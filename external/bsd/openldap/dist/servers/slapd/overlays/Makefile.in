@@ -2,7 +2,7 @@
 # $OpenLDAP$
 ## This work is part of OpenLDAP Software <http://www.openldap.org/>.
 ##
-## Copyright 2003-2020 The OpenLDAP Foundation.
+## Copyright 2003-2021 The OpenLDAP Foundation.
 ## All rights reserved.
 ##
 ## Redistribution and use in source and binary forms, with or without
@@ -16,16 +16,20 @@
 SRCS = overlays.c \
 	accesslog.c \
 	auditlog.c \
+	autoca.c \
 	constraint.c \
 	dds.c \
 	deref.c \
 	dyngroup.c \
 	dynlist.c \
+	homedir.c \
 	memberof.c \
+	otp.c \
 	pcache.c \
 	collect.c \
 	ppolicy.c \
 	refint.c \
+	remoteauth.c \
 	retcode.c \
 	rwm.c rwmconf.c rwmdn.c rwmmap.c \
 	seqmod.c \
@@ -48,7 +52,7 @@ LDAP_LIBDIR= ../../../libraries
 
 MOD_DEFS = -DSLAPD_IMPORT
 
-shared_LDAP_LIBS = $(LDAP_LIBLDAP_R_LA) $(LDAP_LIBLBER_LA)
+shared_LDAP_LIBS = $(LDAP_LIBLDAP_LA) $(LDAP_LIBLBER_LA)
 NT_LINK_LIBS = -L.. -lslapd $(@BUILD_LIBS_DYNAMIC@_LDAP_LIBS)
 UNIX_LINK_LIBS = $(@BUILD_LIBS_DYNAMIC@_LDAP_LIBS)
 
@@ -68,6 +72,9 @@ accesslog.la : accesslog.lo
 auditlog.la : auditlog.lo
 	$(LTLINK_MOD) -module -o $@ auditlog.lo version.lo $(LINK_LIBS)
 
+autoca.la : autoca.lo
+	$(LTLINK_MOD) -module -o $@ autoca.lo version.lo $(LINK_LIBS)
+
 constraint.la : constraint.lo
 	$(LTLINK_MOD) -module -o $@ constraint.lo version.lo $(LINK_LIBS)
 
@@ -83,8 +90,14 @@ dyngroup.la : dyngroup.lo
 dynlist.la : dynlist.lo
 	$(LTLINK_MOD) -module -o $@ dynlist.lo version.lo $(LINK_LIBS)
 
+homedir.la : homedir.lo
+	$(LTLINK_MOD) -module -o $@ homedir.lo version.lo $(LINK_LIBS)
+
 memberof.la : memberof.lo
 	$(LTLINK_MOD) -module -o $@ memberof.lo version.lo $(LINK_LIBS)
+
+otp.la : otp.lo
+	$(LTLINK_MOD) -module -o $@ otp.lo version.lo $(LINK_LIBS)
 
 pcache.la : pcache.lo
 	$(LTLINK_MOD) -module -o $@ pcache.lo version.lo $(LINK_LIBS)
@@ -97,6 +110,9 @@ ppolicy.la : ppolicy.lo
 
 refint.la : refint.lo
 	$(LTLINK_MOD) -module -o $@ refint.lo version.lo $(LINK_LIBS)
+
+remoteauth.la : remoteauth.lo
+	$(LTLINK_MOD) -module -o $@ remoteauth.lo version.lo $(LINK_LIBS)
 
 retcode.la : retcode.lo
 	$(LTLINK_MOD) -module -o $@ retcode.lo version.lo $(LINK_LIBS)

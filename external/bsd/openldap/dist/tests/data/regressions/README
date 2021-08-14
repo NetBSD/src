@@ -11,7 +11,7 @@ shell variables may change, so limit their use to real needs.
 For example, if an issue only appears with a certain database type, the
 test itself should only run when invoked for that database type; 
 otherwise, if the issue appears whatever backend is used, the test should
-be parametric, so that it is run with the backend selected at run-time
+be parameteric, so that it is run with the backend selected at run-time
 via the "-b" switch of the "run" script.
 
 Regression tests are prepared on a voluntary basis, so don't expect all 

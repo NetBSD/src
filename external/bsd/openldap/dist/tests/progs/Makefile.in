@@ -2,7 +2,7 @@
 # $OpenLDAP$
 ## This work is part of OpenLDAP Software <http://www.openldap.org/>.
 ##
-## Copyright 1998-2020 The OpenLDAP Foundation.
+## Copyright 1998-2021 The OpenLDAP Foundation.
 ## All rights reserved.
 ##
 ## Redistribution and use in source and binary forms, with or without
@@ -14,21 +14,19 @@
 ## <http://www.OpenLDAP.org/license.html>.
 
 PROGRAMS = slapd-tester slapd-search slapd-read slapd-addel slapd-modrdn \
-		slapd-modify slapd-bind slapd-mtread ldif-filter
+		slapd-modify slapd-bind slapd-mtread ldif-filter slapd-watcher
 
 SRCS     = slapd-common.c \
 		slapd-tester.c slapd-search.c slapd-read.c slapd-addel.c \
 		slapd-modrdn.c slapd-modify.c slapd-bind.c slapd-mtread.c \
-		ldif-filter.c
+		ldif-filter.c slapd-watcher.c
 
 LDAP_INCDIR= ../../include
 LDAP_LIBDIR= ../../libraries
 
-XLIBS    = $(LDAP_LIBLDAP_LA) $(LDAP_LIBLUTIL_A) $(LDAP_LIBLBER_LA)
-XRLIBS    = $(LDAP_LIBLDAP_R_LA) $(LDAP_LIBLUTIL_A) $(LDAP_LIBLBER_LA)
+XLIBS    = $(LDAP_LIBLDAP_LA) $(LDAP_LIBLUTIL_A) $(LDAP_LIBLDAP_LA) $(LDAP_LIBLBER_LA)
 XXLIBS	 = $(SECURITY_LIBS) $(LUTIL_LIBS)
-RLIBS = $(XRLIBS) $(XXLIBS) $(AC_LIBS) $(XXXLIBS)
-
+XXXLIBS  = $(LTHREAD_LIBS)
 
 OBJS     = slapd-common.o
 
@@ -59,8 +57,10 @@ slapd-bind: slapd-bind.o $(OBJS) $(XLIBS)
 	$(LTLINK) -o $@ slapd-bind.o $(OBJS) $(LIBS)
 
 ldif-filter: ldif-filter.o $(XLIBS)
-	$(LTLINK) -o $@ ldif-filter.o $(LIBS)
+	$(LTLINK) -o $@ ldif-filter.o $(OBJS) $(LIBS)
 
-slapd-mtread: slapd-mtread.o $(OBJS) $(XRLIBS)
-	$(LTLINK) -o $@ slapd-mtread.o $(OBJS) $(RLIBS)
+slapd-mtread: slapd-mtread.o $(OBJS) $(XLIBS)
+	$(LTLINK) -o $@ slapd-mtread.o $(OBJS) $(LIBS)
 
+slapd-watcher: slapd-watcher.o $(OBJS) $(XLIBS)
+	$(LTLINK) -o $@ slapd-watcher.o $(OBJS) $(LIBS)

@@ -176,7 +176,7 @@ Return Value:
 		If successful, the function returns the length in bytes of
         the UTF-8 output character.  
         
-        If utf8char is NULL, count is ignored and the funtion 
+        If utf8char is NULL, count is ignored and the function
         returns the number of bytes that would be written to the 
         output char.
 
@@ -272,7 +272,7 @@ Return Value:
 		written to mbstr, excluding the null termination
         character, if any.
 
-        If mbstr is NULL, count is ignored and the funtion 
+        If mbstr is NULL, count is ignored and the function
         returns the number of bytes required for the output string,
         excluding the NULL.
         

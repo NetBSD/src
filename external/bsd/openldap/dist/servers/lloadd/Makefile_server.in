@@ -1,0 +1,90 @@
+# Makefile.in for Load Balancer
+# $OpenLDAP$
+## This work is part of OpenLDAP Software <http://www.openldap.org/>.
+##
+## Copyright 1998-2021 The OpenLDAP Foundation.
+## All rights reserved.
+##
+## Redistribution and use in source and binary forms, with or without
+## modification, are permitted only as authorized by the OpenLDAP
+## Public License.
+##
+## A copy of this license is available in the file LICENSE in the
+## top-level directory of the distribution or, alternatively, at
+## <http://www.OpenLDAP.org/license.html>.
+
+PROGRAMS = lloadd
+XPROGRAMS = slloadd
+
+XSRCS	= version.c
+
+NT_SRCS = ../slapd/nt_svc.c
+NT_OBJS = ../slapd/nt_svc.o ../../libraries/liblutil/slapdmsg.res
+
+SRCS	+= main.c value.c \
+		  ../slapd/ch_malloc.c ../slapd/proxyp.c ../slapd/sl_malloc.c ../slapd/user.c
+
+OBJS	= $(patsubst %.c,%.o,$(SRCS)) $(@PLAT@_OBJS)
+
+BUILD_OPT = "--enable-balancer"
+BUILD_SRV = @BUILD_BALANCER@
+
+all-local-srv: 	$(PROGRAMS) all-cffiles
+
+# $(LTHREAD_LIBS) must be last!
+XLIBS = $(LLOADD_L)
+XXLIBS = $(LLOADD_LIBS) $(SECURITY_LIBS) $(LUTIL_LIBS) $(SYSTEMD_LIBS)
+XXXLIBS = $(LTHREAD_LIBS)
+
+NT_DEPENDS = slapd.exp
+NT_OBJECTS = slapd.exp symdummy.o $(LLOADD_OBJS) version.o
+
+UNIX_DEPENDS = version.o $(LLOADD_L)
+UNIX_OBJECTS = $(OBJS) version.o
+
+LLOADD_DEPENDS = $(@PLAT@_DEPENDS)
+LLOADD_OBJECTS = $(@PLAT@_OBJECTS)
+
+
+lloadd:	$(LLOADD_DEPENDS) version.o
+	$(LTLINK) -o $@ $(OBJS) version.o $(LIBS)
+
+slloadd:	version.o
+	$(LTLINK) -static -o $@ $(OBJS) version.o $(LIBS)
+
+version.c: Makefile
+	@-$(RM) $@
+	$(MKVERSION) -s -n Versionstr lloadd > $@
+
+version.o: version.c $(OBJS) $(LLOADD_L)
+
+all-cffiles:
+	@if test -n "$(systemdsystemunitdir)"; then \
+		$(SED) -e "s;%LIBEXECDIR%;$(libexecdir);" \
+			$(srcdir)/lloadd.service > lloadd.service.tmp ; \
+	fi
+	touch all-cffiles
+
+clean-local-srv: FORCE
+	$(RM) *.tmp all-cffiles
+
+install-local-srv: install-lloadd install-conf
+
+install-lloadd: FORCE
+	-$(MKDIR) $(DESTDIR)$(libexecdir)
+	@-$(INSTALL) -m 700 -d $(DESTDIR)$(localstatedir)/openldap-lloadd
+	@(								\
+	    for prg in $(PROGRAMS); do					\
+		$(LTINSTALL) $(INSTALLFLAGS) $(STRIP_OPTS) -m 755 $$prg$(EXEEXT)	\
+		    $(DESTDIR)$(libexecdir);				\
+	    done							\
+	)
+
+install-conf: FORCE
+	@-$(MKDIR) $(DESTDIR)$(sysconfdir)
+	if test -n "$(systemdsystemunitdir)" && test ! -f $(DESTDIR)$(systemdsystemunitdir)/lloadd.service; then \
+		$(MKDIR) $(DESTDIR)$(systemdsystemunitdir); \
+		echo "installing lloadd.service in $(systemdsystemunitdir)"; \
+		echo "$(INSTALL) $(INSTALLFLAGS) -m 644 lloadd.service.tmp $(DESTDIR)$(systemdsystemunitdir)/lloadd.service"; \
+		$(INSTALL) $(INSTALLFLAGS) -m 644 lloadd.service.tmp $(DESTDIR)$(systemdsystemunitdir)/lloadd.service; \
+	fi

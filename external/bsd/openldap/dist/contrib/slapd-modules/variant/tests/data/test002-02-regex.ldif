@@ -1,0 +1,7 @@
+dn: cn=Rosco P. Coltrane, ou=Information Technology Division, ou=People, dc=example,dc=com
+changetype: add
+objectclass: OpenLDAPperson
+cn: Rosco P. Coltrane
+sn: Coltrane
+uid: rosco
+title: Chief Investigator, ITD

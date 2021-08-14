@@ -1,5 +1,5 @@
 .TH SLAPO-RWM 5 "RELEASEDATE" "OpenLDAP LDVERSION"
-.\" Copyright 1998-2020 The OpenLDAP Foundation, All Rights Reserved.
+.\" Copyright 1998-2021 The OpenLDAP Foundation, All Rights Reserved.
 .\" Copying restrictions apply.  See the COPYRIGHT file.
 .\" Copyright 2004, Pierangelo Masarati, All rights reserved. <ando@sys-net.it>
 .\" $OpenLDAP$
@@ -394,13 +394,7 @@ referralDN           all ops (only if applicable; defaults
 .LP
 .SH "Basic Configuration Syntax"
 All rewrite/remap directives start with the prefix
-.BR rwm\- ;
-for backwards compatibility with the historical
-.BR slapd\-ldap (5)
-and
-.BR slapd\-meta (5)
-builtin rewrite/remap capabilities, the prefix may be omitted, 
-but this practice is strongly discouraged.
+.BR rwm\-
 .TP
 .B rwm\-rewriteEngine { on | off }
 If `on', the requested rewriting is performed; if `off', no

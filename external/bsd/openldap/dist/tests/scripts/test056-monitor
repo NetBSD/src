@@ -2,7 +2,7 @@
 # $OpenLDAP$
 ## This work is part of OpenLDAP Software <http://www.openldap.org/>.
 ##
-## Copyright 1998-2020 The OpenLDAP Foundation.
+## Copyright 1998-2021 The OpenLDAP Foundation.
 ## All rights reserved.
 ##
 ## Redistribution and use in source and binary forms, with or without
@@ -16,16 +16,11 @@
 echo "running defines.sh"
 . $SRCDIR/scripts/defines.sh
 
-if test $MONITORDB = "no" ; then 
-	echo "Monitor backend not available, test skipped"
-	exit 0
-fi 
-
 mkdir -p $TESTDIR $DBDIR1
 
 echo "Starting slapd on TCP/IP port $PORT..."
-. $CONFFILTER $BACKEND $MONITORDB < $SCHEMACONF > $CONF1
-$SLAPD -f $CONF1 -h $URI1 -d $LVL $TIMING > $LOG1 2>&1 &
+. $CONFFILTER $BACKEND < $SCHEMACONF > $CONF1
+$SLAPD -f $CONF1 -h $URI1 -d $LVL > $LOG1 2>&1 &
 PID=$!
 if test $WAIT != 0 ; then
     echo PID $PID
@@ -37,7 +32,7 @@ sleep 1
 
 echo "Using ldapsearch to check that slapd is running..."
 for i in 0 1 2 3 4 5; do
-	$LDAPSEARCH -s base -b "$MONITOR" -h $LOCALHOST -p $PORT1 \
+	$LDAPSEARCH -s base -b "$MONITOR" -H $URI1 \
 		'objectclass=*' > /dev/null 2>&1
 	RC=$?
 	if test $RC = 0 ; then
@@ -48,7 +43,7 @@ for i in 0 1 2 3 4 5; do
 done
 
 echo "Using ldapsearch to read connection monitor entries..."
-$LDAPSEARCH -S "" -b "$CONNECTIONSMONITORDN" -h $LOCALHOST -p $PORT1 \
+$LDAPSEARCH -S "" -b "$CONNECTIONSMONITORDN" -H $URI1 \
 	'objectclass=*' \
 	structuralObjectClass entryDN \
 	monitorConnectionProtocol monitorConnectionOpsReceived \
@@ -82,11 +77,10 @@ if test $? != 0 ; then
 fi
 
 echo "Using ldapsearch to read database monitor entries..."
-$LDAPSEARCH -S "" -b "$DATABASESMONITORDN" -h $LOCALHOST -p $PORT1 \
+$LDAPSEARCH -S "" -b "$DATABASESMONITORDN" -H $URI1 \
 	'objectclass=*' \
 	structuralObjectClass entryDN namingContexts readOnly \
 	monitorIsShadow monitorContext \
-	olmBDBEntryCache olmBDBDNCache olmBDBIDLCache \
 	> $SEARCHOUT 2>&1
 RC=$?
 
@@ -99,18 +93,8 @@ fi
 echo "Filtering ldapsearch results..."
 $LDIFFILTER -b monitor < $SEARCHOUT > $SEARCHFLT
 
-TMPMONITOROUT2=$MONITOROUT2
-case $BACKEND in
-bdb|hdb)
-	;;
-*)
-	TMPMONITOROUT2=$TESTDIR/monitor2.out
-	grep -v "olmBDB" $MONITOROUT2 > $TMPMONITOROUT2
-	;;
-esac
-
 echo "Comparing filter output..."
-$CMP $SEARCHFLT $TMPMONITOROUT2 > $CMPOUT
+$CMP $SEARCHFLT $MONITOROUT2 > $CMPOUT
 
 if test $? != 0 ; then
         echo "comparison failed - database monitor output is not correct"
@@ -119,7 +103,7 @@ if test $? != 0 ; then
 fi
 
 echo "Using ldapsearch to read statistics monitor entries..."
-$LDAPSEARCH -S "" -b "$STATISTICSMONITORDN" -h $LOCALHOST -p $PORT1 \
+$LDAPSEARCH -S "" -b "$STATISTICSMONITORDN" -H $URI1 \
 	'(|(cn=Entries)(cn=PDU)(cn=Referrals))' \
 	structuralObjectClass monitorCounter entryDN \
 	> $SEARCHOUT 2>&1
@@ -144,7 +128,7 @@ if test $? != 0 ; then
 fi
 
 echo "Using ldapsearch to read operation monitor entries..."
-$LDAPSEARCH -S "" -b "$OPERATIONSMONITORDN" -h $LOCALHOST -p $PORT1 \
+$LDAPSEARCH -S "" -b "$OPERATIONSMONITORDN" -H $URI1 \
 	'objectclass=*' \
 	structuralObjectClass monitorOpInitiated monitorOpCompleted entryDN \
 	> $SEARCHOUT 2>&1

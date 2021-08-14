@@ -1,0 +1,9 @@
+dn: ou=People,dc=example,dc=com
+objectClass: organizationalUnit
+objectClass: extensibleObject
+ou: People
+uidNumber: 0
+gidNumber: 0
+seealso: dc=example,dc=com
+description: The Example, Inc. at Anytown
+

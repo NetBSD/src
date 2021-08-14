@@ -1,5 +1,5 @@
 .TH SLAPO-AUTOGROUP 5 "RELEASEDATE" "OpenLDAP LDVERSION"
-.\" Copyright 1998-2020 The OpenLDAP Foundation All Rights Reserved.
+.\" Copyright 1998-2021 The OpenLDAP Foundation All Rights Reserved.
 .\" Portions Copyright \[u00A9] 2007 Michał Szulczyński.
 .\" Copying restrictions apply.  See the COPYRIGHT file.
 .\" $OpenLDAP$
@@ -39,7 +39,7 @@ here for convenience:
 .TP
 .B \FCautogroup-attrset\FT <group-oc> <URL-ad> <member-ad>
 .TP
-.B \FColcAGattrSet:\FT <group-oc> <URL-ad> <member-ad>
+.B \FColcAutoGroupAttrSet:\FT <group-oc> <URL-ad> <member-ad>
 This defines the objectclass-attribute-URI mappings defining the
 automatically managed groups, and may appear multiple times.
 
@@ -57,7 +57,7 @@ disabled for consistency.
 .TP
 .B \FCautogroup-memberof-ad\FT <memberof-ad>
 .TP
-.B \FColcAGmemberOfAd\FT <memberof-ad>
+.B \FColcAutoGroupMemberOfAd\FT <memberof-ad>
 This defines the attribute that is used by the memberOf overlay to
 store the names of groups that an entry is member of; it must be
 DN-valued. It should be set to the same value as
@@ -88,6 +88,15 @@ cases the overlay will try to detect if groups have been modified and
 then simply refresh them. This can cause performance hits if the
 search specified by the URI deals with a significant number of
 entries.
+.SH BACKWARD COMPATIBILITY
+The autogroup overlay has been reworked with the 2.5 release to use
+a consistent namespace as with other overlays. As a side-effect the
+following cn=config parameters are deprecated and will be removed in
+a future release:
+.B olcAGattrSet
+is replaced with olcAutoGroupAttrSet
+.B olcAGmemberOfAd
+is replaced with olcAutoGroupMemberOfAd
 .SH ACKNOWLEDGEMENTS
 This module was originally written in 2007 by Michał
 Szulczyński.  Further enhancements were contributed by Howard
@@ -97,6 +106,6 @@ updates provided by Emily Backes.
 .BR slapd.conf (5),
 .BR slapd (8).
 .SH Copyrights
-Copyright 1998-2020 The OpenLDAP Foundation.
+Copyright 1998-2021 The OpenLDAP Foundation.
 Portions Copyright \[u00A9] 2007 Michał Szulczyński.
 All rights reserved.

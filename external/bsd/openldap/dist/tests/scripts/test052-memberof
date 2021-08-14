@@ -2,7 +2,7 @@
 # $OpenLDAP$
 ## This work is part of OpenLDAP Software <http://www.openldap.org/>.
 ##
-## Copyright 1998-2020 The OpenLDAP Foundation.
+## Copyright 1998-2021 The OpenLDAP Foundation.
 ## All rights reserved.
 ##
 ## Redistribution and use in source and binary forms, with or without
@@ -27,8 +27,8 @@ $SLAPPASSWD -g -n >$CONFIGPWF
 echo "rootpw `$SLAPPASSWD -T $CONFIGPWF`" >$TESTDIR/configpw.conf
 
 echo "Starting slapd on TCP/IP port $PORT1..."
-. $CONFFILTER $BACKEND $MONITORDB < $NAKEDCONF > $CONF1
-$SLAPD -f $CONF1 -F $TESTDIR/confdir -h $URI1 -d $LVL $TIMING > $LOG1 2>&1 &
+. $CONFFILTER $BACKEND < $NAKEDCONF > $CONF1
+$SLAPD -f $CONF1 -F $TESTDIR/confdir -h $URI1 -d $LVL > $LOG1 2>&1 &
 PID=$!
 if test $WAIT != 0 ; then
     echo PID $PID
@@ -38,7 +38,7 @@ KILLPIDS="$PID"
 
 sleep 1
 for i in 0 1 2 3 4 5; do
-	$LDAPSEARCH -s base -b "$MONITOR" -h $LOCALHOST -p $PORT1 \
+	$LDAPSEARCH -s base -b "$MONITOR" -H $URI1 \
 		'objectclass=*' > /dev/null 2>&1
 	RC=$?
 	if test $RC = 0 ; then
@@ -72,16 +72,15 @@ EOF
 	fi
 fi
 
-indexInclude="" mainInclude="" bdbInclude="# " nullExclude=""
+indexInclude="" mainInclude="" nullExclude=""
 test $INDEXDB = indexdb	|| indexInclude="# "
 test $MAINDB  = maindb	|| mainInclude="# "
 case $BACKEND in
-bdb | hdb) bdbInclude="" ;;
 null) nullExclude="# " ;;
 esac
 
 echo "Running ldapadd to build slapd config database..."
-$LDAPADD -h $LOCALHOST -p $PORT1 -D 'cn=config' -w `cat $CONFIGPWF` \
+$LDAPADD -H $URI1 -D 'cn=config' -w `cat $CONFIGPWF` \
 	>> $TESTOUT 2>&1 <<EOF
 dn: cn=symas group example,cn=schema,cn=config
 objectClass: olcSchemaConfig
@@ -114,7 +113,6 @@ olcRootDN: cn=Manager,$BASEDN
 olcRootPW:: c2VjcmV0
 olcMonitoring: TRUE
 ${nullExclude}olcDbDirectory: $TESTDIR/db.1.a/
-${bdbInclude}olcDbCacheSize: 1000
 ${indexInclude}olcDbIndex: objectClass eq
 ${indexInclude}olcDbIndex: cn pres,eq,sub
 ${indexInclude}olcDbIndex: uid pres,eq,sub
@@ -123,7 +121,7 @@ ${mainInclude}olcDbMode: 384"
 
 dn: olcOverlay={0}memberof,olcDatabase={1}$BACKEND,cn=config
 objectClass: olcOverlayConfig
-objectClass: olcMemberOf
+objectClass: olcMemberOfConfig
 olcOverlay: {0}memberof
 olcMemberOfRefInt: TRUE
 olcMemberOfGroupOC: groupOfNames
@@ -132,7 +130,7 @@ olcMemberOfMemberOfAD: memberOf
 
 dn: olcOverlay={1}memberof,olcDatabase={1}$BACKEND,cn=config
 objectClass: olcOverlayConfig
-objectClass: olcMemberOf
+objectClass: olcMemberOfConfig
 olcOverlay: {1}memberof
 olcMemberOfRefInt: TRUE
 olcMemberOfGroupOC: groupA
@@ -141,7 +139,7 @@ olcMemberOfMemberOfAD: memberOfA
 
 dn: olcOverlay={2}memberof,olcDatabase={1}$BACKEND,cn=config
 objectClass: olcOverlayConfig
-objectClass: olcMemberOf
+objectClass: olcMemberOfConfig
 olcOverlay: {2}memberof
 olcMemberOfRefInt: TRUE
 olcMemberOfGroupOC: groupB
@@ -157,7 +155,7 @@ if test $RC != 0 ; then
 fi
 
 echo "Running ldapadd to build slapd database..."
-$LDAPADD -h $LOCALHOST -p $PORT1 \
+$LDAPADD -H $URI1 \
 	-D "cn=Manager,$BASEDN" -w secret \
 	>> $TESTOUT 2>&1 << EOF
 dn: $BASEDN
@@ -199,7 +197,7 @@ fi
 
 echo "Search the entire database..."
 echo "# Search the entire database..." >> $SEARCHOUT
-$LDAPSEARCH -S "" -b "$BASEDN" -h $LOCALHOST -p $PORT1 \
+$LDAPSEARCH -S "" -b "$BASEDN" -H $URI1 \
 	'(objectClass=*)' '*' memberOf >> $SEARCHOUT 2>&1
 RC=$?
 if test $RC != 0 ; then
@@ -209,7 +207,7 @@ if test $RC != 0 ; then
 fi
 
 echo "Running ldapmodify to add a member..."
-$LDAPMODIFY -h $LOCALHOST -p $PORT1 \
+$LDAPMODIFY -H $URI1 \
 	-D "cn=Manager,$BASEDN" -w secret \
 	>> $TESTOUT 2>&1 << EOF
 dn: cn=Jessica Rabbit,ou=People,$BASEDN
@@ -226,7 +224,7 @@ EOF
 
 echo "Re-search the entire database..."
 echo "# Re-search the entire database after adding Jessica Rabbit and Cartoonia..." >> $SEARCHOUT
-$LDAPSEARCH -S "" -b "$BASEDN" -h $LOCALHOST -p $PORT1 \
+$LDAPSEARCH -S "" -b "$BASEDN" -H $URI1 \
 	'(objectClass=*)' '*' memberOf >> $SEARCHOUT 2>&1
 RC=$?
 if test $RC != 0 ; then
@@ -236,7 +234,7 @@ if test $RC != 0 ; then
 fi
 
 echo "Running ldapmodify to rename a member..."
-$LDAPMODIFY -h $LOCALHOST -p $PORT1 \
+$LDAPMODIFY -H $URI1 \
 	-D "cn=Manager,$BASEDN" -w secret \
 	>> $TESTOUT 2>&1 << EOF
 dn: cn=Baby Herman,ou=People,$BASEDN
@@ -247,7 +245,7 @@ EOF
 
 echo "Re-search the entire database..."
 echo "# Re-search the entire database after renaming Baby Herman..." >> $SEARCHOUT
-$LDAPSEARCH -S "" -b "$BASEDN" -h $LOCALHOST -p $PORT1 \
+$LDAPSEARCH -S "" -b "$BASEDN" -H $URI1 \
 	'(objectClass=*)' '*' memberOf >> $SEARCHOUT 2>&1
 RC=$?
 if test $RC != 0 ; then
@@ -257,7 +255,7 @@ if test $RC != 0 ; then
 fi
 
 echo "Running ldapmodify to rename a group..."
-$LDAPMODIFY -h $LOCALHOST -p $PORT1 \
+$LDAPMODIFY -H $URI1 \
 	-D "cn=Manager,$BASEDN" -w secret \
 	>> $TESTOUT 2>&1 << EOF
 dn: cn=Cartoonia,ou=Groups,$BASEDN
@@ -273,7 +271,7 @@ EOF
 
 echo "Re-search the entire database..."
 echo "# Re-search the entire database after renaming Cartoonia..." >> $SEARCHOUT
-$LDAPSEARCH -S "" -b "$BASEDN" -h $LOCALHOST -p $PORT1 \
+$LDAPSEARCH -S "" -b "$BASEDN" -H $URI1 \
 	'(objectClass=*)' '*' memberOf >> $SEARCHOUT 2>&1
 RC=$?
 if test $RC != 0 ; then
@@ -283,7 +281,7 @@ if test $RC != 0 ; then
 fi
 
 echo "Running ldapmodify to add self..."
-$LDAPMODIFY -h $LOCALHOST -p $PORT1 \
+$LDAPMODIFY -H $URI1 \
 	-D "cn=Manager,$BASEDN" -w secret \
 	>> $TESTOUT 2>&1 << EOF
 dn: cn=Toon Town,ou=Groups,$BASEDN
@@ -294,7 +292,7 @@ EOF
 
 echo "Re-search the entire database..."
 echo "# Re-search the entire database after adding Toon Town to self..." >> $SEARCHOUT
-$LDAPSEARCH -S "" -b "$BASEDN" -h $LOCALHOST -p $PORT1 \
+$LDAPSEARCH -S "" -b "$BASEDN" -H $URI1 \
 	'(objectClass=*)' '*' memberOf >> $SEARCHOUT 2>&1
 RC=$?
 if test $RC != 0 ; then
@@ -304,7 +302,7 @@ if test $RC != 0 ; then
 fi
 
 echo "Running ldapdelete to remove a member..."
-$LDAPMODIFY -h $LOCALHOST -p $PORT1 \
+$LDAPMODIFY -H $URI1 \
 	-D "cn=Manager,$BASEDN" -w secret \
 	>> $TESTOUT 2>&1 << EOF
 dn: cn=Baby Herman Jr,ou=People,$BASEDN
@@ -313,7 +311,7 @@ EOF
 
 echo "Re-search the entire database..."
 echo "# Re-search the entire database after deleting Baby Herman..." >> $SEARCHOUT
-$LDAPSEARCH -S "" -b "$BASEDN" -h $LOCALHOST -p $PORT1 \
+$LDAPSEARCH -S "" -b "$BASEDN" -H $URI1 \
 	'(objectClass=*)' '*' memberOf >> $SEARCHOUT 2>&1
 RC=$?
 if test $RC != 0 ; then
@@ -323,7 +321,7 @@ if test $RC != 0 ; then
 fi
 
 echo "Running ldapdelete to remove a group..."
-$LDAPMODIFY -h $LOCALHOST -p $PORT1 \
+$LDAPMODIFY -H $URI1 \
 	-D "cn=Manager,$BASEDN" -w secret \
 	>> $TESTOUT 2>&1 << EOF
 dn: cn=Toon Town,ou=Groups,$BASEDN
@@ -332,7 +330,7 @@ EOF
 
 echo "Re-search the entire database..."
 echo "# Re-search the entire database after deleting Toon Town..." >> $SEARCHOUT
-$LDAPSEARCH -S "" -b "$BASEDN" -h $LOCALHOST -p $PORT1 \
+$LDAPSEARCH -S "" -b "$BASEDN" -H $URI1 \
 	'(objectClass=*)' '*' memberOf >> $SEARCHOUT 2>&1
 RC=$?
 if test $RC != 0 ; then
@@ -342,7 +340,7 @@ if test $RC != 0 ; then
 fi
 
 echo "Adding groups with MAY member type schemas..."
-$LDAPMODIFY -h $LOCALHOST -p $PORT1 \
+$LDAPMODIFY -H $URI1 \
 	-D "cn=Manager,$BASEDN" -w secret \
 	>> $TESTOUT 2>&1 <<EOF
 dn: cn=Roger Rabbit,ou=People,$BASEDN
@@ -389,7 +387,7 @@ EOF
 
 echo "Re-search the entire database..."
 echo "# Re-search the entire database after adding groups with MAY member type schemas..." >> $SEARCHOUT
-$LDAPSEARCH -S "" -b "$BASEDN" -h $LOCALHOST -p $PORT1 \
+$LDAPSEARCH -S "" -b "$BASEDN" -H $URI1 \
 	'(objectClass=*)' '*' memberOf >> $SEARCHOUT 2>&1
 RC=$?
 if test $RC != 0 ; then
@@ -399,7 +397,7 @@ if test $RC != 0 ; then
 fi
 
 echo "Running ldapmodify to reconfigure the schema used..."
-$LDAPADD -h $LOCALHOST -p $PORT1 -D 'cn=config' -w `cat $CONFIGPWF` \
+$LDAPADD -H $URI1 -D 'cn=config' -w `cat $CONFIGPWF` \
 	>> $TESTOUT 2>&1 <<EOF
 dn: olcOverlay={1}memberof,olcDatabase={1}$BACKEND,cn=config
 changetype: modify
@@ -415,7 +413,7 @@ if test $RC != 0 ; then
 fi
 
 echo "Updating groups to expose the new setting..."
-$LDAPMODIFY -h $LOCALHOST -p $PORT1 \
+$LDAPMODIFY -H $URI1 \
 	-D "cn=Manager,$BASEDN" -w secret \
 	>> $TESTOUT 2>&1 <<EOF
 dn: cn=group1,ou=Groups,$BASEDN
@@ -434,7 +432,7 @@ fi
 
 echo "Re-search the entire database..."
 echo "# Re-search the entire database after updating memberof configuration..." >> $SEARCHOUT
-$LDAPSEARCH -S "" -b "$BASEDN" -h $LOCALHOST -p $PORT1 \
+$LDAPSEARCH -S "" -b "$BASEDN" -H $URI1 \
 	'(objectClass=*)' '*' memberOf >> $SEARCHOUT 2>&1
 RC=$?
 if test $RC != 0 ; then

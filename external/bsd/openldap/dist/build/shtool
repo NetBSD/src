@@ -1,12 +1,12 @@
 #!/bin/sh
 ##
 ##  GNU shtool -- The GNU Portable Shell Tool
-##  Copyright (c) 1994-2006 Ralf S. Engelschall <rse@engelschall.com>
+##  Copyright (c) 1994-2008 Ralf S. Engelschall <rse@engelschall.com>
 ##
 ##  See http://www.gnu.org/software/shtool/ for more information.
 ##  See ftp://ftp.gnu.org/gnu/shtool/ for latest version.
 ##
-##  Version:  2.0.5 (07-Feb-2006)
+##  Version:  2.0.8 (18-Jul-2008)
 ##  Contents: 6/19 available modules
 ##
 
@@ -92,8 +92,8 @@ if [ $# -eq 0 ]; then
     exit 1
 fi
 if [ ".$1" = ".-h" ] || [ ".$1" = ".--help" ]; then
-    echo "This is GNU shtool, version 2.0.5 (07-Feb-2006)"
-    echo 'Copyright (c) 1994-2006 Ralf S. Engelschall <rse@engelschall.com>'
+    echo "This is GNU shtool, version 2.0.8 (18-Jul-2008)"
+    echo 'Copyright (c) 1994-2008 Ralf S. Engelschall <rse@engelschall.com>'
     echo 'Report bugs to <bug-shtool@gnu.org>'
     echo ''
     echo 'Usage: shtool [<options>] [<cmd-name> [<cmd-options>] [<cmd-args>]]'
@@ -161,7 +161,7 @@ if [ ".$1" = ".-h" ] || [ ".$1" = ".--help" ]; then
     exit 0
 fi
 if [ ".$1" = ".-v" ] || [ ".$1" = ".--version" ]; then
-    echo "GNU shtool 2.0.5 (07-Feb-2006)"
+    echo "GNU shtool 2.0.8 (18-Jul-2008)"
     exit 0
 fi
 if [ ".$1" = ".-r" ] || [ ".$1" = ".--recreate" ]; then
@@ -317,7 +317,7 @@ eval `echo h.$opt_spec |\
 eval `echo h:help,$opt_alias |\
       sed -e 's/-/_/g' -e 's/\([a-zA-Z0-9]\):\([^,]*\),*/opt_ALIAS_\2=\1;/g'`
 
-#   interate over argument line
+#   iterate over argument line
 opt_PREV=''
 while [ $# -gt 0 ]; do
     #   special option stops processing
@@ -383,11 +383,11 @@ while [ $# -gt 0 ]; do
             eval "opt_${opt_OPT}=yes"
             ;;
         ':' )
-            #   option with argument (multiple occurances override)
+            #   option with argument (multiple occurrences override)
             eval "opt_${opt_OPT}=\"\$opt_ARG\""
             ;;
         '+' )
-            #   option with argument (multiple occurances append)
+            #   option with argument (multiple occurrences append)
             eval "opt_${opt_OPT}=\"\$opt_${opt_OPT}\${ASC_NL}\$opt_ARG\""
             ;;
         * )
@@ -480,7 +480,7 @@ case $tool in
 echo )
     ##
     ##  echo -- Print string with optional construct expansion
-    ##  Copyright (c) 1998-2006 Ralf S. Engelschall <rse@engelschall.com>
+    ##  Copyright (c) 1998-2008 Ralf S. Engelschall <rse@engelschall.com>
     ##
 
     text="$*"
@@ -601,11 +601,14 @@ echo )
                         userid=`grep "^${username}:" /etc/passwd 2>/dev/null | \
                                 sed -e 's/[^:]*:[^:]*://' -e 's/:.*$//'`
                         if [ ".$userid" = . ]; then
-                            userid=`(ypcat passwd) 2>/dev/null |
-                                    grep "^${username}:" | \
-                                    sed -e 's/[^:]*:[^:]*://' -e 's/:.*$//'`
+                            userid=`(ypmatch "${username}" passwd; nismatch "${username}" passwd) 2>/dev/null | \
+                                    sed -e 'q' | sed -e 's/[^:]*:[^:]*://' -e 's/:.*$//'`
                             if [ ".$userid" = . ]; then
-                                userid='?'
+                                userid=`(nidump passwd . | grep "^${username}:") 2>/dev/null | \
+                                        sed -e 's/[^:]*:[^:]*://' -e 's/:.*$//'`
+                                if [ ".$userid" = . ]; then
+                                    userid='?'
+                                fi
                             fi
                         fi
                     fi
@@ -630,10 +633,14 @@ echo )
                     groupid=`grep "^${username}:" /etc/passwd 2>/dev/null | \
                              sed -e 's/[^:]*:[^:]*:[^:]*://' -e 's/:.*$//'`
                     if [ ".$groupid" = . ]; then
-                        groupid=`(ypcat passwd) 2>/dev/null | grep "^${username}:" | \
-                                 sed -e 's/[^:]*:[^:]*:[^:]*://' -e 's/:.*$//'`
+                        groupid=`(ypmatch "${username}" passwd; nismatch "${username}" passwd) 2>/dev/null | \
+                                 sed -e 'q' | sed -e 's/[^:]*:[^:]*:[^:]*://' -e 's/:.*$//'`
                         if [ ".$groupid" = . ]; then
-                            groupid='?'
+                            groupid=`(nidump passwd . | grep "^${username}:") 2>/dev/null | \
+                                     sed -e 's/[^:]*:[^:]*:[^:]*://' -e 's/:.*$//'`
+                            if [ ".$groupid" = . ]; then
+                                groupid='?'
+                            fi
                         fi
                     fi
                 fi
@@ -658,11 +665,16 @@ echo )
                     groupname=`grep "^[^:]*:[^:]*:${groupid}:" /etc/group 2>/dev/null | \
                                sed -e 's/:.*$//'`
                     if [ ".$groupname" = . ]; then
-                        groupname=`(ypcat group) 2>/dev/null | \
-                                   grep "^[^:]*:[^:]*:${groupid}:" | \
+                        groupname=`(ypcat group; niscat group) 2>/dev/null | \
+                                   sed -e 'q' | grep "^[^:]*:[^:]*:${groupid}:" | \
                                    sed -e 's/:.*$//'`
                         if [ ".$groupname" = . ]; then
-                            groupname='?'
+                            groupname=`(nidump group .) 2>/dev/null | \
+                                       grep "^[^:]*:[^:]*:${groupid}:" | \
+                                       sed -e 's/:.*$//'`
+                            if [ ".$groupname" = . ]; then
+                                groupname='?'
+                            fi
                         fi
                     fi
                 fi
@@ -778,7 +790,7 @@ echo )
 move )
     ##
     ##  move -- Move files with simultaneous substitution
-    ##  Copyright (c) 1999-2006 Ralf S. Engelschall <rse@engelschall.com>
+    ##  Copyright (c) 1999-2008 Ralf S. Engelschall <rse@engelschall.com>
     ##
 
     src="$1"
@@ -870,7 +882,7 @@ move )
 install )
     ##
     ##  install -- Install a program, script or datafile
-    ##  Copyright (c) 1997-2006 Ralf S. Engelschall <rse@engelschall.com>
+    ##  Copyright (c) 1997-2008 Ralf S. Engelschall <rse@engelschall.com>
     ##
 
     #   special case: "shtool install -d <dir> [...]" internally
@@ -956,12 +968,12 @@ install )
             if [ ".$opt_t" = .yes ]; then
                 echo "cp $src $dsttmp" 1>&2
             fi
-            cp $src $dsttmp || shtool_exit $?
+            cp "$src" "$dsttmp" || shtool_exit $?
         else
             if [ ".$opt_t" = .yes ]; then
                 echo "mv $src $dsttmp" 1>&2
             fi
-            mv $src $dsttmp || shtool_exit $?
+            mv "$src" "$dsttmp" || shtool_exit $?
         fi
 
         #   adjust the target file
@@ -972,7 +984,7 @@ install )
             do
                 sed="$sed -e '$e'"
             done
-            cp $dsttmp $dsttmp.old
+            cp "$dsttmp" "$dsttmp.old"
             chmod u+w $dsttmp
             eval "$sed <$dsttmp.old >$dsttmp" || shtool_exit $?
             rm -f $dsttmp.old
@@ -981,7 +993,7 @@ install )
             if [ ".$opt_t" = .yes ]; then
                 echo "strip $dsttmp" 1>&2
             fi
-            strip $dsttmp || shtool_exit $?
+            ${STRIP:-strip} $dsttmp || shtool_exit $?
         fi
         if [ ".$opt_o" != . ]; then
             if [ ".$opt_t" = .yes ]; then
@@ -1007,7 +1019,7 @@ install )
         quick=no
         if [ ".$opt_C" = .yes ]; then
             if [ -r $dst ]; then
-                if cmp -s $src $dst; then
+                if cmp -s "$src" "$dst"; then
                     quick=yes
                 fi
             fi
@@ -1033,7 +1045,7 @@ install )
 mkdir )
     ##
     ##  mkdir -- Make one or more directories
-    ##  Copyright (c) 1996-2006 Ralf S. Engelschall <rse@engelschall.com>
+    ##  Copyright (c) 1996-2008 Ralf S. Engelschall <rse@engelschall.com>
     ##
 
     errstatus=0
@@ -1121,11 +1133,11 @@ mkdir )
 mkln )
     ##
     ##  mkln -- Make link with calculation of relative paths
-    ##  Copyright (c) 1998-2006 Ralf S. Engelschall <rse@engelschall.com>
+    ##  Copyright (c) 1998-2008 Ralf S. Engelschall <rse@engelschall.com>
     ##
 
     #   determine source(s) and destination
-    args=$?
+    args=$#
     srcs=""
     while [ $# -gt 1 ]; do
         srcs="$srcs $1"
@@ -1226,12 +1238,17 @@ mkln )
         #   determine source prefix which is the reverse directory
         #   step-up corresponding to the destination directory
         srcpre=""
-
-        isroot=0
-        if [ ".$prefix" = . ] || [ ".$prefix" = ./ ]; then
-            isroot=1
+        allow_relative_srcpre=no
+        if [ ".$prefix" != . ] && [ ".$prefix" != ./ ]; then
+            allow_relative_srcpre=yes
         fi
-        if [ $oneisabs = 0 ] || [ $isroot = 0 ]; then
+        if [ $oneisabs = 0 ]; then
+            allow_relative_srcpre=yes
+        fi
+        if [ ".$opt_s" != .yes ]; then
+            allow_relative_srcpre=no
+        fi
+        if [ ".$allow_relative_srcpre" = .yes ]; then
             pl="$dstdir/"
             OIFS="$IFS"; IFS='/'
             for pe in $pl; do
@@ -1272,7 +1289,7 @@ mkln )
 subst )
     ##
     ##  subst -- Apply sed(1) substitution operations
-    ##  Copyright (c) 2001-2006 Ralf S. Engelschall <rse@engelschall.com>
+    ##  Copyright (c) 2001-2008 Ralf S. Engelschall <rse@engelschall.com>
     ##
 
     #   remember optional list of file(s)
@@ -1384,7 +1401,7 @@ subst )
                 fi
             fi
 
-            #   optionally check whether any content change actually occurred 
+            #   optionally check whether any content change actually occurred
             if [ ".$opt_q" = .no ]; then
                 if cmp $file$orig $file >/dev/null 2>&1; then
                     if [ ".$opt_w" = .yes ]; then

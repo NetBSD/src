@@ -1,0 +1,5 @@
+dn: ou=Information Technology Division,ou=People,dc=example,dc=com
+oathSecret:: PcbKpIJKbSiHZ7IzHiC0MWbLhdk=
+oathHOTPParams: ou=Alumni Association,ou=People,dc=example,dc=com
+oathHOTPCounter: 12
+

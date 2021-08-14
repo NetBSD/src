@@ -2,7 +2,7 @@
 # Header
 ## This work is part of OpenLDAP Software <http://www.openldap.org/>.
 ##
-## Copyright 1998-2020 The OpenLDAP Foundation.
+## Copyright 1998-2021 The OpenLDAP Foundation.
 ## All rights reserved.
 ##
 ## Redistribution and use in source and binary forms, with or without
@@ -24,7 +24,7 @@ fi
 mkdir -p $TESTDIR $DBDIR1
 
 echo "Running slapadd to build slapd database..."
-. $CONFFILTER $BACKEND $MONITORDB < $MCONF > $ADDCONF
+. $CONFFILTER $BACKEND < $MCONF > $ADDCONF
 $SLAPADD -f $ADDCONF -l $LDIFORDERED
 RC=$?
 if test $RC != 0 ; then
@@ -33,7 +33,7 @@ if test $RC != 0 ; then
 fi
 
 echo "Running slapindex to index slapd database..."
-. $CONFFILTER $BACKEND $MONITORDB < $RETCODECONF > $CONF1
+. $CONFFILTER $BACKEND < $RETCODECONF > $CONF1
 $SLAPINDEX -f $CONF1
 RC=$?
 if test $RC != 0 ; then
@@ -42,7 +42,7 @@ if test $RC != 0 ; then
 fi
 
 echo "Starting slapd on TCP/IP port $PORT1..."
-$SLAPD -f $CONF1 -h $URI1 -d $LVL $TIMING > $LOG1 2>&1 &
+$SLAPD -f $CONF1 -h $URI1 -d $LVL > $LOG1 2>&1 &
 PID=$!
 if test $WAIT != 0 ; then
     echo PID $PID
@@ -54,7 +54,7 @@ sleep 1
 
 echo "Testing slapd searching..."
 for i in 0 1 2 3 4 5; do
-	$LDAPSEARCH -s base -b "$MONITOR" -h $LOCALHOST -p $PORT1 \
+	$LDAPSEARCH -s base -b "$MONITOR" -H $URI1 \
 		'(objectclass=*)' > /dev/null 2>&1
 	RC=$?
 	if test $RC = 0 ; then
@@ -72,7 +72,7 @@ fi
 
 echo "Testing search for timelimitExceeded..."
 $LDAPSEARCH -b "cn=timelimitExceeded,ou=RetCodes,$BASEDN" \
-	-h $LOCALHOST -p $PORT1 '(objectClass=*)' >> $TESTOUT 2>&1
+	-H $URI1 '(objectClass=*)' >> $TESTOUT 2>&1
 RC=$?
 if test $RC != 3 ; then
 	echo "ldapsearch failed ($RC)!"
@@ -82,7 +82,7 @@ fi
 
 echo "Testing modify for unwillingToPerform..."
 $LDAPMODIFY -D "$MANAGERDN" -w $PASSWD \
-	-h $LOCALHOST -p $PORT1 >> $TESTOUT 2>&1 << EOMODS
+	-H $URI1 >> $TESTOUT 2>&1 << EOMODS
 dn: cn=unwillingToPerform,ou=RetCodes,$BASEDN
 changetype: delete
 EOMODS
@@ -94,7 +94,7 @@ if test $RC != 53 ; then
 fi
 
 echo "Testing compare for success after sleep (2 s)..."
-$LDAPCOMPARE -h $LOCALHOST -p $PORT1 \
+$LDAPCOMPARE -H $URI1 \
 	"cn=Success w/ Delay,ou=RetCodes,$BASEDN" "cn:foo" >> $TESTOUT 2>&1
 RC=$?
 if test $RC != 0 ; then

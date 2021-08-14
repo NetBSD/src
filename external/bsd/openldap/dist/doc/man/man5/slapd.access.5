@@ -1,5 +1,5 @@
 .TH SLAPD.ACCESS 5 "RELEASEDATE" "OpenLDAP LDVERSION"
-.\" Copyright 1998-2020 The OpenLDAP Foundation All Rights Reserved.
+.\" Copyright 1998-2021 The OpenLDAP Foundation All Rights Reserved.
 .\" Copying restrictions apply.  See COPYRIGHT/LICENSE.
 .\" $OpenLDAP$
 .SH NAME
@@ -18,6 +18,7 @@ daemon. This configuration file is also used by the SLAPD tools
 .BR slapcat (8),
 .BR slapdn (8),
 .BR slapindex (8),
+.BR slapmodify (8),
 and
 .BR slaptest (8).
 .LP
@@ -95,6 +96,8 @@ clause matches the accessor's properties, its
 and
 .B <control>
 clauses are evaluated.
+
+.LP
 Access control checking stops at the first match of the
 .B <what>
 and
@@ -110,8 +113,26 @@ clause list is implicitly terminated by a
 	by * none stop
 .fi
 .LP
-clause that results in stopping the access control with no access 
-privileges granted.
+.B <control>
+clause.  This implicit
+.B <control>
+stops access directive evaluation with no more access privileges
+granted to anyone else.
+To stop access directive evaluation only when both
+.B <who>
+and
+.B <what>
+match, add an explicit
+.LP
+.nf
+	by * break
+.fi
+.LP
+to the end of the
+.B <who>
+clause list.
+
+.LP
 Each
 .B <what>
 clause list is implicitly terminated by a
@@ -776,7 +797,11 @@ and
 .BR manage .
 Each access level implies all the preceding ones, thus 
 .B manage
-grants all access including administrative access.
+grants all access including administrative access. This access
+allows some modifications which would otherwise be prohibited by the
+LDAP data model or the directory schema, e.g. changing the
+structural objectclass of an entry, or modifying an operational
+attribute that is defined as not user modifiable.
 The 
 .BR write
 access is actually the combination of
@@ -920,9 +945,8 @@ identity, control is passed straight to the subsequent rules.
 
 .SH OPERATION REQUIREMENTS
 Operations require different privileges on different portions of entries.
-The following summary applies to primary MDB database backend and the
-deprecated BDB and HDB backends.   Requirements for other backends may
-(and often do) differ.
+The following summary applies to primary MDB database backend. Requirements
+for other backends may (and often do) differ.
 
 .LP
 The
@@ -1085,9 +1109,7 @@ Access control to search entries is checked by the frontend,
 so it is fully honored by all backends; for all other operations
 and for the discovery phase of the search operation,
 full ACL semantics is only supported by the primary backends, i.e.
-.BR back\-bdb (5),
-and
-.BR back\-hdb (5).
+.BR back\-mdb (5).
 
 Some other backend, like
 .BR back\-sql (5),

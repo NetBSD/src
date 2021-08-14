@@ -2,7 +2,7 @@
 # $OpenLDAP$
 ## This work is part of OpenLDAP Software <http://www.openldap.org/>.
 ##
-## Copyright 1998-2020 The OpenLDAP Foundation.
+## Copyright 1998-2021 The OpenLDAP Foundation.
 ## All rights reserved.
 ##
 ## Redistribution and use in source and binary forms, with or without
@@ -23,9 +23,10 @@ EGREP_CMD="@EGREP@"
 
 export SRCDIR TOPSRCDIR LN_S EGREP_CMD
 
+# Load balancer
+AC_lloadd=lloadd@BUILD_BALANCER@
+
 # backends known to ./run -b <backend> (used to deduce $BACKENDTYPE)
-AC_bdb=@BUILD_BDB@
-AC_hdb=@BUILD_HDB@
 AC_ldif=yes
 AC_mdb=@BUILD_MDB@
 AC_null=@BUILD_NULL@
@@ -33,19 +34,26 @@ AC_null=@BUILD_NULL@
 # other backends
 AC_ldap=ldap@BUILD_LDAP@
 AC_meta=meta@BUILD_META@
-AC_monitor=@BUILD_MONITOR@
+AC_asyncmeta=asyncmeta@BUILD_ASYNCMETA@
+AC_perl=perl@BUILD_PERL@
 AC_relay=relay@BUILD_RELAY@
 AC_sql=sql@BUILD_SQL@
 
 # overlays
 AC_accesslog=accesslog@BUILD_ACCESSLOG@
+AC_argon2=argon2@BUILD_PW_ARGON2@
+AC_autoca=autoca@BUILD_AUTOCA@
 AC_constraint=constraint@BUILD_CONSTRAINT@
 AC_dds=dds@BUILD_DDS@
+AC_deref=deref@BUILD_DEREF@
 AC_dynlist=dynlist@BUILD_DYNLIST@
+AC_homedir=homedir@BUILD_HOMEDIR@
 AC_memberof=memberof@BUILD_MEMBEROF@
+AC_otp=otp@BUILD_OTP@
 AC_pcache=pcache@BUILD_PROXYCACHE@
 AC_ppolicy=ppolicy@BUILD_PPOLICY@
 AC_refint=refint@BUILD_REFINT@
+AC_remoteauth=remoteauth@BUILD_REMOTEAUTH@
 AC_retcode=retcode@BUILD_RETCODE@
 AC_translucent=translucent@BUILD_TRANSLUCENT@
 AC_unique=unique@BUILD_UNIQUE@
@@ -56,9 +64,9 @@ AC_valsort=valsort@BUILD_VALSORT@
 # misc
 AC_WITH_SASL=@WITH_SASL@
 AC_WITH_TLS=@WITH_TLS@
+AC_TLS_TYPE=@WITH_TLS_TYPE@
 AC_WITH_MODULES_ENABLED=@WITH_MODULES_ENABLED@
 AC_ACI_ENABLED=aci@WITH_ACI_ENABLED@
-AC_THREADS=threads@BUILD_THREAD@
 AC_LIBS_DYNAMIC=lib@BUILD_LIBS_DYNAMIC@
 
 # sanitize
@@ -68,13 +76,17 @@ fi
 if test "${AC_meta}" = "metamod" && test "${AC_LIBS_DYNAMIC}" = "static" ; then
 	AC_meta="metano"
 fi
-
-export AC_bdb AC_hdb AC_ldap AC_mdb AC_meta AC_monitor AC_null AC_relay AC_sql \
-	AC_accesslog AC_constraint AC_dds AC_dynlist AC_memberof AC_pcache AC_ppolicy \
-	AC_refint AC_retcode AC_rwm AC_unique AC_syncprov AC_translucent \
+if test "${AC_asyncmeta}" = "asyncmetamod" && test "${AC_LIBS_DYNAMIC}" = "static" ; then
+	AC_meta="asyncmetano"
+fi
+export AC_ldap AC_mdb AC_meta AC_asyncmeta AC_monitor AC_null AC_perl AC_relay AC_sql \
+	AC_accesslog AC_argon2 AC_autoca AC_constraint AC_dds AC_deref AC_dynlist \
+	AC_homedir AC_memberof AC_otp AC_pcache AC_ppolicy AC_refint AC_remoteauth \
+	AC_retcode AC_rwm AC_unique AC_syncprov AC_translucent \
 	AC_valsort \
+	AC_lloadd \
 	AC_WITH_SASL AC_WITH_TLS AC_WITH_MODULES_ENABLED AC_ACI_ENABLED \
-	AC_THREADS AC_LIBS_DYNAMIC
+	AC_LIBS_DYNAMIC AC_WITH_TLS AC_TLS_TYPE
 
 if test ! -x ../servers/slapd/slapd ; then
 	echo "Could not locate slapd(8)"
@@ -153,7 +165,7 @@ while test $# -gt 0 ; do
 done
 
 if test -z "$BACKEND" ; then
-	for b in bdb hdb mdb ; do
+	for b in mdb ; do
 		if eval "test \"\$AC_$b\" != no" ; then
 			BACKEND=$b
 			break
@@ -174,7 +186,7 @@ fi
 # maindb: main storage backend.  Currently index,limits,mode,paged results.
 INDEXDB=noindexdb MAINDB=nomaindb
 case $BACKEND in
-	bdb|hdb|mdb) INDEXDB=indexdb MAINDB=maindb ;;
+	mdb) INDEXDB=indexdb MAINDB=maindb ;;
 	ndb) INDEXDB=indexdb ;;
 esac
 
@@ -250,8 +262,10 @@ while [ $COUNTER -le $LOOP ]; do
 	if [ $LOOP -gt 1 ]; then
 		echo "Running $COUNTER of $LOOP iterations"
 	fi
+	START=`date +%s`
 	$SCRIPT $*
 	RC=$?
+	END=`date +%s`
 
 	if test $CLEAN = yes ; then
 		echo "Cleaning up test run directory from this run."

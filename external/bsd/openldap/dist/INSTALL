@@ -9,12 +9,6 @@ and instructions can be found in The OpenLDAP Administrator's Guide
 It is recommended that you read, or at least skim through, ALL of the
 instructions in this file before attempting to build the software.
 
-It is also recommended you review the Frequently Asked Questions
-(http://www.openldap.org/faq/) pages, in particular the Installation
-section (http://www.openldap.org/faq/index.cgi?file=8) and Platform
-Hints (http://www.openldap.org/faq/index.cgi?file=9) should be
-examined.
-
 Making and Installing the OpenLDAP Distribution
 -----------------------------------------------
 
@@ -55,8 +49,7 @@ Making and Installing the OpenLDAP Distribution
      was trying to do and exactly what failed.  You may need to
      specify additional options and/or variables besides those listed
      above to obtain desired results, depending on your operating
-     system. The Platform Hints section of the FAQ provides help for
-     operating system related problems.
+     system.
 
 4.   Build dependencies:
 
@@ -67,21 +60,18 @@ Making and Installing the OpenLDAP Distribution
         % make
 
      If all goes well, the system will build as configured.  If not,
-     return to step 3 after reviewing the configuration settings.  You
-     may want to consult the Platform Hints subsection of the FAQ if
-     you have not done so already.
+     return to step 3 after reviewing the configuration settings.
 
 6.   Test the standalone system:
 
-     This step requires the standalone LDAP server, slapd(8), with HDB
-     and/or BDB support.
+     This step requires the standalone LDAP server, slapd(8), with MDB
+     support.
 
         % make test
 
      If all goes well, the system has been built as configured.  If
      not, return to step 2 after reviewing your configuration
-     settings.  You may want to consult the Installation section of
-     the FAQ if you have not done so already.
+     settings.
 
 7.   Install the software.  You may need to become the super-user
      (e.g. root) to do this (depending on where you are installing
@@ -99,15 +89,13 @@ configuration directory (normally /usr/local/etc/openldap).
 
         ldap.conf               client defaults
         slapd.conf              Standalone LDAP daemon
+        lload.conf              LDAP Load Balancer daemon
         schema/*.schema         Schema Definitions
 
 ---
-$OpenLDAP: pkg/openldap-guide/release/install.sdf,v 1.16 2002/02/18
-17:09:26 kurt Exp $
-
 This work is part of OpenLDAP Software <http://www.openldap.org/>.
 
-Copyright 1998-2020 The OpenLDAP Foundation.
+Copyright 1998-2021 The OpenLDAP Foundation.
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without

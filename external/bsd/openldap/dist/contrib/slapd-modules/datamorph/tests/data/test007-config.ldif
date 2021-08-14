@@ -1,0 +1,30 @@
+dn: olcDatamorphValue={2}dots,olcDatamorphAttribute={0}enumerated,olcOverlay={0}datamorph,olcDatabase={1}@BACKEND@,cn=config
+changetype: modify
+replace: olcDatamorphIndex
+olcDatamorphIndex: 110
+
+dn: olcDatamorphValue={4}jjones,olcDatamorphAttribute={0}enumerated,olcOverlay={0}datamorph,olcDatabase={1}@BACKEND@,cn=config
+changetype: modify
+replace: olcDatamorphIndex
+olcDatamorphIndex: 14
+
+dn: olcDatamorphValue={3}jaj,olcDatamorphAttribute={0}enumerated,olcOverlay={0}datamorph,olcDatabase={1}@BACKEND@,cn=config
+changetype: modify
+replace: olcDatamorphIndex
+olcDatamorphIndex: 13
+
+dn: olcDatamorphValue={2}dots,olcDatamorphAttribute={0}enumerated,olcOverlay={0}datamorph,olcDatabase={1}@BACKEND@,cn=config
+changetype: modify
+replace: olcDatamorphIndex
+olcDatamorphIndex: 12
+
+dn: olcDatamorphAttribute={1}signed,olcOverlay={0}datamorph,olcDatabase={1}@BACKEND@,cn=config
+changetype: modify
+replace: olcDatamorphIntegerSigned
+olcDatamorphIntegerSigned: TRUE
+-
+replace: olcDatamorphIntegerLowerBound
+olcDatamorphIntegerLowerBound: -20000
+-
+replace: olcDatamorphIntegerUpperBound
+olcDatamorphIntegerUpperBound: 30000

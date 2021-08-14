@@ -1,5 +1,5 @@
 .TH SLAPD-META 5 "RELEASEDATE" "OpenLDAP LDVERSION"
-.\" Copyright 1998-2020 The OpenLDAP Foundation, All Rights Reserved.
+.\" Copyright 1998-2021 The OpenLDAP Foundation, All Rights Reserved.
 .\" Copying restrictions apply.  See the COPYRIGHT file.
 .\" Copyright 2001, Pierangelo Masarati, All rights reserved. <ando@sys-net.it>
 .\" $OpenLDAP$
@@ -49,16 +49,15 @@ of the proxy lined up with that of the proxied server.
 
 .LP
 Note: When looping back to the same instance of \fBslapd\fP(8), 
-each connection requires a new thread; as a consequence, \fBslapd\fP(8)
-must be compiled with thread support, and the \fBthreads\fP parameter 
-may need some tuning; in those cases, unless the multiple target feature
-is required, one may consider using \fBslapd\-relay\fP(5) instead, 
+each connection requires a new thread; as a consequence, the \fBslapd\fP(8)
+\fBthreads\fP parameter may need some tuning. In those cases, unless the
+multiple target feature is required, one may consider using \fBslapd\-relay\fP(5) instead, 
 which performs the relayed operation internally and thus reuses 
 the same connection.
 
 .SH EXAMPLES
 There are examples in various places in this document, as well as in the
-slapd/back\-meta/data/ directory in the OpenLDAP source tree.
+slapd/back-meta/data/ directory in the OpenLDAP source tree.
 .SH CONFIGURATION
 These
 .B slapd.conf
@@ -94,6 +93,10 @@ All the configuration directives that are not specific to targets
 should be defined first for clarity, including those that are common
 to all backends.
 They are:
+
+.TP
+.B conn\-pool\-max <int>
+This directive defines the maximum size of the privileged connections pool.
 
 .TP
 .B conn\-ttl <time>
@@ -132,7 +135,7 @@ trying to return as much data as possible.
 If the value is set to \fBstop\fP, the search is terminated as soon 
 as an error is returned by one target, and the error is immediately 
 propagated to the client.
-If the value is set to \fBreport\fP, the search is continuated to the end
+If the value is set to \fBreport\fP, the search is continued to the end
 but, in case at least one target returned an error code, the first
 non-success error code is returned.
 
@@ -175,7 +178,7 @@ This directive, when set to
 .BR yes ,
 causes the authentication to the remote servers with the pseudo-root
 identity (the identity defined in each
-.B idassert-bind
+.B idassert\-bind
 directive) to be deferred until actually needed by subsequent operations.
 Otherwise, all binds as the rootdn are propagated to the targets.
 
@@ -285,8 +288,7 @@ check permissions.
 .TP
 .B acl\-passwd <password>
 Password used with the
-.B 
-acl\-authcDN
+.B acl\-authcDN
 above.
 
 .TP
@@ -308,6 +310,25 @@ overridden by any per-target directive.
 enable/disable automatic referral chasing, which is delegated to the
 underlying libldap, with rebinding eventually performed if the
 \fBrebind\-as\-user\fP directive is used.  The default is to chase referrals.
+If set before any target specification, it affects all targets, unless
+overridden by any per-target directive.
+
+.TP
+.B client\-pr {accept-unsolicited|DISABLE|<size>}
+This feature allows one to use RFC 2696 Paged Results control when performing
+search operations with a specific target,
+irrespective of the client's request.
+When set to a numeric value, Paged Results control is always
+used with \fIsize\fP as the page size.
+When set to \fIaccept\-unsolicited\fP, unsolicited Paged Results
+control responses are accepted and honored
+for compatibility with broken remote DSAs.
+The client is not exposed to paged results handling
+between
+.BR slapd\-meta (5)
+and the remote servers.
+By default (disabled), Paged Results control is not used
+and responses are not accepted.
 If set before any target specification, it affects all targets, unless
 overridden by any per-target directive.
 
@@ -338,7 +359,7 @@ if defined, selects what
 .I local
 identities are authorized to exploit the identity assertion feature.
 The string
-.B <authz-regexp>
+.B <authz\-regexp>
 follows the rules defined for the
 .I authzFrom
 attribute.
@@ -361,7 +382,9 @@ for details on the syntax of this field.
 .B [tls_cacert=<file>]
 .B [tls_cacertdir=<path>]
 .B [tls_reqcert=never|allow|try|demand]
+.B [tls_reqsan=never|allow|try|demand]
 .B [tls_cipher_suite=<ciphers>]
+.B [tls_ecname=<ciphers>]
 .B [tls_protocol_min=<major>[.<minor>]]
 .B [tls_crlcheck=none|peer|all]
 .RS
@@ -474,6 +497,15 @@ permissions, or the asserted identities must have appropriate
 .I authzFrom 
 permissions.  Note, however, that the ID assertion feature is mostly 
 useful when the asserted identities do not exist on the remote server.
+When
+.I bindmethod
+is
+.BR SASL ,
+the 
+.I authcDN
+must be specified in addition to the
+.IR authcID ,
+although it is not used within the authentication process.
 
 Flags can be
 
@@ -511,7 +543,9 @@ is recommended.
 The TLS settings default to the same as the main slapd TLS settings,
 except for
 .B tls_reqcert
-which defaults to "demand".
+which defaults to "demand", and
+.B tls_reqsan
+which defaults to "allow"..
 
 The identity associated to this directive is also used for privileged
 operations whenever \fBidassert\-bind\fP is defined and \fBacl\-bind\fP
@@ -549,6 +583,14 @@ Only some systems support the customization of these values;
 the
 .B keepalive
 parameter is ignored otherwise, and system-wide settings are used.
+
+.TP
+.B tcp\-user\-timeout  <milliseconds>
+If non-zero, corresponds to the
+.B TCP_USER_TIMEOUT
+set on the target connections, overriding the operating system setting.
+Only some systems support the customization of this parameter, it is
+ignored otherwise and system-wide settings are used.
 
 .TP
 .B map "{attribute|objectclass} [<local name>|*] {<foreign name>|*}"
@@ -691,15 +733,43 @@ In case the timeout is exceeded during a bind operation, the connection
 is destroyed, according to RFC4511.
 
 .TP
-.B tls {[try\-]start|[try\-]propagate}
-execute the StartTLS extended operation when the connection is initialized;
-only works if the URI directive protocol scheme is not \fBldaps://\fP.
+.B tls {none|[try\-]start|[try\-]propagate|ldaps}
+.B [starttls=no]
+.B [tls_cert=<file>]
+.B [tls_key=<file>]
+.B [tls_cacert=<file>]
+.B [tls_cacertdir=<path>]
+.B [tls_reqcert=never|allow|try|demand]
+.B [tls_reqsan=never|allow|try|demand]
+.B [tls_cipher_suite=<ciphers>]
+.B [tls_ecname=<names>]
+.B [tls_crlcheck=none|peer|all]
+.RS
+Specify TLS settings regular connections.
+
+If the first parameter is not "none" then this configures the TLS
+settings to be used for regular connections.
+The StartTLS extended operation will be used when establishing the
+connection unless the URI directive protocol scheme is \fBldaps://\fP.
+In that case this keyword may only be set to "ldaps" and the StartTLS
+operation will not be used.
+
 \fBpropagate\fP issues the StartTLS operation only if the original
 connection did.
 The \fBtry\-\fP prefix instructs the proxy to continue operations
 if the StartTLS operation failed; its use is highly deprecated.
+The TLS settings default to the same as the main slapd TLS settings,
+except for
+.B tls_reqcert
+which defaults to "demand",
+.B tls_reqsan
+which defaults to "allow", and
+.B starttls
+which is overshadowed by the first keyword and thus ignored.
+
 If set before any target specification, it affects all targets, unless
 overridden by any per-target directive.
+.RE
 
 .SH SCENARIOS
 A powerful (and in some sense dangerous) rewrite engine has been added
@@ -1295,6 +1365,7 @@ ETCDIR/slapd.conf
 default slapd configuration file
 .SH SEE ALSO
 .BR slapd.conf (5),
+.BR slapd\-asyncmeta (5),
 .BR slapd\-ldap (5),
 .BR slapo\-pcache (5),
 .BR slapd (8),

@@ -1,6 +1,6 @@
 .TH LDAP_PARSE_RESULT 3 "RELEASEDATE" "OpenLDAP LDVERSION"
 .\" $OpenLDAP$
-.\" Copyright 1998-2020 The OpenLDAP Foundation All Rights Reserved.
+.\" Copyright 1998-2021 The OpenLDAP Foundation All Rights Reserved.
 .\" Copying restrictions apply.  See COPYRIGHT/LICENSE.
 .SH NAME
 ldap_parse_result \- Parsing results
@@ -24,6 +24,11 @@ int ldap_parse_sasl_bind_result( LDAP *ld, LDAPMessage *result,
 .ft B
 int ldap_parse_extended_result( LDAP *ld, LDAPMessage *result,
 	char **retoidp, struct berval **retdatap, int freeit )
+.LP
+.ft B
+int ldap_parse_intermediate( LDAP *ld, LDAPMessage *result,
+	char **retoidp, struct berval **retdatap,
+	LDAPControl ***serverctrlsp, int freeit )
 .SH DESCRIPTION
 .LP
 These routines are used to extract information from a result message.
@@ -41,7 +46,9 @@ the routines
 and
 .B ldap_parse_extended_result()
 are used to get all the result information from SASL bind and extended
-operations.
+operations. To extract information from intermediate responses,
+.B ldap_parse_intermediate()
+can be used.
 .LP
 The \fIerrcodep\fP parameter will be filled in with the result code from
 the result message.
@@ -77,13 +84,13 @@ with an allocated berval structure containing the credentials from the
 server if present. The structure should be freed using
 .BR ber_bvfree (3).
 .LP
-For extended results, the \fIretoidp\fP parameter will be filled in
+For extended results and intermediate responses, the \fIretoidp\fP parameter will be filled in
 with the dotted-OID text representation of the name of the extended
 operation response. The string should be freed using
 .BR ldap_memfree (3).
 If no OID was returned, \fI*retoidp\fP is set to NULL.
 .LP
-For extended results, the \fIretdatap\fP parameter will be filled in
+For extended results and intermediate responses, the \fIretdatap\fP parameter will be filled in
 with a pointer to a berval structure containing the data from the
 extended operation response. The structure should be freed using
 .BR ber_bvfree (3).

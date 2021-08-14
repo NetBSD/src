@@ -2,7 +2,7 @@
 # $OpenLDAP$
 ## This work is part of OpenLDAP Software <http://www.openldap.org/>.
 ##
-## Copyright 1998-2020 The OpenLDAP Foundation.
+## Copyright 1998-2021 The OpenLDAP Foundation.
 ## All rights reserved.
 ##
 ## Redistribution and use in source and binary forms, with or without
@@ -38,6 +38,9 @@ XLIBS = $(LIBRARY) $(LDAP_LIBLUTIL_A)
 XXLIBS = 
 NT_LINK_LIBS = $(AC_LIBS)
 UNIX_LINK_LIBS = $(AC_LIBS)
+ifneq (,$(OL_VERSIONED_SYMBOLS))
+	SYMBOL_VERSION_FLAGS=$(OL_VERSIONED_SYMBOLS)$(LDAP_LIBDIR)/liblber/liblber.vers
+endif
 
 dtest:    $(XLIBS) dtest.o
 	$(LTLINK) -o $@ dtest.o $(LIBS)

@@ -1,5 +1,5 @@
 .TH SLAPO-DDS 5 "RELEASEDATE" "OpenLDAP LDVERSION"
-.\" Copyright 2005-2020 The OpenLDAP Foundation, All Rights Reserved.
+.\" Copyright 2005-2021 The OpenLDAP Foundation, All Rights Reserved.
 .\" Copying restrictions apply.  See the COPYRIGHT file.
 .\" $OpenLDAP$
 .SH NAME
@@ -79,7 +79,7 @@ to avoid potential conflicts with directives specific to the underlying
 database or to other stacked overlays.
 
 .TP
-.B dds\-max\-ttl <ttl>
+.B dds\-max\-ttl <time>
 Specifies the max TTL value.
 This is also the default TTL newly created
 dynamic objects receive, unless
@@ -91,24 +91,24 @@ This value must be between 86400 (1 day, the default) and 31557600
 (1 year plus 6 hours, as per RFC 2589).
 
 .TP
-.B dds\-min\-ttl <ttl>
+.B dds\-min\-ttl <time>
 Specifies the min TTL value; clients requesting a lower TTL by means
 of the refresh extended operation actually obtain this value as CRP.
 If set to 0 (the default), no lower limit is set.
 
 .TP
-.B dds\-default\-ttl <ttl>
+.B dds\-default\-ttl <time>
 Specifies the default TTL value that newly created dynamic objects get.
 If set to 0 (the default), the
 .B dds\-max\-ttl
 is used.
 
 .TP
-.B dds\-interval <ttl>
+.B dds\-interval <time>
 Specifies the interval between expiration checks; defaults to 1 hour.
 
 .TP
-.B dds\-tolerance <ttl>
+.B dds\-tolerance <time>
 Specifies an extra time that is added to the timer that actually wakes up
 the thread that will delete an expired dynamic object.
 So the nominal lifetime of the entry is that specified in the
@@ -223,8 +223,8 @@ access to dn.onelevel="cn=Meetings"
 
 .SH REPLICATION
 This implementation of RFC 2589 provides a restricted interpretation of how
-dynamic objects replicate.  Only the master takes care of handling dynamic
-object expiration, while replicas simply see the dynamic object as a plain
+dynamic objects replicate.  Only the provider takes care of handling dynamic
+object expiration, while consumers simply see the dynamic object as a plain
 object.
 
 When replicating these objects, one needs to explicitly exclude the 

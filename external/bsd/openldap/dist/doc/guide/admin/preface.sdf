@@ -1,5 +1,5 @@
 # $OpenLDAP$
-# Copyright 1999-2020 The OpenLDAP Foundation, All Rights Reserved.
+# Copyright 1999-2021 The OpenLDAP Foundation, All Rights Reserved.
 # COPYING RESTRICTIONS APPLY, see COPYRIGHT.
 # 
 
@@ -9,7 +9,7 @@ P1: Preface
 # document's copyright
 P2[notoc] Copyright
 
-Copyright 1998-2012, The {{ORG[expand]OLF}}, {{All Rights Reserved}}.
+Copyright 1998-2013, The {{ORG[expand]OLF}}, {{All Rights Reserved}}.
 
 Copyright 1992-1996, Regents of the {{ORG[expand]UM}}, {{All Rights Reserved}}.
 
@@ -54,7 +54,7 @@ you should use the manual pages that were installed on your system
 with your version of OpenLDAP software so that you're looking at
 documentation that matches the code. While the OpenLDAP web site
 also provides the manual pages for convenience, you can not assume
-that they corresond to the particular version you're running.
+that they correspond to the particular version you're running.
 
 P2[notoc] Acknowledgments
 

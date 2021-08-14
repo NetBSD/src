@@ -1,0 +1,112 @@
+.TH SLAPD-PW-PBKDF2 5 "RELEASEDATE" "OpenLDAP LDVERSION"
+.\" Copyright 2015-2021 The OpenLDAP Foundation All Rights Reserved.
+.\" Copying restrictions apply.  See COPYRIGHT/LICENSE.
+.\" $OpenLDAP$
+.SH NAME
+slapd-pw-pbkdf2 \- PBKDF2 password module to slapd
+.SH SYNOPSIS
+ETCDIR/slapd.conf
+.RS
+.LP
+.B moduleload
+.B pw-pbkdf2
+.RE
+.SH DESCRIPTION
+.LP
+The
+.B pw-pbkdf2
+module to
+.BR slapd (8)
+provides support for the use of the key stretching function
+PBKDF2 (Password-Based Key Derivation Function 2) following RFC 2898
+in hashed passwords in OpenLDAP.
+.LP
+It does so by providing the following additional password schemes for use in slapd:
+.RS
+.TP
+.B {PBKDF2}
+alias to {PBKDF2-SHA1}
+.TP
+.B {PBKDF2-SHA1}
+PBKDF2 using HMAC-SHA-1 as the underlying pseudorandom function
+.TP
+.B {PBKDF2-SHA256}
+PBKDF2 using HMAC-SHA-256 as the underlying pseudorandom function
+.TP
+.B {PBKDF2-SHA512}
+PBKDF2 using HMAC-SHA-512 as the underlying pseudorandom function
+.RE
+
+.SH CONFIGURATION
+The
+.B pw-pbkdf2
+module does not need any configuration.
+.LP
+After loading the module, the password schemes
+{PBKDF2}, {PBKDF2-SHA1}, {PBKDF2-SHA256}, and {PBKDF2-SHA512}
+will be recognised in values of the
+.I userPassword
+attribute.
+.LP
+You can then instruct OpenLDAP to use these schemes when processing
+the LDAPv3 Password Modify (RFC 3062) extended operations by using the
+.BR password-hash
+option in
+.BR slapd.conf (5).
+
+.SH NOTES
+If you want to use the schemes described here with
+.BR slappasswd (8),
+remember to load the module using its command line options.
+The relevant option/value is:
+.RS
+.LP
+.B \-o
+.BR module\-load = pw-pbkdf2
+.LP
+.RE
+Depending on
+.BR pw-pbkdf2 's
+location, you may also need:
+.RS
+.LP
+.B \-o
+.BR module\-path = \fIpathspec\fP
+.RE
+
+.SH EXAMPLES
+All of the userPassword LDAP attributes below encode the password
+.RI ' secret '.
+.EX
+.LP
+userPassword: {PBKDF2-SHA512}10000$/oQ4xZi382mk7kvCd3ZdkA$2wqjpuyV2l0U/a1QwoQPOtlQL.UcJGNACj1O24balruqQb/NgPW6OCvvrrJP8.SzA3/5iYvLnwWPzeX8IK/bEQ
+.LP
+userPassword: {PBKDF2-SHA256}10000$jq40ImWtmpTE.aYDYV1GfQ$mpiL4ui02ACmYOAnCjp/MI1gQk50xLbZ54RZneU0fCg
+.LP
+userPassword: {PBKDF2-SHA1}10000$QJTEclnXgh9Cz3ChCWpdAg$9.s98jwFJM.NXJK9ca/oJ5AyoAQ
+.EE
+.LP
+To make {PBKDF2-SHA512} the password hash used in Password Modify extended operations,
+simply set this line in slapd.conf(5):
+.EX
+.LP
+password-hash   {PBKDF2-SHA512}
+.EX
+
+.SH SEE ALSO
+.BR slapd.conf (5),
+.BR ldappasswd (1),
+.BR slappasswd (8),
+.BR ldap (3),
+.LP
+"OpenLDAP Administrator's Guide" (http://www.OpenLDAP.org/doc/admin/)
+.LP
+
+.SH ACKNOWLEDGEMENTS
+This manual page has been written by Peter Marschall based on the
+module's README file written by HAMANO Tsukasa <hamano@osstech.co.jp>
+.LP
+.B OpenLDAP
+is developed and maintained by The OpenLDAP Project (http://www.openldap.org/).
+.B OpenLDAP
+is derived from University of Michigan LDAP 3.3 Release.

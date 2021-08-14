@@ -1,0 +1,120 @@
+#! /bin/sh
+## $OpenLDAP$
+## This work is part of OpenLDAP Software <http://www.openldap.org/>.
+##
+## Copyright 2016-2021 The OpenLDAP Foundation.
+## All rights reserved.
+##
+## Redistribution and use in source and binary forms, with or without
+## modification, are permitted only as authorized by the OpenLDAP
+## Public License.
+##
+## A copy of this license is available in the file LICENSE in the
+## top-level directory of the distribution or, alternatively, at
+## <http://www.OpenLDAP.org/license.html>.
+##
+## ACKNOWLEDGEMENTS:
+## This module was written in 2016 by Ondřej Kuzník for Symas Corp.
+
+echo "running defines.sh"
+. $SRCDIR/scripts/defines.sh
+
+. ${SCRIPTDIR}/common.sh
+
+echo "Modifying entry..."
+$LDAPMODIFY -D $MANAGERDN -H $URI1 -w $PASSWD \
+	-f data/test005-changes.ldif >> $TESTOUT 2>&1
+RC=$?
+if test $RC != 0 ; then
+	echo "ldapmodify failed ($RC)!"
+	test $KILLSERVERS != no && kill -HUP $KILLPIDS
+	exit $RC
+fi
+
+# for now, overlay returns success just after the modifications to the main
+# entry succeed, ignoring the rest should they fail
+echo "Modifying a nonexistent variant of an existing entry..."
+$LDAPMODIFY -D $MANAGERDN -H $URI1 -w $PASSWD \
+	-f data/test005-variant-missing.ldif >> $TESTOUT 2>&1
+RC=$?
+if test $RC != 0 ; then
+	echo "ldapmodify failed ($RC)!"
+	test $KILLSERVERS != no && kill -HUP $KILLPIDS
+	exit $RC
+fi
+
+echo "Configuring nonexistent entry as variant..."
+. $CONFFILTER $BACKEND $MONITORDB < data/additional-config.ldif | \
+$LDAPMODIFY -v -D cn=config -H $URI1 -y $CONFIGPWF \
+	>> $TESTOUT 2>&1
+RC=$?
+if test $RC != 0 ; then
+	echo "ldapmodify failed ($RC)!"
+	test $KILLSERVERS != no && kill -HUP $KILLPIDS
+	exit $RC
+fi
+
+echo "Modifying an existing variant of above missing entry..."
+$LDAPMODIFY -D $MANAGERDN -H $URI1 -w $PASSWD \
+	-f data/test005-modify-missing.ldif >> $TESTOUT 2>&1
+RC=$?
+case $RC in
+0)
+	echo "ldapmodify should have failed ($RC)!"
+	test $KILLSERVERS != no && kill -HUP $KILLPIDS
+	exit 1
+	;;
+32)
+	echo "ldapmodify failed ($RC)"
+	;;
+*)
+	echo "ldapmodify failed ($RC)!"
+	test $KILLSERVERS != no && kill -HUP $KILLPIDS
+	exit $RC
+	;;
+esac
+
+echo "Reading affected entries back..."
+echo "# Reading affected entries back..." >> $SEARCHOUT
+$LDAPSEARCH -b "$BASEDN" -H $URI1 \
+	'(|(description=*heard*)(st=*)(ou=alabama)(ou=*IT*))' \
+	>> $SEARCHOUT 2>&1
+RC=$?
+if test $RC != 0 ; then
+	echo "ldapsearch failed ($RC)!"
+	test $KILLSERVERS != no && kill -HUP $KILLPIDS
+	exit $RC
+fi
+
+echo >>$SEARCHOUT
+$LDAPSEARCH -H $URI1 -s base \
+	-b "cn=Bjorn Jensen,ou=Information Technology Division,ou=People,$BASEDN" \
+	>> $SEARCHOUT 2>&1
+RC=$?
+if test $RC != 0 ; then
+	echo "ldapsearch failed ($RC)!"
+	test $KILLSERVERS != no && kill -HUP $KILLPIDS
+	exit $RC
+fi
+
+test $KILLSERVERS != no && kill -HUP $KILLPIDS
+
+LDIF=data/test005-out.ldif
+
+echo "Filtering ldapsearch results..."
+$LDIFFILTER -s e < $SEARCHOUT > $SEARCHFLT
+echo "Filtering expected entries..."
+$LDIFFILTER -s e < $LDIF > $LDIFFLT
+echo "Comparing filter output..."
+$CMP $SEARCHFLT $LDIFFLT > $CMPOUT
+
+if test $? != 0 ; then
+	echo "Comparison failed"
+	exit 1
+fi
+
+echo ">>>>> Test succeeded"
+
+test $KILLSERVERS != no && wait
+
+exit 0

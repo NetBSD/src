@@ -2,7 +2,7 @@
 # $OpenLDAP$
 ## This work is part of OpenLDAP Software <http://www.openldap.org/>.
 ##
-## Copyright 1998-2020 The OpenLDAP Foundation.
+## Copyright 1998-2021 The OpenLDAP Foundation.
 ## All rights reserved.
 ##
 ## Redistribution and use in source and binary forms, with or without
@@ -23,7 +23,7 @@ echo "running defines.sh"
 mkdir -p $TESTDIR $DBDIR1 $DBDIR2
 
 echo "Running slapadd to build slapd database..."
-. $CONFFILTER $BACKEND $MONITORDB < $CONF > $CONF1
+. $CONFFILTER $BACKEND < $CONF > $CONF1
 $SLAPADD -f $CONF1 -l $LDIFORDERED
 RC=$?
 if test $RC != 0 ; then
@@ -31,36 +31,36 @@ if test $RC != 0 ; then
 	exit $RC
 fi
 
-echo "Starting master slapd on TCP/IP port $PORT1..."
-$SLAPD -n master -f $CONF1 -h $URI1 -d $LVL $TIMING > $LOG1 2>&1 &
+echo "Starting provider slapd on TCP/IP port $PORT1..."
+$SLAPD -n provider -f $CONF1 -h $URI1 -d $LVL > $LOG1 2>&1 &
 PID=$!
 if test $WAIT != 0 ; then
     echo PID $PID
     read foo
 fi
 
-echo "Starting slave slapd on TCP/IP port $PORT2..."
-. $CONFFILTER $BACKEND $MONITORDB < $REFSLAVECONF > $CONF2
-$SLAPD -n slave -f $CONF2 -h $URI2 -d $LVL $TIMING > $LOG2 2>&1 &
-SLAVEPID=$!
+echo "Starting consumer slapd on TCP/IP port $PORT2..."
+. $CONFFILTER $BACKEND < $REFCONSUMERCONF > $CONF2
+$SLAPD -n consumer -f $CONF2 -h $URI2 -d $LVL > $LOG2 2>&1 &
+CONSUMERPID=$!
 if test $WAIT != 0 ; then
-    echo SLAVEPID $SLAVEPID
+    echo CONSUMERPID $CONSUMERPID
     read foo
 fi
 
-KILLPIDS="$PID $SLAVEPID"
+KILLPIDS="$PID $CONSUMERPID"
 
 sleep 1
 
-echo "Testing for master slapd..."
+echo "Testing for provider slapd..."
 for i in 0 1 2 3 4 5; do
-	$LDAPSEARCH -s base -b "$MONITOR" -h $LOCALHOST -p $PORT1 \
+	$LDAPSEARCH -s base -b "$MONITOR" -H $URI1 \
 		'objectclass=*' > /dev/null 2>&1
 	RC=$?
 	if test $RC = 0 ; then
 		break
 	fi
-	echo "Waiting 5 seconds for master slapd to start..."
+	echo "Waiting 5 seconds for provider slapd to start..."
 	sleep 5
 done
 
@@ -70,22 +70,22 @@ if test $RC != 0 ; then
 	exit $RC
 fi
 
-echo "Testing for slave slapd..."
+echo "Testing for consumer slapd..."
 for i in 0 1 2 3 4 5; do
-	$LDAPSEARCH -s base -b "$MONITOR" -h $LOCALHOST -p $PORT2 \
+	$LDAPSEARCH -s base -b "$MONITOR" -H $URI2 \
 		'objectclass=*' > /dev/null 2>&1
 	RC=$?
 	if test $RC = 0 ; then
 		break
 	fi
-	echo "Waiting 5 seconds for slave slapd to start..."
+	echo "Waiting 5 seconds for consumer slapd to start..."
 	sleep 5
 done
 
 cat /dev/null > $SEARCHOUT
 
 echo "Testing exact searching..."
-$LDAPSEARCH -C -S "" -b "$BASEDN" -h $LOCALHOST -p $PORT2 \
+$LDAPSEARCH -C -S "" -b "$BASEDN" -H $URI2 \
 	'sn=jensen' >> $SEARCHOUT 2>&1
 RC=$?
 if test $RC != 0 ; then
@@ -95,7 +95,7 @@ if test $RC != 0 ; then
 fi
 
 echo "Testing approximate searching..."
-$LDAPSEARCH -C -S "" -b "$BASEDN" -h $LOCALHOST -p $PORT2 \
+$LDAPSEARCH -C -S "" -b "$BASEDN" -H $URI2 \
 	'(sn=jENSEN)' name >> $SEARCHOUT 2>&1
 RC=$?
 if test $RC != 0 ; then
@@ -105,7 +105,7 @@ if test $RC != 0 ; then
 fi
 
 echo "Testing OR searching..."
-$LDAPSEARCH -C -S "" -b "$BASEDN" -h $LOCALHOST -p $PORT2 \
+$LDAPSEARCH -C -S "" -b "$BASEDN" -H $URI2 \
 	'(|(objectclass=groupofnames)(objectClass=groupofuniquenames)(sn=jones))' >> $SEARCHOUT 2>&1
 RC=$?
 if test $RC != 0 ; then
@@ -115,7 +115,7 @@ if test $RC != 0 ; then
 fi
 
 echo "Testing AND matching and ends-with searching..."
-$LDAPSEARCH -C -S "" -b "ou=groups,$BASEDN" -s one -h $LOCALHOST -p $PORT2 \
+$LDAPSEARCH -C -S "" -b "ou=groups,$BASEDN" -s one -H $URI2 \
 	'(&(objectclass=groupofnames)(cn=A*))' >> $SEARCHOUT 2>&1
 RC=$?
 if test $RC != 0 ; then
@@ -125,7 +125,7 @@ if test $RC != 0 ; then
 fi
 
 echo "Testing NOT searching..."
-$LDAPSEARCH -C -S "" -b "$BASEDN" -h $LOCALHOST -p $PORT2 \
+$LDAPSEARCH -C -S "" -b "$BASEDN" -H $URI2 \
 	'(!(objectclass=pilotPerson))' >> $SEARCHOUT 2>&1
 RC=$?
 if test $RC != 0 ; then
@@ -135,7 +135,7 @@ if test $RC != 0 ; then
 fi
 
 echo "Testing objectClass/attributeType inheritance ..."
-$LDAPSEARCH -M -a never -S "" -b "$BASEDN" -h $LOCALHOST -p $PORT1 \
+$LDAPSEARCH -M -a never -S "" -b "$BASEDN" -H $URI1 \
 	'(&(objectClass=inetorgperson)(userid=uham))' \
 	"2.5.4.0" "userid" >> $SEARCHOUT 2>&1
 RC=$?
@@ -146,7 +146,7 @@ if test $RC != 0 ; then
 fi
 
 echo "Testing dontUseCopy control..."
-$LDAPSEARCH -C -S "" -b "$BASEDN" -h $LOCALHOST -p $PORT2 \
+$LDAPSEARCH -C -S "" -b "$BASEDN" -H $URI2 \
 	-E \!dontUseCopy \
 	'sn=jensen' >> $SEARCHOUT
 RC=$?
@@ -160,7 +160,7 @@ fi
 
 test $KILLSERVERS != no && kill -HUP $KILLPIDS
 
-LDIF=$SEARCHOUTMASTER
+LDIF=$SEARCHOUTPROVIDER
 
 echo "Filtering ldapsearch results..."
 $LDIFFILTER < $SEARCHOUT > $SEARCHFLT

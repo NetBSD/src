@@ -1,4 +1,4 @@
-/*	$NetBSD: gssacl.c,v 1.1.1.2 2018/02/06 01:53:06 christos Exp $	*/
+/*	$NetBSD: gssacl.c,v 1.1.1.3 2021/08/14 16:05:15 christos Exp $	*/
 
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
@@ -309,10 +309,10 @@ regex_matches(
 	regfree( &re );
 
 	Debug( LDAP_DEBUG_TRACE,
-	    "=> regex_matches: string:	 %s\n", str, 0, 0 );
+	    "=> regex_matches: string:	 %s\n", str );
 	Debug( LDAP_DEBUG_TRACE,
 	    "=> regex_matches: rc: %d %s\n",
-		rc, !rc ? "matches" : "no matches", 0 );
+		rc, !rc ? "matches" : "no matches" );
 	return( !rc );
 }
 

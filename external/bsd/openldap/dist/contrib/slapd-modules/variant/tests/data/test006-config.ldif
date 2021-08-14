@@ -1,0 +1,61 @@
+dn: name={4}Mark,olcOverlay={0}variant,olcDatabase={1}@BACKEND@,cn=config
+changetype: add
+objectclass: olcVariantVariant
+olcVariantEntry: cn=Mark Elliot,ou=Alumni Association,ou=People,dc=example,dc=com
+
+dn: olcVariantVariantAttribute=description,name={4}Mark,olcOverlay={0}variant,olcDatabase={1}@BACKEND@,cn=config
+changetype: add
+objectclass: olcVariantAttribute
+olcVariantAlternativeAttribute: cn
+olcVariantAlternativeEntry: cn=Mark Elliot,ou=Alumni Association,ou=People,dc=example,dc=com
+
+dn: name={5}Elliot,olcOverlay={0}variant,olcDatabase={1}@BACKEND@,cn=config
+changetype: add
+objectclass: olcVariantVariant
+olcVariantEntry: sn=Elliot,ou=Add & Delete,dc=example,dc=com
+
+dn: olcVariantVariantAttribute=title,name={5}Elliot,olcOverlay={0}variant,olcDatabase={1}@BACKEND@,cn=config
+changetype: add
+objectclass: olcVariantAttribute
+olcVariantAlternativeAttribute: cn
+olcVariantAlternativeEntry: cn=Mark Elliot,ou=Alumni Association,ou=People,dc=example,dc=com
+
+dn: olcVariantVariantAttribute=description,name={5}Elliot,olcOverlay={0}variant,olcDatabase={1}@BACKEND@,cn=config
+changetype: add
+objectclass: olcVariantAttribute
+olcVariantAlternativeAttribute: description
+olcVariantAlternativeEntry: cn=Added by Bjorn,ou=Add & Delete,dc=example,dc=com
+
+dn: name={6}Doe,olcOverlay={0}variant,olcDatabase={1}@BACKEND@,cn=config
+changetype: add
+objectclass: olcVariantVariant
+olcVariantEntry: sn=Doe,ou=Add & Delete,dc=example,dc=com
+
+dn: olcVariantVariantAttribute=title,name={6}Doe,olcOverlay={0}variant,olcDatabase={1}@BACKEND@,cn=config
+changetype: add
+objectclass: olcVariantAttribute
+olcVariantAlternativeAttribute: cn
+olcVariantAlternativeEntry: cn=John Doe,ou=Information Technology Division,ou=People,dc=example,dc=com
+
+dn: olcVariantVariantAttribute=description,name={6}Doe,olcOverlay={0}variant,olcDatabase={1}@BACKEND@,cn=config
+changetype: add
+objectclass: olcVariantAttribute
+olcVariantAlternativeAttribute: description
+olcVariantAlternativeEntry: cn=Added by Bjorn,ou=Add & Delete,dc=example,dc=com
+
+dn: name={7}Group,olcOverlay={0}variant,olcDatabase={1}@BACKEND@,cn=config
+changetype: add
+objectclass: olcVariantVariant
+olcVariantEntry: cn=Group,ou=Add & Delete,dc=example,dc=com
+
+dn: olcVariantVariantAttribute=seeAlso,name={7}Group,olcOverlay={0}variant,olcDatabase={1}@BACKEND@,cn=config
+changetype: add
+objectclass: olcVariantAttribute
+olcVariantAlternativeAttribute: member
+olcVariantAlternativeEntry: cn=Alumni Assoc Staff,ou=Groups,dc=example,dc=com
+
+dn: olcVariantVariantAttribute=description,name={7}Group,olcOverlay={0}variant,olcDatabase={1}@BACKEND@,cn=config
+changetype: add
+objectclass: olcVariantAttribute
+olcVariantAlternativeAttribute: description
+olcVariantAlternativeEntry: cn=Alumni Assoc Staff,ou=Groups,dc=example,dc=com

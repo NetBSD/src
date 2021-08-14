@@ -2,7 +2,7 @@
 # $OpenLDAP$
 ## This work is part of OpenLDAP Software <http://www.openldap.org/>.
 ##
-## Copyright 1998-2020 The OpenLDAP Foundation.
+## Copyright 1998-2021 The OpenLDAP Foundation.
 ## All rights reserved.
 ##
 ## Redistribution and use in source and binary forms, with or without
@@ -16,10 +16,6 @@
 echo "running defines.sh"
 . $SRCDIR/scripts/defines.sh
 
-if test "$BACKEND" != "bdb" && test "$BACKEND" != "hdb" ; then
-	echo "Warning: this test is known to affect bdb and hdb, although it may impact other backends as well."
-fi
-
 mkdir -p $DBDIR1A $DBDIR2A
 
 ITS=4184
@@ -28,7 +24,7 @@ USER="uid=user1,ou=People,dc=example,dc=com"
 PASS="abc"
 
 echo "Running slapadd to build slapd database..."
-. $CONFFILTER $BACKEND $MONITORDB < $ITSDIR/slapd.conf > $CONF1
+. $CONFFILTER $BACKEND < $ITSDIR/slapd.conf > $CONF1
 $SLAPADD -f $CONF1 -l $ITSDIR/adds.ldif
 RC=$?
 if test $RC != 0 ; then
@@ -37,7 +33,7 @@ if test $RC != 0 ; then
 fi
 
 echo "Starting slapd on TCP/IP port $PORT1..."
-$SLAPD -f $CONF1 -h $URI1 -d $LVL $TIMING > $LOG1 2>&1 &
+$SLAPD -f $CONF1 -h $URI1 -d $LVL > $LOG1 2>&1 &
 PID=$!
 if test $WAIT != 0 ; then
     echo PID $PID
@@ -48,7 +44,7 @@ KILLPIDS="$PID"
 sleep 1
 
 for i in 0 1 2 3 4 5; do
-	$LDAPSEARCH -s base -b "$MONITOR" -h $LOCALHOST -p $PORT1 \
+	$LDAPSEARCH -s base -b "$MONITOR" -H $URI1 \
 		'(objectClass=*)' > /dev/null 2>&1
 	RC=$?
 	if test $RC = 0 ; then
@@ -74,7 +70,7 @@ echo ""
 for S in 1 2 ; do
 	FILE="${ITSDIR}/mods.ldif"
 	echo "${S}) Applying `basename ${FILE}`..."
-	$LDAPMODIFY -v -D "$USER" -w $PASS -h $LOCALHOST -p $PORT1 \
+	$LDAPMODIFY -v -D "$USER" -w $PASS -H $URI1 \
 		-f "${FILE}" > $TESTOUT 2>&1 
 	RC=$?
 	if test $RC != 0 ; then

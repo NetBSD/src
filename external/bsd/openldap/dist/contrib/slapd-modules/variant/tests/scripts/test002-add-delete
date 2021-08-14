@@ -1,0 +1,113 @@
+#! /bin/sh
+## $OpenLDAP$
+## This work is part of OpenLDAP Software <http://www.openldap.org/>.
+##
+## Copyright 2016-2021 The OpenLDAP Foundation.
+## All rights reserved.
+##
+## Redistribution and use in source and binary forms, with or without
+## modification, are permitted only as authorized by the OpenLDAP
+## Public License.
+##
+## A copy of this license is available in the file LICENSE in the
+## top-level directory of the distribution or, alternatively, at
+## <http://www.OpenLDAP.org/license.html>.
+##
+## ACKNOWLEDGEMENTS:
+## This module was written in 2016 by Ondřej Kuzník for Symas Corp.
+
+echo "running defines.sh"
+. $SRCDIR/scripts/defines.sh
+
+. ${SCRIPTDIR}/common.sh
+
+echo "Adding entry..."
+$LDAPMODIFY -D $MANAGERDN -H $URI1 -w $PASSWD \
+	-f data/test002-01-entry.ldif >> $TESTOUT 2>&1
+RC=$?
+if test $RC != 0 ; then
+	echo "ldapmodify failed ($RC)!"
+	test $KILLSERVERS != no && kill -HUP $KILLPIDS
+	exit $RC
+fi
+
+echo "Configuring entry as variant..."
+. $CONFFILTER $BACKEND $MONITORDB < data/additional-config.ldif | \
+$LDAPMODIFY -v -D cn=config -H $URI1 -y $CONFIGPWF \
+	>> $TESTOUT 2>&1
+RC=$?
+if test $RC != 0 ; then
+	echo "ldapmodify failed ($RC)!"
+	test $KILLSERVERS != no && kill -HUP $KILLPIDS
+	exit $RC
+fi
+
+echo "Removing entry..."
+$LDAPDELETE -D $MANAGERDN -H $URI1 -w $PASSWD \
+	"cn=Gern Jensen,ou=Information Technology Division,ou=People,$BASEDN" \
+	>> $TESTOUT 2>&1
+RC=$?
+if test $RC != 0 ; then
+	echo "ldapdelete failed ($RC)!"
+	test $KILLSERVERS != no && kill -HUP $KILLPIDS
+	exit $RC
+fi
+
+echo "Adding entry again (should fail)..."
+$LDAPMODIFY -D $MANAGERDN -H $URI1 -w $PASSWD \
+	-f data/test002-01-entry.ldif >> $TESTOUT 2>&1
+RC=$?
+case $RC in
+0)
+	echo "ldapmodify should have failed ($RC)!"
+	test $KILLSERVERS != no && kill -HUP $KILLPIDS
+	exit 1
+	;;
+19)
+	echo "ldapmodify failed ($RC)"
+	;;
+*)
+	echo "ldapmodify failed ($RC)!"
+	test $KILLSERVERS != no && kill -HUP $KILLPIDS
+	exit $RC
+	;;
+esac
+
+echo "Adding a regex entry (should fail)..."
+$LDAPMODIFY -D $MANAGERDN -H $URI1 -w $PASSWD \
+	-f data/test002-02-regex.ldif >> $TESTOUT 2>&1
+RC=$?
+case $RC in
+0)
+	echo "ldapmodify should have failed ($RC)!"
+	test $KILLSERVERS != no && kill -HUP $KILLPIDS
+	exit 1
+	;;
+19)
+	echo "ldapmodify failed ($RC)"
+	;;
+*)
+	echo "ldapmodify failed ($RC)!"
+	test $KILLSERVERS != no && kill -HUP $KILLPIDS
+	exit $RC
+	;;
+esac
+
+echo "Adding entry with offending attributes removed..."
+grep -v '^description:' data/test002-01-entry.ldif | \
+$LDAPMODIFY -D $MANAGERDN -H $URI1 -w $PASSWD \
+	>> $TESTOUT 2>&1
+RC=$?
+if test $RC != 0 ; then
+	echo "ldapmodify failed ($RC)!"
+	test $KILLSERVERS != no && kill -HUP $KILLPIDS
+	exit $RC
+fi
+
+test $KILLSERVERS != no && kill -HUP $KILLPIDS
+
+echo ">>>>> Test succeeded"
+
+test $KILLSERVERS != no && wait
+
+exit 0

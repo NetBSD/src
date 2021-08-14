@@ -1,4 +1,4 @@
-1) driver name comparison for MS SQL Server workaround is realy kinda dirty
+1) driver name comparison for MS SQL Server workaround is really kinda dirty
    hack, but for now i don't know how to code it more carefully
 2) another dirty hack: length of LONGVARCHAR and LONGVARBINARY fields is
    currently set to MAX_ATTR_LEN. Maybe such fields must be handled with

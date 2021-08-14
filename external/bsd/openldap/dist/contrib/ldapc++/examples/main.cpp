@@ -1,6 +1,6 @@
 // $OpenLDAP$
 /*
- * Copyright 2000-2020 The OpenLDAP Foundation, All Rights Reserved.
+ * Copyright 2000-2021 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
  */
 
@@ -30,7 +30,7 @@ int main(){
         lc->bind("cn=Manager,o=Organisation,c=DE" , "secret",cons);
         std::cout << lc->getHost() << std::endl;    
         bool result = lc->compare("cn=Manager,o=Organisation,c=DE", 
-                LDAPAttribute("cn","Manaer"));
+                LDAPAttribute("cn","Manager"));
         std::cout << "Compare: " << result << std::endl;
     
         LDAPAttributeList* attrs=new LDAPAttributeList();

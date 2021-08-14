@@ -1,0 +1,89 @@
+dn: olcOverlay={0}variant,olcDatabase={1}@BACKEND@,cn=config
+changetype: add
+objectClass: olcOverlayConfig
+objectclass: olcVariantConfig
+
+dn: olcOverlay={0}variant,olcDatabase={1}@BACKEND@,cn=config
+changetype: modify
+replace: olcVariantPassReplication
+olcVariantPassReplication: TRUE
+
+dn: name={0}variant,olcOverlay={0}variant,olcDatabase={1}@BACKEND@,cn=config
+changetype: add
+objectclass: olcVariantVariant
+olcVariantEntry: ou=People,dc=example,dc=com
+
+# a basic variant
+dn: olcVariantVariantAttribute=description,name={0}variant,olcOverlay={0}variant,olcDatabase={1}@BACKEND@,cn=config
+changetype: add
+objectclass: olcVariantAttribute
+olcVariantAlternativeAttribute: description
+olcVariantAlternativeEntry: dc=example,dc=com
+
+# a nonexistent alternate
+dn: olcVariantVariantAttribute=seealso,name={0}variant,olcOverlay={0}variant,olcDatabase={1}@BACKEND@,cn=config
+changetype: add
+objectclass: olcVariantAttribute
+olcVariantAlternativeAttribute: seealso
+olcVariantAlternativeEntry: ou=Societies,dc=example,dc=com
+
+dn: name={1}variant,olcOverlay={0}variant,olcDatabase={1}@BACKEND@,cn=config
+changetype: add
+objectclass: olcVariantVariant
+olcVariantEntry: ou=Groups,dc=example,dc=com
+
+# recursive retrieval is not done
+dn: olcVariantVariantAttribute=description,name={1}variant,olcOverlay={0}variant,olcDatabase={1}@BACKEND@,cn=config
+changetype: add
+objectclass: olcVariantAttribute
+olcVariantAlternativeAttribute: description
+olcVariantAlternativeEntry: ou=People,dc=example,dc=com
+
+# a variant taking data from a different attribute (after the changes below)
+dn: olcVariantVariantAttribute=st,name={1}variant,olcOverlay={0}variant,olcDatabase={1}@BACKEND@,cn=config
+changetype: add
+objectclass: olcVariantAttribute
+olcVariantAlternativeAttribute: st
+olcVariantAlternativeEntry: cn=Manager,dc=example,dc=com
+
+# configuration changes
+dn: olcVariantVariantAttribute={1}st,name={1}variant,olcOverlay={0}variant,olcDatabase={1}@BACKEND@,cn=config
+changetype: modify
+replace: olcVariantAlternativeAttribute
+olcVariantAlternativeAttribute: ou
+-
+replace: olcVariantAlternativeEntry
+olcVariantAlternativeEntry: ou=Alumni Association,ou=People,dc=example,dc=com
+-
+
+# a regex variant
+dn: name={2}regex,olcOverlay={0}variant,olcDatabase={1}@BACKEND@,cn=config
+changetype: add
+objectclass: olcVariantRegex
+olcVariantEntryRegex: (.*),(ou=.*technology.*)(,)dc=example,dc=com
+
+dn: olcVariantVariantAttribute=ou,name={2}regex,olcOverlay={0}variant,olcDatabase={1}@BACKEND@,cn=config
+changetype: add
+objectclass: olcVariantAttributePattern
+olcVariantAlternativeAttribute: ou
+olcVariantAlternativeEntryPattern: $2$3dc=example$3dc=com
+
+# Duplicate description into title
+dn: olcVariantVariantAttribute=title,name={2}regex,olcOverlay={0}variant,olcDatabase={1}@BACKEND@,cn=config
+changetype: add
+objectclass: olcVariantAttributePattern
+olcVariantAlternativeAttribute: description
+olcVariantAlternativeEntryPattern: $0
+
+# everything
+dn: name={3}regex,olcOverlay={0}variant,olcDatabase={1}@BACKEND@,cn=config
+changetype: add
+objectclass: olcVariantRegex
+olcVariantEntryRegex: .*
+
+dn: olcVariantVariantAttribute=l,name={3}regex,olcOverlay={0}variant,olcDatabase={1}@BACKEND@,cn=config
+changetype: add
+objectclass: olcVariantAttributePattern
+olcVariantAlternativeAttribute: l
+olcVariantAlternativeEntryPattern: dc=example,dc=com
+

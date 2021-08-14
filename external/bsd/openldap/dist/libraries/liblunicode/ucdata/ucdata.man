@@ -26,7 +26,7 @@ int uccomp(unsigned long ch1, unsigned long ch2, unsigned long *comp)
 .sp
 int uccomp_hangul(unsigned long *str, int len)
 .sp
-int uccanoncomp(unsiged long *str, int len)
+int uccanoncomp(unsigned long *str, int len)
 .nf
 struct ucnumber {
   int numerator;

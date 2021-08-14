@@ -27,3 +27,11 @@ objectclass: person
 cn: ssha
 sn: ssha
 userpassword: secret
+
+dn: cn=argon2,dc=example,dc=com
+objectclass: person
+cn: argon2
+sn: argon2
+userPassword:: e0FSR09OMn0kYXJnb24yaSR2PTE5JG09NDA5Nix0PTMscD0xJHZTc1orVnZjM
+ UhoZzc0WFNrdVZLOFEkd1B2UUc0blFMS2xaSkRGU0tna2k0L2NYejNLT2lOYXpwL2VDWkFWOFlt
+ Zw==

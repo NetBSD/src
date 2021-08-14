@@ -2,7 +2,7 @@
 # $OpenLDAP$
 ## This work is part of OpenLDAP Software <http://www.openldap.org/>.
 ##
-## Copyright 1998-2020 The OpenLDAP Foundation.
+## Copyright 1998-2021 The OpenLDAP Foundation.
 ## All rights reserved.
 ##
 ## Redistribution and use in source and binary forms, with or without
@@ -22,11 +22,6 @@ esac
 echo "running defines.sh"
 . $SRCDIR/scripts/defines.sh
 
-if test $MONITORDB = "no" ; then 
-	echo "Monitor backend not available, test skipped"
-	exit 0
-fi 
-
 if test x$TESTLOOPS = x ; then
 	TESTLOOPS=50
 fi
@@ -38,7 +33,7 @@ mkdir -p $TESTDIR $DBDIR1
 #
 
 echo "Running slapadd to build slapd database..."
-. $CONFFILTER $BACKEND $MONITORDB < $MCONF > $ADDCONF
+. $CONFFILTER $BACKEND < $MCONF > $ADDCONF
 $SLAPADD -f $ADDCONF -l $LDIFORDERED
 RC=$?
 if test $RC != 0 ; then
@@ -47,7 +42,7 @@ if test $RC != 0 ; then
 fi
 
 echo "Running slapindex to index slapd database..."
-. $CONFFILTER $BACKEND $MONITORDB < $CONF > $CONF1
+. $CONFFILTER $BACKEND < $CONF > $CONF1
 $SLAPINDEX -f $CONF1
 RC=$?
 if test $RC != 0 ; then
@@ -56,8 +51,8 @@ if test $RC != 0 ; then
 fi
 
 echo "Starting slapd on TCP/IP port $PORT1..."
-echo $SLAPD -f $CONF1 -h $URI1 -d $LVL $TIMING
-$SLAPD -f $CONF1 -h $URI1 -d $LVL $TIMING > $LOG1 2>&1 &
+echo $SLAPD -f $CONF1 -h $URI1 -d $LVL
+$SLAPD -f $CONF1 -h $URI1 -d $LVL > $LOG1 2>&1 &
 PID=$!
 if test $WAIT != 0 ; then
     echo PID $PID

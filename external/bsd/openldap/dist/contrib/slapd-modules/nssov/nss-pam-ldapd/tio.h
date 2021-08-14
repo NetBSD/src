@@ -1,4 +1,4 @@
-/*	$NetBSD: tio.h,v 1.1.1.4 2018/02/06 01:53:06 christos Exp $	*/
+/*	$NetBSD: tio.h,v 1.1.1.5 2021/08/14 16:05:14 christos Exp $	*/
 
 /*
    tio.h - timed io functions

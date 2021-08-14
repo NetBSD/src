@@ -1,0 +1,30 @@
+dn: ou=People,dc=example,dc=com
+changetype: modify
+replace: signed
+signed: -1
+-
+replace: number
+number: 1
+-
+
+dn: cn=Dorothy Stevens,ou=Alumni Association,ou=People,dc=example,dc=com
+changetype: modify
+replace: enumerated
+enumerated: jaj
+-
+
+dn: cn=Barbara Jensen,ou=Information Technology Division,ou=People,dc=example,dc=com
+changetype: modify
+add: enumerated
+enumerated: bjorn
+enumerated: uham
+-
+
+dn: cn=John Doe,ou=Information Technology Division,ou=People,dc=example,dc=com
+changetype: modify
+delete: enumerated
+enumerated: johnd
+-
+add: enumerated
+enumerated: melliot
+-

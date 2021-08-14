@@ -5,6 +5,7 @@ slapauth             F      M    R  U  X     d f        o      v
 slapcat              F H                  abcd fg    l no   s  v
 slapdn               F       N P             d f        o      v
 slapindex            F                     bcd fg      no q  t v
+slapmodify           F            S        bcd fg  j l no q s uvw
 slappasswd                         T        c    h          s uv
 slapschema	     F H                  abcd fg    l no   s  v
 slaptest             F          Q            d f       no     uv
@@ -17,11 +18,12 @@ slaptest             F          Q            d f       no     uv
 	-c continue mode
 	-d debug level
 	-f config file
+	-g disable subordinate gluing
 	-l LDIF file
 	-n database number
 	-o options
 	-q "quick" mode
-	-s subtree
+	-s disable schema checking (slapcat: subtree, slappasswd: secret)
 	-u dryrun (slappasswd: RFC2307 userPassword)
 	-v verbose
 

@@ -1,5 +1,5 @@
 # $OpenLDAP$
-# Copyright 1999-2020 The OpenLDAP Foundation, All Rights Reserved.
+# Copyright 1999-2021 The OpenLDAP Foundation, All Rights Reserved.
 # COPYING RESTRICTIONS APPLY, see COPYRIGHT.
 H1: Monitoring
 
@@ -43,8 +43,12 @@ slapd Configuration File}} chapters.
 
 H2: Monitor configuration via cn=config(5)
 
-{{This section has yet to be written.}}
+The {{monitor backend}} is statically built into slapd and can be
+instantiated via ldapadd.
 
+> dn: olcDatabase=monitor,cn=config
+> objectClass: olcDatabaseConfig
+> olcDatabase: monitor
 
 H2: Monitor configuration via slapd.conf(5)
 
@@ -145,7 +149,7 @@ similar to:
 >	description: This object contains information about this server.
 >	description: Most of the information is held in operational attributes, which 
 >	 must be explicitly requested.
->	monitoredInfo: OpenLDAP: slapd 2.4 (Dec  7 2006 17:30:29)
+>	monitoredInfo: OpenLDAP: slapd 2.5 (Dec  7 2006 17:30:29)
 >	entryDN: cn=Monitor
 >	subschemaSubentry: cn=Subschema
 >	hasSubordinates: TRUE
@@ -214,11 +218,10 @@ backends, as well as backends loaded by modules.  For example:
 >	monitoredInfo: config                 
 >	monitoredInfo: ldif     
 >	monitoredInfo: monitor
->	monitoredInfo: bdb        
->	monitoredInfo: hdb
+>	monitoredInfo: mdb
 
-This indicates the {{config}}, {{ldif}}, {{monitor}}, {{bdb}},
-and {{hdb}} backends are available.
+This indicates the {{config}}, {{ldif}}, {{monitor}},
+and {{mdb}} backends are available.
 
 The {{EX:cn=Backends,cn=Monitor}} object is also a container
 for available backend objects.  Each available backend object
@@ -242,21 +245,7 @@ contains information about a particular backend.  For example:
 >	seeAlso: cn=Database 2,cn=Databases,cn=Monitor
 >	
 >	dn: cn=Backend 3,cn=Backends,cn=Monitor
->	monitoredInfo: bdb
->	monitorRuntimeConfig: TRUE
->	supportedControl: 1.3.6.1.1.12
->	supportedControl: 2.16.840.1.113730.3.4.2
->	supportedControl: 1.3.6.1.4.1.4203.666.5.2
->	supportedControl: 1.2.840.113556.1.4.319
->	supportedControl: 1.3.6.1.1.13.1
->	supportedControl: 1.3.6.1.1.13.2
->	supportedControl: 1.3.6.1.4.1.4203.1.10.1
->	supportedControl: 1.2.840.113556.1.4.1413
->	supportedControl: 1.3.6.1.4.1.4203.666.11.7.2
->	seeAlso: cn=Database 1,cn=Databases,cn=Monitor
->	
->	dn: cn=Backend 4,cn=Backends,cn=Monitor
->	monitoredInfo: hdb
+>	monitoredInfo: mdb
 >	monitorRuntimeConfig: TRUE
 >	supportedControl: 1.3.6.1.1.12
 >	supportedControl: 2.16.840.1.113730.3.4.2
@@ -270,8 +259,8 @@ contains information about a particular backend.  For example:
 
 For each of these objects, monitorInfo indicates which backend the
 information in the object is about.  For instance, the {{EX:cn=Backend
-3,cn=Backends,cn=Monitor}} object contains (in the example) information
-about the {{bdb}} backend. 
+5,cn=Backends,cn=Monitor}} object contains (in the example) information
+about the {{mdb}} backend. 
 
 !block table
 Attribute|Description

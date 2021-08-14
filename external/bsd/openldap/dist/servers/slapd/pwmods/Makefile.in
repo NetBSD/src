@@ -1,0 +1,59 @@
+# Makefile.in for overlays
+# $OpenLDAP$
+## This work is part of OpenLDAP Software <http://www.openldap.org/>.
+##
+## Copyright 2003-2021 The OpenLDAP Foundation.
+## All rights reserved.
+##
+## Redistribution and use in source and binary forms, with or without
+## modification, are permitted only as authorized by the OpenLDAP
+## Public License.
+##
+## A copy of this license is available in the file LICENSE in the
+## top-level directory of the distribution or, alternatively, at
+## <http://www.OpenLDAP.org/license.html>.
+
+SRCS = argon2.c
+
+LTONLY_MOD = $(LTONLY_mod)
+LDAP_INCDIR= ../../../include
+LDAP_LIBDIR= ../../../libraries
+
+MOD_DEFS = -DSLAPD_IMPORT
+
+shared_LDAP_LIBS = $(LDAP_LIBLDAP_LA) $(LDAP_LIBLBER_LA)
+NT_LINK_LIBS = -L.. -lslapd $(@BUILD_LIBS_DYNAMIC@_LDAP_LIBS)
+UNIX_LINK_LIBS = $(@BUILD_LIBS_DYNAMIC@_LDAP_LIBS)
+
+LIBRARY = dummyvalue
+PROGRAMS = @SLAPD_DYNAMIC_PWMODS@
+
+XINCPATH = -I.. -I$(srcdir)/..
+XDEFS = $(MODULES_CPPFLAGS)
+
+dynamic: $(PROGRAMS)
+
+argon2.la : argon2.lo version.lo
+	$(LTLINK_MOD) -module -o $@ argon2.lo version.lo $(ARGON2_LIBS) $(LINK_LIBS) $(MODULES_LIBS)
+
+install-local:	$(PROGRAMS)
+	@if test -n "$?" ; then \
+		$(MKDIR) $(DESTDIR)$(moduledir); \
+		$(LTINSTALL) $(INSTALLFLAGS) -m 755 $? $(DESTDIR)$(moduledir);\
+	fi
+
+MKDEPFLAG = -l
+
+.SUFFIXES: .c .o .lo
+
+.c.lo:
+	$(LTCOMPILE_MOD) $<
+
+# Must fixup depends for non-libtool objects
+depend-local: depend-common
+	@if test -n "$(OBJS)"; then \
+	OBJ2=`echo $(OBJS) $(OBJDEP) | $(SED) -e 's/\.o//g'`; \
+	SCR=''; for i in $$OBJ2; do SCR="$$SCR -e s/^$$i.lo:/$$i.o:/"; done; \
+	mv Makefile Makefile.bak; $(SED) $$SCR Makefile.bak > Makefile && \
+	$(RM) Makefile.bak; fi
+

@@ -1,0 +1,177 @@
+.TH SLAPO-SMBK5PWD 5 "RELEASEDATE" "OpenLDAP LDVERSION"
+.\" Copyright 2015-2021 The OpenLDAP Foundation All Rights Reserved.
+.\" Copying restrictions apply.  See COPYRIGHT/LICENSE.
+.\" $OpenLDAP$
+.SH NAME
+slapo-smbk5pwd \- Samba & Kerberos password sync overlay to slapd
+.SH SYNOPSIS
+ETCDIR/slapd.conf
+.RS
+.LP
+include
+.B "<path to>/krb5-kdc.schema"
+.LP
+include
+.B "<path to>/samba.schema"
+.LP
+moduleload
+.B smbk5pwd.so
+.LP
+ ...
+.LP
+database mdb
+.LP
+ ...
+.LP
+overlay
+.B smbk5pwd
+.RE
+
+.SH DESCRIPTION
+.LP
+The
+.B smbk5pwd
+overlay to
+.BR slapd (8)
+overloads the Password Modify Extended Operation (RFC 3062) to update
+Kerberos keys and Samba password hashes for an LDAP user, as well as
+updating password change related attributes for Kerberos, Samba and/or
+UNIX user accounts.
+.LP
+The Samba support is written using the Samba 3.0 LDAP schema;
+Kerberos support is written for Heimdal using its hdb-ldap backend.
+.LP
+Additionally, a new
+.B {K5KEY}
+password hash mechanism is provided.
+For
+.B krb5KDCEntry
+objects that have this scheme specifier in their
+.I userPassword
+attribute, Simple Binds will be checked against the Kerberos keys of the entry.
+No data is needed after the
+.B {K5KEY}
+scheme specifier in the
+.IR userPassword ,
+it is looked up from the entry directly.
+
+.SH CONFIGURATION
+The
+.B smbk5pwd
+overlay supports the following
+.B slapd.conf
+configuration options, which should appear after the
+.B overlay
+directive:
+.TP
+.BI smbk5pwd-enable " <module>"
+can be used to enable only the desired modules.
+Legal values for
+.I <module>
+are
+.LP
+.RS
+.TP
+.B krb5
+If the user has the
+.B krb5KDCEntry
+objectclass, update the
+.B krb5Key
+and
+.B krb5KeyVersionNumber
+attributes using the new password in the Password Modify operation,
+provided the Kerberos account is not expired.
+Exiration is determined by evaluating the
+.B krb5ValidEnd
+attribute.
+.TP
+.B samba
+If the user is a
+.B sambaSamAccount
+object, synchronize the
+.B sambaNTPassword
+to the password entered in the Password Modify operation, and update
+.B sambaPwdLastSet
+accordingly.
+.TP
+.B shadow
+Update the attribute
+.BR shadowLastChange ,
+if the entry has the objectclass
+.BR shadowAccount .
+.LP
+By default all modules compiled in are enabled.
+Setting the config statement restricts the enabled modules to the ones
+explicitly mentioned.
+.RE
+.TP
+.BI smbk5pwd-can-change " <seconds>"
+If the
+.B samba
+module is enabled and the user is a
+.BR sambaSamAccount ,
+update the attribute
+.B sambaPwdCanChange
+to point
+.I <seconds>
+into the future, essentially denying any Samba password change until then.
+A value of
+.B 0
+disables this feature.
+.TP
+.BI smbk5pwd-must-change " <seconds>"
+If the
+.B samba
+module is enabled and the user is a
+.BR sambaSamAccount ,
+update the attribute
+.B sambaPwdMustChange
+to point
+.I <seconds>
+into the future, essentially setting the Samba password expiration time.
+A value of
+.B 0
+disables this feature.
+.LP
+Alternatively, the overlay supports table-driven configuration,
+and thus can be run-time loaded and configured via back-config.
+
+.SH EXAMPLE
+The layout of a slapd.d based, table-driven configuration entry looks like:
+.LP
+.EX
+        # {0}smbk5pwd, {1}mdb, config
+        dn: olcOverlay={0}smbk5pwd,olcDatabase={1}mdb,cn=config
+        objectClass: olcOverlayConfig
+        objectClass: olcSmbK5PwdConfig
+        olcOverlay: {0}smbk5pwd
+        olcSmbK5PwdEnable: krb5
+        olcSmbK5PwdEnable: samba
+        olcSmbK5PwdMustChange: 2592000
+.EE
+.LP
+which enables both
+.B krb5
+and
+.B samba
+modules with a Samba password expiration time of 30 days (=
+.B 2592000
+seconds).
+
+.SH SEE ALSO
+.BR slapd.conf (5),
+.BR ldappasswd (1),
+.BR ldap (3),
+.LP
+"OpenLDAP Administrator's Guide" (http://www.OpenLDAP.org/doc/admin/)
+.LP
+
+.SH ACKNOWLEDGEMENTS
+This manual page has been written by Peter Marschall based on the
+module's README file written by Howard Chu.
+.LP
+.B OpenLDAP
+is developed and maintained by The OpenLDAP Project (http://www.openldap.org/).
+.B OpenLDAP
+is derived from University of Michigan LDAP 3.3 Release.
+

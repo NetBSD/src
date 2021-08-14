@@ -45,11 +45,11 @@ uid: user3
 uidNumber: 5387
 homeDirectory: /home/user3
 loginShell: /bin/false
-gecos: Slave
+gecos: Consumer
 gidNumber: 100
 userPassword: abc
-cn: Slave
-sn: Slave
+cn: Consumer
+sn: Consumer
 
 dn: uid=user2,ou=people,dc=example,dc=com
 objectClass: person

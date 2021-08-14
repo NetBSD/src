@@ -1,0 +1,338 @@
+.TH SLAPO-DATAMORPH 5 "RELEASEDATE" "OpenLDAP"
+.\" Copyright 2016-2017 Symas Corp. All Rights Reserved.
+.\" Copying restrictions apply.  See LICENSE.
+.SH NAME
+slapo\-datamorph \- store enumerated values and fixed size integers
+.SH SYNOPSIS
+olcOverlay=datamorph
+.SH DESCRIPTION
+The
+.B datamorph
+overlay to
+.BR slapd (8)
+allows attributes with a few pre-defined values to be saved more
+space-efficiently as well as signed or unsigned integer attributes.
+
+.LP
+The overlay operates on configured attributes that must have their syntax
+compatible with
+.BR 1.3.6.1.4.1.4203.666.11.12.1.1 ,
+there are three such syntaxes defined by the overlay:
+.B 1.3.6.1.4.1.4203.666.11.12.1.2
+(Enumerated value),
+.B 1.3.6.1.4.1.4203.666.11.12.1.3
+(Fixed-size integer), and
+.B 1.3.6.1.4.1.4203.666.11.12.1.4
+(Fixed-size signed integer).
+.LP
+
+While transforming the request, if a value for an attribute is not permitted by the configuration, the behaviour depends on the operation:
+
+.RS
+.TP
+.B Search
+The affected value assertions in a
+.B Search
+request filter are replaced by a filter returning
+.B Undefined .
+.TP
+.B Compare
+Request returns
+.B Compare
+.BR False .
+.TP
+.B Add, Modify
+Requests are rejected with a
+.B Constraint
+.BR Violation .
+.RE
+
+The supported allowed matching rules for the attribute types above are:
+
+.RS
+.TP
+.B EQUALITY fixedSizeIntegerMatch
+Appropriate for syntaxes
+.B 1.3.6.1.4.1.4203.666.11.12.1.2
+(Enumerated value), and
+.B 1.3.6.1.4.1.4203.666.11.12.1.3
+(Fixed-size integer).
+.TP
+.B EQUALITY fixedSizeSignedIntegerMatch
+Appropriate for syntax
+.B 1.3.6.1.4.1.4203.666.11.12.1.4
+(Fixed-size signed integer) only.
+.TP
+.B ORDERING fixedSizeIntegerOrderingMatch
+Appropriate for syntaxes
+.B 1.3.6.1.4.1.4203.666.11.12.1.2
+(Enumerated value), and
+.B 1.3.6.1.4.1.4203.666.11.12.1.3
+(Fixed-size integer). Enumerated value attributes are compared according to
+their stored database value.
+.TP
+.B ORDERING fixedSizeSignedIntegerOrderingMatch
+Appropriate for syntax
+.B 1.3.6.1.4.1.4203.666.11.12.1.4
+(Fixed-size signed integer) only.
+
+
+.SH CONFIGURATION LAYOUT
+
+The overlay has to be instantiated under a database adding an entry of
+.B olcOverlay=datamorph
+with objectClass of
+.BR olcDatamorphConfig.
+
+The overlay configuration subtree consists of the following levels:
+.RS
+.TP
+.B objectClass=olcDatamorphConfig
+Main overlay configuration. Created directly under the database
+configuration entry.
+.TP
+.B objectClass=olcDatamorphInteger
+Specifies a
+.B fixed-size integer
+attribute and must be a child of an entry with
+.BR objectClass=olcDatamorphConfig .
+There may be as many such entries as necessary provided they all specify a
+different attribute in the
+.B olcDatamorphAttribute
+attribute.
+.TP
+.B objectClass=olcDatamorphEnum
+Specifies an
+.B enumerated
+attribute and must be a child of an entry with
+.BR objectClass=olcDatamorphConfig .
+There may be as many such entries as necessary provided they all specify a
+different attribute in the
+.B olcDatamorphAttribute
+attribute.
+.TP
+.B objectClass=olcDatamorphEnumValue
+Specifies a permitted value for the enumerated attribute and its database
+representation. Must be a child of an entry with
+.BR objectClass=olcDatamorphEnum .
+There may be as many such entries as necessary provided they all specify a
+different value and index in the corresponding fields.
+.RE
+
+In the case of
+.BR slapd.conf (5),
+the attribute definition is delimited by the keyword
+.B datamorph
+to define an integer or enumerated attribute followed by an arbitrary number of
+.B datamorph_value
+lines in the case of an enumerated one. Each new
+.B datamorph
+line starts configuring a new attribute.
+
+.SH ENUMERATED ATTRIBUTE CONFIGURATION ENTRY
+
+The enumerated attribute entry configuration
+.RB ( olcDatamorphEnum )
+only has the following option available:
+
+.RS
+.TP
+.B olcDatamorphAttribute: <attribute>
+Mandatory attribute, indicates that the named attribute is to be handled by the
+overlay. The
+.BR slapd.conf (5)
+equivalent is
+.B datamorph "int"
+.BR <attribute> .
+.RE
+
+The children of this entry then define how the string values map to the
+database values. They use the objectclass
+.BR olcDatamorphEnumValue ,
+which asks for the following attributes:
+
+.RS
+.TP
+.B olcDatamorphValue: <value>
+A permitted value for the attribute being configured.
+.TP
+.B olcDatamorphIndex: <0-255>
+The corresponding database value.
+.RE
+
+The
+.BR slapd.conf (5)
+equivalent of the above two is
+.B datamorph_value <0-255> <value>
+.RB .
+
+.SH FIXED-WIDTH INTEGER CONFIGURATION ENTRY
+
+The fixed-width integer configuration entry
+.RB ( olcDatamorphInteger )
+has the following options available:
+
+.RS
+.TP
+.B olcDatamorphAttribute: <attribute>
+Mandatory attribute, indicates that the named attribute is to be handled by the
+overlay. The
+.BR slapd.conf (5)
+equivalent is
+.B datamorph "int"
+.BR <attribute> .
+.TP
+.B olcDatamorphIntegerBytes: <1|2|4|8>
+Size of the integer as stored in the backend. The
+.BR slapd.conf (5)
+equivalent is
+.B datamorph_size
+.BR <1|2|4|8> .
+.TP
+.B olcDatamorphIntegerSigned: <TRUE|FALSE>
+Whether the integer is to be treated as signed. Note that the overlay will not
+enforce consistency between this option and the attribute's syntax. The
+.BR slapd.conf (5)
+equivalent is
+.B datamorph_signed
+.BR <TRUE|FALSE> .
+.TP
+.B olcDatamorphIntegerLowerBound: <number>
+The lowest value that the configured attribute will be allowed to have. This
+affects all operations where values are mentioned. The
+.BR slapd.conf (5)
+equivalent is
+.B datamorph_lower_bound
+.BR <number> .
+.TP
+.B olcDatamorphIntegerUpperBound: <number>
+The highest value that the configured attribute will be allowed to have. This
+affects all operations where values are mentioned. The
+.BR slapd.conf (5)
+equivalent is
+.B datamorph_upper_bound
+.BR <number> .
+.RE
+
+.SH EXAMPLE
+
+The following is an example of a configured overlay, substitute
+.B $DATABASE
+for the DN of the database it is attached to and
+.B {x}
+with the desired position of the overlay in the overlay stack.
+
+.nf
+dn: olcOverlay={x}datamorph,$DATABASE
+objectClass: olcDatamorphConfig
+olcOverlay: datamorph
+
+# to handle attribute 'enumeratedAttribute'
+dn: olcDatamorphAttribute=enumeratedAttribute,olcOverlay={x}datamorph,$DATABASE
+objectClass: olcDatamorphEnum
+
+# value 'value1' corresponds to 'AQ==' (0x01)
+dn: olcDatamorphValue=value1,olcDatamorphAttribute={0}enumeratedAttribute,olcOv
+ erlay={x}datamorph,$DATABASE
+objectclass: olcDatamorphEnumValue
+olcDatamorphIndex: 1
+
+# value 'value11' corresponds to 'Cw==' (0x0B)
+dn: olcDatamorphValue=value11,olcDatamorphAttribute={0}enumeratedAttribute,olcO
+ verlay={x}datamorph,$DATABASE
+objectclass: olcDatamorphEnumValue
+olcDatamorphIndex: 11
+
+# handle attribute 'signedInteger' as a 2-byte signed integer with values
+# between -20000 and 30000 (inclusive on both sides)
+dn: olcDatamorphAttribute=signedInteger,olcOverlay={x}datamorph,$DATABASE
+objectclass: olcDatamorphInteger
+olcDatamorphIntegerBytes: 2
+olcDatamorphIntegerSigned: TRUE
+olcDatamorphIntegerLowerBound: -20000
+olcDatamorphIntegerUpperBound: 30000
+
+# handle attribute 'shortInteger' as a 1-byte unsigned integer with only values
+# 0 and 1 allowed (effectively a true/false)
+dn: olcDatamorphAttribute=shortInteger,olcOverlay={x}datamorph,$DATABASE
+objectclass: olcDatamorphInteger
+olcDatamorphIntegerBytes: 1
+olcDatamorphIntegerUpperBound: 1
+olcDatamorphIntegerSigned: FALSE
+.fi
+
+The
+.BR slapd.conf (5)
+equivalent of the above follows:
+
+.nf
+overlay datamorph
+
+datamorph enum enumeratedAttribute
+datamorph_value 1 value1
+datamorph_value 11 value11
+
+datamorph int signedInteger
+datamorph_size 2
+datamorph_signed TRUE
+datamorph_lower_bound -20000
+datamorph_upper_bound 30000
+
+datamorph int shortInteger
+datamorph_size 1
+datamorph_signed no
+datamorph_upper_bound 1
+.fi
+
+.SH REPLICATION
+
+Given that there are syntaxes and matching rules provided by the overlay, it
+should be configured on each replica to guarantee consistency.
+
+.SH BUGS AND LIMITATIONS
+Due to the fact that overlays are not active in the
+.BR slapcat (8)
+nor
+.BR slapadd (8)
+processes, backups of the database will be made exactly as stored. This means
+that backups made using
+.BR ldapsearch (1)
+cannot be used by
+.BR slapadd (8)
+nor can backups made using
+.BR slapcat (8)
+be loaded using
+.BR ldapadd (8).
+
+Value based ACLs that involve values of the transformed attributes are not
+supported.
+
+The overlay will refuse operations that add or rename entries with any of the
+configured attributes in their RDN.
+
+No controls are explicitly handled in the overlay, attaching any controls that
+reference configured attributes might lead to unexpected behaviour and is
+therefore discouraged.
+
+Increment modification of the configured attributes is not supported either.
+
+If a transformation is configured to be signed yet the attribute's schema uses the
+unsigned syntax and matching rules, inequality matching will not work as
+intended and will treat negative numbers as higher than positive numbers.
+
+.SH FILES
+.TP
+ETCDIR/slapd.conf
+default slapd configuration file
+.TP
+ETCDIR/slapd.d
+default slapd configuration directory
+.SH SEE ALSO
+.BR slapd-config (5),
+.BR slapd.conf (5),
+.BR slapd.overlays (5),
+.BR slapd (8),
+.BR slapcat (8),
+.BR slapadd (8)
+.SH ACKNOWLEDGEMENTS
+This module was developed in 2016 by Ondřej Kuzník for Symas Corp.

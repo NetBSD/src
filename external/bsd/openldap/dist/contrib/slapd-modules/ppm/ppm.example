@@ -1,0 +1,85 @@
+# Example of ppm configuration
+
+# Such configuration must be stored into pwdCheckModuleArg attribute
+# of a password policy entry
+# See slapo-ppolicy for more details
+# Here is an example of such password policy:
+#   dn: cn=default,ou=policies,dc=my-domain,dc=com
+#   objectClass: pwdPolicy
+#   objectClass: top
+#   objectClass: pwdPolicyChecker
+#   objectClass: person
+#   pwdCheckQuality: 2
+#   pwdAttribute: userPassword
+#   sn: default
+#   cn: default
+#   pwdMinLength: 6
+#   pwdCheckModule: /usr/local/lib/ppm.so
+#   pwdCheckModuleArg:: bWluUXVhbGl0eSAzCmNoZWNrUkROIDAKZm9yYmlkZGVuQ2hhcnMKbWF4Q29uc2VjdXRpdmVQZXJDbGFzcyAwCnVzZUNyYWNrbGliIDAKY3JhY2tsaWJEaWN0IC92YXIvY2FjaGUvY3JhY2tsaWIvY3JhY2tsaWJfZGljdApjbGFzcy11cHBlckNhc2UgQUJDREVGR0hJSktMTU5PUFFSU1RVVldYWVogMCAxCmNsYXNzLWxvd2VyQ2FzZSBhYmNkZWZnaGlqa2xtbm9wcXJzdHV2d3h5eiAwIDEKY2xhc3MtZGlnaXQgMDEyMzQ1Njc4OSAwIDEKY2xhc3Mtc3BlY2lhbCA8Piw/Oy46LyHCp8O5JSrCtV7CqCTCo8KyJsOpfiIjJ3soWy18w6hgX1zDp17DoEApXcKwPX0rIDAgMQ==
+#
+# Different parameters are separated by a linefeed (\n)
+# Parameters starting with a # are ignored
+# Use a base64 tool to code / decode the content of pwdCheckModuleArg
+
+
+
+# Parameters
+
+# minQuality parameter
+# Format:
+# minQuality [NUMBER]
+# Description:
+# One point is granted for each class for which MIN_FOR_POINT criteria is fulfilled.
+# defines the minimum point numbers for the password to be accepted.
+minQuality 3
+
+# checkRDN parameter
+# Format:
+# checkRDN [0 | 1]
+# Description:
+# If set to 1, password must not contain a token from the RDN.
+# Tokens are separated by these delimiters : space tabulation _ - , ; £
+checkRDN 0
+
+# forbiddenChars parameter
+# Format:
+# forbiddenChars [CHARACTERS_FORBIDDEN]
+# Description:
+# Defines the forbidden characters list (no separator).
+# If one of them is found in the password, then it is rejected.
+forbiddenChars 
+
+# maxConsecutivePerClass parameter
+# Format:
+# maxConsecutivePerClass [NUMBER]
+# Description:
+# Defines the maximum number of consecutive character allowed for any class
+maxConsecutivePerClass 0
+
+# useCracklib parameter
+# Format:
+# useCracklib [0 | 1]
+# Description:
+# If set to 1, the password must pass the cracklib check
+useCracklib 0
+
+# cracklibDict parameter
+# Format:
+# cracklibDict [path_to_cracklib_dictionary]
+# Description:
+# directory+filename-prefix that your version of CrackLib will go hunting for
+# For example, /var/pw_dict resolves as /var/pw_dict.pwd,
+# /var/pw_dict.pwi and /var/pw_dict.hwm dictionary files
+cracklibDict /var/cache/cracklib/cracklib_dict
+
+# classes parameter
+# Format:
+# class-[CLASS_NAME] [CHARACTERS_DEFINING_CLASS] [MIN] [MIN_FOR_POINT]
+# Description:
+# [CHARACTERS_DEFINING_CLASS]: characters defining the class (no separator)
+# [MIN]: If at least [MIN] characters of this class is not found in the password, then it is rejected
+# [MIN_FOR_POINT]: one point is granted if password contains at least [MIN_FOR_POINT] character numbers of this class
+class-upperCase ABCDEFGHIJKLMNOPQRSTUVWXYZ 0 1
+class-lowerCase abcdefghijklmnopqrstuvwxyz 0 1
+class-digit 0123456789 0 1
+class-special <>,?;.:/!§ù%*µ^¨$£²&é~"#'{([-|è`_\ç^à@)]°=}+ 0 1

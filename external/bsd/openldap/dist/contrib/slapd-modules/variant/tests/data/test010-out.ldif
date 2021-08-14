@@ -1,0 +1,52 @@
+# Test 1, trigger sizelimit without overlay interference
+dn: cn=Bjorn Jensen,ou=Information Technology Division,ou=People,dc=example,dc
+ =com
+objectClass: OpenLDAPperson
+cn: Bjorn Jensen
+cn: Biiff Jensen
+sn: Jensen
+uid: bjorn
+seeAlso: cn=All Staff,ou=Groups,dc=example,dc=com
+userPassword:: Ympvcm4=
+homePostalAddress: 19923 Seven Mile Rd. $ South Lyon, MI 49999
+drink: Iced Tea
+description: Hiker, biker
+title: Director, Embedded Systems
+postalAddress: Info Tech Division $ 535 W. William St. $ Anytown, MI 48103
+mail: bjorn@mailgw.example.com
+homePhone: +1 313 555 5444
+pager: +1 313 555 4474
+facsimileTelephoneNumber: +1 313 555 2177
+telephoneNumber: +1 313 555 0355
+Size limit exceeded (4)
+
+# Test 2, check sizelimit is not triggered when it matches the number of entries returned
+dn: ou=Groups,dc=example,dc=com
+objectClass: organizationalUnit
+ou: Groups
+st: Alumni Association
+
+dn: ou=People,dc=example,dc=com
+objectClass: organizationalUnit
+objectClass: extensibleObject
+ou: People
+uidNumber: 0
+gidNumber: 0
+description: The Example, Inc. at Anytown
+
+dn: cn=Manager,dc=example,dc=com
+objectClass: person
+cn: Manager
+cn: Directory Manager
+cn: Dir Man
+sn: Manager
+description: Manager of the directory
+userPassword:: c2VjcmV0
+
+# Test 3, check sizelimit will stop at the right time
+dn: ou=Groups,dc=example,dc=com
+objectClass: organizationalUnit
+ou: Groups
+st: Alumni Association
+Size limit exceeded (4)
+

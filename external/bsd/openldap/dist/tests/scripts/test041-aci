@@ -2,7 +2,7 @@
 # $OpenLDAP$
 ## This work is part of OpenLDAP Software <http://www.openldap.org/>.
 ##
-## Copyright 1998-2020 The OpenLDAP Foundation.
+## Copyright 1998-2021 The OpenLDAP Foundation.
 ## All rights reserved.
 ##
 ## Redistribution and use in source and binary forms, with or without
@@ -30,7 +30,7 @@ fi
 mkdir -p $TESTDIR $DBDIR1
 
 echo "Running slapadd to build slapd database..."
-. $CONFFILTER $BACKEND $MONITORDB < $ACICONF > $CONF1
+. $CONFFILTER $BACKEND < $ACICONF > $CONF1
 $SLAPADD -f $CONF1 -l $LDIFORDERED
 RC=$?
 if test $RC != 0 ; then
@@ -39,7 +39,7 @@ if test $RC != 0 ; then
 fi
 
 echo "Starting slapd on TCP/IP port $PORT1..."
-$SLAPD -f $CONF1 -h $URI1 -d $LVL $TIMING > $LOG1 2>&1 &
+$SLAPD -f $CONF1 -h $URI1 -d $LVL > $LOG1 2>&1 &
 PID=$!
 if test $WAIT != 0 ; then
     echo PID $PID
@@ -51,7 +51,7 @@ sleep 1
 
 echo "Testing slapd ACI access control..."
 for i in 0 1 2 3 4 5; do
-	$LDAPSEARCH -s base -b "$MONITOR" -h $LOCALHOST -p $PORT1 \
+	$LDAPSEARCH -s base -b "$MONITOR" -H $URI1 \
 		'objectclass=*' > /dev/null 2>&1
 	RC=$?
 	if test $RC = 0 ; then
@@ -74,7 +74,7 @@ cat /dev/null > $TESTOUT
 BASEDN="dc=example,dc=com"
 echo "Searching \"$BASEDN\" (should fail)..."
 echo "# Searching \"$BASEDN\" (should fail)..." >> $SEARCHOUT
-$LDAPSEARCH -s base -b "$BASEDN" -h $LOCALHOST -p $PORT1 \
+$LDAPSEARCH -s base -b "$BASEDN" -H $URI1 \
 	'(objectclass=*)' >> $SEARCHOUT 2>> $TESTOUT
 RC=$?
 if test $RC != 32 ; then
@@ -90,7 +90,7 @@ fi
 BINDDN="cn=Barbara Jensen,ou=Information Technology Division,ou=People,dc=example,dc=com"
 BINDPW=bjensen
 echo "Testing ldapwhoami as ${BINDDN} (should fail)..."
-$LDAPWHOAMI -h $LOCALHOST -p $PORT1 -D "$BINDDN" -w $BINDPW
+$LDAPWHOAMI -H $URI1 -D "$BINDDN" -w $BINDPW
 RC=$?
 if test $RC = 0 ; then
 	echo "ldapwhoami should have failed!"
@@ -100,7 +100,7 @@ fi
 
 # Populate ACIs
 echo "Writing ACIs as \"$MANAGERDN\"..."
-$LDAPMODIFY -D "$MANAGERDN" -w $PASSWD -h $LOCALHOST -p $PORT1 \
+$LDAPMODIFY -D "$MANAGERDN" -w $PASSWD -H $URI1 \
 	>> $TESTOUT 2>&1 << EOMODS0
 dn: dc=example,dc=com
 changetype: modify
@@ -135,7 +135,7 @@ fi
 BASEDN="dc=example,dc=com"
 echo "Searching \"$BASEDN\" (should succeed with no results)..."
 echo "# Searching \"$BASEDN\" (should succeed with no results)..." >> $SEARCHOUT
-$LDAPSEARCH -s base -b "$BASEDN" -h $LOCALHOST -p $PORT1 \
+$LDAPSEARCH -s base -b "$BASEDN" -H $URI1 \
 	'(objectclass=*)' >> $SEARCHOUT 2>> $TESTOUT
 RC=$?
 if test $RC != 0 ; then
@@ -149,7 +149,7 @@ fi
 BINDDN="cn=Barbara Jensen,ou=Information Technology Division,ou=People,dc=example,dc=com"
 BINDPW=bjensen
 echo "Testing ldapwhoami as ${BINDDN}..."
-$LDAPWHOAMI -h $LOCALHOST -p $PORT1 -D "$BINDDN" -w $BINDPW
+$LDAPWHOAMI -H $URI1 -D "$BINDDN" -w $BINDPW
 RC=$?
 if test $RC != 0 ; then
 	echo "ldapwhoami failed ($RC)!"
@@ -163,7 +163,7 @@ BINDPW=bjorn
 BASEDN="dc=example,dc=com"
 echo "Searching \"$BASEDN\" as \"$BINDDN\" (should succeed)..."
 echo "# Searching \"$BASEDN\" as \"$BINDDN\" (should succeed)..." >> $SEARCHOUT
-$LDAPSEARCH -s base -b "$BASEDN" -h $LOCALHOST -p $PORT1 \
+$LDAPSEARCH -s base -b "$BASEDN" -H $URI1 \
 	-D "$BINDDN" -w "$BINDPW" \
 	'(objectClass=*)' >> $SEARCHOUT 2>> $TESTOUT
 RC=$?
@@ -179,7 +179,7 @@ BINDPW=bjorn
 TGT="cn=John Doe,ou=Information Technology Division,ou=People,dc=example,dc=com"
 NEWPW=jdoe
 echo "Setting \"$TGT\" password..."
-$LDAPPASSWD -h $LOCALHOST -p $PORT1 \
+$LDAPPASSWD -H $URI1 \
 	-w "$BINDPW" -s "$NEWPW" \
 	-D "$BINDDN" "$TGT" >> $TESTOUT 2>&1
 RC=$?
@@ -195,7 +195,7 @@ BINDDN="$TGT"
 BINDPW=$NEWPW
 TGT="cn=John Doe,ou=Information Technology Division,ou=People,dc=example,dc=com"
 NEWPW=newcred
-$LDAPPASSWD -h $LOCALHOST -p $PORT1 \
+$LDAPPASSWD -H $URI1 \
 	-w "$BINDPW" -s "$NEWPW" \
 	-D "$BINDDN" "$TGT" >> $TESTOUT 2>&1
 RC=$?
@@ -210,7 +210,7 @@ BINDPW=$NEWPW
 BASEDN="ou=Groups,dc=example,dc=com"
 echo "Searching \"$BASEDN\" as \"$BINDDN\" (should succeed)..."
 echo "# Searching \"$BASEDN\" as \"$BINDDN\" (should succeed)..." >> $SEARCHOUT
-$LDAPSEARCH -s one -b "$BASEDN" -h $LOCALHOST -p $PORT1 \
+$LDAPSEARCH -s one -b "$BASEDN" -H $URI1 \
 	-D "$BINDDN" -w "$BINDPW" \
 	'(objectClass=*)' >> $SEARCHOUT 2>> $TESTOUT
 RC=$?
@@ -225,7 +225,7 @@ BINDDN="cn=Barbara Jensen,ou=Information Technology Division,ou=People,dc=exampl
 BINDPW=bjensen
 echo "Searching \"$BASEDN\" as \"$BINDDN\" (should succeed with no results)..."
 echo "# Searching \"$BASEDN\" as \"$BINDDN\" (should succeed with no results)..." >> $SEARCHOUT
-$LDAPSEARCH -s one -b "$BASEDN" -h $LOCALHOST -p $PORT1 \
+$LDAPSEARCH -s one -b "$BASEDN" -H $URI1 \
 	-D "$BINDDN" -w "$BINDPW" \
 	'(objectClass=*)' >> $SEARCHOUT 2>> $TESTOUT
 RC=$?

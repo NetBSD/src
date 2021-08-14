@@ -1,0 +1,160 @@
+.TH SLAPO-REMOTEAUTH 5 "RELEASEDATE" "OpenLDAP LDVERSION"
+.\" Copyright 1998-2021 The OpenLDAP Foundation, All Rights Reserved.
+.\" Copying restrictions apply.  See the COPYRIGHT file.
+.\" $OpenLDAP$
+.SH NAME
+slapo-remoteauth \- Delegate authentication requests to remote directories, e.g. Active Directory
+.SH SYNOPSIS
+ETCDIR/slapd.conf
+.SH DESCRIPTION
+The
+.B remoteauth
+overlay to
+.BR slapd (8)
+provides passthrough authentication to remote directory servers, e.g.
+Active Directory, for LDAP simple bind operations. The local LDAP entry
+referenced in the bind operation is mapped to its counterpart in the remote
+directory. An LDAP bind operation is performed against the remote directory
+and results are returned based on those of the remote operation.
+.LP
+A slapd server configured with the
+.B remoteauth
+overlay handles an authentication request based on the presence of
+.B userPassword
+in the local entry. If the
+.B userPassword
+is present, authentication is performed locally, otherwise the
+.B remoteauth
+overlay performs the authentication request to the configured remote directory
+server.
+.LP
+
+.SH CONFIGURATION
+
+The following options can be applied to the
+.B remoteauth
+overlay within the slapd.conf file. All options should follow the
+.B overlay remoteauth
+directive.
+
+.TP
+.B overlay remoteauth
+This directive adds the
+.B remoteauth
+overlay to the current database, see
+.BR slapd.conf (5)
+for details.
+
+.TP
+.B remoteauth_dn_attribute <dnattr>
+Attribute in the local entry that is used to store the bind DN to a remote
+directory server.
+
+.TP
+.B remoteauth_mapping <domain> <hostname|LDAP URI|file:///path/to/list_of_hostnames>
+For a non-Windows deployment, a domain can be considered as a collection of
+one or more hosts to which slapd server authentcates against on behalf of
+authenticating users.
+For a given domain name, the mapping specifies the target server(s),
+e.g., Active Directory domain controller(s), to connect to via LDAP.
+The second argument can be given either as a hostname, an LDAP URI, or a file
+containing a list of hostnames/URIs, one per line. The hostnames are tried in
+sequence until the connection succeeds.
+
+This option can be provided more than once to provide mapping information for
+different domains. For example:
+
+.nf
+    remoteauth_mapping americas file:///path/to/americas.domain.hosts
+    remoteauth_mapping asiapacific file:///path/to/asiapacific.domain.hosts
+    remoteauth_mapping emea emeadc1.emea.example.com
+.fi
+
+.TP
+.B remoteauth_domain_attribute <attr>
+Attribute in the local entry that specifies the domain name, any text after
+"\\" or ":" is ignored.
+
+.TP
+.B remoteauth_default_domain <default domain>
+Default domain.
+
+
+.TP
+.B remoteauth_default_realm <server>
+Fallback server to connect to for domains not specified in
+.BR remoteauth_mapping .
+
+.TP
+.B remoteauth_retry_count <num>
+Number of connection retries attempted. Default is 3.
+
+.TP
+.B remoteauth_store <on|off>
+Whether to store the password in the local entry on successful bind. Default is
+off.
+
+.HP
+.hy 0
+.B remoteauth_tls
+.B [starttls=yes]
+.B [tls_cert=<file>]
+.B [tls_key=<file>]
+.B [tls_cacert=<file>]
+.B [tls_cacertdir=<path>]
+.B [tls_reqcert=never|allow|try|demand]
+.B [tls_reqsan=never|allow|try|demand]
+.B [tls_cipher_suite=<ciphers>]
+.B [tls_ecname=<names>]
+.B [tls_crlcheck=none|peer|all]
+.RS
+Remoteauth specific TLS configuration, see
+.BR slapd.conf (5)
+for more details on each of the parameters and defaults.
+.RE
+
+.TP
+.B remoteauth_tls_peerkey_hash <hostname> <hashname>:<base64 of public key hash>
+Mapping between remote server hostnames and their public key hashes. Only one
+mapping per hostname is supported and if any pins are specified, all hosts
+need to be pinned. If set, pinning is in effect regardless of whether or not
+certificate name validation is enabled by
+.BR tls_reqcert .
+
+.SH EXAMPLE
+A typical example configuration of
+.B remoteauth
+overlay for AD is shown below (as a
+.BR slapd.conf (5)
+snippet):
+
+.LP
+.nf
+   database <database>
+   #...
+
+   overlay remoteauth
+   remoteauth_dn_attribute seeAlso
+   remoteauth_domain_attribute associatedDomain
+   remoteauth_default_realm americas.example.com
+
+   remoteauth_mapping americas file:///home/ldap/etc/remoteauth.americas
+   remoteauth_mapping emea emeadc1.emea.example.com
+
+   remoteauth_tls starttls=yes tls_reqcert=demand tls_cacert=/home/ldap/etc/example-ca.pem
+   remoteauth_tls_peerkey_hash ldap.americas.tld sha256:Bxv3MkLoDm6gt/iDfeGNdNNqa5TTpPDdIwvZM/cIgeo=
+.fi
+
+Where seeAlso contains the AD bind DN for the user, associatedDomain contains the
+Windows Domain Id in the form of <NT-domain-name>:<NT-username> in which
+anything following, including ":", is ignored.
+
+.SH SEE ALSO
+.BR slapd.conf (5),
+.BR slapd (8).
+
+.SH Copyrights
+Copyright 2004-2021 The OpenLDAP Foundation.
+Portions Copyright 2004-2017 Howard Chu, Symas Corporation.
+Portions Copyright 2017-2021 Ondřej Kuzník, Symas Corporation.
+Portions Copyright 2004 Hewlett-Packard Company

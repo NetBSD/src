@@ -1,0 +1,4 @@
+dn: olcVariantVariantAttribute={1}st,name={1}variant,olcOverlay={0}variant,olcDatabase={1}@BACKEND@,cn=config
+changetype: modify
+replace: olcVariantAlternativeAttribute
+olcVariantAlternativeAttribute: userPassword

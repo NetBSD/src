@@ -1,7 +1,7 @@
 # $OpenLDAP$
 ## This work is part of OpenLDAP Software <http://www.openldap.org/>.
 ##
-## Copyright 1998-2020 The OpenLDAP Foundation.
+## Copyright 1998-2021 The OpenLDAP Foundation.
 ## All rights reserved.
 ##
 ## Redistribution and use in source and binary forms, with or without
@@ -40,7 +40,7 @@ lint5: lint5-local FORCE
 clean-common: 	FORCE
 	$(RM) $(LIBRARY) ../$(LIBRARY) $(XLIBRARY) \
 		$(PROGRAMS) $(XPROGRAMS) $(XSRCS) $(XXSRCS) \
-		*.o *.lo a.out *.exe core version.c .libs/*
+		*.o *.lo a.out *.exe *.pc core version.c .libs/*
 
 depend-common: FORCE
 	$(MKDEP) $(DEFS) $(DEFINES) $(SRCS) $(XXSRCS)

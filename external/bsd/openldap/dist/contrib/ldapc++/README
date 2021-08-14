@@ -6,7 +6,7 @@ Headerfiles installed.
 
 Installation:
 =============
-Just run the "configure" script with the apropriate options. Especially
+Just run the "configure" script with the appropriate options. Especially
 these two options can be imported, if you didn't install the OpenLDAP-
 libraries in the default place:
 
@@ -14,7 +14,7 @@ libraries in the default place:
         C-libraries are located.
 --with-ldap-includes=<path to ldap include files> : To tell configure
         where the OpenLDAP include files are located.
---enable-debug to enable compliation with debugging symbols and stderr
+--enable-debug to enable compilation with debugging symbols and stderr
         output
 (run "configure --help" to see all possible command line options)
 

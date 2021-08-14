@@ -1,40 +1,65 @@
 # $OpenLDAP$
-# Copyright 2007-2020 The OpenLDAP Foundation, All Rights Reserved.
+# Copyright 2007-2021 The OpenLDAP Foundation, All Rights Reserved.
 # COPYING RESTRICTIONS APPLY, see COPYRIGHT.
 
-H1: Upgrading from 2.3.x
+H1: Upgrading from 2.4.x
 
 The following sections attempt to document the steps you will need to take in order 
-to upgrade from the latest 2.3.x OpenLDAP version.
+to upgrade from the latest 2.4.x OpenLDAP version.
 
 The normal upgrade procedure, as discussed in the {{SECT:Maintenance}} section, should 
 of course still be followed prior to doing any of this.
 
 H2: {{B:cn=config}} olc* attributes
 
-Quite a few {{olc*}} attributes have now become obsolete, if you see in your logs 
-entries like below, just remove them from the relevant ldif file.
+H2: ppolicy overlay
 
->           olcReplicationInterval: value #0: <olcReplicationInterval> keyword is obsolete (ignored)
+The overlay now implements version 10 of the ppolicy draft in full. This includes the notion of a password
+administrator where applicable (as determined by having a {{manage}} permission to the {{userPassword}} attribute)
+and skips certain processing when there is no valid policy in effect or where the operation is initiated by
+a password administrator. Many attributes are now tagged with {{NO-USER-MODIFICATION}} in the schema, requiring
+the use of {{relax}} control to modify them.
 
-H2: ACLs: searches require privileges on the search base
+In OpenLDAP 2.4 the {{slapo-ppolicy}}(5) overlay relied on a separate schema file to be included for it to function.
+This schema is now implemented internally in the slapo-ppolicy module. When upgrading {{slapd.conf}}(5) deployments
+the include statement for the schema must be removed.  For {{slapd-config}}(5) deployments, the config database
+must be exported via slapcat and the old ppolicy schema removed from the export.  The resulting config database
+can then be imported.
 
-Search operations now require "search" privileges on the "entry" pseudo-attribute of the search
-base. While upgrading from 2.3.x, make sure your ACLs grant such privileges to all desired search
-bases.
+H2: unique overlay
 
-For example, assuming you have the following ACL:
+In OpenLDAP 2.4 it was possible to bypass {{slapo-unique}}(5) checks by using the manageDSAIT control as a part of the
+request. This is no longer possible. To achieve the same functionality the relax control must be used instead, and the
+binding identity must have manage permissions on the entry being modified.
 
->           access to dn.sub="ou=people,dc=example,dc=com" by * search
+With OpenLDAP 2.5 a new keyword "serialize" has been added as a part of the unique_uri configuration parameter. This
+will cause all write operations requiring uniqueness to be serialized so as to avoid the scenario where multiple
+concurrent updates can prevent uniqueness from being enforced. See the {{slapo-unique}}(5) man page for further details.
 
-Searches using a base of "dc=example,dc=com" will only be allowed if you add the following ACL:
+H2: ldap and meta backends
 
->           access to dn.base="dc=example,dc=com" attrs=entry by * search
+Several deprecated configuration directives for {{slapd-ldap}}(5) and {{slapd-meta}}(5) have been removed. Configurations
+using those directive must be updated to use supported directives prior to upgrade.  See the {{slapd-ldap}}(5) and
+{{slapd-meta}}(5) man pages from OpenLDAP 2.4 for a list of deprecated directives.
 
-Note: The {{slapd.access}}(5) man page states that this requirement was introduced
-with OpenLDAP 2.3. However, it is the default behavior only since 2.4.
+H2: shell backend
 
+This deprecated backend has been removed from OpenLDAP 2.5. Configurations making use of this backend must remove it
+prior to upgrade. The {{slapd-sock}}(5) backend is recommended as an alternative.
 
+H2: perl and sql backends
 
-ADD MORE HERE
+The {{slapd-perl}}(5) and {{slapd-sql}}(5) backends are now deprecated and no longer automatically enabled with
+the --enable-backends configure flag.
 
+H2: hdb and bdb backends
+
+The Berkeley DB based slapd-bdb and slapd-hdb backends have been removed from OpenLDAP 2.5. Deployments making use
+of these backends must migrate their configurations to use {{slapd-mdb}}(5) prior to upgrade.
+
+H2: mdb backend
+
+Due to database format changes between OpenLDAP 2.4 and OpenLDAP 2.5 it is mandatory for existing {{slapd-mdb}}(5) databases
+to be exported via an OpenLDAP 2.4 slapcat prior to upgrade. They must then be reloaded via an OpenLDAP 2.5 slapadd after
+the binaries are updated. It is also advised to determine if the new {{slapd-mdb}}(5) idlexp backend directive and/or
+the multival database directive should be added to the OpenLDAP 2.5 configuration prior to import.

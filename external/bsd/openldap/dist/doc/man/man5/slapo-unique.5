@@ -1,5 +1,5 @@
 .TH SLAPO-UNIQUE 5 "RELEASEDATE" "OpenLDAP LDVERSION"
-.\" Copyright 2004-2020 The OpenLDAP Foundation All Rights Reserved.
+.\" Copyright 2004-2021 The OpenLDAP Foundation All Rights Reserved.
 .\" Copying restrictions apply.  See COPYRIGHT/LICENSE.
 .\" $OpenLDAP$
 .SH NAME
@@ -39,20 +39,21 @@ They should appear after the
 .B overlay
 directive.
 .TP
-.B unique_uri <[strict ][ignore ]URI[URI...]...>
+.B unique_uri <[strict ][ignore ][serialize ]URI[[ URI...]...]>
 Configure the base, attributes, scope, and filter for uniqueness
 checking.  Multiple URIs may be specified within a domain,
 allowing complex selections of objects.  Multiple
 .B unique_uri
 statements or
 .B olcUniqueURI
-attributes will create independent domains, each with their own
+attribute values will create independent domains, each with their own
 independent lists of URIs and ignore/strict settings.
 
 Keywords
-.B strict
+.BR strict ,
+.BR ignore ,
 and
-.B ignore
+.B serialize
 have to be enclosed in quotes (") together with the URI.
 
 The LDAP URI syntax is a subset of
@@ -119,6 +120,17 @@ mode extends the concept of uniqueness to include null values, such
 that only one attribute within a subtree will be allowed to have a
 null value.  Strictness applies to all URIs within a uniqueness
 domain, but some domains may be strict while others are not.
+
+It is possible to enforce strict serialization of modifications by
+prepending the keyword
+.B serialize.
+By default, no serialization is performed, so multiple modifications
+occurring nearly simultaneously may see incomplete uniqueness results.
+Using
+.B serialize
+will force individual write operations to fully complete before allowing
+any others to proceed, to ensure that each operation's uniqueness checks
+are consistent.
 .LP
 It is not possible to set both URIs and legacy slapo\-unique configuration
 parameters simultaneously. In general, the legacy configuration options
@@ -161,8 +173,8 @@ Typical attributes for the
 URIs are intentionally not hardcoded into the overlay to allow for
 maximum flexibility in meeting site-specific requirements.
 .LP
-Replication and operations with
-.B manageDsaIt
+Replication and operations with the
+.B relax
 control are allowed to bypass this enforcement. It is therefore important that
 all servers accepting writes have this overlay configured in order to maintain
 uniqueness in a replicated DIT.

@@ -1,6 +1,6 @@
 .TH LDAP_GET_OPTION 3 "RELEASEDATE" "OpenLDAP LDVERSION"
 .\" $OpenLDAP$
-.\" Copyright 1998-2020 The OpenLDAP Foundation All Rights Reserved.
+.\" Copyright 1998-2021 The OpenLDAP Foundation All Rights Reserved.
 .\" Copying restrictions apply.  See COPYRIGHT/LICENSE.
 .SH NAME
 ldap_get_option, ldap_set_option \- LDAP option handling routines
@@ -250,7 +250,9 @@ returns in case of no activity.
 must be a 
 .BR "struct timeval **"
 (the caller has to free
-.BR *outvalue ) ,
+.BR *outvalue
+using
+.BR ldap_memfree (3)),
 and
 .B invalue
 must be a 
@@ -374,6 +376,21 @@ must be a
 This is a read-only, handle-specific option.
 This option is OpenLDAP specific.
 .TP
+.B LDAP_OPT_SOCKET_BIND_ADDRESSES
+Sets/gets a space-separated list of IP Addresses used as binding interface
+to remote server when trying to establish a connection. Only one valid IPv4
+address and/or one valid IPv6 address are allowed in the list.
+.BR outvalue
+must be a
+.BR "char **",
+and the caller is responsible of freeing the returned string by calling
+.BR ldap_memfree (3),
+while
+.BR invalue
+must be a
+.BR "const char *" ;
+the library duplicates the corresponding string.
+.TP
 .B LDAP_OPT_TIMELIMIT
 Sets/gets the value that defines the time limit after which
 a search operation should be terminated by the server.
@@ -392,7 +409,9 @@ Sets/gets a timeout value for the synchronous API calls.
 must be a 
 .BR "struct timeval **"
 (the caller has to free
-.BR *outvalue ) ,
+.BR *outvalue
+using
+.BR ldap_memfree (3)),
 and
 .B invalue
 must be a 
@@ -426,6 +445,17 @@ and the
 .BR port
 fields.
 This option is OpenLDAP specific.
+.TP
+.B LDAP_OPT_KEEPCONN
+Instructs
+.BR ldap_result (3)
+to keep the connection open on read error or if Notice of Disconnection is received. In these cases, the connection should be closed by the caller.
+This option is OpenLDAP specific.
+.TP
+.B LDAP_OPT_TCP_USER_TIMEOUT
+Allows to configure TCP_USER_TIMEOUT in milliseconds on the connection, overriding the operating system setting.
+This option is OpenLDAP specific and supported only on Linux 2.6.37 or higher.
+
 .SH SASL OPTIONS
 The SASL options are OpenLDAP specific.
 .TP
@@ -557,6 +587,22 @@ must be a
 .BR "char **" .
 Its content needs to be freed by the caller using
 .BR ldap_memfree (3).
+.B LDAP_OPT_X_SASL_CBINDING
+Sets/gets the channel-binding type to use in SASL,
+one of
+.BR LDAP_OPT_X_SASL_CBINDING_NONE
+(the default),
+.BR LDAP_OPT_X_SASL_CBINDING_TLS_UNIQUE
+the "tls-unique" type from RFC 5929.
+.BR LDAP_OPT_X_SASL_CBINDING_TLS_ENDPOINT
+the "tls-server-end-point" from RFC 5929, compatible with Windows.
+.BR invalue
+must be
+.BR "const int *" ;
+.BR outvalue
+must be
+.BR "int *" .
+.TP
 .SH TCP OPTIONS
 The TCP options are OpenLDAP specific.
 Mainly intended for use with Linux, they may not be portable.
@@ -622,6 +668,14 @@ Sets/gets the full-path of the certificate file.
 .BR invalue
 must be
 .BR "const char *" ;
+.BR outvalue
+must be
+.BR "char **" ,
+and its contents need to be freed by the caller using
+.BR ldap_memfree (3).
+.TP
+.B LDAP_OPT_X_TLS_CIPHER
+Gets the cipher being used on an established TLS session.
 .BR outvalue
 must be
 .BR "char **" ,
@@ -708,7 +762,20 @@ must be
 .BR "char **" ,
 and its contents need to be freed by the caller using
 .BR ldap_memfree (3).
-Ignored by GnuTLS and Mozilla NSS.
+.TP
+.B LDAP_OPT_X_TLS_ECNAME
+Gets/sets the name of the curve(s) used for
+elliptic curve key exchanges.
+.BR invalue
+must be
+.BR "const char *" ;
+.BR outvalue
+must be
+.BR "char **" ,
+and its contents need to be freed by the caller using
+.BR ldap_memfree (3).
+Ignored by GnuTLS. In GnuTLS a curve may be selected
+in the cipher suite specification.
 .TP
 .B LDAP_OPT_X_TLS_KEYFILE
 Sets/gets the full-path of the certificate key file.
@@ -729,6 +796,23 @@ must be
 A non-zero value pointed to by
 .BR invalue
 tells the library to create a context for a server.
+.TP
+.B LDAP_OPT_X_TLS_PEERCERT
+Gets the peer's certificate in DER format from an established TLS session.
+.BR outvalue
+must be
+.BR "struct berval *" ,
+and the data it returns needs to be freed by the caller using
+.BR ldap_memfree (3).
+.TP
+.B LDAP_OPT_X_TLS_PROTOCOL_MAX
+Sets/gets the maximum protocol version.
+.BR invalue
+must be
+.BR "const int *" ;
+.BR outvalue
+must be
+.BR "int *" .
 .TP
 .B LDAP_OPT_X_TLS_PROTOCOL_MIN
 Sets/gets the minimum protocol version.
@@ -753,10 +837,19 @@ must be
 .BR "char **" ,
 and its contents need to be freed by the caller using
 .BR ldap_memfree (3).
-Ignored by GnuTLS older than version 2.2.  Ignored by Mozilla NSS.
+Ignored by GnuTLS older than version 2.2.
 .TP
 .B LDAP_OPT_X_TLS_REQUIRE_CERT
 Sets/gets the peer certificate checking strategy,
+one of
+.BR LDAP_OPT_X_TLS_NEVER ,
+.BR LDAP_OPT_X_TLS_HARD ,
+.BR LDAP_OPT_X_TLS_DEMAND ,
+.BR LDAP_OPT_X_TLS_ALLOW ,
+.BR LDAP_OPT_X_TLS_TRY .
+.TP
+.B LDAP_OPT_X_TLS_REQUIRE_SAN
+Sets/gets the peer certificate subjectAlternativeName checking strategy,
 one of
 .BR LDAP_OPT_X_TLS_NEVER ,
 .BR LDAP_OPT_X_TLS_HARD ,
@@ -772,6 +865,14 @@ must be
 When using the OpenSSL library this is an SSL*. When using other
 crypto libraries this is a pointer to an OpenLDAP private structure.
 Applications generally should not use this option.
+.TP
+.B LDAP_OPT_X_TLS_VERSION
+Gets the TLS version being used on an established TLS session.
+.BR outvalue
+must be
+.BR "char **" ,
+and its contents need to be freed by the caller using
+.BR ldap_memfree (3).
 .SH ERRORS
 On success, the functions return
 .BR LDAP_OPT_SUCCESS ,

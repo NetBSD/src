@@ -2,7 +2,7 @@
 # $OpenLDAP$
 ## This work is part of OpenLDAP Software <http://www.openldap.org/>.
 ##
-## Copyright 1998-2020 The OpenLDAP Foundation.
+## Copyright 1998-2021 The OpenLDAP Foundation.
 ## All rights reserved.
 ##
 ## Redistribution and use in source and binary forms, with or without
@@ -29,12 +29,12 @@ fi
 
 echo "Starting slapd on TCP/IP port $PORT1..."
 . $CONFFILTER $BACKEND < $CONF > $CONF1
-$SLAPD -f $CONF1 -h $URI1 -d $LVL $TIMING >> /dev/null 2>&1 &
+$SLAPD -f $CONF1 -h $URI1 -d $LVL >> /dev/null 2>&1 &
 PID=$!
 
 echo "Using ldapsearch to retrieve all the entries..."
 for i in 0 1 2 3 4 5; do
-	$LDAPSEARCH -S "" -b "$BASEDN" -h $LOCALHOST -p $PORT1 > $SEARCHOUT 2>&1
+	$LDAPSEARCH -S "" -b "$BASEDN" -H $URI1 > $SEARCHOUT 2>&1
 	RC=$?
 	if test $RC = 1 ; then
 		echo "Waiting 5 seconds for slapd to start..."

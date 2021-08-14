@@ -2,7 +2,7 @@
 # $OpenLDAP$
 ## This work is part of OpenLDAP Software <http://www.openldap.org/>.
 ##
-## Copyright 1998-2020 The OpenLDAP Foundation.
+## Copyright 1998-2021 The OpenLDAP Foundation.
 ## All rights reserved.
 ##
 ## Redistribution and use in source and binary forms, with or without
@@ -27,8 +27,8 @@ $SLAPPASSWD -g -n >$CONFIGPWF
 echo "rootpw `$SLAPPASSWD -T $CONFIGPWF`" >$TESTDIR/configpw.conf
 
 echo "Starting slapd on TCP/IP port $PORT1..."
-. $CONFFILTER $BACKEND $MONITORDB < $PPOLICYCONF > $CONF1
-$SLAPD -f $CONF1 -h $URI1 -d $LVL $TIMING > $LOG1 2>&1 &
+. $CONFFILTER $BACKEND < $PPOLICYCONF > $CONF1
+$SLAPD -f $CONF1 -h $URI1 -d $LVL > $LOG1 2>&1 &
 PID=$!
 if test $WAIT != 0 ; then
     echo PID $PID
@@ -38,12 +38,14 @@ KILLPIDS="$PID"
 
 USER="uid=nd, ou=People, dc=example, dc=com"
 PASS=testpassword
+PWADMIN="uid=ndadmin, ou=People, dc=example, dc=com"
+ADMINPASSWD=testpw
 
 sleep 1
 
 echo "Using ldapsearch to check that slapd is running..."
 for i in 0 1 2 3 4 5; do
-	$LDAPSEARCH -s base -b "$MONITOR" -h $LOCALHOST -p $PORT1 \
+	$LDAPSEARCH -s base -b "$MONITOR" -H $URI1 \
 		'objectclass=*' > /dev/null 2>&1
 	RC=$?
 	if test $RC = 0 ; then
@@ -60,10 +62,24 @@ fi
 
 echo /dev/null > $TESTOUT
 
+echo "Testing redundant ppolicy instance..."
+$LDAPADD -D cn=config -H $URI1 -y $CONFIGPWF <<EOF >> $TESTOUT 2>&1
+dn: olcOverlay=ppolicy,olcDatabase={1}$BACKEND,cn=config
+objectClass: olcOverlayConfig
+objectClass: olcPPolicyConfig
+olcOverlay: ppolicy
+olcPPolicyDefault: cn=duplicate policy,ou=policies,dc=example,dc=com
+EOF
+RC=$?
+if test $RC = 0 ; then
+	echo "ldapadd should have failed ($RC)!"
+	test $KILLSERVERS != no && kill -HUP $KILLPIDS
+	exit 1
+fi
+
 echo "Using ldapadd to populate the database..."
-# may need "-e relax" for draft 09, but not yet.
-$LDAPADD -D "$MANAGERDN" -h $LOCALHOST -p $PORT1 -w $PASSWD < \
-	$LDIFPPOLICY >> $TESTOUT 2>&1
+$LDAPADD -D "$MANAGERDN" -H $URI1 -w $PASSWD -e '!relax' \
+	< $LDIFPPOLICY >> $TESTOUT 2>&1
 RC=$?
 if test $RC != 0 ; then
 	echo "ldapadd failed ($RC)!"
@@ -72,14 +88,14 @@ if test $RC != 0 ; then
 fi
 
 echo "Testing account lockout..."
-$LDAPSEARCH -h $LOCALHOST -p $PORT1 -D "$USER" -w wrongpw >$SEARCHOUT 2>&1
+$LDAPSEARCH -H $URI1 -D "$USER" -w wrongpw >$SEARCHOUT 2>&1
 sleep 2
-$LDAPSEARCH -h $LOCALHOST -p $PORT1 -D "$USER" -w wrongpw >>$SEARCHOUT 2>&1
+$LDAPSEARCH -H $URI1 -D "$USER" -w wrongpw >>$SEARCHOUT 2>&1
 sleep 2
-$LDAPSEARCH -h $LOCALHOST -p $PORT1 -D "$USER" -w wrongpw >>$SEARCHOUT 2>&1
+$LDAPSEARCH -H $URI1 -D "$USER" -w wrongpw >>$SEARCHOUT 2>&1
 sleep 2
-$LDAPSEARCH -e ppolicy -h $LOCALHOST -p $PORT1 -D "$USER" -w wrongpw >> $SEARCHOUT 2>&1
-$LDAPSEARCH -e ppolicy -h $LOCALHOST -p $PORT1 -D "$USER" -w $PASS >> $SEARCHOUT 2>&1
+$LDAPSEARCH -e ppolicy -H $URI1 -D "$USER" -w wrongpw >> $SEARCHOUT 2>&1
+$LDAPSEARCH -e ppolicy -H $URI1 -D "$USER" -w $PASS >> $SEARCHOUT 2>&1
 COUNT=`grep "Account locked" $SEARCHOUT | wc -l`
 if test $COUNT != 2 ; then
 	echo "Account lockout test failed"
@@ -87,10 +103,14 @@ if test $COUNT != 2 ; then
 	exit 1
 fi
 
-echo "Waiting 20 seconds for lockout to reset..."
-sleep 20
+DELAY=`$LDAPSEARCH -D "$MANAGERDN" -H $URI1 -w $PASSWD \
+    -b "$USER" -E accountUsability 1.1 | sed -n -e 's/.*seconds_before_unlock=\(\d*\)/\1/p'`
 
-$LDAPSEARCH -e ppolicy -h $LOCALHOST -p $PORT1 -D "$USER" -w $PASS \
+echo "Waiting $DELAY seconds for lockout to reset..."
+sleep $DELAY
+sleep 1
+
+$LDAPSEARCH -e ppolicy -H $URI1 -D "$USER" -w $PASS \
 	-b "$BASEDN" -s base >> $SEARCHOUT 2>&1
 RC=$?
 if test $RC != 0 ; then
@@ -99,20 +119,24 @@ if test $RC != 0 ; then
 	exit $RC
 fi
 
-echo "Testing password expiration"
-echo "Waiting 20 seconds for password to expire..."
-sleep 20
+DELAY=`$LDAPSEARCH -D "$MANAGERDN" -H $URI1 -w $PASSWD \
+    -b "$USER" -E accountUsability 1.1 | sed -n -e 's/.*expire=\(\d*\)/\1/p'`
 
-$LDAPSEARCH -e ppolicy -h $LOCALHOST -p $PORT1 -D "$USER" -w $PASS \
+echo "Testing password expiration"
+echo "Waiting $DELAY seconds for password to expire..."
+sleep $DELAY
+sleep 1
+
+$LDAPSEARCH -e ppolicy -H $URI1 -D "$USER" -w $PASS \
 	-b "$BASEDN" -s base > $SEARCHOUT 2>&1
 sleep 2
-$LDAPSEARCH -e ppolicy -h $LOCALHOST -p $PORT1 -D "$USER" -w $PASS \
+$LDAPSEARCH -e ppolicy -H $URI1 -D "$USER" -w $PASS \
 	-b "$BASEDN" -s base >> $SEARCHOUT 2>&1
 sleep 2
-$LDAPSEARCH -e ppolicy -h $LOCALHOST -p $PORT1 -D "$USER" -w $PASS \
+$LDAPSEARCH -e ppolicy -H $URI1 -D "$USER" -w $PASS \
 	-b "$BASEDN" -s base >> $SEARCHOUT 2>&1
 sleep 2
-$LDAPSEARCH -e ppolicy -h $LOCALHOST -p $PORT1 -D "$USER" -w $PASS \
+$LDAPSEARCH -e ppolicy -H $URI1 -D "$USER" -w $PASS \
 	-b "$BASEDN" -s base >> $SEARCHOUT 2>&1
 RC=$?
 if test $RC = 0 ; then
@@ -129,7 +153,7 @@ if test $COUNT != 3 ; then
 fi
 
 echo "Resetting password to clear expired status"
-$LDAPPASSWD -h $LOCALHOST -p $PORT1 \
+$LDAPPASSWD -H $URI1 \
 	-w secret -s $PASS \
 	-D "$MANAGERDN" "$USER" >> $TESTOUT 2>&1
 RC=$?
@@ -140,9 +164,9 @@ if test $RC != 0 ; then
 fi
 
 echo "Filling password history..."
-$LDAPMODIFY -v -D "$USER" -h $LOCALHOST -p $PORT1 -w $PASS >> \
+$LDAPMODIFY -v -D "$USER" -H $URI1 -w $PASS >> \
 	$TESTOUT 2>&1 << EOMODS
-dn: uid=nd, ou=People, dc=example, dc=com
+dn: $USER
 changetype: modify
 delete: userpassword
 userpassword: $PASS
@@ -150,7 +174,7 @@ userpassword: $PASS
 replace: userpassword
 userpassword: 20urgle12-1
 
-dn: uid=nd, ou=People, dc=example, dc=com
+dn: $USER
 changetype: modify
 delete: userpassword
 userpassword: 20urgle12-1
@@ -158,7 +182,7 @@ userpassword: 20urgle12-1
 replace: userpassword
 userpassword: 20urgle12-2
 
-dn: uid=nd, ou=People, dc=example, dc=com
+dn: $USER
 changetype: modify
 delete: userpassword
 userpassword: 20urgle12-2
@@ -166,7 +190,7 @@ userpassword: 20urgle12-2
 replace: userpassword
 userpassword: 20urgle12-3
 
-dn: uid=nd, ou=People, dc=example, dc=com
+dn: $USER
 changetype: modify
 delete: userpassword
 userpassword: 20urgle12-3
@@ -174,7 +198,7 @@ userpassword: 20urgle12-3
 replace: userpassword
 userpassword: 20urgle12-4
 
-dn: uid=nd, ou=People, dc=example, dc=com
+dn: $USER
 changetype: modify
 delete: userpassword
 userpassword: 20urgle12-4
@@ -182,7 +206,7 @@ userpassword: 20urgle12-4
 replace: userpassword
 userpassword: 20urgle12-5
 
-dn: uid=nd, ou=People, dc=example, dc=com
+dn: $USER
 changetype: modify
 delete: userpassword
 userpassword: 20urgle12-5
@@ -198,9 +222,9 @@ if test $RC != 0 ; then
 	exit $RC
 fi
 echo "Testing password history..."
-$LDAPMODIFY -v -D "$USER" -h $LOCALHOST -p $PORT1 -w 20urgle12-6 >> \
+$LDAPMODIFY -v -D "$USER" -H $URI1 -w 20urgle12-6 >> \
 	$TESTOUT 2>&1 << EOMODS
-dn: uid=nd, ou=People, dc=example, dc=com
+dn: $USER
 changetype: modify
 delete: userPassword
 userPassword: 20urgle12-6
@@ -216,17 +240,43 @@ if test $RC = 0 ; then
 	exit 1
 fi
 
+echo "Testing failed logins when password/policy missing..."
+
+$LDAPSEARCH -e ppolicy -H $URI1 \
+	-D "uid=test, ou=People,$BASEDN" -w hasnopolicy \
+	-b "$BASEDN" -s base > $SEARCHOUT 2>&1
+RC=$?
+if test $RC = 0 ; then
+	echo "Password accepted ($RC)!"
+	test $KILLSERVERS != no && kill -HUP $KILLPIDS
+	exit 1
+fi
+
+$LDAPSEARCH -e ppolicy -H $URI1 -D "$BASEDN" -w hasnopw \
+	-b "$BASEDN" -s base > $SEARCHOUT 2>&1
+RC=$?
+if test $RC = 0 ; then
+	echo "Password accepted ($RC)!"
+	test $KILLSERVERS != no && kill -HUP $KILLPIDS
+	exit 1
+fi
+
+$LDAPSEARCH -H $URI1 -D "$MANAGERDN" -w $PASSWD -b "$BASEDN" \* \+ > $SEARCHOUT 2>&1
+COUNT=`grep "pwdFailureTime" $SEARCHOUT | wc -l`
+if test $COUNT != 0 ; then
+	echo "Failed login stored on an account without policy and or password"
+	test $KILLSERVERS != no && kill -HUP $KILLPIDS
+	exit 1
+fi
+
 echo "Testing forced reset..."
 
-$LDAPMODIFY -v -D "$MANAGERDN" -h $LOCALHOST -p $PORT1 -w $PASSWD >> \
+$LDAPMODIFY -v -D "$PWADMIN" -H $URI1 -w $ADMINPASSWD >> \
 	$TESTOUT 2>&1 << EOMODS
-dn: uid=nd, ou=People, dc=example, dc=com
+dn: $USER
 changetype: modify
 replace: userPassword
 userPassword: $PASS
--
-replace: pwdReset
-pwdReset: TRUE
 
 EOMODS
 RC=$?
@@ -236,7 +286,7 @@ if test $RC != 0 ; then
 	exit $RC
 fi
 
-$LDAPSEARCH -e ppolicy -h $LOCALHOST -p $PORT1 -D "$USER" -w $PASS \
+$LDAPSEARCH -e ppolicy -H $URI1 -D "$USER" -w $PASS \
 	-b "$BASEDN" -s base > $SEARCHOUT 2>&1
 RC=$?
 if test $RC = 0 ; then
@@ -254,9 +304,9 @@ fi
 
 echo "Clearing forced reset..."
 
-$LDAPMODIFY -v -D "$MANAGERDN" -h $LOCALHOST -p $PORT1 -w $PASSWD >> \
+$LDAPMODIFY -v -D "$MANAGERDN" -H $URI1 -w $PASSWD >> \
 	$TESTOUT 2>&1 << EOMODS
-dn: uid=nd, ou=People, dc=example, dc=com
+dn: $USER
 changetype: modify
 delete: pwdReset
 
@@ -268,7 +318,7 @@ if test $RC != 0 ; then
 	exit $RC
 fi
 
-$LDAPSEARCH -e ppolicy -h $LOCALHOST -p $PORT1 -D "$USER" -w $PASS \
+$LDAPSEARCH -e ppolicy -H $URI1 -D "$USER" -w $PASS \
 	-b "$BASEDN" -s base > $SEARCHOUT 2>&1
 RC=$?
 if test $RC != 0 ; then
@@ -279,7 +329,7 @@ fi
 
 echo "Testing Safe modify..."
 
-$LDAPPASSWD -h $LOCALHOST -p $PORT1 \
+$LDAPPASSWD -H $URI1 \
 	-w $PASS -s failexpect \
 	-D "$USER" >> $TESTOUT 2>&1
 RC=$?
@@ -294,7 +344,7 @@ sleep 2
 OLDPASS=$PASS
 PASS=successexpect
 
-$LDAPPASSWD -h $LOCALHOST -p $PORT1 \
+$LDAPPASSWD -H $URI1 \
 	-w $OLDPASS -s $PASS -a $OLDPASS \
 	-D "$USER" >> $TESTOUT 2>&1
 RC=$?
@@ -306,7 +356,7 @@ fi
 
 echo "Testing length requirement..."
 # check control in response (ITS#5711)
-$LDAPPASSWD -h $LOCALHOST -p $PORT1 \
+$LDAPPASSWD -H $URI1 \
 	-w $PASS -a $PASS -s 2shr \
 	-D "$USER" -e ppolicy > ${TESTOUT}.2 2>&1
 RC=$?
@@ -329,9 +379,21 @@ if test $COUNT != 1 ; then
 	exit 1
 fi
 
+$LDAPPASSWD -H $URI1 \
+	-w $PASS -a $PASS -s passwordthatistoolong \
+	-D "$USER" -e ppolicy > ${TESTOUT}.2 2>&1
+RC=$?
+cat ${TESTOUT}.2 >> $TESTOUT
+COUNT=`grep "Password is too long for policy" ${TESTOUT}.2 | wc -l`
+if test $COUNT != 1 ; then
+	echo "Control not returned in response"
+	test $KILLSERVERS != no && kill -HUP $KILLPIDS
+	exit 1
+fi
+
 echo "Testing hashed length requirement..."
 
-$LDAPMODIFY -h $LOCALHOST -p $PORT1 -D "$USER" -w $PASS > \
+$LDAPMODIFY -H $URI1 -D "$USER" -w $PASS > \
 	${TESTOUT}.2 2>&1 << EOMODS
 dn: $USER
 changetype: modify
@@ -358,7 +420,7 @@ fi
 
 echo "Testing multiple password add/modify checks..."
 
-$LDAPMODIFY -h $LOCALHOST -p $PORT1 -D "$MANAGERDN" -w $PASSWD >> \
+$LDAPMODIFY -H $URI1 -D "$MANAGERDN" -w $PASSWD >> \
 	$TESTOUT 2>&1 << EOMODS
 dn: cn=Add Should Fail, ou=People, dc=example, dc=com
 changetype: add
@@ -375,7 +437,7 @@ if test $RC = 0 ; then
 	exit 1
 fi
 
-$LDAPMODIFY -h $LOCALHOST -p $PORT1 -D "$MANAGERDN" -w $PASSWD >> \
+$LDAPMODIFY -H $URI1 -D "$MANAGERDN" -w $PASSWD >> \
 	$TESTOUT 2>&1 << EOMODS
 dn: $USER
 changetype: modify
@@ -390,7 +452,7 @@ if test $RC = 0 ; then
 	exit 1
 fi
 
-$LDAPMODIFY -h $LOCALHOST -p $PORT1 -D "$MANAGERDN" -w $PASSWD >> \
+$LDAPMODIFY -H $URI1 -D "$MANAGERDN" -w $PASSWD >> \
 	$TESTOUT 2>&1 << EOMODS
 dn: $USER
 changetype: modify
@@ -405,6 +467,62 @@ if test $RC = 0 ; then
 	exit 1
 fi
 
+echo "Testing idle password expiration"
+echo "Reconfiguring policy to replace expiration with idle expiration..."
+$LDAPMODIFY -v -D "$MANAGERDN" -H $URI1 -w $PASSWD >> \
+	$TESTOUT 2>&1 << EOMODS
+dn: cn=Standard Policy, ou=Policies, dc=example, dc=com
+changetype: modify
+delete: pwdMaxAge
+-
+add: pwdMaxIdle
+pwdMaxIdle: 15
+
+EOMODS
+RC=$?
+if test $RC != 0 ; then
+	echo "ldapmodify failed ($RC)!"
+	test $KILLSERVERS != no && kill -HUP $KILLPIDS
+	exit $RC
+fi
+
+$LDAPSEARCH -e ppolicy -H $URI1 -D "$USER" -w $PASS \
+	-b "$BASEDN" -s base > $SEARCHOUT 2>&1
+
+DELAY=`$LDAPSEARCH -D "$MANAGERDN" -H $URI1 -w $PASSWD \
+    -b "$USER" -E accountUsability 1.1 | sed -n -e 's/.*expire=\(\d*\)/\1/p'`
+
+echo "Waiting $DELAY seconds for password to expire..."
+sleep $DELAY
+sleep 1
+
+$LDAPSEARCH -e ppolicy -H $URI1 -D "$USER" -w $PASS \
+	-b "$BASEDN" -s base >> $SEARCHOUT 2>&1
+RC=$?
+if test $RC != 49 ; then
+	echo "Password idle expiration failed ($RC)!"
+	test $KILLSERVERS != no && kill -HUP $KILLPIDS
+	exit 1
+fi
+
+echo "Reverting policy changes..."
+$LDAPMODIFY -v -D "$MANAGERDN" -H $URI1 -w $PASSWD >> \
+	$TESTOUT 2>&1 << EOMODS
+dn: cn=Standard Policy, ou=Policies, dc=example, dc=com
+changetype: modify
+delete: pwdMaxIdle
+-
+add: pwdMaxAge
+pwdMaxAge: 30
+
+EOMODS
+RC=$?
+if test $RC != 0 ; then
+	echo "ldapmodify failed ($RC)!"
+	test $KILLSERVERS != no && kill -HUP $KILLPIDS
+	exit $RC
+fi
+
 if test "$BACKLDAP" != "ldapno" && test "$SYNCPROV" != "syncprovno"  ; then 
 echo ""
 echo "Setting up policy state forwarding test..."
@@ -412,7 +530,7 @@ echo "Setting up policy state forwarding test..."
 mkdir $DBDIR2
 sed -e "s,$DBDIR1,$DBDIR2," < $CONF1 > $CONF2
 echo "Starting slapd consumer on TCP/IP port $PORT2..."
-$SLAPD -f $CONF2 -h $URI2 -d $LVL $TIMING > $LOG2 2>&1 &
+$SLAPD -f $CONF2 -h $URI2 -d $LVL > $LOG2 2>&1 &
 PID=$!
 if test $WAIT != 0 ; then
     echo PID $PID
@@ -555,6 +673,100 @@ fi
 
 # End of chaining test
 
+fi
+
+echo ""
+echo "Testing obsolete Netscape ppolicy controls..."
+echo "Enabling Netscape controls..."
+$LDAPMODIFY -v -D cn=config -H $URI1 -y $CONFIGPWF >> \
+	$TESTOUT 2>&1 << EOMODS
+dn: olcOverlay={0}ppolicy,olcDatabase={1}$BACKEND,cn=config
+changetype: modify
+replace: olcPPolicySendNetscapeControls
+olcPPolicySendNetscapeControls: TRUE
+-
+
+EOMODS
+RC=$?
+if test $RC != 0 ; then
+	echo "ldapmodify failed ($RC)!"
+	test $KILLSERVERS != no && kill -HUP $KILLPIDS
+	exit $RC
+fi
+
+echo "Reconfiguring policy to remove grace logins..."
+$LDAPMODIFY -v -D "$MANAGERDN" -H $URI1 -w $PASSWD >> \
+	$TESTOUT 2>&1 << EOMODS
+dn: cn=Standard Policy, ou=Policies, dc=example, dc=com
+changetype: modify
+delete: pwdGraceAuthnLimit
+-
+replace: pwdMaxAge
+pwdMaxAge: 15
+-
+
+EOMODS
+RC=$?
+if test $RC != 0 ; then
+	echo "ldapmodify failed ($RC)!"
+	test $KILLSERVERS != no && kill -HUP $KILLPIDS
+	exit $RC
+fi
+
+OLDPASS=$PASS
+PASS=newpass
+$LDAPPASSWD -H $URI1 \
+	-w secret -s $PASS \
+	-D "$MANAGERDN" "$USER" >> $TESTOUT 2>&1
+RC=$?
+if test $RC != 0 ; then
+	echo "Setting new password failed ($RC)!"
+	test $KILLSERVERS != no && kill -HUP $KILLPIDS
+	exit $RC
+fi
+
+echo "Clearing forced reset..."
+$LDAPMODIFY -v -D "$MANAGERDN" -H $URI1 -w $PASSWD >> \
+	$TESTOUT 2>&1 << EOMODS
+dn: $USER
+changetype: modify
+delete: pwdReset
+
+EOMODS
+
+DELAY=`$LDAPSEARCH -D "$MANAGERDN" -H $URI1 -w $PASSWD \
+    -b "$USER" -E accountUsability 1.1 | sed -n -e 's/.*expire=\(\d*\)/\1/p'`
+DELAY=`expr $DELAY - 10`
+
+echo "Testing password expiration"
+echo "Waiting $DELAY seconds for password to expire..."
+sleep $DELAY
+
+$LDAPSEARCH -H $URI1 -D "$USER" -w $PASS \
+	-b "$BASEDN" -s base > $SEARCHOUT 2>&1
+sleep 3
+$LDAPSEARCH -H $URI1 -D "$USER" -w $PASS \
+	-b "$BASEDN" -s base >> $SEARCHOUT 2>&1
+sleep 3
+$LDAPSEARCH -H $URI1 -D "$USER" -w $PASS \
+	-b "$BASEDN" -s base >> $SEARCHOUT 2>&1
+sleep 3
+$LDAPSEARCH -H $URI1 -D "$USER" -w $PASS \
+	-b "$BASEDN" -s base >> $SEARCHOUT 2>&1
+sleep 3
+$LDAPSEARCH -H $URI1 -D "$USER" -w $PASS \
+	-b "$BASEDN" -s base >> $SEARCHOUT 2>&1
+RC=$?
+if test $RC = 0 ; then
+	echo "Password expiration failed ($RC)!"
+	test $KILLSERVERS != no && kill -HUP $KILLPIDS
+	exit 1
+fi
+COUNT=`grep "PasswordExpiring" $SEARCHOUT | wc -l`
+if test $COUNT = 0 ; then
+	echo "Password expiring warning test failed!"
+	test $KILLSERVERS != no && kill -HUP $KILLPIDS
+	exit 1
 fi
 
 test $KILLSERVERS != no && kill -HUP $KILLPIDS

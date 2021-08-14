@@ -2,7 +2,7 @@
 # $OpenLDAP$
 ## This work is part of OpenLDAP Software <http://www.openldap.org/>.
 ##
-## Copyright 1998-2020 The OpenLDAP Foundation.
+## Copyright 1998-2021 The OpenLDAP Foundation.
 ## All rights reserved.
 ##
 ## Redistribution and use in source and binary forms, with or without
@@ -19,7 +19,7 @@ echo "running defines.sh"
 mkdir -p $TESTDIR $DBDIR1
 
 echo "Running slapadd to build slapd database..."
-. $CONFFILTER $BACKEND $MONITORDB < $MCONF > $ADDCONF
+. $CONFFILTER $BACKEND < $MCONF > $ADDCONF
 $SLAPADD -f $ADDCONF -l $LDIFORDERED
 RC=$?
 if test $RC != 0 ; then
@@ -28,7 +28,7 @@ if test $RC != 0 ; then
 fi
 
 echo "Running slapindex to index slapd database..."
-. $CONFFILTER $BACKEND $MONITORDB < $CONF > $CONF1
+. $CONFFILTER $BACKEND < $CONF > $CONF1
 $SLAPINDEX -f $CONF1
 RC=$?
 if test $RC != 0 ; then
@@ -37,7 +37,7 @@ if test $RC != 0 ; then
 fi
 
 echo "Starting slapd on TCP/IP port $PORT1..."
-$SLAPD -f $CONF1 -h $URI1 -d $LVL $TIMING > $LOG1 2>&1 &
+$SLAPD -f $CONF1 -h $URI1 -d $LVL > $LOG1 2>&1 &
 PID=$!
 if test $WAIT != 0 ; then
     echo PID $PID
@@ -49,7 +49,7 @@ sleep 1
 
 echo "Testing slapd searching..."
 for i in 0 1 2 3 4 5; do
-	$LDAPSEARCH -s base -b "$MONITOR" -h $LOCALHOST -p $PORT1 \
+	$LDAPSEARCH -s base -b "$MONITOR" -H $URI1 \
 		'objectclass=*' > /dev/null 2>&1
 	RC=$?
 	if test $RC = 0 ; then
@@ -69,7 +69,7 @@ cat /dev/null > $SEARCHOUT
 
 echo "Testing exact searching..."
 echo "# Testing exact searching..." >> $SEARCHOUT
-$LDAPSEARCH -S "" -b "$BASEDN" -h $LOCALHOST -p $PORT1 \
+$LDAPSEARCH -S "" -b "$BASEDN" -H $URI1 \
 	'(sn:=jensen)' >> $SEARCHOUT 2>&1
 RC=$?
 if test $RC != 0 ; then
@@ -80,7 +80,7 @@ fi
 
 echo "Testing approximate searching..."
 echo "# Testing approximate searching..." >> $SEARCHOUT
-$LDAPSEARCH -S "" -b "$BASEDN" -h $LOCALHOST -p $PORT1 \
+$LDAPSEARCH -S "" -b "$BASEDN" -H $URI1 \
 	'(sn~=jensen)' name >> $SEARCHOUT 2>&1
 RC=$?
 if test $RC != 0 ; then
@@ -91,7 +91,7 @@ fi
 
 echo "Testing OR searching..."
 echo "# Testing OR searching..." >> $SEARCHOUT
-$LDAPSEARCH -S "" -b "$BASEDN" -h $LOCALHOST -p $PORT1 \
+$LDAPSEARCH -S "" -b "$BASEDN" -H $URI1 \
 	'(|(givenName=XX*YY*Z)(cn=)(undef=*)(objectclass=groupofnames)(objectclass=groupofuniquenames)(sn:caseExactMatch:=Jones))' >> $SEARCHOUT 2>&1
 RC=$?
 if test $RC != 0 ; then
@@ -102,7 +102,7 @@ fi
 
 echo "Testing AND matching and ends-with searching..."
 echo "# Testing AND matching and ends-with searching..." >> $SEARCHOUT
-$LDAPSEARCH -S "" -b "ou=groups,$BASEDN" -s one -h $LOCALHOST -p $PORT1 \
+$LDAPSEARCH -S "" -b "ou=groups,$BASEDN" -s one -H $URI1 \
 	'(&(|(objectclass=groupofnames)(objectclass=groupofuniquenames))(cn=A*))' >> $SEARCHOUT 2>&1
 RC=$?
 if test $RC != 0 ; then
@@ -113,7 +113,7 @@ fi
 
 echo "Testing NOT searching..."
 echo "# Testing NOT searching..." >> $SEARCHOUT
-$LDAPSEARCH -S "" -b "$BASEDN" -h $LOCALHOST -p $PORT1 \
+$LDAPSEARCH -S "" -b "$BASEDN" -H $URI1 \
 	'(!(objectclass=pilotPerson))' >> $SEARCHOUT 2>&1
 RC=$?
 if test $RC != 0 ; then
@@ -124,7 +124,7 @@ fi
 
 echo "Testing objectClass/attributeType inheritance ..."
 echo "# Testing objectClass/attributeType inheritance ..." >> $SEARCHOUT
-$LDAPSEARCH -M -a never -S "" -b "$BASEDN" -h $LOCALHOST -p $PORT1 \
+$LDAPSEARCH -M -a never -S "" -b "$BASEDN" -H $URI1 \
 	'(&(objectClass=inetorgperson)(userid=uham))' \
 	"2.5.4.0" "userid" >> $SEARCHOUT 2>&1
 RC=$?
@@ -140,7 +140,7 @@ echo "# Testing extended RFC2254 searching:" >> $SEARCHOUT
 FILTER="(:dn:caseIgnoreIA5Match:=example)"
 echo "        f=$FILTER ..."
 echo "#         f=$FILTER ..." >> $SEARCHOUT
-$LDAPSEARCH -S "" -b "$BASEDN" -h $LOCALHOST -p $PORT1 \
+$LDAPSEARCH -S "" -b "$BASEDN" -H $URI1 \
 	"$FILTER" >> $SEARCHOUT 2>&1
 
 RC=$?
@@ -153,14 +153,14 @@ fi
 FILTER="(:dn:caseExactMatch:=Information Technology Division)"
 echo "        f=$FILTER ..."
 echo "#         f=$FILTER ..." >> $SEARCHOUT
-$LDAPSEARCH -S "" -b "$BASEDN" -h $LOCALHOST -p $PORT1 \
+$LDAPSEARCH -S "" -b "$BASEDN" -H $URI1 \
 	"$FILTER" >> $SEARCHOUT 2>&1
 
 # ITS#4380: don't crash when a matchingRule without pretty/validate is used
 FILTER="(:dn:caseIgnoreSubstringsMatch:=Information Technology Division)"
 echo "        f=$FILTER ..."
 echo "#         f=$FILTER ..." >> $SEARCHOUT
-$LDAPSEARCH -S "" -b "$BASEDN" -h $LOCALHOST -p $PORT1 \
+$LDAPSEARCH -S "" -b "$BASEDN" -H $URI1 \
 	"$FILTER" >> $SEARCHOUT 2>&1
 
 RC=$?
@@ -173,7 +173,7 @@ fi
 FILTER="(name:dn:=whatever)"
 echo "        f=$FILTER ..."
 echo "#         f=$FILTER ..." >> $SEARCHOUT
-$LDAPSEARCH -S "" -b "" -s base -h $LOCALHOST -p $PORT1 \
+$LDAPSEARCH -S "" -b "" -s base -H $URI1 \
 	"$FILTER" >> $SEARCHOUT 2>&1
 
 RC=$?
@@ -189,7 +189,7 @@ echo "# Testing values return filter searching:" >> $SEARCHOUT
 FILTER="(o=Example, Inc.)"
 echo "        f=$FILTER ..."
 echo "#         f=$FILTER ..." >> $SEARCHOUT
-$LDAPSEARCH -S "" -b "$BASEDN" -h $LOCALHOST -p $PORT1 \
+$LDAPSEARCH -S "" -b "$BASEDN" -H $URI1 \
 	-E '!mv='"$FILTER" "$FILTER" >> $SEARCHOUT 2>&1
 RC=$?
 if test $RC != 0 ; then
@@ -202,7 +202,7 @@ FILTER="(dc=example)"
 VRFILTER="((o:caseExactMatch:=Example, Inc.)(dc=example))"
 echo "        f=$FILTER mv=$VRFILTER ..."
 echo "#         f=$FILTER mv=$VRFILTER ..." >> $SEARCHOUT
-$LDAPSEARCH -S "" -b "$BASEDN" -h $LOCALHOST -p $PORT1 \
+$LDAPSEARCH -S "" -b "$BASEDN" -H $URI1 \
 	-E '!mv='"$VRFILTER" "$FILTER" >> $SEARCHOUT 2>&1
 RC=$?
 if test $RC != 0 ; then
@@ -215,7 +215,7 @@ FILTER="(dc=example)"
 VRFILTER="((o={*)(dc=*))"
 echo "        f=$FILTER mv=$VRFILTER ..."
 echo "#         f=$FILTER mv=$VRFILTER ..." >> $SEARCHOUT
-$LDAPSEARCH -S "" -b "$BASEDN" -h $LOCALHOST -p $PORT1 \
+$LDAPSEARCH -S "" -b "$BASEDN" -H $URI1 \
 	-E '!mv='"$VRFILTER" "$FILTER" >> $SEARCHOUT 2>&1
 RC=$?
 if test $RC != 0 ; then
@@ -227,8 +227,19 @@ fi
 FILTER="(attributeTypes=0.9.2342.19200300.100.1.25)"
 echo "        f=$FILTER ..."
 echo "#         f=$FILTER ..." >> $SEARCHOUT
-$LDAPSEARCH -S "" -b "cn=Subschema" -s "base" -h $LOCALHOST -p $PORT1 \
+$LDAPSEARCH -S "" -b "cn=Subschema" -s "base" -H $URI1 \
 	-E '!mv='"$FILTER" "$FILTER" "attributeTypes" >> $SEARCHOUT 2>&1
+RC=$?
+if test $RC != 0 ; then
+	echo "ldapsearch failed ($RC)!"
+	test $KILLSERVERS != no && kill -HUP $KILLPIDS
+	exit $RC
+fi
+
+echo "Testing list substring searching..."
+echo "# Testing list substring searching..." >> $SEARCHOUT
+$LDAPSEARCH -S "" -b "$BASEDN" -H $URI1 \
+	'(postalAddress=*Anytown*)' postalAddress >> $SEARCHOUT 2>&1
 RC=$?
 if test $RC != 0 ; then
 	echo "ldapsearch failed ($RC)!"
@@ -238,7 +249,7 @@ fi
 
 test $KILLSERVERS != no && kill -HUP $KILLPIDS
 
-LDIF=$SEARCHOUTMASTER
+LDIF=$SEARCHOUTPROVIDER
 LDIF2=$SEARCHOUTX
 
 echo "Filtering ldapsearch results..."

@@ -2,7 +2,7 @@
 # $OpenLDAP$
 ## This work is part of OpenLDAP Software <http://www.openldap.org/>.
 ##
-## Copyright 1998-2020 The OpenLDAP Foundation.
+## Copyright 1998-2021 The OpenLDAP Foundation.
 ## All rights reserved.
 ##
 ## Redistribution and use in source and binary forms, with or without
@@ -37,6 +37,7 @@ for CMD in $SRCDIR/scripts/test*; do
 		*.bak)	continue;;
 		*.orig)	continue;;
 		*.sav)	continue;;
+		*.py)	continue;;
 		*)		test -f "$CMD" || continue;;
 	esac
 
@@ -60,12 +61,15 @@ EOF
 	BCMD=`basename $CMD`
 	if [ -x "$CMD" ]; then
 		echo ">>>>> Starting ${TB}$BCMD${TN} for $BACKEND..."
+		START=`date +%s`
 		$CMD
 		RC=$?
+		END=`date +%s`
+
 		if test $RC -eq 0 ; then
-			echo ">>>>> $BCMD completed ${TB}OK${TN} for $BACKEND."
+			echo ">>>>> $BCMD completed ${TB}OK${TN} for $BACKEND after $(( $END - $START )) seconds."
 		else
-			echo ">>>>> $BCMD ${TB}failed${TN} for $BACKEND"
+			echo ">>>>> $BCMD ${TB}failed${TN} for $BACKEND after $(( $END - $START )) seconds"
 			FAILCOUNT=`expr $FAILCOUNT + 1`
 
 			if [ -n "$NOEXIT" ]; then

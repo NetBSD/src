@@ -1,5 +1,5 @@
 .TH SLAPO-PCACHE 5 "RELEASEDATE" "OpenLDAP LDVERSION"
-.\" Copyright 1998-2020 The OpenLDAP Foundation, All Rights Reserved.
+.\" Copyright 1998-2021 The OpenLDAP Foundation, All Rights Reserved.
 .\" Copying restrictions apply.  See the COPYRIGHT file.
 .\" Copyright 2001, Pierangelo Masarati, All rights reserved. <ando@sys-net.it>
 .\" $OpenLDAP$
@@ -256,6 +256,10 @@ for the duration of the
 .B pcacheTemplate
 .BR TTL .
 These inconsistencies can be minimized by careful use of the TTR.
+
+The proxy cache overlay requires a full result set of data to properly
+function. Therefore it will strip out the paged results control if it is
+requested by the client.
 
 The remote server should expose the
 .B objectClass 

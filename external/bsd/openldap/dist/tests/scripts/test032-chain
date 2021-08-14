@@ -2,7 +2,7 @@
 # $OpenLDAP$
 ## This work is part of OpenLDAP Software <http://www.openldap.org/>.
 ##
-## Copyright 1998-2020 The OpenLDAP Foundation.
+## Copyright 1998-2021 The OpenLDAP Foundation.
 ## All rights reserved.
 ##
 ## Redistribution and use in source and binary forms, with or without
@@ -26,7 +26,7 @@ rm -rf $TESTDIR
 mkdir -p $TESTDIR $DBDIR1 $DBDIR2
 
 echo "Running slapadd to build slapd database..."
-. $CONFFILTER $BACKEND $MONITORDB < $CHAINCONF1 > $ADDCONF
+. $CONFFILTER $BACKEND < $CHAINCONF1 > $ADDCONF
 . $CONFFILTER < $LDIFCHAIN1 > $SEARCHOUT
 $SLAPADD -f $ADDCONF -l $SEARCHOUT
 RC=$?
@@ -35,7 +35,7 @@ if test $RC != 0 ; then
 	exit $RC
 fi
 
-. $CONFFILTER $BACKEND $MONITORDB < $CHAINCONF2 > $ADDCONF
+. $CONFFILTER $BACKEND < $CHAINCONF2 > $ADDCONF
 . $CONFFILTER < $LDIFCHAIN2 > $SEARCHOUT
 $SLAPADD -f $ADDCONF -l $SEARCHOUT
 RC=$?
@@ -45,8 +45,8 @@ if test $RC != 0 ; then
 fi
 
 echo "Starting first slapd on TCP/IP port $PORT1..."
-. $CONFFILTER $BACKEND $MONITORDB < $CHAINCONF1 > $CONF1
-$SLAPD -f $CONF1 -h $URI1 -d $LVL $TIMING > $LOG1 2>&1 &
+. $CONFFILTER $BACKEND < $CHAINCONF1 > $CONF1
+$SLAPD -f $CONF1 -h $URI1 -d $LVL > $LOG1 2>&1 &
 PID1=$!
 if test $WAIT != 0 ; then
     echo PID $PID1
@@ -55,8 +55,8 @@ fi
 KILLPIDS="$PID1"
 
 echo "Starting second slapd on TCP/IP port $PORT2..."
-. $CONFFILTER $BACKEND $MONITORDB < $CHAINCONF2 > $CONF2
-$SLAPD -f $CONF2 -h $URI2 -d $LVL $TIMING > $LOG2 2>&1 &
+. $CONFFILTER $BACKEND < $CHAINCONF2 > $CONF2
+$SLAPD -f $CONF2 -h $URI2 -d $LVL > $LOG2 2>&1 &
 PID2=$!
 if test $WAIT != 0 ; then
     echo PID $PID2
@@ -69,7 +69,7 @@ sleep 1
 
 echo "Using ldapsearch to check that first slapd is running..."
 for i in 0 1 2 3 4 5; do
-	$LDAPSEARCH -s base -b "$MONITOR" -h $LOCALHOST -p $PORT1 \
+	$LDAPSEARCH -s base -b "$MONITOR" -H $URI1 \
 		'objectclass=*' > /dev/null 2>&1
 	RC=$?
 	if test $RC = 0 ; then
@@ -87,7 +87,7 @@ fi
 
 echo "Using ldapsearch to check that second slapd is running..."
 for i in 0 1 2 3 4 5; do
-	$LDAPSEARCH -s base -b "$MONITOR" -h $LOCALHOST -p $PORT2 \
+	$LDAPSEARCH -s base -b "$MONITOR" -H $URI2 \
 		'objectclass=*' > /dev/null 2>&1
 	RC=$?
 	if test $RC = 0 ; then
@@ -103,9 +103,10 @@ if test $RC != 0 ; then
 	exit $RC
 fi
 
-for P in $PORT1 $PORT2 ; do
-	echo "Testing ldapsearch as anonymous for \"$BASEDN\" on port $P..."
-	$LDAPSEARCH -h $LOCALHOST -p $P -b "$BASEDN" -S "" \
+for n in 1 2 ; do
+	URI=`eval echo '$URI'$n`
+	echo "Testing ldapsearch as anonymous for \"$BASEDN\" on server $n..."
+	$LDAPSEARCH -H $URI -b "$BASEDN" -S "" \
 		 > $SEARCHOUT 2>&1
 
 	RC=$?
@@ -128,8 +129,8 @@ for P in $PORT1 $PORT2 ; do
 		exit 1
 	fi
 
-	echo "Reading the referral entry \"ou=Other,$BASEDN\" as anonymous on port $P..."
-	$LDAPSEARCH -h $LOCALHOST -p $P -b "ou=Other,$BASEDN" -S "" \
+	echo "Reading the referral entry \"ou=Other,$BASEDN\" as anonymous on server $n..."
+	$LDAPSEARCH -H $URI -b "ou=Other,$BASEDN" -S "" \
 		 > $SEARCHOUT 2>&1
 
 	RC=$?
@@ -153,8 +154,8 @@ for P in $PORT1 $PORT2 ; do
 	fi
 
 	DN="cn=Mark Elliot,ou=Alumni Association,ou=People,$BASEDN"
-	echo "Comparing \"$DN\" on port $P..."
-	$LDAPCOMPARE -h $LOCALHOST -p $P "$DN" "cn:Mark Elliot" \
+	echo "Comparing \"$DN\" on server $n..."
+	$LDAPCOMPARE -H $URI "$DN" "cn:Mark Elliot" \
 		 > $TESTOUT 2>&1
 
 	RC=$?
@@ -165,8 +166,8 @@ for P in $PORT1 $PORT2 ; do
 	fi
 
 	DN="ou=Other,$BASEDN"
-	echo "Comparing \"$DN\" on port $P with manageDSAit control..."
-	$LDAPCOMPARE -h $LOCALHOST -p $P -M "$DN" "ou:Other" \
+	echo "Comparing \"$DN\" on server $n with manageDSAit control..."
+	$LDAPCOMPARE -H $URI -M "$DN" "ou:Other" \
 		 > $TESTOUT 2>&1
 
 	RC=$?
@@ -181,7 +182,7 @@ done
 # Testing writes to first server
 #
 echo "Writing to first server with scope on second server..."
-$LDAPMODIFY -v -D "$MANAGERDN" -h $LOCALHOST -p $PORT1 -w $PASSWD > \
+$LDAPMODIFY -v -D "$MANAGERDN" -H $URI1 -w $PASSWD > \
 	$TESTOUT 2>&1 << EOMODS
 dn: cn=New Group,ou=Groups,dc=example,dc=com
 changetype: add
@@ -222,7 +223,7 @@ fi
 # Testing writes to second server
 #
 echo "Writing to second server with scope on first server..."
-$LDAPMODIFY -v -D "$MANAGERDN" -h $LOCALHOST -p $PORT2 -w $PASSWD > \
+$LDAPMODIFY -v -D "$MANAGERDN" -H $URI2 -w $PASSWD > \
 	$TESTOUT 2>&1 << EOMODS
 dn: cn=New User,ou=People,dc=example,dc=com
 changetype: add
@@ -256,9 +257,10 @@ if test $RC != 0 ; then
 	exit $RC
 fi
 
-for P in $PORT1 $PORT2 ; do
-	echo "Testing ldapsearch as anonymous for \"$BASEDN\" on port $P..."
-	$LDAPSEARCH -h $LOCALHOST -p $P -b "$BASEDN" -S "" \
+for n in 1 2 ; do
+	URI=`eval echo '$URI'$n`
+	echo "Testing ldapsearch as anonymous for \"$BASEDN\" on server $n..."
+	$LDAPSEARCH -H $URI -b "$BASEDN" -S "" \
 		 > $SEARCHOUT 2>&1
 
 	RC=$?
@@ -284,7 +286,7 @@ done
 
 NEWPW=newsecret
 echo "Using ldappasswd on second server with scope on first server..."
-$LDAPPASSWD -h $LOCALHOST -p $PORT2 \
+$LDAPPASSWD -H $URI2 \
 	-w secret -s $NEWPW \
 	-D "$MANAGERDN" "$BJORNSDN" >> $TESTOUT 2>&1
 RC=$?
@@ -295,7 +297,7 @@ if test $RC != 0 ; then
 fi
 
 echo "Binding with newly changed password on first server..."
-$LDAPWHOAMI -h $LOCALHOST -p $PORT1 \
+$LDAPWHOAMI -H $URI1 \
 	-D "$BJORNSDN" -w $NEWPW
 RC=$?
 if test $RC != 0 ; then
@@ -305,7 +307,7 @@ if test $RC != 0 ; then
 fi
 
 # ITS#57??
-$LDAPADD -h $LOCALHOST -p $PORT1 \
+$LDAPADD -H $URI1 \
 	-D "$MANAGERDN" -w secret \
 	>> $TESTOUT 2>&1 \
 	<< EOMODS
@@ -319,7 +321,7 @@ ref: ${URI3}ou=Can't%20Contact,dc=example,dc=com
 EOMODS
 
 echo "Reading the referral entry \"ou=Can't Contact,$BASEDN\" as anonymous on port $PORT1..."
-$LDAPSEARCH -h $LOCALHOST -p $PORT1 -b "$BASEDN" -S "" "(cn=Can't Contact)" \
+$LDAPSEARCH -H $URI1 -b "$BASEDN" -S "" "(cn=Can't Contact)" \
 	 > $SEARCHOUT 2>&1
 
 RC=$?

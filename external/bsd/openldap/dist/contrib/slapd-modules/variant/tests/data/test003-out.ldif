@@ -1,0 +1,124 @@
+# Test 1, list two unrelated entries
+dn: cn=Mark Elliot,ou=Alumni Association,ou=People,dc=example,dc=com
+objectClass: OpenLDAPperson
+cn: Mark Elliot
+cn: Mark A Elliot
+sn: Elliot
+uid: melliot
+postalAddress: Alumni Association $ 111 Maple St $ Anytown, MI 48109
+seeAlso: cn=All Staff,ou=Groups,dc=example,dc=com
+homePostalAddress: 199 Outer Drive $ Ypsilanti, MI 48198
+homePhone: +1 313 555 0388
+drink: Gasoline
+title: Director, UM Alumni Association
+mail: melliot@mail.alumni.example.com
+pager: +1 313 555 7671
+facsimileTelephoneNumber: +1 313 555 7762
+telephoneNumber: +1 313 555 4177
+
+dn: cn=Bjorn Jensen,ou=Information Technology Division,ou=People,dc=example,dc
+ =com
+objectClass: OpenLDAPperson
+cn: Bjorn Jensen
+cn: Biiff Jensen
+sn: Jensen
+uid: bjorn
+seeAlso: cn=All Staff,ou=Groups,dc=example,dc=com
+userPassword:: Ympvcm4=
+homePostalAddress: 19923 Seven Mile Rd. $ South Lyon, MI 49999
+drink: Iced Tea
+description: Hiker, biker
+title: Director, Embedded Systems
+postalAddress: Info Tech Division $ 535 W. William St. $ Anytown, MI 48103
+mail: bjorn@mailgw.example.com
+homePhone: +1 313 555 5444
+pager: +1 313 555 4474
+facsimileTelephoneNumber: +1 313 555 2177
+telephoneNumber: +1 313 555 0355
+
+
+# Test 2, list some of the variant entries, checking that attributes have been populated
+dn: ou=Groups,dc=example,dc=com
+objectClass: organizationalUnit
+ou: Groups
+st: Alumni Association
+
+dn: ou=People,dc=example,dc=com
+objectClass: organizationalUnit
+objectClass: extensibleObject
+ou: People
+uidNumber: 0
+gidNumber: 0
+description: The Example, Inc. at Anytown
+
+dn: cn=Manager,dc=example,dc=com
+objectClass: person
+cn: Manager
+cn: Directory Manager
+cn: Dir Man
+sn: Manager
+description: Manager of the directory
+userPassword:: c2VjcmV0
+
+
+# Return $BASEDN, location is rewritten to end
+dn: dc=example,dc=com
+objectClass: top
+objectClass: organization
+objectClass: domainRelatedObject
+objectClass: dcObject
+dc: example
+st: Michigan
+o: Example, Inc.
+o: EX
+o: Ex.
+description: The Example, Inc. at Anytown
+postalAddress: Example, Inc. $ 535 W. William St. $ Anytown, MI 48109 $ US
+telephoneNumber: +1 313 555 1817
+associatedDomain: example.com
+l: Anytown, Michigan
+
+
+# Make sure only the first regex applies
+dn: cn=Bjorn Jensen,ou=Information Technology Division,ou=People,dc=example,dc
+ =com
+objectClass: OpenLDAPperson
+cn: Bjorn Jensen
+cn: Biiff Jensen
+sn: Jensen
+uid: bjorn
+seeAlso: cn=All Staff,ou=Groups,dc=example,dc=com
+userPassword:: Ympvcm4=
+homePostalAddress: 19923 Seven Mile Rd. $ South Lyon, MI 49999
+drink: Iced Tea
+description: Hiker, biker
+postalAddress: Info Tech Division $ 535 W. William St. $ Anytown, MI 48103
+mail: bjorn@mailgw.example.com
+homePhone: +1 313 555 5444
+pager: +1 313 555 4474
+facsimileTelephoneNumber: +1 313 555 2177
+telephoneNumber: +1 313 555 0355
+title: Hiker, biker
+ou: Information Technology Division
+
+
+# Exercise the last regex
+dn: cn=ITD Staff,ou=Groups,dc=example,dc=com
+owner: cn=Manager,dc=example,dc=com
+description: All ITD Staff
+cn: ITD Staff
+objectClass: groupOfUniqueNames
+uniqueMember: cn=Manager,dc=example,dc=com
+uniqueMember: cn=Bjorn Jensen,ou=Information Technology Division,ou=People,dc=
+ example,dc=com
+uniqueMember: cn=James A Jones 2,ou=Information Technology Division,ou=People,
+ dc=example,dc=com
+uniqueMember: cn=John Doe,ou=Information Technology Division,ou=People,dc=exam
+ ple,dc=com
+l: Anytown, Michigan
+
+
+# Test 3, check filters pick up the new data
+dn: ou=Groups,dc=example,dc=com
+st: Alumni Association
+

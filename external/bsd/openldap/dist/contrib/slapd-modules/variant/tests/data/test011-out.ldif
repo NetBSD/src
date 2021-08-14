@@ -1,0 +1,10 @@
+# ldapsearch does not return anything tangible in the output if it enounters a referral
+
+# Asking for the referral will return LDAP_REFERRAL
+Referral (10)
+Matched DN: cn=Gern Jensen,ou=Information Technology Division,ou=People,dc=example,dc=com
+Referral: ldap://hostB/cn=Gern%20Jensen,ou=Information%20Technology%20Division,ou=People,dc=example,dc=com??sub
+# Asking for anything under a referral will do the same
+Referral (10)
+Matched DN: cn=Gern Jensen,ou=Information Technology Division,ou=People,dc=example,dc=com
+Referral: ldap://hostB/cn=child,cn=Gern%20Jensen,ou=Information%20Technology%20Division,ou=People,dc=example,dc=com??sub

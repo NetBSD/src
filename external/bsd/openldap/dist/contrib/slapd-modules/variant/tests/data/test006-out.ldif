@@ -1,0 +1,151 @@
+# reading Mark Elliot as anonymous
+
+# reading the same as various users
+dn: cn=Mark Elliot,ou=Alumni Association,ou=People,dc=example,dc=com
+objectClass: OpenLDAPperson
+cn: Mark A Elliot
+sn: Elliot
+uid: melliot
+postalAddress: Alumni Association $ 111 Maple St $ Anytown, MI 48109
+seeAlso: cn=All Staff,ou=Groups,dc=example,dc=com
+homePostalAddress: 199 Outer Drive $ Ypsilanti, MI 48198
+homePhone: +1 313 555 0388
+drink: Gasoline
+title: Director, UM Alumni Association
+mail: melliot@mail.alumni.example.com
+pager: +1 313 555 7671
+facsimileTelephoneNumber: +1 313 555 7762
+telephoneNumber: +1 313 555 4177
+description: Mark A Elliot
+
+dn: cn=Mark Elliot,ou=Alumni Association,ou=People,dc=example,dc=com
+objectClass: OpenLDAPperson
+cn: Mark Elliot
+sn: Elliot
+uid: melliot
+postalAddress: Alumni Association $ 111 Maple St $ Anytown, MI 48109
+seeAlso: cn=All Staff,ou=Groups,dc=example,dc=com
+homePostalAddress: 199 Outer Drive $ Ypsilanti, MI 48198
+homePhone: +1 313 555 0388
+drink: Gasoline
+title: Director, UM Alumni Association
+mail: melliot@mail.alumni.example.com
+pager: +1 313 555 7671
+facsimileTelephoneNumber: +1 313 555 7762
+telephoneNumber: +1 313 555 4177
+description: Mark Elliot
+
+
+# Add & Delete subtree contents as seen by Babs
+dn: ou=Add & Delete,dc=example,dc=com
+objectClass: organizationalUnit
+ou: Add & Delete
+
+dn: sn=Doe,ou=Add & Delete,dc=example,dc=com
+objectClass: OpenLDAPperson
+cn: John
+uid: jd
+sn: Doe
+title: John Doe
+
+dn: sn=Elliot,ou=Add & Delete,dc=example,dc=com
+objectClass: OpenLDAPperson
+cn: Mark
+uid: me
+sn: Elliot
+title: Mark A Elliot
+
+dn: cn=group,ou=Add & Delete,dc=example,dc=com
+objectClass: groupOfNames
+member: dc=example,dc=com
+cn: group
+description: All Alumni Assoc Staff
+seeAlso: cn=Manager,dc=example,dc=com
+seeAlso: cn=Dorothy Stevens,ou=Alumni Association,ou=People,dc=example,dc=com
+seeAlso: cn=James A Jones 1,ou=Alumni Association,ou=People,dc=example,dc=com
+seeAlso: cn=Jane Doe,ou=Alumni Association,ou=People,dc=example,dc=com
+seeAlso: cn=Jennifer Smith,ou=Alumni Association,ou=People,dc=example,dc=com
+seeAlso: cn=Mark Elliot,ou=Alumni Association,ou=People,dc=example,dc=com
+seeAlso: cn=Ursula Hampster,ou=Alumni Association,ou=People,dc=example,dc=com
+
+
+# Add & Delete subtree contents as seen by Bjorn
+dn: ou=Add & Delete,dc=example,dc=com
+objectClass: organizationalUnit
+ou: Add & Delete
+
+dn: sn=Doe,ou=Add & Delete,dc=example,dc=com
+objectClass: OpenLDAPperson
+cn: John
+uid: jd
+sn: Doe
+title: Jonathon Doe
+
+dn: sn=Elliot,ou=Add & Delete,dc=example,dc=com
+objectClass: OpenLDAPperson
+cn: Mark
+uid: me
+sn: Elliot
+title: Mark Elliot
+
+dn: cn=group,ou=Add & Delete,dc=example,dc=com
+objectClass: groupOfNames
+member: dc=example,dc=com
+cn: group
+description: All Alumni Assoc Staff
+seeAlso: cn=Manager,dc=example,dc=com
+seeAlso: cn=Dorothy Stevens,ou=Alumni Association,ou=People,dc=example,dc=com
+seeAlso: cn=James A Jones 1,ou=Alumni Association,ou=People,dc=example,dc=com
+seeAlso: cn=Jane Doe,ou=Alumni Association,ou=People,dc=example,dc=com
+seeAlso: cn=Jennifer Smith,ou=Alumni Association,ou=People,dc=example,dc=com
+seeAlso: cn=Mark Elliot,ou=Alumni Association,ou=People,dc=example,dc=com
+seeAlso: cn=Ursula Hampster,ou=Alumni Association,ou=People,dc=example,dc=com
+
+
+# Final state of ou=Add & Delete,dc=example,dc=com as seen by the Manager
+dn: ou=Add & Delete,dc=example,dc=com
+objectClass: organizationalUnit
+ou: Add & Delete
+
+dn: cn=Added by Bjorn,ou=Add & Delete,dc=example,dc=com
+objectClass: inetOrgPerson
+sn: Jensen
+cn: Added by Bjorn
+description: added by jaj (should succeed)
+
+dn: sn=Doe,ou=Add & Delete,dc=example,dc=com
+objectClass: OpenLDAPperson
+cn: John
+uid: jd
+sn: Doe
+description: added by jaj (should succeed)
+title: John Doe
+title: Jonathon Doe
+
+dn: sn=Elliot,ou=Add & Delete,dc=example,dc=com
+objectClass: OpenLDAPperson
+cn: Mark
+uid: me
+sn: Elliot
+description: added by jaj (should succeed)
+title: Mark Elliot
+title: Mark A Elliot
+
+dn: cn=group,ou=Add & Delete,dc=example,dc=com
+objectClass: groupOfNames
+member: dc=example,dc=com
+cn: group
+description: All Alumni Assoc Staff
+description: another one added by bjorn (should succeed)
+seeAlso: cn=Manager,dc=example,dc=com
+seeAlso: cn=Dorothy Stevens,ou=Alumni Association,ou=People,dc=example,dc=com
+seeAlso: cn=James A Jones 1,ou=Alumni Association,ou=People,dc=example,dc=com
+seeAlso: cn=Jane Doe,ou=Alumni Association,ou=People,dc=example,dc=com
+seeAlso: cn=Jennifer Smith,ou=Alumni Association,ou=People,dc=example,dc=com
+seeAlso: cn=Mark Elliot,ou=Alumni Association,ou=People,dc=example,dc=com
+seeAlso: cn=Ursula Hampster,ou=Alumni Association,ou=People,dc=example,dc=com
+seeAlso: cn=Bjorn Jensen,ou=Information Technology DivisioN,ou=People,dc=examp
+ le,dc=com
+seeAlso: cn=Barbara Jensen,ou=Information Technology DivisioN,ou=People,dc=exa
+ mple,dc=com
+

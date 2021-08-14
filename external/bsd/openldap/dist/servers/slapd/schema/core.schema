@@ -2,7 +2,7 @@
 # $OpenLDAP$
 ## This work is part of OpenLDAP Software <http://www.openldap.org/>.
 ##
-## Copyright 1998-2020 The OpenLDAP Foundation.
+## Copyright 1998-2021 The OpenLDAP Foundation.
 ## All rights reserved.
 ##
 ## Redistribution and use in source and binary forms, with or without
@@ -524,7 +524,7 @@ objectclass ( 2.5.6.22 NAME 'pkiCA'
 		cACertificate $ crossCertificatePair ) )
 
 objectclass ( 2.5.6.23 NAME 'deltaCRL'
-	DESC 'RFC2587: PKI user'
+	DESC 'RFC4523: X.509 delta CRL'
 	SUP top AUXILIARY
 	MAY deltaRevocationList )
 

@@ -1,5 +1,5 @@
 .TH SLAPO-SYNCPROV 5 "RELEASEDATE" "OpenLDAP LDVERSION"
-.\" Copyright 2004-2020 The OpenLDAP Foundation All Rights Reserved.
+.\" Copyright 2004-2021 The OpenLDAP Foundation All Rights Reserved.
 .\" Copying restrictions apply.  See COPYRIGHT/LICENSE.
 .\" $OpenLDAP$
 .SH NAME
@@ -48,6 +48,14 @@ specifies the number of operations that are recorded in the log. All write
 operations (except Adds) are recorded in the log.
 When using the session log, it is helpful to set an eq index on the
 entryUUID attribute in the underlying database.
+.TP
+.B syncprov\-sessionlog\-source <dn>
+Should not be set when syncprov-sessionlog is set and vice versa.
+
+When accesslog for this database is configured and is logging at this suffix,
+it can be used as the session log source instead of the in-memory session log
+mentioned above. This log has the advantage of not starting afresh every time
+the server is restarted.
 .TP
 .B syncprov\-nopresent TRUE | FALSE
 Specify that the Present phase of refreshing should be skipped. This value

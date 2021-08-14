@@ -10,9 +10,6 @@ structuralObjectClass: monitoredObject
 monitorIsShadow: FALSE
 namingContexts: o=OpenLDAP Project,l=Internet
 readOnly: FALSE
-olmBDBEntryCache: 0
-olmBDBDNCache: 0
-olmBDBIDLCache: 0
 entryDN: cn=Database 1,cn=Databases,cn=Monitor
 
 dn: cn=Database 2,cn=Databases,cn=Monitor

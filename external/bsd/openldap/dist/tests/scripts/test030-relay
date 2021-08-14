@@ -2,7 +2,7 @@
 # $OpenLDAP$
 ## This work is part of OpenLDAP Software <http://www.openldap.org/>.
 ##
-## Copyright 1998-2020 The OpenLDAP Foundation.
+## Copyright 1998-2021 The OpenLDAP Foundation.
 ## All rights reserved.
 ##
 ## Redistribution and use in source and binary forms, with or without
@@ -39,28 +39,20 @@ if test "x$RELAYS" = "x" ; then
 	if test $BACKLDAP = ldapno ; then 
 		echo "ldap backend not available, test skipped"
 	else
-		if test $THREADS = "threadsno" ; then
-			echo "Need threads support, test skipped"
-		else
-			if test "x$RELAYS" != "x" ; then
-				RELAYS="${RELAYS} "
-			fi
-			RELAYS="${RELAYS}ldap"
-		fi 
+		if test "x$RELAYS" != "x" ; then
+			RELAYS="${RELAYS} "
+		fi
+		RELAYS="${RELAYS}ldap"
 	fi
 
 	# back-meta
 	if test $BACKMETA = metano ; then 
 		echo "meta backend not available, test skipped"
 	else
-		if test $THREADS = "threadsno" ; then
-			echo "Need threads support, test skipped"
-		else
-			if test "x$RELAYS" != "x" ; then
-				RELAYS="${RELAYS} "
-			fi
-			RELAYS="${RELAYS}meta"
+		if test "x$RELAYS" != "x" ; then
+			RELAYS="${RELAYS} "
 		fi
+		RELAYS="${RELAYS}meta"
 	fi 
 fi
 
@@ -79,36 +71,24 @@ if test -f $tmpfile ; then
 fi
 first=1
 for RELAY in $RELAYS ; do
-	RUNIT=yes
-	if test $THREADS = "threadsno" ; then
-		case $RELAY in
-		ldap|meta)
-			echo "Need threads support, test skipped"
-			RUNIT=no
-			;;
-		esac
+	if test $first = 1 ; then
+		first=0
+	else
+		echo ">>>>> waiting for things to exit"
+		test $KILLSERVERS != no && wait
+		echo ""
+
+		mv -f $LOG1 $tmpfile
+		rm -rf $TESTDIR
 	fi
-	
-	if test $RUNIT = yes ; then		
-		if test $first = 1 ; then
-			first=0
-		else
-			echo ">>>>> waiting for things to exit"
-			test $KILLSERVERS != no && wait
-			echo ""
 
-			mv -f $LOG1 $tmpfile
-			rm -rf $TESTDIR
-		fi
+	mkdir -p $TESTDIR $DBDIR1
 
-		mkdir -p $TESTDIR $DBDIR1
-
-		if test -f $tmpfile ; then
-			mv $tmpfile $LOG1
-		fi
-	
-		. $SRCDIR/scripts/relay
+	if test -f $tmpfile ; then
+		mv $tmpfile $LOG1
 	fi
+
+	. $SRCDIR/scripts/relay
 done
 
 echo ">>>>> Test succeeded"

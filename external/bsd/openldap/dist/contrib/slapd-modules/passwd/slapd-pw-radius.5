@@ -1,0 +1,110 @@
+.TH SLAPD-PW-RADIUS 5 "RELEASEDATE" "OpenLDAP LDVERSION"
+.\" Copyright 2015-2021 The OpenLDAP Foundation All Rights Reserved.
+.\" Copying restrictions apply.  See COPYRIGHT/LICENSE.
+.\" $OpenLDAP$
+.SH NAME
+slapd-pw-radius \- Radius backend password module to slapd
+.SH SYNOPSIS
+ETCDIR/slapd.conf
+.RS
+.LP
+.B moduleload
+.B pw-radius
+.I /path/to/radius.conf
+.RE
+.SH DESCRIPTION
+.LP
+The
+.B pw-radius
+module to
+.BR slapd (8)
+provides support for using a RADIUS infrastructure as backend to
+verify the password provided in Simple Bind operations to OpenLDAP.
+.LP
+It does so by providing an additional password scheme for use in slapd:
+.RS
+.TP
+.B {RADIUS}
+RADIUS password scheme
+.RE
+.LP
+Unlike in other password schemes, the value following the scheme is not
+a - potentially hashed - password, but the name of the corresponding
+RADIUS user in the RADIUS infrastructure.
+.LP
+This value, together with the password used in the Simple Bind operation,
+will be sent to the RADIUS server for authentication.
+.LP
+If the RADIUS server successfully authenticates the user,
+then the password verification succeeds, resulting in the LDAP Bind
+operation's success.
+.LP
+Conversely, failed RADIUS authentications leads to failing LDAP Binds.
+
+.SH CONFIGURATION
+The
+.B pw-radius
+module needs no configuration beyond the additional
+.I filename
+argument to
+.BR slapd.conf (5)'s
+.B moduleload
+directive.
+This filename is expected to point to a valid
+.BR radius.conf (5).
+file adhering to
+.BR libradius (3).
+.LP
+After loading the module, the password scheme
+.B {RADIUS}
+will be recognised in values of the
+.I userPassword
+attribute.
+
+.SH NOTES
+Owing to its construction, using the
+.B {RADIUS}
+scheme as argument to the
+.BR password-hash
+option in
+.BR slapd.conf (5)
+does not make much sense, because of the scheme's construction.
+.LP
+This also applies to the use of the
+.B {RADIUS}
+scheme in
+.B slappasswd
+or
+.BR ldappasswd .
+
+
+.SH EXAMPLES
+To indicate that Simple Bind operations shall use the RADIUS user
+.B johndoe
+when validating passwords against the RADIUS infrastructure,
+set a user's LDAP attribute userPassword to:
+.EX
+.LP
+userPassword: {RADIUS}johndoe
+.EE
+
+.SH LIMITATIONS
+Due to the way the configuration is loaded (additional argument
+to slapd.conf's moduleload directive), this module cannot be used
+with table-driven configuration.
+
+.SH SEE ALSO
+.BR slapd.conf (5),
+.BR libradius (3)
+.BR ldap (3),
+.LP
+"OpenLDAP Administrator's Guide" (http://www.OpenLDAP.org/doc/admin/)
+.LP
+
+.SH ACKNOWLEDGEMENTS
+This manual page has been written by Peter Marschall.
+.LP
+.B OpenLDAP
+is developed and maintained by The OpenLDAP Project (http://www.openldap.org/).
+.B OpenLDAP
+is derived from University of Michigan LDAP 3.3 Release.

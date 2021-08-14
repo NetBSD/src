@@ -1,0 +1,39 @@
+Most of the project now depends on the compiler supporting C99 variadic
+macros. This is used in the Debug() macro everywhere except libldap and
+its dependencies.
+
+From now on, any time Debug( level, fmt, args... ) is used, you can and
+should provide the appropriate number of arguments. The coccinelle
+patches in this directory implement the transformations used to bring
+the project in line with this.
+
+As we still aim to support libldap on platforms that only provide C89,
+Debug0/1/2/3 macros are used instead.
+
+If you need to adapt your own fork, see ITS#8731, the rest of this
+README and scripts in this directory on what you'll need to achieve
+this.
+
+Coccinelle as of git hash e65a7bdc04ac9122acdae2353422c5736b7998ba from
+https://github.com/coccinelle/coccinelle has been used to run the
+transformations performed. One notable limitation at the time of writing
+is that multi-part (format) strings are always merged onto the same line.
+
+Some sources cannot be processed, nssov overlay being a prime example,
+being wrapped in non-trivial macros.
+
+The following semantic patches are involved:
+- 03-libldap_Debug.cocci: converts the libraries to use the Debug[0123]
+  macros as appropriate
+- 04-variadic.cocci: converts the rest of the project to use the Debug
+  macro with the right number of arguments (as opposed to padding with
+  zeroes)
+- 09-merge.cocci will merge an 'snprintf(s, len, "fmt", args...);
+  Debug(level, "... %s ...", ..., s, ...);' sequence together
+- 07-shortcut.cocci is actually used to apply the above since
+  coccinelle's model-checker seems to struggle with state space
+  explosion in some of the very long and complex functions we have - 
+  09-merge.cocci doesn't finish in any reasonable time
+
+The equivalence.iso and macros.h files aid coccinelle to parse our
+sources correctly and simplify the semantic patches.

@@ -1,6 +1,6 @@
 // $OpenLDAP$
 /*
- * Copyright 2000-2020 The OpenLDAP Foundation, All Rights Reserved.
+ * Copyright 2000-2021 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
  */
 
@@ -18,24 +18,24 @@
 
 using namespace std;
 
-// little helper function for doing case insensitve string comparison
+// little helper function for doing case insensitive string comparison
 bool nocase_compare(char c1, char c2);
 
 LDAPAttributeList::LDAPAttributeList(){
     DEBUG(LDAP_DEBUG_CONSTRUCT,
-            "LDAPAttributeList::LDAPAttributList( )" << endl);
+            "LDAPAttributeList::LDAPAttributeList( )" << endl);
 }
 
 LDAPAttributeList::LDAPAttributeList(const LDAPAttributeList& al){
     DEBUG(LDAP_DEBUG_CONSTRUCT,
-            "LDAPAttributeList::LDAPAttributList(&)" << endl);
+            "LDAPAttributeList::LDAPAttributeList(&)" << endl);
     m_attrs=al.m_attrs;
 }
 
 LDAPAttributeList::LDAPAttributeList(const LDAPAsynConnection *ld, 
         LDAPMessage *msg){
     DEBUG(LDAP_DEBUG_CONSTRUCT,
-            "LDAPAttributeList::LDAPAttributList()" << endl);
+            "LDAPAttributeList::LDAPAttributeList()" << endl);
     BerElement *ptr=0;
     char *name=ldap_first_attribute(ld->getSessionHandle(), msg, &ptr);
 /*
@@ -65,7 +65,7 @@ LDAPAttributeList::LDAPAttributeList(const LDAPAsynConnection *ld,
 }
 
 LDAPAttributeList::~LDAPAttributeList(){
-    DEBUG(LDAP_DEBUG_DESTROY,"LDAPAttributeList::~LDAPAttributList()" << endl);
+    DEBUG(LDAP_DEBUG_DESTROY,"LDAPAttributeList::~LDAPAttributeList()" << endl);
 }
 
 size_t LDAPAttributeList::size() const{

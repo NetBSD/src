@@ -1,0 +1,6 @@
+dn: olcVariantAlternativeAttribute=description,name={1}variant,olcOverlay={0}variant,olcDatabase={1}@BACKEND@,cn=config
+changetype: add
+objectclass: olcVariantAttribute
+olcVariantVariantAttribute: description
+olcVariantAlternativeAttribute: description
+olcVariantAlternativeEntry: ou=People,dc=example,dc=com

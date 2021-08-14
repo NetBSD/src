@@ -1,5 +1,5 @@
 .TH SLAPO-NSSOV 5 "RELEASEDATE" "OpenLDAP LDVERSION"
-.\" Copyright 1998-2020 The OpenLDAP Foundation, All Rights Reserved.
+.\" Copyright 1998-2021 The OpenLDAP Foundation, All Rights Reserved.
 .\" Copying restrictions apply.  See the COPYRIGHT file.
 .\" $OpenLDAP$
 .SH NAME
@@ -242,7 +242,7 @@ Specify a PAM service name whose sessions will be recorded. For the
 configured services, logins will be recorded in the
 .TP
 .B nssov-pam-password-prohibit-message <message>
-Diable password change service and return the specified message to
+Disable password change service and return the specified message to
 users.
 .TP
 .B nssov-pam-pwdmgr-dn <dn>
@@ -278,7 +278,7 @@ of the config entry is
 .LP 
 .RS
 .nf
-    dn: olcOverlay={0}nssov,ocDatabase={1}hdb,cn=config
+    dn: olcOverlay={0}nssov,ocDatabase={1}mdb,cn=config
     objectClass: olcOverlayConfig
     objectClass: olcNssOvConfig
     olcOverlay: {0}nssov

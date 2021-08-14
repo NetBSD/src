@@ -1,0 +1,4 @@
+dn: olcDatamorphValue={0}bjensen,olcDatamorphAttribute={0}enumerated,olcOverlay={0}datamorph,olcDatabase={1}@BACKEND@,cn=config
+changetype: modify
+replace: olcDatamorphIndex
+olcDatamorphIndex: 11

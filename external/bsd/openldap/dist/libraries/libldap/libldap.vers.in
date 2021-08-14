@@ -1,0 +1,16 @@
+HIDDEN
+{
+  local:
+    __*;
+    _rest*;
+    _save*;
+};
+
+OPENLDAP_@OPENLDAP_LIBRELEASE@
+{
+  global:
+    ldap_*;
+    ldif_*;
+  local: *;
+};
+

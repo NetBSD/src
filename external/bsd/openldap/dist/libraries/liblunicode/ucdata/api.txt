@@ -99,7 +99,7 @@ int uccanondecomp(const unsigned long *in, int inlen, unsigned long **out,
   the characters at the same time.
 
   If a -1 is returned, memory allocation was not successful.  If a zero is
-  returned, no decomposition occured.  Any other value means the output string
+  returned, no decomposition occurred.  Any other value means the output string
   contains the fully decomposed string in canonical order.
 
   If the "outlen" parameter comes back with a value > 0, then the string
@@ -146,7 +146,7 @@ int uccomp_hangul(unsigned long *str, int len)
   done in-place.
 
   The return value provides the new length of the string.  This will be
-  smaller than "len" if compositions occured.
+  smaller than "len" if compositions occurred.
 
 int uccanoncomp(unsigned long *str, int len)
 

@@ -102,7 +102,6 @@ NOSYNC
 env
 pagedResultsControl
 dup
-hdb
 LDIFv
 syslog
 monitorTimestamp
@@ -221,8 +220,6 @@ AVAs
 associatedDomain
 organizationalRole
 initgroups
-olcDbCachesize
-olcDbCacheSize
 ETCDIR
 colaligns
 olcReadOnly
@@ -427,10 +424,8 @@ txt
 UTR
 XER
 roomNumber
-olcDbIDLcacheSize
 namespace
 LDAPControl
-dbconfig
 olcAttributeOptions
 dsaparam
 searchResult
@@ -644,8 +639,8 @@ ldapexop
 objectIdentifier
 objectidentifier
 deallocators
-mirrormode
-MirrorMode
+multiprovider
+MultiProvider
 loopDetect
 SIGHUP
 authMethodNotSupported
@@ -858,7 +853,6 @@ datadir
 slapadd
 reqFilter
 matcheddomain
-CThreads
 slapacl
 requestName
 randkey
@@ -887,7 +881,6 @@ proxyAttrSet
 proxyAttrset
 mary
 crlcheck
-olcBdbConfig
 kadmin
 mech
 slapcat
@@ -951,7 +944,6 @@ RetCodes
 userApplications
 NDBM
 newSuperiorDN
-browseable
 auditBind
 setstyle
 newSuperior
@@ -967,7 +959,6 @@ unwillingToPerform
 PhotoURI
 MyCompany
 mkdep
-idlcachesize
 irresponsive
 PasswordModify
 readOnly
@@ -1025,7 +1016,6 @@ slapdconfigfile
 modv
 ObjectClassDescription
 truelies
-slurpd
 basename
 groupOfUniqueNames
 DHAVE
@@ -1185,12 +1175,10 @@ monitorRuntimeConfig
 olcAuditlogFile
 namingContexts
 referralAttrDN
-idlecachesize
 moddn
 calloc
 LDFLAGS
 attributeOrValueExists
-olcHdbConfig
 bsize
 auditObject
 dnssrv
@@ -1361,9 +1349,6 @@ MChAODQ
 lookups
 GnuTLS
 gnutls
-MozNSS
-MOZNSS
-moznss
 LTONLY
 SNMP
 timelimit
@@ -1378,7 +1363,6 @@ spasswd
 sprintf
 monitorCounterObject
 Instanstantiation
-olcDbConfig
 olcLastMod
 vals
 param
@@ -1492,7 +1476,6 @@ ghenry
 odbcinst
 reqType
 slapover
-BerkeleyDB's
 attributename
 lwrap
 reqStart
@@ -1559,7 +1542,7 @@ builtin
 matcheduid
 Locator
 ldapmaster
-olcMirrorMode
+olcMultiProvider
 libldap
 refreshDeletes
 aliasProblem
@@ -1628,7 +1611,6 @@ DSAIT
 olcHidden
 mySNMP
 metainformation
-BerkeleyDB
 ldapuri
 auditAbandon
 RANDFILE
@@ -1662,7 +1644,6 @@ olcPasswordHash
 ldapc
 loopback
 ldapi
-BDB's
 GETREALM
 functionalities
 noplain
@@ -1670,7 +1651,6 @@ NOECHOPROMPT
 AES
 ldaps
 notoc
-bdb
 LDAPv
 IPsec
 olcServerID
@@ -1692,3 +1672,4 @@ lmdb
 LMDB
 LMDB's
 MDB
+slapmodify

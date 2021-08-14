@@ -1,0 +1,13 @@
+[Unit]
+Description=LDAP Load Balancer Daemon
+After=syslog.target network-online.target
+Documentation=man:lloadd.conf
+
+[Service]
+Type=notify
+Environment="LLOADD_URLS=ldap:/// ldapi:///" "LLOADD_OPTIONS="
+EnvironmentFile=/etc/sysconfig/lloadd
+ExecStart=%LIBEXECDIR%/lloadd -d 0 -h ${LLOADD_URLS} $LLOADD_OPTIONS
+
+[Install]
+WantedBy=multi-user.target

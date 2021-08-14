@@ -1,5 +1,5 @@
 .TH SLAPD-LDAP 5 "RELEASEDATE" "OpenLDAP LDVERSION"
-.\" Copyright 1998-2020 The OpenLDAP Foundation All Rights Reserved.
+.\" Copyright 1998-2021 The OpenLDAP Foundation All Rights Reserved.
 .\" Copying restrictions apply.  See COPYRIGHT/LICENSE.
 .\" $OpenLDAP$
 .SH NAME
@@ -49,10 +49,10 @@ of the proxy lined up with that of the proxied server.
 .LP
 Note: When looping back to the same instance of
 .BR slapd (8), 
-each connection requires a new thread; as a consequence,
+each connection requires a new thread; as a consequence, the
 .BR slapd (8)
-must be compiled with thread support, and the \fBthreads\fP parameter 
-may need some tuning; in those cases, one may consider using 
+\fBthreads\fP parameter may need some tuning. In those cases,
+one may consider using 
 .BR slapd\-relay (5)
 instead, which performs the relayed operation 
 internally and thus reuses the same connection.
@@ -113,7 +113,9 @@ needs to be created.
 .B [tls_cacert=<file>]
 .B [tls_cacertdir=<path>]
 .B [tls_reqcert=never|allow|try|demand]
+.B [tls_reqsan=never|allow|try|demand]
 .B [tls_cipher_suite=<ciphers>]
+.B [tls_ecname=<names>]
 .B [tls_protocol_min=<major>[.<minor>]]
 .B [tls_crlcheck=none|peer|all]
 .RS
@@ -144,15 +146,13 @@ The
 .B idassert\-bind
 feature, instead, in some cases can be crafted to implement that behavior,
 which is \fIintrinsically unsafe and should be used with extreme care\fP.
-This directive obsoletes
-.BR acl\-authcDN ,
-and
-.BR acl\-passwd .
 
 The TLS settings default to the same as the main slapd TLS settings,
 except for
 .B tls_reqcert
-which defaults to "demand".
+which defaults to "demand", and
+.B tls_reqsan
+which defaults to "allow".
 .RE
 
 .TP
@@ -192,6 +192,10 @@ underlying libldap, with rebinding eventually performed if the
 \fBrebind\-as\-user\fP directive is used.  The default is to chase referrals.
 
 .TP
+.B conn\-pool\-max <int>
+This directive defines the maximum size of the privileged connections pool.
+
+.TP
 .B conn\-ttl <time>
 This directive causes a cached connection to be dropped and recreated
 after a given ttl, regardless of being idle or not.
@@ -227,7 +231,9 @@ case allows anonymous rather than denies.
 .B [tls_cacert=<file>]
 .B [tls_cacertdir=<path>]
 .B [tls_reqcert=never|allow|try|demand]
+.B [tls_reqsan=never|allow|try|demand]
 .B [tls_cipher_suite=<ciphers>]
+.B [tls_ecname=<names>]
 .B [tls_protocol_min=<version>]
 .B [tls_crlcheck=none|peer|all]
 .RS
@@ -344,7 +350,7 @@ useful when the asserted identities do not exist on the remote server.
 
 Flags can be
 
-\fBoverride,[non\-]prescriptive,proxy\-authz\-[non\-]critical\fP
+\fBoverride,[non\-]prescriptive,proxy\-authz\-[non\-]critical,dn\-{authzid|whoami}\fP
 
 When the 
 .B override
@@ -375,22 +381,25 @@ in violation of RFC 4370.  Use of
 .B proxy\-authz\-critical
 is recommended.
 
+When the
+.B dn\-authzid
+flag is used, RFC 3829 LDAP Authorization Identity Controls
+is used to retrieve the identity associated to the SASL identity;
+when the
+.B dn\-whoami
+flag is used, RFC 4532 LDAP Who am I? Operation is performed
+after the bind for the same purpose.
+
 The TLS settings default to the same as the main slapd TLS settings,
 except for
 .B tls_reqcert
-which defaults to "demand".
+which defaults to "demand", and
+.B tls_reqsan
+which defaults to "allow".
 
 The identity associated to this directive is also used for privileged
 operations whenever \fBidassert\-bind\fP is defined and \fBacl\-bind\fP
 is not.  See \fBacl\-bind\fP for details.
-
-This directive obsoletes
-.BR idassert\-authcDN ,
-.BR idassert\-passwd ,
-.BR idassert\-mode ,
-and
-.BR idassert\-method .
-.RE
 
 .TP
 .B idassert-passthru <authz-regexp>
@@ -408,7 +417,6 @@ See
 section related to
 .BR authz\-policy ,
 for details on the syntax of this field.
-
 
 .TP
 .B idle\-timeout <time>
@@ -433,6 +441,14 @@ Only some systems support the customization of these values;
 the
 .B keepalive
 parameter is ignored otherwise, and system-wide settings are used.
+
+.TP
+.B tcp\-user\-timeout  <milliseconds>
+If non-zero, corresponds to the
+.B TCP_USER_TIMEOUT
+set on the target connections, overriding the operating system setting.
+Only some systems support the customization of this parameter, it is
+ignored otherwise and system-wide settings are used.
 
 .TP
 .B network\-timeout <time>
@@ -584,13 +600,19 @@ is used.
 .B [tls_cacert=<file>]
 .B [tls_cacertdir=<path>]
 .B [tls_reqcert=never|allow|try|demand]
+.B [tls_reqsan=never|allow|try|demand]
 .B [tls_cipher_suite=<ciphers>]
+.B [tls_ecname=<names>]
 .B [tls_crlcheck=none|peer|all]
 .RS
 Specify TLS settings for regular connections.
 
-The first parameter only applies to \fBldap://\fP connections and so
-at the moment, \fBnone\fP and \fBldaps\fP are equivalent.
+If the first parameter is not "none" then this configures the TLS
+settings to be used for regular connections.
+The StartTLS extended operation will be used when establishing the
+connection unless the URI directive protocol scheme is \fBldaps://\fP.
+In that case this keyword may only be set to "ldaps" and the StartTLS
+operation will not be used.
 
 With \fBpropagate\fP, the proxy issues StartTLS operation only if
 the original connection has a TLS layer set up.
@@ -600,7 +622,9 @@ if the StartTLS operation failed; its use is \fBnot\fP recommended.
 The TLS settings default to the same as the main slapd TLS settings,
 except for
 .B tls_reqcert
-which defaults to "demand" and
+which defaults to "demand",
+.B tls_reqsan
+which defaults to "allow", and
 .B starttls
 which is overshadowed by the first keyword and thus ignored.
 .RE
@@ -611,122 +635,6 @@ when set to
 .BR yes ,
 create a temporary connection whenever competing with other threads
 for a shared one; otherwise, wait until the shared connection is available.
-
-.SH BACKWARD COMPATIBILITY
-The LDAP backend has been heavily reworked between releases 2.2 and 2.3,
-and subsequently between 2.3 and 2.4.
-As a side-effect, some of the traditional directives have been
-deprecated and should be no longer used, as they might disappear
-in future releases.
-
-.TP
-.B acl\-authcDN "<administrative DN for access control purposes>"
-Formerly known as the
-.BR binddn ,
-it is the DN that is used to query the target server for acl checking;
-it is supposed to have read access on the target server to attributes used
-on the proxy for acl checking.
-There is no risk of giving away such values; they are only used to
-check permissions.
-
-.B The acl\-authcDN identity is by no means implicitly used by the proxy 
-.B when the client connects anonymously.
-The
-.B idassert\-*
-feature can be used (at own risk) for that purpose instead.
-
-This directive is obsoleted by the
-.B binddn
-arg of
-.B acl\-bind
-when \fIbindmethod\fP=\fBsimple\fP, and will be dismissed in the future.
-
-.TP
-.B acl\-passwd <password>
-Formerly known as the
-.BR bindpw ,
-it is the password used with the above
-.B acl\-authcDN
-directive.
-This directive is obsoleted by the
-.B credentials
-arg of
-.B acl\-bind
-when \fIbindmethod\fP=\fBsimple\fP, and will be dismissed in the future.
-
-.TP
-.B idassert\-authcDN "<administrative DN for proxyAuthz purposes>"
-DN which is used to propagate the client's identity to the target
-by means of the proxyAuthz control when the client does not
-belong to the DIT fragment that is being proxied by back-ldap.
-This directive is obsoleted by the
-.B binddn
-arg of
-.BR idassert\-bind
-when \fIbindmethod\fP=\fBsimple\fP, and will be dismissed in the future.
-
-.TP
-.B idassert\-passwd <password>
-Password used with the
-.B idassert\-authcDN
-above.
-This directive is obsoleted by the
-.B crendentials
-arg of
-.B idassert\-bind
-when \fIbindmethod\fP=\fBsimple\fP, and will be dismissed in the future.
-
-.TP
-.B idassert\-mode <mode> [<flags>]
-defines what type of
-.I identity assertion
-is used.
-This directive is obsoleted by the
-.B mode
-arg of 
-.BR idassert\-bind ,
-and will be dismissed in the future.
-
-.TP
-.B idassert\-method <method> [<saslargs>]
-This directive is obsoleted by the
-.B bindmethod
-arg of
-.BR idassert\-bind ,
-and will be dismissed in the future.
-
-.TP
-.B port <port>
-this directive is no longer supported.  Use the 
-.B uri
-directive as described above.
-
-.TP
-.B server <hostname[:port]>
-this directive is no longer supported.  Use the 
-.B uri
-directive as described above.
-
-.TP
-.B suffixmassage, map, rewrite*
-These directives are no longer supported by back-ldap; their 
-functionality is now delegated to the
-.B rwm
-overlay.  Essentially, add a statement
-
-.B overlay rwm
-
-first, and prefix all rewrite/map statements with
-.B rwm\-
-to obtain the original behavior.
-See
-.BR slapo\-rwm (5)
-for details.
-.\" However, to ease update from existing configurations, back-ldap still 
-.\" recognizes them and automatically instantiates the
-.\" .B rwm
-.\" overlay if available and not instantiated yet.
-.\" This behavior may change in the future.
 
 .SH ACCESS CONTROL
 The

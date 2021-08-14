@@ -1,0 +1,12 @@
+Expression
+@ NULL @
+@@
+
+NULL <=> 0
+
+Expression
+@ underscore_func @
+expression E;
+@@
+
+_(E) => E

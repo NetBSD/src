@@ -2,7 +2,7 @@
 # $OpenLDAP$
 ## This work is part of OpenLDAP Software <http://www.openldap.org/>.
 ##
-## Copyright 1998-2020 The OpenLDAP Foundation.
+## Copyright 1998-2021 The OpenLDAP Foundation.
 ## All rights reserved.
 ##
 ## Redistribution and use in source and binary forms, with or without
@@ -18,8 +18,8 @@ echo ""
 
 echo "Starting slapd on TCP/IP port $PORT1..."
 echo "======== Starting slapd with $RELAY backend ========" >> $LOG1
-. $CONFFILTER $BACKEND $MONITORDB < $RELAYCONF > $CONF1
-$SLAPD -f $CONF1 -h $URI1 -d $LVL $TIMING >> $LOG1 2>&1 &
+. $CONFFILTER $BACKEND < $RELAYCONF > $CONF1
+$SLAPD -f $CONF1 -h $URI1 -d $LVL >> $LOG1 2>&1 &
 PID=$!
 if test $WAIT != 0 ; then
     echo PID $PID
@@ -31,7 +31,7 @@ sleep 1
 
 echo "Using ldapsearch to check that slapd is running..."
 for i in 0 1 2 3 4 5; do
-	$LDAPSEARCH -s base -b "$MONITOR" -h $LOCALHOST -p $PORT1 \
+	$LDAPSEARCH -s base -b "$MONITOR" -H $URI1 \
 		'objectclass=*' > /dev/null 2>&1
 	RC=$?
 	if test $RC = 0 ; then
@@ -47,7 +47,7 @@ if test $RC != 0 ; then
 fi
 
 echo "Using ldapadd to populate the database..."
-$LDAPADD -D "$MANAGERDN" -h $LOCALHOST -p $PORT1 -w $PASSWD < \
+$LDAPADD -D "$MANAGERDN" -H $URI1 -w $PASSWD < \
 	$LDIFORDERED > $TESTOUT 2>&1
 RC=$?
 if test $RC != 0 ; then
@@ -61,7 +61,7 @@ cat /dev/null > $SEARCHOUT
 BASEDN="dc=example,dc=com"
 echo "Searching base=\"$BASEDN\"..."
 echo "# searching base=\"$BASEDN\"..." >> $SEARCHOUT
-$LDAPSEARCH -S '' -h $LOCALHOST -p $PORT1 -b "$BASEDN" >> $SEARCHOUT 2>&1
+$LDAPSEARCH -S '' -H $URI1 -b "$BASEDN" >> $SEARCHOUT 2>&1
 RC=$?
 if test $RC != 0 ; then
 	echo "Search failed ($RC)!"
@@ -72,7 +72,7 @@ fi
 BASEDN="o=Example,c=US"
 echo "Searching base=\"$BASEDN\"..."
 echo "# searching base=\"$BASEDN\"..." >> $SEARCHOUT
-$LDAPSEARCH -S '' -h $LOCALHOST -p $PORT1 -b "$BASEDN" >> $SEARCHOUT 2>&1
+$LDAPSEARCH -S '' -H $URI1 -b "$BASEDN" >> $SEARCHOUT 2>&1
 RC=$?
 if test $RC != 0 ; then
 	echo "Search failed ($RC)!"
@@ -83,7 +83,7 @@ fi
 BASEDN="o=Esempio,c=IT"
 echo "Searching base=\"$BASEDN\"..."
 echo "# searching base=\"$BASEDN\"..." >> $SEARCHOUT
-$LDAPSEARCH -S '' -h $LOCALHOST -p $PORT1 -b "$BASEDN" >> $SEARCHOUT 2>&1
+$LDAPSEARCH -S '' -H $URI1 -b "$BASEDN" >> $SEARCHOUT 2>&1
 RC=$?
 if test $RC != 0 ; then
 	echo "Search failed ($RC)!"
@@ -94,7 +94,7 @@ fi
 BASEDN="o=Beispiel,c=DE"
 echo "Searching base=\"$BASEDN\"..."
 echo "# searching base=\"$BASEDN\"..." >> $SEARCHOUT
-$LDAPSEARCH -S '' -h $LOCALHOST -p $PORT1 -b "$BASEDN" >> $SEARCHOUT 2>&1
+$LDAPSEARCH -S '' -H $URI1 -b "$BASEDN" >> $SEARCHOUT 2>&1
 RC=$?
 if test $RC != 0 ; then
 	echo "Search failed ($RC)!"
@@ -108,7 +108,7 @@ fi
 
 BASEDN="o=Beispiel,c=DE"
 echo "Modifying database \"$BASEDN\"..."
-$LDAPMODIFY -v -D "cn=Manager,$BASEDN" -h $LOCALHOST -p $PORT1 -w $PASSWD \
+$LDAPMODIFY -v -D "cn=Manager,$BASEDN" -H $URI1 -w $PASSWD \
 	-M >> $TESTOUT 2>&1 << EOMODS
 dn: cn=Added User,ou=Alumni Association,ou=People,$BASEDN
 changetype: add
@@ -188,7 +188,7 @@ fi
 
 BASEDN="o=Example,c=US"
 echo "Modifying database \"$BASEDN\"..."
-$LDAPMODIFY -v -D "cn=Manager,$BASEDN" -h $LOCALHOST -p $PORT1 -w $PASSWD \
+$LDAPMODIFY -v -D "cn=Manager,$BASEDN" -H $URI1 -w $PASSWD \
 	-M >> $TESTOUT 2>&1 << EOMODS
 # These operations (updates with objectClass mapping) triggered ITS#3499
 dn: cn=Added Group,ou=Groups,$BASEDN
@@ -233,7 +233,7 @@ fi
 
 echo "Searching base=\"$BASEDN\"..."
 echo "# searching base=\"$BASEDN\"..." >> $SEARCHOUT
-$LDAPSEARCH -S '' -h $LOCALHOST -p $PORT1 -b "$BASEDN" >> $SEARCHOUT 2>&1
+$LDAPSEARCH -S '' -H $URI1 -b "$BASEDN" >> $SEARCHOUT 2>&1
 RC=$?
 if test $RC != 0 ; then
 	echo "Search failed ($RC)!"
@@ -244,7 +244,7 @@ fi
 BASEDN="o=Esempio,c=IT"
 echo "Searching base=\"$BASEDN\"..."
 echo "# searching base=\"$BASEDN\"..." >> $SEARCHOUT
-$LDAPSEARCH -S '' -h $LOCALHOST -p $PORT1 -b "$BASEDN" >> $SEARCHOUT 2>&1
+$LDAPSEARCH -S '' -H $URI1 -b "$BASEDN" >> $SEARCHOUT 2>&1
 RC=$?
 if test $RC != 0 ; then
 	echo "Search failed ($RC)!"
@@ -261,7 +261,7 @@ echo "# 	attrs=\"'*' ref\"" >> $SEARCHOUT
 BASEDN="dc=example,dc=com"
 echo "	base=\"$BASEDN\"..."
 echo "# 	base=\"$BASEDN\"..." >> $SEARCHOUT
-$LDAPSEARCH -S '' -h $LOCALHOST -p $PORT1 -b "$BASEDN" -M "$FILTER" '*' ref \
+$LDAPSEARCH -S '' -H $URI1 -b "$BASEDN" -M "$FILTER" '*' ref \
 	>> $SEARCHOUT 2>&1
 RC=$?
 if test $RC != 0 ; then
@@ -273,7 +273,7 @@ fi
 BASEDN="o=Example,c=US"
 echo "	base=\"$BASEDN\"..."
 echo "# 	base=\"$BASEDN\"..." >> $SEARCHOUT
-$LDAPSEARCH -S '' -h $LOCALHOST -p $PORT1 -b "$BASEDN" -M "$FILTER" '*' ref \
+$LDAPSEARCH -S '' -H $URI1 -b "$BASEDN" -M "$FILTER" '*' ref \
 	>> $SEARCHOUT 2>&1
 RC=$?
 if test $RC != 0 ; then
@@ -285,7 +285,7 @@ fi
 BASEDN="o=Esempio,c=IT"
 echo "	base=\"$BASEDN\"..."
 echo "# 	base=\"$BASEDN\"..." >> $SEARCHOUT
-$LDAPSEARCH -S '' -h $LOCALHOST -p $PORT1 -b "$BASEDN" -M "$FILTER" '*' ref \
+$LDAPSEARCH -S '' -H $URI1 -b "$BASEDN" -M "$FILTER" '*' ref \
 	>> $SEARCHOUT 2>&1
 RC=$?
 if test $RC != 0 ; then
@@ -302,7 +302,7 @@ echo "	base=\"$BASEDN\"..."
 echo "# searching filter=\"$FILTER\"" >> $SEARCHOUT
 echo "# 	attrs=\"seeAlso\"" >> $SEARCHOUT
 echo "# 	base=\"$BASEDN\"..." >> $SEARCHOUT
-$LDAPSEARCH -S '' -h $LOCALHOST -p $PORT1 -b "$BASEDN" "$FILTER" seeAlso \
+$LDAPSEARCH -S '' -H $URI1 -b "$BASEDN" "$FILTER" seeAlso \
 	>> $SEARCHOUT 2>&1
 RC=$?
 if test $RC != 0 ; then
@@ -318,7 +318,7 @@ echo "	base=\"$BASEDN\"..."
 echo "# searching filter=\"$FILTER\"" >> $SEARCHOUT
 echo "# 	attrs=\"uid\"" >> $SEARCHOUT
 echo "# 	base=\"$BASEDN\"..." >> $SEARCHOUT
-$LDAPSEARCH -S '' -h $LOCALHOST -p $PORT1 -b "$BASEDN" "$FILTER" uid \
+$LDAPSEARCH -S '' -H $URI1 -b "$BASEDN" "$FILTER" uid \
 	>> $SEARCHOUT 2>&1
 RC=$?
 if test $RC != 0 ; then
@@ -334,7 +334,7 @@ echo "	base=\"$BASEDN\"..."
 echo "# searching filter=\"$FILTER\"" >> $SEARCHOUT
 echo "# 	attrs=\"member\"" >> $SEARCHOUT
 echo "# 	base=\"$BASEDN\"..." >> $SEARCHOUT
-$LDAPSEARCH -S '' -h $LOCALHOST -p $PORT1 -b "$BASEDN" "$FILTER" member \
+$LDAPSEARCH -S '' -H $URI1 -b "$BASEDN" "$FILTER" member \
 	>> $SEARCHOUT 2>&1
 RC=$?
 if test $RC != 0 ; then
@@ -358,7 +358,7 @@ fi
 
 BASEDN="o=Example,c=US"
 echo "Changing password to database \"$BASEDN\"..."
-$LDAPPASSWD -h $LOCALHOST -p $PORT1 -D "cn=Manager,$BASEDN" -w $PASSWD \
+$LDAPPASSWD -H $URI1 -D "cn=Manager,$BASEDN" -w $PASSWD \
 	-s $PASSWD "cn=Added User,ou=Alumni Association,ou=People,$BASEDN" \
 	>> $TESTOUT 2>&1
 RC=$?
@@ -370,7 +370,7 @@ fi
 
 BASEDN="o=Beispiel,c=DE"
 echo "Binding with newly changed password to database \"$BASEDN\"..."
-$LDAPWHOAMI -h $LOCALHOST -p $PORT1 \
+$LDAPWHOAMI -H $URI1 \
 	-D "cn=Added User,ou=Alumni Association,ou=People,$BASEDN" \
 	-w $PASSWD >> $TESTOUT 2>&1
 RC=$?
@@ -382,7 +382,7 @@ fi
 
 BASEDN="o=Esempio,c=IT"
 echo "Comparing to database \"$BASEDN\"..."
-$LDAPCOMPARE -h $LOCALHOST -p $PORT1 \
+$LDAPCOMPARE -H $URI1 \
 	"cn=Added User,ou=Alumni Association,ou=People,$BASEDN" \
 	"seeAlso:cn=All Staff,ou=Groups,$BASEDN" >> $TESTOUT 2>&1
 RC=$?

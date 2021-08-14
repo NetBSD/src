@@ -1,0 +1,157 @@
+.TH SLAPO_RBAC 5 "RELEASEDATE" "OpenLDAP LDVERSION"
+.\" Copyright 1999-2021 SYMAS Corporation All Rights Reserved.
+.\" Copying restrictions apply.  See COPYRIGHT/LICENSE.
+.\" $OpenLDAP$
+.SH NAME
+slapo\-rbac \- RBAC0 overlay to slapd
+.SH SYNOPSIS
+ETCDIR/slapd.conf
+.SH DESCRIPTION
+.LP
+The 
+.B slapo-rbac
+overlay
+is an implementation of the ANSI INCITS 359 Role-Based Access Control (RBAC) Core.
+When instantiated, it intercepts, decodes and enforces specific RBAC policies per the Apache Fortress RBAC data formats.
+.P
+The overlay provides a set of extended operations.
+They include session create/delete, checkAccess, addActiveRole, dropActiveRole and sessionRoles.
+.P
+
+.SH CONFIGURATION
+These 
+.B slapd.conf
+configuration options apply to the slapo-rbac overlay. 
+
+.TP
+.B overlay	rbac
+This tag gets applied to the RBAC configuration db (see example below).
+.TP
+.B rbac-default-users-base-dn "ou=People,dc=example,dc=com"
+Points to the container that contains the Apache Fortress users.
+.TP
+.B rbac-default-roles-base-dn "ou=Roles,ou=RBAC,dc=example,dc=com"
+Points to the container that contains the Apache Fortress roles.
+.TP
+.B rbac-default-permissions-base-dn "ou=Permissions,ou=RBAC,dc=example,dc=com"
+Points to the container that contains the Apache Fortress perms.
+.TP
+.B rbac-default-sessions-base-dn "cn=rbac"
+Points to the suffix of the RBAC sessions.
+.TP
+.B rbac-default-audit-base-dn "cn=audit"
+Points to the suffix where the audit records are stored.
+.TP
+.B rbac-admin "cn=manager,dc=example,dc=com"
+A service account that has read access to the entire Apache Fortress DIT.
+.TP
+.B rbac-pwd "{SSHA}pSOV2TpCxj2NMACijkcMko4fGrFopctU"
+The password according to the service account.
+.TP
+.B rbac-session-admin "cn=manager,cn=rbac"
+The root dn of the RBAC sessions database.
+.TP
+.B rbac-session-admin-pwd {SSHA}pSOV2TpCxj2NMACijkcMko4fGrFopctU
+The password corresponding with the session database.
+.TP
+.RE
+
+.SH EXAMPLES
+.LP
+.RS
+.nf
+
+This overlay requires the
+.B rbac.schema
+loaded and three additional database config sections, one to store rbac
+sessions, second to store the audit records and third to hold the overlay's
+config parameters. They should appear after the existing Apache Fortress db
+config.
+
+.TP 
+1. Session Database: Used to store the RBAC sessions corresponding to a logged in user.
+.B database	mdb
+.B suffix	"cn=rbac"
+.B rootdn	"cn=manager,cn=rbac"
+.B rootpw	{SSHA}pSOV2TpCxj2NMACijkcMko4fGrFopctU
+.B index	rbacSessid  eq
+.B directory	"/var/openldap/rbacsess"
+.B overlay	dds
+.B dds-default-ttl	3600
+.B dds-max-dynamicObjects	100000
+.B dbnosync
+.B checkpoint	64 5
+.PP
+
+.TP
+2. Audit Database: Stores records that track user's activities.
+.B database	mdb
+.B suffix	"cn=audit"
+.B rootdn	"cn=manager,cn=audit"
+.B rootpw	{SSHA}pSOV2TpCxj2NMACijkcMko4fGrFopctU
+.B directory	"/var/openldap/rbacaudit"
+.B dbnosync
+.B checkpoint    64 5
+
+.PP
+
+.TP
+3. Config Database: Stores the parameters needed for this overlay to work.
+.B database	mdb
+.B suffix		"dc=rbac"
+.B rootdn		"cn=manager,dc=rbac"
+.B rootpw		{SSHA}pSOV2TpCxj2NMACijkcMko4fGrFopctU
+.B directory	"/var/openldap/rbacoverlay"
+.B overlay	rbac
+.B rbac-default-tenant-id "example"
+.B rbac-default-users-base-dn "ou=People,dc=example,dc=com"
+.B rbac-default-roles-base-dn "ou=Roles,ou=RBAC,dc=example,dc=com"
+.B rbac-default-permissions-base-dn "ou=Permissions,ou=RBAC,dc=example,dc=com"
+.B rbac-default-sessions-base-dn "cn=rbac"
+.B rbac-default-audit-base-dn "cn=audit"
+.B rbac-admin "cn=manager,dc=example,dc=com"
+.B rbac-pwd "{SSHA}pSOV2TpCxj2NMACijkcMko4fGrFopctU"
+.B rbac-session-admin "cn=manager,cn=rbac"
+.B rbac-session-admin-pwd {SSHA}pSOV2TpCxj2NMACijkcMko4fGrFopctU
+
+.fi
+.RE
+
+.SH SEE ALSO
+.BR ldap (3),
+.BR slapd.conf (5),
+.BR slapd\-config (5),
+.BR slapo\-chain (5).
+.LP
+"OpenLDAP Administrator's Guide" (http://www.OpenLDAP.org/doc/admin/)
+.LP
+
+.BR ldap (3),
+.BR slapd.conf (5),
+.BR slapd\-config (5),
+.BR slapo\-chain (5).
+.LP
+"OpenLDAP Administrator's Guide" (http://www.OpenLDAP.org/doc/admin/)
+.LP
+
+.UR https://profsandhu.com/journals/tissec/ANSI+INCITS+359-2004.pdf
+.UE ANSI INCITS 359 Role-Based Access Control specification
+
+.UR https://github.com/apache/directory-fortress-core/blob/master/README.md
+.UE Apache Fortress README
+
+.UR https://github.com/apache/directory-fortress-core/blob/master/README-QUICKSTART-SLAPD.md
+.UE Apache Fortress OpenLDAP Quickstart 
+
+.UR https://github.com/apache/directory-fortress-core/blob/master/ldap/schema/fortress.schema
+.UE Apache Fortress RBAC schema
+
+.SH BUGS
+This overlay is experimental.
+
+.SH ACKNOWLEDGEMENTS
+.P
+This module was written in 2013 by Ted Cheng of Symas Corporation
+with a little help from Matt Hardin, Howard Chu, Shawn McKinney.
+.P
+.so ../Project

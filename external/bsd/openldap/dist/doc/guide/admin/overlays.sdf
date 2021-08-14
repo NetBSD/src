@@ -1,5 +1,5 @@
 # $OpenLDAP$
-# Copyright 2007-2020 The OpenLDAP Foundation, All Rights Reserved.
+# Copyright 2007-2021 The OpenLDAP Foundation, All Rights Reserved.
 # COPYING RESTRICTIONS APPLY, see COPYRIGHT.
 
 H1: Overlays
@@ -79,7 +79,7 @@ or in raw form.
 
 It is also used for {{SECT:delta-syncrepl replication}}
 
-Note: An accesslog database is unique to a given master. It should
+Note: An accesslog database is unique to a given provider. It should
 never be replicated.
 
 H3: Access Logging Configuration
@@ -88,7 +88,6 @@ The following is a basic example that implements Access Logging:
 
 >        database mdb
 >        suffix dc=example,dc=com
->        maxsize 85899345920
 >        ...
 >        overlay accesslog
 >        logdb cn=log
@@ -97,7 +96,6 @@ The following is a basic example that implements Access Logging:
 >        
 >        database mdb
 >        suffix cn=log
->        maxsize 85899345920
 >        ...
 >        index reqStart eq
 >        access to *
@@ -107,9 +105,8 @@ The following is an example used for {{SECT:delta-syncrepl replication}}:
 
 >        database mdb
 >        suffix cn=accesslog
->        rootdn cn=accesslog
->        maxsize 85899345920
 >        directory /usr/local/var/openldap-accesslog
+>        rootdn cn=accesslog
 >        index default eq
 >        index entryCSN,objectClass,reqEnd,reqResult,reqStart,reqDN
 
@@ -117,7 +114,6 @@ Accesslog overlay definitions for the primary db
 
 >        database mdb
 >        suffix dc=example,dc=com
->        maxsize 85899345920
 >        ...
 >        overlay accesslog
 >        logdb cn=accesslog
@@ -259,13 +255,13 @@ default when {{B:--enable-ldap}}.
 H3: Chaining Configuration
 
 In order to demonstrate how this overlay works, we shall discuss a typical 
-scenario which might be one master server and three Syncrepl slaves. 
+scenario which might be one provider server and three Syncrepl replicas. 
 
 On each replica, add this near the top of the {{slapd.conf}}(5) file
 (global), before any database definitions:
 
 >        overlay                    chain
->        chain-uri                  "ldap://ldapmaster.example.com"
+>        chain-uri                  "ldap://ldapprovider.example.com"
 >        chain-idassert-bind        bindmethod="simple"
 >                                   binddn="cn=Manager,dc=example,dc=com"
 >                                   credentials="<secret>" 
@@ -275,48 +271,48 @@ On each replica, add this near the top of the {{slapd.conf}}(5) file
 
 Add this below your {{syncrepl}} statement:
 
->        updateref                  "ldap://ldapmaster.example.com/"
+>        updateref                  "ldap://ldapprovider.example.com/"
 
-The {{B:chain-tls}} statement enables TLS from the slave to the ldap master. 
+The {{B:chain-tls}} statement enables TLS from the replica to the ldap provider. 
 The DITs are exactly the same between these machines, therefore whatever user 
-bound to the slave will also exist on the master. If that DN does not have 
-update privileges on the master, nothing will happen.
+bound to the replica will also exist on the provider. If that DN does not have 
+update privileges on the provider, nothing will happen.
 
-You will need to restart the slave after these {{slapd.conf}} changes.
+You will need to restart the replica after these {{slapd.conf}} changes.
 Then, if you are using {{loglevel stats}} (256), you can monitor an
-{{ldapmodify}} on the slave and the master. (If you're using {{cn=config}}
+{{ldapmodify}} on the replica and the provider. (If you're using {{cn=config}}
 no restart is required.)
 
-Now start an {{ldapmodify}} on the slave and watch the logs. You should expect 
+Now start an {{ldapmodify}} on the replica and watch the logs. You should expect 
 something like:
 
->        Sep  6 09:27:25 slave1 slapd[29274]: conn=11 fd=31 ACCEPT from IP=143.199.102.216:45181 (IP=143.199.102.216:389)
->        Sep  6 09:27:25 slave1 slapd[29274]: conn=11 op=0 STARTTLS
->        Sep  6 09:27:25 slave1 slapd[29274]: conn=11 op=0 RESULT oid= err=0 text=
->        Sep  6 09:27:25 slave1 slapd[29274]: conn=11 fd=31 TLS established tls_ssf=256 ssf=256
->        Sep  6 09:27:28 slave1 slapd[29274]: conn=11 op=1 BIND dn="uid=user1,ou=people,dc=example,dc=com" method=128
->        Sep  6 09:27:28 slave1 slapd[29274]: conn=11 op=1 BIND dn="uid=user1,ou=People,dc=example,dc=com" mech=SIMPLE ssf=0
->        Sep  6 09:27:28 slave1 slapd[29274]: conn=11 op=1 RESULT tag=97 err=0 text=
->        Sep  6 09:27:28 slave1 slapd[29274]: conn=11 op=2 MOD dn="uid=user1,ou=People,dc=example,dc=com"
->        Sep  6 09:27:28 slave1 slapd[29274]: conn=11 op=2 MOD attr=mail
->        Sep  6 09:27:28 slave1 slapd[29274]: conn=11 op=2 RESULT tag=103 err=0 text=
->        Sep  6 09:27:28 slave1 slapd[29274]: conn=11 op=3 UNBIND
->        Sep  6 09:27:28 slave1 slapd[29274]: conn=11 fd=31 closed
->        Sep  6 09:27:28 slave1 slapd[29274]: syncrepl_entry: LDAP_RES_SEARCH_ENTRY(LDAP_SYNC_MODIFY)
->        Sep  6 09:27:28 slave1 slapd[29274]: syncrepl_entry: be_search (0)
->        Sep  6 09:27:28 slave1 slapd[29274]: syncrepl_entry: uid=user1,ou=People,dc=example,dc=com
->        Sep  6 09:27:28 slave1 slapd[29274]: syncrepl_entry: be_modify (0)
+>        Sep  6 09:27:25 replica1 slapd[29274]: conn=11 fd=31 ACCEPT from IP=143.199.102.216:45181 (IP=143.199.102.216:389)
+>        Sep  6 09:27:25 replica1 slapd[29274]: conn=11 op=0 STARTTLS
+>        Sep  6 09:27:25 replica1 slapd[29274]: conn=11 op=0 RESULT oid= err=0 text=
+>        Sep  6 09:27:25 replica1 slapd[29274]: conn=11 fd=31 TLS established tls_ssf=256 ssf=256
+>        Sep  6 09:27:28 replica1 slapd[29274]: conn=11 op=1 BIND dn="uid=user1,ou=people,dc=example,dc=com" method=128
+>        Sep  6 09:27:28 replica1 slapd[29274]: conn=11 op=1 BIND dn="uid=user1,ou=People,dc=example,dc=com" mech=SIMPLE ssf=0
+>        Sep  6 09:27:28 replica1 slapd[29274]: conn=11 op=1 RESULT tag=97 err=0 text=
+>        Sep  6 09:27:28 replica1 slapd[29274]: conn=11 op=2 MOD dn="uid=user1,ou=People,dc=example,dc=com"
+>        Sep  6 09:27:28 replica1 slapd[29274]: conn=11 op=2 MOD attr=mail
+>        Sep  6 09:27:28 replica1 slapd[29274]: conn=11 op=2 RESULT tag=103 err=0 text=
+>        Sep  6 09:27:28 replica1 slapd[29274]: conn=11 op=3 UNBIND
+>        Sep  6 09:27:28 replica1 slapd[29274]: conn=11 fd=31 closed
+>        Sep  6 09:27:28 replica1 slapd[29274]: syncrepl_entry: LDAP_RES_SEARCH_ENTRY(LDAP_SYNC_MODIFY)
+>        Sep  6 09:27:28 replica1 slapd[29274]: syncrepl_entry: be_search (0)
+>        Sep  6 09:27:28 replica1 slapd[29274]: syncrepl_entry: uid=user1,ou=People,dc=example,dc=com
+>        Sep  6 09:27:28 replica1 slapd[29274]: syncrepl_entry: be_modify (0)
 
-And on the master you will see this:
+And on the provider you will see this:
 
->        Sep  6 09:23:57 ldapmaster slapd[2961]: conn=55902 op=3 PROXYAUTHZ dn="uid=user1,ou=people,dc=example,dc=com"
->        Sep  6 09:23:57 ldapmaster slapd[2961]: conn=55902 op=3 MOD dn="uid=user1,ou=People,dc=example,dc=com"
->        Sep  6 09:23:57 ldapmaster slapd[2961]: conn=55902 op=3 MOD attr=mail
->        Sep  6 09:23:57 ldapmaster slapd[2961]: conn=55902 op=3 RESULT tag=103 err=0 text=
+>        Sep  6 09:23:57 ldapprovider slapd[2961]: conn=55902 op=3 PROXYAUTHZ dn="uid=user1,ou=people,dc=example,dc=com"
+>        Sep  6 09:23:57 ldapprovider slapd[2961]: conn=55902 op=3 MOD dn="uid=user1,ou=People,dc=example,dc=com"
+>        Sep  6 09:23:57 ldapprovider slapd[2961]: conn=55902 op=3 MOD attr=mail
+>        Sep  6 09:23:57 ldapprovider slapd[2961]: conn=55902 op=3 RESULT tag=103 err=0 text=
 
-Note: You can clearly see the PROXYAUTHZ line on the master, indicating the 
-proper identity assertion for the update on the master. Also note the slave 
-immediately receiving the Syncrepl update from the master.
+Note: You can clearly see the PROXYAUTHZ line on the provider, indicating the 
+proper identity assertion for the update on the provider. Also note the replica
+immediately receiving the Syncrepl update from the provider.
 
 H3: Handling Chaining Errors
 
@@ -369,7 +365,7 @@ Configuration via {{slapd.conf}}(5) would look like:
 >        ldap:///dc=catalog,dc=example,dc=com?title?sub?(objectClass=titleCatalog)
 
 A specification like the above would reject any {{mail}} attribute which did not
-look like {{<alpha-numeric string>@mydomain.com}}.
+look like {{<alphanumeric string>@mydomain.com}}.
 
 It would also reject any title attribute whose values were not listed in the 
 title attribute of any {{titleCatalog}} entries in the given scope.   
@@ -562,9 +558,9 @@ In {{F:slapd.conf}}(5):
 >       ...
 >       overlay dynlist
 >       dynlist-attrset groupOfURLs labeledURI member
-+
-+Note: We must include the {{F:dyngroup.schema}} file that defines the
-+{{F:groupOfURLs}} objectClass used in this example.
+
+Note: We must include the {{F:dyngroup.schema}} file that defines the {{F:groupOfURLs}}
+objectClass used in this example.
 
 Let's apply it to the following entry:
 
@@ -627,8 +623,7 @@ specific database. For example, with the following minimal slapd.conf:
 >        suffix          "dc=example,dc=com"
 >        rootdn          "cn=Manager,dc=example,dc=com"
 >        rootpw          secret
->        maxsize         85899345920
->        directory       /var/lib/ldap2.4
+>        directory       /var/lib/ldap2.5
 >        checkpoint 256 5
 >        index   objectClass   eq
 >        index   uid           eq,sub
@@ -683,8 +678,8 @@ H2: The Proxy Cache Engine
 
 {{TERM:LDAP}} servers typically hold one or more subtrees of a
 {{TERM:DIT}}. Replica (or shadow) servers hold shadow copies of
-entries held by one or more master servers.  Changes are propagated
-from the master server to replica (slave) servers using LDAP Sync
+entries held by one or more provider servers.  Changes are propagated
+from the provider server to replica servers using LDAP Sync
 replication.  An LDAP cache is a special type of replica which holds
 entries corresponding to search filters instead of subtrees.
 
@@ -743,9 +738,9 @@ H4: Setting cache parameters
 This directive enables proxy caching and sets general cache
 parameters.  The <DB> parameter specifies which underlying database
 is to be used to hold cached entries.  It should be set to
-{{EX:mdb}}, {{EX:hdb}}, or {{EX:bdb}}.  The <maxentries> parameter
-specifies the total number of entries which may be held in the cache.
-The <nattrsets> parameter specifies the total number of attribute sets
+{{EX:mdb}}.  The <maxentries> parameter specifies the
+total number of entries which may be held in the cache.  The
+<nattrsets> parameter specifies the total number of attribute sets
 (as specified by the {{EX:pcacheAttrset}} directive) that may be
 defined.  The <entrylimit> parameter specifies the maximum number of
 entries in a cacheable query.  The <period> specifies the consistency
@@ -936,7 +931,7 @@ The actual policy would be:
 >       dn: cn=default,ou=policies,dc=example,dc=com
 >       cn: default
 >       objectClass: pwdPolicy
->       objectClass: person
+>       objectClass: namedPolicy
 >       objectClass: top
 >       pwdAllowUserChange: TRUE
 >       pwdAttribute: userPassword
@@ -953,10 +948,11 @@ The actual policy would be:
 >       pwdMinLength: 5
 >       pwdMustChange: FALSE
 >       pwdSafeModify: FALSE
->       sn: dummy value
 
 You can create additional policy objects as needed. 
 
+The namedPolicy object class is present because the policy entry
+requires a structural object class.
 
 There are two ways password policy can be applied to individual objects:
 
@@ -969,8 +965,53 @@ for an object, and the password policy module was configured with the DN of a
 default policy object and if that object exists, then the policy defined in
 that object is applied.
 
-Please see {{slapo-ppolicy(5)}} for complete explanations of features and discussion of
- "Password Management Issues" at {{URL:http://www.symas.com/blog/?page_id=66}}
+Please see {{slapo-ppolicy(5)}} for a complete explanation of its features.
+
+A guiding philosophy for OpenLDAP and directory servers in general has been
+that they always hand back exactly what they were given, without
+modification. For example, if the cn attribute of an object was set to fOObaR,
+the server will return that exact string during a search. Values of attributes
+of a sensitive nature, such as userPassword, are often hashed to conceal their
+values. Since the userPassword values are used internally by the directory
+server to authenticate users, any hash algorithm that is applied to the value
+must be compatible with the directory server. Historically this problem has
+been solved by making the LDAP client application be able to hash the
+userPassword attribute value in a way that is compatible with the directory
+server, but this solution has the obvious drawback of requiring tight coupling
+between the LDAP client and server, and limits the choices of usable hashing
+algorithms to those that are accommodated by both. This is clearly a
+sub-optimal solution.
+
+In 2001 RFC 3062 became a standard that specified an LDAP extended operation
+for cases like this. Extended operations are not bound by the
+return-what-you-are-given philosophy and so are free to do things to attribute
+values that the add and modify operations cannot. The change password extended
+operation accepts a plaintext password and hashes it based on a specification
+that is contained in the server. This allows the server to be in control of
+the hashing algorithm which, in turn, ensures that any hashes applied to
+userPassword attribute values will not prevent users from being authenticated.
+
+The password policy module's ppolicy_hash_cleartext flag addresses this
+problem by intercepting LDAP modify operations that include the userPassword
+attribute and converting them to change password extended operations so they
+can be hashed according to the specification contained in slapd's
+configuration. When this flag is set, LDAP applications that modify the
+userPassword attribute can send the password in cleartext form to the server
+using a standard LDAP modify command and the server will hash the value
+according to the password-hash directive before storing it. It goes without
+saying that steps need to be taken to protect the cleartext password in
+transit, such as using SSL, TLS, or some other link encryption method.
+
+The following example shows the ppolicy module configured to hash cleartext
+passwords:
+
+>       database mdb
+>       suffix "dc=example,dc=com"
+>       [...additional database configuration directives go here...]
+>
+>       overlay ppolicy
+>       ppolicy_default "cn=default,ou=policies,dc=example,dc=com"
+>       ppolicy_hash_cleartext
 
 
 H3: Further Information
@@ -1221,7 +1262,6 @@ First we configure the overlay in the normal manner:
 >       suffix      "dc=suretecsystems,dc=com"
 >       rootdn      "cn=trans,dc=suretecsystems,dc=com"
 >       rootpw      secret
->       maxsize     85899345920
 >       directory   ./openldap-data
 >       
 >       index       objectClass eq
@@ -1294,7 +1334,7 @@ we can also search for that to return the completely fabricated entry:
 
 >       ldapsearch -x -H ldap://127.0.0.1:9001 (carLicense=LIVID)
 
-This is an extremely feature because you can then extend a remote directory server
+This is an extremely useful feature because you can then extend a remote directory server
 locally and also search against the local entries.
 
 Note: Because the translucent overlay does not perform any DN rewrites, the local

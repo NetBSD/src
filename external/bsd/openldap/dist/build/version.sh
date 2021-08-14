@@ -2,7 +2,7 @@
 # $OpenLDAP$
 ## This work is part of OpenLDAP Software <http://www.openldap.org/>.
 ##
-## Copyright 1998-2020 The OpenLDAP Foundation.
+## Copyright 1998-2021 The OpenLDAP Foundation.
 ## All rights reserved.
 ##
 ## Redistribution and use in source and binary forms, with or without
@@ -22,11 +22,11 @@ if test $ol_patch != X ; then
 	ol_type=Release
 elif test $ol_minor != X ; then
 	ol_version=${ol_major}.${ol_minor}.${ol_patch}
-	ol_api_lib_release=${ol_major}.${ol_minor}-releng
+	ol_api_lib_release=${ol_major}.${ol_minor}.releng
 	ol_type=Engineering
 else
 	ol_version=${ol_major}.${ol_minor}
-	ol_api_lib_release=${ol_major}-devel
+	ol_api_lib_release=${ol_major}.devel
 	ol_type=Devel
 fi
 

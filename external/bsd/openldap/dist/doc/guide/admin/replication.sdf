@@ -1,5 +1,5 @@
 # $OpenLDAP$
-# Copyright 1999-2020 The OpenLDAP Foundation, All Rights Reserved.
+# Copyright 1999-2021 The OpenLDAP Foundation, All Rights Reserved.
 # COPYING RESTRICTIONS APPLY, see COPYRIGHT.
 
 H1: Replication
@@ -13,16 +13,17 @@ a {{master}} server and some number of {{slave}} servers. A master
 accepted directory updates from other clients, and a slave only
 accepted updates from a (single) master. The replication structure
 was rigidly defined and any particular database could only fulfill
-a single role, either master or slave.
+a single role, either master or slave. Another historic term introduced
+with OpenLDAP 2.4 was multimaster.
 
 As OpenLDAP now supports a wide variety of replication topologies, these
-terms have been deprecated in favor of {{provider}} and
-{{consumer}}: A provider replicates directory updates to consumers; 
-consumers receive replication updates from providers. Unlike the
-rigidly defined master/slave relationships, provider/consumer roles
-are quite fluid: replication updates received in a consumer can be
-further propagated by that consumer to other servers, so a consumer
-can also act simultaneously as a provider. Also, a consumer need not
+terms have been deprecated in favor of {{provider}}/{{multi-provider}} and
+{{consumer}}: A provider can accept external write operations and make them
+available for retrieval by consumers; consumers request replication updates from
+providers. Unlike the rigidly defined master/slave relationships,
+provider/consumer roles are quite fluid: replication updates received in a
+consumer can be further propagated by that consumer to other servers, so a
+consumer can also act simultaneously as a provider. Also, a consumer need not
 be an actual LDAP server; it may be just an LDAP client.
 
 The following sections will describe the replication technology and
@@ -37,12 +38,12 @@ short, is a consumer-side replication engine that enables the
 consumer {{TERM:LDAP}} server to maintain a shadow copy of a
 {{TERM:DIT}} fragment. A syncrepl engine resides at the consumer
 and executes as one of the {{slapd}}(8) threads. It creates and maintains a
-consumer replica by connecting to the replication provider to perform
+replica by connecting to the replication provider to perform
 the initial DIT content load followed either by periodic content
 polling or by timely updates upon content changes.
 
 Syncrepl uses the LDAP Content Synchronization protocol (or LDAP Sync for
-short) as the replica synchronization protocol.  LDAP Sync provides
+short) as the consumer synchronization protocol.  LDAP Sync provides
 a stateful replication which supports both pull-based and push-based
 synchronization and does not mandate the use of a history store.
 In pull-based replication the consumer periodically
@@ -58,11 +59,11 @@ maintaining and exchanging synchronization cookies. Because the
 syncrepl consumer and provider maintain their content status, the
 consumer can poll the provider content to perform incremental
 synchronization by asking for the entries required to make the
-consumer replica up-to-date with the provider content. Syncrepl
-also enables convenient management of replicas by maintaining replica
-status.  The consumer replica can be constructed from a consumer-side
+consumer up-to-date with the provider content. Syncrepl
+also enables convenient management of consumers by maintaining replication
+status.  The consumer database can be constructed from a consumer-side
 or a provider-side backup at any synchronization status. Syncrepl
-can automatically resynchronize the consumer replica up-to-date
+can automatically resynchronize the consumer database to be up-to-date
 with the current provider content.
 
 Syncrepl supports both pull-based and push-based synchronization.
@@ -81,7 +82,7 @@ The provider keeps track of the consumer servers that have requested
 a persistent search and sends them necessary updates as the provider
 replication content gets modified.
 
-With syncrepl, a consumer server can create a replica without
+With syncrepl, a consumer can create a replication agreement without
 changing the provider's configurations and without restarting the
 provider server, if the consumer server has appropriate access
 privileges for the DIT fragment to be replicated. The consumer
@@ -90,7 +91,7 @@ changes and restart.
 
 Syncrepl supports partial, sparse, and fractional replications.  The shadow
 DIT fragment is defined by a general search criteria consisting of
-base, scope, filter, and attribute list.  The replica content is
+base, scope, filter, and attribute list.  The consumer content is
 also subject to the access privileges of the bind identity of the
 syncrepl replication connection.
 
@@ -204,13 +205,12 @@ The syncrepl engine utilizes both the present phase and the delete
 phase of the refresh synchronization. It is possible to configure
 a session log in the provider which stores the
 {{EX:entryUUID}}s of a finite number of entries deleted from a
-database. Multiple replicas share the same session log. The syncrepl
-engine uses the
-delete phase if the session log is present and the state of the
-consumer server is recent enough that no session log entries are
+database. Multiple consumers share the same session log. The syncrepl
+engine uses the delete phase if the session log is present and the state
+of the consumer server is recent enough that no session log entries are
 truncated after the last synchronization of the client.  The syncrepl
 engine uses the present phase if no session log is configured for
-the replication content or if the consumer replica is too outdated
+the replication content or if the consumer is too outdated
 to be covered by the session log.  The current design of the session
 log store is memory based, so the information contained in the
 session log is not persistent over multiple provider invocations.
@@ -225,8 +225,8 @@ in the replication context.
 
 The syncrepl engine, which is a consumer-side replication engine,
 can work with any backends. The LDAP Sync provider can be configured
-as an overlay on any backend, but works best with the {{back-bdb}},
-{{back-hdb}}, or {{back-mdb}} backends.
+as an overlay on any backend, but works best with the {{back-mdb}}
+backend.
 
 The LDAP Sync provider maintains a {{EX:contextCSN}} for each
 database as the current synchronization state indicator of the
@@ -265,9 +265,9 @@ database yielded a greater {{EX:entryCSN}} than was previously
 recorded in the suffix entry's {{EX:contextCSN}} attribute, a
 checkpoint will be immediately written with the new value.
 
-The consumer also stores its replica state, which is the provider's
+The consumer also stores its replication state, which is the provider's
 {{EX:contextCSN}} received as a synchronization cookie, in the
-{{EX:contextCSN}} attribute of the suffix entry.  The replica state
+{{EX:contextCSN}} attribute of the suffix entry.  The replication state
 maintained by a consumer server is used as the synchronization state
 indicator when it performs subsequent incremental synchronization
 with the provider server. It is also used as a provider-side
@@ -281,8 +281,8 @@ actions.
 Because a general search filter can be used in the syncrepl
 specification, some entries in the context may be omitted from the
 synchronization content.  The syncrepl engine creates a glue entry
-to fill in the holes in the replica context if any part of the
-replica content is subordinate to the holes. The glue entries will
+to fill in the holes in the consumer context if any part of the
+consumer content is subordinate to the holes. The glue entries will
 not be returned in the search result unless {{ManageDsaIT}} control
 is provided.
 
@@ -320,7 +320,7 @@ multiple objects.
 For example, suppose you have a database consisting of 102,400 objects of 1 KB 
 each. Further, suppose you routinely run a batch job to change the value of 
 a single two-byte attribute value that appears in each of the 102,400 objects 
-on the master. Not counting LDAP and TCP/IP protocol overhead, each time you 
+on the provider. Not counting LDAP and TCP/IP protocol overhead, each time you 
 run this job each consumer will transfer and process {{B:100 MB}} of data to
 process {{B:200KB of changes!}}
 
@@ -338,7 +338,7 @@ situations like the one described above. Delta-syncrepl works by maintaining a
 changelog of a selectable depth in a separate database on the provider. The replication consumer 
 checks the changelog for the changes it needs and, as long as 
 the changelog contains the needed changes, the consumer fetches the changes
-from the changelog and applies them to its database. If, however, a replica 
+from the changelog and applies them to its database. If, however, a consumer
 is too far out of sync (or completely empty), conventional syncrepl is used to 
 bring it up to date and replication then switches back to the delta-syncrepl
 mode.
@@ -351,12 +351,12 @@ it to another machine.
 For configuration, please see the {{SECT:Delta-syncrepl}} section.
 
 
-H3: N-Way Multi-Master replication
+H3: N-Way Multi-Provider Replication
 
-Multi-Master replication is a replication technique using Syncrepl to replicate 
-data to multiple provider ("Master") Directory servers. 
+Multi-Provider replication is a replication technique using Syncrepl to replicate 
+data to multiple provider ("Provider") Directory servers. 
 
-H4: Valid Arguments for Multi-Master replication
+H4: Valid Arguments for Multi-Provider replication
 
 * If any provider fails, other providers will continue to accept updates
 * Avoids a single point of failure
@@ -364,21 +364,21 @@ H4: Valid Arguments for Multi-Master replication
 the network/globe.
 * Good for Automatic failover/High Availability
 
-H4: Invalid Arguments for Multi-Master replication
+H4: Invalid Arguments for Multi-Provider replication
 
-(These are often claimed to be advantages of Multi-Master replication but
+(These are often claimed to be advantages of Multi-Provider replication but
 those claims are false):
 
 * It has {{B:NOTHING}} to do with load balancing
 * Providers {{B:must}} propagate writes to {{B:all}} the other servers, which 
 means the network traffic and write load spreads across all 
-of the servers the same as for single-master.
+of the servers the same as for single-provider.
 * Server utilization and performance are at best identical for
-Multi-Master and Single-Master replication; at worst Single-Master is
+Multi-Provider and Single-Provider replication; at worst Single-Provider is
 superior because indexing can be tuned differently to optimize for the
 different usage patterns between the provider and the consumers.
 
-H4: Arguments against Multi-Master replication
+H4: Arguments against Multi-Provider replication
 
 * Breaks the data consistency guarantees of the directory model
 * {{URL:http://www.openldap.org/faq/data/cache/1240.html}}
@@ -387,18 +387,18 @@ H4: Arguments against Multi-Master replication
 * Typically, a particular machine cannot distinguish between losing contact
  with a peer because that peer crashed, or because the network link has failed
 * If a network is partitioned and multiple clients start writing to each of the 
-"masters" then reconciliation will be a pain; it may be best to simply deny 
+"providers" then reconciliation will be a pain; it may be best to simply deny 
 writes to the clients that are partitioned from the single provider
 
 
-For configuration, please see the {{SECT:N-Way Multi-Master}} section below
+For configuration, please see the {{SECT:N-Way Multi-Provider}} section below
 
-H3: MirrorMode replication
+H3: Mirror mode replication
 
-MirrorMode is a hybrid configuration that provides all of the consistency
-guarantees of single-master replication, while also providing the high
-availability of multi-master. In MirrorMode two providers are set up to
-replicate from each other (as a multi-master configuration), but an
+Mirror mode is a hybrid configuration that provides all of the consistency
+guarantees of single-provider replication, while also providing the high
+availability of multi-provider. In Mirror mode two providers are set up to
+replicate from each other (as a multi-provider configuration), but an
 external frontend is employed to direct all writes to only one of
 the two servers. The second provider will only be used for writes if
 the first provider crashes, at which point the frontend will switch to
@@ -406,7 +406,7 @@ directing all writes to the second provider. When a crashed provider is
 repaired and restarted it will automatically catch up to any changes
 on the running provider and resync.
 
-H4: Arguments for MirrorMode
+H4: Arguments for Mirror mode
 
 * Provides a high-availability (HA) solution for directory writes (replicas handle reads)
 * As long as one provider is operational, writes can safely be accepted
@@ -415,19 +415,16 @@ can be ready to take over (hot standby)
 * Syncrepl also allows the provider nodes to re-synchronize after any downtime
 
 
-H4: Arguments against MirrorMode
+H4: Arguments against Mirror mode
 
-* MirrorMode is not what is termed as a Multi-Master solution. This is because 
+* Mirror mode is not what is termed as a Multi-Provider solution. This is because
 writes have to go to just one of the mirror nodes at a time
-* MirrorMode can be termed as Active-Active Hot-Standby, therefore an external 
+* Mirror mode can be termed as Active-Active Hot-Standby, therefore an external
 server (slapd in proxy mode) or device (hardware load balancer)
 is needed to manage which provider is currently active
 * Backups are managed slightly differently
-- If backing up the Berkeley database itself and periodically backing up the 
-transaction log files, then the same member of the mirror pair needs to be 
-used to collect logfiles until the next database backup is taken 
 
-For configuration, please see the {{SECT:MirrorMode}} section below
+For configuration, please see the {{SECT:Mirror mode}} section below
 
 
 H3: Syncrepl Proxy Mode
@@ -436,7 +433,7 @@ While the LDAP Sync protocol supports both pull- and push-based replication,
 the push mode (refreshAndPersist) must still be initiated from the consumer
 before the provider can begin pushing changes. In some network configurations,
 particularly where firewalls restrict the direction in which connections
-can be made, a provider-initiated push mode may be needed. 
+can be made, a provider-initiated push mode may be needed.
 
 This mode can be configured with the aid of the LDAP Backend
 ({{SECT: Backends}} and {{slapd-ldap(8)}}). Instead of running the
@@ -445,43 +442,6 @@ near (or collocated with) the provider that points to the consumer,
 and the syncrepl engine runs on the proxy.
 
 For configuration, please see the {{SECT:Syncrepl Proxy}} section.
-
-H4: Replacing Slurpd
-
-The old {{slurpd}} mechanism only operated in provider-initiated
-push mode.  Slurpd replication was deprecated in favor of Syncrepl
-replication and has been completely removed from OpenLDAP 2.4.
-
-The slurpd daemon was the original replication mechanism inherited from 
-UMich's LDAP and operated in push mode: the master pushed changes to the 
-slaves. It was replaced for many reasons, in brief:
-
- * It was not reliable
- ** It was extremely sensitive to the ordering of records in the replog
- ** It could easily go out of sync, at which point manual intervention was 
-   required to resync the slave database with the master directory
- ** It wasn't very tolerant of unavailable servers. If a slave went down 
-   for a long time, the replog could grow to a size that was too large for 
-   slurpd to process
- * It only worked in push mode
- * It required stopping and restarting the master to add new slaves
- * It only supported single master replication
-
-Syncrepl has none of those weaknesses:
-
- * Syncrepl is self-synchronizing; you can start with a consumer database
-   in any state from totally empty to fully synced and it will automatically
-   do the right thing to achieve and maintain synchronization
- ** It is completely insensitive to the order in which changes occur
- ** It guarantees convergence between the consumer and the provider
-    content without manual intervention
- ** It can resynchronize regardless of how long a consumer stays out
-    of contact with the provider
- * Syncrepl can operate in either direction
- * Consumers can be added at any time without touching anything on the
-   provider
- * Multi-master replication is supported
-
 
 H2: Configuring the different replication types
 
@@ -492,21 +452,21 @@ H4: Syncrepl configuration
 Because syncrepl is a consumer-side replication engine, the syncrepl
 specification is defined in {{slapd.conf}}(5) of the consumer
 server, not in the provider server's configuration file.  The initial
-loading of the replica content can be performed either by starting
+loading of the consumer content can be performed either by starting
 the syncrepl engine with no synchronization cookie or by populating
-the consumer replica by loading an {{TERM:LDIF}} file dumped as a
+the consumer by loading an {{TERM:LDIF}} file dumped as a
 backup at the provider.
 
 When loading from a backup, it is not required to perform the initial
 loading from the up-to-date backup of the provider content. The
 syncrepl engine will automatically synchronize the initial consumer
-replica to the current provider content. As a result, it is not
-required to stop the provider server in order to avoid the replica
+to the current provider content. As a result, it is not
+required to stop the provider server in order to avoid the replication
 inconsistency caused by the updates to the provider content during
 the content backup and loading process.
 
 When replicating a large scale directory, especially in a bandwidth
-constrained environment, it is advised to load the consumer replica
+constrained environment, it is advised to load the consumer
 from a backup instead of performing a full initial load using
 syncrepl.
 
@@ -567,9 +527,9 @@ The default is FALSE.
 A more complete example of the {{slapd.conf}}(5) content is thus:
 
 >	database mdb
->	maxsize 85899345920
->	suffix dc=example,dc=com
->	rootdn dc=example,dc=com
+>	maxsize 1073741824
+>	suffix dc=Example,dc=com
+>	rootdn dc=Example,dc=com
 >	directory /var/ldap/db
 >	index objectclass,entryCSN,entryUUID eq
 >
@@ -580,15 +540,15 @@ A more complete example of the {{slapd.conf}}(5) content is thus:
 
 H4: Set up the consumer slapd
 
-The syncrepl replication is specified in the database section of
-{{slapd.conf}}(5) for the replica context. The syncrepl engine
+The syncrepl directive is specified in the database section of
+{{slapd.conf}}(5) for the consumer context. The syncrepl engine
 is backend independent and the directive can be defined with any
 database type.
 
 >	database mdb
->	maxsize 85899345920
->	suffix dc=example,dc=com
->	rootdn dc=example,dc=com
+>	maxsize 1073741824
+>	suffix dc=Example,dc=com
+>	rootdn dc=Example,dc=com
 >	directory /var/ldap/db
 >	index objectclass,entryCSN,entryUUID eq
 >
@@ -648,22 +608,22 @@ in order to start the synchronization from a specific state.  The
 cookie is a comma separated list of name=value pairs. Currently
 supported syncrepl cookie fields are {{csn=<csn>}} and {{rid=<rid>}}.
 {{<csn>}} represents the current synchronization state of the
-consumer replica.  {{<rid>}} identifies a consumer replica locally
+consumer. {{<rid>}} identifies a consumer locally
 within the consumer server. It is used to relate the cookie to the
 syncrepl definition in {{slapd.conf}}(5) which has the matching
-replica identifier.  The {{<rid>}} must have no more than 3 decimal
+{{<rid>}}.  The {{<rid>}} must have no more than 3 decimal
 digits.  The command line cookie overrides the synchronization
-cookie stored in the consumer replica database.
+cookie stored in the consumer database.
 
 
 H3: Delta-syncrepl
 
 H4: Delta-syncrepl Provider configuration
 
-Setting up delta-syncrepl requires configuration changes on both the master and 
+Setting up delta-syncrepl requires configuration changes on both the provider and 
 replica servers:
 
->     # Give the replica DN unlimited read access.  This ACL needs to be
+>     # Give the replicator DN unlimited read access.  This ACL needs to be
 >     # merged with other ACL statements, and/or moved within the scope
 >     # of a database.  The "by * break" portion causes evaluation of
 >     # subsequent rules.  See slapd.access(5) for details.
@@ -672,7 +632,7 @@ replica servers:
 >        by * break
 >     
 >     # Set the module path location
->     modulepath /usr/lib/openldap
+>     modulepath /opt/symas/lib/openldap
 >     
 >     # Load the mdb backend
 >     moduleload back_mdb.la
@@ -686,9 +646,8 @@ replica servers:
 >     # Accesslog database definitions
 >     database mdb
 >     suffix cn=accesslog
+>     directory /db/accesslog
 >     rootdn cn=accesslog
->     directory /var/lib/db/accesslog
->     maxsize 85899345920
 >     index default eq
 >     index entryCSN,objectClass,reqEnd,reqResult,reqStart,reqDN
 >     
@@ -696,14 +655,13 @@ replica servers:
 >     syncprov-nopresent TRUE
 >     syncprov-reloadhint TRUE
 >     
->     # Let the replica DN have limitless searches
+>     # Let the replicator DN have limitless searches
 >     limits dn.exact="cn=replicator,dc=example,dc=com" time.soft=unlimited time.hard=unlimited size.soft=unlimited size.hard=unlimited
 >     
 >     # Primary database definitions
 >     database mdb
->     suffix "dc=example,dc=com"
->     rootdn "cn=manager,dc=example,dc=com"
->     maxsize 85899345920
+>     suffix "dc=symas,dc=com"
+>     rootdn "cn=manager,dc=symas,dc=com"
 >     
 >     ## Whatever other configuration options are desired
 >     
@@ -723,7 +681,7 @@ replica servers:
 >     # scan the accesslog DB every day, and purge entries older than 7 days
 >     logpurge 07+00:00 01+00:00
 >     
->     # Let the replica DN have limitless searches
+>     # Let the replicator DN have limitless searches
 >     limits dn.exact="cn=replicator,dc=example,dc=com" time.soft=unlimited time.hard=unlimited size.soft=unlimited size.hard=unlimited
 
 For more information, always consult the relevant man pages ({{slapo-accesslog}}(5) and {{slapd.conf}}(5))
@@ -733,9 +691,8 @@ H4: Delta-syncrepl Consumer configuration
 
 >     # Replica database configuration
 >     database mdb
->     suffix "dc=example,dc=com"
->     rootdn "cn=manager,dc=example,dc=com"
->     maxsize 85899345920
+>     suffix "dc=symas,dc=com"
+>     rootdn "cn=manager,dc=symas,dc=com"
 >     
 >     ## Whatever other configuration bits for the replica, like indexing
 >     ## that you want
@@ -745,7 +702,7 @@ H4: Delta-syncrepl Consumer configuration
 >     
 >     # syncrepl directives
 >     syncrepl  rid=0
->               provider=ldap://ldapmaster.example.com:389
+>               provider=ldap://ldapprovider.example.com:389
 >               bindmethod=simple
 >               binddn="cn=replicator,dc=example,dc=com"
 >               credentials=secret
@@ -757,23 +714,20 @@ H4: Delta-syncrepl Consumer configuration
 >               retry="60 +"
 >               syncdata=accesslog
 >     
->     # Refer updates to the master
->     updateref               ldap://ldapmaster.example.com
+>     # Refer updates to the provider
+>     updateref               ldap://ldapprovider.example.com
 
 
 The above configuration assumes that you have a replicator identity defined 
-in your database that can be used to bind to the provider. In addition, 
-all of the databases (primary, replica, and the accesslog 
-storage database) should also have properly tuned {{DB_CONFIG}} files that meet 
-your needs.
+in your database that can be used to bind to the provider.
 
-Note: An accesslog database is unique to a given master. It should
+Note: An accesslog database is unique to a given provider. It should
 never be replicated.
 
-H3: N-Way Multi-Master
+H3: N-Way Multi-Provider
 
-For the following example we will be using 3 Master nodes. Keeping in line with
-{{B:test050-syncrepl-multimaster}} of the OpenLDAP test suite, we will be configuring
+For the following example we will be using 3 Provider nodes. Keeping in line with
+{{B:test050-syncrepl-multiprovider}} of the OpenLDAP test suite, we will be configuring
 {{slapd(8)}} via {{B:cn=config}}
 
 This sets up the config database:
@@ -788,7 +742,8 @@ This sets up the config database:
 >     olcDatabase: {0}config
 >     olcRootPW: secret
 
-second and third servers will have a different olcServerID obviously:
+Each server must have a unique server ID ({{EX:SID}}), so
+second and third servers will have a different {{EX:olcServerID}} obviously:
 
 >     dn: cn=config
 >     objectClass: olcGlobal
@@ -800,7 +755,7 @@ second and third servers will have a different olcServerID obviously:
 >     olcDatabase: {0}config
 >     olcRootPW: secret
 
-This sets up syncrepl as a provider (since these are all masters):
+This sets up syncrepl as a provider (since these are all providers):
 
 >     dn: cn=module,cn=config
 >     objectClass: olcModuleList
@@ -808,7 +763,7 @@ This sets up syncrepl as a provider (since these are all masters):
 >     olcModulePath: /usr/local/libexec/openldap
 >     olcModuleLoad: syncprov.la
 
-Now we setup the first Master Node (replace $URI1, $URI2 and $URI3 etc. with your actual ldap urls):
+Now we setup the first Provider Node (replace $URI1, $URI2 and $URI3 etc. with your actual ldap urls):
 
 >     dn: cn=config
 >     changetype: modify
@@ -836,12 +791,12 @@ Now we setup the first Master Node (replace $URI1, $URI2 and $URI3 etc. with you
 >       credentials=secret searchbase="cn=config" type=refreshAndPersist
 >       retry="5 5 300 5" timeout=1
 >     -
->     add: olcMirrorMode
->     olcMirrorMode: TRUE
+>     add: olcMultiProvider
+>     olcMultiProvider: TRUE
 
-Now start up the Master and a consumer/s, also add the above LDIF to the first consumer, second consumer etc. It will then replicate {{B:cn=config}}. You now have N-Way Multimaster on the config database.
+Now start up the provider and a consumer/s, also add the above LDIF to the first consumer, second consumer etc. It will then replicate {{B:cn=config}}. You now have N-Way Multi-Provider on the config database.
 
-We still have to replicate the actual data, not just the config, so add to the master (all active and configured consumers/masters will pull down this config, as they are all syncing). Also, replace all {{${}}} variables with whatever is applicable to your setup:
+We still have to replicate the actual data, not just the config, so add to the provider (all active and configured consumers/providers will pull down this config, as they are all syncing). Also, replace all {{${}}} variables with whatever is applicable to your setup:
 
 >     dn: olcDatabase={1}$BACKEND,cn=config
 >     objectClass: olcDatabaseConfig
@@ -851,7 +806,8 @@ We still have to replicate the actual data, not just the config, so add to the m
 >     olcDbDirectory: ./db
 >     olcRootDN: $MANAGERDN
 >     olcRootPW: $PASSWD
->     olcLimits: dn.exact="$MANAGERDN" time.soft=unlimited time.hard=unlimited size.soft=unlimited size.hard=unlimited
+>     olcLimits: dn.exact="$MANAGERDN" time.soft=unlimited time.hard=unlimited
+>       size.soft=unlimited size.hard=unlimited
 >     olcSyncRepl: rid=004 provider=$URI1 binddn="$MANAGERDN" bindmethod=simple
 >       credentials=$PASSWD searchbase="$BASEDN" type=refreshOnly
 >       interval=00:00:00:10 retry="5 5 300 5" timeout=1
@@ -861,7 +817,7 @@ We still have to replicate the actual data, not just the config, so add to the m
 >     olcSyncRepl: rid=006 provider=$URI3 binddn="$MANAGERDN" bindmethod=simple
 >       credentials=$PASSWD searchbase="$BASEDN" type=refreshOnly
 >       interval=00:00:00:10 retry="5 5 300 5" timeout=1
->     olcMirrorMode: TRUE
+>     olcMultiProvider: TRUE
 >     
 >     dn: olcOverlay=syncprov,olcDatabase={1}${BACKEND},cn=config
 >     changetype: add
@@ -878,15 +834,26 @@ directives are the URLs of the servers from which to replicate. These
 must exactly match the URLs {{slapd}} listens on ({{-h}} in {{SECT:Command-Line Options}}).
 Otherwise slapd may attempt to replicate from itself, causing a loop.
 
-H3: MirrorMode
+Note: The {{entryCSN}} and {{contextCSN}} attributes are used
+to track changes to an entry and naming context, respectively. The
+{{EX:SID}} which must be unique for each replication provider is a
+component of these CSNs. If you're using {{slapadd}} to load a
+database and there are no entryCSNs already present in the input
+LDIF, {{slapadd}} will generate them with a {{SID}} of {{EX:000}}. This
+is not a valid {{SID}} for multi-provider replication, and you
+should use the {{EX:-S}} option of {{slapadd}} (8) to specify
+a valid {{SID}} for these generated CSNs. If there are existing
+entryCSNs in the input LDIF, {{slapadd}} will not change them.
 
-MirrorMode configuration is actually very easy. If you have ever setup a normal
+H3: Mirror mode
+
+Mirror mode configuration is actually very easy. If you have ever setup a normal
 slapd syncrepl provider, then the only change is the following two directives:
 
->       mirrormode  on
+>       multiprovider  on
 >       serverID    1
 
-Note: You need to make sure that the {{serverID}} of each mirror node is 
+Note: You need to make sure that the {{serverID}} of each provider node is 
 different and add it as a global configuration option.
 
 H4: Mirror Node Configuration
@@ -897,13 +864,13 @@ The first step is to configure the syncrepl provider the same as in the
 Here's a specific cut down example using {{SECT:LDAP Sync Replication}} in
 {{refreshAndPersist}} mode:
 
-MirrorMode node 1:
+Mirror mode node 1:
 
 >       # Global section
 >       serverID    1
 >       # database section
 >       
->       # syncrepl directive    
+>       # syncrepl directive
 >       syncrepl      rid=001
 >                     provider=ldap://ldap-sid2.example.com
 >                     bindmethod=simple
@@ -914,9 +881,9 @@ MirrorMode node 1:
 >                     type=refreshAndPersist
 >                     retry="60 +"
 >
->       mirrormode on
+>       multiprovider on
 
-MirrorMode node 2:
+Mirror mode node 2:
 
 >       # Global section
 >       serverID    2
@@ -932,10 +899,10 @@ MirrorMode node 2:
 >                     schemachecking=on
 >                     type=refreshAndPersist
 >                     retry="60 +"
->       
->       mirrormode on
+>
+>       multiprovider on
 
-It's simple really; each MirrorMode node is setup {{B:exactly}} the same, except
+It's simple really; each Mirror mode node is setup {{B:exactly}} the same, except
 that the {{serverID}} is unique, and each consumer is pointed to 
 the other server.
 
@@ -946,8 +913,8 @@ dedicated proxy software, 2. using a Back-LDAP proxy as a syncrepl provider
 
 A typical enterprise example might be:
 
-!import "dual_dc.png"; align="center"; title="MirrorMode Enterprise Configuration"
-FT[align="Center"] Figure X.Y: MirrorMode in a Dual Data Center Configuration
+!import "dual_dc.png"; align="center"; title="Mirror mode Enterprise Configuration"
+FT[align="Center"] Figure X.Y: Mirror mode in a Dual Data Center Configuration
 
 H5: Normal Consumer Configuration
 
@@ -955,11 +922,11 @@ This is exactly the same as the {{SECT:Set up the consumer slapd}} section. It
 can either setup in normal {{SECT:syncrepl replication}} mode, or in 
 {{SECT:delta-syncrepl replication}} mode.
 
-H4: MirrorMode Summary
+H4: Mirror mode Summary
 
 You will now have a directory architecture that provides all of the 
-consistency guarantees of single-master replication, while also providing the 
-high availability of multi-master replication.
+consistency guarantees of single-provider replication, while also providing the 
+high availability of multi-provider replication.
 
 
 H3: Syncrepl Proxy
@@ -970,7 +937,7 @@ FT[align="Center"] Figure X.Y: Replacing slurpd
 The following example is for a self-contained push-based replication solution:
 
 >	#######################################################################
->	# Standard OpenLDAP Master/Provider
+>	# Standard OpenLDAP Provider
 >	#######################################################################
 >	
 >	include     /usr/local/etc/openldap/schema/core.schema
@@ -983,7 +950,6 @@ The following example is for a self-contained push-based replication solution:
 >	modulepath  /usr/local/libexec/openldap
 >	moduleload  back_mdb.la
 >	moduleload  syncprov.la
->	moduleload  back_monitor.la
 >	moduleload  back_ldap.la
 >	
 >	pidfile     /usr/local/var/slapd.pid
@@ -994,7 +960,6 @@ The following example is for a self-contained push-based replication solution:
 >	database    mdb
 >	suffix      "dc=suretecsystems,dc=com"
 >	directory   /usr/local/var/openldap-data
->	maxsize     85899345920
 >	
 >	checkpoint      1024 5
 >	
@@ -1013,7 +978,7 @@ The following example is for a self-contained push-based replication solution:
 >	overlay syncprov
 >	syncprov-checkpoint 1000 60
 >	
->	# Let the replica DN have limitless searches
+>	# Let the replicator DN have limitless searches
 >	limits dn.exact="cn=replicator,dc=suretecsystems,dc=com" time.soft=unlimited time.hard=unlimited size.soft=unlimited size.hard=unlimited
 >	
 >	database    monitor
@@ -1055,7 +1020,7 @@ The following example is for a self-contained push-based replication solution:
 A replica configuration for this type of setup could be:
 
 >	#######################################################################
->	# Standard OpenLDAP Slave without Syncrepl
+>	# Standard OpenLDAP Replica without Syncrepl
 >	#######################################################################
 >	
 >	include     /usr/local/etc/openldap/schema/core.schema
@@ -1068,7 +1033,6 @@ A replica configuration for this type of setup could be:
 >	modulepath  /usr/local/libexec/openldap
 >	moduleload  back_mdb.la
 >	moduleload  syncprov.la
->	moduleload  back_monitor.la
 >	moduleload  back_ldap.la
 >	
 >	pidfile     /usr/local/var/slapd.pid
@@ -1078,7 +1042,7 @@ A replica configuration for this type of setup could be:
 >	
 >	database    mdb
 >	suffix      "dc=suretecsystems,dc=com"
->	directory   /usr/local/var/openldap-slave/data
+>	directory   /usr/local/var/openldap-consumer/data
 >	
 >	maxsize         85899345920
 >	checkpoint      1024 5
@@ -1090,12 +1054,12 @@ A replica configuration for this type of setup could be:
 >	rootdn		"cn=admin,dc=suretecsystems,dc=com"
 >	rootpw	  	testing	
 >	
->	# Let the replica DN have limitless searches
+>	# Let the replicator DN have limitless searches
 >	limits dn.exact="cn=replicator,dc=suretecsystems,dc=com" time.soft=unlimited time.hard=unlimited size.soft=unlimited size.hard=unlimited
 >	
 >	updatedn "cn=replicator,dc=suretecsystems,dc=com"
 >	
->	# Refer updates to the master
+>	# Refer updates to the provider
 >	updateref   ldap://localhost:9011
 >	
 >	database    monitor
@@ -1105,7 +1069,7 @@ A replica configuration for this type of setup could be:
 
 You can see we use the {{updatedn}} directive here and example ACLs ({{F:usr/local/etc/openldap/slapd.acl}}) for this could be:
 	
->	# Give the replica DN unlimited read access.  This ACL may need to be
+>	# Give the replicator DN unlimited read access.  This ACL may need to be
 >	# merged with other ACL statements.
 >	
 >	access to *
@@ -1130,10 +1094,10 @@ You can see we use the {{updatedn}} directive here and example ACLs ({{F:usr/loc
 In order to support more replicas, just add more {{database ldap}} sections and
 increment the {{syncrepl rid}} number accordingly.
 
-Note: You must populate the Master and Slave directories with the same data, 
+Note: You must populate the Provider and Replica directories with the same data, 
 unlike when using normal Syncrepl
 
-If you do not have access to modify the master directory configuration you can
+If you do not have access to modify the provider directory configuration you can
 configure a standalone ldap proxy, which might look like:
 
 !import "push-based-standalone.png"; align="center"; title="Syncrepl Standalone Proxy Mode"

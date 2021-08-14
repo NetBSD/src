@@ -16,7 +16,7 @@
 
 # $OpenLDAP$
 
-# Copyright 2000-2020 The OpenLDAP Foundation. All Rights Reserved.
+# Copyright 2000-2021 The OpenLDAP Foundation. All Rights Reserved.
 # COPYING RESTRICTIONS APPLY, see COPYRIGHT file
 VPATH = @srcdir@
 pkgdatadir = $(datadir)/@PACKAGE@
@@ -41,7 +41,7 @@ DIST_COMMON = README $(am__configure_deps) $(srcdir)/Makefile.am \
 	$(srcdir)/Makefile.in $(top_srcdir)/configure AUTHORS TODO \
 	config.guess config.sub depcomp install-sh ltmain.sh missing
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
-am__aclocal_m4_deps = $(top_srcdir)/configure.in
+am__aclocal_m4_deps = $(top_srcdir)/configure.ac
 am__configure_deps = $(am__aclocal_m4_deps) $(CONFIGURE_DEPENDENCIES) \
 	$(ACLOCAL_M4)
 am__CONFIG_DISTCLEAN_FILES = config.status config.cache config.log \

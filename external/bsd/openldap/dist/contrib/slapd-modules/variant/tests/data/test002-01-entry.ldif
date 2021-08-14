@@ -1,0 +1,16 @@
+dn: cn=Gern Jensen,ou=Information Technology Division,ou=People,dc=example,dc=com
+changetype: add
+objectclass: testPerson
+cn: Gern Jensen
+sn: Jensen
+uid: gjensen
+postaladdress: ITD $ 535 W. William St $ Anytown, MI 48103
+seealso: cn=All Staff,ou=Groups,dc=example,dc=com
+drink: Coffee
+homepostaladdress: 844 Brown St. Apt. 4 $ Anytown, MI 48104
+description: Very odd
+facsimiletelephonenumber: +1 313 555 7557
+telephonenumber: +1 313 555 8343
+mail: gjensen@mailgw.example.com
+homephone: +1 313 555 8844
+testTime: 20050304001801.234Z

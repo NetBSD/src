@@ -1,0 +1,267 @@
+#! /bin/sh
+# $OpenLDAP$
+## This work is part of OpenLDAP Software <http://www.openldap.org/>.
+##
+## Copyright 1998-2021 The OpenLDAP Foundation.
+## All rights reserved.
+##
+## Redistribution and use in source and binary forms, with or without
+## modification, are permitted only as authorized by the OpenLDAP
+## Public License.
+##
+## A copy of this license is available in the file LICENSE in the
+## top-level directory of the distribution or, alternatively, at
+## <http://www.OpenLDAP.org/license.html>.
+
+echo "running defines.sh"
+. $SRCDIR/scripts/defines.sh
+
+if test $SYNCPROV = syncprovno; then
+	echo "Syncrepl provider overlay not available, test skipped"
+	exit 0
+fi
+if test $BACKEND = ldif ; then
+	# Onelevel search does not return entries in order of creation or CSN.
+	echo "$BACKEND backend unsuitable for syncprov, test skipped"
+	exit 0
+fi
+
+echo "This test tracks a case where a deleted entry gets resurrected."
+echo "See https://bugs.openldap.org/show_bug.cgi?id=9282 for more information."
+
+MMR=2
+XDIR=$TESTDIR/srv
+
+mkdir -p $TESTDIR
+
+USERDN="cn=Damon Leeson, ou=Product Development, dc=example,dc=com"
+$SLAPPASSWD -g -n >$CONFIGPWF
+
+ITS=9282
+ITSDIR=$DATADIR/regressions/its$ITS
+
+
+n=1
+while [ $n -le $MMR ]; do
+	echo "Initializing server configuration for MMR$n..."
+	DBDIR=${XDIR}$n/db
+	CFDIR=${XDIR}$n/slapd.d
+
+	mkdir -p ${XDIR}$n $DBDIR.1 $DBDIR.2 $CFDIR
+	. $CONFFILTER $BACKEND < $ITSDIR/config.ldif > $TESTDIR/config${n}.ldif
+	if [ $n = 1 ]; then
+		MYURI=`eval echo '$URI2'`
+	else
+		MYURI=`eval echo '$URI1'`
+	fi
+	sed -e "s/@SID@/$n/g" -e "s|@URI@|$MYURI|g" $TESTDIR/config${n}.ldif > $CONFLDIF
+	$SLAPADD -F $CFDIR -n 0 -l $CONFLDIF
+	n=`expr $n + 1`
+done
+
+KILLPIDS=
+n=1
+while [ $n -le $MMR ]; do
+	MYURI=`eval echo '$URI'$n`
+	MYLOG=`eval echo '$LOG'$n`
+	CFDIR=${XDIR}$n/slapd.d
+
+	echo "Starting provider slapd on TCP/IP URI $MYURI"
+	$SLAPD -F $CFDIR -h $MYURI -d $LVL -d sync > $MYLOG 2>&1 &
+
+	PID=$!
+	if test $WAIT != 0 ; then
+		echo PID $PID
+		read foo
+	fi
+	KILLPIDS="$PID $KILLPIDS"
+	if [ $n = 1 ]; then
+		MPID="$PID"
+	fi
+	sleep 1
+
+	echo "Using ldapsearch to check that provider slapd is running..."
+	for i in 0 1 2 3 4 5; do
+		$LDAPSEARCH -s base -b "" -H $MYURI \
+			'objectclass=*' > /dev/null 2>&1
+		RC=$?
+		if test $RC = 0 ; then
+			break
+		fi
+		echo "Waiting 5 seconds for slapd to start..."
+		sleep 5
+	done
+
+	if test $RC != 0 ; then
+		echo "ldapsearch failed ($RC)!"
+		test $KILLSERVERS != no && kill -HUP $KILLPIDS
+		exit $RC
+	fi
+	n=`expr $n + 1`
+done
+
+echo "Sleeping 15 seconds to allow stabilization..."
+sleep 15
+
+echo "Populating database on provider..."
+$LDAPADD -D $MANAGERDN -H $URI1 -w $PASSWD -f $ITSDIR/exampledb.ldif >> $TESTOUT 2>&1
+
+RC=$?
+if test $RC != 0 ; then
+	echo "ldapadd failed ($RC)!"
+	test $KILLSERVERS != no && kill -HUP $KILLPIDS
+	exit $RC
+fi
+
+echo "Waiting on databases to sync..."
+loop=0
+while [ $loop -ne 1 ]; do
+	$LDAPSEARCH -D $MANAGERDN -w $PASSWD -s base -b "$BASEDN" -H $URI1 \
+		contextCSN | grep contextCSN: > $TESTDIR/server1.csn 2>&1
+	$LDAPSEARCH -D $MANAGERDN -w $PASSWD -s base -b "$BASEDN" -H $URI2 \
+		contextCSN | grep contextCSN: > $TESTDIR/server2.csn 2>&1
+	$CMP $TESTDIR/server1.csn $TESTDIR/server2.csn > $CMPOUT 
+	if test $? != 0 ; then
+		echo "Still syncing..."
+		sleep 30
+	else
+		loop=1
+	fi
+done
+
+echo "Comparing entry on providers..."
+$LDAPSEARCH -D $MANAGERDN -w $PASSWD -b "$BASEDN" -H $URI2 \
+	'(cn=Damon Leeson)' '1.1' > $TESTDIR/server2.flt 2>&1
+RC=$?
+
+if test $RC != 0 ; then
+	echo "ldapsearch on $URI2 failed with error $RC."
+	test $KILLSERVERS != no && kill -HUP $KILLPIDS
+	exit $RC
+fi
+
+$LDAPSEARCH -D $MANAGERDN -w $PASSWD -b "$BASEDN" -H $URI1 \
+	'(cn=Damon Leeson)' '1.1' > $TESTDIR/server1.flt 2>&1
+RC=$?
+
+if test $RC != 0 ; then
+	echo "ldapsearch on $URI1 failed with error $RC."
+	test $KILLSERVERS != no && kill -HUP $KILLPIDS
+	exit $RC
+fi
+
+$CMP $TESTDIR/server1.flt $TESTDIR/server2.flt > $CMPOUT
+
+if test $? != 0 ; then
+	echo "test failed - provider 1 and provider 2 databases differ"
+	test $KILLSERVERS != no && kill -HUP $KILLPIDS
+	exit 1
+fi
+
+echo -n "Stopping MMR1 slapd..."
+kill -HUP $MPID
+wait $MPID
+KILLPIDS=`echo "$KILLPIDS " | sed -e "s/ $MPID / /"`;
+sleep $SLEEP2
+echo "done"
+
+echo "Deleting entry from provider 2..."
+
+$LDAPDELETE -D "$MANAGERDN" -H $URI2 -w $PASSWD "$USERDN" >> $TESTOUT
+RC=$?
+
+if test $RC != 0 ; then
+	echo "ldapdelete on $URI2 failed with error $RC."
+	test $KILLSERVERS != no && kill -HUP $KILLPIDS
+	exit $RC
+fi
+
+$LDAPSEARCH -D $MANAGERDN -w $PASSWD -b "$BASEDN" -H $URI2 \
+	'(cn=Damon Leeson)' '1.1' > $TESTDIR/server2dc.flt 2>&1
+
+echo "Starting provider1 slapd on TCP/IP URI $URI1"
+CFDIR="$TESTDIR/srv1/slapd.d"
+$SLAPD -F $CFDIR -h $URI1 -d $LVL >> $LOG1 2>&1 &
+
+PID=$!
+if test $WAIT != 0 ; then
+	echo PID $PID
+	read foo
+fi
+KILLPIDS="$PID $KILLPIDS"
+sleep 1
+
+echo "Using ldapsearch to check that provider slapd is running..."
+for i in 0 1 2 3 4 5; do
+	$LDAPSEARCH -s base -b "" -H $URI1 \
+		'objectclass=*' > /dev/null 2>&1
+	RC=$?
+	if test $RC = 0 ; then
+		break
+	fi
+	echo "Waiting 5 seconds for slapd to start..."
+	sleep 5
+done
+
+if test $RC != 0 ; then
+	echo "ldapsearch failed ($RC)!"
+	test $KILLSERVERS != no && kill -HUP $KILLPIDS
+	exit $RC
+fi
+echo "done"
+
+echo "Sleeping 30 seconds  to allow databases to sync..."
+sleep 30
+
+echo "Comparing entry on providers post delete..."
+$LDAPSEARCH -D $MANAGERDN -w $PASSWD -b "$BASEDN" -H $URI2 \
+	'(cn=Damon Leeson)' '1.1' > $TESTDIR/server2d.flt 2>&1
+RC=$?
+
+if test $RC != 0 ; then
+	echo "ldapsearch on $URI2 failed with error $RC."
+	test $KILLSERVERS != no && kill -HUP $KILLPIDS
+	exit $RC
+fi
+
+$LDAPSEARCH -D $MANAGERDN -w $PASSWD -b "$BASEDN" -H $URI1 \
+	'(cn=Damon Leeson)' '1.1' > $TESTDIR/server1d.flt 2>&1
+RC=$?
+
+if test $RC != 0 ; then
+	echo "ldapsearch on $URI1 failed with error $RC."
+	test $KILLSERVERS != no && kill -HUP $KILLPIDS
+	exit $RC
+fi
+
+$CMP $ITSDIR/noentry.flt $TESTDIR/server2d.flt > $CMPOUT
+if test $? != 0 ; then
+	echo "test failed - entry exists on provider 2"
+	test $KILLSERVERS != no && kill -HUP $KILLPIDS
+	exit 1
+fi
+
+$CMP $ITSDIR/noentry.flt $TESTDIR/server1d.flt > $CMPOUT
+if test $? != 0 ; then
+	echo "test failed - entry exists on provider 1"
+	test $KILLSERVERS != no && kill -HUP $KILLPIDS
+	exit 1
+fi
+
+echo "Checking provider 2 sent the right cookie..."
+grep "starting refresh.*csn=.*#002#.*" $LOG2 >/dev/null 2>&1
+RC=$?
+
+if test $RC != 0 ; then
+    echo "Provider 2 did not send its CSN in the cookie"
+    test $KILLSERVERS != no && kill -HUP $KILLPIDS
+    exit $RC
+fi
+
+test $KILLSERVERS != no && kill -HUP $KILLPIDS
+
+echo ">>>>> Test succeeded"
+
+test $KILLSERVERS != no && wait
+
+exit 0

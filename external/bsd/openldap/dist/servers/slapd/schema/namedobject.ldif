@@ -1,0 +1,32 @@
+# $OpenLDAP$
+## This work is part of OpenLDAP Software <http://www.openldap.org/>.
+##
+## Copyright 2021 The OpenLDAP Foundation.
+## All rights reserved.
+##
+## Redistribution and use in source and binary forms, with or without
+## modification, are permitted only as authorized by the OpenLDAP
+## Public License.
+##
+## A copy of this license is available in the file LICENSE in the
+## top-level directory of the distribution or, alternatively, at
+## <http://www.OpenLDAP.org/license.html>.
+##
+## Definitions from draft Structural Object Classes for Named Objects
+## https://tools.ietf.org/html/draft-stroeder-namedobject
+##
+## Portions Copyright (c) 2013 IETF Trust and the persons identified as the
+## document authors.  All rights reserved.
+#
+# Depends upon core.ldif and cosine.ldif
+#
+# This file was automatically generated from namedobject.schema; see
+# that file for complete references.
+#
+dn: cn=namedobject,cn=schema,cn=config
+objectClass: olcSchemaConfig
+cn: namedobject
+olcObjectClasses: ( 1.3.6.1.4.1.5427.1.389.6.20 NAME 'namedObject' SUP top 
+ STRUCTURAL MUST cn MAY ( uniqueIdentifier $ description ) )
+olcObjectClasses: ( 1.3.6.1.4.1.5427.1.389.6.21 NAME 'namedPolicy' SUP name
+ dObject STRUCTURAL )

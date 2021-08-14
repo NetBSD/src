@@ -2,7 +2,7 @@
 # $OpenLDAP$
 ## This work is part of OpenLDAP Software <http://www.openldap.org/>.
 ##
-## Copyright 1998-2020 The OpenLDAP Foundation.
+## Copyright 1998-2021 The OpenLDAP Foundation.
 ## All rights reserved.
 ##
 ## Redistribution and use in source and binary forms, with or without
@@ -19,8 +19,8 @@ echo "running defines.sh"
 mkdir -p $TESTDIR $DBDIR1A $DBDIR1B $DBDIR1C
 
 echo "Starting slapd on TCP/IP port $PORT..."
-. $CONFFILTER $BACKEND $MONITORDB < $GLUECONF > $CONF1
-$SLAPD -f $CONF1 -h $URI1 -d $LVL $TIMING > $LOG1 2>&1 &
+. $CONFFILTER $BACKEND < $GLUECONF > $CONF1
+$SLAPD -f $CONF1 -h $URI1 -d $LVL > $LOG1 2>&1 &
 PID=$!
 if test $WAIT != 0 ; then
     echo PID $PID
@@ -32,7 +32,7 @@ sleep 1
 
 echo "Using ldapsearch to check that slapd is running..."
 for i in 0 1 2 3 4 5; do
-	$LDAPSEARCH -s base -b "$MONITOR" -h $LOCALHOST -p $PORT1 \
+	$LDAPSEARCH -s base -b "$MONITOR" -H $URI1 \
 		'objectclass=*' > /dev/null 2>&1
 	RC=$?
 	if test $RC = 0 ; then
@@ -43,7 +43,7 @@ for i in 0 1 2 3 4 5; do
 done
 
 echo "Using ldapadd to populate the glued database..."
-$LDAPADD -D "$MANAGERDN" -h $LOCALHOST -p $PORT1 -w $PASSWD < \
+$LDAPADD -D "$MANAGERDN" -H $URI1 -w $PASSWD < \
 	$LDIFORDERED > $TESTOUT 2>&1
 RC=$?
 if test $RC != 0 ; then
@@ -53,7 +53,7 @@ if test $RC != 0 ; then
 fi
 
 echo "Using ldapsearch to read all the entries..."
-$LDAPSEARCH -b "$BASEDN" -h $LOCALHOST -p $PORT1 \
+$LDAPSEARCH -b "$BASEDN" -H $URI1 \
 	'objectclass=*' > $SEARCHOUT 2>&1
 RC=$?
 

@@ -1,5 +1,5 @@
 # $OpenLDAP$
-# Copyright 1999-2020 The OpenLDAP Foundation, All Rights Reserved.
+# Copyright 1999-2021 The OpenLDAP Foundation, All Rights Reserved.
 # COPYING RESTRICTIONS APPLY, see COPYRIGHT.
 
 H1: Using SASL
@@ -138,25 +138,35 @@ command option.
 For the purposes of authentication and authorization, {{slapd}}(8)
 associates an authentication request DN of the form:
 
->	uid=<primary[/instance]>,cn=<realm>,cn=gssapi,cn=auth
+>	uid=<primary[/instance][@realm]>,cn=gssapi,cn=auth
+
+The realm is omitted by Cyrus SASL if it's equal to the default realm of the
+server in {{FILE:/etc/krb5.conf}}.
 
 Continuing our example, a user with the Kerberos principal
 {{EX:kurt@EXAMPLE.COM}} would have the associated DN:
 
->	uid=kurt,cn=example.com,cn=gssapi,cn=auth
+>	uid=kurt,cn=gssapi,cn=auth
 
 and the principal {{EX:ursula/admin@FOREIGN.REALM}} would have the
 associated DN:
 
->	uid=ursula/admin,cn=foreign.realm,cn=gssapi,cn=auth
+>	uid=ursula/admin@foreign.realm,cn=gssapi,cn=auth
 
 
-The authentication request DN can be used directly ACLs and
+The authentication request DN can be used directly in ACLs and
 {{EX:groupOfNames}} "member" attributes, since it is of legitimate
 LDAP DN format.  Or alternatively, the authentication DN could be
 mapped before use.  See the section {{SECT:Mapping Authentication
 Identities}} for details.
 
+If you configure the {{olcSaslRealm}} then it will be inserted as
+an extra component in the authorization DN, regardless of any
+Kerberos realms in use. For example, if you set olcSaslRealm to
+{{EX:example.com}} then you will get:
+
+>	uid=kurt,cn=example.com,cn=gssapi,cn=auth
+>	uid=ursula/admin@foreign.realm,cn=example.com,cn=gssapi,cn=auth
 
 H3: KERBEROS_V4
 
@@ -208,7 +218,7 @@ DN}} of the form
 So in our above example, if the user's name were "adamson", the
 authentication request DN would be:
 
->	uid=adamsom,cn=example.com,cn=kerberos_v4,cn=auth
+>	uid=adamson,cn=example.com,cn=kerberos_v4,cn=auth
 
 This authentication request DN can be used directly ACLs or,
 alternatively, mapped prior to use.  See the section {{SECT:Mapping

@@ -1,9 +1,9 @@
-/*	$NetBSD: componentlib.c,v 1.1.1.4 2018/02/06 01:53:06 christos Exp $	*/
+/*	$NetBSD: componentlib.c,v 1.1.1.5 2021/08/14 16:05:14 christos Exp $	*/
 
 /* Copyright 2004 IBM Corporation
  * All rights reserved.
- * Redisribution and use in source and binary forms, with or without
- * modification, are permitted only as authorizd by the OpenLADP
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted only as authorized by the OpenLDAP
  * Public License.
  */
 /* ACKNOWLEDGEMENTS
@@ -12,7 +12,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: componentlib.c,v 1.1.1.4 2018/02/06 01:53:06 christos Exp $");
+__RCSID("$NetBSD: componentlib.c,v 1.1.1.5 2021/08/14 16:05:14 christos Exp $");
 
 #include "portable.h"
 #include <ac/string.h>
@@ -722,9 +722,9 @@ MatchingComponentInt(char* oid, ComponentSyntaxInfo* csi_attr,
         ComponentInt *a, *b;
                                                                           
         if( oid ) {
-                /* check if this ASN type's matching rule is overrided */
+                /* check if this ASN type's matching rule is overridden */
                 mr = retrieve_matching_rule(oid, csi_attr->csi_comp_desc->cd_type_id );
-                /* if existing function is overrided, call the overriding
+                /* if existing function is overridden, call the overriding
 function*/
                 if ( mr )
                         return component_value_match( mr, csi_attr , csi_assert );
@@ -1324,7 +1324,7 @@ BDecComponentOid ( void* mem_op, GenBuf *b, AsnTag tagId, AsnLen len, void *v,
 }
 
 /*
- * Component BER Decoder : PrintiableString
+ * Component BER Decoder : PrintableString
  */
 
 int
@@ -2027,7 +2027,7 @@ InstallAnyByComponentInt (int anyId, ComponentInt intId, unsigned int size,
 
 
 /*
- * OID and its corresponding decoder can be registerd with this func.
+ * OID and its corresponding decoder can be registered with this func.
  * If contained types constrained by <select> are used,
  * their OID and decoder MUST be registered, otherwise it will return no entry.
  * An open type(ANY type) also need be registered.

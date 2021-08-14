@@ -2,7 +2,7 @@
 # $OpenLDAP$
 ## This work is part of OpenLDAP Software <http://www.openldap.org/>.
 ##
-## Copyright 1998-2020 The OpenLDAP Foundation.
+## Copyright 1998-2021 The OpenLDAP Foundation.
 ## All rights reserved.
 ##
 ## Redistribution and use in source and binary forms, with or without
@@ -32,8 +32,8 @@ fi
 mkdir -p $TESTDIR
 
 echo "Starting slapd on TCP/IP port $PORT1..."
-. $CONFFILTER $BACKEND $MONITORDB < $PASSWDCONF > $CONF1
-$SLAPD -f $CONF1 -h $URI1 -d $LVL $TIMING > $LOG1 2>&1 &
+. $CONFFILTER $BACKEND < $PASSWDCONF > $CONF1
+$SLAPD -f $CONF1 -h $URI1 -d $LVL > $LOG1 2>&1 &
 PID=$!
 if test ${WAIT-0} != 0 ; then
     echo PID $PID
@@ -43,7 +43,7 @@ KILLPIDS="$PID"
 
 echo "Testing slapd searching..."
 for i in 0 1 2 3 4 5; do
-	$LDAPSEARCH -L -b "$BASEDN" -h $LOCALHOST -p $PORT1 \
+	$LDAPSEARCH -L -b "$BASEDN" -H $URI1 \
 		'objectclass=*' > /dev/null 2>&1
 	RC=$?
 	if test $RC = 1 ; then
@@ -61,7 +61,7 @@ fi
 cat /dev/null > $TESTOUT
 
 echo "Testing base suffix searching..."
-$LDAPSEARCH -L -S "" -b "$BASEDN" -s base -h $LOCALHOST -p $PORT1 \
+$LDAPSEARCH -L -S "" -b "$BASEDN" -s base -H $URI1 \
 	'(objectclass=*)' >> $TESTOUT 2>&1
 RC=$?
 if test $RC != 0 ; then
@@ -73,7 +73,7 @@ fi
 echo " ------------ " >> $TESTOUT
 
 echo "Testing user searching..."
-$LDAPSEARCH -L -S "" -b "uid=root,$BASEDN" -s base -h $LOCALHOST -p $PORT1 \
+$LDAPSEARCH -L -S "" -b "uid=root,$BASEDN" -s base -H $URI1 \
 	'(objectclass=*)' >> $TESTOUT 2>&1
 RC=$?
 if test $RC != 0 ; then
@@ -85,7 +85,7 @@ fi
 echo " ------------ " >> $TESTOUT
 
 echo "Testing exact searching..."
-$LDAPSEARCH -L -S "" -b "$BASEDN" -h $LOCALHOST -p $PORT1 \
+$LDAPSEARCH -L -S "" -b "$BASEDN" -H $URI1 \
 	'(uid=root)' >> $TESTOUT 2>&1
 RC=$?
 if test $RC != 0 ; then
@@ -97,7 +97,7 @@ fi
 echo " ------------ " >> $TESTOUT
 
 echo "Testing OR searching..."
-$LDAPSEARCH -L -S "" -b "$BASEDN" -h $LOCALHOST -p $PORT1 \
+$LDAPSEARCH -L -S "" -b "$BASEDN" -H $URI1 \
 	'(|(objectclass=person)(cn=root))' >> $TESTOUT 2>&1
 RC=$?
 if test $RC != 0 ; then
@@ -109,7 +109,7 @@ fi
 echo " ------------ " >> $TESTOUT
 
 echo "Testing AND searching..."
-$LDAPSEARCH -L -S "" -b "$BASEDN" -h $LOCALHOST -p $PORT1 \
+$LDAPSEARCH -L -S "" -b "$BASEDN" -H $URI1 \
 	'(&(objectclass=person)(cn=root))' >> $TESTOUT 2>&1
 RC=$?
 if test $RC != 0 ; then
@@ -122,7 +122,7 @@ test "$KILLSERVERS" != no && kill -HUP $KILLPIDS
 
 echo "Assuming everything is fine."
 #echo "Comparing results"
-#$CMP $TESTOUT $SEARCHOUTMASTER
+#$CMP $TESTOUT $SEARCHOUTPROVIDER
 #if test $? != 0 ; then
 #	echo "Comparison failed"
 #	exit 1

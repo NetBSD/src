@@ -1,0 +1,12 @@
+#LEAD COMMENT
+dn: ou=OpenLDAPtest,dc=example,dc=com
+ou: OpenLDAPtest
+#EMBEDDED COMMENT
+objectclass: organizationalUnit
+objectclass: domainRelatedObject
+l: Anytown, Michigan
+st: Michigan
+description: The Example, Inc. at Anytown
+postaladdress: Example, Inc. $ 535 W. William St. $ Anytown, MI 48109 $ US
+telephonenumber: +1 313 555 1817
+associatedDomain: test.openldap.org

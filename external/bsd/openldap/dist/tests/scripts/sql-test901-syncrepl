@@ -2,7 +2,7 @@
 # $OpenLDAP$
 ## This work is part of OpenLDAP Software <http://www.openldap.org/>.
 ##
-## Copyright 1998-2020 The OpenLDAP Foundation.
+## Copyright 1998-2021 The OpenLDAP Foundation.
 ## All rights reserved.
 ##
 ## Redistribution and use in source and binary forms, with or without
@@ -34,8 +34,8 @@ fi
 mkdir -p $TESTDIR $DBDIR2A
 
 echo "Starting slapd on TCP/IP port $PORT1..."
-. $CONFFILTER $BACKEND $MONITORDB < $SQLSRMASTERCONF > $CONF1
-$SLAPD -f $CONF1 -h $URI1 -d $LVL $TIMING > $LOG1 2>&1 &
+. $CONFFILTER $BACKEND < $SQLSRPROVIDERCONF > $CONF1
+$SLAPD -f $CONF1 -h $URI1 -d $LVL > $LOG1 2>&1 &
 PID=$!
 if test $WAIT != 0 ; then
     echo PID $PID
@@ -45,7 +45,7 @@ KILLPIDS="$PID"
 
 echo "Testing SQL backend write operations..."
 for i in 0 1 2 3 4 5; do
-	$LDAPSEARCH -s base -b "$MONITOR" -h $LOCALHOST -p $PORT1 \
+	$LDAPSEARCH -s base -b "$MONITOR" -H $URI1 \
 		'objectclass=*' > /dev/null 2>&1
 	RC=$?
 	if test $RC = 0 ; then
@@ -61,19 +61,19 @@ if test $RC != 0 ; then
 	exit $RC
 fi
 
-echo "Starting slave slapd on TCP/IP port $PORT2..."
-. $CONFFILTER $BACKEND $MONITORDB < $R1SRSLAVECONF > $CONF2
-$SLAPD -f $CONF2 -h $URI2 -d $LVL $TIMING > $LOG2 2>&1 &
-SLAVEPID=$!
+echo "Starting consumer slapd on TCP/IP port $PORT2..."
+. $CONFFILTER $BACKEND < $R1SRCONSUMERCONF > $CONF2
+$SLAPD -f $CONF2 -h $URI2 -d $LVL > $LOG2 2>&1 &
+CONSUMERPID=$!
 if test $WAIT != 0 ; then
-    echo SLAVEPID $SLAVEPID
+    echo CONSUMERPID $CONSUMERPID
     read foo
 fi
-KILLPIDS="$KILLPIDS $SLAVEPID"
+KILLPIDS="$KILLPIDS $CONSUMERPID"
 
-echo "Using ldapsearch to check that slave slapd is running..."
+echo "Using ldapsearch to check that consumer slapd is running..."
 for i in 0 1 2 3 4 5; do
-	$LDAPSEARCH -s base -b "$MONITOR" -h $LOCALHOST -p $PORT2 \
+	$LDAPSEARCH -s base -b "$MONITOR" -H $URI2 \
 		'objectclass=*' > /dev/null 2>&1
 	RC=$?
 	if test $RC = 0 ; then
@@ -91,10 +91,10 @@ fi
 
 cat /dev/null > $SEARCHOUT
 
-echo "Using ldapsearch to retrieve all the entries from the master..."
-echo "# Using ldapsearch to retrieve all the entries from the master..." \
+echo "Using ldapsearch to retrieve all the entries from the provider..."
+echo "# Using ldapsearch to retrieve all the entries from the provider..." \
 	>> $SEARCHOUT
-$LDAPSEARCH -S "" -h $LOCALHOST -p $PORT1 -b "$BASEDN" \
+$LDAPSEARCH -S "" -H $URI1 -b "$BASEDN" \
 	-D "$MANAGERDN" -w $PASSWD \
 	 "(!(objectClass=referral))" >> $SEARCHOUT 2>&1
 
@@ -107,10 +107,10 @@ fi
 
 cat /dev/null > $SEARCHOUT2
 
-echo "Using ldapsearch to retrieve all the entries from the slave..."
-echo "# Using ldapsearch to retrieve all the entries from the slave..." \
+echo "Using ldapsearch to retrieve all the entries from the consumer..."
+echo "# Using ldapsearch to retrieve all the entries from the consumer..." \
 	>> $SEARCHOUT2
-$LDAPSEARCH -S "" -h $LOCALHOST -p $PORT2 -b "$BASEDN" \
+$LDAPSEARCH -S "" -H $URI2 -b "$BASEDN" \
 	-D "$UPDATEDN" -w $PASSWD \
 	 "(objectClass=*)" >> $SEARCHOUT2 2>&1
 
@@ -121,9 +121,9 @@ if test $RC != 0 ; then
 	exit $RC
 fi
 
-echo "Filtering ldapsearch results from master..."
+echo "Filtering ldapsearch results from provider..."
 $LDIFFILTER < $SEARCHOUT > $SEARCHFLT
-echo "Filtering ldapsearch results from slave..."
+echo "Filtering ldapsearch results from consumer..."
 $LDIFFILTER < $SEARCHOUT2 > $SEARCHFLT2
 echo "Comparing filter output..."
 $CMP $SEARCHFLT $SEARCHFLT2 > $CMPOUT
@@ -138,7 +138,7 @@ cat /dev/null > $SEARCHOUT
 
 echo "Using ldapsearch to retrieve all the entries..."
 echo "# Using ldapsearch to retrieve all the entries..." >> $SEARCHOUT
-$LDAPSEARCH -S "" -h $LOCALHOST -p $PORT1 -b "$BASEDN" \
+$LDAPSEARCH -S "" -H $URI1 -b "$BASEDN" \
 	 "objectClass=*" >> $SEARCHOUT 2>&1
 
 RC=$?
@@ -154,7 +154,7 @@ pgsql|ibmdb2)
 	MANAGERDN="cn=Manager,${BASEDN}"
 	echo "Testing add..."
 	$LDAPMODIFY -v -c -D "$MANAGERDN" -w $PASSWD \
-		-h $LOCALHOST -p $PORT1 >> $TESTOUT 2>&1 << EOMODS
+		-H $URI1 >> $TESTOUT 2>&1 << EOMODS
 version: 1
 
 # Adding an organization...
@@ -229,7 +229,7 @@ EOMODS
 
 	echo "Using ldapsearch to retrieve all the entries..."
 	echo "# Using ldapsearch to retrieve all the entries..." >> $SEARCHOUT
-	$LDAPSEARCH -S "" -h $LOCALHOST -p $PORT1 -b "$BASEDN" \
+	$LDAPSEARCH -S "" -H $URI1 -b "$BASEDN" \
 		 "objectClass=*" >> $SEARCHOUT 2>&1
 
 	RC=$?
@@ -241,7 +241,7 @@ EOMODS
 
 	echo "Testing modify..."
 	$LDAPMODIFY -v -c -D "$MANAGERDN" -w $PASSWD \
-		-h $LOCALHOST -p $PORT1 >> $TESTOUT 2>&1 << EOMODS
+		-H $URI1 >> $TESTOUT 2>&1 << EOMODS
 version: 1
 
 # Deleting all telephone numbers...
@@ -311,7 +311,7 @@ EOMODS
 
 	echo "Using ldapsearch to retrieve all the entries..."
 	echo "# Using ldapsearch to retrieve all the entries..." >> $SEARCHOUT
-	$LDAPSEARCH -S "" -h $LOCALHOST -p $PORT1 -b "$BASEDN" \
+	$LDAPSEARCH -S "" -H $URI1 -b "$BASEDN" \
 		 "objectClass=*" >> $SEARCHOUT 2>&1
 
 	RC=$?
@@ -323,7 +323,7 @@ EOMODS
 
 	echo "Testing delete..."
 	$LDAPMODIFY -v -c -D "$MANAGERDN" -w $PASSWD \
-		-h $LOCALHOST -p $PORT1 >> $TESTOUT 2>&1 << EOMODS
+		-H $URI1 >> $TESTOUT 2>&1 << EOMODS
 version: 1
 
 # Deleting a person...
@@ -348,7 +348,7 @@ EOMODS
 
 	echo "Using ldapsearch to retrieve all the entries..."
 	echo "# Using ldapsearch to retrieve all the entries..." >> $SEARCHOUT
-	$LDAPSEARCH -S "" -h $LOCALHOST -p $PORT1 -b "$BASEDN" \
+	$LDAPSEARCH -S "" -H $URI1 -b "$BASEDN" \
 		 "objectClass=*" >> $SEARCHOUT 2>&1
 
 	RC=$?
@@ -360,7 +360,7 @@ EOMODS
 
 	echo "Testing rename..."
 	$LDAPMODIFY -v -c -D "$MANAGERDN" -w $PASSWD \
-		-h $LOCALHOST -p $PORT1 >> $TESTOUT 2>&1 << EOMODS
+		-H $URI1 >> $TESTOUT 2>&1 << EOMODS
 version: 1
 
 # Renaming an organization...
@@ -392,7 +392,7 @@ EOMODS
 
 	echo "Using ldapsearch to retrieve all the entries..."
 	echo "# Using ldapsearch to retrieve all the entries..." >> $SEARCHOUT
-	$LDAPSEARCH -S "" -h $LOCALHOST -p $PORT1 -b "$BASEDN" \
+	$LDAPSEARCH -S "" -H $URI1 -b "$BASEDN" \
 		 "objectClass=*" >> $SEARCHOUT 2>&1
 
 	RC=$?
@@ -404,7 +404,7 @@ EOMODS
 
 	echo "Adding a child to a referral (should fail)..."
 	$LDAPMODIFY -v -c -D "$MANAGERDN" -w $PASSWD \
-		-h $LOCALHOST -p $PORT1 >> $TESTOUT 2>&1 << EOMODS
+		-H $URI1 >> $TESTOUT 2>&1 << EOMODS
 version: 1
 
 dn: cn=Should Fail,ou=Referral,${BASEDN}
@@ -424,7 +424,7 @@ EOMODS
 
 	echo "Modifying a referral (should fail)..."
 	$LDAPMODIFY -v -c -D "$MANAGERDN" -w $PASSWD \
-		-h $LOCALHOST -p $PORT1 >> $TESTOUT 2>&1 << EOMODS
+		-H $URI1 >> $TESTOUT 2>&1 << EOMODS
 version: 1
 
 dn: ou=Referral,${BASEDN}
@@ -443,7 +443,7 @@ EOMODS
 
 	echo "Renaming a referral (should fail)..."
 	$LDAPMODIFY -v -c -D "$MANAGERDN" -w $PASSWD \
-		-h $LOCALHOST -p $PORT1 >> $TESTOUT 2>&1 << EOMODS
+		-H $URI1 >> $TESTOUT 2>&1 << EOMODS
 version: 1
 
 dn: ou=Referral,${BASEDN}
@@ -461,7 +461,7 @@ EOMODS
 
 	echo "Deleting a referral (should fail)..."
 	$LDAPMODIFY -v -c -D "$MANAGERDN" -w $PASSWD \
-		-h $LOCALHOST -p $PORT1 >> $TESTOUT 2>&1 << EOMODS
+		-H $URI1 >> $TESTOUT 2>&1 << EOMODS
 version: 1
 
 dn: ou=Referral,${BASEDN}
@@ -477,7 +477,7 @@ EOMODS
 
 	echo "Adding a referral..."
 	$LDAPMODIFY -v -c -D "$MANAGERDN" -w $PASSWD \
-		-h $LOCALHOST -p $PORT1 -M >> $TESTOUT 2>&1 << EOMODS
+		-H $URI1 -M >> $TESTOUT 2>&1 << EOMODS
 version: 1
 
 dn: ou=Another Referral,${BASEDN}
@@ -497,7 +497,7 @@ EOMODS
 
 	echo "Modifying a referral with manageDSAit..."
 	$LDAPMODIFY -v -c -D "$MANAGERDN" -w $PASSWD \
-		-h $LOCALHOST -p $PORT1 -M >> $TESTOUT 2>&1 << EOMODS
+		-H $URI1 -M >> $TESTOUT 2>&1 << EOMODS
 version: 1
 
 dn: ou=Referral,${BASEDN}
@@ -516,7 +516,7 @@ EOMODS
 
 	echo "Using ldapsearch to retrieve the modified entry..."
 	echo "# Using ldapsearch to retrieve the modified entry..." >> $SEARCHOUT
-	$LDAPSEARCH -S "" -h $LOCALHOST -p $PORT1 -b "ou=Referral,$BASEDN" -M \
+	$LDAPSEARCH -S "" -H $URI1 -b "ou=Referral,$BASEDN" -M \
 		 "objectClass=*" '*' ref >> $SEARCHOUT 2>&1
 
 	RC=$?
@@ -528,7 +528,7 @@ EOMODS
 
 	echo "Renaming a referral with manageDSAit..."
 	$LDAPMODIFY -v -c -D "$MANAGERDN" -w $PASSWD \
-		-h $LOCALHOST -p $PORT1 -M >> $TESTOUT 2>&1 << EOMODS
+		-H $URI1 -M >> $TESTOUT 2>&1 << EOMODS
 version: 1
 
 dn: ou=Referral,${BASEDN}
@@ -546,7 +546,7 @@ EOMODS
 
 	echo "Using ldapsearch to retrieve the renamed entry..."
 	echo "# Using ldapsearch to retrieve the renamed entry..." >> $SEARCHOUT
-	$LDAPSEARCH -S "" -h $LOCALHOST -p $PORT1 -b "ou=Renamed Referral,$BASEDN" -M \
+	$LDAPSEARCH -S "" -H $URI1 -b "ou=Renamed Referral,$BASEDN" -M \
 		 "objectClass=*" '*' ref >> $SEARCHOUT 2>&1
 
 	RC=$?
@@ -558,7 +558,7 @@ EOMODS
 
 	echo "Deleting a referral with manageDSAit..."
 	$LDAPMODIFY -v -c -D "$MANAGERDN" -w $PASSWD \
-		-h $LOCALHOST -p $PORT1 -M >> $TESTOUT 2>&1 << EOMODS
+		-H $URI1 -M >> $TESTOUT 2>&1 << EOMODS
 version: 1
 
 dn: ou=Renamed Referral,${BASEDN}
@@ -576,7 +576,7 @@ EOMODS
 	BINDPW="mit"
 	NEWPW="newsecret"
 	echo "Testing passwd change..."
-	$LDAPPASSWD -h $LOCALHOST -p $PORT1 \
+	$LDAPPASSWD -H $URI1 \
 		-D "${BINDDN}" -w ${BINDPW} -s ${NEWPW} \
 		"$BINDDN" >> $TESTOUT 2>&1
 
@@ -588,7 +588,7 @@ EOMODS
 	fi
 
 	echo -n "Testing bind with new secret... "
-	$LDAPWHOAMI -h $LOCALHOST -p $PORT1 -D "$BINDDN" -w $NEWPW
+	$LDAPWHOAMI -H $URI1 -D "$BINDDN" -w $NEWPW
 	RC=$?
 	if test $RC != 0 ; then
 		echo "ldapwhoami failed ($RC)!"
@@ -599,7 +599,7 @@ EOMODS
 	BINDDN="cn=Some One,${BASEDN}"
 	BINDPW="someone"
 	echo -n "Testing bind with newly added user... "
-	$LDAPWHOAMI -h $LOCALHOST -p $PORT1 -D "$BINDDN" -w $BINDPW
+	$LDAPWHOAMI -H $URI1 -D "$BINDDN" -w $BINDPW
 	RC=$?
 	if test $RC != 0 ; then
 		echo "ldapwhoami failed ($RC)!"
@@ -609,7 +609,7 @@ EOMODS
 
 	echo "Using ldapsearch to retrieve all the entries..."
 	echo "# Using ldapsearch to retrieve all the entries..." >> $SEARCHOUT
-	$LDAPSEARCH -S "" -h $LOCALHOST -p $PORT1 -b "$BASEDN" \
+	$LDAPSEARCH -S "" -H $URI1 -b "$BASEDN" \
 		 "objectClass=*" >> $SEARCHOUT 2>&1
 
 	RC=$?
@@ -632,15 +632,15 @@ EOMODS
 		exit 1
 	fi
 
-	echo "Waiting 25 seconds for master to send changes..."
+	echo "Waiting 25 seconds for provider to send changes..."
 	sleep 25
 
 	cat /dev/null > $SEARCHOUT
 
-	echo "Using ldapsearch to retrieve all the entries from the master..."
-	echo "# Using ldapsearch to retrieve all the entries from the master..." \
+	echo "Using ldapsearch to retrieve all the entries from the provider..."
+	echo "# Using ldapsearch to retrieve all the entries from the provider..." \
 		>> $SEARCHOUT
-	$LDAPSEARCH -S "" -h $LOCALHOST -p $PORT1 -b "$BASEDN" \
+	$LDAPSEARCH -S "" -H $URI1 -b "$BASEDN" \
 		-D "$MANAGERDN" -w $PASSWD \
 		 "(!(objectClass=referral))" >> $SEARCHOUT 2>&1
 
@@ -653,10 +653,10 @@ EOMODS
 
 	cat /dev/null > $SEARCHOUT2
 
-	echo "Using ldapsearch to retrieve all the entries from the slave..."
-	echo "# Using ldapsearch to retrieve all the entries from the slave..." \
+	echo "Using ldapsearch to retrieve all the entries from the consumer..."
+	echo "# Using ldapsearch to retrieve all the entries from the consumer..." \
 		>> $SEARCHOUT2
-	$LDAPSEARCH -S "" -h $LOCALHOST -p $PORT2 -b "$BASEDN" \
+	$LDAPSEARCH -S "" -H $URI2 -b "$BASEDN" \
 		-D "$UPDATEDN" -w $PASSWD \
 		 "(objectClass=*)" >> $SEARCHOUT2 2>&1
 
@@ -667,9 +667,9 @@ EOMODS
 		exit $RC
 	fi
 
-	echo "Filtering ldapsearch results from master..."
+	echo "Filtering ldapsearch results from provider..."
 	$LDIFFILTER < $SEARCHOUT > $SEARCHFLT
-	echo "Filtering ldapsearch results from slave..."
+	echo "Filtering ldapsearch results from consumer..."
 	$LDIFFILTER < $SEARCHOUT2 > $SEARCHFLT2
 	echo "Comparing filter output..."
 	$CMP $SEARCHFLT $SEARCHFLT2 > $CMPOUT

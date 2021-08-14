@@ -48,7 +48,7 @@ is used to hold the monitor information of each entry.
 
 FUNCTIONALITY
 
-Most of the sybsystems contain an additional depth level, represented
+Most of the subsystems contain an additional depth level, represented
 by detailed item monitoring.
 All the entries undergo an update operation, if a related method is
 defined, prior to being returned.  Moreover, there's a mechanism to

@@ -1,0 +1,109 @@
+.TH PW-TOTP 5 "2015/7/2" "PW-TOTP"
+.\" Copyright 2015-2021 The OpenLDAP Foundation.
+.\" Portions Copyright 2015 by Howard Chu, Symas Corp. All rights reserved.
+.\" Copying restrictions apply.  See COPYRIGHT/LICENSE.
+.SH NAME
+pw-totp \- TOTP Password handling module
+.SH SYNOPSIS
+.B moduleload
+.I pw-totp.la
+.SH DESCRIPTION
+The
+.B pw-totp
+module allows time-based one-time password, AKA "authenticator-style",
+authentication to be added to applications that use LDAP for
+authentication. In most cases no changes to the applications are needed to switch
+to this type of authentication.
+
+With this module, the password needed for a user to authenticate is calculated
+based on the current time and a key that is stored in the user's LDAP entry. Since
+the password is based on the time, it changes periodically. Once used, it cannot be
+used again so keyloggers and shoulder-surfers are thwarted. A mobile
+phone application, such as the Google Authenticator (a 'prover'), can be used
+to calculate the user's current password, which is expressed as a six-digit
+number.
+Alternatively, the value can be calculated by some other application with access
+to the user's key and delivered to the user through SMS or some other channel.
+When prompted to authenticate, the user merely enters the six-digit code provided by
+the prover.
+
+Additionally, the overlay can also authenticate TOTP passwords
+combined with a static password.  To do this, utilize one of the
+{TOTP1ANDPW}, {TOTP256ANDPW}, or {TOTP512ANDPW} password schemes
+and append the static password scheme value to the end of the
+userPassword attribute, separated by a pipe (|) character.
+
+This implementation complies with 
+.B RFC 6238 TOTP Time-based One Time Passwords
+and includes support for the SHA-1, SHA-256, and SHA-512 HMAC
+algorithms.
+
+The HMAC key used in the TOTP computation is stored in the userPassword attribute
+of the user's LDAP entry and the LDAP Password Modify Extended Operation is used to
+set and change the value. The
+value should correspond to that used by the the prover (authenticator). 
+
+.SH CONFIGURATION
+Once the module is loaded with the moduleload command from the synopsis, 
+the {TOTP1}, {TOTP256}, {TOTP512}
+{TOTP1ANDPW}, {TOTP256ANDPW}, and {TOTP512ANDPW}
+password schemes will be recognized.
+
+On the databases where your users reside you must configure the
+totp overlay:
+
+.nf
+	database mdb
+	\...
+	overlay totp
+	\...
+.fi
+
+You can tell OpenLDAP to use one of these new schemes when processing LDAP
+Password Modify Extended Operations, thanks to the password-hash option in
+slapd.conf. For example:
+
+.nf
+	password-hash   {TOTP256}
+.fi
+
+.SH NOTES
+This module includes functionality implemented by the slapo-lastbind overlay
+and cannot coexist with it in the same database. Also note
+that since the time that the last bind occurred
+is needed to properly implement TOTP, provisions need to be made to propagate
+the authTimestamp attribute to other servers that are providing authentication
+services.
+
+The hash functions for the {TOTP1ANDPW}, {TOTP256ANDPW}, and {TOTP512ANDPW}
+schemes expect the secret to be entered in the form:
+<OTP seed><DELIM><static password>, where DELIM is currently defined
+as the pipe character (|).
+
+.SH BUGS
+The time step is hard-coded to thirty seconds. This should be OK for many use cases,
+but it would be nice if the value
+could be changed with a configuration keyword or in an attribute value.
+However, after one successful initial authentication (to verify
+the clocks on the server and the user's prover are in sync) the TOTP
+value of the previous time window may also be used to successfully
+authenticate, provided no successful bind has been performed already
+in the current or previous time window.  This eliminates false
+negatives caused by user or network delays
+entering or transmitting the TOTP value.
+
+The authenticator code that is generated is hard-coded to a length of six digits.
+While in most cases
+this is probably better than the alternative length of four digits, there may be
+cases where a four-digit value is preferred.
+
+In cases where password-hash lists multiple mechanisms, the TOTP key will also
+be changed at the same time. This is likely to be undesirable behavior.
+
+.SH "SEE ALSO"
+.BR slapd.conf (5) ldappasswd (1) 
+.SH ACKNOWLEDGEMENT
+This work was developed by Howard Chu of Symas Corporation for inclusion in
+OpenLDAP Software.
+
+Password + TOTP support added by Greg Veldman on behalf of SCinet.

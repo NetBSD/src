@@ -1,6 +1,6 @@
 .TH LDAP.CONF 5 "RELEASEDATE" "OpenLDAP LDVERSION"
 .\" $OpenLDAP$
-.\" Copyright 1998-2020 The OpenLDAP Foundation All Rights Reserved.
+.\" Copyright 1998-2021 The OpenLDAP Foundation All Rights Reserved.
 .\" Copying restrictions apply.  See COPYRIGHT/LICENSE.
 .SH NAME
 ldap.conf, .ldaprc \- LDAP configuration file/environment variables
@@ -171,6 +171,18 @@ list of hosts may be provided.
 is deprecated in favor of
 .BR URI .
 .TP
+.B KEEPALIVE_IDLE
+Sets/gets the number of seconds a connection needs to remain idle
+before TCP starts sending keepalive probes. Linux only.
+.TP
+.B KEEPALIVE_PROBES
+Sets/gets the maximum number of keepalive probes TCP should send
+before dropping the connection. Linux only.
+.TP
+.B KEEPALIVE_INTERVAL
+Sets/gets the interval in seconds between individual keepalive probes.
+Linux only.
+.TP
 .B NETWORK_TIMEOUT <integer>
 Specifies the timeout (in seconds) after which the poll(2)/select(2)
 following a connect(2) returns in case of no activity.
@@ -200,6 +212,11 @@ The number should be a non-negative integer.  \fISIZELIMIT\fP of zero (0)
 specifies a request for unlimited search size.  Please note that the server
 may still apply any server-side limit on the amount of entries that can be 
 returned by a search operation.
+.TP
+.B SOCKET_BIND_ADDRESSES <IP>
+Specifies the source bind IP to be used for connecting to target LDAP server.
+Multiple IP addresses must be space separated. Only one valid IPv4
+address and/or one valid IPv6 address are allowed in the list.
 .TP
 .B TIMELIMIT <integer>
 Specifies a time limit (in seconds) to use when performing searches.
@@ -265,11 +282,10 @@ mechanisms which can pass credentials to do so).
 .B minssf=<factor> 
 specifies the minimum acceptable
 .I security strength factor
-as an integer approximating the effective key length used for
+as an integer approximate to effective key length used for
 encryption.  0 (zero) implies no protection, 1 implies integrity
-protection only, 56 allows DES or other weak ciphers, 112
-allows triple DES and other strong ciphers, 128 allows RC4,
-Blowfish and other modern strong ciphers.  The default is 0.
+protection only, 128 allows RC4, Blowfish and other similar ciphers,
+256 will require modern ciphers.  The default is 0.
 .TP
 .B maxssf=<factor> 
 specifies the maximum acceptable
@@ -286,6 +302,9 @@ size allowed.  0 disables security layers.  The default is 65536.
 .TP
 .B SASL_NOCANON <on/true/yes/off/false/no>
 Do not perform reverse DNS lookups to canonicalize SASL host names. The default is off.
+.TP
+.B SASL_CBINDING <none/tls-unique/tls-endpoint>
+The channel-binding type to use, see also LDAP_OPT_X_SASL_CBINDING. The default is none.
 .SH GSSAPI OPTIONS
 If OpenLDAP is built with Generic Security Services Application Programming Interface support,
 there are more options you can specify.
@@ -319,31 +338,16 @@ certificates in separate individual files. The
 .B TLS_CACERT
 is always used before
 .B TLS_CACERTDIR.
-This parameter is ignored with GnuTLS.
-
-When using Mozilla NSS, <path> may contain a Mozilla NSS cert/key
-database.  If <path> contains a Mozilla NSS cert/key database and
-CA cert files, OpenLDAP will use the cert/key database and will
-ignore the CA cert files.
 .TP
 .B TLS_CERT <filename>
 Specifies the file that contains the client certificate.
 .B This is a user-only option.
-
-When using Mozilla NSS, if using a cert/key database (specified with
-TLS_CACERTDIR), TLS_CERT specifies the name of the certificate to use:
-.nf
-	TLS_CERT Certificate for Sam Carter
-.fi
-If using a token other than the internal built in token, specify the
-token name first, followed by a colon:
-.nf
-	TLS_CERT my hardware device:Certificate for Sam Carter
-.fi
-Use certutil \-L to list the certificates by name:
-.nf
-	certutil \-d /path/to/certdbdir \-L
-.fi
+.TP
+.B TLS_ECNAME <name>
+Specify the name of the curve(s) to use for Elliptic curve Diffie-Hellman
+ephemeral key exchange.  This option is only used for OpenSSL.
+This option is not used with GnuTLS; the curves may be
+chosen in the GnuTLS ciphersuite specification.
 .TP
 .B TLS_KEY <filename>
 Specifies the file that contains the private key that matches the certificate
@@ -352,24 +356,11 @@ stored in the
 file. Currently, the private key must not be protected with a password, so
 it is of critical importance that the key file is protected carefully.
 .B This is a user-only option.
-
-When using Mozilla NSS, TLS_KEY specifies the name of a file that contains
-the password for the key for the certificate specified with TLS_CERT.  The
-modutil command can be used to turn off password protection for the cert/key
-database.  For example, if TLS_CACERTDIR specifies /home/scarter/.moznss as
-the location of the cert/key database, use modutil to change the password
-to the empty string:
-.nf
-	modutil \-dbdir ~/.moznss \-changepw 'NSS Certificate DB'
-.fi
-You must have the old password, if any.  Ignore the WARNING about the running
-browser.  Press 'Enter' for the new password.
-
 .TP
 .B TLS_CIPHER_SUITE <cipher-suite-spec>
 Specifies acceptable cipher suite and preference order.
 <cipher-suite-spec> should be a cipher specification for 
-the TLS library in use (OpenSSL, GnuTLS, or Mozilla NSS).
+the TLS library in use (OpenSSL or GnuTLS).
 Example:
 .RS
 .RS
@@ -399,14 +390,6 @@ In older versions of GnuTLS, where gnutls\-cli does not support the option
 .nf
 	gnutls\-cli \-l
 .fi
-
-When using Mozilla NSS, the OpenSSL cipher suite specifications are used and
-translated into the format used internally by Mozilla NSS.  There isn't an easy
-way to list the cipher suites from the command line.  The authoritative list
-is in the source code for Mozilla NSS in the file sslinfo.c in the structure
-.nf
-        static const SSLCipherSuiteInfo suiteInfo[]
-.fi
 .RE
 .TP
 .B TLS_PROTOCOL_MIN <major>[.<minor>]
@@ -430,11 +413,11 @@ This parameter is ignored with GnuTLS.
 Specifies the file to obtain random bits from when /dev/[u]random is
 not available. Generally set to the name of the EGD/PRNGD socket.
 The environment variable RANDFILE can also be used to specify the filename.
-This parameter is ignored with GnuTLS and Mozilla NSS.
+This parameter is ignored with GnuTLS.
 .TP
 .B TLS_REQCERT <level>
-Specifies what checks to perform on server certificates in a TLS session,
-if any. The
+Specifies what checks to perform on server certificates in a TLS session.
+The
 .B <level>
 can be specified as one of the following keywords:
 .RS
@@ -443,19 +426,48 @@ can be specified as one of the following keywords:
 The client will not request or check any server certificate.
 .TP
 .B allow
-The server certificate is requested. If no certificate is provided,
-the session proceeds normally. If a bad certificate is provided, it will
+The server certificate is requested. If a bad certificate is provided, it will
 be ignored and the session proceeds normally.
 .TP
 .B try
-The server certificate is requested. If no certificate is provided,
-the session proceeds normally. If a bad certificate is provided,
+The server certificate is requested. If a bad certificate is provided,
 the session is immediately terminated.
 .TP
 .B demand | hard
-These keywords are equivalent. The server certificate is requested. If no
-certificate is provided, or a bad certificate is provided, the session
-is immediately terminated. This is the default setting.
+These keywords are equivalent and the same as
+.BR try .
+This is the default setting.
+.RE
+.TP
+.B TLS_REQSAN <level>
+Specifies what checks to perform on the subjectAlternativeName
+(SAN) extensions in a server certificate when validating the certificate
+name against the specified hostname of the server. The
+.B <level>
+can be specified as one of the following keywords:
+.RS
+.TP
+.B never
+The client will not check any SAN in the certificate.
+.TP
+.B allow
+The SAN is checked against the specified hostname. If a SAN is
+present but none match the specified hostname, the SANs are ignored
+and the usual check against the certificate DN is used.
+This is the default setting.
+.TP
+.B try
+The SAN is checked against the specified hostname. If no SAN is present
+in the server certificate, the usual check against the certificate DN
+is used. If a SAN is present but doesn't match the specified hostname,
+the session is immediately terminated. This setting may be preferred
+when a mix of certs with and without SANs are in use.
+.TP
+.B demand | hard
+These keywords are equivalent. The SAN is checked against the specified
+hostname. If no SAN is present in the server certificate, or no SANs
+match, the session is immediately terminated. This setting should be
+used when only certificates with SANs are in use.
 .RE
 .TP
 .B TLS_CRLCHECK <level>
@@ -463,7 +475,7 @@ Specifies if the Certificate Revocation List (CRL) of the CA should be
 used to verify if the server certificates have not been revoked. This
 requires
 .B TLS_CACERTDIR
-parameter to be set. This parameter is ignored with GnuTLS and Mozilla NSS.
+parameter to be set. This parameter is ignored with GnuTLS.
 .B <level>
 can be specified as one of the following keywords:
 .RS
@@ -481,7 +493,7 @@ Check the CRL for a whole certificate chain
 .B TLS_CRLFILE <filename>
 Specifies the file containing a Certificate Revocation List to be used
 to verify if the server certificates have not been revoked. This
-parameter is only supported with GnuTLS and Mozilla NSS.
+parameter is only supported with GnuTLS.
 .SH "ENVIRONMENT VARIABLES"
 .TP
 LDAPNOINIT

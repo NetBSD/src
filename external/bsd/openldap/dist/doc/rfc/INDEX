@@ -64,6 +64,7 @@ rfc4532.txt LDAP Who am I? Operation (PS)
 rfc4533.txt LDAP Content Sync Operation (E)
 rfc5020.txt LDAP 'entryDN' operational attribute (PS)
 rfc5805.txt LDAP Transactions (E)
+rfc6171.txt LDAP dontUseCopy control (PS)
 
 Legend:
 STD	Standard

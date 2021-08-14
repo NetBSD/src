@@ -1,0 +1,848 @@
+.TH LLOADD.CONF 5 "RELEASEDATE" "OpenLDAP LDVERSION"
+.\" Copyright 1998-2021 The OpenLDAP Foundation All Rights Reserved.
+.\" Copying restrictions apply.  See COPYRIGHT/LICENSE.
+.\" $OpenLDAP$
+.SH NAME
+lloadd.conf \- configuration file for lloadd, the stand-alone LDAP daemon
+.SH SYNOPSIS
+ETCDIR/lloadd.conf
+.SH DESCRIPTION
+The file
+.B ETCDIR/lloadd.conf
+contains configuration information for the
+.BR lloadd (8) daemon.
+.LP
+The
+.B lloadd.conf
+file consists of a series of global configuration options that apply to
+.B lloadd
+as a whole (including all backends), followed by zero or more
+backend definitions that contain information specific how a backend
+instance should be contacted.
+The configuration options are case-insensitive;
+their value, on a case by case basis, may be case-sensitive.
+.LP
+The general format of
+.B lloadd.conf
+is as follows:
+.LP
+.nf
+    # comment - these options apply to the server as a whole
+    <global configuration options>
+    # first backend definition
+    backend-server <backend 1 definition>
+    # subsequent backend definitions
+    ...
+.fi
+.LP
+As many backend servers may be configured as desired.
+.LP
+If a line begins with white space, it is considered a continuation
+of the previous line.  No physical line should be over 2000 bytes
+long.
+.LP
+Blank lines and comment lines beginning with
+a `#' character are ignored.  Note: continuation lines are unwrapped
+before comment processing is applied.
+.LP
+Arguments on configuration lines are separated by white space. If an
+argument contains white space, the argument should be enclosed in
+double quotes.  If an argument contains a double quote (`"') or a
+backslash character (`\\'), the character should be preceded by a
+backslash character.
+.LP
+The specific configuration options available are discussed below in the
+Global Configuration Options and General Backend Options.
+Refer to the "OpenLDAP Administrator's Guide" for more
+details on the lloadd configuration file.
+
+.SH SLAPD INTEGRATION
+Note that when
+.B lloadd
+is configured as a
+.B slapd
+module, any option that shares the same name as an option in
+.BR slapd.conf (5),
+the
+.B slapd
+interpretation wins and the
+.B lloadd
+option mentioned is unavailable through
+.BR slapd.conf (5)
+directly, instead, it would have to be configured via a dedicated attribute in
+cn=config. In particular, unless the
+.B TLSShareSlapdCTX
+option is set,
+.B lloadd
+keeps its own TLS context which cannot be configured except
+through the dynamic configuration.
+
+An additional option is available when running as a
+.B slapd
+module:
+.TP
+.B listen "<listen URIs>"
+The URIs the Load Balancer module should listen on. Must not overlap with the
+ones that
+.B slapd
+uses for its own listening sockets. The related
+.B cn=config
+attribute is
+.B olcBkLloadListen
+with each URI provided as a separate value. No changes to this attribute made
+after the server has started up will take effect until it is restarted.
+
+.SH GLOBAL CONFIGURATION OPTIONS
+Options described in this section apply to all backends. Arguments that should
+be replaced by actual text are shown in brackets <>.
+.TP
+.B argsfile <filename>
+The (absolute) name of a file that will hold the
+.B lloadd
+server's command line (program name and options).
+.TP
+.B concurrency <integer>
+Specify a desired level of concurrency.  Provided to the underlying
+thread system as a hint.  The default is not to provide any hint.
+.\" .TP
+.\" .B gentlehup { on | off }
+.\" A SIGHUP signal will only cause a 'gentle' shutdown-attempt:
+.\" .B Lloadd
+.\" will stop listening for new connections, but will not close the
+.\" connections to the current clients.  Future write operations return
+.\" unwilling-to-perform, though.  Lloadd terminates when all clients
+.\" have closed their connections (if they ever do), or - as before -
+.\" if it receives a SIGTERM signal.  This can be useful if you wish to
+.\" terminate the server and start a new
+.\" .B lloadd
+.\" server
+.\" .B with another database,
+.\" without disrupting the currently active clients.
+.\" The default is off.  You may wish to use
+.\" .B idletimeout
+.\" along with this option.
+.\" .TP
+.\" .B idletimeout <integer>
+.\" Specify the number of seconds to wait before forcibly closing
+.\" an idle client connection.  A idletimeout of 0 disables this
+.\" feature.  The default is 0. You may also want to set the
+.\" .B iotimeout
+.\" option.
+.TP
+.B feature <feature> [...]
+Switch additional features supported by the LDAP Load Balancer on.
+Supported features are:
+.RS
+.RS
+.PD 0
+.TP
+.B proxyauthz
+when proxying an operation, pass the client's authorized identity using
+the proxy authorization control (RFC 4370). No control is added to the
+operation if initiated by a client whose bound identity matches the identity
+configured in
+.B bindconf
+(no normalisation of the DN is attempted).
+
+If SASL binds are issued by clients and this feature is enabled, backend
+servers need to support LDAP Who Am I? extended operation for the Load Balancer
+to detect the correct authorization identity.
+.\" .TP
+.\" .B vc
+.\" when receiving a bind operation from a client, pass it onto a backend
+.\" as a verify credentials external operation request. With this enabled,
+.\" the
+.\" .BR backend 's
+.\" .B bindconns
+.\" option has no effect as there is no need to maintain dedicated bind
+.\" connections anymore.
+.PD
+.RE
+.RE
+.TP
+.B include <filename>
+Read additional configuration information from the given file before
+continuing with the next line of the current file.
+.TP
+.B io-threads <integer>
+Specify the number of threads to use for the connection manager.
+The default is 1 and this is typically adequate for up to 16 CPU cores.
+The value should be set to a power of 2.
+
+If modified after server starts up, a change to this option will not take
+effect until the server has been restarted.
+.TP
+.B logfile <filename>
+Specify a file for recording lloadd debug messages. By default these messages
+only go to stderr, are not recorded anywhere else, and are unrelated to
+messages exposed by the
+.B loglevel
+configuration parameter. Specifying a logfile copies messages to both stderr
+and the logfile.
+.TP
+.B loglevel <integer> [...]
+Specify the level at which debugging statements and operation
+statistics should be syslogged (currently logged to the
+.BR syslogd (8)
+LOG_LOCAL4 facility).
+They must be considered subsystems rather than increasingly verbose
+log levels.
+Some messages with higher priority are logged regardless
+of the configured loglevel as soon as any logging is configured.
+Log levels are additive, and available levels are:
+.RS
+.RS
+.PD 0
+.TP
+.B 1
+.B (0x1 trace)
+trace function calls
+.TP
+.B 2
+.B (0x2 packets)
+debug packet handling
+.TP
+.B 4
+.B (0x4 args)
+heavy trace debugging (function args)
+.TP
+.B 8
+.B (0x8 conns)
+connection management
+.TP
+.B 16
+.B (0x10 BER)
+print out packets sent and received
+.\" .TP
+.\" .B 32
+.\" .B (0x20 filter)
+.\" search filter processing
+.TP
+.B 64
+.B (0x40 config)
+configuration file processing
+.\" .TP
+.\" .B 128
+.\" .B (0x80 ACL)
+.\" access control list processing
+.TP
+.B 256
+.B (0x100 stats)
+connections, LDAP operations, results (recommended)
+.TP
+.B 512
+.B (0x200 stats2)
+stats log entries sent
+.\" .TP
+.\" .B 1024
+.\" .B (0x400 shell)
+.\" print communication with shell backends
+.\" .TP
+.\" .B 2048
+.\" .B (0x800 parse)
+.\" entry parsing
+\".TP
+\".B 4096
+\".B (0x1000 cache)
+\"caching (unused)
+\".TP
+\".B 8192
+\".B (0x2000 index)
+\"data indexing (unused)
+.\" .TP
+.\" .B 16384
+.\" .B (0x4000 sync)
+.\" LDAPSync replication
+.TP
+.B 32768
+.B (0x8000 none)
+only messages that get logged whatever log level is set
+.PD
+.RE
+The desired log level can be input as a single integer that combines
+the (ORed) desired levels, both in decimal or in hexadecimal notation,
+as a list of integers (that are ORed internally),
+or as a list of the names that are shown between parentheses, such that
+.LP
+.nf
+    loglevel 513
+    loglevel 0x201
+    loglevel 512 1
+    loglevel 0x200 0x1
+    loglevel stats trace
+.fi
+.LP
+are equivalent.
+The keyword
+.B any
+can be used as a shortcut to enable logging at all levels (equivalent to \-1).
+The keyword
+.BR none ,
+or the equivalent integer representation, causes those messages
+that are logged regardless of the configured loglevel to be logged.
+In fact, if loglevel is set to 0, no logging occurs,
+so at least the
+.B none
+level is required to have high priority messages logged.
+
+The loglevel defaults to \fBstats\fP.
+This level should usually also be included when using other loglevels, to
+help analyze the logs.
+.RE
+.TP
+.B pidfile <filename>
+The (absolute) name of a file that will hold the
+.B lloadd
+server's process ID (see
+.BR getpid (2)).
+.TP
+.B sockbuf_max_incoming_client <integer>
+Specify the maximum LDAP PDU size accepted coming from clients.
+The default is 262143.
+.TP
+.B sockbuf_max_incoming_upstream <integer>
+Specify the maximum LDAP PDU size accepted coming from upstream
+connections.
+The default is 4194303.
+.TP
+.B tcp-buffer [listener=<URL>] [{read|write}=]<size>
+Specify the size of the TCP buffer.
+A global value for both read and write TCP buffers related to any listener
+is defined, unless the listener is explicitly specified,
+or either the read or write qualifiers are used.
+See
+.BR tcp (7)
+for details.
+Note that some OS-es implement automatic TCP buffer tuning.
+.TP
+.B threads <integer>
+Specify the maximum size of the primary thread pool.
+The default is 16; the minimum value is 2.
+.TP
+.B threadqueues <integer>
+Specify the number of work queues to use for the primary thread pool.
+The default is 1 and this is typically adequate for up to 8 CPU cores.
+The value should not exceed the number of CPUs in the system.
+.TP
+.B max_pdus_per_cycle <integer>
+If set to 0, PDUs are handled by the I/O threads directly, otherwise
+a task is queued to be picked up by the thread pool. This task will
+process PDUs from the connection until there is no more data to be
+read or this limit is reached when the I/O thread can pick it up again.
+Very high values have a potential to cause some connections to be
+starved in a very high-bandwidth environment. The default is 1000.
+.TP
+.B client_max_pending <integer>
+Will cause the load balancer to limit the number unfinished operations for each
+client connection. The default is 0, unlimited.
+.TP
+.B iotimeout <integer>
+Specify the number of milliseconds to wait before forcibly closing
+a connection with an outstanding write. This allows faster recovery from
+various network hang conditions.  An iotimeout of 0 disables this feature.
+The default is 10000.
+
+.SH TLS OPTIONS
+If
+.B lloadd
+is built with support for Transport Layer Security, there are more options
+you can specify.
+
+.TP
+.B TLSShareSlapdCTX { on | off }
+If set to no (the default),
+.B lloadd
+will use its own TLS context (needs to be configured via
+.B cn=config
+unless
+.B lloadd
+is run as a standalone daemon). If enabled, the options for
+.B slapd
+apply instead, since the
+.BR slapd 's
+TLS context is used then.
+
+.LP
+
+The following options are available only when compiled as a standalone daemon.
+When compiled as a
+.BR slapd (8)
+module, the cn=config equivalents need to be used if a separate TLS context for
+the module is needed, otherwise use the
+.B TLSShareSlapdCTX
+option.
+
+.TP
+.B TLSCipherSuite <cipher-suite-spec>
+Permits configuring what ciphers will be accepted and the preference order.
+<cipher-suite-spec> should be a cipher specification for the TLS library
+in use (OpenSSL, GnuTLS, or Mozilla NSS).
+Example:
+.RS
+.RS
+.TP
+.I OpenSSL:
+TLSCipherSuite HIGH:MEDIUM:+SSLv2
+.TP
+.I GnuTLS:
+TLSCiphersuite SECURE256:!AES-128-CBC
+.RE
+
+To check what ciphers a given spec selects in OpenSSL, use:
+
+.nf
+	openssl ciphers \-v <cipher-suite-spec>
+.fi
+
+With GnuTLS the available specs can be found in the manual page of
+.BR gnutls\-cli (1)
+(see the description of the
+option
+.BR \-\-priority ).
+
+In older versions of GnuTLS, where gnutls\-cli does not support the option
+\-\-priority, you can obtain the \(em more limited \(em list of ciphers by calling:
+
+.nf
+	gnutls\-cli \-l
+.fi
+
+When using Mozilla NSS, the OpenSSL cipher suite specifications are used and
+translated into the format used internally by Mozilla NSS.  There isn't an easy
+way to list the cipher suites from the command line.  The authoritative list
+is in the source code for Mozilla NSS in the file sslinfo.c in the structure
+.nf
+        static const SSLCipherSuiteInfo suiteInfo[]
+.fi
+.RE
+.TP
+.B TLSCACertificateFile <filename>
+Specifies the file that contains certificates for all of the Certificate
+Authorities that
+.B lloadd
+will recognize.  The certificate for
+the CA that signed the server certificate must be included among
+these certificates. If the signing CA was not a top-level (root) CA,
+certificates for the entire sequence of CA's from the signing CA to
+the top-level CA should be present. Multiple certificates are simply
+appended to the file; the order is not significant.
+.TP
+.B TLSCACertificatePath <path>
+Specifies the path of a directory that contains Certificate Authority
+certificates in separate individual files. Usually only one of this
+or the TLSCACertificateFile is used. This directive is not supported
+when using GnuTLS.
+
+When using Mozilla NSS, <path> may contain a Mozilla NSS cert/key
+database.  If <path> contains a Mozilla NSS cert/key database and
+CA cert files, OpenLDAP will use the cert/key database and will
+ignore the CA cert files.
+.TP
+.B TLSCertificateFile <filename>
+Specifies the file that contains the
+.B lloadd
+server certificate.
+
+When using Mozilla NSS, if using a cert/key database (specified with
+TLSCACertificatePath), TLSCertificateFile specifies
+the name of the certificate to use:
+.nf
+	TLSCertificateFile Server-Cert
+.fi
+If using a token other than the internal built in token, specify the
+token name first, followed by a colon:
+.nf
+	TLSCertificateFile my hardware device:Server-Cert
+.fi
+Use certutil \-L to list the certificates by name:
+.nf
+	certutil \-d /path/to/certdbdir \-L
+.fi
+.TP
+.B TLSCertificateKeyFile <filename>
+Specifies the file that contains the
+.B lloadd
+server private key that matches the certificate stored in the
+.B TLSCertificateFile
+file.  Currently, the private key must not be protected with a password, so
+it is of critical importance that it is protected carefully.
+
+When using Mozilla NSS, TLSCertificateKeyFile specifies the name of
+a file that contains the password for the key for the certificate specified with
+TLSCertificateFile.  The modutil command can be used to turn off password
+protection for the cert/key database.  For example, if TLSCACertificatePath
+specifies /etc/openldap/certdb as the location of the cert/key database, use
+modutil to change the password to the empty string:
+.nf
+	modutil \-dbdir /etc/openldap/certdb \-changepw 'NSS Certificate DB'
+.fi
+You must have the old password, if any.  Ignore the WARNING about the running
+browser.  Press 'Enter' for the new password.
+.TP
+.B TLSDHParamFile <filename>
+This directive specifies the file that contains parameters for Diffie-Hellman
+ephemeral key exchange.  This is required in order to use a DSA certificate on
+the server, or an RSA certificate missing the "key encipherment" key usage.
+Note that setting this option may also enable
+Anonymous Diffie-Hellman key exchanges in certain non-default cipher suites.
+Anonymous key exchanges should generally be avoided since they provide no
+actual client or server authentication and provide no protection against
+man-in-the-middle attacks.
+You should append "!ADH" to your cipher suites to ensure that these suites
+are not used.
+When using Mozilla NSS these parameters are always generated randomly
+so this directive is ignored.
+.TP
+.B TLSECName <name>
+Specify the name of a curve to use for Elliptic curve Diffie-Hellman
+ephemeral key exchange.  This is required to enable ECDHE algorithms in
+OpenSSL.  This option is not used with GnuTLS; the curves may be
+chosen in the GnuTLS ciphersuite specification. This option is also
+ignored for Mozilla NSS.
+.TP
+.B TLSProtocolMin <major>[.<minor>]
+Specifies minimum SSL/TLS protocol version that will be negotiated.
+If the server doesn't support at least that version,
+the SSL handshake will fail.
+To require TLS 1.x or higher, set this option to 3.(x+1),
+e.g.,
+
+.nf
+	TLSProtocolMin 3.2
+.fi
+
+would require TLS 1.1.
+Specifying a minimum that is higher than that supported by the
+OpenLDAP implementation will result in it requiring the
+highest level that it does support.
+This directive is ignored with GnuTLS.
+.TP
+.B TLSRandFile <filename>
+Specifies the file to obtain random bits from when /dev/[u]random
+is not available.  Generally set to the name of the EGD/PRNGD socket.
+The environment variable RANDFILE can also be used to specify the filename.
+This directive is ignored with GnuTLS and Mozilla NSS.
+.TP
+.B TLSVerifyClient <level>
+Specifies what checks to perform on client certificates in an
+incoming TLS session, if any.
+The
+.B <level>
+can be specified as one of the following keywords:
+.RS
+.TP
+.B never
+This is the default.
+.B lloadd
+will not ask the client for a certificate.
+.TP
+.B allow
+The client certificate is requested.  If no certificate is provided,
+the session proceeds normally.  If a bad certificate is provided,
+it will be ignored and the session proceeds normally.
+.TP
+.B try
+The client certificate is requested.  If no certificate is provided,
+the session proceeds normally.  If a bad certificate is provided,
+the session is immediately terminated.
+.TP
+.B demand | hard | true
+These keywords are all equivalent, for compatibility reasons.
+The client certificate is requested.  If no certificate is provided,
+or a bad certificate is provided, the session is immediately terminated.
+.TP
+.B TLSCRLCheck <level>
+Specifies if the Certificate Revocation List (CRL) of the CA should be
+used to verify if the client certificates have not been revoked. This
+requires
+.B TLSCACertificatePath
+parameter to be set. This directive is ignored with GnuTLS and Mozilla NSS.
+.B <level>
+can be specified as one of the following keywords:
+.RS
+.TP
+.B none
+No CRL checks are performed
+.TP
+.B peer
+Check the CRL of the peer certificate
+.TP
+.B all
+Check the CRL for a whole certificate chain
+.RE
+.TP
+.B TLSCRLFile <filename>
+Specifies a file containing a Certificate Revocation List to be used
+for verifying that certificates have not been revoked. This directive is
+only valid when using GnuTLS and Mozilla NSS.
+
+.SH BACKEND CONFIGURATION
+Options in this section describe how the
+.B lloadd
+connects and authenticates to the backend servers.
+
+It is assumed all backend servers serve the same data. On startup, the
+configured connections are set up and those not dedicated to handle bind
+requests are authenticated with the backend using the information in the
+.B bindconf
+option. The authentication configuration is shared between them.
+.TP
+.B bindconf
+.B [bindmethod=simple|sasl]
+.B [binddn=<dn>]
+.B [saslmech=<mech>]
+.B [authcid=<identity>]
+.B [authzid=<identity>]
+.B [credentials=<passwd>]
+.B [realm=<realm>]
+.B [secprops=<properties>]
+.B [timeout=<seconds>]
+.B [network\-timeout=<seconds>]
+.B [tcp\-user\-timeout=<milliseconds>]
+
+Specifies the bind credentials
+.B lloadd
+uses when setting up its regular connections to all backends.
+
+A
+.B bindmethod
+of
+.B simple
+requires the options
+.B binddn
+and
+.B credentials
+and should only be used when adequate security services
+(e.g. TLS or IPSEC) are in place.
+.B REMEMBER: simple bind credentials must be in cleartext!
+A
+.B bindmethod
+of
+.B sasl
+requires the option
+.B saslmech.
+Depending on the mechanism, an authentication identity and/or
+credentials can be specified using
+.B authcid
+and
+.B credentials.
+The
+.B authzid
+parameter may be used to specify an authorization identity.
+Specific security properties (as with the
+.B sasl\-secprops
+keyword above) for a SASL bind can be set with the
+.B secprops
+option. A non default SASL realm can be set with the
+.B realm
+option.
+
+The
+.B timeout
+parameter indicates how long an operation can be pending a response (result,
+search entry, ...) from the server in seconds. Due to how timeouts are
+detected, the timeout might not be detected and handled up to
+.B timeout
+seconds after it happens.
+
+The
+.B network\-timeout
+parameter sets how long the consumer will wait to establish a
+network connection to the provider. Once a connection is
+established, the
+.B timeout
+parameter determines how long the consumer will wait for the initial
+Bind request to complete.
+
+Timeout set to 0 means no timeout is in effect and by default, no timeouts are
+in effect.
+
+The
+.B tcp\-user\-timeout
+parameter, if non-zero, corresponds to the
+.B TCP_USER_TIMEOUT
+set on the upstream connections, overriding the operating system setting.
+Only some systems support the customization of this parameter, it is
+ignored otherwise and system-wide settings are used.
+
+.SH BACKEND OPTIONS
+
+.TP
+.B backend-server
+.B uri=ldap[s]://<hostname>[:port]
+.B [retry=<retry interval in ms>]
+.B [keepalive=<idle>:<probes>:<interval>]
+.B [starttls=yes|critical]
+.B [tls_cert=<file>]
+.B [tls_key=<file>]
+.B [tls_cacert=<file>]
+.B [tls_cacertdir=<path>]
+.B [tls_reqcert=never|allow|try|demand]
+.B [tls_cipher_suite=<ciphers>]
+.B [tls_crlcheck=none|peer|all]
+.B [tls_protocol_min=<major>[.<minor>]]
+.B [numconns=<conns>]
+.B [bindconns=<conns>]
+.B [max-pending-ops=<ops>]
+.B [conn-max-pending=<ops>]
+
+Marks the beginning of a backend definition.
+
+.B uri
+specifies the backend as an LDAP URI. If <port> is not given, the standard
+LDAP port number (389 or 636) is used.
+
+Lloadd will attempt to maintain
+.B numconns
+active connections and
+.\" unless the
+.\" .B vc
+.\" feature is enabled,
+also
+.B bindconns
+active connections dedicated to handling client bind requests.
+
+If an error occurs on a working connection, a new connection attempt is
+made immediately, if one happens on establishing a new connection to this
+backend, lloadd will wait before a new reconnect attempt is made
+according to the
+.B retry
+parameter (default is 5 seconds).
+
+Operations will be distributed across the backend's connections
+.RB ( upstreams ).
+
+The parameter
+.B conn-max-pending
+unless set to
+.B 0
+(the default), will limit the number unfinished operations per upstream
+connection. Similarly,
+.B max-pending-ops
+will limit the total number or unfinished operations across all backend's
+connections,
+.BR 0 ,
+the default, means no limit will be imposed for this backend.
+
+The
+.B keepalive
+parameter sets the values of \fIidle\fP, \fIprobes\fP, and \fIinterval\fP
+used to check whether a socket is alive;
+.I idle
+is the number of seconds a connection needs to remain idle before TCP
+starts sending keepalive probes;
+.I probes
+is the maximum number of keepalive probes TCP should send before dropping
+the connection;
+.I interval
+is interval in seconds between individual keepalive probes.
+Only some systems support the customization of these values;
+the
+.B keepalive
+parameter is ignored otherwise, and system-wide settings are used.
+
+The
+.B starttls
+parameter specifies use of the StartTLS extended operation
+to establish a TLS session before Binding to the provider. If the
+.B critical
+argument is supplied, the session will be aborted if the StartTLS request
+fails. Otherwise the syncrepl session continues without TLS. The
+tls_reqcert setting defaults to "demand" and the other TLS settings
+default to the same as the main slapd TLS settings.
+
+.\" .TP
+.\" .B readonly on | off
+.\" This option puts the backend into "read-only" mode.  Only read
+.\" operations (i.e. bind, search, compare) will be directed towards this
+.\" backend. By default, readonly is off.
+.\" .TP
+.\" .B restrict <oplist>
+.\" Specify a whitespace separated list of operations that are restricted.
+.\" If defined inside a database specification, restrictions apply only
+.\" to that database, otherwise they are global.
+.\" Operations can be any of
+.\" .BR add ,
+.\" .BR bind ,
+.\" .BR compare ,
+.\" .BR delete ,
+.\" .BR extended[=<OID>] ,
+.\" .BR modify ,
+.\" .BR rename ,
+.\" .BR search ,
+.\" or the special pseudo-operations
+.\" .B read
+.\" and
+.\" .BR write ,
+.\" which respectively summarize read and write operations.
+.\" The use of
+.\" .I restrict write
+.\" is equivalent to
+.\" .I readonly on
+.\" (see above).
+.\" The
+.\" .B extended
+.\" keyword allows one to indicate the OID of the specific operation
+.\" to be restricted.
+
+.SH EXAMPLES
+.LP
+Here is a short example of a configuration file:
+.LP
+.RS
+.nf
+argsfile  LOCALSTATEDIR/run/lloadd.args
+pidfile   LOCALSTATEDIR/run/lloadd.pid
+
+bindconf
+    bindmethod=simple
+    binddn=cn=test
+    credentials=pass
+
+backend-server
+    uri=ldap://ldap1.example.com
+    numconns=3
+    bindconns=2
+    retry=5000
+    max-pending-ops=5
+    conn-max-pending=3
+
+backend-server
+    uri=ldap://ldap2.example.com
+    numconns=3
+    bindconns=2
+    retry=5000
+    max-pending-ops=5
+    conn-max-pending=3
+.fi
+.RE
+.LP
+"OpenLDAP Administrator's Guide" contains a longer annotated
+example of a configuration file.
+The original ETCDIR/lloadd.conf is another example.
+
+.SH LIMITATIONS
+Support for proxying SASL Binds is limited to the
+.B EXTERNAL
+mechanism (and only to extract the DN of a client TLS cerificate if used during
+the last renegotiation) and mechanisms that rely neither on connection metadata
+(as Kerberos does) nor establish a SASL integrity/confidentialiy layer (again,
+some Kerberos mechanisms,
+.B DIGEST-MD5
+can negotiate this).
+
+.SH FILES
+.TP
+ETCDIR/lloadd.conf
+default lloadd configuration file
+.SH SEE ALSO
+.BR ldap (3),
+.BR gnutls\-cli (1),
+.BR slapd.conf (5),
+.BR tcp (7),
+.BR lloadd (8),
+.BR slapd (8).
+.LP
+"OpenLDAP Administrator's Guide" (http://www.OpenLDAP.org/doc/admin/)
+.SH ACKNOWLEDGEMENTS
+.so ../Project

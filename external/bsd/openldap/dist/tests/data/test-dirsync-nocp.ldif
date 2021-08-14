@@ -1,0 +1,272 @@
+#LEAD COMMENT
+dn: ou=People,dc=example,dc=com
+#EMBEDDED COMMENT
+objectclass: organizationalUnit
+objectclass: domainRelatedObject
+ou: People
+associatedDomain: test.openldap.org
+
+dn: ou=Groups,dc=example,dc=com
+objectclass: organizationalUnit
+objectclass: domainRelatedObject
+ou: Groups
+associatedDomain: test.openldap.org
+
+dn: ou=Alumni Association,ou=People,dc=example,dc=com
+objectclass: organizationalUnit
+objectclass: domainRelatedObject
+ou: Alumni Association
+associatedDomain: test.openldap.org
+
+dn: ou=Information Technology Division,ou=People,dc=example,dc=com
+objectclass: organizationalUnit
+objectclass: domainRelatedObject
+ou: Information Technology Division
+associatedDomain: test.openldap.org
+description: MSAD doesn't like long descriptions
+description: 5K and 3K are too big
+
+dn: cn=Barbara Jensen,ou=Information Technology Division,ou=People,dc=example,dc=com
+objectclass: inetOrgPerson
+objectclass: domainRelatedObject
+cn: Barbara Jensen
+sn:: IEplbnNlbiA=
+uid: bjensen
+title: Mythical Manager, Research Systems
+postaladdress: ITD Prod Dev & Deployment $ 535 W. William St. Room 4212 $ Anyt
+ own, MI 48103-4943
+userpassword:: YmplbnNlbg==
+mail: bjensen@mailgw.example.com
+homepostaladdress: 123 Wesley $ Anytown, MI 48103
+description: Mythical manager of the rsdd unix project
+carLicense: water
+homephone: +1 313 555 2333
+pager: +1 313 555 3233
+facsimiletelephonenumber: +1 313 555 2274
+telephonenumber: +1 313 555 9022
+associatedDomain: test.openldap.org
+
+dn: cn=Bjorn Jensen,ou=Information Technology Division,ou=People,dc=example,dc=com
+objectclass: inetOrgPerson
+objectclass: domainRelatedObject
+cn: Bjorn Jensen
+sn: Jensen
+uid: bjorn
+userpassword:: Ympvcm4=
+homepostaladdress: 19923 Seven Mile Rd. $ South Lyon, MI 49999
+carLicense: Iced Tea
+description: Hiker, biker
+title: Director, Embedded Systems
+postaladdress: Info Tech Division $ 535 W. William St. $ Anytown, MI 48103
+mail: bjorn@mailgw.example.com
+homephone: +1 313 555 5444
+pager: +1 313 555 4474
+facsimiletelephonenumber: +1 313 555 2177
+telephonenumber: +1 313 555 0355
+associatedDomain: test.openldap.org
+
+dn: cn=Dorothy Stevens,ou=Alumni Association,ou=People,dc=example,dc=com
+objectclass: inetOrgPerson
+objectclass: domainRelatedObject
+cn: Dorothy Stevens
+sn: Stevens
+uid: dots
+title: Secretary, UM Alumni Association
+postaladdress: Alumni Association $ 111 Maple St $ Anytown, MI 48109
+carLicense: Lemonade
+homepostaladdress: 377 White St. Apt. 3 $ Anytown, MI 48104
+description: Very tall
+facsimiletelephonenumber: +1 313 555 3223
+telephonenumber: +1 313 555 3664
+mail: dots@mail.alumni.example.com
+homephone: +1 313 555 0454
+associatedDomain: test.openldap.org
+
+dn: cn=James A Jones 1,ou=Alumni Association,ou=People,dc=example,dc=com
+objectclass: inetOrgPerson
+objectclass: domainRelatedObject
+cn: James A Jones 1
+sn: Jones
+uid: jaj
+postaladdress: Alumni Association $ 111 Maple St $ Anytown, MI 48109
+userpassword:: amFq
+homepostaladdress: 3882 Beverly Rd. $ Anytown, MI 48105
+homephone: +1 313 555 4772
+description: Outstanding
+title: Mad Cow Researcher, UM Alumni Association
+pager: +1 313 555 3923
+mail: jaj@mail.alumni.example.com
+facsimiletelephonenumber: +1 313 555 4332
+telephonenumber: +1 313 555 0895
+associatedDomain: test.openldap.org
+
+dn: cn=James A Jones 2,ou=Information Technology Division,ou=People,dc=example,dc=com
+objectclass: inetOrgPerson
+objectclass: domainRelatedObject
+cn: James A Jones 2
+sn: Doe
+uid: jjones
+homepostaladdress: 933 Brooks $ Anytown, MI 48104
+homephone: +1 313 555 8838
+title: Senior Manager, Information Technology Division
+description: Not around very much
+mail: jjones@mailgw.example.com
+postaladdress: Info Tech Division $ 535 W William $ Anytown, MI 48103
+pager: +1 313 555 2833
+facsimiletelephonenumber: +1 313 555 8688
+telephonenumber: +1 313 555 7334
+associatedDomain: test.openldap.org
+
+dn: cn=Jane Doe,ou=Alumni Association,ou=People,dc=example,dc=com
+objectclass: inetOrgPerson
+objectclass: domainRelatedObject
+cn: Jane Doe
+sn: Doe
+uid: jdoe
+title: Programmer Analyst, UM Alumni Association
+postaladdress: Alumni Association $ 111 Maple St $ Anytown, MI 48109
+homepostaladdress: 123 Anystreet $ Anytown, MI 48104
+carLicense: diet coke
+description: Enthusiastic
+mail: jdoe@woof.net
+homephone: +1 313 555 5445
+pager: +1 313 555 1220
+facsimiletelephonenumber: +1 313 555 2311
+telephonenumber: +1 313 555 4774
+associatedDomain: test.openldap.org
+
+dn: cn=Jennifer Smith,ou=Alumni Association,ou=People,dc=example,dc=com
+objectclass: inetOrgPerson
+objectclass: domainRelatedObject
+cn: Jennifer Smith
+sn: Smith
+uid: jen
+postaladdress: Alumni Association $ 111 Maple St $ Anytown, MI 48109
+carLicense: Sam Adams
+homepostaladdress: 1000 Maple #44 $ Anytown, MI 48103
+title: Telemarketer, UM Alumni Association
+mail: jen@mail.alumni.example.com
+homephone: +1 313 555 2333
+pager: +1 313 555 6442
+facsimiletelephonenumber: +1 313 555 2756
+telephonenumber: +1 313 555 8232
+associatedDomain: test.openldap.org
+
+dn: cn=John Doe,ou=Information Technology Division,ou=People,dc=example,dc=com
+objectclass: inetOrgPerson
+objectclass: domainRelatedObject
+cn: John Doe
+sn: Doe
+uid: johnd
+postaladdress: ITD $ 535 W. William $ Anytown, MI 48109
+homepostaladdress: 912 East Bllvd $ Anytown, MI 48104
+title: System Administrator, Information Technology Division
+description: overworked!
+mail: johnd@mailgw.example.com
+homephone: +1 313 555 3774
+pager: +1 313 555 6573
+facsimiletelephonenumber: +1 313 555 4544
+telephonenumber: +1 313 555 9394
+associatedDomain: test.openldap.org
+
+dn: cn=Manager,dc=example,dc=com
+objectclass: inetOrgPerson
+objectclass: domainRelatedObject
+cn: Manager
+sn: Manager
+description: Manager of the directory
+userpassword:: c2VjcmV0
+associatedDomain: test.openldap.org
+
+dn: cn=Mark Elliot,ou=Alumni Association,ou=People,dc=example,dc=com
+objectclass: inetOrgPerson
+objectclass: domainRelatedObject
+cn: Mark Elliot
+sn: Elliot
+uid: melliot
+postaladdress: Alumni Association $ 111 Maple St $ Anytown, MI 48109
+homepostaladdress: 199 Outer Drive $ Ypsilanti, MI 48198
+homephone: +1 313 555 0388
+carLicense: Gasoline
+title: Director, UM Alumni Association
+mail: melliot@mail.alumni.example.com
+pager: +1 313 555 7671
+facsimiletelephonenumber: +1 313 555 7762
+telephonenumber: +1 313 555 4177
+associatedDomain: test.openldap.org
+
+dn: cn=Ursula Hampster,ou=Alumni Association,ou=People,dc=example,dc=com
+objectclass: inetOrgPerson
+objectclass: domainRelatedObject
+cn: Ursula Hampster
+sn: Hampster
+uid: uham
+title: Secretary, UM Alumni Association
+postaladdress: Alumni Association $ 111 Maple St $ Anytown, MI 48109
+homepostaladdress: 123 Anystreet $ Anytown, MI 48104
+mail: uham@mail.alumni.example.com
+homephone: +1 313 555 8421
+pager: +1 313 555 2844
+facsimiletelephonenumber: +1 313 555 9700
+telephonenumber: +1 313 555 5331
+associatedDomain: test.openldap.org
+
+dn: cn=All Staff,ou=Groups,dc=example,dc=com
+member: cn=Manager,dc=example,dc=com
+member: cn=Barbara Jensen,ou=Information Technology Division,ou=People,dc=example,dc=com
+member: cn=Jane Doe,ou=Alumni Association,ou=People,dc=example,dc=com
+member: cn=John Doe,ou=Information Technology Division,ou=People,dc=example,dc=com
+member: cn=Mark Elliot,ou=Alumni Association,ou=People,dc=example,dc=com
+member: cn=James A Jones 1,ou=Alumni Association,ou=People,dc=example,dc=com
+member: cn=James A Jones 2,ou=Information Technology Division,ou=People,dc=example,dc=com
+member: cn=Jennifer Smith,ou=Alumni Association,ou=People,dc=example,dc=com
+member: cn=Dorothy Stevens,ou=Alumni Association,ou=People,dc=example,dc=com
+member: cn=Ursula Hampster,ou=Alumni Association,ou=People,dc=example,dc=com
+member: cn=Bjorn Jensen,ou=Information Technology Division,ou=People,dc=example,dc=com
+owner: cn=Manager,dc=example,dc=com
+cn: All Staff
+description: Everyone in the sample data
+objectclass: groupOfNames
+objectclass: domainRelatedObject
+associatedDomain: test.openldap.org
+
+dn: cn=ITD Staff,ou=Groups,dc=example,dc=com
+owner: cn=Manager,dc=example,dc=com
+description: All ITD Staff
+cn: ITD Staff
+objectclass: groupOfUniqueNames
+objectclass: domainRelatedObject
+uniquemember: cn=Manager,dc=example,dc=com
+uniquemember: cn=Bjorn Jensen,OU=Information Technology Division,ou=People,dc=example,dc=com
+uniquemember: cn=James A Jones 2,ou=Information Technology Division,ou=People,dc=example,dc=com
+uniquemember: cn=John Doe,ou=Information Technology Division,ou=People,dc=example,dc=com
+associatedDomain: test.openldap.org
+
+dn: cn=Alumni Assoc Staff,ou=Groups,dc=example,dc=com
+member: cn=Manager,dc=example,dc=com
+member: cn=Dorothy Stevens,ou=Alumni Association,ou=People,dc=example,dc=com
+member: cn=James A Jones 1,ou=Alumni Association,ou=People,dc=example,dc=com
+member: cn=Jane Doe,ou=Alumni Association,ou=People,dc=example,dc=com
+member: cn=Jennifer Smith,ou=Alumni Association,ou=People,dc=example,dc=com
+member: cn=Mark Elliot,ou=Alumni Association,ou=People,dc=example,dc=com
+member: cn=Ursula Hampster,ou=Alumni Association,ou=People,dc=example,dc=com
+owner: cn=Manager,dc=example,dc=com
+description: All Alumni Assoc Staff
+cn: Alumni Assoc Staff
+objectclass: groupOfNames
+objectclass: domainRelatedObject
+associatedDomain: test.openldap.org
+
+dn: ou=testdomain1,dc=example,dc=com
+objectclass: organizationalUnit
+objectclass: domainRelatedObject
+ou: testdomain1
+description: Example, Inc. modify+modrdn test domain
+associatedDomain: test.openldap.org
+
+dn: ou=testdomain2,dc=example,dc=com
+objectclass: organizationalUnit
+objectclass: domainRelatedObject
+ou: testdomain2
+description: Example, Inc. modify then modrdn test domain 
+associatedDomain: test.openldap.org

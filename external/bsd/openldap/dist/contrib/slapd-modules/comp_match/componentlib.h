@@ -1,9 +1,9 @@
-/*	$NetBSD: componentlib.h,v 1.1.1.4 2018/02/06 01:53:06 christos Exp $	*/
+/*	$NetBSD: componentlib.h,v 1.1.1.5 2021/08/14 16:05:14 christos Exp $	*/
 
 /* Copyright 2004 IBM Corporation
  * All rights reserved.
- * Redisribution and use in source and binary forms, with or without
- * modification, are permitted only as  authorizd by the OpenLADP
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted only as authorized by the OpenLDAP
  * Public License.
  */
 /* ACKNOWLEDGEMENTS
@@ -15,7 +15,7 @@
 #define _H_COMPONENT_MODULE
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: componentlib.h,v 1.1.1.4 2018/02/06 01:53:06 christos Exp $");
+__RCSID("$NetBSD: componentlib.h,v 1.1.1.5 2021/08/14 16:05:14 christos Exp $");
 
 #include "portable.h"
 #include <ac/string.h>
@@ -108,7 +108,7 @@ int MatchingComponentBool (char* oid, ComponentSyntaxInfo *a, ComponentSyntaxInf
 #define FreeComponentBool(v) NULL
 
 /*
- * ENUMERTED
+ * ENUMERATED
  */
 typedef struct ComponentEnum {
 	void* syntax;
@@ -563,7 +563,7 @@ retrieve_matching_rule( char* mr_oid, AsnTypeId type );
 #define INITIAL_ATTR_SIZE 256
 #define INCREMENT_SIZE 32
 /*
- * Followings are for conversion from ASN.1 RDN and DN to
+ * The following are for conversion from ASN.1 RDN and DN to
  * LDAP encodings
  */
 #define MAX_ALIASING_ENTRY 128

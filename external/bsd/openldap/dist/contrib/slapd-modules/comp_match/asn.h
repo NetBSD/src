@@ -1,9 +1,9 @@
-/*	$NetBSD: asn.h,v 1.1.1.3 2018/02/06 01:53:06 christos Exp $	*/
+/*	$NetBSD: asn.h,v 1.1.1.4 2021/08/14 16:05:14 christos Exp $	*/
 
 /* Copyright 2004 IBM Corporation
  * All rights reserved.
- * Redisribution and use in source and binary forms, with or without
- * modification, are permitted only as  authorizd by the OpenLADP
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted only as authorized by the OpenLDAP
  * Public License.
  */
 /* ACKNOWLEDGEMENTS

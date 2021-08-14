@@ -1,5 +1,5 @@
 .TH SLAPO-DYNLIST 5 "RELEASEDATE" "OpenLDAP LDVERSION"
-.\" Copyright 1998-2020 The OpenLDAP Foundation, All Rights Reserved.
+.\" Copyright 1998-2021 The OpenLDAP Foundation, All Rights Reserved.
 .\" Copying restrictions apply.  See the COPYRIGHT file.
 .\" $OpenLDAP$
 .SH NAME
@@ -19,17 +19,11 @@ of the attributes listed in the URI are added to the original
 entry.
 No recursion is allowed, to avoid potential infinite loops.
 
-Since the resulting entry is dynamically constructed,
-it does not exist until it is constructed while being returned.
-As a consequence, dynamically added attributes do not participate
-in the filter matching phase of the search request handling.
-In other words, \fIfiltering for dynamically added attributes always fails\fP.
-
 The resulting entry must comply with the LDAP data model, so constraints
 are enforced.
 For example, if a \fISINGLE\-VALUE\fP attribute is listed,
 only the first value found during the list expansion appears in the final entry.
-The above described behavior is disabled when the \fImanageDSAit\fP
+All dynamic behavior is disabled when the \fImanageDSAit\fP
 control (RFC 3296) is used.
 In that case, the contents of the dynamic group entry is returned;
 namely, the URLs are returned instead of being expanded.
@@ -57,7 +51,7 @@ occurrences, and it must appear after the
 .B overlay
 directive.
 .TP
-.B dynlist\-attrset <group-oc> [<URI>] <URL-ad> [[<mapped-ad>:]<member-ad> ...]
+.B dynlist\-attrset <group-oc> [<URI>] <URL-ad> [[<mapped-ad>:]<member-ad>[+<memberOf-ad[@<static-oc>[*]] ...]
 The value 
 .B group\-oc
 is the name of the objectClass that triggers the dynamic expansion of the
@@ -96,6 +90,19 @@ of the URI were present in the
 entry as values of the
 .B member-ad
 attribute.
+If the optional
+.B memberOf-ad
+attribute is also specified, then it will be populated with the DNs of the
+dynamic groups that an entry is a member of.
+If the optional
+.B static-oc
+objectClass is also specified, then the memberOf attribute will also be
+populated with the DNs of the static groups that an entry is a member of.
+If the optional
+.B *
+character is also specified, then the member and memberOf values will be
+populated recursively, for nested groups. Note that currently nesting is
+only supported for Search operations, not Compares.
 
 Alternatively, 
 .B mapped-ad
@@ -103,7 +110,9 @@ can be used to remap attributes obtained through expansion.
 .B member-ad
 attributes are not filled by expanded DN, but are remapped as
 .B mapped-ad 
-attributes.  Multiple mapping statements can be used.
+attributes.  Multiple mapping statements can be used. The
+.B memberOf-ad
+option is not used in this case.
 
 .LP
 The dynlist overlay may be used with any backend, but it is mainly 
@@ -134,6 +143,9 @@ to expand the group.
 Values of the 
 .B dgAuthz
 attribute must conform to the (experimental) \fIOpenLDAP authz\fP syntax.
+When using dynamic memberOf in search filters, search access to the
+.B entryDN
+pseudo-attribute is required.
 
 .SH EXAMPLE
 This example collects all the email addresses of a database into a single
@@ -193,10 +205,56 @@ entry like
     dgIdentity: cn=Group Proxy,ou=Services,dc=example,dc=com
 .fi
 
+
+This example extends the dynamic group feature to add a dynamic
+.B dgMemberOf
+attribute to all the members of a dynamic group:
+.LP
+.nf
+    include /path/to/dyngroup.schema
+    # ...
+
+    database <database>
+    # ...
+
+    overlay dynlist
+    dynlist\-attrset groupOfURLs memberURL member+dgMemberOf
+.fi
+.LP
+
+
+This example extends the dynamic memberOf feature to add the
+.B memberOf
+attribute to all the members of both static and dynamic groups:
+.LP
+.nf
+    include /path/to/dyngroup.schema
+    # ...
+
+    database <database>
+    # ...
+
+    overlay dynlist
+    dynlist\-attrset groupOfURLs memberURL member+memberOf@groupOfNames
+.fi
+.LP
+This dynamic memberOf feature can fully replace the functionality of the
+.BR slapo\-memberof (5)
+overlay.
+
 .SH FILES
 .TP
 ETCDIR/slapd.conf
 default slapd configuration file
+.SH BACKWARD COMPATIBILITY
+The dynlist overlay has been reworked with the 2.5 release to use
+a consistent namespace as with other overlays. As a side-effect the
+following cn=config parameters are deprecated and will be removed in
+a future release:
+.B olcDlAttrSet
+is replaced with olcDynListAttrSet
+.B olcDynamicList
+is replaced with olcDynListConfig
 .SH SEE ALSO
 .BR slapd.conf (5),
 .BR slapd\-config (5),
@@ -205,6 +263,11 @@ The
 .BR slapo\-dynlist (5)
 overlay supports dynamic configuration via
 .BR back-config .
+
+.SH BUGS
+Filtering on dynamic groups may return incomplete results if the
+search operation uses the \fIpagedResults\fP control.
+
 .SH ACKNOWLEDGEMENTS
 .P
 This module was written in 2004 by Pierangelo Masarati for SysNet s.n.c.

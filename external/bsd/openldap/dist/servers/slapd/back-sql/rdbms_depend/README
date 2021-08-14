@@ -6,7 +6,7 @@ to get everything up and running appropriately.
 This document briefly describes the steps that are required to prepare
 a quick'n'dirty installation of back-sql and of the related RDBMS
 and ODBC; Examples are provided, but by no means they pretent
-to represent an exaustive source of info about how to setup the ODBC;
+to represent an exhaustive source of info about how to setup the ODBC;
 refer to the docs for any problem or detail.
 
 Currently, the system has been tested with IBM db2, PostgreSQL and MySQL;

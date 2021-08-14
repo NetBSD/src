@@ -1,6 +1,6 @@
 // $OpenLDAP$
 /*
- * Copyright 2000-2020 The OpenLDAP Foundation, All Rights Reserved.
+ * Copyright 2000-2021 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
  */
 
@@ -137,7 +137,7 @@ const LDAPControlSet* LDAPConstraints::getClientControls() const{
 }
 
 LDAPControl** LDAPConstraints::getSrvCtrlsArray() const {
-    DEBUG(LDAP_DEBUG_TRACE,"LDAPContstraints::getSrvCtrlsArray()" << endl);
+    DEBUG(LDAP_DEBUG_TRACE,"LDAPConstraints::getSrvCtrlsArray()" << endl);
     if(m_serverControls){
         return m_serverControls->toLDAPControlArray();
     }else{
@@ -146,7 +146,7 @@ LDAPControl** LDAPConstraints::getSrvCtrlsArray() const {
 }
 
 LDAPControl** LDAPConstraints::getClCtrlsArray() const {
-    DEBUG(LDAP_DEBUG_TRACE,"LDAPContstraints::getClCtrlsArray()" << endl);
+    DEBUG(LDAP_DEBUG_TRACE,"LDAPConstraints::getClCtrlsArray()" << endl);
     if(m_clientControls){
         return m_clientControls->toLDAPControlArray(); 
     }else{
@@ -155,7 +155,7 @@ LDAPControl** LDAPConstraints::getClCtrlsArray() const {
 }
 
 timeval* LDAPConstraints::getTimeoutStruct() const {
-    DEBUG(LDAP_DEBUG_TRACE,"LDAPContstraints::getTimeoutStruct()" << endl);
+    DEBUG(LDAP_DEBUG_TRACE,"LDAPConstraints::getTimeoutStruct()" << endl);
     if(m_maxTime == LDAP_NO_LIMIT){
         return 0;
     }else{
@@ -167,12 +167,12 @@ timeval* LDAPConstraints::getTimeoutStruct() const {
 }
 
 bool LDAPConstraints::getReferralChase() const {
-    DEBUG(LDAP_DEBUG_TRACE,"LDAPContstraints::getReferralChase()" << endl);
+    DEBUG(LDAP_DEBUG_TRACE,"LDAPConstraints::getReferralChase()" << endl);
 	return m_referralChase;
 }
 
 int LDAPConstraints::getHopLimit() const{
-    DEBUG(LDAP_DEBUG_TRACE,"LDAPContstraints::getHopLimit()" << endl);
+    DEBUG(LDAP_DEBUG_TRACE,"LDAPConstraints::getHopLimit()" << endl);
     return m_HopLimit;
 }
 

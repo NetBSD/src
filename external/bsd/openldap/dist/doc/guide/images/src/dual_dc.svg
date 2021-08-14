@@ -5015,7 +5015,7 @@
            x="137.38075"
            y="681.46503"
            style="font-size:18px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:start;line-height:125%;writing-mode:lr-tb;text-anchor:start;font-family:Arial" /></flowRegion><flowPara
-         id="flowPara15542">Replica Pool</flowPara></flowRoot>    <flowRoot
+         id="flowPara15542">Consumer Pool</flowPara></flowRoot>    <flowRoot
        xml:space="preserve"
        id="flowRoot15534"
        style="font-size:18px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:start;line-height:125%;writing-mode:lr-tb;text-anchor:start;font-family:Arial"
@@ -5027,7 +5027,7 @@
            x="137.38075"
            y="681.46503"
            style="font-size:18px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:start;line-height:125%;writing-mode:lr-tb;text-anchor:start;font-family:Arial" /></flowRegion><flowPara
-         id="flowPara15544">Replica Pool</flowPara></flowRoot>    <path
+         id="flowPara15544">Consumer Pool</flowPara></flowRoot>    <path
        style="fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:0.71494228px;stroke-linecap:butt;stroke-linejoin:miter;marker-start:url(#Arrow1Lstart);marker-end:url(#Arrow1Lend);stroke-opacity:1"
        d="M 254.55844,186.23712 L 254.55844,261.49474"
        id="path16515" />
@@ -5142,7 +5142,7 @@
            x="96.974648"
            y="113.75929"
            style="font-family:Arial;font-weight:normal;font-style:normal;font-stretch:normal;font-variant:normal;font-size:18px;text-anchor:start;text-align:start;writing-mode:lr;line-height:125%" /></flowRegion><flowPara
-         id="flowPara27617">MirrorMode 1</flowPara></flowRoot>    <flowRoot
+         id="flowPara27617">Mirror mode 1</flowPara></flowRoot>    <flowRoot
        xml:space="preserve"
        id="flowRoot27619"
        style="font-size:18px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:start;line-height:125%;writing-mode:lr;text-anchor:start;font-family:Arial"
@@ -5154,7 +5154,7 @@
            x="96.974648"
            y="113.75929"
            style="font-size:18px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:start;line-height:125%;writing-mode:lr;text-anchor:start;font-family:Arial" /></flowRegion><flowPara
-         id="flowPara27627">MirrorMode 2</flowPara></flowRoot>    <path
+         id="flowPara27627">Mirror mode 2</flowPara></flowRoot>    <path
        d="M 103.99577,648.52356 C 103.99577,648.52356 103.75488,628.78956 123.98963,634.70975 C 144.22438,640.62995 140.61103,650.49696 140.85192,650.49696 C 141.09281,650.49696 137.23858,638.37464 152.65553,636.11932 C 166.62714,637.52889 173.13117,640.62995 172.4085,651.06079 C 171.68583,661.49163 164.94091,664.02886 164.94091,664.02886 C 164.94091,664.02886 177.2263,665.43843 173.85384,686.58202 C 168.55426,701.24157 168.55426,699.832 156.26888,701.52349 C 150.72841,698.98626 150.48752,696.73094 150.48752,696.73094 C 150.48752,696.73094 160.60489,707.72561 145.42883,714.77347 C 128.32565,720.12985 126.15764,715.3373 118.93094,712.80007 C 111.94514,707.72561 113.39048,701.52349 113.39048,701.52349 C 113.39048,701.52349 117.7265,711.95432 103.03221,713.92773 C 88.337924,715.90113 82.797457,711.95432 80.147668,695.8852 C 79.424999,683.76287 92.433052,682.63522 92.433052,682.63522 C 92.433052,682.63522 84.483686,682.91713 82.315677,676.71501 C 80.147668,670.51289 78.702329,662.33737 85.206355,651.3427 C 97.25085,638.09272 105.44111,646.83207 103.99577,648.52356 z "
        id="path1503"
        sodipodi:nodetypes="cccccccccccccccccc"
@@ -6805,6 +6805,6 @@
            y="279.42432"
            style="font-size:18px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:start;line-height:125%;writing-mode:lr-tb;text-anchor:start;font-family:Arial" /></flowRegion><flowPara
          id="flowPara3132">Each LB points to</flowPara><flowPara
-         id="flowPara3134">the same MirrorMode</flowPara><flowPara
+         id="flowPara3134">the same Mirror mode</flowPara><flowPara
          id="flowPara3136">Node at any time.</flowPara></flowRoot>  </g>
 </svg>

@@ -1,4 +1,4 @@
-/*	$NetBSD: slapdmsg.h,v 1.1.1.3 2018/02/06 01:53:08 christos Exp $	*/
+/*	$NetBSD: slapdmsg.h,v 1.1.1.4 2021/08/14 16:05:28 christos Exp $	*/
 
 //
 // This file contains message strings for the OpenLDAP slapd service.
@@ -12,7 +12,7 @@
 // source with by creating the appropriate entries in the system registry.
 //
 //
-//  Values are 32 bit values layed out as follows:
+//  Values are 32 bit values laid out as follows:
 //
 //   3 3 2 2 2 2 2 2 2 2 2 2 1 1 1 1 1 1 1 1 1 1
 //   1 0 9 8 7 6 5 4 3 2 1 0 9 8 7 6 5 4 3 2 1 0 9 8 7 6 5 4 3 2 1 0

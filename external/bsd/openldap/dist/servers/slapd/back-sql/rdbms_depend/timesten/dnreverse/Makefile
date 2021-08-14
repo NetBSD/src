@@ -1,4 +1,4 @@
-## Copyright 1997-2020 The OpenLDAP Foundation, All Rights Reserved.
+## Copyright 1997-2021 The OpenLDAP Foundation, All Rights Reserved.
 ##  COPYING RESTRICTIONS APPLY, see COPYRIGHT file
 
 #
@@ -6,7 +6,7 @@
 # (c) Copyright 1996-1998, TimesTen Performance Software.
 # All rights reserved.
 ## Note: This file was contributed by Sam Drake of TimesTen Performance
-##       Software for use and redistribution as an intregal part of
+##       Software for use and redistribution as an integral part of
 ##       OpenLDAP Software.  -Kdz
 
 CPLUSPLUS = CC

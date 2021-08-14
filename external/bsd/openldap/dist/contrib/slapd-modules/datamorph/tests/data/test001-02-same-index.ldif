@@ -1,0 +1,4 @@
+dn: olcDatamorphValue=nope,olcDatamorphAttribute={0}enumerated,olcOverlay={0}datamorph,olcDatabase={1}@BACKEND@,cn=config
+changetype: add
+objectclass: olcDatamorphEnumValue
+olcDatamorphIndex: 1

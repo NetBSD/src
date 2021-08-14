@@ -1,5 +1,5 @@
 .TH SLAPO-AUDITLOG 5 "RELEASEDATE" "OpenLDAP LDVERSION"
-.\" Copyright 2005-2020 The OpenLDAP Foundation All Rights Reserved.
+.\" Copyright 2005-2021 The OpenLDAP Foundation All Rights Reserved.
 .\" Copying restrictions apply.  See COPYRIGHT/LICENSE.
 .\" $OpenLDAP$
 .SH NAME
@@ -11,8 +11,9 @@ ETCDIR/slapd.d
 .SH DESCRIPTION
 The Audit Logging overlay can be used to record all changes on a given
 backend database to a specified log file. Changes are logged as standard
-LDIF, with an additional comment header giving the timestamp of the change
-and the identity of the user making the change.
+LDIF, with an additional comment header providing six fields of
+information about the change. A second comment header is added at the end
+of the operation to note the termination of the change.
 .LP
 For Add and Modify operations the identity comes from the modifiersName
 associated with the operation. This is usually the same as the requestor's
@@ -31,6 +32,19 @@ Specify the fully qualified path for the log file.
 .B olcAuditlogFile <filename>
 For use with 
 .B cn=config
+.SH COMMENT FIELD INFORMATION
+The first field is the operation type.
+.br
+The second field is the timestamp of the operation in seconds since epoch.
+.br
+The third field is the suffix of the database.
+.br
+The fourth field is the recorded modifiersName.
+.br
+The fifth field is the originating IP address and port.
+.br
+The sixth field is the connection number. A connection number of -1
+indicates an internal slapd operation.
 .SH EXAMPLE
 The following LDIF could be used to add this overlay to
 .B cn=config 
@@ -47,6 +61,30 @@ olcAuditlogFile: /tmp/auditlog.ldif
 .fi
 .RE
 .LP
+.LP
+.SH EXAMPLE CHANGELOG
+.LP
+.RS
+.nf
+# modify 1614223245 dc=example,dc=com cn=admin,dc=example,dc=com IP=[::1]:47270 conn=1002
+dn: uid=joepublic,ou=people,dc=example,dc=com
+changetype: modify
+replace: displayName
+displayName: Joe Public
+-
+replace: entryCSN
+entryCSN: 20210225032045.045229Z#000000#001#000000
+-
+replace: modifiersName
+modifiersName: cn=admin,dc=example,dc=com
+-
+replace: modifyTimestamp
+modifyTimestamp: 20210225032045Z
+-
+# end modify 1614223245
+
+.fi
+.RE
 .LP
 .SH FILES
 .TP

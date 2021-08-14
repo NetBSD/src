@@ -41,7 +41,7 @@ noinst_PROGRAMS = main$(EXEEXT) readSchema$(EXEEXT) startTls$(EXEEXT) \
 subdir = examples
 DIST_COMMON = $(srcdir)/Makefile.am $(srcdir)/Makefile.in
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
-am__aclocal_m4_deps = $(top_srcdir)/configure.in
+am__aclocal_m4_deps = $(top_srcdir)/configure.ac
 am__configure_deps = $(am__aclocal_m4_deps) $(CONFIGURE_DEPENDENCIES) \
 	$(ACLOCAL_M4)
 mkinstalldirs = $(install_sh) -d
@@ -198,7 +198,7 @@ top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 
-# Copyright 2003-2020 The OpenLDAP Foundation, All Rights Reserved.
+# Copyright 2003-2021 The OpenLDAP Foundation, All Rights Reserved.
 # COPYING RESTRICTIONS APPLY, see COPYRIGHT file
 AM_CPPFLAGS = -I$(top_srcdir)/src
 main_SOURCES = main.cpp

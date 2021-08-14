@@ -1,0 +1,12 @@
+prefix=@prefix@
+exec_prefix=@exec_prefix@
+includedir=@includedir@
+libdir=@libdir@
+
+Name: lber (@PACKAGE@)
+Description: OpenLDAP Lightweight ASN.1 Basic Encoding Rules library
+URL: https://www.openldap.org
+Version: @VERSION@
+Cflags: -I${includedir}
+Libs: -L${libdir} -llber
+Libs.private: @LIBS@
