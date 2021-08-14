@@ -1,10 +1,10 @@
-/*	$NetBSD: user.c,v 1.2 2020/08/11 13:15:39 christos Exp $	*/
+/*	$NetBSD: user.c,v 1.3 2021/08/14 16:14:58 christos Exp $	*/
 
 /* user.c - set user id, group id and group access list */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2020 The OpenLDAP Foundation.
+ * Copyright 1998-2021 The OpenLDAP Foundation.
  * Portions Copyright 1999 PM Lashley.
  * All rights reserved.
  *
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: user.c,v 1.2 2020/08/11 13:15:39 christos Exp $");
+__RCSID("$NetBSD: user.c,v 1.3 2021/08/14 16:14:58 christos Exp $");
 
 #include "portable.h"
 
@@ -43,7 +43,6 @@ __RCSID("$NetBSD: user.c,v 1.2 2020/08/11 13:15:39 christos Exp $");
 
 /*
  * Set real and effective user id and group id, and group access list
- * The user and group arguments are freed.
  */
 
 void
@@ -61,7 +60,7 @@ slap_init_user( char *user, char *group )
 	    got_uid = 1;
 	    if ( lutil_atou( &u, user ) != 0 ) {
 		Debug( LDAP_DEBUG_ANY, "Unble to parse user %s\n",
-		       user, 0, 0 );
+		       user );
 
 		exit( EXIT_FAILURE );
 	    }
@@ -70,7 +69,6 @@ slap_init_user( char *user, char *group )
 	    pwd = getpwuid( uid );
 	    goto did_getpw;
 #else
-	    free( user );
 	    user = NULL;
 #endif
 	} else {
@@ -78,13 +76,12 @@ slap_init_user( char *user, char *group )
 	did_getpw:
 	    if ( pwd == NULL ) {
 		Debug( LDAP_DEBUG_ANY, "No passwd entry for user %s\n",
-		       user, 0, 0 );
+		       user );
 
 		exit( EXIT_FAILURE );
 	    }
 	    if ( got_uid ) {
-		free( user );
-		user = (pwd != NULL ? ch_strdup( pwd->pw_name ) : NULL);
+		user = (pwd != NULL ? pwd->pw_name : NULL);
 	    } else {
 		got_uid = 1;
 		uid = pwd->pw_uid;
@@ -104,7 +101,7 @@ slap_init_user( char *user, char *group )
 
 	    if ( lutil_atou( &g, group ) != 0 ) {
 		Debug( LDAP_DEBUG_ANY, "Unble to parse group %s\n",
-		       group, 0, 0 );
+		       group );
 
 		exit( EXIT_FAILURE );
 	    }
@@ -120,23 +117,21 @@ slap_init_user( char *user, char *group )
 	did_group:
 	    if ( grp == NULL ) {
 		Debug( LDAP_DEBUG_ANY, "No group entry for group %s\n",
-		       group, 0, 0 );
+		       group );
 
 		exit( EXIT_FAILURE );
 	    }
 	}
-	free( group );
 	got_gid = 1;
     }
 
     if ( user ) {
 	if ( getuid() == 0 && initgroups( user, gid ) != 0 ) {
 	    Debug( LDAP_DEBUG_ANY,
-		   "Could not set the group access (gid) list\n", 0, 0, 0 );
+		   "Could not set the group access (gid) list\n" );
 
 	    exit( EXIT_FAILURE );
 	}
-	free( user );
     }
 
 #ifdef HAVE_ENDGRENT
@@ -146,14 +141,14 @@ slap_init_user( char *user, char *group )
     if ( got_gid ) {
 	if ( setgid( gid ) != 0 ) {
 	    Debug( LDAP_DEBUG_ANY, "Could not set real group id to %d\n",
-		       (int) gid, 0, 0 );
+		       (int) gid );
 
 	    exit( EXIT_FAILURE );
 	}
 #ifdef HAVE_SETEGID
 	if ( setegid( gid ) != 0 ) {
 	    Debug( LDAP_DEBUG_ANY, "Could not set effective group id to %d\n",
-		       (int) gid, 0, 0 );
+		       (int) gid );
 
 	    exit( EXIT_FAILURE );
 	}
@@ -163,14 +158,14 @@ slap_init_user( char *user, char *group )
     if ( got_uid ) {
 	if ( setuid( uid ) != 0 ) {
 	    Debug( LDAP_DEBUG_ANY, "Could not set real user id to %d\n",
-		       (int) uid, 0, 0 );
+		       (int) uid );
 
 	    exit( EXIT_FAILURE );
 	}
 #ifdef HAVE_SETEUID
 	if ( seteuid( uid ) != 0 ) {
 	    Debug( LDAP_DEBUG_ANY, "Could not set effective user id to %d\n",
-		       (int) uid, 0, 0 );
+		       (int) uid );
 
 	    exit( EXIT_FAILURE );
 	}

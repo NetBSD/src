@@ -1,8 +1,8 @@
-/*	$NetBSD: LDAPConnection.h,v 1.2 2020/08/11 13:15:34 christos Exp $	*/
+/*	$NetBSD: LDAPConnection.h,v 1.3 2021/08/14 16:14:49 christos Exp $	*/
 
 // $OpenLDAP$
 /*
- * Copyright 2000-2020 The OpenLDAP Foundation, All Rights Reserved.
+ * Copyright 2000-2021 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
  */
 
@@ -16,7 +16,7 @@
 /** Main class for synchronous LDAP-Communication
  *
  * The class represent a LDAP-Connection to perform synchronous
- * LDAP-Operations. This provides methodes for the different
+ * LDAP-Operations. This provides methods for the different
  * LDAP-Operations. All the methods for the LDAP-operations block until
  * all results for the operation are received or until an error occurs
  */
@@ -45,7 +45,7 @@ class LDAPConnection : private LDAPAsynConnection {
          * 
          * During execution of this constructor no network communication
          * is performed. Just some internal data structure are initialized
-         * @param hostname Name (or IP-Adress) of the destination host
+         * @param hostname Name (or IP-Address) of the destination host
          * @param port Port the LDAP server is running on
          * @param cons Default constraints to use with operations over 
          *      this connection
@@ -59,7 +59,7 @@ class LDAPConnection : private LDAPAsynConnection {
         ~LDAPConnection();
         
         /** 
-         * Initzializes a synchronous connection to a server. 
+         * Initializes a synchronous connection to a server.
          * 
          * There is actually no
          * communication to the server. Just the object is initialized
@@ -84,7 +84,7 @@ class LDAPConnection : private LDAPAsynConnection {
          * Performs a simple authentication with the server
          *
          * @throws LDAPReferralException if a referral is received
-         * @throws LDAPException for any other error occuring during the
+         * @throws LDAPException for any other error occurring during the
          *              operation
          * @param dn    The name of the entry to bind as
          * @param passwd    The cleartext password for the entry
@@ -104,11 +104,11 @@ class LDAPConnection : private LDAPAsynConnection {
         void unbind();
         
         /**
-         * Performs a COMPARE-operation on an entery of the destination 
+         * Performs a COMPARE-operation on an entry of the destination
          * server.
          *
          * @throws LDAPReferralException if a referral is received
-         * @throws LDAPException for any other error occuring during the
+         * @throws LDAPException for any other error occurring during the
          *              operation
          * @param dn    Distinguished name of the entry for which the compare
          *              should be performed
@@ -128,7 +128,7 @@ class LDAPConnection : private LDAPAsynConnection {
          *
          * This method performs the DELETE operation on the server
          * @throws LDAPReferralException if a referral is received
-         * @throws LDAPException for any other error occuring during the
+         * @throws LDAPException for any other error occurring during the
          *              operation
          * @param dn    Distinguished name of the entry that should be deleted
          * @param cons  A set of constraints that should be used with this
@@ -140,7 +140,7 @@ class LDAPConnection : private LDAPAsynConnection {
          * Use this method to perform the ADD-operation
          *
          * @throws LDAPReferralException if a referral is received
-         * @throws LDAPException for any other error occuring during the
+         * @throws LDAPException for any other error occurring during the
          *              operation
          * @param le    the entry to add to the directory
          * @param cons  A set of constraints that should be used with this
@@ -152,7 +152,7 @@ class LDAPConnection : private LDAPAsynConnection {
          * To modify the attributes of an entry, this method can be used
          *
          * @throws LDAPReferralException if a referral is received
-         * @throws LDAPException for any other error occuring during the
+         * @throws LDAPException for any other error occurring during the
          *              operation
          * @param dn    The DN of the entry which should be modified
          * @param mods  A set of modifications for that entry.
@@ -165,10 +165,10 @@ class LDAPConnection : private LDAPAsynConnection {
         /**
          * This method performs the ModDN-operation.
          *
-         * It can be used to rename or move an entry by modifing its DN.
+         * It can be used to rename or move an entry by modifying its DN.
          *
          * @throws LDAPReferralException if a referral is received
-         * @throws LDAPException for any other error occuring during the
+         * @throws LDAPException for any other error occurring during the
          *              operation
          * @param dn    The DN that should be modified
          * @param newRDN    If the RDN of the entry should be modified the
@@ -190,7 +190,7 @@ class LDAPConnection : private LDAPAsynConnection {
          * This method can be used for the sync. SEARCH-operation.
          *
          * @throws LDAPReferralException if a referral is received
-         * @throws LDAPException for any other error occuring during the
+         * @throws LDAPException for any other error occurring during the
          *              operation
          * @param base The distinguished name of the starting point for the
          *      search
@@ -216,7 +216,7 @@ class LDAPConnection : private LDAPAsynConnection {
          * This method is for extended LDAP-Operations.
          *
          * @throws LDAPReferralException if a referral is received
-         * @throws LDAPException for any other error occuring during the
+         * @throws LDAPException for any other error occurring during the
          *              operation
          * @param oid The Object Identifier of the Extended Operation that
          *          should be performed.

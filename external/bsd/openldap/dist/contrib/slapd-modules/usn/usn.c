@@ -1,4 +1,4 @@
-/*	$NetBSD: usn.c,v 1.1.1.1 2021/08/14 16:05:15 christos Exp $	*/
+/*	$NetBSD: usn.c,v 1.2 2021/08/14 16:14:54 christos Exp $	*/
 
 /* usn.c - Maintain Microsoft-style Update Sequence Numbers */
 /* $OpenLDAP$ */
@@ -21,7 +21,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: usn.c,v 1.1.1.1 2021/08/14 16:05:15 christos Exp $");
+__RCSID("$NetBSD: usn.c,v 1.2 2021/08/14 16:14:54 christos Exp $");
 
 #include "portable.h"
 

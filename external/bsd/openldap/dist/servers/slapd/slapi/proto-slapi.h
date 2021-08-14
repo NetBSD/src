@@ -1,9 +1,9 @@
-/*	$NetBSD: proto-slapi.h,v 1.2 2020/08/11 13:15:42 christos Exp $	*/
+/*	$NetBSD: proto-slapi.h,v 1.3 2021/08/14 16:15:02 christos Exp $	*/
 
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2002-2020 The OpenLDAP Foundation.
+ * Copyright 2002-2021 The OpenLDAP Foundation.
  * Portions Copyright 1997,2002-2003 IBM Corporation.
  * All rights reserved.
  *
@@ -67,13 +67,15 @@ LDAP_SLAPI_F (int) slapi_int_pblock_get_next LDAP_P(( Slapi_PBlock **pb ));
 	
 /* plugin.c */
 LDAP_SLAPI_F (int) slapi_int_register_plugin LDAP_P((Backend *be, Slapi_PBlock *pPB));
+LDAP_SLAPI_F (int) slapi_int_register_plugin_index LDAP_P((Backend *be, Slapi_PBlock *pPB, int index));
 LDAP_SLAPI_F (int) slapi_int_call_plugins LDAP_P((Backend *be, int funcType, Slapi_PBlock * pPB));
 LDAP_SLAPI_F (int) slapi_int_get_plugins LDAP_P((Backend *be, int functype, SLAPI_FUNC **ppFuncPtrs));
 LDAP_SLAPI_F (int) slapi_int_register_extop LDAP_P((Backend *pBE, ExtendedOp **opList, Slapi_PBlock *pPB));
 LDAP_SLAPI_F (int) slapi_int_get_extop_plugin LDAP_P((struct berval  *reqoid, SLAPI_FUNC *pFuncAddr ));
 LDAP_SLAPI_F (struct berval *) slapi_int_get_supported_extop LDAP_P(( int ));
+LDAP_SLAPI_F (int) slapi_int_unregister_plugins LDAP_P((Backend *be, int index));
 LDAP_SLAPI_F (int) slapi_int_read_config LDAP_P((Backend *be, const char *fname, int lineno,
-		int argc, char **argv ));
+		int argc, char **argv, int index ));
 LDAP_SLAPI_F (void) slapi_int_plugin_unparse LDAP_P((Backend *be, BerVarray *out ));
 LDAP_SLAPI_F (int) slapi_int_initialize LDAP_P((void));
 

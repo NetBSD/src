@@ -1,9 +1,9 @@
-/*	$NetBSD: kinit.c,v 1.2 2020/08/11 13:15:35 christos Exp $	*/
+/*	$NetBSD: kinit.c,v 1.3 2021/08/14 16:14:51 christos Exp $	*/
 
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2010-2020 The OpenLDAP Foundation.
+ * Copyright 2010-2021 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -45,7 +45,7 @@ static void
 log_krb5_errmsg( krb5_context ctx, const char* func, krb5_error_code rc )
 {
 	const char* errmsg = krb5_get_error_message(ctx, rc);
-	Log2(LDAP_DEBUG_ANY, LDAP_LEVEL_ERR, "slapd-kinit: %s: %s\n", func, errmsg);
+	Log(LDAP_DEBUG_ANY, LDAP_LEVEL_ERR, "slapd-kinit: %s: %s\n", func, errmsg );
 	krb5_free_error_message(ctx, errmsg);
 	return;
 }
@@ -67,7 +67,7 @@ kinit_check_tgt(kinit_data *kid, int *remaining)
 		return 2;
 	} else {
 		if (!krb5_principal_compare(kid->ctx, kid->princ, princ)) {
-			Log0(LDAP_DEBUG_ANY, LDAP_LEVEL_ERR,
+			Log(LDAP_DEBUG_ANY, LDAP_LEVEL_ERR,
 					"Principal in ccache does not match requested principal\n");
 			krb5_free_principal(kid->ctx, princ);
 			return 2;
@@ -95,10 +95,10 @@ kinit_check_tgt(kinit_data *kid, int *remaining)
 
 			*remaining = (time_t)creds.times.endtime-now;
 			if ( *remaining <= 0) {
-				Log1(LDAP_DEBUG_TRACE, LDAP_LEVEL_DEBUG,
+				Log(LDAP_DEBUG_TRACE, LDAP_LEVEL_DEBUG,
 						"kinit_qtask: TGT (%s) expired\n", name);
 			} else {
-				Log4(LDAP_DEBUG_TRACE, LDAP_LEVEL_DEBUG,
+				Log(LDAP_DEBUG_TRACE, LDAP_LEVEL_DEBUG,
 						"kinit_qtask: TGT (%s) expires in %dh:%02dm:%02ds\n",
 						name, *remaining/3600, (*remaining%3600)/60, *remaining%60);
 			}
@@ -107,12 +107,12 @@ kinit_check_tgt(kinit_data *kid, int *remaining)
 			if (*remaining <= 30) {
 				if (creds.times.renew_till-60 > now) {
 					int renewal=creds.times.renew_till-now;
-					Log3(LDAP_DEBUG_TRACE, LDAP_LEVEL_DEBUG,
+					Log(LDAP_DEBUG_TRACE, LDAP_LEVEL_DEBUG,
 							"kinit_qtask: Time remaining for renewal: %dh:%02dm:%02ds\n",
 							renewal/3600, (renewal%3600)/60,  renewal%60);
 					ret = 1;
 				} else {
-					Log0(LDAP_DEBUG_TRACE, LDAP_LEVEL_DEBUG,
+					Log(LDAP_DEBUG_TRACE, LDAP_LEVEL_DEBUG,
 							"kinit_qtask: Only short time left for renewal. "
 							"Trying to re-init.\n");
 					ret = 2;
@@ -139,7 +139,7 @@ kinit_qtask( void *ctx, void *arg )
 	krb5_error_code rc;
 	krb5_creds creds;
 	int nextcheck, remaining, renew=0;
-	Log0(LDAP_DEBUG_TRACE, LDAP_LEVEL_DEBUG, "kinit_qtask: running TGT check\n");
+	Log(LDAP_DEBUG_TRACE, LDAP_LEVEL_DEBUG, "kinit_qtask: running TGT check\n" );
 
 	memset(&creds, 0, sizeof(creds));
 
@@ -147,16 +147,16 @@ kinit_qtask( void *ctx, void *arg )
 
 	if (renew > 0) {
 		if (renew==1) {
-			Log0(LDAP_DEBUG_TRACE, LDAP_LEVEL_DEBUG,
+			Log(LDAP_DEBUG_TRACE, LDAP_LEVEL_DEBUG,
 					"kinit_qtask: Trying to renew TGT: ");
 			rc = krb5_get_renewed_creds(kid->ctx, &creds, kid->princ, kid->ccache, NULL);
 			if (rc!=0) {
-				Log0(LDAP_DEBUG_TRACE, LDAP_LEVEL_DEBUG, "Failed\n");
+				Log(LDAP_DEBUG_TRACE, LDAP_LEVEL_DEBUG, "Failed\n" );
 				log_krb5_errmsg( kid->ctx,
 						"kinit_qtask, Renewal failed: krb5_get_renewed_creds", rc );
 				renew++;
 			} else {
-				Log0(LDAP_DEBUG_TRACE, LDAP_LEVEL_DEBUG, "Success\n");
+				Log(LDAP_DEBUG_TRACE, LDAP_LEVEL_DEBUG, "Success\n" );
 				krb5_cc_initialize(kid->ctx, kid->ccache, creds.client);
 				krb5_cc_store_cred(kid->ctx, kid->ccache, &creds);
 				krb5_free_cred_contents(kid->ctx, &creds);
@@ -164,15 +164,15 @@ kinit_qtask( void *ctx, void *arg )
 			}
 		}
 		if (renew > 1) {
-			Log0(LDAP_DEBUG_TRACE, LDAP_LEVEL_DEBUG,
+			Log(LDAP_DEBUG_TRACE, LDAP_LEVEL_DEBUG,
 					"kinit_qtask: Trying to get new TGT: ");
 			rc = krb5_get_init_creds_keytab( kid->ctx, &creds, kid->princ,
 					kid->keytab, 0, NULL, kid->opts);
 			if (rc) {
-				Log0(LDAP_DEBUG_TRACE, LDAP_LEVEL_DEBUG, "Failed\n");
+				Log(LDAP_DEBUG_TRACE, LDAP_LEVEL_DEBUG, "Failed\n" );
 				log_krb5_errmsg(kid->ctx, "krb5_get_init_creds_keytab", rc);
 			} else {
-				Log0(LDAP_DEBUG_TRACE, LDAP_LEVEL_DEBUG, "Success\n");
+				Log(LDAP_DEBUG_TRACE, LDAP_LEVEL_DEBUG, "Success\n" );
 				renew=kinit_check_tgt(kid, &remaining);
 			}
 			krb5_free_cred_contents(kid->ctx, &creds);
@@ -188,7 +188,7 @@ kinit_qtask( void *ctx, void *arg )
 	if ( ldap_pvt_runqueue_isrunning( &slapd_rq, rtask )) {
 		ldap_pvt_runqueue_stoptask( &slapd_rq, rtask );
 	}
-	Log3(LDAP_DEBUG_TRACE, LDAP_LEVEL_DEBUG,
+	Log(LDAP_DEBUG_TRACE, LDAP_LEVEL_DEBUG,
 			"kinit_qtask: Next TGT check in %dh:%02dm:%02ds\n",
 			nextcheck/3600, (nextcheck%3600)/60,  nextcheck%60);
 	rtask->interval.tv_sec = nextcheck;
@@ -201,7 +201,7 @@ kinit_qtask( void *ctx, void *arg )
 int
 kinit_initialize(void)
 {
-	Log0( LDAP_DEBUG_TRACE, LDAP_LEVEL_DEBUG, "kinit_initialize\n" );
+	Log( LDAP_DEBUG_TRACE, LDAP_LEVEL_DEBUG, "kinit_initialize\n" );
 	krb5_error_code rc;
 	struct re_s *task = NULL;
 
@@ -216,7 +216,7 @@ kinit_initialize(void)
 			int len=STRLENOF("ldap/")+global_host_bv.bv_len+1;
 			principal=ch_calloc(len, 1);
 			snprintf(principal, len, "ldap/%s", global_host_bv.bv_val);
-			Log1(LDAP_DEBUG_TRACE, LDAP_LEVEL_DEBUG, "Principal <%s>\n", principal);
+			Log(LDAP_DEBUG_TRACE, LDAP_LEVEL_DEBUG, "Principal <%s>\n", principal );
 
 		}
 		rc = krb5_parse_name(kid->ctx, principal, &kid->princ);

@@ -1,10 +1,10 @@
-/*	$NetBSD: bind.c,v 1.2 2020/08/11 13:15:39 christos Exp $	*/
+/*	$NetBSD: bind.c,v 1.3 2021/08/14 16:14:58 christos Exp $	*/
 
 /* bind.c - decode an ldap bind operation and pass it to a backend db */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2020 The OpenLDAP Foundation.
+ * Copyright 1998-2021 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: bind.c,v 1.2 2020/08/11 13:15:39 christos Exp $");
+__RCSID("$NetBSD: bind.c,v 1.3 2021/08/14 16:14:58 christos Exp $");
 
 #include "portable.h"
 
@@ -36,6 +36,7 @@ __RCSID("$NetBSD: bind.c,v 1.2 2020/08/11 13:15:39 christos Exp $");
 #include <ac/string.h>
 #include <ac/socket.h>
 
+#include "lutil.h"
 #include "slap.h"
 
 int
@@ -52,7 +53,7 @@ do_bind(
 	Backend *be = NULL;
 
 	Debug( LDAP_DEBUG_TRACE, "%s do_bind\n",
-		op->o_log_prefix, 0, 0 );
+		op->o_log_prefix );
 
 	/*
 	 * Force the connection to "anonymous" until bind succeeds.
@@ -63,9 +64,9 @@ do_bind(
 	}
 	if ( !BER_BVISEMPTY( &op->o_conn->c_dn ) ) {
 		/* log authorization identity demotion */
-		Statslog( LDAP_DEBUG_STATS,
-			"%s BIND anonymous mech=implicit ssf=0\n",
-			op->o_log_prefix, 0, 0, 0, 0 );
+		Debug( LDAP_DEBUG_STATS,
+			"%s BIND anonymous mech=implicit bind_ssf=0 ssf=%d\n",
+			op->o_log_prefix, op->o_conn->c_ssf );
 	}
 	connection2anonymous( op->o_conn );
 	if ( op->o_conn->c_sasl_bind_in_progress ) {
@@ -108,7 +109,7 @@ do_bind(
 
 	if ( tag == LBER_ERROR ) {
 		Debug( LDAP_DEBUG_ANY, "%s do_bind: ber_scanf failed\n",
-			op->o_log_prefix, 0, 0 );
+			op->o_log_prefix );
 		send_ldap_discon( op, rs, LDAP_PROTOCOL_ERROR, "decoding error" );
 		rs->sr_err = SLAPD_DISCONNECT;
 		goto cleanup;
@@ -142,7 +143,7 @@ do_bind(
 
 	if ( tag == LBER_ERROR ) {
 		Debug( LDAP_DEBUG_ANY, "%s do_bind: ber_scanf failed\n",
-			op->o_log_prefix, 0, 0 );
+			op->o_log_prefix );
 		send_ldap_discon( op, rs, LDAP_PROTOCOL_ERROR, "decoding error" );
 		rs->sr_err = SLAPD_DISCONNECT;
 		goto cleanup;
@@ -150,7 +151,7 @@ do_bind(
 
 	if( get_ctrls( op, rs, 1 ) != LDAP_SUCCESS ) {
 		Debug( LDAP_DEBUG_ANY, "%s do_bind: get_ctrls failed\n",
-			op->o_log_prefix, 0, 0 );
+			op->o_log_prefix );
 		goto cleanup;
 	} 
 
@@ -162,18 +163,18 @@ do_bind(
 		op->o_tmpmemctx );
 	if ( rs->sr_err != LDAP_SUCCESS ) {
 		Debug( LDAP_DEBUG_ANY, "%s do_bind: invalid dn (%s)\n",
-			op->o_log_prefix, dn.bv_val, 0 );
+			op->o_log_prefix, dn.bv_val );
 		send_ldap_error( op, rs, LDAP_INVALID_DN_SYNTAX, "invalid DN" );
 		goto cleanup;
 	}
 
-	Statslog( LDAP_DEBUG_STATS, "%s BIND dn=\"%s\" method=%ld\n",
+	Debug( LDAP_DEBUG_STATS, "%s BIND dn=\"%s\" method=%ld\n",
 	    op->o_log_prefix, op->o_req_dn.bv_val,
-		(unsigned long) op->orb_method, 0, 0 );
+		(unsigned long) op->orb_method );
 
 	if( op->orb_method == LDAP_AUTH_SASL ) {
 		Debug( LDAP_DEBUG_TRACE, "do_bind: dn (%s) SASL mech %s\n",
-			op->o_req_dn.bv_val, mech.bv_val, NULL );
+			op->o_req_dn.bv_val, mech.bv_val );
 
 	} else {
 		Debug( LDAP_DEBUG_TRACE,
@@ -184,7 +185,7 @@ do_bind(
 
 	if ( version < LDAP_VERSION_MIN || version > LDAP_VERSION_MAX ) {
 		Debug( LDAP_DEBUG_ANY, "%s do_bind: unknown version=%ld\n",
-			op->o_log_prefix, (unsigned long) version, 0 );
+			op->o_log_prefix, (unsigned long) version );
 		send_ldap_error( op, rs, LDAP_PROTOCOL_ERROR,
 			"requested protocol version not supported" );
 		goto cleanup;
@@ -245,7 +246,7 @@ fe_op_bind( Operation *op, SlapReply *rs )
 	if ( op->orb_method == LDAP_AUTH_SASL ) {
 		if ( op->o_protocol < LDAP_VERSION3 ) {
 			Debug( LDAP_DEBUG_ANY, "do_bind: sasl with LDAPv%ld\n",
-				(unsigned long)op->o_protocol, 0, 0 );
+				(unsigned long)op->o_protocol );
 			send_ldap_discon( op, rs,
 				LDAP_PROTOCOL_ERROR, "SASL bind requires LDAPv3" );
 			rs->sr_err = SLAPD_DISCONNECT;
@@ -254,8 +255,7 @@ fe_op_bind( Operation *op, SlapReply *rs )
 
 		if( BER_BVISNULL( &op->orb_mech ) || BER_BVISEMPTY( &op->orb_mech ) ) {
 			Debug( LDAP_DEBUG_ANY,
-				"do_bind: no sasl mechanism provided\n",
-				0, 0, 0 );
+				"do_bind: no sasl mechanism provided\n" );
 			send_ldap_error( op, rs, LDAP_AUTH_METHOD_NOT_SUPPORTED,
 				"no SASL mechanism provided" );
 			goto cleanup;
@@ -335,7 +335,7 @@ fe_op_bind( Operation *op, SlapReply *rs )
 			 */
 			send_ldap_result( op, rs );
 			Debug( LDAP_DEBUG_TRACE, "do_bind: v%d anonymous bind\n",
-				op->o_protocol, 0, 0 );
+				op->o_protocol );
 			goto cleanup;
 
 		} else if ( global_disallows & SLAP_DISALLOW_BIND_SIMPLE ) {
@@ -346,7 +346,7 @@ fe_op_bind( Operation *op, SlapReply *rs )
 			send_ldap_result( op, rs );
 			Debug( LDAP_DEBUG_TRACE,
 				"do_bind: v%d simple bind(%s) disallowed\n",
-				op->o_protocol, op->o_req_ndn.bv_val, 0 );
+				op->o_protocol, op->o_req_ndn.bv_val );
 			goto cleanup;
 		}
 
@@ -357,7 +357,7 @@ fe_op_bind( Operation *op, SlapReply *rs )
 		send_ldap_result( op, rs );
 		Debug( LDAP_DEBUG_TRACE,
 			"do_bind: v%d unknown authentication method (%d)\n",
-			op->o_protocol, op->orb_method, 0 );
+			op->o_protocol, op->orb_method );
 		goto cleanup;
 	}
 
@@ -406,6 +406,113 @@ cleanup:;
 }
 
 int
+fe_op_lastbind( Operation *op )
+{
+	Operation op2 = *op;
+	SlapReply r2 = { REP_RESULT };
+	slap_callback cb = { NULL, slap_null_cb, NULL, NULL };
+	LDAPControl c, *ca[2];
+	Modifications *m;
+	Entry *e;
+	Attribute *a;
+	char nowstr[ LDAP_LUTIL_GENTIME_BUFSIZE ];
+	struct berval timestamp;
+	time_t bindtime = (time_t)-1;
+	int rc;
+
+	rc = be_entry_get_rw( op, &op->o_conn->c_ndn, NULL, NULL, 0, &e );
+	if ( rc != LDAP_SUCCESS ) {
+		return -1;
+	}
+
+	/* get authTimestamp attribute, if it exists */
+	if ( (a = attr_find( e->e_attrs, slap_schema.si_ad_pwdLastSuccess )) != NULL ) {
+		struct lutil_tm tm;
+		struct lutil_timet tt;
+
+		if ( lutil_parsetime( a->a_nvals[0].bv_val, &tm ) == 0 ) {
+			lutil_tm2time( &tm, &tt );
+			bindtime = tt.tt_sec;
+		}
+		Debug( LDAP_DEBUG_ANY, "fe_op_lastbind: "
+				"old pwdLastSuccess value=%s %lds ago\n",
+				a->a_nvals[0].bv_val, bindtime == (time_t)-1 ? -1 : op->o_time - bindtime );
+
+		/*
+		 * TODO: If the recorded bind time is within configurable precision,
+		 * it doesn't need to be updated (save a write for nothing)
+		 */
+		if ( bindtime != (time_t)-1 && op->o_time <= bindtime ) {
+			be_entry_release_r( op, e );
+			return LDAP_SUCCESS;
+		}
+	}
+
+	/* update the authTimestamp in the user's entry with the current time */
+	timestamp.bv_val = nowstr;
+	timestamp.bv_len = sizeof(nowstr);
+	slap_timestamp( &op->o_time, &timestamp );
+
+	m = ch_calloc( sizeof(Modifications), 1 );
+	m->sml_op = LDAP_MOD_REPLACE;
+	m->sml_flags = 0;
+	m->sml_type = slap_schema.si_ad_pwdLastSuccess->ad_cname;
+	m->sml_desc = slap_schema.si_ad_pwdLastSuccess;
+	m->sml_numvals = 1;
+	m->sml_values = ch_calloc( sizeof(struct berval), 2 );
+	m->sml_nvalues = ch_calloc( sizeof(struct berval), 2 );
+
+	ber_dupbv( &m->sml_values[0], &timestamp );
+	ber_dupbv( &m->sml_nvalues[0], &timestamp );
+
+	be_entry_release_r( op, e );
+
+	op2.o_tag = LDAP_REQ_MODIFY;
+	op2.o_req_dn = op->o_conn->c_dn;
+	op2.o_req_ndn = op->o_conn->c_ndn;
+	op2.o_callback = &cb;
+	op2.orm_modlist = m;
+	op2.orm_no_opattrs = 0;
+	op2.o_dn = op->o_bd->be_rootdn;
+	op2.o_ndn = op->o_bd->be_rootndn;
+
+	/*
+	 * TODO: this is core+frontend, not everything works the same way?
+	 */
+	/*
+	 * Code for forwarding of updates adapted from ppolicy.c of slapo-ppolicy
+	 *
+	 * If this server is a shadow and forward_updates is true,
+	 * use the frontend to perform this modify. That will trigger
+	 * the update referral, which can then be forwarded by the
+	 * chain overlay. Obviously the updateref and chain overlay
+	 * must be configured appropriately for this to be useful.
+	 */
+	if ( SLAP_SHADOW( op->o_bd ) ) {
+		/* Must use Relax control since these are no-user-mod */
+		op2.o_relax = SLAP_CONTROL_CRITICAL;
+		op2.o_ctrls = ca;
+		ca[0] = &c;
+		ca[1] = NULL;
+		BER_BVZERO( &c.ldctl_value );
+		c.ldctl_iscritical = 1;
+		c.ldctl_oid = LDAP_CONTROL_RELAX;
+	} else {
+		/* If not forwarding, don't update opattrs and don't replicate */
+		if ( SLAP_SINGLE_SHADOW( op->o_bd )) {
+			op2.orm_no_opattrs = 1;
+			op2.o_dont_replicate = 1;
+		}
+	}
+
+	rc = op->o_bd->be_modify( &op2, &r2 );
+	slap_mods_free( m, 1 );
+
+done:
+	return rc;
+}
+
+int
 fe_op_bind_success( Operation *op, SlapReply *rs )
 {
 	ldap_pvt_thread_mutex_lock( &op->o_conn->c_mutex );
@@ -431,16 +538,20 @@ fe_op_bind_success( Operation *op, SlapReply *rs )
 	}
 
 	/* log authorization identity */
-	Statslog( LDAP_DEBUG_STATS,
-		"%s BIND dn=\"%s\" mech=%s ssf=0\n",
+	Debug( LDAP_DEBUG_STATS,
+		"%s BIND dn=\"%s\" mech=%s bind_ssf=0 ssf=%d\n",
 		op->o_log_prefix,
-		op->o_conn->c_dn.bv_val, op->orb_mech.bv_val, 0, 0 );
+		op->o_conn->c_dn.bv_val, op->orb_mech.bv_val, op->o_conn->c_ssf );
 
 	Debug( LDAP_DEBUG_TRACE,
 		"do_bind: v%d bind: \"%s\" to \"%s\"\n",
 		op->o_protocol, op->o_req_dn.bv_val, op->o_conn->c_dn.bv_val );
 
 	ldap_pvt_thread_mutex_unlock( &op->o_conn->c_mutex );
+
+	if ( SLAP_LASTBIND( op->o_bd ) ) {
+		fe_op_lastbind( op );
+	}
 
 	/* send this here to avoid a race condition */
 	send_ldap_result( op, rs );

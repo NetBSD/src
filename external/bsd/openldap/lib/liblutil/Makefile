@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2014/05/28 11:32:19 tron Exp $
+#	$NetBSD: Makefile,v 1.6 2021/08/14 16:15:04 christos Exp $
 
 USE_FORT?=	yes
 
@@ -13,7 +13,7 @@ CPPFLAGS+=	-I${LDAP_DISTDIR}/libraries/liblutil
 
 SRCS=		base64.c entropy.c sasl.c signal.c hash.c passfile.c \
 		md5.c passwd.c sha1.c getpass.c lockf.c utils.c uuid.c \
-		sockpair.c avl.c tavl.c meter.c \
+		sockpair.c meter.c \
 		getpeereid.c detach.c
 
 .include <bsd.lib.mk>

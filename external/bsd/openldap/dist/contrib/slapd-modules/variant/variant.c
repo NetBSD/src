@@ -1,4 +1,4 @@
-/*	$NetBSD: variant.c,v 1.1.1.1 2021/08/14 16:05:15 christos Exp $	*/
+/*	$NetBSD: variant.c,v 1.2 2021/08/14 16:14:54 christos Exp $	*/
 
 /* variant.c - variant overlay */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: variant.c,v 1.1.1.1 2021/08/14 16:05:15 christos Exp $");
+__RCSID("$NetBSD: variant.c,v 1.2 2021/08/14 16:14:54 christos Exp $");
 
 #include "portable.h"
 

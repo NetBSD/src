@@ -1,4 +1,4 @@
-/*	$NetBSD: ldapvc.c,v 1.1.1.1 2021/08/14 16:05:12 christos Exp $	*/
+/*	$NetBSD: ldapvc.c,v 1.2 2021/08/14 16:14:49 christos Exp $	*/
 
 /* ldapvc.c -- a tool for verifying credentials */
 /* $OpenLDAP$ */
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: ldapvc.c,v 1.1.1.1 2021/08/14 16:05:12 christos Exp $");
+__RCSID("$NetBSD: ldapvc.c,v 1.2 2021/08/14 16:14:49 christos Exp $");
 
 #include "portable.h"
 

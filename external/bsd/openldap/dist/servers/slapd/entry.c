@@ -1,10 +1,10 @@
-/*	$NetBSD: entry.c,v 1.2 2020/08/11 13:15:39 christos Exp $	*/
+/*	$NetBSD: entry.c,v 1.3 2021/08/14 16:14:58 christos Exp $	*/
 
 /* entry.c - routines for dealing with entries */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2020 The OpenLDAP Foundation.
+ * Copyright 1998-2021 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: entry.c,v 1.2 2020/08/11 13:15:39 christos Exp $");
+__RCSID("$NetBSD: entry.c,v 1.3 2021/08/14 16:14:58 christos Exp $");
 
 #include "portable.h"
 
@@ -137,14 +137,13 @@ str2entry2( char *s, int checkvals )
 	 */
 
 	Debug( LDAP_DEBUG_TRACE, "=> str2entry: \"%s\"\n",
-		s ? s : "NULL", 0, 0 );
+		s ? s : "NULL" );
 
 	e = entry_alloc();
 
 	if( e == NULL ) {
 		Debug( LDAP_DEBUG_ANY,
-			"<= str2entry NULL (entry allocation failed)\n",
-			0, 0, 0 );
+			"<= str2entry NULL (entry allocation failed)\n" );
 		return( NULL );
 	}
 
@@ -175,7 +174,7 @@ str2entry2( char *s, int checkvals )
 		i++;
 		if (i >= lines) {
 			Debug( LDAP_DEBUG_TRACE,
-				"<= str2entry ran past end of entry\n", 0, 0, 0 );
+				"<= str2entry ran past end of entry\n" );
 			goto fail;
 		}
 
@@ -183,7 +182,7 @@ str2entry2( char *s, int checkvals )
 		freeval[i] = freev;
 		if ( rc ) {
 			Debug( LDAP_DEBUG_TRACE,
-				"<= str2entry NULL (parse_line)\n", 0, 0, 0 );
+				"<= str2entry NULL (parse_line)\n" );
 			continue;
 		}
 
@@ -199,7 +198,7 @@ str2entry2( char *s, int checkvals )
 			if( rc != LDAP_SUCCESS ) {
 				Debug( LDAP_DEBUG_ANY, "str2entry: "
 					"entry %ld has invalid DN \"%s\"\n",
-					(long) e->e_id, vals[i].bv_val, 0 );
+					(long) e->e_id, vals[i].bv_val );
 				goto fail;
 			}
 			if ( freeval[i] ) free( vals[i].bv_val );
@@ -213,7 +212,7 @@ str2entry2( char *s, int checkvals )
 	/* check to make sure there was a dn: line */
 	if ( BER_BVISNULL( &e->e_name )) {
 		Debug( LDAP_DEBUG_ANY, "str2entry: entry %ld has no dn\n",
-			(long) e->e_id, 0, 0 );
+			(long) e->e_id );
 		goto fail;
 	}
 
@@ -254,9 +253,9 @@ str2entry2( char *s, int checkvals )
 				rc = slap_bv2ad( type+i, &ad, &text );
 	
 				if( rc != LDAP_SUCCESS ) {
-					int wtool = ( slapMode & (SLAP_TOOL_MODE|SLAP_TOOL_READONLY) ) == SLAP_TOOL_MODE;
+					int wtool = ( slapMode & (SLAP_TOOL_MODE|SLAP_TOOL_READONLY|SLAP_TOOL_NO_SCHEMA_CHECK) ) == SLAP_TOOL_MODE;
 					Debug( wtool ? LDAP_DEBUG_ANY : LDAP_DEBUG_TRACE,
-						"<= str2entry: str2ad(%s): %s\n", type[i].bv_val, text, 0 );
+						"<= str2entry: str2ad(%s): %s\n", type[i].bv_val, text );
 					if( wtool ) {
 						goto fail;
 					}
@@ -265,7 +264,7 @@ str2entry2( char *s, int checkvals )
 					if( rc != LDAP_SUCCESS ) {
 						Debug( LDAP_DEBUG_ANY,
 							"<= str2entry: slap_str2undef_ad(%s): %s\n",
-								type[i].bv_val, text, 0 );
+								type[i].bv_val, text );
 						goto fail;
 					}
 				}
@@ -322,7 +321,7 @@ str2entry2( char *s, int checkvals )
 					} else if ( rc == LDAP_TYPE_OR_VALUE_EXISTS ) {
 						Debug( LDAP_DEBUG_ANY,
 							"str2entry: attributeType %s value #%d provided more than once\n",
-							atail->a_desc->ad_cname.bv_val, j, 0 );
+							atail->a_desc->ad_cname.bv_val, j );
 						goto fail;
 					}
 				}
@@ -333,7 +332,7 @@ str2entry2( char *s, int checkvals )
 				Debug( LDAP_DEBUG_ANY,
 					"str2entry: attributeType %s #%d: "
 					"no value\n", 
-					ad->ad_cname.bv_val, attr_cnt, 0 );
+					ad->ad_cname.bv_val, attr_cnt );
 				goto fail;
 			}
 	
@@ -348,7 +347,7 @@ str2entry2( char *s, int checkvals )
 	
 				if ( rc ) {
 					Debug( LDAP_DEBUG_ANY,
-				   		"<= str2entry NULL (smr_normalize %s %d)\n", ad->ad_cname.bv_val, rc, 0 );
+						"<= str2entry NULL (smr_normalize %s %d)\n", ad->ad_cname.bv_val, rc );
 					goto fail;
 				}
 			}
@@ -362,7 +361,7 @@ str2entry2( char *s, int checkvals )
 	e->e_attrs = ahead.a_next;
 
 	Debug(LDAP_DEBUG_TRACE, "<= str2entry(%s) -> 0x%lx\n",
-		e->e_dn, (unsigned long) e, 0 );
+		e->e_dn, (unsigned long) e );
 	return( e );
 
 fail:
@@ -704,7 +703,7 @@ int entry_encode(Entry *e, struct berval *bv)
 	unsigned char *ptr;
 
 	Debug( LDAP_DEBUG_TRACE, "=> entry_encode(0x%08lx): %s\n",
-		(long) e->e_id, e->e_dn, 0 );
+		(long) e->e_id, e->e_dn );
 
 	dnlen = e->e_name.bv_len;
 	ndnlen = e->e_nname.bv_len;
@@ -758,14 +757,14 @@ int entry_encode(Entry *e, struct berval *bv)
 	}
 
 	Debug( LDAP_DEBUG_TRACE, "<= entry_encode(0x%08lx): %s\n",
-		(long) e->e_id, e->e_dn, 0 );
+		(long) e->e_id, e->e_dn );
 
 	return 0;
 }
 
 /* Retrieve an Entry that was stored using entry_encode above.
  * First entry_header must be called to decode the size of the entry.
- * Then a single block of memory must be malloc'd to accomodate the
+ * Then a single block of memory must be malloc'd to accommodate the
  * bervals and the bulk data. Next the bulk data is retrieved from
  * the DB and parsed by entry_decode.
  *
@@ -810,7 +809,7 @@ entry_decode_dn( EntryHeader *eh, struct berval *dn, struct berval *ndn )
 
 	Debug( LDAP_DEBUG_TRACE,
 		"entry_decode_dn: \"%s\"\n",
-		dn ? dn->bv_val : ndn->bv_val, 0, 0 );
+		dn ? dn->bv_val : ndn->bv_val );
 
 	return 0;
 }
@@ -845,7 +844,7 @@ int entry_decode(EntryHeader *eh, Entry **e)
 	ptr += i+1;
 	Debug( LDAP_DEBUG_TRACE,
 		"entry_decode: \"%s\"\n",
-		x->e_dn, 0, 0 );
+		x->e_dn );
 	x->e_bv = eh->bv;
 
 	a = x->e_attrs;
@@ -860,13 +859,13 @@ int entry_decode(EntryHeader *eh, Entry **e)
 
 		if( rc != LDAP_SUCCESS ) {
 			Debug( LDAP_DEBUG_TRACE,
-				"<= entry_decode: str2ad(%s): %s\n", ptr, text, 0 );
+				"<= entry_decode: str2ad(%s): %s\n", ptr, text );
 			rc = slap_bv2undef_ad( &bv, &ad, &text, 0 );
 
 			if( rc != LDAP_SUCCESS ) {
 				Debug( LDAP_DEBUG_ANY,
 					"<= entry_decode: slap_str2undef_ad(%s): %s\n",
-						ptr, text, 0 );
+						ptr, text );
 				return rc;
 			}
 		}
@@ -915,7 +914,7 @@ int entry_decode(EntryHeader *eh, Entry **e)
 				/* should never happen */
 				Debug( LDAP_DEBUG_ANY,
 					"entry_decode: attributeType %s value #%d provided more than once\n",
-					a->a_desc->ad_cname.bv_val, j, 0 );
+					a->a_desc->ad_cname.bv_val, j );
 				return rc;
 			}
 		}
@@ -926,7 +925,7 @@ int entry_decode(EntryHeader *eh, Entry **e)
 	}
 
 	Debug(LDAP_DEBUG_TRACE, "<= entry_decode(%s)\n",
-		x->e_dn, 0, 0 );
+		x->e_dn );
 	*e = x;
 	return 0;
 }

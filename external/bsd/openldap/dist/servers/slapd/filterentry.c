@@ -1,10 +1,10 @@
-/*	$NetBSD: filterentry.c,v 1.2 2020/08/11 13:15:39 christos Exp $	*/
+/*	$NetBSD: filterentry.c,v 1.3 2021/08/14 16:14:58 christos Exp $	*/
 
 /* filterentry.c - apply a filter to an entry */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2020 The OpenLDAP Foundation.
+ * Copyright 1998-2021 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: filterentry.c,v 1.2 2020/08/11 13:15:39 christos Exp $");
+__RCSID("$NetBSD: filterentry.c,v 1.3 2021/08/14 16:14:58 christos Exp $");
 
 #include "portable.h"
 
@@ -69,10 +69,10 @@ test_filter(
     Filter	*f )
 {
 	int	rc;
-	Debug( LDAP_DEBUG_FILTER, "=> test_filter\n", 0, 0, 0 );
+	Debug( LDAP_DEBUG_FILTER, "=> test_filter\n" );
 
 	if ( f->f_choice & SLAPD_FILTER_UNDEFINED ) {
-		Debug( LDAP_DEBUG_FILTER, "    UNDEFINED\n", 0, 0, 0 );
+		Debug( LDAP_DEBUG_FILTER, "    UNDEFINED\n" );
 		rc = SLAPD_COMPARE_UNDEFINED;
 		goto out;
 	}
@@ -83,53 +83,53 @@ test_filter(
 			f->f_result == LDAP_COMPARE_FALSE ? "false" :
 			f->f_result == LDAP_COMPARE_TRUE ? "true" :
 			f->f_result == SLAPD_COMPARE_UNDEFINED ? "undefined" : "error",
-			f->f_result, 0 );
+			f->f_result );
 
 		rc = f->f_result;
 		break;
 
 	case LDAP_FILTER_EQUALITY:
-		Debug( LDAP_DEBUG_FILTER, "    EQUALITY\n", 0, 0, 0 );
+		Debug( LDAP_DEBUG_FILTER, "    EQUALITY\n" );
 		rc = test_ava_filter( op, e, f->f_ava, LDAP_FILTER_EQUALITY );
 		break;
 
 	case LDAP_FILTER_SUBSTRINGS:
-		Debug( LDAP_DEBUG_FILTER, "    SUBSTRINGS\n", 0, 0, 0 );
+		Debug( LDAP_DEBUG_FILTER, "    SUBSTRINGS\n" );
 		rc = test_substrings_filter( op, e, f );
 		break;
 
 	case LDAP_FILTER_GE:
-		Debug( LDAP_DEBUG_FILTER, "    GE\n", 0, 0, 0 );
+		Debug( LDAP_DEBUG_FILTER, "    GE\n" );
 		rc = test_ava_filter( op, e, f->f_ava, LDAP_FILTER_GE );
 		break;
 
 	case LDAP_FILTER_LE:
-		Debug( LDAP_DEBUG_FILTER, "    LE\n", 0, 0, 0 );
+		Debug( LDAP_DEBUG_FILTER, "    LE\n" );
 		rc = test_ava_filter( op, e, f->f_ava, LDAP_FILTER_LE );
 		break;
 
 	case LDAP_FILTER_PRESENT:
-		Debug( LDAP_DEBUG_FILTER, "    PRESENT\n", 0, 0, 0 );
+		Debug( LDAP_DEBUG_FILTER, "    PRESENT\n" );
 		rc = test_presence_filter( op, e, f->f_desc );
 		break;
 
 	case LDAP_FILTER_APPROX:
-		Debug( LDAP_DEBUG_FILTER, "    APPROX\n", 0, 0, 0 );
+		Debug( LDAP_DEBUG_FILTER, "    APPROX\n" );
 		rc = test_ava_filter( op, e, f->f_ava, LDAP_FILTER_APPROX );
 		break;
 
 	case LDAP_FILTER_AND:
-		Debug( LDAP_DEBUG_FILTER, "    AND\n", 0, 0, 0 );
+		Debug( LDAP_DEBUG_FILTER, "    AND\n" );
 		rc = test_filter_and( op, e, f->f_and );
 		break;
 
 	case LDAP_FILTER_OR:
-		Debug( LDAP_DEBUG_FILTER, "    OR\n", 0, 0, 0 );
+		Debug( LDAP_DEBUG_FILTER, "    OR\n" );
 		rc = test_filter_or( op, e, f->f_or );
 		break;
 
 	case LDAP_FILTER_NOT:
-		Debug( LDAP_DEBUG_FILTER, "    NOT\n", 0, 0, 0 );
+		Debug( LDAP_DEBUG_FILTER, "    NOT\n" );
 		rc = test_filter( op, e, f->f_not );
 
 		/* Flip true to false and false to true
@@ -146,17 +146,17 @@ test_filter(
 		break;
 
 	case LDAP_FILTER_EXT:
-		Debug( LDAP_DEBUG_FILTER, "    EXT\n", 0, 0, 0 );
+		Debug( LDAP_DEBUG_FILTER, "    EXT\n" );
 		rc = test_mra_filter( op, e, f->f_mra );
 		break;
 
 	default:
 		Debug( LDAP_DEBUG_ANY, "    unknown filter type %lu\n",
-		    f->f_choice, 0, 0 );
+		    f->f_choice );
 		rc = LDAP_PROTOCOL_ERROR;
 	}
 out:
-	Debug( LDAP_DEBUG_FILTER, "<= test_filter %d\n", rc, 0, 0 );
+	Debug( LDAP_DEBUG_FILTER, "<= test_filter %d\n", rc );
 	return( rc );
 }
 
@@ -878,7 +878,7 @@ test_filter_and(
 	Filter	*f;
 	int rtn = LDAP_COMPARE_TRUE; /* True if empty */
 
-	Debug( LDAP_DEBUG_FILTER, "=> test_filter_and\n", 0, 0, 0 );
+	Debug( LDAP_DEBUG_FILTER, "=> test_filter_and\n" );
 
 	for ( f = flist; f != NULL; f = f->f_next ) {
 		int rc = test_filter( op, e, f );
@@ -895,7 +895,7 @@ test_filter_and(
 		}
 	}
 
-	Debug( LDAP_DEBUG_FILTER, "<= test_filter_and %d\n", rtn, 0, 0 );
+	Debug( LDAP_DEBUG_FILTER, "<= test_filter_and %d\n", rtn );
 
 	return rtn;
 }
@@ -909,7 +909,7 @@ test_filter_or(
 	Filter	*f;
 	int rtn = LDAP_COMPARE_FALSE; /* False if empty */
 
-	Debug( LDAP_DEBUG_FILTER, "=> test_filter_or\n", 0, 0, 0 );
+	Debug( LDAP_DEBUG_FILTER, "=> test_filter_or\n" );
 
 	for ( f = flist; f != NULL; f = f->f_next ) {
 		int rc = test_filter( op, e, f );
@@ -926,7 +926,7 @@ test_filter_or(
 		}
 	}
 
-	Debug( LDAP_DEBUG_FILTER, "<= test_filter_or %d\n", rtn, 0, 0 );
+	Debug( LDAP_DEBUG_FILTER, "<= test_filter_or %d\n", rtn );
 	return rtn;
 }
 
@@ -940,7 +940,7 @@ test_substrings_filter(
 	Attribute	*a;
 	int rc;
 
-	Debug( LDAP_DEBUG_FILTER, "begin test_substrings_filter\n", 0, 0, 0 );
+	Debug( LDAP_DEBUG_FILTER, "begin test_substrings_filter\n" );
 
 	if ( !access_allowed( op, e,
 		f->f_sub_desc, NULL, ACL_SEARCH, NULL ) )
@@ -986,6 +986,6 @@ test_substrings_filter(
 	}
 
 	Debug( LDAP_DEBUG_FILTER, "end test_substrings_filter %d\n",
-		rc, 0, 0 );
+		rc );
 	return rc;
 }

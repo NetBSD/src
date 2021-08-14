@@ -1,10 +1,10 @@
-/*	$NetBSD: ch_malloc.c,v 1.2 2020/08/11 13:15:39 christos Exp $	*/
+/*	$NetBSD: ch_malloc.c,v 1.3 2021/08/14 16:14:58 christos Exp $	*/
 
 /* ch_malloc.c - malloc routines that test returns from malloc and friends */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2020 The OpenLDAP Foundation.
+ * Copyright 1998-2021 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -29,7 +29,7 @@
 #define CH_FREE 1
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: ch_malloc.c,v 1.2 2020/08/11 13:15:39 christos Exp $");
+__RCSID("$NetBSD: ch_malloc.c,v 1.3 2021/08/14 16:14:58 christos Exp $");
 
 #include "portable.h"
 
@@ -58,7 +58,7 @@ ch_malloc(
 
 	if ( (new = (void *) ber_memalloc_x( size, NULL )) == NULL ) {
 		Debug( LDAP_DEBUG_ANY, "ch_malloc of %lu bytes failed\n",
-			(long) size, 0, 0 );
+			(long) size );
 		assert( 0 );
 		exit( EXIT_FAILURE );
 	}
@@ -90,7 +90,7 @@ ch_realloc(
 
 	if ( (new = (void *) ber_memrealloc_x( block, size, NULL )) == NULL ) {
 		Debug( LDAP_DEBUG_ANY, "ch_realloc of %lu bytes failed\n",
-			(long) size, 0, 0 );
+			(long) size );
 		assert( 0 );
 		exit( EXIT_FAILURE );
 	}
@@ -108,7 +108,7 @@ ch_calloc(
 
 	if ( (new = (void *) ber_memcalloc_x( nelem, size, NULL )) == NULL ) {
 		Debug( LDAP_DEBUG_ANY, "ch_calloc of %lu elems of %lu bytes failed\n",
-		  (long) nelem, (long) size, 0 );
+		  (long) nelem, (long) size );
 		assert( 0 );
 		exit( EXIT_FAILURE );
 	}
@@ -124,7 +124,7 @@ ch_strdup(
 	char	*new;
 
 	if ( (new = ber_strdup_x( string, NULL )) == NULL ) {
-		Debug( LDAP_DEBUG_ANY, "ch_strdup(%s) failed\n", string, 0, 0 );
+		Debug( LDAP_DEBUG_ANY, "ch_strdup(%s) failed\n", string );
 		assert( 0 );
 		exit( EXIT_FAILURE );
 	}

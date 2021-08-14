@@ -1,4 +1,4 @@
-/*	$NetBSD: slapdmsg.h,v 1.1.1.4 2021/08/14 16:05:28 christos Exp $	*/
+/*	$NetBSD: slapdmsg.h,v 1.2 2021/08/14 16:14:58 christos Exp $	*/
 
 //
 // This file contains message strings for the OpenLDAP slapd service.

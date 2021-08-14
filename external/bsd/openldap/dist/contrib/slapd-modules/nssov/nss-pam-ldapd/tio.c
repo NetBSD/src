@@ -1,4 +1,4 @@
-/*	$NetBSD: tio.c,v 1.1.1.5 2021/08/14 16:05:14 christos Exp $	*/
+/*	$NetBSD: tio.c,v 1.2 2021/08/14 16:14:52 christos Exp $	*/
 
 /*
    tio.c - timed io functions
@@ -23,7 +23,7 @@
 */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: tio.c,v 1.1.1.5 2021/08/14 16:05:14 christos Exp $");
+__RCSID("$NetBSD: tio.c,v 1.2 2021/08/14 16:14:52 christos Exp $");
 
 #include "portable.h"
 

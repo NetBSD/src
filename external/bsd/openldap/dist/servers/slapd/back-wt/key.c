@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.1.1.1 2021/08/14 16:05:24 christos Exp $	*/
+/*	$NetBSD: key.c,v 1.2 2021/08/14 16:15:02 christos Exp $	*/
 
 /* OpenLDAP WiredTiger backend */
 /* $OpenLDAP$ */
@@ -22,7 +22,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: key.c,v 1.1.1.1 2021/08/14 16:05:24 christos Exp $");
+__RCSID("$NetBSD: key.c,v 1.2 2021/08/14 16:15:02 christos Exp $");
 
 #include "portable.h"
 

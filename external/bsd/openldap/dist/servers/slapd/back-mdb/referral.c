@@ -1,10 +1,10 @@
-/*	$NetBSD: referral.c,v 1.2 2020/08/11 13:15:40 christos Exp $	*/
+/*	$NetBSD: referral.c,v 1.3 2021/08/14 16:15:00 christos Exp $	*/
 
 /* referral.c - MDB backend referral handler */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2000-2020 The OpenLDAP Foundation.
+ * Copyright 2000-2021 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: referral.c,v 1.2 2020/08/11 13:15:40 christos Exp $");
+__RCSID("$NetBSD: referral.c,v 1.3 2021/08/14 16:15:00 christos Exp $");
 
 #include "portable.h"
 #include <stdio.h>
@@ -69,7 +69,7 @@ mdb_referrals( Operation *op, SlapReply *rs )
 		Debug( LDAP_DEBUG_TRACE,
 			LDAP_XSTRING(mdb_referrals)
 			": dn2entry failed: %s (%d)\n",
-			mdb_strerror(rc), rc, 0 );
+			mdb_strerror(rc), rc );
 		rs->sr_text = "internal error";
 		rc = LDAP_OTHER;
 		goto done;

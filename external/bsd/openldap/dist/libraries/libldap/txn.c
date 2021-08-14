@@ -1,9 +1,9 @@
-/*	$NetBSD: txn.c,v 1.2 2020/08/11 13:15:38 christos Exp $	*/
+/*	$NetBSD: txn.c,v 1.3 2021/08/14 16:14:56 christos Exp $	*/
 
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2006-2020 The OpenLDAP Foundation.
+ * Copyright 2006-2021 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -15,7 +15,7 @@
  * <http://www.OpenLDAP.org/license.html>.
  */
 /* ACKNOWLEDGEMENTS:
- * This program was orignally developed by Kurt D. Zeilenga for inclusion
+ * This program was originally developed by Kurt D. Zeilenga for inclusion
  * in OpenLDAP Software.
  */
 
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: txn.c,v 1.2 2020/08/11 13:15:38 christos Exp $");
+__RCSID("$NetBSD: txn.c,v 1.3 2021/08/14 16:14:56 christos Exp $");
 
 #include "portable.h"
 
@@ -38,7 +38,6 @@ __RCSID("$NetBSD: txn.c,v 1.2 2020/08/11 13:15:38 christos Exp $");
 #include "ldap-int.h"
 #include "ldap_log.h"
 
-#ifdef LDAP_X_TXN
 int
 ldap_txn_start(
 	LDAP *ld,
@@ -46,7 +45,7 @@ ldap_txn_start(
 	LDAPControl **cctrls,
 	int *msgidp )
 {
-	return ldap_extended_operation( ld, LDAP_EXOP_X_TXN_START,
+	return ldap_extended_operation( ld, LDAP_EXOP_TXN_START,
 		NULL, sctrls, cctrls, msgidp );
 }
 
@@ -59,7 +58,7 @@ ldap_txn_start_s(
 {
 	assert( txnid != NULL );
 
-	return ldap_extended_operation_s( ld, LDAP_EXOP_X_TXN_START,
+	return ldap_extended_operation_s( ld, LDAP_EXOP_TXN_START,
 		NULL, sctrls, cctrls, NULL, txnid );
 }
 
@@ -88,7 +87,7 @@ ldap_txn_end(
 
 	ber_flatten( txnber, &txnval );
 
-	rc = ldap_extended_operation( ld, LDAP_EXOP_X_TXN_END,
+	rc = ldap_extended_operation( ld, LDAP_EXOP_TXN_END,
 		txnval, sctrls, cctrls, msgidp );
 
 	ber_free( txnber, 1 );
@@ -121,7 +120,7 @@ ldap_txn_end_s(
 
 	ber_flatten( txnber, &txnval );
 
-	rc = ldap_extended_operation_s( ld, LDAP_EXOP_X_TXN_END,
+	rc = ldap_extended_operation_s( ld, LDAP_EXOP_TXN_END,
 		txnval, sctrls, cctrls, NULL, &retdata );
 
 	ber_free( txnber, 1 );
@@ -157,4 +156,3 @@ done:
 
 	return rc;
 }
-#endif

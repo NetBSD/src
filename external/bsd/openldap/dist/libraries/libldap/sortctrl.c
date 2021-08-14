@@ -1,9 +1,9 @@
-/*	$NetBSD: sortctrl.c,v 1.2 2020/08/11 13:15:37 christos Exp $	*/
+/*	$NetBSD: sortctrl.c,v 1.3 2021/08/14 16:14:56 christos Exp $	*/
 
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2020 The OpenLDAP Foundation.
+ * Copyright 1998-2021 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: sortctrl.c,v 1.2 2020/08/11 13:15:37 christos Exp $");
+__RCSID("$NetBSD: sortctrl.c,v 1.3 2021/08/14 16:14:56 christos Exp $");
 
 #include "portable.h"
 
@@ -92,7 +92,7 @@ static int countKeys(char *keyString)
 						The pointer is updated to point to the next character
 						after the sortkey being parsed.
 						
-   key         (OUT)    Points to the address of an LDAPSortKey stucture
+   key         (OUT)    Points to the address of an LDAPSortKey structure
 						which has been allocated by this routine and
 						initialized with information from the next sortkey.                        
    ---------------------------------------------------------------------------*/
@@ -453,7 +453,7 @@ ldap_create_sort_control(
    returnCode (OUT) This result parameter is filled in with the sort control
 					result code.  This parameter MUST not be NULL.
 				  
-   attribute  (OUT) If an error occured the server may return a string
+   attribute  (OUT) If an error occurred the server may return a string
 					indicating the first attribute in the sortkey list
 					that was in error.  If a string is returned, the memory
 					should be freed with ldap_memfree.  If this parameter is

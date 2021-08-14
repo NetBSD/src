@@ -1,9 +1,9 @@
-/*	$NetBSD: slapschema.c,v 1.2 2020/08/11 13:15:39 christos Exp $	*/
+/*	$NetBSD: slapschema.c,v 1.3 2021/08/14 16:14:58 christos Exp $	*/
 
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2020 The OpenLDAP Foundation.
+ * Copyright 1998-2021 The OpenLDAP Foundation.
  * Portions Copyright 1998-2003 Kurt D. Zeilenga.
  * Portions Copyright 2003 IBM Corporation.
  * All rights reserved.
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: slapschema.c,v 1.2 2020/08/11 13:15:39 christos Exp $");
+__RCSID("$NetBSD: slapschema.c,v 1.3 2021/08/14 16:14:58 christos Exp $");
 
 #include "portable.h"
 
@@ -58,7 +58,7 @@ slapschema( int argc, char **argv )
 	int requestBSF = 0;
 	int doBSF = 0;
 
-	slap_tool_init( progname, SLAPCAT, argc, argv );
+	slap_tool_init( progname, SLAPSCHEMA, argc, argv );
 
 	requestBSF = ( sub_ndn.bv_len || filter );
 

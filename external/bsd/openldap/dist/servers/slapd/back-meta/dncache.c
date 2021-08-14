@@ -1,9 +1,9 @@
-/*	$NetBSD: dncache.c,v 1.2 2020/08/11 13:15:40 christos Exp $	*/
+/*	$NetBSD: dncache.c,v 1.3 2021/08/14 16:15:00 christos Exp $	*/
 
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1999-2020 The OpenLDAP Foundation.
+ * Copyright 1999-2021 The OpenLDAP Foundation.
  * Portions Copyright 2001-2003 Pierangelo Masarati.
  * Portions Copyright 1999-2003 Howard Chu.
  * All rights reserved.
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: dncache.c,v 1.2 2020/08/11 13:15:40 christos Exp $");
+__RCSID("$NetBSD: dncache.c,v 1.3 2021/08/14 16:15:00 christos Exp $");
 
 #include "portable.h"
 
@@ -106,7 +106,7 @@ meta_dncache_get_target(
 
 	tmp_entry.dn = *ndn;
 	ldap_pvt_thread_mutex_lock( &cache->mutex );
-	entry = ( metadncacheentry_t * )avl_find( cache->tree,
+	entry = ( metadncacheentry_t * )ldap_avl_find( cache->tree,
 			( caddr_t )&tmp_entry, meta_dncache_cmp );
 
 	if ( entry != NULL ) {
@@ -162,7 +162,7 @@ meta_dncache_update_entry(
 	tmp_entry.dn = *ndn;
 
 	ldap_pvt_thread_mutex_lock( &cache->mutex );
-	entry = ( metadncacheentry_t * )avl_find( cache->tree,
+	entry = ( metadncacheentry_t * )ldap_avl_find( cache->tree,
 			( caddr_t )&tmp_entry, meta_dncache_cmp );
 
 	if ( entry != NULL ) {
@@ -184,7 +184,7 @@ meta_dncache_update_entry(
 		entry->target = target;
 		entry->lastupdated = curr_time;
 
-		err = avl_insert( &cache->tree, ( caddr_t )entry,
+		err = ldap_avl_insert( &cache->tree, ( caddr_t )entry,
 				meta_dncache_cmp, meta_dncache_dup );
 	}
 
@@ -214,7 +214,7 @@ meta_dncache_delete_entry(
 	tmp_entry.dn = *ndn;
 
 	ldap_pvt_thread_mutex_lock( &cache->mutex );
-	entry = avl_delete( &cache->tree, ( caddr_t )&tmp_entry,
+	entry = ldap_avl_delete( &cache->tree, ( caddr_t )&tmp_entry,
  			meta_dncache_cmp );
 	ldap_pvt_thread_mutex_unlock( &cache->mutex );
 

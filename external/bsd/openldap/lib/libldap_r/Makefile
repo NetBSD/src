@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2014/05/28 11:32:19 tron Exp $
+#	$NetBSD: Makefile,v 1.6 2021/08/14 16:15:04 christos Exp $
 
 USE_FORT?=	yes
 CWARNFLAGS.clang=	-Wno-format-extra-args
@@ -9,11 +9,9 @@ LIB=		ldap_r
 
 .PATH:		${LDAP_DISTDIR}/libraries/libldap_r
 
-SRCS+=		threads.c rdwr.c rmutex.c tpool.c rq.c \
-		thr_posix.c thr_cthreads.c thr_thr.c thr_nt.c \
-		thr_pth.c thr_stub.c thr_debug.c
-
-CPPFLAGS+=	-DLDAP_R_COMPILE
+SRCS+=		threads.c rdwr.c rq.c \
+		thr_posix.c thr_thr.c thr_nt.c \
+		thr_pth.c thr_debug.c
 
 COPTS+=		-pthread
 LIBDPLIBS+=	pthread	${.CURDIR}/../../../../../lib/libpthread

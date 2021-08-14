@@ -1,10 +1,10 @@
-/*	$NetBSD: ldapdelete.c,v 1.2 2020/08/11 13:15:34 christos Exp $	*/
+/*	$NetBSD: ldapdelete.c,v 1.3 2021/08/14 16:14:49 christos Exp $	*/
 
 /* ldapdelete.c - simple program to delete an entry using LDAP */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2020 The OpenLDAP Foundation.
+ * Copyright 1998-2021 The OpenLDAP Foundation.
  * Portions Copyright 1998-2003 Kurt D. Zeilenga.
  * All rights reserved.
  *
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: ldapdelete.c,v 1.2 2020/08/11 13:15:34 christos Exp $");
+__RCSID("$NetBSD: ldapdelete.c,v 1.3 2021/08/14 16:14:49 christos Exp $");
 
 #include "portable.h"
 
@@ -73,7 +73,7 @@ usage( void )
 {
 	fprintf( stderr, _("Delete entries from an LDAP server\n\n"));
 	fprintf( stderr, _("usage: %s [options] [dn]...\n"), prog);
-	fprintf( stderr, _("	dn: list of DNs to delete. If not given, it will be readed from stdin\n"));
+	fprintf( stderr, _("	dn: list of DNs to delete. If not given, it will be read from stdin\n"));
 	fprintf( stderr, _("	    or from the file specified with \"-f file\".\n"));
 	fprintf( stderr, _("Delete Options:\n"));
 	fprintf( stderr, _("  -c         continuous operation mode (do not stop on errors)\n"));
@@ -116,7 +116,7 @@ handle_private_option( int i )
 			optarg++;
 		}
 
-		control = strdup( optarg );
+		control = optarg;
 		if ( (cvalue = strchr( control, '=' )) != NULL ) {
 			*cvalue++ = '\0';
 		}

@@ -1,10 +1,10 @@
-/*	$NetBSD: database.c,v 1.2 2020/08/11 13:15:41 christos Exp $	*/
+/*	$NetBSD: database.c,v 1.3 2021/08/14 16:15:00 christos Exp $	*/
 
 /* database.c - deals with database subsystem */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2001-2020 The OpenLDAP Foundation.
+ * Copyright 2001-2021 The OpenLDAP Foundation.
  * Portions Copyright 2001-2003 Pierangelo Masarati.
  * All rights reserved.
  *
@@ -22,7 +22,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: database.c,v 1.2 2020/08/11 13:15:41 christos Exp $");
+__RCSID("$NetBSD: database.c,v 1.3 2021/08/14 16:15:00 christos Exp $");
 
 #include "portable.h"
 
@@ -155,7 +155,7 @@ monitor_subsys_overlay_init_one(
 			"monitor_subsys_overlay_init_one: "
 			"unable to create entry "
 			"\"cn=Overlay %d,%s\"\n",
-			o, e_database->e_name.bv_val, 0 );
+			o, e_database->e_name.bv_val );
 		return( -1 );
 	}
 	ber_str2bv( on->on_bi.bi_type, 0, 0, &bv );
@@ -189,7 +189,7 @@ monitor_subsys_overlay_init_one(
 			"monitor_subsys_overlay_init_one: "
 			"unable to add entry "
 			"\"cn=Overlay %d,%s\"\n",
-			o, e_database->e_name.bv_val, 0 );
+			o, e_database->e_name.bv_val );
 		return -1;
 	}
 
@@ -221,6 +221,14 @@ monitor_subsys_database_init_one(
 
 	bi = be->bd_info;
 
+	if ( be->be_suffix == NULL ) {
+		Debug( LDAP_DEBUG_ANY,
+			"monitor_subsys_database_init_one: "
+			"missing suffix for %s\n",
+			rdnval );
+		return( -1 );
+	}
+
 	if ( overlay_is_over( be ) ) {
 		oi = (slap_overinfo *)be->bd_info->bi_private;
 		bi = oi->oi_orig;
@@ -233,7 +241,7 @@ monitor_subsys_database_init_one(
 		Debug( LDAP_DEBUG_ANY,
 			"monitor_subsys_database_init_one: "
 			"unable to create entry \"%s,%s\"\n",
-			rdn->bv_val, ms->mss_dn.bv_val, 0 );
+			rdn->bv_val, ms->mss_dn.bv_val );
 		return( -1 );
 	}
 
@@ -250,17 +258,10 @@ monitor_subsys_database_init_one(
 				be->be_suffix, be->be_nsuffix );
 
 	} else {
-		if ( be->be_suffix == NULL ) {
-			Debug( LDAP_DEBUG_ANY,
-				"monitor_subsys_database_init_one: "
-				"missing suffix for %s\n",
-				rdnval, 0, 0 );
-		} else {
-			attr_merge( e, slap_schema.si_ad_namingContexts,
-				be->be_suffix, NULL );
-			attr_merge( e_database, slap_schema.si_ad_namingContexts,
-				be->be_suffix, NULL );
-		}
+		attr_merge( e, slap_schema.si_ad_namingContexts,
+			be->be_suffix, NULL );
+		attr_merge( e_database, slap_schema.si_ad_namingContexts,
+			be->be_suffix, NULL );
 
 		if ( SLAP_GLUE_SUBORDINATE( be ) ) {
 			BackendDB *sup_be = select_backend( &be->be_nsuffix[ 0 ], 1 );
@@ -268,7 +269,7 @@ monitor_subsys_database_init_one(
 				Debug( LDAP_DEBUG_ANY,
 					"monitor_subsys_database_init: "
 					"unable to get superior for %s\n",
-					be->be_suffix[ 0 ].bv_val, 0, 0 );
+					be->be_suffix[ 0 ].bv_val );
 
 			} else {
 				attr_merge( e, mi->mi_ad_monitorSuperiorDN,
@@ -350,12 +351,13 @@ monitor_subsys_database_init_one(
 	mp->mp_info = ms;
 	mp->mp_flags = ms->mss_flags
 		| MONITOR_F_SUB;
+	mp->mp_private = be;
 
 	if ( monitor_cache_add( mi, e ) ) {
 		Debug( LDAP_DEBUG_ANY,
 			"monitor_subsys_database_init_one: "
 			"unable to add entry \"%s,%s\"\n",
-			rdn->bv_val, ms->mss_dn.bv_val, 0 );
+			rdn->bv_val, ms->mss_dn.bv_val );
 		return( -1 );
 	}
 
@@ -414,8 +416,7 @@ monitor_back_register_database_and_overlay(
 			"monitor_back_register_database: "
 			"unable to get "
 			"\"" SLAPD_MONITOR_BACKEND_NAME "\" "
-			"subsystem\n",
-			0, 0, 0 );
+			"subsystem\n" );
 		return -1;
 	}
 
@@ -425,8 +426,7 @@ monitor_back_register_database_and_overlay(
 			"monitor_back_register_database: "
 			"unable to get "
 			"\"" SLAPD_MONITOR_DATABASE_NAME "\" "
-			"subsystem\n",
-			0, 0, 0 );
+			"subsystem\n" );
 		return -1;
 	}
 
@@ -436,8 +436,7 @@ monitor_back_register_database_and_overlay(
 			"monitor_back_register_database: "
 			"unable to get "
 			"\"" SLAPD_MONITOR_OVERLAY_NAME "\" "
-			"subsystem\n",
-			0, 0, 0 );
+			"subsystem\n" );
 		return -1;
 	}
 
@@ -445,37 +444,19 @@ monitor_back_register_database_and_overlay(
 		Debug( LDAP_DEBUG_ANY,
 			"monitor_subsys_database_init: "
 			"unable to get entry \"%s\"\n",
-			ms_database->mss_ndn.bv_val, 0, 0 );
+			ms_database->mss_ndn.bv_val );
 		return( -1 );
 	}
 
 	mp = ( monitor_entry_t * )e_database->e_private;
 	for ( i = -1, ep = &mp->mp_children; *ep; i++ ) {
-		Attribute	*a;
-
-		a = attr_find( (*ep)->e_attrs, slap_schema.si_ad_namingContexts );
-		if ( a ) {
-			int		j, k;
-
-			/* FIXME: RFC 4512 defines namingContexts without an
-			 *        equality matching rule, making comparisons
-			 *        like this one tricky.  We use a_vals and
-			 *        be_suffix instead for now.
-			 */
-			for ( j = 0; !BER_BVISNULL( &a->a_vals[ j ] ); j++ ) {
-				for ( k = 0; !BER_BVISNULL( &be->be_suffix[ k ] ); k++ ) {
-					if ( dn_match( &a->a_vals[ j ],
-					               &be->be_suffix[ k ] ) ) {
-						rc = 0;
-						goto done;
-					}
-				}
-			}
-		}
-
 		mp = ( monitor_entry_t * )(*ep)->e_private;
 
 		assert( mp != NULL );
+		if ( mp->mp_private == be->bd_self ) {
+			rc = 0;
+			goto done;
+		}
 		ep = &mp->mp_next;
 	}
 
@@ -568,8 +549,7 @@ monitor_subsys_database_init(
 			"monitor_subsys_database_init: "
 			"unable to get "
 			"\"" SLAPD_MONITOR_BACKEND_NAME "\" "
-			"subsystem\n",
-			0, 0, 0 );
+			"subsystem\n" );
 		return -1;
 	}
 
@@ -579,8 +559,7 @@ monitor_subsys_database_init(
 			"monitor_subsys_database_init: "
 			"unable to get "
 			"\"" SLAPD_MONITOR_OVERLAY_NAME "\" "
-			"subsystem\n",
-			0, 0, 0 );
+			"subsystem\n" );
 		return -1;
 	}
 
@@ -588,7 +567,7 @@ monitor_subsys_database_init(
 		Debug( LDAP_DEBUG_ANY,
 			"monitor_subsys_database_init: "
 			"unable to get entry \"%s\"\n",
-			ms->mss_ndn.bv_val, 0, 0 );
+			ms->mss_ndn.bv_val );
 		return( -1 );
 	}
 

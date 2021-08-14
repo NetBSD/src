@@ -1,8 +1,9 @@
-#	$NetBSD: Makefile,v 1.4 2014/05/28 11:32:19 tron Exp $
+#	$NetBSD: Makefile,v 1.5 2021/08/14 16:15:03 christos Exp $
 
 USE_FORT?=	yes
 
 CWARNFLAGS.clang=	-Wno-format-extra-args
+CPPFLAGS += -DNO_THREADS
 
 .include "../libldap/Makefile.libldap"
 

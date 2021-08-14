@@ -1,9 +1,9 @@
-/*	$NetBSD: options.c,v 1.2 2020/08/11 13:15:37 christos Exp $	*/
+/*	$NetBSD: options.c,v 1.3 2021/08/14 16:14:55 christos Exp $	*/
 
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2020 The OpenLDAP Foundation.
+ * Copyright 1998-2021 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -16,7 +16,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: options.c,v 1.2 2020/08/11 13:15:37 christos Exp $");
+__RCSID("$NetBSD: options.c,v 1.3 2021/08/14 16:14:55 christos Exp $");
 
 #include "portable.h"
 
@@ -54,7 +54,7 @@ ber_get_option(
 			return LBER_OPT_SUCCESS;
 
 		case LBER_OPT_MEMORY_INUSE:
-			/* The memory inuse is a global variable on kernal implementations.
+			/* The memory inuse is a global variable on kernel implementations.
 			 * This means that memory debug is shared by all LDAP processes
 			 * so for this variable to have much meaning, only one LDAP process
 			 * should be running and memory inuse should be initialized to zero
@@ -70,6 +70,10 @@ ber_get_option(
 
 		case LBER_OPT_LOG_PRINT_FILE:
 			*((FILE**)outvalue) = (FILE*)ber_pvt_err_file;
+			return LBER_OPT_SUCCESS;
+
+		case LBER_OPT_LOG_PRINT_FN:
+			*(BER_LOG_PRINT_FN *)outvalue = ber_pvt_log_print;
 			return LBER_OPT_SUCCESS;
 		}
 
@@ -150,7 +154,7 @@ ber_set_option(
 			return LBER_OPT_SUCCESS;
 
 		case LBER_OPT_MEMORY_INUSE:
-			/* The memory inuse is a global variable on kernal implementations.
+			/* The memory inuse is a global variable on kernel implementations.
 			 * This means that memory debug is shared by all LDAP processes
 			 * so for this variable to have much meaning, only one LDAP process
 			 * should be running and memory inuse should be initialized to zero

@@ -1,10 +1,10 @@
-/*	$NetBSD: retcode.c,v 1.2 2020/08/11 13:15:42 christos Exp $	*/
+/*	$NetBSD: retcode.c,v 1.3 2021/08/14 16:15:02 christos Exp $	*/
 
 /* retcode.c - customizable response for client testing purposes */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2005-2020 The OpenLDAP Foundation.
+ * Copyright 2005-2021 The OpenLDAP Foundation.
  * Portions Copyright 2005 Pierangelo Masarati <ando@sys-net.it>
  * All rights reserved.
  *
@@ -22,7 +22,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: retcode.c,v 1.2 2020/08/11 13:15:42 christos Exp $");
+__RCSID("$NetBSD: retcode.c,v 1.3 2021/08/14 16:15:02 christos Exp $");
 
 #include "portable.h"
 
@@ -36,7 +36,7 @@ __RCSID("$NetBSD: retcode.c,v 1.2 2020/08/11 13:15:42 christos Exp $");
 #include <ac/socket.h>
 
 #include "slap.h"
-#include "config.h"
+#include "slap-config.h"
 #include "lutil.h"
 #include "ldif.h"
 
@@ -795,9 +795,10 @@ static ConfigDriver rc_cf_gen;
 
 static ConfigTable rccfg[] = {
 	{ "retcode-parent", "dn",
-		2, 2, 0, ARG_MAGIC|ARG_DN|RC_PARENT, rc_cf_gen,
+		2, 2, 0, ARG_MAGIC|ARG_DN|ARG_QUOTE|RC_PARENT, rc_cf_gen,
 		"( OLcfgOvAt:20.1 NAME 'olcRetcodeParent' "
 			"DESC '' "
+			"EQUALITY distinguishedNameMatch "
 			"SYNTAX OMsDN SINGLE-VALUE )", NULL, NULL },
 	{ "retcode-item", "rdn> <retcode> <...",
 		3, 0, 0, ARG_MAGIC|RC_ITEM, rc_cf_gen,
@@ -811,6 +812,7 @@ static ConfigTable rccfg[] = {
 			(void *)offsetof(retcode_t, rd_indir),
 		"( OLcfgOvAt:20.3 NAME 'olcRetcodeInDir' "
 			"DESC '' "
+			"EQUALITY booleanMatch "
 			"SYNTAX OMsBoolean SINGLE-VALUE )", NULL, NULL },
 
 	{ "retcode-sleep", "sleeptime",
@@ -818,6 +820,7 @@ static ConfigTable rccfg[] = {
 			(void *)offsetof(retcode_t, rd_sleep),
 		"( OLcfgOvAt:20.4 NAME 'olcRetcodeSleep' "
 			"DESC '' "
+			"EQUALITY integerMatch "
 			"SYNTAX OMsInteger SINGLE-VALUE )", NULL, NULL },
 
 	{ NULL, NULL, 0, 0, 0, ARG_IGNORED }
@@ -954,7 +957,7 @@ rc_cf_gen( ConfigArgs *c )
 				"\"retcode-item <RDN> <retcode> [<text>]\": "
 				"missing args" );
 			Debug( LDAP_DEBUG_CONFIG, "%s: retcode: %s\n",
-				c->log, c->cr_msg, 0 );
+				c->log, c->cr_msg );
 			return ARG_BAD_CONF;
 		}
 
@@ -966,7 +969,7 @@ rc_cf_gen( ConfigArgs *c )
 				"unable to normalize RDN \"%s\": %d",
 				c->argv[ 1 ], rc );
 			Debug( LDAP_DEBUG_CONFIG, "%s: retcode: %s\n",
-				c->log, c->cr_msg, 0 );
+				c->log, c->cr_msg );
 			return ARG_BAD_CONF;
 		}
 
@@ -975,7 +978,7 @@ rc_cf_gen( ConfigArgs *c )
 				"value \"%s\" is not a RDN",
 				c->argv[ 1 ] );
 			Debug( LDAP_DEBUG_CONFIG, "%s: retcode: %s\n",
-				c->log, c->cr_msg, 0 );
+				c->log, c->cr_msg );
 			return ARG_BAD_CONF;
 		}
 
@@ -986,7 +989,7 @@ rc_cf_gen( ConfigArgs *c )
 					"either \"retcode-parent\" "
 					"or \"suffix\" must be defined" );
 				Debug( LDAP_DEBUG_CONFIG, "%s: retcode: %s\n",
-					c->log, c->cr_msg, 0 );
+					c->log, c->cr_msg );
 				return ARG_BAD_CONF;
 			}
 
@@ -1006,7 +1009,7 @@ rc_cf_gen( ConfigArgs *c )
 				"unable to parse return code \"%s\"",
 				c->argv[ 2 ] );
 			Debug( LDAP_DEBUG_CONFIG, "%s: retcode: %s\n",
-				c->log, c->cr_msg, 0 );
+				c->log, c->cr_msg );
 			return ARG_BAD_CONF;
 		}
 
@@ -1069,7 +1072,7 @@ rc_cf_gen( ConfigArgs *c )
 								ops[ j ] );
 							ldap_charray_free( ops );
 							Debug( LDAP_DEBUG_CONFIG, "%s: retcode: %s\n",
-								c->log, c->cr_msg, 0 );
+								c->log, c->cr_msg );
 							return ARG_BAD_CONF;
 						}
 					}
@@ -1082,7 +1085,7 @@ rc_cf_gen( ConfigArgs *c )
 						snprintf( c->cr_msg, sizeof(c->cr_msg),
 							"\"text\" already provided" );
 						Debug( LDAP_DEBUG_CONFIG, "%s: retcode: %s\n",
-							c->log, c->cr_msg, 0 );
+							c->log, c->cr_msg );
 						return ARG_BAD_CONF;
 					}
 					ber_str2bv( &c->argv[ i ][ STRLENOF( "text=" ) ], 0, 1, &rdi.rdi_text );
@@ -1095,7 +1098,7 @@ rc_cf_gen( ConfigArgs *c )
 						snprintf( c->cr_msg, sizeof(c->cr_msg),
 							"\"matched\" already provided" );
 						Debug( LDAP_DEBUG_CONFIG, "%s: retcode: %s\n",
-							c->log, c->cr_msg, 0 );
+							c->log, c->cr_msg );
 						return ARG_BAD_CONF;
 					}
 					ber_str2bv( &c->argv[ i ][ STRLENOF( "matched=" ) ], 0, 0, &dn );
@@ -1104,7 +1107,7 @@ rc_cf_gen( ConfigArgs *c )
 							"unable to prettify matched DN \"%s\"",
 							&c->argv[ i ][ STRLENOF( "matched=" ) ] );
 						Debug( LDAP_DEBUG_CONFIG, "%s: retcode: %s\n",
-							c->log, c->cr_msg, 0 );
+							c->log, c->cr_msg );
 						return ARG_BAD_CONF;
 					}
 
@@ -1117,7 +1120,7 @@ rc_cf_gen( ConfigArgs *c )
 						snprintf( c->cr_msg, sizeof(c->cr_msg),
 							"\"ref\" already provided" );
 						Debug( LDAP_DEBUG_CONFIG, "%s: retcode: %s\n",
-							c->log, c->cr_msg, 0 );
+							c->log, c->cr_msg );
 						return ARG_BAD_CONF;
 					}
 
@@ -1128,7 +1131,7 @@ rc_cf_gen( ConfigArgs *c )
 							"resultCode may cause slapd failures "
 							"related to internal checks" );
 						Debug( LDAP_DEBUG_CONFIG, "%s: retcode: %s\n",
-							c->log, c->cr_msg, 0 );
+							c->log, c->cr_msg );
 					}
 
 					refs = ldap_str2charray( &c->argv[ i ][ STRLENOF( "ref=" ) ], " " );
@@ -1149,7 +1152,7 @@ rc_cf_gen( ConfigArgs *c )
 						snprintf( c->cr_msg, sizeof(c->cr_msg),
 							"\"sleeptime\" already provided" );
 						Debug( LDAP_DEBUG_CONFIG, "%s: retcode: %s\n",
-							c->log, c->cr_msg, 0 );
+							c->log, c->cr_msg );
 						return ARG_BAD_CONF;
 					}
 
@@ -1158,7 +1161,7 @@ rc_cf_gen( ConfigArgs *c )
 							"unable to parse \"sleeptime=%s\"",
 							&c->argv[ i ][ STRLENOF( "sleeptime=" ) ] );
 						Debug( LDAP_DEBUG_CONFIG, "%s: retcode: %s\n",
-							c->log, c->cr_msg, 0 );
+							c->log, c->cr_msg );
 						return ARG_BAD_CONF;
 					}
 
@@ -1170,7 +1173,7 @@ rc_cf_gen( ConfigArgs *c )
 						snprintf( c->cr_msg, sizeof(c->cr_msg),
 							"\"unsolicited\" already provided" );
 						Debug( LDAP_DEBUG_CONFIG, "%s: retcode: %s\n",
-							c->log, c->cr_msg, 0 );
+							c->log, c->cr_msg );
 						return ARG_BAD_CONF;
 					}
 
@@ -1184,7 +1187,7 @@ rc_cf_gen( ConfigArgs *c )
 							snprintf( c->cr_msg, sizeof(c->cr_msg),
 								"unable to parse \"unsolicited\"" );
 							Debug( LDAP_DEBUG_CONFIG, "%s: retcode: %s\n",
-								c->log, c->cr_msg, 0 );
+								c->log, c->cr_msg );
 							return ARG_BAD_CONF;
 						}
 
@@ -1211,7 +1214,7 @@ rc_cf_gen( ConfigArgs *c )
 						snprintf( c->cr_msg, sizeof(c->cr_msg),
 							"unknown flag \"%s\"", arg );
 						Debug( LDAP_DEBUG_CONFIG, "%s: retcode: %s\n",
-							c->log, c->cr_msg, 0 );
+							c->log, c->cr_msg );
 						return ARG_BAD_CONF;
 					}
 
@@ -1220,7 +1223,7 @@ rc_cf_gen( ConfigArgs *c )
 						"unknown option \"%s\"",
 						c->argv[ i ] );
 					Debug( LDAP_DEBUG_CONFIG, "%s: retcode: %s\n",
-						c->log, c->cr_msg, 0 );
+						c->log, c->cr_msg );
 					return ARG_BAD_CONF;
 				}
 			}
@@ -1519,7 +1522,7 @@ retcode_initialize( void )
 		code = register_at( retcode_at[ i ].desc, retcode_at[ i ].ad, 0 );
 		if ( code ) {
 			Debug( LDAP_DEBUG_ANY,
-				"retcode: register_at failed\n", 0, 0, 0 );
+				"retcode: register_at failed\n" );
 			return code;
 		}
 
@@ -1530,7 +1533,7 @@ retcode_initialize( void )
 		code = register_oc( retcode_oc[ i ].desc, retcode_oc[ i ].oc, 0 );
 		if ( code ) {
 			Debug( LDAP_DEBUG_ANY,
-				"retcode: register_oc failed\n", 0, 0, 0 );
+				"retcode: register_oc failed\n" );
 			return code;
 		}
 

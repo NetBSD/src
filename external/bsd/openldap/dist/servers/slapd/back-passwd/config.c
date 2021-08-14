@@ -1,10 +1,10 @@
-/*	$NetBSD: config.c,v 1.2 2020/08/11 13:15:41 christos Exp $	*/
+/*	$NetBSD: config.c,v 1.3 2021/08/14 16:15:01 christos Exp $	*/
 
 /* config.c - passwd backend configuration file routine */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2020 The OpenLDAP Foundation.
+ * Copyright 1998-2021 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: config.c,v 1.2 2020/08/11 13:15:41 christos Exp $");
+__RCSID("$NetBSD: config.c,v 1.3 2021/08/14 16:15:01 christos Exp $");
 
 #include "portable.h"
 
@@ -43,7 +43,7 @@ __RCSID("$NetBSD: config.c,v 1.2 2020/08/11 13:15:41 christos Exp $");
 
 #include "slap.h"
 #include "back-passwd.h"
-#include "config.h"
+#include "slap-config.h"
 
 static ConfigTable passwdcfg[] = {
 	{ "file", "filename", 2, 2, 0,
