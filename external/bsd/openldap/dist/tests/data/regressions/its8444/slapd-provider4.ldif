@@ -24,15 +24,9 @@ include: file://@TESTWD@/@SCHEMADIR@/dyngroup.ldif
 #mod#olcModulePath: @TESTWD@/../servers/slapd/back-@BACKEND@/
 #mod#olcModuleLoad: {0}back_@BACKEND@.la
 
-#monitormod#dn: cn=module{1},cn=config
-#monitormod#objectClass: olcModuleList
-#monitormod#cn: module{1}
-#monitormod#olcModulePath: @TESTWD@/../servers/slapd/back-monitor/
-#monitormod#olcModuleLoad: {0}back_monitor.la
-
-#memberofmod#dn: cn=module{2},cn=config
+#memberofmod#dn: cn=module{1},cn=config
 #memberofmod#objectClass: olcModuleList
-#memberofmod#cn: module{2}
+#memberofmod#cn: module{1}
 #memberofmod#olcModulePath: @TESTWD@/../servers/slapd/overlays/
 #memberofmod#olcModuleLoad: {0}memberof.la
 #dynlistmod#olcModuleLoad: {1}dynlist.la
@@ -61,7 +55,7 @@ olcRootDN: cn=manager,dc=example,dc=com
 olcRootPW: secret
 olcSizeLimit: unlimited
 olcTimeLimit: unlimited
-olcMirrorMode: TRUE
+olcMultiProvider: TRUE
 olcSyncrepl: {0}rid=100 provider=@URI2@ binddn="cn=manager,dc=example,dc=com
  " credentials=secret bindmethod=simple searchbase="dc=example,dc=com" logba
  se="cn=accesslog" logfilter="(&(objectClass=auditWriteObject)(reqResult=0))
@@ -101,13 +95,13 @@ olcSyncrepl: {2}rid=102 provider=@URI1@ binddn="cn=manager,dc=example,dc=com
 
 dn: olcOverlay={0}dynlist,olcDatabase={1}@BACKEND@,cn=config
 objectClass: olcOverlayConfig
-objectClass: olcDynamicList
+objectClass: olcDynListConfig
 olcOverlay: {0}dynlist
-olcDlAttrSet: {0}groupOfURLs memberURL
+olcDynListAttrSet: {0}groupOfURLs memberURL
 
 dn: olcOverlay={1}memberof,olcDatabase={1}@BACKEND@,cn=config
 objectClass: olcOverlayConfig
-objectClass: olcMemberOf
+objectClass: olcMemberOfConfig
 olcOverlay: {1}memberof
 olcMemberOfDangling: ignore
 olcMemberOfRefInt: TRUE

@@ -1,0 +1,5 @@
+# value does not exist in entry
+dn: cn=Dorothy Stevens,ou=Alumni Association,ou=People,dc=example,dc=com
+changetype: modify
+delete: enumerated
+enumerated: uham

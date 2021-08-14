@@ -17,7 +17,7 @@ default to).
 
 Use Makefile or the following commands should work to
 build it from inside the unpacked slapd sources, provided the required KRB5
-header files and libaries are installed on your system:
+header files and libraries are installed on your system:
 
     gcc -fPIC -c -I ../../../include/ -I ../../../servers/slapd kinit.c
     gcc -shared -o kinit.so kinit.o -lkrb5
@@ -25,7 +25,7 @@ header files and libaries are installed on your system:
 ---
 This work is part of OpenLDAP Software <http://www.openldap.org/>.
 
-Copyright 2010-2020 The OpenLDAP Foundation.
+Copyright 2010-2021 The OpenLDAP Foundation.
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted only as authorized by the OpenLDAP

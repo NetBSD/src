@@ -20,7 +20,7 @@ Please read:
 - Add SASL Authentication 
 - Add methods to the Data Classes (LDAPAttribute, LDAPEntry) for higher
   usability. (e.g. LDAPAttributeList::getAttribute(name), ... )
-- implement some Controls/Extented Operations
+- implement some Controls/Extended Operations
 - LDIF im/export library
 - Rework the logging and debugging facilities
 - write some more documentation about the design and structure of the 

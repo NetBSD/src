@@ -2,7 +2,7 @@
 # $OpenLDAP$
 ## This work is part of OpenLDAP Software <http://www.openldap.org/>.
 ##
-## Copyright 1998-2020 The OpenLDAP Foundation.
+## Copyright 1998-2021 The OpenLDAP Foundation.
 ## All rights reserved.
 ##
 ## Redistribution and use in source and binary forms, with or without
@@ -178,7 +178,7 @@ attributeType ( 2.5.4.25.1 NAME 'c-InternationalISDNNumber'
 # 
 # This document and translations of it may be copied and furnished
 # to others, and derivative works that comment on or otherwise explain
-# it or assist in its implmentation may be prepared, copied, published
+# it or assist in its implementation may be prepared, copied, published
 # and distributed, in whole or in part, without restriction of any
 # kind, provided that the above copyright notice and this paragraph
 # are included on all such copies and derivative works.  However,

@@ -48,7 +48,7 @@ Shared libraries and Tcl packages.
 
 If Tcl is built with --enable-shared, AND OpenLDAP (or another version
 for that matter) has been build to create -llber and -lldap as shared
-libaries, AND you build ldaptcl with --enable-shared, it should be
+libraries, AND you build ldaptcl with --enable-shared, it should be
 possible to run a plain Tcl interpreter (eg. tclsh8.0) and do
 
 		package require Ldaptcl

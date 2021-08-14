@@ -2,7 +2,7 @@
 # $OpenLDAP$
 ## This work is part of OpenLDAP Software <http://www.openldap.org/>.
 ##
-## Copyright 1998-2020 The OpenLDAP Foundation.
+## Copyright 1998-2021 The OpenLDAP Foundation.
 ## All rights reserved.
 ##
 ## Redistribution and use in source and binary forms, with or without
@@ -24,7 +24,7 @@ ITSDIR=$DATADIR/regressions/its$ITS
 ITSCONF=$ITSDIR/slapd-glue.conf
 
 echo "Running multi-threaded slapadd in quick mode to build glued slapd databases..."
-. $CONFFILTER $BACKEND $MONITORDB < $ITSCONF > $CONF1
+. $CONFFILTER $BACKEND < $ITSCONF > $CONF1
 $SLAPADD -q -d $LVL -f $CONF1 -l $LDIFORDERED > $SLAPADDLOG1 2>&1
 RC=$?
 if test $RC != 0 ; then
@@ -33,7 +33,7 @@ if test $RC != 0 ; then
 fi
 
 echo "Starting slapd on TCP/IP port $PORT1..."
-$SLAPD -f $CONF1 -h $URI1 -d $LVL $TIMING > $LOG1 2>&1 &
+$SLAPD -f $CONF1 -h $URI1 -d $LVL > $LOG1 2>&1 &
 PID=$!
 if test $WAIT != 0 ; then
     echo PID $PID
@@ -45,7 +45,7 @@ sleep 1
 
 echo "Using ldapsearch to retrieve all the entries..."
 for i in 0 1 2 3 4 5; do
-	$LDAPSEARCH -b "$BASEDN" -h $LOCALHOST -p $PORT1 > $SEARCHOUT 2>&1
+	$LDAPSEARCH -b "$BASEDN" -H $URI1 > $SEARCHOUT 2>&1
 	RC=$?
 	if test $RC = 0 ; then
 		break

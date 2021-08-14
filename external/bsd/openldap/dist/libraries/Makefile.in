@@ -2,7 +2,7 @@
 # $OpenLDAP$
 ## This work is part of OpenLDAP Software <http://www.openldap.org/>.
 ##
-## Copyright 1998-2020 The OpenLDAP Foundation.
+## Copyright 1998-2021 The OpenLDAP Foundation.
 ## All rights reserved.
 ##
 ## Redistribution and use in source and binary forms, with or without
@@ -17,6 +17,14 @@ SUBDIRS= \
 	liblutil \
 	liblber \
 	liblunicode \
-	libldap libldap_r \
+	libldap \
 	librewrite
 
+PKGCONFIG_DIR=$(DESTDIR)$(libdir)/pkgconfig
+PKGCONFIG_SRCDIRS=liblber libldap
+
+install-local:
+	@$(MKDIR) $(PKGCONFIG_DIR)
+	@for i in $(PKGCONFIG_SRCDIRS); do \
+	    $(INSTALL_DATA) $$i/*.pc $(PKGCONFIG_DIR); \
+	done

@@ -1,5 +1,5 @@
 .TH SLAPO-ACCESSLOG 5 "RELEASEDATE" "OpenLDAP LDVERSION"
-.\" Copyright 2005-2020 The OpenLDAP Foundation All Rights Reserved.
+.\" Copyright 2005-2021 The OpenLDAP Foundation All Rights Reserved.
 .\" Copying restrictions apply.  See COPYRIGHT/LICENSE.
 .\" $OpenLDAP$
 .SH NAME
@@ -25,7 +25,9 @@ directive.
 .TP
 .B logdb <suffix>
 Specify the suffix of a database to be used for storing the log records.
-The specified database must be defined elsewhere in the configuration.
+The specified database must be defined elsewhere in the configuration and
+must support an ordered return of results such as
+.BR slapd\-mdb (5)
 The access controls
 on the log database should prevent general access. The suffix entry
 of the log database will be created automatically by this overlay. The log
@@ -102,7 +104,7 @@ succeed or not. The default is FALSE.
 .SH EXAMPLES
 .LP
 .nf
-	database bdb
+	database mdb
 	suffix dc=example,dc=com
 	\...
 	overlay accesslog
@@ -111,7 +113,7 @@ succeed or not. The default is FALSE.
 	logbase search|compare ou=testing,dc=example,dc=com
 	logold (objectclass=person)
 
-	database bdb
+	database mdb
 	suffix cn=log
 	\...
 	index reqStart eq
@@ -135,6 +137,20 @@ The schema is loaded automatically by the overlay.
 The schema includes a number of object classes and associated
 attribute types as described below.
 
+The root entry of the underlying accesslog database makes use
+of the
+.B auditContainer
+class which is as follows:
+.LP
+.RS 4
+(  1.3.6.1.4.1.4203.666.11.5.2.0
+    NAME 'auditContainer'
+    DESC 'AuditLog container'
+    SUP top STRUCTURAL
+    MAY ( cn $ reqStart $ reqEnd ) )
+.RE
+.P
+
 There is
 a basic
 .B auditObject
@@ -157,7 +173,7 @@ class is as follows:
     SUP top STRUCTURAL
     MUST ( reqStart $ reqType $ reqSession )
     MAY ( reqDN $ reqAuthzID $ reqControls $ reqRespControls $
-        reqEnd $ reqResult $ reqMessage $ reqReferral ) )
+        reqEnd $ reqResult $ reqMessage $ reqReferral $ reqEntryUUID ) )
 .RE
 .P
 Note that all of the OIDs used in the logging schema currently reside
@@ -224,6 +240,11 @@ The
 .B reqReferral
 attribute carries any referrals that were returned with the result of the
 request.
+
+The
+.B reqEntryUUID
+attribute records the entryUUID attribute of the entry operated on, for an Add
+request, this is the entryUUID of the newly created entry.
 
 Operation-specific classes are defined with additional attributes to carry
 all of the relevant parameters associated with the operation:
@@ -371,7 +392,7 @@ filter.
     DESC 'ModRDN operation'
     SUP auditWriteObject STRUCTURAL
     MUST ( reqNewRDN $ reqDeleteOldRDN )
-    MAY ( reqNewSuperior $ reqOld ) )
+    MAY ( reqNewSuperior $ reqMod $ reqOld ) )
 .RE
 .P
 The

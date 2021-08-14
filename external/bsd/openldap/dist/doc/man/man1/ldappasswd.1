@@ -1,6 +1,6 @@
 .TH LDAPPASSWD 1 "RELEASEDATE" "OpenLDAP LDVERSION"
 .\" $OpenLDAP$
-.\" Copyright 1998-2020 The OpenLDAP Foundation All Rights Reserved.
+.\" Copyright 1998-2021 The OpenLDAP Foundation All Rights Reserved.
 .\" Copying restrictions apply.  See COPYRIGHT/LICENSE.
 .SH NAME
 ldappasswd \- change the password of an LDAP entry
@@ -38,10 +38,6 @@ ldappasswd \- change the password of an LDAP entry
 .BI \-y \ passwdfile\fR]
 [\c
 .BI \-H \ ldapuri\fR]
-[\c
-.BI \-h \ ldaphost\fR]
-[\c
-.BI \-p \ ldapport\fR]
 [\c
 .BR \-e \ [ ! ] \fIext\fP [ =\fIextparam\fP ]]
 [\c
@@ -148,14 +144,6 @@ Specify URI(s) referring to the ldap server(s); only the protocol/host/port
 fields are allowed; a list of URI, separated by whitespace or commas
 is expected.
 .TP
-.BI \-h \ ldaphost
-Specify an alternate host on which the ldap server is running.
-Deprecated in favor of \fB\-H\fP.
-.TP
-.BI \-p \ ldapport
-Specify an alternate TCP port where the ldap server is listening.
-Deprecated in favor of \fB\-H\fP.
-.TP
 .BR \-e \ [ ! ] \fIext\fP [ =\fIextparam\fP ]
 .TP
 .BR \-E \ [ ! ] \fIext\fP [ =\fIextparam\fP ]
@@ -175,7 +163,7 @@ General extensions:
   [!]postread[=<attrs>] (a comma-separated attribute list)
   [!]preread[=<attrs>]  (a comma-separated attribute list)
   [!]relax
-  sessiontracking
+  sessiontracking[=<username>]
   abandon,cancel,ignore (SIGINT sends abandon/cancel,
   or ignores response; if critical, doesn't wait for SIGINT.
   not really controls)
@@ -188,13 +176,14 @@ Passwd Modify extensions:
 .TP
 .BI \-o \ opt \fR[= optparam \fR]]
 
-Specify general options.
-
-General options:
+Specify any
+.BR ldap.conf (5)
+option or one of the following:
 .nf
   nettimeout=<timeout>  (in seconds, or "none" or "max")
-  ldif-wrap=<width>     (in columns, or "no" for no wrapping)
+  ldif_wrap=<width>     (in columns, or "no" for no wrapping)
 .fi
+
 .TP
 .BI \-O \ security-properties
 Specify SASL security properties.

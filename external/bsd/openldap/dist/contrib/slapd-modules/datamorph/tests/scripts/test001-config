@@ -1,0 +1,248 @@
+#! /bin/sh
+## $OpenLDAP$
+## This work is part of OpenLDAP Software <http://www.openldap.org/>.
+##
+## Copyright 2016-2021 The OpenLDAP Foundation.
+## All rights reserved.
+##
+## Redistribution and use in source and binary forms, with or without
+## modification, are permitted only as authorized by the OpenLDAP
+## Public License.
+##
+## A copy of this license is available in the file LICENSE in the
+## top-level directory of the distribution or, alternatively, at
+## <http://www.OpenLDAP.org/license.html>.
+##
+## ACKNOWLEDGEMENTS:
+## This module was written in 2016 by Ondřej Kuzník for Symas Corp.
+
+echo "running defines.sh"
+. $SRCDIR/scripts/defines.sh
+
+. ${SCRIPTDIR}/common.sh
+
+echo "Applying invalid changes to config (should fail)..."
+for CHANGE in data/test001-*.ldif; do
+	echo "... $CHANGE"
+	. $CONFFILTER $BACKEND $MONITORDB < $CHANGE | \
+	$LDAPMODIFY -D cn=config -H $URI1 -y $CONFIGPWF \
+		>> $TESTOUT 2>&1
+	RC=$?
+	case $RC in
+	0)
+		echo "ldapmodify should have failed ($RC)!"
+		test $KILLSERVERS != no && kill -HUP $KILLPIDS
+		exit 1
+		;;
+	80)
+		echo "ldapmodify failed ($RC)"
+		;;
+	*)
+		echo "ldapmodify failed ($RC)!"
+		test $KILLSERVERS != no && kill -HUP $KILLPIDS
+		exit $RC
+		;;
+	esac
+done
+
+# We run this search after the changes above and before restart so we can also
+# check the reconfiguration attempts actually had no side effects
+echo "Saving search output before server restart..."
+echo "# search output from dynamically configured server..." >> $SERVER6OUT
+$LDAPSEARCH -b "$BASEDN" -H $URI1 \
+	>> $SERVER6OUT 2>&1
+RC=$?
+if test $RC != 0 ; then
+	echo "ldapsearch failed ($RC)!"
+	test $KILLSERVERS != no && kill -HUP $KILLPIDS
+	exit $RC
+fi
+
+echo "Stopping slapd on TCP/IP port $PORT1..."
+kill -HUP $KILLPIDS
+KILLPIDS=""
+sleep $SLEEP0
+echo "Starting slapd on TCP/IP port $PORT1..."
+$SLAPD -F $TESTDIR/confdir -h $URI1 -d $LVL >> $LOG1 2>&1 &
+PID=$!
+if test $WAIT != 0 ; then
+	echo PID $PID
+	read foo
+fi
+KILLPIDS="$PID"
+
+sleep $SLEEP0
+
+for i in 0 1 2 3 4 5; do
+	$LDAPSEARCH -s base -b "$MONITOR" -H $URI1 \
+		'objectclass=*' > /dev/null 2>&1
+	RC=$?
+	if test $RC = 0 ; then
+		break
+	fi
+	echo "Waiting ${SLEEP1} seconds for slapd to start..."
+	sleep ${SLEEP1}
+done
+
+echo "Testing slapd.conf support..."
+mkdir $TESTDIR/conftest $DBDIR2
+. $CONFFILTER $BACKEND $MONITORDB < $CONFTWO \
+	| sed -e '/^argsfile.*/a\
+moduleload ../datamorph.la' \
+		-e '/database.*monitor/i\
+include data/datamorph.conf' \
+	> $CONF2
+echo "database config" >>$CONF2
+echo "rootpw `$SLAPPASSWD -T $CONFIGPWF`" >>$CONF2
+
+$SLAPADD -f $CONF2 -l data/test.ldif
+RC=$?
+if test $RC != 0 ; then
+	echo "slapadd failed ($RC)!"
+	test $KILLSERVERS != no && kill -HUP $KILLPIDS
+	exit $RC
+fi
+
+echo "Starting slapd on TCP/IP port $PORT2..."
+$SLAPD -f $CONF2 -h $URI2 -d $LVL >> $LOG2 2>&1 &
+PID=$!
+if test $WAIT != 0 ; then
+	echo PID $PID
+	read foo
+fi
+
+sleep $SLEEP0
+
+for i in 0 1 2 3 4 5; do
+	$LDAPSEARCH -s base -b "$MONITOR" -H $URI2 \
+		'objectclass=*' > /dev/null 2>&1
+	RC=$?
+	if test $RC = 0 ; then
+		break
+	fi
+	echo "Waiting ${SLEEP1} seconds for slapd to start..."
+	sleep ${SLEEP1}
+done
+
+echo "# search output from server running from slapd.conf..." >> $SERVER2OUT
+$LDAPSEARCH -b "$BASEDN" -H $URI2 \
+	>> $SERVER2OUT 2>&1
+RC=$?
+if test $RC != 0 ; then
+	echo "ldapsearch failed ($RC)!"
+	test $KILLSERVERS != no && kill -HUP $KILLPIDS
+	exit $RC
+fi
+
+echo "Stopping slapd on TCP/IP port $PORT2..."
+kill -HUP $PID
+
+$SLAPD -Tt -f $CONF2 -F $TESTDIR/conftest -d $LVL >> $LOG3 2>&1
+
+echo "Starting slapd on TCP/IP port $PORT2..."
+$SLAPD -F $TESTDIR/conftest -h $URI2 -d $LVL >> $LOG3 2>&1 &
+PID=$!
+if test $WAIT != 0 ; then
+	echo PID $PID
+	read foo
+fi
+KILLPIDS="$KILLPIDS $PID"
+
+sleep $SLEEP0
+
+for i in 0 1 2 3 4 5; do
+	$LDAPSEARCH -s base -b "$MONITOR" -H $URI2 \
+		'objectclass=*' > /dev/null 2>&1
+	RC=$?
+	if test $RC = 0 ; then
+		break
+	fi
+	echo "Waiting ${SLEEP1} seconds for slapd to start..."
+	sleep ${SLEEP1}
+done
+
+echo "Gathering overlay configuration from both servers..."
+echo "# overlay configuration from dynamically configured server..." >> $SERVER1OUT
+$LDAPSEARCH -D cn=config -H $URI1 -y $CONFIGPWF \
+	-b "olcOverlay={0}datamorph,olcDatabase={1}$BACKEND,cn=config" \
+	| sed -e "s/ {[0-9]*}/ /" -e "s/={[0-9]*}/=/g" \
+	>> $SERVER1OUT 2>&1
+RC=$?
+if test $RC != 0 ; then
+	echo "ldapsearch failed ($RC)!"
+	test $KILLSERVERS != no && kill -HUP $KILLPIDS
+	exit $RC
+fi
+
+echo "# overlay configuration from server configured from slapd.conf..." >> $SERVER3OUT
+$LDAPSEARCH -D cn=config -H $URI2 -y $CONFIGPWF \
+	-b "olcOverlay={0}datamorph,olcDatabase={1}$BACKEND,cn=config" \
+	| sed -e "s/ {[0-9]*}/ /" -e "s/={[0-9]*}/=/g" \
+	>> $SERVER3OUT 2>&1
+RC=$?
+if test $RC != 0 ; then
+	echo "ldapsearch failed ($RC)!"
+	test $KILLSERVERS != no && kill -HUP $KILLPIDS
+	exit $RC
+fi
+
+# We've already filtered out the ordering markers, now sort the entries
+echo "Filtering ldapsearch results..."
+$LDIFFILTER -s e < $SERVER3OUT > $SERVER3FLT
+echo "Filtering expected entries..."
+$LDIFFILTER -s e < $SERVER1OUT > $SERVER1FLT
+echo "Comparing filter output..."
+$CMP $SERVER3FLT $SERVER1FLT > $CMPOUT
+
+if test $? != 0 ; then
+	echo "Comparison failed"
+	test $KILLSERVERS != no && kill -HUP $KILLPIDS
+	exit 1
+fi
+
+rm $SERVER1OUT $SERVER3OUT
+
+echo "Comparing search output on both servers..."
+echo "# search output from dynamically configured server..." >> $SERVER1OUT
+$LDAPSEARCH -b "$BASEDN" -H $URI1 \
+	>> $SERVER1OUT 2>&1
+RC=$?
+if test $RC != 0 ; then
+	echo "ldapsearch failed ($RC)!"
+	test $KILLSERVERS != no && kill -HUP $KILLPIDS
+	exit $RC
+fi
+
+echo "# search output from server configured from slapd.conf..." >> $SERVER3OUT
+$LDAPSEARCH -b "$BASEDN" -H $URI2 \
+	>> $SERVER3OUT 2>&1
+RC=$?
+if test $RC != 0 ; then
+	echo "ldapsearch failed ($RC)!"
+	test $KILLSERVERS != no && kill -HUP $KILLPIDS
+	exit $RC
+fi
+
+test $KILLSERVERS != no && kill -HUP $KILLPIDS
+
+echo "Filtering ldapsearch results..."
+$LDIFFILTER -s e < $SERVER1OUT > $SERVER1FLT
+$LDIFFILTER -s e < $SERVER2OUT > $SERVER2FLT
+$LDIFFILTER -s e < $SERVER3OUT > $SERVER3FLT
+echo "Filtering expected entries..."
+$LDIFFILTER -s e < $SERVER6OUT > $SERVER6FLT
+echo "Comparing filter output..."
+$CMP $SERVER6FLT $SERVER1FLT > $CMPOUT && \
+$CMP $SERVER6FLT $SERVER2FLT > $CMPOUT && \
+$CMP $SERVER6FLT $SERVER3FLT > $CMPOUT
+
+if test $? != 0 ; then
+	echo "Comparison failed"
+	exit 1
+fi
+
+echo ">>>>> Test succeeded"
+
+test $KILLSERVERS != no && wait
+
+exit 0

@@ -1,5 +1,5 @@
 .TH SLAPO-MEMBEROF 5 "RELEASEDATE" "OpenLDAP LDVERSION"
-.\" Copyright 1998-2020 The OpenLDAP Foundation, All Rights Reserved.
+.\" Copyright 1998-2021 The OpenLDAP Foundation, All Rights Reserved.
 .\" Copying restrictions apply.  See the COPYRIGHT file.
 .\" $OpenLDAP$
 .SH NAME
@@ -15,6 +15,11 @@ allows automatic reverse group membership maintenance.
 Any time a group entry is modified, its members are modified as appropriate
 in order to keep a DN-valued "is member of" attribute updated with the DN
 of the group.
+.LP
+Note that this overlay is deprecated and support will be dropped in future
+OpenLDAP releases. Installations should use the \fBdynlist\fP
+overlay instead. Using this overlay in a replicated environment is especially
+discouraged.
 
 .SH CONFIGURATION
 The config directives that are specific to the
@@ -107,9 +112,9 @@ The memberof overlay may be used with any backend that provides full
 read-write functionality, but it is mainly intended for use 
 with local storage backends. The maintenance operations it performs
 are internal to the server on which the overlay is configured and
-are never replicated. Replica servers should be configured with their
+are never replicated. Consumer servers should be configured with their
 own instances of the memberOf overlay if it is desired to maintain
-these memberOf attributes on the replicas.  Note that slapo-memberOf
+these memberOf attributes on the consumers.  Note that slapo-memberOf
 is not compatible with syncrepl based replication, and should not be
 used in a replicated environment. An alternative is to use slapo-dynlist
 to emulate slapo-memberOf behavior.
@@ -118,7 +123,15 @@ to emulate slapo-memberOf behavior.
 .TP
 ETCDIR/slapd.conf
 default slapd configuration file
+.SH BACKWARD COMPATIBILITY
+The memberof overlay has been reworked with the 2.5 release to use
+a consistent namespace as with other overlays. As a side-effect the
+following cn=config parameters are deprecated and will be removed in
+a future release:
+.B olcMemberOf
+is replaced with olcMemberOfConfig
 .SH SEE ALSO
+.BR slapo-dynlist (5),
 .BR slapd.conf (5),
 .BR slapd\-config (5),
 .BR slapd (8).

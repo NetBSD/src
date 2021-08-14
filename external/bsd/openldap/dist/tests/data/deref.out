@@ -1,0 +1,39 @@
+dn: o=deref
+objectClass: top
+objectClass: organization
+o: deref
+description: deref test database
+
+dn: ou=users,o=deref
+objectClass: top
+objectClass: organizationalUnit
+ou: users
+description: container for test deref users
+
+dn: ou=groups,o=deref
+objectClass: top
+objectClass: organizationalUnit
+ou: users
+ou: groups
+description: container for test deref groups
+
+dn: cn=Howard Chu,ou=users,o=deref
+objectClass: inetOrgPerson
+cn: Howard Chu
+sn: Chu
+uid: hyc
+
+dn: cn=Pierangelo Masarati,ou=users,o=deref
+objectClass: inetOrgPerson
+cn: Pierangelo Masarati
+sn: Masarati
+uid: ando
+
+dn: cn=Test Group,ou=groups,o=deref
+# member: <uid=hyc>;cn=Howard Chu,ou=users,o=deref
+# member: <uid=ando>;cn=Pierangelo Masarati,ou=users,o=deref
+objectClass: groupOfNames
+cn: Test Group
+member: cn=Howard Chu,ou=users,o=deref
+member: cn=Pierangelo Masarati,ou=users,o=deref
+

@@ -1,0 +1,13 @@
+prefix=@prefix@
+exec_prefix=@exec_prefix@
+includedir=@includedir@
+libdir=@libdir@
+
+Name: ldap (@PACKAGE@)
+Description: OpenLDAP Lightweight Directory Access Protocol library
+URL: https://www.openldap.org
+Version: @VERSION@
+Requires: lber
+Cflags: -I${includedir}
+Libs: -L${libdir} -lldap
+Libs.private: @LIBS@ @SASL_LIBS@ @TLS_LIBS@ @AUTH_LIBS@

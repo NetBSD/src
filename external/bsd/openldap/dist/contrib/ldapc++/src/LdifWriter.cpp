@@ -1,6 +1,6 @@
 // $OpenLDAP$
 /*
- * Copyright 2008-2020 The OpenLDAP Foundation, All Rights Reserved.
+ * Copyright 2008-2021 The OpenLDAP Foundation, All Rights Reserved.
  * COPYING RESTRICTIONS APPLY, see COPYRIGHT file
  */
 
@@ -22,7 +22,7 @@ LdifWriter::LdifWriter( std::ostream& output, int version ) :
             m_addSeparator = true;
         } else {
             std::ostringstream err;
-            err << "Unsuported LDIF Version";
+            err << "Unsupported LDIF Version";
             throw( std::runtime_error(err.str()) );
         }
     }

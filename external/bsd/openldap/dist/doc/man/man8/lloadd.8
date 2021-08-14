@@ -1,0 +1,312 @@
+.TH LLOADD 8C "RELEASEDATE" "OpenLDAP LDVERSION"
+.\" Copyright 2017-2021 The OpenLDAP Foundation All Rights Reserved.
+.\" Copying restrictions apply.  See COPYRIGHT/LICENSE.
+.\" $OpenLDAP$
+.SH NAME
+lloadd \- LDAP Load Balancer Daemon
+.SH SYNOPSIS
+.B LIBEXECDIR/lloadd
+[\c
+.BR \-4 | \-6 ]
+[\c
+.BI \-d \ debug-level\fR]
+[\c
+.BI \-f \ lloadd-config-file\fR]
+[\c
+.BI \-h \ URLs\fR]
+[\c
+.BI \-n \ service-name\fR]
+[\c
+.BI \-s \ syslog-level\fR]
+[\c
+.BI \-l \ syslog-local-user\fR]
+[\c
+.BI \-o \ option\fR[ = value\fR]]
+[\c
+.BI \-r \ directory\fR]
+[\c
+.BI \-u \ user\fR]
+[\c
+.BI \-g \ group\fR]
+.SH DESCRIPTION
+.LP
+.B Lloadd
+is the stand-alone LDAP daemon. It listens for LDAP connections on
+any number of ports (default \fB389\fP), forwarding the LDAP operations
+it receives over these connections to be handled by the configured
+backends.
+.B lloadd
+is typically invoked at boot time, usually out of
+.BR  /etc/rc.local .
+Upon startup,
+.B lloadd
+normally forks and disassociates itself from the invoking tty.
+If configured in the config file, the
+.B lloadd
+process will print its process ID (see
+.BR getpid (2))
+to a
+.B .pid
+file, as well as the command line options during invocation to an
+.B .args
+file (see
+.BR lloadd.conf (5)).
+If the
+.B \-d
+flag is given, even with a zero argument,
+.B lloadd
+will not fork and disassociate from the invoking tty.
+.LP
+See the "OpenLDAP Administrator's Guide" for more details on
+.BR lloadd .
+.SH OPTIONS
+.TP
+.B \-4
+Listen on IPv4 addresses only.
+.TP
+.B \-6
+Listen on IPv6 addresses only.
+.TP
+.BI \-d \ debug-level
+Turn on debugging as defined by
+.IR debug-level .
+If this option is specified, even with a zero argument,
+.B lloadd
+will not fork or disassociate from the invoking terminal.  Some general
+operation and status messages are printed for any value of \fIdebug-level\fP.
+\fIdebug-level\fP is taken as a bit string, with each bit corresponding to a
+different kind of debugging information.  See <ldap_log.h> for details.
+Comma-separated arrays of friendly names can be specified to select
+debugging output of the corresponding debugging information.
+All the names recognized by the \fIloglevel\fP directive
+described in \fBlloadd.conf\fP(5) are supported.
+If \fIdebug-level\fP is \fB?\fP, a list of installed debug-levels is printed,
+and lloadd exits.
+
+Remember that if you turn on packet logging, packets containing bind passwords
+will be output, so if you redirect the log to a logfile, that file should
+be read-protected.
+.TP
+.BI \-s \ syslog-level
+This option tells
+.B lloadd
+at what debug-level debugging statements should be logged to the
+.BR syslog (8)
+facility.
+The value \fIsyslog-level\fP can be set to any value or combination
+allowed by the \fB\-d\fP switch.
+Lloadd logs all messages selected by \fIsyslog-level\fP
+at the
+.BR syslog (3)
+severity debug-level \fBDEBUG\fP,
+on the unit specified with \fB\-l\fP.
+.TP
+.BI \-n \ service-name
+Specifies the service name for logging and other purposes.  Defaults
+to basename of argv[0], i.e.: "lloadd".
+.TP
+.BI \-l \ syslog-local-user
+Selects the local user of the
+.BR syslog (8)
+facility. Value can be
+.BR LOCAL0 ,
+through
+.BR LOCAL7 ,
+as well as
+.B USER
+and
+.BR DAEMON .
+The default is
+.BR LOCAL4 .
+However, this option is only permitted on systems that support
+local users with the
+.BR syslog (8)
+facility.
+Logging to syslog(8) occurs at the "DEBUG" severity debug-level.
+.TP
+.BI \-f \ lloadd-config-file
+Specifies the lloadd configuration file. The default is
+.BR ETCDIR/lloadd.conf .
+.TP
+.BI \-h \ URLlist
+.B lloadd
+will by default serve
+.B ldap:///
+(LDAP over TCP on all interfaces on default LDAP port).  That is,
+it will bind using INADDR_ANY and port \fB389\fP.
+The
+.B \-h
+option may be used to specify LDAP (and other scheme) URLs to serve.
+For example, if lloadd is given
+.BR "\-h \(dqldap://127.0.0.1:9009/ ldaps:/// ldapi:///\(dq" ,
+it will listen on 127.0.0.1:9009 for LDAP, 0.0.0.0:636 for LDAP over TLS,
+and LDAP over IPC (Unix domain sockets).  Host 0.0.0.0 represents
+INADDR_ANY (any interface).
+A space separated list of URLs is expected.  The URLs should be of the LDAP,
+PLDAP, LDAPS, PLDAPS, or LDAPI schemes, and generally without a DN or other
+optional parameters (excepting as discussed below).  Support for the latter
+three schemes depends on selected configuration options. Hosts may be specified
+by name or IPv4 and IPv6 address formats.  Ports, if specified, must be
+numeric.  The default ldap:// port is \fB389\fP and the default ldaps:// port
+is \fB636\fP, same for the proxy enabled variants.
+
+The PLDAP and PLDAPS URL schemes provide support for the HAProxy proxy protocol
+version 2, which allows a load balancer or proxy server to provide the remote
+client IP address to slapd to be used for access control or logging. Ports
+configured for PLDAP or PLDAPS will only accept connections that include the
+necessary proxy protocol header. Connections to these ports should be
+restricted at the network level to only trusted load balancers or proxies to
+avoid spoofing of client IP addresses by third parties.
+
+At the moment, the load balancer does not act on the recorded address in any
+way.
+
+For LDAP over IPC,
+.B name
+is the name of the socket, and no
+.B port
+is required, nor allowed; note that directory separators must be
+URL-encoded, like any other characters that are special to URLs;
+so the socket
+
+        /usr/local/var/ldapi
+
+must be specified as
+
+        ldapi://%2Fusr%2Flocal%2Fvar%2Fldapi
+
+The default location for the IPC socket is LOCALSTATEDIR/run/ldapi
+.TP
+.BI \-r \ directory
+Specifies a directory to become the root directory.  lloadd will
+change the current working directory to this directory and
+then
+.BR chroot (2)
+to this directory.  This is done after opening listeners but before
+reading any configuration file or initializing any backend.  When
+used as a security mechanism, it should be used in conjunction with
+.B \-u
+and
+.B \-g
+options.
+.TP
+.BI \-u \ user
+.B lloadd
+will run lloadd with the specified user name or id, and that user's
+supplementary group access list as set with initgroups(3).  The group ID
+is also changed to this user's gid, unless the \fB\-g\fP option is used to
+override.  Note when used with
+.BR \-r ,
+lloadd will use the user database in the change root environment.
+.TP
+.BI \-g \ group
+.B lloadd
+will run with the specified group name or id.  Note when used with
+.BR \-r ,
+lloadd will use the group database in the change root environment.
+.TP
+.BI \-o \ option\fR[ = value\fR]
+This option provides a generic means to specify options without the need to reserve
+a separate letter for them.
+
+It supports the following options:
+.RS
+.TP
+.BR slp= { on \||\| off \||\| \fIslp-attrs\fP }
+When SLP support is compiled into lloadd, disable it (\fBoff\fP),
+ enable it by registering at SLP DAs without specific SLP attributes (\fBon\fP),
+or with specific SLP attributes
+.I slp-attrs
+that must be an SLP attribute list definition according to the SLP standard.
+
+For example, \fB"slp=(tree=production),(server-type=OpenLDAP),(server\-version=2.4.15)"\fP
+registers at SLP DAs with the three SLP attributes tree, server-type and server-version
+that have the values given above.
+This allows one to specifically query the SLP DAs for LDAP servers holding the
+.I production
+tree in case multiple trees are available.
+.RE
+
+.SH RELATION TO SLAPD(8)
+.B Lloadd
+can be compiled as a
+.B slapd
+loadable module. In that case, it can be loaded as such:
+.LP
+.nf
+.ft tt
+    moduleload path/to/lloadd.la
+    backend lload
+    listen "listening URLs"
+.ft
+.fi
+
+This enables
+.B lloadd
+to provide additional features through the host slapd process like access to
+run-time statistics in
+.B cn=monitor
+and dynamic configuration from
+.BR cn=config .
+
+The listening sockets specified will be under direct control of
+.B lloadd
+and need to be different from the sockets slapd is configured to listen on.
+Clients connecting to these are completely separate from regular LDAP clients
+connecting to the usual
+.B slapd
+sockets -
+.B lloadd
+clients have no access to slapd databases, similarly,
+.B slapd
+client traffic does not propagate to the
+.B lloadd
+backend servers in any way.
+
+.SH EXAMPLES
+To start
+.I lloadd
+and have it fork and detach from the terminal and start load-balancing
+the LDAP servers defined in the default config file, just type:
+.LP
+.nf
+.ft tt
+	LIBEXECDIR/lloadd
+.ft
+.fi
+.LP
+To start
+.B lloadd
+with an alternate configuration file, and turn
+on voluminous debugging which will be printed on standard error, type:
+.LP
+.nf
+.ft tt
+	LIBEXECDIR/lloadd \-f /var/tmp/lloadd.conf \-d 255
+.ft
+.fi
+.LP
+To start
+.B lloadd
+as a module inside a slapd process listening on ldap://:1389 and ldaps://,
+put the following in your slapd.conf (or its equivalent in cn=config):
+.LP
+.nf
+.ft tt
+    moduleload lloadd.la
+    backend lload
+    listen "ldap://:1389 ldaps://"
+.ft
+.fi
+.SH "SEE ALSO"
+.BR ldap (3),
+.BR lloadd.conf (5),
+.BR slapd-config (5),
+.BR slapd-monitor (5),
+.BR slapd (8).
+.LP
+"OpenLDAP Administrator's Guide" (http://www.OpenLDAP.org/doc/admin/)
+.SH BUGS
+See http://www.openldap.org/its/
+.SH ACKNOWLEDGEMENTS
+.so ../Project

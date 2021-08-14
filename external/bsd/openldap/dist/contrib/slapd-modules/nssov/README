@@ -21,7 +21,7 @@ To use the overlay, add:
 	moduleload <path to>nssov.so
 	...
 
-	database hdb
+	database mdb
 	...
 	overlay nssov
 
@@ -65,7 +65,7 @@ See the nss-ldapd/README for the original attribute names used in this code.
 The overlay also supports dynamic configuration in cn=config. The layout
 of the config entry is
 
-	dn: olcOverlay={0}nssov,ocDatabase={1}hdb,cn=config
+	dn: olcOverlay={0}nssov,olcDatabase={1}mdb,cn=config
 	objectClass: olcOverlayConfig
 	objectClass: olcNssOvConfig
 	olcOverlay: {0}nssov
@@ -121,7 +121,7 @@ in the server for the given user.
 ---
 This work is part of OpenLDAP Software <http://www.openldap.org/>.
 
-Copyright 1998-2020 The OpenLDAP Foundation.
+Copyright 1998-2021 The OpenLDAP Foundation.
 Portions Copyright 2008-2009 Howard Chu, Symas Corp. All rights reserved.
 
 Redistribution and use in source and binary forms, with or without

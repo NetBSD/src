@@ -1,0 +1,212 @@
+# Test1: list entries that should have been changed by ldapmodify
+dn: ou=People,dc=example,dc=com
+objectClass: organizationalUnit
+objectClass: extensibleObject
+ou: People
+uidNumber: 0
+gidNumber: 0
+signed: -1
+number: 1
+
+dn: cn=Barbara Jensen,ou=Information Technology Division,ou=People,dc=example,
+ dc=com
+objectClass: OpenLDAPperson
+objectClass: transformedObject
+cn: Barbara Jensen
+cn: Babs Jensen
+sn:: IEplbnNlbiA=
+uid: bjensen
+title: Mythical Manager, Research Systems
+postalAddress: ITD Prod Dev & Deployment $ 535 W. William St. Room 4212 $ Anyt
+ own, MI 48103-4943
+seeAlso: cn=All Staff,ou=Groups,dc=example,dc=com
+userPassword:: YmplbnNlbg==
+mail: bjensen@mailgw.example.com
+homePostalAddress: 123 Wesley $ Anytown, MI 48103
+description: Mythical manager of the rsdd unix project
+drink: water
+homePhone: +1 313 555 2333
+pager: +1 313 555 3233
+facsimileTelephoneNumber: +1 313 555 2274
+telephoneNumber: +1 313 555 9022
+enumerated: bjensen
+enumerated: bjorn
+enumerated: uham
+
+dn: cn=Bjorn Jensen,ou=Information Technology Division,ou=People,dc=example,dc
+ =com
+objectClass: OpenLDAPperson
+objectClass: transformedObject
+cn: Bjorn Jensen
+cn: Biiff Jensen
+sn: Jensen
+uid: bjorn
+seeAlso: cn=All Staff,ou=Groups,dc=example,dc=com
+userPassword:: Ympvcm4=
+homePostalAddress: 19923 Seven Mile Rd. $ South Lyon, MI 49999
+drink: Iced Tea
+description: Hiker, biker
+title: Director, Embedded Systems
+postalAddress: Info Tech Division $ 535 W. William St. $ Anytown, MI 48103
+mail: bjorn@mailgw.example.com
+homePhone: +1 313 555 5444
+pager: +1 313 555 4474
+facsimileTelephoneNumber: +1 313 555 2177
+telephoneNumber: +1 313 555 0355
+enumerated: bjorn
+
+dn: cn=Dorothy Stevens,ou=Alumni Association,ou=People,dc=example,dc=com
+objectClass: OpenLDAPperson
+objectClass: transformedObject
+cn: Dorothy Stevens
+cn: Dot Stevens
+sn: Stevens
+uid: dots
+title: Secretary, UM Alumni Association
+postalAddress: Alumni Association $ 111 Maple St $ Anytown, MI 48109
+seeAlso: cn=All Staff,ou=Groups,dc=example,dc=com
+drink: Lemonade
+homePostalAddress: 377 White St. Apt. 3 $ Anytown, MI 48104
+description: Very tall
+facsimileTelephoneNumber: +1 313 555 3223
+telephoneNumber: +1 313 555 3664
+mail: dots@mail.alumni.example.com
+homePhone: +1 313 555 0454
+enumerated: jaj
+
+dn: cn=James A Jones 1,ou=Alumni Association,ou=People,dc=example,dc=com
+objectClass: OpenLDAPperson
+objectClass: transformedObject
+cn: James A Jones 1
+cn: James Jones
+cn: Jim Jones
+sn: Jones
+uid: jaj
+postalAddress: Alumni Association $ 111 Maple St $ Anytown, MI 48109
+seeAlso: cn=All Staff,ou=Groups,dc=example,dc=com
+userPassword:: amFq
+homePostalAddress: 3882 Beverly Rd. $ Anytown, MI 48105
+homePhone: +1 313 555 4772
+description: Outstanding
+title: Mad Cow Researcher, UM Alumni Association
+pager: +1 313 555 3923
+mail: jaj@mail.alumni.example.com
+facsimileTelephoneNumber: +1 313 555 4332
+telephoneNumber: +1 313 555 0895
+enumerated: jaj
+
+dn: cn=James A Jones 2,ou=Information Technology Division,ou=People,dc=example
+ ,dc=com
+objectClass: OpenLDAPperson
+objectClass: transformedObject
+cn: James A Jones 2
+cn: James Jones
+cn: Jim Jones
+sn: Doe
+uid: jjones
+seeAlso: cn=All Staff,ou=Groups,dc=example,dc=com
+homePostalAddress: 933 Brooks $ Anytown, MI 48104
+homePhone: +1 313 555 8838
+title: Senior Manager, Information Technology Division
+description: Not around very much
+mail: jjones@mailgw.example.com
+postalAddress: Info Tech Division $ 535 W William $ Anytown, MI 48103
+pager: +1 313 555 2833
+facsimileTelephoneNumber: +1 313 555 8688
+telephoneNumber: +1 313 555 7334
+enumerated: jjones
+
+dn: cn=Jane Doe,ou=Alumni Association,ou=People,dc=example,dc=com
+objectClass: OpenLDAPperson
+objectClass: transformedObject
+cn: Jane Doe
+cn: Jane Alverson
+sn: Doe
+uid: jdoe
+title: Programmer Analyst, UM Alumni Association
+postalAddress: Alumni Association $ 111 Maple St $ Anytown, MI 48109
+seeAlso: cn=All Staff,ou=Groups,dc=example,dc=com
+homePostalAddress: 123 Anystreet $ Anytown, MI 48104
+drink: diet coke
+description: Enthusiastic
+mail: jdoe@woof.net
+homePhone: +1 313 555 5445
+pager: +1 313 555 1220
+facsimileTelephoneNumber: +1 313 555 2311
+telephoneNumber: +1 313 555 4774
+enumerated: jdoe
+
+dn: cn=Jennifer Smith,ou=Alumni Association,ou=People,dc=example,dc=com
+objectClass: OpenLDAPperson
+objectClass: transformedObject
+cn: Jennifer Smith
+cn: Jen Smith
+sn: Smith
+uid: jen
+postalAddress: Alumni Association $ 111 Maple St $ Anytown, MI 48109
+seeAlso: cn=All Staff,ou=Groups,dc=example,dc=com
+drink: Sam Adams
+homePostalAddress: 1000 Maple #44 $ Anytown, MI 48103
+title: Telemarketer, UM Alumni Association
+mail: jen@mail.alumni.example.com
+homePhone: +1 313 555 2333
+pager: +1 313 555 6442
+facsimileTelephoneNumber: +1 313 555 2756
+telephoneNumber: +1 313 555 8232
+enumerated: jen
+
+dn: cn=John Doe,ou=Information Technology Division,ou=People,dc=example,dc=com
+objectClass: OpenLDAPperson
+objectClass: transformedObject
+cn: John Doe
+cn: Jonathon Doe
+sn: Doe
+uid: johnd
+postalAddress: ITD $ 535 W. William $ Anytown, MI 48109
+seeAlso: cn=All Staff,ou=Groups,dc=example,dc=com
+homePostalAddress: 912 East Bllvd $ Anytown, MI 48104
+title: System Administrator, Information Technology Division
+description: overworked!
+mail: johnd@mailgw.example.com
+homePhone: +1 313 555 3774
+pager: +1 313 555 6573
+facsimileTelephoneNumber: +1 313 555 4544
+telephoneNumber: +1 313 555 9394
+enumerated: melliot
+
+dn: cn=Mark Elliot,ou=Alumni Association,ou=People,dc=example,dc=com
+objectClass: OpenLDAPperson
+objectClass: transformedObject
+cn: Mark Elliot
+cn: Mark A Elliot
+sn: Elliot
+uid: melliot
+postalAddress: Alumni Association $ 111 Maple St $ Anytown, MI 48109
+seeAlso: cn=All Staff,ou=Groups,dc=example,dc=com
+homePostalAddress: 199 Outer Drive $ Ypsilanti, MI 48198
+homePhone: +1 313 555 0388
+drink: Gasoline
+title: Director, UM Alumni Association
+mail: melliot@mail.alumni.example.com
+pager: +1 313 555 7671
+facsimileTelephoneNumber: +1 313 555 7762
+telephoneNumber: +1 313 555 4177
+enumerated: melliot
+
+dn: cn=Ursula Hampster,ou=Alumni Association,ou=People,dc=example,dc=com
+objectClass: OpenLDAPperson
+objectClass: transformedObject
+cn: Ursula Hampster
+sn: Hampster
+uid: uham
+title: Secretary, UM Alumni Association
+postalAddress: Alumni Association $ 111 Maple St $ Anytown, MI 48109
+seeAlso: cn=All Staff,ou=Groups,dc=example,dc=com
+homePostalAddress: 123 Anystreet $ Anytown, MI 48104
+mail: uham@mail.alumni.example.com
+homePhone: +1 313 555 8421
+pager: +1 313 555 2844
+facsimileTelephoneNumber: +1 313 555 9700
+telephoneNumber: +1 313 555 5331
+enumerated: uham
+

@@ -16,7 +16,6 @@ include: file://@TESTWD@/@SCHEMADIR@/cosine.ldif
 include: file://@TESTWD@/@SCHEMADIR@/inetorgperson.ldif
 include: file://@TESTWD@/@SCHEMADIR@/misc.ldif
 include: file://@TESTWD@/@SCHEMADIR@/nis.ldif
-include: file://@TESTWD@/@SCHEMADIR@/ppolicy.ldif
 
 #mod#dn: cn=module{0},cn=config
 #mod#objectClass: olcModuleList
@@ -24,15 +23,9 @@ include: file://@TESTWD@/@SCHEMADIR@/ppolicy.ldif
 #mod#olcModulePath: @TESTWD@/../servers/slapd/back-@BACKEND@/
 #mod#olcModuleLoad: {0}back_@BACKEND@.la
 
-#monitormod#dn: cn=module{1},cn=config
-#monitormod#objectClass: olcModuleList
-#monitormod#cn: module{1}
-#monitormod#olcModulePath: @TESTWD@/../servers/slapd/back-monitor/
-#monitormod#olcModuleLoad: {0}back_monitor.la
-
-#syncprovmod#dn: cn=module{2},cn=config
+#syncprovmod#dn: cn=module{1},cn=config
 #syncprovmod#objectClass: olcModuleList
-#syncprovmod#cn: module{2}
+#syncprovmod#cn: module{1}
 #syncprovmod#olcModulePath: @TESTWD@/../servers/slapd/overlays/
 #syncprovmod#olcModuleLoad: {0}syncprov.la
 #accesslogmod#olcModuleLoad: {1}accesslog.la
@@ -60,7 +53,7 @@ olcRootDN: cn=manager,dc=example,dc=com
 olcRootPW: secret
 olcSizeLimit: unlimited
 olcTimeLimit: unlimited
-olcMirrorMode: TRUE
+olcMultiProvider: TRUE
 olcSyncrepl: {0}rid=100 provider=@URI1@ binddn="cn=manager,dc=example,dc=com
  " credentials=secret bindmethod=simple searchbase="dc=example,dc=com" logba
  se="cn=accesslog" logfilter="(&(objectClass=auditWriteObject)(reqResult=0))

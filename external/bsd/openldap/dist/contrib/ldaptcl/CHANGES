@@ -1,4 +1,4 @@
-Package rersion 2.0:
+Package version 2.0:
 - Detects OpenLDAP 2.0 and builds correctly with it.
 - Increment major version to 2, library file to libldaptcl2.0.so.
 - Can now perform add/delete/replace modifications in a single command.

@@ -1,5 +1,5 @@
 .TH SLAPCAT 8C "RELEASEDATE" "OpenLDAP LDVERSION"
-.\" Copyright 1998-2020 The OpenLDAP Foundation All Rights Reserved.
+.\" Copyright 1998-2021 The OpenLDAP Foundation All Rights Reserved.
 .\" Copying restrictions apply.  See COPYRIGHT/LICENSE.
 .\" $OpenLDAP$
 .SH NAME
@@ -75,14 +75,14 @@ Deprecated; use \fB-H\fP \fIldap:///???(filter)\fP instead.
 .TP
 .BI \-b \ suffix 
 Use the specified \fIsuffix\fR to determine which database to
-generate output for.  The \fB\-b\fP cannot be used in conjunction
-with the
+generate output for. By default, the first database that supports the requested
+operation is used. The \fB\-b\fP cannot be used in conjunction with the
 .B \-n
 option.
 .TP
 .B \-c
 Enable continue (ignore errors) mode.
-Multiple occorrences of
+Multiple occurrences of
 .B \-c
 make
 .BR slapcat (8)
@@ -149,7 +149,7 @@ Possible generic options/values are:
               syslog\-level=<level> (see `\-S' in slapd(8))
               syslog\-user=<user>   (see `\-l' in slapd(8))
 
-              ldif-wrap={no|<n>}
+              ldif_wrap={no|<n>}
 
 .in
 \fIn\fP is the number of columns allowed for the LDIF output
@@ -177,8 +177,6 @@ mode) when you do this to ensure consistency of the database. It is
 always safe to run 
 .B slapcat
 with the
-.BR slapd\-bdb (5),
-.BR slapd\-hdb (5),
 .BR slapd\-mdb (5),
 and
 .BR slapd\-null (5)

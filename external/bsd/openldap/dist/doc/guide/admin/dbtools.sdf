@@ -1,5 +1,5 @@
 # $OpenLDAP$
-# Copyright 1999-2020 The OpenLDAP Foundation, All Rights Reserved.
+# Copyright 1999-2021 The OpenLDAP Foundation, All Rights Reserved.
 # COPYING RESTRICTIONS APPLY, see COPYRIGHT.
 
 H1: Database Creation and Maintenance Tools
@@ -126,8 +126,16 @@ unacceptably long time to add using the LDAP method described above.
 These tools read the slapd configuration file and an input file
 containing a text representation of the entries to add. For database
 types which support the tools, they produce the database files
-directly (otherwise you must use the on-line method above). There
-are several important configuration options you will want to be
+directly (otherwise you must use the on-line method above). Also,
+the input file must be completely valid, as these tools do fewer
+consistency checks than the on-line method.
+
+Note: this Guide is not meant to provide exhaustive documentation
+on the software. The tool descriptions here only list a few of the
+available options for each command. Read the associated manpages for
+complete documentation on all of the available options.
+
+There are several important configuration options you will want to be
 sure and set in the config file database definition first:
 
 >	suffix <dn>
@@ -225,11 +233,12 @@ modifying {{slapd.conf}}(5)). This is possible using the {{slapindex}}(8)
 program.  {{slapindex}} is invoked like this
 
 >	slapindex -f <slapdconfigfile>
->		[-d <debuglevel>] [-n <databasenumber>|-b <suffix>]
+>		[-d <debuglevel>] [-n <databasenumber>|-b <suffix>] [attr...]
 
 Where the {{EX:-f}}, {{EX:-d}}, {{EX:-n}} and {{EX:-b}} options
-are the same as for the {{slapadd}}(1) program.  {{slapindex}}
-rebuilds all indices based upon the current database contents.
+are the same as for the {{slapadd}}(1) program.  If no specific
+attributes are listed, {{slapindex}} rebuilds all indices based
+upon the current database contents.
 
 
 H3: The {{EX:slapcat}} program
@@ -331,7 +340,7 @@ You can also specify a {{TERM:URL}} containing the attribute value.
 For example, the following specifies the {{EX:jpegPhoto}} value
 should be obtained from the file {{F:/path/to/file.jpeg}}.
 
->	cn:< file:///path/to/file.jpeg
+>	jpegPhoto:< file:///path/to/file.jpeg
 
 Multiple entries within the same LDIF file are separated by blank
 lines. Here's an example of an LDIF file containing three entries.

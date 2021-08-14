@@ -1,0 +1,45 @@
+# Makefile.in for Load Balancer
+# $OpenLDAP$
+## This work is part of OpenLDAP Software <http://www.openldap.org/>.
+##
+## Copyright 1998-2021 The OpenLDAP Foundation.
+## All rights reserved.
+##
+## Redistribution and use in source and binary forms, with or without
+## modification, are permitted only as authorized by the OpenLDAP
+## Public License.
+##
+## A copy of this license is available in the file LICENSE in the
+## top-level directory of the distribution or, alternatively, at
+## <http://www.OpenLDAP.org/license.html>.
+
+
+XSRCS	= version.c
+
+NT_SRCS = ../slapd/nt_svc.c
+NT_OBJS = ../slapd/nt_svc.o ../../libraries/liblutil/slapdmsg.res
+
+SRCS	+= module_init.c monitor.c
+
+OBJS	= $(patsubst %.c,%.lo,$(SRCS)) $(@PLAT@_OBJS)
+
+BUILD_OPT = "--enable-balancer=mod"
+BUILD_MOD = @BUILD_BALANCER@
+
+LIBBASE=lloadd
+
+# $(LTHREAD_LIBS) must be last!
+XLIBS = $(LLOADD_L)
+XXLIBS = $(LLOADD_LIBS) $(SECURITY_LIBS) $(LUTIL_LIBS)
+XXXLIBS = $(LTHREAD_LIBS)
+
+NT_DEPENDS = slapd.exp
+NT_OBJECTS = slapd.exp symdummy.o $(LLOADD_OBJS) version.o
+
+UNIX_DEPENDS = version.o $(LLOADD_L)
+UNIX_OBJECTS = $(OBJS) version.o
+
+LLOADD_DEPENDS = $(@PLAT@_DEPENDS)
+LLOADD_OBJECTS = $(@PLAT@_OBJECTS)
+LINK_LIBS=$(LLOADD_LIBS)
+MOD_DEFS = -DSLAPD_IMPORT -DBALANCER_MODULE

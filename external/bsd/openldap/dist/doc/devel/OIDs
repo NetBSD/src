@@ -1,0 +1,119 @@
+OpenLDAProot	1.3.6.1.4.1.4203
+
+OpenLDAP	OpenLDAProot:1
+
+OpenLDAPsyntax			OpenLDAP:1
+	authPasswordSyntax		OpenLDAPsyntax:2
+
+OpenLDAPmatchingrule	OpenLDAP:2
+	authPasswordExactMatch	OpenLDAPmatchingrule:2
+	authPasswordMatch		OpenLDAPmatchingrule:3
+
+OpenLDAPattributeType	OpenLDAP:3
+	supportedAuthPasswordSchemas	OpenLDAPattributeType:3
+	authPassword					OpenLDAPattributeType:4
+	supportedFeatures				OpenLDAPattributeType:5
+
+OpenLDAPobjectClass		OpenLDAP:4
+	OpenLDAPorg				OpenLDAPObjectClass:3
+	OpenLDAPou				OpenLDAPObjectClass:4
+	OpenLDAPperson			OpenLDAPObjectClass:5
+	OpenLDAPdisplayableObject	OpenLDAPObjectClass:6
+	authPasswordObject		OpenLDAPobjectClass:7
+
+OpenLDAPfeatures		OpenLDAP:5
+	allOperationalAttrs		OpenLDAPfeatures:1
+	OC AD lists				OpenLDAPfeatures:2
+	TrueFalseFilters		OpenLDAPfeatures:3
+	languageTagOptions		OpenLDAPfeatures:4
+	languageRangetags		OpenLDAPfeatures:5
+
+Syncrepl				OpenLDAP:9
+
+OpenLDAPcontrol			OpenLDAP:10
+	SubentriesControl		OpenLDAPcontrol:1
+
+OpenLDAPexop			OpenLDAP:11
+	passwordModify			OpenLDAPexop:1
+	whoAmI					OpenLDAPexop:3
+
+OpenLDAPinternal			OpenLDAP:12
+	OpenLDAPtesting			OpenLDAPinternal:1
+	OpenLDAPconfig			OpenLDAPinternal:2
+	
+
+OpenLDAPexperimental	OpenLDAProot:666
+
+ExperimentalAttr		OpenLDAPexperimental:1
+	OpenLDAPaci				ExperimentalAttr:5
+	entryCSN				ExperimentalAttr:7
+	authzTo					ExperimentalAttr:8
+	authzFrom				ExperimentalAttr:9
+	monitorContext			ExperimentalAttr:10
+	superiorUUID			ExperimentalAttr:11		check - is this dup of parentUUID?
+	namingCSN				ExperimentalAttr:13
+	syncreplCookie			ExperimentalAttr:23
+	contextCSN				ExperimentalAttr:25
+	syncTimestamp			ExperimentalAttr:26
+	lastmodDN				ExperimentalAttr:28		(contrib/slapd-modules/lastmod)
+	lastmodType				ExperimentalAttr:29
+	lastmodEnabled			ExperimentalAttr:30
+	monitorAttrs			ExperimentalAttr:55		(back-monitor)
+	entryExpireTimestamp	ExperimentalAttr:57		(slapo-dds)
+	rdnValue				ExperimentalAttr:58		(contrib/slapd-modules/samba4)
+	parentUUID				ExperimentalAttr:59		(...samba4)
+	x509PrivateKey			ExperimentalAttr:60
+
+
+ExperimentalSyntax		OpenLDAPexperimental:2
+	ACIsyntax				ExperimentalSyntax:1
+	authPassword			ExperimentalSyntax:2	check - this was promoted to RFC3112
+	authz					ExperimentalSyntax:7
+	privateKey				ExperimentalSyntax:13
+
+ExperimentalObjectClass	OpenLDAPexperimental:3
+	glue					ExperimentalObjectClass:4
+	syncConsumerSubentry	ExperimentalObjectClass:5
+	syncProviderSubentry	ExperimentalObjectClass:6
+	lastmod					ExperimentalObjectClass:13
+	monitorClasses			ExperimentalObjectClass:16
+
+ExperimentalMatchingRule	OpenLDAPexperimental:4
+	authPaswordMatch		ExperimentalMatchingRule:1	check - this was promoted to RFC3112
+	ACImatch				ExperimentalMatchingRule:2
+	direectoryStringApproxMatch	ExperimentalMatchingRule:4
+	IA5stringApproxMatch	ExperimentalMatchingRule:5
+	dnOneLevelMatch			ExperimentalMatchingRule:8
+	dnSubtreeMatch			ExperimentalMatchingRule:9
+	dnSubordinateMatch		ExperimentalMatchingRule:10
+	dnSuperiorMatch			ExperimentalMatchingRule:11
+	authzMatch				ExperimentalMatchingRule:12
+	privateKeyMatch			ExperimentalMatchingRule:13
+
+ExperimentalControl		OpenLDAPexperimental:5
+	noop					ExperimentalControl:2
+	noSubordinates			ExperimentalControl:11
+	relax					ExperimentalControl:12
+	slurp					ExperimentalControl:13
+	valsort					ExperimentalControl:14
+	deref					ExperimentalControl:16
+	whatfailed				ExperimentalControl:17
+	noopsrch				ExperimentalControl:18
+
+ExperimentalExop		OpenLDAPexperimental:6
+	verifyCredentials		ExperimentalExop:5
+
+ExperimentalFeatures	OpenLDAPexperimental:8
+	subordinateScope		ExperimentalFeatures:1
+
+SelfContainedWorks		OpenLDAPexperimental:11
+	CSNs					SelfContainedWorks:2
+	chaining				SelfContainedWorks:3
+	retcode					SelfContainedWorks:4
+	accesslog				SelfContainedWorks:5
+	distProc				SelfContainedWorks:6
+	LDAP txns				SelfContainedWorks:7 (replaced by 1.3.6.1.1.21 RFC 5805)
+	dyngroup				SelfContainedWorks:8
+	proxyCache				SelfContainedWorks:9
+	X509 PMI				SelfContainedWorks:10
+	autoca					SelfContainedWorks:11

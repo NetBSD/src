@@ -27,6 +27,7 @@ pwdCheckQuality: 2
 pwdExpireWarning: 10
 pwdMaxAge: 30
 pwdMinLength: 5
+pwdMaxLength: 13
 pwdGraceAuthnLimit: 3
 pwdAllowUserChange: TRUE
 pwdMustChange: TRUE

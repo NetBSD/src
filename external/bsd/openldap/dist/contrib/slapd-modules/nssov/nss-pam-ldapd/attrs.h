@@ -1,4 +1,4 @@
-/*	$NetBSD: attrs.h,v 1.1.1.4 2018/02/06 01:53:06 christos Exp $	*/
+/*	$NetBSD: attrs.h,v 1.1.1.5 2021/08/14 16:05:14 christos Exp $	*/
 
 /*
    attrs.h - wrapper macros for the gcc __attribute__(()) directive
@@ -28,7 +28,7 @@
 #define GCC_VERSION(major, minor)                                           \
   ((__GNUC__ > (major)) || (__GNUC__ == (major) && __GNUC_MINOR__ >= (minor)))
 
-/* These are macros to use some gcc-specific flags in case the're available
+/* These are macros to use some gcc-specific flags in case they're available
    and otherwise define them to empty strings. This allows us to give
    the compiler some extra information.
    See http://gcc.gnu.org/onlinedocs/gcc/Attribute-Syntax.html

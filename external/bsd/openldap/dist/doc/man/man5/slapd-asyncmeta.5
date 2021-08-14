@@ -1,0 +1,531 @@
+.TH SLAPD-ASYNCMETA 5 "RELEASEDATE" "OpenLDAP LDVERSION"
+.\" Copyright 2016-2021 The OpenLDAP Foundation.
+.\" Portions Copyright 2016 Symas Corporation.
+.\" Copying restrictions apply.  See the COPYRIGHT file.
+.\" $OpenLDAP$
+.\"
+
+.SH NAME
+slapd\-asyncmeta \- asynchronous metadirectory backend to slapd
+.SH SYNOPSIS
+ETCDIR/slapd.conf
+.SH DESCRIPTION
+The
+.B asyncmeta
+backend to
+.BR slapd (8)
+performs basic LDAP proxying with respect to a set of remote LDAP
+servers, called "targets".
+The information contained in these servers can be presented as
+belonging to a single Directory Information Tree (DIT).
+
+.LP
+A good knowledge of the functionality of the
+.BR slapd\-meta(5)
+backend  is recommended.   This  backend has been designed as
+an asynchronous version of the
+.B meta
+backend. Unlike
+.B meta
+, the operation handling threads are no longer pending
+on the response from the remote server, thus decreasing the
+number of threads necessary to handle the same load. While
+.B asyncmeta
+maintains the functionality of
+.B meta
+and has a largely similar codebase,
+some changes in operation and some new configuration directives have been
+added. Some configuration options, such as
+.B conn\-pool\-max ,
+.B conn\-ttl ,
+.B single\-conn ,
+and
+.B use\-temporary\-conn
+have been removed, as they are no longer relevant.
+.LP
+.B New connection handling:
+.LP
+
+Unlike
+.B meta,
+which caches bound connections, the
+.B asyncmeta
+works with a configured maximum number of connections per target.
+For each request redirected to a target, a different connection is selected.
+Each connection has a queue, to which the request is added before it is sent to the
+remote server, and is removed after the last response for that request is received.
+ For each new request, the connection with the smallest number of pending requests
+is selected, or using round\-robin if the numbers are equal.
+.LP
+.B Overlays:
+.LP
+Due to implementation specifics, there is no guarantee that any of the existing OpenLDAP overlays will work with
+.B asyncmeta
+backend.
+
+.SH EXAMPLES
+Refer to
+.B slapd\-meta(5)
+for configuration examples.
+
+.SH CONFIGURATION
+These
+.B slapd.conf
+options apply to the ASYNCMETA backend database.
+That is, they must follow a "database asyncmeta" line and come before any
+subsequent "backend" or "database" lines.
+Other database options are described in the
+.BR slapd.conf (5)
+manual page.
+
+.SH SPECIAL CONFIGURATION DIRECTIVES
+Target configuration starts with the "uri" directive.
+All the configuration directives that are not specific to targets
+should be defined first for clarity, including those that are common
+to all backends.
+They are:
+
+.TP
+.B default\-target none
+This directive forces the backend to reject all those operations
+that must resolve to a single target in case none or multiple
+targets are selected.
+They include: add, delete, modify, modrdn; compare is not included, as
+well as bind since, as they don't alter entries, in case of multiple
+matches an attempt is made to perform the operation on any candidate
+target, with the constraint that at most one must succeed.
+This directive can also be used when processing targets to mark a
+specific target as default.
+
+.TP
+.B dncache\-ttl {DISABLED|forever|<ttl>}
+This directive sets the time-to-live of the DN cache.
+This caches the target that holds a given DN to speed up target
+selection in case multiple targets would result from an uncached
+search; forever means cache never expires; disabled means no DN
+caching; otherwise a valid ( > 0 ) ttl is required, in the format
+illustrated for the
+.B idle\-timeout
+directive.
+
+.TP
+.B onerr {CONTINUE|report|stop}
+This directive allows one to select the behavior in case an error is returned
+by one target during a search.
+The default, \fBcontinue\fP, consists in continuing the operation,
+trying to return as much data as possible.
+If the value is set to \fBstop\fP, the search is terminated as soon
+as an error is returned by one target, and the error is immediately
+propagated to the client.
+If the value is set to \fBreport\fP, the search is continued to the end
+but, in case at least one target returned an error code, the first
+non-success error code is returned.
+
+.TP
+.B max\-timeout\-ops <number>
+Specify the number of consecutive timed out requests,
+after which the connection will be considered faulty and dropped.
+
+.TP
+.B max\-pending\-ops <number>
+The maximum number of pending requests stored in a connection's queue.
+The default is 128. When this number is exceeded,
+.B LDAP_BUSY
+will be returned to the client.
+
+.TP
+.B max\-target\-conns <number>
+The maximum number of connections per target. Unlike
+.B slapd\-meta(5),
+no new connections will be created
+once this number is reached. The default value is 255.
+
+.TP
+.B norefs <NO|yes>
+If
+.BR yes ,
+do not return search reference responses.
+By default, they are returned unless request is LDAPv2.
+If set before any target specification, it affects all targets, unless
+overridden by any per-target directive.
+
+.TP
+.B noundeffilter <NO|yes>
+If
+.BR yes ,
+return success instead of searching if a filter is undefined or contains
+undefined portions.
+By default, the search is propagated after replacing undefined portions
+with
+.BR (!(objectClass=*)) ,
+which corresponds to the empty result set.
+If set before any target specification, it affects all targets, unless
+overridden by any per-target directive.
+
+.TP
+.B protocol\-version {0,2,3}
+This directive indicates what protocol version must be used to contact
+the remote server.
+If set to 0 (the default), the proxy uses the same protocol version
+used by the client, otherwise the requested protocol is used.
+The proxy returns \fIunwillingToPerform\fP if an operation that is
+incompatible with the requested protocol is attempted.
+If set before any target specification, it affects all targets, unless
+overridden by any per-target directive.
+
+.TP
+.B pseudoroot\-bind\-defer {YES|no}
+This directive, when set to
+.BR yes ,
+causes the authentication to the remote servers with the pseudo-root
+identity (the identity defined in each
+.B idassert-bind
+directive) to be deferred until actually needed by subsequent operations.
+Otherwise, all binds as the rootdn are propagated to the targets.
+
+.TP
+.B quarantine <interval>,<num>[;<interval>,<num>[...]]
+Turns on quarantine of URIs that returned
+.IR LDAP_UNAVAILABLE ,
+so that an attempt to reconnect only occurs at given intervals instead
+of any time a client requests an operation.
+The pattern is: retry only after at least
+.I interval
+seconds elapsed since last attempt, for exactly
+.I num
+times; then use the next pattern.
+If
+.I num
+for the last pattern is "\fB+\fP", it retries forever; otherwise,
+no more retries occur.
+This directive must appear before any target specification;
+it affects all targets with the same pattern.
+
+.TP
+.B rebind\-as\-user {NO|yes}
+If this option is given, the client's bind credentials are remembered
+for rebinds, when trying to re-establish a broken connection,
+or when chasing a referral, if
+.B chase\-referrals
+is set to
+.IR yes .
+
+.TP
+.B session\-tracking\-request {NO|yes}
+Adds session tracking control for all requests.
+The client's IP and hostname, and the identity associated to each request,
+if known, are sent to the remote server for informational purposes.
+This directive is incompatible with setting \fIprotocol\-version\fP to 2.
+If set before any target specification, it affects all targets, unless
+overridden by any per-target directive.
+
+.SH TARGET SPECIFICATION
+Target specification starts with a "uri" directive:
+
+.TP
+.B uri <protocol>://[<host>]/<naming context> [...]
+Identical to
+.B meta.
+See
+.B slapd\-meta(5)
+for details.
+
+.TP
+.B acl\-authcDN "<administrative DN for access control purposes>"
+DN which is used to query the target server for acl checking,
+as in the LDAP backend; it is supposed to have read access
+on the target server to attributes used on the proxy for acl checking.
+There is no risk of giving away such values; they are only used to
+check permissions.
+.B The acl\-authcDN identity is by no means implicitly used by the proxy
+.B when the client connects anonymously.
+
+.TP
+.B acl\-passwd <password>
+Password used with the
+.B acl\-authcDN
+above.
+
+.TP
+.B bind\-timeout <microseconds>
+This directive defines the timeout, in microseconds, used when polling
+for response after an asynchronous bind connection. See
+.B slapd\-meta(5)
+for details.
+
+.TP
+.B chase\-referrals {YES|no}
+enable/disable automatic referral chasing, which is delegated to the
+underlying libldap, with rebinding eventually performed if the
+\fBrebind\-as\-user\fP directive is used.  The default is to chase referrals.
+If set before any target specification, it affects all targets, unless
+overridden by any per-target directive.
+
+.TP
+.B client\-pr {accept-unsolicited|DISABLE|<size>}
+This feature allows one to use RFC 2696 Paged Results control when performing
+search operations with a specific target,
+irrespective of the client's request. See
+.B slapd\-meta(5)
+for details.
+
+.TP
+.B default\-target [<target>]
+The "default\-target" directive can also be used during target specification.
+With no arguments it marks the current target as the default.
+The optional number marks target <target> as the default one, starting
+from 1.
+Target <target> must be defined.
+
+.TP
+.B filter <pattern>
+This directive allows specifying a
+.BR regex (5)
+pattern to indicate what search filter terms are actually served by a target.
+
+In a search request, if the search filter matches the \fIpattern\fP
+the target is considered while fulfilling the request; otherwise
+the target is ignored. There may be multiple occurrences of
+the
+.B filter
+directive for each target.
+
+.TP
+.B idassert\-authzFrom <authz-regexp>
+if defined, selects what
+.I local
+identities are authorized to exploit the identity assertion feature.
+The string
+.B <authz-regexp>
+follows the rules defined for the
+.I authzFrom
+attribute.
+See
+.BR slapd.conf (5),
+section related to
+.BR authz\-policy ,
+for details on the syntax of this field.
+
+.HP
+.hy 0
+.B idassert\-bind
+.B bindmethod=none|simple|sasl [binddn=<simple DN>] [credentials=<simple password>]
+.B [saslmech=<SASL mech>] [secprops=<properties>] [realm=<realm>]
+.B [authcId=<authentication ID>] [authzId=<authorization ID>]
+.B [authz={native|proxyauthz}] [mode=<mode>] [flags=<flags>]
+.B [starttls=no|yes|critical]
+.B [tls_cert=<file>]
+.B [tls_key=<file>]
+.B [tls_cacert=<file>]
+.B [tls_cacertdir=<path>]
+.B [tls_reqcert=never|allow|try|demand]
+.B [tls_reqsan=never|allow|try|demand]
+.B [tls_cipher_suite=<ciphers>]
+.B [tls_ecname=<names>]
+.B [tls_protocol_min=<major>[.<minor>]]
+.B [tls_crlcheck=none|peer|all]
+Allows one to define the parameters of the authentication method that is
+internally used by the proxy to authorize connections that are
+authenticated by other databases. See
+.B slapd\-meta(5)
+for details.
+
+.TP
+.B idle\-timeout <time>
+This directive causes a a persistent connection  to  be  dropped after
+it  has been idle for the specified time. The connection will be re-created
+the next time it is selected for use. A connection is considered idle if no
+attempts have been made by the backend to use it to send a request to
+the backend server. If there are still pending requests in
+its queue, the connection will be dropped after the last
+request one has either received a result or has timed out.
+
+[<d>d][<h>h][<m>m][<s>[s]]
+
+where <d>, <h>, <m> and <s> are respectively treated as days, hours,
+minutes and seconds.
+If set before any target specification, it affects all targets, unless
+overridden by any per-target directive.
+
+.TP
+.B keepalive  <idle>:<probes>:<interval>
+The
+.B keepalive
+parameter sets the values of \fIidle\fP, \fIprobes\fP, and \fIinterval\fP
+used to check whether a socket is alive;
+.I idle
+is the number of seconds a connection needs to remain idle before TCP
+starts sending keepalive probes;
+.I probes
+is the maximum number of keepalive probes TCP should send before dropping
+the connection;
+.I interval
+is interval in seconds between individual keepalive probes.
+Only some systems support the customization of these values;
+the
+.B keepalive
+parameter is ignored otherwise, and system-wide settings are used.
+
+.TP
+.B tcp\-user\-timeout  <milliseconds>
+If non-zero, corresponds to the
+.B TCP_USER_TIMEOUT
+set on the target connections, overriding the operating system setting.
+Only some systems support the customization of this parameter, it is
+ignored otherwise and system-wide settings are used.
+
+.TP
+.B map "{attribute|objectclass} [<local name>|*] {<foreign name>|*}"
+This maps object classes and attributes as in the LDAP backend.
+See
+.BR slapd\-ldap (5).
+
+.TP
+.B network\-timeout <time>
+Sets the network timeout value after which
+.BR poll (2)/ select (2)
+following a
+.BR connect (2)
+returns in case of no activity while sending an operation to the remote target.
+The value is in milliseconds, and it can be specified as for
+.BR idle\-timeout .
+If set before any target specification, it affects all targets, unless
+overridden by any per-target directive.
+
+.TP
+.B nretries {forever|never|<nretries>}
+This directive defines how many times forwarding an operation should be retried
+in case of temporary failure in contacting a target. The number of retries
+is per operation, so if a bind to the target is necessary first, the remaining
+number is decremented. If defined
+before any target specification, it applies to all targets (by default,
+.BR 3
+times);
+the global value can be overridden by redefinitions inside each target
+specification.
+
+.TP
+.B rewrite* ...
+The rewrite options are identical to the
+.B meta
+backend. See the
+.B REWRITING
+section of
+.B slapd\-meta(5).
+
+.TP
+.B subtree\-{exclude|include} "<rule>"
+This directive allows one to indicate what subtrees are actually served
+by a target. See
+.B slapd\-meta(5)
+for details.
+
+.TP
+.B suffixmassage "<local suffix>" "<remote suffix>"
+.B slapd\-asyncmeta
+does not support the rewrite engine used by
+the LDAP and META backends.
+.B suffixmassage
+can be used to perform DN suffix rewriting, the same way as the obsoleted suffixmassage directive
+previously used by the LDAP backend.
+
+.TP
+.B t\-f\-support {NO|yes|discover}
+enable if the remote server supports absolute filters
+(see \fIRFC 4526\fP for details).
+If set to
+.BR discover ,
+support is detected by reading the remote server's root DSE.
+If set before any target specification, it affects all targets, unless
+overridden by any per-target directive.
+
+.TP
+.B timeout [<op>=]<val> [...]
+This directive allows one to set per-operation timeouts.
+Operations can be
+
+\fB<op> ::= bind, add, delete, modrdn, modify, compare, search\fP
+
+By default, the timeout for all operations is 2 seconds.
+
+See
+.B slapd\-meta(5)
+for details.
+
+.TP
+.B tls {none|[try\-]start|[try\-]propagate|ldaps}
+B [starttls=no]
+.B [tls_cert=<file>]
+.B [tls_key=<file>]
+.B [tls_cacert=<file>]
+.B [tls_cacertdir=<path>]
+.B [tls_reqcert=never|allow|try|demand]
+.B [tls_reqsan=never|allow|try|demand]
+.B [tls_cipher_suite=<ciphers>]
+.B [tls_ecname=<names>]
+.B [tls_crlcheck=none|peer|all]
+.RS
+Specify TLS settings regular connections.
+
+If the first parameter is not "none" then this configures the TLS
+settings to be used for regular connections.
+The StartTLS extended operation will be used when establishing the
+connection unless the URI directive protocol scheme is \fBldaps://\fP.
+In that case this keyword may only be set to "ldaps" and the StartTLS
+operation will not be used.
+
+\fBpropagate\fP issues the StartTLS operation only if the original
+connection did.
+The \fBtry\-\fP prefix instructs the proxy to continue operations
+if the StartTLS operation failed; its use is highly deprecated.
+The TLS settings default to the same as the main slapd TLS settings,
+except for
+.B tls_reqcert
+which defaults to "demand",
+.B tls_reqsan
+which defaults to "allow", and
+.B starttls
+which is overshadowed by the first keyword and thus ignored.
+
+If set before any target specification, it affects all targets, unless
+overridden by any per-target directive.
+.RE
+
+.SH SCENARIOS
+See
+.B slapd\-meta(5)
+for configuration scenarios.
+
+.SH ACLs
+ACL behavior is identical to meta. See
+.B slapd\-meta(5).
+
+.SH ACCESS CONTROL
+The
+.B asyncmeta
+backend does not honor all ACL semantics as described in
+.BR slapd.access (5).
+In general, access checking is delegated to the remote server(s).
+Only
+.B read (=r)
+access to the
+.B entry
+pseudo-attribute and to the other attribute values of the entries
+returned by the
+.B search
+operation is honored, which is performed by the frontend.
+
+.SH FILES
+.TP
+ETCDIR/slapd.conf
+default slapd configuration file
+.SH SEE ALSO
+.BR slapd.conf (5),
+.BR slapd\-ldap (5),
+.BR slapd\-meta (5),
+.BR slapo\-pcache (5),
+.BR slapd (8),
+.BR regex (7),
+.BR re_format (7).
+.SH AUTHOR
+Nadezhda Ivanova, based on back-meta by Pierangelo Masarati.

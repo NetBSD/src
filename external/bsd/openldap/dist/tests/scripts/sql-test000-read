@@ -2,7 +2,7 @@
 # $OpenLDAP$
 ## This work is part of OpenLDAP Software <http://www.openldap.org/>.
 ##
-## Copyright 1998-2020 The OpenLDAP Foundation.
+## Copyright 1998-2021 The OpenLDAP Foundation.
 ## All rights reserved.
 ##
 ## Redistribution and use in source and binary forms, with or without
@@ -29,8 +29,8 @@ fi
 mkdir -p $TESTDIR
 
 echo "Starting slapd on TCP/IP port $PORT1..."
-. $CONFFILTER $BACKEND $MONITORDB < $SQLCONF > $CONF1
-$SLAPD -f $CONF1 -h $URI1 -d $LVL $TIMING > $LOG1 2>&1 &
+. $CONFFILTER $BACKEND < $SQLCONF > $CONF1
+$SLAPD -f $CONF1 -h $URI1 -d $LVL > $LOG1 2>&1 &
 PID=$!
 if test $WAIT != 0 ; then
     echo PID $PID
@@ -40,7 +40,7 @@ KILLPIDS="$PID"
 
 echo "Testing SQL backend read operations..."
 for i in 0 1 2 3 4 5; do
-	$LDAPSEARCH -s base -b "$MONITOR" -h $LOCALHOST -p $PORT1 \
+	$LDAPSEARCH -s base -b "$MONITOR" -H $URI1 \
 		'objectclass=*' > /dev/null 2>&1
 	RC=$?
 	if test $RC = 0 ; then
@@ -60,7 +60,7 @@ BASEDN="dc=example,dc=com"
 BINDDN="cn=Mitya Kovalev,${BASEDN}"
 BINDPW="mit"
 echo -n "Testing correct bind... "
-$LDAPWHOAMI -h $LOCALHOST -p $PORT1 -D "$BINDDN" -w $BINDPW
+$LDAPWHOAMI -H $URI1 -D "$BINDDN" -w $BINDPW
 RC=$?
 if test $RC != 0 ; then
 	echo "ldapwhoami failed ($RC)!"
@@ -69,7 +69,7 @@ if test $RC != 0 ; then
 fi
 
 echo -n "Testing incorrect bind (should fail)... "
-$LDAPWHOAMI -h $LOCALHOST -p $PORT1 -D "$BINDDN" -w "XXX"
+$LDAPWHOAMI -H $URI1 -D "$BINDDN" -w "XXX"
 RC=$?
 if test $RC = 0 ; then
 	echo "ldapwhoami should have failed ($RC)!"
@@ -79,7 +79,7 @@ fi
 
 echo "Testing baseobject search..."
 echo "# Testing baseobject search..." >> $SEARCHOUT
-$LDAPSEARCH -h $LOCALHOST -p $PORT1 -b "$BASEDN" -s base -S "" \
+$LDAPSEARCH -H $URI1 -b "$BASEDN" -s base -S "" \
 	>> $SEARCHOUT 2>&1
 
 RC=$?
@@ -91,7 +91,7 @@ fi
 
 echo "Testing onelevel search..."
 echo "# Testing onelevel search..." >> $SEARCHOUT
-$LDAPSEARCH -h $LOCALHOST -p $PORT1 -b "$BASEDN" -s one -S "" \
+$LDAPSEARCH -H $URI1 -b "$BASEDN" -s one -S "" \
 	>> $SEARCHOUT 2>&1
 
 RC=$?
@@ -103,7 +103,7 @@ fi
 
 echo "Testing subtree search..."
 echo "# Testing subtree search..." >> $SEARCHOUT
-$LDAPSEARCH -h $LOCALHOST -p $PORT1 -b "$BASEDN" -S "" \
+$LDAPSEARCH -H $URI1 -b "$BASEDN" -S "" \
 	>> $SEARCHOUT 2>&1
 
 RC=$?
@@ -115,7 +115,7 @@ fi
 
 echo "Testing subtree search with manageDSAit..."
 echo "# Testing subtree search with manageDSAit..." >> $SEARCHOUT
-$LDAPSEARCH -h $LOCALHOST -p $PORT1 -b "$BASEDN" -M -S "" '*' ref \
+$LDAPSEARCH -H $URI1 -b "$BASEDN" -M -S "" '*' ref \
 	>> $SEARCHOUT 2>&1
 
 RC=$?
@@ -127,7 +127,7 @@ fi
 
 echo "Testing invalid filter..."
 echo "# Testing invalid filter..." >> $SEARCHOUT
-$LDAPSEARCH -h $LOCALHOST -p $PORT1 -b "$BASEDN" -S "" "(foo=)" \
+$LDAPSEARCH -H $URI1 -b "$BASEDN" -S "" "(foo=)" \
 	>> $SEARCHOUT 2>&1
 
 RC=$?
@@ -139,7 +139,7 @@ fi
 
 echo "Testing exact search..."
 echo "# Testing exact search..." >> $SEARCHOUT
-$LDAPSEARCH -h $LOCALHOST -p $PORT1 -b "$BASEDN" -S "" "(sn=Kovalev)" \
+$LDAPSEARCH -H $URI1 -b "$BASEDN" -S "" "(sn=Kovalev)" \
 	>> $SEARCHOUT 2>&1
 
 RC=$?
@@ -151,7 +151,7 @@ fi
 
 echo "Testing substrings initial search..."
 echo "# Testing substrings initial search..." >> $SEARCHOUT
-$LDAPSEARCH -h $LOCALHOST -p $PORT1 -b "$BASEDN" -S "" "(cn=m*)" \
+$LDAPSEARCH -H $URI1 -b "$BASEDN" -S "" "(cn=m*)" \
 	>> $SEARCHOUT 2>&1
 
 RC=$?
@@ -163,7 +163,7 @@ fi
 
 echo "Testing substrings any search..."
 echo "# Testing substrings any search..." >> $SEARCHOUT
-$LDAPSEARCH -h $LOCALHOST -p $PORT1 -b "$BASEDN" -S "" "(cn=*m*)" \
+$LDAPSEARCH -H $URI1 -b "$BASEDN" -S "" "(cn=*m*)" \
 	>> $SEARCHOUT 2>&1
 
 RC=$?
@@ -175,7 +175,7 @@ fi
 
 echo "Testing substrings final search..."
 echo "# Testing substrings final search..." >> $SEARCHOUT
-$LDAPSEARCH -h $LOCALHOST -p $PORT1 -b "$BASEDN" -S "" "(cn=*v)" \
+$LDAPSEARCH -H $URI1 -b "$BASEDN" -S "" "(cn=*v)" \
 	>> $SEARCHOUT 2>&1
 
 RC=$?
@@ -187,7 +187,7 @@ fi
 
 echo "Testing approx search..."
 echo "# Testing approx search..." >> $SEARCHOUT
-$LDAPSEARCH -h $LOCALHOST -p $PORT1 -b "$BASEDN" -S "" "(sn~=kovalev)" \
+$LDAPSEARCH -H $URI1 -b "$BASEDN" -S "" "(sn~=kovalev)" \
 	>> $SEARCHOUT 2>&1
 
 RC=$?
@@ -199,7 +199,7 @@ fi
 
 echo "Testing extensible filter search..."
 echo "# Testing extensible filter search..." >> $SEARCHOUT
-$LDAPSEARCH -h $LOCALHOST -p $PORT1 -b "$BASEDN" -S "" \
+$LDAPSEARCH -H $URI1 -b "$BASEDN" -S "" \
 	 "(sn:caseExactMatch:=Kovalev)" >> $SEARCHOUT 2>&1
 
 RC=$?
@@ -211,7 +211,7 @@ fi
 
 echo "Testing search for telephoneNumber..."
 echo "# Testing search for telephoneNumber..." >> $SEARCHOUT
-$LDAPSEARCH -h $LOCALHOST -p $PORT1 -b "$BASEDN" -S "" \
+$LDAPSEARCH -H $URI1 -b "$BASEDN" -S "" \
 	 "(telephoneNumber=3322334)" >> $SEARCHOUT 2>&1
 
 RC=$?
@@ -223,7 +223,7 @@ fi
 
 echo "Testing AND search..."
 echo "# Testing AND search..." >> $SEARCHOUT
-$LDAPSEARCH -h $LOCALHOST -p $PORT1 -b "$BASEDN" -S "" \
+$LDAPSEARCH -H $URI1 -b "$BASEDN" -S "" \
 	 "(&(sn=kovalev)(givenName=mitya))" >> $SEARCHOUT 2>&1
 
 RC=$?
@@ -235,7 +235,7 @@ fi
 
 echo "Testing AND search on objectClass..."
 echo "# Testing AND search on objectClass..." >> $SEARCHOUT
-$LDAPSEARCH -h $LOCALHOST -p $PORT1 -b "$BASEDN" -S "" \
+$LDAPSEARCH -H $URI1 -b "$BASEDN" -S "" \
 	 "(&(objectClass=organization)(objectClass=dcObject))" >> $SEARCHOUT 2>&1
 
 RC=$?
@@ -247,7 +247,7 @@ fi
 
 echo "Testing OR search..."
 echo "# Testing OR search..." >> $SEARCHOUT
-$LDAPSEARCH -h $LOCALHOST -p $PORT1 -b "$BASEDN" -S "" \
+$LDAPSEARCH -H $URI1 -b "$BASEDN" -S "" \
 	 "(|(sn=kovalev)(givenName=mitya))" >> $SEARCHOUT 2>&1
 
 RC=$?
@@ -259,7 +259,7 @@ fi
 
 echo "Testing OR search on objectClass..."
 echo "# Testing OR search on objectClass..." >> $SEARCHOUT
-$LDAPSEARCH -h $LOCALHOST -p $PORT1 -b "$BASEDN" -S "" \
+$LDAPSEARCH -H $URI1 -b "$BASEDN" -S "" \
 	 "(|(objectClass=document)(objectClass=organization))" \
 	>> $SEARCHOUT 2>&1
 
@@ -272,7 +272,7 @@ fi
 
 echo "Testing NOT search..."
 echo "# Testing NOT search..." >> $SEARCHOUT
-$LDAPSEARCH -h $LOCALHOST -p $PORT1 -b "$BASEDN" -S "" \
+$LDAPSEARCH -H $URI1 -b "$BASEDN" -S "" \
 	 '(!(sn=kovalev))' >> $SEARCHOUT 2>&1
 
 RC=$?
@@ -284,7 +284,7 @@ fi
 
 echo "Testing NOT search on objectClass..."
 echo "# Testing NOT search on objectClass..." >> $SEARCHOUT
-$LDAPSEARCH -h $LOCALHOST -p $PORT1 -b "$BASEDN" -S "" \
+$LDAPSEARCH -H $URI1 -b "$BASEDN" -S "" \
 	 '(!(objectClass=inetOrgPerson))' >> $SEARCHOUT 2>&1
 
 RC=$?
@@ -296,7 +296,7 @@ fi
 
 echo "Testing NOT search on \"auxiliary\" objectClass..."
 echo "# Testing NOT search on \"auxiliary\" objectClass..." >> $SEARCHOUT
-$LDAPSEARCH -h $LOCALHOST -p $PORT1 -b "$BASEDN" -S "" \
+$LDAPSEARCH -H $URI1 -b "$BASEDN" -S "" \
 	 '(!(objectClass=dcObject))' >> $SEARCHOUT 2>&1
 
 RC=$?
@@ -309,7 +309,7 @@ fi
 #### Needs work...
 echo "Testing NOT presence search... (disabled)"
 ###echo "# Testing NOT presence search..." >> $SEARCHOUT
-###$LDAPSEARCH -h $LOCALHOST -p $PORT1 -b "$BASEDN" -S "" \
+###$LDAPSEARCH -H $URI1 -b "$BASEDN" -S "" \
 ###	 '(!(sn=*))' >> $SEARCHOUT 2>&1
 ###
 ###RC=$?
@@ -321,7 +321,7 @@ echo "Testing NOT presence search... (disabled)"
 
 echo "Testing attribute inheritance in filter..."
 echo "# Testing attribute inheritance in filter..." >> $SEARCHOUT
-$LDAPSEARCH -h $LOCALHOST -p $PORT1 -b "$BASEDN" -S "" \
+$LDAPSEARCH -H $URI1 -b "$BASEDN" -S "" \
 	 "(name=example)" >> $SEARCHOUT 2>&1
 
 RC=$?
@@ -334,7 +334,7 @@ fi
 # ITS#4604
 echo "Testing undefined attribute in filter..."
 echo "# Testing undefined attribute in filter..." >> $SEARCHOUT
-$LDAPSEARCH -h $LOCALHOST -p $PORT1 -b "$BASEDN" -S "" \
+$LDAPSEARCH -H $URI1 -b "$BASEDN" -S "" \
 	 "(|(o=example)(foobar=x))" >> $SEARCHOUT 2>&1
 
 RC=$?
@@ -346,7 +346,7 @@ fi
 
 echo "Testing objectClass inheritance in filter..."
 echo "# Testing objectClass inheritance in filter..." >> $SEARCHOUT
-$LDAPSEARCH -h $LOCALHOST -p $PORT1 -b "$BASEDN" -S "" \
+$LDAPSEARCH -H $URI1 -b "$BASEDN" -S "" \
 	 "(objectClass=person)" >> $SEARCHOUT 2>&1
 
 RC=$?
@@ -358,7 +358,7 @@ fi
 
 echo "Testing \"auxiliary\" objectClass in filter..."
 echo "# Testing \"auxiliary\" objectClass in filter..." >> $SEARCHOUT
-$LDAPSEARCH -h $LOCALHOST -p $PORT1 -b "$BASEDN" -S "" \
+$LDAPSEARCH -H $URI1 -b "$BASEDN" -S "" \
 	 "(objectClass=dcObject)" >> $SEARCHOUT 2>&1
 
 RC=$?
@@ -370,7 +370,7 @@ fi
 
 echo "Testing hasSubordinates in filter..."
 echo "# Testing hasSubordinates in filter..." >> $SEARCHOUT
-$LDAPSEARCH -h $LOCALHOST -p $PORT1 -b "$BASEDN" -S "" \
+$LDAPSEARCH -H $URI1 -b "$BASEDN" -S "" \
 	 "(hasSubordinates=TRUE)" >> $SEARCHOUT 2>&1
 
 RC=$?
@@ -382,7 +382,7 @@ fi
 
 echo "Testing entryUUID in filter..."
 echo "# Testing entryUUID in filter..." >> $SEARCHOUT
-$LDAPSEARCH -h $LOCALHOST -p $PORT1 -b "$BASEDN" -S "" \
+$LDAPSEARCH -H $URI1 -b "$BASEDN" -S "" \
 	 "(entryUUID=00000001-0000-0001-0000-000000000000)" >> $SEARCHOUT 2>&1
 
 RC=$?
@@ -394,7 +394,7 @@ fi
 
 echo "Testing attribute inheritance in requested attributes..."
 echo "# Testing attribute inheritance in requested attributes..." >> $SEARCHOUT
-$LDAPSEARCH -h $LOCALHOST -p $PORT1 -b "$BASEDN" -S "" \
+$LDAPSEARCH -H $URI1 -b "$BASEDN" -S "" \
 	 "(sn=kovalev)" name >> $SEARCHOUT 2>&1
 
 RC=$?
@@ -406,7 +406,7 @@ fi
 
 echo "Testing objectClass in requested attributes..."
 echo "# Testing objectClass in requested attributes..." >> $SEARCHOUT
-$LDAPSEARCH -h $LOCALHOST -p $PORT1 -b "$BASEDN" -S "" \
+$LDAPSEARCH -H $URI1 -b "$BASEDN" -S "" \
 	 objectClass >> $SEARCHOUT 2>&1
 
 RC=$?
@@ -418,7 +418,7 @@ fi
 
 echo "Testing operational attributes in request..."
 echo "# Testing operational attributes in request..." >> $SEARCHOUT
-$LDAPSEARCH -h $LOCALHOST -p $PORT1 -b "$BASEDN" -S "" \
+$LDAPSEARCH -H $URI1 -b "$BASEDN" -S "" \
 	 '+' 2>&1 > $SEARCHFLT
 
 RC=$?
@@ -432,7 +432,7 @@ grep -v '^entryCSN:' $SEARCHFLT >> $SEARCHOUT
 
 SIZELIMIT=4
 echo "Testing size limit..."
-$LDAPRSEARCH -h $LOCALHOST -p $PORT1 -b "$BASEDN" \
+$LDAPRSEARCH -H $URI1 -b "$BASEDN" \
 	-z $SIZELIMIT -S "" '(objectClass=*)' >$SEARCHFLT 2>&1
 RC=$?
 COUNT=`awk '/^# numEntries:/ {print $3}' $SEARCHFLT`
@@ -474,7 +474,7 @@ case $RC in
 esac
 
 echo -n "Testing compare (should be TRUE)... "
-$LDAPCOMPARE -h $LOCALHOST -p $PORT1 "$BINDDN" \
+$LDAPCOMPARE -H $URI1 "$BINDDN" \
 	 "sn:kovalev" >> $TESTOUT 2>&1
 
 RC=$?
@@ -493,7 +493,7 @@ case $RC in
 esac
 
 echo -n "Testing compare (should be FALSE)... "
-$LDAPCOMPARE -h $LOCALHOST -p $PORT1 "$BINDDN" \
+$LDAPCOMPARE -H $URI1 "$BINDDN" \
 	 "cn:foobar" >> $TESTOUT 2>&1
 
 RC=$?
@@ -512,7 +512,7 @@ case $RC in
 esac
 
 echo -n "Testing compare (should be UNDEFINED)... "
-$LDAPCOMPARE -h $LOCALHOST -p $PORT1 "$BINDDN" \
+$LDAPCOMPARE -H $URI1 "$BINDDN" \
 	 "o:example" >> $TESTOUT 2>&1
 
 RC=$?
@@ -531,7 +531,7 @@ case $RC in
 esac
 
 echo -n "Testing compare on hasSubordinates (should be TRUE)... "
-$LDAPCOMPARE -h $LOCALHOST -p $PORT1 "$BASEDN" \
+$LDAPCOMPARE -H $URI1 "$BASEDN" \
 	 "hasSubordinates:TRUE" >> $TESTOUT 2>&1
 
 RC=$?

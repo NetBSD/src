@@ -2,7 +2,7 @@
 # $OpenLDAP$
 ## This work is part of OpenLDAP Software <http://www.openldap.org/>.
 ##
-## Copyright 1998-2020 The OpenLDAP Foundation.
+## Copyright 1998-2021 The OpenLDAP Foundation.
 ## All rights reserved.
 ##
 ## Redistribution and use in source and binary forms, with or without
@@ -20,7 +20,7 @@ LVL=acl
 mkdir -p $TESTDIR $DBDIR1
 
 echo "Running slapadd to build slapd database..."
-. $CONFFILTER $BACKEND $MONITORDB < $VALREGEXCONF > $CONF1
+. $CONFFILTER $BACKEND < $VALREGEXCONF > $CONF1
 $SLAPADD -f $CONF1 -l $LDIFORDERED
 RC=$?
 if test $RC != 0 ; then
@@ -29,7 +29,7 @@ if test $RC != 0 ; then
 fi
 
 echo "Starting slapd on TCP/IP port $PORT1..."
-$SLAPD -f $CONF1 -h $URI1 -d $LVL $TIMING > $LOG1 2>&1 &
+$SLAPD -f $CONF1 -h $URI1 -d $LVL > $LOG1 2>&1 &
 PID=$!
 if test $WAIT != 0 ; then
     echo PID $PID
@@ -39,9 +39,9 @@ KILLPIDS="$PID"
 
 sleep 1
 
-echo "Testing attribute value regex subsitution..."
+echo "Testing attribute value regex substitution..."
 for i in 0 1 2 3 4 5; do
-	$LDAPSEARCH -s base -b "$MONITOR" -h $LOCALHOST -p $PORT1 \
+	$LDAPSEARCH -s base -b "$MONITOR" -H $URI1 \
 		'objectclass=*' > /dev/null 2>&1
 	RC=$?
 	if test $RC = 0 ; then
@@ -61,7 +61,7 @@ cat /dev/null > $SEARCHOUT
 
 echo "# Try an attribute vale regex that match, but substitute does not"
 echo "# this should fail"
-$LDAPMODIFY -D "$JAJDN" -h $LOCALHOST -p $PORT1 -w jaj >> \
+$LDAPMODIFY -D "$JAJDN" -H $URI1 -w jaj >> \
 	$TESTOUT 2>&1 << EOMODS
 dn: cn=Bjorn Jensen,ou=Information Technology Division,ou=People,dc=example,dc=com
 changetype: modify
@@ -89,7 +89,7 @@ esac
 
 echo "# Try an attribute vale regex that match and substitute does"
 echo "# this should succeed"
-$LDAPMODIFY -D "$JAJDN" -h $LOCALHOST -p $PORT1 -w jaj >> \
+$LDAPMODIFY -D "$JAJDN" -H $URI1 -w jaj >> \
 	$TESTOUT 2>&1 << EOMODS
 dn: cn=Bjorn Jensen,ou=Information Technology Division,ou=People,dc=example,dc=com
 changetype: modify
