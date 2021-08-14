@@ -1,4 +1,4 @@
-/*	$NetBSD: mcount.c,v 1.14 2019/08/27 22:48:53 kamil Exp $	*/
+/*	$NetBSD: mcount.c,v 1.15 2021/08/14 17:38:44 ryo Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Wasabi Systems, Inc.
@@ -64,19 +64,19 @@
  * SUCH DAMAGE.
  */
 
-/* If building a standalone libkern, don't include mcount. */
-#if (!defined(_KERNEL) || defined(GPROF)) && !defined(_STANDALONE)
-
 #ifdef _KERNEL_OPT
 #include "opt_multiprocessor.h"
 #endif
+
+/* If building a standalone libkern, don't include mcount. */
+#if (!defined(_KERNEL) || defined(GPROF)) && !defined(_STANDALONE)
 
 #include <sys/cdefs.h>
 #if !defined(lint) && !defined(_KERNEL) && defined(LIBC_SCCS)
 #if 0
 static char sccsid[] = "@(#)mcount.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: mcount.c,v 1.14 2019/08/27 22:48:53 kamil Exp $");
+__RCSID("$NetBSD: mcount.c,v 1.15 2021/08/14 17:38:44 ryo Exp $");
 #endif
 #endif
 
