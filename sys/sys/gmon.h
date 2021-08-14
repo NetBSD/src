@@ -1,4 +1,4 @@
-/*	$NetBSD: gmon.h,v 1.10 2012/03/09 15:38:03 christos Exp $	*/
+/*	$NetBSD: gmon.h,v 1.11 2021/08/14 17:51:20 ryo Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1992, 1993
@@ -150,4 +150,5 @@ extern struct gmonparam _gmonparam;
 #define	GPROF_FROMS	2	/* struct: from location hash bucket */
 #define	GPROF_TOS	3	/* struct: destination/count structure */
 #define	GPROF_GMONPARAM	4	/* struct: profiling parameters (see above) */
+#define	GPROF_PERCPU	5	/* per cpu node */
 #endif /* !_SYS_GMON_H_ */

@@ -1,4 +1,4 @@
-.\"	$NetBSD: kgmon.8,v 1.19 2011/04/25 22:46:35 wiz Exp $
+.\"	$NetBSD: kgmon.8,v 1.20 2021/08/14 17:51:20 ryo Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     from: @(#)kgmon.8	8.1 (Berkeley) 6/6/93
 .\"
-.Dd June 6, 1993
+.Dd August 10, 2021
 .Dt KGMON 8
 .Os
 .Sh NAME
@@ -38,6 +38,7 @@
 .Sh SYNOPSIS
 .Nm
 .Op Fl bdhpr
+.Op Fl c Ar cpuid
 .Op Fl M Ar core
 .Op Fl N Ar system
 .Sh DESCRIPTION
@@ -55,6 +56,8 @@ flag is specified,
 .Nm
 extracts profile data from the operating system and produces a
 .Pa gmon.out
+or
+.Pa gmon-<id>.out
 file suitable for later analysis by
 .Xr gprof 1 .
 .Pp
@@ -62,6 +65,18 @@ The options are as follows:
 .Bl -tag -width Ds
 .It Fl b
 Resume the collection of profile data.
+.It Fl c Ar cpuid
+Operate on the CPU specified by
+.Pa cpuid .
+If this option is specified with
+.Fl p ,
+the output file name will be
+.Pa gmon-<id>.out
+instead of
+.Pa gmon.out .
+And if the cpuid argument is
+.Dq all
+, the operation is performed for each cpu.
 .It Fl d
 Enable debug output.
 .It Fl h
@@ -79,6 +94,8 @@ instead of the default
 .It Fl p
 Dump the contents of the profile buffers into a
 .Pa gmon.out
+or
+.Pa gmon-<id>.out
 file.
 .It Fl r
 Reset all the profile buffers.
@@ -86,6 +103,8 @@ If the
 .Fl p
 flag is also specified, the
 .Pa gmon.out
+or
+.Pa gmon-<id>.out
 file is generated before the buffers are reset.
 .El
 .Pp
