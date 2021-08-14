@@ -1,4 +1,4 @@
-/*	$NetBSD: arch.c,v 1.201 2021/08/14 13:26:07 rillig Exp $	*/
+/*	$NetBSD: arch.c,v 1.202 2021/08/14 14:43:30 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -126,7 +126,7 @@
 #include "config.h"
 
 /*	"@(#)arch.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: arch.c,v 1.201 2021/08/14 13:26:07 rillig Exp $");
+MAKE_RCSID("$NetBSD: arch.c,v 1.202 2021/08/14 14:43:30 rillig Exp $");
 
 typedef struct List ArchList;
 typedef struct ListNode ArchListNode;
@@ -988,6 +988,7 @@ Arch_FindLib(GNode *gn, SearchPath *path)
 #endif
 }
 
+/* ARGSUSED */
 static bool
 RanlibOODate(const GNode *gn MAKE_ATTR_UNUSED)
 {
