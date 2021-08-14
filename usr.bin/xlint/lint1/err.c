@@ -1,4 +1,4 @@
-/*	$NetBSD: err.c,v 1.135 2021/08/09 20:07:23 rillig Exp $	*/
+/*	$NetBSD: err.c,v 1.136 2021/08/14 13:00:55 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: err.c,v 1.135 2021/08/09 20:07:23 rillig Exp $");
+__RCSID("$NetBSD: err.c,v 1.136 2021/08/14 13:00:55 rillig Exp $");
 #endif
 
 #include <sys/types.h>
@@ -178,7 +178,7 @@ const char *const msgs[] = {
 	"negative shift",					      /* 121 */
 	"shift amount %llu is greater than bit-size %llu of '%s'",    /* 122 */
 	"illegal combination of %s (%s) and %s (%s), op %s",	      /* 123 */
-	"illegal pointer combination (%s) and (%s), op %s",	      /* 124 */
+	"illegal combination of '%s' and '%s', op '%s'",	      /* 124 */
 	"ANSI C forbids ordered comparisons of pointers to functions",/* 125 */
 	"incompatible types '%s' and '%s' in conditional",	      /* 126 */
 	"'&' before array or function: ignored",		      /* 127 */
@@ -238,7 +238,7 @@ const char *const msgs[] = {
 	"{}-enclosed initializer required",			      /* 181 */
 	"incompatible pointer types (%s != %s)",		      /* 182 */
 	"illegal combination of %s (%s) and %s (%s)",		      /* 183 */
-	"illegal pointer combination",				      /* 184 */
+	"illegal combination of '%s' and '%s'",			      /* 184 */
 	"cannot initialize '%s' from '%s'",			      /* 185 */
 	"bit-field initialization is illegal in traditional C",	      /* 186 */
 	"non-null byte ignored in string initializer",		      /* 187 */

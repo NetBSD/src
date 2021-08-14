@@ -1,7 +1,7 @@
-/*	$NetBSD: msg_124.c,v 1.10 2021/07/10 06:01:41 rillig Exp $	*/
+/*	$NetBSD: msg_124.c,v 1.11 2021/08/14 13:00:55 rillig Exp $	*/
 # 3 "msg_124.c"
 
-// Test for message: illegal pointer combination (%s) and (%s), op %s [124]
+// Test for message: illegal combination of '%s' and '%s', op '%s' [124]
 
 /* lint1-extra-flags: -s */
 
