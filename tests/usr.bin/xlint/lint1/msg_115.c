@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_115.c,v 1.7 2021/08/10 20:43:13 rillig Exp $	*/
+/*	$NetBSD: msg_115.c,v 1.8 2021/08/14 12:46:24 rillig Exp $	*/
 # 3 "msg_115.c"
 
 // Test for message: %soperand of '%s' must be modifiable lvalue [115]
@@ -26,9 +26,9 @@ void take_const_member(const_member);
 const_member
 initialize_const_struct_member(void)
 {
-	/* FIXME: In an initialization, const members can be assigned. */
-	/* expect+1: warning: left operand of '=' must be modifiable lvalue [115] */
+	/* In a simple initialization, const members can be assigned. */
 	const_member cm1 = (const_member) { 12345 };
+
 	if (cm1.member != 0)
 		/* In a function call, const members can be assigned. */
 		take_const_member(cm1);
@@ -36,7 +36,7 @@ initialize_const_struct_member(void)
 	struct {
 		const_member member;
 	} cm2 = {
-	    /* In an initialization, const members can be assigned. */
+	    /* In a nested initialization, const members can be assigned. */
 	    cm1,
 	};
 	if (cm2.member.member != 0) {
