@@ -1,4 +1,4 @@
-/*	$NetBSD: curses_private.h,v 1.73 2020/03/15 01:12:47 uwe Exp $	*/
+/*	$NetBSD: curses_private.h,v 1.74 2021/08/15 12:39:39 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998-2000 Brett Lymn
@@ -299,8 +299,14 @@ struct __screen {
 	bool		 slk_hidden;
 	struct __slk_label *slk_labels;
 
-#ifdef HAVE_WCHAR
+/*
+ * XXX: This conflicts with the value in <limits.h> (32)
+ * which should be used here instead of defining a different value,
+ * but I am not changing it because it is also used in the WCOL()
+ * macro and I don't understand the effects of it.
+ */
 #define MB_LEN_MAX 8
+#ifdef HAVE_WCHAR
 #define MAX_CBUF_SIZE MB_LEN_MAX
 	int		cbuf_head;		/* header to cbuf */
 	int		cbuf_tail;		/* tail to cbuf */
