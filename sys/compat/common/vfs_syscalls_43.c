@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls_43.c,v 1.64.4.1 2020/02/27 19:00:05 martin Exp $	*/
+/*	$NetBSD: vfs_syscalls_43.c,v 1.64.4.2 2021/08/15 09:27:50 martin Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_43.c,v 1.64.4.1 2020/02/27 19:00:05 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_43.c,v 1.64.4.2 2021/08/15 09:27:50 martin Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -75,9 +75,6 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_43.c,v 1.64.4.1 2020/02/27 19:00:05 mar
 #include <compat/common/compat_util.h>
 #include <compat/common/compat_mod.h>
 
-static void cvttimespec(struct timespec *, struct timespec50 *);
-static void cvtstat(struct stat *, struct stat43 *);
-
 static struct syscall_package vfs_syscalls_43_syscalls[] = {
 	{ SYS_compat_43_oquota,     0, (sy_call_t *)compat_43_sys_quota },
 	{ SYS_compat_43_stat43,     0, (sy_call_t *)compat_43_sys_stat },
@@ -96,7 +93,7 @@ static struct syscall_package vfs_syscalls_43_syscalls[] = {
  * Convert from an old to a new timespec structure.
  */
 static void
-cvttimespec(struct timespec *ts, struct timespec50 *ots)
+cvttimespec(struct timespec50 *ots, const struct timespec *ts)
 {
 
 	if (ts->tv_sec > INT_MAX) {
@@ -120,11 +117,11 @@ cvttimespec(struct timespec *ts, struct timespec50 *ots)
  * Convert from an old to a new stat structure.
  */
 static void
-cvtstat(struct stat *st, struct stat43 *ost)
+cvtstat(struct stat43 *ost, const struct stat *st)
 {
 
 	/* Handle any padding. */
-	memset(ost, 0, sizeof *ost);
+	memset(ost, 0, sizeof(*ost));
 	ost->st_dev = st->st_dev;
 	ost->st_ino = st->st_ino;
 	ost->st_mode = st->st_mode & 0xffff;
@@ -136,9 +133,9 @@ cvtstat(struct stat *st, struct stat43 *ost)
 		ost->st_size = st->st_size;
 	else
 		ost->st_size = -2;
-	cvttimespec(&st->st_atimespec, &ost->st_atimespec);
-	cvttimespec(&st->st_mtimespec, &ost->st_mtimespec);
-	cvttimespec(&st->st_ctimespec, &ost->st_ctimespec);
+	cvttimespec(&ost->st_atimespec, &st->st_atimespec);
+	cvttimespec(&ost->st_mtimespec, &st->st_mtimespec);
+	cvttimespec(&ost->st_ctimespec, &st->st_ctimespec);
 	ost->st_blksize = st->st_blksize;
 	ost->st_blocks = st->st_blocks;
 	ost->st_flags = st->st_flags;
@@ -162,10 +159,9 @@ compat_43_sys_stat(struct lwp *l, const struct compat_43_sys_stat_args *uap, reg
 
 	error = do_sys_stat(SCARG(uap, path), FOLLOW, &sb);
 	if (error)
-		return (error);
-	cvtstat(&sb, &osb);
-	error = copyout((void *)&osb, (void *)SCARG(uap, ub), sizeof (osb));
-	return (error);
+		return error;
+	cvtstat(&osb, &sb);
+	return copyout(&osb, SCARG(uap, ub), sizeof(osb));
 }
 
 /*
@@ -177,7 +173,7 @@ compat_43_sys_lstat(struct lwp *l, const struct compat_43_sys_lstat_args *uap, r
 {
 	/* {
 		syscallarg(char *) path;
-		syscallarg(struct ostat *) ub;
+		syscallarg(struct stat43 *) ub;
 	} */
 	struct vnode *vp, *dvp;
 	struct stat sb, sb1;
@@ -242,9 +238,8 @@ again:
 		sb.st_size = sb1.st_size;
 		sb.st_blocks = sb1.st_blocks;
 	}
-	cvtstat(&sb, &osb);
-	error = copyout((void *)&osb, (void *)SCARG(uap, ub), sizeof (osb));
-	return (error);
+	cvtstat(&osb, &sb);
+	return copyout((void *)&osb, (void *)SCARG(uap, ub), sizeof (osb));
 }
 
 /*
@@ -258,18 +253,16 @@ compat_43_sys_fstat(struct lwp *l, const struct compat_43_sys_fstat_args *uap, r
 		syscallarg(int) fd;
 		syscallarg(struct stat43 *) sb;
 	} */
-	struct stat ub;
-	struct stat43 oub;
+	struct stat sb;
+	struct stat43 osb;
 	int error;
 
-	error = do_sys_fstat(SCARG(uap, fd), &ub);
-	if (error == 0) {
-		cvtstat(&ub, &oub);
-		error = copyout((void *)&oub, (void *)SCARG(uap, sb),
-		    sizeof (oub));
-	}
+	error = do_sys_fstat(SCARG(uap, fd), &sb);
+	if (error)
+		return error;
 
-	return (error);
+	cvtstat(&osb, &sb);
+	return copyout(&osb, SCARG(uap, sb), sizeof(osb));
 }
 
 
@@ -292,7 +285,7 @@ compat_43_sys_ftruncate(struct lwp *l, const struct compat_43_sys_ftruncate_args
 
 	SCARG(&nuap, fd) = SCARG(uap, fd);
 	SCARG(&nuap, length) = SCARG(uap, length);
-	return (sys_ftruncate(l, &nuap, retval));
+	return sys_ftruncate(l, &nuap, retval);
 }
 
 /*
@@ -531,7 +524,7 @@ out1:
 	fd_putfile(SCARG(uap, fd));
 	if (error)
 		return error;
-	return copyout(&loff, SCARG(uap, basep), sizeof(long));
+	return copyout(&loff, SCARG(uap, basep), sizeof(loff));
 }
 
 int
