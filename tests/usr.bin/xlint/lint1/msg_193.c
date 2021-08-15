@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_193.c,v 1.13 2021/08/15 21:21:13 rillig Exp $	*/
+/*	$NetBSD: msg_193.c,v 1.14 2021/08/15 21:51:56 rillig Exp $	*/
 # 3 "msg_193.c"
 
 // Test for message: statement not reached [193]
@@ -645,7 +645,12 @@ lint_annotation_NOTREACHED(void)
 		suppressed();
 	}
 
-	/* FIXME: The 'if' statement _is_ reached. */
+	/*
+	 * Since the condition in the 'if' statement is constant, lint knows
+	 * that the branch is unconditionally taken.  The annotation comment
+	 * marks that branch as not reached, which means that any following
+	 * statement cannot be reached as well.
+	 */
 	/* expect+1: warning: statement not reached [193] */
 	if (1)
 		/* NOTREACHED */
