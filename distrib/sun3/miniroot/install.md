@@ -1,4 +1,4 @@
-#	$NetBSD: install.md,v 1.5.2.1 2020/12/14 17:26:37 martin Exp $
+#	$NetBSD: install.md,v 1.5.2.2 2021/08/15 08:44:39 martin Exp $
 #
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -49,12 +49,10 @@ md_set_term() {
 
 md_makerootwritable() {
 	# Just remount the root device read-write.
-	if [ ! -e /tmp/root_writable ]; then
+	if ! cp /dev/null /tmp/.root_writable >/dev/null 2>&1; then
 		echo "Remounting root read-write..."
 		mi_mount_kernfs
 		mount -u /kern/rootdev /
-		swapctl -a /kern/rootdev
-		cp /dev/null /tmp/root_writable
 	fi
 }
 
