@@ -1,4 +1,4 @@
-#	$NetBSD: bn.inc,v 1.5 2018/02/09 13:35:45 christos Exp $
+#	$NetBSD: bn.inc,v 1.6 2021/08/15 13:32:43 rillig Exp $
 #
 #	@(#) Copyright (c) 1995 Simon J. Gerraty
 #
@@ -47,3 +47,7 @@ SRCS += ${BN_SRCS}
 .for cryptosrc in ${BN_SRCS}
 CPPFLAGS.${cryptosrc} = -I${OPENSSLSRC}/crypto/bn ${BNCPPFLAGS}
 .endfor
+
+LINTFLAGS.bn_nist.c+=	-X 132	# conversion from 'unsigned long' to 'int'
+LINTFLAGS.bn_nist.c+=	-X 161	# constant in conditional context
+LINTFLAGS.bn_nist.c+=	-X 275	# cast discards 'const' from type 'pointer to const unsigned long'
