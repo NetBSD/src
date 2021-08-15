@@ -1,3 +1,4 @@
-msg_346.c(20): warning: call to 'strchr' effectively discards 'const' from argument [346]
 msg_346.c(26): warning: call to 'strchr' effectively discards 'const' from argument [346]
-msg_346.c(31): warning: call to 'strchr' effectively discards 'const' from argument [346]
+msg_346.c(32): warning: call to 'strchr' effectively discards 'const' from argument [346]
+msg_346.c(37): warning: call to 'strchr' effectively discards 'const' from argument [346]
+msg_346.c(46): warning: call to 'strchr' effectively discards 'const' from argument [346]
