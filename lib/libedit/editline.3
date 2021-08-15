@@ -1,4 +1,4 @@
-.\"	$NetBSD: editline.3,v 1.100 2021/08/15 10:08:41 christos Exp $
+.\"	$NetBSD: editline.3,v 1.101 2021/08/15 10:12:54 wiz Exp $
 .\"
 .\" Copyright (c) 1997-2014 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -508,9 +508,9 @@ In unbuffered mode,
 .Fn el_gets
 will return immediately after processing a single character.
 .It Dv EL_SAFEREAD , Fa "int flag"
-If
+If the
 .Fa flag
-argument non zero, then
+argument is non-zero, then
 .Nm editline
 attempts to recover from read errors, ignoring the first interrrupted
 error, and trying to reset the input file descriptor to reset non-blocking I/O.
