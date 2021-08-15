@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.335 2021/08/15 13:08:19 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.336 2021/08/15 14:26:39 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.335 2021/08/15 13:08:19 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.336 2021/08/15 14:26:39 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -1349,12 +1349,27 @@ check_pointer_comparison(op_t op, const tnode_t *ln, const tnode_t *rn)
 }
 
 static bool
-is_direct_function_call(const tnode_t *tn, const char *name)
+is_direct_function_call(const tnode_t *tn, const char **out_name)
 {
-	return tn->tn_op == CALL &&
-	       tn->tn_left->tn_op == ADDR &&
-	       tn->tn_left->tn_left->tn_op == NAME &&
-	       strcmp(tn->tn_left->tn_left->tn_sym->s_name, name) == 0;
+
+	if (!(tn->tn_op == CALL &&
+	      tn->tn_left->tn_op == ADDR &&
+	      tn->tn_left->tn_left->tn_op == NAME))
+		return false;
+
+	*out_name = tn->tn_left->tn_left->tn_sym->s_name;
+	return true;
+}
+
+static bool
+is_unconst_function(const char *name)
+{
+
+	return strcmp(name, "memchr") == 0 ||
+	       strcmp(name, "strchr") == 0 ||
+	       strcmp(name, "strpbrk") == 0 ||
+	       strcmp(name, "strrchr") == 0 ||
+	       strcmp(name, "strstr") == 0;
 }
 
 static bool
@@ -1385,23 +1400,31 @@ is_const_char_pointer(const tnode_t *tn)
 }
 
 static bool
-is_strchr_arg_const(const tnode_t *tn)
+is_first_arg_const(const tnode_t *tn)
 {
-	return tn->tn_right->tn_op == PUSH &&
-	       tn->tn_right->tn_right->tn_op == PUSH &&
-	       tn->tn_right->tn_right->tn_right == NULL &&
-	       is_const_char_pointer(tn->tn_right->tn_right->tn_left);
+	const tnode_t *an;
+
+	an = tn->tn_right;
+	if (an == NULL)
+		return false;
+
+	while (an->tn_right != NULL)
+		an = an->tn_right;
+	return is_const_char_pointer(an->tn_left);
 }
 
 static void
-check_unconst_strchr(const type_t *lstp,
-		     const tnode_t *rn, const type_t *rstp)
+check_unconst_function(const type_t *lstp,
+		       const tnode_t *rn, const type_t *rstp)
 {
+	const char *function_name;
+
 	if (lstp->t_tspec == CHAR && !lstp->t_const &&
-	    is_direct_function_call(rn, "strchr") &&
-	    is_strchr_arg_const(rn)) {
+	    is_direct_function_call(rn, &function_name) &&
+	    is_unconst_function(function_name) &&
+	    is_first_arg_const(rn)) {
 		/* call to '%s' effectively discards 'const' from argument */
-		warning(346, "strchr");
+		warning(346, function_name);
 	}
 }
 
@@ -1490,7 +1513,7 @@ check_assign_types_compatible(op_t op, int arg,
 		}
 
 		if (!tflag)
-			check_unconst_strchr(lstp, rn, rstp);
+			check_unconst_function(lstp, rn, rstp);
 
 		return true;
 	}

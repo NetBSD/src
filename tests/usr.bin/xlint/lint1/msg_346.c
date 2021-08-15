@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_346.c,v 1.2 2021/08/15 14:00:27 rillig Exp $	*/
+/*	$NetBSD: msg_346.c,v 1.3 2021/08/15 14:26:39 rillig Exp $	*/
 # 3 "msg_346.c"
 
 // Test for message: call to '%s' effectively discards 'const' from argument [346]
@@ -40,14 +40,14 @@ example(void)
 void
 all_functions(void)
 {
-	/* TODO: expect+1: warning: call to 'memchr' effectively discards 'const' from argument [346] */
+	/* expect+1: warning: call to 'memchr' effectively discards 'const' from argument [346] */
 	take_char_ptr(memchr("string", 'c', 7));
 	/* expect+1: warning: call to 'strchr' effectively discards 'const' from argument [346] */
 	take_char_ptr(strchr("string", 'c'));
-	/* TODO: expect+1: warning: call to 'strpbrk' effectively discards 'const' from argument [346] */
+	/* expect+1: warning: call to 'strpbrk' effectively discards 'const' from argument [346] */
 	take_char_ptr(strpbrk("string", "c"));
-	/* TODO: expect+1: warning: call to 'strrchr' effectively discards 'const' from argument [346] */
+	/* expect+1: warning: call to 'strrchr' effectively discards 'const' from argument [346] */
 	take_char_ptr(strrchr("string", 'c'));
-	/* TODO: expect+1: warning: call to 'strstr' effectively discards 'const' from argument [346] */
+	/* expect+1: warning: call to 'strstr' effectively discards 'const' from argument [346] */
 	take_char_ptr(strstr("string", "c"));
 }
