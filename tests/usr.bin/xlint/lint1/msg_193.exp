@@ -86,4 +86,4 @@ msg_193.c(580): warning: label 'six' unused in function 'test_goto_numbers_alpha
 msg_193.c(597): warning: statement not reached [193]
 msg_193.c(606): warning: statement not reached [193]
 msg_193.c(627): warning: statement not reached [193]
-msg_193.c(650): warning: statement not reached [193]
+msg_193.c(655): warning: statement not reached [193]
