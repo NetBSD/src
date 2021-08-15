@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls_50.c,v 1.25 2020/01/21 02:37:16 pgoyette Exp $	*/
+/*	$NetBSD: vfs_syscalls_50.c,v 1.26 2021/08/15 07:57:46 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_50.c,v 1.25 2020/01/21 02:37:16 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_50.c,v 1.26 2021/08/15 07:57:46 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -69,8 +69,6 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_50.c,v 1.25 2020/01/21 02:37:16 pgoyett
 #include <compat/sys/dirent.h>
 #include <compat/sys/mount.h>
 
-static void cvtstat(struct stat30 *, const struct stat *);
-
 static const struct syscall_package vfs_syscalls_50_syscalls[] = {
 	{ SYS_compat_50___stat30, 0, (sy_call_t *)compat_50_sys___stat30 },
 	{ SYS_compat_50___fstat30, 0, (sy_call_t *)compat_50_sys___fstat30 },
@@ -92,6 +90,8 @@ static void
 cvtstat(struct stat30 *ost, const struct stat *st)
 {
 
+	/* Handle any padding. */
+	memset(ost, 0, sizeof(*ost));
 	ost->st_dev = st->st_dev;
 	ost->st_ino = st->st_ino;
 	ost->st_mode = st->st_mode;
@@ -130,8 +130,7 @@ compat_50_sys___stat30(struct lwp *l, const struct compat_50_sys___stat30_args *
 	if (error)
 		return error;
 	cvtstat(&osb, &sb);
-	error = copyout(&osb, SCARG(uap, ub), sizeof (osb));
-	return error;
+	return copyout(&osb, SCARG(uap, ub), sizeof(osb));
 }
 
 
@@ -154,8 +153,7 @@ compat_50_sys___lstat30(struct lwp *l, const struct compat_50_sys___lstat30_args
 	if (error)
 		return error;
 	cvtstat(&osb, &sb);
-	error = copyout(&osb, SCARG(uap, ub), sizeof (osb));
-	return error;
+	return copyout(&osb, SCARG(uap, ub), sizeof(osb));
 }
 
 /*
@@ -177,8 +175,7 @@ compat_50_sys___fstat30(struct lwp *l, const struct compat_50_sys___fstat30_args
 	if (error)
 		return error;
 	cvtstat(&osb, &sb);
-	error = copyout(&osb, SCARG(uap, sb), sizeof (osb));
-	return error;
+	return copyout(&osb, SCARG(uap, sb), sizeof(osb));
 }
 
 /* ARGSUSED */
@@ -198,8 +195,7 @@ compat_50_sys___fhstat40(struct lwp *l, const struct compat_50_sys___fhstat40_ar
 	if (error)
 		return error;
 	cvtstat(&osb, &sb);
-	error = copyout(&osb, SCARG(uap, sb), sizeof (osb));
-	return error;
+	return copyout(&osb, SCARG(uap, sb), sizeof(osb));
 }
 
 static int
