@@ -1,4 +1,4 @@
-/*	$NetBSD: slk.c,v 1.11 2021/06/24 15:41:25 martin Exp $	*/
+/*	$NetBSD: slk.c,v 1.12 2021/08/15 11:44:39 christos Exp $	*/
 
 /*-
  * Copyright (c) 2017 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: slk.c,v 1.11 2021/06/24 15:41:25 martin Exp $");
+__RCSID("$NetBSD: slk.c,v 1.12 2021/08/15 11:44:39 christos Exp $");
 #endif				/* not lint */
 
 #include <ctype.h>
@@ -818,7 +818,7 @@ __slk_draw(SCREEN *screen, int labnum)
 {
 	const struct __slk_label *l;
 	int retval, inc, lcnt, tx;
-	char ts[MB_CUR_MAX];
+	char ts[MB_LEN_MAX];
 #ifdef HAVE_WCHAR
 	cchar_t cc;
 	wchar_t wc[2];
