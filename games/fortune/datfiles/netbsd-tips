@@ -120,7 +120,7 @@ and "systat netstat" commands.
 Visit the NetBSD Security website to keep track of advisories:
   http://www.NetBSD.org/support/security/
 Or join the security-announce mailing list for alerts:
-  http://www.netbsd.org/mailinglists/#security-announce
+  http://www.NetBSD.org/mailinglists/#security-announce
 %
 Here's an example of finding what package a file belongs to:
 
