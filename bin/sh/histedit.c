@@ -1,4 +1,4 @@
-/*	$NetBSD: histedit.c,v 1.55 2019/02/10 19:21:52 kre Exp $	*/
+/*	$NetBSD: histedit.c,v 1.56 2021/08/15 10:17:55 christos Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -37,11 +37,13 @@
 #if 0
 static char sccsid[] = "@(#)histedit.c	8.2 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: histedit.c,v 1.55 2019/02/10 19:21:52 kre Exp $");
+__RCSID("$NetBSD: histedit.c,v 1.56 2021/08/15 10:17:55 christos Exp $");
 #endif
 #endif /* not lint */
 
 #include <sys/param.h>
+#include <sys/stat.h>
+#include <dirent.h>
 #include <paths.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -71,12 +73,18 @@ History *hist;	/* history cookie */
 EditLine *el;	/* editline cookie */
 int displayhist;
 static FILE *el_in, *el_out;
-
-STATIC const char *fc_replace(const char *, char *, char *);
+static int curpos;
 
 #ifdef DEBUG
 extern FILE *tracefile;
 #endif
+
+static const char *fc_replace(const char *, char *, char *);
+static int not_fcnumber(const char *);
+static int str_to_event(const char *, int);
+static int comparator(const void *, const void *);
+static char **sh_matches(const char *, int, int);
+static unsigned char sh_complete(EditLine *, int);
 
 /*
  * Set history and editing status.  Called whenever the status may
@@ -136,10 +144,11 @@ histedit(void)
 
 				set_prompt_lit(lookupvar("PSlit"));
 				el_set(el, EL_SIGNAL, 1);
+				el_set(el, EL_SAFEREAD, 1);
 				el_set(el, EL_ALIAS_TEXT, alias_text, NULL);
 				el_set(el, EL_ADDFN, "rl-complete",
 				    "ReadLine compatible completion function",
-				    _el_fn_complete);
+				    sh_complete);
 			} else {
 bad:
 				out2str("sh: can't initialize editing\n");
@@ -493,7 +502,7 @@ histcmd(volatile int argc, char ** volatile argv)
 	return 0;
 }
 
-STATIC const char *
+static const char *
 fc_replace(const char *s, char *p, char *r)
 {
 	char *dest;
@@ -512,20 +521,123 @@ fc_replace(const char *s, char *p, char *r)
 	STACKSTRNUL(dest);
 	dest = grabstackstr(dest);
 
-	return (dest);
+	return dest;
 }
 
-int
-not_fcnumber(char *s)
+
+/*
+ * Comparator function for qsort(). The use of curpos here is to skip
+ * characters that we already know to compare equal (common prefix).
+ */
+static int
+comparator(const void *a, const void *b)
+{
+	return strcmp(*(char *const *)a + curpos,
+		*(char *const *)b + curpos);
+}
+
+/*
+ * This function is passed to libedit's fn_complete(). The library will
+ * use it instead of its standard function to find matches, which
+ * searches for files in current directory. If we're at the start of the
+ * line, we want to look for available commands from all paths in $PATH.
+ */
+static char
+**sh_matches(const char *text, int start, int end)
+{
+	char *free_path = NULL, *dirname, *path;
+	char **matches = NULL;
+	size_t i = 0, size = 16;
+
+	if (start > 0)
+		return NULL;
+	curpos = end - start;
+	if ((free_path = path = strdup(pathval())) == NULL)
+		goto out;
+	if ((matches = malloc(size * sizeof(matches[0]))) == NULL)
+		goto out;
+	while ((dirname = strsep(&path, ":")) != NULL) {
+		struct dirent *entry;
+		DIR *dir;
+		int dfd;
+
+		if ((dir = opendir(dirname)) == NULL)
+			continue;
+		if ((dfd = dirfd(dir)) == -1)
+			continue;
+		while ((entry = readdir(dir)) != NULL) {
+			struct stat statb;
+
+			if (strncmp(entry->d_name, text, curpos) != 0)
+				continue;
+			if (entry->d_type == DT_UNKNOWN || entry->d_type == DT_LNK) {
+				if (fstatat(dfd, entry->d_name, &statb, 0) == -1)
+					continue;
+				if (!S_ISREG(statb.st_mode))
+					continue;
+			} else if (entry->d_type != DT_REG)
+				continue;
+			if (++i >= size - 1) {
+				size *= 2;
+				if (reallocarr(&matches, size,
+				    sizeof(*matches)))
+				{
+					closedir(dir);
+					goto out;
+				}
+			}
+			matches[i] = strdup(entry->d_name);
+		}
+		closedir(dir);
+	}
+out:
+	free(free_path);
+	if (i == 0) {
+		free(matches);
+		return NULL;
+	}
+	if (i == 1) {
+		matches[0] = strdup(matches[1]);
+		matches[i + 1] = NULL;
+	} else {
+		size_t j, k;
+
+		qsort(matches + 1, i, sizeof(matches[0]), comparator);
+		for (j = 1, k = 2; k <= i; k++)
+			if (strcmp(matches[j] + curpos, matches[k] + curpos)
+			    == 0)
+				free(matches[k]);
+			else
+				matches[++j] = matches[k];
+		matches[0] = strdup(text);
+		matches[j + 1] = NULL;
+	}
+	return matches;
+}
+
+/*
+ * This is passed to el_set(el, EL_ADDFN, ...) so that it's possible to
+ * bind a key (tab by default) to execute the function.
+ */
+unsigned char
+sh_complete(EditLine *sel, int ch __unused)
+{
+	return (unsigned char)fn_complete(sel, NULL, sh_matches,
+		L" \t\n\"\\'`@$><=;|&{(", NULL, NULL, (size_t)100,
+		NULL, &((int) {0}), NULL, NULL);
+}
+
+static int
+not_fcnumber(const char *s)
 {
 	if (s == NULL)
 		return 0;
         if (*s == '-')
                 s++;
-	return (!is_number(s));
+	return !is_number(s);
 }
 
-int
+static int
 str_to_event(const char *str, int last)
 {
 	HistEvent he;
@@ -571,7 +683,7 @@ str_to_event(const char *str, int last)
 		if (retval == -1)
 			error("history pattern not found: %s", str);
 	}
-	return (he.num);
+	return he.num;
 }
 #else
 int

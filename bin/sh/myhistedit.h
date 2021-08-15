@@ -1,4 +1,4 @@
-/*	$NetBSD: myhistedit.h,v 1.13 2017/06/28 13:46:06 kre Exp $	*/
+/*	$NetBSD: myhistedit.h,v 1.14 2021/08/15 10:17:55 christos Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -37,12 +37,11 @@ extern History *hist;
 extern EditLine *el;
 extern int displayhist;
 
+#include <filecomplete.h>
+
 void histedit(void);
 void sethistsize(const char *);
 void setterm(const char *);
 int inputrc(int, char **);
 void set_editrc(const char *);
 void set_prompt_lit(const char *);
-int not_fcnumber(char *);
-int str_to_event(const char *, int);
-
