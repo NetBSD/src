@@ -1,7 +1,10 @@
-.if empty(MACHINE_ARCH:M*eb)
+.include "mips.inc"
+
+# Don't include mips.S for 32 bit mips because it does not work for mips1
+.if ${MIPS_LE} && ${MIPS_64} == "64"
 .PATH.S: ${.PARSEDIR}
 
-BN_SRCS = mips${"${COPTS:M*-mabi=64*}" == "":?:64}.S
+BN_SRCS = mips${MIPS_64}.S
 .endif
 
 .include "../../bn.inc"

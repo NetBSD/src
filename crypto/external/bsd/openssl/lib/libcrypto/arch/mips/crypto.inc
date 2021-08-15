@@ -1,7 +1,9 @@
-.if empty(MACHINE_ARCH:M*eb)
+.include "mips.inc"
+
+.if ${MIPS_LE}
 .PATH.S: ${.PARSEDIR}
 
-CRYPTO_SRCS += mips-mont${"${COPTS:M*-mabi=64*}" == "":?:64}.S
+CRYPTO_SRCS += mips-mont${MIPS_64}.S
 .endif
 
 .include "../../crypto.inc"
