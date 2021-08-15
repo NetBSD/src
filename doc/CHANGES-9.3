@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.3,v 1.1.2.21 2021/08/11 17:23:19 martin Exp $
+# $NetBSD: CHANGES-9.3,v 1.1.2.22 2021/08/15 09:30:14 martin Exp $
 
 A complete list of changes from the NetBSD 9.2 release to the NetBSD 9.3
 release:
@@ -561,4 +561,35 @@ sys/netinet6/in6_src.c				1.88
 	PR 56348: MTU discovery fails with IPv6 sockets bound to IPv4
 	mapped address.
 	[kardel, ticket #1332]
+
+distrib/notes/hp300/hardware			1.25,1.26
+
+	Improve HP9000/360 and disk related information, mention
+	working emulated disks.
+	[tsutsui, ticket #1334]
+
+distrib/sun2/miniroot/install.md		1.8,1.9
+distrib/sun3/miniroot/install.md		1.8,1.9
+
+	Don't try to add swap on miniroot.
+	[tsutsui, ticket #1335]
+
+crypto/external/bsd/openssl/lib/libcrypto/arch/mips/aes.inc 1.6
+crypto/external/bsd/openssl/lib/libcrypto/arch/mips/bn.inc 1.7,1.8
+crypto/external/bsd/openssl/lib/libcrypto/arch/mips/crypto.inc 1.8
+crypto/external/bsd/openssl/lib/libcrypto/arch/mips/mips.inc 1.1,1.2
+crypto/external/bsd/openssl/lib/libcrypto/arch/mips/poly1305.inc 1.5
+crypto/external/bsd/openssl/lib/libcrypto/arch/mips/sha.inc 1.7
+crypto/external/bsd/openssl/lib/libcrypto/arch/sparc/bn.inc 1.3
+
+	PR 56318: fix openssl arch specific usage of optimized asm code
+	for mips and sparc.
+	[tsutsui, ticket #1336]
+
+sys/compat/common/vfs_syscalls_30.c		1.42
+sys/compat/common/vfs_syscalls_43.c		1.67
+sys/compat/common/vfs_syscalls_50.c		1.26
+
+	Fix compat stat(2) syscall kernel memory disclosure.
+	[christos, ticket #1337]
 
