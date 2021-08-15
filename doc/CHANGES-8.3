@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.3,v 1.1.2.95 2021/08/11 17:25:54 martin Exp $
+# $NetBSD: CHANGES-8.3,v 1.1.2.96 2021/08/15 10:04:53 martin Exp $
 
 A complete list of changes from the NetBSD 8.2 release to the NetBSD 8.3
 release:
@@ -1993,4 +1993,11 @@ sys/netinet6/in6_src.c				1.88
 	PR 56348: MTU discovery fails with IPv6 sockets bound to IPv4
 	mapped address.
 	[kardel, ticket #1690]
+
+sys/compat/common/vfs_syscalls_30.c		1.42
+sys/compat/common/vfs_syscalls_43.c		1.67
+sys/compat/common/vfs_syscalls_50.c		1.26
+
+	Fix compat stat(2) syscall kernel memory disclosure.
+	[christos, ticket #1691]
 
