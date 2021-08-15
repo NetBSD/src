@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.prog.mk,v 1.337 2021/08/14 16:16:32 christos Exp $
+#	$NetBSD: bsd.prog.mk,v 1.338 2021/08/15 10:30:39 christos Exp $
 #	@(#)bsd.prog.mk	8.2 (Berkeley) 4/2/94
 
 .ifndef HOSTPROG
@@ -227,11 +227,13 @@ LIBKRB5_DPADD+= ${LIBKRB5} ${LIBCOM_ERR} \
 	${LIBHX509} ${LIBCRYPTO} ${LIBASN1} \
 	${LIBWIND} ${LIBHEIMBASE} ${LIBCOM_ERR} ${LIBROKEN} \
 	${LIBSQLITE3} ${LIBM} ${LIBCRYPT} ${LIBUTIL}
+LIBGSSAPI_LDADD+= -lgssapi -lheimntlm ${LIBKRB5_LDADD}
+LIBGSSAPI_DPADD+= ${LIBGSSAPI} ${LIBHEIMNTLM} ${LIBKRB5_DPADD}
 .endif
 
 .if (${MKLDAP} != "no")
-LIBLDAP_LDADD+= -lldap -llber -lgssapi -lssl -lcrypto 
-LIBLDAP_DPADD+= ${LIBLDAP} ${LIBLBER} ${LIBGSSAPI} ${LIBSSL} ${LIBCRYPTO}
+LIBLDAP_LDADD+= -lldap -llber ${LIBGSSAPI_LDADD} -lssl -lcrypto 
+LIBLDAP_DPADD+= ${LIBLDAP} ${LIBLBER} ${LIBGSSAPI_DPADD} ${LIBSSL} ${LIBCRYPTO}
 .endif
 
 # PAM applications, if linked statically, need more libraries
