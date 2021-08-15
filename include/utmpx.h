@@ -1,4 +1,4 @@
-/*	$NetBSD: utmpx.h,v 1.17 2009/01/11 19:09:29 christos Exp $	 */
+/*	$NetBSD: utmpx.h,v 1.18 2021/08/15 00:36:11 gutteridge Exp $	 */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -124,7 +124,7 @@ struct lastlogx {
 	char ll_host[_UTX_HOSTSIZE];	/* host name */
 	struct sockaddr_storage ll_ss;	/* address where entry was made from */
 };
-#endif	/* !_XOPEN_SOURCE */
+#endif	/* _NETBSD_SOURCE */
 
 __BEGIN_DECLS
 
