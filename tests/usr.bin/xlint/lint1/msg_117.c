@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_117.c,v 1.5 2021/04/05 01:35:34 rillig Exp $	*/
+/*	$NetBSD: msg_117.c,v 1.6 2021/08/15 13:02:20 rillig Exp $	*/
 # 3 "msg_117.c"
 
 // Test for message: bitwise '%s' on signed value possibly nonportable [117]
@@ -33,4 +33,12 @@ int
 shr_rhs_constant_negative(int a)
 {
 	return a >> -0x1234;		/* expect: 117 *//* expect: 121 */
+}
+
+unsigned int
+shr_unsigned_char(unsigned char uc)
+{
+	/* FIXME: This value cannot actually be negative. */
+	/* expect+1: warning: bitwise '>>' on signed value possibly nonportable [117] */
+	return uc >> 4;
 }
