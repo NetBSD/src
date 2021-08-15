@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_117.c,v 1.6 2021/08/15 13:02:20 rillig Exp $	*/
+/*	$NetBSD: msg_117.c,v 1.7 2021/08/15 13:08:20 rillig Exp $	*/
 # 3 "msg_117.c"
 
 // Test for message: bitwise '%s' on signed value possibly nonportable [117]
@@ -38,7 +38,10 @@ shr_rhs_constant_negative(int a)
 unsigned int
 shr_unsigned_char(unsigned char uc)
 {
-	/* FIXME: This value cannot actually be negative. */
-	/* expect+1: warning: bitwise '>>' on signed value possibly nonportable [117] */
+	/*
+	 * Even though 'uc' is promoted to 'int', it cannot be negative.
+	 * Before tree.c 1.335 from 2021-08-15, lint wrongly warned that
+	 * 'uc >> 4' might be a bitwise '>>' on signed value.
+	 */
 	return uc >> 4;
 }
