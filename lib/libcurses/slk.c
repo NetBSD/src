@@ -1,4 +1,4 @@
-/*	$NetBSD: slk.c,v 1.12 2021/08/15 11:44:39 christos Exp $	*/
+/*	$NetBSD: slk.c,v 1.13 2021/08/15 11:54:12 christos Exp $	*/
 
 /*-
  * Copyright (c) 2017 The NetBSD Foundation, Inc.
@@ -31,12 +31,13 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: slk.c,v 1.12 2021/08/15 11:44:39 christos Exp $");
+__RCSID("$NetBSD: slk.c,v 1.13 2021/08/15 11:54:12 christos Exp $");
 #endif				/* not lint */
 
 #include <ctype.h>
 #include <stdlib.h>
 #include <string.h>
+#include <limits.h>
 #ifdef HAVE_WCHAR
 #include <wctype.h>
 #endif
