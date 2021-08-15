@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2018/03/15 18:40:16 christos Exp $
+#	$NetBSD: Makefile,v 1.4 2021/08/15 12:58:01 rillig Exp $
 
 .include <bsd.own.mk>
 
@@ -16,6 +16,9 @@ SRCS+=	ornd_keys.c
 
 CPPFLAGS+=-DOPENSSL_VERSION_PTEXT="\" based on OpenSSL 0.9.6j 10 Apr 2003\""
 CPPFLAGS+=-DOPENSSL_cleanse=bzero -DOPENSSL_malloc=malloc
+LINTFLAGS+=	-X 117	# bitwise '>>' on signed value possibly nonportable
+LINTFLAGS+=	-X 132	# conversion from 'long' to 'unsigned int'
+LINTFLAGS+=	-X 220	# fallthrough on case statement
 
 INCS=	des.h
 INCSDIR=/usr/include
