@@ -1,4 +1,4 @@
-/* $NetBSD: set.c,v 1.37 2020/01/12 18:42:41 christos Exp $ */
+/* $NetBSD: set.c,v 1.38 2021/08/15 12:16:02 christos Exp $ */
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)set.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: set.c,v 1.37 2020/01/12 18:42:41 christos Exp $");
+__RCSID("$NetBSD: set.c,v 1.38 2021/08/15 12:16:02 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -158,6 +158,7 @@ update_vars(Char *vp)
 	el_set(el, EL_EDITOR, *vn ? short2str(vn) : "emacs");
 	el_set(el, EL_PROMPT, printpromptstr);
 	el_set(el, EL_ALIAS_TEXT, alias_text, NULL);
+	el_set(el, EL_SAFEREAD, 1);
 	el_set(el, EL_ADDFN, "rl-complete",
 	    "ReadLine compatible completion function", _el_fn_complete);
 	el_set(el, EL_BIND, "^I", adrof(STRfilec) ? "rl-complete" : "ed-insert",
