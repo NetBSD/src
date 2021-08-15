@@ -1,4 +1,4 @@
-/*	$NetBSD: fbt_isa.c,v 1.4 2021/08/11 11:16:49 christos Exp $	*/
+/*	$NetBSD: fbt_isa.c,v 1.5 2021/08/15 16:33:57 christos Exp $	*/
 
 /*
  * CDDL HEADER START
@@ -251,9 +251,9 @@ fbt_provide_module_cb(const char *name, int symindx, void *value,
 	/*
 	 * Exclude some more symbols which can be called from probe context.
 	 */
-	if (strncmp(name, "trap", 4) ||
-	    strncmp(name, "x86_curcpu", 10) == 0 ||
-	    strncmp(name, "x86_curlwp", 10) == 0) {
+	if (strcmp(name, "trap") ||
+	    strcmp(name, "x86_curcpu") == 0 ||
+	    strcmp(name, "x86_curlwp") == 0) {
 		return 0;
 	}
 #endif
