@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.libldap,v 1.11 2021/08/14 16:15:03 christos Exp $
+#	$NetBSD: Makefile.libldap,v 1.12 2021/08/15 10:33:58 christos Exp $
 
 .include "../../openldap.mk"
 
@@ -24,7 +24,11 @@ CPPFLAGS+=	-DLDAP_LIBRARY -DHAVE_GSSAPI
 
 LIBDPLIBS+=	lber	${.CURDIR}/../liblber
 
+.if ${USE_KERBEROS} != "no"
+CPPFLAGS+=	-DHAVE_GSSAPI
 LIBDPLIBS+=	gssapi	${NETBSDSRCDIR}/crypto/external/bsd/heimdal/lib/libgssapi
+.endif
+
 LIBDPLIBS+=	crypto	${NETBSDSRCDIR}/crypto/external/bsd/${EXTERNAL_OPENSSL_SUBDIR}/lib/libcrypto
 LIBDPLIBS+=	ssl	${NETBSDSRCDIR}/crypto/external/bsd/${EXTERNAL_OPENSSL_SUBDIR}/lib/libssl
 
