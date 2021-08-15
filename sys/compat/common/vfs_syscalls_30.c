@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls_30.c,v 1.36 2014/10/20 11:58:01 christos Exp $	*/
+/*	$NetBSD: vfs_syscalls_30.c,v 1.36.12.1 2021/08/15 10:03:46 martin Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2008 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_30.c,v 1.36 2014/10/20 11:58:01 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_30.c,v 1.36.12.1 2021/08/15 10:03:46 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -55,7 +55,6 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_30.c,v 1.36 2014/10/20 11:58:01 christo
 #include <compat/sys/dirent.h>
 #include <compat/sys/mount.h>
 
-static void cvtstat(struct stat13 *, const struct stat *);
 
 /*
  * Convert from a new to an old stat structure.
@@ -64,6 +63,8 @@ static void
 cvtstat(struct stat13 *ost, const struct stat *st)
 {
 
+	/* Handle any padding. */
+	memset(ost, 0, sizeof(*ost));
 	ost->st_dev = st->st_dev;
 	ost->st_ino = (uint32_t)st->st_ino;
 	ost->st_mode = st->st_mode;
@@ -101,8 +102,7 @@ compat_30_sys___stat13(struct lwp *l, const struct compat_30_sys___stat13_args *
 	if (error)
 		return error;
 	cvtstat(&osb, &sb);
-	error = copyout(&osb, SCARG(uap, ub), sizeof (osb));
-	return error;
+	return copyout(&osb, SCARG(uap, ub), sizeof(osb));
 }
 
 
@@ -125,8 +125,7 @@ compat_30_sys___lstat13(struct lwp *l, const struct compat_30_sys___lstat13_args
 	if (error)
 		return error;
 	cvtstat(&osb, &sb);
-	error = copyout(&osb, SCARG(uap, ub), sizeof (osb));
-	return error;
+	return copyout(&osb, SCARG(uap, ub), sizeof(osb));
 }
 
 /* ARGSUSED */
@@ -140,33 +139,12 @@ compat_30_sys_fhstat(struct lwp *l, const struct compat_30_sys_fhstat_args *uap,
 	struct stat sb;
 	struct stat13 osb;
 	int error;
-	struct compat_30_fhandle fh;
-	struct mount *mp;
-	struct vnode *vp;
 
-	/*
-	 * Must be super user
-	 */
-	if ((error = kauth_authorize_system(l->l_cred, KAUTH_SYSTEM_FILEHANDLE,
-	    0, NULL, NULL, NULL)))
-		return (error);
-
-	if ((error = copyin(SCARG(uap, fhp), &fh, sizeof(fh))) != 0)
-		return (error);
-
-	if ((mp = vfs_getvfs(&fh.fh_fsid)) == NULL)
-		return (ESTALE);
-	if (mp->mnt_op->vfs_fhtovp == NULL)
-		return EOPNOTSUPP;
-	if ((error = VFS_FHTOVP(mp, (struct fid*)&fh.fh_fid, &vp)))
-		return (error);
-	error = vn_stat(vp, &sb);
-	vput(vp);
+	error = do_fhstat(l, SCARG(uap, fhp), sizeof(*SCARG(uap, fhp)), &sb);
 	if (error)
-		return (error);
+		return error;
 	cvtstat(&osb, &sb);
-	error = copyout(&osb, SCARG(uap, sb), sizeof(sb));
-	return (error);
+	return copyout(&osb, SCARG(uap, sb), sizeof(osb));
 }
 
 /*
@@ -188,8 +166,7 @@ compat_30_sys___fstat13(struct lwp *l, const struct compat_30_sys___fstat13_args
 	if (error)
 		return error;
 	cvtstat(&osb, &sb);
-	error = copyout(&osb, SCARG(uap, sb), sizeof (osb));
-	return error;
+	return copyout(&osb, SCARG(uap, sb), sizeof(osb));
 }
 
 /*
@@ -265,7 +242,7 @@ again:
 		bdp = (struct dirent *)inp;
 		reclen = bdp->d_reclen;
 		if (reclen & _DIRENT_ALIGN(bdp))
-			panic("netbsd30_getdents: bad reclen %d", reclen);
+			panic("%s: bad reclen %d", __func__, reclen);
 		if (cookie)
 			off = *cookie++; /* each entry points to the next */
 		else
@@ -368,9 +345,8 @@ compat_30_sys_getfh(struct lwp *l, const struct compat_30_sys_getfh_args *uap, r
 		error = EINVAL;
 	}
 	if (error)
-		return (error);
-	error = copyout(&fh, SCARG(uap, fhp), sizeof(struct compat_30_fhandle));
-	return (error);
+		return error;
+	return copyout(&fh, SCARG(uap, fhp), sizeof(fh));
 }
 
 /*
@@ -407,8 +383,7 @@ compat_30_sys___fhstat30(struct lwp *l, const struct compat_30_sys___fhstat30_ar
 	if (error)
 		return error;
 	cvtstat(&osb, &sb);
-	error = copyout(&osb, SCARG(uap_30, sb), sizeof (osb));
-	return error;
+	return copyout(&osb, SCARG(uap_30, sb), sizeof(osb));
 }
 
 /* ARGSUSED */
