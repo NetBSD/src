@@ -1,4 +1,4 @@
-/*	$NetBSD: readline.c,v 1.160 2021/08/15 10:06:32 christos Exp $	*/
+/*	$NetBSD: readline.c,v 1.161 2021/08/15 22:14:45 rillig Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include "config.h"
 #if !defined(lint) && !defined(SCCSID)
-__RCSID("$NetBSD: readline.c,v 1.160 2021/08/15 10:06:32 christos Exp $");
+__RCSID("$NetBSD: readline.c,v 1.161 2021/08/15 22:14:45 rillig Exp $");
 #endif /* not lint && not SCCSID */
 
 #include <sys/types.h>
@@ -208,11 +208,10 @@ static void
 _resize_fun(EditLine *el, void *a)
 {
 	const LineInfo *li;
-	char **ap = a;
+	const char **ap = a;
 
 	li = el_line(el);
-	/* a cheesy way to get rid of const cast. */
-	*ap = memchr(li->buffer, *li->buffer, (size_t)1);
+	*ap = li->buffer;
 }
 
 static const char *
