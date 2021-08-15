@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_193.c,v 1.12 2021/07/11 19:30:56 rillig Exp $	*/
+/*	$NetBSD: msg_193.c,v 1.13 2021/08/15 21:21:13 rillig Exp $	*/
 # 3 "msg_193.c"
 
 // Test for message: statement not reached [193]
@@ -616,3 +616,38 @@ reachable:
 /* TODO: switch */
 
 /* TODO: system-dependent constant expression (see tn_system_dependent) */
+
+void suppressed(void);
+
+void
+lint_annotation_NOTREACHED(void)
+{
+	if (0) {
+		/* expect+1: warning: statement not reached [193] */
+		unreachable();
+	}
+
+	if (0) {
+		/* NOTREACHED */
+		suppressed();
+	}
+
+	if (0)
+		/* NOTREACHED */
+		suppressed();
+
+	if (1) {
+		reachable();
+	}
+
+	if (1) {
+		/* NOTREACHED */
+		suppressed();
+	}
+
+	/* FIXME: The 'if' statement _is_ reached. */
+	/* expect+1: warning: statement not reached [193] */
+	if (1)
+		/* NOTREACHED */
+		suppressed();
+}
