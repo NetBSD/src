@@ -1,9 +1,15 @@
-/*	$NetBSD: msg_346.c,v 1.1 2021/08/09 20:07:24 rillig Exp $	*/
+/*	$NetBSD: msg_346.c,v 1.2 2021/08/15 14:00:27 rillig Exp $	*/
 # 3 "msg_346.c"
 
 // Test for message: call to '%s' effectively discards 'const' from argument [346]
 
-char *strchr(const char *, int);
+typedef unsigned long size_t;
+
+void* memchr(const void *, int, size_t);		/* C99 7.21.5.1 */
+char *strchr(const char *, int);			/* C99 7.21.5.2 */
+char* strpbrk(const char *, const char *);		/* C99 7.21.5.4 */
+char* strrchr(const char *, int);			/* C99 7.21.5.5 */
+char* strstr(const char *, const char *);		/* C99 7.21.5.7 */
 
 void take_const_char_ptr(const char *);
 void take_char_ptr(char *);
@@ -29,4 +35,19 @@ example(void)
 	take_const_char_ptr(strchr("literal", 'c'));
 	/* expect+1: warning: call to 'strchr' effectively discards 'const' from argument [346] */
 	take_char_ptr(strchr("literal", 'c'));
+}
+
+void
+all_functions(void)
+{
+	/* TODO: expect+1: warning: call to 'memchr' effectively discards 'const' from argument [346] */
+	take_char_ptr(memchr("string", 'c', 7));
+	/* expect+1: warning: call to 'strchr' effectively discards 'const' from argument [346] */
+	take_char_ptr(strchr("string", 'c'));
+	/* TODO: expect+1: warning: call to 'strpbrk' effectively discards 'const' from argument [346] */
+	take_char_ptr(strpbrk("string", "c"));
+	/* TODO: expect+1: warning: call to 'strrchr' effectively discards 'const' from argument [346] */
+	take_char_ptr(strrchr("string", 'c'));
+	/* TODO: expect+1: warning: call to 'strstr' effectively discards 'const' from argument [346] */
+	take_char_ptr(strstr("string", "c"));
 }
