@@ -1,4 +1,4 @@
-/* $NetBSD: device.h,v 1.173 2021/08/07 18:16:42 thorpej Exp $ */
+/* $NetBSD: device.h,v 1.174 2021/08/15 22:08:01 thorpej Exp $ */
 
 /*
  * Copyright (c) 2021 The NetBSD Foundation, Inc.
@@ -252,6 +252,9 @@ struct devhandle_impl {
 					    const char *, devhandle_t *);
 };
 
+/* Max size of a device external name (including terminating NUL) */
+#define	DEVICE_XNAME_SIZE	16
+
 struct device {
 	devhandle_t	dv_handle;	/* this device's handle;
 					   new device_t's get INVALID */
@@ -262,7 +265,8 @@ struct device {
 	cfdriver_t	dv_cfdriver;	/* our cfdriver */
 	cfattach_t	dv_cfattach;	/* our cfattach */
 	int		dv_unit;	/* device unit number */
-	char		dv_xname[16];	/* external name (name + unit) */
+					/* external name (name + unit) */
+	char		dv_xname[DEVICE_XNAME_SIZE];
 	device_t	dv_parent;	/* pointer to parent device
 					   (NULL if pseudo- or root node) */
 	int		dv_depth;	/* number of parents until root */
