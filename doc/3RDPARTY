@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.1810 2021/08/14 16:20:31 christos Exp $
+#	$NetBSD: 3RDPARTY,v 1.1811 2021/08/15 17:09:03 wiz Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -2081,7 +2081,7 @@ we use BSD-licensed implementation from Citrus project (see entry for
 
 Package:	grep
 Version:	2.5.1a (last GPLv2+ version)
-Current Vers:	3.5
+Current Vers:	3.7
 Maintainer:	FSF
 Archive Site:	ftp://ftp.gnu.org/gnu/grep/
 Home Page:	http://www.gnu.org/software/grep/
