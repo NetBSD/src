@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.14 2021/07/06 12:40:24 thorpej Exp $
+#	$NetBSD: Makefile.inc,v 1.15 2021/08/15 12:41:40 rillig Exp $
 
 JEMALLOC:=${.PARSEDIR}/..
 
@@ -44,6 +44,8 @@ witness.c
 CPPFLAGS.${i}+=-I${JEMALLOC}/include -DJEMALLOC_PROTECT_NOSTD
 COPTS.${i}+= -fvisibility=hidden -funroll-loops
 COPTS.${i}+= ${${ACTIVE_CC} == "clang":? -Wno-atomic-alignment :}
+LINTFLAGS.${i}+=	-X 231	# argument unused
+LINTFLAGS.${i}+=	-X 220	# fallthrough on case statement
 .endfor
 
 COPTS.background_thread.c+=-Wno-error=stack-protector
