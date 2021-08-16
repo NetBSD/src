@@ -1,4 +1,4 @@
-/*	$NetBSD: expr_promote_trad.c,v 1.1 2021/08/16 20:11:03 rillig Exp $	*/
+/*	$NetBSD: expr_promote_trad.c,v 1.2 2021/08/16 20:27:31 rillig Exp $	*/
 # 3 "expr_promote_trad.c"
 
 /*
@@ -27,6 +27,9 @@ struct arithmetic_types {
 	double double_floating;
 	/* long double is not available in traditional C */
 	/* _Complex is not available in traditional C */
+	enum {
+		E
+	} enumerator;
 };
 
 caller(arg)
@@ -42,5 +45,11 @@ caller(arg)
 	    arg->signed_long,
 	    arg->unsigned_long,
 	    arg->single_floating,	/* gets promoted to 'double' */
-	    arg->double_floating);
+	    arg->double_floating,
+	    arg->enumerator);
 }
+
+/*
+ * XXX: Enumerations may need be promoted to 'int', at least C99 6.3.1.1p2
+ * suggests that: "If an int can represent ...".
+ */
