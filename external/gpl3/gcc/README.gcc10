@@ -1,4 +1,4 @@
-$NetBSD: README.gcc10,v 1.23 2021/06/19 06:19:35 mrg Exp $
+$NetBSD: README.gcc10,v 1.24 2021/08/16 17:42:05 mrg Exp $
 
 
 new stuff:
@@ -58,8 +58,8 @@ mips64eb	y	y	y	y		y		y	y	y
 mips64el	y	b	y	y		y		y	?	y
 powerpc		y	b	y	y		y		y	y	y
 powerpc64	y	b	y	y		y		N/A	N/A	y
-sh3eb		y	b	y	y		y		?	?	?
-sh3el		y	y	y	y		y		y	y[7]	n
+sh3eb		y	b	y	y		y		?[2]	?	y
+sh3el		y	y	y	y		y		y	y[7]	y
 sparc		y	y	y	y		y		y	y	y
 sparc64		y	y	y	y		y		y	y	y
 vax		y	y	y	y		y		y	n[6]	y
@@ -72,6 +72,7 @@ coldfire	?	N/A	?	?		?		N/A	N/A
 architecture	tools	kernels	libgcc	native-gcc	make release	runs	atf
 
 [1] - kernel may be too large, does not boot.  GCC 9 is the same, though.
+[2] - failed to find any sh3-eb systems to test.
 [6] - vax vs c++ exceptions issue, same as it ever was
 [7] - fails just as poorly in gxemul/landisk as GCC 9
 [8] - i386 seems to have a signal delivery issue.  pthread tests hang and then
