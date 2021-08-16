@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_277.c,v 1.4 2021/02/27 18:01:29 rillig Exp $	*/
+/*	$NetBSD: msg_277.c,v 1.5 2021/08/16 20:11:03 rillig Exp $	*/
 # 3 "msg_277.c"
 
 // Test for message: initialization of '%s' with '%s' [277]
@@ -24,4 +24,8 @@ example(enum E e, int i)
 	sink_enum(e3);
 	sink_int(i2);
 	sink_int(i3);
+
+	enum E init_0 = 0;
+	/* expect+1: warning: initialization of 'enum E' with 'int' [277] */
+	enum E init_1 = 1;
 }
