@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2390 2021/07/14 03:19:24 ozaki-r Exp $
+#	$NetBSD: mi,v 1.2391 2021/08/16 06:56:28 mrg Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -1359,6 +1359,52 @@
 ./usr/include/g++/exception_defines.h		comp-obsolete		obsolete
 ./usr/include/g++/exception_ptr.h		comp-obsolete		obsolete
 ./usr/include/g++/execution			comp-cxx-include	gcc,cxx,libstdcxx
+./usr/include/g++/experimental/algorithm	comp-cxx-include	gcc,cxx,libstdcxx,gcc=10
+./usr/include/g++/experimental/any		comp-cxx-include	gcc,cxx,libstdcxx,gcc=10
+./usr/include/g++/experimental/array		comp-cxx-include	gcc,cxx,libstdcxx,gcc=10
+./usr/include/g++/experimental/bits/fs_dir.h	comp-cxx-include	gcc,cxx,libstdcxx,gcc=10
+./usr/include/g++/experimental/bits/fs_fwd.h	comp-cxx-include	gcc,cxx,libstdcxx,gcc=10
+./usr/include/g++/experimental/bits/fs_ops.h	comp-cxx-include	gcc,cxx,libstdcxx,gcc=10
+./usr/include/g++/experimental/bits/fs_path.h	comp-cxx-include	gcc,cxx,libstdcxx,gcc=10
+./usr/include/g++/experimental/bits/lfts_config.h comp-cxx-include	gcc,cxx,libstdcxx,gcc=10
+./usr/include/g++/experimental/bits/net.h	comp-cxx-include	gcc,cxx,libstdcxx,gcc=10
+./usr/include/g++/experimental/bits/shared_ptr.h comp-cxx-include	gcc,cxx,libstdcxx,gcc=10
+./usr/include/g++/experimental/bits/string_view.tcc comp-cxx-include	gcc,cxx,libstdcxx,gcc=10
+./usr/include/g++/experimental/buffer		comp-cxx-include	gcc,cxx,libstdcxx,gcc=10
+./usr/include/g++/experimental/chrono		comp-cxx-include	gcc,cxx,libstdcxx,gcc=10
+./usr/include/g++/experimental/deque		comp-cxx-include	gcc,cxx,libstdcxx,gcc=10
+./usr/include/g++/experimental/executor		comp-cxx-include	gcc,cxx,libstdcxx,gcc=10
+./usr/include/g++/experimental/filesystem	comp-cxx-include	gcc,cxx,libstdcxx,gcc=10
+./usr/include/g++/experimental/forward_list	comp-cxx-include	gcc,cxx,libstdcxx,gcc=10
+./usr/include/g++/experimental/functional	comp-cxx-include	gcc,cxx,libstdcxx,gcc=10
+./usr/include/g++/experimental/internet		comp-cxx-include	gcc,cxx,libstdcxx,gcc=10
+./usr/include/g++/experimental/io_context	comp-cxx-include	gcc,cxx,libstdcxx,gcc=10
+./usr/include/g++/experimental/iterator		comp-cxx-include	gcc,cxx,libstdcxx,gcc=10
+./usr/include/g++/experimental/list		comp-cxx-include	gcc,cxx,libstdcxx,gcc=10
+./usr/include/g++/experimental/map		comp-cxx-include	gcc,cxx,libstdcxx,gcc=10
+./usr/include/g++/experimental/memory		comp-cxx-include	gcc,cxx,libstdcxx,gcc=10
+./usr/include/g++/experimental/memory_resource	comp-cxx-include	gcc,cxx,libstdcxx,gcc=10
+./usr/include/g++/experimental/net		comp-cxx-include	gcc,cxx,libstdcxx,gcc=10
+./usr/include/g++/experimental/netfwd		comp-cxx-include	gcc,cxx,libstdcxx,gcc=10
+./usr/include/g++/experimental/numeric		comp-cxx-include	gcc,cxx,libstdcxx,gcc=10
+./usr/include/g++/experimental/optional		comp-cxx-include	gcc,cxx,libstdcxx,gcc=10
+./usr/include/g++/experimental/propagate_const	comp-cxx-include	gcc,cxx,libstdcxx,gcc=10
+./usr/include/g++/experimental/random		comp-cxx-include	gcc,cxx,libstdcxx,gcc=10
+./usr/include/g++/experimental/ratio		comp-cxx-include	gcc,cxx,libstdcxx,gcc=10
+./usr/include/g++/experimental/regex		comp-cxx-include	gcc,cxx,libstdcxx,gcc=10
+./usr/include/g++/experimental/set		comp-cxx-include	gcc,cxx,libstdcxx,gcc=10
+./usr/include/g++/experimental/socket		comp-cxx-include	gcc,cxx,libstdcxx,gcc=10
+./usr/include/g++/experimental/source_location	comp-cxx-include	gcc,cxx,libstdcxx,gcc=10
+./usr/include/g++/experimental/string		comp-cxx-include	gcc,cxx,libstdcxx,gcc=10
+./usr/include/g++/experimental/string_view	comp-cxx-include	gcc,cxx,libstdcxx,gcc=10
+./usr/include/g++/experimental/system_error	comp-cxx-include	gcc,cxx,libstdcxx,gcc=10
+./usr/include/g++/experimental/timer		comp-cxx-include	gcc,cxx,libstdcxx,gcc=10
+./usr/include/g++/experimental/tuple		comp-cxx-include	gcc,cxx,libstdcxx,gcc=10
+./usr/include/g++/experimental/type_traits	comp-cxx-include	gcc,cxx,libstdcxx,gcc=10
+./usr/include/g++/experimental/unordered_map	comp-cxx-include	gcc,cxx,libstdcxx,gcc=10
+./usr/include/g++/experimental/unordered_set	comp-cxx-include	gcc,cxx,libstdcxx,gcc=10
+./usr/include/g++/experimental/utility		comp-cxx-include	gcc,cxx,libstdcxx,gcc=10
+./usr/include/g++/experimental/vector		comp-cxx-include	gcc,cxx,libstdcxx,gcc=10
 ./usr/include/g++/ext/algorithm			comp-cxx-include	gcc,cxx,libstdcxx
 ./usr/include/g++/ext/aligned_buffer.h		comp-cxx-include	gcc,cxx,libstdcxx
 ./usr/include/g++/ext/alloc_traits.h		comp-cxx-include	gcc,cxx,libstdcxx
@@ -1385,7 +1431,8 @@
 ./usr/include/g++/ext/new_allocator.h		comp-cxx-include	gcc,cxx,libstdcxx
 ./usr/include/g++/ext/numeric			comp-cxx-include	gcc,cxx,libstdcxx
 ./usr/include/g++/ext/numeric_traits.h		comp-cxx-include	gcc,cxx,libstdcxx
-./usr/include/g++/ext/opt_random.h							comp-obsolete		obsolete
+./usr/include/g++/ext/opt_random.h		comp-obsolete		obsolete,gcc=9
+./usr/include/g++/ext/opt_random.h		comp-cxx-include	gcc,cxx,libstdcxx,gcc=10
 ./usr/include/g++/ext/pb_ds/assoc_container.hpp						comp-cxx-include	gcc,cxx,libstdcxx
 ./usr/include/g++/ext/pb_ds/detail/bin_search_tree_/bin_search_tree_.hpp		comp-cxx-include	gcc,cxx,libstdcxx
 ./usr/include/g++/ext/pb_ds/detail/bin_search_tree_/constructors_destructor_fn_imps.hpp comp-cxx-include	gcc,cxx,libstdcxx
