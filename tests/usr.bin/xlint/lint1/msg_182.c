@@ -1,7 +1,18 @@
-/*	$NetBSD: msg_182.c,v 1.2 2021/02/21 09:07:58 rillig Exp $	*/
+/*	$NetBSD: msg_182.c,v 1.3 2021/08/16 18:51:58 rillig Exp $	*/
 # 3 "msg_182.c"
 
 // Test for message: incompatible pointer types (%s != %s) [182]
 
-TODO: "Add example code that triggers the above message." /* expect: 249 */
-TODO: "Add example code that almost triggers the above message."
+void *
+return_discarding_volatile(volatile void *arg)
+{
+	/* expect+1: warning: incompatible pointer types (void != volatile void) [182] */
+	return arg;
+}
+
+void
+init_discarding_volatile(volatile void *arg)
+{
+	/* expect+1: warning: incompatible pointer types (void != volatile void) [182] */
+	void *array[] = { arg };
+}

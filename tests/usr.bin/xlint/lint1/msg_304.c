@@ -1,7 +1,19 @@
-/*	$NetBSD: msg_304.c,v 1.2 2021/02/21 09:07:58 rillig Exp $	*/
+/*	$NetBSD: msg_304.c,v 1.3 2021/08/16 18:51:58 rillig Exp $	*/
 # 3 "msg_304.c"
 
-// Test for message: ANSI C forbids conversion of %s to %s, arg #%d [304]
+/* Test for message: ANSI C forbids conversion of %s to %s, arg #%d [304] */
 
-TODO: "Add example code that triggers the above message." /* expect: 249 */
-TODO: "Add example code that almost triggers the above message."
+/* lint1-flags: -sw */
+
+void take_void_pointer(void *);
+void take_function_pointer(void (*)(void));
+
+void
+caller(void *arg)
+{
+	/* expect+1: warning: ANSI C forbids conversion of function pointer to 'void *', arg #1 [304] */
+	take_void_pointer(caller);
+
+	/* expect+1: warning: ANSI C forbids conversion of 'void *' to function pointer, arg #1 [304] */
+	take_function_pointer(arg);
+}
