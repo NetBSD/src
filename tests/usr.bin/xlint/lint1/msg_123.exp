@@ -4,3 +4,5 @@ msg_123.c(23): error: operands of '<' have incompatible types (double != pointer
 msg_123.c(24): warning: illegal combination of pointer (pointer to const char) and integer (_Bool), op < [123]
 msg_123.c(25): warning: illegal combination of pointer (pointer to const char) and integer (int), op < [123]
 msg_123.c(26): error: operands of '<' have incompatible types (pointer != double) [107]
+msg_123.c(34): warning: illegal combination of pointer (pointer to int) and integer (int), op = [123]
+msg_123.c(36): warning: illegal combination of integer (int) and pointer (pointer to int), op = [123]
