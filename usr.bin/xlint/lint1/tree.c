@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.336 2021/08/15 14:26:39 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.337 2021/08/16 18:51:03 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.336 2021/08/15 14:26:39 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.337 2021/08/16 18:51:03 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -1587,11 +1587,6 @@ check_bad_enum_operation(op_t op, const tnode_t *ln, const tnode_t *rn)
 	if (!eflag)
 		return;
 
-	if (!(ln->tn_type->t_is_enum ||
-	      (modtab[op].m_binary && rn->tn_type->t_is_enum))) {
-		return;
-	}
-
 	/*
 	 * Enum as offset to a pointer is an exception (otherwise enums
 	 * could not be used as array indices).
@@ -1604,7 +1599,6 @@ check_bad_enum_operation(op_t op, const tnode_t *ln, const tnode_t *rn)
 
 	/* dubious operation on enum, op %s */
 	warning(241, op_name(op));
-
 }
 
 /*
