@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist.base,v 1.236 2021/05/30 01:56:45 joerg Exp $
+#	$NetBSD: NetBSD.dist.base,v 1.237 2021/08/16 06:56:28 mrg Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 # Do not customize this file as it may be overwritten on upgrades.
@@ -172,6 +172,8 @@
 ./usr/include/g++/bits
 ./usr/include/g++/debug
 ./usr/include/g++/decimal
+./usr/include/g++/experimental
+./usr/include/g++/experimental/bits
 ./usr/include/g++/ext
 ./usr/include/g++/ext/pb_ds
 ./usr/include/g++/ext/pb_ds/detail

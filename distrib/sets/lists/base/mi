@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1280 2021/05/30 01:56:44 joerg Exp $
+# $NetBSD: mi,v 1.1281 2021/08/16 06:56:28 mrg Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -1202,6 +1202,8 @@
 ./usr/include/g++/bits				base-cxx-usr
 ./usr/include/g++/debug				base-cxx-usr
 ./usr/include/g++/decimal			base-cxx-usr
+./usr/include/g++/experimental			base-cxx-usr
+./usr/include/g++/experimental/bits		base-cxx-usr
 ./usr/include/g++/ext				base-cxx-usr
 ./usr/include/g++/ext/pb_ds			base-cxx-usr
 ./usr/include/g++/ext/pb_ds/detail			base-cxx-usr
