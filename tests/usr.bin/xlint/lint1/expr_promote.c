@@ -1,4 +1,4 @@
-/*	$NetBSD: expr_promote.c,v 1.1 2021/08/16 20:11:03 rillig Exp $	*/
+/*	$NetBSD: expr_promote.c,v 1.2 2021/08/16 20:27:31 rillig Exp $	*/
 # 3 "expr_promote.c"
 
 /*
@@ -28,6 +28,9 @@ struct arithmetic_types {
 	float _Complex float_complex;
 	double _Complex double_complex;
 	long double _Complex long_double_complex;
+	enum {
+		E
+	} enumerator;
 };
 
 void
@@ -51,7 +54,15 @@ caller(struct arithmetic_types *arg)
 	    arg->long_floating,
 	    arg->float_complex,
 	    arg->double_complex,
-	    arg->long_double_complex);
+	    arg->long_double_complex,
+	    arg->enumerator);
 }
 
-/* XXX: _Bool is not promoted but should. */
+/*
+ * XXX: _Bool should be promoted to 'int', C99 6.3.1.1p2 "If an int can
+ * represent ...".
+ */
+/*
+ * XXX: Enumerations may need be promoted to 'int', at least C99 6.3.1.1p2
+ * suggests that: "If an int can represent ...".
+ */
