@@ -1,4 +1,4 @@
-/*	$NetBSD: err.c,v 1.136 2021/08/14 13:00:55 rillig Exp $	*/
+/*	$NetBSD: err.c,v 1.137 2021/08/16 06:49:56 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: err.c,v 1.136 2021/08/14 13:00:55 rillig Exp $");
+__RCSID("$NetBSD: err.c,v 1.137 2021/08/16 06:49:56 rillig Exp $");
 #endif
 
 #include <sys/types.h>
@@ -100,7 +100,7 @@ const char *const msgs[] = {
 	"redefinition hides earlier one: %s",			      /* 43 */
 	"declaration introduces new type in ANSI C: %s %s",	      /* 44 */
 	"base type is really '%s %s'",				      /* 45 */
-	"(%s) tag redeclared",					      /* 46 */
+	"%s tag '%s' redeclared as %s",				      /* 46 */
 	"zero sized %s is a C9X feature",			      /* 47 */
 	"overflow in enumeration values: %s",			      /* 48 */
 	"anonymous struct/union members is a C9X feature",	      /* 49 */
