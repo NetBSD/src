@@ -6,3 +6,4 @@ msg_346.c(46): warning: call to 'strchr' effectively discards 'const' from argum
 msg_346.c(48): warning: call to 'strpbrk' effectively discards 'const' from argument [346]
 msg_346.c(50): warning: call to 'strrchr' effectively discards 'const' from argument [346]
 msg_346.c(52): warning: call to 'strstr' effectively discards 'const' from argument [346]
+msg_346.c(60): error: argument mismatch: 0 arg passed, 2 expected [150]

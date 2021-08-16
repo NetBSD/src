@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_346.c,v 1.3 2021/08/15 14:26:39 rillig Exp $	*/
+/*	$NetBSD: msg_346.c,v 1.4 2021/08/16 18:51:58 rillig Exp $	*/
 # 3 "msg_346.c"
 
 // Test for message: call to '%s' effectively discards 'const' from argument [346]
@@ -50,4 +50,12 @@ all_functions(void)
 	take_char_ptr(strrchr("string", 'c'));
 	/* expect+1: warning: call to 'strstr' effectively discards 'const' from argument [346] */
 	take_char_ptr(strstr("string", "c"));
+}
+
+void
+edge_cases(void)
+{
+	/* No arguments, to cover the 'an == NULL' in is_first_arg_const. */
+	/* expect+1: error: argument mismatch: 0 arg passed, 2 expected [150] */
+	take_char_ptr(strchr());
 }
