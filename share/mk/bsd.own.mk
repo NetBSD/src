@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.1258 2021/07/11 22:07:35 mrg Exp $
+#	$NetBSD: bsd.own.mk,v 1.1259 2021/08/16 17:40:16 mrg Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -72,11 +72,7 @@ TOOLCHAIN_MISSING?=	no
 #
 # What GCC is used?
 #
-.if ${MACHINE_CPU} != "sh3"
 HAVE_GCC?=	10
-.else
-HAVE_GCC?=	9
-.endif
 
 #
 # Platforms that can't run a modern GCC natively
