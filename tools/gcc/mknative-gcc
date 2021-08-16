@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: mknative-gcc,v 1.114 2021/04/11 07:35:45 mrg Exp $
+#	$NetBSD: mknative-gcc,v 1.115 2021/08/16 06:25:45 mrg Exp $
 #
 # Shell script for generating all the constants needed for a native
 # platform build of gcc.
@@ -234,8 +234,10 @@ get_libstdcxx_v3 () {
 	_headers1="$_headers1 pb_headers1 pb_headers2 pb_headers3 pb_headers4"
 	_headers1="$_headers1 pb_headers5 pb_headers6 pb_headers7"
 	_headers1="$_headers1 bits_headers ext_headers host_headers"
-	_headers1="$_headers1 thread_host_headers pstl_headers"
+	_headers1="$_headers1 pstl_headers"
 	_headers1="$_headers1 profile_headers profile_impl_headers"
+	_headers1="$_headers1 experimental_headers experimental_bits_headers"
+	_headers1="$_headers1 ext_host_headers"
 
 	# build files
 	for h in $_build_headers; do
