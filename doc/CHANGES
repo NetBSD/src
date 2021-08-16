@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2821 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2822 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -406,3 +406,4 @@ Changes from NetBSD 9.0 to NetBSD 10.0:
 		resulting in better network and storage performance.
 		[jmcneill 20210810]
 	openldap: Import 2.5.6. [christos 20210814]
+	sh3: Switch to GCC 10. [mrg 20210816]
