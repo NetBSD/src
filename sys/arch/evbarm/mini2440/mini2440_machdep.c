@@ -131,7 +131,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mini2440_machdep.c,v 1.18 2020/04/18 11:00:40 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mini2440_machdep.c,v 1.19 2021/08/17 22:00:29 andvar Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_console.h"
@@ -540,7 +540,7 @@ initarm(void *arg)
 	bootconfig.dram[0].pages = SDRAM_SIZE / PAGE_SIZE;
 
 	/*
-	 * Set up the variables that define the availablilty of
+	 * Set up the variables that define the availability of
 	 * physical memory.
          * We use the 2MB between the physical start and the kernel to
          * begin with. Allocating from 0x30200000 and downwards

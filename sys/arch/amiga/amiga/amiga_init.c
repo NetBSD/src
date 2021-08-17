@@ -1,4 +1,4 @@
-/*	$NetBSD: amiga_init.c,v 1.130 2018/09/03 16:29:22 riastradh Exp $	*/
+/*	$NetBSD: amiga_init.c,v 1.131 2021/08/17 22:00:27 andvar Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -39,7 +39,7 @@
 #include "ser.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amiga_init.c,v 1.130 2018/09/03 16:29:22 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amiga_init.c,v 1.131 2021/08/17 22:00:27 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -364,7 +364,7 @@ start_c(int id, u_int fphystart, u_int fphysize, u_int cphysize,
 	/*
 	 * assume KVA_MIN == 0.  We subtract the kernel code (and
 	 * the configdev's and memlists) from the virtual and
-	 * phsical starts and ends.
+	 * physical starts and ends.
 	 */
 	vend   = fphysize;
 	avail  = vend;

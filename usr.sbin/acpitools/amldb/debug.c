@@ -1,4 +1,4 @@
-/*	$NetBSD: debug.c,v 1.1 2007/01/14 04:36:13 christos Exp $	*/
+/*	$NetBSD: debug.c,v 1.2 2021/08/17 22:00:33 andvar Exp $	*/
 
 /*-
  * Copyright (c) 1999 Takanori Watanabe
@@ -30,7 +30,7 @@
  *	$FreeBSD: src/usr.sbin/acpi/amldb/debug.c,v 1.3 2000/11/09 06:24:40 iwasaki Exp $
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: debug.c,v 1.1 2007/01/14 04:36:13 christos Exp $");
+__RCSID("$NetBSD: debug.c,v 1.2 2021/08/17 22:00:33 andvar Exp $");
 
 #include <sys/param.h>
 
@@ -308,7 +308,7 @@ finish_execution:
 			      "m	Show memory management statistics\n"
 			      "r	Run specified method\n"
 			      "f	Find named objects from namespace.\n"
-			      "h	Show this messsage\n", stderr);
+			      "h	Show this message\n", stderr);
 			break;
 		}
 	}

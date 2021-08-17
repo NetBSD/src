@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.83 2020/06/11 19:20:45 ad Exp $	*/
+/*	$NetBSD: machdep.c,v 1.84 2021/08/17 22:00:31 andvar Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -149,7 +149,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.83 2020/06/11 19:20:45 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.84 2021/08/17 22:00:31 andvar Exp $");
 
 #include "opt_ddb.h"
 #include "opt_fpu_emulate.h"
@@ -898,7 +898,7 @@ _bus_dmamap_load(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
 	 */
 	if ((map->_dm_flags & BUS_DMA_24BIT) != 0 && p == NULL) {
 		/*
-		 * XXX Need to implement "don't DMA across this boundry".
+		 * XXX Need to implement "don't DMA across this boundary".
 		 */
 		if (map->_dm_boundary != 0)
 			panic("bus_dmamap_load: boundaries not implemented");

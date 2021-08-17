@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwmreg.h,v 1.8 2021/06/02 11:32:24 nia Exp $	*/
+/*	$NetBSD: if_iwmreg.h,v 1.9 2021/08/17 22:00:31 andvar Exp $	*/
 /*	OpenBSD: if_iwmreg.h,v 1.19 2016/09/20 11:46:09 stsp Exp 	*/
 
 /*-
@@ -5136,7 +5136,7 @@ enum iwm_scan_priority {
  * @fragmented-dwell: dwell time for fragmented passive scan
  * @extended_dwell: dwell time for channels 1, 6 and 11 (in certain cases)
  * @reserved2: for alignment and future use
- * @rx_chain_selct: PHY_RX_CHAIN_* flags
+ * @rx_chain_select: PHY_RX_CHAIN_* flags
  * @scan_flags: &enum iwm_lmac_scan_flags
  * @max_out_time: max time (in TU) to be out of associated channel
  * @suspend_time: pause scan this long (TUs) when returning to service channel

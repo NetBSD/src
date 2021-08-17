@@ -1,4 +1,4 @@
-/*	$NetBSD: kloader_machdep.c,v 1.2 2014/03/02 13:27:38 joerg Exp $	*/
+/*	$NetBSD: kloader_machdep.c,v 1.3 2021/08/17 22:00:29 andvar Exp $	*/
 
 /*-
  * Copyright (C) 2012 NONAKA Kimihiro <nonaka@netbsd.org>
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kloader_machdep.c,v 1.2 2014/03/02 13:27:38 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kloader_machdep.c,v 1.3 2021/08/17 22:00:29 andvar Exp $");
 
 #include "debug_kloader.h"
 #include "opt_cputypes.h"
@@ -87,7 +87,7 @@ kloader_hpcarm_jump(kloader_bootfunc_t func, vaddr_t sp,
 }
 
 /*
- * Physcal address to virtual address
+ * Physical address to virtual address
  */
 vaddr_t
 kloader_phystov(paddr_t pa)

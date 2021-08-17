@@ -1,4 +1,4 @@
-/* $NetBSD: aureg.h,v 1.18 2006/10/02 06:44:00 gdamore Exp $ */
+/* $NetBSD: aureg.h,v 1.19 2021/08/17 22:00:30 andvar Exp $ */
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -328,7 +328,7 @@
 #define	 SCS_CP1		(1<<10)		/* psc1_intclock select */
 #define	 SCS_MP0(n)		(n<<7)		/* psc0_intclock mux */
 #define  SCS_DP0		(1<<6)		/* psc0_intclock divider */
-#define	 SCS_CP0		(1<<5)		/* psc0_intclock seelct */
+#define	 SCS_CP0		(1<<5)		/* psc0_intclock select */
 #define	 SCS_MP2(n)		(n<<2)		/* psc2_intclock mux */
 #define	 SCS_DP2		(1<<1)		/* psc2_intclock divider */
 #define	 SCS_CP2		(1<<0)		/* psc2_intclock select */

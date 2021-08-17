@@ -1,4 +1,4 @@
-/*	$NetBSD: shm.h,v 1.54 2019/08/23 10:22:14 maxv Exp $	*/
+/*	$NetBSD: shm.h,v 1.55 2021/08/17 22:00:32 andvar Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -79,7 +79,7 @@
 #define _SHM_RMLINGER	040000	/* Attach even if segment removed */
 #endif
 
-/* Segment low boundry address multiple */
+/* Segment low boundary address multiple */
 #if defined(_KERNEL) || defined(_STANDALONE) || defined(_MODULE)
 #define	SHMLBA		PAGE_SIZE
 #else

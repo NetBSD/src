@@ -1,4 +1,4 @@
-/*	$NetBSD: atari_init.c,v 1.101 2018/02/26 15:11:12 tsutsui Exp $	*/
+/*	$NetBSD: atari_init.c,v 1.102 2021/08/17 22:00:27 andvar Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atari_init.c,v 1.101 2018/02/26 15:11:12 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atari_init.c,v 1.102 2021/08/17 22:00:27 andvar Exp $");
 
 #include "opt_ddb.h"
 #include "opt_mbtype.h"
@@ -501,7 +501,7 @@ start_c(int id, u_int ttphystart, u_int ttphysize, u_int stphysize,
 	 * Map the allocated space in ST-ram now. In the contig-case, there
 	 * is no need to make a distinction between virtual and physical
 	 * addresses. But I make it anyway to be prepared.
-	 * Physcal space is already reserved!
+	 * Physical space is already reserved!
 	 */
 	st_pool_virt = vstart;
 	pg           = (pt_entry_t *)ptpa;

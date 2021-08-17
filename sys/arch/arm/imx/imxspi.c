@@ -1,4 +1,4 @@
-/*	$NetBSD: imxspi.c,v 1.9 2021/08/07 16:18:44 thorpej Exp $	*/
+/*	$NetBSD: imxspi.c,v 1.10 2021/08/17 22:00:27 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2014  Genetec Corporation.  All rights reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imxspi.c,v 1.9 2021/08/07 16:18:44 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imxspi.c,v 1.10 2021/08/17 22:00:27 andvar Exp $");
 
 #include "opt_imxspi.h"
 #include "opt_fdt.h"
@@ -332,12 +332,12 @@ imxspi_sched(struct imxspi_softc *sc)
 		/* note that we are working on it */
 		sc->sc_transfer = st;
 
-		/* chip slect */
+		/* chip select */
 		if (sc->sc_tag->spi_cs_enable != NULL)
 			sc->sc_tag->spi_cs_enable(sc->sc_tag->cookie,
 			    st->st_slave);
 
-		/* chip slect */
+		/* chip select */
 		chipselect = READ_REG(sc, CONREG);
 		chipselect &= ~IMXSPI_TYPE(CON_CS);
 		chipselect |= __SHIFTIN(st->st_slave, IMXSPI_TYPE(CON_CS));

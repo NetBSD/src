@@ -1,4 +1,4 @@
-/*	$NetBSD: grfabs_cc.c,v 1.35 2011/07/08 09:42:16 mrg Exp $ */
+/*	$NetBSD: grfabs_cc.c,v 1.36 2021/08/17 22:00:27 andvar Exp $ */
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -38,7 +38,7 @@
 #include "opt_amigaccgrf.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grfabs_cc.c,v 1.35 2011/07/08 09:42:16 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grfabs_cc.c,v 1.36 2021/08/17 22:00:27 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -301,13 +301,13 @@ alloc_bitmap(u_short width, u_short height, u_short depth, u_short flags)
 	 * longwords. -ch */
 
 	/* Sigh, it seems for mapping to work we need the bitplane data to 1:
-	 * be aligned on a page boundry. 2: be n pages large.
+	 * be aligned on a page boundary. 2: be n pages large.
 	 *
 	 * why? because the user gets a page aligned address, if this is before
 	 * your allocation, too bad.  Also it seems that the mapping routines
 	 * do not watch to closely to the allowable length. so if you go over
 	 * n pages by less than another page, the user gets to write all over
-	 * the entire page.  Since you did not allocate up to a page boundry
+	 * the entire page.  Since you did not allocate up to a page boundary
 	 * (or more) the user writes into someone elses memory. -ch */
 #ifdef __powerpc__
 #define m68k_round_page(x)	((((unsigned)(x)) + PGOFSET) & ~PGOFSET)

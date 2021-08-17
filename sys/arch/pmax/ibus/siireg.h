@@ -1,4 +1,4 @@
-/*	$NetBSD: siireg.h,v 1.2 2006/07/29 19:10:57 ad Exp $	*/
+/*	$NetBSD: siireg.h,v 1.3 2021/08/17 22:00:30 andvar Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -182,7 +182,7 @@ typedef volatile struct {
 #define SII_TBE		0x0800	/* Transmit Buffer Empty */
 #define SII_IBF		0x0400	/* Input Buffer Full */
 #define SII_IPE		0x0200	/* Incoming Parity Error */
-#define SII_OBB		0x0100	/* Odd Byte Boundry */
+#define SII_OBB		0x0100	/* Odd Byte Boundary */
 #define SII_MIS		0x0010	/* Phase Mismatch */
 #define SII_ATN		0x0008	/* ATN set by initiator if in Target mode */
 #define SII_MSG		0x0004	/* current bus state of MSG */

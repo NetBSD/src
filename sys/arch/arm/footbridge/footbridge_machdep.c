@@ -1,4 +1,4 @@
-/*	$NetBSD: footbridge_machdep.c,v 1.10 2003/04/01 23:19:10 thorpej Exp $	*/
+/*	$NetBSD: footbridge_machdep.c,v 1.11 2021/08/17 22:00:27 andvar Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: footbridge_machdep.c,v 1.10 2003/04/01 23:19:10 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: footbridge_machdep.c,v 1.11 2021/08/17 22:00:27 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -49,9 +49,9 @@ __KERNEL_RCSID(0, "$NetBSD: footbridge_machdep.c,v 1.10 2003/04/01 23:19:10 thor
  * virtual address space that NOTHING else will access
  * and then we alternate the cache cleaning between the
  * two banks.
- * The cache cleaning code requires requires 2 banks aligned
- * on total size boundry so the banks can be alternated by
- * eorring the size bit (assumes the bank size is a power of 2)
+ * The cache cleaning code requires 2 banks aligned
+ * on total size boundary so the banks can be alternated by
+ * xorring the size bit (assumes the bank size is a power of 2)
  *
  * On the DC21285 we have a special cache clean area so we will
  * use it.
