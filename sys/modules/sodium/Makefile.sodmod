@@ -1,0 +1,53 @@
+#	$NetBSD: Makefile.sodmod,v 1.1 2021/08/17 17:29:20 christos Exp $
+
+SODIUMDIR=	${S}/external/isc/libsodium
+SODIUMSRCDIR=	${SODIUMDIR}/dist/src/libsodium
+
+.PATH:	${SODIUMDIR}/src
+SRCS+=	glue.c
+
+.PATH:	${SODIUMSRCDIR}/crypto_scalarmult/curve25519/ref10
+SRCS+=	x25519_ref10.c
+
+.PATH:	${SODIUMSRCDIR}/crypto_scalarmult/curve25519
+SRCS+=	scalarmult_curve25519.c
+
+.PATH:	${SODIUMSRCDIR}/crypto_scalarmult
+SRCS+=	crypto_scalarmult.c
+
+.PATH:	${SODIUMSRCDIR}/crypto_onetimeauth/poly1305/donna
+SRCS+=	poly1305_donna.c
+
+.PATH:	${SODIUMSRCDIR}/crypto_onetimeauth/poly1305
+SRCS+=	onetimeauth_poly1305.c
+
+.PATH:	${SODIUMSRCDIR}/crypto_onetimeauth
+SRCS+=	crypto_onetimeauth.c
+
+.PATH:	${SODIUMSRCDIR}/crypto_stream/chacha20/ref
+SRCS+=	chacha20_ref.c
+
+.PATH:	${SODIUMSRCDIR}/crypto_stream/chacha20
+SRCS+=	stream_chacha20.c
+
+.PATH:	${SODIUMSRCDIR}/crypto_aead/xchacha20poly1305/sodium
+SRCS+=	aead_xchacha20poly1305.c
+
+.PATH:	${SODIUMSRCDIR}/crypto_aead/chacha20poly1305/sodium
+SRCS+=	aead_chacha20poly1305.c
+
+.PATH:	${SODIUMSRCDIR}/crypto_core/hchacha20
+SRCS+=	core_hchacha20.c
+
+.PATH:	${SODIUMSRCDIR}/crypto_core/ed25519/ref10
+SRCS+=	ed25519_ref10.c
+
+WARNS=		3
+
+CWARNFLAGS+=	-Wall
+CWARNFLAGS+=	-Wno-shadow
+CWARNFLAGS+=	-Wno-unused-function
+CWARNFLAGS+=	-Wno-unused-variable
+
+CPPFLAGS+=	-DHAVE_TI_MODE -I${SODIUMDIR}/include 
+CPPFLAGS+=	-I${SODIUMDIR}/dist/src/libsodium/include/sodium
