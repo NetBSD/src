@@ -1,4 +1,4 @@
-/*	$NetBSD: progress.c,v 1.24 2021/08/09 10:46:39 gson Exp $ */
+/*	$NetBSD: progress.c,v 1.25 2021/08/17 07:18:43 gson Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: progress.c,v 1.24 2021/08/09 10:46:39 gson Exp $");
+__RCSID("$NetBSD: progress.c,v 1.25 2021/08/17 07:18:43 gson Exp $");
 #endif				/* not lint */
 
 #include <sys/types.h>
@@ -231,7 +231,11 @@ main(int argc, char *argv[])
 		do {
 			nr = read(fd, fb_buf, buffersize);
 		} while (nr < 0 && errno == EINTR);
-		if (nr <= 0)
+		if (nr < 0) {
+			progressmeter(1);
+			err(1, "reading input");
+		}
+		if (nr == 0)
 			break;
 		for (off = 0; nr; nr -= nw, off += nw, bytes += nw)
 			if ((nw = write(outpipe[1], fb_buf + off,
