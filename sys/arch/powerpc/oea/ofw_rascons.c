@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw_rascons.c,v 1.17 2020/07/07 13:57:20 rin Exp $	*/
+/*	$NetBSD: ofw_rascons.c,v 1.18 2021/08/17 22:00:30 andvar Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofw_rascons.c,v 1.17 2020/07/07 13:57:20 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofw_rascons.c,v 1.18 2021/08/17 22:00:30 andvar Exp $");
 
 #include "wsdisplay.h"
 
@@ -201,7 +201,7 @@ copy_rom_font(void)
 	OF_getprop(chosen, "mmu", &mmu, 4);
 
 	/*
-	 * Convert to physcal address.  We cannot access to Open Firmware's
+	 * Convert to physical address.  We cannot access to Open Firmware's
 	 * virtual address space.
 	 */
 	OF_call_method("translate", mmu, 1, 3, romfont, &romfont, &m, &e);

@@ -1,4 +1,4 @@
-/*	$NetBSD: gemreg.h,v 1.15 2012/07/02 11:23:40 jdc Exp $ */
+/*	$NetBSD: gemreg.h,v 1.16 2021/08/17 22:00:31 andvar Exp $ */
 
 /*
  *
@@ -771,7 +771,7 @@
  * Default: none
  */
 #define	GEM_MII_DATAPATH_SERIAL	0x00000001	/* Use internal Serialink */
-#define	GEM_MII_DATAPATH_SERDES	0x00000002	/* Use PCS via 10bit interfac */
+#define	GEM_MII_DATAPATH_SERDES	0x00000002	/* Use PCS via 10bit interface */
 #define	GEM_MII_DATAPATH_MII	0x00000004	/* Use {G}MII, not PCS */
 #define	GEM_MII_DATAPATH_MIIOUT	0x00000008	/* Set serial output on GMII */
 #define GEM_MII_DATAPATH_BITS	"\177\020"				\

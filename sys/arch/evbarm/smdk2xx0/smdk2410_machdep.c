@@ -1,4 +1,4 @@
-/*	$NetBSD: smdk2410_machdep.c,v 1.44 2020/04/18 11:00:41 skrll Exp $ */
+/*	$NetBSD: smdk2410_machdep.c,v 1.45 2021/08/17 22:00:29 andvar Exp $ */
 
 /*
  * Copyright (c) 2002, 2003 Fujitsu Component Limited
@@ -105,7 +105,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smdk2410_machdep.c,v 1.44 2020/04/18 11:00:41 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smdk2410_machdep.c,v 1.45 2021/08/17 22:00:29 andvar Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_console.h"
@@ -513,7 +513,7 @@ initarm(void *arg)
 	bootconfig.dram[0].pages = SDRAM_SIZE / PAGE_SIZE;
 
 	/*
-	 * Set up the variables that define the availablilty of
+	 * Set up the variables that define the availability of
 	 * physical memory.  For now, we're going to set
 	 * physical_freestart to 0x08200000 (where the kernel
 	 * was loaded), and allocate the memory we need downwards.

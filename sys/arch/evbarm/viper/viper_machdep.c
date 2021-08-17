@@ -1,4 +1,4 @@
-/*	$NetBSD: viper_machdep.c,v 1.32 2020/04/18 11:00:41 skrll Exp $ */
+/*	$NetBSD: viper_machdep.c,v 1.33 2021/08/17 22:00:29 andvar Exp $ */
 
 /*
  * Startup routines for the Arcom Viper.  Below you can trace the
@@ -112,7 +112,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: viper_machdep.c,v 1.32 2020/04/18 11:00:41 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: viper_machdep.c,v 1.33 2021/08/17 22:00:29 andvar Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_console.h"
@@ -440,7 +440,7 @@ initarm(void *arg)
 	bootconfig.dram[0].pages = MEMSIZE / PAGE_SIZE;
 
 	/*
-	 * Set up the variables that define the availablilty of
+	 * Set up the variables that define the availability of
 	 * physical memory.  For now, we're going to set
 	 * physical_freestart to 0xa0200000 (where the kernel
 	 * was loaded), and allocate the memory we need downwards.

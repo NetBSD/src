@@ -1,4 +1,4 @@
-/*	$NetBSD: rndisreg.h,v 1.5 2020/01/08 04:53:38 nonaka Exp $ */
+/*	$NetBSD: rndisreg.h,v 1.6 2021/08/17 22:00:31 andvar Exp $ */
 /*	NetBSD: if_urndisreg.h,v 1.4 2018/11/09 21:57:09 maya Exp */
 /*	$OpenBSD: if_urndisreg.h,v 1.14 2010/07/08 18:22:01 ckuethe Exp $ */
 
@@ -281,7 +281,7 @@ struct rndis_status_msg {
 	/* rndis_diag_info */
 };
 
-/* Keepalive messsage.  May be sent by device. */
+/* Keepalive message.  May be sent by device. */
 #define REMOTE_NDIS_KEEPALIVE_MSG	0x00000008
 #define REMOTE_NDIS_KEEPALIVE_CMPLT	0x80000008
 

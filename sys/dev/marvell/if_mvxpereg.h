@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mvxpereg.h,v 1.5 2019/03/18 11:38:03 msaitoh Exp $	*/
+/*	$NetBSD: if_mvxpereg.h,v 1.6 2021/08/17 22:00:31 andvar Exp $	*/
 /*
  * Copyright (c) 2015 Internet Initiative Japan Inc.
  * All rights reserved.
@@ -558,7 +558,7 @@
 /*
  * Serial(SMI/MII) Registers
  */
-/* Port Seiral Control0 (MVXPE_PSC0) */
+/* Port Serial Control0 (MVXPE_PSC0) */
 #define MVXPE_PSC0_FORCE_FC_MASK	(0x3 << 5)
 #define MVXPE_PSC0_FORCE_FC(fc)		(((fc) & 0x3) << 5)
 #define MVXPE_PSC0_FORCE_FC_PAUSE	MVXPE_PSC0_FORCE_FC(0x1)

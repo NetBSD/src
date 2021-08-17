@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ne_mb.c,v 1.2 2010/04/06 15:32:36 tsutsui Exp $	*/
+/*	$NetBSD: if_ne_mb.c,v 1.3 2021/08/17 22:00:27 andvar Exp $	*/
 
 /*
  * Copyright (c) 2010 Izumi Tsutsui.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ne_mb.c,v 1.2 2010/04/06 15:32:36 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ne_mb.c,v 1.3 2021/08/17 22:00:27 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -144,7 +144,7 @@ ne_mb_probe(device_t parent, cfdata_t cf, void *aux)
 	    (vaddr_t)bus_space_vaddr(iot, iowh) -
 	    (vaddr_t)bus_space_vaddr(iot, ioh);
 
-	/* check if register regions are vaild */
+	/* check if register regions are valid */
 	if (bus_space_peek_1(iot, ioh, 0) == 0)
 		goto out2;
 

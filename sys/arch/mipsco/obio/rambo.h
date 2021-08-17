@@ -1,4 +1,4 @@
-/*	$NetBSD: rambo.h,v 1.7 2009/06/29 20:49:25 mbalmer Exp $	*/
+/*	$NetBSD: rambo.h,v 1.8 2021/08/17 22:00:30 andvar Exp $	*/
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -103,7 +103,7 @@ struct	rambo_ch {
 #define	RB_BLK_MASK	0x3f	/* Alignment mask */
 #define	RB_BLK_SIZE	64	/* Bytes in a DMA Block */
 
-/* DMA cannot cross 512k boundry (2^19 == 512k) */
+/* DMA cannot cross 512k boundary (2^19 == 512k) */
 #define RB_BSIZE	19
 #define RB_BMASK	((1<<RB_BSIZE)-1)
 #define	RB_BOUNDRY	(1<<RB_BSIZE)

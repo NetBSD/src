@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_subr.c,v 1.228 2021/08/17 17:16:40 andvar Exp $	*/
+/*	$NetBSD: pci_subr.c,v 1.229 2021/08/17 22:00:31 andvar Exp $	*/
 
 /*
  * Copyright (c) 1997 Zubin D. Dittia.  All rights reserved.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.228 2021/08/17 17:16:40 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.229 2021/08/17 22:00:31 andvar Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pci.h"
@@ -2736,7 +2736,7 @@ pci_conf_print_caplist(
 
 		/*
 		 * The type was found. Search capability list again and
-		 * print all capabilities that the capabiliy type is
+		 * print all capabilities that the capability type is
 		 * the same. This is required because some capabilities
 		 * appear multiple times (e.g. HyperTransport capability).
 		 */
@@ -3723,7 +3723,7 @@ pci_conf_print_dpa_cap(const pcireg_t *regs, int extcapoff)
 	    PCIREG_SHIFTOUT(reg, PCI_DPA_CAP_XLCY1));
 
 	reg = regs[o2i(extcapoff + PCI_DPA_LATIND)];
-	printf("    Latency Indicatior register: 0x%08x\n", reg);
+	printf("    Latency Indicator register: 0x%08x\n", reg);
 
 	reg = regs[o2i(extcapoff + PCI_DPA_CS)];
 	printf("    Status register: 0x%04x\n", reg & 0xffff);
@@ -3769,7 +3769,7 @@ pci_conf_print_tph_req_cap(const pcireg_t *regs, int extcapoff)
 	onoff("No ST Mode Supported", reg, PCI_TPH_REQ_CAP_NOST);
 	onoff("Interrupt Vector Mode Supported", reg, PCI_TPH_REQ_CAP_INTVEC);
 	onoff("Device Specific Mode Supported", reg, PCI_TPH_REQ_CAP_DEVSPEC);
-	onoff("Extend TPH Reqester Supported", reg, PCI_TPH_REQ_CAP_XTPHREQ);
+	onoff("Extend TPH Requester Supported", reg, PCI_TPH_REQ_CAP_XTPHREQ);
 	sttbloc = PCIREG_SHIFTOUT(reg, PCI_TPH_REQ_CAP_STTBLLOC);
 	printf("      ST Table Location: %s\n",
 	    pci_conf_print_tph_req_cap_sttabloc(sttbloc));
@@ -4409,7 +4409,7 @@ pci_conf_print_extcaplist(
 
 		/*
 		 * The type was found. Search capability list again and
-		 * print all capabilities that the capabiliy type is
+		 * print all capabilities that the capability type is
 		 * the same.
 		 */
 		if (pci_conf_find_extcap(regs, i, &off) == 0)

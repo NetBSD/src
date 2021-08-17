@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.336 2021/01/24 07:36:54 mrg Exp $ */
+/*	$NetBSD: machdep.c,v 1.337 2021/08/17 22:00:31 andvar Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.336 2021/01/24 07:36:54 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.337 2021/08/17 22:00:31 andvar Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_sunos.h"
@@ -1559,7 +1559,7 @@ sun4_dmamap_load(bus_dma_tag_t t, bus_dmamap_t map,
 
 	if ((map->_dm_flags & BUS_DMA_24BIT) == 0) {
 		/*
-		 * XXX Need to implement "don't DMA across this boundry".
+		 * XXX Need to implement "don't DMA across this boundary".
 		 */
 		if (map->_dm_boundary != 0) {
 			bus_addr_t baddr;
