@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2021/08/14 16:15:04 christos Exp $
+#	$NetBSD: Makefile,v 1.7 2021/08/17 01:59:16 mrg Exp $
 
 USE_FORT?=	yes
 CWARNFLAGS.clang=	-Wno-format-extra-args
@@ -11,7 +11,7 @@ LIB=		ldap_r
 
 SRCS+=		threads.c rdwr.c rq.c \
 		thr_posix.c thr_thr.c thr_nt.c \
-		thr_pth.c thr_debug.c
+		thr_pth.c thr_debug.c tpool.c
 
 COPTS+=		-pthread
 LIBDPLIBS+=	pthread	${.CURDIR}/../../../../../lib/libpthread
