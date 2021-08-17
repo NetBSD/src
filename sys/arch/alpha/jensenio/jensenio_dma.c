@@ -1,4 +1,4 @@
-/* $NetBSD: jensenio_dma.c,v 1.9 2021/07/04 22:42:35 thorpej Exp $ */
+/* $NetBSD: jensenio_dma.c,v 1.10 2021/08/17 22:00:27 andvar Exp $ */
 
 /*-
  * Copyright (c) 2000, 2020 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
  * DMA support for the Jensen system.
  *
  * The Jensen uses direct-mapped DMA with a window base of 0, i.e.
- * a page of phyical memory has the same PCI address as CPU address.
+ * a page of physical memory has the same PCI address as CPU address.
  * There is no support for SGMAPs on the Jensen.  This means that for
  * ISA DMA, we must employ bounce buffers for DMA transactions over
  * 16MB ISA limit (due to ISA's 24-bit address space limitation).
@@ -47,7 +47,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: jensenio_dma.c,v 1.9 2021/07/04 22:42:35 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: jensenio_dma.c,v 1.10 2021/08/17 22:00:27 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

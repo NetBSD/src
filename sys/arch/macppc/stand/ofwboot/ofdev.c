@@ -1,4 +1,4 @@
-/*	$NetBSD: ofdev.c,v 1.29 2021/05/24 11:13:44 martin Exp $	*/
+/*	$NetBSD: ofdev.c,v 1.30 2021/08/17 22:00:30 andvar Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -325,7 +325,7 @@ parsefilepath(const char *path, char *devname, char *fname, char *ppart)
 		*cp = savec;
 		if (dhandle != -1) {
 			/*
-			 * If it's a vaild device, lp is a delimiter
+			 * If it's a valid device, lp is a delimiter
 			 * in the OF device path.
 			 */
 			if (OF_getprop(dhandle, "device_type", devtype,

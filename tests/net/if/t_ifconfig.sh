@@ -1,4 +1,4 @@
-# $NetBSD: t_ifconfig.sh,v 1.21 2019/08/15 04:21:33 ozaki-r Exp $
+# $NetBSD: t_ifconfig.sh,v 1.22 2021/08/17 22:00:33 andvar Exp $
 #
 # Copyright (c) 2015 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -168,7 +168,7 @@ ifconfig_options_body()
 	atf_check -s exit:0 -o ignore rump.ifconfig shmif0 up
 
 	# ifconfig -l [-bdsu]
-	#   -l shows only inteface names
+	#   -l shows only interface names
 	atf_check -s exit:0 -o match:'lo0' rump.ifconfig -l
 	atf_check -s exit:0 -o match:'shmif0' rump.ifconfig -l
 	atf_check -s exit:0 -o match:'shmif0' rump.ifconfig -l -b

@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_output.c,v 1.227 2021/03/10 22:28:26 christos Exp $	*/
+/*	$NetBSD: ip6_output.c,v 1.228 2021/08/17 22:00:32 andvar Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.227 2021/03/10 22:28:26 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.228 2021/08/17 22:00:32 andvar Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -683,7 +683,7 @@ ip6_output(
 	}
 
 	/*
-	 * Fill the outgoing inteface to tell the upper layer
+	 * Fill the outgoing interface to tell the upper layer
 	 * to increment per-interface statistics.
 	 */
 	if (ifpp)

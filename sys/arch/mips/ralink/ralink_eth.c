@@ -1,4 +1,4 @@
-/*	$NetBSD: ralink_eth.c,v 1.21 2020/02/04 05:18:36 thorpej Exp $	*/
+/*	$NetBSD: ralink_eth.c,v 1.22 2021/08/17 22:00:30 andvar Exp $	*/
 /*-
  * Copyright (c) 2011 CradlePoint Technology, Inc.
  * All rights reserved.
@@ -29,7 +29,7 @@
 /* ralink_eth.c -- Ralink Ethernet Driver */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ralink_eth.c,v 1.21 2020/02/04 05:18:36 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ralink_eth.c,v 1.22 2021/08/17 22:00:30 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -1539,7 +1539,7 @@ ralink_eth_rxintr(ralink_eth_softc_t *sc)
 		 */
 		MCLAIM(m, &sc->sc_ethercom.ec_rx_mowner);
 
-		/* push it up the inteface */
+		/* push it up the interface */
 		m_set_rcvif(m, ifp);
 
 #ifdef RALINK_ETH_DEBUG

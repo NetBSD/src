@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_machdep.c,v 1.98 2020/04/18 11:00:37 skrll Exp $	*/
+/*	$NetBSD: rpc_machdep.c,v 1.99 2021/08/17 22:00:26 andvar Exp $	*/
 
 /*
  * Copyright (c) 2000-2002 Reinoud Zandijk.
@@ -54,7 +54,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: rpc_machdep.c,v 1.98 2020/04/18 11:00:37 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rpc_machdep.c,v 1.99 2021/08/17 22:00:26 andvar Exp $");
 
 #include <sys/systm.h>
 #include <sys/kernel.h>
@@ -501,7 +501,7 @@ initarm(void *cookie)
 	printf("Allocating page tables\n");
 #endif
 	/*
-	 * Set up the variables that define the availablilty of physical
+	 * Set up the variables that define the availability of physical
 	 * memory
 	 */
 	physical_start = 0xffffffff;
@@ -799,7 +799,7 @@ initarm(void *cookie)
 	 * but since we are boot strapping the addresses used for the read
 	 * may have just been remapped and thus the cache could be out
 	 * of sync. A re-clean after the switch will cure this.
-	 * After booting there are no gross reloations of the kernel thus
+	 * After booting there are no gross relocations of the kernel thus
 	 * this problem will not occur after initarm().
 	 */
 	cpu_idcache_wbinv_all();
@@ -1078,9 +1078,9 @@ parse_rpc_bootargs(char *args)
  * virtual address space that NOTHING else will access
  * and then we alternate the cache cleaning between the
  * two banks.
- * The cache cleaning code requires requires 2 banks aligned
- * on total size boundry so the banks can be alternated by
- * eorring the size bit (assumes the bank size is a power of 2)
+ * The cache cleaning code requires 2 banks aligned
+ * on total size boundary so the banks can be alternated by
+ * xorring the size bit (assumes the bank size is a power of 2)
  */
 extern unsigned int sa1_cache_clean_addr;
 extern unsigned int sa1_cache_clean_size;

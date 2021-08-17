@@ -1,4 +1,4 @@
-/*	$NetBSD: netwinder_machdep.c,v 1.90 2020/04/18 11:00:42 skrll Exp $	*/
+/*	$NetBSD: netwinder_machdep.c,v 1.91 2021/08/17 22:00:30 andvar Exp $	*/
 
 /*
  * Copyright (c) 1997,1998 Mark Brinicombe.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netwinder_machdep.c,v 1.90 2020/04/18 11:00:42 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netwinder_machdep.c,v 1.91 2021/08/17 22:00:30 andvar Exp $");
 
 #include "opt_ddb.h"
 
@@ -449,7 +449,7 @@ initarm(void *arg)
 	bootconfig.dram[0].pages = nwbootinfo.bi_nrpages;
 
 	/*
-	 * Set up the variables that define the availablilty of
+	 * Set up the variables that define the availability of
 	 * physical memory.
 	 *
 	 * Since the NetWinder NeTTrom doesn't load ELF symbols

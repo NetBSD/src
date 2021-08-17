@@ -1,4 +1,4 @@
-/*	$NetBSD: qdreg.h,v 1.5 2005/12/11 12:19:34 christos Exp $	*/
+/*	$NetBSD: qdreg.h,v 1.6 2021/08/17 22:00:31 andvar Exp $	*/
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
  * All rights reserved.
@@ -346,7 +346,7 @@
 
 	    short modeA;		/* ch.A mode reg (read/write) */
 	    short statusA;		/* ch.A status reg (read) */
-#define clkselA statusA 		/* ch.A clock slect reg (write) */
+#define clkselA statusA 		/* ch.A clock select reg (write) */
 	    short cmdA; 		/* ch.A command reg (write) */
 	    short dataA;		/* rcv/xmt data ch.A (read/write) */
 	    short inchng;		/* input change state reg (read) */

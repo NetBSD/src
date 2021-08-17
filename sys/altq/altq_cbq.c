@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_cbq.c,v 1.36 2021/07/21 07:34:44 ozaki-r Exp $	*/
+/*	$NetBSD: altq_cbq.c,v 1.37 2021/08/17 22:00:26 andvar Exp $	*/
 /*	$KAME: altq_cbq.c,v 1.21 2005/04/13 03:44:24 suz Exp $	*/
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: altq_cbq.c,v 1.36 2021/07/21 07:34:44 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: altq_cbq.c,v 1.37 2021/08/17 22:00:26 andvar Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_altq.h"
@@ -816,7 +816,7 @@ cbq_clear_hierarchy(struct cbq_interface *ifacep)
  *	that interface.
  *
  *	Returns:	0, for no error.
- *			EBADF, for specified inteface not found.
+ *			EBADF, for specified interface not found.
  */
 
 static int

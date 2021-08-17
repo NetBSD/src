@@ -1,4 +1,4 @@
-/*	$NetBSD: shark_machdep.c,v 1.46 2019/07/16 14:41:49 skrll Exp $	*/
+/*	$NetBSD: shark_machdep.c,v 1.47 2021/08/17 22:00:31 andvar Exp $	*/
 
 /*
  * Copyright 1997
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: shark_machdep.c,v 1.46 2019/07/16 14:41:49 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: shark_machdep.c,v 1.47 2021/08/17 22:00:31 andvar Exp $");
 
 #include "opt_ddb.h"
 #include "opt_modular.h"
@@ -133,8 +133,8 @@ int ofw_handleticks = 0;	/* set to TRUE by cpu_initclocks */
  * For faster cache cleaning we need two 16K banks of virtual address
  * space that NOTHING else will access and then we alternate the cache
  * cleaning between the two banks.
- * The cache cleaning code requires requires 2 banks aligned
- * on total size boundry so the banks can be alternated by
+ * The cache cleaning code requires 2 banks aligned
+ * on total size boundary so the banks can be alternated by
  * xorring the size bit (assumes the bank size is a power of 2)
  */
 extern unsigned int sa1_cache_clean_addr;

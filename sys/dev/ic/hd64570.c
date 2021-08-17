@@ -1,4 +1,4 @@
-/*	$NetBSD: hd64570.c,v 1.55 2020/01/29 14:47:08 thorpej Exp $	*/
+/*	$NetBSD: hd64570.c,v 1.56 2021/08/17 22:00:31 andvar Exp $	*/
 
 /*
  * Copyright (c) 1999 Christian E. Hopps
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hd64570.c,v 1.55 2020/01/29 14:47:08 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hd64570.c,v 1.56 2021/08/17 22:00:31 andvar Exp $");
 
 #include "opt_inet.h"
 
@@ -657,7 +657,7 @@ sca_dmac_init(struct sca_softc *sc, sca_port_t *scp)
 
 	for (i = 0 ; i < scp->sp_ntxdesc ; i++) {
 		/*
-		 * desc_p points to the physcial address of the NEXT desc
+		 * desc_p points to the physical address of the NEXT desc
 		 */
 		desc_p += sizeof(sca_desc_t);
 
@@ -717,7 +717,7 @@ sca_dmac_init(struct sca_softc *sc, sca_port_t *scp)
 
 	for (i = 0 ; i < scp->sp_nrxdesc; i++) {
 		/*
-		 * desc_p points to the physcial address of the NEXT desc
+		 * desc_p points to the physical address of the NEXT desc
 		 */
 		desc_p += sizeof(sca_desc_t);
 

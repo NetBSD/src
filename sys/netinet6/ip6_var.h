@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_var.h,v 1.90 2021/03/11 11:10:22 ryo Exp $	*/
+/*	$NetBSD: ip6_var.h,v 1.91 2021/08/17 22:00:32 andvar Exp $	*/
 /*	$KAME: ip6_var.h,v 1.33 2000/06/11 14:59:20 jinmei Exp $	*/
 
 /*
@@ -197,7 +197,7 @@ struct	ip6_pktopts {
 #define	IP6_STAT_PFILDROP_OUT	404	/* dropped by pfil (PFIL_OUT) */
 #define	IP6_STAT_IPSECDROP_IN	405	/* dropped by IPsec SP check */
 #define	IP6_STAT_IPSECDROP_OUT	406	/* dropped by IPsec SP check */
-#define	IP6_STAT_IFDROP		407	/* dropped due to inteface state */
+#define	IP6_STAT_IFDROP		407	/* dropped due to interface state */
 #define	IP6_STAT_IDROPPED	408	/* lost packets due to nobufs, etc. */
 #define	IP6_STAT_TIMXCEED	409	/* hop limit exceeded */
 #define	IP6_STAT_TOOBIG		410	/* packet bigger than MTU */

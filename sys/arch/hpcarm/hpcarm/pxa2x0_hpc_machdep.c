@@ -1,4 +1,4 @@
-/*	$NetBSD: pxa2x0_hpc_machdep.c,v 1.29 2020/04/18 11:00:41 skrll Exp $	*/
+/*	$NetBSD: pxa2x0_hpc_machdep.c,v 1.30 2021/08/17 22:00:29 andvar Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pxa2x0_hpc_machdep.c,v 1.29 2020/04/18 11:00:41 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pxa2x0_hpc_machdep.c,v 1.30 2021/08/17 22:00:29 andvar Exp $");
 
 #include "opt_ddb.h"
 #include "opt_dram_pages.h"
@@ -298,7 +298,7 @@ init_pxa2x0(int argc, char **argv, struct bootinfo *bi)
 	 */
 
 	/*
-	 * Set up the variables that define the availability of physcial
+	 * Set up the variables that define the availability of physical
 	 * memory.
 	 */
 	physical_start = bootconfig.dram[0].address;

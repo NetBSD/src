@@ -1,4 +1,4 @@
-/*	$NetBSD: if_casreg.h,v 1.3 2020/01/29 02:16:02 msaitoh Exp $ */
+/*	$NetBSD: if_casreg.h,v 1.4 2021/08/17 22:00:31 andvar Exp $ */
 /*	$OpenBSD: if_casreg.h,v 1.10 2008/05/31 22:49:03 kettenis Exp $	*/
 
 /*
@@ -535,7 +535,7 @@
 
 /* CAS_MII_DATAPATH_MODE reg */
 #define	CAS_MII_DATAPATH_SERIAL	0x00000001	/* Serial link */
-#define	CAS_MII_DATAPATH_SERDES	0x00000002	/* Use PCS via 10bit interfac */
+#define	CAS_MII_DATAPATH_SERDES	0x00000002	/* Use PCS via 10bit interface */
 #define	CAS_MII_DATAPATH_MII	0x00000004	/* Use {G}MII, not PCS */
 #define	CAS_MII_DATAPATH_MIIOUT	0x00000008	/* enable serial output on GMII */
 

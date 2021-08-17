@@ -1,4 +1,4 @@
-/*	$NetBSD: grfabs_fal.c,v 1.27 2010/04/13 11:31:11 tsutsui Exp $	*/
+/*	$NetBSD: grfabs_fal.c,v 1.28 2021/08/17 22:00:27 andvar Exp $	*/
 
 /*
  * Copyright (c) 1995 Thomas Gerner.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grfabs_fal.c,v 1.27 2010/04/13 11:31:11 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grfabs_fal.c,v 1.28 2021/08/17 22:00:27 andvar Exp $");
 
 #ifdef FALCON_VIDEO
 /*
@@ -556,14 +556,14 @@ alloc_bitmap(u_long width, u_long height, u_char depth)
 
 	/*
 	 * Sigh, it seems for mapping to work we need the bitplane data to
-	 *  1: be aligned on a page boundry.
+	 *  1: be aligned on a page boundary.
 	 *  2: be n pages large.
 	 * 
 	 * why? because the user gets a page aligned address, if this is before
 	 * your allocation, too bad.  Also it seems that the mapping routines
 	 * do not watch to closely to the allowable length. so if you go over
 	 * n pages by less than another page, the user gets to write all over
-	 * the entire page. Since you did not allocate up to a page boundry
+	 * the entire page. Since you did not allocate up to a page boundary
 	 * (or more) the user writes into someone elses memory. -ch
 	 */
 	bm_size    = m68k_round_page((width * height * depth) / NBBY);

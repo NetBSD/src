@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_quirks.c,v 1.97 2021/02/21 12:36:38 martin Exp $	*/
+/*	$NetBSD: usb_quirks.c,v 1.98 2021/08/17 22:00:32 andvar Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_quirks.c,v 1.30 2003/01/02 04:15:55 imp Exp $	*/
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb_quirks.c,v 1.97 2021/02/21 12:36:38 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb_quirks.c,v 1.98 2021/08/17 22:00:32 andvar Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -98,7 +98,7 @@ static const usb_config_descriptor_t desc_conf_pn533 = {
 					sizeof(desc_ep_pn533_in) +
 					sizeof(desc_ep_pn533_out)
 				 ),
-	/* bNumInterfac	*/	 1,
+	/* bNumInterface */	 1,
 	/* bConfigurationValue */1,
 	/* iConfiguration */	 0,
 	/* bmAttributes	*/	 UC_ATTR_MBO,
