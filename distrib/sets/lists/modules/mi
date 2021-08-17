@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.144 2021/05/17 04:07:42 yamaguchi Exp $
+# $NetBSD: mi,v 1.145 2021/08/17 17:31:59 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -23,6 +23,8 @@
 ./@MODULEDIR@/audio/audio.kmod			modules-base-kernel	kmod
 ./@MODULEDIR@/autofs				modules-base-kernel	kmod
 ./@MODULEDIR@/autofs/autofs.kmod		modules-base-kernel	kmod
+./@MODULEDIR@/blake2s				modules-base-kernel	kmod
+./@MODULEDIR@/blake2s/blake2s.kmod		modules-base-kernel	kmod
 ./@MODULEDIR@/blowfish				modules-base-kernel	kmod
 ./@MODULEDIR@/blowfish/blowfish.kmod		modules-base-kernel	kmod
 ./@MODULEDIR@/bpf				modules-base-kernel	kmod
@@ -251,6 +253,8 @@
 ./@MODULEDIR@/if_vioif/if_vioif.kmod		base-obsolete		obsolete
 ./@MODULEDIR@/if_vlan				modules-base-kernel	kmod
 ./@MODULEDIR@/if_vlan/if_vlan.kmod		modules-base-kernel	kmod
+./@MODULEDIR@/if_wg				modules-base-kernel	kmod
+./@MODULEDIR@/if_wg/if_wg.kmod			modules-base-kernel	kmod
 ./@MODULEDIR@/iic				modules-base-kernel	kmod
 ./@MODULEDIR@/iic/iic.kmod			modules-base-kernel	kmod
 ./@MODULEDIR@/ip_ecn				modules-base-kernel	kmod
@@ -399,6 +403,8 @@
 ./@MODULEDIR@/slcompress/slcompress.kmod	modules-base-kernel     kmod
 ./@MODULEDIR@/smbfs				base-obsolete		obsolete
 ./@MODULEDIR@/smbfs/smbfs.kmod			base-obsolete		obsolete
+./@MODULEDIR@/sodium				modules-base-kernel     kmod
+./@MODULEDIR@/sodium/sodium.kmod		modules-base-kernel     kmod
 ./@MODULEDIR@/solaris				modules-base-kernel     kmod,solaris
 ./@MODULEDIR@/solaris/solaris.kmod		modules-base-kernel     kmod,solaris
 ./@MODULEDIR@/spdmem				modules-base-kernel	kmod
