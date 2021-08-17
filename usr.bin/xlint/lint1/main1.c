@@ -1,4 +1,4 @@
-/*	$NetBSD: main1.c,v 1.54 2021/08/17 21:05:34 rillig Exp $	*/
+/*	$NetBSD: main1.c,v 1.55 2021/08/17 21:19:02 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: main1.c,v 1.54 2021/08/17 21:05:34 rillig Exp $");
+__RCSID("$NetBSD: main1.c,v 1.55 2021/08/17 21:19:02 rillig Exp $");
 #endif
 
 #include <sys/types.h>
@@ -290,9 +290,9 @@ static void __attribute__((noreturn))
 usage(void)
 {
 	(void)fprintf(stderr,
-	    "usage: %s [-abcdeghmprstuvwyzFST] [-Ac11] [-X <id>[,<id>]... "
-	    "src dest\n",
-	    getprogname());
+	    "usage: %s [-abceghmprstuvwyzFPST] [-Ac11] [-R old=new]\n"
+	    "       %*s [-X <id>[,<id>]...] src dest\n",
+	    getprogname(), (int)strlen(getprogname()), "");
 	exit(1);
 }
 
