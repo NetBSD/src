@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_subr.c,v 1.227 2021/07/12 04:41:14 msaitoh Exp $	*/
+/*	$NetBSD: pci_subr.c,v 1.228 2021/08/17 17:16:40 andvar Exp $	*/
 
 /*
  * Copyright (c) 1997 Zubin D. Dittia.  All rights reserved.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.227 2021/07/12 04:41:14 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.228 2021/08/17 17:16:40 andvar Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pci.h"
@@ -3539,7 +3539,7 @@ pci_conf_print_multicast_cap(const pcireg_t *regs, int extcapoff)
 	/* Endpoint Only */
 	n = PCIREG_SHIFTOUT(reg, PCI_MCAST_CAP_WINSIZEREQ);
 	if (n > 0)
-		printf("      Windw Size Requested: %d\n", 1 << (n - 1));
+		printf("      Window Size Requested: %d\n", 1 << (n - 1));
 
 	onoff("ECRC Regeneration Supported", reg, PCI_MCAST_CAP_ECRCREGEN);
 
