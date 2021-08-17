@@ -1,4 +1,4 @@
-# $NetBSD: module.mi,v 1.9 2021/05/17 04:07:42 yamaguchi Exp $
+# $NetBSD: module.mi,v 1.10 2021/08/17 17:31:58 christos Exp $
 ./usr/libdata/debug/@MODULEDIR@					modules-base-kernel	kmod,debug
 ./usr/libdata/debug/@MODULEDIR@/accf_dataready			modules-base-kernel	kmod,debug
 ./usr/libdata/debug/@MODULEDIR@/accf_dataready/accf_dataready.kmod.debug	modules-base-kernel	kmod,debug
@@ -14,6 +14,8 @@
 ./usr/libdata/debug/@MODULEDIR@/audio/audio.kmod.debug			modules-base-kernel	kmod,debug
 ./usr/libdata/debug/@MODULEDIR@/autofs				modules-base-kernel	kmod,debug
 ./usr/libdata/debug/@MODULEDIR@/autofs/autofs.kmod.debug		modules-base-kernel	kmod,debug
+./usr/libdata/debug/@MODULEDIR@/blake2s				modules-base-kernel	kmod,debug
+./usr/libdata/debug/@MODULEDIR@/blake2s/blake2s.kmod.debug		modules-base-kernel	kmod,debug
 ./usr/libdata/debug/@MODULEDIR@/blowfish				modules-base-kernel	kmod,debug
 ./usr/libdata/debug/@MODULEDIR@/blowfish/blowfish.kmod.debug		modules-base-kernel	kmod,debug
 ./usr/libdata/debug/@MODULEDIR@/bpf				modules-base-kernel	kmod,debug
@@ -224,6 +226,8 @@
 ./usr/libdata/debug/@MODULEDIR@/if_urndis/if_urndis.kmod.debug		modules-base-kernel	kmod,debug
 ./usr/libdata/debug/@MODULEDIR@/if_vlan				modules-base-kernel	kmod,debug
 ./usr/libdata/debug/@MODULEDIR@/if_vlan/if_vlan.kmod.debug		modules-base-kernel	kmod,debug
+./usr/libdata/debug/@MODULEDIR@/if_wg				modules-base-kernel	kmod,debug
+./usr/libdata/debug/@MODULEDIR@/if_wg/if_wg.kmod.debug		modules-base-kernel	kmod,debug
 ./usr/libdata/debug/@MODULEDIR@/iic				modules-base-kernel	kmod,debug
 ./usr/libdata/debug/@MODULEDIR@/iic/iic.kmod.debug			modules-base-kernel	kmod,debug
 ./usr/libdata/debug/@MODULEDIR@/ip_ecn				modules-base-kernel	kmod,debug
@@ -332,6 +336,8 @@
 ./usr/libdata/debug/@MODULEDIR@/skipjack/skipjack.kmod.debug		modules-base-kernel	kmod,debug
 ./usr/libdata/debug/@MODULEDIR@/slcompress			modules-base-kernel     kmod,debug
 ./usr/libdata/debug/@MODULEDIR@/slcompress/slcompress.kmod.debug	modules-base-kernel     kmod,debug
+./usr/libdata/debug/@MODULEDIR@/sodium				modules-base-kernel     kmod,solaris,debug
+./usr/libdata/debug/@MODULEDIR@/sodium/sodium.kmod.debug		modules-base-kernel     kmod,solaris,debug
 ./usr/libdata/debug/@MODULEDIR@/solaris				modules-base-kernel     kmod,solaris,debug
 ./usr/libdata/debug/@MODULEDIR@/solaris/solaris.kmod.debug		modules-base-kernel     kmod,solaris,debug
 ./usr/libdata/debug/@MODULEDIR@/spdmem				modules-base-kernel	kmod,debug
