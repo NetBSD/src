@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wg.c,v 1.64 2021/06/16 00:21:19 riastradh Exp $	*/
+/*	$NetBSD: if_wg.c,v 1.65 2021/08/17 17:31:13 christos Exp $	*/
 
 /*
  * Copyright (C) Ryota Ozaki <ozaki.ryota@gmail.com>
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wg.c,v 1.64 2021/06/16 00:21:19 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wg.c,v 1.65 2021/08/17 17:31:13 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_altq_enabled.h"
@@ -442,7 +442,7 @@ sliwin_update(struct sliwin *W, uint64_t S)
 	bit = S % SLIWIN_BPW;
 	if (W->B[word] & (1UL << bit))
 		return EAUTH;
-	W->B[word] |= 1UL << bit;
+	W->B[word] |= 1U << bit;
 
 	/* Accept!  */
 	return 0;
@@ -1009,7 +1009,7 @@ wg_algo_hmac(uint8_t out[], const size_t outlen,
 	uint8_t hmackey[HMAC_BLOCK_LEN] = {0};
 	uint8_t ipad[HMAC_BLOCK_LEN];
 	uint8_t opad[HMAC_BLOCK_LEN];
-	int i;
+	size_t i;
 	struct blake2s state;
 
 	KASSERT(outlen == WG_HASH_LEN);
@@ -1167,11 +1167,11 @@ wg_algo_tai64n(wg_timestamp_t timestamp)
 	/* FIXME strict TAI64N (https://cr.yp.to/libtai/tai64.html) */
 	getnanotime(&ts);
 	/* TAI64 label in external TAI64 format */
-	be32enc(timestamp, 0x40000000UL + (ts.tv_sec >> 32));
+	be32enc(timestamp, 0x40000000U + (uint32_t)(ts.tv_sec >> 32));
 	/* second beginning from 1970 TAI */
-	be32enc(timestamp + 4, ts.tv_sec & 0xffffffffU);
+	be32enc(timestamp + 4, (uint32_t)(ts.tv_sec & 0xffffffffU));
 	/* nanosecond in big-endian format */
-	be32enc(timestamp + 8, ts.tv_nsec);
+	be32enc(timestamp + 8, (uint32_t)ts.tv_nsec);
 }
 
 /*
@@ -1715,7 +1715,7 @@ wg_send_handshake_msg_init(struct wg_softc *wg, struct wg_peer *wgp)
 		if (wgp->wgp_handshake_start_time == 0)
 			wgp->wgp_handshake_start_time = time_uptime;
 		callout_schedule(&wgp->wgp_handshake_timeout_timer,
-		    MIN(wg_rekey_timeout, INT_MAX/hz) * hz);
+		    MIN(wg_rekey_timeout, (unsigned)(INT_MAX / hz)) * hz);
 	} else {
 		wg_put_session_index(wg, wgs);
 		/* Initiation failed; toss packet waiting for it if any.  */
@@ -2271,7 +2271,7 @@ wg_lookup_session_by_index(struct wg_softc *wg, const uint32_t index,
 static void
 wg_schedule_rekey_timer(struct wg_peer *wgp)
 {
-	int timeout = MIN(wg_rekey_after_time, INT_MAX/hz);
+	int timeout = MIN(wg_rekey_after_time, (unsigned)(INT_MAX / hz));
 
 	callout_schedule(&wgp->wgp_rekey_timer, timeout * hz);
 }
@@ -2308,7 +2308,7 @@ wg_need_to_send_init_message(struct wg_session *wgs)
 }
 
 static void
-wg_schedule_peer_task(struct wg_peer *wgp, int task)
+wg_schedule_peer_task(struct wg_peer *wgp, unsigned int task)
 {
 
 	mutex_enter(wgp->wgp_intr_lock);
@@ -3082,7 +3082,7 @@ wg_peer_work(struct work *wk, void *cookie)
 {
 	struct wg_peer *wgp = container_of(wk, struct wg_peer, wgp_work);
 	struct wg_softc *wg = wgp->wgp_sc;
-	int tasks;
+	unsigned int tasks;
 
 	mutex_enter(wgp->wgp_intr_lock);
 	while ((tasks = wgp->wgp_tasks) != 0) {
@@ -4515,10 +4515,10 @@ wg_ioctl_get(struct wg_softc *wg, struct ifdrv *ifd)
 		const struct timespec *t = &wgp->wgp_last_handshake_time;
 
 		if (!prop_dictionary_set_uint64(prop_peer,
-			"last_handshake_time_sec", t->tv_sec))
+			"last_handshake_time_sec", (uint64_t)t->tv_sec))
 			goto next;
 		if (!prop_dictionary_set_uint32(prop_peer,
-			"last_handshake_time_nsec", t->tv_nsec))
+			"last_handshake_time_nsec", (uint32_t)t->tv_nsec))
 			goto next;
 
 		if (wgp->wgp_n_allowedips == 0)
@@ -5002,4 +5002,4 @@ rumpkern_wg_recv_peer(struct wg_softc *wg, struct iovec *iov, size_t iovlen)
  */
 #include "if_module.h"
 
-IF_MODULE(MODULE_CLASS_DRIVER, wg, "")
+IF_MODULE(MODULE_CLASS_DRIVER, wg, "sodium,blake2s")
