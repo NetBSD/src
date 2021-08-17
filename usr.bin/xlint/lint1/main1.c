@@ -1,4 +1,4 @@
-/*	$NetBSD: main1.c,v 1.55 2021/08/17 21:19:02 rillig Exp $	*/
+/*	$NetBSD: main1.c,v 1.56 2021/08/17 22:29:11 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: main1.c,v 1.55 2021/08/17 21:19:02 rillig Exp $");
+__RCSID("$NetBSD: main1.c,v 1.56 2021/08/17 22:29:11 rillig Exp $");
 #endif
 
 #include <sys/types.h>
@@ -168,11 +168,28 @@ sigfpe(int s)
 	fpe = 1;
 }
 
+static void
+suppress_messages(char *ids)
+{
+	char *ptr, *end;
+	long id;
+
+	for (ptr = strtok(ids, ","); ptr != NULL; ptr = strtok(NULL, ",")) {
+		errno = 0;
+		id = strtol(ptr, &end, 0);
+		if ((id == TARG_LONG_MIN || id == TARG_LONG_MAX) &&
+		    errno == ERANGE)
+			err(1, "invalid error message id '%s'", ptr);
+		if (*end != '\0' || ptr == end || id < 0 || id >= ERR_SETSIZE)
+			errx(1, "invalid error message id '%s'", ptr);
+		ERR_SET(id, &msgset);
+	}
+}
+
 int
 main(int argc, char *argv[])
 {
-	int	c;
-	char	*ptr;
+	int c;
 
 	setprogname(argv[0]);
 
@@ -217,23 +234,7 @@ main(int argc, char *argv[])
 			break;
 
 		case 'X':
-			for (ptr = strtok(optarg, ","); ptr != NULL;
-			    ptr = strtok(NULL, ",")) {
-				char *eptr;
-				long msg;
-
-				errno = 0;
-				msg = strtol(ptr, &eptr, 0);
-				if ((msg == TARG_LONG_MIN || msg == TARG_LONG_MAX) &&
-				    errno == ERANGE)
-				    err(1, "invalid error message id '%s'",
-					ptr);
-				if (*eptr != '\0' || ptr == eptr || msg < 0 ||
-				    msg >= ERR_SETSIZE)
-					errx(1, "invalid error message id '%s'",
-					    ptr);
-				ERR_SET(msg, &msgset);
-			}
+			suppress_messages(optarg);
 			break;
 		default:
 			usage();
