@@ -1,4 +1,4 @@
-/*	$NetBSD: pcireg.h,v 1.155 2021/06/24 23:48:08 thorpej Exp $	*/
+/*	$NetBSD: pcireg.h,v 1.156 2021/08/17 22:00:32 andvar Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1999, 2000
@@ -507,8 +507,8 @@ typedef u_int8_t pci_revision_t;
 #define	PCI_MAPREG_ROM_VSTAT_INPROG	0x1 /* Validation in Progress */
 #define	PCI_MAPREG_ROM_VSTAT_VPASS	0x2 /* Valid contnt, trust test nperf*/
 #define	PCI_MAPREG_ROM_VSTAT_VPASSTRUST	0x3 /* Valid and trusted contents */
-#define	PCI_MAPREG_ROM_VSTAT_VFAIL	0x4 /* Invaild contents */
-#define	PCI_MAPREG_ROM_VSTAT_VFAILUNTRUST 0x5 /* Vaild but untrusted contents*/
+#define	PCI_MAPREG_ROM_VSTAT_VFAIL	0x4 /* Invalid contents */
+#define	PCI_MAPREG_ROM_VSTAT_VFAILUNTRUST 0x5 /* Valid but untrusted contents */
 #define	PCI_MAPREG_ROM_VSTAT_WPASS	0x6 /* VPASS + warning */
 #define	PCI_MAPREG_ROM_VSTAT_WPASSTRUST	0x7 /* VPASSTRUST + warning */
 #define	PCI_MAPREG_ROM_VALID_DETAIL __BITS(7, 4) /* Validation Details */
@@ -932,7 +932,7 @@ typedef u_int8_t pci_revision_t;
 /* For IOMMU only */
 #define PCI_SECURE_CAP_IOTLBSUP	__BIT(24)	/* IOTLB */
 #define PCI_SECURE_CAP_HTTUNNEL	__BIT(25)	/* HT tunnel translation */
-#define PCI_SECURE_CAP_NPCACHE	__BIT(26) /* Not present table entries cahced*/
+#define PCI_SECURE_CAP_NPCACHE	__BIT(26) /* Not present table entries cached */
 #define PCI_SECURE_CAP_EFRSUP	__BIT(27)	/* IOMMU Ext-Feature Reg */
 #define PCI_SECURE_CAP_EXT	__BIT(28)	/* IOMMU Misc Info Reg 1 */
 #define PCI_SECURE_IOMMU_BAL   0x04 /* Base Address Low */
@@ -948,14 +948,14 @@ typedef u_int8_t pci_revision_t;
 #define PCI_SECURE_IOMMU_RANGE_LASTDEV	__BITS(31, 24)	/* Last device */
 #define PCI_SECURE_IOMMU_MISC0 0x10 /* IOMMU Miscellaneous Information 0 */
 #define PCI_SECURE_IOMMU_MISC0_MSINUM  __BITS(4, 0)  /* MSI Message number */
-#define PCI_SECURE_IOMMU_MISC0_GVASIZE __BITS(7, 5) /* Guest Virtual Adr siz */
+#define PCI_SECURE_IOMMU_MISC0_GVASIZE __BITS(7, 5) /* Guest Virtual Adr size */
 #define PCI_SECURE_IOMMU_MISC0_GVASIZE_48B	0x2	/* 48bits */
-#define PCI_SECURE_IOMMU_MISC0_PASIZE  __BITS(14, 8) /* Physical Address siz */
+#define PCI_SECURE_IOMMU_MISC0_PASIZE  __BITS(14, 8) /* Physical Address size */
 #define PCI_SECURE_IOMMU_MISC0_VASIZE  __BITS(21, 15)/* Virtual Address size */
 #define PCI_SECURE_IOMMU_MISC0_ATSRESV __BIT(22) /* ATS resp addr range rsvd */
 #define PCI_SECURE_IOMMU_MISC0_MISNPPR __BITS(31, 27)/* Periph Pg Rq MSI Msgn*/
 #define PCI_SECURE_IOMMU_MISC1 0x14 /* IOMMU Miscellaneous Information 1 */
-#define PCI_SECURE_IOMMU_MISC1_MSINUM __BITS(4, 0) /* MSI Messsage number(GA)*/
+#define PCI_SECURE_IOMMU_MISC1_MSINUM __BITS(4, 0) /* MSI Message number(GA) */
 
 /*
  * Capability ID: 0x10
@@ -1030,7 +1030,7 @@ typedef u_int8_t pci_revision_t;
 #define PCIE_LCSR	0x10	/* Link Control & Status Register */
 #define PCIE_LCSR_ASPM_L0S	__BIT(0)       /* Active State PM Control L0s*/
 #define PCIE_LCSR_ASPM_L1	__BIT(1)       /* Active State PM Control L1 */
-#define PCIE_LCSR_RCB		__BIT(3)       /* Read Completion Boundry Ctl*/
+#define PCIE_LCSR_RCB		__BIT(3)       /* Read Completion Boundary Ctl*/
 #define PCIE_LCSR_LINK_DIS	__BIT(4)       /* Link Disable */
 #define PCIE_LCSR_RETRAIN	__BIT(5)       /* Retrain Link */
 #define PCIE_LCSR_COMCLKCFG	__BIT(6)       /* Common Clock Configuration */
@@ -1970,7 +1970,7 @@ struct pci_rom {
 #define	PCI_TPH_REQ_CAP_NOST	__BIT(0)	/* No ST Mode Supported */
 #define	PCI_TPH_REQ_CAP_INTVEC	__BIT(1)	/* Intr Vec Mode Supported */
 #define	PCI_TPH_REQ_CAP_DEVSPEC	__BIT(2)   /* Device Specific Mode Supported */
-#define	PCI_TPH_REQ_CAP_XTPHREQ	__BIT(8)    /* Extend TPH Reqester Supported */
+#define	PCI_TPH_REQ_CAP_XTPHREQ	__BIT(8)    /* Extend TPH Requester Supported */
 #define	PCI_TPH_REQ_CAP_STTBLLOC __BITS(10, 9)	/* ST Table Location */
 #define	PCI_TPH_REQ_STTBLLOC_NONE 	0	/* not present */
 #define	PCI_TPH_REQ_STTBLLOC_TPHREQ 	1	/* in the TPHREQ cap */

@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-#	$NetBSD: ypinit.sh,v 1.14 2018/09/23 02:15:25 kre Exp $
+#	$NetBSD: ypinit.sh,v 1.15 2021/08/17 22:00:33 andvar Exp $
 #
 # ypinit.sh - setup a master or slave YP server
 #
@@ -184,7 +184,7 @@ __list_of_servers
 			esac
 		fi
 	done
-else # interacive
+else # interactive
 	if [ "${servertype}" != "client" ]; then
 		echo ${host} >> ${tmpfile}
 	fi

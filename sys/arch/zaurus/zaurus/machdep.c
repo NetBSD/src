@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.47 2020/04/18 11:00:42 skrll Exp $	*/
+/*	$NetBSD: machdep.c,v 1.48 2021/08/17 22:00:31 andvar Exp $	*/
 /*	$OpenBSD: zaurus_machdep.c,v 1.25 2006/06/20 18:24:04 todd Exp $	*/
 
 /*
@@ -107,7 +107,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.47 2020/04/18 11:00:42 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.48 2021/08/17 22:00:31 andvar Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -755,7 +755,7 @@ initarm(void *arg)
 	bootconfig.dram[0].pages = memsize / PAGE_SIZE;
 
 	/*
-	 * Set up the variables that define the availablilty of
+	 * Set up the variables that define the availability of
 	 * physical memory.  For now, we're going to set
 	 * physical_freestart to 0xa0200000 (where the kernel
 	 * was loaded), and allocate the memory we need downwards.

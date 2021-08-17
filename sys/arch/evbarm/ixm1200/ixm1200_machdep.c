@@ -1,4 +1,4 @@
-/*	$NetBSD: ixm1200_machdep.c,v 1.65 2020/04/18 11:00:40 skrll Exp $ */
+/*	$NetBSD: ixm1200_machdep.c,v 1.66 2021/08/17 22:00:28 andvar Exp $ */
 
 /*
  * Copyright (c) 2002, 2003
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixm1200_machdep.c,v 1.65 2020/04/18 11:00:40 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixm1200_machdep.c,v 1.66 2021/08/17 22:00:28 andvar Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_console.h"
@@ -375,7 +375,7 @@ initarm(void *arg)
 	kerneldatasize = ((kerneldatasize - 1) & ~(PAGE_SIZE * 4 - 1)) + PAGE_SIZE * 8;
 
 	/*
-	 * Set up the variables that define the availablilty of physcial
+	 * Set up the variables that define the availability of physical
 	 * memory
 	 */
 	physical_start = bootconfig.dram[0].address;
@@ -604,7 +604,7 @@ initarm(void *arg)
 	 * but since we are boot strapping the addresses used for the read
 	 * may have just been remapped and thus the cache could be out
 	 * of sync. A re-clean after the switch will cure this.
-	 * After booting there are no gross reloations of the kernel thus
+	 * After booting there are no gross relocations of the kernel thus
 	 * this problem will not occur after initarm().
 	 */
 	cpu_idcache_wbinv_all();
@@ -639,7 +639,7 @@ initarm(void *arg)
 	 * Once things get going this will change as we will need a proper
 	 * handler. Until then we will use a handler that just panics but
 	 * tells us why.
-	 * Initialisation of the vetcors will just panic on a data abort.
+	 * Initialisation of the vectors will just panic on a data abort.
 	 * This just fills in a slightly better one.
 	 */
 #ifdef VERBOSE_INIT_ARM
@@ -740,9 +740,9 @@ consinit(void)
  * virtual address space that NOTHING else will access
  * and then we alternate the cache cleaning between the
  * two banks.
- * The cache cleaning code requires requires 2 banks aligned
- * on total size boundry so the banks can be alternated by
- * eorring the size bit (assumes the bank size is a power of 2)
+ * The cache cleaning code requires 2 banks aligned
+ * on total size boundary so the banks can be alternated by
+ * xorring the size bit (assumes the bank size is a power of 2)
  */
 void
 ixdp_ixp12x0_cc_setup(void)

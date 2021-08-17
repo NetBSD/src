@@ -1,4 +1,4 @@
-/* $NetBSD: imx31lk_machdep.c,v 1.28 2020/04/18 11:00:39 skrll Exp $ */
+/* $NetBSD: imx31lk_machdep.c,v 1.29 2021/08/17 22:00:28 andvar Exp $ */
 
 /*
  * Startup routines for the ZOOM iMX31 LITEKIT.
@@ -110,7 +110,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imx31lk_machdep.c,v 1.28 2020/04/18 11:00:39 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imx31lk_machdep.c,v 1.29 2021/08/17 22:00:28 andvar Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_console.h"
@@ -391,7 +391,7 @@ initarm(void *arg)
 	bootconfig.dram[0].pages = MEMSIZE / PAGE_SIZE;
 
 	/*
-	 * Set up the variables that define the availablilty of
+	 * Set up the variables that define the availability of
 	 * physical memory.  For now, we're going to set
 	 * physical_freeend to 0x80100000UL (where the kernel
 	 * was loaded) and allocate the memory we need downwards.

@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.99 2021/08/07 16:18:41 thorpej Exp $ */
+/*	$NetBSD: fd.c,v 1.100 2021/08/17 22:00:27 andvar Exp $ */
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.99 2021/08/07 16:18:41 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.100 2021/08/17 22:00:27 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -152,9 +152,9 @@ struct fd_softc {
 	struct callout motor_ch;
 	struct fdtype *type;
 	void *cachep;		/* cached track data (write through) */
-	int cachetrk;		/* cahced track -1 for none */
+	int cachetrk;		/* cached track -1 for none */
 	int hwunit;		/* unit for amiga controlling hw */
-	int unitmask;		/* mask for cia select deslect */
+	int unitmask;		/* mask for cia select deselect */
 	int pstepdir;		/* previous step direction */
 	int curcyl;		/* current curcyl head positioned on */
 	int flags;		/* misc flags */

@@ -1,4 +1,4 @@
-/*	$NetBSD: README,v 1.1 2001/06/14 12:57:12 fredette Exp $ */
+/*	$NetBSD: README,v 1.2 2021/08/17 22:00:31 andvar Exp $ */
 
 The sun bootblocks are split into two parts: a small 1st-level program that
 gets written right after the superblock in a partition (and is hence limited
@@ -33,6 +33,6 @@ netboot works.
 bootxx, installboot are tested and working.  It would be nice if
 installboot would find the inumber for the 2nd stage boot program
 without having the filesystem mounted so this command can work
-with securelevel==1 (the default).  Doing this requies adding
+with securelevel==1 (the default).  Doing this requires adding
 code to read and do a directory lookup in the root...
 
