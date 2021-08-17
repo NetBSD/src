@@ -1,4 +1,4 @@
-/*	$NetBSD: main1.c,v 1.53 2021/08/01 19:11:54 rillig Exp $	*/
+/*	$NetBSD: main1.c,v 1.54 2021/08/17 21:05:34 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: main1.c,v 1.53 2021/08/01 19:11:54 rillig Exp $");
+__RCSID("$NetBSD: main1.c,v 1.54 2021/08/17 21:05:34 rillig Exp $");
 #endif
 
 #include <sys/types.h>
@@ -130,16 +130,15 @@ sig_atomic_t fpe;
 
 static	void	usage(void);
 
-static const char builtins[] =
-    "int __builtin_isinf(long double);\n"
-    "int __builtin_isnan(long double);\n"
-    "int __builtin_copysign(long double, long double);\n"
-;
-static const size_t builtinlen = sizeof(builtins) - 1;
-
 static FILE *
 gcc_builtins(void)
 {
+	static const char builtins[] =
+	    "int __builtin_isinf(long double);\n"
+	    "int __builtin_isnan(long double);\n"
+	    "int __builtin_copysign(long double, long double);\n";
+	size_t builtins_len = sizeof(builtins) - 1;
+
 #if HAVE_NBTOOL_CONFIG_H
 	char template[] = "/tmp/lint.XXXXXX";
 	int fd;
@@ -151,14 +150,14 @@ gcc_builtins(void)
 		close(fd);
 		return NULL;
 	}
-	if (fwrite(builtins, 1, builtinlen, fp) != builtinlen) {
+	if (fwrite(builtins, 1, builtins_len, fp) != builtins_len) {
 		fclose(fp);
 		return NULL;
 	}
 	rewind(fp);
 	return fp;
 #else
-	return fmemopen(__UNCONST(builtins), builtinlen, "r");
+	return fmemopen(__UNCONST(builtins), builtins_len, "r");
 #endif
 }
 
