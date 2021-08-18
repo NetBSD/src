@@ -1,4 +1,4 @@
-/* $NetBSD: ix_txrx.c,v 1.81 2021/07/07 08:58:19 msaitoh Exp $ */
+/* $NetBSD: ix_txrx.c,v 1.82 2021/08/18 09:17:17 msaitoh Exp $ */
 
 /******************************************************************************
 
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ix_txrx.c,v 1.81 2021/07/07 08:58:19 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ix_txrx.c,v 1.82 2021/08/18 09:17:17 msaitoh Exp $");
 
 #include "opt_inet.h"
 #include "opt_inet6.h"
@@ -1336,15 +1336,15 @@ ixgbe_refresh_mbufs(struct rx_ring *rxr, int limit)
 	struct adapter      *adapter = rxr->adapter;
 	struct ixgbe_rx_buf *rxbuf;
 	struct mbuf         *mp;
-	int                 i, j, error;
+	int                 i, error;
 	bool                refreshed = false;
 
-	i = j = rxr->next_to_refresh;
-	/* Control the loop with one beyond */
-	if (++j == rxr->num_desc)
-		j = 0;
+	i = rxr->next_to_refresh;
+	/* next_to_refresh points to the previous one */
+	if (++i == rxr->num_desc)
+		i = 0;
 
-	while (j != limit) {
+	while (i != limit) {
 		rxbuf = &rxr->rx_buffers[i];
 		if (rxbuf->buf == NULL) {
 			mp = ixgbe_getjcl(&rxr->jcl_head, M_NOWAIT,
@@ -1387,11 +1387,10 @@ ixgbe_refresh_mbufs(struct rx_ring *rxr, int limit)
 		}
 
 		refreshed = true;
-		/* Next is precalculated */
-		i = j;
+		/* next_to_refresh points to the previous one */
 		rxr->next_to_refresh = i;
-		if (++j == rxr->num_desc)
-			j = 0;
+		if (++i == rxr->num_desc)
+			i = 0;
 	}
 
 update:
@@ -2090,6 +2089,7 @@ next_desc:
 		/* Advance our pointers to the next descriptor. */
 		if (++i == rxr->num_desc)
 			i = 0;
+		rxr->next_to_check = i;
 
 		/* Now send to the stack or do LRO */
 		if (sendmp != NULL) {
@@ -2106,8 +2106,6 @@ next_desc:
 	/* Refresh any remaining buf structs */
 	if (ixgbe_rx_unrefreshed(rxr))
 		ixgbe_refresh_mbufs(rxr, i);
-
-	rxr->next_to_check = i;
 
 	IXGBE_RX_UNLOCK(rxr);
 
