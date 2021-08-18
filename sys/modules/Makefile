@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.253 2021/08/17 21:39:32 kre Exp $
+#	$NetBSD: Makefile,v 1.254 2021/08/18 09:07:07 christos Exp $
 
 .include <bsd.own.mk>
 
@@ -27,7 +27,7 @@ SUBDIR+=	adosfs
 SUBDIR+=	aio
 SUBDIR+=	audio
 SUBDIR+=	autofs
-SUBDIR+=	blakes2s
+SUBDIR+=	blake2s
 SUBDIR+=	blowfish
 SUBDIR+=	bpf
 SUBDIR+=	bpf_filter
