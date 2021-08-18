@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.sodmod,v 1.1 2021/08/17 17:29:20 christos Exp $
+#	$NetBSD: Makefile.sodmod,v 1.2 2021/08/18 09:34:45 christos Exp $
 
 SODIUMDIR=	${S}/external/isc/libsodium
 SODIUMSRCDIR=	${SODIUMDIR}/dist/src/libsodium
@@ -49,5 +49,8 @@ CWARNFLAGS+=	-Wno-shadow
 CWARNFLAGS+=	-Wno-unused-function
 CWARNFLAGS+=	-Wno-unused-variable
 
-CPPFLAGS+=	-DHAVE_TI_MODE -I${SODIUMDIR}/include 
+.if ${MACHINE_CPU} == "x86_64"
+CPPFLAGS+=	-DHAVE_TI_MODE
+.endif
+CPPFLAGS+=	-I${SODIUMDIR}/include 
 CPPFLAGS+=	-I${SODIUMDIR}/dist/src/libsodium/include/sodium
