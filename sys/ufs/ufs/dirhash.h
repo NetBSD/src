@@ -1,4 +1,4 @@
-/*	$NetBSD: dirhash.h,v 1.8 2019/12/27 09:25:58 msaitoh Exp $	*/
+/*	$NetBSD: dirhash.h,v 1.9 2021/08/19 20:56:36 andvar Exp $	*/
 
 /*
  * Copyright (c) 2001 Ian Dowse.  All rights reserved.
@@ -63,7 +63,7 @@
  * placed at the most-recently-used end of the list. This helps a lot
  * in the worst-case case scenario where every directory access is
  * to a directory that is not hashed (i.e. the working set of hash
- * candidates is much larger than the configured memry limit). In this
+ * candidates is much larger than the configured memory limit). In this
  * case it limits the number of hash builds to 1/DH_SCOREINIT of the
  * number of accesses.
  */

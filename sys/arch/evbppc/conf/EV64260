@@ -1,4 +1,4 @@
-#	$NetBSD: EV64260,v 1.73 2019/04/26 21:40:29 sevan Exp $
+#	$NetBSD: EV64260,v 1.74 2021/08/19 20:56:36 andvar Exp $
 #
 #	MVP -- Motorola's Multiprocessing Verification Platform
 #
@@ -265,7 +265,7 @@ pseudo-device	pty			# pseudo-terminals
 #pseudo-device	wsmux			# ick
 pseudo-device	clockctl		# user control of clock subsystem
 pseudo-device	ksyms			# /dev/ksyms
-pseudo-device	swdmover		# softare dmover(9) back-end
+pseudo-device	swdmover		# software dmover(9) back-end
 pseudo-device	dmoverio		# /dev/dmover dmover(9) interface
 
 include "dev/veriexec.config"

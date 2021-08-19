@@ -1,4 +1,4 @@
-/*	$NetBSD: t_vnops.c,v 1.59 2017/01/13 21:30:40 christos Exp $	*/
+/*	$NetBSD: t_vnops.c,v 1.60 2021/08/19 20:56:36 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -148,7 +148,7 @@ lookup_complex(const atf_tc_t *tc, const char *mountpath)
 #undef FIELD
 #undef TIME
 
-		atf_tc_fail("stat results differ, see ouput for more details");
+		atf_tc_fail("stat results differ, see output for more details");
 	}
 }
 

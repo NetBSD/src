@@ -1,4 +1,4 @@
-/* $NetBSD: fenv.c,v 1.8 2021/08/12 20:53:18 andvar Exp $ */
+/* $NetBSD: fenv.c,v 1.9 2021/08/19 20:56:36 andvar Exp $ */
 
 /*-
  * Copyright (c) 2004-2005 David Schultz <das (at) FreeBSD.ORG>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: fenv.c,v 1.8 2021/08/12 20:53:18 andvar Exp $");
+__RCSID("$NetBSD: fenv.c,v 1.9 2021/08/19 20:56:36 andvar Exp $");
 
 #include "namespace.h"
 
@@ -369,7 +369,7 @@ fegetenv(fenv_t *envp)
       * exceptions are masked).
       *
       * 8.6 X87 FPU EXCEPTION SYNCHRONIZATION -
-      * Intel(R) 64 and IA-32 Architectures Softare Developer's Manual - Vol 1
+      * Intel(R) 64 and IA-32 Architectures Software Developer's Manual - Vol 1
       *
       */
 	__fldcw(envp->x87.control);
