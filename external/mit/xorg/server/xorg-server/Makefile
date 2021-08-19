@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.29 2017/08/29 18:19:49 ryoon Exp $
+#	$NetBSD: Makefile,v 1.30 2021/08/19 11:03:04 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -9,12 +9,7 @@ SUBDIR+=	glx
 SUBDIR+=	dix fb mi Xext miext os randr render 
 SUBDIR+=	present pseudoramiX
 SUBDIR+=	Xi xkb xkbstubs dbe record xfixes
-SUBDIR+=	damageext composite config .WAIT
-
-# XXX
-.if ${HAVE_DRI3:Uno} != "no"
-SUBDIR+=	dri3
-.endif
+SUBDIR+=	damageext composite config dri3 .WAIT
 
 .if ${HAVE_XORG_GLAMOR} != "no"
 SUBDIR+=	glamor
