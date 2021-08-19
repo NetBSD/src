@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.42.2.8 2020/10/15 19:36:51 bouyer Exp $	*/
+/*	$NetBSD: defs.h,v 1.42.2.9 2021/08/19 04:52:10 snj Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -696,13 +696,8 @@ void	disp_cur_fspart(int, int);
 int	make_filesystems(struct install_partition_desc *);
 int	make_fstab(struct install_partition_desc *);
 int	mount_disks(struct install_partition_desc *);
-/*
- * set_swap_if_low_ram and set_swap return -1 on error,
- * 0 if no swap was added on purpose and
- * 1 if swap has been added (and needs to be cleared later).
- */
-int	set_swap_if_low_ram(struct install_partition_desc *);
-int	set_swap(struct install_partition_desc *);
+void	set_swap_if_low_ram(struct install_partition_desc *);
+void	set_swap(struct install_partition_desc *);
 void	clear_swap(void);
 int	check_swap(const char *, int);
 char *bootxx_name(struct install_partition_desc *);
