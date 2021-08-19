@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC64,v 1.180 2021/08/18 09:18:09 msaitoh Exp $
+#	$NetBSD: GENERIC64,v 1.181 2021/08/19 02:05:34 msaitoh Exp $
 #
 #	GENERIC ARM (aarch64) kernel
 #
@@ -252,8 +252,8 @@ genet*		at fdt?
 #scx*		at fdt?
 aq*		at pci? dev ? function ?	# Aquantia AQC 10 gigabit
 ena*		at pci? dev ? function ?	# Amazon.com Elastic Network Adapter
-ixg*	at pci? dev ? function ?	# Intel 8259x 10 gigabit
-ixv*	at pci? dev ? function ?	# Intel 8259x 10G virtual function
+ixg* 		at pci? dev ? function ?	# Intel 8259x 10 gigabit
+ixv* 		at pci? dev ? function ?	# Intel 8259x 10G virtual function
 mcx*		at pci? dev ? function ?	# Mellanox 5th generation Ethernet
 mskc*		at pci? dev ? function ?	# Marvell Yukon 2 Gigabit Ethernet
 msk*		at mskc?
