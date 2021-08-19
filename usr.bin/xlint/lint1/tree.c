@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.337 2021/08/16 18:51:03 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.338 2021/08/19 20:48:47 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.337 2021/08/16 18:51:03 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.338 2021/08/19 20:48:47 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -3072,7 +3072,7 @@ fold(tnode_t *tn)
 			if (msb(q, t, -1) == 0)
 				ovfl = true;
 		} else if (msb(sl, t, -1) == 0 && msb(sr, t, -1) == 0) {
-			if (msb(q, t, -1) != 0)
+			if (msb(q, t, -1) != 0 && !utyp)
 				ovfl = true;
 		}
 		break;
