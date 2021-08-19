@@ -1,4 +1,4 @@
-/* $NetBSD: xlint.c,v 1.76 2021/08/19 16:18:43 rillig Exp $ */
+/* $NetBSD: xlint.c,v 1.77 2021/08/19 16:29:41 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: xlint.c,v 1.76 2021/08/19 16:18:43 rillig Exp $");
+__RCSID("$NetBSD: xlint.c,v 1.77 2021/08/19 16:29:41 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -95,10 +95,10 @@ static	char	**libs;
 /* search path for libraries */
 static	char	**libsrchpath;
 
-static  char	*libexec_path;
+static const char *libexec_dir;
 
 /* flags */
-static	bool	iflag, oflag, Cflag, sflag, tflag, Fflag, dflag, Bflag;
+static	bool	iflag, oflag, Cflag, sflag, tflag, Fflag, dflag;
 
 /* print the commands executed to run the stages of compilation */
 static	bool	Vflag;
@@ -520,8 +520,7 @@ main(int argc, char *argv[])
 			break;
 
 		case 'B':
-			Bflag = true;
-			libexec_path = xstrdup(optarg);
+			libexec_dir = xstrdup(optarg);
 			break;
 
 		case 'V':
@@ -692,7 +691,7 @@ fname(const char *name)
 
 	/* run lint1 */
 
-	if (!Bflag) {
+	if (libexec_dir == NULL) {
 		pathname = xasprintf("%s/%slint1",
 		    PATH_LIBEXEC, target_prefix);
 	} else {
@@ -700,7 +699,7 @@ fname(const char *name)
 		 * XXX Unclear whether we should be using target_prefix
 		 * XXX here.  --thorpej@wasabisystems.com
 		 */
-		pathname = concat2(libexec_path, "/lint1");
+		pathname = concat2(libexec_dir, "/lint1");
 	}
 
 	list_add_copy(&args, pathname);
@@ -830,14 +829,14 @@ run_lint2(void)
 
 	args = list_new();
 
-	if (!Bflag) {
+	if (libexec_dir == NULL) {
 		path = xasprintf("%s/%slint2", PATH_LIBEXEC, target_prefix);
 	} else {
 		/*
 		 * XXX Unclear whether we should be using target_prefix
 		 * XXX here.  --thorpej@wasabisystems.com
 		 */
-		path = concat2(libexec_path, "/lint2");
+		path = concat2(libexec_dir, "/lint2");
 	}
 
 	list_add_copy(&args, path);
