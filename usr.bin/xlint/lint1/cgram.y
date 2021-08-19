@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.355 2021/08/11 05:19:32 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.356 2021/08/19 08:59:22 christos Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: cgram.y,v 1.355 2021/08/11 05:19:32 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.356 2021/08/19 08:59:22 christos Exp $");
 #endif
 
 #include <limits.h>
@@ -248,6 +248,7 @@ anonymize(sym_t *s)
 %token			T_AT_PACKED
 %token			T_AT_PCS
 %token			T_AT_PURE
+%token			T_AT_RETURNS_NONNULL
 %token			T_AT_RETURNS_TWICE
 %token			T_AT_SECTION
 %token			T_AT_SENTINEL
@@ -2076,6 +2077,7 @@ gcc_attribute_spec:
 	  }
 	| T_AT_PCS T_LPAREN string T_RPAREN
 	| T_AT_PURE
+	| T_AT_RETURNS_NONNULL
 	| T_AT_RETURNS_TWICE
 	| T_AT_SECTION T_LPAREN string T_RPAREN
 	| T_AT_SENTINEL T_LPAREN constant_expr T_RPAREN
