@@ -1,4 +1,4 @@
-/*	$NetBSD: op.h,v 1.16 2021/03/20 20:56:58 rillig Exp $	*/
+/*	$NetBSD: op.h,v 1.17 2021/08/19 18:39:34 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -64,11 +64,12 @@ extern const mod_t modtab[];
 
 #define begin_ops() typedef enum {
 #define op(name, repr, \
-		bi, lo, tb, rb, \
-		in, ic, ar, sc, \
-		fo, va, ts, ba, \
-		se, lu, ru, pc, \
-		cm, ve, de, ew) \
+		is_binary, is_logical, takes_bool, requires_bool, \
+		is_integer, is_complex, is_arithmetic, is_scalar, \
+		can_fold, is_value, is_test, balances_operands, \
+		side_effects, left_unsigned, right_unsigned, \
+		precedence_confusion, is_comparison, \
+		valid_on_enum, bad_on_enum, warn_if_eq) \
 	name,
 #define end_ops() } op_t;
 #include "ops.def"
