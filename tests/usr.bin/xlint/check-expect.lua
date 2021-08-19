@@ -1,5 +1,5 @@
 #!  /usr/bin/lua
--- $NetBSD: check-expect.lua,v 1.10 2021/07/05 19:02:14 rillig Exp $
+-- $NetBSD: check-expect.lua,v 1.11 2021/08/19 20:32:33 rillig Exp $
 
 --[[
 
@@ -116,7 +116,7 @@ local function check_test(c_fname, errors)
     end
 
     if not found then
-      errors:add("error: %s: must expect \"%s\"", act.location, act.message)
+      errors:add("error: %s: missing /* expect: %s */", act.location, act.message)
     end
   end
 
