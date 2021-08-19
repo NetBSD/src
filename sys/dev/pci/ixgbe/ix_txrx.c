@@ -1,4 +1,4 @@
-/* $NetBSD: ix_txrx.c,v 1.83 2021/08/19 04:47:12 msaitoh Exp $ */
+/* $NetBSD: ix_txrx.c,v 1.84 2021/08/19 04:49:29 msaitoh Exp $ */
 
 /******************************************************************************
 
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ix_txrx.c,v 1.83 2021/08/19 04:47:12 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ix_txrx.c,v 1.84 2021/08/19 04:49:29 msaitoh Exp $");
 
 #include "opt_inet.h"
 #include "opt_inet6.h"
@@ -1353,7 +1353,8 @@ ixgbe_refresh_mbufs(struct rx_ring *rxr, int limit)
 				rxr->no_jmbuf.ev_count++;
 				goto update;
 			}
-			if (adapter->max_frame_size <= (MCLBYTES - ETHER_ALIGN))
+			if (adapter->max_frame_size
+			    <= (rxr->mbuf_sz - ETHER_ALIGN))
 				m_adj(mp, ETHER_ALIGN);
 		} else
 			mp = rxbuf->buf;
