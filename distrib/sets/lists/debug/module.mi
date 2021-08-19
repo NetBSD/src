@@ -1,4 +1,4 @@
-# $NetBSD: module.mi,v 1.10 2021/08/17 17:31:58 christos Exp $
+# $NetBSD: module.mi,v 1.11 2021/08/19 05:09:24 christos Exp $
 ./usr/libdata/debug/@MODULEDIR@					modules-base-kernel	kmod,debug
 ./usr/libdata/debug/@MODULEDIR@/accf_dataready			modules-base-kernel	kmod,debug
 ./usr/libdata/debug/@MODULEDIR@/accf_dataready/accf_dataready.kmod.debug	modules-base-kernel	kmod,debug
@@ -336,8 +336,8 @@
 ./usr/libdata/debug/@MODULEDIR@/skipjack/skipjack.kmod.debug		modules-base-kernel	kmod,debug
 ./usr/libdata/debug/@MODULEDIR@/slcompress			modules-base-kernel     kmod,debug
 ./usr/libdata/debug/@MODULEDIR@/slcompress/slcompress.kmod.debug	modules-base-kernel     kmod,debug
-./usr/libdata/debug/@MODULEDIR@/sodium				modules-base-kernel     kmod,solaris,debug
-./usr/libdata/debug/@MODULEDIR@/sodium/sodium.kmod.debug		modules-base-kernel     kmod,solaris,debug
+./usr/libdata/debug/@MODULEDIR@/sodium				modules-base-kernel     kmod,debug
+./usr/libdata/debug/@MODULEDIR@/sodium/sodium.kmod.debug		modules-base-kernel     kmod,debug
 ./usr/libdata/debug/@MODULEDIR@/solaris				modules-base-kernel     kmod,solaris,debug
 ./usr/libdata/debug/@MODULEDIR@/solaris/solaris.kmod.debug		modules-base-kernel     kmod,solaris,debug
 ./usr/libdata/debug/@MODULEDIR@/spdmem				modules-base-kernel	kmod,debug
