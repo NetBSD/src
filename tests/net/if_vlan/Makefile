@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.3 2021/07/09 05:54:11 yamaguchi Exp $
+# $NetBSD: Makefile,v 1.4 2021/08/19 03:27:05 yamaguchi Exp $
 #
 
 .include <bsd.own.mk>
@@ -17,5 +17,7 @@ BINDIR.siocXmulti=	${TESTSDIR}
 PROGS+=			bpfopen
 MAN.bpfopen=	#empty
 BINDIR.bpfopen=	${TESTSDIR}
+DPADD.bpfopen+=	${LIBUTIL}
+LDADD.bpfopen+=	-lutil
 
 .include <bsd.test.mk>
