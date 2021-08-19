@@ -1,4 +1,4 @@
-/*	$NetBSD: upgrade.c,v 1.12.2.3 2020/02/10 21:39:37 bouyer Exp $	*/
+/*	$NetBSD: upgrade.c,v 1.12.2.4 2021/08/19 04:52:10 snj Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -81,8 +81,7 @@ do_upgrade(void)
 		install.cur_system = true;
 	}
 
-	if (set_swap_if_low_ram(&install) < 0)
-		return;
+	set_swap_if_low_ram(&install);
 
 	if (md_pre_update(&install) < 0)
 		goto free_install;
