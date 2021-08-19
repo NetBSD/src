@@ -35,7 +35,7 @@ Feature Changes
    the notable exception of Ubuntu 18.04 (Bionic) which is a work in
    progress. If you are running on an affected operating system, compile
    BIND 9 with ``--disable-pthread-rwlock`` until a fixed version of
-   glibc is available. [GL !3125]
+   glibc is available. :gl:`!3125`
 
 Bug Fixes
 ~~~~~~~~~

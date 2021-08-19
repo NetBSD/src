@@ -17,7 +17,7 @@ New Features
 - A new ``purge-keys`` option has been added to ``dnssec-policy``. It
   sets the period of time that key files are retained after becoming
   obsolete due to a key rollover; the default is 90 days. This feature
-  can be disabled by setting ``purge-keys`` to 0. [GL #2408]
+  can be disabled by setting ``purge-keys`` to 0. :gl:`#2408`
 
 Feature Changes
 ~~~~~~~~~~~~~~~
@@ -27,7 +27,7 @@ Feature Changes
   query resolution process. This may happen, for example, if the
   ``fetches-per-server`` or ``fetches-per-zone`` limits are reached. In
   this case, ``named`` attempts to answer DNS requests with stale data,
-  but does not start the ``stale-refresh-time`` window. [GL #2434]
+  but does not start the ``stale-refresh-time`` window. :gl:`#2434`
 
 Bug Fixes
 ~~~~~~~~~
@@ -47,25 +47,25 @@ Bug Fixes
   A journal file's format can be changed manually by running
   ``named-journalprint -d`` (downgrade) or ``named-journalprint -u``
   (upgrade). Note that this *must not* be done while ``named`` is
-  running. [GL #2505]
+  running. :gl:`#2505`
 
 - ``named`` crashed when it was allowed to serve stale answers and
   ``stale-answer-client-timeout`` was triggered without any (stale) data
-  available in the cache to answer the query. [GL #2503]
+  available in the cache to answer the query. :gl:`#2503`
 
 - If an outgoing packet exceeded ``max-udp-size``, ``named`` dropped it
   instead of sending back a proper response. To prevent this problem,
   the ``IP_DONTFRAG`` option is no longer set on UDP sockets, which has
-  been happening since BIND 9.16.11. [GL #2466]
+  been happening since BIND 9.16.11. :gl:`#2466`
 
 - NSEC3 records were not immediately created when signing a dynamic zone
   using ``dnssec-policy`` with ``nsec3param``. This has been fixed.
-  [GL #2498]
+  :gl:`#2498`
 
 - A memory leak occurred when ``named`` was reconfigured after adding an
   inline-signed zone with ``auto-dnssec maintain`` enabled. This has
-  been fixed. [GL #2041]
+  been fixed. :gl:`#2041`
 
 - An invalid direction field (not one of ``N``, ``S``, ``E``, ``W``) in
   a LOC record resulted in an INSIST failure when a zone file containing
-  such a record was loaded. [GL #2499]
+  such a record was loaded. :gl:`#2499`

@@ -18,7 +18,7 @@ Security Fixes
   crafted large TCP DNS message. This was disclosed in CVE-2020-8620.
 
   ISC would like to thank Emanuel Almeida of Cisco Systems, Inc. for
-  bringing this vulnerability to our attention. [GL #1996]
+  bringing this vulnerability to our attention. :gl:`#1996`
 
 - ``named`` could crash after failing an assertion check in certain
   query resolution scenarios where QNAME minimization and forwarding
@@ -27,14 +27,15 @@ Security Fixes
   are used at any point. This was disclosed in CVE-2020-8621.
 
   ISC would like to thank Joseph Gullo for bringing this vulnerability
-  to our attention. [GL #1997]
+  to our attention. :gl:`#1997`
 
 - It was possible to trigger an assertion failure when verifying the
   response to a TSIG-signed request. This was disclosed in
   CVE-2020-8622.
 
   ISC would like to thank Dave Feldman, Jeff Warren, and Joel Cunningham
-  of Oracle for bringing this vulnerability to our attention. [GL #2028]
+  of Oracle for bringing this vulnerability to our attention.
+  :gl:`#2028`
 
 - When BIND 9 was compiled with native PKCS#11 support, it was possible
   to trigger an assertion failure in code determining the number of bits
@@ -42,7 +43,7 @@ Security Fixes
   was disclosed in CVE-2020-8623.
 
   ISC would like to thank Lyu Chiy for bringing this vulnerability to
-  our attention. [GL #2037]
+  our attention. :gl:`#2037`
 
 - ``update-policy`` rules of type ``subdomain`` were incorrectly treated
   as ``zonesub`` rules, which allowed keys used in ``subdomain`` rules
@@ -51,13 +52,13 @@ Security Fixes
   described in the ARM. This was disclosed in CVE-2020-8624.
 
   ISC would like to thank Joop Boonen of credativ GmbH for bringing this
-  vulnerability to our attention. [GL #2055]
+  vulnerability to our attention. :gl:`#2055`
 
 New Features
 ~~~~~~~~~~~~
 
 - A new configuration option ``stale-cache-enable`` has been introduced
-  to enable or disable keeping stale answers in cache. [GL #1712]
+  to enable or disable keeping stale answers in cache. :gl:`#1712`
 
 Feature Changes
 ~~~~~~~~~~~~~~~
@@ -67,17 +68,17 @@ Feature Changes
   ``max-cache-size`` (configured explicitly, defaulting to a value based
   on system memory or set to ``unlimited``) now pre-allocates fixed-size
   hash tables. This prevents interruption to query resolution when the
-  hash table sizes need to be increased. [GL #1775]
+  hash table sizes need to be increased. :gl:`#1775`
 
 - Resource records received with 0 TTL are no longer kept in the cache
-  to be used for stale answers. [GL #1829]
+  to be used for stale answers. :gl:`#1829`
 
 Bug Fixes
 ~~~~~~~~~
 
 - Wildcard RPZ passthru rules could incorrectly be overridden by other
   rules that were loaded from RPZ zones which appeared later in the
-  ``response-policy`` statement. This has been fixed. [GL #1619]
+  ``response-policy`` statement. This has been fixed. :gl:`#1619`
 
 - The IPv6 Duplicate Address Detection (DAD) mechanism could
   inadvertently prevent ``named`` from binding to new IPv6 interfaces,
@@ -92,7 +93,7 @@ Bug Fixes
   thereafter to ignore that address/interface. The problem was worked
   around by setting the ``IP_FREEBIND`` option on the socket and trying
   to ``bind()`` to each IPv6 address again if the first ``bind()`` call
-  for that address failed with ``EADDRNOTAVAIL``. [GL #2038]
+  for that address failed with ``EADDRNOTAVAIL``. :gl:`#2038`
 
 - Addressed an error in recursive clients stats reporting which could
   cause underflow, and even negative statistics. There were occasions
@@ -101,12 +102,12 @@ Bug Fixes
   increment in recursive clients stats would take place. Conversely,
   when processing the answers, if the recursion code were executed
   before the prefetch, the same counter would be decremented without a
-  matching increment. [GL #1719]
+  matching increment. :gl:`#1719`
 
 - The introduction of KASP support inadvertently caused the second field
   of ``sig-validity-interval`` to always be calculated in hours, even in
   cases when it should have been calculated in days. This has been
-  fixed. (Thanks to Tony Finch.) [GL !3735]
+  fixed. (Thanks to Tony Finch.) :gl:`!3735`
 
 - LMDB locking code was revised to make ``rndc reconfig`` work properly
-  on FreeBSD and with LMDB >= 0.9.26. [GL #1976]
+  on FreeBSD and with LMDB >= 0.9.26. :gl:`#1976`

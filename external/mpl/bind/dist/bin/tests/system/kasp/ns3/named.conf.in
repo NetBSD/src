@@ -100,6 +100,13 @@ zone "unsigned.kasp" {
 	dnssec-policy "none";
 };
 
+/* A zone that is initially set to insecure. */
+zone "insecure.kasp" {
+	type primary;
+	file "insecure.kasp.db";
+	dnssec-policy "insecure";
+};
+
 /* A master zone with dnssec-policy but keys already created. */
 zone "dnssec-keygen.kasp" {
 	type primary;
@@ -242,6 +249,15 @@ zone "fresh-sigs.autosign" {
 zone "unfresh-sigs.autosign" {
 	type primary;
 	file "unfresh-sigs.autosign.db";
+	dnssec-policy "autosign";
+};
+
+/*
+ * Zone that has missing private KSK.
+ */
+zone "ksk-missing.autosign" {
+	type primary;
+	file "ksk-missing.autosign.db";
 	dnssec-policy "autosign";
 };
 

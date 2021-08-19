@@ -24,8 +24,23 @@ copy_setports ns5/named.conf.in ns5/named.conf
 copy_setports ns6/named.conf.in ns6/named.conf
 copy_setports ns7/named.conf.in ns7/named.conf
 copy_setports ns8/named.conf.in ns8/named.conf
-copy_setports ns9/named.conf.in ns9/named.conf
-copy_setports ns10/named.conf.in ns10/named.conf
+
+# If "tkey-gssapi-credential" is set in the configuration and GSSAPI support is
+# not available, named will refuse to start.  As the test system framework does
+# not support starting named instances conditionally, ensure that
+# "tkey-gssapi-credential" is only present in named.conf if GSSAPI support is
+# available.
+copy_setports ns9/named.conf.in ns9/named.conf.in.tkey
+copy_setports ns10/named.conf.in ns10/named.conf.in.tkey
+if $FEATURETEST --gssapi; then
+	sed 's|@TKEY_CONFIGURATION@|tkey-gssapi-credential "DNS/ns9.example.com@EXAMPLE.COM";|' ns9/named.conf.in.tkey > ns9/named.conf
+	sed 's|@TKEY_CONFIGURATION@|tkey-gssapi-credential "DNS/ns10.example.com@EXAMPLE.COM";|' ns10/named.conf.in.tkey > ns10/named.conf
+else
+	sed 's|@TKEY_CONFIGURATION@||' ns9/named.conf.in.tkey > ns9/named.conf
+	sed 's|@TKEY_CONFIGURATION@||' ns10/named.conf.in.tkey > ns10/named.conf
+fi
+rm -f ns9/named.conf.in.tkey
+rm -f ns10/named.conf.in.tkey
 
 copy_setports verylarge.in verylarge
 

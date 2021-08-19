@@ -319,7 +319,7 @@ COVERAGE=''
 KEYMGR=''
 AS_IF([test "X$PYTHON" != "X"],
       [PYTHON_TOOLS=python
-       CHECKDS=checkds
+       CHECKDS=checkdstool
        COVERAGE=coverage
        KEYMGR=keymgr
        PYTHON_INSTALL_DIR="$with_python_install_dir"
@@ -364,7 +364,7 @@ case "$INSTALL" in
 		;;
 esac
 
-AC_PATH_PROGS([PYTEST], [pytest-3 py.test-3 pytest pytest-pypy], [])
+AC_PATH_PROGS([PYTEST], [pytest-3 py.test-3 pytest py.test pytest-pypy], [])
 AS_IF([test -z "$PYTEST"],
       [AC_MSG_WARN([pytest not found, some system tests will be skipped])])
 AC_SUBST([PYTEST])
@@ -530,6 +530,34 @@ AC_TRY_COMPILE([],[void foo() __attribute__((noreturn));],
 		ISC_PLATFORM_NORETURN_POST="#define ISC_PLATFORM_NORETURN_POST"])
 AC_SUBST(ISC_PLATFORM_NORETURN_PRE)
 AC_SUBST(ISC_PLATFORM_NORETURN_POST)
+
+#
+# check for GCC malloc attribute
+#
+AX_GCC_FUNC_ATTRIBUTE([malloc])
+
+AC_MSG_CHECKING([for extended malloc attributes])
+AC_COMPILE_IFELSE(
+  [AC_LANG_PROGRAM(
+     [[
+       #include <stddef.h>
+       #include <stdlib.h>
+       __attribute__ ((malloc, malloc (free, 1))
+       void * xmalloc(size_t sz) { return malloc(sz); }
+     ]],
+     [[
+       void *p = xmalloc(8);
+       free(p);
+     ]])],
+  [AC_MSG_RESULT(yes)
+   AC_DEFINE([HAVE_MALLOC_EXT_ATTR], [1], [define if extended attributes for malloc are available])
+  ],
+  [AC_MSG_RESULT(no)])
+
+#
+# check for GCC returns_nonnull attribute
+#
+AX_GCC_FUNC_ATTRIBUTE([returns_nonnull])
 
 #
 # check if we have kqueue
@@ -699,16 +727,6 @@ AC_CHECK_HEADERS([pthread_np.h], [], [], [#include <pthread.h>])
 AC_MSG_CHECKING(for libuv)
 PKG_CHECK_MODULES([LIBUV], [libuv >= 1.0.0], [],
 		  [AC_MSG_ERROR([libuv not found])])
-AC_SUBST([LIBUV_CFLAGS])
-AC_SUBST([LIBUV_LIBS])
-
-AX_SAVE_FLAGS([libuv])
-CFLAGS="$CFLAGS $LIBUV_CFLAGS"
-LIBS="$LDFLAGS $LIBUV_LIBS"
-# Those functions are only provided in newer versions of libuv, we'll be emulating them
-# for now
-AC_CHECK_FUNCS([uv_handle_get_data uv_handle_set_data uv_import uv_udp_connect uv_translate_sys_error])
-AX_RESTORE_FLAGS([libuv])
 
 #
 # flockfile is usually provided by pthreads
@@ -1549,6 +1567,8 @@ AC_ARG_ENABLE([backtrace],
 
 AS_IF([test "$enable_backtrace" = "yes"],
       [AC_DEFINE([USE_BACKTRACE], [1], [define if we can use backtrace])
+       AC_CHECK_LIB(execinfo,backtrace,EXILIBS=-lexecinfo,EXILIBS=)
+       LIBS="$LIBS $EXILIBS"
        AC_LINK_IFELSE(
 	 [AC_LANG_PROGRAM(
 	    [[#include <execinfo.h>]],
@@ -1826,8 +1846,6 @@ AC_COMPILE_IFELSE(
 # Check for if_nametoindex() for IPv6 scoped addresses support
 #
 AC_CHECK_FUNCS([if_nametoindex])
-
-AC_CHECK_FUNCS(nanosleep usleep explicit_bzero)
 
 ISC_ATOMIC_LIBS=""
 AC_CHECK_HEADERS(
@@ -2205,10 +2223,10 @@ AC_ARG_WITH([cmocka],
 
 AS_CASE([$with_cmocka],
 	[no],[],
-	[detect],[PKG_CHECK_MODULES([CMOCKA], [cmocka >= 1.0.0],
-				    [AC_DEFINE([HAVE_CMOCKA], [1], [Use CMocka])],
-				    [with_cmocka=no])],
-	[yes],[PKG_CHECK_MODULES([CMOCKA], [cmocka >= 1.0.0],
+	[detect],[PKG_CHECK_MODULES([CMOCKA], [cmocka >= 1.1.3],
+				    [AC_DEFINE([HAVE_CMOCKA], [1], [Use CMocka])
+				     with_cmocka=yes],[with_cmocka=no])],
+	[yes],[PKG_CHECK_MODULES([CMOCKA], [cmocka >= 1.1.3],
 				 [AC_DEFINE([HAVE_CMOCKA], [1], [Use CMocka])])],
 	[AC_MSG_ERROR([Use PKG_CONFIG_PATH to specify path to CMocka library])]
        )
@@ -2889,8 +2907,6 @@ AC_CONFIG_FILES([
 	lib/ns/include/Makefile
 	lib/ns/include/ns/Makefile
 	lib/ns/tests/Makefile
-	lib/samples/Makefile
-	lib/samples/Makefile-postinstall
 	make/Makefile
 	make/mkdep
 	unit/unittest.sh

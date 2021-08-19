@@ -15,4 +15,3 @@ rm -f */named.conf
 rm -f */named.run
 rm -rf __pycache__
 rm -f *.status
-rm -rf .cache

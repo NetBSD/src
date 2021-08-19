@@ -50,6 +50,12 @@ zone "step1.going-insecure-dynamic.kasp" {
 	allow-update { any; };
 };
 
+zone "step1.going-straight-to-none.kasp" {
+	type master;
+	file "step1.going-straight-to-none.kasp.db";
+	dnssec-policy "default";
+};
+
 /* These are alorithm rollover test zones. */
 zone "step1.algorithm-roll.kasp" {
 	type primary;
@@ -61,4 +67,16 @@ zone "step1.csk-algorithm-roll.kasp" {
 	type primary;
 	file "step1.csk-algorithm-roll.kasp.db";
 	dnssec-policy "csk-algoroll";
+};
+
+dnssec-policy "modified" {
+	keys {
+		csk lifetime unlimited algorithm rsasha256 2048;
+	};
+};
+
+zone example {
+	type primary;
+	dnssec-policy modified;
+	file "example.db";
 };

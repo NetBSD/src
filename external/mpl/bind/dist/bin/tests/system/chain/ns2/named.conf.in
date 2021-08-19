@@ -40,6 +40,26 @@ zone "signed-sub2.example" {
 	file "sub.db";
 };
 
+zone "wildcard-secure.example" {
+	type primary;
+	file "wildcard-secure.example.db.signed";
+};
+
+zone "wildcard-nsec.example" {
+	type primary;
+	file "wildcard-nsec.example.db.signed";
+};
+
+zone "wildcard-nsec3.example" {
+	type primary;
+	file "wildcard-nsec3.example.db.signed";
+};
+
+zone "wildcard-nsec3-optout.example" {
+	type primary;
+	file "wildcard-nsec3-optout.example.db.signed";
+};
+
 zone "domain0.nil" { type primary; file "generic.db"; };
 zone "domain1.nil" { type primary; file "generic.db"; };
 zone "domain2.nil" { type primary; file "generic.db"; };

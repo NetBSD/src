@@ -111,3 +111,11 @@ zone "nsec3-to-nsec.kasp" {
 	file "nsec3-to-nsec.kasp.db";
 	dnssec-policy "nsec3";
 };
+
+/* The zone fails to load, this should not prevent shutdown. */
+zone "nsec3-fails-to-load.kasp" {
+	type primary;
+	file "nsec3-fails-to-load.kasp.db";
+	dnssec-policy "nsec3";
+	allow-update { any; };
+};

@@ -66,6 +66,7 @@ catz \
 cds \
 chain \
 checkconf \
+checkds \
 checknames \
 checkzone \
 database \
@@ -409,6 +410,22 @@ keyfile_to_key_id() {
 	echo "$1" | sed "s/.*+0\{0,4\}//"
 }
 
+# private_type_record: write a private type record recording the state of the
+# signing process
+#
+# For a given zone ($1), algorithm number ($2) and key file ($3), print the
+# private type record with default type value of 65534, indicating that the
+# signing process for this key is completed.
+private_type_record() {
+        _zone=$1
+        _algorithm=$2
+        _keyfile=$3
+
+        _id=$(keyfile_to_key_id "$_keyfile")
+
+        printf "%s. 0 IN TYPE65534 %s 5 %02x%04x0000\n" "$_zone" "\\#" "$_algorithm" "$_id"
+}
+
 # nextpart*() - functions for reading files incrementally
 #
 # These functions aim to facilitate looking for (or waiting for)
@@ -573,7 +590,7 @@ _repeat() (
 )
 
 rndc_reload() {
-    echo_i "`$RNDC -c ../common/rndc.conf -s $2 -p ${CONTROLPORT} reload $3 2>&1 | sed 's/^/'$1' /'`"
+    $RNDC -c ../common/rndc.conf -s $2 -p ${CONTROLPORT} reload $3 2>&1 | sed 's/^/'"I:$SYSTESTDIR:$1"' /'
     # reloading single zone is synchronous, if we're reloading whole server
     # we need to wait for reload to finish
     if [ -z "$3" ]; then
@@ -585,7 +602,7 @@ rndc_reload() {
 }
 
 rndc_reconfig() {
-    echo_i "`$RNDC -c ../common/rndc.conf -s $2 -p ${CONTROLPORT} reconfig 2>&1 | sed 's/^/'$1' /'`"
+    $RNDC -c ../common/rndc.conf -s $2 -p ${CONTROLPORT} reconfig 2>&1 | sed 's/^/'"I:$SYSTESTDIR:$1"' /'
     for __try in 0 1 2 3 4 5 6 7 8 9; do
 	$RNDC -c ../common/rndc.conf -s $2 -p ${CONTROLPORT} status | grep "reload/reconfig in progress" > /dev/null || break
 	sleep 1
@@ -720,6 +737,7 @@ export KEYGEN
 export KEYSETTOOL
 export KEYSIGNER
 export KRB5_CONFIG
+export KRB5_KTNAME
 export MAKEJOURNAL
 export MDIG
 export NAMED
@@ -737,9 +755,9 @@ export PYTHON
 export RESOLVE
 export RNDC
 export RRCHECKER
-export SAMPLEUPDATE
 export SIGNER
 export SUBDIRS
 export TMPDIR
 export TSIGKEYGEN
+export VERIFY
 export WIRETEST

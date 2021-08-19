@@ -41,8 +41,8 @@ set_nsec3param() {
 	FLAGS=$1
 	ITERATIONS=$2
 	SALTLEN=$3
+	# Reset salt.
 	SALT=""
-	test "$SALTLEN" = "0" && SALT="-"
 }
 
 # The apex NSEC3PARAM record indicates that it is signed.
@@ -115,6 +115,10 @@ _check_nsec3_nsec3param()
 {
 	dig_with_opts +noquestion @$SERVER "${ZONE}" NSEC3PARAM > "dig.out.test$n.nsec3param.$ZONE" || return 1
 	grep "${ZONE}.*0.*IN.*NSEC3PARAM.*1.*0.*${ITERATIONS}.*${SALT}" "dig.out.test$n.nsec3param.$ZONE" > /dev/null || return 1
+
+	if [ -z "$SALT" ]; then
+		SALT=`awk '$4 == "NSEC3PARAM" { print $8 }' dig.out.test$n.nsec3param.$ZONE`
+	fi
 	return 0
 }
 
@@ -128,14 +132,14 @@ _check_nsec3_nxdomain()
 check_nsec3()
 {
 	n=$((n+1))
-	echo_i "check NSEC3PARAM response for zone ${ZONE} ($n)"
+	echo_i "check that NSEC3PARAM 1 0 ${ITERATIONS} is published zone ${ZONE} ($n)"
 	ret=0
 	retry_quiet 10 _check_nsec3_nsec3param || log_error "bad NSEC3PARAM response for ${ZONE}"
 	test "$ret" -eq 0 || echo_i "failed"
 	status=$((status+ret))
 
 	n=$((n+1))
-	echo_i "check NSEC3 response for zone ${ZONE} ($n)"
+	echo_i "check NXDOMAIN response has correct NSEC3 1 ${FLAGS} ${ITERATIONS} ${SALT} for zone ${ZONE} ($n)"
 	ret=0
 	retry_quiet 10 _check_nsec3_nxdomain || log_error "bad NXDOMAIN response for zone ${ZONE}"
 	test "$ret" -eq 0 || echo_i "failed"
@@ -169,24 +173,28 @@ dnssec_verify
 
 # Zone: nsec3-change.kasp.
 set_zone_policy "nsec3-change.kasp" "nsec3"
+set_nsec3param "0" "5" "8"
 echo_i "initial check zone ${ZONE}"
 check_nsec3
 dnssec_verify
 
 # Zone: nsec3-dynamic-change.kasp.
 set_zone_policy "nsec3-dynamic-change.kasp" "nsec3"
+set_nsec3param "0" "5" "8"
 echo_i "initial check zone ${ZONE}"
 check_nsec3
 dnssec_verify
 
 # Zone: nsec3-to-nsec.kasp.
 set_zone_policy "nsec3-to-nsec.kasp" "nsec3"
+set_nsec3param "0" "5" "8"
 echo_i "initial check zone ${ZONE}"
 check_nsec3
 dnssec_verify
 
 # Zone: nsec3-to-optout.kasp.
 set_zone_policy "nsec3-to-optout.kasp" "nsec3"
+set_nsec3param "0" "5" "8"
 echo_i "initial check zone ${ZONE}"
 check_nsec3
 dnssec_verify
@@ -205,12 +213,10 @@ echo_i "initial check zone ${ZONE}"
 check_nsec3
 dnssec_verify
 
-
 # Reconfig named.
 echo_i "reconfig dnssec-policy to trigger nsec3 rollovers"
 copy_setports ns3/named2.conf.in ns3/named.conf
 rndc_reconfig ns3 10.53.0.3
-
 
 # Zone: nsec-to-nsec3.kasp. (reconfigured)
 set_zone_policy "nsec-to-nsec3.kasp" "nsec3"
@@ -221,12 +227,14 @@ dnssec_verify
 
 # Zone: nsec3.kasp. (same)
 set_zone_policy "nsec3.kasp" "nsec3"
+set_nsec3param "0" "5" "8"
 echo_i "check zone ${ZONE} after reconfig"
 check_nsec3
 dnssec_verify
 
 # Zone: nsec3-dyamic.kasp. (same)
 set_zone_policy "nsec3-dynamic.kasp" "nsec3"
+set_nsec3param "0" "5" "8"
 echo_i "check zone ${ZONE} after reconfig"
 check_nsec3
 dnssec_verify
@@ -247,6 +255,7 @@ dnssec_verify
 
 # Zone: nsec3-to-nsec.kasp. (reconfigured)
 set_zone_policy "nsec3-to-nsec.kasp" "nsec"
+set_nsec3param "1" "11" "0"
 echo_i "check zone ${ZONE} after reconfig"
 check_nsec
 dnssec_verify
@@ -283,6 +292,44 @@ set_zone_policy "nsec3-change.kasp" "nsec3-other"
 echo_i "use rndc signing -nsec3param ${ZONE} to change NSEC3 settings"
 rndccmd $SERVER signing -nsec3param 1 1 12 ffff $ZONE > rndc.signing.test$n.$ZONE || log_error "failed to call rndc signing -nsec3param $ZONE"
 grep "zone uses dnssec-policy, use rndc dnssec command instead" rndc.signing.test$n.$ZONE > /dev/null || log_error "rndc signing -nsec3param should fail"
+check_nsec3
+dnssec_verify
+
+# Test NSEC3 and NSEC3PARAM is the same after restart
+set_zone_policy "nsec3.kasp" "nsec3"
+set_nsec3param "0" "5" "8"
+echo_i "check zone ${ZONE} before restart"
+check_nsec3
+dnssec_verify
+
+# Restart named, NSEC3 should stay the same.
+ret=0
+echo "stop ns3"
+$PERL ../stop.pl --use-rndc --port ${CONTROLPORT} nsec3 ${DIR} || ret=1
+test "$ret" -eq 0 || echo_i "failed"
+status=$((status+ret))
+
+ret=0
+echo "start ns3"
+start_server --noclean --restart --port ${PORT} nsec3 ${DIR}
+test "$ret" -eq 0 || echo_i "failed"
+status=$((status+ret))
+
+prevsalt="${SALT}"
+set_zone_policy "nsec3.kasp" "nsec3"
+set_nsec3param "0" "5" "8"
+SALT="${prevsalt}"
+echo_i "check zone ${ZONE} after restart has salt ${SALT}"
+check_nsec3
+dnssec_verify
+
+# Zone: nsec3-fails-to-load.kasp. (should be fixed after reload)
+cp ns3/template.db.in ns3/nsec3-fails-to-load.kasp.db
+rndc_reload ns3 10.53.0.3
+
+set_zone_policy "nsec3-fails-to-load.kasp" "nsec3"
+set_nsec3param "0" "5" "8"
+echo_i "check zone ${ZONE} after reload"
 check_nsec3
 dnssec_verify
 

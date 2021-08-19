@@ -44,6 +44,9 @@
     <ClInclude Include="..\include\isc\backtrace.h">
       <Filter>Library Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="..\include\isc\barrier.h">
+      <Filter>Library Header Files</Filter>
+    </ClInclude>
     <ClInclude Include="..\include\isc\base32.h">
       <Filter>Library Header Files</Filter>
     </ClInclude>
@@ -144,6 +147,9 @@
       <Filter>Library Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\include\isc\magic.h">
+      <Filter>Library Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\isc\managers.h">
       <Filter>Library Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\include\isc\mem.h">
@@ -257,13 +263,13 @@
     <ClInclude Include="..\include\isc\timer.h">
       <Filter>Library Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\include\isc\tls.h">
-      <Filter>Library Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="..\include\isc\tm.h">
       <Filter>Library Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\include\isc\types.h">
+      <Filter>Library Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\isc\url.h">
       <Filter>Library Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\include\isc\utf8.h">
@@ -356,6 +362,9 @@
       <Filter>Win32 Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\entropy_private.h">
+      <Filter>Win32 Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\netmgr_p.h">
       <Filter>Win32 Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\openssl_shim.h">
@@ -542,6 +551,9 @@
     <ClCompile Include="..\log.c">
       <Filter>Library Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\managers.c">
+      <Filter>Library Source Files</Filter>
+    </ClCompile>
     <ClCompile Include="..\mem.c">
       <Filter>Library Source Files</Filter>
     </ClCompile>
@@ -549,6 +561,24 @@
       <Filter>Library Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\netaddr.c">
+      <Filter>Library Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\netmgr\netmgr.c">
+      <Filter>Library Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\netmgr\tcp.c">
+      <Filter>Library Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\netmgr\udp.c">
+      <Filter>Library Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\netmgr\uverr2result.c">
+      <Filter>Library Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\netmgr\uv-compat.c">
+      <Filter>Library Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\netmgr\tcpdns.c">
       <Filter>Library Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\netscope.c">
@@ -633,6 +663,9 @@
       <Filter>Library Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\tm.c">
+      <Filter>Library Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\url.c">
       <Filter>Library Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\utf8.c">

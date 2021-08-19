@@ -27,3 +27,5 @@ for zn in nsec-to-nsec3 nsec3 nsec3-other nsec3-change nsec3-to-nsec \
 do
 	setup "${zn}.kasp"
 done
+
+cp nsec3-fails-to-load.kasp.db.in nsec3-fails-to-load.kasp.db

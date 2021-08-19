@@ -53,7 +53,7 @@ policy zone is configured as a normal zone and also listed in a
 
 To use the catalog zone feature to serve a new member zone:
 
--  Set up the the member zone to be served on the primary as normal. This
+-  Set up the member zone to be served on the primary as normal. This
    can be done by editing ``named.conf`` or by running
    ``rndc addzone``.
 
@@ -118,19 +118,18 @@ specified in any order.
    member zone name.
 
 ``zone-directory``
-   This option causes local copies of member zones'
-   zone files to be stored in
-   the specified directory, if ``in-memory`` is not set to ``yes``. The default is to store zone files in the
-   server's working directory. A non-absolute pathname in
-   ``zone-directory`` is assumed to be relative to the working directory.
+   This option causes local copies of member zones' zone files to be
+   stored in the specified directory, if ``in-memory`` is not set to
+   ``yes``. The default is to store zone files in the server's working
+   directory. A non-absolute pathname in ``zone-directory`` is assumed
+   to be relative to the working directory.
 
 ``min-update-interval``
-   This option sets the minimum interval between
-   processing of updates to catalog zones, in seconds. If an update to a
-   catalog zone (for example, via IXFR) happens less than
-   ``min-update-interval`` seconds after the most recent update, the
-   changes are not carried out until this interval has elapsed. The
-   default is 5 seconds.
+   This option sets the minimum interval between updates to catalog
+   zones, in seconds. If an update to a catalog zone (for example, via
+   IXFR) happens less than ``min-update-interval`` seconds after the
+   most recent update, the changes are not carried out until this
+   interval has elapsed. The default is 5 seconds.
 
 Catalog zones are defined on a per-view basis. Configuring a non-empty
 ``catalog-zones`` statement in a view automatically turns on

@@ -7,7 +7,7 @@
 # See the COPYRIGHT file distributed with this work for additional
 # information regarding copyright ownership.
 
-rm -f dig.out.test*
+rm -f dig.out*
 rm -f ns*/named.conf
 rm -f ns*/root.bk
 rm -f rndc.out.test*

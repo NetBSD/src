@@ -136,7 +136,7 @@ Currently supported commands are:
    This sample ``addzone`` command adds the zone ``example.com`` to
    the default view:
 
-   ``$ \ rndc addzone example.com '{ type master; file "example.com.db"; };'``
+   ``rndc addzone example.com '{ type master; file "example.com.db"; };'``
 
    (Note the brackets around and semi-colon after the zone configuration
    text.)

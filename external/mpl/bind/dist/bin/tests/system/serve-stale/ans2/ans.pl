@@ -26,7 +26,12 @@ sub rmpid { unlink "ans.pid"; exit 1; };
 $SIG{INT} = \&rmpid;
 $SIG{TERM} = \&rmpid;
 
+# If send_response is set, the server will respond, otherwise the query will
+# be dropped.
 my $send_response = 1;
+# If slow_response is set, a lookup for the CNAME target (target.example) is
+# delayed. Other lookups will not be delayed.
+my $slow_response = 0;
 
 my $localaddr = "10.53.0.2";
 
@@ -49,6 +54,8 @@ my $TXT = "data.example 2 IN TXT \"A text record with a 2 second ttl\"";
 my $LONGTXT = "longttl.example 600 IN TXT \"A text record with a 600 second ttl\"";
 my $CAA = "othertype.example 2 IN CAA 0 issue \"ca1.example.net\"";
 my $negSOA = "example 2 IN SOA . . 0 0 0 0 300";
+my $CNAME = "cname.example 7 IN CNAME target.example";
+my $TARGET = "target.example 9 IN A $localaddr";
 
 sub reply_handler {
     my ($qname, $qclass, $qtype) = @_;
@@ -70,6 +77,15 @@ sub reply_handler {
     } elsif ($qname eq "disable" ) {
 	if ($qtype eq "TXT") {
 	    $send_response = 0;
+            my $rr = new Net::DNS::RR("$qname 0 $qclass TXT \"$send_response\"");
+            push @ans, $rr;
+	}
+	$rcode = "NOERROR";
+        return ($rcode, \@ans, \@auth, \@add, { aa => 1 });
+    } elsif ($qname eq "slowdown" ) {
+	if ($qtype eq "TXT") {
+	    $send_response = 1;
+	    $slow_response = 1;
             my $rr = new Net::DNS::RR("$qname 0 $qclass TXT \"$send_response\"");
             push @ans, $rr;
 	}
@@ -111,6 +127,37 @@ sub reply_handler {
     } elsif ($qname eq "data.example") {
 	if ($qtype eq "TXT") {
 	    my $rr = new Net::DNS::RR($TXT);
+	    push @ans, $rr;
+	} else {
+	    my $rr = new Net::DNS::RR($negSOA);
+	    push @auth, $rr;
+	}
+	$rcode = "NOERROR";
+    } elsif ($qname eq "a-only.example") {
+	if ($qtype eq "A") {
+	    my $rr = new Net::DNS::RR("a-only.example 2 IN A $localaddr");
+	    push @ans, $rr;
+	} else {
+	    my $rr = new Net::DNS::RR($negSOA);
+	    push @auth, $rr;
+	}
+	$rcode = "NOERROR";
+    } elsif ($qname eq "cname.example") {
+	if ($qtype eq "A") {
+	    my $rr = new Net::DNS::RR($CNAME);
+	    push @ans, $rr;
+	} else {
+	    my $rr = new Net::DNS::RR($negSOA);
+	    push @auth, $rr;
+	}
+	$rcode = "NOERROR";
+    } elsif ($qname eq "target.example") {
+	if ($slow_response) {
+                print "  Sleeping 3 seconds\n";
+		sleep(3);
+	}
+	if ($qtype eq "A") {
+	    my $rr = new Net::DNS::RR($TARGET);
 	    push @ans, $rr;
 	} else {
 	    my $rr = new Net::DNS::RR($negSOA);

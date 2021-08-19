@@ -17,7 +17,7 @@ New Features
 - NSEC3 support was added to KASP. A new option for ``dnssec-policy``,
   ``nsec3param``, can be used to set the desired NSEC3 parameters.
   NSEC3 salt collisions are automatically prevented during resalting.
-  [GL #1620]
+  :gl:`#1620`
 
 Feature Changes
 ~~~~~~~~~~~~~~~
@@ -27,7 +27,7 @@ Feature Changes
   included in the count (as a result of the fix for CVE-2020-8616),
   ``max-recursion-queries`` has a higher chance of being exceeded by
   non-attack queries, which is the main reason for increasing its
-  default value. [GL #2305]
+  default value. :gl:`#2305`
 
 - The default value of ``nocookie-udp-size`` was restored back to 4096
   bytes. Since ``max-udp-size`` is the upper bound for
@@ -35,16 +35,16 @@ Feature Changes
   to change ``nocookie-udp-size`` together with ``max-udp-size`` in
   order to increase the default EDNS buffer size limit.
   ``nocookie-udp-size`` can still be set to a value lower than
-  ``max-udp-size``, if desired. [GL #2250]
+  ``max-udp-size``, if desired. :gl:`#2250`
 
 Bug Fixes
 ~~~~~~~~~
 
 - Handling of missing DNS COOKIE responses over UDP was tightened by
-  falling back to TCP. [GL #2275]
+  falling back to TCP. :gl:`#2275`
 
 - The CNAME synthesized from a DNAME was incorrectly followed when the
-  QTYPE was CNAME or ANY. [GL #2280]
+  QTYPE was CNAME or ANY. :gl:`#2280`
 
 - Building with native PKCS#11 support for AEP Keyper has been broken
-  since BIND 9.16.6. This has been fixed. [GL #2315]
+  since BIND 9.16.6. This has been fixed. :gl:`#2315`

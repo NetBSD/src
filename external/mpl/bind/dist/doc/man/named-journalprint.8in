@@ -32,7 +32,7 @@ level margin: \\n[rst2man-indent\\n[rst2man-indent-level]]
 ..
 .SH SYNOPSIS
 .sp
-\fBnamed\-journalprint\fP [\fB\-dux\fP] {journal}
+\fBnamed\-journalprint\fP [\-c serial] [\fB\-dux\fP] {journal}
 .SH DESCRIPTION
 .sp
 \fBnamed\-journalprint\fP scans the contents of a zone journal file,
@@ -51,6 +51,12 @@ file.
 into a human\-readable text format. Each line begins with \fBadd\fP or \fBdel\fP,
 to indicate whether the record was added or deleted, and continues with
 the resource record in master\-file format.
+.sp
+The \fB\-c\fP (compact) option provides a mechanism to reduce the size of
+a journal by removing (most/all) transactions prior to the specified
+serial number. Note: this option \fImust not\fP be used while \fBnamed\fP is
+running, and can cause data loss if the zone file has not been updated
+to contain the data being removed from the journal. Use with extreme caution.
 .sp
 The \fB\-x\fP option causes additional data about the journal file to be
 printed at the beginning of the output and before each group of changes.

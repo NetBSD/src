@@ -20,9 +20,11 @@ rm -f */named.memstats
 rm -f */named.run
 rm -f */ans.run
 rm -f */named.stats
+rm -f */named.stats-stage*
 rm -f dig.out*
 rm -f curl.out.*
 rm -f ns*/named.lock
 rm -f stats*out
 rm -f ns*/managed-keys.bind*
 rm -f xsltproc.out.*
+rm -f named.stats.*

@@ -16,7 +16,7 @@ Security Fixes
 
 -  DNS rebinding protection was ineffective when BIND 9 is configured as
    a forwarding DNS server. Found and responsibly reported by Tobias
-   Klein. [GL #1574]
+   Klein.:gl:`#1574`
 
 Known Issues
 ~~~~~~~~~~~~
@@ -26,15 +26,15 @@ Known Issues
    of these were related to RPZ processing, which has been fixed in this
    release (see below). Others appear to occur where there are
    NSEC3-related changes (such as an operator changing the NSEC3 salt
-   used in the hash calculation). These are being investigated. [GL
-   #1685]
+   used in the hash calculation). These are being investigated.
+   :gl:`#1685`
 
 Feature Changes
 ~~~~~~~~~~~~~~~
 
 -  The previous DNSSEC sign statistics used lots of memory. The number
    of keys to track is reduced to four per zone, which should be enough
-   for 99% of all signed zones. [GL #1179]
+   for 99% of all signed zones. :gl:`#1179`
 
 Bug Fixes
 ~~~~~~~~~
@@ -43,7 +43,7 @@ Bug Fixes
    number of records was deleted, ``named`` could become nonresponsive
    for a short period while deleted names were removed from the RPZ
    summary database. This database cleanup is now done incrementally
-   over a longer period of time, reducing such delays. [GL #1447]
+   over a longer period of time, reducing such delays. :gl:`#1447`
 
 -  When trying to migrate an already-signed zone from
    ``auto-dnssec maintain`` to one based on ``dnssec-policy``, the
@@ -52,4 +52,4 @@ Bug Fixes
    possible that some clients would not have been able to validate
    responses until all old DNSSEC information had timed out from caches.
    BIND now looks at the time metadata of the existing keys and
-   incorporates it into its DNSSEC policy operation. [GL #1706]
+   incorporates it into its DNSSEC policy operation. :gl:`#1706`

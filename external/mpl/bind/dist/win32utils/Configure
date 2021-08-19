@@ -126,6 +126,8 @@ my @projectlist = ("..\\bin\\check\\win32\\checkconf.vcxproj",
                    "..\\bin\\tests\\system\\win32\\keydelete.vcxproj.filters",
                    "..\\bin\\tests\\system\\win32\\pipequeries.vcxproj",
                    "..\\bin\\tests\\system\\win32\\pipequeries.vcxproj.filters",
+                   "..\\bin\\tests\\system\\win32\\resolve.vcxproj",
+                   "..\\bin\\tests\\system\\win32\\resolve.vcxproj.filters",
                    "..\\bin\\tests\\win32\\backtrace_test.vcxproj",
                    "..\\bin\\tests\\win32\\backtrace_test.vcxproj.filters",
                    "..\\bin\\tests\\win32\\inter_test.vcxproj",
@@ -171,18 +173,6 @@ my @projectlist = ("..\\bin\\check\\win32\\checkconf.vcxproj",
                    "..\\lib\\isccfg\\win32\\libisccfg.vcxproj",
                    "..\\lib\\isccfg\\win32\\libisccfg.vcxproj.filters",
                    "..\\lib\\ns\\win32\\libns.vcxproj",
-                   "..\\lib\\samples\\win32\\resolve.vcxproj",
-                   "..\\lib\\samples\\win32\\resolve.vcxproj.filters",
-                   "..\\lib\\samples\\win32\\async.vcxproj",
-                   "..\\lib\\samples\\win32\\async.vcxproj.filters",
-                   "..\\lib\\samples\\win32\\gai.vcxproj",
-                   "..\\lib\\samples\\win32\\gai.vcxproj.filters",
-                   "..\\lib\\samples\\win32\\update.vcxproj",
-                   "..\\lib\\samples\\win32\\update.vcxproj.filters",
-                   "..\\lib\\samples\\win32\\request.vcxproj",
-                   "..\\lib\\samples\\win32\\request.vcxproj.filters",
-                   "..\\lib\\samples\\win32\\nsprobe.vcxproj",
-                   "..\\lib\\samples\\win32\\nsprobe.vcxproj.filters",
                    "..\\lib\\win32\\bindevt\\bindevt.vcxproj",
                    "..\\lib\\win32\\bindevt\\bindevt.vcxproj.filters",
                    "bind9.sln");
@@ -206,9 +196,6 @@ my @substdefh = ("CONFIGARGS",
                  "WITH_IDN",
                  "CPU_RELAX",
                  "VALIDATION_DEFAULT",
-                 "HAVE_UV_HANDLE_GET_DATA",
-                 "HAVE_UV_HANDLE_SET_DATA",
-                 "HAVE_UV_IMPORT",
     );
 
 # for platform.h
@@ -329,7 +316,6 @@ my @substcond = ("ATOMIC",
                  "OPENSSL",
                  "PKCS11",
                  "PYTHON",
-                 "SAMPLES",
                  "STESTS",
                  "TESTS",
                  "XTESTS",
@@ -363,7 +349,6 @@ my @withlist = ("aes",
                 "pssuspend",
                 "python",
                 "readline",
-                "samples",
                 "system-tests",
                 "tests",
                 "tuning",
@@ -404,7 +389,6 @@ my @help = (
 "  with-tests            build with test suite\n",
 "  with-extra-tests      build with extra test suite\n",
 "  with-system-tests     build with system test suite\n",
-"  with-samples          build with sample programs\n",
 "  with-openssl[=PATH]   build with OpenSSL yes|path (mandatory)\n",
 "  with-libuv[=PATH]     build with libuv yes|path (mandatory)\n",
 "  with-pkcs11[=PATH]    build with PKCS#11 support yes|no|provider-path\n",
@@ -447,7 +431,6 @@ my $enable_rpz_nsdname = "yes";
 my $use_tests = "no";
 my $use_xtests = "no";
 my $use_stests = "no";
-my $use_samples = "no";
 my $use_libuv = "auto";
 my $libuv_path = "..\\..\\";
 my $use_openssl = "auto";
@@ -686,7 +669,6 @@ if ($enable_developer eq "yes") {
     $use_tests = "yes";
     $use_xtests = "yes";
     $use_stests = "yes";
-    $use_samples = "yes";
 }
 
 # parse with/without
@@ -708,10 +690,6 @@ sub mywith {
         if ($val =~ /^yes$/i) {
             $use_tests = "yes";
             $use_stests = "yes";
-        }
-    } elsif ($key =~ /^samples$/i) {
-        if ($val =~ /^yes$/i) {
-            $use_samples = "yes";
         }
     } elsif ($key =~ /^openssl$/i) {
         if ($val =~ /^no$/i) {
@@ -924,9 +902,6 @@ if ($verbose) {
     }
     if ($use_stests eq "yes") {
         print "system tests: enabled\n";
-    }
-    if ($use_samples eq "yes") {
-        print "sample programs: enabled\n";
     }
     if ($use_pkcs11 eq "no") {
         print "pkcs11: disabled\n";
@@ -1222,11 +1197,6 @@ if ($use_stests eq "yes") {
     $configcond{"STESTS"} = 1;
 }
 
-# with-samples
-if ($use_samples eq "yes") {
-    $configcond{"SAMPLES"} = 1;
-}
-
 # with-libuv
 if ($use_libuv eq "auto") {
     if ($verbose) {
@@ -1258,13 +1228,6 @@ if ($use_libuv eq "auto") {
     if ($use_libuv eq "auto") {
         die "can't find an libuv built directory at sibling root\n";
     }
-
-    # When a libuv version exposing uv_import() and uv_export() is released, the
-    # following three config.h macros will need to be conditionally defined for
-    # that libuv version and all later ones.
-    # $configdefh{"HAVE_UV_HANDLE_SET_DATA"} = 1;
-    # $configdefh{"HAVE_UV_HANDLE_GET_DATA"} = 1;
-    # $configdefh{"HAVE_UV_IMPORT"} = 1;
 }
 # falls into (so no else)
 if ($use_libuv eq "yes") {
@@ -1291,12 +1254,6 @@ if ($use_libuv eq "yes") {
     $configinc{"LIBUV_INC"} = "$libuv_inc";
     $configlib{"LIBUV_LIB"} = "$libuv_lib";
     $configdll{"LIBUV_DLL"} = "$libuv_dll";
-    # When a libuv version exposing uv_import() and uv_export() is released, the
-    # following three config.h macros will need to be conditionally defined for
-    # that libuv version and all later ones.
-    # $configdefh{"HAVE_UV_HANDLE_SET_DATA"} = 1;
-    # $configdefh{"HAVE_UV_HANDLE_GET_DATA"} = 1;
-    # $configdefh{"HAVE_UV_IMPORT"} = 1;
 }
 
 # with-openssl
@@ -2007,7 +1964,7 @@ if ($use_python ne "no") {
         $configcond{"PYTHON"} = 1;
         $configdefd{"USE_PYTHON"} = "USE_PYTHON";
         $configvar{"PYTHON"} = "$python_command";
-        $configtest{"CHECKDS"} = "checkds";
+        $configtest{"CHECKDS"} = "checkdstool";
         $configtest{"COVERAGE"} = "coverage";
         $configtest{"KEYMGR"} = "keymgr";
         # Doesn't matter

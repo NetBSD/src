@@ -218,13 +218,13 @@ zone expires and no longer responds to queries.
 Stealth Servers
 ^^^^^^^^^^^^^^^
 
-Usually, all of the zone's authoritative servers are listed in NS records
-in the parent zone. These NS records constitute a *delegation* of the
-zone from the parent. The authoritative servers are also listed in the
-zone file itself, at the *top level* or *apex* of the zone.
-Servers that are not in the parent's
-NS delegation can be listed in the zone's top-level NS records, but servers that are not present at the zone's top level
-cannot be listed in the parent's delegation.
+Usually, all of the zone's authoritative servers are listed in NS
+records in the parent zone. These NS records constitute a *delegation*
+of the zone from the parent. The authoritative servers are also listed
+in the zone file itself, at the *top level* or *apex* of the zone.
+Servers that are not in the parent's NS delegation can be listed in the
+zone's top-level NS records, but servers that are not present at the
+zone's top level cannot be listed in the parent's delegation.
 
 A *stealth server* is a server that is authoritative for a zone but is
 not listed in that zone's NS records. Stealth servers can be used for

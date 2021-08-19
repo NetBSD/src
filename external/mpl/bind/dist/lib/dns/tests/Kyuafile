@@ -19,6 +19,7 @@ tap_test_program{name='peer_test'}
 tap_test_program{name='private_test'}
 tap_test_program{name='rbt_serialize_test', is_exclusive=true}
 tap_test_program{name='rbt_test'}
+tap_test_program{name='rbtdb_test'}
 tap_test_program{name='rdata_test'}
 tap_test_program{name='rdataset_test'}
 tap_test_program{name='rdatasetstats_test'}

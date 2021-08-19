@@ -28,7 +28,8 @@ def added_lines(target_branch, paths):
 def lines_containing(lines, string):
     return [l for l in lines if bytes(string, 'utf-8') in l]
 
-issue_or_mr_id_regex = re.compile(br'\[(GL [#!]|RT #)[0-9]+\]')
+changes_issue_or_mr_id_regex = re.compile(br'\[(GL [#!]|RT #)[0-9]+\]')
+relnotes_issue_or_mr_id_regex = re.compile(br':gl:`[#!][0-9]+`')
 release_notes_regex = re.compile(r'doc/(arm|notes)/notes-.*\.(rst|xml)')
 
 modified_files = danger.git.modified_files
@@ -186,7 +187,7 @@ if changes_modified and no_changes_label_set:
 
 changes_added_lines = added_lines(target_branch, ['CHANGES'])
 placeholders_added = lines_containing(changes_added_lines, '[placeholder]')
-identifiers_found = filter(issue_or_mr_id_regex.search, changes_added_lines)
+identifiers_found = filter(changes_issue_or_mr_id_regex.search, changes_added_lines)
 if changes_added_lines:
     if placeholders_added:
         if target_branch != 'main':
@@ -234,7 +235,7 @@ if release_notes_changed and not release_notes_label_set:
 
 if release_notes_changed:
     notes_added_lines = added_lines(target_branch, release_notes_changed)
-    identifiers_found = filter(issue_or_mr_id_regex.search, notes_added_lines)
+    identifiers_found = filter(relnotes_issue_or_mr_id_regex.search, notes_added_lines)
     if notes_added_lines and not any(identifiers_found):
         warn('No valid issue/MR identifiers found in added release notes.')
 else:

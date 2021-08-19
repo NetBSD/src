@@ -14,6 +14,7 @@ tap_test_program{name='lex_test'}
 tap_test_program{name='md_test'}
 tap_test_program{name='mem_test'}
 tap_test_program{name='netaddr_test'}
+tap_test_program{name='netmgr_test'}
 tap_test_program{name='parse_test'}
 tap_test_program{name='pool_test'}
 tap_test_program{name='radix_test'}

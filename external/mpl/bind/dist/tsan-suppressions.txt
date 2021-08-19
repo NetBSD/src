@@ -1,0 +1,2 @@
+# Uninstrumented library.
+called_from_lib:libfstrm.so

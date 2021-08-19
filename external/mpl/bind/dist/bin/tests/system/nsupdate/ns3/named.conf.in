@@ -61,3 +61,11 @@ zone "too-big.test" {
 	max-records 3;
 	file "too-big.test.db";
 };
+
+/* Zone for testing CDS and CDNSKEY updates from other provider */
+zone "multisigner.test" {
+	type primary;
+	allow-update { any; };
+	dnssec-policy "default";
+	file "multisigner.test.db";
+};

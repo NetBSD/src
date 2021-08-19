@@ -33,16 +33,6 @@ controls {
 	inet 10.53.0.4 port @CONTROLPORT@ allow { any; } keys { rndc_key; };
 };
 
-key "external" {
-	algorithm "hmac-sha1";
-	secret "YPfMoAk6h+3iN8MDRQC004iSNHY=";
-};
-
-key "internal" {
-	algorithm "hmac-sha1";
-	secret "4xILSZQnuO1UKubXHkYUsvBRPu8=";
-};
-
 dnssec-policy "rsasha256" {
 	keys {
 		zsk key-directory lifetime P3M algorithm 8 1024;
@@ -64,7 +54,19 @@ dnssec-policy "rsasha256" {
 	parent-propagation-delay 3h;
 };
 
-view "external-view" {
+key "external" {
+	algorithm "hmac-sha1";
+	secret "YPfMoAk6h+3iN8MDRQC004iSNHY=";
+};
+
+key "internal" {
+	algorithm "hmac-sha1";
+	secret "4xILSZQnuO1UKubXHkYUsvBRPu8=";
+};
+
+view "ext" {
+        match-clients { key "external"; };
+
 	zone "view-rsasha256.kasp" {
 		type master;
 		file "view-rsasha256.kasp.ext.db";
@@ -72,7 +74,9 @@ view "external-view" {
 	};
 };
 
-view "internal-view" {
+view "int" {
+        match-clients { key "internal"; };
+
 	zone "view-rsasha256.kasp" {
 		type master;
 		file "view-rsasha256.kasp.int.db";

@@ -39,3 +39,12 @@ make_key 3 ${EXTRAPORT3} hmac-sha224
 make_key 4 ${EXTRAPORT4} hmac-sha256
 make_key 5 ${EXTRAPORT5} hmac-sha384
 make_key 6 ${EXTRAPORT6} hmac-sha512
+
+cat >> ns4/named.conf <<- EOF
+
+controls {
+	inet 10.53.0.4 port ${EXTRAPORT7}
+		allow { any; } keys { "key1"; "key2"; "key3";
+                                      "key4"; "key5"; "key6"; };
+};
+EOF

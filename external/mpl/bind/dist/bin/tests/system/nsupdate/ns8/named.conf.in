@@ -20,7 +20,7 @@ options {
 	recursion no;
 	notify yes;
 	minimal-responses no;
-	tkey-gssapi-keytab "dns.keytab";
+	tkey-gssapi-keytab "dns-other-than-KRB5_KTNAME.keytab";
 };
 
 key rndc_key {

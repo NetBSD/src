@@ -15,5 +15,5 @@ rm -f ./ns*/named.lock
 rm -f ./ns*/named.memstats
 rm -f ./ns*/named.run*
 rm -f ./ns*/named.stats
-rm -rf ./.cache ./__pycache__
+rm -rf ./__pycache__
 rm -f ./ns*/large.db

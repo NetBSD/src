@@ -29,7 +29,7 @@ named-journalprint - print zone journal in human-readable form
 Synopsis
 ~~~~~~~~
 
-:program:`named-journalprint` [**-dux**] {journal}
+:program:`named-journalprint` [-c serial] [**-dux**] {journal}
 
 Description
 ~~~~~~~~~~~
@@ -50,6 +50,12 @@ file.
 into a human-readable text format. Each line begins with ``add`` or ``del``,
 to indicate whether the record was added or deleted, and continues with
 the resource record in master-file format.
+
+The ``-c`` (compact) option provides a mechanism to reduce the size of
+a journal by removing (most/all) transactions prior to the specified
+serial number. Note: this option *must not* be used while ``named`` is
+running, and can cause data loss if the zone file has not been updated
+to contain the data being removed from the journal. Use with extreme caution.
 
 The ``-x`` option causes additional data about the journal file to be
 printed at the beginning of the output and before each group of changes.

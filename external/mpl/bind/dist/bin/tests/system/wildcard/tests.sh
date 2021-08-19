@@ -231,5 +231,40 @@ grep "ANSWER: 0," dig.out.ns1.test$n > /dev/null || ret=1
 if [ $ret != 0 ]; then echo_i "failed"; fi
 status=`expr $status + $ret`
 
+n=`expr $n + 1`
+echo_i "check wild card expansions by code point ($n)"
+ret=0
+i=0
+while test $i -lt 256
+do
+	x=`expr 00$i : '.*\(...\)$'`
+	$DIG $DIGOPTS @10.53.0.1 "\\$x.example" TXT > dig.out.ns1.$x.test$n
+	if test $i -le 32 -o $i -ge 127
+	then
+		grep '^\\'"$x"'\.example\..*TXT.*\"this is a wildcard\"$' dig.out.ns1.$x.test$n > /dev/null || { echo_i "code point $x failed" ; ret=1; }
+        # "=34 $=36 (=40 )=41 .=46 ;=59 \=92 @=64
+	elif test $i -eq 34 -o $i -eq 36 -o $i -eq 40 -o $i -eq 41 -o \
+                  $i -eq 46 -o $i -eq 59 -o $i -eq 64 -o $i -eq 92
+	then
+		case $i in
+		34) a='"';;
+		36) a='$';;
+		40) a='(';;
+		41) a=')';;
+		46) a='\.';;
+		59) a=';';;
+		64) a='@';;
+		92) a='\\';;
+		*) a=''; echo_i "code point $x failed" ; ret=1 ;;
+		esac
+		grep '^\\'"$a"'\.example.*.*TXT.*"this is a wildcard"$' dig.out.ns1.$x.test$n > /dev/null || { echo_i "code point $x failed" ; ret=1; }
+	else
+		grep '^\\' dig.out.ns1.$x.test$n && { echo_i "code point $x failed" ; ret=1; }
+	fi
+	i=`expr $i + 1`
+done
+if [ $ret != 0 ]; then echo_i "failed"; fi
+status=`expr $status + $ret`
+
 echo_i "exit status: $status"
 [ $status -eq 0 ] || exit 1

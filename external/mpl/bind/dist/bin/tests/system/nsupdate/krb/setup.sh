@@ -101,7 +101,7 @@ kinit -V -k -t krb5-machine.keytab -l ${lifetime}d -c krb5-machine.ccache host/m
 kinit -V -k -t ms-machine.keytab -l ${lifetime}d -c ms-machine.ccache 'machine$@EXAMPLE.COM'
 
 cp ns7-server.keytab ../ns7/dns.keytab
-cp ns8-server.keytab ../ns8/dns.keytab
+cp ns8-server.keytab ../ns8/dns-other-than-KRB5_KTNAME.keytab
 cp ns9-server.keytab ../ns9/dns.keytab
 cp ns10-server.keytab ../ns10/dns.keytab
 

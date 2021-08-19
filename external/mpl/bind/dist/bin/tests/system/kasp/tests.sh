@@ -326,6 +326,27 @@ retry_quiet 10 update_is_signed "10.0.0.11" "10.0.0.44" || ret=1
 test "$ret" -eq 0 || echo_i "failed"
 status=$((status+ret))
 
+# Move the private key file, a rekey event should not introduce replacement
+# keys.
+ret=0
+echo_i "test that if private key files are inaccessible this doesn't trigger a rollover ($n)"
+basefile=$(key_get KEY1 BASEFILE)
+mv "${basefile}.private" "${basefile}.offline"
+rndccmd 10.53.0.3 loadkeys "$ZONE" > /dev/null || log_error "rndc loadkeys zone ${ZONE} failed"
+wait_for_log 3 "offline, policy default" $DIR/named.run || ret=1
+mv "${basefile}.offline" "${basefile}.private"
+test "$ret" -eq 0 || echo_i "failed"
+status=$((status+ret))
+
+# Nothing has changed.
+check_keys
+check_dnssecstatus "$SERVER" "$POLICY" "$ZONE"
+set_keytimes_csk_policy
+check_keytimes
+check_apex
+check_subdomain
+dnssec_verify
+
 #
 # Zone: dynamic.kasp
 #
@@ -773,6 +794,30 @@ dnssec_verify
 #
 set_zone "unsigned.kasp"
 set_policy "none" "0" "0"
+set_server "ns3" "10.53.0.3"
+
+key_clear "KEY1"
+key_clear "KEY2"
+key_clear "KEY3"
+key_clear "KEY4"
+
+check_keys
+check_dnssecstatus "$SERVER" "$POLICY" "$ZONE"
+check_apex
+check_subdomain
+# Make sure the zone file is untouched.
+n=$((n+1))
+echo_i "Make sure the zonefile for zone ${ZONE} is not edited ($n)"
+ret=0
+diff "${DIR}/${ZONE}.db.infile" "${DIR}/${ZONE}.db" || ret=1
+test "$ret" -eq 0 || echo_i "failed"
+status=$((status+ret))
+
+#
+# Zone: insecure.kasp.
+#
+set_zone "insecure.kasp"
+set_policy "insecure" "0" "0"
 set_server "ns3" "10.53.0.3"
 
 key_clear "KEY1"
@@ -1324,13 +1369,50 @@ dnssec_verify
 check_rrsig_refresh
 
 #
+# Zone: ksk-missing.autosign.
+#
+set_zone "ksk-missing.autosign"
+set_policy "autosign" "2" "300"
+set_server "ns3" "10.53.0.3"
+# Key properties, timings and states same as above.
+# Skip checking the private file, because it is missing.
+key_set "KEY1" "PRIVATE" "no"
+
+check_keys
+check_dnssecstatus "$SERVER" "$POLICY" "$ZONE"
+check_apex
+check_subdomain
+dnssec_verify
+
+# Restore the PRIVATE variable.
+key_set "KEY1" "PRIVATE" "yes"
+
+#
 # Zone: zsk-missing.autosign.
 #
 set_zone "zsk-missing.autosign"
 set_policy "autosign" "2" "300"
 set_server "ns3" "10.53.0.3"
 # Key properties, timings and states same as above.
-# TODO.
+# Skip checking the private file, because it is missing.
+key_set "KEY2" "PRIVATE" "no"
+
+check_keys
+check_dnssecstatus "$SERVER" "$POLICY" "$ZONE"
+# For the apex, we expect the SOA to be signed with the KSK because the ZSK is
+# offline. Temporary treat KEY1 as a zone signing key too.
+set_keyrole "KEY1" "csk"
+set_zonesigning "KEY1" "yes"
+set_zonesigning "KEY2" "no"
+check_apex
+set_keyrole "KEY1" "ksk"
+set_zonesigning "KEY1" "no"
+set_zonesigning "KEY2" "yes"
+check_subdomain
+dnssec_verify
+
+# Restore the PRIVATE variable.
+key_set "KEY2" "PRIVATE" "yes"
 
 #
 # Zone: zsk-retired.autosign.
@@ -1748,6 +1830,7 @@ check_apex
 check_subdomain
 dnssec_verify
 
+# Test with views.
 set_zone "example.net"
 set_server "ns4" "10.53.0.4"
 TSIG="hmac-sha1:keyforview1:$VIEW1"
@@ -1778,6 +1861,23 @@ dnssec_verify
 n=$((n+1))
 # check subdomain
 echo_i "check TXT example.net (view example2) rrset is signed correctly ($n)"
+ret=0
+dig_with_opts "view.${ZONE}" "@${SERVER}" TXT > "dig.out.$DIR.test$n.txt" || log_error "dig view.${ZONE} TXT failed"
+grep "status: NOERROR" "dig.out.$DIR.test$n.txt" > /dev/null || log_error "mismatch status in DNS response"
+grep "view.${ZONE}\..*${DEFAULT_TTL}.*IN.*TXT.*view2" "dig.out.$DIR.test$n.txt" > /dev/null || log_error "missing view.${ZONE} TXT record in response"
+check_signatures TXT "dig.out.$DIR.test$n.txt" "ZSK"
+test "$ret" -eq 0 || echo_i "failed"
+status=$((status+ret))
+
+TSIG="hmac-sha1:keyforview3:$VIEW3"
+wait_for_nsec
+check_keys
+check_dnssecstatus "$SERVER" "$POLICY" "$ZONE" "example2"
+check_apex
+dnssec_verify
+n=$((n+1))
+# check subdomain
+echo_i "check TXT example.net (in-view example2) rrset is signed correctly ($n)"
 ret=0
 dig_with_opts "view.${ZONE}" "@${SERVER}" TXT > "dig.out.$DIR.test$n.txt" || log_error "dig view.${ZONE} TXT failed"
 grep "status: NOERROR" "dig.out.$DIR.test$n.txt" > /dev/null || log_error "mismatch status in DNS response"
@@ -3542,6 +3642,44 @@ check_apex
 check_subdomain
 dnssec_verify
 
+#
+# Zone step1.going-straight-to-none.kasp
+#
+set_zone "step1.going-straight-to-none.kasp"
+set_policy "default" "1" "3600"
+set_server "ns6" "10.53.0.6"
+# Key properties.
+set_keyrole      "KEY1" "csk"
+set_keylifetime  "KEY1" "0"
+set_keyalgorithm "KEY1" "13" "ECDSAP256SHA256" "256"
+set_keysigning   "KEY1" "yes"
+set_zonesigning  "KEY1" "yes"
+# DNSKEY, RRSIG (ksk), RRSIG (zsk) are published. DS needs to wait.
+set_keystate "KEY1" "GOAL"         "omnipresent"
+set_keystate "KEY1" "STATE_DNSKEY" "omnipresent"
+set_keystate "KEY1" "STATE_KRRSIG" "omnipresent"
+set_keystate "KEY1" "STATE_ZRRSIG" "omnipresent"
+set_keystate "KEY1" "STATE_DS"     "omnipresent"
+# This policy only has one key.
+key_clear "KEY2"
+key_clear "KEY3"
+key_clear "KEY4"
+
+check_keys
+check_dnssecstatus "$SERVER" "$POLICY" "$ZONE"
+
+# The first key is immediately published and activated.
+created=$(key_get KEY1 CREATED)
+set_keytime "KEY1" "PUBLISHED"   "${created}"
+set_keytime "KEY1" "ACTIVE"      "${created}"
+set_keytime "KEY1" "SYNCPUBLISH" "${created}"
+# Key lifetime is unlimited, so not setting RETIRED and REMOVED.
+check_keytimes
+
+check_apex
+check_subdomain
+dnssec_verify
+
 # Reconfig dnssec-policy (triggering algorithm roll and other dnssec-policy
 # changes).
 echo_i "reconfig dnssec-policy to trigger algorithm rollover"
@@ -3599,7 +3737,7 @@ wait_for_done_signing() {
 # Zone: step1.going-insecure.kasp
 #
 set_zone "step1.going-insecure.kasp"
-set_policy "none" "2" "7200"
+set_policy "insecure" "2" "7200"
 set_server "ns6" "10.53.0.6"
 # Expect a CDS/CDNSKEY Delete Record.
 set_cdsdelete
@@ -3636,7 +3774,7 @@ check_next_key_event 93600
 # Zone: step2.going-insecure.kasp
 #
 set_zone "step2.going-insecure.kasp"
-set_policy "none" "2" "7200"
+set_policy "insecure" "2" "7200"
 set_server "ns6" "10.53.0.6"
 
 # The DS is long enough removed from the zone to be considered HIDDEN.
@@ -3666,7 +3804,7 @@ check_next_key_event 7500
 #
 set_zone "step1.going-insecure-dynamic.kasp"
 set_dynamic
-set_policy "none" "2" "7200"
+set_policy "insecure" "2" "7200"
 set_server "ns6" "10.53.0.6"
 # Expect a CDS/CDNSKEY Delete Record.
 set_cdsdelete
@@ -3704,7 +3842,7 @@ check_next_key_event 93600
 #
 set_zone "step2.going-insecure-dynamic.kasp"
 set_dynamic
-set_policy "none" "2" "7200"
+set_policy "insecure" "2" "7200"
 set_server "ns6" "10.53.0.6"
 
 # The DS is long enough removed from the zone to be considered HIDDEN.
@@ -3728,6 +3866,39 @@ check_subdomain
 # propagation delay, plus DNSKEY TTL:
 # 5m + 2h = 125m =  7500 seconds.
 check_next_key_event 7500
+
+#
+# Zone: step1.going-straight-to-none.kasp
+#
+set_zone "step1.going-straight-to-none.kasp"
+set_policy "none" "1" "3600"
+set_server "ns6" "10.53.0.6"
+
+# The zone will go bogus after signatures expire, but remains validly signed for now.
+
+# Key properties.
+set_keyrole      "KEY1" "csk"
+set_keylifetime  "KEY1" "0"
+set_keyalgorithm "KEY1" "13" "ECDSAP256SHA256" "256"
+set_keysigning   "KEY1" "yes"
+set_zonesigning  "KEY1" "yes"
+# DNSKEY, RRSIG (ksk), RRSIG (zsk) are published. DS needs to wait.
+set_keystate "KEY1" "GOAL"         "omnipresent"
+set_keystate "KEY1" "STATE_DNSKEY" "omnipresent"
+set_keystate "KEY1" "STATE_KRRSIG" "omnipresent"
+set_keystate "KEY1" "STATE_ZRRSIG" "omnipresent"
+set_keystate "KEY1" "STATE_DS"     "omnipresent"
+# This policy only has one key.
+key_clear "KEY2"
+key_clear "KEY3"
+key_clear "KEY4"
+
+# Various signing policy checks.
+check_keys
+check_dnssecstatus "$SERVER" "$POLICY" "$ZONE"
+check_apex
+check_subdomain
+dnssec_verify
 
 #
 # Testing KSK/ZSK algorithm rollover.
@@ -4449,6 +4620,51 @@ dnssec_verify
 # Next key event is never since we established the policy and the keys have
 # an unlimited lifetime.  Fallback to the default loadkeys interval.
 check_next_key_event 3600
+
+echo_i "Check that 'rndc reload' of just the serial updates the signed instance ($n)"
+TSIG=
+ret=0
+dig_with_opts @10.53.0.6 example SOA > dig.out.ns6.test$n.soa1 || ret=1
+cp ns6/example2.db.in ns6/example.db || ret=1
+nextpart ns6/named.run > /dev/null
+rndccmd 10.53.0.6 reload || ret=1
+wait_for_log 3 "all zones loaded" ns6/named.run
+sleep 1
+dig_with_opts @10.53.0.6 example SOA > dig.out.ns6.test$n.soa2 || ret=1
+soa1=$(awk '$4 == "SOA" { print $7 }' dig.out.ns6.test$n.soa1)
+soa2=$(awk '$4 == "SOA" { print $7 }' dig.out.ns6.test$n.soa2)
+ttl1=$(awk '$4 == "SOA" { print $2 }' dig.out.ns6.test$n.soa1)
+ttl2=$(awk '$4 == "SOA" { print $2 }' dig.out.ns6.test$n.soa2)
+test ${soa1:-1000} -lt ${soa2:-0} || ret=1
+test ${ttl1:-0} -eq 300 || ret=1
+test ${ttl2:-0} -eq 300 || ret=1
+test "$ret" -eq 0 || echo_i "failed"
+status=$((status+ret))
+n=$((n+1))
+
+echo_i "Check that restart with zone changes and deleted journal works ($n)"
+TSIG=
+ret=0
+dig_with_opts @10.53.0.6 example SOA > dig.out.ns6.test$n.soa1 || ret=1
+stop_server --use-rndc --port ${CONTROLPORT} kasp ns6
+# TTL of all records change from 300 to 400
+cp ns6/example3.db.in ns6/example.db || ret=1
+rm ns6/example.db.jnl
+nextpart ns6/named.run > /dev/null
+start_server --noclean --restart --port ${PORT} kasp ns6
+wait_for_log 3 "all zones loaded" ns6/named.run
+sleep 1
+dig_with_opts @10.53.0.6 example SOA > dig.out.ns6.test$n.soa2 || ret=1
+soa1=$(awk '$4 == "SOA" { print $7 }' dig.out.ns6.test$n.soa1)
+soa2=$(awk '$4 == "SOA" { print $7 }' dig.out.ns6.test$n.soa2)
+ttl1=$(awk '$4 == "SOA" { print $2 }' dig.out.ns6.test$n.soa1)
+ttl2=$(awk '$4 == "SOA" { print $2 }' dig.out.ns6.test$n.soa2)
+test ${soa1:-1000} -lt ${soa2:-0} || ret=1
+test ${ttl1:-0} -eq 300 || ret=1
+test ${ttl2:-0} -eq 400 || ret=1
+test "$ret" -eq 0 || echo_i "failed"
+status=$((status+ret))
+n=$((n+1))
 
 echo_i "exit status: $status"
 [ $status -eq 0 ] || exit 1

@@ -55,7 +55,7 @@ NZD2NZF=$TOP/bin/tools/named-nzd2nzf
 PK11DEL="$TOP/bin/pkcs11/pkcs11-destroy -s ${SLOT:-0} -p ${HSMPIN:-1234} -w 0"
 PK11GEN="$TOP/bin/pkcs11/pkcs11-keygen -q -s ${SLOT:-0} -p ${HSMPIN:-1234}"
 PK11LIST="$TOP/bin/pkcs11/pkcs11-list -s ${SLOT:-0} -p ${HSMPIN:-1234}"
-RESOLVE=$TOP/lib/samples/resolve
+RESOLVE=$TOP/bin/tests/system/resolve
 REVOKE=$TOP/bin/dnssec/dnssec-revoke
 RNDC=$TOP/bin/rndc/rndc
 RNDCCONFGEN=$TOP/bin/confgen/rndc-confgen
@@ -72,10 +72,11 @@ KEYCREATE=$TOP/bin/tests/system/tkey/keycreate
 KEYDELETE=$TOP/bin/tests/system/tkey/keydelete
 MAKEJOURNAL=$TOP/bin/tests/makejournal
 PIPEQUERIES=$TOP/bin/tests/system/pipelined/pipequeries
-SAMPLEUPDATE=$TOP/lib/samples/sample-update
 
 # we don't want a KRB5_CONFIG setting breaking the tests
 KRB5_CONFIG=/dev/null
+# use local keytab instead of default /etc/krb5.keytab
+KRB5_KTNAME=dns.keytab
 
 #
 # Construct the lists of tests to run
@@ -83,7 +84,7 @@ KRB5_CONFIG=/dev/null
 SEQUENTIAL_UNIX="@PKCS11_TEST@"
 SEQUENTIALDIRS="$SEQUENTIAL_COMMON $SEQUENTIAL_UNIX"
 
-PARALLEL_UNIX="@CHECKDS@ @COVERAGE@ @DNSTAP@ @KEYMGR@ cookie cpu logfileconfig"
+PARALLEL_UNIX="@CHECKDS@ @COVERAGE@ @DNSTAP@ @KEYMGR@ cookie logfileconfig"
 PARALLELDIRS="$PARALLEL_COMMON $PARALLEL_UNIX"
 
 SUBDIRS="$SEQUENTIALDIRS $PARALLELDIRS"

@@ -31,11 +31,18 @@
 # -- Project information -----------------------------------------------------
 
 project = u'BIND 9'
+# pylint: disable=wrong-import-position
+import datetime
+year = datetime.datetime.now().year
 # pylint: disable=redefined-builtin
-copyright = u'2021, Internet Systems Consortium'
+copyright = u"%d, Internet Systems Consortium" % year
 author = u'Internet Systems Consortium'
 
 # -- General configuration ---------------------------------------------------
+
+# Build man pages directly in _build/man/, not in _build/man/<section>/.
+# This is what the shell code in Makefile.am expects.
+man_make_section_directory = False
 
 # Add any Sphinx extension module names here, as strings. They can be
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom

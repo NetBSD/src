@@ -888,11 +888,36 @@ you may not even have to do that [#]_.
 When the time approaches for the roll of a KSK or CSK, BIND adds a
 CDS and a CDNSKEY record for the key in question to the apex of the
 zone. If your parent zone supports polling for CDS/CDNSKEY records, they
-are uploaded and the DS record published in the parent - at least ideally. At
-the time of this writing (mid-2020) BIND does not check for the presence of a
-DS record in the parent zone before completing the KSK or CSK rollover
-and withdrawing the old key. Instead, you need to use the ``rndc`` tool
-to tell ``named`` that the DS record has been published. For example:
+are uploaded and the DS record published in the parent - at least ideally.
+
+If BIND is configured with ``parental-agents``, it will check for the DS
+presence. Let's look at the following configuration excerpt:
+
+::
+
+   parental-agents "net" {
+       10.53.0.11, 10.53.0.12;
+   };
+
+   zone "example.net" in {
+       ...
+       dnssec-policy standard;
+       parental-agents { "net"; };
+       ...
+   };
+
+BIND will check for the presence of the DS record in the parent zone by querying
+its parental agents (defined in :rfc:`7344` to be the entities that the child
+zone has a relationship with to change its delegation information). In the
+example above, The zone `example.net` is configured with two parental agents,
+at the addresses 10.53.0.11 and 10.53.0.12. These addresses are used as an
+example only. Both addresses will have to respond with a DS RRset that
+includes the DS record identifying the key that is being rolled. If one or
+both don't have the DS included yet the rollover is paused, and the check for
+DS presence is retried after an hour. The same applies for DS withdrawal.
+
+Alternatively, you can use the ``rndc`` tool to tell ``named`` that the DS
+record has been published or withdrawn. For example:
 
 ::
 

@@ -42,6 +42,7 @@ view rec {
 	recursion yes;
 	dnssec-validation yes;
 	dnssec-accept-expired yes;
+	minimal-responses no;
 
 	zone "." {
 		type hint;

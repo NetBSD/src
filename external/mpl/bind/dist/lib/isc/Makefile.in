@@ -18,7 +18,9 @@ VERSION=@BIND9_VERSION@
 CINCLUDES =	-I${srcdir}/unix/include \
 		-I${srcdir}/pthreads/include \
 		-I./include \
-		-I${srcdir}/include ${DNS_INCLUDES} \
+		-I${srcdir}/include \
+		-I${srcdir} \
+		${DNS_INCLUDES} \
 		${OPENSSL_CFLAGS} \
 		${JSON_C_CFLAGS} \
 		${LIBXML2_CFLAGS} \
@@ -51,9 +53,10 @@ OBJS =		pk11.@O@ pk11_result.@O@ \
 		event.@O@ hash.@O@ ht.@O@ heap.@O@ hex.@O@ \
 		hmac.@O@ hp.@O@ httpd.@O@ iterated_hash.@O@ \
 		lex.@O@ lfsr.@O@ lib.@O@ log.@O@ \
-		md.@O@ mem.@O@ mutexblock.@O@ \
+		managers.@O@ md.@O@ mem.@O@ mutexblock.@O@ \
 		netmgr/netmgr.@O@ netmgr/tcp.@O@ netmgr/udp.@O@ \
-		netmgr/tcpdns.@O@ netmgr/tlsdns.@O@ netmgr/uverr2result.@O@ netmgr/uv-compat.@O@ \
+		netmgr/tcpdns.@O@ \
+		netmgr/uverr2result.@O@ netmgr/uv-compat.@O@ \
 		netaddr.@O@ netscope.@O@ nonce.@O@ openssl_shim.@O@ pool.@O@ \
 		parseint.@O@ portset.@O@ queue.@O@ quota.@O@ \
 		radix.@O@ random.@O@ ratelimiter.@O@ \
@@ -61,7 +64,7 @@ OBJS =		pk11.@O@ pk11_result.@O@ \
 		safe.@O@ serial.@O@ siphash.@O@ sockaddr.@O@ stats.@O@ \
 		string.@O@ symtab.@O@ task.@O@ taskpool.@O@ tls.@O@ \
 		trampoline.@O@ \
-		utf8.@O@ tm.@O@ timer.@O@ version.@O@ \
+		url.@O@ utf8.@O@ tm.@O@ timer.@O@ version.@O@ \
 		${UNIXOBJS} ${THREADOBJS}
 SYMTBLOBJS =	backtrace-emptytbl.@O@
 
@@ -73,14 +76,14 @@ SRCS =		pk11.c pk11_result.c \
 		entropy.c error.c event.c hash.c ht.c heap.c \
 		hex.c hmac.c hp.c httpd.c iterated_hash.c \
 		lex.c lfsr.c lib.c log.c \
-		md.c mem.c mutexblock.c \
+		managers.c md.c mem.c mutexblock.c \
 		netaddr.c netscope.c nonce.c openssl_shim.c pool.c \
 		parseint.c portset.c queue.c quota.c radix.c random.c \
 		ratelimiter.c region.c regex.c result.c rwlock.c \
 		safe.c serial.c siphash.c sockaddr.c stats.c string.c \
 		symtab.c task.c taskpool.c timer.c tls.c \
 		trampoline.c \
-		utf8.c tm.c version.c
+		url.c utf8.c tm.c version.c
 
 LIBS =		${OPENSSL_LIBS} ${JSON_C_LIBS} ${LIBUV_LIBS} ${LIBXML2_LIBS} ${ZLIB_LIBS} @LIBS@
 

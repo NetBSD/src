@@ -1,4 +1,4 @@
-/*	$NetBSD: trampoline_p.h,v 1.1.1.1 2021/04/29 16:46:32 christos Exp $	*/
+/*	$NetBSD: trampoline_p.h,v 1.1.1.2 2021/08/19 11:45:27 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -14,6 +14,30 @@
 #pragma once
 
 #include <isc/thread.h>
+
+/*! \file isc/trampoline_p.h
+ * \brief isc__trampoline: allows safe reuse of thread ID numbers.
+ *
+ * The 'isc_hp' hazard pointer API uses an internal thread ID
+ * variable ('tid_v') that is incremented for each new thread that uses
+ * hazard pointers. This thread ID is then used as an index into a global
+ * shared table of hazard pointer state.
+ *
+ * Since the thread ID is only incremented and never decremented, the
+ * table can overflow if threads are frequently created and destroyed.
+ *
+ * A trampoline is a thin wrapper around any function to be called from
+ * a newly launched thread. It maintains a table of thread IDs used by
+ * current and previous threads; when a thread is destroyed, its slot in
+ * the trampoline table becomes available, and the next thread to occupy
+ * that slot can use the same thread ID that its predecessor did.
+ *
+ * The trampoline table initially has space for 64 worker threads in
+ * addition to the main thread. If more threads than that are in
+ * concurrent use, the table is reallocated with twice as much space.
+ * (Note that the number of concurrent threads is currently capped at
+ * 128 by the queue and hazard pointer implementations.)
+ */
 
 typedef struct isc__trampoline isc__trampoline_t;
 

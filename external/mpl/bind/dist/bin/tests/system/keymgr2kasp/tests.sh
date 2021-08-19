@@ -866,7 +866,7 @@ set_keystate     "KEY3" "STATE_ZRRSIG" "hidden"
 TSIG="hmac-sha1:external:$VIEW1"
 check_keys
 wait_for_done_signing
-check_dnssecstatus "$SERVER" "$POLICY" "$ZONE" "external-view"
+check_dnssecstatus "$SERVER" "$POLICY" "$ZONE" "ext"
 set_keytimes_view_migration
 
 # Set expected key times:
@@ -923,11 +923,11 @@ check_keytimes
 check_apex
 dnssec_verify
 
-# Various signing policy checks (external).
+# Various signing policy checks (internal).
 TSIG="hmac-sha1:internal:$VIEW2"
 check_keys
 wait_for_done_signing
-check_dnssecstatus "$SERVER" "$POLICY" "$ZONE" "internal-view"
+check_dnssecstatus "$SERVER" "$POLICY" "$ZONE" "int"
 set_keytimes_view_migration
 check_keytimes
 check_apex

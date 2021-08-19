@@ -21,17 +21,6 @@ setup() {
 	infile="${zone}.db.infile"
 }
 
-private_type_record() {
-	_zone=$1
-	_algorithm=$2
-	_keyfile=$3
-
-	_id=$(keyfile_to_key_id "$_keyfile")
-
-	printf "%s. 0 IN TYPE65534 %s 5 %02x%04x0000\n" "$_zone" "\\#" "$_algorithm" "$_id"
-}
-
-
 # Make lines shorter by storing key states in environment variables.
 H="HIDDEN"
 R="RUMOURED"
@@ -77,6 +66,17 @@ do
 	private_type_record $zone $DEFAULT_ALGORITHM_NUMBER "$ZSK" >> "$infile"
 	$SIGNER -S -x -s now-1h -e now+2w -o $zone -O full -f $zonefile $infile > signer.out.$zone.1 2>&1
 done
+
+# This zone is going straight to "none" policy. This is undefined behavior.
+setup step1.going-straight-to-none.kasp
+echo "$zone" >> zones
+TactN="now"
+csktimes="-P ${TactN} -A ${TactN} -P sync ${TactN}"
+CSK=$($KEYGEN -k default $csktimes $zone 2> keygen.out.$zone.1)
+$SETTIME -s -g $O -k $O $TactN -z $O $TactN -r $O $TactN -d $O $TactN "$CSK" > settime.out.$zone.1 2>&1
+cat template.db.in "${CSK}.key" > "$infile"
+private_type_record $zone $DEFAULT_ALGORITHM_NUMBER "$CSK" >> "$infile"
+$SIGNER -S -z -x -s now-1h -e now+2w -o $zone -O full -f $zonefile $infile > signer.out.$zone.1 2>&1
 
 #
 # The zones at algorithm-roll.kasp represent the various steps of a ZSK/KSK
@@ -381,3 +381,9 @@ cat template.db.in "${CSK1}.key" "${CSK2}.key" > "$infile"
 private_type_record $zone 5  "$CSK1" >> "$infile"
 private_type_record $zone $DEFAULT_ALGORITHM_NUMBER "$CSK2" >> "$infile"
 $SIGNER -S -x -z -s now-1h -e now+2w -o $zone -O full -f $zonefile $infile > signer.out.$zone.1 2>&1
+
+#
+# Reload testing
+#
+echo "example" >> zones
+cp example.db.in example.db

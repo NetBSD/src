@@ -77,13 +77,13 @@ backend storage of redirection rules:
 ::
 
        dlz other {
-       database "dlopen driver.so args";
-       search no;
+              database "dlopen driver.so args";
+              search no;
        };
 
        zone "." {
-       type redirect;
-       dlz other;
+              type redirect;
+              dlz other;
        };
 
 
@@ -99,7 +99,7 @@ module as an argument in the ``dlz`` statement:
 ::
 
        dlz other {
-       database "dlopen driver.so example.nil";
+              database "dlopen driver.so example.nil";
        };
 
 

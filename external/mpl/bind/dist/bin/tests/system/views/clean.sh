@@ -9,6 +9,8 @@
 # See the COPYRIGHT file distributed with this work for additional
 # information regarding copyright ownership.
 
+set -e
+
 #
 # Clean up after zone transfer tests.
 #
@@ -16,9 +18,9 @@
 rm -f ns*/named.conf
 rm -f ns3/example.bk dig.out.ns?.?
 rm -f ns2/example.db ns3/internal.bk
-rm -f */*.jnl
-rm -f */named.memstats
-rm -f */named.run */named.run.prev
+rm -f -- */*.jnl
+rm -f -- */named.memstats
+rm -f -- */named.run */named.run.prev
 rm -f ns2/external/K*
 rm -f ns2/external/inline.db.jbk
 rm -f ns2/external/inline.db.signed

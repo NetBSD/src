@@ -9,7 +9,10 @@
 # See the COPYRIGHT file distributed with this work for additional
 # information regarding copyright ownership.
 
+set -e
+
 SYSTEMTESTTOP=..
+# shellcheck source=conf.sh
 . $SYSTEMTESTTOP/conf.sh
 
 cp -f ns2/example1.db ns2/example.db
@@ -26,9 +29,9 @@ copy_setports ns5/named.conf.in ns5/named.conf
 #
 $KEYGEN -K ns2/internal -a rsasha256 -q inline > /dev/null 2>&1
 $KEYGEN -K ns2/internal -a rsasha256 -qfk inline > /dev/null 2>&1
-k1=`$KEYGEN -K ns2/external -a rsasha256 -q inline 2> /dev/null`
-k2=`$KEYGEN -K ns2/external -a rsasha256 -qfk inline 2> /dev/null`
+k1=$($KEYGEN -K ns2/external -a rsasha256 -q inline 2> /dev/null)
+k2=$($KEYGEN -K ns2/external -a rsasha256 -qfk inline 2> /dev/null)
 $KEYGEN -K ns2/external -a rsasha256 -q inline > /dev/null 2>&1
 $KEYGEN -K ns2/external -a rsasha256 -qfk inline > /dev/null 2>&1
-test -n "$k1" && rm -f ns2/external/$k1.*
-test -n "$k2" && rm -f ns2/external/$k2.*
+test -n "$k1" && rm -f ns2/external/"$k1".*
+test -n "$k2" && rm -f ns2/external/"$k2".*

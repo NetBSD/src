@@ -1,3 +1,249 @@
+	--- 9.16.20 released ---
+
+5689.	[security]	An assertion failure occurred when named attempted to
+			send a UDP packet that exceeded the MTU size, if
+			Response Rate Limiting (RRL) was enabled.
+			(CVE-2021-25218) [GL #2856]
+
+5688.	[bug]		Zones using KASP and inline-signed zones failed to apply
+			changes from the unsigned zone to the signed zone under
+			certain circumstances. This has been fixed. [GL #2735]
+
+5687.	[bug]		"rndc reload <zonename>" could trigger a redundant
+			reload for an inline-signed zone whose zone file was not
+			modified since the last "rndc reload". This has been
+			fixed. [GL #2855]
+
+5686.	[func]		The number of internal data structures allocated for
+			each zone was reduced. [GL #2829]
+
+5685.	[bug]		named failed to check the opcode of responses when
+			performing zone refreshes, stub zone updates, and UPDATE
+			forwarding. This has been fixed. [GL #2762]
+
+5682.	[bug]		Some changes to "zone-statistics" settings were not
+			properly processed by "rndc reconfig". This has been
+			fixed. [GL #2820]
+
+5681.	[func]		Relax the checks in the dns_zone_cdscheck() function to
+			allow CDS and CDNSKEY records in the zone that do not
+			match an existing DNSKEY record, as long as the
+			algorithm matches. This allows a clean rollover from one
+			provider to another in a multi-signer DNSSEC
+			configuration. [GL #2710]
+
+5679.	[func]		Thread affinity is no longer set. [GL #2822]
+
+5678.	[bug]		The "check DS" code failed to release all resources upon
+			named shutdown when a refresh was in progress. This has
+			been fixed. [GL #2811]
+
+5672.	[bug]		Authentication of rndc messages could fail if a
+			"controls" statement was configured with multiple key
+			algorithms for the same listener. This has been fixed.
+			[GL #2756]
+
+	--- 9.16.19 released ---
+
+5671.	[bug]		A race condition could occur where two threads were
+			competing for the same set of key file locks, leading to
+			a deadlock. This has been fixed. [GL #2786]
+
+5670.	[bug]		create_keydata() created an invalid placeholder keydata
+			record upon a refresh failure, which prevented the
+			database of managed keys from subsequently being read
+			back. This has been fixed. [GL #2686]
+
+5669.	[func]		KASP support was extended with the "check DS" feature.
+			Zones with "dnssec-policy" and "parental-agents"
+			configured now check for DS presence and can perform
+			automatic KSK rollovers. [GL #1126]
+
+5668.	[bug]		Rescheduling a setnsec3param() task when a zone failed
+			to load on startup caused a hang on shutdown. This has
+			been fixed. [GL #2791]
+
+5667.	[bug]		The configuration-checking code failed to account for
+			the inheritance rules of the "dnssec-policy" option.
+			This has been fixed. [GL #2780]
+
+5666.	[doc]		The safe "edns-udp-size" value was tweaked to match the
+			probing value from BIND 9.16 for better compatibility.
+			[GL #2183]
+
+5665.	[bug]		If nsupdate sends an SOA request and receives a REFUSED
+			response, it now fails over to the next available
+			server. [GL #2758]
+
+5664.	[func]		For UDP messages larger than the path MTU, named now
+			sends an empty response with the TC (TrunCated) bit set.
+			In addition, setting the DF (Don't Fragment) flag on
+			outgoing UDP sockets was re-enabled. [GL #2790]
+
+5662.	[bug]		Views with recursion disabled are now configured with a
+			default cache size of 2 MB unless "max-cache-size" is
+			explicitly set. This prevents cache RBT hash tables from
+			being needlessly preallocated for such views. [GL #2777]
+
+5661.	[bug]		Change 5644 inadvertently introduced a deadlock: when
+			locking the key file mutex for each zone structure in a
+			different view, the "in-view" logic was not considered.
+			This has been fixed. [GL #2783]
+
+5658.	[bug]		Increasing "max-cache-size" for a running named instance
+			(using "rndc reconfig") did not cause the hash tables
+			used by cache databases to be grown accordingly. This
+			has been fixed. [GL #2770]
+
+5655.	[bug]		Signed, insecure delegation responses prepared by named
+			either lacked the necessary NSEC records or contained
+			duplicate NSEC records when both wildcard expansion and
+			CNAME chaining were required to prepare the response.
+			This has been fixed. [GL #2759]
+
+5653.	[bug]		A bug that caused the NSEC3 salt to be changed on every
+			restart for zones using KASP has been fixed. [GL #2725]
+
+	--- 9.16.18 released ---
+
+5660.	[bug]		The configuration-checking code failed to account for
+			the inheritance rules of the "key-directory" option.
+			[GL #2778]
+
+5659.	[bug]		When preparing DNS responses, named could replace the
+			letters 'W' (uppercase) and 'w' (lowercase) with '\000'.
+			This has been fixed. [GL #2779]
+
+	--- 9.16.17 released ---
+
+5652.	[bug]		A copy-and-paste error in change 5584 caused the
+			IP_DONTFRAG socket option to be enabled instead of
+			disabled. This has been fixed. [GL #2746]
+
+5651.	[func]		Refactor zone dumping to be processed asynchronously via
+			the uv_work_t thread pool API. [GL #2732]
+
+5650.	[bug]		Prevent a crash that could occur if serve-stale was
+			enabled and a prefetch was triggered during a query
+			restart. [GL #2733]
+
+5649.	[bug]		If a query was answered with stale data on a server with
+			DNS64 enabled, an assertion could occur if a non-stale
+			answer arrived afterward. [GL #2731]
+
+5648.	[bug]		The calculation of the estimated IXFR transaction size
+			in dns_journal_iter_init() was invalid. [GL #2685]
+
+5644.	[bug]		Fix a race condition in reading and writing key files
+			for zones using KASP and configured in multiple views.
+			[GL #1875]
+
+5643.	[cleanup]	"make install" no longer creates an empty
+			${localstatedir}/run directory. [GL #2709]
+
+5642.	[bug]		Zones which are configured in multiple views with
+			different values set for "dnssec-policy" and with
+			identical values set for "key-directory" are now
+			detected and treated as a configuration error.
+			[GL #2463]
+
+5641.	[bug]		Address a potential memory leak in
+			dst_key_fromnamedfile(). [GL #2689]
+
+5639.	[bug]		Check that the first and last SOA record of an AXFR are
+			consistent. [GL #2528]
+
+5638.	[bug]		Improvements related to network manager/task manager
+			integration:
+			- isc_managers_create() and isc_managers_destroy()
+			  functions were added to handle setup and teardown of
+			  netmgr, taskmgr, timermgr, and socketmgr, since these
+			  require a precise order of operations now.
+			- Event queue processing is now quantized to prevent
+			  infinite looping.
+			- The netmgr can now be paused from within a netmgr
+			  thread.
+			- Deadlocks due to a conflict between netmgr's
+			  pause/resume and listen/stoplistening operations were
+			  fixed.
+			[GL #2654]
+
+5633.	[doc]		The "inline-signing" option was incorrectly described as
+			being inherited from the "options"/"view" levels and was
+			incorrectly accepted at those levels without effect.
+			This has been fixed. [GL #2536]
+
+5624.	[func]		Task manager events are now processed inside network
+			manager loops. The task manager no longer needs its own
+			set of worker threads, which improves resolver
+			performance. [GL #2638]
+
+	--- 9.16.16 released ---
+
+5637.	[func]		Change the default value of the "max-ixfr-ratio" option
+			to "unlimited". [GL #2671]
+
+5636.	[bug]		named and named-checkconf did not report an error when
+			multiple zones with the "dnssec-policy" option set were
+			using the same zone file. This has been fixed.
+			[GL #2603]
+
+5635.	[bug]		Journal compaction could fail when a journal with
+			invalid transaction headers was not detected at startup.
+			This has been fixed. [GL #2670]
+
+5634.	[bug]		If "dnssec-policy" was active and a private key file was
+			temporarily offline during a rekey event, named could
+			incorrectly introduce replacement keys and break a
+			signed zone. This has been fixed. [GL #2596]
+
+5633.	[doc]		The "inline-signing" option was incorrectly described as
+			being inherited from the "options"/"view" levels and was
+			incorrectly accepted at those levels without effect.
+			This has been fixed. [GL #2536]
+
+5632.	[func]		Add a new built-in KASP, "insecure", which is used to
+			transition a zone from a signed to an unsigned state.
+			The existing built-in KASP "none" should no longer be
+			used to unsign a zone. [GL #2645]
+
+5631.	[protocol]	Update the implementation of the ZONEMD RR type to match
+			RFC 8976. [GL #2658]
+
+5630.	[func]		Treat DNSSEC responses containing NSEC3 records with
+			iteration counts greater than 150 as insecure.
+			[GL #2445]
+
+5629.	[func]		Reduce the maximum supported number of NSEC3 iterations
+			that can be configured for a zone to 150. [GL #2642]
+
+5627.	[bug]		RRSIG(SOA) RRsets placed anywhere other than at the zone
+			apex were triggering infinite resigning loops. This has
+			been fixed. [GL #2650]
+
+5626.	[bug]		When generating zone signing keys, KASP now also checks
+			for key ID conflicts among newly created keys, rather
+			than just between new and existing ones. [GL #2628]
+
+5625.	[bug]		A deadlock could occur when multiple "rndc addzone",
+			"rndc delzone", and/or "rndc modzone" commands were
+			invoked simultaneously for different zones. This has
+			been fixed. [GL #2626]
+
+5622.	[cleanup]	The lib/samples/ directory has been removed, as export
+			versions of libraries are no longer maintained.
+			[GL !4835]
+
+5619.	[protocol]	Implement draft-vandijk-dnsop-nsec-ttl, updating the
+			protocol such that NSEC(3) TTL values are set to the
+			minimum of the SOA MINIMUM value or the SOA TTL.
+			[GL #2347]
+
+5618.	[bug]		Change 5149 introduced some inconsistencies in the way
+			record TTLs were presented in cache dumps. These
+			inconsistencies have been eliminated. [GL #389]
+			[GL #2289]
+
 	--- 9.16.15 released ---
 
 5621.	[bug]		Due to a backporting mistake in change 5609, named
