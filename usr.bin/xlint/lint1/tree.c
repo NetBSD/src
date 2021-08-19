@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.338 2021/08/19 20:48:47 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.339 2021/08/19 20:53:37 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.338 2021/08/19 20:48:47 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.339 2021/08/19 20:53:37 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -3005,12 +3005,12 @@ plength(type_t *tp)
 static tnode_t *
 fold(tnode_t *tn)
 {
-	val_t	*v;
-	tspec_t	t;
-	bool	utyp, ovfl;
-	int64_t	sl, sr = 0, q = 0, mask;
+	val_t *v;
+	tspec_t t;
+	bool utyp, ovfl;
+	int64_t sl, sr = 0, q = 0, mask;
 	uint64_t ul, ur = 0;
-	tnode_t	*cn;
+	tnode_t *cn;
 
 	v = xcalloc(1, sizeof(*v));
 	v->v_tspec = t = tn->tn_type->t_tspec;
@@ -3068,7 +3068,7 @@ fold(tnode_t *tn)
 		break;
 	case PLUS:
 		q = utyp ? (int64_t)(ul + ur) : sl + sr;
-		if (msb(sl, t, -1)  != 0 && msb(sr, t, -1) != 0) {
+		if (msb(sl, t, -1) != 0 && msb(sr, t, -1) != 0) {
 			if (msb(q, t, -1) == 0)
 				ovfl = true;
 		} else if (msb(sl, t, -1) == 0 && msb(sr, t, -1) == 0) {
@@ -3129,8 +3129,8 @@ fold(tnode_t *tn)
 	}
 
 	/* XXX does not work for quads. */
-	if (ovfl || ((uint64_t)(q | mask) != ~(uint64_t)0 &&
-	    (q & ~mask) != 0)) {
+	if (ovfl ||
+	    ((uint64_t)(q | mask) != ~(uint64_t)0 && (q & ~mask) != 0)) {
 		if (hflag)
 			/* integer overflow detected, op %s */
 			warning(141, op_name(tn->tn_op));
