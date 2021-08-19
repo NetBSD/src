@@ -1,4 +1,4 @@
-/*	$NetBSD: expr_fold.c,v 1.1 2021/08/19 20:32:33 rillig Exp $	*/
+/*	$NetBSD: expr_fold.c,v 1.2 2021/08/19 20:48:47 rillig Exp $	*/
 # 3 "expr_fold.c"
 
 /*
@@ -175,9 +175,9 @@ fold_plus(void)
 	 * other operand is converted to unsigned as well.
 	 * See C99 6.3.1.8p1, paragraph 8 of 10.
 	 */
-	/*FIXME*//* expect+1: warning: integer overflow detected, op + [141] */
+	/* wrong integer overflow warning before tree.c 1.338 from 2021-08-19 */
 	take_uint(2147483647 + 1U);
-	/*FIXME*//* expect+1: warning: integer overflow detected, op + [141] */
+	/* wrong integer overflow warning before tree.c 1.338 from 2021-08-19 */
 	take_uint(2147483647U + 1);
 }
 
