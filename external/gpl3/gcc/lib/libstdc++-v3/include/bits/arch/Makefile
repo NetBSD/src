@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2021/04/25 15:08:28 christos Exp $
+#	$NetBSD: Makefile,v 1.7 2021/08/19 06:52:37 mrg Exp $
 
 # install multilib c++config.h files
 .include <bsd.init.mk>
@@ -26,11 +26,6 @@ CXXCONFIGARGS=	powerpc64 _LP64 powerpc
 .if ${MACHINE_ARCH} == "riscv64"
 SUBDIR=		riscv32 riscv64
 CXXCONFIGARGS=	riscv64 _LP64 riscv32
-.endif
-
-.if ${MACHINE_ARCH} == "aarch64"
-SUBDIR=		arm aarch64
-CXXCONFIGARGS=	aarch64 _LP64 arm
 .endif
 
 # now install the generated front end
