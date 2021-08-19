@@ -1,4 +1,4 @@
-/*	$NetBSD: tulipreg.h,v 1.40 2021/08/17 22:00:31 andvar Exp $	*/
+/*	$NetBSD: tulipreg.h,v 1.41 2021/08/19 20:43:58 andvar Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -578,7 +578,8 @@ struct tulip_desc {
 #define	OPMODE_SR		0x00000002	/* start receive */
 #define	OPMODE_HO		0x00000004	/* hash only mode (ro) */
 #define	OPMODE_PB		0x00000008	/* pass bad frames */
-#define	OPMODE_WINB_APP		0x00000008	/* accept all physical packet */
+#define	OPMODE_WINB_APP		0x00000008	/* accept all physical 
+						   packets */
 #define	OPMODE_IF		0x00000010	/* inverse filter mode (ro) */
 #define	OPMODE_WINB_AMP		0x00000010	/* accept multicast packet */
 #define	OPMODE_SB		0x00000020	/* start backoff counter */
