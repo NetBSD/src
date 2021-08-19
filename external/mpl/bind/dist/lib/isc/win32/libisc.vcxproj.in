@@ -263,6 +263,7 @@ copy InstallFiles ..\Build\Release\
     <ClInclude Include="..\include\isc\astack.h" />
     <ClInclude Include="..\include\isc\atomic.h" />
     <ClInclude Include="..\include\isc\backtrace.h" />
+    <ClInclude Include="..\include\isc\barrier.h" />
     <ClInclude Include="..\include\isc\base32.h" />
     <ClInclude Include="..\include\isc\base64.h" />
     <ClInclude Include="..\include\isc\bind9.h" />
@@ -297,6 +298,7 @@ copy InstallFiles ..\Build\Release\
     <ClInclude Include="..\include\isc\list.h" />
     <ClInclude Include="..\include\isc\log.h" />
     <ClInclude Include="..\include\isc\magic.h" />
+    <ClInclude Include="..\include\isc\managers.h" />
     <ClInclude Include="..\include\isc\md.h" />
     <ClInclude Include="..\include\isc\mem.h" />
     <ClInclude Include="..\include\isc\meminfo.h" />
@@ -335,7 +337,6 @@ copy InstallFiles ..\Build\Release\
     <ClInclude Include="..\include\isc\task.h" />
     <ClInclude Include="..\include\isc\taskpool.h" />
     <ClInclude Include="..\include\isc\timer.h" />
-    <ClInclude Include="..\include\isc\tls.h" />
     <ClInclude Include="..\include\isc\tm.h" />
     <ClInclude Include="..\include\isc\types.h" />
     <ClInclude Include="..\include\isc\utf8.h" />
@@ -371,6 +372,7 @@ copy InstallFiles ..\Build\Release\
     <ClInclude Include="include\isc\time.h" />
     <ClInclude Include="include\isc\win32os.h" />
     <ClInclude Include="..\entropy_private.h" />
+    <ClInclude Include="..\netmgr_p.h" />
     <ClInclude Include="..\openssl_shim.h" />
     <ClInclude Include="..\trampoline_p.h" />
     <ClInclude Include="syslog.h" />
@@ -407,6 +409,7 @@ copy InstallFiles ..\Build\Release\
     <ClCompile Include="..\lfsr.c" />
     <ClCompile Include="..\lib.c" />
     <ClCompile Include="..\log.c" />
+    <ClCompile Include="..\managers.c" />
     <ClCompile Include="..\md.c" />
     <ClCompile Include="..\mem.c" />
     <ClCompile Include="..\mutexblock.c" />
@@ -417,7 +420,6 @@ copy InstallFiles ..\Build\Release\
     <ClCompile Include="..\netmgr\uverr2result.c" />
     <ClCompile Include="..\netmgr\uv-compat.c" />
     <ClCompile Include="..\netmgr\tcpdns.c" />
-    <ClCompile Include="..\netmgr\tlsdns.c" />
     <ClCompile Include="..\netscope.c" />
     <ClCompile Include="..\nonce.c" />
     <ClCompile Include="..\openssl_shim.c" />
@@ -446,6 +448,7 @@ copy InstallFiles ..\Build\Release\
     <ClCompile Include="..\trampoline.c" />
     <ClCompile Include="..\tls.c" />
     <ClCompile Include="..\tm.c" />
+    <ClCompile Include="..\url.c" />
     <ClCompile Include="..\utf8.c" />
 @IF PKCS11
     <ClCompile Include="..\pk11.c" />

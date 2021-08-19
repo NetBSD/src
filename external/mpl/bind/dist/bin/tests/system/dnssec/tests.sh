@@ -1313,7 +1313,7 @@ status=$((status+ret))
 echo_ic "one non-KSK DNSKEY ($n)"
 ret=0
 (
-cd signer/general || exit 1
+cd signer/general || exit 0
 rm -f signed.zone
 $SIGNER -f signed.zone -o example.com. test2.zone > signer.out.$n
 test -f signed.zone
@@ -1325,7 +1325,7 @@ status=$((status+ret))
 echo_ic "one KSK DNSKEY ($n)"
 ret=0
 (
-cd signer/general || exit 1
+cd signer/general || exit 0
 rm -f signed.zone
 $SIGNER -f signed.zone -o example.com. test3.zone > signer.out.$n
 test -f signed.zone
@@ -1373,7 +1373,7 @@ status=$((status+ret))
 echo_ic "two DNSKEY, both private keys missing ($n)"
 ret=0
 (
-cd signer/general || exit 1
+cd signer/general || exit 0
 rm -f signed.zone
 $SIGNER -f signed.zone -o example.com. test7.zone > signer.out.$n
 test -f signed.zone
@@ -1385,11 +1385,35 @@ status=$((status+ret))
 echo_ic "two DNSKEY, one private key missing ($n)"
 ret=0
 (
-cd signer/general || exit 1
+cd signer/general || exit 0
 rm -f signed.zone
 $SIGNER -f signed.zone -o example.com. test8.zone > signer.out.$n
 test -f signed.zone
 ) && ret=1
+n=$((n+1))
+test "$ret" -eq 0 || echo_i "failed"
+status=$((status+ret))
+
+echo_ic "check that dnssec-signzone rejects excessive NSEC3 iterations ($n)"
+ret=0
+(
+cd signer/general || exit 0
+rm -f signed.zone
+$SIGNER -f signed.zone -3 - -H 151 -o example.com. test9.zone > signer.out.$n
+test -f signed.zone
+) && ret=1
+n=$((n+1))
+test "$ret" -eq 0 || echo_i "failed"
+status=$((status+ret))
+
+echo_ic "check that dnssec-signzone accepts maximum NSEC3 iterations ($n)"
+ret=0
+(
+cd signer/general || exit 1
+rm -f signed.zone
+$SIGNER -f signed.zone -3 - -H 150 -o example.com. test9.zone > signer.out.$n
+test -f signed.zone
+) || ret=1
 n=$((n+1))
 test "$ret" -eq 0 || echo_i "failed"
 status=$((status+ret))
@@ -3227,6 +3251,14 @@ n=$((n+1))
 test "$ret" -eq 0 || echo_i "failed"
 status=$((status+ret))
 
+echo_i "check that not-at-zone-apex RRSIG(SOA) RRsets are removed from the zone after load ($n)"
+ret=0
+dig_with_opts split-rrsig AXFR @10.53.0.7 > dig.out.test$n || ret=1
+grep -q "not-at-zone-apex.*RRSIG.*SOA" dig.out.test$n && ret=1
+n=$((n+1))
+test "$ret" -eq 0 || echo_i "failed"
+status=$((status+ret))
+
 echo_i "check that 'dnssec-keygen -S' works for all supported algorithms ($n)"
 ret=0
 alg=1
@@ -3315,26 +3347,6 @@ ret=0
 dig_with_opts +noall +answer @10.53.0.2 cds cds-auto.secure > dig.out.test$n
 lines=$(awk '$4 == "RRSIG" && $5 == "CDS" {print}' dig.out.test$n | wc -l)
 test "$lines" -eq 2 || ret=1
-n=$((n+1))
-test "$ret" -eq 0 || echo_i "failed"
-status=$((status+ret))
-
-echo_i "check that a lone non matching CDS record is rejected ($n)"
-ret=0
-(
-echo zone cds-update.secure
-echo server 10.53.0.2 "$PORT"
-echo update delete cds-update.secure CDS
-dig_with_opts +noall +answer @10.53.0.2 dnskey cds-update.secure |
-grep "DNSKEY.257" | sed 's/DNSKEY.257/DNSKEY 258/' |
-$DSFROMKEY -C -A -f - -T 1 cds-update.secure |
-sed "s/^/update add /"
-echo send
-) | $NSUPDATE > nsupdate.out.test$n 2>&1 || true
-grep "update failed: REFUSED" nsupdate.out.test$n > /dev/null || ret=1
-dig_with_opts +noall +answer @10.53.0.2 cds cds-update.secure > dig.out.test$n
-lines=$(awk '$4 == "CDS" {print}' dig.out.test$n | wc -l)
-test "${lines:-10}" -eq 0 || ret=1
 n=$((n+1))
 test "$ret" -eq 0 || echo_i "failed"
 status=$((status+ret))
@@ -3551,25 +3563,6 @@ status=$((status+ret))
 # algorithm, apply a fixed rrset order such that the unsupported algorithm
 # precedes the supported one in the DNSKEY RRset, and verify the result still
 # validates succesfully.
-
-echo_i "check that a lone non matching CDNSKEY record is rejected ($n)"
-ret=0
-(
-echo zone cdnskey-update.secure
-echo server 10.53.0.2 "$PORT"
-echo update delete cdnskey-update.secure CDNSKEY
-echo send
-dig_with_opts +noall +answer @10.53.0.2 dnskey cdnskey-update.secure |
-sed -n -e "s/^/update add /" -e 's/DNSKEY.257/CDNSKEY 258/p'
-echo send
-) | $NSUPDATE > nsupdate.out.test$n 2>&1 || true
-grep "update failed: REFUSED" nsupdate.out.test$n > /dev/null || ret=1
-dig_with_opts +noall +answer @10.53.0.2 cdnskey cdnskey-update.secure > dig.out.test$n
-lines=$(awk '$4 == "CDNSKEY" {print}' dig.out.test$n | wc -l)
-test "${lines:-10}" -eq 0 || ret=1
-n=$((n+1))
-test "$ret" -eq 0 || echo_i "failed"
-status=$((status+ret))
 
 echo_i "check that a CDNSKEY deletion record is accepted ($n)"
 ret=0
@@ -3813,7 +3806,7 @@ status=$((status+ret))
 echo_i "check that DNAME at apex with NSEC3 is correctly signed (dnssec-signzone) ($n)"
 ret=0
 dig_with_opts txt dname-at-apex-nsec3.example @10.53.0.3 > dig.out.ns3.test$n || ret=1
-grep "RRSIG.NSEC3 ${DEFAULT_ALGORITHM_NUMBER} 3 3600" dig.out.ns3.test$n > /dev/null || ret=1
+grep "RRSIG.NSEC3 ${DEFAULT_ALGORITHM_NUMBER} 3 600" dig.out.ns3.test$n > /dev/null || ret=1
 n=$((n+1))
 test "$ret" -eq 0 || echo_i "failed"
 status=$((status+ret))
@@ -4270,6 +4263,65 @@ dig_with_opts @10.53.0.4 inprogress A > dig.out.ns4.test$n || ret=1
 grep "flags: qr rd ra;" dig.out.ns4.test$n >/dev/null || ret=1
 grep "status: NOERROR" dig.out.ns4.test$n >/dev/null || ret=1
 grep 'A.10\.53\.0\.10' dig.out.ns4.test$n >/dev/null || ret=1
+n=$((n+1))
+test "$ret" -eq 0 || echo_i "failed"
+status=$((status+ret))
+
+echo_i "checking excessive NSEC3 iteration warnings in named.run ($n)"
+ret=0
+grep "zone too-many-iterations/IN: excessive NSEC3PARAM iterations [0-9]* > 150" ns2/named.run >/dev/null 2>&1 || ret=1
+grep "zone too-many-iterations/IN: excessive NSEC3PARAM iterations [0-9]* > 150" ns3/named.run >/dev/null 2>&1 || ret=1
+n=$((n+1))
+test "$ret" -eq 0 || echo_i "failed"
+status=$((status+ret))
+
+# Check that the validating resolver will fallback to insecure if the answer
+# contains NSEC3 records with high iteration count.
+echo_i "checking fallback to insecure when NSEC3 iterations is too high (nxdomain) ($n)"
+ret=0
+dig_with_opts @10.53.0.2 does-not-exist.too-many-iterations > dig.out.ns2.test$n || ret=1
+dig_with_opts @10.53.0.4 does-not-exist.too-many-iterations > dig.out.ns4.test$n || ret=1
+digcomp dig.out.ns2.test$n dig.out.ns4.test$n || ret=1
+grep "flags: qr rd ra;" dig.out.ns4.test$n >/dev/null || ret=1
+grep "status: NXDOMAIN" dig.out.ns4.test$n >/dev/null || ret=1
+grep "ANSWER: 0, AUTHORITY: 6" dig.out.ns4.test$n > /dev/null || ret=1
+n=$((n+1))
+test "$ret" -eq 0 || echo_i "failed"
+status=$((status+ret))
+
+echo_i "checking fallback to insecure when NSEC3 iterations is too high (nodata) ($n)"
+ret=0
+dig_with_opts @10.53.0.2 a.too-many-iterations txt > dig.out.ns2.test$n || ret=1
+dig_with_opts @10.53.0.4 a.too-many-iterations txt > dig.out.ns4.test$n || ret=1
+digcomp dig.out.ns2.test$n dig.out.ns4.test$n || ret=1
+grep "flags: qr rd ra;" dig.out.ns4.test$n >/dev/null || ret=1
+grep "status: NOERROR" dig.out.ns4.test$n >/dev/null || ret=1
+grep "ANSWER: 0, AUTHORITY: 4" dig.out.ns4.test$n > /dev/null || ret=1
+n=$((n+1))
+test "$ret" -eq 0 || echo_i "failed"
+status=$((status+ret))
+
+echo_i "checking fallback to insecure when NSEC3 iterations is too high (wildcard) ($n)"
+ret=0
+dig_with_opts @10.53.0.2 wild.a.too-many-iterations > dig.out.ns2.test$n || ret=1
+dig_with_opts @10.53.0.4 wild.a.too-many-iterations > dig.out.ns4.test$n || ret=1
+digcomp dig.out.ns2.test$n dig.out.ns4.test$n || ret=1
+grep "flags: qr rd ra;" dig.out.ns4.test$n >/dev/null || ret=1
+grep "status: NOERROR" dig.out.ns4.test$n >/dev/null || ret=1
+grep 'wild\.a\.too-many-iterations\..*A.10\.0\.0\.3' dig.out.ns4.test$n >/dev/null || ret=1
+grep "ANSWER: 2, AUTHORITY: 4" dig.out.ns4.test$n > /dev/null || ret=1
+n=$((n+1))
+test "$ret" -eq 0 || echo_i "failed"
+status=$((status+ret))
+
+echo_i "checking fallback to insecure when NSEC3 iterations is too high (wildcard nodata) ($n)"
+ret=0
+dig_with_opts @10.53.0.2 type100 wild.a.too-many-iterations > dig.out.ns2.test$n || ret=1
+dig_with_opts @10.53.0.4 type100 wild.a.too-many-iterations > dig.out.ns4.test$n || ret=1
+digcomp dig.out.ns2.test$n dig.out.ns4.test$n || ret=1
+grep "flags: qr rd ra;" dig.out.ns4.test$n >/dev/null || ret=1
+grep "status: NOERROR" dig.out.ns4.test$n >/dev/null || ret=1
+grep "ANSWER: 0, AUTHORITY: 8" dig.out.ns4.test$n > /dev/null || ret=1
 n=$((n+1))
 test "$ret" -eq 0 || echo_i "failed"
 status=$((status+ret))

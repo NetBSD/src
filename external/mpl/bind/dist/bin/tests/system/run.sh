@@ -36,7 +36,8 @@ else
     clean=true
 fi
 
-while getopts "knp:r-:" flag; do
+restart=false
+while getopts "knp:r-:t" flag; do
     case "$flag" in
     -) case "${OPTARG}" in
                keep) stopservers=false ;;
@@ -46,6 +47,7 @@ while getopts "knp:r-:" flag; do
     k) stopservers=false ;;
     n) clean=false ;;
     p) baseport=$OPTARG ;;
+    t) restart=true ;;
     esac
 done
 shift `expr $OPTIND - 1`
@@ -118,22 +120,14 @@ export CONTROLPORT
 export LOWPORT
 export HIGHPORT
 
-restart=false
-
-start_servers_failed() {
-    echoinfo "I:$systest:starting servers failed"
-    echofail "R:$systest:FAIL"
-    echoend  "E:$systest:$(date_with_args)"
-    exit 1
-}
-
 start_servers() {
     echoinfo "I:$systest:starting servers"
     if $restart; then
-        $PERL start.pl --restart --port "$PORT" "$systest" || start_servers_failed
-    else
-        restart=true
-        $PERL start.pl --port "$PORT" "$systest" || start_servers_failed
+        restart_opt="--restart"
+    fi
+    if ! $PERL start.pl ${restart_opt} --port "$PORT" "$systest"; then
+        echoinfo "I:$systest:starting servers failed"
+        return 1
     fi
 }
 
@@ -192,14 +186,16 @@ else
     exit 0
 fi
 
-# Clean up files left from any potential previous runs
-if test -f $systest/clean.sh
-then
-    if ! ( cd "${systest}" && $SHELL clean.sh "$@" ); then
-        echowarn "I:$systest:clean.sh script failed"
-        echofail "R:$systest:FAIL"
-        echoend  "E:$systest:$(date_with_args)"
-        exit 1
+# Clean up files left from any potential previous runs except when
+# started with the --restart option.
+if ! $restart; then
+    if test -f "$systest/clean.sh"; then
+        if ! ( cd "${systest}" && $SHELL clean.sh "$@" ); then
+            echowarn "I:$systest:clean.sh script failed"
+            echofail "R:$systest:FAIL"
+            echoend  "E:$systest:$(date_with_args)"
+            exit 1
+        fi
     fi
 fi
 
@@ -218,29 +214,38 @@ status=0
 run=0
 # Run the tests
 if [ -r "$systest/tests.sh" ]; then
-    start_servers
-    ( cd "$systest" && $SHELL tests.sh "$@" )
-    status=$?
-    run=$((run+1))
-    stop_servers || status=1
+    if start_servers; then
+        ( cd "$systest" && $SHELL tests.sh "$@" )
+        status=$?
+        run=$((run+1))
+        stop_servers || status=1
+    else
+        status=1
+    fi
 fi
 
-if [ -n "$PYTEST" ]; then
-    run=$((run+1))
-    for test in $(cd "${systest}" && find . -name "tests*.py"); do
-        start_servers
-        rm -f "$systest/$test.status"
-        test_status=0
-        (cd "$systest" && "$PYTEST" -v "$test" "$@" || echo "$?" > "$test.status") | SYSTESTDIR="$systest" cat_d
-        if [ -f "$systest/$test.status" ]; then
-            echo_i "FAILED"
-            test_status=$(cat "$systest/$test.status")
-        fi
-        status=$((status+test_status))
-        stop_servers || status=1
-    done
-else
-    echoinfo "I:$systest:pytest not installed, skipping python tests"
+if [ $status -eq 0 ]; then
+    if [ -n "$PYTEST" ]; then
+        run=$((run+1))
+        for test in $(cd "${systest}" && find . -name "tests*.py"); do
+            if start_servers; then
+                rm -f "$systest/$test.status"
+                test_status=0
+                (cd "$systest" && "$PYTEST" -v "$test" "$@" || echo "$?" > "$test.status") | SYSTESTDIR="$systest" cat_d
+                if [ -f "$systest/$test.status" ]; then
+                    echo_i "FAILED"
+                    test_status=$(cat "$systest/$test.status")
+                fi
+                status=$((status+test_status))
+                stop_servers || status=1
+            else
+                status=1
+                break
+            fi
+        done
+    else
+        echoinfo "I:$systest:pytest not installed, skipping python tests"
+    fi
 fi
 
 if [ "$run" -eq "0" ]; then
@@ -307,7 +312,7 @@ elif [ "$status" -ne 0 ]; then
     echofail "R:$systest:FAIL"
 else
     echopass "R:$systest:PASS"
-    if $clean; then
+    if $clean && ! $restart; then
        ( cd $systest && $SHELL clean.sh "$@" )
        if test -d ../../../.git; then
            git status -su --ignored "${systest}/" 2>/dev/null | \
@@ -317,6 +322,11 @@ else
        fi
     fi
 fi
+
+NAMED_RUN_LINES_THRESHOLD=200000
+find "${systest}" -type f -name "named.run" -exec wc -l {} \; | awk "\$1 > ${NAMED_RUN_LINES_THRESHOLD} { print \$2 }" | sort | while read -r LOG_FILE; do
+    echowarn "I:${systest}:${LOG_FILE} contains more than ${NAMED_RUN_LINES_THRESHOLD} lines, consider tweaking the test to limit disk I/O"
+done
 
 echoend "E:$systest:$(date_with_args)"
 

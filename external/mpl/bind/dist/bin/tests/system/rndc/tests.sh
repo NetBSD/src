@@ -414,6 +414,16 @@ if [ $ret != 0 ]; then echo_i "failed"; fi
 status=`expr $status + $ret`
 
 n=`expr $n + 1`
+echo_i "testing single control channel with multiple algorithms ($n)"
+ret=0
+for i in 1 2 3 4 5 6
+do
+        $RNDC -s 10.53.0.4 -p ${EXTRAPORT7} -c ns4/key${i}.conf status > /dev/null 2>&1 || ret=1
+done
+if [ $ret != 0 ]; then echo_i "failed"; fi
+status=`expr $status + $ret`
+
+n=`expr $n + 1`
 echo_i "testing automatic zones are reported ($n)"
 ret=0
 $RNDC -s 10.53.0.4 -p ${EXTRAPORT6} -c ns4/key6.conf status > rndc.out.1.test$n || ret=1

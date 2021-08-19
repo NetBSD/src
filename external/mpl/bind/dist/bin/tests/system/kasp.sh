@@ -31,6 +31,7 @@ SHA224="hXfwwwiag2QGqblopofai9NuW28q/1rH4CaTnA=="
 SHA256="R16NojROxtxH/xbDl//ehDsHm5DjWTQ2YXV+hGC2iBY="
 VIEW1="YPfMoAk6h+3iN8MDRQC004iSNHY="
 VIEW2="4xILSZQnuO1UKubXHkYUsvBRPu8="
+VIEW3="C1Azf+gGPMmxrUg/WQINP6eV9Y0="
 
 ###############################################################################
 # Key properties                                                              #
@@ -59,6 +60,7 @@ VIEW2="4xILSZQnuO1UKubXHkYUsvBRPu8="
 # EXPECT_ZRRSIG
 # EXPECT_KRRSIG
 # LEGACY
+# PRIVATE
 
 key_key() {
 	echo "${1}__${2}"
@@ -112,6 +114,7 @@ key_clear() {
 	key_set "$1" "EXPECT_ZRRSIG" 'no'
 	key_set "$1" "EXPECT_KRRSIG" 'no'
 	key_set "$1" "LEGACY" 'no'
+	key_set "$1" "PRIVATE" 'yes'
 }
 
 # Start clear.
@@ -196,8 +199,8 @@ set_policy() {
 	CDS_DELETE="no"
 }
 # By default policies are considered to be secure.
-# If a zone sets its policy to "none", call 'set_cdsdelete' to tell the system
-# test to expect a CDS and CDNSKEY Delete record.
+# If a zone sets its policy to "insecure", call 'set_cdsdelete' to tell the
+# system test to expect a CDS and CDNSKEY Delete record.
 set_cdsdelete() {
 	CDS_DELETE="yes"
 }
@@ -303,6 +306,7 @@ check_key() {
 	_dnskey_ttl="$DNSKEY_TTL"
 	_lifetime=$(key_get "$1" LIFETIME)
 	_legacy=$(key_get "$1" LEGACY)
+	_private=$(key_get "$1" PRIVATE)
 
 	_published=$(key_get "$1" PUBLISHED)
 	_active=$(key_get "$1" ACTIVE)
@@ -341,7 +345,9 @@ check_key() {
 
 	# Check file existence.
 	[ -s "$KEY_FILE" ] || ret=1
-	[ -s "$PRIVATE_FILE" ] || ret=1
+	if [ "$_private" = "yes" ]; then
+		[ -s "$PRIVATE_FILE" ] || ret=1
+	fi
 	if [ "$_legacy" = "no" ]; then
 		[ -s "$STATE_FILE" ] || ret=1
 	fi
@@ -352,7 +358,9 @@ check_key() {
 	grep "; Created:" "$KEY_FILE" > "${ZONE}.${KEY_ID}.${_alg_num}.created" || _log_error "mismatch created comment in $KEY_FILE"
 	KEY_CREATED=$(awk '{print $3}' < "${ZONE}.${KEY_ID}.${_alg_num}.created")
 
-	grep "Created: ${KEY_CREATED}" "$PRIVATE_FILE" > /dev/null || _log_error "mismatch created in $PRIVATE_FILE"
+	if [ "$_private" = "yes" ]; then
+		grep "Created: ${KEY_CREATED}" "$PRIVATE_FILE" > /dev/null || _log_error "mismatch created in $PRIVATE_FILE"
+	fi
 	if [ "$_legacy" = "no" ]; then
 		grep "Generated: ${KEY_CREATED}" "$STATE_FILE" > /dev/null || _log_error "mismatch generated in $STATE_FILE"
 	fi
@@ -363,8 +371,10 @@ check_key() {
 	grep "This is a ${_role2} key, keyid ${_key_id}, for ${_zone}." "$KEY_FILE" > /dev/null || _log_error "mismatch top comment in $KEY_FILE"
 	grep "${_zone}\. ${_dnskey_ttl} IN DNSKEY ${_flags} 3 ${_alg_num}" "$KEY_FILE" > /dev/null || _log_error "mismatch DNSKEY record in $KEY_FILE"
 	# Now check the private key file.
-	grep "Private-key-format: v1.3" "$PRIVATE_FILE" > /dev/null || _log_error "mismatch private key format in $PRIVATE_FILE"
-	grep "Algorithm: ${_alg_num} (${_alg_string})" "$PRIVATE_FILE" > /dev/null || _log_error "mismatch algorithm in $PRIVATE_FILE"
+	if [ "$_private" = "yes" ]; then
+		grep "Private-key-format: v1.3" "$PRIVATE_FILE" > /dev/null || _log_error "mismatch private key format in $PRIVATE_FILE"
+		grep "Algorithm: ${_alg_num} (${_alg_string})" "$PRIVATE_FILE" > /dev/null || _log_error "mismatch algorithm in $PRIVATE_FILE"
+	fi
 	# Now check the key state file.
 	if [ "$_legacy" = "no" ]; then
 		grep "This is the state of key ${_key_id}, for ${_zone}." "$STATE_FILE" > /dev/null || _log_error "mismatch top comment in $STATE_FILE"
@@ -444,6 +454,8 @@ check_timingmetadata() {
 	_key_file="${_base_file}.key"
 	_private_file="${_base_file}.private"
 	_state_file="${_base_file}.state"
+	_legacy=$(key_get "$1" LEGACY)
+	_private=$(key_get "$1" PRIVATE)
 
 	_published=$(key_get "$1" PUBLISHED)
 	_syncpublish=$(key_get "$1" SYNCPUBLISH)
@@ -459,13 +471,17 @@ check_timingmetadata() {
 
 	if [ "$_published" = "none" ]; then
 		grep "; Publish:" "${_key_file}" > /dev/null && _log_error "unexpected publish comment in ${_key_file}"
-		grep "Publish:" "${_private_file}" > /dev/null && _log_error "unexpected publish in ${_private_file}"
+		if [ "$_private" = "yes" ]; then
+			grep "Publish:" "${_private_file}" > /dev/null && _log_error "unexpected publish in ${_private_file}"
+		fi
 		if [ "$_legacy" = "no" ]; then
 			grep "Published: " "${_state_file}" > /dev/null && _log_error "unexpected publish in ${_state_file}"
 		fi
 	else
 		grep "; Publish: $_published" "${_key_file}" > /dev/null || _log_error "mismatch publish comment in ${_key_file} (expected ${_published})"
-		grep "Publish: $_published" "${_private_file}" > /dev/null || _log_error "mismatch publish in ${_private_file} (expected ${_published})"
+		if [ "$_private" = "yes" ]; then
+			grep "Publish: $_published" "${_private_file}" > /dev/null || _log_error "mismatch publish in ${_private_file} (expected ${_published})"
+		fi
 		if [ "$_legacy" = "no" ]; then
 			grep "Published: $_published" "${_state_file}" > /dev/null || _log_error "mismatch publish in ${_state_file} (expected ${_published})"
 		fi
@@ -473,13 +489,17 @@ check_timingmetadata() {
 
 	if [ "$_syncpublish" = "none" ]; then
 		grep "; SyncPublish:" "${_key_file}" > /dev/null && _log_error "unexpected syncpublish comment in ${_key_file}"
-		grep "SyncPublish:" "${_private_file}" > /dev/null && _log_error "unexpected syncpublish in ${_private_file}"
+		if [ "$_private" = "yes" ]; then
+			grep "SyncPublish:" "${_private_file}" > /dev/null && _log_error "unexpected syncpublish in ${_private_file}"
+		fi
 		if [ "$_legacy" = "no" ]; then
 			grep "PublishCDS: " "${_state_file}" > /dev/null && _log_error "unexpected syncpublish in ${_state_file}"
 		fi
 	else
 		grep "; SyncPublish: $_syncpublish" "${_key_file}" > /dev/null || _log_error "mismatch syncpublish comment in ${_key_file} (expected ${_syncpublish})"
-		grep "SyncPublish: $_syncpublish" "${_private_file}" > /dev/null || _log_error "mismatch syncpublish in ${_private_file} (expected ${_syncpublish})"
+		if [ "$_private" = "yes" ]; then
+			grep "SyncPublish: $_syncpublish" "${_private_file}" > /dev/null || _log_error "mismatch syncpublish in ${_private_file} (expected ${_syncpublish})"
+		fi
 		if [ "$_legacy" = "no" ]; then
 			grep "PublishCDS: $_syncpublish" "${_state_file}" > /dev/null || _log_error "mismatch syncpublish in ${_state_file} (expected ${_syncpublish})"
 		fi
@@ -487,13 +507,17 @@ check_timingmetadata() {
 
 	if [ "$_active" = "none" ]; then
 		grep "; Activate:" "${_key_file}" > /dev/null && _log_error "unexpected active comment in ${_key_file}"
-		grep "Activate:" "${_private_file}" > /dev/null && _log_error "unexpected active in ${_private_file}"
+		if [ "$_private" = "yes" ]; then
+			grep "Activate:" "${_private_file}" > /dev/null && _log_error "unexpected active in ${_private_file}"
+		fi
 		if [ "$_legacy" = "no" ]; then
 			grep "Active: " "${_state_file}" > /dev/null && _log_error "unexpected active in ${_state_file}"
 		fi
 	else
 		grep "; Activate: $_active" "${_key_file}" > /dev/null || _log_error "mismatch active comment in ${_key_file} (expected ${_active})"
-		grep "Activate: $_active" "${_private_file}" > /dev/null || _log_error "mismatch active in ${_private_file} (expected ${_active})"
+		if [ "$_private" = "yes" ]; then
+			grep "Activate: $_active" "${_private_file}" > /dev/null || _log_error "mismatch active in ${_private_file} (expected ${_active})"
+		fi
 		if [ "$_legacy" = "no" ]; then
 			grep "Active: $_active" "${_state_file}" > /dev/null || _log_error "mismatch active in ${_state_file} (expected ${_active})"
 		fi
@@ -501,13 +525,17 @@ check_timingmetadata() {
 
 	if [ "$_retired" = "none" ]; then
 		grep "; Inactive:" "${_key_file}" > /dev/null && _log_error "unexpected retired comment in ${_key_file}"
-		grep "Inactive:" "${_private_file}" > /dev/null && _log_error "unexpected retired in ${_private_file}"
+		if [ "$_private" = "yes" ]; then
+			grep "Inactive:" "${_private_file}" > /dev/null && _log_error "unexpected retired in ${_private_file}"
+		fi
 		if [ "$_legacy" = "no" ]; then
 			grep "Retired: " "${_state_file}" > /dev/null && _log_error "unexpected retired in ${_state_file}"
 		fi
 	else
 		grep "; Inactive: $_retired" "${_key_file}" > /dev/null || _log_error "mismatch retired comment in ${_key_file} (expected ${_retired})"
-		grep "Inactive: $_retired" "${_private_file}" > /dev/null || _log_error "mismatch retired in ${_private_file} (expected ${_retired})"
+		if [ "$_private" = "yes" ]; then
+			grep "Inactive: $_retired" "${_private_file}" > /dev/null || _log_error "mismatch retired in ${_private_file} (expected ${_retired})"
+		fi
 		if [ "$_legacy" = "no" ]; then
 			grep "Retired: $_retired" "${_state_file}" > /dev/null || _log_error "mismatch retired in ${_state_file} (expected ${_retired})"
 		fi
@@ -515,13 +543,17 @@ check_timingmetadata() {
 
 	if [ "$_revoked" = "none" ]; then
 		grep "; Revoke:" "${_key_file}" > /dev/null && _log_error "unexpected revoked comment in ${_key_file}"
-		grep "Revoke:" "${_private_file}" > /dev/null && _log_error "unexpected revoked in ${_private_file}"
+		if [ "$_private" = "yes" ]; then
+			grep "Revoke:" "${_private_file}" > /dev/null && _log_error "unexpected revoked in ${_private_file}"
+		fi
 		if [ "$_legacy" = "no" ]; then
 			grep "Revoked: " "${_state_file}" > /dev/null && _log_error "unexpected revoked in ${_state_file}"
 		fi
 	else
 		grep "; Revoke: $_revoked" "${_key_file}" > /dev/null || _log_error "mismatch revoked comment in ${_key_file} (expected ${_revoked})"
-		grep "Revoke: $_revoked" "${_private_file}" > /dev/null || _log_error "mismatch revoked in ${_private_file} (expected ${_revoked})"
+		if [ "$_private" = "yes" ]; then
+			grep "Revoke: $_revoked" "${_private_file}" > /dev/null || _log_error "mismatch revoked in ${_private_file} (expected ${_revoked})"
+		fi
 		if [ "$_legacy" = "no" ]; then
 			grep "Revoked: $_revoked" "${_state_file}" > /dev/null || _log_error "mismatch revoked in ${_state_file} (expected ${_revoked})"
 		fi
@@ -529,13 +561,17 @@ check_timingmetadata() {
 
 	if [ "$_removed" = "none" ]; then
 		grep "; Delete:" "${_key_file}" > /dev/null && _log_error "unexpected removed comment in ${_key_file}"
-		grep "Delete:" "${_private_file}" > /dev/null && _log_error "unexpected removed in ${_private_file}"
+		if [ "$_private" = "yes" ]; then
+			grep "Delete:" "${_private_file}" > /dev/null && _log_error "unexpected removed in ${_private_file}"
+		fi
 		if [ "$_legacy" = "no" ]; then
 			grep "Removed: " "${_state_file}" > /dev/null && _log_error "unexpected removed in ${_state_file}"
 		fi
 	else
 		grep "; Delete: $_removed" "${_key_file}" > /dev/null || _log_error "mismatch removed comment in ${_key_file} (expected ${_removed})"
-		grep "Delete: $_removed" "${_private_file}" > /dev/null || _log_error "mismatch removed in ${_private_file} (expected ${_removed})"
+		if [ "$_private" = "yes" ]; then
+			grep "Delete: $_removed" "${_private_file}" > /dev/null || _log_error "mismatch removed in ${_private_file} (expected ${_removed})"
+		fi
 		if [ "$_legacy" = "no" ]; then
 			grep "Removed: $_removed" "${_state_file}" > /dev/null || _log_error "mismatch removed in ${_state_file} (expected ${_removed})"
 		fi
@@ -672,7 +708,7 @@ _check_keys() {
 	# Check key files.
 	_ids=$(get_keyids "$DIR" "$ZONE")
 	for _id in $_ids; do
-		# There are three key files with the same algorithm.
+		# There are multiple key files with the same algorithm.
 		# Check them until a match is found.
 		ret=0
 		echo_i "check key id $_id"
@@ -779,18 +815,22 @@ check_dnssecstatus() {
 
 	_rndccmd $_server dnssec -status $_zone in $_view > rndc.dnssec.status.out.$_zone.$n || _log_error "rndc dnssec -status zone ${_zone} failed"
 
-	grep "dnssec-policy: ${_policy}" rndc.dnssec.status.out.$_zone.$n > /dev/null || _log_error "bad dnssec status for signed zone ${_zone}"
-	if [ "$(key_get KEY1 EXPECT)" = "yes" ]; then
-		grep "key: $(key_get KEY1 ID)" rndc.dnssec.status.out.$_zone.$n > /dev/null || _log_error "missing key $(key_get KEY1 ID) from dnssec status"
-	fi
-	if [ "$(key_get KEY2 EXPECT)" = "yes" ]; then
-		grep "key: $(key_get KEY2 ID)" rndc.dnssec.status.out.$_zone.$n > /dev/null || _log_error "missing key $(key_get KEY2 ID) from dnssec status"
-	fi
-	if [ "$(key_get KEY3 EXPECT)" = "yes" ]; then
-		grep "key: $(key_get KEY3 ID)" rndc.dnssec.status.out.$_zone.$n > /dev/null || _log_error "missing key $(key_get KEY3 ID) from dnssec status"
-	fi
-	if [ "$(key_get KEY4 EXPECT)" = "yes" ]; then
-		grep "key: $(key_get KEY4 ID)" rndc.dnssec.status.out.$_zone.$n > /dev/null || _log_error "missing key $(key_get KEY4 ID) from dnssec status"
+	if [ "$_policy" = "none" ]; then
+		grep "Zone does not have dnssec-policy" rndc.dnssec.status.out.$_zone.$n > /dev/null || log_error "bad dnssec status for unsigned zone ${_zone}"
+	else
+		grep "dnssec-policy: ${_policy}" rndc.dnssec.status.out.$_zone.$n > /dev/null || _log_error "bad dnssec status for signed zone ${_zone}"
+		if [ "$(key_get KEY1 EXPECT)" = "yes" ]; then
+			grep "key: $(key_get KEY1 ID)" rndc.dnssec.status.out.$_zone.$n > /dev/null || _log_error "missing key $(key_get KEY1 ID) from dnssec status"
+		fi
+		if [ "$(key_get KEY2 EXPECT)" = "yes" ]; then
+			grep "key: $(key_get KEY2 ID)" rndc.dnssec.status.out.$_zone.$n > /dev/null || _log_error "missing key $(key_get KEY2 ID) from dnssec status"
+		fi
+		if [ "$(key_get KEY3 EXPECT)" = "yes" ]; then
+			grep "key: $(key_get KEY3 ID)" rndc.dnssec.status.out.$_zone.$n > /dev/null || _log_error "missing key $(key_get KEY3 ID) from dnssec status"
+		fi
+		if [ "$(key_get KEY4 EXPECT)" = "yes" ]; then
+			grep "key: $(key_get KEY4 ID)" rndc.dnssec.status.out.$_zone.$n > /dev/null || _log_error "missing key $(key_get KEY4 ID) from dnssec status"
+		fi
 	fi
 
 	test "$ret" -eq 0 || echo_i "failed"
@@ -799,10 +839,12 @@ check_dnssecstatus() {
 
 # Check if RRset of type $1 in file $2 is signed with the right keys.
 # The right keys are the ones that expect a signature and matches the role $3.
-check_signatures() {
+_check_signatures() {
 	_qtype=$1
 	_file=$2
 	_role=$3
+
+	numsigs=0
 
 	if [ "$_role" = "KSK" ]; then
 		_expect_type=EXPECT_KRRSIG
@@ -811,28 +853,41 @@ check_signatures() {
 	fi
 
 	if [ "$(key_get KEY1 "$_expect_type")" = "yes" ] && [ "$(key_get KEY1 "$_role")" = "yes" ]; then
-		get_keys_which_signed "$_qtype" "$_file" | grep "^$(key_get KEY1 ID)$" > /dev/null || _log_error "${_qtype} RRset not signed with key $(key_get KEY1 ID)"
+		get_keys_which_signed "$_qtype" "$_file" | grep "^$(key_get KEY1 ID)$" > /dev/null || return 1
+		numsigs=$((numsigs+1))
 	elif [ "$(key_get KEY1 EXPECT)" = "yes" ]; then
-		get_keys_which_signed "$_qtype" "$_file" | grep "^$(key_get KEY1 ID)$" > /dev/null && _log_error "${_qtype} RRset signed unexpectedly with key $(key_get KEY1 ID)"
+		get_keys_which_signed "$_qtype" "$_file" | grep "^$(key_get KEY1 ID)$" > /dev/null && return 1
 	fi
 
 	if [ "$(key_get KEY2 "$_expect_type")" = "yes" ] && [ "$(key_get KEY2 "$_role")" = "yes" ]; then
-		get_keys_which_signed "$_qtype" "$_file" | grep "^$(key_get KEY2 ID)$" > /dev/null || _log_error "${_qtype} RRset not signed with key $(key_get KEY2 ID)"
+		get_keys_which_signed "$_qtype" "$_file" | grep "^$(key_get KEY2 ID)$" > /dev/null || return 1
+		numsigs=$((numsigs+1))
 	elif [ "$(key_get KEY2 EXPECT)" = "yes" ]; then
-		get_keys_which_signed "$_qtype" "$_file" | grep "^$(key_get KEY2 ID)$" > /dev/null && _log_error "${_qtype} RRset signed unexpectedly with key $(key_get KEY2 ID)"
+		get_keys_which_signed "$_qtype" "$_file" | grep "^$(key_get KEY2 ID)$" > /dev/null && return 1
 	fi
 
 	if [ "$(key_get KEY3 "$_expect_type")" = "yes" ] && [ "$(key_get KEY3 "$_role")" = "yes" ]; then
-		get_keys_which_signed "$_qtype" "$_file" | grep "^$(key_get KEY3 ID)$" > /dev/null || _log_error "${_qtype} RRset not signed with key $(key_get KEY3 ID)"
+		get_keys_which_signed "$_qtype" "$_file" | grep "^$(key_get KEY3 ID)$" > /dev/null || return 1
+		numsigs=$((numsigs+1))
 	elif [ "$(key_get KEY3 EXPECT)" = "yes" ]; then
-		get_keys_which_signed "$_qtype" "$_file" | grep "^$(key_get KEY3 ID)$" > /dev/null && _log_error "${_qtype} RRset signed unexpectedly with key $(key_get KEY3 ID)"
+		get_keys_which_signed "$_qtype" "$_file" | grep "^$(key_get KEY3 ID)$" > /dev/null && return 1
 	fi
 
 	if [ "$(key_get KEY4 "$_expect_type")" = "yes" ] && [ "$(key_get KEY4 "$_role")" = "yes" ]; then
-		get_keys_which_signed "$_qtype" "$_file" | grep "^$(key_get KEY4 ID)$" > /dev/null || _log_error "${_qtype} RRset not signed with key $(key_get KEY4 ID)"
+		get_keys_which_signed "$_qtype" "$_file" | grep "^$(key_get KEY4 ID)$" > /dev/null || return 1
+		numsigs=$((numsigs+1))
 	elif [ "$(key_get KEY4 EXPECT)" = "yes" ]; then
-		get_keys_which_signed "$_qtype" "$_file" | grep "^$(key_get KEY4 ID)$" > /dev/null && _log_error "${_qtype} RRset signed unexpectedly with key $(key_get KEY4 ID)"
+		get_keys_which_signed "$_qtype" "$_file" | grep "^$(key_get KEY4 ID)$" > /dev/null && return 1
 	fi
+
+	lines=$(get_keys_which_signed "${_qtype}" "${_file}" | wc -l)
+	test "$lines" -eq "$numsigs" || echo_i "bad number of signatures for $_qtype (got $lines, expected $numsigs)"
+	test "$lines" -eq "$numsigs" || return 1
+
+	return 0
+}
+check_signatures() {
+	retry_quiet 3 _check_signatures $1 $2 $3 || _log_error "RRset $1 in zone $ZONE incorrectly signed"
 }
 
 response_has_cds_for_key() (
@@ -867,6 +922,8 @@ check_cds() {
 	echo_i "check CDS and CDNSKEY rrset are signed correctly for zone ${ZONE} ($n)"
 	ret=0
 
+	_checksig=0
+
 	_dig_with_opts "$ZONE" "@${SERVER}" "CDS" > "dig.out.$DIR.test$n.cds" || _log_error "dig ${ZONE} CDS failed"
 	grep "status: NOERROR" "dig.out.$DIR.test$n.cds" > /dev/null || _log_error "mismatch status in DNS response"
 
@@ -879,13 +936,13 @@ check_cds() {
 	else
 		grep "CDS.*0 0 0 00" "dig.out.$DIR.test$n.cds" > /dev/null || _log_error "missing CDS DELETE record in DNS response"
 		grep "CDNSKEY.*0 3 0 AA==" "dig.out.$DIR.test$n.cdnskey" > /dev/null || _log_error "missing CDNSKEY DELETE record in DNS response"
+		_checksig=1
 	fi
 
 	if [ "$(key_get KEY1 STATE_DS)" = "rumoured" ] || [ "$(key_get KEY1 STATE_DS)" = "omnipresent" ]; then
 		response_has_cds_for_key KEY1 "dig.out.$DIR.test$n.cds" || _log_error "missing CDS record in response for key $(key_get KEY1 ID)"
-		check_signatures "CDS" "dig.out.$DIR.test$n.cds" "KSK"
 		response_has_cdnskey_for_key KEY1 "dig.out.$DIR.test$n.cdnskey" || _log_error "missing CDNSKEY record in response for key $(key_get KEY1 ID)"
-		check_signatures "CDNSKEY" "dig.out.$DIR.test$n.cdnskey" "KSK"
+		_checksig=1
 	elif [ "$(key_get KEY1 EXPECT)" = "yes" ]; then
 		response_has_cds_for_key KEY1 "dig.out.$DIR.test$n.cds" && _log_error "unexpected CDS record in response for key $(key_get KEY1 ID)"
 		# KEY1 should not have an associated CDNSKEY, but there may be
@@ -896,9 +953,8 @@ check_cds() {
 
 	if [ "$(key_get KEY2 STATE_DS)" = "rumoured" ] || [ "$(key_get KEY2 STATE_DS)" = "omnipresent" ]; then
 		response_has_cds_for_key KEY2 "dig.out.$DIR.test$n.cds" || _log_error "missing CDS record in response for key $(key_get KEY2 ID)"
-		check_signatures "CDS" "dig.out.$DIR.test$n.cds" "KSK"
 		response_has_cdnskey_for_key KEY2 "dig.out.$DIR.test$n.cdnskey" || _log_error "missing CDNSKEY record in response for key $(key_get KEY2 ID)"
-		check_signatures "CDNSKEY" "dig.out.$DIR.test$n.cdnskey" "KSK"
+		_checksig=1
 	elif [ "$(key_get KEY2 EXPECT)" = "yes" ]; then
 		response_has_cds_for_key KEY2 "dig.out.$DIR.test$n.cds" && _log_error "unexpected CDS record in response for key $(key_get KEY2 ID)"
 		# KEY2 should not have an associated CDNSKEY, but there may be
@@ -909,9 +965,8 @@ check_cds() {
 
 	if [ "$(key_get KEY3 STATE_DS)" = "rumoured" ] || [ "$(key_get KEY3 STATE_DS)" = "omnipresent" ]; then
 		response_has_cds_for_key KEY3 "dig.out.$DIR.test$n.cds" || _log_error "missing CDS record in response for key $(key_get KEY3 ID)"
-		check_signatures "CDS" "dig.out.$DIR.test$n.cds" "KSK"
 		response_has_cdnskey_for_key KEY3 "dig.out.$DIR.test$n.cdnskey" || _log_error "missing CDNSKEY record in response for key $(key_get KEY3 ID)"
-		check_signatures "CDNSKEY" "dig.out.$DIR.test$n.cdnskey" "KSK"
+		_checksig=1
 	elif [ "$(key_get KEY3 EXPECT)" = "yes" ]; then
 		response_has_cds_for_key KEY3 "dig.out.$DIR.test$n.cds" && _log_error "unexpected CDS record in response for key $(key_get KEY3 ID)"
 		# KEY3 should not have an associated CDNSKEY, but there may be
@@ -922,9 +977,8 @@ check_cds() {
 
 	if [ "$(key_get KEY4 STATE_DS)" = "rumoured" ] || [ "$(key_get KEY4 STATE_DS)" = "omnipresent" ]; then
 		response_has_cds_for_key KEY4 "dig.out.$DIR.test$n.cds" || _log_error "missing CDS record in response for key $(key_get KEY4 ID)"
-		check_signatures "CDS" "dig.out.$DIR.test$n.cds" "KSK"
 		response_has_cdnskey_for_key KEY4 "dig.out.$DIR.test$n.cdnskey" || _log_error "missing CDNSKEY record in response for key $(key_get KEY4 ID)"
-		check_signatures "CDNSKEY" "dig.out.$DIR.test$n.cdnskey" "KSK"
+		_checksig=1
 	elif [ "$(key_get KEY4 EXPECT)" = "yes" ]; then
 		response_has_cds_for_key KEY4 "dig.out.$DIR.test$n.cds" && _log_error "unexpected CDS record in response for key $(key_get KEY4 ID)"
 		# KEY4 should not have an associated CDNSKEY, but there may be
@@ -933,68 +987,81 @@ check_cds() {
 		# so let's skip this check for now.
 	fi
 
+	test "$_checksig" -eq 0 || check_signatures "CDS" "dig.out.$DIR.test$n.cds" "KSK"
+	test "$_checksig" -eq 0 || check_signatures "CDNSKEY" "dig.out.$DIR.test$n.cdnskey" "KSK"
+
 	test "$ret" -eq 0 || echo_i "failed"
 	status=$((status+ret))
+}
+
+
+# Test DNSKEY query.
+_check_apex_dnskey() {
+	_dig_with_opts "$ZONE" "@${SERVER}" "DNSKEY" > "dig.out.$DIR.test$n" || return 1
+	grep "status: NOERROR" "dig.out.$DIR.test$n" > /dev/null || return 1
+
+	_checksig=0
+
+	if [ "$(key_get KEY1 STATE_DNSKEY)" = "rumoured" ] || [ "$(key_get KEY1 STATE_DNSKEY)" = "omnipresent" ]; then
+		grep "${ZONE}\..*${DNSKEY_TTL}.*IN.*DNSKEY.*257.*.3.*$(key_get KEY1 ALG_NUM)" "dig.out.$DIR.test$n" > /dev/null || return 1
+		_checksig=1
+	elif [ "$(key_get KEY1 EXPECT)" = "yes" ]; then
+		grep "${ZONE}\.*${DNSKEY_TTL}.*IN.*DNSKEY.*257.*.3.*$(key_get KEY1 ALG_NUM)" "dig.out.$DIR.test$n" > /dev/null && return 1
+	fi
+
+	if [ "$(key_get KEY2 STATE_DNSKEY)" = "rumoured" ] || [ "$(key_get KEY2 STATE_DNSKEY)" = "omnipresent" ]; then
+		grep "${ZONE}\..*${DNSKEY_TTL}.*IN.*DNSKEY.*257.*.3.*$(key_get KEY2 ALG_NUM)" "dig.out.$DIR.test$n" > /dev/null || return 1
+		_checksig=1
+	elif [ "$(key_get KEY2 EXPECT)" = "yes" ]; then
+		grep "${ZONE}\.*${DNSKEY_TTL}.*IN.*DNSKEY.*257.*.3.*$(key_get KEY2 ALG_NUM)" "dig.out.$DIR.test$n" > /dev/null && return 1
+	fi
+
+	if [ "$(key_get KEY3 STATE_DNSKEY)" = "rumoured" ] || [ "$(key_get KEY3 STATE_DNSKEY)" = "omnipresent" ]; then
+		grep "${ZONE}\..*${DNSKEY_TTL}.*IN.*DNSKEY.*257.*.3.*$(key_get KEY3 ALG_NUM)" "dig.out.$DIR.test$n" > /dev/null || return 1
+		_checksig=1
+	elif [ "$(key_get KEY3 EXPECT)" = "yes" ]; then
+		grep "${ZONE}\..*${DNSKEY_TTL}.*IN.*DNSKEY.*257.*.3.*$(key_get KEY3 ALG_NUM)" "dig.out.$DIR.test$n" > /dev/null && return 1
+	fi
+
+	if [ "$(key_get KEY4 STATE_DNSKEY)" = "rumoured" ] || [ "$(key_get KEY4 STATE_DNSKEY)" = "omnipresent" ]; then
+		grep "${ZONE}\..*${DNSKEY_TTL}.*IN.*DNSKEY.*257.*.3.*$(key_get KEY4 ALG_NUM)" "dig.out.$DIR.test$n" > /dev/null || return 1
+		_checksig=1
+	elif [ "$(key_get KEY4 EXPECT)" = "yes" ]; then
+		grep "${ZONE}\..*${DNSKEY_TTL}.*IN.*DNSKEY.*257.*.3.*$(key_get KEY4 ALG_NUM)" "dig.out.$DIR.test$n" > /dev/null && return 1
+	fi
+
+	test "$_checksig" -eq 0 && return 0
+
+	retry_quiet 3 _check_signatures "DNSKEY" "dig.out.$DIR.test$n" "KSK" || return 1
+
+	return 0
 }
 
 # Test the apex of a configured zone. This checks that the SOA and DNSKEY
 # RRsets are signed correctly and with the appropriate keys.
 check_apex() {
+
 	# Test DNSKEY query.
-	_qtype="DNSKEY"
 	n=$((n+1))
-	echo_i "check ${_qtype} rrset is signed correctly for zone ${ZONE} ($n)"
+	echo_i "check DNSKEY rrset is signed correctly for zone ${ZONE} ($n)"
 	ret=0
-	_dig_with_opts "$ZONE" "@${SERVER}" $_qtype > "dig.out.$DIR.test$n" || _log_error "dig ${ZONE} ${_qtype} failed"
-	grep "status: NOERROR" "dig.out.$DIR.test$n" > /dev/null || _log_error "mismatch status in DNS response"
-
-	if [ "$(key_get KEY1 STATE_DNSKEY)" = "rumoured" ] || [ "$(key_get KEY1 STATE_DNSKEY)" = "omnipresent" ]; then
-		grep "${ZONE}\..*${DNSKEY_TTL}.*IN.*${_qtype}.*257.*.3.*$(key_get KEY1 ALG_NUM)" "dig.out.$DIR.test$n" > /dev/null || _log_error "missing ${_qtype} record in response for key $(key_get KEY1 ID)"
-		check_signatures $_qtype "dig.out.$DIR.test$n" "KSK"
-		numkeys=$((numkeys+1))
-	elif [ "$(key_get KEY1 EXPECT)" = "yes" ]; then
-		grep "${ZONE}\.*${DNSKEY_TTL}.*IN.*${_qtype}.*257.*.3.*$(key_get KEY1 ALG_NUM)" "dig.out.$DIR.test$n" > /dev/null && _log_error "unexpected ${_qtype} record in response for key $(key_get KEY1 ID)"
-	fi
-
-	if [ "$(key_get KEY2 STATE_DNSKEY)" = "rumoured" ] || [ "$(key_get KEY2 STATE_DNSKEY)" = "omnipresent" ]; then
-		grep "${ZONE}\..*${DNSKEY_TTL}.*IN.*${_qtype}.*257.*.3.*$(key_get KEY2 ALG_NUM)" "dig.out.$DIR.test$n" > /dev/null || _log_error "missing ${_qtype} record in response for key $(key_get KEY2 ID)"
-		check_signatures $_qtype "dig.out.$DIR.test$n" "KSK"
-		numkeys=$((numkeys+1))
-	elif [ "$(key_get KEY2 EXPECT)" = "yes" ]; then
-		grep "${ZONE}\.*${DNSKEY_TTL}.*IN.*${_qtype}.*257.*.3.*$(key_get KEY2 ALG_NUM)" "dig.out.$DIR.test$n" > /dev/null && _log_error "unexpected ${_qtype} record in response for key $(key_get KEY2 ID)"
-	fi
-
-	if [ "$(key_get KEY3 STATE_DNSKEY)" = "rumoured" ] || [ "$(key_get KEY3 STATE_DNSKEY)" = "omnipresent" ]; then
-		grep "${ZONE}\..*${DNSKEY_TTL}.*IN.*${_qtype}.*257.*.3.*$(key_get KEY3 ALG_NUM)" "dig.out.$DIR.test$n" > /dev/null || _log_error "missing ${_qtype} record in response for key $(key_get KEY3 ID)"
-		check_signatures $_qtype "dig.out.$DIR.test$n" "KSK"
-		numkeys=$((numkeys+1))
-	elif [ "$(key_get KEY3 EXPECT)" = "yes" ]; then
-		grep "${ZONE}\..*${DNSKEY_TTL}.*IN.*${_qtype}.*257.*.3.*$(key_get KEY3 ALG_NUM)" "dig.out.$DIR.test$n" > /dev/null && _log_error "unexpected ${_qtype} record in response for key $(key_get KEY3 ID)"
-	fi
-
-	if [ "$(key_get KEY4 STATE_DNSKEY)" = "rumoured" ] || [ "$(key_get KEY4 STATE_DNSKEY)" = "omnipresent" ]; then
-		grep "${ZONE}\..*${DNSKEY_TTL}.*IN.*${_qtype}.*257.*.3.*$(key_get KEY4 ALG_NUM)" "dig.out.$DIR.test$n" > /dev/null || _log_error "missing ${_qtype} record in response for key $(key_get KEY4 ID)"
-		check_signatures $_qtype "dig.out.$DIR.test$n" "KSK"
-		numkeys=$((numkeys+1))
-	elif [ "$(key_get KEY4 EXPECT)" = "yes" ]; then
-		grep "${ZONE}\..*${DNSKEY_TTL}.*IN.*${_qtype}.*257.*.3.*$(key_get KEY4 ALG_NUM)" "dig.out.$DIR.test$n" > /dev/null && _log_error "unexpected ${_qtype} record in response for key $(key_get KEY4 ID)"
-	fi
-
-	lines=$(get_keys_which_signed $_qtype "dig.out.$DIR.test$n" | wc -l)
-	check_signatures $_qtype "dig.out.$DIR.test$n" "KSK"
+	retry_quiet 3 _check_apex_dnskey || ret=1
 	test "$ret" -eq 0 || echo_i "failed"
 	status=$((status+ret))
 
+	# We retry the DNSKEY query for at most three seconds to avoid test
+	# failures due to timing issues. If the DNSKEY query check passes this
+	# means the zone is resigned and further apex checks (SOA, CDS, CDNSKEY)
+	# don't need to be retried quietly.
+
 	# Test SOA query.
-	_qtype="SOA"
 	n=$((n+1))
-	echo_i "check ${_qtype} rrset is signed correctly for zone ${ZONE} ($n)"
+	echo_i "check SOA rrset is signed correctly for zone ${ZONE} ($n)"
 	ret=0
-	_dig_with_opts "$ZONE" "@${SERVER}" $_qtype > "dig.out.$DIR.test$n" || _log_error "dig ${ZONE} ${_qtype} failed"
+	_dig_with_opts "$ZONE" "@${SERVER}" "SOA" > "dig.out.$DIR.test$n" || _log_error "dig ${ZONE} SOA failed"
 	grep "status: NOERROR" "dig.out.$DIR.test$n" > /dev/null || _log_error "mismatch status in DNS response"
-	grep "${ZONE}\..*${DEFAULT_TTL}.*IN.*${_qtype}.*" "dig.out.$DIR.test$n" > /dev/null || _log_error "missing ${_qtype} record in response"
-	lines=$(get_keys_which_signed $_qtype "dig.out.$DIR.test$n" | wc -l)
-	check_signatures $_qtype "dig.out.$DIR.test$n" "ZSK"
+	grep "${ZONE}\..*${DEFAULT_TTL}.*IN.*SOA.*" "dig.out.$DIR.test$n" > /dev/null || _log_error "missing SOA record in response"
+	check_signatures "SOA" "dig.out.$DIR.test$n" "ZSK"
 	test "$ret" -eq 0 || echo_i "failed"
 	status=$((status+ret))
 

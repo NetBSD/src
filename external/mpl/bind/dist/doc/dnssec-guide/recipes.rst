@@ -1069,8 +1069,8 @@ Below is an example showing how to remove DS records using the
 To be on the safe side, wait a while before actually deleting
 all signed data from your zone, just in case some validating resolvers
 have cached information. After you are certain that all cached
-information has expired (usually this means one TTL interval has passed), you may
-reconfigure your zone.
+information has expired (usually this means one TTL interval has passed),
+you may reconfigure your zone.
 
 Here is what ``named.conf`` looks like when it is signed:
 
@@ -1083,7 +1083,7 @@ Here is what ``named.conf`` looks like when it is signed:
        dnssec-policy "default";
    };
 
-Remove the ``dnssec-policy`` line so your ``named.conf`` looks like this:
+Change your ``dnssec-policy`` line to indicate you want to revert to unsigned:
 
 ::
 
@@ -1091,8 +1091,26 @@ Remove the ``dnssec-policy`` line so your ``named.conf`` looks like this:
        type primary;
        file "db/example.com.db";
        allow-transfer { any; };
+       dnssec-policy "insecure";
    };
 
 Then use ``rndc reload`` to reload the zone.
 
-Your zone is now reverted back to the traditional, insecure DNS format.
+The "insecure" policy is a built-in policy (like "default"). It will make sure
+the zone is still DNSSEC maintained, to allow for a graceful transition to
+unsigned.
+
+When the DS records have been removed from the parent zone, use
+``rndc dnssec -checkds -key <id> withdrawn example.com`` to tell ``named`` that
+the DS is removed, and the remaining DNSSEC records will be removed in a timely
+manner. Or if you have parental agents configured, the DNSSEC records will be
+automatically removed after BIND has seen that the parental agents no longer
+serves the DS RRset for this zone.
+
+After a while, your zone is reverted back to the traditional, insecure DNS
+format. You can verify by checking that all DNSKEY and RRSIG records have been
+removed from the zone.
+
+You can then remove the ``dnssec-policy`` line from your ``named.conf`` and
+reload the zone. The zone will now no longer be subject to any DNSSEC
+maintenance.

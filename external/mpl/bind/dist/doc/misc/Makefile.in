@@ -71,6 +71,7 @@ rst: options
 	${PERL} rst-grammars.pl options.active controls > controls.grammar.rst
 	${PERL} rst-grammars.pl options.active key > key.grammar.rst
 	${PERL} rst-grammars.pl options.active logging > logging.grammar.rst
+	${PERL} rst-grammars.pl options.active parental-agents > parentals.grammar.rst
 	${PERL} rst-grammars.pl options.active primaries > primaries.grammar.rst
 	${PERL} rst-grammars.pl options.active options > options.grammar.rst
 	${PERL} rst-grammars.pl options.active server > server.grammar.rst

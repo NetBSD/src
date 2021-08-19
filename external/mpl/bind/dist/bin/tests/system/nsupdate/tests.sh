@@ -53,6 +53,16 @@ while true; do
     fi
 done
 
+has_positive_response() {
+	zone=$1
+	type=$2
+	ns=$3
+	$DIG $DIGOPTS +tcp +norec $zone $type @$ns > dig.out.post.test$n || return 1
+	grep "status: NOERROR" dig.out.post.test$n > /dev/null || return 1
+	grep "ANSWER: 0," dig.out.post.test$n > /dev/null && return 1
+	return 0
+}
+
 ret=0
 echo_i "fetching first copy of zone before update"
 $DIG $DIGOPTS +tcp +noadd +nosea +nostat +noquest +nocomm +nocmd example.nil.\
@@ -304,32 +314,43 @@ elif [ "$serial" -gt "$now" ]; then
 fi
 [ $ret = 0 ] || { echo_i "failed"; status=1; }
 
-ret=0
 if $PERL -e 'use Net::DNS;' 2>/dev/null
 then
-    echo_i "running update.pl test"
-    {
-      $PERL update_test.pl -s 10.53.0.1 -p ${PORT} update.nil. || ret=1
-    } | cat_i
+    n=`expr $n + 1`
+    ret=0
+    echo_i "running update.pl test ($n)"
+    $PERL update_test.pl -s 10.53.0.1 -p ${PORT} update.nil. > perl.update_test.out || ret=1
     [ $ret -eq 1 ] && { echo_i "failed"; status=1; }
+
+    if $PERL -e 'use Net::DNS; die "Net::DNS too old ($Net::DNS::VERSION < 1.01)" if ($Net::DNS::VERSION < 1.01)' > /dev/null
+    then
+	n=`expr $n + 1`
+	ret=0
+	echo_i "check for too many NSEC3 iterations log ($n)"
+	grep "updating zone 'update.nil/IN': too many NSEC3 iterations (151)" ns1/named.run > /dev/null || ret=1
+	[ $ret -eq 1 ] && { echo_i "failed"; status=1; }
+    fi
 else
     echo_i "The second part of this test requires the Net::DNS library." >&2
 fi
 
+n=`expr $n + 1`
 ret=0
-echo_i "fetching first copy of test zone"
+echo_i "fetching first copy of test zone ($n)"
 $DIG $DIGOPTS +tcp +noadd +nosea +nostat +noquest +nocomm +nocmd example.nil.\
 	@10.53.0.1 axfr > dig.out.ns1 || ret=1
 [ $ret = 0 ] || { echo_i "failed"; status=1; }
 
+n=`expr $n + 1`
 ret=0
-echo_i "fetching second copy of test zone"
+echo_i "fetching second copy of test zone ($n)"
 $DIG $DIGOPTS +tcp +noadd +nosea +nostat +noquest +nocomm +nocmd example.nil.\
 	@10.53.0.2 axfr > dig.out.ns2 || ret=1
 [ $ret = 0 ] || { echo_i "failed"; status=1; }
 
+n=`expr $n + 1`
 ret=0
-echo_i "comparing zones"
+echo_i "comparing zones ($n)"
 digcomp dig.out.ns1 dig.out.ns2 || ret=1
 [ $ret = 0 ] || { echo_i "failed"; status=1; }
 
@@ -349,21 +370,24 @@ else
 fi
 sleep 10
 
+n=`expr $n + 1`
 ret=0
-echo_i "fetching ns1 after hard restart"
+echo_i "fetching ns1 after hard restart ($n)"
 $DIG $DIGOPTS +tcp +noadd +nosea +nostat +noquest +nocomm +nocmd example.nil.\
 	@10.53.0.1 axfr > dig.out.ns1.after || ret=1
 [ $ret = 0 ] || { echo_i "failed"; status=1; }
 
+n=`expr $n + 1`
 ret=0
-echo_i "comparing zones"
+echo_i "comparing zones ($n)"
 digcomp dig.out.ns1 dig.out.ns1.after || ret=1
 [ $ret = 0 ] || { echo_i "failed"; status=1; }
 
 echo_i "begin RT #482 regression test"
 
+n=`expr $n + 1`
 ret=0
-echo_i "update primary"
+echo_i "update primary ($n)"
 $NSUPDATE -k ns1/ddns.key <<END > /dev/null || ret=1
 server 10.53.0.1 ${PORT}
 update add updated2.example.nil. 600 A 10.10.10.2
@@ -385,8 +409,9 @@ fi
 
 sleep 5
 
+n=`expr $n + 1`
 ret=0
-echo_i "update primary again"
+echo_i "update primary again ($n)"
 $NSUPDATE -k ns1/ddns.key <<END > /dev/null || ret=1
 server 10.53.0.1 ${PORT}
 update add updated3.example.nil. 600 A 10.10.10.3
@@ -408,7 +433,8 @@ fi
 
 sleep 5
 
-echo_i "check to 'out of sync' message"
+n=`expr $n + 1`
+echo_i "check to 'out of sync' message ($n)"
 if grep "out of sync" ns2/named.run
 then
 	echo_i "failed (found 'out of sync')"
@@ -1132,6 +1158,10 @@ grep "UPDATE, status: NOERROR" nsupdate.out-$n > /dev/null 2>&1 || ret=1
 grep "UPDATE, status: FORMERR" nsupdate.out-$n > /dev/null 2>&1 || ret=1
 [ $ret = 0 ] || { echo_i "failed"; status=1; }
 
+
+
+n=`expr $n + 1`
+ret=0
 echo_i "check that DS to the zone apex is ignored ($n)"
 $DIG $DIGOPTS +tcp +norec example DS @10.53.0.3 > dig.out.pre.test$n || ret=1
 grep "status: NOERROR" dig.out.pre.test$n > /dev/null || ret=1
@@ -1151,7 +1181,89 @@ grep "status: NOERROR" dig.out.post.test$n > /dev/null || ret=1
 grep "ANSWER: 0," dig.out.post.test$n > /dev/null || ret=1
 [ $ret = 0 ] || { echo_i "failed"; status=1; }
 
-if $FEATURETEST --gssapi ; then
+n=`expr $n + 1`
+ret=0
+echo_i "check that CDS with mismatched algorithm to DNSSEC multisigner zone is not allowed ($n)"
+$DIG $DIGOPTS +tcp +norec multisigner.test CDS @10.53.0.3 > dig.out.pre.test$n || ret=1
+grep "status: NOERROR" dig.out.pre.test$n > /dev/null || ret=1
+grep "ANSWER: 0," dig.out.pre.test$n > /dev/null || ret=1
+$NSUPDATE -d <<END > nsupdate.out-$n 2>&1 && ret=1
+server 10.53.0.3 ${PORT}
+zone multisigner.test
+update add multisigner.test 3600 IN CDS 14364 14 2 FD03B2312C8F0FE72C1751EFA1007D743C94EC91594FF0047C23C37CE119BA0C
+send
+END
+msg=": bad CDS RRset"
+nextpart ns3/named.run | grep "$msg" > /dev/null || ret=1
+$DIG $DIGOPTS +tcp +norec multisigner.test CDS @10.53.0.3 > dig.out.post.test$n || ret=1
+grep "status: NOERROR" dig.out.post.test$n > /dev/null || ret=1
+grep "ANSWER: 0," dig.out.post.test$n > /dev/null || ret=1
+[ $ret = 0 ] || { echo_i "failed"; status=1; }
+
+n=`expr $n + 1`
+ret=0
+echo_i "check that CDNSKEY with mismatched algorithm to DNSSEC multisigner zone is not allowed ($n)"
+$DIG $DIGOPTS +tcp +norec multisigner.test CDNSKEY @10.53.0.3 > dig.out.pre.test$n || ret=1
+grep "status: NOERROR" dig.out.pre.test$n > /dev/null || ret=1
+grep "ANSWER: 0," dig.out.pre.test$n > /dev/null || ret=1
+nextpart ns3/named.run > /dev/null
+$NSUPDATE -d <<END > nsupdate.out-$n 2>&1 && ret=1
+server 10.53.0.3 ${PORT}
+zone multisigner.test
+update add multisigner.test 3600 IN CDNSKEY 257 3 14 d0NQ5PKmDz6P0B1WPMH9/UKRux/toSFwV2nTJYPA1Cx8pB0sJGTXbVhG U+6gye7VCHDhGIn9CjVfb2RJPW7GnQ==
+send
+END
+msg=": bad CDNSKEY RRset"
+nextpart ns3/named.run | grep "$msg" > /dev/null || ret=1
+$DIG $DIGOPTS +tcp +norec multisigner.test CDNSKEY @10.53.0.3 > dig.out.post.test$n || ret=1
+grep "status: NOERROR" dig.out.post.test$n > /dev/null || ret=1
+grep "ANSWER: 0," dig.out.post.test$n > /dev/null || ret=1
+[ $ret = 0 ] || { echo_i "failed"; status=1; }
+
+n=`expr $n + 1`
+ret=0
+echo_i "check that CDS to DNSSEC multisigner zone is allowed ($n)"
+$DIG $DIGOPTS +tcp +norec multisigner.test CDS @10.53.0.3 > dig.out.pre.test$n || ret=1
+grep "status: NOERROR" dig.out.pre.test$n > /dev/null || ret=1
+grep "ANSWER: 0," dig.out.pre.test$n > /dev/null || ret=1
+$NSUPDATE -d <<END > nsupdate.out-$n 2>&1 || ret=1
+server 10.53.0.3 ${PORT}
+zone multisigner.test
+update add multisigner.test 3600 IN CDS 14364 13 2 FD03B2312C8F0FE72C1751EFA1007D743C94EC91594FF0047C23C37CE119BA0C
+send
+END
+retry_quiet 5 has_positive_response multisigner.test CDS 10.53.0.3 || ret=1
+[ $ret = 0 ] || { echo_i "failed"; status=1; }
+
+n=`expr $n + 1`
+ret=0
+echo_i "check that CDNSKEY to DNSSEC multisigner zone is allowed ($n)"
+$DIG $DIGOPTS +tcp +norec multisigner.test CDNSKEY @10.53.0.3 > dig.out.pre.test$n || ret=1
+grep "status: NOERROR" dig.out.pre.test$n > /dev/null || ret=1
+grep "ANSWER: 0," dig.out.pre.test$n > /dev/null || ret=1
+$NSUPDATE -d <<END > nsupdate.out-$n 2>&1 || ret=1
+server 10.53.0.3 ${PORT}
+zone multisigner.test
+update add multisigner.test 3600 IN CDNSKEY 257 3 13 d0NQ5PKmDz6P0B1WPMH9/UKRux/toSFwV2nTJYPA1Cx8pB0sJGTXbVhG U+6gye7VCHDhGIn9CjVfb2RJPW7GnQ==
+send
+END
+retry_quiet 5 has_positive_response multisigner.test CDNSKEY 10.53.0.3 || ret=1
+[ $ret = 0 ] || { echo_i "failed"; status=1; }
+
+n=`expr $n + 1`
+ret=0
+echo_i "check that excessive NSEC3PARAM iterations are rejected by nsupdate ($n)"
+$NSUPDATE -d <<END > nsupdate.out-$n 2>&1 && ret=1
+server 10.53.0.3 ${PORT}
+zone example
+update add example 0 in NSEC3PARAM 1 0 151 -
+END
+grep "NSEC3PARAM has excessive iterations (> 150)" nsupdate.out-$n >/dev/null || ret=1
+[ $ret = 0 ] || { echo_i "failed"; status=1; }
+
+if ! $FEATURETEST --gssapi ; then
+  echo_i "SKIPPED: GSSAPI tests"
+else
   n=`expr $n + 1`
   ret=0
   echo_i "check krb5-self match ($n)"
@@ -1370,88 +1482,6 @@ EOF
   [ $ret = 0 ] || { echo_i "failed"; status=1; }
 
 fi
-#
-#  Add client library tests here
-#
-
-if test unset != "${SAMPLEUPDATE:-unset}" -a -x "${SAMPLEUPDATE}"
-then
-
-    n=`expr $n + 1`
-    ret=0
-    echo_i "check that dns_client_update handles prerequisite NXDOMAIN failure ($n)"
-    $SAMPLEUPDATE -P ${PORT} -a 10.53.0.1 -a 10.53.0.2 -p "nxdomain exists.sample" \
-	add "nxdomain-exists.sample 0 in a 1.2.3.4" > update.out.test$n 2>&1
-    $SAMPLEUPDATE -P ${PORT} -a 10.53.0.2 -p "nxdomain exists.sample" \
-	add "check-nxdomain-exists.sample 0 in a 1.2.3.4" > update.out.check$n 2>&1
-    $DIG $DIGOPTS +tcp @10.53.0.1 a nxdomain-exists.sample > dig.out.ns1.test$n
-    $DIG $DIGOPTS +tcp @10.53.0.2 a nxdomain-exists.sample > dig.out.ns2.test$n
-    $DIG $DIGOPTS +tcp @10.53.0.2 a check-nxdomain-exists.sample > check.out.ns2.test$n
-    grep "update failed: YXDOMAIN" update.out.test$n > /dev/null || ret=1
-    grep "update succeeded" update.out.check$n > /dev/null || ret=1
-    grep "status: NXDOMAIN" dig.out.ns1.test$n > /dev/null || ret=1
-    grep "status: NXDOMAIN" dig.out.ns2.test$n > /dev/null || ret=1
-    grep "status: NOERROR" check.out.ns2.test$n > /dev/null || ret=1
-    [ $ret = 0 ] || { echo_i "failed"; status=1; }
-
-    n=`expr $n + 1`
-    ret=0
-    echo_i "check that dns_client_update handles prerequisite YXDOMAIN failure ($n)"
-    $SAMPLEUPDATE -P ${PORT} -a 10.53.0.1 -a 10.53.0.2 -p "yxdomain nxdomain.sample" \
-	add "yxdomain-nxdomain.sample 0 in a 1.2.3.4" > update.out.test$n 2>&1
-    $SAMPLEUPDATE -P ${PORT} -a 10.53.0.2 -p "yxdomain nxdomain.sample" \
-	add "check-yxdomain-nxdomain.sample 0 in a 1.2.3.4" > update.out.check$n 2>&1
-    $DIG $DIGOPTS +tcp @10.53.0.1 a nxdomain-exists.sample > dig.out.ns1.test$n
-    $DIG $DIGOPTS +tcp @10.53.0.2 a nxdomain-exists.sample > dig.out.ns2.test$n
-    $DIG $DIGOPTS +tcp @10.53.0.2 a check-nxdomain-exists.sample > check.out.ns2.test$n
-    grep "update failed: NXDOMAIN" update.out.test$n > /dev/null || ret=1
-    grep "update succeeded" update.out.check$n > /dev/null || ret=1
-    grep "status: NXDOMAIN" dig.out.ns1.test$n > /dev/null || ret=1
-    grep "status: NXDOMAIN" dig.out.ns2.test$n > /dev/null || ret=1
-    grep "status: NOERROR" check.out.ns2.test$n > /dev/null || ret=1
-    [ $ret = 0 ] || { echo_i "failed"; status=1; }
-
-    n=`expr $n + 1`
-    ret=0
-    echo_i "check that dns_client_update handles prerequisite NXRRSET failure ($n)"
-    $SAMPLEUPDATE -P ${PORT} -a 10.53.0.1 -a 10.53.0.2 -p "nxrrset exists.sample TXT This RRset exists." \
-	add "nxrrset-exists.sample 0 in a 1.2.3.4" > update.out.test$n 2>&1
-    $SAMPLEUPDATE -P ${PORT} -a 10.53.0.2 -p "nxrrset exists.sample TXT This RRset exists." \
-	add "check-nxrrset-exists.sample 0 in a 1.2.3.4" > update.out.check$n 2>&1
-    $DIG $DIGOPTS +tcp @10.53.0.1 a nxrrset-exists.sample > dig.out.ns1.test$n
-    $DIG $DIGOPTS +tcp @10.53.0.2 a nxrrset-exists.sample > dig.out.ns2.test$n
-    $DIG $DIGOPTS +tcp @10.53.0.2 a check-nxrrset-exists.sample > check.out.ns2.test$n
-    grep "update failed: YXRRSET" update.out.test$n > /dev/null || ret=1
-    grep "update succeeded" update.out.check$n > /dev/null || ret=1
-    grep "status: NXDOMAIN" dig.out.ns1.test$n > /dev/null || ret=1
-    grep "status: NXDOMAIN" dig.out.ns2.test$n > /dev/null || ret=1
-    grep "status: NOERROR" check.out.ns2.test$n > /dev/null || ret=1
-    [ $ret = 0 ] || { echo_i "failed"; status=1; }
-
-    n=`expr $n + 1`
-    ret=0
-    echo_i "check that dns_client_update handles prerequisite YXRRSET failure ($n)"
-    $SAMPLEUPDATE -s -P ${PORT} -a 10.53.0.1 -a 10.53.0.2 \
-	-p "yxrrset no-txt.sample TXT" \
-	add "yxrrset-nxrrset.sample 0 in a 1.2.3.4" > update.out.test$n 2>&1
-    $SAMPLEUPDATE -P ${PORT} -a 10.53.0.2 -p "yxrrset no-txt.sample TXT" \
-	add "check-yxrrset-nxrrset.sample 0 in a 1.2.3.4" > update.out.check$n 2>&1
-    $DIG $DIGOPTS +tcp @10.53.0.1 a yxrrset-nxrrset.sample > dig.out.ns1.test$n
-    $DIG $DIGOPTS +tcp @10.53.0.2 a yxrrset-nxrrset.sample > dig.out.ns2.test$n
-    $DIG $DIGOPTS +tcp @10.53.0.2 a check-yxrrset-nxrrset.sample > check.out.ns2.test$n
-    grep "update failed: NXRRSET" update.out.test$n > /dev/null || ret=1
-    grep "update succeeded" update.out.check$n > /dev/null || ret=1
-    grep "status: NXDOMAIN" dig.out.ns1.test$n > /dev/null || ret=1
-    grep "status: NXDOMAIN" dig.out.ns2.test$n > /dev/null || ret=1
-    grep "status: NOERROR" check.out.ns2.test$n > /dev/null || ret=1
-    grep "2nd update failed: NXRRSET" update.out.test$n > /dev/null || ret=1
-    [ $ret = 0 ] || { echo_i "failed"; status=1; }
-
-fi
-
-#
-# End client library tests here
-#
 
 echo_i "exit status: $status"
 [ $status -eq 0 ] || exit 1

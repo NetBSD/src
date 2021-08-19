@@ -1,0 +1,36 @@
+; Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+;
+; This Source Code Form is subject to the terms of the Mozilla Public
+; License, v. 2.0. If a copy of the MPL was not distributed with this
+; file, You can obtain one at http://mozilla.org/MPL/2.0/.
+;
+; See the COPYRIGHT file distributed with this work for additional
+; information regarding copyright ownership.
+
+$TTL 300
+@			IN	SOA  secondary.example. hostmaster.example. (
+				1       ; serial
+				20      ; refresh (20 seconds)
+				20      ; retry (20 seconds)
+				1814400 ; expire (3 weeks)
+				3600    ; minimum (1 hour)
+				)
+
+				NS	ns2
+ns2				A	10.53.0.2
+
+dspublished			NS	ns9.dspublished
+reference			NS	ns9.reference
+missing-dspublished		NS	ns9.missing-dspublished
+bad-dspublished			NS	ns9.bad-dspublished
+multiple-dspublished		NS	ns9.multiple-dspublished
+incomplete-dspublished		NS	ns9.incomplete-dspublished
+bad2-dspublished		NS	ns9.bad2-dspublished
+
+dswithdrawn			NS	ns9.dswithdrawn
+missing-dswithdrawn		NS	ns9.missing-dswithdrawn
+bad-dswithdrawn			NS	ns9.bad-dswithdrawn
+multiple-dswithdrawn		NS	ns9.multiple-dswithdrawn
+incomplete-dswithdrawn		NS	ns9.incomplete-dswithdrawn
+bad2-dswithdrawn		NS	ns9.bad2-dswithdrawn
+

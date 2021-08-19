@@ -80,6 +80,34 @@ sub reply_handler {
 	$rr = new Net::DNS::RR("$synth2 $ttl $qclass DNAME .");
 	push @ans, $rr;
 	$rcode = "NOERROR";
+    # The following three code branches referring to the "example.dname"
+    # zone are necessary for the resolver variant of the CVE-2021-25215
+    # regression test to work.  A named instance cannot be used for
+    # serving the DNAME records below as a version of BIND vulnerable to
+    # CVE-2021-25215 would crash while answering the queries asked by
+    # the tested resolver.
+    } elsif ($qname eq "ns3.example.dname") {
+	if ($qtype eq "A") {
+		my $rr = new Net::DNS::RR("$qname $ttl $qclass A 10.53.0.3");
+		push @ans, $rr;
+	}
+	if ($qtype eq "AAAA") {
+		my $rr = new Net::DNS::RR("example.dname. $ttl $qclass SOA . . 0 0 0 0 $ttl");
+		push @auth, $rr;
+	}
+	$rcode = "NOERROR";
+    } elsif ($qname eq "self.example.self.example.dname") {
+	my $rr = new Net::DNS::RR("self.example.dname. $ttl $qclass DNAME dname.");
+	push @ans, $rr;
+	$rr = new Net::DNS::RR("$qname $ttl $qclass CNAME self.example.dname.");
+	push @ans, $rr;
+	$rcode = "NOERROR";
+    } elsif ($qname eq "self.example.dname") {
+	if ($qtype eq "DNAME") {
+		my $rr = new Net::DNS::RR("$qname $ttl $qclass DNAME dname.");
+		push @ans, $rr;
+	}
+	$rcode = "NOERROR";
     } else {
 	$rcode = "REFUSED";
     }

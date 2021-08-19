@@ -7,7 +7,7 @@
   	allow-query-on { <address_match_element>; ... };
   	allow-transfer { <address_match_element>; ... };
   	allow-update-forwarding { <address_match_element>; ... };
-  	also-notify [ port <integer> ] [ dscp <integer> ] { ( <primaries> | <ipv4_address> [ port <integer> ] | <ipv6_address> [ port <integer> ] ) [ key <string> ]; ... };
+  	also-notify [ port <integer> ] [ dscp <integer> ] { ( <remote-servers> | <ipv4_address> [ port <integer> ] | <ipv6_address> [ port <integer> ] ) [ key <string> ]; ... };
   	alt-transfer-source ( <ipv4_address> | * ) [ port ( <integer> | * ) ] [ dscp <integer> ];
   	alt-transfer-source-v6 ( <ipv6_address> | * ) [ port ( <integer> | * ) ] [ dscp <integer> ];
   	check-names ( fail | warn | ignore );
@@ -17,7 +17,8 @@
   	journal <quoted_string>;
   	masterfile-format ( map | raw | text );
   	masterfile-style ( full | relative );
-  	masters [ port <integer> ] [ dscp <integer> ] { ( <primaries> | <ipv4_address> [ port <integer> ] | <ipv6_address> [ port <integer> ] ) [ key <string> ]; ... };
+  	masters [ port <integer> ] [ dscp <integer> ] { ( <remote-servers> | <ipv4_address> [ port <integer> ] | <ipv6_address> [ port <integer> ] ) [ key <string> ]; ... };
+  	max-ixfr-ratio ( unlimited | <percentage> );
   	max-journal-size ( default | unlimited | <sizeval> );
   	max-records <integer>;
   	max-refresh-time <integer>;
@@ -33,7 +34,7 @@
   	notify-delay <integer>;
   	notify-source ( <ipv4_address> | * ) [ port ( <integer> | * ) ] [ dscp <integer> ];
   	notify-source-v6 ( <ipv6_address> | * ) [ port ( <integer> | * ) ] [ dscp <integer> ];
-  	primaries [ port <integer> ] [ dscp <integer> ] { ( <primaries> | <ipv4_address> [ port <integer> ] | <ipv6_address> [ port <integer> ] ) [ key <string> ]; ... };
+  	primaries [ port <integer> ] [ dscp <integer> ] { ( <remote-servers> | <ipv4_address> [ port <integer> ] | <ipv6_address> [ port <integer> ] ) [ key <string> ]; ... };
   	request-expire <boolean>;
   	request-ixfr <boolean>;
   	transfer-source ( <ipv4_address> | * ) [ port ( <integer> | * ) ] [ dscp <integer> ];

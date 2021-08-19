@@ -363,6 +363,12 @@ zone "revoked.trusted" {
 	file "revoked.trusted.db.signed";
 };
 
+zone "too-many-iterations" {
+	type secondary;
+	primaries { 10.53.0.2; };
+	file "too-many-iterations.bk";
+};
+
 include "siginterval.conf";
 
 include "trusted.conf";

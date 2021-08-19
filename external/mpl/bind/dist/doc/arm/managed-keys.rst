@@ -35,7 +35,7 @@ zone with one of them; this is the "active" KSK. All KSKs which do not
 sign the zone are "stand-by" keys.
 
 Any validating resolver which is configured to use the active KSK as an
-RFC 5011-managed trust anchor takes note of the stand-by KSKs in the
+:rfc:`5011`-managed trust anchor takes note of the stand-by KSKs in the
 zone's DNSKEY RRset, and stores them for future reference. The resolver
 rechecks the zone periodically; after 30 days, if the new key is
 still there, the key is accepted by the resolver as a valid

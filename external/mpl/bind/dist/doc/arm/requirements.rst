@@ -60,7 +60,7 @@ Name Server-Intensive Environment Issues
 
 For name server-intensive environments, there are two
 configurations that may be used. The first is one where clients and any
-second-level internal name servers query a main name server, which has
+second-level internal name servers query the main name server, which has
 enough memory to build a large cache; this approach minimizes the
 bandwidth used by external name lookups. The second alternative is to
 set up second-level internal name servers to make queries independently.

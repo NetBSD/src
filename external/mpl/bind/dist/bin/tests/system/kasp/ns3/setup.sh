@@ -22,16 +22,6 @@ setup() {
 	echo "$zone" >> zones
 }
 
-private_type_record() {
-	_zone=$1
-	_algorithm=$2
-	_keyfile=$3
-
-	_id=$(keyfile_to_key_id "$_keyfile")
-
-	printf "%s. 0 IN TYPE65534 %s 5 %02x%04x0000\n" "$_zone" "\\#" "$_algorithm" "$_id"
-}
-
 # Set in the key state files the Predecessor/Successor fields.
 # Key $1 is the predecessor of key $2.
 key_successor() {
@@ -74,6 +64,14 @@ fi
 
 # Set up zone that stays unsigned.
 zone="unsigned.kasp"
+echo_i "setting up zone: $zone"
+zonefile="${zone}.db"
+infile="${zone}.db.infile"
+cp template.db.in $infile
+cp template.db.in $zonefile
+
+# Set up zone that stays unsigned.
+zone="insecure.kasp"
 echo_i "setting up zone: $zone"
 zonefile="${zone}.db"
 infile="${zone}.db.infile"
@@ -187,7 +185,25 @@ private_type_record $zone $DEFAULT_ALGORITHM_NUMBER "$KSK" >> "$infile"
 private_type_record $zone $DEFAULT_ALGORITHM_NUMBER "$ZSK" >> "$infile"
 $SIGNER -S -x -s now-1w -e now+1w -o $zone -O full -f $zonefile $infile > signer.out.$zone.1 2>&1
 
-# These signatures are already expired, and the private ZSK is missing.
+# These signatures are still good, but the private KSK is missing.
+setup ksk-missing.autosign
+T="now-6mo"
+ksktimes="-P $T -A $T -P sync $T"
+zsktimes="-P $T -A $T"
+KSK=$($KEYGEN -a $DEFAULT_ALGORITHM -L 300 -f KSK $ksktimes $zone 2> keygen.out.$zone.1)
+ZSK=$($KEYGEN -a $DEFAULT_ALGORITHM -L 300        $zsktimes $zone 2> keygen.out.$zone.2)
+$SETTIME -s -g $O -d $O $T -k $O $T -r $O $T "$KSK" > settime.out.$zone.1 2>&1
+$SETTIME -s -g $O -k $O $T -z $O $T          "$ZSK" > settime.out.$zone.2 2>&1
+cat template.db.in "${KSK}.key" "${ZSK}.key" > "$infile"
+private_type_record $zone $DEFAULT_ALGORITHM_NUMBER "$KSK" >> "$infile"
+private_type_record $zone $DEFAULT_ALGORITHM_NUMBER "$ZSK" >> "$infile"
+$SIGNER -S -x -s now-1w -e now+1w -o $zone -O full -f $zonefile $infile > signer.out.$zone.1 2>&1
+echo "KSK: yes" >> "${KSK}".state
+echo "ZSK: no" >> "${KSK}".state
+echo "Lifetime: 63072000" >> "${KSK}".state # PT2Y
+rm -f "${KSK}".private
+
+# These signatures are still good, but the private ZSK is missing.
 setup zsk-missing.autosign
 T="now-6mo"
 ksktimes="-P $T -A $T -P sync $T"
@@ -199,7 +215,10 @@ $SETTIME -s -g $O -k $O $T -z $O $T          "$ZSK" > settime.out.$zone.2 2>&1
 cat template.db.in "${KSK}.key" "${ZSK}.key" > "$infile"
 private_type_record $zone $DEFAULT_ALGORITHM_NUMBER "$KSK" >> "$infile"
 private_type_record $zone $DEFAULT_ALGORITHM_NUMBER "$ZSK" >> "$infile"
-$SIGNER -PS -x -s now-2w -e now-1mi -o $zone -O full -f $zonefile $infile > signer.out.$zone.1 2>&1
+$SIGNER -S -x -s now-1w -e now+1w -o $zone -O full -f $zonefile $infile > signer.out.$zone.1 2>&1
+echo "KSK: no" >> "${ZSK}".state
+echo "ZSK: yes" >> "${ZSK}".state
+echo "Lifetime: 31536000" >> "${ZSK}".state # PT1Y
 rm -f "${ZSK}".private
 
 # These signatures are already expired, and the private ZSK is retired.
@@ -264,7 +283,6 @@ $SETTIME -s -g $O -k $O $TcotN -r $O $TcotN -d $H $TpubN -z $R $TpubN "$CSK" > s
 cat template.db.in "${CSK}.key" > "$infile"
 private_type_record $zone $DEFAULT_ALGORITHM_NUMBER "$CSK" >> "$infile"
 $SIGNER -S -z -x -s now-1h -e now+30d -o $zone -O full -f $zonefile $infile > signer.out.$zone.1 2>&1
-setup step3.enable-dnssec.autosign
 
 # Step 4:
 # The DS has been submitted long enough ago to become OMNIPRESENT.

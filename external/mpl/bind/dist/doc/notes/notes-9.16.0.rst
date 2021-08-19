@@ -21,13 +21,13 @@ New Features
    is now used by ``named`` for listening for incoming requests and
    responding to them. This change will make it easier to improve
    performance and implement new protocol layers (for example, DNS over
-   TLS) in the future. [GL #29]
+   TLS) in the future. :gl:`#29`
 
 -  The new ``dnssec-policy`` option allows the configuration of a key
    and signing policy (KASP) for zones. This option enables ``named`` to
    generate new keys as needed and automatically roll both ZSK and KSK
    keys. (Note that the syntax for this statement differs from the
-   DNSSEC policy used by ``dnssec-keymgr``.) [GL #1134]
+   DNSSEC policy used by ``dnssec-keymgr``.) :gl:`#1134`
 
 -  In order to clarify the configuration of DNSSEC keys, the
    ``trusted-keys`` and ``managed-keys`` statements have been
@@ -41,7 +41,7 @@ New Features
    When used with the new keyword ``static-key``, ``trust-anchors`` has
    the same behavior as ``trusted-keys``, i.e., it configures a
    permanent trust anchor that will not automatically be updated. (This
-   usage is not recommended for the root key.) [GL #6]
+   usage is not recommended for the root key.) :gl:`#6`
 
 -  Two new keywords have been added to the ``trust-anchors`` statement:
    ``initial-ds`` and ``static-ds``. These allow the use of trust
@@ -52,10 +52,10 @@ New Features
    As with the ``initial-key`` and ``static-key`` keywords,
    ``initial-ds`` configures a dynamic trust anchor to be maintained via
    :rfc:`5011`, and ``static-ds`` configures a permanent trust anchor.
-   [GL #6] [GL #622]
+   :gl:`#6` :gl:`#622`
 
 -  ``dig``, ``mdig`` and ``delv`` can all now take a ``+yaml`` option to
-   print output in a detailed YAML format. [GL #1145]
+   print output in a detailed YAML format. :gl:`#1145`
 
 -  ``dig`` now has a new command line option: ``+[no]unexpected``. By
    default, ``dig`` won't accept a reply from a source other than the
@@ -65,9 +65,9 @@ New Features
 -  ``dig`` now accepts a new command line option, ``+[no]expandaaaa``,
    which causes the IPv6 addresses in AAAA records to be printed in full
    128-bit notation rather than the default :rfc:`5952` format.
-   [GL #765]
+   :gl:`#765`
 
--  Statistics channel groups can now be toggled. [GL #1030]
+-  Statistics channel groups can now be toggled. :gl:`#1030`
 
 Feature Changes
 ~~~~~~~~~~~~~~~
@@ -78,7 +78,7 @@ Feature Changes
    of ``auto``, automatic :rfc:`5011` key rollovers would be disabled.
    This combination of settings was never intended to work, but there
    was no check for it in the parser. This has been corrected, and it is
-   now a fatal configuration error. [GL #868]
+   now a fatal configuration error. :gl:`#868`
 
 -  DS and CDS records are now generated with SHA-256 digests only,
    instead of both SHA-1 and SHA-256. This affects the default output of
@@ -87,16 +87,16 @@ Feature Changes
    ``dnssec-signzone`` based on ``keyset`` files, the CDS records added
    to a zone by ``named`` and ``dnssec-signzone`` based on "sync" timing
    parameters in key files, and the checks performed by
-   ``dnssec-checkds``. [GL #1015]
+   ``dnssec-checkds``. :gl:`#1015`
 
 -  ``named`` will now log a warning if a static key is configured for
-   the root zone. [GL #6]
+   the root zone. :gl:`#6`
 
 -  A SipHash 2-4 based DNS Cookie (:rfc:`7873`) algorithm has been added
    and made default. Old non-default HMAC-SHA based DNS Cookie
    algorithms have been removed, and only the default AES algorithm is
    being kept for legacy reasons. This change has no operational impact
-   in most common scenarios. [GL #605]
+   in most common scenarios. :gl:`#605`
 
    If you are running multiple DNS servers (different versions of BIND 9
    or DNS servers from multiple vendors) responding from the same IP
@@ -110,40 +110,40 @@ Feature Changes
    requests the signed zone to be printed to standard output with the
    ``-f -`` option. A new configuration option ``-q`` has been added to
    silence all output on standard output except for the name of the
-   signed zone. [GL #1151]
+   signed zone. :gl:`#1151`
 
 -  The DNSSEC validation code has been refactored for clarity and to
-   reduce code duplication. [GL #622]
+   reduce code duplication. :gl:`#622`
 
 -  Compile-time settings enabled by the ``--with-tuning=large`` option
    for ``configure`` are now in effect by default. Previously used
    default compile-time settings can be enabled by passing
-   ``--with-tuning=small`` to ``configure``. [GL !2989]
+   ``--with-tuning=small`` to ``configure``. :gl:`!2989`
 
 -  JSON-C is now the only supported library for enabling JSON support
    for BIND statistics. The ``configure`` option has been renamed from
    ``--with-libjson`` to ``--with-json-c``. Set the ``PKG_CONFIG_PATH``
    environment variable accordingly to specify a custom path to the
    ``json-c`` library, as the new ``configure`` option does not take the
-   library installation path as an optional argument. [GL #855]
+   library installation path as an optional argument. :gl:`#855`
 
 -  ``./configure`` no longer sets ``--sysconfdir`` to ``/etc`` or
    ``--localstatedir`` to ``/var`` when ``--prefix`` is not specified
    and the aforementioned options are not specified explicitly. Instead,
    Autoconf's defaults of ``$prefix/etc`` and ``$prefix/var`` are
-   respected. [GL #658]
+   respected. :gl:`#658`
 
 Removed Features
 ~~~~~~~~~~~~~~~~
 
 -  The ``dnssec-enable`` option has been obsoleted and no longer has any
    effect. DNSSEC responses are always enabled if signatures and other
-   DNSSEC data are present. [GL #866]
+   DNSSEC data are present. :gl:`#866`
 
 -  DNSSEC Lookaside Validation (DLV) is now obsolete. The
    ``dnssec-lookaside`` option has been marked as deprecated; when used
    in ``named.conf``, it will generate a warning but will otherwise be
    ignored. All code enabling the use of lookaside validation has been
-   removed from the validator, ``delv``, and the DNSSEC tools. [GL #7]
+   removed from the validator, ``delv``, and the DNSSEC tools. :gl:`#7`
 
--  The ``cleaning-interval`` option has been removed. [GL !1731]
+-  The ``cleaning-interval`` option has been removed. :gl:`!1731`
