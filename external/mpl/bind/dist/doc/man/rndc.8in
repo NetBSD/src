@@ -136,7 +136,7 @@ after a restart.
 This sample \fBaddzone\fP command adds the zone \fBexample.com\fP to
 the default view:
 .sp
-\fB$ \e rndc addzone example.com \(aq{ type master; file "example.com.db"; };\(aq\fP
+\fBrndc addzone example.com \(aq{ type master; file "example.com.db"; };\(aq\fP
 .sp
 (Note the brackets around and semi\-colon after the zone configuration
 text.)

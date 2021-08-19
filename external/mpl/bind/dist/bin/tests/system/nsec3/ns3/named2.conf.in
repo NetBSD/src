@@ -117,3 +117,11 @@ zone "nsec3-to-nsec.kasp" {
 	//dnssec-policy "nsec3";
 	dnssec-policy "nsec";
 };
+
+/* The zone fails to load, but is fixed after a reload. */
+zone "nsec3-fails-to-load.kasp" {
+	type primary;
+	file "nsec3-fails-to-load.kasp.db";
+	dnssec-policy "nsec3";
+	allow-update { any; };
+};

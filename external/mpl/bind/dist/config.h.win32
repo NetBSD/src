@@ -376,14 +376,11 @@ typedef __int64 off_t;
 /* Define to 1 if you have the `SSL_CTX_up_ref' function. */
 #define SSL_CTX_UP_REF 1
 
-/* Define to 1 if you have the `uv_handle_get_data' function. */
-@HAVE_UV_HANDLE_GET_DATA@
+/* Define to 1 if you have the `setlocale' function. */
+#define HAVE_SETLOCALE 1
 
-/* Define to 1 if you have the `uv_handle_set_data' function. */
-@HAVE_UV_HANDLE_SET_DATA@
-
-/* Define to 1 if you have the `uv_import' function. */
-@HAVE_UV_IMPORT@
+/* Define to 1 if you have the <locale.h> header file. */
+#define HAVE_LOCALE_H 1
 
 /*
  * Define to nothing if C supports flexible array members, and to 1 if it does

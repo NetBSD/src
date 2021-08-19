@@ -72,7 +72,7 @@ All changes made to a zone using dynamic update are stored in the zone's
 journal file. This file is automatically created by the server when the
 first dynamic update takes place. The name of the journal file is formed
 by appending the extension ``.jnl`` to the name of the corresponding
-zone file, unless specifically overridden. The journal file is in a
+zone file unless specifically overridden. The journal file is in a
 binary format and should not be edited manually.
 
 The server also occasionally writes ("dumps") the complete contents
@@ -612,7 +612,7 @@ recommended that zone keys use a cryptographic algorithm designated as
 RSASHA256 and ECDSAP256SHA256; ECDSAP256SHA256 is recommended for
 current and future deployments.
 
-The following command generates a ECDSAP256SHA256 key for the
+The following command generates an ECDSAP256SHA256 key for the
 ``child.example`` zone:
 
 ``dnssec-keygen -a ECDSAP256SHA256 -n ZONE child.example.``
@@ -834,7 +834,7 @@ Address-to-Name Lookups Using Nibble Format
 
 When looking up an address in nibble format, the address components are
 simply reversed, just as in IPv4, and ``ip6.arpa.`` is appended to the
-resulting name. For example, the following would provide reverse name
+resulting name. For example, the following commands produce a reverse name
 lookup for a host with address ``2001:db8::1``:
 
 ::

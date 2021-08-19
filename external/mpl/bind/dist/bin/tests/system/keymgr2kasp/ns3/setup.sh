@@ -21,17 +21,6 @@ setup() {
 	infile="${zone}.db.infile"
 }
 
-private_type_record() {
-	_zone=$1
-	_algorithm=$2
-	_keyfile=$3
-
-	_id=$(keyfile_to_key_id "$_keyfile")
-
-	printf "%s. 0 IN TYPE65534 %s 5 %02x%04x0000\n" "$_zone" "\\#" "$_algorithm" "$_id"
-}
-
-
 # Make lines shorter by storing key states in environment variables.
 H="HIDDEN"
 R="RUMOURED"

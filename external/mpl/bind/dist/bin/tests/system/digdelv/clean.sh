@@ -28,3 +28,4 @@ rm -f ./ns2/dsset-example.
 rm -f ./ns2/example.db ./ns2/K* ./ns2/keyid ./ns2/keydata
 rm -f ./nslookup.out.test*
 rm -f ./yamlget.out.*
+rm -f ./nsupdate.out.test*

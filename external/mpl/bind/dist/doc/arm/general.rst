@@ -175,7 +175,7 @@ Clarification.* January 2006.
 
 :rfc:`4398` - S. Josefsson. *Storing Certificates in the Domain Name System (DNS).* March 2006.
 
-:rfc:`4470` - S. Weiler and J. Ihren. *Minimally Covering NSEC Records and
+:rfc:`4470` - S. Weiler and J. Ihren. *Minimally covering NSEC Records and
 DNSSEC On-line Signing.* April 2006. [5]
 
 :rfc:`4509` - W. Hardaker. *Use of SHA-256 in DNSSEC Delegation Signer
@@ -542,7 +542,7 @@ retrieve unknown keys.
 [4] Compliance is with loading and serving of A6 records only. A6 records were moved
 to the experimental category by :rfc:`3363`.
 
-[5] Minimally covering NSEC records are accepted but not generated.
+[5] Minimally Covering NSEC records are accepted but not generated.
 
 [6] BIND 9 interoperates with correctly designed experiments.
 
@@ -581,7 +581,7 @@ is accepted but not returned in responses.
 [17] Wildcard records are not supported in DNSSEC secure zones.
 
 [18] Servers authoritative for secure zones being resolved by BIND
-9 must support EDNS0 (RFC2671), and must return all relevant SIGs
+9 must support EDNS0 (:rfc:`2671`), and must return all relevant SIGs
 and NXTs in responses, rather than relying on the resolving server
 to perform separate queries for missing SIGs and NXTs.
 

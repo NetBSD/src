@@ -43,7 +43,7 @@
     Note: eventually ``named`` will have to stop treating such timeouts as due to :rfc:`1034` non-compliance and start treating it as plain packet loss. Falsely classifying packet loss as due to :rfc:`1034` non-compliance impacts DNSSEC validation, which requires EDNS for the DNSSEC records to be returned.
 
 ``general``
-    Catch-all for many things that still are not classified into categories.
+    A catch-all for many things that still are not classified into categories.
 
 ``lame-servers``
     Misconfigurations in remote servers, discovered by BIND 9 when trying to query those servers during resolution.
@@ -58,7 +58,7 @@
     NSID options received from upstream servers.
 
 ``queries``
-    Location where queries should be logged.
+    A location where queries should be logged.
     
     At startup, specifying the category ``queries`` also enables query logging unless the ``querylog`` option has been specified.
     

@@ -15,11 +15,11 @@ New Features
 ~~~~~~~~~~~~
 
 - Add a new ``rndc`` command, ``rndc dnssec -rollover``, which triggers
-  a manual rollover for a specific key. [GL #1749]
+  a manual rollover for a specific key. :gl:`#1749`
 
 - Add a new ``rndc`` command, ``rndc dumpdb -expired``, which dumps the
   cache database, including expired RRsets that are awaiting cleanup, to
-  the ``dump-file`` for diagnostic purposes. [GL #1870]
+  the ``dump-file`` for diagnostic purposes. :gl:`#1870`
 
 Feature Changes
 ~~~~~~~~~~~~~~~
@@ -33,23 +33,23 @@ Feature Changes
   MTU minus the estimated header space. In practice, the smallest MTU
   witnessed in the operational DNS community is 1500 octets, the maximum
   Ethernet payload size, so a useful default for maximum DNS/UDP payload
-  size on reliable networks would be 1400 bytes. [GL #2183]
+  size on reliable networks would be 1432 bytes. :gl:`#2183`
 
 Bug Fixes
 ~~~~~~~~~
 
 - ``named`` reported an invalid memory size when running in an
   environment that did not properly report the number of available
-  memory pages and/or the size of each memory page. [GL #2166]
+  memory pages and/or the size of each memory page. :gl:`#2166`
 
 - With multiple forwarders configured, ``named`` could fail the
   ``REQUIRE(msg->state == (-1))`` assertion in ``lib/dns/message.c``,
-  causing it to crash. This has been fixed. [GL #2124]
+  causing it to crash. This has been fixed. :gl:`#2124`
 
 - ``named`` erroneously performed continuous key rollovers for KASP
   policies that used algorithm Ed25519 or Ed448 due to a mismatch
-  between created key size and expected key size. [GL #2171]
+  between created key size and expected key size. :gl:`#2171`
 
 - Updating contents of an RPZ zone which contained names spelled using
   varying letter case could cause some processing rules in that RPZ zone
-  to be erroneously ignored. [GL #2169]
+  to be erroneously ignored. :gl:`#2169`

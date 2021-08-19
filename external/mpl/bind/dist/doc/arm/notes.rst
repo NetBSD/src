@@ -16,10 +16,10 @@ Release Notes
 Introduction
 ------------
 
-BIND 9.16 is a stable branch of BIND. This document summarizes
-significant changes since the last production release on that branch.
-Please see the CHANGES file for a more detailed list of changes and bug
-fixes.
+BIND 9.16 (Extended Support Version) is a stable branch of BIND. This
+document summarizes significant changes since the last production
+release on that branch. Please see the CHANGES file for a more detailed
+list of changes and bug fixes.
 
 Note on Version Numbering
 -------------------------
@@ -59,6 +59,11 @@ https://www.isc.org/download/. There you will find additional
 information about each release, source code, and pre-compiled versions
 for Microsoft Windows operating systems.
 
+.. include:: ../notes/notes-9.16.20.rst
+.. include:: ../notes/notes-9.16.19.rst
+.. include:: ../notes/notes-9.16.18.rst
+.. include:: ../notes/notes-9.16.17.rst
+.. include:: ../notes/notes-9.16.16.rst
 .. include:: ../notes/notes-9.16.15.rst
 .. include:: ../notes/notes-9.16.14.rst
 .. include:: ../notes/notes-9.16.13.rst
@@ -99,12 +104,9 @@ https://www.isc.org/contact/.
 End of Life
 -----------
 
-The end-of-life date for BIND 9.16 has not yet been determined. At some
-point in the future, BIND 9.16 will be designated as an Extended Support
-Version (ESV). Until then, the current ESV is BIND 9.11, which will be
-supported until at least December 2021.  See
-https://kb.isc.org/docs/aa-00896 for details of ISC's software support
-policy.
+BIND 9.16 (Extended Support Version) will be supported until at least
+December, 2023. See https://kb.isc.org/docs/aa-00896 for details of
+ISC's software support policy.
 
 Thank You
 ---------

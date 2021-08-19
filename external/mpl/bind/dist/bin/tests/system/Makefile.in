@@ -17,23 +17,32 @@ VERSION=@BIND9_VERSION@
 
 SUBDIRS =	dlzexternal dyndb pipelined rndc rpz rsabigexponent tkey
 
-CINCLUDES =	${ISC_INCLUDES} ${DNS_INCLUDES}
+CINCLUDES =	${ISC_INCLUDES} \
+		${DNS_INCLUDES}	\
+		${ISCCFG_INCLUDES} \
+		${IRS_INCLUDES}
 
 CDEFINES =	@USE_GSSAPI@ @CONTRIB_DLZ@
 CWARNINGS =
 
 ISCLIBS =	../../../lib/isc/libisc.@A@ @NO_LIBTOOL_ISCLIBS@
+DNSLIBS =	../../../lib/dns/libdns.@A@ @NO_LIBTOOL_DNSLIBS@
+ISCCFGLIBS =	../../../lib/isccfg/libisccfg.@A@
+IRSLIBS =	../../../lib/irs/libirs.@A@
 
-ISCDEPLIBS =
+ISCDEPLIBS =	../../../lib/isc/libisc.@A@
+DNSDEPLIBS =	../../../lib/dns/libdns.@A@
+ISCCFGDEPLIBS =	../../../lib/isccfg/libisccfg.@A@
+IRSDEPLIBS =	../../../lib/irs/libirs.@A@
 
-DEPLIBS =
+DEPLIBS =	${IRSDEPLIBS} ${ISCCFGDEPLIBS} ${DNSDEPLIBS} ${ISCDEPLIBS}
 
-LIBS =		@LIBS@
+LIBS =		${IRSLIBS} ${ISCCFGLIBS} ${DNSLIBS} ${ISCLIBS} @LIBS@
 
-OBJS =		feature-test.@O@
-SRCS =		feature-test.c
+OBJS =		feature-test.@O@ resolve.@O@
+SRCS =		feature-test.c resolve.c
 
-TARGETS =	feature-test@EXEEXT@
+TARGETS =	feature-test@EXEEXT@ resolve@EXEEXT@
 
 @BIND9_MAKE_RULES@
 
@@ -41,6 +50,10 @@ subdirs: ${TARGETS}
 
 feature-test@EXEEXT@: feature-test.@O@
 	${LIBTOOL_MODE_LINK} ${PURIFY} ${CC} ${CFLAGS} ${LDFLAGS} -o $@ feature-test.@O@ ${ISCLIBS} ${LIBS}
+
+resolve@EXEEXT@: resolve.@O@ ${DEPLIBS}
+	${LIBTOOL_MODE_LINK} ${PURIFY} ${CC} ${CFLAGS} ${LDFLAGS} -o $@ \
+	resolve.@O@ ${LIBS}
 
 # Running the scripts below is bypassed when a separate build directory is
 # used.
