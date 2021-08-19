@@ -1,4 +1,4 @@
-/* $NetBSD: xlint.c,v 1.73 2021/08/19 15:55:23 rillig Exp $ */
+/* $NetBSD: xlint.c,v 1.74 2021/08/19 16:05:56 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: xlint.c,v 1.73 2021/08/19 15:55:23 rillig Exp $");
+__RCSID("$NetBSD: xlint.c,v 1.74 2021/08/19 16:05:56 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -394,10 +394,13 @@ main(int argc, char *argv[])
 		case 'v':
 		case 'w':
 		case 'z':
+		case 'P':
 			pass_flag_to_lint1(c);
 			break;
 
 		case 'A':
+		case 'R':
+		case 'X':
 			pass_flag_to_lint1(c);
 			pass_to_lint1(optarg);
 			break;
@@ -411,11 +414,6 @@ main(int argc, char *argv[])
 			pass_flag_to_lint2(c);
 			break;
 
-		case 'X':
-			pass_flag_to_lint1(c);
-			pass_to_lint1(optarg);
-			break;
-
 		case 'i':
 			if (Cflag)
 				usage();
@@ -427,21 +425,12 @@ main(int argc, char *argv[])
 			break;
 
 		case 'p':
-			pass_flag_to_lint1(c);
-			pass_flag_to_lint2(c);
 			if (*deflibs != NULL) {
 				list_clear(&deflibs);
 				list_add_copy(&deflibs, "c");
 			}
-			break;
-
-		case 'P':
 			pass_flag_to_lint1(c);
-			break;
-
-		case 'R':
-			pass_flag_to_lint1(c);
-			pass_to_lint1(optarg);
+			pass_flag_to_lint2(c);
 			break;
 
 		case 's':
@@ -452,16 +441,16 @@ main(int argc, char *argv[])
 			list_add_copy(&cpp.lcflags, "-Wtrigraphs");
 			list_add_copy(&cpp.lcflags, "-pedantic");
 			list_add_copy(&cpp.lcflags, "-D__STRICT_ANSI__");
+			sflag = true;
 			pass_flag_to_lint1(c);
 			pass_flag_to_lint2(c);
-			sflag = true;
 			break;
 
 		case 'S':
 			if (tflag)
 				usage();
-			pass_flag_to_lint1(c);
 			Sflag = true;
+			pass_flag_to_lint1(c);
 			break;
 
 		case 'T':
@@ -474,6 +463,7 @@ main(int argc, char *argv[])
 		case 't':
 			if (sflag)
 				usage();
+			tflag = true;
 			list_clear(&cpp.lcflags);
 			list_add_copy(&cpp.lcflags, "-traditional");
 			list_add_copy(&cpp.lcflags, "-Wtraditional");
@@ -481,11 +471,11 @@ main(int argc, char *argv[])
 			list_add_copy(&cpp.lcflags, "-D" MACHINE_ARCH);
 			pass_flag_to_lint1(c);
 			pass_flag_to_lint2(c);
-			tflag = true;
 			break;
 #endif
 
 		case 'x':
+		case 'H':
 			pass_flag_to_lint2(c);
 			break;
 
@@ -528,10 +518,6 @@ main(int argc, char *argv[])
 
 		case 'L':
 			list_add_copy(&libsrchpath, optarg);
-			break;
-
-		case 'H':
-			pass_flag_to_lint2(c);
 			break;
 
 		case 'B':
