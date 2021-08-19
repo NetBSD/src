@@ -138,7 +138,7 @@ signed with a particular key, use:
    allow-query { !{ !10/8; any; }; key example; };
 
 Within the nested ACL, any address that is *not* in the 10/8 network
-prefix is rejected, which terminates processing of the ACL.
+prefix is rejected, which terminates the processing of the ACL.
 Any address that *is* in the 10/8 network prefix is accepted, but
 this causes a negative match of the nested ACL, so the containing ACL
 continues processing. The query is accepted if it is signed by

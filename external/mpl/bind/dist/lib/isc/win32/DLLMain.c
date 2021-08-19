@@ -1,4 +1,4 @@
-/*	$NetBSD: DLLMain.c,v 1.1.1.5 2021/04/29 16:46:33 christos Exp $	*/
+/*	$NetBSD: DLLMain.c,v 1.1.1.6 2021/08/19 11:45:28 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -15,7 +15,6 @@
 #include <windows.h>
 
 #include <isc/mem.h>
-#include <isc/tls.h>
 #include <isc/util.h>
 
 #include "lib_p.h"

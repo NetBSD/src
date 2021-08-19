@@ -1,4 +1,4 @@
-/*	$NetBSD: dyndb.h,v 1.1.1.4 2021/02/19 16:37:14 christos Exp $	*/
+/*	$NetBSD: dyndb.h,v 1.1.1.5 2021/08/19 11:45:25 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -42,7 +42,7 @@ struct dns_dyndbctx {
 	dns_zonemgr_t * zmgr;
 	isc_task_t *	task;
 	isc_timermgr_t *timermgr;
-	bool *		refvar;
+	unsigned int *	memdebug;
 };
 
 #define DNS_DYNDBCTX_MAGIC    ISC_MAGIC('D', 'd', 'b', 'c')

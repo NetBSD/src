@@ -39,27 +39,33 @@ controls {
 zone "step1.going-insecure.kasp" {
         type master;
         file "step1.going-insecure.kasp.db";
-        dnssec-policy "none";
+        dnssec-policy "insecure";
 };
 
 zone "step2.going-insecure.kasp" {
         type master;
         file "step2.going-insecure.kasp.db";
-        dnssec-policy "none";
+        dnssec-policy "insecure";
 };
 
 zone "step1.going-insecure-dynamic.kasp" {
         type master;
         file "step1.going-insecure-dynamic.kasp.db";
-        dnssec-policy "none";
+        dnssec-policy "insecure";
 	allow-update { any; };
 };
 
 zone "step2.going-insecure-dynamic.kasp" {
         type master;
         file "step2.going-insecure-dynamic.kasp.db";
-        dnssec-policy "none";
+        dnssec-policy "insecure";
 	allow-update { any; };
+};
+
+zone "step1.going-straight-to-none.kasp" {
+        type master;
+        file "step1.going-straight-to-none.kasp.db";
+        dnssec-policy "none";
 };
 
 /*
@@ -138,4 +144,16 @@ zone "step6.csk-algorithm-roll.kasp" {
 	type primary;
 	file "step6.csk-algorithm-roll.kasp.db";
 	dnssec-policy "csk-algoroll";
+};
+
+dnssec-policy "modified" {
+	keys {
+		csk lifetime unlimited algorithm rsasha256 2048;
+	};
+};
+
+zone example {
+	type primary;
+	dnssec-policy modified;
+	file "example.db";
 };

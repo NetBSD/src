@@ -1,4 +1,4 @@
-/*	$NetBSD: resolver.c,v 1.1.1.11 2021/04/29 16:46:29 christos Exp $	*/
+/*	$NetBSD: resolver.c,v 1.1.1.12 2021/08/19 11:45:24 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -2581,7 +2581,6 @@ resquery_send(resquery_t *query) {
 	/*
 	 * Set up question.
 	 */
-	dns_name_init(qname, NULL);
 	dns_name_clone(&fctx->name, qname);
 	dns_rdataset_makequestion(qrdataset, res->rdclass, fctx->type);
 	ISC_LIST_APPEND(qname->list, qrdataset, link);

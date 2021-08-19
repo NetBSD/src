@@ -1,4 +1,4 @@
-/*	$NetBSD: socket.c,v 1.1.1.8 2021/02/19 16:37:17 christos Exp $	*/
+/*	$NetBSD: socket.c,v 1.1.1.9 2021/08/19 11:45:28 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -339,7 +339,6 @@ struct isc_socketmgr {
 	HANDLE hIoCompletionPort;
 	int maxIOCPThreads;
 	HANDLE hIOCPThreads[MAX_IOCPTHREADS];
-	DWORD dwIOCPThreadIds[MAX_IOCPTHREADS];
 	size_t maxudp;
 
 	/*
@@ -502,15 +501,8 @@ iocompletionport_createthreads(int total_threads, isc_socketmgr_t *manager) {
 	 * We need at least one
 	 */
 	for (i = 0; i < total_threads; i++) {
-		manager->hIOCPThreads[i] =
-			CreateThread(NULL, 0, SocketIoThread, manager, 0,
-				     &manager->dwIOCPThreadIds[i]);
-		if (manager->hIOCPThreads[i] == NULL) {
-			errval = GetLastError();
-			strerror_r(errval, strbuf, sizeof(strbuf));
-			FATAL_ERROR(__FILE__, __LINE__,
-				    "Can't create IOCP thread: %s", strbuf);
-		}
+		isc_thread_create(SocketIoThread, manager,
+				  &manager->hIOCPThreads[i]);
 	}
 }
 
@@ -3956,15 +3948,6 @@ error:
 	return (result);
 }
 #endif /* HAVE_JSON_C */
-
-isc_result_t
-isc_socketmgr_createinctx(isc_mem_t *mctx, isc_socketmgr_t **managerp) {
-	isc_result_t result;
-
-	result = isc_socketmgr_create(mctx, managerp);
-
-	return (result);
-}
 
 void
 isc_socketmgr_maxudp(isc_socketmgr_t *manager, unsigned int maxudp) {

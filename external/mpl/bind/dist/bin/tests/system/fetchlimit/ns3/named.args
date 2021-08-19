@@ -1,2 +1,1 @@
-# Don't specify '-T clienttest' as it consumes lots of memory with this test
--D fetchlimit-ns3 -X named.lock -m record,size,mctx -c named.conf -d 99 -g -U 4
+-m record,size,mctx -c named.conf -d 1 -D fetchlimit-ns3 -X named.lock -g -T maxcachesize=2097152

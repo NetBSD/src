@@ -1,4 +1,4 @@
-/*	$NetBSD: lib.c,v 1.1.1.6 2021/04/29 16:46:32 christos Exp $	*/
+/*	$NetBSD: lib.c,v 1.1.1.7 2021/08/19 11:45:27 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -16,7 +16,6 @@
 #include <isc/bind9.h>
 #include <isc/lib.h>
 #include <isc/mem.h>
-#include <isc/tls.h>
 #include <isc/util.h>
 
 #include "config.h"
@@ -38,9 +37,9 @@ isc_lib_register(void) {
 }
 
 void
-isc__initialize(void) ISC_CONSTRUCTOR(101);
+isc__initialize(void) ISC_CONSTRUCTOR;
 void
-isc__shutdown(void) ISC_DESTRUCTOR(101);
+isc__shutdown(void) ISC_DESTRUCTOR;
 
 void
 isc__initialize(void) {

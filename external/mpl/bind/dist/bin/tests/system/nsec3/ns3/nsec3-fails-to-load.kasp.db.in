@@ -1,0 +1,8 @@
+@			IN SOA  kasp. nsec3-fails-to-load.kasp. (
+                                1          ; serial
+                                30         ; refresh (30 seconds)
+                                10         ; retry (10 seconds)
+                                3600000    ; expire (5 weeks 6 days 16 hours)
+                                300        ; minimum (5 minutes)
+                                )
+                        NS      nsec3-fails-to-load.kasp.

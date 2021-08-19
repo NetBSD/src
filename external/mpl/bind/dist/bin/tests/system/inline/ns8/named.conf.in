@@ -144,3 +144,10 @@ zone "example16.com" {
 	auto-dnssec maintain;
 	file "example16.com.db";
 };
+
+zone example {
+	type primary;
+	inline-signing yes;
+	auto-dnssec maintain;
+	file "example.db";
+};

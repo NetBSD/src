@@ -38,12 +38,12 @@ As of Nov 2020, BIND 9.16 is fully supported and regularly tested on the
 following systems:
 
   * Debian 9, 10
-  * Ubuntu LTS 16.04, 20.04
-  * Fedora 33
+  * Ubuntu LTS 18.04, 20.04
+  * Fedora 34
   * Red Hat Enterprise Linux / CentOS 7, 8
-  * FreeBSD 11.4, 12.2
-  * OpenBSD 6.8
-  * Alpine Linux 3.13
+  * FreeBSD 11.4, 12.2, 13.0
+  * OpenBSD 6.9
+  * Alpine Linux 3.14
 
 The amd64, i386, armhf and arm64 CPU architectures are all fully
 supported.
@@ -62,7 +62,7 @@ Server 2016, none of these are tested regularly by ISC.
   * Solaris 11
   * NetBSD
   * Other Linux distributions still supported by their vendors, such as:
-      + Ubuntu 19.04+
+      + Ubuntu 20.10+
       + Gentoo
       + Arch Linux
   * OpenWRT/LEDE 17.01+
@@ -79,7 +79,7 @@ assessed against the risk of adverse effect on officially supported
 platforms.
 
   * Platforms past or close to their respective EOL dates, such as:
-      + Ubuntu 14.04, 18.10
+      + Ubuntu 14.04, 16.04 (Ubuntu ESM releases are not supported)
       + CentOS 6
       + Debian Jessie
       + FreeBSD 10.x

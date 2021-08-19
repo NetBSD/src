@@ -1,4 +1,4 @@
-/*	$NetBSD: nsupdate.c,v 1.1.1.8 2021/04/29 16:46:20 christos Exp $	*/
+/*	$NetBSD: nsupdate.c,v 1.1.1.9 2021/08/19 11:45:15 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -30,6 +30,7 @@
 #include <isc/hash.h>
 #include <isc/lex.h>
 #include <isc/log.h>
+#include <isc/managers.h>
 #include <isc/mem.h>
 #include <isc/nonce.h>
 #include <isc/parseint.h>
@@ -58,6 +59,7 @@
 #include <dns/masterdump.h>
 #include <dns/message.h>
 #include <dns/name.h>
+#include <dns/nsec3.h>
 #include <dns/rcode.h>
 #include <dns/rdata.h>
 #include <dns/rdataclass.h>
@@ -140,6 +142,7 @@ static bool usegsstsig = false;
 static bool use_win2k_gsstsig = false;
 static bool tried_other_gsstsig = false;
 static bool local_only = false;
+static isc_nm_t *netmgr = NULL;
 static isc_taskmgr_t *taskmgr = NULL;
 static isc_task_t *global_task = NULL;
 static isc_event_t *global_event = NULL;
@@ -943,8 +946,8 @@ setup_system(void) {
 	result = isc_timermgr_create(gmctx, &timermgr);
 	check_result(result, "dns_timermgr_create");
 
-	result = isc_taskmgr_create(gmctx, 1, 0, NULL, &taskmgr);
-	check_result(result, "isc_taskmgr_create");
+	result = isc_managers_create(gmctx, 1, 0, &netmgr, &taskmgr);
+	check_result(result, "isc_managers_create");
 
 	result = isc_task_create(taskmgr, 0, &global_task);
 	check_result(result, "isc_task_create");
@@ -1283,7 +1286,6 @@ static uint16_t
 parse_name(char **cmdlinep, dns_message_t *msg, dns_name_t **namep) {
 	isc_result_t result;
 	char *word;
-	isc_buffer_t *namebuf = NULL;
 	isc_buffer_t source;
 
 	word = nsu_strsep(cmdlinep, " \t\r\n");
@@ -1294,10 +1296,6 @@ parse_name(char **cmdlinep, dns_message_t *msg, dns_name_t **namep) {
 
 	result = dns_message_gettempname(msg, namep);
 	check_result(result, "dns_message_gettempname");
-	isc_buffer_allocate(gmctx, &namebuf, DNS_NAME_MAXWIRE);
-	dns_name_init(*namep, NULL);
-	dns_name_setbuffer(*namep, namebuf);
-	dns_message_takebuffer(msg, &namebuf);
 	isc_buffer_init(&source, word, strlen(word));
 	isc_buffer_add(&source, strlen(word));
 	result = dns_name_fromtext(*namep, &source, dns_rootname, 0, NULL);
@@ -1981,6 +1979,19 @@ parseclass:
 		}
 	}
 
+	if (!isdelete && rdata->type == dns_rdatatype_nsec3param) {
+		dns_rdata_nsec3param_t nsec3param;
+
+		result = dns_rdata_tostruct(rdata, &nsec3param, NULL);
+		check_result(result, "dns_rdata_tostruct");
+		if (nsec3param.iterations > dns_nsec3_maxiterations()) {
+			fprintf(stderr,
+				"NSEC3PARAM has excessive iterations (> %u)\n",
+				dns_nsec3_maxiterations());
+			goto failure;
+		}
+	}
+
 doneparsing:
 
 	result = dns_message_gettemprdatalist(updatemsg, &rdatalist);
@@ -2079,7 +2090,6 @@ setzone(dns_name_t *zonename) {
 	if (zonename != NULL) {
 		result = dns_message_gettempname(updatemsg, &name);
 		check_result(result, "dns_message_gettempname");
-		dns_name_init(name, NULL);
 		dns_name_clone(zonename, name);
 		result = dns_message_gettemprdataset(updatemsg, &rdataset);
 		check_result(result, "dns_message_gettemprdataset");
@@ -2464,6 +2474,10 @@ update_completed(isc_task_t *task, isc_event_t *event) {
 		check_result(result, "dns_request_getresponse");
 	}
 
+	if (answer->opcode != dns_opcode_update) {
+		fatal("invalid OPCODE in response to UPDATE request");
+	}
+
 	if (answer->rcode != dns_rcode_noerror) {
 		seenerror = true;
 		if (!debugging) {
@@ -2653,10 +2667,25 @@ recvsoa(isc_task_t *task, isc_event_t *event) {
 		return;
 	}
 	check_result(result, "dns_request_getresponse");
+
+	if (rcvmsg->rcode == dns_rcode_refused) {
+		next_server("recvsoa", addr, DNS_R_REFUSED);
+		dns_message_detach(&rcvmsg);
+		dns_request_destroy(&request);
+		dns_message_renderreset(soaquery);
+		dns_message_settsigkey(soaquery, NULL);
+		sendrequest(&servers[ns_inuse], soaquery, &request);
+		return;
+	}
+
 	section = DNS_SECTION_ANSWER;
 	POST(section);
 	if (debugging) {
 		show_message(stderr, rcvmsg, "Reply from SOA query:");
+	}
+
+	if (rcvmsg->opcode != dns_opcode_query) {
+		fatal("invalid OPCODE in response to SOA query");
 	}
 
 	if (rcvmsg->rcode != dns_rcode_noerror &&
@@ -3132,6 +3161,10 @@ recvgss(isc_task_t *task, isc_event_t *event) {
 			     "recvmsg reply from GSS-TSIG query");
 	}
 
+	if (rcvmsg->opcode != dns_opcode_query) {
+		fatal("invalid OPCODE in response to GSS-TSIG query");
+	}
+
 	if (rcvmsg->rcode == dns_rcode_formerr && !tried_other_gsstsig) {
 		ddebug("recvgss trying %s GSS-TSIG",
 		       use_win2k_gsstsig ? "Standard" : "Win2k");
@@ -3261,7 +3294,6 @@ start_update(void) {
 	dns_rdataset_makequestion(rdataset, getzoneclass(), dns_rdatatype_soa);
 
 	if (userzone != NULL) {
-		dns_name_init(name, NULL);
 		dns_name_clone(userzone, name);
 	} else {
 		dns_rdataset_t *tmprdataset;
@@ -3280,7 +3312,6 @@ start_update(void) {
 		}
 		firstname = NULL;
 		dns_message_currentname(updatemsg, section, &firstname);
-		dns_name_init(name, NULL);
 		dns_name_clone(firstname, name);
 		/*
 		 * Looks to see if the first name references a DS record
@@ -3332,7 +3363,7 @@ cleanup(void) {
 	}
 
 	ddebug("Shutting down task manager");
-	isc_taskmgr_destroy(&taskmgr);
+	isc_managers_destroy(&netmgr, &taskmgr);
 
 	ddebug("Destroying event");
 	isc_event_free(&global_event);

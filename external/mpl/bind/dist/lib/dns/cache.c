@@ -1,4 +1,4 @@
-/*	$NetBSD: cache.c,v 1.1.1.4 2021/02/19 16:37:11 christos Exp $	*/
+/*	$NetBSD: cache.c,v 1.1.1.5 2021/08/19 11:45:22 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -959,8 +959,9 @@ dns_cache_setcachesize(dns_cache_t *cache, size_t size) {
 		 * time, or replacing other limits).
 		 */
 		isc_mem_setwater(cache->mctx, water, cache, hiwater, lowater);
-		dns_db_adjusthashsize(cache->db, size);
 	}
+
+	dns_db_adjusthashsize(cache->db, size);
 }
 
 size_t

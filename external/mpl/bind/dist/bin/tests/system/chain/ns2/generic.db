@@ -16,3 +16,5 @@ ns2	86400	AAAA    fd92:7065:b8e:ffff::2
 @       86400	AAAA 	1:2:3::4
 *       86400	A 	1.2.3.4
 *       86400	AAAA 	1:2:3::4
+; CVE-2021-25215 regression test data
+self	86400	DNAME	nil.

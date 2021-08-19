@@ -1,4 +1,4 @@
-/*	$NetBSD: getnameinfo.c,v 1.1.1.4 2021/02/19 16:37:16 christos Exp $	*/
+/*	$NetBSD: getnameinfo.c,v 1.1.1.5 2021/08/19 11:45:27 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -321,9 +321,8 @@ found:
 
 		/* Get the PTR RRset */
 		ISC_LIST_INIT(answerlist);
-		iresult = dns_client_resolve(
-			client, ptrname, dns_rdataclass_in, dns_rdatatype_ptr,
-			DNS_CLIENTRESOPT_ALLOWRUN, &answerlist);
+		iresult = dns_client_resolve(client, ptrname, dns_rdataclass_in,
+					     dns_rdatatype_ptr, 0, &answerlist);
 		switch (iresult) {
 		case ISC_R_SUCCESS:
 		/*

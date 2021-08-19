@@ -1,4 +1,4 @@
-/*	$NetBSD: zone.h,v 1.1.1.5 2021/02/19 16:37:15 christos Exp $	*/
+/*	$NetBSD: zone.h,v 1.1.1.6 2021/08/19 11:45:26 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -348,6 +348,24 @@ dns_zone_getmaxttl(dns_zone_t *zone);
  *\li	dns_ttl_t maxttl.
  */
 
+void
+dns_zone_lock_keyfiles(dns_zone_t *zone);
+/*%<
+ *	Lock associated keyfiles for this zone.
+ *
+ * Require:
+ *\li	'zone' to be a valid zone.
+ */
+
+void
+dns_zone_unlock_keyfiles(dns_zone_t *zone);
+/*%<
+ *	Unlock associated keyfiles for this zone.
+ *
+ * Require:
+ *\li	'zone' to be a valid zone.
+ */
+
 isc_result_t
 dns_zone_load(dns_zone_t *zone, bool newonly);
 
@@ -451,16 +469,6 @@ dns_zone_idetach(dns_zone_t **zonep);
  * Require:
  *\li	The caller is running in the context of the zone's task.
  *\li	'zonep' to point to a valid zone.
- */
-
-void
-dns_zone_setflag(dns_zone_t *zone, unsigned int flags, bool value);
-/*%<
- *	Sets ('value' == 'true') / clears ('value' == 'IS_FALSE')
- *	zone flags.  Valid flag bits are DNS_ZONE_F_*.
- *
- * Requires
- *\li	'zone' to be a valid zone.
  */
 
 isc_result_t
@@ -621,12 +629,29 @@ dns_zone_setprimarieswithkeys(dns_zone_t *zone, const isc_sockaddr_t *primaries,
  *\li	'zone' to be a valid zone.
  *\li	'primaries' array of isc_sockaddr_t with port set or NULL.
  *\li	'count' the number of primaries.
- *\li      'keynames' array of dns_name_t's for tsig keys or NULL.
+ *\li	'keynames' array of dns_name_t's for tsig keys or NULL.
  *
- *  \li    dns_zone_setprimaries() is just a wrapper to setprimarieswithkeys(),
- *      passing NULL in the keynames field.
+ *\li	If 'primaries' is NULL then 'count' must be zero.
  *
- * \li	If 'primaries' is NULL then 'count' must be zero.
+ * Returns:
+ *\li	#ISC_R_SUCCESS
+ *\li	#ISC_R_NOMEMORY
+ *\li      Any result dns_name_dup() can return, if keynames!=NULL
+ */
+
+isc_result_t
+dns_zone_setparentals(dns_zone_t *zone, const isc_sockaddr_t *parentals,
+		      dns_name_t **keynames, uint32_t count);
+/*%<
+ *	Set the list of parental agents for the zone.
+ *
+ * Require:
+ *\li	'zone' to be a valid zone.
+ *\li	'parentals' array of isc_sockaddr_t with port set or NULL.
+ *\li	'count' the number of primaries.
+ *\li	'keynames' array of dns_name_t's for tsig keys or NULL.
+ *
+ *\li	If 'parentals' is NULL then 'count' must be zero.
  *
  * Returns:
  *\li	#ISC_R_SUCCESS
@@ -674,32 +699,6 @@ dns_kasp_t *
 dns_zone_getkasp(dns_zone_t *zone);
 /*%<
  *	Returns the current kasp.
- *
- * Require:
- *\li	'zone' to be a valid zone.
- */
-
-bool
-dns_zone_secure_to_insecure(dns_zone_t *zone, bool reconfig);
-/*%<
- *	Returns true if the zone is transitioning to insecure.
- *	Only can happen if a zone previously used a dnssec-policy,
- *	but changed the value to "none" (or removed the configuration
- *	option). If 'reconfig' is true, only check the key files,
- *	because the zone structure is not yet updated with the
- *	newest configuration.
- *
- * Require:
- *\li	'zone' to be a valid zone.
- */
-
-bool
-dns_zone_use_kasp(dns_zone_t *zone);
-/*%<
- *	Check if zone needs to use kasp.
- *	True if there is a policy that is not "none",
- *	or if there are state files associated with the keys
- *	related to this zone.
  *
  * Require:
  *\li	'zone' to be a valid zone.
@@ -888,6 +887,94 @@ isc_result_t
 dns_zone_setaltxfrsource6dscp(dns_zone_t *zone, isc_dscp_t dscp);
 /*%<
  * Set the DSCP value associated with the transfer/alt-transfer source.
+ *
+ * Require:
+ *\li	'zone' to be a valid zone.
+ *
+ * Returns:
+ *\li	#ISC_R_SUCCESS
+ */
+
+isc_result_t
+dns_zone_setparentalsrc4(dns_zone_t *zone, const isc_sockaddr_t *parentalsrc);
+/*%<
+ * 	Set the source address to be used with IPv4 parental DS queries.
+ *
+ * Require:
+ *\li	'zone' to be a valid zone.
+ *\li	'parentalsrc' to contain the address.
+ *
+ * Returns:
+ *\li	#ISC_R_SUCCESS
+ */
+
+isc_sockaddr_t *
+dns_zone_getparentalsrc4(dns_zone_t *zone);
+/*%<
+ *	Returns the source address set by a previous dns_zone_setparentalsrc4
+ *	call, or the default of inaddr_any, port 0.
+ *
+ * Require:
+ *\li	'zone' to be a valid zone.
+ */
+
+isc_dscp_t
+dns_zone_getparentalsrc4dscp(dns_zone_t *zone);
+/*%/
+ * Get the DSCP value associated with the IPv4 parental source.
+ *
+ * Require:
+ *\li	'zone' to be a valid zone.
+ */
+
+isc_result_t
+dns_zone_setparentalsrc4dscp(dns_zone_t *zone, isc_dscp_t dscp);
+/*%<
+ * Set the DSCP value associated with the IPv4 parental source.
+ *
+ * Require:
+ *\li	'zone' to be a valid zone.
+ *
+ * Returns:
+ *\li	#ISC_R_SUCCESS
+ */
+
+isc_result_t
+dns_zone_setparentalsrc6(dns_zone_t *zone, const isc_sockaddr_t *parentalsrc);
+/*%<
+ * 	Set the source address to be used with IPv6 parental DS queries.
+ *
+ * Require:
+ *\li	'zone' to be a valid zone.
+ *\li	'parentalsrc' to contain the address.
+ *
+ * Returns:
+ *\li	#ISC_R_SUCCESS
+ */
+
+isc_sockaddr_t *
+dns_zone_getparentalsrc6(dns_zone_t *zone);
+/*%<
+ *	Returns the source address set by a previous dns_zone_setparentalsrc6
+ *	call, or the default of in6addr_any, port 0.
+ *
+ * Require:
+ *\li	'zone' to be a valid zone.
+ */
+
+isc_dscp_t
+dns_zone_getparentalsrc6dscp(dns_zone_t *zone);
+/*%/
+ * Get the DSCP value associated with the IPv6 parental source.
+ *
+ * Require:
+ *\li	'zone' to be a valid zone.
+ */
+
+isc_result_t
+dns_zone_setparentalsrc6dscp(dns_zone_t *zone, isc_dscp_t dscp);
+/*%<
+ * Set the DSCP value associated with the IPv6 parental source.
  *
  * Require:
  *\li	'zone' to be a valid zone.
@@ -1639,6 +1726,22 @@ dns_zone_getkeydirectory(dns_zone_t *zone);
  */
 
 isc_result_t
+dns_zone_getdnsseckeys(dns_zone_t *zone, dns_db_t *db, dns_dbversion_t *ver,
+		       isc_stdtime_t now, dns_dnsseckeylist_t *keys);
+/*%
+ * Find DNSSEC keys used for signing with dnssec-policy. Load these keys
+ * into 'keys'.
+ *
+ * Requires:
+ *\li	'zone' to be valid initialised zone.
+ *\li	'keys' to be an initialised DNSSEC keylist.
+ *
+ * Returns:
+ *\li	#ISC_R_SUCCESS
+ *\li	Error
+ */
+
+isc_result_t
 dns_zonemgr_create(isc_mem_t *mctx, isc_taskmgr_t *taskmgr,
 		   isc_timermgr_t *timermgr, isc_socketmgr_t *socketmgr,
 		   dns_zonemgr_t **zmgrp);
@@ -1754,6 +1857,12 @@ dns_zonemgr_releasezone(dns_zonemgr_t *zmgr, dns_zone_t *zone);
  *\li	'zone->zmgr' == NULL;
  */
 
+isc_taskmgr_t *
+dns_zonemgr_gettaskmgr(dns_zonemgr_t *zmgr);
+/*%
+ * Get the tasmkgr object attached to 'zmgr'.
+ */
+
 void
 dns_zonemgr_settransfersin(dns_zonemgr_t *zmgr, uint32_t value);
 /*%<
@@ -1810,6 +1919,15 @@ dns_zonemgr_getiolimit(dns_zonemgr_t *zmgr);
  *
  * Requires:
  *\li	'zmgr' to be a valid zone manager.
+ */
+
+void
+dns_zonemgr_setcheckdsrate(dns_zonemgr_t *zmgr, unsigned int value);
+/*%<
+ *	Set the number of parental DS queries sent per second.
+ *
+ * Requires:
+ *\li	'zmgr' to be a valid zone manager
  */
 
 void
