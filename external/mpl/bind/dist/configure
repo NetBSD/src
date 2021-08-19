@@ -12798,7 +12798,7 @@ COVERAGE=''
 KEYMGR=''
 if test "X$PYTHON" != "X"; then :
   PYTHON_TOOLS=python
-       CHECKDS=checkds
+       CHECKDS=checkdstool
        COVERAGE=coverage
        KEYMGR=keymgr
        PYTHON_INSTALL_DIR="$with_python_install_dir"
@@ -12845,7 +12845,7 @@ case "$INSTALL" in
 		;;
 esac
 
-for ac_prog in pytest-3 py.test-3 pytest pytest-pypy
+for ac_prog in pytest-3 py.test-3 pytest py.test pytest-pypy
 do
   # Extract the first word of "$ac_prog", so it can be a program name with args.
 set dummy $ac_prog; ac_word=$2
@@ -14350,6 +14350,148 @@ $as_echo "no" >&6; }
 		ISC_PLATFORM_NORETURN_POST="#define ISC_PLATFORM_NORETURN_POST"
 fi
 rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+
+
+
+#
+# check for GCC malloc attribute
+#
+
+
+
+    { $as_echo "$as_me:${as_lineno-$LINENO}: checking for __attribute__((malloc))" >&5
+$as_echo_n "checking for __attribute__((malloc))... " >&6; }
+if ${ax_cv_have_func_attribute_malloc+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+
+        cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+
+                    void *foo( void ) __attribute__((malloc));
+
+int
+main ()
+{
+
+  ;
+  return 0;
+}
+
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+                                      if test -s conftest.err; then :
+  ax_cv_have_func_attribute_malloc=no
+else
+  ax_cv_have_func_attribute_malloc=yes
+fi
+else
+  ax_cv_have_func_attribute_malloc=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ax_cv_have_func_attribute_malloc" >&5
+$as_echo "$ax_cv_have_func_attribute_malloc" >&6; }
+
+    if test yes = $ax_cv_have_func_attribute_malloc; then :
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_FUNC_ATTRIBUTE_MALLOC 1
+_ACEOF
+
+fi
+
+
+
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for extended malloc attributes" >&5
+$as_echo_n "checking for extended malloc attributes... " >&6; }
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+       #include <stddef.h>
+       #include <stdlib.h>
+       __attribute__ ((malloc, malloc (free, 1))
+       void * xmalloc(size_t sz) { return malloc(sz); }
+
+int
+main ()
+{
+
+       void *p = xmalloc(8);
+       free(p);
+
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_compile "$LINENO"; then :
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
+
+$as_echo "#define HAVE_MALLOC_EXT_ATTR 1" >>confdefs.h
+
+
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+
+#
+# check for GCC returns_nonnull attribute
+#
+
+
+
+    { $as_echo "$as_me:${as_lineno-$LINENO}: checking for __attribute__((returns_nonnull))" >&5
+$as_echo_n "checking for __attribute__((returns_nonnull))... " >&6; }
+if ${ax_cv_have_func_attribute_returns_nonnull+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+
+        cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+
+                    void *foo( void ) __attribute__((returns_nonnull));
+
+int
+main ()
+{
+
+  ;
+  return 0;
+}
+
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+                                      if test -s conftest.err; then :
+  ax_cv_have_func_attribute_returns_nonnull=no
+else
+  ax_cv_have_func_attribute_returns_nonnull=yes
+fi
+else
+  ax_cv_have_func_attribute_returns_nonnull=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ax_cv_have_func_attribute_returns_nonnull" >&5
+$as_echo "$ax_cv_have_func_attribute_returns_nonnull" >&6; }
+
+    if test yes = $ax_cv_have_func_attribute_returns_nonnull; then :
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_FUNC_ATTRIBUTE_RETURNS_NONNULL 1
+_ACEOF
+
+fi
+
 
 
 
@@ -16078,148 +16220,6 @@ else
 $as_echo "yes" >&6; }
 
 fi
-
-
-
-
-
-  CCASFLAGS_libuv_ax_save_flags=$CCASFLAGS
-
-
-
-  CFLAGS_libuv_ax_save_flags=$CFLAGS
-
-
-
-  CPPFLAGS_libuv_ax_save_flags=$CPPFLAGS
-
-
-
-  CXXFLAGS_libuv_ax_save_flags=$CXXFLAGS
-
-
-
-  ERLCFLAGS_libuv_ax_save_flags=$ERLCFLAGS
-
-
-
-  FCFLAGS_libuv_ax_save_flags=$FCFLAGS
-
-
-
-  FCLIBS_libuv_ax_save_flags=$FCLIBS
-
-
-
-  FFLAGS_libuv_ax_save_flags=$FFLAGS
-
-
-
-  FLIBS_libuv_ax_save_flags=$FLIBS
-
-
-
-  GCJFLAGS_libuv_ax_save_flags=$GCJFLAGS
-
-
-
-  JAVACFLAGS_libuv_ax_save_flags=$JAVACFLAGS
-
-
-
-  LDFLAGS_libuv_ax_save_flags=$LDFLAGS
-
-
-
-  LIBS_libuv_ax_save_flags=$LIBS
-
-
-
-  OBJCFLAGS_libuv_ax_save_flags=$OBJCFLAGS
-
-
-
-  OBJCXXFLAGS_libuv_ax_save_flags=$OBJCXXFLAGS
-
-
-
-  UPCFLAGS_libuv_ax_save_flags=$UPCFLAGS
-
-
-
-  VALAFLAGS_libuv_ax_save_flags=$VALAFLAGS
-
-
-
-CFLAGS="$CFLAGS $LIBUV_CFLAGS"
-LIBS="$LDFLAGS $LIBUV_LIBS"
-# Those functions are only provided in newer versions of libuv, we'll be emulating them
-# for now
-for ac_func in uv_handle_get_data uv_handle_set_data uv_import uv_udp_connect uv_translate_sys_error
-do :
-  as_ac_var=`$as_echo "ac_cv_func_$ac_func" | $as_tr_sh`
-ac_fn_c_check_func "$LINENO" "$ac_func" "$as_ac_var"
-if eval test \"x\$"$as_ac_var"\" = x"yes"; then :
-  cat >>confdefs.h <<_ACEOF
-#define `$as_echo "HAVE_$ac_func" | $as_tr_cpp` 1
-_ACEOF
-
-fi
-done
-
-
-  CCASFLAGS=$CCASFLAGS_libuv_ax_save_flags
-
-
-  CFLAGS=$CFLAGS_libuv_ax_save_flags
-
-
-  CPPFLAGS=$CPPFLAGS_libuv_ax_save_flags
-
-
-  CXXFLAGS=$CXXFLAGS_libuv_ax_save_flags
-
-
-  ERLCFLAGS=$ERLCFLAGS_libuv_ax_save_flags
-
-
-  FCFLAGS=$FCFLAGS_libuv_ax_save_flags
-
-
-  FCLIBS=$FCLIBS_libuv_ax_save_flags
-
-
-  FFLAGS=$FFLAGS_libuv_ax_save_flags
-
-
-  FLIBS=$FLIBS_libuv_ax_save_flags
-
-
-  GCJFLAGS=$GCJFLAGS_libuv_ax_save_flags
-
-
-  JAVACFLAGS=$JAVACFLAGS_libuv_ax_save_flags
-
-
-  LDFLAGS=$LDFLAGS_libuv_ax_save_flags
-
-
-  LIBS=$LIBS_libuv_ax_save_flags
-
-
-  OBJCFLAGS=$OBJCFLAGS_libuv_ax_save_flags
-
-
-  OBJCXXFLAGS=$OBJCXXFLAGS_libuv_ax_save_flags
-
-
-  UPCFLAGS=$UPCFLAGS_libuv_ax_save_flags
-
-
-  VALAFLAGS=$VALAFLAGS_libuv_ax_save_flags
-
-
-
 
 #
 # flockfile is usually provided by pthreads
@@ -19213,6 +19213,49 @@ if test "$enable_backtrace" = "yes"; then :
 
 $as_echo "#define USE_BACKTRACE 1" >>confdefs.h
 
+       { $as_echo "$as_me:${as_lineno-$LINENO}: checking for backtrace in -lexecinfo" >&5
+$as_echo_n "checking for backtrace in -lexecinfo... " >&6; }
+if ${ac_cv_lib_execinfo_backtrace+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lexecinfo  $LIBS"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char backtrace ();
+int
+main ()
+{
+return backtrace ();
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  ac_cv_lib_execinfo_backtrace=yes
+else
+  ac_cv_lib_execinfo_backtrace=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_execinfo_backtrace" >&5
+$as_echo "$ac_cv_lib_execinfo_backtrace" >&6; }
+if test "x$ac_cv_lib_execinfo_backtrace" = xyes; then :
+  EXILIBS=-lexecinfo
+else
+  EXILIBS=
+fi
+
+       LIBS="$LIBS $EXILIBS"
        cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 #include <execinfo.h>
@@ -19903,19 +19946,6 @@ do :
 if test "x$ac_cv_func_if_nametoindex" = xyes; then :
   cat >>confdefs.h <<_ACEOF
 #define HAVE_IF_NAMETOINDEX 1
-_ACEOF
-
-fi
-done
-
-
-for ac_func in nanosleep usleep explicit_bzero
-do :
-  as_ac_var=`$as_echo "ac_cv_func_$ac_func" | $as_tr_sh`
-ac_fn_c_check_func "$LINENO" "$ac_func" "$as_ac_var"
-if eval test \"x\$"$as_ac_var"\" = x"yes"; then :
-  cat >>confdefs.h <<_ACEOF
-#define `$as_echo "HAVE_$ac_func" | $as_tr_cpp` 1
 _ACEOF
 
 fi
@@ -21787,19 +21817,19 @@ case $with_cmocka in #(
   detect) :
 
 pkg_failed=no
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for cmocka >= 1.0.0" >&5
-$as_echo_n "checking for cmocka >= 1.0.0... " >&6; }
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for cmocka >= 1.1.3" >&5
+$as_echo_n "checking for cmocka >= 1.1.3... " >&6; }
 
 if test -n "$CMOCKA_CFLAGS"; then
     pkg_cv_CMOCKA_CFLAGS="$CMOCKA_CFLAGS"
  elif test -n "$PKG_CONFIG"; then
     if test -n "$PKG_CONFIG" && \
-    { { $as_echo "$as_me:${as_lineno-$LINENO}: \$PKG_CONFIG --exists --print-errors \"cmocka >= 1.0.0\""; } >&5
-  ($PKG_CONFIG --exists --print-errors "cmocka >= 1.0.0") 2>&5
+    { { $as_echo "$as_me:${as_lineno-$LINENO}: \$PKG_CONFIG --exists --print-errors \"cmocka >= 1.1.3\""; } >&5
+  ($PKG_CONFIG --exists --print-errors "cmocka >= 1.1.3") 2>&5
   ac_status=$?
   $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
   test $ac_status = 0; }; then
-  pkg_cv_CMOCKA_CFLAGS=`$PKG_CONFIG --cflags "cmocka >= 1.0.0" 2>/dev/null`
+  pkg_cv_CMOCKA_CFLAGS=`$PKG_CONFIG --cflags "cmocka >= 1.1.3" 2>/dev/null`
 		      test "x$?" != "x0" && pkg_failed=yes
 else
   pkg_failed=yes
@@ -21811,12 +21841,12 @@ if test -n "$CMOCKA_LIBS"; then
     pkg_cv_CMOCKA_LIBS="$CMOCKA_LIBS"
  elif test -n "$PKG_CONFIG"; then
     if test -n "$PKG_CONFIG" && \
-    { { $as_echo "$as_me:${as_lineno-$LINENO}: \$PKG_CONFIG --exists --print-errors \"cmocka >= 1.0.0\""; } >&5
-  ($PKG_CONFIG --exists --print-errors "cmocka >= 1.0.0") 2>&5
+    { { $as_echo "$as_me:${as_lineno-$LINENO}: \$PKG_CONFIG --exists --print-errors \"cmocka >= 1.1.3\""; } >&5
+  ($PKG_CONFIG --exists --print-errors "cmocka >= 1.1.3") 2>&5
   ac_status=$?
   $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
   test $ac_status = 0; }; then
-  pkg_cv_CMOCKA_LIBS=`$PKG_CONFIG --libs "cmocka >= 1.0.0" 2>/dev/null`
+  pkg_cv_CMOCKA_LIBS=`$PKG_CONFIG --libs "cmocka >= 1.1.3" 2>/dev/null`
 		      test "x$?" != "x0" && pkg_failed=yes
 else
   pkg_failed=yes
@@ -21837,9 +21867,9 @@ else
         _pkg_short_errors_supported=no
 fi
         if test $_pkg_short_errors_supported = yes; then
-	        CMOCKA_PKG_ERRORS=`$PKG_CONFIG --short-errors --print-errors --cflags --libs "cmocka >= 1.0.0" 2>&1`
+	        CMOCKA_PKG_ERRORS=`$PKG_CONFIG --short-errors --print-errors --cflags --libs "cmocka >= 1.1.3" 2>&1`
         else
-	        CMOCKA_PKG_ERRORS=`$PKG_CONFIG --print-errors --cflags --libs "cmocka >= 1.0.0" 2>&1`
+	        CMOCKA_PKG_ERRORS=`$PKG_CONFIG --print-errors --cflags --libs "cmocka >= 1.1.3" 2>&1`
         fi
 	# Put the nasty error message in config.log where it belongs
 	echo "$CMOCKA_PKG_ERRORS" >&5
@@ -21857,23 +21887,24 @@ $as_echo "yes" >&6; }
 
 $as_echo "#define HAVE_CMOCKA 1" >>confdefs.h
 
+				     with_cmocka=yes
 fi ;; #(
   yes) :
 
 pkg_failed=no
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for cmocka >= 1.0.0" >&5
-$as_echo_n "checking for cmocka >= 1.0.0... " >&6; }
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for cmocka >= 1.1.3" >&5
+$as_echo_n "checking for cmocka >= 1.1.3... " >&6; }
 
 if test -n "$CMOCKA_CFLAGS"; then
     pkg_cv_CMOCKA_CFLAGS="$CMOCKA_CFLAGS"
  elif test -n "$PKG_CONFIG"; then
     if test -n "$PKG_CONFIG" && \
-    { { $as_echo "$as_me:${as_lineno-$LINENO}: \$PKG_CONFIG --exists --print-errors \"cmocka >= 1.0.0\""; } >&5
-  ($PKG_CONFIG --exists --print-errors "cmocka >= 1.0.0") 2>&5
+    { { $as_echo "$as_me:${as_lineno-$LINENO}: \$PKG_CONFIG --exists --print-errors \"cmocka >= 1.1.3\""; } >&5
+  ($PKG_CONFIG --exists --print-errors "cmocka >= 1.1.3") 2>&5
   ac_status=$?
   $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
   test $ac_status = 0; }; then
-  pkg_cv_CMOCKA_CFLAGS=`$PKG_CONFIG --cflags "cmocka >= 1.0.0" 2>/dev/null`
+  pkg_cv_CMOCKA_CFLAGS=`$PKG_CONFIG --cflags "cmocka >= 1.1.3" 2>/dev/null`
 		      test "x$?" != "x0" && pkg_failed=yes
 else
   pkg_failed=yes
@@ -21885,12 +21916,12 @@ if test -n "$CMOCKA_LIBS"; then
     pkg_cv_CMOCKA_LIBS="$CMOCKA_LIBS"
  elif test -n "$PKG_CONFIG"; then
     if test -n "$PKG_CONFIG" && \
-    { { $as_echo "$as_me:${as_lineno-$LINENO}: \$PKG_CONFIG --exists --print-errors \"cmocka >= 1.0.0\""; } >&5
-  ($PKG_CONFIG --exists --print-errors "cmocka >= 1.0.0") 2>&5
+    { { $as_echo "$as_me:${as_lineno-$LINENO}: \$PKG_CONFIG --exists --print-errors \"cmocka >= 1.1.3\""; } >&5
+  ($PKG_CONFIG --exists --print-errors "cmocka >= 1.1.3") 2>&5
   ac_status=$?
   $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
   test $ac_status = 0; }; then
-  pkg_cv_CMOCKA_LIBS=`$PKG_CONFIG --libs "cmocka >= 1.0.0" 2>/dev/null`
+  pkg_cv_CMOCKA_LIBS=`$PKG_CONFIG --libs "cmocka >= 1.1.3" 2>/dev/null`
 		      test "x$?" != "x0" && pkg_failed=yes
 else
   pkg_failed=yes
@@ -21911,14 +21942,14 @@ else
         _pkg_short_errors_supported=no
 fi
         if test $_pkg_short_errors_supported = yes; then
-	        CMOCKA_PKG_ERRORS=`$PKG_CONFIG --short-errors --print-errors --cflags --libs "cmocka >= 1.0.0" 2>&1`
+	        CMOCKA_PKG_ERRORS=`$PKG_CONFIG --short-errors --print-errors --cflags --libs "cmocka >= 1.1.3" 2>&1`
         else
-	        CMOCKA_PKG_ERRORS=`$PKG_CONFIG --print-errors --cflags --libs "cmocka >= 1.0.0" 2>&1`
+	        CMOCKA_PKG_ERRORS=`$PKG_CONFIG --print-errors --cflags --libs "cmocka >= 1.1.3" 2>&1`
         fi
 	# Put the nasty error message in config.log where it belongs
 	echo "$CMOCKA_PKG_ERRORS" >&5
 
-	as_fn_error $? "Package requirements (cmocka >= 1.0.0) were not met:
+	as_fn_error $? "Package requirements (cmocka >= 1.1.3) were not met:
 
 $CMOCKA_PKG_ERRORS
 
@@ -23952,7 +23983,7 @@ ac_config_commands="$ac_config_commands chmod"
 # elsewhere if there's a good reason for doing so.
 #
 
-ac_config_files="$ac_config_files Makefile bin/Makefile bin/check/Makefile bin/confgen/Makefile bin/confgen/unix/Makefile bin/delv/Makefile bin/dig/Makefile bin/dnssec/Makefile bin/named/Makefile bin/named/unix/Makefile bin/nsupdate/Makefile bin/pkcs11/Makefile bin/plugins/Makefile bin/python/Makefile bin/python/dnssec-checkds.py bin/python/dnssec-coverage.py bin/python/dnssec-keymgr.py bin/python/isc/Makefile bin/python/isc/__init__.py bin/python/isc/checkds.py bin/python/isc/coverage.py bin/python/isc/dnskey.py bin/python/isc/eventlist.py bin/python/isc/keydict.py bin/python/isc/keyevent.py bin/python/isc/keymgr.py bin/python/isc/keyseries.py bin/python/isc/keyzone.py bin/python/isc/policy.py bin/python/isc/rndc.py bin/python/isc/tests/Makefile bin/python/isc/tests/dnskey_test.py bin/python/isc/tests/policy_test.py bin/python/isc/utils.py bin/rndc/Makefile bin/tests/Makefile bin/tests/headerdep_test.sh bin/tests/optional/Makefile bin/tests/pkcs11/Makefile bin/tests/pkcs11/benchmarks/Makefile bin/tests/system/Makefile bin/tests/system/conf.sh bin/tests/system/dlzexternal/Makefile bin/tests/system/dlzexternal/ns1/dlzs.conf bin/tests/system/dyndb/Makefile bin/tests/system/dyndb/driver/Makefile bin/tests/system/pipelined/Makefile bin/tests/system/rndc/Makefile bin/tests/system/rpz/Makefile bin/tests/system/rsabigexponent/Makefile bin/tests/system/tkey/Makefile bin/tools/Makefile contrib/scripts/check-secure-delegation.pl contrib/scripts/zone-edit.sh doc/Makefile doc/arm/Makefile doc/doxygen/Doxyfile doc/doxygen/Makefile doc/doxygen/doxygen-input-filter doc/man/Makefile doc/misc/Makefile fuzz/Makefile lib/Makefile lib/bind9/Makefile lib/bind9/include/Makefile lib/bind9/include/bind9/Makefile lib/dns/Makefile lib/dns/include/Makefile lib/dns/include/dns/Makefile lib/dns/include/dst/Makefile lib/dns/tests/Makefile lib/irs/Makefile lib/irs/include/Makefile lib/irs/include/irs/Makefile lib/irs/include/irs/netdb.h lib/irs/include/irs/platform.h lib/irs/tests/Makefile lib/isc/Makefile lib/isc/include/Makefile lib/isc/include/isc/Makefile lib/isc/include/isc/platform.h lib/isc/include/pk11/Makefile lib/isc/include/pkcs11/Makefile lib/isc/netmgr/Makefile lib/isc/pthreads/Makefile lib/isc/pthreads/include/Makefile lib/isc/pthreads/include/isc/Makefile lib/isc/tests/Makefile lib/isc/unix/Makefile lib/isc/unix/include/Makefile lib/isc/unix/include/isc/Makefile lib/isccc/Makefile lib/isccc/include/Makefile lib/isccc/include/isccc/Makefile lib/isccc/tests/Makefile lib/isccfg/Makefile lib/isccfg/include/Makefile lib/isccfg/include/isccfg/Makefile lib/isccfg/tests/Makefile lib/ns/Makefile lib/ns/include/Makefile lib/ns/include/ns/Makefile lib/ns/tests/Makefile lib/samples/Makefile lib/samples/Makefile-postinstall make/Makefile make/mkdep unit/unittest.sh util/check-make-install"
+ac_config_files="$ac_config_files Makefile bin/Makefile bin/check/Makefile bin/confgen/Makefile bin/confgen/unix/Makefile bin/delv/Makefile bin/dig/Makefile bin/dnssec/Makefile bin/named/Makefile bin/named/unix/Makefile bin/nsupdate/Makefile bin/pkcs11/Makefile bin/plugins/Makefile bin/python/Makefile bin/python/dnssec-checkds.py bin/python/dnssec-coverage.py bin/python/dnssec-keymgr.py bin/python/isc/Makefile bin/python/isc/__init__.py bin/python/isc/checkds.py bin/python/isc/coverage.py bin/python/isc/dnskey.py bin/python/isc/eventlist.py bin/python/isc/keydict.py bin/python/isc/keyevent.py bin/python/isc/keymgr.py bin/python/isc/keyseries.py bin/python/isc/keyzone.py bin/python/isc/policy.py bin/python/isc/rndc.py bin/python/isc/tests/Makefile bin/python/isc/tests/dnskey_test.py bin/python/isc/tests/policy_test.py bin/python/isc/utils.py bin/rndc/Makefile bin/tests/Makefile bin/tests/headerdep_test.sh bin/tests/optional/Makefile bin/tests/pkcs11/Makefile bin/tests/pkcs11/benchmarks/Makefile bin/tests/system/Makefile bin/tests/system/conf.sh bin/tests/system/dlzexternal/Makefile bin/tests/system/dlzexternal/ns1/dlzs.conf bin/tests/system/dyndb/Makefile bin/tests/system/dyndb/driver/Makefile bin/tests/system/pipelined/Makefile bin/tests/system/rndc/Makefile bin/tests/system/rpz/Makefile bin/tests/system/rsabigexponent/Makefile bin/tests/system/tkey/Makefile bin/tools/Makefile contrib/scripts/check-secure-delegation.pl contrib/scripts/zone-edit.sh doc/Makefile doc/arm/Makefile doc/doxygen/Doxyfile doc/doxygen/Makefile doc/doxygen/doxygen-input-filter doc/man/Makefile doc/misc/Makefile fuzz/Makefile lib/Makefile lib/bind9/Makefile lib/bind9/include/Makefile lib/bind9/include/bind9/Makefile lib/dns/Makefile lib/dns/include/Makefile lib/dns/include/dns/Makefile lib/dns/include/dst/Makefile lib/dns/tests/Makefile lib/irs/Makefile lib/irs/include/Makefile lib/irs/include/irs/Makefile lib/irs/include/irs/netdb.h lib/irs/include/irs/platform.h lib/irs/tests/Makefile lib/isc/Makefile lib/isc/include/Makefile lib/isc/include/isc/Makefile lib/isc/include/isc/platform.h lib/isc/include/pk11/Makefile lib/isc/include/pkcs11/Makefile lib/isc/netmgr/Makefile lib/isc/pthreads/Makefile lib/isc/pthreads/include/Makefile lib/isc/pthreads/include/isc/Makefile lib/isc/tests/Makefile lib/isc/unix/Makefile lib/isc/unix/include/Makefile lib/isc/unix/include/isc/Makefile lib/isccc/Makefile lib/isccc/include/Makefile lib/isccc/include/isccc/Makefile lib/isccc/tests/Makefile lib/isccfg/Makefile lib/isccfg/include/Makefile lib/isccfg/include/isccfg/Makefile lib/isccfg/tests/Makefile lib/ns/Makefile lib/ns/include/Makefile lib/ns/include/ns/Makefile lib/ns/tests/Makefile make/Makefile make/mkdep unit/unittest.sh util/check-make-install"
 
 
 #
@@ -25068,8 +25099,6 @@ do
     "lib/ns/include/Makefile") CONFIG_FILES="$CONFIG_FILES lib/ns/include/Makefile" ;;
     "lib/ns/include/ns/Makefile") CONFIG_FILES="$CONFIG_FILES lib/ns/include/ns/Makefile" ;;
     "lib/ns/tests/Makefile") CONFIG_FILES="$CONFIG_FILES lib/ns/tests/Makefile" ;;
-    "lib/samples/Makefile") CONFIG_FILES="$CONFIG_FILES lib/samples/Makefile" ;;
-    "lib/samples/Makefile-postinstall") CONFIG_FILES="$CONFIG_FILES lib/samples/Makefile-postinstall" ;;
     "make/Makefile") CONFIG_FILES="$CONFIG_FILES make/Makefile" ;;
     "make/mkdep") CONFIG_FILES="$CONFIG_FILES make/mkdep" ;;
     "unit/unittest.sh") CONFIG_FILES="$CONFIG_FILES unit/unittest.sh" ;;

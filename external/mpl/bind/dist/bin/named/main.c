@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.11 2021/04/29 17:26:09 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.12 2021/08/19 11:50:15 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -20,6 +20,10 @@
 #include <string.h>
 #include <uv.h>
 
+#if HAVE_LOCALE_H
+#include <locale.h>
+#endif /* HAVE_LOCALE_H */
+
 #ifdef HAVE_DNSTAP
 #include <protobuf-c/protobuf-c.h>
 #endif
@@ -32,6 +36,7 @@
 #include <isc/hash.h>
 #include <isc/hp.h>
 #include <isc/httpd.h>
+#include <isc/managers.h>
 #include <isc/netmgr.h>
 #include <isc/os.h>
 #include <isc/platform.h>
@@ -341,11 +346,14 @@ library_unexpected_error(const char *file, int line, const char *format,
 static void
 usage(void) {
 	fprintf(stderr, "usage: named [-4|-6] [-c conffile] [-d debuglevel] "
-			"[-E engine] [-f|-g]\n"
-			"             [-n number_of_cpus] [-p port] [-s] "
-			"[-S sockets] [-t chrootdir]\n"
-			"             [-u username] [-U listeners] "
-			"[-m {usage|trace|record|size|mctx}]\n"
+			"[-D comment] [-E engine]\n"
+			"             [-f|-g] [-L logfile] [-n number_of_cpus] "
+			"[-p port] [-s]\n"
+			"             [-S sockets] [-t chrootdir] [-u "
+			"username] [-U listeners]\n"
+			"             [-X lockfile] [-m "
+			"{usage|trace|record|size|mctx}]\n"
+			"             [-M fill|nofill]\n"
 			"usage: named [-v|-V]\n");
 }
 
@@ -917,23 +925,11 @@ create_managers(void) {
 		      "using %u UDP listener%s per interface", named_g_udpdisp,
 		      named_g_udpdisp == 1 ? "" : "s");
 
-	/*
-	 * We have ncpus network threads, ncpus worker threads, ncpus
-	 * old network threads - make it 4x just to be safe. The memory
-	 * impact is negligible.
-	 */
-	isc_hp_init(4 * named_g_cpus);
-	named_g_nm = isc_nm_start(named_g_mctx, named_g_cpus);
-	if (named_g_nm == NULL) {
-		UNEXPECTED_ERROR(__FILE__, __LINE__, "isc_nm_start() failed");
-		return (ISC_R_UNEXPECTED);
-	}
-
-	result = isc_taskmgr_create(named_g_mctx, named_g_cpus, 0, named_g_nm,
-				    &named_g_taskmgr);
+	result = isc_managers_create(named_g_mctx, named_g_cpus, 0, &named_g_nm,
+				     &named_g_taskmgr);
 	if (result != ISC_R_SUCCESS) {
 		UNEXPECTED_ERROR(__FILE__, __LINE__,
-				 "isc_taskmgr_create() failed: %s",
+				 "isc_managers_create() failed: %s",
 				 isc_result_totext(result));
 		return (ISC_R_UNEXPECTED);
 	}
@@ -968,25 +964,9 @@ create_managers(void) {
 
 static void
 destroy_managers(void) {
-	/*
-	 * isc_nm_closedown() closes all active connections, freeing
-	 * attached clients and other resources and preventing new
-	 * connections from being established, but it not does not
-	 * stop all processing or destroy the netmgr yet.
-	 */
-	isc_nm_closedown(named_g_nm);
-
-	/*
-	 * isc_taskmgr_destroy() will block until all tasks have exited.
-	 */
-	isc_taskmgr_destroy(&named_g_taskmgr);
+	isc_managers_destroy(&named_g_nm, &named_g_taskmgr);
 	isc_timermgr_destroy(&named_g_timermgr);
 	isc_socketmgr_destroy(&named_g_socketmgr);
-
-	/*
-	 * At this point is safe to destroy the netmgr.
-	 */
-	isc_nm_destroy(&named_g_nm);
 }
 
 static void
@@ -1502,6 +1482,20 @@ main(int argc, char *argv[]) {
 #ifdef HAVE_LIBXML2
 	xmlInitThreads();
 #endif /* HAVE_LIBXML2 */
+
+	/*
+	 * Technically, this call is superfluous because on startup of the main
+	 * program, the portable "C" locale is selected by default.  This
+	 * explicit call here is for a reference that the BIND 9 code base is
+	 * not locale aware and the locale MUST be set to "C" (or "POSIX") when
+	 * calling any BIND 9 library code.  If you are calling external
+	 * libraries that use locale, such calls must be wrapped into
+	 * setlocale(LC_ALL, ""); before the call and setlocale(LC_ALL, "C");
+	 * after the call, and no BIND 9 library calls must be made in between.
+	 */
+#if HAVE_SETLOCALE
+	setlocale(LC_ALL, "C");
+#endif /* HAVE_SETLOCALE */
 
 	/*
 	 * Record version in core image.

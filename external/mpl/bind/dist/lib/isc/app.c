@@ -1,4 +1,4 @@
-/*	$NetBSD: app.c,v 1.5 2021/04/03 22:44:43 christos Exp $	*/
+/*	$NetBSD: app.c,v 1.6 2021/08/19 11:50:18 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -52,7 +52,7 @@
  */
 
 static isc_thread_t blockedthread;
-static atomic_bool is_running;
+static atomic_bool is_running = ATOMIC_VAR_INIT(0);
 
 #ifdef WIN32
 /*

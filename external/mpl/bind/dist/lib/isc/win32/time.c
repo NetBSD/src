@@ -1,4 +1,4 @@
-/*	$NetBSD: time.c,v 1.7 2021/04/29 17:26:13 christos Exp $	*/
+/*	$NetBSD: time.c,v 1.8 2021/08/19 11:50:19 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -22,6 +22,7 @@
 #include <windows.h>
 
 #include <isc/assertions.h>
+#include <isc/once.h>
 #include <isc/string.h>
 #include <isc/time.h>
 #include <isc/tm.h>
@@ -544,4 +545,107 @@ isc_time_formatshorttimestamp(const isc_time_t *t, char *buf,
 	} else {
 		buf[0] = 0;
 	}
+}
+
+/*
+ * POSIX Shims
+ */
+
+struct tm *
+gmtime_r(const time_t *clock, struct tm *result) {
+	errno_t ret = gmtime_s(result, clock);
+	if (ret != 0) {
+		errno = ret;
+		return (NULL);
+	}
+	return (result);
+}
+
+struct tm *
+localtime_r(const time_t *clock, struct tm *result) {
+	errno_t ret = localtime_s(result, clock);
+	if (ret != 0) {
+		errno = ret;
+		return (NULL);
+	}
+	return (result);
+}
+
+#define BILLION 1000000000
+
+static isc_once_t nsec_ticks_once = ISC_ONCE_INIT;
+static double nsec_ticks = 0;
+
+static void
+nsec_ticks_init(void) {
+	LARGE_INTEGER ticks;
+	RUNTIME_CHECK(QueryPerformanceFrequency(&ticks) != 0);
+	nsec_ticks = (double)ticks.QuadPart / 1000000000.0;
+	RUNTIME_CHECK(nsec_ticks != 0.0);
+}
+
+int
+nanosleep(const struct timespec *req, struct timespec *rem) {
+	int_fast64_t sleep_msec;
+	uint_fast64_t ticks, until;
+	LARGE_INTEGER before, after;
+
+	RUNTIME_CHECK(isc_once_do(&nsec_ticks_once, nsec_ticks_init) ==
+		      ISC_R_SUCCESS);
+
+	if (req->tv_nsec < 0 || BILLION <= req->tv_nsec) {
+		errno = EINVAL;
+		return (-1);
+	}
+
+	/* Sleep() is not interruptible; there is no remaining delay ever  */
+	if (rem != NULL) {
+		rem->tv_sec = 0;
+		rem->tv_nsec = 0;
+	}
+
+	if (req->tv_sec >= 0) {
+		/*
+		 * For requested delays of one second or more, 15ms resolution
+		 * granularity is sufficient.
+		 */
+		Sleep(req->tv_sec * 1000 + req->tv_nsec / 1000000);
+
+		return (0);
+	}
+
+	/* Sleep has <-8,8> ms precision, so substract 10 milliseconds */
+	sleep_msec = (int64_t)req->tv_nsec / 1000000 - 10;
+	ticks = req->tv_nsec * nsec_ticks;
+
+	RUNTIME_CHECK(QueryPerformanceCounter(&before) != 0);
+
+	until = before.QuadPart + ticks;
+
+	if (sleep_msec > 0) {
+		Sleep(sleep_msec);
+	}
+
+	while (true) {
+		LARGE_INTEGER after;
+		RUNTIME_CHECK(QueryPerformanceCounter(&after) != 0);
+		if (after.QuadPart >= until) {
+			break;
+		}
+	}
+
+done:
+	return (0);
+}
+
+int
+usleep(useconds_t useconds) {
+	struct timespec req;
+
+	req.tv_sec = useconds / 1000000;
+	req.tv_nsec = (useconds * 1000) % 1000000000;
+
+	nanosleep(&req, NULL);
+
+	return (0);
 }

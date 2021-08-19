@@ -1,4 +1,4 @@
-/*	$NetBSD: client.c,v 1.9 2021/04/05 11:27:01 rillig Exp $	*/
+/*	$NetBSD: client.c,v 1.10 2021/08/19 11:50:17 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -410,92 +410,15 @@ createview(isc_mem_t *mctx, dns_rdataclass_t rdclass, unsigned int options,
 	return (ISC_R_SUCCESS);
 }
 
+
 isc_result_t
-dns_client_create(dns_client_t **clientp, unsigned int options) {
+dns_client_create(isc_mem_t *mctx, isc_appctx_t *actx, isc_taskmgr_t *taskmgr,
+		  isc_socketmgr_t *socketmgr, isc_timermgr_t *timermgr,
+		  unsigned int options, dns_client_t **clientp,
+		  const isc_sockaddr_t *localaddr4,
+		  const isc_sockaddr_t *localaddr6) {
 	isc_result_t result;
-	isc_mem_t *mctx = NULL;
-	isc_appctx_t *actx = NULL;
-	isc_taskmgr_t *taskmgr = NULL;
-	isc_socketmgr_t *socketmgr = NULL;
-	isc_timermgr_t *timermgr = NULL;
-#if 0
-	/* XXXMPA add debug logging support */
-	isc_log_t *lctx = NULL;
-	isc_logconfig_t *logconfig = NULL;
-	unsigned int logdebuglevel = 0;
-#endif /* if 0 */
-
-	isc_mem_create(&mctx);
-	result = isc_appctx_create(mctx, &actx);
-	if (result != ISC_R_SUCCESS) {
-		goto cleanup;
-	}
-	result = isc_app_ctxstart(actx);
-	if (result != ISC_R_SUCCESS) {
-		goto cleanup;
-	}
-	result = isc_taskmgr_createinctx(mctx, 1, 0, &taskmgr);
-	if (result != ISC_R_SUCCESS) {
-		goto cleanup;
-	}
-	result = isc_socketmgr_createinctx(mctx, &socketmgr);
-	if (result != ISC_R_SUCCESS) {
-		goto cleanup;
-	}
-	result = isc_timermgr_createinctx(mctx, &timermgr);
-	if (result != ISC_R_SUCCESS) {
-		goto cleanup;
-	}
-#if 0
-	isc_log_create(mctx, &lctx, &logconfig);
-	isc_log_setcontext(lctx);
-	dns_log_init(lctx);
-	dns_log_setcontext(lctx);
-	result = isc_log_usechannel(logconfig, "default_debug", NULL, NULL);
-	if (result != ISC_R_SUCCESS) {
-		goto cleanup;
-	}
-	isc_log_setdebuglevel(lctx, logdebuglevel);
-#endif /* if 0 */
-	result = dns_client_createx(mctx, actx, taskmgr, socketmgr, timermgr,
-				    options, clientp, NULL, NULL);
-	if (result != ISC_R_SUCCESS) {
-		goto cleanup;
-	}
-
-	(*clientp)->attributes |= DNS_CLIENTATTR_OWNCTX;
-
-	/* client has its own reference to mctx, so we can detach it here */
-	isc_mem_detach(&mctx);
-
-	return (ISC_R_SUCCESS);
-
-cleanup:
-	if (taskmgr != NULL) {
-		isc_taskmgr_destroy(&taskmgr);
-	}
-	if (timermgr != NULL) {
-		isc_timermgr_destroy(&timermgr);
-	}
-	if (socketmgr != NULL) {
-		isc_socketmgr_destroy(&socketmgr);
-	}
-	if (actx != NULL) {
-		isc_appctx_destroy(&actx);
-	}
-	isc_mem_detach(&mctx);
-
-	return (result);
-}
-
-isc_result_t
-dns_client_createx(isc_mem_t *mctx, isc_appctx_t *actx, isc_taskmgr_t *taskmgr,
-		   isc_socketmgr_t *socketmgr, isc_timermgr_t *timermgr,
-		   unsigned int options, dns_client_t **clientp,
-		   const isc_sockaddr_t *localaddr4,
-		   const isc_sockaddr_t *localaddr6) {
 	dns_client_t *client;
-	isc_result_t result;
 	dns_dispatchmgr_t *dispatchmgr = NULL;
 	dns_dispatch_t *dispatchv4 = NULL;
 	dns_dispatch_t *dispatchv6 = NULL;
@@ -633,21 +556,6 @@ destroyclient(dns_client_t *client) {
 	dns_dispatchmgr_destroy(&client->dispatchmgr);
 
 	isc_task_detach(&client->task);
-
-	/*
-	 * If the client has created its own running environments,
-	 * destroy them.
-	 */
-	if ((client->attributes & DNS_CLIENTATTR_OWNCTX) != 0) {
-		isc_taskmgr_destroy(&client->taskmgr);
-		isc_timermgr_destroy(&client->timermgr);
-		isc_socketmgr_destroy(&client->socketmgr);
-
-		isc_app_ctxfinish(client->actx);
-		isc_appctx_destroy(&client->actx);
-	}
-
-	isc_mutex_destroy(&client->lock);
 	client->magic = 0;
 
 	isc_mem_putanddetach(&client->mctx, client, sizeof(*client));

@@ -1,4 +1,4 @@
-/*	$NetBSD: tsig.c,v 1.9 2021/04/29 17:26:11 christos Exp $	*/
+/*	$NetBSD: tsig.c,v 1.10 2021/08/19 11:50:17 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -762,7 +762,7 @@ dns_tsig_sign(dns_message_t *msg) {
 	unsigned char data[128];
 	isc_buffer_t databuf, sigbuf;
 	isc_buffer_t *dynbuf = NULL;
-	dns_name_t *owner;
+	dns_name_t *owner = NULL;
 	dns_rdata_t *rdata = NULL;
 	dns_rdatalist_t *datalist = NULL;
 	dns_rdataset_t *dataset = NULL;
@@ -1018,20 +1018,17 @@ dns_tsig_sign(dns_message_t *msg) {
 		tsig.signature = NULL;
 	}
 
-	owner = NULL;
 	ret = dns_message_gettempname(msg, &owner);
 	if (ret != ISC_R_SUCCESS) {
 		goto cleanup_rdata;
 	}
-	dns_name_init(owner, NULL);
-	dns_name_dup(&key->name, msg->mctx, owner);
+	dns_name_copynf(&key->name, owner);
 
-	datalist = NULL;
 	ret = dns_message_gettemprdatalist(msg, &datalist);
 	if (ret != ISC_R_SUCCESS) {
 		goto cleanup_owner;
 	}
-	dataset = NULL;
+
 	ret = dns_message_gettemprdataset(msg, &dataset);
 	if (ret != ISC_R_SUCCESS) {
 		goto cleanup_rdatalist;

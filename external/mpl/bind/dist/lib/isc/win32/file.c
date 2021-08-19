@@ -1,4 +1,4 @@
-/*	$NetBSD: file.c,v 1.6 2021/02/19 16:42:21 christos Exp $	*/
+/*	$NetBSD: file.c,v 1.7 2021/08/19 11:50:19 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -104,7 +104,7 @@ gettemp(char *path, bool binary, int *doopen) {
 			if (*trv == 'z') {
 				*trv++ = 'a';
 			} else {
-				if (isdigit(*trv)) {
+				if (isdigit((unsigned char)*trv)) {
 					*trv = 'a';
 				} else {
 					++*trv;

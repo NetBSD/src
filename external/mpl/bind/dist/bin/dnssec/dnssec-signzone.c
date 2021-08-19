@@ -1,4 +1,4 @@
-/*	$NetBSD: dnssec-signzone.c,v 1.7 2021/04/29 17:26:09 christos Exp $	*/
+/*	$NetBSD: dnssec-signzone.c,v 1.8 2021/08/19 11:50:15 christos Exp $	*/
 
 /*
  * Portions Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -41,6 +41,7 @@
 #include <isc/file.h>
 #include <isc/hash.h>
 #include <isc/hex.h>
+#include <isc/managers.h>
 #include <isc/md.h>
 #include <isc/mem.h>
 #include <isc/mutex.h>
@@ -125,7 +126,7 @@ struct signer_event {
 
 static dns_dnsseckeylist_t keylist;
 static unsigned int keycount = 0;
-isc_rwlock_t keylist_lock;
+static isc_rwlock_t keylist_lock;
 static isc_stdtime_t starttime = 0, endtime = 0, dnskey_endtime = 0, now;
 static int cycle = -1;
 static int jitter = 0;
@@ -145,6 +146,7 @@ static unsigned int nsigned = 0, nretained = 0, ndropped = 0;
 static unsigned int nverified = 0, nverifyfailed = 0;
 static const char *directory = NULL, *dsdir = NULL;
 static isc_mutex_t namelock, statslock;
+static isc_nm_t *netmgr = NULL;
 static isc_taskmgr_t *taskmgr = NULL;
 static dns_db_t *gdb;		  /* The database */
 static dns_dbversion_t *gversion; /* The database version */
@@ -178,8 +180,9 @@ static bool remove_orphansigs = false;
 static bool remove_inactkeysigs = false;
 static bool output_dnssec_only = false;
 static bool output_stdout = false;
-bool set_maxttl = false;
+static bool set_maxttl = false;
 static dns_ttl_t maxttl = 0;
+static bool no_max_check = false;
 
 #define INCSTAT(counter)            \
 	if (printstats) {           \
@@ -382,9 +385,9 @@ keythatsigned(dns_rdata_rrsig_t *rrsig) {
 	dst_key_t *pubkey = NULL, *privkey = NULL;
 	dns_dnsseckey_t *key = NULL;
 
-	isc_rwlock_lock(&keylist_lock, isc_rwlocktype_read);
+	RWLOCK(&keylist_lock, isc_rwlocktype_read);
 	key = keythatsigned_unlocked(rrsig);
-	isc_rwlock_unlock(&keylist_lock, isc_rwlocktype_read);
+	RWUNLOCK(&keylist_lock, isc_rwlocktype_read);
 	if (key != NULL) {
 		return (key);
 	}
@@ -1335,8 +1338,8 @@ get_soa_ttls(void) {
 	result = dns_rdataset_first(&soaset);
 	check_result(result, "dns_rdataset_first");
 	dns_rdataset_current(&soaset, &rdata);
-	zone_soa_min_ttl = dns_soa_getminimum(&rdata);
 	soa_ttl = soaset.ttl;
+	zone_soa_min_ttl = ISC_MIN(dns_soa_getminimum(&rdata), soa_ttl);
 	if (set_maxttl) {
 		zone_soa_min_ttl = ISC_MIN(zone_soa_min_ttl, maxttl);
 		soa_ttl = ISC_MIN(soa_ttl, maxttl);
@@ -3439,6 +3442,12 @@ main(int argc, char *argv[]) {
 
 		case 'H':
 			set_iter = true;
+			/* too-many is NOT DOCUMENTED */
+			if (strcmp(isc_commandline_argument, "too-many") == 0) {
+				nsec3iter = 151;
+				no_max_check = true;
+				break;
+			}
 			nsec3iter = strtoul(isc_commandline_argument, &endp, 0);
 			if (*endp != '\0') {
 				fatal("iterations must be numeric");
@@ -3857,7 +3866,6 @@ main(int argc, char *argv[]) {
 	warnifallksk(gdb);
 
 	if (IS_NSEC3) {
-		unsigned int max;
 		bool answer;
 
 		hash_length = dns_nsec3_hashlength(dns_hash_sha1);
@@ -3876,12 +3884,15 @@ main(int argc, char *argv[]) {
 			      "NSEC-only DNSKEY");
 		}
 
-		result = dns_nsec3_maxiterations(gdb, NULL, mctx, &max);
-		check_result(result, "dns_nsec3_maxiterations()");
-		if (nsec3iter > max) {
-			fatal("NSEC3 iterations too big for weakest DNSKEY "
-			      "strength. Maximum iterations allowed %u.",
-			      max);
+		if (nsec3iter > dns_nsec3_maxiterations()) {
+			if (no_max_check) {
+				fprintf(stderr,
+					"Ignoring max iterations check.\n");
+			} else {
+				fatal("NSEC3 iterations too big. Maximum "
+				      "iterations allowed %u.",
+				      dns_nsec3_maxiterations());
+			}
 		}
 	} else {
 		hashlist_init(&hashlist, 0, 0); /* silence clang */
@@ -3954,7 +3965,7 @@ main(int argc, char *argv[]) {
 	print_time(outfp);
 	print_version(outfp);
 
-	result = isc_taskmgr_create(mctx, ntasks, 0, NULL, &taskmgr);
+	result = isc_managers_create(mctx, ntasks, 0, &netmgr, &taskmgr);
 	if (result != ISC_R_SUCCESS) {
 		fatal("failed to create task manager: %s",
 		      isc_result_totext(result));
@@ -4009,7 +4020,7 @@ main(int argc, char *argv[]) {
 	for (i = 0; i < (int)ntasks; i++) {
 		isc_task_detach(&tasks[i]);
 	}
-	isc_taskmgr_destroy(&taskmgr);
+	isc_managers_destroy(&netmgr, &taskmgr);
 	isc_mem_put(mctx, tasks, ntasks * sizeof(isc_task_t *));
 	postsign();
 	TIME_NOW(&sign_finish);

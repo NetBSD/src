@@ -1,4 +1,4 @@
-/*	$NetBSD: byaddr_test.c,v 1.5 2021/02/19 16:42:11 christos Exp $	*/
+/*	$NetBSD: byaddr_test.c,v 1.6 2021/08/19 11:50:15 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -19,6 +19,7 @@
 
 #include <isc/app.h>
 #include <isc/commandline.h>
+#include <isc/managers.h>
 #include <isc/mem.h>
 #include <isc/netaddr.h>
 #include <isc/print.h>
@@ -67,18 +68,19 @@ done(isc_task_t *task, isc_event_t *event) {
 
 int
 main(int argc, char *argv[]) {
-	isc_mem_t *mctx;
+	isc_mem_t *mctx = NULL;
 	bool verbose = false;
 	unsigned int workers = 2;
-	isc_taskmgr_t *taskmgr;
-	isc_task_t *task;
-	isc_timermgr_t *timermgr;
-	dns_view_t *view;
+	isc_nm_t *netmgr = NULL;
+	isc_taskmgr_t *taskmgr = NULL;
+	isc_task_t *task = NULL;
+	isc_timermgr_t *timermgr = NULL;
+	dns_view_t *view = NULL;
 	int ch;
-	isc_socketmgr_t *socketmgr;
-	dns_dispatchmgr_t *dispatchmgr;
+	isc_socketmgr_t *socketmgr = NULL;
+	dns_dispatchmgr_t *dispatchmgr = NULL;
 	isc_netaddr_t na;
-	dns_byaddr_t *byaddr;
+	dns_byaddr_t *byaddr = NULL;
 	isc_result_t result;
 	unsigned int options = 0;
 	dns_cache_t *cache;
@@ -87,7 +89,6 @@ main(int argc, char *argv[]) {
 
 	dns_result_register();
 
-	mctx = NULL;
 	isc_mem_create(&mctx);
 
 	while ((ch = isc_commandline_parse(argc, argv, "nvw:")) != -1) {
@@ -112,28 +113,21 @@ main(int argc, char *argv[]) {
 		printf("IPv6: %s\n", isc_result_totext(isc_net_probeipv6()));
 	}
 
-	taskmgr = NULL;
-	RUNTIME_CHECK(isc_taskmgr_create(mctx, workers, 0, NULL, &taskmgr) ==
-		      ISC_R_SUCCESS);
-	task = NULL;
+	RUNTIME_CHECK(isc_managers_create(mctx, workers, 0, &netmgr,
+					  &taskmgr) == ISC_R_SUCCESS);
 	RUNTIME_CHECK(isc_task_create(taskmgr, 0, &task) == ISC_R_SUCCESS);
 	isc_task_setname(task, "byaddr", NULL);
 
-	dispatchmgr = NULL;
 	RUNTIME_CHECK(dns_dispatchmgr_create(mctx, &dispatchmgr) ==
 		      ISC_R_SUCCESS);
 
-	timermgr = NULL;
 	RUNTIME_CHECK(isc_timermgr_create(mctx, &timermgr) == ISC_R_SUCCESS);
-	socketmgr = NULL;
 	RUNTIME_CHECK(isc_socketmgr_create(mctx, &socketmgr) == ISC_R_SUCCESS);
 
-	cache = NULL;
 	RUNTIME_CHECK(dns_cache_create(mctx, mctx, taskmgr, timermgr,
 				       dns_rdataclass_in, "", "rbt", 0, NULL,
 				       &cache) == ISC_R_SUCCESS);
 
-	view = NULL;
 	RUNTIME_CHECK(dns_view_create(mctx, dns_rdataclass_in, "default",
 				      &view) == ISC_R_SUCCESS);
 
@@ -238,7 +232,7 @@ main(int argc, char *argv[]) {
 
 	dns_dispatchmgr_destroy(&dispatchmgr);
 
-	isc_taskmgr_destroy(&taskmgr);
+	isc_managers_destroy(&netmgr, &taskmgr);
 
 	isc_socketmgr_destroy(&socketmgr);
 	isc_timermgr_destroy(&timermgr);

@@ -1,4 +1,4 @@
-/*	$NetBSD: dnssectool.c,v 1.5 2021/02/19 16:42:10 christos Exp $	*/
+/*	$NetBSD: dnssectool.c,v 1.6 2021/08/19 11:50:15 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -278,7 +278,7 @@ strtokeystate(const char *str) {
 			return ((dst_key_state_t)i);
 		}
 	}
-	fatal("unknown key state");
+	fatal("unknown key state %s", str);
 }
 
 isc_stdtime_t

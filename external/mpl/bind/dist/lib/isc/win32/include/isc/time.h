@@ -1,4 +1,4 @@
-/*	$NetBSD: time.h,v 1.6 2021/04/29 17:26:13 christos Exp $	*/
+/*	$NetBSD: time.h,v 1.7 2021/08/19 11:50:19 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -27,25 +27,19 @@
  *** POSIX Shims
  ***/
 
-inline struct tm *
-gmtime_r(const time_t *clock, struct tm *result) {
-	errno_t ret = gmtime_s(result, clock);
-	if (ret != 0) {
-		errno = ret;
-		return (NULL);
-	}
-	return (result);
-}
+struct tm *
+gmtime_r(const time_t *clock, struct tm *result);
 
-inline struct tm *
-localtime_r(const time_t *clock, struct tm *result) {
-	errno_t ret = localtime_s(result, clock);
-	if (ret != 0) {
-		errno = ret;
-		return (NULL);
-	}
-	return (result);
-}
+struct tm *
+localtime_r(const time_t *clock, struct tm *result);
+
+int
+nanosleep(const struct timespec *req, struct timespec *rem);
+
+typedef uint32_t useconds_t;
+
+int
+usleep(useconds_t usec);
 
 /***
  *** Intervals

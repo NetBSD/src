@@ -1,4 +1,4 @@
-/*	$NetBSD: netmgr_test.c,v 1.1.1.1 2021/08/19 11:45:28 christos Exp $	*/
+/*	$NetBSD: netmgr_test.c,v 1.2 2021/08/19 11:50:19 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")

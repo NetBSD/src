@@ -1,4 +1,4 @@
-/*	$NetBSD: dighost.c,v 1.11 2021/04/29 17:26:09 christos Exp $	*/
+/*	$NetBSD: dighost.c,v 1.12 2021/08/19 11:50:14 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -43,6 +43,7 @@
 #include <isc/hex.h>
 #include <isc/lang.h>
 #include <isc/log.h>
+#include <isc/managers.h>
 #include <isc/netaddr.h>
 #include <isc/netdb.h>
 #include <isc/nonce.h>
@@ -100,6 +101,14 @@
 #define NS_IN6ADDRSZ 16
 #endif /* if !defined(NS_IN6ADDRSZ) */
 
+#if HAVE_SETLOCALE
+#define systemlocale(l) (void)setlocale(l, "")
+#define resetlocale(l)	(void)setlocale(l, "C")
+#else
+#define systemlocale(l)
+#define resetlocale(l)
+#endif /* HAVE_SETLOCALE */
+
 dig_lookuplist_t lookup_list;
 dig_serverlist_t server_list;
 dig_searchlistlist_t search_list;
@@ -113,6 +122,7 @@ unsigned int timeout = 0;
 unsigned int extrabytes;
 isc_mem_t *mctx = NULL;
 isc_log_t *lctx = NULL;
+isc_nm_t *netmgr = NULL;
 isc_taskmgr_t *taskmgr = NULL;
 isc_task_t *global_task = NULL;
 isc_timermgr_t *timermgr = NULL;
@@ -1339,11 +1349,6 @@ setup_system(bool ipv4only, bool ipv6only) {
 
 	irs_resconf_destroy(&resconf);
 
-#ifdef HAVE_SETLOCALE
-	/* Set locale */
-	(void)setlocale(LC_ALL, "");
-#endif /* ifdef HAVE_SETLOCALE */
-
 	if (keyfile[0] != 0) {
 		setup_file_key();
 	} else if (keysecret[0] != 0) {
@@ -1406,8 +1411,8 @@ setup_libs(void) {
 
 	isc_log_setdebuglevel(lctx, 0);
 
-	result = isc_taskmgr_create(mctx, 1, 0, NULL, &taskmgr);
-	check_result(result, "isc_taskmgr_create");
+	result = isc_managers_create(mctx, 1, 0, &netmgr, &taskmgr);
+	check_result(result, "isc_managers_create");
 
 	result = isc_task_create(taskmgr, 0, &global_task);
 	check_result(result, "isc_task_create");
@@ -2055,7 +2060,6 @@ insert_soa(dig_lookup_t *lookup) {
 
 	result = dns_message_gettempname(lookup->sendmsg, &soaname);
 	check_result(result, "dns_message_gettempname");
-	dns_name_init(soaname, NULL);
 	dns_name_clone(lookup->name, soaname);
 	ISC_LIST_INIT(soaname->list);
 	ISC_LIST_APPEND(soaname->list, rdataset, link);
@@ -2116,7 +2120,6 @@ setup_lookup(dig_lookup_t *lookup) {
 	}
 	result = dns_message_gettempname(lookup->sendmsg, &lookup->name);
 	check_result(result, "dns_message_gettempname");
-	dns_name_init(lookup->name, NULL);
 
 	isc_buffer_init(&lookup->namebuf, lookup->name_space,
 			sizeof(lookup->name_space));
@@ -2160,7 +2163,6 @@ setup_lookup(dig_lookup_t *lookup) {
 		result = dns_message_gettempname(lookup->sendmsg,
 						 &lookup->oname);
 		check_result(result, "dns_message_gettempname");
-		dns_name_init(lookup->oname, NULL);
 		/* XXX Helper funct to conv char* to name? */
 		origin = lookup->origin->origin;
 #ifdef HAVE_LIBIDN2
@@ -4353,13 +4355,10 @@ destroy_libs(void) {
 		debug("freeing task");
 		isc_task_detach(&global_task);
 	}
-	/*
-	 * The taskmgr_destroy() call blocks until all events are cleared
-	 * from the task.
-	 */
+
 	if (taskmgr != NULL) {
 		debug("freeing taskmgr");
-		isc_taskmgr_destroy(&taskmgr);
+		isc_managers_destroy(&netmgr, &taskmgr);
 	}
 	LOCK_LOOKUP;
 	REQUIRE(sockcount == 0);
@@ -4424,8 +4423,9 @@ destroy_libs(void) {
 #ifdef HAVE_LIBIDN2
 static isc_result_t
 idn_output_filter(isc_buffer_t *buffer, unsigned int used_org) {
-	char src[MXNAME], *dst;
+	char src[MXNAME], *dst = NULL;
 	size_t srclen, dstlen;
+	isc_result_t result = ISC_R_SUCCESS;
 
 	/*
 	 * Copy name from 'buffer' to 'src' and terminate it with NULL.
@@ -4433,23 +4433,27 @@ idn_output_filter(isc_buffer_t *buffer, unsigned int used_org) {
 	srclen = isc_buffer_usedlength(buffer) - used_org;
 	if (srclen >= sizeof(src)) {
 		warn("Input name too long to perform IDN conversion");
-		return (ISC_R_SUCCESS);
+		goto cleanup;
 	}
 	memmove(src, (char *)isc_buffer_base(buffer) + used_org, srclen);
 	src[srclen] = '\0';
+
+	systemlocale(LC_ALL);
 
 	/*
 	 * Convert 'src' to the current locale's character encoding.
 	 */
 	idn_ace_to_locale(src, &dst);
 
+	resetlocale(LC_ALL);
+
 	/*
 	 * Check whether the converted name will fit back into 'buffer'.
 	 */
 	dstlen = strlen(dst);
 	if (isc_buffer_length(buffer) < used_org + dstlen) {
-		idn2_free(dst);
-		return (ISC_R_NOSPACE);
+		result = ISC_R_NOSPACE;
+		goto cleanup;
 	}
 
 	/*
@@ -4462,9 +4466,12 @@ idn_output_filter(isc_buffer_t *buffer, unsigned int used_org) {
 	/*
 	 * Clean up.
 	 */
-	idn2_free(dst);
+cleanup:
+	if (dst != NULL) {
+		idn2_free(dst);
+	}
 
-	return (ISC_R_SUCCESS);
+	return (result);
 }
 
 /*%
@@ -4479,6 +4486,8 @@ idn_locale_to_ace(const char *src, char *dst, size_t dstlen) {
 	const char *final_src;
 	char *ascii_src;
 	int res;
+
+	systemlocale(LC_ALL);
 
 	/*
 	 * We trust libidn2 to return an error if 'src' is too large to be a
@@ -4500,6 +4509,8 @@ idn_locale_to_ace(const char *src, char *dst, size_t dstlen) {
 	(void)strlcpy(dst, final_src, dstlen);
 
 	idn2_free(ascii_src);
+
+	resetlocale(LC_ALL);
 }
 
 /*%
@@ -4513,6 +4524,8 @@ static void
 idn_ace_to_locale(const char *src, char **dst) {
 	char *local_src, *utf8_src;
 	int res;
+
+	systemlocale(LC_ALL);
 
 	/*
 	 * We need to:
@@ -4579,5 +4592,7 @@ idn_ace_to_locale(const char *src, char **dst) {
 	idn2_free(utf8_src);
 
 	*dst = local_src;
+
+	resetlocale(LC_ALL);
 }
 #endif /* HAVE_LIBIDN2 */

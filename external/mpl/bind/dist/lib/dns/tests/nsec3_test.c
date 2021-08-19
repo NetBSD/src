@@ -1,4 +1,4 @@
-/*	$NetBSD: nsec3_test.c,v 1.7 2021/04/29 17:26:11 christos Exp $	*/
+/*	$NetBSD: nsec3_test.c,v 1.8 2021/08/19 11:50:18 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -62,8 +62,7 @@ iteration_test(const char *file, unsigned int expected) {
 	result = dns_test_loaddb(&db, dns_dbtype_zone, "test", file);
 	assert_int_equal(result, ISC_R_SUCCESS);
 
-	result = dns_nsec3_maxiterations(db, NULL, dt_mctx, &iterations);
-	assert_int_equal(result, ISC_R_SUCCESS);
+	iterations = dns_nsec3_maxiterations();
 
 	assert_int_equal(iterations, expected);
 
@@ -140,10 +139,10 @@ max_iterations(void **state) {
 	UNUSED(state);
 
 	iteration_test("testdata/nsec3/1024.db", 150);
-	iteration_test("testdata/nsec3/2048.db", 500);
-	iteration_test("testdata/nsec3/4096.db", 2500);
+	iteration_test("testdata/nsec3/2048.db", 150);
+	iteration_test("testdata/nsec3/4096.db", 150);
 	iteration_test("testdata/nsec3/min-1024.db", 150);
-	iteration_test("testdata/nsec3/min-2048.db", 500);
+	iteration_test("testdata/nsec3/min-2048.db", 150);
 }
 
 /* check dns_nsec3param_salttotext() */

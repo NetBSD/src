@@ -1,4 +1,4 @@
-/*	$NetBSD: named-journalprint.c,v 1.5 2021/04/29 17:26:10 christos Exp $	*/
+/*	$NetBSD: named-journalprint.c,v 1.6 2021/08/19 11:50:17 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -70,12 +70,24 @@ main(int argc, char **argv) {
 	isc_log_t *lctx = NULL;
 	uint32_t flags = 0U;
 	int ch;
+	bool compact = false;
 	bool downgrade = false;
 	bool upgrade = false;
+	unsigned int serial = 0;
+	char *endp = NULL;
 
 	progname = argv[0];
-	while ((ch = isc_commandline_parse(argc, argv, "dux")) != -1) {
+	while ((ch = isc_commandline_parse(argc, argv, "c:dux")) != -1) {
 		switch (ch) {
+		case 'c':
+			compact = true;
+			serial = strtoul(isc_commandline_argument, &endp, 0);
+			if (endp == isc_commandline_argument || *endp != 0) {
+				fprintf(stderr, "invalid serial: %s\n",
+					isc_commandline_argument);
+				exit(1);
+			}
+			break;
 		case 'd':
 			downgrade = true;
 			break;
@@ -107,6 +119,9 @@ main(int argc, char **argv) {
 	} else if (downgrade) {
 		flags = DNS_JOURNAL_COMPACTALL | DNS_JOURNAL_VERSION1;
 		result = dns_journal_compact(mctx, file, 0, flags, 0);
+	} else if (compact) {
+		flags = 0;
+		result = dns_journal_compact(mctx, file, serial, flags, 0);
 	} else {
 		result = dns_journal_print(mctx, flags, file, stdout);
 		if (result == DNS_R_NOJOURNAL) {

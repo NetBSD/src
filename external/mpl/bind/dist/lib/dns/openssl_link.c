@@ -1,4 +1,4 @@
-/*	$NetBSD: openssl_link.c,v 1.6 2021/04/29 17:26:11 christos Exp $	*/
+/*	$NetBSD: openssl_link.c,v 1.7 2021/08/19 11:50:17 christos Exp $	*/
 
 /*
  * Portions Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -31,7 +31,6 @@
 #include <isc/platform.h>
 #include <isc/string.h>
 #include <isc/thread.h>
-#include <isc/tls.h>
 #include <isc/util.h>
 
 #include <dns/log.h>

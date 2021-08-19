@@ -1,4 +1,4 @@
-/*	$NetBSD: zonemd_63.c,v 1.3 2021/02/19 16:42:17 christos Exp $	*/
+/*	$NetBSD: zonemd_63.c,v 1.4 2021/08/19 11:50:17 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -11,7 +11,7 @@
  * information regarding copyright ownership.
  */
 
-/* draft-wessels-zone-digest-05 */
+/* RFC 8976 */
 
 #ifndef RDATA_GENERIC_ZONEMD_63_C
 #define RDATA_GENERIC_ZONEMD_63_C
@@ -22,6 +22,8 @@ static inline isc_result_t
 fromtext_zonemd(ARGS_FROMTEXT) {
 	isc_token_t token;
 	int digest_type, length;
+	isc_buffer_t save;
+	isc_result_t result;
 
 	UNUSED(type);
 	UNUSED(rdclass);
@@ -30,26 +32,26 @@ fromtext_zonemd(ARGS_FROMTEXT) {
 	UNUSED(callbacks);
 
 	/*
-	 * Serial.
+	 * Zone Serial.
 	 */
 	RETERR(isc_lex_getmastertoken(lexer, &token, isc_tokentype_number,
 				      false));
 	RETERR(uint32_tobuffer(token.value.as_ulong, target));
 
 	/*
-	 * Digest type.
+	 * Digest Scheme.
+	 */
+	RETERR(isc_lex_getmastertoken(lexer, &token, isc_tokentype_number,
+				      false));
+	RETERR(uint8_tobuffer(token.value.as_ulong, target));
+
+	/*
+	 * Digest Type.
 	 */
 	RETERR(isc_lex_getmastertoken(lexer, &token, isc_tokentype_number,
 				      false));
 	digest_type = token.value.as_ulong;
 	RETERR(uint8_tobuffer(digest_type, target));
-
-	/*
-	 * Reserved.
-	 */
-	RETERR(isc_lex_getmastertoken(lexer, &token, isc_tokentype_number,
-				      false));
-	RETERR(uint8_tobuffer(token.value.as_ulong, target));
 
 	/*
 	 * Digest.
@@ -58,12 +60,21 @@ fromtext_zonemd(ARGS_FROMTEXT) {
 	case DNS_ZONEMD_DIGEST_SHA384:
 		length = ISC_SHA384_DIGESTLENGTH;
 		break;
+	case DNS_ZONEMD_DIGEST_SHA512:
+		length = ISC_SHA512_DIGESTLENGTH;
+		break;
 	default:
 		length = -2;
 		break;
 	}
 
-	return (isc_hex_tobuffer(lexer, target, length));
+	save = *target;
+	result = isc_hex_tobuffer(lexer, target, length);
+	/* Minimum length of digest is 12 octets. */
+	if (isc_buffer_usedlength(target) - isc_buffer_usedlength(&save) < 12) {
+		return (ISC_R_UNEXPECTEDEND);
+	}
+	return (result);
 }
 
 static inline isc_result_t
@@ -79,7 +90,7 @@ totext_zonemd(ARGS_TOTEXT) {
 	dns_rdata_toregion(rdata, &sr);
 
 	/*
-	 * Serial.
+	 * Zone Serial.
 	 */
 	num = uint32_fromregion(&sr);
 	isc_region_consume(&sr, 4);
@@ -89,7 +100,7 @@ totext_zonemd(ARGS_TOTEXT) {
 	RETERR(str_totext(" ", target));
 
 	/*
-	 * Digest type.
+	 * Digest scheme.
 	 */
 	num = uint8_fromregion(&sr);
 	isc_region_consume(&sr, 1);
@@ -97,8 +108,9 @@ totext_zonemd(ARGS_TOTEXT) {
 	RETERR(str_totext(buf, target));
 
 	RETERR(str_totext(" ", target));
+
 	/*
-	 * Reserved.
+	 * Digest type.
 	 */
 	num = uint8_fromregion(&sr);
 	isc_region_consume(&sr, 1);
@@ -131,6 +143,7 @@ totext_zonemd(ARGS_TOTEXT) {
 static inline isc_result_t
 fromwire_zonemd(ARGS_FROMWIRE) {
 	isc_region_t sr;
+	size_t digestlen = 0;
 
 	UNUSED(type);
 	UNUSED(rdclass);
@@ -140,15 +153,28 @@ fromwire_zonemd(ARGS_FROMWIRE) {
 	isc_buffer_activeregion(source, &sr);
 
 	/*
-	 * If we do not recognize the digest type, only ensure that the digest
-	 * is present at all.
+	 * If we do not recognize the digest type, ensure that the digest
+	 * meets minimum length (12).
 	 *
 	 * If we do recognize the digest type, ensure that the digest is of the
 	 * correct length.
 	 */
-	if (sr.length < 7 || (sr.base[4] == DNS_ZONEMD_DIGEST_SHA384 &&
-			      sr.length < 6 + ISC_SHA384_DIGESTLENGTH))
-	{
+	if (sr.length < 18) {
+		return (ISC_R_UNEXPECTEDEND);
+	}
+
+	switch (sr.base[5]) {
+	case DNS_ZONEMD_DIGEST_SHA384:
+		digestlen = ISC_SHA384_DIGESTLENGTH;
+		break;
+	case DNS_ZONEMD_DIGEST_SHA512:
+		digestlen = ISC_SHA512_DIGESTLENGTH;
+		break;
+	default:
+		break;
+	}
+
+	if (digestlen != 0 && sr.length < 6 + digestlen) {
 		return (ISC_R_UNEXPECTEDEND);
 	}
 
@@ -158,8 +184,8 @@ fromwire_zonemd(ARGS_FROMWIRE) {
 	 *
 	 * If there is extra data, dns_rdata_fromwire() will detect that.
 	 */
-	if (sr.base[4] == DNS_ZONEMD_DIGEST_SHA384) {
-		sr.length = 6 + ISC_SHA384_DIGESTLENGTH;
+	if (digestlen != 0) {
+		sr.length = 6 + digestlen;
 	}
 
 	isc_buffer_forward(source, sr.length);
@@ -210,11 +236,14 @@ fromstruct_zonemd(ARGS_FROMSTRUCT) {
 	case DNS_ZONEMD_DIGEST_SHA384:
 		REQUIRE(zonemd->length == ISC_SHA384_DIGESTLENGTH);
 		break;
+	case DNS_ZONEMD_DIGEST_SHA512:
+		REQUIRE(zonemd->length == ISC_SHA512_DIGESTLENGTH);
+		break;
 	}
 
 	RETERR(uint32_tobuffer(zonemd->serial, target));
+	RETERR(uint8_tobuffer(zonemd->scheme, target));
 	RETERR(uint8_tobuffer(zonemd->digest_type, target));
-	RETERR(uint8_tobuffer(zonemd->reserved, target));
 
 	return (mem_tobuffer(target, zonemd->digest, zonemd->length));
 }
@@ -236,9 +265,9 @@ tostruct_zonemd(ARGS_TOSTRUCT) {
 
 	zonemd->serial = uint32_fromregion(&region);
 	isc_region_consume(&region, 4);
-	zonemd->digest_type = uint8_fromregion(&region);
+	zonemd->scheme = uint8_fromregion(&region);
 	isc_region_consume(&region, 1);
-	zonemd->reserved = uint8_fromregion(&region);
+	zonemd->digest_type = uint8_fromregion(&region);
 	isc_region_consume(&region, 1);
 	zonemd->length = region.length;
 
