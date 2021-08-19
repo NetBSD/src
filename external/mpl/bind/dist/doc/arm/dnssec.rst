@@ -194,7 +194,7 @@ option.
 Dynamic DNS Update Method
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 
-To perform key rollovers via dynamic update, the ``K*``
+To perform key rollovers via a dynamic update, the ``K*``
 files for the new keys must be added so that ``named`` can find them.
 The new DNSKEY RRs can then be added via dynamic update. ``named`` then causes the
 zone to be signed with the new keys; when the signing is complete, the

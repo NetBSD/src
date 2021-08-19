@@ -17,26 +17,26 @@ New Features
 - A new configuration option, ``stale-refresh-time``, has been
   introduced. It allows a stale RRset to be served directly from cache
   for a period of time after a failed lookup, before a new attempt to
-  refresh it is made. [GL #2066]
+  refresh it is made. :gl:`#2066`
 
 Bug Fixes
 ~~~~~~~~~
 
 - ``named`` could crash with an assertion failure if a TCP connection
-  were closed while a request was still being processed. [GL #2227]
+  were closed while a request was still being processed. :gl:`#2227`
 
 - ``named`` acting as a resolver could incorrectly treat signed zones
   with no DS record at the parent as bogus. Such zones should be treated
-  as insecure. This has been fixed. [GL #2236]
+  as insecure. This has been fixed. :gl:`#2236`
 
 - After a Negative Trust Anchor (NTA) is added, BIND performs periodic
   checks to see if it is still necessary. If BIND encountered a failure
   while creating a query to perform such a check, it attempted to
-  dereference a ``NULL`` pointer, resulting in a crash. [GL #2244]
+  dereference a ``NULL`` pointer, resulting in a crash. :gl:`#2244`
 
 - A problem obtaining glue records could prevent a stub zone from
   functioning properly, if the authoritative server for the zone were
-  configured for minimal responses. [GL #1736]
+  configured for minimal responses. :gl:`#1736`
 
 - ``UV_EOF`` is no longer treated as a ``TCP4RecvErr`` or a
-  ``TCP6RecvErr``. [GL #2208]
+  ``TCP6RecvErr``. :gl:`#2208`

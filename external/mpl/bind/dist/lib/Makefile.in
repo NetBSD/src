@@ -15,7 +15,7 @@ top_srcdir =	@top_srcdir@
 # Attempt to disable parallel processing.
 .NOTPARALLEL:
 .NO_PARALLEL:
-SUBDIRS =	isc isccc dns ns isccfg bind9 irs samples
+SUBDIRS =	isc isccc dns ns isccfg bind9 irs
 TARGETS =
 
 @BIND9_MAKE_RULES@

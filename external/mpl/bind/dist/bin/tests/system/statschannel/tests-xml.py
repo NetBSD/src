@@ -23,7 +23,8 @@ from helper import fmt
 # XML helper functions
 def fetch_zones_xml(statsip, statsport):
 
-    r = requests.get("http://{}:{}/xml/v3/zones".format(statsip, statsport))
+    r = requests.get("http://{}:{}/xml/v3/zones".format(statsip, statsport),
+                     timeout=600)
     assert r.status_code == 200
 
     root = ET.fromstring(r.text)
@@ -47,7 +48,8 @@ def fetch_traffic_xml(statsip, statsport):
 
         return out
 
-    r = requests.get("http://{}:{}/xml/v3/traffic".format(statsip, statsport))
+    r = requests.get("http://{}:{}/xml/v3/traffic".format(statsip, statsport),
+                     timeout=600)
     assert r.status_code == 200
 
     root = ET.fromstring(r.text)

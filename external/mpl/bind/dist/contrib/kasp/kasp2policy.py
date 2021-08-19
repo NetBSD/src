@@ -22,8 +22,8 @@
 from xml.etree import cElementTree as ET
 from collections import defaultdict
 import re
-import ply.yacc as yacc
-import ply.lex as lex
+from ply import yacc
+from ply import lex
 from isc import dnskey
 
 

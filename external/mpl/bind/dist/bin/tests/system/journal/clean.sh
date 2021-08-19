@@ -14,3 +14,5 @@ rm -f */named.run
 rm -f dig.out*
 rm -f journalprint.out.*
 rm -f ns1/managed-keys.bind
+rm -f ns2/managed-keys.bind
+rm -f tmp.jnl

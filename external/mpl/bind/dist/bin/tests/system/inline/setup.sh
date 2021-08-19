@@ -31,6 +31,7 @@ cp ns3/master.db.in ns3/nsec3.db
 cp ns3/master.db.in ns3/externalkey.db
 cp ns3/master.db.in ns3/delayedkeys.db
 cp ns3/master.db.in ns3/removedkeys-primary.db
+cp ns3/include.db.in ns3/include.db
 
 mkdir ns3/removedkeys
 

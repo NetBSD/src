@@ -13,6 +13,8 @@ SYSTEMTESTTOP=..
 status=0
 n=0
 
+mkdir keys
+
 n=`expr $n + 1`
 echo_i "checking that named-checkconf handles a known good config ($n)"
 ret=0
@@ -514,8 +516,6 @@ echo_i "checking named-checkconf kasp nsec3 iterations errors ($n)"
 ret=0
 $CHECKCONF kasp-bad-nsec3-iter.conf > checkconf.out$n 2>&1 && ret=1
 grep "dnssec-policy: nsec3 iterations value 151 out of range" < checkconf.out$n > /dev/null || ret=1
-grep "dnssec-policy: nsec3 iterations value 501 out of range" < checkconf.out$n > /dev/null || ret=1
-grep "dnssec-policy: nsec3 iterations value 2501 out of range" < checkconf.out$n > /dev/null || ret=1
 lines=$(wc -l < "checkconf.out$n")
 if [ $lines != 3 ]; then ret=1; fi
 if [ $ret != 0 ]; then echo_i "failed"; fi
@@ -569,6 +569,8 @@ $CHECKCONF warn-maxratio1.conf > checkconf.out$n 2>/dev/null || ret=1
 grep "exceeds 100%" < checkconf.out$n > /dev/null || ret=1
 if [ $ret != 0 ]; then echo_i "failed"; ret=1; fi
 status=`expr $status + $ret`
+
+rmdir keys
 
 echo_i "exit status: $status"
 [ $status -eq 0 ] || exit 1

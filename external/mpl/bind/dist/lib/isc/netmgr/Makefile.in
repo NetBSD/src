@@ -26,10 +26,13 @@ CDEFINES =
 CWARNINGS =
 
 # Alphabetically
-OBJS =		netmgr.@O@ tcp.@O@ udp.@O@ tcpdns.@O@ tlsdns.@O@ uverr2result.@O@ uv-compat.@O@
+OBJS =		netmgr.@O@ tcp.@O@ udp.@O@ \
+		tcpdns.@O@ \
+		uverr2result.@O@ uv-compat.@O@
 
 # Alphabetically
-SRCS =		netmgr.c tcp.c udp.c tcpdns.c tlsdns.c uverr2result.c uv-compat.c
+SRCS =		netmgr.c tcp.c udp.c tcpdns.c \
+		uverr2result.c uv-compat.c
 
 TARGETS =	${OBJS}
 

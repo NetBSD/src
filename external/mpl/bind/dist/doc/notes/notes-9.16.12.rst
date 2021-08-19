@@ -24,7 +24,7 @@ Security Fixes
   (CVE-2020-8625)
 
   This vulnerability was responsibly reported to us as ZDI-CAN-12302 by
-  Trend Micro Zero Day Initiative. [GL #2354]
+  Trend Micro Zero Day Initiative. :gl:`#2354`
 
 New Features
 ~~~~~~~~~~~~
@@ -39,7 +39,7 @@ New Features
 
   This behavior is controlled by the ``max-ixfr-ratio`` option - a
   percentage value representing the ratio of IXFR size to the size of a
-  full zone transfer. The default is ``100%``. [GL #1515]
+  full zone transfer. The default is ``100%``. :gl:`#1515`
 
 - A new option, ``stale-answer-client-timeout``, has been added to
   improve ``named``'s behavior with respect to serving stale data. The
@@ -57,7 +57,7 @@ New Features
   This new behavior can be disabled by setting
   ``stale-answer-client-timeout`` to ``off`` or ``disabled``. The new
   option has no effect if ``stale-answer-enable`` is disabled.
-  [GL #2247]
+  :gl:`#2247`
 
 Feature Changes
 ~~~~~~~~~~~~~~~
@@ -67,40 +67,40 @@ Feature Changes
   ``named.conf``. Similarly, ``notify primary-only`` can now be used as
   a synonym for ``notify master-only``. The output of ``rndc
   zonestatus`` now uses ``primary`` and ``secondary`` terminology.
-  [GL #1948]
+  :gl:`#1948`
 
 - The default value of ``max-stale-ttl`` has been changed from 12 hours
   to 1 day and the default value of ``stale-answer-ttl`` has been
   changed from 1 second to 30 seconds, following :rfc:`8767`
-  recommendations. [GL #2248]
+  recommendations. :gl:`#2248`
 
 - The SONAMEs for BIND 9 libraries now include the current BIND 9
   version number, in an effort to tightly couple internal libraries with
   a specific release. This change makes the BIND 9 release process both
   simpler and more consistent while also unequivocally preventing BIND 9
   binaries from silently loading wrong versions of shared libraries (or
-  multiple versions of the same shared library) at startup. [GL #2387]
+  multiple versions of the same shared library) at startup. :gl:`#2387`
 
 - When ``check-names`` is in effect, A records below an ``_spf``,
   ``_spf_rate``, or ``_spf_verify`` label (which are employed by the
   ``exists`` SPF mechanism defined in :rfc:`7208` section 5.7/appendix
-  D.1) are no longer reported as warnings/errors. [GL #2377]
+  D.1) are no longer reported as warnings/errors. :gl:`#2377`
 
 Bug Fixes
 ~~~~~~~~~
 
 - ``named`` failed to start when its configuration included a zone with
-  a non-builtin ``allow-update`` ACL attached. [GL #2413]
+  a non-builtin ``allow-update`` ACL attached. :gl:`#2413`
 
 - Previously, ``dnssec-keyfromlabel`` crashed when operating on an ECDSA
-  key. This has been fixed. [GL #2178]
+  key. This has been fixed. :gl:`#2178`
 
 - KASP incorrectly set signature validity to the value of the DNSKEY
-  signature validity. This has been fixed. [GL #2383]
+  signature validity. This has been fixed. :gl:`#2383`
 
 - When migrating to KASP, BIND 9 considered keys with the ``Inactive``
   and/or ``Delete`` timing metadata to be possible active keys. This has
-  been fixed. [GL #2406]
+  been fixed. :gl:`#2406`
 
 - Fix the "three is a crowd" key rollover bug in KASP. When keys rolled
   faster than the time required to finish the rollover procedure, the
@@ -108,8 +108,8 @@ Bug Fixes
   were taking part in a rollover. This could lead to premature removal
   of predecessor keys. BIND 9 now implements a recursive successor
   relation, as described in the paper "Flexible and Robust Key Rollover"
-  (Equation (2)). [GL #2375]
+  (Equation (2)). :gl:`#2375`
 
 - Performance of the DNSSEC verification code (used by
   ``dnssec-signzone``, ``dnssec-verify``, and mirror zones) has been
-  improved. [GL #2073]
+  improved. :gl:`#2073`

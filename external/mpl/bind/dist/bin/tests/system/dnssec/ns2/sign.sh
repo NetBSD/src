@@ -318,3 +318,14 @@ key1=$("$KEYGEN" -q -a "$DEFAULT_ALGORITHM" -b "$DEFAULT_BITS" -n zone -f KSK "$
 key2=$("$KEYGEN" -q -a "$DEFAULT_ALGORITHM" -b "$DEFAULT_BITS" -n zone "$zone")
 $SETTIME -P sync now "$key1" > /dev/null
 cat "$infile" > "$zonefile.signed"
+
+#
+# Negative result from this zone should come back as insecure.
+#
+zone=too-many-iterations
+infile=too-many-iterations.db.in
+zonefile=too-many-iterations.db
+key1=$("$KEYGEN" -q -a "$DEFAULT_ALGORITHM" -b "$DEFAULT_BITS" -n zone -f KSK "$zone")
+key2=$("$KEYGEN" -q -a "$DEFAULT_ALGORITHM" -b "$DEFAULT_BITS" -n zone "$zone")
+cat "$infile" "$key1.key" "$key2.key" > "$zonefile"
+"$SIGNER" -P -3 - -H too-many -g -o "$zone" "$zonefile" > /dev/null 2>&1

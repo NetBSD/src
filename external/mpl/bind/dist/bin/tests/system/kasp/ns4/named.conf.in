@@ -45,6 +45,11 @@ key "keyforview2" {
 	secret "4xILSZQnuO1UKubXHkYUsvBRPu8=";
 };
 
+key "keyforview3" {
+	algorithm "hmac-sha1";
+	secret "C1Azf+gGPMmxrUg/WQINP6eV9Y0=";
+};
+
 dnssec-policy "test" {
 	keys {
 		csk key-directory lifetime 0 algorithm 14;
@@ -150,5 +155,12 @@ view "example2" {
 	zone "example.net" {
 		type primary;
 		file "example2.db";
+	};
+};
+
+view "example3" {
+	match-clients { key "keyforview3"; };
+	zone "example.net" {
+		in-view example2;
 	};
 };

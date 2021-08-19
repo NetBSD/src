@@ -25,6 +25,7 @@ rm -f ./canonical?.*
 rm -f ./delv.out*
 rm -f ./delve.out*
 rm -f ./dig.out.*
+rm -f ./ns2/too-many-iterations.db
 rm -f ./dnssectools.out*
 rm -f ./dsfromkey.out.*
 rm -f ./keygen.err
