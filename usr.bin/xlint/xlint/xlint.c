@@ -1,4 +1,4 @@
-/* $NetBSD: xlint.c,v 1.75 2021/08/19 16:15:31 rillig Exp $ */
+/* $NetBSD: xlint.c,v 1.76 2021/08/19 16:18:43 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: xlint.c,v 1.75 2021/08/19 16:15:31 rillig Exp $");
+__RCSID("$NetBSD: xlint.c,v 1.76 2021/08/19 16:18:43 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -98,7 +98,7 @@ static	char	**libsrchpath;
 static  char	*libexec_path;
 
 /* flags */
-static	bool	iflag, oflag, Cflag, sflag, tflag, Fflag, dflag, Bflag, Sflag;
+static	bool	iflag, oflag, Cflag, sflag, tflag, Fflag, dflag, Bflag;
 
 /* print the commands executed to run the stages of compilation */
 static	bool	Vflag;
@@ -449,7 +449,6 @@ main(int argc, char *argv[])
 		case 'S':
 			if (tflag)
 				usage();
-			Sflag = true;
 			pass_flag_to_lint1(c);
 			break;
 
