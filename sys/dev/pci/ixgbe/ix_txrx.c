@@ -1,4 +1,4 @@
-/* $NetBSD: ix_txrx.c,v 1.84 2021/08/19 04:49:29 msaitoh Exp $ */
+/* $NetBSD: ix_txrx.c,v 1.85 2021/08/19 08:53:21 msaitoh Exp $ */
 
 /******************************************************************************
 
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ix_txrx.c,v 1.84 2021/08/19 04:49:29 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ix_txrx.c,v 1.85 2021/08/19 08:53:21 msaitoh Exp $");
 
 #include "opt_inet.h"
 #include "opt_inet6.h"
@@ -1565,7 +1565,7 @@ ixgbe_setup_receive_ring(struct rx_ring *rxr)
 			 */
 			m_freem(mp);
 			rxbuf->buf = NULL;
-                        goto fail;
+			goto fail;
 		}
 		bus_dmamap_sync(rxr->ptag->dt_dmat, rxbuf->pmap,
 		    0, mp->m_pkthdr.len, BUS_DMASYNC_PREREAD);
@@ -2093,9 +2093,8 @@ next_desc:
 		rxr->next_to_check = i;
 
 		/* Now send to the stack or do LRO */
-		if (sendmp != NULL) {
+		if (sendmp != NULL)
 			ixgbe_rx_input(rxr, ifp, sendmp, ptype);
-		}
 
 		/* Every 8 descriptors we go to refresh mbufs */
 		if (processed == 8) {
