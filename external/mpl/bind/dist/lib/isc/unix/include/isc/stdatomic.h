@@ -1,4 +1,4 @@
-/*	$NetBSD: stdatomic.h,v 1.4 2021/03/27 00:06:27 rillig Exp $	*/
+/*	$NetBSD: stdatomic.h,v 1.5 2021/08/19 11:50:19 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -187,10 +187,10 @@ typedef uintmax_t	   atomic_uintmax_t;
 						fail)                         \
 	({                                                                    \
 		__typeof__(obj) __v;                                          \
-		_Bool __r;                                                    \
+		_Bool		__r;                                          \
 		__v = (__typeof__(obj))__sync_val_compare_and_swap(           \
 			obj, *(expected), desired);                           \
-		__r = ((__typeof__(obj)) * (expected) == __v);                \
+		__r = ((__typeof__(obj))*(expected) == __v);                  \
 		*(expected) = __v;                                            \
 		__r;                                                          \
 	})

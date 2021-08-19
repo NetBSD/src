@@ -1,4 +1,4 @@
-/*	$NetBSD: masterdump.h,v 1.5 2021/02/19 16:42:16 christos Exp $	*/
+/*	$NetBSD: masterdump.h,v 1.6 2021/08/19 11:50:17 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -245,11 +245,11 @@ dns_dumpctx_db(dns_dumpctx_t *dctx);
 
 /*@{*/
 isc_result_t
-dns_master_dumptostreaminc(isc_mem_t *mctx, dns_db_t *db,
-			   dns_dbversion_t *	     version,
-			   const dns_master_style_t *style, FILE *f,
-			   isc_task_t *task, dns_dumpdonefunc_t done,
-			   void *done_arg, dns_dumpctx_t **dctxp);
+dns_master_dumptostreamasync(isc_mem_t *mctx, dns_db_t *db,
+			     dns_dbversion_t *	       version,
+			     const dns_master_style_t *style, FILE *f,
+			     isc_task_t *task, dns_dumpdonefunc_t done,
+			     void *done_arg, dns_dumpctx_t **dctxp);
 
 isc_result_t
 dns_master_dumptostream(isc_mem_t *mctx, dns_db_t *db, dns_dbversion_t *version,
@@ -260,11 +260,6 @@ dns_master_dumptostream(isc_mem_t *mctx, dns_db_t *db, dns_dbversion_t *version,
  * Dump the database 'db' to the steam 'f' in the specified format by
  * 'format'.  If the format is dns_masterformat_text (the RFC1035 format),
  * 'style' specifies the file style (e.g., &dns_master_style_default).
- *
- * dns_master_dumptostream() is an old form of dns_master_dumptostream3(),
- * which always specifies the dns_masterformat_text format.
- * dns_master_dumptostream2() is an old form which always specifies
- * a NULL header.
  *
  * If 'format' is dns_masterformat_raw, then 'header' can contain
  * information to be written to the file header.
@@ -278,7 +273,6 @@ dns_master_dumptostream(isc_mem_t *mctx, dns_db_t *db, dns_dbversion_t *version,
  *
  * Returns:
  *\li	ISC_R_SUCCESS
- *\li	ISC_R_CONTINUE	dns_master_dumptostreaminc() only.
  *\li	ISC_R_NOMEMORY
  *\li	Any database or rrset iterator error.
  *\li	Any dns_rdata_totext() error code.
@@ -288,11 +282,11 @@ dns_master_dumptostream(isc_mem_t *mctx, dns_db_t *db, dns_dbversion_t *version,
 /*@{*/
 
 isc_result_t
-dns_master_dumpinc(isc_mem_t *mctx, dns_db_t *db, dns_dbversion_t *version,
-		   const dns_master_style_t *style, const char *filename,
-		   isc_task_t *task, dns_dumpdonefunc_t done, void *done_arg,
-		   dns_dumpctx_t **dctxp, dns_masterformat_t format,
-		   dns_masterrawheader_t *header);
+dns_master_dumpasync(isc_mem_t *mctx, dns_db_t *db, dns_dbversion_t *version,
+		     const dns_master_style_t *style, const char *filename,
+		     isc_task_t *task, dns_dumpdonefunc_t done, void *done_arg,
+		     dns_dumpctx_t **dctxp, dns_masterformat_t format,
+		     dns_masterrawheader_t *header);
 
 isc_result_t
 dns_master_dump(isc_mem_t *mctx, dns_db_t *db, dns_dbversion_t *version,
@@ -304,11 +298,6 @@ dns_master_dump(isc_mem_t *mctx, dns_db_t *db, dns_dbversion_t *version,
  * 'format'.  If the format is dns_masterformat_text (the RFC1035 format),
  * 'style' specifies the file style (e.g., &dns_master_style_default).
  *
- * dns_master_dumpinc() and dns_master_dump() are old forms of _dumpinc3()
- * and _dump3(), respectively, which always specify the dns_masterformat_text
- * format.  dns_master_dumpinc2() and dns_master_dump2() are old forms which
- * always specify a NULL header.
- *
  * If 'format' is dns_masterformat_raw, then 'header' can contain
  * information to be written to the file header.
  *
@@ -316,7 +305,6 @@ dns_master_dump(isc_mem_t *mctx, dns_db_t *db, dns_dbversion_t *version,
  *
  * Returns:
  *\li	ISC_R_SUCCESS
- *\li	ISC_R_CONTINUE	dns_master_dumpinc() only.
  *\li	ISC_R_NOMEMORY
  *\li	Any database or rrset iterator error.
  *\li	Any dns_rdata_totext() error code.

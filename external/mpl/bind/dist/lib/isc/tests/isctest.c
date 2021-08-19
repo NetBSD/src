@@ -1,4 +1,4 @@
-/*	$NetBSD: isctest.c,v 1.5 2021/02/19 16:42:20 christos Exp $	*/
+/*	$NetBSD: isctest.c,v 1.6 2021/08/19 11:50:19 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -21,6 +21,7 @@
 
 #include <isc/buffer.h>
 #include <isc/hash.h>
+#include <isc/managers.h>
 #include <isc/mem.h>
 #include <isc/os.h>
 #include <isc/socket.h>
@@ -59,17 +60,15 @@ cleanup_managers(void) {
 		isc_task_shutdown(maintask);
 		isc_task_destroy(&maintask);
 	}
+
+	isc_managers_destroy(netmgr == NULL ? NULL : &netmgr,
+			     taskmgr == NULL ? NULL : &taskmgr);
+
 	if (socketmgr != NULL) {
 		isc_socketmgr_destroy(&socketmgr);
 	}
-	if (taskmgr != NULL) {
-		isc_taskmgr_destroy(&taskmgr);
-	}
 	if (timermgr != NULL) {
 		isc_timermgr_destroy(&timermgr);
-	}
-	if (netmgr != NULL) {
-		isc_nm_detach(&netmgr);
 	}
 }
 
@@ -87,9 +86,8 @@ create_managers(unsigned int workers) {
 		workers = atoi(p);
 	}
 
-	netmgr = isc_nm_start(test_mctx, workers);
-	CHECK(isc_taskmgr_create(test_mctx, workers, 0, netmgr, &taskmgr));
-	CHECK(isc_task_create(taskmgr, 0, &maintask));
+	CHECK(isc_managers_create(test_mctx, workers, 0, &netmgr, &taskmgr));
+	CHECK(isc_task_create_bound(taskmgr, 0, &maintask, 0));
 	isc_taskmgr_setexcltask(taskmgr, maintask);
 
 	CHECK(isc_timermgr_create(test_mctx, &timermgr));
@@ -149,9 +147,6 @@ isc_test_end(void) {
 	if (maintask != NULL) {
 		isc_task_detach(&maintask);
 	}
-	if (taskmgr != NULL) {
-		isc_taskmgr_destroy(&taskmgr);
-	}
 
 	cleanup_managers();
 
@@ -170,19 +165,9 @@ isc_test_end(void) {
  */
 void
 isc_test_nap(uint32_t usec) {
-#ifdef HAVE_NANOSLEEP
 	struct timespec ts;
 
 	ts.tv_sec = usec / 1000000;
 	ts.tv_nsec = (usec % 1000000) * 1000;
 	nanosleep(&ts, NULL);
-#elif HAVE_USLEEP
-	usleep(usec);
-#else  /* ifdef HAVE_NANOSLEEP */
-	/*
-	 * No fractional-second sleep function is available, so we
-	 * round up to the nearest second and sleep instead
-	 */
-	sleep((usec / 1000000) + 1);
-#endif /* ifdef HAVE_NANOSLEEP */
 }

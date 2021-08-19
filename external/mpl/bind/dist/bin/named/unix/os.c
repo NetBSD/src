@@ -1,4 +1,4 @@
-/*	$NetBSD: os.c,v 1.7 2021/04/05 11:27:00 rillig Exp $	*/
+/*	$NetBSD: os.c,v 1.8 2021/08/19 11:50:15 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -380,7 +380,7 @@ all_digits(const char *s) {
 		return (false);
 	}
 	while (*s != '\0') {
-		if (!isdigit((*s) & 0xff)) {
+		if (!isdigit((unsigned char)(*s))) {
 			return (false);
 		}
 		s++;

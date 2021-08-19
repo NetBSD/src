@@ -1,4 +1,4 @@
-/*	$NetBSD: uv-compat.h,v 1.3 2021/02/19 16:42:20 christos Exp $	*/
+/*	$NetBSD: uv-compat.h,v 1.4 2021/08/19 11:50:18 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -21,24 +21,35 @@
  * library version.
  */
 
-#ifndef HAVE_UV_HANDLE_GET_DATA
+#define UV_VERSION(major, minor, patch) ((major << 16) | (minor << 8) | (patch))
+
+#if UV_VERSION_HEX < UV_VERSION(1, 19, 0)
 static inline void *
 uv_handle_get_data(const uv_handle_t *handle) {
 	return (handle->data);
 }
-#endif /* ifndef HAVE_UV_HANDLE_GET_DATA */
 
-#ifndef HAVE_UV_HANDLE_SET_DATA
 static inline void
 uv_handle_set_data(uv_handle_t *handle, void *data) {
 	handle->data = data;
 }
-#endif /* ifndef HAVE_UV_HANDLE_SET_DATA */
 
-#ifdef HAVE_UV_UDP_CONNECT
-#define isc_uv_udp_connect uv_udp_connect
-#else
+static inline void *
+uv_req_get_data(const uv_req_t *req) {
+	return (req->data);
+}
 
+static inline void
+uv_req_set_data(uv_req_t *req, void *data) {
+	req->data = data;
+}
+#endif /* UV_VERSION_HEX < UV_VERSION(1, 19, 0) */
+
+#if UV_VERSION_HEX < UV_VERSION(1, 34, 0)
+#define uv_sleep(msec) usleep(msec * 1000)
+#endif /* UV_VERSION_HEX < UV_VERSION(1, 34, 0) */
+
+#if UV_VERSION_HEX < UV_VERSION(1, 27, 0)
 int
 isc_uv_udp_connect(uv_udp_t *handle, const struct sockaddr *addr);
 /*%<
@@ -48,8 +59,37 @@ isc_uv_udp_connect(uv_udp_t *handle, const struct sockaddr *addr);
  * NOTE: This is just a limited shim for uv_udp_connect() as it requires the
  * handle to be bound.
  */
+#else /* UV_VERSION_HEX < UV_VERSION(1, 27, 0) */
+#define isc_uv_udp_connect uv_udp_connect
+#endif /* UV_VERSION_HEX < UV_VERSION(1, 27, 0) */
 
-#endif
+#if UV_VERSION_HEX < UV_VERSION(1, 12, 0)
+#include <stdlib.h>
+#include <string.h>
+
+static inline int
+uv_os_getenv(const char *name, char *buffer, size_t *size) {
+	size_t len;
+	char *buf = getenv(name);
+
+	if (buf == NULL) {
+		return (UV_ENOENT);
+	}
+
+	len = strlen(buf) + 1;
+	if (len > *size) {
+		*size = len;
+		return (UV_ENOBUFS);
+	}
+
+	*size = len;
+	memmove(buffer, buf, len);
+
+	return (0);
+}
+
+#define uv_os_setenv(name, value) setenv(name, value, 0)
+#endif /* UV_VERSION_HEX < UV_VERSION(1, 12, 0) */
 
 int
 isc_uv_udp_freebind(uv_udp_t *handle, const struct sockaddr *addr,

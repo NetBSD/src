@@ -1,4 +1,4 @@
-/*	$NetBSD: gsstest.c,v 1.6 2021/04/29 17:26:10 christos Exp $	*/
+/*	$NetBSD: gsstest.c,v 1.7 2021/08/19 11:50:15 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -18,6 +18,7 @@
 #include <isc/app.h>
 #include <isc/base64.h>
 #include <isc/log.h>
+#include <isc/managers.h>
 #include <isc/mem.h>
 #include <isc/print.h>
 #include <isc/sockaddr.h>
@@ -60,11 +61,11 @@
 
 static dns_fixedname_t servername, gssname;
 
-static isc_mem_t *mctx;
-static dns_requestmgr_t *requestmgr;
+static isc_mem_t *mctx = NULL;
+static dns_requestmgr_t *requestmgr = NULL;
 static isc_sockaddr_t address;
 
-static dns_tsig_keyring_t *ring;
+static dns_tsig_keyring_t *ring = NULL;
 static dns_tsigkey_t *tsigkey = NULL;
 static dns_gss_ctx_id_t gssctx;
 static dns_gss_ctx_id_t *gssctxp = &gssctx;
@@ -430,16 +431,17 @@ setup(void) {
 
 int
 main(int argc, char *argv[]) {
-	isc_taskmgr_t *taskmgr;
-	isc_timermgr_t *timermgr;
-	isc_socketmgr_t *socketmgr;
-	isc_socket_t *sock;
+	isc_nm_t *netmgr = NULL;
+	isc_taskmgr_t *taskmgr = NULL;
+	isc_timermgr_t *timermgr = NULL;
+	isc_socketmgr_t *socketmgr = NULL;
+	isc_socket_t *sock = NULL;
 	unsigned int attrs, attrmask;
 	isc_sockaddr_t bind_any;
-	dns_dispatchmgr_t *dispatchmgr;
-	dns_dispatch_t *dispatchv4;
-	dns_view_t *view;
-	isc_task_t *task;
+	dns_dispatchmgr_t *dispatchmgr = NULL;
+	dns_dispatch_t *dispatchv4 = NULL;
+	dns_view_t *view = NULL;
+	isc_task_t *task = NULL;
 	isc_log_t *lctx = NULL;
 	isc_logconfig_t *lcfg = NULL;
 	isc_logdestination_t destination;
@@ -475,38 +477,28 @@ main(int argc, char *argv[]) {
 
 	RUNCHECK(dst_lib_init(mctx, NULL));
 
-	taskmgr = NULL;
-	RUNCHECK(isc_taskmgr_create(mctx, 1, 0, NULL, &taskmgr));
-	task = NULL;
+	RUNCHECK(isc_managers_create(mctx, 1, 0, &netmgr, &taskmgr));
 	RUNCHECK(isc_task_create(taskmgr, 0, &task));
-	timermgr = NULL;
 	RUNCHECK(isc_timermgr_create(mctx, &timermgr));
-	socketmgr = NULL;
 	RUNCHECK(isc_socketmgr_create(mctx, &socketmgr));
-	dispatchmgr = NULL;
 	RUNCHECK(dns_dispatchmgr_create(mctx, &dispatchmgr));
 	isc_sockaddr_any(&bind_any);
 	attrs = DNS_DISPATCHATTR_UDP | DNS_DISPATCHATTR_MAKEQUERY |
 		DNS_DISPATCHATTR_IPV4;
 	attrmask = DNS_DISPATCHATTR_UDP | DNS_DISPATCHATTR_TCP |
 		   DNS_DISPATCHATTR_IPV4 | DNS_DISPATCHATTR_IPV6;
-	dispatchv4 = NULL;
 	RUNCHECK(dns_dispatch_getudp(dispatchmgr, socketmgr, taskmgr, &bind_any,
 				     4096, 4, 2, 3, 5, attrs, attrmask,
 				     &dispatchv4));
-	requestmgr = NULL;
 	RUNCHECK(dns_requestmgr_create(mctx, timermgr, socketmgr, taskmgr,
 				       dispatchmgr, dispatchv4, NULL,
 				       &requestmgr));
 
-	ring = NULL;
 	RUNCHECK(dns_tsigkeyring_create(mctx, &ring));
 
-	view = NULL;
 	RUNCHECK(dns_view_create(mctx, 0, "_test", &view));
 	dns_view_setkeyring(view, ring);
 
-	sock = NULL;
 	RUNCHECK(isc_socket_create(socketmgr, PF_INET, isc_sockettype_udp,
 				   &sock));
 
@@ -529,7 +521,7 @@ main(int argc, char *argv[]) {
 	isc_timermgr_destroy(&timermgr);
 
 	isc_task_detach(&task);
-	isc_taskmgr_destroy(&taskmgr);
+	isc_managers_destroy(&netmgr, &taskmgr);
 
 	isc_socket_detach(&sock);
 	isc_socketmgr_destroy(&socketmgr);

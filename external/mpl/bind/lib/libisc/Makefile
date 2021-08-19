@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.16 2021/04/29 17:26:15 christos Exp $
+#	$NetBSD: Makefile,v 1.17 2021/08/19 11:50:21 christos Exp $
 
 LIB=isc
 #USE_SHLIBDIR=   yes
@@ -35,14 +35,14 @@ CRYPTO_SRCS=	aes.c
 
 SRCS=		app.c assertions.c astack.c base32.c base64.c bind9.c buffer.c \
 		bufferlist.c commandline.c crc64.c counter.c error.c event.c \
-		hash.c heap.c hex.c hmac.c hp.c httpd.c ht.c \
+		hash.c heap.c hex.c hmac.c hp.c httpd.c ht.c managers.c \
 		iterated_hash.c lex.c lfsr.c lib.c log.c md.c mem.c \
 		mutexblock.c netaddr.c netscope.c nonce.c parseint.c \
 		pool.c portset.c queue.c quota.c radix.c random.c \
 		ratelimiter.c regex.c trampoline.c \
 		region.c result.c rwlock.c safe.c serial.c siphash.c \
 		sockaddr.c stats.c string.c symtab.c task.c \
-		taskpool.c timer.c tls.c tlsdns.c tm.c utf8.c version.c \
+		taskpool.c timer.c tls.c tm.c utf8.c version.c \
 		${UNIX_SRCS} ${PTHREAD_SRCS} ${CRYPTO_SRCS} ${NETMGR_SRCS}
 
 

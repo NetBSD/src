@@ -1,4 +1,4 @@
-/*	$NetBSD: zoneverify.c,v 1.7 2021/02/19 16:42:16 christos Exp $	*/
+/*	$NetBSD: zoneverify.c,v 1.8 2021/08/19 11:50:17 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -618,11 +618,11 @@ cleanup:
 }
 
 static isc_result_t
-isoptout(const vctx_t *vctx, const dns_rdata_t *nsec3rdata, bool *optout) {
+isoptout(const vctx_t *vctx, const dns_rdata_nsec3param_t *nsec3param,
+	 bool *optout) {
 	dns_rdataset_t rdataset;
 	dns_rdata_t rdata = DNS_RDATA_INIT;
 	dns_rdata_nsec3_t nsec3;
-	dns_rdata_nsec3param_t nsec3param;
 	dns_fixedname_t fixed;
 	dns_name_t *hashname;
 	isc_result_t result;
@@ -630,14 +630,11 @@ isoptout(const vctx_t *vctx, const dns_rdata_t *nsec3rdata, bool *optout) {
 	unsigned char rawhash[NSEC3_MAX_HASH_LENGTH];
 	size_t rhsize = sizeof(rawhash);
 
-	result = dns_rdata_tostruct(nsec3rdata, &nsec3param, NULL);
-	RUNTIME_CHECK(result == ISC_R_SUCCESS);
-
 	dns_fixedname_init(&fixed);
 	result = dns_nsec3_hashname(&fixed, rawhash, &rhsize, vctx->origin,
-				    vctx->origin, nsec3param.hash,
-				    nsec3param.iterations, nsec3param.salt,
-				    nsec3param.salt_length);
+				    vctx->origin, nsec3param->hash,
+				    nsec3param->iterations, nsec3param->salt,
+				    nsec3param->salt_length);
 	if (result != ISC_R_SUCCESS) {
 		zoneverify_log_error(vctx, "dns_nsec3_hashname(): %s",
 				     isc_result_totext(result));
@@ -710,7 +707,14 @@ verifynsec3(const vctx_t *vctx, const dns_name_t *name,
 		return (ISC_R_SUCCESS);
 	}
 
-	result = isoptout(vctx, rdata, &optout);
+	if (nsec3param.iterations > DNS_NSEC3_MAXITERATIONS) {
+		result = DNS_R_NSEC3ITERRANGE;
+		zoneverify_log_error(vctx, "verifynsec3: %s",
+				     isc_result_totext(result));
+		return (result);
+	}
+
+	result = isoptout(vctx, &nsec3param, &optout);
 	if (result != ISC_R_SUCCESS) {
 		return (result);
 	}

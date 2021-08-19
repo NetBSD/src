@@ -1,4 +1,4 @@
-/*	$NetBSD: rndc.c,v 1.6 2021/02/19 16:42:11 christos Exp $	*/
+/*	$NetBSD: rndc.c,v 1.7 2021/08/19 11:50:15 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -23,6 +23,7 @@
 #include <isc/commandline.h>
 #include <isc/file.h>
 #include <isc/log.h>
+#include <isc/managers.h>
 #include <isc/mem.h>
 #include <isc/net.h>
 #include <isc/print.h>
@@ -861,6 +862,7 @@ int
 main(int argc, char **argv) {
 	isc_result_t result = ISC_R_SUCCESS;
 	bool show_final_mem = false;
+	isc_nm_t *netmgr = NULL;
 	isc_taskmgr_t *taskmgr = NULL;
 	isc_task_t *task = NULL;
 	isc_log_t *log = NULL;
@@ -998,7 +1000,7 @@ main(int argc, char **argv) {
 	DO("create socket manager",
 	   isc_socketmgr_create(rndc_mctx, &socketmgr));
 	DO("create task manager",
-	   isc_taskmgr_create(rndc_mctx, 1, 0, NULL, &taskmgr));
+	   isc_managers_create(rndc_mctx, 1, 0, &netmgr, &taskmgr));
 	DO("create task", isc_task_create(taskmgr, 0, &task));
 
 	isc_log_create(rndc_mctx, &log, &logconfig);
@@ -1070,7 +1072,7 @@ main(int argc, char **argv) {
 	}
 
 	isc_task_detach(&task);
-	isc_taskmgr_destroy(&taskmgr);
+	isc_managers_destroy(&netmgr, &taskmgr);
 	isc_socketmgr_destroy(&socketmgr);
 	isc_log_destroy(&log);
 	isc_log_setcontext(NULL);
