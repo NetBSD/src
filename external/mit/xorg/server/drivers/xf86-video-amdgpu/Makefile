@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2021/05/31 21:45:41 joerg Exp $
+#	$NetBSD: Makefile,v 1.4 2021/08/19 04:34:57 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -23,6 +23,8 @@ CPPFLAGS+=	-I${DESTDIR}${X11INCDIR}/X11 \
 		-I${DESTDIR}${X11INCDIR}/libdrm \
 		-I${DESTDIR}${X11INCDIR}/pixman-1 \
 		-I${X11SRCDIR.${DRIVER}}/../include
+
+LDADD+=		${LDADD.glamor} -lgbm
 
 # XXX
 COPTS+=		-Wno-error
