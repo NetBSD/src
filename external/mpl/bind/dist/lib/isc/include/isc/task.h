@@ -1,4 +1,4 @@
-/*	$NetBSD: task.h,v 1.5 2021/02/19 16:42:19 christos Exp $	*/
+/*	$NetBSD: task.h,v 1.6 2021/08/19 11:50:18 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -11,12 +11,11 @@
  * information regarding copyright ownership.
  */
 
-#ifndef ISC_TASK_H
-#define ISC_TASK_H 1
+#pragma once
 
 /*****
-***** Module Info
-*****/
+ ***** Module Info
+ *****/
 
 /*! \file isc/task.h
  * \brief The task system provides a lightweight execution context, which is
@@ -87,8 +86,8 @@
 #define ISC_TASKEVENT_LASTEVENT	 (ISC_EVENTCLASS_TASK + 65535)
 
 /*****
-***** Tasks.
-*****/
+ ***** Tasks.
+ *****/
 
 ISC_LANG_BEGINDECLS
 
@@ -101,45 +100,14 @@ typedef enum {
 	isc_taskmgrmode_privileged
 } isc_taskmgrmode_t;
 
-/*%
- * This structure is actually just the common prefix of a task manager
- * object implementation's version of an isc_taskmgr_t.
- * \brief
- * Direct use of this structure by clients is forbidden.  task implementations
- * may change the structure.  'magic' must be ISCAPI_TASKMGR_MAGIC for any
- * of the isc_task_ routines to work.  task implementations must maintain
- * all task invariants.
- */
-struct isc_taskmgr {
-	unsigned int impmagic;
-	unsigned int magic;
-};
-
-#define ISCAPI_TASKMGR_MAGIC ISC_MAGIC('A', 't', 'm', 'g')
-#define ISCAPI_TASKMGR_VALID(m) \
-	((m) != NULL && (m)->magic == ISCAPI_TASKMGR_MAGIC)
-
-/*%
- * This is the common prefix of a task object.  The same note as
- * that for the taskmgr structure applies.
- */
-struct isc_task {
-	unsigned int impmagic;
-	unsigned int magic;
-};
-
-#define ISCAPI_TASK_MAGIC    ISC_MAGIC('A', 't', 's', 't')
-#define ISCAPI_TASK_VALID(s) ((s) != NULL && (s)->magic == ISCAPI_TASK_MAGIC)
-
 isc_result_t
 isc_task_create(isc_taskmgr_t *manager, unsigned int quantum,
 		isc_task_t **taskp);
-
 isc_result_t
 isc_task_create_bound(isc_taskmgr_t *manager, unsigned int quantum,
 		      isc_task_t **taskp, int threadid);
 /*%<
- * Create a task.
+ * Create a task, optionally bound to a particular threadid.
  *
  * Notes:
  *
@@ -168,6 +136,29 @@ isc_task_create_bound(isc_taskmgr_t *manager, unsigned int quantum,
  *\li	#ISC_R_NOMEMORY
  *\li	#ISC_R_UNEXPECTED
  *\li	#ISC_R_SHUTTINGDOWN
+ */
+
+void
+isc_task_ready(isc_task_t *task);
+/*%<
+ * Enqueue the task onto netmgr queue.
+ */
+
+isc_result_t
+isc_task_run(isc_task_t *task);
+/*%<
+ * Run all the queued events for the 'task', returning
+ * when the queue is empty or the number of events executed
+ * exceeds the 'quantum' specified when the task was created.
+ *
+ * Requires:
+ *
+ *\li	'task' is a valid task.
+ *
+ * Returns:
+ *
+ *\li	#ISC_R_SUCCESS
+ *\li	#ISC_R_QUOTA
  */
 
 void
@@ -522,6 +513,9 @@ isc_task_getname(isc_task_t *task);
  *
  */
 
+isc_nm_t *
+isc_task_getnetmgr(isc_task_t *task);
+
 void *
 isc_task_gettag(isc_task_t *task);
 /*%<
@@ -622,15 +616,15 @@ isc_task_setprivilege(isc_task_t *task, bool priv);
  * but when the task manager has been set to privileged execution mode via
  * isc_taskmgr_setmode(), only tasks with the flag set will be executed,
  * and all other tasks will wait until they're done.  Once all privileged
- * tasks have finished executing, the task manager will automatically
- * return to normal execution mode and nonprivileged task can resume.
+ * tasks have finished executing, the task manager resumes running
+ * non-privileged tasks.
  *
  * Requires:
  *\li	'task' is a valid task.
  */
 
 bool
-isc_task_privilege(isc_task_t *task);
+isc_task_getprivilege(isc_task_t *task);
 /*%<
  * Returns the current value of the task's privilege flag.
  *
@@ -638,118 +632,47 @@ isc_task_privilege(isc_task_t *task);
  *\li	'task' is a valid task.
  */
 
-/*****
-***** Task Manager.
-*****/
-
-isc_result_t
-isc_taskmgr_createinctx(isc_mem_t *mctx, unsigned int workers,
-			unsigned int default_quantum, isc_taskmgr_t **managerp);
-isc_result_t
-isc_taskmgr_create(isc_mem_t *mctx, unsigned int workers,
-		   unsigned int default_quantum, isc_nm_t *nm,
-		   isc_taskmgr_t **managerp);
+bool
+isc_task_privileged(isc_task_t *task);
 /*%<
- * Create a new task manager.  isc_taskmgr_createinctx() also associates
- * the new manager with the specified application context.
- *
- * Notes:
- *
- *\li	'workers' in the number of worker threads to create.  In general,
- *	the value should be close to the number of processors in the system.
- *	The 'workers' value is advisory only.  An attempt will be made to
- *	create 'workers' threads, but if at least one thread creation
- *	succeeds, isc_taskmgr_create() may return ISC_R_SUCCESS.
- *
- *\li	If 'default_quantum' is non-zero, then it will be used as the default
- *	quantum value when tasks are created.  If zero, then an implementation
- *	defined default quantum will be used.
- *
- *\li	If 'nm' is set then netmgr is paused when an exclusive task mode
- *	is requested.
+ * Returns true if the task's privilege flag is set *and* the task
+ * manager is currently in privileged mode.
  *
  * Requires:
- *
- *\li      'mctx' is a valid memory context.
- *
- *\li	workers > 0
- *
- *\li	managerp != NULL && *managerp == NULL
- *
- *\li	'actx' is a valid application context (for createinctx()).
- *
- * Ensures:
- *
- *\li	On success, '*managerp' will be attached to the newly created task
- *	manager.
- *
- * Returns:
- *
- *\li	#ISC_R_SUCCESS
- *\li	#ISC_R_NOMEMORY
- *\li	#ISC_R_NOTHREADS		No threads could be created.
- *\li	#ISC_R_UNEXPECTED		An unexpected error occurred.
- *\li	#ISC_R_SHUTTINGDOWN      	The non-threaded, shared, task
- *					manager shutting down.
+ *\li	'task' is a valid task.
+ */
+
+/*****
+ ***** Task Manager.
+ *****/
+
+void
+isc_taskmgr_attach(isc_taskmgr_t *, isc_taskmgr_t **);
+void
+isc_taskmgr_detach(isc_taskmgr_t **);
+/*%<
+ * Attach/detach the task manager.
  */
 
 void
-isc_taskmgr_setprivilegedmode(isc_taskmgr_t *manager);
-
+isc_taskmgr_setmode(isc_taskmgr_t *manager, isc_taskmgrmode_t mode);
 isc_taskmgrmode_t
 isc_taskmgr_mode(isc_taskmgr_t *manager);
 /*%<
- * Set/get the current operating mode of the task manager.  Valid modes are:
+ * Set/get the operating mode of the task manager. Valid modes are:
  *
- *\li  isc_taskmgrmode_normal
- *\li  isc_taskmgrmode_privileged
+ *\li	isc_taskmgrmode_normal
+ *\li	isc_taskmgrmode_privileged
  *
  * In privileged execution mode, only tasks that have had the "privilege"
- * flag set via isc_task_setprivilege() can be executed.  When all such
- * tasks are complete, the manager automatically returns to normal mode
- * and proceeds with running non-privileged ready tasks.  This means it is
- * necessary to have at least one privileged task waiting on the ready
- * queue *before* setting the manager into privileged execution mode,
- * which in turn means the task which calls this function should be in
- * task-exclusive mode when it does so.
+ * flag set via isc_task_setprivilege() can be executed. When all such
+ * tasks are complete, non-privileged tasks resume running. The task calling
+ * this function should be in task-exclusive mode; the privileged tasks
+ * will be run after isc_task_endexclusive() is called.
  *
  * Requires:
  *
- *\li      'manager' is a valid task manager.
- */
-
-void
-isc_taskmgr_destroy(isc_taskmgr_t **managerp);
-/*%<
- * Destroy '*managerp'.
- *
- * Notes:
- *
- *\li	Calling isc_taskmgr_destroy() will shutdown all tasks managed by
- *	*managerp that haven't already been shutdown.  The call will block
- *	until all tasks have entered the done state.
- *
- *\li	isc_taskmgr_destroy() must not be called by a task event action,
- *	because it would block forever waiting for the event action to
- *	complete.  An event action that wants to cause task manager shutdown
- *	should request some non-event action thread of execution to do the
- *	shutdown, e.g. by signaling a condition variable or using
- *	isc_app_shutdown().
- *
- *\li	Task manager references are not reference counted, so the caller
- *	must ensure that no attempt will be made to use the manager after
- *	isc_taskmgr_destroy() returns.
- *
- * Requires:
- *
- *\li	'*managerp' is a valid task manager.
- *
- *\li	isc_taskmgr_destroy() has not be called previously on '*managerp'.
- *
- * Ensures:
- *
- *\li	All resources used by the task manager, and any tasks it managed,
- *	have been freed.
+ *\li	'manager' is a valid task manager.
  */
 
 void
@@ -787,5 +710,3 @@ isc_taskmgr_renderjson(isc_taskmgr_t *mgr, void *tasksobj0);
 #endif /* HAVE_JSON_C */
 
 ISC_LANG_ENDDECLS
-
-#endif /* ISC_TASK_H */

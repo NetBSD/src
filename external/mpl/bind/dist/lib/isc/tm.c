@@ -1,4 +1,4 @@
-/*	$NetBSD: tm.c,v 1.5 2021/02/19 16:42:19 christos Exp $	*/
+/*	$NetBSD: tm.c,v 1.6 2021/08/19 11:50:18 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -91,7 +91,7 @@ conv_num(const char **buf, int *dest, int llim, int ulim) {
 	/* The limit also determines the number of valid digits. */
 	int rulim = ulim;
 
-	if (**buf < '0' || **buf > '9') {
+	if (!isdigit((unsigned char)**buf)) {
 		return (0);
 	}
 

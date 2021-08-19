@@ -1,4 +1,4 @@
-/*	$NetBSD: mdig.c,v 1.8 2021/04/29 17:26:10 christos Exp $	*/
+/*	$NetBSD: mdig.c,v 1.9 2021/08/19 11:50:17 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -22,6 +22,7 @@
 #include <isc/hash.h>
 #include <isc/hex.h>
 #include <isc/log.h>
+#include <isc/managers.h>
 #include <isc/mem.h>
 #include <isc/net.h>
 #include <isc/nonce.h>
@@ -88,10 +89,10 @@
 #define US_PER_SEC 1000000 /*%< Microseconds per second. */
 #define US_PER_MS  1000	   /*%< Microseconds per millisecond. */
 
-static isc_mem_t *mctx;
-static dns_requestmgr_t *requestmgr;
-static const char *batchname;
-static FILE *batchfp;
+static isc_mem_t *mctx = NULL;
+static dns_requestmgr_t *requestmgr = NULL;
+static const char *batchname = NULL;
+static FILE *batchfp = NULL;
 static bool burst = false;
 static bool have_ipv4 = false;
 static bool have_ipv6 = false;
@@ -116,7 +117,7 @@ static bool yaml = false;
 static bool continue_on_error = false;
 static uint32_t display_splitwidth = 0xffffffff;
 static isc_sockaddr_t srcaddr;
-static char *server;
+static char *server = NULL;
 static isc_sockaddr_t dstaddr;
 static in_port_t port = 53;
 static isc_dscp_t dscp = -1;
@@ -580,10 +581,10 @@ compute_cookie(unsigned char *cookie, size_t len) {
 
 static isc_result_t
 sendquery(struct query *query, isc_task_t *task) {
-	dns_request_t *request;
-	dns_message_t *message;
-	dns_name_t *qname;
-	dns_rdataset_t *qrdataset;
+	dns_request_t *request = NULL;
+	dns_message_t *message = NULL;
+	dns_name_t *qname = NULL;
+	dns_rdataset_t *qrdataset = NULL;
 	isc_result_t result;
 	dns_fixedname_t queryname;
 	isc_buffer_t buf;
@@ -598,7 +599,6 @@ sendquery(struct query *query, isc_task_t *task) {
 				   dns_rootname, 0, NULL);
 	CHECK("dns_name_fromtext", result);
 
-	message = NULL;
 	dns_message_create(mctx, DNS_MESSAGE_INTENTRENDER, &message);
 
 	message->opcode = dns_opcode_query;
@@ -620,15 +620,12 @@ sendquery(struct query *query, isc_task_t *task) {
 	message->rdclass = query->rdclass;
 	message->id = (unsigned short)(random() & 0xFFFF);
 
-	qname = NULL;
 	result = dns_message_gettempname(message, &qname);
 	CHECK("dns_message_gettempname", result);
 
-	qrdataset = NULL;
 	result = dns_message_gettemprdataset(message, &qrdataset);
 	CHECK("dns_message_gettemprdataset", result);
 
-	dns_name_init(qname, NULL);
 	dns_name_clone(dns_fixedname_name(&queryname), qname);
 	dns_rdataset_makequestion(qrdataset, query->rdclass, query->rdtype);
 	ISC_LIST_APPEND(qname->list, qrdataset, link);
@@ -2062,37 +2059,23 @@ parse_args(bool is_batchfile, int argc, char **argv) {
 	}
 }
 
-#ifdef WIN32
-static void
-usleep(unsigned int usec) {
-	HANDLE timer;
-	LARGE_INTEGER ft;
-
-	ft.QuadPart = -(10 * (__int64)usec);
-
-	timer = CreateWaitableTimer(NULL, TRUE, NULL);
-	SetWaitableTimer(timer, &ft, 0, NULL, NULL, 0);
-	WaitForSingleObject(timer, INFINITE);
-	CloseHandle(timer);
-}
-#endif
-
 /*% Main processing routine for mdig */
 int
 main(int argc, char *argv[]) {
-	struct query *query;
+	struct query *query = NULL;
 	isc_result_t result;
 	isc_sockaddr_t bind_any;
-	isc_log_t *lctx;
-	isc_logconfig_t *lcfg;
-	isc_taskmgr_t *taskmgr;
-	isc_task_t *task;
-	isc_timermgr_t *timermgr;
-	isc_socketmgr_t *socketmgr;
-	dns_dispatchmgr_t *dispatchmgr;
+	isc_log_t *lctx = NULL;
+	isc_logconfig_t *lcfg = NULL;
+	isc_nm_t *netmgr = NULL;
+	isc_taskmgr_t *taskmgr = NULL;
+	isc_task_t *task = NULL;
+	isc_timermgr_t *timermgr = NULL;
+	isc_socketmgr_t *socketmgr = NULL;
+	dns_dispatchmgr_t *dispatchmgr = NULL;
 	unsigned int attrs, attrmask;
-	dns_dispatch_t *dispatchvx;
-	dns_view_t *view;
+	dns_dispatch_t *dispatchvx = NULL;
+	dns_view_t *view = NULL;
 	int ns;
 	unsigned int i;
 
@@ -2112,11 +2095,8 @@ main(int argc, char *argv[]) {
 
 	preparse_args(argc, argv);
 
-	mctx = NULL;
 	isc_mem_create(&mctx);
 
-	lctx = NULL;
-	lcfg = NULL;
 	isc_log_create(mctx, &lctx, &lcfg);
 
 	RUNCHECK(dst_lib_init(mctx, NULL));
@@ -2146,16 +2126,11 @@ main(int argc, char *argv[]) {
 		fatal("can't choose between IPv4 and IPv6");
 	}
 
-	taskmgr = NULL;
-	RUNCHECK(isc_taskmgr_create(mctx, 1, 0, NULL, &taskmgr));
-	task = NULL;
+	RUNCHECK(isc_managers_create(mctx, 1, 0, &netmgr, &taskmgr));
 	RUNCHECK(isc_task_create(taskmgr, 0, &task));
-	timermgr = NULL;
 
 	RUNCHECK(isc_timermgr_create(mctx, &timermgr));
-	socketmgr = NULL;
 	RUNCHECK(isc_socketmgr_create(mctx, &socketmgr));
-	dispatchmgr = NULL;
 	RUNCHECK(dns_dispatchmgr_create(mctx, &dispatchmgr));
 
 	attrs = DNS_DISPATCHATTR_UDP | DNS_DISPATCHATTR_MAKEQUERY;
@@ -2168,18 +2143,15 @@ main(int argc, char *argv[]) {
 	}
 	attrmask = DNS_DISPATCHATTR_UDP | DNS_DISPATCHATTR_TCP |
 		   DNS_DISPATCHATTR_IPV4 | DNS_DISPATCHATTR_IPV6;
-	dispatchvx = NULL;
 	RUNCHECK(dns_dispatch_getudp(dispatchmgr, socketmgr, taskmgr,
 				     have_src ? &srcaddr : &bind_any, 4096, 100,
 				     100, 17, 19, attrs, attrmask,
 				     &dispatchvx));
-	requestmgr = NULL;
 	RUNCHECK(dns_requestmgr_create(
 		mctx, timermgr, socketmgr, taskmgr, dispatchmgr,
 		have_ipv4 ? dispatchvx : NULL, have_ipv6 ? dispatchvx : NULL,
 		&requestmgr));
 
-	view = NULL;
 	RUNCHECK(dns_view_create(mctx, 0, "_test", &view));
 
 	query = ISC_LIST_HEAD(queries);
@@ -2226,7 +2198,7 @@ main(int argc, char *argv[]) {
 
 	isc_task_shutdown(task);
 	isc_task_detach(&task);
-	isc_taskmgr_destroy(&taskmgr);
+	isc_managers_destroy(&netmgr, &taskmgr);
 
 	dst_lib_destroy();
 

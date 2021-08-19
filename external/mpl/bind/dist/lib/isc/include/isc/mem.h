@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.h,v 1.7 2021/04/29 17:26:12 christos Exp $	*/
+/*	$NetBSD: mem.h,v 1.8 2021/08/19 11:50:18 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -175,6 +175,8 @@ typedef struct isc_memmethods {
 	void *(*memreallocate)(isc_mem_t *mctx, void *ptr,
 			       size_t size _ISC_MEM_FLARG);
 	char *(*memstrdup)(isc_mem_t *mctx, const char *s _ISC_MEM_FLARG);
+	char *(*memstrndup)(isc_mem_t *mctx, const char *s,
+			    size_t size _ISC_MEM_FLARG);
 	void (*memfree)(isc_mem_t *mctx, void *ptr _ISC_MEM_FLARG);
 } isc_memmethods_t;
 
@@ -229,7 +231,9 @@ struct isc_mempool {
 #define isc_mem_reallocate(c, p, s) \
 	ISCMEMFUNC(reallocate)((c), (p), (s)_ISC_MEM_FILELINE)
 #define isc_mem_strdup(c, p) ISCMEMFUNC(strdup)((c), (p)_ISC_MEM_FILELINE)
-#define isc_mempool_get(c)   ISCMEMPOOLFUNC(get)((c)_ISC_MEM_FILELINE)
+#define isc_mem_strndup(c, p, s) \
+	ISCMEMFUNC(strndup)((c), (p), (s)_ISC_MEM_FILELINE)
+#define isc_mempool_get(c) ISCMEMPOOLFUNC(get)((c)_ISC_MEM_FILELINE)
 
 #define isc_mem_put(c, p, s)                                     \
 	do {                                                     \
@@ -589,18 +593,51 @@ isc_mempool_setfillcount(isc_mempool_t *mpctx, unsigned int limit);
  *\li	limit > 0
  */
 
+#if defined(UNIT_TESTING) && defined(malloc)
+/*
+ * cmocka.h redefined malloc as a macro, we #undef it
+ * to avoid replacing ISC_ATTR_MALLOC with garbage.
+ */
+#pragma push_macro("malloc")
+#undef malloc
+#define POP_MALLOC_MACRO 1
+#endif
+
 /*
  * Pseudo-private functions for use via macros.  Do not call directly.
  */
+void ISCMEMFUNC(putanddetach)(isc_mem_t **, void *, size_t _ISC_MEM_FLARG);
+void ISCMEMFUNC(put)(isc_mem_t *, void *, size_t _ISC_MEM_FLARG);
+void ISCMEMFUNC(free)(isc_mem_t *, void *_ISC_MEM_FLARG);
+
+ISC_ATTR_RETURNS_NONNULL
+ISC_ATTR_MALLOC_DEALLOCATOR_IDX(ISCMEMFUNC(put), 2)
 void *ISCMEMFUNC(get)(isc_mem_t *, size_t _ISC_MEM_FLARG);
-void  ISCMEMFUNC(putanddetach)(isc_mem_t **, void *, size_t _ISC_MEM_FLARG);
-void  ISCMEMFUNC(put)(isc_mem_t *, void *, size_t _ISC_MEM_FLARG);
+
+ISC_ATTR_RETURNS_NONNULL
+ISC_ATTR_MALLOC_DEALLOCATOR_IDX(ISCMEMFUNC(free), 2)
 void *ISCMEMFUNC(allocate)(isc_mem_t *, size_t _ISC_MEM_FLARG);
+
+ISC_ATTR_RETURNS_NONNULL
+ISC_ATTR_DEALLOCATOR_IDX(ISCMEMFUNC(free), 2)
 void *ISCMEMFUNC(reallocate)(isc_mem_t *, void *, size_t _ISC_MEM_FLARG);
-void  ISCMEMFUNC(free)(isc_mem_t *, void *_ISC_MEM_FLARG);
+
+ISC_ATTR_RETURNS_NONNULL
+ISC_ATTR_MALLOC_DEALLOCATOR_IDX(ISCMEMFUNC(free), 2)
 char *ISCMEMFUNC(strdup)(isc_mem_t *, const char *_ISC_MEM_FLARG);
+char *ISCMEMFUNC(strndup)(isc_mem_t *, const char *, size_t _ISC_MEM_FLARG);
+
+ISC_ATTR_MALLOC_DEALLOCATOR_IDX(ISCMEMPOOLFUNC(put), 2)
 void *ISCMEMPOOLFUNC(get)(isc_mempool_t *_ISC_MEM_FLARG);
-void  ISCMEMPOOLFUNC(put)(isc_mempool_t *, void *_ISC_MEM_FLARG);
+
+void ISCMEMPOOLFUNC(put)(isc_mempool_t *, void *_ISC_MEM_FLARG);
+
+#ifdef POP_MALLOC_MACRO
+/*
+ * Restore cmocka.h macro for malloc.
+ */
+#pragma pop_macro("malloc")
+#endif
 
 ISC_LANG_ENDDECLS
 

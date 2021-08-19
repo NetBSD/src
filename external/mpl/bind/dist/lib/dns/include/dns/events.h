@@ -1,4 +1,4 @@
-/*	$NetBSD: events.h,v 1.5 2021/04/29 17:26:11 christos Exp $	*/
+/*	$NetBSD: events.h,v 1.6 2021/08/19 11:50:17 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -82,6 +82,7 @@
 #define DNS_EVENT_STARTUPDATE	     (ISC_EVENTCLASS_DNS + 58)
 #define DNS_EVENT_TRYSTALE	     (ISC_EVENTCLASS_DNS + 59)
 #define DNS_EVENT_ZONEFLUSH	     (ISC_EVENTCLASS_DNS + 60)
+#define DNS_EVENT_CHECKDSSENDTOADDR  (ISC_EVENTCLASS_DNS + 61)
 
 #define DNS_EVENT_FIRSTEVENT (ISC_EVENTCLASS_DNS + 0)
 #define DNS_EVENT_LASTEVENT  (ISC_EVENTCLASS_DNS + 65535)

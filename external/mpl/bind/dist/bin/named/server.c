@@ -1,4 +1,4 @@
-/*	$NetBSD: server.c,v 1.16 2021/04/29 17:26:09 christos Exp $	*/
+/*	$NetBSD: server.c,v 1.17 2021/08/19 11:50:15 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -3077,8 +3077,8 @@ configure_catz_zone(dns_view_t *view, const cfg_obj_t *config,
 
 	obj = cfg_tuple_get(catz_obj, "default-masters");
 	if (obj != NULL && cfg_obj_istuple(obj)) {
-		result = named_config_getipandkeylist(config, obj, view->mctx,
-						      &opts->masters);
+		result = named_config_getipandkeylist(
+			config, "primaries", obj, view->mctx, &opts->masters);
 	}
 
 	obj = cfg_tuple_get(catz_obj, "in-memory");
@@ -3883,6 +3883,42 @@ register_one_plugin(const cfg_obj_t *config, const cfg_obj_t *obj,
 #endif /* ifdef HAVE_DLOPEN */
 
 /*
+ * Determine if a minimal-sized cache can be used for a given view, according
+ * to 'maps' (implicit defaults, global options, view options) and 'optionmaps'
+ * (global options, view options).  This is only allowed for views which have
+ * recursion disabled and do not have "max-cache-size" set explicitly.  Using
+ * minimal-sized caches prevents a situation in which all explicitly configured
+ * and built-in views inherit the default "max-cache-size 90%;" setting, which
+ * could lead to memory exhaustion with multiple views configured.
+ */
+static bool
+minimal_cache_allowed(const cfg_obj_t *maps[4],
+		      const cfg_obj_t *optionmaps[3]) {
+	const cfg_obj_t *obj;
+
+	/*
+	 * Do not use a minimal-sized cache for a view with recursion enabled.
+	 */
+	obj = NULL;
+	(void)named_config_get(maps, "recursion", &obj);
+	INSIST(obj != NULL);
+	if (cfg_obj_asboolean(obj)) {
+		return (false);
+	}
+
+	/*
+	 * Do not use a minimal-sized cache if a specific size was requested.
+	 */
+	obj = NULL;
+	(void)named_config_get(optionmaps, "max-cache-size", &obj);
+	if (obj != NULL) {
+		return (false);
+	}
+
+	return (true);
+}
+
+/*
  * Configure 'view' according to 'vconfig', taking defaults from 'config'
  * where values are missing in 'vconfig'.
  *
@@ -4146,6 +4182,12 @@ configure_view(dns_view_t *view, dns_viewlist_t *viewlist, cfg_obj_t *config,
 	 */
 	if (named_g_maxcachesize != 0) {
 		max_cache_size = named_g_maxcachesize;
+	} else if (minimal_cache_allowed(maps, optionmaps)) {
+		/*
+		 * dns_cache_setcachesize() will adjust this to the smallest
+		 * allowed value.
+		 */
+		max_cache_size = 1;
 	} else if (cfg_obj_isstring(obj)) {
 		str = cfg_obj_asstring(obj);
 		INSIST(strcasecmp(str, "unlimited") == 0);
@@ -8985,7 +9027,7 @@ load_configuration(const char *filename, named_server_t *server,
 		dns_kasp_detach(&kasp);
 	}
 	/*
-	 * Create the built-in kasp policies ("default", "none").
+	 * Create the built-in kasp policies ("default", "insecure").
 	 */
 	kasp = NULL;
 	CHECK(cfg_kasp_fromconfig(NULL, "default", named_g_mctx, named_g_lctx,
@@ -8995,7 +9037,7 @@ load_configuration(const char *filename, named_server_t *server,
 	dns_kasp_detach(&kasp);
 
 	kasp = NULL;
-	CHECK(cfg_kasp_fromconfig(NULL, "none", named_g_mctx, named_g_lctx,
+	CHECK(cfg_kasp_fromconfig(NULL, "insecure", named_g_mctx, named_g_lctx,
 				  &kasplist, &kasp));
 	INSIST(kasp != NULL);
 	dns_kasp_freeze(kasp);
@@ -9681,8 +9723,9 @@ view_loaded(void *arg) {
 static isc_result_t
 load_zones(named_server_t *server, bool init, bool reconfig) {
 	isc_result_t result;
-	dns_view_t *view;
-	ns_zoneload_t *zl;
+	isc_taskmgr_t *taskmgr = dns_zonemgr_gettaskmgr(server->zonemgr);
+	dns_view_t *view = NULL;
+	ns_zoneload_t *zl = NULL;
 
 	zl = isc_mem_get(server->mctx, sizeof(*zl));
 	zl->server = server;
@@ -9734,19 +9777,28 @@ cleanup:
 	if (isc_refcount_decrement(&zl->refs) == 1) {
 		isc_refcount_destroy(&zl->refs);
 		isc_mem_put(server->mctx, zl, sizeof(*zl));
-	} else if (init) {
-		/*
-		 * Place the task manager into privileged mode.  This
-		 * ensures that after we leave task-exclusive mode, no
-		 * other tasks will be able to run except for the ones
-		 * that are loading zones. (This should only be done during
-		 * the initial server setup; it isn't necessary during
-		 * a reload.)
-		 */
-		isc_taskmgr_setprivilegedmode(named_g_taskmgr);
 	}
 
-	isc_task_endexclusive(server->task);
+	if (init) {
+		/*
+		 * If we're setting up the server for the first time, set
+		 * the task manager into privileged mode; this ensures
+		 * that no other tasks will begin to run until after zone
+		 * loading is complete. We won't return from exclusive mode
+		 * until the loading is finished; we can then drop out of
+		 * privileged mode.
+		 *
+		 * We do *not* want to do this in the case of reload or
+		 * reconfig, as loading a large zone could cause the server
+		 * to be inactive for too long a time.
+		 */
+		isc_taskmgr_setmode(taskmgr, isc_taskmgrmode_privileged);
+		isc_task_endexclusive(server->task);
+		isc_taskmgr_setmode(taskmgr, isc_taskmgrmode_normal);
+	} else {
+		isc_task_endexclusive(server->task);
+	}
+
 	return (result);
 }
 
@@ -10012,7 +10064,7 @@ named_server_create(isc_mem_t *mctx, named_server_t **serverp) {
 	 * startup and shutdown of the server, as well as all exclusive
 	 * tasks.
 	 */
-	CHECKFATAL(isc_task_create(named_g_taskmgr, 0, &server->task),
+	CHECKFATAL(isc_task_create_bound(named_g_taskmgr, 0, &server->task, 0),
 		   "creating server task");
 	isc_task_setname(server->task, "server", server);
 	isc_taskmgr_setexcltask(named_g_taskmgr, server->task);
@@ -10607,6 +10659,8 @@ named_server_retransfercommand(named_server_t *server, isc_lex_t *lex,
 	dns_zone_t *raw = NULL;
 	dns_zonetype_t type;
 
+	REQUIRE(text != NULL);
+
 	result = zone_from_args(server, lex, NULL, &zone, NULL, text, true);
 	if (result != ISC_R_SUCCESS) {
 		return (result);
@@ -10653,6 +10707,8 @@ named_server_reloadcommand(named_server_t *server, isc_lex_t *lex,
 	dns_zone_t *zone = NULL;
 	dns_zonetype_t type;
 	const char *msg = NULL;
+
+	REQUIRE(text != NULL);
 
 	result = zone_from_args(server, lex, NULL, &zone, NULL, text, true);
 	if (result != ISC_R_SUCCESS) {
@@ -10734,6 +10790,8 @@ named_server_notifycommand(named_server_t *server, isc_lex_t *lex,
 	dns_zone_t *zone = NULL;
 	const char msg[] = "zone notify queued";
 
+	REQUIRE(text != NULL);
+
 	result = zone_from_args(server, lex, NULL, &zone, NULL, text, true);
 	if (result != ISC_R_SUCCESS) {
 		return (result);
@@ -10761,6 +10819,8 @@ named_server_refreshcommand(named_server_t *server, isc_lex_t *lex,
 	const char msg1[] = "zone refresh queued";
 	const char msg2[] = "not a slave, mirror, or stub zone";
 	dns_zonetype_t type;
+
+	REQUIRE(text != NULL);
 
 	result = zone_from_args(server, lex, NULL, &zone, NULL, text, true);
 	if (result != ISC_R_SUCCESS) {
@@ -11085,7 +11145,7 @@ resume:
 				";\n; Cache dump of view '%s' (cache %s)\n;\n",
 				dctx->view->view->name,
 				dns_cache_getname(dctx->view->view->cache));
-			result = dns_master_dumptostreaminc(
+			result = dns_master_dumptostreamasync(
 				dctx->mctx, dctx->cache, NULL, style, dctx->fp,
 				dctx->task, dumpdone, dctx, &dctx->mdctx);
 			if (result == DNS_R_CONTINUE) {
@@ -11145,7 +11205,7 @@ resume:
 				goto nextzone;
 			}
 			dns_db_currentversion(dctx->db, &dctx->version);
-			result = dns_master_dumptostreaminc(
+			result = dns_master_dumptostreamasync(
 				dctx->mctx, dctx->db, dctx->version, style,
 				dctx->fp, dctx->task, dumpdone, dctx,
 				&dctx->mdctx);
@@ -11196,6 +11256,8 @@ named_server_dumpdb(named_server_t *server, isc_lex_t *lex,
 	char *ptr;
 	const char *sep;
 	bool found;
+
+	REQUIRE(text != NULL);
 
 	/* Skip the command name. */
 	ptr = next_token(lex, NULL);
@@ -11319,6 +11381,8 @@ named_server_dumpsecroots(named_server_t *server, isc_lex_t *lex,
 	char tbuf[64];
 	unsigned int used = isc_buffer_usedlength(*text);
 	bool first = true;
+
+	REQUIRE(text != NULL);
 
 	/* Skip the command name. */
 	ptr = next_token(lex, text);
@@ -11507,6 +11571,8 @@ named_server_validation(named_server_t *server, isc_lex_t *lex,
 	bool changed = false;
 	isc_result_t result;
 	bool enable = true, set = true, first = true;
+
+	REQUIRE(text != NULL);
 
 	/* Skip the command name. */
 	ptr = next_token(lex, text);
@@ -11828,6 +11894,8 @@ named_server_status(named_server_t *server, isc_buffer_t **text) {
 	char line[1024], hostname[256];
 	named_reload_t reload_status;
 
+	REQUIRE(text != NULL);
+
 	if (named_g_server->version_set) {
 		ob = " (";
 		cb = ")";
@@ -11955,6 +12023,8 @@ named_server_testgen(isc_lex_t *lex, isc_buffer_t **text) {
 	unsigned long i;
 	const unsigned char chars[] = "abcdefghijklmnopqrstuvwxyz0123456789";
 
+	REQUIRE(text != NULL);
+
 	/* Skip the command name. */
 	ptr = next_token(lex, text);
 	if (ptr == NULL) {
@@ -12049,6 +12119,8 @@ named_server_tsigdelete(named_server_t *server, isc_lex_t *lex,
 	char *ptr, *viewname;
 	char target[DNS_NAME_FORMATSIZE];
 	char fbuf[16];
+
+	REQUIRE(text != NULL);
 
 	(void)next_token(lex, text); /* skip command name */
 
@@ -12174,6 +12246,8 @@ named_server_tsiglist(named_server_t *server, isc_buffer_t **text) {
 	dns_view_t *view;
 	unsigned int foundkeys = 0;
 
+	REQUIRE(text != NULL);
+
 	for (view = ISC_LIST_HEAD(server->viewlist); view != NULL;
 	     view = ISC_LIST_NEXT(view, link))
 	{
@@ -12218,6 +12292,8 @@ named_server_rekey(named_server_t *server, isc_lex_t *lex,
 	bool fullsign = false;
 	char *ptr;
 
+	REQUIRE(text != NULL);
+
 	ptr = next_token(lex, text);
 	if (ptr == NULL) {
 		return (ISC_R_UNEXPECTEDEND);
@@ -12226,6 +12302,8 @@ named_server_rekey(named_server_t *server, isc_lex_t *lex,
 	if (strcasecmp(ptr, NAMED_COMMAND_SIGN) == 0) {
 		fullsign = true;
 	}
+
+	REQUIRE(text != NULL);
 
 	result = zone_from_args(server, lex, NULL, &zone, NULL, text, false);
 	if (result != ISC_R_SUCCESS) {
@@ -12299,6 +12377,8 @@ named_server_sync(named_server_t *server, isc_lex_t *lex, isc_buffer_t **text) {
 	const char *vname, *sep, *arg;
 	bool cleanup = false;
 
+	REQUIRE(text != NULL);
+
 	(void)next_token(lex, text);
 
 	arg = next_token(lex, text);
@@ -12307,6 +12387,8 @@ named_server_sync(named_server_t *server, isc_lex_t *lex, isc_buffer_t **text) {
 		cleanup = true;
 		arg = next_token(lex, text);
 	}
+
+	REQUIRE(text != NULL);
 
 	result = zone_from_args(server, lex, arg, &zone, NULL, text, false);
 	if (result != ISC_R_SUCCESS) {
@@ -12377,6 +12459,8 @@ named_server_freeze(named_server_t *server, bool freeze, isc_lex_t *lex,
 	const char *vname, *sep;
 	bool frozen;
 	const char *msg = NULL;
+
+	REQUIRE(text != NULL);
 
 	result = zone_from_args(server, lex, NULL, &mayberaw, NULL, text, true);
 	if (result != ISC_R_SUCCESS) {
@@ -12494,6 +12578,8 @@ named_server_freeze(named_server_t *server, bool freeze, isc_lex_t *lex,
  */
 isc_result_t
 named_smf_add_message(isc_buffer_t **text) {
+	REQUIRE(text != NULL);
+
 	return (putstr(text, "use svcadm(1M) to manage named"));
 }
 #endif /* HAVE_LIBSCF */
@@ -13348,13 +13434,13 @@ do_addzone(named_server_t *server, ns_cfgctx_t *cfg, dns_view_t *view,
 #ifndef HAVE_LMDB
 	FILE *fp = NULL;
 	bool cleanup_config = false;
-#else  /* HAVE_LMDB */
+#else /* HAVE_LMDB */
 	MDB_txn *txn = NULL;
 	MDB_dbi dbi;
+	bool locked = false;
 
 	UNUSED(zoneconf);
-	LOCK(&view->new_zone_lock);
-#endif /* HAVE_LMDB */
+#endif
 
 	/* Zone shouldn't already exist */
 	if (redirect) {
@@ -13374,12 +13460,16 @@ do_addzone(named_server_t *server, ns_cfgctx_t *cfg, dns_view_t *view,
 		goto cleanup;
 	}
 
+	result = isc_task_beginexclusive(server->task);
+	RUNTIME_CHECK(result == ISC_R_SUCCESS);
+
 #ifndef HAVE_LMDB
 	/*
 	 * Make sure we can open the configuration save file
 	 */
 	result = isc_stdio_open(view->new_zone_file, "a", &fp);
 	if (result != ISC_R_SUCCESS) {
+		isc_task_endexclusive(server->task);
 		TCHECK(putstr(text, "unable to create '"));
 		TCHECK(putstr(text, view->new_zone_file));
 		TCHECK(putstr(text, "': "));
@@ -13390,9 +13480,12 @@ do_addzone(named_server_t *server, ns_cfgctx_t *cfg, dns_view_t *view,
 	(void)isc_stdio_close(fp);
 	fp = NULL;
 #else  /* HAVE_LMDB */
+	LOCK(&view->new_zone_lock);
+	locked = true;
 	/* Make sure we can open the NZD database */
 	result = nzd_writable(view);
 	if (result != ISC_R_SUCCESS) {
+		isc_task_endexclusive(server->task);
 		TCHECK(putstr(text, "unable to open NZD database for '"));
 		TCHECK(putstr(text, view->new_zone_db));
 		TCHECK(putstr(text, "'"));
@@ -13400,9 +13493,6 @@ do_addzone(named_server_t *server, ns_cfgctx_t *cfg, dns_view_t *view,
 		goto cleanup;
 	}
 #endif /* HAVE_LMDB */
-
-	result = isc_task_beginexclusive(server->task);
-	RUNTIME_CHECK(result == ISC_R_SUCCESS);
 
 	/* Mark view unfrozen and configure zone */
 	dns_view_thaw(view);
@@ -13507,7 +13597,9 @@ cleanup:
 	if (txn != NULL) {
 		(void)nzd_close(&txn, false);
 	}
-	UNLOCK(&view->new_zone_lock);
+	if (locked) {
+		UNLOCK(&view->new_zone_lock);
+	}
 #endif /* HAVE_LMDB */
 
 	if (zone != NULL) {
@@ -13531,7 +13623,7 @@ do_modzone(named_server_t *server, ns_cfgctx_t *cfg, dns_view_t *view,
 #else  /* HAVE_LMDB */
 	MDB_txn *txn = NULL;
 	MDB_dbi dbi;
-	LOCK(&view->new_zone_lock);
+	bool locked = false;
 #endif /* HAVE_LMDB */
 
 	/* Zone must already exist */
@@ -13577,6 +13669,8 @@ do_modzone(named_server_t *server, ns_cfgctx_t *cfg, dns_view_t *view,
 	(void)isc_stdio_close(fp);
 	fp = NULL;
 #else  /* HAVE_LMDB */
+	LOCK(&view->new_zone_lock);
+	locked = true;
 	/* Make sure we can open the NZD database */
 	result = nzd_writable(view);
 	if (result != ISC_R_SUCCESS) {
@@ -13729,7 +13823,9 @@ cleanup:
 	if (txn != NULL) {
 		(void)nzd_close(&txn, false);
 	}
-	UNLOCK(&view->new_zone_lock);
+	if (locked) {
+		UNLOCK(&view->new_zone_lock);
+	}
 #endif /* HAVE_LMDB */
 
 	if (zone != NULL) {
@@ -13756,6 +13852,8 @@ named_server_changezone(named_server_t *server, char *command,
 	isc_buffer_t buf;
 	dns_fixedname_t fname;
 	dns_name_t *dnsname;
+
+	REQUIRE(text != NULL);
 
 	if (strncasecmp(command, "add", 3) == 0) {
 		addzone = true;
@@ -14032,6 +14130,8 @@ named_server_delzone(named_server_t *server, isc_lex_t *lex,
 	isc_event_t *dzevent = NULL;
 	isc_task_t *task = NULL;
 
+	REQUIRE(text != NULL);
+
 	/* Skip the command name. */
 	ptr = next_token(lex, text);
 	if (ptr == NULL) {
@@ -14246,6 +14346,8 @@ named_server_showzone(named_server_t *server, isc_lex_t *lex,
 	bool added, redirect;
 	ns_dzarg_t dzarg;
 
+	REQUIRE(text != NULL);
+
 	/* Parse parameters */
 	CHECK(zone_from_args(server, lex, NULL, &zone, zonename, text, true));
 	if (zone == NULL) {
@@ -14381,6 +14483,8 @@ named_server_signing(named_server_t *server, isc_lex_t *lex,
 	const char *ptr;
 	size_t n;
 
+	REQUIRE(text != NULL);
+
 	dns_rdataset_init(&privset);
 
 	/* Skip the command name. */
@@ -14441,7 +14545,8 @@ named_server_signing(named_server_t *server, isc_lex_t *lex,
 				return (ISC_R_BADNUMBER);
 			}
 
-			if (hash > 0xffU || flags > 0xffU) {
+			if (hash > 0xffU || flags > 0xffU ||
+			    iter > dns_nsec3_maxiterations()) {
 				return (ISC_R_RANGE);
 			}
 
@@ -14481,7 +14586,7 @@ named_server_signing(named_server_t *server, isc_lex_t *lex,
 		CHECK(ISC_R_UNEXPECTEDEND);
 	}
 
-	if (dns_zone_use_kasp(zone)) {
+	if (dns_zone_getkasp(zone) != NULL) {
 		(void)putstr(text, "zone uses dnssec-policy, use rndc dnssec "
 				   "command instead");
 		(void)putnull(text);
@@ -14607,6 +14712,10 @@ named_server_dnssec(named_server_t *server, isc_lex_t *lex,
 	isc_stdtime_t now, when;
 	isc_time_t timenow, timewhen;
 	const char *dir;
+	dns_db_t *db = NULL;
+	dns_dbversion_t *version = NULL;
+
+	REQUIRE(text != NULL);
 
 	/* Skip the command name. */
 	ptr = next_token(lex, text);
@@ -14738,12 +14847,15 @@ named_server_dnssec(named_server_t *server, isc_lex_t *lex,
 
 	/* Get DNSSEC keys. */
 	dir = dns_zone_getkeydirectory(zone);
+	CHECK(dns_zone_getdb(zone, &db));
+	dns_db_currentversion(db, &version);
 	LOCK(&kasp->lock);
-	result = dns_dnssec_findmatchingkeys(dns_zone_getorigin(zone), dir, now,
-					     dns_zone_getmctx(zone), &keys);
+	result = dns_zone_getdnsseckeys(zone, db, version, now, &keys);
 	UNLOCK(&kasp->lock);
-	if (result != ISC_R_SUCCESS && result != ISC_R_NOTFOUND) {
-		goto cleanup;
+	if (result != ISC_R_SUCCESS) {
+		if (result != ISC_R_NOTFOUND) {
+			goto cleanup;
+		}
 	}
 
 	if (status) {
@@ -14864,6 +14976,13 @@ cleanup:
 		(void)putnull(text);
 	}
 
+	if (version != NULL) {
+		dns_db_closeversion(db, &version, false);
+	}
+	if (db != NULL) {
+		dns_db_detach(&db);
+	}
+
 	while (!ISC_LIST_EMPTY(keys)) {
 		key = ISC_LIST_HEAD(keys);
 		ISC_LIST_UNLINK(keys, key, link);
@@ -14937,6 +15056,8 @@ named_server_zonestatus(named_server_t *server, isc_lex_t *lex,
 	dns_db_t *db = NULL, *rawdb = NULL;
 	char **incfiles = NULL;
 	int nfiles = 0;
+
+	REQUIRE(text != NULL);
 
 	isc_time_settoepoch(&loadtime);
 	isc_time_settoepoch(&refreshtime);
@@ -15203,6 +15324,8 @@ named_server_nta(named_server_t *server, isc_lex_t *lex, bool readonly,
 	bool ttlset = false, excl = false, viewfound = false;
 	dns_rdataclass_t rdclass = dns_rdataclass_in;
 	bool first = true;
+
+	REQUIRE(text != NULL);
 
 	UNUSED(force);
 
@@ -15757,6 +15880,8 @@ named_server_mkeys(named_server_t *server, isc_lex_t *lex,
 	bool found = false;
 	bool first = true;
 
+	REQUIRE(text != NULL);
+
 	/* Skip rndc command name */
 	cmd = next_token(lex, text);
 	if (cmd == NULL) {
@@ -15875,6 +16000,8 @@ named_server_dnstap(named_server_t *server, isc_lex_t *lex,
 	isc_result_t result;
 	bool reopen = false;
 	int backups = 0;
+
+	REQUIRE(text != NULL);
 
 	if (server->dtenv == NULL) {
 		return (ISC_R_NOTFOUND);
@@ -16029,6 +16156,8 @@ named_server_servestale(named_server_t *server, isc_lex_t *lex,
 	bool wantstatus = false;
 	isc_result_t result = ISC_R_SUCCESS;
 	bool exclusive = false;
+
+	REQUIRE(text != NULL);
 
 	/* Skip the command name. */
 	ptr = next_token(lex, text);

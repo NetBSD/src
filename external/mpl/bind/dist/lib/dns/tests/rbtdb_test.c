@@ -1,4 +1,4 @@
-/*	$NetBSD: rbtdb_test.c,v 1.1.1.1 2021/08/19 11:45:26 christos Exp $	*/
+/*	$NetBSD: rbtdb_test.c,v 1.2 2021/08/19 11:50:18 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")

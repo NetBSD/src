@@ -1,4 +1,4 @@
-/*	$NetBSD: keymgr.h,v 1.4 2021/02/19 16:42:16 christos Exp $	*/
+/*	$NetBSD: keymgr.h,v 1.5 2021/08/19 11:50:17 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -28,12 +28,12 @@ ISC_LANG_BEGINDECLS
 isc_result_t
 dns_keymgr_run(const dns_name_t *origin, dns_rdataclass_t rdclass,
 	       const char *directory, isc_mem_t *mctx,
-	       dns_dnsseckeylist_t *keyring, dns_kasp_t *kasp,
-	       isc_stdtime_t now, isc_stdtime_t *nexttime);
+	       dns_dnsseckeylist_t *keyring, dns_dnsseckeylist_t *dnskeys,
+	       dns_kasp_t *kasp, isc_stdtime_t now, isc_stdtime_t *nexttime);
 /*%<
- * Manage keys in 'keylist' and update timing data according to 'kasp' policy.
+ * Manage keys in 'keyring' and update timing data according to 'kasp' policy.
  * Create new keys for 'origin' if necessary in 'directory'.  Append all such
- * keys, along with use hints gleaned from their metadata, onto 'keylist'.
+ * keys, along with use hints gleaned from their metadata, onto 'keyring'.
  *
  * Update key states and store changes back to disk. Store when to run next
  * in 'nexttime'.

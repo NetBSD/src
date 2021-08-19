@@ -1,4 +1,4 @@
-/*	$NetBSD: rdata.c,v 1.10 2021/04/05 11:27:02 rillig Exp $	*/
+/*	$NetBSD: rdata.c,v 1.11 2021/08/19 11:50:17 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -84,37 +84,61 @@
 		const dns_name_t *origin, unsigned int options, \
 		isc_buffer_t *target, dns_rdatacallbacks_t *callbacks
 
+#define CALL_FROMTEXT rdclass, type, lexer, origin, options, target, callbacks
+
 #define ARGS_TOTEXT \
 	dns_rdata_t *rdata, dns_rdata_textctx_t *tctx, isc_buffer_t *target
+
+#define CALL_TOTEXT rdata, tctx, target
 
 #define ARGS_FROMWIRE                                            \
 	int rdclass, dns_rdatatype_t type, isc_buffer_t *source, \
 		dns_decompress_t *dctx, unsigned int options,    \
 		isc_buffer_t *target
 
+#define CALL_FROMWIRE rdclass, type, source, dctx, options, target
+
 #define ARGS_TOWIRE \
 	dns_rdata_t *rdata, dns_compress_t *cctx, isc_buffer_t *target
 
+#define CALL_TOWIRE rdata, cctx, target
+
 #define ARGS_COMPARE const dns_rdata_t *rdata1, const dns_rdata_t *rdata2
+
+#define CALL_COMPARE rdata1, rdata2
 
 #define ARGS_FROMSTRUCT \
 	int rdclass, dns_rdatatype_t type, void *source, isc_buffer_t *target
 
+#define CALL_FROMSTRUCT rdclass, type, source, target
+
 #define ARGS_TOSTRUCT const dns_rdata_t *rdata, void *target, isc_mem_t *mctx
 
+#define CALL_TOSTRUCT rdata, target, mctx
+
 #define ARGS_FREESTRUCT void *source
+
+#define CALL_FREESTRUCT source
 
 #define ARGS_ADDLDATA \
 	dns_rdata_t *rdata, dns_additionaldatafunc_t add, void *arg
 
+#define CALL_ADDLDATA rdata, add, arg
+
 #define ARGS_DIGEST dns_rdata_t *rdata, dns_digestfunc_t digest, void *arg
+
+#define CALL_DIGEST rdata, digest, arg
 
 #define ARGS_CHECKOWNER                                   \
 	const dns_name_t *name, dns_rdataclass_t rdclass, \
 		dns_rdatatype_t type, bool wildcard
 
+#define CALL_CHECKOWNER name, rdclass, type, wildcard
+
 #define ARGS_CHECKNAMES \
 	dns_rdata_t *rdata, const dns_name_t *owner, dns_name_t *bad
+
+#define CALL_CHECKNAMES rdata, owner, bad
 
 /*%
  * Context structure for the totext_ functions.
@@ -1200,6 +1224,7 @@ dns_rdata_tostruct(const dns_rdata_t *rdata, void *target, isc_mem_t *mctx) {
 
 	REQUIRE(rdata != NULL);
 	REQUIRE(DNS_RDATA_VALIDFLAGS(rdata));
+	REQUIRE((rdata->flags & DNS_RDATA_UPDATE) == 0);
 
 	TOSTRUCTSWITCH
 

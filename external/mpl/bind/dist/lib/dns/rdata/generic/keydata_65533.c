@@ -1,4 +1,4 @@
-/*	$NetBSD: keydata_65533.c,v 1.7 2021/02/19 16:42:17 christos Exp $	*/
+/*	$NetBSD: keydata_65533.c,v 1.8 2021/08/19 11:50:17 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -73,6 +73,11 @@ fromtext_keydata(ARGS_FROMTEXT) {
 	RETTOK(dns_secalg_fromtext(&alg, &token.value.as_textregion));
 	RETERR(mem_tobuffer(target, &alg, 1));
 
+	/* Do we have a placeholder KEYDATA record? */
+	if (flags == 0 && proto == 0 && alg == 0) {
+		return (ISC_R_SUCCESS);
+	}
+
 	/* No Key? */
 	if ((flags & 0xc000) == 0xc000) {
 		return (ISC_R_SUCCESS);
@@ -86,7 +91,7 @@ totext_keydata(ARGS_TOTEXT) {
 	isc_region_t sr;
 	char buf[sizeof("64000")];
 	unsigned int flags;
-	unsigned char algorithm;
+	unsigned char proto, algorithm;
 	unsigned long refresh, add, deltime;
 	char algbuf[DNS_NAME_FORMATSIZE];
 	const char *keyinfo;
@@ -134,7 +139,8 @@ totext_keydata(ARGS_TOTEXT) {
 	}
 
 	/* protocol */
-	snprintf(buf, sizeof(buf), "%u", sr.base[0]);
+	proto = sr.base[0];
+	snprintf(buf, sizeof(buf), "%u", proto);
 	isc_region_consume(&sr, 1);
 	RETERR(str_totext(buf, target));
 	RETERR(str_totext(" ", target));
@@ -144,6 +150,14 @@ totext_keydata(ARGS_TOTEXT) {
 	snprintf(buf, sizeof(buf), "%u", algorithm);
 	isc_region_consume(&sr, 1);
 	RETERR(str_totext(buf, target));
+
+	/* Do we have a placeholder KEYDATA record? */
+	if (flags == 0 && proto == 0 && algorithm == 0) {
+		if ((tctx->flags & DNS_STYLEFLAG_RRCOMMENT) != 0) {
+			RETERR(str_totext(" ; placeholder", target));
+		}
+		return (ISC_R_SUCCESS);
+	}
 
 	/* No Key? */
 	if ((flags & 0xc000) == 0xc000) {

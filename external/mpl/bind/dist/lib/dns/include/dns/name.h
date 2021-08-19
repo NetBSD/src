@@ -1,4 +1,4 @@
-/*	$NetBSD: name.h,v 1.7 2021/04/05 11:27:02 rillig Exp $	*/
+/*	$NetBSD: name.h,v 1.8 2021/08/19 11:50:17 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -640,7 +640,7 @@ dns_name_clone(const dns_name_t *source, dns_name_t *target);
  * Notes:
  *
  * \li	'target' refers to the same memory as 'source', so 'source'
- *	must not be changed while 'target' is still in use.
+ *	must not be changed or freed while 'target' is still in use.
  *
  * \li	This call is functionally equivalent to:
  *
@@ -1244,21 +1244,16 @@ dns_name_settotextfilter(dns_name_totextfilter_t *proc);
 
 isc_result_t
 dns_name_copy(const dns_name_t *source, dns_name_t *dest, isc_buffer_t *target);
-void
-dns_name_copynf(const dns_name_t *source, dns_name_t *dest);
 /*%<
- * Makes 'dest' refer to a copy of the name in 'source'.  The data are either
- * copied to 'target' or in case of dns_name_copynf the dedicated buffer in
- * 'dest'.
+ * Copies the name in 'source' into 'dest'.  The name data is copied to
+ * the 'target' buffer, which is then set as the buffer for 'dest'.
  *
  * Requires:
  * \li	'source' is a valid name.
  *
- * \li	'dest' is an initialized name with a dedicated buffer.
+ * \li	'dest' is an initialized name.
  *
  * \li	'target' is an initialized buffer.
- *
- * \li	Either dest has a dedicated buffer or target != NULL.
  *
  * Ensures:
  *
@@ -1267,6 +1262,18 @@ dns_name_copynf(const dns_name_t *source, dns_name_t *dest);
  * Returns:
  *\li	#ISC_R_SUCCESS
  *\li	#ISC_R_NOSPACE
+ */
+
+void
+dns_name_copynf(const dns_name_t *source, dns_name_t *dest);
+/*%<
+ * Copies the name in 'source' into 'dest'.  The name data is copied to
+ * the dedicated buffer for 'dest'.
+ *
+ * Requires:
+ * \li	'source' is a valid name.
+ *
+ * \li	'dest' is an initialized name with a dedicated buffer.
  */
 
 bool

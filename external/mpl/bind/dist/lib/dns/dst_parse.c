@@ -1,4 +1,4 @@
-/*	$NetBSD: dst_parse.c,v 1.7 2021/04/05 11:27:02 rillig Exp $	*/
+/*	$NetBSD: dst_parse.c,v 1.8 2021/08/19 11:50:17 christos Exp $	*/
 
 /*
  * Portions Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -63,7 +63,7 @@ static const char *timetags[TIMING_NTAGS] = {
 
 #define NUMERIC_NTAGS (DST_MAX_NUMERIC + 1)
 static const char *numerictags[NUMERIC_NTAGS] = {
-	"Predecessor:", "Successor:", "MaxTTL:", "RollPeriod:", NULL
+	"Predecessor:", "Successor:", "MaxTTL:", "RollPeriod:", NULL, NULL, NULL
 };
 
 struct parse_map {

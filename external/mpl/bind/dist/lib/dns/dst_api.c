@@ -1,4 +1,4 @@
-/*	$NetBSD: dst_api.c,v 1.10 2021/04/29 17:26:11 christos Exp $	*/
+/*	$NetBSD: dst_api.c,v 1.11 2021/08/19 11:50:17 christos Exp $	*/
 
 /*
  * Portions Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -99,7 +99,8 @@
 
 #define NUMERIC_NTAGS (DST_MAX_NUMERIC + 1)
 static const char *numerictags[NUMERIC_NTAGS] = {
-	"Predecessor:", "Successor:", "MaxTTL:", "RollPeriod:", "Lifetime:"
+	"Predecessor:", "Successor:",  "MaxTTL:",    "RollPeriod:",
+	"Lifetime:",	"DSPubCount:", "DSRemCount:"
 };
 
 #define BOOLEAN_NTAGS (DST_MAX_BOOLEAN + 1)
@@ -571,8 +572,8 @@ dst_key_fromnamedfile(const char *filename, const char *dirname, int type,
 		      isc_mem_t *mctx, dst_key_t **keyp) {
 	isc_result_t result;
 	dst_key_t *pubkey = NULL, *key = NULL;
-	char *newfilename = NULL;
-	int newfilenamelen = 0;
+	char *newfilename = NULL, *statefilename = NULL;
+	int newfilenamelen = 0, statefilenamelen = 0;
 	isc_lex_t *lex = NULL;
 
 	REQUIRE(dst_initialized);
@@ -601,67 +602,56 @@ dst_key_fromnamedfile(const char *filename, const char *dirname, int type,
 			   ".key");
 	INSIST(result == ISC_R_SUCCESS);
 
-	result = dst_key_read_public(newfilename, type, mctx, &pubkey);
+	RETERR(dst_key_read_public(newfilename, type, mctx, &pubkey));
 	isc_mem_put(mctx, newfilename, newfilenamelen);
-	newfilename = NULL;
-	RETERR(result);
+
+	/*
+	 * Read the state file, if requested by type.
+	 */
+	if ((type & DST_TYPE_STATE) != 0) {
+		statefilenamelen = strlen(filename) + 7;
+		if (dirname != NULL) {
+			statefilenamelen += strlen(dirname) + 1;
+		}
+		statefilename = isc_mem_get(mctx, statefilenamelen);
+		result = addsuffix(statefilename, statefilenamelen, dirname,
+				   filename, ".state");
+		INSIST(result == ISC_R_SUCCESS);
+	}
+
+	pubkey->kasp = false;
+	if ((type & DST_TYPE_STATE) != 0) {
+		result = dst_key_read_state(statefilename, mctx, &pubkey);
+		if (result == ISC_R_SUCCESS) {
+			pubkey->kasp = true;
+		} else if (result == ISC_R_FILENOTFOUND) {
+			/* Having no state is valid. */
+			result = ISC_R_SUCCESS;
+		}
+		RETERR(result);
+	}
 
 	if ((type & (DST_TYPE_PRIVATE | DST_TYPE_PUBLIC)) == DST_TYPE_PUBLIC ||
 	    (pubkey->key_flags & DNS_KEYFLAG_TYPEMASK) == DNS_KEYTYPE_NOKEY)
 	{
-		result = computeid(pubkey);
-		if (result != ISC_R_SUCCESS) {
-			dst_key_free(&pubkey);
-			return (result);
-		}
-
+		RETERR(computeid(pubkey));
 		*keyp = pubkey;
-		return (ISC_R_SUCCESS);
+		pubkey = NULL;
+		goto out;
 	}
 
-	result = algorithm_status(pubkey->key_alg);
-	if (result != ISC_R_SUCCESS) {
-		dst_key_free(&pubkey);
-		return (result);
-	}
+	RETERR(algorithm_status(pubkey->key_alg));
 
 	key = get_key_struct(pubkey->key_name, pubkey->key_alg,
 			     pubkey->key_flags, pubkey->key_proto,
 			     pubkey->key_size, pubkey->key_class,
 			     pubkey->key_ttl, mctx);
 	if (key == NULL) {
-		dst_key_free(&pubkey);
-		return (ISC_R_NOMEMORY);
+		RETERR(ISC_R_NOMEMORY);
 	}
 
 	if (key->func->parse == NULL) {
 		RETERR(DST_R_UNSUPPORTEDALG);
-	}
-
-	/*
-	 * Read the state file, if requested by type.
-	 */
-	if ((type & DST_TYPE_STATE) != 0) {
-		newfilenamelen = strlen(filename) + 7;
-		if (dirname != NULL) {
-			newfilenamelen += strlen(dirname) + 1;
-		}
-		newfilename = isc_mem_get(mctx, newfilenamelen);
-		result = addsuffix(newfilename, newfilenamelen, dirname,
-				   filename, ".state");
-		INSIST(result == ISC_R_SUCCESS);
-
-		key->kasp = false;
-		result = dst_key_read_state(newfilename, mctx, &key);
-		if (result == ISC_R_SUCCESS) {
-			key->kasp = true;
-		} else if (result == ISC_R_FILENOTFOUND) {
-			/* Having no state is valid. */
-			result = ISC_R_SUCCESS;
-		}
-		isc_mem_put(mctx, newfilename, newfilenamelen);
-		newfilename = NULL;
-		RETERR(result);
 	}
 
 	newfilenamelen = strlen(filename) + 9;
@@ -680,15 +670,26 @@ dst_key_fromnamedfile(const char *filename, const char *dirname, int type,
 	RETERR(key->func->parse(key, lex, pubkey));
 	isc_lex_destroy(&lex);
 
+	key->kasp = false;
+	if ((type & DST_TYPE_STATE) != 0) {
+		result = dst_key_read_state(statefilename, mctx, &key);
+		if (result == ISC_R_SUCCESS) {
+			key->kasp = true;
+		} else if (result == ISC_R_FILENOTFOUND) {
+			/* Having no state is valid. */
+			result = ISC_R_SUCCESS;
+		}
+		RETERR(result);
+	}
+
 	RETERR(computeid(key));
 
 	if (pubkey->key_id != key->key_id) {
 		RETERR(DST_R_INVALIDPRIVATEKEY);
 	}
-	dst_key_free(&pubkey);
 
 	*keyp = key;
-	return (ISC_R_SUCCESS);
+	key = NULL;
 
 out:
 	if (pubkey != NULL) {
@@ -696,6 +697,9 @@ out:
 	}
 	if (newfilename != NULL) {
 		isc_mem_put(mctx, newfilename, newfilenamelen);
+	}
+	if (statefilename != NULL) {
+		isc_mem_put(mctx, statefilename, statefilenamelen);
 	}
 	if (lex != NULL) {
 		isc_lex_destroy(&lex);
@@ -1016,13 +1020,22 @@ dst_key_generate(const dns_name_t *name, unsigned int alg, unsigned int bits,
 
 isc_result_t
 dst_key_getbool(const dst_key_t *key, int type, bool *valuep) {
+	dst_key_t *k;
+
 	REQUIRE(VALID_KEY(key));
 	REQUIRE(valuep != NULL);
 	REQUIRE(type <= DST_MAX_BOOLEAN);
+
+	DE_CONST(key, k);
+
+	isc_mutex_lock(&k->mdlock);
 	if (!key->boolset[type]) {
+		isc_mutex_unlock(&k->mdlock);
 		return (ISC_R_NOTFOUND);
 	}
 	*valuep = key->bools[type];
+	isc_mutex_unlock(&k->mdlock);
+
 	return (ISC_R_SUCCESS);
 }
 
@@ -1030,26 +1043,41 @@ void
 dst_key_setbool(dst_key_t *key, int type, bool value) {
 	REQUIRE(VALID_KEY(key));
 	REQUIRE(type <= DST_MAX_BOOLEAN);
+
+	isc_mutex_lock(&key->mdlock);
 	key->bools[type] = value;
 	key->boolset[type] = true;
+	isc_mutex_unlock(&key->mdlock);
 }
 
 void
 dst_key_unsetbool(dst_key_t *key, int type) {
 	REQUIRE(VALID_KEY(key));
 	REQUIRE(type <= DST_MAX_BOOLEAN);
+
+	isc_mutex_lock(&key->mdlock);
 	key->boolset[type] = false;
+	isc_mutex_unlock(&key->mdlock);
 }
 
 isc_result_t
 dst_key_getnum(const dst_key_t *key, int type, uint32_t *valuep) {
+	dst_key_t *k;
+
 	REQUIRE(VALID_KEY(key));
 	REQUIRE(valuep != NULL);
 	REQUIRE(type <= DST_MAX_NUMERIC);
+
+	DE_CONST(key, k);
+
+	isc_mutex_lock(&k->mdlock);
 	if (!key->numset[type]) {
+		isc_mutex_unlock(&k->mdlock);
 		return (ISC_R_NOTFOUND);
 	}
 	*valuep = key->nums[type];
+	isc_mutex_unlock(&k->mdlock);
+
 	return (ISC_R_SUCCESS);
 }
 
@@ -1057,26 +1085,40 @@ void
 dst_key_setnum(dst_key_t *key, int type, uint32_t value) {
 	REQUIRE(VALID_KEY(key));
 	REQUIRE(type <= DST_MAX_NUMERIC);
+
+	isc_mutex_lock(&key->mdlock);
 	key->nums[type] = value;
 	key->numset[type] = true;
+	isc_mutex_unlock(&key->mdlock);
 }
 
 void
 dst_key_unsetnum(dst_key_t *key, int type) {
 	REQUIRE(VALID_KEY(key));
 	REQUIRE(type <= DST_MAX_NUMERIC);
+
+	isc_mutex_lock(&key->mdlock);
 	key->numset[type] = false;
+	isc_mutex_unlock(&key->mdlock);
 }
 
 isc_result_t
 dst_key_gettime(const dst_key_t *key, int type, isc_stdtime_t *timep) {
+	dst_key_t *k;
+
 	REQUIRE(VALID_KEY(key));
 	REQUIRE(timep != NULL);
 	REQUIRE(type <= DST_MAX_TIMES);
+
+	DE_CONST(key, k);
+
+	isc_mutex_lock(&k->mdlock);
 	if (!key->timeset[type]) {
+		isc_mutex_unlock(&k->mdlock);
 		return (ISC_R_NOTFOUND);
 	}
 	*timep = key->times[type];
+	isc_mutex_unlock(&k->mdlock);
 	return (ISC_R_SUCCESS);
 }
 
@@ -1084,26 +1126,41 @@ void
 dst_key_settime(dst_key_t *key, int type, isc_stdtime_t when) {
 	REQUIRE(VALID_KEY(key));
 	REQUIRE(type <= DST_MAX_TIMES);
+
+	isc_mutex_lock(&key->mdlock);
 	key->times[type] = when;
 	key->timeset[type] = true;
+	isc_mutex_unlock(&key->mdlock);
 }
 
 void
 dst_key_unsettime(dst_key_t *key, int type) {
 	REQUIRE(VALID_KEY(key));
 	REQUIRE(type <= DST_MAX_TIMES);
+
+	isc_mutex_lock(&key->mdlock);
 	key->timeset[type] = false;
+	isc_mutex_unlock(&key->mdlock);
 }
 
 isc_result_t
 dst_key_getstate(const dst_key_t *key, int type, dst_key_state_t *statep) {
+	dst_key_t *k;
+
 	REQUIRE(VALID_KEY(key));
 	REQUIRE(statep != NULL);
 	REQUIRE(type <= DST_MAX_KEYSTATES);
+
+	DE_CONST(key, k);
+
+	isc_mutex_lock(&k->mdlock);
 	if (!key->keystateset[type]) {
+		isc_mutex_unlock(&k->mdlock);
 		return (ISC_R_NOTFOUND);
 	}
 	*statep = key->keystates[type];
+	isc_mutex_unlock(&k->mdlock);
+
 	return (ISC_R_SUCCESS);
 }
 
@@ -1111,15 +1168,21 @@ void
 dst_key_setstate(dst_key_t *key, int type, dst_key_state_t state) {
 	REQUIRE(VALID_KEY(key));
 	REQUIRE(type <= DST_MAX_KEYSTATES);
+
+	isc_mutex_lock(&key->mdlock);
 	key->keystates[type] = state;
 	key->keystateset[type] = true;
+	isc_mutex_unlock(&key->mdlock);
 }
 
 void
 dst_key_unsetstate(dst_key_t *key, int type) {
 	REQUIRE(VALID_KEY(key));
 	REQUIRE(type <= DST_MAX_KEYSTATES);
+
+	isc_mutex_lock(&key->mdlock);
 	key->keystateset[type] = false;
+	isc_mutex_unlock(&key->mdlock);
 }
 
 isc_result_t
@@ -1291,6 +1354,7 @@ dst_key_free(dst_key_t **keyp) {
 		if (key->key_tkeytoken) {
 			isc_buffer_free(&key->key_tkeytoken);
 		}
+		isc_mutex_destroy(&key->mdlock);
 		isc_safe_memwipe(key, sizeof(*key));
 		isc_mem_putanddetach(&mctx, key, sizeof(*key));
 	}
@@ -1486,6 +1550,7 @@ get_key_struct(const dns_name_t *name, unsigned int alg, unsigned int flags,
 		key->times[i] = 0;
 		key->timeset[i] = false;
 	}
+	isc_mutex_init(&key->mdlock);
 	key->inactive = false;
 	key->magic = KEY_MAGIC;
 	return (key);
@@ -2019,6 +2084,9 @@ write_key_state(const dst_key_t *key, int type, const char *directory) {
 		printtime(key, DST_TIME_SYNCPUBLISH, "PublishCDS", fp);
 		printtime(key, DST_TIME_SYNCDELETE, "DeleteCDS", fp);
 
+		printnum(key, DST_NUM_DSPUBCOUNT, "DSPubCount", fp);
+		printnum(key, DST_NUM_DSDELCOUNT, "DSDelCount", fp);
+
 		printtime(key, DST_TIME_DNSKEY, "DNSKEYChange", fp);
 		printtime(key, DST_TIME_ZRRSIG, "ZRRSIGChange", fp);
 		printtime(key, DST_TIME_KRRSIG, "KRRSIGChange", fp);
@@ -2377,20 +2445,31 @@ dst_key_is_unused(dst_key_t *key) {
 	return (true);
 }
 
-static void
-get_ksk_zsk(dst_key_t *key, bool *ksk, bool *zsk) {
+isc_result_t
+dst_key_role(dst_key_t *key, bool *ksk, bool *zsk) {
 	bool k = false, z = false;
+	isc_result_t result, ret = ISC_R_SUCCESS;
 
-	if (dst_key_getbool(key, DST_BOOL_KSK, &k) == ISC_R_SUCCESS) {
-		*ksk = k;
-	} else {
-		*ksk = ((dst_key_flags(key) & DNS_KEYFLAG_KSK) != 0);
+	if (ksk != NULL) {
+		result = dst_key_getbool(key, DST_BOOL_KSK, &k);
+		if (result == ISC_R_SUCCESS) {
+			*ksk = k;
+		} else {
+			*ksk = ((dst_key_flags(key) & DNS_KEYFLAG_KSK) != 0);
+			ret = result;
+		}
 	}
-	if (dst_key_getbool(key, DST_BOOL_ZSK, &z) == ISC_R_SUCCESS) {
-		*zsk = z;
-	} else {
-		*zsk = ((dst_key_flags(key) & DNS_KEYFLAG_KSK) == 0);
+
+	if (zsk != NULL) {
+		result = dst_key_getbool(key, DST_BOOL_ZSK, &z);
+		if (result == ISC_R_SUCCESS) {
+			*zsk = z;
+		} else {
+			*zsk = ((dst_key_flags(key) & DNS_KEYFLAG_KSK) == 0);
+			ret = result;
+		}
 	}
+	return (ret);
 }
 
 /* Hints on key whether it can be published and/or used for signing. */
@@ -2449,7 +2528,7 @@ dst_key_is_active(dst_key_t *key, isc_stdtime_t now) {
 		time_ok = (when <= now);
 	}
 
-	get_ksk_zsk(key, &ksk, &zsk);
+	(void)dst_key_role(key, &ksk, &zsk);
 
 	/* Check key states:
 	 * KSK: If the DS is RUMOURED or OMNIPRESENT the key is considered
@@ -2510,7 +2589,7 @@ dst_key_is_signing(dst_key_t *key, int role, isc_stdtime_t now,
 		time_ok = (when <= now);
 	}
 
-	get_ksk_zsk(key, &ksk, &zsk);
+	(void)dst_key_role(key, &ksk, &zsk);
 
 	/* Check key states:
 	 * If the RRSIG state is RUMOURED or OMNIPRESENT, it means the key

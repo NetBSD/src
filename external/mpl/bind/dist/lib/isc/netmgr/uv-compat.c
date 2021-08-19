@@ -1,4 +1,4 @@
-/*	$NetBSD: uv-compat.c,v 1.4 2021/02/19 16:42:20 christos Exp $	*/
+/*	$NetBSD: uv-compat.c,v 1.5 2021/08/19 11:50:18 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -18,7 +18,7 @@
 
 #include "netmgr-int.h"
 
-#ifndef HAVE_UV_UDP_CONNECT
+#if UV_VERSION_HEX < UV_VERSION(1, 27, 0)
 int
 isc_uv_udp_connect(uv_udp_t *handle, const struct sockaddr *addr) {
 	int err = 0;
@@ -38,17 +38,17 @@ isc_uv_udp_connect(uv_udp_t *handle, const struct sockaddr *addr) {
 #ifdef WIN32
 		return (uv_translate_sys_error(err));
 #else /* WIN32 */
-#ifdef HAVE_UV_TRANSLATE_SYS_ERROR
+#if UV_VERSION_HEX >= UV_VERSION(1, 10, 0)
 		return (uv_translate_sys_error(errno));
 #else
 		return (-errno);
-#endif /* HAVE_UV_TRANSLATE_SYS_ERROR */
+#endif /* UV_VERSION_HEX >= UV_VERSION(1, 10, 0) */
 #endif /* WIN32 */
 	}
 
 	return (0);
 }
-#endif /* ifndef HAVE_UV_UDP_CONNECT */
+#endif /* UV_VERSION_HEX < UV_VERSION(1, 27, 0) */
 
 int
 isc_uv_udp_freebind(uv_udp_t *handle, const struct sockaddr *addr,

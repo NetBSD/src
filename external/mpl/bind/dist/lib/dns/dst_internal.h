@@ -1,4 +1,4 @@
-/*	$NetBSD: dst_internal.h,v 1.6 2021/04/29 17:26:11 christos Exp $	*/
+/*	$NetBSD: dst_internal.h,v 1.7 2021/08/19 11:50:17 christos Exp $	*/
 
 /*
  * Portions Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -96,6 +96,7 @@ typedef enum { DO_SIGN, DO_VERIFY } dst_use_t;
 struct dst_key {
 	unsigned int magic;
 	isc_refcount_t refs;
+	isc_mutex_t mdlock;	    /*%< lock for read/write metadata */
 	dns_name_t *key_name;	    /*%< name of the key */
 	unsigned int key_size;	    /*%< size of the key in bits */
 	unsigned int key_proto;	    /*%< protocols this key is used for

@@ -1,4 +1,4 @@
-/*	$NetBSD: update.c,v 1.9 2021/04/05 11:27:02 rillig Exp $	*/
+/*	$NetBSD: update.c,v 1.10 2021/08/19 11:50:17 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -1066,11 +1066,16 @@ find_zone_keys(dns_zone_t *zone, dns_db_t *db, dns_dbversion_t *ver,
 	isc_stdtime_t now;
 	dns_dbnode_t *node = NULL;
 	const char *directory = dns_zone_getkeydirectory(zone);
+
 	CHECK(dns_db_findnode(db, dns_db_origin(db), false, &node));
 	isc_stdtime_get(&now);
-	CHECK(dns_dnssec_findzonekeys(db, ver, node, dns_db_origin(db),
-				      directory, now, mctx, maxkeys, keys,
-				      nkeys));
+
+	dns_zone_lock_keyfiles(zone);
+	result = dns_dnssec_findzonekeys(db, ver, node, dns_db_origin(db),
+					 directory, now, mctx, maxkeys, keys,
+					 nkeys);
+	dns_zone_unlock_keyfiles(zone);
+
 failure:
 	if (node != NULL) {
 		dns_db_detachnode(db, &node);
@@ -1089,6 +1094,7 @@ add_sigs(dns_update_log_t *log, dns_zone_t *zone, dns_db_t *db,
 	 bool keyset_kskonly) {
 	isc_result_t result;
 	dns_dbnode_t *node = NULL;
+	dns_kasp_t *kasp = dns_zone_getkasp(zone);
 	dns_rdataset_t rdataset;
 	dns_rdata_t sig_rdata = DNS_RDATA_INIT;
 	dns_stats_t *dnssecsignstats = dns_zone_getdnssecsignstats(zone);
@@ -1099,7 +1105,7 @@ add_sigs(dns_update_log_t *log, dns_zone_t *zone, dns_db_t *db,
 	bool use_kasp = false;
 	isc_mem_t *mctx = diff->mctx;
 
-	if (dns_zone_use_kasp(zone)) {
+	if (kasp != NULL) {
 		check_ksk = false;
 		keyset_kskonly = true;
 		use_kasp = true;
@@ -1580,7 +1586,8 @@ dns_update_signaturesinc(dns_update_log_t *log, dns_zone_t *zone, dns_db_t *db,
 					  DNS_ZONEOPT_DNSKEYKSKONLY) != 0);
 
 		/*
-		 * Get the NSEC/NSEC3 TTL from the SOA MINIMUM field.
+		 * Calculate the NSEC/NSEC3 TTL as a minimum of the SOA TTL and
+		 * MINIMUM field.
 		 */
 		CHECK(dns_db_findnode(db, dns_db_origin(db), false, &node));
 		dns_rdataset_init(&rdataset);
@@ -1590,7 +1597,7 @@ dns_update_signaturesinc(dns_update_log_t *log, dns_zone_t *zone, dns_db_t *db,
 		CHECK(dns_rdataset_first(&rdataset));
 		dns_rdataset_current(&rdataset, &rdata);
 		CHECK(dns_rdata_tostruct(&rdata, &soa, NULL));
-		state->nsecttl = soa.minimum;
+		state->nsecttl = ISC_MIN(rdataset.ttl, soa.minimum);
 		dns_rdataset_disassociate(&rdataset);
 		dns_db_detachnode(db, &node);
 
@@ -2244,8 +2251,19 @@ dns_update_soaserial(uint32_t serial, dns_updatemethod_t method,
 	case dns_updatemethod_unixtime:
 	case dns_updatemethod_date:
 		if (!(new_serial != 0 && isc_serial_gt(new_serial, serial))) {
-			method = dns_updatemethod_increment;
-			new_serial = dns__update_soaserial(serial, method);
+			/*
+			 * If the new date serial following YYYYMMDD00 is equal
+			 * to or smaller than the current serial, but YYYYMMDD99
+			 * would be larger, pretend we have used the
+			 * "dns_updatemethod_date" method.
+			 */
+			if (method == dns_updatemethod_unixtime ||
+			    !isc_serial_gt(new_serial + 99, serial))
+			{
+				method = dns_updatemethod_increment;
+			}
+			new_serial = dns__update_soaserial(
+				serial, dns_updatemethod_increment);
 		}
 		break;
 	default:

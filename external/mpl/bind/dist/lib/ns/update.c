@@ -1,4 +1,4 @@
-/*	$NetBSD: update.c,v 1.10 2021/04/05 11:27:04 rillig Exp $	*/
+/*	$NetBSD: update.c,v 1.11 2021/08/19 11:50:19 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -2001,7 +2001,7 @@ check_dnssec(ns_client_t *client, dns_zone_t *zone, dns_db_t *db,
 	dns_difftuple_t *tuple;
 	bool nseconly = false, nsec3 = false;
 	isc_result_t result;
-	unsigned int iterations = 0, max;
+	unsigned int iterations = 0;
 	dns_rdatatype_t privatetype = dns_zone_getprivatetype(zone);
 
 	/* Scan the tuples for an NSEC-only DNSKEY or an NSEC3PARAM */
@@ -2056,12 +2056,9 @@ check_dnssec(ns_client_t *client, dns_zone_t *zone, dns_db_t *db,
 
 	/* Verify NSEC3 params */
 	CHECK(get_iterations(db, ver, privatetype, &iterations));
-	CHECK(dns_nsec3_maxiterations(db, ver, client->mctx, &max));
-	if (max != 0 && iterations > max) {
+	if (iterations > dns_nsec3_maxiterations()) {
 		update_log(client, zone, ISC_LOG_ERROR,
-			   "too many NSEC3 iterations (%u) for "
-			   "weakest DNSKEY (%u)",
-			   iterations, max);
+			   "too many NSEC3 iterations (%u)", iterations);
 		result = DNS_R_REFUSED;
 		goto failure;
 	}

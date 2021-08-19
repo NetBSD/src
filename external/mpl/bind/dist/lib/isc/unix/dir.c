@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.c,v 1.4 2021/02/19 16:42:20 christos Exp $	*/
+/*	$NetBSD: dir.c,v 1.5 2021/08/19 11:50:19 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -232,7 +232,7 @@ isc_dir_createunique(char *templet) {
 		 */
 		p = x;
 		while (*p != '\0') {
-			if (isdigit(*p & 0xff)) {
+			if (isdigit((unsigned char)*p)) {
 				*p = 'a';
 			} else if (*p != 'z') {
 				++*p;

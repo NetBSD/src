@@ -157,9 +157,6 @@
 /* Define to 1 if you have the `EVP_sha512' function. */
 #define HAVE_EVP_SHA512 1
 
-/* Define to 1 if you have the `explicit_bzero' function. */
-/* #undef HAVE_EXPLICIT_BZERO */
-
 /* Define to 1 if you have the <fcntl.h> header file. */
 #define HAVE_FCNTL_H 1
 
@@ -177,6 +174,12 @@
 
 /* Define to 1 if the system has the `destructor' function attribute */
 #define HAVE_FUNC_ATTRIBUTE_DESTRUCTOR 1
+
+/* Define to 1 if the system has the `malloc' function attribute */
+#define HAVE_FUNC_ATTRIBUTE_MALLOC 1
+
+/* Define to 1 if the system has the `returns_nonnull' function attribute */
+#define HAVE_FUNC_ATTRIBUTE_RETURNS_NONNULL 1
 
 /* Build with GeoIP2 support */
 /* #undef HAVE_GEOIP2 */
@@ -242,7 +245,7 @@
 #define HAVE_KRB5_KRB5_H 1
 
 /* define if system have backtrace function */
-/* #undef HAVE_LIBCTRACE */
+#define HAVE_LIBCTRACE 1
 
 /* Define if libidn2 was found */
 /* #undef HAVE_LIBIDN2 */
@@ -271,14 +274,14 @@
 /* Define to 1 if you have the <locale.h> header file. */
 #define HAVE_LOCALE_H 1
 
+/* define if extended attributes for malloc are available */
+/* #undef HAVE_MALLOC_EXT_ATTR */
+
 /* Define to 1 if you have the <memory.h> header file. */
 #define HAVE_MEMORY_H 1
 
 /* Define to 1 if you have the `mmap' function. */
 #define HAVE_MMAP 1
-
-/* Define to 1 if you have the `nanosleep' function. */
-#define HAVE_NANOSLEEP 1
 
 /* Define to 1 if you have the <net/if6.h> header file. */
 /* #undef HAVE_NET_IF6_H */
@@ -504,24 +507,6 @@
 
 /* define if the compiler supports _Unwind_Backtrace() */
 #define HAVE_UNWIND_BACKTRACE 1
-
-/* Define to 1 if you have the `usleep' function. */
-#define HAVE_USLEEP 1
-
-/* Define to 1 if you have the `uv_handle_get_data' function. */
-#define HAVE_UV_HANDLE_GET_DATA 1
-
-/* Define to 1 if you have the `uv_handle_set_data' function. */
-#define HAVE_UV_HANDLE_SET_DATA 1
-
-/* Define to 1 if you have the `uv_import' function. */
-/* #undef HAVE_UV_IMPORT */
-
-/* Define to 1 if you have the `uv_translate_sys_error' function. */
-#define HAVE_UV_TRANSLATE_SYS_ERROR 1
-
-/* Define to 1 if you have the `uv_udp_connect' function. */
-#define HAVE_UV_UDP_CONNECT 1
 
 /* Use zlib library */
 #define HAVE_ZLIB 1

@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.8 2021/02/19 16:42:19 christos Exp $	*/
+/*	$NetBSD: types.h,v 1.9 2021/08/19 11:50:18 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -70,22 +70,21 @@ typedef struct isc_mempool	 isc_mempool_t;	      /*%< Memory Pool */
 typedef struct isc_netaddr	 isc_netaddr_t;	      /*%< Net Address */
 typedef struct isc_nm		 isc_nm_t;	      /*%< Network manager */
 typedef struct isc_nmsocket	 isc_nmsocket_t; /*%< Network manager socket */
-typedef struct isc_nmiface  isc_nmiface_t;  /*%< Network manager interface.  */
-typedef struct isc_nmhandle isc_nmhandle_t; /*%< Network manager handle */
-typedef struct isc_portset  isc_portset_t;  /*%< Port Set */
-typedef struct isc_quota    isc_quota_t;    /*%< Quota */
-typedef struct isc_ratelimiter isc_ratelimiter_t;    /*%< Rate Limiter */
-typedef struct isc_region      isc_region_t;	     /*%< Region */
-typedef uint64_t	       isc_resourcevalue_t;  /*%< Resource Value */
-typedef unsigned int	       isc_result_t;	     /*%< Result */
-typedef struct isc_rwlock      isc_rwlock_t;	     /*%< Read Write Lock */
-typedef struct isc_sockaddr    isc_sockaddr_t;	     /*%< Socket Address */
-typedef ISC_LIST(isc_sockaddr_t) isc_sockaddrlist_t; /*%< Socket Address List
-						      * */
-typedef struct isc_socket      isc_socket_t;	     /*%< Socket */
-typedef struct isc_socketevent isc_socketevent_t;    /*%< Socket Event */
-typedef struct isc_socketmgr   isc_socketmgr_t;	     /*%< Socket Manager */
-typedef struct isc_stats       isc_stats_t;	     /*%< Statistics */
+typedef struct isc_nmhandle	 isc_nmhandle_t; /*%< Network manager handle */
+typedef struct isc_portset	 isc_portset_t;	 /*%< Port Set */
+typedef struct isc_quota	 isc_quota_t;	 /*%< Quota */
+typedef struct isc_ratelimiter	 isc_ratelimiter_t;   /*%< Rate Limiter */
+typedef struct isc_region	 isc_region_t;	      /*%< Region */
+typedef uint64_t		 isc_resourcevalue_t; /*%< Resource Value */
+typedef unsigned int		 isc_result_t;	      /*%< Result */
+typedef struct isc_rwlock	 isc_rwlock_t;	      /*%< Read Write Lock */
+typedef struct isc_sockaddr	 isc_sockaddr_t;      /*%< Socket Address */
+typedef ISC_LIST(isc_sockaddr_t) isc_sockaddrlist_t;  /*%< Socket Address List
+						       * */
+typedef struct isc_socket      isc_socket_t;	      /*%< Socket */
+typedef struct isc_socketevent isc_socketevent_t;     /*%< Socket Event */
+typedef struct isc_socketmgr   isc_socketmgr_t;	      /*%< Socket Manager */
+typedef struct isc_stats       isc_stats_t;	      /*%< Statistics */
 #if defined(_WIN32) && !defined(_WIN64) || !defined(_LP64)
 typedef int_fast32_t isc_statscounter_t; /*%< Statistics Counter */
 #else  /* if defined(_WIN32) && !defined(_WIN64) */

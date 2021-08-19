@@ -1,4 +1,4 @@
-/*	$NetBSD: nsec3.h,v 1.5 2021/02/19 16:42:16 christos Exp $	*/
+/*	$NetBSD: nsec3.h,v 1.6 2021/08/19 11:50:17 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -26,7 +26,8 @@
 #include <dns/rdatastruct.h>
 #include <dns/types.h>
 
-#define DNS_NSEC3_SALTSIZE 255
+#define DNS_NSEC3_SALTSIZE	255
+#define DNS_NSEC3_MAXITERATIONS 150U
 
 /*
  * hash = 1, flags =1, iterations = 2, salt length = 1, salt = 255 (max)
@@ -210,18 +211,10 @@ dns_nsec3_activex(dns_db_t *db, dns_dbversion_t *version, bool complete,
  *	'answer' to be non NULL.
  */
 
-isc_result_t
-dns_nsec3_maxiterations(dns_db_t *db, dns_dbversion_t *version, isc_mem_t *mctx,
-			unsigned int *iterationsp);
+unsigned int
+dns_nsec3_maxiterations(void);
 /*%<
- * Find the maximum permissible number of iterations allowed based on
- * the key strength.
- *
- * Requires:
- *	'db' to be valid.
- *	'version' to be valid or NULL.
- *	'mctx' to be valid.
- *	'iterationsp' to be non NULL.
+ * Return the maximum permissible number of NSEC3 iterations.
  */
 
 bool

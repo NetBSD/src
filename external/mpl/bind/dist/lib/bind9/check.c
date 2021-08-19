@@ -1,4 +1,4 @@
-/*	$NetBSD: check.c,v 1.12 2021/04/29 17:26:10 christos Exp $	*/
+/*	$NetBSD: check.c,v 1.13 2021/08/19 11:50:17 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -13,6 +13,7 @@
 
 /*! \file */
 
+#include <ctype.h>
 #include <inttypes.h>
 #include <stdbool.h>
 #include <stdlib.h>
@@ -72,6 +73,9 @@ static isc_result_t
 fileexist(const cfg_obj_t *obj, isc_symtab_t *symtab, bool writeable,
 	  isc_log_t *logctxlogc);
 
+static isc_result_t
+keydirexist(const cfg_obj_t *zcgf, const char *dir, const char *kaspnamestr,
+	    isc_symtab_t *symtab, isc_log_t *logctx, isc_mem_t *mctx);
 static void
 freekey(char *key, unsigned int type, isc_symvalue_t value, void *userarg) {
 	UNUSED(type);
@@ -894,6 +898,9 @@ kasp_name_allowed(const cfg_listelt_t *element) {
 	if (strcmp("default", name) == 0) {
 		return (false);
 	}
+	if (strcmp("insecure", name) == 0) {
+		return (false);
+	}
 	return (true);
 }
 
@@ -1051,18 +1058,17 @@ check_options(const cfg_obj_t *options, isc_log_t *logctx, isc_mem_t *mctx,
 			if (result == ISC_R_SUCCESS) {
 				result = ISC_R_FAILURE;
 			}
-		}
-
-		if (bad_name) {
+		} else if (bad_name) {
 			cfg_obj_log(obj, logctx, ISC_LOG_ERROR,
-				    "dnssec-policy name may not be 'none' or "
-				    "'default' (which is the built-in policy)");
+				    "dnssec-policy name may not be 'insecure', "
+				    "'none', or 'default' (which are built-in "
+				    "policies)");
 			if (result == ISC_R_SUCCESS) {
 				result = ISC_R_FAILURE;
 			}
+		} else {
+			has_dnssecpolicy = true;
 		}
-
-		has_dnssecpolicy = true;
 	}
 
 	obj = NULL;
@@ -1682,12 +1688,12 @@ check_options(const cfg_obj_t *options, isc_log_t *logctx, isc_mem_t *mctx,
 }
 
 /*
- * Check "primaries" style list.
+ * Check "remote-servers" style list.
  */
 static isc_result_t
-bind9_check_primarylist(const cfg_obj_t *cctx, const char *list,
-			isc_log_t *logctx, isc_symtab_t *symtab,
-			isc_mem_t *mctx) {
+bind9_check_remoteserverlist(const cfg_obj_t *cctx, const char *list,
+			     isc_log_t *logctx, isc_symtab_t *symtab,
+			     isc_mem_t *mctx) {
 	isc_symvalue_t symvalue;
 	isc_result_t result, tresult;
 	const cfg_obj_t *obj = NULL;
@@ -1724,9 +1730,9 @@ bind9_check_primarylist(const cfg_obj_t *cctx, const char *list,
 				file = "<unknown file>";
 			}
 			cfg_obj_log(obj, logctx, ISC_LOG_ERROR,
-				    "primaries list '%s' is duplicated: "
+				    "%s list '%s' is duplicated: "
 				    "also defined at %s:%u",
-				    name, file, line);
+				    list, name, file, line);
 			isc_mem_free(mctx, tmp);
 			result = tresult;
 			break;
@@ -1754,13 +1760,35 @@ bind9_check_primarylists(const cfg_obj_t *cctx, isc_log_t *logctx,
 	if (result != ISC_R_SUCCESS) {
 		return (result);
 	}
-	tresult = bind9_check_primarylist(cctx, "primaries", logctx, symtab,
-					  mctx);
+	tresult = bind9_check_remoteserverlist(cctx, "primaries", logctx,
+					       symtab, mctx);
 	if (tresult != ISC_R_SUCCESS) {
 		result = tresult;
 	}
-	tresult = bind9_check_primarylist(cctx, "masters", logctx, symtab,
-					  mctx);
+	tresult = bind9_check_remoteserverlist(cctx, "masters", logctx, symtab,
+					       mctx);
+	if (tresult != ISC_R_SUCCESS) {
+		result = tresult;
+	}
+	isc_symtab_destroy(&symtab);
+	return (result);
+}
+
+/*
+ * Check parental-agents lists for duplicates.
+ */
+static isc_result_t
+bind9_check_parentalagentlists(const cfg_obj_t *cctx, isc_log_t *logctx,
+			       isc_mem_t *mctx) {
+	isc_result_t result, tresult;
+	isc_symtab_t *symtab = NULL;
+
+	result = isc_symtab_create(mctx, 100, freekey, mctx, false, &symtab);
+	if (result != ISC_R_SUCCESS) {
+		return (result);
+	}
+	tresult = bind9_check_remoteserverlist(cctx, "parental-agents", logctx,
+					       symtab, mctx);
 	if (tresult != ISC_R_SUCCESS) {
 		result = tresult;
 	}
@@ -1769,8 +1797,8 @@ bind9_check_primarylists(const cfg_obj_t *cctx, isc_log_t *logctx,
 }
 
 static isc_result_t
-get_primaries(const cfg_obj_t *cctx, const char *list, const char *name,
-	      const cfg_obj_t **ret) {
+get_remotes(const cfg_obj_t *cctx, const char *list, const char *name,
+	    const cfg_obj_t **ret) {
 	isc_result_t result;
 	const cfg_obj_t *obj = NULL;
 	const cfg_listelt_t *elt = NULL;
@@ -1799,20 +1827,25 @@ get_primaries(const cfg_obj_t *cctx, const char *list, const char *name,
 }
 
 static isc_result_t
-get_primaries_def(const cfg_obj_t *cctx, const char *name,
-		  const cfg_obj_t **ret) {
-	isc_result_t result;
+get_remoteservers_def(const char *list, const char *name, const cfg_obj_t *cctx,
+		      const cfg_obj_t **ret) {
+	isc_result_t result = ISC_R_NOTFOUND;
 
-	result = get_primaries(cctx, "primaries", name, ret);
-	if (result != ISC_R_SUCCESS) {
-		result = get_primaries(cctx, "masters", name, ret);
+	if (strcmp(list, "primaries") == 0) {
+		result = get_remotes(cctx, "primaries", name, ret);
+		if (result != ISC_R_SUCCESS) {
+			result = get_remotes(cctx, "masters", name, ret);
+		}
+	} else if (strcmp(list, "parental-agents") == 0) {
+		result = get_remotes(cctx, "parental-agents", name, ret);
 	}
 	return (result);
 }
 
 static isc_result_t
-validate_primaries(const cfg_obj_t *obj, const cfg_obj_t *config,
-		   uint32_t *countp, isc_log_t *logctx, isc_mem_t *mctx) {
+validate_remotes(const char *list, const cfg_obj_t *obj,
+		 const cfg_obj_t *config, uint32_t *countp, isc_log_t *logctx,
+		 isc_mem_t *mctx) {
 	isc_result_t result = ISC_R_SUCCESS;
 	isc_result_t tresult;
 	uint32_t count = 0;
@@ -1821,7 +1854,7 @@ validate_primaries(const cfg_obj_t *obj, const cfg_obj_t *config,
 	const cfg_listelt_t *element;
 	const cfg_listelt_t **stack = NULL;
 	uint32_t stackcount = 0, pushed = 0;
-	const cfg_obj_t *list;
+	const cfg_obj_t *listobj;
 
 	REQUIRE(countp != NULL);
 	result = isc_symtab_create(mctx, 100, NULL, NULL, false, &symtab);
@@ -1831,8 +1864,8 @@ validate_primaries(const cfg_obj_t *obj, const cfg_obj_t *config,
 	}
 
 newlist:
-	list = cfg_tuple_get(obj, "addresses");
-	element = cfg_list_first(list);
+	listobj = cfg_tuple_get(obj, "addresses");
+	element = cfg_list_first(listobj);
 resume:
 	for (; element != NULL; element = cfg_list_next(element)) {
 		const char *listname;
@@ -1840,7 +1873,7 @@ resume:
 		const cfg_obj_t *key;
 
 		addr = cfg_tuple_get(cfg_listelt_value(element),
-				     "primarieselement");
+				     "remoteselement");
 		key = cfg_tuple_get(cfg_listelt_value(element), "key");
 
 		if (cfg_obj_issockaddr(addr)) {
@@ -1862,13 +1895,13 @@ resume:
 		if (tresult == ISC_R_EXISTS) {
 			continue;
 		}
-		tresult = get_primaries_def(config, listname, &obj);
+		tresult = get_remoteservers_def(list, listname, config, &obj);
 		if (tresult != ISC_R_SUCCESS) {
 			if (result == ISC_R_SUCCESS) {
 				result = tresult;
 			}
 			cfg_obj_log(addr, logctx, ISC_LOG_ERROR,
-				    "unable to find primaries list '%s'",
+				    "unable to find %s list '%s'", list,
 				    listname);
 			continue;
 		}
@@ -2201,9 +2234,9 @@ cleanup:
 static isc_result_t
 check_zoneconf(const cfg_obj_t *zconfig, const cfg_obj_t *voptions,
 	       const cfg_obj_t *config, isc_symtab_t *symtab,
-	       isc_symtab_t *files, isc_symtab_t *inview, const char *viewname,
-	       dns_rdataclass_t defclass, cfg_aclconfctx_t *actx,
-	       isc_log_t *logctx, isc_mem_t *mctx) {
+	       isc_symtab_t *files, isc_symtab_t *keydirs, isc_symtab_t *inview,
+	       const char *viewname, dns_rdataclass_t defclass,
+	       cfg_aclconfctx_t *actx, isc_log_t *logctx, isc_mem_t *mctx) {
 	const char *znamestr;
 	const char *typestr = NULL;
 	const char *target = NULL;
@@ -2228,6 +2261,8 @@ check_zoneconf(const cfg_obj_t *zconfig, const cfg_obj_t *voptions,
 	bool has_dnssecpolicy = false;
 	const void *clauses = NULL;
 	const char *option = NULL;
+	const char *kaspname = NULL;
+	const char *dir = NULL;
 	static const char *acls[] = {
 		"allow-notify",
 		"allow-transfer",
@@ -2455,11 +2490,19 @@ check_zoneconf(const cfg_obj_t *zconfig, const cfg_obj_t *voptions,
 	 */
 	obj = NULL;
 	(void)cfg_map_get(zoptions, "dnssec-policy", &obj);
+	if (obj == NULL && voptions != NULL) {
+		(void)cfg_map_get(voptions, "dnssec-policy", &obj);
+	}
+	if (obj == NULL && goptions != NULL) {
+		(void)cfg_map_get(goptions, "dnssec-policy", &obj);
+	}
 	if (obj != NULL) {
 		const cfg_obj_t *kasps = NULL;
-		const char *kaspname = cfg_obj_asstring(obj);
 
+		kaspname = cfg_obj_asstring(obj);
 		if (strcmp(kaspname, "default") == 0) {
+			has_dnssecpolicy = true;
+		} else if (strcmp(kaspname, "insecure") == 0) {
 			has_dnssecpolicy = true;
 		} else if (strcmp(kaspname, "none") == 0) {
 			has_dnssecpolicy = false;
@@ -2575,8 +2618,8 @@ check_zoneconf(const cfg_obj_t *zconfig, const cfg_obj_t *voptions,
 		}
 		if (tresult == ISC_R_SUCCESS && donotify) {
 			uint32_t count;
-			tresult = validate_primaries(obj, config, &count,
-						     logctx, mctx);
+			tresult = validate_remotes("primaries", obj, config,
+						   &count, logctx, mctx);
 			if (tresult != ISC_R_SUCCESS && result == ISC_R_SUCCESS)
 			{
 				result = tresult;
@@ -2617,8 +2660,8 @@ check_zoneconf(const cfg_obj_t *zconfig, const cfg_obj_t *voptions,
 			result = ISC_R_FAILURE;
 		} else {
 			uint32_t count;
-			tresult = validate_primaries(obj, config, &count,
-						     logctx, mctx);
+			tresult = validate_remotes("primaries", obj, config,
+						   &count, logctx, mctx);
 			if (tresult != ISC_R_SUCCESS && result == ISC_R_SUCCESS)
 			{
 				result = tresult;
@@ -2627,6 +2670,32 @@ check_zoneconf(const cfg_obj_t *zconfig, const cfg_obj_t *voptions,
 				cfg_obj_log(zoptions, logctx, ISC_LOG_ERROR,
 					    "zone '%s': "
 					    "empty 'primaries' entry",
+					    znamestr);
+				result = ISC_R_FAILURE;
+			}
+		}
+	}
+
+	/*
+	 * Primary and secondary zones that have a "parental-agents" field,
+	 * must have a corresponding "parental-agents" clause.
+	 */
+	if (ztype == CFG_ZONE_MASTER || ztype == CFG_ZONE_SLAVE) {
+		obj = NULL;
+		(void)cfg_map_get(zoptions, "parental-agents", &obj);
+		if (obj != NULL) {
+			uint32_t count;
+			tresult = validate_remotes("parental-agents", obj,
+						   config, &count, logctx,
+						   mctx);
+			if (tresult != ISC_R_SUCCESS && result == ISC_R_SUCCESS)
+			{
+				result = tresult;
+			}
+			if (tresult == ISC_R_SUCCESS && count == 0) {
+				cfg_obj_log(zoptions, logctx, ISC_LOG_ERROR,
+					    "zone '%s': "
+					    "empty 'parental-agents' entry",
 					    znamestr);
 				result = ISC_R_FAILURE;
 			}
@@ -3008,9 +3077,16 @@ check_zoneconf(const cfg_obj_t *zconfig, const cfg_obj_t *voptions,
 	 * Warn if key-directory doesn't exist
 	 */
 	obj = NULL;
-	tresult = cfg_map_get(zoptions, "key-directory", &obj);
-	if (tresult == ISC_R_SUCCESS) {
-		const char *dir = cfg_obj_asstring(obj);
+	(void)cfg_map_get(zoptions, "key-directory", &obj);
+	if (obj == NULL && voptions != NULL) {
+		(void)cfg_map_get(voptions, "key-directory", &obj);
+	}
+	if (obj == NULL && goptions != NULL) {
+		(void)cfg_map_get(goptions, "key-directory", &obj);
+	}
+	if (obj != NULL) {
+		dir = cfg_obj_asstring(obj);
+
 		tresult = isc_file_isdirectory(dir);
 		switch (tresult) {
 		case ISC_R_SUCCESS:
@@ -3033,6 +3109,25 @@ check_zoneconf(const cfg_obj_t *zconfig, const cfg_obj_t *voptions,
 	}
 
 	/*
+	 * Make sure there is no other zone with the same
+	 * key-directory and a different dnssec-policy.
+	 */
+	if (zname != NULL) {
+		char keydirbuf[DNS_NAME_FORMATSIZE + 128];
+		char *tmp = keydirbuf;
+		size_t len = sizeof(keydirbuf);
+		dns_name_format(zname, keydirbuf, sizeof(keydirbuf));
+		tmp += strlen(tmp);
+		len -= strlen(tmp);
+		(void)snprintf(tmp, len, "/%s", (dir == NULL) ? "(null)" : dir);
+		tresult = keydirexist(zconfig, (const char *)keydirbuf,
+				      kaspname, keydirs, logctx, mctx);
+		if (tresult != ISC_R_SUCCESS) {
+			result = tresult;
+		}
+	}
+
+	/*
 	 * Check various options.
 	 */
 	tresult = check_options(zoptions, logctx, mctx, optlevel_zone);
@@ -3041,10 +3136,9 @@ check_zoneconf(const cfg_obj_t *zconfig, const cfg_obj_t *voptions,
 	}
 
 	/*
-	 * If the zone type is rbt/rbt64 then master/hint zones
-	 * require file clauses.
-	 * If inline signing is used, then slave zones require a
-	 * file clause as well
+	 * If the zone type is rbt/rbt64 then master/hint zones require file
+	 * clauses. If inline-signing is used, then slave zones require a
+	 * file clause as well.
 	 */
 	obj = NULL;
 	dlz = false;
@@ -3082,7 +3176,8 @@ check_zoneconf(const cfg_obj_t *zconfig, const cfg_obj_t *voptions,
 			result = tresult;
 		} else if (tresult == ISC_R_SUCCESS &&
 			   (ztype == CFG_ZONE_SLAVE ||
-			    ztype == CFG_ZONE_MIRROR || ddns))
+			    ztype == CFG_ZONE_MIRROR || ddns ||
+			    has_dnssecpolicy))
 		{
 			tresult = fileexist(fileobj, files, true, logctx);
 			if (tresult != ISC_R_SUCCESS) {
@@ -3242,6 +3337,56 @@ fileexist(const cfg_obj_t *obj, isc_symtab_t *symtab, bool writeable,
 	return (result);
 }
 
+static isc_result_t
+keydirexist(const cfg_obj_t *zcfg, const char *keydir, const char *kaspnamestr,
+	    isc_symtab_t *symtab, isc_log_t *logctx, isc_mem_t *mctx) {
+	isc_result_t result;
+	isc_symvalue_t symvalue;
+	char *symkey;
+
+	if (kaspnamestr == NULL || strcmp(kaspnamestr, "none") == 0) {
+		return (ISC_R_SUCCESS);
+	}
+
+	result = isc_symtab_lookup(symtab, keydir, 0, &symvalue);
+	if (result == ISC_R_SUCCESS) {
+		const cfg_obj_t *kasp = NULL;
+		const cfg_obj_t *exist = symvalue.as_cpointer;
+		const char *file = cfg_obj_file(exist);
+		unsigned int line = cfg_obj_line(exist);
+
+		/*
+		 * Having the same key-directory for the same zone is fine
+		 * iff the zone is using the same policy, or has no policy.
+		 */
+		(void)cfg_map_get(cfg_tuple_get(exist, "options"),
+				  "dnssec-policy", &kasp);
+		if (kasp == NULL ||
+		    strcmp(cfg_obj_asstring(kasp), "none") == 0 ||
+		    strcmp(cfg_obj_asstring(kasp), kaspnamestr) == 0)
+		{
+			return (ISC_R_SUCCESS);
+		}
+
+		cfg_obj_log(zcfg, logctx, ISC_LOG_ERROR,
+			    "key-directory '%s' already in use by zone %s with "
+			    "policy %s: %s:%u",
+			    keydir,
+			    cfg_obj_asstring(cfg_tuple_get(exist, "name")),
+			    cfg_obj_asstring(kasp), file, line);
+		return (ISC_R_EXISTS);
+	}
+
+	/*
+	 * Add the new zone plus key-directory.
+	 */
+	symkey = isc_mem_strdup(mctx, keydir);
+	symvalue.as_cpointer = zcfg;
+	result = isc_symtab_define(symtab, symkey, 2, symvalue,
+				   isc_symexists_reject);
+	return (result);
+}
+
 /*
  * Check key list for duplicates key names and that the key names
  * are valid domain names as these keys are used for TSIG.
@@ -3319,6 +3464,7 @@ static struct {
 	const char *v6;
 } sources[] = { { "transfer-source", "transfer-source-v6" },
 		{ "notify-source", "notify-source-v6" },
+		{ "parental-source", "parental-source-v6" },
 		{ "query-source", "query-source-v6" },
 		{ NULL, NULL } };
 
@@ -4203,8 +4349,8 @@ check_dnstap(const cfg_obj_t *voptions, const cfg_obj_t *config,
 static isc_result_t
 check_viewconf(const cfg_obj_t *config, const cfg_obj_t *voptions,
 	       const char *viewname, dns_rdataclass_t vclass,
-	       isc_symtab_t *files, bool check_plugins, isc_symtab_t *inview,
-	       isc_log_t *logctx, isc_mem_t *mctx) {
+	       isc_symtab_t *files, isc_symtab_t *keydirs, bool check_plugins,
+	       isc_symtab_t *inview, isc_log_t *logctx, isc_mem_t *mctx) {
 	const cfg_obj_t *zones = NULL;
 	const cfg_obj_t *view_tkeys = NULL, *global_tkeys = NULL;
 	const cfg_obj_t *view_mkeys = NULL, *global_mkeys = NULL;
@@ -4264,8 +4410,8 @@ check_viewconf(const cfg_obj_t *config, const cfg_obj_t *voptions,
 		const cfg_obj_t *zone = cfg_listelt_value(element);
 
 		tresult = check_zoneconf(zone, voptions, config, symtab, files,
-					 inview, viewname, vclass, actx, logctx,
-					 mctx);
+					 keydirs, inview, viewname, vclass,
+					 actx, logctx, mctx);
 		if (tresult != ISC_R_SUCCESS) {
 			result = ISC_R_FAILURE;
 		}
@@ -4878,6 +5024,7 @@ bind9_check_namedconf(const cfg_obj_t *config, bool check_plugins,
 	isc_result_t tresult;
 	isc_symtab_t *symtab = NULL;
 	isc_symtab_t *files = NULL;
+	isc_symtab_t *keydirs = NULL;
 	isc_symtab_t *inview = NULL;
 
 	static const char *builtin[] = { "localhost", "localnets", "any",
@@ -4900,6 +5047,11 @@ bind9_check_namedconf(const cfg_obj_t *config, bool check_plugins,
 	}
 
 	if (bind9_check_primarylists(config, logctx, mctx) != ISC_R_SUCCESS) {
+		result = ISC_R_FAILURE;
+	}
+
+	if (bind9_check_parentalagentlists(config, logctx, mctx) !=
+	    ISC_R_SUCCESS) {
 		result = ISC_R_FAILURE;
 	}
 
@@ -4929,6 +5081,12 @@ bind9_check_namedconf(const cfg_obj_t *config, bool check_plugins,
 		goto cleanup;
 	}
 
+	tresult = isc_symtab_create(mctx, 100, freekey, mctx, false, &keydirs);
+	if (tresult != ISC_R_SUCCESS) {
+		result = tresult;
+		goto cleanup;
+	}
+
 	tresult = isc_symtab_create(mctx, 100, freekey, mctx, true, &inview);
 	if (tresult != ISC_R_SUCCESS) {
 		result = tresult;
@@ -4937,8 +5095,8 @@ bind9_check_namedconf(const cfg_obj_t *config, bool check_plugins,
 
 	if (views == NULL) {
 		tresult = check_viewconf(config, NULL, NULL, dns_rdataclass_in,
-					 files, check_plugins, inview, logctx,
-					 mctx);
+					 files, keydirs, check_plugins, inview,
+					 logctx, mctx);
 		if (result == ISC_R_SUCCESS && tresult != ISC_R_SUCCESS) {
 			result = ISC_R_FAILURE;
 		}
@@ -5029,8 +5187,8 @@ bind9_check_namedconf(const cfg_obj_t *config, bool check_plugins,
 		}
 		if (tresult == ISC_R_SUCCESS) {
 			tresult = check_viewconf(config, voptions, key, vclass,
-						 files, check_plugins, inview,
-						 logctx, mctx);
+						 files, keydirs, check_plugins,
+						 inview, logctx, mctx);
 		}
 		if (tresult != ISC_R_SUCCESS) {
 			result = ISC_R_FAILURE;
@@ -5148,6 +5306,9 @@ cleanup:
 	}
 	if (files != NULL) {
 		isc_symtab_destroy(&files);
+	}
+	if (keydirs != NULL) {
+		isc_symtab_destroy(&keydirs);
 	}
 
 	return (result);

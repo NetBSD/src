@@ -1,4 +1,4 @@
-/*	$NetBSD: timer.h,v 1.5 2021/02/19 16:42:19 christos Exp $	*/
+/*	$NetBSD: timer.h,v 1.6 2021/08/19 11:50:18 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -98,36 +98,6 @@ typedef struct isc_timerevent {
 #define ISC_TIMEREVENT_IDLE	  (ISC_EVENTCLASS_TIMER + 2)
 #define ISC_TIMEREVENT_LIFE	  (ISC_EVENTCLASS_TIMER + 3)
 #define ISC_TIMEREVENT_LASTEVENT  (ISC_EVENTCLASS_TIMER + 65535)
-
-/*%
- * This structure is actually just the common prefix of a timer manager
- * object implementation's version of an isc_timermgr_t.
- * \brief
- * Direct use of this structure by clients is forbidden.  timer implementations
- * may change the structure.  'magic' must be ISCAPI_TIMERMGR_MAGIC for any
- * of the isc_timer_ routines to work.  timer implementations must maintain
- * all timer invariants.
- */
-struct isc_timermgr {
-	unsigned int impmagic;
-	unsigned int magic;
-};
-
-#define ISCAPI_TIMERMGR_MAGIC ISC_MAGIC('A', 't', 'm', 'g')
-#define ISCAPI_TIMERMGR_VALID(m) \
-	((m) != NULL && (m)->magic == ISCAPI_TIMERMGR_MAGIC)
-
-/*%
- * This is the common prefix of a timer object.  The same note as
- * that for the timermgr structure applies.
- */
-struct isc_timer {
-	unsigned int impmagic;
-	unsigned int magic;
-};
-
-#define ISCAPI_TIMER_MAGIC    ISC_MAGIC('A', 't', 'm', 'r')
-#define ISCAPI_TIMER_VALID(s) ((s) != NULL && (s)->magic == ISCAPI_TIMER_MAGIC)
 
 /***
  *** Timer and Timer Manager Functions
@@ -309,13 +279,9 @@ isc_timer_gettype(isc_timer_t *timer);
  */
 
 isc_result_t
-isc_timermgr_createinctx(isc_mem_t *mctx, isc_timermgr_t **managerp);
-
-isc_result_t
 isc_timermgr_create(isc_mem_t *mctx, isc_timermgr_t **managerp);
 /*%<
- * Create a timer manager.  isc_timermgr_createinctx() also associates
- * the new manager with the specified application context.
+ * Create a timer manager.
  *
  * Notes:
  *
@@ -326,8 +292,6 @@ isc_timermgr_create(isc_mem_t *mctx, isc_timermgr_t **managerp);
  *\li	'mctx' is a valid memory context.
  *
  *\li	'managerp' points to a NULL isc_timermgr_t.
- *
- *\li	'actx' is a valid application context (for createinctx()).
  *
  * Ensures:
  *

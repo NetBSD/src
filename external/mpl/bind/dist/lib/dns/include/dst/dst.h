@@ -1,4 +1,4 @@
-/*	$NetBSD: dst.h,v 1.7 2021/04/29 17:26:11 christos Exp $	*/
+/*	$NetBSD: dst.h,v 1.8 2021/08/19 11:50:17 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -144,7 +144,9 @@ typedef enum dst_key_state {
 #define DST_NUM_MAXTTL	    2
 #define DST_NUM_ROLLPERIOD  3
 #define DST_NUM_LIFETIME    4
-#define DST_MAX_NUMERIC	    4
+#define DST_NUM_DSPUBCOUNT  5
+#define DST_NUM_DSDELCOUNT  6
+#define DST_MAX_NUMERIC	    6
 
 /* Boolean metadata definitions */
 #define DST_BOOL_KSK	0
@@ -1177,6 +1179,15 @@ dst_key_goal(dst_key_t *key);
  * Get the key goal. Should be OMNIPRESENT or HIDDEN.
  * This can be used to determine if the key is being introduced or
  * is on its way out.
+ *
+ * Requires:
+ *	'key' to be valid.
+ */
+
+isc_result_t
+dst_key_role(dst_key_t *key, bool *ksk, bool *zsk);
+/*%<
+ * Get the key role. A key can have the KSK or the ZSK role, or both.
  *
  * Requires:
  *	'key' to be valid.

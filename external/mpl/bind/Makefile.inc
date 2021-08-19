@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.11 2021/04/13 01:15:57 mrg Exp $
+#	$NetBSD: Makefile.inc,v 1.12 2021/08/19 11:50:14 christos Exp $
 
 .if !defined(BIND9_MAKEFILE_INC)
 BIND9_MAKEFILE_INC=yes
@@ -72,16 +72,16 @@ DBG=-g3 -gstabs
 LDADD+=		-lbind9_g -lisccfg_g -ldns_g -lns_g -lirs_g
 LDADD+=		-lisccc_g -lisc_g
 LDADD+=		-L${LIBUVOBJDIR} -luv_g
-LDADD+=		-lkvm_g -lz_g
+LDADD+=		-lexecinfo_g -lkvm_g -lz_g
 .else
 LDADD+=		-lbind9 -lisccfg -ldns -lns -lirs
 DPADD+=		${LIBBIND9} ${LIBISCCFG} ${LIBDNS} ${LIBNS} ${LIBIRS}
 LDADD+=		-lisccc -lisc 
 LDADD+=		-L${LIBUVOBJDIR} -luv
-LDADD+=		-lkvm -lz
+LDADD+=		-lexecinfo -lkvm -lz
 DPADD+=		${LIBISCCC} ${LIBISC}
 DPADD+=		${LIBUVOBJDIR}/libuv.a
-DPADD+=		${LIBKVM} ${LIBZ}
+DPADD+=		${LIBEXECINFO} ${LIBKVM} ${LIBZ}
 .endif
 .else
 CPPFLAGS+= -DLIBINTERFACE=${LIBINTERFACE} \

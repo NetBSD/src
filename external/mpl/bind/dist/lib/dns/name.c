@@ -1,4 +1,4 @@
-/*	$NetBSD: name.c,v 1.9 2021/04/05 11:27:02 rillig Exp $	*/
+/*	$NetBSD: name.c,v 1.10 2021/08/19 11:50:17 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -1206,7 +1206,7 @@ dns_name_fromtext(dns_name_t *name, isc_buffer_t *source,
 			POST(state);
 		/* FALLTHROUGH */
 		case ft_escape:
-			if (!isdigit(c & 0xff)) {
+			if (!isdigit((unsigned char)c)) {
 				if (count >= 63) {
 					return (DNS_R_LABELTOOLONG);
 				}
@@ -1226,7 +1226,7 @@ dns_name_fromtext(dns_name_t *name, isc_buffer_t *source,
 			state = ft_escdecimal;
 		/* FALLTHROUGH */
 		case ft_escdecimal:
-			if (!isdigit(c & 0xff)) {
+			if (!isdigit((unsigned char)c)) {
 				return (DNS_R_BADESCAPE);
 			}
 			value *= 10;
@@ -1266,6 +1266,7 @@ dns_name_fromtext(dns_name_t *name, isc_buffer_t *source,
 		}
 		if (state == ft_ordinary) {
 			INSIST(count != 0);
+			INSIST(label != NULL);
 			*label = count;
 			labels++;
 			INSIST(labels <= 127);
@@ -2465,7 +2466,7 @@ dns_name_fromstring2(dns_name_t *target, const char *src,
 
 static isc_result_t
 name_copy(const dns_name_t *source, dns_name_t *dest, isc_buffer_t *target) {
-	unsigned char *ndata;
+	unsigned char *ndata = NULL;
 
 	/*
 	 * Make dest a copy of source.
@@ -2497,7 +2498,7 @@ name_copy(const dns_name_t *source, dns_name_t *dest, isc_buffer_t *target) {
 	}
 
 	if (dest->labels > 0 && dest->offsets != NULL) {
-		if (source->offsets != NULL) {
+		if (source->offsets != NULL && source->labels != 0) {
 			memmove(dest->offsets, source->offsets, source->labels);
 		} else {
 			set_offsets(dest, dest->offsets, NULL);

@@ -1,4 +1,4 @@
-/*	$NetBSD: host.c,v 1.7 2021/04/29 17:26:09 christos Exp $	*/
+/*	$NetBSD: host.c,v 1.8 2021/08/19 11:50:14 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -15,12 +15,9 @@
 
 #include <inttypes.h>
 #include <limits.h>
+#include <locale.h>
 #include <stdbool.h>
 #include <stdlib.h>
-
-#ifdef HAVE_LOCALE_H
-#include <locale.h>
-#endif /* ifdef HAVE_LOCALE_H */
 
 #include <isc/app.h>
 #include <isc/commandline.h>

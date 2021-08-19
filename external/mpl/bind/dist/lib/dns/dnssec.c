@@ -1,4 +1,4 @@
-/*	$NetBSD: dnssec.c,v 1.10 2021/04/29 17:26:11 christos Exp $	*/
+/*	$NetBSD: dnssec.c,v 1.11 2021/08/19 11:50:17 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -13,6 +13,7 @@
 
 /*! \file */
 
+#include <ctype.h>
 #include <inttypes.h>
 #include <stdbool.h>
 #include <stdlib.h>
@@ -1435,8 +1436,7 @@ dns_dnssec_findmatchingkeys(const dns_name_t *origin, const char *directory,
 
 		alg = 0;
 		for (i = len + 1 + 1; i < dir.entry.length; i++) {
-			if (dir.entry.name[i] < '0' || dir.entry.name[i] > '9')
-			{
+			if (!isdigit((unsigned char)dir.entry.name[i])) {
 				break;
 			}
 			alg *= 10;
@@ -1454,15 +1454,8 @@ dns_dnssec_findmatchingkeys(const dns_name_t *origin, const char *directory,
 		}
 
 		for (i++; i < dir.entry.length; i++) {
-			if (dir.entry.name[i] < '0' || dir.entry.name[i] > '9')
-			{
+			if (!isdigit((unsigned char)dir.entry.name[i])) {
 				break;
-
-				/*
-				 * Did we not read exactly 5 more digits?
-				 * Did we overflow?
-				 * Did we correctly terminate?
-				 */
 			}
 		}
 
@@ -1659,7 +1652,7 @@ dns_dnssec_keylistfromrdataset(const dns_name_t *origin, const char *directory,
 			       dns_dnsseckeylist_t *keylist) {
 	dns_rdataset_t keys;
 	dns_rdata_t rdata = DNS_RDATA_INIT;
-	dst_key_t *pubkey = NULL, *privkey = NULL;
+	dst_key_t *dnskey = NULL, *pubkey = NULL, *privkey = NULL;
 	isc_result_t result;
 
 	REQUIRE(keyset != NULL && dns_rdataset_isassociated(keyset));
@@ -1682,27 +1675,38 @@ dns_dnssec_keylistfromrdataset(const dns_name_t *origin, const char *directory,
 			goto skip;
 		}
 
-		RETERR(dns_dnssec_keyfromrdata(origin, &rdata, mctx, &pubkey));
-		dst_key_setttl(pubkey, keys.ttl);
+		RETERR(dns_dnssec_keyfromrdata(origin, &rdata, mctx, &dnskey));
+		dst_key_setttl(dnskey, keys.ttl);
 
-		if (!is_zone_key(pubkey) ||
-		    (dst_key_flags(pubkey) & DNS_KEYTYPE_NOAUTH) != 0) {
+		if (!is_zone_key(dnskey) ||
+		    (dst_key_flags(dnskey) & DNS_KEYTYPE_NOAUTH) != 0) {
 			goto skip;
 		}
 
 		/* Corrupted .key file? */
-		if (!dns_name_equal(origin, dst_key_name(pubkey))) {
+		if (!dns_name_equal(origin, dst_key_name(dnskey))) {
 			goto skip;
 		}
 
 		if (publickey) {
-			RETERR(addkey(keylist, &pubkey, savekeys, mctx));
+			RETERR(addkey(keylist, &dnskey, savekeys, mctx));
 			goto skip;
 		}
 
+		/* Try to read the public key. */
 		result = dst_key_fromfile(
-			dst_key_name(pubkey), dst_key_id(pubkey),
-			dst_key_alg(pubkey),
+			dst_key_name(dnskey), dst_key_id(dnskey),
+			dst_key_alg(dnskey), (DST_TYPE_PUBLIC | DST_TYPE_STATE),
+			directory, mctx, &pubkey);
+		if (result == ISC_R_FILENOTFOUND || result == ISC_R_NOPERM) {
+			result = ISC_R_SUCCESS;
+		}
+		RETERR(result);
+
+		/* Now read the private key. */
+		result = dst_key_fromfile(
+			dst_key_name(dnskey), dst_key_id(dnskey),
+			dst_key_alg(dnskey),
 			(DST_TYPE_PUBLIC | DST_TYPE_PRIVATE | DST_TYPE_STATE),
 			directory, mctx, &privkey);
 
@@ -1713,22 +1717,22 @@ dns_dnssec_keylistfromrdataset(const dns_name_t *origin, const char *directory,
 		 */
 		if (result == ISC_R_FILENOTFOUND) {
 			uint32_t flags;
-			flags = dst_key_flags(pubkey);
+			flags = dst_key_flags(dnskey);
 			if ((flags & DNS_KEYFLAG_REVOKE) != 0) {
-				dst_key_setflags(pubkey,
+				dst_key_setflags(dnskey,
 						 flags & ~DNS_KEYFLAG_REVOKE);
 				result = dst_key_fromfile(
-					dst_key_name(pubkey),
-					dst_key_id(pubkey), dst_key_alg(pubkey),
+					dst_key_name(dnskey),
+					dst_key_id(dnskey), dst_key_alg(dnskey),
 					(DST_TYPE_PUBLIC | DST_TYPE_PRIVATE |
 					 DST_TYPE_STATE),
 					directory, mctx, &privkey);
 				if (result == ISC_R_SUCCESS &&
-				    dst_key_pubcompare(pubkey, privkey, false))
+				    dst_key_pubcompare(dnskey, privkey, false))
 				{
 					dst_key_setflags(privkey, flags);
 				}
-				dst_key_setflags(pubkey, flags);
+				dst_key_setflags(dnskey, flags);
 			}
 		}
 
@@ -1741,8 +1745,8 @@ dns_dnssec_keylistfromrdataset(const dns_name_t *origin, const char *directory,
 
 			isc_buffer_init(&buf, filename, NAME_MAX);
 			result2 = dst_key_getfilename(
-				dst_key_name(pubkey), dst_key_id(pubkey),
-				dst_key_alg(pubkey),
+				dst_key_name(dnskey), dst_key_id(dnskey),
+				dst_key_alg(dnskey),
 				(DST_TYPE_PUBLIC | DST_TYPE_PRIVATE |
 				 DST_TYPE_STATE),
 				directory, mctx, &buf);
@@ -1750,13 +1754,13 @@ dns_dnssec_keylistfromrdataset(const dns_name_t *origin, const char *directory,
 				char namebuf[DNS_NAME_FORMATSIZE];
 				char algbuf[DNS_SECALG_FORMATSIZE];
 
-				dns_name_format(dst_key_name(pubkey), namebuf,
+				dns_name_format(dst_key_name(dnskey), namebuf,
 						sizeof(namebuf));
-				dns_secalg_format(dst_key_alg(pubkey), algbuf,
+				dns_secalg_format(dst_key_alg(dnskey), algbuf,
 						  sizeof(algbuf));
 				snprintf(filename, sizeof(filename) - 1,
 					 "key file for %s/%s/%d", namebuf,
-					 algbuf, dst_key_id(pubkey));
+					 algbuf, dst_key_id(dnskey));
 			}
 
 			isc_log_write(dns_lctx, DNS_LOGCATEGORY_GENERAL,
@@ -1767,7 +1771,13 @@ dns_dnssec_keylistfromrdataset(const dns_name_t *origin, const char *directory,
 		}
 
 		if (result == ISC_R_FILENOTFOUND || result == ISC_R_NOPERM) {
-			RETERR(addkey(keylist, &pubkey, savekeys, mctx));
+			if (pubkey != NULL) {
+				RETERR(addkey(keylist, &pubkey, savekeys,
+					      mctx));
+			} else {
+				RETERR(addkey(keylist, &dnskey, savekeys,
+					      mctx));
+			}
 			goto skip;
 		}
 		RETERR(result);
@@ -1781,10 +1791,13 @@ dns_dnssec_keylistfromrdataset(const dns_name_t *origin, const char *directory,
 		 * Whatever the key's default TTL may have
 		 * been, the rdataset TTL takes priority.
 		 */
-		dst_key_setttl(privkey, dst_key_getttl(pubkey));
+		dst_key_setttl(privkey, dst_key_getttl(dnskey));
 
 		RETERR(addkey(keylist, &privkey, savekeys, mctx));
 	skip:
+		if (dnskey != NULL) {
+			dst_key_free(&dnskey);
+		}
 		if (pubkey != NULL) {
 			dst_key_free(&pubkey);
 		}
@@ -1810,6 +1823,9 @@ dns_dnssec_keylistfromrdataset(const dns_name_t *origin, const char *directory,
 failure:
 	if (dns_rdataset_isassociated(&keys)) {
 		dns_rdataset_disassociate(&keys);
+	}
+	if (dnskey != NULL) {
+		dst_key_free(&dnskey);
 	}
 	if (pubkey != NULL) {
 		dst_key_free(&pubkey);

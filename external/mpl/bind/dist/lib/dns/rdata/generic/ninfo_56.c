@@ -1,4 +1,4 @@
-/*	$NetBSD: ninfo_56.c,v 1.6 2021/02/19 16:42:17 christos Exp $	*/
+/*	$NetBSD: ninfo_56.c,v 1.7 2021/08/19 11:50:17 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -20,36 +20,22 @@ static inline isc_result_t
 fromtext_ninfo(ARGS_FROMTEXT) {
 	REQUIRE(type == dns_rdatatype_ninfo);
 
-	UNUSED(type);
-	UNUSED(rdclass);
-	UNUSED(origin);
-	UNUSED(options);
-	UNUSED(callbacks);
-
-	return (generic_fromtext_txt(rdclass, type, lexer, origin, options,
-				     target, callbacks));
+	return (generic_fromtext_txt(CALL_FROMTEXT));
 }
 
 static inline isc_result_t
 totext_ninfo(ARGS_TOTEXT) {
-	UNUSED(tctx);
-
+	REQUIRE(rdata != NULL);
 	REQUIRE(rdata->type == dns_rdatatype_ninfo);
 
-	return (generic_totext_txt(rdata, tctx, target));
+	return (generic_totext_txt(CALL_TOTEXT));
 }
 
 static inline isc_result_t
 fromwire_ninfo(ARGS_FROMWIRE) {
 	REQUIRE(type == dns_rdatatype_ninfo);
 
-	UNUSED(type);
-	UNUSED(dctx);
-	UNUSED(rdclass);
-	UNUSED(options);
-
-	return (generic_fromwire_txt(rdclass, type, source, dctx, options,
-				     target));
+	return (generic_fromwire_txt(CALL_FROMWIRE));
 }
 
 static inline isc_result_t
@@ -79,7 +65,7 @@ static inline isc_result_t
 fromstruct_ninfo(ARGS_FROMSTRUCT) {
 	REQUIRE(type == dns_rdatatype_ninfo);
 
-	return (generic_fromstruct_txt(rdclass, type, source, target));
+	return (generic_fromstruct_txt(CALL_FROMSTRUCT));
 }
 
 static inline isc_result_t
@@ -93,7 +79,7 @@ tostruct_ninfo(ARGS_TOSTRUCT) {
 	ninfo->common.rdtype = rdata->type;
 	ISC_LINK_INIT(&ninfo->common, link);
 
-	return (generic_tostruct_txt(rdata, target, mctx));
+	return (generic_tostruct_txt(CALL_TOSTRUCT));
 }
 
 static inline void

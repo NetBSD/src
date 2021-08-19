@@ -1,4 +1,4 @@
-/*	$NetBSD: message.h,v 1.9 2021/02/19 16:42:16 christos Exp $	*/
+/*	$NetBSD: message.h,v 1.10 2021/08/19 11:50:17 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -76,8 +76,7 @@
  * \code
  *	buffer = isc_buffer_allocate(mctx, 512);
  *	name = NULL;
- *	name = dns_message_gettempname(message, &name);
- *	dns_name_init(name, NULL);
+ *	result = dns_message_gettempname(message, &name);
  *	result = dns_name_fromtext(name, &source, dns_rootname, 0, buffer);
  *	dns_message_takebuffer(message, &buffer);
  * \endcode
@@ -892,24 +891,8 @@ dns_message_gettempname(dns_message_t *msg, dns_name_t **item);
  * to the message code using dns_message_puttempname() or inserted into
  * one of the message's sections before the message is destroyed.
  *
- * It is the caller's responsibility to initialize this name.
- *
- * Requires:
- *\li	msg be a valid message
- *
- *\li	item != NULL && *item == NULL
- *
- * Returns:
- *\li	#ISC_R_SUCCESS		-- All is well.
- *\li	#ISC_R_NOMEMORY		-- No item can be allocated.
- */
-
-isc_result_t
-dns_message_gettempoffsets(dns_message_t *msg, dns_offsets_t **item);
-/*%<
- * Return an offsets array that can be used for any temporary purpose,
- * such as attaching to a temporary name.  The offsets will be freed
- * when the message is destroyed or reset.
+ * The name will be associated with a dns_fixedname object, and will
+ * be initialized.
  *
  * Requires:
  *\li	msg be a valid message

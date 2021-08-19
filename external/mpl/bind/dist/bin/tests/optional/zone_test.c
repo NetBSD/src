@@ -1,4 +1,4 @@
-/*	$NetBSD: zone_test.c,v 1.6 2021/02/19 16:42:12 christos Exp $	*/
+/*	$NetBSD: zone_test.c,v 1.7 2021/08/19 11:50:15 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -20,6 +20,7 @@
 
 #include <isc/app.h>
 #include <isc/commandline.h>
+#include <isc/managers.h>
 #include <isc/mem.h>
 #include <isc/print.h>
 #include <isc/socket.h>
@@ -40,6 +41,7 @@ static int quiet = 0;
 static int stats = 0;
 static isc_mem_t *mctx = NULL;
 dns_zone_t *zone = NULL;
+isc_nm_t *netmgr = NULL;
 isc_taskmgr_t *taskmgr = NULL;
 isc_timermgr_t *timermgr = NULL;
 isc_socketmgr_t *socketmgr = NULL;
@@ -287,7 +289,7 @@ main(int argc, char **argv) {
 
 	RUNTIME_CHECK(isc_app_start() == ISC_R_SUCCESS);
 	isc_mem_create(&mctx);
-	RUNTIME_CHECK(isc_taskmgr_create(mctx, 2, 0, NULL, &taskmgr) ==
+	RUNTIME_CHECK(isc_managers_create(mctx, 2, 0, NULL, &taskmgr) ==
 		      ISC_R_SUCCESS);
 	RUNTIME_CHECK(isc_timermgr_create(mctx, &timermgr) == ISC_R_SUCCESS);
 	RUNTIME_CHECK(isc_socketmgr_create(mctx, &socketmgr) == ISC_R_SUCCESS);
@@ -304,7 +306,7 @@ main(int argc, char **argv) {
 	dns_zonemgr_shutdown(zonemgr);
 	dns_zonemgr_detach(&zonemgr);
 	isc_socketmgr_destroy(&socketmgr);
-	isc_taskmgr_destroy(&taskmgr);
+	isc_managers_destroy(&netmgr, &taskmgr);
 	isc_timermgr_destroy(&timermgr);
 	if (!quiet && stats) {
 		isc_mem_stats(mctx, stdout);

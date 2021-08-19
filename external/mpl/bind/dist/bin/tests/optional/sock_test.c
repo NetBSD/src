@@ -1,4 +1,4 @@
-/*	$NetBSD: sock_test.c,v 1.4 2021/02/19 16:42:12 christos Exp $	*/
+/*	$NetBSD: sock_test.c,v 1.5 2021/08/19 11:50:15 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -15,6 +15,7 @@
 #include <string.h>
 #include <unistd.h>
 
+#include <isc/managers.h>
 #include <isc/mem.h>
 #include <isc/print.h>
 #include <isc/socket.h>
@@ -23,8 +24,9 @@
 #include <isc/timer.h>
 #include <isc/util.h>
 
-isc_mem_t *mctx;
-isc_taskmgr_t *manager;
+isc_mem_t *mctx = NULL;
+isc_nm_t *netmgr = NULL;
+isc_taskmgr_t *taskmgr = NULL;
 
 static void
 my_shutdown(isc_task_t *task, isc_event_t *event) {
@@ -191,10 +193,10 @@ my_connect(isc_task_t *task, isc_event_t *event) {
 static void
 my_listen(isc_task_t *task, isc_event_t *event) {
 	char *name = event->ev_arg;
-	isc_socket_newconnev_t *dev;
+	isc_socket_newconnev_t *dev = NULL;
 	isc_region_t region;
-	isc_socket_t *oldsock;
-	isc_task_t *newtask;
+	isc_socket_t *oldsock = NULL;
+	isc_task_t *newtask = NULL;
 
 	dev = (isc_socket_newconnev_t *)event;
 
@@ -217,8 +219,7 @@ my_listen(isc_task_t *task, isc_event_t *event) {
 		 * Create a new task for this socket, and queue up a
 		 * recv on it.
 		 */
-		newtask = NULL;
-		RUNTIME_CHECK(isc_task_create(manager, 0, &newtask) ==
+		RUNTIME_CHECK(isc_task_create(taskmgr, 0, &newtask) ==
 			      ISC_R_SUCCESS);
 		isc_socket_recv(dev->newsocket, &region, 1, newtask, my_recv,
 				event->ev_arg);
@@ -255,14 +256,14 @@ static char xso2[] = "so2";
 
 int
 main(int argc, char *argv[]) {
-	isc_task_t *t1, *t2;
-	isc_timermgr_t *timgr;
+	isc_task_t *t1 = NULL, *t2 = NULL;
+	isc_timermgr_t *timgr = NULL;
 	isc_time_t expires;
 	isc_interval_t interval;
-	isc_timer_t *ti1;
+	isc_timer_t *ti1 = NULL;
 	unsigned int workers;
-	isc_socketmgr_t *socketmgr;
-	isc_socket_t *so1, *so2;
+	isc_socketmgr_t *socketmgr = NULL;
+	isc_socket_t *so1 = NULL, *so2 = NULL;
 	isc_sockaddr_t sockaddr;
 	struct in_addr ina;
 	struct in6_addr in6a;
@@ -291,26 +292,21 @@ main(int argc, char *argv[]) {
 	/*
 	 * EVERYTHING needs a memory context.
 	 */
-	mctx = NULL;
 	isc_mem_create(&mctx);
 
 	/*
 	 * The task manager is independent (other than memory context)
 	 */
-	manager = NULL;
-	RUNTIME_CHECK(isc_taskmgr_create(mctx, workers, 0, NULL, &manager) ==
-		      ISC_R_SUCCESS);
+	RUNTIME_CHECK(isc_managers_create(mctx, workers, 0, &netmgr,
+					  &taskmgr) == ISC_R_SUCCESS);
 
 	/*
 	 * Timer manager depends only on the memory context as well.
 	 */
-	timgr = NULL;
 	RUNTIME_CHECK(isc_timermgr_create(mctx, &timgr) == ISC_R_SUCCESS);
 
-	t1 = NULL;
-	RUNTIME_CHECK(isc_task_create(manager, 0, &t1) == ISC_R_SUCCESS);
-	t2 = NULL;
-	RUNTIME_CHECK(isc_task_create(manager, 0, &t2) == ISC_R_SUCCESS);
+	RUNTIME_CHECK(isc_task_create(taskmgr, 0, &t1) == ISC_R_SUCCESS);
+	RUNTIME_CHECK(isc_task_create(taskmgr, 0, &t2) == ISC_R_SUCCESS);
 	RUNTIME_CHECK(isc_task_onshutdown(t1, my_shutdown, one) ==
 		      ISC_R_SUCCESS);
 	RUNTIME_CHECK(isc_task_onshutdown(t2, my_shutdown, two) ==
@@ -319,13 +315,11 @@ main(int argc, char *argv[]) {
 	printf("task 1 = %p\n", t1);
 	printf("task 2 = %p\n", t2);
 
-	socketmgr = NULL;
 	RUNTIME_CHECK(isc_socketmgr_create(mctx, &socketmgr) == ISC_R_SUCCESS);
 
 	/*
 	 * Open up a listener socket.
 	 */
-	so1 = NULL;
 
 	if (pf == PF_INET6) {
 		in6a = in6addr_any;
@@ -347,7 +341,6 @@ main(int argc, char *argv[]) {
 		      ISC_R_SUCCESS);
 	isc_time_settoepoch(&expires);
 	isc_interval_set(&interval, 10, 0);
-	ti1 = NULL;
 	RUNTIME_CHECK(isc_timer_create(timgr, isc_timertype_once, &expires,
 				       &interval, t1, timeout, so1,
 				       &ti1) == ISC_R_SUCCESS);
@@ -356,7 +349,6 @@ main(int argc, char *argv[]) {
 	 * Open up a socket that will connect to www.flame.org, port 80.
 	 * Why not.  :)
 	 */
-	so2 = NULL;
 	ina.s_addr = inet_addr("204.152.184.97");
 	if (0 && pf == PF_INET6) {
 		isc_sockaddr_v6fromin(&sockaddr, &ina, 80);
@@ -393,7 +385,7 @@ main(int argc, char *argv[]) {
 	isc_timermgr_destroy(&timgr);
 
 	fprintf(stderr, "Destroying task manager\n");
-	isc_taskmgr_destroy(&manager);
+	isc_managers_destroy(&netmgr, &taskmgr);
 
 	isc_mem_stats(mctx, stdout);
 	isc_mem_destroy(&mctx);

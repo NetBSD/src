@@ -1,4 +1,4 @@
-/*	$NetBSD: diff.h,v 1.4 2021/02/19 16:42:16 christos Exp $	*/
+/*	$NetBSD: diff.h,v 1.5 2021/08/19 11:50:17 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -68,6 +68,7 @@ typedef enum {
 } dns_diffop_t;
 
 typedef struct dns_difftuple dns_difftuple_t;
+typedef ISC_LIST(dns_difftuple_t) dns_difftuplelist_t;
 
 #define DNS_DIFFTUPLE_MAGIC    ISC_MAGIC('D', 'I', 'F', 'T')
 #define DNS_DIFFTUPLE_VALID(t) ISC_MAGIC_VALID(t, DNS_DIFFTUPLE_MAGIC)
@@ -94,9 +95,9 @@ typedef struct dns_diff dns_diff_t;
 #define DNS_DIFF_VALID(t) ISC_MAGIC_VALID(t, DNS_DIFF_MAGIC)
 
 struct dns_diff {
-	unsigned int magic;
-	isc_mem_t *  mctx;
-	ISC_LIST(dns_difftuple_t) tuples;
+	unsigned int	    magic;
+	isc_mem_t *	    mctx;
+	dns_difftuplelist_t tuples;
 };
 
 /* Type of comparison function for sorting diffs. */

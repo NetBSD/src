@@ -1,4 +1,4 @@
-/*	$NetBSD: result.h,v 1.8 2021/02/19 16:42:19 christos Exp $	*/
+/*	$NetBSD: result.h,v 1.9 2021/08/19 11:50:18 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -66,7 +66,7 @@
 #define ISC_R_MULTICAST	       43	    /*%< invalid use of multicast */
 #define ISC_R_NOTFILE	       44	    /*%< not a file */
 #define ISC_R_NOTDIRECTORY     45	    /*%< not a directory */
-#define ISC_R_QUEUEFULL	       46	    /*%< queue is full */
+#define ISC_R_EMPTY	       46	    /*%< queue is empty */
 #define ISC_R_FAMILYMISMATCH   47	    /*%< address family mismatch */
 #define ISC_R_FAMILYNOSUPPORT  48	    /*%< AF not supported */
 #define ISC_R_BADHEX	       49	    /*%< bad hex encoding */
@@ -91,9 +91,10 @@
 #define ISC_R_DEFAULT	       68	    /*%< default */
 #define ISC_R_IPV4PREFIX       69	    /*%< IPv4 prefix */
 #define ISC_R_TLSERROR	       70	    /*%< TLS error */
+#define ISC_R_HTTP2ALPNERROR   71	    /*%< ALPN for HTTP/2 failed */
 
 /*% Not a result code: the number of results. */
-#define ISC_R_NRESULTS 71
+#define ISC_R_NRESULTS 72
 
 ISC_LANG_BEGINDECLS
 
