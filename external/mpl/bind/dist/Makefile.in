@@ -48,9 +48,7 @@ docclean manclean maintainer-clean::
 doc man:: ${MANOBJS}
 
 installdirs:
-	$(SHELL) ${top_srcdir}/mkinstalldirs ${DESTDIR}${bindir} \
-	${DESTDIR}${localstatedir}/run ${DESTDIR}${sysconfdir}
-	$(SHELL) ${top_srcdir}/mkinstalldirs ${DESTDIR}${mandir}/man1
+	$(SHELL) ${top_srcdir}/mkinstalldirs ${DESTDIR}${sysconfdir}
 
 install:: installdirs
 	${INSTALL_DATA} ${top_srcdir}/bind.keys ${DESTDIR}${sysconfdir}

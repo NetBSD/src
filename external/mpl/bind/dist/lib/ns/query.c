@@ -1,4 +1,4 @@
-/*	$NetBSD: query.c,v 1.13 2021/04/29 17:26:14 christos Exp $	*/
+/*	$NetBSD: query.c,v 1.14 2021/08/19 11:50:19 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -13,6 +13,7 @@
 
 /*! \file */
 
+#include <ctype.h>
 #include <inttypes.h>
 #include <stdbool.h>
 #include <string.h>
@@ -136,8 +137,12 @@
 
 #define REDIRECT(c) (((c)->query.attributes & NS_QUERYATTR_REDIRECT) != 0)
 
-/*% Was the query already answered due to stale-answer-client-timeout? */
+/*% Was the client already sent a response? */
 #define QUERY_ANSWERED(q) (((q)->attributes & NS_QUERYATTR_ANSWERED) != 0)
+
+/*% Have we already processed an answer via stale-answer-client-timeout? */
+#define QUERY_STALEPENDING(q) \
+	(((q)->attributes & NS_QUERYATTR_STALEPENDING) != 0)
 
 /*% Does the query allow stale data in the response? */
 #define QUERY_STALEOK(q) (((q)->attributes & NS_QUERYATTR_STALEOK) != 0)
@@ -779,7 +784,7 @@ ns_query_free(ns_client_t *client) {
 
 isc_result_t
 ns_query_init(ns_client_t *client) {
-	isc_result_t result;
+	isc_result_t result = ISC_R_SUCCESS;
 
 	REQUIRE(NS_CLIENT_VALID(client));
 
@@ -818,16 +823,8 @@ ns_query_init(ns_client_t *client) {
 	client->query.redirect.fname =
 		dns_fixedname_initname(&client->query.redirect.fixed);
 	query_reset(client, false);
-	result = ns_client_newdbversion(client, 3);
-	if (result != ISC_R_SUCCESS) {
-		isc_mutex_destroy(&client->query.fetchlock);
-		return (result);
-	}
-	result = ns_client_newnamebuf(client);
-	if (result != ISC_R_SUCCESS) {
-		query_freefreeversions(client, true);
-		isc_mutex_destroy(&client->query.fetchlock);
-	}
+	ns_client_newdbversion(client, 3);
+	ns_client_newnamebuf(client);
 
 	return (result);
 }
@@ -5294,7 +5291,7 @@ get_root_key_sentinel_id(query_ctx_t *qctx, const char *ndata) {
 	int i;
 
 	for (i = 0; i < 5; i++) {
-		if (ndata[i] < '0' || ndata[i] > '9') {
+		if (!isdigit((unsigned char)ndata[i])) {
 			return (false);
 		}
 		v *= 10;
@@ -5821,6 +5818,7 @@ query_lookup(query_ctx_t *qctx) {
 		{
 			qctx->rdataset->ttl = qctx->view->staleanswerttl;
 			stale_found = true;
+			inc_stats(qctx->client, ns_statscounter_usedstale);
 		} else {
 			stale_found = false;
 		}
@@ -5859,9 +5857,6 @@ query_lookup(query_ctx_t *qctx) {
 			return (ns_query_done(qctx));
 		}
 	} else if (stale_timeout) {
-		qctx->client->query.attributes |= NS_QUERYATTR_STALEOK;
-		qctx->rdataset->attributes |= DNS_RDATASETATTR_STALE_ADDED;
-
 		if ((qctx->options & DNS_GETDB_STALEFIRST) != 0) {
 			if (!stale_found) {
 				/*
@@ -5879,7 +5874,7 @@ query_lookup(query_ctx_t *qctx) {
 					dns_resolver_destroyfetch(
 						&qctx->client->query.fetch);
 				}
-				return query_lookup(qctx);
+				return (query_lookup(qctx));
 			} else {
 				/*
 				 * Immediately return the stale answer, start a
@@ -5908,6 +5903,13 @@ query_lookup(query_ctx_t *qctx) {
 			if (!stale_found) {
 				return (result);
 			}
+
+			/*
+			 * There still might be real answer later. Mark the
+			 * query so we'll know we can skip answering.
+			 */
+			qctx->client->query.attributes |=
+				NS_QUERYATTR_STALEPENDING;
 		}
 	}
 
@@ -5920,6 +5922,7 @@ query_lookup(query_ctx_t *qctx) {
 		qctx->client->query.attributes |= NS_QUERYATTR_STALEOK;
 		qctx->rdataset->attributes |= DNS_RDATASETATTR_STALE_ADDED;
 	}
+
 	result = query_gotanswer(qctx, result);
 
 	if (refresh_rrset) {
@@ -6025,10 +6028,12 @@ static void
 fetch_callback(isc_task_t *task, isc_event_t *event) {
 	dns_fetchevent_t *devent = (dns_fetchevent_t *)event;
 	dns_fetch_t *fetch = NULL;
-	ns_client_t *client;
-	bool fetch_canceled, client_shuttingdown;
-	isc_result_t result;
+	ns_client_t *client = NULL;
+	bool fetch_canceled = false;
+	bool fetch_answered = false;
+	bool client_shuttingdown = false;
 	isc_logcategory_t *logcategory = NS_LOGCATEGORY_QUERY_ERRORS;
+	isc_result_t result;
 	int errorloglevel;
 	query_ctx_t qctx;
 
@@ -6036,7 +6041,9 @@ fetch_callback(isc_task_t *task, isc_event_t *event) {
 
 	REQUIRE(event->ev_type == DNS_EVENT_FETCHDONE ||
 		event->ev_type == DNS_EVENT_TRYSTALE);
+
 	client = devent->ev_arg;
+
 	REQUIRE(NS_CLIENT_VALID(client));
 	REQUIRE(task == client->task);
 	REQUIRE(RECURSING(client));
@@ -6048,7 +6055,6 @@ fetch_callback(isc_task_t *task, isc_event_t *event) {
 		isc_event_free(ISC_EVENT_PTR(&event));
 		return;
 	}
-
 	/*
 	 * We are resuming from recursion. Reset any attributes, options
 	 * that a lookup due to stale-answer-client-timeout may have set.
@@ -6056,17 +6062,28 @@ fetch_callback(isc_task_t *task, isc_event_t *event) {
 	if (client->view->cachedb != NULL && client->view->recursion) {
 		client->query.attributes |= NS_QUERYATTR_RECURSIONOK;
 	}
+	client->query.fetchoptions &= ~DNS_FETCHOPT_TRYSTALE_ONTIMEOUT;
 	client->query.dboptions &= ~DNS_DBFIND_STALETIMEOUT;
 	client->nodetach = false;
 
 	LOCK(&client->query.fetchlock);
-	if (client->query.fetch != NULL) {
+	INSIST(client->query.fetch == devent->fetch ||
+	       client->query.fetch == NULL);
+	if (QUERY_STALEPENDING(&client->query)) {
+		/*
+		 * We've gotten an authoritative answer to a query that
+		 * was left pending after a stale timeout. We don't need
+		 * to do anything with it; free all the data and go home.
+		 */
+		client->query.fetch = NULL;
+		fetch_answered = true;
+	} else if (client->query.fetch != NULL) {
 		/*
 		 * This is the fetch we've been waiting for.
 		 */
 		INSIST(devent->fetch == client->query.fetch);
 		client->query.fetch = NULL;
-		fetch_canceled = false;
+
 		/*
 		 * Update client->now.
 		 */
@@ -6079,7 +6096,6 @@ fetch_callback(isc_task_t *task, isc_event_t *event) {
 		fetch_canceled = true;
 	}
 	UNLOCK(&client->query.fetchlock);
-	INSIST(client->query.fetch == NULL);
 
 	SAVE(fetch, devent->fetch);
 
@@ -6122,7 +6138,7 @@ fetch_callback(isc_task_t *task, isc_event_t *event) {
 	qctx_init(client, &devent, 0, &qctx);
 
 	client_shuttingdown = ns_client_shuttingdown(client);
-	if (fetch_canceled || client_shuttingdown) {
+	if (fetch_canceled || fetch_answered || client_shuttingdown) {
 		/*
 		 * We've timed out or are shutting down. We can now
 		 * free the event and other resources held by qctx, but
@@ -7749,7 +7765,7 @@ query_addanswer(query_ctx_t *qctx) {
 		 * We can clear the attribute to prevent redundant clearing
 		 * in subsequent lookups.
 		 */
-		qctx->client->query.attributes &= ~DNS_RDATASETATTR_STALE_ADDED;
+		qctx->client->query.attributes &= ~NS_QUERYATTR_STALEOK;
 	}
 
 	if (qctx->dns64) {
@@ -8404,7 +8420,7 @@ query_prepare_delegation_response(query_ctx_t *qctx) {
 	}
 
 	/*
-	 * Add a DS if needed.
+	 * Add DS/NSEC(3) record(s) if needed.
 	 */
 	query_addds(qctx);
 
@@ -8662,7 +8678,7 @@ cleanup:
 }
 
 /*%
- * Add a DS record if needed.
+ * Add DS/NSEC(3) record(s) if needed.
  */
 static void
 query_addds(query_ctx_t *qctx) {
@@ -8719,26 +8735,40 @@ query_addds(query_ctx_t *qctx) {
 
 	/*
 	 * We've already added the NS record, so if the name's not there,
-	 * we have other problems.  Use this name rather than calling
-	 * query_addrrset().
+	 * we have other problems.
 	 */
 	result = dns_message_firstname(client->message, DNS_SECTION_AUTHORITY);
 	if (result != ISC_R_SUCCESS) {
 		goto cleanup;
 	}
 
-	rname = NULL;
-	dns_message_currentname(client->message, DNS_SECTION_AUTHORITY, &rname);
-	result = dns_message_findtype(rname, dns_rdatatype_ns, 0, NULL);
+	/*
+	 * Find the delegation in the response message - it is not necessarily
+	 * the first name in the AUTHORITY section when wildcard processing is
+	 * involved.
+	 */
+	while (result == ISC_R_SUCCESS) {
+		rname = NULL;
+		dns_message_currentname(client->message, DNS_SECTION_AUTHORITY,
+					&rname);
+		result = dns_message_findtype(rname, dns_rdatatype_ns, 0, NULL);
+		if (result == ISC_R_SUCCESS) {
+			break;
+		}
+		result = dns_message_nextname(client->message,
+					      DNS_SECTION_AUTHORITY);
+	}
+
 	if (result != ISC_R_SUCCESS) {
 		goto cleanup;
 	}
 
-	ISC_LIST_APPEND(rname->list, rdataset, link);
-	ISC_LIST_APPEND(rname->list, sigrdataset, link);
-	rdataset = NULL;
-	sigrdataset = NULL;
-	return;
+	/*
+	 * Add the relevant RRset (DS or NSEC) to the delegation.
+	 */
+	query_addrrset(qctx, &rname, &rdataset, &sigrdataset, NULL,
+		       DNS_SECTION_AUTHORITY);
+	goto cleanup;
 
 addnsec3:
 	if (!dns_db_iszone(qctx->db)) {
@@ -9529,8 +9559,7 @@ query_synthcnamewildcard(query_ctx_t *qctx, dns_rdataset_t *rdataset,
 	RUNTIME_CHECK(result == ISC_R_SUCCESS);
 	dns_rdata_reset(&rdata);
 
-	dns_name_init(tname, NULL);
-	dns_name_dup(&cname.cname, qctx->client->mctx, tname);
+	dns_name_copynf(&cname.cname, tname);
 
 	dns_rdata_freestruct(&cname);
 	ns_client_qnamereplace(qctx->client, tname);
@@ -10062,9 +10091,9 @@ cleanup:
  */
 static isc_result_t
 query_cname(query_ctx_t *qctx) {
-	isc_result_t result;
-	dns_name_t *tname;
-	dns_rdataset_t *trdataset;
+	isc_result_t result = ISC_R_UNSET;
+	dns_name_t *tname = NULL;
+	dns_rdataset_t *trdataset = NULL;
 	dns_rdataset_t **sigrdatasetp = NULL;
 	dns_rdata_t rdata = DNS_RDATA_INIT;
 	dns_rdata_cname_t cname;
@@ -10126,7 +10155,6 @@ query_cname(query_ctx_t *qctx) {
 	 * Reset qname to be the target name of the CNAME and restart
 	 * the query.
 	 */
-	tname = NULL;
 	result = dns_message_gettempname(qctx->client->message, &tname);
 	if (result != ISC_R_SUCCESS) {
 		return (ns_query_done(qctx));
@@ -10143,8 +10171,7 @@ query_cname(query_ctx_t *qctx) {
 	RUNTIME_CHECK(result == ISC_R_SUCCESS);
 	dns_rdata_reset(&rdata);
 
-	dns_name_init(tname, NULL);
-	dns_name_dup(&cname.cname, qctx->client->mctx, tname);
+	dns_name_copynf(&cname.cname, tname);
 
 	dns_rdata_freestruct(&cname);
 	ns_client_qnamereplace(qctx->client, tname);
@@ -10246,7 +10273,7 @@ query_dname(query_ctx_t *qctx) {
 	RUNTIME_CHECK(result == ISC_R_SUCCESS);
 	dns_rdata_reset(&rdata);
 
-	dns_name_clone(&dname.dname, tname);
+	dns_name_copynf(&dname.dname, tname);
 	dns_rdata_freestruct(&dname);
 
 	/*
@@ -10344,7 +10371,8 @@ query_addcname(query_ctx_t *qctx, dns_trust_t trust, dns_ttl_t ttl) {
 	if (result != ISC_R_SUCCESS) {
 		return (result);
 	}
-	dns_name_dup(client->query.qname, client->mctx, aname);
+
+	dns_name_copynf(client->query.qname, aname);
 
 	result = dns_message_gettemprdatalist(client->message, &rdatalist);
 	if (result != ISC_R_SUCCESS) {
@@ -10479,8 +10507,13 @@ query_addsoa(query_ctx_t *qctx, unsigned int override_ttl,
 	if (result != ISC_R_SUCCESS) {
 		return (result);
 	}
-	dns_name_init(name, NULL);
+
+	/*
+	 * We'll be releasing 'name' before returning, so it's safe to
+	 * use clone instead of copying here.
+	 */
 	dns_name_clone(dns_db_origin(qctx->db), name);
+
 	rdataset = ns_client_newrdataset(client);
 	if (rdataset == NULL) {
 		CTRACE(ISC_LOG_ERROR, "unable to allocate rdataset");
@@ -10616,7 +10649,6 @@ query_addns(query_ctx_t *qctx) {
 					 "failed: done");
 		return (result);
 	}
-	dns_name_init(name, NULL);
 	dns_name_clone(dns_db_origin(qctx->db), name);
 	rdataset = ns_client_newrdataset(client);
 	if (rdataset == NULL) {

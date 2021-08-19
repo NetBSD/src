@@ -1,4 +1,4 @@
-/*	$NetBSD: message.c,v 1.12 2021/04/05 11:27:02 rillig Exp $	*/
+/*	$NetBSD: message.c,v 1.13 2021/08/19 11:50:17 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -468,10 +468,7 @@ msgresetnames(dns_message_t *msg, unsigned int first_section) {
 				isc_mempool_put(msg->rdspool, rds);
 				rds = next_rds;
 			}
-			if (dns_name_dynamic(name)) {
-				dns_name_free(name, msg->mctx);
-			}
-			isc_mempool_put(msg->namepool, name);
+			dns_message_puttempname(msg, &name);
 			name = next_name;
 		}
 	}
@@ -513,12 +510,8 @@ msgresetsigs(dns_message_t *msg, bool replying) {
 				isc_mempool_put(msg->rdspool, msg->querytsig);
 			}
 		}
-		if (dns_name_dynamic(msg->tsigname)) {
-			dns_name_free(msg->tsigname, msg->mctx);
-		}
-		isc_mempool_put(msg->namepool, msg->tsigname);
+		dns_message_puttempname(msg, &msg->tsigname);
 		msg->tsig = NULL;
-		msg->tsigname = NULL;
 	} else if (msg->querytsig != NULL && !replying) {
 		dns_rdataset_disassociate(msg->querytsig);
 		isc_mempool_put(msg->rdspool, msg->querytsig);
@@ -529,10 +522,7 @@ msgresetsigs(dns_message_t *msg, bool replying) {
 		dns_rdataset_disassociate(msg->sig0);
 		isc_mempool_put(msg->rdspool, msg->sig0);
 		if (msg->sig0name != NULL) {
-			if (dns_name_dynamic(msg->sig0name)) {
-				dns_name_free(msg->sig0name, msg->mctx);
-			}
-			isc_mempool_put(msg->namepool, msg->sig0name);
+			dns_message_puttempname(msg, &msg->sig0name);
 		}
 		msg->sig0 = NULL;
 		msg->sig0name = NULL;
@@ -718,8 +708,8 @@ spacefortsig(dns_tsigkey_t *key, int otherlen) {
 
 void
 dns_message_create(isc_mem_t *mctx, unsigned int intent, dns_message_t **msgp) {
-	dns_message_t *m;
-	isc_buffer_t *dynbuf;
+	dns_message_t *m = NULL;
+	isc_buffer_t *dynbuf = NULL;
 	unsigned int i;
 
 	REQUIRE(mctx != NULL);
@@ -729,29 +719,23 @@ dns_message_create(isc_mem_t *mctx, unsigned int intent, dns_message_t **msgp) {
 		intent == DNS_MESSAGE_INTENTRENDER);
 
 	m = isc_mem_get(mctx, sizeof(dns_message_t));
-
-	m->magic = DNS_MESSAGE_MAGIC;
-	m->from_to_wire = intent;
+	*m = (dns_message_t){ .from_to_wire = intent };
+	isc_mem_attach(mctx, &m->mctx);
 	msginit(m);
 
 	for (i = 0; i < DNS_SECTION_MAX; i++) {
 		ISC_LIST_INIT(m->sections[i]);
 	}
 
-	m->mctx = NULL;
-	isc_mem_attach(mctx, &m->mctx);
-
 	ISC_LIST_INIT(m->scratchpad);
 	ISC_LIST_INIT(m->cleanup);
-	m->namepool = NULL;
-	m->rdspool = NULL;
 	ISC_LIST_INIT(m->rdatas);
 	ISC_LIST_INIT(m->rdatalists);
 	ISC_LIST_INIT(m->offsets);
 	ISC_LIST_INIT(m->freerdata);
 	ISC_LIST_INIT(m->freerdatalist);
 
-	isc_mempool_create(m->mctx, sizeof(dns_name_t), &m->namepool);
+	isc_mempool_create(m->mctx, sizeof(dns_fixedname_t), &m->namepool);
 	isc_mempool_setfillcount(m->namepool, NAME_COUNT);
 	isc_mempool_setfreemax(m->namepool, NAME_COUNT);
 	isc_mempool_setname(m->namepool, "msg:names");
@@ -761,13 +745,11 @@ dns_message_create(isc_mem_t *mctx, unsigned int intent, dns_message_t **msgp) {
 	isc_mempool_setfreemax(m->rdspool, RDATASET_COUNT);
 	isc_mempool_setname(m->rdspool, "msg:rdataset");
 
-	dynbuf = NULL;
 	isc_buffer_allocate(mctx, &dynbuf, SCRATCHPAD_SIZE);
 	ISC_LIST_APPEND(m->scratchpad, dynbuf, link);
 
-	m->cctx = NULL;
-
 	isc_refcount_init(&m->refcount, 1);
+	m->magic = DNS_MESSAGE_MAGIC;
 
 	*msgp = m;
 }
@@ -987,41 +969,26 @@ getquestions(isc_buffer_t *source, dns_message_t *msg, dns_decompress_t *dctx,
 	     unsigned int options) {
 	isc_region_t r;
 	unsigned int count;
-	dns_name_t *name;
-	dns_name_t *name2;
-	dns_offsets_t *offsets;
-	dns_rdataset_t *rdataset;
-	dns_rdatalist_t *rdatalist;
+	dns_name_t *name = NULL;
+	dns_name_t *name2 = NULL;
+	dns_rdataset_t *rdataset = NULL;
+	dns_rdatalist_t *rdatalist = NULL;
 	isc_result_t result;
 	dns_rdatatype_t rdtype;
 	dns_rdataclass_t rdclass;
-	dns_namelist_t *section;
-	bool free_name;
-	bool best_effort;
-	bool seen_problem;
-
-	section = &msg->sections[DNS_SECTION_QUESTION];
-
-	best_effort = ((options & DNS_MESSAGEPARSE_BESTEFFORT) != 0);
-	seen_problem = false;
-
-	name = NULL;
-	rdataset = NULL;
-	rdatalist = NULL;
+	dns_namelist_t *section = &msg->sections[DNS_SECTION_QUESTION];
+	bool best_effort = ((options & DNS_MESSAGEPARSE_BESTEFFORT) != 0);
+	bool seen_problem = false;
+	bool free_name = false;
 
 	for (count = 0; count < msg->counts[DNS_SECTION_QUESTION]; count++) {
-		name = isc_mempool_get(msg->namepool);
-		if (name == NULL) {
-			return (ISC_R_NOMEMORY);
-		}
-		free_name = true;
-
-		offsets = newoffsets(msg);
-		if (offsets == NULL) {
-			result = ISC_R_NOMEMORY;
+		name = NULL;
+		result = dns_message_gettempname(msg, &name);
+		if (result != ISC_R_SUCCESS) {
 			goto cleanup;
 		}
-		dns_name_init(name, *offsets);
+		name->offsets = (unsigned char *)newoffsets(msg);
+		free_name = true;
 
 		/*
 		 * Parse the name out of this packet.
@@ -1058,7 +1025,7 @@ getquestions(isc_buffer_t *source, dns_message_t *msg, dns_decompress_t *dctx,
 			ISC_LIST_APPEND(*section, name, link);
 			free_name = false;
 		} else {
-			isc_mempool_put(msg->namepool, name);
+			dns_message_puttempname(msg, &name);
 			name = name2;
 			name2 = NULL;
 			free_name = false;
@@ -1144,13 +1111,8 @@ cleanup:
 		INSIST(!dns_rdataset_isassociated(rdataset));
 		isc_mempool_put(msg->rdspool, rdataset);
 	}
-#if 0
-	if (rdatalist != NULL) {
-		isc_mempool_put(msg->rdlpool, rdatalist);
-	}
-#endif /* if 0 */
 	if (free_name) {
-		isc_mempool_put(msg->namepool, name);
+		dns_message_puttempname(msg, &name);
 	}
 
 	return (result);
@@ -1231,24 +1193,18 @@ getsection(isc_buffer_t *source, dns_message_t *msg, dns_decompress_t *dctx,
 	unsigned int count, rdatalen;
 	dns_name_t *name = NULL;
 	dns_name_t *name2 = NULL;
-	dns_offsets_t *offsets;
 	dns_rdataset_t *rdataset = NULL;
-	dns_rdatalist_t *rdatalist;
+	dns_rdatalist_t *rdatalist = NULL;
 	isc_result_t result;
 	dns_rdatatype_t rdtype, covers;
 	dns_rdataclass_t rdclass;
-	dns_rdata_t *rdata;
+	dns_rdata_t *rdata = NULL;
 	dns_ttl_t ttl;
-	dns_namelist_t *section;
-	bool free_name = false, free_rdataset = false;
-	bool preserve_order, best_effort, seen_problem;
+	dns_namelist_t *section = &msg->sections[sectionid];
+	bool free_name = false, free_rdataset = false, seen_problem = false;
+	bool preserve_order = ((options & DNS_MESSAGEPARSE_PRESERVEORDER) != 0);
+	bool best_effort = ((options & DNS_MESSAGEPARSE_BESTEFFORT) != 0);
 	bool isedns, issigzero, istsig;
-
-	preserve_order = ((options & DNS_MESSAGEPARSE_PRESERVEORDER) != 0);
-	best_effort = ((options & DNS_MESSAGEPARSE_BESTEFFORT) != 0);
-	seen_problem = false;
-
-	section = &msg->sections[sectionid];
 
 	for (count = 0; count < msg->counts[sectionid]; count++) {
 		int recstart = source->current;
@@ -1261,18 +1217,13 @@ getsection(isc_buffer_t *source, dns_message_t *msg, dns_decompress_t *dctx,
 		issigzero = false;
 		istsig = false;
 
-		name = isc_mempool_get(msg->namepool);
-		if (name == NULL) {
-			return (ISC_R_NOMEMORY);
-		}
-		free_name = true;
-
-		offsets = newoffsets(msg);
-		if (offsets == NULL) {
-			result = ISC_R_NOMEMORY;
+		name = NULL;
+		result = dns_message_gettempname(msg, &name);
+		if (result != ISC_R_SUCCESS) {
 			goto cleanup;
 		}
-		dns_name_init(name, *offsets);
+		name->offsets = (unsigned char *)newoffsets(msg);
+		free_name = true;
 
 		/*
 		 * Parse the name out of this packet.
@@ -1509,7 +1460,7 @@ getsection(isc_buffer_t *source, dns_message_t *msg, dns_decompress_t *dctx,
 			 * If it is a new name, append to the section.
 			 */
 			if (result == ISC_R_SUCCESS) {
-				isc_mempool_put(msg->namepool, name);
+				dns_message_puttempname(msg, &name);
 				name = name2;
 			} else {
 				ISC_LIST_APPEND(*section, name, link);
@@ -1626,11 +1577,11 @@ getsection(isc_buffer_t *source, dns_message_t *msg, dns_decompress_t *dctx,
 			msg->opt = rdataset;
 			rdataset = NULL;
 			free_rdataset = false;
-			ercode = (dns_rcode_t)(
-				(msg->opt->ttl & DNS_MESSAGE_EDNSRCODE_MASK) >>
-				20);
+			ercode = (dns_rcode_t)((msg->opt->ttl &
+						DNS_MESSAGE_EDNSRCODE_MASK) >>
+					       20);
 			msg->rcode |= ercode;
-			isc_mempool_put(msg->namepool, name);
+			dns_message_puttempname(msg, &name);
 			free_name = false;
 		} else if (issigzero) {
 			msg->sig0 = rdataset;
@@ -1654,7 +1605,7 @@ getsection(isc_buffer_t *source, dns_message_t *msg, dns_decompress_t *dctx,
 
 		if (seen_problem) {
 			if (free_name) {
-				isc_mempool_put(msg->namepool, name);
+				dns_message_puttempname(msg, &name);
 			}
 			if (free_rdataset) {
 				isc_mempool_put(msg->rdspool, rdataset);
@@ -1686,7 +1637,7 @@ getsection(isc_buffer_t *source, dns_message_t *msg, dns_decompress_t *dctx,
 
 cleanup:
 	if (free_name) {
-		isc_mempool_put(msg->namepool, name);
+		dns_message_puttempname(msg, &name);
 	}
 	if (free_rdataset) {
 		isc_mempool_put(msg->rdspool, rdataset);
@@ -2570,27 +2521,16 @@ dns_message_removename(dns_message_t *msg, dns_name_t *name,
 
 isc_result_t
 dns_message_gettempname(dns_message_t *msg, dns_name_t **item) {
+	dns_fixedname_t *fn = NULL;
+
 	REQUIRE(DNS_MESSAGE_VALID(msg));
 	REQUIRE(item != NULL && *item == NULL);
 
-	*item = isc_mempool_get(msg->namepool);
-	if (*item == NULL) {
+	fn = isc_mempool_get(msg->namepool);
+	if (fn == NULL) {
 		return (ISC_R_NOMEMORY);
 	}
-	dns_name_init(*item, NULL);
-
-	return (ISC_R_SUCCESS);
-}
-
-isc_result_t
-dns_message_gettempoffsets(dns_message_t *msg, dns_offsets_t **item) {
-	REQUIRE(DNS_MESSAGE_VALID(msg));
-	REQUIRE(item != NULL && *item == NULL);
-
-	*item = newoffsets(msg);
-	if (*item == NULL) {
-		return (ISC_R_NOMEMORY);
-	}
+	*item = dns_fixedname_initname(fn);
 
 	return (ISC_R_SUCCESS);
 }
@@ -2619,7 +2559,6 @@ dns_message_gettemprdataset(dns_message_t *msg, dns_rdataset_t **item) {
 	}
 
 	dns_rdataset_init(*item);
-
 	return (ISC_R_SUCCESS);
 }
 
@@ -2638,18 +2577,29 @@ dns_message_gettemprdatalist(dns_message_t *msg, dns_rdatalist_t **item) {
 
 void
 dns_message_puttempname(dns_message_t *msg, dns_name_t **itemp) {
-	dns_name_t *item;
+	dns_name_t *item = NULL;
 
 	REQUIRE(DNS_MESSAGE_VALID(msg));
 	REQUIRE(itemp != NULL && *itemp != NULL);
+
 	item = *itemp;
 	*itemp = NULL;
+
 	REQUIRE(!ISC_LINK_LINKED(item, link));
 	REQUIRE(ISC_LIST_HEAD(item->list) == NULL);
 
+	/*
+	 * we need to check this in case dns_name_dup() was used.
+	 */
 	if (dns_name_dynamic(item)) {
 		dns_name_free(item, msg->mctx);
 	}
+
+	/*
+	 * 'name' is the first field in dns_fixedname_t, so putting
+	 * back the address of name is the same as putting back
+	 * the fixedname.
+	 */
 	isc_mempool_put(msg->namepool, item);
 }
 

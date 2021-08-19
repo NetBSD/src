@@ -156,9 +156,6 @@
 /* Define to 1 if you have the `EVP_sha512' function. */
 #undef HAVE_EVP_SHA512
 
-/* Define to 1 if you have the `explicit_bzero' function. */
-#undef HAVE_EXPLICIT_BZERO
-
 /* Define to 1 if you have the <fcntl.h> header file. */
 #undef HAVE_FCNTL_H
 
@@ -176,6 +173,12 @@
 
 /* Define to 1 if the system has the `destructor' function attribute */
 #undef HAVE_FUNC_ATTRIBUTE_DESTRUCTOR
+
+/* Define to 1 if the system has the `malloc' function attribute */
+#undef HAVE_FUNC_ATTRIBUTE_MALLOC
+
+/* Define to 1 if the system has the `returns_nonnull' function attribute */
+#undef HAVE_FUNC_ATTRIBUTE_RETURNS_NONNULL
 
 /* Build with GeoIP2 support */
 #undef HAVE_GEOIP2
@@ -270,14 +273,14 @@
 /* Define to 1 if you have the <locale.h> header file. */
 #undef HAVE_LOCALE_H
 
+/* define if extended attributes for malloc are available */
+#undef HAVE_MALLOC_EXT_ATTR
+
 /* Define to 1 if you have the <memory.h> header file. */
 #undef HAVE_MEMORY_H
 
 /* Define to 1 if you have the `mmap' function. */
 #undef HAVE_MMAP
-
-/* Define to 1 if you have the `nanosleep' function. */
-#undef HAVE_NANOSLEEP
 
 /* Define to 1 if you have the <net/if6.h> header file. */
 #undef HAVE_NET_IF6_H
@@ -500,24 +503,6 @@
 
 /* define if the compiler supports _Unwind_Backtrace() */
 #undef HAVE_UNWIND_BACKTRACE
-
-/* Define to 1 if you have the `usleep' function. */
-#undef HAVE_USLEEP
-
-/* Define to 1 if you have the `uv_handle_get_data' function. */
-#undef HAVE_UV_HANDLE_GET_DATA
-
-/* Define to 1 if you have the `uv_handle_set_data' function. */
-#undef HAVE_UV_HANDLE_SET_DATA
-
-/* Define to 1 if you have the `uv_import' function. */
-#undef HAVE_UV_IMPORT
-
-/* Define to 1 if you have the `uv_translate_sys_error' function. */
-#undef HAVE_UV_TRANSLATE_SYS_ERROR
-
-/* Define to 1 if you have the `uv_udp_connect' function. */
-#undef HAVE_UV_UDP_CONNECT
 
 /* Use zlib library */
 #undef HAVE_ZLIB

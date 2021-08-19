@@ -1,4 +1,4 @@
-/*	$NetBSD: validator.c,v 1.9 2021/02/19 16:42:16 christos Exp $	*/
+/*	$NetBSD: validator.c,v 1.10 2021/08/19 11:50:17 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -2247,6 +2247,26 @@ findnsec3proofs(dns_validator_t *val) {
 		if (unknown) {
 			val->attributes |= VALATTR_FOUNDUNKNOWN;
 		}
+		if (result == DNS_R_NSEC3ITERRANGE) {
+			/*
+			 * We don't really know which NSEC3 record provides
+			 * which proof.  Just populate them.
+			 */
+			if (NEEDNOQNAME(val) &&
+			    proofs[DNS_VALIDATOR_NOQNAMEPROOF] == NULL) {
+				proofs[DNS_VALIDATOR_NOQNAMEPROOF] = name;
+			} else if (setclosest) {
+				proofs[DNS_VALIDATOR_CLOSESTENCLOSER] = name;
+			} else if (NEEDNODATA(val) &&
+				   proofs[DNS_VALIDATOR_NODATAPROOF] == NULL) {
+				proofs[DNS_VALIDATOR_NODATAPROOF] = name;
+			} else if (NEEDNOWILDCARD(val) &&
+				   proofs[DNS_VALIDATOR_NOWILDCARDPROOF] ==
+					   NULL) {
+				proofs[DNS_VALIDATOR_NOWILDCARDPROOF] = name;
+			}
+			return (result);
+		}
 		if (result != ISC_R_SUCCESS) {
 			continue;
 		}
@@ -2503,7 +2523,13 @@ validate_nx(dns_validator_t *val, bool resume) {
 	 */
 	if (!NEEDNODATA(val) && !NEEDNOWILDCARD(val) && NEEDNOQNAME(val)) {
 		if (!FOUNDNOQNAME(val)) {
-			findnsec3proofs(val);
+			result = findnsec3proofs(val);
+			if (result == DNS_R_NSEC3ITERRANGE) {
+				validator_log(val, ISC_LOG_DEBUG(3),
+					      "too many iterations");
+				markanswer(val, "validate_nx (3)", NULL);
+				return (ISC_R_SUCCESS);
+			}
 		}
 
 		if (FOUNDNOQNAME(val) && FOUNDCLOSEST(val) && !FOUNDOPTOUT(val))
@@ -2533,7 +2559,13 @@ validate_nx(dns_validator_t *val, bool resume) {
 	}
 
 	if (!FOUNDNOQNAME(val) && !FOUNDNODATA(val)) {
-		findnsec3proofs(val);
+		result = findnsec3proofs(val);
+		if (result == DNS_R_NSEC3ITERRANGE) {
+			validator_log(val, ISC_LOG_DEBUG(3),
+				      "too many iterations");
+			markanswer(val, "validate_nx (4)", NULL);
+			return (ISC_R_SUCCESS);
+		}
 	}
 
 	/*

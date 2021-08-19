@@ -1,4 +1,4 @@
-/*	$NetBSD: uv_wrap.h,v 1.2 2021/02/19 16:42:20 christos Exp $	*/
+/*	$NetBSD: uv_wrap.h,v 1.3 2021/08/19 11:50:19 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -28,6 +28,8 @@
 #define UNIT_TESTING
 #include <cmocka.h>
 
+#include "../netmgr/uv-compat.h"
+
 /* uv_udp_t */
 
 int
@@ -35,13 +37,13 @@ __wrap_uv_udp_open(uv_udp_t *handle, uv_os_sock_t sock);
 int
 __wrap_uv_udp_bind(uv_udp_t *handle, const struct sockaddr *addr,
 		   unsigned int flags);
-#if HAVE_UV_UDP_CONNECT
+#if UV_VERSION_HEX >= UV_VERSION(1, 27, 0)
 int
 __wrap_uv_udp_connect(uv_udp_t *handle, const struct sockaddr *addr);
 int
 __wrap_uv_udp_getpeername(const uv_udp_t *handle, struct sockaddr *name,
 			  int *namelen);
-#endif /* HAVE_UV_UDP_CONNECT */
+#endif /* UV_VERSION_HEX >= UV_VERSION(1, 27, 0) */
 int
 __wrap_uv_udp_getsockname(const uv_udp_t *handle, struct sockaddr *name,
 			  int *namelen);
@@ -114,7 +116,7 @@ __wrap_uv_udp_bind(uv_udp_t *handle, const struct sockaddr *addr,
 }
 
 static atomic_int __state_uv_udp_connect = ATOMIC_VAR_INIT(0);
-#if HAVE_UV_UDP_CONNECT
+#if UV_VERSION_HEX >= UV_VERSION(1, 27, 0)
 int
 __wrap_uv_udp_connect(uv_udp_t *handle, const struct sockaddr *addr) {
 	if (atomic_load(&__state_uv_udp_connect) == 0) {
@@ -122,10 +124,10 @@ __wrap_uv_udp_connect(uv_udp_t *handle, const struct sockaddr *addr) {
 	}
 	return (atomic_load(&__state_uv_udp_connect));
 }
-#endif /* HAVE_UV_UDP_CONNECT */
+#endif /* UV_VERSION_HEX >= UV_VERSION(1, 27, 0) */
 
 static atomic_int __state_uv_udp_getpeername = ATOMIC_VAR_INIT(0);
-#if HAVE_UV_UDP_CONNECT
+#if UV_VERSION_HEX >= UV_VERSION(1, 27, 0)
 int
 __wrap_uv_udp_getpeername(const uv_udp_t *handle, struct sockaddr *name,
 			  int *namelen) {
@@ -134,7 +136,7 @@ __wrap_uv_udp_getpeername(const uv_udp_t *handle, struct sockaddr *name,
 	}
 	return (atomic_load(&__state_uv_udp_getpeername));
 }
-#endif /* HAVE_UV_UDP_CONNECT */
+#endif /* UV_VERSION_HEX >= UV_VERSION(1, 27, 0) */
 
 static atomic_int __state_uv_udp_getsockname = ATOMIC_VAR_INIT(0);
 int
@@ -272,10 +274,10 @@ __wrap_uv_fileno(const uv_handle_t *handle, uv_os_fd_t *fd) {
 
 #define uv_udp_open(...) __wrap_uv_udp_open(__VA_ARGS__)
 #define uv_udp_bind(...) __wrap_uv_udp_bind(__VA_ARGS__)
-#if HAVE_UV_UDP_CONNECT
+#if UV_VERSION_HEX >= UV_VERSION(1, 27, 0)
 #define uv_udp_connect(...)	__wrap_uv_udp_connect(__VA_ARGS__)
 #define uv_udp_getpeername(...) __wrap_uv_udp_getpeername(__VA_ARGS__)
-#endif /* HAVE_UV_UDP_CONNECT */
+#endif /* UV_VERSION_HEX >= UV_VERSION(1, 27, 0) */
 #define uv_udp_getsockname(...) __wrap_uv_udp_getsockname(__VA_ARGS__)
 #define uv_udp_send(...)	__wrap_uv_udp_send(__VA_ARGS__)
 #define uv_udp_recv_start(...)	__wrap_uv_udp_recv_start(__VA_ARGS__)

@@ -1,4 +1,4 @@
-/*	$NetBSD: context.c,v 1.5 2021/02/19 16:42:18 christos Exp $	*/
+/*	$NetBSD: context.c,v 1.6 2021/08/19 11:50:18 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -16,7 +16,9 @@
 #include <isc/app.h>
 #include <isc/lib.h>
 #include <isc/magic.h>
+#include <isc/managers.h>
 #include <isc/mem.h>
+#include <isc/netmgr.h>
 #include <isc/once.h>
 #include <isc/socket.h>
 #include <isc/task.h>
@@ -54,6 +56,7 @@ struct irs_context {
 	unsigned int magic;
 	isc_mem_t *mctx;
 	isc_appctx_t *actx;
+	isc_nm_t *netmgr;
 	isc_taskmgr_t *taskmgr;
 	isc_task_t *task;
 	isc_socketmgr_t *socketmgr;
@@ -64,11 +67,11 @@ struct irs_context {
 };
 
 static void
-ctxs_destroy(isc_mem_t **mctxp, isc_appctx_t **actxp, isc_taskmgr_t **taskmgrp,
-	     isc_socketmgr_t **socketmgrp, isc_timermgr_t **timermgrp) {
-	if (taskmgrp != NULL) {
-		isc_taskmgr_destroy(taskmgrp);
-	}
+ctxs_destroy(isc_mem_t **mctxp, isc_appctx_t **actxp, isc_nm_t **netmgrp,
+	     isc_taskmgr_t **taskmgrp, isc_socketmgr_t **socketmgrp,
+	     isc_timermgr_t **timermgrp) {
+	isc_managers_destroy(netmgrp == NULL ? NULL : netmgrp,
+			     taskmgrp == NULL ? NULL : taskmgrp);
 
 	if (timermgrp != NULL) {
 		isc_timermgr_destroy(timermgrp);
@@ -88,8 +91,9 @@ ctxs_destroy(isc_mem_t **mctxp, isc_appctx_t **actxp, isc_taskmgr_t **taskmgrp,
 }
 
 static isc_result_t
-ctxs_init(isc_mem_t **mctxp, isc_appctx_t **actxp, isc_taskmgr_t **taskmgrp,
-	  isc_socketmgr_t **socketmgrp, isc_timermgr_t **timermgrp) {
+ctxs_init(isc_mem_t **mctxp, isc_appctx_t **actxp, isc_nm_t **netmgrp,
+	  isc_taskmgr_t **taskmgrp, isc_socketmgr_t **socketmgrp,
+	  isc_timermgr_t **timermgrp) {
 	isc_result_t result;
 
 	isc_mem_create(mctxp);
@@ -99,17 +103,17 @@ ctxs_init(isc_mem_t **mctxp, isc_appctx_t **actxp, isc_taskmgr_t **taskmgrp,
 		goto fail;
 	}
 
-	result = isc_taskmgr_createinctx(*mctxp, 1, 0, taskmgrp);
+	result = isc_managers_create(*mctxp, 1, 0, netmgrp, taskmgrp);
 	if (result != ISC_R_SUCCESS) {
 		goto fail;
 	}
 
-	result = isc_socketmgr_createinctx(*mctxp, socketmgrp);
+	result = isc_socketmgr_create(*mctxp, socketmgrp);
 	if (result != ISC_R_SUCCESS) {
 		goto fail;
 	}
 
-	result = isc_timermgr_createinctx(*mctxp, timermgrp);
+	result = isc_timermgr_create(*mctxp, timermgrp);
 	if (result != ISC_R_SUCCESS) {
 		goto fail;
 	}
@@ -117,7 +121,7 @@ ctxs_init(isc_mem_t **mctxp, isc_appctx_t **actxp, isc_taskmgr_t **taskmgrp,
 	return (ISC_R_SUCCESS);
 
 fail:
-	ctxs_destroy(mctxp, actxp, taskmgrp, socketmgrp, timermgrp);
+	ctxs_destroy(mctxp, actxp, netmgrp, taskmgrp, socketmgrp, timermgrp);
 
 	return (result);
 }
@@ -146,6 +150,7 @@ irs_context_create(irs_context_t **contextp) {
 	irs_context_t *context;
 	isc_appctx_t *actx = NULL;
 	isc_mem_t *mctx = NULL;
+	isc_nm_t *netmgr = NULL;
 	isc_taskmgr_t *taskmgr = NULL;
 	isc_socketmgr_t *socketmgr = NULL;
 	isc_timermgr_t *timermgr = NULL;
@@ -160,14 +165,16 @@ irs_context_create(irs_context_t **contextp) {
 		return (result);
 	}
 
-	result = ctxs_init(&mctx, &actx, &taskmgr, &socketmgr, &timermgr);
+	result = ctxs_init(&mctx, &actx, &netmgr, &taskmgr, &socketmgr,
+			   &timermgr);
 	if (result != ISC_R_SUCCESS) {
 		return (result);
 	}
 
 	result = isc_app_ctxstart(actx);
 	if (result != ISC_R_SUCCESS) {
-		ctxs_destroy(&mctx, &actx, &taskmgr, &socketmgr, &timermgr);
+		ctxs_destroy(&mctx, &actx, &netmgr, &taskmgr, &socketmgr,
+			     &timermgr);
 		return (result);
 	}
 
@@ -187,8 +194,8 @@ irs_context_create(irs_context_t **contextp) {
 	}
 
 	/* Create a DNS client object */
-	result = dns_client_createx(mctx, actx, taskmgr, socketmgr, timermgr, 0,
-				    &client, NULL, NULL);
+	result = dns_client_create(mctx, actx, taskmgr, socketmgr, timermgr, 0,
+				   &client, NULL, NULL);
 	if (result != ISC_R_SUCCESS) {
 		goto fail;
 	}
@@ -242,7 +249,7 @@ fail:
 	if (client != NULL) {
 		dns_client_destroy(&client);
 	}
-	ctxs_destroy(NULL, &actx, &taskmgr, &socketmgr, &timermgr);
+	ctxs_destroy(NULL, &actx, &netmgr, &taskmgr, &socketmgr, &timermgr);
 	isc_mem_putanddetach(&mctx, context, sizeof(*context));
 
 	return (result);
@@ -262,7 +269,7 @@ irs_context_destroy(irs_context_t **contextp) {
 	irs_resconf_destroy(&context->resconf);
 	dns_client_destroy(&context->dnsclient);
 
-	ctxs_destroy(NULL, &context->actx, &context->taskmgr,
+	ctxs_destroy(NULL, &context->actx, &context->netmgr, &context->taskmgr,
 		     &context->socketmgr, &context->timermgr);
 
 	context->magic = 0;

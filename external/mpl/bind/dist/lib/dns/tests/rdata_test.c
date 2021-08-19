@@ -1,4 +1,4 @@
-/*	$NetBSD: rdata_test.c,v 1.9 2021/04/29 17:26:11 christos Exp $	*/
+/*	$NetBSD: rdata_test.c,v 1.10 2021/08/19 11:50:18 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -622,6 +622,10 @@ check_wire_ok(const wire_ok_t *wire_ok, bool empty_ok, dns_rdataclass_t rdclass,
 	 * Check all entries in the supplied array.
 	 */
 	for (i = 0; wire_ok[i].len != 0; i++) {
+		if (debug) {
+			fprintf(stderr, "calling check_wire_ok_single on %zu\n",
+				i);
+		}
 		check_wire_ok_single(&wire_ok[i], rdclass, type, structsize);
 	}
 
@@ -2413,7 +2417,7 @@ wks(void **state) {
 /*
  * ZONEMD tests.
  *
- * Excerpted from draft-wessels-dns-zone-digest:
+ * Excerpted from RFC 8976:
  *
  * The ZONEMD RDATA wire format is encoded as follows:
  *
@@ -2422,56 +2426,131 @@ wks(void **state) {
  *    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
  *    |                             Serial                            |
  *    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
- *    |  Digest Type  |   Reserved    |                               |
+ *    |    Scheme     |Hash Algorithm |                               |
  *    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+                               |
  *    |                             Digest                            |
  *    /                                                               /
  *    /                                                               /
  *    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
  *
- * 2.1.1.  The Serial Field
+ * 2.2.1.  The Serial Field
  *
- *    The Serial field is a 32-bit unsigned integer in network order.  It
- *    is equal to the serial number from the zone's SOA record
+ *    The Serial field is a 32-bit unsigned integer in network byte order.
+ *    It is the serial number from the zone's SOA record ([RFC1035],
+ *    Section 3.3.13) for which the zone digest was generated.
  *
- * 2.1.2.  The Digest Type Field
+ *    It is included here to clearly bind the ZONEMD RR to a particular
+ *    version of the zone's content.  Without the serial number, a stand-
+ *    alone ZONEMD digest has no obvious association to any particular
+ *    instance of a zone.
  *
- *    The Digest Type field is an 8-bit unsigned integer that identifies
- *    the algorithm used to construct the digest.
+ * 2.2.2.  The Scheme Field
  *
- *    At the time of this writing, SHA384, with value 1, is the only Digest
- *    Type defined for ZONEMD records.
+ *    The Scheme field is an 8-bit unsigned integer that identifies the
+ *    methods by which data is collated and presented as input to the
+ *    hashing function.
  *
- * 2.1.3.  The Reserved Field
+ *    Herein, SIMPLE, with Scheme value 1, is the only standardized Scheme
+ *    defined for ZONEMD records and it MUST be supported by
+ *    implementations.  The "ZONEMD Schemes" registry is further described
+ *    in Section 5.
  *
- *    The Reserved field is an 8-bit unsigned integer, which is always set
- *    to zero.
+ *    Scheme values 240-254 are allocated for Private Use.
  *
- * 2.1.4.  The Digest Field
+ * 2.2.3.  The Hash Algorithm Field
+ *
+ *    The Hash Algorithm field is an 8-bit unsigned integer that identifies
+ *    the cryptographic hash algorithm used to construct the digest.
+ *
+ *    Herein, SHA384 ([RFC6234]), with Hash Algorithm value 1, is the only
+ *    standardized Hash Algorithm defined for ZONEMD records that MUST be
+ *    supported by implementations.  When SHA384 is used, the size of the
+ *    Digest field is 48 octets.  The result of the SHA384 digest algorithm
+ *    MUST NOT be truncated, and the entire 48-octet digest is published in
+ *    the ZONEMD record.
+ *
+ *    SHA512 ([RFC6234]), with Hash Algorithm value 2, is also defined for
+ *    ZONEMD records and SHOULD be supported by implementations.  When
+ *    SHA512 is used, the size of the Digest field is 64 octets.  The
+ *    result of the SHA512 digest algorithm MUST NOT be truncated, and the
+ *    entire 64-octet digest is published in the ZONEMD record.
+ *
+ *    Hash Algorithm values 240-254 are allocated for Private Use.
+ *
+ *    The "ZONEMD Hash Algorithms" registry is further described in
+ *    Section 5.
+ *
+ * 2.2.4.  The Digest Field
  *
  *    The Digest field is a variable-length sequence of octets containing
- *    the message digest.
+ *    the output of the hash algorithm.  The length of the Digest field is
+ *    determined by deducting the fixed size of the Serial, Scheme, and
+ *    Hash Algorithm fields from the RDATA size in the ZONEMD RR header.
+ *
+ *    The Digest field MUST NOT be shorter than 12 octets.  Digests for the
+ *    SHA384 and SHA512 hash algorithms specified herein are never
+ *    truncated.  Digests for future hash algorithms MAY be truncated but
+ *    MUST NOT be truncated to a length that results in less than 96 bits
+ *    (12 octets) of equivalent strength.
+ *
+ *    Section 3 describes how to calculate the digest for a zone.
+ *    Section 4 describes how to use the digest to verify the contents of a
+ *    zone.
+ *
  */
 
 static void
 zonemd(void **state) {
-	text_ok_t text_ok[] = { TEXT_INVALID(""),
-				TEXT_INVALID("0"),
-				TEXT_INVALID("0 0"),
-				TEXT_INVALID("0 0 0"),
-				TEXT_INVALID("99999999 0 0"),
-				TEXT_INVALID("2019020700 0 0"),
-				TEXT_INVALID("2019020700 1 0 DEADBEEF"),
-				TEXT_VALID("2019020700 2 0 DEADBEEF"),
-				TEXT_VALID("2019020700 255 0 DEADBEEF"),
-				TEXT_INVALID("2019020700 256 0 DEADBEEF"),
-				TEXT_VALID("2019020700 2 255 DEADBEEF"),
-				TEXT_INVALID("2019020700 2 256 DEADBEEF"),
-				TEXT_VALID("2019020700 1 0 "
-					   "7162D2BB75C047A53DE98767C9192BEB"
-					   "14DB01E7E2267135DAF0230A 19BA4A31"
-					   "6AF6BF64AA5C7BAE24B2992850300509"),
-				TEXT_SENTINEL() };
+	text_ok_t text_ok[] = {
+		TEXT_INVALID(""),
+		/* No digest scheme or digest type*/
+		TEXT_INVALID("0"),
+		/* No digest type */
+		TEXT_INVALID("0 0"),
+		/* No digest */
+		TEXT_INVALID("0 0 0"),
+		/* No digest */
+		TEXT_INVALID("99999999 0 0"),
+		/* No digest */
+		TEXT_INVALID("2019020700 0 0"),
+		/* Digest too short */
+		TEXT_INVALID("2019020700 1 1 DEADBEEF"),
+		/* Digest too short */
+		TEXT_INVALID("2019020700 1 2 DEADBEEF"),
+		/* Digest too short */
+		TEXT_INVALID("2019020700 1 3 DEADBEEFDEADBEEFDEADBE"),
+		/* Digest type unknown */
+		TEXT_VALID("2019020700 1 3 DEADBEEFDEADBEEFDEADBEEF"),
+		/* Digest type max */
+		TEXT_VALID("2019020700 1 255 DEADBEEFDEADBEEFDEADBEEF"),
+		/* Digest type too big */
+		TEXT_INVALID("2019020700 0 256 DEADBEEFDEADBEEFDEADBEEF"),
+		/* Scheme max */
+		TEXT_VALID("2019020700 255 3 DEADBEEFDEADBEEFDEADBEEF"),
+		/* Scheme too big */
+		TEXT_INVALID("2019020700 256 3 DEADBEEFDEADBEEFDEADBEEF"),
+		/* SHA384 */
+		TEXT_VALID("2019020700 1 1 "
+			   "7162D2BB75C047A53DE98767C9192BEB"
+			   "14DB01E7E2267135DAF0230A 19BA4A31"
+			   "6AF6BF64AA5C7BAE24B2992850300509"),
+		/* SHA512 */
+		TEXT_VALID("2019020700 1 2 "
+			   "08CFA1115C7B948C4163A901270395EA"
+			   "226A930CD2CBCF2FA9A5E6EB 85F37C8A"
+			   "4E114D884E66F176EAB121CB02DB7D65"
+			   "2E0CC4827E7A3204 F166B47E5613FD27"),
+		/* SHA384 too short and with private scheme */
+		TEXT_INVALID("2021042801 0 1 "
+			     "7162D2BB75C047A53DE98767C9192BEB"
+			     "6AF6BF64AA5C7BAE24B2992850300509"),
+		/* SHA512 too short and with private scheme */
+		TEXT_INVALID("2021042802 5 2 "
+			     "A897B40072ECAE9E4CA3F1F227DE8F5E"
+			     "480CDEBB16DFC64C1C349A7B5F6C71AB"
+			     "E8A88B76EF0BA1604EC25752E946BF98"),
+		TEXT_SENTINEL()
+	};
 	wire_ok_t wire_ok[] = {
 		/*
 		 * Short.
@@ -2498,18 +2577,28 @@ zonemd(void **state) {
 		 */
 		WIRE_INVALID(0x00, 0x00, 0x00, 0x00, 0x00, 0x00),
 		/*
-		 * Minimal, one-octet hash for an undefined digest type.
+		 * Short 11-octet digest.
 		 */
-		WIRE_VALID(0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00),
+		WIRE_INVALID(0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+			     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+			     0x00),
+		/*
+		 * Minimal, 12-octet hash for an undefined digest type.
+		 */
+		WIRE_VALID(0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+			   0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+			   0x00),
 		/*
 		 * SHA-384 is defined, so we insist there be a digest of
 		 * the expected length.
 		 */
-		WIRE_INVALID(0x00, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00),
+		WIRE_INVALID(0x00, 0x00, 0x00, 0x00, 0x01, 0x01, 0x00, 0x00,
+			     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+			     0x00, 0x00),
 		/*
 		 * 48-octet digest, valid for SHA-384.
 		 */
-		WIRE_VALID(0x00, 0x00, 0x00, 0x00, 0x01, 0x00, 0xde, 0xad, 0xbe,
+		WIRE_VALID(0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0xde, 0xad, 0xbe,
 			   0xef, 0xfa, 0xce, 0xde, 0xad, 0xbe, 0xef, 0xfa, 0xce,
 			   0xde, 0xad, 0xbe, 0xef, 0xfa, 0xce, 0xde, 0xad, 0xbe,
 			   0xef, 0xfa, 0xce, 0xde, 0xad, 0xbe, 0xef, 0xfa, 0xce,
@@ -2519,7 +2608,7 @@ zonemd(void **state) {
 		/*
 		 * 56-octet digest, too long for SHA-384.
 		 */
-		WIRE_INVALID(0x00, 0x00, 0x00, 0x00, 0x01, 0x00, 0xde, 0xad,
+		WIRE_INVALID(0x00, 0x00, 0x00, 0x00, 0x01, 0x01, 0xde, 0xad,
 			     0xbe, 0xef, 0xfa, 0xce, 0xde, 0xad, 0xbe, 0xef,
 			     0xfa, 0xce, 0xde, 0xad, 0xbe, 0xef, 0xfa, 0xce,
 			     0xde, 0xad, 0xbe, 0xef, 0xfa, 0xce, 0xde, 0xad,
@@ -2528,9 +2617,44 @@ zonemd(void **state) {
 			     0xde, 0xad, 0xbe, 0xef, 0xfa, 0xce, 0xde, 0xad,
 			     0xbe, 0xef, 0xfa, 0xce),
 		/*
+		 * 56-octet digest, too short for SHA-512
+		 */
+		WIRE_INVALID(0x00, 0x00, 0x00, 0x00, 0x01, 0x02, 0xde, 0xad,
+			     0xbe, 0xef, 0xfa, 0xce, 0xde, 0xad, 0xbe, 0xef,
+			     0xfa, 0xce, 0xde, 0xad, 0xbe, 0xef, 0xfa, 0xce,
+			     0xde, 0xad, 0xbe, 0xef, 0xfa, 0xce, 0xde, 0xad,
+			     0xbe, 0xef, 0xfa, 0xce, 0xde, 0xad, 0xbe, 0xef,
+			     0xfa, 0xce, 0xde, 0xad, 0xbe, 0xef, 0xfa, 0xce,
+			     0xde, 0xad, 0xbe, 0xef, 0xfa, 0xce, 0xde, 0xad,
+			     0xbe, 0xef, 0xfa, 0xce, 0xde, 0xad),
+		/*
+		 * 64-octet digest, just right for SHA-512
+		 */
+		WIRE_VALID(0x00, 0x00, 0x00, 0x00, 0x01, 0x02, 0xde, 0xad, 0xbe,
+			   0xef, 0xfa, 0xce, 0xde, 0xad, 0xbe, 0xef, 0xfa, 0xce,
+			   0xde, 0xad, 0xbe, 0xef, 0xfa, 0xce, 0xde, 0xad, 0xbe,
+			   0xef, 0xfa, 0xce, 0xde, 0xad, 0xbe, 0xef, 0xfa, 0xce,
+			   0xde, 0xad, 0xbe, 0xef, 0xfa, 0xce, 0xde, 0xad, 0xbe,
+			   0xef, 0xfa, 0xce, 0xde, 0xad, 0xbe, 0xef, 0xfa, 0xce,
+			   0xde, 0xad, 0xbe, 0xef, 0xfa, 0xce, 0xde, 0xad, 0xbe,
+			   0xef, 0xfa, 0xce, 0xde, 0xad, 0xbe, 0xef),
+		/*
+		 * 72-octet digest, too long for SHA-512
+		 */
+		WIRE_INVALID(0x00, 0x00, 0x00, 0x00, 0x01, 0x02, 0xde, 0xad,
+			     0xbe, 0xef, 0xfa, 0xce, 0xde, 0xad, 0xbe, 0xef,
+			     0xfa, 0xce, 0xde, 0xad, 0xbe, 0xef, 0xfa, 0xce,
+			     0xde, 0xad, 0xbe, 0xef, 0xfa, 0xce, 0xde, 0xad,
+			     0xbe, 0xef, 0xfa, 0xce, 0xde, 0xad, 0xbe, 0xef,
+			     0xfa, 0xce, 0xde, 0xad, 0xbe, 0xef, 0xfa, 0xce,
+			     0xde, 0xad, 0xbe, 0xef, 0xfa, 0xce, 0xde, 0xad,
+			     0xbe, 0xef, 0xfa, 0xce, 0xde, 0xad, 0xbe, 0xef,
+			     0xfa, 0xce, 0xde, 0xad, 0xbe, 0xef, 0xfa, 0xce,
+			     0xde, 0xad, 0xbe, 0xef, 0xfa, 0xce),
+		/*
 		 * 56-octet digest, valid for an undefined digest type.
 		 */
-		WIRE_VALID(0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xde, 0xad, 0xbe,
+		WIRE_VALID(0x00, 0x00, 0x00, 0x00, 0x01, 0x00, 0xde, 0xad, 0xbe,
 			   0xef, 0xfa, 0xce, 0xde, 0xad, 0xbe, 0xef, 0xfa, 0xce,
 			   0xde, 0xad, 0xbe, 0xef, 0xfa, 0xce, 0xde, 0xad, 0xbe,
 			   0xef, 0xfa, 0xce, 0xde, 0xad, 0xbe, 0xef, 0xfa, 0xce,

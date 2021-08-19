@@ -1,4 +1,4 @@
-/*	$NetBSD: netmgr-int.h,v 1.6 2021/04/29 17:26:12 christos Exp $	*/
+/*	$NetBSD: netmgr-int.h,v 1.7 2021/08/19 11:50:18 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -21,6 +21,7 @@
 
 #include <isc/astack.h>
 #include <isc/atomic.h>
+#include <isc/barrier.h>
 #include <isc/buffer.h>
 #include <isc/condition.h>
 #include <isc/magic.h>
@@ -32,6 +33,7 @@
 #include <isc/refcount.h>
 #include <isc/region.h>
 #include <isc/result.h>
+#include <isc/rwlock.h>
 #include <isc/sockaddr.h>
 #include <isc/stats.h>
 #include <isc/thread.h>
@@ -41,7 +43,8 @@
 
 #define ISC_NETMGR_TID_UNKNOWN -1
 
-#define ISC_NETMGR_TLSBUF_SIZE 65536
+/* Must be different from ISC_NETMGR_TID_UNKNOWN */
+#define ISC_NETMGR_NON_INTERLOCKED -2
 
 #if !defined(WIN32)
 /*
@@ -66,7 +69,7 @@
 /*%
  * Larger buffer for when the regular one isn't enough; this will
  * hold two full DNS packets with lengths.  netmgr receives 64k at
- * most in TCPDNS or TLSDNS connections, so there's no risk of overrun
+ * most in TCPDNS connections, so there's no risk of overrun
  * when using a buffer this size.
  */
 #define NM_BIG_BUF (65535 + 2) * 2
@@ -160,6 +163,17 @@ isc__nm_dump_active(isc_nm_t *nm);
 #endif
 
 /*
+ * Queue types in the order of processing priority.
+ */
+typedef enum {
+	NETIEVENT_PRIORITY = 0,
+	NETIEVENT_PRIVILEGED = 1,
+	NETIEVENT_TASK = 2,
+	NETIEVENT_NORMAL = 3,
+	NETIEVENT_MAX = 4,
+} netievent_type_t;
+
+/*
  * Single network event loop worker.
  */
 typedef struct isc__networker {
@@ -169,15 +183,13 @@ typedef struct isc__networker {
 	uv_async_t async; /* async channel to send
 			   * data to this networker */
 	isc_mutex_t lock;
-	isc_condition_t cond;
 	bool paused;
 	bool finished;
 	isc_thread_t thread;
-	isc_queue_t *ievents;	   /* incoming async events */
-	isc_queue_t *ievents_prio; /* priority async events
-				    * used for listening etc.
-				    * can be processed while
-				    * worker is paused */
+	isc_queue_t *ievents[NETIEVENT_MAX];
+	atomic_uint_fast32_t nievents[NETIEVENT_MAX];
+	isc_condition_t cond_prio;
+
 	isc_refcount_t references;
 	atomic_int_fast64_t pktcount;
 	char *recvbuf;
@@ -224,49 +236,28 @@ struct isc_nmhandle {
 	char extra[];
 };
 
-/*
- * An interface - an address we can listen on.
- */
-struct isc_nmiface {
-	isc_sockaddr_t addr;
-};
-
 typedef enum isc__netievent_type {
 	netievent_udpconnect,
+	netievent_udpclose,
 	netievent_udpsend,
 	netievent_udpread,
-	netievent_udpstop,
 	netievent_udpcancel,
-	netievent_udpclose,
 
 	netievent_tcpconnect,
+	netievent_tcpclose,
 	netievent_tcpsend,
 	netievent_tcpstartread,
 	netievent_tcppauseread,
 	netievent_tcpaccept,
-	netievent_tcpstop,
 	netievent_tcpcancel,
-	netievent_tcpclose,
 
 	netievent_tcpdnsaccept,
 	netievent_tcpdnsconnect,
+	netievent_tcpdnsclose,
 	netievent_tcpdnssend,
 	netievent_tcpdnsread,
 	netievent_tcpdnscancel,
-	netievent_tcpdnsclose,
-	netievent_tcpdnsstop,
 
-	netievent_tlsdnsaccept,
-	netievent_tlsdnsconnect,
-	netievent_tlsdnssend,
-	netievent_tlsdnsread,
-	netievent_tlsdnscancel,
-	netievent_tlsdnsclose,
-	netievent_tlsdnsstop,
-	netievent_tlsdnscycle,
-	netievent_tlsdnsshutdown,
-
-	netievent_close,
 	netievent_shutdown,
 	netievent_stop,
 	netievent_pause,
@@ -275,17 +266,26 @@ typedef enum isc__netievent_type {
 	netievent_readcb,
 	netievent_sendcb,
 
-	netievent_prio = 0xff, /* event type values higher than this
-				* will be treated as high-priority
-				* events, which can be processed
-				* while the netmgr is paused.
-				*/
+	netievent_task,
+	netievent_privilegedtask,
+
+	/*
+	 * event type values higher than this will be treated
+	 * as high-priority events, which can be processed
+	 * while the netmgr is pausing or paused.
+	 */
+	netievent_prio = 0xff,
+
 	netievent_udplisten,
+	netievent_udpstop,
 	netievent_tcplisten,
+	netievent_tcpstop,
 	netievent_tcpdnslisten,
-	netievent_tlsdnslisten,
+	netievent_tcpdnsstop,
+
 	netievent_resume,
 	netievent_detach,
+	netievent_close,
 } isc__netievent_type;
 
 typedef union {
@@ -533,19 +533,41 @@ typedef struct isc__netievent__socket_quota {
 		isc__nm_put_netievent(nm, ievent);                             \
 	}
 
+typedef struct isc__netievent__task {
+	isc__netievent_type type;
+	isc_task_t *task;
+} isc__netievent__task_t;
+
+#define NETIEVENT_TASK_TYPE(type) \
+	typedef isc__netievent__task_t isc__netievent_##type##_t;
+
+#define NETIEVENT_TASK_DECL(type)                                \
+	isc__netievent_##type##_t *isc__nm_get_netievent_##type( \
+		isc_nm_t *nm, isc_task_t *task);                 \
+	void isc__nm_put_netievent_##type(isc_nm_t *nm,          \
+					  isc__netievent_##type##_t *ievent);
+
+#define NETIEVENT_TASK_DEF(type)                                               \
+	isc__netievent_##type##_t *isc__nm_get_netievent_##type(               \
+		isc_nm_t *nm, isc_task_t *task) {                              \
+		isc__netievent_##type##_t *ievent =                            \
+			isc__nm_get_netievent(nm, netievent_##type);           \
+		ievent->task = task;                                           \
+                                                                               \
+		return (ievent);                                               \
+	}                                                                      \
+                                                                               \
+	void isc__nm_put_netievent_##type(isc_nm_t *nm,                        \
+					  isc__netievent_##type##_t *ievent) { \
+		ievent->task = NULL;                                           \
+		isc__nm_put_netievent(nm, ievent);                             \
+	}
+
 typedef struct isc__netievent_udpsend {
 	NETIEVENT__SOCKET;
 	isc_sockaddr_t peer;
 	isc__nm_uvreq_t *req;
 } isc__netievent_udpsend_t;
-
-typedef struct isc__netievent_tlsconnect {
-	isc__netievent_type type;
-	isc_nmsocket_t *sock;
-	SSL_CTX *ctx;
-	isc_sockaddr_t local; /* local address */
-	isc_sockaddr_t peer;  /* peer address */
-} isc__netievent_tlsconnect_t;
 
 typedef struct isc__netievent {
 	isc__netievent_type type;
@@ -578,8 +600,18 @@ typedef union {
 	isc__netievent__socket_req_t nisr;
 	isc__netievent_udpsend_t nius;
 	isc__netievent__socket_quota_t nisq;
-	isc__netievent_tlsconnect_t nitc;
 } isc__netievent_storage_t;
+
+/*
+ * Work item for a uv_work threadpool.
+ */
+typedef struct isc__nm_work {
+	isc_nm_t *netmgr;
+	uv_work_t req;
+	isc_nm_workcb_t cb;
+	isc_nm_after_workcb_t after_cb;
+	void *data;
+} isc__nm_work_t;
 
 /*
  * Network manager
@@ -591,9 +623,10 @@ struct isc_nm {
 	int magic;
 	isc_refcount_t references;
 	isc_mem_t *mctx;
-	uint32_t nworkers;
+	int nworkers;
 	isc_mutex_t lock;
 	isc_condition_t wkstatecond;
+	isc_condition_t wkpausecond;
 	isc__networker_t *workers;
 
 	isc_stats_t *stats;
@@ -605,8 +638,10 @@ struct isc_nm {
 	isc_mutex_t evlock;
 
 	uint_fast32_t workers_running;
-	uint_fast32_t workers_paused;
+	atomic_uint_fast32_t workers_paused;
 	atomic_uint_fast32_t maxudp;
+
+	atomic_bool paused;
 
 	/*
 	 * Active connections are being closed and new connections are
@@ -620,7 +655,7 @@ struct isc_nm {
 	 * or pause, or we'll deadlock. We have to either re-enqueue our
 	 * event or wait for the other one to finish if we want to pause.
 	 */
-	atomic_bool interlocked;
+	atomic_int interlocked;
 
 	/*
 	 * Timeout values for TCP connections, corresponding to
@@ -634,6 +669,9 @@ struct isc_nm {
 	atomic_uint_fast32_t keepalive;
 	atomic_uint_fast32_t advertised;
 
+	isc_barrier_t pausing;
+	isc_barrier_t resuming;
+
 #ifdef NETMGR_TRACE
 	ISC_LIST(isc_nmsocket_t) active_sockets;
 #endif
@@ -646,8 +684,6 @@ typedef enum isc_nmsocket_type {
 	isc_nm_tcplistener,
 	isc_nm_tcpdnslistener,
 	isc_nm_tcpdnssocket,
-	isc_nm_tlsdnslistener,
-	isc_nm_tlsdnssocket
 } isc_nmsocket_type;
 
 /*%
@@ -686,6 +722,7 @@ struct isc_nmsocket {
 	int tid;
 	isc_nmsocket_type type;
 	isc_nm_t *mgr;
+
 	/*% Parent socket for multithreaded listeners */
 	isc_nmsocket_t *parent;
 	/*% Listener socket this connection was accepted on */
@@ -693,27 +730,8 @@ struct isc_nmsocket {
 	/*% Self socket */
 	isc_nmsocket_t *self;
 
-	/*% TLS stuff */
-	struct tls {
-		SSL *ssl;
-		SSL_CTX *ctx;
-		BIO *app_rbio;
-		BIO *app_wbio;
-		BIO *ssl_rbio;
-		BIO *ssl_wbio;
-		enum {
-			TLS_STATE_NONE,
-			TLS_STATE_HANDSHAKE,
-			TLS_STATE_IO,
-			TLS_STATE_ERROR,
-			TLS_STATE_CLOSING
-		} state;
-		uv_buf_t senddata;
-		bool cycle;
-		isc_result_t pending_error;
-		/* List of active send requests. */
-		isc__nm_uvreq_t *pending_req;
-	} tls;
+	isc_barrier_t startlistening;
+	isc_barrier_t stoplistening;
 
 	/*%
 	 * quota is the TCP client, attached when a TCP connection
@@ -734,8 +752,6 @@ struct isc_nmsocket {
 	 * TCP read/connect timeout timers.
 	 */
 	uv_timer_t timer;
-	bool timer_initialized;
-	bool timer_running;
 	uint64_t read_timeout;
 	uint64_t connect_timeout;
 
@@ -748,7 +764,7 @@ struct isc_nmsocket {
 	/*% Child sockets for multi-socket setups */
 	isc_nmsocket_t *children;
 	uint_fast32_t nchildren;
-	isc_nmiface_t *iface;
+	isc_sockaddr_t iface;
 	isc_nmhandle_t *statichandle;
 	isc_nmhandle_t *outerhandle;
 
@@ -767,7 +783,7 @@ struct isc_nmsocket {
 
 	/* Atomic */
 	/*% Number of running (e.g. listening) child sockets */
-	uint_fast32_t rchildren;
+	atomic_uint_fast32_t rchildren;
 
 	/*%
 	 * Socket is active if it's listening, working, etc. If it's
@@ -916,6 +932,7 @@ struct isc_nmsocket {
 	void *accept_cbarg;
 
 	atomic_int_fast32_t active_child_connections;
+
 #ifdef NETMGR_TRACE
 	void *backtrace[TRACE_SIZE];
 	int backtrace_size;
@@ -989,7 +1006,7 @@ isc___nm_uvreq_put(isc__nm_uvreq_t **req, isc_nmsocket_t *sock FLARG);
 
 void
 isc___nmsocket_init(isc_nmsocket_t *sock, isc_nm_t *mgr, isc_nmsocket_type type,
-		    isc_nmiface_t *iface FLARG);
+		    isc_sockaddr_t *iface FLARG);
 /*%<
  * Initialize socket 'sock', attach it to 'mgr', and set it to type 'type'
  * and its interface to 'iface'.
@@ -1013,6 +1030,13 @@ isc___nmsocket_prep_destroy(isc_nmsocket_t *sock FLARG);
 /*%<
  * Market 'sock' as inactive, close it if necessary, and destroy it
  * if there are no remaining references or active handles.
+ */
+
+void
+isc__nmsocket_shutdown(isc_nmsocket_t *sock);
+/*%<
+ * Initiate the socket shutdown which actively calls the active
+ * callbacks.
  */
 
 bool
@@ -1046,18 +1070,20 @@ void
 isc__nmsocket_timer_start(isc_nmsocket_t *sock);
 void
 isc__nmsocket_timer_restart(isc_nmsocket_t *sock);
+bool
+isc__nmsocket_timer_running(isc_nmsocket_t *sock);
 /*%<
- * Start/stop/restart the read timeout on the socket
+ * Start/stop/restart/check the timeout on the socket
  */
 
 void
 isc__nm_connectcb(isc_nmsocket_t *sock, isc__nm_uvreq_t *uvreq,
-		  isc_result_t eresult);
+		  isc_result_t eresult, bool async);
+
 void
 isc__nm_async_connectcb(isc__networker_t *worker, isc__netievent_t *ev0);
 /*%<
  * Issue a connect callback on the socket, used to call the callback
-
  */
 
 void
@@ -1090,8 +1116,8 @@ isc__nm_async_shutdown(isc__networker_t *worker, isc__netievent_t *ev0);
  */
 
 void
-isc__nm_udp_send(isc_nmhandle_t *handle, isc_region_t *region, isc_nm_cb_t cb,
-		 void *cbarg);
+isc__nm_udp_send(isc_nmhandle_t *handle, const isc_region_t *region,
+		 isc_nm_cb_t cb, void *cbarg);
 /*%<
  * Back-end implementation of isc_nm_send() for UDP handles.
  */
@@ -1152,8 +1178,8 @@ isc__nm_async_udpclose(isc__networker_t *worker, isc__netievent_t *ev0);
  */
 
 void
-isc__nm_tcp_send(isc_nmhandle_t *handle, isc_region_t *region, isc_nm_cb_t cb,
-		 void *cbarg);
+isc__nm_tcp_send(isc_nmhandle_t *handle, const isc_region_t *region,
+		 isc_nm_cb_t cb, void *cbarg);
 /*%<
  * Back-end implementation of isc_nm_send() for TCP handles.
  */
@@ -1300,70 +1326,6 @@ isc__nm_tcpdns_cancelread(isc_nmhandle_t *handle);
  * Stop reading on a connected TCPDNS handle.
  */
 
-void
-isc__nm_async_tlsdnscycle(isc__networker_t *worker, isc__netievent_t *ev0);
-void
-isc__nm_async_tlsdnsaccept(isc__networker_t *worker, isc__netievent_t *ev0);
-void
-isc__nm_async_tlsdnsconnect(isc__networker_t *worker, isc__netievent_t *ev0);
-void
-isc__nm_async_tlsdnslisten(isc__networker_t *worker, isc__netievent_t *ev0);
-void
-isc__nm_tlsdns_send(isc_nmhandle_t *handle, isc_region_t *region,
-		    isc_nm_cb_t cb, void *cbarg);
-/*%<
- * Back-end implementation of isc_nm_send() for TLSDNS handles.
- */
-
-void
-isc__nm_tlsdns_shutdown(isc_nmsocket_t *sock);
-
-void
-isc__nm_tlsdns_close(isc_nmsocket_t *sock);
-/*%<
- * Close a TLSDNS socket.
- */
-
-void
-isc__nm_tlsdns_stoplistening(isc_nmsocket_t *sock);
-/*%<
- * Stop listening on 'sock'.
- */
-
-void
-isc__nm_tlsdns_settimeout(isc_nmhandle_t *handle, uint32_t timeout);
-/*%<
- * Set the read timeout and reset the timer for the TLSDNS socket
- * associated with 'handle', and the TCP socket it wraps around.
- */
-
-void
-isc__nm_async_tlsdnslisten(isc__networker_t *worker, isc__netievent_t *ev0);
-void
-isc__nm_async_tlsdnsaccept(isc__networker_t *worker, isc__netievent_t *ev0);
-void
-isc__nm_async_tlsdnscancel(isc__networker_t *worker, isc__netievent_t *ev0);
-void
-isc__nm_async_tlsdnsclose(isc__networker_t *worker, isc__netievent_t *ev0);
-void
-isc__nm_async_tlsdnssend(isc__networker_t *worker, isc__netievent_t *ev0);
-void
-isc__nm_async_tlsdnsstop(isc__networker_t *worker, isc__netievent_t *ev0);
-void
-isc__nm_async_tlsdnsshutdown(isc__networker_t *worker, isc__netievent_t *ev0);
-
-void
-isc__nm_async_tlsdnsread(isc__networker_t *worker, isc__netievent_t *ev0);
-
-void
-isc__nm_tlsdns_read(isc_nmhandle_t *handle, isc_nm_recv_cb_t cb, void *cbarg);
-
-void
-isc__nm_tlsdns_cancelread(isc_nmhandle_t *handle);
-/*%<
- * Stop reading on a connected TLSDNS handle.
- */
-
 #define isc__nm_uverr2result(x) \
 	isc___nm_uverr2result(x, true, __FILE__, __LINE__, __func__)
 isc_result_t
@@ -1443,9 +1405,10 @@ isc__nm_socket_incoming_cpu(uv_os_sock_t fd);
  */
 
 isc_result_t
-isc__nm_socket_dontfrag(uv_os_sock_t fd, sa_family_t sa_family);
+isc__nm_socket_disable_pmtud(uv_os_sock_t fd, sa_family_t sa_family);
 /*%<
- * Set the SO_IP_DONTFRAG (or equivalent) socket option of the fd if available
+ * Disable the Path MTU Discovery, either by disabling IP(V6)_DONTFRAG socket
+ * option, or setting the IP(V6)_MTU_DISCOVER socket option to IP_PMTUDISC_OMIT
  */
 
 isc_result_t
@@ -1453,6 +1416,12 @@ isc__nm_socket_connectiontimeout(uv_os_sock_t fd, int timeout_ms);
 /*%<
  * Set the connection timeout in milliseconds, on non-Linux platforms,
  * the minimum value must be at least 1000 (1 second).
+ */
+
+isc_result_t
+isc__nm_socket_tcp_nodelay(uv_os_sock_t fd);
+/*%<
+ * Disables Nagle's algorithm on a TCP socket (sets TCP_NODELAY).
  */
 
 /*
@@ -1479,17 +1448,6 @@ NETIEVENT_SOCKET_REQ_TYPE(tcpdnssend);
 NETIEVENT_SOCKET_HANDLE_TYPE(tcpdnscancel);
 NETIEVENT_SOCKET_QUOTA_TYPE(tcpdnsaccept);
 
-NETIEVENT_SOCKET_TYPE(tlsdnsclose);
-NETIEVENT_SOCKET_TYPE(tlsdnsread);
-NETIEVENT_SOCKET_TYPE(tlsdnsstop);
-NETIEVENT_SOCKET_TYPE(tlsdnsshutdown);
-NETIEVENT_SOCKET_TYPE(tlsdnslisten);
-NETIEVENT_SOCKET_REQ_TYPE(tlsdnsconnect);
-NETIEVENT_SOCKET_REQ_TYPE(tlsdnssend);
-NETIEVENT_SOCKET_HANDLE_TYPE(tlsdnscancel);
-NETIEVENT_SOCKET_QUOTA_TYPE(tlsdnsaccept);
-NETIEVENT_SOCKET_TYPE(tlsdnscycle);
-
 NETIEVENT_SOCKET_REQ_TYPE(tcpconnect);
 NETIEVENT_SOCKET_REQ_TYPE(tcpsend);
 NETIEVENT_SOCKET_TYPE(tcpstartread);
@@ -1509,6 +1467,9 @@ NETIEVENT_TYPE(pause);
 NETIEVENT_TYPE(resume);
 NETIEVENT_TYPE(shutdown);
 NETIEVENT_TYPE(stop);
+
+NETIEVENT_TASK_TYPE(task);
+NETIEVENT_TASK_TYPE(privilegedtask);
 
 /* Now declared the helper functions */
 
@@ -1533,17 +1494,6 @@ NETIEVENT_SOCKET_REQ_DECL(tcpdnssend);
 NETIEVENT_SOCKET_HANDLE_DECL(tcpdnscancel);
 NETIEVENT_SOCKET_QUOTA_DECL(tcpdnsaccept);
 
-NETIEVENT_SOCKET_DECL(tlsdnsclose);
-NETIEVENT_SOCKET_DECL(tlsdnsread);
-NETIEVENT_SOCKET_DECL(tlsdnsstop);
-NETIEVENT_SOCKET_DECL(tlsdnsshutdown);
-NETIEVENT_SOCKET_DECL(tlsdnslisten);
-NETIEVENT_SOCKET_REQ_DECL(tlsdnsconnect);
-NETIEVENT_SOCKET_REQ_DECL(tlsdnssend);
-NETIEVENT_SOCKET_HANDLE_DECL(tlsdnscancel);
-NETIEVENT_SOCKET_QUOTA_DECL(tlsdnsaccept);
-NETIEVENT_SOCKET_DECL(tlsdnscycle);
-
 NETIEVENT_SOCKET_REQ_DECL(tcpconnect);
 NETIEVENT_SOCKET_REQ_DECL(tcpsend);
 NETIEVENT_SOCKET_REQ_DECL(udpconnect);
@@ -1563,19 +1513,18 @@ NETIEVENT_DECL(resume);
 NETIEVENT_DECL(shutdown);
 NETIEVENT_DECL(stop);
 
+NETIEVENT_TASK_DECL(task);
+NETIEVENT_TASK_DECL(privilegedtask);
+
 void
 isc__nm_udp_failed_read_cb(isc_nmsocket_t *sock, isc_result_t result);
 void
 isc__nm_tcp_failed_read_cb(isc_nmsocket_t *sock, isc_result_t result);
 void
 isc__nm_tcpdns_failed_read_cb(isc_nmsocket_t *sock, isc_result_t result);
-void
-isc__nm_tlsdns_failed_read_cb(isc_nmsocket_t *sock, isc_result_t result);
 
 isc_result_t
 isc__nm_tcpdns_processbuffer(isc_nmsocket_t *sock);
-isc_result_t
-isc__nm_tlsdns_processbuffer(isc_nmsocket_t *sock);
 
 isc__nm_uvreq_t *
 isc__nm_get_read_req(isc_nmsocket_t *sock, isc_sockaddr_t *sockaddr);
@@ -1587,9 +1536,9 @@ void
 isc__nm_udp_read_cb(uv_udp_t *handle, ssize_t nrecv, const uv_buf_t *buf,
 		    const struct sockaddr *addr, unsigned flags);
 void
-isc__nm_tcpdns_read_cb(uv_stream_t *stream, ssize_t nread, const uv_buf_t *buf);
+isc__nm_tcp_read_cb(uv_stream_t *stream, ssize_t nread, const uv_buf_t *buf);
 void
-isc__nm_tlsdns_read_cb(uv_stream_t *stream, ssize_t nread, const uv_buf_t *buf);
+isc__nm_tcpdns_read_cb(uv_stream_t *stream, ssize_t nread, const uv_buf_t *buf);
 
 void
 isc__nm_start_reading(isc_nmsocket_t *sock);
@@ -1600,7 +1549,9 @@ isc__nm_process_sock_buffer(isc_nmsocket_t *sock);
 void
 isc__nm_resume_processing(void *arg);
 bool
-isc__nm_inactive(isc_nmsocket_t *sock);
+isc__nmsocket_closing(isc_nmsocket_t *sock);
+bool
+isc__nm_closing(isc_nmsocket_t *sock);
 
 void
 isc__nm_alloc_dnsbuf(isc_nmsocket_t *sock, size_t len);
@@ -1612,8 +1563,11 @@ void
 isc__nm_failed_accept_cb(isc_nmsocket_t *sock, isc_result_t eresult);
 void
 isc__nm_failed_connect_cb(isc_nmsocket_t *sock, isc__nm_uvreq_t *req,
-			  isc_result_t eresult);
+			  isc_result_t eresult, bool async);
 void
-isc__nm_failed_read_cb(isc_nmsocket_t *sock, isc_result_t result);
+isc__nm_failed_read_cb(isc_nmsocket_t *sock, isc_result_t result, bool async);
+
+void
+isc__nmsocket_connecttimeout_cb(uv_timer_t *timer);
 
 #define STREAM_CLIENTS_PER_CONN 23

@@ -1,4 +1,4 @@
-/*	$NetBSD: delv.c,v 1.9 2021/04/05 11:27:00 rillig Exp $	*/
+/*	$NetBSD: delv.c,v 1.10 2021/08/19 11:50:14 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -35,6 +35,7 @@
 #include <isc/hex.h>
 #include <isc/lib.h>
 #include <isc/log.h>
+#include <isc/managers.h>
 #include <isc/md.h>
 #include <isc/mem.h>
 #ifdef WIN32
@@ -73,7 +74,6 @@
 #include <isccfg/log.h>
 #include <isccfg/namedconf.h>
 
-#include <irs/netdb.h>
 #include <irs/resconf.h>
 
 #define CHECK(r)                             \
@@ -1729,6 +1729,7 @@ main(int argc, char *argv[]) {
 	dns_namelist_t namelist;
 	unsigned int resopt, clopt;
 	isc_appctx_t *actx = NULL;
+	isc_nm_t *netmgr = NULL;
 	isc_taskmgr_t *taskmgr = NULL;
 	isc_socketmgr_t *socketmgr = NULL;
 	isc_timermgr_t *timermgr = NULL;
@@ -1752,9 +1753,9 @@ main(int argc, char *argv[]) {
 	isc_mem_create(&mctx);
 
 	CHECK(isc_appctx_create(mctx, &actx));
-	CHECK(isc_taskmgr_createinctx(mctx, 1, 0, &taskmgr));
-	CHECK(isc_socketmgr_createinctx(mctx, &socketmgr));
-	CHECK(isc_timermgr_createinctx(mctx, &timermgr));
+	CHECK(isc_managers_create(mctx, 1, 0, &netmgr, &taskmgr));
+	CHECK(isc_socketmgr_create(mctx, &socketmgr));
+	CHECK(isc_timermgr_create(mctx, &timermgr));
 
 	parse_args(argc, argv);
 
@@ -1775,8 +1776,8 @@ main(int argc, char *argv[]) {
 
 	/* Create client */
 	clopt = DNS_CLIENTCREATEOPT_USECACHE;
-	result = dns_client_createx(mctx, actx, taskmgr, socketmgr, timermgr,
-				    clopt, &client, srcaddr4, srcaddr6);
+	result = dns_client_create(mctx, actx, taskmgr, socketmgr, timermgr,
+				   clopt, &client, srcaddr4, srcaddr6);
 	if (result != ISC_R_SUCCESS) {
 		delv_log(ISC_LOG_ERROR, "dns_client_create: %s",
 			 isc_result_totext(result));
@@ -1796,7 +1797,7 @@ main(int argc, char *argv[]) {
 	CHECK(convert_name(&qfn, &query_name, qname));
 
 	/* Set up resolution options */
-	resopt = DNS_CLIENTRESOPT_ALLOWRUN | DNS_CLIENTRESOPT_NOCDFLAG;
+	resopt = DNS_CLIENTRESOPT_NOCDFLAG;
 	if (no_sigs) {
 		resopt |= DNS_CLIENTRESOPT_NODNSSEC;
 	}
@@ -1859,7 +1860,7 @@ cleanup:
 		dns_client_destroy(&client);
 	}
 	if (taskmgr != NULL) {
-		isc_taskmgr_destroy(&taskmgr);
+		isc_managers_destroy(&netmgr, &taskmgr);
 	}
 	if (timermgr != NULL) {
 		isc_timermgr_destroy(&timermgr);

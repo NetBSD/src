@@ -1,4 +1,4 @@
-/*	$NetBSD: quota_test.c,v 1.4 2021/04/29 17:26:12 christos Exp $	*/
+/*	$NetBSD: quota_test.c,v 1.5 2021/08/19 11:50:19 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -29,6 +29,8 @@
 #include <isc/result.h>
 #include <isc/thread.h>
 #include <isc/util.h>
+
+#include "isctest.h"
 
 static void
 isc_quota_get_set_test(void **state) {
@@ -258,7 +260,7 @@ isc_thread_t g_threads[10 * 100];
 static void *
 quota_detach(void *quotap) {
 	isc_quota_t *quota = (isc_quota_t *)quotap;
-	usleep(10000);
+	isc_test_nap(10000);
 	isc_quota_detach(&quota);
 	return ((isc_threadresult_t)0);
 }

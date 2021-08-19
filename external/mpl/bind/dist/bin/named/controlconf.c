@@ -1,4 +1,4 @@
-/*	$NetBSD: controlconf.c,v 1.7 2021/04/05 11:27:00 rillig Exp $	*/
+/*	$NetBSD: controlconf.c,v 1.8 2021/08/19 11:50:15 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -394,10 +394,6 @@ control_recvmessage(isc_task_t *task, isc_event_t *event) {
 			break;
 		}
 		isc_mem_put(listener->mctx, secret.rstart, REGION_SIZE(secret));
-		if (result != ISCCC_R_BADAUTH) {
-			log_invalid(&conn->ccmsg, result);
-			goto cleanup;
-		}
 	}
 
 	if (key == NULL) {

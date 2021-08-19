@@ -1,4 +1,4 @@
-/*	$NetBSD: zoneconf.c,v 1.10 2021/04/05 11:27:00 rillig Exp $	*/
+/*	$NetBSD: zoneconf.c,v 1.11 2021/08/19 11:50:15 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -1230,15 +1230,23 @@ named_zone_configure(const cfg_obj_t *config, const cfg_obj_t *vconfig,
 		result = named_config_get(maps, "dnssec-policy", &obj);
 		if (result == ISC_R_SUCCESS) {
 			kaspname = cfg_obj_asstring(obj);
-			result = dns_kasplist_find(kasplist, kaspname, &kasp);
-			if (result != ISC_R_SUCCESS) {
-				cfg_obj_log(obj, named_g_lctx, ISC_LOG_ERROR,
-					    "'dnssec-policy '%s' not found ",
-					    kaspname);
-				RETERR(result);
+			if (strcmp(kaspname, "none") != 0) {
+				result = dns_kasplist_find(kasplist, kaspname,
+							   &kasp);
+				if (result != ISC_R_SUCCESS) {
+					cfg_obj_log(
+						obj, named_g_lctx,
+						ISC_LOG_ERROR,
+						"dnssec-policy '%s' not found ",
+						kaspname);
+					RETERR(result);
+				}
+				dns_zone_setkasp(zone, kasp);
+				use_kasp = true;
 			}
-			dns_zone_setkasp(zone, kasp);
-			use_kasp = dns_zone_use_kasp(zone);
+		}
+		if (!use_kasp) {
+			dns_zone_setkasp(zone, NULL);
 		}
 
 		obj = NULL;
@@ -1281,8 +1289,8 @@ named_zone_configure(const cfg_obj_t *config, const cfg_obj_t *vconfig,
 			dns_ipkeylist_t ipkl;
 			dns_ipkeylist_init(&ipkl);
 
-			RETERR(named_config_getipandkeylist(config, obj, mctx,
-							    &ipkl));
+			RETERR(named_config_getipandkeylist(config, "primaries",
+							    obj, mctx, &ipkl));
 			result = dns_zone_setalsonotifydscpkeys(
 				zone, ipkl.addrs, ipkl.dscps, ipkl.keys,
 				ipkl.count);
@@ -1291,6 +1299,30 @@ named_zone_configure(const cfg_obj_t *config, const cfg_obj_t *vconfig,
 		} else {
 			RETERR(dns_zone_setalsonotify(zone, NULL, 0));
 		}
+
+		obj = NULL;
+		result = named_config_get(maps, "parental-source", &obj);
+		INSIST(result == ISC_R_SUCCESS && obj != NULL);
+		RETERR(dns_zone_setparentalsrc4(zone, cfg_obj_assockaddr(obj)));
+		dscp = cfg_obj_getdscp(obj);
+		if (dscp == -1) {
+			dscp = named_g_dscp;
+		}
+		RETERR(dns_zone_setparentalsrc4dscp(zone, dscp));
+		named_add_reserved_dispatch(named_g_server,
+					    cfg_obj_assockaddr(obj));
+
+		obj = NULL;
+		result = named_config_get(maps, "parental-source-v6", &obj);
+		INSIST(result == ISC_R_SUCCESS && obj != NULL);
+		RETERR(dns_zone_setparentalsrc6(zone, cfg_obj_assockaddr(obj)));
+		dscp = cfg_obj_getdscp(obj);
+		if (dscp == -1) {
+			dscp = named_g_dscp;
+		}
+		RETERR(dns_zone_setparentalsrc6dscp(zone, dscp));
+		named_add_reserved_dispatch(named_g_server,
+					    cfg_obj_assockaddr(obj));
 
 		obj = NULL;
 		result = named_config_get(maps, "notify-source", &obj);
@@ -1651,10 +1683,11 @@ named_zone_configure(const cfg_obj_t *config, const cfg_obj_t *vconfig,
 
 		obj = NULL;
 		result = cfg_map_get(zoptions, "auto-dnssec", &obj);
-		if (kasp != NULL && strcmp(dns_kasp_getname(kasp), "none") != 0)
-		{
+		if (kasp != NULL) {
+			bool s2i = (strcmp(dns_kasp_getname(kasp),
+					   "insecure") != 0);
 			dns_zone_setkeyopt(zone, DNS_ZONEKEY_ALLOW, true);
-			dns_zone_setkeyopt(zone, DNS_ZONEKEY_CREATE, true);
+			dns_zone_setkeyopt(zone, DNS_ZONEKEY_CREATE, !s2i);
 			dns_zone_setkeyopt(zone, DNS_ZONEKEY_MAINTAIN, true);
 		} else if (result == ISC_R_SUCCESS) {
 			const char *arg = cfg_obj_asstring(obj);
@@ -1671,11 +1704,6 @@ named_zone_configure(const cfg_obj_t *config, const cfg_obj_t *vconfig,
 			dns_zone_setkeyopt(zone, DNS_ZONEKEY_ALLOW, allow);
 			dns_zone_setkeyopt(zone, DNS_ZONEKEY_CREATE, false);
 			dns_zone_setkeyopt(zone, DNS_ZONEKEY_MAINTAIN, maint);
-		} else {
-			bool s2i = dns_zone_secure_to_insecure(zone, false);
-			dns_zone_setkeyopt(zone, DNS_ZONEKEY_ALLOW, s2i);
-			dns_zone_setkeyopt(zone, DNS_ZONEKEY_CREATE, false);
-			dns_zone_setkeyopt(zone, DNS_ZONEKEY_MAINTAIN, s2i);
 		}
 	}
 
@@ -1684,6 +1712,26 @@ named_zone_configure(const cfg_obj_t *config, const cfg_obj_t *vconfig,
 					  allow_update_forwarding, ac, mayberaw,
 					  dns_zone_setforwardacl,
 					  dns_zone_clearforwardacl));
+	}
+
+	/*%
+	 * Configure parental agents, applies to primary and secondary zones.
+	 */
+	if (ztype == dns_zone_master || ztype == dns_zone_slave) {
+		obj = NULL;
+		(void)cfg_map_get(zoptions, "parental-agents", &obj);
+		if (obj != NULL) {
+			dns_ipkeylist_t ipkl;
+			dns_ipkeylist_init(&ipkl);
+			RETERR(named_config_getipandkeylist(
+				config, "parental-agents", obj, mctx, &ipkl));
+			result = dns_zone_setparentals(zone, ipkl.addrs,
+						       ipkl.keys, ipkl.count);
+			dns_ipkeylist_clear(mctx, &ipkl);
+			RETERR(result);
+		} else {
+			RETERR(dns_zone_setparentals(zone, NULL, NULL, 0));
+		}
 	}
 
 	/*%
@@ -1880,8 +1928,8 @@ named_zone_configure(const cfg_obj_t *config, const cfg_obj_t *vconfig,
 		if (obj == NULL && ztype == dns_zone_mirror &&
 		    dns_name_equal(dns_zone_getorigin(zone), dns_rootname))
 		{
-			result = named_config_getprimariesdef(
-				named_g_config,
+			result = named_config_getremotesdef(
+				named_g_config, "primaries",
 				DEFAULT_IANA_ROOT_ZONE_PRIMARIES, &obj);
 			RETERR(result);
 		}
@@ -1889,8 +1937,8 @@ named_zone_configure(const cfg_obj_t *config, const cfg_obj_t *vconfig,
 			dns_ipkeylist_t ipkl;
 			dns_ipkeylist_init(&ipkl);
 
-			RETERR(named_config_getipandkeylist(config, obj, mctx,
-							    &ipkl));
+			RETERR(named_config_getipandkeylist(config, "primaries",
+							    obj, mctx, &ipkl));
 			result = dns_zone_setprimarieswithkeys(
 				mayberaw, ipkl.addrs, ipkl.keys, ipkl.count);
 			count = ipkl.count;
@@ -2194,13 +2242,6 @@ named_zone_inlinesigning(dns_zone_t *zone, const cfg_obj_t *zconfig,
 			dns_zone_log(zone, ISC_LOG_DEBUG(1),
 				     "inline-signing: "
 				     "implicitly through dnssec-policy");
-		} else {
-			inline_signing = dns_zone_secure_to_insecure(zone,
-								     true);
-			dns_zone_log(
-				zone, ISC_LOG_DEBUG(1), "inline-signing: %s",
-				inline_signing ? "transitioning to insecure"
-					       : "no");
 		}
 	}
 

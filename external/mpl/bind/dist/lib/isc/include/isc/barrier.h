@@ -1,4 +1,4 @@
-/*	$NetBSD: barrier.h,v 1.1.1.1 2021/08/19 11:45:27 christos Exp $	*/
+/*	$NetBSD: barrier.h,v 1.2 2021/08/19 11:50:18 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")

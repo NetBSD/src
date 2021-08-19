@@ -1,4 +1,4 @@
-/*	$NetBSD: kaspconf.c,v 1.4 2021/04/29 17:26:13 christos Exp $	*/
+/*	$NetBSD: kaspconf.c,v 1.5 2021/08/19 11:50:19 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -24,6 +24,7 @@
 #include <dns/kasp.h>
 #include <dns/keyvalues.h>
 #include <dns/log.h>
+#include <dns/nsec3.h>
 #include <dns/result.h>
 #include <dns/secalg.h>
 
@@ -215,12 +216,7 @@ cfg_nsec3param_fromconfig(const cfg_obj_t *config, dns_kasp_t *kasp,
 		return (DNS_R_NSEC3BADALG);
 	}
 
-	/* See RFC 5155 Section 10.3 for iteration limits. */
-	if (min_keysize <= 1024 && iter > 150) {
-		ret = DNS_R_NSEC3ITERRANGE;
-	} else if (min_keysize <= 2048 && iter > 500) {
-		ret = DNS_R_NSEC3ITERRANGE;
-	} else if (min_keysize <= 4096 && iter > 2500) {
+	if (iter > dns_nsec3_maxiterations()) {
 		ret = DNS_R_NSEC3ITERRANGE;
 	}
 
@@ -332,9 +328,9 @@ cfg_kasp_fromconfig(const cfg_obj_t *config, const char *name, isc_mem_t *mctx,
 			}
 		}
 		INSIST(!(dns_kasp_keylist_empty(kasp)));
-	} else if (strcmp(kaspname, "none") == 0) {
-		/* "dnssec-policy none": key list must be empty */
-		INSIST(strcmp(kaspname, "none") == 0);
+	} else if (strcmp(kaspname, "insecure") == 0) {
+		/* "dnssec-policy insecure": key list must be empty */
+		INSIST(strcmp(kaspname, "insecure") == 0);
 		INSIST(dns_kasp_keylist_empty(kasp));
 	} else {
 		/* No keys clause configured, use the "default". */

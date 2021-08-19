@@ -1,4 +1,4 @@
-/*	$NetBSD: rdata.h,v 1.6 2021/02/19 16:42:16 christos Exp $	*/
+/*	$NetBSD: rdata.h,v 1.7 2021/08/19 11:50:17 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -518,7 +518,7 @@ dns_rdata_tostruct(const dns_rdata_t *rdata, void *target, isc_mem_t *mctx);
  *
  * Requires:
  *
- *\li	'rdata' is a valid, non-empty rdata.
+ *\li	'rdata' is a valid, non-empty, non-pseudo rdata.
  *
  *\li	'target' to point to a valid pointer for the type and class.
  *
