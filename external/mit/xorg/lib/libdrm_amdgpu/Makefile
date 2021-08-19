@@ -1,4 +1,4 @@
-#      $NetBSD: Makefile,v 1.5 2019/01/10 09:10:31 mrg Exp $
+#      $NetBSD: Makefile,v 1.6 2021/08/19 09:05:23 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -32,10 +32,10 @@ PKGDIST=	drm
 
 COPTS.amdgpu_cs.c+= -Wno-stack-protector
 
-#FILES=		amdgpu.ids
-#FILESDIR=	${LIBDRMDATADIR}
+FILES=		amdgpu.ids
+FILESDIR=	${LIBDRMDATADIR}
 
-.PATH:          ${X11SRCDIR.libdrm}/data
+.PATH:          ${X11SRCDIR.drm}/data
 
 .include "../libdrm/Makefile.defines"
 
