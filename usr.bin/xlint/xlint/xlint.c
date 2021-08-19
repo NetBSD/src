@@ -1,4 +1,4 @@
-/* $NetBSD: xlint.c,v 1.72 2021/08/09 21:27:20 rillig Exp $ */
+/* $NetBSD: xlint.c,v 1.73 2021/08/19 15:55:23 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: xlint.c,v 1.72 2021/08/09 21:27:20 rillig Exp $");
+__RCSID("$NetBSD: xlint.c,v 1.73 2021/08/19 15:55:23 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -203,10 +203,32 @@ pass_to_lint1(const char *opt)
 }
 
 static void
+pass_flag_to_lint1(int flag)
+{
+	char buf[3];
+
+	buf[0] = '-';
+	buf[1] = (char)flag;
+	buf[2] = '\0';
+	pass_to_lint1(buf);
+}
+
+static void
 pass_to_lint2(const char *opt)
 {
 
 	list_add_copy(&lint2.flags, opt);
+}
+
+static void
+pass_flag_to_lint2(int flag)
+{
+	char buf[3];
+
+	buf[0] = '-';
+	buf[1] = (char)flag;
+	buf[2] = '\0';
+	pass_to_lint2(buf);
 }
 
 static void
@@ -308,7 +330,7 @@ int
 main(int argc, char *argv[])
 {
 	int	c;
-	char	flgbuf[3], *tmp;
+	char	*tmp;
 	size_t	len;
 	const char *ks;
 
@@ -372,12 +394,11 @@ main(int argc, char *argv[])
 		case 'v':
 		case 'w':
 		case 'z':
-			(void)sprintf(flgbuf, "-%c", c);
-			pass_to_lint1(flgbuf);
+			pass_flag_to_lint1(c);
 			break;
 
 		case 'A':
-			pass_to_lint1("-A");
+			pass_flag_to_lint1(c);
 			pass_to_lint1(optarg);
 			break;
 
@@ -386,14 +407,12 @@ main(int argc, char *argv[])
 			/* FALLTHROUGH */
 		case 'u':
 		case 'h':
-			(void)sprintf(flgbuf, "-%c", c);
-			pass_to_lint1(flgbuf);
-			pass_to_lint2(flgbuf);
+			pass_flag_to_lint1(c);
+			pass_flag_to_lint2(c);
 			break;
 
 		case 'X':
-			(void)sprintf(flgbuf, "-%c", c);
-			pass_to_lint1(flgbuf);
+			pass_flag_to_lint1(c);
 			pass_to_lint1(optarg);
 			break;
 
@@ -408,8 +427,8 @@ main(int argc, char *argv[])
 			break;
 
 		case 'p':
-			pass_to_lint1("-p");
-			pass_to_lint2("-p");
+			pass_flag_to_lint1(c);
+			pass_flag_to_lint2(c);
 			if (*deflibs != NULL) {
 				list_clear(&deflibs);
 				list_add_copy(&deflibs, "c");
@@ -417,11 +436,12 @@ main(int argc, char *argv[])
 			break;
 
 		case 'P':
-			pass_to_lint1("-P");
+			pass_flag_to_lint1(c);
 			break;
 
 		case 'R':
-			pass_to_lint1(concat2("-R", optarg));
+			pass_flag_to_lint1(c);
+			pass_to_lint1(optarg);
 			break;
 
 		case 's':
@@ -432,23 +452,22 @@ main(int argc, char *argv[])
 			list_add_copy(&cpp.lcflags, "-Wtrigraphs");
 			list_add_copy(&cpp.lcflags, "-pedantic");
 			list_add_copy(&cpp.lcflags, "-D__STRICT_ANSI__");
-			pass_to_lint1("-s");
-			pass_to_lint2("-s");
+			pass_flag_to_lint1(c);
+			pass_flag_to_lint2(c);
 			sflag = true;
 			break;
 
 		case 'S':
 			if (tflag)
 				usage();
-			pass_to_lint1("-S");
+			pass_flag_to_lint1(c);
 			Sflag = true;
 			break;
 
 		case 'T':
-			(void)sprintf(flgbuf, "-%c", c);
 			pass_to_cpp("-I" PATH_STRICT_BOOL_INCLUDE);
-			pass_to_lint1(flgbuf);
-			pass_to_lint2(flgbuf);
+			pass_flag_to_lint1(c);
+			pass_flag_to_lint2(c);
 			break;
 
 #if !HAVE_NBTOOL_CONFIG_H
@@ -460,21 +479,22 @@ main(int argc, char *argv[])
 			list_add_copy(&cpp.lcflags, "-Wtraditional");
 			list_add_copy(&cpp.lcflags, "-D" MACHINE);
 			list_add_copy(&cpp.lcflags, "-D" MACHINE_ARCH);
-			pass_to_lint1("-t");
-			pass_to_lint2("-t");
+			pass_flag_to_lint1(c);
+			pass_flag_to_lint2(c);
 			tflag = true;
 			break;
 #endif
 
 		case 'x':
-			pass_to_lint2("-x");
+			pass_flag_to_lint2(c);
 			break;
 
 		case 'C':
 			if (Cflag || oflag || iflag)
 				usage();
 			Cflag = true;
-			list_add(&lint2.flags, concat2("-C", optarg));
+			pass_flag_to_lint2(c);
+			pass_to_lint2(optarg);
 			lint2.outlib = xasprintf("llib-l%s.ln", optarg);
 			list_clear(&deflibs);
 			break;
@@ -511,7 +531,7 @@ main(int argc, char *argv[])
 			break;
 
 		case 'H':
-			pass_to_lint2("-H");
+			pass_flag_to_lint2(c);
 			break;
 
 		case 'B':
