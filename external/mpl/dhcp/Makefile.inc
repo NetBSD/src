@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.inc,v 1.10 2021/04/13 04:14:46 mrg Exp $
+# $NetBSD: Makefile.inc,v 1.11 2021/08/19 11:50:56 christos Exp $
 
 WARNS?=	1	# XXX -Wshadow -Wcast-qual -Wsign-compare
 
@@ -45,8 +45,8 @@ LDADD+= -lirs -lisccfg -ldns -lisc
 LDADD+= -L${LIBUVOBJDIR} -luv
 DPADD+= ${LIBIRS} ${LIBISCCFG} ${LIBDNS} ${LIBISC} ${LIBUV}
 DPADD+= ${LIBUVOBJDIR}/libuv.a
-LDADD+= -lkvm -lpthread -lz
-DPADD+= ${LIBKVM} ${LIBPTHREAD} ${LIBZ}
+LDADD+= -lexecinfo -lkvm -lpthread -lz
+DPADD+= ${LIBEXECINFO} ${LIBKVM} ${LIBPTHREAD} ${LIBZ}
 .if (${MKKERBEROS} != "no")
 LDADD+= -lgssapi -lheimntlm ${LIBKRB5_LDADD} ${LIBKRB5_STATIC_LDADD}
 DPADD+= ${LIBKRB5_DPADD} ${LIBHEIMNTLM} ${LIBGSSAPI} ${LIBKRB5_STATIC_DPADD}
