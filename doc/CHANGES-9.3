@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.3,v 1.1.2.22 2021/08/15 09:30:14 martin Exp $
+# $NetBSD: CHANGES-9.3,v 1.1.2.23 2021/08/19 04:53:21 snj Exp $
 
 A complete list of changes from the NetBSD 9.2 release to the NetBSD 9.3
 release:
@@ -592,4 +592,11 @@ sys/compat/common/vfs_syscalls_50.c		1.26
 
 	Fix compat stat(2) syscall kernel memory disclosure.
 	[christos, ticket #1337]
+
+usr.sbin/sysinst/defs.h				1.72
+usr.sbin/sysinst/disks.c			1.75
+usr.sbin/sysinst/upgrade.c			1.18
+
+	PR 56354: make swap in sysinst optional for upgrades
+	[martin, ticket #1333]
 
