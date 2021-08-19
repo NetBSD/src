@@ -162,3 +162,44 @@ You can use progress(1) to monitor the progress of data in a pipe:
 %
 Press CTRL+T to send SIGINFO and see the current status of the
 command running in the current terminal.
+%
+To enable the Multicast DNS responder, add
+
+	mdnsd=YES
+
+to /etc/rc.conf.  Your system will now be reachable on the network as
+hostname.local.
+
+To enable Multicast DNS lookups, add mdnsd to the 'hosts' field in
+/etc/nsswitch.conf.
+%
+NetBSD includes a tutorial on using vi(1), the classic BSD text
+editor:
+
+	less /usr/share/doc/usd/vi/vitut.txt
+%
+A login shell will read initial commands from ~/.profile.
+
+When using the X Window System, initializing with 'startx' will
+read ~/.xinitrc.  Initializing with xdm will read commands from
+~/.xsession, but logins through xdm will not read ~/.profile.
+%
+After installing NetBSD, additional sets can be installed with
+sysinst(8).
+%
+Depending on the version of NetBSD, the system may raise the sysctl(8)
+variable kern.securelevel to 1 on boot.  The system's securelevel may be
+raised by the superuser, but never lowered.
+
+To learn more about the different securelevel settings, see:
+
+	man secmodel_securelevel
+%
+To learn more about the various security features in NetBSD, see:
+
+	man 7 security
+%
+Network interface traffic can be monitored with the following
+command:
+
+	sysstat ifstat
