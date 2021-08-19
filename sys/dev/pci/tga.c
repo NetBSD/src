@@ -1,4 +1,4 @@
-/* $NetBSD: tga.c,v 1.88 2021/08/07 16:19:14 thorpej Exp $ */
+/* $NetBSD: tga.c,v 1.89 2021/08/19 20:56:36 andvar Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tga.c,v 1.88 2021/08/07 16:19:14 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tga.c,v 1.89 2021/08/19 20:56:36 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1265,7 +1265,7 @@ void tga_putchar(void *c, int row, int col, u_int uc, long attr)
 		*rp = 0xffffffff;
 	}
 
-	/* Set grapics mode back to normal. */
+	/* Set graphics mode back to normal. */
 	TGAWREG(dc, TGA_REG_GMOR, 0);
 	TGAWREG(dc, TGA_REG_GPXR_P, 0xffffffff);
 }
@@ -1316,7 +1316,7 @@ tga_eraserows(void *c, int row, int num, long attr)
 		rp = (int32_t *)((uint8_t *)rp + ri->ri_stride);
 	}
 
-	/* Set grapics mode back to normal. */
+	/* Set graphics mode back to normal. */
 	TGAWREG(dc, TGA_REG_GMOR, 0);
 }
 
@@ -1366,7 +1366,7 @@ tga_erasecols (void *c, int row, int col, int num, long attr)
 		rp = (int32_t *)((uint8_t *)rp + ri->ri_stride);
 	}
 
-	/* Set grapics mode back to normal. */
+	/* Set graphics mode back to normal. */
 	TGAWREG(dc, TGA_REG_GMOR, 0);
 }
 
