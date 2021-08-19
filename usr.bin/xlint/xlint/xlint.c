@@ -1,4 +1,4 @@
-/* $NetBSD: xlint.c,v 1.74 2021/08/19 16:05:56 rillig Exp $ */
+/* $NetBSD: xlint.c,v 1.75 2021/08/19 16:15:31 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: xlint.c,v 1.74 2021/08/19 16:05:56 rillig Exp $");
+__RCSID("$NetBSD: xlint.c,v 1.75 2021/08/19 16:15:31 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -554,22 +554,16 @@ main(int argc, char *argv[])
 		if (arg[0] == '-') {
 			char ***list;
 
-			list = NULL;	/* XXXGCC -Wuninitialized */
-
 			/* option */
-			switch (arg[1]) {
-			case 'l':
+			if (arg[1] == 'l')
 				list = &libs;
-				break;
-
-			case 'L':
+			else if (arg[1] == 'L')
 				list = &libsrchpath;
-				break;
-
-			default:
+			else {
 				usage();
 				/* NOTREACHED */
 			}
+
 			if (arg[2] != '\0')
 				list_add_copy(list, arg + 2);
 			else if (argc > 1) {
