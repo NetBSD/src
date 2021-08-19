@@ -1,4 +1,4 @@
-/* $NetBSD: ssdfb_spi.c,v 1.9 2021/08/05 19:17:22 tnn Exp $ */
+/* $NetBSD: ssdfb_spi.c,v 1.10 2021/08/19 11:04:21 tnn Exp $ */
 
 /*
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ssdfb_spi.c,v 1.9 2021/08/05 19:17:22 tnn Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ssdfb_spi.c,v 1.10 2021/08/19 11:04:21 tnn Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -58,6 +58,8 @@ struct ssdfb_spi_softc {
 	struct fdtbus_gpio_pin	*sc_gpio_res;
 #endif
 	bool			sc_3wiremode;
+	bool			sc_late_dc_deassert;
+	uint8_t			sc_padding_cmd;
 };
 
 static int	ssdfb_spi_match(device_t, cfdata_t, void *);
@@ -78,7 +80,7 @@ static void	ssdfb_bitstream_append(struct bs_state *, uint8_t, uint8_t);
 static void	ssdfb_bitstream_append_cmd(struct bs_state *, uint8_t);
 static void	ssdfb_bitstream_append_data(struct bs_state *, uint8_t *,
 		    size_t);
-static void	ssdfb_bitstream_final(struct bs_state *);
+static void	ssdfb_bitstream_final(struct bs_state *, uint8_t);
 
 CFATTACH_DECL_NEW(ssdfb_spi, sizeof(struct ssdfb_spi_softc),
     ssdfb_spi_match, ssdfb_spi_attach, NULL, NULL);
@@ -167,6 +169,7 @@ ssdfb_spi_attach(device_t parent, device_t self, void *aux)
 		sc->sc.sc_transfer_rect = sc->sc_3wiremode
 		    ? ssdfb_spi_xfer_rect_3wire_ssd1322
 		    : ssdfb_spi_xfer_rect_4wire_ssd1322;
+		sc->sc_padding_cmd = SSD1322_CMD_WRITE_RAM;
 		break;
 	case SSDFB_PRODUCT_SSD1353_GENERIC:
 	case SSDFB_PRODUCT_DEP_160128A_RGB:
@@ -200,7 +203,7 @@ ssdfb_spi_cmd_3wire(void *cookie, uint8_t *cmd, size_t len, bool usepoll)
 	cmd++;
 	len--;
 	ssdfb_bitstream_append_data(&s, cmd, len);
-	ssdfb_bitstream_final(&s);
+	ssdfb_bitstream_final(&s, sc->sc_padding_cmd);
 
 	return spi_send(sc->sc_sh, s.cur - s.base, bitstream);
 }
@@ -230,7 +233,7 @@ ssdfb_spi_xfer_rect_3wire_ssd1322(void *cookie, uint8_t fromcol, uint8_t tocol,
 	ssdfb_bitstream_append_data(&s, &fromcol, 1);
 	ssdfb_bitstream_append_data(&s, &tocol, 1);
 	ssdfb_bitstream_append_cmd(&s, SSD1322_CMD_WRITE_RAM);
-	ssdfb_bitstream_final(&s);
+	ssdfb_bitstream_final(&s, sc->sc_padding_cmd);
 	error = spi_send(sc->sc_sh, s.cur - s.base, bitstream);
 	if (error)
 		return error;
@@ -239,7 +242,7 @@ ssdfb_spi_xfer_rect_3wire_ssd1322(void *cookie, uint8_t fromcol, uint8_t tocol,
 	for (row = fromrow; row <= torow; row++) {
 		ssdfb_bitstream_init(&s, bitstream);
 		ssdfb_bitstream_append_data(&s, p, rlen);
-		ssdfb_bitstream_final(&s);
+		ssdfb_bitstream_final(&s, sc->sc_padding_cmd);
 		error = spi_send(sc->sc_sh, s.cur - s.base, bitstream);
 		if (error)
 			return error;
@@ -290,11 +293,8 @@ ssdfb_bitstream_append_data(struct bs_state *s, uint8_t *data, size_t len)
 }
 
 static void
-ssdfb_bitstream_final(struct bs_state *s)
+ssdfb_bitstream_final(struct bs_state *s, uint8_t padding_cmd)
 {
-	uint8_t padding_cmd = SSD1322_CMD_WRITE_RAM;
-	/* padding_cmd = SSDFB_NOP_CMD; */
-
 	while (s->mask != 0x80) {
 		ssdfb_bitstream_append_cmd(s, padding_cmd);
 	}
@@ -321,7 +321,8 @@ ssdfb_spi_cmd_4wire(void *cookie, uint8_t *cmd, size_t len, bool usepoll)
 	if (error)
 		return error;
 	if (len > 1) {
-		ssdfb_spi_4wire_set_dc(sc, 1);
+		if (!sc->sc_late_dc_deassert)
+			ssdfb_spi_4wire_set_dc(sc, 1);
 		len--;
 		cmd++;
 		error = spi_send(sc->sc_sh, len, cmd);
