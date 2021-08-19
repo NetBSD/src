@@ -1,4 +1,4 @@
-/* $NetBSD: lex.c,v 1.63 2021/08/19 08:59:22 christos Exp $ */
+/* $NetBSD: lex.c,v 1.64 2021/08/19 20:08:25 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: lex.c,v 1.63 2021/08/19 08:59:22 christos Exp $");
+__RCSID("$NetBSD: lex.c,v 1.64 2021/08/19 20:08:25 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -665,30 +665,7 @@ lex_integer_constant(const char *yytext, size_t yyleng, int base)
 #endif
 		break;
 #endif
-		/* LINTED206: (enumeration values not handled in switch) */
-	case STRUCT:
-	case VOID:
-	case LDOUBLE:
-	case FUNC:
-	case ARRAY:
-	case PTR:
-	case ENUM:
-	case UNION:
-	case SIGNED:
-	case NOTSPEC:
-	case DOUBLE:
-	case FLOAT:
-	case USHORT:
-	case SHORT:
-	case UCHAR:
-	case SCHAR:
-	case CHAR:
-	case BOOL:
-	case UNSIGN:
-	case FCOMPLEX:
-	case DCOMPLEX:
-	case LCOMPLEX:
-	case COMPLEX:
+	default:
 		break;
 	}
 
