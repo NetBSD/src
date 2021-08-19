@@ -1,4 +1,4 @@
-/*	$NetBSD: gssapi.c,v 1.4 2021/08/14 16:15:46 christos Exp $	*/
+/*	$NetBSD: gssapi.c,v 1.5 2021/08/19 12:13:37 christos Exp $	*/
 
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: gssapi.c,v 1.4 2021/08/14 16:15:46 christos Exp $");
+__RCSID("$NetBSD: gssapi.c,v 1.5 2021/08/19 12:13:37 christos Exp $");
 
 #include "portable.h"
 
@@ -137,10 +137,11 @@ sb_sasl_gssapi_init(
 	if ( gss_rc != GSS_S_COMPLETE ) {
 		char msg[256];
 		ber_log_printf( LDAP_DEBUG_ANY, p->sbiod->sbiod_sb->sb_debug,
-				"sb_sasl_gssapi_init: failed to wrap size limit: %s\n",
+				"%s: failed to wrap size limit: %s\n", __func__,
 				gsserrstr( msg, sizeof(msg), ctx_mech, gss_rc, minor_status ) );
 		ber_log_printf( LDAP_DEBUG_ANY, p->sbiod->sbiod_sb->sb_debug,
-				"sb_sasl_gssapi_init: fallback to default wrap size limit\n");
+				"%s: fallback to default wrap size limit\n",
+				__func__);
 		/*
 		 * some libgssglue/libgssapi versions
 		 * have a broken gss_wrap_size_limit()
@@ -196,14 +197,15 @@ sb_sasl_gssapi_encode(
 	if ( gss_rc != GSS_S_COMPLETE ) {
 		char msg[256];
 		ber_log_printf( LDAP_DEBUG_ANY, p->sbiod->sbiod_sb->sb_debug,
-				"sb_sasl_gssapi_encode: failed to encode packet: %s\n",
+				"%s: failed to encode packet: %s\n", __func__,
 				gsserrstr( msg, sizeof(msg), ctx_mech, gss_rc, minor_status ) );
 		return -1;
 	}
 
 	if ( conf_req_flag && conf_state == 0 ) {
 		ber_log_printf( LDAP_DEBUG_ANY, p->sbiod->sbiod_sb->sb_debug,
-				"sb_sasl_gssapi_encode: GSS_C_CONF_FLAG was ignored by our gss_wrap()\n" );
+				"%s: GSS_C_CONF_FLAG was ignored by our gss_wrap()\n",
+				__func__);
 		return -1;
 	}
 
@@ -214,8 +216,8 @@ sb_sasl_gssapi_encode(
 		ber_pvt_sb_grow_buffer( dst, pkt_len ) < 0 )
 	{
 		ber_log_printf( LDAP_DEBUG_ANY, p->sbiod->sbiod_sb->sb_debug,
-				"sb_sasl_gssapi_encode: failed to grow the buffer to %lu bytes\n",
-				pkt_len );
+				"%s: failed to grow the buffer to %lu bytes\n",
+				__func__, pkt_len );
 		return -1;
 	}
 
@@ -275,14 +277,15 @@ sb_sasl_gssapi_decode(
 	if ( gss_rc != GSS_S_COMPLETE ) {
 		char msg[256];
 		ber_log_printf( LDAP_DEBUG_ANY, p->sbiod->sbiod_sb->sb_debug,
-				"sb_sasl_gssapi_decode: failed to decode packet: %s\n",
+				"%s: failed to decode packet: %s\n", __func__,
 				gsserrstr( msg, sizeof(msg), ctx_mech, gss_rc, minor_status ) );
 		return -1;
 	}
 
 	if ( conf_req_flag && conf_state == 0 ) {
 		ber_log_printf( LDAP_DEBUG_ANY, p->sbiod->sbiod_sb->sb_debug,
-				"sb_sasl_gssapi_encode: GSS_C_CONF_FLAG was ignored by our peer\n" );
+				"%s: GSS_C_CONF_FLAG was ignored by our peer\n",
+				__func__);
 		return -1;
 	}
 
@@ -291,8 +294,8 @@ sb_sasl_gssapi_decode(
 		ber_pvt_sb_grow_buffer( dst, unwrapped.length ) < 0 )
 	{
 		ber_log_printf( LDAP_DEBUG_ANY, p->sbiod->sbiod_sb->sb_debug,
-				"sb_sasl_gssapi_decode: failed to grow the buffer to %lu bytes\n",
-				unwrapped.length );
+				"%s: failed to grow the buffer to %zu bytes\n",
+				__func__, unwrapped.length );
 		return -1;
 	}
 
