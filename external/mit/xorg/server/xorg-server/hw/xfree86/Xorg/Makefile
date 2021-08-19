@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.19 2021/08/11 23:02:39 maya Exp $
+#	$NetBSD: Makefile,v 1.20 2021/08/19 11:03:04 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -63,10 +63,7 @@ LDADD+=	${LDADD.glx}
 LDADD+=	${LDADD.present}
 LDADD+=	${LDADD.hw/xfree86/dri}
 LDADD+=	${LDADD.hw/xfree86/dri2}
-# XXX
-.if ${HAVE_DRI3:Uno} != "no"
 LDADD+=	${LDADD.dri3}
-.endif
 LDADD+=	${LDADD.hw/xfree86/dixmods/fb}
 LDADD+=	-lpixman-1 -lXfont2 -lfreetype -lXau -lfontenc -lXdmcp
 LDADD+=	-lpciaccess -ldrm
@@ -117,6 +114,7 @@ DPADD+=	\
 	${DPADD.present} \
 	${DPADD.hw/xfree86/dri} \
 	${DPADD.hw/xfree86/dri2} \
+	${DPADD.dri3} \
 	${DPADD.hw/xfree86/dixmods/fb} \
 	${DPADD.hw/xfree86/fb} \
 	${DPADD.hw/xfree86/common} \
@@ -137,11 +135,6 @@ DPADD+=	\
 DPADD+= \
 	${DPADD.glamor} \
 	${LIBEPOXY}
-.endif
-
-# XXX
-.if ${HAVE_DRI3:Uno} != "no"
-DPADD+=	${DPADD.dri3}
 .endif
 
 LDADD+=	-lcrypto
