@@ -1,4 +1,4 @@
-#	$NetBSD: t_vlan.sh,v 1.23 2021/07/14 08:51:51 yamaguchi Exp $
+#	$NetBSD: t_vlan.sh,v 1.24 2021/08/19 03:27:05 yamaguchi Exp $
 #
 # Copyright (c) 2016 Internet Initiative Japan Inc.
 # All rights reserved.
@@ -929,6 +929,8 @@ vlan_promisc_body()
 	local atf_brconfig="atf_check -s exit:0 $HIJACKING /sbin/brconfig"
 	local atf_arp="atf_check -s exit:0 rump.arp"
 	local bpfopen="$HIJACKING $(atf_get_srcdir)/bpfopen"
+	bpfopen="$bpfopen -dv -b /rump/dev/bpf"
+	local pidfile="./bpfopen.pid"
 	local macaddr=""
 
 	rump_server_bpf_start $SOCK_LOCAL vlan bridge
@@ -982,8 +984,7 @@ vlan_promisc_body()
 	$atf_ifconfig vlan0 vlan 1 vlanif shmif0
 	$atf_ifconfig -w 10
 
-	$bpfopen -r shmif0 &
-	pid=$!
+	atf_check -s exit:0 -e match:'bpf opened' $bpfopen -p $pidfile shmif0
 
 	atf_check -s exit:0 -o not-match:'PROMISC' rump.ifconfig vlan0
 	atf_check -s exit:0 -o match:'PROMISC' rump.ifconfig shmif0
@@ -999,7 +1000,7 @@ vlan_promisc_body()
 	atf_check -s exit:0 -o match:'input:.*errors' \
 	    rump.ifconfig -v vlan0
 
-	kill -TERM $pid
+	atf_check -s exit:0 kill -TERM $(cat $pidfile)
 	sleep 2
 
 	atf_check -s exit:0 -o not-match:'PROMISC' rump.ifconfig vlan0
@@ -1012,8 +1013,7 @@ vlan_promisc_body()
 	$atf_ifconfig vlan0 vlan 1 vlanif shmif0
 	$atf_ifconfig vlan0 up
 
-	$bpfopen -r vlan0 &
-	pid=$!
+	atf_check -s exit:0 -e match:'bpf opened' $bpfopen -p $pidfile vlan0
 
 	atf_check -s exit:0 -o match:'PROMISC' rump.ifconfig vlan0
 	atf_check -s exit:0 -o match:'PROMISC' rump.ifconfig shmif0
@@ -1023,7 +1023,8 @@ vlan_promisc_body()
 	atf_check -s exit:0 -o not-match:'PROMISC' rump.ifconfig vlan0
 	atf_check -s exit:0 -o not-match:'PROMISC' rump.ifconfig shmif0
 
-	kill -TERM $pid
+	atf_check -s exit:0 kill -TERM $(cat $pidfile)
+	sleep 2
 	atf_check -s exit:0 -o not-match:'PROMISC' rump.ifconfig vlan0
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: bpfopen.c,v 1.1 2021/07/09 05:54:11 yamaguchi Exp $	*/
+/*	$NetBSD: bpfopen.c,v 1.2 2021/08/19 03:27:05 yamaguchi Exp $	*/
 
 /*
  * Copyright (c) 2021 Internet Initiative Japan Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: bpfopen.c,v 1.1 2021/07/09 05:54:11 yamaguchi Exp $");
+__RCSID("$NetBSD: bpfopen.c,v 1.2 2021/08/19 03:27:05 yamaguchi Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -45,6 +45,8 @@ __RCSID("$NetBSD: bpfopen.c,v 1.1 2021/07/09 05:54:11 yamaguchi Exp $");
 #include <signal.h>
 #include <unistd.h>
 
+#include <util.h>
+
 enum {
 	ARG_PROG = 0,
 	ARG_HOST,
@@ -58,16 +60,25 @@ enum {
 };
 
 static void	sighandler(int);
+static void	log_debug(const char *, ...) __printflike(1, 2);
+static int	bpf_open(void);
+static void	bpf_close(int);
+static void	bpf_read(int);
 
-static sig_atomic_t quit;
+static sig_atomic_t	 quit;
+static bool		 daemonize = false;
+static int		 verbose = 0;
+static const char	*path_pid = "/var/run/bpfopen.pid";
+static const char	*path_bpf = "/dev/bpf";
+static const char	*ifname = NULL;
 
 static void
 usage(void)
 {
 
-	fprintf(stderr, "%s {-r|-h} <ifname>\n"
-	    "\t-r: rump_server\n"
-	    "\t-h: host\n",
+	fprintf(stderr, "%s [-vd] [-p pidfile] [-b devbpf ] <ifname>\n"
+	    "\t-v: verbose\n"
+	    "\t-d: daemon mode\n",
 	    getprogname());
 	exit(1);
 }
@@ -75,42 +86,146 @@ usage(void)
 int
 main(int argc, char *argv[])
 {
-	struct ifreq ifr;
-	struct pollfd pfd[PFD_NUM];
-	const char *bpf_path;
-	int n, bpfd, nfds;
-	size_t bufsiz;
-	char *buf;
+	int bpfd;
+	int ch;
 
-	if (argc != ARG_NUM)
-		usage();
-
-	if (strcmp(argv[ARG_HOST], "-h") == 0) {
-		bpf_path = "/dev/bpf";
-	} else if (strcmp(argv[ARG_HOST], "-r") == 0){
-		bpf_path = "/rump/dev/bpf";
-	} else {
-		errx(1, "-r or -h");
+	while ((ch = getopt(argc, argv, "b:dp:v")) != -1) {
+		switch (ch) {
+		case 'b':
+			path_bpf = optarg;
+			break;
+		case 'd':
+			daemonize = true;
+			break;
+		case 'p':
+			path_pid = optarg;
+			break;
+		case 'v':
+			verbose++;
+			break;
+		default:
+			usage();
+		}
 	}
 
-	bpfd = open(bpf_path, O_RDONLY);
+	argc -= optind;
+	argv += optind;
+
+	if (argc != 1)
+		usage();
+
+	ifname = argv[0];
+
+	bpfd = bpf_open();
 	if (bpfd < 0)
-		err(1, "open %s", bpf_path);
+		err(1, "bpf_open");
+	log_debug("bpf opened");
+
+	if (daemonize) {
+		if (daemon(1, 1) != 0) {
+			bpf_close(bpfd);
+			err(1, "daemon");
+		}
+		log_debug("daemonized");
+
+		if (pidfile(path_pid) != 0) {
+			bpf_close(bpfd);
+			err(1, "pidfile");
+		}
+	}
+
+	bpf_read(bpfd);
+	bpf_close(bpfd);
+	if (daemonize)
+		pidfile_clean();
+
+	return 0;
+}
+
+static void
+sighandler(int signo)
+{
+
+	quit = 1;
+}
+
+static void
+log_debug(const char *fmt, ...)
+{
+	va_list ap;
+
+	if (verbose <= 0)
+		return;
+
+	va_start(ap, fmt);
+	vfprintf(stderr, fmt, ap);
+	va_end(ap);
+
+	fprintf(stderr, "\n");
+}
+
+static int
+bpf_open(void)
+{
+	struct ifreq ifr;
+	int bpfd;
+
+	bpfd = open(path_bpf, O_RDONLY);
+	if (bpfd < 0) {
+		log_debug("open: %s", strerror(errno));
+		return -1;
+	}
 
 	memset(&ifr, 0, sizeof(ifr));
-	strlcpy(ifr.ifr_name, argv[ARG_IFNAME],
-	    sizeof(ifr.ifr_name));
-	if (ioctl(bpfd, BIOCSETIF, &ifr) != 0)
-		err(1, "BIOCSETIF");
-	if (ioctl(bpfd, BIOCPROMISC, NULL) != 0)
-		err(1, "BIOCPROMISC");
-	if (ioctl(bpfd, BIOCGBLEN, &bufsiz) != 0)
-		err(1, "BIOCGBLEN");
+	strlcpy(ifr.ifr_name, ifname, sizeof(ifr.ifr_name));
+
+	if (ioctl(bpfd, BIOCSETIF, &ifr) != 0) {
+		log_debug("BIOCSETIF: %s", strerror(errno));
+		goto close_bpfd;
+	}
+
+	if (ioctl(bpfd, BIOCPROMISC, NULL) != 0) {
+		log_debug("BIOCPROMISC: %s", strerror(errno));
+		goto close_bpfd;
+	}
+
+	return bpfd;
+
+close_bpfd:
+	close(bpfd);
+
+	return -1;
+}
+
+static void
+bpf_close(int bpfd)
+{
+
+	close(bpfd);
+}
+
+static void
+bpf_read(int bpfd)
+{
+	struct pollfd pfd[PFD_NUM];
+	int nfds;
+	char *buf;
+	u_int bufsiz;
+	ssize_t n;
+
+	if (ioctl(bpfd, BIOCGBLEN, &bufsiz) != 0) {
+		bufsiz = BPF_DFLTBUFSIZE;
+		log_debug("BIOCGBLEN: %s, use default size %u",
+		    strerror(errno), bufsiz);
+	}
+
 	bufsiz = MIN(bufsiz, BPF_DFLTBUFSIZE * 4);
 
 	buf = malloc(bufsiz);
-	if (buf == NULL)
-		err(1, "malloc");
+	if (buf == NULL) {
+		log_debug("malloc: %s", strerror(errno));
+		return;
+	}
 
 	quit = 0;
 	signal(SIGTERM, sighandler);
@@ -118,7 +233,8 @@ main(int argc, char *argv[])
 	signal(SIGINT, sighandler);
 	signal(SIGHUP, sighandler);
 
-	fprintf(stderr, "bpf open %s\n", ifr.ifr_name);
+	log_debug("start reading %s, bufsiz=%u", ifname, bufsiz);
+
 	while (quit == 0) {
 		pfd[PFD_BPF].fd = bpfd;
 		pfd[PFD_BPF].events = POLLIN;
@@ -131,23 +247,13 @@ main(int argc, char *argv[])
 
 		if (nfds > 0 && (pfd[PFD_BPF].revents & POLLIN)) {
 			/* read & drop */
-			memset(buf, 0, sizeof(bufsiz));
+			memset(buf, 0, bufsiz);
 			n = read(pfd[PFD_BPF].fd, buf, bufsiz);
 			if (n < 0)
 				quit = 1;
 		}
 	}
 
-	close(bpfd);
+	log_debug("finish reading %s", ifname);
 	free(buf);
-	fprintf(stderr, "closed\n");
-
-	return 0;
-}
-
-static void
-sighandler(int signo)
-{
-
-	quit = 1;
 }
