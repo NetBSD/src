@@ -1,4 +1,4 @@
-/* $NetBSD: xlint.c,v 1.77 2021/08/19 16:29:41 rillig Exp $ */
+/* $NetBSD: xlint.c,v 1.78 2021/08/19 21:21:04 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: xlint.c,v 1.77 2021/08/19 16:29:41 rillig Exp $");
+__RCSID("$NetBSD: xlint.c,v 1.78 2021/08/19 21:21:04 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -612,9 +612,10 @@ main(int argc, char *argv[])
 static void
 fname(const char *name)
 {
+	static char default_cc[] = DEFAULT_CC;
 	const	char *bn, *suff;
 	char	**args, *ofn, *pathname;
-	const char *CC;
+	char *CC;
 	size_t	len;
 	int	fd;
 
@@ -661,7 +662,7 @@ fname(const char *name)
 
 	/* run cc */
 	if ((CC = getenv("CC")) == NULL)
-		CC = DEFAULT_CC;
+		CC = default_cc;
 	if ((pathname = findcc(CC)) == NULL)
 		if (setenv("PATH", DEFAULT_PATH, 1) == 0)
 			pathname = findcc(CC);
