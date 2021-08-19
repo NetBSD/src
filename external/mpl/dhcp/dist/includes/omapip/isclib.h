@@ -1,4 +1,4 @@
-/*	$NetBSD: isclib.h,v 1.3 2020/08/03 21:10:57 christos Exp $	*/
+/*	$NetBSD: isclib.h,v 1.4 2021/08/19 11:50:56 christos Exp $	*/
 
 /* isclib.h
 
@@ -54,6 +54,7 @@
 #include <isc/lex.h>
 #include <isc/lib.h>
 #include <isc/app.h>
+#include <isc/managers.h>
 #include <isc/mem.h>
 #include <isc/parseint.h>
 #include <isc/socket.h>
@@ -96,6 +97,7 @@ typedef struct dhcp_context {
 	int              actx_started; // ISC_TRUE if ctxstart has been called
 	int              actx_running; // ISC_TRUE if ctxrun has been called
 	isc_taskmgr_t	*taskmgr;
+	isc_nm_t	*netmgr;
 	isc_task_t	*task;
 	isc_socketmgr_t *socketmgr;
 	isc_timermgr_t	*timermgr;

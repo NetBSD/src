@@ -1,4 +1,4 @@
-/*	$NetBSD: isclib.c,v 1.5 2020/08/03 21:10:57 christos Exp $	*/
+/*	$NetBSD: isclib.c,v 1.6 2021/08/19 11:50:56 christos Exp $	*/
 
 /*
  * Copyright(c) 2009-2019 by Internet Systems Consortium, Inc.("ISC")
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: isclib.c,v 1.5 2020/08/03 21:10:57 christos Exp $");
+__RCSID("$NetBSD: isclib.c,v 1.6 2021/08/19 11:50:56 christos Exp $");
 
 /*Trying to figure out what we need to define to get things to work.
   It looks like we want/need the library but need the fdwatchcommand
@@ -109,7 +109,8 @@ isclib_cleanup(void)
 		isc_socketmgr_destroy(&dhcp_gbl_ctx.socketmgr);
 
 	if (dhcp_gbl_ctx.taskmgr != NULL)
-		isc_taskmgr_destroy(&dhcp_gbl_ctx.taskmgr);
+		isc_managers_destroy(&dhcp_gbl_ctx.netmgr,
+				     &dhcp_gbl_ctx.taskmgr);
 
 	if (dhcp_gbl_ctx.actx_started != ISC_FALSE) {
 		isc_app_ctxfinish(dhcp_gbl_ctx.actx);
@@ -218,22 +219,19 @@ dhcp_context_create(int flags,
 
 		result = isc_appctx_create(dhcp_gbl_ctx.mctx,
 					   &dhcp_gbl_ctx.actx);
+
+		result = isc_managers_create(dhcp_gbl_ctx.mctx, 1, 0,
+		    &dhcp_gbl_ctx.netmgr, &dhcp_gbl_ctx.taskmgr);
 		if (result != ISC_R_SUCCESS)
 			goto cleanup;
 
-		result = isc_taskmgr_createinctx(dhcp_gbl_ctx.mctx,
-						 1, 0,
-						 &dhcp_gbl_ctx.taskmgr);
+		result = isc_socketmgr_create(dhcp_gbl_ctx.mctx,
+					      &dhcp_gbl_ctx.socketmgr);
 		if (result != ISC_R_SUCCESS)
 			goto cleanup;
 
-		result = isc_socketmgr_createinctx(dhcp_gbl_ctx.mctx,
-						   &dhcp_gbl_ctx.socketmgr);
-		if (result != ISC_R_SUCCESS)
-			goto cleanup;
-
-		result = isc_timermgr_createinctx(dhcp_gbl_ctx.mctx,
-						  &dhcp_gbl_ctx.timermgr);
+		result = isc_timermgr_create(dhcp_gbl_ctx.mctx,
+					     &dhcp_gbl_ctx.timermgr);
 		if (result != ISC_R_SUCCESS)
 			goto cleanup;
 
@@ -395,19 +393,19 @@ void dhcp_signal_handler(int signal) {
 isc_result_t dns_client_init() {
 	isc_result_t result;
 	if (dhcp_gbl_ctx.dnsclient == NULL) {
-		result = dns_client_createx(dhcp_gbl_ctx.mctx,
-					     dhcp_gbl_ctx.actx,
-					     dhcp_gbl_ctx.taskmgr,
-					     dhcp_gbl_ctx.socketmgr,
-					     dhcp_gbl_ctx.timermgr,
-					     0,
-					     &dhcp_gbl_ctx.dnsclient,
-					     (dhcp_gbl_ctx.use_local4 ?
-					      &dhcp_gbl_ctx.local4_sockaddr
-					      : NULL),
-					     (dhcp_gbl_ctx.use_local6 ?
-					      &dhcp_gbl_ctx.local6_sockaddr
-					      : NULL));
+		result = dns_client_create(dhcp_gbl_ctx.mctx,
+					   dhcp_gbl_ctx.actx,
+					   dhcp_gbl_ctx.taskmgr,
+					   dhcp_gbl_ctx.socketmgr,
+					   dhcp_gbl_ctx.timermgr,
+					   0,
+					   &dhcp_gbl_ctx.dnsclient,
+					   (dhcp_gbl_ctx.use_local4 ?
+					    &dhcp_gbl_ctx.local4_sockaddr
+					    : NULL),
+					   (dhcp_gbl_ctx.use_local6 ?
+					    &dhcp_gbl_ctx.local6_sockaddr
+					    : NULL));
 
 		if (result != ISC_R_SUCCESS) {
 			log_error("Unable to create DNS client context:"
