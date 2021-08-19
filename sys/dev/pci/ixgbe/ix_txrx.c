@@ -1,4 +1,4 @@
-/* $NetBSD: ix_txrx.c,v 1.85 2021/08/19 08:53:21 msaitoh Exp $ */
+/* $NetBSD: ix_txrx.c,v 1.86 2021/08/19 10:18:13 msaitoh Exp $ */
 
 /******************************************************************************
 
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ix_txrx.c,v 1.85 2021/08/19 08:53:21 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ix_txrx.c,v 1.86 2021/08/19 10:18:13 msaitoh Exp $");
 
 #include "opt_inet.h"
 #include "opt_inet6.h"
@@ -95,6 +95,10 @@ static bool ixgbe_rsc_enable = FALSE;
  * setting this to 0.
  */
 static int atr_sample_rate = 20;
+
+#define IXGBE_M_ADJ(adapter, rxr, mp)					\
+	if (adapter->max_frame_size <= (rxr->mbuf_sz - ETHER_ALIGN))	\
+		m_adj(mp, ETHER_ALIGN)
 
 /************************************************************************
  *  Local Function prototypes
@@ -1353,13 +1357,10 @@ ixgbe_refresh_mbufs(struct rx_ring *rxr, int limit)
 				rxr->no_jmbuf.ev_count++;
 				goto update;
 			}
-			if (adapter->max_frame_size
-			    <= (rxr->mbuf_sz - ETHER_ALIGN))
-				m_adj(mp, ETHER_ALIGN);
+			mp->m_pkthdr.len = mp->m_len = rxr->mbuf_sz;
+			IXGBE_M_ADJ(adapter, rxr, mp);
 		} else
 			mp = rxbuf->buf;
-
-		mp->m_pkthdr.len = mp->m_len = rxr->mbuf_sz;
 
 		/* If we're dealing with an mbuf that was copied rather
 		 * than replaced, there's no need to go through busdma.
@@ -1554,6 +1555,7 @@ ixgbe_setup_receive_ring(struct rx_ring *rxr)
 		}
 		mp = rxbuf->buf;
 		mp->m_pkthdr.len = mp->m_len = rxr->mbuf_sz;
+		IXGBE_M_ADJ(adapter, rxr, mp);
 		/* Get the memory mapping */
 		error = bus_dmamap_load_mbuf(rxr->ptag->dt_dmat, rxbuf->pmap,
 		    mp, BUS_DMA_NOWAIT);
@@ -1964,41 +1966,67 @@ ixgbe_rxeof(struct ix_queue *que)
 		 */
 		sendmp = rbuf->fmp;
 		if (sendmp != NULL) {  /* secondary frag */
+			/* Update new (used in future) mbuf */
+			newmp->m_pkthdr.len = newmp->m_len = rxr->mbuf_sz;
+			IXGBE_M_ADJ(adapter, rxr, newmp);
 			rbuf->buf = newmp;
 			rbuf->fmp = NULL;
+
+			/* For secondary frag */
 			mp->m_len = len;
 			mp->m_flags &= ~M_PKTHDR;
+
+			/* For sendmp */
 			sendmp->m_pkthdr.len += mp->m_len;
 		} else {
 			/*
-			 * Optimize.  This might be a small packet,
-			 * maybe just a TCP ACK.  Do a fast copy that
-			 * is cache aligned into a new mbuf, and
-			 * leave the old mbuf+cluster for re-use.
+			 * It's the first segment of a multi descriptor
+			 * packet or a single segment which contains a full
+			 * packet.
+			 */
+
+			/*
+			 * Optimize.  This might be a small packet, maybe just
+			 * a TCP ACK. Copy into a new mbuf, and Leave the old
+			 * mbuf+cluster for re-use.
 			 */
 			if (eop && len <= adapter->rx_copy_len) {
 				sendmp = m_gethdr(M_NOWAIT, MT_DATA);
 				if (sendmp != NULL) {
-					sendmp->m_data += IXGBE_RX_COPY_ALIGN;
-					ixgbe_bcopy(mp->m_data, sendmp->m_data,
-					    len);
-					sendmp->m_len = len;
+					sendmp->m_data += ETHER_ALIGN;
+					memcpy(mtod(sendmp, void *),
+					    mtod(mp, void *), len);
 					rxr->rx_copies.ev_count++;
 					rbuf->flags |= IXGBE_RX_COPY;
 
+					/*
+					 * Free pre-allocated mbuf anymore
+					 * because we recycle the current
+					 * buffer.
+					 */
 					m_freem(newmp);
 				}
 			}
+
+			/*
+			 * Two cases:
+			 * a) non small packet(i.e. !IXGBE_RX_COPY).
+			 * b) a small packet but the above m_gethdr() failed.
+			 */
 			if (sendmp == NULL) {
+				/* Update new (used in future) mbuf */
+				newmp->m_pkthdr.len = newmp->m_len
+				    = rxr->mbuf_sz;
+				IXGBE_M_ADJ(adapter, rxr, newmp);
 				rbuf->buf = newmp;
 				rbuf->fmp = NULL;
-				mp->m_len = len;
+
+				/* For sendmp */
 				sendmp = mp;
 			}
 
 			/* first desc of a non-ps chain */
-			sendmp->m_flags |= M_PKTHDR;
-			sendmp->m_pkthdr.len = len;
+			sendmp->m_pkthdr.len = sendmp->m_len = len;
 		}
 		++processed;
 
