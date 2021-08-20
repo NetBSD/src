@@ -1,4 +1,4 @@
-/*	$NetBSD: ofwreal.S,v 1.15 2020/07/06 09:34:18 rin Exp $	*/
+/*	$NetBSD: ofwreal.S,v 1.16 2021/08/20 20:25:27 andvar Exp $	*/
 
 /*
  * Copyright (C) 1996 Wolfgang Solfrank.
@@ -128,7 +128,7 @@ fwentry:
 	mtmsr	%r4
 	isync
 
-	lis	%r3,fwsave@ha		/* save mmu values of firmare */
+	lis	%r3,fwsave@ha		/* save mmu values of firmware */
 	addi	%r3,%r3,fwsave@l	/* (might not be necessary, but... */
 	bl	savemmu
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: t_can.c,v 1.7 2019/06/24 06:26:29 skrll Exp $	*/
+/*	$NetBSD: t_can.c,v 1.8 2021/08/20 20:25:28 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2017 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: t_can.c,v 1.7 2019/06/24 06:26:29 skrll Exp $");
+__RCSID("$NetBSD: t_can.c,v 1.8 2021/08/20 20:25:28 andvar Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -526,7 +526,7 @@ ATF_TC(canbindfilter);
 ATF_TC_HEAD(canbindfilter, tc)
 {
 
-	atf_tc_set_md_var(tc, "descr", "check that socket bound to an interface doens't get other interface's messages");
+	atf_tc_set_md_var(tc, "descr", "check that socket bound to an interface doesn't get other interface's messages");
 	atf_tc_set_md_var(tc, "timeout", "5");
 }
 
