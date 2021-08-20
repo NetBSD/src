@@ -1,4 +1,4 @@
-/*	$NetBSD: ne2000.c,v 1.76 2019/01/27 02:08:42 pgoyette Exp $	*/
+/*	$NetBSD: ne2000.c,v 1.77 2021/08/20 20:25:28 andvar Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ne2000.c,v 1.76 2019/01/27 02:08:42 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ne2000.c,v 1.77 2021/08/20 20:25:28 andvar Exp $");
 
 #include "rtl80x9.h"
 
@@ -207,7 +207,7 @@ ne2000_attach(struct ne2000_softc *nsc, uint8_t *myea)
 		dsc->sc_reg_map[i] = i;
 
 	/*
-	 * NIC memory doens't start at zero on an NE board.
+	 * NIC memory doesn't start at zero on an NE board.
 	 * The start address is tied to the bus width.
 	 */
 #ifdef GWETHER

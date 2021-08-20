@@ -1,4 +1,4 @@
-/* $NetBSD: udf_subr.c,v 1.154 2021/07/24 21:31:38 andvar Exp $ */
+/* $NetBSD: udf_subr.c,v 1.155 2021/08/20 20:25:28 andvar Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_subr.c,v 1.154 2021/07/24 21:31:38 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_subr.c,v 1.155 2021/08/20 20:25:28 andvar Exp $");
 #endif /* not lint */
 
 
@@ -289,7 +289,7 @@ udf_setup_writeparams(struct udf_mount *ump)
 	/*
 	 * only CD burning normally needs setting up, but other disc types
 	 * might need other settings to be made. The MMC framework will set up
-	 * the nessisary recording parameters according to the disc
+	 * the necessary recording parameters according to the disc
 	 * characteristics read in. Modifications can be made in the discinfo
 	 * structure passed to change the nature of the disc.
 	 */

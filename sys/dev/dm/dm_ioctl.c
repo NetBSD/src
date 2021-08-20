@@ -1,4 +1,4 @@
-/* $NetBSD: dm_ioctl.c,v 1.53 2021/07/24 21:31:37 andvar Exp $      */
+/* $NetBSD: dm_ioctl.c,v 1.54 2021/08/20 20:25:27 andvar Exp $      */
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dm_ioctl.c,v 1.53 2021/07/24 21:31:37 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dm_ioctl.c,v 1.54 2021/08/20 20:25:27 andvar Exp $");
 
 /*
  * Locking is used to synchronise between ioctl calls and between dm_table's
@@ -557,7 +557,7 @@ dm_dev_resume_ioctl(prop_dictionary_t dm_dict)
 
 /*
  * Table management routines
- * lvm2tools doens't send name/uuid to kernel with table
+ * lvm2tools doesn't send name/uuid to kernel with table
  * for lookup I have to use minor number.
  */
 

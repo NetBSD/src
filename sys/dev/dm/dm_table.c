@@ -1,4 +1,4 @@
-/*        $NetBSD: dm_table.c,v 1.19 2019/12/31 10:30:30 tkusumi Exp $      */
+/*        $NetBSD: dm_table.c,v 1.20 2021/08/20 20:25:27 andvar Exp $      */
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dm_table.c,v 1.19 2019/12/31 10:30:30 tkusumi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dm_table.c,v 1.20 2021/08/20 20:25:27 andvar Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -326,7 +326,7 @@ dm_table_head_destroy(dm_table_head_t *head)
 
 	KASSERT(!mutex_owned(&head->table_mtx));
 	KASSERT(!cv_has_waiters(&head->table_cv));
-	/* tables doens't exists when I call this routine, therefore it
+	/* tables don't exist when I call this routine, therefore it
 	 * doesn't make sense to have io_cnt != 0 */
 	KASSERT(head->io_cnt == 0);
 

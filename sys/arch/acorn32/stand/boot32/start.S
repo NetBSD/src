@@ -1,4 +1,4 @@
-/*	$NetBSD: start.S,v 1.4 2021/02/06 21:45:38 joerg Exp $	*/
+/*	$NetBSD: start.S,v 1.5 2021/08/20 20:25:26 andvar Exp $	*/
 
 /*
  * Copyright (c) 2002 Reinoud Zandijk
@@ -47,7 +47,7 @@ ENTRY(relocate_code)
 	ldmfd	sp!, {r8-r12}
 
 	/*
-	 * determine processor architecture version. This is nessisary for the
+	 * determine processor architecture version. This is necessary for the
 	 * correct coprocessor instruction.
 	 */
 	mrc	p15, 0, r0, c0, c0, 0					/* read CPU id in r0			*/

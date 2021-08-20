@@ -1,8 +1,8 @@
-#	$NetBSD: XLSATX,v 1.31 2020/09/27 13:48:50 roy Exp $
+#	$NetBSD: XLSATX,v 1.32 2021/08/20 20:25:27 andvar Exp $
 
 include 	"arch/evbmips/conf/std.rmixl"
 
-#ident 		"XLSATX-$Revision: 1.31 $"
+#ident 		"XLSATX-$Revision: 1.32 $"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
@@ -114,7 +114,7 @@ options 	MIIVERBOSE	# verbose PHY autoconfig messages
 # Bitmask for enabling the PCI IDE channels in the southbridge.
 # Set bit 0 (0x01) for channel 0, bit 1 (0x02) for channel 1.
 #
-# Do this if your firmware (usually PMON and YAMON) doens't enable the IDE
+# Do this if your firmware (usually PMON and YAMON) doesn't enable the IDE
 # channels for you (thus causing the NetBSD `pciide' driver to ignore them).
 options 	PCI_NETBSD_ENABLE_IDE=0x1
 

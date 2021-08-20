@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe.c,v 1.287 2021/07/15 08:09:31 msaitoh Exp $ */
+/* $NetBSD: ixgbe.c,v 1.288 2021/08/20 20:25:28 andvar Exp $ */
 
 /******************************************************************************
 
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixgbe.c,v 1.287 2021/07/15 08:09:31 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixgbe.c,v 1.288 2021/08/20 20:25:28 andvar Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -4822,7 +4822,7 @@ out:
 	IXGBE_CORE_LOCK(adapter);
 
 	/*
-	 * Don't shedule MSF event if the chip is 82598. 82598 doesn't support
+	 * Don't schedule MSF event if the chip is 82598. 82598 doesn't support
 	 * MSF. At least, calling ixgbe_handle_msf on 82598 DA makes the link
 	 * flap because the function calls setup_link().
 	 */

@@ -1,5 +1,5 @@
 #define	DEBUG
-/*	$NetBSD: boot.c,v 1.9 2016/07/07 06:55:38 msaitoh Exp $	*/
+/*	$NetBSD: boot.c,v 1.10 2021/08/20 20:25:27 andvar Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -254,7 +254,7 @@ main(void)
  loaded:
 	/*
 	 * Okay, kernel is loaded, free the extra memory at the end.
-	 * Round to the ARM OpenFirmare page size (4k).
+	 * Round to the ARM OpenFirmware page size (4k).
 	 */
 	cp = (char *) ((marks[MARK_END] + 0xfff) & ~0xfff);
 	size = (u_long) (endbuf - cp);

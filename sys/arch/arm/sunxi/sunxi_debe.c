@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_debe.c,v 1.14 2021/08/07 16:18:45 thorpej Exp $ */
+/* $NetBSD: sunxi_debe.c,v 1.15 2021/08/20 20:25:27 andvar Exp $ */
 
 /*-
  * Copyright (c) 2018 Manuel Bouyer <bouyer@antioche.eu.org>
@@ -38,7 +38,7 @@
 #define SUNXI_DEBE_CURMAX	64
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_debe.c,v 1.14 2021/08/07 16:18:45 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_debe.c,v 1.15 2021/08/20 20:25:27 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -288,7 +288,7 @@ sunxi_debe_ep_connect(device_t self, struct fdt_endpoint *ep, bool connect)
 		 */
 		if (sc->sc_unit != -1 && rep_idx != -1 &&
 		    sc->sc_unit != rep_idx) {
-			aprint_error_dev(self, ": remote id %d doens't match"
+			aprint_error_dev(self, ": remote id %d doesn't match"
 			    " discovered unit number %d\n",
 			    rep_idx, sc->sc_unit);
 			return;

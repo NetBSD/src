@@ -1,4 +1,4 @@
-/* $NetBSD: auixpvar.h,v 1.10 2019/10/16 21:52:22 maya Exp $*/
+/* $NetBSD: auixpvar.h,v 1.11 2021/08/20 20:25:28 andvar Exp $*/
 
 /*
  * Copyright (c) 2004, 2005 Reinoud Zandijk <reinoud@netbsd.org>
@@ -84,7 +84,7 @@ struct auixp_softc {
 
 	/* card id */
 	int			type;
-	int			delay1, delay2;		/* nessisary? */
+	int			delay1, delay2;		/* necessary? */
 
 	/* card properties */
 	int			has_4ch, has_6ch, is_fixed, has_spdif;

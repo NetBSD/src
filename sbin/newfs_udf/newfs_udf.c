@@ -1,4 +1,4 @@
-/* $NetBSD: newfs_udf.c,v 1.20 2020/04/05 15:25:40 joerg Exp $ */
+/* $NetBSD: newfs_udf.c,v 1.21 2021/08/20 20:25:26 andvar Exp $ */
 
 /*
  * Copyright (c) 2006, 2008, 2013 Reinoud Zandijk
@@ -391,7 +391,7 @@ udf_setup_writeparams(struct mmc_discinfo *di)
 	/*
 	 * only CD burning normally needs setting up, but other disc types
 	 * might need other settings to be made. The MMC framework will set up
-	 * the nessisary recording parameters according to the disc
+	 * the necessary recording parameters according to the disc
 	 * characteristics read in. Modifications can be made in the discinfo
 	 * structure passed to change the nature of the disc.
 	 */
@@ -865,7 +865,7 @@ main(int argc, char **argv)
 		printf("Metadata percentage  %d %%\n", meta_perc);
 	printf("\n");
 
-	/* prepare disc if nessisary (recordables mainly) */
+	/* prepare disc if necessary (recordables mainly) */
 	error = udf_prepare_disc();
 	if (error) {
 		perror("preparing disc failed");
