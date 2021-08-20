@@ -1,4 +1,4 @@
-# $NetBSD: t_findcc.sh,v 1.1 2021/08/11 20:42:26 rillig Exp $
+# $NetBSD: t_findcc.sh,v 1.2 2021/08/20 05:45:19 rillig Exp $
 #
 # Copyright (c) 2021 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -75,8 +75,8 @@ rel_not_found_body() {
 		"$(atf_get_srcdir)"/h_findcc 'bin/echo'
 }
 
-# If the program name contains a slash in the middle, it is interpreted
-# relative to the current directory.
+# If the program name contains a slash, no matter where, the program is not
+# searched in the PATH.  This is the same behavior as in /bin/sh.
 #
 atf_test_case rel_found
 rel_found_body() {
@@ -106,6 +106,40 @@ rel_arg_found_body() {
 }
 
 
+atf_test_case abs_not_found
+abs_not_found_body() {
+	atf_check -o "inline:(not found)$n" \
+	    env -i \
+		"$(atf_get_srcdir)"/h_findcc "$PWD/nonexistent/echo"
+}
+
+atf_test_case abs_found
+abs_found_body() {
+	mkdir bin
+	echo '#! /bin/sh' > bin/echo
+	chmod +x bin/echo
+
+	atf_check -o "inline:$PWD/bin/echo$n" \
+	    env -i \
+		"$(atf_get_srcdir)"/h_findcc "$PWD/bin/echo"
+}
+
+# If the program name is an absolute pathname, the arguments are discarded.
+#
+# XXX: Discarding the arguments feels unintended.
+#
+atf_test_case abs_arg_found
+abs_arg_found_body() {
+	mkdir bin
+	echo '#! /bin/sh' > bin/echo
+	chmod +x bin/echo
+
+	atf_check -o "inline:$PWD/bin/echo$n" \
+	    env -i \
+		"$(atf_get_srcdir)"/h_findcc "$PWD/bin/echo arg"
+}
+
+
 atf_init_test_cases() {
 	atf_add_test_case base_not_found
 	atf_add_test_case base_found
@@ -114,4 +148,8 @@ atf_init_test_cases() {
 	atf_add_test_case rel_not_found
 	atf_add_test_case rel_found
 	atf_add_test_case rel_arg_found
+
+	atf_add_test_case abs_not_found
+	atf_add_test_case abs_found
+	atf_add_test_case abs_arg_found
 }
