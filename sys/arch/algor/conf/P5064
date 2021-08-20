@@ -1,4 +1,4 @@
-#	$NetBSD: P5064,v 1.94 2021/06/29 10:22:34 nia Exp $
+#	$NetBSD: P5064,v 1.95 2021/08/20 20:25:27 andvar Exp $
 #
 # Algorithmics P-5064 kernel.
 #
@@ -7,7 +7,7 @@ include	"arch/algor/conf/std.algor"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"P5064-$Revision: 1.94 $"
+#ident 		"P5064-$Revision: 1.95 $"
 
 maxusers 32
 
@@ -86,7 +86,7 @@ options 	SCSIVERBOSE		# Verbose SCSI errors
 # Bitmask for enabling the PCI IDE channels in the southbridge.
 # Set bit 0 (0x01) for channel 0, bit 1 (0x02) for channel 1.
 #
-# Do this if your firmware (usually PMON) doens't enable the IDE
+# Do this if your firmware (usually PMON) doesn't enable the IDE
 # channels for you (thus causing the NetBSD `pciide' driver to
 # ignore them).
 options 	PCI_NETBSD_ENABLE_IDE=0x1

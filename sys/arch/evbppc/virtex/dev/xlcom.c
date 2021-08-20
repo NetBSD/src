@@ -1,4 +1,4 @@
-/* 	$NetBSD: xlcom.c,v 1.11 2014/07/25 08:10:33 dholland Exp $ */
+/* 	$NetBSD: xlcom.c,v 1.12 2021/08/20 20:25:27 andvar Exp $ */
 
 /*
  * Copyright (c) 2006 Jachym Holecek
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xlcom.c,v 1.11 2014/07/25 08:10:33 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xlcom.c,v 1.12 2021/08/20 20:25:27 andvar Exp $");
 
 #include "opt_kgdb.h"
 
@@ -357,7 +357,7 @@ xlcom_recv_chunk(struct xlcom_softc *sc)
 		stat = bus_space_read_4(sc->sc_iot, sc->sc_ioh, XLCOM_STAT);
 	}
 
-	/* Shedule completion hook if we received any. */
+	/* Schedule completion hook if we received any. */
 	if (n != sc->sc_ravail)
 		softint_schedule(sc->sc_rx_soft);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: t_quota2_remount.c,v 1.5 2017/01/13 21:30:39 christos Exp $	*/
+/*	$NetBSD: t_quota2_remount.c,v 1.6 2021/08/20 20:25:28 andvar Exp $	*/
 
 /*
  * Basic tests for quota2
@@ -44,7 +44,7 @@ do_quota(const atf_tc_t *tc, int n, const char *newfs_opts, int log)
 
 	uargs.fspec = __UNCONST("/diskdev");
 
-	/* read-only doens't have quota enabled */
+	/* read-only doesn't have quota enabled */
 	if (rump_sys_mount(MOUNT_FFS, FSTEST_MNTNAME, MNT_RDONLY,
 	    &uargs, sizeof(uargs)) == -1)
 		atf_tc_fail_errno("mount ffs ro %s", FSTEST_MNTNAME);
