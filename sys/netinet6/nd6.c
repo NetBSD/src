@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6.c,v 1.256.2.7 2019/09/30 15:55:40 martin Exp $	*/
+/*	$NetBSD: nd6.c,v 1.256.2.8 2021/08/20 19:32:49 martin Exp $	*/
 /*	$KAME: nd6.c,v 1.279 2002/06/08 11:16:51 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.256.2.7 2019/09/30 15:55:40 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.256.2.8 2021/08/20 19:32:49 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -2036,6 +2036,7 @@ nd6_llinfo_release_pkts(struct llentry *ln, struct ifnet *ifp)
 
 	m_hold = ln->la_hold, ln->la_hold = NULL, ln->la_numheld = 0;
 
+	LLE_ADDREF(ln);
 	LLE_WUNLOCK(ln);
 	for (; m_hold != NULL; m_hold = m_hold_next) {
 		m_hold_next = m_hold->m_nextpkt;
@@ -2049,6 +2050,7 @@ nd6_llinfo_release_pkts(struct llentry *ln, struct ifnet *ifp)
 		ip6_if_output(ifp, ifp, m_hold, &sin6, NULL);
 	}
 	LLE_WLOCK(ln);
+	LLE_REMREF(ln);
 }
 
 /*
