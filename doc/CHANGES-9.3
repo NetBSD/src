@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.3,v 1.1.2.23 2021/08/19 04:53:21 snj Exp $
+# $NetBSD: CHANGES-9.3,v 1.1.2.24 2021/08/20 19:33:44 martin Exp $
 
 A complete list of changes from the NetBSD 9.2 release to the NetBSD 9.3
 release:
@@ -599,4 +599,10 @@ usr.sbin/sysinst/upgrade.c			1.18
 
 	PR 56354: make swap in sysinst optional for upgrades
 	[martin, ticket #1333]
+
+sys/netinet6/nd6.c				1.277
+
+	nd6: avoid use-after-free in ND L2 cache.
+	[ozaki-r, ticket #1338]
+
 
