@@ -1,4 +1,4 @@
-/* $NetBSD: udf_create.c,v 1.29 2021/04/13 06:25:48 mrg Exp $ */
+/* $NetBSD: udf_create.c,v 1.30 2021/08/20 20:25:26 andvar Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -30,7 +30,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: udf_create.c,v 1.29 2021/04/13 06:25:48 mrg Exp $");
+__RCSID("$NetBSD: udf_create.c,v 1.30 2021/08/20 20:25:26 andvar Exp $");
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -276,7 +276,7 @@ udf_calculate_disc_layout(int format_flags, int min_udf,
 
 	/*
 	 * Align partition LBA space to blocking granularity. Not strickly
-	 * nessisary for non sparables but safer for the VRS data since it is
+	 * necessary for non sparables but safer for the VRS data since it is
 	 * not updated sporadically
 	 */
 

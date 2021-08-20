@@ -1,4 +1,4 @@
-/*	$NetBSD: lxtphy.c,v 1.55 2020/03/15 23:04:50 thorpej Exp $	*/
+/*	$NetBSD: lxtphy.c,v 1.56 2021/08/20 20:25:28 andvar Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lxtphy.c,v 1.55 2020/03/15 23:04:50 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lxtphy.c,v 1.56 2021/08/20 20:25:28 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -238,7 +238,7 @@ lxtphy_status(struct mii_softc *sc)
 	/*
 	 * Get link status from the CSR; we need to read the CSR
 	 * for media type anyhow, and the link status in the CSR
-	 * doens't latch, so fewer register reads are required.
+	 * doesn't latch, so fewer register reads are required.
 	 */
 	PHY_READ(sc, MII_LXTPHY_CSR, &csr);
 	if (csr & CSR_LINK)
