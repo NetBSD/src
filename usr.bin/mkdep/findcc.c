@@ -1,4 +1,4 @@
-/* $NetBSD: findcc.c,v 1.9 2021/08/20 05:45:19 rillig Exp $ */
+/* $NetBSD: findcc.c,v 1.10 2021/08/20 06:36:10 rillig Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
 #if !defined(lint)
 __COPYRIGHT("@(#) Copyright (c) 1999 The NetBSD Foundation, Inc.\
  All rights reserved.");
-__RCSID("$NetBSD: findcc.c,v 1.9 2021/08/20 05:45:19 rillig Exp $");
+__RCSID("$NetBSD: findcc.c,v 1.10 2021/08/20 06:36:10 rillig Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -49,47 +49,40 @@ __RCSID("$NetBSD: findcc.c,v 1.9 2021/08/20 05:45:19 rillig Exp $");
 #include "findcc.h"
 
 char *
-findcc(const char *cc_command)
+findcc(const char *progname)
 {
-	char   *progname, *path, *dir, *next;
-	char   buffer[MAXPATHLEN];
+	char *cc;
+	const char *path, *dir;
+	char buffer[MAXPATHLEN];
+	size_t progname_len, dir_len;
 
-	if ((progname = strdup(cc_command)) == NULL)
-		return NULL;
+	progname_len = strcspn(progname, " ");
 
-	if ((next = strchr(progname, ' ')) != NULL)
-		*next = '\0';
-
-	if (strchr(progname, '/') != NULL) {
-		if (access(progname, X_OK) == 0)
-			return progname;
-		free(progname);
-		return NULL;
-	}
-
-	if (((path = getenv("PATH")) == NULL) ||
-	    ((path = strdup(path)) == NULL)) {
-		free(progname);
+	if (memchr(progname, '/', progname_len) != NULL) {
+		if ((cc = strndup(progname, progname_len)) == NULL)
+			return NULL;
+		if (access(cc, X_OK) == 0)
+			return cc;
+		free(cc);
 		return NULL;
 	}
 
-	dir = path;
-	while (dir != NULL) {
-		if ((next = strchr(dir, ':')) != NULL)
-			*next++ = '\0';
+	if ((path = getenv("PATH")) == NULL)
+		return NULL;
 
-		if (snprintf(buffer, sizeof(buffer),
-		    "%s/%s", dir, progname) < (int)sizeof(buffer)) {
-			if (access(buffer, X_OK) == 0) {
-				free(path);
-				free(progname);
-				return strdup(buffer);
-			}
-		}
-		dir = next;
+	for (dir = path; *dir != '\0'; ) {
+		dir_len = strcspn(dir, ":");
+
+		if ((size_t)snprintf(buffer, sizeof(buffer), "%.*s/%.*s",
+			(int)dir_len, dir, (int)progname_len, progname)
+		    < sizeof(buffer)
+		    && access(buffer, X_OK) == 0)
+			return strdup(buffer);
+
+		dir += dir_len;
+		if (*dir == ':')
+			dir++;
 	}
 
-	free(path);
-	free(progname);
 	return NULL;
 }

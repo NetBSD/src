@@ -1,4 +1,4 @@
-# $NetBSD: t_findcc.sh,v 1.2 2021/08/20 05:45:19 rillig Exp $
+# $NetBSD: t_findcc.sh,v 1.3 2021/08/20 06:36:10 rillig Exp $
 #
 # Copyright (c) 2021 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -49,6 +49,31 @@ base_found_body() {
 	atf_check -o "inline:/bin/echo$n" \
 	    env -i PATH='/bin:/nonexistent' \
 		"$(atf_get_srcdir)"/h_findcc 'echo'
+}
+
+# A plain program name is searched in the PATH and, in this example, it is
+# found in '/bin', which comes second in the PATH.
+#
+atf_test_case base_found_second
+base_found_second_body() {
+	atf_check -o "inline:/bin/echo$n" \
+	    env -i PATH='/nonexistent:/bin' \
+		"$(atf_get_srcdir)"/h_findcc 'echo'
+}
+
+# A plain program name is searched in the PATH and, in this example, it is
+# found in './bin', a relative path in the PATH, which is rather unusual in
+# practice.
+#
+atf_test_case base_found_reldir
+base_found_reldir_body() {
+	mkdir bin
+	echo '#! /bin/sh' > 'bin/reldir-echo'
+	chmod +x 'bin/reldir-echo'
+
+	atf_check -o "inline:bin/reldir-echo$n" \
+	    env -i PATH='/nonexistent:bin' \
+		"$(atf_get_srcdir)"/h_findcc 'reldir-echo'
 }
 
 # The C compiler can be specified as a program with one or more arguments.
@@ -143,6 +168,8 @@ abs_arg_found_body() {
 atf_init_test_cases() {
 	atf_add_test_case base_not_found
 	atf_add_test_case base_found
+	atf_add_test_case base_found_second
+	atf_add_test_case base_found_reldir
 	atf_add_test_case base_arg_found
 
 	atf_add_test_case rel_not_found

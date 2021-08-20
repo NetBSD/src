@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.2 2021/08/11 20:42:26 rillig Exp $
+# $NetBSD: Makefile,v 1.3 2021/08/20 06:36:10 rillig Exp $
 
 .include <bsd.own.mk>
 
@@ -13,5 +13,6 @@ PROG=		h_findcc
 SRCS=		h_findcc.c findcc.c
 CPPFLAGS+=	-I${NETBSDSRCDIR}/usr.bin/mkdep
 MAN.h_findcc=	# none
+WARNS=		6
 
 .include <bsd.test.mk>
