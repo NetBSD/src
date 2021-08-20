@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2823 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2824 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -405,6 +405,10 @@ Changes from NetBSD 9.0 to NetBSD 10.0:
 	evbarm: Improvements in interrupt handling on Arm GIC v2 and v3 systems
 		resulting in better network and storage performance.
 		[jmcneill 20210810]
+	kernel profiling: Improved performance of kernel profiling with
+		MULTIPROCESSOR. [ryo 20210814]
+	kgmon(8): added -c option to get profile information for each cpu.
+		[ryo 20210814]
 	openldap: Import 2.5.6. [christos 20210814]
 	sh3: Switch to GCC 10. [mrg 20210816]
 	bind: Import version 9.16.20. [christos 20210819]
