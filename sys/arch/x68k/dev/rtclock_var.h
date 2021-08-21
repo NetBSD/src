@@ -1,4 +1,4 @@
-/*	$NetBSD: rtclock_var.h,v 1.11 2009/01/03 09:32:13 isaki Exp $	*/
+/*	$NetBSD: rtclock_var.h,v 1.12 2021/08/21 09:59:46 andvar Exp $	*/
 
 /*
  * Copyright 1993, 1994 Masaru Oki
@@ -31,7 +31,7 @@
  */
 
 /*
- * Should be splitted to _reg.h and _var.h
+ * Should be split to _reg.h and _var.h
  */
 
 #ifndef _RTCLOCKVAR_H_
