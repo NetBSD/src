@@ -1,4 +1,4 @@
-/*	$NetBSD: readline.c,v 1.163 2021/08/21 12:34:59 christos Exp $	*/
+/*	$NetBSD: readline.c,v 1.164 2021/08/21 12:38:56 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include "config.h"
 #if !defined(lint) && !defined(SCCSID)
-__RCSID("$NetBSD: readline.c,v 1.163 2021/08/21 12:34:59 christos Exp $");
+__RCSID("$NetBSD: readline.c,v 1.164 2021/08/21 12:38:56 christos Exp $");
 #endif /* not lint && not SCCSID */
 
 #include <sys/types.h>
@@ -2078,6 +2078,7 @@ rl_callback_read_char(void)
 	const char *buf = el_gets(e, &count);
 	char *wbuf;
 
+	el_set(e, EL_UNBUFFERED, 1);
 	if (buf == NULL || count-- <= 0)
 		return;
 	if (count == 0 && buf[0] == e->el_tty.t_c[TS_IO][C_EOF])
@@ -2093,7 +2094,6 @@ rl_callback_read_char(void)
 		} else
 			wbuf = NULL;
 		(*(void (*)(const char *))rl_linefunc)(wbuf);
-		el_set(e, EL_UNBUFFERED, 1);
 	}
 }
 
@@ -2111,9 +2111,8 @@ rl_callback_handler_install(const char *prompt, rl_vcpfunc_t *linefunc)
 void
 rl_callback_handler_remove(void)
 {
+	el_set(e, EL_UNBUFFERED, 0);
 	rl_linefunc = NULL;
-	el_end(e);
-	e = NULL;
 }
 
 void
