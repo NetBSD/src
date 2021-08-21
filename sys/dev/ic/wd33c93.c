@@ -1,4 +1,4 @@
-/*	$NetBSD: wd33c93.c,v 1.30 2021/08/07 16:19:12 thorpej Exp $	*/
+/*	$NetBSD: wd33c93.c,v 1.31 2021/08/21 11:55:25 andvar Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wd33c93.c,v 1.30 2021/08/07 16:19:12 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wd33c93.c,v 1.31 2021/08/21 11:55:25 andvar Exp $");
 
 #include "opt_ddb.h"
 
@@ -2140,7 +2140,7 @@ wd33c93_nextstate(struct wd33c93_softc *sc, struct wd33c93_acb	*acb, u_char csr,
 
 	default:
 	abort:
-		/* Something unexpected happend -- deal with it. */
+		/* Something unexpected happened -- deal with it. */
 		printf("next: aborting asr 0x%02x csr 0x%02x\n", asr, csr);
 
 #ifdef DDB

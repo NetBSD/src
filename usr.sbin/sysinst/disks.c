@@ -1,4 +1,4 @@
-/*	$NetBSD: disks.c,v 1.75 2021/08/12 09:33:59 martin Exp $ */
+/*	$NetBSD: disks.c,v 1.76 2021/08/21 11:55:26 andvar Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -543,7 +543,7 @@ is_partitionable_device(const char *dev)
  * Multi-purpose helper function:
  * iterate all known disks, invoke a callback for each.
  * Stop iteration when the callback returns false.
- * Return true when iteration actually happend, false on error.
+ * Return true when iteration actually happened, false on error.
  */
 bool
 enumerate_disks(void *state, bool (*func)(void *state, const char *dev))

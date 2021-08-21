@@ -1,4 +1,4 @@
-/*	$NetBSD: dk.c,v 1.106 2021/08/04 21:44:41 mlelstv Exp $	*/
+/*	$NetBSD: dk.c,v 1.107 2021/08/21 11:55:25 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.106 2021/08/04 21:44:41 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.107 2021/08/21 11:55:25 andvar Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_dkwedge.h"
@@ -362,7 +362,7 @@ dkwedge_add(struct dkwedge_info *dkw)
 
 	/*
 	 * Wedge will be added; increment the wedge count for the parent.
-	 * Only allow this to happend if RAW_PART is the only thing open.
+	 * Only allow this to happen if RAW_PART is the only thing open.
 	 */
 	mutex_enter(&pdk->dk_openlock);
 	if (pdk->dk_openmask & ~(1 << RAW_PART))

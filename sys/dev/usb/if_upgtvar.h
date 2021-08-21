@@ -1,4 +1,4 @@
-/*	$NetBSD: if_upgtvar.h,v 1.6 2020/03/15 23:04:51 thorpej Exp $	*/
+/*	$NetBSD: if_upgtvar.h,v 1.7 2021/08/21 11:55:25 andvar Exp $	*/
 /*	$OpenBSD: if_upgtvar.h,v 1.15 2009/08/10 20:02:19 deraadt Exp $ */
 
 /*
@@ -270,19 +270,19 @@ struct upgt_lmac_filter {
 	uint32_t			unknown4;
 } __packed;
 
-/* frequence 3 data */
+/* frequency 3 data */
 struct upgt_lmac_freq3 {
 	uint16_t			freq;
 	uint8_t				data[6];
 } __packed;
 
-/* frequence 4 data */
+/* frequency 4 data */
 struct upgt_lmac_freq4 {
 	struct upgt_eeprom_freq4_2	cmd;
 	uint8_t				pad;
 };
 
-/* frequence 6 data */
+/* frequency 6 data */
 struct upgt_lmac_freq6 {
 	uint16_t			freq;
 	uint8_t				data[8];

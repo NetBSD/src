@@ -1,4 +1,4 @@
-/*	$NetBSD: audioio.h,v 1.38 2019/05/08 13:40:19 isaki Exp $	*/
+/*	$NetBSD: audioio.h,v 1.39 2021/08/21 11:55:25 andvar Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -183,7 +183,7 @@ struct audio_format {
 
 	/**
 	 * The bit size of one sample.
-	 * It must be >= validbits, and is usualy a multiple of 8.
+	 * It must be >= validbits, and is usually a multiple of 8.
 	 */
 	u_int precision;
 

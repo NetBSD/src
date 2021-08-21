@@ -1200,7 +1200,7 @@ wecho_wchar_body()
 atf_test_case halfdelay
 halfdelay_head()
 {
-    atf_set "descr" "Tests seting the input mode to half delay"
+    atf_set "descr" "Tests setting the input mode to half delay"
 }
 halfdelay_body()
 {

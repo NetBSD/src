@@ -1,4 +1,4 @@
--/* $NetBSD: isp_target.c,v 1.35 2018/09/03 16:29:31 riastradh Exp $ */
+-/* $NetBSD: isp_target.c,v 1.36 2021/08/21 11:55:25 andvar Exp $ */
 /*-
  *  Copyright (c) 1997-2008 by Matthew Jacob
  *  All rights reserved.
@@ -65,7 +65,7 @@
 
 #ifdef	__NetBSD__
 #include <sys/cdefs.h> 
-__KERNEL_RCSID(0, "$NetBSD: isp_target.c,v 1.35 2018/09/03 16:29:31 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isp_target.c,v 1.36 2021/08/21 11:55:25 andvar Exp $");
 #include <dev/ic/isp_netbsd.h>
 #endif
 #ifdef	__FreeBSD__
@@ -1256,7 +1256,7 @@ isp_handle_atio(ispsoftc_t *isp, at_entry_t *aep)
 	 * The firmware status (except for the QLTM_SVALID bit) indicates
 	 * why this ATIO was sent to us.
 	 *
-	 * If QLTM_SVALID is set, the firware has recommended Sense Data.
+	 * If QLTM_SVALID is set, the firmware has recommended Sense Data.
 	 *
 	 * If the DISCONNECTS DISABLED bit is set in the flags field,
 	 * we're still connected on the SCSI bus - i.e. the initiator
@@ -1342,7 +1342,7 @@ isp_handle_atio2(ispsoftc_t *isp, at2_entry_t *aep)
 	 * The firmware status (except for the QLTM_SVALID bit) indicates
 	 * why this ATIO was sent to us.
 	 *
-	 * If QLTM_SVALID is set, the firware has recommended Sense Data.
+	 * If QLTM_SVALID is set, the firmware has recommended Sense Data.
 	 *
 	 * If the DISCONNECTS DISABLED bit is set in the flags field,
 	 * we're still connected on the SCSI bus - i.e. the initiator

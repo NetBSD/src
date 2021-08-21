@@ -1,4 +1,4 @@
-/*	$NetBSD: fwohci.c,v 1.147 2021/08/21 09:59:46 andvar Exp $	*/
+/*	$NetBSD: fwohci.c,v 1.148 2021/08/21 11:55:25 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2003 Hidetoshi Shimokawa
@@ -37,7 +37,7 @@
  *
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fwohci.c,v 1.147 2021/08/21 09:59:46 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fwohci.c,v 1.148 2021/08/21 11:55:25 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -2271,7 +2271,7 @@ fwohci_rbuf_update(struct fwohci_softc *sc, int dmach)
 		else
 			/* XXX */
 			aprint_error_dev(fc->dev,
-			    "fwohci_rbuf_update: this shouldn't happend\n");
+			    "fwohci_rbuf_update: this shouldn't happen\n");
 
 		STAILQ_REMOVE_HEAD(&ir->stdma, link);
 		STAILQ_INSERT_TAIL(&ir->stvalid, chunk, link);
