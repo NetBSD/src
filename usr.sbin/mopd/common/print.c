@@ -1,4 +1,4 @@
-/*	$NetBSD: print.c,v 1.9 2021/08/02 12:56:25 andvar Exp $	*/
+/*	$NetBSD: print.c,v 1.10 2021/08/21 23:00:32 andvar Exp $	*/
 
 /*
  * Copyright (c) 1993-96 Mats O Jansson.  All rights reserved.
@@ -26,7 +26,7 @@
 
 #include "port.h"
 #ifndef lint
-__RCSID("$NetBSD: print.c,v 1.9 2021/08/02 12:56:25 andvar Exp $");
+__RCSID("$NetBSD: print.c,v 1.10 2021/08/21 23:00:32 andvar Exp $");
 #endif
 
 #include <sys/types.h>
@@ -470,7 +470,7 @@ mopPrintInfo(FILE *fd, const u_char *pkt, int *idx,
 			break;
 		case MOP_K_INFO_MFCT:
 			tmps = mopGetShort(pkt,idx);
-			(void)fprintf(fd,"Maint Funcion: %04x ( ",tmps);
+			(void)fprintf(fd,"Maint Function: %04x ( ",tmps);
 			if (tmps &   1) (void)fprintf(fd, "Loop ");
 			if (tmps &   2) (void)fprintf(fd, "Dump ");
 			if (tmps &   4) (void)fprintf(fd, "Pldr ");
