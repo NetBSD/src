@@ -1,4 +1,4 @@
-* $NetBSD: README,v 1.6 2013/04/20 03:26:11 isaki Exp $
+* $NetBSD: README,v 1.7 2021/08/21 23:00:31 andvar Exp $
 * NetBSD/m68k FPE (floating point emulation) README file
 * Created Oct/??/95 by kenn@remus.rutgers.edu (Ken Nakata)
 * Last updated Oct/15/2011 by tsutsui
@@ -116,7 +116,7 @@ type 0 arithmetic instruction follows this prototype:
 
 Where fe is a pointer to a struct fpemu in which frame, fpframe, and
 fetched operands are accessible.  That's right, you don't have to
-fetch the operands by yourself in your emulation funtion.  For
+fetch the operands by yourself in your emulation function.  For
 instance, the parts calling FSQRT, FSUB, FADD and FTST look like:
 
 	switch(word1 & 0x3F) {

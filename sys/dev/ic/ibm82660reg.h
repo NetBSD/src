@@ -1,4 +1,4 @@
-/* $NetBSD: ibm82660reg.h,v 1.3 2008/06/14 12:01:28 mjf Exp $ */
+/* $NetBSD: ibm82660reg.h,v 1.4 2021/08/21 23:00:31 andvar Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  * Also known as a Lanai/Kauai.
  */
 
-/* Memmory Bank Starting Addresses */
+/* Memory Bank Starting Addresses */
 #define	IBM_82660_MEM_BANK0_START	0x80
 #define	IBM_82660_MEM_BANK1_START	0x81
 #define	IBM_82660_MEM_BANK2_START	0x82
