@@ -1,4 +1,4 @@
-/*	$NetBSD: lex_integer_ilp32.c,v 1.2 2021/06/29 13:58:13 rillig Exp $	*/
+/*	$NetBSD: lex_integer_ilp32.c,v 1.3 2021/08/21 11:50:57 rillig Exp $	*/
 # 3 "lex_integer_ilp32.c"
 
 /*
@@ -7,7 +7,7 @@
  * C99 6.4.4.1 "Integer constants"
  */
 
-/* lint1-only-if ilp32 */
+/* lint1-only-if: ilp32 */
 
 void sinki(int);
 void sinku(unsigned int);
