@@ -1,4 +1,4 @@
-/*	$NetBSD: glue.c,v 1.2 2021/08/17 17:30:01 christos Exp $	*/
+/*	$NetBSD: sodium_module.c,v 1.1 2021/08/21 09:08:08 christos Exp $	*/
 
 /*-
  * Copyright (c) 2021 The NetBSD Foundation, Inc.
@@ -27,13 +27,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: glue.c,v 1.2 2021/08/17 17:30:01 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sodium_module.c,v 1.1 2021/08/21 09:08:08 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
 #include <sys/module.h>
-
-int libsodium_errno;
 
 MODULE(MODULE_CLASS_MISC, sodium, NULL);
 
