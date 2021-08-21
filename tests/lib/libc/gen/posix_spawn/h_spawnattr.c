@@ -1,4 +1,4 @@
-/* $NetBSD: h_spawnattr.c,v 1.1 2012/02/13 21:03:08 martin Exp $ */
+/* $NetBSD: h_spawnattr.c,v 1.2 2021/08/21 23:00:32 andvar Exp $ */
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 /*
  * Helper to test the hardcoded assumptions from t_spawnattr.c
- * Exit with apropriate exit status and print diagnostics to
+ * Exit with appropriate exit status and print diagnostics to
  * stderr explaining what is wrong.
  */
 int

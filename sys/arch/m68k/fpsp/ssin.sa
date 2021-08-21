@@ -1,4 +1,4 @@
-*	$NetBSD: ssin.sa,v 1.4 2000/03/13 23:52:32 soren Exp $
+*	$NetBSD: ssin.sa,v 1.5 2021/08/21 23:00:31 andvar Exp $
 
 *	MOTOROLA MICROPROCESSOR & MEMORY TECHNOLOGY GROUP
 *	M68000 Hi-Performance Microprocessor Division
@@ -41,7 +41,7 @@
 *	Input: Double-extended number X in location pointed to
 *		by address register a0.
 *
-*	Output: The funtion value sin(X) or cos(X) returned in Fp0 if SIN or
+*	Output: The function value sin(X) or cos(X) returned in Fp0 if SIN or
 *		COS is requested. Otherwise, for SINCOS, sin(X) is returned
 *		in Fp0, and cos(X) is returned in Fp1.
 *

@@ -1,4 +1,4 @@
-/*	$NetBSD: amidisplaycc.c,v 1.37 2021/08/07 16:18:41 thorpej Exp $ */
+/*	$NetBSD: amidisplaycc.c,v 1.38 2021/08/21 23:00:31 andvar Exp $ */
 
 /*-
  * Copyright (c) 2000 Jukka Andberg.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amidisplaycc.c,v 1.37 2021/08/07 16:18:41 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amidisplaycc.c,v 1.38 2021/08/21 23:00:31 andvar Exp $");
 
 /*
  * wscons interface to amiga custom chips. Contains the necessary functions
@@ -1930,7 +1930,7 @@ amidisplaycc_pollc(void *cookie, int on)
  * These dummy functions are here just so that we can compete of
  * the console at init.
  * If we win the console then the wscons system will provide the
- * real ones which in turn will call the apropriate wskbd device.
+ * real ones which in turn will call the appropriate wskbd device.
  * These should never be called.
  */
 

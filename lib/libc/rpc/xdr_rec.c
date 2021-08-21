@@ -1,4 +1,4 @@
-/*	$NetBSD: xdr_rec.c,v 1.37 2018/07/25 23:59:08 kamil Exp $	*/
+/*	$NetBSD: xdr_rec.c,v 1.38 2021/08/21 23:00:30 andvar Exp $	*/
 
 /*
  * Copyright (c) 2010, Oracle America, Inc.
@@ -37,7 +37,7 @@
 static char *sccsid = "@(#)xdr_rec.c 1.21 87/08/11 Copyr 1984 Sun Micro";
 static char *sccsid = "@(#)xdr_rec.c	2.2 88/08/01 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: xdr_rec.c,v 1.37 2018/07/25 23:59:08 kamil Exp $");
+__RCSID("$NetBSD: xdr_rec.c,v 1.38 2021/08/21 23:00:30 andvar Exp $");
 #endif
 #endif
 
@@ -479,7 +479,7 @@ xdrrec_skiprecord(XDR *xdrs)
 }
 
 /*
- * Look ahead fuction.
+ * Look ahead function.
  * Returns TRUE iff there is no more input in the buffer 
  * after consuming the rest of the current record.
  */

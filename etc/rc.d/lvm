@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: lvm,v 1.7 2021/08/03 05:15:20 mlelstv Exp $
+# $NetBSD: lvm,v 1.8 2021/08/21 23:00:30 andvar Exp $
 #
 
 # PROVIDE: lvm
@@ -32,7 +32,7 @@ lvm_start()
 		# Scan for all available VG's
 		/sbin/lvm vgscan --mknodes --ignorelockingfailure >/dev/null
 
-		# Activate all LV's and create apropriate nodes in /dev
+		# Activate all LV's and create appropriate nodes in /dev
 		/sbin/lvm vgchange --ignorelockingfailure -a y >/dev/null
 		LV_LIST=$(/sbin/lvm vgdisplay -C -o vg_name --noheadings 2>/dev/null)
 		echo " Activated Volume Groups:" $LV_LIST

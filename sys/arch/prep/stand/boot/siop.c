@@ -1,4 +1,4 @@
-/*	$NetBSD: siop.c,v 1.4 2021/07/24 21:31:35 andvar Exp $	*/
+/*	$NetBSD: siop.c,v 1.5 2021/08/21 23:00:31 andvar Exp $	*/
 /*
  * Copyright (c) 2010 KIYOHARA Takashi
  * All rights reserved.
@@ -180,7 +180,7 @@ siop_sdp(struct siop_adapter *adp, struct siop_xfer *xfer, struct scsi_xfer *xs,
 
 		siop_cmd->flags &= ~CMDFL_RESID;
 		table = &xfer->siop_tables.data[offset];
-		/* "cut" already transfered data from this table */
+		/* "cut" already transferred data from this table */
 		table->addr =
 		    htoc32(ctoh32(table->addr) + ctoh32(table->count) -
 							siop_cmd->resid);

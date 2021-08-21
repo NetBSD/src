@@ -1,4 +1,4 @@
-/*	$NetBSD: clnt_vc.c,v 1.26 2015/01/20 18:31:25 christos Exp $	*/
+/*	$NetBSD: clnt_vc.c,v 1.27 2021/08/21 23:00:30 andvar Exp $	*/
 
 /*
  * Copyright (c) 2010, Oracle America, Inc.
@@ -38,7 +38,7 @@ static char *sccsid = "@(#)clnt_tcp.c 1.37 87/10/05 Copyr 1984 Sun Micro";
 static char *sccsid = "@(#)clnt_tcp.c	2.2 88/08/01 4.0 RPCSRC";
 static char sccsid[] = "@(#)clnt_vc.c 1.19 89/03/16 Copyr 1988 Sun Micro";
 #else
-__RCSID("$NetBSD: clnt_vc.c,v 1.26 2015/01/20 18:31:25 christos Exp $");
+__RCSID("$NetBSD: clnt_vc.c,v 1.27 2021/08/21 23:00:30 andvar Exp $");
 #endif
 #endif
  
@@ -119,9 +119,9 @@ struct ct_data {
  *      This machinery implements per-fd locks for MT-safety.  It is not
  *      sufficient to do per-CLIENT handle locks for MT-safety because a
  *      user may create more than one CLIENT handle with the same fd behind
- *      it.  Therfore, we allocate an array of flags (vc_fd_locks), protected
+ *      it.  Therefore, we allocate an array of flags (vc_fd_locks), protected
  *      by the clnt_fd_lock mutex, and an array (vc_cv) of condition variables
- *      similarly protected.  Vc_fd_lock[fd] == 1 => a call is activte on some
+ *      similarly protected.  Vc_fd_lock[fd] == 1 => a call is active on some
  *      CLIENT handle created for that fd.
  *      The current implementation holds locks across the entire RPC and reply.
  *      Yes, this is silly, and as soon as this code is proven to work, this

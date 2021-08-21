@@ -1,4 +1,4 @@
-/*	$NetBSD: svc.c,v 1.39 2015/11/13 15:22:12 christos Exp $	*/
+/*	$NetBSD: svc.c,v 1.40 2021/08/21 23:00:30 andvar Exp $	*/
 
 /*
  * Copyright (c) 2010, Oracle America, Inc.
@@ -37,7 +37,7 @@
 static char *sccsid = "@(#)svc.c 1.44 88/02/08 Copyr 1984 Sun Micro";
 static char *sccsid = "@(#)svc.c	2.4 88/08/11 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: svc.c,v 1.39 2015/11/13 15:22:12 christos Exp $");
+__RCSID("$NetBSD: svc.c,v 1.40 2021/08/21 23:00:30 andvar Exp $");
 #endif
 #endif
 
@@ -106,7 +106,7 @@ int __svc_maxrec;
  * The services list
  * Each entry represents a set of procedures (an rpc program).
  * The dispatch routine takes request structs and runs the
- * apropriate procedure.
+ * appropriate procedure.
  */
 static struct svc_callout {
 	struct svc_callout *sc_next;

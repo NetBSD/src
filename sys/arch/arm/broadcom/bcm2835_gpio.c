@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm2835_gpio.c,v 1.22 2021/08/07 16:18:43 thorpej Exp $	*/
+/*	$NetBSD: bcm2835_gpio.c,v 1.23 2021/08/21 23:00:31 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2013, 2014, 2017 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm2835_gpio.c,v 1.22 2021/08/07 16:18:43 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm2835_gpio.c,v 1.23 2021/08/21 23:00:31 andvar Exp $");
 
 /*
  * Driver for BCM2835 GPIO
@@ -196,7 +196,7 @@ bcm283x_pinctrl_set_config(device_t dev, const void *data, size_t len)
 	const u_int *func = fdtbus_get_prop(phandle, "brcm,function", &func_len);
 
 	if (!pull && !func) {
-		aprint_error_dev(dev, "one of brcm,pull or brcm,funcion must "
+		aprint_error_dev(dev, "one of brcm,pull or brcm,function must "
 		    "be specified");
 		return -1;
 	}

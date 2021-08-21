@@ -1,4 +1,4 @@
-/*	$NetBSD: isns_pdu.c,v 1.4 2018/02/08 09:05:17 dholland Exp $	*/
+/*	$NetBSD: isns_pdu.c,v 1.5 2021/08/21 23:00:30 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2004,2009 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: isns_pdu.c,v 1.4 2018/02/08 09:05:17 dholland Exp $");
+__RCSID("$NetBSD: isns_pdu.c,v 1.5 2021/08/21 23:00:30 andvar Exp $");
 
 
 #include <sys/types.h>
@@ -768,7 +768,7 @@ isns_get_pdu_request_tail(struct isns_trans_s *trans_p)
 
 
 /*
- * isns_new_pdu - allocates a new PDU and assigns funtion ID and flags
+ * isns_new_pdu - allocates a new PDU and assigns function ID and flags
  */
 struct isns_pdu_s *
 isns_new_pdu(struct isns_config_s *cfg_p, uint16_t trans_id, uint16_t func_id,

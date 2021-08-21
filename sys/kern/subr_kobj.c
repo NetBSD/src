@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_kobj.c,v 1.68 2021/06/09 15:15:35 christos Exp $	*/
+/*	$NetBSD: subr_kobj.c,v 1.69 2021/08/21 23:00:32 andvar Exp $	*/
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_kobj.c,v 1.68 2021/06/09 15:15:35 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_kobj.c,v 1.69 2021/08/21 23:00:32 andvar Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_modular.h"
@@ -961,7 +961,7 @@ kobj_findbase(kobj_t ko, int sec)
  * kobj_checksyms:
  *
  *	Scan symbol table for duplicates or resolve references to
- *	exernal symbols.
+ *	external symbols.
  */
 static int
 kobj_checksyms(kobj_t ko, bool undefined)

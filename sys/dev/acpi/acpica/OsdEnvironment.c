@@ -1,4 +1,4 @@
-/*	$NetBSD: OsdEnvironment.c,v 1.6 2011/06/12 11:31:31 jruoho Exp $	*/
+/*	$NetBSD: OsdEnvironment.c,v 1.7 2021/08/21 23:00:31 andvar Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: OsdEnvironment.c,v 1.6 2011/06/12 11:31:31 jruoho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: OsdEnvironment.c,v 1.7 2021/08/21 23:00:31 andvar Exp $");
 
 #include <sys/types.h>
 
@@ -83,7 +83,7 @@ AcpiOsTerminate(void)
 /*
  * AcpiOsGetRootPointer:
  *
- *	Obtain the Root ACPI talbe pointer (RSDP)
+ *	Obtain the Root ACPI table pointer (RSDP)
  */
 ACPI_PHYSICAL_ADDRESS
 AcpiOsGetRootPointer(void)
