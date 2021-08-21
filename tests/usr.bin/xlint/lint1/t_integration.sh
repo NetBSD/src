@@ -1,4 +1,4 @@
-# $NetBSD: t_integration.sh,v 1.68 2021/07/13 18:50:16 rillig Exp $
+# $NetBSD: t_integration.sh,v 1.69 2021/08/21 11:50:57 rillig Exp $
 #
 # Copyright (c) 2008, 2010 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -85,11 +85,16 @@ configure_test_case()
 					flags = ""
 				for (i = 3; i < NF; i++)
 					flags = flags " " $i
+			} else if ($2 == "lint1-only-if:") {
+				 if (!platform_has($3))
+				 	skip = "yes"
+			} else if ($2 == "lint1-skip-if:") {
+				if (platform_has($3))
+					skip = "yes"
+			} else {
+				printf("bad lint1 comment '\''%s'\''\n", $2) > "/dev/stderr"
+				exit(1)
 			}
-			if ($2 == "lint1-only-if" && !platform_has($3))
-				skip = "yes"
-			if ($2 == "lint1-skip-if" && platform_has($3))
-				skip = "yes"
 		}
 
 		END {

@@ -1,4 +1,4 @@
-/*	$NetBSD: op_shl_lp64.c,v 1.2 2021/07/31 19:52:44 rillig Exp $	*/
+/*	$NetBSD: op_shl_lp64.c,v 1.3 2021/08/21 11:50:57 rillig Exp $	*/
 # 3 "op_shl_lp64.c"
 
 /*
@@ -11,7 +11,7 @@
  * These warnings had been discovered in ecp_nistp256.c(296).
  */
 
-/* lint1-only-if lp64 */
+/* lint1-only-if: lp64 */
 
 const __uint128_t zero105 =
     (((__uint128_t)1) << 105)
