@@ -1,4 +1,4 @@
-/*	$NetBSD: vs.c,v 1.54 2021/02/06 12:50:04 isaki Exp $	*/
+/*	$NetBSD: vs.c,v 1.55 2021/08/21 10:18:14 andvar Exp $	*/
 
 /*
  * Copyright (c) 2001 Tetsuya Isaki. All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vs.c,v 1.54 2021/02/06 12:50:04 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vs.c,v 1.55 2021/08/21 10:18:14 andvar Exp $");
 
 #include "audio.h"
 #include "vs.h"
@@ -476,7 +476,7 @@ vs_halt_input(void *hdl)
 	DPRINTF(1, ("vs_halt_input\n"));
 	sc = hdl;
 
-	/* stop ADPCM recoding */
+	/* stop ADPCM recording */
 	dmac_abort_xfer(sc->sc_dma_ch->ch_softc, sc->sc_current.xfer);
 	bus_space_write_1(sc->sc_iot, sc->sc_ioh,
 	    MSM6258_CMD, MSM6258_CMD_STOP);
