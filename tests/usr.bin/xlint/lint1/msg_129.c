@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_129.c,v 1.3 2021/01/30 23:05:08 rillig Exp $	*/
+/*	$NetBSD: msg_129.c,v 1.4 2021/08/21 07:52:07 rillig Exp $	*/
 # 3 "msg_129.c"
 
 // Test for message: expression has null effect [129]
@@ -15,8 +15,8 @@ _Bool side_effect(void);
  * wrongly reported as having no side effect.
  *
  * The bug was that has_side_effect did not properly examine the sub-nodes.
- * The ',' operator has m_has_side_effect == false since it depends on its
- * operands whether the ',' actually has side effects.  For nested ','
+ * The ',' operator itself has m_has_side_effect == false since it depends
+ * on its operands whether the ',' actually has side effects.  For nested ','
  * operators, the function did not evaluate the operands deeply but only did
  * a quick shallow test on the m_has_side_effect property.  Since that is
  * false, lint thought that the whole expression would have no side effect.
@@ -40,4 +40,50 @@ operator_comma(void)
 		return;
 	if (0, side_effect())		/* expect: 129 */
 		return;
+}
+
+void
+legitimate_use_cases(int arg)
+{
+	int local = 3;
+
+	/*
+	 * This expression is commonly used to mark the argument as
+	 * deliberately unused.
+	 */
+	/* TODO: remove this bogus warning. */
+	/* expect+1: warning: expression has null effect [129] */
+	(void)arg;
+
+	/*
+	 * This expression is commonly used to mark the local variable as
+	 * deliberately unused.  This situation occurs when the local
+	 * variable is only used in some but not all compile-time selectable
+	 * variants of the code, such as in debugging mode, and writing down
+	 * the exact conditions would complicate the code unnecessarily.
+	 */
+	/* TODO: remove this bogus warning. */
+	/* expect+1: warning: expression has null effect [129] */
+	(void)local;
+
+	/* This is a short-hand notation for a do-nothing command. */
+	/* TODO: remove this bogus warning. */
+	/* expect+1: warning: expression has null effect [129] */
+	(void)0;
+
+	/*
+	 * This variant of the do-nothing command is commonly used in
+	 * preprocessor macros since it works nicely with if-else and if-then
+	 * statements.  It is longer than the above variant though.
+	 */
+	do {
+	} while (0);
+
+	/*
+	 * Only the expression '(void)0' is common, other expressions are
+	 * unusual enough that they warrant a warning.
+	 */
+	/* TODO: remove this bogus warning. */
+	/* expect+1: warning: expression has null effect [129] */
+	(void)13;
 }
