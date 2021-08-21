@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_129.c,v 1.4 2021/08/21 07:52:07 rillig Exp $	*/
+/*	$NetBSD: msg_129.c,v 1.5 2021/08/21 08:18:48 rillig Exp $	*/
 # 3 "msg_129.c"
 
 // Test for message: expression has null effect [129]
@@ -51,8 +51,6 @@ legitimate_use_cases(int arg)
 	 * This expression is commonly used to mark the argument as
 	 * deliberately unused.
 	 */
-	/* TODO: remove this bogus warning. */
-	/* expect+1: warning: expression has null effect [129] */
 	(void)arg;
 
 	/*
@@ -62,14 +60,18 @@ legitimate_use_cases(int arg)
 	 * variants of the code, such as in debugging mode, and writing down
 	 * the exact conditions would complicate the code unnecessarily.
 	 */
-	/* TODO: remove this bogus warning. */
-	/* expect+1: warning: expression has null effect [129] */
 	(void)local;
 
 	/* This is a short-hand notation for a do-nothing command. */
-	/* TODO: remove this bogus warning. */
-	/* expect+1: warning: expression has null effect [129] */
 	(void)0;
+
+	/*
+	 * At the point where lint checks for expressions having a null
+	 * effect, constants have been folded, therefore the following
+	 * expression is considered safe as well.  It does not appear in
+	 * practice though.
+	 */
+	(void)(3 - 3);
 
 	/*
 	 * This variant of the do-nothing command is commonly used in
@@ -81,9 +83,12 @@ legitimate_use_cases(int arg)
 
 	/*
 	 * Only the expression '(void)0' is common, other expressions are
-	 * unusual enough that they warrant a warning.
+	 * unusual enough to warrant a warning.
 	 */
-	/* TODO: remove this bogus warning. */
 	/* expect+1: warning: expression has null effect [129] */
 	(void)13;
+
+	/* Double casts are unusual enough to warrant a warning. */
+	/* expect+1: warning: expression has null effect [129] */
+	(void)(void)0;
 }
