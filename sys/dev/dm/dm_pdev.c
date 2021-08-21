@@ -1,4 +1,4 @@
-/*        $NetBSD: dm_pdev.c,v 1.22 2019/12/20 16:16:36 tkusumi Exp $      */
+/*        $NetBSD: dm_pdev.c,v 1.23 2021/08/21 22:23:33 andvar Exp $      */
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dm_pdev.c,v 1.22 2019/12/20 16:16:36 tkusumi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dm_pdev.c,v 1.23 2021/08/21 22:23:33 andvar Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -211,7 +211,7 @@ dm_pdev_destroy(void)
 }
 
 /*
- * This funcion is called from dm_dev_remove_ioctl.
+ * This function is called from dm_dev_remove_ioctl.
  * When I'm removing device from list, I have to decrement
  * reference counter. If reference counter is 0 I will remove
  * dmp from global list and from device list to. And I will CLOSE

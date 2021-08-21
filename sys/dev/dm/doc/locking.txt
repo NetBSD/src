@@ -43,7 +43,7 @@ typedef struct dm_dev {
         int minor;
         uint32_t flags; /* store communication protocol flags */
 
-        kmutex_t dev_mtx; /* mutex for generall device lock */
+        kmutex_t dev_mtx; /* mutex for general device lock */
         kcondvar_t dev_cv; /* cv for ioctl synchronisation */
 
         uint32_t event_nr;
@@ -106,48 +106,48 @@ dm_table_head_t is used as entry for every dm_table synchronisation routine.
 Because every table user have to get list to table list head I have implemented
 these routines to manage access to table lists. 
 
-/*                                                                                                            
- * Destroy all table data. This function can run when there are no                                            
- * readers on table lists.                                                                                    
+/*
+ * Destroy all table data. This function can run when there are no
+ * readers on table lists.
  */
 int dm_table_destroy(dm_table_head_t *, uint8_t);
 
-/*                                                                                                            
- * Return length of active table in device.                                                                   
+/*
+ * Return length of active table in device.
  */
 uint64_t dm_table_size(dm_table_head_t *);
 
-/*                                                                                                            
- * Return current active table to caller, increment io_cnt reference counter.                                 
+/*
+ * Return current active table to caller, increment io_cnt reference counter.
  */
 struct dm_table *dm_table_get_entry(dm_table_head_t *, uint8_t);
 
-/*                                                                                                            
- * Return > 0 if table is at least one table entry (returns number of entries)                                
- * and return 0 if there is not. Target count returned from this function                                     
- * doesn't need to be true when userspace user receive it (after return                                       
- * there can be dm_dev_resume_ioctl), therfore this isonly informative.                                       
+/*
+ * Return > 0 if table is at least one table entry (returns number of entries)
+ * and return 0 if there is not. Target count returned from this function
+ * doesn't need to be true when userspace user receives it (after return
+ * there can be dm_dev_resume_ioctl), therefore this is only informative.
  */
 int dm_table_get_target_count(dm_table_head_t *, uint8_t);
 
-/*                                                                                                            
- * Decrement io reference counter and wake up all callers, with table_head cv.                                
+/*
+ * Decrement io reference counter and wake up all callers, with table_head cv.
  */
 void dm_table_release(dm_table_head_t *, uint8_t s);
 
-/*                                                                                                            
- * Switch table from inactive to active mode. Have to wait until io_cnt is 0.                                 
+/*
+ * Switch table from inactive to active mode. Have to wait until io_cnt is 0.
  */
 void dm_table_switch_tables(dm_table_head_t *);
 
-/*                                                                                                            
- * Initialize table_head structures, I'm trying to keep this structure as                                     
- * opaque as possible.                                                                                        
+/*
+ * Initialize table_head structures, I'm trying to keep this structure as
+ * opaque as possible.
  */
 void dm_table_head_init(dm_table_head_t *);
 
-/*                                                                                                            
- * Destroy all variables in table_head                                                                        
+/*
+ * Destroy all variables in table_head
  */
 void dm_table_head_destroy(dm_table_head_t *);
 
@@ -172,11 +172,11 @@ is reference counter 0 and only then it can work with device. It will sleep on
 head->table_cv while there are other readers. dm_table_get_entry is specific in that it will return table with hold reference counter. After dm_table_get_entry 
 every caller must call dm_table_release when it doesn't want to work with it. 
 
-/*                                                                                                            
- * Function to increment table user reference counter. Return id                                              
- * of table_id table.                                                                                         
- * DM_TABLE_ACTIVE will return active table id.                                                               
- * DM_TABLE_INACTIVE will return inactive table id.                                                           
+/*
+ * Function to increment table user reference counter. Return id
+ * of table_id table.
+ * DM_TABLE_ACTIVE will return active table id.
+ * DM_TABLE_INACTIVE will return inactive table id.
  */
 static int
 dm_table_busy(dm_table_head_t *head, uint8_t table_id)
@@ -198,8 +198,8 @@ dm_table_busy(dm_table_head_t *head, uint8_t table_id)
         return id;
 }
 
-/*                                                                                                            
- * Function release table lock and eventually wakeup all waiters.                                             
+/*
+ * Function release table lock and eventually wakeup all waiters.
  */
 static void
 dm_table_unbusy(dm_table_head_t *head)
@@ -245,17 +245,4 @@ dm_dev_unbusy.
 
 dm_dev_remove_ioctl routine have to remove dm_dev from global device list,
 and wait until all ioctl users from dm_dev are gone. 
-
-
-
-
-
-
-
-
-
-
-
-
-
 
