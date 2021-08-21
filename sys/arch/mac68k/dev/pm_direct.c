@@ -1,4 +1,4 @@
-/*	$NetBSD: pm_direct.c,v 1.29 2013/10/25 20:49:38 martin Exp $	*/
+/*	$NetBSD: pm_direct.c,v 1.30 2021/08/21 11:55:24 andvar Exp $	*/
 
 /*
  * Copyright (C) 1997 Takashi Hamada
@@ -32,7 +32,7 @@
 /* From: pm_direct.c 1.3 03/18/98 Takashi Hamada */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pm_direct.c,v 1.29 2013/10/25 20:49:38 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pm_direct.c,v 1.30 2021/08/21 11:55:24 andvar Exp $");
 
 #include "opt_adb.h"
 
@@ -549,7 +549,7 @@ pm_intr_pm1(void *arg)
 
 	PM_VIA_CLR_INTR();				/* clear VIA1 interrupt */
 
-	/* ask PM what happend */
+	/* ask PM what happened */
 	pmdata.command = 0x78;
 	pmdata.num_data = 0;
 	pmdata.data[0] = pmdata.data[1] = 0;
@@ -809,7 +809,7 @@ pm_intr_pm2(void *arg)
 	s = splhigh();
 
 	PM_VIA_CLR_INTR();			/* clear VIA1 interrupt */
-						/* ask PM what happend */
+						/* ask PM what happened */
 	pmdata.command = 0x78;
 	pmdata.num_data = 0;
 	pmdata.s_buf = &pmdata.data[2];

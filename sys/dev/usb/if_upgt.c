@@ -1,4 +1,4 @@
-/*	$NetBSD: if_upgt.c,v 1.31 2020/03/15 23:04:51 thorpej Exp $	*/
+/*	$NetBSD: if_upgt.c,v 1.32 2021/08/21 11:55:25 andvar Exp $	*/
 /*	$OpenBSD: if_upgt.c,v 1.49 2010/04/20 22:05:43 tedu Exp $ */
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_upgt.c,v 1.31 2020/03/15 23:04:51 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_upgt.c,v 1.32 2021/08/21 11:55:25 andvar Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -1172,7 +1172,7 @@ upgt_eeprom_parse_freq3(struct upgt_softc *sc, uint8_t *data, int len)
 
 		sc->sc_eeprom_freq3[channel] = freq3[i];
 
-		DPRINTF(2, "%s: frequence=%d, channel=%d\n",
+		DPRINTF(2, "%s: frequency=%d, channel=%d\n",
 		    device_xname(sc->sc_dev),
 		    le16toh(sc->sc_eeprom_freq3[channel].freq), channel);
 	}
@@ -1212,7 +1212,7 @@ upgt_eeprom_parse_freq4(struct upgt_softc *sc, uint8_t *data, int len)
 			sc->sc_eeprom_freq4[channel][j].pad = 0;
 		}
 
-		DPRINTF(2, "%s: frequence=%d, channel=%d\n",
+		DPRINTF(2, "%s: frequency=%d, channel=%d\n",
 		    device_xname(sc->sc_dev),
 		    le16toh(freq4_1[i].freq), channel);
 	}
@@ -1236,7 +1236,7 @@ upgt_eeprom_parse_freq6(struct upgt_softc *sc, uint8_t *data, int len)
 
 		sc->sc_eeprom_freq6[channel] = freq6[i];
 
-		DPRINTF(2, "%s: frequence=%d, channel=%d\n",
+		DPRINTF(2, "%s: frequency=%d, channel=%d\n",
 		    device_xname(sc->sc_dev),
 		    le16toh(sc->sc_eeprom_freq6[channel].freq), channel);
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: bozohttpd.c,v 1.132 2021/05/05 07:41:48 mrg Exp $	*/
+/*	$NetBSD: bozohttpd.c,v 1.133 2021/08/21 11:55:24 andvar Exp $	*/
 
 /*	$eterna: bozohttpd.c,v 1.178 2011/11/18 09:21:15 mrg Exp $	*/
 
@@ -1459,7 +1459,7 @@ use_slashdir:
 
 /*
  * checks to see if this request has a valid .bzredirect file.  returns
- * 0 when no redirection happend, or 1 when handle_redirect() has been
+ * 0 when no redirection happened, or 1 when handle_redirect() has been
  * called, -1 on error.
  */
 static int
