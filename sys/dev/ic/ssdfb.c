@@ -1,4 +1,4 @@
-/* $NetBSD: ssdfb.c,v 1.21 2021/08/07 16:19:12 thorpej Exp $ */
+/* $NetBSD: ssdfb.c,v 1.22 2021/08/21 17:50:02 tnn Exp $ */
 
 /*
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ssdfb.c,v 1.21 2021/08/07 16:19:12 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ssdfb.c,v 1.22 2021/08/21 17:50:02 tnn Exp $");
 
 #include "opt_ddb.h"
 
@@ -1060,8 +1060,10 @@ ssdfb_set_contrast(struct ssdfb_softc *sc, uint8_t value, bool usepoll)
 		if (error)
 			return error;
 		cmd[0] = SSD1353_CMD_SET_CONTRAST_CONTROL_C;
+		break;
 	default:
 		cmd[0] = SSDFB_CMD_SET_CONTRAST_CONTROL;
+		break;
 	}
 
 	return sc->sc_cmd(sc->sc_cookie, cmd, sizeof(cmd), usepoll);
