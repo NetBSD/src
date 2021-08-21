@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.340 2021/08/19 21:13:58 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.341 2021/08/21 08:18:48 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.340 2021/08/19 21:13:58 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.341 2021/08/21 08:18:48 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -3801,14 +3801,47 @@ has_side_effect(const tnode_t *tn) // NOLINT(misc-no-recursion)
 	return false;
 }
 
+static bool
+is_void_cast(const tnode_t *tn)
+{
+
+	return tn->tn_op == CVT && tn->tn_cast &&
+	       tn->tn_type->t_tspec == VOID;
+}
+
+static bool
+is_local_symbol(const tnode_t *tn)
+{
+
+	return tn->tn_op == LOAD &&
+	       tn->tn_left->tn_op == NAME &&
+	       tn->tn_left->tn_sym->s_scl == AUTO;
+}
+
+static bool
+is_int_constant_zero(const tnode_t *tn)
+{
+
+	return tn->tn_op == CON &&
+	       tn->tn_type->t_tspec == INT &&
+	       tn->tn_val->v_quad == 0;
+}
+
 static void
 check_null_effect(const tnode_t *tn)
 {
 
-	if (hflag && !has_side_effect(tn)) {
-		/* expression has null effect */
-		warning(129);
-	}
+	if (!hflag)
+		return;
+	if ( has_side_effect(tn))
+		return;
+	if (is_void_cast(tn) && is_local_symbol(tn->tn_left))
+		return;
+	if (is_void_cast(tn) && is_int_constant_zero(tn->tn_left))
+		return;
+
+	/* expression has null effect */
+	warning(129);
 }
 
 /* ARGSUSED */
