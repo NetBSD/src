@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.55 2019/01/25 15:31:11 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.56 2021/08/21 13:22:19 christos Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1992, 1993
@@ -36,7 +36,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1992, 1993\
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: main.c,v 1.55 2019/01/25 15:31:11 christos Exp $");
+__RCSID("$NetBSD: main.c,v 1.56 2021/08/21 13:22:19 christos Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -81,6 +81,7 @@ int     allcounter;
 sig_atomic_t needsredraw = 0;
 float	hertz;
 double	etime;
+bool	showzero = false;
 
 static	WINDOW *wload;			/* one line window for load average */
 
@@ -105,7 +106,7 @@ main(int argc, char **argv)
 	egid = getegid();
 	(void)setegid(getgid());
 
-	while ((ch = getopt(argc, argv, "M:N:bnw:t:")) != -1)
+	while ((ch = getopt(argc, argv, "M:N:bnw:t:z")) != -1)
 		switch(ch) {
 		case 'M':
 			memf = optarg;
@@ -121,11 +122,14 @@ main(int argc, char **argv)
 			break;
 		case 't':
 			if ((turns = atoi(optarg)) <= 0)
-				errx(1, "turns <= 0.");
+				errx(EXIT_FAILURE, "turns <= 0.");
 			break;
 		case 'w':
 			if ((naptime = strtod(optarg, NULL)) <= 0)
-				errx(1, "interval <= 0.");
+				errx(EXIT_FAILURE, "interval <= 0.");
+			break;
+		case 'z':
+			showzero = true;
 			break;
 		case '?':
 		default:
@@ -177,7 +181,7 @@ main(int argc, char **argv)
 
 	kd = kvm_openfiles(nlistf, memf, NULL, O_RDONLY, errbuf);
 	if (kd == NULL)
-		errx(1, "%s", errbuf);
+		errx(EXIT_FAILURE, "%s", errbuf);
 
 	/* Get rid of privs for now. */
 	if (nlistf == NULL && memf == NULL)
@@ -195,7 +199,7 @@ main(int argc, char **argv)
 	 * routines to minimize update work by curses.
 	 */
 	if (initscr() == NULL)
-		errx(1, "couldn't initialize screen");
+		errx(EXIT_FAILURE, "couldn't initialize screen");
 
 	CMDLINE = LINES - 1;
 	wnd = (*curmode->c_open)();
@@ -248,9 +252,9 @@ main(int argc, char **argv)
 static void
 usage(void)
 {
-	fprintf(stderr, "usage: systat [-bn] [-M core] [-N system] [-w wait] "
-		"[-t turns]\n\t\t[display] [refresh-interval]\n");
-	exit(1);
+	fprintf(stderr, "usage: %s [-bnz] [-M core] [-N system] [-w wait] "
+	    "[-t turns]\n\t\t[display] [refresh-interval]\n", getprogname());
+	exit(EXIT_FAILURE);
 }
 
 
@@ -366,7 +370,7 @@ die(int signo)
 	clrtoeol();
 	refresh();
 	endwin();
-	exit(0);
+	exit(EXIT_SUCCESS);
 }
 
 void
@@ -417,7 +421,7 @@ nlisterr(struct nlist name_list[])
 	clrtoeol();
 	refresh();
 	endwin();
-	exit(1);
+	exit(EXIT_FAILURE);
 }
 
 bool

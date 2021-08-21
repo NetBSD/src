@@ -1,4 +1,4 @@
-/*	$NetBSD: vmstat.c,v 1.89 2021/07/24 13:42:05 simonb Exp $	*/
+/*	$NetBSD: vmstat.c,v 1.90 2021/08/21 13:22:19 christos Exp $	*/
 
 /*-
  * Copyright (c) 1983, 1989, 1992, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.2 (Berkeley) 1/12/94";
 #endif
-__RCSID("$NetBSD: vmstat.c,v 1.89 2021/07/24 13:42:05 simonb Exp $");
+__RCSID("$NetBSD: vmstat.c,v 1.90 2021/08/21 13:22:19 christos Exp $");
 #endif /* not lint */
 
 /*
@@ -743,7 +743,7 @@ puthumanint_scale(u_int64_t n, int l, int c, int w, int scale)
 
 	if (move(l, c) != OK)
 		return;
-	if (n == 0) {
+	if (n == 0 && !showzero) {
 		hline(' ', w);
 		return;
 	}
@@ -783,7 +783,7 @@ putint(int n, int l, int c, int w)
 
 	if (move(l, c) != OK)
 		return;
-	if (n == 0) {
+	if (n == 0 && !showzero) {
 		hline(' ', w);
 		return;
 	}
@@ -805,7 +805,7 @@ putfloat(double f, int l, int c, int w, int d, int nz)
 
 	if (move(l, c) != OK)
 		return;
-	if (nz && f == 0.0) {
+	if (nz && f == 0.0 && !showzero) {
 		hline(' ', w);
 		return;
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.47 2019/01/25 15:31:11 christos Exp $	*/
+/*	$NetBSD: extern.h,v 1.48 2021/08/21 13:22:19 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -64,6 +64,7 @@ extern int	turns;
 extern gid_t	egid;
 extern float	hertz;
 extern double	etime;
+extern bool 	showzero;
 
 struct inpcb;
 #ifdef INET6
