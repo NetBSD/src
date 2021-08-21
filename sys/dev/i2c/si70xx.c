@@ -1,4 +1,4 @@
-/*	$NetBSD: si70xx.c,v 1.7 2021/06/15 04:39:49 mlelstv Exp $	*/
+/*	$NetBSD: si70xx.c,v 1.8 2021/08/21 11:55:25 andvar Exp $	*/
 
 /*
  * Copyright (c) 2017 Brad Spencer <brad@anduin.eldar.org>
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: si70xx.c,v 1.7 2021/06/15 04:39:49 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: si70xx.c,v 1.8 2021/08/21 11:55:25 andvar Exp $");
 
 /*
   Driver for the Silicon Labs SI7013/SI7020/SI7021
@@ -687,7 +687,7 @@ si70xx_attach(device_t parent, device_t self, void *aux)
 	    buf, 8);
 
 	if (error) {
-		aprint_error_dev(self, "Failed to read firware version: %d\n",
+		aprint_error_dev(self, "Failed to read firmware version: %d\n",
 		    error);
 		ecount++;
 	}

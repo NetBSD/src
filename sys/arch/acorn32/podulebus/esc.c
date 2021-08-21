@@ -1,4 +1,4 @@
-/*	$NetBSD: esc.c,v 1.33 2020/07/22 01:24:39 msaitoh Exp $	*/
+/*	$NetBSD: esc.c,v 1.34 2021/08/21 11:55:24 andvar Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esc.c,v 1.33 2020/07/22 01:24:39 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esc.c,v 1.34 2021/08/21 11:55:24 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -209,7 +209,7 @@ escinitialize(struct esc_softc *dev)
 	if (dev->sc_clock_freq <= 40)
 		dev->sc_clock_conv_fact = 2+((dev->sc_clock_freq-10)/5);
 	else
-		panic("escinitialize: Clock frequence too high");
+		panic("escinitialize: Clock frequency too high");
 
 /* Setup and save the basic configuration registers */
 	dev->sc_config1 = (dev->sc_host_id & ESC_CFG1_BUS_ID_MASK);
@@ -330,7 +330,7 @@ esc_donextcmd(struct esc_softc *dev, struct esc_pending *pendp)
  * select the unit during splbio. We then cycle through the generated
  * interrupts until the interrupt routine signals that the unit has
  * acknowledged the reset. After that we have to wait a reset to select
- * delay before anything else can happend.
+ * delay before anything else can happen.
  */
 	if (pendp->xs->xs_control & XS_CTL_RESET) {
 		struct nexus	*nexus;
@@ -774,7 +774,7 @@ esc_arbitate_target(struct esc_softc *dev, int target)
 	int		 s;
 
 /*
- * This is realy simple. Raise interrupt level to splbio. Grab the nexus and
+ * This is really simple. Raise interrupt level to splbio. Grab the nexus and
  * leave.
  */
 	nexus = &dev->sc_nexus[target];
@@ -859,8 +859,8 @@ esc_setup_nexus(struct esc_softc *dev, struct nexus *nexus, struct esc_pending *
 	} else if (sync && !(nexus->flags & ESC_NF_SYNC_TESTED)) {
 		/*
 		 * If the scsi unit is not set to synch transfer and we want
-		 * that, we have to negotiate. This should realy base the
-		 * period on the clock frequence rather than just check if
+		 * that, we have to negotiate. This should really base the
+		 * period on the clock frequency rather than just check if
 		 * >25 MHz
 		 */
 
@@ -1248,7 +1248,7 @@ esc_midaction(struct esc_softc *dev, esc_regmap_p rp, struct nexus *nexus)
 			nexus->status = -1;
 
 		/*
-		 * Preload the command complete message. Handeled in
+		 * Preload the command complete message. Handled in
 		 * esc_postaction.
 		 */
 		dev->sc_msg_in[0] = msg;
@@ -1369,7 +1369,7 @@ esc_postaction(struct esc_softc *dev, esc_regmap_p rp, struct nexus *nexus)
 	case ESC_PHASE_MESSAGE_OUT:
 		/*
 		 * Either the scsi unit wants us to send a message or we have
-		 * asked for it by seting the ATN bit.
+		 * asked for it by setting the ATN bit.
 		 */
 		nexus->state = ESC_NS_MSG_OUT;
 
@@ -1523,7 +1523,7 @@ esc_postaction(struct esc_softc *dev, esc_regmap_p rp, struct nexus *nexus)
 					/*
 					 * Hmmm, it seems that the scsi unit
 					 * initiated sync negotiation, so lets
-					 * reply acording to scsi-2 standard.
+					 * reply according to scsi-2 standard.
 					 */
 					if (!(nexus->flags& ESC_NF_SDTR_SENT))
 					{
@@ -1550,7 +1550,7 @@ esc_postaction(struct esc_softc *dev, esc_regmap_p rp, struct nexus *nexus)
 				case 0x02: /* EXTENDED IDENTIFY (SCSI-1) */
 				case 0x03: /* WIDE DATA TRANSFER REQUEST */
 			        default:
-					/* Reject any unhandeled messages. */
+					/* Reject any unhandled messages. */
 
 					dev->sc_msg_out[0] = 0x07;
 					dev->sc_msg_out_len = 1;
@@ -1561,7 +1561,7 @@ esc_postaction(struct esc_softc *dev, esc_regmap_p rp, struct nexus *nexus)
 				break;
 
 			default:
-				/* Reject any unhandeled messages. */
+				/* Reject any unhandled messages. */
 
 				dev->sc_msg_out[0] = 0x07;
 				dev->sc_msg_out_len = 1;

@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC32_IP3x,v 1.133 2020/09/27 13:48:54 roy Exp $
+#	$NetBSD: GENERIC32_IP3x,v 1.134 2021/08/21 11:55:24 andvar Exp $
 #
 # GENERIC32_IP3x machine description file
 # 
@@ -28,7 +28,7 @@ makeoptions	TEXTADDR="0x80069000"	# entry point
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC32_IP3x-$Revision: 1.133 $"
+#ident		"GENERIC32_IP3x-$Revision: 1.134 $"
 
 maxusers	32
 
@@ -41,7 +41,7 @@ makeoptions	CPUFLAGS="-march=mips3 -mtune=vr5000"
 # Standard system options
 #options 	INSECURE	# disable kernel security levels
 
-#options 	NTP		# NTP phase/frequence locked loop
+#options 	NTP		# NTP phase/frequency locked loop
 options 	KTRACE		# system call tracing via ktrace(1)
 
 options 	SYSVMSG		# System V message queues
