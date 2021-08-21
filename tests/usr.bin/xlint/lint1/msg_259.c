@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_259.c,v 1.9 2021/07/04 17:32:24 rillig Exp $	*/
+/*	$NetBSD: msg_259.c,v 1.10 2021/08/21 11:19:38 rillig Exp $	*/
 # 3 "msg_259.c"
 
 // Test for message: argument #%d is converted from '%s' to '%s' due to prototype [259]
@@ -27,4 +27,29 @@ example(char c, int i, long l)
 	/* expect+1: from 'long' to 'int' due to prototype [259] */
 	farg_int(l);
 	farg_long(l);
+}
+
+void farg_unsigned_int(unsigned int);
+void farg_unsigned_long(unsigned long);
+void farg_unsigned_long_long(unsigned long long);
+
+/*
+ * Converting a signed integer type to its corresponding unsigned integer
+ * type (C99 6.2.5p6) is usually not a problem.  A common case where it
+ * occurs is when the difference of two pointers is converted to size_t.
+ */
+void
+convert_to_corresponding_unsigned(int i, long l, long long ll)
+{
+	/* TODO: don't warn here. */
+	/* expect+1: warning: argument #1 is converted from 'int' to 'unsigned int' due to prototype [259] */
+	farg_unsigned_int(i);
+
+	/* TODO: don't warn here. */
+	/* expect+1: warning: argument #1 is converted from 'long' to 'unsigned long' due to prototype [259] */
+	farg_unsigned_long(l);
+
+	/* TODO: don't warn here. */
+	/* expect+1: warning: argument #1 is converted from 'long long' to 'unsigned long long' due to prototype [259] */
+	farg_unsigned_long_long(ll);
 }
