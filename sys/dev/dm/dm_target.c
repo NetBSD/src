@@ -1,4 +1,4 @@
-/*        $NetBSD: dm_target.c,v 1.41 2020/07/08 15:07:13 thorpej Exp $      */
+/*        $NetBSD: dm_target.c,v 1.42 2021/08/21 22:23:33 andvar Exp $      */
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dm_target.c,v 1.41 2020/07/08 15:07:13 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dm_target.c,v 1.42 2021/08/21 22:23:33 andvar Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -122,7 +122,7 @@ dm_target_lookup(const char *dm_target_name)
 }
 
 /*
- * Search for name in TAIL and return apropriate pointer.
+ * Search for name in TAIL and return appropriate pointer.
  */
 static dm_target_t *
 dm_target_lookup_name(const char *dm_target_name)
@@ -148,7 +148,7 @@ dm_target_lookup_name(const char *dm_target_name)
 /*
  * Insert new target struct into the TAIL.
  * dm_target
- *   contains name, version, function pointer to specifif target functions.
+ *   contains name, version, function pointer to specific target functions.
  */
 int
 dm_target_insert(dm_target_t *dm_target)

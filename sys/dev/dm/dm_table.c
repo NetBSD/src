@@ -1,4 +1,4 @@
-/*        $NetBSD: dm_table.c,v 1.20 2021/08/20 20:25:27 andvar Exp $      */
+/*        $NetBSD: dm_table.c,v 1.21 2021/08/21 22:23:33 andvar Exp $      */
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dm_table.c,v 1.20 2021/08/20 20:25:27 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dm_table.c,v 1.21 2021/08/21 22:23:33 andvar Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -141,7 +141,7 @@ dm_table_switch_tables(dm_table_head_t *head)
  * Destroy all table data. This function can run when there are no
  * readers on table lists.
  *
- * XXX Is it ok to call kmem_free and potentialy VOP_CLOSE with held mutex ?xs
+ * XXX Is it ok to call kmem_free and potentially VOP_CLOSE with held mutex ?xs
  */
 int
 dm_table_destroy(dm_table_head_t *head, uint8_t table_id)
@@ -274,8 +274,8 @@ dm_table_disksize(dm_table_head_t *head, uint64_t *numsecp,
 /*
  * Return > 0 if table is at least one table entry (returns number of entries)
  * and return 0 if there is not. Target count returned from this function
- * doesn't need to be true when userspace user receive it (after return
- * there can be dm_dev_resume_ioctl), therfore this isonly informative.
+ * doesn't need to be true when userspace user receives it (after return
+ * there can be dm_dev_resume_ioctl), therefore this is only informative.
  */
 int
 dm_table_get_target_count(dm_table_head_t *head, uint8_t table_id)
