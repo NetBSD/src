@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.356 2021/08/19 08:59:22 christos Exp $ */
+/* $NetBSD: cgram.y,v 1.357 2021/08/21 07:03:30 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: cgram.y,v 1.356 2021/08/19 08:59:22 christos Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.357 2021/08/21 07:03:30 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -382,11 +382,11 @@ identifier_sym:			/* helper for struct/union/enum */
 /* K&R ???, C90 ???, C99 6.4.2.1, C11 ??? */
 identifier:
 	  T_NAME {
-		debug_printf("cgram: name '%s'", $1->sb_name);
+		debug_step("cgram: name '%s'", $1->sb_name);
 		$$ = $1;
 	  }
 	| T_TYPENAME {
-		debug_printf("cgram: typename '%s'", $1->sb_name);
+		debug_step("cgram: typename '%s'", $1->sb_name);
 		$$ = $1;
 	  }
 	;
