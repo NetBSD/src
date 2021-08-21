@@ -1,4 +1,4 @@
-/*	$NetBSD: lex_char_uchar.c,v 1.3 2021/06/29 21:33:09 rillig Exp $	*/
+/*	$NetBSD: lex_char_uchar.c,v 1.4 2021/08/21 11:50:57 rillig Exp $	*/
 # 3 "lex_char_uchar.c"
 
 /*
@@ -6,7 +6,7 @@
  * char has the same representation as unsigned char.
  */
 
-/* lint1-only-if uchar */
+/* lint1-only-if: uchar */
 
 /*
  * Before inittyp.c 1.23 from 2021-06-29, the following initialization

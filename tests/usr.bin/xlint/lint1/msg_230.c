@@ -1,10 +1,10 @@
-/*	$NetBSD: msg_230.c,v 1.4 2021/07/03 19:31:22 rillig Exp $	*/
+/*	$NetBSD: msg_230.c,v 1.5 2021/08/21 11:50:57 rillig Exp $	*/
 # 3 "msg_230.c"
 
 // Test for message: nonportable character comparison, op %s [230]
 
 /* lint1-flags: -S -g -p -w */
-/* lint1-only-if schar */
+/* lint1-only-if: schar */
 
 void example(char c, unsigned char uc, signed char sc)
 {
