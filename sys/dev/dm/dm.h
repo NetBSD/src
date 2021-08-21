@@ -1,4 +1,4 @@
-/*        $NetBSD: dm.h,v 1.55 2020/01/21 16:27:53 tkusumi Exp $      */
+/*        $NetBSD: dm.h,v 1.56 2021/08/21 22:23:33 andvar Exp $      */
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -117,7 +117,7 @@ typedef struct dm_pdev {
 	struct vnode *pdev_vnode;
 	uint64_t pdev_numsec;
 	unsigned int pdev_secsize;
-	int ref_cnt; /* reference counter for users ofthis pdev */
+	int ref_cnt; /* reference counter for users of this pdev */
 
 	SLIST_ENTRY(dm_pdev) next_pdev;
 } dm_pdev_t;
@@ -137,7 +137,7 @@ typedef struct dm_dev {
 	uint64_t minor; /* Device minor number */
 	uint32_t flags; /* store communication protocol flags */
 
-	kmutex_t dev_mtx; /* mutex for generall device lock */
+	kmutex_t dev_mtx; /* mutex for general device lock */
 	kcondvar_t dev_cv; /* cv for between ioctl synchronisation */
 
 	uint32_t event_nr;

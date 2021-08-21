@@ -1,4 +1,4 @@
-/*        $NetBSD: dm_dev.c,v 1.18 2020/07/08 15:07:13 thorpej Exp $      */
+/*        $NetBSD: dm_dev.c,v 1.19 2021/08/21 22:23:33 andvar Exp $      */
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dm_dev.c,v 1.18 2020/07/08 15:07:13 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dm_dev.c,v 1.19 2021/08/21 22:23:33 andvar Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -270,7 +270,7 @@ dm_dev_rem(const char *dm_dev_name, const char *dm_dev_uuid,
 
 /*
  * Destroy all devices created in device-mapper. Remove all tables
- * free all allocated memmory.
+ * free all allocated memory.
  */
 int
 dm_dev_destroy(void)

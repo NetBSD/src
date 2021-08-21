@@ -14,12 +14,12 @@
      mapped to physical. There are many targets linear, stripe, mirror etc.
 
      Functions available to dm device:
-     	       list available targets. They can be added with module in linux.     	       
+     	       list available targets. They can be added with module in linux.
 
   3) dm table.
-     Every device-mapper device consits from one or more tables. Table specify 
-     Start, length of logical blocks and target which is used to map them to 
-     physical blocks. 
+     Every device-mapper device consists from one or more tables.
+     Table specifies start, length of logical blocks and target which is used
+     to map them to physical blocks.
 
      {start} {length} {target} | {device} {target parameters}
      
@@ -54,7 +54,7 @@
 
       out: struct dm-ioctl
 
-      Fuction:
+      Function:
 	 sends libdevmapper ioctl protocol version to kernel and ask for kernel version.
 	 If major and minor numbers are good we can continue.
 
@@ -111,7 +111,7 @@
 
     Implementation:
        Kernel driver will find device with name from struct dm_ioctl-name/uuid.
-       Change name of selected device to string foun behind struc dm_ioctl header 
+       Change name of selected device to string found behind struct dm_ioctl header 
        in userspace buffer.
 
  7) DM_DEV_SUSPEND
@@ -161,7 +161,7 @@
        Kernel driver will find device with name from struct dm_ioctl-name/uuid.
        Table is added to the inactive slot. Every device can have more than one 
        table loaded. Tables are stored in SLIST. This ioctl also open physical 
-       device spedcified in table and add it to dm_device specific pdev list.
+       device specified in table and add it to dm_device specific pdev list.
 
  11) DM_TABLE_CLEAR
 
@@ -192,7 +192,7 @@
 
      Implementation:
        Kernel driver will find device with name from struct dm_ioctl-name/uuid.
-       DM driver will copyout dm_target_spec structures behidn struct dm_ioctl.
+       DM driver will copyout dm_target_spec structures behind struct dm_ioctl.
 
  14) DM_LIST_VERSIONS	
      
@@ -257,11 +257,11 @@
    
 	
 
-		Desing of new device-mapper ioctl interface
+		Design of new device-mapper ioctl interface
 
    Basic architecture of device-mapper -> libdevmapper ioctl interface is this. 
    Libdevmapper allocate buffer with size of data_size. At the start of this buffer 
-   dm-ioctl structure is placed. any aditional information from/to kernel are placed
+   dm-ioctl structure is placed. any additional information from/to kernel are placed
    behind end (start of data part is pointed with data_start var.) of dm-ioctl struct. 
    
    Kernel driver then after ioctl call have to copyin data from userspace to kernel.
@@ -398,7 +398,7 @@
     
     struct dm_name_list {
         uint64_t dev;
-        uint32_t next;          /* offset to the next record from                                    
+        uint32_t next;          /* offset to the next record from
                                    the _start_ of this */
         char name[0];
     };
@@ -470,6 +470,6 @@
 	<key>target_type</key>
 	<string>...</string>
 	
-	<key>aditional info</key>
+	<key>additional info</key>
 	<string>...</string>
       </dict>
