@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211.c,v 1.60 2020/10/06 23:51:05 roy Exp $	*/
+/*	$NetBSD: ieee80211.c,v 1.61 2021/08/21 11:55:25 andvar Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -36,7 +36,7 @@
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211.c,v 1.22 2005/08/10 16:22:29 sam Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ieee80211.c,v 1.60 2020/10/06 23:51:05 roy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211.c,v 1.61 2021/08/21 11:55:25 andvar Exp $");
 #endif
 
 /*
@@ -1048,7 +1048,7 @@ ieee80211_rate2media(struct ieee80211com *ic, int rate, enum ieee80211_phymode m
 		{  72 | IFM_IEEE80211_11G, IFM_IEEE80211_OFDM36 },
 		{  96 | IFM_IEEE80211_11G, IFM_IEEE80211_OFDM48 },
 		{ 108 | IFM_IEEE80211_11G, IFM_IEEE80211_OFDM54 },
-		/* NB: OFDM72 doesn't realy exist so we don't handle it */
+		/* NB: OFDM72 doesn't really exist so we don't handle it */
 	};
 	u_int mask, i;
 

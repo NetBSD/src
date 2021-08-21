@@ -1,4 +1,4 @@
-/* $NetBSD: sfasvar.h,v 1.8 2020/07/22 01:24:39 msaitoh Exp $ */
+/* $NetBSD: sfasvar.h,v 1.9 2021/08/21 11:55:24 andvar Exp $ */
 
 /*
  * Copyright (c) 1995 Daniel Widenfalk
@@ -128,7 +128,7 @@ struct nexus {
 #define SFAS_NS_DISCONNECTED	9	/* We are disconnected */
 #define SFAS_NS_RESELECTED	10	/* We was reselected */
 #define SFAS_NS_DONE		11	/* Done. Prephsase to FINISHED */
-#define SFAS_NS_FINISHED	12	/* Realy done. Call scsi_done */
+#define SFAS_NS_FINISHED	12	/* Really done. Call scsi_done */
 #define SFAS_NS_RESET		13	/* We are resetting this unit */
 
 /* SCSI nexus flags */

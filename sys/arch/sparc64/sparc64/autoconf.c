@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.234 2021/08/07 16:19:06 thorpej Exp $ */
+/*	$NetBSD: autoconf.c,v 1.235 2021/08/21 11:55:25 andvar Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.234 2021/08/07 16:19:06 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.235 2021/08/21 11:55:25 andvar Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -289,7 +289,7 @@ bootstrap(void *o0, void *bootargs, void *bootsize, void *o3, void *ofw)
 	extern void OF_sym2val32(void *);
 	extern struct consdev consdev_prom;
 
-	/* Save OpenFrimware entry point */
+	/* Save OpenFirmware entry point */
 	romp   = ofw;
 	romtba = get_romtba();
 
@@ -924,7 +924,7 @@ dev_path_drive_match(device_t dev, int ctrlnode, int target,
 		/*
 		 * Note: "child" here is == ofbootpackage (s.a.), which
 		 * may be completely wrong for the device we are checking,
-		 * what we realy do here is to match "target" and "lun".
+		 * what we really do here is to match "target" and "lun".
 		 */
 		if (wwn)
 			snprintf(buf, sizeof(buf), "%s@w%016" PRIx64 ",%d",

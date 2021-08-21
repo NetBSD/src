@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.lib.mk,v 1.384 2020/11/09 16:15:05 christos Exp $
+#	$NetBSD: bsd.lib.mk,v 1.385 2021/08/21 11:55:24 andvar Exp $
 #	@(#)bsd.lib.mk	8.3 (Berkeley) 4/22/94
 
 .include <bsd.init.mk>
@@ -147,7 +147,7 @@ SHLIB_FULLVERSION=${SHLIB_MAJOR}
 # SHLIB_MAJOR, SHLIB_MINOR, SHLIB_TEENY: Major, minor, and teeny version
 #			numbers of shared library
 # SHLIB_SOVERSION:	version number to be compiled into a shared library
-#			via -soname. Usualy ${SHLIB_MAJOR} on ELF.
+#			via -soname. Usually ${SHLIB_MAJOR} on ELF.
 #			NetBSD/pmax used to use ${SHLIB_MAJOR}[.${SHLIB_MINOR}
 #			[.${SHLIB_TEENY}]]
 # SHLIB_SHFLAGS:	Flags to tell ${LD} to emit shared library.

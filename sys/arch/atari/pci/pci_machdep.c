@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.61 2021/08/07 16:18:46 thorpej Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.62 2021/08/21 11:55:24 andvar Exp $	*/
 
 /*
  * Copyright (c) 1996 Leo Weppelman.  All rights reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.61 2021/08/07 16:18:46 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.62 2021/08/21 11:55:24 andvar Exp $");
 
 #include "opt_mbtype.h"
 
@@ -75,7 +75,7 @@ __KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.61 2021/08/07 16:18:46 thorpej Exp
 					    I/O addresses up to 0xffff) */
 
 /*
- * PCI memory and IO should be aligned acording to this masks
+ * PCI memory and IO should be aligned according to these masks
  */
 #define PCI_MACHDEP_IO_ALIGN_MASK	0xffffff00
 #define PCI_MACHDEP_MEM_ALIGN_MASK	0xfffff000
