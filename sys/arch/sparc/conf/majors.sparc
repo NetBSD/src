@@ -1,4 +1,4 @@
-#	$NetBSD: majors.sparc,v 1.40 2020/04/04 16:06:16 jdolecek Exp $
+#	$NetBSD: majors.sparc,v 1.41 2021/08/21 09:59:45 andvar Exp $
 #
 # Device majors for sparc
 #
@@ -127,7 +127,7 @@ device-major	joy		char 137		joy
 # New machine-independent driver majors are assigned in 
 # sys/conf/majors.
 
-# ld has (eroneously) been assigned a MD major on some ports, this one
+# ld has (erroneously) been assigned a MD major on some ports, this one
 # is from the (mostly unused) sys/conf/majors.storage
 device-major	ld		char 303 block	303	ld
 

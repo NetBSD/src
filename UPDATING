@@ -1,4 +1,4 @@
-$NetBSD: UPDATING,v 1.319 2021/07/11 21:58:52 mrg Exp $
+$NetBSD: UPDATING,v 1.320 2021/08/21 09:59:45 andvar Exp $
 
 This file (UPDATING) is intended to be a brief reference to recent
 changes that might cause problems in the build process, and a guide for
@@ -398,7 +398,7 @@ Recent changes:
 	to IPSEC (and the older IPSEC version removed).
 
 20130605:
-	Previous freetype installations eroneously installed private
+	Previous freetype installations erroneously installed private
 	header files. If you are building against a non-empty $DESTDIR,
 	please remove ${DESTDIR}//usr/X11R7/include/freetype2/freetype/.
 
@@ -538,7 +538,7 @@ Recent changes:
 	build problems with xsrc.
 
 20100522:
-	private section of <ctype.h> was splitted, and now mklocale(1)
+	private section of <ctype.h> was split, and now mklocale(1)
 	include ctype_local.h, so you have to make cleandir in tools/mklocale.
 
 20100520:
@@ -609,7 +609,7 @@ Recent changes:
 
 20090202:
 	pkg_install now depends on the pkgdb cache for automatic conflict
-	detection.  It is recommented to rebuild the cache with
+	detection.  It is recommended to rebuild the cache with
 	``pkg_admin rebuild''.
 
 20090110:

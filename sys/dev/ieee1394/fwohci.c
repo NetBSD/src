@@ -1,4 +1,4 @@
-/*	$NetBSD: fwohci.c,v 1.146 2021/08/07 16:19:12 thorpej Exp $	*/
+/*	$NetBSD: fwohci.c,v 1.147 2021/08/21 09:59:46 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2003 Hidetoshi Shimokawa
@@ -37,7 +37,7 @@
  *
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fwohci.c,v 1.146 2021/08/07 16:19:12 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fwohci.c,v 1.147 2021/08/21 09:59:46 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -2683,7 +2683,7 @@ fwohci_arcv_swap(struct fw_pkt *fp, int len)
 	hlen = tinfo[fp0->mode.common.tcode].hdr_len;
 	if (hlen > len) {
 		if (firewire_debug)
-			printf("splitted header\n");
+			printf("split header\n");
 		return len - hlen;
 	}
 #if BYTE_ORDER == BIG_ENDIAN
@@ -2796,7 +2796,7 @@ fwohci_arcv(struct fwohci_softc *sc, struct fwohci_dbch *dbch)
 				void *buf;
 
 				if (dbch->buf_offset < 0) {
-					/* splitted in header, pull up */
+					/* split in header, pull up */
 					char *p;
 
 					rlen -= dbch->buf_offset;
@@ -2824,7 +2824,7 @@ fwohci_arcv(struct fwohci_softc *sc, struct fwohci_dbch *dbch)
 					vec[0].iov_base = (char *)&pktbuf;
 					vec[0].iov_len = offset;
 				} else {
-					/* splitted in payload */
+					/* split in payload */
 					buf = (char *)dbch->pdb_tr->buf +
 					    dbch->buf_offset;
 					rlen = psize - dbch->buf_offset;
@@ -2874,7 +2874,7 @@ fwohci_arcv(struct fwohci_softc *sc, struct fwohci_dbch *dbch)
 				if (len < 0) {
 					dbch->pdb_tr = db_tr;
 					if (firewire_debug)
-						printf("splitted payload\n");
+						printf("split payload\n");
 					/* sanity check */
 					if (resCount != 0) {
 						aprint_error_dev(sc->fc.dev,
