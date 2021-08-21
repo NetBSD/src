@@ -1,4 +1,4 @@
-/*	$NetBSD: audiodef.h,v 1.15 2020/09/13 04:14:48 isaki Exp $	*/
+/*	$NetBSD: audiodef.h,v 1.16 2021/08/21 10:18:14 andvar Exp $	*/
 
 /*
  * Copyright (C) 2017 Tetsuya Isaki. All rights reserved.
@@ -97,7 +97,7 @@ typedef enum {
 struct audio_track {
 	/*
 	 * AUMODE_PLAY for playback track, or
-	 * AUMODE_RECORD for recoding track.
+	 * AUMODE_RECORD for recording track.
 	 * Note that AUMODE_PLAY_ALL is maintained by file->mode, not here.
 	 */
 	int mode;
