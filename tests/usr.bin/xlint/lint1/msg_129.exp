@@ -1,2 +1,6 @@
 msg_129.c(37): warning: expression has null effect [129]
 msg_129.c(41): warning: expression has null effect [129]
+msg_129.c(56): warning: expression has null effect [129]
+msg_129.c(67): warning: expression has null effect [129]
+msg_129.c(72): warning: expression has null effect [129]
+msg_129.c(88): warning: expression has null effect [129]
