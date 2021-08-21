@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.343 2021/08/21 08:39:01 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.344 2021/08/21 11:27:26 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.343 2021/08/21 08:39:01 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.344 2021/08/21 11:27:26 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -1958,6 +1958,36 @@ convert(op_t op, int arg, type_t *tp, tnode_t *tn)
 }
 
 /*
+ * The types differ in sign or base type (char, short, int, long, long long,
+ * float, double, long double).
+ *
+ * If they differ only in sign and the argument is representable in both
+ * types, print no warning.
+ */
+static void
+check_prototype_conversion_integer(const tnode_t *tn, const tnode_t *ptn,
+				   const type_t *tp, tspec_t nt, tspec_t ot,
+				   int arg)
+{
+
+	if (!hflag)
+		return;
+
+	/*
+	 * If the types differ only in sign and the argument has the same
+	 * representation in both types, print no warning.
+	 */
+	if (ptn->tn_op == CON && is_integer(nt) &&
+	    signed_type(nt) == signed_type(ot) &&
+	    !msb(ptn->tn_val->v_quad, ot, -1))
+		return;
+
+	/* argument #%d is converted from '%s' to '%s' ... */
+	warning(259,
+	    arg, type_name(tn->tn_type), type_name(tp));
+}
+
+/*
  * Print a warning if a prototype causes a type conversion that is
  * different from what would happen to the same argument in the
  * absence of a prototype.
@@ -2000,24 +2030,8 @@ check_prototype_conversion(int arg, tspec_t nt, tspec_t ot, type_t *tp,
 			warning(259,
 			    arg, type_name(tn->tn_type), type_name(tp));
 		}
-	} else if (hflag) {
-		/*
-		 * they differ in sign or base type (char, short, int,
-		 * long, long long, float, double, long double)
-		 *
-		 * if they differ only in sign and the argument is a constant
-		 * and the msb of the argument is not set, print no warning
-		 */
-		if (ptn->tn_op == CON && is_integer(nt) &&
-		    signed_type(nt) == signed_type(ot) &&
-		    !msb(ptn->tn_val->v_quad, ot, -1)) {
-			/* ok */
-		} else {
-			/* argument #%d is converted from '%s' to '%s' ... */
-			warning(259,
-			    arg, type_name(tn->tn_type), type_name(tp));
-		}
-	}
+	} else
+		check_prototype_conversion_integer(tn, ptn, tp, nt, ot, arg);
 }
 
 /*
