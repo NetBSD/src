@@ -1,4 +1,4 @@
-/* $NetBSD: vfs_dirhash.c,v 1.13 2019/02/10 17:13:33 christos Exp $ */
+/* $NetBSD: vfs_dirhash.c,v 1.14 2021/08/21 09:59:46 andvar Exp $ */
 
 /*
  * Copyright (c) 2008 Reinoud Zandijk
@@ -28,7 +28,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_dirhash.c,v 1.13 2019/02/10 17:13:33 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_dirhash.c,v 1.14 2021/08/21 09:59:46 andvar Exp $");
 
 /* CLEAN UP! */
 #include <sys/param.h>
@@ -55,7 +55,7 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_dirhash.c,v 1.13 2019/02/10 17:13:33 christos Ex
  *
  * The global dirhash_queue is protected by the dirhashmutex. This lock is
  * internal only and is FS/mountpoint/vnode independent. On exit of the
- * exported functions this mutex is not helt.
+ * exported functions this mutex is not held.
  *
  * The dirhash structure is considered part of the vnode/inode/udf_node
  * structure and will thus use the lock that protects that vnode/inode.

@@ -1,4 +1,4 @@
-/* $NetBSD: auixp.c,v 1.51 2021/08/20 20:25:28 andvar Exp $ */
+/* $NetBSD: auixp.c,v 1.52 2021/08/21 09:59:46 andvar Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Reinoud Zandijk <reinoud@netbsd.org>
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auixp.c,v 1.51 2021/08/20 20:25:28 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auixp.c,v 1.52 2021/08/21 09:59:46 andvar Exp $");
 
 #include <sys/types.h>
 #include <sys/errno.h>
@@ -360,7 +360,7 @@ auixp_commit_settings(void *hdl)
 		value &= ~ATI_REG_CMD_SPDF_CONFIG_MASK;
 		value |=  ATI_REG_CMD_SPDF_CONFIG_34; /* NetBSD AC'97 default */
 
-		/* XXX this prolly is not necessary unless splitted XXX */
+		/* XXX this prolly is not necessary unless split XXX */
 		value &= ~ATI_REG_CMD_INTERLEAVE_SPDF;
 		if (params->precision <= 16)
 			value |= ATI_REG_CMD_INTERLEAVE_SPDF;

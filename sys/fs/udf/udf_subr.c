@@ -1,4 +1,4 @@
-/* $NetBSD: udf_subr.c,v 1.155 2021/08/20 20:25:28 andvar Exp $ */
+/* $NetBSD: udf_subr.c,v 1.156 2021/08/21 09:59:46 andvar Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_subr.c,v 1.155 2021/08/20 20:25:28 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_subr.c,v 1.156 2021/08/21 09:59:46 andvar Exp $");
 #endif /* not lint */
 
 
@@ -5202,7 +5202,7 @@ udf_dir_attach(struct udf_mount *ump, struct udf_node *dir_node,
 			addr_type  = icbflags & UDF_ICB_TAG_FLAGS_ALLOC_MASK;
 		}
 
-		/* make sure the next fid desc_tag won't be splitted */
+		/* make sure the next fid desc_tag won't be split */
 		if (addr_type != UDF_ICB_INTERN_ALLOC) {
 			end_fid_pos = chosen_fid_pos + chosen_size;
 			lb_rest = lb_size - (end_fid_pos % lb_size);

@@ -1,4 +1,4 @@
-/*	$NetBSD: audiotest.c,v 1.14 2021/07/21 06:18:32 isaki Exp $	*/
+/*	$NetBSD: audiotest.c,v 1.15 2021/08/21 09:59:46 andvar Exp $	*/
 
 /*
  * Copyright (C) 2019 Tetsuya Isaki. All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: audiotest.c,v 1.14 2021/07/21 06:18:32 isaki Exp $");
+__RCSID("$NetBSD: audiotest.c,v 1.15 2021/08/21 09:59:46 andvar Exp $");
 
 #include <errno.h>
 #include <fcntl.h>
@@ -4159,7 +4159,7 @@ signal_FIOASYNC(int signo)
 }
 
 /*
- * FIOASYNC between two descriptors should be splitted.
+ * FIOASYNC between two descriptors should be split.
  */
 DEF(FIOASYNC_reset)
 {

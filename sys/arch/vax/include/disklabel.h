@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.h,v 1.7 2013/04/04 12:50:03 martin Exp $	*/
+/*	$NetBSD: disklabel.h,v 1.8 2021/08/21 09:59:46 andvar Exp $	*/
 
 /*
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -40,7 +40,7 @@
 #define	OLDMAXPARTITIONS 	8	/* number of partitions before nb-6 */
 #define	RAW_PART		2	/* raw partition: xx?c */
 /*
- * In NetBSD 6 we eroneously used a too large MAXPARTITIONS value (disklabel
+ * In NetBSD 6 we erroneously used a too large MAXPARTITIONS value (disklabel
  * overlapped with important parts of the bootblocks and made some machines
  * unbootable).
  */

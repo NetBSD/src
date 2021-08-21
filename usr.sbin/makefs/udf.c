@@ -1,4 +1,4 @@
-/* $NetBSD: udf.c,v 1.21 2020/04/18 12:25:01 martin Exp $ */
+/* $NetBSD: udf.c,v 1.22 2021/08/21 09:59:46 andvar Exp $ */
 
 /*
  * Copyright (c) 2006, 2008, 2013 Reinoud Zandijk
@@ -30,7 +30,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: udf.c,v 1.21 2020/04/18 12:25:01 martin Exp $");
+__RCSID("$NetBSD: udf.c,v 1.22 2021/08/21 09:59:46 andvar Exp $");
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -67,7 +67,7 @@ __RCSID("$NetBSD: udf.c,v 1.21 2020/04/18 12:25:01 martin Exp $");
 
 /*
  * Note: due to the setup of the newfs code, the current state of the program
- * and its options are helt in a few global variables. The FS specific parts
+ * and its options are held in a few global variables. The FS specific parts
  * are in a global `context' structure.
  */
 
