@@ -1,4 +1,4 @@
-/*	$NetBSD: cd.c,v 1.351 2021/04/16 12:58:54 reinoud Exp $	*/
+/*	$NetBSD: cd.c,v 1.352 2021/08/21 23:00:32 andvar Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001, 2003, 2004, 2005, 2008 The NetBSD Foundation,
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.351 2021/04/16 12:58:54 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.352 2021/08/21 23:00:32 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -3376,7 +3376,7 @@ mmc_do_close_or_finalise(struct scsipi_periph *periph, struct mmc_op *mmc_op)
 		    (void *)blob, sizeof(blob), flags, CDRETRIES, 20000);
 		if (error)
 			return error;
-		/* and use funtion 2 */
+		/* and use function 2 */
 		func = 2;
 		break;
 	case 0x11 : /* DVD-R (DL) */

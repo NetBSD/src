@@ -1,4 +1,4 @@
-/*	$NetBSD: db_command.c,v 1.177 2021/08/13 20:47:55 andvar Exp $	*/
+/*	$NetBSD: db_command.c,v 1.178 2021/08/21 23:00:31 andvar Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1998, 1999, 2002, 2009, 2019
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_command.c,v 1.177 2021/08/13 20:47:55 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_command.c,v 1.178 2021/08/21 23:00:31 andvar Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_aio.h"
@@ -837,7 +837,7 @@ db_read_command(void)
 }
 
 /*
- * Parse command line and execute apropriate function.
+ * Parse command line and execute appropriate function.
  */
 static void
 db_command(const struct db_command **last_cmdp)
