@@ -1,4 +1,4 @@
-/*	$NetBSD: lex_integer.c,v 1.6 2021/07/13 19:38:10 rillig Exp $	*/
+/*	$NetBSD: lex_integer.c,v 1.7 2021/08/21 11:50:57 rillig Exp $	*/
 # 3 "lex_integer.c"
 
 /*
@@ -7,7 +7,7 @@
  * C99 6.4.4.1 "Integer constants"
  */
 
-/* lint1-only-if lp64 */
+/* lint1-only-if: lp64 */
 
 void sinki(int);
 void sinku(unsigned int);
