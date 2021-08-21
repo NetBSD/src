@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: postinstall.in,v 1.39 2021/06/07 05:29:22 mlelstv Exp $
+# $NetBSD: postinstall.in,v 1.40 2021/08/21 09:59:47 andvar Exp $
 #
 # Copyright (c) 2002-2021 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -1252,13 +1252,13 @@ do_dhcpcdrundir()
 
 	if [ -d "${DEST_DIR}/@RUNDIR@" ]; then
 		if [ "${op}" = "check" ]; then
-			msg "Remove eroneously created /@RUNDIR@"
+			msg "Remove erroneously created /@RUNDIR@"
 			failed=1
 		elif ! rm -r "${DEST_DIR}/@RUNDIR@"; then
 			msg "Failed to remove ${DEST_DIR}/@RUNDIR@"
 			failed=1
 		else
-			msg "Removed eroneously created ${DEST_DIR}/@RUNDIR@"
+			msg "Removed erroneously created ${DEST_DIR}/@RUNDIR@"
 		fi
 	fi
 	return ${failed}
