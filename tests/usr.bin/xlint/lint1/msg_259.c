@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_259.c,v 1.11 2021/08/21 11:50:57 rillig Exp $	*/
+/*	$NetBSD: msg_259.c,v 1.12 2021/08/21 11:58:12 rillig Exp $	*/
 # 3 "msg_259.c"
 
 // Test for message: argument #%d is converted from '%s' to '%s' due to prototype [259]
@@ -52,4 +52,19 @@ convert_to_corresponding_unsigned(int i, long l, long long ll)
 	/* TODO: don't warn here. */
 	/* expect+1: warning: argument #1 is converted from 'long long' to 'unsigned long long' due to prototype [259] */
 	farg_unsigned_long_long(ll);
+
+	/*
+	 * XXX: Why no warning?  Even though 'unsigned long' is 64 bits
+	 * wide, it cannot represent negative 32-bit values.
+	 */
+	farg_unsigned_long(i);
+
+	/*
+	 * XXX: Why no warning?  Even though 'unsigned long long' is 64 bits
+	 * wide, it cannot represent negative 32-bit values.
+	 */
+	farg_unsigned_long_long(i);
+
+	/* expect+1: warning: argument #1 is converted from 'long' to 'unsigned long long' due to prototype [259] */
+	farg_unsigned_long_long(l);
 }
