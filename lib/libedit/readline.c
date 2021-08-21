@@ -1,4 +1,4 @@
-/*	$NetBSD: readline.c,v 1.162 2021/08/15 22:22:52 rillig Exp $	*/
+/*	$NetBSD: readline.c,v 1.163 2021/08/21 12:34:59 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include "config.h"
 #if !defined(lint) && !defined(SCCSID)
-__RCSID("$NetBSD: readline.c,v 1.162 2021/08/15 22:22:52 rillig Exp $");
+__RCSID("$NetBSD: readline.c,v 1.163 2021/08/21 12:34:59 christos Exp $");
 #endif /* not lint && not SCCSID */
 
 #include <sys/types.h>
@@ -108,6 +108,7 @@ int rl_attempted_completion_over = 0;
 const char *rl_basic_word_break_characters = break_chars;
 char *rl_completer_word_break_characters = NULL;
 const char *rl_completer_quote_characters = NULL;
+const char *rl_basic_quote_characters = "\"'";
 rl_compentry_func_t *rl_completion_entry_function = NULL;
 char *(*rl_completion_word_break_hook)(void) = NULL;
 rl_completion_func_t *rl_attempted_completion_function = NULL;
@@ -127,6 +128,15 @@ VFunction *rl_completion_display_matches_hook = NULL;
 VFunction *rl_prep_term_function = (VFunction *)rl_prep_terminal;
 VFunction *rl_deprep_term_function = (VFunction *)rl_deprep_terminal;
 KEYMAP_ENTRY_ARRAY emacs_meta_keymap;
+unsigned long rl_readline_state;
+int _rl_complete_mark_directories;
+rl_icppfunc_t *rl_directory_completion_hook;
+int rl_completion_suppress_append;
+int rl_sort_completion_matches;
+int _rl_completion_prefix_display_length;
+int _rl_echoing_p;
+int history_max_entries;
+char *rl_display_prompt;
 
 /*
  * The current prompt string.
@@ -2436,4 +2446,41 @@ rl_echo_signal_char(int sig)
 	if (c == -1)
 		return;
 	re_putc(e, c, 0);
+}
+
+int
+rl_crlf(void)
+{
+	re_putc(e, '\n', 0);
+	return 0;
+}
+
+int
+rl_ding(void)
+{
+	re_putc(e, '\a', 0);
+	return 0;
+}
+
+int
+rl_abort(int count, int key)
+{
+	return count && key ? 0 : 0;
+}
+
+int
+rl_set_keymap_name(const char *name, Keymap k)
+{
+	return name && k ? 0 : 0;
+}
+
+histdata_t
+free_history_entry(HIST_ENTRY *he)
+{
+	return he ? NULL : NULL;
+}
+
+void
+_rl_erase_entire_line(void)
+{
 }
