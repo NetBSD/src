@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.341 2021/08/21 08:18:48 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.342 2021/08/21 08:29:59 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.341 2021/08/21 08:18:48 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.342 2021/08/21 08:29:59 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -355,7 +355,7 @@ struct_or_union_member(tnode_t *tn, op_t op, sym_t *msym)
 			continue;
 		if (strcmp(msym->s_name, csym->s_name) != 0)
 			continue;
-		for (sym = csym->s_link ; sym != NULL; sym = sym->s_link) {
+		for (sym = csym->s_link; sym != NULL; sym = sym->s_link) {
 			bool w;
 
 			if (sym->s_scl != MOS && sym->s_scl != MOU)
@@ -759,7 +759,7 @@ typeok_incdec(op_t op, const tnode_t *tn, const type_t *tp)
 
 static bool
 typeok_address(const mod_t *mp,
-	    const tnode_t *tn, const type_t *tp, tspec_t t)
+	       const tnode_t *tn, const type_t *tp, tspec_t t)
 {
 	if (t == ARRAY || t == FUNC) {
 		/* ok, a warning comes later (in build_address()) */
@@ -1023,8 +1023,8 @@ typeok_colon(const mod_t *mp,
 		return true;
 
 	if ((lt == PTR && is_integer(rt)) || (is_integer(lt) && rt == PTR)) {
-		const char *lx = lt == PTR ?  "pointer" : "integer";
-		const char *rx = rt == PTR ?  "pointer" : "integer";
+		const char *lx = lt == PTR ? "pointer" : "integer";
+		const char *rx = rt == PTR ? "pointer" : "integer";
 		/* illegal combination of %s (%s) and %s (%s), op %s */
 		warning(123, lx, type_name(ltp),
 		    rx, type_name(rtp), mp->m_name);
@@ -2712,6 +2712,7 @@ build_real_imag(op_t op, tnode_t *ln)
 
 	return ntn;
 }
+
 /*
  * Create a tree node for the unary & operator
  */
@@ -3273,9 +3274,9 @@ fold_float(tnode_t *tn)
 		} else if (t == DOUBLE) {
 			v->v_ldbl = v->v_ldbl < 0 ? -DBL_MAX : DBL_MAX;
 		} else {
-			v->v_ldbl = v->v_ldbl < 0 ? -LDBL_MAX: LDBL_MAX;
+			v->v_ldbl = v->v_ldbl < 0 ? -LDBL_MAX : LDBL_MAX;
 		}
-	    fpe = 0;
+		fpe = 0;
 	}
 
 	return build_constant(tn->tn_type, v);
@@ -3833,7 +3834,7 @@ check_null_effect(const tnode_t *tn)
 
 	if (!hflag)
 		return;
-	if ( has_side_effect(tn))
+	if (has_side_effect(tn))
 		return;
 	if (is_void_cast(tn) && is_local_symbol(tn->tn_left))
 		return;
