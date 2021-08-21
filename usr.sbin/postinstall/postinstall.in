@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: postinstall.in,v 1.40 2021/08/21 09:59:47 andvar Exp $
+# $NetBSD: postinstall.in,v 1.41 2021/08/21 10:06:33 andvar Exp $
 #
 # Copyright (c) 2002-2021 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -1243,7 +1243,7 @@ do_dhcpcd()
 #	dhcpcdrundir
 #
 
-additem dhcpcdrundir "accidentaly created /@RUNDIR@ does not exist"
+additem dhcpcdrundir "accidentally created /@RUNDIR@ does not exist"
 do_dhcpcdrundir()
 {
 	[ -n "$1" ] || err 3 "USAGE: do_dhcpcdrundir fix|check"
