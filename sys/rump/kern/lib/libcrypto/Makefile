@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.22 2021/08/21 08:47:23 christos Exp $
+#	$NetBSD: Makefile,v 1.23 2021/08/21 09:08:55 christos Exp $
 #
 
 S=${.CURDIR}/../../../..
@@ -80,7 +80,7 @@ SODIUM_SRCS+=	aead_xchacha20poly1305.c
 SODIUM_SRCS+=	aead_chacha20poly1305.c
 SODIUM_SRCS+=	core_hchacha20.c
 SODIUM_SRCS+=	ed25519_ref10.c
-SODIUM_SRCS+=	glue.c
+SODIUM_SRCS+=	sodium_module.c
 
 SRCS+=	${SODIUM_SRCS}
 
