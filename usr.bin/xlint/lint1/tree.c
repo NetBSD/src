@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.342 2021/08/21 08:29:59 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.343 2021/08/21 08:39:01 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.342 2021/08/21 08:29:59 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.343 2021/08/21 08:39:01 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -3193,7 +3193,7 @@ fold_float(tnode_t *tn)
 {
 	val_t	*v;
 	tspec_t	t;
-	ldbl_t	l, r = 0;
+	ldbl_t	lv, rv = 0;
 
 	fpe = 0;
 	v = xcalloc(1, sizeof(*v));
@@ -3204,58 +3204,58 @@ fold_float(tnode_t *tn)
 	lint_assert(!modtab[tn->tn_op].m_binary ||
 	    t == tn->tn_right->tn_type->t_tspec);
 
-	l = tn->tn_left->tn_val->v_ldbl;
+	lv = tn->tn_left->tn_val->v_ldbl;
 	if (modtab[tn->tn_op].m_binary)
-		r = tn->tn_right->tn_val->v_ldbl;
+		rv = tn->tn_right->tn_val->v_ldbl;
 
 	switch (tn->tn_op) {
 	case UPLUS:
-		v->v_ldbl = l;
+		v->v_ldbl = lv;
 		break;
 	case UMINUS:
-		v->v_ldbl = -l;
+		v->v_ldbl = -lv;
 		break;
 	case MULT:
-		v->v_ldbl = l * r;
+		v->v_ldbl = lv * rv;
 		break;
 	case DIV:
-		if (r == 0.0) {
+		if (rv == 0.0) {
 			/* division by 0 */
 			error(139);
 			if (t == FLOAT) {
-				v->v_ldbl = l < 0 ? -FLT_MAX : FLT_MAX;
+				v->v_ldbl = lv < 0 ? -FLT_MAX : FLT_MAX;
 			} else if (t == DOUBLE) {
-				v->v_ldbl = l < 0 ? -DBL_MAX : DBL_MAX;
+				v->v_ldbl = lv < 0 ? -DBL_MAX : DBL_MAX;
 			} else {
-				v->v_ldbl = l < 0 ? -LDBL_MAX : LDBL_MAX;
+				v->v_ldbl = lv < 0 ? -LDBL_MAX : LDBL_MAX;
 			}
 		} else {
-			v->v_ldbl = l / r;
+			v->v_ldbl = lv / rv;
 		}
 		break;
 	case PLUS:
-		v->v_ldbl = l + r;
+		v->v_ldbl = lv + rv;
 		break;
 	case MINUS:
-		v->v_ldbl = l - r;
+		v->v_ldbl = lv - rv;
 		break;
 	case LT:
-		v->v_quad = l < r ? 1 : 0;
+		v->v_quad = lv < rv ? 1 : 0;
 		break;
 	case LE:
-		v->v_quad = l <= r ? 1 : 0;
+		v->v_quad = lv <= rv ? 1 : 0;
 		break;
 	case GE:
-		v->v_quad = l >= r ? 1 : 0;
+		v->v_quad = lv >= rv ? 1 : 0;
 		break;
 	case GT:
-		v->v_quad = l > r ? 1 : 0;
+		v->v_quad = lv > rv ? 1 : 0;
 		break;
 	case EQ:
-		v->v_quad = l == r ? 1 : 0;
+		v->v_quad = lv == rv ? 1 : 0;
 		break;
 	case NE:
-		v->v_quad = l != r ? 1 : 0;
+		v->v_quad = lv != rv ? 1 : 0;
 		break;
 	default:
 		lint_assert(/*CONSTCOND*/false);
