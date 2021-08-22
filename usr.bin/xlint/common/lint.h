@@ -1,4 +1,4 @@
-/*	$NetBSD: lint.h,v 1.28 2021/08/10 17:31:44 rillig Exp $	*/
+/*	$NetBSD: lint.h,v 1.29 2021/08/22 15:06:49 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -117,7 +117,9 @@ typedef	struct {
 #define is_complex(t)		(ttab[t].tt_is_complex)
 #define is_scalar(t)		(ttab[t].tt_is_scalar)
 
+#if defined(IS_LINT1) || defined(IS_LINT2)
 extern	ttab_t	ttab[];
+#endif
 
 
 typedef	enum {
