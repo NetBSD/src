@@ -1,4 +1,4 @@
-/*	$NetBSD: i2c.c,v 1.80.2.2 2021/08/09 01:09:41 thorpej Exp $	*/
+/*	$NetBSD: i2c.c,v 1.80.2.3 2021/08/22 18:40:11 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2021 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i2c.c,v 1.80.2.2 2021/08/09 01:09:41 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i2c.c,v 1.80.2.3 2021/08/22 18:40:11 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -679,15 +679,13 @@ iic_attach(device_t parent, device_t self, void *aux)
 	 * Attempt to enumerate the devices on the bus.  If there is no
 	 * enumeration method, then we will attempt indirect configuration.
 	 */
-	struct i2c_enumerate_devices_args enumargs;
-	struct i2c_attach_args ia;
-
-	memset(&ia, 0, sizeof(ia));
-	ia.ia_tag = ic;
-
-	memset(&enumargs, 0, sizeof(enumargs));
-	enumargs.ia = &ia;
-	enumargs.callback = iic_enumerate_devices_callback;
+	struct i2c_attach_args ia = {
+		.ia_tag = ic,
+	};
+	struct i2c_enumerate_devices_args enumargs = {
+		.ia = &ia,
+		.callback = iic_enumerate_devices_callback,
+	};
 
 	rv = device_call(self, "i2c-enumerate-devices", &enumargs);
 	if (rv == ENOTSUP) {
