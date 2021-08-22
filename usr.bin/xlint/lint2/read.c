@@ -1,4 +1,4 @@
-/* $NetBSD: read.c,v 1.54 2021/08/22 13:12:39 rillig Exp $ */
+/* $NetBSD: read.c,v 1.55 2021/08/22 13:21:48 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: read.c,v 1.54 2021/08/22 13:12:39 rillig Exp $");
+__RCSID("$NetBSD: read.c,v 1.55 2021/08/22 13:21:48 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -393,17 +393,17 @@ decldef(pos_t *posp, const char *cp)
 		switch (c) {
 		case 'd':
 			if (sym.s_def != NODECL)
-				inperr("nodecl %c", c);
+				inperr("def");
 			sym.s_def = DEF;
 			break;
 		case 'e':
 			if (sym.s_def != NODECL)
-				inperr("nodecl %c", c);
+				inperr("decl");
 			sym.s_def = DECL;
 			break;
 		case 'i':
 			if (sym.s_inline)
-				inperr("inline %c", c);
+				inperr("inline");
 			sym.s_inline = true;
 			break;
 		case 'o':
@@ -423,12 +423,12 @@ decldef(pos_t *posp, const char *cp)
 			break;
 		case 't':
 			if (sym.s_def != NODECL)
-				inperr("nodecl %c", c);
+				inperr("tdef");
 			sym.s_def = TDEF;
 			break;
 		case 'u':
 			if (used)
-				inperr("used %c", c);
+				inperr("used");
 			used = true;
 			break;
 		case 'v':
@@ -894,7 +894,7 @@ gettlen(const char *cp, const char **epp)
 			(void)parse_int(&cp);
 			break;
 		default:
-			inperr("bad value: %c\n", cp[-1]);
+			inperr("bad value: %c", cp[-1]);
 		}
 		break;
 	default:
