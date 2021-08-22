@@ -1,4 +1,4 @@
-/*	$NetBSD: expr_fold.c,v 1.2 2021/08/19 20:48:47 rillig Exp $	*/
+/*	$NetBSD: expr_fold.c,v 1.3 2021/08/22 20:14:24 rillig Exp $	*/
 # 3 "expr_fold.c"
 
 /*
@@ -285,3 +285,22 @@ fold_bitor(void)
 	take_bool(1 | 3);
 	take_bool(3 | 1);
 }
+
+/*
+ * The following expression originated in vndcompress.c 1.29 from 2017-07-29,
+ * where line 310 contained a seemingly harmless compile-time assertion that
+ * expanded to a real monster expression.
+ *
+ * __CTASSERT(MUL_OK(uint64_t, MAX_N_BLOCKS, MAX_BLOCKSIZE));
+ */
+struct ctassert5_struct {
+	unsigned int member:
+	    /*CONSTCOND*/
+	    0xfffffffeU
+	    <=
+		((1ULL << 63) + 1 < 1 ? ~(1ULL << 63) : ~0ULL) / 0xfffffe00U
+		? 1
+		/* FIXME: the above '(1ULL << 63) + 1' is wrong */
+		/* expect+1: error: illegal bit-field size: 255 [36] */
+		: -1;
+};
