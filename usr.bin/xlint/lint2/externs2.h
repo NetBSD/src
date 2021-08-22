@@ -1,4 +1,4 @@
-/* $NetBSD: externs2.h,v 1.11 2021/08/22 04:43:44 rillig Exp $ */
+/* $NetBSD: externs2.h,v 1.12 2021/08/22 14:50:06 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -44,7 +44,8 @@ extern	bool	tflag;
 extern	bool	Hflag;
 extern	bool	hflag;
 extern	bool	Fflag;
-
+extern	bool	pflag;
+extern	bool	Tflag;
 
 /*
  * hash.c

@@ -1,4 +1,4 @@
-/*	$NetBSD: inittyp.c,v 1.24 2021/06/30 10:56:24 rillig Exp $	*/
+/*	$NetBSD: inittyp.c,v 1.25 2021/08/22 14:50:06 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,13 +37,17 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: inittyp.c,v 1.24 2021/06/30 10:56:24 rillig Exp $");
+__RCSID("$NetBSD: inittyp.c,v 1.25 2021/08/22 14:50:06 rillig Exp $");
 #endif
 
 #include <limits.h>
 #include <stdlib.h>
 
-#include "lint.h"
+#if defined(IS_LINT1)
+#include "lint1.h"
+#else
+#include "lint2.h"
+#endif
 
 /* various type information */
 ttab_t	ttab[NTSPEC];
