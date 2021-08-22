@@ -1,3 +1,5 @@
+/*	$NetBSD: aic79xxvar.h,v 1.28 2021/08/22 19:56:15 andvar Exp $	*/
+
 /*
  * Core definitions and data structures sharable across OS platforms.
  *
@@ -288,7 +290,7 @@ typedef enum {
 	 */
 	AHD_NONPACKFIFO_BUG	= 0x4000,
 	/*
-	 * Writing to a DFF SCBPTR register may fail if concurent with
+	 * Writing to a DFF SCBPTR register may fail if concurrent with
 	 * a hardware write to the other DFF SCBPTR register.  This is
 	 * not currently a concern in our sequencer since all chips with
 	 * this bug have the AHD_NONPACKFIFO_BUG and all writes of concern
@@ -486,7 +488,7 @@ struct hardware_scb {
  *	o A residual has occurred if SG_FULL_RESID is set in sgptr,
  *	  or residual_sgptr does not have SG_LIST_NULL set.
  *
- *	o We are transfering the last segment if residual_datacnt has
+ *	o We are transferring the last segment if residual_datacnt has
  *	  the SG_LAST_SEG flag set.
  *
  * Host:
@@ -534,7 +536,7 @@ struct hardware_scb {
  * the length to store additional address bits and a flag to indicate
  * that a given segment terminates the transfer.  This gives us an
  * addressable range of 512GB on machines with 64bit PCI or with chips
- * that can support dual address cycles on 32bit PCI busses.
+ * that can support dual address cycles on 32bit PCI buses.
  */
 struct ahd_dma_seg {
 	uint32_t	addr;
@@ -691,7 +693,7 @@ struct scb_data {
 /************************ Target Mode Definitions *****************************/
 
 /*
- * Connection desciptor for select-in requests in target mode.
+ * Connection descriptor for select-in requests in target mode.
  */
 struct target_cmd {
 	uint8_t scsiid;		/* Our ID and the initiator's ID */
@@ -750,7 +752,7 @@ struct ahd_tmode_lstate;
 /******************** Transfer Negotiation Datastructures *********************/
 #define AHD_TRANS_CUR		0x01	/* Modify current negotiation status */
 #define AHD_TRANS_ACTIVE	0x03	/* Assume this target is on the bus */
-#define AHD_TRANS_GOAL		0x04	/* Modify negontiation goal */
+#define AHD_TRANS_GOAL		0x04	/* Modify negotiation goal */
 #define AHD_TRANS_USER		0x08	/* Modify user negotiation settings */
 #define AHD_PERIOD_10MHz	0x19
 
@@ -1122,7 +1124,7 @@ struct ahd_softc {
 
 	/*
 	 * Device instance currently on the bus awaiting a continue TIO
-	 * for a command that was not given the disconnect priviledge.
+	 * for a command that was not given the disconnect privilege.
 	 */
 	struct ahd_tmode_lstate  *pending_device;
 
@@ -1444,7 +1446,7 @@ void			ahd_validate_width(struct ahd_softc *,
 typedef enum {
 	AHD_NEG_TO_GOAL,	/* Renegotiate only if goal and curr differ. */
 	AHD_NEG_IF_NON_ASYNC,	/* Renegotiate so long as goal is non-async. */
-	AHD_NEG_ALWAYS		/* Renegotiat even if goal is async. */
+	AHD_NEG_ALWAYS		/* Renegotiate even if goal is async. */
 } ahd_neg_type;
 int			ahd_update_neg_request(struct ahd_softc *,
 			    struct ahd_devinfo *, struct ahd_tmode_tstate *,
