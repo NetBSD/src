@@ -1,1 +1,1 @@
-msg_269.c(6): error: syntax error ':' [249]
+msg_269.c(7): warning: argument declared inline: x [269]
