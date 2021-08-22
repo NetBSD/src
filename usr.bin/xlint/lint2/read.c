@@ -1,4 +1,4 @@
-/* $NetBSD: read.c,v 1.53 2021/08/22 12:32:13 rillig Exp $ */
+/* $NetBSD: read.c,v 1.54 2021/08/22 13:12:39 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: read.c,v 1.53 2021/08/22 12:32:13 rillig Exp $");
+__RCSID("$NetBSD: read.c,v 1.54 2021/08/22 13:12:39 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -1159,7 +1159,7 @@ mkstatic(hte_t *hte)
 	 * Create a new hash table entry
 	 *
 	 * XXX this entry should be put at the beginning of the list to
-	 * avoid to process the same symbol twice.
+	 * avoid processing the same symbol twice.
 	 */
 	for (nhte = hte; nhte->h_link != NULL; nhte = nhte->h_link)
 		continue;
