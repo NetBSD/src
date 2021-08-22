@@ -1,4 +1,4 @@
-/*	$NetBSD: expr_fold.c,v 1.3 2021/08/22 20:14:24 rillig Exp $	*/
+/*	$NetBSD: expr_fold.c,v 1.4 2021/08/22 21:17:04 rillig Exp $	*/
 # 3 "expr_fold.c"
 
 /*
@@ -292,6 +292,12 @@ fold_bitor(void)
  * expanded to a real monster expression.
  *
  * __CTASSERT(MUL_OK(uint64_t, MAX_N_BLOCKS, MAX_BLOCKSIZE));
+ *
+ * Before tree.c 1.345 from 2021-08-22, lint wrongly assumed that the result
+ * of all binary operators were the common arithmetic type, but that was
+ * wrong for the comparison operators.  The expression '1ULL < 2ULL' does not
+ * have type 'unsigned long long' but 'int' in default mode, or '_Bool' in
+ * strict bool mode.
  */
 struct ctassert5_struct {
 	unsigned int member:
@@ -300,7 +306,5 @@ struct ctassert5_struct {
 	    <=
 		((1ULL << 63) + 1 < 1 ? ~(1ULL << 63) : ~0ULL) / 0xfffffe00U
 		? 1
-		/* FIXME: the above '(1ULL << 63) + 1' is wrong */
-		/* expect+1: error: illegal bit-field size: 255 [36] */
 		: -1;
 };
