@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.16 2021/08/03 17:20:02 rillig Exp $	*/
+/*	$NetBSD: mem.c,v 1.17 2021/08/22 15:06:49 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: mem.c,v 1.16 2021/08/03 17:20:02 rillig Exp $");
+__RCSID("$NetBSD: mem.c,v 1.17 2021/08/22 15:06:49 rillig Exp $");
 #endif
 
 #include <stdarg.h>
@@ -83,6 +83,7 @@ xstrdup(const char *s)
 	return not_null(strdup(s));
 }
 
+#if defined(IS_XLINT)
 char *
 xasprintf(const char *fmt, ...)
 {
@@ -97,3 +98,4 @@ xasprintf(const char *fmt, ...)
 		not_null(NULL);
 	return str;
 }
+#endif
