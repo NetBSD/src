@@ -1,4 +1,4 @@
-/*	$NetBSD: expr_fold_strict_bool.c,v 1.1 2021/08/22 20:56:51 rillig Exp $	*/
+/*	$NetBSD: expr_fold_strict_bool.c,v 1.2 2021/08/22 21:17:04 rillig Exp $	*/
 # 3 "expr_fold_strict_bool.c"
 
 /*
@@ -28,8 +28,14 @@ struct fold_64_bit {
 	/* expect+1: error: illegal bit-field size: 255 [36] */
 	_Bool lt_unsigned_small_bad: 3ULL < 1ULL ? 1 : -1;
 
-	/* FIXME: 1 is much smaller than 1ULL << 63. */
-	/* expect+1: error: illegal bit-field size: 255 [36] */
+	/*
+	 * Before tree.c 1.345 from 2021-08-22, lint wrongly assumed that the
+	 * result of all binary operators were the common arithmetic type,
+	 * but that was wrong for the comparison operators.  The expression
+	 * '1ULL < 2ULL' does not have type 'unsigned long long' but 'int' in
+	 * default mode, or '_Bool' in strict bool mode.
+	 */
 	_Bool lt_unsigned_big_ok: 1ULL < 1ULL << 63 ? 1 : -1;
+	/* expect+1: error: illegal bit-field size: 255 [36] */
 	_Bool lt_unsigned_big_bad: 1ULL << 63 < 1ULL ? 1 : -1;
 };
