@@ -1,4 +1,4 @@
-/*	$NetBSD: cyclone_boot.h,v 1.1 2001/06/20 22:14:34 chris Exp $	*/
+/*	$NetBSD: cyclone_boot.h,v 1.2 2021/08/22 07:00:41 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997,1998 Mark Brinicombe.
@@ -43,18 +43,18 @@
  */
 
 struct ebsaboot {
-	u_int32_t	bt_magic;	/* boot info magic number */
-	u_int32_t	bt_vargp;	/* virtual addr of arg page */
-	u_int32_t	bt_pargp;	/* physical addr of arg page */
+	uint32_t	bt_magic;	/* boot info magic number */
+	uint32_t	bt_vargp;	/* virtual addr of arg page */
+	uint32_t	bt_pargp;	/* physical addr of arg page */
 	const char *	bt_args;	/* kernel args string pointer */
 	pd_entry_t *	bt_l1;		/* active L1 page table */
-	u_int32_t	bt_memstart;	/* start of physical memory */
-	u_int32_t	bt_memend;	/* end of physical memory */
-	u_int32_t	bt_memavail;	/* start of avail phys memory */
-	u_int32_t	bt_fclk;	/* fclk frequency */
-	u_int32_t	bt_pciclk;	/* PCI bus frequency */
-	u_int32_t	bt_vers;	/* structure version (CATS) */
-	u_int32_t	bt_features;	/* feature mask (CATS) */
+	uint32_t	bt_memstart;	/* start of physical memory */
+	uint32_t	bt_memend;	/* end of physical memory */
+	uint32_t	bt_memavail;	/* start of avail phys memory */
+	uint32_t	bt_fclk;	/* fclk frequency */
+	uint32_t	bt_pciclk;	/* PCI bus frequency */
+	uint32_t	bt_vers;	/* structure version (CATS) */
+	uint32_t	bt_features;	/* feature mask (CATS) */
 };
 
 #define BT_MAGIC_NUMBER_EBSA	0x45425341
