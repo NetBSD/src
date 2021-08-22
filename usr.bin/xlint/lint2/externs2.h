@@ -1,4 +1,4 @@
-/* $NetBSD: externs2.h,v 1.10 2021/08/10 17:31:44 rillig Exp $ */
+/* $NetBSD: externs2.h,v 1.11 2021/08/22 04:43:44 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -78,7 +78,7 @@ extern	void	*xalloc(size_t);
  */
 extern	void	inittyp(void);
 extern	void	mainused(void);
-extern	void	chkname(hte_t *);
+extern	void	chkname(const hte_t *);
 
 /*
  * msg.c

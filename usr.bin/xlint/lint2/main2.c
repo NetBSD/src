@@ -1,4 +1,4 @@
-/*	$NetBSD: main2.c,v 1.18 2021/08/11 05:37:45 rillig Exp $	*/
+/*	$NetBSD: main2.c,v 1.19 2021/08/22 04:43:44 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: main2.c,v 1.18 2021/08/11 05:37:45 rillig Exp $");
+__RCSID("$NetBSD: main2.c,v 1.19 2021/08/22 04:43:44 rillig Exp $");
 #endif
 
 #include <stdio.h>
@@ -90,6 +90,12 @@ bool	Fflag;
 const char **libs;
 
 static	void	usage(void) __attribute__((noreturn));
+
+static void
+check_name(hte_t *hte)
+{
+	chkname(hte);
+}
 
 int
 main(int argc, char *argv[])
@@ -182,7 +188,7 @@ main(int argc, char *argv[])
 
 	/* perform all tests */
 	/* TODO: sort the names; hashcode order looks chaotic. */
-	forall(chkname);
+	forall(check_name);
 
 	exit(0);
 	/* NOTREACHED */
