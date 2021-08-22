@@ -1,4 +1,4 @@
-/* $NetBSD: read.c,v 1.50 2021/08/22 11:57:23 rillig Exp $ */
+/* $NetBSD: read.c,v 1.51 2021/08/22 12:15:37 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: read.c,v 1.50 2021/08/22 11:57:23 rillig Exp $");
+__RCSID("$NetBSD: read.c,v 1.51 2021/08/22 12:15:37 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -625,7 +625,7 @@ inptype(const char *cp, const char **epp)
 	int	narg, i;
 	bool	osdef = false;
 	size_t	tlen;
-	u_short	tidx, sidx;
+	u_short	tidx;
 	int	h;
 
 	/* If we have this type already, return its index. */
@@ -657,12 +657,10 @@ inptype(const char *cp, const char **epp)
 	switch (tp->t_tspec) {
 	case ARRAY:
 		tp->t_dim = parse_int(&cp);
-		sidx = inptype(cp, &cp); /* force seq. point! (ditto below) */
-		tp->t_subt = TP(sidx);
+		tp->t_subt = TP(inptype(cp, &cp));
 		break;
 	case PTR:
-		sidx = inptype(cp, &cp);
-		tp->t_subt = TP(sidx);
+		tp->t_subt = TP(inptype(cp, &cp));
 		break;
 	case FUNC:
 		c = *cp;
@@ -670,20 +668,18 @@ inptype(const char *cp, const char **epp)
 			if (!osdef)
 				tp->t_proto = true;
 			narg = parse_int(&cp);
-			tp->t_args = xcalloc((size_t)(narg + 1),
+			tp->t_args = xcalloc((size_t)narg + 1,
 					     sizeof(*tp->t_args));
 			for (i = 0; i < narg; i++) {
 				if (i == narg - 1 && *cp == 'E') {
 					tp->t_vararg = true;
 					cp++;
 				} else {
-					sidx = inptype(cp, &cp);
-					tp->t_args[i] = TP(sidx);
+					tp->t_args[i] = TP(inptype(cp, &cp));
 				}
 			}
 		}
-		sidx = inptype(cp, &cp);
-		tp->t_subt = TP(sidx);
+		tp->t_subt = TP(inptype(cp, &cp));
 		break;
 	case ENUM:
 		tp->t_tspec = INT;
@@ -994,7 +990,7 @@ findtype(const char *cp, size_t len, int h)
 }
 
 /*
- * Store a type and its type string so we can later share this type
+ * Store a type and its type string, so we can later share this type
  * if we read the same type string from the input file.
  */
 static u_short
