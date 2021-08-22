@@ -1,4 +1,4 @@
-/* $NetBSD: chk.c,v 1.43 2021/08/08 11:56:35 rillig Exp $ */
+/* $NetBSD: chk.c,v 1.44 2021/08/22 04:43:44 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: chk.c,v 1.43 2021/08/08 11:56:35 rillig Exp $");
+__RCSID("$NetBSD: chk.c,v 1.44 2021/08/22 04:43:44 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -48,23 +48,23 @@ __RCSID("$NetBSD: chk.c,v 1.43 2021/08/08 11:56:35 rillig Exp $");
 
 #include "lint2.h"
 
-static	void	chkund(hte_t *);
-static	void	chkdnu(hte_t *);
-static	void	chkdnud(hte_t *);
-static	void	chkmd(hte_t *);
-static	void	chkvtui(hte_t *, sym_t *, sym_t *);
-static	void	chkvtdi(hte_t *, sym_t *, sym_t *);
-static	void	chkfaui(hte_t *, sym_t *, sym_t *);
-static	void	chkau(hte_t *, int, sym_t *, sym_t *, pos_t *,
+static	void	chkund(const hte_t *);
+static	void	chkdnu(const hte_t *);
+static	void	chkdnud(const hte_t *);
+static	void	chkmd(const hte_t *);
+static	void	chkvtui(const hte_t *, sym_t *, sym_t *);
+static	void	chkvtdi(const hte_t *, sym_t *, sym_t *);
+static	void	chkfaui(const hte_t *, sym_t *, sym_t *);
+static	void	chkau(const hte_t *, int, sym_t *, sym_t *, pos_t *,
 			   fcall_t *, fcall_t *, type_t *, type_t *);
-static	void	chkrvu(hte_t *, sym_t *);
-static	void	chkadecl(hte_t *, sym_t *, sym_t *);
-static	void	printflike(hte_t *,fcall_t *, int, const char *, type_t **);
-static	void	scanflike(hte_t *, fcall_t *, int, const char *, type_t **);
-static	void	badfmt(hte_t *, fcall_t *);
-static	void	inconarg(hte_t *, fcall_t *, int);
-static	void	tofewarg(hte_t *, fcall_t *);
-static	void	tomanyarg(hte_t *, fcall_t *);
+static	void	chkrvu(const hte_t *, sym_t *);
+static	void	chkadecl(const hte_t *, sym_t *, sym_t *);
+static	void	printflike(const hte_t *, fcall_t *, int, const char *, type_t **);
+static	void	scanflike(const hte_t *, fcall_t *, int, const char *, type_t **);
+static	void	badfmt(const hte_t *, fcall_t *);
+static	void	inconarg(const hte_t *, fcall_t *, int);
+static	void	tofewarg(const hte_t *, fcall_t *);
+static	void	tomanyarg(const hte_t *, fcall_t *);
 static	bool	eqtype(type_t *, type_t *, bool, bool, bool, bool *);
 static	bool	eqargs(type_t *, type_t *, bool *);
 static	bool	mnoarg(type_t *, bool *);
@@ -86,7 +86,7 @@ mainused(void)
  * Performs all tests for a single name
  */
 void
-chkname(hte_t *hte)
+chkname(const hte_t *hte)
 {
 	sym_t	*sym, *def, *pdecl, *decl;
 
@@ -131,7 +131,7 @@ chkname(hte_t *hte)
  * Print a warning if the name has been used, but not defined.
  */
 static void
-chkund(hte_t *hte)
+chkund(const hte_t *hte)
 {
 	fcall_t	*fcall;
 	usym_t	*usym;
@@ -152,7 +152,7 @@ chkund(hte_t *hte)
  * Print a warning if the name has been defined, but never used.
  */
 static void
-chkdnu(hte_t *hte)
+chkdnu(const hte_t *hte)
 {
 	sym_t	*sym;
 
@@ -173,7 +173,7 @@ chkdnu(hte_t *hte)
  * or defined.
  */
 static void
-chkdnud(hte_t *hte)
+chkdnud(const hte_t *hte)
 {
 	sym_t	*sym;
 
@@ -195,7 +195,7 @@ chkdnud(hte_t *hte)
  * this name.
  */
 static void
-chkmd(hte_t *hte)
+chkmd(const hte_t *hte)
 {
 	sym_t	*sym, *def1;
 	char	*pos1;
@@ -234,7 +234,7 @@ chkmd(hte_t *hte)
  * call as it's done for function arguments.
  */
 static void
-chkvtui(hte_t *hte, sym_t *def, sym_t *decl)
+chkvtui(const hte_t *hte, sym_t *def, sym_t *decl)
 {
 	fcall_t	*call;
 	char	*pos1;
@@ -295,7 +295,7 @@ chkvtui(hte_t *hte, sym_t *def, sym_t *decl)
  * types of return values are tested.
  */
 static void
-chkvtdi(hte_t *hte, sym_t *def, sym_t *decl)
+chkvtdi(const hte_t *hte, sym_t *def, sym_t *decl)
 {
 	sym_t	*sym;
 	type_t	*tp1, *tp2;
@@ -337,7 +337,7 @@ chkvtdi(hte_t *hte, sym_t *def, sym_t *decl)
  * of the same function.
  */
 static void
-chkfaui(hte_t *hte, sym_t *def, sym_t *decl)
+chkfaui(const hte_t *hte, sym_t *def, sym_t *decl)
 {
 	type_t	*tp1, *tp2, **ap1, **ap2;
 	pos_t	*pos1p = NULL;
@@ -445,7 +445,7 @@ chkfaui(hte_t *hte, sym_t *def, sym_t *decl)
  *
  */
 static void
-chkau(hte_t *hte, int n, sym_t *def, sym_t *decl, pos_t *pos1p,
+chkau(const hte_t *hte, int n, sym_t *def, sym_t *decl, pos_t *pos1p,
 	fcall_t *call1, fcall_t *call, type_t *arg1, type_t *arg2)
 {
 	bool	promote, asgn, dowarn;
@@ -600,7 +600,7 @@ chkau(hte_t *hte, int n, sym_t *def, sym_t *decl, pos_t *pos1p,
  * string fmt.
  */
 static void
-printflike(hte_t *hte, fcall_t *call, int n, const char *fmt, type_t **ap)
+printflike(const hte_t *hte, fcall_t *call, int n, const char *fmt, type_t **ap)
 {
 	const	char *fp;
 	int	fc;
@@ -825,7 +825,7 @@ printflike(hte_t *hte, fcall_t *call, int n, const char *fmt, type_t **ap)
  * string fmt.
  */
 static void
-scanflike(hte_t *hte, fcall_t *call, int n, const char *fmt, type_t **ap)
+scanflike(const hte_t *hte, fcall_t *call, int n, const char *fmt, type_t **ap)
 {
 	const	char *fp;
 	int	fc;
@@ -1016,7 +1016,7 @@ scanflike(hte_t *hte, fcall_t *call, int n, const char *fmt, type_t **ap)
 }
 
 static void
-badfmt(hte_t *hte, fcall_t *call)
+badfmt(const hte_t *hte, fcall_t *call)
 {
 
 	/* %s: malformed format string  \t%s */
@@ -1024,7 +1024,7 @@ badfmt(hte_t *hte, fcall_t *call)
 }
 
 static void
-inconarg(hte_t *hte, fcall_t *call, int n)
+inconarg(const hte_t *hte, fcall_t *call, int n)
 {
 
 	/* %s, arg %d inconsistent with format  \t%s */
@@ -1032,7 +1032,7 @@ inconarg(hte_t *hte, fcall_t *call, int n)
 }
 
 static void
-tofewarg(hte_t *hte, fcall_t *call)
+tofewarg(const hte_t *hte, fcall_t *call)
 {
 
 	/* %s: too few args for format  \t%s */
@@ -1040,7 +1040,7 @@ tofewarg(hte_t *hte, fcall_t *call)
 }
 
 static void
-tomanyarg(hte_t *hte, fcall_t *call)
+tomanyarg(const hte_t *hte, fcall_t *call)
 {
 
 	/* %s: too many args for format  \t%s */
@@ -1066,7 +1066,7 @@ static const char ignorelist[][8] = {
  * or return values which are always or sometimes ignored.
  */
 static void
-chkrvu(hte_t *hte, sym_t *def)
+chkrvu(const hte_t *hte, sym_t *def)
 {
 	fcall_t	*call;
 	bool	used, ignored;
@@ -1119,7 +1119,7 @@ chkrvu(hte_t *hte, sym_t *def)
  * Print warnings for inconsistent argument declarations.
  */
 static void
-chkadecl(hte_t *hte, sym_t *def, sym_t *decl)
+chkadecl(const hte_t *hte, sym_t *def, sym_t *decl)
 {
 	bool	osdef, eq, dowarn;
 	int	n;
