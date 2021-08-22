@@ -1,1 +1,1 @@
-msg_270.c(6): error: syntax error ':' [249]
+msg_270.c(9): warning: function prototypes are illegal in traditional C [270]
