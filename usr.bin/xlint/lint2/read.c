@@ -1,4 +1,4 @@
-/* $NetBSD: read.c,v 1.51 2021/08/22 12:15:37 rillig Exp $ */
+/* $NetBSD: read.c,v 1.52 2021/08/22 12:25:16 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: read.c,v 1.51 2021/08/22 12:15:37 rillig Exp $");
+__RCSID("$NetBSD: read.c,v 1.52 2021/08/22 12:25:16 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -708,33 +708,7 @@ inptype(const char *cp, const char **epp)
 			break;
 		}
 		break;
-	case LONG:
-	case VOID:
-	case LDOUBLE:
-	case DOUBLE:
-	case FLOAT:
-	case UQUAD:
-	case QUAD:
-#ifdef INT128_SIZE
-	case UINT128:
-	case INT128:
-#endif
-	case ULONG:
-	case UINT:
-	case INT:
-	case USHORT:
-	case SHORT:
-	case UCHAR:
-	case SCHAR:
-	case CHAR:
-	case BOOL:
-	case UNSIGN:
-	case SIGNED:
-	case NOTSPEC:
-	case FCOMPLEX:
-	case DCOMPLEX:
-	case LCOMPLEX:
-	case COMPLEX:
+	default:
 		break;
 	}
 
@@ -884,12 +858,11 @@ gettlen(const char *cp, const char **epp)
 		}
 		break;
 	default:
-		inperr("bad type: %c %c", c, s);
+		break;
 	}
 
-	if (t == NOTSPEC) {
-		inperr("undefined type: %c %c", c, s);
-	}
+	if (t == NOTSPEC)
+		inperr("bad type: %c %c", c, s);
 
 	switch (t) {
 	case ARRAY:
@@ -918,8 +891,6 @@ gettlen(const char *cp, const char **epp)
 	case UNION:
 		switch (*cp++) {
 		case '1':
-			(void)inpname(cp, &cp);
-			break;
 		case '2':
 			(void)inpname(cp, &cp);
 			break;
@@ -937,33 +908,7 @@ gettlen(const char *cp, const char **epp)
 			inperr("bad value: %c\n", cp[-1]);
 		}
 		break;
-	case FLOAT:
-	case USHORT:
-	case SHORT:
-	case UCHAR:
-	case SCHAR:
-	case CHAR:
-	case BOOL:
-	case UNSIGN:
-	case SIGNED:
-	case NOTSPEC:
-	case INT:
-	case UINT:
-	case DOUBLE:
-	case LDOUBLE:
-	case VOID:
-	case ULONG:
-	case LONG:
-	case QUAD:
-	case UQUAD:
-#ifdef INT128_SIZE
-	case INT128:
-	case UINT128:
-#endif
-	case FCOMPLEX:
-	case DCOMPLEX:
-	case LCOMPLEX:
-	case COMPLEX:
+	default:
 		break;
 	}
 
