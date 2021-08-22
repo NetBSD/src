@@ -1,4 +1,4 @@
-/* $NetBSD: t_lwp_create.c,v 1.3 2020/06/06 18:11:21 thorpej Exp $ */
+/* $NetBSD: t_lwp_create.c,v 1.4 2021/08/22 20:18:39 andvar Exp $ */
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -185,7 +185,7 @@ INVALID_UCONTEXT(hppa, invalid_0, "clear illegal bits in psw")
 INVALID_UCONTEXT(i386, untouchable_eflags, "changing forbidden eflags")
 	uc->uc_mcontext.__gregs[_REG_EFL] |= PSL_IOPL;
 }
-INVALID_UCONTEXT(i386, priv_escalation, "modifying priviledge level")
+INVALID_UCONTEXT(i386, priv_escalation, "modifying privilege level")
 	uc->uc_mcontext.__gregs[_REG_CS] &= ~SEL_RPL;
 }
 #endif

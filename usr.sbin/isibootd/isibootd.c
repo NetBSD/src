@@ -1,4 +1,4 @@
-/*	$NetBSD: isibootd.c,v 1.4 2021/01/30 11:34:28 tsutsui Exp $	*/
+/*	$NetBSD: isibootd.c,v 1.5 2021/08/22 20:18:39 andvar Exp $	*/
 /*	Id: isiboot.c,v 1.2 1999/12/26 14:33:33 nisimura Exp 	*/
 
 /*-
@@ -157,7 +157,7 @@ main(int argc, char *argv[])
 	argc -= optind;
 
 	if (geteuid() != 0)
-		warnx("WARNING: run by non root priviledge");
+		warnx("WARNING: run by non root privilege");
 
 	memset(station.name, 0, sizeof(station.name));
 	gethostname(station.name, sizeof(station.name) - 1);

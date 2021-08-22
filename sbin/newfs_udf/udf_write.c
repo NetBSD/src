@@ -1,4 +1,4 @@
-/* $NetBSD: udf_write.c,v 1.9 2015/01/02 21:01:12 reinoud Exp $ */
+/* $NetBSD: udf_write.c,v 1.10 2021/08/22 20:18:39 andvar Exp $ */
 
 /*
  * Copyright (c) 2006, 2008, 2013 Reinoud Zandijk
@@ -30,7 +30,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: udf_write.c,v 1.9 2015/01/02 21:01:12 reinoud Exp $");
+__RCSID("$NetBSD: udf_write.c,v 1.10 2021/08/22 20:18:39 andvar Exp $");
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -820,7 +820,7 @@ udf_do_newfs_postfix(void)
 			return error;
 		loc++;
 	
-		/* mark end of integrity desciptor sequence again */
+		/* mark end of integrity descriptor sequence again */
 		error = udf_write_dscr_phys(terminator_dscr, loc, 1);
 		if (error)
 			return error;

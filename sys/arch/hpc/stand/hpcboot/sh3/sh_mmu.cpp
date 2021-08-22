@@ -1,4 +1,4 @@
-/*	$NetBSD: sh_mmu.cpp,v 1.7 2008/04/28 20:23:20 martin Exp $	*/
+/*	$NetBSD: sh_mmu.cpp,v 1.8 2021/08/22 20:18:39 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -202,7 +202,7 @@ MemoryManager_SHMMU::MMUDump()
 			goto disabled;
 		DPRINTF((TEXT("%s virtual storage mode,"),
 		    r & SH3_MMUCR_SV ? TEXT("single") : TEXT("multiple")));
-		DPRINTF((TEXT(" SQ access: (priviledge%S)"),
+		DPRINTF((TEXT(" SQ access: (privilege%S)"),
 		    r & SH4_MMUCR_SQMD ? "" : "/user"));
 		DPRINTF((TEXT("\n")));
 #if sample_code

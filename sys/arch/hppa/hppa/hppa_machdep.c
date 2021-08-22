@@ -1,4 +1,4 @@
-/*	$NetBSD: hppa_machdep.c,v 1.31 2020/04/16 09:28:52 skrll Exp $	*/
+/*	$NetBSD: hppa_machdep.c,v 1.32 2021/08/22 20:18:39 andvar Exp $	*/
 
 /*-
  * Copyright (c) 1997, 2019 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hppa_machdep.c,v 1.31 2020/04/16 09:28:52 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hppa_machdep.c,v 1.32 2021/08/22 20:18:39 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -141,7 +141,7 @@ cpu_mcontext_validate(struct lwp *l, const mcontext_t *mcp)
 #if 0
 	/*
 	 * XXX
-	 * Force the space regs and priviledge bits to
+	 * Force the space regs and privilege bits to
 	 * the right values in the trapframe for now.
 	 */
 

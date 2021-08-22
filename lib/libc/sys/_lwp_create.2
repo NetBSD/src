@@ -1,4 +1,4 @@
-.\"	$NetBSD: _lwp_create.2,v 1.8 2021/07/31 20:51:32 andvar Exp $
+.\"	$NetBSD: _lwp_create.2,v 1.9 2021/08/22 20:18:39 andvar Exp $
 .\"
 .\" Copyright (c) 2003 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -49,7 +49,7 @@ argument specifies the initial execution context for the new LWP including
 signal mask, stack, and machine registers.
 The signal stack of the newly created light-weight process is reset to
 disabled.
-If this context specifies invalid register values (for example priviledge
+If this context specifies invalid register values (for example privilege
 escalation by setting machine dependent bits forbidden for user processes),
 or does not specify cpu register values (uc_flags does not have the
 _UC_CPU bit set), the call will fail and errno will be set to EINVAL.
