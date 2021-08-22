@@ -1,4 +1,4 @@
-/* $NetBSD: read.c,v 1.52 2021/08/22 12:25:16 rillig Exp $ */
+/* $NetBSD: read.c,v 1.53 2021/08/22 12:32:13 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: read.c,v 1.52 2021/08/22 12:25:16 rillig Exp $");
+__RCSID("$NetBSD: read.c,v 1.53 2021/08/22 12:32:13 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -643,12 +643,12 @@ inptype(const char *cp, const char **epp)
 
 	c = *cp++;
 
-	while (c == 'c' || c == 'v') {
-		if (c == 'c') {
-			tp->t_const = true;
-		} else {
-			tp->t_volatile = true;
-		}
+	if (c == 'c') {
+		tp->t_const = true;
+		c = *cp++;
+	}
+	if (c == 'v') {
+		tp->t_volatile = true;
 		c = *cp++;
 	}
 
@@ -726,26 +726,15 @@ gettlen(const char *cp, const char **epp)
 	char	c, s;
 	tspec_t	t;
 	int	narg, i;
-	bool	cm, vm;
 
 	cp1 = cp;
 
 	c = *cp++;
 
-	cm = vm = false;
-
-	while (c == 'c' || c == 'v') {
-		if (c == 'c') {
-			if (cm)
-				inperr("cm: %c", c);
-			cm = true;
-		} else {
-			if (vm)
-				inperr("vm: %c", c);
-			vm = true;
-		}
+	if (c == 'c')
 		c = *cp++;
-	}
+	if (c == 'v')
+		c = *cp++;
 
 	switch (c) {
 	case 's':
