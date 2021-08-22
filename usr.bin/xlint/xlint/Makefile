@@ -1,6 +1,5 @@
-#	$NetBSD: Makefile,v 1.20 2021/01/24 00:11:07 christos Exp $
+#	$NetBSD: Makefile,v 1.21 2021/08/22 14:35:44 rillig Exp $
 
-.PATH:		${.CURDIR}/../lint1
 .PATH:		${.CURDIR}/../../mkdep
 
 PROG=		xlint
