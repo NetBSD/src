@@ -1,3 +1,5 @@
+/*	$NetBSD: aic7xxxvar.h,v 1.58 2021/08/22 19:56:15 andvar Exp $	*/
+
 /*
  * Core definitions and data structures sharable across OS platforms.
  *
@@ -37,7 +39,7 @@
  * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGES.
  *
- * $Id: aic7xxxvar.h,v 1.57 2009/05/12 14:25:17 cegger Exp $
+ * $Id: aic7xxxvar.h,v 1.58 2021/08/22 19:56:15 andvar Exp $
  *
  * $FreeBSD: /repoman/r/ncvs/src/sys/dev/aic7xxx/aic7xxx.h,v 1.44 2003/01/20 20:44:55 gibbs Exp $
  */
@@ -545,7 +547,7 @@ struct hardware_scb {
  *	o A residual has occurred if SG_FULL_RESID is set in sgptr,
  *	  or residual_sgptr does not have SG_LIST_NULL set.
  *
- *	o We are transfering the last segment if residual_datacnt has
+ *	o We are transferring the last segment if residual_datacnt has
  *	  the SG_LAST_SEG flag set.
  *
  * Host:
@@ -604,7 +606,7 @@ struct hardware_scb {
  * the length to store additional address bits and a flag to indicate
  * that a given segment terminates the transfer.  This gives us an
  * addressable range of 512GB on machines with 64bit PCI or with chips
- * that can support dual address cycles on 32bit PCI busses.
+ * that can support dual address cycles on 32bit PCI buses.
  */
 struct ahc_dma_seg {
 	uint32_t	addr;
@@ -740,7 +742,7 @@ struct scb_data {
 /************************ Target Mode Definitions *****************************/
 
 /*
- * Connection desciptor for select-in requests in target mode.
+ * Connection descriptor for select-in requests in target mode.
  */
 struct target_cmd {
 	uint8_t scsiid;		/* Our ID and the initiator's ID */
@@ -868,7 +870,7 @@ struct ahc_syncrate {
 #define	AHC_ULTRA2_XFER_PERIOD 0x0a
 
 /*
- * Indexes into our table of syncronous transfer rates.
+ * Indexes into our table of synchronous transfer rates.
  */
 #define AHC_SYNCRATE_DT		0
 #define AHC_SYNCRATE_ULTRA2	1
@@ -1093,7 +1095,7 @@ struct ahc_softc {
 
 	/*
 	 * Device instance currently on the bus awaiting a continue TIO
-	 * for a command that was not given the disconnect priviledge.
+	 * for a command that was not given the disconnect privilege.
 	 */
 	struct ahc_tmode_lstate  *pending_device;
 
@@ -1337,7 +1339,7 @@ void			ahc_validate_width(struct ahc_softc *,
 typedef enum {
 	AHC_NEG_TO_GOAL,	/* Renegotiate only if goal and curr differ. */
 	AHC_NEG_IF_NON_ASYNC,	/* Renegotiate so long as goal is non-async. */
-	AHC_NEG_ALWAYS		/* Renegotiat even if goal is async. */
+	AHC_NEG_ALWAYS		/* Renegotiate even if goal is async. */
 } ahc_neg_type;
 int			ahc_update_neg_request(struct ahc_softc *,
 			    struct ahc_devinfo *, struct ahc_tmode_tstate *,
