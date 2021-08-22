@@ -1,4 +1,4 @@
-/* $NetBSD: read.c,v 1.49 2021/08/08 11:56:35 rillig Exp $ */
+/* $NetBSD: read.c,v 1.50 2021/08/22 11:57:23 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: read.c,v 1.49 2021/08/08 11:56:35 rillig Exp $");
+__RCSID("$NetBSD: read.c,v 1.50 2021/08/22 11:57:23 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -556,13 +556,70 @@ usedsym(pos_t *posp, const char *cp)
 	hte->h_lusym = &usym->u_next;
 }
 
+static tspec_t
+parse_tspec(const char **pp, char c, bool *osdef)
+{
+	char s;
+
+	switch (c) {
+	case 's':	/* 'signed' or 'struct' or 'float' */
+	case 'u':	/* 'unsigned' or 'union' */
+	case 'l':	/* 'long double' */
+	case 'e':	/* 'enum' */
+		s = c;
+		c = *(*pp)++;
+		break;
+	default:
+		s = '\0';
+		break;
+	}
+
+	switch (c) {
+	case 'B':
+		return BOOL;
+	case 'C':
+		return s == 's' ? SCHAR : (s == 'u' ? UCHAR : CHAR);
+	case 'S':
+		return s == 'u' ? USHORT : SHORT;
+	case 'I':
+		return s == 'u' ? UINT : INT;
+	case 'L':
+		return s == 'u' ? ULONG : LONG;
+	case 'Q':
+		return s == 'u' ? UQUAD : QUAD;
+#ifdef INT128_SIZE
+	case 'J':
+		return s == 'u' ? UINT128 : INT128;
+#endif
+	case 'D':
+		return s == 's' ? FLOAT : (s == 'l' ? LDOUBLE : DOUBLE);
+	case 'V':
+		return VOID;
+	case 'P':
+		return PTR;
+	case 'A':
+		return ARRAY;
+	case 'F':
+	case 'f':
+		*osdef = c == 'f';
+		return FUNC;
+	case 'T':
+		return s == 'e' ? ENUM : (s == 's' ? STRUCT : UNION);
+	case 'X':
+		return s == 's' ? FCOMPLEX
+				       : (s == 'l' ? LCOMPLEX : DCOMPLEX);
+	default:
+		inperr("tspec '%c'", c);
+	}
+}
+
 /*
  * Read a type and return the index of this type.
  */
 static u_short
 inptype(const char *cp, const char **epp)
 {
-	char	c, s;
+	char	c;
 	const	char *ep;
 	type_t	*tp;
 	int	narg, i;
@@ -595,68 +652,7 @@ inptype(const char *cp, const char **epp)
 		c = *cp++;
 	}
 
-	switch (c) {
-	case 's':
-	case 'u':
-	case 'l':
-	case 'e':
-		s = c;
-		c = *cp++;
-		break;
-	default:
-		s = '\0';
-		break;
-	}
-
-	switch (c) {
-	case 'B':
-		tp->t_tspec = BOOL;
-		break;
-	case 'C':
-		tp->t_tspec = s == 's' ? SCHAR : (s == 'u' ? UCHAR : CHAR);
-		break;
-	case 'S':
-		tp->t_tspec = s == 'u' ? USHORT : SHORT;
-		break;
-	case 'I':
-		tp->t_tspec = s == 'u' ? UINT : INT;
-		break;
-	case 'L':
-		tp->t_tspec = s == 'u' ? ULONG : LONG;
-		break;
-	case 'Q':
-		tp->t_tspec = s == 'u' ? UQUAD : QUAD;
-		break;
-#ifdef INT128_SIZE
-	case 'J':
-		tp->t_tspec = s == 'u' ? UINT128 : INT128;
-		break;
-#endif
-	case 'D':
-		tp->t_tspec = s == 's' ? FLOAT : (s == 'l' ? LDOUBLE : DOUBLE);
-		break;
-	case 'V':
-		tp->t_tspec = VOID;
-		break;
-	case 'P':
-		tp->t_tspec = PTR;
-		break;
-	case 'A':
-		tp->t_tspec = ARRAY;
-		break;
-	case 'F':
-	case 'f':
-		osdef = c == 'f';
-		tp->t_tspec = FUNC;
-		break;
-	case 'T':
-		tp->t_tspec = s == 'e' ? ENUM : (s == 's' ? STRUCT : UNION);
-		break;
-	case 'X':
-		tp->t_tspec = s == 's' ? FCOMPLEX
-				       : (s == 'l' ? LCOMPLEX : DCOMPLEX);
-		break;
-	}
+	tp->t_tspec = parse_tspec(&cp, c, &osdef);
 
 	switch (tp->t_tspec) {
 	case ARRAY:
