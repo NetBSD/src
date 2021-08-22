@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.344 2021/08/21 11:27:26 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.345 2021/08/22 21:17:04 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.344 2021/08/21 11:27:26 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.345 2021/08/22 21:17:04 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -3028,9 +3028,10 @@ fold(tnode_t *tn)
 	tnode_t *cn;
 
 	v = xcalloc(1, sizeof(*v));
-	v->v_tspec = t = tn->tn_type->t_tspec;
+	v->v_tspec = tn->tn_type->t_tspec;
 
-	utyp = t == PTR || is_uinteger(t);
+	t = tn->tn_left->tn_type->t_tspec;
+	utyp = !is_integer(t) || is_uinteger(t);
 	ul = sl = tn->tn_left->tn_val->v_quad;
 	if (modtab[tn->tn_op].m_binary)
 		ur = sr = tn->tn_right->tn_val->v_quad;
