@@ -1,1 +1,1 @@
-msg_271.c(6): error: syntax error ':' [249]
+msg_271.c(13): warning: switch expression must be of type `int' in traditional C [271]

@@ -1,7 +1,6 @@
-/*	$NetBSD: msg_272.c,v 1.2 2021/02/21 09:07:58 rillig Exp $	*/
+/*	$NetBSD: msg_272.c,v 1.3 2021/08/22 13:45:56 rillig Exp $	*/
 # 3 "msg_272.c"
 
 // Test for message: empty translation unit [272]
 
-TODO: "Add example code that triggers the above message." /* expect: 249 */
-TODO: "Add example code that almost triggers the above message."
+/* expect+1: warning: empty translation unit [272] */
