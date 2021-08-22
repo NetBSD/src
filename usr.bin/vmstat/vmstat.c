@@ -1,4 +1,4 @@
-/* $NetBSD: vmstat.c,v 1.246 2021/04/02 06:28:55 simonb Exp $ */
+/* $NetBSD: vmstat.c,v 1.247 2021/08/22 22:24:12 rillig Exp $ */
 
 /*-
  * Copyright (c) 1998, 2000, 2001, 2007, 2019, 2020
@@ -71,7 +71,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1986, 1991, 1993\
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.2 (Berkeley) 3/1/95";
 #else
-__RCSID("$NetBSD: vmstat.c,v 1.246 2021/04/02 06:28:55 simonb Exp $");
+__RCSID("$NetBSD: vmstat.c,v 1.247 2021/08/22 22:24:12 rillig Exp $");
 #endif
 #endif /* not lint */
 
@@ -1568,8 +1568,10 @@ dopool(int verbose, int wide)
 	struct pool_allocator pa;
 	char maxp[32], name[32];
 
-	if (memf == NULL)
-		return dopool_sysctl(verbose, wide);
+	if (memf == NULL) {
+		dopool_sysctl(verbose, wide);
+		return;
+	}
 
 	memset(&pool_totals, 0, sizeof pool_totals);
 	kread(namelist, X_POOLHEAD, &pool_head, sizeof(pool_head));
@@ -1767,8 +1769,10 @@ dopoolcache(int verbose)
 	size_t i;
 	double p;
 
-	if (memf == NULL)
-		return dopoolcache_sysctl(verbose);
+	if (memf == NULL) {
+		dopoolcache_sysctl(verbose);
+		return;
+	}
 
 	kread(namelist, X_POOLHEAD, &pool_head, sizeof(pool_head));
 	addr = TAILQ_FIRST(&pool_head);
@@ -1895,8 +1899,10 @@ dohashstat(int verbose, int todo, const char *hashname)
 	u_long	hashsize, i;
 	int	used, items, chain, maxchain;
 
-	if (memf == NULL)
-		return dohashstat_sysctl(verbose, todo, hashname);
+	if (memf == NULL) {
+		dohashstat_sysctl(verbose, todo, hashname);
+		return;
+	}
 
 	hashbuf = NULL;
 	hashbufsize = 0;

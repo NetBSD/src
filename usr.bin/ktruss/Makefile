@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.31 2020/09/07 00:26:23 mrg Exp $
+#	$NetBSD: Makefile,v 1.32 2021/08/22 22:24:12 rillig Exp $
 
 NOMAN=		# defined
 
@@ -7,6 +7,7 @@ NOMAN=		# defined
 PROG=		ktruss
 SRCS=		ktrace.c dump.c subr.c misc.c setemul.c
 CLEANFILES+=	misc.c misc.h
+LINT_SUPPORTED=	no	# ktruss-ioctl.c defines uio_t twice.
 
 .if (${MKDYNAMICROOT} == "no")
 LDSTATIC?=-static

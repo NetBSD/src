@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.83 2021/08/07 17:38:41 rillig Exp $
+#	$NetBSD: Makefile,v 1.84 2021/08/22 22:24:12 rillig Exp $
 
 .include <bsd.own.mk>
 
@@ -19,6 +19,7 @@ CWARNFLAGS.clang+=	-Wno-error=implicit-int-float-conversion
 LINTFLAGS+=		-T
 LOBJS.${PROG}+=		${SRCS:M*.y:.y=.ln}
 LOBJS.${PROG}+=		${SRCS:M*.l:.l=.ln}
+LINTFLAGS.scan.c+=	-X 107,126,330,331,332,333	# strict bool mode
 
 CPPFLAGS+=	-DIS_LINT1
 CPPFLAGS+=	-I${.CURDIR}
