@@ -1,4 +1,4 @@
-/*	$NetBSD: err.c,v 1.137 2021/08/16 06:49:56 rillig Exp $	*/
+/*	$NetBSD: err.c,v 1.138 2021/08/22 13:52:19 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: err.c,v 1.137 2021/08/16 06:49:56 rillig Exp $");
+__RCSID("$NetBSD: err.c,v 1.138 2021/08/22 13:52:19 rillig Exp $");
 #endif
 
 #include <sys/types.h>
@@ -257,7 +257,7 @@ const char *const msgs[] = {
 	"duplicate case in switch: %lu",			      /* 200 */
 	"default outside switch",				      /* 201 */
 	"duplicate default in switch",				      /* 202 */
-	"case label must be of type `int' in traditional C",	      /* 203 */
+	"case label must be of type 'int' in traditional C",	      /* 203 */
 	"controlling expressions must have scalar type",	      /* 204 */
 	"switch expression must have integral type",		      /* 205 */
 	"enumeration value(s) not handled in switch",		      /* 206 */
@@ -325,7 +325,7 @@ const char *const msgs[] = {
 	"variable declared inline: %s",				      /* 268 */
 	"argument declared inline: %s",				      /* 269 */
 	"function prototypes are illegal in traditional C",	      /* 270 */
-	"switch expression must be of type `int' in traditional C",   /* 271 */
+	"switch expression must be of type 'int' in traditional C",   /* 271 */
 	"empty translation unit",				      /* 272 */
 	"bit-field type '%s' invalid in ANSI C",		      /* 273 */
 	"ANSI C forbids comparison of %s with %s",		      /* 274 */
