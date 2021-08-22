@@ -1,7 +1,27 @@
-/*	$NetBSD: msg_271.c,v 1.2 2021/02/21 09:07:58 rillig Exp $	*/
+/*	$NetBSD: msg_271.c,v 1.3 2021/08/22 13:45:56 rillig Exp $	*/
 # 3 "msg_271.c"
 
-// Test for message: switch expression must be of type `int' in traditional C [271]
+/* Test for message: switch expression must be of type `int' in traditional C [271] */
 
-TODO: "Add example code that triggers the above message." /* expect: 249 */
-TODO: "Add example code that almost triggers the above message."
+/* lint1-flags: -tw */
+
+example(long_int, unsigned_int)
+	long long_int;
+	unsigned unsigned_int;
+{
+	/* expect+1: warning: switch expression must be of type `int' in traditional C [271] */
+	switch (long_int) {
+	case 3:
+		return 1;
+	}
+
+	/*
+	 * XXX: K&R clearly says "the result must be 'int'", but lint also
+	 * allows unsigned int.
+	 */
+	switch (unsigned_int) {
+	case 3:
+		return 1;
+	}
+	return 2;
+}
