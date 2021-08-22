@@ -1,4 +1,4 @@
-/*	$NetBSD: i2c.c,v 1.80.2.3 2021/08/22 18:40:11 thorpej Exp $	*/
+/*	$NetBSD: i2c.c,v 1.80.2.4 2021/08/22 18:43:06 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2021 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i2c.c,v 1.80.2.3 2021/08/22 18:40:11 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i2c.c,v 1.80.2.4 2021/08/22 18:43:06 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -211,7 +211,6 @@ iic_devslot_reserve(struct iic_softc *sc, i2c_addr_t addr)
 		 */
 		KASSERT(link->l_addr > new_link->l_addr);
 		TAILQ_INSERT_BEFORE(link, new_link, l_list);
-		new_link = NULL;
 		break;
 	}
 	/*
@@ -220,6 +219,7 @@ iic_devslot_reserve(struct iic_softc *sc, i2c_addr_t addr)
 	 */
 	KASSERT(link != NULL);
 	KASSERT(TAILQ_NEXT(new_link, l_list) == link);
+	new_link = NULL;
 
  done:
 	mutex_exit(&sc->sc_devlist_lock);
