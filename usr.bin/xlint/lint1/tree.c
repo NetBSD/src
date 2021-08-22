@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.345 2021/08/22 21:17:04 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.346 2021/08/22 21:27:15 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.345 2021/08/22 21:17:04 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.346 2021/08/22 21:27:15 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -3033,7 +3033,7 @@ fold(tnode_t *tn)
 	t = tn->tn_left->tn_type->t_tspec;
 	utyp = !is_integer(t) || is_uinteger(t);
 	ul = sl = tn->tn_left->tn_val->v_quad;
-	if (modtab[tn->tn_op].m_binary)
+	if (is_binary(tn))
 		ur = sr = tn->tn_right->tn_val->v_quad;
 
 	mask = value_bits(size_in_bits(t));
@@ -3157,7 +3157,7 @@ fold(tnode_t *tn)
 	cn = build_constant(tn->tn_type, v);
 	if (tn->tn_left->tn_system_dependent)
 		cn->tn_system_dependent = true;
-	if (modtab[tn->tn_op].m_binary && tn->tn_right->tn_system_dependent)
+	if (is_binary(tn) && tn->tn_right->tn_system_dependent)
 		cn->tn_system_dependent = true;
 
 	return cn;
@@ -3178,7 +3178,7 @@ fold_test(tnode_t *tn)
 	lint_assert(v->v_tspec == INT || (Tflag && v->v_tspec == BOOL));
 
 	l = constant_is_nonzero(tn->tn_left);
-	r = modtab[tn->tn_op].m_binary && constant_is_nonzero(tn->tn_right);
+	r = is_binary(tn) && constant_is_nonzero(tn->tn_right);
 
 	switch (tn->tn_op) {
 	case NOT:
@@ -3216,11 +3216,10 @@ fold_float(tnode_t *tn)
 
 	lint_assert(is_floating(t));
 	lint_assert(t == tn->tn_left->tn_type->t_tspec);
-	lint_assert(!modtab[tn->tn_op].m_binary ||
-	    t == tn->tn_right->tn_type->t_tspec);
+	lint_assert(!is_binary(tn) || t == tn->tn_right->tn_type->t_tspec);
 
 	lv = tn->tn_left->tn_val->v_ldbl;
-	if (modtab[tn->tn_op].m_binary)
+	if (is_binary(tn))
 		rv = tn->tn_right->tn_val->v_ldbl;
 
 	switch (tn->tn_op) {
@@ -4334,7 +4333,7 @@ check_precedence_confusion(tnode_t *tn)
 
 	debug_node(tn);
 
-	lint_assert(modtab[tn->tn_op].m_binary);
+	lint_assert(is_binary(tn));
 	for (ln = tn->tn_left; ln->tn_op == CVT; ln = ln->tn_left)
 		continue;
 	for (rn = tn->tn_right; rn->tn_op == CVT; rn = rn->tn_left)
