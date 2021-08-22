@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_338.c,v 1.4 2021/08/22 22:09:57 rillig Exp $	*/
+/*	$NetBSD: msg_338.c,v 1.5 2021/08/22 22:15:07 rillig Exp $	*/
 # 3 "msg_338.c"
 
 // Test for message: option '%c' should be handled in the switch [338]
@@ -54,14 +54,17 @@ main(int argc, char **argv)
 
 void usage(void);
 
-/* Seen in usr.bin/ftp/main.c 1.127 from 2020-07-18. */
+/*
+ * Before ckgetopt.c 1.11 from 2021-08-23, lint wrongly warned about a
+ * missing '?' in the switch statement, even though it was there.
+ *
+ * Seen in usr.bin/ftp/main.c 1.127 from 2020-07-18.
+ */
 int
 question_option(int argc, char **argv)
 {
 	int c;
 
-	/* FIXME */
-	/* expect+1: warning: option '?' should be handled in the switch [338] */
 	while ((c = getopt(argc, argv, "?x")) != -1) {
 		switch (c) {
 		case 'x':
