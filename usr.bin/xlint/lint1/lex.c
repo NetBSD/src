@@ -1,4 +1,4 @@
-/* $NetBSD: lex.c,v 1.66 2021/08/22 13:01:47 rillig Exp $ */
+/* $NetBSD: lex.c,v 1.67 2021/08/22 13:12:39 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: lex.c,v 1.66 2021/08/22 13:01:47 rillig Exp $");
+__RCSID("$NetBSD: lex.c,v 1.67 2021/08/22 13:12:39 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -72,7 +72,7 @@ bool in_system_header = false;
 static	sbuf_t *allocsb(void);
 static	void	freesb(sbuf_t *);
 static	int	inpc(void);
-static	int	hash(const char *);
+static	u_int	hash(const char *);
 static	sym_t *	search(sbuf_t *);
 static	int	keyw(sym_t *);
 static	int	get_escaped_char(int);
@@ -316,7 +316,7 @@ add_keyword(const struct kwtab *kw, bool leading, bool trailing)
 
 /*
  * All keywords are written to the symbol table. This saves us looking
- * in a extra table for each name we found.
+ * in an extra table for each name we found.
  */
 void
 initscan(void)
@@ -392,7 +392,7 @@ inpc(void)
 	return c;
 }
 
-static int
+static u_int
 hash(const char *s)
 {
 	u_int	v;
@@ -459,7 +459,7 @@ lex_name(const char *yytext, size_t yyleng)
 static sym_t *
 search(sbuf_t *sb)
 {
-	int h;
+	u_int h;
 	sym_t *sym;
 	const struct kwtab *kw;
 
