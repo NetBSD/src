@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.prog.mk,v 1.338 2021/08/15 10:30:39 christos Exp $
+#	$NetBSD: bsd.prog.mk,v 1.339 2021/08/23 22:13:27 mrg Exp $
 #	@(#)bsd.prog.mk	8.2 (Berkeley) 4/2/94
 
 .ifndef HOSTPROG
@@ -264,6 +264,14 @@ _X11LIBLIST= dps fntstubs fontcache fontconfig fontenc freetype FS GL GLU \
     ICE lbxutil SM X11 X11_xcb Xau Xaw xcb Xdmcp Xext Xfont Xfont2 Xft Xi \
     Xinerama xkbfile Xmu Xmuu Xpm Xrandr Xrender Xss Xt XTrap Xtst Xv Xxf86dga \
     Xxf86misc Xxf86vm Xcomposite Xdamage Xfixes
+_XCBLIBLIST= \
+    atom aux composite damage dpms dri2 dri3 event glx icccm image keysyms \
+    present property randr record render_util render reply res screensaver \
+    shape shm sync xf86dri xfixes xinerama xinput xkb xtest xv xvmc
+
+# Ugly one-offs
+LIBX11_XCB=	${DESTDIR}${X11USRLIBDIR}/libX11-xcb.a
+LIBXCB=	${DESTDIR}${X11USRLIBDIR}/libxcb.a
 
 .for _lib in ${_X11LIBLIST}
 .ifndef LIB${_lib:tu}
@@ -272,9 +280,13 @@ LIB${_lib:tu}=	${DESTDIR}${X11USRLIBDIR}/lib${_lib}.a
 .endif
 .endfor
 
-# Ugly one-offs
-LIBX11_XCB=	${DESTDIR}${X11USRLIBDIR}/libX11-xcb.a
-LIBXCB=	${DESTDIR}${X11USRLIBDIR}/libxcb.a
+# These ones have "_" in the variable name and "-" in the path.
+.for _lib in ${_XCBLIBLIST}
+.ifndef LIBXCB_${_lib:tu}
+LIBXCB_${_lib:tu}=	${DESTDIR}${X11USRLIBDIR}/libxcb-${_lib}.a
+.MADE:		${LIBXCB_${_lib:tu}}	# Note: ${DESTDIR} will be expanded
+.endif
+.endfor
 
 .if defined(RESCUEDIR)
 CPPFLAGS+=	-DRESCUEDIR=\"${RESCUEDIR}\"
