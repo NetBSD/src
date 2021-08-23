@@ -1,4 +1,4 @@
-/*	$NetBSD: externs1.h,v 1.130 2021/08/22 14:50:06 rillig Exp $	*/
+/*	$NetBSD: externs1.h,v 1.131 2021/08/23 06:21:59 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -78,7 +78,7 @@ extern	symt_t	symtyp;
 extern	FILE	*yyin;
 
 extern	void	initscan(void);
-extern	bool	msb(int64_t, tspec_t, int);
+extern	bool	msb(int64_t, tspec_t);
 extern	int64_t	convert_integer(int64_t, tspec_t, int);
 extern	void	clear_warn_flags(void);
 extern	sym_t	*getsym(sbuf_t *);
