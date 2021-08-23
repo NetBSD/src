@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.350 2021/08/23 06:50:01 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.351 2021/08/23 17:03:23 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.350 2021/08/23 06:50:01 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.351 2021/08/23 17:03:23 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -4238,40 +4238,37 @@ constant_addr(const tnode_t *tn, const sym_t **symp, ptrdiff_t *offsp)
 	}
 }
 
-/*
- * Concatenate two string constants.
- */
+/* Append s2 to s1, then free s2. */
 strg_t *
-cat_strings(strg_t *strg1, strg_t *strg2)
+cat_strings(strg_t *s1, strg_t *s2)
 {
-	size_t	len1, len2, len;
+	size_t len1, len2, sz;
 
-	if (strg1->st_tspec != strg2->st_tspec) {
+	if (s1->st_tspec != s2->st_tspec) {
 		/* cannot concatenate wide and regular string literals */
 		error(292);
-		return strg1;
+		return s1;
 	}
 
-	len1 = strg1->st_len;
-	len2 = strg2->st_len + 1;	/* + NUL */
-	len = len1 + len2;
+	len1 = s1->st_len;
+	len2 = s2->st_len;
 
-#define COPY(F) \
-    do { \
-	strg1->F = xrealloc(strg1->F, len * sizeof(*strg1->F)); \
-	(void)memcpy(strg1->F + len1, strg2->F, len2 * sizeof(*strg1->F)); \
-	free(strg2->F); \
-    } while (false)
+	if (s1->st_tspec == CHAR) {
+		sz = sizeof(*s1->st_cp);
+		s1->st_cp = xrealloc(s1->st_cp, (len1 + len2 + 1) * sz);
+		memcpy(s1->st_cp + len1, s2->st_cp, (len2 + 1) * sz);
+		free(s2->st_cp);
+	} else {
+		sz = sizeof(*s1->st_wcp);
+		s1->st_wcp = xrealloc(s1->st_wcp, (len1 + len2 + 1) * sz);
+		memcpy(s1->st_wcp + len1, s2->st_wcp, (len2 + 1) * sz);
+		free(s2->st_wcp);
+	}
 
-	if (strg1->st_tspec == CHAR)
-		COPY(st_cp);
-	else
-		COPY(st_wcp);
+	s1->st_len = len1 + len2;
+	free(s2);
 
-	strg1->st_len = len - 1; /* - NUL */
-	free(strg2);
-
-	return strg1;
+	return s1;
 }
 
 static bool
