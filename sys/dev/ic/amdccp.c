@@ -1,4 +1,4 @@
-/* $NetBSD: amdccp.c,v 1.2 2020/04/30 03:40:53 riastradh Exp $ */
+/* $NetBSD: amdccp.c,v 1.3 2021/08/23 23:55:43 mrg Exp $ */
 
 /*
  * Copyright (c) 2018 Jonathan A. Kollasch
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: amdccp.c,v 1.2 2020/04/30 03:40:53 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdccp.c,v 1.3 2021/08/23 23:55:43 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -77,13 +77,19 @@ amdccp_rnd_callback(size_t bytes_wanted, void *priv)
 	while (bytes_wanted) {
 		const size_t nbytes = MIN(bytes_wanted, sizeof(buf));
 		const size_t nwords = howmany(nbytes, sizeof(buf[0]));
+
 		for (cnt = 0; cnt < nwords; cnt++) {
 			buf[cnt] = amdccp_rnd_read(sc);
 			if (buf[cnt] == 0) {
 				break;
 			}
 		}
+		if (cnt == 0) {
+			break;
+		}
+
 		const size_t cntby = cnt * sizeof(buf[0]);
+
 		rnd_add_data_sync(&sc->sc_rndsource, buf, cntby, cntby * NBBY);
 		bytes_wanted -= MIN(bytes_wanted, cntby);
 	}
