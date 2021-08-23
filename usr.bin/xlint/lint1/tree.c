@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.349 2021/08/23 06:32:30 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.350 2021/08/23 06:50:01 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.349 2021/08/23 06:32:30 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.350 2021/08/23 06:50:01 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -3142,7 +3142,7 @@ fold(tnode_t *tn)
 	if (ovfl ||
 	    ((uint64_t)(q | mask) != ~(uint64_t)0 && (q & ~mask) != 0)) {
 		if (hflag)
-			/* integer overflow detected, op %s */
+			/* integer overflow detected, op '%s' */
 			warning(141, op_name(tn->tn_op));
 	}
 
