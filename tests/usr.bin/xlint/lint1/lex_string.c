@@ -1,4 +1,4 @@
-/*	$NetBSD: lex_string.c,v 1.2 2021/06/19 08:37:18 rillig Exp $	*/
+/*	$NetBSD: lex_string.c,v 1.3 2021/08/23 17:47:34 rillig Exp $	*/
 # 3 "lex_string.c"
 
 /*
@@ -25,4 +25,9 @@ test(void)
 
 	/* expect+1: dubious escape \y [79] */
 	sink("\y");		/* unknown escape sequence */
+
+	sink("first" "second");
+
+	/* expect+1: error: cannot concatenate wide and regular string literals [292] */
+	sink("plain" L"wide");
 }
