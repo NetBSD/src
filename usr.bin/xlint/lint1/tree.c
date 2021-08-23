@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.347 2021/08/23 06:10:26 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.348 2021/08/23 06:21:59 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.347 2021/08/23 06:10:26 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.348 2021/08/23 06:21:59 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -1979,7 +1979,7 @@ check_prototype_conversion_integer(const tnode_t *tn, const tnode_t *ptn,
 	 */
 	if (ptn->tn_op == CON && is_integer(nt) &&
 	    signed_type(nt) == signed_type(ot) &&
-	    !msb(ptn->tn_val->v_quad, ot, -1))
+	    !msb(ptn->tn_val->v_quad, ot))
 		return;
 
 	/* argument #%d is converted from '%s' to '%s' ... */
@@ -3045,7 +3045,7 @@ fold(tnode_t *tn)
 		break;
 	case UMINUS:
 		q = -sl;
-		if (sl != 0 && msb(q, t, -1) == msb(sl, t, -1))
+		if (sl != 0 && msb(q, t) == msb(sl, t))
 			ovfl = true;
 		break;
 	case COMPL:
@@ -3060,7 +3060,7 @@ fold(tnode_t *tn)
 				ovfl = true;
 		} else {
 			q = sl * sr;
-			if (msb(q, t, -1) != (msb(sl, t, -1) ^ msb(sr, t, -1)))
+			if (msb(q, t) != (msb(sl, t) ^ msb(sr, t)))
 				ovfl = true;
 		}
 		break;
@@ -3084,20 +3084,19 @@ fold(tnode_t *tn)
 		break;
 	case PLUS:
 		q = utyp ? (int64_t)(ul + ur) : sl + sr;
-		if (msb(sl, t, -1) && msb(sr, t, -1)) {
-			if (!msb(q, t, -1))
+		if (msb(sl, t) && msb(sr, t)) {
+			if (!msb(q, t))
 				ovfl = true;
-		} else if (!msb(sl, t, -1) && !msb(sr, t, -1)) {
-			if (msb(q, t, -1) && !utyp)
+		} else if (!msb(sl, t) && !msb(sr, t)) {
+			if (msb(q, t) && !utyp)
 				ovfl = true;
 		}
 		break;
 	case MINUS:
 		q = utyp ? (int64_t)(ul - ur) : sl - sr;
-		if (!utyp &&
-		    msb(sl, t, -1) && !msb(sr, t, -1) && !msb(q, t, -1))
+		if (!utyp && msb(sl, t) && !msb(sr, t) && !msb(q, t))
 			ovfl = true;
-		if (!msb(sl, t, -1) && msb(sr, t, -1) && msb(q, t, -1))
+		if (!msb(sl, t) && msb(sr, t) && msb(q, t))
 			ovfl = true;
 		break;
 	case SHL:

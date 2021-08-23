@@ -1,4 +1,4 @@
-/* $NetBSD: lex.c,v 1.67 2021/08/22 13:12:39 rillig Exp $ */
+/* $NetBSD: lex.c,v 1.68 2021/08/23 06:21:59 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: lex.c,v 1.67 2021/08/22 13:12:39 rillig Exp $");
+__RCSID("$NetBSD: lex.c,v 1.68 2021/08/23 06:21:59 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -673,12 +673,10 @@ lex_integer_constant(const char *yytext, size_t yyleng, int base)
 }
 
 bool
-msb(int64_t q, tspec_t t, int len)
+msb(int64_t q, tspec_t t)
 {
 
-	if (len <= 0)
-		len = size_in_bits(t);
-	return (q & bit(len - 1)) != 0;
+	return (q & bit(size_in_bits(t) - 1)) != 0;
 }
 
 /*
@@ -696,7 +694,7 @@ convert_integer(int64_t q, tspec_t t, int len)
 		len = size_in_bits(t);
 
 	vbits = value_bits(len);
-	return t == PTR || is_uinteger(t) || !msb(q, t, len)
+	return t == PTR || is_uinteger(t) || ((q & bit(len - 1)) == 0)
 	    ? (int64_t)(q & vbits)
 	    : (int64_t)(q | ~vbits);
 }
