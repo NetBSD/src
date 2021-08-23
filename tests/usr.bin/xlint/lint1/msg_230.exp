@@ -1,3 +1,5 @@
 msg_230.c(14): warning: comparison of unsigned char with 0, op < [162]
 msg_230.c(27): warning: nonportable character comparison, op <= [230]
 msg_230.c(30): warning: comparison of unsigned char with negative constant, op <= [162]
+msg_230.c(36): warning: nonportable character comparison, op <= [230]
+msg_230.c(39): warning: nonportable character comparison, op <= [230]
