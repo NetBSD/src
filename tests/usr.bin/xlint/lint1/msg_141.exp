@@ -1,1 +1,5 @@
-msg_141.c(6): error: syntax error ':' [249]
+msg_141.c(10): warning: integer overflow detected, op - [141]
+msg_141.c(14): warning: integer overflow detected, op - [141]
+msg_141.c(17): warning: integer overflow detected, op + [141]
+msg_141.c(21): warning: integer overflow detected, op + [141]
+msg_141.c(21): warning: initialization of unsigned with negative constant [221]
