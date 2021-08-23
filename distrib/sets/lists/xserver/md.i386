@@ -1,4 +1,4 @@
-# $NetBSD: md.i386,v 1.132 2021/08/19 09:05:22 mrg Exp $
+# $NetBSD: md.i386,v 1.133 2021/08/23 23:08:50 mrg Exp $
 ./usr/X11R7/bin/X					xserver-xorg-server-bin	xorg
 ./usr/X11R7/bin/Xorg					xserver-xorg-server-bin	xorg
 ./usr/X11R7/bin/cvt					xserver-xorg-server-bin	xorg
@@ -57,7 +57,8 @@
 ./usr/X11R7/lib/modules/dri/unichrome_dri.so		xserver-obsolete	obsolete
 ./usr/X11R7/lib/modules/dri/unichrome_dri.so.0		xserver-obsolete	obsolete
 ./usr/X11R7/lib/modules/drivers/amdgpu_drv.so		xserver-xf86-video-amdgpu-drivers	xorg,xorg_server_ver=120
-./usr/X11R7/lib/modules/drivers/amdgpu_drv.so.19	xserver-xf86-video-amdgpu-drivers	xorg,xorg_server_ver=120
+./usr/X11R7/lib/modules/drivers/amdgpu_drv.so.19	xserver-obsolete	obsolete
+./usr/X11R7/lib/modules/drivers/amdgpu_drv.so.21	xserver-xf86-video-amdgpu-drivers	xorg,xorg_server_ver=120
 ./usr/X11R7/lib/modules/drivers/apm_drv.so		-unknown-	xorg,xorg_server_ver=110
 ./usr/X11R7/lib/modules/drivers/apm_drv.so		xserver-obsolete	xorg,xorg_server_ver=120,obsolete
 ./usr/X11R7/lib/modules/drivers/apm_drv.so.1		-unknown-	xorg,xorg_server_ver=110
