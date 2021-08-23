@@ -1,4 +1,4 @@
-/*	$NetBSD: expr_fold.c,v 1.4 2021/08/22 21:17:04 rillig Exp $	*/
+/*	$NetBSD: expr_fold.c,v 1.5 2021/08/23 06:50:01 rillig Exp $	*/
 # 3 "expr_fold.c"
 
 /*
@@ -67,10 +67,10 @@ fold_uminus(void)
 	/* expect+1: warning: argument #1 is converted from 'long' to 'int' due to prototype [259] */
 	take_int(-2147483648);
 
-	/* expect+2: warning: integer overflow detected, op + [141] */
-	/* expect+1: warning: integer overflow detected, op - [141] */
+	/* expect+2: warning: integer overflow detected, op '+' [141] */
+	/* expect+1: warning: integer overflow detected, op '-' [141] */
 	take_int(-(2147483647 + 1));
-	/* expect+1: warning: integer overflow detected, op - [141] */
+	/* expect+1: warning: integer overflow detected, op '-' [141] */
 	take_int(-(-2147483647 - 1));
 	/* expect+2: warning: argument #1 is converted from 'long' to 'int' due to prototype [259] */
 	/* expect+1: warning: conversion of 'long' to 'int' is out of range, arg #1 [295] */
@@ -118,14 +118,14 @@ void
 fold_mult(void)
 {
 	take_int(32767 * 65536);
-	/* expect+1: warning: integer overflow detected, op * [141] */
+	/* expect+1: warning: integer overflow detected, op '*' [141] */
 	take_int(32768 * 65536);
-	/* expect+1: warning: integer overflow detected, op * [141] */
+	/* expect+1: warning: integer overflow detected, op '*' [141] */
 	take_int(65536 * 65536);
 
 	take_uint(32767 * 65536U);
 	take_uint(32768 * 65536U);
-	/* expect+1: warning: integer overflow detected, op * [141] */
+	/* expect+1: warning: integer overflow detected, op '*' [141] */
 	take_uint(65536 * 65536U);
 }
 
@@ -134,7 +134,7 @@ fold_div(void)
 {
 	/* expect+3: error: division by 0 [139] */
 	/* XXX: The following message is redundant. */
-	/* expect+1: warning: integer overflow detected, op / [141] */
+	/* expect+1: warning: integer overflow detected, op '/' [141] */
 	take_int(0 / 0);
 
 	/* expect+2: warning: argument #1 is converted from 'long' to 'int' due to prototype [259] */
@@ -161,13 +161,13 @@ fold_mod(void)
 void
 fold_plus(void)
 {
-	/* expect+1: warning: integer overflow detected, op + [141] */
+	/* expect+1: warning: integer overflow detected, op '+' [141] */
 	take_int(2147483647 + 1);
 
 	/* Assume two's complement, so no overflow. */
 	take_int(-2147483647 + -1);
 
-	/* expect+1: warning: integer overflow detected, op + [141] */
+	/* expect+1: warning: integer overflow detected, op '+' [141] */
 	take_int(-2147483647 + -2);
 
 	/*
@@ -184,26 +184,26 @@ fold_plus(void)
 void
 fold_minus(void)
 {
-	/* expect+1: warning: integer overflow detected, op - [141] */
+	/* expect+1: warning: integer overflow detected, op '-' [141] */
 	take_int(2147483647 - -1);
 	/* Assume two's complement. */
 	take_int(-2147483647 - 1);
-	/* expect+1: warning: integer overflow detected, op - [141] */
+	/* expect+1: warning: integer overflow detected, op '-' [141] */
 	take_int(-2147483647 - 2);
 
 	/* expect+1: warning: argument #1 is converted from 'long' to 'int' due to prototype [259] */
 	take_int(0 - 2147483648);
-	/* expect+1: warning: integer overflow detected, op - [141] */
+	/* expect+1: warning: integer overflow detected, op '-' [141] */
 	take_uint(0 - 2147483648U);
 }
 
 void
 fold_shl(void)
 {
-	/* expect+1: warning: integer overflow detected, op << [141] */
+	/* expect+1: warning: integer overflow detected, op '<<' [141] */
 	take_int(1 << 24 << 24);
 
-	/* expect+1: warning: integer overflow detected, op << [141] */
+	/* expect+1: warning: integer overflow detected, op '<<' [141] */
 	take_uint(1U << 24 << 24);
 
 	/* FIXME: undefined behavior in 'fold' at 'uint64_t << 104'. */
