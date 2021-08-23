@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_swap.c,v 1.205 2021/06/03 20:18:06 riastradh Exp $	*/
+/*	$NetBSD: uvm_swap.c,v 1.206 2021/08/23 13:08:18 hannken Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997, 2009 Matthew R. Green
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.205 2021/06/03 20:18:06 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.206 2021/08/23 13:08:18 hannken Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_compat_netbsd.h"
@@ -1149,7 +1149,7 @@ uvm_swap_shutdown(struct lwp *l)
 	struct vnode *vp;
 	int error;
 
-	if (!uvm_swap_init_done)
+	if (!uvm_swap_init_done || uvmexp.nswapdev == 0)
 		return;
 	printf("turning off swap...");
 	rw_enter(&swap_syscall_lock, RW_WRITER);
