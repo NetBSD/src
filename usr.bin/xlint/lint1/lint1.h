@@ -1,4 +1,4 @@
-/* $NetBSD: lint1.h,v 1.124 2021/08/23 06:26:37 rillig Exp $ */
+/* $NetBSD: lint1.h,v 1.125 2021/08/23 17:03:23 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -79,7 +79,7 @@ typedef struct {
 	} while (false)
 
 /*
- * Strings cannot be referenced to simply by a pointer to its first
+ * Strings cannot be referenced simply by a pointer to their first
  * char. This is because strings can contain NUL characters other than the
  * trailing NUL.
  *
