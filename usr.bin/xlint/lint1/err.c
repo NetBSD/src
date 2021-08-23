@@ -1,4 +1,4 @@
-/*	$NetBSD: err.c,v 1.138 2021/08/22 13:52:19 rillig Exp $	*/
+/*	$NetBSD: err.c,v 1.139 2021/08/23 06:50:01 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: err.c,v 1.138 2021/08/22 13:52:19 rillig Exp $");
+__RCSID("$NetBSD: err.c,v 1.139 2021/08/23 06:50:01 rillig Exp $");
 #endif
 
 #include <sys/types.h>
@@ -195,7 +195,7 @@ const char *const msgs[] = {
 	"unknown operand size, op %s",				      /* 138 */
 	"division by 0",					      /* 139 */
 	"modulus by 0",						      /* 140 */
-	"integer overflow detected, op %s",			      /* 141 */
+	"integer overflow detected, op '%s'",			      /* 141 */
 	"floating point overflow detected, op %s",		      /* 142 */
 	"cannot take size/alignment of incomplete type",	      /* 143 */
 	"cannot take size/alignment of function",		      /* 144 */
