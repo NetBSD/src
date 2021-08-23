@@ -1,4 +1,4 @@
-/* $NetBSD: lint1.h,v 1.123 2021/08/22 21:27:15 rillig Exp $ */
+/* $NetBSD: lint1.h,v 1.124 2021/08/23 06:26:37 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -570,6 +570,12 @@ bit(unsigned i)
 
 	lint_assert(i < 64);
 	return (uint64_t)1 << i;
+}
+
+static inline bool
+msb(int64_t q, tspec_t t)
+{
+	return (q & bit(size_in_bits(t) - 1)) != 0;
 }
 
 static inline uint64_t

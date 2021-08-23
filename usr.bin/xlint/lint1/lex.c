@@ -1,4 +1,4 @@
-/* $NetBSD: lex.c,v 1.68 2021/08/23 06:21:59 rillig Exp $ */
+/* $NetBSD: lex.c,v 1.69 2021/08/23 06:26:37 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: lex.c,v 1.68 2021/08/23 06:21:59 rillig Exp $");
+__RCSID("$NetBSD: lex.c,v 1.69 2021/08/23 06:26:37 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -670,13 +670,6 @@ lex_integer_constant(const char *yytext, size_t yyleng, int base)
 	yylval.y_val->v_quad = (int64_t)uq;
 
 	return T_CON;
-}
-
-bool
-msb(int64_t q, tspec_t t)
-{
-
-	return (q & bit(size_in_bits(t) - 1)) != 0;
 }
 
 /*
