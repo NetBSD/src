@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.348 2021/08/23 06:21:59 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.349 2021/08/23 06:32:30 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.348 2021/08/23 06:21:59 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.349 2021/08/23 06:32:30 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -3084,13 +3084,10 @@ fold(tnode_t *tn)
 		break;
 	case PLUS:
 		q = utyp ? (int64_t)(ul + ur) : sl + sr;
-		if (msb(sl, t) && msb(sr, t)) {
-			if (!msb(q, t))
-				ovfl = true;
-		} else if (!msb(sl, t) && !msb(sr, t)) {
-			if (msb(q, t) && !utyp)
-				ovfl = true;
-		}
+		if (msb(sl, t) && msb(sr, t) && !msb(q, t))
+			ovfl = true;
+		if (!utyp && !msb(sl, t) && !msb(sr, t) && msb(q, t))
+			ovfl = true;
 		break;
 	case MINUS:
 		q = utyp ? (int64_t)(ul - ur) : sl - sr;
