@@ -1,4 +1,8 @@
-$NetBSD: CHANGES,v 1.49 2021/05/05 07:41:48 mrg Exp $
+$NetBSD: CHANGES,v 1.50 2021/08/24 09:47:36 mrg Exp $
+
+changes in bozohttpd 20210824:
+	o  new "-m tlsversion" option to set the minimum TLS version
+	   available.  partially from <sunil@nimmagadda.net>.
 
 changes in bozohttpd 20210504:
 	o  don't assume host BUFSIZ is sufficent.  small BUFSIZ leads to

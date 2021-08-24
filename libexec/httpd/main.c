@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.28 2021/08/24 05:29:27 mrg Exp $	*/
+/*	$NetBSD: main.c,v 1.29 2021/08/24 09:47:36 mrg Exp $	*/
 
 /*	$eterna: main.c,v 1.6 2011/11/18 09:21:15 mrg Exp $	*/
 /* from: eterna: bozohttpd.c,v 1.159 2009/05/23 02:14:30 mrg Exp 	*/
@@ -164,7 +164,7 @@ main(int argc, char **argv)
 	 */
 
 	while ((c = getopt(argc, argv,
-	    "C:EGHI:L:M:P:R:S:T:U:VXZ:bc:defhi:np:st:uv:x:z:")) != -1) {
+	    "C:EGHI:L:M:m:P:R:S:T:U:VXZ:bc:defhi:np:st:uv:x:z:")) != -1) {
 		switch (c) {
 
 		case 'b':
@@ -280,6 +280,15 @@ main(int argc, char **argv)
 			bozo_add_content_map_mime(&httpd, optarg, argv[optind],
 			    argv[optind+1], argv[optind+2]);
 			optind += 3;
+			break;
+
+		case 'm':
+			if (!have_ssl)
+				goto no_ssl;
+
+			httpd.ssl_min_proto = optarg;
+			debug((&httpd, DEBUG_NORMAL,
+			    "using minimum protocol version: %s", optarg));
 			break;
 
 		case 'n':

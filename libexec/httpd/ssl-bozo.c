@@ -1,4 +1,4 @@
-/*	$NetBSD: ssl-bozo.c,v 1.29 2020/10/15 04:21:53 mrg Exp $	*/
+/*	$NetBSD: ssl-bozo.c,v 1.30 2021/08/24 09:47:36 mrg Exp $	*/
 
 /*	$eterna: ssl-bozo.c,v 1.15 2011/11/18 09:21:15 mrg Exp $	*/
 
@@ -61,13 +61,6 @@
 	"!KRB5-DES-CBC3-SHA"
 #endif
 
-#ifndef BOZO_SSL_OPTIONS
-#define BOZO_SSL_OPTIONS					\
-	((long)(SSL_OP_NO_SSLv2 | SSL_OP_NO_SSLv3 | SSL_OP_NO_TLSv1))
-#endif
-
-  /* this structure encapsulates the ssl info */
-
 /* this structure encapsulates the ssl info */
 typedef struct sslinfo_t {
 	SSL_CTX			*ssl_context;
@@ -77,6 +70,40 @@ typedef struct sslinfo_t {
 	char			*privatekey_file;
 	char			*ciphers;
 } sslinfo_t;
+
+/* Default to TLS 1.3. */
+struct {
+	unsigned	proto;
+	const char	*name;
+} protos[] = {
+	{ TLS1_3_VERSION, "TLSv1.3" },
+	{ TLS1_2_VERSION, "TLSv1.2" },
+	{ TLS1_1_VERSION, "TLSv1.1" },
+	{ 0, NULL },
+};
+
+static int
+bozo_ssl_proto(const char *name)
+{
+	unsigned i;
+
+	if (name)
+		for (i = 0; protos[0].proto != 0; i++)
+			if (strcasecmp(name, protos[i].name) == 0)
+				return protos[i].proto;
+	return protos[0].proto;
+}
+
+static const char *
+bozo_ssl_name(unsigned version)
+{
+	unsigned i;
+
+	for (i = 0; protos[0].proto != 0; i++)
+		if (version == protos[i].proto)
+			return protos[i].name;
+	return protos[0].name;
+}
 
 /*
  * bozo_clear_ssl_queue:  print the contents of the SSL error queue
@@ -208,7 +235,7 @@ void
 bozo_ssl_init(bozohttpd_t *httpd)
 {
 	sslinfo_t *sslinfo = httpd->sslinfo;
-	long options;
+	int proto;
 
 	if (sslinfo == NULL || !sslinfo->certificate_file)
 		return;
@@ -222,12 +249,12 @@ bozo_ssl_init(bozohttpd_t *httpd)
 		bozo_ssl_err(httpd, EXIT_FAILURE,
 		    "SSL context creation failed");
 
-	options = SSL_CTX_set_options(sslinfo->ssl_context,
-	    BOZO_SSL_OPTIONS);
-	if ((options & BOZO_SSL_OPTIONS) != BOZO_SSL_OPTIONS)
+	proto = bozo_ssl_proto(httpd->ssl_min_proto);
+
+	if (!SSL_CTX_set_min_proto_version(sslinfo->ssl_context, proto))
 		bozo_ssl_err(httpd, EXIT_FAILURE,
-		    "Error setting ssl options requested %#lx, got %#lx",
-		    BOZO_SSL_OPTIONS, options);
+		    "Error setting minimum protocol version '%s'",
+		    bozo_ssl_name(proto));
 
 	if (!SSL_CTX_set_cipher_list(sslinfo->ssl_context,
 	    sslinfo->ciphers ? sslinfo->ciphers : BOZO_SSL_CIPHERS))
