@@ -1,4 +1,4 @@
-/*	$NetBSD: ssl-bozo.c,v 1.30 2021/08/24 09:47:36 mrg Exp $	*/
+/*	$NetBSD: ssl-bozo.c,v 1.31 2021/08/24 09:53:26 mrg Exp $	*/
 
 /*	$eterna: ssl-bozo.c,v 1.15 2011/11/18 09:21:15 mrg Exp $	*/
 
@@ -51,10 +51,15 @@
 
 #ifndef BOZO_SSL_CIPHERS
 #define BOZO_SSL_CIPHERS 					\
-	"AES256-GCM-SHA384:AES256-SHA256:AES256-SHA:"		\
-	"AES128-GCM-SHA256:AES128-SHA256:AES128-SHA:"		\
-	"AES:"							\
-	"-SHA:"							\
+	"HIGH:"							\
+	"-SHA:-ADH:"						\
+	"-PSK-AES128-CCM:-PSK-AES256-CCM:"			\
+	"-DHE-PSK-AES128-CCM8:-DHE-PSK-AES256-CCM8:"		\
+	"-AES128-CCM8:-AES256-CCM8:"				\
+	"-DHE-RSA-AES128-CCM8:-DHE-RSA-AES256-CCM8:"		\
+	"-PSK-AES128-CCM8:-PSK-AES256-CCM8:"			\
+	"-CAMELLIA128:-CAMELLIA256:"				\
+	"-RSA-PSK-CHACHA20-POLY1305:"				\
 	"!aNULL:!eNULL:"					\
 	"!EXPORT:!DES:!RC4:!MD5:!PSK:!aECDH:"			\
 	"!EDH-DSS-DES-CBC3-SHA:!EDH-RSA-DES-CBC3-SHA:"		\
