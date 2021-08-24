@@ -1,11 +1,11 @@
-# $NetBSD: emit_lp64.ln,v 1.1 2021/08/24 21:30:52 rillig Exp $
+# $NetBSD: emit_lp64.ln,v 1.2 2021/08/24 23:38:51 rillig Exp $
 #
 # Test emitting a lint library file on an LP64 platform.
 
-0s first-file.c
+0 s first-file.c
 S first-file.c
 10 d 0.10 t 15int128_variable J
 
-0s second-file.c
+0 s second-file.c
 S second-file.c
 20 d 0.20 d 16uint128_function F0 uJ
