@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.29.16.1 2021/08/09 00:30:08 thorpej Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.29.16.2 2021/08/24 03:27:39 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.29.16.1 2021/08/09 00:30:08 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.29.16.2 2021/08/24 03:27:39 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -66,75 +66,35 @@ struct sandpoint_i2cdev {
 };
 
 static const struct sandpoint_i2cdev dlink_i2cdevs[] = {
-[0] =	{
-		.name = "strtc",
-		.compat = "st,m41t80",
-		.addr = 0x68,
-	},
-[1] =	{
-		.name = NULL
-	}
+	{ .name = "strtc", .compat = "st,m41t80", .addr = 0x68, },
+	{ .name = NULL }
 };
 
 static const struct sandpoint_i2cdev iomega_i2cdevs[] = {
-[0] =	{
-		.name = "dsrtc",
-		.compat = "dallas,ds1307",
-		.addr = 0x68,
-	},
-[1] =	{
-		.name = NULL
-	}
+	{ .name = "dsrtc", .compat = "dallas,ds1307", .addr = 0x68, },
+	{ .name = NULL }
 };
 
 static const struct sandpoint_i2cdev kurobox_i2cdevs[] = {
-[0] =	{
-		.name = "rs5c372rtc",
-		.compat = "ricoh,rs5c372a",
-		.addr = 0x32,
-	},
-[1] =	{
-		.name = NULL
-	}
+	{ .name = "rs5c372rtc", .compat = "ricoh,rs5c372a", .addr = 0x32, },
+	{ .name = NULL }
 };
 
 static const struct sandpoint_i2cdev nhnas_i2cdevs[] = {
-[0] =	{
-		.name = "pcf8563rtc",
-		.compat = "nxp,pcf8563",
-		.addr = 0x51,
-	},
-[1] =	{
-		.name = NULL
-	}
+	{ .name = "pcf8563rtc", .compat = "nxp,pcf8563", .addr = 0x51, },
+	{ .name = NULL }
 };
 
 static const struct sandpoint_i2cdev qnap_i2cdevs[] = {
-[0] =	{
-		.name = "s390rtc",
-		.compat = "sii,s35390a",
-		.addr = 0x30,
-	},
-[1] =	{
-		.name = NULL
-	}
+	{ .name = "s390rtc", .compat = "sii,s35390a", .addr = 0x30, },
+	{ .name = NULL }
 };
 
 static const struct sandpoint_i2cdev synology_i2cdevs[] = {
-[0] =	{
-		.name = "rs5c372rtc",
-		.compat = "ricoh,rs5c372a",
-		.addr = 0x32,
-	},
-[1] =	{
-		.name = "lmtemp",
-		.compat = "national,lm75",
-		.addr = 0x48,
-		.model_mask = BI_MODEL_THERMAL,
-	},
-[2] =	{
-		.name = NULL
-	}
+	{ .name = "rs5c372rtc", .compat = "ricoh,rs5c372a", .addr = 0x32, },
+	{ .name = "lmtemp", .compat = "national,lm75", .addr = 0x48,
+	   .model_mask = BI_MODEL_THERMAL, },
+	{ .name = NULL }
 };
 
 static const struct device_compatible_entry sandpoint_i2c_compat[] = {
