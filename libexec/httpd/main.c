@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.27 2021/02/27 12:36:46 mrg Exp $	*/
+/*	$NetBSD: main.c,v 1.28 2021/08/24 05:29:27 mrg Exp $	*/
 
 /*	$eterna: main.c,v 1.6 2011/11/18 09:21:15 mrg Exp $	*/
 /* from: eterna: bozohttpd.c,v 1.159 2009/05/23 02:14:30 mrg Exp 	*/
@@ -102,7 +102,9 @@ usage(bozohttpd_t *httpd, char *progname)
 		bozowarn(httpd, "   -P pidfile\t\tpid file path");
 	if (have_user)
 		bozowarn(httpd, "   -p dir\t\t\"public_html\" directory name");
-
+	if (have_dirindex)
+		bozowarn(httpd, "   -R readme\t\tput readme file in footer "
+				"of directory index");
 	if (have_core) {
 		bozowarn(httpd, "   -S version\t\tset server version string");
 		bozowarn(httpd, "   -s\t\t\talways log to stderr");
@@ -113,20 +115,17 @@ usage(bozohttpd_t *httpd, char *progname)
 	}
 	if (have_user)
 		bozowarn(httpd, "   -u\t\t\tenable ~user/public_html support");
-
 	if (have_core) {
 		bozowarn(httpd, "   -V\t\t\tUnknown virtual hosts go to "
 				"`slashdir'");
 		bozowarn(httpd, "   -v virtualroot\tenable virtual host "
 				"support in this directory");
 	}
-
 	if (have_dirindex)
 		bozowarn(httpd, "   -X\t\t\tdirectory index support");
 	if (have_core)
 		bozowarn(httpd, "   -x index\t\tdefault \"index.html\" "
 				"file name");
-
 	if (have_ssl) {
 		bozowarn(httpd, "   -Z cert privkey\tspecify path to server "
 				"certificate and private key file\n"
@@ -303,6 +302,9 @@ main(int argc, char **argv)
 			break;
 
 		case 'R':
+			if (!have_dirindex)
+				goto no_dirindex_support;
+
 			bozo_set_pref(&httpd, &prefs, "directory index readme",
 				      optarg);
 			break;
