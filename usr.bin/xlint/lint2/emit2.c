@@ -1,4 +1,4 @@
-/* $NetBSD: emit2.c,v 1.19 2021/04/02 12:16:50 rillig Exp $ */
+/* $NetBSD: emit2.c,v 1.20 2021/08/24 21:30:52 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: emit2.c,v 1.19 2021/04/02 12:16:50 rillig Exp $");
+__RCSID("$NetBSD: emit2.c,v 1.20 2021/08/24 21:30:52 rillig Exp $");
 #endif
 
 #include "lint2.h"
@@ -70,6 +70,10 @@ outtype(type_t *tp)
 		case ULONG:	t = 'L';	s = 'u';	break;
 		case QUAD:	t = 'Q';	s = '\0';	break;
 		case UQUAD:	t = 'Q';	s = 'u';	break;
+#ifdef INT128_SIZE
+		case INT128:	t = 'J';	s = '\0';	break;
+		case UINT128:	t = 'J';	s = 'u';	break;
+#endif
 		case FLOAT:	t = 'D';	s = 's';	break;
 		case DOUBLE:	t = 'D';	s = '\0';	break;
 		case LDOUBLE:	t = 'D';	s = 'l';	break;
