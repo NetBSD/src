@@ -1,9 +1,9 @@
-# $NetBSD: emit.ln,v 1.1 2021/08/24 21:30:52 rillig Exp $
+# $NetBSD: emit.ln,v 1.2 2021/08/24 23:38:51 rillig Exp $
 #
 # Test emitting a lint library file.
 
 # Extracted from ../lint1/emit.exp-ln.
-0s emit.c
+0 s emit.c
 S emit.c
 
 # Global variables that are declared using 'extern' are not part of a
@@ -23,17 +23,17 @@ S emit.c
 # library's interface, therefore they are omitted from the output.
 121 d 0.121 e 30return_void_unknown_parameters F V
 122 d 0.122 e 38return_implicit_int_unknown_parameters F I
-125 d 0.125 e 32extern_return_void_no_parameters F 0 V
+125 d 0.125 e 32extern_return_void_no_parameters F0 V
 
 # Function calls are not part of a library's interface, therefore they are
 # omitted from the output.
-161 c 0.161 s2 "%" i 9my_printf f2 PcC PC V
+161 c 0.161 s2"%" i 9my_printf f2 PcC PC V
 
 # Function definitions are copied to the output.
 159 d 0.159 d 14cover_outqchar F0 V
 
 # Taken from ../lint1/expr_promote.exp-ln.
-0s expr_promote.c
+0 s expr_promote.c
 S expr_promote.c
 
 10 d 0.10 e 4sink F2 PcC E V

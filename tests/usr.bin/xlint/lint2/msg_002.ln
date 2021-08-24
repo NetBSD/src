@@ -1,14 +1,14 @@
-# $NetBSD: msg_002.ln,v 1.2 2021/08/06 16:21:00 rillig Exp $
+# $NetBSD: msg_002.ln,v 1.3 2021/08/24 23:38:51 rillig Exp $
 #
 # Test data for message 2 of lint2:
 #	%s declared( %s ), but never used or defined
 #
 
-0smsg_002.c
-Smsg_002.c
+0 s msg_002.c
+S msg_002.c
 
 # extern int only_declared;
-2d0.2e13only_declaredI
+2 d 0.2 e 13only_declared I
 
 # int defined;
-3d0.3t7definedI
+3 d 0.3 t 7defined I

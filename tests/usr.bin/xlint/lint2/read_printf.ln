@@ -1,14 +1,14 @@
-# $NetBSD: read_printf.ln,v 1.2 2021/08/08 11:07:19 rillig Exp $
+# $NetBSD: read_printf.ln,v 1.3 2021/08/24 23:38:51 rillig Exp $
 #
 # Test reading of declarations and usage of printf-like functions.
 
 # void my_printf(const char *, ...);
-0sprintf-def.c
-Sprintf-def.c
-3d0.3d9my_printfF2PcCEV
+0 s printf-def.c
+S printf-def.c
+3 d 0.3 d 9my_printf F2 PcC E V
 
-0sprintf-use.c
-Sprintf-use.c
+0 s printf-use.c
+S printf-use.c
 
 # my_printf("string %s", "string %s%%%3d");
 #
@@ -20,22 +20,22 @@ Sprintf-use.c
 # takes place.  Since it is still the address of a string, its value is
 # analyzed for printf format specifiers.  This is unnecessary though since in
 # this example, the format string is already in argument 1, but not 2.
-11c0.11 s2"%s%%%3d" i 9my_printf f2 PcC PC V
+11 c 0.11 s2"%s%%%3d" i 9my_printf f2 PcC PC V
 
 # my_printf("int %d", 12345);
 #
 # Argument 2 is a positive integer.
-12c0.12 p2 i 9my_printf f2 PcC I V
+12 c 0.12 p2 i 9my_printf f2 PcC I V
 
 # my_printf("%s %d %p", "\t", -6, (const void *)0);
 #
 # Argument 2 is a string without any printf-like format specifiers.
 # Argument 3 is a negative integer.
 # Argument 4 has no further interesting properties.
-13c0.13 s2"" n3 i 9my_printf f4 PcC PC I PcV V
+13 c 0.13 s2"" n3 i 9my_printf f4 PcC PC I PcV V
 
 # See tests/lint1/emit.c, function cover_outqchar.
-161c0.161 s2"%" i 9my_printf f2 PcC PC V
-162c0.162 s2"%s"i 9my_printf f2 PcC PC V
-163c0.163 s2"%%" i 9my_printf f2 PcC PC V
-164c0.164 s2"%\a%\b%\f%\n%\r%\t%\v%\177" i 9my_printf f2 PcC PC V
+161 c 0.161 s2"%" i 9my_printf f2 PcC PC V
+162 c 0.162 s2"%s"i 9my_printf f2 PcC PC V
+163 c 0.163 s2"%%" i 9my_printf f2 PcC PC V
+164 c 0.164 s2"%\a%\b%\f%\n%\r%\t%\v%\177" i 9my_printf f2 PcC PC V

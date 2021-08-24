@@ -1,11 +1,11 @@
-# $NetBSD: msg_008.ln,v 1.2 2021/08/14 14:25:51 rillig Exp $
+# $NetBSD: msg_008.ln,v 1.3 2021/08/24 23:38:51 rillig Exp $
 #
 # Test data for message 8 of lint2:
 #	%s returns value which is always ignored
 #
 
-0smsg_008.c
-Smsg_008.c
+0 s msg_008.c
+S msg_008.c
 
 # 100: bool func(void) { return true }
 100 d 0.100 drs 4func F0 B
