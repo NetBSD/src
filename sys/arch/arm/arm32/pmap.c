@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.428 2021/03/23 10:21:49 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.429 2021/08/24 07:32:31 skrll Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -192,7 +192,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.428 2021/03/23 10:21:49 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.429 2021/08/24 07:32:31 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -5979,7 +5979,7 @@ vaddr_t
 pmap_growkernel(vaddr_t maxkvaddr)
 {
 	UVMHIST_FUNC(__func__);
-	UVMHIST_CALLARGS(maphist, "growing kernel from %#jx to %#jx\n",
+	UVMHIST_CALLARGS(maphist, "growing kernel from %#jx to %#jx",
 	    pmap_curmaxkvaddr, maxkvaddr, 0, 0);
 
 	pmap_t kpm = pmap_kernel();
