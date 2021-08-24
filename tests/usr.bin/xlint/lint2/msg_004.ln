@@ -1,17 +1,17 @@
-# $NetBSD: msg_004.ln,v 1.2 2021/08/07 19:07:03 rillig Exp $
+# $NetBSD: msg_004.ln,v 1.3 2021/08/24 23:38:51 rillig Exp $
 #
 # Test data for message 4 of lint2:
 #	%s value used inconsistently  	%s  ::  %s
 
 # msg_004_define.c:2: double add(double a, double b) { return a + b; }
-0smsg_004_define.c
-Smsg_004_define.c
-2d0.2dr3addF2DDD
+0 s msg_004_define.c
+S msg_004_define.c
+2 d 0.2 d r 3add F2 D D D
 
 # msg_004_call.c:2: int add(int, int);
 # msg_004_call.c:4: int main(void) { return add(2, 3); }
-0smsg_004_call.c
-Smsg_004_call.c
-2d0.2e3addF2III
-4c0.4p1p2u3addf2III
-4d0.4dr4mainF0I
+0 s msg_004_call.c
+S msg_004_call.c
+2 d 0.2 e 3add F2 I I I
+4 c 0.4 p1 p2 u 3add f2 I I I
+4 d 0.4 d r 4main F0 I
