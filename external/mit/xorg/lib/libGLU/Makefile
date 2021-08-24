@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.21 2021/07/11 20:52:06 mrg Exp $
+#	$NetBSD: Makefile,v 1.22 2021/08/24 03:10:11 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -128,7 +128,7 @@ SRCS=		${SRCS.libutil} ${SRCS.libtess} \
 CFLAGS+=	-fno-strict-aliasing -fvisibility=hidden -pthread
 
 .PATH:		${X11SRCDIR.glu}/include/GL
-INCS=	glu.h glu_mangle.h
+INCS=	glu.h
 INCSDIR=${X11INCDIR}/GL
 
 LIBDPLIBS=	Xext	${.CURDIR}/../libXext \
