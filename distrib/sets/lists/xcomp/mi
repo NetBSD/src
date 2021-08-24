@@ -1,4 +1,4 @@
-#	 $NetBSD: mi,v 1.225 2021/07/11 20:48:48 mrg Exp $
+#	 $NetBSD: mi,v 1.226 2021/08/24 00:12:32 mrg Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -19,7 +19,7 @@
 ./usr/X11R7/include/GL/glcorearb.h			xcomp-xorgproto-include	xorg
 ./usr/X11R7/include/GL/glext.h				xcomp-xorgproto-include	xorg
 ./usr/X11R7/include/GL/glu.h				xcomp-xorgproto-include	xorg
-./usr/X11R7/include/GL/glu_mangle.h			xcomp-xorgproto-include	xorg
+./usr/X11R7/include/GL/glu_mangle.h			xcomp-obsolete	obsolete
 ./usr/X11R7/include/GL/glut.h				xcomp-obsolete	obsolete
 ./usr/X11R7/include/GL/glutf90.h			xcomp-obsolete	obsolete
 ./usr/X11R7/include/GL/glx.h				xcomp-xorgproto-include	xorg
