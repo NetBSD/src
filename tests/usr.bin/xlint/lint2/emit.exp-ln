@@ -1,7 +1,7 @@
-# $NetBSD: emit.exp-ln,v 1.1 2021/08/24 21:30:52 rillig Exp $
+# $NetBSD: emit.exp-ln,v 1.2 2021/08/24 23:38:51 rillig Exp $
 
 S llib-lemit.ln
-0s llib-lemit.ln
+0 s llib-lemit.ln
 
 # Normally, it does not matter in which filename a particular symbol is
 # defined. Only in cases where a file defines an anonymous tag type (struct,

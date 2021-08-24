@@ -1,25 +1,25 @@
-# $NetBSD: msg_001.ln,v 1.3 2021/08/07 19:07:03 rillig Exp $
+# $NetBSD: msg_001.ln,v 1.4 2021/08/24 23:38:51 rillig Exp $
 #
 # Test data for message 1 of lint2:
 #	%s defined( %s ), but never used
 #
 
-0smsg_001.c
-Smsg_001.c
+0 s msg_001.c
+S msg_001.c
 
-3c0.3p1i16used_not_definedf2IDI
-2d0.2do16defined_not_usedf0I
+3 c 0.3 p1 i 16used_not_defined f2 I D I
+2 d 0.2 d o 16defined_not_used f0 I
 
 # The function 'main' always counts as used.
 # int main(void) {}
-10d0.10d4mainF0I
+10 d 0.10 d 4main F0 I
 # extern main() {}
-12d0.12e4mainFI
+12 d 0.12 e 4main F I
 
 # If a function is declared once in old style and once with prototype,
 # the prototype definition is preferred; see chkname.
 #
 # extern merge_old_style_and_prototype();
-20d0.20e29merge_old_style_and_prototypeFI
+20 d 0.20 e 29merge_old_style_and_prototype F I
 # extern int merge_old_style_and_prototype(char *);
-21d0.21e29merge_old_style_and_prototypeF1PCI
+21 d 0.21 e 29merge_old_style_and_prototype F1 PCI
