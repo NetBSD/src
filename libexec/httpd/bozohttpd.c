@@ -1,4 +1,4 @@
-/*	$NetBSD: bozohttpd.c,v 1.133 2021/08/21 11:55:24 andvar Exp $	*/
+/*	$NetBSD: bozohttpd.c,v 1.134 2021/08/24 05:29:27 mrg Exp $	*/
 
 /*	$eterna: bozohttpd.c,v 1.178 2011/11/18 09:21:15 mrg Exp $	*/
 
@@ -241,7 +241,7 @@ bozo_set_pref(bozohttpd_t *httpd, bozoprefs_t *bozoprefs,
 }
 
 static void
-bozo_clear_prefs(bozohttpd_t *httpd, bozoprefs_t *prefs)
+bozo_clear_prefs(bozoprefs_t *prefs)
 {
 	size_t	i;
 
@@ -2722,7 +2722,7 @@ bozo_setup(bozohttpd_t *httpd, bozoprefs_t *prefs, const char *vhost,
 void
 bozo_cleanup(bozohttpd_t *httpd, bozoprefs_t *prefs)
 {
-	bozo_clear_prefs(httpd, prefs);
+	bozo_clear_prefs(prefs);
 
 	free(httpd->virthostname);
 	free(httpd->errorbuf);
