@@ -1,4 +1,4 @@
-/*	$NetBSD: bozohttpd.c,v 1.134 2021/08/24 05:29:27 mrg Exp $	*/
+/*	$NetBSD: bozohttpd.c,v 1.135 2021/08/24 05:39:39 mrg Exp $	*/
 
 /*	$eterna: bozohttpd.c,v 1.178 2011/11/18 09:21:15 mrg Exp $	*/
 
@@ -148,7 +148,7 @@
 #include "bozohttpd.h"
 
 #ifndef SSL_TIMEOUT
-#define	SSL_TIMEOUT		"30"	/* wait for 30 seconds for ssl handshake  */
+#define	SSL_TIMEOUT		"30"	/* ssl handshake: 30 seconds timeout */
 #endif
 #ifndef INITIAL_TIMEOUT
 #define	INITIAL_TIMEOUT		"30"	/* wait for 30 seconds initially */
@@ -670,23 +670,14 @@ bozo_read_request(bozohttpd_t *httpd)
 	 * Override the bound port from the request value, so it works even
 	 * if passed through a proxy that doesn't rewrite the port.
 	 */
+	port = NULL;
 	if (httpd->bindport) {
 		if (strcmp(httpd->bindport, BOZO_HTTP_PORT) != 0)
 			port = httpd->bindport;
-		else
-			port = NULL;
-	} else {
-		if (getsockname(0, (struct sockaddr *)(void *)&ss, &slen) < 0)
-			port = NULL;
-		else {
-			if (getnameinfo((struct sockaddr *)(void *)&ss, slen,
-					NULL, 0, bufport, sizeof bufport,
-					NI_NUMERICSERV) == 0)
-				port = bufport;
-			else
-				port = NULL;
-		}
-	}
+	} else if (getsockname(0, (struct sockaddr *)(void *)&ss, &slen) == 0 &&
+		   getnameinfo((struct sockaddr *)(void *)&ss, slen, NULL, 0,
+			       bufport, sizeof bufport, NI_NUMERICSERV) == 0)
+		port = bufport;
 	if (port != NULL)
 		request->hr_serverport = bozostrdup(httpd, request, port);
 
