@@ -1,4 +1,4 @@
-# $NetBSD: t_lint2.sh,v 1.5 2021/08/08 16:35:15 rillig Exp $
+# $NetBSD: t_lint2.sh,v 1.6 2021/08/24 21:30:52 rillig Exp $
 #
 # Copyright (c) 2021 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -46,8 +46,40 @@ std_body()
 	    "$lint2" -h -p -x "$1.ln"
 }
 
+std_emit_body()
+{
+	# shellcheck disable=SC2155
+	local srcdir="$(atf_get_srcdir)"
+
+	# remove comments and whitespace from the .ln files
+	sed -e '/^#/d' -e '/^$/d' -e 's,#.*,,' -e 's,[[:space:]],,g' \
+	    < "$srcdir/$1.ln" \
+	    > "$1.ln"
+	sed -e '/^#/d' -e '/^$/d' -e 's,#.*,,' -e 's,[[:space:]],,g' \
+	    < "$srcdir/$1.exp-ln" \
+	    > "$1.exp-ln"
+
+	atf_check \
+	    "$lint2" -h -p -x -C "$1" "$1.ln"
+
+	atf_check -o "file:$1.exp-ln" \
+	    cat "llib-l$1.ln"
+}
+
+emit_body()
+{
+	std_emit_body 'emit'
+}
+
+emit_lp64_body()
+{
+	std_emit_body 'emit_lp64'
+}
+
 atf_init_test_cases()
 {
+	local i
+
 	# shellcheck disable=SC2013
 	for i in $(cd "$(atf_get_srcdir)" && echo *.ln); do
 		i=${i%.ln}
@@ -60,8 +92,10 @@ atf_init_test_cases()
 			esac
 		esac
 
-		eval "${i}_head() { std_head; }"
-		eval "${i}_body() { std_body '$i'; }"
+		type "${i}_head" 1>/dev/null 2>&1 \
+		|| eval "${i}_head() { std_head; }"
+		type "${i}_body" 1>/dev/null 2>&1 \
+		|| eval "${i}_body() { std_body '$i'; }"
 		atf_add_test_case "$i"
 	done
 }

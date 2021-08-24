@@ -1,0 +1,18 @@
+# $NetBSD: emit.exp-ln,v 1.1 2021/08/24 21:30:52 rillig Exp $
+
+S llib-lemit.ln
+0s llib-lemit.ln
+
+# Normally, it does not matter in which filename a particular symbol is
+# defined. Only in cases where a file defines an anonymous tag type (struct,
+# union, enum), its name is included in the resulting library.  In this
+# particular case, it would not be necessary though since none of the exported
+# symbols actually refers to one of these anonymous types.
+1s emit.c
+2s expr_promote.c
+
+# from emit.c
+0 d 0.0 t u 11defined_int I
+0 d 0.0 d u 14cover_outqchar F0 V
+# from expr_promote.c
+0 d 0.0 d u 6caller F1 PsT116arithmetic_types V

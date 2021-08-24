@@ -1,0 +1,41 @@
+# $NetBSD: emit.ln,v 1.1 2021/08/24 21:30:52 rillig Exp $
+#
+# Test emitting a lint library file.
+
+# Extracted from ../lint1/emit.exp-ln.
+0s emit.c
+S emit.c
+
+# Global variables that are declared using 'extern' are not part of a
+# library's interface, therefore they are omitted from the output.
+101 d 0.101 e 12extern__Bool B
+
+# Global variables that are defined, not only declared, are part of a
+# library's interface.
+106 d 0.106 t 11defined_int I
+
+# Referring to an anonymous tagged type forces the source file to be listed as
+# part of the library.  If it weren't listed, the diagnostics from lint2 were
+# not able to refer to the location where this type has been defined.
+97 d 0.97 e 21extern_anonymous_enum eT395.0.0
+
+# Function declarations, as opposed to function definitions, are not part of a
+# library's interface, therefore they are omitted from the output.
+121 d 0.121 e 30return_void_unknown_parameters F V
+122 d 0.122 e 38return_implicit_int_unknown_parameters F I
+125 d 0.125 e 32extern_return_void_no_parameters F 0 V
+
+# Function calls are not part of a library's interface, therefore they are
+# omitted from the output.
+161 c 0.161 s2 "%" i 9my_printf f2 PcC PC V
+
+# Function definitions are copied to the output.
+159 d 0.159 d 14cover_outqchar F0 V
+
+# Taken from ../lint1/expr_promote.exp-ln.
+0s expr_promote.c
+S expr_promote.c
+
+10 d 0.10 e 4sink F2 PcC E V
+58 c 0.58 i 4sink f20 PcC B I I I I I I uI L uL Q uQ D D lD sX X lX eT331.0.0 V
+37 d 0.37 d 6caller F1 PsT116arithmetic_types V

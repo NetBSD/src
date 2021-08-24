@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.6 2021/08/08 16:35:15 rillig Exp $
+# $NetBSD: Makefile,v 1.7 2021/08/24 21:30:52 rillig Exp $
 
 NOMAN=		yes
 
@@ -10,6 +10,8 @@ TESTS_SH=	t_lint2
 
 FILESDIR=	${TESTSDIR}
 
+TESTS+=		emit
+TESTS+=		emit_lp64
 .for msg in \
     000 001 002 003 004 005 006 007 008 009 \
     010 011 012 013 014 015 016 017 018
@@ -19,7 +21,9 @@ TESTS+=		read
 TESTS+=		read_lp64
 TESTS+=		read_printf
 
-FILES+=		${TESTS:=.ln} ${TESTS:=.exp}
+FILES+=		${TESTS:=.ln}
+FILES+=		${TESTS:Nemit*:=.exp}
+FILES+=		${TESTS:Memit*:=.exp-ln}
 
 # Note: only works for adding tests.
 # To remove a test, the $$mi file must be edited manually.
