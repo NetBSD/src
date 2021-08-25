@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_132.c,v 1.5 2021/04/06 21:17:28 rillig Exp $	*/
+/*	$NetBSD: msg_132.c,v 1.6 2021/08/25 22:04:52 rillig Exp $	*/
 # 3 "msg_132.c"
 
 // Test for message: conversion from '%s' to '%s' may lose accuracy [132]
@@ -73,4 +73,15 @@ to_bool(long a, long b)
 {
 	/* seen in fp_lib.h, function wideRightShiftWithSticky */
 	return a | b;
+}
+
+/* ARGSUSED */
+const char *
+cover_build_plus_minus(const char *arr, double idx)
+{
+	/* expect+3: error: operands of '+' have incompatible types (pointer != double) [107] */
+	/* expect+2: warning: function 'cover_build_plus_minus' expects to return value [214] */
+	if (idx > 0.0)
+		return arr + idx;
+	return arr + (unsigned int)idx;
 }
