@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe.c,v 1.288 2021/08/20 20:25:28 andvar Exp $ */
+/* $NetBSD: ixgbe.c,v 1.289 2021/08/25 09:06:02 msaitoh Exp $ */
 
 /******************************************************************************
 
@@ -64,13 +64,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixgbe.c,v 1.288 2021/08/20 20:25:28 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixgbe.c,v 1.289 2021/08/25 09:06:02 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
 #include "opt_inet6.h"
 #include "opt_net_mpsafe.h"
-#include "opt_ixgbe.h"
 #endif
 
 #include "ixgbe.h"
@@ -990,8 +989,6 @@ ixgbe_attach(device_t parent, device_t dev, void *aux)
 
 	/* Set default high limit of copying mbuf in rxeof */
 	adapter->rx_copy_len = IXGBE_RX_COPY_LEN_MAX;
-
-	adapter->num_jcl = adapter->num_rx_desc * IXGBE_JCLNUM_MULTI;
 
 	/* Allocate our TX/RX Queues */
 	if (ixgbe_allocate_queues(adapter)) {
@@ -3419,13 +3416,6 @@ ixgbe_add_device_sysctls(struct adapter *adapter)
 		aprint_error_dev(dev, "could not create sysctl\n");
 
 	if (sysctl_createv(log, 0, &rnode, &cnode,
-	    CTLFLAG_READONLY, CTLTYPE_INT, "num_jcl_per_queue",
-	    SYSCTL_DESCR("Number of jumbo buffers per queue"),
-	    NULL, 0, &adapter->num_jcl, 0, CTL_CREATE,
-	    CTL_EOL) != 0)
-		aprint_error_dev(dev, "could not create sysctl\n");
-
-	if (sysctl_createv(log, 0, &rnode, &cnode,
 	    CTLFLAG_READONLY, CTLTYPE_INT,
 	    "num_queues", SYSCTL_DESCR("Number of queues"),
 	    NULL, 0, &adapter->num_queues, 0, CTL_CREATE, CTL_EOL) != 0)
@@ -4076,11 +4066,8 @@ ixgbe_init_locked(struct adapter *adapter)
 	/* Setup Multicast table */
 	ixgbe_set_rxfilter(adapter);
 
-	/* Determine the correct mbuf pool, based on frame size */
-	if (adapter->max_frame_size <= MCLBYTES)
-		adapter->rx_mbuf_sz = MCLBYTES;
-	else
-		adapter->rx_mbuf_sz = MJUMPAGESIZE;
+	/* Use fixed buffer size, even for jumbo frames */
+	adapter->rx_mbuf_sz = MCLBYTES;
 
 	/* Prepare receive descriptors and buffers */
 	error = ixgbe_setup_receive_structures(adapter);
