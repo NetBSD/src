@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe.h,v 1.77 2021/08/19 22:17:56 msaitoh Exp $ */
+/* $NetBSD: ixgbe.h,v 1.78 2021/08/25 09:06:02 msaitoh Exp $ */
 
 /******************************************************************************
   SPDX-License-Identifier: BSD-3-Clause
@@ -416,9 +416,6 @@ struct rx_ring {
 #endif
 	struct ixgbe_rx_buf	*rx_buffers;
 	ixgbe_dma_tag_t		*ptag;
-	u16			last_rx_mbuf_sz;
-	u32			last_num_rx_desc;
-	ixgbe_extmem_head_t	jcl_head;
 
 	u64			bytes; /* Used for AIM calc */
 	u64			packets;
@@ -566,7 +563,6 @@ struct adapter {
 	u32			num_rx_desc;
 	u32			rx_process_limit;
 	u32			rx_copy_len;
-	int			num_jcl;
 
 	/* Multicast array memory */
 	struct ixgbe_mc_addr	*mta;
@@ -778,9 +774,6 @@ bool ixgbe_rxeof(struct ix_queue *);
 
 /* For NetBSD */
 const struct sysctlnode *ixgbe_sysctl_instance(struct adapter *);
-void ixgbe_jcl_reinit(struct adapter *, bus_dma_tag_t, struct rx_ring *,
-    int, size_t);
-void ixgbe_jcl_destroy(struct adapter *,  struct rx_ring *);
 
 #include "ixgbe_bypass.h"
 #include "ixgbe_fdir.h"
