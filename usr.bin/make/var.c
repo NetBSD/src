@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.947 2021/08/14 13:11:33 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.948 2021/08/25 22:14:38 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -140,7 +140,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.947 2021/08/14 13:11:33 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.948 2021/08/25 22:14:38 rillig Exp $");
 
 /*
  * Variables are defined using one of the VAR=value assignments.  Their
@@ -1605,7 +1605,8 @@ RegexReplace(const char *replace, SepBuf *buf, const char *wp,
 
 		if (*rp == '&') {
 			SepBuf_AddBytesBetween(buf,
-			    wp + m[0].rm_so, wp + m[0].rm_eo);
+			    wp + (size_t)m[0].rm_so,
+			    wp + (size_t)m[0].rm_eo);
 			continue;
 		}
 
@@ -1626,7 +1627,8 @@ RegexReplace(const char *replace, SepBuf *buf, const char *wp,
 			}
 		} else {
 			SepBuf_AddBytesBetween(buf,
-			    wp + m[n].rm_so, wp + m[n].rm_eo);
+			    wp + (size_t)m[n].rm_so,
+			    wp + (size_t)m[n].rm_eo);
 		}
 	}
 }
@@ -1673,7 +1675,7 @@ ok:
 
 	RegexReplace(args->replace, buf, wp, m, args->nsub);
 
-	wp += m[0].rm_eo;
+	wp += (size_t)m[0].rm_eo;
 	if (args->pflags.subGlobal) {
 		flags |= REG_NOTBOL;
 		if (m[0].rm_so == 0 && m[0].rm_eo == 0) {

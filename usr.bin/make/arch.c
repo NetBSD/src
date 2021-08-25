@@ -1,4 +1,4 @@
-/*	$NetBSD: arch.c,v 1.202 2021/08/14 14:43:30 rillig Exp $	*/
+/*	$NetBSD: arch.c,v 1.203 2021/08/25 22:14:38 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -126,7 +126,7 @@
 #include "config.h"
 
 /*	"@(#)arch.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: arch.c,v 1.202 2021/08/14 14:43:30 rillig Exp $");
+MAKE_RCSID("$NetBSD: arch.c,v 1.203 2021/08/25 22:14:38 rillig Exp $");
 
 typedef struct List ArchList;
 typedef struct ListNode ArchListNode;
@@ -552,14 +552,14 @@ ArchStatMember(const char *archive, const char *member, bool addToCache)
 		if (strncmp(memName, AR_EFMT1, sizeof AR_EFMT1 - 1) == 0 &&
 		    ch_isdigit(memName[sizeof AR_EFMT1 - 1])) {
 
-			int elen = atoi(memName + sizeof AR_EFMT1 - 1);
+			size_t elen = atoi(memName + sizeof AR_EFMT1 - 1);
 
-			if ((unsigned int)elen > MAXPATHLEN)
+			if (elen > MAXPATHLEN)
 				goto badarch;
-			if (fread(memName, (size_t)elen, 1, arch) != 1)
+			if (fread(memName, elen, 1, arch) != 1)
 				goto badarch;
 			memName[elen] = '\0';
-			if (fseek(arch, -elen, SEEK_CUR) != 0)
+			if (fseek(arch, -(long)elen, SEEK_CUR) != 0)
 				goto badarch;
 			if (DEBUG(ARCH) || DEBUG(MAKE))
 				debug_printf(
@@ -791,14 +791,15 @@ ArchFindMember(const char *archive, const char *member, struct ar_hdr *out_arh,
 		if (strncmp(out_arh->ar_name, AR_EFMT1, sizeof AR_EFMT1 - 1) ==
 		    0 &&
 		    (ch_isdigit(out_arh->ar_name[sizeof AR_EFMT1 - 1]))) {
-			int elen = atoi(&out_arh->ar_name[sizeof AR_EFMT1 - 1]);
+			size_t elen = atoi(
+			    &out_arh->ar_name[sizeof AR_EFMT1 - 1]);
 			char ename[MAXPATHLEN + 1];
 
-			if ((unsigned int)elen > MAXPATHLEN) {
+			if (elen > MAXPATHLEN) {
 				fclose(arch);
 				return NULL;
 			}
-			if (fread(ename, (size_t)elen, 1, arch) != 1) {
+			if (fread(ename, elen, 1, arch) != 1) {
 				fclose(arch);
 				return NULL;
 			}
@@ -811,14 +812,14 @@ ArchFindMember(const char *archive, const char *member, struct ar_hdr *out_arh,
 			if (strncmp(ename, member, len) == 0) {
 				/* Found as extended name */
 				if (fseek(arch,
-					  -(long)sizeof(struct ar_hdr) - elen,
-					  SEEK_CUR) != 0) {
+				    -(long)(sizeof(struct ar_hdr) - elen),
+				    SEEK_CUR) != 0) {
 					fclose(arch);
 					return NULL;
 				}
 				return arch;
 			}
-			if (fseek(arch, -elen, SEEK_CUR) != 0) {
+			if (fseek(arch, -(long)elen, SEEK_CUR) != 0) {
 				fclose(arch);
 				return NULL;
 			}
@@ -834,7 +835,7 @@ ArchFindMember(const char *archive, const char *member, struct ar_hdr *out_arh,
 		 */
 		out_arh->ar_size[sizeof out_arh->ar_size - 1] = '\0';
 		size = (int)strtol(out_arh->ar_size, NULL, 10);
-		if (fseek(arch, (size + 1) & ~1, SEEK_CUR) != 0) {
+		if (fseek(arch, (size + 1) & ~1L, SEEK_CUR) != 0) {
 			fclose(arch);
 			return NULL;
 		}
