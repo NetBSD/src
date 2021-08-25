@@ -1,4 +1,4 @@
-/*	$NetBSD: cksum.c,v 1.49 2021/03/18 18:12:35 cheusov Exp $	*/
+/*	$NetBSD: cksum.c,v 1.50 2021/08/25 22:59:57 rillig Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -81,7 +81,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993\
 #if 0
 static char sccsid[] = "@(#)cksum.c	8.2 (Berkeley) 4/28/95";
 #endif
-__RCSID("$NetBSD: cksum.c,v 1.49 2021/03/18 18:12:35 cheusov Exp $");
+__RCSID("$NetBSD: cksum.c,v 1.50 2021/08/25 22:59:57 rillig Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -383,7 +383,7 @@ main(int argc, char **argv)
 						rval = 1;
 						continue;
 					}
-					while (isspace((int)*++p_filename))
+					while (isspace((unsigned char)*++p_filename))
 						nspaces++;
 					l_filename = strlen(p_filename);
 					l_cksum = p_filename - buf - nspaces;
