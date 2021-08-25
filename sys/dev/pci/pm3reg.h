@@ -1,3 +1,5 @@
+/* $NetBSD: pm3reg.h,v 1.3 2021/08/25 21:50:29 andvar Exp $ */
+
 /*
  * Copyright (c) 2015 Naruaki Etomi
  * All rights reserved.
