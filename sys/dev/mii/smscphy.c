@@ -1,3 +1,5 @@
+/* $NetBSD: smscphy.c,v 1.4 2021/08/25 21:50:29 andvar Exp $ */
+
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-FreeBSD
  *
@@ -24,12 +26,14 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <sys/cdefs.h>
 /* $FreeBSD: head/sys/dev/mii/smscphy.c 326255 2017-11-27 14:52:40Z pfg $ */
 
 /*
  * Driver for the SMSC LAN8710A
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: smscphy.c,v 1.4 2021/08/25 21:50:29 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
