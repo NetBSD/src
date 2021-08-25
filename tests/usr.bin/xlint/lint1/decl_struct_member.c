@@ -1,4 +1,4 @@
-/*	$NetBSD: decl_struct_member.c,v 1.10 2021/07/21 21:17:57 rillig Exp $	*/
+/*	$NetBSD: decl_struct_member.c,v 1.11 2021/08/25 22:04:52 rillig Exp $	*/
 # 3 "decl_struct_member.c"
 
 struct multi_attributes {
@@ -54,6 +54,22 @@ struct cover_notype_struct_declarators {
 struct cover_notype_struct_declarator_bit_field {
 	const a: 3, : 0, b: 4;
 	const : 0;
+};
+
+/*
+ * An array of bit-fields sounds like a strange idea since a bit-field member
+ * is not addressable, while an array needs to be addressable.  Due to this
+ * contradiction, this combination may have gone without mention in the C
+ * standards.
+ *
+ * GCC 10.3.0 complains that the bit-field has invalid type.
+ *
+ * Clang 12.0.1 complains that the bit-field has non-integral type 'unsigned
+ * int [8]'.
+ */
+struct array_of_bit_fields {
+	/* expect+1: warning: illegal bit-field type 'array[8] of unsigned int' [35] */
+	unsigned int bits[8]: 1;
 };
 
 /*

@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.106 2021/08/22 20:56:51 rillig Exp $
+# $NetBSD: Makefile,v 1.107 2021/08/25 22:04:52 rillig Exp $
 
 NOMAN=		# defined
 MAX_MESSAGE=	346		# see lint1/err.c
@@ -208,6 +208,8 @@ FILES+=		msg_001_c90.c
 FILES+=		msg_001_c90.exp
 FILES+=		msg_000_c90.c
 FILES+=		msg_000_c90.exp
+FILES+=		msg_132_ilp32.c
+FILES+=		msg_132_ilp32.exp
 FILES+=		msg_230_uchar.c
 FILES+=		msg_230_uchar.exp
 FILES+=		msg_259_ilp32.c
