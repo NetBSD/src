@@ -1,4 +1,4 @@
-/*	$NetBSD: sem.c,v 1.85 2021/04/13 03:09:42 mrg Exp $	*/
+/*	$NetBSD: sem.c,v 1.86 2021/08/25 23:07:34 rillig Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -45,7 +45,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: sem.c,v 1.85 2021/04/13 03:09:42 mrg Exp $");
+__RCSID("$NetBSD: sem.c,v 1.86 2021/08/25 23:07:34 rillig Exp $");
 
 #include <sys/param.h>
 #include <ctype.h>
@@ -950,7 +950,7 @@ resolve(struct nvlist **nvp, const char *name, const char *what,
 	const char *cp;
 	devmajor_t maj;
 	devminor_t min;
-	size_t i, l;
+	size_t l;
 	int unit;
 	char buf[NAMESIZE];
 
@@ -1000,7 +1000,7 @@ resolve(struct nvlist **nvp, const char *name, const char *what,
 	 * suffix, remove it if there, and split into name ("ra") and
 	 * unit (2).
 	 */
-	l = i = strlen(nv->nv_str);
+	l = strlen(nv->nv_str);
 	cp = &nv->nv_str[l];
 	if (l > 1 && *--cp >= 'a' && *cp < 'a' + maxpartitions &&
 	    isdigit((unsigned char)cp[-1])) {
