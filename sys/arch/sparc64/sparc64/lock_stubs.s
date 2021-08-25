@@ -1,4 +1,4 @@
-/*	$NetBSD: lock_stubs.s,v 1.9 2013/04/28 23:42:23 nakayama Exp $	*/
+/*	$NetBSD: lock_stubs.s,v 1.10 2021/08/25 13:28:51 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006 The NetBSD Foundation, Inc.
@@ -47,18 +47,6 @@
 #define	MB_READ	/* nothing */
 #define	MB_MEM	/* nothing */
 #endif
-
-/*
- * int _lock_cas(uintptr_t *ptr, uintptr_t old, uintptr_t new);
- */
-.align	32
-ENTRY(_lock_cas)
-	CASPTR	[%o0], %o1, %o2			! compare-and-swap
-	MB_MEM
-	xor	%o1, %o2, %o2			! expected == actual?
-	clr	%o0
-	retl
-	 movrz	%o2, 1, %o0
 
 #if !defined(LOCKDEBUG)
 
