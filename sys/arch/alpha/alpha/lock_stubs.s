@@ -1,4 +1,4 @@
-/*	$NetBSD: lock_stubs.s,v 1.9 2021/07/14 02:18:10 thorpej Exp $	*/
+/*	$NetBSD: lock_stubs.s,v 1.10 2021/08/25 13:28:51 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2021 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
 
 #include <machine/asm.h>
 
-__KERNEL_RCSID(0, "$NetBSD: lock_stubs.s,v 1.9 2021/07/14 02:18:10 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lock_stubs.s,v 1.10 2021/08/25 13:28:51 thorpej Exp $");
 
 #include "assym.h"
 
@@ -47,27 +47,6 @@ __KERNEL_RCSID(0, "$NetBSD: lock_stubs.s,v 1.9 2021/07/14 02:18:10 thorpej Exp $
 #else
 #define	MB(label)	/* nothing */
 #endif
-
-/*
- * int	_lock_cas(uintptr_t *ptr, uintptr_t old, uintptr_t new)
- */
-LEAF(_lock_cas, 3)
-1:
-	mov	a2, v0
-	ldq_l	t1, 0(a0)
-	cmpeq	t1, a1, t1
-	beq	t1, 2f
-	stq_c	v0, 0(a0)
-	beq	v0, 3f
-	MB(.L__lock_cas_mb_1)
-	RET
-2:
-	mov	zero, v0
-	MB(.L__lock_cas_mb_2)
-	RET
-3:
-	br	1b
-	END(_lock_cas)
 
 #if !defined(LOCKDEBUG)
 
@@ -396,8 +375,6 @@ LEAF(rw_exit, 1)
 	.section ".rodata"
 	.globl	lock_stub_patch_table
 lock_stub_patch_table:
-	.quad	.L__lock_cas_mb_1
-	.quad	.L__lock_cas_mb_2
 #if !defined(LOCKDEBUG)
 	.quad	.L_mutex_enter_mb_1
 	.quad	.L_mutex_exit_mb_1
