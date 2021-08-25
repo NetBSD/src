@@ -1,4 +1,4 @@
-/*	$NetBSD: lexi.c,v 1.41 2021/03/14 00:22:16 rillig Exp $	*/
+/*	$NetBSD: lexi.c,v 1.42 2021/08/25 22:26:30 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -46,7 +46,7 @@ static char sccsid[] = "@(#)lexi.c	8.1 (Berkeley) 6/6/93";
 #include <sys/cdefs.h>
 #ifndef lint
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: lexi.c,v 1.41 2021/03/14 00:22:16 rillig Exp $");
+__RCSID("$NetBSD: lexi.c,v 1.42 2021/08/25 22:26:30 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/lexi.c 337862 2018-08-15 18:19:45Z pstef $");
 #endif
@@ -377,7 +377,7 @@ lexi(struct parser_state *state)
 	    /* ... so maybe a type_t or a typedef */
 	    if ((opt.auto_typedefs && ((u = strrchr(s_token, '_')) != NULL) &&
 	        strcmp(u, "_t") == 0) || (typename_top >= 0 &&
-		  bsearch(s_token, typenames, typename_top + 1,
+		  bsearch(s_token, typenames, (size_t)typename_top + 1,
 		    sizeof typenames[0], compare_string_array))) {
 		state->keyword = rw_type;
 		state->last_u_d = true;
