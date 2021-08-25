@@ -1,4 +1,4 @@
-/*	$NetBSD: base64.c,v 1.3 2020/08/14 13:40:25 christos Exp $	*/
+/*	$NetBSD: base64.c,v 1.4 2021/08/25 22:43:20 rillig Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: base64.c,v 1.3 2020/08/14 13:40:25 christos Exp $");
+__RCSID("$NetBSD: base64.c,v 1.4 2021/08/25 22:43:20 rillig Exp $");
 
 #include <ctype.h>
 #include <errno.h>
@@ -132,7 +132,7 @@ b64_decode(FILE *fout, FILE *fin, bool ignore)
 {
 	int state, c;
 	uint8_t b, out;
-	char *pos;
+	const char *pos;
 
 	state = 0;
 	out = 0;
