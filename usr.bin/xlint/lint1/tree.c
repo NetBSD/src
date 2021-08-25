@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.351 2021/08/23 17:03:23 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.352 2021/08/25 22:00:26 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.351 2021/08/23 17:03:23 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.352 2021/08/25 22:00:26 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -2769,8 +2769,6 @@ build_plus_minus(op_t op, tnode_t *ln, tnode_t *rn)
 	}
 
 	if (ln->tn_type->t_tspec == PTR && rn->tn_type->t_tspec != PTR) {
-
-		/* XXX: this assertion should be easy to trigger */
 		lint_assert(is_integer(rn->tn_type->t_tspec));
 
 		check_ctype_macro_invocation(ln, rn);
@@ -2946,18 +2944,19 @@ build_assignment(op_t op, tnode_t *ln, tnode_t *rn)
 }
 
 /*
- * Get length of type tp->t_subt.
+ * Get length of type tp->t_subt, as a constant expression of type ptrdiff_t
+ * as seen from the target platform.
  */
 static tnode_t *
 plength(type_t *tp)
 {
-	int	elem, elsz;
+	int elem, elsz_in_bits;
 
 	lint_assert(tp->t_tspec == PTR);
 	tp = tp->t_subt;
 
 	elem = 1;
-	elsz = 0;
+	elsz_in_bits = 0;
 
 	while (tp->t_tspec == ARRAY) {
 		elem *= tp->t_dim;
@@ -2975,7 +2974,7 @@ plength(type_t *tp)
 		break;
 	case STRUCT:
 	case UNION:
-		if ((elsz = tp->t_str->sou_size_in_bits) == 0)
+		if ((elsz_in_bits = tp->t_str->sou_size_in_bits) == 0)
 			/* cannot do pointer arithmetic on operand of ... */
 			error(136);
 		break;
@@ -2986,25 +2985,25 @@ plength(type_t *tp)
 		}
 		/* FALLTHROUGH */
 	default:
-		if ((elsz = size_in_bits(tp->t_tspec)) == 0) {
+		if ((elsz_in_bits = size_in_bits(tp->t_tspec)) == 0) {
 			/* cannot do pointer arithmetic on operand of ... */
 			error(136);
 		} else {
-			lint_assert(elsz != -1);
+			lint_assert(elsz_in_bits != -1);
 		}
 		break;
 	}
 
-	if (elem == 0 && elsz != 0) {
+	if (elem == 0 && elsz_in_bits != 0) {
 		/* cannot do pointer arithmetic on operand of unknown size */
 		error(136);
 	}
 
-	if (elsz == 0)
-		elsz = CHAR_SIZE;
+	if (elsz_in_bits == 0)
+		elsz_in_bits = CHAR_SIZE;
 
 	return build_integer_constant(PTRDIFF_TSPEC,
-	    (int64_t)(elem * elsz / CHAR_SIZE));
+	    (int64_t)(elem * elsz_in_bits / CHAR_SIZE));
 }
 
 /*
