@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.c,v 1.60 2021/03/26 22:02:00 rillig Exp $	*/
+/*	$NetBSD: indent.c,v 1.61 2021/08/25 22:26:30 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -46,7 +46,7 @@ static char sccsid[] = "@(#)indent.c	5.17 (Berkeley) 6/7/93";
 #include <sys/cdefs.h>
 #ifndef lint
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: indent.c,v 1.60 2021/03/26 22:02:00 rillig Exp $");
+__RCSID("$NetBSD: indent.c,v 1.61 2021/08/25 22:26:30 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/indent.c 340138 2018-11-04 19:24:49Z oshogbo $");
 #endif
@@ -1197,7 +1197,7 @@ process_preprocessing(void)
 	    }
 	    if (sc_end - save_com + com_end - com_start > sc_size)
 		errx(1, "input too long");
-	    memmove(sc_end, s_lab + com_start, com_end - com_start);
+	    memmove(sc_end, s_lab + com_start, (size_t)(com_end - com_start));
 	    sc_end += com_end - com_start;
 	    e_lab = s_lab + com_start;
 	    while (e_lab > s_lab && (e_lab[-1] == ' ' || e_lab[-1] == '\t'))
@@ -1235,22 +1235,12 @@ process_preprocessing(void)
 	else
 	    ifdef_level--;
     } else {
-	static const struct directives {
-	    int size;
-	    const char *string;
-	} recognized[] = {
-		{7, "include"},
-		{6, "define"},
-		{5, "undef"},
-		{4, "line"},
-		{5, "error"},
-		{6, "pragma"}
-	};
-	int d = nitems(recognized);
-	while (--d >= 0)
-	    if (strncmp(s_lab + 1, recognized[d].string, recognized[d].size) == 0)
-		break;
-	if (d < 0) {
+	if (strncmp(s_lab + 1, "pragma", 6) != 0 &&
+	    strncmp(s_lab + 1, "error", 5) != 0 &&
+	    strncmp(s_lab + 1, "line", 4) != 0 &&
+	    strncmp(s_lab + 1, "undef", 5) != 0 &&
+	    strncmp(s_lab + 1, "define", 6) != 0 &&
+	    strncmp(s_lab + 1, "include", 7) != 0) {
 	    diag(1, "Unrecognized cpp directive");
 	    return;
 	}
@@ -1538,13 +1528,13 @@ indent_declaration(int cur_dec_ind, int tabs_to_var)
     if (tabs_to_var) {
 	int tpos;
 
-	check_size_code(cur_dec_ind / opt.tabsize);
+	check_size_code((size_t)(cur_dec_ind / opt.tabsize));
 	while ((tpos = opt.tabsize * (1 + pos / opt.tabsize)) <= cur_dec_ind) {
 	    *e_code++ = '\t';
 	    pos = tpos;
 	}
     }
-    check_size_code(cur_dec_ind - pos + 1);
+    check_size_code((size_t)(cur_dec_ind - pos + 1));
     while (pos < cur_dec_ind) {
 	*e_code++ = ' ';
 	pos++;
