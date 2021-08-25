@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_mutex.c,v 1.97 2021/04/03 14:56:14 thorpej Exp $	*/
+/*	$NetBSD: kern_mutex.c,v 1.98 2021/08/25 04:13:42 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007, 2008, 2019 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 #define	__MUTEX_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_mutex.c,v 1.97 2021/04/03 14:56:14 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_mutex.c,v 1.98 2021/08/25 04:13:42 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -213,6 +213,11 @@ do {									\
     (((owner) & MUTEX_BIT_SPIN) != 0)
 #define	MUTEX_ADAPTIVE_P(owner)		\
     (((owner) & MUTEX_BIT_SPIN) == 0)
+
+#ifndef MUTEX_CAS
+#define	MUTEX_CAS(p, o, n)		\
+	(atomic_cas_ulong((volatile unsigned long *)(p), (o), (n)) == (o))
+#endif /* MUTEX_CAS */
 
 #define	MUTEX_DEBUG_P(mtx)	(((mtx)->mtx_owner & MUTEX_BIT_NODEBUG) == 0)
 #if defined(LOCKDEBUG)

@@ -1,4 +1,4 @@
-/*	$NetBSD: mutex.h,v 1.3 2019/11/29 22:55:34 riastradh Exp $	*/
+/*	$NetBSD: mutex.h,v 1.4 2021/08/25 04:13:41 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2007 The NetBSD Foundation, Inc.
@@ -112,9 +112,6 @@ riscv_mutex_spinbit_lock_unlock(kmutex_t *__mtx)
 #define	__HAVE_SPIN_MUTEX_STUBS		1
 #endif
 #define	__HAVE_SIMPLE_MUTEXES		1
-
-#define	MUTEX_CAS(p, o, n)		\
-    (atomic_cas_ulong((volatile unsigned long *)(p), (o), (n)) == (o))
 
 #endif	/* __MUTEX_PRIVATE */
 
