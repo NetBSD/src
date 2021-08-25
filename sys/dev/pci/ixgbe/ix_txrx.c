@@ -1,4 +1,4 @@
-/* $NetBSD: ix_txrx.c,v 1.86 2021/08/19 10:18:13 msaitoh Exp $ */
+/* $NetBSD: ix_txrx.c,v 1.87 2021/08/25 09:06:02 msaitoh Exp $ */
 
 /******************************************************************************
 
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ix_txrx.c,v 1.86 2021/08/19 10:18:13 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ix_txrx.c,v 1.87 2021/08/25 09:06:02 msaitoh Exp $");
 
 #include "opt_inet.h"
 #include "opt_inet6.h"
@@ -1330,7 +1330,7 @@ ixgbe_setup_hw_rsc(struct rx_ring *rxr)
  *      be recalled to try again.
  *
  *   XXX NetBSD TODO:
- *    - The ixgbe_rxeof() function always preallocates mbuf cluster (jcl),
+ *    - The ixgbe_rxeof() function always preallocates mbuf cluster,
  *      so the ixgbe_refresh_mbufs() function can be simplified.
  *
  ************************************************************************/
@@ -1351,8 +1351,7 @@ ixgbe_refresh_mbufs(struct rx_ring *rxr, int limit)
 	while (i != limit) {
 		rxbuf = &rxr->rx_buffers[i];
 		if (rxbuf->buf == NULL) {
-			mp = ixgbe_getjcl(&rxr->jcl_head, M_NOWAIT,
-			    MT_DATA, M_PKTHDR, rxr->mbuf_sz);
+			mp = ixgbe_getcl();
 			if (mp == NULL) {
 				rxr->no_jmbuf.ev_count++;
 				goto update;
@@ -1506,17 +1505,6 @@ ixgbe_setup_receive_ring(struct rx_ring *rxr)
 	/* Free current RX buffer structs and their mbufs */
 	ixgbe_free_receive_ring(rxr);
 
-	IXGBE_RX_UNLOCK(rxr);
-	/*
-	 * Now reinitialize our supply of jumbo mbufs.  The number
-	 * or size of jumbo mbufs may have changed.
-	 * Assume all of rxr->ptag are the same.
-	 */
-	ixgbe_jcl_reinit(adapter, rxr->ptag->dt_dmat, rxr,
-	    adapter->num_jcl, adapter->rx_mbuf_sz);
-
-	IXGBE_RX_LOCK(rxr);
-
 	/* Now replenish the mbufs */
 	for (int j = 0; j != rxr->num_desc; ++j) {
 		struct mbuf *mp;
@@ -1546,8 +1534,7 @@ ixgbe_setup_receive_ring(struct rx_ring *rxr)
 #endif /* DEV_NETMAP */
 
 		rxbuf->flags = 0;
-		rxbuf->buf = ixgbe_getjcl(&rxr->jcl_head, M_NOWAIT,
-		    MT_DATA, M_PKTHDR, adapter->rx_mbuf_sz);
+		rxbuf->buf = ixgbe_getcl();
 		if (rxbuf->buf == NULL) {
 			rxr->no_jmbuf.ev_count++;
 			error = ENOBUFS;
@@ -1701,9 +1688,6 @@ ixgbe_free_receive_buffers(struct rx_ring *rxr)
 				rxbuf->pmap = NULL;
 			}
 		}
-
-		/* NetBSD specific. See ixgbe_netbsd.c */
-		ixgbe_jcl_destroy(adapter, rxr);
 
 		if (rxr->rx_buffers != NULL) {
 			free(rxr->rx_buffers, M_DEVBUF);
@@ -1893,8 +1877,7 @@ ixgbe_rxeof(struct ix_queue *que)
 
 		/* pre-alloc new mbuf */
 		if (!discard_multidesc)
-			newmp = ixgbe_getjcl(&rxr->jcl_head, M_NOWAIT, MT_DATA,
-			    M_PKTHDR, rxr->mbuf_sz);
+			newmp = ixgbe_getcl();
 		else
 			newmp = NULL;
 		if (newmp == NULL) {
