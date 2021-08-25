@@ -1,4 +1,4 @@
-.\"	$NetBSD: ixv.4,v 1.7 2021/03/09 12:02:24 wiz Exp $
+.\"	$NetBSD: ixv.4,v 1.8 2021/08/25 09:06:02 msaitoh Exp $
 .\"
 .\" Copyright (c) 2018 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd March 9, 2021
+.Dd August 25, 2021
 .Dt IXV 4
 .Os
 .Sh NAME
@@ -43,26 +43,6 @@ newer chips support.
 It can be used on a
 .Nx
 guest that the host supports SR-IOV.
-.Sh OPTIONS
-The
-.Nm
-driver doesn't use the common
-.Xr MCLGET 9
-interface and use the driver specific cluster allocation mechanism.
-If it's exhausted, the
-.Xr evcnt 9
-counter "ixgX qY Rx no jumbo mbuf" is incremented.
-If this is observed,
-the number can be changed by the following config parameter:
-.Bl -tag -width IXGBE_JCLNUM_MULTI -offset 3n
-.It Dv IXGBE_JCLNUM_MULTI
-The number of RX jumbo buffers (clusters) per queue is calculated by
-.Dv IXGBE_JCLNUM_MULTI
-* (number of rx descriptors).
-The total number of clusters per queue is available with the
-.Li hw.ixgN.num_jcl_per_queue
-.Xr sysctl 7 .
-.El
 .Sh SEE ALSO
 .Xr arp 4 ,
 .Xr ixg 4 ,
