@@ -1,7 +1,8 @@
-/*	$NetBSD: msg_189.c,v 1.4 2021/04/09 20:12:01 rillig Exp $	*/
+/*	$NetBSD: msg_189.c,v 1.5 2021/08/26 19:23:25 rillig Exp $	*/
 # 3 "msg_189.c"
 
 /* Test for message: assignment of struct/union illegal in traditional C [189] */
+/* This message is not used. */
 
 /* lint1-flags: -tw */
 

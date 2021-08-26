@@ -1,1 +1,1 @@
-msg_015.c(6): error: syntax error ':' [249]
+msg_015.c(9): error: function returns illegal type [15]

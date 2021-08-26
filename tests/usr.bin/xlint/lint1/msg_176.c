@@ -1,7 +1,8 @@
-/*	$NetBSD: msg_176.c,v 1.4 2021/04/05 01:35:34 rillig Exp $	*/
+/*	$NetBSD: msg_176.c,v 1.5 2021/08/26 19:23:25 rillig Exp $	*/
 # 3 "msg_176.c"
 
 // Test for message: invalid initializer type %s [176]
+/* This message is not used. */
 
 /*
  * Before init.c 1.161 from 2021-03-28, lint wrongly complained about
