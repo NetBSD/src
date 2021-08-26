@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe.h,v 1.78 2021/08/25 09:06:02 msaitoh Exp $ */
+/* $NetBSD: ixgbe.h,v 1.79 2021/08/26 09:03:47 msaitoh Exp $ */
 
 /******************************************************************************
   SPDX-License-Identifier: BSD-3-Clause
@@ -425,7 +425,7 @@ struct rx_ring {
 	struct evcnt		rx_packets;
 	struct evcnt		rx_bytes;
 	struct evcnt		rx_discarded;
-	struct evcnt		no_jmbuf;
+	struct evcnt		no_mbuf;
 	u64			rsc_num;
 
 	/* Flow Director */
