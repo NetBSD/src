@@ -1,4 +1,4 @@
-/* $NetBSD: ixv.c,v 1.165 2021/08/25 09:06:02 msaitoh Exp $ */
+/* $NetBSD: ixv.c,v 1.166 2021/08/26 09:03:47 msaitoh Exp $ */
 
 /******************************************************************************
 
@@ -35,7 +35,7 @@
 /*$FreeBSD: head/sys/dev/ixgbe/if_ixv.c 331224 2018-03-19 20:55:05Z erj $*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixv.c,v 1.165 2021/08/25 09:06:02 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixv.c,v 1.166 2021/08/26 09:03:47 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -657,7 +657,7 @@ ixv_detach(device_t dev, int flags)
 		evcnt_detach(&rxr->rx_packets);
 		evcnt_detach(&rxr->rx_bytes);
 		evcnt_detach(&rxr->rx_copies);
-		evcnt_detach(&rxr->no_jmbuf);
+		evcnt_detach(&rxr->no_mbuf);
 		evcnt_detach(&rxr->rx_discarded);
 	}
 	evcnt_detach(&stats->ipcs);
@@ -2742,8 +2742,8 @@ ixv_add_stats_sysctls(struct adapter *adapter)
 		    "Queue Bytes Received");
 		evcnt_attach_dynamic(&rxr->rx_copies, EVCNT_TYPE_MISC,
 		    NULL, adapter->queues[i].evnamebuf, "Copied RX Frames");
-		evcnt_attach_dynamic(&rxr->no_jmbuf, EVCNT_TYPE_MISC,
-		    NULL, adapter->queues[i].evnamebuf, "Rx no jumbo mbuf");
+		evcnt_attach_dynamic(&rxr->no_mbuf, EVCNT_TYPE_MISC,
+		    NULL, adapter->queues[i].evnamebuf, "Rx no mbuf");
 		evcnt_attach_dynamic(&rxr->rx_discarded, EVCNT_TYPE_MISC,
 		    NULL, adapter->queues[i].evnamebuf, "Rx discarded");
 #ifdef LRO
@@ -2840,7 +2840,7 @@ ixv_clear_evcnt(struct adapter *adapter)
 		rxr->rx_packets.ev_count = 0;
 		rxr->rx_bytes.ev_count = 0;
 		rxr->rx_copies.ev_count = 0;
-		rxr->no_jmbuf.ev_count = 0;
+		rxr->no_mbuf.ev_count = 0;
 		rxr->rx_discarded.ev_count = 0;
 	}
 

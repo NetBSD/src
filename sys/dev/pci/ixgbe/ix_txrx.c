@@ -1,4 +1,4 @@
-/* $NetBSD: ix_txrx.c,v 1.87 2021/08/25 09:06:02 msaitoh Exp $ */
+/* $NetBSD: ix_txrx.c,v 1.88 2021/08/26 09:03:47 msaitoh Exp $ */
 
 /******************************************************************************
 
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ix_txrx.c,v 1.87 2021/08/25 09:06:02 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ix_txrx.c,v 1.88 2021/08/26 09:03:47 msaitoh Exp $");
 
 #include "opt_inet.h"
 #include "opt_inet6.h"
@@ -1353,7 +1353,7 @@ ixgbe_refresh_mbufs(struct rx_ring *rxr, int limit)
 		if (rxbuf->buf == NULL) {
 			mp = ixgbe_getcl();
 			if (mp == NULL) {
-				rxr->no_jmbuf.ev_count++;
+				rxr->no_mbuf.ev_count++;
 				goto update;
 			}
 			mp->m_pkthdr.len = mp->m_len = rxr->mbuf_sz;
@@ -1536,7 +1536,7 @@ ixgbe_setup_receive_ring(struct rx_ring *rxr)
 		rxbuf->flags = 0;
 		rxbuf->buf = ixgbe_getcl();
 		if (rxbuf->buf == NULL) {
-			rxr->no_jmbuf.ev_count++;
+			rxr->no_mbuf.ev_count++;
 			error = ENOBUFS;
 			goto fail;
 		}
@@ -1881,7 +1881,7 @@ ixgbe_rxeof(struct ix_queue *que)
 		else
 			newmp = NULL;
 		if (newmp == NULL) {
-			rxr->no_jmbuf.ev_count++;
+			rxr->no_mbuf.ev_count++;
 			/*
 			 * Descriptor initialization is already done by the
 			 * above code (cur->wb.upper.status_error = 0).
