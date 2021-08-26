@@ -1,7 +1,8 @@
-/*	$NetBSD: msg_066.c,v 1.4 2021/07/15 20:05:49 rillig Exp $	*/
+/*	$NetBSD: msg_066.c,v 1.5 2021/08/26 19:23:25 rillig Exp $	*/
 # 3 "msg_066.c"
 
 // Test for message: syntax requires ';' after last struct/union member [66]
+/* This message is not used. */
 
 /*
  * This message was removed in cgram.y 1.328 from 2021-07-15 because all

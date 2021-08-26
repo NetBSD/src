@@ -1,1 +1,3 @@
-msg_017.c(6): error: syntax error ':' [249]
+msg_017.c(16): error: null dimension [17]
+msg_017.c(7): warning: empty array declaration: empty_array_var [190]
+msg_017.c(11): warning: empty array declaration: typedef_var [190]

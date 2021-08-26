@@ -1,5 +1,5 @@
 #! /bin/sh
-# $NetBSD: accept.sh,v 1.7 2021/08/16 06:24:37 rillig Exp $
+# $NetBSD: accept.sh,v 1.8 2021/08/26 19:23:25 rillig Exp $
 #
 # Copyright (c) 2021 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -75,7 +75,9 @@ for pattern in "$@"; do
 		fi
 
 		case "$base" in (msg_*)
-			if [ ! -f "$expfile" ]; then
+			if grep 'This message is not used\.' "$cfile" >/dev/null; then
+				: 'Skip further checks.'
+			elif [ ! -f "$expfile" ]; then
 				echo "$base should produce warnings"
 			elif grep '^TODO: "Add example code' "$base.c" >/dev/null; then
 				: 'ok, this test is not yet written'
@@ -90,7 +92,6 @@ for pattern in "$@"; do
 				fi
 			fi
 		esac
-
 	done
 done
 

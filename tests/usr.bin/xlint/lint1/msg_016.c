@@ -1,7 +1,16 @@
-/*	$NetBSD: msg_016.c,v 1.2 2021/02/21 09:07:58 rillig Exp $	*/
+/*	$NetBSD: msg_016.c,v 1.3 2021/08/26 19:23:25 rillig Exp $	*/
 # 3 "msg_016.c"
 
 // Test for message: array of function is illegal [16]
 
-TODO: "Add example code that triggers the above message." /* expect: 249 */
-TODO: "Add example code that almost triggers the above message."
+typedef void function(void);
+
+/* expect+1: error: array of function is illegal [16] */
+function functions[] = {
+	/*
+	 * XXX: The below warning should not assume that function is an
+	 * integer type.
+	 */
+	/* expect+1: warning: illegal combination of integer (int) and pointer (pointer to void) [183] */
+	(void *)0,
+};

@@ -1,7 +1,12 @@
-/*	$NetBSD: msg_012.c,v 1.2 2021/02/21 09:07:58 rillig Exp $	*/
+/*	$NetBSD: msg_012.c,v 1.3 2021/08/26 19:23:25 rillig Exp $	*/
 # 3 "msg_012.c"
 
 // Test for message: compiler takes size of function [12]
+/* This message is not used. */
 
-TODO: "Add example code that triggers the above message." /* expect: 249 */
-TODO: "Add example code that almost triggers the above message."
+unsigned long
+example(void)
+{
+	/* expect+1: error: cannot take size/alignment of function [144] */
+	return sizeof(example);
+}

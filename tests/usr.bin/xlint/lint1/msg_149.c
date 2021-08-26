@@ -1,7 +1,12 @@
-/*	$NetBSD: msg_149.c,v 1.2 2021/02/21 09:07:58 rillig Exp $	*/
+/*	$NetBSD: msg_149.c,v 1.3 2021/08/26 19:23:25 rillig Exp $	*/
 # 3 "msg_149.c"
 
 // Test for message: illegal function (type %s) [149]
 
-TODO: "Add example code that triggers the above message." /* expect: 249 */
-TODO: "Add example code that almost triggers the above message."
+void
+example(int i)
+{
+	i++;
+	/* expect+1: error: illegal function (type int) [149] */
+	i(3);
+}

@@ -1,1 +1,1 @@
-msg_201.c(6): error: syntax error ':' [249]
+msg_201.c(10): error: default outside switch [201]

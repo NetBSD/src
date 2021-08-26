@@ -1,7 +1,12 @@
-/*	$NetBSD: msg_201.c,v 1.2 2021/02/21 09:07:58 rillig Exp $	*/
+/*	$NetBSD: msg_201.c,v 1.3 2021/08/26 19:23:25 rillig Exp $	*/
 # 3 "msg_201.c"
 
 // Test for message: default outside switch [201]
 
-TODO: "Add example code that triggers the above message." /* expect: 249 */
-TODO: "Add example code that almost triggers the above message."
+void
+example(void)
+{
+	/* expect+1: error: default outside switch [201] */
+default:
+	return;
+}
