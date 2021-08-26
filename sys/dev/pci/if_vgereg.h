@@ -1,3 +1,5 @@
+/* $NetBSD: if_vgereg.h,v 1.7 2021/08/26 21:33:36 andvar Exp $ */
+
 /*-
  * Copyright (c) 2004
  *	Bill Paul <wpaul@windriver.com>.  All rights reserved.

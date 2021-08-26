@@ -1,3 +1,4 @@
+/* $NetBSD: aubtfwlreg.h,v 1.2 2021/08/26 21:33:36 andvar Exp $ */
 
 #define AR3K_FIRMWARE_HEADER_SIZE 20
 

@@ -1,3 +1,4 @@
+/*	$NetBSD: pciide_svwsata_reg.h,v 1.2 2021/08/26 21:33:36 andvar Exp $	*/
 /*	$OpenBSD: pciide_svwsata_reg.h,v 1.4 2006/02/10 21:45:41 kettenis Exp $	*/
 
 /*
