@@ -1,2 +1,2 @@
-msg_066.c(13): error: syntax error '}' [249]
-msg_066.c(16): error: cannot recover from previous errors [224]
+msg_066.c(14): error: syntax error '}' [249]
+msg_066.c(17): error: cannot recover from previous errors [224]
