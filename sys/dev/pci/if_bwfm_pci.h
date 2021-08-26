@@ -1,3 +1,4 @@
+/*	$NetBSD: if_bwfm_pci.h,v 1.2 2021/08/26 21:33:36 andvar Exp $	*/
 /*	$OpenBSD: if_bwfm_pci.h,v 1.2 2018/01/05 23:30:16 patrick Exp $	*/
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
