@@ -1,3 +1,4 @@
+/*	$NetBSD: if_urtwreg.h,v 1.7 2021/08/26 21:33:36 andvar Exp $	*/
 /*	$OpenBSD: if_urtwreg.h,v 1.13 2010/08/27 17:08:01 jsg Exp $	*/
 
 /*-

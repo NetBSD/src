@@ -1,3 +1,5 @@
+/* $NetBSD: if_jmereg.h,v 1.6 2021/08/26 21:33:36 andvar Exp $ */
+
 /*-
  * Copyright (c) 2008, Pyun YongHyeon <yongari@FreeBSD.org>
  * All rights reserved.

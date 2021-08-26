@@ -1,3 +1,4 @@
+/*	$NetBSD: vioscsireg.h,v 1.2 2021/08/26 21:33:36 andvar Exp $	*/
 /*	$OpenBSD: vioscsireg.h,v 1.1 2013/12/20 21:50:49 matthew Exp $	*/
 /*
  * Copyright (c) 2013 Google Inc.
