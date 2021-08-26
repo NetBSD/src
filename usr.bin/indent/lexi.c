@@ -1,4 +1,4 @@
-/*	$NetBSD: lexi.c,v 1.42 2021/08/25 22:26:30 rillig Exp $	*/
+/*	$NetBSD: lexi.c,v 1.43 2021/08/26 07:03:00 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -46,7 +46,7 @@ static char sccsid[] = "@(#)lexi.c	8.1 (Berkeley) 6/6/93";
 #include <sys/cdefs.h>
 #ifndef lint
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: lexi.c,v 1.42 2021/08/25 22:26:30 rillig Exp $");
+__RCSID("$NetBSD: lexi.c,v 1.43 2021/08/26 07:03:00 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/lexi.c 337862 2018-08-15 18:19:45Z pstef $");
 #endif
@@ -284,13 +284,78 @@ lexi_end(token_type code)
 #  define lexi_end(tk) (tk)
 #endif
 
+static void
+lex_number(void)
+{
+    char s;
+    unsigned char i;
+
+    for (s = 'A'; s != 'f' && s != 'i' && s != 'u'; ) {
+	i = (unsigned char)*buf_ptr;
+	if (i >= nitems(table) || table[i] == NULL ||
+	    table[i][s - 'A'] == ' ') {
+	    s = table[0][s - 'A'];
+	    break;
+	}
+	s = table[i][s - 'A'];
+	check_size_token(1);
+	*e_token++ = inbuf_next();
+    }
+    /* s now indicates the type: f(loating), i(integer), u(nknown) */
+}
+
+static void
+lex_word(void)
+{
+    while (isalnum((unsigned char)*buf_ptr) ||
+	   *buf_ptr == '\\' ||
+	   *buf_ptr == '_' || *buf_ptr == '$') {
+	/* fill_buffer() terminates buffer with newline */
+	if (*buf_ptr == '\\') {
+	    if (buf_ptr[1] == '\n') {
+		buf_ptr += 2;
+		if (buf_ptr >= buf_end)
+		    fill_buffer();
+	    } else
+		break;
+	}
+	check_size_token(1);
+	*e_token++ = inbuf_next();
+    }
+}
+
+static void
+lex_char_or_string(void)
+{
+    char delim;
+
+    delim = *token;
+    do {			/* copy the string */
+	for (;;) {		/* move one character or [/<char>]<char> */
+	    if (*buf_ptr == '\n') {
+		diag(1, "Unterminated literal");
+		return;
+	    }
+	    check_size_token(2);
+	    *e_token = inbuf_next();
+	    if (*e_token == '\\') {	/* if escape, copy extra char */
+		if (*buf_ptr == '\n')	/* check for escaped newline */
+		    ++line_no;
+		*++e_token = inbuf_next();
+		++e_token;	/* we must increment this again because we
+				 * copied two chars */
+	    } else
+		break;		/* we copied one character */
+	}			/* end of while (1) */
+    } while (*e_token++ != delim);
+}
+
 token_type
 lexi(struct parser_state *state)
 {
     int         unary_delim;	/* this is set to 1 if the current token
 				 * forces a following operator to be unary */
     token_type  code;		/* internal code to be returned */
-    char        qchar;		/* the delimiter character for a string */
 
     e_token = s_token;		/* point to start of place to save token */
     unary_delim = false;
@@ -310,43 +375,15 @@ lexi(struct parser_state *state)
 	*buf_ptr == '_' || *buf_ptr == '$' ||
 	(buf_ptr[0] == '.' && isdigit((unsigned char)buf_ptr[1]))) {
 	/*
-	 * we have a character or number
+	 * we have a letter or number
 	 */
 	struct templ *p;
 
 	if (isdigit((unsigned char)*buf_ptr) ||
 	    (buf_ptr[0] == '.' && isdigit((unsigned char)buf_ptr[1]))) {
-	    char s;
-	    unsigned char i;
-
-	    for (s = 'A'; s != 'f' && s != 'i' && s != 'u'; ) {
-		i = (unsigned char)*buf_ptr;
-		if (i >= nitems(table) || table[i] == NULL ||
-		    table[i][s - 'A'] == ' ') {
-		    s = table[0][s - 'A'];
-		    break;
-		}
-		s = table[i][s - 'A'];
-		check_size_token(1);
-		*e_token++ = inbuf_next();
-	    }
-	    /* s now indicates the type: f(loating), i(integer), u(nknown) */
+	    lex_number();
 	} else {
-	    while (isalnum((unsigned char)*buf_ptr) ||
-		   *buf_ptr == '\\' ||
-		   *buf_ptr == '_' || *buf_ptr == '$') {
-		/* fill_buffer() terminates buffer with newline */
-		if (*buf_ptr == '\\') {
-		    if (buf_ptr[1] == '\n') {
-			buf_ptr += 2;
-			if (buf_ptr >= buf_end)
-			    fill_buffer();
-		    } else
-			break;
-		}
-		check_size_token(1);
-		*e_token++ = inbuf_next();
-	    }
+	    lex_word();
 	}
 	*e_token = '\0';
 
@@ -477,28 +514,9 @@ lexi(struct parser_state *state)
 	 */
 	break;
 
-    case '\'':			/* start of quoted character */
-    case '"':			/* start of string */
-	qchar = *token;
-	do {			/* copy the string */
-	    for (;;) {		/* move one character or [/<char>]<char> */
-		if (*buf_ptr == '\n') {
-		    diag(1, "Unterminated literal");
-		    goto stop_lit;
-		}
-		check_size_token(2);
-		*e_token = inbuf_next();
-		if (*e_token == '\\') {		/* if escape, copy extra char */
-		    if (*buf_ptr == '\n')	/* check for escaped newline */
-			++line_no;
-		    *++e_token = inbuf_next();
-		    ++e_token;	/* we must increment this again because we
-				 * copied two chars */
-		} else
-		    break;	/* we copied one character */
-	    }			/* end of while (1) */
-	} while (*e_token++ != qchar);
-stop_lit:
+    case '\'':
+    case '"':
+    	lex_char_or_string();
 	code = ident;
 	break;
 
