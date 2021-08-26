@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.429 2021/08/24 07:32:31 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.430 2021/08/26 08:56:21 skrll Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -192,7 +192,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.429 2021/08/24 07:32:31 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.430 2021/08/26 08:56:21 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -6023,7 +6023,7 @@ pmap_growkernel(vaddr_t maxkvaddr)
 		KASSERT(*pdep == 0);
 		l1pte_setone(pdep, npde);
 #else
-		/* Distribute new L1 entry to all other L1s */
+		/* Distribute new L1 entry to all L1s */
 		SLIST_FOREACH(l1, &l1_list, l1_link) {
 			pd_entry_t * const pdep = &l1->l1_kva[l1slot];
 			l1pte_setone(pdep, npde);
