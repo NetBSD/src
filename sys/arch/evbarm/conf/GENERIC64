@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC64,v 1.181 2021/08/19 02:05:34 msaitoh Exp $
+#	$NetBSD: GENERIC64,v 1.182 2021/08/26 17:08:34 thorpej Exp $
 #
 #	GENERIC ARM (aarch64) kernel
 #
@@ -333,6 +333,7 @@ as3722reg*	at as3722pmic?
 axppmic*	at iic?			# X-Powers AXP Power Management IC
 axpreg*		at axppmic?
 cwfg*		at iic?			# CellWise CW2015 Fuel Gauge IC
+dsrtc*		at iic?			# Dallas Semiconductor RTCs
 es8316ac*	at iic?			# Everest Semi ES8316 Audio CODEC
 fan53555reg*	at iic?			# FAN53555 / SY82x regulator
 max77620pmic*	at iic?

@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC,v 1.99 2021/06/26 09:29:14 nia Exp $
+#	$NetBSD: GENERIC,v 1.100 2021/08/26 17:08:34 thorpej Exp $
 #
 #	GENERIC ARM (aarch32) kernel
 #
@@ -365,6 +365,7 @@ axp20xreg* 	at axp20x?
 axp22x* 	at iic?			# AXP221 Power Management IC
 axppmic* 	at iic?			# X-Powers AXP Power Management IC
 axpreg* 	at axppmic?
+dsrtc*		at iic?			# Dallas Semiconductor RTCs
 em3027rtc* 	at iic?
 max77620pmic* 	at iic?
 pcaiicmux*	at iic?			# PCA954x / PCA984x I2C switch / mux
