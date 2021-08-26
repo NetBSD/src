@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bwfm_pci.c,v 1.10 2021/05/08 00:27:02 thorpej Exp $	*/
+/*	$NetBSD: if_bwfm_pci.c,v 1.11 2021/08/26 21:33:36 andvar Exp $	*/
 /*	$OpenBSD: if_bwfm_pci.c,v 1.18 2018/02/08 05:00:38 patrick Exp $	*/
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
@@ -16,6 +16,9 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: if_bwfm_pci.c,v 1.11 2021/08/26 21:33:36 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

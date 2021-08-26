@@ -1,3 +1,4 @@
+/*	$NetBSD: mbim.h,v 1.2 2021/08/26 21:33:36 andvar Exp $ */
 /*	$OpenBSD: mbim.h,v 1.4 2017/04/18 13:27:55 gerhard Exp $ */
 
 /*
