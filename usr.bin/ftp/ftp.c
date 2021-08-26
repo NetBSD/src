@@ -1,4 +1,4 @@
-/*	$NetBSD: ftp.c,v 1.172 2021/06/03 10:11:00 lukem Exp $	*/
+/*	$NetBSD: ftp.c,v 1.173 2021/08/26 06:16:29 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1996-2021 The NetBSD Foundation, Inc.
@@ -92,7 +92,7 @@
 #if 0
 static char sccsid[] = "@(#)ftp.c	8.6 (Berkeley) 10/27/94";
 #else
-__RCSID("$NetBSD: ftp.c,v 1.172 2021/06/03 10:11:00 lukem Exp $");
+__RCSID("$NetBSD: ftp.c,v 1.173 2021/08/26 06:16:29 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -1406,6 +1406,12 @@ initconn(void)
 			data_addr.si_su.su_sin.sin_addr.s_addr =
 			    htonl(pack4(addr, 0));
 			data_addr.su_port = htons(pack2(port, 0));
+			if (data_addr.si_su.su_sin.sin_addr.s_addr !=
+			    hisctladdr.si_su.su_sin.sin_addr.s_addr) {
+				fputs("Passive mode address mismatch.\n",
+				    ttyout);
+				goto bad;
+			}
 		} else if (strcmp(pasvcmd, "LPSV") == 0) {
 			if (code / 10 == 22 && code != 228) {
 				fputs("wrong server: return code must be 228\n",
@@ -1440,6 +1446,12 @@ initconn(void)
 				data_addr.si_su.su_sin.sin_addr.s_addr =
 				    htonl(pack4(addr, 0));
 				data_addr.su_port = htons(pack2(port, 0));
+				if (data_addr.si_su.su_sin.sin_addr.s_addr !=
+				    hisctladdr.si_su.su_sin.sin_addr.s_addr) {
+					fputs("Passive mode address mismatch.\n",
+					    ttyout);
+					goto bad;
+				}
 				break;
 #ifdef INET6
 			case AF_INET6:
@@ -1477,6 +1489,14 @@ initconn(void)
 				}
 			    }
 				data_addr.su_port = htons(pack2(port, 0));
+				if (memcmp(
+				    &data_addr.si_su.su_sin6.sin6_addr,
+				    &hisctladdr.si_su.su_sin6.sin6_addr,
+				    sizeof(data_addr.si_su.su_sin6.sin6_addr))) {
+					fputs("Passive mode address mismatch.\n",
+					    ttyout);
+					goto bad;
+				}
 				break;
 #endif
 			default:
