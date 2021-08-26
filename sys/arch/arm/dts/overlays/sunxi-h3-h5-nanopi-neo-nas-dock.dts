@@ -1,0 +1,98 @@
+/* $NetBSD: sunxi-h3-h5-nanopi-neo-nas-dock.dts,v 1.1 2021/08/26 00:00:35 thorpej Exp $ */
+
+/*-
+ * Copyright (c) 2021 The NetBSD Foundation, Inc.
+ * All rights reserved.
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Jason R. Thorpe.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
+
+/*
+ * Overlay for the FriendlyARM NanoPi NAS Dock for the NanoPi NEO, NEO Air,
+ * and NEO2.
+ */
+
+/dts-v1/;
+/plugin/;
+
+/ {
+	compatible = "friendlyarm,nanopi-neo2", "friendlyarm,nanopi-neo-air",
+	    "friendlyarm,nanopi-neo";
+
+	/* ohci1/ehci1 is brought out to a connector on the board. */
+	fragment@0 {
+		target = <&ehci1>;
+		__overlay__ {
+			status = "okay";
+		};
+	};
+
+	fragment@1 {
+		target = <&ohci1>;
+		__overlay__ {
+			status = "okay";
+		};
+	};
+
+	/* ohci2/ehci2 has the JM20329 USB2->SATA bridge. */
+	fragment@2 {
+		target = <&ehci2>;
+		__overlay__ {
+			status = "okay";
+		};
+	};
+
+	fragment@3 {
+		target = <&ohci2>;
+		__overlay__ {
+			status = "okay";
+		};
+	};
+
+	/* i2c0 has the DS1307 real time clock chip. */
+	fragment@4 {
+		target = <&i2c0>;
+		__overlay__ {
+			status = "okay";
+
+			dock_rtc: rtc@68 {
+				compatible = "dallas,ds1307";
+				reg = <0x68>;
+			};
+		};
+	};
+
+	/*
+	 * Alias rtc0 to the DS1307 so the kernel will use it
+	 * instead of the built-in RTC on the SoC (which is not
+	 * battery-backed).
+	 */
+	fragment@5 {
+		target-path = "/aliases";
+		__overlay__ {
+			rtc0 = &dock_rtc;
+		};
+	};
+};
