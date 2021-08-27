@@ -1,1 +1,1 @@
-msg_025.c(6): error: syntax error ':' [249]
+msg_025.c(7): error: cannot initialize typedef: number [25]

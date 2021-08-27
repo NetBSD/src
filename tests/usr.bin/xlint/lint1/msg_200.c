@@ -1,7 +1,15 @@
-/*	$NetBSD: msg_200.c,v 1.2 2021/02/21 09:07:58 rillig Exp $	*/
+/*	$NetBSD: msg_200.c,v 1.3 2021/08/27 20:16:50 rillig Exp $	*/
 # 3 "msg_200.c"
 
 // Test for message: duplicate case in switch: %lu [200]
 
-TODO: "Add example code that triggers the above message." /* expect: 249 */
-TODO: "Add example code that almost triggers the above message."
+void
+example(unsigned x)
+{
+	switch (x) {
+	case 3:
+	/* expect+1: error: duplicate case in switch: 3 [200] */
+	case 3:
+		break;
+	}
+}

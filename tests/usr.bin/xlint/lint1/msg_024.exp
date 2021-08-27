@@ -1,1 +1,2 @@
-msg_024.c(6): error: syntax error ':' [249]
+msg_024.c(16): error: cannot initialize function: fn [24]
+msg_024.c(16): error: {}-enclosed initializer required [181]
