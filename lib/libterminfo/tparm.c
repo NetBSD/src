@@ -1,4 +1,4 @@
-/* $NetBSD: tparm.c,v 1.18 2020/03/27 15:11:57 christos Exp $ */
+/* $NetBSD: tparm.c,v 1.19 2021/08/27 18:40:28 rillig Exp $ */
 
 /*
  * Copyright (c) 2009, 2011, 2013 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: tparm.c,v 1.18 2020/03/27 15:11:57 christos Exp $");
+__RCSID("$NetBSD: tparm.c,v 1.19 2021/08/27 18:40:28 rillig Exp $");
 #include <sys/param.h>
 
 #include <assert.h>
@@ -42,7 +42,7 @@ __RCSID("$NetBSD: tparm.c,v 1.18 2020/03/27 15:11:57 christos Exp $");
 #include <term.h>
 
 #define LONG_STR_MAX ((CHAR_BIT * sizeof(long)) / 3)
-#define BUFINC 128	/* Size to increament the terminal buffer by */
+#define BUFINC 128	/* Size to increment the terminal buffer by */
 
 #define VA_LONG_LONG	1
 #define VA_CHAR_INT	2
@@ -157,7 +157,7 @@ _ti_parm_analyse(const char *str, int *piss, int piss_len)
 			continue;
 		c = *str++;
 		switch (c) {
-			case 'l': /* FALLTHROUGH */
+			case 'l':
 			case 's':
 				if (lpop > 0) {
 					if (lpop <= piss_len)
@@ -235,7 +235,7 @@ _ti_tiparm(TERMINAL *term, const char *str, int va_type, va_list parms)
 			if (va_type == VA_LONG_LONG) {
 				/* This only works if char * fits into a long
 				 * on this platform. */
-				if (sizeof(char *) <= sizeof(long)/*CONSTCOND*/)
+				if (sizeof(char *) <= sizeof(long))
 					params[l].string =
 					    (char *)va_arg(parms, long);
 				else {
@@ -270,20 +270,20 @@ _ti_tiparm(TERMINAL *term, const char *str, int va_type, va_list parms)
 		val = 0;
 		while (done == 0 && (size_t)(fp - fmt) < sizeof(fmt)) {
 			switch (c) {
-			case 'c': /* FALLTHROUGH */
+			case 'c':
 			case 's':
 				*fp++ = c;
 				done = 1;
 				break;
-			case 'd': /* FALLTHROUGH */
-			case 'o': /* FALLTHROUGH */
-			case 'x': /* FALLTHROUGH */
-			case 'X': /* FALLTHROUGH */
+			case 'd':
+			case 'o':
+			case 'x':
+			case 'X':
 				*fp++ = 'l';
 				*fp++ = c;
 				done = 1;
 				break;
-			case '#': /* FALLTHROUGH */
+			case '#':
 			case ' ':
 				*fp++ = c;
 				break;
@@ -368,9 +368,9 @@ _ti_tiparm(TERMINAL *term, const char *str, int va_type, va_list parms)
 			push((long)l, NULL, &stack);
 #endif
 			break;
-		case 'd': /* FALLTHROUGH */
-		case 'o': /* FALLTHROUGH */
-		case 'x': /* FALLTHROUGH */
+		case 'd':
+		case 'o':
+		case 'x':
 		case 'X':
 			pop(&val, NULL, &stack);
 			if (onum(term, fmt, (int)val, olen) == 0)
@@ -425,18 +425,18 @@ _ti_tiparm(TERMINAL *term, const char *str, int va_type, va_list parms)
 			if (*str == '}')
 				str++;
 			break;
-		case '+': /* FALLTHROUGH */
-		case '-': /* FALLTHROUGH */
-		case '*': /* FALLTHROUGH */
-		case '/': /* FALLTHROUGH */
-		case 'm': /* FALLTHROUGH */
-		case 'A': /* FALLTHROUGH */
-		case 'O': /* FALLTHROUGH */
-		case '&': /* FALLTHROUGH */
-		case '|': /* FALLTHROUGH */
-		case '^': /* FALLTHROUGH */
-		case '=': /* FALLTHROUGH */
-		case '<': /* FALLTHROUGH */
+		case '+':
+		case '-':
+		case '*':
+		case '/':
+		case 'm':
+		case 'A':
+		case 'O':
+		case '&':
+		case '|':
+		case '^':
+		case '=':
+		case '<':
 		case '>':
 			pop(&val, NULL, &stack);
 			pop(&val2, NULL, &stack);
