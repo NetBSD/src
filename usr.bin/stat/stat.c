@@ -1,4 +1,4 @@
-/*	$NetBSD: stat.c,v 1.46 2020/09/07 00:46:38 mrg Exp $ */
+/*	$NetBSD: stat.c,v 1.47 2021/08/27 18:11:07 rillig Exp $ */
 
 /*
  * Copyright (c) 2002-2011 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: stat.c,v 1.46 2020/09/07 00:46:38 mrg Exp $");
+__RCSID("$NetBSD: stat.c,v 1.47 2021/08/27 18:11:07 rillig Exp $");
 #endif
 
 #if ! HAVE_NBTOOL_CONFIG_H
@@ -469,9 +469,9 @@ output(const struct stat *st, const char *file,
 		} while (1/*CONSTCOND*/);
 
 		size = -1;
-		if (isdigit((unsigned)*statfmt)) {
+		if (isdigit((unsigned char)*statfmt)) {
 			size = 0;
-			while (isdigit((unsigned)*statfmt)) {
+			while (isdigit((unsigned char)*statfmt)) {
 				size = (size * 10) + (*statfmt - '0');
 				statfmt++;
 				if (size < 0)
@@ -484,7 +484,7 @@ output(const struct stat *st, const char *file,
 			statfmt++;
 
 			prec = 0;
-			while (isdigit((unsigned)*statfmt)) {
+			while (isdigit((unsigned char)*statfmt)) {
 				prec = (prec * 10) + (*statfmt - '0');
 				statfmt++;
 				if (prec < 0)
