@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_117.c,v 1.7 2021/08/15 13:08:20 rillig Exp $	*/
+/*	$NetBSD: msg_117.c,v 1.8 2021/08/27 17:49:31 rillig Exp $	*/
 # 3 "msg_117.c"
 
 // Test for message: bitwise '%s' on signed value possibly nonportable [117]
@@ -44,4 +44,18 @@ shr_unsigned_char(unsigned char uc)
 	 * 'uc >> 4' might be a bitwise '>>' on signed value.
 	 */
 	return uc >> 4;
+}
+
+unsigned char
+shr_unsigned_char_promoted(unsigned char bit)
+{
+	/*
+	 * Before TODO from TODO, lint wrongly warned that the bitwise shift
+	 * might be on a signed value, which was wrong.  Even though the
+	 * expression has type 'int', the value of the expression cannot be
+	 * negative, as long as int is larger than char, which holds for all
+	 * platforms supported by lint.
+	 */
+	/* expect+1: warning: bitwise '>>' on signed value possibly nonportable [117] */
+	return (unsigned char)((bit - 1) >> 5);
 }
