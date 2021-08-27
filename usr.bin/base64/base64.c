@@ -1,4 +1,4 @@
-/*	$NetBSD: base64.c,v 1.4 2021/08/25 22:43:20 rillig Exp $	*/
+/*	$NetBSD: base64.c,v 1.5 2021/08/27 17:53:13 christos Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: base64.c,v 1.4 2021/08/25 22:43:20 rillig Exp $");
+__RCSID("$NetBSD: base64.c,v 1.5 2021/08/27 17:53:13 christos Exp $");
 
 #include <ctype.h>
 #include <errno.h>
@@ -240,7 +240,7 @@ main(int argc, char *argv[])
 {
 	bool decode = false;
 	size_t wrap = 76;
-	bool ignore = false;
+	bool ignore = true;
 	int c;
 
 	while ((c = getopt(argc, argv, "b:Ddiw:")) != -1) {
