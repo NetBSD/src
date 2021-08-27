@@ -1,1 +1,1 @@
-msg_052.c(6): error: syntax error ':' [249]
+msg_052.c(9): error: cannot initialize parameter: i [52]
