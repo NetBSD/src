@@ -1,4 +1,4 @@
-/*	$NetBSD: bzlib.c,v 1.4 2019/07/21 11:52:14 maya Exp $	*/
+/*	$NetBSD: bzlib.c,v 1.5 2021/08/27 17:31:48 rillig Exp $	*/
 
 
 /*-------------------------------------------------------------*/
@@ -1410,7 +1410,7 @@ BZFILE * bzopen_or_bzdopen
       case 's':
          smallMode = 1; break;
       default:
-         if (isdigit((unsigned char)(*mode))) {
+         if (isdigit((UChar)(*mode))) {
             blockSize100k = *mode-BZ_HDR_0;
          }
       }

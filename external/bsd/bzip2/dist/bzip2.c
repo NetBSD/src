@@ -1,4 +1,4 @@
-/*	$NetBSD: bzip2.c,v 1.5 2019/07/21 11:52:14 maya Exp $	*/
+/*	$NetBSD: bzip2.c,v 1.6 2021/08/27 17:31:48 rillig Exp $	*/
 
 
 /*-----------------------------------------------------------*/
@@ -1762,8 +1762,8 @@ void addFlagsFromEnvVar ( Cell** argList, const Char* varName )
          if (p[i] == 0) break;
          p += i;
          i = 0;
-         while (isspace((Int32)(p[0]))) p++;
-         while (p[i] != 0 && !isspace((Int32)(p[i]))) i++;
+         while (isspace((UChar)(p[0]))) p++;
+         while (p[i] != 0 && !isspace((UChar)(p[i]))) i++;
          if (i > 0) {
             k = i; if (k > FILE_NAME_LEN-10) k = FILE_NAME_LEN-10;
             for (j = 0; j < k; j++) tmpName[j] = p[j];
