@@ -1,7 +1,24 @@
-/*	$NetBSD: msg_297.c,v 1.2 2021/02/21 09:07:58 rillig Exp $	*/
+/*	$NetBSD: msg_297.c,v 1.3 2021/08/27 20:49:25 rillig Exp $	*/
 # 3 "msg_297.c"
 
 // Test for message: conversion to '%s' may sign-extend incorrectly, arg #%d [297]
 
-TODO: "Add example code that triggers the above message." /* expect: 249 */
-TODO: "Add example code that almost triggers the above message."
+/* lint1-extra-flags: -P -a -p */
+
+void take_unsigned_long_long(unsigned long long);
+void take_long_long(long long);
+
+void
+caller(signed int si, unsigned int ui)
+{
+
+	/* expect+1: warning: conversion to 'unsigned long long' may sign-extend incorrectly, arg #1 [297] */
+	take_unsigned_long_long(si);
+
+	take_unsigned_long_long(ui);
+
+	take_long_long(si);
+
+	/* expect+1: warning: conversion to 'long long' may sign-extend incorrectly, arg #1 [297] */
+	take_long_long(ui);
+}

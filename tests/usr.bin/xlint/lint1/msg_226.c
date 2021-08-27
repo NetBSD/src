@@ -1,7 +1,7 @@
-/*	$NetBSD: msg_226.c,v 1.2 2021/02/21 09:07:58 rillig Exp $	*/
+/*	$NetBSD: msg_226.c,v 1.3 2021/08/27 20:49:25 rillig Exp $	*/
 # 3 "msg_226.c"
 
 // Test for message: static variable %s unused [226]
 
-TODO: "Add example code that triggers the above message." /* expect: 249 */
-TODO: "Add example code that almost triggers the above message."
+/* expect+1: warning: static variable unused unused [226] */
+static int unused;
