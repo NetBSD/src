@@ -1,4 +1,4 @@
-/*	$NetBSD: sdiff.c,v 1.2 2009/04/13 07:19:55 lukem Exp $	*/
+/*	$NetBSD: sdiff.c,v 1.3 2021/08/27 17:38:57 rillig Exp $	*/
 /*	$OpenBSD: sdiff.c,v 1.20 2006/09/19 05:52:23 otto Exp $ */
 
 /*
@@ -423,7 +423,7 @@ prompt(const char *s1, const char *s2)
 		const char *p;
 
 		/* Skip leading whitespace. */
-		for (p = cmd; isspace((int)(*p)); ++p)
+		for (p = cmd; isspace((unsigned char)(*p)); ++p)
 			;
 
 		switch (*p) {
@@ -579,7 +579,7 @@ parsecmd(FILE *diffpipe, FILE *file1, FILE *file2)
 
 	p = line;
 	/* Go to character after line number. */
-	while (isdigit((int)(*p)))
+	while (isdigit((unsigned char)(*p)))
 		++p;
 	c = *p;
 	*p++ = 0;
@@ -592,7 +592,7 @@ parsecmd(FILE *diffpipe, FILE *file1, FILE *file2)
 
 		q = p;
 		/* Go to character after file2end. */
-		while (isdigit((int)(*p)))
+		while (isdigit((unsigned char)(*p)))
 			++p;
 		c = *p;
 		*p++ = 0;
@@ -612,7 +612,7 @@ parsecmd(FILE *diffpipe, FILE *file1, FILE *file2)
 
 	q = p;
 	/* Go to character after line number. */
-	while (isdigit((int)(*p)))
+	while (isdigit((unsigned char)(*p)))
 		++p;
 	c = *p;
 	*p++ = 0;
