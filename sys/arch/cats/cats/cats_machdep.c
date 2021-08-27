@@ -1,4 +1,4 @@
-/*	$NetBSD: cats_machdep.c,v 1.89 2020/04/18 11:00:38 skrll Exp $	*/
+/*	$NetBSD: cats_machdep.c,v 1.90 2021/08/27 09:14:55 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997,1998 Mark Brinicombe.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cats_machdep.c,v 1.89 2020/04/18 11:00:38 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cats_machdep.c,v 1.90 2021/08/27 09:14:55 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_modular.h"
@@ -98,7 +98,7 @@ __KERNEL_RCSID(0, "$NetBSD: cats_machdep.c,v 1.89 2020/04/18 11:00:38 skrll Exp 
 /*
  * Size of available KVM space, note that growkernel will grow into this.
  */
-#define KERNEL_VM_SIZE	0x0C000000
+#define KERNEL_VM_SIZE	0x0c000000
 
 /*
  * Address to call from cpu_reset() to reset the machine.
