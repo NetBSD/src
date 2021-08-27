@@ -1,4 +1,4 @@
-/*	$NetBSD: sockstat.c,v 1.23 2020/08/26 22:57:55 christos Exp $ */
+/*	$NetBSD: sockstat.c,v 1.24 2021/08/27 18:09:30 rillig Exp $ */
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: sockstat.c,v 1.23 2020/08/26 22:57:55 christos Exp $");
+__RCSID("$NetBSD: sockstat.c,v 1.24 2021/08/27 18:09:30 rillig Exp $");
 #endif
 
 #define _KMEMUSER
@@ -275,7 +275,7 @@ get_num(const char *l, const char **s, const char **e)
 	long x;
 	char *t;
 
-	while (isdigit((u_int)**e))
+	while (isdigit((unsigned char)**e))
 		(*e)++;
 	if (*s != *e) {
 		errno = 0;
