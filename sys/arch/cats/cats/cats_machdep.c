@@ -1,4 +1,4 @@
-/*	$NetBSD: cats_machdep.c,v 1.90 2021/08/27 09:14:55 skrll Exp $	*/
+/*	$NetBSD: cats_machdep.c,v 1.91 2021/08/27 09:23:27 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997,1998 Mark Brinicombe.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cats_machdep.c,v 1.90 2021/08/27 09:14:55 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cats_machdep.c,v 1.91 2021/08/27 09:23:27 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_modular.h"
@@ -475,7 +475,6 @@ initarm(void *arm_bootargs)
 #endif
 
 #ifdef DDB
-	db_machine_init();
 	if (boothowto & RB_KDB)
 		Debugger();
 #endif
