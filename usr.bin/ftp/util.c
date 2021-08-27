@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.162 2021/04/25 08:26:35 lukem Exp $	*/
+/*	$NetBSD: util.c,v 1.163 2021/08/27 17:35:03 rillig Exp $	*/
 
 /*-
  * Copyright (c) 1997-2020 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: util.c,v 1.162 2021/04/25 08:26:35 lukem Exp $");
+__RCSID("$NetBSD: util.c,v 1.163 2021/08/27 17:35:03 rillig Exp $");
 #endif /* not lint */
 
 /*
@@ -171,7 +171,7 @@ parse_feat(const char *fline)
 			 * work-around broken ProFTPd servers that can't
 			 * even obey RFC 2389.
 			 */
-	while (*fline && isspace((int)*fline))
+	while (*fline && isspace((unsigned char)*fline))
 		fline++;
 
 	if (strcasecmp(fline, "MDTM") == 0)
