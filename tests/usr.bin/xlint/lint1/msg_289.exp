@@ -1,1 +1,1 @@
-msg_289.c(6): error: syntax error ':' [249]
+msg_289.c(10): warning: can't be used together: /* PRINTFLIKE */ /* SCANFLIKE */ [289]
