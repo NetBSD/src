@@ -1,4 +1,4 @@
-/*	$NetBSD: edit.c,v 1.4 2011/09/01 07:18:51 plunky Exp $	*/
+/*	$NetBSD: edit.c,v 1.5 2021/08/27 17:36:37 rillig Exp $	*/
 /*	$OpenBSD: edit.c,v 1.14 2006/05/25 03:20:32 ray Exp $ */
 
 /*
@@ -76,7 +76,7 @@ eparse(const char *cmd, const char *left, const char *right)
 	char buf[BUFSIZ], *text;
 
 	/* Skip whitespace. */
-	while (isspace((int)(*cmd)))
+	while (isspace((unsigned char)(*cmd)))
 		++cmd;
 
 	text = NULL;
