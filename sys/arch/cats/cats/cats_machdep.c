@@ -1,4 +1,4 @@
-/*	$NetBSD: cats_machdep.c,v 1.91 2021/08/27 09:23:27 skrll Exp $	*/
+/*	$NetBSD: cats_machdep.c,v 1.92 2021/08/27 09:29:05 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997,1998 Mark Brinicombe.
@@ -40,8 +40,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cats_machdep.c,v 1.91 2021/08/27 09:23:27 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cats_machdep.c,v 1.92 2021/08/27 09:29:05 skrll Exp $");
 
+#include "opt_arm_debug.h"
 #include "opt_ddb.h"
 #include "opt_modular.h"
 
@@ -84,6 +85,12 @@ __KERNEL_RCSID(0, "$NetBSD: cats_machdep.c,v 1.91 2021/08/27 09:23:27 skrll Exp 
 #if NISA > 0
 #include <dev/isa/isareg.h>
 #include <dev/isa/isavar.h>
+#endif
+
+#ifdef VERBOSE_INIT_ARM
+#define VPRINTF(...)	printf(__VA_ARGS__)
+#else
+#define VPRINTF(...)	__nothing
 #endif
 
 /* Kernel text starts at the base of the kernel address space. */
@@ -269,23 +276,21 @@ initarm(void *arm_bootargs)
 		panic("Incompatible magic number %#x passed in boot args",
 		    ebsabootinfo.bt_magic);
 
-#ifdef VERBOSE_INIT_ARM
 	/* output the incoming bootinfo */
-	printf("bootinfo @ %p\n", arm_bootargs);
-	printf("bt_magic    = 0x%08x\n", ebsabootinfo.bt_magic);
-	printf("bt_vargp    = 0x%08x\n", ebsabootinfo.bt_vargp);
-	printf("bt_pargp    = 0x%08x\n", ebsabootinfo.bt_pargp);
-	printf("bt_args @ %p, contents = \"%s\"\n", ebsabootinfo.bt_args, ebsabootinfo.bt_args);
-	printf("bt_l1       = %p\n", ebsabootinfo.bt_l1);
+	VPRINTF("bootinfo @ %p\n", arm_bootargs);
+	VPRINTF("bt_magic    = 0x%08x\n", ebsabootinfo.bt_magic);
+	VPRINTF("bt_vargp    = 0x%08x\n", ebsabootinfo.bt_vargp);
+	VPRINTF("bt_pargp    = 0x%08x\n", ebsabootinfo.bt_pargp);
+	VPRINTF("bt_args @ %p, contents = \"%s\"\n", ebsabootinfo.bt_args, ebsabootinfo.bt_args);
+	VPRINTF("bt_l1       = %p\n", ebsabootinfo.bt_l1);
 
-	printf("bt_memstart = 0x%08x\n", ebsabootinfo.bt_memstart);
-	printf("bt_memend   = 0x%08x\n", ebsabootinfo.bt_memend);
-	printf("bt_memavail = 0x%08x\n", ebsabootinfo.bt_memavail);
-	printf("bt_fclk     = 0x%08x\n", ebsabootinfo.bt_fclk);
-	printf("bt_pciclk   = 0x%08x\n", ebsabootinfo.bt_pciclk);
-	printf("bt_vers     = 0x%08x\n", ebsabootinfo.bt_vers);
-	printf("bt_features = 0x%08x\n", ebsabootinfo.bt_features);
-#endif
+	VPRINTF("bt_memstart = 0x%08x\n", ebsabootinfo.bt_memstart);
+	VPRINTF("bt_memend   = 0x%08x\n", ebsabootinfo.bt_memend);
+	VPRINTF("bt_memavail = 0x%08x\n", ebsabootinfo.bt_memavail);
+	VPRINTF("bt_fclk     = 0x%08x\n", ebsabootinfo.bt_fclk);
+	VPRINTF("bt_pciclk   = 0x%08x\n", ebsabootinfo.bt_pciclk);
+	VPRINTF("bt_vers     = 0x%08x\n", ebsabootinfo.bt_vers);
+	VPRINTF("bt_features = 0x%08x\n", ebsabootinfo.bt_features);
 
 	/*
 	 * Examine the boot args string for options we need to know about
@@ -301,7 +306,7 @@ initarm(void *arm_bootargs)
 #ifdef MEMSIZE
 	if (ram_size == 0 || ram_size > (unsigned)MEMSIZE * 1024 * 1024)
 		ram_size = (unsigned)MEMSIZE * 1024 * 1024;
-	DPRINTF("ram_size = 0x%x\n", (int)ram_size);
+	VPRINTF("ram_size = 0x%x\n", (int)ram_size);
 #else
 	KASSERTMSG(ram_size > 0, "RAM size unknown and MEMSIZE undefined");
 #endif
@@ -388,9 +393,7 @@ initarm(void *arm_bootargs)
 		extern int footbridge_isa_dma_nranges;
 #endif
 
-#if 0
-		printf("%zu: %lx -> %lx\n", i, start, end - 1);
-#endif
+		VPRINTF("%zu: 0x08%lx -> 0x08%lx\n", i, start, end - 1);
 
 #if NISADMA > 0
 		if (arm32_dma_range_intersect(footbridge_isa_dma_ranges,
@@ -400,10 +403,8 @@ initarm(void *arm_bootargs)
 			 * Place the pages that intersect with the
 			 * ISA DMA range onto the ISA DMA free list.
 			 */
-#if 0
-			printf("    ISADMA 0x%lx -> 0x%lx\n", istart,
+			VPRINTF("    ISADMA 0x08%lx -> 0x%08lx\n", istart,
 			    istart + isize - 1);
-#endif
 			bp = &cats_physmem[ncats_physmem++];
 			KASSERT(ncats_physmem < MAX_PHYSMEM);
 			bp->bp_start = atop(istart);
@@ -415,10 +416,8 @@ initarm(void *arm_bootargs)
 			 * intersection onto the default free list.
 			 */
 			if (start < istart) {
-#if 0
-				printf("    BEFORE 0x%lx -> 0x%lx\n",
+				VPRINTF("    BEFORE 0x08%lx -> 0x08%lx\n",
 				    start, istart - 1);
-#endif
 				bp = &cats_physmem[ncats_physmem++];
 				KASSERT(ncats_physmem < MAX_PHYSMEM);
 				bp->bp_start = atop(start);
@@ -431,10 +430,8 @@ initarm(void *arm_bootargs)
 			 * intersection onto the default free list.
 			 */
 			if ((istart + isize) < end) {
-#if 0
-				printf("     AFTER 0x%lx -> 0x%lx\n",
+				VPRINTF("     AFTER 0x%08lx -> 0x%08lx\n",
 				    (istart + isize), end - 1);
-#endif
 				bp = &cats_physmem[ncats_physmem++];
 				KASSERT(ncats_physmem < MAX_PHYSMEM);
 				bp->bp_start = atop(istart + isize);
