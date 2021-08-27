@@ -1,4 +1,4 @@
-/*	$NetBSD: print.c,v 1.23 2019/10/24 18:18:00 kamil Exp $	*/
+/*	$NetBSD: print.c,v 1.24 2021/08/27 17:41:39 rillig Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: print.c,v 1.23 2019/10/24 18:18:00 kamil Exp $");
+__RCSID("$NetBSD: print.c,v 1.24 2021/08/27 17:41:39 rillig Exp $");
 
 #include <ctype.h>
 #include <iconv.h>
@@ -1059,7 +1059,8 @@ print_language_base_attribute_id_list(sdp_data_t *data)
 			break;
 
 		be16enc(lang, v);
-		if (!islower((int)lang[0]) || !islower((int)lang[1]))
+		if (!islower((unsigned char)lang[0]) ||
+		    !islower((unsigned char)lang[1]))
 			break;
 
 		/*
