@@ -1,4 +1,4 @@
-/*	$NetBSD: mem1.c,v 1.49 2021/08/10 17:57:16 rillig Exp $	*/
+/*	$NetBSD: mem1.c,v 1.50 2021/08/28 12:59:25 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: mem1.c,v 1.49 2021/08/10 17:57:16 rillig Exp $");
+__RCSID("$NetBSD: mem1.c,v 1.50 2021/08/28 12:59:25 rillig Exp $");
 #endif
 
 #include <sys/types.h>
@@ -285,11 +285,8 @@ xfreeblk(memory_block **fmbp)
 void
 initmem(void)
 {
-	int	pgsz;
 
-	pgsz = getpagesize();
-	mblklen = ((MBLKSIZ + pgsz - 1) / pgsz) * pgsz;
-
+	mblklen = MBLKSIZ - MBLKSIZ % (unsigned int)getpagesize();
 	mblks = xcalloc(nmblks = ML_INC, sizeof(*mblks));
 }
 
