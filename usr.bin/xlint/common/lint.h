@@ -1,4 +1,4 @@
-/*	$NetBSD: lint.h,v 1.29 2021/08/22 15:06:49 rillig Exp $	*/
+/*	$NetBSD: lint.h,v 1.30 2021/08/28 12:59:25 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -92,9 +92,9 @@ typedef enum {
  * size of types, name and classification
  */
 typedef	struct {
-	size_t	tt_size_in_bits;
-	size_t	tt_portable_size_in_bits; /* different from tt_size_in_bits
-					 * if pflag is set */
+	unsigned int tt_size_in_bits;
+	unsigned int tt_portable_size_in_bits; /* different from
+					 * tt_size_in_bits if pflag is set */
 	tspec_t	tt_signed_counterpart;
 	tspec_t	tt_unsigned_counterpart;
 	bool	tt_is_integer : 1;	/* integer type */
