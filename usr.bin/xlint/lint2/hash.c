@@ -1,4 +1,4 @@
-/*	$NetBSD: hash.c,v 1.20 2021/08/28 19:00:55 rillig Exp $	*/
+/*	$NetBSD: hash.c,v 1.21 2021/08/28 19:27:44 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: hash.c,v 1.20 2021/08/28 19:00:55 rillig Exp $");
+__RCSID("$NetBSD: hash.c,v 1.21 2021/08/28 19:27:44 rillig Exp $");
 #endif
 
 /*
@@ -80,8 +80,8 @@ hash(const char *s)
 
 	v = 0;
 	for (us = (const unsigned char *)s; *us != '\0'; us++) {
-		v = (v << sizeof(v)) + *us;
-		v ^= v >> (sizeof(v) * CHAR_BIT - sizeof(v));
+		v = (v << 4) + *us;
+		v ^= v >> 28;
 	}
 	return v % HSHSIZ2;
 }
