@@ -1,4 +1,4 @@
-/* $NetBSD: lex.c,v 1.74 2021/08/28 15:01:43 rillig Exp $ */
+/* $NetBSD: lex.c,v 1.75 2021/08/28 18:58:24 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: lex.c,v 1.74 2021/08/28 15:01:43 rillig Exp $");
+__RCSID("$NetBSD: lex.c,v 1.75 2021/08/28 18:58:24 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -512,6 +512,9 @@ lex_integer_constant(const char *yytext, size_t yyleng, int base)
 	bool	warned = false;
 #ifdef TARG_INT128_MAX
 	__uint128_t uq = 0;
+	/* FIXME: INT128 doesn't belong here. */
+	/* TODO: const */
+	/* TODO: remove #ifdef */
 	static	tspec_t contypes[2][4] = {
 		{ INT,  LONG,  QUAD, INT128, },
 		{ UINT, ULONG, UQUAD, UINT128, }
@@ -561,7 +564,7 @@ lex_integer_constant(const char *yytext, size_t yyleng, int base)
 
 	errno = 0;
 
-	uq = strtouq(cp, &eptr, base);
+	uq = strtoull(cp, &eptr, base);
 	lint_assert(eptr == cp + len);
 	if (errno != 0) {
 		/* integer constant out of range */
