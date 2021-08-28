@@ -1,4 +1,4 @@
-/*	$NetBSD: hash.c,v 1.17 2021/08/28 12:21:53 rillig Exp $	*/
+/*	$NetBSD: hash.c,v 1.18 2021/08/28 17:11:19 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: hash.c,v 1.17 2021/08/28 12:21:53 rillig Exp $");
+__RCSID("$NetBSD: hash.c,v 1.18 2021/08/28 17:11:19 rillig Exp $");
 #endif
 
 /*
@@ -128,20 +128,18 @@ _hsearch(hte_t **table, const char *s, bool mknew)
 }
 
 /*
- * Call function f for each name in the hash table.
+ * Call the action for each name in the hash table.
  */
 void
-_forall(hte_t **table, void (*f)(hte_t *))
+symtab_forall(void (*action)(hte_t *))
 {
 	int	i;
 	hte_t	*hte;
-
-	if (table == NULL)
-		table = htab;
+	hte_t	**table = htab;
 
 	for (i = 0; i < HSHSIZ2; i++) {
 		for (hte = table[i]; hte != NULL; hte = hte->h_link)
-			(*f)(hte);
+			action(hte);
 	}
 }
 
