@@ -1,4 +1,4 @@
-/*	$NetBSD: externs1.h,v 1.135 2021/08/28 13:11:10 rillig Exp $	*/
+/*	$NetBSD: externs1.h,v 1.136 2021/08/28 16:36:54 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -234,6 +234,7 @@ extern	const char *scl_name(scl_t);
 extern	const tnode_t *before_conversion(const tnode_t *);
 extern	type_t	*derive_type(type_t *, tspec_t);
 extern	type_t	*expr_derive_type(type_t *, tspec_t);
+extern	bool	is_gcc_builtin(const char *);
 extern	tnode_t	*build_constant(type_t *, val_t *);
 extern	tnode_t	*build_name(sym_t *, int);
 extern	tnode_t	*build_string(strg_t *);

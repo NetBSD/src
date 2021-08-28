@@ -1,6 +1,3 @@
-1d-1.1e15__builtin_isinfF1lDI
-2d-1.2e15__builtin_isnanF1lDI
-3d-1.3e18__builtin_copysignF2lDlDI
 0semit.c
 Semit.c
 47d0.47e12extern__BoolB
@@ -59,7 +56,4 @@ Semit.c
 163c0.163s2"%%"i9my_printff2PcCPCV
 164c0.164s2"%\a%\b%\f%\n%\r%\t%\v%\177"i9my_printff2PcCPCV
 159d0.159d14cover_outqcharF0V
-177c0.177p2i16__builtin_expectf2III
-178c0.178p1i17__builtin_bswap32f1II
-180c0.180z3i13__atomic_loadf3PLPLII
 173d0.173d17call_gcc_builtinsF2IPLV
