@@ -1,4 +1,4 @@
-/* $NetBSD: lint1.h,v 1.125 2021/08/23 17:03:23 rillig Exp $ */
+/* $NetBSD: lint1.h,v 1.126 2021/08/28 12:21:53 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -89,8 +89,8 @@ typedef	struct strg {
 	tspec_t	st_tspec;		/* CHAR or WCHAR */
 	size_t	st_len;			/* length without trailing NUL */
 	union {
-		u_char	*_st_cp;
-		wchar_t	*_st_wcp;
+		unsigned char *_st_cp;
+		wchar_t *_st_wcp;
 	} st_u;
 } strg_t;
 
@@ -134,8 +134,8 @@ typedef struct {
  * the structure type in pass 2.
  */
 typedef	struct {
-	u_int	sou_size_in_bits;
-	u_short	sou_align_in_bits;
+	unsigned int sou_size_in_bits;
+	unsigned short sou_align_in_bits;
 	bool	sou_incomplete : 1;
 	struct	sym *sou_first_member;
 	struct	sym *sou_tag;
@@ -183,8 +183,8 @@ struct lint1_type {
 		struct	sym *_t_args;	/* arguments (if t_proto) */
 	} t_u;
 	struct {
-		u_int	_t_flen : 8;	/* length of bit-field */
-		u_int	_t_foffs : 24;	/* offset of bit-field */
+		unsigned int _t_flen : 8;	/* length of bit-field */
+		unsigned int _t_foffs : 24;	/* offset of bit-field */
 	} t_b;
 	struct	lint1_type *t_subt; /* element type (if ARRAY),
 				 * return value (if FUNC),
@@ -361,8 +361,8 @@ typedef	struct dinfo {
 	type_t	*d_type;	/* after end_type() pointer to the type used
 				   for all declarators */
 	sym_t	*d_redeclared_symbol;
-	u_int	d_offset;	/* offset of next structure member */
-	u_short	d_sou_align_in_bits; /* alignment required for current
+	unsigned int d_offset;	/* offset of next structure member */
+	unsigned short d_sou_align_in_bits; /* alignment required for current
 				 * structure */
 	scl_t	d_ctx;		/* context of declaration */
 	bool	d_const : 1;	/* const in declaration specifiers */
