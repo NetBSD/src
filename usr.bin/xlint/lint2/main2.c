@@ -1,4 +1,4 @@
-/*	$NetBSD: main2.c,v 1.20 2021/08/28 17:11:19 rillig Exp $	*/
+/*	$NetBSD: main2.c,v 1.21 2021/08/28 19:49:28 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: main2.c,v 1.20 2021/08/28 17:11:19 rillig Exp $");
+__RCSID("$NetBSD: main2.c,v 1.21 2021/08/28 19:49:28 rillig Exp $");
 #endif
 
 #include <stdio.h>
@@ -187,8 +187,7 @@ main(int argc, char *argv[])
 	mainused();
 
 	/* perform all tests */
-	/* TODO: sort the names; hashcode order looks chaotic. */
-	symtab_forall(check_name);
+	symtab_forall_sorted(check_name);
 
 	exit(0);
 	/* NOTREACHED */
