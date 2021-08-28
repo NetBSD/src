@@ -1,4 +1,4 @@
-/* $NetBSD: lex.c,v 1.77 2021/08/28 21:14:32 rillig Exp $ */
+/* $NetBSD: lex.c,v 1.78 2021/08/28 21:52:14 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: lex.c,v 1.77 2021/08/28 21:14:32 rillig Exp $");
+__RCSID("$NetBSD: lex.c,v 1.78 2021/08/28 21:52:14 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -397,11 +397,11 @@ static unsigned int
 hash(const char *s)
 {
 	unsigned int v;
-	const unsigned char *us;
+	const char *p;
 
 	v = 0;
-	for (us = (const unsigned char *)s; *us != '\0'; us++) {
-		v = (v << 4) + *us;
+	for (p = s; *p != '\0'; p++) {
+		v = (v << 4) + (unsigned char)*p;
 		v ^= v >> 28;
 	}
 	return v % HSHSIZ1;

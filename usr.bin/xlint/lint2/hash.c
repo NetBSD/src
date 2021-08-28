@@ -1,4 +1,4 @@
-/*	$NetBSD: hash.c,v 1.21 2021/08/28 19:27:44 rillig Exp $	*/
+/*	$NetBSD: hash.c,v 1.22 2021/08/28 21:52:14 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: hash.c,v 1.21 2021/08/28 19:27:44 rillig Exp $");
+__RCSID("$NetBSD: hash.c,v 1.22 2021/08/28 21:52:14 rillig Exp $");
 #endif
 
 /*
@@ -53,8 +53,6 @@ __RCSID("$NetBSD: hash.c,v 1.21 2021/08/28 19:27:44 rillig Exp $");
 
 /* pointer to hash table, initialized in inithash() */
 static	hte_t	**htab;
-
-static	unsigned int hash(const char *);
 
 /*
  * Initialize hash table.
@@ -76,11 +74,11 @@ static unsigned int
 hash(const char *s)
 {
 	unsigned int v;
-	const unsigned char *us;
+	const char *p;
 
 	v = 0;
-	for (us = (const unsigned char *)s; *us != '\0'; us++) {
-		v = (v << 4) + *us;
+	for (p = s; *p != '\0'; p++) {
+		v = (v << 4) + (unsigned char)*p;
 		v ^= v >> 28;
 	}
 	return v % HSHSIZ2;
