@@ -1,4 +1,4 @@
-/*	$NetBSD: lex_integer.c,v 1.8 2021/08/28 20:51:10 rillig Exp $	*/
+/*	$NetBSD: lex_integer.c,v 1.9 2021/08/28 21:01:34 rillig Exp $	*/
 # 3 "lex_integer.c"
 
 /*
@@ -26,16 +26,21 @@ no_suffix(void)
 {
 	/* expect+1: passing 'int' */
 	print_type(0);
-	/* The '-' is not part of the constant, it's a unary operator. */
+	/* The '-' is not part of the constant, it is a unary operator. */
 	/* expect+1: passing 'int' */
 	print_type(-1);
+
 	/* expect+1: passing 'int' */
 	print_type(2147483647);
 	/* expect+1: passing 'int' */
 	print_type(0x7fffffff);
+	/* expect+1: passing 'int' */
+	print_type(017777777777);
 
 	/* expect+1: passing 'unsigned int' */
 	print_type(0x80000000);
+	/* expect+1: passing 'unsigned int' */
+	print_type(020000000000);
 	/* expect+1: passing 'unsigned int' */
 	print_type(0xffffffff);
 
