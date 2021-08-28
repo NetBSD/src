@@ -1,4 +1,4 @@
-/*	$NetBSD: inittyp.c,v 1.25 2021/08/22 14:50:06 rillig Exp $	*/
+/*	$NetBSD: inittyp.c,v 1.26 2021/08/28 13:02:25 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: inittyp.c,v 1.25 2021/08/22 14:50:06 rillig Exp $");
+__RCSID("$NetBSD: inittyp.c,v 1.26 2021/08/28 13:02:25 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -122,19 +122,19 @@ inittyp(void)
 		typeinfo(LCOMPLEX, LCOMPLEX, LCOMPLEX,
 		    LDOUBLE_SIZE * 2, 80 * 2,
 		    0, 0, 1, 1, 1, 1, "long double _Complex"),
-		typeinfo(VOID, VOID, VOID, -1, -1,
+		typeinfo(VOID, VOID, VOID, 0, 0,
 		    0, 0, 0, 0, 0, 0, "void"),
-		typeinfo(STRUCT, STRUCT, STRUCT, -1, -1,
+		typeinfo(STRUCT, STRUCT, STRUCT, 0, 0,
 		    0, 0, 0, 0, 0, 0, "struct"),
-		typeinfo(UNION, UNION, UNION, -1, -1,
+		typeinfo(UNION, UNION, UNION, 0, 0,
 		    0, 0, 0, 0, 0, 0, "union"),
 		typeinfo(ENUM, ENUM, ENUM, ENUM_SIZE, 24,
 		    1, 0, 0, 1, 1, 0, "enum"),
 		typeinfo(PTR, PTR, PTR, PTR_SIZE, 32,
 		    0, 1, 0, 0, 1, 0, "pointer"),
-		typeinfo(ARRAY, ARRAY, ARRAY, -1, -1,
+		typeinfo(ARRAY, ARRAY, ARRAY, 0, 0,
 		    0, 0, 0, 0, 0, 0, "array"),
-		typeinfo(FUNC, FUNC, FUNC, -1, -1,
+		typeinfo(FUNC, FUNC, FUNC, 0, 0,
 		    0, 0, 0, 0, 0, 0, "function"),
 #undef typeinfo
 	};
