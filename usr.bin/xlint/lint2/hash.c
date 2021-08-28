@@ -1,4 +1,4 @@
-/*	$NetBSD: hash.c,v 1.19 2021/08/28 17:18:42 rillig Exp $	*/
+/*	$NetBSD: hash.c,v 1.20 2021/08/28 19:00:55 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: hash.c,v 1.19 2021/08/28 17:18:42 rillig Exp $");
+__RCSID("$NetBSD: hash.c,v 1.20 2021/08/28 19:00:55 rillig Exp $");
 #endif
 
 /*
@@ -169,7 +169,6 @@ symtab_forall(void (*action)(hte_t *))
 	}
 }
 
-
 /* Run the action for each name in the symbol table, in alphabetic order. */
 void
 symtab_forall_sorted(void (*action)(hte_t *))
@@ -187,6 +186,8 @@ symtab_forall_sorted(void (*action)(hte_t *))
 
 	for (i = 0; i < sorted.len; i++)
 		action(sorted.items[i]);
+
+	free(sorted.items);
 }
 
 /*
