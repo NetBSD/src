@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.358 2021/08/28 16:36:54 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.359 2021/08/28 16:43:50 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.358 2021/08/28 16:36:54 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.359 2021/08/28 16:43:50 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -4098,6 +4098,14 @@ check_array_index(tnode_t *tn, bool amper)
 	}
 }
 
+static bool
+is_out_of_char_range(const tnode_t *tn)
+{
+	return tn->tn_op == CON &&
+	    (tn->tn_val->v_quad < 0 ||
+	     tn->tn_val->v_quad > (int)~(~0U << (CHAR_SIZE - 1)));
+}
+
 /*
  * Check for ordered comparisons of unsigned values with 0.
  */
@@ -4115,16 +4123,8 @@ check_integer_comparison(op_t op, tnode_t *ln, tnode_t *rn)
 	if (!is_integer(lt) || !is_integer(rt))
 		return;
 
-	if ((hflag || pflag) && lt == CHAR && rn->tn_op == CON &&
-	    (rn->tn_val->v_quad < 0 ||
-	     rn->tn_val->v_quad > (int)~(~0U << (CHAR_SIZE - 1)))) {
-		/* nonportable character comparison, op %s */
-		warning(230, op_name(op));
-		return;
-	}
-	if ((hflag || pflag) && rt == CHAR && ln->tn_op == CON &&
-	    (ln->tn_val->v_quad < 0 ||
-	     ln->tn_val->v_quad > (int)~(~0U << (CHAR_SIZE - 1)))) {
+	if ((hflag || pflag) && ((lt == CHAR && is_out_of_char_range(rn)) ||
+				 (rt == CHAR && is_out_of_char_range(ln)))) {
 		/* nonportable character comparison, op %s */
 		warning(230, op_name(op));
 		return;
