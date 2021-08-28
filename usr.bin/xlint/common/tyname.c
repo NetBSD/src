@@ -1,4 +1,4 @@
-/*	$NetBSD: tyname.c,v 1.44 2021/08/03 17:44:58 rillig Exp $	*/
+/*	$NetBSD: tyname.c,v 1.45 2021/08/28 13:29:26 rillig Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tyname.c,v 1.44 2021/08/03 17:44:58 rillig Exp $");
+__RCSID("$NetBSD: tyname.c,v 1.45 2021/08/28 13:29:26 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -143,7 +143,7 @@ buf_add_int(buffer *buf, int n)
 {
 	char num[1 + sizeof(n) * CHAR_BIT + 1];
 
-	snprintf(num, sizeof(num), "%d", n);
+	(void)snprintf(num, sizeof(num), "%d", n);
 	buf_add(buf, num);
 }
 

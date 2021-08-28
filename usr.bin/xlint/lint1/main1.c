@@ -1,4 +1,4 @@
-/*	$NetBSD: main1.c,v 1.56 2021/08/17 22:29:11 rillig Exp $	*/
+/*	$NetBSD: main1.c,v 1.57 2021/08/28 13:29:26 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: main1.c,v 1.56 2021/08/17 22:29:11 rillig Exp $");
+__RCSID("$NetBSD: main1.c,v 1.57 2021/08/28 13:29:26 rillig Exp $");
 #endif
 
 #include <sys/types.h>
@@ -147,11 +147,11 @@ gcc_builtins(void)
 		return NULL;
 	(void)unlink(template);
 	if ((fp = fdopen(fd, "r+")) == NULL) {
-		close(fd);
+		(void)close(fd);
 		return NULL;
 	}
 	if (fwrite(builtins, 1, builtins_len, fp) != builtins_len) {
-		fclose(fp);
+		(void)fclose(fp);
 		return NULL;
 	}
 	rewind(fp);
@@ -267,14 +267,14 @@ main(int argc, char *argv[])
 		if ((yyin = gcc_builtins()) == NULL)
 			err(1, "cannot open builtins");
 		yyparse();
-		fclose(yyin);
+		(void)fclose(yyin);
 	}
 
 	/* open the input file */
 	if ((yyin = fopen(argv[0], "r")) == NULL)
 		err(1, "cannot open '%s'", argv[0]);
 	yyparse();
-	fclose(yyin);
+	(void)fclose(yyin);
 
 	/* Following warnings cannot be suppressed by LINTED */
 	lwarn = LWARN_ALL;
