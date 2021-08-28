@@ -1,4 +1,4 @@
-/*	$NetBSD: func.c,v 1.121 2021/08/28 12:21:53 rillig Exp $	*/
+/*	$NetBSD: func.c,v 1.122 2021/08/28 13:29:26 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: func.c,v 1.121 2021/08/28 12:21:53 rillig Exp $");
+__RCSID("$NetBSD: func.c,v 1.122 2021/08/28 13:29:26 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -718,7 +718,7 @@ switch1(tnode_t *tn)
 	}
 
 	/* leak the memory, for check_case_label_bitand */
-	expr_save_memory();
+	(void)expr_save_memory();
 
 	check_getopt_begin_switch();
 	expr(tn, true, false, false, false);
