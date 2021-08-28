@@ -1,4 +1,4 @@
-/*	$NetBSD: lex_integer.c,v 1.7 2021/08/21 11:50:57 rillig Exp $	*/
+/*	$NetBSD: lex_integer.c,v 1.8 2021/08/28 20:51:10 rillig Exp $	*/
 # 3 "lex_integer.c"
 
 /*
@@ -9,60 +9,137 @@
 
 /* lint1-only-if: lp64 */
 
-void sinki(int);
-void sinku(unsigned int);
+long signed_long;
+unsigned long long unsigned_long_long_var;
 
-/* All platforms supported by lint have 32-bit int in two's complement. */
+struct s {
+	int member;
+};
+/*
+ * When lint tries to convert the argument to 'struct s', it prints the
+ * actual type of the argument as a side effect.
+ */
+void print_type(struct s);
+
 void
-test_signed_int(void)
+no_suffix(void)
 {
-	sinki(0);
+	/* expect+1: passing 'int' */
+	print_type(0);
+	/* The '-' is not part of the constant, it's a unary operator. */
+	/* expect+1: passing 'int' */
+	print_type(-1);
+	/* expect+1: passing 'int' */
+	print_type(2147483647);
+	/* expect+1: passing 'int' */
+	print_type(0x7fffffff);
 
-	sinki(-1);
+	/* expect+1: passing 'unsigned int' */
+	print_type(0x80000000);
+	/* expect+1: passing 'unsigned int' */
+	print_type(0xffffffff);
 
-	sinki(2147483647);
+	/* expect+1: passing 'long' */
+	print_type(2147483648);
+	/* expect+1: passing 'long' */
+	print_type(0x0000000100000000);
+	/* expect+1: passing 'long' */
+	print_type(0x7fffffffffffffff);
 
-	/* expect+2: converted from 'long' to 'int' due to prototype */
-	/* expect+1: conversion of 'long' to 'int' is out of range */
-	sinki(2147483648);
+	/* expect+1: passing 'unsigned long' */
+	print_type(0x8000000000000000);
+	/* expect+1: passing 'unsigned long' */
+	print_type(0xffffffffffffffff);
 
-	sinki(-2147483647);
-
-	/* expect+1: converted from 'long' to 'int' due to prototype */
-	sinki(-2147483648);
+	/* expect+2: warning: integer constant out of range [252] */
+	/* expect+1: warning: passing 'unsigned long' */
+	print_type(0x00010000000000000000);
 }
 
 void
-test_unsigned_int(void)
+suffix_u(void)
 {
-	sinku(0);
+	/* expect+1: passing 'unsigned int' */
+	print_type(3U);
+	/* expect+1: passing 'unsigned int' */
+	print_type(3u);
 
-	sinku(4294967295U);
-
-	/* expect+2: from 'unsigned long' to 'unsigned int' due to prototype */
-	/* expect+1: conversion of 'unsigned long' to 'unsigned int' is out of range */
-	sinku(4294967296U);
+	/* expect+1: passing 'unsigned int' */
+	print_type(4294967295U);
+	/* expect+1: passing 'unsigned long' */
+	print_type(4294967296U);
 }
 
-void sinkull(unsigned long long);
+void
+suffix_l(void)
+{
+	/* expect+1: passing 'long' */
+	print_type(3L);
+
+	/* expect+1: passing 'long' */
+	print_type(3l);
+}
 
 void
-suffixes(void)
+suffix_ul(void)
 {
-	sinkull(3u);
-	sinkull(3ll);
-	sinkull(3llu);
-	sinkull(3Ull);
+	/* expect+1: passing 'unsigned long' */
+	print_type(3UL);
+	/* expect+1: passing 'unsigned long' */
+	print_type(3LU);
+}
+
+void
+suffix_ll(void)
+{
+	/* expect+1: passing 'long long' */
+	print_type(3LL);
+
+	/* The 'Ll' must not use mixed case. Checked by the compiler. */
+	/* expect+1: passing 'long long' */
+	print_type(3Ll);
+
+	/* expect+1: passing 'long long' */
+	print_type(3ll);
+}
+
+void
+suffix_ull(void)
+{
+	/* expect+1: passing 'unsigned long long' */
+	print_type(3llu);
+	/* expect+1: passing 'unsigned long long' */
+	print_type(3Ull);
 
 	/* The 'LL' must not be split. Checked by the compiler. */
-	sinkull(3lul);
-	/* The 'Ll' must not used mixed case. Checked by the compiler. */
-	sinkull(3ULl);
+	/* expect+1: passing 'unsigned long long' */
+	print_type(3lul);
+
+	/* The 'Ll' must not use mixed case. Checked by the compiler. */
+	/* expect+1: passing 'unsigned long long' */
+	print_type(3ULl);
+}
+
+void
+suffix_too_many(void)
+{
+	/* expect+2: warning: malformed integer constant [251] */
+	/* expect+1: passing 'long long' */
+	print_type(3LLL);
+
+	/* expect+2: warning: malformed integer constant [251] */
+	/* expect+1: passing 'unsigned int' */
+	print_type(3uu);
 }
 
 /* https://gcc.gnu.org/onlinedocs/gcc/Binary-constants.html */
 void
 binary_literal(void)
 {
-	sinku(0b1111000001011010);
+	/* This is a GCC extension, but lint doesn't know that. */
+	/* expect+1: passing 'int' */
+	print_type(0b1111000001011010);
+
+	/* expect+1: passing 'unsigned int' */
+	print_type(0b11110000111100001111000011110000);
 }
