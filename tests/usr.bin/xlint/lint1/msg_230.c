@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_230.c,v 1.7 2021/08/28 14:45:19 rillig Exp $	*/
+/*	$NetBSD: msg_230.c,v 1.8 2021/08/28 15:25:10 rillig Exp $	*/
 # 3 "msg_230.c"
 
 // Test for message: nonportable character comparison, op %s [230]
@@ -88,6 +88,10 @@ compare_lt(char c)
 	/* expect+1: warning: nonportable character comparison, op > [230] */
 	if (c > -1)
 		return;
+	/*
+	 * On platforms where char is unsigned, lint warns that the
+	 * comparison always evaluates to true; see msg_230_uchar.c.
+	 */
 	if (c >= 0)
 		return;
 
