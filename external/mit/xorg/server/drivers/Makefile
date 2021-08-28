@@ -1,13 +1,6 @@
-#	$NetBSD: Makefile,v 1.102 2021/05/27 04:54:21 jdc Exp $
+#	$NetBSD: Makefile,v 1.103 2021/08/28 08:56:10 maya Exp $
 
 .include <bsd.own.mk>
-
-# modesetting is builtin to xorg-server 1.18 tree
-.if ${XORG_SERVER_SUBDIR} == "xorg-server.old"
-MODE_SETTING=	xf86-video-modesetting
-.else
-MODE_SETTING=
-.endif
 
 # xf86-input drivers
 
@@ -44,7 +37,6 @@ SUBDIR+= \
 	xf86-video-intel \
 	xf86-video-mach64 \
 	xf86-video-mga \
-	${MODE_SETTING} \
 	xf86-video-neomagic \
 	xf86-video-nv \
 	xf86-video-nouveau \
@@ -181,7 +173,6 @@ SUBDIR+= \
 .if ${MACHINE} == "evbarm"
 SUBDIR+= \
 	xf86-video-ati \
-	${MODE_SETTING} \
 	xf86-video-nouveau \
 	xf86-video-radeon \
 	xf86-video-radeon-kms \
