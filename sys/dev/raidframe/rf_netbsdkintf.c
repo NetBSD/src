@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.399 2021/08/07 16:19:15 thorpej Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.400 2021/08/28 16:00:52 oster Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2008-2011 The NetBSD Foundation, Inc.
@@ -101,7 +101,7 @@
  ***********************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.399 2021/08/07 16:19:15 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.400 2021/08/28 16:00:52 oster Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_raid_autoconfig.h"
@@ -3040,7 +3040,19 @@ rf_find_raid_components(void)
 				vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 				error = VOP_OPEN(vp, FREAD, NOCRED);
 				if (error) {
-					/* Whatever... */
+					/* Not quite a 'whatever'.  In
+					 * this situation we know 
+					 * there is a FS_RAID
+					 * partition, but we can't
+					 * open it.  The most likely
+					 * reason is that the
+					 * partition is already in
+					 * use by another RAID set.
+					 * So note that we've already
+					 * found a partition on this
+					 * disk so we don't attempt
+					 * to use the raw disk later. */
+					rf_part_found = 1;
 					vput(vp);
 					continue;
 				}
