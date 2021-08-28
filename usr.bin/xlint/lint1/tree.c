@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.359 2021/08/28 16:43:50 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.360 2021/08/28 16:51:57 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.359 2021/08/28 16:43:50 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.360 2021/08/28 16:51:57 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -4102,8 +4102,8 @@ static bool
 is_out_of_char_range(const tnode_t *tn)
 {
 	return tn->tn_op == CON &&
-	    (tn->tn_val->v_quad < 0 ||
-	     tn->tn_val->v_quad > (int)~(~0U << (CHAR_SIZE - 1)));
+	       !(0 <= tn->tn_val->v_quad &&
+		 tn->tn_val->v_quad < 1 << (CHAR_SIZE - 1));
 }
 
 /*
