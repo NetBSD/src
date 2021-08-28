@@ -1,4 +1,4 @@
-/* $NetBSD: lex.c,v 1.71 2021/08/28 12:21:53 rillig Exp $ */
+/* $NetBSD: lex.c,v 1.72 2021/08/28 13:11:10 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: lex.c,v 1.71 2021/08/28 12:21:53 rillig Exp $");
+__RCSID("$NetBSD: lex.c,v 1.72 2021/08/28 13:11:10 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -52,7 +52,7 @@ __RCSID("$NetBSD: lex.c,v 1.71 2021/08/28 12:21:53 rillig Exp $");
 #include "lint1.h"
 #include "cgram.h"
 
-#define CHAR_MASK	((int)(~(~0U << CHAR_SIZE)))
+#define CHAR_MASK	((1U << CHAR_SIZE) - 1)
 
 
 /* Current position (it's also updated when an included file is parsed) */
@@ -504,7 +504,7 @@ int
 lex_integer_constant(const char *yytext, size_t yyleng, int base)
 {
 	int	l_suffix, u_suffix;
-	int	len;
+	size_t	len;
 	const	char *cp;
 	char	c, *eptr;
 	tspec_t	typ;
@@ -663,7 +663,7 @@ lex_integer_constant(const char *yytext, size_t yyleng, int base)
 		break;
 	}
 
-	uq = (uint64_t)convert_integer((int64_t)uq, typ, -1);
+	uq = (uint64_t)convert_integer((int64_t)uq, typ, 0);
 
 	yylval.y_val = xcalloc(1, sizeof(*yylval.y_val));
 	yylval.y_val->v_tspec = typ;
@@ -680,11 +680,11 @@ lex_integer_constant(const char *yytext, size_t yyleng, int base)
  * to the width of type t.
  */
 int64_t
-convert_integer(int64_t q, tspec_t t, int len)
+convert_integer(int64_t q, tspec_t t, unsigned int len)
 {
 	uint64_t vbits;
 
-	if (len <= 0)
+	if (len == 0)
 		len = size_in_bits(t);
 
 	vbits = value_bits(len);
