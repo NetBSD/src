@@ -1,4 +1,4 @@
-/* $NetBSD: emit2.c,v 1.21 2021/08/28 17:11:19 rillig Exp $ */
+/* $NetBSD: emit2.c,v 1.22 2021/08/28 17:18:42 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: emit2.c,v 1.21 2021/08/28 17:11:19 rillig Exp $");
+__RCSID("$NetBSD: emit2.c,v 1.22 2021/08/28 17:18:42 rillig Exp $");
 #endif
 
 #include "lint2.h"
@@ -246,7 +246,7 @@ outlib(const char *name)
 	outfiles();
 
 	/* write all definitions with external linkage */
-	symtab_forall(dumpname);
+	symtab_forall_sorted(dumpname);
 
 	/* close the output */
 	outclose();

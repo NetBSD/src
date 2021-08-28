@@ -1,4 +1,4 @@
-/*	$NetBSD: hash.c,v 1.18 2021/08/28 17:11:19 rillig Exp $	*/
+/*	$NetBSD: hash.c,v 1.19 2021/08/28 17:18:42 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: hash.c,v 1.18 2021/08/28 17:11:19 rillig Exp $");
+__RCSID("$NetBSD: hash.c,v 1.19 2021/08/28 17:18:42 rillig Exp $");
 #endif
 
 /*
@@ -127,6 +127,32 @@ _hsearch(hte_t **table, const char *s, bool mknew)
 	return hte;
 }
 
+struct hte_list {
+	hte_t **items;
+	size_t len;
+	size_t cap;
+};
+
+static void
+hte_list_add(struct hte_list *list, hte_t *item)
+{
+	if (list->len >= list->cap) {
+		list->cap = list->cap == 0 ? 1024 : 2 * list->cap;
+		list->items = xrealloc(list->items,
+		    sizeof(list->items[0]) * list->cap);
+	}
+	list->items[list->len++] = item;
+}
+
+static int
+hte_by_name(const void *va, const void *vb)
+{
+	const hte_t *a = *((const hte_t *const *)va);
+	const hte_t *b = *((const hte_t *const *)vb);
+
+	return strcmp(a->h_name, b->h_name);
+}
+
 /*
  * Call the action for each name in the hash table.
  */
@@ -141,6 +167,26 @@ symtab_forall(void (*action)(hte_t *))
 		for (hte = table[i]; hte != NULL; hte = hte->h_link)
 			action(hte);
 	}
+}
+
+
+/* Run the action for each name in the symbol table, in alphabetic order. */
+void
+symtab_forall_sorted(void (*action)(hte_t *))
+{
+	hte_t *hte;
+	struct hte_list sorted = { NULL, 0, 0 };
+	size_t i;
+	hte_t **table = htab;
+
+	for (i = 0; i < HSHSIZ2; i++)
+		for (hte = table[i]; hte != NULL; hte = hte->h_link)
+			hte_list_add(&sorted, hte);
+
+	qsort(sorted.items, sorted.len, sizeof(sorted.items[0]), hte_by_name);
+
+	for (i = 0; i < sorted.len; i++)
+		action(sorted.items[i]);
 }
 
 /*
