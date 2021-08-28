@@ -1,4 +1,4 @@
-/*	$NetBSD: hash.c,v 1.16 2021/08/22 13:12:39 rillig Exp $	*/
+/*	$NetBSD: hash.c,v 1.17 2021/08/28 12:21:53 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: hash.c,v 1.16 2021/08/22 13:12:39 rillig Exp $");
+__RCSID("$NetBSD: hash.c,v 1.17 2021/08/28 12:21:53 rillig Exp $");
 #endif
 
 /*
@@ -54,7 +54,7 @@ __RCSID("$NetBSD: hash.c,v 1.16 2021/08/22 13:12:39 rillig Exp $");
 /* pointer to hash table, initialized in inithash() */
 static	hte_t	**htab;
 
-static	u_int	hash(const char *);
+static	unsigned int hash(const char *);
 
 /*
  * Initialize hash table.
@@ -72,14 +72,14 @@ _inithash(hte_t ***tablep)
 /*
  * Compute hash value from a string.
  */
-static u_int
+static unsigned int
 hash(const char *s)
 {
-	u_int	v;
-	const	u_char *us;
+	unsigned int v;
+	const unsigned char *us;
 
 	v = 0;
-	for (us = (const u_char *)s; *us != '\0'; us++) {
+	for (us = (const unsigned char *)s; *us != '\0'; us++) {
 		v = (v << sizeof(v)) + *us;
 		v ^= v >> (sizeof(v) * CHAR_BIT - sizeof(v));
 	}
@@ -93,7 +93,7 @@ hash(const char *s)
 hte_t *
 _hsearch(hte_t **table, const char *s, bool mknew)
 {
-	u_int	h;
+	unsigned int h;
 	hte_t	*hte;
 
 	if (table == NULL)
