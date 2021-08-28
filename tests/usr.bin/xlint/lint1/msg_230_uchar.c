@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_230_uchar.c,v 1.2 2021/08/21 11:50:57 rillig Exp $	*/
+/*	$NetBSD: msg_230_uchar.c,v 1.3 2021/08/28 14:45:19 rillig Exp $	*/
 # 3 "msg_230_uchar.c"
 
 // Test for message: nonportable character comparison, op %s [230]
@@ -23,7 +23,7 @@ void example(char c, unsigned char uc, signed char sc)
 	 *
 	 * The comparisons may actually differ subtly because of the usual
 	 * arithmetic promotions.
-	 * */
+	 */
 	/* expect+1: warning: nonportable character comparison, op <= [230] */
 	if (c <= -1)
 		return;
