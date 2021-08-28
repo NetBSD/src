@@ -1,4 +1,4 @@
-# $NetBSD: emit.exp-ln,v 1.2 2021/08/24 23:38:51 rillig Exp $
+# $NetBSD: emit.exp-ln,v 1.3 2021/08/28 17:18:42 rillig Exp $
 
 S llib-lemit.ln
 0 s llib-lemit.ln
@@ -11,8 +11,11 @@ S llib-lemit.ln
 1s emit.c
 2s expr_promote.c
 
-# from emit.c
-0 d 0.0 t u 11defined_int I
-0 d 0.0 d u 14cover_outqchar F0 V
+# Since emit2.c 1.22 from 2021-08-28, the symbols are written in alphabetic
+# order.
+
 # from expr_promote.c
 0 d 0.0 d u 6caller F1 PsT116arithmetic_types V
+# from emit.c
+0 d 0.0 d u 14cover_outqchar F0 V
+0 d 0.0 t u 11defined_int I
