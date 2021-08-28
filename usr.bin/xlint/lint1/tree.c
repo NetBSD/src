@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.352 2021/08/25 22:00:26 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.353 2021/08/28 12:21:53 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.352 2021/08/25 22:00:26 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.353 2021/08/28 12:21:53 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -1761,7 +1761,7 @@ promote(op_t op, bool farg, tnode_t *tn)
 {
 	tspec_t	t;
 	type_t	*ntp;
-	u_int	len;
+	unsigned int len;
 
 	t = tn->tn_type->t_tspec;
 
@@ -2215,11 +2215,11 @@ convert_constant_floating(op_t op, int arg, tspec_t ot, const type_t *tp,
 	case INT:
 		max = TARG_INT_MAX;	min = TARG_INT_MIN;	break;
 	case UINT:
-		max = (u_int)TARG_UINT_MAX;min = 0;		break;
+		max = (unsigned int)TARG_UINT_MAX; min = 0;	break;
 	case LONG:
 		max = TARG_LONG_MAX;	min = TARG_LONG_MIN;	break;
 	case ULONG:
-		max = (u_long)TARG_ULONG_MAX; min = 0;		break;
+		max = (unsigned long)TARG_ULONG_MAX; min = 0;	break;
 	case QUAD:
 		max = QUAD_MAX;		min = QUAD_MIN;		break;
 	case UQUAD:
@@ -4224,9 +4224,11 @@ constant_addr(const tnode_t *tn, const sym_t **symp, ptrdiff_t *offsp)
 		 *	struct foo {
 		 *		unsigned char a;
 		 *	} f = {
-		 *		(u_char)(u_long)(&(((struct foo *)0)->a))
+		 *		(unsigned char)(unsigned long)
+		 *		    (&(((struct foo *)0)->a))
 		 *	};
-		 * since psize(u_long) != psize(u_char) this fails.
+		 * since psize(unsigned long) != psize(unsigned char),
+		 * this fails.
 		 */
 		else if (psize(t) != psize(ot))
 			return -1;
