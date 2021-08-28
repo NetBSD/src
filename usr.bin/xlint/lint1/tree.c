@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.357 2021/08/28 15:36:54 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.358 2021/08/28 16:36:54 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.357 2021/08/28 15:36:54 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.358 2021/08/28 16:36:54 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -191,8 +191,14 @@ fallback_symbol(sym_t *sym)
 	error(99, sym->s_name);
 }
 
-/* https://gcc.gnu.org/onlinedocs/gcc/C-Extensions.html */
-static bool
+/*
+ * Functions that are predeclared by GCC can be called with arbitrary
+ * arguments.  Since lint usually runs after a successful compilation, it's
+ * the compiler's job to catch any errors.
+ *
+ * https://gcc.gnu.org/onlinedocs/gcc/C-Extensions.html
+ */
+bool
 is_gcc_builtin(const char *name)
 {
 	return strncmp(name, "__atomic_", 9) == 0 ||
@@ -3939,7 +3945,7 @@ check_expr_misc(const tnode_t *tn, bool vctx, bool tctx,
 	case CALL:
 		lint_assert(ln->tn_op == ADDR);
 		lint_assert(ln->tn_left->tn_op == NAME);
-		if (!szof)
+		if (!szof && !is_gcc_builtin(ln->tn_left->tn_sym->s_name))
 			outcall(tn, vctx || tctx, rvdisc);
 		break;
 	case EQ:
