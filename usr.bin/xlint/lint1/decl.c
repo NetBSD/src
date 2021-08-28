@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.225 2021/08/28 12:41:03 rillig Exp $ */
+/* $NetBSD: decl.c,v 1.226 2021/08/28 12:59:25 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: decl.c,v 1.225 2021/08/28 12:41:03 rillig Exp $");
+__RCSID("$NetBSD: decl.c,v 1.226 2021/08/28 12:59:25 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -581,7 +581,7 @@ setpackedsize(type_t *tp)
 				if (mem == NULL)
 					break;
 			}
-			size_t x = (size_t)type_size_in_bits(mem->s_type);
+			unsigned int x = type_size_in_bits(mem->s_type);
 			if (tp->t_tspec == STRUCT)
 				sp->sou_size_in_bits += x;
 			else if (x > sp->sou_size_in_bits)
@@ -1227,7 +1227,7 @@ declarator_1_struct_union(sym_t *dsym)
 	if (dsym->s_bitfield) {
 		align(alignment_in_bits(tp), tp->t_flen);
 		dsym->s_value.v_quad =
-		    (dcs->d_offset / size_in_bits(t)) * size_in_bits(t);
+		    dcs->d_offset - dcs->d_offset % size_in_bits(t);
 		tp->t_foffs = dcs->d_offset - (int)dsym->s_value.v_quad;
 		dcs->d_offset += tp->t_flen;
 	} else {
@@ -1852,7 +1852,7 @@ complete_tag_struct_or_union(type_t *tp, sym_t *fmem)
 					break;
 			}
 			sp->sou_size_in_bits +=
-			    (u_int)type_size_in_bits(mem->s_type);
+			    type_size_in_bits(mem->s_type);
 		}
 		if (mem->s_name != unnamed)
 			n++;

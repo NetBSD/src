@@ -1,4 +1,4 @@
-/*	$NetBSD: mem2.c,v 1.12 2021/08/01 17:59:47 rillig Exp $	*/
+/*	$NetBSD: mem2.c,v 1.13 2021/08/28 12:59:25 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: mem2.c,v 1.12 2021/08/01 17:59:47 rillig Exp $");
+__RCSID("$NetBSD: mem2.c,v 1.13 2021/08/28 12:59:25 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -59,11 +59,8 @@ static void	*mbuf;
 void
 initmem(void)
 {
-	int	pgsz;
 
-	pgsz = getpagesize();
-	mblklen = ((MBLKSIZ + pgsz - 1) / pgsz) * pgsz;
-
+	mblklen = MBLKSIZ - MBLKSIZ % (unsigned int)getpagesize();
 	nxtfree = mblklen;
 }
 
