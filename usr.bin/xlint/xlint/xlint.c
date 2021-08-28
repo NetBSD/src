@@ -1,4 +1,4 @@
-/* $NetBSD: xlint.c,v 1.79 2021/08/20 05:45:19 rillig Exp $ */
+/* $NetBSD: xlint.c,v 1.80 2021/08/28 14:42:29 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: xlint.c,v 1.79 2021/08/20 05:45:19 rillig Exp $");
+__RCSID("$NetBSD: xlint.c,v 1.80 2021/08/28 14:42:29 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -652,7 +652,7 @@ fname(const char *name)
 			warn("can't make temp");
 			terminate(-1);
 		}
-		close(fd);
+		(void)close(fd);
 	}
 	if (!iflag)
 		list_add_copy(&lint1.outfiles, ofn);
@@ -746,7 +746,7 @@ runchild(const char *path, char *const *args, const char *crfn, int fdout)
 		/* setup the standard output if necessary */
 		if (fdout != -1) {
 			dup2(fdout, STDOUT_FILENO);
-			close(fdout);
+			(void)close(fdout);
 		}
 		(void)execvp(path, args);
 		warn("cannot exec %s", path);
