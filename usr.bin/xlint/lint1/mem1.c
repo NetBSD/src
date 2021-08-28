@@ -1,4 +1,4 @@
-/*	$NetBSD: mem1.c,v 1.50 2021/08/28 12:59:25 rillig Exp $	*/
+/*	$NetBSD: mem1.c,v 1.51 2021/08/28 13:29:26 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: mem1.c,v 1.50 2021/08/28 12:59:25 rillig Exp $");
+__RCSID("$NetBSD: mem1.c,v 1.51 2021/08/28 13:29:26 rillig Exp $");
 #endif
 
 #include <sys/types.h>
@@ -112,7 +112,7 @@ transform_filename(const char *name, size_t len)
 			break;
 	if (r == NULL)
 		return name;
-	snprintf(buf, sizeof(buf), "%s%s", r->repl, name + r->orig_len);
+	(void)snprintf(buf, sizeof(buf), "%s%s", r->repl, name + r->orig_len);
 	return buf;
 }
 
