@@ -1,4 +1,4 @@
-/* $NetBSD: lex.c,v 1.76 2021/08/28 19:27:44 rillig Exp $ */
+/* $NetBSD: lex.c,v 1.77 2021/08/28 21:14:32 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: lex.c,v 1.76 2021/08/28 19:27:44 rillig Exp $");
+__RCSID("$NetBSD: lex.c,v 1.77 2021/08/28 21:14:32 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -510,22 +510,13 @@ lex_integer_constant(const char *yytext, size_t yyleng, int base)
 	tspec_t	typ;
 	bool	ansiu;
 	bool	warned = false;
-#ifdef TARG_INT128_MAX
-	__uint128_t uq = 0;
-	/* FIXME: INT128 doesn't belong here. */
-	/* TODO: const */
-	/* TODO: remove #ifdef */
-	static	tspec_t contypes[2][4] = {
-		{ INT,  LONG,  QUAD, INT128, },
-		{ UINT, ULONG, UQUAD, UINT128, }
-	};
-#else
 	uint64_t uq = 0;
-	static	tspec_t contypes[2][3] = {
+
+	/* C11 6.4.4.1p5 */
+	static const tspec_t suffix_type[2][3] = {
 		{ INT,  LONG,  QUAD, },
 		{ UINT, ULONG, UQUAD, }
 	};
-#endif
 
 	cp = yytext;
 	len = yyleng;
@@ -560,7 +551,7 @@ lex_integer_constant(const char *yytext, size_t yyleng, int base)
 		/* suffix U is illegal in traditional C */
 		warning(97);
 	}
-	typ = contypes[u_suffix][l_suffix];
+	typ = suffix_type[u_suffix][l_suffix];
 
 	errno = 0;
 
@@ -643,25 +634,6 @@ lex_integer_constant(const char *yytext, size_t yyleng, int base)
 			warning(252);
 		}
 		break;
-#ifdef INT128_SIZE
-	case INT128:
-#ifdef TARG_INT128_MAX
-		if (uq > TARG_INT128_MAX && !tflag) {
-			typ = UINT128;
-			if (!sflag)
-				ansiu = true;
-		}
-#endif
-		break;
-	case UINT128:
-#ifdef TARG_INT128_MAX
-		if (uq > TARG_UINT128_MAX && !warned) {
-			/* integer constant out of range */
-			warning(252);
-		}
-#endif
-		break;
-#endif
 	default:
 		break;
 	}
