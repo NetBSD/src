@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.224 2021/08/28 12:21:53 rillig Exp $ */
+/* $NetBSD: decl.c,v 1.225 2021/08/28 12:41:03 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: decl.c,v 1.224 2021/08/28 12:21:53 rillig Exp $");
+__RCSID("$NetBSD: decl.c,v 1.225 2021/08/28 12:41:03 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -552,15 +552,15 @@ settdsym(type_t *tp, sym_t *sym)
 	}
 }
 
-static size_t
+static unsigned int
 bitfieldsize(sym_t **mem)
 {
-	size_t len = (*mem)->s_type->t_flen;
+	unsigned int len = (*mem)->s_type->t_flen;
 	while (*mem != NULL && (*mem)->s_type->t_bitfield) {
 		len += (*mem)->s_type->t_flen;
 		*mem = (*mem)->s_next;
 	}
-	return ((len + INT_SIZE - 1) / INT_SIZE) * INT_SIZE;
+	return len - len % INT_SIZE;
 }
 
 static void
@@ -951,7 +951,7 @@ length(const type_t *tp, const char *name)
 	return elem * elsz;
 }
 
-int
+unsigned int
 alignment_in_bits(const type_t *tp)
 {
 	size_t	a;
@@ -1807,6 +1807,7 @@ storage_class_name(scl_t sc)
 	case ENUM_TAG:	return "enum";
 	default:	lint_assert(/*CONSTCOND*/false);
 	}
+	/* NOTREACHED */
 }
 
 /*
@@ -1826,7 +1827,7 @@ complete_tag_struct_or_union(type_t *tp, sym_t *fmem)
 	setcomplete(tp, true);
 
 	t = tp->t_tspec;
-	align(dcs->d_sou_align_in_bits, 0);
+	align((u_int)dcs->d_sou_align_in_bits, 0);
 	sp = tp->t_str;
 	sp->sou_align_in_bits = dcs->d_sou_align_in_bits;
 	sp->sou_first_member = fmem;
@@ -1850,7 +1851,8 @@ complete_tag_struct_or_union(type_t *tp, sym_t *fmem)
 				if (mem == NULL)
 					break;
 			}
-			sp->sou_size_in_bits += type_size_in_bits(mem->s_type);
+			sp->sou_size_in_bits +=
+			    (u_int)type_size_in_bits(mem->s_type);
 		}
 		if (mem->s_name != unnamed)
 			n++;
