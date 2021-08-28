@@ -1,4 +1,4 @@
-/* $NetBSD: lex.c,v 1.72 2021/08/28 13:11:10 rillig Exp $ */
+/* $NetBSD: lex.c,v 1.73 2021/08/28 13:29:26 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: lex.c,v 1.72 2021/08/28 13:11:10 rillig Exp $");
+__RCSID("$NetBSD: lex.c,v 1.73 2021/08/28 13:29:26 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -295,7 +295,7 @@ add_keyword(const struct kwtab *kw, bool leading, bool trailing)
 	if (!leading && !trailing) {
 		name = kw->kw_name;
 	} else {
-		snprintf(buf, sizeof(buf), "%s%s%s",
+		(void)snprintf(buf, sizeof(buf), "%s%s%s",
 		    leading ? "__" : "", kw->kw_name, trailing ? "__" : "");
 		name = xstrdup(buf);
 	}

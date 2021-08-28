@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.358 2021/08/25 22:48:40 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.359 2021/08/28 13:29:26 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: cgram.y,v 1.358 2021/08/25 22:48:40 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.359 2021/08/28 13:29:26 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -2166,7 +2166,7 @@ cgram_to_string(int token, YYSTYPE val)
 static void
 cgram_print(FILE *output, int token, YYSTYPE val)
 {
-	fprintf(output, "%s", cgram_to_string(token, val));
+	(void)fprintf(output, "%s", cgram_to_string(token, val));
 }
 #endif
 
