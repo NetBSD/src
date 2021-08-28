@@ -1,4 +1,4 @@
-/* $NetBSD: read.c,v 1.55 2021/08/22 13:21:48 rillig Exp $ */
+/* $NetBSD: read.c,v 1.56 2021/08/28 12:21:53 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: read.c,v 1.55 2021/08/22 13:21:48 rillig Exp $");
+__RCSID("$NetBSD: read.c,v 1.56 2021/08/28 12:21:53 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -77,9 +77,9 @@ static	size_t	nfnames;
  * types.
  */
 typedef struct thtab {
-	const	char *th_name;
-	u_short	th_idx;
-	struct	thtab *th_next;
+	const char *th_name;
+	unsigned short th_idx;
+	struct thtab *th_next;
 } thtab_t;
 static	thtab_t	**thtab;		/* hash table */
 type_t	**tlst;				/* array for indexed access */
@@ -99,10 +99,10 @@ static	void	setfnid(int, const char *);
 static	void	funccall(pos_t *, const char *);
 static	void	decldef(pos_t *, const char *);
 static	void	usedsym(pos_t *, const char *);
-static	u_short	inptype(const char *, const char **);
+static	unsigned short inptype(const char *, const char **);
 static	int	gettlen(const char *, const char **);
-static	u_short	findtype(const char *, size_t, int);
-static	u_short	storetyp(type_t *, const char *, size_t, int);
+static	unsigned short findtype(const char *, size_t, int);
+static	unsigned short storetyp(type_t *, const char *, size_t, int);
 static	int	thash(const char *, size_t);
 static	char	*inpqstrg(const char *, const char **);
 static	const	char *inpname(const char *, const char **);
@@ -206,10 +206,10 @@ readfile(const char *name)
 			inperr("bad line number");
 		iline = parse_int(&cp);
 
-		pos.p_src = (u_short)csrcfile;
-		pos.p_line = (u_short)cline;
-		pos.p_isrc = (u_short)isrc;
-		pos.p_iline = (u_short)iline;
+		pos.p_src = (unsigned short)csrcfile;
+		pos.p_line = (unsigned short)cline;
+		pos.p_isrc = (unsigned short)isrc;
+		pos.p_iline = (unsigned short)iline;
 
 		/* process rest of this record */
 		switch (rt) {
@@ -286,7 +286,7 @@ setfnid(int fid, const char *cp)
 	 */
 	if ((size_t)fid >= ninpfns)
 		errx(1, "internal error: setfnid()");
-	inpfns[fid] = (u_short)getfnidx(cp);
+	inpfns[fid] = (unsigned short)getfnidx(cp);
 }
 
 /*
@@ -616,7 +616,7 @@ parse_tspec(const char **pp, char c, bool *osdef)
 /*
  * Read a type and return the index of this type.
  */
-static u_short
+static unsigned short
 inptype(const char *cp, const char **epp)
 {
 	char	c;
@@ -625,7 +625,7 @@ inptype(const char *cp, const char **epp)
 	int	narg, i;
 	bool	osdef = false;
 	size_t	tlen;
-	u_short	tidx;
+	unsigned short tidx;
 	int	h;
 
 	/* If we have this type already, return its index. */
@@ -908,7 +908,7 @@ gettlen(const char *cp, const char **epp)
 /*
  * Search a type by its type string.
  */
-static u_short
+static unsigned short
 findtype(const char *cp, size_t len, int h)
 {
 	thtab_t	*thte;
@@ -927,10 +927,10 @@ findtype(const char *cp, size_t len, int h)
  * Store a type and its type string, so we can later share this type
  * if we read the same type string from the input file.
  */
-static u_short
+static unsigned short
 storetyp(type_t *tp, const char *cp, size_t len, int h)
 {
-	static	u_int	tidx = 1;	/* 0 is reserved */
+	static unsigned int tidx = 1;	/* 0 is reserved */
 	thtab_t	*thte;
 	char	*name;
 
@@ -956,7 +956,7 @@ storetyp(type_t *tp, const char *cp, size_t len, int h)
 	thte->th_next = thtab[h];
 	thtab[h] = thte;
 
-	return (u_short)tidx++;
+	return (unsigned short)tidx++;
 }
 
 /*
@@ -965,11 +965,11 @@ storetyp(type_t *tp, const char *cp, size_t len, int h)
 static int
 thash(const char *s, size_t len)
 {
-	u_int	v;
+	unsigned int v;
 
 	v = 0;
 	while (len-- != 0) {
-		v = (v << sizeof(v)) + (u_char)*s++;
+		v = (v << sizeof(v)) + (unsigned char)*s++;
 		v ^= v >> (sizeof(v) * CHAR_BIT - sizeof(v));
 	}
 	return v % THSHSIZ2;

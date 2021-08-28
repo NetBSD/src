@@ -1,4 +1,4 @@
-/* $NetBSD: lex.c,v 1.70 2021/08/25 22:48:40 rillig Exp $ */
+/* $NetBSD: lex.c,v 1.71 2021/08/28 12:21:53 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: lex.c,v 1.70 2021/08/25 22:48:40 rillig Exp $");
+__RCSID("$NetBSD: lex.c,v 1.71 2021/08/28 12:21:53 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -72,7 +72,7 @@ bool in_system_header = false;
 static	sbuf_t *allocsb(void);
 static	void	freesb(sbuf_t *);
 static	int	inpc(void);
-static	u_int	hash(const char *);
+static	unsigned int hash(const char *);
 static	sym_t *	search(sbuf_t *);
 static	int	keyw(sym_t *);
 static	int	get_escaped_char(int);
@@ -393,14 +393,14 @@ inpc(void)
 	return c;
 }
 
-static u_int
+static unsigned int
 hash(const char *s)
 {
-	u_int	v;
-	const	u_char *us;
+	unsigned int v;
+	const unsigned char *us;
 
 	v = 0;
-	for (us = (const u_char *)s; *us != '\0'; us++) {
+	for (us = (const unsigned char *)s; *us != '\0'; us++) {
 		v = (v << sizeof(v)) + *us;
 		v ^= v >> (sizeof(v) * CHAR_BIT - sizeof(v));
 	}
@@ -460,7 +460,7 @@ lex_name(const char *yytext, size_t yyleng)
 static sym_t *
 search(sbuf_t *sb)
 {
-	u_int h;
+	unsigned int h;
 	sym_t *sym;
 	const struct kwtab *kw;
 
@@ -1276,7 +1276,7 @@ clear_warn_flags(void)
 int
 lex_string(void)
 {
-	u_char	*s;
+	unsigned char *s;
 	int	c;
 	size_t	len, max;
 	strg_t	*strg;

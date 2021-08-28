@@ -1,4 +1,4 @@
-/* $NetBSD: lint2.h,v 1.16 2021/08/22 13:01:47 rillig Exp $ */
+/* $NetBSD: lint2.h,v 1.17 2021/08/28 12:21:53 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -95,12 +95,12 @@ typedef	struct arginf {
  * Keeps information about position in source file.
  */
 typedef	struct {
-	u_short	p_src;		/* index of name of translation unit
+	unsigned short p_src;	/* index of name of translation unit
 				   (the name which was specified at the
 				   command line) */
-	u_short	p_line;		/* line number in p_src */
-	u_short	p_isrc;		/* index of (included) file */
-	u_short p_iline;	/* line number in p_iline */
+	unsigned short p_line;	/* line number in p_src */
+	unsigned short p_isrc;	/* index of (included) file */
+	unsigned short p_iline;	/* line number in p_iline */
 } pos_t;
 
 /*
@@ -115,7 +115,7 @@ typedef	struct sym {
 	struct {
 		pos_t	s_pos;		/* pos of def./decl. */
 #ifndef lint
-		u_char	s_def;		/* DECL, TDEF or DEF */
+		unsigned char s_def;	/* DECL, TDEF or DEF */
 #else
 		def_t	s_def;
 #endif
@@ -126,7 +126,7 @@ typedef	struct sym {
 		bool	s_va : 1;	/* check only first s_nva arguments */
 		bool	s_prfl : 1;	/* printflike */
 		bool	s_scfl : 1;	/* scanflike */
-		u_short	s_type;		/* type */
+		unsigned short s_type;	/* type */
 		struct	sym *s_next;	/* next symbol with same name */
 	} s_s;
 	short	s_nva;
@@ -153,7 +153,7 @@ typedef	struct fcall {
 	pos_t	f_pos;		/* position of call */
 	bool	f_rused : 1;	/* return value used */
 	bool	f_rdisc : 1;	/* return value discarded (casted to void) */
-	u_short	f_type;		/* types of expected return value and args */
+	unsigned short f_type;	/* types of expected return value and args */
 	arginf_t *f_args;	/* information about constant arguments */
 	struct	fcall *f_next;	/* next call of same function */
 } fcall_t;
@@ -189,7 +189,7 @@ typedef	struct hte {
 
 /* maps type indices into pointers to type structs */
 static inline type_t *
-TP(u_short type_id) {
+TP(unsigned short type_id) {
 	/* force sequence point for newly parsed type_id */
 	return tlst[type_id];
 }

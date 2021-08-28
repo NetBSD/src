@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.223 2021/08/28 12:06:08 rillig Exp $ */
+/* $NetBSD: decl.c,v 1.224 2021/08/28 12:21:53 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: decl.c,v 1.223 2021/08/28 12:06:08 rillig Exp $");
+__RCSID("$NetBSD: decl.c,v 1.224 2021/08/28 12:21:53 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -64,7 +64,7 @@ dinfo_t	*dcs;
 
 static	type_t	*tdeferr(type_t *, tspec_t);
 static	void	settdsym(type_t *, sym_t *);
-static	void	align(u_int, u_int);
+static	void	align(unsigned int, unsigned int);
 static	sym_t	*newtag(sym_t *, scl_t, bool, bool);
 static	bool	eqargs(const type_t *, const type_t *, bool *);
 static	bool	mnoarg(const type_t *, bool *);
@@ -1180,7 +1180,7 @@ declarator_1_struct_union(sym_t *dsym)
 	type_t	*tp;
 	tspec_t	t;
 	int	sz;
-	u_int	o = 0;	/* Appease GCC */
+	unsigned int o = 0;	/* Appease GCC */
 
 	lint_assert(dsym->s_scl == MOS || dsym->s_scl == MOU);
 
@@ -1257,9 +1257,9 @@ declarator_1_struct_union(sym_t *dsym)
  * al contains the required alignment, len the length of a bit-field.
  */
 static void
-align(u_int al, u_int len)
+align(unsigned int al, unsigned int len)
 {
-	u_int no;
+	unsigned int no;
 
 	/*
 	 * The alignment of the current element becomes the alignment of

@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.c,v 1.15 2021/03/27 11:08:00 rillig Exp $	*/
+/*	$NetBSD: msg.c,v 1.16 2021/08/28 12:21:53 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: msg.c,v 1.15 2021/03/27 11:08:00 rillig Exp $");
+__RCSID("$NetBSD: msg.c,v 1.16 2021/08/28 12:21:53 rillig Exp $");
 #endif
 
 #include <stdarg.h>
@@ -127,7 +127,7 @@ mkpos(pos_t *posp)
 	qm = !Hflag && posp->p_src != posp->p_isrc;
 
 	len = strlen(fn = lbasename(fnames[src]));
-	len += 3 * sizeof(u_short) + 4;
+	len += 3 * sizeof(unsigned short) + 4;
 
 	if (len > blen)
 		buf = xrealloc(buf, blen = len);
