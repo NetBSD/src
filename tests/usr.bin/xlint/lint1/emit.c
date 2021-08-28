@@ -1,4 +1,4 @@
-/*	$NetBSD: emit.c,v 1.2 2021/08/08 11:07:19 rillig Exp $	*/
+/*	$NetBSD: emit.c,v 1.3 2021/08/28 16:21:24 rillig Exp $	*/
 # 3 "emit.c"
 
 /*
@@ -7,8 +7,8 @@
  * consistently across different translation units.
  */
 
-// omit the option '-g' to avoid having the GCC builtins in the .ln file.
-/* lint1-flags: -Sw */
+
+
 
 /*
  * Define some derived types.
@@ -162,4 +162,20 @@ cover_outqchar(void)
 	my_printf("%s", "%s");
 	my_printf("%s", "%%");
 	my_printf("%s", "%\a %\b %\f %\n %\r %\t %\v %\177");
+}
+
+/*
+ * Calls to GCC builtin functions should not be emitted since GCC already
+ * guarantees a consistent definition of these function and checks the
+ * arguments, so there is nothing left to do for lint.
+ */
+void
+call_gcc_builtins(int x, long *ptr)
+{
+	long value;
+
+	__builtin_expect(x > 0, 1);
+	__builtin_bswap32(0x12345678);
+
+	__atomic_load(ptr, &value, 0);
 }
