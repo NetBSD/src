@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.353 2021/08/28 12:21:53 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.354 2021/08/28 12:29:40 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.353 2021/08/28 12:21:53 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.354 2021/08/28 12:29:40 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -2215,15 +2215,15 @@ convert_constant_floating(op_t op, int arg, tspec_t ot, const type_t *tp,
 	case INT:
 		max = TARG_INT_MAX;	min = TARG_INT_MIN;	break;
 	case UINT:
-		max = (unsigned int)TARG_UINT_MAX; min = 0;	break;
+		max = TARG_UINT_MAX;	min = 0;		break;
 	case LONG:
 		max = TARG_LONG_MAX;	min = TARG_LONG_MIN;	break;
 	case ULONG:
-		max = (unsigned long)TARG_ULONG_MAX; min = 0;	break;
+		max = TARG_ULONG_MAX;	min = 0;		break;
 	case QUAD:
 		max = QUAD_MAX;		min = QUAD_MIN;		break;
 	case UQUAD:
-		max = (uint64_t)UQUAD_MAX; min = 0;		break;
+		max = UQUAD_MAX;	min = 0;		break;
 	case FLOAT:
 	case FCOMPLEX:
 		max = FLT_MAX;		min = -FLT_MAX;		break;
