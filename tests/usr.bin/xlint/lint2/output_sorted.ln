@@ -1,0 +1,29 @@
+# $NetBSD: output_sorted.ln,v 1.1 2021/08/28 19:45:18 rillig Exp $
+#
+# Test whether the output is sorted by symbol name.
+# As of 2021-08-28, the output is sorted by hashcode, which looks random.
+
+0 s output_sorted.c
+S output_sorted.c
+
+10 c 0.10 d	12no_prototype		f2 I PcC V
+11 c 0.11 d	12no_prototype		f2 PcC D V
+
+# Function calls with different names and incompatible argument types.
+# The function names are sorted by their Gray code.
+10 c 0.10 d	8func0000		f2 I PcC V
+11 c 0.11 d	8func0000		f2 PcC D V
+10 c 0.10 d	8func1000		f2 I PcC V
+11 c 0.11 d	8func1000		f2 PcC D V
+10 c 0.10 d	8func3000		f2 I PcC V
+11 c 0.11 d	8func3000		f2 PcC D V
+10 c 0.10 d	8func2000		f2 I PcC V
+11 c 0.11 d	8func2000		f2 PcC D V
+10 c 0.10 d	8func6000		f2 I PcC V
+11 c 0.11 d	8func6000		f2 PcC D V
+10 c 0.10 d	8func7000		f2 I PcC V
+11 c 0.11 d	8func7000		f2 PcC D V
+10 c 0.10 d	8func5000		f2 I PcC V
+11 c 0.11 d	8func5000		f2 PcC D V
+10 c 0.10 d	8func4000		f2 I PcC V
+11 c 0.11 d	8func4000		f2 PcC D V
