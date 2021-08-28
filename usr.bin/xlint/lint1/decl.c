@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.222 2021/08/16 06:49:56 rillig Exp $ */
+/* $NetBSD: decl.c,v 1.223 2021/08/28 12:06:08 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: decl.c,v 1.222 2021/08/16 06:49:56 rillig Exp $");
+__RCSID("$NetBSD: decl.c,v 1.223 2021/08/28 12:06:08 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -957,11 +957,8 @@ alignment_in_bits(const type_t *tp)
 	size_t	a;
 	tspec_t	t;
 
-	while (tp != NULL && tp->t_tspec == ARRAY)
+	while (tp->t_tspec == ARRAY)
 		tp = tp->t_subt;
-
-	if (tp == NULL)
-		return -1;
 
 	if ((t = tp->t_tspec) == STRUCT || t == UNION) {
 		a = tp->t_str->sou_align_in_bits;
