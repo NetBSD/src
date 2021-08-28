@@ -1,4 +1,4 @@
-/* $NetBSD: lex.c,v 1.73 2021/08/28 13:29:26 rillig Exp $ */
+/* $NetBSD: lex.c,v 1.74 2021/08/28 15:01:43 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: lex.c,v 1.73 2021/08/28 13:29:26 rillig Exp $");
+__RCSID("$NetBSD: lex.c,v 1.74 2021/08/28 15:01:43 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -816,14 +816,8 @@ lex_character_constant(void)
 		/* empty character constant */
 		error(73);
 	}
-	if (n == 1) {
-		/*
-		 * XXX: use the target platform's 'char' instead of the
-		 *  'char' from the execution environment, to be able to
-		 *  run lint for powerpc on x86_64.
-		 */
-		val = (char)val;
-	}
+	if (n == 1)
+		val = (int)convert_integer(val, CHAR, CHAR_SIZE);
 
 	yylval.y_val = xcalloc(1, sizeof(*yylval.y_val));
 	yylval.y_val->v_tspec = INT;
