@@ -1,4 +1,4 @@
-/*	$NetBSD: main2.c,v 1.19 2021/08/22 04:43:44 rillig Exp $	*/
+/*	$NetBSD: main2.c,v 1.20 2021/08/28 17:11:19 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: main2.c,v 1.19 2021/08/22 04:43:44 rillig Exp $");
+__RCSID("$NetBSD: main2.c,v 1.20 2021/08/28 17:11:19 rillig Exp $");
 #endif
 
 #include <stdio.h>
@@ -174,7 +174,7 @@ main(int argc, char *argv[])
 
 	/* write the lint library */
 	if (Cflag) {
-		forall(mkstatic);
+		symtab_forall(mkstatic);
 		outlib(libname);
 	}
 
@@ -182,13 +182,13 @@ main(int argc, char *argv[])
 	for (i = 0; libs[i] != NULL; i++)
 		readfile(libs[i]);
 
-	forall(mkstatic);
+	symtab_forall(mkstatic);
 
 	mainused();
 
 	/* perform all tests */
 	/* TODO: sort the names; hashcode order looks chaotic. */
-	forall(check_name);
+	symtab_forall(check_name);
 
 	exit(0);
 	/* NOTREACHED */
