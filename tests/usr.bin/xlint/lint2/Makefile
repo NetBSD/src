@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.7 2021/08/24 21:30:52 rillig Exp $
+# $NetBSD: Makefile,v 1.8 2021/08/28 19:45:18 rillig Exp $
 
 NOMAN=		yes
 
@@ -17,6 +17,7 @@ TESTS+=		emit_lp64
     010 011 012 013 014 015 016 017 018
 TESTS+=		msg_${msg}
 .endfor
+TESTS+=		output_sorted
 TESTS+=		read
 TESTS+=		read_lp64
 TESTS+=		read_printf

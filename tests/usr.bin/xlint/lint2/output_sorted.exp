@@ -1,0 +1,27 @@
+func7000 used( output_sorted.c(10) ), but not defined
+func7000, arg 1 used inconsistently  	output_sorted.c(10)[int]  ::  output_sorted.c(11)[pointer to const char]
+func7000, arg 2 used inconsistently  	output_sorted.c(10)[pointer to const char]  ::  output_sorted.c(11)[double]
+func0000 used( output_sorted.c(10) ), but not defined
+func0000, arg 1 used inconsistently  	output_sorted.c(10)[int]  ::  output_sorted.c(11)[pointer to const char]
+func0000, arg 2 used inconsistently  	output_sorted.c(10)[pointer to const char]  ::  output_sorted.c(11)[double]
+no_prototype used( output_sorted.c(10) ), but not defined
+no_prototype, arg 1 used inconsistently  	output_sorted.c(10)[int]  ::  output_sorted.c(11)[pointer to const char]
+no_prototype, arg 2 used inconsistently  	output_sorted.c(10)[pointer to const char]  ::  output_sorted.c(11)[double]
+func1000 used( output_sorted.c(10) ), but not defined
+func1000, arg 1 used inconsistently  	output_sorted.c(10)[int]  ::  output_sorted.c(11)[pointer to const char]
+func1000, arg 2 used inconsistently  	output_sorted.c(10)[pointer to const char]  ::  output_sorted.c(11)[double]
+func2000 used( output_sorted.c(10) ), but not defined
+func2000, arg 1 used inconsistently  	output_sorted.c(10)[int]  ::  output_sorted.c(11)[pointer to const char]
+func2000, arg 2 used inconsistently  	output_sorted.c(10)[pointer to const char]  ::  output_sorted.c(11)[double]
+func3000 used( output_sorted.c(10) ), but not defined
+func3000, arg 1 used inconsistently  	output_sorted.c(10)[int]  ::  output_sorted.c(11)[pointer to const char]
+func3000, arg 2 used inconsistently  	output_sorted.c(10)[pointer to const char]  ::  output_sorted.c(11)[double]
+func4000 used( output_sorted.c(10) ), but not defined
+func4000, arg 1 used inconsistently  	output_sorted.c(10)[int]  ::  output_sorted.c(11)[pointer to const char]
+func4000, arg 2 used inconsistently  	output_sorted.c(10)[pointer to const char]  ::  output_sorted.c(11)[double]
+func5000 used( output_sorted.c(10) ), but not defined
+func5000, arg 1 used inconsistently  	output_sorted.c(10)[int]  ::  output_sorted.c(11)[pointer to const char]
+func5000, arg 2 used inconsistently  	output_sorted.c(10)[pointer to const char]  ::  output_sorted.c(11)[double]
+func6000 used( output_sorted.c(10) ), but not defined
+func6000, arg 1 used inconsistently  	output_sorted.c(10)[int]  ::  output_sorted.c(11)[pointer to const char]
+func6000, arg 2 used inconsistently  	output_sorted.c(10)[pointer to const char]  ::  output_sorted.c(11)[double]
