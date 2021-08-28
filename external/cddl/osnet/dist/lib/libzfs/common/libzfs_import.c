@@ -1099,6 +1099,7 @@ zpool_open_func(void *arg)
 	off_t size;
 
 	/* skip devices with wedges */
+	memset(&dkwl, 0, sizeof(dkwl));
 	if (native_ioctl(fd, DIOCLWEDGES, &dkwl) == 0 &&
 	    dkwl.dkwl_nwedges > 0) {
 		(void) close(fd);
