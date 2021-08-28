@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_162.c,v 1.3 2021/08/23 17:47:34 rillig Exp $	*/
+/*	$NetBSD: msg_162.c,v 1.4 2021/08/28 14:45:19 rillig Exp $	*/
 # 3 "msg_162.c"
 
 // Test for message: comparison of %s with %s, op %s [162]
@@ -50,4 +50,35 @@ right_unsigned(unsigned int ui)
 	/* expect+1: warning: comparison of 0 with unsigned int, op >= [162] */
 	if (0 >= ui) {
 	}
+}
+
+/*
+ * Lint does not care about these comparisons, even though they are obviously
+ * out of range.
+ */
+void
+compare_signed_char(signed char sc)
+{
+	if (sc == -129)
+		return;
+	if (sc == -128)
+		return;
+	if (sc == 127)
+		return;
+	if (sc == 128)
+		return;
+}
+
+void
+compare_unsigned_char(unsigned char uc)
+{
+	/* expect+1: warning: comparison of unsigned char with negative constant, op == [162] */
+	if (uc == -1)
+		return;
+	if (uc == 0)
+		return;
+	if (uc == 255)
+		return;
+	if (uc == 256)
+		return;
 }
