@@ -1,10 +1,11 @@
-# $NetBSD: Makefile,v 1.6 2020/06/30 14:30:49 jruoho Exp $
+# $NetBSD: Makefile,v 1.7 2021/08/29 09:54:18 christos Exp $
 .include <bsd.own.mk>
 
 TESTSDIR=       ${TESTSBASE}/usr.sbin
 
 TESTS_SUBDIRS+= cpuctl
 TESTS_SUBDIRS+= execsnoop
+TESTS_SUBDIRS+= inetd
 TESTS_SUBDIRS+= mtree
 TESTS_SUBDIRS+= opensnoop
 TESTS_SUBDIRS+= stdethers

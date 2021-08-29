@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1118 2021/08/28 19:45:18 rillig Exp $
+# $NetBSD: mi,v 1.1119 2021/08/29 09:54:18 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -201,6 +201,7 @@
 ./usr/libdata/debug/usr/tests/usr.bin/netpgpverify	tests-usr.bin-debug	compattestfile,atf
 ./usr/libdata/debug/usr/tests/usr.bin/tar		tests-usr.bin-debug	compattestfile,atf
 ./usr/libdata/debug/usr/tests/usr.sbin			tests-usr.sbin-debug	compattestfile,atf
+./usr/libdata/debug/usr/tests/usr.sbin/inetd		tests-usr.sbin-debug	compattestfile,atf
 ./usr/libdata/debug/usr/tests/util			tests-obsolete		obsolete
 ./usr/libdata/debug/usr/tests/util/df			tests-obsolete		obsolete
 ./usr/libdata/debug/usr/tests/util/id			tests-obsolete		obsolete
@@ -7107,6 +7108,12 @@
 ./usr/tests/usr.sbin/execsnoop/Atffile			tests-usr.sbin-tests	compattestfile,atf
 ./usr/tests/usr.sbin/execsnoop/Kyuafile			tests-usr.sbin-tests	compattestfile,atf,kyua
 ./usr/tests/usr.sbin/execsnoop/t_execsnoop		tests-usr.sbin-tests	compattestfile,atf
+./usr/tests/usr.sbin/inetd				tests-usr.sbin-tests	compattestfile,atf
+./usr/tests/usr.sbin/inetd/Atffile			tests-usr.sbin-tests	compattestfile,atf
+./usr/tests/usr.sbin/inetd/Kyuafile			tests-usr.sbin-tests	compattestfile,atf,kyua
+./usr/tests/usr.sbin/inetd/inetd_ratelimit.conf		tests-usr.sbin-tests	compattestfile,atf
+./usr/tests/usr.sbin/inetd/t_inetd			tests-usr.sbin-tests	compattestfile,atf
+./usr/tests/usr.sbin/inetd/test_server			tests-usr.sbin-tests	compattestfile,atf
 ./usr/tests/usr.sbin/mtree				tests-usr.sbin-tests	compattestfile,atf
 ./usr/tests/usr.sbin/mtree/Atffile			tests-usr.sbin-tests	compattestfile,atf
 ./usr/tests/usr.sbin/mtree/Kyuafile			tests-usr.sbin-tests	compattestfile,atf,kyua

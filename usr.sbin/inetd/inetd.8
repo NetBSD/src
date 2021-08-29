@@ -1,4 +1,4 @@
-.\"	$NetBSD: inetd.8,v 1.61 2017/07/20 07:42:54 wiz Exp $
+.\"	$NetBSD: inetd.8,v 1.62 2021/08/29 09:54:18 christos Exp $
 .\"
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -57,7 +57,7 @@
 .\"
 .\"     from: @(#)inetd.8       8.4 (Berkeley) 6/1/94
 .\"
-.Dd July 19, 2017
+.Dd August 29, 2021
 .Dt INETD 8
 .Os
 .Sh NAME
@@ -106,12 +106,21 @@ The path given for this configuration file must be absolute, unless
 the
 .Fl d
 option is also given on the command line.
+
+Services can be specified using the legacy `positional' notation or the 
+`key-values' notation described in the sections "Positional Notation" and 
+"Key-Values Notation" below.
+
+.Ss Positional Notation
+
 There must be an entry for each field of the configuration
 file, with entries for each field separated by a tab or
 a space.
-Comments are denoted by a ``#'' at the beginning of a line.
+Comments are denoted by a ``#'' at the beginning of a line (see subsection 
+"Key-Values Notation" for defining comments in key-values definitions).
 There must be an entry for each field (except for one
-special case, described below).
+special case, described below). A positional definition is terminated by a 
+newline.
 The fields of the configuration file are as follows:
 .Pp
 .Bd -unfilled -offset indent -compact
@@ -133,17 +142,10 @@ The single character
 .Dq \&*
 means
 .Dv INADDR_ANY :
-all local addresses.
-To avoid the need to repeat listen addresses over and over again,
-listen addresses are inherited from line to line, and the listen
-address can be changed without defining a service by including a line
-containing just
-a
+all local addresses. The
 .Em listen-addr
-followed by a colon.
-The default (compatible with historical configuration files) is \&*.
-To return to this behavior after configuring some services with
-specific listen addresses, give \&* explicitly.
+may be a host name, which will be resolved once, when the service
+definition is read from the config file.
 .Pp
 Note that restricted listen addresses are meaningless and ignored for
 UNIX-domain services, and are not supported for
@@ -190,6 +192,11 @@ A range is bounded by the low version to the high version \- e.g.
 For UNIX-domain (local) services, the
 .Em service-spec
 is the path name to listen on.
+.Pp
+The
+.Em service-spec
+must not begin with a dot. See 
+.Sx Directives .
 .Pp
 The
 .Em socket-type
@@ -265,9 +272,9 @@ tcp,rcvbuf=64k,sndbuf=1m
 .Pp
 A literal value may be specified, or modified using
 .Sq k
-to indicate kilobytes or
+to indicate kibibytes or
 .Sq m
-to indicate megabytes.
+to indicate mebibytes.
 Socket buffer sizes may be specified for all
 services and protocols except for tcpmux services.
 .Pp
@@ -277,8 +284,8 @@ entry is used to tell
 .Nm
 if it should wait for the server program to return,
 or continue processing connections on the socket.
-If a datagram server connects
-to its peer, freeing the socket so
+If a datagram server reads a single datagram and connects
+to its peer through a different socket, freeing the service's socket so
 .Nm
 can receive further messages on the socket, it is said to be
 a
@@ -382,6 +389,244 @@ word
 should take the place of this entry.
 It is possible to quote an argument using either single or double quotes.
 This allows you to have, e.g., spaces in paths and parameters.
+
+.Ss Key-Values Notation
+
+In key-values notation, keys are separated from their associated values by `=',
+values are separated by whitespace, and key-values options are separated by 
+commas. A service definition is terminated by a semicolon. Multiple definitions 
+may exist on a single line (and a line may end with a positional definition. 
+A key-values definition has the following form:
+
+.Bd -filled -offset indent
+[listen-addr:]service-spec {on|off} <option> = [value1], 
+<option> = [value1] [value2] ..., <option> =, ...;
+.Ed
+.Pp
+Values may be in quotes, and support the following escape sequences.
+.Bl -hang -width "\xXX" -offset indent
+.It Sy \e\e 
+Backslash.
+.It Sy \en 
+Line feed.
+.It Sy \et 
+Tab.
+.It Sy \er 
+Carriage return.
+.It Sy \e' 
+Single quote.
+.It Sy \e" 
+Double quote.
+.It Sy \exXX 
+Hexadecimal byte value, replace XX.
+.El
+.Pp
+.Em [listen-addr:]service-spec 
+has the same form as in positional notation. If 
+.Em service-spec
+is followed by
+.Em on
+then the service definition is active by default. If
+.Em service-spec
+is followed by 
+.Em off
+then the service definition is parsed and errors are output to
+the system log, but the service is not active and no sockets are created.
+
+Comments that exist between the initial on/off directive 
+and the closing semicolon may begin in any column and may exist on the same line
+as non-comment text. Note: editor syntax highlighting may be misleading!
+
+Syntax and semantic error detection is performed on a best-effort basis. If an 
+error with a service definition is easily detectable, it will log the error 
+using 
+.Xr syslog 3 
+and continue reading the configuration file if possible, skipping the erroneous 
+definition or file. 
+Otherwise, it is up to the user to write definitions that conform to the 
+documentation. Errors may be worded differently depending on the ordering of 
+options in the service definition.
+
+The following are the available values for
+.Em <option>:
+.Bl -hang -width "acceptfilter"
+.It Sy bind
+Set the listen address for this service. This can be an IPv4 or IPv6 address 
+or a hostname.
+
+.It Sy socktype
+Equivalent to
+.Em socket-type 
+in positional notation.
+.Em socktype
+is optional if 
+.Em protocol
+is specified and is udp{4,6} or tcp{4,6}.
+
+.It Sy acceptfilter
+An accept filter, equivalent to 
+.Em accept
+in positional notation (see 
+.Xr accept_filter 9 
+and SO_ACCEPTFITLER in 
+.Xr setsockopt 2
+).
+
+.It Sy protocol
+Equivalent to 
+.Em protocol
+in positional notation.
+If specified as "tcp" or "udp" with no version specifier, the associated 
+hostname or 
+.Em bind
+value is used
+to determine the IP version. If the version is not specified and the hostname
+string or
+.Em bind
+value is not an IPv4 or IPv6 address, the
+service definition is invalid.
+
+.It Sy sndbuf
+Equivalent to 
+.Em sndbuf
+in positional notation.
+
+.It Sy recvbuf
+Equivalent to 
+.Em recvbuf
+in positional notation.
+
+.It Sy wait
+The value 
+.Em yes
+or
+.Em no .
+Equivalent to 
+.Em wait/nowait 
+in positional notation. This option is automatically determined for internal 
+services, and is mandatory for all others.
+
+.It Sy service_max
+Equivalent to
+.Em max
+in positional notation. Defaults to 40 if not specified.
+
+.It Sy ip_max
+Specifies the maximum number of server instances that may be spawned from
+.Em inetd
+within an interval of 60 seconds for a given IP address.
+
+.It Sy user
+The user to run the program as. Equivalent to
+.Em user
+in positional notation.
+
+.It Sy group
+The primary group to run the program as. Equivalent to 
+.Em group
+in positional notation.
+
+.It Sy exec
+The path to the program's executable or 
+.Dq internal
+for a built-in service. 
+If not specified, this will be assumed to be 
+.Dq internal
+is assumed (and will fail if 
+.Em socktype 
+is not specified).
+internal
+.It Sy args
+The program arguments. By convention, the first argument should be the name of 
+the program.
+
+.It Sy ipsec
+An IPsec policy string. Defaults to the global default setting. If 
+specified without a value (i.e. "ipsec=,"), IPsec will be disabled for this 
+service. See the
+.Sx Directives
+section for details. Currently only one value is allowed, so all IPsec policies 
+should be in a quoted string, separated by semicolons.
+.El
+
+.Ss Directives
+.\" Newlines needed for spacing, .Pp won't work.
+
+
+
+.Pp
+<listen-addr>:
+.Pp
+To avoid the need to repeat listen addresses over and over again,
+listen addresses are inherited from line to line, and the listen
+address can be changed without defining a service by including a line
+containing just
+a
+.Em listen-addr
+followed by a colon.
+The default (compatible with historical configuration files) is \&*.
+To return to this behavior after configuring some services with
+specific listen addresses, give \&* explicitly.
+.Pp
+.Li "#@"
+[<IPsec policy>] [; [<IPsec policy>]] ...
+.Pp
+The implementation includes a tiny hack to support IPsec policy settings for
+each socket.
+A special form of the comment line, starting with
+.Dq Li "#@" ,
+is used as a policy specifier.
+The content of the above comment line will be treated as a IPsec policy string,
+as described in
+.Xr ipsec_set_policy 3 .
+Multiple IPsec policy strings may be specified by using a semicolon
+as a separator.
+If conflicting policy strings are found in a single line,
+the last string will take effect. IPsec policy strings are not parsed in
+comments within a key-values service definition.
+A
+.Li "#@"
+line affects all of the subsequent lines in the same config file,
+so you may want to reset the IPsec policy by using a comment line containing
+only
+.Li "#@"
+.Pq with no policy string .
+.Pp
+If an invalid IPsec policy string appears in a config file,
+.Nm
+logs an error message using
+.Xr syslog 3
+and stops reading the current config file, but may continue reading
+from other files not affected by the IPsec directive.
+.Pp
+\&.include <glob-path>
+.Pp
+Other files can be read by inetd by specifying an include directive in an inetd 
+config file. 
+.Em glob-path
+is an 
+absolute path or a path relative (including parent directories) to the directory 
+containing the current config 
+file, and may contain glob patterns as specified by
+.Xr glob 7 .
+.Pp
+To include a specific file, include the relative or absolute path of the file.
+To include all files in a directory, 
+.Em glob-path 
+should be the directory of the files to include followed by "/*".
+.Pp
+The listening address and IPsec configuration strings of the current config file
+are inherited by files included by this directive.
+.Pp
+Files included by this directive using a glob path match are not read in a 
+specific order. If a specific order is desired, files or directories should be 
+included individually without the use of glob patterns. Behavior is undefined if
+multiple include directives include the same file and
+this should be avoided. Circular references are caught by inetd. Anything after
+.Em glob-path
+on the same line is ignored.
+.Em glob-path
+may be in quotes.
 .Ss Internal Services
 .Nm
 provides several
@@ -458,34 +703,6 @@ for access control facility configurations, as described in
 wrappers do not affect/restrict
 .Tn UDP
 or internal services.
-.Ss IPsec
-The implementation includes a tiny hack to support IPsec policy settings for
-each socket.
-A special form of the comment line, starting with
-.Dq Li "#@" ,
-is used as a policy specifier.
-The content of the above comment line will be treated as a IPsec policy string,
-as described in
-.Xr ipsec_set_policy 3 .
-Multiple IPsec policy strings may be specified by using a semicolon
-as a separator.
-If conflicting policy strings are found in a single line,
-the last string will take effect.
-A
-.Li "#@"
-line affects all of the following lines in
-.Pa /etc/inetd.conf ,
-so you may want to reset the IPsec policy by using a comment line containing
-only
-.Li "#@"
-.Pq with no policy string .
-.Pp
-If an invalid IPsec policy string appears in
-.Pa /etc/inetd.conf ,
-.Nm
-logs an error message using
-.Xr syslog 3
-and terminates itself.
 .Ss IPv6 TCP/UDP behavior
 If you wish to run a server for both IPv4 and IPv6 traffic,
 you will need to run two separate processes for the same server program,
@@ -496,7 +713,7 @@ using
 and
 .Dq tcp6
 respectively.
-Plain
+In positional syntax, plain
 .Dq tcp
 means TCP on top of the current default IP version,
 which is, at this moment, IPv4.
@@ -629,8 +846,21 @@ Provided you never have more than one entry for a given RPC service,
 everything should work correctly (Note that default host address
 specifiers do apply to RPC lines with no explicit specifier.)
 .Pp
+.Em tcpmux
+on IPv6 is not tested enough.
+.Pp
+For automatic IP version detection in key-values syntax (see the
+.Em protocol
+key), addresses with an interface specifier in the form <address>%<iface>
+are not currently supported, as addresses of that form are not parsed by 
+.Xr inet_pton 3 .
+.Pp
 .Dq tcpmux
 on IPv6 is not tested enough.
+.Pp
+If a positional service definition has an invalid parameter and extends
+across multiple lines using tab characters, the subsequent lines after the 
+error are treated as new service definitions.
 .Sh SECURITY CONSIDERATIONS
 Enabling the
 .Dq echo ,
