@@ -1,5 +1,5 @@
 #! /usr/bin/env sh
-#	$NetBSD: build.sh,v 1.354 2021/08/06 07:55:13 andvar Exp $
+#	$NetBSD: build.sh,v 1.355 2021/08/29 09:02:01 christos Exp $
 #
 # Copyright (c) 2001-2011 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -1965,7 +1965,7 @@ createmakewrapper()
 	eval cat <<EOF ${makewrapout}
 #! ${HOST_SH}
 # Set proper variables to allow easy "make" building of a NetBSD subtree.
-# Generated from:  \$NetBSD: build.sh,v 1.354 2021/08/06 07:55:13 andvar Exp $
+# Generated from:  \$NetBSD: build.sh,v 1.355 2021/08/29 09:02:01 christos Exp $
 # with these arguments: ${_args}
 #
 
@@ -2212,28 +2212,24 @@ installworld()
 #
 
 RUMP_LIBSETS='
-	-lrump,
-	-lrumpvfs -lrump,
-	-lrumpvfs -lrumpdev -lrump,
-	-lrumpnet -lrump,
-	-lrumpkern_tty -lrumpvfs -lrump,
-	-lrumpfs_tmpfs -lrumpvfs -lrump,
-	-lrumpfs_ffs -lrumpfs_msdos -lrumpvfs -lrumpdev_disk -lrumpdev -lrump,
+	-lrumpvfs_nofifofs -lrumpvfs -lrump,
+	-lrumpvfs_nofifofs -lrumpvfs -lrumpdev -lrump,
+	-lrumpvfs_nofifofs -lrumpvfs
+	-lrumpnet_virtif -lrumpnet_netinet -lrumpnet_net -lrumpnet -lrump,
+	-lrumpkern_tty -lrumpvfs_nofifofs -lrumpvfs -lrump,
+	-lrumpfs_tmpfs -lrumpvfs_nofifofs -lrumpvfs -lrump,
+	-lrumpfs_ffs -lrumpfs_msdos -lrumpvfs_nofifofs -lrumpvfs -lrumpdev_disk -lrumpdev -lrump,
 	-lrumpnet_virtif -lrumpnet_netinet -lrumpnet_net -lrumpnet
-	    -lrumpdev -lrumpvfs -lrump,
-	-lrumpnet_sockin -lrumpfs_smbfs -lrumpdev_netsmb
-	    -lrumpkern_crypto -lrumpdev -lrumpnet -lrumpvfs -lrump,
-	-lrumpnet_sockin -lrumpfs_nfs -lrumpnet -lrumpvfs -lrump,
+	    -lrumpdev -lrumpvfs_nofifofs -lrumpvfs -lrump,
+	-lrumpnet_sockin -lrumpfs_nfs
+	-lrumpnet_virtif -lrumpnet_netinet -lrumpnet_net -lrumpnet
+	-lrumpvfs_nofifofs -lrumpvfs -lrump,
 	-lrumpdev_cgd -lrumpdev_raidframe -lrumpdev_disk -lrumpdev_rnd
-	    -lrumpdev_dm -lrumpdev -lrumpvfs -lrumpkern_crypto -lrump'
+	    -lrumpdev_dm -lrumpdev -lrumpvfs_nofifofs -lrumpvfs -lrumpkern_crypto -lrump'
 dorump()
 {
 	local doclean=""
 	local doobjs=""
-
-	# we cannot link libs without building csu, and that leads to lossage
-	[ "${1}" != "rumptest" ] && bomb 'build.sh rump not yet functional. ' \
-	    'did you mean "rumptest"?'
 
 	export RUMPKERN_ONLY=1
 	# create obj and distrib dirs
@@ -2271,7 +2267,7 @@ dorump()
 	for set in ${RUMP_LIBSETS} ; do
 		IFS="${oIFS}"
 		${runcmd} ${tool_ld} -nostdlib -L${DESTDIR}/usr/lib	\
-		    -static --whole-archive ${set} 2>&1 -o /tmp/rumptest.$$ | \
+		    -static --whole-archive -lpthread -lc ${set} 2>&1 -o /tmp/rumptest.$$ | \
 		      awk -v quirks="${md_quirks}" '
 			/undefined reference/ &&
 			    !/more undefined references.*follow/{
@@ -2488,7 +2484,17 @@ main()
 			installworld "${arg}"
 			;;
 
-		rump|rumptest)
+		rump)
+			make_in_dir . do-distrib-dirs
+			make_in_dir . includes
+			make_in_dir lib/csu dependall
+			make_in_dir lib/csu install
+			make_in_dir external/gpl3/gcc/lib/libgcc dependall
+			make_in_dir external/gpl3/gcc/lib/libgcc install
+			dorump "${op}"
+			;;
+
+		rumptest)
 			dorump "${op}"
 			;;
 
