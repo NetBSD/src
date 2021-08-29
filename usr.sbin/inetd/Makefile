@@ -1,9 +1,7 @@
 #	from: @(#)Makefile	8.1 (Berkeley) 6/6/93
-#	$NetBSD: Makefile,v 1.26 2021/08/29 11:43:25 christos Exp $
+#	$NetBSD: Makefile,v 1.27 2021/08/29 11:43:48 christos Exp $
 
 .include <bsd.own.mk>
-
-COPTS+=-m32
 
 USE_FORT?= yes	# network server
 
