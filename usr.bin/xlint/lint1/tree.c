@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.362 2021/08/29 16:17:08 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.363 2021/08/29 17:01:27 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.362 2021/08/29 16:17:08 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.363 2021/08/29 17:01:27 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -236,7 +236,7 @@ build_name(sym_t *sym, int follow_token)
 				 */
 			} else if (Sflag) {
 				/* function '%s' implicitly declared to ... */
-				warning(215, sym->s_name);
+				error(215, sym->s_name);
 			} else if (sflag) {
 				/* function '%s' implicitly declared to ... */
 				warning(215, sym->s_name);

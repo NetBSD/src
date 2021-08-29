@@ -1,4 +1,4 @@
-msg_215.c(21): warning: function 'name' implicitly declared to return int [215]
+msg_215.c(21): error: function 'name' implicitly declared to return int [215]
 msg_215.c(25): error: 'parenthesized' undefined [99]
 msg_215.c(25): error: illegal function (type int) [149]
 msg_215.c(29): error: type 'struct str' does not have member 'member' [101]
