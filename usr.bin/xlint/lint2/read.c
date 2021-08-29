@@ -1,4 +1,4 @@
-/* $NetBSD: read.c,v 1.57 2021/08/29 10:13:02 rillig Exp $ */
+/* $NetBSD: read.c,v 1.58 2021/08/29 10:18:17 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: read.c,v 1.57 2021/08/29 10:13:02 rillig Exp $");
+__RCSID("$NetBSD: read.c,v 1.58 2021/08/29 10:18:17 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -388,68 +388,68 @@ decldef(pos_t *posp, const char *cp)
 
 	used = false;
 
-	while (strchr("deiorstuvPS", (c = *cp)) != NULL) {
-		cp++;
+	for (; (c = *cp) != '\0'; cp++) {
 		switch (c) {
 		case 'd':
 			if (sym.s_def != NODECL)
 				inperr("def");
 			sym.s_def = DEF;
-			break;
+			continue;
 		case 'e':
 			if (sym.s_def != NODECL)
 				inperr("decl");
 			sym.s_def = DECL;
-			break;
+			continue;
 		case 'i':
 			if (sym.s_inline)
 				inperr("inline");
 			sym.s_inline = true;
-			break;
+			continue;
 		case 'o':
 			if (sym.s_old_style_function)
 				inperr("osdef");
 			sym.s_old_style_function = true;
-			break;
+			continue;
 		case 'r':
 			if (sym.s_function_has_return_value)
 				inperr("r");
 			sym.s_function_has_return_value = true;
-			break;
+			continue;
 		case 's':
 			if (sym.s_static)
 				inperr("static");
 			sym.s_static = true;
-			break;
+			continue;
 		case 't':
 			if (sym.s_def != NODECL)
 				inperr("tdef");
 			sym.s_def = TDEF;
-			break;
+			continue;
 		case 'u':
 			if (used)
 				inperr("used");
 			used = true;
-			break;
+			continue;
 		case 'v':
 			if (sym.s_check_only_first_args)
 				inperr("v");
 			sym.s_check_only_first_args = true;
 			sym.s_check_num_args = parse_short(&cp);
-			break;
+			continue;
 		case 'P':
 			if (sym.s_printflike)
 				inperr("P");
 			sym.s_printflike = true;
 			sym.s_printflike_arg = parse_short(&cp);
-			break;
+			continue;
 		case 'S':
 			if (sym.s_scanflike)
 				inperr("S");
 			sym.s_scanflike = true;
 			sym.s_scanflike_arg = parse_short(&cp);
-			break;
+			continue;
 		}
+		break;
 	}
 
 	/* read symbol name, doing renaming if necessary */
