@@ -1,4 +1,4 @@
-/*	$NetBSD: lint.h,v 1.30 2021/08/28 12:59:25 rillig Exp $	*/
+/*	$NetBSD: lint.h,v 1.31 2021/08/29 09:29:32 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -153,3 +153,5 @@ static inline bool
 ch_isprint(char ch) { return isprint((unsigned char)ch) != 0; }
 static inline bool
 ch_isspace(char ch) { return isspace((unsigned char)ch) != 0; }
+static inline bool
+ch_isupper(char ch) { return isupper((unsigned char)ch) != 0; }
