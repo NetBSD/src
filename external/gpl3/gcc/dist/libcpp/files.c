@@ -233,7 +233,7 @@ open_file (_cpp_file *file)
     }
   else
     file->fd = open (file->path, O_RDONLY | O_NOCTTY | O_BINARY
-		     | (cpp_restricted != NULL) ? O_NONBLOCK : 0, 0666);
+		     | ((cpp_restricted != NULL) ? O_NONBLOCK : 0), 0666);
 
 
   if (file->fd != -1)
