@@ -1,4 +1,4 @@
-/*	$NetBSD: interactive.c,v 1.30 2021/08/29 09:15:33 christos Exp $	*/
+/*	$NetBSD: interactive.c,v 1.31 2021/08/29 09:17:58 christos Exp $	*/
 
 /*
  * Copyright (c) 1985, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)interactive.c	8.5 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: interactive.c,v 1.30 2021/08/29 09:15:33 christos Exp $");
+__RCSID("$NetBSD: interactive.c,v 1.31 2021/08/29 09:17:58 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -597,7 +597,7 @@ mkentry(char *name, struct direct *dp, struct afile *fp)
 	fp->fnum = dp->d_ino;
 	fp->fname = savename(dp->d_name);
 	for (cp = fp->fname; *cp; cp++)
-		if (!vflag && isprint((unsigned char)*cp))
+		if (!vflag && !isprint((unsigned char)*cp))
 			*cp = '?';
 	fp->len = cp - fp->fname;
 	if (dflag && TSTINO(fp->fnum, dumpmap) == 0)
