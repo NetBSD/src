@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_215.c,v 1.9 2021/06/30 14:42:13 rillig Exp $	*/
+/*	$NetBSD: msg_215.c,v 1.10 2021/08/29 15:49:04 rillig Exp $	*/
 # 3 "msg_215.c"
 
 // Test for message: function '%s' implicitly declared to return int [215]
@@ -15,7 +15,7 @@ struct str {
 
 /* ARGSUSED */
 void
-test(struct str str)
+test(struct str str, const double *p_double)
 {
 	/* expect+1: warning: function 'name' implicitly declared to return int [215] */
 	name();
@@ -31,4 +31,9 @@ test(struct str str)
 	/* https://gcc.gnu.org/onlinedocs/gcc/C-Extensions.html */
 	__builtin_whatever(123, "string");
 	__atomic_whatever(123, "string");
+	/* obsolete but still in use, as of 2021 */
+	__sync_whatever(123, "string");
+
+	/* https://software.intel.com/sites/landingpage/IntrinsicsGuide/ */
+	_mm_load_sd(p_double);
 }

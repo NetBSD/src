@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.360 2021/08/28 16:51:57 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.361 2021/08/29 15:49:04 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.360 2021/08/28 16:51:57 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.361 2021/08/29 15:49:04 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -192,17 +192,28 @@ fallback_symbol(sym_t *sym)
 }
 
 /*
- * Functions that are predeclared by GCC can be called with arbitrary
- * arguments.  Since lint usually runs after a successful compilation, it's
- * the compiler's job to catch any errors.
- *
- * https://gcc.gnu.org/onlinedocs/gcc/C-Extensions.html
+ * Functions that are predeclared by GCC or other compilers can be called
+ * with arbitrary arguments.  Since lint usually runs after a successful
+ * compilation, it's the compiler's job to catch any errors.
  */
 bool
-is_gcc_builtin(const char *name)
+is_compiler_builtin(const char *name)
 {
-	return strncmp(name, "__atomic_", 9) == 0 ||
-	       strncmp(name, "__builtin_", 10) == 0;
+	/* https://gcc.gnu.org/onlinedocs/gcc/C-Extensions.html */
+	if (strncmp(name, "__atomic_", 9) == 0 ||
+	    strncmp(name, "__builtin_", 10) == 0)
+		return true;
+
+	/* https://gcc.gnu.org/onlinedocs/gcc/C-Extensions.html */
+	/* obsolete but still in use, as of 2021 */
+	if (strncmp(name, "__sync_", 7) == 0)
+		return true;
+
+	/* https://software.intel.com/sites/landingpage/IntrinsicsGuide/ */
+	if (strncmp(name, "_mm_", 4) == 0)
+		return true;
+
+	return false;
 }
 
 /*
@@ -218,7 +229,7 @@ build_name(sym_t *sym, int follow_token)
 		sym->s_scl = EXTERN;
 		sym->s_def = DECL;
 		if (follow_token == T_LPAREN) {
-			if (gflag && is_gcc_builtin(sym->s_name)) {
+			if (gflag && is_compiler_builtin(sym->s_name)) {
 				/*
 				 * Do not warn about these, just assume that
 				 * they are regular functions compatible with
@@ -3945,7 +3956,8 @@ check_expr_misc(const tnode_t *tn, bool vctx, bool tctx,
 	case CALL:
 		lint_assert(ln->tn_op == ADDR);
 		lint_assert(ln->tn_left->tn_op == NAME);
-		if (!szof && !is_gcc_builtin(ln->tn_left->tn_sym->s_name))
+		if (!szof &&
+		    !is_compiler_builtin(ln->tn_left->tn_sym->s_name))
 			outcall(tn, vctx || tctx, rvdisc);
 		break;
 	case EQ:
