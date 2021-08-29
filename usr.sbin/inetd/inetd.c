@@ -1,4 +1,4 @@
-/*	$NetBSD: inetd.c,v 1.126 2019/12/27 09:22:20 msaitoh Exp $	*/
+/*	$NetBSD: inetd.c,v 1.127 2021/08/29 09:54:18 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1991, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)inetd.c	8.4 (Berkeley) 4/13/94";
 #else
-__RCSID("$NetBSD: inetd.c,v 1.126 2019/12/27 09:22:20 msaitoh Exp $");
+__RCSID("$NetBSD: inetd.c,v 1.127 2021/08/29 09:54:18 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -187,12 +187,11 @@ __RCSID("$NetBSD: inetd.c,v 1.126 2019/12/27 09:22:20 msaitoh Exp $");
 #include <sys/param.h>
 #include <sys/stat.h>
 #include <sys/ioctl.h>
-#include <sys/socket.h>
-#include <sys/un.h>
 #include <sys/wait.h>
-#include <sys/time.h>
 #include <sys/resource.h>
 #include <sys/event.h>
+#include <sys/socket.h>
+
 
 #ifndef NO_RPC
 #define RPC
@@ -200,8 +199,6 @@ __RCSID("$NetBSD: inetd.c,v 1.126 2019/12/27 09:22:20 msaitoh Exp $");
 
 #include <net/if.h>
 
-#include <netinet/in.h>
-#include <arpa/inet.h>
 #ifdef RPC
 #include <rpc/rpc.h>
 #include <rpc/rpcb_clnt.h>
@@ -209,10 +206,12 @@ __RCSID("$NetBSD: inetd.c,v 1.126 2019/12/27 09:22:20 msaitoh Exp $");
 #endif
 
 #include <ctype.h>
+#include <err.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <glob.h>
 #include <grp.h>
-#include <netdb.h>
+#include <libgen.h>
 #include <pwd.h>
 #include <signal.h>
 #include <stdio.h>
@@ -223,15 +222,7 @@ __RCSID("$NetBSD: inetd.c,v 1.126 2019/12/27 09:22:20 msaitoh Exp $");
 #include <util.h>
 #include <ifaddrs.h>
 
-#include "pathnames.h"
-
-#ifdef IPSEC
-#include <netipsec/ipsec.h>
-#ifndef IPSEC_POLICY_IPSEC	/* no ipsec support on old ipsec */
-#undef IPSEC
-#endif
-#include "ipsec.h"
-#endif
+#include "inetd.h"
 
 #ifdef LIBWRAP
 # include <tcpd.h>
@@ -251,11 +242,8 @@ int allow_severity = LIBWRAP_ALLOW_FACILITY|LIBWRAP_ALLOW_SEVERITY;
 int deny_severity = LIBWRAP_DENY_FACILITY|LIBWRAP_DENY_SEVERITY;
 #endif
 
-#define	TOOMANY		40		/* don't start more than TOOMANY */
-#define	CNT_INTVL	60		/* servers in CNT_INTVL sec. */
+#define	CNT_INTVL	((time_t)60)	/* servers in CNT_INTVL sec. */
 #define	RETRYTIME	(60*10)		/* retry after bind or server fail */
-
-#define	A_CNT(a)	(sizeof (a) / sizeof (a[0]))
 
 int	debug;
 #ifdef LIBWRAP
@@ -280,56 +268,7 @@ struct rlimit	rlim_ofile;
 struct kevent	changebuf[64];
 size_t		changes;
 
-struct	servtab {
-	char	*se_hostaddr;		/* host address to listen on */
-	char	*se_service;		/* name of service */
-	int	se_socktype;		/* type of socket to use */
-	int	se_family;		/* address family */
-	char	*se_proto;		/* protocol used */
-	int	se_sndbuf;		/* sndbuf size */
-	int	se_rcvbuf;		/* rcvbuf size */
-	int	se_rpcprog;		/* rpc program number */
-	int	se_rpcversl;		/* rpc program lowest version */
-	int	se_rpcversh;		/* rpc program highest version */
-#define isrpcservice(sep)	((sep)->se_rpcversl != 0)
-	pid_t	se_wait;		/* single threaded server */
-	short	se_checked;		/* looked at during merge */
-	char	*se_user;		/* user name to run as */
-	char	*se_group;		/* group name to run as */
-	struct	biltin *se_bi;		/* if built-in, description */
-	char	*se_server;		/* server program */
-#define	MAXARGV 64
-	char	*se_argv[MAXARGV+1];	/* program arguments */
-#ifdef IPSEC
-	char	*se_policy;		/* IPsec poilcy string */
-#endif
-	struct accept_filter_arg se_accf; /* accept filter for stream service */
-	int	se_fd;			/* open descriptor */
-	int	se_type;		/* type */
-	union {
-		struct	sockaddr se_un_ctrladdr;
-		struct	sockaddr_in se_un_ctrladdr_in;
-		struct	sockaddr_in6 se_un_ctrladdr_in6;
-		struct	sockaddr_un se_un_ctrladdr_un;
-	} se_un;			/* bound address */
-#define se_ctrladdr	se_un.se_un_ctrladdr
-#define se_ctrladdr_in	se_un.se_un_ctrladdr_in
-#define se_ctrladdr_un	se_un.se_un_ctrladdr_un
-	int	se_ctrladdr_size;
-	int	se_max;			/* max # of instances of this service */
-	int	se_count;		/* number started since se_time */
-	struct	timeval se_time;	/* start of se_count */
-	struct	servtab *se_next;
-} *servtab;
-
-#define NORM_TYPE	0
-#define MUX_TYPE	1
-#define MUXPLUS_TYPE	2
-#define FAITH_TYPE	3
-#define ISMUX(sep)	(((sep)->se_type == MUX_TYPE) || \
-			 ((sep)->se_type == MUXPLUS_TYPE))
-#define ISMUXPLUS(sep)	((sep)->se_type == MUXPLUS_TYPE)
-
+struct servtab *servtab;
 
 static void	chargen_dg(int, struct servtab *);
 static void	chargen_stream(int, struct servtab *);
@@ -342,22 +281,19 @@ static void	discard_stream(int, struct servtab *);
 static void	echo_dg(int, struct servtab *);
 static void	echo_stream(int, struct servtab *);
 static void	endconfig(void);
-static struct servtab *enter(struct servtab *);
-static void	freeconfig(struct servtab *);
-static struct servtab *getconfigent(void);
+static struct servtab	*enter(struct servtab *);
+static struct servtab	*getconfigent(char **);
 __dead static void	goaway(void);
 static void	machtime_dg(int, struct servtab *);
 static void	machtime_stream(int, struct servtab *);
-static char    *newstr(const char *);
-static char    *nextline(FILE *);
+#ifdef DEBUG_ENABLE
 static void	print_service(const char *, struct servtab *);
+#endif
 static void	reapchild(void);
 static void	retry(void);
 static void	run_service(int, struct servtab *, int);
-static int	setconfig(void);
 static void	setup(struct servtab *);
-static char    *sskip(char **);
-static char    *skip(char **);
+static char	*skip(char **);
 static void	tcpmux(int, struct servtab *);
 __dead static void	usage(void);
 static void	register_rpc(struct servtab *);
@@ -367,12 +303,30 @@ static void	inetd_setproctitle(char *, int);
 static void	initring(void);
 static uint32_t	machtime(void);
 static int	port_good_dg(struct sockaddr *);
-static int 	dg_broadcast(struct in_addr *);
-static int	my_kevent(const struct kevent *, size_t, struct kevent *,
-		size_t);
-static struct kevent *	allocchange(void);
+static int	dg_broadcast(struct in_addr *);
+static int	my_kevent(const struct kevent *, size_t, struct kevent *, size_t);
+static struct kevent	*allocchange(void);
 static int	get_line(int, char *, int);
 static void	spawn(struct servtab *, int);
+static struct servtab	init_servtab(void);
+static int	rl_process(struct servtab *, int);
+static struct se_ip_list_node	*rl_add(struct servtab *, char *);
+static void	rl_reset(struct servtab *, time_t);
+static struct se_ip_list_node	*rl_try_get_ip(struct servtab *, char *);
+static void	include_configs(char *);
+static int	glob_error(const char *, int);
+static void	read_glob_configs(char *);
+static void	prepare_next_config(const char*);
+static bool	is_same_service(const struct servtab *, const struct servtab *);
+static char	*gen_file_pattern(const char *, const char *);
+static bool	check_no_reinclude(const char *);
+static void	include_matched_path(char *);
+static void	purge_unchecked(void);
+static void	config_root(void);
+static void	clear_ip_list(struct servtab *);
+static time_t	rl_time(void);
+static void	rl_get_name(struct servtab *, int, char *);
+static void	rl_drop_connection(struct servtab *, int);
 
 struct biltin {
 	const char *bi_service;		/* internally provided service name */
@@ -472,7 +426,7 @@ main(int argc, char *argv[])
 			rlim_ofile_cur = OPEN_MAX;
 	}
 
-	for (n = 0; n < (int)A_CNT(my_signals); n++) {
+	for (n = 0; n < (int)__arraycount(my_signals); n++) {
 		int	signum;
 
 		signum = my_signals[n];
@@ -495,10 +449,10 @@ main(int argc, char *argv[])
 
 		if (reload) {
 			reload = 0;
-			config();
+			config_root();
 		}
 
-		n = my_kevent(changebuf, changes, eventbuf, A_CNT(eventbuf));
+		n = my_kevent(changebuf, changes, eventbuf, __arraycount(eventbuf));
 		changes = 0;
 
 		for (ev = eventbuf; n > 0; ev++, n--) {
@@ -526,20 +480,17 @@ main(int argc, char *argv[])
 			/* Paranoia */
 			if ((int)ev->ident != sep->se_fd)
 				continue;
-			if (debug)
-				fprintf(stderr, "someone wants %s\n",
-				    sep->se_service);
+			DPRINTF(SERV_FMT ": service requested" , SERV_PARAMS(sep));
 			if (!sep->se_wait && sep->se_socktype == SOCK_STREAM) {
 				/* XXX here do the libwrap check-before-accept*/
 				ctrl = accept(sep->se_fd, NULL, NULL);
-				if (debug)
-					fprintf(stderr, "accept, ctrl %d\n",
-					    ctrl);
+				DPRINTF(SERV_FMT ": accept, ctrl fd %d", 
+				    SERV_PARAMS(sep), ctrl);
 				if (ctrl < 0) {
 					if (errno != EINTR)
 						syslog(LOG_WARNING,
-						    "accept (for %s): %m",
-						    sep->se_service);
+						    SERV_FMT ": accept: %m",
+						    SERV_PARAMS(sep));
 					continue;
 				}
 			} else
@@ -562,31 +513,8 @@ spawn(struct servtab *sep, int ctrl)
 	dofork = (sep->se_bi == 0 || sep->se_bi->bi_fork);
 #endif
 	if (dofork) {
-		if (sep->se_count++ == 0)
-			(void)gettimeofday(&sep->se_time, NULL);
-		else if (sep->se_count >= sep->se_max) {
-			struct timeval now;
-
-			(void)gettimeofday(&now, NULL);
-			if (now.tv_sec - sep->se_time.tv_sec > CNT_INTVL) {
-				sep->se_time = now;
-				sep->se_count = 1;
-			} else {
-				syslog(LOG_ERR,
-				    "%s/%s max spawn rate (%d in %d seconds) "
-				    "exceeded; service not started",
-				    sep->se_service, sep->se_proto,
-				    sep->se_max, CNT_INTVL);
-				if (!sep->se_wait && sep->se_socktype ==
-				    SOCK_STREAM)
-					close(ctrl);
-				close_sep(sep);
-				if (!timingout) {
-					timingout = 1;
-					alarm(RETRYTIME);
-				}
-				return;
-			}
+		if (rl_process(sep, ctrl)) {
+			return;
 		}
 		pid = fork();
 		if (pid < 0) {
@@ -607,7 +535,7 @@ spawn(struct servtab *sep, int ctrl)
 		if (pid == 0) {
 			size_t	n;
 
-			for (n = 0; n < A_CNT(my_signals); n++)
+			for (n = 0; n < __arraycount(my_signals); n++)
 				(void) signal(my_signals[n], SIG_DFL);
 			if (debug)
 				setsid();
@@ -716,9 +644,8 @@ run_service(int ctrl, struct servtab *sep, int didfork)
 		} else if (sep->se_group) {
 			(void) setgid((gid_t)grp->gr_gid);
 		}
-		if (debug)
-			fprintf(stderr, "%d execl %s\n",
-			    getpid(), sep->se_server);
+		DPRINTF("%d execl %s", 
+		    getpid(), sep->se_server);
 		/* Set our control descriptor to not close-on-exec... */
 		if (fcntl(ctrl, F_SETFD, 0) < 0)
 			syslog(LOG_ERR, "fcntl (%d, F_SETFD, 0): %m", ctrl);
@@ -738,7 +665,7 @@ run_service(int ctrl, struct servtab *sep, int didfork)
 	reject:
 		if (sep->se_socktype != SOCK_STREAM)
 			recv(ctrl, buf, sizeof (buf), 0);
-		_exit(1);
+		_exit(EXIT_FAILURE);
 	}
 }
 
@@ -753,9 +680,7 @@ reapchild(void)
 		pid = wait3(&status, WNOHANG, NULL);
 		if (pid <= 0)
 			break;
-		if (debug)
-			(void) fprintf(stderr, "%d reaped, status %#x\n", 
-			    pid, status);
+		DPRINTF("%d reaped, status %#x", pid, status);
 		for (sep = servtab; sep != NULL; sep = sep->se_next)
 			if (sep->se_wait == pid) {
 				struct kevent	*ev;
@@ -772,31 +697,46 @@ reapchild(void)
 				ev = allocchange();
 				EV_SET(ev, sep->se_fd, EVFILT_READ,
 				    EV_ADD | EV_ENABLE, 0, 0, (intptr_t)sep);
-				if (debug)
-					fprintf(stderr, "restored %s, fd %d\n",
-					    sep->se_service, sep->se_fd);
+				DPRINTF("restored %s, fd %d",
+				    sep->se_service, sep->se_fd);
 			}
 	}
 }
 
+size_t	line_number;
+
+/* 
+ * Recursively merge loaded service definitions with any defined
+ * in the current or included config files. 
+ */
 static void
 config(void)
 {
-	struct servtab *sep, *cp, **sepp;
+	struct servtab *sep, *cp;
+	/*
+	 * Current position in line, used with key-values notation, 
+	 * saves cp across getconfigent calls. 
+	 */
+	char *current_pos;
 	size_t n;
-
-	if (!setconfig()) {
+	
+	/* open config file from beginning */
+	fconfig = fopen(CONFIG, "r");
+	if(fconfig == NULL) {
 		syslog(LOG_ERR, "%s: %m", CONFIG);
 		return;
 	}
-	for (sep = servtab; sep != NULL; sep = sep->se_next)
-		sep->se_checked = 0;
-	while ((cp = getconfigent()) != NULL) {
+
+	/* First call to nextline will advance line_number to 1 */
+	line_number = 0;
+	
+	/* Start parsing at the beginning of the first line */
+	current_pos = nextline(fconfig);
+
+	while ((cp = getconfigent(&current_pos)) != NULL) {
+		/* Find an already existing service definition */
 		for (sep = servtab; sep != NULL; sep = sep->se_next)
-			if (strcmp(sep->se_service, cp->se_service) == 0 &&
-			    strcmp(sep->se_hostaddr, cp->se_hostaddr) == 0 &&
-			    strcmp(sep->se_proto, cp->se_proto) == 0 &&
-			    ISMUX(sep) == ISMUX(cp))
+			if (is_same_service(sep, cp))
 				break;
 		if (sep != NULL) {
 			int i;
@@ -821,30 +761,39 @@ config(void)
 			SWAP(char *, sep->se_policy, cp->se_policy);
 #endif
 			SWAP(int, cp->se_type, sep->se_type);
-			SWAP(int, cp->se_max, sep->se_max);
+			SWAP(size_t, cp->se_service_max, sep->se_service_max);
+			SWAP(size_t, cp->se_ip_max, sep->se_ip_max);
 #undef SWAP
 			if (isrpcservice(sep))
 				unregister_rpc(sep);
 			sep->se_rpcversl = cp->se_rpcversl;
 			sep->se_rpcversh = cp->se_rpcversh;
 			freeconfig(cp);
+#ifdef DEBUG_ENABLE
 			if (debug)
 				print_service("REDO", sep);
+#endif
 		} else {
 			sep = enter(cp);
+#ifdef DEBUG_ENABLE
 			if (debug)
 				print_service("ADD ", sep);
+#endif
 		}
 		sep->se_checked = 1;
 
+		/* 
+		 * Remainder of config(void) checks validity of servtab options
+		 * and sets up the service by setting up sockets (in setup(servtab)). 
+		 */
 		switch (sep->se_family) {
 		case AF_LOCAL:
 			if (sep->se_fd != -1)
 				break;
 			n = strlen(sep->se_service);
 			if (n >= sizeof(sep->se_ctrladdr_un.sun_path)) {
-				syslog(LOG_ERR, "%s: address too long",
-				    sep->se_service);
+				syslog(LOG_ERR, "%s/%s: address too long",
+				    sep->se_service, sep->se_proto);
 				sep->se_checked = 0;
 				continue;
 			}
@@ -893,17 +842,17 @@ config(void)
 			if (isrpcservice(sep) || ISMUX(sep))
 				port = "0";
 			else
-				port = sep->se_service;
+				port = sep->se_service;		
 			error = getaddrinfo(host, port, &hints, &res);
 			if (error) {
 				if (error == EAI_SERVICE) {
 					/* gai_strerror not friendly enough */
-					syslog(LOG_WARNING, "%s/%s: "
+					syslog(LOG_WARNING, SERV_FMT ": "
 					    "unknown service",
-					    sep->se_service, sep->se_proto);
+					    SERV_PARAMS(sep));
 				} else {
-					syslog(LOG_ERR, "%s/%s: %s: %s",
-					    sep->se_service, sep->se_proto,
+					syslog(LOG_ERR, SERV_FMT ": %s: %s",
+					    SERV_PARAMS(sep),
 					    sep->se_hostaddr,
 					    gai_strerror(error));
 				}
@@ -912,8 +861,8 @@ config(void)
 			}
 			if (res->ai_next) {
 				syslog(LOG_ERR,
-					"%s/%s: %s: resolved to multiple addr",
-				    sep->se_service, sep->se_proto,
+					SERV_FMT ": %s: resolved to multiple addr",
+				    SERV_PARAMS(sep),
 				    sep->se_hostaddr);
 				sep->se_checked = 0;
 				freeaddrinfo(res);
@@ -937,9 +886,9 @@ config(void)
 					rp = getrpcbyname(sep->se_service);
 					if (rp == 0) {
 						syslog(LOG_ERR,
-						    "%s/%s: unknown service",
-						    sep->se_service,
-						    sep->se_proto);
+						    SERV_FMT 
+						    ": unknown service",
+						    SERV_PARAMS(sep));
 						sep->se_checked = 0;
 						continue;
 					}
@@ -961,27 +910,6 @@ config(void)
 		}
 	}
 	endconfig();
-	/*
-	 * Purge anything not looked at above.
-	 */
-	sepp = &servtab;
-	while ((sep = *sepp) != NULL) {
-		if (sep->se_checked) {
-			sepp = &sep->se_next;
-			continue;
-		}
-		*sepp = sep->se_next;
-		if (sep->se_fd >= 0)
-			close_sep(sep);
-		if (isrpcservice(sep))
-			unregister_rpc(sep);
-		if (sep->se_family == AF_LOCAL)
-			(void)unlink(sep->se_service);
-		if (debug)
-			print_service("FREE", sep);
-		freeconfig(sep);
-		free(sep);
-	}
 }
 
 static void
@@ -1015,7 +943,7 @@ goaway(void)
 	for (sep = servtab; sep != NULL; sep = sep->se_next) {
 		if (sep->se_fd == -1)
 			continue;
-
+		
 		switch (sep->se_family) {
 		case AF_LOCAL:
 			(void)unlink(sep->se_service);
@@ -1044,17 +972,16 @@ setup(struct servtab *sep)
 	struct kevent	*ev;
 
 	if ((sep->se_fd = socket(sep->se_family, sep->se_socktype, 0)) < 0) {
-		if (debug)
-			fprintf(stderr, "socket failed on %s/%s: %s\n", 
-			    sep->se_service, sep->se_proto, strerror(errno));
+		DPRINTF("socket failed on " SERV_FMT ": %s", 
+		    SERV_PARAMS(sep), strerror(errno));
 		syslog(LOG_ERR, "%s/%s: socket: %m",
 		    sep->se_service, sep->se_proto);
 		return;
 	}
 	/* Set all listening sockets to close-on-exec. */
 	if (fcntl(sep->se_fd, F_SETFD, FD_CLOEXEC) < 0) {
-		syslog(LOG_ERR, "%s/%s: fcntl(F_SETFD, FD_CLOEXEC): %m",
-		    sep->se_service, sep->se_proto);
+		syslog(LOG_ERR, SERV_FMT ": fcntl(F_SETFD, FD_CLOEXEC): %m",
+		    SERV_PARAMS(sep));
 		close(sep->se_fd);
 		sep->se_fd = -1;
 		return;
@@ -1092,8 +1019,8 @@ setsockopt(fd, SOL_SOCKET, opt, &on, (socklen_t)sizeof(on))
 	if (sep->se_policy != NULL) {
 		int e = ipsecsetup(sep->se_family, sep->se_fd, sep->se_policy);
 		if (e < 0) {
-			syslog(LOG_ERR, "%s/%s: ipsec setup failed",
-			    sep->se_service, sep->se_proto);
+			syslog(LOG_ERR, SERV_FMT ": ipsec setup failed",
+			    SERV_PARAMS(sep));
 			(void)close(sep->se_fd);
 			sep->se_fd = -1;
 			return;
@@ -1101,13 +1028,11 @@ setsockopt(fd, SOL_SOCKET, opt, &on, (socklen_t)sizeof(on))
 	}
 #endif
 
-	if (bind(sep->se_fd, &sep->se_ctrladdr,
-	    (socklen_t)sep->se_ctrladdr_size) < 0) {
-		if (debug)
-			fprintf(stderr, "bind failed on %s/%s: %s\n",
-			    sep->se_service, sep->se_proto, strerror(errno));
-		syslog(LOG_ERR, "%s/%s: bind: %m",
-		    sep->se_service, sep->se_proto);
+	if (bind(sep->se_fd, &sep->se_ctrladdr, sep->se_ctrladdr_size) < 0) {
+		DPRINTF(SERV_FMT ": bind failed: %s",
+			SERV_PARAMS(sep), strerror(errno));
+		syslog(LOG_ERR, SERV_FMT ": bind: %m",
+		    SERV_PARAMS(sep));
 		(void) close(sep->se_fd);
 		sep->se_fd = -1;
 		if (!timingout) {
@@ -1134,9 +1059,7 @@ setsockopt(fd, SOL_SOCKET, opt, &on, (socklen_t)sizeof(on))
 		if (maxsock > (int)(rlim_ofile_cur - FD_MARGIN))
 			bump_nofile();
 	}
-	if (debug)
-		fprintf(stderr, "registered %s on %d\n",
-		    sep->se_server, sep->se_fd);
+	DPRINTF(SERV_FMT ": registered on fd %d", SERV_PARAMS(sep), sep->se_fd);
 }
 
 /*
@@ -1144,12 +1067,16 @@ setsockopt(fd, SOL_SOCKET, opt, &on, (socklen_t)sizeof(on))
  */
 static void
 close_sep(struct servtab *sep)
-{
+{	
+
 	if (sep->se_fd >= 0) {
 		(void) close(sep->se_fd);
 		sep->se_fd = -1;
 	}
 	sep->se_count = 0;
+	if (sep->se_ip_max != SERVTAB_UNSPEC_SIZE_T) {
+		clear_ip_list(sep);
+	}
 }
 
 static void
@@ -1169,8 +1096,8 @@ register_rpc(struct servtab *sep)
 	}
 	socklen = sizeof ss;
 	if (getsockname(sep->se_fd, (struct sockaddr *)(void *)&ss, &socklen) < 0) {
-		syslog(LOG_ERR, "%s/%s: getsockname: %m",
-		    sep->se_service, sep->se_proto);
+		syslog(LOG_ERR, SERV_FMT ": getsockname: %m",
+		    SERV_PARAMS(sep));
 		return;
 	}
 
@@ -1178,10 +1105,9 @@ register_rpc(struct servtab *sep)
 	nbuf.len = ss.ss_len;
 	nbuf.maxlen = sizeof (struct sockaddr_storage);
 	for (n = sep->se_rpcversl; n <= sep->se_rpcversh; n++) {
-		if (debug)
-			fprintf(stderr, "rpcb_set: %u %d %s %s\n",
-			    sep->se_rpcprog, n, nconf->nc_netid,
-			    taddr2uaddr(nconf, &nbuf));
+		DPRINTF("rpcb_set: %u %d %s %s",
+		    sep->se_rpcprog, n, nconf->nc_netid,
+		    taddr2uaddr(nconf, &nbuf));
 		(void)rpcb_unset((unsigned int)sep->se_rpcprog, (unsigned int)n, nconf);
 		if (!rpcb_set((unsigned int)sep->se_rpcprog, (unsigned int)n, nconf, &nbuf))
 			syslog(LOG_ERR, "rpcb_set: %u %d %s %s%s",
@@ -1205,9 +1131,8 @@ unregister_rpc(struct servtab *sep)
 	}
 
 	for (n = sep->se_rpcversl; n <= sep->se_rpcversh; n++) {
-		if (debug)
-			fprintf(stderr, "rpcb_unset(%u, %d, %s)\n",
-			    sep->se_rpcprog, n, nconf->nc_netid);
+		DPRINTF("rpcb_unset(%u, %d, %s)",
+		    sep->se_rpcprog, n, nconf->nc_netid);
 		if (!rpcb_unset((unsigned int)sep->se_rpcprog, (unsigned int)n, nconf))
 			syslog(LOG_ERR, "rpcb_unset(%u, %d, %s) failed\n",
 			    sep->se_rpcprog, n, nconf->nc_netid);
@@ -1224,7 +1149,7 @@ enter(struct servtab *cp)
 	sep = malloc(sizeof (*sep));
 	if (sep == NULL) {
 		syslog(LOG_ERR, "Out of memory.");
-		exit(1);
+		exit(EXIT_FAILURE);
 	}
 	*sep = *cp;
 	sep->se_fd = -1;
@@ -1234,32 +1159,15 @@ enter(struct servtab *cp)
 	return (sep);
 }
 
-FILE	*fconfig = NULL;
-struct	servtab serv;
-char	line[LINE_MAX];
+FILE	*fconfig;
+/* Temporary storage for new servtab */
+static struct	servtab serv;
+/* Current line from current config file */
+static char	line[LINE_MAX];
 char    *defhost;
 #ifdef IPSEC
-static char *policy = NULL;
+char *policy;
 #endif
-
-static int
-setconfig(void)
-{
-	if (defhost)
-		free(defhost);
-	defhost = newstr("*");
-#ifdef IPSEC
-	if (policy)
-		free(policy);
-	policy = NULL;
-#endif
-	if (fconfig != NULL) {
-		fseek(fconfig, 0L, SEEK_SET);
-		return (1);
-	}
-	fconfig = fopen(CONFIG, "r");
-	return (fconfig != NULL);
-}
 
 static void
 endconfig(void)
@@ -1272,23 +1180,59 @@ endconfig(void)
 		free(defhost);
 		defhost = NULL;
 	}
+
+#ifdef IPSEC
+	if (policy != NULL) {
+		free(policy);
+		policy = NULL;
+	}
+#endif
+
 }
 
+#define LOG_EARLY_ENDCONF() \
+	ERR("Exiting %s early. Some services will be unavailable", CONFIG)
+
+#define LOG_TOO_FEW_ARGS() \
+	ERR("Expected more arguments")
+
+/* Parse the next service and apply any directives, and returns it as servtab */
 static struct servtab *
-getconfigent(void)
+getconfigent(char **current_pos)
 {
 	struct servtab *sep = &serv;
-	int argc, val;
+	int argc, val; 
 	char *cp, *cp0, *arg, *buf0, *buf1, *sz0, *sz1;
 	static char TCPMUX_TOKEN[] = "tcpmux/";
 #define MUX_LEN		(sizeof(TCPMUX_TOKEN)-1)
 	char *hostdelim;
 
-more:
-	while ((cp = nextline(fconfig)) != NULL) {
+	/* 
+	 * Pre-condition: current_pos points into line, 
+	 * line contains config line. Continue where the last getconfigent left off.
+	 * Allows for multiple service definitions per line. 
+	 */
+	cp = *current_pos;
+
+	if (false) {
+		/* 
+		 * Go to the next line, but only after attemting to read the current 
+		 * one! Keep reading until we find a valid definition or EOF. 
+		 */
+more:	
+		cp = nextline(fconfig);
+	}
+
+	if (cp == NULL) {
+		/* EOF or I/O error, let config() know to exit the file */
+		return NULL;
+	}
+
+	/* Comments and IPsec policies */
+	if (cp[0] == '#') {
 #ifdef IPSEC
 		/* lines starting with #@ is not a comment, but the policy */
-		if (cp[0] == '#' && cp[1] == '@') {
+		if (cp[1] == '@') {
 			char *p;
 			for (p = cp + 2; p && *p && isspace((unsigned char)*p); p++)
 				;
@@ -1298,10 +1242,13 @@ more:
 				policy = NULL;
 			} else {
 				if (ipsecsetup_test(p) < 0) {
-					syslog(LOG_ERR,
-						"%s: invalid ipsec policy \"%s\"",
-						CONFIG, p);
-					exit(1);
+					ERR("Invalid IPsec policy \"%s\"", p);
+					LOG_EARLY_ENDCONF();
+					/* 
+					* Stop reading the current config to prevent services 
+					* from being run without IPsec.
+					*/
+					return NULL;
 				} else {
 					if (policy)
 						free(policy);
@@ -1310,22 +1257,36 @@ more:
 			}
 		}
 #endif
-		if (*cp == '#' || *cp == '\0')
-			continue;
-		break;
-	}
-	if (cp == NULL)
-		return (NULL);
-	/*
-	 * clear the static buffer, since some fields (se_ctrladdr,
-	 * for example) don't get initialized here.
-	 */
-	memset(sep, 0, sizeof *sep);
-	arg = skip(&cp);
-	if (cp == NULL) {
-		/* got an empty line containing just blanks/tabs. */
+
 		goto more;
 	}
+
+	/* Parse next token: listen-addr/hostname, service-spec, .include */
+	arg = skip(&cp);
+
+	if (cp == NULL) {
+		goto more;
+	}
+
+	if(arg[0] == '.') {
+		if (strcmp(&arg[1], "include") == 0) {
+			/* include directive */
+			arg = skip(&cp);
+			if(arg == NULL) {
+				LOG_TOO_FEW_ARGS();
+				return NULL;
+			}
+			include_configs(arg);
+			goto more;
+		} else {
+			ERR("Unknown directive '%s'", &arg[1]);
+			goto more;
+		}
+	}
+	
+	/* After this point, we might need to store data in a servtab */
+	*sep = init_servtab();
+
 	/* Check for a host name. */
 	hostdelim = strrchr(arg, ':');
 	if (hostdelim) {
@@ -1348,8 +1309,10 @@ more:
 				goto more;
 			}
 		}
-	} else
-		sep->se_hostaddr = newstr(defhost);
+	} else {
+		/* No host address found, set it to NULL to indicate absence */
+		sep->se_hostaddr = NULL;
+	}
 	if (strncmp(arg, TCPMUX_TOKEN, MUX_LEN) == 0) {
 		char *c = arg + MUX_LEN;
 		if (*c == '+') {
@@ -1363,49 +1326,79 @@ more:
 		sep->se_type = NORM_TYPE;
 	}
 
-	arg = sskip(&cp);
-	if (strncmp(arg, "stream", sizeof("stream") - 1) == 0) {
-		char *accf, *accf_arg;
+	DPRINTCONF("Found service definition '%s'", sep->se_service);
 
-		sep->se_socktype = SOCK_STREAM;
+	/* on/off/socktype */
+	arg = skip(&cp);
+	if (arg == NULL) {
+		LOG_TOO_FEW_ARGS();
+		freeconfig(sep);
+		goto more;
+	}
 
-		/* one and only one accept filter */
-		accf = strchr(arg, ':');	
-		if (accf) {
-	    		if (accf != strrchr(arg, ':') ||/* more than one */
-	    		    *(accf + 1) == '\0') {	/* nothing beyond */
-				sep->se_socktype = -1;
-			} else {
-				accf++;			/* skip delimiter */
-				strlcpy(sep->se_accf.af_name, accf,
-					sizeof(sep->se_accf.af_name));
-				accf_arg = strchr(accf, ',');
-				if (accf_arg) {	/* zero or one arg, no more */
-					if (strrchr(accf, ',') != accf_arg) {
-						sep->se_socktype = -1;
-					} else {
-						accf_arg++;
-						strlcpy(sep->se_accf.af_arg,
-							accf_arg,
-							sizeof(sep->se_accf.af_arg));
-					}
-				}
-			}
+	/* Check for new v2 syntax */
+	if (strcmp(arg, "on") == 0 || strncmp(arg, "on#", 3) == 0) {
+
+		if (arg[2] == '#') {
+			cp = nextline(fconfig);
+		}
+
+		switch(parse_syntax_v2(sep, &cp)) {
+		case V2_SUCCESS:
+			*current_pos = cp;
+			return sep;
+		case V2_SKIP:
+			/* Skip invalid definitions, freeconfig is called in parse_v2.c */
+			*current_pos = cp;
+			freeconfig(sep);
+			goto more;
+		case V2_ERROR:
+			/* 
+			 * Unrecoverable error, stop reading. freeconfig is called
+			 * in parse_v2.c 
+			 */
+			LOG_EARLY_ENDCONF();
+			freeconfig(sep);
+			return NULL;
+		}
+	} else if (strcmp(arg, "off") == 0 || strncmp(arg, "off#", 4) == 0) {
+		
+		if (arg[3] == '#') {
+			cp = nextline(fconfig);
+		}
+
+		/* Parse syntax the same as with 'on', but ignore the result */
+		switch(parse_syntax_v2(sep, &cp)) {
+		case V2_SUCCESS:
+		case V2_SKIP:
+			*current_pos = cp;
+			freeconfig(sep);
+			goto more;
+		case V2_ERROR:
+			/* Unrecoverable error, stop reading */
+			LOG_EARLY_ENDCONF();
+			freeconfig(sep);
+			return NULL;
+		}
+	} else {
+		/* continue parsing v1 */
+		parse_socktype(arg, sep);
+		if (sep->se_socktype == SOCK_STREAM) {
+			parse_accept_filter(arg, sep);
+		}
+		if (sep->se_hostaddr == NULL) {
+			/* Set host to current default */
+			sep->se_hostaddr = newstr(defhost);
 		}
 	}
-		
-	else if (strcmp(arg, "dgram") == 0)
-		sep->se_socktype = SOCK_DGRAM;
-	else if (strcmp(arg, "rdm") == 0)
-		sep->se_socktype = SOCK_RDM;
-	else if (strcmp(arg, "seqpacket") == 0)
-		sep->se_socktype = SOCK_SEQPACKET;
-	else if (strcmp(arg, "raw") == 0)
-		sep->se_socktype = SOCK_RAW;
-	else
-		sep->se_socktype = -1;
 
-	arg = sskip(&cp);
+	/* protocol */
+	arg = skip(&cp);
+	if (arg == NULL) {
+		LOG_TOO_FEW_ARGS();
+		freeconfig(sep);
+		goto more;
+	}
 	if (sep->se_type == NORM_TYPE &&
 	    strncmp(arg, "faith/", strlen("faith/")) == 0) {
 		arg += strlen("faith/");
@@ -1415,8 +1408,9 @@ more:
 
 #define	MALFORMED(arg) \
 do { \
-	syslog(LOG_ERR, "%s: malformed buffer size option `%s'", \
+	ERR("%s: malformed buffer size option `%s'", \
 	    sep->se_service, (arg)); \
+	freeconfig(sep); \
 	goto more; \
 	/*NOTREACHED*/ \
 } while (/*CONSTCOND*/0)
@@ -1435,8 +1429,9 @@ do { \
 			val *= 1024 * 1024; \
 	} \
 	if (val < 1) { \
-		syslog(LOG_ERR, "%s: invalid buffer size `%s'", \
+		ERR("%s: invalid buffer size `%s'", \
 		    sep->se_service, (arg)); \
+		freeconfig(sep); \
 		goto more; \
 	} \
 	/*NOTREACHED*/ \
@@ -1461,7 +1456,7 @@ do { \
 	if ((buf0 = strchr(sep->se_proto, ',')) != NULL) {
 		/* Not meaningful for Tcpmux services. */
 		if (ISMUX(sep)) {
-			syslog(LOG_ERR, "%s: can't specify buffer sizes for "
+			ERR("%s: can't specify buffer sizes for "
 			    "tcpmux services", sep->se_service);
 			goto more;
 		}
@@ -1476,8 +1471,7 @@ do { \
 
 			/* Make sure a 3rd one wasn't specified. */
 			if (strchr(buf1, ',') != NULL) {
-				syslog(LOG_ERR, "%s: too many buffer sizes",
-				    sep->se_service);
+				ERR("%s: too many buffer sizes", sep->se_service);
 				goto more;
 			}
 
@@ -1509,115 +1503,85 @@ do { \
 #undef GETVAL
 #undef MALFORMED
 
-	if (strcmp(sep->se_proto, "unix") == 0) {
-		sep->se_family = AF_LOCAL;
-	} else {
-		val = (int)strlen(sep->se_proto);
-		if (!val) {
-			syslog(LOG_ERR, "%s: invalid protocol specified",
-			    sep->se_service);
-			goto more;
-		}
-		val = sep->se_proto[val - 1];
-		switch (val) {
-		case '4':	/*tcp4 or udp4*/
-			sep->se_family = AF_INET;
-			break;
-#ifdef INET6
-		case '6':	/*tcp6 or udp6*/
-			sep->se_family = AF_INET6;
-			break;
-#endif
-		default:
-			sep->se_family = AF_INET;	/*will become AF_INET6*/
-			break;
-		}
-		if (strncmp(sep->se_proto, "rpc/", 4) == 0) {
-#ifdef RPC
-			char *cp1, *ccp;
-			cp1 = strchr(sep->se_service, '/');
-			if (cp1 == 0) {
-				syslog(LOG_ERR, "%s: no rpc version",
-				    sep->se_service);
-				goto more;
-			}
-			*cp1++ = '\0';
-			sep->se_rpcversl = sep->se_rpcversh =
-			    (int)strtol(cp1, &ccp, 0);
-			if (ccp == cp1) {
-		badafterall:
-				syslog(LOG_ERR, "%s/%s: bad rpc version",
-				    sep->se_service, cp1);
-				goto more;
-			}
-			if (*ccp == '-') {
-				cp1 = ccp + 1;
-				sep->se_rpcversh = (int)strtol(cp1, &ccp, 0);
-				if (ccp == cp1)
-					goto badafterall;
-			}
-#else
-			syslog(LOG_ERR, "%s: rpc services not supported",
-			    sep->se_service);
-			goto more;
-#endif /* RPC */
-		}
+	if (parse_protocol(sep)) {
+		freeconfig(sep);
+		goto more;
 	}
-	arg = sskip(&cp);
-	{
+
+	/* wait/nowait:max */
+	arg = skip(&cp);
+	if (arg == NULL) {
+		LOG_TOO_FEW_ARGS();
+		freeconfig(sep);
+		goto more;
+	}
+
+	/* Rate limiting parsing */ {
 		char *cp1;
 		if ((cp1 = strchr(arg, ':')) == NULL)
 			cp1 = strchr(arg, '.');
 		if (cp1 != NULL) {
+			int rstatus;
 			*cp1++ = '\0';
-			sep->se_max = atoi(cp1);
+			sep->se_service_max = (size_t)strtou(cp1, NULL, 10, 0, 
+			    SERVTAB_COUNT_MAX, &rstatus);
+
+			if (rstatus != 0) {
+				if (rstatus != ERANGE) {
+					/* For compatibility with atoi parsing */
+					sep->se_service_max = 0;
+				}
+
+				WRN("Improper \"max\" value '%s', "
+				    "using '%zu' instead: %s", 
+				    cp1,
+				    sep->se_service_max,
+				    strerror(rstatus));
+			}
+
 		} else
-			sep->se_max = TOOMANY;
+			sep->se_service_max = TOOMANY;
 	}
-	sep->se_wait = strcmp(arg, "wait") == 0;
-	if (ISMUX(sep)) {
-		/*
-		 * Silently enforce "nowait" for TCPMUX services since
-		 * they don't have an assigned port to listen on.
-		 */
-		sep->se_wait = 0;
-
-		if (strncmp(sep->se_proto, "tcp", 3)) {
-			syslog(LOG_ERR, 
-			    "%s: bad protocol for tcpmux service %s",
-			    CONFIG, sep->se_service);
-			goto more;
-		}
-		if (sep->se_socktype != SOCK_STREAM) {
-			syslog(LOG_ERR, 
-			    "%s: bad socket type for tcpmux service %s",
-			    CONFIG, sep->se_service);
-			goto more;
-		}
+	if (parse_wait(sep, strcmp(arg, "wait") == 0)) {
+		freeconfig(sep);
+		goto more;
 	}
-	sep->se_user = newstr(sskip(&cp));
-	if ((sep->se_group = strchr(sep->se_user, ':')) != NULL)
-		*sep->se_group++ = '\0';
-	else if ((sep->se_group = strchr(sep->se_user, '.')) != NULL)
-		*sep->se_group++ = '\0';
 
-	sep->se_server = newstr(sskip(&cp));
-	if (strcmp(sep->se_server, "internal") == 0) {
-		struct biltin *bi;
+	/* Parse user:group token */
+	arg = skip(&cp);
+	if(arg == NULL) {
+		LOG_TOO_FEW_ARGS();
+		freeconfig(sep);
+		goto more;
+	}
+	char* separator = strchr(arg, ':');
+	if (separator == NULL) {
+		/* Backwards compatibility, allow dot instead of colon */
+		separator = strchr(arg, '.');
+	}
 
-		for (bi = biltins; bi->bi_service; bi++)
-			if (bi->bi_socktype == sep->se_socktype &&
-			    strcmp(bi->bi_service, sep->se_service) == 0)
-				break;
-		if (bi->bi_service == 0) {
-			syslog(LOG_ERR, "internal service %s unknown",
-			    sep->se_service);
-			goto more;
-		}
-		sep->se_bi = bi;
-		sep->se_wait = bi->bi_wait;
-	} else
-		sep->se_bi = NULL;
+	if (separator == NULL) {
+		/* Only user was specified */
+		sep->se_group = NULL;
+	} else {
+		*separator = '\0';
+		sep->se_group = newstr(separator + 1);
+	}
+
+	sep->se_user = newstr(arg);
+
+	/* Parser server-program (path to binary or "internal") */
+	arg = skip(&cp);
+	if (arg == NULL) {
+		LOG_TOO_FEW_ARGS();
+		freeconfig(sep);
+		goto more;
+	}
+	if (parse_server(sep, arg)) {
+		freeconfig(sep);
+		goto more;
+	}
+	
 	argc = 0;
 	for (arg = skip(&cp); cp; arg = skip(&cp)) {
 		if (argc < MAXARGV)
@@ -1628,10 +1592,12 @@ do { \
 #ifdef IPSEC
 	sep->se_policy = policy ? newstr(policy) : NULL;
 #endif
+	/* getconfigent read a positional service def, move to next line */
+	*current_pos = nextline(fconfig);
 	return (sep);
 }
 
-static void
+void
 freeconfig(struct servtab *cp)
 {
 	int i;
@@ -1644,7 +1610,8 @@ freeconfig(struct servtab *cp)
 		free(cp->se_proto);
 	if (cp->se_user)
 		free(cp->se_user);
-	/* Note: se_group is part of the newstr'ed se_user */
+	if(cp->se_group)
+		free(cp->se_group);
 	if (cp->se_server)
 		free(cp->se_server);
 	for (i = 0; i < MAXARGV; i++)
@@ -1656,24 +1623,12 @@ freeconfig(struct servtab *cp)
 #endif
 }
 
-
 /*
- * Safe skip - if skip returns null, log a syntax error in the
- * configuration file and exit.
+ * Get next token *in the current service definition* from config file.
+ * Allows multi-line parse if single space or single tab-indented.
+ * Things in quotes are considered single token.
+ * Advances cp to next token.
  */
-static char *
-sskip(char **cpp)
-{
-	char *cp;
-
-	cp = skip(cpp);
-	if (cp == NULL) {
-		syslog(LOG_ERR, "%s: syntax error", CONFIG);
-		exit(1);
-	}
-	return (cp);
-}
-
 static char *
 skip(char **cpp)
 {
@@ -1692,13 +1647,14 @@ again:
 
 		c = getc(fconfig);
 		(void) ungetc(c, fconfig);
-		if (c == ' ' || c == '\t')
+		if (c == ' ' || c == '\t') 
 			if ((cp = nextline(fconfig)) != NULL)
 				goto again;
 		*cpp = NULL;
 		return (NULL);
 	}
 	start = cp;
+	/* Parse shell-style quotes */
 	quote = '\0';
 	while (*cp && (quote || (*cp != ' ' && *cp != '\t'))) {
 		if (*cp == '\'' || *cp == '"') {
@@ -1720,27 +1676,32 @@ again:
 	return (start);
 }
 
-static char *
+char *
 nextline(FILE *fd)
 {
 	char *cp;
 
-	if (fgets(line, (int)sizeof(line), fd) == NULL)
-		return (NULL);
+	if (fgets(line, (int)sizeof(line), fd) == NULL) {
+		if (ferror(fd)) {
+			ERR("Error when reading next line: %s", strerror(errno));
+		}
+		return NULL;
+	}
 	cp = strchr(line, '\n');
 	if (cp)
 		*cp = '\0';
-	return (line);
+	line_number++;
+	return line;
 }
 
-static char *
+char *
 newstr(const char *cp)
 {
 	char *dp;
 	if ((dp = strdup((cp != NULL) ? cp : "")) != NULL)
 		return (dp);
 	syslog(LOG_ERR, "strdup: %m");
-	exit(1);
+	exit(EXIT_FAILURE);
 	/*NOTREACHED*/
 }
 
@@ -1948,8 +1909,7 @@ machtime(void)
 	struct timeval tv;
 
 	if (gettimeofday(&tv, NULL) < 0) {
-		if (debug)
-			fprintf(stderr, "Unable to get time of day\n");
+		DPRINTF("Unable to get time of day");
 		return (0);
 	}
 #define	OFFSET ((uint32_t)25567 * 24*60*60)
@@ -2025,6 +1985,7 @@ daytime_dg(int s, struct servtab *sep)
 	(void) sendto(s, buffer, len, 0, sa, size);
 }
 
+#ifdef DEBUG_ENABLE
 /*
  * print_service:
  *	Dump relevant information to stderr
@@ -2035,14 +1996,14 @@ print_service(const char *action, struct servtab *sep)
 
 	if (isrpcservice(sep))
 		fprintf(stderr,
-		    "%s: %s rpcprog=%d, rpcvers = %d/%d, proto=%s, wait.max=%d.%d, user:group=%s:%s builtin=%lx server=%s"
+		    "%s: %s rpcprog=%d, rpcvers = %d/%d, proto=%s, wait.max=%d.%zu, user:group=%s:%s builtin=%lx server=%s"
 #ifdef IPSEC
 		    " policy=\"%s\""
 #endif
 		    "\n",
 		    action, sep->se_service,
 		    sep->se_rpcprog, sep->se_rpcversh, sep->se_rpcversl, sep->se_proto,
-		    sep->se_wait, sep->se_max, sep->se_user, sep->se_group,
+		    sep->se_wait, sep->se_service_max, sep->se_user, sep->se_group,
 		    (long)sep->se_bi, sep->se_server
 #ifdef IPSEC
 		    , (sep->se_policy ? sep->se_policy : "")
@@ -2050,21 +2011,22 @@ print_service(const char *action, struct servtab *sep)
 		    );
 	else
 		fprintf(stderr,
-		    "%s: %s proto=%s%s, wait.max=%d.%d, user:group=%s:%s builtin=%lx server=%s"
+		    "%s: %s:%s proto=%s%s, wait.max=%d.%zu, user:group=%s:%s builtin=%lx server=%s"
 #ifdef IPSEC
 		    " policy=%s"
 #endif
 		    "\n",
-		    action, sep->se_service,
+		    action, sep->se_hostaddr, sep->se_service,
 		    sep->se_type == FAITH_TYPE ? "faith/" : "",
 		    sep->se_proto,
-		    sep->se_wait, sep->se_max, sep->se_user, sep->se_group,
+		    sep->se_wait, sep->se_service_max, sep->se_user, sep->se_group,
 		    (long)sep->se_bi, sep->se_server
 #ifdef IPSEC
 		    , (sep->se_policy ? sep->se_policy : "")
 #endif
 		    );
 }
+#endif
 
 static void
 usage(void)
@@ -2074,7 +2036,7 @@ usage(void)
 #else
 	(void)fprintf(stderr, "usage: %s [-d] [conf]\n", getprogname());
 #endif
-	exit(1);
+	exit(EXIT_FAILURE);
 }
 
 
@@ -2122,8 +2084,7 @@ tcpmux(int ctrl, struct servtab *sep)
 	}
 	service[len] = '\0';
 
-	if (debug)
-		fprintf(stderr, "tcpmux: someone wants %s\n", service);
+	DPRINTF("tcpmux: %s: service requested", service);
 
 	/*
 	 * Help is a required command, and lists available services,
@@ -2155,7 +2116,7 @@ tcpmux(int ctrl, struct servtab *sep)
 	}
 	strwrite(ctrl, "-Service not available\r\n");
 reject:
-	_exit(1);
+	_exit(EXIT_FAILURE);
 }
 
 /*
@@ -2270,10 +2231,753 @@ my_kevent(const struct kevent *changelist, size_t nchanges,
 static struct kevent *
 allocchange(void)
 {
-	if (changes == A_CNT(changebuf)) {
-		(void) my_kevent(changebuf, A_CNT(changebuf), NULL, 0);
+	if (changes == __arraycount(changebuf)) {
+		(void) my_kevent(changebuf, __arraycount(changebuf), NULL, 0);
 		changes = 0;
 	}
 
 	return (&changebuf[changes++]);
+}
+
+static void
+config_root()
+{
+	struct servtab *sep;
+	/* Uncheck services */
+	for (sep = servtab; sep != NULL; sep = sep->se_next) {
+		sep->se_checked = 0;
+	}
+	defhost = newstr("*");
+#ifdef IPSEC
+	policy = NULL;
+#endif
+	fconfig = NULL;
+	config();
+	purge_unchecked();
+}
+
+static void 
+purge_unchecked(void) 
+{
+	struct servtab *sep, **sepp = &servtab;
+	int servtab_count = 0;
+	while ((sep = *sepp) != NULL) {
+		if (sep->se_checked) {
+			sepp = &sep->se_next;
+			servtab_count++;
+			continue;
+		}
+		*sepp = sep->se_next;
+		if (sep->se_fd >= 0)
+			close_sep(sep);
+		if (isrpcservice(sep))
+			unregister_rpc(sep);
+		if (sep->se_family == AF_LOCAL)
+			(void)unlink(sep->se_service);
+#ifdef DEBUG_ENABLE
+		if (debug)
+			print_service("FREE", sep);
+#endif
+		freeconfig(sep);
+		free(sep);
+	}
+	DPRINTF("%d service(s) loaded.", servtab_count);
+}
+
+static bool
+is_same_service(const struct servtab *sep, const struct servtab *cp) 
+{
+	return 
+	    strcmp(sep->se_service, cp->se_service) == 0 &&
+	    strcmp(sep->se_hostaddr, cp->se_hostaddr) == 0 &&
+	    strcmp(sep->se_proto, cp->se_proto) == 0 &&
+	    sep->se_family == cp->se_family &&
+	    ISMUX(sep) == ISMUX(cp);
+}
+
+int 
+parse_protocol(struct servtab *sep)
+{	
+	int val;
+
+	if (strcmp(sep->se_proto, "unix") == 0) {
+		sep->se_family = AF_LOCAL;
+	} else {
+		val = (int)strlen(sep->se_proto);
+		if (!val) {
+			ERR("%s: invalid protocol specified",
+			    sep->se_service);
+			return -1;
+		}
+		val = sep->se_proto[val - 1];
+		switch (val) {
+		case '4':	/*tcp4 or udp4*/
+			sep->se_family = AF_INET;
+			break;
+#ifdef INET6
+		case '6':	/*tcp6 or udp6*/
+			sep->se_family = AF_INET6;
+			break;
+#endif
+		default:
+			/* Use 'default' IP version which is IPv4, may eventually be
+			 * changed to AF_INET6 */
+			sep->se_family = AF_INET;
+			break;
+		}
+		if (strncmp(sep->se_proto, "rpc/", 4) == 0) {
+#ifdef RPC
+			char *cp1, *ccp;
+			cp1 = strchr(sep->se_service, '/');
+			if (cp1 == 0) {
+				ERR("%s: no rpc version",
+				    sep->se_service);
+				return -1;
+			}
+			*cp1++ = '\0';
+			sep->se_rpcversl = sep->se_rpcversh =
+			    (int)strtol(cp1, &ccp, 0);
+			if (ccp == cp1) {
+		badafterall:
+				ERR("%s/%s: bad rpc version",
+				    sep->se_service, cp1);
+				return -1;
+			}
+			if (*ccp == '-') {
+				cp1 = ccp + 1;
+				sep->se_rpcversh = (int)strtol(cp1, &ccp, 0);
+				if (ccp == cp1)
+					goto badafterall;
+			}
+#else
+			ERR("%s: rpc services not supported",
+			    sep->se_service);
+			return -1;
+#endif /* RPC */
+		}
+	}
+	return 0;
+}
+
+int
+parse_wait(struct servtab *sep, int wait)
+{
+	if (!ISMUX(sep)) {
+		sep->se_wait = wait;
+		return 0;
+	}
+	/*
+	 * Silently enforce "nowait" for TCPMUX services since
+	 * they don't have an assigned port to listen on.
+	 */
+	sep->se_wait = 0;
+
+	if (strncmp(sep->se_proto, "tcp", 3)) {
+		ERR("bad protocol for tcpmux service %s",
+			sep->se_service);
+		return -1;
+	}
+	if (sep->se_socktype != SOCK_STREAM) {
+		ERR("bad socket type for tcpmux service %s",
+		    sep->se_service);
+		return -1;
+	}
+	return 0;
+}
+
+int
+parse_server(struct servtab *sep, const char *arg){
+	sep->se_server = newstr(arg);
+	if (strcmp(sep->se_server, "internal") == 0) {
+		sep->se_bi = NULL;
+		return 0;
+	}
+	struct biltin *bi;
+
+	for (bi = biltins; bi->bi_service; bi++)
+		if (bi->bi_socktype == sep->se_socktype &&
+		    strcmp(bi->bi_service, sep->se_service) == 0)
+			break;
+	if (bi->bi_service == 0) {
+		ERR("Internal service %s unknown",
+		    sep->se_service);
+		return -1;
+	}
+	sep->se_bi = bi;
+	sep->se_wait = bi->bi_wait;
+	return 0;
+}
+
+/* TODO test to make sure accept filter still works */
+void 
+parse_accept_filter(char *arg, struct servtab *sep) {
+	char *accf, *accf_arg;
+	/* one and only one accept filter */
+	accf = strchr(arg, ':');	
+	if (!accf)
+		return;
+	if (accf != strrchr(arg, ':') || *(accf + 1) == '\0') {
+		/* more than one ||  nothing beyond */
+		sep->se_socktype = -1;
+		return;
+	}
+
+	accf++;			/* skip delimiter */
+	strlcpy(sep->se_accf.af_name, accf, sizeof(sep->se_accf.af_name));
+	accf_arg = strchr(accf, ',');
+	if (!accf_arg)		/* zero or one arg, no more */
+		return;
+
+	if (strrchr(accf, ',') != accf_arg) {
+		sep->se_socktype = -1;
+	} else {
+		accf_arg++;
+		strlcpy(sep->se_accf.af_arg, accf_arg,
+		    sizeof(sep->se_accf.af_arg));
+	}
+}
+
+void 
+parse_socktype(char* arg, struct servtab* sep) {
+	/* stream socket may have an accept filter, only check first chars */
+	if (strncmp(arg, "stream", sizeof("stream") - 1) == 0)
+		sep->se_socktype = SOCK_STREAM;
+	else if (strcmp(arg, "dgram") == 0)
+		sep->se_socktype = SOCK_DGRAM;
+	else if (strcmp(arg, "rdm") == 0)
+		sep->se_socktype = SOCK_RDM;
+	else if (strcmp(arg, "seqpacket") == 0)
+		sep->se_socktype = SOCK_SEQPACKET;
+	else if (strcmp(arg, "raw") == 0)
+		sep->se_socktype = SOCK_RAW;
+	else
+		sep->se_socktype = -1;
+}
+
+static struct servtab 
+init_servtab() {
+	/* This does not set every field to default. See enter() as well */
+	return (struct servtab) {
+		/* 
+		 * Set se_max to non-zero so uninitialized value is not
+	 	 * a valid value. Useful in v2 syntax parsing. 
+		 */
+		.se_service_max = SERVTAB_UNSPEC_SIZE_T,
+		.se_ip_max = SERVTAB_UNSPEC_SIZE_T,
+		.se_wait = SERVTAB_UNSPEC_VAL,
+		.se_socktype = SERVTAB_UNSPEC_VAL
+		/* All other fields initialized to 0 or null */
+	};
+}
+
+/* Include directives bookkeeping structure */
+struct file_list {
+	/* Absolute path used for checking for circular references */
+	char *abs;
+	/* Pointer to the absolute path of the parent config file,
+	 * on the stack */
+	struct file_list *next;
+} *file_list_head;
+
+static void
+include_configs(char *pattern)
+{
+	/* Allocate global per-config state on the thread stack */
+	const char* save_CONFIG;
+	FILE	*save_fconfig;
+	size_t	save_line_number;
+	char    *save_defhost;
+	struct	file_list new_file;
+#ifdef IPSEC
+	char *save_policy;
+#endif
+
+	/* Store current globals on the stack */
+	save_CONFIG = CONFIG;
+	save_fconfig = fconfig;
+	save_line_number = line_number;
+	save_defhost = defhost;
+	new_file.abs = realpath(CONFIG, NULL);
+	new_file.next = file_list_head;
+#ifdef IPSEC
+	save_policy = policy;
+#endif
+	/* Put new_file at the top of the config stack */
+	file_list_head = &new_file;
+	read_glob_configs(pattern);
+	free((void *)new_file.abs);
+	/* Pop new_file off the stack */
+	file_list_head = new_file.next;
+
+	/* Restore global per-config state */
+	CONFIG = save_CONFIG;
+	fconfig = save_fconfig;
+	line_number = save_line_number;
+	defhost = save_defhost;
+#ifdef IPSEC
+	policy = save_policy;
+#endif
+}
+
+static void 
+prepare_next_config(const char *file_name)
+{
+	/* Setup new state that is normally only done in main */
+	CONFIG = file_name;
+
+	/* Inherit default host and IPsec policy */
+	defhost = newstr(defhost);
+
+#ifdef IPSEC
+	policy = (policy == NULL) ? NULL : newstr(policy);
+#endif
+}
+
+static void
+read_glob_configs(char *pattern) {
+	glob_t results;
+	char *full_pattern;
+	int glob_result;
+	full_pattern = gen_file_pattern(CONFIG, pattern);
+
+	DPRINTCONF("Found include directive '%s'", full_pattern);
+
+	glob_result = glob(full_pattern, GLOB_NOSORT, glob_error, &results);
+	switch(glob_result) {
+	case 0:
+		/* No glob errors */
+		break;
+	case GLOB_ABORTED:
+		ERR("Error while searching for include files");
+		break;
+	case GLOB_NOMATCH:
+		/* It's fine if no files were matched. */
+		DPRINTCONF("No files matched pattern '%s'", full_pattern);
+		break;
+	case GLOB_NOSPACE:
+		ERR("Error when searching for include files: %s",
+		    strerror(errno));
+		break;
+	default:
+		ERR("Unknown glob(3) error %d", errno);
+		break;
+	}
+	free(full_pattern);
+
+	for (size_t i = 0; i < results.gl_pathc; i++) {
+		include_matched_path(results.gl_pathv[i]);
+	}
+
+	globfree(&results);
+}
+
+static void
+include_matched_path(char *glob_path)
+{
+	struct stat sb;
+	char *tmp;
+
+	if (lstat(glob_path, &sb)) {
+		ERR("Error calling stat on path '%s': %s", glob_path,
+		    strerror(errno));
+		return;
+	}
+
+	if (!S_ISREG(sb.st_mode) && !S_ISLNK(sb.st_mode)) {
+		DPRINTCONF("'%s' is not a file.", glob_path);
+		ERR("The matched path '%s' is not a regular file", glob_path);
+		return;
+	}
+
+	DPRINTCONF("Include '%s'", glob_path);
+
+	if (S_ISLNK(sb.st_mode)) {
+		tmp = glob_path;
+		glob_path = realpath(tmp, NULL);
+	}
+
+	/* Ensure the file is not being reincluded .*/
+	if (check_no_reinclude(glob_path)) {
+		prepare_next_config(glob_path);
+		config();
+	} else {
+		DPRINTCONF("File '%s' already included in current include "
+		    "chain", glob_path);
+		WRN("Including file '%s' would cause a circular "
+		    "dependency", glob_path);
+	}
+
+	if (S_ISLNK(sb.st_mode)) {
+		free(glob_path);
+		glob_path = tmp;
+	}
+}
+
+static bool
+check_no_reinclude(const char *glob_path)
+{
+	struct file_list *cur = file_list_head;
+	char *abs_path = realpath(glob_path, NULL);
+
+	if (abs_path == NULL) {
+		ERR("Error checking real path for '%s': %s",
+			glob_path, strerror(errno));
+		return false;
+	}
+
+	DPRINTCONF("Absolute path '%s'", abs_path);
+
+	for (cur = file_list_head; cur != NULL; cur = cur->next) {
+		if (strcmp(cur->abs, abs_path) == 0) {
+			/* file included more than once */
+			/* TODO relative or abs path for logging error? */
+			free(abs_path);
+			return false;
+		}
+	}
+	free(abs_path);
+	return true;
+}
+
+/* Resolve the pattern relative to the config file the pattern is from  */
+static char * 
+gen_file_pattern(const char *cur_config, const char *pattern)
+{
+	if(pattern[0] == '/') {
+		/* Absolute paths don't need any normalization */
+		return newstr(pattern);
+	}
+
+	/* pattern is relative */
+	/* Find the end of the file's directory */
+	int i, last = 0;
+	for (i = 0; cur_config[i] != '\0'; i++) {
+		if (cur_config[i] == '/') {
+			last = i;
+		}
+	}
+
+	if (last == 0) {
+		/* cur_config is just a filename, pattern already correct */
+		return newstr(pattern);
+	} 
+
+	/* Relativize pattern to cur_config file's directory */
+	char *full_pattern = malloc(last + 1 + strlen(pattern) + 1);
+	if (full_pattern == NULL) {
+		syslog(LOG_ERR, "Out of memory.");
+		exit(EXIT_FAILURE);
+	}
+	memcpy(full_pattern, cur_config, last);
+	full_pattern[last] = '/';
+	strcpy(&full_pattern[last + 1], pattern);
+	return full_pattern;
+}
+
+static int
+glob_error(const char *path, int error) 
+{
+	WRN("Error while resolving path '%s': %s", path, strerror(error));
+	return 0;
+}
+
+/* Return 0 on allow, -1 if connection should be blocked */
+static int
+rl_process(struct servtab *sep, int ctrl)
+{
+	struct se_ip_list_node *node;
+	time_t now = 0; /* 0 prevents GCC from complaining */
+	bool istimevalid = false;
+	char hbuf[NI_MAXHOST];
+
+	DPRINTF(SERV_FMT ": processing rate-limiting",
+	    SERV_PARAMS(sep));
+	DPRINTF(SERV_FMT ": se_service_max "
+	    "%zu and se_count %zu", SERV_PARAMS(sep),
+	    sep->se_service_max, sep->se_count);
+
+	/* se_count is incremented if rl_process will return 0 */
+	if (sep->se_count == 0) {
+		now = rl_time();
+		sep->se_time = now;
+		istimevalid = true;
+	}
+	
+	if (sep->se_count >= sep->se_service_max) {
+		if(!istimevalid) {
+			now = rl_time();
+			istimevalid = true;
+		}
+		
+		if (now - sep->se_time > CNT_INTVL) {
+			rl_reset(sep, now);
+		} else {
+			syslog(LOG_ERR,
+                            SERV_FMT ": max spawn rate (%zu in %zi seconds) "
+                            "already met, closing until end of timeout in "
+			    "%zu seconds",
+                            SERV_PARAMS(sep),
+                            sep->se_service_max,
+			    (intmax_t)CNT_INTVL,
+			    (uintmax_t)RETRYTIME);
+
+			DPRINTF(SERV_FMT ": service not started",
+			    SERV_PARAMS(sep));
+
+			rl_drop_connection(sep, ctrl);
+
+			/* Close the server for 10 minutes */
+			close_sep(sep);
+			if (!timingout) {
+				timingout = 1;
+				alarm(RETRYTIME);
+			}
+
+			return -1;
+		}
+	}
+
+	if (sep->se_ip_max != SERVTAB_UNSPEC_SIZE_T) {
+		rl_get_name(sep, ctrl, hbuf);
+		node = rl_try_get_ip(sep, hbuf);
+		if(node == NULL) {
+			node = rl_add(sep, hbuf);
+		}
+
+		DPRINTF(
+		    SERV_FMT ": se_ip_max %zu and ip_count %zu",
+		    SERV_PARAMS(sep), sep->se_ip_max, node->count);
+		
+		if (node->count >= sep->se_ip_max) {
+			if (!istimevalid) {
+				/* 
+				 * Only get the clock time if we didn't
+				 * already 
+				 */
+				now = rl_time();
+				istimevalid = true;
+			}
+		
+			if (now - sep->se_time > CNT_INTVL) {
+				rl_reset(sep, now);
+				node = rl_add(sep, hbuf);
+			} else {
+				if (debug && node->count == sep->se_ip_max) {
+					/*
+					 * Only log first failed request to
+					 * prevent DoS attack writing to system
+					 * log
+					 */
+					syslog(LOG_ERR, SERV_FMT
+					    ": max ip spawn rate (%zu in " 
+					    "%zi seconds) for "
+					    "%." TOSTRING(NI_MAXHOST) "s "
+					    "already met; service not started",
+					    SERV_PARAMS(sep),
+					    sep->se_ip_max,
+					    (intmax_t)CNT_INTVL,
+					    node->address);
+				}
+
+				DPRINTF(SERV_FMT ": service not started", 
+   				    SERV_PARAMS(sep));
+
+				rl_drop_connection(sep, ctrl);
+				/*
+				 * Increment so debug-syslog message will
+				 * trigger only once 
+				 */
+				node->count++;
+				return -1;
+			}
+		}
+		node->count++;
+	}
+
+	DPRINTF(SERV_FMT ": running service ", SERV_PARAMS(sep));
+
+	sep->se_count++;
+	return 0;
+}
+
+/* Get the remote's IP address in textual form into hbuf of size NI_MAXHOST */
+static void
+rl_get_name(struct servtab *sep, int ctrl, char *hbuf)
+{
+	struct sockaddr_storage addr;
+	socklen_t len = sizeof(struct sockaddr_storage);
+	switch (sep->se_socktype) {
+	case SOCK_STREAM:
+		if (getpeername(ctrl, (struct sockaddr *)&addr, &len)) { 
+			/* error, log it and skip ip rate limiting */
+			syslog(LOG_ERR,
+				SERV_FMT " failed to get peer name of the "
+				"connection", SERV_PARAMS(sep));
+			exit(EXIT_FAILURE);
+		}
+		break;
+	case SOCK_DGRAM: {
+		struct msghdr header = {
+			.msg_name = &addr,
+			.msg_namelen = sizeof(struct sockaddr_storage),
+			/* scatter/gather and control info is null */
+		};
+		int count;
+		
+		/* Peek so service can still get the packet */
+		count = recvmsg(ctrl, &header, MSG_PEEK);
+		if (count == -1) {
+			syslog(LOG_ERR,
+			    "failed to get dgram source address: %s; exiting",
+			    strerror(errno));
+			exit(EXIT_FAILURE);
+		}
+		break;
+	}
+	default:
+		DPRINTF(SERV_FMT ": ip_max rate limiting not supported for "
+		    "socktype", SERV_PARAMS(sep));
+		syslog(LOG_ERR, SERV_FMT
+		    ": ip_max rate limiting not supported for socktype",
+		    SERV_PARAMS(sep));
+		exit(EXIT_FAILURE);
+	}
+
+	if (getnameinfo((struct sockaddr *)&addr, 
+		addr.ss_len, hbuf,
+		NI_MAXHOST, NULL, 0, NI_NUMERICHOST)) {
+		/* error, log it and skip ip rate limiting */
+		syslog(LOG_ERR,
+		    SERV_FMT ": failed to get name info of the incoming "
+		    "connection; exiting",
+		    SERV_PARAMS(sep));
+		exit(EXIT_FAILURE);
+	}
+}
+
+static void
+rl_drop_connection(struct servtab *sep, int ctrl)
+{
+
+	if (!sep->se_wait && sep->se_socktype == SOCK_STREAM) {
+		/* 
+		 * If the fd isn't a listen socket, 
+		 * close the individual connection too. 
+		 */
+		close(ctrl);
+		return;
+	}
+	if (sep->se_socktype != SOCK_DGRAM) {
+		return;
+	}
+	/* 
+	 * Drop the single datagram the service would have
+	 * consumed if nowait. If this is a wait service, this
+	 * will consume 1 datagram, and further received packets
+	 * will be removed in the same way.
+	 */
+	struct msghdr header = {
+		/* All fields null, just consume one message */
+	};
+	int count;
+	
+	count = recvmsg(ctrl, &header, 0);
+	if (count == -1) {
+		syslog(LOG_ERR,
+		    SERV_FMT ": failed to consume nowait dgram: %s",
+		    SERV_PARAMS(sep), strerror(errno));
+		exit(EXIT_FAILURE);
+	}
+	DPRINTF(SERV_FMT ": dropped dgram message", 
+	    SERV_PARAMS(sep));
+}
+
+static time_t 
+rl_time()
+{
+	struct timespec time;
+	if(clock_gettime(CLOCK_MONOTONIC, &time) == -1) {
+		syslog(LOG_ERR, "clock_gettime for rate limiting failed: %s; "
+		    "exiting", strerror(errno));
+		/* Exit inetd if rate limiting fails */
+		exit(EXIT_FAILURE);
+	}
+	return time.tv_sec;
+}
+
+static struct se_ip_list_node*
+rl_add(struct servtab *sep, char* ip)
+{
+	DPRINTF(
+	    SERV_FMT ": add ip %s to rate limiting tracking",
+	    SERV_PARAMS(sep), ip);
+
+	/* 
+	 * TODO memory could be saved by using a variable length malloc
+	 * with only the length of ip instead of the existing address field
+	 * NI_MAXHOST in length.
+	 */
+	struct se_ip_list_node* temp = malloc(sizeof(*temp));
+	if (temp == NULL) {
+		syslog(LOG_ERR, "Out of memory.");
+		exit(EXIT_FAILURE);
+	}
+	temp->count = 0;
+	temp->next = NULL;
+	strlcpy(temp->address, ip, sizeof(temp->address));
+
+	if (sep->se_ip_list_head == NULL) {
+		/* List empty, insert as head */
+		sep->se_ip_list_head = temp;
+	} else {
+		/* List not empty, insert as head, point next to prev head */
+		temp->next = sep->se_ip_list_head;
+		sep->se_ip_list_head = temp;
+	}
+
+	return temp;
+}
+
+static void
+rl_reset(struct servtab *sep, time_t now)
+{
+	DPRINTF(SERV_FMT ": %zi seconds passed; resetting rate limiting ", 
+	    SERV_PARAMS(sep), (intmax_t)(now - sep->se_time));
+
+	sep->se_count = 0;
+	sep->se_time = now;
+	if (sep->se_ip_max != SERVTAB_UNSPEC_SIZE_T) {
+		clear_ip_list(sep);
+	}
+}
+
+static void
+clear_ip_list(struct servtab *sep) {
+	struct se_ip_list_node *curr, *next;
+	curr = sep->se_ip_list_head;
+
+	while (curr != NULL) {
+		next = curr->next;
+		free(curr);
+		curr = next;
+	}
+	sep->se_ip_list_head = NULL;
+}
+
+static struct se_ip_list_node *
+rl_try_get_ip(struct servtab *sep, char *ip)
+{
+	struct se_ip_list_node *curr; 
+
+	DPRINTF(
+	    SERV_FMT ": look up ip %s for ip_max rate limiting",
+	    SERV_PARAMS(sep), ip);
+
+	for (curr = sep->se_ip_list_head; curr != NULL; curr = curr->next) {
+		if (!strncmp(curr->address, ip, NI_MAXHOST)) {
+			/* IP addr match */
+			return curr;
+		}
+	}
+	return NULL;
 }
