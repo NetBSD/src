@@ -1,4 +1,4 @@
-/* $NetBSD: lex.c,v 1.78 2021/08/28 21:52:14 rillig Exp $ */
+/* $NetBSD: lex.c,v 1.79 2021/08/29 09:05:35 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: lex.c,v 1.78 2021/08/28 21:52:14 rillig Exp $");
+__RCSID("$NetBSD: lex.c,v 1.79 2021/08/29 09:05:35 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -1120,6 +1120,7 @@ lex_comment(void)
 		{ "CONSTANTCONDITION",	false,	constcond	},
 		{ "FALLTHRU",		false,	fallthru	},
 		{ "FALLTHROUGH",	false,	fallthru	},
+		{ "FALL THROUGH",	false,	fallthru	},
 		{ "LINTLIBRARY",	false,	lintlib		},
 		{ "LINTED",		true,	linted		},
 		{ "LONGLONG",		false,	longlong	},
@@ -1144,10 +1145,13 @@ lex_comment(void)
 
 	/* Read the potential keyword to keywd */
 	l = 0;
-	while (c != EOF && isupper(c) && l < sizeof(keywd) - 1) {
+	while (c != EOF && l < sizeof(keywd) - 1 &&
+	    (isupper(c) || isspace(c))) {
 		keywd[l++] = (char)c;
 		c = inpc();
 	}
+	while (l > 0 && ch_isspace(keywd[l - 1]))
+		l--;
 	keywd[l] = '\0';
 
 	/* look for the keyword */

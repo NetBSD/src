@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_220.c,v 1.4 2021/08/29 08:57:50 rillig Exp $	*/
+/*	$NetBSD: msg_220.c,v 1.5 2021/08/29 09:05:35 rillig Exp $	*/
 # 3 "msg_220.c"
 
 // Test for message: fallthrough on case statement [220]
@@ -53,7 +53,7 @@ annotation_comment_variations(int n)
 	case 1:
 		println("1");
 		/* FALL THROUGH */
-		/* expect+1: warning: fallthrough on case statement [220] */
+		/* Lint warned before 2021-08-29. */
 	case 2:
 		println("2");
 		/* FALLS THROUGH */
