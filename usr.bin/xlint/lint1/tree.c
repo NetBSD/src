@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.361 2021/08/29 15:49:04 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.362 2021/08/29 16:17:08 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.361 2021/08/29 15:49:04 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.362 2021/08/29 16:17:08 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -200,14 +200,13 @@ bool
 is_compiler_builtin(const char *name)
 {
 	/* https://gcc.gnu.org/onlinedocs/gcc/C-Extensions.html */
-	if (strncmp(name, "__atomic_", 9) == 0 ||
-	    strncmp(name, "__builtin_", 10) == 0)
-		return true;
-
-	/* https://gcc.gnu.org/onlinedocs/gcc/C-Extensions.html */
-	/* obsolete but still in use, as of 2021 */
-	if (strncmp(name, "__sync_", 7) == 0)
-		return true;
+	if (gflag) {
+		if (strncmp(name, "__atomic_", 9) == 0 ||
+		    strncmp(name, "__builtin_", 10) == 0 ||
+		    /* obsolete but still in use, as of 2021 */
+		    strncmp(name, "__sync_", 7) == 0)
+			return true;
+	}
 
 	/* https://software.intel.com/sites/landingpage/IntrinsicsGuide/ */
 	if (strncmp(name, "_mm_", 4) == 0)
@@ -229,7 +228,7 @@ build_name(sym_t *sym, int follow_token)
 		sym->s_scl = EXTERN;
 		sym->s_def = DECL;
 		if (follow_token == T_LPAREN) {
-			if (gflag && is_compiler_builtin(sym->s_name)) {
+			if (is_compiler_builtin(sym->s_name)) {
 				/*
 				 * Do not warn about these, just assume that
 				 * they are regular functions compatible with
