@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.15 2021/05/30 02:24:05 joerg Exp $
+#	$NetBSD: Makefile.inc,v 1.16 2021/08/29 16:44:16 rillig Exp $
 #	@(#)Makefile.inc	8.1 (Berkeley) 6/4/93
 
 # gmon sources
@@ -16,6 +16,17 @@ MLINKS+=moncontrol.3 monstartup.3
 # mcount.c should be fixed and this test removed.
 #
 COPTS.mcount.c+=${${ACTIVE_CXX} == "gcc":? -Wa,--no-warn :}
+.endif
+
+.if ${MACHINE_CPU} == "i386"
+# lint1 says:
+# mcount.c(285): warning: function '_mcount' implicitly declared to return int
+#
+# lint2 says:
+# _mcount used( common/lib/libc/gmon/mcount.c(285) ), but not defined
+#
+# The correct fix is probably to have a consistent underscore in both places.
+LINTFLAGS.mcount.c+=	-X 215
 .endif
 
 .if (${MACHINE_CPU} == "i386" || ${MACHINE_CPU} == "x86_64") && \
