@@ -1,4 +1,4 @@
-/* $NetBSD: lint2.h,v 1.17 2021/08/28 12:21:53 rillig Exp $ */
+/* $NetBSD: lint2.h,v 1.18 2021/08/29 09:48:02 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -114,7 +114,7 @@ typedef	struct {
 typedef	struct sym {
 	struct {
 		pos_t	s_pos;		/* pos of def./decl. */
-#ifndef lint
+#if !defined(lint) && !defined(DEBUG)
 		unsigned char s_def;	/* DECL, TDEF or DEF */
 #else
 		def_t	s_def;
