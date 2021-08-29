@@ -1,4 +1,4 @@
-/*	$NetBSD: time.h,v 1.12 2018/06/03 05:55:08 chs Exp $	*/
+/*	$NetBSD: time.h,v 1.13 2021/08/29 08:43:12 christos Exp $	*/
 
 /*-
  * Copyright (c) 2007 Pawel Jakub Dawidek <pjd@FreeBSD.org>
@@ -96,7 +96,7 @@ ddi_get_lbolt64(void)
 int clock_gettime(clockid_t, struct timespec *)
     __RENAME(__clock_gettime50);
 #endif
-#ifdef __linux__
+#if defined(__linux__) || defined(__GNU__)
 #include <time.h>
 #endif
 
