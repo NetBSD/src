@@ -1,4 +1,4 @@
-/*	$NetBSD: ata.c,v 1.162 2021/08/07 16:19:09 thorpej Exp $	*/
+/*	$NetBSD: ata.c,v 1.163 2021/08/29 23:49:32 rin Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.162 2021/08/07 16:19:09 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.163 2021/08/29 23:49:32 rin Exp $");
 
 #include "opt_ata.h"
 
@@ -2044,9 +2044,7 @@ ata_probe_caps(struct ata_drive_datas *drvp)
 #if NATA_DMA
 	if ((atac->atac_cap & ATAC_CAP_DMA) == 0) {
 		/* don't care about DMA modes */
-		if (*sep != '\0')
-			aprint_verbose("\n");
-		return;
+		goto out;
 	}
 	if (cf_flags & ATA_CONFIG_DMA_SET) {
 		ata_channel_lock(chp);
@@ -2092,13 +2090,10 @@ ata_probe_caps(struct ata_drive_datas *drvp)
 	}
 	ata_channel_unlock(chp);
 
-	if (*sep != '\0')
-		aprint_verbose("\n");
-
 #if NATA_UDMA
 	if ((atac->atac_cap & ATAC_CAP_UDMA) == 0) {
 		/* don't care about UDMA modes */
-		return;
+		goto out;
 	}
 	if (cf_flags & ATA_CONFIG_UDMA_SET) {
 		ata_channel_lock(chp);
@@ -2113,7 +2108,10 @@ ata_probe_caps(struct ata_drive_datas *drvp)
 		ata_channel_unlock(chp);
 	}
 #endif	/* NATA_UDMA */
+out:
 #endif	/* NATA_DMA */
+	if (*sep != '\0')
+		aprint_verbose("\n");
 }
 
 /* management of the /dev/atabus* devices */
