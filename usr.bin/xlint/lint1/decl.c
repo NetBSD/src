@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.227 2021/08/28 16:36:54 rillig Exp $ */
+/* $NetBSD: decl.c,v 1.228 2021/08/29 15:49:04 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: decl.c,v 1.227 2021/08/28 16:36:54 rillig Exp $");
+__RCSID("$NetBSD: decl.c,v 1.228 2021/08/29 15:49:04 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -1972,7 +1972,7 @@ declare_extern(sym_t *dsym, bool initflg, sbuf_t *renaming)
 		 */
 		rval = dsym->s_type->t_subt->t_tspec != VOID;
 		outfdef(dsym, &dsym->s_def_pos, rval, false, NULL);
-	} else if (!is_gcc_builtin(dsym->s_name)) {
+	} else if (!is_compiler_builtin(dsym->s_name)) {
 		outsym(dsym, dsym->s_scl, dsym->s_def);
 	}
 
