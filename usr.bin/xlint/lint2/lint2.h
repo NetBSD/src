@@ -1,4 +1,4 @@
-/* $NetBSD: lint2.h,v 1.18 2021/08/29 09:48:02 rillig Exp $ */
+/* $NetBSD: lint2.h,v 1.19 2021/08/29 10:13:02 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -103,14 +103,7 @@ typedef	struct {
 	unsigned short p_iline;	/* line number in p_iline */
 } pos_t;
 
-/*
- * Used for definitions and declarations
- *
- * To save memory, variable sized structures are used. If
- * all s_va, s_prfl and s_scfl are not set, the memory allocated
- * for a symbol is only large enough to keep the first member of
- * struct sym, s_s.
- */
+/* Used for definitions and declarations. */
 typedef	struct sym {
 	struct {
 		pos_t	s_pos;		/* pos of def./decl. */
@@ -119,30 +112,35 @@ typedef	struct sym {
 #else
 		def_t	s_def;
 #endif
-		bool	s_rval : 1;	/* function has return value */
-		bool	s_inline : 1;	/* function is inline */
-		bool	s_osdef : 1;	/* old style function definition */
-		bool	s_static : 1;	/* symbol is static */
-		bool	s_va : 1;	/* check only first s_nva arguments */
-		bool	s_prfl : 1;	/* printflike */
-		bool	s_scfl : 1;	/* scanflike */
-		unsigned short s_type;	/* type */
+		bool	s_function_has_return_value : 1;
+		bool	s_inline : 1;
+		bool	s_old_style_function : 1;
+		bool	s_static : 1;
+		bool	s_check_only_first_args : 1;
+		bool	s_printflike : 1;
+		bool	s_scanflike : 1;
+		unsigned short s_type;
+		/* XXX: gap of 4 bytes on LP64 platforms */
 		struct	sym *s_next;	/* next symbol with same name */
 	} s_s;
-	short	s_nva;
-	short	s_nprfl;
-	short	s_nscfl;
+	/*
+	 * To save memory, the remaining members are only allocated if one of
+	 * s_check_only_first_args, s_printflike and s_scanflike is set.
+	 */
+	short	s_check_num_args;	/* if s_check_only_first_args */
+	short	s_printflike_arg;	/* if s_printflike */
+	short	s_scanflike_arg;	/* if s_scanflike */
 } sym_t;
 
 #define s_pos		s_s.s_pos
-#define s_rval		s_s.s_rval
-#define s_osdef		s_s.s_osdef
+#define s_function_has_return_value s_s.s_function_has_return_value
+#define s_old_style_function s_s.s_old_style_function
 #define s_inline	s_s.s_inline
 #define s_static	s_s.s_static
 #define s_def		s_s.s_def
-#define s_va		s_s.s_va
-#define s_prfl		s_s.s_prfl
-#define s_scfl		s_s.s_scfl
+#define s_check_only_first_args	s_s.s_check_only_first_args
+#define s_printflike	s_s.s_printflike
+#define s_scanflike	s_s.s_scanflike
 #define s_type		s_s.s_type
 #define s_next		s_s.s_next
 
