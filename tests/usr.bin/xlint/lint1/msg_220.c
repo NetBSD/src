@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_220.c,v 1.6 2021/08/29 09:09:53 rillig Exp $	*/
+/*	$NetBSD: msg_220.c,v 1.7 2021/08/29 09:29:32 rillig Exp $	*/
 # 3 "msg_220.c"
 
 // Test for message: fallthrough on case statement [220]
@@ -52,8 +52,9 @@ annotation_comment_variations(int n)
 		/* FALLTHROUGH */
 	case 1:
 		println("1");
+		/* Seen in libarchive/archive_string.c, macro WRITE_UC. */
 		/* FALL THROUGH */
-		/* Lint warned before 2021-08-29. */
+		/* Lint warned before lex.c 1.79 from 2021-08-29. */
 	case 2:
 		println("2");
 		/* FALLS THROUGH */
@@ -64,12 +65,14 @@ annotation_comment_variations(int n)
 		/* expect+1: warning: fallthrough on case statement [220] */
 	case 4:
 		println("4");
+		/* This is the Splint variant, which is seldom used. */
 		/* @fallthrough@ */
 		/* expect+1: warning: fallthrough on case statement [220] */
 	case 5:
 		println("5");
+		/* Seen in unbound/lookup3.c, function hashlittle. */
+		/* Lint warned before lex.c 1.80 from 2021-08-29. */
 		/* fallthrough */
-		/* expect+1: warning: fallthrough on case statement [220] */
 	case 6:
 		println("6");
 	}
