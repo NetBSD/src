@@ -1,4 +1,4 @@
-/* $NetBSD: emit2.c,v 1.22 2021/08/28 17:18:42 rillig Exp $ */
+/* $NetBSD: emit2.c,v 1.23 2021/08/29 10:13:02 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: emit2.c,v 1.22 2021/08/28 17:18:42 rillig Exp $");
+__RCSID("$NetBSD: emit2.c,v 1.23 2021/08/29 10:13:02 rillig Exp $");
 #endif
 
 #include "lint2.h"
@@ -160,25 +160,25 @@ outdef(hte_t *hte, sym_t *sym)
 	outint(0);
 
 	/* flags */
-	if (sym->s_va) {
-		outchar('v');		/* varargs */
-		outint(sym->s_nva);
+	if (sym->s_check_only_first_args) {
+		outchar('v');
+		outint(sym->s_check_num_args);
 	}
-	if (sym->s_scfl) {
-		outchar('S');		/* scanflike */
-		outint(sym->s_nscfl);
+	if (sym->s_scanflike) {
+		outchar('S');
+		outint(sym->s_scanflike_arg);
 	}
-	if (sym->s_prfl) {
-		outchar('P');		/* printflike */
-		outint(sym->s_nprfl);
+	if (sym->s_printflike) {
+		outchar('P');
+		outint(sym->s_printflike_arg);
 	}
 	/* definition or tentative definition */
 	outchar(sym->s_def == DEF ? 'd' : 't');
 	if (TP(sym->s_type)->t_tspec == FUNC) {
-		if (sym->s_rval)
-			outchar('r');	/* fkt. has return value */
-		if (sym->s_osdef)
-			outchar('o');	/* old style definition */
+		if (sym->s_function_has_return_value)
+			outchar('r');
+		if (sym->s_old_style_function)
+			outchar('o');
 	}
 	outchar('u');			/* used (no warning if not used) */
 

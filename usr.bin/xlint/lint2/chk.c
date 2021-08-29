@@ -1,4 +1,4 @@
-/* $NetBSD: chk.c,v 1.44 2021/08/22 04:43:44 rillig Exp $ */
+/* $NetBSD: chk.c,v 1.45 2021/08/29 10:13:02 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: chk.c,v 1.44 2021/08/22 04:43:44 rillig Exp $");
+__RCSID("$NetBSD: chk.c,v 1.45 2021/08/29 10:13:02 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -382,7 +382,8 @@ chkfaui(const hte_t *hte, sym_t *def, sym_t *decl)
 		ap2 = tp2->t_args;
 		n = 0;
 		while (*ap1 != NULL && *ap2 != NULL) {
-			if (def != NULL && def->s_va && n >= def->s_nva)
+			if (def != NULL && def->s_check_only_first_args &&
+			    n >= def->s_check_num_args)
 				break;
 			n++;
 			chkau(hte, n, def, decl, pos1p, call1, call,
@@ -392,7 +393,8 @@ chkfaui(const hte_t *hte, sym_t *def, sym_t *decl)
 		}
 		if (*ap1 == *ap2) {
 			/* equal # of arguments */
-		} else if (def != NULL && def->s_va && n >= def->s_nva) {
+		} else if (def != NULL && def->s_check_only_first_args &&
+			   n >= def->s_check_num_args) {
 			/*
 			 * function definition with VARARGS; The # of
 			 * arguments of the call must be at least as large
@@ -413,16 +415,18 @@ chkfaui(const hte_t *hte, sym_t *def, sym_t *decl)
 		}
 
 		/* perform SCANFLIKE/PRINTFLIKE tests */
-		if (def == NULL || (!def->s_prfl && !def->s_scfl))
+		if (def == NULL || (!def->s_printflike && !def->s_scanflike))
 			continue;
-		as = def->s_prfl ? def->s_nprfl : def->s_nscfl;
+		as = def->s_printflike
+		    ? def->s_printflike_arg
+		    : def->s_scanflike_arg;
 		for (ai = call->f_args; ai != NULL; ai = ai->a_next) {
 			if (ai->a_num == as)
 				break;
 		}
 		if (ai == NULL || !ai->a_fmt)
 			continue;
-		if (def->s_prfl) {
+		if (def->s_printflike) {
 			printflike(hte, call, n, ai->a_fstrg, ap2);
 		} else {
 			scanflike(hte, call, n, ai->a_fstrg, ap2);
@@ -463,7 +467,7 @@ chkau(const hte_t *hte, int n, sym_t *def, sym_t *decl, pos_t *pos1p,
 	 */
 
 	/* arg1 must be promoted if it stems from an old style definition */
-	promote = def != NULL && def->s_osdef;
+	promote = def != NULL && def->s_old_style_function;
 
 	/*
 	 * If we compare with a definition or declaration, we must perform
@@ -1078,7 +1082,7 @@ chkrvu(const hte_t *hte, sym_t *def)
 	if (hte->h_calls == NULL)
 		return;
 
-	if (def->s_rval) {
+	if (def->s_function_has_return_value) {
 		/*
 		 * XXX as soon as we are able to disable single warnings
 		 * the following dependencies from hflag should be removed.
@@ -1130,7 +1134,7 @@ chkadecl(const hte_t *hte, sym_t *def, sym_t *decl)
 
 	osdef = false;
 	if (def != NULL) {
-		osdef = def->s_osdef;
+		osdef = def->s_old_style_function;
 		sym1 = def;
 	} else if (decl != NULL && TP(decl->s_type)->t_proto) {
 		sym1 = decl;
@@ -1173,8 +1177,8 @@ chkadecl(const hte_t *hte, sym_t *def, sym_t *decl)
 			tp2 = TP(sym->s_type);
 			if (tp1->t_vararg == tp2->t_vararg)
 				continue;
-			if (tp2->t_vararg &&
-			    sym1->s_va && sym1->s_nva == n && !sflag) {
+			if (tp2->t_vararg && sym1->s_check_only_first_args &&
+			    sym1->s_check_num_args == n && !sflag) {
 				continue;
 			}
 		}
