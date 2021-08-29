@@ -1,4 +1,4 @@
-/*	$NetBSD: interactive.c,v 1.29 2021/06/19 13:56:35 christos Exp $	*/
+/*	$NetBSD: interactive.c,v 1.30 2021/08/29 09:15:33 christos Exp $	*/
 
 /*
  * Copyright (c) 1985, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)interactive.c	8.5 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: interactive.c,v 1.29 2021/06/19 13:56:35 christos Exp $");
+__RCSID("$NetBSD: interactive.c,v 1.30 2021/08/29 09:15:33 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -371,7 +371,7 @@ getnext:
 		 * it then canonicalize and return it.
 		 */
 		snprintf(output, sizeof(output), "%s/%s", curdir, rawname);
-		canon(output, name, sizeof(name));
+		canon(output, name, size);
 	}
 	if ((globretval = glob(name, GLOB_ALTDIRFUNC, NULL, &ap->glob)) < 0) {
 		fprintf(stderr, "%s: %s: ", ap->cmd, name);
