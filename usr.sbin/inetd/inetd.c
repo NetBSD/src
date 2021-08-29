@@ -1,4 +1,4 @@
-/*	$NetBSD: inetd.c,v 1.127 2021/08/29 09:54:18 christos Exp $	*/
+/*	$NetBSD: inetd.c,v 1.128 2021/08/29 11:43:25 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1991, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)inetd.c	8.4 (Berkeley) 4/13/94";
 #else
-__RCSID("$NetBSD: inetd.c,v 1.127 2021/08/29 09:54:18 christos Exp $");
+__RCSID("$NetBSD: inetd.c,v 1.128 2021/08/29 11:43:25 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -2713,9 +2713,9 @@ rl_process(struct servtab *sep, int ctrl)
 			rl_reset(sep, now);
 		} else {
 			syslog(LOG_ERR,
-                            SERV_FMT ": max spawn rate (%zu in %zi seconds) "
+                            SERV_FMT ": max spawn rate (%zu in %ji seconds) "
                             "already met, closing until end of timeout in "
-			    "%zu seconds",
+			    "%ju seconds",
                             SERV_PARAMS(sep),
                             sep->se_service_max,
 			    (intmax_t)CNT_INTVL,
@@ -2770,7 +2770,7 @@ rl_process(struct servtab *sep, int ctrl)
 					 */
 					syslog(LOG_ERR, SERV_FMT
 					    ": max ip spawn rate (%zu in " 
-					    "%zi seconds) for "
+					    "%ji seconds) for "
 					    "%." TOSTRING(NI_MAXHOST) "s "
 					    "already met; service not started",
 					    SERV_PARAMS(sep),
@@ -2941,7 +2941,7 @@ rl_add(struct servtab *sep, char* ip)
 static void
 rl_reset(struct servtab *sep, time_t now)
 {
-	DPRINTF(SERV_FMT ": %zi seconds passed; resetting rate limiting ", 
+	DPRINTF(SERV_FMT ": %ji seconds passed; resetting rate limiting ", 
 	    SERV_PARAMS(sep), (intmax_t)(now - sep->se_time));
 
 	sep->se_count = 0;
