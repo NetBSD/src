@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_259.c,v 1.12 2021/08/21 11:58:12 rillig Exp $	*/
+/*	$NetBSD: msg_259.c,v 1.13 2021/08/30 18:33:37 rillig Exp $	*/
 # 3 "msg_259.c"
 
 // Test for message: argument #%d is converted from '%s' to '%s' due to prototype [259]
@@ -67,4 +67,16 @@ convert_to_corresponding_unsigned(int i, long l, long long ll)
 
 	/* expect+1: warning: argument #1 is converted from 'long' to 'unsigned long long' due to prototype [259] */
 	farg_unsigned_long_long(l);
+}
+
+void
+pass_sizeof_as_smaller_type(void)
+{
+	/*
+	 * XXX: Even though the expression has type size_t, it has a constant
+	 * value that fits effortless into an 'unsigned int', it's so small
+	 * that it would even fit into a 3-bit bit-field.
+	 */
+	/* expect+1: warning: argument #1 is converted from 'unsigned long' to 'unsigned int' due to prototype [259] */
+	farg_unsigned_int(sizeof(int));
 }

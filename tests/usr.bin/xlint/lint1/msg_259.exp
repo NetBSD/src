@@ -3,3 +3,4 @@ msg_259.c(46): warning: argument #1 is converted from 'int' to 'unsigned int' du
 msg_259.c(50): warning: argument #1 is converted from 'long' to 'unsigned long' due to prototype [259]
 msg_259.c(54): warning: argument #1 is converted from 'long long' to 'unsigned long long' due to prototype [259]
 msg_259.c(69): warning: argument #1 is converted from 'long' to 'unsigned long long' due to prototype [259]
+msg_259.c(81): warning: argument #1 is converted from 'unsigned long' to 'unsigned int' due to prototype [259]
