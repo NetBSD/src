@@ -1,4 +1,4 @@
-/* $NetBSD: read.c,v 1.60 2021/08/30 18:03:52 christos Exp $ */
+/* $NetBSD: read.c,v 1.61 2021/08/30 19:07:57 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: read.c,v 1.60 2021/08/30 18:03:52 christos Exp $");
+__RCSID("$NetBSD: read.c,v 1.61 2021/08/30 19:07:57 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -136,12 +136,7 @@ parse_int(const char **p)
 static short
 parse_short(const char **p)
 {
-
-	short s;
-	(*p)++;
-	s = (short)parse_int(p);
-	(*p)--;
-	return s;
+	return (short)parse_int(p);
 }
 
 void
@@ -392,68 +387,68 @@ decldef(pos_t *posp, const char *cp)
 
 	used = false;
 
-	for (; (c = *cp) != '\0'; cp++) {
+	while (strchr("deiorstuvPS", (c = *cp)) != NULL) {
+		cp++;
 		switch (c) {
 		case 'd':
 			if (sym.s_def != NODECL)
 				inperr("def");
 			sym.s_def = DEF;
-			continue;
+			break;
 		case 'e':
 			if (sym.s_def != NODECL)
 				inperr("decl");
 			sym.s_def = DECL;
-			continue;
+			break;
 		case 'i':
 			if (sym.s_inline)
 				inperr("inline");
 			sym.s_inline = true;
-			continue;
+			break;
 		case 'o':
 			if (sym.s_old_style_function)
 				inperr("osdef");
 			sym.s_old_style_function = true;
-			continue;
+			break;
 		case 'r':
 			if (sym.s_function_has_return_value)
 				inperr("r");
 			sym.s_function_has_return_value = true;
-			continue;
+			break;
 		case 's':
 			if (sym.s_static)
 				inperr("static");
 			sym.s_static = true;
-			continue;
+			break;
 		case 't':
 			if (sym.s_def != NODECL)
 				inperr("tdef");
 			sym.s_def = TDEF;
-			continue;
+			break;
 		case 'u':
 			if (used)
 				inperr("used");
 			used = true;
-			continue;
+			break;
 		case 'v':
 			if (sym.s_check_only_first_args)
 				inperr("v");
 			sym.s_check_only_first_args = true;
 			sym.s_check_num_args = parse_short(&cp);
-			continue;
+			break;
 		case 'P':
 			if (sym.s_printflike)
 				inperr("P");
 			sym.s_printflike = true;
 			sym.s_printflike_arg = parse_short(&cp);
-			continue;
+			break;
 		case 'S':
 			if (sym.s_scanflike)
 				inperr("S");
 			sym.s_scanflike = true;
 			sym.s_scanflike_arg = parse_short(&cp);
-			continue;
+			break;
 		}
-		break;
 	}
 
 	/* read symbol name, doing renaming if necessary */
