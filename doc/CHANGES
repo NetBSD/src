@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2825 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2826 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -414,3 +414,4 @@ Changes from NetBSD 9.0 to NetBSD 10.0:
 	bind: Import version 9.16.20. [christos 20210819]
 	evbarm: Support marvell-based machines in big-endian mode. Currently,
 		only KUROBOX_PRO has been tested. [rin 20210830]
+	evbarm: Add support for Apple M1. [jmcneill 20210830]
