@@ -1,4 +1,4 @@
-/*	$NetBSD: inetd.h,v 1.1 2021/08/29 09:54:18 christos Exp $	*/
+/*	$NetBSD: inetd.h,v 1.2 2021/08/30 17:32:23 rillig Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003 The NetBSD Foundation, Inc.
@@ -82,9 +82,9 @@
 #endif
 
 typedef enum service_type {
-	NORM_TYPE = 0, 
-	MUX_TYPE = 1, 
-	MUXPLUS_TYPE = 2, 
+	NORM_TYPE = 0,
+	MUX_TYPE = 1,
+	MUXPLUS_TYPE = 2,
 	FAITH_TYPE = 3
 } service_type;
 
@@ -159,9 +159,9 @@ struct	servtab {
 	size_t	se_ip_max;  		/* max # of instances of this service per ip per minute */
 	struct se_ip_list_node {
 		struct se_ip_list_node	*next;
-		size_t count;		/* 
+		size_t count;		/*
 					 * number of instances of this service started from
-					 * this ip address since se_time (includes 
+					 * this ip address since se_time (includes
 					 * attempted starts if greater than se_ip_max)
 					 */
 		char address[NI_MAXHOST];
@@ -202,7 +202,7 @@ extern char *policy;
 
 typedef enum parse_v2_result {V2_SUCCESS, V2_SKIP, V2_ERROR} parse_v2_result;
 
-/* 
+/*
  * Parse a key-values service definition, starting at the token after
  * on/off (i.e. parse a series of key-values pairs terminated by a semicolon).
  * Fills the provided servtab structure. Does not call freeconfig on error.
