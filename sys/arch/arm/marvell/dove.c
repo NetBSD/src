@@ -1,4 +1,4 @@
-/*	$NetBSD: dove.c,v 1.1 2017/01/07 16:19:28 kiyohara Exp $	*/
+/*	$NetBSD: dove.c,v 1.2 2021/08/30 00:04:30 rin Exp $	*/
 /*
  * Copyright (c) 2016 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dove.c,v 1.1 2017/01/07 16:19:28 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dove.c,v 1.2 2021/08/30 00:04:30 rin Exp $");
 
 #define _INTR_PRIVATE
 
@@ -61,7 +61,7 @@ __KERNEL_RCSID(0, "$NetBSD: dove.c,v 1.1 2017/01/07 16:19:28 kiyohara Exp $");
 		bus_space_write_4((sc)->sc_iot, (sc)->sc_pmch, (o), (v))
 #else
 vaddr_t pmu_base = -1;
-#define READ_PMUREG(sc, o)	(*(volatile uint32_t *)(pmu_base + (o)))
+#define READ_PMUREG(sc, o)	le32toh(*(volatile uint32_t *)(pmu_base + (o)))
 #endif
 
 static void dove_intr_init(void);
@@ -279,8 +279,8 @@ dove_getclks(bus_addr_t iobase)
 
 #define MHz	* 1000 * 1000
 
-	val = *(volatile uint32_t *)(iobase + DOVE_MISC_BASE +
-	    DOVE_MISC_SAMPLE_AT_RESET0);
+	val = le32toh(*(volatile uint32_t *)(iobase + DOVE_MISC_BASE +
+	    DOVE_MISC_SAMPLE_AT_RESET0));
 
 	switch (val & 0x01800000) {
 	case 0x00000000: mvTclk = 166 MHz; break;
