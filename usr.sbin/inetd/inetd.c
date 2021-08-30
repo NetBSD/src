@@ -1,4 +1,4 @@
-/*	$NetBSD: inetd.c,v 1.130 2021/08/30 17:32:23 rillig Exp $	*/
+/*	$NetBSD: inetd.c,v 1.131 2021/08/30 18:21:11 rillig Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1991, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)inetd.c	8.4 (Berkeley) 4/13/94";
 #else
-__RCSID("$NetBSD: inetd.c,v 1.130 2021/08/30 17:32:23 rillig Exp $");
+__RCSID("$NetBSD: inetd.c,v 1.131 2021/08/30 18:21:11 rillig Exp $");
 #endif
 #endif /* not lint */
 
@@ -801,7 +801,7 @@ config(void)
 			strlcpy(sep->se_ctrladdr_un.sun_path,
 			    sep->se_service, n + 1);
 			sep->se_ctrladdr_un.sun_family = AF_LOCAL;
-			sep->se_ctrladdr_size = (int)(n +
+			sep->se_ctrladdr_size = (socklen_t)(n +
 			    sizeof(sep->se_ctrladdr_un) -
 			    sizeof(sep->se_ctrladdr_un.sun_path));
 			if (!ISMUX(sep))
@@ -1825,12 +1825,12 @@ initring(void)
 
 	for (i = 0; i <= 128; ++i)
 		if (isprint(i))
-			*endring++ = i;
+			*endring++ = (char)i;
 }
 
 /* ARGSUSED */
 static void
-chargen_stream(int s,struct servtab *sep)	/* Character generator */
+chargen_stream(int s, struct servtab *sep)	/* Character generator */
 {
 	size_t len;
 	char *rs, text[LINESIZ+2];
@@ -1845,7 +1845,7 @@ chargen_stream(int s,struct servtab *sep)	/* Character generator */
 	text[LINESIZ] = '\r';
 	text[LINESIZ + 1] = '\n';
 	for (rs = ring;;) {
-		if ((len = endring - rs) >= LINESIZ)
+		if ((len = (size_t)(endring - rs)) >= LINESIZ)
 			memmove(text, rs, LINESIZ);
 		else {
 			memmove(text, rs, len);
@@ -1882,7 +1882,7 @@ chargen_dg(int s, struct servtab *sep)		/* Character generator */
 	if (!port_good_dg(sa))
 		return;
 
-	if ((len = endring - rs) >= LINESIZ)
+	if ((len = (size_t)(endring - rs)) >= LINESIZ)
 		memmove(text, rs, LINESIZ);
 	else {
 		memmove(text, rs, len);
@@ -1958,7 +1958,7 @@ daytime_stream(int s,struct servtab *sep)
 	clk = time((time_t *) 0);
 
 	len = snprintf(buffer, sizeof buffer, "%.24s\r\n", ctime(&clk));
-	(void) write(s, buffer, len);
+	(void) write(s, buffer, (size_t)len);
 }
 
 /* ARGSUSED */
@@ -1982,7 +1982,7 @@ daytime_dg(int s, struct servtab *sep)
 	if (!port_good_dg(sa))
 		return;
 	len = snprintf(buffer, sizeof buffer, "%.24s\r\n", ctime(&clk));
-	(void) sendto(s, buffer, len, 0, sa, size);
+	(void) sendto(s, buffer, (size_t)len, 0, sa, size);
 }
 
 #ifdef DEBUG_ENABLE
@@ -2052,7 +2052,7 @@ get_line(int fd,	char *buf, int len)
 	ssize_t n;
 
 	do {
-		n = read(fd, buf, len-count);
+		n = read(fd, buf, (size_t)(len - count));
 		if (n == 0)
 			return (count);
 		if (n < 0)
@@ -2240,7 +2240,7 @@ allocchange(void)
 }
 
 static void
-config_root()
+config_root(void)
 {
 	struct servtab *sep;
 	/* Uncheck services */
@@ -2438,7 +2438,8 @@ parse_accept_filter(char *arg, struct servtab *sep) {
 }
 
 void
-parse_socktype(char* arg, struct servtab* sep) {
+parse_socktype(char* arg, struct servtab* sep)
+{
 	/* stream socket may have an accept filter, only check first chars */
 	if (strncmp(arg, "stream", sizeof("stream") - 1) == 0)
 		sep->se_socktype = SOCK_STREAM;
@@ -2455,7 +2456,8 @@ parse_socktype(char* arg, struct servtab* sep) {
 }
 
 static struct servtab
-init_servtab() {
+init_servtab(void)
+{
 	/* This does not set every field to default. See enter() as well */
 	return (struct servtab) {
 		/*
@@ -2643,14 +2645,14 @@ check_no_reinclude(const char *glob_path)
 static char *
 gen_file_pattern(const char *cur_config, const char *pattern)
 {
-	if(pattern[0] == '/') {
+	if (pattern[0] == '/') {
 		/* Absolute paths don't need any normalization */
 		return newstr(pattern);
 	}
 
 	/* pattern is relative */
 	/* Find the end of the file's directory */
-	int i, last = 0;
+	size_t i, last = 0;
 	for (i = 0; cur_config[i] != '\0'; i++) {
 		if (cur_config[i] == '/') {
 			last = i;
@@ -2822,7 +2824,7 @@ rl_get_name(struct servtab *sep, int ctrl, char *hbuf)
 			.msg_namelen = sizeof(struct sockaddr_storage),
 			/* scatter/gather and control info is null */
 		};
-		int count;
+		ssize_t count;
 
 		/* Peek so service can still get the packet */
 		count = recvmsg(ctrl, &header, MSG_PEEK);
@@ -2879,7 +2881,7 @@ rl_drop_connection(struct servtab *sep, int ctrl)
 	struct msghdr header = {
 		/* All fields null, just consume one message */
 	};
-	int count;
+	ssize_t count;
 
 	count = recvmsg(ctrl, &header, 0);
 	if (count == -1) {
@@ -2893,7 +2895,7 @@ rl_drop_connection(struct servtab *sep, int ctrl)
 }
 
 static time_t
-rl_time()
+rl_time(void)
 {
 	struct timespec time;
 	if(clock_gettime(CLOCK_MONOTONIC, &time) == -1) {
