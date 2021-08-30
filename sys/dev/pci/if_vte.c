@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vte.c,v 1.31 2020/02/07 00:04:28 thorpej Exp $	*/
+/*	$NetBSD: if_vte.c,v 1.32 2021/08/30 20:09:22 andvar Exp $	*/
 
 /*
  * Copyright (c) 2011 Manuel Bouyer.  All rights reserved.
@@ -55,7 +55,7 @@
 /* Driver for DM&P Electronics, Inc, Vortex86 RDC R6040 FastEthernet. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vte.c,v 1.31 2020/02/07 00:04:28 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vte.c,v 1.32 2021/08/30 20:09:22 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1211,9 +1211,10 @@ vte_tick(void *arg)
 static void
 vte_reset(struct vte_softc *sc)
 {
-	uint16_t mcr;
+	uint16_t mcr, mdcsc;
 	int i;
 
+	mdcsc = CSR_READ_2(sc, VTE_MDCSC);
 	mcr = CSR_READ_2(sc, VTE_MCR1);
 	CSR_WRITE_2(sc, VTE_MCR1, mcr | MCR1_MAC_RESET);
 	for (i = VTE_RESET_TIMEOUT; i > 0; i--) {
@@ -1231,6 +1232,14 @@ vte_reset(struct vte_softc *sc)
 	CSR_WRITE_2(sc, VTE_MACSM, 0x0002);
 	CSR_WRITE_2(sc, VTE_MACSM, 0);
 	DELAY(5000);
+
+	/*
+	 * On some SoCs (like Vortex86DX3) MDC speed control register value
+	 * needs to be restored to original value instead of default one,
+	 * otherwise some PHY registers may fail to be read.
+	 */
+	if (mdcsc != MDCSC_DEFAULT)
+		CSR_WRITE_2(sc, VTE_MDCSC, mdcsc);
 }
 
 
