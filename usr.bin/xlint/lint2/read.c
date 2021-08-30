@@ -1,4 +1,4 @@
-/* $NetBSD: read.c,v 1.62 2021/08/30 20:20:20 rillig Exp $ */
+/* $NetBSD: read.c,v 1.63 2021/08/30 21:35:23 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: read.c,v 1.62 2021/08/30 20:20:20 rillig Exp $");
+__RCSID("$NetBSD: read.c,v 1.63 2021/08/30 21:35:23 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -369,6 +369,76 @@ funccall(pos_t *posp, const char *cp)
 		inperr("trailing line data: %s", cp);
 }
 
+static bool
+parse_function_attribute(const char **pp, sym_t *sym, bool *used)
+{
+
+	switch (*(*pp)++) {
+	case 'd':
+		if (sym->s_def != NODECL)
+			inperr("def");
+		sym->s_def = DEF;
+		break;
+	case 'e':
+		if (sym->s_def != NODECL)
+			inperr("decl");
+		sym->s_def = DECL;
+		break;
+	case 'i':
+		if (sym->s_inline)
+			inperr("inline");
+		sym->s_inline = true;
+		break;
+	case 'o':
+		if (sym->s_old_style_function)
+			inperr("osdef");
+		sym->s_old_style_function = true;
+		break;
+	case 'r':
+		if (sym->s_function_has_return_value)
+			inperr("r");
+		sym->s_function_has_return_value = true;
+		break;
+	case 's':
+		if (sym->s_static)
+			inperr("static");
+		sym->s_static = true;
+		break;
+	case 't':
+		if (sym->s_def != NODECL)
+			inperr("tdef");
+		sym->s_def = TDEF;
+		break;
+	case 'u':
+		if (*used)
+			inperr("used");
+		*used = true;
+		break;
+	case 'v':
+		if (sym->s_check_only_first_args)
+			inperr("v");
+		sym->s_check_only_first_args = true;
+		sym->s_check_num_args = parse_short(pp);
+		break;
+	case 'P':
+		if (sym->s_printflike)
+			inperr("P");
+		sym->s_printflike = true;
+		sym->s_printflike_arg = parse_short(pp);
+		break;
+	case 'S':
+		if (sym->s_scanflike)
+			inperr("S");
+		sym->s_scanflike = true;
+		sym->s_scanflike_arg = parse_short(pp);
+		break;
+	default:
+		(*pp)--;
+		return false;
+	}
+	return true;
+}
+
 /*
  * Process a declaration or definition (d-record).
  */
@@ -376,7 +446,7 @@ static void
 decldef(pos_t *posp, const char *cp)
 {
 	sym_t	*symp, sym;
-	char	c, *pos1, *tname;
+	char	*pos1, *tname;
 	bool	used, renamed;
 	hte_t	*hte, *renamehte = NULL;
 	const char *name, *newname;
@@ -387,73 +457,9 @@ decldef(pos_t *posp, const char *cp)
 
 	used = false;
 
-	for (;;) {
-		switch (c = *cp++) {
-		case 'd':
-			if (sym.s_def != NODECL)
-				inperr("def");
-			sym.s_def = DEF;
-			break;
-		case 'e':
-			if (sym.s_def != NODECL)
-				inperr("decl");
-			sym.s_def = DECL;
-			break;
-		case 'i':
-			if (sym.s_inline)
-				inperr("inline");
-			sym.s_inline = true;
-			break;
-		case 'o':
-			if (sym.s_old_style_function)
-				inperr("osdef");
-			sym.s_old_style_function = true;
-			break;
-		case 'r':
-			if (sym.s_function_has_return_value)
-				inperr("r");
-			sym.s_function_has_return_value = true;
-			break;
-		case 's':
-			if (sym.s_static)
-				inperr("static");
-			sym.s_static = true;
-			break;
-		case 't':
-			if (sym.s_def != NODECL)
-				inperr("tdef");
-			sym.s_def = TDEF;
-			break;
-		case 'u':
-			if (used)
-				inperr("used");
-			used = true;
-			break;
-		case 'v':
-			if (sym.s_check_only_first_args)
-				inperr("v");
-			sym.s_check_only_first_args = true;
-			sym.s_check_num_args = parse_short(&cp);
-			break;
-		case 'P':
-			if (sym.s_printflike)
-				inperr("P");
-			sym.s_printflike = true;
-			sym.s_printflike_arg = parse_short(&cp);
-			break;
-		case 'S':
-			if (sym.s_scanflike)
-				inperr("S");
-			sym.s_scanflike = true;
-			sym.s_scanflike_arg = parse_short(&cp);
-			break;
-		default:
-			cp--;
-			goto done_function_attributes;
-		}
-	}
+	while (parse_function_attribute(&cp, &sym, &used))
+		continue;
 
-done_function_attributes:
 	/* read symbol name, doing renaming if necessary */
 	name = inpname(cp, &cp);
 	renamed = false;
