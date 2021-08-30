@@ -1,4 +1,4 @@
-/*	$NetBSD: jemalloc.c,v 1.53 2020/05/15 14:37:21 joerg Exp $	*/
+/*	$NetBSD: jemalloc.c,v 1.54 2021/08/30 13:12:16 christos Exp $	*/
 
 /*-
  * Copyright (C) 2006,2007 Jason Evans <jasone@FreeBSD.org>.
@@ -117,7 +117,7 @@
 
 #include <sys/cdefs.h>
 /* __FBSDID("$FreeBSD: src/lib/libc/stdlib/malloc.c,v 1.147 2007/06/15 22:00:16 jasone Exp $"); */ 
-__RCSID("$NetBSD: jemalloc.c,v 1.53 2020/05/15 14:37:21 joerg Exp $");
+__RCSID("$NetBSD: jemalloc.c,v 1.54 2021/08/30 13:12:16 christos Exp $");
 
 #ifdef __FreeBSD__
 #include "libc_private.h"
@@ -1276,7 +1276,6 @@ stats_print(arena_t *arena)
  * Begin chunk management functions.
  */
 
-#ifndef lint
 static inline int
 chunk_comp(chunk_node_t *a, chunk_node_t *b)
 {
@@ -1293,8 +1292,7 @@ chunk_comp(chunk_node_t *a, chunk_node_t *b)
 }
 
 /* Generate red-black tree code for chunks. */
-RB_GENERATE_STATIC(chunk_tree_s, chunk_node_s, link, chunk_comp);
-#endif
+RB_GENERATE_STATIC(chunk_tree_s, chunk_node_s, link, chunk_comp)
 
 static void *
 pages_map_align(void *addr, size_t size, int align)
@@ -1371,18 +1369,15 @@ chunk_alloc(size_t size)
 		 * to use them.
 		 */
 
-		/* LINTED */
 		tchunk = RB_MIN(chunk_tree_s, &old_chunks);
 		while (tchunk != NULL) {
 			/* Found an address range.  Try to recycle it. */
 
 			chunk = tchunk->chunk;
 			delchunk = tchunk;
-			/* LINTED */
 			tchunk = RB_NEXT(chunk_tree_s, &old_chunks, delchunk);
 
 			/* Remove delchunk from the tree. */
-			/* LINTED */
 			RB_REMOVE(chunk_tree_s, &old_chunks, delchunk);
 			base_chunk_node_dealloc(delchunk);
 
@@ -1465,15 +1460,12 @@ RETURN:
 		 * memory we just allocated.
 		 */
 		key.chunk = ret;
-		/* LINTED */
 		tchunk = RB_NFIND(chunk_tree_s, &old_chunks, &key);
 		while (tchunk != NULL
 		    && (uintptr_t)tchunk->chunk >= (uintptr_t)ret
 		    && (uintptr_t)tchunk->chunk < (uintptr_t)ret + size) {
 			delchunk = tchunk;
-			/* LINTED */
 			tchunk = RB_NEXT(chunk_tree_s, &old_chunks, delchunk);
-			/* LINTED */
 			RB_REMOVE(chunk_tree_s, &old_chunks, delchunk);
 			base_chunk_node_dealloc(delchunk);
 		}
@@ -1551,7 +1543,6 @@ chunk_dealloc(void *chunk, size_t size)
 				node->chunk = (void *)((uintptr_t)chunk
 				    + (uintptr_t)offset);
 				node->size = chunksize;
-				/* LINTED */
 				RB_INSERT(chunk_tree_s, &old_chunks, node);
 			}
 		}
@@ -1571,7 +1562,6 @@ chunk_dealloc(void *chunk, size_t size)
 			if (node != NULL) {
 				node->chunk = (void *)(uintptr_t)chunk;
 				node->size = chunksize;
-				/* LINTED */
 				RB_INSERT(chunk_tree_s, &old_chunks, node);
 			}
 		}
@@ -1644,7 +1634,6 @@ choose_arena(void)
         return choose_arena_hard();
 }
 
-#ifndef lint
 static inline int
 arena_chunk_comp(arena_chunk_t *a, arena_chunk_t *b)
 {
@@ -1666,10 +1655,8 @@ arena_chunk_comp(arena_chunk_t *a, arena_chunk_t *b)
 }
 
 /* Generate red-black tree code for arena chunks. */
-RB_GENERATE_STATIC(arena_chunk_tree_s, arena_chunk_s, link, arena_chunk_comp);
-#endif
+RB_GENERATE_STATIC(arena_chunk_tree_s, arena_chunk_s, link, arena_chunk_comp)
 
-#ifndef lint
 static inline int
 arena_run_comp(arena_run_t *a, arena_run_t *b)
 {
@@ -1686,8 +1673,7 @@ arena_run_comp(arena_run_t *a, arena_run_t *b)
 }
 
 /* Generate red-black tree code for arena runs. */
-RB_GENERATE_STATIC(arena_run_tree_s, arena_run_s, link, arena_run_comp);
-#endif
+RB_GENERATE_STATIC(arena_run_tree_s, arena_run_s, link, arena_run_comp)
 
 static inline void *
 arena_run_reg_alloc(arena_run_t *run, arena_bin_t *bin)
@@ -1896,7 +1882,6 @@ arena_chunk_alloc(arena_t *arena)
 		chunk = arena->spare;
 		arena->spare = NULL;
 
-		/* LINTED */
 		RB_INSERT(arena_chunk_tree_s, &arena->chunks, chunk);
 	} else {
 		chunk = (arena_chunk_t *)chunk_alloc(chunksize);
@@ -1942,7 +1927,6 @@ arena_chunk_dealloc(arena_t *arena, arena_chunk_t *chunk)
 	 * Remove chunk from the chunk tree, regardless of whether this chunk
 	 * will be cached, so that the arena does not use it.
 	 */
-	/* LINTED */
 	RB_REMOVE(arena_chunk_tree_s, &chunk->arena->chunks, chunk);
 
 	if (opt_hint == false) {
@@ -2145,10 +2129,8 @@ arena_bin_nonfull_run_get(arena_t *arena, arena_bin_t *bin)
 	unsigned i, remainder;
 
 	/* Look for a usable run. */
-	/* LINTED */
 	if ((run = RB_MIN(arena_run_tree_s, &bin->runs)) != NULL) {
 		/* run is guaranteed to have available space. */
-		/* LINTED */
 		RB_REMOVE(arena_run_tree_s, &bin->runs, run);
 #ifdef MALLOC_STATS
 		bin->stats.reruns++;
@@ -2621,7 +2603,6 @@ arena_dalloc(arena_t *arena, arena_chunk_t *chunk, void *ptr)
 				 * never gets inserted into the non-full runs
 				 * tree.
 				 */
-				/* LINTED */
 				RB_REMOVE(arena_run_tree_s, &bin->runs, run);
 			}
 #ifdef MALLOC_DEBUG
@@ -2642,13 +2623,11 @@ arena_dalloc(arena_t *arena, arena_chunk_t *chunk, void *ptr)
 				/* Switch runcur. */
 				if (bin->runcur->nfree > 0) {
 					/* Insert runcur. */
-					/* LINTED */
 					RB_INSERT(arena_run_tree_s, &bin->runs,
 					    bin->runcur);
 				}
 				bin->runcur = run;
 			} else {
-				/* LINTED */
 				RB_INSERT(arena_run_tree_s, &bin->runs, run);
 			}
 		}
@@ -2957,7 +2936,6 @@ huge_ralloc(void *ptr, size_t size, size_t oldsize)
 		 */
 		malloc_mutex_lock(&chunks_mtx);
 		key.chunk = __DECONST(void *, ptr);
-		/* LINTED */
 		node = RB_FIND(chunk_tree_s, &huge, &key);
 		assert(node != NULL);
 		assert(node->chunk == ptr);
@@ -3042,11 +3020,9 @@ huge_dalloc(void *ptr)
 
 	/* Extract from tree of huge allocations. */
 	key.chunk = ptr;
-	/* LINTED */
 	node = RB_FIND(chunk_tree_s, &huge, &key);
 	assert(node != NULL);
 	assert(node->chunk == ptr);
-	/* LINTED */
 	RB_REMOVE(chunk_tree_s, &huge, node);
 
 #ifdef MALLOC_STATS
@@ -3237,7 +3213,6 @@ isalloc(const void *ptr)
 
 		/* Extract from tree of huge allocations. */
 		key.chunk = __DECONST(void *, ptr);
-		/* LINTED */
 		node = RB_FIND(chunk_tree_s, &huge, &key);
 		assert(node != NULL);
 
