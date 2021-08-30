@@ -1,4 +1,4 @@
-/*	$NetBSD: kirkwood.c,v 1.10 2017/01/07 16:19:28 kiyohara Exp $	*/
+/*	$NetBSD: kirkwood.c,v 1.11 2021/08/30 00:04:30 rin Exp $	*/
 /*
  * Copyright (c) 2010 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kirkwood.c,v 1.10 2017/01/07 16:19:28 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kirkwood.c,v 1.11 2021/08/30 00:04:30 rin Exp $");
 
 #define _INTR_PRIVATE
 
@@ -244,8 +244,8 @@ kirkwood_getclks(vaddr_t iobase)
 	else		/* 166MHz */
 		mvTclk = 166666667;
 
-	reg = *(volatile uint32_t *)(iobase + KIRKWOOD_MPP_BASE +
-	    KIRKWOOD_MPP_SAMPLE_AT_RESET);
+	reg = le32toh(*(volatile uint32_t *)(iobase + KIRKWOOD_MPP_BASE +
+	    KIRKWOOD_MPP_SAMPLE_AT_RESET));
 	if (model == MARVELL_KIRKWOOD_88F6180) {
 		switch (reg & 0x0000001c) {
 		case 0x00000014: mvPclk =  600 MHz; break;

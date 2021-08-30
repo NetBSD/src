@@ -1,4 +1,4 @@
-/*	$NetBSD: mv78xx0.c,v 1.2 2017/01/07 16:19:28 kiyohara Exp $	*/
+/*	$NetBSD: mv78xx0.c,v 1.3 2021/08/30 00:04:30 rin Exp $	*/
 /*
  * Copyright (c) 2010 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mv78xx0.c,v 1.2 2017/01/07 16:19:28 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mv78xx0.c,v 1.3 2021/08/30 00:04:30 rin Exp $");
 
 #define _INTR_PRIVATE
 
@@ -214,14 +214,16 @@ mv78xx0_getclks(vaddr_t iobase)
 
 #define MHz	* 1000 * 1000
 
-	reg = *(volatile uint32_t *)(iobase + MV78XX0_SAMPLE_AT_RESET_HIGH);
+	reg = le32toh(*(volatile uint32_t *)(iobase +
+	    MV78XX0_SAMPLE_AT_RESET_HIGH));
 	switch (reg & 0x180) {
 	case 0x000: mvTclk = 166666667; break;
 	case 0x080: mvTclk =   200 MHz; break;
 	default:    mvTclk =   200 MHz; break;
 	}
 
-	reg = *(volatile uint32_t *)(iobase + MV78XX0_SAMPLE_AT_RESET_LOW);
+	reg = le32toh(*(volatile uint32_t *)(iobase +
+	    MV78XX0_SAMPLE_AT_RESET_LOW));
 
 	switch (reg & 0x0e0) {
 	case 0x020: mvSysclk =   200 MHz; break;

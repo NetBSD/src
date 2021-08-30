@@ -1,4 +1,4 @@
-/*	$NetBSD: orion.c,v 1.6 2017/01/07 16:19:28 kiyohara Exp $	*/
+/*	$NetBSD: orion.c,v 1.7 2021/08/30 00:04:30 rin Exp $	*/
 /*
  * Copyright (c) 2010 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: orion.c,v 1.6 2017/01/07 16:19:28 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: orion.c,v 1.7 2021/08/30 00:04:30 rin Exp $");
 
 #define _INTR_PRIVATE
 
@@ -224,8 +224,8 @@ orion_getclks(vaddr_t iobase)
 		tclk_shift = 8;
 	}
 
-	reg = *(volatile uint32_t *)(iobase + ORION_PMI_BASE +
-	    ORION_PMI_SAMPLE_AT_RESET);
+	reg = le32toh(*(volatile uint32_t *)(iobase + ORION_PMI_BASE +
+	    ORION_PMI_SAMPLE_AT_RESET));
 	armddrclk = (reg >> armddrclk_shift) & ORION_PMISMPL_ARMDDRCLK_MASK;
 	if (model == PCI_PRODUCT_MARVELL_88F5281)
 		if (reg & ORION_PMISMPL_ARMDDRCLK_H_MASK)
