@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_el2.S,v 1.8 2020/12/26 00:55:26 jmcneill Exp $	*/
+/*	$NetBSD: locore_el2.S,v 1.9 2021/08/30 22:31:20 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2012-2014 Andrew Turner
@@ -32,7 +32,7 @@
 #include <aarch64/hypervisor.h>
 #include "assym.h"
 
-RCSID("$NetBSD: locore_el2.S,v 1.8 2020/12/26 00:55:26 jmcneill Exp $")
+RCSID("$NetBSD: locore_el2.S,v 1.9 2021/08/30 22:31:20 jmcneill Exp $")
 
 /*
  * For use in #include "locore_el2.S".
@@ -61,6 +61,14 @@ drop_to_el1:
 	ret
 
 in_el2:
+	/* Check for EL2 host mode */
+	mrs	x2, hcr_el2
+	tbz	x2, #34, no_el2_host_mode	/* HCR_E2H not set? */
+
+	/* EL2 host mode supported, nothing to do, leave. */
+	ret
+
+no_el2_host_mode:
 	/* EL1 will be AArch64. */
 	mov	x2, #(HCR_RW)
 	msr	hcr_el2, x2
