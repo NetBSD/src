@@ -1,4 +1,4 @@
-/* $NetBSD: cpu_fdt.c,v 1.40 2021/08/07 16:18:43 thorpej Exp $ */
+/* $NetBSD: cpu_fdt.c,v 1.41 2021/08/30 23:16:17 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -30,7 +30,7 @@
 #include "psci_fdt.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_fdt.c,v 1.40 2021/08/07 16:18:43 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_fdt.c,v 1.41 2021/08/30 23:16:17 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -332,7 +332,8 @@ ARM_CPU_METHOD(psci, "psci", cpu_enable_psci);
 
 #if defined(MULTIPROCESSOR) && defined(__aarch64__)
 static int
-spintable_cpu_on(u_int cpuindex, paddr_t entry_point_address, paddr_t cpu_release_addr)
+spintable_cpu_on(const int phandle, u_int cpuindex,
+    paddr_t entry_point_address, paddr_t cpu_release_addr)
 {
 	/*
 	 * we need devmap for cpu-release-addr in advance.
@@ -346,10 +347,18 @@ spintable_cpu_on(u_int cpuindex, paddr_t entry_point_address, paddr_t cpu_releas
 		extern struct bus_space arm_generic_bs_tag;
 		bus_space_handle_t ioh;
 
+		const int parent = OF_parent(phandle);
+		const int addr_cells = fdtbus_get_addr_cells(parent);
+
 		bus_space_map(&arm_generic_bs_tag, cpu_release_addr,
 		    sizeof(paddr_t), 0, &ioh);
-		bus_space_write_4(&arm_generic_bs_tag, ioh, 0,
-		    entry_point_address);
+		if (addr_cells == 1) {
+			bus_space_write_4(&arm_generic_bs_tag, ioh, 0,
+			    entry_point_address);
+		} else {
+			bus_space_write_8(&arm_generic_bs_tag, ioh, 0,
+			    entry_point_address);
+		}
 		bus_space_unmap(&arm_generic_bs_tag, ioh, sizeof(paddr_t));
 	}
 
@@ -367,7 +376,8 @@ cpu_enable_spin_table(int phandle)
 	if (of_getprop_uint64(phandle, "cpu-release-addr", &addr) != 0)
 		return ENXIO;
 
-	ret = spintable_cpu_on(mpidr, cpu_fdt_mpstart_pa(), (paddr_t)addr);
+	ret = spintable_cpu_on(phandle, mpidr, cpu_fdt_mpstart_pa(),
+	    (paddr_t)addr);
 	if (ret != 0)
 		return EIO;
 
