@@ -1,4 +1,4 @@
-/*	$NetBSD: inetd.c,v 1.128 2021/08/29 11:43:25 christos Exp $	*/
+/*	$NetBSD: inetd.c,v 1.129 2021/08/30 08:21:12 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1991, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)inetd.c	8.4 (Berkeley) 4/13/94";
 #else
-__RCSID("$NetBSD: inetd.c,v 1.128 2021/08/29 11:43:25 christos Exp $");
+__RCSID("$NetBSD: inetd.c,v 1.129 2021/08/30 08:21:12 mlelstv Exp $");
 #endif
 #endif /* not lint */
 
@@ -2388,7 +2388,7 @@ parse_wait(struct servtab *sep, int wait)
 int
 parse_server(struct servtab *sep, const char *arg){
 	sep->se_server = newstr(arg);
-	if (strcmp(sep->se_server, "internal") == 0) {
+	if (strcmp(sep->se_server, "internal") != 0) {
 		sep->se_bi = NULL;
 		return 0;
 	}
@@ -2398,7 +2398,7 @@ parse_server(struct servtab *sep, const char *arg){
 		if (bi->bi_socktype == sep->se_socktype &&
 		    strcmp(bi->bi_service, sep->se_service) == 0)
 			break;
-	if (bi->bi_service == 0) {
+	if (bi->bi_service == NULL) {
 		ERR("Internal service %s unknown",
 		    sep->se_service);
 		return -1;
