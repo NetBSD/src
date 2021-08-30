@@ -1,4 +1,4 @@
-/*	$NetBSD: pciconf.c,v 1.52 2021/01/03 10:31:37 skrll Exp $	*/
+/*	$NetBSD: pciconf.c,v 1.53 2021/08/30 22:49:03 jmcneill Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pciconf.c,v 1.52 2021/01/03 10:31:37 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pciconf.c,v 1.53 2021/08/30 22:49:03 jmcneill Exp $");
 
 #include "opt_pci.h"
 
@@ -1012,6 +1012,11 @@ setup_memwins(pciconf_bus_t *pb)
 
 		pm->address = pci_allocate_range(r, pm->size, pm->align,
 						 ok64);
+		if (~pm->address == 0 && r == &pb->pmem_res) {
+			r = &pb->mem_res;
+			pm->address = pci_allocate_range(r, pm->size,
+							 pm->align, ok64);
+		}
 		if (~pm->address == 0) {
 			print_tag(pd->pc, pd->tag);
 			printf(
