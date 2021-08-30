@@ -1,5 +1,5 @@
 #	from: @(#)Makefile	8.1 (Berkeley) 6/6/93
-#	$NetBSD: Makefile,v 1.27 2021/08/29 11:43:48 christos Exp $
+#	$NetBSD: Makefile,v 1.28 2021/08/30 18:21:11 rillig Exp $
 
 .include <bsd.own.mk>
 
@@ -9,6 +9,7 @@ PROG=	inetd
 SRCS=	inetd.c parse_v2.c
 MAN=	inetd.8
 MLINKS=	inetd.8 inetd.conf.5
+WARNS=	6
 
 # Enables debug printouts when in debug mode
 CPPFLAGS+=-DDEBUG_ENABLE
