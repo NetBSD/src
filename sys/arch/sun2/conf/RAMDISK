@@ -1,4 +1,4 @@
-# $NetBSD: RAMDISK,v 1.60 2019/04/03 16:30:28 christos Exp $
+# $NetBSD: RAMDISK,v 1.61 2021/08/30 18:59:57 christos Exp $
 
 # RAMDISK: Root/swap on ramdisk
 # This kernel is used to:
@@ -13,7 +13,9 @@ include "arch/sun2/conf/std.sun2"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-makeoptions	COPTS="-Os"	# optimize for size
+makeoptions	COPTS="-Os -ffunction-sections -fdata-sections"	# optimize for size
+makeoptions	EXTRA_LINKFLAGS="--gc-sections"
+makeoptions	KERNLDSCRIPT="${SUN2}/conf/kern.ldscript"
 
 # Machines to be supported by this kernel
 #options 	FPU_EMULATE
