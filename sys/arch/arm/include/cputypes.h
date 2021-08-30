@@ -1,4 +1,4 @@
-/*	$NetBSD: cputypes.h,v 1.13 2020/07/01 08:02:13 ryo Exp $	*/
+/*	$NetBSD: cputypes.h,v 1.14 2021/08/30 22:57:33 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Ben Harris
@@ -207,6 +207,9 @@
 #define CPU_ID_THUNDERX81XXRX	0x43000a20
 #define CPU_ID_THUNDERX83XXRX	0x43000a30
 #define CPU_ID_THUNDERX2RX	0x43000af0
+
+#define CPU_ID_APPLE_M1_ICESTORM	0x61000220
+#define CPU_ID_APPLE_M1_FIRESTORM	0x61000230
 
 #define CPU_ID_SA110		0x4401a100
 #define CPU_ID_SA1100		0x4401a110
