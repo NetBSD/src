@@ -1,4 +1,4 @@
-# $NetBSD: read.ln,v 1.4 2021/08/30 20:11:56 rillig Exp $
+# $NetBSD: read.ln,v 1.5 2021/08/30 21:23:37 rillig Exp $
 #
 # Cover each path of reading declarations, definitions and usages.
 
@@ -63,11 +63,6 @@ S read.c
 # void f302(const volatile int *);
 303 d 0.303 e 4f303 F1 PcvI V
 
-# The "cleanup" in read.c 1.58 produced "not a number: v0...".
-# The corresponding tests for parsing vararg, printflike and scanflike are
-# still missing, that's why it got through unnoticed.
-400 d 0.439 v0 d 13bpf_set_error F3 PsT115_compiler_state PcC E V
-
 # Taken from ../lint1/emit.exp-ln.
 193 d 0.193 v0 d 15varargs_comment   F1 PcC V
 199 d 0.199 v0 d 17varargs_0_comment F1 PcC V
@@ -81,3 +76,21 @@ S read.c
 237 d 0.237         d 17scanflike_comment     F1  PcC V
 243 d 0.243         d 19scanflike_0_comment   F1  PcC V
 249 d 0.249 v3  S3  d 19scanflike_3_comment   F3  I I PcC V
+#
+253 d 0.253 e   13used_function F0 V
+258 c 0.258 i   13used_function f0 V
+# In a function definition, 'i' means 'inline'.
+256 d 0.256 d i 15inline_function F0 V
+
+# In a function definition, 'r' means the function returns a value, in
+# contrast to having a mere 'return;' without any expression.
+# This distinction is mainly relevant for non-prototype functions.
+254 d 0.254 d r   13used_function F0 I
+# In a function call, 'i' means 'return value ignored'.
+262 c 0.262 i     13used_function f0 I
+# In a function call, 'd' means 'return value discarded'.
+263 c 0.263 d     13used_function f0 I
+# In a function call, 'u' means 'return value used'.
+264 c 0.264 u     13used_function f0 I
+# This function is 'inline' and 'has return value'.
+260 d 0.260 d r i 15inline_function F0 I
