@@ -1,4 +1,4 @@
-/* $NetBSD: arm_simplefb.c,v 1.10 2021/03/02 11:51:00 jmcneill Exp $ */
+/* $NetBSD: arm_simplefb.c,v 1.11 2021/08/30 22:47:24 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
 #include "opt_vcons.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arm_simplefb.c,v 1.10 2021/03/02 11:51:00 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arm_simplefb.c,v 1.11 2021/08/30 22:47:24 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -68,6 +68,7 @@ static struct arm_simplefb_softc {
 	uint32_t	sc_stride;
 	uint16_t	sc_depth;
 	bool		sc_swapped;
+	bool		sc_10bit;
 	void		*sc_bits;
 } arm_simplefb_softc;
 
@@ -136,6 +137,12 @@ arm_simplefb_init_screen(void *cookie, struct vcons_screen *scr,
 		ri->ri_rpos =  8;
 		ri->ri_gpos = 16;
 		ri->ri_bpos = 24;
+	} else if (sc->sc_10bit) {
+		KASSERT(ri->ri_depth == 32);
+		ri->ri_rnum = ri->ri_gnum = ri->ri_bnum = 10;
+		ri->ri_rpos = 20;
+		ri->ri_gpos = 10;
+		ri->ri_bpos =  0;
 	}
 
 	scr->scr_flags |= VCONS_LOADFONT;
@@ -207,6 +214,7 @@ arm_simplefb_preattach(void)
 	uint16_t depth;
 	long defattr;
 	bool swapped = false;
+	bool is_10bit = false;
 
 	const int phandle = arm_simplefb_find_node();
 	if (phandle == -1)
@@ -231,6 +239,9 @@ arm_simplefb_preattach(void)
 		   strcmp(format, "b8g8r8x8") == 0) {
 		depth = 32;
 		swapped = true;
+	} else if (strcmp(format, "x2r10g10b10") == 0) {
+		depth = 32;
+		is_10bit = true;
 	} else if (strcmp(format, "r5g6b5") == 0) {
 		depth = 16;
 	} else {
@@ -259,6 +270,7 @@ arm_simplefb_preattach(void)
 	sc->sc_stride = stride;
 	sc->sc_bits = bus_space_vaddr(bst, bsh);
 	sc->sc_swapped = swapped;
+	sc->sc_10bit = is_10bit;
 
 	wsfont_init();
 
