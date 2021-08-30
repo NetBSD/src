@@ -1,4 +1,4 @@
-/* $NetBSD: dwc3_fdt.c,v 1.16 2021/08/07 16:19:10 thorpej Exp $ */
+/* $NetBSD: dwc3_fdt.c,v 1.17 2021/08/30 22:49:42 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwc3_fdt.c,v 1.16 2021/08/07 16:19:10 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwc3_fdt.c,v 1.17 2021/08/30 22:49:42 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -241,6 +241,12 @@ dwc3_fdt_attach(device_t parent, device_t self, void *aux)
 	int error, dwc3_phandle;
 	void *ih;
 	u_int n;
+
+	/* XXX IOMMUs not supported yet */
+	if (of_hasprop(phandle, "iommus")) {
+		aprint_error(": devices behind IOMMUs not supported\n");
+		return;
+	}
 
 	/* Find dwc3 sub-node */
 	if (of_compatible_lookup(phandle, compat_data_dwc3) == NULL) {
