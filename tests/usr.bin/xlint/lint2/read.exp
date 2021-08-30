@@ -1,2 +1,12 @@
 a125 declared( read.c(125) ), but never used or defined
 bpf_set_error defined( read.c(400) ), but never used
+printflike_0_comment defined( read.c(217) ), but never used
+printflike_10_comment defined( read.c(229) ), but never used
+printflike_3_comment defined( read.c(223) ), but never used
+printflike_comment defined( read.c(211) ), but never used
+scanflike_0_comment defined( read.c(243) ), but never used
+scanflike_3_comment defined( read.c(249) ), but never used
+scanflike_comment defined( read.c(237) ), but never used
+varargs_0_comment defined( read.c(199) ), but never used
+varargs_3_comment defined( read.c(205) ), but never used
+varargs_comment defined( read.c(193) ), but never used
