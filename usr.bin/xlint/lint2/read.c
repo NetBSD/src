@@ -1,4 +1,4 @@
-/* $NetBSD: read.c,v 1.61 2021/08/30 19:07:57 rillig Exp $ */
+/* $NetBSD: read.c,v 1.62 2021/08/30 20:20:20 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: read.c,v 1.61 2021/08/30 19:07:57 rillig Exp $");
+__RCSID("$NetBSD: read.c,v 1.62 2021/08/30 20:20:20 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -387,9 +387,8 @@ decldef(pos_t *posp, const char *cp)
 
 	used = false;
 
-	while (strchr("deiorstuvPS", (c = *cp)) != NULL) {
-		cp++;
-		switch (c) {
+	for (;;) {
+		switch (c = *cp++) {
 		case 'd':
 			if (sym.s_def != NODECL)
 				inperr("def");
@@ -448,9 +447,13 @@ decldef(pos_t *posp, const char *cp)
 			sym.s_scanflike = true;
 			sym.s_scanflike_arg = parse_short(&cp);
 			break;
+		default:
+			cp--;
+			goto done_function_attributes;
 		}
 	}
 
+done_function_attributes:
 	/* read symbol name, doing renaming if necessary */
 	name = inpname(cp, &cp);
 	renamed = false;
