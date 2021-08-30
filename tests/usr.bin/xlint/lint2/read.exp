@@ -1,1 +1,2 @@
 a125 declared( read.c(125) ), but never used or defined
+bpf_set_error defined( read.c(400) ), but never used
