@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1119 2021/08/29 09:54:18 christos Exp $
+# $NetBSD: mi,v 1.1120 2021/08/30 17:08:13 rillig Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -5423,6 +5423,8 @@
 ./usr/tests/usr.bin/make/unit-tests/directive-for-escape.mk			tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/make/unit-tests/directive-for-generating-endif.exp		tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/make/unit-tests/directive-for-generating-endif.mk		tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/make/unit-tests/directive-for-if.exp			tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/make/unit-tests/directive-for-if.mk				tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/make/unit-tests/directive-for-lines.exp			tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/make/unit-tests/directive-for-lines.mk			tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/make/unit-tests/directive-for-null.exp			tests-usr.bin-tests	compattestfile,atf
