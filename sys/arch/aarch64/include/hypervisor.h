@@ -1,4 +1,4 @@
-/*	$NetBSD: hypervisor.h,v 1.2 2020/08/29 07:17:23 maxv Exp $	*/
+/*	$NetBSD: hypervisor.h,v 1.3 2021/08/30 22:32:06 jmcneill Exp $	*/
 /*-
  * Copyright (c) 2013, 2014 Andrew Turner
  * All rights reserved.
@@ -81,6 +81,7 @@
 #define	HCR_RW		0x0000000080000000
 #define	HCR_CD		0x0000000100000000
 #define	HCR_ID		0x0000000200000000
+#define	HCR_E2H		0x0000000400000000
 #define	HCR_ATA		0x0100000000000000
 
 /*
