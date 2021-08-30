@@ -1,4 +1,4 @@
-/*	$NetBSD: parse_v2.c,v 1.1 2021/08/29 09:54:18 christos Exp $	*/
+/*	$NetBSD: parse_v2.c,v 1.2 2021/08/30 06:27:49 tih Exp $	*/
 
 /*-
  * Copyright (c) 2021 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: parse_v2.c,v 1.1 2021/08/29 09:54:18 christos Exp $");
+__RCSID("$NetBSD: parse_v2.c,v 1.2 2021/08/30 06:27:49 tih Exp $");
 
 #include <ctype.h>
 #include <errno.h>
@@ -95,7 +95,7 @@ static int	size_to_bytes(char *);
 static bool infer_protocol_ip_version(struct servtab *);
 static bool	setup_internal(struct servtab *);
 static void	try_infer_socktype(struct servtab *);
-char hex_to_bits(char);
+int hex_to_bits(char);
 #ifdef IPSEC
 static void	setup_ipsec(struct servtab *);
 #endif
@@ -405,7 +405,7 @@ parse_quotes(char **cpp)
 			cp++;
 			switch (*cp) {
 			case 'x': {
-				char temp, bits;
+				int temp, bits;
 				if (((bits = hex_to_bits(*(cp + 1))) == -1) 
 				|| ((temp = hex_to_bits(*(cp + 2))) == -1)) {
 					ERR("Invalid hexcode sequence '%.4s'", 
@@ -459,7 +459,7 @@ parse_quotes(char **cpp)
 	return true;
 }
 
-char
+int
 hex_to_bits(char in)
 {
 	switch(in) {
