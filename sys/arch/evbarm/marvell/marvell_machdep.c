@@ -1,4 +1,4 @@
-/*	$NetBSD: marvell_machdep.c,v 1.36 2019/07/16 14:41:47 skrll Exp $ */
+/*	$NetBSD: marvell_machdep.c,v 1.37 2021/08/30 00:04:30 rin Exp $ */
 /*
  * Copyright (c) 2007, 2008, 2010 KIYOHARA Takashi
  * All rights reserved.
@@ -25,7 +25,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: marvell_machdep.c,v 1.36 2019/07/16 14:41:47 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: marvell_machdep.c,v 1.37 2021/08/30 00:04:30 rin Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_console.h"
@@ -208,7 +208,8 @@ armadaxp_system_reset(void)
 {
 	extern vaddr_t misc_base;
 
-#define write_miscreg(r, v)	(*(volatile uint32_t *)(misc_base + (r)) = (v))
+#define	write_miscreg(r, v)	\
+    (*(volatile uint32_t *)(misc_base + (r)) = htole32(v))
 
 	/* Unmask soft reset */
 	write_miscreg(ARMADAXP_MISC_RSTOUTNMASKR,

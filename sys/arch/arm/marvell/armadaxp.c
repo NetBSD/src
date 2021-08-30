@@ -1,4 +1,4 @@
-/*	$NetBSD: armadaxp.c,v 1.23 2020/10/30 18:54:36 skrll Exp $	*/
+/*	$NetBSD: armadaxp.c,v 1.24 2021/08/30 00:04:30 rin Exp $	*/
 /*******************************************************************************
 Copyright (C) Marvell International Ltd. and its affiliates
 
@@ -37,7 +37,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 *******************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: armadaxp.c,v 1.23 2020/10/30 18:54:36 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: armadaxp.c,v 1.24 2021/08/30 00:04:30 rin Exp $");
 
 #define _INTR_PRIVATE
 
@@ -86,7 +86,7 @@ bus_space_handle_t mpic_cpu_handle;
 static bus_space_handle_t mpic_handle, l2_handle;
 int l2cache_state = 0;
 int iocc_state = 0;
-#define read_miscreg(r)		(*(volatile uint32_t *)(misc_base + (r)))
+#define	read_miscreg(r)		le32toh(*(volatile uint32_t *)(misc_base + (r)))
 vaddr_t misc_base;
 vaddr_t armadaxp_l2_barrier_reg;
 

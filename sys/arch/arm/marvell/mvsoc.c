@@ -1,4 +1,4 @@
-/*	$NetBSD: mvsoc.c,v 1.31 2021/08/07 16:18:44 thorpej Exp $	*/
+/*	$NetBSD: mvsoc.c,v 1.32 2021/08/30 00:04:30 rin Exp $	*/
 /*
  * Copyright (c) 2007, 2008, 2013, 2014, 2016 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mvsoc.c,v 1.31 2021/08/07 16:18:44 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mvsoc.c,v 1.32 2021/08/30 00:04:30 rin Exp $");
 
 #include "opt_cputypes.h"
 #include "opt_mvsoc.h"
@@ -92,13 +92,13 @@ static vaddr_t com_base;
 static inline uint32_t
 uart_read(bus_size_t o)
 {
-	return *(volatile uint32_t *)(com_base + (o << 2));
+	return le32toh(*(volatile uint32_t *)(com_base + (o << 2)));
 }
 
 static inline void
 uart_write(bus_size_t o, uint32_t v)
 {
-	*(volatile uint32_t *)(com_base + (o << 2)) = v;
+	*(volatile uint32_t *)(com_base + (o << 2)) = htole32(v);
 }
 
 static int
@@ -1195,21 +1195,21 @@ mvsoc_model(void)
 
 	KASSERT(regbase != 0xffffffff);
 
-	reg = *(volatile uint32_t *)(pex_base + PCI_ID_REG);
+	reg = le32toh(*(volatile uint32_t *)(pex_base + PCI_ID_REG));
 	model = PCI_PRODUCT(reg);
 
 #if defined(ORION)
 	if (model == PCI_PRODUCT_MARVELL_88F5182) {
-		reg = *(volatile uint32_t *)(regbase + ORION_PMI_BASE +
-		    ORION_PMI_SAMPLE_AT_RESET);
+		reg = le32toh(*(volatile uint32_t *)(regbase + ORION_PMI_BASE +
+		    ORION_PMI_SAMPLE_AT_RESET));
 		if ((reg & ORION_PMISMPL_TCLK_MASK) == 0)
 			model = PCI_PRODUCT_MARVELL_88F5082;
 	}
 #endif
 #if defined(KIRKWOOD)
 	if (model == PCI_PRODUCT_MARVELL_88F6281) {
-		reg = *(volatile uint32_t *)(regbase + KIRKWOOD_MISC_BASE +
-		    KIRKWOOD_MISC_DEVICEID);
+		reg = le32toh(*(volatile uint32_t *)(regbase +
+		    KIRKWOOD_MISC_BASE + KIRKWOOD_MISC_DEVICEID));
 		if (reg == 1)	/* 88F6192 is 1 */
 			model = MARVELL_KIRKWOOD_88F6192;
 	}
@@ -1226,7 +1226,7 @@ mvsoc_rev(void)
 
 	KASSERT(regbase != 0xffffffff);
 
-	reg = *(volatile uint32_t *)(pex_base + PCI_CLASS_REG);
+	reg = le32toh(*(volatile uint32_t *)(pex_base + PCI_CLASS_REG));
 	rev = PCI_REVISION(reg);
 
 	return rev;
@@ -1311,10 +1311,11 @@ mvsoc_target_ddr(uint32_t attr, uint32_t *base, uint32_t *size)
 		aprint_error("unknwon ATTR: 0x%x", attr);
 		return -1;
 	}
-	sizereg = *(volatile uint32_t *)(dsc_base + MVSOC_DSC_CSSR(cs));
+	sizereg = le32toh(*(volatile uint32_t *)(dsc_base +
+	    MVSOC_DSC_CSSR(cs)));
 	if (sizereg & MVSOC_DSC_CSSR_WINEN) {
-		baseaddrreg =
-		    *(volatile uint32_t *)(dsc_base + MVSOC_DSC_CSBAR(cs));
+		baseaddrreg = le32toh(*(volatile uint32_t *)(dsc_base +
+		    MVSOC_DSC_CSBAR(cs)));
 
 		if (base != NULL)
 			*base = baseaddrreg & MVSOC_DSC_CSBAR_BASE_MASK;
@@ -1401,7 +1402,7 @@ mvsoc_target_axi(int tag, uint32_t *base, uint32_t *size)
 		aprint_error("unknwon TAG: 0x%x", tag);
 		return -1;
 	}
-	val = *(volatile uint32_t *)(regbase + MVSOC_AXI_MMAP1(cs));
+	val = le32toh(*(volatile uint32_t *)(regbase + MVSOC_AXI_MMAP1(cs)));
 	if (val & MVSOC_AXI_MMAP1_VALID) {
 		if (base != NULL)
 			*base = MVSOC_AXI_MMAP1_STARTADDRESS(val);
