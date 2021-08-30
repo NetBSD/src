@@ -57,3 +57,13 @@ Semit.c
 164c0.164s2"%\a%\b%\f%\n%\r%\t%\v%\177"i9my_printff2PcCPCV
 159d0.159d14cover_outqcharF0V
 173d0.173d17call_gcc_builtinsF2IPLV
+193d0.193v0d15varargs_commentF1PcCV
+199d0.199v0d17varargs_0_commentF1PcCV
+205d0.205v3d17varargs_3_commentF4IIIPcCV
+211d0.211d18printflike_commentF1PcCV
+217d0.217d20printflike_0_commentF1PcCV
+223d0.223v3P3d20printflike_3_commentF3IIPcCV
+229d0.229v10P10d21printflike_10_commentF10IIIIIIIIIPcCV
+237d0.237d17scanflike_commentF1PcCV
+243d0.243d19scanflike_0_commentF1PcCV
+249d0.249v3S3d19scanflike_3_commentF3IIPcCV

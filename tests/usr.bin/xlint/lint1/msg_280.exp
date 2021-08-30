@@ -1,1 +1,7 @@
-msg_280.c(6): error: syntax error ':' [249]
+msg_280.c(18): warning: must be outside function: /* VARARGS */ [280]
+msg_280.c(24): warning: must be outside function: /* VARARGS */ [280]
+msg_280.c(34): warning: must be outside function: /* VARARGS */ [280]
+msg_280.c(43): warning: must be outside function: /* ARGSUSED */ [280]
+msg_280.c(40): warning: argument 'str' unused in function 'argsused_bad_body' [231]
+msg_280.c(50): warning: must be outside function: /* PRINTFLIKE */ [280]
+msg_280.c(58): warning: must be outside function: /* SCANFLIKE */ [280]
