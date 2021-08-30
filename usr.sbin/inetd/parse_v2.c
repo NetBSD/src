@@ -1,4 +1,4 @@
-/*	$NetBSD: parse_v2.c,v 1.3 2021/08/30 17:32:23 rillig Exp $	*/
+/*	$NetBSD: parse_v2.c,v 1.4 2021/08/30 18:21:11 rillig Exp $	*/
 
 /*-
  * Copyright (c) 2021 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: parse_v2.c,v 1.3 2021/08/30 17:32:23 rillig Exp $");
+__RCSID("$NetBSD: parse_v2.c,v 1.4 2021/08/30 18:21:11 rillig Exp $");
 
 #include <ctype.h>
 #include <errno.h>
@@ -95,7 +95,7 @@ static int	size_to_bytes(char *);
 static bool infer_protocol_ip_version(struct servtab *);
 static bool	setup_internal(struct servtab *);
 static void	try_infer_socktype(struct servtab *);
-int hex_to_bits(char);
+static int hex_to_bits(char);
 #ifdef IPSEC
 static void	setup_ipsec(struct servtab *);
 #endif
@@ -337,7 +337,7 @@ skip_whitespace(char **cpp)
 {
 	char *cp = *cpp;
 
-	int line_start = line_number;
+	size_t line_start = line_number;
 
 	for (;;) {
 		while (isblank((unsigned char)*cp))
@@ -348,7 +348,7 @@ skip_whitespace(char **cpp)
 
 			/* Should never expect EOF when skipping whitespace */
 			if (cp == NULL) {
-				ERR("Early end of file after line %d",
+				ERR("Early end of file after line %zu",
 				    line_start);
 				return false;
 			}
@@ -405,16 +405,14 @@ parse_quotes(char **cpp)
 			cp++;
 			switch (*cp) {
 			case 'x': {
-				int temp, bits;
-				if (((bits = hex_to_bits(*(cp + 1))) == -1)
-				|| ((temp = hex_to_bits(*(cp + 2))) == -1)) {
+				int hi, lo;
+				if ((hi = hex_to_bits(cp[1])) == -1
+				|| (lo = hex_to_bits(cp[2])) == -1) {
 					ERR("Invalid hexcode sequence '%.4s'",
 					    start);
 					return false;
 				}
-				bits <<= 4;
-				bits |= temp;
-				*start = bits;
+				*start = (char)((hi << 4) | lo);
 				strmove(cp, 3);
 				continue;
 			}
@@ -459,7 +457,7 @@ parse_quotes(char **cpp)
 	return true;
 }
 
-int
+static int
 hex_to_bits(char in)
 {
 	switch(in) {
@@ -511,7 +509,7 @@ next_value(vlist list)
 	 * Found the start of a potential value. Advance one character
 	 * past the end of the value.
 	 */
-	char * start = cp;
+	char *start = cp;
 	while (!isblank((unsigned char)*cp) && *cp != '#' &&
 	    *cp != ',' && *cp != ';' && *cp != '\0' ) {
 		if (*cp == '"' || *cp == '\'') {
