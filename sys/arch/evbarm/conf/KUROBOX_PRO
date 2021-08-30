@@ -1,4 +1,4 @@
-#	$NetBSD: KUROBOX_PRO,v 1.14 2021/08/30 00:26:11 rin Exp $
+#	$NetBSD: KUROBOX_PRO,v 1.15 2021/08/30 01:29:41 rin Exp $
 #
 #  KUROBOX_PRO -- KUROUTOSHIKOU. KURO-BOX/PRO platform kernel
 #
@@ -30,6 +30,8 @@ makeoptions	DEBUG="-g"	# compile full symbol table
 makeoptions	COPY_SYMTAB=1
 #options 	AUDIO_DEBUG=2
 
+# XXX PR port-arm/56380
+no options 	PAX_ASLR
 
 # On-chip PCI Interface doesn't use.
 no gtpci* at mvsoc?
