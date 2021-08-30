@@ -1,4 +1,4 @@
-/*	$NetBSD: j720tp.c,v 1.13 2021/08/07 16:18:53 thorpej Exp $	*/
+/*	$NetBSD: j720tp.c,v 1.14 2021/08/30 05:57:51 rin Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 /* Jornada 720 touch-panel driver. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: j720tp.c,v 1.13 2021/08/07 16:18:53 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: j720tp.c,v 1.14 2021/08/30 05:57:51 rin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_j720tp.h"
@@ -223,7 +223,9 @@ j720tp_attach(device_t parent, device_t self, void *aux)
 	sc->sc_ssp = device_private(parent);
 	sc->sc_enabled = 0;
 	sc->sc_hard_icon = 0;
+#ifdef WSDISPLAY_COMPAT_RAWKBD
 	sc->sc_rawkbd = 0;
+#endif
 
 	/* Touch-panel as a pointing device. */
 	wsma.accessops = &j720tp_wsmouse_accessops;
