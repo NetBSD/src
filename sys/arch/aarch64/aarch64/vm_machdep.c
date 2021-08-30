@@ -1,4 +1,4 @@
-/* $NetBSD: vm_machdep.c,v 1.11 2021/03/28 10:29:05 skrll Exp $ */
+/* $NetBSD: vm_machdep.c,v 1.12 2021/08/30 22:54:40 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 #include "opt_ddb.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.11 2021/03/28 10:29:05 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.12 2021/08/30 22:54:40 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -163,7 +163,6 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 	ktf->tf_reg[27] = (uint64_t)func;
 	ktf->tf_reg[28] = (uint64_t)arg;
 	ktf->tf_reg[29] = 0;
-	KASSERTMSG(reg_daif_read() == 0, "DAIF=0x%lx", reg_daif_read());
 	ktf->tf_lr = (uintptr_t)lwp_trampoline;
 #ifdef DDB
 	ktf->tf_pc = (uint64_t)&&backtrace_here;
