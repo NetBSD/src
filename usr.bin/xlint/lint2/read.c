@@ -1,4 +1,4 @@
-/* $NetBSD: read.c,v 1.59 2021/08/30 14:57:04 christos Exp $ */
+/* $NetBSD: read.c,v 1.60 2021/08/30 18:03:52 christos Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: read.c,v 1.59 2021/08/30 14:57:04 christos Exp $");
+__RCSID("$NetBSD: read.c,v 1.60 2021/08/30 18:03:52 christos Exp $");
 #endif
 
 #include <ctype.h>
@@ -137,8 +137,11 @@ static short
 parse_short(const char **p)
 {
 
+	short s;
 	(*p)++;
-	return (short)parse_int(p);
+	s = (short)parse_int(p);
+	(*p)--;
+	return s;
 }
 
 void
