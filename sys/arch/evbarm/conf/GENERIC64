@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC64,v 1.182 2021/08/26 17:08:34 thorpej Exp $
+#	$NetBSD: GENERIC64,v 1.183 2021/08/30 23:26:26 jmcneill Exp $
 #
 #	GENERIC ARM (aarch64) kernel
 #
@@ -12,6 +12,7 @@ maxusers	64
 
 options 	CPU_CORTEX
 options 	CPU_THUNDERX
+options 	SOC_APPLE
 options 	SOC_BCM2837
 options 	SOC_MESONG12
 options 	SOC_MESONGXBB
@@ -140,12 +141,13 @@ syscon*		at fdt? pass 1		# Generic System Controller
 sunxisramc*	at fdt? pass 1		# Allwinner System Control
 
 # Timer
-gtmr*		at fdt? pass 1		# ARM Generic Timer
+gtmr*		at fdt? pass 2		# ARM Generic Timer
 gtmr*		at acpi?
 armgtmr0	at gtmr?
 tegratimer*	at fdt?			# Timers
 
 # Watchdog
+applewdog*	at fdt?			# Apple watchdog
 bcmpmwdog*	at fdt?			# Broadcom BCM283x watchdog
 dwcwdt* 	at fdt?			# DesignWare watchdog
 mesongxwdt*	at fdt?			# Amlogic Meson GX watchdog
@@ -153,6 +155,7 @@ sbsawdt*	at acpi?		# ARM SBSA-compliant watchdog
 sunxiwdt*	at fdt?			# Allwinner watchdog
 
 # Interrupt controller
+appleintc*	at fdt? pass 1		# Apple AIC
 bcmicu*		at fdt? pass 1		# Broadcom BCM283x ICU
 tegralic*	at fdt? pass 1		# NVIDIA Tegra LIC
 gic*		at fdt? pass 1		# ARM GICv2
@@ -162,6 +165,9 @@ gicvthree*	at fdt? pass 1		# ARM GICv3
 gicvthree*	at acpi?
 imx7gpc*	at fdt? pass 2		# IMX GPCv2
 sunxinmi*	at fdt? pass 2		# Allwinner NMI / R_INTC
+
+# IOMMU
+appledart*	at fdt? pass 3		# Apple DART
 
 # Memory controller
 tegramc*	at fdt?	pass 4		# NVIDIA Tegra MC
@@ -233,6 +239,7 @@ tegra210xpad*	at fdt?			# NVIDIA Tegra XUSB PADCTL (T210)
 tegra210xphy*	at tegra210xpad?
 
 # PCIE
+applepcie*	at fdt?			# Apple PCIe
 pcihost*	at fdt?			# Generic PCI host controller
 acpipchb*	at acpi?		# ACPI PCIe host bridge
 rkpcie*		at fdt?			# Rockchip AXI PCIE
@@ -251,6 +258,7 @@ genet*		at fdt?
 #scx*		at acpi?			# Socionext Gigabit Ethernet
 #scx*		at fdt?
 aq*		at pci? dev ? function ?	# Aquantia AQC 10 gigabit
+bge*		at pci? dev ? function ?	# Broadcom 570x gigabit Ethernet
 ena*		at pci? dev ? function ?	# Amazon.com Elastic Network Adapter
 ixg* 		at pci? dev ? function ?	# Intel 8259x 10 gigabit
 ixv* 		at pci? dev ? function ?	# Intel 8259x 10G virtual function
