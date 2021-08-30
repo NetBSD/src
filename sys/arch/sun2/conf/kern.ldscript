@@ -1,0 +1,88 @@
+/*	$NetBSD: kern.ldscript,v 1.1 2021/08/30 18:59:57 christos Exp $	*/
+
+#include "assym.h"
+
+__PAGE_SIZE = 0x1000 ;
+
+ENTRY(_start)
+SECTIONS
+{
+	.text : AT (ADDR(.text) & 0x0fffffff)
+	{
+		KEEP(*(.text._start));
+		. = ALIGN(__PAGE_SIZE);
+		__text_user_start = . ;
+		*(.text.user)
+		. = ALIGN(__PAGE_SIZE);
+		__text_user_end = . ;
+
+		*(.text)
+		*(.text.*)
+		*(.stub)
+		. = ALIGN(__PAGE_SIZE);
+	} =0xCC
+	_etext = . ;
+	PROVIDE (etext = .) ;
+
+	/*
+	 * Push the rodata segment up to the next large page boundary so that we
+	 * can map the text segment with large pages.
+	 */
+	. = ALIGN(__PAGE_SIZE);
+
+	__rodata_start = . ;
+
+	.rodata :
+	{
+		*(.rodata)
+		*(.rodata.*)
+		. = ALIGN(COHERENCY_UNIT);
+		__CTOR_LIST__ = .;
+		*(.ctors)
+		__CTOR_END__ = .;
+	}
+
+	. = ALIGN(__PAGE_SIZE);
+
+	__data_start = . ;
+	.data :
+	{
+		*(.data)
+	}
+
+	. = ALIGN(COHERENCY_UNIT);
+	.data.cacheline_aligned :
+	{
+		*(.data.cacheline_aligned)
+	}
+	. = ALIGN(COHERENCY_UNIT);
+	.data.read_mostly :
+	{
+		*(.data.read_mostly)
+	}
+	. = ALIGN(COHERENCY_UNIT);
+
+	_edata = . ;
+	PROVIDE (edata = .) ;
+	__bss_start = . ;
+	.bss :
+	{
+		*(.bss)
+		*(.bss.*)
+		*(COMMON)
+		. = ALIGN(__PAGE_SIZE);
+	}
+
+	. = ALIGN(__PAGE_SIZE);
+
+	/* End of the kernel image */
+	__kernel_end = . ;
+
+	_end = . ;
+	PROVIDE (end = .) ;
+	.note.netbsd.ident :
+	{
+		KEEP(*(.note.netbsd.ident));
+	}
+}
+
