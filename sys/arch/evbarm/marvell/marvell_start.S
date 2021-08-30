@@ -1,4 +1,4 @@
-/*	$NetBSD: marvell_start.S,v 1.10 2018/10/16 11:28:30 skrll Exp $ */
+/*	$NetBSD: marvell_start.S,v 1.11 2021/08/30 00:00:02 rin Exp $ */
 /*
  * Copyright (C) 2005, 2006 WIDE Project and SOUM Corporation.
  * All rights reserved.
@@ -66,7 +66,7 @@
 #include <evbarm/marvell/marvellreg.h>
 #include "assym.h"
 
-RCSID("$NetBSD: marvell_start.S,v 1.10 2018/10/16 11:28:30 skrll Exp $")
+RCSID("$NetBSD: marvell_start.S,v 1.11 2021/08/30 00:00:02 rin Exp $")
 
 #ifndef SDRAM_START
 #define SDRAM_START	0x00000000
@@ -103,6 +103,25 @@ _C_LABEL(marvell_start):
 	 *  Kernel is loaded in SDRAM (0x00200000..), and is expected to run
 	 *  in VA 0xc0200000..
 	 */
+
+#ifdef __ARMEB__
+	/*
+	 * u-boot is running in little-endian mode. Therefore, we need to
+	 * encode first few instructions in the opposite byte order.
+	 */
+
+	/* Turn on CPU_CONTROL_BEND_ENABLE bit. */
+	.word	0x104f11ee	/* mrc p15, 0, r4, c1, c0, 0 */
+	.word	0x804084e3	/* orr r4, r4, #CPU_CONTROL_BEND_ENABLE */
+	.word	0x104f01ee	/* mcr p15, 0, r4, c1, c0, 0 */
+
+	/* Flush prefetch buffer. */
+	.word	0x0000a0e1	/* nop */
+	.word	0x0000a0e1	/* nop */
+	.word	0x0000a0e1	/* nop */
+
+	CPWAIT(r4)
+#endif
 
 	/* Check cores */
 	mrc	p15, 0, r4, c0, c0, 0
