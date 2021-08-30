@@ -1,4 +1,4 @@
-#	$NetBSD: KUROBOX_PRO,v 1.13 2021/08/30 00:21:29 rin Exp $
+#	$NetBSD: KUROBOX_PRO,v 1.14 2021/08/30 00:26:11 rin Exp $
 #
 #  KUROBOX_PRO -- KUROUTOSHIKOU. KURO-BOX/PRO platform kernel
 #
@@ -40,3 +40,7 @@ rs5c372rtc* at iic? addr 0x32		# RICOH RS5C372 RTC
 # PCI network interfaces
 #mskc*	at pci? dev ? function ?	# Marvell Yukon 2 Gigabit Ethernet
 #msk*	at mskc?
+
+# NVM Express controllers and devices
+nvme*		at pci? dev ? function ?
+ld*		at nvme? nsid ?
