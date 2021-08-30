@@ -1,4 +1,4 @@
-/*	$NetBSD: emit.c,v 1.4 2021/08/30 19:48:21 rillig Exp $	*/
+/*	$NetBSD: emit.c,v 1.5 2021/08/30 21:23:37 rillig Exp $	*/
 # 3 "emit.c"
 
 /*
@@ -248,4 +248,18 @@ scanflike_0_comment(const char *fmt)
 void
 scanflike_3_comment(int a, int b, const char *fmt)
 {
+}
+
+int
+used_function(void)
+{
+	return 4;
+}
+
+inline int
+inline_function(void)
+{
+	used_function();
+	(void)used_function();
+	return used_function();
 }
