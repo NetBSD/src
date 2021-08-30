@@ -1,4 +1,4 @@
-/*	$NetBSD: mvsoc_space.c,v 1.10 2018/03/16 17:56:32 ryo Exp $	*/
+/*	$NetBSD: mvsoc_space.c,v 1.11 2021/08/30 00:04:30 rin Exp $	*/
 /*
  * Copyright (c) 2007 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mvsoc_space.c,v 1.10 2018/03/16 17:56:32 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mvsoc_space.c,v 1.11 2021/08/30 00:04:30 rin Exp $");
 
 #include "opt_mvsoc.h"
 #include "mvpex.h"
@@ -42,6 +42,11 @@ __KERNEL_RCSID(0, "$NetBSD: mvsoc_space.c,v 1.10 2018/03/16 17:56:32 ryo Exp $")
 #include <arm/marvell/mvsocreg.h>
 #include <arm/marvell/mvsocvar.h>
 
+#ifdef __ARMEB__
+#define	NSWAP(n)	n ## _swap
+#else
+#define	NSWAP(n)	n
+#endif
 
 /* Proto types for all the bus_space structure functions */
 bs_protos(mvsoc);
@@ -52,75 +57,75 @@ bs_protos(bs_notimpl);
 #define MVSOC_BUS_SPACE_NORMAL_FUNCS		\
 	/* read (single) */			\
 	.bs_r_1 = generic_bs_r_1,		\
-	.bs_r_2 = generic_armv4_bs_r_2,		\
-	.bs_r_4 = generic_bs_r_4,		\
+	.bs_r_2 = NSWAP(generic_armv4_bs_r_2),	\
+	.bs_r_4 = NSWAP(generic_bs_r_4),	\
 	.bs_r_8 = bs_notimpl_bs_r_8,		\
 						\
 	/* read multiple */			\
 	.bs_rm_1 = generic_bs_rm_1,		\
-	.bs_rm_2 = generic_armv4_bs_rm_2,	\
-	.bs_rm_4 = generic_bs_rm_4,		\
+	.bs_rm_2 = NSWAP(generic_armv4_bs_rm_2),\
+	.bs_rm_4 = NSWAP(generic_bs_rm_4),	\
 	.bs_rm_8 = bs_notimpl_bs_rm_8,		\
 						\
 	/* read region */			\
 	.bs_rr_1 = generic_bs_rr_1,		\
-	.bs_rr_2 = generic_armv4_bs_rr_2,	\
-	.bs_rr_4 = generic_bs_rr_4,		\
+	.bs_rr_2 = NSWAP(generic_armv4_bs_rr_2),\
+	.bs_rr_4 = NSWAP(generic_bs_rr_4),	\
 	.bs_rr_8 = bs_notimpl_bs_rr_8,		\
 						\
 	/* write (single) */			\
 	.bs_w_1 = generic_bs_w_1,		\
-	.bs_w_2 = generic_armv4_bs_w_2,		\
-	.bs_w_4 = generic_bs_w_4,		\
+	.bs_w_2 = NSWAP(generic_armv4_bs_w_2),	\
+	.bs_w_4 = NSWAP(generic_bs_w_4),	\
 	.bs_w_8 = bs_notimpl_bs_w_8,		\
 						\
 	/* write multiple */			\
 	.bs_wm_1 = generic_bs_wm_1,		\
-	.bs_wm_2 = generic_armv4_bs_wm_2,	\
-	.bs_wm_4 = generic_bs_wm_4,		\
+	.bs_wm_2 = NSWAP(generic_armv4_bs_wm_2),\
+	.bs_wm_4 = NSWAP(generic_bs_wm_4),	\
 	.bs_wm_8 = bs_notimpl_bs_wm_8,		\
 						\
 	/* write region */			\
 	.bs_wr_1 = generic_bs_wr_1,		\
-	.bs_wr_2 = generic_armv4_bs_wr_2,	\
-	.bs_wr_4 = generic_bs_wr_4,		\
+	.bs_wr_2 = NSWAP(generic_armv4_bs_wr_2),\
+	.bs_wr_4 = NSWAP(generic_bs_wr_4),	\
 	.bs_wr_8 = bs_notimpl_bs_wr_8
 
 #define MVSOC_BUS_SPACE_STREAM_FUNCS		\
 	/* read stream (single) */		\
 	.bs_r_1_s = generic_bs_r_1,		\
-	.bs_r_2_s = generic_armv4_bs_r_2,	\
-	.bs_r_4_s = generic_bs_r_4,		\
+	.bs_r_2_s = NSWAP(generic_armv4_bs_r_2),\
+	.bs_r_4_s = NSWAP(generic_bs_r_4),	\
 	.bs_r_8_s = bs_notimpl_bs_r_8,		\
 						\
 	/* read multiple stream */		\
 	.bs_rm_1_s = generic_bs_rm_1,		\
-	.bs_rm_2_s = generic_armv4_bs_rm_2,	\
-	.bs_rm_4_s = generic_bs_rm_4,		\
+	.bs_rm_2_s = NSWAP(generic_armv4_bs_rm_2),\
+	.bs_rm_4_s = NSWAP(generic_bs_rm_4),	\
 	.bs_rm_8_s = bs_notimpl_bs_rm_8,	\
 						\
 	/* read region stream */		\
 	.bs_rr_1_s = generic_bs_rr_1,		\
-	.bs_rr_2_s = generic_armv4_bs_rr_2,	\
-	.bs_rr_4_s = generic_bs_rr_4,		\
+	.bs_rr_2_s = NSWAP(generic_armv4_bs_rr_2),\
+	.bs_rr_4_s = NSWAP(generic_bs_rr_4),	\
 	.bs_rr_8_s = bs_notimpl_bs_rr_8,	\
 						\
 	/* write stream (single) */		\
 	.bs_w_1_s = generic_bs_w_1,		\
-	.bs_w_2_s = generic_armv4_bs_w_2,	\
-	.bs_w_4_s = generic_bs_w_4,		\
+	.bs_w_2_s = NSWAP(generic_armv4_bs_w_2),\
+	.bs_w_4_s = NSWAP(generic_bs_w_4,	\
 	.bs_w_8_s = bs_notimpl_bs_w_8,		\
 						\
 	/* write multiple stream */		\
 	.bs_wm_1_s = generic_bs_wm_1,		\
-	.bs_wm_2_s = generic_armv4_bs_wm_2,	\
-	.bs_wm_4_s = generic_bs_wm_4,		\
+	.bs_wm_2_s = NSWAP(generic_armv4_bs_wm_2),\
+	.bs_wm_4_s = NSWAP(generic_bs_wm_4),	\
 	.bs_wm_8_s = bs_notimpl_bs_wm_8,	\
 						\
 	/* write region stream */		\
 	.bs_wr_1_s = generic_bs_wr_1,		\
-	.bs_wr_2_s = generic_armv4_bs_wr_2,	\
-	.bs_wr_4_s = generic_bs_wr_4,		\
+	.bs_wr_2_s = NSWAP(generic_armv4_bs_wr_2),\
+	.bs_wr_4_s = NSWAP(generic_bs_wr_4),	\
 	.bs_wr_8_s = bs_notimpl_bs_wr_8
 
 #define MVSOC_BUS_SPACE_DEFAULT_FUNCS		\
@@ -130,7 +135,7 @@ bs_protos(bs_notimpl);
 	.bs_subregion = mvsoc_bs_subregion,	\
 						\
 	/* allocation/deallocation */		\
-	.bs_alloc =mvsoc_bs_alloc,		\
+	.bs_alloc = mvsoc_bs_alloc,		\
 	.bs_free = mvsoc_bs_free,		\
 						\
 	/* get kernel virtual address */	\
@@ -152,8 +157,8 @@ bs_protos(bs_notimpl);
 						\
 	/* set region */			\
 	.bs_sr_1 = bs_notimpl_bs_sr_1,		\
-	.bs_sr_2 = generic_armv4_bs_sr_2,	\
-	.bs_sr_4 = generic_bs_sr_4,		\
+	.bs_sr_2 = NSWAP(generic_armv4_bs_sr_2),\
+	.bs_sr_4 = NSWAP(generic_bs_sr_4),	\
 	.bs_sr_8 = bs_notimpl_bs_sr_8,		\
 						\
 	/* copy */				\

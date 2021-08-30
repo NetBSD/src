@@ -1,4 +1,4 @@
-/*	$NetBSD: mvsocvar.h,v 1.12 2017/03/10 15:44:24 skrll Exp $	*/
+/*	$NetBSD: mvsocvar.h,v 1.13 2021/08/30 00:04:30 rin Exp $	*/
 /*
  * Copyright (c) 2007, 2010 KIYOHARA Takashi
  * All rights reserved.
@@ -48,8 +48,10 @@ extern int gpp_npins, gpp_irqbase;
 extern struct bus_space mvsoc_bs_tag;
 extern struct arm32_bus_dma_tag mvsoc_bus_dma_tag;
 
-#define read_mlmbreg(o)		(*(volatile uint32_t *)(mlmb_base + (o)))
-#define write_mlmbreg(o, v)	(*(volatile uint32_t *)(mlmb_base + (o)) = (v))
+#define read_mlmbreg(o)		\
+    le32toh(*(volatile uint32_t *)(mlmb_base + (o)))
+#define write_mlmbreg(o, v)	\
+    (*(volatile uint32_t *)(mlmb_base + (o)) = htole32(v))
 
 void mvsoc_bootstrap(bus_addr_t);
 uint16_t mvsoc_model(void);
