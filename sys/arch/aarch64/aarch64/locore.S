@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.78 2021/03/21 09:08:40 skrll Exp $	*/
+/*	$NetBSD: locore.S,v 1.79 2021/08/30 22:24:39 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -38,7 +38,7 @@
 #include <aarch64/hypervisor.h>
 #include "assym.h"
 
-RCSID("$NetBSD: locore.S,v 1.78 2021/03/21 09:08:40 skrll Exp $")
+RCSID("$NetBSD: locore.S,v 1.79 2021/08/30 22:24:39 jmcneill Exp $")
 
 #ifdef AARCH64_DEVICE_MEM_STRONGLY_ORDERED
 #define	MAIR_DEVICE_MEM		MAIR_DEVICE_nGnRnE
@@ -927,7 +927,7 @@ mmu_enable:
 
 	ldr	x0, mair_setting
 	msr	mair_el1, x0
-
+	isb
 
 	/* TCR_EL1:IPS[34:32] = AA64MMFR0:PARange[3:0] */
 	ldr	x0, tcr_setting
