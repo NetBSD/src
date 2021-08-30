@@ -1,4 +1,4 @@
-/*	$NetBSD: mount.h,v 1.14 2020/07/03 18:49:37 jdolecek Exp $	*/
+/*	$NetBSD: mount.h,v 1.15 2021/08/30 08:40:00 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993
@@ -101,10 +101,12 @@ static __inline void
 statvfs_to_statfs12(const struct statvfs *fs, struct statfs12 *s12)
 {
 	size_t i = 0;
+
+	memset(s12, 0, sizeof(*s12));
+
 	s12->f_type = 0;
 	s12->f_oflags = (short)fs->f_flag;
 
-	memset(s12, 0, sizeof(*s12));
 	for (i = 0; i < sizeof(__nv) / sizeof(__nv[0]); i++) {
 		if (strcmp(__nv[i].name, fs->f_fstypename) == 0) {
 			s12->f_type = __nv[i].value;
