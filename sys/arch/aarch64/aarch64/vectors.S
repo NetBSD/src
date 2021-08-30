@@ -1,4 +1,4 @@
-/*	$NetBSD: vectors.S,v 1.22 2021/03/09 16:44:27 ryo Exp $	*/
+/*	$NetBSD: vectors.S,v 1.23 2021/08/30 23:20:00 jmcneill Exp $	*/
 
 #include <aarch64/asm.h>
 #include <aarch64/locore.h>
@@ -10,7 +10,7 @@
 #include "opt_ddb.h"
 #include "opt_dtrace.h"
 
-RCSID("$NetBSD: vectors.S,v 1.22 2021/03/09 16:44:27 ryo Exp $")
+RCSID("$NetBSD: vectors.S,v 1.23 2021/08/30 23:20:00 jmcneill Exp $")
 
 	ARMV8_DEFINE_OPTIONS
 
@@ -130,18 +130,18 @@ vector_func	el1t_fiq_handler,   1, trap_el1t_fiq
 vector_func	el1t_error_handler, 1, trap_el1t_error
 
 vector_func	el1h_sync_handler,  1, trap_el1h_sync
-vector_func	el1h_intr_handler,  1, interrupt
-vector_func	el1h_fiq_handler,   1, trap_el1h_fiq
+vector_func	el1h_intr_handler,  1, cpu_irq
+vector_func	el1h_fiq_handler,   1, cpu_fiq
 vector_func	el1h_error_handler, 1, trap_el1h_error
 
 vector_func	el0_sync_handler,  0, trap_el0_sync
-vector_func	el0_intr_handler,  0, interrupt
-vector_func	el0_fiq_handler,   0, trap_el0_fiq
+vector_func	el0_intr_handler,  0, cpu_irq
+vector_func	el0_fiq_handler,   0, cpu_fiq
 vector_func	el0_error_handler, 0, trap_el0_error
 
 vector_func	el0_32sync_handler,  0, trap_el0_32sync, ro
-vector_func	el0_32intr_handler,  0, interrupt, ro
-vector_func	el0_32fiq_handler,   0, trap_el0_32fiq, ro
+vector_func	el0_32intr_handler,  0, cpu_irq, ro
+vector_func	el0_32fiq_handler,   0, cpu_fiq, ro
 vector_func	el0_32error_handler, 0, trap_el0_32error, ro
 
 /*
