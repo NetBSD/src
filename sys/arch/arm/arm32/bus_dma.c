@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.132 2021/02/07 10:47:40 skrll Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.133 2021/08/30 22:56:26 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2020 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
 #include "opt_cputypes.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.132 2021/02/07 10:47:40 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.133 2021/08/30 22:56:26 jmcneill Exp $");
 
 #include <sys/param.h>
 
@@ -259,6 +259,7 @@ _bus_dmamap_load_paddr(bus_dma_tag_t t, bus_dmamap_t map,
 		/* new segment */
 		segs[nseg].ds_addr = curaddr;
 		segs[nseg].ds_len = sgsize;
+		segs[nseg]._ds_paddr = curaddr;
 		segs[nseg]._ds_flags = _ds_flags;
 		nseg++;
 	}
@@ -1717,7 +1718,8 @@ _bus_dmamem_alloc_range(bus_dma_tag_t t, bus_size_t size, bus_size_t alignment,
 	 */
 	m = TAILQ_FIRST(&mlist);
 	curseg = 0;
-	lastaddr = segs[curseg].ds_addr = VM_PAGE_TO_PHYS(m);
+	lastaddr = segs[curseg].ds_addr = segs[curseg]._ds_paddr =
+	    VM_PAGE_TO_PHYS(m);
 	segs[curseg].ds_len = PAGE_SIZE;
 #ifdef DEBUG_DMA
 		printf("alloc: page %#lx\n", lastaddr);
@@ -1742,6 +1744,7 @@ _bus_dmamem_alloc_range(bus_dma_tag_t t, bus_size_t size, bus_size_t alignment,
 				return EFBIG;
 			}
 			segs[curseg].ds_addr = curaddr;
+			segs[curseg]._ds_paddr = curaddr;
 			segs[curseg].ds_len = PAGE_SIZE;
 		}
 		lastaddr = curaddr;
