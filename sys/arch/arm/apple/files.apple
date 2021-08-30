@@ -1,0 +1,30 @@
+#	$NetBSD: files.apple,v 1.1 2021/08/30 23:26:26 jmcneill Exp $
+#
+# Configuration info for Apple Silicon SoCs
+#
+#
+
+file	arch/arm/apple/apple_platform.c		soc_apple
+
+# Interrupt controller
+device	appleintc: pic, pic_splfuncs
+attach	appleintc at fdt with apple_intc
+file	arch/arm/apple/apple_intc.c		apple_intc
+
+# Watchdog timer
+device	applewdog: sysmon_wdog
+attach	applewdog at fdt with apple_wdog
+file	arch/arm/apple/apple_wdog.c		apple_wdog
+
+# PCIe controller
+device	applepcie: pcibus, pcihost_fdt
+attach	applepcie at fdt with apple_pcie
+file	arch/arm/apple/apple_pcie.c		apple_pcie
+
+# IOMMU
+device	appledart
+attach	appledart at fdt with apple_dart
+file	arch/arm/apple/apple_dart.c		apple_dart
+
+# SOC parameters
+defflag	opt_soc.h				SOC_APPLE
