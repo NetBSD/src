@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_pax.c,v 1.61 2020/01/23 10:21:14 ad Exp $	*/
+/*	$NetBSD: kern_pax.c,v 1.62 2021/08/30 01:25:10 rin Exp $	*/
 
 /*
  * Copyright (c) 2015, 2020 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_pax.c,v 1.61 2020/01/23 10:21:14 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_pax.c,v 1.62 2021/08/30 01:25:10 rin Exp $");
 
 #include "opt_pax.h"
 
@@ -604,7 +604,7 @@ pax_aslr_exec_offset(struct exec_package *epp, vaddr_t align)
 #endif
 	return pax_aslr_offset(align);
 out:
-	return 0;
+	return MAX(align, PAGE_SIZE);
 }
 
 voff_t
