@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.346 2020/07/02 09:07:10 msaitoh Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.347 2021/08/30 22:48:16 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.346 2020/07/02 09:07:10 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.347 2021/08/30 22:48:16 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -4430,9 +4430,11 @@ bge_rxeof(struct bge_softc *sc)
 		tosync = -tosync;
 	}
 
-	bus_dmamap_sync(sc->bge_dmatag, sc->bge_ring_map,
-	    offset, tosync * sizeof (struct bge_rx_bd),
-	    BUS_DMASYNC_POSTREAD);
+	if (tosync != 0) {
+		bus_dmamap_sync(sc->bge_dmatag, sc->bge_ring_map,
+		    offset, tosync * sizeof (struct bge_rx_bd),
+		    BUS_DMASYNC_POSTREAD);
+	}
 
 	while (rx_cons != rx_prod) {
 		struct bge_rx_bd	*cur_rx;
@@ -4603,9 +4605,11 @@ bge_txeof(struct bge_softc *sc)
 		tosync = -tosync;
 	}
 
-	bus_dmamap_sync(sc->bge_dmatag, sc->bge_ring_map,
-	    offset, tosync * sizeof (struct bge_tx_bd),
-	    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
+	if (tosync != 0) {
+		bus_dmamap_sync(sc->bge_dmatag, sc->bge_ring_map,
+		    offset, tosync * sizeof (struct bge_tx_bd),
+		    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
+	}
 
 	/*
 	 * Go through our tx ring and free mbufs for those
