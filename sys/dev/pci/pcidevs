@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.1428 2021/07/17 07:11:35 mrg Exp $
+$NetBSD: pcidevs,v 1.1429 2021/08/30 00:06:04 mrg Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -1739,6 +1739,7 @@ product ATI RADEON_HD5600_RD	0x68c1	Radeon HD 5600 Redwood
 product ATI RADEON_HD5570	0x68d9	Radeon HD 5570
 product ATI RADEON_HD5450	0x68f9	Radeon HD 5450
 product ATI RADEON_X1300	0x7146	Radeon X1300 Series (RV515)
+product ATI RADEON_X1550	0x7147	Radeon X1550 Series (RV505)
 product ATI RADEON_X1300_S	0x7166	Radeon X1300 Series (RV515) Secondary
 product ATI RADEON_X1600XT	0x71c0	Radeon X1600 XT
 product ATI RADEON_X1600	0x71c5	Radeon Mobility X1600
