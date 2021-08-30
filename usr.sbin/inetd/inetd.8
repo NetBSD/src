@@ -1,4 +1,4 @@
-.\"	$NetBSD: inetd.8,v 1.62 2021/08/29 09:54:18 christos Exp $
+.\"	$NetBSD: inetd.8,v 1.63 2021/08/30 16:10:34 wiz Exp $
 .\"
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -106,21 +106,23 @@ The path given for this configuration file must be absolute, unless
 the
 .Fl d
 option is also given on the command line.
-
+.Pp
 Services can be specified using the legacy `positional' notation or the 
-`key-values' notation described in the sections "Positional Notation" and 
-"Key-Values Notation" below.
-
+`key-values' notation described in the sections
+.Sx Positional Notation
+and 
+.Sx Key-Values Notation
+below.
 .Ss Positional Notation
-
 There must be an entry for each field of the configuration
 file, with entries for each field separated by a tab or
 a space.
 Comments are denoted by a ``#'' at the beginning of a line (see subsection 
-"Key-Values Notation" for defining comments in key-values definitions).
+.Sx Key-Values Notation
+for defining comments in key-values definitions).
 There must be an entry for each field (except for one
-special case, described below). A positional definition is terminated by a 
-newline.
+special case, described below).
+A positional definition is terminated by a newline.
 The fields of the configuration file are as follows:
 .Pp
 .Bd -unfilled -offset indent -compact
@@ -133,18 +135,19 @@ server-program
 server program arguments
 .Ed
 .Pp
-The 
+The
 .Em listen-addr
-specifies the local address
+parameter specifies the local address
 .Nm
 should use when listening.
 The single character
 .Dq \&*
 means
 .Dv INADDR_ANY :
-all local addresses. The
+all local addresses.
+The
 .Em listen-addr
-may be a host name, which will be resolved once, when the service
+parameter may be a host name, which will be resolved once, when the service
 definition is read from the config file.
 .Pp
 Note that restricted listen addresses are meaningless and ignored for
@@ -157,10 +160,10 @@ services always listen on all interfaces.
 .Pp
 The form of the
 .Em service-spec
-varies with the service type.
+parameter varies with the service type.
 For Internet services, the
 .Em service-spec
-can be either the name of a service from
+parameter can be either the name of a service from
 .Pa /etc/services
 or a decimal port number.
 For
@@ -175,7 +178,7 @@ For
 .Em Sun-RPC
 based services, the
 .Em service-spec
-has the form
+parameter has the form
 .Em service-name Ns Li / Ns Em version .
 The service name must be a valid RPC service name from
 the file
@@ -186,21 +189,22 @@ on the right of the
 .Dq /
 is the RPC version number.
 This can simply be a single numeric argument or a range of versions.
-A range is bounded by the low version to the high version \- e.g.
+A range is bounded by the low version to the high version, e.g.
 .Dq rusers/1-3 .
 .Pp
 For UNIX-domain (local) services, the
 .Em service-spec
-is the path name to listen on.
+parameter is the path name to listen on.
 .Pp
 The
 .Em service-spec
-must not begin with a dot. See 
+parameter must not begin with a dot.
+See 
 .Sx Directives .
 .Pp
 The
 .Em socket-type
-should be one of
+parameter should be one of
 .Dq stream ,
 .Dq dgram ,
 .Dq raw ,
@@ -215,8 +219,7 @@ Optionally, for Internet services, an accept filter
 .Xr accept_filter 9 )
 can be specified by appending a colon to
 .Em socket-type ,
-followed by
-the name of the desired accept filter.
+followed by the name of the desired accept filter.
 In this case
 .Nm
 will not see new connections for the specified service until the accept
@@ -226,7 +229,7 @@ filter decides they are ready to be handled.
 .Pp
 The
 .Em protocol
-must be a valid protocol as given in
+parameter must be a valid protocol as given in
 .Pa /etc/protocols
 or (for UNIX-domain services) the string
 .Dq unix .
@@ -389,15 +392,14 @@ word
 should take the place of this entry.
 It is possible to quote an argument using either single or double quotes.
 This allows you to have, e.g., spaces in paths and parameters.
-
 .Ss Key-Values Notation
-
 In key-values notation, keys are separated from their associated values by `=',
 values are separated by whitespace, and key-values options are separated by 
-commas. A service definition is terminated by a semicolon. Multiple definitions 
-may exist on a single line (and a line may end with a positional definition. 
+commas.
+A service definition is terminated by a semicolon.
+Multiple definitions may exist on a single line (and a line may
+end with a positional definition.
 A key-values definition has the following form:
-
 .Bd -filled -offset indent
 [listen-addr:]service-spec {on|off} <option> = [value1], 
 <option> = [value1] [value2] ..., <option> =, ...;
@@ -426,34 +428,36 @@ has the same form as in positional notation. If
 .Em service-spec
 is followed by
 .Em on
-then the service definition is active by default. If
+then the service definition is active by default.
+If
 .Em service-spec
 is followed by 
 .Em off
 then the service definition is parsed and errors are output to
 the system log, but the service is not active and no sockets are created.
-
+.Pp
 Comments that exist between the initial on/off directive 
 and the closing semicolon may begin in any column and may exist on the same line
-as non-comment text. Note: editor syntax highlighting may be misleading!
-
-Syntax and semantic error detection is performed on a best-effort basis. If an 
-error with a service definition is easily detectable, it will log the error 
-using 
+as non-comment text.
+Note: editor syntax highlighting may be misleading!
+.Pp
+Syntax and semantic error detection is performed on a best-effort basis.
+If an error with a service definition is easily detectable, it will
+log the error using
 .Xr syslog 3 
 and continue reading the configuration file if possible, skipping the erroneous 
 definition or file. 
 Otherwise, it is up to the user to write definitions that conform to the 
-documentation. Errors may be worded differently depending on the ordering of 
+documentation.
+Errors may be worded differently depending on the ordering of 
 options in the service definition.
-
+.Pp
 The following are the available values for
 .Em <option>:
 .Bl -hang -width "acceptfilter"
 .It Sy bind
-Set the listen address for this service. This can be an IPv4 or IPv6 address 
-or a hostname.
-
+Set the listen address for this service.
+This can be an IPv4 or IPv6 address or a hostname.
 .It Sy socktype
 Equivalent to
 .Em socket-type 
@@ -461,107 +465,101 @@ in positional notation.
 .Em socktype
 is optional if 
 .Em protocol
-is specified and is udp{4,6} or tcp{4,6}.
-
+is specified and is
+.Li udp{4,6}
+or
+.Li tcp{4,6} .
 .It Sy acceptfilter
 An accept filter, equivalent to 
 .Em accept
 in positional notation (see 
 .Xr accept_filter 9 
-and SO_ACCEPTFITLER in 
-.Xr setsockopt 2
-).
-
+and
+.Dv SO_ACCEPTFITLER
+in 
+.Xr setsockopt 2 ) .
 .It Sy protocol
 Equivalent to 
 .Em protocol
 in positional notation.
-If specified as "tcp" or "udp" with no version specifier, the associated 
-hostname or 
+If specified as
+.Li tcp
+or
+.Li udp
+with no version specifier, the associated hostname or 
 .Em bind
-value is used
-to determine the IP version. If the version is not specified and the hostname
-string or
+value is used to determine the IP version.
+If the version is not specified and the hostname string or
 .Em bind
-value is not an IPv4 or IPv6 address, the
-service definition is invalid.
-
+value is not an IPv4 or IPv6 address, the service definition is
+invalid.
 .It Sy sndbuf
 Equivalent to 
 .Em sndbuf
 in positional notation.
-
 .It Sy recvbuf
 Equivalent to 
 .Em recvbuf
 in positional notation.
-
 .It Sy wait
 The value 
-.Em yes
+.Li yes
 or
-.Em no .
+.Li no .
 Equivalent to 
 .Em wait/nowait 
-in positional notation. This option is automatically determined for internal 
+in positional notation.
+This option is automatically determined for internal 
 services, and is mandatory for all others.
-
 .It Sy service_max
 Equivalent to
 .Em max
-in positional notation. Defaults to 40 if not specified.
-
+in positional notation.
+Defaults to 40 if not specified.
 .It Sy ip_max
 Specifies the maximum number of server instances that may be spawned from
-.Em inetd
+.Nm
 within an interval of 60 seconds for a given IP address.
-
 .It Sy user
-The user to run the program as. Equivalent to
+The user to run the program as.
+Equivalent to
 .Em user
 in positional notation.
-
 .It Sy group
-The primary group to run the program as. Equivalent to 
+The primary group to run the program as.
+Equivalent to 
 .Em group
 in positional notation.
-
 .It Sy exec
 The path to the program's executable or 
 .Dq internal
 for a built-in service. 
 If not specified, this will be assumed to be 
 .Dq internal
-is assumed (and will fail if 
+(and will fail if 
 .Em socktype 
 is not specified).
-internal
 .It Sy args
-The program arguments. By convention, the first argument should be the name of 
-the program.
-
+The program arguments.
+By convention, the first argument should be the name of the program.
 .It Sy ipsec
-An IPsec policy string. Defaults to the global default setting. If 
-specified without a value (i.e. "ipsec=,"), IPsec will be disabled for this 
-service. See the
+An IPsec policy string.
+Defaults to the global default setting.
+If specified without a value (i.e. "ipsec=,"), IPsec will be disabled
+for this service.
+See the
 .Sx Directives
-section for details. Currently only one value is allowed, so all IPsec policies 
+section for details.
+Currently only one value is allowed, so all IPsec policies 
 should be in a quoted string, separated by semicolons.
 .El
-
 .Ss Directives
-.\" Newlines needed for spacing, .Pp won't work.
-
-
-
-.Pp
 <listen-addr>:
 .Pp
 To avoid the need to repeat listen addresses over and over again,
 listen addresses are inherited from line to line, and the listen
 address can be changed without defining a service by including a line
-containing just
-a
+containing just a
 .Em listen-addr
 followed by a colon.
 The default (compatible with historical configuration files) is \&*.
@@ -582,7 +580,8 @@ as described in
 Multiple IPsec policy strings may be specified by using a semicolon
 as a separator.
 If conflicting policy strings are found in a single line,
-the last string will take effect. IPsec policy strings are not parsed in
+the last string will take effect.
+IPsec policy strings are not parsed in
 comments within a key-values service definition.
 A
 .Li "#@"
@@ -619,10 +618,15 @@ The listening address and IPsec configuration strings of the current config file
 are inherited by files included by this directive.
 .Pp
 Files included by this directive using a glob path match are not read in a 
-specific order. If a specific order is desired, files or directories should be 
-included individually without the use of glob patterns. Behavior is undefined if
+specific order.
+If a specific order is desired, files or directories should be 
+included individually without the use of glob patterns.
+Behavior is undefined if
 multiple include directives include the same file and
-this should be avoided. Circular references are caught by inetd. Anything after
+this should be avoided.
+Circular references are caught by
+.Nm .
+Anything after
 .Em glob-path
 on the same line is ignored.
 .Em glob-path
