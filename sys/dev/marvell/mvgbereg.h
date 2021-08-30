@@ -1,4 +1,4 @@
-/*	$NetBSD: mvgbereg.h,v 1.8 2013/12/23 02:23:25 kiyohara Exp $	*/
+/*	$NetBSD: mvgbereg.h,v 1.9 2021/08/30 00:08:28 rin Exp $	*/
 /*
  * Copyright (c) 2007, 2013 KIYOHARA Takashi
  * All rights reserved.
@@ -26,6 +26,31 @@
  */
 #ifndef _MVGBEREG_H_
 #define _MVGBEREG_H_
+
+/*
+ * For ARMEB, peripheral is configured to little-endian mode, even if
+ * CPU itself is in big-endian mode...
+ */
+
+#if BYTE_ORDER == BIG_ENDIAN && !defined(__arm__)
+#define	MVGBE_BIG_ENDIAN
+#endif
+
+/*
+ * ... therefore, we need byte-swapping descriptor fields.
+ */
+
+#if BYTE_ORDER == BIG_ENDIAN && defined(__arm__)
+#define	H2MVGBE16(x)	htole16(x)
+#define	H2MVGBE32(x)	htole32(x)
+#define	MVGBE2H16(x)	le16toh(x)
+#define	MVGBE2H32(x)	le32toh(x)
+#else
+#define	H2MVGBE16(x)	(x)
+#define	H2MVGBE32(x)	(x)
+#define	MVGBE2H16(x)	(x)
+#define	MVGBE2H32(x)	(x)
+#endif
 
 #define MVGBE_SIZE		0x4000
 
@@ -758,13 +783,13 @@
  *    by the hardware.  We'll just pad them out to that to make it easier.
  */
 struct mvgbe_tx_desc {
-#if BYTE_ORDER == BIG_ENDIAN
+#ifdef MVGBE_BIG_ENDIAN
 	uint16_t bytecnt;		/* Descriptor buffer byte count */
 	uint16_t l4ichk;		/* CPU provided TCP Checksum */
 	uint32_t cmdsts;		/* Descriptor command status */
 	uint32_t nextdescptr;		/* Next descriptor pointer */
 	uint32_t bufptr;		/* Descriptor buffer pointer */
-#else	/* LITTLE_ENDIAN */
+#else
 	uint32_t cmdsts;		/* Descriptor command status */
 	uint16_t l4ichk;		/* CPU provided TCP Checksum */
 	uint16_t bytecnt;		/* Descriptor buffer byte count */
@@ -775,13 +800,13 @@ struct mvgbe_tx_desc {
 } __packed;
 
 struct mvgbe_rx_desc {
-#if BYTE_ORDER == BIG_ENDIAN
+#ifdef MVGBE_BIG_ENDIAN
 	uint16_t bytecnt;		/* Descriptor buffer byte count */
 	uint16_t bufsize;		/* Buffer size */
 	uint32_t cmdsts;		/* Descriptor command status */
 	uint32_t nextdescptr;		/* Next descriptor pointer */
 	uint32_t bufptr;		/* Descriptor buffer pointer */
-#else	/* LITTLE_ENDIAN */
+#else
 	uint32_t cmdsts;		/* Descriptor command status */
 	uint16_t bufsize;		/* Buffer size */
 	uint16_t bytecnt;		/* Descriptor buffer byte count */
