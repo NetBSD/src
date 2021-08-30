@@ -1,4 +1,4 @@
-/*	$NetBSD: parse_v2.c,v 1.2 2021/08/30 06:27:49 tih Exp $	*/
+/*	$NetBSD: parse_v2.c,v 1.3 2021/08/30 17:32:23 rillig Exp $	*/
 
 /*-
  * Copyright (c) 2021 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: parse_v2.c,v 1.2 2021/08/30 06:27:49 tih Exp $");
+__RCSID("$NetBSD: parse_v2.c,v 1.3 2021/08/30 17:32:23 rillig Exp $");
 
 #include <ctype.h>
 #include <errno.h>
@@ -156,7 +156,7 @@ parse_syntax_v2(struct servtab *sep, char **cpp)
 	invoke_result result;
 
 	for (;;) {
-		switch(result = 
+		switch(result =
 			parse_invoke_handler(&is_valid_definition, cpp, sep)) {
 		case INVOKE_SUCCESS:
 			/* Keep reading more options in. */
@@ -194,14 +194,14 @@ parse_syntax_v2(struct servtab *sep, char **cpp)
 	}
 }
 
-/* 
+/*
  * Fill in any remaining values that should be inferred
- * Log an error if a required parameter that isn't 
+ * Log an error if a required parameter that isn't
  * provided by user can't be inferred from other servtab data.
- * Return true on success, false on failure. 
+ * Return true on success, false on failure.
  */
-static bool 
-fill_default_values(struct servtab *sep) 
+static bool
+fill_default_values(struct servtab *sep)
 {
 	bool is_valid = true;
 
@@ -209,7 +209,7 @@ fill_default_values(struct servtab *sep)
 		/* Set default to same as in v1 syntax. */
 		sep->se_service_max = TOOMANY;
 	}
-	
+
 	if (sep->se_hostaddr == NULL) {
 		/* Set hostaddr to default */
 		sep->se_hostaddr = newstr(defhost);
@@ -292,7 +292,7 @@ setup_internal(struct servtab *sep)
 		ENI("exec");
 		return false;
 	}
-	
+
 	if (wait_prev != SERVTAB_UNSPEC_VAL && wait_prev != sep->se_wait) {
 		/* If wait was already specified throw an error. */
 		WRN(WAIT_WRN, sep->se_service);
@@ -311,7 +311,7 @@ infer_protocol_ip_version(struct servtab *sep)
 		&& strcmp("rpc/udp", sep->se_proto) != 0) {
 		return true;
 	}
-	
+
 	if (inet_pton(AF_INET, sep->se_hostaddr, &tmp)) {
 		sep->se_family = AF_INET;
 		return true;
@@ -327,29 +327,29 @@ infer_protocol_ip_version(struct servtab *sep)
 	return false;
 }
 
-/* 
- * Skips whitespaces, newline characters, and comments, 
- * and returns the next token. Returns false and logs error if an EOF is 
- * encountered. 
+/*
+ * Skips whitespaces, newline characters, and comments,
+ * and returns the next token. Returns false and logs error if an EOF is
+ * encountered.
  */
-static bool 
+static bool
 skip_whitespace(char **cpp)
 {
 	char *cp = *cpp;
 
 	int line_start = line_number;
-	
+
 	for (;;) {
 		while (isblank((unsigned char)*cp))
 			cp++;
 
-		if (*cp == '\0' || *cp == '#') {  
+		if (*cp == '\0' || *cp == '#') {
 			cp = nextline(fconfig);
 
 			/* Should never expect EOF when skipping whitespace */
 			if (cp == NULL) {
 				ERR("Early end of file after line %d",
-				    line_start); 
+				    line_start);
 				return false;
 			}
 			continue;
@@ -362,7 +362,7 @@ skip_whitespace(char **cpp)
 }
 
 /* Get the key handler function pointer for the given name */
-static key_handler_func 
+static key_handler_func
 get_handler(char *name)
 {
 	/* Call function to handle option parsing. */
@@ -374,18 +374,18 @@ get_handler(char *name)
 	return NULL;
 }
 
-static inline void 
+static inline void
 strmove(char *buf, size_t off)
-{ 
+{
 	memmove(buf, buf + off, strlen(buf + off) + 1);
 }
 
-/* 
- * Perform an in-place parse of a single-line quoted string 
+/*
+ * Perform an in-place parse of a single-line quoted string
  * with escape sequences. Sets *cpp to the position after the quoted characters.
  * Uses shell-style quote parsing.
  */
-static bool 
+static bool
 parse_quotes(char **cpp)
 {
 	char *cp = *cpp;
@@ -398,7 +398,7 @@ parse_quotes(char **cpp)
 			strmove(cp, 1);
 			continue;
 		}
-		
+
 		if (*cp == '\\') {
 			/* start is location of backslash */
 			char *start = cp;
@@ -406,9 +406,9 @@ parse_quotes(char **cpp)
 			switch (*cp) {
 			case 'x': {
 				int temp, bits;
-				if (((bits = hex_to_bits(*(cp + 1))) == -1) 
+				if (((bits = hex_to_bits(*(cp + 1))) == -1)
 				|| ((temp = hex_to_bits(*(cp + 2))) == -1)) {
-					ERR("Invalid hexcode sequence '%.4s'", 
+					ERR("Invalid hexcode sequence '%.4s'",
 					    start);
 					return false;
 				}
@@ -474,16 +474,16 @@ hex_to_bits(char in)
 	}
 }
 
-/* 
+/*
  * Parse the next value for a key handler and advance list->cp past the found
- * value. Return NULL if there are no more values or there was an error 
+ * value. Return NULL if there are no more values or there was an error
  * during parsing, and set the list->state to the appropriate value.
  */
-static char * 
+static char *
 next_value(vlist list)
 {
 	char *cp = list->cp;
-	
+
 	if (list->state != VALS_PARSING) {
 		/* Already at the end of a values list, or there was an error.*/
 		return NULL;
@@ -500,19 +500,19 @@ next_value(vlist list)
 		list->cp = cp + 1;
 		return NULL;
 	}
-	
+
 	/* Check for end of line */
 	if (!skip_whitespace(&cp)) {
 		list->state = VALS_ERROR;
 		return NULL;
 	}
 
-	/* 
+	/*
 	 * Found the start of a potential value. Advance one character
-	 * past the end of the value. 
+	 * past the end of the value.
 	 */
 	char * start = cp;
-	while (!isblank((unsigned char)*cp) && *cp != '#' && 
+	while (!isblank((unsigned char)*cp) && *cp != '#' &&
 	    *cp != ',' && *cp != ';' && *cp != '\0' ) {
 		if (*cp == '"' || *cp == '\'') {
 			/* Found a quoted segment */
@@ -525,7 +525,7 @@ next_value(vlist list)
 			cp++;
 		}
 	}
-	
+
 	/* Handle comments next to unquoted values */
 	if (*cp == '#') {
 		*cp = '\0';
@@ -534,7 +534,7 @@ next_value(vlist list)
 	}
 
 	if (*cp == '\0') {
-		/* 
+		/*
 		 * Value ends with end of line, so it is already NUL-terminated
 		 */
 		list->cp = cp;
@@ -570,20 +570,20 @@ parse_invoke_handler(bool *is_valid_definition, char **cpp, struct servtab *sep)
 	/* Starting character of key */
 	key_name = cp;
 
-		
+
 	/* alphabetical or underscore allowed in name */
 	while (isalpha((unsigned char)*cp) || *cp == '_') {
 		cp++;
 	}
-		
+
 	is_blank = isblank((unsigned char)*cp);
 
 	/* Get key handler and move to start of values */
 	if (*cp != '=' && !is_blank && *cp != '#') {
 		ERR("Expected '=' but found '%c'", *cp);
 		return INVOKE_ERROR;
-	} 
-	
+	}
+
 	save = *cp;
 	*cp = '\0';
 	cp++;
@@ -616,9 +616,9 @@ parse_invoke_handler(bool *is_valid_definition, char **cpp, struct servtab *sep)
 
 	info = (val_parse_info) {cp, VALS_PARSING};
 
-	/* 
+	/*
 	 * Read values for key and write into sep.
-	 * If parsing is successful, all values for key must be read. 
+	 * If parsing is successful, all values for key must be read.
 	 */
 	if (handler(sep, &info) == KEY_HANDLER_FAILURE) {
 		/*
@@ -631,14 +631,14 @@ parse_invoke_handler(bool *is_valid_definition, char **cpp, struct servtab *sep)
 	}
 
 	if (info.state == VALS_END_DEF) {
-		/* 
+		/*
 		 * Exit definition handling for(;;).
-		 * Set the position to the end of the definition, 
+		 * Set the position to the end of the definition,
 		 * for multi-definition lines.
 		 */
 		*cpp = info.cp;
 		return INVOKE_FINISH;
-	} 
+	}
 	if (info.state == VALS_ERROR) {
 		/* Parse error, stop reading config */
 		return INVOKE_ERROR;
@@ -655,8 +655,8 @@ is_internal(struct servtab *sep)
 	return sep->se_bi != NULL;
 }
 
-/* 
- * Key-values handlers 
+/*
+ * Key-values handlers
  */
 
 static hresult
@@ -667,8 +667,8 @@ unknown_handler(struct servtab *sep, vlist values)
 }
 
 /* Set listen address for this service */
-static hresult 
-bind_handler(struct servtab *sep, vlist values) 
+static hresult
+bind_handler(struct servtab *sep, vlist values)
 {
 	if (sep->se_hostaddr != NULL) {
 		TMD("bind");
@@ -684,7 +684,7 @@ bind_handler(struct servtab *sep, vlist values)
 	return KEY_HANDLER_SUCCESS;
 }
 
-static hresult 
+static hresult
 socket_type_handler(struct servtab *sep, vlist values)
 {
 	char *type = next_value(values);
@@ -710,14 +710,14 @@ socket_type_handler(struct servtab *sep, vlist values)
 }
 
 /* Set accept filter SO_ACCEPTFILTER */
-static hresult 
+static hresult
 filter_handler(struct servtab *sep, vlist values)
 {
-	/* 
+	/*
 	 * See: SO_ACCEPTFILTER https://man.netbsd.org/setsockopt.2
 	 * An accept filter can have one other argument.
 	 * This code currently only supports one accept filter
-	 * Also see parse_accept_filter(char* arg, struct servtab*sep) 
+	 * Also see parse_accept_filter(char* arg, struct servtab*sep)
 	 */
 
 	char *af_name, *af_arg;
@@ -750,7 +750,7 @@ filter_handler(struct servtab *sep, vlist values)
 }
 
 /* Set protocol (udp, tcp, unix, etc.) */
-static hresult 
+static hresult
 protocol_handler(struct servtab *sep, vlist values)
 {
 	char *val;
@@ -759,7 +759,7 @@ protocol_handler(struct servtab *sep, vlist values)
 		TFA("protocol");
 		return KEY_HANDLER_FAILURE;
 	}
-	
+
 	if (sep->se_type == NORM_TYPE &&
 	    strncmp(val, "faith/", strlen("faith/")) == 0) {
 		val += strlen("faith/");
@@ -777,7 +777,7 @@ protocol_handler(struct servtab *sep, vlist values)
 	return KEY_HANDLER_SUCCESS;
 }
 
-/* 
+/*
  * Convert a string number possible ending with k or m to an integer.
  * Based on MALFORMED, GETVAL, and ASSIGN in getconfigent(void).
  */
@@ -816,18 +816,18 @@ size_to_bytes(char *arg)
 }
 
 /* sndbuf size */
-static hresult 
+static hresult
 send_buf_handler(struct servtab *sep, vlist values)
 {
 	char *arg;
 	int buffer_size;
 
 	if (ISMUX(sep)) {
-		ERR("%s: can't specify buffer sizes for tcpmux services", 
+		ERR("%s: can't specify buffer sizes for tcpmux services",
 			sep->se_service);
 		return KEY_HANDLER_FAILURE;
 	}
-			
+
 
 	if ((arg = next_value(values)) == NULL) {
 		TFA("sndbuf");
@@ -851,14 +851,14 @@ send_buf_handler(struct servtab *sep, vlist values)
 }
 
 /* recvbuf size */
-static hresult 
+static hresult
 recv_buf_handler(struct servtab *sep, vlist values)
 {
 	char *arg;
 	int buffer_size;
 
 	if (ISMUX(sep)) {
-		ERR("%s: Cannot specify buffer sizes for tcpmux services", 
+		ERR("%s: Cannot specify buffer sizes for tcpmux services",
 			sep->se_service);
 		return KEY_HANDLER_FAILURE;
 	}
@@ -866,8 +866,8 @@ recv_buf_handler(struct servtab *sep, vlist values)
 	if ((arg = next_value(values)) == NULL){
 		TFA("recvbuf");
 		return KEY_HANDLER_FAILURE;
-	}	
-	
+	}
+
 	buffer_size = size_to_bytes(arg);
 
 	if (buffer_size == -1) {
@@ -886,7 +886,7 @@ recv_buf_handler(struct servtab *sep, vlist values)
 }
 
 /* Same as wait in positional */
-static hresult 
+static hresult
 wait_handler(struct servtab *sep, vlist values)
 {
 	char *val;
@@ -922,7 +922,7 @@ wait_handler(struct servtab *sep, vlist values)
 	} else if (parse_wait(sep, wait)) {
 		return KEY_HANDLER_FAILURE;
 	}
-	
+
 	if ((val = next_value(values)) != NULL) {
 		TMA("wait");
 		return KEY_HANDLER_FAILURE;
@@ -932,7 +932,7 @@ wait_handler(struct servtab *sep, vlist values)
 }
 
 /* Set max connections in interval rate-limit, same as max in positional */
-static hresult 
+static hresult
 service_max_handler(struct servtab *sep, vlist values)
 {
 	char *count_str;
@@ -942,7 +942,7 @@ service_max_handler(struct servtab *sep, vlist values)
 		TMD("service_max");
 		return KEY_HANDLER_FAILURE;
 	}
-	
+
 	count_str = next_value(values);
 
 	if (count_str == NULL) {
@@ -950,7 +950,7 @@ service_max_handler(struct servtab *sep, vlist values)
 		return KEY_HANDLER_FAILURE;
 	}
 
-	size_t count = (size_t)strtou(count_str, NULL, 10, 0, 
+	size_t count = (size_t)strtou(count_str, NULL, 10, 0,
 	    SERVTAB_COUNT_MAX, &rstatus);
 
 	if (rstatus) {
@@ -974,12 +974,12 @@ ip_max_handler(struct servtab *sep, vlist values)
 {
 	char *count_str;
 	int rstatus;
-	
+
 	if (sep->se_ip_max != SERVTAB_UNSPEC_SIZE_T) {
 		TMD("ip_max");
 		return KEY_HANDLER_FAILURE;
 	}
-	
+
 	count_str = next_value(values);
 
 	if (count_str == NULL) {
@@ -987,7 +987,7 @@ ip_max_handler(struct servtab *sep, vlist values)
 		return KEY_HANDLER_FAILURE;
 	}
 
-	size_t count = (size_t)strtou(count_str, NULL, 10, 0, 
+	size_t count = (size_t)strtou(count_str, NULL, 10, 0,
 	    SERVTAB_COUNT_MAX, &rstatus);
 
 	if (rstatus) {
@@ -1006,12 +1006,12 @@ ip_max_handler(struct servtab *sep, vlist values)
 }
 
 /* Set user to execute as */
-static hresult 
+static hresult
 user_handler(struct servtab *sep, vlist values)
 {
 	if (sep->se_user != NULL) {
 		TMD("user");
-		return KEY_HANDLER_FAILURE;		
+		return KEY_HANDLER_FAILURE;
 	}
 
 	char *name = next_value(values);
@@ -1030,9 +1030,9 @@ user_handler(struct servtab *sep, vlist values)
 
 	return KEY_HANDLER_SUCCESS;
 }
- 
+
 /* Set group to execute as */
-static hresult 
+static hresult
 group_handler(struct servtab *sep, vlist values)
 {
 	char *name = next_value(values);
@@ -1053,7 +1053,7 @@ group_handler(struct servtab *sep, vlist values)
 }
 
 /* Handle program path or "internal" */
-static hresult 
+static hresult
 exec_handler(struct servtab *sep, vlist values)
 {
 	char *val;
@@ -1075,7 +1075,7 @@ exec_handler(struct servtab *sep, vlist values)
 			WRN(WAIT_WRN, sep->se_service);
 		}
 	}
-	
+
 	if ((val = next_value(values)) != NULL) {
 		TMA("exec");
 		return KEY_HANDLER_FAILURE;
@@ -1085,7 +1085,7 @@ exec_handler(struct servtab *sep, vlist values)
 }
 
 /* Handle program arguments */
-static hresult 
+static hresult
 args_handler(struct servtab *sep, vlist values)
 {
 	char *val;
@@ -1107,13 +1107,13 @@ args_handler(struct servtab *sep, vlist values)
 	}
 	while (argc <= MAXARGV)
 		sep->se_argv[argc++] = NULL;
-	
+
 	return KEY_HANDLER_SUCCESS;
 
 }
 
 #ifdef IPSEC
-/* 
+/*
  * ipsec_handler currently uses the ipsec.h utilities for parsing, requiring
  * all policies as a single value. This handler could potentially allow multiple
  * policies as separate values in the future, but strings would need to be
@@ -1135,7 +1135,7 @@ ipsec_handler(struct servtab *sep, vlist values)
 		return KEY_HANDLER_FAILURE;
 	}
 
-	/* 
+	/*
 	 * Use 'ipsec=' with no argument to disable ipsec for this service
 	 * An empty string indicates that IPsec was disabled, handled in
 	 * fill_default_values.
