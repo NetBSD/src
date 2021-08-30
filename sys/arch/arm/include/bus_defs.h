@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_defs.h,v 1.16 2021/04/23 06:02:48 skrll Exp $	*/
+/*	$NetBSD: bus_defs.h,v 1.17 2021/08/30 22:56:26 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2001 The NetBSD Foundation, Inc.
@@ -377,6 +377,7 @@ struct arm32_bus_dma_segment {
 	 * PRIVATE MEMBERS:
 	 */
 	uint32_t	_ds_flags;	/* _BUS_DMAMAP_COHERENT */
+	paddr_t		_ds_paddr;	/* CPU address */
 };
 typedef struct arm32_bus_dma_segment	bus_dma_segment_t;
 
@@ -481,6 +482,7 @@ struct arm32_bus_dmamap {
 	struct vmspace	*_dm_vmspace;	/* vmspace that owns the mapping */
 
 	void		*_dm_cookie;	/* cookie for bus-specific functions */
+	void		*_dm_iommu;	/* cookie for iommu functions */
 
 	/*
 	 * PUBLIC MEMBERS: these are used by machine-independent code.
