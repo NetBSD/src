@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.124 2021/07/24 17:07:59 jmcneill Exp $
+#	$NetBSD: Makefile.inc,v 1.125 2021/08/30 00:14:45 rin Exp $
 #
 #	etc.evbarm/Makefile.inc -- evbarm-specific etc Makefile targets
 #
@@ -19,6 +19,9 @@ KERNEL_SETS.armv4+=		IXM1200
 
 EVBARM_BOARDS.xscale+=		ADI_BRH
 KERNEL_SETS.xscale+=		NSLU2
+
+EVBARM_BOARDS.armv5t+=		KUROBOX_PRO
+# Other marvell-based machines may also work but not tested yet.
 
 EVBARM_BOARDS.armv6+=		RPI
 EVBARM_BOARDS.armv6hf+=	 	RPI
