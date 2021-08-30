@@ -1,4 +1,4 @@
-# $NetBSD: read.ln,v 1.2 2021/08/24 23:38:51 rillig Exp $
+# $NetBSD: read.ln,v 1.3 2021/08/30 19:07:57 rillig Exp $
 #
 # Cover each path of reading declarations, definitions and usages.
 
@@ -62,3 +62,8 @@ S read.c
 302 d 0.302 e 4f302 F1 PvI V
 # void f302(const volatile int *);
 303 d 0.303 e 4f303 F1 PcvI V
+
+# The "cleanup" in read.c 1.58 produced "not a number: v0...".
+# The corresponding tests for parsing vararg, printflike and scanflike are
+# still missing, that's why it got through unnoticed.
+400 d 0.439 v0 d 13bpf_set_error F3 PsT115_compiler_state PcC E V
