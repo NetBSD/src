@@ -1,4 +1,4 @@
-/*	$NetBSD: emit.c,v 1.3 2021/08/28 16:21:24 rillig Exp $	*/
+/*	$NetBSD: emit.c,v 1.4 2021/08/30 19:48:21 rillig Exp $	*/
 # 3 "emit.c"
 
 /*
@@ -7,8 +7,8 @@
  * consistently across different translation units.
  */
 
-
-
+/* Do not warn about unused parameters. */
+/* lint1-extra-flags: -X 231 */
 
 /*
  * Define some derived types.
@@ -178,4 +178,74 @@ call_gcc_builtins(int x, long *ptr)
 	__builtin_bswap32(0x12345678);
 
 	__atomic_load(ptr, &value, 0);
+}
+
+/*
+ * XXX: It's strange that a function can be annotated with VARARGS even
+ * though it does not take varargs at all.
+ *
+ * This feature is not useful for modern code anyway, it focused on pre-C90
+ * code that did not have function prototypes.
+ */
+
+/* VARARGS */
+void
+varargs_comment(const char *fmt)
+{
+}
+
+/* VARARGS 0 */
+void
+varargs_0_comment(const char *fmt)
+{
+}
+
+/* VARARGS 3 */
+void
+varargs_3_comment(int a, int b, int c, const char *fmt)
+{
+}
+
+/* PRINTFLIKE */
+void
+printflike_comment(const char *fmt)
+{
+}
+
+/* PRINTFLIKE 0 */
+void
+printflike_0_comment(const char *fmt)
+{
+}
+
+/* PRINTFLIKE 3 */
+void
+printflike_3_comment(int a, int b, const char *fmt)
+{
+}
+
+/* PRINTFLIKE 10 */
+void
+printflike_10_comment(int a1, int a2, int a3, int a4, int a5,
+		      int a6, int a7, int a8, int a9,
+		      const char *fmt)
+{
+}
+
+/* SCANFLIKE */
+void
+scanflike_comment(const char *fmt)
+{
+}
+
+/* SCANFLIKE 0 */
+void
+scanflike_0_comment(const char *fmt)
+{
+}
+
+/* SCANFLIKE 3 */
+void
+scanflike_3_comment(int a, int b, const char *fmt)
+{
 }
