@@ -1,4 +1,4 @@
-/*	$NetBSD: inetd.c,v 1.129 2021/08/30 08:21:12 mlelstv Exp $	*/
+/*	$NetBSD: inetd.c,v 1.130 2021/08/30 17:32:23 rillig Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1991, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)inetd.c	8.4 (Berkeley) 4/13/94";
 #else
-__RCSID("$NetBSD: inetd.c,v 1.129 2021/08/30 08:21:12 mlelstv Exp $");
+__RCSID("$NetBSD: inetd.c,v 1.130 2021/08/30 17:32:23 rillig Exp $");
 #endif
 #endif /* not lint */
 
@@ -484,7 +484,7 @@ main(int argc, char *argv[])
 			if (!sep->se_wait && sep->se_socktype == SOCK_STREAM) {
 				/* XXX here do the libwrap check-before-accept*/
 				ctrl = accept(sep->se_fd, NULL, NULL);
-				DPRINTF(SERV_FMT ": accept, ctrl fd %d", 
+				DPRINTF(SERV_FMT ": accept, ctrl fd %d",
 				    SERV_PARAMS(sep), ctrl);
 				if (ctrl < 0) {
 					if (errno != EINTR)
@@ -644,7 +644,7 @@ run_service(int ctrl, struct servtab *sep, int didfork)
 		} else if (sep->se_group) {
 			(void) setgid((gid_t)grp->gr_gid);
 		}
-		DPRINTF("%d execl %s", 
+		DPRINTF("%d execl %s",
 		    getpid(), sep->se_server);
 		/* Set our control descriptor to not close-on-exec... */
 		if (fcntl(ctrl, F_SETFD, 0) < 0)
@@ -705,21 +705,21 @@ reapchild(void)
 
 size_t	line_number;
 
-/* 
+/*
  * Recursively merge loaded service definitions with any defined
- * in the current or included config files. 
+ * in the current or included config files.
  */
 static void
 config(void)
 {
 	struct servtab *sep, *cp;
 	/*
-	 * Current position in line, used with key-values notation, 
-	 * saves cp across getconfigent calls. 
+	 * Current position in line, used with key-values notation,
+	 * saves cp across getconfigent calls.
 	 */
 	char *current_pos;
 	size_t n;
-	
+
 	/* open config file from beginning */
 	fconfig = fopen(CONFIG, "r");
 	if(fconfig == NULL) {
@@ -729,7 +729,7 @@ config(void)
 
 	/* First call to nextline will advance line_number to 1 */
 	line_number = 0;
-	
+
 	/* Start parsing at the beginning of the first line */
 	current_pos = nextline(fconfig);
 
@@ -782,9 +782,9 @@ config(void)
 		}
 		sep->se_checked = 1;
 
-		/* 
+		/*
 		 * Remainder of config(void) checks validity of servtab options
-		 * and sets up the service by setting up sockets (in setup(servtab)). 
+		 * and sets up the service by setting up sockets (in setup(servtab)).
 		 */
 		switch (sep->se_family) {
 		case AF_LOCAL:
@@ -842,7 +842,7 @@ config(void)
 			if (isrpcservice(sep) || ISMUX(sep))
 				port = "0";
 			else
-				port = sep->se_service;		
+				port = sep->se_service;
 			error = getaddrinfo(host, port, &hints, &res);
 			if (error) {
 				if (error == EAI_SERVICE) {
@@ -886,7 +886,7 @@ config(void)
 					rp = getrpcbyname(sep->se_service);
 					if (rp == 0) {
 						syslog(LOG_ERR,
-						    SERV_FMT 
+						    SERV_FMT
 						    ": unknown service",
 						    SERV_PARAMS(sep));
 						sep->se_checked = 0;
@@ -943,7 +943,7 @@ goaway(void)
 	for (sep = servtab; sep != NULL; sep = sep->se_next) {
 		if (sep->se_fd == -1)
 			continue;
-		
+
 		switch (sep->se_family) {
 		case AF_LOCAL:
 			(void)unlink(sep->se_service);
@@ -972,7 +972,7 @@ setup(struct servtab *sep)
 	struct kevent	*ev;
 
 	if ((sep->se_fd = socket(sep->se_family, sep->se_socktype, 0)) < 0) {
-		DPRINTF("socket failed on " SERV_FMT ": %s", 
+		DPRINTF("socket failed on " SERV_FMT ": %s",
 		    SERV_PARAMS(sep), strerror(errno));
 		syslog(LOG_ERR, "%s/%s: socket: %m",
 		    sep->se_service, sep->se_proto);
@@ -1067,7 +1067,7 @@ setsockopt(fd, SOL_SOCKET, opt, &on, (socklen_t)sizeof(on))
  */
 static void
 close_sep(struct servtab *sep)
-{	
+{
 
 	if (sep->se_fd >= 0) {
 		(void) close(sep->se_fd);
@@ -1201,25 +1201,25 @@ static struct servtab *
 getconfigent(char **current_pos)
 {
 	struct servtab *sep = &serv;
-	int argc, val; 
+	int argc, val;
 	char *cp, *cp0, *arg, *buf0, *buf1, *sz0, *sz1;
 	static char TCPMUX_TOKEN[] = "tcpmux/";
 #define MUX_LEN		(sizeof(TCPMUX_TOKEN)-1)
 	char *hostdelim;
 
-	/* 
-	 * Pre-condition: current_pos points into line, 
+	/*
+	 * Pre-condition: current_pos points into line,
 	 * line contains config line. Continue where the last getconfigent left off.
-	 * Allows for multiple service definitions per line. 
+	 * Allows for multiple service definitions per line.
 	 */
 	cp = *current_pos;
 
 	if (false) {
-		/* 
-		 * Go to the next line, but only after attemting to read the current 
-		 * one! Keep reading until we find a valid definition or EOF. 
+		/*
+		 * Go to the next line, but only after attemting to read the current
+		 * one! Keep reading until we find a valid definition or EOF.
 		 */
-more:	
+more:
 		cp = nextline(fconfig);
 	}
 
@@ -1244,8 +1244,8 @@ more:
 				if (ipsecsetup_test(p) < 0) {
 					ERR("Invalid IPsec policy \"%s\"", p);
 					LOG_EARLY_ENDCONF();
-					/* 
-					* Stop reading the current config to prevent services 
+					/*
+					* Stop reading the current config to prevent services
 					* from being run without IPsec.
 					*/
 					return NULL;
@@ -1283,7 +1283,7 @@ more:
 			goto more;
 		}
 	}
-	
+
 	/* After this point, we might need to store data in a servtab */
 	*sep = init_servtab();
 
@@ -1353,16 +1353,16 @@ more:
 			freeconfig(sep);
 			goto more;
 		case V2_ERROR:
-			/* 
+			/*
 			 * Unrecoverable error, stop reading. freeconfig is called
-			 * in parse_v2.c 
+			 * in parse_v2.c
 			 */
 			LOG_EARLY_ENDCONF();
 			freeconfig(sep);
 			return NULL;
 		}
 	} else if (strcmp(arg, "off") == 0 || strncmp(arg, "off#", 4) == 0) {
-		
+
 		if (arg[3] == '#') {
 			cp = nextline(fconfig);
 		}
@@ -1523,7 +1523,7 @@ do { \
 		if (cp1 != NULL) {
 			int rstatus;
 			*cp1++ = '\0';
-			sep->se_service_max = (size_t)strtou(cp1, NULL, 10, 0, 
+			sep->se_service_max = (size_t)strtou(cp1, NULL, 10, 0,
 			    SERVTAB_COUNT_MAX, &rstatus);
 
 			if (rstatus != 0) {
@@ -1533,7 +1533,7 @@ do { \
 				}
 
 				WRN("Improper \"max\" value '%s', "
-				    "using '%zu' instead: %s", 
+				    "using '%zu' instead: %s",
 				    cp1,
 				    sep->se_service_max,
 				    strerror(rstatus));
@@ -1581,7 +1581,7 @@ do { \
 		freeconfig(sep);
 		goto more;
 	}
-	
+
 	argc = 0;
 	for (arg = skip(&cp); cp; arg = skip(&cp)) {
 		if (argc < MAXARGV)
@@ -1647,7 +1647,7 @@ again:
 
 		c = getc(fconfig);
 		(void) ungetc(c, fconfig);
-		if (c == ' ' || c == '\t') 
+		if (c == ' ' || c == '\t')
 			if ((cp = nextline(fconfig)) != NULL)
 				goto again;
 		*cpp = NULL;
@@ -1805,7 +1805,7 @@ discard_stream(int s, struct servtab *sep) /* Discard service -- ignore data */
 /* ARGSUSED */
 static void
 discard_dg(int s, struct servtab *sep)	/* Discard service -- ignore data */
-	
+
 {
 	char buffer[BUFSIZE];
 
@@ -2256,8 +2256,8 @@ config_root()
 	purge_unchecked();
 }
 
-static void 
-purge_unchecked(void) 
+static void
+purge_unchecked(void)
 {
 	struct servtab *sep, **sepp = &servtab;
 	int servtab_count = 0;
@@ -2285,9 +2285,9 @@ purge_unchecked(void)
 }
 
 static bool
-is_same_service(const struct servtab *sep, const struct servtab *cp) 
+is_same_service(const struct servtab *sep, const struct servtab *cp)
 {
-	return 
+	return
 	    strcmp(sep->se_service, cp->se_service) == 0 &&
 	    strcmp(sep->se_hostaddr, cp->se_hostaddr) == 0 &&
 	    strcmp(sep->se_proto, cp->se_proto) == 0 &&
@@ -2295,9 +2295,9 @@ is_same_service(const struct servtab *sep, const struct servtab *cp)
 	    ISMUX(sep) == ISMUX(cp);
 }
 
-int 
+int
 parse_protocol(struct servtab *sep)
-{	
+{
 	int val;
 
 	if (strcmp(sep->se_proto, "unix") == 0) {
@@ -2409,11 +2409,11 @@ parse_server(struct servtab *sep, const char *arg){
 }
 
 /* TODO test to make sure accept filter still works */
-void 
+void
 parse_accept_filter(char *arg, struct servtab *sep) {
 	char *accf, *accf_arg;
 	/* one and only one accept filter */
-	accf = strchr(arg, ':');	
+	accf = strchr(arg, ':');
 	if (!accf)
 		return;
 	if (accf != strrchr(arg, ':') || *(accf + 1) == '\0') {
@@ -2437,7 +2437,7 @@ parse_accept_filter(char *arg, struct servtab *sep) {
 	}
 }
 
-void 
+void
 parse_socktype(char* arg, struct servtab* sep) {
 	/* stream socket may have an accept filter, only check first chars */
 	if (strncmp(arg, "stream", sizeof("stream") - 1) == 0)
@@ -2454,13 +2454,13 @@ parse_socktype(char* arg, struct servtab* sep) {
 		sep->se_socktype = -1;
 }
 
-static struct servtab 
+static struct servtab
 init_servtab() {
 	/* This does not set every field to default. See enter() as well */
 	return (struct servtab) {
-		/* 
+		/*
 		 * Set se_max to non-zero so uninitialized value is not
-	 	 * a valid value. Useful in v2 syntax parsing. 
+	 	 * a valid value. Useful in v2 syntax parsing.
 		 */
 		.se_service_max = SERVTAB_UNSPEC_SIZE_T,
 		.se_ip_max = SERVTAB_UNSPEC_SIZE_T,
@@ -2519,7 +2519,7 @@ include_configs(char *pattern)
 #endif
 }
 
-static void 
+static void
 prepare_next_config(const char *file_name)
 {
 	/* Setup new state that is normally only done in main */
@@ -2640,7 +2640,7 @@ check_no_reinclude(const char *glob_path)
 }
 
 /* Resolve the pattern relative to the config file the pattern is from  */
-static char * 
+static char *
 gen_file_pattern(const char *cur_config, const char *pattern)
 {
 	if(pattern[0] == '/') {
@@ -2660,7 +2660,7 @@ gen_file_pattern(const char *cur_config, const char *pattern)
 	if (last == 0) {
 		/* cur_config is just a filename, pattern already correct */
 		return newstr(pattern);
-	} 
+	}
 
 	/* Relativize pattern to cur_config file's directory */
 	char *full_pattern = malloc(last + 1 + strlen(pattern) + 1);
@@ -2675,7 +2675,7 @@ gen_file_pattern(const char *cur_config, const char *pattern)
 }
 
 static int
-glob_error(const char *path, int error) 
+glob_error(const char *path, int error)
 {
 	WRN("Error while resolving path '%s': %s", path, strerror(error));
 	return 0;
@@ -2702,13 +2702,13 @@ rl_process(struct servtab *sep, int ctrl)
 		sep->se_time = now;
 		istimevalid = true;
 	}
-	
+
 	if (sep->se_count >= sep->se_service_max) {
 		if(!istimevalid) {
 			now = rl_time();
 			istimevalid = true;
 		}
-		
+
 		if (now - sep->se_time > CNT_INTVL) {
 			rl_reset(sep, now);
 		} else {
@@ -2747,17 +2747,17 @@ rl_process(struct servtab *sep, int ctrl)
 		DPRINTF(
 		    SERV_FMT ": se_ip_max %zu and ip_count %zu",
 		    SERV_PARAMS(sep), sep->se_ip_max, node->count);
-		
+
 		if (node->count >= sep->se_ip_max) {
 			if (!istimevalid) {
-				/* 
+				/*
 				 * Only get the clock time if we didn't
-				 * already 
+				 * already
 				 */
 				now = rl_time();
 				istimevalid = true;
 			}
-		
+
 			if (now - sep->se_time > CNT_INTVL) {
 				rl_reset(sep, now);
 				node = rl_add(sep, hbuf);
@@ -2769,7 +2769,7 @@ rl_process(struct servtab *sep, int ctrl)
 					 * log
 					 */
 					syslog(LOG_ERR, SERV_FMT
-					    ": max ip spawn rate (%zu in " 
+					    ": max ip spawn rate (%zu in "
 					    "%ji seconds) for "
 					    "%." TOSTRING(NI_MAXHOST) "s "
 					    "already met; service not started",
@@ -2779,13 +2779,13 @@ rl_process(struct servtab *sep, int ctrl)
 					    node->address);
 				}
 
-				DPRINTF(SERV_FMT ": service not started", 
+				DPRINTF(SERV_FMT ": service not started",
    				    SERV_PARAMS(sep));
 
 				rl_drop_connection(sep, ctrl);
 				/*
 				 * Increment so debug-syslog message will
-				 * trigger only once 
+				 * trigger only once
 				 */
 				node->count++;
 				return -1;
@@ -2808,7 +2808,7 @@ rl_get_name(struct servtab *sep, int ctrl, char *hbuf)
 	socklen_t len = sizeof(struct sockaddr_storage);
 	switch (sep->se_socktype) {
 	case SOCK_STREAM:
-		if (getpeername(ctrl, (struct sockaddr *)&addr, &len)) { 
+		if (getpeername(ctrl, (struct sockaddr *)&addr, &len)) {
 			/* error, log it and skip ip rate limiting */
 			syslog(LOG_ERR,
 				SERV_FMT " failed to get peer name of the "
@@ -2823,7 +2823,7 @@ rl_get_name(struct servtab *sep, int ctrl, char *hbuf)
 			/* scatter/gather and control info is null */
 		};
 		int count;
-		
+
 		/* Peek so service can still get the packet */
 		count = recvmsg(ctrl, &header, MSG_PEEK);
 		if (count == -1) {
@@ -2843,7 +2843,7 @@ rl_get_name(struct servtab *sep, int ctrl, char *hbuf)
 		exit(EXIT_FAILURE);
 	}
 
-	if (getnameinfo((struct sockaddr *)&addr, 
+	if (getnameinfo((struct sockaddr *)&addr,
 		addr.ss_len, hbuf,
 		NI_MAXHOST, NULL, 0, NI_NUMERICHOST)) {
 		/* error, log it and skip ip rate limiting */
@@ -2860,9 +2860,9 @@ rl_drop_connection(struct servtab *sep, int ctrl)
 {
 
 	if (!sep->se_wait && sep->se_socktype == SOCK_STREAM) {
-		/* 
-		 * If the fd isn't a listen socket, 
-		 * close the individual connection too. 
+		/*
+		 * If the fd isn't a listen socket,
+		 * close the individual connection too.
 		 */
 		close(ctrl);
 		return;
@@ -2870,7 +2870,7 @@ rl_drop_connection(struct servtab *sep, int ctrl)
 	if (sep->se_socktype != SOCK_DGRAM) {
 		return;
 	}
-	/* 
+	/*
 	 * Drop the single datagram the service would have
 	 * consumed if nowait. If this is a wait service, this
 	 * will consume 1 datagram, and further received packets
@@ -2880,7 +2880,7 @@ rl_drop_connection(struct servtab *sep, int ctrl)
 		/* All fields null, just consume one message */
 	};
 	int count;
-	
+
 	count = recvmsg(ctrl, &header, 0);
 	if (count == -1) {
 		syslog(LOG_ERR,
@@ -2888,11 +2888,11 @@ rl_drop_connection(struct servtab *sep, int ctrl)
 		    SERV_PARAMS(sep), strerror(errno));
 		exit(EXIT_FAILURE);
 	}
-	DPRINTF(SERV_FMT ": dropped dgram message", 
+	DPRINTF(SERV_FMT ": dropped dgram message",
 	    SERV_PARAMS(sep));
 }
 
-static time_t 
+static time_t
 rl_time()
 {
 	struct timespec time;
@@ -2912,7 +2912,7 @@ rl_add(struct servtab *sep, char* ip)
 	    SERV_FMT ": add ip %s to rate limiting tracking",
 	    SERV_PARAMS(sep), ip);
 
-	/* 
+	/*
 	 * TODO memory could be saved by using a variable length malloc
 	 * with only the length of ip instead of the existing address field
 	 * NI_MAXHOST in length.
@@ -2941,7 +2941,7 @@ rl_add(struct servtab *sep, char* ip)
 static void
 rl_reset(struct servtab *sep, time_t now)
 {
-	DPRINTF(SERV_FMT ": %ji seconds passed; resetting rate limiting ", 
+	DPRINTF(SERV_FMT ": %ji seconds passed; resetting rate limiting ",
 	    SERV_PARAMS(sep), (intmax_t)(now - sep->se_time));
 
 	sep->se_count = 0;
@@ -2967,7 +2967,7 @@ clear_ip_list(struct servtab *sep) {
 static struct se_ip_list_node *
 rl_try_get_ip(struct servtab *sep, char *ip)
 {
-	struct se_ip_list_node *curr; 
+	struct se_ip_list_node *curr;
 
 	DPRINTF(
 	    SERV_FMT ": look up ip %s for ip_max rate limiting",
