@@ -1,4 +1,4 @@
-/* $NetBSD: emit1.c,v 1.51 2021/08/28 12:21:53 rillig Exp $ */
+/* $NetBSD: emit1.c,v 1.52 2021/08/30 19:48:21 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: emit1.c,v 1.51 2021/08/28 12:21:53 rillig Exp $");
+__RCSID("$NetBSD: emit1.c,v 1.52 2021/08/30 19:48:21 rillig Exp $");
 #endif
 
 #include "lint1.h"
@@ -99,7 +99,7 @@ outtype(const type_t *tp)
 	while (tp != NULL) {
 		if ((ts = tp->t_tspec) == INT && tp->t_is_enum)
 			ts = ENUM;
-		/* Available letters: ----E-GH--K-MNO--R--U-W-YZ */
+		/* Available letters: ------GH--K-MNO--R--U-W-YZ */
 		switch (ts) {
 		case BOOL:	t = 'B';	s = '\0';	break;
 		case CHAR:	t = 'C';	s = '\0';	break;
