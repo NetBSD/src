@@ -1,4 +1,4 @@
-/* $NetBSD: fdt_intr.h,v 1.5 2018/11/09 23:35:06 jmcneill Exp $ */
+/* $NetBSD: fdt_intr.h,v 1.6 2021/08/30 23:20:00 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -30,6 +30,7 @@
 #define _ARM_FDT_INTR_H
 
 #define	ARM_IRQ_HANDLER		_C_LABEL(arm_fdt_irq_handler)
+#define	ARM_FIQ_HANDLER		_C_LABEL(arm_fdt_fiq_handler)
 
 #ifndef _LOCORE
 
@@ -41,6 +42,8 @@
 
 void	arm_fdt_irq_set_handler(void (*)(void *));
 void	arm_fdt_irq_handler(void *);
+void	arm_fdt_fiq_set_handler(void (*)(void *));
+void	arm_fdt_fiq_handler(void *);
 
 #include <arm/pic/picvar.h>
 

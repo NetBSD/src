@@ -1,4 +1,4 @@
-/* $NetBSD: arm_fdt.c,v 1.17 2021/08/07 16:18:43 thorpej Exp $ */
+/* $NetBSD: arm_fdt.c,v 1.18 2021/08/30 23:20:00 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared D. McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,7 @@
 #include "opt_modular.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arm_fdt.c,v 1.17 2021/08/07 16:18:43 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arm_fdt.c,v 1.18 2021/08/30 23:20:00 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -48,6 +48,8 @@ __KERNEL_RCSID(0, "$NetBSD: arm_fdt.c,v 1.17 2021/08/07 16:18:43 thorpej Exp $")
 
 #include <arm/fdt/arm_fdtvar.h>
 
+#include <arm/locore.h>
+
 #ifdef EFI_RUNTIME
 #include <arm/arm/efi_runtime.h>
 #include <dev/clock_subr.h>
@@ -57,6 +59,7 @@ static int	arm_fdt_match(device_t, cfdata_t, void *);
 static void	arm_fdt_attach(device_t, device_t, void *);
 
 static void	arm_fdt_irq_default_handler(void *);
+static void	arm_fdt_fiq_default_handler(void *);
 
 #ifdef EFI_RUNTIME
 static void	arm_fdt_efi_init(device_t);
@@ -79,6 +82,7 @@ static TAILQ_HEAD(, arm_fdt_cpu_hatch_cb) arm_fdt_cpu_hatch_cbs =
     TAILQ_HEAD_INITIALIZER(arm_fdt_cpu_hatch_cbs);
 
 static void (*_arm_fdt_irq_handler)(void *) = arm_fdt_irq_default_handler;
+static void (*_arm_fdt_fiq_handler)(void *) = arm_fdt_fiq_default_handler;
 static void (*_arm_fdt_timer_init)(void) = NULL;
 
 int
@@ -95,6 +99,8 @@ arm_fdt_attach(device_t parent, device_t self, void *aux)
 
 	aprint_naive("\n");
 	aprint_normal("\n");
+
+	DISABLE_INTERRUPT();
 
 #ifdef EFI_RUNTIME
 	arm_fdt_efi_init(self);
@@ -174,7 +180,13 @@ arm_fdt_cpu_hatch(struct cpu_info *ci)
 static void
 arm_fdt_irq_default_handler(void *frame)
 {
-	panic("missing interrupt controller driver");
+	panic("No IRQ handler installed");
+}
+
+static void
+arm_fdt_fiq_default_handler(void *frame)
+{
+	panic("No FIQ handler installed");
 }
 
 void
@@ -185,9 +197,22 @@ arm_fdt_irq_set_handler(void (*irq_handler)(void *))
 }
 
 void
+arm_fdt_fiq_set_handler(void (*fiq_handler)(void *))
+{
+	KASSERT(_arm_fdt_fiq_handler == arm_fdt_fiq_default_handler);
+	_arm_fdt_fiq_handler = fiq_handler;
+}
+
+void
 arm_fdt_irq_handler(void *tf)
 {
 	_arm_fdt_irq_handler(tf);
+}
+
+void
+arm_fdt_fiq_handler(void *tf)
+{
+	_arm_fdt_fiq_handler(tf);
 }
 
 void
@@ -232,6 +257,7 @@ cpu_initclocks(void)
 	if (_arm_fdt_timer_init == NULL)
 		panic("cpu_initclocks: no timer registered");
 	_arm_fdt_timer_init();
+	ENABLE_INTERRUPT();
 }
 #endif
 

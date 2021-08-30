@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.h,v 1.17 2020/09/06 17:38:10 ryo Exp $	*/
+/*	$NetBSD: machdep.h,v 1.18 2021/08/30 23:20:00 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -111,7 +111,8 @@ void trap_el0_error(struct trapframe *);
 void trap_el0_32sync(struct trapframe *);
 void trap_el0_32fiq(struct trapframe *);
 void trap_el0_32error(struct trapframe *);
-void interrupt(struct trapframe *);
+void cpu_irq(struct trapframe *);
+void cpu_fiq(struct trapframe *);
 
 /* cpu_onfault */
 int cpu_set_onfault(struct faultbuf *) __returns_twice;

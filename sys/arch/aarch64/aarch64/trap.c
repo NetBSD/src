@@ -1,4 +1,4 @@
-/* $NetBSD: trap.c,v 1.46 2021/04/14 05:43:09 ryo Exp $ */
+/* $NetBSD: trap.c,v 1.47 2021/08/30 23:20:00 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: trap.c,v 1.46 2021/04/14 05:43:09 ryo Exp $");
+__KERNEL_RCSID(1, "$NetBSD: trap.c,v 1.47 2021/08/30 23:20:00 jmcneill Exp $");
 
 #include "opt_arm_intr_impl.h"
 #include "opt_compat_netbsd32.h"
@@ -504,7 +504,7 @@ trap_el0_sync(struct trapframe *tf)
 }
 
 void
-interrupt(struct trapframe *tf)
+cpu_irq(struct trapframe *tf)
 {
 	struct cpu_info * const ci = curcpu();
 
@@ -530,6 +530,33 @@ interrupt(struct trapframe *tf)
 
 	ci->ci_intr_depth++;
 	ARM_IRQ_HANDLER(tf);
+	ci->ci_intr_depth--;
+
+	cpu_dosoftints();
+}
+
+void
+cpu_fiq(struct trapframe *tf)
+{
+	struct cpu_info * const ci = curcpu();
+
+#ifdef STACKCHECKS
+	struct lwp *l = curlwp;
+	void *sp = (void *)reg_sp_read();
+	if (l->l_addr >= sp) {
+		panic("lwp/interrupt stack overflow detected."
+		    " lwp=%p, sp=%p, l_addr=%p", l, sp, l->l_addr);
+	}
+#endif
+
+	/* disable trace */
+	reg_mdscr_el1_write(reg_mdscr_el1_read() & ~MDSCR_SS);
+
+	/* enable traps */
+	daif_enable(DAIF_D|DAIF_A);
+
+	ci->ci_intr_depth++;
+	ARM_FIQ_HANDLER(tf);
 	ci->ci_intr_depth--;
 
 	cpu_dosoftints();
