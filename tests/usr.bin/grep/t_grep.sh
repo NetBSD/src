@@ -1,4 +1,4 @@
-# $NetBSD: t_grep.sh,v 1.5 2021/08/30 23:10:58 rillig Exp $
+# $NetBSD: t_grep.sh,v 1.6 2021/08/30 23:14:14 rillig Exp $
 #
 # Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -112,7 +112,7 @@ word_locale_body()
 atf_test_case word_in_line
 word_in_line_head()
 {
-	atf_set "descr" "Checks word search at the beginning of a line"
+	atf_set "descr" "Checks word search in different locations of a line"
 }
 word_in_line_body()
 {
