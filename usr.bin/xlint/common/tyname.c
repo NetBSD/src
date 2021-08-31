@@ -1,4 +1,4 @@
-/*	$NetBSD: tyname.c,v 1.45 2021/08/28 13:29:26 rillig Exp $	*/
+/*	$NetBSD: tyname.c,v 1.46 2021/08/31 23:49:21 rillig Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tyname.c,v 1.45 2021/08/28 13:29:26 rillig Exp $");
+__RCSID("$NetBSD: tyname.c,v 1.46 2021/08/31 23:49:21 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -303,33 +303,6 @@ type_name(const type_t *tp)
 	buf_add(&buf, tspec_name(t));
 
 	switch (t) {
-	case BOOL:
-	case CHAR:
-	case UCHAR:
-	case SCHAR:
-	case SHORT:
-	case USHORT:
-	case INT:
-	case UINT:
-	case LONG:
-	case ULONG:
-	case QUAD:
-	case UQUAD:
-#ifdef INT128_SIZE
-	case INT128:
-	case UINT128:
-#endif
-	case FLOAT:
-	case DOUBLE:
-	case LDOUBLE:
-	case VOID:
-	case COMPLEX:
-	case FCOMPLEX:
-	case DCOMPLEX:
-	case LCOMPLEX:
-	case SIGNED:
-	case UNSIGN:
-		break;
 	case PTR:
 		buf_add(&buf, " to ");
 		buf_add(&buf, type_name(tp->t_subt));
@@ -348,7 +321,7 @@ type_name(const type_t *tp)
 		type_name_of_function(&buf, tp);
 		break;
 	default:
-		INTERNAL_ERROR("type_name(%d)", t);
+		break;
 	}
 
 	name = intern(buf.data);
