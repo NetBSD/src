@@ -1,4 +1,4 @@
-/*	$NetBSD: inetd.c,v 1.131 2021/08/30 18:21:11 rillig Exp $	*/
+/*	$NetBSD: inetd.c,v 1.132 2021/08/31 19:34:42 rillig Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1991, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)inetd.c	8.4 (Berkeley) 4/13/94";
 #else
-__RCSID("$NetBSD: inetd.c,v 1.131 2021/08/30 18:21:11 rillig Exp $");
+__RCSID("$NetBSD: inetd.c,v 1.132 2021/08/31 19:34:42 rillig Exp $");
 #endif
 #endif /* not lint */
 
@@ -760,7 +760,7 @@ config(void)
 #ifdef IPSEC
 			SWAP(char *, sep->se_policy, cp->se_policy);
 #endif
-			SWAP(int, cp->se_type, sep->se_type);
+			SWAP(service_type, cp->se_type, sep->se_type);
 			SWAP(size_t, cp->se_service_max, sep->se_service_max);
 			SWAP(size_t, cp->se_ip_max, sep->se_ip_max);
 #undef SWAP
