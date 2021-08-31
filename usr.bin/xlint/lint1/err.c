@@ -1,4 +1,4 @@
-/*	$NetBSD: err.c,v 1.141 2021/08/27 20:19:45 rillig Exp $	*/
+/*	$NetBSD: err.c,v 1.142 2021/08/31 17:51:30 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: err.c,v 1.141 2021/08/27 20:19:45 rillig Exp $");
+__RCSID("$NetBSD: err.c,v 1.142 2021/08/31 17:51:30 rillig Exp $");
 #endif
 
 #include <sys/types.h>
@@ -620,16 +620,6 @@ void
 
 	va_start(ap, pos);
 	vmessage_at(msgid, pos, ap);
-	va_end(ap);
-}
-
-void
-(message)(int msgid, ...)
-{
-	va_list	ap;
-
-	va_start(ap, msgid);
-	vmessage_at(msgid, &curr_pos, ap);
 	va_end(ap);
 }
 

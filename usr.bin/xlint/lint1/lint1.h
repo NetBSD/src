@@ -1,4 +1,4 @@
-/* $NetBSD: lint1.h,v 1.127 2021/08/28 12:41:03 rillig Exp $ */
+/* $NetBSD: lint1.h,v 1.128 2021/08/31 17:51:30 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -518,7 +518,6 @@ check_printf(const char *fmt, ...)
 
 #  define error(msgid, args...) wrap_check_printf(error, msgid, ##args)
 #  define warning(msgid, args...) wrap_check_printf(warning, msgid, ##args)
-#  define message(msgid, args...) wrap_check_printf(message, msgid, ##args)
 #  define gnuism(msgid, args...) wrap_check_printf(gnuism, msgid, ##args)
 #  define c99ism(msgid, args...) wrap_check_printf(c99ism, msgid, ##args)
 #  define c11ism(msgid, args...) wrap_check_printf(c11ism, msgid, ##args)
