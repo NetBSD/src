@@ -1,4 +1,4 @@
-/*	$NetBSD: mem1.c,v 1.51 2021/08/28 13:29:26 rillig Exp $	*/
+/*	$NetBSD: mem1.c,v 1.52 2021/08/31 17:22:25 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,14 +37,12 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: mem1.c,v 1.51 2021/08/28 13:29:26 rillig Exp $");
+__RCSID("$NetBSD: mem1.c,v 1.52 2021/08/31 17:22:25 rillig Exp $");
 #endif
 
-#include <sys/types.h>
 #include <sys/param.h>
 #include <stdlib.h>
 #include <string.h>
-#include <unistd.h>
 
 #include "lint1.h"
 
@@ -286,7 +284,7 @@ void
 initmem(void)
 {
 
-	mblklen = MBLKSIZ - MBLKSIZ % (unsigned int)getpagesize();
+	mblklen = mem_block_size();
 	mblks = xcalloc(nmblks = ML_INC, sizeof(*mblks));
 }
 
