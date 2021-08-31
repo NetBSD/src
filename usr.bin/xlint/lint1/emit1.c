@@ -1,4 +1,4 @@
-/* $NetBSD: emit1.c,v 1.52 2021/08/30 19:48:21 rillig Exp $ */
+/* $NetBSD: emit1.c,v 1.53 2021/08/31 23:10:52 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: emit1.c,v 1.52 2021/08/30 19:48:21 rillig Exp $");
+__RCSID("$NetBSD: emit1.c,v 1.53 2021/08/31 23:10:52 rillig Exp $");
 #endif
 
 #include "lint1.h"
@@ -92,52 +92,30 @@ static	void	outfstrg(strg_t *);
 void
 outtype(const type_t *tp)
 {
-	int	t, s, na;
+	/* Available letters: ------GH--K-MNO--R--U-W-YZ */
+#ifdef INT128_SIZE
+	static const char tt[NTSPEC] = "???BCCCSSIILLQQJJDDDVTTTPAF?XXX";
+	static const char ss[NTSPEC] = "???  su u u u u us l sue   ?s l";
+#else
+	static const char tt[NTSPEC] = "???BCCCSSIILLQQDDDVTTTPAF?XXX";
+	static const char ss[NTSPEC] = "???  su u u u us l sue   ?s l";
+#endif
+	char	t, s;
+	int	na;
 	sym_t	*arg;
 	tspec_t	ts;
 
 	while (tp != NULL) {
 		if ((ts = tp->t_tspec) == INT && tp->t_is_enum)
 			ts = ENUM;
-		/* Available letters: ------GH--K-MNO--R--U-W-YZ */
-		switch (ts) {
-		case BOOL:	t = 'B';	s = '\0';	break;
-		case CHAR:	t = 'C';	s = '\0';	break;
-		case SCHAR:	t = 'C';	s = 's';	break;
-		case UCHAR:	t = 'C';	s = 'u';	break;
-		case SHORT:	t = 'S';	s = '\0';	break;
-		case USHORT:	t = 'S';	s = 'u';	break;
-		case INT:	t = 'I';	s = '\0';	break;
-		case UINT:	t = 'I';	s = 'u';	break;
-		case LONG:	t = 'L';	s = '\0';	break;
-		case ULONG:	t = 'L';	s = 'u';	break;
-		case QUAD:	t = 'Q';	s = '\0';	break;
-		case UQUAD:	t = 'Q';	s = 'u';	break;
-#ifdef INT128_SIZE
-		case INT128:	t = 'J';	s = '\0';	break;
-		case UINT128:	t = 'J';	s = 'u';	break;
-#endif
-		case FLOAT:	t = 'D';	s = 's';	break;
-		case DOUBLE:	t = 'D';	s = '\0';	break;
-		case LDOUBLE:	t = 'D';	s = 'l';	break;
-		case VOID:	t = 'V';	s = '\0';	break;
-		case STRUCT:	t = 'T';	s = 's';	break;
-		case UNION:	t = 'T';	s = 'u';	break;
-		case ENUM:	t = 'T';	s = 'e';	break;
-		case PTR:	t = 'P';	s = '\0';	break;
-		case ARRAY:	t = 'A';	s = '\0';	break;
-		case FUNC:	t = 'F';	s = '\0';	break;
-		case FCOMPLEX:	t = 'X';	s = 's';	break;
-		case DCOMPLEX:	t = 'X';	s = '\0';	break;
-		case LCOMPLEX:	t = 'X';	s = 'l';	break;
-		default:
-			lint_assert(/*CONSTCOND*/false);
-		}
+		t = tt[ts];
+		s = ss[ts];
+		lint_assert(t != '?' && t != '?');
 		if (tp->t_const)
 			outchar('c');
 		if (tp->t_volatile)
 			outchar('v');
-		if (s != '\0')
+		if (s != ' ')
 			outchar(s);
 		outchar(t);
 		if (ts == ARRAY) {
