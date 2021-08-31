@@ -1,4 +1,4 @@
-/*	$NetBSD: externs1.h,v 1.137 2021/08/29 15:49:04 rillig Exp $	*/
+/*	$NetBSD: externs1.h,v 1.138 2021/08/31 17:51:30 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -152,7 +152,6 @@ extern	void	warning_at(int, const pos_t *, ...);
 extern	void	message_at(int, const pos_t *, ...);
 extern	void	error(int, ...);
 extern	void	warning(int, ...);
-extern	void	message(int, ...);
 extern	void	gnuism(int, ...);
 extern	void	c99ism(int, ...);
 extern	void	c11ism(int, ...);
