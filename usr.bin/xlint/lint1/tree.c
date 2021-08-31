@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.363 2021/08/29 17:01:27 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.364 2021/08/31 19:17:45 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.363 2021/08/29 17:01:27 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.364 2021/08/31 19:17:45 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -1975,19 +1975,29 @@ convert(op_t op, int arg, type_t *tp, tnode_t *tn)
 
 /*
  * The types differ in sign or base type (char, short, int, long, long long,
- * float, double, long double).
+ * int128_t, float, double, long double).
  *
  * If they differ only in sign and the argument is representable in both
  * types, print no warning.
  */
-static void
-check_prototype_conversion_integer(const tnode_t *tn, const tnode_t *ptn,
-				   const type_t *tp, tspec_t nt, tspec_t ot,
-				   int arg)
+static bool
+should_warn_about_prototype_conversion(
+    int arg,
+    const type_t *tp, tspec_t nt,
+    const tnode_t *tn, tspec_t ot,
+    const tnode_t *ptn)
 {
 
+	if (is_floating(nt) != is_floating(ot) ||
+	    portable_size_in_bits(nt) != portable_size_in_bits(ot)) {
+		/* representation and/or width change */
+		if (!is_integer(ot))
+			return true;
+		return portable_size_in_bits(ot) > portable_size_in_bits(INT);
+	}
+
 	if (!hflag)
-		return;
+		return false;
 
 	/*
 	 * If the types differ only in sign and the argument has the same
@@ -1996,11 +2006,9 @@ check_prototype_conversion_integer(const tnode_t *tn, const tnode_t *ptn,
 	if (ptn->tn_op == CON && is_integer(nt) &&
 	    signed_type(nt) == signed_type(ot) &&
 	    !msb(ptn->tn_val->v_quad, ot))
-		return;
+		return false;
 
-	/* argument #%d is converted from '%s' to '%s' ... */
-	warning(259,
-	    arg, type_name(tn->tn_type), type_name(tp));
+	return true;
 }
 
 /*
@@ -2037,17 +2045,11 @@ check_prototype_conversion(int arg, tspec_t nt, tspec_t ot, type_t *tp,
 	if (nt == ot || (nt == ENUM && ot == INT))
 		return;
 
-	if (is_floating(nt) != is_floating(ot) ||
-	    portable_size_in_bits(nt) != portable_size_in_bits(ot)) {
-		/* representation and/or width change */
-		if (!is_integer(ot) ||
-		    portable_size_in_bits(ot) > portable_size_in_bits(INT)) {
-			/* argument #%d is converted from '%s' to '%s' ... */
-			warning(259,
-			    arg, type_name(tn->tn_type), type_name(tp));
-		}
-	} else
-		check_prototype_conversion_integer(tn, ptn, tp, nt, ot, arg);
+	if (should_warn_about_prototype_conversion(
+	    arg, tp, nt, tn, ot, ptn)) {
+		/* argument #%d is converted from '%s' to '%s' ... */
+		warning(259, arg, type_name(tn->tn_type), type_name(tp));
+	}
 }
 
 /*
