@@ -1,4 +1,4 @@
-.\"	$NetBSD: inetd.8,v 1.63 2021/08/30 16:10:34 wiz Exp $
+.\"	$NetBSD: inetd.8,v 1.64 2021/08/31 11:16:00 wiz Exp $
 .\"
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -545,8 +545,9 @@ By convention, the first argument should be the name of the program.
 .It Sy ipsec
 An IPsec policy string.
 Defaults to the global default setting.
-If specified without a value (i.e. "ipsec=,"), IPsec will be disabled
-for this service.
+If specified without a value (i.e.,
+.Dq ipsec=, ) ,
+IPsec will be disabled for this service.
 See the
 .Sx Directives
 section for details.
