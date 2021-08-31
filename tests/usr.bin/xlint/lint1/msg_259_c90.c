@@ -1,7 +1,12 @@
-/*	$NetBSD: msg_259_c90.c,v 1.1 2021/08/31 18:59:26 rillig Exp $	*/
+/*	$NetBSD: msg_259_c90.c,v 1.2 2021/08/31 19:26:23 rillig Exp $	*/
 # 3 "msg_259_c90.c"
 
 /* Test for message: argument #%d is converted from '%s' to '%s' due to prototype [259] */
+
+/*
+ * See also msg_297, but that requires the flags -a -p -P, which are not
+ * enabled in the default NetBSD build.
+ */
 
 /* lint1-only-if: lp64 */
 /* XXX: The flag '-s' suppresses all warnings.  Why? */
