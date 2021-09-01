@@ -1,4 +1,4 @@
-/*	$NetBSD: test_server.c,v 1.1 2021/08/29 09:54:18 christos Exp $	*/
+/*	$NetBSD: test_server.c,v 1.2 2021/09/01 06:12:50 christos Exp $	*/
 
 /*-
  * Copyright (c) 2021 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: test_server.c,v 1.1 2021/08/29 09:54:18 christos Exp $");
+__RCSID("$NetBSD: test_server.c,v 1.2 2021/09/01 06:12:50 christos Exp $");
 
 #include <sys/socket.h>
 #include <unistd.h>
@@ -91,18 +91,18 @@ main(int argc, char **argv)
 }
 
 static void
-stream_nowait_service()
+stream_nowait_service(void)
 {
 	ssize_t count;
 	char buffer[10];
 	CHECK(count = recv(0, buffer, sizeof(buffer), 0));
 	syslog(LOG_WARNING, "Received stream/nowait message \"%.*s\"\n",
-	    count, buffer);
-	CHECK(send(1, buffer, count, 0));
+	    (int)count, buffer);
+	CHECK(send(1, buffer, (size_t)count, 0));
 }
 
 static void
-stream_wait_service()
+stream_wait_service(void)
 {
 	struct sockaddr_storage addr;
 	ssize_t count;
@@ -113,18 +113,17 @@ stream_wait_service()
 	CHECK(fd = accept(0, (struct sockaddr*)&addr, &addr_len));
 	CHECK(count = recv(fd, buffer, sizeof(buffer), 0));
 	syslog(LOG_WARNING, "Received stream/wait message \"%.*s\"\n",
-	    count, buffer);
-	CHECK(send(fd, buffer, count, 0));
+	    (int)count, buffer);
+	CHECK(send(fd, buffer, (size_t)count, 0));
 	CHECK(shutdown(fd, SHUT_RDWR));
 	CHECK(close(fd));
 }
 
 static void
-dgram_wait_service()
+dgram_wait_service(void)
 {
 	char buffer[256];
 	char name[NI_MAXHOST];
-	socklen_t source_size;
 	struct sockaddr_storage addr;
 
 	struct iovec store = {
@@ -138,14 +137,13 @@ dgram_wait_service()
 		.msg_iovlen = 1
 		/* scatter/gather and control info is null */
 	};
-	int count;
+	ssize_t count;
 
 	/* Peek so service can still get the packet */
 	CHECK(count = recvmsg(0, &header, 0));
 
-	CHECK(sendto(1, buffer, count, 0, 
-	    (struct sockaddr*)(&addr), 
-	    addr.ss_len));
+	CHECK(sendto(1, buffer, (size_t)count, 0, 
+	    (struct sockaddr*)(&addr), addr.ss_len));
 	
 	int error = getnameinfo((struct sockaddr*)&addr, 
 	    addr.ss_len, name, NI_MAXHOST,
@@ -156,5 +154,5 @@ dgram_wait_service()
 		exit(EXIT_FAILURE);
 	}
 	syslog(LOG_WARNING, "Received dgram/wait message \"%.*s\" from %s\n", 
-	    count, buffer, name);
+	    (int)count, buffer, name);
 }

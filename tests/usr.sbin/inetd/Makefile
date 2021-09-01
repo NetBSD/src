@@ -1,5 +1,6 @@
-# $NetBSD: Makefile,v 1.1 2021/08/29 09:54:18 christos Exp $
+# $NetBSD: Makefile,v 1.2 2021/09/01 06:12:50 christos Exp $
 
+WARNS=6
 .include <bsd.own.mk>
 
 TESTSDIR=${TESTSBASE}/usr.sbin/inetd

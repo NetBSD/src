@@ -1,4 +1,4 @@
-/*	$NetBSD: t_inetd.c,v 1.1 2021/08/29 09:54:18 christos Exp $	*/
+/*	$NetBSD: t_inetd.c,v 1.2 2021/09/01 06:12:50 christos Exp $	*/
 
 /*-
  * Copyright (c) 2021 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_inetd.c,v 1.1 2021/08/29 09:54:18 christos Exp $");
+__RCSID("$NetBSD: t_inetd.c,v 1.2 2021/09/01 06:12:50 christos Exp $");
 
 #include <atf-c.h>
 #include <spawn.h>
@@ -51,7 +51,7 @@ __RCSID("$NetBSD: t_inetd.c,v 1.1 2021/08/29 09:54:18 christos Exp $");
 #define TCP 6
 #define UDP 17
 
-static pid_t	run(const char *, char **);
+static pid_t	run(const char *, char *const *);
 static char	*concat(const char *restrict, const char *restrict);
 static void	waitfor(pid_t, const char *);
 static bool	run_udp_client(const char *);
@@ -83,15 +83,15 @@ ATF_TC_BODY(test_ratelimit, tc)
 	);
 	
 	/* Run inetd in debug mode using specified config file */
-	proc = run("inetd", (char*[]) {
-	    "inetd", "-d",
+	proc = run("inetd", (char* const []) {
+	    __UNCONST("inetd"), __UNCONST("-d"),
 	    concat(atf_tc_get_config_var(tc, "srcdir"),
 	    "/inetd_ratelimit.conf"),
 	    NULL
 	});
 
 	/* Wait for inetd to load services */
-	CHECK_ERROR(sleep(1));
+	sleep(1);
 
 	/*
 	 * TODO test dgram/nowait? Specified in manpage but doesn't seem to
@@ -151,6 +151,8 @@ ATF_TC_BODY(test_ratelimit, tc)
 ATF_TP_ADD_TCS(tp)
 {
 	ATF_TP_ADD_TC(tp, test_ratelimit);
+
+	return atf_no_error();
 }
 
 /* Return true if successfully received message, false if timeout */
@@ -177,10 +179,6 @@ run_udp_client(const char *port)
 		.msg_iovlen = 1
 	};
 
-	struct mmsghdr msglist = {
-		.msg_hdr = &msg
-	};
-	
 	ssize_t count = recvmsg(udp, &msg, 0);
 	if (count == -1) {
 		if (errno == EAGAIN) {
@@ -254,7 +252,7 @@ create_socket(const char *address, const char *port,
 	ATF_REQUIRE_MSG(res->ai_next == NULL, "Ambiguous create_socket args");
 	CHECK_ERROR(fd = socket(res->ai_family, 
 	    res->ai_socktype, res->ai_protocol));
-	struct timeval timeout = { timeout_sec };
+	struct timeval timeout = { timeout_sec, 0 };
 	CHECK_ERROR(setsockopt(fd, SOL_SOCKET, SO_RCVTIMEO, &timeout, 
 	    sizeof(timeout)));
 	memcpy(dst, res->ai_addr, res->ai_addrlen);
@@ -264,7 +262,7 @@ create_socket(const char *address, const char *port,
 
 /* Run program with args */
 static pid_t
-run(const char *prog, char **args)
+run(const char *prog, char *const *args)
 {
 	pid_t proc;
 	extern char **environ;
@@ -278,7 +276,9 @@ static void
 waitfor(pid_t pid, const char *taskname)
 {
 	int status;
-	CHECK_ERROR(waitpid(pid, &status, WALLSIG) == pid);
+	int rpid = waitpid(pid, &status, WALLSIG);
+	ATF_REQUIRE_MSG(rpid == pid, "wait %d != %d %s",
+	    rpid, pid, strerror(errno));
 
 	ATF_REQUIRE_EQ_MSG(WEXITSTATUS(status), EXIT_SUCCESS, 
 	    "%s failed with "
