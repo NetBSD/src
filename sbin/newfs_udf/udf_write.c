@@ -1,4 +1,4 @@
-/* $NetBSD: udf_write.c,v 1.10 2021/08/22 20:18:39 andvar Exp $ */
+/* $NetBSD: udf_write.c,v 1.11 2021/09/01 14:17:46 andvar Exp $ */
 
 /*
  * Copyright (c) 2006, 2008, 2013 Reinoud Zandijk
@@ -30,7 +30,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: udf_write.c,v 1.10 2021/08/22 20:18:39 andvar Exp $");
+__RCSID("$NetBSD: udf_write.c,v 1.11 2021/09/01 14:17:46 andvar Exp $");
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -551,7 +551,7 @@ udf_do_newfs_prefix(void)
 	/*
 	 * Start with wipeout of VRS1 upto start of partition. This allows
 	 * formatting for sequentials with the track reservation and it 
-	 * cleans old rubbish on rewritables. For sequentuals without the
+	 * cleans old rubbish on rewritables. For sequentials without the
 	 * track reservation all is wiped from track start.
 	 */
 	if ((zero_dscr = calloc(1, context.sector_size)) == NULL)
@@ -580,7 +580,7 @@ udf_do_newfs_prefix(void)
 	 * terminator
 	 */
 
-	/* start of volume recognision sequence building */
+	/* start of volume recognition sequence building */
 	context.vds_seq = 0;
 
 	/* Create primary volume descriptor */
