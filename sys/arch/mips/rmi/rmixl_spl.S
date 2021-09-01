@@ -1,4 +1,4 @@
-/*	$NetBSD: rmixl_spl.S,v 1.6 2020/12/01 08:39:39 skrll Exp $	*/
+/*	$NetBSD: rmixl_spl.S,v 1.7 2021/09/01 14:17:46 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2009, 2010 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
 #include <mips/asm.h>
 #include <mips/cpuregs.h>
 
-RCSID("$NetBSD: rmixl_spl.S,v 1.6 2020/12/01 08:39:39 skrll Exp $");
+RCSID("$NetBSD: rmixl_spl.S,v 1.7 2021/09/01 14:17:46 andvar Exp $");
 
 #include "assym.h"
 
@@ -284,7 +284,7 @@ STATIC_LEAF(_splsw_splintr)
 	 * - if clock intr is requested, set MIPS_INT_MASK_5
 	 * - if other HW intr is requested, set MIPS_INT_MASK_1 as summary bit
 	 *   the RMI evbmips_iointr function will sort through
-	 *   individial EIRR requests
+	 *   individual EIRR requests
 	 */
 	li	t2, RMIXL_INT_MASK_5		# load RMIXL_INT_MASK_5
 	and	t1, v1, t2			# save count/compare intr request value
