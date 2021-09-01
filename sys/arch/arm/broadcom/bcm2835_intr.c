@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm2835_intr.c,v 1.39 2021/09/01 03:08:08 rin Exp $	*/
+/*	$NetBSD: bcm2835_intr.c,v 1.40 2021/09/01 22:11:35 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2012, 2015, 2019 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm2835_intr.c,v 1.39 2021/09/01 03:08:08 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm2835_intr.c,v 1.40 2021/09/01 22:11:35 jmcneill Exp $");
 
 #define _INTR_PRIVATE
 
@@ -842,7 +842,7 @@ bcm2836mp_send_ipi(struct pic_softc *pic, const kcpuset_t *kcp, u_long ipi)
 int
 bcm2836mp_ipi_handler(void *priv)
 {
-	const struct cpu_info *ci = curcpu();
+	const struct cpu_info *ci = priv;
 	const cpuid_t cpuid = ci->ci_core_id;
 	uint32_t ipimask, bit;
 
@@ -898,7 +898,7 @@ bcm2836mp_intr_init(void *priv, struct cpu_info *ci)
 
 #if defined(MULTIPROCESSOR)
 	intr_establish(BCM2836_INT_MAILBOX0_CPUN(cpuid), IPL_HIGH,
-	    IST_LEVEL | IST_MPSAFE, bcm2836mp_ipi_handler, NULL);
+	    IST_LEVEL | IST_MPSAFE, bcm2836mp_ipi_handler, ci);
 
 	struct bcm2836mp_interrupt *bip;
 	TAILQ_FOREACH(bip, &bcm2836mp_interrupts, bi_next) {
