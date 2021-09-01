@@ -1,4 +1,4 @@
-/* $NetBSD: apple_platform.c,v 1.1 2021/08/30 23:26:26 jmcneill Exp $ */
+/* $NetBSD: apple_platform.c,v 1.2 2021/09/01 23:05:03 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2021 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: apple_platform.c,v 1.1 2021/08/30 23:26:26 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: apple_platform.c,v 1.2 2021/09/01 23:05:03 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -57,6 +57,18 @@ __KERNEL_RCSID(0, "$NetBSD: apple_platform.c,v 1.1 2021/08/30 23:26:26 jmcneill 
 #include <libfdt.h>
 
 #include <arch/evbarm/fdt/platform.h>
+
+/*
+ * Faux DMIPS/MHz values for known CPU types. The values themselves are
+ * unimportant except as relative comparisons between different CPUs on
+ * the same system.
+ */
+static const struct device_compatible_entry cpu_capacity_compat_data[] = {
+	/* Apple M1 */
+	{ .compat = "apple,icestorm",	.value = 0 },	/* efficiency core */
+	{ .compat = "apple,firestorm",	.value = 1 },	/* performance core */
+	DEVICE_COMPAT_EOL
+};
 
 extern struct bus_space arm_generic_bs_tag;
 
@@ -183,6 +195,19 @@ apple_platform_device_register(device_t self, void *aux)
 	prop_dictionary_t prop = device_properties(self);
 	uint8_t eaddr[ETHER_ADDR_LEN];
 	int len;
+
+	if (device_is_a(self, "cpu")) {
+		struct fdt_attach_args * const faa = aux;
+		const int phandle = faa->faa_phandle;
+		const struct device_compatible_entry *dce;
+
+		dce = of_compatible_lookup(phandle, cpu_capacity_compat_data);
+		if (dce != NULL) {
+			prop_dictionary_set_uint32(prop, "capacity_dmips_mhz",
+			    dce->value);
+		}
+		return;
+	}
 
 	if (device_is_a(self, "bge") &&
 	    device_is_a(device_parent(self), "pci")) {
