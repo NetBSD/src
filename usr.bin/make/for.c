@@ -1,4 +1,4 @@
-/*	$NetBSD: for.c,v 1.144 2021/06/25 16:10:07 rillig Exp $	*/
+/*	$NetBSD: for.c,v 1.145 2021/09/01 23:07:41 rillig Exp $	*/
 
 /*
  * Copyright (c) 1992, The Regents of the University of California.
@@ -58,7 +58,7 @@
 #include "make.h"
 
 /*	"@(#)for.c	8.1 (Berkeley) 6/6/93"	*/
-MAKE_RCSID("$NetBSD: for.c,v 1.144 2021/06/25 16:10:07 rillig Exp $");
+MAKE_RCSID("$NetBSD: for.c,v 1.145 2021/09/01 23:07:41 rillig Exp $");
 
 
 /* One of the variables to the left of the "in" in a .for loop. */
@@ -72,10 +72,6 @@ typedef struct ForLoop {
 	Vector /* of ForVar */ vars; /* Iteration variables */
 	Words items;		/* Substitution items */
 	Buffer curBody;		/* Expanded body of the current iteration */
-	/* Is any of the names 1 character long? If so, when the variable
-	 * values are substituted, the parser must handle $V expressions as
-	 * well, not only ${V} and $(V). */
-	bool short_var;
 	unsigned int sub_next;	/* Where to continue iterating */
 } ForLoop;
 
@@ -94,7 +90,6 @@ ForLoop_New(void)
 	f->items.words = NULL;
 	f->items.freeIt = NULL;
 	Buf_Init(&f->curBody);
-	f->short_var = false;
 	f->sub_next = 0;
 
 	return f;
@@ -150,8 +145,6 @@ ForLoop_ParseVarnames(ForLoop *f, const char **pp)
 			p += 2;
 			break;
 		}
-		if (len == 1)
-			f->short_var = true;
 
 		ForLoop_AddVar(f, p, len);
 		p += len;
@@ -422,7 +415,7 @@ ForLoop_SubstVarShort(ForLoop *f, const char *p, const char **inout_mark)
 	size_t i;
 
 	/* Skip $$ and stupid ones. */
-	if (!f->short_var || strchr("}):$", ch) != NULL)
+	if (strchr("}):$", ch) != NULL)
 		return;
 
 	vars = Vector_Get(&f->vars, 0);
