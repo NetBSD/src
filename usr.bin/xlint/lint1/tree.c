@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.364 2021/08/31 19:17:45 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.365 2021/09/01 06:48:24 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.364 2021/08/31 19:17:45 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.365 2021/09/01 06:48:24 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -115,8 +115,8 @@ derive_type(type_t *tp, tspec_t t)
 }
 
 /*
- * Build 'pointer to tp', 'array of tp' or 'function returning tp'.  The
- * memory is freed at the end of the current expression.
+ * Derive 'pointer to tp' or 'function returning tp'.
+ * The memory is freed at the end of the current expression.
  */
 type_t *
 expr_derive_type(type_t *tp, tspec_t t)
@@ -274,14 +274,19 @@ build_string(strg_t *strg)
 {
 	size_t	len;
 	tnode_t	*n;
+	type_t *tp;
 
 	len = strg->st_len;
 
 	n = expr_zalloc_tnode();
 
+	tp = expr_zalloc(sizeof(*tp));
+	tp->t_tspec = ARRAY;
+	tp->t_subt = gettyp(strg->st_tspec);
+	tp->t_dim = len + 1;
+
 	n->tn_op = STRING;
-	n->tn_type = expr_derive_type(gettyp(strg->st_tspec), ARRAY);
-	n->tn_type->t_dim = len + 1;
+	n->tn_type = tp;
 	n->tn_lvalue = true;
 
 	n->tn_string = expr_zalloc(sizeof(*n->tn_string));
