@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm2835_intr.c,v 1.38 2021/03/08 14:22:42 mlelstv Exp $	*/
+/*	$NetBSD: bcm2835_intr.c,v 1.39 2021/09/01 03:08:08 rin Exp $	*/
 
 /*-
  * Copyright (c) 2012, 2015, 2019 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm2835_intr.c,v 1.38 2021/03/08 14:22:42 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm2835_intr.c,v 1.39 2021/09/01 03:08:08 rin Exp $");
 
 #define _INTR_PRIVATE
 
@@ -358,6 +358,34 @@ bcm2835_icu_attach(device_t parent, device_t self, void *aux)
 		    BCM2836_LOCAL_PRESCALER, 0x80000000);
 
 		ifuncs = &bcm2836mpicu_fdt_funcs;
+
+		/*
+		 * XXX
+		 * Register all PICs here in order to avoid pic_add() from
+		 * cpu_hatch(). See port-arm/56264.
+		 */
+		CPU_INFO_ITERATOR cii;
+		struct cpu_info *ci;
+		for (CPU_INFO_FOREACH(cii, ci)) {
+			const cpuid_t cpuid = ci->ci_core_id;
+			struct pic_softc * const pic = &bcm2836mp_pic[cpuid];
+
+			KASSERT(cpuid < BCM2836_NCPUS);
+
+#if defined(MULTIPROCESSOR)
+			pic->pic_cpus = ci->ci_kcpuset;
+			/*
+			 * Append "#n" to avoid duplication of .pic_name[]
+			 * It should be a unique id for intr_get_source()
+			 */
+			char suffix[sizeof("#00000")];
+			snprintf(suffix, sizeof(suffix), "#%lu", cpuid);
+			strlcat(pic->pic_name, suffix, sizeof(pic->pic_name));
+#endif
+
+			bcm2836mp_int_base[cpuid] =
+			    pic_add(pic, PIC_IRQBASE_ALLOC);
+		}
 
 		bcm2836mp_intr_init(self, curcpu());
 		arm_fdt_cpu_hatch_register(self, bcm2836mp_intr_init);
@@ -865,22 +893,8 @@ static void
 bcm2836mp_intr_init(void *priv, struct cpu_info *ci)
 {
 	const cpuid_t cpuid = ci->ci_core_id;
-	struct pic_softc * const pic = &bcm2836mp_pic[cpuid];
 
 	KASSERT(cpuid < BCM2836_NCPUS);
-
-#if defined(MULTIPROCESSOR)
-	pic->pic_cpus = ci->ci_kcpuset;
-
-	/*
-	 * Append "#n" to avoid duplication of .pic_name[]
-	 * It should be a unique id for intr_get_source()
-	 */
-	char suffix[sizeof("#00000")];
-	snprintf(suffix, sizeof(suffix), "#%lu", cpuid);
-	strlcat(pic->pic_name, suffix, sizeof(pic->pic_name));
-#endif
-	bcm2836mp_int_base[cpuid] = pic_add(pic, PIC_IRQBASE_ALLOC);
 
 #if defined(MULTIPROCESSOR)
 	intr_establish(BCM2836_INT_MAILBOX0_CPUN(cpuid), IPL_HIGH,
