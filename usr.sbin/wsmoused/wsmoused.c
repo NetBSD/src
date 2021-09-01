@@ -1,4 +1,4 @@
-/* $NetBSD: wsmoused.c,v 1.26 2011/05/31 03:37:02 christos Exp $ */
+/* $NetBSD: wsmoused.c,v 1.27 2021/09/01 06:10:06 mlelstv Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 2002, 2003\
  The NetBSD Foundation, Inc.  All rights reserved.");
-__RCSID("$NetBSD: wsmoused.c,v 1.26 2011/05/31 03:37:02 christos Exp $");
+__RCSID("$NetBSD: wsmoused.c,v 1.27 2021/09/01 06:10:06 mlelstv Exp $");
 #endif /* not lint */
 
 #include <sys/ioctl.h>
@@ -71,7 +71,7 @@ static int Foreground = 1;
 static int X_Console = -1;
 static int X_Console_Delay = 5;
 
-#ifdef WSMOUSED_SELECTION_MODE
+#ifdef WSMOUSED_ACTION_MODE
 extern struct mode_bootstrap Action_Mode;
 #endif
 #ifdef WSMOUSED_SELECTION_MODE
