@@ -1,5 +1,5 @@
-/*	$NetBSD: clientloop.c,v 1.32 2021/04/19 14:40:15 christos Exp $	*/
-/* $OpenBSD: clientloop.c,v 1.359 2021/03/19 02:22:34 djm Exp $ */
+/*	$NetBSD: clientloop.c,v 1.33 2021/09/02 11:26:17 christos Exp $	*/
+/* $OpenBSD: clientloop.c,v 1.369 2021/07/23 04:04:52 djm Exp $ */
 
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -62,7 +62,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: clientloop.c,v 1.32 2021/04/19 14:40:15 christos Exp $");
+__RCSID("$NetBSD: clientloop.c,v 1.33 2021/09/02 11:26:17 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/ioctl.h>
@@ -112,15 +112,6 @@ __RCSID("$NetBSD: clientloop.c,v 1.32 2021/04/19 14:40:15 christos Exp $");
 
 /* import options */
 extern Options options;
-
-/* Flag indicating that stdin should be redirected from /dev/null. */
-extern int stdin_null_flag;
-
-/* Flag indicating that no shell has been requested */
-extern int no_shell_flag;
-
-/* Flag indicating that ssh should daemonise after authentication is complete */
-extern int fork_after_authentication_flag;
 
 /* Control socket */
 extern int muxserver_sock; /* XXX use mux_client_cleanup() instead */
@@ -569,7 +560,7 @@ client_wait_until_can_do_something(struct ssh *ssh,
 			fatal_fr(r, "sshbuf_putf");
 		quit_pending = 1;
 	} else if (options.server_alive_interval > 0 && !FD_ISSET(connection_in,
-	     *readsetp) && monotime() >= server_alive_time)
+	    *readsetp) && monotime() >= server_alive_time)
 		/*
 		 * ServerAlive check is needed. We can't rely on the select
 		 * timing out since traffic on the client side such as port
@@ -693,6 +684,8 @@ client_status_confirm(struct ssh *ssh, int type, Channel *c, void *ctx)
 		 * their stderr.
 		 */
 		if (tochan) {
+			debug3_f("channel %d: mux request: %s", c->self,
+			    cr->request_type);
 			if ((r = sshbuf_put(c->extended, errmsg,
 			    strlen(errmsg))) != 0)
 				fatal_fr(r, "sshbuf_put");
@@ -1243,7 +1236,7 @@ client_loop(struct ssh *ssh, int have_pty, int escape_char_arg,
 			fatal_f("pledge(): %s", strerror(errno));
 
 	} else if (!option_clear_or_none(options.proxy_command) ||
-	    fork_after_authentication_flag) {
+	    options.fork_after_authentication) {
 		debug("pledge: proc");
 		if (pledge("stdio cpath unix inet dns proc tty", NULL) == -1)
 			fatal_f("pledge(): %s", strerror(errno));
@@ -1359,6 +1352,10 @@ client_loop(struct ssh *ssh, int have_pty, int escape_char_arg,
 		if (quit_pending)
 			break;
 
+		/* A timeout may have triggered rekeying */
+		if ((r = ssh_packet_check_rekey(ssh)) != 0)
+			fatal_fr(r, "cannot start rekeying");
+
 		/*
 		 * Send as much buffered packet data as possible to the
 		 * sender.
@@ -1403,20 +1400,12 @@ client_loop(struct ssh *ssh, int have_pty, int escape_char_arg,
 	if (have_pty)
 		leave_raw_mode(options.request_tty == REQUEST_TTY_FORCE);
 
-	/* restore blocking io */
-	if (!isatty(fileno(stdin)))
-		unset_nonblock(fileno(stdin));
-	if (!isatty(fileno(stdout)))
-		unset_nonblock(fileno(stdout));
-	if (!isatty(fileno(stderr)))
-		unset_nonblock(fileno(stderr));
-
 	/*
 	 * If there was no shell or command requested, there will be no remote
 	 * exit status to be returned.  In that case, clear error code if the
 	 * connection was deliberately terminated at this end.
 	 */
-	if (no_shell_flag && received_signal == SIGTERM) {
+	if (options.session_type == SESSION_TYPE_NONE && received_signal == SIGTERM) {
 		received_signal = 0;
 		exit_status = 0;
 	}
@@ -1968,7 +1957,7 @@ hostkeys_check_old(struct hostkey_foreach_line *l, void *_ctx)
 		if (!sshkey_equal(l->key, ctx->old_keys[i]))
 			continue;
 		debug3_f("found deprecated %s key at %s:%ld as %s",
-		    sshkey_ssh_name(ctx->keys[i]), l->path, l->linenum,
+		    sshkey_ssh_name(ctx->old_keys[i]), l->path, l->linenum,
 		    hashed ? "[HASHED]" : l->hosts);
 		ctx->old_key_seen = 1;
 		break;
@@ -2162,11 +2151,14 @@ client_global_hostkeys_private_confirm(struct ssh *ssh, int type,
 		 */
 		use_kexsigtype = kexsigtype == KEY_RSA &&
 		    sshkey_type_plain(ctx->keys[i]->type) == KEY_RSA;
+		debug3_f("verify %s key %zu using %s sigalg",
+		    sshkey_type(ctx->keys[i]), i,
+		    use_kexsigtype ? ssh->kex->hostkey_alg : "default");
 		if ((r = sshkey_verify(ctx->keys[i], sig, siglen,
 		    sshbuf_ptr(signdata), sshbuf_len(signdata),
 		    use_kexsigtype ? ssh->kex->hostkey_alg : NULL, 0,
 		    NULL)) != 0) {
-			error_f("server gave bad signature for %s key %zu",
+			error_fr(r, "server gave bad signature for %s key %zu",
 			    sshkey_type(ctx->keys[i]), i);
 			goto out;
 		}
@@ -2598,7 +2590,7 @@ client_stop_mux(void)
 	 * If we are in persist mode, or don't have a shell, signal that we
 	 * should close when all active channels are closed.
 	 */
-	if (options.control_persist || no_shell_flag) {
+	if (options.control_persist || options.session_type == SESSION_TYPE_NONE) {
 		session_closed = 1;
 		setproctitle("[stopped mux]");
 	}

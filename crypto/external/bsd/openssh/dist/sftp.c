@@ -1,5 +1,5 @@
-/*	$NetBSD: sftp.c,v 1.32 2021/04/19 14:40:15 christos Exp $	*/
-/* $OpenBSD: sftp.c,v 1.209 2021/04/03 06:58:30 djm Exp $ */
+/*	$NetBSD: sftp.c,v 1.33 2021/09/02 11:26:18 christos Exp $	*/
+/* $OpenBSD: sftp.c,v 1.211 2021/08/12 09:59:00 schwarze Exp $ */
 
 /*
  * Copyright (c) 2001-2004 Damien Miller <djm@openbsd.org>
@@ -18,7 +18,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: sftp.c,v 1.32 2021/04/19 14:40:15 christos Exp $");
+__RCSID("$NetBSD: sftp.c,v 1.33 2021/09/02 11:26:18 christos Exp $");
 
 #include <sys/param.h>	/* MIN MAX */
 #include <sys/types.h>
@@ -235,6 +235,13 @@ cmd_interrupt(int signo)
 	(void)write(STDERR_FILENO, msg, sizeof(msg) - 1);
 	interrupted = 1;
 	errno = olderrno;
+}
+
+/* ARGSUSED */
+static void
+read_interrupt(int signo)
+{
+	interrupted = 1;
 }
 
 /*ARGSUSED*/
@@ -640,10 +647,11 @@ process_get(struct sftp_conn *conn, const char *src, const char *dst,
 		else if (!quiet && !resume)
 			mprintf("Fetching %s to %s\n",
 			    g.gl_pathv[i], abs_dst);
+		/* XXX follow link flag */
 		if (globpath_is_dir(g.gl_pathv[i]) && (rflag || global_rflag)) {
 			if (download_dir(conn, g.gl_pathv[i], abs_dst, NULL,
 			    pflag || global_pflag, 1, resume,
-			    fflag || global_fflag) == -1)
+			    fflag || global_fflag, 0) == -1)
 				err = -1;
 		} else {
 			if (do_download(conn, g.gl_pathv[i], abs_dst, NULL,
@@ -733,10 +741,11 @@ process_put(struct sftp_conn *conn, const char *src, const char *dst,
 		else if (!quiet && !resume)
 			mprintf("Uploading %s to %s\n",
 			    g.gl_pathv[i], abs_dst);
+		/* XXX follow_link_flag */
 		if (globpath_is_dir(g.gl_pathv[i]) && (rflag || global_rflag)) {
 			if (upload_dir(conn, g.gl_pathv[i], abs_dst,
 			    pflag || global_pflag, 1, resume,
-			    fflag || global_fflag) == -1)
+			    fflag || global_fflag, 0) == -1)
 				err = -1;
 		} else {
 			if (do_upload(conn, g.gl_pathv[i], abs_dst,
@@ -2208,9 +2217,8 @@ interactive_loop(struct sftp_conn *conn, const char *file1, const char *file2)
 		const char *line;
 		int count = 0;
 
-		ssh_signal(SIGINT, SIG_IGN);
-
 		if (el == NULL) {
+			ssh_signal(SIGINT, SIG_IGN);
 			if (interactive)
 				printf("sftp> ");
 			if (fgets(cmd, sizeof(cmd), infile) == NULL) {
@@ -2219,9 +2227,21 @@ interactive_loop(struct sftp_conn *conn, const char *file1, const char *file2)
 				break;
 			}
 		} else {
+		        struct sigaction sa;
+
+			interrupted = 0;
+		        memset(&sa, 0, sizeof(sa));
+		        sa.sa_handler = read_interrupt;
+        		if (sigaction(SIGINT, &sa, NULL) == -1) {
+		                debug3("sigaction(%s): %s",
+				    strsignal(SIGINT), strerror(errno));
+				break;
+        		}
 			if ((line = el_gets(el, &count)) == NULL ||
 			    count <= 0) {
 				printf("\n");
+				if (interrupted)
+					continue;
 				break;
 			}
 			history(hl, &hev, H_ENTER, line);

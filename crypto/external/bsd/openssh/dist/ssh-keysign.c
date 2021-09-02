@@ -1,5 +1,5 @@
-/*	$NetBSD: ssh-keysign.c,v 1.21 2021/03/05 17:47:16 christos Exp $	*/
-/* $OpenBSD: ssh-keysign.c,v 1.66 2020/12/17 23:10:27 djm Exp $ */
+/*	$NetBSD: ssh-keysign.c,v 1.22 2021/09/02 11:26:18 christos Exp $	*/
+/* $OpenBSD: ssh-keysign.c,v 1.67 2021/07/05 01:16:46 dtucker Exp $ */
 
 /*
  * Copyright (c) 2002 Markus Friedl.  All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: ssh-keysign.c,v 1.21 2021/03/05 17:47:16 christos Exp $");
+__RCSID("$NetBSD: ssh-keysign.c,v 1.22 2021/09/02 11:26:18 christos Exp $");
 #include <sys/types.h>
 
 #ifdef WITH_OPENSSL
@@ -36,10 +36,10 @@ __RCSID("$NetBSD: ssh-keysign.c,v 1.21 2021/03/05 17:47:16 christos Exp $");
 #include <fcntl.h>
 #include <paths.h>
 #include <pwd.h>
-#include <stdlib.h>
-#include <stdio.h>
-#include <string.h>
 #include <stdarg.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 #include <unistd.h>
 #include <errno.h>
 

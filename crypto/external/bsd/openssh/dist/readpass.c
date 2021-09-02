@@ -1,5 +1,5 @@
-/*	$NetBSD: readpass.c,v 1.16 2021/03/05 17:47:16 christos Exp $	*/
-/* $OpenBSD: readpass.c,v 1.68 2020/11/10 07:46:20 claudio Exp $ */
+/*	$NetBSD: readpass.c,v 1.17 2021/09/02 11:26:18 christos Exp $	*/
+/* $OpenBSD: readpass.c,v 1.69 2021/07/23 05:56:47 djm Exp $ */
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: readpass.c,v 1.16 2021/03/05 17:47:16 christos Exp $");
+__RCSID("$NetBSD: readpass.c,v 1.17 2021/09/02 11:26:18 christos Exp $");
 #include <sys/types.h>
 #include <sys/wait.h>
 
@@ -118,7 +118,7 @@ ssh_askpass(const char *askpass, const char *msg, const char *env_hint)
  * Reads a passphrase from /dev/tty with echo turned off/on.  Returns the
  * passphrase (allocated with xmalloc).  Exits if EOF is encountered. If
  * RP_ALLOW_STDIN is set, the passphrase will be read from stdin if no
- * tty is available
+ * tty is or askpass program is available
  */
 char *
 read_passphrase(const char *prompt, int flags)
@@ -147,7 +147,7 @@ read_passphrase(const char *prompt, int flags)
 		use_askpass = 1;
 	else if (flags & RP_ALLOW_STDIN) {
 		if (!isatty(STDIN_FILENO)) {
-			debug("read_passphrase: stdin is not a tty");
+			debug_f("stdin is not a tty");
 			use_askpass = 1;
 		}
 	} else {
@@ -163,7 +163,7 @@ read_passphrase(const char *prompt, int flags)
 			(void)write(ttyfd, &cr, 1);
 			close(ttyfd);
 		} else {
-			debug("read_passphrase: can't open %s: %s", _PATH_TTY,
+			debug_f("can't open %s: %s", _PATH_TTY,
 			    strerror(errno));
 			use_askpass = 1;
 		}

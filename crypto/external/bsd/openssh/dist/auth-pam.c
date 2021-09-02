@@ -51,7 +51,7 @@
 /*
  * NetBSD local changes
  */
-__RCSID("$NetBSD: auth-pam.c,v 1.19 2019/04/20 17:16:40 christos Exp $");
+__RCSID("$NetBSD: auth-pam.c,v 1.20 2021/09/02 11:26:17 christos Exp $");
 #define _LIB_PTHREAD_H
 #undef USE_POSIX_THREADS /* Not yet */
 #define HAVE_SECURITY_PAM_APPL_H
@@ -1386,6 +1386,5 @@ sshpam_set_maxtries_reached(int reached)
 	sshpam_maxtries_reached = 1;
 	options.password_authentication = 0;
 	options.kbd_interactive_authentication = 0;
-	options.challenge_response_authentication = 0;
 }
 #endif /* USE_PAM */

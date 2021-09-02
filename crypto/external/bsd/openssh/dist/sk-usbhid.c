@@ -1,5 +1,5 @@
-/*	$NetBSD: sk-usbhid.c,v 1.5 2021/03/05 17:47:16 christos Exp $	*/
-/* $OpenBSD: sk-usbhid.c,v 1.29 2021/02/18 02:15:07 djm Exp $ */
+/*	$NetBSD: sk-usbhid.c,v 1.6 2021/09/02 11:26:18 christos Exp $	*/
+/* $OpenBSD: sk-usbhid.c,v 1.30 2021/05/31 06:48:42 djm Exp $ */
 
 /*
  * Copyright (c) 2019 Markus Friedl
@@ -18,7 +18,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 #include "includes.h"
-__RCSID("$NetBSD: sk-usbhid.c,v 1.5 2021/03/05 17:47:16 christos Exp $");
+__RCSID("$NetBSD: sk-usbhid.c,v 1.6 2021/09/02 11:26:18 christos Exp $");
 
 #include <stdint.h>
 #include <stdlib.h>
@@ -639,7 +639,7 @@ sk_enroll(uint32_t alg, const uint8_t *challenge, size_t challenge_len,
 {
 	fido_cred_t *cred = NULL;
 	const uint8_t *ptr;
-	uint8_t user_id[32];
+	uint8_t user_id[32], chall_hash[32];
 	struct sk_usbhid *sk = NULL;
 	struct sk_enroll_response *response = NULL;
 	size_t len;
@@ -691,8 +691,13 @@ sk_enroll(uint32_t alg, const uint8_t *challenge, size_t challenge_len,
 		skdebug(__func__, "fido_cred_set_type: %s", fido_strerr(r));
 		goto out;
 	}
-	if ((r = fido_cred_set_clientdata_hash(cred, challenge,
-	    challenge_len)) != FIDO_OK) {
+	if (sha256_mem(challenge, challenge_len,
+	    chall_hash, sizeof(chall_hash)) != 0) {
+		skdebug(__func__, "hash challenge failed");
+		goto out;
+	}
+	if ((r = fido_cred_set_clientdata_hash(cred, chall_hash,
+	    sizeof(chall_hash))) != FIDO_OK) {
 		skdebug(__func__, "fido_cred_set_clientdata_hash: %s",
 		    fido_strerr(r));
 		goto out;

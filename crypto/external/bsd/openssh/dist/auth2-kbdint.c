@@ -1,5 +1,5 @@
-/*	$NetBSD: auth2-kbdint.c,v 1.13 2021/03/05 17:47:15 christos Exp $	*/
-/* $OpenBSD: auth2-kbdint.c,v 1.12 2020/10/18 11:32:01 djm Exp $ */
+/*	$NetBSD: auth2-kbdint.c,v 1.14 2021/09/02 11:26:17 christos Exp $	*/
+/* $OpenBSD: auth2-kbdint.c,v 1.13 2021/07/02 05:11:20 dtucker Exp $ */
 
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: auth2-kbdint.c,v 1.13 2021/03/05 17:47:15 christos Exp $");
+__RCSID("$NetBSD: auth2-kbdint.c,v 1.14 2021/09/02 11:26:17 christos Exp $");
 #include <sys/types.h>
 
 #include <stdlib.h>
@@ -58,7 +58,7 @@ userauth_kbdint(struct ssh *ssh)
 
 	debug("keyboard-interactive devs %s", devs);
 
-	if (options.challenge_response_authentication)
+	if (options.kbd_interactive_authentication)
 		authenticated = auth2_challenge(ssh, devs);
 
 	free(devs);

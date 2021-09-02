@@ -1,5 +1,5 @@
-/*	$NetBSD: nchan.c,v 1.12 2021/03/05 17:47:16 christos Exp $	*/
-/* $OpenBSD: nchan.c,v 1.72 2021/01/27 09:26:54 djm Exp $ */
+/*	$NetBSD: nchan.c,v 1.13 2021/09/02 11:26:18 christos Exp $	*/
+/* $OpenBSD: nchan.c,v 1.73 2021/05/19 01:24:05 djm Exp $ */
 
 /*
  * Copyright (c) 1999, 2000, 2001, 2002 Markus Friedl.  All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: nchan.c,v 1.12 2021/03/05 17:47:16 christos Exp $");
+__RCSID("$NetBSD: nchan.c,v 1.13 2021/09/02 11:26:18 christos Exp $");
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/queue.h>
@@ -386,7 +386,7 @@ chan_shutdown_write(struct ssh *ssh, Channel *c)
 			    c->istate, c->ostate, strerror(errno));
 		}
 	} else {
-		if (channel_close_fd(ssh, &c->wfd) < 0) {
+		if (channel_close_fd(ssh, c, &c->wfd) < 0) {
 			logit_f("channel %d: close() failed for "
 			    "fd %d [i%d o%d]: %.100s", c->self, c->wfd,
 			    c->istate, c->ostate, strerror(errno));
@@ -409,7 +409,7 @@ chan_shutdown_read(struct ssh *ssh, Channel *c)
 			    c->istate, c->ostate, strerror(errno));
 		}
 	} else {
-		if (channel_close_fd(ssh, &c->rfd) < 0) {
+		if (channel_close_fd(ssh, c, &c->rfd) < 0) {
 			logit_f("channel %d: close() failed for "
 			    "fd %d [i%d o%d]: %.100s", c->self, c->rfd,
 			    c->istate, c->ostate, strerror(errno));
@@ -428,7 +428,7 @@ chan_shutdown_extended_read(struct ssh *ssh, Channel *c)
 	debug_f("channel %d: (i%d o%d sock %d wfd %d efd %d [%s])",
 	    c->self, c->istate, c->ostate, c->sock, c->rfd, c->efd,
 	    channel_format_extended_usage(c));
-	if (channel_close_fd(ssh, &c->efd) < 0) {
+	if (channel_close_fd(ssh, c, &c->efd) < 0) {
 		logit_f("channel %d: close() failed for "
 		    "extended fd %d [i%d o%d]: %.100s", c->self, c->efd,
 		    c->istate, c->ostate, strerror(errno));

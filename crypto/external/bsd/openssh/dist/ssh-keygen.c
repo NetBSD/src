@@ -1,5 +1,5 @@
-/*	$NetBSD: ssh-keygen.c,v 1.39 2021/04/19 14:40:15 christos Exp $	*/
-/* $OpenBSD: ssh-keygen.c,v 1.429 2021/04/03 06:18:41 djm Exp $ */
+/*	$NetBSD: ssh-keygen.c,v 1.40 2021/09/02 11:26:18 christos Exp $	*/
+/* $OpenBSD: ssh-keygen.c,v 1.435 2021/08/11 08:54:17 djm Exp $ */
 
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -15,7 +15,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: ssh-keygen.c,v 1.39 2021/04/19 14:40:15 christos Exp $");
+__RCSID("$NetBSD: ssh-keygen.c,v 1.40 2021/09/02 11:26:18 christos Exp $");
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/stat.h>
@@ -30,10 +30,10 @@ __RCSID("$NetBSD: ssh-keygen.c,v 1.39 2021/04/19 14:40:15 christos Exp $");
 #include <fcntl.h>
 #include <netdb.h>
 #include <pwd.h>
+#include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <stdarg.h>
 #include <unistd.h>
 #include <limits.h>
 #include <locale.h>
@@ -2654,14 +2654,54 @@ done:
 }
 
 static int
+sig_process_opts(char * const *opts, size_t nopts, uint64_t *verify_timep,
+    int *print_pubkey)
+{
+	size_t i;
+	time_t now;
+
+	*verify_timep = 0;
+	*print_pubkey = 0;
+	for (i = 0; i < nopts; i++) {
+		if (strncasecmp(opts[i], "verify-time=", 12) == 0) {
+			if (parse_absolute_time(opts[i] + 12,
+			    verify_timep) != 0 || *verify_timep == 0) {
+				error("Invalid \"verify-time\" option");
+				return SSH_ERR_INVALID_ARGUMENT;
+			}
+		} else if (print_pubkey &&
+		    strcasecmp(opts[i], "print-pubkey") == 0) {
+			*print_pubkey = 1;
+		} else {
+			error("Invalid option \"%s\"", opts[i]);
+			return SSH_ERR_INVALID_ARGUMENT;
+		}
+	}
+	if (*verify_timep == 0) {
+		if ((now = time(NULL)) < 0) {
+			error("Time is before epoch");
+			return SSH_ERR_INVALID_ARGUMENT;
+		}
+		*verify_timep = (uint64_t)now;
+	}
+	return 0;
+}
+
+static int
 sig_verify(const char *signature, const char *sig_namespace,
-    const char *principal, const char *allowed_keys, const char *revoked_keys)
+    const char *principal, const char *allowed_keys, const char *revoked_keys,
+    char * const *opts, size_t nopts)
 {
 	int r, ret = -1;
+	int print_pubkey = 0;
 	struct sshbuf *sigbuf = NULL, *abuf = NULL;
 	struct sshkey *sign_key = NULL;
 	char *fp = NULL;
 	struct sshkey_sig_details *sig_details = NULL;
+	uint64_t verify_time = 0;
+
+	if (sig_process_opts(opts, nopts, &verify_time, &print_pubkey) != 0)
+		goto done; /* error already logged */
 
 	memset(&sig_details, 0, sizeof(sig_details));
 	if ((r = sshbuf_load_file(signature, &abuf)) != 0) {
@@ -2696,7 +2736,7 @@ sig_verify(const char *signature, const char *sig_namespace,
 	}
 
 	if (allowed_keys != NULL && (r = sshsig_check_allowed_keys(allowed_keys,
-	    sign_key, principal, sig_namespace)) != 0) {
+	    sign_key, principal, sig_namespace, verify_time)) != 0) {
 		debug3_fr(r, "sshsig_check_allowed_keys");
 		goto done;
 	}
@@ -2721,6 +2761,15 @@ done:
 			printf("Could not verify signature.\n");
 		}
 	}
+	/* Print the signature key if requested */
+	if (ret == 0 && print_pubkey && sign_key != NULL) {
+		if ((r = sshkey_write(sign_key, stdout)) == 0)
+			fputc('\n', stdout);
+		else {
+			error_r(r, "Could not print public key.\n");
+			ret = -1;
+		}
+	}
 	sshbuf_free(sigbuf);
 	sshbuf_free(abuf);
 	sshkey_free(sign_key);
@@ -2730,11 +2779,17 @@ done:
 }
 
 static int
-sig_find_principals(const char *signature, const char *allowed_keys) {
+sig_find_principals(const char *signature, const char *allowed_keys,
+    char * const *opts, size_t nopts)
+{
 	int r, ret = -1;
 	struct sshbuf *sigbuf = NULL, *abuf = NULL;
 	struct sshkey *sign_key = NULL;
 	char *principals = NULL, *cp, *tmp;
+	uint64_t verify_time = 0;
+
+	if (sig_process_opts(opts, nopts, &verify_time, NULL) != 0)
+		goto done; /* error already logged */
 
 	if ((r = sshbuf_load_file(signature, &abuf)) != 0) {
 		error_r(r, "Couldn't read signature file");
@@ -2749,8 +2804,9 @@ sig_find_principals(const char *signature, const char *allowed_keys) {
 		goto done;
 	}
 	if ((r = sshsig_find_principals(allowed_keys, sign_key,
-	    &principals)) != 0) {
-		error_fr(r, "sshsig_get_principal");
+	    verify_time, &principals)) != 0) {
+		if (r != SSH_ERR_KEY_NOT_FOUND)
+			error_fr(r, "sshsig_find_principal");
 		goto done;
 	}
 	ret = 0;
@@ -3052,8 +3108,10 @@ usage(void)
 	    "                  [-w provider] [-Z cipher]\n"
 	    "       ssh-keygen -p [-a rounds] [-f keyfile] [-m format] [-N new_passphrase]\n"
 	    "                   [-P old_passphrase] [-Z cipher]\n"
+#ifdef WITH_OPENSSL
 	    "       ssh-keygen -i [-f input_keyfile] [-m key_format]\n"
 	    "       ssh-keygen -e [-f input_keyfile] [-m key_format]\n"
+#endif
 	    "       ssh-keygen -y [-f input_keyfile]\n"
 	    "       ssh-keygen -c [-a rounds] [-C comment] [-f keyfile] [-P passphrase]\n"
 	    "       ssh-keygen -l [-v] [-E fingerprint_hash] [-f input_keyfile]\n"
@@ -3357,7 +3415,8 @@ main(int argc, char **argv)
 				    "missing allowed keys file");
 				exit(1);
 			}
-			return sig_find_principals(ca_key_path, identity_file);
+			return sig_find_principals(ca_key_path, identity_file,
+			    opts, nopts);
 		} else if (strncmp(sign_op, "sign", 4) == 0) {
 			if (cert_principals == NULL ||
 			    *cert_principals == '\0') {
@@ -3379,7 +3438,7 @@ main(int argc, char **argv)
 				exit(1);
 			}
 			return sig_verify(ca_key_path, cert_principals,
-			    NULL, NULL, NULL);
+			    NULL, NULL, NULL, opts, nopts);
 		} else if (strncmp(sign_op, "verify", 6) == 0) {
 			if (cert_principals == NULL ||
 			    *cert_principals == '\0') {
@@ -3403,7 +3462,8 @@ main(int argc, char **argv)
 				exit(1);
 			}
 			return sig_verify(ca_key_path, cert_principals,
-			    cert_key_id, identity_file, rr_hostname);
+			    cert_key_id, identity_file, rr_hostname,
+			    opts, nopts);
 		}
 		error("Unsupported operation for -Y: \"%s\"", sign_op);
 		usage();

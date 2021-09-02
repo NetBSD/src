@@ -1,5 +1,5 @@
-/*	$NetBSD: auth.c,v 1.30 2021/04/19 14:40:15 christos Exp $	*/
-/* $OpenBSD: auth.c,v 1.152 2021/04/03 06:18:40 djm Exp $ */
+/*	$NetBSD: auth.c,v 1.31 2021/09/02 11:26:17 christos Exp $	*/
+/* $OpenBSD: auth.c,v 1.153 2021/07/05 00:50:25 dtucker Exp $ */
 
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: auth.c,v 1.30 2021/04/19 14:40:15 christos Exp $");
+__RCSID("$NetBSD: auth.c,v 1.31 2021/09/02 11:26:17 christos Exp $");
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/socket.h>
@@ -756,9 +756,7 @@ fakepw(void)
  * be freed. NB. this will usually trigger a DNS query the first time it is
  * called.
  * This function does additional checks on the hostname to mitigate some
- * attacks on legacy rhosts-style authentication.
- * XXX is RhostsRSAAuthentication vulnerable to these?
- * XXX Can we remove these checks? (or if not, remove RhostsRSAAuthentication?)
+ * attacks on based on conflation of hostnames and IP addresses.
  */
 
 static char *
