@@ -1,4 +1,4 @@
-/*	$NetBSD: for.c,v 1.146 2021/09/02 06:29:56 rillig Exp $	*/
+/*	$NetBSD: for.c,v 1.147 2021/09/02 07:02:07 rillig Exp $	*/
 
 /*
  * Copyright (c) 1992, The Regents of the University of California.
@@ -58,7 +58,7 @@
 #include "make.h"
 
 /*	"@(#)for.c	8.1 (Berkeley) 6/6/93"	*/
-MAKE_RCSID("$NetBSD: for.c,v 1.146 2021/09/02 06:29:56 rillig Exp $");
+MAKE_RCSID("$NetBSD: for.c,v 1.147 2021/09/02 07:02:07 rillig Exp $");
 
 
 /* One of the variables to the left of the "in" in a .for loop. */
@@ -278,33 +278,33 @@ For_Accum(const char *line)
 
 
 static size_t
-for_var_len(const char *var)
+ExprLen(const char *expr)
 {
-	char ch, var_start, var_end;
+	char ch, expr_open, expr_close;
 	int depth;
 	size_t len;
 
-	var_start = *var;
-	if (var_start == '\0')
+	expr_open = expr[0];
+	if (expr_open == '\0')
 		/* just escape the $ */
 		return 0;
 
-	if (var_start == '(')
-		var_end = ')';
-	else if (var_start == '{')
-		var_end = '}';
+	if (expr_open == '(')
+		expr_close = ')';
+	else if (expr_open == '{')
+		expr_close = '}';
 	else
 		return 1;	/* Single char variable */
 
 	depth = 1;
-	for (len = 1; (ch = var[len++]) != '\0';) {
-		if (ch == var_start)
+	for (len = 1; (ch = expr[len++]) != '\0';) {
+		if (ch == expr_open)
 			depth++;
-		else if (ch == var_end && --depth == 0)
+		else if (ch == expr_close && --depth == 0)
 			return len;
 	}
 
-	/* Variable end not found, escape the $ */
+	/* Expression end not found, escape the $ */
 	return 0;
 }
 
@@ -345,8 +345,12 @@ Buf_AddEscaped(Buffer *cmds, const char *item, char endc)
 	 * :U processing, see ApplyModifier_Defined. */
 	while ((ch = *item++) != '\0') {
 		if (ch == '$') {
-			size_t len = for_var_len(item);
+			size_t len = ExprLen(item);
 			if (len != 0) {
+				/*
+				 * XXX: Should a '\' be added here?
+				 * See directive-for-escape.mk, ExprLen.
+				 */
 				Buf_AddBytes(cmds, item - 1, len + 1);
 				item += len;
 				continue;
@@ -427,8 +431,10 @@ ForLoop_SubstVarShort(ForLoop *f, const char *p, const char **inout_mark)
 	return;
 
 found:
+	Buf_AddBytesBetween(&f->curBody, *inout_mark, p);
+	*inout_mark = p + 1;
+
 	/* Replace $<ch> with ${:U<value>} */
-	Buf_AddBytesBetween(&f->curBody, *inout_mark, p), *inout_mark = p + 1;
 	Buf_AddStr(&f->curBody, "{:U");
 	Buf_AddEscaped(&f->curBody, f->items.words[f->sub_next + i], '}');
 	Buf_AddByte(&f->curBody, '}');
@@ -444,8 +450,8 @@ found:
  * defined, see unit-tests/varname-empty.mk for more details.
  *
  * The detection of substitutions of the loop control variables is naive.
- * Many of the modifiers use '\' to escape '$' (not '$'), so it is possible
- * to contrive a makefile where an unwanted substitution happens.
+ * Many of the modifiers use '\$' instead of '$$' to escape '$', so it is
+ * possible to contrive a makefile where an unwanted substitution happens.
  */
 static void
 ForLoop_SubstBody(ForLoop *f)
