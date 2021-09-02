@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.369 2021/09/02 19:19:17 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.370 2021/09/02 20:10:17 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.369 2021/09/02 19:19:17 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.370 2021/09/02 20:10:17 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -3917,40 +3917,92 @@ check_null_effect(const tnode_t *tn)
 	warning(129);
 }
 
-/* ARGSUSED */
-void
-check_expr_misc(const tnode_t *tn, bool vctx, bool tctx,
-		bool eqwarn, bool fcall, bool rvdisc, bool szof)
+static void
+check_expr_addr(const tnode_t *ln, bool szof, bool fcall)
 {
-	tnode_t	*ln, *rn;
-	const mod_t *mp;
-	op_t	op;
-	scl_t	sc;
-	dinfo_t	*di;
+	/* XXX: Taking warn_about_unreachable into account here feels wrong. */
+	if (ln->tn_op == NAME && (reached || !warn_about_unreachable)) {
+		if (!szof)
+			mark_as_set(ln->tn_sym);
+		mark_as_used(ln->tn_sym, fcall, szof);
+	}
+	if (ln->tn_op == INDIR && ln->tn_left->tn_op == PLUS)
+		/* check the range of array indices */
+		check_array_index(ln->tn_left, true);
+}
 
-	if (tn == NULL)
-		return;
+static void
+check_expr_load(const tnode_t *ln)
+{
+	if (ln->tn_op == INDIR && ln->tn_left->tn_op == PLUS)
+		/* check the range of array indices */
+		check_array_index(ln->tn_left, false);
+}
 
-	ln = tn->tn_left;
-	rn = tn->tn_right;
-	mp = &modtab[op = tn->tn_op];
+static void
+check_expr_side_effect(const tnode_t *ln, bool szof)
+{
+	scl_t sc;
+	dinfo_t *di;
 
+	/* XXX: Taking warn_about_unreachable into account here feels wrong. */
+	if (ln->tn_op == NAME && (reached || !warn_about_unreachable)) {
+		sc = ln->tn_sym->s_scl;
+		/*
+		 * Look if there was a asm statement in one of the
+		 * compound statements we are in. If not, we don't
+		 * print a warning.
+		 */
+		for (di = dcs; di != NULL; di = di->d_next) {
+			if (di->d_asm)
+				break;
+		}
+		if (sc != EXTERN && sc != STATIC &&
+		    !ln->tn_sym->s_set && !szof && di == NULL) {
+			/* %s may be used before set */
+			warning(158, ln->tn_sym->s_name);
+			mark_as_set(ln->tn_sym);
+		}
+		mark_as_used(ln->tn_sym, false, false);
+	}
+}
+
+static void
+check_expr_assign(const tnode_t *ln, bool szof)
+{
+	/* XXX: Taking warn_about_unreachable into account here feels wrong. */
+	if (ln->tn_op == NAME && !szof && (reached || !warn_about_unreachable)) {
+		mark_as_set(ln->tn_sym);
+		if (ln->tn_sym->s_scl == EXTERN)
+			outusg(ln->tn_sym);
+	}
+	if (ln->tn_op == INDIR && ln->tn_left->tn_op == PLUS)
+		/* check the range of array indices */
+		check_array_index(ln->tn_left, false);
+}
+
+static void
+check_expr_call(const tnode_t *tn, const tnode_t *ln,
+		bool szof, bool vctx, bool tctx, bool rvdisc)
+{
+	lint_assert(ln->tn_op == ADDR);
+	lint_assert(ln->tn_left->tn_op == NAME);
+	if (!szof &&
+	    !is_compiler_builtin(ln->tn_left->tn_sym->s_name))
+		outcall(tn, vctx || tctx, rvdisc);
+}
+
+static bool
+check_expr_op(const tnode_t *tn, op_t op, const tnode_t *ln,
+	      bool szof, bool fcall, bool vctx, bool tctx, bool rvdisc,
+	      bool eqwarn)
+{
 	switch (op) {
 	case ADDR:
-		/* XXX: Taking warn_about_unreachable into account here feels wrong. */
-		if (ln->tn_op == NAME && (reached || !warn_about_unreachable)) {
-			if (!szof)
-				mark_as_set(ln->tn_sym);
-			mark_as_used(ln->tn_sym, fcall, szof);
-		}
-		if (ln->tn_op == INDIR && ln->tn_left->tn_op == PLUS)
-			/* check the range of array indices */
-			check_array_index(ln->tn_left, true);
+		check_expr_addr(ln, szof, fcall);
 		break;
 	case LOAD:
-		if (ln->tn_op == INDIR && ln->tn_left->tn_op == PLUS)
-			/* check the range of array indices */
-			check_array_index(ln->tn_left, false);
+		check_expr_load(ln);
 		/* FALLTHROUGH */
 	case PUSH:
 	case INCBEF:
@@ -3969,44 +4021,13 @@ check_expr_misc(const tnode_t *tn, bool vctx, bool tctx,
 	case SHRASS:
 	case REAL:
 	case IMAG:
-		/* XXX: Taking warn_about_unreachable into account here feels wrong. */
-		if (ln->tn_op == NAME && (reached || !warn_about_unreachable)) {
-			sc = ln->tn_sym->s_scl;
-			/*
-			 * Look if there was a asm statement in one of the
-			 * compound statements we are in. If not, we don't
-			 * print a warning.
-			 */
-			for (di = dcs; di != NULL; di = di->d_next) {
-				if (di->d_asm)
-					break;
-			}
-			if (sc != EXTERN && sc != STATIC &&
-			    !ln->tn_sym->s_set && !szof && di == NULL) {
-				/* %s may be used before set */
-				warning(158, ln->tn_sym->s_name);
-				mark_as_set(ln->tn_sym);
-			}
-			mark_as_used(ln->tn_sym, false, false);
-		}
+		check_expr_side_effect(ln, szof);
 		break;
 	case ASSIGN:
-		/* XXX: Taking warn_about_unreachable into account here feels wrong. */
-		if (ln->tn_op == NAME && !szof && (reached || !warn_about_unreachable)) {
-			mark_as_set(ln->tn_sym);
-			if (ln->tn_sym->s_scl == EXTERN)
-				outusg(ln->tn_sym);
-		}
-		if (ln->tn_op == INDIR && ln->tn_left->tn_op == PLUS)
-			/* check the range of array indices */
-			check_array_index(ln->tn_left, false);
+		check_expr_assign(ln, szof);
 		break;
 	case CALL:
-		lint_assert(ln->tn_op == ADDR);
-		lint_assert(ln->tn_left->tn_op == NAME);
-		if (!szof &&
-		    !is_compiler_builtin(ln->tn_left->tn_sym->s_name))
-			outcall(tn, vctx || tctx, rvdisc);
+		check_expr_call(tn, ln, szof, vctx, tctx, rvdisc);
 		break;
 	case EQ:
 		if (hflag && eqwarn)
@@ -4016,7 +4037,7 @@ check_expr_misc(const tnode_t *tn, bool vctx, bool tctx,
 	case CON:
 	case NAME:
 	case STRING:
-		return;
+		return false;
 		/* LINTED206: (enumeration values not handled in switch) */
 	case BITOR:
 	case BITXOR:
@@ -4057,6 +4078,28 @@ check_expr_misc(const tnode_t *tn, bool vctx, bool tctx,
 	case LOGAND:
 		break;
 	}
+	return true;
+}
+
+/* ARGSUSED */
+void
+check_expr_misc(const tnode_t *tn, bool vctx, bool tctx,
+		bool eqwarn, bool fcall, bool rvdisc, bool szof)
+{
+	tnode_t	*ln, *rn;
+	const mod_t *mp;
+	op_t	op;
+
+	if (tn == NULL)
+		return;
+
+	ln = tn->tn_left;
+	rn = tn->tn_right;
+	mp = &modtab[op = tn->tn_op];
+
+	if (!check_expr_op(tn, op, ln,
+	    szof, fcall, vctx, tctx, rvdisc, eqwarn))
+		return;
 
 	bool cvctx = mp->m_left_value_context;
 	bool ctctx = mp->m_left_test_context;
