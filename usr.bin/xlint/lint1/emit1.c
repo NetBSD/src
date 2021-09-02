@@ -1,4 +1,4 @@
-/* $NetBSD: emit1.c,v 1.53 2021/08/31 23:10:52 rillig Exp $ */
+/* $NetBSD: emit1.c,v 1.54 2021/09/02 07:04:41 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: emit1.c,v 1.53 2021/08/31 23:10:52 rillig Exp $");
+__RCSID("$NetBSD: emit1.c,v 1.54 2021/09/02 07:04:41 rillig Exp $");
 #endif
 
 #include "lint1.h"
@@ -110,7 +110,7 @@ outtype(const type_t *tp)
 			ts = ENUM;
 		t = tt[ts];
 		s = ss[ts];
-		lint_assert(t != '?' && t != '?');
+		lint_assert(t != '?' && s != '?');
 		if (tp->t_const)
 			outchar('c');
 		if (tp->t_volatile)
