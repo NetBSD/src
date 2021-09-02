@@ -1,4 +1,4 @@
-/* $NetBSD: apple_platform.c,v 1.2 2021/09/01 23:05:03 jmcneill Exp $ */
+/* $NetBSD: apple_platform.c,v 1.3 2021/09/02 20:57:57 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2021 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: apple_platform.c,v 1.2 2021/09/01 23:05:03 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: apple_platform.c,v 1.3 2021/09/02 20:57:57 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -57,18 +57,6 @@ __KERNEL_RCSID(0, "$NetBSD: apple_platform.c,v 1.2 2021/09/01 23:05:03 jmcneill 
 #include <libfdt.h>
 
 #include <arch/evbarm/fdt/platform.h>
-
-/*
- * Faux DMIPS/MHz values for known CPU types. The values themselves are
- * unimportant except as relative comparisons between different CPUs on
- * the same system.
- */
-static const struct device_compatible_entry cpu_capacity_compat_data[] = {
-	/* Apple M1 */
-	{ .compat = "apple,icestorm",	.value = 0 },	/* efficiency core */
-	{ .compat = "apple,firestorm",	.value = 1 },	/* performance core */
-	DEVICE_COMPAT_EOL
-};
 
 extern struct bus_space arm_generic_bs_tag;
 
@@ -198,14 +186,21 @@ apple_platform_device_register(device_t self, void *aux)
 
 	if (device_is_a(self, "cpu")) {
 		struct fdt_attach_args * const faa = aux;
-		const int phandle = faa->faa_phandle;
-		const struct device_compatible_entry *dce;
+		bus_addr_t cpuid;
 
-		dce = of_compatible_lookup(phandle, cpu_capacity_compat_data);
-		if (dce != NULL) {
-			prop_dictionary_set_uint32(prop, "capacity_dmips_mhz",
-			    dce->value);
+		if (fdtbus_get_reg(faa->faa_phandle, 0, &cpuid, NULL) != 0) {
+			cpuid = 0;
 		}
+
+		/*
+		 * On Apple M1 (and hopefully later models), AFF2 is 0 for
+		 * efficiency and 1 for performance cores. Use this value
+		 * to provide a fake DMIPS/MHz value -- the actual number
+		 * only matters in relation to the value presented by other
+		 * cores.
+		 */
+		const u_int aff2 = __SHIFTOUT(cpuid, MPIDR_AFF2);
+		prop_dictionary_set_uint32(prop, "capacity_dmips_mhz", aff2);
 		return;
 	}
 
