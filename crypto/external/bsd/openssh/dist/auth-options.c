@@ -1,5 +1,5 @@
-/*	$NetBSD: auth-options.c,v 1.26 2021/04/19 14:40:15 christos Exp $	*/
-/* $OpenBSD: auth-options.c,v 1.95 2021/04/03 06:18:40 djm Exp $ */
+/*	$NetBSD: auth-options.c,v 1.27 2021/09/02 11:26:17 christos Exp $	*/
+/* $OpenBSD: auth-options.c,v 1.97 2021/07/24 01:55:19 djm Exp $ */
 
 /*
  * Copyright (c) 2018 Damien Miller <djm@mindrot.org>
@@ -18,7 +18,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: auth-options.c,v 1.26 2021/04/19 14:40:15 christos Exp $");
+__RCSID("$NetBSD: auth-options.c,v 1.27 2021/09/02 11:26:17 christos Exp $");
 #include <sys/types.h>
 #include <sys/queue.h>
 
@@ -326,6 +326,7 @@ sshauthopt_parse(const char *opts, const char **errstrp)
 	struct sshauthopt *ret = NULL;
 	const char *errstr = "unknown error";
 	uint64_t valid_before;
+	size_t i, l;
 
 	if (errstrp != NULL)
 		*errstrp = NULL;
@@ -399,7 +400,7 @@ sshauthopt_parse(const char *opts, const char **errstrp)
 			    valid_before < ret->valid_before)
 				ret->valid_before = valid_before;
 		} else if (opt_match(&opts, "environment")) {
-			if (ret->nenv > INT_MAX) {
+			if (ret->nenv > SSH_AUTHOPT_ENV_MAX) {
 				errstr = "too many environment strings";
 				goto fail;
 			}
@@ -411,25 +412,41 @@ sshauthopt_parse(const char *opts, const char **errstrp)
 				errstr = "invalid environment string";
 				goto fail;
 			}
-			if ((cp = strdup(opt)) == NULL)
+			if ((cp = strdup(opt)) == NULL) {
+				free(opt);
 				goto alloc_fail;
-			cp[tmp - opt] = '\0'; /* truncate at '=' */
+			}
+			l = (size_t)(tmp - opt);
+			cp[l] = '\0'; /* truncate at '=' */
 			if (!valid_env_name(cp)) {
 				free(cp);
 				free(opt);
 				errstr = "invalid environment string";
 				goto fail;
 			}
-			free(cp);
-			/* Append it. */
-			oarray = ret->env;
-			if ((ret->env = recallocarray(ret->env, ret->nenv,
-			    ret->nenv + 1, sizeof(*ret->env))) == NULL) {
-				free(opt);
-				ret->env = oarray; /* put it back for cleanup */
-				goto alloc_fail;
+			/* Check for duplicates; XXX O(n*log(n)) */
+			for (i = 0; i < ret->nenv; i++) {
+				if (strncmp(ret->env[i], cp, l) == 0 &&
+				    ret->env[i][l] == '=')
+					break;
 			}
-			ret->env[ret->nenv++] = opt;
+			free(cp);
+			/* First match wins */
+			if (i >= ret->nenv) {
+				/* Append it. */
+				oarray = ret->env;
+				if ((ret->env = recallocarray(ret->env,
+				    ret->nenv, ret->nenv + 1,
+				    sizeof(*ret->env))) == NULL) {
+					free(opt);
+					/* put it back for cleanup */
+					ret->env = oarray;
+					goto alloc_fail;
+				}
+				ret->env[ret->nenv++] = opt;
+				opt = NULL; /* transferred */
+			}
+			free(opt);
 		} else if (opt_match(&opts, "permitopen")) {
 			if (handle_permit(&opts, 0, &ret->permitopen,
 			    &ret->npermitopen, &errstr) != 0)
