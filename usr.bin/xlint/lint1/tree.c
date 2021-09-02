@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.367 2021/09/02 16:31:01 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.368 2021/09/02 17:29:19 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.367 2021/09/02 16:31:01 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.368 2021/09/02 17:29:19 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -2034,8 +2034,8 @@ check_prototype_conversion(int arg, tspec_t nt, tspec_t ot, type_t *tp,
 	 * would be useless, because functions declared the old style
 	 * can't expect char/short arguments.
 	 */
-	/* XXX: what about SCHAR? */
-	if (nt == CHAR || nt == UCHAR || nt == SHORT || nt == USHORT)
+	if (nt == CHAR || nt == SCHAR || nt == UCHAR ||
+	    nt == SHORT || nt == USHORT)
 		return;
 
 	/* apply the default promotion */
