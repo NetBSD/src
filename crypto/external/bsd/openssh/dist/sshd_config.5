@@ -1,4 +1,4 @@
-.\"	$NetBSD: sshd_config.5,v 1.34 2021/04/19 14:40:15 christos Exp $
+.\"	$NetBSD: sshd_config.5,v 1.35 2021/09/02 11:26:18 christos Exp $
 .\"  -*- nroff -*-
 .\"
 .\" Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -35,8 +35,8 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\" $OpenBSD: sshd_config.5,v 1.331 2021/04/04 11:36:56 jmc Exp $
-.Dd April 4 2021
+.\" $OpenBSD: sshd_config.5,v 1.334 2021/08/12 23:59:25 djm Exp $
+.Dd August 12 2021
 .Dt SSHD_CONFIG 5
 .Os
 .Sh NAME
@@ -380,20 +380,24 @@ Specifies which algorithms are allowed for signing of certificates
 by certificate authorities (CAs).
 The default is:
 .Bd -literal -offset indent
-ssh-ed25519,ecdsa-sha2-nistp256,ecdsa-sha2-nistp384,ecdsa-sha2-nistp521,
-sk-ssh-ed25519@openssh.com,sk-ecdsa-sha2-nistp256@openssh.com,
+ssh-ed25519,ecdsa-sha2-nistp256,
+ecdsa-sha2-nistp384,ecdsa-sha2-nistp521,
+sk-ssh-ed25519@openssh.com,
+sk-ecdsa-sha2-nistp256@openssh.com,
 rsa-sha2-512,rsa-sha2-256
 .Ed
 .Pp
+If the specified list begins with a
+.Sq +
+character, then the specified algorithms will be appended to the default set
+instead of replacing them.
+If the specified list begins with a
+.Sq -
+character, then the specified algorithms (including wildcards) will be removed
+from the default set instead of replacing them.
+.Pp
 Certificates signed using other algorithms will not be accepted for
 public key or host-based authentication.
-.It Cm ChallengeResponseAuthentication
-Specifies whether challenge-response authentication is allowed.
-All authentication styles from
-.Xr login.conf 5
-are supported.
-The default is
-.Cm yes .
 .It Cm ChrootDirectory
 Specifies the pathname of a directory to
 .Xr chroot 2
@@ -878,15 +882,17 @@ for interactive sessions and
 for non-interactive sessions.
 .It Cm KbdInteractiveAuthentication
 Specifies whether to allow keyboard-interactive authentication.
+All authentication styles from
+.Xr login.conf 5
+are supported.
+The default is
+.Cm yes .
 The argument to this keyword must be
 .Cm yes
 or
 .Cm no .
-The default is to use whatever value
 .Cm ChallengeResponseAuthentication
-is set to
-(by default
-.Cm yes ) .
+is a deprecated alias for this.
 .It Cm KerberosAuthentication
 Specifies whether the password provided by the user for
 .Cm PasswordAuthentication
@@ -1609,7 +1615,7 @@ For more information on KRLs, see the KEY REVOCATION LISTS section in
 .It Cm RDomain
 Specifies an explicit routing domain that is applied after authentication
 has completed.
-The user session, as well and any forwarded or listening IP sockets,
+The user session, as well as any forwarded or listening IP sockets,
 will be bound to this
 .Xr rdomain 4 .
 If the routing domain is set to

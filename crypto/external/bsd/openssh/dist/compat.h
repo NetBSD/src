@@ -1,5 +1,5 @@
-/*	$NetBSD: compat.h,v 1.14 2021/03/05 17:47:16 christos Exp $	*/
-/* $OpenBSD: compat.h,v 1.56 2021/01/27 09:26:54 djm Exp $ */
+/*	$NetBSD: compat.h,v 1.15 2021/09/02 11:26:17 christos Exp $	*/
+/* $OpenBSD: compat.h,v 1.57 2021/06/06 03:40:39 djm Exp $ */
 
 /*
  * Copyright (c) 1999, 2000, 2001 Markus Friedl.  All rights reserved.
@@ -30,7 +30,7 @@
 
 #define SSH_BUG_UTF8TTYMODE	0x00000001
 #define SSH_BUG_SIGTYPE		0x00000002
-/* #define unused		0x00000004 */
+#define SSH_BUG_SIGTYPE74	0x00000004
 /* #define unused		0x00000008 */
 #define SSH_OLD_SESSIONID	0x00000010
 /* #define unused		0x00000020 */

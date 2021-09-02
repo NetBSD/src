@@ -1,5 +1,5 @@
-/*	$NetBSD: packet.c,v 1.44 2021/04/19 14:40:15 christos Exp $	*/
-/* $OpenBSD: packet.c,v 1.300 2021/04/03 06:18:40 djm Exp $ */
+/*	$NetBSD: packet.c,v 1.45 2021/09/02 11:26:18 christos Exp $	*/
+/* $OpenBSD: packet.c,v 1.301 2021/07/16 09:00:23 djm Exp $ */
 
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -40,7 +40,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: packet.c,v 1.44 2021/04/19 14:40:15 christos Exp $");
+__RCSID("$NetBSD: packet.c,v 1.45 2021/09/02 11:26:18 christos Exp $");
 
 #include <sys/param.h>	/* MIN roundup */
 #include <sys/types.h>
@@ -988,6 +988,15 @@ ssh_packet_need_rekeying(struct ssh *ssh, u_int outbound_packet_len)
 	    (state->p_read.blocks > state->max_blocks_in));
 }
 
+int
+ssh_packet_check_rekey(struct ssh *ssh)
+{
+	if (!ssh_packet_need_rekeying(ssh, 0))
+		return 0;
+	debug3_f("rekex triggered");
+	return kex_start_rekex(ssh);
+}
+
 /*
  * Delayed compression for SSH2 is enabled after authentication:
  * This happens on the server side after a SSH2_MSG_USERAUTH_SUCCESS is sent,
@@ -1687,12 +1696,8 @@ ssh_packet_read_poll2(struct ssh *ssh, u_char *typep, u_int32_t *seqnr_p)
 	/* reset for next packet */
 	state->packlen = 0;
 
-	/* do we need to rekey? */
-	if (ssh_packet_need_rekeying(ssh, 0)) {
-		debug3_f("rekex triggered");
-		if ((r = kex_start_rekex(ssh)) != 0)
-			return r;
-	}
+	if ((r = ssh_packet_check_rekey(ssh)) != 0)
+		return r;
  out:
 	return r;
 }

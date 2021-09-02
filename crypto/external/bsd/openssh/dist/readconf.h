@@ -1,5 +1,5 @@
-/*	$NetBSD: readconf.h,v 1.26 2021/03/05 17:47:16 christos Exp $	*/
-/* $OpenBSD: readconf.h,v 1.140 2021/02/15 20:43:15 markus Exp $ */
+/*	$NetBSD: readconf.h,v 1.27 2021/09/02 11:26:18 christos Exp $	*/
+/* $OpenBSD: readconf.h,v 1.144 2021/07/23 04:04:52 djm Exp $ */
 
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -39,7 +39,6 @@ typedef struct {
 	struct ForwardOptions fwd_opts;	/* forwarding options */
 	int     pubkey_authentication;	/* Try ssh2 pubkey authentication. */
 	int     hostbased_authentication;	/* ssh2's rhosts_rsa */
-	int     challenge_response_authentication;
 #if defined(KRB4) || defined(KRB5)
 	int     kerberos_authentication;	/* Try Kerberos authentication. */
 #endif
@@ -166,6 +165,9 @@ typedef struct {
 
 	int	request_tty;
 	int	send_version_first;
+	int	session_type;
+	int	stdin_null;
+	int	fork_after_authentication;
 
 	int	proxy_use_fdpass;
 
@@ -210,6 +212,10 @@ typedef struct {
 #define REQUEST_TTY_NO		1
 #define REQUEST_TTY_YES		2
 #define REQUEST_TTY_FORCE	3
+
+#define SESSION_TYPE_NONE	0
+#define SESSION_TYPE_SUBSYSTEM	1
+#define SESSION_TYPE_DEFAULT	2
 
 #define SSHCONF_CHECKPERM	1  /* check permissions on config file */
 #define SSHCONF_USERCONF	2  /* user provided config file not system */

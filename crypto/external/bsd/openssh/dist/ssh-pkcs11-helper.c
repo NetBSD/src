@@ -1,5 +1,5 @@
-/*	$NetBSD: ssh-pkcs11-helper.c,v 1.20 2021/03/05 17:47:16 christos Exp $	*/
-/* $OpenBSD: ssh-pkcs11-helper.c,v 1.24 2020/10/18 11:32:02 djm Exp $ */
+/*	$NetBSD: ssh-pkcs11-helper.c,v 1.21 2021/09/02 11:26:18 christos Exp $	*/
+/* $OpenBSD: ssh-pkcs11-helper.c,v 1.25 2021/08/11 05:20:17 djm Exp $ */
 
 /*
  * Copyright (c) 2010 Markus Friedl.  All rights reserved.
@@ -17,7 +17,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 #include "includes.h"
-__RCSID("$NetBSD: ssh-pkcs11-helper.c,v 1.20 2021/03/05 17:47:16 christos Exp $");
+__RCSID("$NetBSD: ssh-pkcs11-helper.c,v 1.21 2021/09/02 11:26:18 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/queue.h>
@@ -94,7 +94,8 @@ lookup_key(struct sshkey *k)
 	struct pkcs11_keyinfo *ki;
 
 	TAILQ_FOREACH(ki, &pkcs11_keylist, next) {
-		debug("check %p %s %s", ki, ki->providername, ki->label);
+		debug("check %s %s %s", sshkey_type(ki->key),
+		    ki->providername, ki->label);
 		if (sshkey_equal(k, ki->key))
 			return (ki->key);
 	}

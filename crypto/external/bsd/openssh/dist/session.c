@@ -1,5 +1,5 @@
-/*	$NetBSD: session.c,v 1.34 2021/04/19 14:40:15 christos Exp $	*/
-/* $OpenBSD: session.c,v 1.328 2021/04/03 06:18:41 djm Exp $ */
+/*	$NetBSD: session.c,v 1.35 2021/09/02 11:26:18 christos Exp $	*/
+/* $OpenBSD: session.c,v 1.329 2021/08/11 05:20:17 djm Exp $ */
 
 /*
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -36,7 +36,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: session.c,v 1.34 2021/04/19 14:40:15 christos Exp $");
+__RCSID("$NetBSD: session.c,v 1.35 2021/09/02 11:26:18 christos Exp $");
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <sys/un.h>
@@ -1609,12 +1609,11 @@ session_dump(void)
 	for (i = 0; i < sessions_nalloc; i++) {
 		Session *s = &sessions[i];
 
-		debug("dump: used %d next_unused %d session %d %p "
+		debug("dump: used %d next_unused %d session %d "
 		    "channel %d pid %ld",
 		    s->used,
 		    s->next_unused,
 		    s->self,
-		    s,
 		    s->chanid,
 		    (long)s->pid);
 	}

@@ -1,5 +1,5 @@
-/*	$NetBSD: log.c,v 1.23 2021/04/19 14:40:15 christos Exp $	*/
-/* $OpenBSD: log.c,v 1.58 2021/04/15 16:24:31 markus Exp $ */
+/*	$NetBSD: log.c,v 1.24 2021/09/02 11:26:18 christos Exp $	*/
+/* $OpenBSD: log.c,v 1.59 2021/05/07 04:11:51 djm Exp $ */
 
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -37,7 +37,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: log.c,v 1.23 2021/04/19 14:40:15 christos Exp $");
+__RCSID("$NetBSD: log.c,v 1.24 2021/09/02 11:26:18 christos Exp $");
 #include <sys/types.h>
 #include <sys/uio.h>
 
@@ -445,8 +445,9 @@ sshlogv(const char *file, const char *func, int line, int showfunc,
 	const char *cp;
 	size_t i;
 
-	snprintf(tag, sizeof(tag), "%.48s:%.48s():%d",
-	    (cp = strrchr(file, '/')) == NULL ? file : cp + 1, func, line);
+	snprintf(tag, sizeof(tag), "%.48s:%.48s():%d (pid=%ld)",
+	    (cp = strrchr(file, '/')) == NULL ? file : cp + 1, func, line,
+	    (long)getpid());
 	for (i = 0; i < nlog_verbose; i++) {
 		if (match_pattern_list(tag, log_verbose[i], 0) == 1) {
 			forced = 1;
