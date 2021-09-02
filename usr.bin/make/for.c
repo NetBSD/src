@@ -1,4 +1,4 @@
-/*	$NetBSD: for.c,v 1.145 2021/09/01 23:07:41 rillig Exp $	*/
+/*	$NetBSD: for.c,v 1.146 2021/09/02 06:29:56 rillig Exp $	*/
 
 /*
  * Copyright (c) 1992, The Regents of the University of California.
@@ -58,7 +58,7 @@
 #include "make.h"
 
 /*	"@(#)for.c	8.1 (Berkeley) 6/6/93"	*/
-MAKE_RCSID("$NetBSD: for.c,v 1.145 2021/09/01 23:07:41 rillig Exp $");
+MAKE_RCSID("$NetBSD: for.c,v 1.146 2021/09/02 06:29:56 rillig Exp $");
 
 
 /* One of the variables to the left of the "in" in a .for loop. */
@@ -363,7 +363,7 @@ Buf_AddEscaped(Buffer *cmds, const char *item, char endc)
 }
 
 /*
- * While expanding the body of a .for loop, replace the variable name of an
+ * When expanding the body of a .for loop, replace the variable name of an
  * expression like ${i} or ${i:...} or $(i) or $(i:...) with ":Uvalue".
  */
 static void
@@ -404,7 +404,7 @@ ForLoop_SubstVarLong(ForLoop *f, const char **pp, const char *bodyEnd,
 }
 
 /*
- * While expanding the body of a .for loop, replace single-character
+ * When expanding the body of a .for loop, replace single-character
  * variable expressions like $i with their ${:U...} expansion.
  */
 static void
@@ -415,7 +415,7 @@ ForLoop_SubstVarShort(ForLoop *f, const char *p, const char **inout_mark)
 	size_t i;
 
 	/* Skip $$ and stupid ones. */
-	if (strchr("}):$", ch) != NULL)
+	if (ch == '}' || ch == ')' || ch == ':' || ch == '$')
 		return;
 
 	vars = Vector_Get(&f->vars, 0);
@@ -451,7 +451,7 @@ static void
 ForLoop_SubstBody(ForLoop *f)
 {
 	const char *p, *bodyEnd;
-	const char *mark;	/* where the last replacement left off */
+	const char *mark;	/* where the last substitution left off */
 
 	Buf_Empty(&f->curBody);
 
@@ -459,9 +459,9 @@ ForLoop_SubstBody(ForLoop *f)
 	bodyEnd = f->body.data + f->body.len;
 	for (p = mark; (p = strchr(p, '$')) != NULL;) {
 		if (p[1] == '{' || p[1] == '(') {
+			char endc = p[1] == '{' ? '}' : ')';
 			p += 2;
-			ForLoop_SubstVarLong(f, &p, bodyEnd,
-			    p[-1] == '{' ? '}' : ')', &mark);
+			ForLoop_SubstVarLong(f, &p, bodyEnd, endc, &mark);
 		} else if (p[1] != '\0') {
 			ForLoop_SubstVarShort(f, p + 1, &mark);
 			p += 2;
