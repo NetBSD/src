@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.366 2021/09/02 16:16:49 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.367 2021/09/02 16:31:01 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.366 2021/09/02 16:16:49 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.367 2021/09/02 16:31:01 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -1978,17 +1978,16 @@ convert(op_t op, int arg, type_t *tp, tnode_t *tn)
 	return ntn;
 }
 
-/*
- * The types differ in sign or base type (char, short, int, long, long long,
- * int128_t, float, double, long double).
- *
- * If they differ only in sign and the argument is representable in both
- * types, print no warning.
- */
 static bool
 should_warn_about_prototype_conversion(tspec_t nt,
 				       tspec_t ot, const tnode_t *ptn)
 {
+
+	if (nt == ot)
+		return false;
+
+	if (nt == ENUM && ot == INT)
+		return false;
 
 	if (is_floating(nt) != is_floating(ot) ||
 	    portable_size_in_bits(nt) != portable_size_in_bits(ot)) {
@@ -2014,9 +2013,9 @@ should_warn_about_prototype_conversion(tspec_t nt,
 }
 
 /*
- * Print a warning if a prototype causes a type conversion that is
- * different from what would happen to the same argument in the
- * absence of a prototype.
+ * Warn if a prototype causes a type conversion that is different from what
+ * would happen to the same argument in the absence of a prototype.  This
+ * check is intended for code that needs to stay compatible with pre-C90 C.
  *
  * Errors/warnings about illegal type combinations are already printed
  * in check_assign_types_compatible().
@@ -2039,13 +2038,9 @@ check_prototype_conversion(int arg, tspec_t nt, tspec_t ot, type_t *tp,
 	if (nt == CHAR || nt == UCHAR || nt == SHORT || nt == USHORT)
 		return;
 
-	/* get default promotion */
+	/* apply the default promotion */
 	ptn = promote(NOOP, true, tn);
 	ot = ptn->tn_type->t_tspec;
-
-	/* return if types are the same with and without prototype */
-	if (nt == ot || (nt == ENUM && ot == INT))
-		return;
 
 	if (should_warn_about_prototype_conversion(nt, ot, ptn)) {
 		/* argument #%d is converted from '%s' to '%s' ... */
