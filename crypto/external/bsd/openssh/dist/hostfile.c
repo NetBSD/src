@@ -1,5 +1,5 @@
-/*	$NetBSD: hostfile.c,v 1.20 2021/04/19 14:40:15 christos Exp $	*/
-/* $OpenBSD: hostfile.c,v 1.90 2021/04/03 06:58:30 djm Exp $ */
+/*	$NetBSD: hostfile.c,v 1.21 2021/09/02 11:26:18 christos Exp $	*/
+/* $OpenBSD: hostfile.c,v 1.91 2021/07/05 01:16:46 dtucker Exp $ */
 
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -39,7 +39,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: hostfile.c,v 1.20 2021/04/19 14:40:15 christos Exp $");
+__RCSID("$NetBSD: hostfile.c,v 1.21 2021/09/02 11:26:18 christos Exp $");
 #include <sys/types.h>
 #include <sys/stat.h>
 
@@ -47,11 +47,10 @@ __RCSID("$NetBSD: hostfile.c,v 1.20 2021/04/19 14:40:15 christos Exp $");
 
 #include <errno.h>
 #include <resolv.h>
+#include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <stdarg.h>
-#include <time.h>
 #include <unistd.h>
 
 #include "xmalloc.h"

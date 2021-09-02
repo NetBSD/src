@@ -1,5 +1,5 @@
-/*	$NetBSD: sshkey.h,v 1.14 2021/03/05 17:47:16 christos Exp $	*/
-/* $OpenBSD: sshkey.h,v 1.49 2021/01/26 00:49:30 djm Exp $ */
+/*	$NetBSD: sshkey.h,v 1.15 2021/09/02 11:26:18 christos Exp $	*/
+/* $OpenBSD: sshkey.h,v 1.50 2021/07/23 03:37:52 djm Exp $ */
 
 /*
  * Copyright (c) 2000, 2001 Markus Friedl.  All rights reserved.
@@ -192,6 +192,8 @@ int	 sshkey_to_certified(struct sshkey *);
 int	 sshkey_drop_cert(struct sshkey *);
 int	 sshkey_cert_copy(const struct sshkey *, struct sshkey *);
 int	 sshkey_cert_check_authority(const struct sshkey *, int, int, int,
+    uint64_t, const char *, const char **);
+int	 sshkey_cert_check_authority_now(const struct sshkey *, int, int, int,
     const char *, const char **);
 int	 sshkey_cert_check_host(const struct sshkey *, const char *,
     int , const char *, const char **);

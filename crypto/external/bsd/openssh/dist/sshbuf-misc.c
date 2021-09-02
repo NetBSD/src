@@ -1,4 +1,4 @@
-/*	$OpenBSD: sshbuf-misc.c,v 1.16 2020/06/22 05:54:10 djm Exp $	*/
+/*	$OpenBSD: sshbuf-misc.c,v 1.17 2021/08/11 05:21:32 djm Exp $	*/
 /*
  * Copyright (c) 2011 Damien Miller
  *
@@ -15,7 +15,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 #include "includes.h"
-__RCSID("$NetBSD: sshbuf-misc.c,v 1.12 2020/12/04 18:42:50 christos Exp $");
+__RCSID("$NetBSD: sshbuf-misc.c,v 1.13 2021/09/02 11:26:18 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -63,7 +63,7 @@ sshbuf_dump_data(const void *s, size_t len, FILE *f)
 void
 sshbuf_dump(const struct sshbuf *buf, FILE *f)
 {
-	fprintf(f, "buffer %p len = %zu\n", buf, sshbuf_len(buf));
+	fprintf(f, "buffer len = %zu\n", sshbuf_len(buf));
 	sshbuf_dump_data(sshbuf_ptr(buf), sshbuf_len(buf), f);
 }
 

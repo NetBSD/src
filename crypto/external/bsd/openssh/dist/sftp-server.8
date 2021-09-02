@@ -1,5 +1,5 @@
-.\"	$NetBSD: sftp-server.8,v 1.13 2020/12/04 18:42:50 christos Exp $
-.\" $OpenBSD: sftp-server.8,v 1.30 2020/06/22 06:36:40 jmc Exp $
+.\"	$NetBSD: sftp-server.8,v 1.14 2021/09/02 11:26:18 christos Exp $
+.\" $OpenBSD: sftp-server.8,v 1.31 2021/07/27 14:14:25 jmc Exp $
 .\"
 .\" Copyright (c) 2000 Markus Friedl.  All rights reserved.
 .\"
@@ -23,7 +23,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd June 22 2020
+.Dd July 27 2021
 .Dt SFTP-SERVER 8
 .Os
 .Sh NAME
@@ -65,7 +65,7 @@ for more information.
 Valid options are:
 .Bl -tag -width Ds
 .It Fl d Ar start_directory
-specifies an alternate starting directory for users.
+Specifies an alternate starting directory for users.
 The pathname may contain the following tokens that are expanded at runtime:
 %% is replaced by a literal '%',
 %d is replaced by the home directory of the user being authenticated,
@@ -101,7 +101,7 @@ DEBUG and DEBUG1 are equivalent.
 DEBUG2 and DEBUG3 each specify higher levels of debugging output.
 The default is ERROR.
 .It Fl P Ar denied_requests
-Specify a comma-separated list of SFTP protocol requests that are banned by
+Specifies a comma-separated list of SFTP protocol requests that are banned by
 the server.
 .Nm
 will reply to any denied request with a failure.
@@ -111,7 +111,7 @@ flag can be used to determine the supported request types.
 If both denied and allowed lists are specified, then the denied list is
 applied before the allowed list.
 .It Fl p Ar allowed_requests
-Specify a comma-separated list of SFTP protocol requests that are permitted
+Specifies a comma-separated list of SFTP protocol requests that are permitted
 by the server.
 All request types that are not on the allowed list will be logged and replied
 to with a failure message.
@@ -119,7 +119,7 @@ to with a failure message.
 Care must be taken when using this feature to ensure that requests made
 implicitly by SFTP clients are permitted.
 .It Fl Q Ar protocol_feature
-Query protocol features supported by
+Queries protocol features supported by
 .Nm .
 At present the only feature that may be queried is
 .Dq requests ,
