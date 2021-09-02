@@ -1,11 +1,22 @@
-/*	$NetBSD: msg_259.c,v 1.18 2021/09/02 17:29:19 rillig Exp $	*/
+/*	$NetBSD: msg_259.c,v 1.19 2021/09/02 17:55:27 rillig Exp $	*/
 # 3 "msg_259.c"
 
 // Test for message: argument #%d is converted from '%s' to '%s' due to prototype [259]
 
 /*
- * See also msg_297, but that requires the flags -a -p -P, which are not
- * enabled in the default NetBSD build.
+ * This warning detects function calls that are translated in very different
+ * translation environments, one where prototypes are omitted, and one where
+ * prototypes are active.  It is possible to make such code interoperable,
+ * but that requires that each argument is converted to its proper type by
+ * the caller of the function.
+ *
+ * When lint is run with the '-s' flag, it no longer warns about code with
+ * incompatibilities between traditional C and C90, therefore this test omits
+ * all of the options '-t', '-s', '-S' and '-Ac11'.
+ *
+ * See also msg_297, which is about lossy integer conversions, but that
+ * requires the flags -a -p -P, which are not enabled in the default NetBSD
+ * build.
  */
 
 /* lint1-only-if: lp64 */
@@ -43,13 +54,16 @@ change_in_type_width(char c, int i, long l)
 }
 
 /*
- * The default argument promotions convert any small integer type to at
- * least 'int', and without function prototypes, it is not possible to
- * declare a function that has a parameter smaller than int, therefore
- * these conversions do not produce any warnings.
- * FIXME: Remove the warnings for 'signed char'.
- * There are lossless conversions though, but these are covered by warning
- * 297 instead.
+ * Converting a signed integer type to its corresponding unsigned integer
+ * type (C99 6.2.5p6) is usually not a problem since the actual values of the
+ * expressions are usually not anywhere near the maximum signed value.  From
+ * a technical standpoint, it is correct to warn here since even small
+ * negative numbers may result in very large positive numbers.
+ *
+ * A common case where it occurs is when the difference of two pointers is
+ * converted to size_t.  The type ptrdiff_t is defined to be signed, but in
+ * many practical cases, the expression is '(end - start)', which makes the
+ * resulting value necessarily positive.
  */
 void
 small_integer_types(char c, signed char sc, unsigned char uc,
@@ -109,16 +123,15 @@ small_integer_types(char c, signed char sc, unsigned char uc,
 }
 
 /*
- * Converting a signed integer type to its corresponding unsigned integer
- * type (C99 6.2.5p6) is usually not a problem since the actual values of the
- * expressions are usually not anywhere near the maximum signed value.  From
- * a technical standpoint, it is correct to warn here since even small
- * negative numbers may result in very large positive numbers.
+ * This function tests, among others, the conversion from a signed integer
+ * type to its corresponding unsigned integer type.  Warning 259 is not
+ * about lossy integer conversions but about ABI calling conventions.
  *
- * A common case where it occurs is when the difference of two pointers is
- * converted to size_t.  The type ptrdiff_t is defined to be signed, but in
- * many practical cases, the expression is '(end - start)', which makes the
- * resulting value necessarily positive.
+ * A common case where a conversion from a signed integer type to its
+ * corresponding unsigned integer type occurs is when the difference of two
+ * pointers is converted to size_t.  The type ptrdiff_t is defined to be
+ * signed, but in many practical cases, the expression is '(end - start)',
+ * which makes the resulting value necessarily positive.
  */
 void
 signed_to_unsigned(int si, long sl, long long sll)
@@ -133,8 +146,9 @@ signed_to_unsigned(int si, long sl, long long sll)
 	unsigned_int(sll);
 
 	/*
-	 * XXX: Why no warning?  Even though 'unsigned long' is 64 bits
-	 * wide, it cannot represent negative 32-bit values.
+	 * No warning here.  Even though 'unsigned long' is 64 bits wide, it
+	 * cannot represent negative 32-bit values.  This lossy conversion is
+	 * covered by message 297 instead, which requires nonstandard flags.
 	 */
 	unsigned_long(si);
 
@@ -144,8 +158,10 @@ signed_to_unsigned(int si, long sl, long long sll)
 	unsigned_long(sll);
 
 	/*
-	 * XXX: Why no warning?  Even though 'unsigned long long' is 64 bits
-	 * wide, it cannot represent negative 32-bit values.
+	 * No warning here.  Even though 'unsigned long long' is 64 bits
+	 * wide, it cannot represent negative 32-bit values.  This lossy
+	 * conversion is covered by message 297 instead, which requires
+	 * nonstandard flags.
 	 */
 	unsigned_long_long(si);
 
@@ -217,10 +233,16 @@ void
 pass_sizeof_as_smaller_type(void)
 {
 	/*
-	 * XXX: Even though the expression has type size_t, it has a constant
+	 * Even though the expression has type size_t, it has a constant
 	 * value that fits effortless into an 'unsigned int', it's so small
-	 * that it would even fit into a 3-bit bit-field, so lint should not
-	 * warn here.
+	 * that it would even fit into a 3-bit bit-field, so lint's warning
+	 * may seem wrong here.
+	 *
+	 * This warning 259 is not about lossy integer conversion though but
+	 * instead covers calling conventions that may differ between integer
+	 * types of different sizes, and from that point of view, the
+	 * constant, even though its value would fit in an unsigned int, is
+	 * still passed as size_t.
 	 */
 	/* expect+1: warning: argument #1 is converted from 'unsigned long' to 'unsigned int' due to prototype [259] */
 	unsigned_int(sizeof(int));
