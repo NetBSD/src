@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_259.c,v 1.16 2021/08/31 19:26:23 rillig Exp $	*/
+/*	$NetBSD: msg_259.c,v 1.17 2021/09/02 17:26:43 rillig Exp $	*/
 # 3 "msg_259.c"
 
 // Test for message: argument #%d is converted from '%s' to '%s' due to prototype [259]
@@ -12,6 +12,10 @@
 /* lint1-extra-flags: -h */
 
 void plain_char(char);
+void signed_char(signed char);
+void unsigned_char(unsigned char);
+void signed_short(signed short);
+void unsigned_short(unsigned short);
 void signed_int(int);
 void unsigned_int(unsigned int);
 void signed_long(long);
@@ -36,6 +40,74 @@ change_in_type_width(char c, int i, long l)
 	/* expect+1: from 'long' to 'int' due to prototype [259] */
 	signed_int(l);
 	signed_long(l);
+}
+
+/*
+ * The default argument promotions convert any small integer type to at
+ * least 'int', and without function prototypes, it is not possible to
+ * declare a function that has a parameter smaller than int, therefore
+ * these conversions do not produce any warnings.
+ * FIXME: Remove the warnings for 'signed char'.
+ * There are lossless conversions though, but these are covered by warning
+ * 297 instead.
+ */
+void
+small_integer_types(char c, signed char sc, unsigned char uc,
+		    signed short ss, unsigned short us,
+		    signed int si, unsigned int ui,
+		    signed long long sll, unsigned long long ull)
+{
+	plain_char(c);
+	plain_char(sc);
+	plain_char(uc);
+	plain_char(ss);
+	plain_char(us);
+	plain_char(si);
+	plain_char(ui);
+	plain_char(sll);
+	plain_char(ull);
+
+	signed_char(c);
+	signed_char(sc);
+	signed_char(uc);
+	signed_char(ss);
+	signed_char(us);
+	signed_char(si);
+	signed_char(ui);
+	/* expect+1: warning: argument #1 is converted from 'long long' to 'signed char' due to prototype [259] */
+	signed_char(sll);
+	/* expect+1: warning: argument #1 is converted from 'unsigned long long' to 'signed char' due to prototype [259] */
+	signed_char(ull);
+
+	unsigned_char(c);
+	unsigned_char(sc);
+	unsigned_char(uc);
+	unsigned_char(ss);
+	unsigned_char(us);
+	unsigned_char(si);
+	unsigned_char(ui);
+	unsigned_char(sll);
+	unsigned_char(ull);
+
+	signed_short(c);
+	signed_short(sc);
+	signed_short(uc);
+	signed_short(ss);
+	signed_short(us);
+	signed_short(si);
+	signed_short(ui);
+	signed_short(sll);
+	signed_short(ull);
+
+	unsigned_short(c);
+	unsigned_short(sc);
+	unsigned_short(uc);
+	unsigned_short(ss);
+	unsigned_short(us);
+	unsigned_short(si);
+	unsigned_short(ui);
+	unsigned_short(sll);
+	unsigned_short(ull);
 }
 
 /*
