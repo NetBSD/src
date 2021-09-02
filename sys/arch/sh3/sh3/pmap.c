@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.85 2021/07/26 21:43:11 andvar Exp $	*/
+/*	$NetBSD: pmap.c,v 1.86 2021/09/02 07:55:56 rin Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.85 2021/07/26 21:43:11 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.86 2021/09/02 07:55:56 rin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -385,9 +385,12 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 	else {
 		pte = __pmap_pte_alloc(pmap, va);
 		if (pte == NULL) {
-			if (flags & PMAP_CANFAIL)
+			if (flags & PMAP_CANFAIL) {
+				if (pg != NULL)
+					__pmap_pv_remove(pmap, pg, va);
 				return ENOMEM;
-			panic("pmap_enter: cannot allocate pte");
+			}
+			panic("%s: __pmap_pte_alloc failed", __func__);
 		}
 	}
 
@@ -724,8 +727,14 @@ pmap_page_protect(struct vm_page *pg, vm_prot_t prot)
 		/* Remove all */
 		s = splvm();
 		while ((pv = SLIST_FIRST(&pvh->pvh_head)) != NULL) {
+			pmap = pv->pv_pmap;
 			va = pv->pv_va;
-			pmap_remove(pv->pv_pmap, va, va + PAGE_SIZE);
+#ifdef DIAGNOSTIC
+			pt_entry_t *pte = __pmap_pte_lookup(pmap, va);
+			KASSERT(pte != NULL);
+			KASSERT(*pte != 0);
+#endif
+			pmap_remove(pmap, va, va + PAGE_SIZE);
 		}
 		splx(s);
 	}
