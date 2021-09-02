@@ -1,4 +1,4 @@
-# $NetBSD: directive-for-escape.mk,v 1.10 2021/06/25 16:10:07 rillig Exp $
+# $NetBSD: directive-for-escape.mk,v 1.11 2021/09/02 07:02:08 rillig Exp $
 #
 # Test escaping of special characters in the iteration values of a .for loop.
 # These values get expanded later using the :U variable modifier, and this
@@ -29,19 +29,21 @@ ASCII.2020-12-31=	!"\\\#$$%&'()*+,-./0-9:;<=>?@A-Z[\]_^a-z{|}~
 .  info ${chars}
 .endfor
 
-# Cover the code in for_var_len.
+# Cover the code in ExprLen.
 #
 # XXX: It is unexpected that the variable V gets expanded in the loop body.
-# The double '$$' should prevent exactly this.  Probably nobody was
-# adventurous enough to use literal dollar signs in the values of a .for
+# The double '$$' should intuitively prevent exactly this.  Probably nobody
+# was adventurous enough to use literal dollar signs in the values of a .for
 # loop.
+#
+# See for.c, function ExprLen.
 V=		value
 VALUES=		$$ $${V} $${V:=-with-modifier} $$(V) $$(V:=-with-modifier)
 .for i in ${VALUES}
 .  info $i
 .endfor
 
-# Try to cover the code for nested '{}' in for_var_len, without success.
+# Try to cover the code for nested '{}' in ExprLen, without success.
 #
 # The value of the variable VALUES is not meant to be a variable expression.
 # Instead, it is meant to represent literal text, the only escaping mechanism
@@ -55,9 +57,9 @@ VALUES=		$${UNDEF:U\$$\$$ {{}} end}
 .  info $i
 .endfor
 
-# Second try to cover the code for nested '{}' in for_var_len.
+# Second try to cover the code for nested '{}' in ExprLen.
 #
-# XXX: It is wrong that for_var_len requires the braces to be balanced.
+# XXX: It is wrong that ExprLen requires the braces to be balanced.
 # Each variable modifier has its own inconsistent way of parsing nested
 # variable expressions, braces and parentheses.  (Compare ':M', ':S', and
 # ':D' for details.)  The only sensible thing to do is therefore to let
