@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_259.c,v 1.17 2021/09/02 17:26:43 rillig Exp $	*/
+/*	$NetBSD: msg_259.c,v 1.18 2021/09/02 17:29:19 rillig Exp $	*/
 # 3 "msg_259.c"
 
 // Test for message: argument #%d is converted from '%s' to '%s' due to prototype [259]
@@ -74,9 +74,7 @@ small_integer_types(char c, signed char sc, unsigned char uc,
 	signed_char(us);
 	signed_char(si);
 	signed_char(ui);
-	/* expect+1: warning: argument #1 is converted from 'long long' to 'signed char' due to prototype [259] */
 	signed_char(sll);
-	/* expect+1: warning: argument #1 is converted from 'unsigned long long' to 'signed char' due to prototype [259] */
 	signed_char(ull);
 
 	unsigned_char(c);
