@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.365 2021/09/01 06:48:24 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.366 2021/09/02 16:16:49 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.365 2021/09/01 06:48:24 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.366 2021/09/02 16:16:49 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -1986,11 +1986,8 @@ convert(op_t op, int arg, type_t *tp, tnode_t *tn)
  * types, print no warning.
  */
 static bool
-should_warn_about_prototype_conversion(
-    int arg,
-    const type_t *tp, tspec_t nt,
-    const tnode_t *tn, tspec_t ot,
-    const tnode_t *ptn)
+should_warn_about_prototype_conversion(tspec_t nt,
+				       tspec_t ot, const tnode_t *ptn)
 {
 
 	if (is_floating(nt) != is_floating(ot) ||
@@ -2050,8 +2047,7 @@ check_prototype_conversion(int arg, tspec_t nt, tspec_t ot, type_t *tp,
 	if (nt == ot || (nt == ENUM && ot == INT))
 		return;
 
-	if (should_warn_about_prototype_conversion(
-	    arg, tp, nt, tn, ot, ptn)) {
+	if (should_warn_about_prototype_conversion(nt, ot, ptn)) {
 		/* argument #%d is converted from '%s' to '%s' ... */
 		warning(259, arg, type_name(tn->tn_type), type_name(tp));
 	}
