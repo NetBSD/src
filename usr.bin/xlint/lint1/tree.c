@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.368 2021/09/02 17:29:19 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.369 2021/09/02 19:19:17 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.368 2021/09/02 17:29:19 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.369 2021/09/02 19:19:17 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -1449,136 +1449,142 @@ check_unconst_function(const type_t *lstp,
 	}
 }
 
-/*
- * Checks type compatibility for ASSIGN, INIT, FARG and RETURN
- * and prints warnings/errors if necessary.
- * If the types are (almost) compatible, 1 is returned, otherwise 0.
- */
-static bool
-check_assign_types_compatible(op_t op, int arg,
-			      const tnode_t *ln, const tnode_t *rn)
+static void
+check_assign_void_pointer(op_t op, int arg,
+			  tspec_t lt, tspec_t lst,
+			  tspec_t rt, tspec_t rst)
 {
-	tspec_t	lt, rt, lst = NOTSPEC, rst = NOTSPEC;
-	type_t	*ltp, *rtp, *lstp = NULL, *rstp = NULL;
-	const mod_t *mp;
-	const	char *lts, *rts;
+	const char *lts, *rts;
 
-	if ((lt = (ltp = ln->tn_type)->t_tspec) == PTR)
-		lst = (lstp = ltp->t_subt)->t_tspec;
-	if ((rt = (rtp = rn->tn_type)->t_tspec) == PTR)
-		rst = (rstp = rtp->t_subt)->t_tspec;
-	mp = &modtab[op];
+	if (!(lt == PTR && rt == PTR && (lst == VOID || rst == VOID)))
+		return;
+	/* two pointers, at least one pointer to void */
 
-	if (lt == BOOL && is_scalar(rt))	/* C99 6.3.1.2 */
-		return true;
+	if (!(sflag && (lst == FUNC || rst == FUNC)))
+		return;
+	/* comb. of ptr to func and ptr to void */
 
-	if (is_arithmetic(lt) && (is_arithmetic(rt) || rt == BOOL))
-		return true;
+	*(lst == FUNC ? &lts : &rts) = "function pointer";
+	*(lst == VOID ? &lts : &rts) = "'void *'";
 
-	if ((lt == STRUCT || lt == UNION) && (rt == STRUCT || rt == UNION))
-		/* both are struct or union */
-		return ltp->t_str == rtp->t_str;
-
-	/* a null pointer may be assigned to any pointer */
-	if (lt == PTR && is_null_pointer(rn))
-		return true;
-
-	if (lt == PTR && rt == PTR && (lst == VOID || rst == VOID)) {
-		/* two pointers, at least one pointer to void */
-		if (sflag && (lst == FUNC || rst == FUNC)) {
-			/* comb. of ptr to func and ptr to void */
-			*(lst == FUNC ? &lts : &rts) = "function pointer";
-			*(lst == VOID ? &lts : &rts) = "'void *'";
-			switch (op) {
-			case INIT:
-			case RETURN:
-				/* ANSI C forbids conversion of %s to %s */
-				warning(303, rts, lts);
-				break;
-			case FARG:
-				/* ANSI C forbids conv. of %s to %s, arg #%d */
-				warning(304, rts, lts, arg);
-				break;
-			default:
-				/* ANSI C forbids conv. of %s to %s, op %s */
-				warning(305, rts, lts, mp->m_name);
-				break;
-			}
-		}
+	switch (op) {
+	case INIT:
+	case RETURN:
+		/* ANSI C forbids conversion of %s to %s */
+		warning(303, rts, lts);
+		break;
+	case FARG:
+		/* ANSI C forbids conv. of %s to %s, arg #%d */
+		warning(304, rts, lts, arg);
+		break;
+	default:
+		/* ANSI C forbids conv. of %s to %s, op %s */
+		warning(305, rts, lts, op_name(op));
+		break;
 	}
+}
 
-	if (lt == PTR && rt == PTR && (lst == VOID || rst == VOID ||
-				       eqtype(lstp, rstp, true, false, NULL))) {
-		/* compatible pointer types (qualifiers ignored) */
-		if (!tflag &&
-		    ((!lstp->t_const && rstp->t_const) ||
-		     (!lstp->t_volatile && rstp->t_volatile))) {
-			/* left side has not all qualifiers of right */
-			switch (op) {
-			case INIT:
-			case RETURN:
-				/* incompatible pointer types (%s != %s) */
-				warning(182, type_name(lstp), type_name(rstp));
-				break;
-			case FARG:
-				/* converting '%s' to incompatible '%s' ... */
-				warning(153,
-				    type_name(rtp), type_name(ltp), arg);
-				break;
-			default:
-				/* operands have incompatible pointer type... */
-				warning(128, mp->m_name,
-				    type_name(lstp), type_name(rstp));
-				break;
-			}
-		}
+static bool
+check_assign_void_pointer_compat(op_t op, int arg,
+				 const type_t *const ltp, tspec_t const lt,
+				 const type_t *const lstp, tspec_t const lst,
+				 const tnode_t *const rn,
+				 const type_t *const rtp, tspec_t const rt,
+				 const type_t *const rstp, tspec_t const rst)
+{
+	if (!(lt == PTR && rt == PTR && (lst == VOID || rst == VOID ||
+					 eqtype(lstp, rstp, true, false, NULL))))
+		return false;
 
-		if (!tflag)
-			check_unconst_function(lstp, rn, rstp);
-
-		return true;
-	}
-
-	if ((lt == PTR && is_integer(rt)) || (is_integer(lt) && rt == PTR)) {
-		const char *lx = lt == PTR ? "pointer" : "integer";
-		const char *rx = rt == PTR ? "pointer" : "integer";
-
+	/* compatible pointer types (qualifiers ignored) */
+	if (!tflag &&
+	    ((!lstp->t_const && rstp->t_const) ||
+	     (!lstp->t_volatile && rstp->t_volatile))) {
+		/* left side has not all qualifiers of right */
 		switch (op) {
 		case INIT:
 		case RETURN:
-			/* illegal combination of %s (%s) and %s (%s) */
-			warning(183, lx, type_name(ltp), rx, type_name(rtp));
+			/* incompatible pointer types (%s != %s) */
+			warning(182, type_name(lstp), type_name(rstp));
 			break;
 		case FARG:
-			/* illegal comb. of %s (%s) and %s (%s), arg #%d */
-			warning(154,
-			    lx, type_name(ltp), rx, type_name(rtp), arg);
+			/* converting '%s' to incompatible '%s' ... */
+			warning(153,
+			    type_name(rtp), type_name(ltp), arg);
 			break;
 		default:
-			/* illegal combination of %s (%s) and %s (%s), op %s */
-			warning(123,
-			    lx, type_name(ltp), rx, type_name(rtp), mp->m_name);
+			/* operands have incompatible pointer type... */
+			warning(128, op_name(op),
+			    type_name(lstp), type_name(rstp));
 			break;
 		}
-		return true;
 	}
 
-	if (lt == PTR && rt == PTR) {
-		switch (op) {
-		case RETURN:
-			warn_incompatible_pointers(NULL, ltp, rtp);
-			break;
-		case FARG:
-			/* converting '%s' to incompatible '%s' for ... */
-			warning(153, type_name(rtp), type_name(ltp), arg);
-			break;
-		default:
-			warn_incompatible_pointers(mp, ltp, rtp);
-			break;
-		}
-		return true;
-	}
+	if (!tflag)
+		check_unconst_function(lstp, rn, rstp);
 
+	return true;
+}
+
+static bool
+check_assign_pointer_integer(op_t op, int arg,
+			     const type_t *const ltp, tspec_t const lt,
+			     const type_t *const rtp, tspec_t const rt)
+{
+	if (!((lt == PTR && is_integer(rt)) || (is_integer(lt) && rt == PTR)))
+		return false;
+
+	const char *lx = lt == PTR ? "pointer" : "integer";
+	const char *rx = rt == PTR ? "pointer" : "integer";
+
+	switch (op) {
+	case INIT:
+	case RETURN:
+		/* illegal combination of %s (%s) and %s (%s) */
+		warning(183, lx, type_name(ltp), rx, type_name(rtp));
+		break;
+	case FARG:
+		/* illegal comb. of %s (%s) and %s (%s), arg #%d */
+		warning(154,
+		    lx, type_name(ltp), rx, type_name(rtp), arg);
+		break;
+	default:
+		/* illegal combination of %s (%s) and %s (%s), op %s */
+		warning(123,
+		    lx, type_name(ltp), rx, type_name(rtp), op_name(op));
+		break;
+	}
+	return true;
+}
+
+static bool
+check_assign_pointer(op_t op, int arg,
+		     const type_t *ltp, tspec_t lt,
+		     const type_t *rtp, tspec_t rt)
+{
+	if (!(lt == PTR && rt == PTR))
+		return false;
+
+	switch (op) {
+	case RETURN:
+		warn_incompatible_pointers(NULL, ltp, rtp);
+		break;
+	case FARG:
+		/* converting '%s' to incompatible '%s' for ... */
+		warning(153, type_name(rtp), type_name(ltp), arg);
+		break;
+	default:
+		warn_incompatible_pointers(&modtab[op], ltp, rtp);
+		break;
+	}
+	return true;
+}
+
+static void
+warn_assign(op_t op, int arg,
+	    const type_t *ltp, tspec_t lt,
+	    const type_t *rtp, tspec_t rt)
+{
 	switch (op) {
 	case INIT:
 		/* cannot initialize '%s' from '%s' */
@@ -1596,7 +1602,52 @@ check_assign_types_compatible(op_t op, int arg,
 		warn_incompatible_types(op, ltp, lt, rtp, rt);
 		break;
 	}
+}
 
+/*
+ * Checks type compatibility for ASSIGN, INIT, FARG and RETURN
+ * and prints warnings/errors if necessary.
+ * Returns whether the types are (almost) compatible.
+ */
+static bool
+check_assign_types_compatible(op_t op, int arg,
+			      const tnode_t *ln, const tnode_t *rn)
+{
+	tspec_t	lt, rt, lst = NOTSPEC, rst = NOTSPEC;
+	type_t	*ltp, *rtp, *lstp = NULL, *rstp = NULL;
+
+	if ((lt = (ltp = ln->tn_type)->t_tspec) == PTR)
+		lst = (lstp = ltp->t_subt)->t_tspec;
+	if ((rt = (rtp = rn->tn_type)->t_tspec) == PTR)
+		rst = (rstp = rtp->t_subt)->t_tspec;
+
+	if (lt == BOOL && is_scalar(rt))	/* C99 6.3.1.2 */
+		return true;
+
+	if (is_arithmetic(lt) && (is_arithmetic(rt) || rt == BOOL))
+		return true;
+
+	if ((lt == STRUCT || lt == UNION) && (rt == STRUCT || rt == UNION))
+		/* both are struct or union */
+		return ltp->t_str == rtp->t_str;
+
+	/* a null pointer may be assigned to any pointer */
+	if (lt == PTR && is_null_pointer(rn))
+		return true;
+
+	check_assign_void_pointer(op, arg, lt, lst, rt, rst);
+
+	if (check_assign_void_pointer_compat(op, arg,
+	    ltp, lt, lstp, lst, rn, rtp, rt, rstp, rst))
+		return true;
+
+	if (check_assign_pointer_integer(op, arg, ltp, lt, rtp, rt))
+		return true;
+
+	if (check_assign_pointer(op, arg, ltp, lt, rtp, rt))
+		return true;
+
+	warn_assign(op, arg, ltp, lt, rtp, rt);
 	return false;
 }
 
