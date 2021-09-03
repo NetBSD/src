@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.334.2.5 2020/09/03 13:45:24 martin Exp $	*/
+/*	$NetBSD: pmap.c,v 1.334.2.6 2021/09/03 10:27:33 martin Exp $	*/
 
 /*
  * Copyright (c) 2008, 2010, 2016, 2017 The NetBSD Foundation, Inc.
@@ -130,7 +130,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.334.2.5 2020/09/03 13:45:24 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.334.2.6 2021/09/03 10:27:33 martin Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -806,6 +806,7 @@ pmap_exec_fixup(struct vm_map *map, struct trapframe *tf, struct pcb *pcb)
 void
 pat_init(struct cpu_info *ci)
 {
+#ifndef XENPV
 	uint64_t pat;
 
 	if (!(ci->ci_feat_val[0] & CPUID_PAT))
@@ -819,6 +820,7 @@ pat_init(struct cpu_info *ci)
 
 	wrmsr(MSR_CR_PAT, pat);
 	cpu_pat_enabled = true;
+#endif
 }
 
 static pt_entry_t
