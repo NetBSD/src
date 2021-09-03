@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec.c,v 1.6 2021/08/30 17:32:23 rillig Exp $	*/
+/*	$NetBSD: ipsec.c,v 1.7 2021/09/03 20:24:28 rillig Exp $	*/
 
 /*
  * Copyright (C) 1999 WIDE Project.
@@ -36,6 +36,7 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -58,7 +59,7 @@ ipsecsetup(int af, int fd, const char *policy)
 	char *p0, *p;
 	int error;
 
-	if (!policy || *policy == '\0')
+	if (policy == NULL || *policy == '\0')
 		p0 = p = strdup("in entrust; out entrust");
 	else
 		p0 = p = strdup(policy);
@@ -70,11 +71,11 @@ ipsecsetup(int af, int fd, const char *policy)
 			break;
 		while (*p && isspace((unsigned char)*p))
 			p++;
-		if (!*p) {
+		if (*p == '\0') {
 			p = NULL;
 			continue;
 		}
-		error = ipsecsetup0(af, fd, p, 1);
+		error = ipsecsetup0(af, fd, p, true);
 		if (error < 0)
 			break;
 		p = NULL;
@@ -91,7 +92,7 @@ ipsecsetup_test(const char *policy)
 	char *buf;
 	int error;
 
-	if (!policy)
+	if (policy == NULL)
 		return -1;
 	p0 = p = strdup(policy);
 	if (p == NULL)
@@ -104,7 +105,7 @@ ipsecsetup_test(const char *policy)
 			break;
 		while (*p && isspace((unsigned char)*p))
 			p++;
-		if (!*p) {
+		if (*p == '\0') {
 			p = NULL;
 			continue;
 		}
