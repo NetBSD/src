@@ -1,4 +1,4 @@
-/*	$NetBSD: inetd.h,v 1.2 2021/08/30 17:32:23 rillig Exp $	*/
+/*	$NetBSD: inetd.h,v 1.3 2021/09/03 20:24:28 rillig Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003 The NetBSD Foundation, Inc.
@@ -70,6 +70,7 @@
 #include <arpa/inet.h>
 
 #include <netdb.h>
+#include <stdbool.h>
 
 #include "pathnames.h"
 
@@ -109,7 +110,7 @@ typedef enum service_type {
 	if (debug) {\
 		fprintf(stderr, fmt "\n" __VA_OPT__(,) __VA_ARGS__);\
 	}\
-} while (0)
+} while (false)
 #else
 #define DPRINTF(fmt, ...) __nothing
 #endif

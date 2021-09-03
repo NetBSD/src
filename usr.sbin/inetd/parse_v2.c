@@ -1,4 +1,4 @@
-/*	$NetBSD: parse_v2.c,v 1.4 2021/08/30 18:21:11 rillig Exp $	*/
+/*	$NetBSD: parse_v2.c,v 1.5 2021/09/03 20:24:28 rillig Exp $	*/
 
 /*-
  * Copyright (c) 2021 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: parse_v2.c,v 1.4 2021/08/30 18:21:11 rillig Exp $");
+__RCSID("$NetBSD: parse_v2.c,v 1.5 2021/09/03 20:24:28 rillig Exp $");
 
 #include <ctype.h>
 #include <errno.h>
@@ -392,7 +392,7 @@ parse_quotes(char **cpp)
 	char quote = *cp;
 
 	strmove(cp, 1);
-	while (*cp && quote) {
+	while (*cp != '\0' && quote != '\0') {
 		if (*cp == quote) {
 			quote = '\0';
 			strmove(cp, 1);
@@ -449,7 +449,7 @@ parse_quotes(char **cpp)
 		cp++;
 	}
 
-	if (*cp == '\0' && quote) {
+	if (*cp == '\0' && quote != '\0') {
 		ERR("Unclosed quote");
 		return false;
 	}
@@ -787,7 +787,7 @@ size_to_bytes(char *arg)
 
 	count = (int)strtoi(arg, &tail, 10, 0, INT_MAX, &rstatus);
 
-	if (rstatus && rstatus != ENOTSUP) {
+	if (rstatus != 0 && rstatus != ENOTSUP) {
 		ERR("Invalid buffer size '%s': %s", arg, strerror(rstatus));
 		return -1;
 	}
@@ -951,7 +951,7 @@ service_max_handler(struct servtab *sep, vlist values)
 	size_t count = (size_t)strtou(count_str, NULL, 10, 0,
 	    SERVTAB_COUNT_MAX, &rstatus);
 
-	if (rstatus) {
+	if (rstatus != 0) {
 		ERR("Invalid service_max '%s': %s", count_str,
 		    strerror(rstatus));
 		return KEY_HANDLER_FAILURE;
@@ -988,7 +988,7 @@ ip_max_handler(struct servtab *sep, vlist values)
 	size_t count = (size_t)strtou(count_str, NULL, 10, 0,
 	    SERVTAB_COUNT_MAX, &rstatus);
 
-	if (rstatus) {
+	if (rstatus != 0) {
 		ERR("Invalid ip_max '%s': %s", count_str, strerror(rstatus));
 		return KEY_HANDLER_FAILURE;
 	}
@@ -1138,7 +1138,7 @@ ipsec_handler(struct servtab *sep, vlist values)
 	 * An empty string indicates that IPsec was disabled, handled in
 	 * fill_default_values.
 	 */
-	sep->se_policy = policy ? newstr(ipsecstr) : newstr("");
+	sep->se_policy = policy != NULL ? newstr(ipsecstr) : newstr("");
 
 	if (next_value(values) != NULL) {
 		TMA("ipsec");
