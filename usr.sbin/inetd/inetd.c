@@ -1,4 +1,4 @@
-/*	$NetBSD: inetd.c,v 1.135 2021/09/03 20:41:19 rillig Exp $	*/
+/*	$NetBSD: inetd.c,v 1.136 2021/09/03 21:02:04 rillig Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1991, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)inetd.c	8.4 (Berkeley) 4/13/94";
 #else
-__RCSID("$NetBSD: inetd.c,v 1.135 2021/09/03 20:41:19 rillig Exp $");
+__RCSID("$NetBSD: inetd.c,v 1.136 2021/09/03 21:02:04 rillig Exp $");
 #endif
 #endif /* not lint */
 
@@ -1234,7 +1234,7 @@ more:
 		/* lines starting with #@ is not a comment, but the policy */
 		if (cp[1] == '@') {
 			char *p;
-			for (p = cp + 2; p && *p && isspace((unsigned char)*p); p++)
+			for (p = cp + 2; isspace((unsigned char)*p); p++)
 				;
 			if (*p == '\0') {
 				if (policy)
