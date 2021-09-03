@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec.c,v 1.7 2021/09/03 20:24:28 rillig Exp $	*/
+/*	$NetBSD: ipsec.c,v 1.8 2021/09/03 21:02:04 rillig Exp $	*/
 
 /*
  * Copyright (C) 1999 WIDE Project.
@@ -69,7 +69,7 @@ ipsecsetup(int af, int fd, const char *policy)
 		p = strtok(p, ";");
 		if (p == NULL)
 			break;
-		while (*p && isspace((unsigned char)*p))
+		while (isspace((unsigned char)*p))
 			p++;
 		if (*p == '\0') {
 			p = NULL;
@@ -103,7 +103,7 @@ ipsecsetup_test(const char *policy)
 		p = strtok(p, ";");
 		if (p == NULL)
 			break;
-		while (*p && isspace((unsigned char)*p))
+		while (isspace((unsigned char)*p))
 			p++;
 		if (*p == '\0') {
 			p = NULL;
