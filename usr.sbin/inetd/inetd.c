@@ -1,4 +1,4 @@
-/*	$NetBSD: inetd.c,v 1.134 2021/09/03 20:24:28 rillig Exp $	*/
+/*	$NetBSD: inetd.c,v 1.135 2021/09/03 20:41:19 rillig Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1991, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)inetd.c	8.4 (Berkeley) 4/13/94";
 #else
-__RCSID("$NetBSD: inetd.c,v 1.134 2021/09/03 20:24:28 rillig Exp $");
+__RCSID("$NetBSD: inetd.c,v 1.135 2021/09/03 20:41:19 rillig Exp $");
 #endif
 #endif /* not lint */
 
@@ -1600,24 +1600,16 @@ freeconfig(struct servtab *cp)
 {
 	int i;
 
-	if (cp->se_hostaddr)
-		free(cp->se_hostaddr);
-	if (cp->se_service)
-		free(cp->se_service);
-	if (cp->se_proto)
-		free(cp->se_proto);
-	if (cp->se_user)
-		free(cp->se_user);
-	if(cp->se_group)
-		free(cp->se_group);
-	if (cp->se_server)
-		free(cp->se_server);
+	free(cp->se_hostaddr);
+	free(cp->se_service);
+	free(cp->se_proto);
+	free(cp->se_user);
+	free(cp->se_group);
+	free(cp->se_server);
 	for (i = 0; i < MAXARGV; i++)
-		if (cp->se_argv[i])
-			free(cp->se_argv[i]);
+		free(cp->se_argv[i]);
 #ifdef IPSEC
-	if (cp->se_policy)
-		free(cp->se_policy);
+	free(cp->se_policy);
 #endif
 }
 
@@ -2505,7 +2497,7 @@ include_configs(char *pattern)
 	/* Put new_file at the top of the config stack */
 	file_list_head = &new_file;
 	read_glob_configs(pattern);
-	free((void *)new_file.abs);
+	free(new_file.abs);
 	/* Pop new_file off the stack */
 	file_list_head = new_file.next;
 
