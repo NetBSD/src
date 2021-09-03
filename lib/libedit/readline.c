@@ -1,4 +1,4 @@
-/*	$NetBSD: readline.c,v 1.164 2021/08/21 12:38:56 christos Exp $	*/
+/*	$NetBSD: readline.c,v 1.165 2021/09/03 12:20:38 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include "config.h"
 #if !defined(lint) && !defined(SCCSID)
-__RCSID("$NetBSD: readline.c,v 1.164 2021/08/21 12:38:56 christos Exp $");
+__RCSID("$NetBSD: readline.c,v 1.165 2021/09/03 12:20:38 christos Exp $");
 #endif /* not lint && not SCCSID */
 
 #include <sys/types.h>
@@ -460,14 +460,10 @@ readline(const char *p)
 	ret = el_gets(e, &count);
 
 	if (ret && count > 0) {
-		int lastidx;
-
 		buf = strdup(ret);
 		if (buf == NULL)
 			goto out;
-		lastidx = count - 1;
-		if (buf[lastidx] == '\n')
-			buf[lastidx] = '\0';
+		buf[strcspn(buf, "\n")] = '\0';
 	} else
 		buf = NULL;
 
@@ -665,6 +661,120 @@ get_history_event(const char *cmd, int *cindex, int qchar)
 	return rptr;
 }
 
+static int
+getfrom(const char **cmdp, char **fromp, const char *search, int delim)
+{
+	size_t size = 16;
+	size_t len = 0;
+	const char *cmd = *cmdp;
+	char *what = el_realloc(*fromp, size * sizeof(*what));
+	if (what == NULL){
+		el_free(*fromp);
+		*fromp = NULL;
+		return 0;
+	}
+	for (; *cmd && *cmd != delim; cmd++) {
+		if (*cmd == '\\' && cmd[1] == delim)
+			cmd++;
+		if (len >= size) {
+			char *nwhat;
+			nwhat = el_realloc(what, (size <<= 1) * sizeof(*nwhat));
+			if (nwhat == NULL) {
+				el_free(what);
+				el_free(*fromp);
+				*cmdp = cmd;
+				*fromp = NULL;
+				return 0;
+			}
+			what = nwhat;
+		}
+		what[len++] = *cmd;
+	}
+	what[len] = '\0';
+	*fromp = what;
+	*cmdp = cmd;
+	if (*what == '\0') {
+		el_free(what);
+		if (search) {
+			*fromp = strdup(search);
+			if (*fromp == NULL) {
+				return 0;
+			}
+		} else {
+			*fromp = NULL;
+			return -1;
+		}
+	}
+	if (!*cmd) {
+		el_free(what);
+		return -1;
+	}
+
+	cmd++;	/* shift after delim */
+	*cmdp = cmd;
+
+	if (!*cmd) {
+		el_free(what);
+		return -1;
+	}
+	return 1;
+}
+
+static int
+getto(const char **cmdp, char **top, const char *from, int delim)
+{
+	size_t size = 16;
+	size_t len = 0;
+	size_t from_len = strlen(from);
+	const char *cmd = *cmdp;
+	char *with = el_realloc(*top, size * sizeof(*with));
+	if (with == NULL)
+		goto out;
+
+	for (; *cmd && *cmd != delim; cmd++) {
+		if (len + from_len + 1 >= size) {
+			char *nwith;
+			size += from_len + 1;
+			nwith = el_realloc(with, size * sizeof(*nwith));
+			if (nwith == NULL)
+				goto out;
+			with = nwith;
+		}
+		if (*cmd == '&') {
+			/* safe */
+			strcpy(&with[len], from);
+			len += from_len;
+			continue;
+		}
+		if (*cmd == '\\' && (*(cmd + 1) == delim || *(cmd + 1) == '&'))
+			cmd++;
+		with[len++] = *cmd;
+	}
+	if (!*cmd)
+		goto out;
+	with[len] = '\0';
+	*top = with;
+	*cmdp = cmd;
+	return 1;
+out:
+	el_free(with);
+	el_free(*top);
+	*top = NULL;
+	*cmdp = cmd;
+	return -1;
+}
+
+static void
+replace(char **tmp, int c)
+{
+	char *aptr;
+	if ((aptr = strrchr(*tmp, c)) == NULL)
+		return;
+	aptr = strdup(aptr + 1); // XXX: check
+	el_free(*tmp);
+	*tmp = aptr;
+}
+
 /*
  * the real function doing history expansion - takes as argument command
  * to do and data upon which the command should be executed
@@ -679,11 +789,11 @@ static int
 _history_expand_command(const char *command, size_t offs, size_t cmdlen,
     char **result)
 {
-	char *tmp, *search = NULL, *aptr;
+	char *tmp, *search = NULL, *aptr, delim;
 	const char *ptr, *cmd;
 	static char *from = NULL, *to = NULL;
 	int start, end, idx, has_mods = 0;
-	int p_on = 0, g_on = 0;
+	int p_on = 0, g_on = 0, ev;
 
 	*result = NULL;
 	aptr = NULL;
@@ -747,7 +857,7 @@ _history_expand_command(const char *command, size_t offs, size_t cmdlen,
 			start = -1, cmd++;
 		else if (*cmd == '*')
 			start = 1, cmd++;
-	       else if (*cmd == '-' || isdigit((unsigned char) *cmd)) {
+		else if (*cmd == '-' || isdigit((unsigned char) *cmd)) {
 			start = 0;
 			while (*cmd && '0' <= *cmd && *cmd <= '9')
 				start = start * 10 + *cmd++ - '0';
@@ -790,132 +900,54 @@ _history_expand_command(const char *command, size_t offs, size_t cmdlen,
 	}
 
 	for (; *cmd; cmd++) {
-		if (*cmd == ':')
+		switch (*cmd) {
+		case ':':
 			continue;
-		else if (*cmd == 'h') {		/* remove trailing path */
+		case 'h': 	/* remove trailing path */
 			if ((aptr = strrchr(tmp, '/')) != NULL)
 				*aptr = '\0';
-		} else if (*cmd == 't') {	/* remove leading path */
-			if ((aptr = strrchr(tmp, '/')) != NULL) {
-				aptr = strdup(aptr + 1);
-				el_free(tmp);
-				tmp = aptr;
-			}
-		} else if (*cmd == 'r') {	/* remove trailing suffix */
+			continue;
+		case 't':	/* remove leading path */
+			replace(&tmp, '/');
+			continue;
+		case 'r':	/* remove trailing suffix */
 			if ((aptr = strrchr(tmp, '.')) != NULL)
 				*aptr = '\0';
-		} else if (*cmd == 'e') {	/* remove all but suffix */
-			if ((aptr = strrchr(tmp, '.')) != NULL) {
-				aptr = strdup(aptr);
-				el_free(tmp);
-				tmp = aptr;
-			}
-		} else if (*cmd == 'p')		/* print only */
+			continue;
+		case 'e':	/* remove all but suffix */
+			replace(&tmp, '.');
+			continue;
+		case 'p':	/* print only */
 			p_on = 1;
-		else if (*cmd == 'g')
+			continue;
+		case 'g':
 			g_on = 2;
-		else if (*cmd == 's' || *cmd == '&') {
-			char *what, *with, delim;
-			size_t len, from_len;
-			size_t size;
-
-			if (*cmd == '&' && (from == NULL || to == NULL))
+			continue;
+		case '&':
+			if (from == NULL || to == NULL)
 				continue;
-			else if (*cmd == 's') {
-				delim = *(++cmd), cmd++;
-				size = 16;
-				what = el_realloc(from, size * sizeof(*what));
-				if (what == NULL) {
-					el_free(from);
-					el_free(tmp);
-					return 0;
-				}
-				len = 0;
-				for (; *cmd && *cmd != delim; cmd++) {
-					if (*cmd == '\\' && cmd[1] == delim)
-						cmd++;
-					if (len >= size) {
-						char *nwhat;
-						nwhat = el_realloc(what,
-						    (size <<= 1) *
-						    sizeof(*nwhat));
-						if (nwhat == NULL) {
-							el_free(what);
-							el_free(tmp);
-							return 0;
-						}
-						what = nwhat;
-					}
-					what[len++] = *cmd;
-				}
-				what[len] = '\0';
-				from = what;
-				if (*what == '\0') {
-					el_free(what);
-					if (search) {
-						from = strdup(search);
-						if (from == NULL) {
-							el_free(tmp);
-							return 0;
-						}
-					} else {
-						from = NULL;
-						el_free(tmp);
-						return -1;
-					}
-				}
-				cmd++;	/* shift after delim */
-				if (!*cmd)
-					continue;
-
-				size = 16;
-				with = el_realloc(to, size * sizeof(*with));
-				if (with == NULL) {
-					el_free(to);
-					el_free(tmp);
-					return -1;
-				}
-				len = 0;
-				from_len = strlen(from);
-				for (; *cmd && *cmd != delim; cmd++) {
-					if (len + from_len + 1 >= size) {
-						char *nwith;
-						size += from_len + 1;
-						nwith = el_realloc(with,
-						    size * sizeof(*nwith));
-						if (nwith == NULL) {
-							el_free(with);
-							el_free(tmp);
-							return -1;
-						}
-						with = nwith;
-					}
-					if (*cmd == '&') {
-						/* safe */
-						(void)strcpy(&with[len], from);
-						len += from_len;
-						continue;
-					}
-					if (*cmd == '\\'
-					    && (*(cmd + 1) == delim
-						|| *(cmd + 1) == '&'))
-						cmd++;
-					with[len++] = *cmd;
-				}
-				with[len] = '\0';
-				to = with;
+			/*FALLTHROUGH*/
+		case 's':
+			delim = *(++cmd), cmd++;	/* XXX: check */
+			if ((ev = getfrom(&cmd, &from, search, delim)) != 1) {
+				el_free(tmp);
+				return ev;
 			}
-
+			if ((ev = getto(&cmd, &to, from, delim)) != 1) {
+				el_free(tmp);
+				return ev;
+			}
 			aptr = _rl_compat_sub(tmp, from, to, g_on);
 			if (aptr) {
 				el_free(tmp);
 				tmp = aptr;
 			}
 			g_on = 0;
+			continue;
 		}
 	}
 	*result = tmp;
-	return p_on? 2:1;
+	return p_on ? 2 : 1;
 }
 
 
