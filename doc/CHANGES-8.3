@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.3,v 1.1.2.97 2021/08/20 19:35:59 martin Exp $
+# $NetBSD: CHANGES-8.3,v 1.1.2.98 2021/09/03 10:24:09 martin Exp $
 
 A complete list of changes from the NetBSD 8.2 release to the NetBSD 8.3
 release:
@@ -2005,4 +2005,10 @@ sys/netinet6/nd6.c				1.277
 
 	nd6: avoid use-after-free in ND L2 cache.
 	[ozaki-r, ticket #1692]
+
+sys/dev/pci/if_vte.c				1.32
+
+	vte(4): PR 53494: restore original MDC speed control register value
+	after MAC reset.
+	[andvar, ticket #1693]
 
