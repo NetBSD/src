@@ -1,4 +1,4 @@
-#	$NetBSD: std.beagle,v 1.18 2019/05/18 08:49:23 skrll Exp $
+#	$NetBSD: std.beagle,v 1.19 2021/09/03 21:58:36 andvar Exp $
 #
 # standard NetBSD/evbarm for BEAGLEBOARD options
 
@@ -8,7 +8,7 @@ include		"arch/evbarm/conf/std.evbarm"
 # Pull in BEAGLEBOARD config definitions.
 include		"arch/evbarm/conf/files.beagle"
 
-# Architecture opions
+# Architecture options
 options 	ARM_GENERIC_TODR
 options 	ARM_HAS_VBAR
 options 	ARM_INTR_IMPL="<arch/arm/omap/omap2_intr.h>"

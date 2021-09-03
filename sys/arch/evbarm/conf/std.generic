@@ -1,4 +1,4 @@
-#	$NetBSD: std.generic,v 1.9 2021/03/21 09:00:55 skrll Exp $
+#	$NetBSD: std.generic,v 1.10 2021/09/03 21:58:36 andvar Exp $
 #
 # 	generic NetBSD/evbarm with FDT support
 
@@ -9,7 +9,7 @@ include		"arch/arm/conf/std.arm"		# arch standard options
 options 	EXEC_ELF32
 options 	EXEC_SCRIPT
 
-# Architecture opions
+# Architecture options
 options 	ARM32
 
 options 	ARM_GENERIC_TODR

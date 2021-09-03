@@ -1,4 +1,4 @@
-#	$NetBSD: std.zynq,v 1.6 2018/10/18 09:01:54 skrll Exp $
+#	$NetBSD: std.zynq,v 1.7 2021/09/03 21:58:36 andvar Exp $
 #
 # standard NetBSD/evbarm for ZYNQ options
 
@@ -8,7 +8,7 @@ include		"arch/evbarm/conf/std.evbarm"
 # Pull in Zynq config definitions.
 include		"arch/evbarm/conf/files.zynq"
 
-# Architecture opions
+# Architecture options
 options 	ARM_GENERIC_TODR
 options 	ARM_HAS_VBAR
 options 	ARM_INTR_IMPL="<arch/arm/zynq/zynq7000_intr.h>"
