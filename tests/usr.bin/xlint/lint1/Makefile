@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.108 2021/08/31 18:59:26 rillig Exp $
+# $NetBSD: Makefile,v 1.109 2021/09/03 22:44:09 rillig Exp $
 
 NOMAN=		# defined
 MAX_MESSAGE=	346		# see lint1/err.c
@@ -172,6 +172,8 @@ FILES+=		gcc_attribute_var.c
 FILES+=		gcc_attribute_var.exp
 FILES+=		gcc_bit_field_types.c
 FILES+=		gcc_bit_field_types.exp
+FILES+=		gcc_builtin_overflow.c
+FILES+=		gcc_builtin_overflow.exp
 FILES+=		gcc_cast_union.c
 FILES+=		gcc_cast_union.exp
 FILES+=		gcc_init_compound_literal.c
