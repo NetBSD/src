@@ -1,4 +1,4 @@
-/* $NetBSD: rk3399_pcie.c,v 1.15 2021/01/27 03:10:19 thorpej Exp $ */
+/* $NetBSD: rk3399_pcie.c,v 1.16 2021/09/03 01:21:48 mrg Exp $ */
 /*
  * Copyright (c) 2018 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -17,7 +17,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: rk3399_pcie.c,v 1.15 2021/01/27 03:10:19 thorpej Exp $");
+__KERNEL_RCSID(1, "$NetBSD: rk3399_pcie.c,v 1.16 2021/09/03 01:21:48 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -206,10 +206,11 @@ rkpcie_attach(device_t parent, device_t self, void *aux)
 	struct pcihost_softc * const phsc = &sc->sc_phsc;
 	struct fdt_attach_args *faa = aux;
 	struct fdtbus_gpio_pin *ep_gpio;
-	u_int max_link_speed, num_lanes;
+	u_int max_link_speed, num_lanes, bus_scan_delay_ms;
 	struct fdtbus_phy *phy[4];
 	const u_int *bus_range;
 	uint32_t status;
+	uint32_t delayed_ms = 0;
 	int timo, len;
 
 	phsc->sc_dev = self;
@@ -258,6 +259,14 @@ rkpcie_attach(device_t parent, device_t self, void *aux)
 	if (of_getprop_uint32(phandle, "num-lanes", &num_lanes) != 0)
 		num_lanes = 1;
 
+	/*
+	 * If the DT has a "bus-scan-delay-ms" property, delay attaching the
+	 * PCI bus this many microseconds.
+	 */
+	if (of_getprop_uint32(phandle, "bus-scan-delay-ms",
+	    &bus_scan_delay_ms) != 0)
+		bus_scan_delay_ms = 0;
+
 again:
 	fdtbus_gpio_write(ep_gpio, 0);
 
@@ -281,6 +290,7 @@ again:
 	reset_assert(phandle, "pipe");
 
 	delay(1000);	/* TPERST. use 1ms */
+	delayed_ms += 1;
 	
 	reset_deassert(phandle, "pm");
 	reset_deassert(phandle, "aclk");
@@ -315,6 +325,7 @@ again:
 
 	fdtbus_gpio_write(ep_gpio, 1);
 	delay(20000);	/* 20 ms according to PCI-e BS "Conventional Reset" */
+	delayed_ms += 20;
 
 	/* Start link training. */
 	HWRITE4(sc, PCIE_CLIENT_BASIC_STRAP_CONF, PCBSC_LINK_TRAIN_EN);
@@ -324,6 +335,7 @@ again:
 		if (PCBS1_LINK_ST(status) == PCBS1_LS_DL_DONE)
 			break;
 		delay(1000);
+		delayed_ms += 1;
 	}
 	if (timo == 0) {
 		device_printf(self, "link training timeout (link_st %u)\n",
@@ -342,6 +354,7 @@ again:
 			if ((status & PCIE_CORE_PL_CONF_SPEED_MASK) == PCIE_CORE_PL_CONF_SPEED_5G)
 				break;
 			delay(1000);
+			delayed_ms += 1;
 		}
 		if (timo == 0) {
 			device_printf(self, "Gen2 link training timeout\n");
@@ -350,6 +363,7 @@ again:
 		}
 	}
 	delay(80000);	/* wait 100 ms before CSR access. already waited 20. */
+	delayed_ms += 80;
 
 	fdtbus_gpio_release(ep_gpio);
 
@@ -407,6 +421,15 @@ again:
 	sc->sc_phsc.sc_pc.pc_conf_read = rkpcie_conf_read;
 	sc->sc_phsc.sc_pc.pc_conf_write = rkpcie_conf_write;
 	sc->sc_phsc.sc_pc.pc_conf_hook = rkpcie_conf_hook;
+
+	if (bus_scan_delay_ms > delayed_ms) {
+		uint32_t ms = bus_scan_delay_ms - delayed_ms;
+
+		aprint_verbose_dev(phsc->sc_dev,
+		    "waiting %u extra ms for reset (already waited %u)\n",
+		    ms, delayed_ms);
+		delay(ms * 1000);
+	}
 
 	mutex_init(&sc->sc_conf_lock, MUTEX_DEFAULT, IPL_HIGH);
 	pcihost_init2(&sc->sc_phsc);
