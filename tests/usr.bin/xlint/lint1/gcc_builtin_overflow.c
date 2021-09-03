@@ -1,4 +1,4 @@
-/*	$NetBSD: gcc_builtin_overflow.c,v 1.1 2021/09/03 22:44:09 rillig Exp $	*/
+/*	$NetBSD: gcc_builtin_overflow.c,v 1.2 2021/09/03 22:48:49 rillig Exp $	*/
 # 3 "gcc_builtin_overflow.c"
 
 /*
@@ -15,11 +15,13 @@ is_overflow(void)
 {
 	int sum;
 
-	/* expect+1: error: controlling expression must be bool, not 'int' [333] */
 	if (__builtin_add_overflow(1, 2, &sum))
 		return;
 
-	/* expect+1: error: controlling expression must be bool, not 'int' [333] */
 	if (__builtin_add_overflow_p(1, 2, 12345))
+		return;
+
+	/* expect+1: error: controlling expression must be bool, not 'int' [333] */
+	if (__builtin_other(1, 2, 12345))
 		return;
 }
