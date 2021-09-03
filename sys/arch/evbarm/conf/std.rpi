@@ -1,4 +1,4 @@
-#	$NetBSD: std.rpi,v 1.25 2021/03/21 09:00:55 skrll Exp $
+#	$NetBSD: std.rpi,v 1.26 2021/09/03 21:58:36 andvar Exp $
 #
 # standard NetBSD/evbarm for Raspberry Pi options
 
@@ -8,7 +8,7 @@ include		"arch/evbarm/conf/std.evbarm"
 # Pull in Raspberry Pi config definitions.
 include		"arch/evbarm/conf/files.rpi"
 
-# Architecture opions
+# Architecture options
 options 	ARM_GENERIC_TODR
 options 	ARM_HAS_VBAR
 options 	ARM_INTR_IMPL="<arch/arm/fdt/fdt_intr.h>"
