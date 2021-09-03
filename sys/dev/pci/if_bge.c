@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.347 2021/08/30 22:48:16 jmcneill Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.348 2021/09/03 21:55:00 andvar Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.347 2021/08/30 22:48:16 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.348 2021/09/03 21:55:00 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -3305,7 +3305,7 @@ bge_attach(device_t parent, device_t self, void *aux)
 		pm_ctl &= ~(PCI_PWR_D0 | PCI_PWR_D1 | PCI_PWR_D2 | PCI_PWR_D3);
 		pm_ctl |= (1 << 8) | PCI_PWR_D0 ; /* D0 state */
 		pci_conf_write(pc, sc->sc_pcitag, BGE_PCI_PWRMGMT_CMD, pm_ctl);
-		DELAY(1000);	/* 27 usec is allegedly sufficent */
+		DELAY(1000);	/* 27 usec is allegedly sufficient */
 	}
 
 	/* Save chipset family. */

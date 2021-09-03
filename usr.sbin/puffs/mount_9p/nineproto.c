@@ -1,4 +1,4 @@
-/*	$NetBSD: nineproto.c,v 1.13 2020/05/26 22:33:04 uwe Exp $	*/
+/*	$NetBSD: nineproto.c,v 1.14 2021/09/03 21:55:01 andvar Exp $	*/
 
 /*
  * Copyright (c) 2007  Antti Kantee.  All Rights Reserved.
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: nineproto.c,v 1.13 2020/05/26 22:33:04 uwe Exp $");
+__RCSID("$NetBSD: nineproto.c,v 1.14 2021/09/03 21:55:01 andvar Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -175,7 +175,7 @@ proto_getstat(struct puffs_usermount *pu, struct puffs_framebuf *pb, struct vatt
 	GETSTR(NULL, &v16);
 	if (p9p->protover == P9PROTO_VERSION_U) {
 		uint32_t dummy;
-		GETSTR(NULL, &v16); /* extention[s], not used */
+		GETSTR(NULL, &v16); /* extension[s], not used */
 		GETFIELD(p9pbuf_get_4, &dummy, 4); /* n_uid[4], not used */
 		GETFIELD(p9pbuf_get_4, &dummy, 4); /* n_gid[4], not used */
 		GETFIELD(p9pbuf_get_4, &dummy, 4); /* n_muid[4], not used */
@@ -376,7 +376,7 @@ proto_make_stat(struct puffs_usermount *pu, struct puffs_framebuf *pb,
 	p9pbuf_put_str(pb, group);
 	p9pbuf_put_str(pb, "");			/* muid		*/
 	if (p9p->protover == P9PROTO_VERSION_U) {
-		p9pbuf_put_str(pb, P9PROTO_STAT_NOSTR);	/* extentions[s] */
+		p9pbuf_put_str(pb, P9PROTO_STAT_NOSTR);	/* extensions[s] */
 		p9pbuf_put_4(pb, P9PROTO_STAT_NOVAL4);	/* n_uid[4] */
 		p9pbuf_put_4(pb, P9PROTO_STAT_NOVAL4);	/* n_gid[4] */
 		p9pbuf_put_4(pb, P9PROTO_STAT_NOVAL4);	/* n_muid[4] */
