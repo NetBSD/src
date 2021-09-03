@@ -1,4 +1,4 @@
-/*	$NetBSD: inetd.c,v 1.133 2021/09/03 19:33:51 rillig Exp $	*/
+/*	$NetBSD: inetd.c,v 1.134 2021/09/03 20:24:28 rillig Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1991, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)inetd.c	8.4 (Berkeley) 4/13/94";
 #else
-__RCSID("$NetBSD: inetd.c,v 1.133 2021/09/03 19:33:51 rillig Exp $");
+__RCSID("$NetBSD: inetd.c,v 1.134 2021/09/03 20:24:28 rillig Exp $");
 #endif
 #endif /* not lint */
 
@@ -337,28 +337,28 @@ struct biltin {
 					/* function which performs it */
 } biltins[] = {
 	/* Echo received data */
-	{ "echo",	SOCK_STREAM,	1, 0,	echo_stream },
-	{ "echo",	SOCK_DGRAM,	0, 0,	echo_dg },
+	{ "echo",	SOCK_STREAM,	true, false,	echo_stream },
+	{ "echo",	SOCK_DGRAM,	false, false,	echo_dg },
 
 	/* Internet /dev/null */
-	{ "discard",	SOCK_STREAM,	1, 0,	discard_stream },
-	{ "discard",	SOCK_DGRAM,	0, 0,	discard_dg },
+	{ "discard",	SOCK_STREAM,	true, false,	discard_stream },
+	{ "discard",	SOCK_DGRAM,	false, false,	discard_dg },
 
 	/* Return 32 bit time since 1970 */
-	{ "time",	SOCK_STREAM,	0, 0,	machtime_stream },
-	{ "time",	SOCK_DGRAM,	0, 0,	machtime_dg },
+	{ "time",	SOCK_STREAM,	false, false,	machtime_stream },
+	{ "time",	SOCK_DGRAM,	false, false,	machtime_dg },
 
 	/* Return human-readable time */
-	{ "daytime",	SOCK_STREAM,	0, 0,	daytime_stream },
-	{ "daytime",	SOCK_DGRAM,	0, 0,	daytime_dg },
+	{ "daytime",	SOCK_STREAM,	false, false,	daytime_stream },
+	{ "daytime",	SOCK_DGRAM,	false, false,	daytime_dg },
 
 	/* Familiar character generator */
-	{ "chargen",	SOCK_STREAM,	1, 0,	chargen_stream },
-	{ "chargen",	SOCK_DGRAM,	0, 0,	chargen_dg },
+	{ "chargen",	SOCK_STREAM,	true, false,	chargen_stream },
+	{ "chargen",	SOCK_DGRAM,	false, false,	chargen_dg },
 
-	{ "tcpmux",	SOCK_STREAM,	1, 0,	tcpmux },
+	{ "tcpmux",	SOCK_STREAM,	true, false,	tcpmux },
 
-	{ NULL, 0, 0, 0, NULL }
+	{ NULL, 0, false, false, NULL }
 };
 
 /* list of "bad" ports. I.e. ports that are most obviously used for
@@ -389,12 +389,12 @@ main(int argc, char *argv[])
 					   )) != -1)
 		switch(ch) {
 		case 'd':
-			debug = 1;
+			debug = true;
 			options |= SO_DEBUG;
 			break;
 #ifdef LIBWRAP
 		case 'l':
-			lflag = 1;
+			lflag = true;
 			break;
 #endif
 		case '?':
@@ -448,7 +448,7 @@ main(int argc, char *argv[])
 		struct servtab	*sep;
 
 		if (reload) {
-			reload = 0;
+			reload = false;
 			config_root();
 		}
 
@@ -469,7 +469,7 @@ main(int argc, char *argv[])
 					goaway();
 					break;
 				case SIGHUP:
-					reload = 1;
+					reload = true;
 					break;
 				}
 				continue;
@@ -481,7 +481,7 @@ main(int argc, char *argv[])
 			if ((int)ev->ident != sep->se_fd)
 				continue;
 			DPRINTF(SERV_FMT ": service requested" , SERV_PARAMS(sep));
-			if (!sep->se_wait && sep->se_socktype == SOCK_STREAM) {
+			if (sep->se_wait == 0 && sep->se_socktype == SOCK_STREAM) {
 				/* XXX here do the libwrap check-before-accept*/
 				ctrl = accept(sep->se_fd, NULL, NULL);
 				DPRINTF(SERV_FMT ": accept, ctrl fd %d",
@@ -508,9 +508,9 @@ spawn(struct servtab *sep, int ctrl)
 
 	pid = 0;
 #ifdef LIBWRAP_INTERNAL
-	dofork = 1;
+	dofork = true;
 #else
-	dofork = (sep->se_bi == 0 || sep->se_bi->bi_fork);
+	dofork = (sep->se_bi == NULL || sep->se_bi->bi_fork);
 #endif
 	if (dofork) {
 		if (rl_process(sep, ctrl)) {
@@ -519,12 +519,12 @@ spawn(struct servtab *sep, int ctrl)
 		pid = fork();
 		if (pid < 0) {
 			syslog(LOG_ERR, "fork: %m");
-			if (!sep->se_wait && sep->se_socktype == SOCK_STREAM)
+			if (sep->se_wait == 0 && sep->se_socktype == SOCK_STREAM)
 				close(ctrl);
 			sleep(1);
 			return;
 		}
-		if (pid != 0 && sep->se_wait) {
+		if (pid != 0 && sep->se_wait != 0) {
 			struct kevent	*ev;
 
 			sep->se_wait = pid;
@@ -546,7 +546,7 @@ spawn(struct servtab *sep, int ctrl)
 		if (dofork)
 			exit(0);
 	}
-	if (!sep->se_wait && sep->se_socktype == SOCK_STREAM)
+	if (sep->se_wait == 0 && sep->se_socktype == SOCK_STREAM)
 		close(ctrl);
 }
 
@@ -568,11 +568,11 @@ run_service(int ctrl, struct servtab *sep, int didfork)
 #ifndef LIBWRAP_INTERNAL
 	if (sep->se_bi == 0)
 #endif
-	if (!sep->se_wait && sep->se_socktype == SOCK_STREAM) {
-		request_init(&req, RQ_DAEMON, sep->se_argv[0] ?
+	if (sep->se_wait == 0 && sep->se_socktype == SOCK_STREAM) {
+		request_init(&req, RQ_DAEMON, sep->se_argv[0] != NULL ?
 		    sep->se_argv[0] : sep->se_service, RQ_FILE, ctrl, NULL);
 		fromhost(&req);
-		denied = !hosts_access(&req);
+		denied = hosts_access(&req) == 0;
 		if (denied || lflag) {
 			if (getnameinfo(&sep->se_ctrladdr,
 			    (socklen_t)sep->se_ctrladdr.sa_len, NULL, 0,
@@ -582,7 +582,7 @@ run_service(int ctrl, struct servtab *sep, int didfork)
 				    ntohs(sep->se_ctrladdr_in.sin_port));
 			}
 			service = buf;
-			if (req.client->sin) {
+			if (req.client->sin != NULL) {
 				sockaddr_snprintf(abuf, sizeof(abuf), "%a",
 				    req.client->sin);
 			} else {
@@ -603,9 +603,9 @@ run_service(int ctrl, struct servtab *sep, int didfork)
 	}
 #endif /* LIBWRAP */
 
-	if (sep->se_bi) {
+	if (sep->se_bi != NULL) {
 		if (didfork) {
-			for (s = servtab; s; s = s->se_next)
+			for (s = servtab; s != NULL; s = s->se_next)
 				if (s->se_fd != -1 && s->se_fd != ctrl) {
 					close(s->se_fd);
 					s->se_fd = -1;
@@ -618,14 +618,14 @@ run_service(int ctrl, struct servtab *sep, int didfork)
 			    sep->se_service, sep->se_proto, sep->se_user);
 			goto reject;
 		}
-		if (sep->se_group &&
+		if (sep->se_group != NULL &&
 		    (grp = getgrnam(sep->se_group)) == NULL) {
 			syslog(LOG_ERR, "%s/%s: %s: No such group",
 			    sep->se_service, sep->se_proto, sep->se_group);
 			goto reject;
 		}
-		if (pwd->pw_uid) {
-			if (sep->se_group)
+		if (pwd->pw_uid != 0) {
+			if (sep->se_group != NULL)
 				pwd->pw_gid = grp->gr_gid;
 			if (setgid(pwd->pw_gid) < 0) {
 				syslog(LOG_ERR,
@@ -641,7 +641,7 @@ run_service(int ctrl, struct servtab *sep, int didfork)
 				    sep->se_proto, pwd->pw_uid);
 				goto reject;
 			}
-		} else if (sep->se_group) {
+		} else if (sep->se_group != NULL) {
 			(void) setgid((gid_t)grp->gr_gid);
 		}
 		DPRINTF("%d execl %s",
@@ -826,7 +826,7 @@ config(void)
 				    "supported by the kernel",
 				    sep->se_service, sep->se_proto,
 				    sep->se_hostaddr);
-				sep->se_checked = 0;
+				sep->se_checked = false;
 				continue;
 			}
 			close(s);
@@ -835,7 +835,7 @@ config(void)
 			hints.ai_family = sep->se_family;
 			hints.ai_socktype = sep->se_socktype;
 			hints.ai_flags = AI_PASSIVE;
-			if (!strcmp(sep->se_hostaddr, "*"))
+			if (strcmp(sep->se_hostaddr, "*") == 0)
 				host = NULL;
 			else
 				host = sep->se_hostaddr;
@@ -844,7 +844,7 @@ config(void)
 			else
 				port = sep->se_service;
 			error = getaddrinfo(host, port, &hints, &res);
-			if (error) {
+			if (error != 0) {
 				if (error == EAI_SERVICE) {
 					/* gai_strerror not friendly enough */
 					syslog(LOG_WARNING, SERV_FMT ": "
@@ -856,15 +856,15 @@ config(void)
 					    sep->se_hostaddr,
 					    gai_strerror(error));
 				}
-				sep->se_checked = 0;
+				sep->se_checked = false;
 				continue;
 			}
-			if (res->ai_next) {
+			if (res->ai_next != NULL) {
 				syslog(LOG_ERR,
 					SERV_FMT ": %s: resolved to multiple addr",
 				    SERV_PARAMS(sep),
 				    sep->se_hostaddr);
-				sep->se_checked = 0;
+				sep->se_checked = false;
 				freeaddrinfo(res);
 				continue;
 			}
@@ -889,7 +889,7 @@ config(void)
 						    SERV_FMT
 						    ": unknown service",
 						    SERV_PARAMS(sep));
-						sep->se_checked = 0;
+						sep->se_checked = false;
 						continue;
 					}
 					sep->se_rpcprog = rp->r_number;
@@ -917,7 +917,7 @@ retry(void)
 {
 	struct servtab *sep;
 
-	timingout = 0;
+	timingout = false;
 	for (sep = servtab; sep != NULL; sep = sep->se_next) {
 		if (sep->se_fd == -1 && !ISMUX(sep)) {
 			switch (sep->se_family) {
@@ -1036,7 +1036,7 @@ setsockopt(fd, SOL_SOCKET, opt, &on, (socklen_t)sizeof(on))
 		(void) close(sep->se_fd);
 		sep->se_fd = -1;
 		if (!timingout) {
-			timingout = 1;
+			timingout = true;
 			alarm(RETRYTIME);
 		}
 		return;
@@ -1109,7 +1109,7 @@ register_rpc(struct servtab *sep)
 		    sep->se_rpcprog, n, nconf->nc_netid,
 		    taddr2uaddr(nconf, &nbuf));
 		(void)rpcb_unset((unsigned int)sep->se_rpcprog, (unsigned int)n, nconf);
-		if (!rpcb_set((unsigned int)sep->se_rpcprog, (unsigned int)n, nconf, &nbuf))
+		if (rpcb_set((unsigned int)sep->se_rpcprog, (unsigned int)n, nconf, &nbuf) == 0)
 			syslog(LOG_ERR, "rpcb_set: %u %d %s %s%s",
 			    sep->se_rpcprog, n, nconf->nc_netid,
 			    taddr2uaddr(nconf, &nbuf), clnt_spcreateerror(""));
@@ -1133,7 +1133,7 @@ unregister_rpc(struct servtab *sep)
 	for (n = sep->se_rpcversl; n <= sep->se_rpcversh; n++) {
 		DPRINTF("rpcb_unset(%u, %d, %s)",
 		    sep->se_rpcprog, n, nconf->nc_netid);
-		if (!rpcb_unset((unsigned int)sep->se_rpcprog, (unsigned int)n, nconf))
+		if (rpcb_unset((unsigned int)sep->se_rpcprog, (unsigned int)n, nconf) == 0)
 			syslog(LOG_ERR, "rpcb_unset(%u, %d, %s) failed\n",
 			    sep->se_rpcprog, n, nconf->nc_netid);
 	}
@@ -1289,7 +1289,7 @@ more:
 
 	/* Check for a host name. */
 	hostdelim = strrchr(arg, ':');
-	if (hostdelim) {
+	if (hostdelim != NULL) {
 		*hostdelim = '\0';
 		if (arg[0] == '[' && hostdelim > arg && hostdelim[-1] == ']') {
 			hostdelim[-1] = '\0';
@@ -1412,8 +1412,7 @@ do { \
 	    sep->se_service, (arg)); \
 	freeconfig(sep); \
 	goto more; \
-	/*NOTREACHED*/ \
-} while (/*CONSTCOND*/0)
+} while (false)
 
 #define	GETVAL(arg) \
 do { \
@@ -1434,8 +1433,7 @@ do { \
 		freeconfig(sep); \
 		goto more; \
 	} \
-	/*NOTREACHED*/ \
-} while (/*CONSTCOND*/0)
+} while (false)
 
 #define	ASSIGN(arg) \
 do { \
@@ -1445,7 +1443,7 @@ do { \
 		sep->se_rcvbuf = val; \
 	else \
 		MALFORMED((arg)); \
-} while (/*CONSTCOND*/0)
+} while (false)
 
 	/*
 	 * Extract the send and receive buffer sizes before parsing
@@ -1583,14 +1581,14 @@ do { \
 	}
 
 	argc = 0;
-	for (arg = skip(&cp); cp; arg = skip(&cp)) {
+	for (arg = skip(&cp); cp != NULL; arg = skip(&cp)) {
 		if (argc < MAXARGV)
 			sep->se_argv[argc++] = newstr(arg);
 	}
 	while (argc <= MAXARGV)
 		sep->se_argv[argc++] = NULL;
 #ifdef IPSEC
-	sep->se_policy = policy ? newstr(policy) : NULL;
+	sep->se_policy = policy != NULL ? newstr(policy) : NULL;
 #endif
 	/* getconfigent read a positional service def, move to next line */
 	*current_pos = nextline(fconfig);
@@ -1656,12 +1654,12 @@ again:
 	start = cp;
 	/* Parse shell-style quotes */
 	quote = '\0';
-	while (*cp && (quote || (*cp != ' ' && *cp != '\t'))) {
+	while (*cp != '\0' && (quote != '\0' || (*cp != ' ' && *cp != '\t'))) {
 		if (*cp == '\'' || *cp == '"') {
-			if (quote && *cp != quote)
+			if (quote != '\0' && *cp != quote)
 				cp++;
 			else {
-				if (quote)
+				if (quote != '\0')
 					quote = '\0';
 				else
 					quote = *cp;
@@ -1682,13 +1680,13 @@ nextline(FILE *fd)
 	char *cp;
 
 	if (fgets(line, (int)sizeof(line), fd) == NULL) {
-		if (ferror(fd)) {
+		if (ferror(fd) != 0) {
 			ERR("Error when reading next line: %s", strerror(errno));
 		}
 		return NULL;
 	}
 	cp = strchr(line, '\n');
-	if (cp)
+	if (cp != NULL)
 		*cp = '\0';
 	line_number++;
 	return line;
@@ -1837,7 +1835,7 @@ chargen_stream(int s, struct servtab *sep)	/* Character generator */
 
 	inetd_setproctitle(sep->se_service, s);
 
-	if (!endring) {
+	if (endring == NULL) {
 		initring();
 		rs = ring;
 	}
@@ -2006,7 +2004,7 @@ print_service(const char *action, struct servtab *sep)
 		    sep->se_wait, sep->se_service_max, sep->se_user, sep->se_group,
 		    (long)sep->se_bi, sep->se_server
 #ifdef IPSEC
-		    , (sep->se_policy ? sep->se_policy : "")
+		    , (sep->se_policy != NULL ? sep->se_policy : "")
 #endif
 		    );
 	else
@@ -2022,7 +2020,7 @@ print_service(const char *action, struct servtab *sep)
 		    sep->se_wait, sep->se_service_max, sep->se_user, sep->se_group,
 		    (long)sep->se_bi, sep->se_server
 #ifdef IPSEC
-		    , (sep->se_policy ? sep->se_policy : "")
+		    , (sep->se_policy != NULL ? sep->se_policy : "")
 #endif
 		    );
 }
@@ -2090,7 +2088,7 @@ tcpmux(int ctrl, struct servtab *sep)
 	 * Help is a required command, and lists available services,
 	 * one per line.
 	 */
-	if (!strcasecmp(service, "help")) {
+	if (strcasecmp(service, "help") == 0) {
 		strwrite(ctrl, "+Available services:\r\n");
 		strwrite(ctrl, "help\r\n");
 		for (sep = servtab; sep != NULL; sep = sep->se_next) {
@@ -2107,10 +2105,10 @@ tcpmux(int ctrl, struct servtab *sep)
 	for (sep = servtab; sep != NULL; sep = sep->se_next) {
 		if (!ISMUX(sep))
 			continue;
-		if (!strcasecmp(service, sep->se_service)) {
+		if (strcasecmp(service, sep->se_service) == 0) {
 			if (ISMUXPLUS(sep))
 				strwrite(ctrl, "+Go\r\n");
-			run_service(ctrl, sep, 1 /* forked */);
+			run_service(ctrl, sep, true /* forked */);
 			return;
 		}
 	}
@@ -2170,7 +2168,7 @@ port_good_dg(struct sockaddr *sa)
 #endif
 	default:
 		/* XXX unsupported af, is it safe to assume it to be safe? */
-		return (1);
+		return true;
 	}
 
 	for (i = 0; bad_ports[i] != 0; i++) {
@@ -2178,7 +2176,7 @@ port_good_dg(struct sockaddr *sa)
 			goto bad;
 	}
 
-	return (1);
+	return true;
 
 bad:
 	if (getnameinfo(sa, sa->sa_len, hbuf, (socklen_t)sizeof(hbuf), NULL, 0,
@@ -2186,7 +2184,7 @@ bad:
 		strlcpy(hbuf, "?", sizeof(hbuf));
 	syslog(LOG_WARNING,"Possible DoS attack from %s, Port %d",
 		hbuf, port);
-	return (0);
+	return false;
 }
 
 /* XXX need optimization */
@@ -2197,19 +2195,19 @@ dg_broadcast(struct in_addr *in)
 	struct sockaddr_in *sin;
 
 	if (getifaddrs(&ifap) < 0)
-		return (0);
-	for (ifa = ifap; ifa; ifa = ifa->ifa_next) {
+		return false;
+	for (ifa = ifap; ifa != NULL; ifa = ifa->ifa_next) {
 		if (ifa->ifa_addr->sa_family != AF_INET ||
 		    (ifa->ifa_flags & IFF_BROADCAST) == 0)
 			continue;
 		sin = (struct sockaddr_in *)(void *)ifa->ifa_broadaddr;
 		if (sin->sin_addr.s_addr == in->s_addr) {
 			freeifaddrs(ifap);
-			return (1);
+			return true;
 		}
 	}
 	freeifaddrs(ifap);
-	return (0);
+	return false;
 }
 
 static int
@@ -2245,7 +2243,7 @@ config_root(void)
 	struct servtab *sep;
 	/* Uncheck services */
 	for (sep = servtab; sep != NULL; sep = sep->se_next) {
-		sep->se_checked = 0;
+		sep->se_checked = false;
 	}
 	defhost = newstr("*");
 #ifdef IPSEC
@@ -2304,7 +2302,7 @@ parse_protocol(struct servtab *sep)
 		sep->se_family = AF_LOCAL;
 	} else {
 		val = (int)strlen(sep->se_proto);
-		if (!val) {
+		if (val == 0) {
 			ERR("%s: invalid protocol specified",
 			    sep->se_service);
 			return -1;
@@ -2414,7 +2412,7 @@ parse_accept_filter(char *arg, struct servtab *sep) {
 	char *accf, *accf_arg;
 	/* one and only one accept filter */
 	accf = strchr(arg, ':');
-	if (!accf)
+	if (accf == NULL)
 		return;
 	if (accf != strrchr(arg, ':') || *(accf + 1) == '\0') {
 		/* more than one ||  nothing beyond */
@@ -2425,7 +2423,7 @@ parse_accept_filter(char *arg, struct servtab *sep) {
 	accf++;			/* skip delimiter */
 	strlcpy(sep->se_accf.af_name, accf, sizeof(sep->se_accf.af_name));
 	accf_arg = strchr(accf, ',');
-	if (!accf_arg)		/* zero or one arg, no more */
+	if (accf_arg == NULL)	/* zero or one arg, no more */
 		return;
 
 	if (strrchr(accf, ',') != accf_arg) {
@@ -2579,7 +2577,7 @@ include_matched_path(char *glob_path)
 	struct stat sb;
 	char *tmp;
 
-	if (lstat(glob_path, &sb)) {
+	if (lstat(glob_path, &sb) != 0) {
 		ERR("Error calling stat on path '%s': %s", glob_path,
 		    strerror(errno));
 		return;
@@ -2731,7 +2729,7 @@ rl_process(struct servtab *sep, int ctrl)
 			/* Close the server for 10 minutes */
 			close_sep(sep);
 			if (!timingout) {
-				timingout = 1;
+				timingout = true;
 				alarm(RETRYTIME);
 			}
 
@@ -2810,7 +2808,7 @@ rl_get_name(struct servtab *sep, int ctrl, char *hbuf)
 	socklen_t len = sizeof(struct sockaddr_storage);
 	switch (sep->se_socktype) {
 	case SOCK_STREAM:
-		if (getpeername(ctrl, (struct sockaddr *)&addr, &len)) {
+		if (getpeername(ctrl, (struct sockaddr *)&addr, &len) != 0) {
 			/* error, log it and skip ip rate limiting */
 			syslog(LOG_ERR,
 				SERV_FMT " failed to get peer name of the "
@@ -2861,7 +2859,7 @@ static void
 rl_drop_connection(struct servtab *sep, int ctrl)
 {
 
-	if (!sep->se_wait && sep->se_socktype == SOCK_STREAM) {
+	if (sep->se_wait == 0 && sep->se_socktype == SOCK_STREAM) {
 		/*
 		 * If the fd isn't a listen socket,
 		 * close the individual connection too.
