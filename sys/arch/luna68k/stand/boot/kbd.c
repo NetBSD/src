@@ -1,4 +1,4 @@
-/*	$NetBSD: kbd.c,v 1.4 2015/02/14 13:06:28 tsutsui Exp $	*/
+/*	$NetBSD: kbd.c,v 1.5 2021/09/03 16:21:15 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1992 OMRON Corporation.
@@ -213,11 +213,22 @@ static const struct kbd_keymap kbd_keymap[] = {
 int	shift_flag = 0;
 int	ctrl_flag  = 0;
 int	meta_flag  = 0;
+int	mouse_flag  = 0;
 
 int
 kbd_decode(uint8_t code)
 {
 	unsigned int c, updown = 0;
+
+	/* ignore mouse data */
+	if (mouse_flag != 0) {
+		mouse_flag--;
+		return KC_IGNORE;
+	}
+	if ((code & 0xf8) == 0x80) {
+		mouse_flag = 2;
+		return KC_IGNORE;
+	}
 
 	if (code & 0x80)
 		updown = 1;
