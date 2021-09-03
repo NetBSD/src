@@ -1,4 +1,4 @@
-/*	$NetBSD: ace_ebus.c,v 1.24 2021/07/24 21:31:32 andvar Exp $	*/
+/*	$NetBSD: ace_ebus.c,v 1.25 2021/09/03 22:33:17 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ace_ebus.c,v 1.24 2021/07/24 21:31:32 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ace_ebus.c,v 1.25 2021/09/03 22:33:17 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1313,7 +1313,7 @@ sysace_write_at(struct ace_softc *sc, daddr_t start_sector, char *buffer,
 				SysaceDumpRegisters(sc->sc_dr);
 				/*
 				 * Ignore, we'll handle it the next time around
-				 * BUGBUG To be revised along with non-existant
+				 * BUGBUG To be revised along with non-existent
 				 * error handling
 				 */
 			}

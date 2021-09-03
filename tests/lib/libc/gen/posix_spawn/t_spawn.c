@@ -1,4 +1,4 @@
-/* $NetBSD: t_spawn.c,v 1.2 2014/10/18 08:33:30 snj Exp $ */
+/* $NetBSD: t_spawn.c,v 1.3 2021/09/03 22:33:18 andvar Exp $ */
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@ ATF_TC(t_spawn_missing);
 ATF_TC_HEAD(t_spawn_missing, tc)
 {
 	atf_tc_set_md_var(tc, "descr",
-	    "posix_spawn a non existant binary");
+	    "posix_spawn a non-existent binary");
 }
 
 ATF_TC_BODY(t_spawn_missing, tc)
@@ -117,7 +117,7 @@ ATF_TC(t_spawn_nonexec);
 ATF_TC_HEAD(t_spawn_nonexec, tc)
 {
 	atf_tc_set_md_var(tc, "descr",
-	    "posix_spawn a script with non existing interpreter");
+	    "posix_spawn a script with non-existent interpreter");
 }
 
 ATF_TC_BODY(t_spawn_nonexec, tc)
