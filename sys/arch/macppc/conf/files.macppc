@@ -1,4 +1,4 @@
-#	$NetBSD: files.macppc,v 1.121 2021/07/27 23:38:42 macallan Exp $
+#	$NetBSD: files.macppc,v 1.122 2021/09/03 17:18:39 macallan Exp $
 #
 # macppc-specific configuration info
 
@@ -180,7 +180,7 @@ define fancontrol
 file arch/macppc/dev/fancontrol.c		fancontrol
 defflag	opt_fancontrol.h	FANCONTROL_DEBUG
 
-device smu { } : fancontrol
+device smu { } : sysmon_envsys, fancontrol
 attach smu at mainbus
 file arch/macppc/dev/smu.c			smu needs-flag
 defflag	opt_smu.h	SMU_DEBUG
