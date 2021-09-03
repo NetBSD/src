@@ -1,4 +1,4 @@
-/* $NetBSD: rk3399-rockpro64.dts,v 1.11 2020/05/17 19:57:25 riastradh Exp $ */
+/* $NetBSD: rk3399-rockpro64.dts,v 1.12 2021/09/03 01:21:48 mrg Exp $ */
 
 /*-
  * Copyright (c) 2019 Jared McNeill <jmcneill@invisible.ca>
@@ -185,6 +185,7 @@
 	pinctrl-names = "default";
 	pinctrl-0 = <&pcie_clkreqn>;
 	vpcie3v3-supply = <&vcc3v3_pcie>;
+	bus-scan-delay-ms = <1000>;
 	status = "okay";
 };
 
