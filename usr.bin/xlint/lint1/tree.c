@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.371 2021/09/03 22:27:32 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.372 2021/09/03 22:48:49 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.371 2021/09/03 22:27:32 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.372 2021/09/03 22:48:49 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -215,6 +215,25 @@ is_compiler_builtin(const char *name)
 	return false;
 }
 
+static bool
+str_endswith(const char *haystack, const char *needle)
+{
+	size_t hlen = strlen(haystack);
+	size_t nlen = strlen(needle);
+
+	return nlen <= hlen &&
+	       memcmp(haystack + hlen - nlen, needle, nlen) == 0;
+}
+
+/* https://gcc.gnu.org/onlinedocs/gcc/Integer-Overflow-Builtins.html */
+static bool
+is_gcc_bool_builtin(const char *name)
+{
+	return strncmp(name, "__builtin_", 10) == 0 &&
+	       (str_endswith(name, "_overflow") ||
+		str_endswith(name, "_overflow_p"));
+}
+
 static void
 build_name_call(sym_t *sym)
 {
@@ -225,6 +244,10 @@ build_name_call(sym_t *sym)
 		 * they are regular functions compatible with
 		 * non-prototype calling conventions.
 		 */
+
+		if (is_gcc_bool_builtin(sym->s_name))
+			sym->s_type = gettyp(BOOL);
+
 	} else if (Sflag) {
 		/* function '%s' implicitly declared to return int */
 		error(215, sym->s_name);
