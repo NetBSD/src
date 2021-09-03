@@ -1,3 +1,4 @@
+/*	$NetBSD: cipher-chachapoly-libcrypto.c,v 1.2 2021/09/03 10:30:33 christos Exp $	*/
 /*
  * Copyright (c) 2013 Damien Miller <djm@mindrot.org>
  *
@@ -15,6 +16,8 @@
  */
 
 /* $OpenBSD: cipher-chachapoly-libcrypto.c,v 1.1 2020/04/03 04:32:21 djm Exp $ */
+#include "includes.h"
+__RCSID("$NetBSD: cipher-chachapoly-libcrypto.c,v 1.2 2021/09/03 10:30:33 christos Exp $");
 
 #include <sys/types.h>
 #include <stdarg.h> /* needed for log.h */
