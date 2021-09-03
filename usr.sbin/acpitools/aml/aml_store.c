@@ -1,4 +1,4 @@
-/*	$NetBSD: aml_store.c,v 1.2 2019/02/03 03:19:30 mrg Exp $	*/
+/*	$NetBSD: aml_store.c,v 1.3 2021/09/03 22:33:18 andvar Exp $	*/
 
 /*-
  * Copyright (c) 1999 Takanori Watanabe
@@ -30,7 +30,7 @@
  *	$FreeBSD: src/usr.sbin/acpi/amldb/aml/aml_store.c,v 1.3 2000/11/09 06:24:45 iwasaki Exp $
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: aml_store.c,v 1.2 2019/02/03 03:19:30 mrg Exp $");
+__RCSID("$NetBSD: aml_store.c,v 1.3 2021/09/03 22:33:18 andvar Exp $");
 
 #include <sys/param.h>
 
@@ -305,7 +305,7 @@ aml_store_to_name(struct aml_environ *env, union aml_object *obj,
 		return;
 	}
 	if (name == NULL || obj == NULL) {
-		AML_DEBUGPRINT("[Try to store no existant name ]");
+		AML_DEBUGPRINT("[Try to store non-existent name]");
 		return;
 	}
 	if (name->property == NULL) {

@@ -1,4 +1,4 @@
-/* $NetBSD: t_uvm_physseg.c,v 1.9 2021/08/13 20:19:13 andvar Exp $ */
+/* $NetBSD: t_uvm_physseg.c,v 1.10 2021/09/03 22:33:18 andvar Exp $ */
 
 /*-
  * Copyright (c) 2015, 2016 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_uvm_physseg.c,v 1.9 2021/08/13 20:19:13 andvar Exp $");
+__RCSID("$NetBSD: t_uvm_physseg.c,v 1.10 2021/09/03 22:33:18 andvar Exp $");
 
 /*
  * If this line is commented out tests related to uvm_physseg_get_pmseg()
@@ -1886,7 +1886,7 @@ ATF_TC(vm_physseg_find_invalid);
 ATF_TC_HEAD(vm_physseg_find_invalid, tc)
 {
 	atf_tc_set_md_var(tc, "descr", "Tests if the returned segment number \
-	    is (paddr_t) -1  when a non existant PFN is passed into \
+	    is (paddr_t) -1  when a non-existent PFN is passed into \
 	    uvm_physseg_find() call.");
 }
 ATF_TC_BODY(vm_physseg_find_invalid, tc)

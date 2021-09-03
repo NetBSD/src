@@ -1,4 +1,4 @@
-/*	$NetBSD: mly.c,v 1.55 2021/08/07 16:19:14 thorpej Exp $	*/
+/*	$NetBSD: mly.c,v 1.56 2021/09/03 22:33:17 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mly.c,v 1.55 2021/08/07 16:19:14 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mly.c,v 1.56 2021/09/03 22:33:17 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1826,7 +1826,7 @@ mly_scsipi_request(struct scsipi_channel *chan, scsipi_adapter_req_t req,
 		splx(s);
 
 		/*
-		 * Check for I/O attempt to a protected or non-existant
+		 * Check for I/O attempt to a protected or non-existent
 		 * device.
 		 */
 		if ((tmp & MLY_BTL_PROTECTED) != 0) {

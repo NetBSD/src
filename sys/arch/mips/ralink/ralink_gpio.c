@@ -1,4 +1,4 @@
-/*	$NetBSD: ralink_gpio.c,v 1.11 2021/08/07 16:18:59 thorpej Exp $	*/
+/*	$NetBSD: ralink_gpio.c,v 1.12 2021/09/03 22:33:17 andvar Exp $	*/
 /*-
  * Copyright (c) 2011 CradlePoint Technology, Inc.
  * All rights reserved.
@@ -29,7 +29,7 @@
 /* ra_gpio.c -- Ralink 3052 gpio driver */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ralink_gpio.c,v 1.11 2021/08/07 16:18:59 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ralink_gpio.c,v 1.12 2021/09/03 22:33:17 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -900,7 +900,7 @@ ra_gpio_pin_read(void *arg, int pin)
 		 * then warn and return 0
 		 */
 		const int index = pin_tab_index[pin];
-		KASSERTMSG(index != -1, "%s: non-existant pin=%d\n",
+		KASSERTMSG(index != -1, "%s: non-existent pin=%d\n",
 			__func__, pin);
 		if (index == -1) {
 			rv = 0;
@@ -1001,7 +1001,7 @@ ra_gpio_pin_write(void *arg, int pin, int value)
 	 * then warn and return
 	 */
 	const int index = pin_tab_index[pin];
-	KASSERTMSG(index != -1, "%s: non-existant pin=%d\n", __func__, pin);
+	KASSERTMSG(index != -1, "%s: non-existent pin=%d\n", __func__, pin);
 	if (index == -1)
 		return;
 
@@ -1432,7 +1432,7 @@ disable_gpio_interrupt(ra_gpio_softc_t *sc, int pin)
 {
 	RALINK_DEBUG_FUNC_ENTRY();
 	const int index = pin_tab_index[pin];
-	KASSERTMSG(index != -1, "%s: non-existant pin=%d\n", __func__, pin);
+	KASSERTMSG(index != -1, "%s: non-existent pin=%d\n", __func__, pin);
 	if (index == -1)
 		return;
 
@@ -1456,7 +1456,7 @@ static void
 enable_gpio_interrupt(ra_gpio_softc_t *sc, int pin)
 {
 	const int index = pin_tab_index[pin];
-	KASSERTMSG(index != -1, "%s: non-existant pin=%d\n", __func__, pin);
+	KASSERTMSG(index != -1, "%s: non-existent pin=%d\n", __func__, pin);
 	if (index == -1)
 		return;
 
