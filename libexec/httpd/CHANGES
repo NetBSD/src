@@ -1,4 +1,4 @@
-$NetBSD: CHANGES,v 1.51 2021/08/24 09:53:26 mrg Exp $
+$NetBSD: CHANGES,v 1.52 2021/09/03 21:54:59 andvar Exp $
 
 changes in bozohttpd 20210824:
 	o  new "-m tlsversion" option to set the minimum TLS version
@@ -8,7 +8,7 @@ changes in bozohttpd 20210824:
 	   list of bad options.  should deal with PR#51278.
 
 changes in bozohttpd 20210504:
-	o  don't assume host BUFSIZ is sufficent.  small BUFSIZ leads to
+	o  don't assume host BUFSIZ is sufficient.  small BUFSIZ leads to
 	   always happens errors in the testsuite.  switch all these buffers
 	   to be 4KiB sized.  reported by embr <git@liclac.eu>
 
@@ -282,7 +282,7 @@ changes in bozohttpd 20030409:
 
 changes in bozohttpd 20030313:
 	o  deprecate -r flag; make this the default and silently ignore -r now
-	o  add support for file extentions to call CGI programs (from lukem)
+	o  add support for file extensions to call CGI programs (from lukem)
 	o  add dynamic support to add new content map entries, allowing both
 	   new file types and non /cgi-bin CGI programs to be run with the
 	   new -C "suffix cgihandler" and -M "suffix type encoding encoding11"

@@ -1,4 +1,4 @@
-/*	$NetBSD: resolv.h,v 1.41 2021/04/30 16:07:49 christos Exp $	*/
+/*	$NetBSD: resolv.h,v 1.42 2021/09/03 21:54:58 andvar Exp $	*/
 
 /*
  * Portions Copyright (C) 2004, 2005, 2008, 2009  Internet Systems Consortium, Inc. ("ISC")
@@ -188,7 +188,7 @@ struct __res_state {
 			uint16_t		nscount;
 			uint16_t		nstimes[MAXNS];	/*%< ms. */
 			int			nssocks[MAXNS];
-			struct __res_state_ext *ext;	/*%< extention for IPv6 */
+			struct __res_state_ext *ext;	/*%< extension for IPv6 */
 		} _ext;
 	} _u;
 	u_char	*_rnd;			/*%< PRIVATE: random state */
