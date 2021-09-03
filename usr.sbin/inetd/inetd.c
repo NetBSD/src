@@ -1,4 +1,4 @@
-/*	$NetBSD: inetd.c,v 1.132 2021/08/31 19:34:42 rillig Exp $	*/
+/*	$NetBSD: inetd.c,v 1.133 2021/09/03 19:33:51 rillig Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1991, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)inetd.c	8.4 (Berkeley) 4/13/94";
 #else
-__RCSID("$NetBSD: inetd.c,v 1.132 2021/08/31 19:34:42 rillig Exp $");
+__RCSID("$NetBSD: inetd.c,v 1.133 2021/09/03 19:33:51 rillig Exp $");
 #endif
 #endif /* not lint */
 
@@ -104,7 +104,7 @@ __RCSID("$NetBSD: inetd.c,v 1.132 2021/08/31 19:34:42 rillig Exp $");
  *	server program arguments	maximum of MAXARGV (64)
  *
  * For RPC services
- *      service name/version            must be in /etc/rpc
+ *	service name/version		must be in /etc/rpc
  *	socket type			stream/dgram/raw/rdm/seqpacket
  *	protocol			must be in /etc/protocols
  *	wait/nowait[:max]		single-threaded/multi-threaded
@@ -2715,11 +2715,11 @@ rl_process(struct servtab *sep, int ctrl)
 			rl_reset(sep, now);
 		} else {
 			syslog(LOG_ERR,
-                            SERV_FMT ": max spawn rate (%zu in %ji seconds) "
-                            "already met, closing until end of timeout in "
+			    SERV_FMT ": max spawn rate (%zu in %ji seconds) "
+			    "already met, closing until end of timeout in "
 			    "%ju seconds",
-                            SERV_PARAMS(sep),
-                            sep->se_service_max,
+			    SERV_PARAMS(sep),
+			    sep->se_service_max,
 			    (intmax_t)CNT_INTVL,
 			    (uintmax_t)RETRYTIME);
 
