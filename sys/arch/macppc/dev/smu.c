@@ -46,6 +46,7 @@
 
 #include <macppc/dev/obiovar.h>
 #include <macppc/dev/smuvar.h>
+#include <macppc/dev/fancontrolvar.h>
 
 #include "opt_smu.h"
 
@@ -67,7 +68,9 @@ struct smu_fan {
 	int min_rpm;
 	int max_rpm;
 	int default_rpm;
+	int wanted_rpm;
 	int current_rpm;
+	int fault;
 	time_t last_update;
 };
 
@@ -82,19 +85,11 @@ struct smu_iicbus {
 #define SMU_MAX_IICBUS		3
 #define SMU_MAX_SME_SENSORS	(SMU_MAX_FANS + 8)
 
-struct smu_zone {
-	bool (*filter)(const envsys_data_t *);
-	int nfans;
-	int fans[SMU_MAX_FANS];
-	int threshold, step;
-	int duty;
-};
 
-
-#define SMU_ZONE_CPUS	0
-#define SMU_ZONE_DRIVES	1
-#define SMU_ZONE_SLOTS	2
-#define SMU_ZONES	3
+#define SMU_ZONE_CPU		0
+#define SMU_ZONE_CASE		1
+#define SMU_ZONE_DRIVEBAY	2
+#define SMU_ZONES		3
 
 #define C_TO_uK(n) (n * 1000000 + 273150000)
 
@@ -123,7 +118,7 @@ struct smu_softc {
 	uint32_t cpu_m;
 	int32_t  cpu_b;
 
-	struct smu_zone sc_zones[SMU_ZONES];
+	fancontrol_zone_t sc_zones[SMU_ZONES];
 	lwp_t *sc_thread;
 	bool sc_dying;
 };
@@ -165,20 +160,19 @@ static int smu_dbell_gpio_intr(void *);
 static int smu_todr_gettime_ymdhms(todr_chip_handle_t, struct clock_ymdhms *);
 static int smu_todr_settime_ymdhms(todr_chip_handle_t, struct clock_ymdhms *);
 static int smu_fan_update_rpm(struct smu_fan *);
-static int smu_fan_get_rpm(struct smu_fan *, int *);
-static int smu_fan_set_rpm(struct smu_fan *, int);
 static int smu_read_adc(struct smu_softc *, int);
 
 static int smu_iicbus_exec(void *, i2c_op_t, i2c_addr_t, const void *,
     size_t, void *, size_t, int);
-static int smu_sysctl_fan_rpm(SYSCTLFN_ARGS);
 
 static void smu_setup_zones(struct smu_softc *);
-static void smu_adjust_zone(struct smu_softc *, int);
 static void smu_adjust(void *);
+
 static bool is_cpu_sensor(const envsys_data_t *);
 static bool is_drive_sensor(const envsys_data_t *);
 static bool is_slots_sensor(const envsys_data_t *);
+static int smu_fan_get_rpm(void *, int);
+static int smu_fan_set_rpm(void *, int, int);
 
 int smu_get_datablock(int, uint8_t *, size_t);
 
@@ -299,9 +293,8 @@ static void
 smu_setup_fans(struct smu_softc *sc)
 {
 	struct smu_fan *fan;
-	struct sysctlnode *sysctl_fans, *sysctl_fan, *sysctl_node;
-	char type[32], sysctl_fan_name[32];
-	int node, i, j;
+	char type[32];
+	int node, i;
 	const char *fans[] = { "fans", "rpm-fans", 0 };
 	int n = 0;
 	
@@ -349,6 +342,8 @@ smu_setup_fans(struct smu_softc *sc)
 			    fan->location, fan->reg, fan->zone, fan->rpm_ctl,
 			    fan->min_rpm, fan->max_rpm, fan->default_rpm);
 
+			fan->wanted_rpm = fan->default_rpm;
+			fan->fault = 0; 
 			sc->sc_num_fans++;
 		}
 		n++;
@@ -356,88 +351,8 @@ smu_setup_fans(struct smu_softc *sc)
 
 	for (i = 0; i < sc->sc_num_fans; i++) {
 		fan = &sc->sc_fans[i];
-		smu_fan_set_rpm(fan, fan->default_rpm);
-		smu_fan_get_rpm(fan, &fan->current_rpm);
-	}
-
-	/* Create sysctl nodes for each fan */
-
-	sysctl_createv(NULL, 0, NULL, (void *) &sysctl_fans,
-	    CTLFLAG_READWRITE | CTLFLAG_OWNDESC,
-	    CTLTYPE_NODE, "fans", NULL,
-	    NULL, 0, NULL, 0,
-	    CTL_MACHDEP,
-	    sc->sc_sysctl_me->sysctl_num,
-	    CTL_CREATE, CTL_EOL);
-
-	for (i = 0; i < sc->sc_num_fans; i++) {
-		fan = &sc->sc_fans[i];
-
-		for (j = 0; j < strlen(fan->location); j++) {
-			sysctl_fan_name[j] = tolower(fan->location[j]);
-			if (sysctl_fan_name[j] == ' ')
-				sysctl_fan_name[j] = '_';
-		}
-		sysctl_fan_name[j] = '\0';
-
-		sysctl_createv(NULL, 0, NULL, (void *) &sysctl_fan,
-		    CTLFLAG_READWRITE | CTLFLAG_OWNDESC,
-		    CTLTYPE_NODE, sysctl_fan_name, "fan information",
-		    NULL, 0, NULL, 0,
-		    CTL_MACHDEP,
-		    sc->sc_sysctl_me->sysctl_num,
-		    sysctl_fans->sysctl_num,
-		    CTL_CREATE, CTL_EOL);
-
-		sysctl_createv(NULL, 0, NULL, (void *) &sysctl_node,
-		    CTLFLAG_READONLY | CTLFLAG_OWNDESC,
-		    CTLTYPE_INT, "zone", "fan zone",
-		    NULL, 0, &fan->zone, 0,
-		    CTL_MACHDEP,
-		    sc->sc_sysctl_me->sysctl_num,
-		    sysctl_fans->sysctl_num,
-		    sysctl_fan->sysctl_num,
-		    CTL_CREATE, CTL_EOL);
-
-		sysctl_createv(NULL, 0, NULL, (void *) &sysctl_node,
-		    CTLFLAG_READONLY | CTLFLAG_OWNDESC,
-		    CTLTYPE_INT, "min_rpm", "fan minimum rpm",
-		    NULL, 0, &fan->min_rpm, 0,
-		    CTL_MACHDEP,
-		    sc->sc_sysctl_me->sysctl_num,
-		    sysctl_fans->sysctl_num,
-		    sysctl_fan->sysctl_num,
-		    CTL_CREATE, CTL_EOL);
-
-		sysctl_createv(NULL, 0, NULL, (void *) &sysctl_node,
-		    CTLFLAG_READONLY | CTLFLAG_OWNDESC,
-		    CTLTYPE_INT, "max_rpm", "fan maximum rpm",
-		    NULL, 0, &fan->max_rpm, 0,
-		    CTL_MACHDEP,
-		    sc->sc_sysctl_me->sysctl_num,
-		    sysctl_fans->sysctl_num,
-		    sysctl_fan->sysctl_num,
-		    CTL_CREATE, CTL_EOL);
-
-		sysctl_createv(NULL, 0, NULL, (void *) &sysctl_node,
-		    CTLFLAG_READONLY | CTLFLAG_OWNDESC,
-		    CTLTYPE_INT, "default_rpm", "fan default rpm",
-		    NULL, 0, &fan->default_rpm, 0,
-		    CTL_MACHDEP,
-		    sc->sc_sysctl_me->sysctl_num,
-		    sysctl_fans->sysctl_num,
-		    sysctl_fan->sysctl_num,
-		    CTL_CREATE, CTL_EOL);
-
-		sysctl_createv(NULL, 0, NULL, (void *) &sysctl_node,
-		    CTLFLAG_READWRITE | CTLFLAG_OWNDESC,
-		    CTLTYPE_INT, "rpm", "fan current rpm",
-		    smu_sysctl_fan_rpm, 0, (void *) fan, 0,
-		    CTL_MACHDEP,
-		    sc->sc_sysctl_me->sysctl_num,
-		    sysctl_fans->sysctl_num,
-		    sysctl_fan->sysctl_num,
-		    CTL_CREATE, CTL_EOL);
+		smu_fan_set_rpm(sc, i, fan->default_rpm);
+		smu_fan_update_rpm(fan);
 	}
 }
 
@@ -554,18 +469,17 @@ static void
 smu_sme_refresh(struct sysmon_envsys *sme, envsys_data_t *edata)
 {
 	struct smu_softc *sc = sme->sme_cookie;
-	struct smu_fan *fan;
 	int which = edata->sensor;
 	int ret;
 
 	edata->state = ENVSYS_SINVALID;
 
 	if (which < sc->sc_num_fans) {
-		fan = &sc->sc_fans[which];
 
-		ret = smu_fan_get_rpm(fan, &fan->current_rpm);
-		if (ret == 0) {
-			edata->value_cur = fan->current_rpm;
+		ret = smu_fan_get_rpm(sc, which);
+		if (ret != -1) {
+			sc->sc_fans[which].current_rpm = ret;
+			edata->value_cur = ret;
 			edata->state = ENVSYS_SVALID;
 		}
 	} else if (edata->private > 0) {
@@ -738,7 +652,7 @@ smu_fan_update_rpm(struct smu_fan *fan)
 {
 	struct smu_softc *sc = fan->sc;
 	struct smu_cmd cmd;
-	int ret;
+	int ret, diff;
 
 	cmd.cmd = SMU_CMD_FAN;
 	cmd.len = 2;
@@ -761,31 +675,35 @@ smu_fan_update_rpm(struct smu_fan *fan)
 			    cmd.data[2 + fan->reg * 2];
 		}
 	}
-
+	diff = abs(fan->current_rpm - fan->wanted_rpm);
+	if (diff > fan->max_rpm >> 3) {
+		fan->fault++;
+	} else fan->fault = 0;
 	return ret;
 }
 
 static int
-smu_fan_get_rpm(struct smu_fan *fan, int *rpm)
+smu_fan_get_rpm(void *cookie, int which)
 {
+	struct smu_softc *sc = cookie;
+	struct smu_fan *fan = &sc->sc_fans[which];
 	int ret;
 	ret = 0;
 
 	if (time_uptime - fan->last_update > 1) {
 		ret = smu_fan_update_rpm(fan);
 		if (ret != 0)
-			return ret;
+			return -1;
 	}
 
-	*rpm = fan->current_rpm;
-
-	return ret;
+	return fan->current_rpm;
 }
 
 static int
-smu_fan_set_rpm(struct smu_fan *fan, int rpm)
+smu_fan_set_rpm(void *cookie, int which, int rpm)
 {
-	struct smu_softc *sc = fan->sc;
+	struct smu_softc *sc = cookie;
+	struct smu_fan *fan = &sc->sc_fans[which];
 	struct smu_cmd cmd;
 	int ret;
 
@@ -793,6 +711,8 @@ smu_fan_set_rpm(struct smu_fan *fan, int rpm)
 
 	rpm = uimax(fan->min_rpm, rpm);
 	rpm = uimin(fan->max_rpm, rpm);
+
+	fan->wanted_rpm = rpm;
 
 	cmd.cmd = SMU_CMD_FAN;
 	cmd.len = 4;
@@ -887,33 +807,6 @@ smu_iicbus_exec(void *cookie, i2c_op_t op, i2c_addr_t addr, const void *send,
 	return 0;
 }
 
-static int
-smu_sysctl_fan_rpm(SYSCTLFN_ARGS)
-{
-	struct sysctlnode node = *rnode;
-	struct smu_fan *fan = node.sysctl_data;
-	int rpm = 0;
-	int ret;
-
-	node.sysctl_data = &rpm;
-
-	if (newp) {
-		if (sysctl_lookup(SYSCTLFN_CALL(&node)) == 0) {
-			rpm = *(int *) node.sysctl_data;
-			return smu_fan_set_rpm(fan, rpm);
-		}
-		return EINVAL;
-	} else {
-		ret = smu_fan_get_rpm(fan, &rpm);
-		if (ret != 0)
-			return (ret);
-
-		return sysctl_lookup(SYSCTLFN_CALL(&node));
-	}
-
-	return 0;
-}
-
 SYSCTL_SETUP(smu_sysctl_setup, "SMU sysctl subtree setup")
 {
 	sysctl_createv(NULL, 0, NULL, NULL,
@@ -924,103 +817,90 @@ SYSCTL_SETUP(smu_sysctl_setup, "SMU sysctl subtree setup")
 static void
 smu_setup_zones(struct smu_softc *sc)
 {
-	struct smu_zone *z;
 	struct smu_fan *f;
+	fancontrol_zone_t *z;
 	int i;
 
+	/* init zones */
+	sc->sc_zones[SMU_ZONE_CPU].name = "CPUs";
+	sc->sc_zones[SMU_ZONE_CPU].filter = is_cpu_sensor;
+	sc->sc_zones[SMU_ZONE_CPU].cookie = sc;
+	sc->sc_zones[SMU_ZONE_CPU].get_rpm = smu_fan_get_rpm;
+	sc->sc_zones[SMU_ZONE_CPU].set_rpm = smu_fan_set_rpm;
+	sc->sc_zones[SMU_ZONE_CPU].Tmin = 45;
+	sc->sc_zones[SMU_ZONE_CPU].Tmax = 80;
+	sc->sc_zones[SMU_ZONE_CPU].nfans = 0;
+	sc->sc_zones[SMU_ZONE_CASE].name = "Slots";
+	sc->sc_zones[SMU_ZONE_CASE].filter = is_slots_sensor;
+	sc->sc_zones[SMU_ZONE_CASE].cookie = sc;
+	sc->sc_zones[SMU_ZONE_CASE].Tmin = 50;
+	sc->sc_zones[SMU_ZONE_CASE].Tmax = 75;
+	sc->sc_zones[SMU_ZONE_CASE].nfans = 0;
+	sc->sc_zones[SMU_ZONE_CASE].get_rpm = smu_fan_get_rpm;
+	sc->sc_zones[SMU_ZONE_CASE].set_rpm = smu_fan_set_rpm;
+	sc->sc_zones[SMU_ZONE_DRIVEBAY].name = "Drivebays";
+	sc->sc_zones[SMU_ZONE_DRIVEBAY].filter = is_drive_sensor;
+	sc->sc_zones[SMU_ZONE_DRIVEBAY].cookie = sc;
+	sc->sc_zones[SMU_ZONE_DRIVEBAY].get_rpm = smu_fan_get_rpm;
+	sc->sc_zones[SMU_ZONE_DRIVEBAY].set_rpm = smu_fan_set_rpm;
+	sc->sc_zones[SMU_ZONE_DRIVEBAY].Tmin = 30;
+	sc->sc_zones[SMU_ZONE_DRIVEBAY].Tmax = 50;
+	sc->sc_zones[SMU_ZONE_DRIVEBAY].nfans = 0;
+
 	/* find CPU fans */
-	z = &sc->sc_zones[SMU_ZONE_CPUS];
-	z->nfans = 0;
+	z = &sc->sc_zones[SMU_ZONE_CPU];
 	for (i = 0; i < SMU_MAX_FANS; i++) {
 		f = &sc->sc_fans[i];
 		if ((strstr(f->location, "CPU") != NULL) || 
 		    (strstr(f->location, "System") != NULL)) {
-			z->fans[z->nfans] = i;
+			z->fans[z->nfans].num = i;
+			z->fans[z->nfans].min_rpm = f->min_rpm;
+			z->fans[z->nfans].max_rpm = f->max_rpm;
+			z->fans[z->nfans].name = f->location;
 			z->nfans++;
 		}
 	}
 	aprint_normal_dev(sc->sc_dev,
 	    "using %d fans for CPU zone\n", z->nfans);
-	z->threshold = C_TO_uK(45);
-	z->duty = 150;
-	z->step = 3;	
-	z->filter = is_cpu_sensor;
 
-	z = &sc->sc_zones[SMU_ZONE_DRIVES];
-	z->nfans = 0;
+	z = &sc->sc_zones[SMU_ZONE_DRIVEBAY];
 	for (i = 0; i < SMU_MAX_FANS; i++) {
 		f = &sc->sc_fans[i];
 		if ((strstr(f->location, "DRIVE") != NULL) ||
 		    (strstr(f->location, "Drive") != NULL)) {
-			z->fans[z->nfans] = i;
+			z->fans[z->nfans].num = i;
+			z->fans[z->nfans].min_rpm = f->min_rpm;
+			z->fans[z->nfans].max_rpm = f->max_rpm;
+			z->fans[z->nfans].name = f->location;
 			z->nfans++;
 		}
 	}
 	aprint_normal_dev(sc->sc_dev,
 	    "using %d fans for drive bay zone\n", z->nfans);
-	z->threshold = C_TO_uK(40);
-	z->duty = 150;
-	z->step = 2;
-	z->filter = is_drive_sensor;
 
-	z = &sc->sc_zones[SMU_ZONE_SLOTS];
-	z->nfans = 0;
+	z = &sc->sc_zones[SMU_ZONE_CASE];
 	for (i = 0; i < SMU_MAX_FANS; i++) {
 		f = &sc->sc_fans[i];
 		if ((strstr(f->location, "BACKSIDE") != NULL) ||
 		    (strstr(f->location, "SLOTS") != NULL)) {
-			z->fans[z->nfans] = i;
+			z->fans[z->nfans].num = i;
+			z->fans[z->nfans].min_rpm = f->min_rpm;
+			z->fans[z->nfans].max_rpm = f->max_rpm;
+			z->fans[z->nfans].name = f->location;
 			z->nfans++;
 		}
 	}
 	aprint_normal_dev(sc->sc_dev,
 	    "using %d fans for expansion slots zone\n", z->nfans);
-	z->threshold = C_TO_uK(40);
-	z->duty = 150;
-	z->step = 2;
-	z->filter = is_slots_sensor;
+
+	/* setup sysctls for our zones etc. */
+	for (i = 0; i < SMU_ZONES; i++) {
+		fancontrol_init_zone(&sc->sc_zones[i], sc->sc_sysctl_me);
+	}
 
 	sc->sc_dying = false;
 	kthread_create(PRI_NONE, 0, curcpu(), smu_adjust, sc, &sc->sc_thread,
 	    "fan control"); 
-}
-
-static void
-smu_adjust_zone(struct smu_softc *sc, int which)
-{
-	struct smu_zone *z = &sc->sc_zones[which];
-	struct smu_fan *f;
-	long temp, newduty, i, speed, diff;
-
-	DPRINTF("%s %d\n", __func__, which);
-
-	temp = sysmon_envsys_get_max_value(z->filter, true);
-	if (temp == 0) {
-		/* no sensor data - leave fan alone */
-		DPRINTF("nodata\n");
-		return;
-	}
-	DPRINTF("temp %ld ", (temp - 273150000) / 1000000);
-	diff = ((temp - z->threshold) / 1000000) * z->step;
-
-	if (diff < 0) newduty = 0;
-	else if (diff > 100) newduty = 100;
-	else newduty = diff;
-
-	DPRINTF("newduty %ld diff %ld \n", newduty, diff);
-	if (newduty == z->duty) {
-		DPRINTF("no change\n");
-		return;
-	}
-	z->duty = newduty;
-	/* now adjust each fan to the new duty cycle */
-	for (i = 0; i < z->nfans; i++) {
-		f = &sc->sc_fans[z->fans[i]];
-		speed = f->min_rpm + ((f->max_rpm - f->min_rpm) * newduty) / 100;
-		DPRINTF("fan %d speed %ld ", z->fans[i], speed);
-		smu_fan_set_rpm(f, speed);
-	}
-	DPRINTF("\n");
 }
 
 static void
@@ -1031,8 +911,9 @@ smu_adjust(void *cookie)
 
 	while (!sc->sc_dying) {
 		for (i = 0; i < SMU_ZONES; i++)
-			smu_adjust_zone(sc, i);
-		kpause("fanctrl", true, mstohz(3000), NULL);
+			if (sc->sc_zones[i].nfans > 0)
+				fancontrol_adjust_zone(&sc->sc_zones[i]);
+		kpause("fanctrl", true, mstohz(2000), NULL);
 	}
 	kthread_exit(0);
 }
