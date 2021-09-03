@@ -206,6 +206,11 @@ AcpiInfo (
 {
     va_list                 ArgList;
 
+#if defined(ACPI_QUIET_BOOT)
+    if (ACPI_QUIET_BOOT) {
+        return;
+    }
+#endif
 
     ACPI_MSG_REDIRECT_BEGIN;
     AcpiOsPrintf (ACPI_MSG_INFO);

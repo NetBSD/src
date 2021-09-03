@@ -1,7 +1,7 @@
 /******************************************************************************
  *
  * Name: acnetbsd.h - OS specific defines, etc.
- *       $Revision: 1.22 $
+ *       $Revision: 1.23 $
  *
  *****************************************************************************/
 
@@ -65,6 +65,7 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/reboot.h>
 #include <sys/endian.h>
 #include <dev/acpi/acpica/acpi_func.h>
 
@@ -143,5 +144,9 @@
 #define ACPI_USE_SYSTEM_CLIBRARY
 #define ACPI_USE_NATIVE_DIVIDE
 #define ACPI_USE_NATIVE_MATH64
+
+/* Suppress ACPI_INFO level log messages when this is true */
+#define	ACPI_QUIET_BOOT	\
+	((boothowto & (AB_QUIET|AB_SILENT)) != 0)
 
 #endif /* __ACNETBSD_H__ */
