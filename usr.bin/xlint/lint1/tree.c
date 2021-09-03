@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.370 2021/09/02 20:10:17 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.371 2021/09/03 22:27:32 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.370 2021/09/02 20:10:17 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.371 2021/09/03 22:27:32 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -215,6 +215,28 @@ is_compiler_builtin(const char *name)
 	return false;
 }
 
+static void
+build_name_call(sym_t *sym)
+{
+
+	if (is_compiler_builtin(sym->s_name)) {
+		/*
+		 * Do not warn about these, just assume that
+		 * they are regular functions compatible with
+		 * non-prototype calling conventions.
+		 */
+	} else if (Sflag) {
+		/* function '%s' implicitly declared to return int */
+		error(215, sym->s_name);
+	} else if (sflag) {
+		/* function '%s' implicitly declared to return int */
+		warning(215, sym->s_name);
+	}
+
+	/* XXX if tflag is set, the symbol should be exported to level 0 */
+	sym->s_type = derive_type(sym->s_type, FUNC);
+}
+
 /*
  * Create a node for a name (symbol table entry).
  * follow_token is the token which follows the name.
@@ -228,24 +250,7 @@ build_name(sym_t *sym, int follow_token)
 		sym->s_scl = EXTERN;
 		sym->s_def = DECL;
 		if (follow_token == T_LPAREN) {
-			if (is_compiler_builtin(sym->s_name)) {
-				/*
-				 * Do not warn about these, just assume that
-				 * they are regular functions compatible with
-				 * non-prototype calling conventions.
-				 */
-			} else if (Sflag) {
-				/* function '%s' implicitly declared to ... */
-				error(215, sym->s_name);
-			} else if (sflag) {
-				/* function '%s' implicitly declared to ... */
-				warning(215, sym->s_name);
-			}
-			/*
-			 * XXX if tflag is set the symbol should be
-			 * exported to level 0
-			 */
-			sym->s_type = derive_type(sym->s_type, FUNC);
+			build_name_call(sym);
 		} else {
 			fallback_symbol(sym);
 		}
