@@ -327,7 +327,7 @@ add flags missed in last merge
 2005-07-22 16:36  sam
 
 Diff reduction against p4:
-o add ic_flags_ext for eventual extention of ic_flags
+o add ic_flags_ext for eventual extension of ic_flags
 o define/reserve flag+capabilities bits for superg,
   bg scan, and roaming support
 o refactor debug msg macros

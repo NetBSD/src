@@ -1,4 +1,4 @@
-/*	$NetBSD: uvideo.c,v 1.60 2021/05/16 09:17:23 mlelstv Exp $	*/
+/*	$NetBSD: uvideo.c,v 1.61 2021/09/03 21:55:00 andvar Exp $	*/
 
 /*
  * Copyright (c) 2008 Patrick Mahoney
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvideo.c,v 1.60 2021/05/16 09:17:23 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvideo.c,v 1.61 2021/09/03 21:55:00 andvar Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -135,7 +135,7 @@ struct uvideo_unit {
 		struct uvideo_extension_unit	vu_extension;
 	} u;
 
-	/* Used by camera terminal, processing and extention units. */
+	/* Used by camera terminal, processing and extension units. */
 	uint8_t		vu_control_size; /* number of bytes in vu_controls */
 	uint8_t		*vu_controls;	 /* array of bytes. bits are
 					  * numbered from 0 at least

@@ -1,4 +1,4 @@
-/*	$NetBSD: armreg.h,v 1.130 2021/01/31 06:18:50 skrll Exp $	*/
+/*	$NetBSD: armreg.h,v 1.131 2021/09/03 21:55:00 andvar Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Ben Harris
@@ -540,7 +540,7 @@
 #define PRRR_TR_NORMAL	2		// Normal Memory
 
 /* ARMv7 MPIDR, Multiprocessor Affinity Register generic format  */
-#define MPIDR_MP		__BIT(31)	/* 1 = Have MP Extention */
+#define MPIDR_MP		__BIT(31)	/* 1 = Have MP Extension */
 #define MPIDR_U			__BIT(30)	/* 1 = Uni-Processor System */
 #define MPIDR_MT		__BIT(24)	/* 1 = SMT(AFF0 is logical) */
 #define MPIDR_AFF2		__BITS(23,16)	/* Affinity Level 2 */

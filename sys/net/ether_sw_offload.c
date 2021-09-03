@@ -1,4 +1,4 @@
-/*	$NetBSD: ether_sw_offload.c,v 1.7 2020/03/27 17:18:15 jdolecek Exp $	*/
+/*	$NetBSD: ether_sw_offload.c,v 1.8 2021/09/03 21:55:00 andvar Exp $	*/
 
 /*
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ether_sw_offload.c,v 1.7 2020/03/27 17:18:15 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ether_sw_offload.c,v 1.8 2021/09/03 21:55:00 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -124,7 +124,7 @@ ether_sw_offload_tx(struct ifnet *ifp, struct mbuf *m)
 		/*
 		 * tcp[46]_segment() assume that size of payloads is
 		 * a multiple of MSS. Further, tcp6_segment() assumes
-		 * no extention headers.
+		 * no extension headers.
 		 *
 		 * XXX Do we need some KASSERT's?
 		 */

@@ -1,4 +1,4 @@
-/*	$NetBSD: nfsmb.c,v 1.27 2021/08/07 16:19:14 thorpej Exp $	*/
+/*	$NetBSD: nfsmb.c,v 1.28 2021/09/03 21:55:00 andvar Exp $	*/
 /*
  * Copyright (c) 2007 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  *
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfsmb.c,v 1.27 2021/08/07 16:19:14 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfsmb.c,v 1.28 2021/09/03 21:55:00 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -178,7 +178,7 @@ nfsmbc_attach(device_t parent, device_t self, void *aux)
 
 	/* This driver is similar to an ISA bridge that doesn't
 	 * need any special handling. So registering NULL handlers
-	 * are sufficent. */
+	 * are sufficient. */
 	if (!pmf_device_register(self, NULL, NULL))
 		aprint_error_dev(self, "couldn't establish power handler\n");
 }
@@ -242,7 +242,7 @@ nfsmb_attach(device_t parent, device_t self, void *aux)
 
 	/* This driver is similar to an ISA bridge that doesn't
 	 * need any special handling. So registering NULL handlers
-	 * are sufficent. */
+	 * are sufficient. */
 	if (!pmf_device_register(self, NULL, NULL))
 		aprint_error_dev(self, "couldn't establish power handler\n");
 }

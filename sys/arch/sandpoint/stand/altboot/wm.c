@@ -1,4 +1,4 @@
-/* $NetBSD: wm.c,v 1.2 2011/01/27 17:38:04 phx Exp $ */
+/* $NetBSD: wm.c,v 1.3 2021/09/03 21:55:00 andvar Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@ struct rdesc {
 #define T2_IFCS		(1U << 25)	/* insert FCS */
 #define T2_RS		(1U << 27)	/* report status */
 #define T2_RPS		(1U << 28)	/* report packet sent */
-#define T2_DEXT		(1U << 29)	/* descriptor extention */
+#define T2_DEXT		(1U << 29)	/* descriptor extension */
 #define T2_VLE		(1U << 30)	/* VLAN enable */
 #define T2_IDE		(1U << 31)	/* interrupt delay enable */
 /* T3 status */
@@ -96,7 +96,7 @@ struct rdesc {
 #define R3_CE		(1U << 8)	/* CRC error */
 #define R3_SE		(1U << 9)	/* symbol error */
 #define R3_SEQ		(1U << 10)	/* sequence error */
-#define R3_CXE		(1U << 12)	/* carrier extention error */
+#define R3_CXE		(1U << 12)	/* carrier extension error */
 #define R3_TCPE		(1U << 13)	/* TCP csum error found */
 #define R3_IPE		(1U << 14)	/* IP csum error found */
 #define R3_RXE		(1U << 15)	/* Rx data error */

@@ -1,4 +1,4 @@
-/*	$NetBSD: pdcsata.c,v 1.31 2019/02/03 03:19:27 mrg Exp $	*/
+/*	$NetBSD: pdcsata.c,v 1.32 2021/09/03 21:55:00 andvar Exp $	*/
 
 /*
  * Copyright (c) 2004, Manuel Bouyer.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pdcsata.c,v 1.31 2019/02/03 03:19:27 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pdcsata.c,v 1.32 2021/09/03 21:55:00 andvar Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -405,7 +405,7 @@ pdcsata_chip_map(struct pciide_softc *sc, const struct pci_attach_args *pa)
 		/*
 		 * subregion de busmaster registers. They're spread all over
 		 * the controller's register space :(. They are also 4 bytes
-		 * sized, with some specific extentions in the extra bits.
+		 * sized, with some specific extensions in the extra bits.
 		 * It also seems that the IDEDMA_CTL register isn't available.
 		 */
 		if (bus_space_subregion(sc->sc_ba5_st, sc->sc_ba5_sh,

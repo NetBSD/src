@@ -1,4 +1,4 @@
-/*	$NetBSD: sctp_output.c,v 1.23 2021/07/24 21:31:39 andvar Exp $ */
+/*	$NetBSD: sctp_output.c,v 1.24 2021/09/03 21:55:01 andvar Exp $ */
 /*	$KAME: sctp_output.c,v 1.48 2005/06/16 18:29:24 jinmei Exp $	*/
 
 /*
@@ -30,7 +30,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sctp_output.c,v 1.23 2021/07/24 21:31:39 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sctp_output.c,v 1.24 2021/09/03 21:55:01 andvar Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ipsec.h"
@@ -3356,7 +3356,7 @@ sctp_send_initiate_ack(struct sctp_inpcb *inp, struct sctp_tcb *stcb,
 	stc.peerport = sh->src_port;
 
 	/*
-	 * If we wanted to honor cookie life extentions, we would add
+	 * If we wanted to honor cookie life extensions, we would add
 	 * to stc.cookie_life. For now we should NOT honor any extension
 	 */
 	stc.site_scope = stc.local_scope = stc.loopback_scope = 0;
@@ -3958,7 +3958,7 @@ sctp_prune_prsctp(struct sctp_tcb *stcb,
 							return;
 						}
 					} /* if chunk was present */
-				} /* if of sufficent priority */
+				} /* if of sufficient priority */
 			} /* if chunk has enabled */
 		} /* tailqforeach */
 
@@ -9949,7 +9949,7 @@ sctp_sosend(struct socket *so, struct sockaddr *addr, struct uio *uio,
 		/* UDP style, we must go ahead and start the INIT process */
 		if ((use_rcvinfo) &&
 		    (srcv.sinfo_flags & SCTP_ABORT)) {
-			/* User asks to abort a non-existant asoc */
+			/* User asks to abort a non-existent asoc */
 			error = ENOENT;
 			sounlock(so);
 			goto out;

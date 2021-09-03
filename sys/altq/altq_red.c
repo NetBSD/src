@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_red.c,v 1.32 2019/12/26 04:53:11 msaitoh Exp $	*/
+/*	$NetBSD: altq_red.c,v 1.33 2021/09/03 21:54:59 andvar Exp $	*/
 /*	$KAME: altq_red.c,v 1.20 2005/04/13 03:44:25 suz Exp $	*/
 
 /*
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: altq_red.c,v 1.32 2019/12/26 04:53:11 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: altq_red.c,v 1.33 2021/09/03 21:54:59 andvar Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_altq.h"
@@ -178,7 +178,7 @@ __KERNEL_RCSID(0, "$NetBSD: altq_red.c,v 1.32 2019/12/26 04:53:11 msaitoh Exp $"
 #ifdef ALTQ3_COMPAT
 #ifdef ALTQ_FLOWVALVE
 /*
- * flow-valve is an extention to protect red from unresponsive flows
+ * flow-valve is an extension to protect red from unresponsive flows
  * and to promote end-to-end congestion control.
  * flow-valve observes the average drop rates of the flows that have
  * experienced packet drops in the recent past.
