@@ -1,4 +1,4 @@
-/*	$NetBSD: aic79xx.seq,v 1.12 2019/06/04 10:15:22 msaitoh Exp $	*/
+/*	$NetBSD: aic79xx.seq,v 1.13 2021/09/03 22:33:17 andvar Exp $	*/
 
 /*
  * Adaptec U320 device driver firmware for Linux and FreeBSD.
@@ -1274,7 +1274,7 @@ service_fifo:
 
 	/*
 	 * We fetch a "cacheline aligned" and sized amount of data
-	 * so we don't end up referencing a non-existant page.
+	 * so we don't end up referencing a non-existent page.
 	 * Cacheline aligned is in quotes because the kernel will
 	 * set the prefetch amount to a reasonable level if the
 	 * cacheline size is unknown.
