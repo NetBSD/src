@@ -1,4 +1,4 @@
-/* $NetBSD: udf_allocation.c,v 1.43 2021/08/20 20:25:28 andvar Exp $ */
+/* $NetBSD: udf_allocation.c,v 1.44 2021/09/03 21:55:00 andvar Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_allocation.c,v 1.43 2021/08/20 20:25:28 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_allocation.c,v 1.44 2021/09/03 21:55:00 andvar Exp $");
 #endif /* not lint */
 
 
@@ -1479,7 +1479,7 @@ udf_trunc_metadatapart(struct udf_mount *ump, uint32_t num_lb)
 	/* XXX
 	 *
 	 * the following checks will fail for BD-R UDF 2.60! but they are
-	 * read-only for now anyway! Its even doubtfull if it is to be allowed
+	 * read-only for now anyway! Its even doubtful if it is to be allowed
 	 * for these discs.
 	 */
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_alloc.c,v 1.169 2020/09/05 16:30:13 riastradh Exp $	*/
+/*	$NetBSD: ffs_alloc.c,v 1.170 2021/09/03 21:55:01 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_alloc.c,v 1.169 2020/09/05 16:30:13 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_alloc.c,v 1.170 2021/09/03 21:55:01 andvar Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -779,7 +779,7 @@ ffs_blkpref_ufs1(struct inode *ip, daddr_t lbn, int indx, int flags,
 
 	/*
 	 * If allocating a contiguous file with B_CONTIG, use the hints
-	 * in the inode extentions to return the desired block.
+	 * in the inode extensions to return the desired block.
 	 *
 	 * For metadata (indirect blocks) return the address of where
 	 * the first indirect block resides - we'll scan for the next
@@ -843,7 +843,7 @@ ffs_blkpref_ufs2(struct inode *ip, daddr_t lbn, int indx, int flags,
 
 	/*
 	 * If allocating a contiguous file with B_CONTIG, use the hints
-	 * in the inode extentions to return the desired block.
+	 * in the inode extensions to return the desired block.
 	 *
 	 * For metadata (indirect blocks) return the address of where
 	 * the first indirect block resides - we'll scan for the next

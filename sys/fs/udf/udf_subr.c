@@ -1,4 +1,4 @@
-/* $NetBSD: udf_subr.c,v 1.156 2021/08/21 09:59:46 andvar Exp $ */
+/* $NetBSD: udf_subr.c,v 1.157 2021/09/03 21:55:00 andvar Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_subr.c,v 1.156 2021/08/21 09:59:46 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_subr.c,v 1.157 2021/09/03 21:55:00 andvar Exp $");
 #endif /* not lint */
 
 
@@ -2950,7 +2950,7 @@ udf_check_for_vat(struct udf_node *vat_node)
 	/*
 	 * check contents of the file if its the old 1.50 VAT table format.
 	 * Its notoriously broken and allthough some implementations support an
-	 * extention as defined in the UDF 1.50 errata document, its doubtfull
+	 * extension as defined in the UDF 1.50 errata document, its doubtful
 	 * to be useable since a lot of implementations don't maintain it.
 	 */
 	lvinfo = ump->logvol_info;
@@ -4280,7 +4280,7 @@ udf_timestamp_to_timespec(struct udf_mount *ump,
 	 */
 	tz  = udf_rw16(timestamp->type_tz);
 	tz &= 0x0fff;			/* only lower 12 bits are significant */
-	if (tz & 0x0800)		/* sign extention */
+	if (tz & 0x0800)		/* sign extension */
 		tz |= 0xf000;
 
 	/* TODO check timezone conversion */

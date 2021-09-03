@@ -1,4 +1,4 @@
-/* $NetBSD: fenv.c,v 1.9 2021/08/19 20:56:36 andvar Exp $ */
+/* $NetBSD: fenv.c,v 1.10 2021/09/03 21:54:59 andvar Exp $ */
 
 /*-
  * Copyright (c) 2004-2005 David Schultz <das (at) FreeBSD.ORG>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: fenv.c,v 1.9 2021/08/19 20:56:36 andvar Exp $");
+__RCSID("$NetBSD: fenv.c,v 1.10 2021/09/03 21:54:59 andvar Exp $");
 
 #include "namespace.h"
 
@@ -496,7 +496,7 @@ feupdateenv(const fenv_t *envp)
 }
 
 /*
- * The following functions are extentions to the standard
+ * The following functions are extensions to the standard
  */
 int
 feenableexcept(int mask)
