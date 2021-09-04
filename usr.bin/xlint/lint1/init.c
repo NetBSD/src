@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.208 2021/08/14 12:46:23 rillig Exp $	*/
+/*	$NetBSD: init.c,v 1.209 2021/09/04 12:30:46 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: init.c,v 1.208 2021/08/14 12:46:23 rillig Exp $");
+__RCSID("$NetBSD: init.c,v 1.209 2021/09/04 12:30:46 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -319,7 +319,7 @@ check_trad_no_auto_aggregate(const sym_t *sym)
 
 	if (has_automatic_storage_duration(sym) &&
 	    !is_scalar(sym->s_type->t_tspec)) {
-		/* no automatic aggregate initialization in trad. C */
+		/* no automatic aggregate initialization in traditional C */
 		warning(188);
 	}
 }

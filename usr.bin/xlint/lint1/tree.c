@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.376 2021/09/04 10:09:19 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.377 2021/09/04 12:30:46 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.376 2021/09/04 10:09:19 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.377 2021/09/04 12:30:46 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -1067,7 +1067,7 @@ typeok_colon_pointer(const mod_t *mp, const type_t *ltp, const type_t *rtp)
 	if ((lst == VOID && rst == FUNC) || (lst == FUNC && rst == VOID)) {
 		/* (void *)0 handled above */
 		if (sflag)
-			/* ANSI C forbids conv. of %s to %s, op %s */
+			/* ANSI C forbids conversion of %s to %s, op %s */
 			warning(305, "function pointer", "'void *'",
 			    mp->m_name);
 		return;
@@ -1465,11 +1465,11 @@ check_assign_void_pointer(op_t op, int arg,
 		warning(303, rts, lts);
 		break;
 	case FARG:
-		/* ANSI C forbids conv. of %s to %s, arg #%d */
+		/* ANSI C forbids conversion of %s to %s, arg #%d */
 		warning(304, rts, lts, arg);
 		break;
 	default:
-		/* ANSI C forbids conv. of %s to %s, op %s */
+		/* ANSI C forbids conversion of %s to %s, op %s */
 		warning(305, rts, lts, op_name(op));
 		break;
 	}
@@ -1535,7 +1535,7 @@ check_assign_pointer_integer(op_t op, int arg,
 		warning(183, lx, type_name(ltp), rx, type_name(rtp));
 		break;
 	case FARG:
-		/* illegal comb. of %s (%s) and %s (%s), arg #%d */
+		/* illegal combination of %s (%s) and %s (%s), arg #%d */
 		warning(154,
 		    lx, type_name(ltp), rx, type_name(rtp), arg);
 		break;
@@ -2141,11 +2141,11 @@ check_integer_conversion(op_t op, int arg, tspec_t nt, tspec_t ot, type_t *tp,
 		/* conversion from '%s' may lose accuracy */
 		if (aflag > 0) {
 			if (op == FARG) {
-				/* conv. from '%s' to '%s' may lose ... */
+				/* conversion from '%s' to '%s' may ... */
 				warning(298,
 				    type_name(tn->tn_type), type_name(tp), arg);
 			} else {
-				/* conv. from '%s' to '%s' may lose accuracy */
+				/* conversion from '%s' to '%s' may ... */
 				warning(132,
 				    type_name(tn->tn_type), type_name(tp));
 			}
@@ -2297,7 +2297,7 @@ convert_constant_floating(op_t op, int arg, tspec_t ot, const type_t *tp,
 	if (v->v_ldbl > max || v->v_ldbl < min) {
 		lint_assert(nt != LDOUBLE);
 		if (op == FARG) {
-			/* conv. of '%s' to '%s' is out of range, ... */
+			/* conversion of '%s' to '%s' is out of range, ... */
 			warning(295,
 			    type_name(gettyp(ot)), type_name(tp), arg);
 		} else {
@@ -2346,7 +2346,7 @@ convert_constant_check_range_bitor(size_t nsz, size_t osz, const val_t *v,
 				   uint64_t xmask, op_t op)
 {
 	if (nsz < osz && (v->v_quad & xmask) != 0) {
-		/* constant truncated by conv., op %s */
+		/* constant truncated by conversion, op %s */
 		warning(306, op_name(op));
 	}
 }

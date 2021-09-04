@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.229 2021/09/04 12:05:54 rillig Exp $ */
+/* $NetBSD: decl.c,v 1.230 2021/09/04 12:30:46 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: decl.c,v 1.229 2021/09/04 12:05:54 rillig Exp $");
+__RCSID("$NetBSD: decl.c,v 1.230 2021/09/04 12:30:46 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -1070,7 +1070,7 @@ check_type(sym_t *sym)
 			if (dcs->d_ctx == PROTO_ARG) {
 				if (sym->s_scl != ABSTRACT) {
 					lint_assert(sym->s_name != unnamed);
-					/* void param. cannot have name: %s */
+					/* void parameter cannot have ... */
 					error(61, sym->s_name);
 					*tpp = gettyp(INT);
 				}
@@ -1741,7 +1741,7 @@ newtag(sym_t *tag, scl_t scl, bool decl, bool semi)
 			/* "struct a;" */
 			if (!tflag) {
 				if (!sflag)
-					/* decl. introduces new type ... */
+					/* declaration introduces new ... */
 					warning(44, storage_class_name(scl),
 					    tag->s_name);
 				tag = pushdown(tag);
@@ -1762,9 +1762,8 @@ newtag(sym_t *tag, scl_t scl, bool decl, bool semi)
 			/* base type is really '%s %s' */
 			warning(45, storage_class_name(tag->s_scl),
 			    tag->s_name);
-			/* declaration introduces new type in ANSI C: %s %s */
 			if (!sflag) {
-				/* decl. introduces new type in ANSI C: %s %s */
+				/* declaration introduces new type in ... */
 				warning(44, storage_class_name(scl),
 				    tag->s_name);
 			}
@@ -2360,7 +2359,7 @@ check_old_style_definition(sym_t *rdsym, sym_t *dsym)
 		 */
 		if (!eqtype(arg->s_type, parg->s_type, true, true, &dowarn) ||
 		    dowarn) {
-			/* prototype does not match old style defn., arg #%d */
+			/* prototype does not match old style ... */
 			error(299, n);
 			msg = true;
 		}
@@ -2542,7 +2541,7 @@ check_func_lint_directives(void)
 		if (arg->s_type->t_tspec != PTR ||
 		    ((t = arg->s_type->t_subt->t_tspec) != CHAR &&
 		     t != UCHAR && t != SCHAR)) {
-			/* arg. %d must be 'char *' for PRINTFLIKE/SCANFLIKE */
+			/* argument %d must be 'char *' for PRINTFLIKE/... */
 			warning(293, narg);
 			printflike_argnum = scanflike_argnum = -1;
 		}
@@ -2697,7 +2696,7 @@ check_local_redeclaration(const sym_t *dsym, sym_t *rsym)
 			 */
 			if (tflag) {
 				if (hflag)
-					/* decl. hides parameter: %s */
+					/* declaration hides parameter: %s */
 					warning(91, dsym->s_name);
 				rmsym(rsym);
 			}

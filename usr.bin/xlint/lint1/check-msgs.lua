@@ -1,9 +1,9 @@
 #! /usr/bin/lua
--- $NetBSD: check-msgs.lua,v 1.11 2021/06/15 08:37:56 rillig Exp $
+-- $NetBSD: check-msgs.lua,v 1.12 2021/09/04 12:30:46 rillig Exp $
 
 --[[
 
-usage: lua ./check-msgs.lua *.c
+usage: lua ./check-msgs.lua *.c *.y
 
 Check that the message text in the comments of the C source code matches the
 actual user-visible message text in err.c.
@@ -47,22 +47,6 @@ local function check_message(fname, lineno, id, comment, msgs)
   msg = msg:gsub("/%*", "**")
   msg = msg:gsub("%*/", "**")
   msg = msg:gsub("\\(.)", "%1")
-
-  -- allow a few abbreviations to be used in the code
-  comment = comment:gsub("arg%.", "argument")
-  comment = comment:gsub("comb%.", "combination")
-  comment = comment:gsub("conv%.", "conversion")
-  comment = comment:gsub("decl%.", "declaration")
-  comment = comment:gsub("defn%.", "definition")
-  comment = comment:gsub("des%.s", "designators")
-  comment = comment:gsub("expr%.", "expression")
-  comment = comment:gsub("func%.", "function")
-  comment = comment:gsub("incomp%.", "incompatible")
-  comment = comment:gsub("init%.", "initialize")
-  comment = comment:gsub("param%.", "parameter")
-  comment = comment:gsub("req%.", "requires")
-  comment = comment:gsub("poss%.", "possibly")
-  comment = comment:gsub("trad%.", "traditional")
 
   if comment == msg then
     return

@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.359 2021/08/28 13:29:26 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.360 2021/09/04 12:30:46 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: cgram.y,v 1.359 2021/08/28 13:29:26 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.360 2021/09/04 12:30:46 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -1559,7 +1559,7 @@ designator:			/* C99 6.7.8 "Initialization" */
 	  T_LBRACK range T_RBRACK {
 		add_designator_subscript($2);
 		if (!Sflag)
-			/* array initializer with des.s is a C9X feature */
+			/* array initializer with designators is a C9X ... */
 			warning(321);
 	  }
 	| T_POINT identifier {
