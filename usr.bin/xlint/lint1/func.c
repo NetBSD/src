@@ -1,4 +1,4 @@
-/*	$NetBSD: func.c,v 1.122 2021/08/28 13:29:26 rillig Exp $	*/
+/*	$NetBSD: func.c,v 1.123 2021/09/04 12:30:46 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: func.c,v 1.122 2021/08/28 13:29:26 rillig Exp $");
+__RCSID("$NetBSD: func.c,v 1.123 2021/09/04 12:30:46 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -697,7 +697,7 @@ switch1(tnode_t *tn)
 	if (tn != NULL && tflag) {
 		t = tn->tn_type->t_tspec;
 		if (t == LONG || t == ULONG || t == QUAD || t == UQUAD) {
-			/* switch expr. must be of type 'int' in trad. C */
+			/* switch expression must be of type 'int' in ... */
 			warning(271);
 		}
 	}
