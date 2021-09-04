@@ -1,4 +1,4 @@
-/*	$NetBSD: obs200_machdep.c,v 1.24 2021/08/03 09:25:44 rin Exp $	*/
+/*	$NetBSD: obs200_machdep.c,v 1.25 2021/09/04 13:36:07 rin Exp $	*/
 /*	Original: machdep.c,v 1.3 2005/01/17 17:24:09 shige Exp	*/
 
 /*
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: obs200_machdep.c,v 1.24 2021/08/03 09:25:44 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: obs200_machdep.c,v 1.25 2021/09/04 13:36:07 rin Exp $");
 
 #include "opt_ddb.h"
 
@@ -120,8 +120,8 @@ void initppc(vaddr_t, vaddr_t, char *, void *);
 void
 initppc(vaddr_t startkernel, vaddr_t endkernel, char *args, void *info_block)
 {
-	u_int32_t pllmode;
-	u_int32_t psr;
+	u_int32_t pllmode __debugused;
+	u_int32_t psr __debugused;
 	vaddr_t va;
 	u_int memsize;
 
