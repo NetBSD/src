@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.372 2021/09/03 22:48:49 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.373 2021/09/04 09:18:25 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.372 2021/09/03 22:48:49 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.373 2021/09/04 09:18:25 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -1014,16 +1014,14 @@ typeok_ordered_comparison(op_t op,
 }
 
 static bool
-typeok_quest(tspec_t lt, const tnode_t **rn)
+typeok_quest(tspec_t lt, const tnode_t *rn)
 {
 	if (!is_scalar(lt)) {
 		/* first operand must have scalar type, op ? : */
 		error(170);
 		return false;
 	}
-	while ((*rn)->tn_op == CVT)
-		*rn = (*rn)->tn_left;
-	lint_assert((*rn)->tn_op == COLON);
+	lint_assert(before_conversion(rn)->tn_op == COLON);
 	return true;
 }
 
@@ -1235,7 +1233,7 @@ typeok_op(op_t op, const mod_t *mp, int arg,
 			return false;
 		break;
 	case QUEST:
-		if (!typeok_quest(lt, &rn))
+		if (!typeok_quest(lt, rn))
 			return false;
 		break;
 	case COLON:
