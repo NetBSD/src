@@ -1,4 +1,4 @@
-/* $NetBSD: emit1.c,v 1.55 2021/09/04 14:26:32 rillig Exp $ */
+/* $NetBSD: emit1.c,v 1.56 2021/09/04 14:48:27 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: emit1.c,v 1.55 2021/09/04 14:26:32 rillig Exp $");
+__RCSID("$NetBSD: emit1.c,v 1.56 2021/09/04 14:48:27 rillig Exp $");
 #endif
 
 #include "lint1.h"
@@ -429,6 +429,56 @@ outcall(const tnode_t *tn, bool rvused, bool rvdisc)
 	}
 	/* expected type of return value */
 	outtype(tn->tn_type);
+}
+
+/* write a character to the output buffer, quoted if necessary */
+static void
+outqchar(char c)
+{
+
+	if (ch_isprint(c) && c != '\\' && c != '"' && c != '\'') {
+		outchar(c);
+		return;
+	}
+
+	outchar('\\');
+	switch (c) {
+	case '\\':
+		outchar('\\');
+		break;
+	case '"':
+		outchar('"');
+		break;
+	case '\'':
+		outchar('\'');
+		break;
+	case '\b':
+		outchar('b');
+		break;
+	case '\t':
+		outchar('t');
+		break;
+	case '\n':
+		outchar('n');
+		break;
+	case '\f':
+		outchar('f');
+		break;
+	case '\r':
+		outchar('r');
+		break;
+	case '\v':
+		outchar('v');
+		break;
+	case '\a':
+		outchar('a');
+		break;
+	default:
+		outchar((char)((((unsigned char)c >> 6) & 07) + '0'));
+		outchar((char)((((unsigned char)c >> 3) & 07) + '0'));
+		outchar((char)((c & 07) + '0'));
+		break;
+	}
 }
 
 /*
