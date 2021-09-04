@@ -1,4 +1,4 @@
-/* $NetBSD: apple_pcie.c,v 1.1 2021/08/30 23:26:26 jmcneill Exp $ */
+/* $NetBSD: apple_pcie.c,v 1.2 2021/09/04 12:35:31 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2021 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: apple_pcie.c,v 1.1 2021/08/30 23:26:26 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: apple_pcie.c,v 1.2 2021/09/04 12:35:31 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -51,9 +51,6 @@ __KERNEL_RCSID(0, "$NetBSD: apple_pcie.c,v 1.1 2021/08/30 23:26:26 jmcneill Exp 
 #define	 PCIE_MSI_CTRL_32	(5U << 4)
 #define	PCIE_MSI_REMAP		0x0128
 #define	PCIE_MSI_DOORBELL	0x0168
-
-/* XXX apple_dart.c */
-extern bus_dma_tag_t apple_dart_iommu_lookup(int);
 
 struct apple_pcie_softc {
 	struct pcihost_softc	sc_pcihost;
@@ -174,36 +171,15 @@ apple_pcie_attach_hook(device_t parent, device_t self,
 {
 	struct apple_pcie_softc *sc = pba->pba_pc->pc_conf_v;
 	const int phandle = sc->sc_pcihost.sc_phandle;
-	const u_int *iommu_map;
-	int len;
+	bus_dma_tag_t dmat;
 
 	KASSERT(device_is_a(sc->sc_pcihost.sc_dev, "applepcie"));
 
-	iommu_map = fdtbus_get_prop(phandle, "iommu-map", &len);
-	if (iommu_map == NULL) {
-		panic("%s: no iommu-map?!",
-		    device_xname(sc->sc_pcihost.sc_dev));
-		return;
-	}
+	/* XXX this should be per-device, not per-bus */
+	const uint32_t rid = pba->pba_bus << 8;
 
-	while (len >= 16) {
-		const u_int ridbase = be32toh(iommu_map[0]);
-		const u_int xref = fdtbus_get_phandle_from_native(
-		    be32toh(iommu_map[1]));
-
-		const int bus = (ridbase >> 8) & 0xff;
-		if (bus == pba->pba_bus) {
-			pba->pba_dmat = apple_dart_iommu_lookup(xref);
-			pba->pba_dmat64 = pba->pba_dmat;
-			return;
-		}
-
-		iommu_map += 4;
-		len -= 16;
-	}
-
-	//panic("no iommu for bus %d\n", pba->pba_bus);
-	pba->pba_dmat = pba->pba_dmat64 = sc->sc_pcihost.sc_dmat;
+	dmat = fdtbus_iommu_map_pci(phandle, rid, sc->sc_pcihost.sc_dmat);
+	pba->pba_dmat = pba->pba_dmat64 = dmat;
 }
 
 static int
