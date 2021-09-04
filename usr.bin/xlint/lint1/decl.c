@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.232 2021/09/04 13:27:59 rillig Exp $ */
+/* $NetBSD: decl.c,v 1.233 2021/09/04 13:45:37 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: decl.c,v 1.232 2021/09/04 13:27:59 rillig Exp $");
+__RCSID("$NetBSD: decl.c,v 1.233 2021/09/04 13:45:37 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -443,88 +443,51 @@ tdeferr(type_t *td, tspec_t t)
 
 	t2 = td->t_tspec;
 
-	switch (t) {
-	case SIGNED:
-	case UNSIGN:
-		if (t2 == CHAR || t2 == SHORT || t2 == INT || t2 == LONG ||
-		    t2 == QUAD) {
-			if (!tflag)
-				/* modifying typedef with '%s'; only ... */
-				warning(5, ttab[t].tt_name);
-			td = dup_type(gettyp(merge_signedness(t2, t)));
-			td->t_typedef = true;
-			return td;
-		}
-		break;
-	case SHORT:
-		if (t2 == INT || t2 == UINT) {
-			/* modifying typedef with '%s'; only qualifiers ... */
-			warning(5, "short");
-			td = dup_type(gettyp(t2 == INT ? SHORT : USHORT));
-			td->t_typedef = true;
-			return td;
-		}
-		break;
-	case LONG:
-		if (t2 == INT || t2 == UINT || t2 == LONG || t2 == ULONG ||
-		    t2 == FLOAT || t2 == DOUBLE || t2 == DCOMPLEX) {
-			/* modifying typedef with '%s'; only qualifiers ... */
-			warning(5, "long");
-			if (t2 == INT) {
-				td = gettyp(LONG);
-			} else if (t2 == UINT) {
-				td = gettyp(ULONG);
-			} else if (t2 == LONG) {
-				td = gettyp(QUAD);
-			} else if (t2 == ULONG) {
-				td = gettyp(UQUAD);
-			} else if (t2 == FLOAT) {
-				td = gettyp(DOUBLE);
-			} else if (t2 == DOUBLE) {
-				td = gettyp(LDOUBLE);
-			} else if (t2 == DCOMPLEX) {
-				td = gettyp(LCOMPLEX);
-			}
-			td = dup_type(td);
-			td->t_typedef = true;
-			return td;
-		}
-		break;
-		/* LINTED206: (enumeration values not handled in switch) */
-	case NOTSPEC:
-	case USHORT:
-	case UCHAR:
-	case SCHAR:
-	case CHAR:
-	case BOOL:
-	case FUNC:
-	case ARRAY:
-	case PTR:
-	case ENUM:
-	case UNION:
-	case STRUCT:
-	case VOID:
-	case LDOUBLE:
-	case FLOAT:
-	case DOUBLE:
-	case UQUAD:
-	case QUAD:
-#ifdef INT128_SIZE
-	case UINT128:
-	case INT128:
-#endif
-	case ULONG:
-	case UINT:
-	case INT:
-	case FCOMPLEX:
-	case DCOMPLEX:
-	case LCOMPLEX:
-	case COMPLEX:
-		break;
+	if ((t == SIGNED || t == UNSIGN) &&
+	    (t2 == CHAR || t2 == SHORT || t2 == INT ||
+	     t2 == LONG || t2 == QUAD)) {
+		if (!tflag)
+			/* modifying typedef with '%s'; only qualifiers... */
+			warning(5, tspec_name(t));
+		td = dup_type(gettyp(merge_signedness(t2, t)));
+		td->t_typedef = true;
+		return td;
 	}
 
-	/* Anything other is not accepted. */
+	if (t == SHORT && (t2 == INT || t2 == UINT)) {
+		/* modifying typedef with '%s'; only qualifiers allowed */
+		warning(5, "short");
+		td = dup_type(gettyp(t2 == INT ? SHORT : USHORT));
+		td->t_typedef = true;
+		return td;
+	}
 
+	if (t == LONG &&
+	    (t2 == INT || t2 == UINT || t2 == LONG || t2 == ULONG ||
+	     t2 == FLOAT || t2 == DOUBLE || t2 == DCOMPLEX)) {
+		/* modifying typedef with '%s'; only qualifiers allowed */
+		warning(5, "long");
+		if (t2 == INT) {
+			td = gettyp(LONG);
+		} else if (t2 == UINT) {
+			td = gettyp(ULONG);
+		} else if (t2 == LONG) {
+			td = gettyp(QUAD);
+		} else if (t2 == ULONG) {
+			td = gettyp(UQUAD);
+		} else if (t2 == FLOAT) {
+			td = gettyp(DOUBLE);
+		} else if (t2 == DOUBLE) {
+			td = gettyp(LDOUBLE);
+		} else if (t2 == DCOMPLEX) {
+			td = gettyp(LCOMPLEX);
+		}
+		td = dup_type(td);
+		td->t_typedef = true;
+		return td;
+	}
+
+	/* Anything else is not accepted. */
 	dcs->d_invalid_type_combination = true;
 	return td;
 }
