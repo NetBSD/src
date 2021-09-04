@@ -1,4 +1,4 @@
-/*	$NetBSD: commands.c,v 1.15 2021/06/13 12:46:01 rillig Exp $	*/
+/*	$NetBSD: commands.c,v 1.16 2021/09/04 01:34:32 rin Exp $	*/
 
 /*-
  * Copyright 2009 Brett Lymn <blymn@NetBSD.org>
@@ -53,32 +53,32 @@ command_execute(char *func, int nargs, char **args)
 {
 	size_t i, j;
 
-	i = 0;
-	while (i < ncmds) {
-		if (strcmp(func, commands[i].name) == 0) {
-			/* Check only restricted set of functions is called before
-			 * initscr/newterm */
-			if (!initdone) {
-				j = 0;
-				while (j < nrcmds) {
-					if (strcmp(func, restricted_commands[j]) == 0) {
-						if (strcmp(func, "initscr") == 0  ||
-							strcmp(func, "newterm") == 0)
-							initdone = 1;
-						/* matched function */
-						commands[i].func(nargs, args);
-						return;
-					}
-					j++;
-				}
-				report_status("YOU NEED TO CALL INITSCR/NEWTERM FIRST");
-				return;
-			}
+	for (i = 0; i < ncmds; i++) {
+		if (strcmp(func, commands[i].name) != 0)
+			continue;
+
+		/* Check only restricted set of functions is called before
+		 * initscr/newterm */
+		if (initdone) {
 			/* matched function */
 			commands[i].func(nargs, args);
 			return;
 		}
-		i++;
+
+		for (j = 0; j < nrcmds; j++) {
+			if (strcmp(func, restricted_commands[j]) != 0)
+				continue;
+
+			if (strcmp(func, "initscr") == 0  ||
+			    strcmp(func, "newterm") == 0)
+				initdone = 1;
+
+			/* matched function */
+			commands[i].func(nargs, args);
+			return;
+		}
+		report_status("YOU NEED TO CALL INITSCR/NEWTERM FIRST");
+		return;
 	}
 
 	report_status("UNKNOWN_FUNCTION");
