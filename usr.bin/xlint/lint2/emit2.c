@@ -1,4 +1,4 @@
-/* $NetBSD: emit2.c,v 1.23 2021/08/29 10:13:02 rillig Exp $ */
+/* $NetBSD: emit2.c,v 1.24 2021/09/04 14:26:32 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: emit2.c,v 1.23 2021/08/29 10:13:02 rillig Exp $");
+__RCSID("$NetBSD: emit2.c,v 1.24 2021/09/04 14:26:32 rillig Exp $");
 #endif
 
 #include "lint2.h"
@@ -50,7 +50,8 @@ static	void	outfiles(void);
 static void
 outtype(type_t *tp)
 {
-	int	t, s, na;
+	char	t, s;
+	int	na;
 	tspec_t	ts;
 	type_t	**ap;
 
