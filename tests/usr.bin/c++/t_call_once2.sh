@@ -1,4 +1,4 @@
-#	$NetBSD: t_call_once2.sh,v 1.2 2019/05/15 13:43:45 christos Exp $
+#	$NetBSD: t_call_once2.sh,v 1.3 2021/09/04 05:47:31 rin Exp $
 #
 # Copyright (c) 2018 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -50,7 +50,7 @@ call_once2_pic_32_head() {
 }
 
 atf_test_case call_once2_pic_profile
-call_once2_pic_head() {
+call_once2_pic_profile_head() {
 	atf_set "descr" "compile and run PIC std::call_once with profiling flag"
 	atf_set "require.progs" "c++"
 }
