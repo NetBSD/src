@@ -1,4 +1,4 @@
-/*	$NetBSD: externs.h,v 1.22 2021/09/04 14:26:32 rillig Exp $	*/
+/*	$NetBSD: externs.h,v 1.23 2021/09/04 14:42:30 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -56,8 +56,6 @@ extern  char	*xasprintf(const char *, ...) __printflike(1, 2);
  * emit.c
  */
 #if defined(IS_LINT1) || defined(IS_LINT2)
-extern	ob_t	ob;
-
 extern	void	outopen(const char *);
 extern	void	outclose(void);
 extern	void	outclr(void);
@@ -65,7 +63,6 @@ extern	void	outchar(char);
 extern	void	outqchar(char);
 extern	void	outstrg(const char *);
 extern	void	outint(int);
-#define outname(a)	outname1(__FILE__, __LINE__, a);
-extern	void	outname1(const char *, size_t, const char *);
+extern	void	outname(const char *);
 extern	void	outsrc(const char *);
 #endif
