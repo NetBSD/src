@@ -1,4 +1,4 @@
-# $NetBSD: emit.exp-ln,v 1.3 2021/08/28 17:18:42 rillig Exp $
+# $NetBSD: emit.exp-ln,v 1.4 2021/09/04 18:26:35 rillig Exp $
 
 S llib-lemit.ln
 0 s llib-lemit.ln
@@ -19,3 +19,45 @@ S llib-lemit.ln
 # from emit.c
 0 d 0.0 d u 14cover_outqchar F0 V
 0 d 0.0 t u 11defined_int I
+
+0 d 0.0 du 28func_old_style_parameterless f0 D
+0 d 0.0 du 25func_old_style_parameters f2 PC I D
+0 d 0.0 v1 P1 du 15func_printflike f1 PC I
+0 d 0.0 v1 S1 du 14func_scanflike f1 PC I
+0 d 0.0 v1 du 12func_varargs F2 PC E I
+
+# the variables for the basic types
+0 d 0.0 du 9var__Bool B
+0 d 0.0 du 19var_array_of_double A7D
+0 d 0.0 du 10var_double D
+0 d 0.0 du 18var_double_complex X
+0 d 0.0 du 18var_enum_anonymous eT3 0.2.0
+0 d 0.0 du 12var_enum_tage T1 8enum_tag
+0 d 0.0 du 16var_enum_typedef eT2 12enum_typedef
+0 d 0.0 du 9var_float sD
+0 d 0.0 du 17var_float_complex sX
+0 d 0.0 du 15var_long_double lD
+0 d 0.0 du 23var_long_double_complex lX
+0 d 0.0 du 14var_plain_char C
+0 d 0.0 du 18var_pointer_to_int PI
+0 d 0.0 du 33var_pointer_to_old_style_function PFI
+0 d 0.0 du 37var_pointer_to_parameterless_function PF0 I
+0 d 0.0 du 33var_pointer_to_prototype_function PF2 PcvC I I
+0 d 0.0 du 31var_pointer_to_varargs_function PF3 PcC I E I
+0 d 0.0 du 19var_pointer_to_void PV
+0 d 0.0 du 15var_signed_char sC
+0 d 0.0 du 14var_signed_int I
+0 d 0.0 du 15var_signed_long L
+0 d 0.0 du 20var_signed_long_long Q
+0 d 0.0 du 16var_signed_short S
+0 d 0.0 du 20var_struct_anonymous sT3 0.2.0
+0 d 0.0 du 14var_struct_tag sT1 10struct_tag
+0 d 0.0 du 18var_struct_typedef sT 2 14struct_typedef
+0 d 0.0 du 19var_union_anonymous uT3 0.2.0
+0 d 0.0 du 13var_union_tag uT1 9union_tag
+0 d 0.0 du 17var_union_typedef uT2 13union_typedef
+0 d 0.0 du 17var_unsigned_char uC
+0 d 0.0 du 16var_unsigned_int uI
+0 d 0.0 du 17var_unsigned_long uL
+0 d 0.0 du 22var_unsigned_long_long uQ
+0 d 0.0 du 18var_unsigned_short uS

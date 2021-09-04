@@ -1,4 +1,4 @@
-# $NetBSD: emit.ln,v 1.2 2021/08/24 23:38:51 rillig Exp $
+# $NetBSD: emit.ln,v 1.3 2021/09/04 18:26:35 rillig Exp $
 #
 # Test emitting a lint library file.
 
@@ -39,3 +39,48 @@ S expr_promote.c
 10 d 0.10 e 4sink F2 PcC E V
 58 c 0.58 i 4sink f20 PcC B I I I I I I uI L uL Q uQ D D lD sX X lX eT331.0.0 V
 37 d 0.37 d 6caller F1 PsT116arithmetic_types V
+
+# Emit all basic types.
+0 d 0.0 d 9var__Bool B
+0 d 0.0 d 14var_plain_char C
+0 d 0.0 d 15var_signed_char sC
+0 d 0.0 d 17var_unsigned_char uC
+0 d 0.0 d 16var_signed_short S
+0 d 0.0 d 18var_unsigned_short uS
+0 d 0.0 d 14var_signed_int I
+0 d 0.0 d 16var_unsigned_int uI
+0 d 0.0 d 15var_signed_long L
+0 d 0.0 d 17var_unsigned_long uL
+0 d 0.0 d 20var_signed_long_long Q
+0 d 0.0 d 22var_unsigned_long_long uQ
+# see emit_lp64 for __int128_t
+# see emit_lp64 for __uint128_t
+0 d 0.0 d 9var_float sD
+0 d 0.0 d 10var_double D
+0 d 0.0 d 15var_long_double lD
+0 d 0.0 d 19var_pointer_to_void PV
+0 d 0.0 d 14var_struct_tag sT1 10struct_tag
+0 d 0.0 d 18var_struct_typedef sT2 14struct_typedef
+0 d 0.0 d 20var_struct_anonymous sT3 0.0.0
+0 d 0.0 d 13var_union_tag uT1 9union_tag
+0 d 0.0 d 17var_union_typedef uT2 13union_typedef
+0 d 0.0 d 19var_union_anonymous uT3 0.0.0
+0 d 0.0 d 12var_enum_tag eT1 8enum_tag
+0 d 0.0 d 16var_enum_typedef eT2 12enum_typedef
+0 d 0.0 d 18var_enum_anonymous eT3 0.0.0
+0 d 0.0 d 18var_pointer_to_int PI
+0 d 0.0 d 19var_array_of_double A7D
+0 d 0.0 d 33var_pointer_to_old_style_function P F I
+0 d 0.0 d 37var_pointer_to_parameterless_function P F0 I
+0 d 0.0 d 33var_pointer_to_prototype_function P F2 PcvC I I
+0 d 0.0 d 31var_pointer_to_varargs_function P F3 PcC I E I
+0 d 0.0 d 17var_float_complex sX
+0 d 0.0 d 18var_double_complex X
+0 d 0.0 d 23var_long_double_complex lX
+
+0 d 0.0 d 28func_old_style_parameterless f0 D
+0 d 0.0 d 25func_old_style_parameters f2 PC I D
+0 d 0.0 v1 d 12func_varargs F2 PC E I
+0 d 0.0 v1 P1 d 15func_printflike f1 PC I
+0 d 0.0 v1 S1 d 14func_scanflike f1 PC I
+# TODO: find out how traditional C defined a varargs function
