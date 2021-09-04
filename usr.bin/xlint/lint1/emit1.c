@@ -1,4 +1,4 @@
-/* $NetBSD: emit1.c,v 1.54 2021/09/02 07:04:41 rillig Exp $ */
+/* $NetBSD: emit1.c,v 1.55 2021/09/04 14:26:32 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: emit1.c,v 1.54 2021/09/02 07:04:41 rillig Exp $");
+__RCSID("$NetBSD: emit1.c,v 1.55 2021/09/04 14:26:32 rillig Exp $");
 #endif
 
 #include "lint1.h"
@@ -413,7 +413,7 @@ outcall(const tnode_t *tn, bool rvused, bool rvdisc)
 
 	}
 	/* return value discarded/used/ignored */
-	outchar(rvdisc ? 'd' : (rvused ? 'u' : 'i'));
+	outchar((char)(rvdisc ? 'd' : (rvused ? 'u' : 'i')));
 
 	/* name of the called function */
 	outname(tn->tn_left->tn_left->tn_sym->s_name);
