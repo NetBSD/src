@@ -1,4 +1,4 @@
-/* $NetBSD: emit2.c,v 1.25 2021/09/04 18:49:33 rillig Exp $ */
+/* $NetBSD: emit2.c,v 1.26 2021/09/04 18:58:57 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: emit2.c,v 1.25 2021/09/04 18:49:33 rillig Exp $");
+__RCSID("$NetBSD: emit2.c,v 1.26 2021/09/04 18:58:57 rillig Exp $");
 #endif
 
 #include "lint2.h"
@@ -50,11 +50,6 @@ static	void	outfiles(void);
 static void
 outtype(type_t *tp)
 {
-	char	t, s;
-	int	na;
-	tspec_t	ts;
-	type_t	**ap;
-
 #ifdef INT128_SIZE
 	static const char tt[NTSPEC] = "???BCCCSSIILLQQJJDDDVTTTPAF?XXX";
 	static const char ss[NTSPEC] = "???  su u u u u us l sue   ?s l";
@@ -62,23 +57,26 @@ outtype(type_t *tp)
 	static const char tt[NTSPEC] = "???BCCCSSIILLQQDDDVTTTPAF?XXX";
 	static const char ss[NTSPEC] = "???  su u u u us l sue   ?s l";
 #endif
+	int	na;
+	tspec_t	ts;
+	type_t	**ap;
 
 	while (tp != NULL) {
 		if ((ts = tp->t_tspec) == INT && tp->t_is_enum)
 			ts = ENUM;
-		t = tt[ts];
-		s = ss[ts];
-		if (!ch_isupper(t))
+		if (!ch_isupper(tt[ts]))
 			errx(1, "internal error: outtype(%d)", ts);
-		if (ts == FUNC && tp->t_args != NULL && !tp->t_proto)
-			t = 'f';
 		if (tp->t_const)
 			outchar('c');
 		if (tp->t_volatile)
 			outchar('v');
-		if (s != ' ')
-			outchar(s);
-		outchar(t);
+		if (ss[ts] != ' ')
+			outchar(ss[ts]);
+		if (ts == FUNC && tp->t_args != NULL && !tp->t_proto)
+			outchar('f');
+		else
+			outchar(tt[ts]);
+
 		if (ts == ARRAY) {
 			outint(tp->t_dim);
 		} else if (ts == ENUM || ts == STRUCT || ts == UNION) {
