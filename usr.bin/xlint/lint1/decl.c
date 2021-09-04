@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.230 2021/09/04 12:30:46 rillig Exp $ */
+/* $NetBSD: decl.c,v 1.231 2021/09/04 12:37:46 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: decl.c,v 1.230 2021/09/04 12:30:46 rillig Exp $");
+__RCSID("$NetBSD: decl.c,v 1.231 2021/09/04 12:37:46 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -1771,14 +1771,8 @@ newtag(sym_t *tag, scl_t scl, bool decl, bool semi)
 			dcs->d_next->d_nonempty_decl = true;
 		}
 	} else {
-		if (tag->s_scl != scl) {
-			/* %s tag '%s' redeclared as %s */
-			error(46, storage_class_name(tag->s_scl),
-			    tag->s_name, storage_class_name(scl));
-			print_previous_declaration(-1, tag);
-			tag = pushdown(tag);
-			dcs->d_next->d_nonempty_decl = true;
-		} else if (decl && !is_incomplete(tag->s_type)) {
+		if (tag->s_scl != scl ||
+		    (decl && !is_incomplete(tag->s_type))) {
 			/* %s tag '%s' redeclared as %s */
 			error(46, storage_class_name(tag->s_scl),
 			    tag->s_name, storage_class_name(scl));
