@@ -1,4 +1,4 @@
-# $NetBSD: emit.exp-ln,v 1.4 2021/09/04 18:26:35 rillig Exp $
+# $NetBSD: emit.exp-ln,v 1.5 2021/09/04 18:34:17 rillig Exp $
 
 S llib-lemit.ln
 0 s llib-lemit.ln
@@ -25,6 +25,9 @@ S llib-lemit.ln
 0 d 0.0 v1 P1 du 15func_printflike f1 PC I
 0 d 0.0 v1 S1 du 14func_scanflike f1 PC I
 0 d 0.0 v1 du 12func_varargs F2 PC E I
+
+0 d 0.0 d r o u 13old_style_int f0 I
+0 d 0.0 d o u 14old_style_void f0 I
 
 # the variables for the basic types
 0 d 0.0 du 9var__Bool B
