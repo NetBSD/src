@@ -1,4 +1,4 @@
-/* $NetBSD: fdtvar.h,v 1.70 2021/04/24 23:36:53 thorpej Exp $ */
+/* $NetBSD: fdtvar.h,v 1.71 2021/09/04 12:34:39 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -106,6 +106,10 @@ struct fdtbus_pinctrl_pin {
 
 struct fdtbus_pinctrl_controller_func {
 	int (*set_config)(device_t, const void *, size_t);
+};
+
+struct fdtbus_iommu_func {
+	bus_dma_tag_t (*map)(device_t, const u_int *, bus_dma_tag_t);
 };
 
 struct fdtbus_regulator_controller;
@@ -299,6 +303,8 @@ int		fdtbus_register_pwm_controller(device_t, int,
 int		fdtbus_register_mmc_pwrseq(device_t, int,
 		    const struct fdtbus_mmc_pwrseq_func *);
 int		fdtbus_register_syscon(device_t, int, struct syscon *);
+int		fdtbus_register_iommu(device_t, int,
+		    const struct fdtbus_iommu_func *);
 
 void		fdtbus_set_decoderegprop(bool);
 
@@ -363,6 +369,8 @@ int		fdtbus_regulator_supports_voltage(struct fdtbus_regulator *,
 		    u_int, u_int);
 struct syscon *	fdtbus_syscon_acquire(int, const char *);
 struct syscon *	fdtbus_syscon_lookup(int);
+bus_dma_tag_t	fdtbus_iommu_map(int, u_int, bus_dma_tag_t);
+bus_dma_tag_t	fdtbus_iommu_map_pci(int, uint32_t, bus_dma_tag_t);
 
 struct fdtbus_dma *fdtbus_dma_get(int, const char *, void (*)(void *), void *);
 struct fdtbus_dma *fdtbus_dma_get_index(int, u_int, void (*)(void *),
