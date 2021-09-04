@@ -1,4 +1,4 @@
-/* $NetBSD: siotty.c,v 1.48 2021/09/04 12:38:13 tsutsui Exp $ */
+/* $NetBSD: siotty.c,v 1.49 2021/09/04 12:44:23 tsutsui Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: siotty.c,v 1.48 2021/09/04 12:38:13 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: siotty.c,v 1.49 2021/09/04 12:44:23 tsutsui Exp $");
 
 #include "opt_ddb.h"
 
@@ -692,16 +692,16 @@ getsiocsr(struct sioreg *sio)
 /*---------------------  console interface ----------------------*/
 
 struct consdev syscons = {
-	NULL,
-	NULL,
-	syscngetc,
-	syscnputc,
-	nullcnpollc,
-	NULL,
-	NULL,
-	NULL,
-	NODEV,
-	CN_REMOTE,
+	.cn_probe = NULL,
+	.cn_init  = NULL,
+	.cn_getc  = syscngetc,
+	.cn_putc  = syscnputc,
+	.cn_pollc = nullcnpollc,
+	.cn_bell  = NULL,
+	.cn_halt  = NULL,
+	.cn_flush = NULL,
+	.cn_dev   = NODEV,
+	.cn_pri   = CN_REMOTE,
 };
 
 /* EXPORT */ void
