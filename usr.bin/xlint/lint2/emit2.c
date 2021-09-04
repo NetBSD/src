@@ -1,4 +1,4 @@
-/* $NetBSD: emit2.c,v 1.24 2021/09/04 14:26:32 rillig Exp $ */
+/* $NetBSD: emit2.c,v 1.25 2021/09/04 18:49:33 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: emit2.c,v 1.24 2021/09/04 14:26:32 rillig Exp $");
+__RCSID("$NetBSD: emit2.c,v 1.25 2021/09/04 18:49:33 rillig Exp $");
 #endif
 
 #include "lint2.h"
@@ -55,54 +55,28 @@ outtype(type_t *tp)
 	tspec_t	ts;
 	type_t	**ap;
 
+#ifdef INT128_SIZE
+	static const char tt[NTSPEC] = "???BCCCSSIILLQQJJDDDVTTTPAF?XXX";
+	static const char ss[NTSPEC] = "???  su u u u u us l sue   ?s l";
+#else
+	static const char tt[NTSPEC] = "???BCCCSSIILLQQDDDVTTTPAF?XXX";
+	static const char ss[NTSPEC] = "???  su u u u us l sue   ?s l";
+#endif
+
 	while (tp != NULL) {
 		if ((ts = tp->t_tspec) == INT && tp->t_is_enum)
 			ts = ENUM;
-		switch (ts) {
-		case BOOL:	t = 'B';	s = '\0';	break;
-		case CHAR:	t = 'C';	s = '\0';	break;
-		case SCHAR:	t = 'C';	s = 's';	break;
-		case UCHAR:	t = 'C';	s = 'u';	break;
-		case SHORT:	t = 'S';	s = '\0';	break;
-		case USHORT:	t = 'S';	s = 'u';	break;
-		case INT:	t = 'I';	s = '\0';	break;
-		case UINT:	t = 'I';	s = 'u';	break;
-		case LONG:	t = 'L';	s = '\0';	break;
-		case ULONG:	t = 'L';	s = 'u';	break;
-		case QUAD:	t = 'Q';	s = '\0';	break;
-		case UQUAD:	t = 'Q';	s = 'u';	break;
-#ifdef INT128_SIZE
-		case INT128:	t = 'J';	s = '\0';	break;
-		case UINT128:	t = 'J';	s = 'u';	break;
-#endif
-		case FLOAT:	t = 'D';	s = 's';	break;
-		case DOUBLE:	t = 'D';	s = '\0';	break;
-		case LDOUBLE:	t = 'D';	s = 'l';	break;
-		case VOID:	t = 'V';	s = '\0';	break;
-		case PTR:	t = 'P';	s = '\0';	break;
-		case ARRAY:	t = 'A';	s = '\0';	break;
-		case ENUM:	t = 'T';	s = 'e';	break;
-		case STRUCT:	t = 'T';	s = 's';	break;
-		case UNION:	t = 'T';	s = 'u';	break;
-		case FCOMPLEX:	t = 'X';	s = 's';	break;
-		case DCOMPLEX:	t = 'X';	s = '\0';	break;
-		case LCOMPLEX:	t = 'X';	s = 'l';	break;
-		case FUNC:
-			if (tp->t_args != NULL && !tp->t_proto) {
-				t = 'f';
-			} else {
-				t = 'F';
-			}
-			s = '\0';
-			break;
-		default:
-			errx(1, "internal error: outtype() 1");
-		}
+		t = tt[ts];
+		s = ss[ts];
+		if (!ch_isupper(t))
+			errx(1, "internal error: outtype(%d)", ts);
+		if (ts == FUNC && tp->t_args != NULL && !tp->t_proto)
+			t = 'f';
 		if (tp->t_const)
 			outchar('c');
 		if (tp->t_volatile)
 			outchar('v');
-		if (s != '\0')
+		if (s != ' ')
 			outchar(s);
 		outchar(t);
 		if (ts == ARRAY) {
