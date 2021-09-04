@@ -1,4 +1,4 @@
-/*	$NetBSD: tyname.c,v 1.46 2021/08/31 23:49:21 rillig Exp $	*/
+/*	$NetBSD: tyname.c,v 1.47 2021/09/04 13:45:36 rillig Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tyname.c,v 1.46 2021/08/31 23:49:21 rillig Exp $");
+__RCSID("$NetBSD: tyname.c,v 1.47 2021/09/04 13:45:36 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -147,6 +147,7 @@ buf_add_int(buffer *buf, int n)
 	buf_add(buf, num);
 }
 
+/* XXX: at least partly redundant with ttab[t].tt_name */
 const char *
 tspec_name(tspec_t t)
 {

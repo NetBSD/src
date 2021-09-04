@@ -1,8 +1,29 @@
-/*	$NetBSD: msg_005.c,v 1.3 2021/01/31 11:12:07 rillig Exp $	*/
+/*	$NetBSD: msg_005.c,v 1.4 2021/09/04 13:45:37 rillig Exp $	*/
 # 3 "msg_005.c"
 
 // Test for message: modifying typedef with '%s'; only qualifiers allowed [5]
 
 typedef int number;
-number long long_variable;	/* expect: 5 */
-number const const_variable;
+
+/* expect+1: warning: modifying typedef with 'signed'; only qualifiers allowed [5] */
+typedef number signed signed_number;
+
+/* expect+1: warning: modifying typedef with 'unsigned'; only qualifiers allowed [5] */
+typedef number unsigned unsigned_number;
+
+/* expect+1: warning: modifying typedef with 'short'; only qualifiers allowed [5] */
+typedef number short short_number;
+
+/* expect+1: modifying typedef with 'long'; only qualifiers allowed [5] */
+typedef number long long_number;
+
+/*
+ * If the type qualifier comes first, the following name is interpreted as a
+ * new name, not as the one referring to the typedef.  This makes the above
+ * type modifications even more obscure.
+ */
+/* expect+1: error: syntax error 'prefix_long_number' [249] */
+typedef long number prefix_long_number;
+
+/* Type qualifiers are OK. */
+typedef number const const_number;
