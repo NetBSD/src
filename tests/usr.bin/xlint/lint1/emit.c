@@ -1,4 +1,4 @@
-/*	$NetBSD: emit.c,v 1.5 2021/08/30 21:23:37 rillig Exp $	*/
+/*	$NetBSD: emit.c,v 1.6 2021/09/04 15:13:00 rillig Exp $	*/
 # 3 "emit.c"
 
 /*
@@ -146,6 +146,7 @@ void taking_varargs(const char *, ...);
 static int static_function(void);			/* expect: declared */
 
 void my_printf(const char *, ...);
+void my_scanf(const char *, ...);
 
 /*
  * String literals that occur in function calls are written to the .ln file,
@@ -161,7 +162,14 @@ cover_outqchar(void)
 	my_printf("%s", "%");
 	my_printf("%s", "%s");
 	my_printf("%s", "%%");
-	my_printf("%s", "%\a %\b %\f %\n %\r %\t %\v %\177");
+	my_printf("%s", "%\\ %\" %' %\a %\b %\f %\n %\r %\t %\v %\177");
+}
+
+void
+cover_outfstrg(void)
+{
+	my_printf("%s", "%-3d %+3d % d %#x %03d %*.*s %6.2f %hd %ld %Ld %qd");
+	my_scanf("%s", "%[0-9]s %[^A-Za-z]s %[][A-Za-z0-9]s %[+-]s");
 }
 
 /*
@@ -262,4 +270,18 @@ inline_function(void)
 	used_function();
 	(void)used_function();
 	return used_function();
+}
+
+extern int declared_used_var;
+int defined_used_var;
+
+/*
+ * When a function is used, that usage is output as a 'c' record.
+ * When a variable is used, that usage is output as a 'u' record.
+ */
+void
+use_vars(void)
+{
+	declared_used_var++;
+	defined_used_var++;
 }
