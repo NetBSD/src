@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.228 2021/08/29 15:49:04 rillig Exp $ */
+/* $NetBSD: decl.c,v 1.229 2021/09/04 12:05:54 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: decl.c,v 1.228 2021/08/29 15:49:04 rillig Exp $");
+__RCSID("$NetBSD: decl.c,v 1.229 2021/09/04 12:05:54 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -2656,6 +2656,66 @@ check_prototype_declaration(sym_t *arg, sym_t *parg)
 	return msg;
 }
 
+static void
+check_local_hiding(const sym_t *dsym)
+{
+	switch (dsym->s_scl) {
+	case AUTO:
+		/* automatic hides external declaration: %s */
+		warning(86, dsym->s_name);
+		break;
+	case STATIC:
+		/* static hides external declaration: %s */
+		warning(87, dsym->s_name);
+		break;
+	case TYPEDEF:
+		/* typedef hides external declaration: %s */
+		warning(88, dsym->s_name);
+		break;
+	case EXTERN:
+		/* Already checked in declare_external_in_block. */
+		break;
+	default:
+		lint_assert(/*CONSTCOND*/false);
+	}
+}
+
+static void
+check_local_redeclaration(const sym_t *dsym, sym_t *rsym)
+{
+	if (rsym->s_block_level == 0) {
+		if (hflag)
+			check_local_hiding(dsym);
+
+	} else if (rsym->s_block_level == block_level) {
+
+		/* no hflag, because it's illegal! */
+		if (rsym->s_arg) {
+			/*
+			 * if !tflag, a "redeclaration of %s" error
+			 * is produced below
+			 */
+			if (tflag) {
+				if (hflag)
+					/* decl. hides parameter: %s */
+					warning(91, dsym->s_name);
+				rmsym(rsym);
+			}
+		}
+
+	} else if (rsym->s_block_level < block_level) {
+		if (hflag)
+			/* declaration hides earlier one: %s */
+			warning(95, dsym->s_name);
+	}
+
+	if (rsym->s_block_level == block_level) {
+		/* redeclaration of %s */
+		error(27, dsym->s_name);
+		rmsym(rsym);
+	}
+}
+
 /*
  * Completes a single local declaration/definition.
  */
@@ -2717,71 +2777,8 @@ declare_local(sym_t *dsym, bool initflg)
 		}
 	}
 
-	if (dcs->d_redeclared_symbol != NULL) {
-
-		if (dcs->d_redeclared_symbol->s_block_level == 0) {
-
-			switch (dsym->s_scl) {
-			case AUTO:
-				if (hflag)
-					/* automatic hides external decl.: %s */
-					warning(86, dsym->s_name);
-				break;
-			case STATIC:
-				if (hflag)
-					/* static hides external decl.: %s */
-					warning(87, dsym->s_name);
-				break;
-			case TYPEDEF:
-				if (hflag)
-					/* typedef hides external decl.: %s */
-					warning(88, dsym->s_name);
-				break;
-			case EXTERN:
-				/*
-				 * Warnings and errors are printed in
-				 * declare_external_in_block()
-				 */
-				break;
-			default:
-				lint_assert(/*CONSTCOND*/false);
-			}
-
-		} else if (dcs->d_redeclared_symbol->s_block_level ==
-			   block_level) {
-
-			/* no hflag, because it's illegal! */
-			if (dcs->d_redeclared_symbol->s_arg) {
-				/*
-				 * if !tflag, a "redeclaration of %s" error
-				 * is produced below
-				 */
-				if (tflag) {
-					if (hflag)
-						/* decl. hides parameter: %s */
-						warning(91, dsym->s_name);
-					rmsym(dcs->d_redeclared_symbol);
-				}
-			}
-
-		} else if (dcs->d_redeclared_symbol->s_block_level <
-			   block_level) {
-
-			if (hflag)
-				/* declaration hides earlier one: %s */
-				warning(95, dsym->s_name);
-
-		}
-
-		if (dcs->d_redeclared_symbol->s_block_level == block_level) {
-
-			/* redeclaration of %s */
-			error(27, dsym->s_name);
-			rmsym(dcs->d_redeclared_symbol);
-
-		}
-
-	}
+	if (dcs->d_redeclared_symbol != NULL)
+		check_local_redeclaration(dsym, dcs->d_redeclared_symbol);
 
 	if (initflg && !check_init(dsym)) {
 		dsym->s_def = DEF;
