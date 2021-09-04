@@ -1,4 +1,4 @@
-/*	$NetBSD: inittyp.c,v 1.27 2021/09/04 10:26:44 rillig Exp $	*/
+/*	$NetBSD: inittyp.c,v 1.28 2021/09/04 14:07:51 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: inittyp.c,v 1.27 2021/09/04 10:26:44 rillig Exp $");
+__RCSID("$NetBSD: inittyp.c,v 1.28 2021/09/04 14:07:51 rillig Exp $");
 #endif
 
 #if defined(IS_LINT1)
@@ -112,13 +112,6 @@ inittyp(void)
 		    0, 0, 1, 1, 1, 0, "double"),
 		typeinfo(LDOUBLE, LDOUBLE, LDOUBLE, LDOUBLE_SIZE, 80,
 		    0, 0, 1, 1, 1, 0, "long double"),
-		typeinfo(FCOMPLEX, FCOMPLEX, FCOMPLEX, FLOAT_SIZE * 2, 32 * 2,
-		    0, 0, 1, 1, 1, 1, "float _Complex"),
-		typeinfo(DCOMPLEX, DCOMPLEX, DCOMPLEX, DOUBLE_SIZE * 2, 64 * 2,
-		    0, 0, 1, 1, 1, 1, "double _Complex"),
-		typeinfo(LCOMPLEX, LCOMPLEX, LCOMPLEX,
-		    LDOUBLE_SIZE * 2, 80 * 2,
-		    0, 0, 1, 1, 1, 1, "long double _Complex"),
 		typeinfo(VOID, VOID, VOID, 0, 0,
 		    0, 0, 0, 0, 0, 0, "void"),
 		typeinfo(STRUCT, STRUCT, STRUCT, 0, 0,
@@ -133,6 +126,13 @@ inittyp(void)
 		    0, 0, 0, 0, 0, 0, "array"),
 		typeinfo(FUNC, FUNC, FUNC, 0, 0,
 		    0, 0, 0, 0, 0, 0, "function"),
+		typeinfo(FCOMPLEX, FCOMPLEX, FCOMPLEX, FLOAT_SIZE * 2, 32 * 2,
+		    0, 0, 1, 1, 1, 1, "float _Complex"),
+		typeinfo(DCOMPLEX, DCOMPLEX, DCOMPLEX, DOUBLE_SIZE * 2, 64 * 2,
+		    0, 0, 1, 1, 1, 1, "double _Complex"),
+		typeinfo(LCOMPLEX, LCOMPLEX, LCOMPLEX,
+		    LDOUBLE_SIZE * 2, 80 * 2,
+		    0, 0, 1, 1, 1, 1, "long double _Complex"),
 #undef typeinfo
 	};
 

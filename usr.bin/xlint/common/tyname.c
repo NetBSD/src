@@ -1,4 +1,4 @@
-/*	$NetBSD: tyname.c,v 1.48 2021/09/04 13:53:20 rillig Exp $	*/
+/*	$NetBSD: tyname.c,v 1.49 2021/09/04 14:07:51 rillig Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tyname.c,v 1.48 2021/09/04 13:53:20 rillig Exp $");
+__RCSID("$NetBSD: tyname.c,v 1.49 2021/09/04 14:07:51 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -150,7 +150,7 @@ buf_add_int(buffer *buf, int n)
 const char *
 tspec_name(tspec_t t)
 {
-	const char *name = t == COMPLEX ? "_Complex" : ttab[t].tt_name;
+	const char *name = ttab[t].tt_name;
 	if (name == NULL)
 		INTERNAL_ERROR("tspec_name(%d)", t);
 	return name;
