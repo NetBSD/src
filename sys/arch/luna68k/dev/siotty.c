@@ -1,4 +1,4 @@
-/* $NetBSD: siotty.c,v 1.47 2020/12/29 17:17:14 tsutsui Exp $ */
+/* $NetBSD: siotty.c,v 1.48 2021/09/04 12:38:13 tsutsui Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: siotty.c,v 1.47 2020/12/29 17:17:14 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: siotty.c,v 1.48 2021/09/04 12:38:13 tsutsui Exp $");
 
 #include "opt_ddb.h"
 
@@ -49,6 +49,7 @@ __KERNEL_RCSID(0, "$NetBSD: siotty.c,v 1.47 2020/12/29 17:17:14 tsutsui Exp $");
 #include <sys/kauth.h>
 #include <sys/kmem.h>
 
+#include <machine/board.h>
 #include <machine/cpu.h>
 
 #include <luna68k/dev/sioreg.h>
@@ -711,7 +712,7 @@ syscninit(int channel)
  * boot/reset/poweron.  ROM monitor emits one line message on CH.A.
  */
 	struct sioreg *sio;
-	sio = (struct sioreg *)0x51000000 + channel;
+	sio = (struct sioreg *)OBIO_SIO + channel;
 
 	syscons.cn_dev = makedev(cdevsw_lookup_major(&siotty_cdevsw),
 				 channel);
@@ -735,7 +736,7 @@ syscngetc(dev_t dev)
 	struct sioreg *sio;
 	int s, c;
 
-	sio = (struct sioreg *)0x51000000 + ((int)dev & 0x1);
+	sio = (struct sioreg *)OBIO_SIO + ((int)dev & 0x1);
 	s = splhigh();
 	while ((getsiocsr(sio) & RR_RXRDY) == 0)
 		continue;
@@ -751,7 +752,7 @@ syscnputc(dev_t dev, int c)
 	struct sioreg *sio;
 	int s;
 
-	sio = (struct sioreg *)0x51000000 + ((int)dev & 0x1);
+	sio = (struct sioreg *)OBIO_SIO + ((int)dev & 0x1);
 	s = splhigh();
 	while ((getsiocsr(sio) & RR_TXRDY) == 0)
 		continue;
