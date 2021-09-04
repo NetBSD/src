@@ -1,4 +1,4 @@
-/* $NetBSD: camellia-api.c,v 1.1 2011/05/05 17:38:36 drochner Exp $ */
+/* $NetBSD: camellia-api.c,v 1.2 2021/09/04 00:33:09 gutteridge Exp $ */
 
 /*
  *
@@ -28,6 +28,7 @@
  */
 
 #include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: camellia-api.c,v 1.2 2021/09/04 00:33:09 gutteridge Exp $");
 
 #include <sys/types.h>
 #include <crypto/camellia/camellia.h>

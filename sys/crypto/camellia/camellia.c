@@ -1,4 +1,4 @@
-/* $NetBSD: camellia.c,v 1.2 2014/01/01 15:18:57 pgoyette Exp $ */
+/* $NetBSD: camellia.c,v 1.3 2021/09/04 00:33:09 gutteridge Exp $ */
 
 /* camellia.h ver 1.1.0
  *
@@ -33,6 +33,8 @@
  */
 
 #include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: camellia.c,v 1.3 2021/09/04 00:33:09 gutteridge Exp $");
+
 #include <sys/types.h>
 #include <sys/systm.h>
 #include <sys/errno.h>
@@ -1007,7 +1009,7 @@ camellia_encrypt128(const uint32_t *subkey, uint32_t *io)
 void
 camellia_decrypt128(const uint32_t *subkey, uint32_t *io)
 {
-    uint32_t il,ir,t0,t1;               /* temporary valiables */
+    uint32_t il,ir,t0,t1;               /* temporary variables */
     
     /* pre whitening but absorb kw2*/
     io[0] ^= SUBL(24);
@@ -1077,7 +1079,7 @@ camellia_decrypt128(const uint32_t *subkey, uint32_t *io)
 void
 camellia_encrypt256(const uint32_t *subkey, uint32_t *io)
 {
-    uint32_t il,ir,t0,t1;           /* temporary valiables */
+    uint32_t il,ir,t0,t1;           /* temporary variables */
 
     /* pre whitening but absorb kw2*/
     io[0] ^= SUBL(0);
@@ -1160,7 +1162,7 @@ camellia_encrypt256(const uint32_t *subkey, uint32_t *io)
 void
 camellia_decrypt256(const uint32_t *subkey, uint32_t *io)
 {
-    uint32_t il,ir,t0,t1;           /* temporary valiables */
+    uint32_t il,ir,t0,t1;           /* temporary variables */
 
     /* pre whitening but absorb kw2*/
     io[0] ^= SUBL(32);
