@@ -1,4 +1,4 @@
-/* $NetBSD: apple_dart.c,v 1.1 2021/08/30 23:26:26 jmcneill Exp $ */
+/* $NetBSD: apple_dart.c,v 1.2 2021/09/04 12:35:31 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2021 Mark Kettenis <kettenis@openbsd.org>
@@ -20,7 +20,7 @@
 //#define APPLE_DART_DEBUG
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: apple_dart.c,v 1.1 2021/08/30 23:26:26 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: apple_dart.c,v 1.2 2021/09/04 12:35:31 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -34,46 +34,6 @@ __KERNEL_RCSID(0, "$NetBSD: apple_dart.c,v 1.1 2021/08/30 23:26:26 jmcneill Exp 
 #include <arm/cpufunc.h>
 
 #include <dev/fdt/fdtvar.h>
-
-/*
- * DT node to bus_dma tag mappings
- */
-
-bus_dma_tag_t apple_dart_iommu_lookup(int);
-
-struct apple_dart_iommu {
-	int phandle;
-	bus_dma_tag_t dmat;
-	LIST_ENTRY(apple_dart_iommu) next;
-};
-
-static LIST_HEAD(, apple_dart_iommu) apple_dart_iommus =
-    LIST_HEAD_INITIALIZER(apple_dart_iommus);
-
-static void
-apple_dart_iommu_register(int phandle, bus_dma_tag_t dmat)
-{
-	struct apple_dart_iommu *iommu;
-
-	iommu = kmem_alloc(sizeof(*iommu), KM_SLEEP);
-	iommu->phandle = phandle;
-	iommu->dmat = dmat;
-	LIST_INSERT_HEAD(&apple_dart_iommus, iommu, next);
-}
-
-bus_dma_tag_t
-apple_dart_iommu_lookup(int phandle)
-{
-	struct apple_dart_iommu *iommu;
-
-	LIST_FOREACH(iommu, &apple_dart_iommus, next) {
-		if (iommu->phandle == phandle) {
-			return iommu->dmat;
-		}
-	}
-
-	panic("Couldn't find IOMMU for node 0x%x", phandle);
-}
 
 /*
  * DART registers
@@ -473,6 +433,18 @@ apple_dart_dmamap_unload(bus_dma_tag_t t, bus_dmamap_t map)
 	sc->sc_dmat->_dmamap_unload(sc->sc_dmat, map);
 }
 
+static bus_dma_tag_t
+apple_dart_iommu_map(device_t dev, const u_int *data, bus_dma_tag_t dmat)
+{
+	struct apple_dart_softc * const sc = device_private(dev);
+
+	return &sc->sc_bus_dmat;
+}
+
+const struct fdtbus_iommu_func apple_dart_iommu_funcs = {
+	.map = apple_dart_iommu_map,
+};
+
 static int
 apple_dart_match(device_t parent, cfdata_t cf, void *aux)
 {
@@ -623,7 +595,7 @@ apple_dart_attach(device_t parent, device_t self, void *aux)
 	sc->sc_bus_dmat._dmamap_load_raw = apple_dart_dmamap_load_raw;
 	sc->sc_bus_dmat._dmamap_unload = apple_dart_dmamap_unload;
 
-	apple_dart_iommu_register(phandle, &sc->sc_bus_dmat);
+	fdtbus_register_iommu(self, phandle, &apple_dart_iommu_funcs);
 }
 
 CFATTACH_DECL_NEW(apple_dart, sizeof(struct apple_dart_softc),
