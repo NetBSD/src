@@ -1,4 +1,4 @@
-/*	$NetBSD: externs.h,v 1.21 2021/08/31 17:22:24 rillig Exp $	*/
+/*	$NetBSD: externs.h,v 1.22 2021/09/04 14:26:32 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -61,8 +61,8 @@ extern	ob_t	ob;
 extern	void	outopen(const char *);
 extern	void	outclose(void);
 extern	void	outclr(void);
-extern	void	outchar(int);
-extern	void	outqchar(int);
+extern	void	outchar(char);
+extern	void	outqchar(char);
 extern	void	outstrg(const char *);
 extern	void	outint(int);
 #define outname(a)	outname1(__FILE__, __LINE__, a);
