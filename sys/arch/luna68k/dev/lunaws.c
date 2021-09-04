@@ -1,4 +1,4 @@
-/* $NetBSD: lunaws.c,v 1.33 2021/08/07 16:18:57 thorpej Exp $ */
+/* $NetBSD: lunaws.c,v 1.34 2021/09/04 18:38:03 tsutsui Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: lunaws.c,v 1.33 2021/08/07 16:18:57 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lunaws.c,v 1.34 2021/09/04 18:38:03 tsutsui Exp $");
 
 #include "opt_wsdisplay_compat.h"
 #include "wsmouse.h"
@@ -77,9 +77,9 @@ struct ws_softc {
 	u_int		sc_rxqtail;
 #if NWSMOUSE > 0
 	device_t	sc_wsmousedev;
-	int		sc_msreport;
 	int		sc_msbuttons, sc_msdx, sc_msdy;
 #endif
+	int		sc_msreport;
 	void		*sc_si;
 	int		sc_rawkbd;
 };
@@ -184,9 +184,9 @@ wsattach(device_t parent, device_t self, void *aux)
 	b.accesscookie = (void *)sc;
 	sc->sc_wsmousedev = config_found(self, &b, wsmousedevprint,
 	    CFARGS(.iattr = "wsmousedev"));
-	sc->sc_msreport = 0;
 	}
 #endif
+	sc->sc_msreport = 0;
 }
 
 /*ARGSUSED*/
@@ -225,41 +225,42 @@ wssoftintr(void *arg)
 	while (sc->sc_rxqhead != sc->sc_rxqtail) {
 		code = sc->sc_rxq[sc->sc_rxqhead];
 		sc->sc_rxqhead = OMKBD_NEXTRXQ(sc->sc_rxqhead);
-#if NWSMOUSE > 0
 		/*
-		 * if (code >= 0x80 && code <= 0x87), then
+		 * if (code >= 0x80 && code <= 0x87), i.e.
+		 * if ((code & 0xf8) == 0x80), then
 		 * it's the first byte of 3 byte long mouse report
 		 *	code[0] & 07 -> LMR button condition
 		 *	code[1], [2] -> x,y delta
 		 * otherwise, key press or release event.
 		 */
-		if (sc->sc_msreport == 0) {
-			if (code < 0x80 || code > 0x87) {
-				omkbd_input(sc, code);
-				continue;
-			}
-			code = (code & 07) ^ 07;
-			/* LMR->RML: wsevent counts 0 for leftmost */
-			sc->sc_msbuttons = (code & 02);
-			if ((code & 01) != 0)
-				sc->sc_msbuttons |= 04;
-			if ((code & 04) != 0)
-				sc->sc_msbuttons |= 01;
-			sc->sc_msreport = 1;
-		} else if (sc->sc_msreport == 1) {
+		if (sc->sc_msreport == 1) {
+#if NWSMOUSE > 0
 			sc->sc_msdx = (int8_t)code;
+#endif
 			sc->sc_msreport = 2;
+			continue;
 		} else if (sc->sc_msreport == 2) {
+#if NWSMOUSE > 0
 			sc->sc_msdy = (int8_t)code;
 			wsmouse_input(sc->sc_wsmousedev,
 			    sc->sc_msbuttons, sc->sc_msdx, sc->sc_msdy, 0, 0,
 			    WSMOUSE_INPUT_DELTA);
-
-			sc->sc_msreport = 0;
-		}
-#else
-		omkbd_input(sc, code);
 #endif
+			sc->sc_msreport = 0;
+			continue;
+		}
+		if ((code & 0xf8) == 0x80) {
+#if NWSMOUSE > 0
+			/* buttons: Negative logic to positive */
+			code = ~code;
+			/* LMR->RML: wsevent counts 0 for leftmost */
+			sc->sc_msbuttons =
+			    ((code & 1) << 2) | (code & 2) | ((code & 4) >> 2);
+#endif
+			sc->sc_msreport = 1;
+			continue;
+		}
+		omkbd_input(sc, code);
 	}
 }
 
@@ -380,10 +381,7 @@ omkbd_ioctl(void *v, u_long cmd, void *data, int flag, struct lwp *l)
 static int
 omms_enable(void *v)
 {
-	struct ws_softc *sc = v;
-
 	syscnputc((dev_t)1, 0x60); /* enable 3 byte long mouse reporting */
-	sc->sc_msreport = 0;
 	return 0;
 }
 
@@ -402,9 +400,6 @@ omms_ioctl(void *v, u_long cmd, void *data, int flag, struct lwp *l)
 static void
 omms_disable(void *v)
 {
-	struct ws_softc *sc = v;
-
 	syscnputc((dev_t)1, 0x20); /* quiet mouse */
-	sc->sc_msreport = 0;
 }
 #endif
