@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.374 2021/09/04 09:26:21 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.375 2021/09/04 09:45:26 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.374 2021/09/04 09:26:21 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.375 2021/09/04 09:45:26 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -785,6 +785,37 @@ is_null_pointer(const tnode_t *tn)
 	       && (tn->tn_op == CON && tn->tn_val->v_quad == 0);
 }
 
+/*
+ * Most errors required by ANSI C are reported in struct_or_union_member().
+ * Here we only check for totally wrong things.
+ */
+static bool
+typeok_point(const tnode_t *ln, const type_t *ltp, tspec_t lt)
+{
+	if (lt == FUNC || lt == VOID || ltp->t_bitfield ||
+	    ((lt != STRUCT && lt != UNION) && !ln->tn_lvalue)) {
+		/* Without tflag we got already an error */
+		if (tflag)
+			/* unacceptable operand of '%s' */
+			error(111, op_name(POINT));
+		return false;
+	}
+	return true;
+}
+
+static bool
+typeok_arrow(tspec_t lt)
+{
+	if (lt == PTR || (tflag && is_integer(lt)))
+		return true;
+
+	/* Without tflag we got already an error */
+	if (tflag)
+		/* unacceptable operand of '%s' */
+		error(111, op_name(ARROW));
+	return false;
+}
+
 static bool
 typeok_incdec(op_t op, const tnode_t *tn, const type_t *tp)
 {
@@ -841,7 +872,7 @@ typeok_address(const mod_t *mp,
 }
 
 static bool
-typeok_star(tspec_t t)
+typeok_indir(tspec_t t)
 {
 	/* until now there were no type checks for this operator */
 	if (t != PTR) {
@@ -989,9 +1020,9 @@ is_typeok_eq(const tnode_t *ln, tspec_t lt, const tnode_t *rn, tspec_t rt)
 }
 
 static bool
-typeok_ordered_comparison(op_t op,
-			  const tnode_t *ln, const type_t *ltp, tspec_t lt,
-			  const tnode_t *rn, const type_t *rtp, tspec_t rt)
+typeok_compare(op_t op,
+	       const tnode_t *ln, const type_t *ltp, tspec_t lt,
+	       const tnode_t *rn, const type_t *rtp, tspec_t rt)
 {
 	if (lt == PTR && rt == PTR) {
 		check_pointer_comparison(op, ln, rn);
@@ -1153,7 +1184,12 @@ typeok_scalar(op_t op, const mod_t *mp,
 	return true;
 }
 
-/* Check the types for specific operators and type combinations. */
+/*
+ * Check the types for specific operators and type combinations.
+ *
+ * At this point, the operands already conform to the type requirements of
+ * the operator, such as being integer, floating or scalar.
+ */
 static bool
 typeok_op(op_t op, const mod_t *mp, int arg,
 	  const tnode_t *ln, const type_t *ltp, tspec_t lt,
@@ -1161,30 +1197,9 @@ typeok_op(op_t op, const mod_t *mp, int arg,
 {
 	switch (op) {
 	case POINT:
-		/*
-		 * Most errors required by ANSI C are reported in
-		 * struct_or_union_member().
-		 * Here we only must check for totally wrong things.
-		 */
-		if (lt == FUNC || lt == VOID || ltp->t_bitfield ||
-		    ((lt != STRUCT && lt != UNION) && !ln->tn_lvalue)) {
-			/* Without tflag we got already an error */
-			if (tflag)
-				/* unacceptable operand of '%s' */
-				error(111, mp->m_name);
-			return false;
-		}
-		/* Now we have an object we can create a pointer to */
-		break;
+		return typeok_point(ln, ltp, lt);
 	case ARROW:
-		if (lt != PTR && !(tflag && is_integer(lt))) {
-			/* Without tflag we got already an error */
-			if (tflag)
-				/* unacceptable operand of '%s' */
-				error(111, mp->m_name);
-			return false;
-		}
-		break;
+		return typeok_arrow(lt);
 	case INCAFT:
 	case DECAFT:
 	case INCBEF:
@@ -1193,7 +1208,7 @@ typeok_op(op_t op, const mod_t *mp, int arg,
 	case ADDR:
 		return typeok_address(mp, ln, ltp, lt);
 	case INDIR:
-		return typeok_star(lt);
+		return typeok_indir(lt);
 	case PLUS:
 		return typeok_plus(op, ltp, lt, rtp, rt);
 	case MINUS:
@@ -1219,7 +1234,7 @@ typeok_op(op_t op, const mod_t *mp, int arg,
 	case GT:
 	case LE:
 	case GE:
-		return typeok_ordered_comparison(op, ln, ltp, lt, rn, rtp, rt);
+		return typeok_compare(op, ln, ltp, lt, rn, rtp, rt);
 	case QUEST:
 		return typeok_quest(lt, rn);
 	case COLON:
@@ -1261,34 +1276,7 @@ typeok_op(op_t op, const mod_t *mp, int arg,
 		if (!modtab[ln->tn_op].m_has_side_effect)
 			check_null_effect(ln);
 		break;
-		/* LINTED206: (enumeration values not handled in switch) */
-	case CON:
-	case CASE:
-	case PUSH:
-	case LOAD:
-	case ICALL:
-	case CVT:
-	case CALL:
-	case FSEL:
-	case STRING:
-	case NAME:
-	case LOGOR:
-	case LOGAND:
-	case BITOR:
-	case BITXOR:
-	case BITAND:
-	case MOD:
-	case DIV:
-	case MULT:
-	case UMINUS:
-	case UPLUS:
-	case DEC:
-	case INC:
-	case COMPL:
-	case NOT:
-	case NOOP:
-	case REAL:
-	case IMAG:
+	default:
 		break;
 	}
 	return true;
