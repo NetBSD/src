@@ -1,4 +1,4 @@
-/*	$NetBSD: emit.c,v 1.14 2021/09/04 14:26:32 rillig Exp $	*/
+/*	$NetBSD: emit.c,v 1.15 2021/09/04 14:42:30 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: emit.c,v 1.14 2021/09/04 14:26:32 rillig Exp $");
+__RCSID("$NetBSD: emit.c,v 1.15 2021/09/04 14:42:30 rillig Exp $");
 #endif
 
 #include <stdio.h>
@@ -50,7 +50,7 @@ static	const	char *loname;
 static	FILE	*lout;
 
 /* output buffer data */
-ob_t	ob;
+static	ob_t	ob;
 
 static	void	outxbuf(void);
 
@@ -132,9 +132,7 @@ outchar(char c)
 }
 
 #if defined(IS_LINT1)
-/*
- * write a character to the output buffer, quoted if necessary
- */
+/* write a character to the output buffer, quoted if necessary */
 void
 outqchar(char c)
 {
@@ -200,9 +198,7 @@ outstrg(const char *s)
 	}
 }
 
-/*
- * write an integer value to the output buffer
- */
+/* write an integer value to the output buffer */
 void
 outint(int i)
 {
@@ -212,23 +208,15 @@ outint(int i)
 	ob.o_next += sprintf(ob.o_next, "%d", i);
 }
 
-/*
- * write the name of a symbol to the output buffer
- * the name is preceded by its length
- */
+/* write a name to the output buffer, preceded by its length */
 void
-outname1(const char *file, size_t line, const char *name)
+outname(const char *name)
 {
-
-	if (name == NULL)
-		errx(1, "%s, %zu: internal error: outname(NULL)", file, line);
 	outint((int)strlen(name));
 	outstrg(name);
 }
 
-/*
- * write the name of the .c source
- */
+/* write the name of the .c source */
 void
 outsrc(const char *name)
 {
