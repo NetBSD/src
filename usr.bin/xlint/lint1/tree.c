@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.373 2021/09/04 09:18:25 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.374 2021/09/04 09:26:21 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.373 2021/09/04 09:18:25 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.374 2021/09/04 09:26:21 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -1189,25 +1189,15 @@ typeok_op(op_t op, const mod_t *mp, int arg,
 	case DECAFT:
 	case INCBEF:
 	case DECBEF:
-		if (!typeok_incdec(op, ln, ltp))
-			return false;
-		break;
+		return typeok_incdec(op, ln, ltp);
 	case ADDR:
-		if (!typeok_address(mp, ln, ltp, lt))
-			return false;
-		break;
+		return typeok_address(mp, ln, ltp, lt);
 	case INDIR:
-		if (!typeok_star(lt))
-			return false;
-		break;
+		return typeok_star(lt);
 	case PLUS:
-		if (!typeok_plus(op, ltp, lt, rtp, rt))
-			return false;
-		break;
+		return typeok_plus(op, ltp, lt, rtp, rt);
 	case MINUS:
-		if (!typeok_minus(op, ltp, lt, rtp, rt))
-			return false;
-		break;
+		return typeok_minus(op, ltp, lt, rtp, rt);
 	case SHR:
 		typeok_shr(mp, ln, lt, rn, rt);
 		goto shift;
@@ -1229,17 +1219,11 @@ typeok_op(op_t op, const mod_t *mp, int arg,
 	case GT:
 	case LE:
 	case GE:
-		if (!typeok_ordered_comparison(op, ln, ltp, lt, rn, rtp, rt))
-			return false;
-		break;
+		return typeok_ordered_comparison(op, ln, ltp, lt, rn, rtp, rt);
 	case QUEST:
-		if (!typeok_quest(lt, rn))
-			return false;
-		break;
+		return typeok_quest(lt, rn);
 	case COLON:
-		if (!typeok_colon(mp, ln, ltp, lt, rn, rtp, rt))
-			return false;
-		break;
+		return typeok_colon(mp, ln, ltp, lt, rn, rtp, rt);
 	case ASSIGN:
 	case INIT:
 	case FARG:
@@ -1272,9 +1256,7 @@ typeok_op(op_t op, const mod_t *mp, int arg,
 	case ORASS:
 		goto assign;
 	assign:
-		if (!typeok_assign(op, ln, ltp, lt))
-			return false;
-		break;
+		return typeok_assign(op, ln, ltp, lt);
 	case COMMA:
 		if (!modtab[ln->tn_op].m_has_side_effect)
 			check_null_effect(ln);
