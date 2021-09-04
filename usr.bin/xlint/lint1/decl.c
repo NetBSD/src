@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.231 2021/09/04 12:37:46 rillig Exp $ */
+/* $NetBSD: decl.c,v 1.232 2021/09/04 13:27:59 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: decl.c,v 1.231 2021/09/04 12:37:46 rillig Exp $");
+__RCSID("$NetBSD: decl.c,v 1.232 2021/09/04 13:27:59 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -913,7 +913,7 @@ end_type(void)
 int
 length(const type_t *tp, const char *name)
 {
-	int	elem, elsz;
+	unsigned int elem, elsz;
 
 	elem = 1;
 	while (tp != NULL && tp->t_tspec == ARRAY) {
@@ -948,7 +948,7 @@ length(const type_t *tp, const char *name)
 			INTERNAL_ERROR("length(%d)", elsz);
 		break;
 	}
-	return elem * elsz;
+	return (int)(elem * elsz);
 }
 
 unsigned int
@@ -1136,7 +1136,7 @@ check_bit_field_type(sym_t *dsym,  type_t **const inout_tp, tspec_t *inout_t)
 		if (!(bitfieldtype_ok || gflag) || !is_integer(t)) {
 			/* illegal bit-field type '%s' */
 			warning(35, type_name(tp));
-			int sz = tp->t_flen;
+			unsigned int sz = tp->t_flen;
 			dsym->s_type = tp = dup_type(gettyp(t = INT));
 			if ((tp->t_flen = sz) > size_in_bits(t))
 				tp->t_flen = size_in_bits(t);
