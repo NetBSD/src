@@ -1,4 +1,4 @@
-/* $NetBSD: emit1.c,v 1.56 2021/09/04 14:48:27 rillig Exp $ */
+/* $NetBSD: emit1.c,v 1.57 2021/09/04 14:58:42 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: emit1.c,v 1.56 2021/09/04 14:48:27 rillig Exp $");
+__RCSID("$NetBSD: emit1.c,v 1.57 2021/09/04 14:58:42 rillig Exp $");
 #endif
 
 #include "lint1.h"
@@ -488,13 +488,13 @@ outqchar(char c)
 static void
 outfstrg(strg_t *strg)
 {
-	unsigned char c, oc;
+	char c, oc;
 	bool	first;
-	unsigned char *cp;
+	const char *cp;
 
 	lint_assert(strg->st_tspec == CHAR);
 
-	cp = strg->st_cp;
+	cp = (const char *)strg->st_cp;
 
 	outchar('"');
 
@@ -507,44 +507,45 @@ outfstrg(strg_t *strg)
 			continue;
 		}
 
-		outqchar('%');
+		outchar('%');
 		c = *cp++;
 
 		/* flags for printf and scanf and *-fieldwidth for printf */
-		while (c != '\0' && (c == '-' || c == '+' || c == ' ' ||
-				     c == '#' || c == '0' || c == '*')) {
-			outqchar(c);
+		while (c == '-' || c == '+' || c == ' ' ||
+		       c == '#' || c == '0' || c == '*') {
+			outchar(c);
 			c = *cp++;
 		}
 
 		/* numeric field width */
-		while (c != '\0' && ch_isdigit((char)c)) {
-			outqchar(c);
+		while (ch_isdigit(c)) {
+			outchar(c);
 			c = *cp++;
 		}
 
 		/* precision for printf */
 		if (c == '.') {
-			outqchar(c);
-			if ((c = *cp++) == '*') {
-				outqchar(c);
+			outchar(c);
+			c = *cp++;
+			if (c == '*') {
+				outchar(c);
 				c = *cp++;
 			} else {
-				while (c != '\0' && ch_isdigit((char)c)) {
-					outqchar(c);
+				while (ch_isdigit(c)) {
+					outchar(c);
 					c = *cp++;
 				}
 			}
 		}
 
-		/* h, l, L and q flags fpr printf and scanf */
+		/* h, l, L and q flags for printf and scanf */
 		if (c == 'h' || c == 'l' || c == 'L' || c == 'q') {
-			outqchar(c);
+			outchar(c);
 			c = *cp++;
 		}
 
 		/*
-		 * The last character. It is always written so we can detect
+		 * The last character. It is always written, so we can detect
 		 * invalid format specifiers.
 		 */
 		if (c != '\0') {
@@ -564,13 +565,13 @@ outfstrg(strg_t *strg)
 				while (c != '\0' && c != ']') {
 					if (c == '-') {
 						if (!first && *cp != ']')
-							outqchar(c);
+							outchar(c);
 					}
 					first = false;
 					c = *cp++;
 				}
 				if (c == ']') {
-					outqchar(c);
+					outchar(c);
 					c = *cp++;
 				}
 			}
