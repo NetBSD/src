@@ -1,4 +1,4 @@
-/*	$NetBSD: tyname.c,v 1.47 2021/09/04 13:45:36 rillig Exp $	*/
+/*	$NetBSD: tyname.c,v 1.48 2021/09/04 13:53:20 rillig Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tyname.c,v 1.47 2021/09/04 13:45:36 rillig Exp $");
+__RCSID("$NetBSD: tyname.c,v 1.48 2021/09/04 13:53:20 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -147,47 +147,13 @@ buf_add_int(buffer *buf, int n)
 	buf_add(buf, num);
 }
 
-/* XXX: at least partly redundant with ttab[t].tt_name */
 const char *
 tspec_name(tspec_t t)
 {
-	switch (t) {
-	case SIGNED:	return "signed";
-	case UNSIGN:	return "unsigned";
-	case BOOL:	return "_Bool";
-	case CHAR:	return "char";
-	case SCHAR:	return "signed char";
-	case UCHAR:	return "unsigned char";
-	case SHORT:	return "short";
-	case USHORT:	return "unsigned short";
-	case INT:	return "int";
-	case UINT:	return "unsigned int";
-	case LONG:	return "long";
-	case ULONG:	return "unsigned long";
-	case QUAD:	return "long long";
-	case UQUAD:	return "unsigned long long";
-#ifdef INT128_SIZE
-	case INT128:	return "__int128_t";
-	case UINT128:	return "__uint128_t";
-#endif
-	case FLOAT:	return "float";
-	case DOUBLE:	return "double";
-	case LDOUBLE:	return "long double";
-	case VOID:	return "void";
-	case STRUCT:	return "struct";
-	case UNION:	return "union";
-	case ENUM:	return "enum";
-	case PTR:	return "pointer";
-	case ARRAY:	return "array";
-	case FUNC:	return "function";
-	case COMPLEX:	return "_Complex";
-	case FCOMPLEX:	return "float _Complex";
-	case DCOMPLEX:	return "double _Complex";
-	case LCOMPLEX:	return "long double _Complex";
-	default:
+	const char *name = t == COMPLEX ? "_Complex" : ttab[t].tt_name;
+	if (name == NULL)
 		INTERNAL_ERROR("tspec_name(%d)", t);
-		return NULL;
-	}
+	return name;
 }
 
 static void
