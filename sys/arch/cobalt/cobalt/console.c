@@ -1,4 +1,4 @@
-/*	$NetBSD: console.c,v 1.12 2011/07/01 20:36:42 dyoung Exp $	*/
+/*	$NetBSD: console.c,v 1.13 2021/09/04 02:19:56 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang.  All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: console.c,v 1.12 2011/07/01 20:36:42 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: console.c,v 1.13 2021/09/04 02:19:56 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -50,18 +50,59 @@ int	console_present = 0;	/* Do we have a console? */
 
 struct	consdev	constab[] = {
 #if NCOM_MAINBUS > 0
-	{ com_mainbus_cnprobe, com_mainbus_cninit,
-	    NULL, NULL, NULL, NULL, NULL, NULL, 0, CN_DEAD },
+	{
+		.cn_probe = com_mainbus_cnprobe,
+		.cn_init  = com_mainbus_cninit,
+		.cn_getc  = NULL,
+		.cn_putc  = NULL,
+		.cn_pollc = NULL,
+		.cn_bell  = NULL,
+		.cn_halt  = NULL,
+		.cn_flush = NULL,
+		.cn_dev   = 0,
+		.cn_pri   = CN_DEAD
+	},
 #endif
 #if NZSC > 0
-	{ zscnprobe, zscninit, zscngetc, zscnputc, nullcnpollc,
-	    NULL, NULL, NULL, NODEV, CN_DEAD },
+	{
+		.cn_probe = zscnprobe,
+		.cn_init  = zscninit,
+		.cn_getc  = zscngetc,
+		.cn_putc  = zscnputc,
+		.cn_pollc = nullcnpollc,
+		.cn_bell  = NULL,
+		.cn_halt  = NULL,
+		.cn_flush = NULL,
+		.cn_dev   = NODEV,
+		.cn_pri   = CN_DEAD
+	},
 #endif
 #if NNULLCONS > 0
-	{ nullcnprobe, nullcninit,
-	    NULL, NULL, NULL, NULL, NULL, NULL, 0, CN_DEAD },
+	{
+		.cn_probe = nullcnprobe,
+		.cn_init  = nullcninit,
+		.cn_getc  = NULL,
+		.cn_putc  = NULL,
+		.cn_pollc = NULL,
+		.cn_bell  = NULL,
+		.cn_halt  = NULL,
+		.cn_flush = NULL,
+		.cn_dev   = 0,
+		.cn_pri   = CN_DEAD
+	},
 #endif
-	{ NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, CN_DEAD }
+	{
+		.cn_probe = NULL,
+		.cn_init  = NULL,
+		.cn_getc  = NULL,
+		.cn_putc  = NULL,
+		.cn_pollc = NULL,
+		.cn_bell  = NULL,
+		.cn_halt  = NULL,
+		.cn_flush = NULL,
+		.cn_dev   = 0,
+		.cn_pri   = CN_DEAD
+	}
 };
 
 #define CONSOLE_PROBE	0x0020001c	/* console flag passed by firmware */
