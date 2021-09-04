@@ -1,4 +1,4 @@
-/* $NetBSD: siotty.c,v 1.49 2021/09/04 12:44:23 tsutsui Exp $ */
+/* $NetBSD: siotty.c,v 1.50 2021/09/04 12:54:19 tsutsui Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -31,9 +31,10 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: siotty.c,v 1.49 2021/09/04 12:44:23 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: siotty.c,v 1.50 2021/09/04 12:54:19 tsutsui Exp $");
 
 #include "opt_ddb.h"
+#include "siotty.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -105,7 +106,6 @@ u_int siotty_rbuf_size = SIOTTY_RING_SIZE;
 
 static struct cnm_state	siotty_cnm_state;
 
-#include "siotty.h"
 static void siostart(struct tty *);
 static int  sioparam(struct tty *, struct termios *);
 static void siottyintr(void *);
@@ -415,14 +415,16 @@ sioparam(struct tty *tp, struct termios *t)
 	tp->t_ospeed = t->c_ospeed;
 	tp->t_cflag = t->c_cflag;
 
-	sc->sc_wr[WR3] &= 0x3f;
-	sc->sc_wr[WR5] &= 0x9f;
+	sc->sc_wr[WR3] &= ~WR3_RX8BIT;
+	sc->sc_wr[WR5] &= ~WR5_TX8BIT;
 	switch (tp->t_cflag & CSIZE) {
 	case CS7:
-		sc->sc_wr[WR3] |= WR3_RX7BIT; sc->sc_wr[WR5] |= WR5_TX7BIT;
+		sc->sc_wr[WR3] |= WR3_RX7BIT;
+		sc->sc_wr[WR5] |= WR5_TX7BIT;
 		break;
 	case CS8:
-		sc->sc_wr[WR3] |= WR3_RX8BIT; sc->sc_wr[WR5] |= WR5_TX8BIT;
+		sc->sc_wr[WR3] |= WR3_RX8BIT;
+		sc->sc_wr[WR5] |= WR5_TX8BIT;
 		break;
 	}
 	if ((tp->t_cflag & PARENB) != 0) {
@@ -524,9 +526,9 @@ sioopen(dev_t dev, int flag, int mode, struct lwp *l)
 		/* raise RTS and DTR here; but, DTR lead is not wired */
 		/* then check DCD condition; but, DCD lead is not wired */
 #if 0
-		if ((sc->sc_flags & TIOCFLAG_SOFTCAR) != 0
-		    || (tp->t_cflag & MDMBUF) != 0
-		    || (getsiocsr(sc->sc_ctl) & RR_DCD) != 0)
+		if ((sc->sc_flags & TIOCFLAG_SOFTCAR) != 0 ||
+		    (tp->t_cflag & MDMBUF) != 0 ||
+		    (getsiocsr(sc->sc_ctl) & RR_DCD) != 0)
 			tp->t_state |= TS_CARR_ON;
 		else
 			tp->t_state &= ~TS_CARR_ON;
@@ -558,8 +560,8 @@ sioclose(dev_t dev, int flag, int mode, struct lwp *l)
 	s = splserial();
 	siomctl(sc, TIOCM_BREAK, DMBIC);
 #if 0 /* because unable to feed DTR signal */
-	if ((tp->t_cflag & HUPCL) != 0
-	    || tp->t_wopen || (tp->t_state & TS_ISOPEN) == 0) {
+	if ((tp->t_cflag & HUPCL) != 0 ||
+	    tp->t_wopen || (tp->t_state & TS_ISOPEN) == 0) {
 		siomctl(sc, TIOCM_DTR, DMBIC);
 		/* Yield CPU time to others for 1 second, then ... */
 		siomctl(sc, TIOCM_DTR, DMBIS);
