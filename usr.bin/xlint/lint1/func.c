@@ -1,4 +1,4 @@
-/*	$NetBSD: func.c,v 1.123 2021/09/04 12:30:46 rillig Exp $	*/
+/*	$NetBSD: func.c,v 1.124 2021/09/04 12:37:46 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: func.c,v 1.123 2021/09/04 12:30:46 rillig Exp $");
+__RCSID("$NetBSD: func.c,v 1.124 2021/09/04 12:37:46 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -603,8 +603,7 @@ static tnode_t *
 check_controlling_expression(tnode_t *tn)
 {
 
-	if (tn != NULL)
-		tn = cconv(tn);
+	tn = cconv(tn);
 	if (tn != NULL)
 		tn = promote(NOOP, false, tn);
 
