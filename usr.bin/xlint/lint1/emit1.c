@@ -1,4 +1,4 @@
-/* $NetBSD: emit1.c,v 1.57 2021/09/04 14:58:42 rillig Exp $ */
+/* $NetBSD: emit1.c,v 1.58 2021/09/04 18:58:57 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: emit1.c,v 1.57 2021/09/04 14:58:42 rillig Exp $");
+__RCSID("$NetBSD: emit1.c,v 1.58 2021/09/04 18:58:57 rillig Exp $");
 #endif
 
 #include "lint1.h"
@@ -100,7 +100,6 @@ outtype(const type_t *tp)
 	static const char tt[NTSPEC] = "???BCCCSSIILLQQDDDVTTTPAF?XXX";
 	static const char ss[NTSPEC] = "???  su u u u us l sue   ?s l";
 #endif
-	char	t, s;
 	int	na;
 	sym_t	*arg;
 	tspec_t	ts;
@@ -108,16 +107,15 @@ outtype(const type_t *tp)
 	while (tp != NULL) {
 		if ((ts = tp->t_tspec) == INT && tp->t_is_enum)
 			ts = ENUM;
-		t = tt[ts];
-		s = ss[ts];
-		lint_assert(t != '?' && s != '?');
+		lint_assert(tt[ts] != '?' && ss[ts] != '?');
 		if (tp->t_const)
 			outchar('c');
 		if (tp->t_volatile)
 			outchar('v');
-		if (s != ' ')
-			outchar(s);
-		outchar(t);
+		if (ss[ts] != ' ')
+			outchar(ss[ts]);
+		outchar(tt[ts]);
+
 		if (ts == ARRAY) {
 			outint(tp->t_dim);
 		} else if (ts == ENUM) {
