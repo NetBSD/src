@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.375 2021/09/04 09:45:26 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.376 2021/09/04 10:09:19 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.375 2021/09/04 09:45:26 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.376 2021/09/04 10:09:19 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -1196,45 +1196,42 @@ typeok_op(op_t op, const mod_t *mp, int arg,
 	  const tnode_t *rn, const type_t *rtp, tspec_t rt)
 {
 	switch (op) {
-	case POINT:
-		return typeok_point(ln, ltp, lt);
 	case ARROW:
 		return typeok_arrow(lt);
-	case INCAFT:
-	case DECAFT:
+	case POINT:
+		return typeok_point(ln, ltp, lt);
 	case INCBEF:
 	case DECBEF:
+	case INCAFT:
+	case DECAFT:
 		return typeok_incdec(op, ln, ltp);
-	case ADDR:
-		return typeok_address(mp, ln, ltp, lt);
 	case INDIR:
 		return typeok_indir(lt);
+	case ADDR:
+		return typeok_address(mp, ln, ltp, lt);
 	case PLUS:
 		return typeok_plus(op, ltp, lt, rtp, rt);
 	case MINUS:
 		return typeok_minus(op, ltp, lt, rtp, rt);
-	case SHR:
-		typeok_shr(mp, ln, lt, rn, rt);
-		goto shift;
 	case SHL:
 		typeok_shl(mp, lt, rt);
+		goto shift;
+	case SHR:
+		typeok_shr(mp, ln, lt, rn, rt);
 	shift:
 		typeok_shift(lt, rn, rt);
 		break;
+	case LT:
+	case LE:
+	case GT:
+	case GE:
+	compare:
+		return typeok_compare(op, ln, ltp, lt, rn, rtp, rt);
 	case EQ:
 	case NE:
-		/*
-		 * Accept some things which are allowed with EQ and NE,
-		 * but not with ordered comparisons.
-		 */
 		if (is_typeok_eq(ln, lt, rn, rt))
 			break;
-		/* FALLTHROUGH */
-	case LT:
-	case GT:
-	case LE:
-	case GE:
-		return typeok_compare(op, ln, ltp, lt, rn, rtp, rt);
+		goto compare;
 	case QUEST:
 		return typeok_quest(lt, rn);
 	case COLON:
@@ -1252,7 +1249,6 @@ typeok_op(op_t op, const mod_t *mp, int arg,
 		goto assign;
 	case ADDASS:
 	case SUBASS:
-		/* operands have scalar types (checked above) */
 		if ((lt == PTR && !is_integer(rt)) || rt == PTR) {
 			warn_incompatible_types(op, ltp, lt, rtp, rt);
 			return false;
@@ -1269,7 +1265,6 @@ typeok_op(op_t op, const mod_t *mp, int arg,
 	case ANDASS:
 	case XORASS:
 	case ORASS:
-		goto assign;
 	assign:
 		return typeok_assign(op, ln, ltp, lt);
 	case COMMA:
