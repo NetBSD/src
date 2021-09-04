@@ -1,4 +1,4 @@
-/*	$NetBSD: emit.c,v 1.15 2021/09/04 14:42:30 rillig Exp $	*/
+/*	$NetBSD: emit.c,v 1.16 2021/09/04 14:48:27 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: emit.c,v 1.15 2021/09/04 14:42:30 rillig Exp $");
+__RCSID("$NetBSD: emit.c,v 1.16 2021/09/04 14:48:27 rillig Exp $");
 #endif
 
 #include <stdio.h>
@@ -130,57 +130,6 @@ outchar(char c)
 		outxbuf();
 	*ob.o_next++ = c;
 }
-
-#if defined(IS_LINT1)
-/* write a character to the output buffer, quoted if necessary */
-void
-outqchar(char c)
-{
-
-	if (ch_isprint(c) && c != '\\' && c != '"' && c != '\'') {
-		outchar(c);
-	} else {
-		outchar('\\');
-		switch (c) {
-		case '\\':
-			outchar('\\');
-			break;
-		case '"':
-			outchar('"');
-			break;
-		case '\'':
-			outchar('\'');
-			break;
-		case '\b':
-			outchar('b');
-			break;
-		case '\t':
-			outchar('t');
-			break;
-		case '\n':
-			outchar('n');
-			break;
-		case '\f':
-			outchar('f');
-			break;
-		case '\r':
-			outchar('r');
-			break;
-		case '\v':
-			outchar('v');
-			break;
-		case '\a':
-			outchar('a');
-			break;
-		default:
-			outchar((char)((((unsigned char)c >> 6) & 07) + '0'));
-			outchar((char)((((unsigned char)c >> 3) & 07) + '0'));
-			outchar((char)((c & 07) + '0'));
-			break;
-		}
-	}
-}
-#endif
 
 /*
  * write a string to the output buffer
