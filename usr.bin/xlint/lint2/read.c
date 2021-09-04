@@ -1,4 +1,4 @@
-/* $NetBSD: read.c,v 1.63 2021/08/30 21:35:23 rillig Exp $ */
+/* $NetBSD: read.c,v 1.64 2021/09/04 19:16:38 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: read.c,v 1.63 2021/08/30 21:35:23 rillig Exp $");
+__RCSID("$NetBSD: read.c,v 1.64 2021/09/04 19:16:38 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -307,45 +307,47 @@ funccall(pos_t *posp, const char *cp)
 	/* read flags */
 	rused = rdisc = false;
 	lai = &fcall->f_args;
-	while ((c = *cp) == 'u' || c == 'i' || c == 'd' ||
-	       c == 'z' || c == 'p' || c == 'n' || c == 's') {
-		cp++;
-		switch (c) {
-		case 'u':
-			if (rused || rdisc)
-				inperr("used or discovered: %c", c);
-			rused = true;
-			break;
-		case 'i':
-			if (rused || rdisc)
-				inperr("used or discovered: %c", c);
-			break;
-		case 'd':
-			if (rused || rdisc)
-				inperr("used or discovered: %c", c);
-			rdisc = true;
-			break;
-		case 'z':
-		case 'p':
-		case 'n':
-		case 's':
-			ai = xalloc(sizeof(*ai));
-			ai->a_num = parse_int(&cp);
-			if (c == 'z') {
-				ai->a_pcon = ai->a_zero = true;
-			} else if (c == 'p') {
-				ai->a_pcon = true;
-			} else if (c == 'n') {
-				ai->a_ncon = true;
-			} else {
-				ai->a_fmt = true;
-				ai->a_fstrg = inpqstrg(cp, &cp);
-			}
-			*lai = ai;
-			lai = &ai->a_next;
-			break;
+
+again:
+	c = *cp++;
+	switch (c) {
+	case 'u':
+		if (rused || rdisc)
+			inperr("used or discovered: %c", c);
+		rused = true;
+		goto again;
+	case 'i':
+		if (rused || rdisc)
+			inperr("used or discovered: %c", c);
+		goto again;
+	case 'd':
+		if (rused || rdisc)
+			inperr("used or discovered: %c", c);
+		rdisc = true;
+		goto again;
+	case 'z':
+	case 'p':
+	case 'n':
+	case 's':
+		ai = xalloc(sizeof(*ai));
+		ai->a_num = parse_int(&cp);
+		if (c == 'z') {
+			ai->a_pcon = ai->a_zero = true;
+		} else if (c == 'p') {
+			ai->a_pcon = true;
+		} else if (c == 'n') {
+			ai->a_ncon = true;
+		} else {
+			ai->a_fmt = true;
+			ai->a_fstrg = inpqstrg(cp, &cp);
 		}
+		*lai = ai;
+		lai = &ai->a_next;
+		goto again;
+	default:
+		cp--;
 	}
+
 	fcall->f_rused = rused;
 	fcall->f_rdisc = rdisc;
 
