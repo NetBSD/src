@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_usrreq.c,v 1.30 2016/09/24 23:12:54 mrg Exp $	*/
+/*	$NetBSD: pci_usrreq.c,v 1.31 2021/09/05 03:47:24 mrg Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_usrreq.c,v 1.30 2016/09/24 23:12:54 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_usrreq.c,v 1.31 2021/09/05 03:47:24 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pci.h"
@@ -127,6 +127,8 @@ pciioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 
 		for (i = 0; i < pci_cd.cd_ndevs; i++) {
 			sc = device_lookup_private(&pci_cd, i);
+			if (sc == NULL)
+				continue;
 			if (sc->sc_bus == dnameonbus->bus)
 				break;	/* found the right bus */
 		}
