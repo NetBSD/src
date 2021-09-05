@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.378 2021/09/05 16:03:55 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.379 2021/09/05 17:49:55 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.378 2021/09/05 16:03:55 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.379 2021/09/05 17:49:55 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -4232,7 +4232,7 @@ check_integer_comparison(op_t op, tnode_t *ln, tnode_t *rn)
 			/* comparison of %s with %s, op %s */
 			warning(162, type_name(ln->tn_type),
 			    "negative constant", op_name(op));
-		} else if (op == LT || op == GE || (hflag && op == LE)) {
+		} else if (op == LT || op == GE) {
 			/* comparison of %s with %s, op %s */
 			warning(162, type_name(ln->tn_type), "0", op_name(op));
 		}
@@ -4244,7 +4244,7 @@ check_integer_comparison(op_t op, tnode_t *ln, tnode_t *rn)
 			/* comparison of %s with %s, op %s */
 			warning(162, "negative constant",
 			    type_name(rn->tn_type), op_name(op));
-		} else if (op == GT || op == LE || (hflag && op == GE)) {
+		} else if (op == GT || op == LE) {
 			/* comparison of %s with %s, op %s */
 			warning(162, "0", type_name(rn->tn_type), op_name(op));
 		}
