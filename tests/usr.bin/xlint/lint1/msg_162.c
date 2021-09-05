@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_162.c,v 1.4 2021/08/28 14:45:19 rillig Exp $	*/
+/*	$NetBSD: msg_162.c,v 1.5 2021/09/05 16:47:24 rillig Exp $	*/
 # 3 "msg_162.c"
 
 // Test for message: comparison of %s with %s, op %s [162]
@@ -81,4 +81,48 @@ compare_unsigned_char(unsigned char uc)
 		return;
 	if (uc == 256)
 		return;
+}
+
+void take_bool(_Bool);
+
+void
+compare_operators(unsigned int x)
+{
+	/* expect+1: warning: comparison of unsigned int with negative constant, op < [162] */
+	take_bool(x < -1);
+	/* expect+1: warning: comparison of unsigned int with 0, op < [162] */
+	take_bool(x < 0);
+	take_bool(x < 1);
+
+	/* expect+1: warning: comparison of unsigned int with negative constant, op <= [162] */
+	take_bool(x <= -1);
+	/*
+	 * XXX: The expression 'x <= 0' is equivalent to 'x < 1', so lint
+	 * should not warn about it, just as it doesn't warn about the
+	 * inverted condition, which is 'x > 0'.
+	 */
+	/* expect+1: warning: comparison of unsigned int with 0, op <= [162] */
+	take_bool(x <= 0);
+	take_bool(x <= 1);
+
+	/* expect+1: warning: comparison of unsigned int with negative constant, op > [162] */
+	take_bool(x > -1);
+	take_bool(x > 0);
+	take_bool(x > 1);
+
+	/* expect+1: warning: comparison of unsigned int with negative constant, op >= [162] */
+	take_bool(x >= -1);
+	/* expect+1: warning: comparison of unsigned int with 0, op >= [162] */
+	take_bool(x >= 0);
+	take_bool(x >= 1);
+
+	/* expect+1: warning: comparison of unsigned int with negative constant, op == [162] */
+	take_bool(x == -1);
+	take_bool(x == 0);
+	take_bool(x == 1);
+
+	/* expect+1: warning: comparison of unsigned int with negative constant, op != [162] */
+	take_bool(x != -1);
+	take_bool(x != 0);
+	take_bool(x != 1);
 }
