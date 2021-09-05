@@ -1,4 +1,4 @@
-# $NetBSD: t_intr.sh,v 1.2 2021/07/09 15:26:59 christos Exp $
+# $NetBSD: t_intr.sh,v 1.3 2021/09/05 22:14:49 rillig Exp $
 #
 # Copyright (c) 2021 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -40,7 +40,7 @@ h_test() {
 	"${DIR}/h_intr" \
 	    -p "$2" -a ${SSIZE} -b ${BSIZE} -t ${TMOUT} \
 	    -c "dd of=numbers.out msgfmt=quiet" numbers.in
-	"${DIR}/h_testnumbers" < numbers.out
+	atf_check "${DIR}/h_testnumbers" < numbers.out
 }
 
 atf_test_case stdio_intr_ionbf
