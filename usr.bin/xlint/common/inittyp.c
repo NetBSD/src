@@ -1,4 +1,4 @@
-/*	$NetBSD: inittyp.c,v 1.29 2021/09/04 15:39:41 rillig Exp $	*/
+/*	$NetBSD: inittyp.c,v 1.30 2021/09/05 18:17:15 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: inittyp.c,v 1.29 2021/09/04 15:39:41 rillig Exp $");
+__RCSID("$NetBSD: inittyp.c,v 1.30 2021/09/05 18:17:15 rillig Exp $");
 #endif
 
 #if defined(IS_LINT1)
@@ -48,6 +48,7 @@ __RCSID("$NetBSD: inittyp.c,v 1.29 2021/09/04 15:39:41 rillig Exp $");
 
 #define INT_RSIZE	(/*CONSTCOND*/INTPTR_TSPEC == LONG ? 3 : 4)
 
+#ifdef IS_LINT1
 #define typeinfo( \
 	    name, signed_type, unsigned_type, \
 	    size_in_bits, portable_size_in_bits, \
@@ -60,6 +61,18 @@ __RCSID("$NetBSD: inittyp.c,v 1.29 2021/09/04 15:39:41 rillig Exp $");
 		(is_arithmetic) > 0, (is_scalar) > 0, (is_complex) > 0, \
 		name, \
 	}
+#else
+#define typeinfo( \
+	    name, signed_type, unsigned_type, \
+	    size_in_bits, portable_size_in_bits, \
+	    is_integer, is_unsigned, is_floating, is_arithmetic, \
+	    is_scalar, is_complex) \
+	{ \
+		signed_type, unsigned_type, \
+		(is_integer) > 0, \
+		name, \
+	}
+#endif
 
 /* various type information */
 ttab_t	ttab[NTSPEC] = {
@@ -121,6 +134,7 @@ ttab_t	ttab[NTSPEC] = {
 };
 #undef typeinfo
 
+#ifdef IS_LINT1
 void
 inittyp(void)
 {
@@ -138,3 +152,4 @@ inittyp(void)
 		ttab[BOOL].tt_is_arithmetic = false;
 	}
 }
+#endif
