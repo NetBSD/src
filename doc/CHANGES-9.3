@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.3,v 1.1.2.25 2021/09/03 10:28:29 martin Exp $
+# $NetBSD: CHANGES-9.3,v 1.1.2.26 2021/09/05 10:49:51 martin Exp $
 
 A complete list of changes from the NetBSD 9.2 release to the NetBSD 9.3
 release:
@@ -621,4 +621,10 @@ sys/arch/x86/x86/pmap.c				1.410
 
 	xen: Make pat_init() a NOOP on XENPV; it causes a trap with Xen 4.15.
 	[manu, ticket #1341]
+
+sys/arch/mips/mips/trap.c			1.250,1.251
+
+	mips: fix and disable a debug message for TLB handling.
+	[tsutsui, ticket #1342]
+
 
