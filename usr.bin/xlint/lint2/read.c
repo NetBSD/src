@@ -1,4 +1,4 @@
-/* $NetBSD: read.c,v 1.65 2021/09/05 16:15:05 rillig Exp $ */
+/* $NetBSD: read.c,v 1.66 2021/09/05 19:44:56 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: read.c,v 1.65 2021/09/05 16:15:05 rillig Exp $");
+__RCSID("$NetBSD: read.c,v 1.66 2021/09/05 19:44:56 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -139,15 +139,79 @@ parse_short(const char **p)
 	return (short)parse_int(p);
 }
 
+static void
+read_ln_line(char *line, size_t len)
+{
+	const char *cp;
+	int cline, isrc, iline;
+	char rt;
+	pos_t pos;
+
+	flines[srcfile]++;
+
+	if (len == 0 || line[len - 1] != '\n')
+		inperr("%s", &line[len - 1]);
+	line[len - 1] = '\0';
+	cp = line;
+
+	/* line number in csrcfile */
+	if (!try_parse_int(&cp, &cline))
+		cline = -1;
+
+	/* record type */
+	if (*cp == '\0')
+		inperr("missing record type");
+	rt = *cp++;
+
+	if (rt == 'S') {
+		setsrc(cp);
+		return;
+	}
+	if (rt == 's') {
+		setfnid(cline, cp);
+		return;
+	}
+
+	/*
+	 * Index of (included) source file. If this index is
+	 * different from csrcfile, it refers to an included
+	 * file.
+	 */
+	isrc = parse_int(&cp);
+	isrc = inpfns[isrc];
+
+	/* line number in isrc */
+	if (*cp++ != '.')
+		inperr("bad line number");
+	iline = parse_int(&cp);
+
+	pos.p_src = (unsigned short)csrcfile;
+	pos.p_line = (unsigned short)cline;
+	pos.p_isrc = (unsigned short)isrc;
+	pos.p_iline = (unsigned short)iline;
+
+	/* process rest of this record */
+	switch (rt) {
+	case 'c':
+		funccall(&pos, cp);
+		break;
+	case 'd':
+		decldef(&pos, cp);
+		break;
+	case 'u':
+		usedsym(&pos, cp);
+		break;
+	default:
+		inperr("bad record type %c", rt);
+	}
+}
+
 void
 readfile(const char *name)
 {
 	FILE	*inp;
 	size_t	len;
-	const	char *cp;
-	char	*line, rt = '\0';
-	int	cline, isrc, iline;
-	pos_t	pos;
+	char	*line;
 
 	if (inpfns == NULL)
 		inpfns = xcalloc(ninpfns = 128, sizeof(*inpfns));
@@ -167,65 +231,8 @@ readfile(const char *name)
 	if ((inp = fopen(name, "r")) == NULL)
 		err(1, "cannot open %s", name);
 
-	while ((line = fgetln(inp, &len)) != NULL) {
-		flines[srcfile]++;
-
-		if (len == 0 || line[len - 1] != '\n')
-			inperr("%s", &line[len - 1]);
-		line[len - 1] = '\0';
-		cp = line;
-
-		/* line number in csrcfile */
-		if (!try_parse_int(&cp, &cline))
-			cline = -1;
-
-		/* record type */
-		if (*cp == '\0')
-			inperr("missing record type");
-		rt = *cp++;
-
-		if (rt == 'S') {
-			setsrc(cp);
-			continue;
-		} else if (rt == 's') {
-			setfnid(cline, cp);
-			continue;
-		}
-
-		/*
-		 * Index of (included) source file. If this index is
-		 * different from csrcfile, it refers to an included
-		 * file.
-		 */
-		isrc = parse_int(&cp);
-		isrc = inpfns[isrc];
-
-		/* line number in isrc */
-		if (*cp++ != '.')
-			inperr("bad line number");
-		iline = parse_int(&cp);
-
-		pos.p_src = (unsigned short)csrcfile;
-		pos.p_line = (unsigned short)cline;
-		pos.p_isrc = (unsigned short)isrc;
-		pos.p_iline = (unsigned short)iline;
-
-		/* process rest of this record */
-		switch (rt) {
-		case 'c':
-			funccall(&pos, cp);
-			break;
-		case 'd':
-			decldef(&pos, cp);
-			break;
-		case 'u':
-			usedsym(&pos, cp);
-			break;
-		default:
-			inperr("bad record type %c", rt);
-		}
-
-	}
+	while ((line = fgetln(inp, &len)) != NULL)
+		read_ln_line(line, len);
 
 	_destroyhash(renametab);
 
