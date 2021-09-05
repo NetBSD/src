@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.102 2021/09/05 12:23:40 rin Exp $	*/
+/*	$NetBSD: pmap.c,v 1.103 2021/09/05 12:28:44 rin Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.102 2021/09/05 12:23:40 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.103 2021/09/05 12:28:44 rin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -709,8 +709,7 @@ pmap_enter_pv(struct pmap *pm, vaddr_t va, paddr_t pa, int flags)
 	struct pv_entry *pv, *npv;
 	int s;
 
-	if (!pmap_initialized)
-		return 0;
+	KASSERT(pmap_initialized);
 
 	s = splvm();
 
