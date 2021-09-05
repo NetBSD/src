@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.379 2021/09/05 17:49:55 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.380 2021/09/05 18:34:50 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.379 2021/09/05 17:49:55 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.380 2021/09/05 18:34:50 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -4321,7 +4321,7 @@ constant_addr(const tnode_t *tn, const sym_t **symp, ptrdiff_t *offsp)
 		    (!is_integer(ot) && ot != PTR)) {
 			return false;
 		}
-#ifdef notdef
+#if 0
 		/*
 		 * consider:
 		 *	struct foo {
