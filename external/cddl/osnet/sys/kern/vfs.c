@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs.c,v 1.8 2019/05/22 08:42:57 hannken Exp $	*/
+/*	$NetBSD: vfs.c,v 1.9 2021/09/05 11:43:22 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 2006-2007 Pawel Jakub Dawidek <pjd@FreeBSD.org>
@@ -27,8 +27,9 @@
  */
 
 #include <sys/cdefs.h>
-#define __FBSDID(x)
+#ifdef __FreeBSD__
 __FBSDID("$FreeBSD: head/sys/cddl/compat/opensolaris/kern/opensolaris_lookup.c 314194 2017-02-24 07:53:56Z avg $");
+#endif
 
 #include <sys/param.h>
 #include <sys/kernel.h>
