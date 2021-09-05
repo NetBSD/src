@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.99 2021/09/04 14:31:04 rin Exp $	*/
+/*	$NetBSD: pmap.c,v 1.100 2021/09/05 09:57:43 rin Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.99 2021/09/04 14:31:04 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.100 2021/09/05 09:57:43 rin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -590,17 +590,10 @@ void
 vm_page_free1(struct vm_page *pg)
 {
 
-#ifdef DIAGNOSTIC
-	if (pg->flags != (PG_CLEAN|PG_FAKE)) {
-		printf("Freeing invalid page %p\n", pg);
-		printf("pa = %llx\n",
-		    (unsigned long long)VM_PAGE_TO_PHYS(pg));
-#ifdef DDB
-		Debugger();
-#endif
-		return;
-	}
-#endif
+	KASSERTMSG(pg->flags == (PG_CLEAN | PG_FAKE),
+	    "invalid page pg = %p, pa = %" PRIxPADDR,
+	    pg, VM_PAGE_TO_PHYS(pg));
+
 	pg->flags |= PG_BUSY;
 	pg->wire_count = 0;
 	uvm_pagefree(pg);
@@ -824,11 +817,8 @@ pmap_enter(struct pmap *pm, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 	/* XXXX -- need to support multiple page sizes. */
 	tte |= TTE_SZ_16K;
 
-#ifdef DIAGNOSTIC
-	if ((flags & (PMAP_NOCACHE | PME_WRITETHROUG)) ==
-	    (PMAP_NOCACHE | PME_WRITETHROUG))
-		panic("pmap_enter: uncached & writethrough");
-#endif
+	KASSERT((flags & (PMAP_NOCACHE | PME_WRITETHROUG)) !=
+	    (PMAP_NOCACHE | PME_WRITETHROUG));
 
 	if (flags & PMAP_NOCACHE) {
 		/* Must be I/O mapping */
@@ -867,10 +857,7 @@ pmap_enter(struct pmap *pm, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 
 		/* Now set attributes. */
 		attr = pa_to_attr(pa);
-#ifdef DIAGNOSTIC
-		if (!attr)
-			panic("managed but no attr");
-#endif
+		KASSERT(attr);
 		if (flags & VM_PROT_ALL)
 			*attr |= PMAP_ATTR_REF;
 		if (flags & VM_PROT_WRITE)
@@ -954,11 +941,8 @@ pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 		/* XXXX -- need to support multiple page sizes. */
 		tte |= TTE_SZ_16K;
 
-#ifdef DIAGNOSTIC
-		if ((flags & (PMAP_NOCACHE | PME_WRITETHROUG)) ==
-		    (PMAP_NOCACHE | PME_WRITETHROUG))
-			panic("pmap_kenter_pa: uncached & writethrough");
-#endif
+		KASSERT((flags & (PMAP_NOCACHE | PME_WRITETHROUG)) !=
+		    (PMAP_NOCACHE | PME_WRITETHROUG));
 
 		if (flags & PMAP_NOCACHE)
 			/* Must be I/O mapping */
@@ -1380,11 +1364,8 @@ ppc4xx_tlb_enter(int ctx, vaddr_t va, u_int pte)
 
 	idx = ppc4xx_tlb_find_victim();
 
-#ifdef DIAGNOSTIC
-	if ((idx < tlb_nreserved) || (idx >= NTLB) || (idx & 63) == 0) {
-		panic("ppc4xx_tlb_enter: replacing entry %ld", idx);
-	}
-#endif
+	KASSERTMSG(idx >= tlb_nreserved && idx < NTLB,
+	    "invalid entry %ld", idx);
 
 	tlb_info[idx].ti_va = (va & TLB_EPN_MASK);
 	tlb_info[idx].ti_ctx = ctx;
@@ -1588,22 +1569,10 @@ ctx_flush(int cnum)
 	/* We gotta steal this context */
 	for (i = tlb_nreserved; i < NTLB; i++) {
 		if (tlb_info[i].ti_ctx == cnum) {
-			/* Can't steal ctx if it has a locked entry. */
-			if (TLB_LOCKED(i)) {
-#ifdef DIAGNOSTIC
-				printf("ctx_flush: can't invalidate "
-				    "locked mapping %d for context %d\n",
-				    i, cnum);
-#ifdef DDB
-				Debugger();
-#endif
-#endif
-				return 1;
-			}
-#ifdef DIAGNOSTIC
-			if (i < tlb_nreserved)
-				panic("TLB entry %d not locked", i);
-#endif
+			/* Can't steal ctx if it has locked/reserved entry. */
+			KASSERTMSG(!TLB_LOCKED(i) && i >= tlb_nreserved,
+			    "locked/reserved entry %d for ctx %d",
+			    i, cnum);
 			/*
 			 * Invalidate particular TLB entry regardless of
 			 * locked status
@@ -1625,12 +1594,7 @@ ctx_alloc(struct pmap *pm)
 	static int next = MINCTX;
 	int cnum, s;
 
-	if (pm == pmap_kernel()) {
-#ifdef DIAGNOSTIC
-		printf("ctx_alloc: kernel pmap!\n");
-#endif
-		return 0;
-	}
+	KASSERT(pm != pmap_kernel());
 
 	s = splvm();
 
@@ -1682,18 +1646,9 @@ ctx_free(struct pmap *pm)
 	if (oldctx == 0)
 		panic("ctx_free: freeing kernel context");
 
-#ifdef DIAGNOSTIC
-	if (ctxbusy[oldctx] == 0)
-		printf("ctx_free: freeing free context %d\n", oldctx);
-	if (ctxbusy[oldctx] != pm) {
-		printf("ctx_free: freeing someone esle's context\n "
-		   "ctxbusy[%d] = %p, pm->pm_ctx = %p\n",
-		   oldctx, (void *)(u_long)ctxbusy[oldctx], pm);
-#ifdef DDB
-		Debugger();
-#endif
-	}
-#endif
+	KASSERTMSG(ctxbusy[oldctx] == pm,
+	    "ctxbusy[%d] = %p, pm->pm_ctx = %p",
+	    oldctx, ctxbusy[oldctx], pm);
 
 	/* We should verify it has not been stolen and reallocated... */
 	ctxbusy[oldctx] = NULL;
