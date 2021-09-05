@@ -1,4 +1,4 @@
-/* $NetBSD: lex.c,v 1.80 2021/08/29 09:29:32 rillig Exp $ */
+/* $NetBSD: lex.c,v 1.81 2021/09/05 16:03:55 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: lex.c,v 1.80 2021/08/29 09:29:32 rillig Exp $");
+__RCSID("$NetBSD: lex.c,v 1.81 2021/09/05 16:03:55 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -555,7 +555,7 @@ lex_integer_constant(const char *yytext, size_t yyleng, int base)
 
 	errno = 0;
 
-	uq = strtoull(cp, &eptr, base);
+	uq = (uint64_t)strtoull(cp, &eptr, base);
 	lint_assert(eptr == cp + len);
 	if (errno != 0) {
 		/* integer constant out of range */
@@ -679,7 +679,7 @@ int
 lex_floating_constant(const char *yytext, size_t yyleng)
 {
 	const	char *cp;
-	int	len;
+	size_t	len;
 	tspec_t typ;
 	char	c, *eptr;
 	double	d;
@@ -688,10 +688,9 @@ lex_floating_constant(const char *yytext, size_t yyleng)
 	cp = yytext;
 	len = yyleng;
 
-	if (cp[len - 1] == 'i') {
-		/* imaginary, do nothing for now */
-		len--;
-	}
+	if (cp[len - 1] == 'i')
+		len--;		/* imaginary, do nothing for now */
+
 	if ((c = cp[len - 1]) == 'f' || c == 'F') {
 		typ = FLOAT;
 		len--;

@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.233 2021/09/04 13:45:37 rillig Exp $ */
+/* $NetBSD: decl.c,v 1.234 2021/09/05 16:03:55 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: decl.c,v 1.233 2021/09/04 13:45:37 rillig Exp $");
+__RCSID("$NetBSD: decl.c,v 1.234 2021/09/05 16:03:55 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -907,8 +907,7 @@ length(const type_t *tp, const char *name)
 		/* FALLTHROUGH */
 	default:
 		elsz = size_in_bits(tp->t_tspec);
-		if (elsz <= 0)
-			INTERNAL_ERROR("length(%d)", elsz);
+		lint_assert(elsz > 0);
 		break;
 	}
 	return (int)(elem * elsz);
@@ -917,8 +916,8 @@ length(const type_t *tp, const char *name)
 unsigned int
 alignment_in_bits(const type_t *tp)
 {
-	size_t	a;
-	tspec_t	t;
+	unsigned int a;
+	tspec_t t;
 
 	while (tp->t_tspec == ARRAY)
 		tp = tp->t_subt;
