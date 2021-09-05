@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.103 2021/09/05 12:28:44 rin Exp $	*/
+/*	$NetBSD: pmap.c,v 1.104 2021/09/05 12:47:10 rin Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.103 2021/09/05 12:28:44 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.104 2021/09/05 12:47:10 rin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -183,7 +183,7 @@ static struct pool pv_pool;
 
 static int pmap_initialized;
 
-static int ctx_flush(int);
+static void ctx_flush(int);
 
 struct pv_entry *pa_to_pv(paddr_t);
 static inline char *pa_to_attr(paddr_t);
@@ -1560,7 +1560,7 @@ pmap_tlbmiss(vaddr_t va, int ctx)
 /*
  * Flush all the entries matching a context from the TLB.
  */
-static int
+static void
 ctx_flush(int cnum)
 {
 	int i;
@@ -1579,7 +1579,6 @@ ctx_flush(int cnum)
 			tlb_invalidate_entry(i);
 		}
 	}
-	return 0;
 }
 
 /*
@@ -1605,15 +1604,9 @@ ctx_alloc(struct pmap *pm)
 	} while (ctxbusy[cnum] != NULL && cnum != next);
 
 	/* Now clean it out */
-oops:
 	if (cnum < MINCTX)
 		cnum = MINCTX; /* Never steal ctx 0 or 1 */
-	if (ctx_flush(cnum)) {
-		/* oops -- something's wired. */
-		if (++cnum >= NUMCTX)
-			cnum = MINCTX;
-		goto oops;
-	}
+	ctx_flush(cnum);
 
 	if (ctxbusy[cnum]) {
 #ifdef DEBUG
