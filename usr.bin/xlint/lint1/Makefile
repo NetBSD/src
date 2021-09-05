@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.85 2021/09/05 13:46:31 rillig Exp $
+#	$NetBSD: Makefile,v 1.86 2021/09/05 16:36:56 rillig Exp $
 
 .include <bsd.own.mk>
 
@@ -20,6 +20,9 @@ LINTFLAGS+=		-T
 LOBJS.${PROG}+=		${SRCS:M*.y:.y=.ln}
 LOBJS.${PROG}+=		${SRCS:M*.l:.l=.ln}
 LINTFLAGS.scan.c+=	-X 107,126,330,331,332,333	# strict bool mode
+LINTFLAGS.scan.c+=	-X 162		# comparison of 'unsigned <= 0'
+LINTFLAGS.scan.c+=	-X 192,214	# due to suppressed bool errors
+LINTFLAGS.scan.c+=	-X 307		# static variable unused
 
 CPPFLAGS+=	-DIS_LINT1
 CPPFLAGS+=	-I${.CURDIR}
