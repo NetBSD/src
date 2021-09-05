@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.84 2021/08/22 22:24:12 rillig Exp $
+#	$NetBSD: Makefile,v 1.85 2021/09/05 13:46:31 rillig Exp $
 
 .include <bsd.own.mk>
 
@@ -29,16 +29,34 @@ COPTS.err.c+=	${${ACTIVE_CC} == "clang":? -Wno-format-nonliteral :}
 
 BINDIR=		/usr/libexec
 
-CLEANFILES+=	${MAN}
+CLEANFILES+=	${MAN} ${MAN}.date
 
 .if ${USETOOLS} == "yes"
 LINT1=		${TOOLDIR}/libexec/${MACHINE_GNU_PLATFORM}-lint1
 .endif
 LINT1?=		./${PROG}
 
-${MAN}:		makeman ${LINT1:C/^\.\///} Makefile
+${MAN}.date:	err.c
+	sed -E \
+	    -e 's,.*(....)/([0-9]{2})/0?([0-9]+).*,\2 \3\, \1,' \
+	    -e 's,^01,January,' \
+	    -e 's,^02,February,' \
+	    -e 's,^03,March,' \
+	    -e 's,^04,April,' \
+	    -e 's,^05,May,' \
+	    -e 's,^06,June,' \
+	    -e 's,^07,July,' \
+	    -e 's,^08,August,' \
+	    -e 's,^09,September,' \
+	    -e 's,^10,October,' \
+	    -e 's,^11,November,' \
+	    -e 's,^12,December,' \
+	    -e 1q \
+	    ${.ALLSRC} > ${.TARGET}
+
+${MAN}:		makeman ${LINT1:./%=%} Makefile ${MAN}.date
 	${_MKTARGET_CREATE}
-	${HOST_SH} ${.ALLSRC:M*makeman} ${LINT1} -m >${.TARGET}
+	${HOST_SH} ${.ALLSRC:M*makeman} "$$(cat ${.ALLSRC:M*.date})" ${LINT1} -m >${.TARGET}
 
 LDADD+=		-lm
 .ifndef HOSTPROG
