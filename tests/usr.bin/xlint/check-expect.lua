@@ -1,5 +1,5 @@
 #!  /usr/bin/lua
--- $NetBSD: check-expect.lua,v 1.12 2021/08/21 07:49:48 rillig Exp $
+-- $NetBSD: check-expect.lua,v 1.13 2021/09/05 19:16:37 rillig Exp $
 
 --[[
 
@@ -105,10 +105,11 @@ local function check_test(c_fname, errors)
 
   for _, act in ipairs(messages) do
     local exp = comments_by_location[act.location] or {}
+    local exp_comment = act.message:gsub("/%*", "**"):gsub("%*/", "**")
 
     local found = false
     for i, message in ipairs(exp) do
-      if message ~= "" and act.message:find(message, 1, true) then
+      if message ~= "" and exp_comment:find(message, 1, true) then
         exp[i] = ""
         found = true
         break
@@ -116,7 +117,7 @@ local function check_test(c_fname, errors)
     end
 
     if not found then
-      errors:add("error: %s: missing /* expect+1: %s */", act.location, act.message)
+      errors:add("error: %s: missing /* expect+1: %s */", act.location, exp_comment)
     end
   end
 
