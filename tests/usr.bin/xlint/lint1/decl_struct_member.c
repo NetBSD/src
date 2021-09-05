@@ -1,4 +1,4 @@
-/*	$NetBSD: decl_struct_member.c,v 1.11 2021/08/25 22:04:52 rillig Exp $	*/
+/*	$NetBSD: decl_struct_member.c,v 1.12 2021/09/05 11:42:32 rillig Exp $	*/
 # 3 "decl_struct_member.c"
 
 struct multi_attributes {
@@ -77,10 +77,12 @@ struct array_of_bit_fields {
  */
 struct {
 	char a(_)0		/* expect: syntax error '0' */
-}
+
 /*
- * FIXME: adding a semicolon here triggers another assertion:
+ * Before cgram.y 1.328 from 2021-07-15, lint ran into an assertion failure
+ * at the closing semicolon:
  *
  * assertion "t == NOTSPEC" failed in end_type at decl.c:774
  */
+};
 /* expect+1: cannot recover from previous errors */
