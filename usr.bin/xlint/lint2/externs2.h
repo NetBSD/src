@@ -1,4 +1,4 @@
-/* $NetBSD: externs2.h,v 1.14 2021/08/28 17:18:42 rillig Exp $ */
+/* $NetBSD: externs2.h,v 1.15 2021/09/05 18:17:15 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -44,8 +44,6 @@ extern	bool	tflag;
 extern	bool	Hflag;
 extern	bool	hflag;
 extern	bool	Fflag;
-extern	bool	pflag;
-extern	bool	Tflag;
 
 /*
  * hash.c
@@ -77,7 +75,6 @@ extern	void	*xalloc(size_t);
 /*
  * chk.c
  */
-extern	void	inittyp(void);
 extern	void	mainused(void);
 extern	void	chkname(const hte_t *);
 
