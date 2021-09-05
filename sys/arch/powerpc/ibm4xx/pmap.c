@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.100 2021/09/05 09:57:43 rin Exp $	*/
+/*	$NetBSD: pmap.c,v 1.101 2021/09/05 12:05:05 rin Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.100 2021/09/05 09:57:43 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.101 2021/09/05 12:05:05 rin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -1732,7 +1732,7 @@ pmap_testout(void)
 	printf("Modified page: ref %d, mod %d\n", ref, mod);
 
 	/* Check pmap_protect() */
-	pmap_protect(pmap_kernel(), va, va+1, VM_PROT_READ);
+	pmap_protect(pmap_kernel(), va, va + PAGE_SIZE, VM_PROT_READ);
 	pmap_update(pmap_kernel());
 	ref = pmap_is_referenced(pg);
 	mod = pmap_is_modified(pg);
@@ -1769,7 +1769,7 @@ pmap_testout(void)
 	printf("Modified page: ref %d, mod %d\n", ref, mod);
 
 	/* Check pmap_protect() */
-	pmap_protect(pmap_kernel(), va, va+1, VM_PROT_NONE);
+	pmap_protect(pmap_kernel(), va, va + PAGE_SIZE, VM_PROT_NONE);
 	pmap_update(pmap_kernel());
 	ref = pmap_is_referenced(pg);
 	mod = pmap_is_modified(pg);
@@ -1879,7 +1879,7 @@ pmap_testout(void)
 	printf("Modified page: ref %d, mod %d\n", ref, mod);
 
 	/* Unmap page */
-	pmap_remove(pmap_kernel(), va, va+1);
+	pmap_remove(pmap_kernel(), va, va + PAGE_SIZE);
 	pmap_update(pmap_kernel());
 	ref = pmap_is_referenced(pg);
 	mod = pmap_is_modified(pg);
