@@ -1,4 +1,4 @@
-/* $NetBSD: read.c,v 1.64 2021/09/04 19:16:38 rillig Exp $ */
+/* $NetBSD: read.c,v 1.65 2021/09/05 16:15:05 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: read.c,v 1.64 2021/09/04 19:16:38 rillig Exp $");
+__RCSID("$NetBSD: read.c,v 1.65 2021/09/05 16:15:05 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -100,7 +100,7 @@ static	void	funccall(pos_t *, const char *);
 static	void	decldef(pos_t *, const char *);
 static	void	usedsym(pos_t *, const char *);
 static	unsigned short inptype(const char *, const char **);
-static	int	gettlen(const char *, const char **);
+static	size_t	gettlen(const char *, const char **);
 static	unsigned short findtype(const char *, size_t, int);
 static	unsigned short storetyp(type_t *, const char *, size_t, int);
 static	int	thash(const char *, size_t);
@@ -621,6 +621,7 @@ parse_tspec(const char **pp, char c, bool *osdef)
 				       : (s == 'l' ? LCOMPLEX : DCOMPLEX);
 	default:
 		inperr("tspec '%c'", c);
+		/* NOTREACHED */
 	}
 }
 
@@ -730,7 +731,7 @@ inptype(const char *cp, const char **epp)
 /*
  * Get the length of a type string.
  */
-static int
+static size_t
 gettlen(const char *cp, const char **epp)
 {
 	const	char *cp1;
@@ -913,7 +914,7 @@ gettlen(const char *cp, const char **epp)
 	}
 
 	*epp = cp;
-	return cp - cp1;
+	return (size_t)(cp - cp1);
 }
 
 /*
@@ -1107,7 +1108,7 @@ getfnidx(const char *fn)
 	/* 0 is reserved */
 	for (i = 1; fnames[i] != NULL; i++) {
 		if (strcmp(fnames[i], fn) == 0)
-			return i;
+			return (int)i;
 	}
 
 	if (i == nfnames - 1) {
@@ -1121,7 +1122,7 @@ getfnidx(const char *fn)
 
 	fnames[i] = xstrdup(fn);
 	flines[i] = 0;
-	return i;
+	return (int)i;
 }
 
 /*
