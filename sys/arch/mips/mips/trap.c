@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.249 2019/04/06 11:54:20 kamil Exp $	*/
+/*	$NetBSD: trap.c,v 1.249.4.1 2021/09/05 10:48:48 martin Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.249 2019/04/06 11:54:20 kamil Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.249.4.1 2021/09/05 10:48:48 martin Exp $");
 
 #include "opt_cputype.h"	/* which mips CPU levels do we support? */
 #include "opt_ddb.h"
@@ -296,10 +296,20 @@ trap(uint32_t status, uint32_t cause, vaddr_t vaddr, vaddr_t pc,
 		vaddr = trunc_page(vaddr);
 		int ok = pmap_tlb_update_addr(pmap, vaddr, pte, 0);
 		kpreempt_enable();
-		if (ok != 1)
+		if (ok != 1) {
+#if 0 /* PMAP_FAULTINFO? */
+			/*
+			 * Since we don't block interrupts here,
+			 * this can legitimately happen if we get
+			 * a TLB miss that's serviced in an interrupt
+			 * hander that happens to randomly evict the
+			 * TLB entry we're concerned about.
+			 */
 			printf("pmap_tlb_update_addr(%p,%#"
-			    PRIxVADDR",%#"PRIxPTE", 0) returned %d",
+			    PRIxVADDR",%#"PRIxPTE", 0) returned %d\n",
 			    pmap, vaddr, pte_value(pte), ok);
+#endif
+		}
 		paddr_t pa = pte_to_paddr(pte);
 		KASSERTMSG(uvm_pageismanaged(pa),
 		    "%#"PRIxVADDR" pa %#"PRIxPADDR, vaddr, pa);
