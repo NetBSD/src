@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_280.c,v 1.3 2021/08/30 19:48:21 rillig Exp $	*/
+/*	$NetBSD: msg_280.c,v 1.4 2021/09/05 18:39:58 rillig Exp $	*/
 # 3 "msg_280.c"
 
 // Test for message: must be outside function: /* %s */ [280]
@@ -14,8 +14,6 @@ void
 /* XXX: Why is this comment considered 'outside' enough? */
 varargs_bad_param(/* VARARGS */ const char *str, ...)
 {
-	/* expect+1: warning: must be outside function: */
-	/* VARARGS */
 	(void)str;
 }
 
