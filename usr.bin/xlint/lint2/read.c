@@ -1,4 +1,4 @@
-/* $NetBSD: read.c,v 1.66 2021/09/05 19:44:56 rillig Exp $ */
+/* $NetBSD: read.c,v 1.67 2021/09/05 19:58:53 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: read.c,v 1.66 2021/09/05 19:44:56 rillig Exp $");
+__RCSID("$NetBSD: read.c,v 1.67 2021/09/05 19:58:53 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -72,7 +72,7 @@ static	size_t	nfnames;
 /*
  * Types are shared (to save memory for the types itself) and accessed
  * via indices (to save memory for references to types (indices are short)).
- * To share types, a equal type must be located fast. This is done by a
+ * To share types, an equal type must be located fast. This is done by a
  * hash table. Access by indices is done via an array of pointers to the
  * types.
  */
@@ -91,9 +91,8 @@ static	hte_t **renametab;
 static	int	csrcfile;
 
 
-#define		inperr(fmt, args...) \
-	inperror(__FILE__, __LINE__, fmt, ##args)
-static	void	inperror(const char *, size_t, const char *, ...);
+static	void	inperr(const char *, ...)
+    __attribute__((format(printf, 1, 2), noreturn));
 static	void	setsrc(const char *);
 static	void	setfnid(int, const char *);
 static	void	funccall(pos_t *, const char *);
@@ -243,8 +242,8 @@ readfile(const char *name)
 }
 
 
-static void __attribute__((format(printf, 3, 4))) __attribute__((noreturn))
-inperror(const char *file, size_t line, const char *fmt, ...)
+static void
+inperr(const char *fmt, ...)
 {
 	va_list ap;
 	char buf[1024];
@@ -253,7 +252,7 @@ inperror(const char *file, size_t line, const char *fmt, ...)
 	(void)vsnprintf(buf, sizeof(buf), fmt, ap);
 	va_end(ap);
 
-	errx(1, "%s,%zu: input file error: %s,%zu (%s)", file, line,
+	errx(1, "input file error: %s,%zu (%s)",
 	    fnames[srcfile], flines[srcfile], buf);
 }
 
