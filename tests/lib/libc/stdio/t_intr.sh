@@ -1,4 +1,4 @@
-# $NetBSD: t_intr.sh,v 1.3 2021/09/05 22:14:49 rillig Exp $
+# $NetBSD: t_intr.sh,v 1.4 2021/09/05 22:34:07 rillig Exp $
 #
 # Copyright (c) 2021 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -40,7 +40,7 @@ h_test() {
 	"${DIR}/h_intr" \
 	    -p "$2" -a ${SSIZE} -b ${BSIZE} -t ${TMOUT} \
 	    -c "dd of=numbers.out msgfmt=quiet" numbers.in
-	atf_check "${DIR}/h_testnumbers" < numbers.out
+	atf_check -o "file:numbers.in" cat numbers.out
 }
 
 atf_test_case stdio_intr_ionbf
@@ -70,7 +70,7 @@ stdio_intr_iofbf_head()
 }
 stdio_intr_iofbf_body()
 {
-	h_test ${MAX} IOFBF
+	h_test ${LMAX} IOFBF
 }
 
 atf_init_test_cases()
