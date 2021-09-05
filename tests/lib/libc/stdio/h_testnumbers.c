@@ -9,7 +9,8 @@ main(void)
 	size_t i = 0;
 	while (fgets(line, sizeof(line), stdin) != NULL) {
 		if ((size_t)atoi(line) != i)
-			errx(EXIT_FAILURE, "bad line %s\n", line);
+			errx(EXIT_FAILURE, "bad line \"%s\", expected %zu\n",
+			    line, i);
 		i++;
 	}
 	return EXIT_SUCCESS;
