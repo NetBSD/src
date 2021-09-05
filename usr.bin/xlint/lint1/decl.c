@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.234 2021/09/05 16:03:55 rillig Exp $ */
+/* $NetBSD: decl.c,v 1.235 2021/09/05 16:15:05 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: decl.c,v 1.234 2021/09/05 16:03:55 rillig Exp $");
+__RCSID("$NetBSD: decl.c,v 1.235 2021/09/05 16:15:05 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -140,6 +140,7 @@ initdecl(void)
 	typetab[LCOMPLEX].t_tspec = LCOMPLEX;
 }
 
+#ifdef DEBUG
 /* Return the name of the "storage class" in the wider sense. */
 const char *
 scl_name(scl_t scl)
@@ -153,6 +154,7 @@ scl_name(scl_t scl)
 
 	return names[scl];
 }
+#endif
 
 /*
  * Returns a shared type structure for arithmetic types and void.
