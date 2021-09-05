@@ -52,5 +52,5 @@ Additional Links
 ----------------
 
 - [The NetBSD Guide](https://www.NetBSD.org/docs/guide/en/)
-- [NetBSD manual pages](http://man.NetBSD.org/)
+- [NetBSD manual pages](https://man.NetBSD.org/)
 - [NetBSD Cross-Reference](https://nxr.NetBSD.org/)
