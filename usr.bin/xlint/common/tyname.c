@@ -1,4 +1,4 @@
-/*	$NetBSD: tyname.c,v 1.49 2021/09/04 14:07:51 rillig Exp $	*/
+/*	$NetBSD: tyname.c,v 1.50 2021/09/05 18:34:50 rillig Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tyname.c,v 1.49 2021/09/04 14:07:51 rillig Exp $");
+__RCSID("$NetBSD: tyname.c,v 1.50 2021/09/05 18:34:50 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -163,7 +163,7 @@ type_name_of_function(buffer *buf, const type_t *tp)
 
 	buf_add(buf, "(");
 	if (tp->t_proto) {
-#ifdef t_enum /* lint1 */
+#ifdef IS_LINT1
 		sym_t *arg;
 
 		arg = tp->t_args;
@@ -173,7 +173,7 @@ type_name_of_function(buffer *buf, const type_t *tp)
 			buf_add(buf, sep), sep = ", ";
 			buf_add(buf, type_name(arg->s_type));
 		}
-#else /* lint2 */
+#else
 		type_t **argtype;
 
 		argtype = tp->t_args;
@@ -197,7 +197,7 @@ static void
 type_name_of_struct_or_union(buffer *buf, const type_t *tp)
 {
 	buf_add(buf, " ");
-#ifdef t_str
+#ifdef IS_LINT1
 	if (tp->t_str->sou_tag->s_name == unnamed &&
 	    tp->t_str->sou_first_typedef != NULL) {
 		buf_add(buf, "typedef ");
@@ -214,7 +214,7 @@ static void
 type_name_of_enum(buffer *buf, const type_t *tp)
 {
 	buf_add(buf, " ");
-#ifdef t_enum
+#ifdef IS_LINT1
 	if (tp->t_enum->en_tag->s_name == unnamed &&
 	    tp->t_enum->en_first_typedef != NULL) {
 		buf_add(buf, "typedef ");
@@ -231,7 +231,7 @@ static void
 type_name_of_array(buffer *buf, const type_t *tp)
 {
 	buf_add(buf, "[");
-#ifdef t_str /* lint1 */
+#ifdef IS_LINT1
 	if (tp->t_incomplete_array)
 		buf_add(buf, "unknown_size");
 	else
@@ -263,7 +263,7 @@ type_name(const type_t *tp)
 	if (tp->t_volatile)
 		buf_add(&buf, "volatile ");
 
-#ifdef t_str
+#ifdef IS_LINT1
 	if ((t == STRUCT || t == UNION) && tp->t_str->sou_incomplete)
 		buf_add(&buf, "incomplete ");
 #endif
