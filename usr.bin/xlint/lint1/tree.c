@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.377 2021/09/04 12:30:46 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.378 2021/09/05 16:03:55 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.377 2021/09/04 12:30:46 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.378 2021/09/05 16:03:55 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -311,7 +311,7 @@ build_string(strg_t *strg)
 	tp = expr_zalloc(sizeof(*tp));
 	tp->t_tspec = ARRAY;
 	tp->t_subt = gettyp(strg->st_tspec);
-	tp->t_dim = len + 1;
+	tp->t_dim = (int)(len + 1);
 
 	n->tn_op = STRING;
 	n->tn_type = tp;
@@ -1426,8 +1426,7 @@ is_first_arg_const(const tnode_t *tn)
 }
 
 static void
-check_unconst_function(const type_t *lstp,
-		       const tnode_t *rn, const type_t *rstp)
+check_unconst_function(const type_t *lstp, const tnode_t *rn)
 {
 	const char *function_name;
 
@@ -1512,7 +1511,7 @@ check_assign_void_pointer_compat(op_t op, int arg,
 	}
 
 	if (!tflag)
-		check_unconst_function(lstp, rn, rstp);
+		check_unconst_function(lstp, rn);
 
 	return true;
 }
@@ -2290,7 +2289,8 @@ convert_constant_floating(op_t op, int arg, tspec_t ot, const type_t *tp,
 		/* Got already an error because of float --> ptr */
 	case LDOUBLE:
 	case LCOMPLEX:
-		max = LDBL_MAX;		min = -LDBL_MAX;	break;
+		/* LINTED 248 */
+		max = LDBL_MAX;		min = -max;		break;
 	default:
 		lint_assert(/*CONSTCOND*/false);
 	}
@@ -2363,7 +2363,7 @@ convert_constant_check_range_bitand(size_t nsz, size_t osz,
 				    const type_t *tp, op_t op)
 {
 	if (nsz > osz &&
-	    (nv->v_quad & bit(osz - 1)) != 0 &&
+	    (nv->v_quad & bit((unsigned int)(osz - 1))) != 0 &&
 	    (nv->v_quad & xmask) != xmask) {
 		/* extra bits set to 0 in conversion of '%s' to '%s', ... */
 		warning(309, type_name(gettyp(ot)),
@@ -2470,8 +2470,8 @@ static void
 convert_constant_check_range(tspec_t ot, const type_t *tp, tspec_t nt,
 			     op_t op, int arg, const val_t *v, val_t *nv)
 {
-	int	osz, nsz;
-	int64_t	xmask, xmsk1;
+	unsigned int osz, nsz;
+	uint64_t xmask, xmsk1;
 
 	osz = size_in_bits(ot);
 	nsz = tp->t_bitfield ? tp->t_flen : size_in_bits(nt);
@@ -2511,9 +2511,9 @@ convert_constant_check_range(tspec_t ot, const type_t *tp, tspec_t nt,
 void
 convert_constant(op_t op, int arg, const type_t *tp, val_t *nv, val_t *v)
 {
-	tspec_t	ot, nt;
-	int	sz;
-	bool	range_check;
+	tspec_t ot, nt;
+	unsigned int sz;
+	bool range_check;
 
 	/*
 	 * TODO: make 'v' const; the name of this function does not suggest
@@ -3123,7 +3123,7 @@ fold(tnode_t *tn)
 		if (sr == 0) {
 			/* division by 0 */
 			error(139);
-			q = utyp ? UQUAD_MAX : QUAD_MAX;
+			q = utyp ? -1 : INT64_MAX;
 		} else {
 			q = utyp ? (int64_t)(ul / ur) : sl / sr;
 		}
@@ -3249,6 +3249,20 @@ fold_test(tnode_t *tn)
 	return build_constant(tn->tn_type, v);
 }
 
+static ldbl_t
+floating_error_value(tspec_t t, ldbl_t lv)
+{
+	if (t == FLOAT) {
+		return lv < 0 ? -FLT_MAX : FLT_MAX;
+	} else if (t == DOUBLE) {
+		return lv < 0 ? -DBL_MAX : DBL_MAX;
+	} else {
+		/* LINTED 248: floating-point constant out of range */
+		ldbl_t max = LDBL_MAX;
+		return lv < 0 ? -max : max;
+	}
+}
+
 /*
  * Fold constant nodes having operands with floating point type.
  */
@@ -3285,13 +3299,7 @@ fold_float(tnode_t *tn)
 		if (rv == 0.0) {
 			/* division by 0 */
 			error(139);
-			if (t == FLOAT) {
-				v->v_ldbl = lv < 0 ? -FLT_MAX : FLT_MAX;
-			} else if (t == DOUBLE) {
-				v->v_ldbl = lv < 0 ? -DBL_MAX : DBL_MAX;
-			} else {
-				v->v_ldbl = lv < 0 ? -LDBL_MAX : LDBL_MAX;
-			}
+			v->v_ldbl = floating_error_value(t, lv);
 		} else {
 			v->v_ldbl = lv / rv;
 		}
@@ -3332,13 +3340,7 @@ fold_float(tnode_t *tn)
 	     (v->v_ldbl > DBL_MAX || v->v_ldbl < -DBL_MAX))) {
 		/* floating point overflow detected, op %s */
 		warning(142, op_name(tn->tn_op));
-		if (t == FLOAT) {
-			v->v_ldbl = v->v_ldbl < 0 ? -FLT_MAX : FLT_MAX;
-		} else if (t == DOUBLE) {
-			v->v_ldbl = v->v_ldbl < 0 ? -DBL_MAX : DBL_MAX;
-		} else {
-			v->v_ldbl = v->v_ldbl < 0 ? -LDBL_MAX : LDBL_MAX;
-		}
+		v->v_ldbl = floating_error_value(t, v->v_ldbl);
 		fpe = 0;
 	}
 
@@ -3361,6 +3363,7 @@ build_sizeof(const type_t *tp)
 /*
  * Create a constant node for offsetof.
  */
+/* ARGSUSED */ /* See implementation comments. */
 tnode_t *
 build_offsetof(const type_t *tp, const sym_t *sym)
 {
