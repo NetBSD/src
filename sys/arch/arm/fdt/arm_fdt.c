@@ -1,4 +1,4 @@
-/* $NetBSD: arm_fdt.c,v 1.18 2021/08/30 23:20:00 jmcneill Exp $ */
+/* $NetBSD: arm_fdt.c,v 1.19 2021/09/05 13:20:34 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared D. McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,7 @@
 #include "opt_modular.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arm_fdt.c,v 1.18 2021/08/30 23:20:00 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arm_fdt.c,v 1.19 2021/09/05 13:20:34 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -225,29 +225,6 @@ arm_fdt_timer_register(void (*timerfn)(void))
 		return;
 	}
 	_arm_fdt_timer_init = timerfn;
-}
-
-void
-arm_fdt_memory_dump(paddr_t pa)
-{
-	const struct arm_platform *plat = arm_fdt_platform();
-	struct fdt_attach_args faa;
-	bus_space_tag_t bst;
-	bus_space_handle_t bsh;
-
-	plat->ap_init_attach_args(&faa);
-
-	bst = faa.faa_bst;
-	bus_space_map(bst, pa, 0x100, 0, &bsh);
-
-	for (int i = 0; i < 0x100; i += 0x10) {
-		printf("%" PRIxPTR ": %08x %08x %08x %08x\n",
-		    (uintptr_t)(pa + i),
-		    bus_space_read_4(bst, bsh, i + 0),
-		    bus_space_read_4(bst, bsh, i + 4),
-		    bus_space_read_4(bst, bsh, i + 8),
-		    bus_space_read_4(bst, bsh, i + 12));
-	}
 }
 
 #ifdef __HAVE_GENERIC_CPU_INITCLOCKS
