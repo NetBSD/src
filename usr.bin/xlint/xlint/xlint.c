@@ -1,4 +1,4 @@
-/* $NetBSD: xlint.c,v 1.81 2021/09/05 16:15:05 rillig Exp $ */
+/* $NetBSD: xlint.c,v 1.82 2021/09/05 18:17:15 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: xlint.c,v 1.81 2021/09/05 16:15:05 rillig Exp $");
+__RCSID("$NetBSD: xlint.c,v 1.82 2021/09/05 18:17:15 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -430,7 +430,6 @@ main(int argc, char *argv[])
 				list_add_copy(&deflibs, "c");
 			}
 			pass_flag_to_lint1(c);
-			pass_flag_to_lint2(c);
 			break;
 
 		case 's':
@@ -455,7 +454,6 @@ main(int argc, char *argv[])
 		case 'T':
 			pass_to_cpp("-I" PATH_STRICT_BOOL_INCLUDE);
 			pass_flag_to_lint1(c);
-			pass_flag_to_lint2(c);
 			break;
 
 #if !HAVE_NBTOOL_CONFIG_H

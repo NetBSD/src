@@ -1,4 +1,4 @@
-# $NetBSD: t_lint2.sh,v 1.7 2021/09/04 20:39:17 rillig Exp $
+# $NetBSD: t_lint2.sh,v 1.8 2021/09/05 18:17:15 rillig Exp $
 #
 # Copyright (c) 2021 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -43,7 +43,7 @@ std_body()
 	    > "$1.ln"
 
 	atf_check -o "file:$srcdir/$1.exp" \
-	    "$lint2" -h -p -x "$1.ln"
+	    "$lint2" -h -x "$1.ln"
 }
 
 std_emit_body()
@@ -60,7 +60,7 @@ std_emit_body()
 	    > "$1.exp-ln"
 
 	atf_check \
-	    "$lint2" -h -p -x -C "$1" "$1.ln"
+	    "$lint2" -h -x -C "$1" "$1.ln"
 
 	atf_check -o "file:$1.exp-ln" \
 	    cat "llib-l$1.ln"

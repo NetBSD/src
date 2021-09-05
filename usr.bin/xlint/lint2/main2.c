@@ -1,4 +1,4 @@
-/*	$NetBSD: main2.c,v 1.21 2021/08/28 19:49:28 rillig Exp $	*/
+/*	$NetBSD: main2.c,v 1.22 2021/09/05 18:17:15 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: main2.c,v 1.21 2021/08/28 19:49:28 rillig Exp $");
+__RCSID("$NetBSD: main2.c,v 1.22 2021/09/05 18:17:15 rillig Exp $");
 #endif
 
 #include <stdio.h>
@@ -60,15 +60,12 @@ bool	uflag = true;
 bool	Cflag;
 const char *libname;
 
-bool	pflag;
-
 /*
  * warnings for (tentative) definitions of the same name in more than
  * one translation unit
  */
 bool	sflag;
 
-bool	Tflag;
 bool	tflag;
 
 /*
@@ -107,13 +104,10 @@ main(int argc, char *argv[])
 	libs = xcalloc(1, sizeof(*libs));
 
 	opterr = 0;
-	while ((c = getopt(argc, argv, "hpstxuC:HTFl:")) != -1) {
+	while ((c = getopt(argc, argv, "hstxuC:HFl:")) != -1) {
 		switch (c) {
 		case 's':
 			sflag = true;
-			break;
-		case 'T':
-			Tflag = true;
 			break;
 		case 't':
 			tflag = true;
@@ -123,9 +117,6 @@ main(int argc, char *argv[])
 			break;
 		case 'x':
 			xflag = true;
-			break;
-		case 'p':
-			pflag = true;
 			break;
 		case 'C':
 			len = strlen(optarg);
@@ -166,8 +157,6 @@ main(int argc, char *argv[])
 
 	/* initialize hash table */
 	inithash();
-
-	inittyp();
 
 	for (i = 0; i < argc; i++)
 		readfile(argv[i]);
