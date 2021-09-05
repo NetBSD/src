@@ -1,4 +1,4 @@
-/* $NetBSD: arm_fdtvar.h,v 1.18 2021/08/30 23:20:00 jmcneill Exp $ */
+/* $NetBSD: arm_fdtvar.h,v 1.19 2021/09/05 13:20:34 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared D. McNeill <jmcneill@invisible.ca>
@@ -96,8 +96,6 @@ void	arm_fdt_irq_set_handler(void (*)(void *));
 void	arm_fdt_irq_handler(void *);
 void	arm_fdt_fiq_set_handler(void (*)(void *));
 void	arm_fdt_fiq_handler(void *);
-
-void	arm_fdt_memory_dump(paddr_t);
 
 void	arm_fdt_module_init(void);
 
