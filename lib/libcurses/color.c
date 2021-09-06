@@ -1,4 +1,4 @@
-/*	$NetBSD: color.c,v 1.41 2017/01/06 13:53:18 roy Exp $	*/
+/*	$NetBSD: color.c,v 1.42 2021/09/06 02:48:54 rin Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: color.c,v 1.41 2017/01/06 13:53:18 roy Exp $");
+__RCSID("$NetBSD: color.c,v 1.42 2021/09/06 02:48:54 rin Exp $");
 #endif				/* not lint */
 
 #include "curses.h"
@@ -439,7 +439,7 @@ color_content(short color, short *redp, short *greenp, short *bluep)
  *	Use terminal default colours instead of curses default colour.
   */
 int
-use_default_colors()
+use_default_colors(void)
 {
 #ifdef DEBUG
 	__CTRACE(__CTRACE_COLOR, "use_default_colors\n");
