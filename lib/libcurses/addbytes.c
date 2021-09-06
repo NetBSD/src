@@ -1,4 +1,4 @@
-/*	$NetBSD: addbytes.c,v 1.58 2021/09/06 07:08:25 rin Exp $	*/
+/*	$NetBSD: addbytes.c,v 1.59 2021/09/06 07:45:48 rin Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)addbytes.c	8.4 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: addbytes.c,v 1.58 2021/09/06 07:08:25 rin Exp $");
+__RCSID("$NetBSD: addbytes.c,v 1.59 2021/09/06 07:45:48 rin Exp $");
 #endif
 #endif				/* not lint */
 
@@ -253,8 +253,7 @@ _cursesi_addbyte(WINDOW *win, __LINE **lp, int *y, int *x, int c,
 		(*lp)->flags &= ~__ISPASTEOL;
 		if (*y == win->scr_b) {
 			__CTRACE(__CTRACE_INPUT,
-				 "ADDBYTES - on bottom "
-				 "of scrolling region\n");
+			    "ADDBYTES - on bottom of scrolling region\n");
 			if (!(win->flags & __SCROLLOK))
 				return ERR;
 			scroll(win);
@@ -267,9 +266,8 @@ _cursesi_addbyte(WINDOW *win, __LINE **lp, int *y, int *x, int c,
 	}
 
 	__CTRACE(__CTRACE_INPUT,
-		 "ADDBYTES: 1: y = %d, x = %d, firstch = %d, lastch = %d\n",
-		 *y, *x, *win->alines[*y]->firstchp,
-		 *win->alines[*y]->lastchp);
+	    "ADDBYTES: 1: y = %d, x = %d, firstch = %d, lastch = %d\n",
+	    *y, *x, *win->alines[*y]->firstchp, *win->alines[*y]->lastchp);
 
 	attributes = (win->wattr | attr) & (__ATTRIBUTES & ~__COLOR);
 	if (attr & __COLOR)
@@ -293,9 +291,9 @@ _cursesi_addbyte(WINDOW *win, __LINE **lp, int *y, int *x, int c,
 	if (newx > *(*lp)->lastchp)
 		*(*lp)->lastchp = newx;
 	__CTRACE(__CTRACE_INPUT, "ADDBYTES: change gives f/l: %d/%d [%d/%d]\n",
-		 *(*lp)->firstchp, *(*lp)->lastchp,
-		 *(*lp)->firstchp - win->ch_off,
-		 *(*lp)->lastchp - win->ch_off);
+	    *(*lp)->firstchp, *(*lp)->lastchp,
+	    *(*lp)->firstchp - win->ch_off,
+	    *(*lp)->lastchp - win->ch_off);
 	if (win->bch != ' ' && c == ' ')
 		(*lp)->line[*x].ch = win->bch;
 	else
@@ -313,9 +311,8 @@ _cursesi_addbyte(WINDOW *win, __LINE **lp, int *y, int *x, int c,
 		(*x)++;
 
 	__CTRACE(__CTRACE_INPUT,
-		 "ADDBYTES: 2: y = %d, x = %d, firstch = %d, lastch = %d\n",
-		 *y, *x, *win->alines[*y]->firstchp,
-		 *win->alines[*y]->lastchp);
+	    "ADDBYTES: 2: y = %d, x = %d, firstch = %d, lastch = %d\n",
+	    *y, *x, *win->alines[*y]->firstchp, *win->alines[*y]->lastchp);
 	__sync(win);
 	return OK;
 }
@@ -392,8 +389,8 @@ _cursesi_addwchar(WINDOW *win, __LINE **lnp, int *y, int *x,
 	/* check for non-spacing character */
 	if (!wcwidth(wch->vals[0])) {
 		__CTRACE(__CTRACE_INPUT,
-			 "_cursesi_addwchar: char '%c' is non-spacing\n",
-			 wch->vals[0]);
+		    "_cursesi_addwchar: char '%c' is non-spacing\n",
+		    wch->vals[0]);
 		cw = WCOL(*lp);
 		if (cw < 0) {
 			lp += cw;
@@ -436,8 +433,8 @@ _cursesi_addwchar(WINDOW *win, __LINE **lnp, int *y, int *x,
 	} else {
 		for (sx = *x - 1; sx >= max(*x + cw, 0); sx--) {
 			__CTRACE(__CTRACE_INPUT,
-				 "_cursesi_addwchar: clear current char (%d,%d)\n",
-				 *y, sx);
+			    "_cursesi_addwchar: clear current char (%d,%d)\n",
+			    *y, sx);
 			tp = &win->alines[*y]->line[sx];
 			tp->ch = (wchar_t) btowc((int) win->bch);
 			if (_cursesi_copy_nsp(win->bnsp, tp) == ERR)
@@ -460,8 +457,7 @@ _cursesi_addwchar(WINDOW *win, __LINE **lnp, int *y, int *x,
 
 	if (cw > win->maxx - *x) {
 		__CTRACE(__CTRACE_INPUT,
-			 "_cursesi_addwchar: clear EOL (%d,%d)\n",
-			 *y, *x);
+		    "_cursesi_addwchar: clear EOL (%d,%d)\n", *y, *x);
 		if (*y == win->scr_b) {
 			if (!(win->flags & __SCROLLOK))
 				return ERR;
@@ -493,8 +489,8 @@ _cursesi_addwchar(WINDOW *win, __LINE **lnp, int *y, int *x,
 
 	/* add spacing character */
 	__CTRACE(__CTRACE_INPUT,
-		 "_cursesi_addwchar: add character (%d,%d) 0x%x\n",
-		 *y, *x, wch->vals[0]);
+	    "_cursesi_addwchar: add character (%d,%d) 0x%x\n",
+	    *y, *x, wch->vals[0]);
 	(*lnp)->flags |= __ISDIRTY;
 	newx = *x + win->ch_off;
 	if (newx < *(*lnp)->firstchp)
@@ -520,8 +516,8 @@ _cursesi_addwchar(WINDOW *win, __LINE **lnp, int *y, int *x,
 	SET_WCOL(*lp, cw);
 
 	__CTRACE(__CTRACE_INPUT,
-		 "_cursesi_addwchar: add spacing char 0x%x, attr 0x%x\n",
-		 lp->ch, lp->attr);
+	    "_cursesi_addwchar: add spacing char 0x%x, attr 0x%x\n",
+	    lp->ch, lp->attr);
 
 	if (wch->elements > 1) {
 		for (i = 1; i < wch->elements; i++) {
@@ -531,15 +527,18 @@ _cursesi_addwchar(WINDOW *win, __LINE **lnp, int *y, int *x,
 			np->ch = wch->vals[i];
 			np->next = lp->nsp;
 			__CTRACE(__CTRACE_INPUT,
-			    "_cursesi_addwchar: add non-spacing char 0x%x\n", np->ch);
+			    "_cursesi_addwchar: add non-spacing char 0x%x\n",
+			    np->ch);
 			lp->nsp = np;
 		}
 	}
-	__CTRACE(__CTRACE_INPUT, "_cursesi_addwchar: non-spacing list header: %p\n",
-	    lp->nsp);
-	__CTRACE(__CTRACE_INPUT, "_cursesi_addwchar: add rest columns (%d:%d)\n",
-		sx + 1, sx + cw - 1);
-	__CTRACE(__CTRACE_INPUT, "_cursesi_addwchar: *x = %d, win->maxx = %d\n", *x, win->maxx);
+	__CTRACE(__CTRACE_INPUT,
+	    "_cursesi_addwchar: non-spacing list header: %p\n", lp->nsp);
+	__CTRACE(__CTRACE_INPUT,
+	    "_cursesi_addwchar: add rest columns (%d:%d)\n",
+	    sx + 1, sx + cw - 1);
+	__CTRACE(__CTRACE_INPUT, "_cursesi_addwchar: *x = %d, win->maxx = %d\n",
+	    *x, win->maxx);
 	for (tp = lp + 1, *x = sx + 1; *x - sx <= cw - 1; tp++, (*x)++) {
 		if (tp->nsp) {
 			__cursesi_free_nsp(tp->nsp);
@@ -552,12 +551,14 @@ _cursesi_addwchar(WINDOW *win, __LINE **lnp, int *y, int *x,
 	}
 
 	if (*x == win->maxx) {
-	__CTRACE(__CTRACE_INPUT, "_cursesi_addwchar: do line wrap\n");
+		__CTRACE(__CTRACE_INPUT, "_cursesi_addwchar: do line wrap\n");
 		if (*y == win->scr_b) {
-	__CTRACE(__CTRACE_INPUT, "_cursesi_addwchar: at bottom of screen\n");
+			__CTRACE(__CTRACE_INPUT,
+			    "_cursesi_addwchar: at bottom of screen\n");
 			if (!(win->flags & __SCROLLOK))
 				return ERR;
-	__CTRACE(__CTRACE_INPUT, "_cursesi_addwchar: do a scroll\n");
+			__CTRACE(__CTRACE_INPUT,
+			    "_cursesi_addwchar: do a scroll\n");
 			scroll(win);
 		}
 		newx = win->maxx - 1 + win->ch_off;
@@ -595,8 +596,11 @@ _cursesi_addwchar(WINDOW *win, __LINE **lnp, int *y, int *x,
 		}
 	}
 
-	__CTRACE(__CTRACE_INPUT, "_cursesi_addwchar: %d : 0x%x\n", lp->ch, lp->attr);
-	__CTRACE(__CTRACE_INPUT, "_cursesi_addwchar: *x = %d, *y = %d, win->maxx = %d\n", *x, *y, win->maxx);
+	__CTRACE(__CTRACE_INPUT, "_cursesi_addwchar: %d : 0x%x\n",
+	    lp->ch, lp->attr);
+	__CTRACE(__CTRACE_INPUT,
+	    "_cursesi_addwchar: *x = %d, *y = %d, win->maxx = %d\n",
+	    *x, *y, win->maxx);
 	__sync(win);
 	return OK;
 #endif

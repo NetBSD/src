@@ -1,4 +1,4 @@
-/*	$NetBSD: getch.c,v 1.76 2021/09/06 07:03:49 rin Exp $	*/
+/*	$NetBSD: getch.c,v 1.77 2021/09/06 07:45:48 rin Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)getch.c	8.2 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: getch.c,v 1.76 2021/09/06 07:03:49 rin Exp $");
+__RCSID("$NetBSD: getch.c,v 1.77 2021/09/06 07:45:48 rin Exp $");
 #endif
 #endif					/* not lint */
 
@@ -302,26 +302,26 @@ add_new_key(keymap_t *current, char chr, int key_type, int symbol)
 		the_key->type = key_type;
 
 		switch (key_type) {
-		  case KEYMAP_MULTI:
-			    /* need for next key */
-			  __CTRACE(__CTRACE_MISC, "Creating new keymap\n");
-			  the_key->value.next = new_keymap();
-			  the_key->enable = TRUE;
-			  break;
+		case KEYMAP_MULTI:
+			/* need for next key */
+			__CTRACE(__CTRACE_MISC, "Creating new keymap\n");
+			the_key->value.next = new_keymap();
+			the_key->enable = TRUE;
+			break;
 
-		  case KEYMAP_LEAF:
-				/* the associated symbol for the key */
-			  __CTRACE(__CTRACE_MISC, "Adding leaf key\n");
-			  the_key->value.symbol = symbol;
-			  the_key->enable = TRUE;
-			  break;
+		case KEYMAP_LEAF:
+			/* the associated symbol for the key */
+			__CTRACE(__CTRACE_MISC, "Adding leaf key\n");
+			the_key->value.symbol = symbol;
+			the_key->enable = TRUE;
+			break;
 
-		  default:
-			  fprintf(stderr, "add_new_key: bad type passed\n");
-			  exit(1);
+		default:
+			fprintf(stderr, "add_new_key: bad type passed\n");
+			exit(1);
 		}
 	} else {
-		  /* the key is already known - just return the address. */
+		/* the key is already known - just return the address. */
 		__CTRACE(__CTRACE_MISC, "Keymap already known\n");
 		the_key = current->key[current->mapping[(unsigned char)chr]];
 	}
@@ -357,7 +357,8 @@ delete_key_sequence(keymap_t *current, int key_type)
 				_cursesi_free_keymap(key->value.next);
 		} else if ((key->type == KEYMAP_LEAF)
 			   && (key->value.symbol == key_type)) {
-		__CTRACE(__CTRACE_INPUT, "delete_key_sequence: found keysym %d, deleting\n",
+		__CTRACE(__CTRACE_INPUT,
+		    "delete_key_sequence: found keysym %d, deleting\n",
 		    key_type);
 			key->enable = FALSE;
 		}
@@ -801,9 +802,13 @@ wgetch(WINDOW *win)
 			wrefresh(win);
 		else if ((_cursesi_screen->curscr->cury != (win->begy + win->cury))
 		         || (_cursesi_screen->curscr->curx != (win->begx + win->curx))) {
-			__CTRACE(__CTRACE_INPUT, "wgetch: curscr cury %d cury %d curscr curx %d curx %d\n",
-			_cursesi_screen->curscr->cury, win->begy + win->cury,
-			_cursesi_screen->curscr->curx, win->begx + win->curx);
+			__CTRACE(__CTRACE_INPUT,
+			    "wgetch: curscr cury %d cury %d "
+			    "curscr curx %d curx %d\n",
+			    _cursesi_screen->curscr->cury,
+			    win->begy + win->cury,
+			    _cursesi_screen->curscr->curx,
+			    win->begx + win->curx);
 			/*
 			 * Just in case the window is not dirty but the
 			 * cursor was  moved, check and update the 
