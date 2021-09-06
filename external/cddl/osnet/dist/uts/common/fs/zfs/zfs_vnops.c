@@ -3116,7 +3116,8 @@ zfs_getattr(vnode_t *vp, vattr_t *vap, int flags, cred_t *cr,
 		links = zp->z_links + 1;
 	else
 		links = zp->z_links;
-	vap->va_nlink = MIN(links, LINK_MAX);	/* nlink_t limit! */
+	/* XXX NetBSD: use LINK_MAX when that value matches 32-bit nlink_t */
+	vap->va_nlink = MIN(links, UINT32_MAX);	/* nlink_t limit! */
 	vap->va_size = zp->z_size;
 #ifdef illumos
 	vap->va_rdev = vp->v_rdev;
