@@ -1,4 +1,4 @@
-/* $NetBSD: pcihost_fdt.c,v 1.26 2021/08/07 16:18:43 thorpej Exp $ */
+/* $NetBSD: pcihost_fdt.c,v 1.27 2021/09/06 14:03:17 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcihost_fdt.c,v 1.26 2021/08/07 16:18:43 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcihost_fdt.c,v 1.27 2021/09/06 14:03:17 jmcneill Exp $");
 
 #include <sys/param.h>
 
@@ -126,6 +126,7 @@ pcihost_attach(device_t parent, device_t self, void *aux)
 	sc->sc_dev = self;
 	sc->sc_dmat = faa->faa_dmat;
 	sc->sc_bst = faa->faa_bst;
+	sc->sc_pci_bst = faa->faa_bst;
 	sc->sc_phandle = faa->faa_phandle;
 	error = bus_space_map(sc->sc_bst, cs_addr, cs_size,
 	    _ARM_BUS_SPACE_MAP_STRONGLY_ORDERED, &sc->sc_bsh);
@@ -230,14 +231,14 @@ pcihost_config(struct pcihost_softc *sc)
 	bool swap;
 
 	struct pcih_bus_space * const pibs = &sc->sc_io;
-	pibs->bst = *sc->sc_bst;
+	pibs->bst = *sc->sc_pci_bst;
 	pibs->bst.bs_cookie = pibs;
 	pibs->map = pibs->bst.bs_map;
 	pibs->flags = PCI_FLAGS_IO_OKAY;
 	pibs->bst.bs_map = pcihost_bus_space_map;
 
 	struct pcih_bus_space * const pmbs = &sc->sc_mem;
-	pmbs->bst = *sc->sc_bst;
+	pmbs->bst = *sc->sc_pci_bst;
 	pmbs->bst.bs_cookie = pmbs;
 	pmbs->map = pmbs->bst.bs_map;
 	pmbs->flags = PCI_FLAGS_MEM_OKAY;

@@ -1,4 +1,4 @@
-/* $NetBSD: apple_pcie.c,v 1.2 2021/09/04 12:35:31 jmcneill Exp $ */
+/* $NetBSD: apple_pcie.c,v 1.3 2021/09/06 14:03:17 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2021 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: apple_pcie.c,v 1.2 2021/09/04 12:35:31 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: apple_pcie.c,v 1.3 2021/09/06 14:03:17 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -106,9 +106,13 @@ apple_pcie_attach(device_t parent, device_t self, void *aux)
 	sc->sc_dev = self;
 	sc->sc_dmat = faa->faa_dmat;
 	sc->sc_bst = faa->faa_bst;
+	/*
+	 * Create a new bus tag for PCIe devices that does not inherit the
+	 * nonposted MMIO flag from the host controller.
+	 */
+	sc->sc_pci_bst = fdtbus_bus_tag_create(phandle, 0);
 	sc->sc_phandle = phandle;
-	error = bus_space_map(sc->sc_bst, cs_addr, cs_size,
-	    _ARM_BUS_SPACE_MAP_STRONGLY_ORDERED, &sc->sc_bsh);
+	error = bus_space_map(faa->faa_bst, cs_addr, cs_size, 0, &sc->sc_bsh);
 	if (error) {
 		aprint_error(": couldn't map registers: %d\n", error);
 		return;
@@ -146,8 +150,7 @@ apple_pcie_setup_port(struct apple_pcie_softc *sc, u_int portno)
 		aprint_error(": couldn't get %s regs\n", regname);
 		return;
 	}
-	error = bus_space_map(bst, addr, size,
-	    _ARM_BUS_SPACE_MAP_STRONGLY_ORDERED, &bsh);
+	error = bus_space_map(bst, addr, size, 0, &bsh);
 	if (error != 0) {
 		aprint_error(": couldn't map %s regs\n", regname);
 		return;
