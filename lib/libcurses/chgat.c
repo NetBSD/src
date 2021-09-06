@@ -1,4 +1,4 @@
-/*	$NetBSD: chgat.c,v 1.6 2021/09/06 07:03:49 rin Exp $	*/
+/*	$NetBSD: chgat.c,v 1.7 2021/09/06 07:45:48 rin Exp $	*/
 
 /*
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: chgat.c,v 1.6 2021/09/06 07:03:49 rin Exp $");
+__RCSID("$NetBSD: chgat.c,v 1.7 2021/09/06 07:45:48 rin Exp $");
 
 #include "curses.h"
 #include "curses_private.h"
@@ -72,8 +72,8 @@ mvwchgat(WINDOW *win , int y, int x, int count, attr_t attr, short color,
 		count = win->maxx - x;
 
 	__CTRACE(__CTRACE_ATTR, "mvwchgat: x: %d y: %d count: %d attr: 0x%x "
-		 "color pair %d\n", x, y, count, (attr & ~__COLOR),
-		 PAIR_NUMBER(color));
+	    "color pair %d\n", x, y, count, (attr & ~__COLOR),
+	    PAIR_NUMBER(color));
 	lp = win->alines[y];
 	lc = &lp->line[x];
 

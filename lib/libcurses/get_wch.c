@@ -1,4 +1,4 @@
-/*   $NetBSD: get_wch.c,v 1.25 2021/09/06 07:03:49 rin Exp $ */
+/*   $NetBSD: get_wch.c,v 1.26 2021/09/06 07:45:48 rin Exp $ */
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation Inc.
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: get_wch.c,v 1.25 2021/09/06 07:03:49 rin Exp $");
+__RCSID("$NetBSD: get_wch.c,v 1.26 2021/09/06 07:45:48 rin Exp $");
 #endif						  /* not lint */
 
 #include <errno.h>
@@ -190,7 +190,7 @@ inkey(wchar_t *wc, int to, int delay)
 			k = (wchar_t)c;
 			__CTRACE(__CTRACE_INPUT,
 			    "inkey (wstate wcassembling) got '%s'\n",
-				unctrl(k));
+			    unctrl(k));
 			if (feof(infd)) { /* inter-char T/O, start backout */
 				clearerr(infd);
 				if (*start == *end)
@@ -236,7 +236,8 @@ inkey(wchar_t *wc, int to, int delay)
 				if ( ret == -1 ) {
 					/* return the 1st character we know */
 					*wc = inbuf[*start];
-					*working = *start = (*start + 1) % MAX_CBUF_SIZE;
+					*working = *start =
+					    (*start + 1) % MAX_CBUF_SIZE;
 					__CTRACE(__CTRACE_INPUT,
 					    "inkey: Invalid wide char(%x) "
 					    "[head(%d), current(%d), "
@@ -244,8 +245,8 @@ inkey(wchar_t *wc, int to, int delay)
 					    *wc, *start, *working, *end);
 				} else { /* > 0 */
 					/* return the wide character */
-					*start = *working
-					       = (*working + ret)%MAX_CBUF_SIZE;
+					*start = *working =
+					    (*working + ret) % MAX_CBUF_SIZE;
 					__CTRACE(__CTRACE_INPUT,
 					    "inkey: Wide char found(%x) "
 					    "[head(%d), current(%d), "
@@ -289,7 +290,7 @@ inkey(wchar_t *wc, int to, int delay)
 			/* wide-character specific code */
 			__CTRACE(__CTRACE_INPUT,
 			    "inkey: Checking for wide char\n");
-			mbrtowc( NULL, NULL, 1, &_cursesi_screen->sp );
+			mbrtowc(NULL, NULL, 1, &_cursesi_screen->sp);
 			*working = *start;
 			mlen = *end > *working ?
 				*end - *working : MAX_CBUF_SIZE - *working;
@@ -297,8 +298,8 @@ inkey(wchar_t *wc, int to, int delay)
 				return ERR;
 			__CTRACE(__CTRACE_INPUT,
 			    "inkey: Check wide char[head(%d), "
-			    "current(%d), tail(%d), mlen(%ld)]\n",
-			    *start, *working, *end, (long) mlen);
+			    "current(%d), tail(%d), mlen(%zu)]\n",
+			    *start, *working, *end, mlen);
 			ret = (int)mbrtowc(wc, inbuf + (*working), mlen,
 			                   &_cursesi_screen->sp);
 			__CTRACE(__CTRACE_INPUT,
@@ -312,8 +313,8 @@ inkey(wchar_t *wc, int to, int delay)
 							  &_cursesi_screen->sp);
 			}
 			if (ret == -2 && wstate != INKEY_TIMEOUT) {
-				*working = (*working + (int) mlen)
-					% MAX_CBUF_SIZE;
+				*working =
+				    (*working + (int) mlen) % MAX_CBUF_SIZE;
 				wstate = INKEY_WCASSEMBLING;
 				continue;
 			}
@@ -322,16 +323,16 @@ inkey(wchar_t *wc, int to, int delay)
 			if (ret == -1) {
 				/* return the first key we know about */
 				*wc = inbuf[*start];
-				*working = *start
-					= (*start + 1) % MAX_CBUF_SIZE;
+				*working = *start =
+				    (*start + 1) % MAX_CBUF_SIZE;
 				__CTRACE(__CTRACE_INPUT,
 				    "inkey: Invalid wide char(%x)[head(%d), "
 				    "current(%d), tail(%d)]\n",
 				    *wc, *start, *working, *end);
 			} else { /* > 0 */
 				/* return the wide character */
-				*start = *working
-					= (*working + ret) % MAX_CBUF_SIZE;
+				*start = *working =
+				    (*working + ret) % MAX_CBUF_SIZE;
 				__CTRACE(__CTRACE_INPUT,
 				    "inkey: Wide char found(%x)[head(%d), "
 				    "current(%d), tail(%d)]\n",
@@ -359,8 +360,8 @@ inkey(wchar_t *wc, int to, int delay)
 			if (current->key[current->mapping[k]]->type
 					== KEYMAP_LEAF) {
 				/* eat the key sequence in cbuf */
-				*start = *working = ( *working + 1 )
-				    % MAX_CBUF_SIZE;
+				*start = *working =
+				    (*working + 1) % MAX_CBUF_SIZE;
 
 				/* check if inbuf empty now */
 				__CTRACE(__CTRACE_INPUT,
@@ -379,7 +380,7 @@ inkey(wchar_t *wc, int to, int delay)
 					__CTRACE(__CTRACE_INPUT,
 					    "[inkey]=>BACKOUT, start(%d), "
 					    "current(%d), end(%d)",
-					    *start, *working, *end );
+					    *start, *working, *end);
 				}
 
 				/* return the symbol */

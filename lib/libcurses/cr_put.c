@@ -1,4 +1,4 @@
-/*	$NetBSD: cr_put.c,v 1.36 2021/09/06 07:03:49 rin Exp $	*/
+/*	$NetBSD: cr_put.c,v 1.37 2021/09/06 07:45:48 rin Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)cr_put.c	8.3 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: cr_put.c,v 1.36 2021/09/06 07:03:49 rin Exp $");
+__RCSID("$NetBSD: cr_put.c,v 1.37 2021/09/06 07:45:48 rin Exp $");
 #endif
 #endif				/* not lint */
 
@@ -74,7 +74,8 @@ int
 __mvcur(int ly, int lx, int y, int x, int in_refresh)
 {
 	__CTRACE(__CTRACE_OUTPUT,
-	    "mvcur: moving cursor from (%d, %d) to (%d, %d) in refresh %d\n", ly, lx, y, x, in_refresh);
+	    "mvcur: moving cursor from (%d, %d) to (%d, %d) in refresh %d\n",
+	    ly, lx, y, x, in_refresh);
 	destcol = x;
 	destline = y;
 	outcol = lx;
@@ -90,8 +91,9 @@ fgoto(int in_refresh)
 	char	*cgp;
 
 	__CTRACE(__CTRACE_OUTPUT, "fgoto: in_refresh=%d\n", in_refresh);
-	__CTRACE(__CTRACE_OUTPUT, "fgoto: outcol=%d, outline=%d, destcol=%d, destline=%d\n",
-		outcol, outline, destcol, destline);
+	__CTRACE(__CTRACE_OUTPUT,
+	    "fgoto: outcol=%d, outline=%d, destcol=%d, destline=%d\n",
+	    outcol, outline, destcol, destline);
 	if (destcol >= COLS) {
 		destline += destcol / COLS;
 		destcol %= COLS;
@@ -209,7 +211,8 @@ plod(int cnt, int in_refresh)
 
 	__CTRACE(__CTRACE_OUTPUT, "plod: cnt=%d, in_refresh=%d\n",
 	    cnt, in_refresh);
-	__CTRACE(__CTRACE_OUTPUT, "plod: plodding from col %d, row %d to col %d, row %d\n",
+	__CTRACE(__CTRACE_OUTPUT,
+	    "plod: plodding from col %d, row %d to col %d, row %d\n",
 	    outcol, outline, destcol, destline);
 	plodcnt = plodflg = cnt;
 	soutcol = outcol;

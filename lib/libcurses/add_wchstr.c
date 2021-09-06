@@ -1,4 +1,4 @@
-/*   $NetBSD: add_wchstr.c,v 1.9 2021/09/06 07:03:49 rin Exp $ */
+/*   $NetBSD: add_wchstr.c,v 1.10 2021/09/06 07:45:48 rin Exp $ */
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation Inc.
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: add_wchstr.c,v 1.9 2021/09/06 07:03:49 rin Exp $");
+__RCSID("$NetBSD: add_wchstr.c,v 1.10 2021/09/06 07:45:48 rin Exp $");
 #endif				/* not lint */
 
 #include <stdlib.h>
@@ -244,8 +244,8 @@ wadd_wchnstr(WINDOW *win, const cchar_t *wchstr, int n)
 			}
 			lp++, ex++;
 			__CTRACE(__CTRACE_INPUT,
-				"wadd_wchnstr: ex = %d, x = %d, cw = %d\n",
-				 ex, x, cw);
+			    "wadd_wchnstr: ex = %d, x = %d, cw = %d\n",
+			    ex, x, cw);
 			while (ex - x <= cw - 1) {
 				np = lp->nsp;
 				if (np) {
@@ -264,7 +264,7 @@ wadd_wchnstr(WINDOW *win, const cchar_t *wchstr, int n)
 		} else {
 			/* non-spacing character */
 			__CTRACE(__CTRACE_INPUT,
-				"wadd_wchnstr: as non-spacing char");
+			    "wadd_wchnstr: as non-spacing char");
 			for (i = 0; i < chp->elements; i++) {
 				np = malloc(sizeof(nschar_t));
 				if (!np)
