@@ -1,4 +1,4 @@
-/* $NetBSD: isp.c,v 1.127 2018/02/08 09:05:19 dholland Exp $ */
+/* $NetBSD: isp.c,v 1.128 2021/09/06 21:56:04 andvar Exp $ */
 /*
  * Machine and OS Independent (well, as best as possible)
  * code for the Qlogic ISP SCSI adapters.
@@ -43,7 +43,7 @@
  */
 #ifdef	__NetBSD__
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isp.c,v 1.127 2018/02/08 09:05:19 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isp.c,v 1.128 2021/09/06 21:56:04 andvar Exp $");
 #include <dev/ic/isp_netbsd.h>
 #endif
 #ifdef	__FreeBSD__
@@ -1609,7 +1609,7 @@ isp_fibre_init(ispsoftc_t *isp)
 			 * We can't have Fast Posting any more- we now
 			 * have 32 bit handles.
 			 *
-			 * RIO seemed to have to much breakage.
+			 * RIO seemed to have too much breakage.
 			 *
 			 * Just opt for safety.
 			 */
