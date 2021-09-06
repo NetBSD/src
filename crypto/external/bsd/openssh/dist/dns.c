@@ -1,4 +1,4 @@
-/*	$NetBSD: dns.c,v 1.20 2021/09/04 01:47:47 ryoon Exp $	*/
+/*	$NetBSD: dns.c,v 1.21 2021/09/06 13:11:34 ryoon Exp $	*/
 /* $OpenBSD: dns.c,v 1.41 2021/07/19 03:13:28 dtucker Exp $ */
 
 /*
@@ -27,7 +27,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: dns.c,v 1.20 2021/09/04 01:47:47 ryoon Exp $");
+__RCSID("$NetBSD: dns.c,v 1.21 2021/09/06 13:11:34 ryoon Exp $");
 #include <sys/types.h>
 #include <sys/socket.h>
 
@@ -267,7 +267,7 @@ verify_host_key_dns(const char *hostname, struct sockaddr *address,
 		/* Check if the current key is the same as the given key */
 		if (hostkey_algorithm == dnskey_algorithm &&
 		    hostkey_digest_len == dnskey_digest_len) {
-			if (!consttime_memequal(hostkey_digest, dnskey_digest,
+			if (timingsafe_bcmp(hostkey_digest, dnskey_digest,
 			    hostkey_digest_len) == 0) {
 				debug_f("matched SSHFP type %d fptype %d",
 				    dnskey_algorithm, dnskey_digest_type);
