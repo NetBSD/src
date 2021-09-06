@@ -1,4 +1,4 @@
-/*	$NetBSD: fileio.c,v 1.7 2020/02/24 12:20:29 rin Exp $	*/
+/*	$NetBSD: fileio.c,v 1.8 2021/09/06 07:03:49 rin Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fileio.c,v 1.7 2020/02/24 12:20:29 rin Exp $");
+__RCSID("$NetBSD: fileio.c,v 1.8 2021/09/06 07:03:49 rin Exp $");
 #endif				/* not lint */
 
 #include "curses.h"
@@ -83,9 +83,7 @@ putwin(WINDOW *win, FILE *fp)
 	int y, x;
 	__LDATA *sp;
 
-#ifdef DEBUG
 	__CTRACE(__CTRACE_FILEIO, "putwin: win %p\n", win);
-#endif
 
 	if (win == NULL)
 		return ERR;
@@ -176,9 +174,7 @@ getwin(FILE *fp)
 	int y, x;
 	__LDATA *sp;
 
-#ifdef DEBUG
 	__CTRACE(__CTRACE_FILEIO, "getwin\n");
-#endif
 
 	/* Check library version */
 	if (fread(&major, sizeof(int), 1, fp) != 1)
@@ -235,9 +231,7 @@ getwin(FILE *fp)
 		}
 		__touchline(win, y, 0, (int) win->maxx - 1);
 	}
-#ifdef DEBUG
 	__CTRACE(__CTRACE_FILEIO, "getwin: win = %p\n", win);
-#endif
 	return win;
 
 error1:

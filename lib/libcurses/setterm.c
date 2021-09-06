@@ -1,4 +1,4 @@
-/*	$NetBSD: setterm.c,v 1.69 2021/06/10 07:15:40 mcf Exp $	*/
+/*	$NetBSD: setterm.c,v 1.70 2021/09/06 07:03:50 rin Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)setterm.c	8.8 (Berkeley) 10/25/94";
 #else
-__RCSID("$NetBSD: setterm.c,v 1.69 2021/06/10 07:15:40 mcf Exp $");
+__RCSID("$NetBSD: setterm.c,v 1.70 2021/09/06 07:03:50 rin Exp $");
 #endif
 #endif /* not lint */
 
@@ -78,9 +78,7 @@ _cursesi_setterm(char *type, SCREEN *screen)
 		if (screen->term == NULL)
 			return ERR;
 	}
-#ifdef DEBUG
 	__CTRACE(__CTRACE_INIT, "setterm: tty = %s\n", type);
-#endif
 
 	/* lines and cols will have been setup correctly by ti_setupterm(3). */
 	screen->LINES = t_lines(screen->term);
@@ -102,9 +100,7 @@ _cursesi_setterm(char *type, SCREEN *screen)
 		screen->LINES = 1;
 		t_lines(screen->term) = 1;
 	}
-#ifdef DEBUG
 	__CTRACE(__CTRACE_INIT, "setterm: filtered %d\n", screen->filtered);
-#endif
 
 	if ((p = getenv("ESCDELAY")) != NULL)
 		screen->ESCDELAY = (int)strtol(p, NULL, 0);
@@ -127,11 +123,9 @@ _cursesi_setterm(char *type, SCREEN *screen)
 	ESCDELAY = screen->ESCDELAY;
 	TABSIZE = screen->TABSIZE;
 
-#ifdef DEBUG
 	__CTRACE(__CTRACE_INIT,
 	    "setterm: LINES = %d, COLS = %d, TABSIZE = %d\n",
 	    LINES, COLS, TABSIZE);
-#endif
 
 	/*
 	 * set the pad char, only take the first char of the pc capability
@@ -280,9 +274,7 @@ does_esc_m(const char *cap)
 	const char *capptr;
 	int seq;
 
-#ifdef DEBUG
 	__CTRACE(__CTRACE_INIT, "does_esc_m: Checking %s\n", cap);
-#endif
 	/* Is it just "\E[m" or "\E[0m"? */
 	if (!strcmp(cap, "\x1b[m") || !strcmp(cap, "\x1b[0m"))
 		return 1;
@@ -378,9 +370,7 @@ does_ctrl_o(const char *exit_cap, const char *acs_cap)
 	char *eptr, *aptr;
 	int res;
 
-#ifdef DEBUG
 	__CTRACE(__CTRACE_INIT, "does_ctrl_o: Testing %s for %s\n", exit_cap, acs_cap);
-#endif
 
 	eptr = capdup_nodelay(exit_cap);
 	if (__predict_false(eptr == NULL))
