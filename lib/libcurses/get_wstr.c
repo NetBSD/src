@@ -1,4 +1,4 @@
-/*   $NetBSD: get_wstr.c,v 1.9 2021/08/15 15:12:36 rillig Exp $ */
+/*   $NetBSD: get_wstr.c,v 1.10 2021/09/06 07:03:49 rin Exp $ */
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation Inc.
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: get_wstr.c,v 1.9 2021/08/15 15:12:36 rillig Exp $");
+__RCSID("$NetBSD: get_wstr.c,v 1.10 2021/09/06 07:03:49 rin Exp $");
 #endif						  /* not lint */
 
 #include "curses.h"
@@ -175,11 +175,9 @@ __wgetn_wstr(WINDOW *win, wchar_t *wstr, int n)
 
 	while (wget_wch(win, &wc) != ERR
 	       && wc != L'\n' && wc != L'\r') {
-#ifdef DEBUG
 		__CTRACE(__CTRACE_INPUT,
 		    "__wgetn_wstr: win %p, char 0x%x, remain %d\n",
 		    win, wc, remain);
-#endif
 		*wstr = wc;
 		touchline(win, win->cury, 1);
 		if (wc == ec || wc == KEY_BACKSPACE || wc == KEY_LEFT) {

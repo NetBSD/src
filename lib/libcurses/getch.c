@@ -1,4 +1,4 @@
-/*	$NetBSD: getch.c,v 1.75 2020/07/06 23:33:38 uwe Exp $	*/
+/*	$NetBSD: getch.c,v 1.76 2021/09/06 07:03:49 rin Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)getch.c	8.2 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: getch.c,v 1.75 2020/07/06 23:33:38 uwe Exp $");
+__RCSID("$NetBSD: getch.c,v 1.76 2021/09/06 07:03:49 rin Exp $");
 #endif
 #endif					/* not lint */
 
@@ -261,11 +261,9 @@ add_new_key(keymap_t *current, char chr, int key_type, int symbol)
 	key_entry_t *the_key;
         int i, ki;
 
-#ifdef DEBUG
 	__CTRACE(__CTRACE_MISC,
 	    "Adding character %s of type %d, symbol 0x%x\n",
 	    unctrl(chr), key_type, symbol);
-#endif
 	if (current->mapping[(unsigned char)chr] < 0) {
 		if (current->mapping[(unsigned char)chr] == MAPPING_UNUSED) {
 			  /* first time for this char */
@@ -306,18 +304,14 @@ add_new_key(keymap_t *current, char chr, int key_type, int symbol)
 		switch (key_type) {
 		  case KEYMAP_MULTI:
 			    /* need for next key */
-#ifdef DEBUG
 			  __CTRACE(__CTRACE_MISC, "Creating new keymap\n");
-#endif
 			  the_key->value.next = new_keymap();
 			  the_key->enable = TRUE;
 			  break;
 
 		  case KEYMAP_LEAF:
 				/* the associated symbol for the key */
-#ifdef DEBUG
 			  __CTRACE(__CTRACE_MISC, "Adding leaf key\n");
-#endif
 			  the_key->value.symbol = symbol;
 			  the_key->enable = TRUE;
 			  break;
@@ -328,9 +322,7 @@ add_new_key(keymap_t *current, char chr, int key_type, int symbol)
 		}
 	} else {
 		  /* the key is already known - just return the address. */
-#ifdef DEBUG
 		__CTRACE(__CTRACE_MISC, "Keymap already known\n");
-#endif
 		the_key = current->key[current->mapping[(unsigned char)chr]];
 	}
 
@@ -365,10 +357,8 @@ delete_key_sequence(keymap_t *current, int key_type)
 				_cursesi_free_keymap(key->value.next);
 		} else if ((key->type == KEYMAP_LEAF)
 			   && (key->value.symbol == key_type)) {
-#ifdef DEBUG
 		__CTRACE(__CTRACE_INPUT, "delete_key_sequence: found keysym %d, deleting\n",
 		    key_type);
-#endif
 			key->enable = FALSE;
 		}
 	}
@@ -385,10 +375,8 @@ add_key_sequence(SCREEN *screen, char *sequence, int key_type)
 	keymap_t *current;
 	int length, j, key_ent;
 
-#ifdef DEBUG
 	__CTRACE(__CTRACE_MISC, "add_key_sequence: add key sequence: %s(%s)\n",
 	    sequence, keyname(key_type));
-#endif /* DEBUG */
 	current = screen->base_keymap;	/* always start with
 					 * base keymap. */
 	length = (int)strlen(sequence);
@@ -552,9 +540,7 @@ inkey(int to, int delay)
 
 	k = 0;		/* XXX gcc -Wuninitialized */
 
-#ifdef DEBUG
 	__CTRACE(__CTRACE_INPUT, "inkey (%d, %d)\n", to, delay);
-#endif
 	for (;;) {		/* loop until we get a complete key sequence */
 reread:
 		if (_cursesi_state == INKEY_NORM) {
@@ -570,10 +556,8 @@ reread:
 				return ERR;
 
 			k = (wchar_t)c;
-#ifdef DEBUG
 			__CTRACE(__CTRACE_INPUT,
 			    "inkey (state normal) got '%s'\n", unctrl(k));
-#endif
 
 			working = start;
 			inbuf[working] = k;
@@ -613,10 +597,8 @@ reread:
 			if ((to || delay) && (__notimeout() == ERR))
 					return ERR;
 
-#ifdef DEBUG
 			__CTRACE(__CTRACE_INPUT,
 			    "inkey (state assembling) got '%s'\n", unctrl(k));
-#endif
 			if (feof(infd) || c == -1) {	/* inter-char timeout,
 							 * start backing out */
 				clearerr(infd);
@@ -786,10 +768,8 @@ define_key(char *sequence, int symbol)
 		return ERR;
 
 	if (sequence == NULL) {
-#ifdef DEBUG
 		__CTRACE(__CTRACE_INPUT, "define_key: deleting keysym %d\n",
 		    symbol);
-#endif
 		delete_key_sequence(_cursesi_screen->base_keymap, symbol);
 	} else
 		add_key_sequence(_cursesi_screen, sequence, symbol);
@@ -808,9 +788,7 @@ wgetch(WINDOW *win)
 	int c;
 	FILE *infd = _cursesi_screen->infd;
 
-#ifdef DEBUG
 	__CTRACE(__CTRACE_INPUT, "wgetch: win(%p)\n", win);
-#endif
 	if (win == NULL)
 		return ERR;
 	if (!(win->flags & __SCROLLOK) && (win->flags & __FULLWIN)
@@ -823,11 +801,9 @@ wgetch(WINDOW *win)
 			wrefresh(win);
 		else if ((_cursesi_screen->curscr->cury != (win->begy + win->cury))
 		         || (_cursesi_screen->curscr->curx != (win->begx + win->curx))) {
-#ifdef DEBUG
 			__CTRACE(__CTRACE_INPUT, "wgetch: curscr cury %d cury %d curscr curx %d curx %d\n",
 			_cursesi_screen->curscr->cury, win->begy + win->cury,
 			_cursesi_screen->curscr->curx, win->begx + win->curx);
-#endif
 			/*
 			 * Just in case the window is not dirty but the
 			 * cursor was  moved, check and update the 
@@ -843,24 +819,18 @@ wgetch(WINDOW *win)
 		}
 	}
 
-#ifdef DEBUG
 	__CTRACE(__CTRACE_INPUT, "wgetch: __echoit = %d, "
 	    "__rawmode = %d, __nl = %d, flags = %#.4x, delay = %d\n",
 	    __echoit, __rawmode, _cursesi_screen->nl, win->flags, win->delay);
-#endif
 	if (_cursesi_screen->resized) {
 		resizeterm(LINES, COLS);
 		_cursesi_screen->resized = 0;
-#ifdef DEBUG
 		__CTRACE(__CTRACE_INPUT, "wgetch returning KEY_RESIZE\n");
-#endif
 		return KEY_RESIZE;
 	}
 	if (_cursesi_screen->unget_pos) {
-#ifdef DEBUG
 		__CTRACE(__CTRACE_INPUT, "wgetch returning char at %d\n",
 		    _cursesi_screen->unget_pos);
-#endif
 		_cursesi_screen->unget_pos--;
 		c = _cursesi_screen->unget_list[_cursesi_screen->unget_pos];
 		if (__echoit)
@@ -961,9 +931,7 @@ __unget(wint_t c)
 	wchar_t	*p;
 	int	len;
 
-#ifdef DEBUG
 	__CTRACE(__CTRACE_INPUT, "__unget(%x)\n", c);
-#endif
 	if (_cursesi_screen == NULL)
 		return ERR;
 	if (_cursesi_screen->unget_pos >= _cursesi_screen->unget_len) {
@@ -1033,9 +1001,7 @@ __fgetc_resize(FILE *infd)
 
 	if (!ferror(infd) || errno != EINTR || !_cursesi_screen->resized)
 		return ERR;
-#ifdef DEBUG
 	__CTRACE(__CTRACE_INPUT, "__fgetc_resize returning KEY_RESIZE\n");
-#endif
 	resizeterm(LINES, COLS);
 	_cursesi_screen->resized = 0;
 	return KEY_RESIZE;

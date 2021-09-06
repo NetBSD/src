@@ -1,4 +1,4 @@
-/*	$NetBSD: color.c,v 1.42 2021/09/06 02:48:54 rin Exp $	*/
+/*	$NetBSD: color.c,v 1.43 2021/09/06 07:03:49 rin Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: color.c,v 1.42 2021/09/06 02:48:54 rin Exp $");
+__RCSID("$NetBSD: color.c,v 1.43 2021/09/06 07:03:49 rin Exp $");
 #endif				/* not lint */
 
 #include "curses.h"
@@ -184,10 +184,8 @@ start_color(void)
 		if (temp_nc & 0x0100)
 			_cursesi_screen->nca |= __ALTCHARSET;
 	}
-#ifdef DEBUG
 	__CTRACE(__CTRACE_COLOR, "start_color: _cursesi_screen->nca = %08x\n",
 	    _cursesi_screen->nca);
-#endif
 
 	/* Set up initial 8 colours */
 #define	RGB_ON	680	/* Allow for bright colours */
@@ -269,9 +267,7 @@ init_pair(short pair, short fore, short back)
 {
 	int	changed;
 
-#ifdef DEBUG
 	__CTRACE(__CTRACE_COLOR, "init_pair: %d, %d, %d\n", pair, fore, back);
-#endif
 
 	if (pair < 0 || pair >= COLOR_PAIRS)
 		return ERR;
@@ -405,10 +401,8 @@ init_color_value(short color, short red, short green, short blue)
 int
 init_color(short color, short red, short green, short blue)
 {
-#ifdef DEBUG
 	__CTRACE(__CTRACE_COLOR, "init_color: %d, %d, %d, %d\n",
 	    color, red, green, blue);
-#endif
 	if (init_color_value(color, red, green, blue) == ERR)
 		return ERR;
 	if (!can_change || t_initialize_color(_cursesi_screen->term) == NULL)
@@ -441,9 +435,7 @@ color_content(short color, short *redp, short *greenp, short *bluep)
 int
 use_default_colors(void)
 {
-#ifdef DEBUG
 	__CTRACE(__CTRACE_COLOR, "use_default_colors\n");
-#endif
 
 	return (assume_default_colors(-1, -1));
 }
@@ -455,11 +447,9 @@ use_default_colors(void)
 int
 assume_default_colors(short fore, short back)
 {
-#ifdef DEBUG
 	__CTRACE(__CTRACE_COLOR, "assume_default_colors: %d, %d\n",
 	    fore, back);
 	__CTRACE(__CTRACE_COLOR, "assume_default_colors: default_colour = %d, pair_number = %d\n", __default_color, PAIR_NUMBER(__default_color));
-#endif
 
 	/* Swap red/blue and yellow/cyan */
 	if (_cursesi_screen->color_type == COLOR_OTHER) {
@@ -540,11 +530,9 @@ __set_color( /*ARGSUSED*/ WINDOW *win, attr_t attr)
 		return;
 
 	pair = PAIR_NUMBER((uint32_t)attr);
-#ifdef DEBUG
 	__CTRACE(__CTRACE_COLOR, "__set_color: %d, %d, %d\n", pair,
 		 _cursesi_screen->colour_pairs[pair].fore,
 		 _cursesi_screen->colour_pairs[pair].back);
-#endif
 	switch (_cursesi_screen->color_type) {
 	/* Set ANSI forground and background colours */
 	case COLOR_ANSI:
@@ -591,9 +579,7 @@ __set_color( /*ARGSUSED*/ WINDOW *win, attr_t attr)
 void
 __unset_color(WINDOW *win)
 {
-#ifdef DEBUG
 	__CTRACE(__CTRACE_COLOR, "__unset_color\n");
-#endif
 	switch (_cursesi_screen->color_type) {
 	/* Clear ANSI forground and background colours */
 	case COLOR_ANSI:
@@ -650,19 +636,15 @@ __change_pair(short pair)
 
 
 	for (wlp = _cursesi_screen->winlistp; wlp != NULL; wlp = wlp->nextp) {
-#ifdef DEBUG
 		__CTRACE(__CTRACE_COLOR, "__change_pair: win = %p\n",
 		    wlp->winp);
-#endif
 		win = wlp->winp;
 		if (win == __virtscr)
 			continue;
 		else if (win == curscr) {
 			/* Reset colour attribute on curscr */
-#ifdef DEBUG
 			__CTRACE(__CTRACE_COLOR,
 			    "__change_pair: win == curscr\n");
-#endif
 			for (y = 0; y < curscr->maxy; y++) {
 				lp = curscr->alines[y];
 				for (x = 0; x < curscr->maxx; x++) {

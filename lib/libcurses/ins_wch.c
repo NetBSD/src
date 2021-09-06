@@ -1,4 +1,4 @@
-/*   $NetBSD: ins_wch.c,v 1.16 2021/06/22 07:22:44 blymn Exp $ */
+/*   $NetBSD: ins_wch.c,v 1.17 2021/09/06 07:03:49 rin Exp $ */
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation Inc.
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ins_wch.c,v 1.16 2021/06/22 07:22:44 blymn Exp $");
+__RCSID("$NetBSD: ins_wch.c,v 1.17 2021/09/06 07:03:49 rin Exp $");
 #endif						  /* not lint */
 
 #include <string.h>
@@ -95,9 +95,7 @@ wins_wch(WINDOW *win, const cchar_t *wch)
 	if (!wch)
 		return OK;
 	cw = wcwidth(wch->vals[0]);
-#ifdef DEBUG
 	__CTRACE(__CTRACE_INPUT, "wins_wch: wcwidth %d\n", cw);
-#endif
 	if (cw < 0)
 		cw = 1;
 	if (!cw)
@@ -105,9 +103,7 @@ wins_wch(WINDOW *win, const cchar_t *wch)
 
 	x = win->curx;
 	y = win->cury;
-#ifdef DEBUG
 	__CTRACE(__CTRACE_INPUT, "wins_wch: (%d,%d)\n", y, x);
-#endif /* DEBUG */
 	switch (wch->vals[0]) {
 		case L'\b':
 			if (--x < 0)
@@ -151,16 +147,12 @@ wins_wch(WINDOW *win, const cchar_t *wch)
 		*lnp->firstchp = newx;
 
 	/* shift all complete characters */
-#ifdef DEBUG
 	__CTRACE(__CTRACE_INPUT, "wins_wch: shift all characters\n");
-#endif /* DEBUG */
 	temp1 = &win->alines[y]->line[win->maxx - 1];
 	temp2 = temp1 - cw;
 	pcw = WCOL(*(temp2 + 1));
 	if (pcw < 0) {
-#ifdef DEBUG
 		__CTRACE(__CTRACE_INPUT, "wins_wch: clear EOL\n");
-#endif /* DEBUG */
 		temp2 += pcw;
 		while (temp1 > temp2 + cw) {
 			np = temp1->nsp;
@@ -200,10 +192,8 @@ wins_wch(WINDOW *win, const cchar_t *wch)
 			start->nsp = np;
 		}
 	}
-#ifdef DEBUG
 	__CTRACE(__CTRACE_INPUT, "wins_wch: insert (%x,%x,%p)\n",
 	    start->ch, start->attr, start->nsp);
-#endif /* DEBUG */
 	temp1 = start + 1;
 	ex = x + 1;
 	while (ex - x < cw) {

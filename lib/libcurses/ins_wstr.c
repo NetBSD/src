@@ -1,4 +1,4 @@
-/*   $NetBSD: ins_wstr.c,v 1.15 2020/07/06 22:46:50 uwe Exp $ */
+/*   $NetBSD: ins_wstr.c,v 1.16 2021/09/06 07:03:49 rin Exp $ */
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation Inc.
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ins_wstr.c,v 1.15 2020/07/06 22:46:50 uwe Exp $");
+__RCSID("$NetBSD: ins_wstr.c,v 1.16 2021/09/06 07:03:49 rin Exp $");
 #endif						  /* not lint */
 
 #include <string.h>
@@ -160,9 +160,7 @@ wins_nwstr(WINDOW *win, const wchar_t *wstr, int n)
 		n--, len++, width += w;
 		scp++;
 	}
-#ifdef DEBUG
 	__CTRACE(__CTRACE_INPUT, "wins_nwstr: width=%d,len=%d\n", width, len);
-#endif /* DEBUG */
 
 	if (cw > win->maxx - win->curx + 1)
 		return ERR;
@@ -174,9 +172,7 @@ wins_nwstr(WINDOW *win, const wchar_t *wstr, int n)
 		sx += pcw;
 		start += pcw;
 	}
-#ifdef DEBUG
 	__CTRACE(__CTRACE_INPUT, "wins_nwstr: start@(%d)\n", sx);
-#endif /* DEBUG */
 	pcw = WCOL(*start);
 	lnp->flags |= __ISDIRTY;
 	newx = sx + win->ch_off;
@@ -197,18 +193,14 @@ wins_nwstr(WINDOW *win, const wchar_t *wstr, int n)
 
 	/* shift all complete characters */
 	if (sx + width + pcw <= win->maxx) {
-#ifdef DEBUG
 		__CTRACE(__CTRACE_INPUT, "wins_nwstr: shift all characters\n");
-#endif /* DEBUG */
 		temp1 = &win->alines[win->cury]->line[win->maxx - 1];
 		temp2 = temp1 - width;
 		pcw = WCOL(*(temp2 + 1));
 		if (pcw < 0) {
-#ifdef DEBUG
 			__CTRACE(__CTRACE_INPUT,
 			    "wins_nwstr: clear from %d to EOL(%d)\n",
 			    win->maxx + pcw, win->maxx - 1);
-#endif /* DEBUG */
 			temp2 += pcw;
 			while (temp1 > temp2 + width) {
 				temp1->ch = (wchar_t)btowc((int) win->bch);
@@ -216,10 +208,8 @@ wins_nwstr(WINDOW *win, const wchar_t *wstr, int n)
 					return ERR;
 				temp1->attr = win->battr;
 				SET_WCOL(*temp1, 1);
-#ifdef DEBUG
 				__CTRACE(__CTRACE_INPUT,
 				    "wins_nwstr: empty cell(%p)\n", temp1);
-#endif /* DEBUG */
 				temp1--;
 			}
 		}
@@ -278,10 +268,8 @@ wins_nwstr(WINDOW *win, const wchar_t *wstr, int n)
 			temp1->attr = win->wattr;
 			SET_WCOL(*temp1, cw);
 			temp1->nsp = NULL;
-#ifdef DEBUG
 			__CTRACE(__CTRACE_INPUT,
 			    "wins_nwstr: add spacing char(%x)\n", temp1->ch);
-#endif /* DEBUG */
 			temp2 = temp1++;
 			if (cw > 1) {
 				x = -1;
@@ -303,10 +291,8 @@ wins_nwstr(WINDOW *win, const wchar_t *wstr, int n)
 			np->ch = *scp;
 			np->next = temp1->nsp;
 			temp1->nsp = np;
-#ifdef DEBUG
 			__CTRACE(__CTRACE_INPUT,
 			    "wins_nstr: add non-spacing char(%x)\n", np->ch);
-#endif /* DEBUG */
 		}
 	}
 #ifdef DEBUG

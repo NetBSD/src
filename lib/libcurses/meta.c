@@ -1,4 +1,4 @@
-/*	$NetBSD: meta.c,v 1.9 2017/01/06 13:53:18 roy Exp $	*/
+/*	$NetBSD: meta.c,v 1.10 2021/09/06 07:03:50 rin Exp $	*/
 
 /*-
  * Copyright (c) 1998-2000 Brett Lymn
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: meta.c,v 1.9 2017/01/06 13:53:18 roy Exp $");
+__RCSID("$NetBSD: meta.c,v 1.10 2021/09/06 07:03:50 rin Exp $");
 #endif				/* not lint */
 
 #include "curses.h"
@@ -47,18 +47,14 @@ meta(/*ARGSUSED*/ WINDOW *win, bool bf)
 
 	if (bf == TRUE) {
 		if (meta_on != NULL) {
-#ifdef DEBUG
 			__CTRACE(__CTRACE_MISC, "meta: TRUE\n");
-#endif
 			tputs(meta_on, 0, __cputchar);
 			_cursesi_screen->meta_state = TRUE;
 			fflush(_cursesi_screen->outfd);
 		}
 	} else {
 		if (meta_off != NULL) {
-#ifdef DEBUG
 			__CTRACE(__CTRACE_MISC, "meta: FALSE\n");
-#endif
 			tputs(meta_off, 0, __cputchar);
 			_cursesi_screen->meta_state = FALSE;
 			fflush(_cursesi_screen->outfd);
