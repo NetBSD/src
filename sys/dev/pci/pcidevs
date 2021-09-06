@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.1432 2021/09/03 00:44:49 mrg Exp $
+$NetBSD: pcidevs,v 1.1433 2021/09/06 02:43:06 mrg Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -2123,7 +2123,7 @@ product ATI RADEON_HD8240	0x9838	Radeon HD 8240 / R3 Series
 product ATI RADEON_HD8180	0x9839	Radeon HD 8180
 product ATI RADEON_HD8250	0x983d	Radeon HD 8250/8280G
 product ATI RADEON_KABINI_HDA	0x9840	Kabini HDMI/DP Audio
-product ATI RADEON_R3		0x9850	Radeon R3 Graphics
+product ATI RADEON_R2_3		0x9850	Radeon R2 Graphics
 product ATI RADEON_R4R5		0x9851	Radeon R4/R5 Graphics
 product ATI RADEON_R2_1		0x9852	Radeon R2 Graphics
 product ATI RADEON_R2_2		0x9853	Radeon R2 Graphics
