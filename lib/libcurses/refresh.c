@@ -1,4 +1,4 @@
-/*	$NetBSD: refresh.c,v 1.114 2021/09/06 07:03:50 rin Exp $	*/
+/*	$NetBSD: refresh.c,v 1.115 2021/09/06 07:45:48 rin Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)refresh.c	8.7 (Berkeley) 8/13/94";
 #else
-__RCSID("$NetBSD: refresh.c,v 1.114 2021/09/06 07:03:50 rin Exp $");
+__RCSID("$NetBSD: refresh.c,v 1.115 2021/09/06 07:45:48 rin Exp $");
 #endif
 #endif				/* not lint */
 
@@ -100,7 +100,9 @@ int
 wnoutrefresh(WINDOW *win)
 {
 
-	__CTRACE(__CTRACE_REFRESH, "wnoutrefresh: win %p, begy %d, begx %d, maxy %d, maxx %d\n", win, win->begy, win->begx, win->maxy, win->maxx);
+	__CTRACE(__CTRACE_REFRESH,
+	    "wnoutrefresh: win %p, begy %d, begx %d, maxy %d, maxx %d\n",
+	    win, win->begy, win->begx, win->maxy, win->maxx);
 
 	return _wnoutrefresh(win, 0, 0, win->begy, win->begx,
 	    win->maxy, win->maxx);
@@ -252,18 +254,19 @@ _wnoutrefresh(WINDOW *win, int begy, int begx, int wbegy, int wbegx,
 			_wintype = "dwin";
 
 		__CTRACE(__CTRACE_REFRESH,
-		"_wnoutrefresh: %s wy %d\tf %d\tl %d\tflags %x\n",
-		_wintype, dy_off, *dwlp->firstchp, *dwlp->lastchp, dwlp->flags);
+		    "_wnoutrefresh: %s wy %d\tf %d\tl %d\tflags %x\n",
+		    _wintype, dy_off, *dwlp->firstchp, *dwlp->lastchp,
+		    dwlp->flags);
 		__CTRACE(__CTRACE_REFRESH,
-		"_wnoutrefresh: %s maxx %d\tch_off %d wlp %p\n",
-		_wintype, dwin->maxx, dwin->ch_off, wlp);
+		    "_wnoutrefresh: %s maxx %d\tch_off %d wlp %p\n",
+		    _wintype, dwin->maxx, dwin->ch_off, wlp);
 #endif
 		if (((wlp->flags & (__ISDIRTY | __ISFORCED)) == 0) &&
 		    ((dwlp->flags & (__ISDIRTY | __ISFORCED)) == 0))
 			continue;
 		__CTRACE(__CTRACE_REFRESH,
-		"_wnoutrefresh: line y_off %d (dy_off %d) is dirty\n",
-			y_off, dy_off);
+		    "_wnoutrefresh: line y_off %d (dy_off %d) is dirty\n",
+		    y_off, dy_off);
 
 		wlp = swin->alines[wy];
 		vlp = screen->__virtscr->alines[y_off];
@@ -305,7 +308,8 @@ _wnoutrefresh(WINDOW *win, int begy, int begx, int wbegy, int wbegx,
 				    wy, wx, y_off, x_off,
 				    unctrl(wlp->line[wx].ch),
 				    wlp->line[wx].attr);
-				__CTRACE(__CTRACE_REFRESH, " (curdest %s, 0x%x)",
+				__CTRACE(__CTRACE_REFRESH,
+				    " (curdest %s, 0x%x)",
 				    unctrl(vlp->line[x_off].ch),
 				    vlp->line[x_off].attr);
 				/* Copy character */
@@ -1669,8 +1673,8 @@ done:
 						(void) memcpy(clp->line + i -
 						    BLANKSIZE, buf, sizeof(buf));
 					}
-					(void) memcpy(clp->line , buf, i *
-					    sizeof(buf[0]));
+					(void)memcpy(clp->line, buf,
+					    i * sizeof(buf[0]));
 					__CTRACE(__CTRACE_REFRESH,
 					    " blanked out: dirty\n");
 					clp->hash = blank_hash;
@@ -1682,7 +1686,8 @@ done:
 				}
 			} else {
 				__CTRACE(__CTRACE_REFRESH, " -- dirty\n");
-				__touchline(__virtscr, target, 0, (int) __virtscr->maxx - 1);
+				__touchline(__virtscr, target, 0,
+				    (int)__virtscr->maxx - 1);
 			}
 		if (target == cur_period) {
 			i = target + 1;
@@ -1996,8 +2001,8 @@ __cursesi_putnsp(nschar_t *nsp, const int wy, const int wx)
 	while (p != NULL) {
 		__cputwchar((int)p->ch);
 		__CTRACE(__CTRACE_REFRESH,
-		       "_cursesi_putnsp: (%d,%d) non-spacing putwchar(0x%x)\n",
-			 wy, wx - 1, p->ch);
+		    "_cursesi_putnsp: (%d,%d) non-spacing putwchar(0x%x)\n",
+		    wy, wx - 1, p->ch);
 		p = p->next;
 	}
 }

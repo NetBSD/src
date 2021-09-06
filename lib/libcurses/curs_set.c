@@ -1,4 +1,4 @@
-/*	$NetBSD: curs_set.c,v 1.11 2021/09/06 07:03:49 rin Exp $	*/
+/*	$NetBSD: curs_set.c,v 1.12 2021/09/06 07:45:48 rin Exp $	*/
 
 /*-
  * Copyright (c) 1998-2000 Brett Lymn
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: curs_set.c,v 1.11 2021/09/06 07:03:49 rin Exp $");
+__RCSID("$NetBSD: curs_set.c,v 1.12 2021/09/06 07:45:48 rin Exp $");
 #endif				/* not lint */
 
 #include "curses.h"
@@ -74,8 +74,7 @@ curs_set(int visibility)
 
 		case 2: /* high visibility */
 			if (cursor_visible != NULL) {
-				__CTRACE(__CTRACE_MISC,
-				    "curs_set: high vis\n");
+				__CTRACE(__CTRACE_MISC, "curs_set: high vis\n");
 				_cursesi_screen->old_mode = 2;
 				tputs(cursor_visible, 0, __cputchar);
 				fflush(_cursesi_screen->outfd);

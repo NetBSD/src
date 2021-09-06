@@ -1,4 +1,4 @@
-/*	$NetBSD: slk.c,v 1.15 2021/09/06 07:03:50 rin Exp $	*/
+/*	$NetBSD: slk.c,v 1.16 2021/09/06 07:45:48 rin Exp $	*/
 
 /*-
  * Copyright (c) 2017 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: slk.c,v 1.15 2021/09/06 07:03:50 rin Exp $");
+__RCSID("$NetBSD: slk.c,v 1.16 2021/09/06 07:45:48 rin Exp $");
 #endif				/* not lint */
 
 #include <ctype.h>
@@ -558,8 +558,9 @@ __slk_wset(SCREEN *screen, int labnum, const wchar_t *label, int justify)
 	__CTRACE(__CTRACE_INPUT, "__slk_wset: entry\n");
 	olabel = label;
 	if ((len = wcsrtombs(NULL, &olabel, 0, &screen->sp)) == -1) {
-	__CTRACE(__CTRACE_INPUT, "__slk_wset: conversion failed on char 0x%x\n",
-	    (uint16_t) *olabel);
+	__CTRACE(__CTRACE_INPUT,
+	    "__slk_wset: conversion failed on char 0x%hx\n",
+	    (uint16_t)*olabel);
 		return ERR;
 	}
 
@@ -574,7 +575,7 @@ __slk_wset(SCREEN *screen, int labnum, const wchar_t *label, int justify)
 out:
 	free(str);
 	__CTRACE(__CTRACE_INPUT, "__slk_wset: return %s\n",
-	    (result == OK)?"OK":"ERR");
+	    result == OK ? "OK" : "ERR");
 	return result;
 }
 #endif	/* HAVE_WCHAR */
@@ -843,7 +844,8 @@ __slk_draw(SCREEN *screen, int labnum)
 					continue;
 				}
 
-	__CTRACE(__CTRACE_INPUT, "__slk_draw: last label, (%d,%d) char[%d] 0x%x\n",
+	__CTRACE(__CTRACE_INPUT,
+	    "__slk_draw: last label, (%d,%d) char[%d] 0x%x\n",
 	    l->x + tx, 0, lcnt, l->label[lcnt]);
 	__CTRACE(__CTRACE_INPUT, "__slk_draw: label len %d, wcwidth %d\n",
 	    screen->slk_label_len, wcwidth(l->label[lcnt]));

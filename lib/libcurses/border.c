@@ -1,4 +1,4 @@
-/*	$NetBSD: border.c,v 1.19 2021/09/06 07:03:49 rin Exp $	*/
+/*	$NetBSD: border.c,v 1.20 2021/09/06 07:45:48 rin Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: border.c,v 1.19 2021/09/06 07:03:49 rin Exp $");
+__RCSID("$NetBSD: border.c,v 1.20 2021/09/06 07:45:48 rin Exp $");
 #endif				/* not lint */
 
 #include <stdlib.h>
@@ -372,7 +372,7 @@ int wborder_set(WINDOW *win, const cchar_t *ls, const cchar_t *rs,
 		if (pcw != 1) {
 			__CTRACE(__CTRACE_INPUT,
 			    "wborder_set: clean out partial chars[%d:%d]",
-			    endx - cw + pcw, endx - cw );
+			    endx - cw + pcw, endx - cw);
 			k = pcw < 0 ? endx -cw + pcw : endx - cw;
 			for (j = endx - cw; j >= k; j--) {
 				win->alines[i]->line[j].ch

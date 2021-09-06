@@ -1,4 +1,4 @@
-/*   $NetBSD: ins_wstr.c,v 1.16 2021/09/06 07:03:49 rin Exp $ */
+/*   $NetBSD: ins_wstr.c,v 1.17 2021/09/06 07:45:48 rin Exp $ */
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation Inc.
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ins_wstr.c,v 1.16 2021/09/06 07:03:49 rin Exp $");
+__RCSID("$NetBSD: ins_wstr.c,v 1.17 2021/09/06 07:45:48 rin Exp $");
 #endif						  /* not lint */
 
 #include <string.h>
@@ -184,7 +184,7 @@ wins_nwstr(WINDOW *win, const wchar_t *wstr, int n)
 		for (x = 0; x < win->maxx; x++)
 			__CTRACE(__CTRACE_INPUT,
 			    "wins_nwstr: (%d,%d)=(%x,%x,%p)\n",
-			    (int) win->cury, x,
+			    win->cury, x,
 			    win->alines[win->cury]->line[x].ch,
 			    win->alines[win->cury]->line[x].attr,
 			    win->alines[win->cury]->line[x].nsp);
@@ -223,7 +223,7 @@ wins_nwstr(WINDOW *win, const wchar_t *wstr, int n)
 			for (x = 0; x < win->maxx; x++)
 				__CTRACE(__CTRACE_INPUT,
 				    "wins_nwstr: (%d,%d)=(%x,%x,%p)\n",
-				    (int) win->cury, x,
+				    win->cury, x,
 				    win->alines[win->cury]->line[x].ch,
 				    win->alines[win->cury]->line[x].attr,
 				    win->alines[win->cury]->line[x].nsp);
@@ -301,7 +301,7 @@ wins_nwstr(WINDOW *win, const wchar_t *wstr, int n)
 		for (x = 0; x < win->maxx; x++)
 			__CTRACE(__CTRACE_INPUT,
 			    "wins_nwstr: (%d,%d)=(%x,%x,%p)\n",
-			    (int) win->cury, x,
+			    win->cury, x,
 			    win->alines[win->cury]->line[x].ch,
 			    win->alines[win->cury]->line[x].attr,
 			    win->alines[win->cury]->line[x].nsp);

@@ -1,4 +1,4 @@
-/*	$NetBSD: addch.c,v 1.22 2021/09/06 07:03:49 rin Exp $	*/
+/*	$NetBSD: addch.c,v 1.23 2021/09/06 07:45:48 rin Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)addch.c	8.2 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: addch.c,v 1.22 2021/09/06 07:03:49 rin Exp $");
+__RCSID("$NetBSD: addch.c,v 1.23 2021/09/06 07:45:48 rin Exp $");
 #endif
 #endif				/* not lint */
 
@@ -94,8 +94,8 @@ waddch(WINDOW *win, chtype ch)
 
 	__cursesi_chtype_to_cchar(ch, &cc);
 	__CTRACE(__CTRACE_INPUT,
-		 "addch: %d : 0x%x (adding char as wide char)\n",
-		 cc.vals[0], cc.attributes);
+	    "addch: %d : 0x%x (adding char as wide char)\n",
+	    cc.vals[0], cc.attributes);
 
 	return wadd_wch(win, &cc);
 }
