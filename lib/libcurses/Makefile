@@ -1,11 +1,11 @@
-#	$NetBSD: Makefile,v 1.95 2021/06/27 16:24:52 christos Exp $
+#	$NetBSD: Makefile,v 1.96 2021/09/06 15:17:25 rin Exp $
 #	@(#)Makefile	8.2 (Berkeley) 1/2/94
 
 .include <bsd.own.mk>
 
 WARNS=	2
 
-CPPFLAGS+=-I${.CURDIR} -I${NETBSDSRCDIR}/lib/libterminfo
+CPPFLAGS+=-I${.CURDIR} -I${NETBSDSRCDIR}/lib/libterminfo -I.
 .if defined(DEBUG_CURSES)
 CPPFLAGS+=-g -DDEBUG
 .endif
@@ -215,8 +215,12 @@ MLINKS+= curses_addch.3 addch.3 curses_addchstr.3 addchnstr.3 \
 
 SUBDIR.roff+= PSD.doc
 
+DPSRCS+=	fileio.h
+CLEANFILES+=	fileio.h
+
 fileio.h: shlib_version genfileioh.awk
-	${TOOL_AWK} -f ${.CURDIR}/genfileioh.awk < ${.CURDIR}/shlib_version > ${.CURDIR}/fileio.h
+	${TOOL_AWK} -f ${.CURDIR}/genfileioh.awk < ${.CURDIR}/shlib_version \
+	    > ${.TARGET}
 
 .include <bsd.lib.mk>
 .include <bsd.subdir.mk>
