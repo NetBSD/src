@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.S,v 1.73 2020/09/14 16:11:00 skrll Exp $	*/
+/*	$NetBSD: trap.S,v 1.74 2021/09/06 21:56:03 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -662,7 +662,7 @@ os_hpmc:
 	STRAP(tlbd,T_TLB_DIRTY,DTLBPRE)	/* 20. TLB dirty bit trap */
 	ATRAP(pgref,T_PAGEREF)		/* 21. page reference trap */
 	CTRAP(emu,T_EMULATION,)		/* 22. assist emulation trap */
-	ATRAP(hpl,T_HIGHERPL)		/* 23. higher-privelege transfer trap*/
+	ATRAP(hpl,T_HIGHERPL)		/* 23. higher-privilege transfer trap*/
 	ATRAP(lpl,T_LOWERPL)		/* 24. lower-privilege transfer trap */
 	ATRAP(tknbr,T_TAKENBR)		/* 25. taken branch trap */
 	ATRAP(dacc,T_DATACC)		/* 26. data access rights trap */

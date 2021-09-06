@@ -1,4 +1,4 @@
-/*	$NetBSD: kgdb_hppa.c,v 1.9 2019/04/15 20:45:08 skrll Exp $	*/
+/*	$NetBSD: kgdb_hppa.c,v 1.10 2021/09/06 21:56:03 andvar Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kgdb_hppa.c,v 1.9 2019/04/15 20:45:08 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kgdb_hppa.c,v 1.10 2021/09/06 21:56:03 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/kgdb.h>
@@ -121,7 +121,7 @@ kgdb_signal(int type)
 	case T_EXCEPTION:	/* assist exception */
 	case T_TLB_DIRTY:	/* TLB dirty bit */
 	case T_PAGEREF:		/* page reference */
-	case T_HIGHERPL:	/* higher-privelege transfer */
+	case T_HIGHERPL:	/* higher-privilege transfer */
 	case T_LOWERPL:		/* lower-privilege transfer */
 #endif
 	default:

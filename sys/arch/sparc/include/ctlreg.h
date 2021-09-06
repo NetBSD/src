@@ -1,4 +1,4 @@
-/*	$NetBSD: ctlreg.h,v 1.30 2019/08/29 05:55:18 msaitoh Exp $ */
+/*	$NetBSD: ctlreg.h,v 1.31 2021/09/06 21:56:03 andvar Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -382,7 +382,7 @@
 #define SFSR_FT_NONE		(0 << 2) 	/* no fault */
 #define SFSR_FT_INVADDR		(1 << 2)	/* invalid address fault */
 #define SFSR_FT_PROTERR		(2 << 2)	/* protection fault */
-#define SFSR_FT_PRIVERR		(3 << 2)	/* privelege violation */
+#define SFSR_FT_PRIVERR		(3 << 2)	/* privilege violation */
 #define SFSR_FT_TRANSERR	(4 << 2)	/* translation fault */
 #define SFSR_FT_BUSERR		(5 << 2)	/* access bus error */
 #define SFSR_FT_INTERR		(6 << 2)	/* internal error */

@@ -1,4 +1,4 @@
-/*	$NetBSD: neo.c,v 1.55 2019/11/12 13:17:44 msaitoh Exp $	*/
+/*	$NetBSD: neo.c,v 1.56 2021/09/06 21:56:04 andvar Exp $	*/
 
 /*
  * Copyright (c) 1999 Cameron Grant <gandalf@vilnya.demon.co.uk>
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: neo.c,v 1.55 2019/11/12 13:17:44 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: neo.c,v 1.56 2021/09/06 21:56:04 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -100,8 +100,8 @@ __KERNEL_RCSID(0, "$NetBSD: neo.c,v 1.55 2019/11/12 13:17:44 msaitoh Exp $");
  * at 44.1kHz/stero/16 bit. However, to keep the buffer full, interrupts
  * are generated more often than that, so 20-40 interrupts per second
  * should not be unexpected. Increasing BUFFSIZE should help minimize
- * of glitches due to drivers that spend to much time looping at high
- * privelege levels as well as the impact of badly written audio
+ * of glitches due to drivers that spend too much time looping at high
+ * privilege levels as well as the impact of badly written audio
  * interface clients.
  *
  * TO-DO list:
