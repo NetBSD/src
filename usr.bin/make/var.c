@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.948 2021/08/25 22:14:38 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.949 2021/09/06 19:38:30 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -140,7 +140,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.948 2021/08/25 22:14:38 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.949 2021/09/06 19:38:30 rillig Exp $");
 
 /*
  * Variables are defined using one of the VAR=value assignments.  Their
@@ -1975,7 +1975,7 @@ VarStrftime(const char *fmt, bool zulu, time_t tim)
  * After parsing, the modifier is evaluated.  The side effects from evaluating
  * nested variable expressions in the modifier text often already happen
  * during parsing though.  For most modifiers this doesn't matter since their
- * only noticeable effect is that the update the value of the expression.
+ * only noticeable effect is that they update the value of the expression.
  * Some modifiers such as ':sh' or '::=' have noticeable side effects though.
  *
  * Evaluating the modifier usually takes the current value of the variable
