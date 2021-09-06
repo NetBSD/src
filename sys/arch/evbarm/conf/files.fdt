@@ -1,8 +1,9 @@
-#	$NetBSD: files.fdt,v 1.8 2021/05/12 23:22:32 thorpej Exp $
+#	$NetBSD: files.fdt,v 1.9 2021/09/06 14:03:17 jmcneill Exp $
 #
 # FDT-based kernel configuration info
 #
 
+file	arch/evbarm/fdt/fdt_bus_machdep.c	fdt
 file	arch/evbarm/fdt/fdt_dma_machdep.c	fdt
 file	arch/evbarm/fdt/fdt_machdep.c		fdt
 file	dev/ofw/ofw_pci_subr.c			fdt & pci

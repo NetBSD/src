@@ -1,4 +1,4 @@
-/* $NetBSD: rk3399_pcie.c,v 1.16 2021/09/03 01:21:48 mrg Exp $ */
+/* $NetBSD: rk3399_pcie.c,v 1.17 2021/09/06 14:03:17 jmcneill Exp $ */
 /*
  * Copyright (c) 2018 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -17,7 +17,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: rk3399_pcie.c,v 1.16 2021/09/03 01:21:48 mrg Exp $");
+__KERNEL_RCSID(1, "$NetBSD: rk3399_pcie.c,v 1.17 2021/09/06 14:03:17 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -215,11 +215,12 @@ rkpcie_attach(device_t parent, device_t self, void *aux)
 
 	phsc->sc_dev = self;
 	phsc->sc_bst = faa->faa_bst;
+	phsc->sc_pci_bst = faa->faa_bst;
 	phsc->sc_dmat = faa->faa_dmat;
 	sc->sc_iot = phsc->sc_bst;
 	phsc->sc_phandle = faa->faa_phandle;
 	const int phandle = phsc->sc_phandle;
-	
+
 	if (fdtbus_get_reg_byname(faa->faa_phandle, "axi-base", &sc->sc_axi_addr, &sc->sc_axi_size) != 0) {
 		aprint_error(": couldn't get axi registers\n");
 		return;
