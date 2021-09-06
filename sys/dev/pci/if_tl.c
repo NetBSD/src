@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tl.c,v 1.122 2020/07/07 06:27:37 msaitoh Exp $	*/
+/*	$NetBSD: if_tl.c,v 1.123 2021/09/06 20:55:08 andvar Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tl.c,v 1.122 2020/07/07 06:27:37 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tl.c,v 1.123 2021/09/06 20:55:08 andvar Exp $");
 
 #undef TLDEBUG
 #define TL_PRIV_STATS
@@ -1281,7 +1281,7 @@ tbdinit:
 		 if (error == 0)
 			bus_dmamap_unload(sc->tl_dmatag, Tx->m_dmamap);
 		 if (again) {
-			/* already copyed, can't do much more */
+			/* already copied, can't do much more */
 			m_freem(mb_head);
 			goto bad;
 		}
@@ -1327,7 +1327,7 @@ tbdinit:
 	if (size < ETHER_MIN_TX) {
 #ifdef DIAGNOSTIC
 		if (segment >= TL_NSEG) {
-			panic("%s: to much segmets (%d)", __func__, segment);
+			panic("%s: too much segments (%d)", __func__, segment);
 		}
 #endif
 		/*

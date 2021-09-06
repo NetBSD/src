@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_physmap.c,v 1.4 2020/09/06 15:27:22 riastradh Exp $	*/
+/*	$NetBSD: subr_physmap.c,v 1.5 2021/09/06 20:55:08 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: subr_physmap.c,v 1.4 2020/09/06 15:27:22 riastradh Exp $");
+__KERNEL_RCSID(1, "$NetBSD: subr_physmap.c,v 1.5 2021/09/06 20:55:08 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/physmap.h>
@@ -206,7 +206,7 @@ physmap_create_pagelist(struct vm_page **pgs, size_t npgs)
 		if (curaddr != lastaddr) {
 			/*
 			 * If the addresses are not the same, we need to use
-			 * a new segemnt.  Set its address and update lastaddr.
+			 * a new segment.  Set its address and update lastaddr.
 			 */
 			ps++;
 			ps->ps_addr = curaddr;
