@@ -1,4 +1,4 @@
-/*	$NetBSD: dma.c,v 1.43 2010/06/06 04:50:06 mrg Exp $	*/
+/*	$NetBSD: dma.c,v 1.44 2021/09/06 20:55:08 andvar Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 #include "opt_m68k_arch.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dma.c,v 1.43 2010/06/06 04:50:06 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dma.c,v 1.44 2021/09/06 20:55:08 andvar Exp $");
 
 #include <machine/hp300spu.h>	/* XXX param.h includes cpu.h */
 
@@ -609,7 +609,7 @@ dmaintr(void *arg)
 			printf("dma channel %d: intr when armed\n", i);
 #endif
 		/*
-		 * Load the next segemnt, or finish up if we're done.
+		 * Load the next segment, or finish up if we're done.
 		 */
 		dc->dm_cur++;
 		if (dc->dm_cur <= dc->dm_last) {
