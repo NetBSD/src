@@ -1,4 +1,4 @@
-/*	$NetBSD: color.c,v 1.43 2021/09/06 07:03:49 rin Exp $	*/
+/*	$NetBSD: color.c,v 1.44 2021/09/06 07:45:48 rin Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: color.c,v 1.43 2021/09/06 07:03:49 rin Exp $");
+__RCSID("$NetBSD: color.c,v 1.44 2021/09/06 07:45:48 rin Exp $");
 #endif				/* not lint */
 
 #include "curses.h"
@@ -449,7 +449,9 @@ assume_default_colors(short fore, short back)
 {
 	__CTRACE(__CTRACE_COLOR, "assume_default_colors: %d, %d\n",
 	    fore, back);
-	__CTRACE(__CTRACE_COLOR, "assume_default_colors: default_colour = %d, pair_number = %d\n", __default_color, PAIR_NUMBER(__default_color));
+	__CTRACE(__CTRACE_COLOR,
+	    "assume_default_colors: default_colour = %d, pair_number = %d\n",
+	    __default_color, PAIR_NUMBER(__default_color));
 
 	/* Swap red/blue and yellow/cyan */
 	if (_cursesi_screen->color_type == COLOR_OTHER) {
@@ -531,8 +533,8 @@ __set_color( /*ARGSUSED*/ WINDOW *win, attr_t attr)
 
 	pair = PAIR_NUMBER((uint32_t)attr);
 	__CTRACE(__CTRACE_COLOR, "__set_color: %d, %d, %d\n", pair,
-		 _cursesi_screen->colour_pairs[pair].fore,
-		 _cursesi_screen->colour_pairs[pair].back);
+	    _cursesi_screen->colour_pairs[pair].fore,
+	    _cursesi_screen->colour_pairs[pair].back);
 	switch (_cursesi_screen->color_type) {
 	/* Set ANSI forground and background colours */
 	case COLOR_ANSI:

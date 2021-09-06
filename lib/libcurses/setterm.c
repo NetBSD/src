@@ -1,4 +1,4 @@
-/*	$NetBSD: setterm.c,v 1.70 2021/09/06 07:03:50 rin Exp $	*/
+/*	$NetBSD: setterm.c,v 1.71 2021/09/06 07:45:48 rin Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)setterm.c	8.8 (Berkeley) 10/25/94";
 #else
-__RCSID("$NetBSD: setterm.c,v 1.70 2021/09/06 07:03:50 rin Exp $");
+__RCSID("$NetBSD: setterm.c,v 1.71 2021/09/06 07:45:48 rin Exp $");
 #endif
 #endif /* not lint */
 
@@ -370,7 +370,8 @@ does_ctrl_o(const char *exit_cap, const char *acs_cap)
 	char *eptr, *aptr;
 	int res;
 
-	__CTRACE(__CTRACE_INIT, "does_ctrl_o: Testing %s for %s\n", exit_cap, acs_cap);
+	__CTRACE(__CTRACE_INIT, "does_ctrl_o: Testing %s for %s\n",
+	    exit_cap, acs_cap);
 
 	eptr = capdup_nodelay(exit_cap);
 	if (__predict_false(eptr == NULL))
