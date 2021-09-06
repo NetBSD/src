@@ -1,4 +1,4 @@
-/* $NetBSD: apple_dart.c,v 1.2 2021/09/04 12:35:31 jmcneill Exp $ */
+/* $NetBSD: apple_dart.c,v 1.3 2021/09/06 14:03:17 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2021 Mark Kettenis <kettenis@openbsd.org>
@@ -20,7 +20,7 @@
 //#define APPLE_DART_DEBUG
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: apple_dart.c,v 1.2 2021/09/04 12:35:31 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: apple_dart.c,v 1.3 2021/09/06 14:03:17 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -482,8 +482,7 @@ apple_dart_attach(device_t parent, device_t self, void *aux)
 	sc->sc_phandle = phandle;
 	sc->sc_dmat = faa->faa_dmat;
 	sc->sc_bst = faa->faa_bst;
-	if (bus_space_map(sc->sc_bst, addr, size,
-	    _ARM_BUS_SPACE_MAP_STRONGLY_ORDERED, &sc->sc_bsh) != 0) {
+	if (bus_space_map(sc->sc_bst, addr, size, 0, &sc->sc_bsh) != 0) {
 		aprint_error(": couldn't map registers\n");
 		return;
 	}

@@ -1,4 +1,4 @@
-/* $NetBSD: fdtbus.c,v 1.42 2021/08/07 16:19:10 thorpej Exp $ */
+/* $NetBSD: fdtbus.c,v 1.43 2021/09/06 14:03:18 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdtbus.c,v 1.42 2021/08/07 16:19:10 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdtbus.c,v 1.43 2021/09/06 14:03:18 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -206,7 +206,9 @@ fdt_init_attach_args(const struct fdt_attach_args *faa_tmpl, struct fdt_node *no
 	faa->faa_phandle = node->n_phandle;
 	faa->faa_name = node->n_name;
 	faa->faa_quiet = quiet;
-	faa->faa_dmat = node->n_faa.faa_dmat;
+	faa->faa_bst = node->n_faa.faa_bst;
+	faa->faa_dmat = fdtbus_iommu_map(node->n_phandle, 0,
+	   node->n_faa.faa_dmat);
 }
 
 static bool
@@ -295,6 +297,34 @@ fdt_get_dma_tag(struct fdt_node *node)
 	return fdtbus_dma_tag_create(node->n_phandle, ranges, nranges);
 }
 
+static uint32_t
+fdt_bus_flags(int phandle, uint32_t *flags)
+{
+	if (of_hasprop(phandle, "nonposted-mmio")) {
+		*flags |= FDT_BUS_SPACE_FLAG_NONPOSTED_MMIO;
+		return 1;
+	}
+
+	return 0;
+}
+
+static bus_space_tag_t
+fdt_get_bus_tag(struct fdt_node *node)
+{
+	uint32_t flags = 0;
+	int parent;
+
+	parent = OF_parent(node->n_phandle);
+	while (parent != -1) {
+		if (fdt_bus_flags(parent, &flags) != 0) {
+			break;
+		}
+		parent = OF_parent(parent);
+	}
+
+	return fdtbus_bus_tag_create(node->n_phandle, flags);
+}
+
 void
 fdt_add_child(device_t bus, const int child, struct fdt_attach_args *faa,
     u_int order)
@@ -313,6 +343,7 @@ fdt_add_child(device_t bus, const int child, struct fdt_attach_args *faa,
 	node->n_faa = *faa;
 	node->n_faa.faa_phandle = child;
 	node->n_faa.faa_name = node->n_name;
+	node->n_faa.faa_bst = fdt_get_bus_tag(node);
 	node->n_faa.faa_dmat = fdt_get_dma_tag(node);
 
 	fdt_add_node(node);

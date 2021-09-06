@@ -1,4 +1,4 @@
-/* $NetBSD: fdtvar.h,v 1.71 2021/09/04 12:34:39 jmcneill Exp $ */
+/* $NetBSD: fdtvar.h,v 1.72 2021/09/06 14:03:18 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -275,6 +275,8 @@ struct fdt_dma_range {
 	bus_size_t	dr_len;
 };
 
+#define	FDT_BUS_SPACE_FLAG_NONPOSTED_MMIO	__BIT(0)
+
 int		fdtbus_register_interrupt_controller(device_t, int,
 		    const struct fdtbus_interrupt_controller_func *);
 int		fdtbus_register_i2c_controller(i2c_tag_t, int);
@@ -447,5 +449,6 @@ int		fdtbus_print(void *, const char *);
 
 bus_dma_tag_t	fdtbus_dma_tag_create(int, const struct fdt_dma_range *,
 		    u_int);
+bus_space_tag_t	fdtbus_bus_tag_create(int, uint32_t);
 
 #endif /* _DEV_FDT_FDTVAR_H_ */
