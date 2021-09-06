@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.h,v 1.4 2010/01/16 10:06:31 skrll Exp $	*/
+/*	$NetBSD: trap.h,v 1.5 2021/09/06 21:56:03 andvar Exp $	*/
 
 /*	$OpenBSD: trap.h,v 1.8 2000/02/10 20:05:39 mickey Exp $	*/
 
@@ -57,7 +57,7 @@
 #define	T_TLB_DIRTY	20	/* TLB dirty bit */
 #define	T_PAGEREF	21	/* page reference */
 #define	T_EMULATION	22	/* assist emulation */
-#define	T_HIGHERPL	23	/* higher-privelege transfer */
+#define	T_HIGHERPL	23	/* higher-privilege transfer */
 #define	T_LOWERPL	24	/* lower-privilege transfer */
 #define	T_TAKENBR	25	/* taken branch */
 #define	T_DATACC	26	/* data access rights >=7100 */
