@@ -1,4 +1,4 @@
-/*	$NetBSD: tls2.c,v 1.3 2021/08/14 16:14:56 christos Exp $	*/
+/*	$NetBSD: tls2.c,v 1.4 2021/09/06 17:34:33 rillig Exp $	*/
 
 /* tls.c - Handle tls/ssl. */
 /* $OpenLDAP$ */
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: tls2.c,v 1.3 2021/08/14 16:14:56 christos Exp $");
+__RCSID("$NetBSD: tls2.c,v 1.4 2021/09/06 17:34:33 rillig Exp $");
 
 #include "portable.h"
 #include "ldap_config.h"
@@ -396,7 +396,7 @@ ldap_int_tls_connect( LDAP *ld, LDAPConn *conn, const char *host )
 				break;
 			if ( *c == '.' )
 				continue;
-			if ( !isdigit( *c )) {
+			if ( !isdigit( (unsigned char)*c )) {
 				numeric = 0;
 				break;
 			}
