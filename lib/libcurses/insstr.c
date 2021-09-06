@@ -1,4 +1,4 @@
-/*   $NetBSD: insstr.c,v 1.8 2020/07/06 22:46:50 uwe Exp $ */
+/*   $NetBSD: insstr.c,v 1.9 2021/09/06 07:03:49 rin Exp $ */
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation Inc.
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: insstr.c,v 1.8 2020/07/06 22:46:50 uwe Exp $");
+__RCSID("$NetBSD: insstr.c,v 1.9 2021/09/06 07:03:49 rin Exp $");
 #endif						  /* not lint */
 
 #include <string.h>
@@ -155,16 +155,12 @@ winsnstr(WINDOW *win, const char *str, int n)
 		for (scp = str, len = 0; n-- && *scp++; ++len);
 	else
 		for (scp = str, len = 0; *scp++; ++len);
-#ifdef DEBUG
 	__CTRACE(__CTRACE_INPUT, "winsnstr: len = %d\n", len);
-#endif /* DEBUG */
 
 	/* move string */
 	end = &win->alines[win->cury]->line[win->curx];
 	if (len < win->maxx - win->curx) {
-#ifdef DEBUG
 		__CTRACE(__CTRACE_INPUT, "winsnstr: shift %d cells\n", len);
-#endif /* DEBUG */
 		temp1 = &win->alines[win->cury]->line[win->maxx - 1];
 		temp2 = temp1 - len;
 		while (temp2 >= end) {

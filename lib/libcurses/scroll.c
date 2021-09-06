@@ -1,4 +1,4 @@
-/*	$NetBSD: scroll.c,v 1.26 2019/06/09 07:40:14 blymn Exp $	*/
+/*	$NetBSD: scroll.c,v 1.27 2021/09/06 07:03:50 rin Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)scroll.c	8.3 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: scroll.c,v 1.26 2019/06/09 07:40:14 blymn Exp $");
+__RCSID("$NetBSD: scroll.c,v 1.27 2021/09/06 07:03:50 rin Exp $");
 #endif
 #endif				/* not lint */
 
@@ -87,9 +87,7 @@ wscrl(WINDOW *win, int nlines)
 {
 	int     oy, ox;
 
-#ifdef DEBUG
 	__CTRACE(__CTRACE_WINDOW, "wscrl: (%p) lines=%d\n", win, nlines);
-#endif
 
 	if (!(win->flags & __SCROLLOK))
 		return ERR;
@@ -97,9 +95,7 @@ wscrl(WINDOW *win, int nlines)
 		return OK;
 
 	getyx(win, oy, ox);
-#ifdef DEBUG
 	__CTRACE(__CTRACE_WINDOW, "wscrl: y=%d\n", oy);
-#endif
 	wmove(win, win->scr_t, 1);
 	winsdelln(win, 0 - nlines);
 	wmove(win, oy, ox);
@@ -108,9 +104,7 @@ wscrl(WINDOW *win, int nlines)
 		__cputchar('\n');
 		if (!__NONL)
 			win->curx = 0;
-#ifdef DEBUG
 		__CTRACE(__CTRACE_WINDOW, "scroll: win == curscr\n");
-#endif
 	}
 	return OK;
 }

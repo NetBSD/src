@@ -1,4 +1,4 @@
-/*	$NetBSD: mvwin.c,v 1.21 2017/01/11 20:43:03 roy Exp $	*/
+/*	$NetBSD: mvwin.c,v 1.22 2021/09/06 07:03:50 rin Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)mvwin.c	8.2 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: mvwin.c,v 1.21 2017/01/11 20:43:03 roy Exp $");
+__RCSID("$NetBSD: mvwin.c,v 1.22 2021/09/06 07:03:50 rin Exp $");
 #endif
 #endif				/* not lint */
 
@@ -84,9 +84,7 @@ mvderwin(WINDOW *win, int dy, int dx)
 			*plp->firstchp = x;
 		if (*plp->lastchp < x + win->maxx)
 			*plp->lastchp = x + win->maxx;
-#ifdef DEBUG
 		__CTRACE(__CTRACE_REFRESH, "mvderwin: firstchp = %d, lastchp = %d\n", *plp->firstchp, *plp->lastchp);
-#endif
 	}
 
 	return OK;

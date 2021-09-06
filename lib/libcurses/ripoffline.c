@@ -1,4 +1,4 @@
-/*	$NetBSD: ripoffline.c,v 1.5 2018/10/03 13:22:29 roy Exp $	*/
+/*	$NetBSD: ripoffline.c,v 1.6 2021/09/06 07:03:50 rin Exp $	*/
 
 /*-
  * Copyright (c) 2017 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ripoffline.c,v 1.5 2018/10/03 13:22:29 roy Exp $");
+__RCSID("$NetBSD: ripoffline.c,v 1.6 2021/09/06 07:03:50 rin Exp $");
 #endif				/* not lint */
 
 #include "curses.h"
@@ -53,9 +53,7 @@ int
 ripoffline(int line, int (*init)(WINDOW *, int))
 {
 
-#ifdef DEBUG
 	__CTRACE(__CTRACE_WINDOW, "ripoffline: %d\n", line);
-#endif
 
 	if (nrips >= MAX_RIPS || init == NULL)
 		return ERR; /* This makes sense, but not standards compliant. */
