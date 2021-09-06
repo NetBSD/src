@@ -1,4 +1,4 @@
-/*	$NetBSD: key_debug.c,v 1.15 2020/06/05 15:19:08 christos Exp $	*/
+/*	$NetBSD: key_debug.c,v 1.16 2021/09/06 17:19:52 rillig Exp $	*/
 
 /*	$KAME: key_debug.c,v 1.29 2001/08/16 14:25:41 itojun Exp $	*/
 
@@ -299,7 +299,7 @@ kdebug_sadb_identity(struct sadb_ext *ext)
 			p = (void *)(id + 1);
 			ep = p + len;
 			for (/*nothing*/; *p && p < ep; p++) {
-				if (isprint((int)*p))
+				if (isprint((unsigned char)*p))
 					printf("%c", *p & 0xff);
 				else
 					printf("\\%03o", *p & 0xff);
