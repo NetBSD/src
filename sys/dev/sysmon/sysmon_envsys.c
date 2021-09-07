@@ -1,4 +1,4 @@
-/*	$NetBSD: sysmon_envsys.c,v 1.147 2020/06/11 02:39:31 thorpej Exp $	*/
+/*	$NetBSD: sysmon_envsys.c,v 1.148 2021/09/07 13:24:46 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008 Juan Romero Pardines.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys.c,v 1.147 2020/06/11 02:39:31 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys.c,v 1.148 2021/09/07 13:24:46 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -1540,7 +1540,7 @@ bad:
  * returns false). Example usage: callback selects temperature
  * sensors in a given thermal zone, the function calculates the
  * maximum currently reported temperature in this zone.
- * If the parameter "refresh" is true, new values will be aquired
+ * If the parameter "refresh" is true, new values will be acquired
  * from the hardware, if not, the last reported value will be used.
  */
 uint32_t

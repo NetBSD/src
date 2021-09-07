@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.4 2021/07/01 22:57:45 macallan Exp $	*/
+/*	$NetBSD: intr.c,v 1.5 2021/09/07 13:24:45 andvar Exp $	*/
 /*	$OpenBSD: intr.c,v 1.27 2009/12/31 12:52:35 jsing Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.4 2021/07/01 22:57:45 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.5 2021/09/07 13:24:45 andvar Exp $");
 
 #define __MUTEX_PRIVATE
 
@@ -349,7 +349,7 @@ hppa_intr(struct trapframe *frame)
 	/*
 	 * If we interrupted in the middle of mutex_enter(), we must patch up
 	 * the lock owner value quickly if we got the interlock.  If any of the
-	 * interrupt handlers need to aquire the mutex, they could deadlock if
+	 * interrupt handlers need to acquire the mutex, they could deadlock if
 	 * the owner value is left unset.
 	 */
 	if (frame->tf_iisq_head == HPPA_SID_KERNEL &&

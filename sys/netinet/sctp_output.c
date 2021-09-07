@@ -1,4 +1,4 @@
-/*	$NetBSD: sctp_output.c,v 1.24 2021/09/03 21:55:01 andvar Exp $ */
+/*	$NetBSD: sctp_output.c,v 1.25 2021/09/07 13:24:46 andvar Exp $ */
 /*	$KAME: sctp_output.c,v 1.48 2005/06/16 18:29:24 jinmei Exp $	*/
 
 /*
@@ -30,7 +30,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sctp_output.c,v 1.24 2021/09/03 21:55:01 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sctp_output.c,v 1.25 2021/09/07 13:24:46 andvar Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ipsec.h"
@@ -9413,7 +9413,7 @@ sctp_copy_it_in(struct sctp_inpcb *inp,
 			}
 			error = sblock(&so->so_snd, M_WAITOK);
 			if (error) {
-				/* Can't aquire the lock */
+				/* Can't acquire the lock */
 				goto out_locked;
 			}
 #if defined(__FreeBSD__) && __FreeBSD_version >= 502115
