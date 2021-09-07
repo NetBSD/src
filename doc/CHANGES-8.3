@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.3,v 1.1.2.98 2021/09/03 10:24:09 martin Exp $
+# $NetBSD: CHANGES-8.3,v 1.1.2.99 2021/09/07 22:29:07 snj Exp $
 
 A complete list of changes from the NetBSD 8.2 release to the NetBSD 8.3
 release:
@@ -2011,4 +2011,10 @@ sys/dev/pci/if_vte.c				1.32
 	vte(4): PR 53494: restore original MDC speed control register value
 	after MAC reset.
 	[andvar, ticket #1693]
+
+distrib/sets/makesrctars			1.43
+
+	PR 56389: do not include top level .git or .hg directories
+	in source sets.
+	[martin, ticket #1694]
 
