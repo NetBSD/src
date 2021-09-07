@@ -1,4 +1,4 @@
-/*	$NetBSD: ugen.c,v 1.161 2021/09/07 10:42:48 riastradh Exp $	*/
+/*	$NetBSD: ugen.c,v 1.162 2021/09/07 10:42:59 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ugen.c,v 1.161 2021/09/07 10:42:48 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ugen.c,v 1.162 2021/09/07 10:42:59 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -1167,9 +1167,27 @@ ugen_detach(device_t self, int flags)
 
 	DPRINTF(("ugen_detach: sc=%p flags=%d\n", sc, flags));
 
+	KASSERT(KERNEL_LOCKED_P()); /* sc_is_open */
+
+	/*
+	 * Fail if we're not forced to detach and userland has any
+	 * endpoints open.
+	 */
+	if ((flags & DETACH_FORCE) == 0) {
+		for (i = 0; i < USB_MAX_ENDPOINTS; i++) {
+			if (sc->sc_is_open[i])
+				return EBUSY;
+		}
+	}
+
+	/* Prevent new users.  Prevent suspend/resume.  */
 	sc->sc_dying = 1;
 	pmf_device_deregister(self);
 
+	/*
+	 * If we never finished attaching, skip nixing endpoints and
+	 * users because there aren't any.
+	 */
 	if (!sc->sc_attached)
 		goto out;
 
