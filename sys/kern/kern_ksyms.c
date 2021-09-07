@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ksyms.c,v 1.101 2021/09/07 16:56:13 riastradh Exp $	*/
+/*	$NetBSD: kern_ksyms.c,v 1.102 2021/09/07 16:56:25 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_ksyms.c,v 1.101 2021/09/07 16:56:13 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ksyms.c,v 1.102 2021/09/07 16:56:25 riastradh Exp $");
 
 #if defined(_KERNEL) && defined(_KERNEL_OPT)
 #include "opt_copy_symtab.h"
@@ -117,7 +117,6 @@ static struct ksyms_symtab *ksyms_last_snapshot;
 static bool ksyms_initted;
 static bool ksyms_loaded;
 static kmutex_t ksyms_lock __cacheline_aligned;
-static kcondvar_t ksyms_cv;
 static struct ksyms_symtab kernel_symtab;
 
 static void ksyms_hdr_init(const void *);
@@ -246,7 +245,6 @@ ksyms_init(void)
 
 	if (!ksyms_initted) {
 		mutex_init(&ksyms_lock, MUTEX_DEFAULT, IPL_NONE);
-		cv_init(&ksyms_cv, "ksyms");
 		ksyms_initted = true;
 	}
 }
@@ -330,6 +328,7 @@ addsymtab(const char *name, void *symstart, size_t symsize,
 	tab->sd_minsym = UINTPTR_MAX;
 	tab->sd_maxsym = 0;
 	tab->sd_usroffset = 0;
+	tab->sd_gone = false;
 	tab->sd_ctfstart = ctfstart;
 	tab->sd_ctfsize = ctfsize;
 	tab->sd_nmap = nmap;
@@ -447,9 +446,9 @@ addsymtab(const char *name, void *symstart, size_t symsize,
 	KASSERT(cold || mutex_owned(&ksyms_lock));
 
 	/*
-	 * Publish the symtab.  Do this at splhigh to ensure ddb never
-	 * witnesses an inconsistent state of the queue, unless memory
-	 * is so corrupt that we crash in TAILQ_INSERT_TAIL.
+	 * Ensure ddb never witnesses an inconsistent state of the
+	 * queue, unless memory is so corrupt that we crash in
+	 * TAILQ_INSERT_TAIL.
 	 */
 	s = splhigh();
 	TAILQ_INSERT_TAIL(&ksyms_symtabs, tab, sd_queue);
@@ -602,6 +601,8 @@ ksyms_getval_unlocked(const char *mod, const char *sym, Elf_Sym **symp,
 #endif
 
 	TAILQ_FOREACH(st, &ksyms_symtabs, sd_queue) {
+		if (__predict_false(st->sd_gone))
+			continue;
 		if (mod != NULL && strcmp(st->sd_name, mod))
 			continue;
 		if ((es = findsym(sym, st, type)) != NULL) {
@@ -635,6 +636,8 @@ ksyms_get_mod(const char *mod)
 
 	mutex_enter(&ksyms_lock);
 	TAILQ_FOREACH(st, &ksyms_symtabs, sd_queue) {
+		if (__predict_false(st->sd_gone))
+			continue;
 		if (mod != NULL && strcmp(st->sd_name, mod))
 			continue;
 		break;
@@ -668,6 +671,8 @@ ksyms_mod_foreach(const char *mod, ksyms_callback_t callback, void *opaque)
 
 	/* find the module */
 	TAILQ_FOREACH(st, &ksyms_symtabs, sd_queue) {
+		if (__predict_false(st->sd_gone))
+			continue;
 		if (mod != NULL && strcmp(st->sd_name, mod))
 			continue;
 
@@ -711,6 +716,8 @@ ksyms_getname(const char **mod, const char **sym, vaddr_t v, int f)
 		return ENOENT;
 
 	TAILQ_FOREACH(st, &ksyms_symtabs, sd_queue) {
+		if (st->sd_gone)
+			continue;
 		if (v < st->sd_minsym || v > st->sd_maxsym)
 			continue;
 		sz = st->sd_symsize/sizeof(Elf_Sym);
@@ -773,44 +780,37 @@ void
 ksyms_modunload(const char *name)
 {
 	struct ksyms_symtab *st;
+	bool do_free = false;
 	int s;
 
 	mutex_enter(&ksyms_lock);
 	TAILQ_FOREACH(st, &ksyms_symtabs, sd_queue) {
+		if (st->sd_gone)
+			continue;
 		if (strcmp(name, st->sd_name) != 0)
 			continue;
+		st->sd_gone = true;
+		ksyms_sizes_calc();
+		if (ksyms_opencnt == 0) {
+			/*
+			 * Ensure ddb never witnesses an inconsistent
+			 * state of the queue, unless memory is so
+			 * corrupt that we crash in TAILQ_REMOVE.
+			 */
+			s = splhigh();
+			TAILQ_REMOVE(&ksyms_symtabs, st, sd_queue);
+			splx(s);
+			do_free = true;
+		}
 		break;
 	}
+	mutex_exit(&ksyms_lock);
 	KASSERT(st != NULL);
 
-	/*
-	 * Wait for last /dev/ksyms close -- readers may be in the
-	 * middle of viewing a snapshot including this module.  (We
-	 * could skip this if it's past ksyms_last_snapshot, but it's
-	 * not clear that's worth the effort.)
-	 */
-	while (ksyms_opencnt)
-		cv_wait(&ksyms_cv, &ksyms_lock);
-
-	/*
-	 * Remove the symtab.  Do this at splhigh to ensure ddb never
-	 * witnesses an inconsistent state of the queue, unless memory
-	 * is so corrupt that we crash in TAILQ_REMOVE.
-	 */
-	s = splhigh();
-	TAILQ_REMOVE(&ksyms_symtabs, st, sd_queue);
-	splx(s);
-
-	/* Recompute the ksyms sizes now that we've removed st.  */
-	ksyms_sizes_calc();
-	mutex_exit(&ksyms_lock);
-
-	/*
-	 * No more references are possible.  Free the name map and the
-	 * symtab itself, which we had allocated in ksyms_modload.
-	 */
-	kmem_free(st->sd_nmap, st->sd_nmapsize * sizeof(uint32_t));
-	kmem_free(st, sizeof(*st));
+	if (do_free) {
+		kmem_free(st->sd_nmap, st->sd_nmapsize * sizeof(uint32_t));
+		kmem_free(st, sizeof(*st));
+	}
 }
 
 #ifdef DDB
@@ -830,6 +830,8 @@ ksyms_sift(char *mod, char *sym, int mode)
 		return ENOENT;
 
 	TAILQ_FOREACH(st, &ksyms_symtabs, sd_queue) {
+		if (st->sd_gone)
+			continue;
 		if (mod && strcmp(mod, st->sd_name))
 			continue;
 		sb = st->sd_strstart - st->sd_usroffset;
@@ -891,6 +893,8 @@ ksyms_sizes_calc(void)
 
 	ksyms_symsz = ksyms_strsz = 0;
 	TAILQ_FOREACH(st, &ksyms_symtabs, sd_queue) {
+		if (__predict_false(st->sd_gone))
+			continue;
 		delta = ksyms_strsz - st->sd_usroffset;
 		if (delta != 0) {
 			for (i = 0; i < st->sd_symsize/sizeof(Elf_Sym); i++)
@@ -1023,13 +1027,36 @@ out:	mutex_exit(&ksyms_lock);
 static int
 ksymsclose(dev_t dev, int oflags, int devtype, struct lwp *l)
 {
+	struct ksyms_symtab *st, *next;
+	TAILQ_HEAD(, ksyms_symtab) to_free = TAILQ_HEAD_INITIALIZER(to_free);
+	int s;
 
+	/* Discard references to symbol tables. */
 	mutex_enter(&ksyms_lock);
 	if (--ksyms_opencnt)
 		goto out;
 	ksyms_last_snapshot = NULL;
-	cv_broadcast(&ksyms_cv);
+	TAILQ_FOREACH_SAFE(st, &ksyms_symtabs, sd_queue, next) {
+		if (st->sd_gone) {
+			/*
+			 * Ensure ddb never witnesses an inconsistent
+			 * state of the queue, unless memory is so
+			 * corrupt that we crash in TAILQ_REMOVE.
+			 */
+			s = splhigh();
+			TAILQ_REMOVE(&ksyms_symtabs, st, sd_queue);
+			splx(s);
+			TAILQ_INSERT_TAIL(&to_free, st, sd_queue);
+		}
+	}
+	if (!TAILQ_EMPTY(&to_free))
+		ksyms_sizes_calc();
 out:	mutex_exit(&ksyms_lock);
+
+	TAILQ_FOREACH_SAFE(st, &to_free, sd_queue, next) {
+		kmem_free(st->sd_nmap, st->sd_nmapsize * sizeof(uint32_t));
+		kmem_free(st, sizeof(*st));
+	}
 
 	return 0;
 }
@@ -1042,7 +1069,8 @@ ksymsread(dev_t dev, struct uio *uio, int ioflag)
 	int error;
 
 	/*
-	 * First: Copy out the ELF header.
+	 * First: Copy out the ELF header.   XXX Lose if ksymsopen()
+	 * occurs during read of the header.
 	 */
 	off = uio->uio_offset;
 	if (off < sizeof(struct ksyms_hdr)) {
@@ -1053,17 +1081,12 @@ ksymsread(dev_t dev, struct uio *uio, int ioflag)
 	}
 
 	/*
-	 * Copy out the symbol table.  The list of symtabs is
-	 * guaranteed to be nonempty because we always have an entry
-	 * for the main kernel.  We stop at ksyms_last_snapshot, not at
-	 * the end of the tailq or NULL, because entries beyond
-	 * ksyms_last_snapshot are not included in this snapshot (and
-	 * may not be fully initialized memory as we witness it).
+	 * Copy out the symbol table.
 	 */
 	filepos = sizeof(struct ksyms_hdr);
-	for (st = TAILQ_FIRST(&ksyms_symtabs);
-	     ;
-	     st = TAILQ_NEXT(st, sd_queue)) {
+	TAILQ_FOREACH(st, &ksyms_symtabs, sd_queue) {
+		if (__predict_false(st->sd_gone))
+			continue;
 		if (uio->uio_resid == 0)
 			return 0;
 		if (uio->uio_offset <= st->sd_symsize + filepos) {
@@ -1102,8 +1125,6 @@ ksymsread(dev_t dev, struct uio *uio, int ioflag)
 
 	/*
 	 * Copy out the CTF table.
-	 *
-	 * XXX Why does this only copy out the first symtab's CTF?
 	 */
 	st = TAILQ_FIRST(&ksyms_symtabs);
 	if (st->sd_ctfstart != NULL) {
@@ -1175,6 +1196,8 @@ ksymsioctl(dev_t dev, u_long cmd, void *data, int fflag, struct lwp *l)
 		 */
 		mutex_enter(&ksyms_lock);
 		TAILQ_FOREACH(st, &ksyms_symtabs, sd_queue) {
+			if (st->sd_gone)
+				continue;
 			if ((sym = findsym(str, st, KSYMS_ANY)) == NULL)
 				continue;
 #ifdef notdef
@@ -1215,6 +1238,8 @@ ksymsioctl(dev_t dev, u_long cmd, void *data, int fflag, struct lwp *l)
 		 */
 		mutex_enter(&ksyms_lock);
 		TAILQ_FOREACH(st, &ksyms_symtabs, sd_queue) {
+			if (st->sd_gone)
+				continue;
 			if ((sym = findsym(str, st, KSYMS_ANY)) == NULL)
 				continue;
 #ifdef notdef
