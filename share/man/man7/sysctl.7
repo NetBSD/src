@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysctl.7,v 1.139.2.1 2019/11/18 19:45:00 martin Exp $
+.\"	$NetBSD: sysctl.7,v 1.139.2.2 2021/09/07 17:12:21 martin Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -736,6 +736,11 @@ Memory Mapped Files Option is available on this system,
 otherwise\ 0.
 .It Li kern.maxfiles ( Dv KERN_MAXFILES )
 The maximum number of open files that may be open in the system.
+This also controls the maximum file locks per unprivilegied user 
+enforced by
+.Xr fnctl 2
+and 
+.Xr flock 2 .
 .It Li kern.maxpartitions ( Dv KERN_MAXPARTITIONS )
 The maximum number of partitions allowed per disk.
 .It Li kern.maxlwp
