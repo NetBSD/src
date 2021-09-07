@@ -1,6 +1,6 @@
 #! /bin/sh
 #
-#	$NetBSD: makesrctars,v 1.41 2017/04/12 17:29:49 christos Exp $
+#	$NetBSD: makesrctars,v 1.41.4.1 2021/09/07 22:28:31 snj Exp $
 #
 # makesrctars srcdir setdir
 #	Create source tarballs in setdir from the source under srcdir.
@@ -84,8 +84,10 @@ makeset()
 		cd "${dir}"
 		srcprefix="${srcprefix}/${dir}"
 	fi
-	# Gets rid of any obj dirs and things below it 
-	echo "obj" > "${intmp}"
+	# Gets rid of any obj dirs and things below it. Also skip
+	# .hg or .git repositories (if we got the source via git
+	# or mercurial)
+	printf "obj\n./.git\n./.hg\n" > "${intmp}"
 	egrep="$*"
 	if [ "${egrep}" = "" ]; then
 		egrep='.'
