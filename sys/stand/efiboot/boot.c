@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.35 2021/07/24 10:22:28 jmcneill Exp $	*/
+/*	$NetBSD: boot.c,v 1.36 2021/09/07 11:41:31 nia Exp $	*/
 
 /*-
  * Copyright (c) 2016 Kimihiro Nonaka <nonaka@netbsd.org>
@@ -451,61 +451,6 @@ set_bootargs(const char *arg)
 	return 0;
 }
 
-static void
-get_memory_info(uint64_t *ptotal)
-{
-	EFI_MEMORY_DESCRIPTOR *md, *memmap;
-	UINTN nentries, mapkey, descsize;
-	UINT32 descver;
-	uint64_t totalpg = 0;
-	int n;
-
-	memmap = LibMemoryMap(&nentries, &mapkey, &descsize, &descver);
-	for (n = 0, md = memmap; n < nentries; n++, md = NextMemoryDescriptor(md, descsize)) {
-		if ((md->Attribute & EFI_MEMORY_WB) == 0) {
-			continue;
-		}
-		totalpg += md->NumberOfPages;
-	}
-
-	*ptotal = totalpg * EFI_PAGE_SIZE;
-}
-
-static void
-format_bytes(uint64_t val, uint64_t *pdiv, const char **punit)
-{
-	static const char *units[] = { "KB", "MB", "GB" };
-	unsigned n;
-
-	*punit = "bytes";
-	*pdiv = 1;
-
-	for (n = 0; n < __arraycount(units) && val >= 1024 * 10; n++) {
-		*punit = units[n];
-		*pdiv *= 1024;
-		val /= 1024;
-	}
-}
-
-void
-print_banner(void)
-{
-	const char *total_unit;
-	uint64_t total, total_div;
-
-	get_memory_info(&total);
-	format_bytes(total, &total_div, &total_unit);
-
-	printf("  \\-__,------,___.\n");
-	printf("   \\        __,---`  %s\n", bootprog_name);
-	printf("    \\       `---,_.  Revision %s\n", bootprog_rev);
-	printf("     \\-,_____,.---`  Memory: %" PRIu64 " %s\n",
-	    total / total_div, total_unit);
-	printf("      \\\n");
-	printf("       \\\n");
-	printf("        \\\n\n");
-}
-
 void
 boot(void)
 {
@@ -520,7 +465,7 @@ boot(void)
 	if (bootcfg_info.clear)
 		uefi_call_wrapper(ST->ConOut->ClearScreen, 1, ST->ConOut);
 
-	print_banner();
+	print_bootcfg_banner(bootprog_name, bootprog_rev);
 
 	/* Display menu if configured */
 	if (bootcfg_info.nummenu > 0) {

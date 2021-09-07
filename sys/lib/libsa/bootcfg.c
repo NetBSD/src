@@ -1,4 +1,4 @@
-/*	$NetBSD: bootcfg.c,v 1.6 2021/05/30 05:59:23 mlelstv Exp $	*/
+/*	$NetBSD: bootcfg.c,v 1.7 2021/09/07 11:41:31 nia Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -277,4 +277,27 @@ perform_bootcfg(const char *conf, bootcfg_command command, const off_t maxsz)
 		bootcfg_info.def = cmenu - 1;
 
 	return 0;
+}
+
+void
+print_bootcfg_banner(const char *bootprog_name, const char *bootprog_rev)
+{
+	int n = 0;
+
+	if (bootcfg_info.banner[0]) {  
+		for (; n < BOOTCFG_MAXBANNER && bootcfg_info.banner[n]; n++) 
+			printf("%s\n", bootcfg_info.banner[n]);
+		return;
+	}
+
+	/* If the user has not specified a banner, print a default one. */
+
+	printf("\n");
+	printf("  \\\\-__,------,___.\n");
+	printf("   \\\\        __,---`  %s\n", bootprog_name);
+	printf("    \\\\       `---,_.  Revision %s\n", bootprog_rev);
+	printf("     \\\\-,_____,.---`\n");
+	printf("      \\\\\n");
+	printf("       \\\\\n");
+	printf("        \\\\\n\n");
 }

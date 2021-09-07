@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.19 2021/06/22 19:53:58 nia Exp $	*/
+/*	$NetBSD: boot.c,v 1.20 2021/09/07 11:41:31 nia Exp $	*/
 
 /*-
  * Copyright (c) 2016 Kimihiro Nonaka <nonaka@netbsd.org>
@@ -278,31 +278,6 @@ bootit(const char *filename, int howto)
 }
 
 void
-print_banner(void)
-{
-	int n;
-
-	clearit();
-	if (bootcfg_info.banner[0]) {
-		for (n = 0; n < BOOTCFG_MAXBANNER && bootcfg_info.banner[n];
-		    n++)
-			printf("%s\n", bootcfg_info.banner[n]);
-	} else {
-		printf("\n"
-		   "  \\-__,------,___.\n"
-		   "   \\        __,---`  %s (from NetBSD %s)\n"
-		   "    \\       `---,_.  Revision %s\n"
-		   "     \\-,_____,.---`  Memory: %d/%d k\n"
-		   "      \\\n"  
-		   "       \\\n"
-		   "        \\\n",
-		   bootprog_name, bootprog_kernrev,
-		   bootprog_rev,               
-		   getbasemem(), getextmem());
-	}
-}
-
-void
 boot(void)
 {
 	int currname;
@@ -344,10 +319,12 @@ boot(void)
 	 * If console set in boot.cfg, switch to it.
 	 * This will print the banner, so we don't need to explicitly do it
 	 */
-	if (bootcfg_info.consdev)
+	if (bootcfg_info.consdev) {
 		command_consdev(bootcfg_info.consdev);
-	else
-		print_banner();
+	} else {
+		clearit();
+		print_bootcfg_banner(bootprog_name, bootprog_rev);
+	}
 
 	/* Display the menu, if applicable */
 	twiddle_toggle = 0;
@@ -602,7 +579,8 @@ command_consdev(char *arg)
 				}
 			}
 			efi_consinit(cdp->tag, ioport, speed);
-			print_banner();
+			clearit();
+			print_bootcfg_banner(bootprog_name, bootprog_rev);
 			return;
 		}
 	}
