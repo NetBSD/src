@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos_ioctl.c,v 1.70 2019/09/23 20:38:27 christos Exp $	*/
+/*	$NetBSD: sunos_ioctl.c,v 1.71 2021/09/07 11:43:05 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1993 Markus Wild.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunos_ioctl.c,v 1.70 2019/09/23 20:38:27 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunos_ioctl.c,v 1.71 2021/09/07 11:43:05 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -126,6 +126,8 @@ static void
 stios2btios(struct sunos_termios *st, struct termios *bt)
 {
 	u_long l, r;
+
+	memset(bt, 0, sizeof(*bt));
 
 	l = st->c_iflag;
 	r = 	((l & 0x00000001) ? IGNBRK	: 0);
@@ -247,6 +249,8 @@ btios2stios(struct termios *bt, struct sunos_termios *st)
 {
 	u_long l, r;
 	int s;
+
+	memset(st, 0, sizeof(*st));
 
 	l = bt->c_iflag;
 	r = 	((l &  IGNBRK) ? 0x00000001	: 0);
@@ -372,6 +376,8 @@ btios2stios(struct termios *bt, struct sunos_termios *st)
 static void
 stios2stio(struct sunos_termios *ts, struct sunos_termio *t)
 {
+
+	memset(t, 0, sizeof(*t));
 	t->c_iflag = ts->c_iflag;
 	t->c_oflag = ts->c_oflag;
 	t->c_cflag = ts->c_cflag;
@@ -383,6 +389,8 @@ stios2stio(struct sunos_termios *ts, struct sunos_termio *t)
 static void
 stio2stios(struct sunos_termio *t, struct sunos_termios *ts)
 {
+
+	memset(ts, 0, sizeof(*ts));
 	ts->c_iflag = t->c_iflag;
 	ts->c_oflag = t->c_oflag;
 	ts->c_cflag = t->c_cflag;
@@ -486,6 +494,7 @@ sunos_sys_ioctl(struct lwp *l, const struct sunos_sys_ioctl_args *uap,
 		if ((error = (*ctl)(fp, TIOCGWINSZ, &ws)) != 0)
 			break;
 
+		memset(&ss, 0, sizeof(ss));
 		ss.ts_row = ws.ws_row;
 		ss.ts_col = ws.ws_col;
 
@@ -727,6 +736,7 @@ sunos_sys_ioctl(struct lwp *l, const struct sunos_sys_ioctl_args *uap,
 		if (error)
 			break;
 
+		memset(&sunos_aui, 0, sizeof(sunos_aui));
 		sunos_aui.play = *(struct sunos_audio_prinfo *)&aui.play;
 		sunos_aui.record = *(struct sunos_audio_prinfo *)&aui.record;
 
@@ -937,6 +947,9 @@ static void sunos_to_bsd_flock(struct sunos_flock *, struct flock *);
 static void
 bsd_to_sunos_flock(struct flock *iflp, struct sunos_flock *oflp)
 {
+
+	memset(oflp, 0, sizeof(*oflp));
+
 	switch (iflp->l_type) {
 	case F_RDLCK:
 		oflp->l_type = SUNOS_F_RDLCK;
@@ -963,6 +976,9 @@ bsd_to_sunos_flock(struct flock *iflp, struct sunos_flock *oflp)
 static void
 sunos_to_bsd_flock(struct sunos_flock *iflp, struct flock *oflp)
 {
+
+	memset(oflp, 0, sizeof(*oflp));
+
 	switch (iflp->l_type) {
 	case SUNOS_F_RDLCK:
 		oflp->l_type = F_RDLCK;

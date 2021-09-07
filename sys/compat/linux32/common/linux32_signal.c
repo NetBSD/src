@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_signal.c,v 1.20 2019/08/23 08:31:11 maxv Exp $ */
+/*	$NetBSD: linux32_signal.c,v 1.21 2021/09/07 11:43:04 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2006 Emmanuel Dreyfus, all rights reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux32_signal.c,v 1.20 2019/08/23 08:31:11 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_signal.c,v 1.21 2021/09/07 11:43:04 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/ucred.h>
@@ -215,6 +215,7 @@ linux32_to_native_sigflags(const unsigned long lsf)
 void
 linux32_to_native_sigaction(struct sigaction *bsa, const struct linux32_sigaction *lsa)
 {
+	memset(bsa, 0, sizeof(*bsa));
 	bsa->sa_handler = NETBSD32PTR64(lsa->linux_sa_handler);
 	linux32_to_native_sigset(&bsa->sa_mask, &lsa->linux_sa_mask);
 	bsa->sa_flags = linux32_to_native_sigflags(lsa->linux_sa_flags);
@@ -223,6 +224,7 @@ linux32_to_native_sigaction(struct sigaction *bsa, const struct linux32_sigactio
 void
 native_to_linux32_sigaction(struct linux32_sigaction *lsa, const struct sigaction *bsa)
 {
+	memset(lsa, 0, sizeof(*lsa));
 	NETBSD32PTR32(lsa->linux_sa_handler, bsa->sa_handler);
 	native_to_linux32_sigset(&lsa->linux_sa_mask, &bsa->sa_mask);
 	lsa->linux_sa_flags = native_to_linux32_sigflags(bsa->sa_flags);
