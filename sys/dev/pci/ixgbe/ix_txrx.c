@@ -1,4 +1,4 @@
-/* $NetBSD: ix_txrx.c,v 1.91 2021/09/07 03:48:01 msaitoh Exp $ */
+/* $NetBSD: ix_txrx.c,v 1.92 2021/09/07 08:17:20 msaitoh Exp $ */
 
 /******************************************************************************
 
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ix_txrx.c,v 1.91 2021/09/07 03:48:01 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ix_txrx.c,v 1.92 2021/09/07 08:17:20 msaitoh Exp $");
 
 #include "opt_inet.h"
 #include "opt_inet6.h"
@@ -1877,12 +1877,14 @@ ixgbe_rxeof(struct ix_queue *que)
 		}
 
 		/* pre-alloc new mbuf */
-		if (!discard_multidesc)
+		if (!discard_multidesc) {
 			newmp = ixgbe_getcl();
-		else
+			if (__predict_false(newmp == NULL))
+				rxr->no_mbuf.ev_count++;
+		} else
 			newmp = NULL;
+
 		if (__predict_false(newmp == NULL)) {
-			rxr->no_mbuf.ev_count++;
 			/*
 			 * Descriptor initialization is already done by the
 			 * above code (cur->wb.upper.status_error = 0).
