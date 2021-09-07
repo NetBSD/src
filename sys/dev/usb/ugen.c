@@ -1,4 +1,4 @@
-/*	$NetBSD: ugen.c,v 1.163 2021/09/07 10:43:11 riastradh Exp $	*/
+/*	$NetBSD: ugen.c,v 1.164 2021/09/07 10:43:21 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ugen.c,v 1.163 2021/09/07 10:43:11 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ugen.c,v 1.164 2021/09/07 10:43:21 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -1206,7 +1206,7 @@ ugen_detach(device_t self, int flags)
 	if (!sc->sc_attached)
 		goto out;
 
-	/* Abort all pipes.  Causes processes waiting for transfer to wake. */
+	/* Abort all pipes.  */
 	for (i = 0; i < USB_MAX_ENDPOINTS; i++) {
 		for (dir = OUT; dir <= IN; dir++) {
 			sce = &sc->sc_endpoints[i][dir];
@@ -1218,8 +1218,10 @@ ugen_detach(device_t self, int flags)
 	mutex_enter(&sc->sc_lock);
 	if (--sc->sc_refcnt >= 0) {
 		/* Wake everyone */
-		for (i = 0; i < USB_MAX_ENDPOINTS; i++)
-			cv_signal(&sc->sc_endpoints[i][IN].cv);
+		for (i = 0; i < USB_MAX_ENDPOINTS; i++) {
+			for (dir = OUT; dir <= IN; dir++)
+				cv_signal(&sc->sc_endpoints[i][dir].cv);
+		}
 		/* Wait for processes to go away. */
 		if (cv_timedwait(&sc->sc_detach_cv, &sc->sc_lock, hz * 60))
 			aprint_error_dev(self, ": didn't detach\n");
