@@ -1,4 +1,4 @@
-/*	$NetBSD: ugen.c,v 1.166 2021/09/07 10:43:51 riastradh Exp $	*/
+/*	$NetBSD: ugen.c,v 1.167 2021/09/07 10:44:04 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ugen.c,v 1.166 2021/09/07 10:43:51 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ugen.c,v 1.167 2021/09/07 10:44:04 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -669,8 +669,10 @@ ugenopen(dev_t dev, int flag, int mode, struct lwp *l)
 			DPRINTFN(5, ("ugenopen: isoc open done\n"));
 			break;
 		bad:
-			while (--i >= 0) /* implicit buffer free */
+			while (--i >= 0) { /* implicit buffer free */
 				usbd_destroy_xfer(sce->isoreqs[i].xfer);
+				sce->isoreqs[i].xfer = NULL;
+			}
 			usbd_close_pipe(sce->pipeh);
 			sce->pipeh = NULL;
 			kmem_free(sce->ibuf, isize * UGEN_NISOFRAMES);
@@ -699,13 +701,8 @@ ugen_do_close(struct ugen_softc *sc, int flag, int endpt)
 
 	KASSERT(KERNEL_LOCKED_P()); /* sc_is_open */
 
-	if (!sc->sc_is_open[endpt]) {
-		KASSERT(sc->sc_endpoints[endpt][IN].pipeh == NULL);
-		KASSERT(sc->sc_endpoints[endpt][OUT].pipeh == NULL);
-		KASSERT(sc->sc_endpoints[endpt][IN].ibuf == NULL);
-		KASSERT(sc->sc_endpoints[endpt][OUT].ibuf == NULL);
-		return;
-	}
+	if (!sc->sc_is_open[endpt])
+		goto out;
 
 	if (endpt == USB_CONTROL_ENDPOINT) {
 		DPRINTFN(5, ("ugenclose: close control\n"));
@@ -733,13 +730,16 @@ ugen_do_close(struct ugen_softc *sc, int flag, int endpt)
 			msize = isize;
 			break;
 		case UE_ISOCHRONOUS:
-			for (i = 0; i < UGEN_NISOREQS; ++i)
+			for (i = 0; i < UGEN_NISOREQS; ++i) {
 				usbd_destroy_xfer(sce->isoreqs[i].xfer);
+				sce->isoreqs[i].xfer = NULL;
+			}
 			msize = isize * UGEN_NISOFRAMES;
 			break;
 		case UE_BULK:
 			if (sce->state & (UGEN_BULK_RA | UGEN_BULK_WB)) {
 				usbd_destroy_xfer(sce->ra_wb_xfer);
+				sce->ra_wb_xfer = NULL;
 				msize = sce->ra_wb_bufsize;
 			}
 			break;
@@ -755,6 +755,14 @@ ugen_do_close(struct ugen_softc *sc, int flag, int endpt)
 	}
 
 out:	sc->sc_is_open[endpt] = 0;
+	for (dir = OUT; dir <= IN; dir++) {
+		sce = &sc->sc_endpoints[endpt][dir];
+		KASSERT(sce->pipeh == NULL);
+		KASSERT(sce->ibuf == NULL);
+		KASSERT(sce->ra_wb_xfer == NULL);
+		for (i = 0; i < UGEN_NISOREQS; i++)
+			KASSERT(sce->isoreqs[i].xfer == NULL);
+	}
 }
 
 static int
@@ -1649,6 +1657,8 @@ ugen_do_ioctl(struct ugen_softc *sc, int endpt, u_long cmd,
 			/* Only turn RA on if it's currently off. */
 			if (sce->state & UGEN_BULK_RA)
 				return 0;
+			KASSERT(sce->ra_wb_xfer == NULL);
+			KASSERT(sce->ibuf == NULL);
 
 			if (sce->ra_wb_bufsize == 0 || sce->ra_wb_reqsize == 0)
 				/* shouldn't happen */
@@ -1674,6 +1684,7 @@ ugen_do_ioctl(struct ugen_softc *sc, int endpt, u_long cmd,
 				kmem_free(sce->ibuf, sce->ra_wb_bufsize);
 				sce->ibuf = NULL;
 				usbd_destroy_xfer(sce->ra_wb_xfer);
+				sce->ra_wb_xfer = NULL;
 				return EIO;
 			}
 		} else {
@@ -1684,6 +1695,7 @@ ugen_do_ioctl(struct ugen_softc *sc, int endpt, u_long cmd,
 			sce->state &= ~UGEN_BULK_RA;
 			usbd_abort_pipe(sce->pipeh);
 			usbd_destroy_xfer(sce->ra_wb_xfer);
+			sce->ra_wb_xfer = NULL;
 			/*
 			 * XXX Discard whatever's in the buffer, but we
 			 * should keep it around and drain the buffer
@@ -1707,12 +1719,15 @@ ugen_do_ioctl(struct ugen_softc *sc, int endpt, u_long cmd,
 			/* Only turn WB on if it's currently off. */
 			if (sce->state & UGEN_BULK_WB)
 				return 0;
+			KASSERT(sce->ra_wb_xfer == NULL);
+			KASSERT(sce->ibuf == NULL);
 
 			if (sce->ra_wb_bufsize == 0 || sce->ra_wb_reqsize == 0)
 				/* shouldn't happen */
 				return EINVAL;
 			error = usbd_create_xfer(sce->pipeh, sce->ra_wb_reqsize,
 			    0, 0, &sce->ra_wb_xfer);
+			/* XXX check error???  */
 			sce->ra_wb_xferlen = sce->ra_wb_reqsize;
 			sce->ibuf = kmem_alloc(sce->ra_wb_bufsize, KM_SLEEP);
 			sce->fill = sce->cur = sce->ibuf;
@@ -1732,6 +1747,7 @@ ugen_do_ioctl(struct ugen_softc *sc, int endpt, u_long cmd,
 			 */
 			usbd_abort_pipe(sce->pipeh);
 			usbd_destroy_xfer(sce->ra_wb_xfer);
+			sce->ra_wb_xfer = NULL;
 			kmem_free(sce->ibuf, sce->ra_wb_bufsize);
 			sce->ibuf = NULL;
 		}
