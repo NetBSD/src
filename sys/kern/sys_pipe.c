@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_pipe.c,v 1.152 2021/01/25 19:21:11 dholland Exp $	*/
+/*	$NetBSD: sys_pipe.c,v 1.153 2021/09/07 13:24:46 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_pipe.c,v 1.152 2021/01/25 19:21:11 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_pipe.c,v 1.153 2021/09/07 13:24:46 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -584,7 +584,7 @@ pipe_write(file_t *fp, off_t *offset, struct uio *uio, kauth_cred_t cred,
 	}
 	++wpipe->pipe_busy;
 
-	/* Aquire the long-term pipe lock */
+	/* Acquire the long-term pipe lock */
 	if ((error = pipelock(wpipe, true)) != 0) {
 		--wpipe->pipe_busy;
 		if (wpipe->pipe_busy == 0) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.235 2021/08/21 11:55:25 andvar Exp $ */
+/*	$NetBSD: autoconf.c,v 1.236 2021/09/07 13:24:46 andvar Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.235 2021/08/21 11:55:25 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.236 2021/09/07 13:24:46 andvar Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -1457,7 +1457,7 @@ device_register_post_config(device_t dev, void *aux)
 
 		/*
 		 * If this is a FC-AL drive it will have
-		 * aquired its WWN device property by now,
+		 * acquired its WWN device property by now,
 		 * so we can properly match it.
 		 */
 		if (prop_dictionary_get_uint64(device_properties(dev),
