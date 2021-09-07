@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi.c,v 1.218 2021/06/16 13:20:49 riastradh Exp $	*/
+/*	$NetBSD: usbdi.c,v 1.219 2021/09/07 10:44:18 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1998, 2012, 2015 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.218 2021/06/16 13:20:49 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.219 2021/09/07 10:44:18 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -340,6 +340,7 @@ usbd_close_pipe(struct usbd_pipe *pipe)
 	pipe->up_methods->upm_close(pipe);
 	usbd_unlock_pipe(pipe);
 
+	cv_destroy(&pipe->up_callingcv);
 	if (pipe->up_intrxfer)
 		usbd_destroy_xfer(pipe->up_intrxfer);
 	usb_rem_task_wait(pipe->up_dev, &pipe->up_async_task, USB_TASKQ_DRIVER,
@@ -991,6 +992,13 @@ usbd_ar_pipe(struct usbd_pipe *pipe)
 			/* Make the HC abort it (and invoke the callback). */
 			SDT_PROBE1(usb, device, xfer, abort,  xfer);
 			pipe->up_methods->upm_abort(xfer);
+			while (pipe->up_callingxfer == xfer) {
+				USBHIST_LOG(usbdebug, "wait for callback"
+				    "pipe = %#jx xfer = %#jx",
+				    (uintptr_t)pipe, (uintptr_t)xfer, 0, 0);
+				cv_wait(&pipe->up_callingcv,
+				    pipe->up_dev->ud_bus->ub_lock);
+			}
 			/* XXX only for non-0 usbd_clear_endpoint_stall(pipe); */
 		}
 	}
@@ -1092,6 +1100,8 @@ usb_transfer_complete(struct usbd_xfer *xfer)
 
 	if (xfer->ux_callback) {
 		if (!polling) {
+			KASSERT(pipe->up_callingxfer == NULL);
+			pipe->up_callingxfer = xfer;
 			mutex_exit(pipe->up_dev->ud_bus->ub_lock);
 			if (!(pipe->up_flags & USBD_MPSAFE))
 				KERNEL_LOCK(1, curlwp);
@@ -1103,6 +1113,9 @@ usb_transfer_complete(struct usbd_xfer *xfer)
 			if (!(pipe->up_flags & USBD_MPSAFE))
 				KERNEL_UNLOCK_ONE(curlwp);
 			mutex_enter(pipe->up_dev->ud_bus->ub_lock);
+			KASSERT(pipe->up_callingxfer == xfer);
+			pipe->up_callingxfer = NULL;
+			cv_broadcast(&pipe->up_callingcv);
 		}
 	}
 
