@@ -1,4 +1,4 @@
-/* $NetBSD: linux_exec_powerpc.c,v 1.24 2012/02/21 18:10:00 rjs Exp $ */
+/* $NetBSD: linux_exec_powerpc.c,v 1.25 2021/09/07 11:43:04 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_exec_powerpc.c,v 1.24 2012/02/21 18:10:00 rjs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_exec_powerpc.c,v 1.25 2021/09/07 11:43:04 riastradh Exp $");
 
 #define ELFSIZE 32
 
@@ -93,7 +93,7 @@ ELFNAME2(linux,copyargs)(struct lwp *l, struct exec_package *pack,
 	    & ~LINUX_SHIFT);
 #endif
 
-	memset(ai, 0, sizeof(AuxInfo) * LINUX_ELF_AUX_ENTRIES);
+	memset(ai, 0, sizeof(ai));
 
 	a = ai;
 

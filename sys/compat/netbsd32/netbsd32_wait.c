@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_wait.c,v 1.24 2020/10/15 23:06:06 rin Exp $	*/
+/*	$NetBSD: netbsd32_wait.c,v 1.25 2021/09/07 11:43:05 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_wait.c,v 1.24 2020/10/15 23:06:06 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_wait.c,v 1.25 2021/09/07 11:43:05 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -133,6 +133,7 @@ netbsd32_wait6(struct lwp *l, const struct netbsd32_wait6_args *uap,
 	if (wrup != NULL && error == 0) {
 		struct netbsd32_wrusage wru32;
 
+		memset(&wru32, 0, sizeof(wru32));
 		netbsd32_from_rusage(&wrup->wru_self, &wru32.wru_self);
 		netbsd32_from_rusage(&wrup->wru_children, &wru32.wru_children);
 		error = copyout(&wru32, SCARG_P32(uap, wru), sizeof(wru32));

@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_nfssvc.c,v 1.7 2021/08/30 08:39:24 riastradh Exp $	*/
+/*	$NetBSD: netbsd32_nfssvc.c,v 1.8 2021/09/07 11:43:05 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2015 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_nfssvc.c,v 1.7 2021/08/30 08:39:24 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_nfssvc.c,v 1.8 2021/09/07 11:43:05 riastradh Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_nfs.h"
@@ -121,6 +121,7 @@ nfssvc32_nsd_out(void *argp, const struct nfsd_srvargs *nsd)
 {
 	struct netbsd32_nfsd_srvargs args32;
 
+	memset(&args32, 0, sizeof(args32));
 	NETBSD32PTR32(args32.nsd_nfsd, nsd->nsd_nfsd);
 	args32.nsd_uid = nsd->nsd_uid;
 	args32.nsd_haddr = nsd->nsd_haddr;

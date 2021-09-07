@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.59 2019/08/23 10:31:14 maxv Exp $ */
+/*	$NetBSD: linux_machdep.c,v 1.60 2021/09/07 11:43:03 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2005 Emmanuel Dreyfus, all rights reserved.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.59 2019/08/23 10:31:14 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.60 2021/09/07 11:43:03 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -227,6 +227,7 @@ linux_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 	if (fpsp != NULL) {
 		size_t fp_size = sizeof fpregs;
 		/* The netbsd and linux structures both match the fxsave data */
+		memset(&fpregs, 0, sizeof(fpregs));
 		(void)process_read_fpregs(l, &fpregs, &fp_size);
 		error = copyout(&fpregs, fpsp, sizeof(*fpsp));
 	}

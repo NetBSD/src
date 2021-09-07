@@ -1,4 +1,4 @@
-/*	$NetBSD: statvfs.h,v 1.3 2020/07/03 19:00:01 christos Exp $	 */
+/*	$NetBSD: statvfs.h,v 1.4 2021/09/07 11:43:05 riastradh Exp $	 */
 
 /*-
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -77,6 +77,9 @@ __BEGIN_DECLS
 static __inline void
 statvfs_to_statvfs90(const struct statvfs *s, struct statvfs90 *s90)
 {
+
+	memset(s90, 0, sizeof(*s90));
+
 	s90->f_flag = s->f_flag;
 	s90->f_bsize = s->f_bsize;
 	s90->f_frsize = s->f_frsize;
