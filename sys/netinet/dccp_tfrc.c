@@ -1,5 +1,5 @@
 /*	$KAME: dccp_tfrc.c,v 1.16 2006/03/01 17:34:08 nishida Exp $	*/
-/*	$NetBSD: dccp_tfrc.c,v 1.6 2019/12/27 09:25:58 msaitoh Exp $ */
+/*	$NetBSD: dccp_tfrc.c,v 1.7 2021/09/07 13:24:46 andvar Exp $ */
 
 /*
  * Copyright (c) 2003  Nils-Erik Mattsson
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dccp_tfrc.c,v 1.6 2019/12/27 09:25:58 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dccp_tfrc.c,v 1.7 2021/09/07 13:24:46 andvar Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_dccp.h"
@@ -244,7 +244,7 @@ tfrc_time_send(void *ccb)
 		    "TFRC - Callout pending. (tfrc_time_send)\n"));
 		return;
 	}
-	/* aquire locks for dccp_output */
+	/* acquire locks for dccp_output */
 	s = splsoftnet();
 	INP_INFO_RLOCK(&dccpbinfo);
 	/*inp = cb->pcb->d_inpcb;*/

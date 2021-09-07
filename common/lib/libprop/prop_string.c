@@ -1,4 +1,4 @@
-/*	$NetBSD: prop_string.c,v 1.15 2020/06/20 00:16:50 christos Exp $	*/
+/*	$NetBSD: prop_string.c,v 1.16 2021/09/07 13:24:45 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2020 The NetBSD Foundation, Inc.
@@ -146,7 +146,7 @@ _prop_string_free(prop_stack_t stack, prop_object_t *obj)
 		_PROP_MUTEX_LOCK(_prop_string_tree_mutex);
 		/*
 		 * Double-check the retain count now that we've
-		 * acqured the tree lock; holding this lock prevents
+		 * acquired the tree lock; holding this lock prevents
 		 * new retains from coming in by finding it in the
 		 * tree.
 		 */
