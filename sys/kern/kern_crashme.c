@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_crashme.c,v 1.3 2020/04/23 03:15:47 rin Exp $	*/
+/*	$NetBSD: kern_crashme.c,v 1.4 2021/09/07 11:00:13 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2018, 2019 Matthew R. Green
@@ -36,6 +36,10 @@
  * panic or crash.  you can add and remove nodes.
  */
 
+#ifdef _KERNEL_OPT
+#include "opt_ddb.h"
+#endif
+
 #include <sys/param.h>
 #include <sys/sysctl.h>
 #include <sys/systm.h>
@@ -44,6 +48,10 @@
 #include <sys/mutex.h>
 #include <sys/crashme.h>
 
+#ifdef DDB
+#include <ddb/ddb.h>
+#endif
+
 #define DPRINTF(fmt, ...) \
 	printf("%s:%d: " fmt "\n", __func__, __LINE__, ## __VA_ARGS__)
 
@@ -51,6 +59,9 @@ static int crashme_sysctl_forwarder(SYSCTLFN_PROTO);
 
 static int crashme_panic(int);
 static int crashme_null_deref(int);
+#ifdef DDB
+static int crashme_ddb(int);
+#endif
 
 #define CMNODE(name, lname, func)	\
     {					\
@@ -62,6 +73,9 @@ static int crashme_null_deref(int);
 static crashme_node nodes[] = {
     CMNODE("panic", "plain old panic", crashme_panic),
     CMNODE("null_deref", "null dereference", crashme_null_deref),
+#ifdef DDB
+    CMNODE("ddb", "enter ddb directly", crashme_ddb),
+#endif
 };
 static crashme_node *first_node;
 static kmutex_t crashme_lock;
@@ -234,3 +248,13 @@ crashme_null_deref(int flags)
 	*(volatile char *)0 = 0;
 	return -1;
 }
+
+#ifdef DDB
+static int
+crashme_ddb(int flags)
+{
+
+	Debugger();
+	return 0;
+}
+#endif
