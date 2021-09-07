@@ -1,4 +1,4 @@
-# $NetBSD: var-eval-short.mk,v 1.6 2021/09/06 19:38:30 rillig Exp $
+# $NetBSD: var-eval-short.mk,v 1.7 2021/09/07 20:41:58 rillig Exp $
 #
 # Tests for each variable modifier to ensure that they only do the minimum
 # necessary computations.  If the result of the expression is not needed, they
@@ -59,10 +59,12 @@ FAIL=	${:!echo unexpected 1>&2!}
 .endif
 
 # Before var.c 1.856 from 2021-03-14, the modifier ':C' did not expand the
-# nested expression ${FAIL} and then tried to compile the unexpanded text as a
-# regular expression, which failed both because of the '{FAIL}', which is not
-# a valid repetition, and because of the '****', which are repeated
-# repetitions as well.
+# nested expression ${FAIL}, which is correct, and then tried to compile the
+# unexpanded text as a regular expression, which is unnecessary since the
+# right-hand side of the '&&' cannot influence the outcome of the condition.
+# Compiling the regular expression then failed both because of the '{FAIL}',
+# which is not a valid repetition of the form '{1,5}', and because of the
+# '****', which are repeated repetitions as well.
 # '${FAIL}'
 .if 0 && ${:Uword:C,${FAIL}****,,}
 .endif
