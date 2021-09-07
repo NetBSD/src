@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ksyms.c,v 1.99 2021/09/07 10:59:46 riastradh Exp $	*/
+/*	$NetBSD: kern_ksyms.c,v 1.100 2021/09/07 11:00:02 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_ksyms.c,v 1.99 2021/09/07 10:59:46 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ksyms.c,v 1.100 2021/09/07 11:00:02 riastradh Exp $");
 
 #if defined(_KERNEL) && defined(_KERNEL_OPT)
 #include "opt_copy_symtab.h"
@@ -94,6 +94,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_ksyms.c,v 1.99 2021/09/07 10:59:46 riastradh Ex
 #include <sys/ksyms.h>
 #include <sys/kernel.h>
 #include <sys/intr.h>
+#include <sys/pserialize.h>
 
 #ifdef DDB
 #include <ddb/db_output.h>
@@ -118,6 +119,7 @@ static bool ksyms_initted;
 static bool ksyms_loaded;
 static kmutex_t ksyms_lock __cacheline_aligned;
 static kcondvar_t ksyms_cv;
+static pserialize_t ksyms_psz __read_mostly;
 static struct ksyms_symtab kernel_symtab;
 
 static void ksyms_hdr_init(const void *);
@@ -146,6 +148,7 @@ int ksyms_strsz;
 int ksyms_ctfsz;	/* this is not currently used by savecore(8) */
 TAILQ_HEAD(ksyms_symtab_queue, ksyms_symtab) ksyms_symtabs =
     TAILQ_HEAD_INITIALIZER(ksyms_symtabs);
+static struct pslist_head ksyms_symtabs_psz = PSLIST_INITIALIZER;
 
 static int
 ksyms_verify(const void *symstart, const void *strstart)
@@ -247,6 +250,7 @@ ksyms_init(void)
 	if (!ksyms_initted) {
 		mutex_init(&ksyms_lock, MUTEX_DEFAULT, IPL_NONE);
 		cv_init(&ksyms_cv, "ksyms");
+		ksyms_psz = pserialize_create();
 		ksyms_initted = true;
 	}
 }
@@ -449,9 +453,19 @@ addsymtab(const char *name, void *symstart, size_t symsize,
 	/*
 	 * Publish the symtab.  Do this at splhigh to ensure ddb never
 	 * witnesses an inconsistent state of the queue, unless memory
-	 * is so corrupt that we crash in TAILQ_INSERT_TAIL.
+	 * is so corrupt that we crash in PSLIST_WRITER_INSERT_AFTER or
+	 * TAILQ_INSERT_TAIL.
 	 */
+	PSLIST_ENTRY_INIT(tab, sd_pslist);
 	s = splhigh();
+	if (TAILQ_EMPTY(&ksyms_symtabs)) {
+		PSLIST_WRITER_INSERT_HEAD(&ksyms_symtabs_psz, tab, sd_pslist);
+	} else {
+		struct ksyms_symtab *last;
+
+		last = TAILQ_LAST(&ksyms_symtabs, ksyms_symtab_queue);
+		PSLIST_WRITER_INSERT_AFTER(last, tab, sd_pslist);
+	}
 	TAILQ_INSERT_TAIL(&ksyms_symtabs, tab, sd_queue);
 	splx(s);
 
@@ -587,7 +601,9 @@ ksyms_addsyms_explicit(void *ehdr, void *symstart, size_t symsize,
  * "val" is a pointer to the corresponding value, if call succeeded.
  * Returns 0 if success or ENOENT if no such entry.
  *
- * Call with ksyms_lock, unless known that the symbol table can't change.
+ * If symp is nonnull, caller must hold ksyms_lock or module_lock, have
+ * ksyms_opencnt nonzero, be in a pserialize read section, be in ddb
+ * with all other CPUs quiescent.
  */
 int
 ksyms_getval_unlocked(const char *mod, const char *sym, Elf_Sym **symp,
@@ -595,51 +611,61 @@ ksyms_getval_unlocked(const char *mod, const char *sym, Elf_Sym **symp,
 {
 	struct ksyms_symtab *st;
 	Elf_Sym *es;
+	int s, error = ENOENT;
 
 #ifdef KSYMS_DEBUG
 	if (ksyms_debug & FOLLOW_CALLS)
 		printf("%s: mod %s sym %s valp %p\n", __func__, mod, sym, val);
 #endif
 
-	TAILQ_FOREACH(st, &ksyms_symtabs, sd_queue) {
+	s = pserialize_read_enter();
+	PSLIST_READER_FOREACH(st, &ksyms_symtabs_psz, struct ksyms_symtab,
+	    sd_pslist) {
 		if (mod != NULL && strcmp(st->sd_name, mod))
 			continue;
 		if ((es = findsym(sym, st, type)) != NULL) {
 			*val = es->st_value;
 			if (symp)
 				*symp = es;
-			return 0;
+			error = 0;
+			break;
 		}
 	}
-	return ENOENT;
+	pserialize_read_exit(s);
+	return error;
 }
 
 int
 ksyms_getval(const char *mod, const char *sym, unsigned long *val, int type)
 {
-	int rc;
 
 	if (!ksyms_loaded)
 		return ENOENT;
 
-	mutex_enter(&ksyms_lock);
-	rc = ksyms_getval_unlocked(mod, sym, NULL, val, type);
-	mutex_exit(&ksyms_lock);
-	return rc;
+	/* No locking needed -- we read the table pserialized.  */
+	return ksyms_getval_unlocked(mod, sym, NULL, val, type);
 }
 
+/*
+ * ksyms_get_mod(mod)
+ *
+ * Return the symtab for the given module name.  Caller must ensure
+ * that the module cannot be unloaded until after this returns.
+ */
 struct ksyms_symtab *
 ksyms_get_mod(const char *mod)
 {
 	struct ksyms_symtab *st;
+	int s;
 
-	mutex_enter(&ksyms_lock);
-	TAILQ_FOREACH(st, &ksyms_symtabs, sd_queue) {
+	s = pserialize_read_enter();
+	PSLIST_READER_FOREACH(st, &ksyms_symtabs_psz, struct ksyms_symtab,
+	    sd_pslist) {
 		if (mod != NULL && strcmp(st->sd_name, mod))
 			continue;
 		break;
 	}
-	mutex_exit(&ksyms_lock);
+	pserialize_read_exit(s);
 
 	return st;
 }
@@ -695,7 +721,9 @@ ksyms_mod_foreach(const char *mod, ksyms_callback_t callback, void *opaque)
  * Get "mod" and "symbol" associated with an address.
  * Returns 0 if success or ENOENT if no such entry.
  *
- * Call with ksyms_lock, unless known that the symbol table can't change.
+ * Caller must hold ksyms_lock or module_lock, have ksyms_opencnt
+ * nonzero, be in a pserialize read section, or be in ddb with all
+ * other CPUs quiescent.
  */
 int
 ksyms_getname(const char **mod, const char **sym, vaddr_t v, int f)
@@ -710,7 +738,8 @@ ksyms_getname(const char **mod, const char **sym, vaddr_t v, int f)
 	if (!ksyms_loaded)
 		return ENOENT;
 
-	TAILQ_FOREACH(st, &ksyms_symtabs, sd_queue) {
+	PSLIST_READER_FOREACH(st, &ksyms_symtabs_psz, struct ksyms_symtab,
+	    sd_pslist) {
 		if (v < st->sd_minsym || v > st->sd_maxsym)
 			continue;
 		sz = st->sd_symsize/sizeof(Elf_Sym);
@@ -795,11 +824,20 @@ ksyms_modunload(const char *name)
 	/*
 	 * Remove the symtab.  Do this at splhigh to ensure ddb never
 	 * witnesses an inconsistent state of the queue, unless memory
-	 * is so corrupt that we crash in TAILQ_REMOVE.
+	 * is so corrupt that we crash in TAILQ_REMOVE or
+	 * PSLIST_WRITER_REMOVE.
 	 */
 	s = splhigh();
 	TAILQ_REMOVE(&ksyms_symtabs, st, sd_queue);
+	PSLIST_WRITER_REMOVE(st, sd_pslist);
 	splx(s);
+
+	/*
+	 * And wait a grace period, in case there are any pserialized
+	 * readers in flight.
+	 */
+	pserialize_perform(ksyms_psz);
+	PSLIST_ENTRY_DESTROY(st, sd_pslist);
 
 	/* Recompute the ksyms sizes now that we've removed st.  */
 	ksyms_sizes_calc();
@@ -1142,7 +1180,7 @@ ksymsioctl(dev_t dev, u_long cmd, void *data, int fflag, struct lwp *l)
 	unsigned long val;
 	int error = 0;
 	char *str = NULL;
-	int len;
+	int len, s;
 
 	/* Read ksyms_maxlen only once while not holding the lock. */
 	len = ksyms_maxlen;
@@ -1173,8 +1211,9 @@ ksymsioctl(dev_t dev, u_long cmd, void *data, int fflag, struct lwp *l)
 		 * Use the in-kernel symbol lookup code for fast
 		 * retreival of a symbol.
 		 */
-		mutex_enter(&ksyms_lock);
-		TAILQ_FOREACH(st, &ksyms_symtabs, sd_queue) {
+		s = pserialize_read_enter();
+		PSLIST_READER_FOREACH(st, &ksyms_symtabs_psz,
+		    struct ksyms_symtab, sd_pslist) {
 			if ((sym = findsym(str, st, KSYMS_ANY)) == NULL)
 				continue;
 #ifdef notdef
@@ -1188,10 +1227,10 @@ ksymsioctl(dev_t dev, u_long cmd, void *data, int fflag, struct lwp *l)
 		}
 		if (sym != NULL) {
 			memcpy(&copy, sym, sizeof(copy));
-			mutex_exit(&ksyms_lock);
+			pserialize_read_exit(s);
 			error = copyout(&copy, okg->kg_sym, sizeof(Elf_Sym));
 		} else {
-			mutex_exit(&ksyms_lock);
+			pserialize_read_exit(s);
 			error = ENOENT;
 		}
 		kmem_free(str, len);
@@ -1213,8 +1252,9 @@ ksymsioctl(dev_t dev, u_long cmd, void *data, int fflag, struct lwp *l)
 		 * Use the in-kernel symbol lookup code for fast
 		 * retreival of a symbol.
 		 */
-		mutex_enter(&ksyms_lock);
-		TAILQ_FOREACH(st, &ksyms_symtabs, sd_queue) {
+		s = pserialize_read_enter();
+		PSLIST_READER_FOREACH(st, &ksyms_symtabs_psz,
+		    struct ksyms_symtab, sd_pslist) {
 			if ((sym = findsym(str, st, KSYMS_ANY)) == NULL)
 				continue;
 #ifdef notdef
@@ -1231,7 +1271,7 @@ ksymsioctl(dev_t dev, u_long cmd, void *data, int fflag, struct lwp *l)
 		} else {
 			error = ENOENT;
 		}
-		mutex_exit(&ksyms_lock);
+		pserialize_read_exit(s);
 		kmem_free(str, len);
 		break;
 
