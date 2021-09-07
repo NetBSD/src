@@ -1,4 +1,4 @@
-/*	$NetBSD: ugen.c,v 1.158 2020/12/18 01:40:20 thorpej Exp $	*/
+/*	$NetBSD: ugen.c,v 1.159 2021/09/07 10:42:22 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ugen.c,v 1.158 2020/12/18 01:40:20 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ugen.c,v 1.159 2021/09/07 10:42:22 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -441,6 +441,8 @@ ugen_set_config(struct ugen_softc *sc, int configno, int chkopen)
 	DPRINTFN(1,("ugen_set_config: %s to configno %d, sc=%p\n",
 		    device_xname(sc->sc_dev), configno, sc));
 
+	KASSERT(KERNEL_LOCKED_P()); /* sc_is_open */
+
 	if (chkopen) {
 		/*
 		 * We start at 1, not 0, because we don't care whether the
@@ -508,6 +510,8 @@ ugenopen(dev_t dev, int flag, int mode, struct lwp *l)
 	struct usbd_xfer *xfer;
 	int i, j;
 	int error;
+
+	KASSERT(KERNEL_LOCKED_P()); /* sc_is_open */
 
 	if ((sc = ugenif_acquire(unit)) == NULL)
 		return ENXIO;
@@ -674,6 +678,8 @@ ugenclose(dev_t dev, int flag, int mode, struct lwp *l)
 	int dir;
 	int i;
 	int error;
+
+	KASSERT(KERNEL_LOCKED_P()); /* sc_is_open */
 
 	if ((sc = ugenif_acquire(UGENUNIT(dev))) == NULL)
 		return ENXIO;
@@ -1529,6 +1535,8 @@ ugen_do_ioctl(struct ugen_softc *sc, int endpt, u_long cmd,
 	int cdesclen;
 	int error;
 	int dir;
+
+	KASSERT(KERNEL_LOCKED_P()); /* ugen_set_config */
 
 	DPRINTFN(5, ("ugenioctl: cmd=%08lx\n", cmd));
 
