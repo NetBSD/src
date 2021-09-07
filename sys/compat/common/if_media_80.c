@@ -1,4 +1,4 @@
-/*	$NetBSD: if_media_80.c,v 1.3 2019/12/12 02:15:42 pgoyette Exp $	*/
+/*	$NetBSD: if_media_80.c,v 1.4 2021/09/07 11:43:02 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -141,7 +141,8 @@ compat_ifmediareq_post(struct ifreq *ifr, u_long cmd)
 		 * there is no problem to trust ifm_count.
 		 */
 		minwords = ifmr->ifm_count;
-		kptr = malloc(minwords * sizeof(*kptr), M_TEMP, M_WAITOK);
+		kptr = malloc(minwords * sizeof(*kptr), M_TEMP,
+		    M_WAITOK|M_ZERO);
 		if (kptr == NULL)
 			return ENOMEM;
 

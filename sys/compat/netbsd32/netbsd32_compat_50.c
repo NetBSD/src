@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_compat_50.c,v 1.51 2021/02/18 12:54:03 simonb Exp $	*/
+/*	$NetBSD: netbsd32_compat_50.c,v 1.52 2021/09/07 11:43:05 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2020 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_50.c,v 1.51 2021/02/18 12:54:03 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_50.c,v 1.52 2021/09/07 11:43:05 riastradh Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -170,6 +170,7 @@ compat_50_netbsd32_gettimeofday(struct lwp *l,
 		 * NetBSD has no kernel notion of time zone, so we just
 		 * fake up a timezone struct and return it if demanded.
 		 */
+		memset(&tzfake, 0, sizeof(tzfake));
 		tzfake.tz_minuteswest = 0;
 		tzfake.tz_dsttime = 0;
 		error = copyout(&tzfake, SCARG_P32(uap, tzp), sizeof(tzfake));
@@ -255,6 +256,8 @@ compat_50_netbsd32_adjtime(struct lwp *l,
 		return error;
 
 	if (SCARG_P32(uap, olddelta)) {
+		memset(&atv, 0, sizeof(atv));
+
 		mutex_spin_enter(&timecounter_lock);
 		atv.tv_sec = time_adjtime / 1000000;
 		atv.tv_usec = time_adjtime % 1000000;
@@ -401,6 +404,7 @@ compat_50_netbsd32_timer_settime(struct lwp *l,
 		return error;
 
 	if (ovp) {
+		memset(&its32, 0, sizeof(its32));
 		netbsd32_from_timespec50(&ovp->it_interval, &its32.it_interval);
 		netbsd32_from_timespec50(&ovp->it_value, &its32.it_value);
 		return copyout(&its32, SCARG_P32(uap, ovalue), sizeof(its32));
@@ -422,6 +426,8 @@ compat_50_netbsd32_timer_gettime(struct lwp *l, const struct compat_50_netbsd32_
 	if ((error = dotimer_gettime(SCARG(uap, timerid), l->l_proc,
 	    &its)) != 0)
 		return error;
+
+	memset(&its32, 0, sizeof(its32));
 
 	netbsd32_from_timespec50(&its.it_interval, &its32.it_interval);
 	netbsd32_from_timespec50(&its.it_value, &its32.it_value);

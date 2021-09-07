@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_ptrace.c,v 1.22 2020/05/23 23:42:41 ad Exp $	*/
+/*	$NetBSD: linux_ptrace.c,v 1.23 2021/09/07 11:43:04 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_ptrace.c,v 1.22 2020/05/23 23:42:41 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_ptrace.c,v 1.23 2021/09/07 11:43:04 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/mount.h>
@@ -180,6 +180,7 @@ linux_sys_ptrace_arch(struct lwp *l, const struct linux_sys_ptrace_args *uap,
 		if (error) {
 			break;
 		}
+		memset(linux_regs, 0, sizeof(*linux_regs));
 		memcpy(linux_regs->uregs, regs->r, 13 * sizeof(register_t));
 		linux_regs->uregs[LINUX_REG_SP] = regs->r_sp;
 		linux_regs->uregs[LINUX_REG_LR] = regs->r_lr;

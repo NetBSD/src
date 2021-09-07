@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.33 2021/02/01 19:31:34 skrll Exp $	*/
+/*	$NetBSD: linux_machdep.c,v 1.34 2021/09/07 11:43:04 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1995, 2000 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.33 2021/02/01 19:31:34 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.34 2021/09/07 11:43:04 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -106,6 +106,8 @@ linux_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 	fp--;
 
 	/* Build stack frame for signal trampoline. */
+
+	memset(&frame, 0, sizeof(frame));
 
 	/* Save register context. */
 	frame.sf_sc.sc_r0     = tf->tf_r0;

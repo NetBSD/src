@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_ptrace.c,v 1.8 2019/12/24 14:50:59 kamil Exp $	*/
+/*	$NetBSD: netbsd32_ptrace.c,v 1.9 2021/09/07 11:43:05 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_ptrace.c,v 1.8 2019/12/24 14:50:59 kamil Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_ptrace.c,v 1.9 2021/09/07 11:43:05 riastradh Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ptrace.h"
@@ -55,6 +55,7 @@ static void
 netbsd32_lwpstatus_to_lwpstatus32(struct netbsd32_ptrace_lwpstatus *pls32,
     const struct ptrace_lwpstatus *pls)
 {
+	memset(pls32, 0, sizeof(*pls32));
 	pls32->pl_lwpid = pls->pl_lwpid;
 	pls32->pl_sigpend = pls->pl_sigpend;
 	pls32->pl_sigmask = pls->pl_sigmask;
@@ -103,6 +104,7 @@ netbsd32_copyout_piod(const struct ptrace_io_desc *piod, void *addr, size_t len)
 	if (len != 0 && sizeof(piod32) != len)
 		return EINVAL;
 
+	memset(&piod32, 0, sizeof(piod32));
 	piod32.piod_op = piod->piod_op;
 	NETBSD32PTR32(piod32.piod_offs, piod->piod_offs);
 	NETBSD32PTR32(piod32.piod_addr, piod->piod_addr);
@@ -134,6 +136,7 @@ netbsd32_copyout_siginfo(const struct ptrace_siginfo *psi, void *addr, size_t le
 	if (sizeof(psi32) != len)
 		return EINVAL;
 
+	memset(&psi32, 0, sizeof(psi32));
 	psi32.psi_lwpid = psi->psi_lwpid;
 	netbsd32_si_to_si32(&psi32.psi_siginfo, &psi->psi_siginfo);
 	return copyout(&psi32, addr, sizeof(psi32));
