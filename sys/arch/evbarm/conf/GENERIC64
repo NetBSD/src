@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC64,v 1.183 2021/08/30 23:26:26 jmcneill Exp $
+#	$NetBSD: GENERIC64,v 1.184 2021/09/07 10:09:34 msaitoh Exp $
 #
 #	GENERIC ARM (aarch64) kernel
 #
@@ -93,7 +93,7 @@ options 	EXEC_ELF32
 options 	EFI_RUNTIME
 
 # Device tree support
-armfdt0		at root
+armfdt0 	at root
 simplebus*	at fdt? pass 0
 
 # ACPI support
@@ -108,7 +108,7 @@ acpipcc*	at acpi?
 acpifan*	at acpi?
 acpiged*	at acpi?
 acpilid*	at acpi?
-acpitz*		at acpi?
+acpitz* 	at acpi?
 
 # CPUs
 cpus*		at fdt? pass 0
@@ -118,7 +118,7 @@ cpu*		at acpi?
 vmt*		at fdt?			# VMware Tools
 
 # Performance monitors
-armpmu*		at fdt?
+armpmu* 	at fdt?
 pseudo-device	tprof
 
 # CPU frequency scaling
@@ -127,7 +127,7 @@ cpufreqdt*	at cpu?
 # Power State Coordination Interface (PSCI)
 psci*		at fdt? pass 0
 
-fclock*		at fdt? pass 1
+fclock* 	at fdt? pass 1
 ffclock*	at fdt? pass 1
 fregulator*	at fdt? pass 4
 gregulator*	at fdt? pass 4
@@ -137,7 +137,7 @@ wskbd*		at gpiokeys? console ? mux 1
 gpioleds*	at fdt?
 
 # System Controller
-syscon*		at fdt? pass 1		# Generic System Controller
+syscon* 	at fdt? pass 1		# Generic System Controller
 sunxisramc*	at fdt? pass 1		# Allwinner System Control
 
 # Timer
@@ -156,11 +156,11 @@ sunxiwdt*	at fdt?			# Allwinner watchdog
 
 # Interrupt controller
 appleintc*	at fdt? pass 1		# Apple AIC
-bcmicu*		at fdt? pass 1		# Broadcom BCM283x ICU
+bcmicu* 	at fdt? pass 1		# Broadcom BCM283x ICU
 tegralic*	at fdt? pass 1		# NVIDIA Tegra LIC
 gic*		at fdt? pass 1		# ARM GICv2
 gic*		at acpi?
-armgic0		at gic?
+armgic0 	at gic?
 gicvthree*	at fdt? pass 1		# ARM GICv3
 gicvthree*	at acpi?
 imx7gpc*	at fdt? pass 2		# IMX GPCv2
@@ -175,7 +175,7 @@ tegramc*	at fdt?	pass 4		# NVIDIA Tegra MC
 # Firmware devices
 bcmmbox*	at fdt?			# Broadcom VideoCore IV mailbox
 bcmmbox*	at acpi?
-vcmbox*		at bcmmbox?
+vcmbox* 	at bcmmbox?
 qemufwcfg*	at fdt?			# QEMU Firmware Configuration device
 qemufwcfg*	at acpi?
 
@@ -193,7 +193,7 @@ tegrapmc*	at fdt? pass 4		# NVIDIA Tegra PMC
 
 # Clock and Reset controller
 bcmcprman*	at fdt? pass 1		# Broadcom BCM283x Clock Manager
-bcmaux*		at fdt? pass 1		# Broadcom BCM283x Aux Periph Clocks
+bcmaux* 	at fdt? pass 1		# Broadcom BCM283x Aux Periph Clocks
 g12aoclkc*	at fdt? pass 2		# Amlogic Meson G12 AO clock controller
 g12clkc*	at fdt? pass 2		# Amlogic Meson G12 EE clock controller
 gxbbaoclkc*	at fdt? pass 2		# Amlogic Meson GXBB AO clock controller
@@ -217,11 +217,11 @@ tegra210car*	at fdt? pass 3		# NVIDIA Tegra CAR (T210)
 bcmgpio*	at fdt? pass 3		# Broadcom BCM283x GPIO
 imxgpio*	at fdt? pass 3		# IMX GPIO
 mesonpinctrl*	at fdt? pass 2		# Amlogic Meson GPIO
-plgpio*		at fdt?			# ARM PrimeCell PL061 GPIO
-plgpio*		at acpi?
+plgpio* 	at fdt?			# ARM PrimeCell PL061 GPIO
+plgpio* 	at acpi?
 sunxigpio*	at fdt? pass 3		# Allwinner GPIO
 tegragpio*	at fdt? pass 2		# NVIDIA Tegra GPIO
-rkgpio*		at rkiomux?		# Rockchip GPIO
+rkgpio* 	at rkiomux?		# Rockchip GPIO
 gpio*		at gpiobus?
 
 # PWM controller
@@ -242,7 +242,7 @@ tegra210xphy*	at tegra210xpad?
 applepcie*	at fdt?			# Apple PCIe
 pcihost*	at fdt?			# Generic PCI host controller
 acpipchb*	at acpi?		# ACPI PCIe host bridge
-rkpcie*		at fdt?			# Rockchip AXI PCIE
+rkpcie* 	at fdt?			# Rockchip AXI PCIE
 rkpciephy*	at fdt? pass 9		# Rockchip AXI PCIE PHY
 tegrapcie0	at fdt?			# NVIDIA Tegra PCIE
 pci*		at pcibus?
@@ -272,31 +272,31 @@ wm*		at pci? dev ? function ?	# Intel Gigabit Ethernet
 
 # MII/PHY support
 atphy*		at mii? phy ?		# Attansic/Atheros PHYs
-brgphy*		at mii? phy ?		# Broadcom BCM5400-family PHYs
+brgphy* 	at mii? phy ?		# Broadcom BCM5400-family PHYs
 exphy* 		at mii? phy ?		# 3Com internal PHYs
 gentbi* 	at mii? phy ?		# Generic Ten-Bit 1000BASE-[CLS]X PHYs
 glxtphy*	at mii? phy ?		# Level One LXT-1000 PHYs
 gphyter* 	at mii? phy ?		# NS83861 Gig-E PHY
-gxlphy*		at mii? phy ?		# Amlogic Meson GX internal PHY
-icsphy*		at mii? phy ?		# Integrated Circuit Systems ICS189x
+gxlphy* 	at mii? phy ?		# Amlogic Meson GX internal PHY
+icsphy* 	at mii? phy ?		# Integrated Circuit Systems ICS189x
 igphy*		at mii? phy ?		# Intel IGP01E1000
 ihphy*		at mii? phy ?		# Intel 82577 PHYs
 ikphy*		at mii? phy ?		# Intel 82563 PHYs
 inphy*		at mii? phy ?		# Intel 82555 PHYs
 iophy*		at mii? phy ?		# Intel 82553 PHYs
-lxtphy*		at mii? phy ?		# Level One LXT-970 PHYs
-makphy*		at mii? phy ?		# Marvell Semiconductor 88E1000 PHYs
+lxtphy* 	at mii? phy ?		# Level One LXT-970 PHYs
+makphy* 	at mii? phy ?		# Marvell Semiconductor 88E1000 PHYs
 nsphy*		at mii? phy ?		# NS83840 PHYs
 nsphyter*	at mii? phy ? 		# NS83843 PHYs
-pnaphy*		at mii? phy ?		# generic HomePNA PHYs
-rdcphy*		at mii? phy ?		# RDC R6040 10/100 PHY
-rgephy*		at mii? phy ?		# Realtek 8169S/8110S internal PHYs
+pnaphy* 	at mii? phy ?		# generic HomePNA PHYs
+rdcphy* 	at mii? phy ?		# RDC R6040 10/100 PHY
+rgephy* 	at mii? phy ?		# Realtek 8169S/8110S internal PHYs
 rlphy*		at mii? phy ?		# Realtek 8139/8201L PHYs
 smscphy*	at mii? phy ?		# SMSC LAN87xx PHYs
 sqphy*		at mii? phy ?		# Seeq 80220/80221/80223 PHYs
 tlphy*		at mii? phy ?		# ThunderLAN PHYs
 tqphy*		at mii? phy ?		# TDK Semiconductor PHYs
-urlphy*		at mii? phy ?		# Realtek RTL8150L internal PHYs
+urlphy* 	at mii? phy ?		# Realtek RTL8150L internal PHYs
 ukphy*		at mii? phy ?		# generic unknown PHYs
 
 # Mini-PCIe Wireless
@@ -317,29 +317,29 @@ com*		at puc? port ?
 
 # I2C controllers
 options 	I2C_MAX_ADDR=0xfff
-bsciic*		at fdt?			# Broadcom BCM283x Serial Control
-bsciic*		at acpi?
+bsciic* 	at fdt?			# Broadcom BCM283x Serial Control
+bsciic* 	at acpi?
 dwiic*		at fdt?			# Designware I2C
 dwiic*		at acpi?
-imxi2c*		at fdt? pass 4		# IMX I2C
-nxpiic*		at acpi?		# NXP Layerscape I2C
+imxi2c* 	at fdt? pass 4		# IMX I2C
+nxpiic* 	at acpi?		# NXP Layerscape I2C
 rkiic*		at fdt? pass 4		# Rockchip I2C
 sunxirsb*	at fdt?	pass 4		# Allwinner RSB
 sunxitwi*	at fdt?			# Allwinner TWI
 tegrai2c*	at fdt? pass 4		# NVIDIA Tegra I2C
 #sniiic*	at fdt?			# Socionext SC2A11 I2C
 #sniiic*	at acpi?
-iicmux*		at fdt? pass 5		# I2C mux virtual controllers
+iicmux* 	at fdt? pass 5		# I2C mux virtual controllers
 iic*		at i2cbus?
 
 # I2C devices
-titemp*		at iic?
+titemp* 	at iic?
 seeprom*	at iic?
-spdmem*		at iic?			# memory module SPD EEPROM decoder
+spdmem* 	at iic?			# memory module SPD EEPROM decoder
 as3722pmic*	at iic?
 as3722reg*	at as3722pmic?
 axppmic*	at iic?			# X-Powers AXP Power Management IC
-axpreg*		at axppmic?
+axpreg* 	at axppmic?
 cwfg*		at iic?			# CellWise CW2015 Fuel Gauge IC
 dsrtc*		at iic?			# Dallas Semiconductor RTCs
 es8316ac*	at iic?			# Everest Semi ES8316 Audio CODEC
@@ -347,14 +347,14 @@ fan53555reg*	at iic?			# FAN53555 / SY82x regulator
 max77620pmic*	at iic?
 pcaiicmux*	at iic?			# PCA954x / PCA984x I2C switch / mux
 pcf8563rtc*	at iic?			# PCF8563 RTC
-rkpmic*		at iic?			# Rockchip Power Management IC
+rkpmic* 	at iic?			# Rockchip Power Management IC
 rkreg*		at rkpmic?
 tcagpio*	at iic?
 
 # Random number generators
-amdccp*		at fdt?			# AMD Cryptograhic Coprocessor RNG
-amdccp*		at acpi?
-bcmrng*		at fdt?			# Broadcom BCM283x RNG
+amdccp* 	at fdt?			# AMD Cryptograhic Coprocessor RNG
+amdccp* 	at acpi?
+bcmrng* 	at fdt?			# Broadcom BCM283x RNG
 mesonrng*	at fdt?			# Amlogic Meson RNG
 sun8icrypto* 	at fdt?			# Allwinner Crypto Engine
 rkv1crypto* 	at fdt?			# Rockchip Crypto v1
@@ -366,7 +366,7 @@ tegrartc*	at fdt?			# NVIDIA Tegra RTC
 
 # SDMMC
 bcmsdhost*	at fdt?			# Broadcom BCM283x SD Host Interface
-dwcmmc*		at fdt?			# Designware SD/MMC
+dwcmmc* 	at fdt?			# Designware SD/MMC
 mesongxmmc*	at fdt?			# Amlogic Meson GX eMMC/SD/SDIO controller
 mmcpwrseq*	at fdt? pass 5		# Simple MMC power sequence provider
 rkemmcphy*	at fdt?			# Rockchip eMMC PHY
@@ -387,7 +387,7 @@ bwfm*		at sdmmc?		# Broadcom BCM43xxx WiFi Interface
 ahcisata*	at fdt?			# AHCI SATA
 ahcisata*	at acpi?
 ahcisata*	at pci? dev ? function ?
-atabus*		at ata?
+atabus* 	at ata?
 atapibus*	at atapi?
 wd*		at atabus? drive ?
 cd*		at atapibus? drive ?
@@ -397,7 +397,7 @@ nvme*		at pci? dev ? function ?
 ld*		at nvme? nsid ?
 
 # SPI controllers
-bcmspi*		at fdt?			# Broadcom BCM283x SPI
+bcmspi* 	at fdt?			# Broadcom BCM283x SPI
 rkspi*		at fdt?			# Rockchip SPI
 sun6ispi*	at fdt?			# Allwinner SPI
 spi*		at spibus?
@@ -405,7 +405,7 @@ m25p*		at spi?
 spiflash*	at spiflashbus?
 
 # Broadcom VCHIQ, etc
-vchiq0 		at fdt?
+vchiq0		at fdt?
 vcaudio0 	at vchiq0
 
 # Audio support
@@ -434,7 +434,7 @@ hdmicec*	at hdmicecbus?
 
 # Display
 anxdp*		at fdt?			# Analogix-based (e)DP
-anxedp*		at iic?			# Analogix eDP TX
+anxedp* 	at iic?			# Analogix eDP TX
 dispcon*	at fdt?			# Display connector devices
 panel*		at fdt?			# Display panels
 dwhdmi* 	at fdt?			# Designware HDMI TX
@@ -473,14 +473,14 @@ options 	FONT_BOLD16x32
 #nouveau*	at fdt?			# NVIDIA GPU
 #nouveau*	at pci? dev ? function ?
 #nouveaufb*	at nouveaufbbus?
-radeon*		at pci? dev ? function ? # AMD Radeon
+radeon* 	at pci? dev ? function ? # AMD Radeon
 radeondrmkmsfb*	at radeonfbbus?
 
 # Backlight
 pwmbacklight*	at fdt?			# PWM Backlight controls
 
 # Fan
-pwmfan*		at fdt?			# PWM Fan controls
+pwmfan* 	at fdt?			# PWM Fan controls
 
 # Thermal throttling controller
 mesonthermal*	at fdt?			# Amlogic thermal sensor controller
@@ -501,7 +501,7 @@ rkusbphy*	at rkusb?
 sunxiusbphy*	at fdt? pass 9		# Allwinner USB PHY
 sunxiusb3phy*	at fdt? pass 9		# Allwinner USB3 PHY
 tegrausbphy*	at fdt?			# NVIDIA Tegra USB PHY
-dwctwo*		at fdt?			# Designware USB DRD
+dwctwo* 	at fdt?			# Designware USB DRD
 ehci*		at fdt?			# EHCI
 ehci*		at pci?			# EHCI
 ehci*		at acpi?		# EHCI
@@ -518,13 +518,13 @@ midi*		at midibus?
 pseudo-device	sequencer			# MIDI sequencer
 
 # Virtio devices
-virtio*		at fdt?			# Virtio MMIO device
-virtio*		at acpi?
-virtio*		at pci? dev ? function ?
+virtio* 	at fdt?			# Virtio MMIO device
+virtio* 	at acpi?
+virtio* 	at pci? dev ? function ?
 #viomb*		at virtio?		# Virtio memory balloon device
 ld*		at virtio?		# Virtio disk device
 vioif*		at virtio?		# Virtio network device
-viornd*		at virtio?		# Virtio entropy device
+viornd* 	at virtio?		# Virtio entropy device
 vioscsi*	at virtio?		# Virtio SCSI device
 
 # SCSI controllers
