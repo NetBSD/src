@@ -1,4 +1,4 @@
-/*	$NetBSD: refresh.c,v 1.115 2021/09/06 07:45:48 rin Exp $	*/
+/*	$NetBSD: refresh.c,v 1.116 2021/09/07 01:23:09 rin Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)refresh.c	8.7 (Berkeley) 8/13/94";
 #else
-__RCSID("$NetBSD: refresh.c,v 1.115 2021/09/06 07:45:48 rin Exp $");
+__RCSID("$NetBSD: refresh.c,v 1.116 2021/09/07 01:23:09 rin Exp $");
 #endif
 #endif				/* not lint */
 
@@ -515,11 +515,6 @@ doupdate(void)
 	__LINE	*wlp, *vlp;
 	short	 wy;
 	int	 dnum, was_cleared, changed;
-#ifdef HAVE_WCHAR
-	__LDATA *lp;
-	nschar_t *np;
-	int x;
-#endif /* HAVE_WCHAR */
 
 	/* Check if we need to restart ... */
 	if (_cursesi_screen->endwin)
@@ -538,32 +533,8 @@ doupdate(void)
 	if (!_cursesi_screen->curwin) {
 		for (wy = 0; wy < win->maxy; wy++) {
 			wlp = win->alines[wy];
-			if (wlp->flags & __ISDIRTY) {
-#ifndef HAVE_WCHAR
-				wlp->hash = __hash(wlp->line,
-				    (size_t)(win->maxx * __LDATASIZE));
-#else
-				wlp->hash = 0;
-				for ( x = 0; x < win->maxx; x++ ) {
-					lp = &wlp->line[ x ];
-					wlp->hash = __hash_more( &lp->ch,
-						sizeof(wchar_t), wlp->hash );
-					wlp->hash = __hash_more( &lp->attr,
-						sizeof(attr_t), wlp->hash );
-					np = lp->nsp;
-					if (np) {
-						while (np) {
-							wlp->hash
-							    = __hash_more(
-								&np->ch,
-								sizeof(wchar_t),
-								wlp->hash);
-							np = np->next;
-						}
-					}
-				}
-#endif /* HAVE_WCHAR */
-			}
+			if (wlp->flags & __ISDIRTY)
+				wlp->hash = __hash_line(wlp->line, win->maxx);
 		}
 	}
 

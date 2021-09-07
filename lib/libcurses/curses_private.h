@@ -1,4 +1,4 @@
-/*	$NetBSD: curses_private.h,v 1.75 2021/09/06 07:03:49 rin Exp $	*/
+/*	$NetBSD: curses_private.h,v 1.76 2021/09/07 01:23:09 rin Exp $	*/
 
 /*-
  * Copyright (c) 1998-2000 Brett Lymn
@@ -373,6 +373,7 @@ void     _cursesi_resetterm(SCREEN *);
 int      _cursesi_setterm(char *, SCREEN *);
 int	 __delay(void);
 unsigned int	 __hash_more(const void *, size_t, unsigned int);
+unsigned int	 __hash_line(const __LDATA *, int);
 #define	__hash(s, len)	__hash_more((s), (len), 0u)
 void	 __id_subwins(WINDOW *);
 void	 __init_getch(SCREEN *);

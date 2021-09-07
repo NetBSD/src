@@ -1,4 +1,4 @@
-/*	$NetBSD: resize.c,v 1.32 2021/09/06 07:03:50 rin Exp $	*/
+/*	$NetBSD: resize.c,v 1.33 2021/09/07 01:23:09 rin Exp $	*/
 
 /*
  * Copyright (c) 2001
@@ -33,7 +33,7 @@
 #if 0
 static char sccsid[] = "@(#)resize.c   blymn 2001/08/26";
 #else
-__RCSID("$NetBSD: resize.c,v 1.32 2021/09/06 07:03:50 rin Exp $");
+__RCSID("$NetBSD: resize.c,v 1.33 2021/09/07 01:23:09 rin Exp $");
 #endif
 #endif				/* not lint */
 
@@ -360,8 +360,7 @@ __resizewin(WINDOW *win, int nlines, int ncols)
 			SET_WCOL(*sp, 1);
 #endif /* HAVE_WCHAR */
 		}
-		lp->hash = __hash((char *)(void *)lp->line,
-				  (size_t)(ncols * __LDATASIZE));
+		lp->hash = __hash_line(lp->line, ncols);
 	}
 
 	__CTRACE(__CTRACE_WINDOW, "resize: win->wattr = %08x\n", win->wattr);
