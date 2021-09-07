@@ -1,4 +1,4 @@
-/*	$NetBSD: m38813c.c,v 1.15 2021/08/07 16:18:54 thorpej Exp $ */
+/*	$NetBSD: m38813c.c,v 1.16 2021/09/07 06:36:06 rin Exp $ */
 
 /*-
  * Copyright (c) 1999, 2001 The NetBSD Foundation, Inc.
@@ -34,13 +34,15 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: m38813c.c,v 1.15 2021/08/07 16:18:54 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: m38813c.c,v 1.16 2021/09/07 06:36:06 rin Exp $");
 
 #include "opt_use_poll.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
+
+#include <mips/cpuregs.h>
 
 #include <machine/bus.h>
 #include <machine/intr.h>
