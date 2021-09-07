@@ -1,4 +1,4 @@
-.\"	$NetBSD: fcntl.2,v 1.41 2013/12/28 20:03:22 dholland Exp $
+.\"	$NetBSD: fcntl.2,v 1.41.28.1 2021/09/07 17:12:21 martin Exp $
 .\"
 .\" Copyright (c) 1983, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -501,6 +501,10 @@ or
 .Dv F_SETLKW ,
 and satisfying the lock or unlock request would result in the
 number of locked regions in the system exceeding a system-imposed limit.
+.It Bq Er ENOMEM
+The file lock limit for the current unprivilegied user 
+has been reached. It can be modified using sysctl
+.Li kern.maxfiles .
 .It Bq Er ESRCH
 .Fa cmd
 is
