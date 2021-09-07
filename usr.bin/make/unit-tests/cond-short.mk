@@ -1,4 +1,4 @@
-# $NetBSD: cond-short.mk,v 1.16 2021/03/14 11:49:37 rillig Exp $
+# $NetBSD: cond-short.mk,v 1.17 2021/09/07 20:41:58 rillig Exp $
 #
 # Demonstrates that in conditions, the right-hand side of an && or ||
 # is only evaluated if it can actually influence the result.
@@ -12,7 +12,20 @@
 # possible to skip evaluation of irrelevant variable expressions and only
 # parse them.  They were still evaluated though, the only difference to
 # relevant variable expressions was that in the irrelevant variable
-# expressions, undefined variables were allowed.
+# expressions, undefined variables were allowed.  This allowed for conditions
+# like 'defined(VAR) && ${VAR:S,from,to,} != ""', which no longer produced an
+# error message 'Malformed conditional', but it still evaluated the
+# expression, even though the expression was irrelevant.
+#
+# Since the initial commit on 1993-03-21, the manual page has been saying that
+# make 'will only evaluate a conditional as far as is necessary to determine',
+# but that was wrong.  The code in cond.c 1.1 from 1993-03-21 looks good since
+# it calls Var_Parse(condExpr, VAR_CMD, doEval,&varSpecLen,&doFree), but the
+# definition of Var_Parse does not call the third parameter 'doEval', as would
+# be expected, but instead 'err', accompanied by the comment 'TRUE if
+# undefined variables are an error'.  This subtle difference between 'do not
+# evaluate at all' and 'allow undefined variables' led to the unexpected
+# evaluation.
 #
 # See also:
 #	var-eval-short.mk, for short-circuited variable modifiers
