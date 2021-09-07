@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.106 2021/08/07 16:19:09 thorpej Exp $	*/
+/*	$NetBSD: audio.c,v 1.107 2021/09/07 13:24:46 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -138,7 +138,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.106 2021/08/07 16:19:09 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.107 2021/09/07 13:24:46 andvar Exp $");
 
 #ifdef _KERNEL_OPT
 #include "audio.h"
@@ -1645,7 +1645,7 @@ audio_track_waitio(struct audio_softc *sc, audio_track_t *track)
 
 /*
  * Try to acquire track lock.
- * It doesn't block if the track lock is already aquired.
+ * It doesn't block if the track lock is already acquired.
  * Returns true if the track lock was acquired, or false if the track
  * lock was already acquired.
  */
