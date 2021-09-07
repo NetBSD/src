@@ -1,4 +1,4 @@
-/*	$NetBSD: fileio.c,v 1.8 2021/09/06 07:03:49 rin Exp $	*/
+/*	$NetBSD: fileio.c,v 1.9 2021/09/07 12:36:57 rin Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -29,9 +29,10 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#ifndef LIBHACK
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fileio.c,v 1.8 2021/09/06 07:03:49 rin Exp $");
+__RCSID("$NetBSD: fileio.c,v 1.9 2021/09/07 12:36:57 rin Exp $");
 #endif				/* not lint */
 
 #include "curses.h"
@@ -241,3 +242,4 @@ error0:
 		free(wtmp);
 	return NULL;
 }
+#endif /* !LIBHACK */
