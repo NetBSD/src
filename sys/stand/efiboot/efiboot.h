@@ -1,4 +1,4 @@
-/*	$NetBSD: efiboot.h,v 1.15 2021/06/20 19:10:47 jmcneill Exp $	*/
+/*	$NetBSD: efiboot.h,v 1.16 2021/09/07 11:41:31 nia Exp $	*/
 
 /*-
  * Copyright (c) 2016 Kimihiro Nonaka <nonaka@netbsd.org>
@@ -51,7 +51,6 @@ extern struct fs_ops nfs_fs_ops;
 /* boot.c */
 void boot(void);
 void clearit(void);
-void print_banner(void);
 extern const struct boot_command commands[];
 void command_help(char *);
 int set_default_device(const char *);

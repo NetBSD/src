@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.31 2014/06/28 09:16:18 rtr Exp $	*/
+/*	$NetBSD: main.c,v 1.32 2021/09/07 11:41:32 nia Exp $	*/
 
 /*
  * Copyright (c) 1996
@@ -106,20 +106,6 @@ bootit(const char *filename, int howto)
 	return (-1);
 }
 
-static void
-print_banner(void)
-{
-	int base = getbasemem();
-	int ext = getextmem();
-
-	clearit();
-	printf("\n"
-	       ">> NetBSD/x86 PXE boot, Revision %s (from NetBSD %s)\n"
-	       ">> Memory: %d/%d k\n",
-	       bootprog_rev, bootprog_kernrev,
-	       base, ext);
-}
-
 int
 main(void)
 {
@@ -148,10 +134,12 @@ main(void)
 	 * If console set in boot.cfg, switch to it.
 	 * This will print the banner, so we don't need to explicitly do it
 	 */
-	if (bootcfg_info.consdev)
+	if (bootcfg_info.consdev) {
 		command_consdev(bootcfg_info.consdev);
-	else 
-		print_banner();
+	} else {
+		clearit();
+		print_bootcfg_banner(bootprog_name, bootprog_rev);
+	}
 
 	/* Display the menu, if applicable */
 	twiddle_toggle = 0;
@@ -161,7 +149,8 @@ main(void)
 	}
 #else
 	twiddle_toggle = 0;
-	print_banner();
+	clearit();
+	print_bootcfg_banner(bootprog_name, bootprog_rev);
 #endif
 
 	printf("Press return to boot now, any other key for boot menu\n");
@@ -254,7 +243,8 @@ command_consdev(char *arg)
 	for (cdp = cons_devs; cdp->name; cdp++) {
 		if (!strcmp(arg, cdp->name)) {
 			initio(cdp->tag);
-			print_banner();
+			clearit();
+			print_bootcfg_banner(bootprog_name, bootprog_rev);
 			return;
 		}
 	}
