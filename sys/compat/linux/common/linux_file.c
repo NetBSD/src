@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_file.c,v 1.118 2020/05/23 23:42:41 ad Exp $	*/
+/*	$NetBSD: linux_file.c,v 1.119 2021/09/07 11:43:04 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 2008 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_file.c,v 1.118 2020/05/23 23:42:41 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_file.c,v 1.119 2021/09/07 11:43:04 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -445,6 +445,7 @@ static void
 bsd_to_linux_stat(struct stat *bsp, struct linux_stat *lsp)
 {
 
+	memset(lsp, 0, sizeof(*lsp));
 	lsp->lst_dev     = linux_fakedev(bsp->st_dev, 0);
 	lsp->lst_ino     = bsp->st_ino;
 	lsp->lst_mode    = (linux_mode_t)bsp->st_mode;
