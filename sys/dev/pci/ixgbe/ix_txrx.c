@@ -1,4 +1,4 @@
-/* $NetBSD: ix_txrx.c,v 1.90 2021/09/03 08:57:58 msaitoh Exp $ */
+/* $NetBSD: ix_txrx.c,v 1.91 2021/09/07 03:48:01 msaitoh Exp $ */
 
 /******************************************************************************
 
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ix_txrx.c,v 1.90 2021/09/03 08:57:58 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ix_txrx.c,v 1.91 2021/09/07 03:48:01 msaitoh Exp $");
 
 #include "opt_inet.h"
 #include "opt_inet6.h"
@@ -1350,7 +1350,7 @@ ixgbe_refresh_mbufs(struct rx_ring *rxr, int limit)
 
 	while (i != limit) {
 		rxbuf = &rxr->rx_buffers[i];
-		if (rxbuf->buf == NULL) {
+		if (__predict_false(rxbuf->buf == NULL)) {
 			mp = ixgbe_getcl();
 			if (mp == NULL) {
 				rxr->no_mbuf.ev_count++;
@@ -1369,7 +1369,7 @@ ixgbe_refresh_mbufs(struct rx_ring *rxr, int limit)
 			ixgbe_dmamap_unload(rxr->ptag, rxbuf->pmap);
 			error = bus_dmamap_load_mbuf(rxr->ptag->dt_dmat,
 			    rxbuf->pmap, mp, BUS_DMA_NOWAIT);
-			if (error != 0) {
+			if (__predict_false(error != 0)) {
 				device_printf(adapter->dev, "Refresh mbufs: "
 				    "payload dmamap load failure - %d\n",
 				    error);
@@ -1881,7 +1881,7 @@ ixgbe_rxeof(struct ix_queue *que)
 			newmp = ixgbe_getcl();
 		else
 			newmp = NULL;
-		if (newmp == NULL) {
+		if (__predict_false(newmp == NULL)) {
 			rxr->no_mbuf.ev_count++;
 			/*
 			 * Descriptor initialization is already done by the
