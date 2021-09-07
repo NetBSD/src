@@ -1,4 +1,4 @@
-/*	$NetBSD: ugen.c,v 1.165 2021/09/07 10:43:34 riastradh Exp $	*/
+/*	$NetBSD: ugen.c,v 1.166 2021/09/07 10:43:51 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ugen.c,v 1.165 2021/09/07 10:43:34 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ugen.c,v 1.166 2021/09/07 10:43:51 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -1215,6 +1215,12 @@ ugen_detach(device_t self, int flags)
 		}
 	}
 
+	/*
+	 * Wait for users to drain.  Before this point there can be no
+	 * more I/O operations started because we set sc_dying; after
+	 * this, there can be no more I/O operations in progress, so it
+	 * will be safe to free things.
+	 */
 	mutex_enter(&sc->sc_lock);
 	if (--sc->sc_refcnt >= 0) {
 		/* Wake everyone */
@@ -1223,8 +1229,9 @@ ugen_detach(device_t self, int flags)
 				cv_broadcast(&sc->sc_endpoints[i][dir].cv);
 		}
 		/* Wait for processes to go away. */
-		if (cv_timedwait(&sc->sc_detach_cv, &sc->sc_lock, hz * 60))
-			aprint_error_dev(self, ": didn't detach\n");
+		do {
+			cv_wait(&sc->sc_detach_cv, &sc->sc_lock);
+		} while (sc->sc_refcnt >= 0);
 	}
 	mutex_exit(&sc->sc_lock);
 
