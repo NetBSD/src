@@ -1,4 +1,4 @@
-/*	$NetBSD: boot2.c,v 1.77 2021/06/21 19:52:17 nia Exp $	*/
+/*	$NetBSD: boot2.c,v 1.78 2021/09/07 11:41:31 nia Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -121,7 +121,6 @@ static const char *default_part_name;
 
 char *sprint_bootsel(const char *);
 static void bootit(const char *, int);
-void print_banner(void);
 void boot2(int, uint64_t);
 
 void	command_help(char *);
@@ -298,35 +297,6 @@ bootit(const char *filename, int howto)
 		printf("boot returned\n");
 }
 
-void
-print_banner(void)
-{
-
-	clearit();
-#ifndef SMALL
-	int n;
-	if (bootcfg_info.banner[0]) {
-		for (n = 0; n < BOOTCFG_MAXBANNER && bootcfg_info.banner[n];
-		    n++) 
-			printf("%s\n", bootcfg_info.banner[n]);
-	} else {
-#endif /* !SMALL */
-		printf("\n"
-		       "  \\-__,------,___.\n"
-		       "   \\        __,---`  %s (from NetBSD %s)\n"
-		       "    \\       `---,_.  Revision %s\n"
-		       "     \\-,_____,.---`  Memory: %d/%d k\n"
-		       "      \\\n"
-		       "       \\\n"
-		       "        \\\n",
-		       bootprog_name, bootprog_kernrev,
-		       bootprog_rev,
-		       getbasemem(), getextmem());
-#ifndef SMALL
-	}
-#endif /* !SMALL */
-}
-
 /*
  * Called from the initial entry point boot_start in biosboot.S
  *
@@ -379,10 +349,12 @@ boot2(int biosdev, uint64_t biossector)
 	 * If console set in boot.cfg, switch to it.
 	 * This will print the banner, so we don't need to explicitly do it
 	 */
-	if (bootcfg_info.consdev)
+	if (bootcfg_info.consdev) {
 		command_consdev(bootcfg_info.consdev);
-	else 
-		print_banner();
+	} else {
+		clearit();
+		print_bootcfg_banner(bootprog_name, bootprog_rev);
+	}
 
 	/* Display the menu, if applicable */
 	twiddle_toggle = 0;
@@ -393,7 +365,8 @@ boot2(int biosdev, uint64_t biossector)
 
 #else
 	twiddle_toggle = 0;
-	print_banner();
+	clearit();
+	print_bootcfg_banner(bootprog_name, bootprog_rev);
 #endif
 
 	printf("Press return to boot now, any other key for boot menu\n");
@@ -616,7 +589,8 @@ command_consdev(char *arg)
 		}
 
 		initio(cdp->tag);
-		print_banner();
+		clearit();
+		print_bootcfg_banner(bootprog_name, bootprog_rev);
 		return;
 	}
 error:

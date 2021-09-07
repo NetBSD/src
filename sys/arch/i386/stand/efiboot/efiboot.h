@@ -1,4 +1,4 @@
-/*	$NetBSD: efiboot.h,v 1.10 2019/09/13 02:19:45 manu Exp $	*/
+/*	$NetBSD: efiboot.h,v 1.11 2021/09/07 11:41:31 nia Exp $	*/
 
 /*-
  * Copyright (c) 2016 Kimihiro Nonaka <nonaka@netbsd.org>
@@ -41,7 +41,6 @@ extern EFI_GUID GraphicsOutputProtocol;
 /* boot.c */
 void boot(void);
 void clearit(void);
-void print_banner(void);
 
 /* efiboot.c */
 extern EFI_HANDLE IH;

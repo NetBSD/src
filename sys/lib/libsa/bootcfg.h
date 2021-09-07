@@ -1,4 +1,4 @@
-/*	$NetBSD: bootcfg.h,v 1.4 2021/05/30 05:59:23 mlelstv Exp $	*/
+/*	$NetBSD: bootcfg.h,v 1.5 2021/09/07 11:41:31 nia Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -54,5 +54,6 @@ extern struct bootcfg_def bootcfg_info;
 
 int perform_bootcfg(const char *, bootcfg_command, const off_t);
 void bootcfg_do_noop(const char *, char *);
+void print_bootcfg_banner(const char *, const char *);
 
 #endif /* !_BOOTCFG_H */
