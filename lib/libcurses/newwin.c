@@ -1,4 +1,4 @@
-/*	$NetBSD: newwin.c,v 1.61 2021/09/06 07:03:50 rin Exp $	*/
+/*	$NetBSD: newwin.c,v 1.62 2021/09/07 01:23:09 rin Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)newwin.c	8.3 (Berkeley) 7/27/94";
 #else
-__RCSID("$NetBSD: newwin.c,v 1.61 2021/09/06 07:03:50 rin Exp $");
+__RCSID("$NetBSD: newwin.c,v 1.62 2021/09/07 01:23:09 rin Exp $");
 #endif
 #endif				/* not lint */
 
@@ -169,8 +169,7 @@ __newwin(SCREEN *screen, int nlines, int ncols, int by, int bx, int ispad,
 			SET_WCOL(*sp, 1);
 #endif /* HAVE_WCHAR */
 		}
-		lp->hash = __hash((char *)(void *)lp->line,
-				  (size_t)(maxx * __LDATASIZE));
+		lp->hash = __hash_line(lp->line, maxx);
 	}
 	return (win);
 }
@@ -227,11 +226,6 @@ __set_subwin(WINDOW *orig, WINDOW *win)
 {
 	int     i;
 	__LINE *lp, *olp;
-#ifdef HAVE_WCHAR
-	__LDATA *cp;
-	int j;
-	nschar_t *np;
-#endif /* HAVE_WCHAR */
 
 	win->ch_off = win->begx - orig->begx;
 	/* Point line pointers to line space. */
@@ -244,26 +238,7 @@ __set_subwin(WINDOW *orig, WINDOW *win)
 		lp->line = &olp->line[win->ch_off];
 		lp->firstchp = &olp->firstch;
 		lp->lastchp = &olp->lastch;
-#ifndef HAVE_WCHAR
-		lp->hash = __hash((char *)(void *)lp->line,
-				  (size_t)(win->maxx * __LDATASIZE));
-#else
-		lp->hash = 0;
-		for (cp = lp->line, j = 0; j < win->maxx; j++, cp++) {
-			lp->hash = __hash_more( &cp->ch,
-			    sizeof( wchar_t ), lp->hash );
-			lp->hash = __hash_more( &cp->attr,
-			    sizeof( wchar_t ), lp->hash );
-			if ( cp->nsp ) {
-				np = cp->nsp;
-				while ( np ) {
-					lp->hash = __hash_more( &np->ch,
-					    sizeof( wchar_t ), lp->hash );
-					np = np->next;
-				}
-			}
-		}
-#endif /* HAVE_WCHAR */
+		lp->hash = __hash_line(lp->line, win->maxx);
 	}
 
 	__CTRACE(__CTRACE_WINDOW, "__set_subwin: win->ch_off = %d\n",
