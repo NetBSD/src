@@ -1,4 +1,4 @@
-/*	$NetBSD: ugen.c,v 1.159 2021/09/07 10:42:22 riastradh Exp $	*/
+/*	$NetBSD: ugen.c,v 1.160 2021/09/07 10:42:34 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ugen.c,v 1.159 2021/09/07 10:42:22 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ugen.c,v 1.160 2021/09/07 10:42:34 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -510,6 +510,7 @@ ugenopen(dev_t dev, int flag, int mode, struct lwp *l)
 	struct usbd_xfer *xfer;
 	int i, j;
 	int error;
+	int opened;
 
 	KASSERT(KERNEL_LOCKED_P()); /* sc_is_open */
 
@@ -521,7 +522,7 @@ ugenopen(dev_t dev, int flag, int mode, struct lwp *l)
 
 	/* The control endpoint allows multiple opens. */
 	if (endpt == USB_CONTROL_ENDPOINT) {
-		sc->sc_is_open[USB_CONTROL_ENDPOINT] = 1;
+		opened = sc->sc_is_open[USB_CONTROL_ENDPOINT] = 1;
 		error = 0;
 		goto out;
 	}
@@ -530,6 +531,7 @@ ugenopen(dev_t dev, int flag, int mode, struct lwp *l)
 		error = EBUSY;
 		goto out;
 	}
+	opened = sc->sc_is_open[endpt] = 1;
 
 	/* Make sure there are pipes for all directions. */
 	for (dir = OUT; dir <= IN; dir++) {
@@ -663,9 +665,10 @@ ugenopen(dev_t dev, int flag, int mode, struct lwp *l)
 			goto out;
 		}
 	}
-	sc->sc_is_open[endpt] = 1;
 	error = 0;
-out:	ugenif_release(sc);
+out:	if (error && opened)
+		sc->sc_is_open[endpt] = 0;
+	ugenif_release(sc);
 	return error;
 }
 
