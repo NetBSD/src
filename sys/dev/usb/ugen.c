@@ -1,4 +1,4 @@
-/*	$NetBSD: ugen.c,v 1.160 2021/09/07 10:42:34 riastradh Exp $	*/
+/*	$NetBSD: ugen.c,v 1.161 2021/09/07 10:42:48 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ugen.c,v 1.160 2021/09/07 10:42:34 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ugen.c,v 1.161 2021/09/07 10:42:48 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -455,6 +455,12 @@ ugen_set_config(struct ugen_softc *sc, int configno, int chkopen)
 				      device_xname(sc->sc_dev), endptno));
 				return USBD_IN_USE;
 			}
+
+		/* Prevent opening while we're setting the config.  */
+		for (endptno = 1; endptno < USB_MAX_ENDPOINTS; endptno++) {
+			KASSERT(!sc->sc_is_open[endptno]);
+			sc->sc_is_open[endptno] = 1;
+		}
 	}
 
 	/* Avoid setting the current value. */
@@ -462,23 +468,23 @@ ugen_set_config(struct ugen_softc *sc, int configno, int chkopen)
 	if (!cdesc || cdesc->bConfigurationValue != configno) {
 		err = usbd_set_config_no(dev, configno, 1);
 		if (err)
-			return err;
+			goto out;
 	}
 
 	ugen_clear_endpoints(sc);
 
 	err = usbd_interface_count(dev, &niface);
 	if (err)
-		return err;
+		goto out;
 
 	for (ifaceno = 0; ifaceno < niface; ifaceno++) {
 		DPRINTFN(1,("ugen_set_config: ifaceno %d\n", ifaceno));
 		err = usbd_device2interface_handle(dev, ifaceno, &iface);
 		if (err)
-			return err;
+			goto out;
 		err = usbd_endpoint_count(iface, &nendpt);
 		if (err)
-			return err;
+			goto out;
 		for (endptno = 0; endptno < nendpt; endptno++) {
 			ed = usbd_interface2endpoint_descriptor(iface,endptno);
 			KASSERT(ed != NULL);
@@ -494,7 +500,19 @@ ugen_set_config(struct ugen_softc *sc, int configno, int chkopen)
 			sce->iface = iface;
 		}
 	}
-	return USBD_NORMAL_COMPLETION;
+	err = USBD_NORMAL_COMPLETION;
+
+out:	if (chkopen) {
+		/*
+		 * Allow open again now that we're done trying to set
+		 * the config.
+		 */
+		for (endptno = 1; endptno < USB_MAX_ENDPOINTS; endptno++) {
+			KASSERT(sc->sc_is_open[endptno]);
+			sc->sc_is_open[endptno] = 0;
+		}
+	}
+	return err;
 }
 
 static int
