@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.3,v 1.1.2.27 2021/09/07 17:13:20 martin Exp $
+# $NetBSD: CHANGES-9.3,v 1.1.2.28 2021/09/07 22:30:10 snj Exp $
 
 A complete list of changes from the NetBSD 9.2 release to the NetBSD 9.3
 release:
@@ -634,4 +634,10 @@ sys/kern/vfs_lockf.c				1.74
 
 	Tie the maximum file lock per unprivilegied uid to kern.maxfiles.
 	[manu, ticket #1343]
+
+distrib/sets/makesrctars			1.43
+
+	PR 56389: do not include top level .git or .hg directories
+	in source sets.
+	[martin, ticket #1344]
 
