@@ -1,4 +1,4 @@
-/*	$NetBSD: ugen.c,v 1.162 2021/09/07 10:42:59 riastradh Exp $	*/
+/*	$NetBSD: ugen.c,v 1.163 2021/09/07 10:43:11 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ugen.c,v 1.162 2021/09/07 10:42:59 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ugen.c,v 1.163 2021/09/07 10:43:11 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -690,30 +690,25 @@ out:	if (error && opened)
 	return error;
 }
 
-static int
-ugenclose(dev_t dev, int flag, int mode, struct lwp *l)
+static void
+ugen_do_close(struct ugen_softc *sc, int flag, int endpt)
 {
-	int endpt = UGENENDPOINT(dev);
-	struct ugen_softc *sc;
 	struct ugen_endpoint *sce;
 	int dir;
 	int i;
-	int error;
 
 	KASSERT(KERNEL_LOCKED_P()); /* sc_is_open */
 
-	if ((sc = ugenif_acquire(UGENUNIT(dev))) == NULL)
-		return ENXIO;
-
-	DPRINTFN(5, ("ugenclose: flag=%d, mode=%d, unit=%d, endpt=%d\n",
-		     flag, mode, UGENUNIT(dev), endpt));
-
-	KASSERT(sc->sc_is_open[endpt]);
+	if (!sc->sc_is_open[endpt]) {
+		KASSERT(sc->sc_endpoints[endpt][IN].pipeh == NULL);
+		KASSERT(sc->sc_endpoints[endpt][OUT].pipeh == NULL);
+		KASSERT(sc->sc_endpoints[endpt][IN].ibuf == NULL);
+		KASSERT(sc->sc_endpoints[endpt][OUT].ibuf == NULL);
+		return;
+	}
 
 	if (endpt == USB_CONTROL_ENDPOINT) {
 		DPRINTFN(5, ("ugenclose: close control\n"));
-		sc->sc_is_open[endpt] = 0;
-		error = 0;
 		goto out;
 	}
 
@@ -758,11 +753,31 @@ ugenclose(dev_t dev, int flag, int mode, struct lwp *l)
 			sce->ibuf = NULL;
 		}
 	}
-	sc->sc_is_open[endpt] = 0;
-	error = 0;
 
-out:	ugenif_release(sc);
-	return error;
+out:	sc->sc_is_open[endpt] = 0;
+}
+
+static int
+ugenclose(dev_t dev, int flag, int mode, struct lwp *l)
+{
+	int endpt = UGENENDPOINT(dev);
+	struct ugen_softc *sc;
+
+	DPRINTFN(5, ("ugenclose: flag=%d, mode=%d, unit=%d, endpt=%d\n",
+		     flag, mode, UGENUNIT(dev), endpt));
+
+	KASSERT(KERNEL_LOCKED_P()); /* ugen_do_close */
+
+	if ((sc = ugenif_acquire(UGENUNIT(dev))) == NULL)
+		return ENXIO;
+
+	KASSERT(sc->sc_is_open[endpt]);
+	ugen_do_close(sc, flag, endpt);
+	KASSERT(!sc->sc_is_open[endpt]);
+
+	ugenif_release(sc);
+
+	return 0;
 }
 
 Static int
@@ -1214,9 +1229,16 @@ ugen_detach(device_t self, int flags)
 	/* locate the major number */
 	maj = cdevsw_lookup_major(&ugen_cdevsw);
 
-	/* Nuke the vnodes for any open instances (calls close). */
+	/*
+	 * Nuke the vnodes for any open instances (calls ugenclose, but
+	 * with no effect because we already set sc_dying).
+	 */
 	mn = sc->sc_unit * USB_MAX_ENDPOINTS;
 	vdevgone(maj, mn, mn + USB_MAX_ENDPOINTS - 1, VCHR);
+
+	/* Actually close any lingering pipes.  */
+	for (i = 0; i < USB_MAX_ENDPOINTS; i++)
+		ugen_do_close(sc, FREAD|FWRITE, i);
 
 	usbd_add_drv_event(USB_EVENT_DRIVER_DETACH, sc->sc_udev, sc->sc_dev);
 	ugenif_put_unit(sc);
