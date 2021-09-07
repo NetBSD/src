@@ -203,3 +203,7 @@ Network interface traffic can be monitored with the following
 command:
 
 	sysstat ifstat
+%
+To list connected disk devices:
+
+	sysctl hw.disknames
