@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.91 2021/09/08 07:22:56 rin Exp $	*/
+/*	$NetBSD: pmap.c,v 1.92 2021/09/08 07:25:55 rin Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.91 2021/09/08 07:22:56 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.92 2021/09/08 07:25:55 rin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -192,7 +192,7 @@ pmap_growkernel(vaddr_t maxkvaddr)
 
 	return __pmap_kve;
  error:
-	panic("pmap_growkernel: out of memory.");
+	panic("%s: out of memory", __func__);
 	/* NOTREACHED */
 }
 
@@ -368,7 +368,7 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 		if (__pmap_pv_enter(pmap, pg, va)) {
 			if (flags & PMAP_CANFAIL)
 				return ENOMEM;
-			panic("%s: __pmap_pv_enter failed", __func__);
+			panic("%s: cannot allocate pv", __func__);
 		}
 	} else {	/* bus-space (always uncached map) */
 		if (kva)
@@ -392,7 +392,7 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 					__pmap_pv_remove(pmap, pg, va);
 				return ENOMEM;
 			}
-			panic("%s: __pmap_pte_alloc failed", __func__);
+			panic("%s: cannot allocate pte", __func__);
 		}
 	}
 
@@ -666,7 +666,7 @@ pmap_protect(pmap_t pmap, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 
 	switch (prot) {
 	default:
-		panic("pmap_protect: invalid protection mode %x", prot);
+		panic("%s: invalid protection mode %x", __func__, prot);
 		/* NOTREACHED */
 	case VM_PROT_READ:
 	case VM_PROT_READ | VM_PROT_EXECUTE:
@@ -1096,7 +1096,7 @@ __pmap_asid_alloc(void)
 		}
 	}
 
-	panic("No ASID allocated.");
+	panic("%s: no ASID allocated", __func__);
 	/* NOTREACHED */
 }
 
