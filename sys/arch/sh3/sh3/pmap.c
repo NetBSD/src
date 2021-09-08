@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.92 2021/09/08 07:25:55 rin Exp $	*/
+/*	$NetBSD: pmap.c,v 1.93 2021/09/08 11:59:43 rin Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.92 2021/09/08 07:25:55 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.93 2021/09/08 11:59:43 rin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -371,14 +371,15 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 			panic("%s: cannot allocate pv", __func__);
 		}
 	} else {	/* bus-space (always uncached map) */
-		if (kva)
+		if (kva) {
 			entry |= PG_V | PG_SH |
 			    ((prot & VM_PROT_WRITE) ?
 			    (PG_PR_KRW | PG_D) : PG_PR_KRO);
-		else
+		} else {
 			entry |= PG_V |
 			    ((prot & VM_PROT_WRITE) ?
 			    (PG_PR_URW | PG_D) : PG_PR_URO);
+		}
 	}
 
 	/* Register to page table */
@@ -788,9 +789,10 @@ pmap_copy_page(paddr_t src, paddr_t dst)
 		sh_dcache_wbinv_all();
 		memcpy((void *)SH3_PHYS_TO_P2SEG(dst),
 		    (void *)SH3_PHYS_TO_P2SEG(src), PAGE_SIZE);
-	} else
+	} else {
 		memcpy((void *)SH3_PHYS_TO_P1SEG(dst),
 		    (void *)SH3_PHYS_TO_P1SEG(src), PAGE_SIZE);
+	}
 }
 
 bool
