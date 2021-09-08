@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.88 2021/09/08 00:24:29 rin Exp $	*/
+/*	$NetBSD: pmap.c,v 1.89 2021/09/08 00:35:56 rin Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.88 2021/09/08 00:24:29 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.89 2021/09/08 00:35:56 rin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -153,7 +153,7 @@ pmap_steal_memory(vsize_t size, vaddr_t *vstart, vaddr_t *vend)
 	va = SH3_PHYS_TO_P1SEG(pa);
 	memset((void *)va, 0, size);
 
-	return (va);
+	return va;
 }
 
 vaddr_t
@@ -162,7 +162,7 @@ pmap_growkernel(vaddr_t maxkvaddr)
 	int i, n;
 
 	if (maxkvaddr <= __pmap_kve)
-		return (__pmap_kve);
+		return __pmap_kve;
 
 	i = __PMAP_PTP_INDEX(__pmap_kve - VM_MIN_KERNEL_ADDRESS);
 	__pmap_kve = __PMAP_PTP_TRUNC(maxkvaddr);
@@ -190,9 +190,9 @@ pmap_growkernel(vaddr_t maxkvaddr)
 		}
 	}
 
-	return (__pmap_kve);
+	return __pmap_kve;
  error:
-	panic("pmap_growkernel: out of memory.");
+	panic("%s: out of memory", __func__);
 	/* NOTREACHED */
 }
 
@@ -248,7 +248,7 @@ pmap_create(void)
 		    uvm_pagealloc(NULL, 0, NULL,
 			UVM_PGA_USERESERVE | UVM_PGA_ZERO)));
 
-	return (pmap);
+	return pmap;
 }
 
 void
@@ -271,7 +271,7 @@ pmap_destroy(pmap_t pmap)
 			for (j = 0; j < __PMAP_PTP_PG_N; j++, pte++)
 				KDASSERT(*pte == 0);
 		}
-#endif /* DEBUG */
+#endif
 		/* Purge cache entry for next use of this page. */
 		if (SH_HAS_VIRTUAL_ALIAS)
 			sh_dcache_inv_range(va, PAGE_SIZE);
@@ -323,7 +323,7 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 	struct vm_page *pg;
 	struct vm_page_md *pvh;
 	pt_entry_t entry, *pte;
-	bool kva = (pmap == pmap_kernel());
+	bool kva = pmap == pmap_kernel();
 
 	/* "flags" never exceed "prot" */
 	KDASSERT(prot != 0 && ((flags & VM_PROT_ALL) & ~prot) == 0);
@@ -362,24 +362,23 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 
 		/* Check for existing mapping */
 		if (__pmap_map_change(pmap, va, pa, prot, entry))
-			return (0);
+			return 0;
 
 		/* Add to physical-virtual map list of this page */
 		if (__pmap_pv_enter(pmap, pg, va)) {
 			if (flags & PMAP_CANFAIL)
 				return ENOMEM;
-			panic("%s: __pmap_pv_enter failed", __func__);
+			panic("%s: cannot allocate pv", __func__);
 		}
 	} else {	/* bus-space (always uncached map) */
-		if (kva) {
+		if (kva)
 			entry |= PG_V | PG_SH |
-			    ((prot & VM_PROT_WRITE) ?
-			    (PG_PR_KRW | PG_D) : PG_PR_KRO);
-		} else {
+			    (prot & VM_PROT_WRITE) ?
+			    (PG_PR_KRW | PG_D) : PG_PR_KRO;
+		else
 			entry |= PG_V |
-			    ((prot & VM_PROT_WRITE) ?
-			    (PG_PR_URW | PG_D) : PG_PR_URO);
-		}
+			    (prot & VM_PROT_WRITE) ?
+			    (PG_PR_URW | PG_D) : PG_PR_URO;
 	}
 
 	/* Register to page table */
@@ -393,7 +392,7 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 					__pmap_pv_remove(pmap, pg, va);
 				return ENOMEM;
 			}
-			panic("%s: __pmap_pte_alloc failed", __func__);
+			panic("%s: cannot allocate pte", __func__);
 		}
 	}
 
@@ -410,7 +409,7 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 		pmap->pm_stats.wired_count++;
 	pmap->pm_stats.resident_count++;
 
-	return (0);
+	return 0;
 }
 
 /*
@@ -428,13 +427,13 @@ __pmap_map_change(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot,
 	vaddr_t eva = va + PAGE_SIZE;
 
 	if ((pte = __pmap_pte_lookup(pmap, va)) == NULL ||
-	    ((oentry = *pte) == 0))
-		return (false);		/* no mapping exists. */
+	    (oentry = *pte) == 0)
+		return false;		/* no mapping exists. */
 
 	if (pa != (oentry & PG_PPN)) {
 		/* Enter a mapping at a mapping to another physical page. */
 		pmap_remove(pmap, va, eva);
-		return (false);
+		return false;
 	}
 
 	/* Pre-existing mapping */
@@ -454,10 +453,10 @@ __pmap_map_change(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot,
 	} else if (entry & _PG_WIRED) {
 		/* unwired -> wired. make sure to reflect "flags" */
 		pmap_remove(pmap, va, eva);
-		return (false);
+		return false;
 	}
 
-	return (true);	/* mapping was changed. */
+	return true;	/* mapping was changed. */
 }
 
 /*
@@ -575,7 +574,7 @@ __pmap_pv_remove(pmap_t pmap, struct vm_page *pg, vaddr_t vaddr)
 #ifdef DEBUG
 	/* Check duplicated map. */
 	SLIST_FOREACH(pv, &pvh->pvh_head, pv_link)
-	    KDASSERT(!(pv->pv_pmap == pmap && pv->pv_va == vaddr));
+		KDASSERT(!(pv->pv_pmap == pmap && pv->pv_va == vaddr));
 #endif
 	splx(s);
 }
@@ -638,17 +637,17 @@ pmap_extract(pmap_t pmap, vaddr_t va, paddr_t *pap)
 	if (pmap == pmap_kernel() && (va >> 30) == 2) {
 		if (pap != NULL)
 			*pap = va & SH3_PHYS_MASK;
-		return (true);
+		return true;
 	}
 
 	pte = __pmap_pte_lookup(pmap, va);
 	if (pte == NULL || *pte == 0)
-		return (false);
+		return false;
 
 	if (pap != NULL)
 		*pap = (*pte & PG_PPN) | (va & PGOFSET);
 
-	return (true);
+	return true;
 }
 
 void
@@ -667,23 +666,20 @@ pmap_protect(pmap_t pmap, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 
 	switch (prot) {
 	default:
-		panic("pmap_protect: invalid protection mode %x", prot);
+		panic("%s: invalid protection mode %x", __func__, prot);
 		/* NOTREACHED */
 	case VM_PROT_READ:
-		/* FALLTHROUGH */
 	case VM_PROT_READ | VM_PROT_EXECUTE:
 		protbits = kernel ? PG_PR_KRO : PG_PR_URO;
 		break;
 	case VM_PROT_READ | VM_PROT_WRITE:
-		/* FALLTHROUGH */
 	case VM_PROT_ALL:
 		protbits = kernel ? PG_PR_KRW : PG_PR_URW;
 		break;
 	}
 
 	for (va = sva; va < eva; va += PAGE_SIZE) {
-
-		if (((pte = __pmap_pte_lookup(pmap, va)) == NULL) ||
+		if ((pte = __pmap_pte_lookup(pmap, va)) == NULL ||
 		    (entry = *pte) == 0)
 			continue;
 
@@ -713,12 +709,10 @@ pmap_page_protect(struct vm_page *pg, vm_prot_t prot)
 
 	switch (prot) {
 	case VM_PROT_READ | VM_PROT_WRITE:
-		/* FALLTHROUGH */
 	case VM_PROT_ALL:
 		break;
 
 	case VM_PROT_READ:
-		/* FALLTHROUGH */
 	case VM_PROT_READ | VM_PROT_EXECUTE:
 		s = splvm();
 		SLIST_FOREACH(pv, &pvh->pvh_head, pv_link) {
@@ -781,9 +775,8 @@ pmap_zero_page(paddr_t phys)
 		/* sync cache since we access via P2. */
 		sh_dcache_wbinv_all();
 		memset((void *)SH3_PHYS_TO_P2SEG(phys), 0, PAGE_SIZE);
-	} else {
+	} else
 		memset((void *)SH3_PHYS_TO_P1SEG(phys), 0, PAGE_SIZE);
-	}
 }
 
 void
@@ -795,10 +788,9 @@ pmap_copy_page(paddr_t src, paddr_t dst)
 		sh_dcache_wbinv_all();
 		memcpy((void *)SH3_PHYS_TO_P2SEG(dst),
 		    (void *)SH3_PHYS_TO_P2SEG(src), PAGE_SIZE);
-	} else {
+	} else
 		memcpy((void *)SH3_PHYS_TO_P1SEG(dst),
 		    (void *)SH3_PHYS_TO_P1SEG(src), PAGE_SIZE);
-	}
 }
 
 bool
@@ -806,7 +798,7 @@ pmap_is_referenced(struct vm_page *pg)
 {
 	struct vm_page_md *pvh = VM_PAGE_TO_MD(pg);
 
-	return ((pvh->pvh_flags & PVH_REFERENCED) ? true : false);
+	return (pvh->pvh_flags & PVH_REFERENCED) ? true : false;
 }
 
 bool
@@ -841,7 +833,7 @@ pmap_clear_reference(struct vm_page *pg)
 	}
 	splx(s);
 
-	return (true);
+	return true;
 }
 
 bool
@@ -849,7 +841,7 @@ pmap_is_modified(struct vm_page *pg)
 {
 	struct vm_page_md *pvh = VM_PAGE_TO_MD(pg);
 
-	return ((pvh->pvh_flags & PVH_MODIFIED) ? true : false);
+	return (pvh->pvh_flags & PVH_MODIFIED) ? true : false;
 }
 
 bool
@@ -865,14 +857,14 @@ pmap_clear_modify(struct vm_page *pg)
 
 	modified = pvh->pvh_flags & PVH_MODIFIED;
 	if (!modified)
-		return (false);
+		return false;
 
 	pvh->pvh_flags &= ~PVH_MODIFIED;
 
 	s = splvm();
 	if (SLIST_EMPTY(&pvh->pvh_head)) {/* no map on this page */
 		splx(s);
-		return (true);
+		return true;
 	}
 
 	/* Write-back and invalidate TLB entry */
@@ -897,14 +889,14 @@ pmap_clear_modify(struct vm_page *pg)
 	}
 	splx(s);
 
-	return (true);
+	return true;
 }
 
 paddr_t
 pmap_phys_address(paddr_t cookie)
 {
 
-	return (sh3_ptob(cookie));
+	return sh3_ptob(cookie);
 }
 
 #ifdef SH4
@@ -945,9 +937,9 @@ __pmap_pv_page_alloc(struct pool *pool, int flags)
 
 	pg = uvm_pagealloc(NULL, 0, NULL, UVM_PGA_USERESERVE);
 	if (pg == NULL)
-		return (NULL);
+		return NULL;
 
-	return ((void *)SH3_PHYS_TO_P1SEG(VM_PAGE_TO_PHYS(pg)));
+	return (void *)SH3_PHYS_TO_P1SEG(VM_PAGE_TO_PHYS(pg));
 }
 
 void
@@ -973,7 +965,7 @@ __pmap_pte_alloc(pmap_t pmap, vaddr_t va)
 	pt_entry_t *ptp, *pte;
 
 	if ((pte = __pmap_pte_lookup(pmap, va)) != NULL)
-		return (pte);
+		return pte;
 
 	/* Allocate page table (not managed page) */
 	pg = uvm_pagealloc(NULL, 0, NULL, UVM_PGA_USERESERVE | UVM_PGA_ZERO);
@@ -983,7 +975,7 @@ __pmap_pte_alloc(pmap_t pmap, vaddr_t va)
 	ptp = (pt_entry_t *)SH3_PHYS_TO_P1SEG(VM_PAGE_TO_PHYS(pg));
 	pmap->pm_ptp[__PMAP_PTP_INDEX(va)] = ptp;
 
-	return (ptp + __PMAP_PTP_OFSET(va));
+	return ptp + __PMAP_PTP_OFSET(va);
 }
 
 /*
@@ -996,14 +988,14 @@ __pmap_pte_lookup(pmap_t pmap, vaddr_t va)
 	pt_entry_t *ptp;
 
 	if (pmap == pmap_kernel())
-		return (__pmap_kpte_lookup(va));
+		return __pmap_kpte_lookup(va);
 
 	/* Lookup page table page */
 	ptp = pmap->pm_ptp[__PMAP_PTP_INDEX(va)];
 	if (ptp == NULL)
-		return (NULL);
+		return NULL;
 
-	return (ptp + __PMAP_PTP_OFSET(va));
+	return ptp + __PMAP_PTP_OFSET(va);
 }
 
 /*
@@ -1019,7 +1011,7 @@ __pmap_kpte_lookup(vaddr_t va)
 	if (ptp == NULL)
 		return NULL;
 
-	return (ptp + __PMAP_PTP_OFSET(va));
+	return ptp + __PMAP_PTP_OFSET(va);
 }
 
 /*
@@ -1034,13 +1026,13 @@ __pmap_pte_load(pmap_t pmap, vaddr_t va, int flags)
 	pt_entry_t *pte;
 	pt_entry_t entry;
 
-	KDASSERT((((int)va < 0) && (pmap == pmap_kernel())) ||
-	    (((int)va >= 0) && (pmap != pmap_kernel())));
+	KDASSERT(((intptr_t)va < 0 && pmap == pmap_kernel()) ||
+	    ((intptr_t)va >= 0 && pmap != pmap_kernel()));
 
 	/* Lookup page table entry */
-	if (((pte = __pmap_pte_lookup(pmap, va)) == NULL) ||
-	    ((entry = *pte) == 0))
-		return (false);
+	if ((pte = __pmap_pte_lookup(pmap, va)) == NULL ||
+	    (entry = *pte) == 0)
+		return false;
 
 	KDASSERT(va != 0);
 
@@ -1063,7 +1055,7 @@ __pmap_pte_load(pmap_t pmap, vaddr_t va, int flags)
 	if (pmap->pm_asid != -1)
 		sh_tlb_update(pmap->pm_asid, va, entry);
 
-	return (true);
+	return true;
 }
 
 /*
@@ -1086,7 +1078,7 @@ __pmap_asid_alloc(void)
 			if ((map & (1 << j)) == 0 && (k + j) != 0) {
 				__pmap_asid.map[k] |= (1 << j);
 				__pmap_asid.hint = (k << 5) + j;
-				return (__pmap_asid.hint);
+				return __pmap_asid.hint;
 			}
 		}
 	}
@@ -1100,11 +1092,11 @@ __pmap_asid_alloc(void)
 			/* Invalidate all old ASID entry */
 			sh_tlb_invalidate_asid(pmap->pm_asid);
 
-			return (__pmap_asid.hint);
+			return __pmap_asid.hint;
 		}
 	}
 
-	panic("No ASID allocated.");
+	panic("%s: no ASID allocated", __func__);
 	/* NOTREACHED */
 }
 
