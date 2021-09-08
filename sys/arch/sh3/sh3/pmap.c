@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.87 2021/09/02 08:02:33 rin Exp $	*/
+/*	$NetBSD: pmap.c,v 1.88 2021/09/08 00:24:29 rin Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.87 2021/09/02 08:02:33 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.88 2021/09/08 00:24:29 rin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -737,10 +737,10 @@ pmap_page_protect(struct vm_page *pg, vm_prot_t prot)
 		while ((pv = SLIST_FIRST(&pvh->pvh_head)) != NULL) {
 			pmap = pv->pv_pmap;
 			va = pv->pv_va;
-#ifdef DIAGNOSTIC
+#ifdef DEBUG
 			pt_entry_t *pte = __pmap_pte_lookup(pmap, va);
-			KASSERT(pte != NULL);
-			KASSERT(*pte != 0);
+			KDASSERT(pte != NULL);
+			KDASSERT(*pte != 0);
 #endif
 			pmap_remove(pmap, va, va + PAGE_SIZE);
 		}
