@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.104 2021/09/05 12:47:10 rin Exp $	*/
+/*	$NetBSD: pmap.c,v 1.105 2021/09/08 00:17:21 rin Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.104 2021/09/05 12:47:10 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.105 2021/09/08 00:17:21 rin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -235,13 +235,13 @@ pte_enter(struct pmap *pm, vaddr_t va, u_int pte)
 	if (!pm->pm_ptbl[seg]) {
 		/* Don't allocate a page to clear a non-existent mapping. */
 		if (!pte)
-			return 1;
+			return 0;
 
 		vaddr_t km = uvm_km_alloc(kernel_map, PAGE_SIZE, 0,
 		    UVM_KMF_WIRED | UVM_KMF_ZERO | UVM_KMF_NOWAIT);
 
 		if (__predict_false(km == 0))
-			return 0;
+			return ENOMEM;
 
 		pm->pm_ptbl[seg] = (u_int *)km;
 	}
@@ -256,7 +256,7 @@ pte_enter(struct pmap *pm, vaddr_t va, u_int pte)
 		else
 			pm->pm_stats.resident_count++;
 	}
-	return 1;
+	return 0;
 }
 
 /*
@@ -700,9 +700,6 @@ pmap_copy_page(paddr_t src, paddr_t dst)
 	dcache_wbinv_page(dst);
 }
 
-/*
- * This returns != 0 on success.
- */
 static inline int
 pmap_enter_pv(struct pmap *pm, vaddr_t va, paddr_t pa, int flags)
 {
@@ -731,7 +728,7 @@ pmap_enter_pv(struct pmap *pm, vaddr_t va, paddr_t pa, int flags)
 			if ((flags & PMAP_CANFAIL) == 0)
 				panic("pmap_enter_pv: failed");
 			splx(s);
-			return 0;
+			return ENOMEM;
 		}
 		npv->pv_va = va;
 		npv->pv_pm = pm;
@@ -746,7 +743,7 @@ pmap_enter_pv(struct pmap *pm, vaddr_t va, paddr_t pa, int flags)
 
 	splx(s);
 
-	return 1;
+	return 0;
 }
 
 static void
@@ -849,7 +846,7 @@ pmap_enter(struct pmap *pm, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 	if (pmap_initialized && managed) {
 		char *attr;
 
-		if (!pmap_enter_pv(pm, va, pa, flags)) {
+		if (pmap_enter_pv(pm, va, pa, flags)) {
 			/* Could not enter pv on a managed page */
 			return ENOMEM;
 		}
@@ -866,7 +863,7 @@ pmap_enter(struct pmap *pm, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 	s = splvm();
 
 	/* Insert page into page table. */
-	if (__predict_false(!pte_enter(pm, va, tte))) {
+	if (__predict_false(pte_enter(pm, va, tte))) {
 		if (__predict_false((flags & PMAP_CANFAIL) == 0))
 			panic("%s: pte_enter", __func__);
 		splx(s);
@@ -961,7 +958,7 @@ pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 	s = splvm();
 
 	/* Insert page into page table. */
-	if (__predict_false(!pte_enter(pm, va, tte)))
+	if (__predict_false(pte_enter(pm, va, tte)))
 		panic("%s: pte_enter", __func__);
 
 	splx(s);
