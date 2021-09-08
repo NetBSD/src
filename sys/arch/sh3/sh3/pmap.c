@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.93 2021/09/08 11:59:43 rin Exp $	*/
+/*	$NetBSD: pmap.c,v 1.94 2021/09/08 12:00:50 rin Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.93 2021/09/08 11:59:43 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.94 2021/09/08 12:00:50 rin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -814,7 +814,7 @@ pmap_clear_reference(struct vm_page *pg)
 	int s;
 
 	if ((pvh->pvh_flags & PVH_REFERENCED) == 0)
-		return (false);
+		return false;
 
 	pvh->pvh_flags &= ~PVH_REFERENCED;
 
