@@ -1,4 +1,4 @@
-# $NetBSD: t_intr.sh,v 1.4 2021/09/05 22:34:07 rillig Exp $
+# $NetBSD: t_intr.sh,v 1.5 2021/09/09 21:47:47 rillig Exp $
 #
 # Copyright (c) 2021 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -77,5 +77,6 @@ atf_init_test_cases()
 {
 	atf_add_test_case stdio_intr_ionbf
 	atf_add_test_case stdio_intr_iolbf
-	atf_add_test_case stdio_intr_iofbf
+	# flappy test; see fflush.c 1.19 to 1.24
+	#atf_add_test_case stdio_intr_iofbf
 }
