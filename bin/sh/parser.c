@@ -1,4 +1,4 @@
-/*	$NetBSD: parser.c,v 1.171 2020/08/19 22:41:47 kre Exp $	*/
+/*	$NetBSD: parser.c,v 1.172 2021/09/09 01:14:04 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)parser.c	8.7 (Berkeley) 5/16/95";
 #else
-__RCSID("$NetBSD: parser.c,v 1.171 2020/08/19 22:41:47 kre Exp $");
+__RCSID("$NetBSD: parser.c,v 1.172 2021/09/09 01:14:04 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -422,6 +422,8 @@ command(void)
 			n1->nfor.args = ap;
 			if (lasttoken != TNL && lasttoken != TSEMI)
 				synexpect(TSEMI, 0);
+			if (lasttoken == TNL)
+				readheredocs();
 		} else {
 			static char argvars[5] = {
 			    CTLVAR, VSNORMAL|VSQUOTE, '@', '=', '\0'
@@ -2506,7 +2508,7 @@ STATIC void
 linebreak(void)
 {
 	while (readtoken() == TNL)
-		;
+		readheredocs();
 }
 
 /*
