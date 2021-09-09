@@ -1,4 +1,4 @@
-# $NetBSD: t_here.sh,v 1.7 2019/01/22 14:31:53 kre Exp $
+# $NetBSD: t_here.sh,v 1.8 2021/09/09 00:04:51 kre Exp $
 #
 # Copyright (c) 2007 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -530,6 +530,35 @@ side_effects_body() {
 		'
 }
 
+# The following tests a problem reported on the austin-list 2021-09-08
+# by oguzismailuysal@gmail.com ... it affected all ash derived shells
+atf_test_case hard_cases
+hard_cases_head() {
+	atf_set "descr" \
+		"Tests here docs in positions that have confised our parser"
+}
+hard_cases_body() {
+
+	atf_check -s exit:0 -o inline:'xxx\n' -e empty ${TEST_SH} -c '
+		: <<- do | for x in xxx
+		do
+		do echo $x
+		done'
+
+	atf_check -s exit:0 -o inline:'xxx\n' -e empty ${TEST_SH} -c '
+		set -- xxx
+		: <<- done | for x in xxx
+		done
+		do echo $x
+		done'
+
+	atf_check -s exit:0 -o inline:'xxx\n' -e empty ${TEST_SH} -c '
+		: <<- in | case xxx
+		in
+		in xxx) echo xxx;;
+		esac'
+}
+
 atf_test_case vicious
 vicious_head() {
 	atf_set "descr" "Tests for obscure and obnoxious uses of here docs"
@@ -600,5 +629,6 @@ atf_init_test_cases() {
 	atf_add_test_case nested	# here docs inside here docs
 	atf_add_test_case quoting	# stuff quoted inside
 	atf_add_test_case side_effects	# here docs that modify environment
+	atf_add_test_case hard_cases	# here doc bodies appearing mid command
 	atf_add_test_case vicious	# evil test from the austin-l list...
 }
