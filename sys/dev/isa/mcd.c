@@ -1,4 +1,4 @@
-/*	$NetBSD: mcd.c,v 1.120 2020/02/24 12:20:29 rin Exp $	*/
+/*	$NetBSD: mcd.c,v 1.121 2021/09/09 23:26:36 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -56,7 +56,7 @@
 /*static char COPYRIGHT[] = "mcd-driver (C)1993 by H.Veit & B.Moore";*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mcd.c,v 1.120 2020/02/24 12:20:29 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mcd.c,v 1.121 2021/09/09 23:26:36 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1601,6 +1601,7 @@ mcd_read_subchannel(struct mcd_softc *sc, struct ioc_read_subchannel *ch,
 	if ((error = mcd_getqchan(sc, &q, ch->data_format)) != 0)
 		return error;
 
+	memset(info, 0, sizeof(*info));
 	info->header.audio_status = sc->audio_status;
 	info->what.media_catalog.data_format = ch->data_format;
 
