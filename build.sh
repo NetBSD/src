@@ -1,5 +1,5 @@
 #! /usr/bin/env sh
-#	$NetBSD: build.sh,v 1.355 2021/08/29 09:02:01 christos Exp $
+#	$NetBSD: build.sh,v 1.356 2021/09/09 15:00:01 martin Exp $
 #
 # Copyright (c) 2001-2011 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -1071,6 +1071,8 @@ Usage: ${progname} [-EhnoPRrUuxy] [-a arch] [-B buildid] [-C cdextras]
     list-arch           Display a list of valid MACHINE/MACHINE_ARCH values,
                         and exit.  The list may be narrowed by passing glob
                         patterns or exact values in MACHINE or MACHINE_ARCH.
+    mkrepro-timestamp   Show the latest source timestamp used for reproducable
+                        builds and exit.  Requires -P or -V MKREPRO=yes.
 
  Options:
     -a arch        Set MACHINE_ARCH to arch.  [Default: deduced from MACHINE]
@@ -1366,7 +1368,12 @@ parseoptions()
 
 		list-arch)
 			listarch "${MACHINE}" "${MACHINE_ARCH}"
-			exit $?
+			exit
+			;;
+		mkrepro-timestamp)
+			setup_mkrepro quiet
+			echo ${MKREPRO_TIMESTAMP:-0}
+			[ ${MKREPRO_TIMESTAMP:-0} -ne 0 ]; exit
 			;;
 
 		kernel=*|releasekernel=*|kernel.gdb=*)
@@ -1965,7 +1972,7 @@ createmakewrapper()
 	eval cat <<EOF ${makewrapout}
 #! ${HOST_SH}
 # Set proper variables to allow easy "make" building of a NetBSD subtree.
-# Generated from:  \$NetBSD: build.sh,v 1.355 2021/08/29 09:02:01 christos Exp $
+# Generated from:  \$NetBSD: build.sh,v 1.356 2021/09/09 15:00:01 martin Exp $
 # with these arguments: ${_args}
 #
 
@@ -2294,8 +2301,13 @@ repro_date() {
 
 setup_mkrepro()
 {
+	local quiet="$1"
+
 	if [ ${MKREPRO-no} != "yes" ]; then
 		return
+	fi
+	if [ ${MKREPRO_TIMESTAMP-0} -ne 0 ]; then
+		return;
 	fi
 
 	local dirs=${NETBSDSRCDIR-/usr/src}/
@@ -2343,7 +2355,10 @@ setup_mkrepro()
 	done
 
 	[ "${MKREPRO_TIMESTAMP}" != "0" ] || bomb "Failed to compute timestamp"
-	statusmsg2 "MKREPRO_TIMESTAMP" "$(repro_date "${MKREPRO_TIMESTAMP}")"
+	if [ -z "${quiet}" ]; then
+		statusmsg2 "MKREPRO_TIMESTAMP" \
+			"$(repro_date "${MKREPRO_TIMESTAMP}")"
+	fi
 	export MKREPRO MKREPRO_TIMESTAMP
 }
 
