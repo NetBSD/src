@@ -1,4 +1,4 @@
-/*	$NetBSD: readline.c,v 1.165 2021/09/03 12:20:38 christos Exp $	*/
+/*	$NetBSD: readline.c,v 1.166 2021/09/09 20:25:30 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include "config.h"
 #if !defined(lint) && !defined(SCCSID)
-__RCSID("$NetBSD: readline.c,v 1.165 2021/09/03 12:20:38 christos Exp $");
+__RCSID("$NetBSD: readline.c,v 1.166 2021/09/09 20:25:30 christos Exp $");
 #endif /* not lint && not SCCSID */
 
 #include <sys/types.h>
@@ -624,8 +624,7 @@ get_history_event(const char *cmd, int *cindex, int qchar)
 
 	if (sub) {
 		if (pat != last_search_pat) {
-			if (last_search_pat)
-				el_free(last_search_pat);
+			el_free(last_search_pat);
 			last_search_pat = pat;
 		}
 		ret = history_search(pat, -1);
@@ -642,9 +641,8 @@ get_history_event(const char *cmd, int *cindex, int qchar)
 	}
 
 	if (sub && len) {
-		if (last_search_match && last_search_match != pat)
-			el_free(last_search_match);
-		last_search_match = pat;
+		el_free(last_search_match);
+		last_search_match = strdup(pat);
 	}
 
 	if (pat != last_search_pat)
@@ -676,7 +674,7 @@ getfrom(const char **cmdp, char **fromp, const char *search, int delim)
 	for (; *cmd && *cmd != delim; cmd++) {
 		if (*cmd == '\\' && cmd[1] == delim)
 			cmd++;
-		if (len >= size) {
+		if (len - 1 >= size) {
 			char *nwhat;
 			nwhat = el_realloc(what, (size <<= 1) * sizeof(*nwhat));
 			if (nwhat == NULL) {
@@ -707,6 +705,7 @@ getfrom(const char **cmdp, char **fromp, const char *search, int delim)
 	}
 	if (!*cmd) {
 		el_free(what);
+		*fromp = NULL;
 		return -1;
 	}
 
@@ -715,6 +714,7 @@ getfrom(const char **cmdp, char **fromp, const char *search, int delim)
 
 	if (!*cmd) {
 		el_free(what);
+		*fromp = NULL;
 		return -1;
 	}
 	return 1;
@@ -728,6 +728,7 @@ getto(const char **cmdp, char **top, const char *from, int delim)
 	size_t from_len = strlen(from);
 	const char *cmd = *cmdp;
 	char *with = el_realloc(*top, size * sizeof(*with));
+	*top = NULL;
 	if (with == NULL)
 		goto out;
 
@@ -848,7 +849,7 @@ _history_expand_command(const char *command, size_t offs, size_t cmdlen,
 	/* Now parse any word designators */
 
 	if (*cmd == '%')	/* last word matched by ?pat? */
-		tmp = strdup(last_search_match? last_search_match:"");
+		tmp = strdup(last_search_match ? last_search_match : "");
 	else if (strchr("^*$-0123456789", *cmd)) {
 		start = end = -1;
 		if (*cmd == '^')
@@ -928,26 +929,30 @@ _history_expand_command(const char *command, size_t offs, size_t cmdlen,
 				continue;
 			/*FALLTHROUGH*/
 		case 's':
-			delim = *(++cmd), cmd++;	/* XXX: check */
-			if ((ev = getfrom(&cmd, &from, search, delim)) != 1) {
-				el_free(tmp);
-				return ev;
-			}
-			if ((ev = getto(&cmd, &to, from, delim)) != 1) {
-				el_free(tmp);
-				return ev;
-			}
+			ev = -1;
+			delim = *++cmd;
+			if (delim == '\0' || *++cmd == '\0')
+				goto out;
+			if ((ev = getfrom(&cmd, &from, search, delim)) != 1)
+				goto out;
+			if ((ev = getto(&cmd, &to, from, delim)) != 1)
+				goto out;
 			aptr = _rl_compat_sub(tmp, from, to, g_on);
 			if (aptr) {
 				el_free(tmp);
 				tmp = aptr;
 			}
 			g_on = 0;
+			cmd--;
 			continue;
 		}
 	}
 	*result = tmp;
 	return p_on ? 2 : 1;
+out:
+	el_free(tmp);
+	return ev;
+	
 }
 
 
