@@ -1,4 +1,4 @@
-/*	$NetBSD: gtmr.c,v 1.44 2021/08/30 22:53:37 jmcneill Exp $	*/
+/*	$NetBSD: gtmr.c,v 1.45 2021/09/09 21:39:02 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gtmr.c,v 1.44 2021/08/30 22:53:37 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gtmr.c,v 1.45 2021/09/09 21:39:02 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -333,6 +333,12 @@ gtmr_intr(void *arg)
 	struct cpu_info * const ci = curcpu();
 	struct clockframe * const cf = arg;
 	struct gtmr_softc * const sc = &gtmr_sc;
+
+	const uint32_t ctl = gtmr_read_ctl(sc);
+	if ((ctl & (CNTCTL_ENABLE|CNTCTL_ISTATUS)) != (CNTCTL_ENABLE|CNTCTL_ISTATUS)) {
+		aprint_debug_dev(ci->ci_dev, "spurious timer interrupt (ctl=%#x)\n", ctl);
+		return 0;
+	}
 
 	const uint64_t now = gtmr_read_cntct(sc);
 	uint64_t delta = now - ci->ci_lastintr;
