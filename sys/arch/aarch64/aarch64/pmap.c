@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.109 2021/09/09 08:09:44 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.110 2021/09/09 08:12:27 skrll Exp $	*/
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.109 2021/09/09 08:09:44 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.110 2021/09/09 08:12:27 skrll Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_ddb.h"
@@ -967,23 +967,24 @@ pmap_icache_sync_range(pmap_t pm, vaddr_t sva, vaddr_t eva)
 		}
 
 		pte = *ptep;
-		if (lxpde_valid(pte)) {
-			vaddr_t eob = (va + blocksize) & ~(blocksize - 1);
-			vsize_t len = ulmin(eva, eob) - va;
+		if (!lxpde_valid(pte))
+			continue;
 
-			if (l3pte_readable(pte)) {
-				cpu_icache_sync_range(va, len);
-			} else {
-				/*
-				 * change to accessible temporally
-				 * to do cpu_icache_sync_range()
-				 */
-				atomic_swap_64(ptep, pte | LX_BLKPAG_AF);
-				AARCH64_TLBI_BY_ASID_VA(pm->pm_asid, va, true);
-				cpu_icache_sync_range(va, len);
-				atomic_swap_64(ptep, pte);
-				AARCH64_TLBI_BY_ASID_VA(pm->pm_asid, va, true);
-			}
+		vaddr_t eob = (va + blocksize) & ~(blocksize - 1);
+		vsize_t len = ulmin(eva, eob) - va;
+
+		if (l3pte_readable(pte)) {
+			cpu_icache_sync_range(va, len);
+		} else {
+			/*
+			 * change to accessible temporally
+			 * to do cpu_icache_sync_range()
+			 */
+			atomic_swap_64(ptep, pte | LX_BLKPAG_AF);
+			AARCH64_TLBI_BY_ASID_VA(pm->pm_asid, va, true);
+			cpu_icache_sync_range(va, len);
+			atomic_swap_64(ptep, pte);
+			AARCH64_TLBI_BY_ASID_VA(pm->pm_asid, va, true);
 		}
 	}
 
