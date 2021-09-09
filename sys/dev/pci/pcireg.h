@@ -1,4 +1,4 @@
-/*	$NetBSD: pcireg.h,v 1.157 2021/09/09 02:12:48 mrg Exp $	*/
+/*	$NetBSD: pcireg.h,v 1.158 2021/09/09 08:11:42 mrg Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1999, 2000
@@ -1017,12 +1017,12 @@ typedef u_int8_t pci_revision_t;
 #define PCIE_DCSR_EMGPWRREDD	__BIT(6 + 16)  /* Emg. Pwr. Reduct. Detected */
 #define PCIE_LCAP	0x0c	/* Link Capabilities Register */
 #define PCIE_LCAP_MAX_SPEED	__BITS(3, 0)   /* Max Link Speed */
-#define  PCIE_LCAP_MAX_SPEED_2	__BIT(0)       /* 2.5GT/s */
-#define  PCIE_LCAP_MAX_SPEED_5	__BIT(1)       /* 5GT/s */
-#define  PCIE_LCAP_MAX_SPEED_8	__BIT(3)       /* 8GT/s */
-#define  PCIE_LCAP_MAX_SPEED_16	__BIT(4)       /* 16GT/s */
-#define  PCIE_LCAP_MAX_SPEED_32	__BIT(5)       /* 32GT/s */
-#define  PCIE_LCAP_MAX_SPEED_64	__BIT(6)       /* 64GT/s */
+#define  PCIE_LCAP_MAX_SPEED_2	1	       /* 2.5GT/s */
+#define  PCIE_LCAP_MAX_SPEED_5	2	       /* 5GT/s */
+#define  PCIE_LCAP_MAX_SPEED_8	3	       /* 8GT/s */
+#define  PCIE_LCAP_MAX_SPEED_16	4	       /* 16GT/s */
+#define  PCIE_LCAP_MAX_SPEED_32	5	       /* 32GT/s */
+#define  PCIE_LCAP_MAX_SPEED_64	6	       /* 64GT/s */
 #define PCIE_LCAP_MAX_WIDTH	__BITS(9, 4)   /* Maximum Link Width */
 #define PCIE_LCAP_ASPM		__BITS(11, 10) /* Active State Link PM Supp. */
 #define PCIE_LCAP_L0S_EXIT	__BITS(14, 12) /* L0s Exit Latency */
