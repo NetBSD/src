@@ -1,4 +1,4 @@
-/*	$NetBSD: unlz.c,v 1.6 2018/11/11 01:42:36 christos Exp $	*/
+/*	$NetBSD: unlz.c,v 1.7 2021/09/10 21:52:17 rillig Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -393,7 +393,7 @@ lz_bm_init(int *a, size_t l)
 	size_t l = __arraycount(a[0]); \
 	for (size_t i = 0; i < __arraycount(a); i++) \
 		lz_bm_init(a[i], l); \
-} while (/*CONSTCOND*/0)
+} while (0)
 
 #define LZ_MODEL_INIT(a) do { \
 	a.choice1 = BIT_MODEL_INIT; \
@@ -401,7 +401,7 @@ lz_bm_init(int *a, size_t l)
 	LZ_BM_INIT2(a.bm_low); \
 	LZ_BM_INIT2(a.bm_mid); \
 	LZ_BM_INIT(a.bm_high); \
-} while (/*CONSTCOND*/0)
+} while (0)
 		
 static bool
 lz_decode_member(struct lz_decoder *lz)

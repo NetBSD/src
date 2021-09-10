@@ -1,4 +1,4 @@
-/*     $NetBSD: login_pam.c,v 1.26 2020/02/08 13:44:35 kamil Exp $       */
+/*     $NetBSD: login_pam.c,v 1.27 2021/09/10 21:52:17 rillig Exp $       */
 
 /*-
  * Copyright (c) 1980, 1987, 1988, 1991, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1987, 1988, 1991, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)login.c	8.4 (Berkeley) 4/2/94";
 #endif
-__RCSID("$NetBSD: login_pam.c,v 1.26 2020/02/08 13:44:35 kamil Exp $");
+__RCSID("$NetBSD: login_pam.c,v 1.27 2021/09/10 21:52:17 rillig Exp $");
 #endif /* not lint */
 
 /*
@@ -258,7 +258,7 @@ main(int argc, char *argv[])
 	warnx("%s: %s", msg, pam_strerror(pamh, pam_err));		\
 	pam_end(pamh, pam_err);						\
 	sleepexit(EXIT_FAILURE);					\
-} while (/*CONSTCOND*/0)
+} while (0)
 
 		pam_err = pam_start("login", username, &pamc, &pamh);
 		if (pam_err != PAM_SUCCESS) {
@@ -274,7 +274,7 @@ main(int argc, char *argv[])
 	pam_err = pam_set_item(pamh, (item), (var));			\
 	if (pam_err != PAM_SUCCESS)					\
 		PAM_END("pam_set_item(" # item ")");			\
-} while (/*CONSTCOND*/0)
+} while (0)
 
 		/* 
 		 * Fill hostname tty, and nested user

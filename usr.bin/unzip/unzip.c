@@ -1,4 +1,4 @@
-/* $NetBSD: unzip.c,v 1.27 2021/02/18 18:06:02 christos Exp $ */
+/* $NetBSD: unzip.c,v 1.28 2021/09/10 21:52:18 rillig Exp $ */
 
 /*-
  * Copyright (c) 2009, 2010 Joerg Sonnenberger <joerg@NetBSD.org>
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: unzip.c,v 1.27 2021/02/18 18:06:02 christos Exp $");
+__RCSID("$NetBSD: unzip.c,v 1.28 2021/09/10 21:52:18 rillig Exp $");
 
 #ifdef __GLIBC__
 #define _GNU_SOURCE
@@ -97,7 +97,7 @@ static int		 tty;
 		int acret = (call);				\
 		if (acret != ARCHIVE_OK)			\
 			errorx("%s", archive_error_string(a));	\
-	} while (/*CONSTCOND*/0)
+	} while (0)
 
 /*
  * Indicates that last info() did not end with EOL.  This helps error() et

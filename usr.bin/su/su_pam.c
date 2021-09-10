@@ -1,4 +1,4 @@
-/*	$NetBSD: su_pam.c,v 1.21 2018/02/26 00:05:05 htodd Exp $	*/
+/*	$NetBSD: su_pam.c,v 1.22 2021/09/10 21:52:18 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988 The Regents of the University of California.
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988\
 #if 0
 static char sccsid[] = "@(#)su.c	8.3 (Berkeley) 4/2/94";*/
 #else
-__RCSID("$NetBSD: su_pam.c,v 1.21 2018/02/26 00:05:05 htodd Exp $");
+__RCSID("$NetBSD: su_pam.c,v 1.22 2021/09/10 21:52:18 rillig Exp $");
 #endif
 #endif /* not lint */
 
@@ -220,7 +220,7 @@ main(int argc, char **argv)
 	/*
 	 * PAM initialization
 	 */
-#define PAM_END(msg) do { func = msg; goto done;} /* NOTREACHED */ while (/*CONSTCOND*/0)
+#define PAM_END(msg) do { func = msg; goto done;} /* NOTREACHED */ while (0)
 
 	if ((pam_err = pam_start("su", user, &pamc, &pamh)) != PAM_SUCCESS) {
 		if (pamh != NULL)
