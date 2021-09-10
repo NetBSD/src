@@ -1,4 +1,4 @@
-/*	$NetBSD: adm1021.c,v 1.29 2021/06/21 03:12:54 christos Exp $ */
+/*	$NetBSD: adm1021.c,v 1.29.6.1 2021/09/10 15:45:28 thorpej Exp $ */
 /*	$OpenBSD: adm1021.c,v 1.27 2007/06/24 05:34:35 dlg Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adm1021.c,v 1.29 2021/06/21 03:12:54 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adm1021.c,v 1.29.6.1 2021/09/10 15:45:28 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -341,8 +341,11 @@ admtemp_attach(device_t parent, device_t self, void *aux)
 
 	sc->sc_tag = ia->ia_tag;
 	sc->sc_addr = ia->ia_addr;
-	sc->sc_prop = ia->ia_prop;
-	prop_object_retain(sc->sc_prop);
+
+	/* XXX XXX XXX */
+	if ((sc->sc_prop = ia->ia_prop) != NULL) {
+		prop_object_retain(sc->sc_prop);
+	}
 
 	if (iic_acquire_bus(sc->sc_tag, 0)) {
 		aprint_error_dev(self, "cannot acquire iic bus\n");

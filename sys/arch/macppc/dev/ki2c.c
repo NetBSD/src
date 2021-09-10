@@ -1,4 +1,4 @@
-/*	$NetBSD: ki2c.c,v 1.32.2.1 2021/08/09 00:30:08 thorpej Exp $	*/
+/*	$NetBSD: ki2c.c,v 1.32.2.2 2021/09/10 15:45:28 thorpej Exp $	*/
 /*	Id: ki2c.c,v 1.7 2002/10/05 09:56:05 tsubai Exp	*/
 
 /*-
@@ -68,6 +68,7 @@ ki2c_i2c_device_props(struct ki2c_softc *sc, int node)
 	char descr[32], num[8];
 
 	/* We're fetching descriptions for sensors. */
+	/* XXX This is a terrible hack and should not be done this way XXX */
 
 	for (node = OF_child(node); node != 0; node = OF_peer(node)) {
 		if (of_getprop_uint32(node, "reg", &reg) == -1) {

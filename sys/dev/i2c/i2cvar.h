@@ -1,4 +1,4 @@
-/*	$NetBSD: i2cvar.h,v 1.24.12.1 2021/08/09 00:30:09 thorpej Exp $	*/
+/*	$NetBSD: i2cvar.h,v 1.24.12.2 2021/09/10 15:45:28 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -155,8 +155,10 @@ struct i2c_attach_args {
 	const char *	ia_name;	/* name of the device */
 	const char *	ia_clist;	/* compatible strlist */
 	size_t		ia_clist_size;	/* size of compatible strlist */
-	prop_dictionary_t ia_prop;	/* property dictionary for the device */
 	devhandle_t	ia_devhandle;	/* device handle for the device */
+
+	/* XXX ia_prop is deprecated; please don't add new usage. XXX */
+	prop_dictionary_t ia_prop;	/* property dictionary for the device */
 };
 
 /*

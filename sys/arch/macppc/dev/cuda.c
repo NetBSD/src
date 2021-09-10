@@ -1,4 +1,4 @@
-/*	$NetBSD: cuda.c,v 1.29.2.1 2021/08/09 00:30:08 thorpej Exp $ */
+/*	$NetBSD: cuda.c,v 1.29.2.2 2021/09/10 15:45:27 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2006 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cuda.c,v 1.29.2.1 2021/08/09 00:30:08 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cuda.c,v 1.29.2.2 2021/09/10 15:45:27 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -178,7 +178,6 @@ static int
 cuda_i2c_enumerate_devices(device_t dev, devhandle_t call_handle, void *v)
 {
 	struct i2c_enumerate_devices_args *args = v;
-	prop_dictionary_t props;
 	int i;
 	bool cbrv;
 
@@ -186,19 +185,14 @@ cuda_i2c_enumerate_devices(device_t dev, devhandle_t call_handle, void *v)
 	struct cuda_softc *sc = args->ia->ia_tag->ic_cookie;
 
 	for (i = 0; i < sc->sc_ni2c_devices; i++) {
-		props = prop_dictionary_create();
-
 		args->ia->ia_addr = sc->sc_i2c_devices[i].addr;
 		args->ia->ia_name = sc->sc_i2c_devices[i].name;
 		args->ia->ia_clist = sc->sc_i2c_devices[i].compatible;
 		args->ia->ia_clist_size = strlen(args->ia->ia_clist) + 1;
-		args->ia->ia_prop = props;
 		/* Child gets no handle. */
 		devhandle_invalidate(&args->ia->ia_devhandle);
 
 		cbrv = args->callback(dev, args);
-
-		prop_object_release(props);
 
 		if (!cbrv) {
 			break;	/* callback decides if we continue */

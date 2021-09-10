@@ -1,4 +1,4 @@
-/*	$NetBSD: dbcool.c,v 1.62 2021/06/21 03:12:54 christos Exp $ */
+/*	$NetBSD: dbcool.c,v 1.62.6.1 2021/09/10 15:45:28 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dbcool.c,v 1.62 2021/06/21 03:12:54 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dbcool.c,v 1.62.6.1 2021/09/10 15:45:28 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -775,8 +775,11 @@ dbcool_attach(device_t parent, device_t self, void *aux)
 	sc->sc_dc.dc_readreg = dbcool_readreg;
 	sc->sc_dc.dc_writereg = dbcool_writereg;
 	sc->sc_dev = self;
-	sc->sc_prop = args->ia_prop;
-	prop_object_retain(sc->sc_prop);
+
+	/* XXX XXX XXX */
+	if ((sc->sc_prop = args->ia_prop) != NULL) {
+		prop_object_retain(sc->sc_prop);
+	}
 
 	if (dbcool_chip_ident(&sc->sc_dc) < 0 || sc->sc_dc.dc_chip == NULL)
 		panic("could not identify chip at addr %d", args->ia_addr);

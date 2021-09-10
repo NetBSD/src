@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw_patch.c,v 1.7.14.1 2021/08/09 00:30:08 thorpej Exp $ */
+/*	$NetBSD: ofw_patch.c,v 1.7.14.2 2021/09/10 15:45:28 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2020, 2021 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofw_patch.c,v 1.7.14.1 2021/08/09 00:30:08 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofw_patch.c,v 1.7.14.2 2021/09/10 15:45:28 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>
@@ -143,20 +143,16 @@ i2c_fixup_enumerate_devices(device_t dev, devhandle_t call_handle, void *v)
 	/* Now enumerate our additions. */
 	const struct i2c_addition *i2c_adds = fixup->i2c_additions;
 	KASSERT(i2c_adds != NULL);
-	prop_dictionary_t props;
 	int i;
 	bool cbrv;
 
 	for (i = 0; i < fixup->i2c_nadditions; i++) {
-		props = prop_dictionary_create();
-
 		args->ia->ia_addr = i2c_adds[i].addr;
 		args->ia->ia_name = i2c_adds[i].name;
 		args->ia->ia_clist = i2c_adds[i].compat;
 		args->ia->ia_clist_size = args->ia->ia_clist != NULL
 		    ? strlen(i2c_adds[i].compat) + 1
 		    : 0;
-		args->ia->ia_prop = props;
 		if (fixup->i2c_phandle != 0) {
 			args->ia->ia_devhandle =
 			    devhandle_from_of(fixup->i2c_phandle);
@@ -165,8 +161,6 @@ i2c_fixup_enumerate_devices(device_t dev, devhandle_t call_handle, void *v)
 		}
 
 		cbrv = args->callback(dev, args);
-
-		prop_object_release(props);
 
 		if (! cbrv) {
 			break;
