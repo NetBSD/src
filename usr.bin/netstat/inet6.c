@@ -1,4 +1,4 @@
-/*	$NetBSD: inet6.c,v 1.77 2020/08/28 07:23:48 ozaki-r Exp $	*/
+/*	$NetBSD: inet6.c,v 1.78 2021/09/10 21:52:18 rillig Exp $	*/
 /*	BSDI inet.c,v 2.3 1995/10/24 02:19:29 prb Exp	*/
 
 /*
@@ -64,7 +64,7 @@
 #if 0
 static char sccsid[] = "@(#)inet.c	8.4 (Berkeley) 4/20/94";
 #else
-__RCSID("$NetBSD: inet6.c,v 1.77 2020/08/28 07:23:48 ozaki-r Exp $");
+__RCSID("$NetBSD: inet6.c,v 1.78 2021/09/10 21:52:18 rillig Exp $");
 #endif
 #endif /* not lint */
 
@@ -747,7 +747,7 @@ ip6_stats(u_long off, const char *name)
 			printf("\t\t%llu addresses scope=%x\n",\
 			       (unsigned long long)ip6stat[s], i);\
 		}\
-	} while(/*CONSTCOND*/0);
+	} while(0);
 
 	p(IP6_STAT_SOURCES_NONE,
 	  "\t%llu failure%s of source address selection\n");

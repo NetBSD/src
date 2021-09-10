@@ -1,4 +1,4 @@
-/*	$NetBSD: tip.h,v 1.34 2020/04/23 00:35:14 joerg Exp $	*/
+/*	$NetBSD: tip.h,v 1.35 2021/09/10 21:52:18 rillig Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -155,10 +155,10 @@ typedef
 #define	character(v)	((char)(intptr_t)(v))
 #define	address(v)	((long *)(intptr_t)(v))
 
-#define	setnumber(v,n)		do { (v) = (char *)(intptr_t)(n); } while (/*CONSTCOND*/0)
-#define	setboolean(v,n)		do { (v) = (char *)(intptr_t)(n); } while (/*CONSTCOND*/0)
-#define	setcharacter(v,n)	do { (v) = (char *)(intptr_t)(n); } while (/*CONSTCOND*/0)
-#define	setaddress(v,n)		do { (v) = (char *)(intptr_t)(n); } while (/*CONSTCOND*/0)
+#define	setnumber(v,n)		do { (v) = (char *)(intptr_t)(n); } while (0)
+#define	setboolean(v,n)		do { (v) = (char *)(intptr_t)(n); } while (0)
+#define	setcharacter(v,n)	do { (v) = (char *)(intptr_t)(n); } while (0)
+#define	setaddress(v,n)		do { (v) = (char *)(intptr_t)(n); } while (0)
 
 /*
  * Escape command table definitions --
