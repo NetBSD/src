@@ -1,10 +1,10 @@
-#	$NetBSD: Makefile,v 1.23 2021/09/05 15:15:58 rillig Exp $
+#	$NetBSD: Makefile,v 1.24 2021/09/10 20:02:50 rillig Exp $
 
 .PATH:		${.CURDIR}/../../mkdep
 
 PROG=		xlint
 SRCS=		xlint.c mem.c findcc.c
-PROGNAME= 	lint
+PROGNAME=	lint
 MAN=		lint.1
 
 CPPFLAGS+=	-I${.CURDIR}/../../mkdep

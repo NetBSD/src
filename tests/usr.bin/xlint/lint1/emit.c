@@ -1,4 +1,4 @@
-/*	$NetBSD: emit.c,v 1.6 2021/09/04 15:13:00 rillig Exp $	*/
+/*	$NetBSD: emit.c,v 1.7 2021/09/10 20:02:51 rillig Exp $	*/
 # 3 "emit.c"
 
 /*
@@ -45,7 +45,7 @@ typedef enum {
  */
 
 extern _Bool			extern__Bool;
-extern float _Complex 		extern__Complex_float;
+extern float _Complex		extern__Complex_float;
 extern double _Complex		extern__Complex_double;
 extern long double _Complex	extern__Complex_long_double;
 extern char			extern_char;

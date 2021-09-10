@@ -1,4 +1,4 @@
-/*	$NetBSD: d_gcc_compound_statements2.c,v 1.3 2021/04/23 20:13:29 rillig Exp $	*/
+/*	$NetBSD: d_gcc_compound_statements2.c,v 1.4 2021/09/10 20:02:51 rillig Exp $	*/
 # 3 "d_gcc_compound_statements2.c"
 
 /* GCC compound statements with non-expressions */
@@ -21,8 +21,8 @@ compound_expression_with_only_stmt(void)
 {
 	struct cpu_info ci = { 0 };
 	return ({
-	    if (ci.bar > 0)
-	    	ci.bar++;
-	    ci;
+		if (ci.bar > 0)
+			ci.bar++;
+		ci;
 	}).bar;
 }
