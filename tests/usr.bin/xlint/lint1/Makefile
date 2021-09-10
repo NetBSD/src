@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.109 2021/09/03 22:44:09 rillig Exp $
+# $NetBSD: Makefile,v 1.110 2021/09/10 19:40:18 rillig Exp $
 
 NOMAN=		# defined
 MAX_MESSAGE=	346		# see lint1/err.c
@@ -203,6 +203,8 @@ FILES+=		lex_integer_ilp32.c
 FILES+=		lex_integer_ilp32.exp
 FILES+=		lex_string.c
 FILES+=		lex_string.exp
+FILES+=		lex_whitespace.c
+FILES+=		lex_whitespace.exp
 FILES+=		lex_wide_char.c
 FILES+=		lex_wide_char.exp
 FILES+=		lex_wide_string.c
