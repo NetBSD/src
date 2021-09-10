@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.0,v 1.1.2.180 2020/02/14 00:06:28 martin Exp $
+# $NetBSD: CHANGES-9.0,v 1.1.2.181 2021/09/10 07:45:27 martin Exp $
 
 A complete list of changes from the initial NetBSD 9.0 branch on 2019-07-30
 until the 9.0 release:
@@ -7901,7 +7901,7 @@ sys/dev/pci/ixgbe/if_bypass.c		1.5
 sys/dev/pci/ixgbe/ixgbe_osdep.c		1.5
 sys/dev/pci/ixgbe/ix_txrx.c		1.58-1.60
 sys/dev/pci/ixgbe/ixgbe.c		1.220-1.221
-sys/dev/pci/ixgbe/ixgbe.h		1.60-1.2
+sys/dev/pci/ixgbe/ixgbe.h		1.60-1.62
 sys/dev/pci/ixgbe/ixgbe_api.c		1.24
 sys/dev/pci/ixgbe/ixgbe_common.c	1.26
 sys/dev/pci/ixgbe/ixgbe_netbsd.c	1.11-1.12
