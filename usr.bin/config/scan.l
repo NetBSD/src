@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: scan.l,v 1.33 2020/07/26 22:25:47 uwe Exp $	*/
+/*	$NetBSD: scan.l,v 1.34 2021/09/10 21:52:17 rillig Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: scan.l,v 1.33 2020/07/26 22:25:47 uwe Exp $");
+__RCSID("$NetBSD: scan.l,v 1.34 2021/09/10 21:52:17 rillig Exp $");
 
 #include <sys/param.h>
 #include <errno.h>
@@ -90,7 +90,7 @@ int	 ifdefshift = -1;
 		printf("%s%s [%d,%d,%d] %#" PRIx64 "\n", x, # s, \
 		    IDS_PARENT_DISABLED, IDS_ISMATCH(st), getcurifdef(), \
 		    ifdefstate); \
-	} while (/*CONSTCOND*/0)
+	} while (0)
 #else
 # define IDS_PRINT(s, st, x) ((void)0)
 #endif

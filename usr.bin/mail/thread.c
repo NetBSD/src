@@ -1,4 +1,4 @@
-/*	$NetBSD: thread.c,v 1.10 2012/10/21 22:18:16 christos Exp $	*/
+/*	$NetBSD: thread.c,v 1.11 2021/09/10 21:52:18 rillig Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #ifndef __lint__
-__RCSID("$NetBSD: thread.c,v 1.10 2012/10/21 22:18:16 christos Exp $");
+__RCSID("$NetBSD: thread.c,v 1.11 2021/09/10 21:52:18 rillig Exp $");
 #endif /* not __lint__ */
 
 #include <assert.h>
@@ -453,7 +453,7 @@ thread_fix_old_links(struct message *nmessage, struct message *message, int omsg
 # define FIX_LINK(p)	do {\
 	if (p)\
 		p = nmessage + (p - message);\
-  } while (/*CONSTCOND*/0)
+  } while (0)
 
 	FIX_LINK(current_thread.t_head);
 	for (i = 0; i < omsgCount; i++) {
