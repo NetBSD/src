@@ -1,4 +1,4 @@
-#	$NetBSD: files.macppc,v 1.122 2021/09/03 17:18:39 macallan Exp $
+#	$NetBSD: files.macppc,v 1.123 2021/09/10 23:32:17 macallan Exp $
 #
 # macppc-specific configuration info
 
@@ -335,3 +335,10 @@ defflag opt_lmu.h LMU_DEBUG
 device	fcu: sysmon_envsys, fancontrol
 attach	fcu at iic
 file	arch/macppc/dev/fcu.c				fcu	needs-flag
+
+# fan control bits found in obio's space on some G5
+device 	obiofan: sysmon_envsys
+attach 	obiofan at obio
+file 	arch/macppc/dev/obiofan.c			obiofan
+defflag opt_obiofan.h OBIOFAN_DEBUG
+
