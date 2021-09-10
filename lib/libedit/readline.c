@@ -1,4 +1,4 @@
-/*	$NetBSD: readline.c,v 1.166 2021/09/09 20:25:30 christos Exp $	*/
+/*	$NetBSD: readline.c,v 1.167 2021/09/10 13:29:06 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include "config.h"
 #if !defined(lint) && !defined(SCCSID)
-__RCSID("$NetBSD: readline.c,v 1.166 2021/09/09 20:25:30 christos Exp $");
+__RCSID("$NetBSD: readline.c,v 1.167 2021/09/10 13:29:06 christos Exp $");
 #endif /* not lint && not SCCSID */
 
 #include <sys/types.h>
@@ -123,7 +123,6 @@ int readline_echoing_p = 1;
 int _rl_print_completions_horizontally = 0;
 VFunction *rl_redisplay_function = NULL;
 Function *rl_startup_hook = NULL;
-int rl_did_startup_hook = 0;
 VFunction *rl_completion_display_matches_hook = NULL;
 VFunction *rl_prep_term_function = (VFunction *)rl_prep_terminal;
 VFunction *rl_deprep_term_function = (VFunction *)rl_deprep_terminal;
@@ -425,8 +424,7 @@ readline(const char *p)
 
 	if (e == NULL || h == NULL)
 		rl_initialize();
-	if (rl_did_startup_hook == 0 && rl_startup_hook) {
-		rl_did_startup_hook = 1;
+	if (rl_startup_hook) {
 		(*rl_startup_hook)(NULL, 0);
 	}
 	tty_init(e);
