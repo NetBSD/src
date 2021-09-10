@@ -1,4 +1,4 @@
-/*	$NetBSD: misc.c,v 1.23 2011/11/07 22:24:23 jym Exp $	*/
+/*	$NetBSD: misc.c,v 1.24 2021/09/10 22:11:03 rillig Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)misc.c	8.3 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: misc.c,v 1.23 2011/11/07 22:24:23 jym Exp $");
+__RCSID("$NetBSD: misc.c,v 1.24 2021/09/10 22:11:03 rillig Exp $");
 #endif
 #endif /* not lint */
 
@@ -204,9 +204,9 @@ dd_write_msg(const char *fmt, int enable)
 		mS = 1;
 
 #define ADDC(c) do { if (enable != 0) buffer_write(&c, 1, 0); } \
-	while (/*CONSTCOND*/0)
+	while (0)
 #define ADDS(p) do { if (enable != 0) buffer_write(p, strlen(p), 0); } \
-	while (/*CONSTCOND*/0)
+	while (0)
 
 	for (ptr = fmt; *ptr; ptr++) {
 		if (*ptr != '%') {
