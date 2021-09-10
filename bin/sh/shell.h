@@ -1,4 +1,4 @@
-/*	$NetBSD: shell.h,v 1.29 2019/01/22 13:48:28 kre Exp $	*/
+/*	$NetBSD: shell.h,v 1.30 2021/09/10 22:11:03 rillig Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -110,42 +110,42 @@ extern	int		ShNest;
 #define CTRACE(when, param)	do {					\
 				    if ((DFlags & (when)) != 0)		\
 					trace param;			\
-				} while (/*CONSTCOND*/ 0)
+				} while (0)
 
 #define CCTRACE(when,cond,param) do {					\
 				    if ((cond) && (DFlags & (when)) != 0) \
 					trace param;			\
-				} while (/*CONSTCOND*/ 0)
+				} while (0)
 
 #define CTRACEV(when, param)	do {					\
 				    if ((DFlags & (when)) != 0)		\
 					tracev param;			\
-				} while (/*CONSTCOND*/ 0)
+				} while (0)
 
 #define XTRACE(when, param, xtra) do {					\
 				    if ((DFlags & (when)) != 0) {	\
 					trace param;			\
 					xtra;				\
 				    }					\
-				} while (/*CONSTCOND*/ 0)
+				} while (0)
 
 #define VTRACE(when, param)	do {					\
 				    if ((DFlags &			\
 					(when)<<DBG_VBOSE_SHIFT) != 0)	\
 					    trace param;		\
-				} while (/*CONSTCOND*/ 0)
+				} while (0)
 
 #define CVTRACE(when,cond,param) do {					\
 				    if ((cond) && (DFlags &		\
 					(when)<<DBG_VBOSE_SHIFT) != 0)	\
 					    trace param;		\
-				} while (/*CONSTCOND*/ 0)
+				} while (0)
 
 #define VTRACEV(when, param)	do {					\
 				    if ((DFlags &			\
 					(when)<<DBG_VBOSE_SHIFT) != 0)	\
 					    tracev param;		\
-				} while (/*CONSTCOND*/ 0)
+				} while (0)
 
 #define VXTRACE(when, param, xtra) do {					\
 				    if ((DFlags &			\
@@ -153,7 +153,7 @@ extern	int		ShNest;
 					    trace param;		\
 					    xtra;			\
 				    }					\
-				} while (/*CONSTCOND*/ 0)
+				} while (0)
 
 #define SHELL_FORKED()	ShNest++
 #define VFORK_BLOCK	{ const int _ShNest = ShNest;
