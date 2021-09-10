@@ -1,4 +1,4 @@
-/*	$NetBSD: readline.c,v 1.167 2021/09/10 13:29:06 christos Exp $	*/
+/*	$NetBSD: readline.c,v 1.168 2021/09/10 18:51:36 rillig Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include "config.h"
 #if !defined(lint) && !defined(SCCSID)
-__RCSID("$NetBSD: readline.c,v 1.167 2021/09/10 13:29:06 christos Exp $");
+__RCSID("$NetBSD: readline.c,v 1.168 2021/09/10 18:51:36 rillig Exp $");
 #endif /* not lint && not SCCSID */
 
 #include <sys/types.h>
@@ -596,7 +596,7 @@ get_history_event(const char *cmd, int *cindex, int qchar)
 		if (sub && cmd[idx] == '?')
 			break;
 		if (!sub && (cmd[idx] == ':' || cmd[idx] == ' '
-				    || cmd[idx] == '\t' || cmd[idx] == qchar))
+		    || cmd[idx] == '\t' || cmd[idx] == qchar))
 			break;
 		idx++;
 	}
@@ -824,7 +824,8 @@ _history_expand_command(const char *command, size_t offs, size_t cmdlen,
 		} else {
 			int	qchar;
 
-			qchar = (offs > 0 && command[offs - 1] == '"')? '"':0;
+			qchar = (offs > 0 && command[offs - 1] == '"')
+			    ? '"' : '\0';
 			ptr = get_history_event(command + offs, &idx, qchar);
 		}
 		has_mods = command[offs + (size_t)idx] == ':';
@@ -902,7 +903,7 @@ _history_expand_command(const char *command, size_t offs, size_t cmdlen,
 		switch (*cmd) {
 		case ':':
 			continue;
-		case 'h': 	/* remove trailing path */
+		case 'h':	/* remove trailing path */
 			if ((aptr = strrchr(tmp, '/')) != NULL)
 				*aptr = '\0';
 			continue;
@@ -1402,7 +1403,7 @@ read_history(const char *filename)
 		return errno;
 	errno = 0;
 	if (history(h, &ev, H_LOAD, filename) == -1)
-	    return errno ? errno : EINVAL;
+		return errno ? errno : EINVAL;
 	if (history(h, &ev, H_GETSIZE) == 0)
 		history_length = ev.num;
 	if (history_length < 0)
@@ -2080,7 +2081,7 @@ static unsigned char
 rl_bind_wrapper(EditLine *el __attribute__((__unused__)), unsigned char c)
 {
 	if (map[c] == NULL)
-	    return CC_ERROR;
+		return CC_ERROR;
 
 	_rl_update_pos();
 
