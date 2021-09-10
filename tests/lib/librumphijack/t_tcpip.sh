@@ -1,4 +1,4 @@
-#       $NetBSD: t_tcpip.sh,v 1.19 2019/05/13 17:55:08 bad Exp $
+#       $NetBSD: t_tcpip.sh,v 1.20 2021/09/10 21:21:35 christos Exp $
 #
 # Copyright (c) 2011 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -91,12 +91,14 @@ start_sshd() {
 	atf_check -s eq:0 -o empty -e empty chmod 400 ssh_host_key
 	atf_check -s eq:0 -o empty -e empty chmod 444 ssh_host_key.pub
 
+# Start in debugging mode so we don't have parent<->child privsep stuff
         env LD_PRELOAD=/usr/lib/librumphijack.so \
-	    /usr/sbin/sshd -e -f ./sshd_config
-	while [ ! -f sshd.pid ]; do
-		sleep 0.01
-	done
-	echo "SSH server started (pid $(cat sshd.pid))"
+	    /usr/sbin/sshd -d -e -E out -f ./sshd_config &
+#	while [ ! -f sshd.pid ]; do
+#		sleep 0.01
+#	done
+#	echo "SSH server started (pid $(cat sshd.pid))"
+	sleep 1
 
 	echo "Setting up SSH client configuration"
 	atf_check -s eq:0 -o empty -e empty \
@@ -122,8 +124,6 @@ ssh_head()
 
 ssh_body()
 {
-	atf_expect_fail "PR lib/50174"
-
 	atf_check -s exit:0 ${rumpnetsrv} ${RUMP_SERVER}
 	# make sure clients die after we nuke the server
 	export RUMPHIJACK_RETRYCONNECT='die'
@@ -137,7 +137,8 @@ ssh_body()
 	jot 11 12 | xargs mkdir
 	cd ..
 
-	atf_check -s exit:0 -o save:ssh.out				\
+	# ignore stderr for now, prints environment in debug mode
+	atf_check -s exit:0 -o save:ssh.out -e ignore			\
 	    env LD_PRELOAD=/usr/lib/librumphijack.so			\
 	    ssh -T -F ssh_config 127.0.0.1 env BLOCKSIZE=512		\
 	    ls -li $(pwd)/testdir
