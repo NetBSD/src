@@ -1,4 +1,4 @@
-/*      $NetBSD: hijack.c,v 1.131 2020/05/27 18:55:36 christos Exp $	*/
+/*      $NetBSD: hijack.c,v 1.132 2021/09/10 20:33:38 christos Exp $	*/
 
 /*-
  * Copyright (c) 2011 Antti Kantee.  All Rights Reserved.
@@ -34,7 +34,7 @@
 #include <rump/rumpuser_port.h>
 
 #if !defined(lint)
-__RCSID("$NetBSD: hijack.c,v 1.131 2020/05/27 18:55:36 christos Exp $");
+__RCSID("$NetBSD: hijack.c,v 1.132 2021/09/10 20:33:38 christos Exp $");
 #endif
 
 #include <sys/param.h>
@@ -187,6 +187,7 @@ enum dualcall {
 #if defined(__NetBSD__)
 
 #if !__NetBSD_Prereq__(5,99,7)
+#define REALSELECT pselect
 #define REALSELECT select
 #define REALPOLLTS pollts
 #define REALKEVENT kevent
@@ -199,6 +200,7 @@ enum dualcall {
 #define REALMKNOD mknod
 #define REALFHSTAT __fhstat40
 #else /* >= 5.99.7 */
+#define REALPSELECT _sys___pselect50
 #define REALSELECT _sys___select50
 #define REALPOLLTS _sys___pollts50
 #define REALKEVENT _sys___kevent50
@@ -248,6 +250,7 @@ int __getcwd(char *, size_t);
 #define REALREAD read
 #define REALPREAD pread
 #define REALPWRITE pwrite
+#define REALPSELECT pselect
 #define REALSELECT select
 #define REALPOLLTS ppoll
 #define REALUTIMES utimes
@@ -262,6 +265,8 @@ int __getcwd(char *, size_t);
 
 #endif /* platform */
 
+int REALPSELECT(int, fd_set *, fd_set *, fd_set *, const struct timespec *,
+		const sigset_t *);
 int REALSELECT(int, fd_set *, fd_set *, fd_set *, struct timeval *);
 int REALPOLLTS(struct pollfd *, nfds_t,
 	       const struct timespec *, const sigset_t *);
@@ -482,7 +487,7 @@ setdup2(int hostfd, int rumpfd)
 {
 
 	if (hostfd > DUP2HIGH) {
-		_DIAGASSERT(0);
+		_DIAGASSERT(/*CONSTCOND*/0);
 		return;
 	}
 
@@ -494,7 +499,7 @@ clrdup2(int hostfd)
 {
 
 	if (hostfd > DUP2HIGH) {
-		_DIAGASSERT(0);
+		_DIAGASSERT(/*CONSTCOND*/0);
 		return;
 	}
 
@@ -696,7 +701,7 @@ sockparser(char *buf)
 			}
 		}
 		if (socketmap[i].name == NULL) {
-			errx(1, "invalid socket specifier %s", p);
+			errx(EXIT_FAILURE, "invalid socket specifier %s", p);
 		}
 	}
 }
@@ -707,16 +712,17 @@ pathparser(char *buf)
 
 	/* sanity-check */
 	if (*buf != '/')
-		errx(1, "hijack path specifier must begin with ``/''");
+		errx(EXIT_FAILURE,
+		    "hijack path specifier must begin with ``/''");
 	rumpprefixlen = strlen(buf);
 	if (rumpprefixlen < 2)
-		errx(1, "invalid hijack prefix: %s", buf);
+		errx(EXIT_FAILURE, "invalid hijack prefix: %s", buf);
 	if (buf[rumpprefixlen-1] == '/' && strspn(buf, "/") != rumpprefixlen)
-		errx(1, "hijack prefix may end in slash only if pure "
-		    "slash, gave %s", buf);
+		errx(EXIT_FAILURE, "hijack prefix may end in slash only if "
+		    "pure slash, gave %s", buf);
 
 	if ((rumpprefix = strdup(buf)) == NULL)
-		err(1, "strdup");
+		err(EXIT_FAILURE, "strdup");
 	rumpprefixlen = strlen(rumpprefix);
 }
 
@@ -737,19 +743,19 @@ blanketparser(char *buf)
 
 	blanket = malloc(nblanket * sizeof(*blanket));
 	if (blanket == NULL)
-		err(1, "alloc blanket %d", nblanket);
+		err(EXIT_FAILURE, "alloc blanket %d", nblanket);
 
 	for (p = strtok_r(buf, ":", &l), i = 0; p;
 	    p = strtok_r(NULL, ":", &l), i++) {
 		blanket[i].pfx = strdup(p);
 		if (blanket[i].pfx == NULL)
-			err(1, "strdup blanket");
+			err(EXIT_FAILURE, "strdup blanket");
 		blanket[i].len = strlen(p);
 
 		if (blanket[i].len == 0 || *blanket[i].pfx != '/')
-			errx(1, "invalid blanket specifier %s", p);
+			errx(EXIT_FAILURE, "invalid blanket specifier %s", p);
 		if (*(blanket[i].pfx + blanket[i].len-1) == '/')
-			errx(1, "invalid blanket specifier %s", p);
+			errx(EXIT_FAILURE, "invalid blanket specifier %s", p);
 	}
 }
 
@@ -780,7 +786,8 @@ vfsparser(char *buf)
 	fullmask = 0;
 	for (i = 0; vfscalls[i].name != NULL; i++) {
 		if (fullmask & vfscalls[i].bit)
-			errx(1, "problem exists between vi and chair");
+			errx(EXIT_FAILURE,
+			    "problem exists between vi and chair");
 		fullmask |= vfscalls[i].bit;
 	}
 
@@ -810,7 +817,7 @@ vfsparser(char *buf)
 			}
 		}
 		if (vfscalls[i].name == NULL) {
-			errx(1, "invalid vfscall specifier %s", p);
+			errx(EXIT_FAILURE, "invalid vfscall specifier %s", p);
 		}
 	}
 }
@@ -836,7 +843,7 @@ sysctlparser(char *buf)
 		return;
 	}
 
-	errx(1, "sysctl value should be y(es)/n(o), gave: %s", buf);
+	errx(EXIT_FAILURE, "sysctl value should be y(es)/n(o), gave: %s", buf);
 }
 
 static bool rumpmodctl = false;
@@ -860,7 +867,7 @@ modctlparser(char *buf)
 		return;
 	}
 
-	errx(1, "modctl value should be y(es)/n(o), gave: %s", buf);
+	errx(EXIT_FAILURE, "modctl value should be y(es)/n(o), gave: %s", buf);
 }
 
 static void
@@ -870,14 +877,14 @@ fdoffparser(char *buf)
 	char *ep;
 
 	if (*buf == '-') {
-		errx(1, "fdoff must not be negative");
+		errx(EXIT_FAILURE, "fdoff must not be negative");
 	}
 	fdoff = strtoul(buf, &ep, 10);
 	if (*ep != '\0')
-		errx(1, "invalid fdoff specifier \"%s\"", buf);
+		errx(EXIT_FAILURE, "invalid fdoff specifier \"%s\"", buf);
 	if (fdoff >= INT_MAX/2 || fdoff < 3)
-		errx(1, "fdoff out of range");
-	hijack_fdoff = fdoff;
+		errx(EXIT_FAILURE, "fdoff out of range");
+	hijack_fdoff = (int)fdoff;
 }
 
 static struct {
@@ -904,7 +911,7 @@ parsehijack(char *hijack)
 	int i;
 
 	if ((hijackcopy = strdup(hijack)) == NULL)
-		err(1, "strdup");
+		err(EXIT_FAILURE, "strdup");
 
 	/* disable everything explicitly */
 	for (i = 0; i < PF_MAX; i++)
@@ -922,7 +929,7 @@ parsehijack(char *hijack)
 			if (strncmp(hijackparse[i].name, p,
 			    (size_t)(p2-p)) == 0) {
 				if (nop2 && hijackparse[i].needvalues)
-					errx(1, "invalid hijack specifier: %s",
+					errx(EXIT_FAILURE, "invalid hijack specifier: %s",
 					    hijackcopy);
 				hijackparse[i].parsefn(nop2 ? NULL : p2+1);
 				break;
@@ -930,12 +937,13 @@ parsehijack(char *hijack)
 		}
 
 		if (hijackparse[i].parsefn == NULL)
-			errx(1, "invalid hijack specifier name in %s", p);
+			errx(EXIT_FAILURE,
+			    "invalid hijack specifier name in %s", p);
 	}
 
 }
 
-static void __attribute__((constructor))
+static void __attribute__((__constructor__))
 rcinit(void)
 {
 	char buf[1024];
@@ -960,23 +968,29 @@ rcinit(void)
 		}
 
 		if (j == __arraycount(syscnames))
-			errx(1, "rumphijack error: syscall pos %d missing", i);
+			errx(EXIT_FAILURE,
+			    "rumphijack error: syscall pos %d missing", i);
 
 		syscalls[i].bs_host = dlsym(RTLD_NEXT,
 		    syscnames[j].scm_hostname);
 		if (syscalls[i].bs_host == NULL)
-			errx(1, "hostcall %s not found!",
+			errx(EXIT_FAILURE, "hostcall %s not found!",
 			    syscnames[j].scm_hostname);
 
 		syscalls[i].bs_rump = dlsym(RTLD_NEXT,
 		    syscnames[j].scm_rumpname);
 		if (syscalls[i].bs_rump == NULL)
-			errx(1, "rumpcall %s not found!",
+			errx(EXIT_FAILURE, "rumpcall %s not found!",
 			    syscnames[j].scm_rumpname);
+#if 0
+		fprintf(stderr, "%s %p %s %p\n",
+		    syscnames[j].scm_hostname, syscalls[i].bs_host,
+		    syscnames[j].scm_rumpname, syscalls[i].bs_rump);
+#endif
 	}
 
 	if (rumpclient_init() == -1)
-		err(1, "rumpclient init");
+		err(EXIT_FAILURE, "rumpclient init");
 
 	/* check which syscalls we're supposed to hijack */
 	if (getenv_r("RUMPHIJACK", buf, sizeof(buf)) == -1) {
@@ -998,7 +1012,8 @@ rcinit(void)
 
 			timeout = (time_t)strtoll(buf, &ep, 10);
 			if (timeout <= 0 || ep != buf + strlen(buf))
-				errx(1, "RUMPHIJACK_RETRYCONNECT must be "
+				errx(EXIT_FAILURE,
+				    "RUMPHIJACK_RETRYCONNECT must be "
 				    "keyword or integer, got: %s", buf);
 
 			rumpclient_setconnretry(timeout);
@@ -1171,9 +1186,9 @@ open(const char *path, int flags, ...)
 	bool isrump;
 	va_list ap;
 	enum pathtype pt;
-	int fd;
+	int fd, rfd;
 
-	DPRINTF(("open -> %s (%s)\n", path, whichpath(path)));
+	DPRINTF(("open -> %s (%s)", path, whichpath(path)));
 
 	if ((pt = path_isrump(path)) != PATH_HOST) {
 		if (pt == PATH_RUMP)
@@ -1190,12 +1205,12 @@ open(const char *path, int flags, ...)
 	va_end(ap);
 
 	if (isrump)
-		fd = fd_rump2host(fd);
+		rfd = fd_rump2host(fd);
 	else
-		fd = fd_host2host(fd);
+		rfd = fd_host2host(fd);
 
-	DPRINTF(("open <- %d (%s)\n", fd, whichfd(fd)));
-	return fd;
+	DPRINTF((" <- %d/%d (%s)\n", fd, rfd, whichfd(rfd)));
+	return rfd;
 }
 
 int
@@ -1391,7 +1406,7 @@ int
 REALSOCKET(int domain, int type, int protocol)
 {
 	int (*op_socket)(int, int, int);
-	int fd;
+	int fd, rfd;
 	bool isrump;
 
 	isrump = domain < PF_MAX && rumpsockets[domain];
@@ -1403,19 +1418,19 @@ REALSOCKET(int domain, int type, int protocol)
 	fd = op_socket(domain, type, protocol);
 
 	if (isrump)
-		fd = fd_rump2host(fd);
+		rfd = fd_rump2host(fd);
 	else
-		fd = fd_host2host(fd);
-	DPRINTF(("socket <- %d\n", fd));
+		rfd = fd_host2host(fd);
+	DPRINTF(("socket <- %d/%d (%s)\n", fd, rfd, whichfd(rfd)));
 
-	return fd;
+	return rfd;
 }
 
 int
 accept(int s, struct sockaddr *addr, socklen_t *addrlen)
 {
 	int (*op_accept)(int, struct sockaddr *, socklen_t *);
-	int fd;
+	int fd, rfd;
 	bool isrump;
 
 	isrump = fd_isrump(s);
@@ -1429,13 +1444,13 @@ accept(int s, struct sockaddr *addr, socklen_t *addrlen)
 	}
 	fd = op_accept(s, addr, addrlen);
 	if (fd != -1 && isrump)
-		fd = fd_rump2host(fd);
+		rfd = fd_rump2host(fd);
 	else
-		fd = fd_host2host(fd);
+		rfd = fd_host2host(fd);
 
-	DPRINTF((" <- %d\n", fd));
+	DPRINTF((" <- %d/%d (%s)\n", fd, rfd, whichfd(rfd)));
 
-	return fd;
+	return rfd;
 }
 
 #ifndef __linux__
@@ -1445,7 +1460,7 @@ paccept(int s, struct sockaddr *addr, socklen_t *addrlen,
 {
 	int (*op_paccept)(int, struct sockaddr *, socklen_t *,
 	    const sigset_t * restrict, int);
-	int fd;
+	int fd, rfd;
 	bool isrump;
 
 	isrump = fd_isrump(s);
@@ -1459,13 +1474,13 @@ paccept(int s, struct sockaddr *addr, socklen_t *addrlen,
 	}
 	fd = op_paccept(s, addr, addrlen, sigmask, flags);
 	if (fd != -1 && isrump)
-		fd = fd_rump2host(fd);
+		rfd = fd_rump2host(fd);
 	else
-		fd = fd_host2host(fd);
+		rfd = fd_host2host(fd);
 
-	DPRINTF((" <- %d\n", fd));
+	DPRINTF((" <- %d/%d (%s)\n", fd, rfd, whichfd(rfd)));
 
-	return fd;
+	return rfd;
 }
 #endif
 
@@ -1721,7 +1736,8 @@ recvmsg(int fd, struct msghdr *msg, int flags)
 	ssize_t (*op_recvmsg)(int, struct msghdr *, int);
 	ssize_t ret;
 	const bool isrump = fd_isrump(fd);
-
+	
+	DPRINTF(("%s -> %d (%s)\n", __func__, fd, whichfd(fd)));
 	if (isrump) {
 		fd = fd_host2rump(fd);
 		op_recvmsg = GETSYSCALL(rump, RECVMSG);
@@ -1778,6 +1794,7 @@ sendmsg(int fd, const struct msghdr *msg, int flags)
 	const bool isrump = fd_isrump(fd);
 	int error;
 
+	DPRINTF(("%s -> %d (%s)\n", __func__, fd, whichfd(fd)));
 	/*
 	 * reject descriptors from a different kernel.
 	 */
@@ -1878,7 +1895,7 @@ fork(void)
 #ifdef VFORK
 /* we do not have the luxury of not requiring a stackframe */
 #define	__strong_alias_macro(m, f)	__strong_alias(m, f)
-__strong_alias_macro(VFORK,fork);
+__strong_alias_macro(VFORK,fork)
 #endif
 
 int
@@ -1957,17 +1974,16 @@ execve(const char *path, char *const argv[], char *const envp[])
  * select is done by calling poll.
  */
 int
-REALSELECT(int nfds, fd_set *readfds, fd_set *writefds, fd_set *exceptfds,
-	struct timeval *timeout)
+REALPSELECT(int nfds, fd_set *readfds, fd_set *writefds, fd_set *exceptfds,
+	const struct timespec *timeout, const sigset_t *sigmask)
 {
 	struct pollfd *pfds;
-	struct timespec ts, *tsp = NULL;
 	nfds_t realnfds;
 	int i, j;
 	int rv, incr;
 
-	DPRINTF(("select %d %p %p %p %p\n", nfds,
-	    readfds, writefds, exceptfds, timeout));
+	DPRINTF(("pselect %d %p %p %p %p %p\n", nfds,
+	    readfds, writefds, exceptfds, timeout, sigmask));
 
 	/*
 	 * Well, first we must scan the fds to figure out how many
@@ -2022,11 +2038,7 @@ REALSELECT(int nfds, fd_set *readfds, fd_set *writefds, fd_set *exceptfds,
 	}
 	assert(j == (int)realnfds);
 
-	if (timeout) {
-		TIMEVAL_TO_TIMESPEC(timeout, &ts);
-		tsp = &ts;
-	}
-	rv = REALPOLLTS(pfds, realnfds, tsp, NULL);
+	rv = REALPOLLTS(pfds, realnfds, timeout, sigmask);
 	/*
 	 * "If select() returns with an error the descriptor sets
 	 * will be unmodified"
@@ -2078,6 +2090,19 @@ REALSELECT(int nfds, fd_set *readfds, fd_set *writefds, fd_set *exceptfds,
 	free(pfds);
 	return rv;
 }
+
+int
+REALSELECT(int nfds, fd_set *readfds, fd_set *writefds, fd_set *exceptfds,
+	struct timeval *timeout)
+{
+	struct timespec ts, *tsp = NULL;
+	if (timeout) {
+		TIMEVAL_TO_TIMESPEC(timeout, &ts);
+		tsp = &ts;
+	}
+	return REALPSELECT(nfds, readfds, writefds, exceptfds, tsp, NULL);
+}
+
 
 static void
 checkpoll(struct pollfd *fds, nfds_t nfds, int *hostcall, int *rumpcall)
@@ -2559,7 +2584,7 @@ FDCALL(off_t, lseek, DUALCALL_LSEEK,					\
 	(int, off_t, int),						\
 	(fd, offset, whence))
 #ifdef LSEEK_ALIAS
-__strong_alias(LSEEK_ALIAS,lseek);
+__strong_alias(LSEEK_ALIAS,lseek)
 #endif
 
 #ifndef __linux__
