@@ -1,4 +1,4 @@
-/*	$NetBSD: col.c,v 1.19 2020/11/01 22:27:15 christos Exp $	*/
+/*	$NetBSD: col.c,v 1.20 2021/09/10 21:52:17 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-3-Clause
@@ -47,7 +47,7 @@ __FBSDID("$FreeBSD: head/usr.bin/col/col.c 366577 2020-10-09 15:27:37Z markj $")
 ;
 
 #endif
-__RCSID("$NetBSD: col.c,v 1.19 2020/11/01 22:27:15 christos Exp $");
+__RCSID("$NetBSD: col.c,v 1.20 2021/09/10 21:52:17 rillig Exp $");
 #endif /* not lint */
 
 #include <err.h>
@@ -123,7 +123,7 @@ static int	pass_unknown_seqs;	/* pass unknown control sequences */
 	do {					\
 		if (putwchar(ch) == WEOF)	\
 			errx(EXIT_FAILURE, "write error");	\
-	} while (/*CONSTCOND*/0)
+	} while (0)
 
 int
 main(int argc, char **argv)
