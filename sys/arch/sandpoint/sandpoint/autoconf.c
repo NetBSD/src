@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.29.16.2 2021/08/24 03:27:39 thorpej Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.29.16.3 2021/09/10 15:45:28 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.29.16.2 2021/08/24 03:27:39 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.29.16.3 2021/09/10 15:45:28 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -118,7 +118,6 @@ sandpoint_i2c_enumerate_devices(device_t dev, devhandle_t call_handle, void *v)
 	struct i2c_enumerate_devices_args *args = v;
 	const struct device_compatible_entry *dce;
 	const struct sandpoint_i2cdev *i2cdev;
-	prop_dictionary_t props;
 	bool cbrv;
 
 	KASSERT(bi_pfam != NULL);
@@ -141,19 +140,14 @@ sandpoint_i2c_enumerate_devices(device_t dev, devhandle_t call_handle, void *v)
 			}
 		}
 
-		props = prop_dictionary_create();
-
 		args->ia->ia_addr = i2cdev->addr;
 		args->ia->ia_name = i2cdev->name;
 		args->ia->ia_clist = i2cdev->compat;
 		args->ia->ia_clist_size = strlen(i2cdev->compat) + 1;
-		args->ia->ia_prop = props;
 		/* no devhandle for child devices. */
 		devhandle_invalidate(&args->ia->ia_devhandle);
 
 		cbrv = args->callback(dev, args);
-
-		prop_object_release(props);
 
 		if (!cbrv) {
 			break;

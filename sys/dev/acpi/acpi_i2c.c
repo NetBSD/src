@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_i2c.c,v 1.11.14.1 2021/08/09 00:30:09 thorpej Exp $ */
+/* $NetBSD: acpi_i2c.c,v 1.11.14.2 2021/09/10 15:45:28 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2017, 2021 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_i2c.c,v 1.11.14.1 2021/08/09 00:30:09 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_i2c.c,v 1.11.14.2 2021/09/10 15:45:28 thorpej Exp $");
 
 #include <dev/acpi/acpireg.h>
 #include <dev/acpi/acpivar.h>
@@ -74,7 +74,6 @@ acpi_i2c_enumerate_device(device_t dev, struct acpi_devnode *ad,
 {
 	char *clist;
 	size_t clist_size;
-	prop_dictionary_t props;
 	struct acpi_i2c_context i2cc;
 	bool cbrv;
 	ACPI_STATUS rv;
@@ -97,18 +96,15 @@ acpi_i2c_enumerate_device(device_t dev, struct acpi_devnode *ad,
 		    ad->ad_name);
 		return true;	/* keep enumerating */
 	}
-	props = prop_dictionary_create();
 
 	args->ia->ia_addr = i2cc.i2c_addr;
 	args->ia->ia_name = ad->ad_name;
 	args->ia->ia_clist = clist;
 	args->ia->ia_clist_size = clist_size;
-	args->ia->ia_prop = props;
 	args->ia->ia_devhandle = devhandle_from_acpi(ad->ad_handle);
 
 	cbrv = args->callback(dev, args);
 
-	prop_object_release(props);
 	kmem_free(clist, clist_size);
 
 	return cbrv;	/* callback decides if we keep enumerating */

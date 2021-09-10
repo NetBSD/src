@@ -1,4 +1,4 @@
-/*	$NetBSD: i2c.c,v 1.80.2.4 2021/08/22 18:43:06 thorpej Exp $	*/
+/*	$NetBSD: i2c.c,v 1.80.2.5 2021/09/10 15:45:28 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2021 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i2c.c,v 1.80.2.4 2021/08/22 18:43:06 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i2c.c,v 1.80.2.5 2021/09/10 15:45:28 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -495,12 +495,8 @@ iic_search(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 		/* Use the default. */
 	}
 
+	memset(&ia, 0, sizeof(ia));
 	ia.ia_tag = sc->sc_tag;
-
-	ia.ia_name = NULL;
-	ia.ia_clist = NULL;
-	ia.ia_clist_size = 0;
-	ia.ia_prop = NULL;
 
 	if (cf->cf_loc[IICCF_ADDR] == IICCF_ADDR_DEFAULT) {
 		/*

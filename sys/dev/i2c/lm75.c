@@ -1,4 +1,4 @@
-/*	$NetBSD: lm75.c,v 1.45 2021/06/21 03:12:54 christos Exp $	*/
+/*	$NetBSD: lm75.c,v 1.45.6.1 2021/09/10 15:45:28 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lm75.c,v 1.45 2021/06/21 03:12:54 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lm75.c,v 1.45.6.1 2021/09/10 15:45:28 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -214,9 +214,11 @@ lmtemp_attach(device_t parent, device_t self, void *aux)
 
 	sc->sc_tag = ia->ia_tag;
 	sc->sc_address = ia->ia_addr;
-	sc->sc_prop = ia->ia_prop;
-	
-	if (ia->ia_prop != NULL) prop_object_retain(sc->sc_prop);
+
+	/* XXX XXX XXX */
+	if ((sc->sc_prop = ia->ia_prop) != NULL) {
+		prop_object_retain(sc->sc_prop);
+	}
 
 	aprint_naive(": Temperature Sensor\n");
 	if (ia->ia_name) {

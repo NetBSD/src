@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw_i2c_subr.c,v 1.1.16.1 2021/08/09 00:30:09 thorpej Exp $	*/
+/*	$NetBSD: ofw_i2c_subr.c,v 1.1.16.2 2021/09/10 15:45:28 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2021 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofw_i2c_subr.c,v 1.1.16.1 2021/08/09 00:30:09 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofw_i2c_subr.c,v 1.1.16.2 2021/09/10 15:45:28 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -132,7 +132,6 @@ of_i2c_enumerate_devices(device_t dev, devhandle_t call_handle, void *v)
 	struct i2c_enumerate_devices_args *args = v;
 	int i2c_node, node;
 	char name[32], compat_buf[32];
-	prop_dictionary_t props;
 	uint32_t addr;
 	char *clist;
 	int clist_size;
@@ -163,18 +162,15 @@ of_i2c_enumerate_devices(device_t dev, devhandle_t call_handle, void *v)
 			kmem_tmpbuf_free(clist, clist_size, compat_buf);
 			continue;
 		}
-		props = prop_dictionary_create();
 
 		args->ia->ia_addr = (i2c_addr_t)addr;
 		args->ia->ia_name = name;
 		args->ia->ia_clist = clist;
 		args->ia->ia_clist_size = clist_size;
-		args->ia->ia_prop = props;
 		args->ia->ia_devhandle = devhandle_from_of(node);
 
 		cbrv = args->callback(dev, args);
 
-		prop_object_release(props);
 		kmem_tmpbuf_free(clist, clist_size, compat_buf);
 
 		if (!cbrv) {
