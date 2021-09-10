@@ -1,4 +1,4 @@
-/*	$NetBSD: show.c,v 1.53 2019/02/14 13:27:59 kre Exp $	*/
+/*	$NetBSD: show.c,v 1.54 2021/09/10 22:11:03 rillig Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)show.c	8.3 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: show.c,v 1.53 2019/02/14 13:27:59 kre Exp $");
+__RCSID("$NetBSD: show.c,v 1.54 2021/09/10 22:11:03 rillig Exp $");
 #endif
 #endif /* not lint */
 
@@ -185,7 +185,7 @@ opentrace(void)
 		if (tracedata.f != NULL)		\
 			free(tracedata.f);		\
 		tracedata.f = v;			\
-	} while (/*CONSTCOND*/ 0)
+	} while (0)
 
 	replace(tracefile, s);
 

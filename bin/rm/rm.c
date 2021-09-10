@@ -1,4 +1,4 @@
-/* $NetBSD: rm.c,v 1.53 2013/04/26 18:43:22 christos Exp $ */
+/* $NetBSD: rm.c,v 1.54 2021/09/10 22:11:03 rillig Exp $ */
 
 /*-
  * Copyright (c) 1990, 1993, 1994, 2003
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1990, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)rm.c	8.8 (Berkeley) 4/27/95";
 #else
-__RCSID("$NetBSD: rm.c,v 1.53 2013/04/26 18:43:22 christos Exp $");
+__RCSID("$NetBSD: rm.c,v 1.54 2021/09/10 22:11:03 rillig Exp $");
 #endif
 #endif /* not lint */
 
@@ -437,7 +437,7 @@ rm_overwrite(char *file, struct stat *sbp)
 			goto err;					\
 	}								\
 	sync();		/* another poke at hidden caches */		\
-} while (/* CONSTCOND */ 0)
+} while (0)
 
 #define READ_PASS(byte) do {						\
 	off_t len;							\
@@ -457,7 +457,7 @@ rm_overwrite(char *file, struct stat *sbp)
 			goto err;					\
 	}								\
 	sync();		/* another poke at hidden caches */		\
-} while (/* CONSTCOND */ 0)
+} while (0)
 
 	/*
 	 * DSS sanitization matrix "clear" for magnetic disks: 
