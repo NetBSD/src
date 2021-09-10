@@ -1,4 +1,4 @@
-.\"	$NetBSD: iic.4,v 1.26 2021/03/11 17:12:42 nia Exp $
+.\"	$NetBSD: iic.4,v 1.27 2021/09/10 21:12:20 nia Exp $
 .\"	$OpenBSD: iic.4,v 1.74 2008/09/10 16:13:43 reyk Exp $
 .\"
 .\" Copyright (c) 2004, 2006 Alexander Yurchenko <grange@openbsd.org>
@@ -16,7 +16,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd February 27, 2021
+.Dd September 10, 2021
 .Dt IIC 4
 .Os
 .Sh NAME
@@ -175,12 +175,40 @@ A wide list of slaves are supported, among them:
 .\" cat /tmp/x
 .\"
 .Bl -tag -width 13n -compact -offset indent
+.It Xr adm1026hm 4
+Analog Devices ADM1026 complete thermal system management controller
+.It Xr admtemp 4
+Analog Devices ADM1021 temperature sensor
+.It Xr am2315temp 4
+Aosong AM2315 humidity/temperature sensors
+.It Xr ddc 4
+VESA Display Data Channel V2 devices
 .It Xr dbcool 4
 dbCool(tm) family of environmental monitors and fan controllers
+.It Xr g760a 4
+Global Mixed-mode Technology Inc. G760a fan speed controller
+.It Xr hythygtemp 4
+IST-AG HYT-221/271/939 humidity/temperature sensors
+.It Xr ibmhawk 4
+Temperature, voltage, and fan sensors present on IBM eServers
+.It Xr ims 4
+I2C mice and touch panels
+.It Xr lm 4
+National Semiconductor LM78, LM79, and compatible hardware monitors
+.It Xr lmenv 4
+National Semiconductor LM81, LM87, and compatible hardware monitors
+.It Xr lmtemp 4
+National Semiconductor LM75, LM77, and compatible hardware monitors
 .It Xr pcf8563rtc 4
 NXP PCF8563 real-time clock
 .It Xr rs5c372rtc 4
 RICOH RS5C372A and RS5C372B real-time clock
+.It Xr mcp980x 4
+Microchip 9800/1/2/3 I2C temperature sensor
+.It Xr mpl115a 4
+Freescale MPL115A2 absolute pressure sensor
+.It Xr si70xxtemp 4
+Silicon Labs SI7013/SI7020/SI7021 humidity/temperature sensors
 .It Xr s390rtc 4
 Seiko Instruments S-35390 real-time clock
 .It Xr sdtemp 4
@@ -189,10 +217,18 @@ JEDEC JC-42.4 compatible memory module temperature sensors
 24-series I2C EEPROM driver
 .It Xr sgsmix 4
 SGS 7433 Basic Audio Processor found in some Apple machines
+.It Xr smscmon 4
+Standard Microsystems Corporation LPC47M192 and LPC47M997 sensors
 .It Xr spdmem 4
 Generic Memory Module Serial Presence Detect
 .It Xr ssdfb 4
 OLED/PLED framebuffer modules
+.It Xr tea5767radio 4
+Philips/NXP TEA5767 FM stereo radio
+.It Xr tps65217pmic 4
+Texas Instruments TPS65217 Power Management IC
+.It Xr tsllux 4
+Taos TSL256x Light-to-Digital Coverter
 .El
 .Sh FILES
 .Bl -tag -width "/dev/iicu" -compact
