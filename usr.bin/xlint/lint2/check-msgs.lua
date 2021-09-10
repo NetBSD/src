@@ -1,5 +1,5 @@
 #! /usr/bin/lua
--- $NetBSD: check-msgs.lua,v 1.1 2021/02/28 18:17:08 rillig Exp $
+-- $NetBSD: check-msgs.lua,v 1.2 2021/09/10 21:05:08 rillig Exp $
 
 --[[
 
@@ -12,7 +12,7 @@ actual user-visible message text in msg.c.
 
 
 local function load_messages(fname)
-  local msgs = {}
+  local msgs = {} ---@type table<number>string
 
   local f = assert(io.open(fname, "r"))
   for line in f:lines() do
@@ -28,11 +28,19 @@ local function load_messages(fname)
 end
 
 
-local function check_message(fname, lineno, id, comment, msgs, errors)
+local had_errors = false
+---@param fmt string
+function print_error(fmt, ...)
+  print(fmt:format(...))
+  had_errors = true
+end
+
+
+local function check_message(fname, lineno, id, comment, msgs)
   local msg = msgs[id]
 
   if msg == nil then
-    errors:add("%s:%d: id=%d not found", fname, lineno, id)
+    print_error("%s:%d: id=%d not found", fname, lineno, id)
     return
   end
 
@@ -50,17 +58,12 @@ local function check_message(fname, lineno, id, comment, msgs, errors)
     return
   end
 
-  errors:add("%s:%d:   id=%-3d   msg=%-40s   comment=%s",
+  print_error("%s:%d:   id=%-3d   msg=%-40s   comment=%s",
     fname, lineno, id, msg, comment)
 end
 
 
-local function collect_errors(fname, msgs)
-  local errors = {}
-  errors.add = function(self, fmt, ...)
-    table.insert(self, fmt:format(...))
-  end
-
+local function check_file(fname, msgs)
   local f = assert(io.open(fname, "r"))
   local lineno = 0
   local prev = ""
@@ -72,9 +75,9 @@ local function collect_errors(fname, msgs)
     if func == "msg" then
       local comment = prev:match("^%s+/%* (.+) %*/$")
       if comment ~= nil then
-        check_message(fname, lineno, id, comment, msgs, errors)
+        check_message(fname, lineno, id, comment, msgs)
       else
-        errors:add("%s:%d: missing comment for %d: /* %s */",
+        print_error("%s:%d: missing comment for %d: /* %s */",
           fname, lineno, id, msgs[id])
       end
     end
@@ -83,28 +86,15 @@ local function collect_errors(fname, msgs)
   end
 
   f:close()
-
-  return errors
-end
-
-
-local function check_file(fname, msgs)
-  local errors = collect_errors(fname, msgs)
-  for _, err in ipairs(errors) do
-    print(err)
-  end
-  return #errors == 0
 end
 
 
 local function main(arg)
   local msgs = load_messages("msg.c")
-  local ok = true
   for _, fname in ipairs(arg) do
-    ok = check_file(fname, msgs) and ok
+    check_file(fname, msgs)
   end
-  return ok
 end
 
-
-os.exit(main(arg))
+main(arg)
+os.exit(not had_errors)
