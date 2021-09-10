@@ -1,4 +1,4 @@
-/*	$NetBSD: ps.h,v 1.29 2016/12/02 21:59:03 christos Exp $	*/
+/*	$NetBSD: ps.h,v 1.30 2021/09/10 22:11:03 rillig Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -99,6 +99,6 @@ typedef struct var {
 	if ((vent)->var->flag & LWP)			\
 	    pi->li = kl;				\
 	((vent)->var->oproc)(pi, (vent), (mode));	\
-	} while (/*CONSTCOND*/ 0)
+	} while (0)
 
 #include "extern.h"
