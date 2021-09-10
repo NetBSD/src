@@ -1,4 +1,4 @@
-/* $NetBSD: spi.c,v 1.19.2.1 2021/08/09 00:30:09 thorpej Exp $ */
+/* $NetBSD: spi.c,v 1.19.2.2 2021/09/10 15:43:03 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spi.c,v 1.19.2.1 2021/08/09 00:30:09 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spi.c,v 1.19.2.2 2021/09/10 15:43:03 thorpej Exp $");
 
 #include "locators.h"
 
@@ -108,6 +108,7 @@ struct spi_handle {
 	int			sh_flags;	/* ^^ slave_state_lock ^^ */
 #define SPIH_ATTACHED		__BIT(0)
 #define SPIH_DIRECT		__BIT(1)
+	device_t		sh_dev;		/* ^^ slave_state_lock ^^ */
 };
 
 #define SPI_MAXDATA 4096
@@ -211,6 +212,7 @@ spi_attach_child(struct spi_softc *sc, struct spi_attach_args *sa,
 		}
 	}
 
+	mutex_enter(&sc->sc_slave_state_lock);
 	if (newdev == NULL) {
 		/*
 		 * Clear our claim on this chip select (yes, just
@@ -218,10 +220,12 @@ spi_attach_child(struct spi_softc *sc, struct spi_attach_args *sa,
 		 * of chip selects for which there is a device tree
 		 * node).
 		 */
-		mutex_enter(&sc->sc_slave_state_lock);
 		CLR(sh->sh_flags, SPIH_ATTACHED);
-		mutex_exit(&sc->sc_slave_state_lock);
+	} else {
+		/* Record the child for posterity. */
+		sh->sh_dev = newdev;
 	}
+	mutex_exit(&sc->sc_slave_state_lock);
 }
 
 static int
