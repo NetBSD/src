@@ -1,11 +1,11 @@
-/*	$NetBSD: ops.def,v 1.24 2021/08/14 12:46:23 rillig Exp $ */
+/*	$NetBSD: ops.def,v 1.25 2021/09/10 20:02:50 rillig Exp $ */
 
 begin_ops()
 
 /*
  * Operator properties; see mod_t in op.h.
  *
- * 	warn if operand '='					      x
+ *	warn if operand '='					      x
  *	bad on enum						    x
  *	valid on enum						  x
  *	comparison		- - - - - - - - - - - - - - - - x

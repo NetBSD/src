@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.360 2021/09/04 12:30:46 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.361 2021/09/10 20:02:50 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: cgram.y,v 1.360 2021/09/04 12:30:46 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.361 2021/09/10 20:02:50 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -445,8 +445,8 @@ primary_expression:
 generic_selection:
 	  T_GENERIC T_LPAREN assignment_expression T_COMMA
 	    generic_assoc_list T_RPAREN {
-	  	/* generic selection requires C11 or later */
-	  	c11ism(345);
+		/* generic selection requires C11 or later */
+		c11ism(345);
 		$$ = build_generic_selection($3, $5);
 	  }
 	;
