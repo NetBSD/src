@@ -1,4 +1,4 @@
-/*	$NetBSD: d_init_array_using_string.c,v 1.5 2021/08/14 13:00:55 rillig Exp $	*/
+/*	$NetBSD: d_init_array_using_string.c,v 1.6 2021/09/10 20:02:51 rillig Exp $	*/
 # 3 "d_init_array_using_string.c"
 
 /*
@@ -28,15 +28,15 @@ test_pointer_initialization_in_struct(void)
 	};
 
 	struct cs_ws type_match = {
-	    	"",
-	    	L"",
+		"",
+		L"",
 	};
 
 	struct cs_ws type_mismatch = {
 		/* expect+1: warning: illegal combination of 'pointer to const char' and 'pointer to int', op 'init' [124] */
-	    	L"",
-	    	/* expect+1: warning: illegal combination of 'pointer to const int' and 'pointer to char', op 'init' [124] */
-	    	"",
+		L"",
+		/* expect+1: warning: illegal combination of 'pointer to const int' and 'pointer to char', op 'init' [124] */
+		"",
 	};
 
 	struct cs_ws extra_braces = {
@@ -55,23 +55,23 @@ test_array_initialization_in_struct(void)
 	};
 
 	struct cs_ws type_match = {
-	    	"",
-	    	L"",
+		"",
+		L"",
 	};
 
 	struct cs_ws type_mismatch = {
-	    	L"",		/* expect: cannot initialize */
-	    	"",		/* expect: cannot initialize */
+		L"",		/* expect: cannot initialize */
+		"",		/* expect: cannot initialize */
 	};
 
 	struct cs_ws no_terminating_null = {
-	    	"0123456789",
-	    	L"0123456789",
+		"0123456789",
+		L"0123456789",
 	};
 
 	struct cs_ws too_many_characters = {
-	    	"0123456789X",	/* expect: non-null byte ignored */
-	    	L"0123456789X",	/* expect: non-null byte ignored */
+		"0123456789X",	/* expect: non-null byte ignored */
+		L"0123456789X",	/* expect: non-null byte ignored */
 	};
 
 	struct cs_ws extra_braces = {
