@@ -1,4 +1,4 @@
-/* $NetBSD: if_bce.c,v 1.58 2020/02/07 00:04:28 thorpej Exp $	 */
+/* $NetBSD: if_bce.c,v 1.59 2021/09/10 14:43:04 jakllsch Exp $	 */
 
 /*
  * Copyright (c) 2003 Clifford Wright. All rights reserved.
@@ -35,9 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bce.c,v 1.58 2020/02/07 00:04:28 thorpej Exp $");
-
-#include "vlan.h"
+__KERNEL_RCSID(0, "$NetBSD: if_bce.c,v 1.59 2021/09/10 14:43:04 jakllsch Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
