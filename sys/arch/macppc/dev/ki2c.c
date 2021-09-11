@@ -1,4 +1,4 @@
-/*	$NetBSD: ki2c.c,v 1.32.2.3 2021/09/11 14:47:06 thorpej Exp $	*/
+/*	$NetBSD: ki2c.c,v 1.32.2.4 2021/09/11 17:22:35 thorpej Exp $	*/
 /*	Id: ki2c.c,v 1.7 2002/10/05 09:56:05 tsubai Exp	*/
 
 /*-
@@ -381,8 +381,8 @@ ki2c_attach(device_t parent, device_t self, void *aux)
 	}
 
 	/*
-	 * Set up our handle implementation (we provide our own
-	 * i2c enumeration call).
+	 * Set up our handle implementation so that we can override
+	 * "i2c-enumerate-devices".
 	 */
 	devhandle = device_handle(self);
 	devhandle_impl_inherit(&sc->sc_devhandle_impl, devhandle.impl);

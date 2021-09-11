@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_device.c,v 1.8 2021/08/07 18:16:42 thorpej Exp $	*/
+/*	$NetBSD: subr_device.c,v 1.8.2.1 2021/09/11 17:22:36 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2006, 2021 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_device.c,v 1.8 2021/08/07 18:16:42 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_device.c,v 1.8.2.1 2021/09/11 17:22:36 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -103,6 +103,22 @@ devhandle_impl_inherit(struct devhandle_impl *impl,
 {
 	memcpy(impl, super, sizeof(*impl));
 	impl->super = super;
+}
+
+/*
+ * Helper function that provides a short-hand method of the common
+ * "subclass a device handle" flow.
+ */
+devhandle_t
+devhandle_subclass(devhandle_t handle,
+    struct devhandle_impl *new_impl,
+    device_call_t (*new_lookup)(devhandle_t, const char *, devhandle_t *))
+{
+	devhandle_impl_inherit(new_impl, handle.impl);
+	new_impl->lookup_device_call = new_lookup;
+	handle.impl = new_impl;
+
+	return handle;
 }
 
 /*

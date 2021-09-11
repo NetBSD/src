@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw_patch.c,v 1.7.14.4 2021/09/11 13:02:29 thorpej Exp $ */
+/*	$NetBSD: ofw_patch.c,v 1.7.14.5 2021/09/11 17:22:36 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2020, 2021 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofw_patch.c,v 1.7.14.4 2021/09/11 13:02:29 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofw_patch.c,v 1.7.14.5 2021/09/11 17:22:36 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>
@@ -163,17 +163,15 @@ add_i2c_devices(device_t dev, const struct i2c_deventry *i2c_adds,
 	devhandle_t devhandle = device_handle(dev);
 	fixup->i2c_super_handle = devhandle;
 
-	/* Sub-class the devhandle_impl. */
-	devhandle_impl_inherit(&fixup->i2c_devhandle_impl, devhandle.impl);
-	fixup->i2c_devhandle_impl.lookup_device_call =
-	    i2c_fixup_lookup_device_call;
+	/* Sub-class it so we can override "i2c-enumerate-devices". */
+	devhandle = devhandle_subclass(devhandle, &fixup->i2c_devhandle_impl,
+	    i2c_fixup_lookup_device_call);
 
 	/*
 	 * ...and slide that on into the device.  This handle will be
 	 * passed on to the iic bus instance, and our enumeration method
 	 * will get called to enumerate the child devices.
 	 */
-	devhandle.impl = &fixup->i2c_devhandle_impl;
 	device_set_handle(dev, devhandle);
 }
 

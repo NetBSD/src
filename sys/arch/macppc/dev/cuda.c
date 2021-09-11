@@ -1,4 +1,4 @@
-/*	$NetBSD: cuda.c,v 1.29.2.4 2021/09/11 15:22:57 thorpej Exp $ */
+/*	$NetBSD: cuda.c,v 1.29.2.5 2021/09/11 17:22:35 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2006 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cuda.c,v 1.29.2.4 2021/09/11 15:22:57 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cuda.c,v 1.29.2.5 2021/09/11 17:22:35 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -307,17 +307,12 @@ cuda_attach(device_t parent, device_t self, void *aux)
 	}
 
 	/*
-	 * Normally the i2c bus instance would automatically inherit
-	 * our devhandle, but we provide our own i2c device enumeration
-	 * method, so we need to supply the bus instance with our own
-	 * device handle implementation, using the one we got from
-	 * OpenFirmware as the "super".
+	 * Subclass our device handle so we can override
+	 * "i2c-enumerate-devices" and give that to the
+	 * i2c bus instance.
 	 */
-	devhandle_t devhandle = devhandle_from_of(sc->sc_node);
-	devhandle_impl_inherit(&sc->sc_devhandle_impl, devhandle.impl);
-	sc->sc_devhandle_impl.lookup_device_call =
-	    cuda_devhandle_lookup_device_call;
-	devhandle.impl = &sc->sc_devhandle_impl;
+	devhandle_t devhandle = devhandle_subclass(device_handle(self),
+	    &sc->sc_devhandle_impl, cuda_devhandle_lookup_device_call);
 
 	iic_tag_init(&sc->sc_i2c);
 	sc->sc_i2c.ic_cookie = sc;
