@@ -1,4 +1,4 @@
-.\"	$NetBSD: fseek.3,v 1.28 2017/01/01 12:39:33 abhinav Exp $
+.\"	$NetBSD: fseek.3,v 1.29 2021/09/11 18:46:22 rillig Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -33,7 +33,7 @@
 .\"
 .\"     @(#)fseek.3	8.1 (Berkeley) 6/4/93
 .\"
-.Dd January 1, 2017
+.Dd September 11, 2021
 .Dt FSEEK 3
 .Os
 .Sh NAME
@@ -130,7 +130,7 @@ except that the error indicator for the stream is also cleared
 In this implementations,
 .Dq Fa fpos_t
 is a complex object that represents both the position and the parse
-state of the stream, making these routines as the only way to portably
+state of the stream, making these routines the only way to portably
 reposition a text stream.
 The
 .Ar pos
