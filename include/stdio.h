@@ -1,4 +1,4 @@
-/*	$NetBSD: stdio.h,v 1.101 2021/09/11 16:58:38 rillig Exp $	*/
+/*	$NetBSD: stdio.h,v 1.102 2021/09/11 18:38:25 rillig Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -66,11 +66,6 @@ typedef __va_list va_list;
 
 #include <sys/null.h>
 
-/*      
- * This is fairly grotesque, but pure ANSI code must not inspect the
- * innards of an fpos_t anyway.  The library internally uses off_t,
- * which we assume is exactly as big as eight chars.
- */
 typedef struct __sfpos {
 	__off_t _pos;
 	__mbstate_t _mbstate_in, _mbstate_out;
