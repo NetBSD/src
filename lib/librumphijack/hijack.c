@@ -1,4 +1,4 @@
-/*      $NetBSD: hijack.c,v 1.134 2021/09/11 08:32:11 rillig Exp $	*/
+/*      $NetBSD: hijack.c,v 1.135 2021/09/11 14:22:12 christos Exp $	*/
 
 /*-
  * Copyright (c) 2011 Antti Kantee.  All Rights Reserved.
@@ -34,7 +34,7 @@
 #include <rump/rumpuser_port.h>
 
 #if !defined(lint)
-__RCSID("$NetBSD: hijack.c,v 1.134 2021/09/11 08:32:11 rillig Exp $");
+__RCSID("$NetBSD: hijack.c,v 1.135 2021/09/11 14:22:12 christos Exp $");
 #endif
 
 #include <sys/param.h>
@@ -2854,8 +2854,3 @@ nfssvc(int flags, void *argstructp)
 	return op_nfssvc(flags, argstructp);
 }
 #endif /* __NetBSD__ */
-
-int
-closefrom(int fd) {
-	return 0;
-}
