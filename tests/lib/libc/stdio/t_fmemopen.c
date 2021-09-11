@@ -1,4 +1,4 @@
-/* $NetBSD: t_fmemopen.c,v 1.6 2021/07/10 13:22:01 martin Exp $ */
+/* $NetBSD: t_fmemopen.c,v 1.7 2021/09/11 18:18:28 rillig Exp $ */
 
 /*-
  * Copyright (c)2010 Takehiko NOZAKI,
@@ -65,7 +65,7 @@ const char *mode_rwa[] = {
 
 const char *mode_r[] = { "r", "rb", "r+", "rb+", "r+b", NULL };
 const char *mode_w[] = { "w", "wb", "w+", "wb+", "w+b", NULL };
-const char *mode_a[] = { "a", "ab", "a+", "ab+", "a+b", NULL }; 
+const char *mode_a[] = { "a", "ab", "a+", "ab+", "a+b", NULL };
 
 struct testcase {
 	const char *s;
@@ -179,7 +179,7 @@ ATF_TC_BODY(test01, tc)
 ATF_TC(test02);
 ATF_TC_HEAD(test02, tc)
 {
-        atf_tc_set_md_var(tc, "descr", "test02");
+	atf_tc_set_md_var(tc, "descr", "test02");
 }
 ATF_TC_BODY(test02, tc)
 {
@@ -215,14 +215,14 @@ ATF_TC_BODY(test02, tc)
 ATF_TC(test03);
 ATF_TC_HEAD(test03, tc)
 {
-        atf_tc_set_md_var(tc, "descr", "test03");
+	atf_tc_set_md_var(tc, "descr", "test03");
 }
 ATF_TC_BODY(test03, tc)
 {
 	const char **p;
 	char buf[BUFSIZ];
 	FILE *fp;
- 
+
 	for (p = &mode_w[0]; *p != NULL; ++p) {
 
 		memset(&buf[0], 0x1, sizeof(buf));
@@ -359,7 +359,7 @@ ATF_TC_BODY(test07, tc)
 /*
  * Because this feature is only useful when the stream is opened for updating
  * (because there is no way to get a pointer to the buffer) the fmemopen()
- * call may fail if the mode argument does not include a '+' . 
+ * call may fail if the mode argument does not include a '+'.
  */
 		errno = 0;
 		fp = fmemopen(NULL, 1, *p);
