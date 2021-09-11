@@ -1,4 +1,4 @@
-/*	$NetBSD: ki2c.c,v 1.32.2.2 2021/09/10 15:45:28 thorpej Exp $	*/
+/*	$NetBSD: ki2c.c,v 1.32.2.3 2021/09/11 14:47:06 thorpej Exp $	*/
 /*	Id: ki2c.c,v 1.7 2002/10/05 09:56:05 tsubai Exp	*/
 
 /*-
@@ -132,14 +132,13 @@ ki2c_i2c_enumerate_device(struct ki2c_softc *sc, device_t dev, int node,
 	cbrv = args->callback(dev, args);
 
 	prop_object_release(props);
-
+ out:
+	kmem_tmpbuf_free(compat, compat_size, compat_buf);
 	return cbrv;	/* callback decides if we keep enumerating */
 
  bad:
-	if (compat != compat_buf) {
-		kmem_tmpbuf_free(compat, compat_size, compat_buf);
-	}
-	return true;			/* keep enumerating */
+	cbrv = true;			/* keep enumerating */
+	goto out;
 }
 
 static int
