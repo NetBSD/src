@@ -1,4 +1,4 @@
-/*	$NetBSD: partitions.h,v 1.23 2021/09/11 20:28:06 andvar Exp $	*/
+/*	$NetBSD: partitions.h,v 1.24 2021/09/11 21:30:46 andvar Exp $	*/
 
 /*
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  * details.
  *
  * NOTE:
- *  - all sector numbers, alignement and sizes are in units of the
+ *  - all sector numbers, alignment and sizes are in units of the
  *    disks physical sector size (not necessarily 512 bytes)!
  *  - some interfaces pass the disks sector size (when it is easily
  *    available at typical callers), but the backends can always
@@ -166,7 +166,7 @@ struct disk_part_custom_attribute {
 };
 
 /*
- * When displaying a partition editor, we have standard colums, but
+ * When displaying a partition editor, we have standard columns, but
  * partitioning schemes add custom columns to the table as well.
  * There is a fixed number of columns and they are described by this
  * structure:
@@ -176,7 +176,7 @@ struct disk_part_edit_column_desc {
 	unsigned int width;
 };
 
-struct disk_partitions;	/* in-memory represenation of a set of partitions */
+struct disk_partitions;	/* in-memory representation of a set of partitions */
 
 /*
  * When querying partition "device" names, we may ask for:
@@ -214,7 +214,7 @@ struct disk_partitioning_scheme {
 	 * scheme. Depending on partitioning details it may not be
 	 * used in the end.
 	 * This link is only here for better help messages.
-	 * See *secondary_partitions further below for actually accesing
+	 * See *secondary_partitions further below for actually accessing
 	 * secondary partitions.
 	 */
 	const struct disk_partitioning_scheme *secondary_scheme;
@@ -434,7 +434,7 @@ struct disk_partitioning_scheme {
 	 * function pointer to NULL.
 	 *
 	 * If force_empty = true, ignore all on-disk contents and just
-	 * create a new disk_partitons structure for the secondary scheme
+	 * create a new disk_partitions structure for the secondary scheme
 	 * (this is used after deleting all partitions and setting up
 	 * things for "use whole disk").
 	 *
@@ -627,7 +627,7 @@ bool generic_adapt_foreign_part_info(
     const struct disk_part_info *src);
 
 /*
- * One time initialization and clenaup
+ * One time initialization and cleanup
  */
 void partitions_init(void);
 void partitions_cleanup(void);

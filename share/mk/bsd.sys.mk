@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.sys.mk,v 1.306 2021/04/26 00:38:23 christos Exp $
+#	$NetBSD: bsd.sys.mk,v 1.307 2021/09/11 21:30:46 andvar Exp $
 #
 # Build definitions used for NetBSD source tree builds.
 
@@ -172,7 +172,7 @@ CPPFLAGS+=	-D_FORTIFY_SOURCE=2
 COPTS+=	-fstack-protector -Wstack-protector 
 
 # GCC 4.8 on m68k erroneously does not protect functions with
-# variables needing special alignement, see
+# variables needing special alignment, see
 #	http://gcc.gnu.org/bugzilla/show_bug.cgi?id=59674
 # (the underlying issue for sh and vax may be different, needs more
 # investigation, symptoms are similar but for different sources)

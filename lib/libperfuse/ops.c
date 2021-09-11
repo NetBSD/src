@@ -1,4 +1,4 @@
-/*  $NetBSD: ops.c,v 1.88 2019/09/23 12:00:57 christos Exp $ */
+/*  $NetBSD: ops.c,v 1.89 2021/09/11 21:30:46 andvar Exp $ */
 
 /*-
  *  Copyright (c) 2010-2011 Emmanuel Dreyfus. All rights reserved.
@@ -697,7 +697,7 @@ fuse_to_dirent(struct puffs_usermount *pu, puffs_cookie_t opc,
 		 * fd->off is not the offset, it is an opaque cookie
 		 * given by the filesystem to keep state across multiple
 		 * readdir() operation.
-		 * Use record alignement instead.
+		 * Use record alignment instead.
 		 */
 		len = FUSE_DIRENT_ALIGN(sizeof(*fd) + fd->namelen);
 #ifdef PERFUSE_DEBUG

@@ -1,4 +1,4 @@
-/*	$NetBSD: mvxpbmvar.h,v 1.2 2021/08/02 12:56:24 andvar Exp $	*/
+/*	$NetBSD: mvxpbmvar.h,v 1.3 2021/09/11 21:30:46 andvar Exp $	*/
 /*
  * Copyright (c) 2015 Internet Initiative Japan Inc.
  * All rights reserved.
@@ -34,7 +34,7 @@
 #define MVXPBM_UNIT_MAX		1
 
 /*
- * Buffer alignement
+ * Buffer alignment
  */
 #define MVXPBM_NUM_SLOTS	2048	/* minimum number of slots */
 #define MVXPBM_PACKET_SIZE	2000	/* minimum packet size */
