@@ -1,4 +1,4 @@
-/*	$NetBSD: null.c,v 1.35 2019/11/02 18:14:36 tnn Exp $	*/
+/*	$NetBSD: null.c,v 1.36 2021/09/11 20:28:03 andvar Exp $	*/
 
 /*
  * Copyright (c) 2007  Antti Kantee.  All Rights Reserved.
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: null.c,v 1.35 2019/11/02 18:14:36 tnn Exp $");
+__RCSID("$NetBSD: null.c,v 1.36 2021/09/11 20:28:03 andvar Exp $");
 #endif /* !lint */
 
 /*
@@ -159,7 +159,7 @@ makenode(struct puffs_usermount *pu, struct puffs_newinfo *pni,
 	return 0;
 }
 
-/* This should be called first and overriden from the file system */
+/* This should be called first and overridden from the file system */
 void
 puffs_null_setops(struct puffs_ops *pops)
 {

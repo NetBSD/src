@@ -1,4 +1,4 @@
-/*	$NetBSD: dm9000.c,v 1.29 2020/06/27 13:34:20 jmcneill Exp $	*/
+/*	$NetBSD: dm9000.c,v 1.30 2021/09/11 20:28:06 andvar Exp $	*/
 
 /*
  * Copyright (c) 2009 Paul Fleischer
@@ -219,7 +219,7 @@ dme_attach(struct dme_softc *sc, const uint8_t *notusedanymore)
 	ea = (dict) ? prop_dictionary_get(dict, "mac-address") : NULL;
 	if (ea != NULL) {
 	       /*
-		 * If the MAC address is overriden by a device property,
+		 * If the MAC address is overridden by a device property,
 		 * use that.
 		 */
 		KASSERT(prop_object_type(ea) == PROP_TYPE_DATA);

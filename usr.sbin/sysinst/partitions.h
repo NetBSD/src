@@ -1,4 +1,4 @@
-/*	$NetBSD: partitions.h,v 1.22 2021/01/31 22:45:46 rillig Exp $	*/
+/*	$NetBSD: partitions.h,v 1.23 2021/09/11 20:28:06 andvar Exp $	*/
 
 /*
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -618,7 +618,7 @@ partitions_read_disk(const char *, daddr_t disk_size,
     size_t bytes_per_sector, bool no_mbr);
 
 /*
- * Generic part info adaption, may be overriden by individual partitionin
+ * Generic part info adaption, may be overridden by individual partitioning
  * schemes
  */
 bool generic_adapt_foreign_part_info(
