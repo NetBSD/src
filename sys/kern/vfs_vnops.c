@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnops.c,v 1.221 2021/07/18 09:30:36 dholland Exp $	*/
+/*	$NetBSD: vfs_vnops.c,v 1.222 2021/09/11 10:08:55 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.221 2021/07/18 09:30:36 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.222 2021/09/11 10:08:55 riastradh Exp $");
 
 #include "veriexec.h"
 
@@ -121,6 +121,7 @@ static int vn_statfile(file_t *fp, struct stat *sb);
 static int vn_ioctl(file_t *fp, u_long com, void *data);
 static int vn_mmap(struct file *, off_t *, size_t, int, int *, int *,
 		   struct uvm_object **, int *);
+static int vn_seek(struct file *, off_t, int, off_t *, int);
 
 const struct fileops vnops = {
 	.fo_name = "vn",
@@ -134,6 +135,7 @@ const struct fileops vnops = {
 	.fo_kqfilter = vn_kqfilter,
 	.fo_restart = fnullop_restart,
 	.fo_mmap = vn_mmap,
+	.fo_seek = vn_seek,
 };
 
 /*
@@ -1110,7 +1112,56 @@ vn_mmap(struct file *fp, off_t *offp, size_t size, int prot, int *flagsp,
 	return 0;
 }
 
+static int
+vn_seek(struct file *fp, off_t delta, int whence, off_t *newoffp,
+    int flags)
+{
+	kauth_cred_t cred = fp->f_cred;
+	off_t oldoff, newoff;
+	struct vnode *vp = fp->f_vnode;
+	struct vattr vattr;
+	int error;
 
+	if (vp->v_type == VFIFO)
+		return ESPIPE;
+
+	vn_lock(vp, LK_SHARED | LK_RETRY);
+
+	/* Compute the old and new offsets.  */
+	oldoff = fp->f_offset;
+	switch (whence) {
+	case SEEK_CUR:
+		newoff = oldoff + delta; /* XXX arithmetic overflow */
+		break;
+	case SEEK_END:
+		error = VOP_GETATTR(vp, &vattr, cred);
+		if (error)
+			goto out;
+		newoff = delta + vattr.va_size; /* XXX arithmetic overflow */
+		break;
+	case SEEK_SET:
+		newoff = delta;
+		break;
+	default:
+		error = EINVAL;
+		goto out;
+	}
+
+	/* Pass the proposed change to the file system to audit.  */
+	error = VOP_SEEK(vp, oldoff, newoff, cred);
+	if (error)
+		goto out;
+
+	/* Success!  */
+	if (newoffp)
+		*newoffp = newoff;
+	if (flags & FOF_UPDATE_OFFSET)
+		fp->f_offset = newoff;
+	error = 0;
+
+out:	VOP_UNLOCK(vp);
+	return error;
+}
 
 /*
  * Check that the vnode is still valid, and if so
