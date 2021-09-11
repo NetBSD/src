@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_fs.c,v 1.93 2021/02/16 14:47:20 simonb Exp $	*/
+/*	$NetBSD: netbsd32_fs.c,v 1.94 2021/09/11 10:08:55 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_fs.c,v 1.93 2021/02/16 14:47:20 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_fs.c,v 1.94 2021/09/11 10:08:55 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -648,7 +648,6 @@ netbsd32_preadv(struct lwp *l, const struct netbsd32_preadv_args *uap, register_
 		syscallarg(netbsd32_off_t) offset;
 	} */
 	file_t *fp;
-	struct vnode *vp;
 	off_t offset;
 	int error, fd = SCARG(uap, fd);
 
@@ -660,19 +659,14 @@ netbsd32_preadv(struct lwp *l, const struct netbsd32_preadv_args *uap, register_
 		return EBADF;
 	}
 
-	vp = fp->f_vnode;
-	if (fp->f_type != DTYPE_VNODE || vp->v_type == VFIFO) {
+	if (fp->f_ops->fo_seek == NULL) {
 		error = ESPIPE;
 		goto out;
 	}
 
 	offset = SCARG(uap, offset);
-
-	/*
-	 * XXX This works because no file systems actually
-	 * XXX take any action on the seek operation.
-	 */
-	if ((error = VOP_SEEK(vp, fp->f_offset, offset, fp->f_cred)) != 0)
+	error = (*fp->f_ops->fo_seek)(fp, offset, SEEK_SET, &offset, 0);
+	if (error)
 		goto out;
 
 	return dofilereadv32(fd, fp, SCARG_P32(uap, iovp),
@@ -694,7 +688,6 @@ netbsd32_pwritev(struct lwp *l, const struct netbsd32_pwritev_args *uap, registe
 		syscallarg(netbsd32_off_t) offset;
 	} */
 	file_t *fp;
-	struct vnode *vp;
 	off_t offset;
 	int error, fd = SCARG(uap, fd);
 
@@ -706,19 +699,14 @@ netbsd32_pwritev(struct lwp *l, const struct netbsd32_pwritev_args *uap, registe
 		return EBADF;
 	}
 
-	vp = fp->f_vnode;
-	if (fp->f_type != DTYPE_VNODE || vp->v_type == VFIFO) {
+	if (fp->f_ops->fo_seek == NULL) {
 		error = ESPIPE;
 		goto out;
 	}
 
 	offset = SCARG(uap, offset);
-
-	/*
-	 * XXX This works because no file systems actually
-	 * XXX take any action on the seek operation.
-	 */
-	if ((error = VOP_SEEK(vp, fp->f_offset, offset, fp->f_cred)) != 0)
+	error = (*fp->f_ops->fo_seek)(fp, offset, SEEK_SET, &offset, 0);
+	if (error)
 		goto out;
 
 	return dofilewritev32(fd, fp, SCARG_P32(uap, iovp),

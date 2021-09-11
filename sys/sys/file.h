@@ -1,4 +1,4 @@
-/*	$NetBSD: file.h,v 1.86 2020/05/02 18:43:02 christos Exp $	*/
+/*	$NetBSD: file.h,v 1.87 2021/09/11 10:08:55 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -94,7 +94,7 @@ struct fileops {
 	void	(*fo_restart)	(struct file *);
 	int	(*fo_mmap)	(struct file *, off_t *, size_t, int, int *,
 				 int *, struct uvm_object **, int *);
-	void	(*fo_spare2)	(void);
+	int	(*fo_seek)	(struct file *, off_t, int, off_t *, int);
 };
 
 union file_data {
