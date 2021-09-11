@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw_patch.c,v 1.7.14.2 2021/09/10 15:45:28 thorpej Exp $ */
+/*	$NetBSD: ofw_patch.c,v 1.7.14.3 2021/09/11 01:03:18 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2020, 2021 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofw_patch.c,v 1.7.14.2 2021/09/10 15:45:28 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofw_patch.c,v 1.7.14.3 2021/09/11 01:03:18 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>
@@ -90,12 +90,11 @@ add_gpio_pins(device_t dev, const struct gpio_pin_fixup *addpins, int npins)
  * On some systems, there are lots of i2c devices missing from the
  * device tree.
  *
- * The way we deal with this is by defining a devhandle_impl subclass
- * of the i2c controller's devhandle, create a new OF-type devhandle
- * with the new devhandle_impl, and stuff that into the controller
- * device's handle, which will then pass that handle on down to the iic bus
- * instance.  This devhandle_impl will implement "i2c-enumerate-devices",
- * and pass everything else along to the super.
+ * The way we deal with this is by subclassing the controller's
+ * devhandle_impl and overriding the "i2c-enumerate-devices" device
+ * call.  Our implementation will enumerate using the super-class
+ * (OpenFirmware enumeration), and then enumerate the missing entries
+ * from our own static tables.
  *
  * This devhandle_impl will be wrapped inside of a container structure
  * that will point to the extra devices that need to be added as children
@@ -104,18 +103,11 @@ add_gpio_pins(device_t dev, const struct gpio_pin_fixup *addpins, int npins)
  * additions.
  */
 
-struct i2c_addition {
-	const char *name;
-	const char *compat;
-	i2c_addr_t addr;
-};
-
 struct i2c_fixup_container {
 	struct devhandle_impl i2c_devhandle_impl;
 	devhandle_t i2c_super_handle;
-	const struct i2c_addition *i2c_additions;
+	const struct i2c_deventry *i2c_additions;
 	int i2c_nadditions;
-	int i2c_phandle;
 };
 
 static int
@@ -128,46 +120,20 @@ i2c_fixup_enumerate_devices(device_t dev, devhandle_t call_handle, void *v)
 			 struct i2c_fixup_container, i2c_devhandle_impl);
 	devhandle_t super_handle = fixup->i2c_super_handle;
 	device_call_t super_call;
-	int error;
+	int super_error, error;
 
 	/* First, enumerate using whatever is in the device tree. */
 	super_call = devhandle_lookup_device_call(super_handle,
 	    "i2c-enumerate-devices", &super_handle);
-	if (super_call != NULL) {
-		error = super_call(dev, super_handle, args);
-		if (error) {
-			return error;
-		}
-	}
+	super_error = super_call != NULL ? super_call(dev, super_handle, args)
+					 : 0;
 
 	/* Now enumerate our additions. */
-	const struct i2c_addition *i2c_adds = fixup->i2c_additions;
-	KASSERT(i2c_adds != NULL);
-	int i;
-	bool cbrv;
+	KASSERT(fixup->i2c_additions != NULL);
+	error = i2c_enumerate_deventries(dev, call_handle, args,
+	    fixup->i2c_additions, fixup->i2c_nadditions);
 
-	for (i = 0; i < fixup->i2c_nadditions; i++) {
-		args->ia->ia_addr = i2c_adds[i].addr;
-		args->ia->ia_name = i2c_adds[i].name;
-		args->ia->ia_clist = i2c_adds[i].compat;
-		args->ia->ia_clist_size = args->ia->ia_clist != NULL
-		    ? strlen(i2c_adds[i].compat) + 1
-		    : 0;
-		if (fixup->i2c_phandle != 0) {
-			args->ia->ia_devhandle =
-			    devhandle_from_of(fixup->i2c_phandle);
-		} else {
-			devhandle_invalidate(&args->ia->ia_devhandle);
-		}
-
-		cbrv = args->callback(dev, args);
-
-		if (! cbrv) {
-			break;
-		}
-	}
-
-	return 0;
+	return super_error != 0 ? super_error : error;
 }
 
 static device_call_t
@@ -183,8 +149,8 @@ i2c_fixup_lookup_device_call(devhandle_t handle, const char *name,
 }
 
 static void
-add_i2c_devices(device_t dev, const struct i2c_addition *i2c_adds, int nadds,
-    int phandle)
+add_i2c_devices(device_t dev, const struct i2c_deventry *i2c_adds,
+    unsigned int nadds)
 {
 	struct i2c_fixup_container *fixup;
 
@@ -192,7 +158,6 @@ add_i2c_devices(device_t dev, const struct i2c_addition *i2c_adds, int nadds,
 
 	fixup->i2c_additions = i2c_adds;
 	fixup->i2c_nadditions = nadds;
-	fixup->i2c_phandle = phandle;
 
 	/* Stash away the super-class handle. */
 	devhandle_t devhandle = device_handle(dev);
@@ -306,7 +271,7 @@ static int v210_env_sensors_i2c_phandle __read_mostly;
 static void
 v210_env_sensors_fixup(device_t dev, void *aux)
 {
-	static const struct i2c_addition i2c_adds[] = {
+	static const struct i2c_deventry i2c_adds[] = {
 		{ .name = "hardware-monitor",
 		  .compat = "i2c-adm1026", .addr = 0x2e },
 
@@ -319,7 +284,7 @@ v210_env_sensors_fixup(device_t dev, void *aux)
 	devhandle_t devhandle = device_handle(dev);
 	v210_env_sensors_i2c_phandle = devhandle_to_of(devhandle);
 
-	add_i2c_devices(dev, i2c_adds, __arraycount(i2c_adds), 0);
+	add_i2c_devices(dev, i2c_adds, __arraycount(i2c_adds));
 }
 
 static const struct device_compatible_entry dtnode_fixup_table_v210[] = {
@@ -441,7 +406,7 @@ static int e250_envctrltwo_phandle __read_mostly;
 static void
 e250_envctrltwo_fixup(device_t dev, void *aux)
 {
-	static const struct i2c_addition i2c_adds[] = {
+	static const struct i2c_deventry i2c_adds[] = {
 		/* PSU temperature / CPU fan */
 		{ .name = "PSU", .compat = "ecadc", .addr = 0x4a },
 
@@ -468,8 +433,7 @@ e250_envctrltwo_fixup(device_t dev, void *aux)
 	KASSERT(e250_envctrltwo_phandle == 0);
 	e250_envctrltwo_phandle = devhandle_to_of(devhandle);
 
-	add_i2c_devices(dev, i2c_adds, __arraycount(i2c_adds),
-	    e250_envctrltwo_phandle);
+	add_i2c_devices(dev, i2c_adds, __arraycount(i2c_adds));
 }
 
 static const struct device_compatible_entry dtnode_fixup_table_e250[] = {
@@ -652,7 +616,7 @@ static const struct system_fixup system_fixups_e250 = {
 static void
 e450_envctrl_fixup(device_t dev, void *aux)
 {
-	static const struct i2c_addition i2c_adds[] = {
+	static const struct i2c_deventry i2c_adds[] = {
 		/* Power supply 1 temperature. */
 		{ .name = "PSU-1", .compat = "ecadc", .addr = 0x48 },
 
@@ -670,8 +634,7 @@ e450_envctrl_fixup(device_t dev, void *aux)
 	};
 	devhandle_t devhandle = device_handle(dev);
 	KASSERT(devhandle_type(devhandle) == DEVHANDLE_TYPE_OF);
-	add_i2c_devices(dev, i2c_adds, __arraycount(i2c_adds),
-	    devhandle_to_of(devhandle));
+	add_i2c_devices(dev, i2c_adds, __arraycount(i2c_adds));
 }
 
 static const struct device_compatible_entry dtnode_fixup_table_e450[] = {
@@ -692,13 +655,13 @@ static const struct system_fixup system_fixups_e450 = {
 static void
 sparcle_smbus_fixup(device_t dev, void *aux)
 {
-	static const struct i2c_addition i2c_adds[] = {
+	static const struct i2c_deventry i2c_adds[] = {
 		{ .name = "dimm-spd",	.addr = 0x50 },
 		{ .name = "dimm-spd",	.addr = 0x51 },
 	};
 	devhandle_t devhandle = device_handle(dev);
 	KASSERT(devhandle_type(devhandle) == DEVHANDLE_TYPE_OF);
-	add_i2c_devices(dev, i2c_adds, __arraycount(i2c_adds), 0);
+	add_i2c_devices(dev, i2c_adds, __arraycount(i2c_adds));
 };
 
 static const struct device_compatible_entry dtnode_fixup_table_sparcle[] = {

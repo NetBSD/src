@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.29.16.3 2021/09/10 15:45:28 thorpej Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.29.16.4 2021/09/11 01:03:18 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.29.16.3 2021/09/10 15:45:28 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.29.16.4 2021/09/11 01:03:18 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -58,54 +58,82 @@ static struct btinfo_net *bi_net;
 static struct btinfo_prodfamily *bi_pfam;
 static struct btinfo_model *bi_model;
 
-struct sandpoint_i2cdev {
-	const char *	name;
-	const char *	compat;
-	uint32_t	model_mask;
-	i2c_addr_t	addr;
+struct sandpoint_i2c_data {
+	const struct i2c_deventry *entries;
+	unsigned int               nentries;
+	uint32_t                   model_mask;
 };
 
-static const struct sandpoint_i2cdev dlink_i2cdevs[] = {
+static const struct i2c_deventry dlink_i2cdevs[] = {
 	{ .name = "strtc", .compat = "st,m41t80", .addr = 0x68, },
-	{ .name = NULL }
+};
+static const struct sandpoint_i2c_data dlink_i2cdata[] = {
+	{ .entries = dlink_i2cdevs,
+	  .nentries = __arraycount(dlink_i2cdevs), },
+	{ .entries = NULL },
 };
 
-static const struct sandpoint_i2cdev iomega_i2cdevs[] = {
+static const struct i2c_deventry iomega_i2cdevs[] = {
 	{ .name = "dsrtc", .compat = "dallas,ds1307", .addr = 0x68, },
-	{ .name = NULL }
+};
+static const struct sandpoint_i2c_data iomega_i2cdata[] = {
+	{ .entries = iomega_i2cdevs,
+	  .nentries = __arraycount(iomega_i2cdevs), },
+	{ .entries = NULL },
 };
 
-static const struct sandpoint_i2cdev kurobox_i2cdevs[] = {
+static const struct i2c_deventry kurobox_i2cdevs[] = {
 	{ .name = "rs5c372rtc", .compat = "ricoh,rs5c372a", .addr = 0x32, },
-	{ .name = NULL }
+};
+static const struct sandpoint_i2c_data kurobox_i2cdata[] = {
+	{ .entries = kurobox_i2cdevs,
+	  .nentries = __arraycount(kurobox_i2cdevs), },
+	{ .entries = NULL },
 };
 
-static const struct sandpoint_i2cdev nhnas_i2cdevs[] = {
+static const struct i2c_deventry nhnas_i2cdevs[] = {
 	{ .name = "pcf8563rtc", .compat = "nxp,pcf8563", .addr = 0x51, },
-	{ .name = NULL }
+};
+static const struct sandpoint_i2c_data nhnas_i2cdata[] = {
+	{ .entries = nhnas_i2cdevs,
+	  .nentries = __arraycount(nhnas_i2cdevs), },
+	{ .entries = NULL },
 };
 
-static const struct sandpoint_i2cdev qnap_i2cdevs[] = {
+static const struct i2c_deventry qnap_i2cdevs[] = {
 	{ .name = "s390rtc", .compat = "sii,s35390a", .addr = 0x30, },
-	{ .name = NULL }
+};
+static const struct sandpoint_i2c_data qnap_i2cdata[] = {
+	{ .entries = qnap_i2cdevs,
+	  .nentries = __arraycount(qnap_i2cdevs), },
+	{ .entries = NULL },
 };
 
-static const struct sandpoint_i2cdev synology_i2cdevs[] = {
+static const struct i2c_deventry synology_thermal_i2cdevs[] = {
 	{ .name = "rs5c372rtc", .compat = "ricoh,rs5c372a", .addr = 0x32, },
-	{ .name = "lmtemp", .compat = "national,lm75", .addr = 0x48,
-	   .model_mask = BI_MODEL_THERMAL, },
-	{ .name = NULL }
+	{ .name = "lmtemp", .compat = "national,lm75", .addr = 0x48, },
+};
+static const struct i2c_deventry synology_i2cdevs[] = {
+	{ .name = "rs5c372rtc", .compat = "ricoh,rs5c372a", .addr = 0x32, },
+};
+static const struct sandpoint_i2c_data synology_i2cdata[] = {
+	{ .entries = synology_thermal_i2cdevs,
+	  .nentries = __arraycount(synology_thermal_i2cdevs),
+	  .model_mask  = BI_MODEL_THERMAL, },
+	{ .entries = synology_i2cdevs,
+	  .nentries = __arraycount(synology_i2cdevs), },
+	{ .entries = NULL },
 };
 
 static const struct device_compatible_entry sandpoint_i2c_compat[] = {
-	{ .compat = "dlink",		.data = &dlink_i2cdevs },
-	{ .compat = "iomega",		.data = &iomega_i2cdevs },
-	{ .compat = "kurobox",		.data = &kurobox_i2cdevs },
+	{ .compat = "dlink",		.data = dlink_i2cdata },
+	{ .compat = "iomega",		.data = iomega_i2cdata },
+	{ .compat = "kurobox",		.data = kurobox_i2cdata },
 	/* kurot4 has same i2c devices as kurobox */
-	{ .compat = "kurot4",		.data = &kurobox_i2cdevs },
-	{ .compat = "nhnas",		.data = &nhnas_i2cdevs },
-	{ .compat = "qnap",		.data = &qnap_i2cdevs },
-	{ .compat = "synology",		.data = &synology_i2cdevs },
+	{ .compat = "kurot4",		.data = kurobox_i2cdata },
+	{ .compat = "nhnas",		.data = nhnas_i2cdata },
+	{ .compat = "qnap",		.data = qnap_i2cdata },
+	{ .compat = "synology",		.data = synology_i2cdata },
 	DEVICE_COMPAT_EOL
 };
 
@@ -115,10 +143,8 @@ static const struct device_compatible_entry sandpoint_i2c_compat[] = {
 static int
 sandpoint_i2c_enumerate_devices(device_t dev, devhandle_t call_handle, void *v)
 {
-	struct i2c_enumerate_devices_args *args = v;
 	const struct device_compatible_entry *dce;
-	const struct sandpoint_i2cdev *i2cdev;
-	bool cbrv;
+	const struct sandpoint_i2c_data *data;
 
 	KASSERT(bi_pfam != NULL);
 
@@ -128,33 +154,27 @@ sandpoint_i2c_enumerate_devices(device_t dev, devhandle_t call_handle, void *v)
 		/* no i2c devices for this model. */
 		return 0;
 	}
-	i2cdev = dce->data;
-	KASSERT(i2cdev != NULL);
+	data = dce->data;
+	KASSERT(data != NULL);
 
-	for (; i2cdev->name != NULL; i2cdev++) {
-		if (i2cdev->model_mask != 0) {
-			KASSERT(bi_model != NULL);
-			if ((i2cdev->model_mask & bi_model->flags) == 0) {
-				/* skip this device. */
-				continue;
-			}
+	/* Filter by model_mask if necessary. */
+	for (; data->entries != NULL; data++) {
+		if (data->model_mask == 0) {
+			/* We'll use this one! */
+			break;
 		}
-
-		args->ia->ia_addr = i2cdev->addr;
-		args->ia->ia_name = i2cdev->name;
-		args->ia->ia_clist = i2cdev->compat;
-		args->ia->ia_clist_size = strlen(i2cdev->compat) + 1;
-		/* no devhandle for child devices. */
-		devhandle_invalidate(&args->ia->ia_devhandle);
-
-		cbrv = args->callback(dev, args);
-
-		if (!cbrv) {
+		if ((data->model_mask & bi_model->flags) == data->model_mask) {
+			/* We'll use this one! */
 			break;
 		}
 	}
+	if (data->entries == NULL) {
+		/* no i2c devies for this model. */
+		return 0;
+	}
 
-	return 0;
+	return i2c_enumerate_deventries(dev, call_handle, v,
+	    data->entries, data->nentries);
 }
 
 static device_call_t
