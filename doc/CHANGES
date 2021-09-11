@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2827 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2828 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -416,3 +416,5 @@ Changes from NetBSD 9.0 to NetBSD 10.0:
 		only KUROBOX_PRO has been tested. [rin 20210830]
 	evbarm: Add support for Apple M1. [jmcneill 20210830]
 	OpenSSH: Import 8.7. [christos 20210902]
+	efiboot: Add support for specifying a banner in boot.cfg. [nia 20210907]
+	pxeboot: Add support for specifying a banner in boot.cfg. [nia 20210907]
