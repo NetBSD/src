@@ -1,4 +1,4 @@
-/* $NetBSD: const.c,v 1.10 2013/01/22 20:35:29 christos Exp $ */
+/* $NetBSD: const.c,v 1.11 2021/09/11 20:55:03 christos Exp $ */
 
 /*-
  * Copyright (c) 1991, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)const.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: const.c,v 1.10 2013/01/22 20:35:29 christos Exp $");
+__RCSID("$NetBSD: const.c,v 1.11 2021/09/11 20:55:03 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -108,6 +108,7 @@ Char STRmail[]		= { 'm', 'a', 'i', 'l', '\0' };
 Char STRmh[]            = { '-', 'h', '\0' };
 Char STRminus[]		= { '-', '\0' };
 Char STRml[]		= { '-', 'l', '\0' };
+Char STRmZ[]		= { '-', 'Z', '\0' };
 Char STRmn[]		= { '-', 'n', '\0' };
 Char STRmquestion[]     = { '?' | QUOTE, ' ', '\0' };
 Char STRnice[]		= { 'n', 'i', 'c', 'e', '\0' };

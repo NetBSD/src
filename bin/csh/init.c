@@ -1,4 +1,4 @@
-/* $NetBSD: init.c,v 1.11 2013/01/22 19:28:00 christos Exp $ */
+/* $NetBSD: init.c,v 1.12 2021/09/11 20:55:03 christos Exp $ */
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)init.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: init.c,v 1.11 2013/01/22 19:28:00 christos Exp $");
+__RCSID("$NetBSD: init.c,v 1.12 2021/09/11 20:55:03 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -73,7 +73,7 @@ struct biltins bfunc[] =
     { "hashstat", 	hashstat, 	0, 0	},
     { "history", 	dohist, 	0, 2	},
     { "if", 		doif, 		1, INF	},
-    { "jobs", 		dojobs, 	0, 1	},
+    { "jobs", 		dojobs, 	0, 2	},
     { "kill", 		dokill, 	1, INF	},
     { "limit", 		dolimit, 	0, 3	},
     { "linedit", 	doecho, 	0, INF	},

@@ -1,4 +1,4 @@
-/* $NetBSD: err.c,v 1.23 2019/01/05 16:54:00 christos Exp $ */
+/* $NetBSD: err.c,v 1.24 2021/09/11 20:55:03 christos Exp $ */
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)err.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: err.c,v 1.23 2019/01/05 16:54:00 christos Exp $");
+__RCSID("$NetBSD: err.c,v 1.24 2021/09/11 20:55:03 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -171,7 +171,7 @@ static const char *errorlist[] =
 #define ERR_STRING	56
     "%s",
 #define ERR_JOBS	57
-    "usage: jobs [ -l ]",
+    "usage: jobs [ -lZ ]",
 #define ERR_JOBARGS	58
     "Arguments should be jobs or process id's",
 #define ERR_JOBCUR	59
