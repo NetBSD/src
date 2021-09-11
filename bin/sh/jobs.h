@@ -1,4 +1,4 @@
-/*	$NetBSD: jobs.h,v 1.24 2021/04/04 13:24:07 kre Exp $	*/
+/*	$NetBSD: jobs.h,v 1.25 2021/09/11 20:43:32 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -49,6 +49,7 @@
 #define	SHOW_SIGNALLED	0x10	/* only if stopped/exited on signal */
 #define	SHOW_ISSIG	0x20	/* job was signalled */
 #define	SHOW_NO_FREE	0x40	/* do not free job */
+#define	SHOW_PROCTITLE	0x80	/* set the process title */
 
 
 /*
