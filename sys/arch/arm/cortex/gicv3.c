@@ -1,4 +1,4 @@
-/* $NetBSD: gicv3.c,v 1.46 2021/08/10 17:12:31 jmcneill Exp $ */
+/* $NetBSD: gicv3.c,v 1.47 2021/09/11 01:49:11 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -32,7 +32,7 @@
 #define	_INTR_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gicv3.c,v 1.46 2021/08/10 17:12:31 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gicv3.c,v 1.47 2021/09/11 01:49:11 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -402,18 +402,6 @@ gicv3_cpu_init(struct pic_softc *pic, struct cpu_info *ci)
 	ci->ci_gic_redist = gicv3_find_redist(sc);
 	ci->ci_gic_sgir = gicv3_sgir(sc);
 
-	/* Store route to CPU for SPIs */
-	const uint64_t cpu_identity = gicv3_cpu_identity();
-	const u_int aff0 = __SHIFTOUT(cpu_identity, GICR_TYPER_Affinity_Value_Aff0);
-	const u_int aff1 = __SHIFTOUT(cpu_identity, GICR_TYPER_Affinity_Value_Aff1);
-	const u_int aff2 = __SHIFTOUT(cpu_identity, GICR_TYPER_Affinity_Value_Aff2);
-	const u_int aff3 = __SHIFTOUT(cpu_identity, GICR_TYPER_Affinity_Value_Aff3);
-	sc->sc_irouter[cpu_index(ci)] =
-	    __SHIFTIN(aff0, GICD_IROUTER_Aff0) |
-	    __SHIFTIN(aff1, GICD_IROUTER_Aff1) |
-	    __SHIFTIN(aff2, GICD_IROUTER_Aff2) |
-	    __SHIFTIN(aff3, GICD_IROUTER_Aff3);
-
 	/* Enable System register access and disable IRQ/FIQ bypass */
 	icc_sre = ICC_SRE_EL1_SRE | ICC_SRE_EL1_DFB | ICC_SRE_EL1_DIB;
 	icc_sre_write(icc_sre);
@@ -482,8 +470,7 @@ gicv3_get_affinity(struct pic_softc *pic, size_t irq, kcpuset_t *affinity)
 	if (group == 0) {
 		/* All CPUs are targets for group 0 (SGI/PPI) */
 		for (n = 0; n < ncpu; n++) {
-			if (sc->sc_irouter[n] != UINT64_MAX)
-				kcpuset_set(affinity, n);
+			kcpuset_set(affinity, n);
 		}
 	} else {
 		/* Find distributor targets (SPI) */
@@ -861,15 +848,19 @@ gicv3_quirk_rockchip_rk3399(struct gicv3_softc *sc)
 int
 gicv3_init(struct gicv3_softc *sc)
 {
-	int n;
+	CPU_INFO_ITERATOR cii;
+	struct cpu_info *ci;
 
 	KASSERT(CPU_IS_PRIMARY(curcpu()));
 
 	LIST_INIT(&sc->sc_lpi_callbacks);
 
+	/* Store route to CPU for SPIs */
 	sc->sc_irouter = kmem_zalloc(sizeof(*sc->sc_irouter) * ncpu, KM_SLEEP);
-	for (n = 0; n < ncpu; n++)
-		sc->sc_irouter[n] = UINT64_MAX;
+	for (CPU_INFO_FOREACH(cii, ci)) {
+		KASSERT(cpu_index(ci) < ncpu);
+		sc->sc_irouter[cpu_index(ci)] = ci->ci_cpuid;
+	}
 
 	sc->sc_gicd_typer = gicd_read_4(sc, GICD_TYPER);
 
