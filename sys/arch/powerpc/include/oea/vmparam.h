@@ -33,7 +33,7 @@
 #include <sys/queue.h>
 
 /*
- * Most of the definitions in this can be overriden by a machine-specific
+ * Most of the definitions in this can be overridden by a machine-specific
  * vmparam.h if required.  Otherwise a port can just include this file
  * get the right thing to happen.
  */

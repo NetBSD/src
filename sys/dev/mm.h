@@ -1,4 +1,4 @@
-/*	$NetBSD: mm.h,v 1.3 2016/07/11 16:13:28 matt Exp $	*/
+/*	$NetBSD: mm.h,v 1.4 2021/09/11 20:28:06 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2008 Joerg Sonnenberger <joerg@NetBSD.org>.
@@ -64,7 +64,7 @@ paddr_t	mm_md_mmap(dev_t, off_t, int);
 
 /*
  * Optional access check for the virtual address. The third argument tells
- * mm that the check was done and uvm_kernacc is overriden.
+ * mm that the check was done and uvm_kernacc is overridden.
  *
  * machine/types.h must define __HAVE_MM_MD_KERNACC to use this.
  */
