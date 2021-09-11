@@ -1,4 +1,4 @@
-/*	$NetBSD: stdio.h,v 1.102 2021/09/11 18:38:25 rillig Exp $	*/
+/*	$NetBSD: stdio.h,v 1.103 2021/09/11 19:05:06 rillig Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -103,13 +103,12 @@ struct __sbuf {
  * _lbfsize is used only to make the inline line-buffered output stream
  * code as compact as possible.
  *
- * _ub, _up, and _ur are used when ungetc() pushes back more characters
- * than fit in the current _bf, or when ungetc() pushes back a character
- * that does not match the previous one in _bf.  When this happens,
- * _ub._base becomes non-nil (i.e., a stream has ungetc() data iff
- * _ub._base!=NULL) and _up and _ur save the current values of _p and _r.
- *
- * NB: see WARNING above before changing the layout of this structure!
+ * _ub (via _ext and struct __sfileext), _up, and _ur are used when ungetc()
+ * pushes back more characters than fit in the current _bf, or when ungetc()
+ * pushes back a character that does not match the previous one in _bf.
+ * When this happens, _ext._base becomes non-nil (i.e., a stream has ungetc()
+ * data iff _ub._base != NULL) and _up and _ur save the current values of _p
+ * and _r.
  */
 typedef	struct __sFILE {
 	unsigned char *_p;	/* current position in (some) buffer */
