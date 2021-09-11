@@ -16,7 +16,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_open_memstream.c,v 1.2 2014/10/19 11:17:43 justin Exp $");
+__RCSID("$NetBSD: t_open_memstream.c,v 1.3 2021/09/11 18:18:28 rillig Exp $");
 
 #include <atf-c.h>
 #include <err.h>
@@ -90,7 +90,7 @@ ATF_TC_BODY(test_open_memstream, tc)
 ATF_TP_ADD_TCS(tp)
 {
 
-        ATF_TP_ADD_TC(tp, test_open_memstream);
+	ATF_TP_ADD_TC(tp, test_open_memstream);
 
-        return atf_no_error();
+	return atf_no_error();
 }

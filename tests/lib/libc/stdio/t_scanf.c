@@ -1,4 +1,4 @@
-/* $NetBSD: t_scanf.c,v 1.3 2012/03/18 07:00:51 jruoho Exp $ */
+/* $NetBSD: t_scanf.c,v 1.4 2021/09/11 18:18:28 rillig Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -43,12 +43,12 @@ ATF_TC_HEAD(sscanf_neghex, tc)
 
 ATF_TC_BODY(sscanf_neghex, tc)
 {
-        int i;
+	int i;
 
-        sscanf(STRNUM, "%i", &i);
+	sscanf(STRNUM, "%i", &i);
 	ATF_REQUIRE(i == NUM);
 
-        sscanf(STRNUM, "%x", &i);
+	sscanf(STRNUM, "%x", &i);
 	ATF_REQUIRE(i == NUM);
 }
 
@@ -64,9 +64,9 @@ ATF_TC_BODY(sscanf_whitespace, tc)
 	const char str[] = "\f\n\r\t\v%z";
 	char c;
 
-        /* set of "white space" symbols from isspace(3) */
-        c = 0;
-        (void)sscanf(str, "%%%c", &c);
+	/* set of "white space" symbols from isspace(3) */
+	c = 0;
+	(void)sscanf(str, "%%%c", &c);
 	ATF_REQUIRE(c == 'z');
 }
 
