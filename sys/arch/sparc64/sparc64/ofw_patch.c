@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw_patch.c,v 1.7.14.3 2021/09/11 01:03:18 thorpej Exp $ */
+/*	$NetBSD: ofw_patch.c,v 1.7.14.4 2021/09/11 13:02:29 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2020, 2021 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofw_patch.c,v 1.7.14.3 2021/09/11 01:03:18 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofw_patch.c,v 1.7.14.4 2021/09/11 13:02:29 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>
@@ -699,55 +699,6 @@ static const struct system_fixup system_fixups_meso999 = {
 };
 
 /*****************************************************************************
- * Universal fixups
- *****************************************************************************/
-
-static void
-universal_fixups(device_t dev, void *aux)
-{
-	/*
-	 * If the parent of an "iic" instance is named "pmu" in the
-	 * device tree, then we need to fix up the devhandle for the
-	 * bus because the device tree topology is:
-	 *
-	 *	pmu -> i2c -> [devices...]
-	 */
-	if (device_is_a(dev, "iic")) {
-		device_t parent = device_parent(dev);
-		devhandle_t parent_devhandle = device_handle(parent);
-		char name[32];
-
-		if (devhandle_type(parent_devhandle) != DEVHANDLE_TYPE_OF) {
-			return;
-		}
-		int parent_phandle = devhandle_to_of(parent_devhandle);
-
-		if (OF_getprop(parent_phandle, "name", name,
-			       sizeof(name)) <= 0) {
-			return;
-		}
-		name[sizeof(name) - 1] = '\0';	/* sanity */
-		if (strcmp(name, "pmu") != 0) {
-			return;
-		}
-
-		int node;
-		for (node = OF_child(parent_phandle); node != 0;
-		     node = OF_peer(node)) {
-			if (OF_getprop(node, "name", name,
-				       sizeof(name)) <= 0) {
-				continue;
-			}
-			if (strcmp(name, "i2c") == 0) {
-				device_set_handle(dev,
-				    devhandle_from_of(node));
-				break;
-			}
-		}
-	}
-}
-
-/*****************************************************************************
  * End of system-specific data
  *****************************************************************************/
 
@@ -783,9 +734,6 @@ sparc64_device_tree_fixup(device_t dev, void *aux)
 	const struct device_compatible_entry *dce;
 	void (*fn)(device_t, void *);
 	devhandle_t devhandle;
-
-	/* First, deal with some universal fixups. */
-	universal_fixups(dev, aux);
 
 	devhandle = device_handle(dev);
 
