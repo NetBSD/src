@@ -1,4 +1,4 @@
-/*	$NetBSD: cuda.c,v 1.29.2.3 2021/09/11 13:13:59 thorpej Exp $ */
+/*	$NetBSD: cuda.c,v 1.29.2.4 2021/09/11 15:22:57 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2006 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cuda.c,v 1.29.2.3 2021/09/11 13:13:59 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cuda.c,v 1.29.2.4 2021/09/11 15:22:57 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -298,11 +298,9 @@ cuda_attach(device_t parent, device_t self, void *aux)
 	/* we don't have OF nodes for i2c devices so we have to make our own */
 	node = OF_finddevice("/valkyrie");
 	if (node != -1) {
-		/* XXX a real "compatible" string would be nice... */
 		cuda_add_i2c_device(sc, "videopll",
 		    "aapl,valkyrie-videopll", 0x50);
 	}
-
 	node = OF_finddevice("/perch");
 	if (node != -1) {
 		cuda_add_i2c_device(sc, "sgsmix", "st,tda7433", 0x8a);

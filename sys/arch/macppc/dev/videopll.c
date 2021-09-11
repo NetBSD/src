@@ -1,4 +1,4 @@
-/*	$NetBSD: videopll.c,v 1.3.28.1 2021/08/09 00:30:08 thorpej Exp $	*/
+/*	$NetBSD: videopll.c,v 1.3.28.2 2021/09/11 15:22:57 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2012 Michael Lorenz
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: videopll.c,v 1.3.28.1 2021/08/09 00:30:08 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: videopll.c,v 1.3.28.2 2021/09/11 15:22:57 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -67,7 +67,6 @@ CFATTACH_DECL_NEW(videopll, sizeof(struct videopll_softc),
 static void *glob = NULL;
 
 static const struct device_compatible_entry compat_data[] = {
-	/* XXX a real "compatible" string would be nice... */
 	{ .compat = "aapl,valkyrie-videopll" },
 	DEVICE_COMPAT_EOL
 };
