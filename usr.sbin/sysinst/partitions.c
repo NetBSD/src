@@ -1,4 +1,4 @@
-/*	$NetBSD: partitions.c,v 1.12 2020/11/06 12:23:10 martin Exp $	*/
+/*	$NetBSD: partitions.c,v 1.13 2021/09/11 20:28:06 andvar Exp $	*/
 
 /*
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -136,7 +136,7 @@ extern const struct disk_partitioning_scheme mbr_parts;
 static struct disk_partitioning_scheme only_disklabel_parts;
 
 /*
- * If not overriden by MD code, we can not boot from plain
+ * If not overridden by MD code, we can not boot from plain
  * disklabel disks (w/o MBR).
  */
 static bool have_only_disklabel_boot_support(const char *disk)

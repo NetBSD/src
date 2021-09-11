@@ -1,4 +1,4 @@
-/*	$NetBSD: namespace.h,v 1.201 2021/07/04 16:18:50 rillig Exp $	*/
+/*	$NetBSD: namespace.h,v 1.202 2021/09/11 20:28:03 andvar Exp $	*/
 
 /*-
  * Copyright (c) 1997-2004 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
 
 /*
  * namespace protection for libc functions that are used internally
- * in libc and should be not overriden by applications. To do this,
+ * in libc and should be not overridden by applications. To do this,
  * this header renames them to a name that starts with an "_" so that
  * libc uses the "_" flavor internally (and this name is not part of
  * the application namespace), and then a weak alias is added to the

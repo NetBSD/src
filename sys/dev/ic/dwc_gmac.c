@@ -1,4 +1,4 @@
-/* $NetBSD: dwc_gmac.c,v 1.74 2021/06/16 00:21:18 riastradh Exp $ */
+/* $NetBSD: dwc_gmac.c,v 1.75 2021/09/11 20:28:06 andvar Exp $ */
 
 /*-
  * Copyright (c) 2013, 2014 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: dwc_gmac.c,v 1.74 2021/06/16 00:21:18 riastradh Exp $");
+__KERNEL_RCSID(1, "$NetBSD: dwc_gmac.c,v 1.75 2021/09/11 20:28:06 andvar Exp $");
 
 /* #define	DWC_GMAC_DEBUG	1 */
 
@@ -196,7 +196,7 @@ dwc_gmac_attach(struct dwc_gmac_softc *sc, int phy_id, uint32_t mii_clk)
 	prop_data_t ea = dict ? prop_dictionary_get(dict, "mac-address") : NULL;
 	if (ea != NULL) {
 		/*
-		 * If the MAC address is overriden by a device property,
+		 * If the MAC address is overridden by a device property,
 		 * use that.
 		 */
 		KASSERT(prop_object_type(ea) == PROP_TYPE_DATA);
