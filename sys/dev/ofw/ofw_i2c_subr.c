@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw_i2c_subr.c,v 1.1.16.2 2021/09/10 15:45:28 thorpej Exp $	*/
+/*	$NetBSD: ofw_i2c_subr.c,v 1.1.16.3 2021/09/11 12:44:49 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2021 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofw_i2c_subr.c,v 1.1.16.2 2021/09/10 15:45:28 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofw_i2c_subr.c,v 1.1.16.3 2021/09/11 12:44:49 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -138,6 +138,21 @@ of_i2c_enumerate_devices(device_t dev, devhandle_t call_handle, void *v)
 	bool cbrv;
 
 	i2c_node = devhandle_to_of(call_handle);
+
+	/*
+	 * The Device Tree bindings state that if a controller has a
+	 * child node named "i2c-bus", then that is the node beneath
+	 * which the child devices are populated.
+	 */
+	for (node = OF_child(i2c_node); node != 0; node = OF_peer(node)) {
+		if (OF_getprop(node, "name", name, sizeof(name)) <= 0) {
+			continue;
+		}
+		if (strcmp(name, "i2c-bus") == 0) {
+			i2c_node = node;
+			break;
+		}
+	}
 
 	for (node = OF_child(i2c_node); node != 0; node = OF_peer(node)) {
 		if (OF_getprop(node, "name", name, sizeof(name)) <= 0) {
