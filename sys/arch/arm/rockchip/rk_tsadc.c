@@ -1,4 +1,4 @@
-/*	$NetBSD: rk_tsadc.c,v 1.13 2021/06/12 00:04:46 mrg Exp $	*/
+/*	$NetBSD: rk_tsadc.c,v 1.14 2021/09/11 20:28:03 andvar Exp $	*/
 
 /*
  * Copyright (c) 2019 Matthew R. Green
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: rk_tsadc.c,v 1.13 2021/06/12 00:04:46 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rk_tsadc.c,v 1.14 2021/09/11 20:28:03 andvar Exp $");
 
 /*
  * Driver for the TSADC temperature sensor monitor in RK3328 and RK3399.
@@ -247,7 +247,7 @@ static const struct rk_tsadc_sensor rk_tsadc_sensors[] = {
 	   * pull out of here?
 	   * do something with hysteresis?  put in debounce?
 	   * 
-	   * Note that tshut may be overriden by the board specific DT.
+	   * Note that tshut may be overridden by the board specific DT.
 	   */
 	  .s_warn = 75000000,
 	  .s_tshut = 95000000,

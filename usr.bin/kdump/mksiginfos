@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: mksiginfos,v 1.5 2008/10/19 22:10:05 apb Exp $
+#	$NetBSD: mksiginfos,v 1.6 2021/09/11 20:28:06 andvar Exp $
 #
 # Copyright (c) 2003 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -28,7 +28,7 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-# allow AWK to be overriden
+# allow AWK to be overridden
 : ${AWK:=awk}
 
 $AWK '

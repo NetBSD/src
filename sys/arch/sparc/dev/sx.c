@@ -1,4 +1,4 @@
-/*	$NetBSD: sx.c,v 1.4 2019/03/01 02:30:42 macallan Exp $	*/
+/*	$NetBSD: sx.c,v 1.5 2021/09/11 20:28:05 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sx.c,v 1.4 2019/03/01 02:30:42 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sx.c,v 1.5 2021/09/11 20:28:05 andvar Exp $");
 
 #include "locators.h"
 
@@ -100,7 +100,7 @@ sx_attach(device_t parent, device_t self, void *aux)
 	/* initialize control registers, clear errors etc. */
 	sx_write(sc, SX_R0_INIT, 0);
 	sx_write(sc, SX_ERROR, 0);
-	/* default, to be overriden once cgfourteen takes over */
+	/* default, to be overridden once cgfourteen takes over */
 	sx_write(sc, SX_PAGE_BOUND_LOWER, 0xfc000000);
 	/* cg14 takes up the whole 64MB chunk */
 	sx_write(sc, SX_PAGE_BOUND_UPPER, 0xffffffff);

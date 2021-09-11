@@ -1,4 +1,4 @@
-/*	$NetBSD: acu.c,v 1.17 2019/02/01 08:29:04 mrg Exp $	*/
+/*	$NetBSD: acu.c,v 1.18 2021/09/11 20:28:06 andvar Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)acu.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: acu.c,v 1.17 2019/02/01 08:29:04 mrg Exp $");
+__RCSID("$NetBSD: acu.c,v 1.18 2021/09/11 20:28:06 andvar Exp $");
 #endif /* not lint */
 
 #include "tip.h"
@@ -53,7 +53,7 @@ static acu_t   *acutype(char *);
  * The phone numbers are in PN, and the call unit is in CU.
  *
  * If the PN is an '@', then we consult the PHONES file for
- *   the phone numbers.  This file is /etc/phones, unless overriden
+ *   the phone numbers.  This file is /etc/phones, unless overridden.
  *   by an exported shell variable.
  *
  * The data base files must be in the format:

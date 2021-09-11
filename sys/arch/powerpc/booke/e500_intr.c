@@ -1,4 +1,4 @@
-/*	$NetBSD: e500_intr.c,v 1.44 2020/07/06 10:11:14 rin Exp $	*/
+/*	$NetBSD: e500_intr.c,v 1.45 2021/09/11 20:28:04 andvar Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -37,7 +37,7 @@
 #define __INTR_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: e500_intr.c,v 1.44 2020/07/06 10:11:14 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: e500_intr.c,v 1.45 2021/09/11 20:28:04 andvar Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_mpc85xx.h"
@@ -1001,7 +1001,7 @@ e500_extintr(struct trapframe *tf)
 		struct intr_source * const is = &e500_intr_sources[irq];
 		if (__predict_true(is < e500_intr_last_source)) {
 			/*
-			 * Timer interrupts get their argument overriden with
+			 * Timer interrupts get their argument overridden with
 			 * the pointer to the trapframe.
 			 */
 			KASSERTMSG(is->is_ipl == ipl,

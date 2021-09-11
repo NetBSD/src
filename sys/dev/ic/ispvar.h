@@ -1,4 +1,4 @@
-/* $NetBSD: ispvar.h,v 1.73 2014/10/18 08:33:27 snj Exp $ */
+/* $NetBSD: ispvar.h,v 1.74 2021/09/11 20:28:06 andvar Exp $ */
 /*
  * Copyright (C) 1999 National Aeronautics & Space Administration
  * All rights reserved.
@@ -1117,7 +1117,7 @@ void isp_async(ispsoftc_t *, ispasync_t, ...);
  *	DEFAULT_PORTWWN(ispsoftc_t *, chan)	Default FC Port WWN to use
  *
  *		These defines are hooks to allow the setting of node and
- *		port WWNs when NVRAM cannot be read or is to be overriden.
+ *		port WWNs when NVRAM cannot be read or is to be overridden.
  *
  *	ACTIVE_NODEWWN(ispsoftc_t *, chan)	FC Node WWN to use
  *	ACTIVE_PORTWWN(ispsoftc_t *, chan)	FC Port WWN to use

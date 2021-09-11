@@ -1,4 +1,4 @@
-/* $NetBSD: isp.c,v 1.128 2021/09/06 21:56:04 andvar Exp $ */
+/* $NetBSD: isp.c,v 1.129 2021/09/11 20:28:06 andvar Exp $ */
 /*
  * Machine and OS Independent (well, as best as possible)
  * code for the Qlogic ISP SCSI adapters.
@@ -43,7 +43,7 @@
  */
 #ifdef	__NetBSD__
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isp.c,v 1.128 2021/09/06 21:56:04 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isp.c,v 1.129 2021/09/11 20:28:06 andvar Exp $");
 #include <dev/ic/isp_netbsd.h>
 #endif
 #ifdef	__FreeBSD__
@@ -1143,7 +1143,7 @@ isp_reset(ispsoftc_t *isp, int do_load_defaults)
 
 	/*
 	 * We get some default values established. As a side
-	 * effect, NVRAM is read here (unless overriden by
+	 * effect, NVRAM is read here (unless overridden by
 	 * a configuration flag).
 	 */
 	if (do_load_defaults) {

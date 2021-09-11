@@ -1,4 +1,4 @@
-# $NetBSD: t_patch.sh,v 1.3 2021/05/25 11:55:42 cjep Exp $
+# $NetBSD: t_patch.sh,v 1.4 2021/09/11 20:28:06 andvar Exp $
 #
 # Copyright (c) 2020, 2021 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -120,7 +120,7 @@ EOF
 	atf_check [ ! -f to_patch.orig ]
 	atf_check grep -q -m 1 '^new text$' to_patch
 
-	# Environment variables should be overriden.
+	# Environment variables should be overridden.
 	printf '%s\n' 'original file' > to_patch
 	VERSION_CONTROL=existing patch -V none to_patch \
 	    < test_diff.patch

@@ -1,11 +1,11 @@
-#	$NetBSD: Makefile.kern.inc,v 1.281 2021/06/02 15:45:28 nia Exp $
+#	$NetBSD: Makefile.kern.inc,v 1.282 2021/09/11 20:28:05 andvar Exp $
 #
 # This file contains common `MI' targets and definitions and it is included
 # at the bottom of each `MD' ${MACHINE}/conf/Makefile.${MACHINE}.
 #
 # Each target in this file should be protected with `if !target(target)'
 # or `if !commands(target)' and each variable should only be conditionally
-# assigned `VAR ?= VALUE', so that everything can be overriden.
+# assigned `VAR ?= VALUE', so that everything can be overridden.
 #
 # DEBUG is set to -g if debugging.
 # PROF is set to -pg if profiling.
@@ -414,7 +414,7 @@ ${_s:T:R}.d: ${_s}
 
 # List of kernel images that will be installed into the root file system.
 # Some platforms may need to install more than one (e.g. a netbsd.aout file
-# to be loaded directly by the firmware), so this can be overriden by them.
+# to be loaded directly by the firmware), so this can be overridden by them.
 KERNIMAGES?=	netbsd
 
 .if !target(install)

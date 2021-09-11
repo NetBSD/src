@@ -1,4 +1,4 @@
-/* $NetBSD: README.md_defs,v 1.6 2020/10/05 12:28:45 martin Exp $ */
+/* $NetBSD: README.md_defs,v 1.7 2021/09/11 20:28:06 andvar Exp $ */
 
 The following is trying to document the most important machine dependent
 defines used in the sysinst code.
@@ -14,7 +14,7 @@ copied at 8k into the image).
 
 
 The default installation description is created as a static array using
-lots of conditionals. It may be overriden / replaced in the MD code
+lots of conditionals. It may be overridden / replaced in the MD code
 (see below), an example for that is arch/i386/md.c when we have been
 booted from UEFI firmware.
 
