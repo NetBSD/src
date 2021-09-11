@@ -1,4 +1,4 @@
-.\"	$NetBSD: sh.1,v 1.229 2020/09/18 07:21:26 wiz Exp $
+.\"	$NetBSD: sh.1,v 1.230 2021/09/11 20:43:32 christos Exp $
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -31,7 +31,7 @@
 .\"
 .\"	@(#)sh.1	8.6 (Berkeley) 5/4/95
 .\"
-.Dd September 18, 2020
+.Dd September 11, 2021
 .Dt SH 1
 .\" everything except c o and s (keep them ordered)
 .ds flags abCEeFfhIiLmnpquVvXx
@@ -2977,7 +2977,7 @@ or with
 there is no process group leader (should not happen),
 and otherwise exits with status 0.
 .\"
-.It Ic jobs Oo Fl l Ns \&| Ns Fl p Oc Op Ar job ...
+.It Ic jobs Oo Fl l Ns \&| Ns Fl p \&| Fl Z Oc Op Ar job ...
 Without
 .Ar job
 arguments,
@@ -3004,6 +3004,11 @@ With the
 .Fl p
 flag, the output contains only the process identifier of the lead
 process.
+.Pp
+With the
+.Fl Z
+flag, the process command line is set using
+.Xr setproctitle 3 .
 .Pp
 In an interactive shell, each job shown as completed in the output
 from the jobs command is implicitly waited for, and is removed from

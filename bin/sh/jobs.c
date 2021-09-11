@@ -1,4 +1,4 @@
-/*	$NetBSD: jobs.c,v 1.110 2021/04/04 13:24:07 kre Exp $	*/
+/*	$NetBSD: jobs.c,v 1.111 2021/09/11 20:43:32 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)jobs.c	8.5 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: jobs.c,v 1.110 2021/04/04 13:24:07 kre Exp $");
+__RCSID("$NetBSD: jobs.c,v 1.111 2021/09/11 20:43:32 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -550,11 +550,23 @@ jobscmd(int argc, char **argv)
 	int mode, m;
 
 	mode = 0;
-	while ((m = nextopt("lp")))
-		if (m == 'l')
+	while ((m = nextopt("lpZ")))
+		switch (m) {
+		case 'l':
 			mode = SHOW_PID;
-		else
+			break;
+		case 'p':
 			mode = SHOW_PGID;
+			break;
+		case 'Z':
+			mode = SHOW_PROCTITLE;
+			break;
+		}
+
+	if (mode == SHOW_PROCTITLE) {
+		setproctitle("%s", *argptr);
+		return 0;
+	}
 
 	if (!iflag && !posix)
 		mode |= SHOW_NO_FREE;
