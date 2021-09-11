@@ -1,4 +1,4 @@
-/*	$NetBSD: cuda.c,v 1.29.2.2 2021/09/10 15:45:27 thorpej Exp $ */
+/*	$NetBSD: cuda.c,v 1.29.2.3 2021/09/11 13:13:59 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2006 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cuda.c,v 1.29.2.2 2021/09/10 15:45:27 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cuda.c,v 1.29.2.3 2021/09/11 13:13:59 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -90,12 +90,8 @@ struct cuda_softc {
 	 */
 	struct devhandle_impl sc_devhandle_impl;
 
-	struct {
-		const char *name;
-		const char *compatible;
-		i2c_addr_t addr;
-	} sc_i2c_devices[CUDA_MAX_I2C_DEVICES];
-	int sc_ni2c_devices;
+	struct i2c_deventry sc_i2c_devices[CUDA_MAX_I2C_DEVICES];
+	unsigned int sc_ni2c_devices;
 
 	int sc_node;
 	int sc_state;
@@ -169,7 +165,7 @@ cuda_add_i2c_device(struct cuda_softc *sc, const char *name,
 {
 	KASSERT(sc->sc_ni2c_devices < CUDA_MAX_I2C_DEVICES);
 	sc->sc_i2c_devices[sc->sc_ni2c_devices].name = name;
-	sc->sc_i2c_devices[sc->sc_ni2c_devices].compatible = compatible;
+	sc->sc_i2c_devices[sc->sc_ni2c_devices].compat = compatible;
 	sc->sc_i2c_devices[sc->sc_ni2c_devices].addr = addr;
 	sc->sc_ni2c_devices++;
 }
@@ -178,28 +174,12 @@ static int
 cuda_i2c_enumerate_devices(device_t dev, devhandle_t call_handle, void *v)
 {
 	struct i2c_enumerate_devices_args *args = v;
-	int i;
-	bool cbrv;
 
 	/* dev is the "iicbus" instance.  Cuda softc is in args. */
 	struct cuda_softc *sc = args->ia->ia_tag->ic_cookie;
 
-	for (i = 0; i < sc->sc_ni2c_devices; i++) {
-		args->ia->ia_addr = sc->sc_i2c_devices[i].addr;
-		args->ia->ia_name = sc->sc_i2c_devices[i].name;
-		args->ia->ia_clist = sc->sc_i2c_devices[i].compatible;
-		args->ia->ia_clist_size = strlen(args->ia->ia_clist) + 1;
-		/* Child gets no handle. */
-		devhandle_invalidate(&args->ia->ia_devhandle);
-
-		cbrv = args->callback(dev, args);
-
-		if (!cbrv) {
-			break;	/* callback decides if we continue */
-		}
-	}
-
-	return 0;
+	return i2c_enumerate_deventries(dev, call_handle, args,
+	    sc->sc_i2c_devices, sc->sc_ni2c_devices);
 }
 
 static device_call_t
