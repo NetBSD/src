@@ -1,4 +1,4 @@
-/*      $NetBSD: rumpclient.c,v 1.67 2016/09/06 07:45:41 martin Exp $	*/
+/*      $NetBSD: rumpclient.c,v 1.68 2021/09/11 14:23:04 christos Exp $	*/
 
 /*
  * Copyright (c) 2010, 2011 Antti Kantee.  All Rights Reserved.
@@ -50,7 +50,7 @@
 #define USE_SIGNALFD
 #endif
 
-__RCSID("$NetBSD: rumpclient.c,v 1.67 2016/09/06 07:45:41 martin Exp $");
+__RCSID("$NetBSD: rumpclient.c,v 1.68 2021/09/11 14:23:04 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/mman.h>
@@ -1087,7 +1087,7 @@ int
 rumpclient__closenotify(int *fdp, enum rumpclient_closevariant variant)
 {
 	int fd = *fdp;
-	int untilfd, rv;
+	int untilfd;
 	int newfd;
 
 	switch (variant) {
@@ -1096,9 +1096,7 @@ rumpclient__closenotify(int *fdp, enum rumpclient_closevariant variant)
 		for (; fd <= untilfd; fd++) {
 			if (fd == clispc.spc_fd || fd == holyfd)
 				continue;
-			rv = host_close(fd);
-			if (rv == -1)
-				return -1;
+			(void)host_close(fd);
 		}
 		*fdp = fd;
 		break;
