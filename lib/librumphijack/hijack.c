@@ -1,4 +1,4 @@
-/*      $NetBSD: hijack.c,v 1.133 2021/09/10 21:22:05 christos Exp $	*/
+/*      $NetBSD: hijack.c,v 1.134 2021/09/11 08:32:11 rillig Exp $	*/
 
 /*-
  * Copyright (c) 2011 Antti Kantee.  All Rights Reserved.
@@ -34,7 +34,7 @@
 #include <rump/rumpuser_port.h>
 
 #if !defined(lint)
-__RCSID("$NetBSD: hijack.c,v 1.133 2021/09/10 21:22:05 christos Exp $");
+__RCSID("$NetBSD: hijack.c,v 1.134 2021/09/11 08:32:11 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -187,7 +187,7 @@ enum dualcall {
 #if defined(__NetBSD__)
 
 #if !__NetBSD_Prereq__(5,99,7)
-#define REALSELECT pselect
+#define REALPSELECT pselect
 #define REALSELECT select
 #define REALPOLLTS pollts
 #define REALKEVENT kevent
