@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ksyms.c,v 1.102 2021/09/07 16:56:25 riastradh Exp $	*/
+/*	$NetBSD: kern_ksyms.c,v 1.103 2021/09/11 10:09:31 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_ksyms.c,v 1.102 2021/09/07 16:56:25 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ksyms.c,v 1.103 2021/09/11 10:09:31 riastradh Exp $");
 
 #if defined(_KERNEL) && defined(_KERNEL_OPT)
 #include "opt_copy_symtab.h"
@@ -86,6 +86,9 @@ __KERNEL_RCSID(0, "$NetBSD: kern_ksyms.c,v 1.102 2021/09/07 16:56:25 riastradh E
 #include <sys/param.h>
 #include <sys/queue.h>
 #include <sys/exec.h>
+#include <sys/file.h>
+#include <sys/filedesc.h>
+#include <sys/kauth.h>
 #include <sys/systm.h>
 #include <sys/conf.h>
 #include <sys/kmem.h>
@@ -94,6 +97,9 @@ __KERNEL_RCSID(0, "$NetBSD: kern_ksyms.c,v 1.102 2021/09/07 16:56:25 riastradh E
 #include <sys/ksyms.h>
 #include <sys/kernel.h>
 #include <sys/intr.h>
+#include <sys/stat.h>
+
+#include <uvm/uvm_extern.h>
 
 #ifdef DDB
 #include <ddb/db_output.h>
@@ -104,6 +110,15 @@ __KERNEL_RCSID(0, "$NetBSD: kern_ksyms.c,v 1.102 2021/09/07 16:56:25 riastradh E
 #include "ioconf.h"
 #endif
 
+struct ksyms_snapshot {
+	uint64_t		ks_refcnt;
+	uint64_t		ks_gen;
+	struct uvm_object	*ks_uobj;
+	size_t			ks_size;
+	dev_t			ks_dev;
+	int			ks_maxlen;
+};
+
 #define KSYMS_MAX_ID	98304
 #ifdef KDTRACE_HOOKS
 static uint32_t ksyms_nmap[KSYMS_MAX_ID];	/* sorted symbol table map */
@@ -112,15 +127,20 @@ static uint32_t *ksyms_nmap = NULL;
 #endif
 
 static int ksyms_maxlen;
-static uint64_t ksyms_opencnt;
-static struct ksyms_symtab *ksyms_last_snapshot;
 static bool ksyms_initted;
 static bool ksyms_loaded;
 static kmutex_t ksyms_lock __cacheline_aligned;
 static struct ksyms_symtab kernel_symtab;
+static kcondvar_t ksyms_cv;
+static struct lwp *ksyms_snapshotting;
+static struct ksyms_snapshot *ksyms_snapshot;
+static uint64_t ksyms_snapshot_gen;
 
 static void ksyms_hdr_init(const void *);
 static void ksyms_sizes_calc(void);
+static struct ksyms_snapshot *ksyms_snapshot_alloc(int, size_t, dev_t,
+    uint64_t);
+static void ksyms_snapshot_release(struct ksyms_snapshot *);
 
 #ifdef KSYMS_DEBUG
 #define	FOLLOW_CALLS		1
@@ -245,6 +265,7 @@ ksyms_init(void)
 
 	if (!ksyms_initted) {
 		mutex_init(&ksyms_lock, MUTEX_DEFAULT, IPL_NONE);
+		cv_init(&ksyms_cv, "ksyms");
 		ksyms_initted = true;
 	}
 }
@@ -328,7 +349,6 @@ addsymtab(const char *name, void *symstart, size_t symsize,
 	tab->sd_minsym = UINTPTR_MAX;
 	tab->sd_maxsym = 0;
 	tab->sd_usroffset = 0;
-	tab->sd_gone = false;
 	tab->sd_ctfstart = ctfstart;
 	tab->sd_ctfsize = ctfsize;
 	tab->sd_nmap = nmap;
@@ -446,9 +466,9 @@ addsymtab(const char *name, void *symstart, size_t symsize,
 	KASSERT(cold || mutex_owned(&ksyms_lock));
 
 	/*
-	 * Ensure ddb never witnesses an inconsistent state of the
-	 * queue, unless memory is so corrupt that we crash in
-	 * TAILQ_INSERT_TAIL.
+	 * Publish the symtab.  Do this at splhigh to ensure ddb never
+	 * witnesses an inconsistent state of the queue, unless memory
+	 * is so corrupt that we crash in TAILQ_INSERT_TAIL.
 	 */
 	s = splhigh();
 	TAILQ_INSERT_TAIL(&ksyms_symtabs, tab, sd_queue);
@@ -557,6 +577,9 @@ ksyms_addsyms_elf(int symsize, void *start, void *end)
 	    kernel_symtab.sd_symstart, kernel_symtab.sd_strstart,
 	    (long)kernel_symtab.sd_symsize/sizeof(Elf_Sym));
 #endif
+
+	/* Should be no snapshot to invalidate yet.  */
+	KASSERT(ksyms_snapshot == NULL);
 }
 
 /*
@@ -577,6 +600,9 @@ ksyms_addsyms_explicit(void *ehdr, void *symstart, size_t symsize,
 	ksyms_hdr_init(ehdr);
 	addsymtab("netbsd", symstart, symsize, strstart, strsize,
 	    &kernel_symtab, symstart, NULL, 0, ksyms_nmap);
+
+	/* Should be no snapshot to invalidate yet.  */
+	KASSERT(ksyms_snapshot == NULL);
 }
 
 /*
@@ -601,8 +627,6 @@ ksyms_getval_unlocked(const char *mod, const char *sym, Elf_Sym **symp,
 #endif
 
 	TAILQ_FOREACH(st, &ksyms_symtabs, sd_queue) {
-		if (__predict_false(st->sd_gone))
-			continue;
 		if (mod != NULL && strcmp(st->sd_name, mod))
 			continue;
 		if ((es = findsym(sym, st, type)) != NULL) {
@@ -636,8 +660,6 @@ ksyms_get_mod(const char *mod)
 
 	mutex_enter(&ksyms_lock);
 	TAILQ_FOREACH(st, &ksyms_symtabs, sd_queue) {
-		if (__predict_false(st->sd_gone))
-			continue;
 		if (mod != NULL && strcmp(st->sd_name, mod))
 			continue;
 		break;
@@ -671,8 +693,6 @@ ksyms_mod_foreach(const char *mod, ksyms_callback_t callback, void *opaque)
 
 	/* find the module */
 	TAILQ_FOREACH(st, &ksyms_symtabs, sd_queue) {
-		if (__predict_false(st->sd_gone))
-			continue;
 		if (mod != NULL && strcmp(st->sd_name, mod))
 			continue;
 
@@ -716,8 +736,6 @@ ksyms_getname(const char **mod, const char **sym, vaddr_t v, int f)
 		return ENOENT;
 
 	TAILQ_FOREACH(st, &ksyms_symtabs, sd_queue) {
-		if (st->sd_gone)
-			continue;
 		if (v < st->sd_minsym || v > st->sd_maxsym)
 			continue;
 		sz = st->sd_symsize/sizeof(Elf_Sym);
@@ -762,6 +780,7 @@ ksyms_modload(const char *name, void *symstart, vsize_t symsize,
     char *strstart, vsize_t strsize)
 {
 	struct ksyms_symtab *st;
+	struct ksyms_snapshot *ks;
 	void *nmap;
 
 	st = kmem_zalloc(sizeof(*st), KM_SLEEP);
@@ -770,7 +789,12 @@ ksyms_modload(const char *name, void *symstart, vsize_t symsize,
 	mutex_enter(&ksyms_lock);
 	addsymtab(name, symstart, symsize, strstart, strsize, st, symstart,
 	    NULL, 0, nmap);
+	ks = ksyms_snapshot;
+	ksyms_snapshot = NULL;
 	mutex_exit(&ksyms_lock);
+
+	if (ks)
+		ksyms_snapshot_release(ks);
 }
 
 /*
@@ -780,37 +804,48 @@ void
 ksyms_modunload(const char *name)
 {
 	struct ksyms_symtab *st;
-	bool do_free = false;
+	struct ksyms_snapshot *ks;
 	int s;
 
 	mutex_enter(&ksyms_lock);
 	TAILQ_FOREACH(st, &ksyms_symtabs, sd_queue) {
-		if (st->sd_gone)
-			continue;
 		if (strcmp(name, st->sd_name) != 0)
 			continue;
-		st->sd_gone = true;
-		ksyms_sizes_calc();
-		if (ksyms_opencnt == 0) {
-			/*
-			 * Ensure ddb never witnesses an inconsistent
-			 * state of the queue, unless memory is so
-			 * corrupt that we crash in TAILQ_REMOVE.
-			 */
-			s = splhigh();
-			TAILQ_REMOVE(&ksyms_symtabs, st, sd_queue);
-			splx(s);
-			do_free = true;
-		}
 		break;
 	}
-	mutex_exit(&ksyms_lock);
 	KASSERT(st != NULL);
 
-	if (do_free) {
-		kmem_free(st->sd_nmap, st->sd_nmapsize * sizeof(uint32_t));
-		kmem_free(st, sizeof(*st));
-	}
+	/* Wait for any snapshot in progress to complete.  */
+	while (ksyms_snapshotting)
+		cv_wait(&ksyms_cv, &ksyms_lock);
+
+	/*
+	 * Remove the symtab.  Do this at splhigh to ensure ddb never
+	 * witnesses an inconsistent state of the queue, unless memory
+	 * is so corrupt that we crash in TAILQ_REMOVE.
+	 */
+	s = splhigh();
+	TAILQ_REMOVE(&ksyms_symtabs, st, sd_queue);
+	splx(s);
+
+	/* Recompute the ksyms sizes now that we've removed st.  */
+	ksyms_sizes_calc();
+
+	/* Invalidate the global ksyms snapshot.  */
+	ks = ksyms_snapshot;
+	ksyms_snapshot = NULL;
+	mutex_exit(&ksyms_lock);
+
+	/*
+	 * No more references are possible.  Free the name map and the
+	 * symtab itself, which we had allocated in ksyms_modload.
+	 */
+	kmem_free(st->sd_nmap, st->sd_nmapsize * sizeof(uint32_t));
+	kmem_free(st, sizeof(*st));
+
+	/* Release the formerly global ksyms snapshot, if any.  */
+	if (ks)
+		ksyms_snapshot_release(ks);
 }
 
 #ifdef DDB
@@ -830,8 +865,6 @@ ksyms_sift(char *mod, char *sym, int mode)
 		return ENOENT;
 
 	TAILQ_FOREACH(st, &ksyms_symtabs, sd_queue) {
-		if (st->sd_gone)
-			continue;
 		if (mod && strcmp(mod, st->sd_name))
 			continue;
 		sb = st->sd_strstart - st->sd_usroffset;
@@ -893,8 +926,6 @@ ksyms_sizes_calc(void)
 
 	ksyms_symsz = ksyms_strsz = 0;
 	TAILQ_FOREACH(st, &ksyms_symtabs, sd_queue) {
-		if (__predict_false(st->sd_gone))
-			continue;
 		delta = ksyms_strsz - st->sd_usroffset;
 		if (delta != 0) {
 			for (i = 0; i < st->sd_symsize/sizeof(Elf_Sym); i++)
@@ -997,19 +1028,183 @@ ksyms_hdr_init(const void *hdraddr)
 	SHTCOPY(".SUNW_ctf");
 }
 
-static int
-ksymsopen(dev_t dev, int oflags, int devtype, struct lwp *l)
+static struct ksyms_snapshot *
+ksyms_snapshot_alloc(int maxlen, size_t size, dev_t dev, uint64_t gen)
 {
+	struct ksyms_snapshot *ks;
+
+	ks = kmem_zalloc(sizeof(*ks), KM_SLEEP);
+	ks->ks_refcnt = 1;
+	ks->ks_gen = gen;
+	ks->ks_uobj = uao_create(size, 0);
+	ks->ks_size = size;
+	ks->ks_dev = dev;
+	ks->ks_maxlen = maxlen;
+
+	return ks;
+}
+
+static void
+ksyms_snapshot_release(struct ksyms_snapshot *ks)
+{
+	uint64_t refcnt;
+
+	mutex_enter(&ksyms_lock);
+	refcnt = --ks->ks_refcnt;
+	mutex_exit(&ksyms_lock);
+
+	if (refcnt)
+		return;
+
+	uao_detach(ks->ks_uobj);
+	kmem_free(ks, sizeof(*ks));
+}
+
+static int
+ubc_copyfrombuf(struct uvm_object *uobj, struct uio *uio, const void *buf,
+    size_t n)
+{
+	struct iovec iov = { .iov_base = __UNCONST(buf), .iov_len = n };
+
+	uio->uio_iov = &iov;
+	uio->uio_iovcnt = 1;
+	uio->uio_resid = n;
+
+	return ubc_uiomove(uobj, uio, n, UVM_ADV_SEQUENTIAL, UBC_WRITE);
+}
+
+static int
+ksyms_take_snapshot(struct ksyms_snapshot *ks, struct ksyms_symtab *last)
+{
+	struct uvm_object *uobj = ks->ks_uobj;
+	struct uio uio;
+	struct ksyms_symtab *st;
+	int error;
+
+	/* Caller must have initiated snapshotting.  */
+	KASSERT(ksyms_snapshotting == curlwp);
+
+	/* Start a uio transfer to reuse incrementally.  */
+	uio.uio_offset = 0;
+	uio.uio_rw = UIO_WRITE; /* write from buffer to uobj */
+	UIO_SETUP_SYSSPACE(&uio);
+
+	/*
+	 * First: Copy out the ELF header.
+	 */
+	error = ubc_copyfrombuf(uobj, &uio, &ksyms_hdr, sizeof(ksyms_hdr));
+	if (error)
+		return error;
+
+	/*
+	 * Copy out the symbol table.  The list of symtabs is
+	 * guaranteed to be nonempty because we always have an entry
+	 * for the main kernel.  We stop at last, not at the end of the
+	 * tailq or NULL, because entries beyond last are not included
+	 * in this snapshot (and may not be fully initialized memory as
+	 * we witness it).
+	 */
+	KASSERT(uio.uio_offset == sizeof(struct ksyms_hdr));
+	for (st = TAILQ_FIRST(&ksyms_symtabs);
+	     ;
+	     st = TAILQ_NEXT(st, sd_queue)) {
+		error = ubc_copyfrombuf(uobj, &uio, st->sd_symstart,
+		    st->sd_symsize);
+		if (error)
+			return error;
+		if (st == last)
+			break;
+	}
+
+	/*
+	 * Copy out the string table
+	 */
+	KASSERT(uio.uio_offset == sizeof(struct ksyms_hdr) +
+	    ksyms_hdr.kh_shdr[SYMTAB].sh_size);
+	for (st = TAILQ_FIRST(&ksyms_symtabs);
+	     ;
+	     st = TAILQ_NEXT(st, sd_queue)) {
+		error = ubc_copyfrombuf(uobj, &uio, st->sd_strstart,
+		    st->sd_strsize);
+		if (error)
+			return error;
+		if (st == last)
+			break;
+	}
+
+	/*
+	 * Copy out the CTF table.
+	 */
+	KASSERT(uio.uio_offset == sizeof(struct ksyms_hdr) +
+	    ksyms_hdr.kh_shdr[SYMTAB].sh_size +
+	    ksyms_hdr.kh_shdr[STRTAB].sh_size);
+	st = TAILQ_FIRST(&ksyms_symtabs);
+	if (st->sd_ctfstart != NULL) {
+		error = ubc_copyfrombuf(uobj, &uio, st->sd_ctfstart,
+		    st->sd_ctfsize);
+		if (error)
+			return error;
+	}
+
+	KASSERT(uio.uio_offset == sizeof(struct ksyms_hdr) +
+	    ksyms_hdr.kh_shdr[SYMTAB].sh_size +
+	    ksyms_hdr.kh_shdr[STRTAB].sh_size +
+	    ksyms_hdr.kh_shdr[SHCTF].sh_size);
+	KASSERT(uio.uio_offset == ks->ks_size);
+
+	return 0;
+}
+
+static const struct fileops ksyms_fileops;
+
+static int
+ksymsopen(dev_t dev, int flags, int devtype, struct lwp *l)
+{
+	struct file *fp = NULL;
+	int fd = -1;
+	struct ksyms_snapshot *ks = NULL;
+	size_t size;
+	struct ksyms_symtab *last;
+	int maxlen;
+	uint64_t gen;
+	int error;
+
 	if (minor(dev) != 0 || !ksyms_loaded)
 		return ENXIO;
 
-	/*
-	 * Create a "snapshot" of the kernel symbol table.  Bumping
-	 * ksyms_opencnt will prevent symbol tables from being freed.
-	 */
+	/* Allocate a private file.  */
+	error = fd_allocfile(&fp, &fd);
+	if (error)
+		return error;
+
 	mutex_enter(&ksyms_lock);
-	if (ksyms_opencnt++)
+
+	/*
+	 * Wait until we have a snapshot, or until there is no snapshot
+	 * being taken right now so we can take one.
+	 */
+	while ((ks = ksyms_snapshot) == NULL && ksyms_snapshotting) {
+		error = cv_wait_sig(&ksyms_cv, &ksyms_lock);
+		if (error)
+			goto out;
+	}
+
+	/*
+	 * If there's a usable snapshot, increment its reference count
+	 * (can't overflow, 64-bit) and just reuse it.
+	 */
+	if (ks) {
+		ks->ks_refcnt++;
 		goto out;
+	}
+
+	/* Find the current length of the symtab object. */
+	size = sizeof(struct ksyms_hdr);
+	size += ksyms_strsz;
+	size += ksyms_symsz;
+	size += ksyms_ctfsz;
+
+	/* Start a new snapshot.  */
 	ksyms_hdr.kh_shdr[SYMTAB].sh_size = ksyms_symsz;
 	ksyms_hdr.kh_shdr[SYMTAB].sh_info = ksyms_symsz / sizeof(Elf_Sym);
 	ksyms_hdr.kh_shdr[STRTAB].sh_offset = ksyms_symsz +
@@ -1018,143 +1213,216 @@ ksymsopen(dev_t dev, int oflags, int devtype, struct lwp *l)
 	ksyms_hdr.kh_shdr[SHCTF].sh_offset = ksyms_strsz +
 	    ksyms_hdr.kh_shdr[STRTAB].sh_offset;
 	ksyms_hdr.kh_shdr[SHCTF].sh_size = ksyms_ctfsz;
-	ksyms_last_snapshot = TAILQ_LAST(&ksyms_symtabs, ksyms_symtab_queue);
-out:	mutex_exit(&ksyms_lock);
+	last = TAILQ_LAST(&ksyms_symtabs, ksyms_symtab_queue);
+	maxlen = ksyms_maxlen;
+	gen = ksyms_snapshot_gen++;
 
-	return 0;
-}
+	/*
+	 * Prevent ksyms entries from being removed while we take the
+	 * snapshot.
+	 */
+	KASSERT(ksyms_snapshotting == NULL);
+	ksyms_snapshotting = curlwp;
+	mutex_exit(&ksyms_lock);
 
-static int
-ksymsclose(dev_t dev, int oflags, int devtype, struct lwp *l)
-{
-	struct ksyms_symtab *st, *next;
-	TAILQ_HEAD(, ksyms_symtab) to_free = TAILQ_HEAD_INITIALIZER(to_free);
-	int s;
+	/* Create a snapshot and write the symtab to it.  */
+	ks = ksyms_snapshot_alloc(maxlen, size, dev, gen);
+	error = ksyms_take_snapshot(ks, last);
 
-	/* Discard references to symbol tables. */
+	/*
+	 * Snapshot creation is done.  Wake up anyone waiting to remove
+	 * entries (module unload).
+	 */
 	mutex_enter(&ksyms_lock);
-	if (--ksyms_opencnt)
-		goto out;
-	ksyms_last_snapshot = NULL;
-	TAILQ_FOREACH_SAFE(st, &ksyms_symtabs, sd_queue, next) {
-		if (st->sd_gone) {
-			/*
-			 * Ensure ddb never witnesses an inconsistent
-			 * state of the queue, unless memory is so
-			 * corrupt that we crash in TAILQ_REMOVE.
-			 */
-			s = splhigh();
-			TAILQ_REMOVE(&ksyms_symtabs, st, sd_queue);
-			splx(s);
-			TAILQ_INSERT_TAIL(&to_free, st, sd_queue);
-		}
-	}
-	if (!TAILQ_EMPTY(&to_free))
-		ksyms_sizes_calc();
-out:	mutex_exit(&ksyms_lock);
+	KASSERTMSG(ksyms_snapshotting == curlwp, "lwp %p stole snapshot",
+	    ksyms_snapshotting);
+	ksyms_snapshotting = NULL;
+	cv_broadcast(&ksyms_cv);
 
-	TAILQ_FOREACH_SAFE(st, &to_free, sd_queue, next) {
-		kmem_free(st->sd_nmap, st->sd_nmapsize * sizeof(uint32_t));
-		kmem_free(st, sizeof(*st));
+	/* If we failed, give up.  */
+	if (error)
+		goto out;
+
+	/* Cache the snapshot for the next reader.  */
+	KASSERT(ksyms_snapshot == NULL);
+	ksyms_snapshot = ks;
+	ks->ks_refcnt++;
+	KASSERT(ks->ks_refcnt == 2);
+
+out:	mutex_exit(&ksyms_lock);
+	if (error) {
+		if (fp)
+			fd_abort(curproc, fp, fd);
+		if (ks)
+			ksyms_snapshot_release(ks);
+	} else {
+		KASSERT(fp);
+		KASSERT(ks);
+		error = fd_clone(fp, fd, flags, &ksyms_fileops, ks);
+		KASSERTMSG(error == EMOVEFD, "error=%d", error);
 	}
+	return error;
+}
+
+static int
+ksymsclose(struct file *fp)
+{
+	struct ksyms_snapshot *ks = fp->f_data;
+
+	ksyms_snapshot_release(ks);
 
 	return 0;
 }
 
 static int
-ksymsread(dev_t dev, struct uio *uio, int ioflag)
+ksymsread(struct file *fp, off_t *offp, struct uio *uio, kauth_cred_t cred,
+    int flags)
 {
-	struct ksyms_symtab *st;
-	size_t filepos, inpos, off;
+	const struct ksyms_snapshot *ks = fp->f_data;
+	size_t count;
 	int error;
 
 	/*
-	 * First: Copy out the ELF header.   XXX Lose if ksymsopen()
-	 * occurs during read of the header.
+	 * Since we don't have a per-object lock, we might as well use
+	 * the struct file lock to serialize access to fp->f_offset --
+	 * but if the caller isn't relying on or updating fp->f_offset,
+	 * there's no need to do even that.  We could use ksyms_lock,
+	 * but why bother with a global lock if not needed?  Either
+	 * way, the lock we use here must agree with what ksymsseek
+	 * takes (nothing else in ksyms uses fp->f_offset).
 	 */
-	off = uio->uio_offset;
-	if (off < sizeof(struct ksyms_hdr)) {
-		error = uiomove((char *)&ksyms_hdr + off,
-		    sizeof(struct ksyms_hdr) - off, uio);
-		if (error != 0)
-			return error;
+	if (offp == &fp->f_offset)
+		mutex_enter(&fp->f_lock);
+
+	/* Refuse negative offsets.  */
+	if (*offp < 0) {
+		error = EINVAL;
+		goto out;
+	}
+
+	/* Return nothing at or past end of file.  */
+	if (*offp >= ks->ks_size) {
+		error = 0;
+		goto out;
 	}
 
 	/*
-	 * Copy out the symbol table.
+	 * 1. Set up the uio to transfer from offset *offp.
+	 * 2. Transfer as many bytes as we can (at most uio->uio_resid
+	 *    or what's left in the ksyms).
+	 * 3. If requested, update *offp to reflect the number of bytes
+	 *    transferred.
 	 */
-	filepos = sizeof(struct ksyms_hdr);
-	TAILQ_FOREACH(st, &ksyms_symtabs, sd_queue) {
-		if (__predict_false(st->sd_gone))
-			continue;
-		if (uio->uio_resid == 0)
-			return 0;
-		if (uio->uio_offset <= st->sd_symsize + filepos) {
-			inpos = uio->uio_offset - filepos;
-			error = uiomove((char *)st->sd_symstart + inpos,
-			   st->sd_symsize - inpos, uio);
-			if (error != 0)
-				return error;
-		}
-		filepos += st->sd_symsize;
-		if (st == ksyms_last_snapshot)
-			break;
-	}
+	uio->uio_offset = *offp;
+	count = uio->uio_resid;
+	error = ubc_uiomove(ks->ks_uobj, uio, MIN(count, ks->ks_size - *offp),
+	    UVM_ADV_SEQUENTIAL, UBC_READ|UBC_PARTIALOK);
+	if (flags & FOF_UPDATE_OFFSET)
+		*offp += count - uio->uio_resid;
 
-	/*
-	 * Copy out the string table
-	 */
-	KASSERT(filepos == sizeof(struct ksyms_hdr) +
-	    ksyms_hdr.kh_shdr[SYMTAB].sh_size);
-	for (st = TAILQ_FIRST(&ksyms_symtabs);
-	     ;
-	     st = TAILQ_NEXT(st, sd_queue)) {
-		if (uio->uio_resid == 0)
-			return 0;
-		if (uio->uio_offset <= st->sd_strsize + filepos) {
-			inpos = uio->uio_offset - filepos;
-			error = uiomove((char *)st->sd_strstart + inpos,
-			   st->sd_strsize - inpos, uio);
-			if (error != 0)
-				return error;
-		}
-		filepos += st->sd_strsize;
-		if (st == ksyms_last_snapshot)
-			break;
-	}
+out:	if (offp == &fp->f_offset)
+		mutex_exit(&fp->f_lock);
+	return error;
+}
 
-	/*
-	 * Copy out the CTF table.
-	 */
-	st = TAILQ_FIRST(&ksyms_symtabs);
-	if (st->sd_ctfstart != NULL) {
-		if (uio->uio_resid == 0)
-			return 0;
-		if (uio->uio_offset <= st->sd_ctfsize + filepos) {
-			inpos = uio->uio_offset - filepos;
-			error = uiomove((char *)st->sd_ctfstart + inpos,
-			    st->sd_ctfsize - inpos, uio);
-			if (error != 0)
-				return error;
-		}
-		filepos += st->sd_ctfsize;
-	}
+static int
+ksymsstat(struct file *fp, struct stat *st)
+{
+	const struct ksyms_snapshot *ks = fp->f_data;
+
+	memset(st, 0, sizeof(*st));
+
+	st->st_dev = NODEV;
+	st->st_ino = 0;
+	st->st_mode = S_IFCHR;
+	st->st_nlink = 1;
+	st->st_uid = kauth_cred_geteuid(fp->f_cred);
+	st->st_gid = kauth_cred_getegid(fp->f_cred);
+	st->st_rdev = ks->ks_dev;
+	st->st_size = ks->ks_size;
+	/* zero time */
+	st->st_blksize = MAXPHYS; /* XXX arbitrary */
+	st->st_blocks = 0;
+	st->st_gen = ks->ks_gen;
 
 	return 0;
 }
 
 static int
-ksymswrite(dev_t dev, struct uio *uio, int ioflag)
+ksymsmmap(struct file *fp, off_t *offp, size_t nbytes, int prot, int *flagsp,
+    int *advicep, struct uvm_object **uobjp, int *maxprotp)
 {
-	return EROFS;
+	const struct ksyms_snapshot *ks = fp->f_data;
+
+	/* uvm_mmap guarantees page-aligned offset and size.  */
+	KASSERT(*offp == round_page(*offp));
+	KASSERT(nbytes == round_page(nbytes));
+
+	/* Refuse negative offsets.  */
+	if (*offp < 0)
+		return EINVAL;
+
+	/* Refuse mappings that pass the end of file.  */
+	if (nbytes > round_page(ks->ks_size) ||
+	    *offp > round_page(ks->ks_size) - nbytes)
+		return EINVAL;	/* XXX ??? */
+
+	/* Success!  */
+	*advicep = UVM_ADV_SEQUENTIAL;
+	*uobjp = ks->ks_uobj;
+	*maxprotp = prot & VM_PROT_READ;
+	return 0;
+}
+
+static int
+ksymsseek(struct file *fp, off_t delta, int whence, off_t *newoffp, int flags)
+{
+	struct ksyms_snapshot *ks = fp->f_data;
+	off_t base, newoff;
+	int error;
+
+	mutex_enter(&fp->f_lock);
+
+	switch (whence) {
+	case SEEK_CUR:
+		base = fp->f_offset;
+		break;
+	case SEEK_END:
+		base = ks->ks_size;
+		break;
+	case SEEK_SET:
+		base = 0;
+		break;
+	default:
+		error = EINVAL;
+		goto out;
+	}
+
+	/* Compute the new offset and validate it.  */
+	newoff = base + delta;	/* XXX arithmetic overflow */
+	if (newoff < 0) {
+		error = EINVAL;
+		goto out;
+	}
+
+	/* Success!  */
+	if (newoffp)
+		*newoffp = newoff;
+	if (flags & FOF_UPDATE_OFFSET)
+		fp->f_offset = newoff;
+	error = 0;
+
+out:	mutex_exit(&fp->f_lock);
+	return error;
 }
 
 __CTASSERT(offsetof(struct ksyms_ogsymbol, kg_name) == offsetof(struct ksyms_gsymbol, kg_name));
 __CTASSERT(offsetof(struct ksyms_gvalue, kv_name) == offsetof(struct ksyms_gsymbol, kg_name));
 
 static int
-ksymsioctl(dev_t dev, u_long cmd, void *data, int fflag, struct lwp *l)
+ksymsioctl(struct file *fp, u_long cmd, void *data)
 {
+	struct ksyms_snapshot *ks = fp->f_data;
 	struct ksyms_ogsymbol *okg = (struct ksyms_ogsymbol *)data;
 	struct ksyms_gsymbol *kg = (struct ksyms_gsymbol *)data;
 	struct ksyms_gvalue *kv = (struct ksyms_gvalue *)data;
@@ -1165,8 +1433,8 @@ ksymsioctl(dev_t dev, u_long cmd, void *data, int fflag, struct lwp *l)
 	char *str = NULL;
 	int len;
 
-	/* Read ksyms_maxlen only once while not holding the lock. */
-	len = ksyms_maxlen;
+	/* Read cached ksyms_maxlen.  */
+	len = ks->ks_maxlen;
 
 	if (cmd == OKIOCGVALUE || cmd == OKIOCGSYMBOL ||
 	    cmd == KIOCGVALUE || cmd == KIOCGSYMBOL) {
@@ -1196,8 +1464,6 @@ ksymsioctl(dev_t dev, u_long cmd, void *data, int fflag, struct lwp *l)
 		 */
 		mutex_enter(&ksyms_lock);
 		TAILQ_FOREACH(st, &ksyms_symtabs, sd_queue) {
-			if (st->sd_gone)
-				continue;
 			if ((sym = findsym(str, st, KSYMS_ANY)) == NULL)
 				continue;
 #ifdef notdef
@@ -1238,8 +1504,6 @@ ksymsioctl(dev_t dev, u_long cmd, void *data, int fflag, struct lwp *l)
 		 */
 		mutex_enter(&ksyms_lock);
 		TAILQ_FOREACH(st, &ksyms_symtabs, sd_queue) {
-			if (st->sd_gone)
-				continue;
 			if ((sym = findsym(str, st, KSYMS_ANY)) == NULL)
 				continue;
 #ifdef notdef
@@ -1264,10 +1528,7 @@ ksymsioctl(dev_t dev, u_long cmd, void *data, int fflag, struct lwp *l)
 		/*
 		 * Get total size of symbol table.
 		 */
-		mutex_enter(&ksyms_lock);
-		*(int *)data = ksyms_strsz + ksyms_symsz +
-		    sizeof(struct ksyms_hdr);
-		mutex_exit(&ksyms_lock);
+		*(int *)data = ks->ks_size;
 		break;
 
 	default:
@@ -1280,15 +1541,30 @@ ksymsioctl(dev_t dev, u_long cmd, void *data, int fflag, struct lwp *l)
 
 const struct cdevsw ksyms_cdevsw = {
 	.d_open = ksymsopen,
-	.d_close = ksymsclose,
-	.d_read = ksymsread,
-	.d_write = ksymswrite,
-	.d_ioctl = ksymsioctl,
-	.d_stop = nullstop,
+	.d_close = noclose,
+	.d_read = noread,
+	.d_write = nowrite,
+	.d_ioctl = noioctl,
+	.d_stop = nostop,
 	.d_tty = notty,
 	.d_poll = nopoll,
 	.d_mmap = nommap,
-	.d_kqfilter = nullkqfilter,
+	.d_kqfilter = nokqfilter,
 	.d_discard = nodiscard,
 	.d_flag = D_OTHER | D_MPSAFE
+};
+
+static const struct fileops ksyms_fileops = {
+	.fo_name = "ksyms",
+	.fo_read = ksymsread,
+	.fo_write = fbadop_write,
+	.fo_ioctl = ksymsioctl,
+	.fo_fcntl = fnullop_fcntl,
+	.fo_poll = fnullop_poll,
+	.fo_stat = ksymsstat,
+	.fo_close = ksymsclose,
+	.fo_kqfilter = fnullop_kqfilter,
+	.fo_restart = fnullop_restart,
+	.fo_mmap = ksymsmmap,
+	.fo_seek = ksymsseek,
 };
