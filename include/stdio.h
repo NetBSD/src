@@ -1,4 +1,4 @@
-/*	$NetBSD: stdio.h,v 1.99 2020/03/20 01:08:42 joerg Exp $	*/
+/*	$NetBSD: stdio.h,v 1.100 2021/09/11 08:34:24 rillig Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -325,7 +325,7 @@ int	getchar_unlocked(void);
 int	putc_unlocked(int, FILE *);
 int	putchar_unlocked(int);
 __END_DECLS
-#endif /* C99 || _POSIX_C_SOURCE >= 1995056 || _XOPEN_SOURCE >= 500 || ... */
+#endif /* C99 || _POSIX_C_SOURCE >= 199506 || _XOPEN_SOURCE >= 500 || ... */
 
 /*
  * Functions defined in POSIX 1003.2 and XPG2 or later.
