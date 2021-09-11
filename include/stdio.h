@@ -1,4 +1,4 @@
-/*	$NetBSD: stdio.h,v 1.100 2021/09/11 08:34:24 rillig Exp $	*/
+/*	$NetBSD: stdio.h,v 1.101 2021/09/11 16:58:38 rillig Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -344,7 +344,7 @@ __END_DECLS
 #endif
 
 /*
- * Functions defined in ISO XPG4.2, ISO C99, POSIX 1003.1-2001 or later.
+ * Functions defined in XPG4.2, ISO C99, POSIX 1003.1-2001 or later.
  */
 #if defined(__STDIO_C99_FEATURES) || (_POSIX_C_SOURCE - 0) >= 200112L || \
     (defined(_XOPEN_SOURCE) && defined(_XOPEN_SOURCE_EXTENDED)) || \
