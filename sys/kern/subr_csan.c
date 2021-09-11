@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_csan.c,v 1.12 2021/09/07 16:56:13 riastradh Exp $	*/
+/*	$NetBSD: subr_csan.c,v 1.13 2021/09/11 10:09:55 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2019-2020 Maxime Villard, m00nbsd.net
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_csan.c,v 1.12 2021/09/07 16:56:13 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_csan.c,v 1.13 2021/09/11 10:09:55 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -40,6 +40,7 @@ __KERNEL_RCSID(0, "$NetBSD: subr_csan.c,v 1.12 2021/09/07 16:56:13 riastradh Exp
 #include <sys/types.h>
 #include <sys/csan.h>
 #include <sys/cpu.h>
+#include <sys/pserialize.h>
 
 #ifdef KCSAN_PANIC
 #define REPORT panic
@@ -94,7 +95,9 @@ static inline void
 kcsan_report(csan_cell_t *new, cpuid_t newcpu, csan_cell_t *old, cpuid_t oldcpu)
 {
 	const char *newsym, *oldsym;
+	int s;
 
+	s = pserialize_read_enter();
 	if (ksyms_getname(NULL, &newsym, (vaddr_t)new->pc, KSYMS_PROC) != 0) {
 		newsym = "Unknown";
 	}
@@ -110,6 +113,7 @@ kcsan_report(csan_cell_t *new, cpuid_t newcpu, csan_cell_t *old, cpuid_t oldcpu)
 	    oldcpu,
 	    (old->atomic ? "Atomic " : ""), (old->write ? "Write" : "Read"),
 	    (void *)old->addr, old->size, (void *)old->pc, oldsym);
+	pserialize_read_exit(s);
 	kcsan_md_unwind();
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.302 2021/09/07 16:56:13 riastradh Exp $ */
+/*	$NetBSD: machdep.c,v 1.303 2021/09/11 10:09:55 riastradh Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2019 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.302 2021/09/07 16:56:13 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.303 2021/09/11 10:09:55 riastradh Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -102,6 +102,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.302 2021/09/07 16:56:13 riastradh Exp 
 #include <sys/cpu.h>
 #include <sys/module.h>
 #include <sys/ksyms.h>
+#include <sys/pserialize.h>
 
 #include <sys/exec_aout.h>
 
@@ -836,17 +837,22 @@ get_symbol_and_offset(const char **mod, const char **sym, vaddr_t *offset, vaddr
 {
 	static char symbuf[256];
 	unsigned long symaddr;
+	int s, error;
 
 #if NKSYMS || defined(DDB) || defined(MODULAR)
+	s = pserialize_read_enter();
 	if (ksyms_getname(mod, sym, pc,
 			  KSYMS_CLOSEST|KSYMS_PROC|KSYMS_ANY) == 0) {
-		if (ksyms_getval(*mod, *sym, &symaddr,
-				 KSYMS_CLOSEST|KSYMS_PROC|KSYMS_ANY) != 0)
+		error = ksyms_getval(*mod, *sym, &symaddr,
+		    KSYMS_CLOSEST|KSYMS_PROC|KSYMS_ANY);
+		pserialize_read_exit(s);
+		if (error)
 			goto failed;
 
 		*offset = (vaddr_t)(pc - symaddr);
 		return;
 	}
+	pserialize_read_exit(s);
 #endif
  failed:
 	snprintf(symbuf, sizeof symbuf, "%llx", (unsigned long long)pc);
