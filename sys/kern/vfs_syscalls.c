@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.551 2021/07/03 09:39:26 mlelstv Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.552 2021/09/11 10:08:55 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009, 2019, 2020 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.551 2021/07/03 09:39:26 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.552 2021/09/11 10:08:55 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_fileassoc.h"
@@ -2856,50 +2856,30 @@ sys_lseek(struct lwp *l, const struct sys_lseek_args *uap, register_t *retval)
 		syscallarg(off_t) offset;
 		syscallarg(int) whence;
 	} */
-	kauth_cred_t cred = l->l_cred;
 	file_t *fp;
-	struct vnode *vp;
-	struct vattr vattr;
-	off_t newoff;
 	int error, fd;
+
+	switch (SCARG(uap, whence)) {
+	case SEEK_CUR:
+	case SEEK_END:
+	case SEEK_SET:
+		break;
+	default:
+		return EINVAL;
+	}
 
 	fd = SCARG(uap, fd);
 
 	if ((fp = fd_getfile(fd)) == NULL)
 		return (EBADF);
 
-	vp = fp->f_vnode;
-	if (fp->f_type != DTYPE_VNODE || vp->v_type == VFIFO) {
+	if (fp->f_ops->fo_seek == NULL) {
 		error = ESPIPE;
 		goto out;
 	}
 
-	vn_lock(vp, LK_SHARED | LK_RETRY);
-
-	switch (SCARG(uap, whence)) {
-	case SEEK_CUR:
-		newoff = fp->f_offset + SCARG(uap, offset);
-		break;
-	case SEEK_END:
-		error = VOP_GETATTR(vp, &vattr, cred);
-		if (error) {
-			VOP_UNLOCK(vp);
-			goto out;
-		}
-		newoff = SCARG(uap, offset) + vattr.va_size;
-		break;
-	case SEEK_SET:
-		newoff = SCARG(uap, offset);
-		break;
-	default:
-		error = EINVAL;
-		VOP_UNLOCK(vp);
-		goto out;
-	}
-	VOP_UNLOCK(vp);
-	if ((error = VOP_SEEK(vp, fp->f_offset, newoff, cred)) == 0) {
-		*(off_t *)retval = fp->f_offset = newoff;
-	}
+	error = (*fp->f_ops->fo_seek)(fp, SCARG(uap, offset),
+	    SCARG(uap, whence), (off_t *)retval, FOF_UPDATE_OFFSET);
  out:
  	fd_putfile(fd);
 	return (error);
@@ -2918,7 +2898,6 @@ sys_pread(struct lwp *l, const struct sys_pread_args *uap, register_t *retval)
 		syscallarg(off_t) offset;
 	} */
 	file_t *fp;
-	struct vnode *vp;
 	off_t offset;
 	int error, fd = SCARG(uap, fd);
 
@@ -2930,19 +2909,14 @@ sys_pread(struct lwp *l, const struct sys_pread_args *uap, register_t *retval)
 		return (EBADF);
 	}
 
-	vp = fp->f_vnode;
-	if (fp->f_type != DTYPE_VNODE || vp->v_type == VFIFO) {
+	if (fp->f_ops->fo_seek == NULL) {
 		error = ESPIPE;
 		goto out;
 	}
 
 	offset = SCARG(uap, offset);
-
-	/*
-	 * XXX This works because no file systems actually
-	 * XXX take any action on the seek operation.
-	 */
-	if ((error = VOP_SEEK(vp, fp->f_offset, offset, fp->f_cred)) != 0)
+	error = (*fp->f_ops->fo_seek)(fp, offset, SEEK_SET, &offset, 0);
+	if (error)
 		goto out;
 
 	/* dofileread() will unuse the descriptor for us */
@@ -2985,7 +2959,6 @@ sys_pwrite(struct lwp *l, const struct sys_pwrite_args *uap, register_t *retval)
 		syscallarg(off_t) offset;
 	} */
 	file_t *fp;
-	struct vnode *vp;
 	off_t offset;
 	int error, fd = SCARG(uap, fd);
 
@@ -2997,19 +2970,14 @@ sys_pwrite(struct lwp *l, const struct sys_pwrite_args *uap, register_t *retval)
 		return (EBADF);
 	}
 
-	vp = fp->f_vnode;
-	if (fp->f_type != DTYPE_VNODE || vp->v_type == VFIFO) {
+	if (fp->f_ops->fo_seek == NULL) {
 		error = ESPIPE;
 		goto out;
 	}
 
 	offset = SCARG(uap, offset);
-
-	/*
-	 * XXX This works because no file systems actually
-	 * XXX take any action on the seek operation.
-	 */
-	if ((error = VOP_SEEK(vp, fp->f_offset, offset, fp->f_cred)) != 0)
+	error = (*fp->f_ops->fo_seek)(fp, offset, SEEK_SET, &offset, 0);
+	if (error)
 		goto out;
 
 	/* dofilewrite() will unuse the descriptor for us */
