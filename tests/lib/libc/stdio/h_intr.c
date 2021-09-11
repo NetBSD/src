@@ -1,4 +1,4 @@
-/*	$NetBSD: h_intr.c,v 1.5 2021/07/10 07:50:20 christos Exp $	*/
+/*	$NetBSD: h_intr.c,v 1.6 2021/09/11 18:18:28 rillig Exp $	*/
 
 /**
  * Test of interrupted I/O to popen()ed commands.
@@ -15,7 +15,7 @@
  *
  * Check program:
  * find /mnt -type f -exec ./h_intr -b 512 -c run.sh {} +
- * 
+ *
  * ./run.sh:
 	#!/bin/sh
 	set -eu
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: h_intr.c,v 1.5 2021/07/10 07:50:20 christos Exp $");
+__RCSID("$NetBSD: h_intr.c,v 1.6 2021/09/11 18:18:28 rillig Exp $");
 
 #include <time.h>
 #include <err.h>
@@ -355,13 +355,13 @@ xsignal(int signo, sig_t handler)
 
 static void
 alarmtimer(int wait)
-{               
+{
 	struct itimerval itv;
 
 	itv.it_value.tv_sec = wait / MS;
 	itv.it_value.tv_usec = (wait - itv.it_value.tv_sec * MS) * MS;
 	itv.it_interval = itv.it_value;
-	setitimer(ITIMER_REAL, &itv, NULL); 
+	setitimer(ITIMER_REAL, &itv, NULL);
 }
 
 static void
