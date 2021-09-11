@@ -1,4 +1,4 @@
-/*	$NetBSD: stdio.h,v 1.103 2021/09/11 19:05:06 rillig Exp $	*/
+/*	$NetBSD: stdio.h,v 1.104 2021/09/11 20:05:33 rillig Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -383,8 +383,7 @@ __END_DECLS
 #endif /* (_POSIX_C_SOURCE - 0) >= 200112L || _XOPEN_SOURCE >= 500 || ... */
 
 /*
- * Functions defined in ISO C99.  Still put under _NETBSD_SOURCE due to
- * backward compatible.
+ * Functions defined in ISO C99.
  */
 #if defined(__STDIO_C99_FEATURES)
 __BEGIN_DECLS
