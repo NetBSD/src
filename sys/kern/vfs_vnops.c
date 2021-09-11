@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnops.c,v 1.222 2021/09/11 10:08:55 riastradh Exp $	*/
+/*	$NetBSD: vfs_vnops.c,v 1.223 2021/09/11 10:09:13 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.222 2021/09/11 10:08:55 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.223 2021/09/11 10:09:13 riastradh Exp $");
 
 #include "veriexec.h"
 
@@ -817,10 +817,11 @@ vn_ioctl(file_t *fp, u_long com, void *data)
 		if (com == FIONREAD) {
 			vn_lock(vp, LK_SHARED | LK_RETRY);
 			error = VOP_GETATTR(vp, &vattr, kauth_cred_get());
+			if (error == 0)
+				*(int *)data = vattr.va_size - fp->f_offset;
 			VOP_UNLOCK(vp);
 			if (error)
 				return (error);
-			*(int *)data = vattr.va_size - fp->f_offset;
 			return (0);
 		}
 		if ((com == FIONWRITE) || (com == FIONSPACE)) {
