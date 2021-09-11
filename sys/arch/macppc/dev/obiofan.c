@@ -1,8 +1,7 @@
-/*	$NetBSD: obiofan.c,v 1.1 2021/09/10 23:32:17 macallan Exp $	*/
-/*	Id: ki2c.c,v 1.7 2002/10/05 09:56:05 tsubai Exp	*/
+/*	$NetBSD: obiofan.c,v 1.2 2021/09/11 16:29:18 macallan Exp $	*/
 
 /*-
- * Copyright (c) 2006 Michael Lorenz
+ * Copyright (c) 2021 Michael Lorenz
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
