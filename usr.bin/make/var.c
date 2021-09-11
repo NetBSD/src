@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.949 2021/09/06 19:38:30 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.950 2021/09/11 09:16:14 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -140,7 +140,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.949 2021/09/06 19:38:30 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.950 2021/09/11 09:16:14 rillig Exp $");
 
 /*
  * Variables are defined using one of the VAR=value assignments.  Their
@@ -2564,6 +2564,7 @@ TryParseTime(const char **pp, time_t *out_time)
 static ApplyModifierResult
 ApplyModifier_Gmtime(const char **pp, ModChain *ch)
 {
+	Expr *expr;
 	time_t utc;
 
 	const char *mod = *pp;
@@ -2583,9 +2584,10 @@ ApplyModifier_Gmtime(const char **pp, ModChain *ch)
 		*pp = mod + 6;
 	}
 
-	if (ModChain_ShouldEval(ch))
-		Expr_SetValueOwn(ch->expr,
-		    VarStrftime(ch->expr->value.str, true, utc));
+	expr = ch->expr;
+	if (Expr_ShouldEval(expr))
+		Expr_SetValueOwn(expr,
+		    VarStrftime(expr->value.str, true, utc));
 
 	return AMR_OK;
 }
@@ -2594,6 +2596,7 @@ ApplyModifier_Gmtime(const char **pp, ModChain *ch)
 static ApplyModifierResult
 ApplyModifier_Localtime(const char **pp, ModChain *ch)
 {
+	Expr *expr;
 	time_t utc;
 
 	const char *mod = *pp;
@@ -2613,9 +2616,10 @@ ApplyModifier_Localtime(const char **pp, ModChain *ch)
 		*pp = mod + 9;
 	}
 
-	if (ModChain_ShouldEval(ch))
-		Expr_SetValueOwn(ch->expr,
-		    VarStrftime(ch->expr->value.str, false, utc));
+	expr = ch->expr;
+	if (Expr_ShouldEval(expr))
+		Expr_SetValueOwn(expr,
+		    VarStrftime(expr->value.str, false, utc));
 
 	return AMR_OK;
 }
@@ -2644,7 +2648,7 @@ ApplyModifier_Path(const char **pp, ModChain *ch)
 
 	(*pp)++;
 
-	if (!ModChain_ShouldEval(ch))
+	if (!Expr_ShouldEval(expr))
 		return AMR_OK;
 
 	Expr_Define(expr);
@@ -3149,14 +3153,14 @@ ApplyModifier_To(const char **pp, ModChain *ch)
 
 	if (mod[1] == 'u') {				/* :tu */
 		*pp = mod + 2;
-		if (ModChain_ShouldEval(ch))
+		if (Expr_ShouldEval(expr))
 			Expr_SetValueOwn(expr, str_toupper(expr->value.str));
 		return AMR_OK;
 	}
 
 	if (mod[1] == 'l') {				/* :tl */
 		*pp = mod + 2;
-		if (ModChain_ShouldEval(ch))
+		if (Expr_ShouldEval(expr))
 			Expr_SetValueOwn(expr, str_tolower(expr->value.str));
 		return AMR_OK;
 	}
@@ -3443,7 +3447,7 @@ ApplyModifier_IfElse(const char **pp, ModChain *ch)
 		return AMR_CLEANUP;
 	}
 
-	if (!ModChain_ShouldEval(ch)) {
+	if (!Expr_ShouldEval(expr)) {
 		FStr_Done(&then_expr);
 		FStr_Done(&else_expr);
 	} else if (value) {
