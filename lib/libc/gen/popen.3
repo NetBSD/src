@@ -1,4 +1,4 @@
-.\"	$NetBSD: popen.3,v 1.21 2017/02/21 19:53:20 abhinav Exp $
+.\"	$NetBSD: popen.3,v 1.22 2021/09/11 19:58:24 rillig Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)popen.3	8.2 (Berkeley) 5/3/95
 .\"
-.Dd January 19, 2015
+.Dd September 11, 2021
 .Dt POPEN 3
 .Os
 .Sh NAME
@@ -195,6 +195,11 @@ and a
 .Fn pclose
 function appeared in
 .At v7 .
+.Pp
+The
+.Fn popenve
+function first appeared in
+.Nx 8 .
 .Sh BUGS
 Since the standard input of a command opened for reading
 shares its seek offset with the process that called
@@ -220,8 +225,3 @@ always calls
 .Xr sh 1 ,
 never calls
 .Xr csh 1 .
-.Pp
-The
-.Fn popenve
-function first appeared in
-.Nx 8 .
