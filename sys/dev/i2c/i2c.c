@@ -1,4 +1,4 @@
-/*	$NetBSD: i2c.c,v 1.80.2.6 2021/09/11 01:03:18 thorpej Exp $	*/
+/*	$NetBSD: i2c.c,v 1.80.2.7 2021/09/12 22:02:19 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2021 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i2c.c,v 1.80.2.6 2021/09/11 01:03:18 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i2c.c,v 1.80.2.7 2021/09/12 22:02:19 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -274,7 +274,6 @@ iic_devslot_remove(struct iic_softc *sc, device_t dev, i2c_addr_t addr)
 
 	if (link != NULL) {
 		kmem_free(link, sizeof(*link));
-		return false;
 	}
 	return rv;
 }
