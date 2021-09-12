@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.380 2021/09/05 18:34:50 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.381 2021/09/12 10:06:03 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.380 2021/09/05 18:34:50 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.381 2021/09/12 10:06:03 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -3977,19 +3977,19 @@ check_expr_assign(const tnode_t *ln, bool szof)
 
 static void
 check_expr_call(const tnode_t *tn, const tnode_t *ln,
-		bool szof, bool vctx, bool tctx, bool rvdisc)
+		bool szof, bool vctx, bool tctx, bool retval_discarded)
 {
 	lint_assert(ln->tn_op == ADDR);
 	lint_assert(ln->tn_left->tn_op == NAME);
 	if (!szof &&
 	    !is_compiler_builtin(ln->tn_left->tn_sym->s_name))
-		outcall(tn, vctx || tctx, rvdisc);
+		outcall(tn, vctx || tctx, retval_discarded);
 }
 
 static bool
 check_expr_op(const tnode_t *tn, op_t op, const tnode_t *ln,
-	      bool szof, bool fcall, bool vctx, bool tctx, bool rvdisc,
-	      bool eqwarn)
+	      bool szof, bool fcall, bool vctx, bool tctx,
+	      bool retval_discarded, bool eqwarn)
 {
 	switch (op) {
 	case ADDR:
@@ -4021,7 +4021,7 @@ check_expr_op(const tnode_t *tn, op_t op, const tnode_t *ln,
 		check_expr_assign(ln, szof);
 		break;
 	case CALL:
-		check_expr_call(tn, ln, szof, vctx, tctx, rvdisc);
+		check_expr_call(tn, ln, szof, vctx, tctx, retval_discarded);
 		break;
 	case EQ:
 		if (hflag && eqwarn)
@@ -4078,7 +4078,7 @@ check_expr_op(const tnode_t *tn, op_t op, const tnode_t *ln,
 /* ARGSUSED */
 void
 check_expr_misc(const tnode_t *tn, bool vctx, bool tctx,
-		bool eqwarn, bool fcall, bool rvdisc, bool szof)
+		bool eqwarn, bool fcall, bool retval_discarded, bool szof)
 {
 	tnode_t	*ln, *rn;
 	const mod_t *mp;
@@ -4092,7 +4092,7 @@ check_expr_misc(const tnode_t *tn, bool vctx, bool tctx,
 	mp = &modtab[op = tn->tn_op];
 
 	if (!check_expr_op(tn, op, ln,
-	    szof, fcall, vctx, tctx, rvdisc, eqwarn))
+	    szof, fcall, vctx, tctx, retval_discarded, eqwarn))
 		return;
 
 	bool cvctx = mp->m_left_value_context;

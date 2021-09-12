@@ -1,4 +1,4 @@
-/* $NetBSD: emit1.c,v 1.58 2021/09/04 18:58:57 rillig Exp $ */
+/* $NetBSD: emit1.c,v 1.59 2021/09/12 10:06:03 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: emit1.c,v 1.58 2021/09/04 18:58:57 rillig Exp $");
+__RCSID("$NetBSD: emit1.c,v 1.59 2021/09/12 10:06:03 rillig Exp $");
 #endif
 
 #include "lint1.h"
@@ -342,12 +342,12 @@ outfdef(const sym_t *fsym, const pos_t *posp, bool rval, bool osdef,
  * write out all information necessary for lint2 to check function
  * calls
  *
- * rvused is set if the return value is used (assigned to a variable)
- * rvdisc is set if the return value is not used and not ignored
- * (casted to void)
+ * retval_used is set if the return value is used (assigned to a variable)
+ * retval_discarded is set if the return value is neither used nor ignored
+ * (that is, cast to void)
  */
 void
-outcall(const tnode_t *tn, bool rvused, bool rvdisc)
+outcall(const tnode_t *tn, bool retval_used, bool retval_discarded)
 {
 	tnode_t	*args, *arg;
 	int	narg, n, i;
@@ -411,7 +411,7 @@ outcall(const tnode_t *tn, bool rvused, bool rvdisc)
 
 	}
 	/* return value discarded/used/ignored */
-	outchar((char)(rvdisc ? 'd' : (rvused ? 'u' : 'i')));
+	outchar((char)(retval_discarded ? 'd' : (retval_used ? 'u' : 'i')));
 
 	/* name of the called function */
 	outname(tn->tn_left->tn_left->tn_sym->s_name);
