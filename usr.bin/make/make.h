@@ -1,4 +1,4 @@
-/*	$NetBSD: make.h,v 1.264 2021/07/31 09:30:17 rillig Exp $	*/
+/*	$NetBSD: make.h,v 1.265 2021/09/12 09:51:14 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -142,17 +142,24 @@
 
 #if __STDC_VERSION__ >= 199901L || defined(lint) || defined(USE_C99_BOOLEAN)
 #include <stdbool.h>
+#elif defined(__bool_true_false_are_defined)
+/*
+ * All files of make must be compiled with the same definition of bool.
+ * Since one of the files includes <stdbool.h>, that means the header is
+ * available on this platform.  Recompile everything with -DUSE_C99_BOOLEAN.
+ */
+#error "<stdbool.h> is included in pre-C99 mode"
+#elif defined(bool) || defined(true) || defined(false)
+/*
+ * In pre-C99 mode, make does not expect that bool is already defined.
+ * You need to ensure that all translation units use the same definition for
+ * bool.
+ */
+#error "bool/true/false is defined in pre-C99 mode"
 #else
-#ifndef bool
-typedef unsigned int Boolean;
-#define bool	Boolean
-#endif
-#ifndef true
+typedef unsigned char bool;
 #define true	1
-#endif
-#ifndef false
 #define false	0
-#endif
 #endif
 
 #include "lst.h"
