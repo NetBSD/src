@@ -1,4 +1,4 @@
-/*	$NetBSD: err.c,v 1.144 2021/09/05 16:15:05 rillig Exp $	*/
+/*	$NetBSD: err.c,v 1.145 2021/09/12 16:28:45 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: err.c,v 1.144 2021/09/05 16:15:05 rillig Exp $");
+__RCSID("$NetBSD: err.c,v 1.145 2021/09/12 16:28:45 rillig Exp $");
 #endif
 
 #include <sys/types.h>
@@ -401,6 +401,7 @@ const char *const msgs[] = {
 	"bit-field of type plain 'int' has implementation-defined signedness", /* 344 */
 	"generic selection requires C11 or later",		      /* 345 */
 	"call to '%s' effectively discards 'const' from argument",    /* 346 */
+	"redeclaration of '%s' with type '%s', expected '%s'",	      /* 347 */
 };
 
 static struct include_level {
