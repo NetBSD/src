@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw_patch.c,v 1.7.14.5 2021/09/11 17:22:36 thorpej Exp $ */
+/*	$NetBSD: ofw_patch.c,v 1.7.14.6 2021/09/12 18:38:06 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2020, 2021 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofw_patch.c,v 1.7.14.5 2021/09/11 17:22:36 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofw_patch.c,v 1.7.14.6 2021/09/12 18:38:06 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>
@@ -732,12 +732,13 @@ sparc64_device_tree_fixup(device_t dev, void *aux)
 	const struct device_compatible_entry *dce;
 	void (*fn)(device_t, void *);
 	devhandle_t devhandle;
+	const char *cptab[1];
 
 	devhandle = device_handle(dev);
 
 	if (! system_fixup_entry_initialized) {
-		dce = device_compatible_lookup((const char **)&machine_model, 1,
-		    system_fixup_table);
+		cptab[0] = machine_model;
+		dce = device_compatible_lookup(cptab, 1, system_fixup_table);
 		if (dce != NULL) {
 			system_fixup_entry = dce->data;
 		}
@@ -762,8 +763,8 @@ sparc64_device_tree_fixup(device_t dev, void *aux)
 		    MAX_PACKAGE_PATH);
 		package_path[MAX_PACKAGE_PATH - 1] = '\0'; /* sanity */
 		if (path_size > 0) {
-			const char *ccp = package_path;
-			dce = device_compatible_lookup(&ccp, 1,
+			cptab[0] = package_path;
+			dce = device_compatible_lookup(cptab, 1,
 			    system_fixup_entry->dtnode_fixups);
 			if (dce != NULL && (fn = dce->data) != NULL) {
 				(*fn)(dev, aux);
