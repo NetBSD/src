@@ -1,4 +1,4 @@
-/*	$NetBSD: targ.c,v 1.169 2021/09/12 07:50:45 rillig Exp $	*/
+/*	$NetBSD: targ.c,v 1.170 2021/09/12 07:52:21 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -113,7 +113,7 @@
 #include "dir.h"
 
 /*	"@(#)targ.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: targ.c,v 1.169 2021/09/12 07:50:45 rillig Exp $");
+MAKE_RCSID("$NetBSD: targ.c,v 1.170 2021/09/12 07:52:21 rillig Exp $");
 
 /*
  * All target nodes that appeared on the left-hand side of one of the
@@ -439,8 +439,9 @@ Targ_PrintType(int type)
 		{ OP_USE,	false,	"USE"		},
 		{ OP_OPTIONAL,	false,	"OPTIONAL"	},
 	};
+	size_t i;
 
-	for (size_t i = 0; i < sizeof(names) / sizeof(names[0]); i++) {
+	for (i = 0; i < sizeof(names) / sizeof(names[0]); i++) {
 		if (type & names[i].bit) {
 			if (names[i].internal)
 				DEBUG1(TARG, " .%s", names[i].name);
