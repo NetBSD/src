@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.110 2021/09/09 08:12:27 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.111 2021/09/12 08:23:57 skrll Exp $	*/
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.110 2021/09/09 08:12:27 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.111 2021/09/12 08:23:57 skrll Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_ddb.h"
@@ -2213,19 +2213,19 @@ pmap_page_remove(struct pmap_page *pp, vm_prot_t prot)
 			continue;
 		}
 		opte = atomic_swap_64(pv->pv_ptep, 0);
+		const vaddr_t va = trunc_page(pv->pv_va);
 		if (lxpde_valid(opte)) {
-			_pmap_pdp_delref(pv->pv_pmap,
+			_pmap_pdp_delref(pm,
 			    AARCH64_KVA_TO_PA(trunc_page(
 			    (vaddr_t)pv->pv_ptep)), false);
-			AARCH64_TLBI_BY_ASID_VA(pv->pv_pmap->pm_asid,
-			    trunc_page(pv->pv_va), true);
+			AARCH64_TLBI_BY_ASID_VA(pm->pm_asid, va, true);
 
 			if ((opte & LX_BLKPAG_OS_WIRED) != 0) {
-				_pmap_adj_wired_count(pv->pv_pmap, -1);
+				_pmap_adj_wired_count(pm, -1);
 			}
-			_pmap_adj_resident_count(pv->pv_pmap, -1);
+			_pmap_adj_resident_count(pm, -1);
 		}
-		pvtmp = _pmap_remove_pv(pp, pm, trunc_page(pv->pv_va), opte);
+		pvtmp = _pmap_remove_pv(pp, pm, va, opte);
 		if (pvtmp == NULL) {
 			KASSERT(pv == &pp->pp_pv);
 		} else {
