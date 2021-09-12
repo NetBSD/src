@@ -1,4 +1,4 @@
-/*	$NetBSD: hash.c,v 1.64 2021/04/11 12:46:54 rillig Exp $	*/
+/*	$NetBSD: hash.c,v 1.65 2021/09/12 08:36:14 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -74,7 +74,7 @@
 #include "make.h"
 
 /*	"@(#)hash.c	8.1 (Berkeley) 6/6/93"	*/
-MAKE_RCSID("$NetBSD: hash.c,v 1.64 2021/04/11 12:46:54 rillig Exp $");
+MAKE_RCSID("$NetBSD: hash.c,v 1.65 2021/09/12 08:36:14 rillig Exp $");
 
 /*
  * The ratio of # entries to # buckets at which we rebuild the table to
@@ -152,7 +152,7 @@ HashTable_FindEntryBySubstring(HashTable *t, Substring key, unsigned int h)
 	unsigned int chainlen = 0;
 
 #ifdef DEBUG_HASH_LOOKUP
-	DEBUG4(HASH, "%s: %p h=%08x key=%.*s\n", __func__, t, h,
+	DEBUG5(HASH, "%s: %p h=%08x key=%.*s\n", __func__, t, h,
 	    (int)Substring_Length(key), key.start);
 #endif
 
