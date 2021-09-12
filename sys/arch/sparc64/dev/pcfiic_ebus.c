@@ -1,4 +1,4 @@
-/*	$NetBSD: pcfiic_ebus.c,v 1.7.16.1 2021/08/09 00:30:08 thorpej Exp $	*/
+/*	$NetBSD: pcfiic_ebus.c,v 1.7.16.2 2021/09/12 23:13:02 thorpej Exp $	*/
 /*	$OpenBSD: pcfiic_ebus.c,v 1.13 2008/06/08 03:07:40 deraadt Exp $ */
 
 /*
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcfiic_ebus.c,v 1.7.16.1 2021/08/09 00:30:08 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcfiic_ebus.c,v 1.7.16.2 2021/09/12 23:13:02 thorpej Exp $");
 
 /*
  * Device specific driver for the EBus i2c devices found on some sun4u
@@ -167,7 +167,13 @@ bbc_initialize_channels(struct pcfiic_ebus_softc *esc)
 
 	nchannels = popcount(busmap);
 	if (nchannels == 0) {
-		/* No child devices. */
+		/*
+		 * No child devices in the device tree.  This is fine;
+		 * the generic code will just assume a single channel
+		 * and attach a bus instance, but our MUX will still
+		 * get programmed correctly because we've initialized
+		 * the acquire/release bus funcitons.
+		 */
 		return;
 	}
 
