@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.236 2021/09/12 16:28:45 rillig Exp $ */
+/* $NetBSD: decl.c,v 1.237 2021/09/12 17:30:53 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: decl.c,v 1.236 2021/09/12 16:28:45 rillig Exp $");
+__RCSID("$NetBSD: decl.c,v 1.237 2021/09/12 17:30:53 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -1398,11 +1398,19 @@ add_function(sym_t *decl, sym_t *args)
 		dcs->d_next->d_func_args = args;
 	}
 
+	/*
+	 * XXX: What is this code doing on a semantic level, and why?
+	 * Returning decl leads to the wrong function types in msg_347.
+	 */
 	tpp = &decl->s_type;
 	while (*tpp != NULL && *tpp != dcs->d_next->d_type)
+		/*
+		 * XXX: accessing INT->t_subt feels strange, even though it
+		 * may even be guaranteed to be NULL.
+		 */
 		tpp = &(*tpp)->t_subt;
 	if (*tpp == NULL)
-	    return decl;
+	    return decl;	/* see msg_347 */
 
 	*tpp = tp = getblk(sizeof(*tp));
 	tp->t_tspec = FUNC;
