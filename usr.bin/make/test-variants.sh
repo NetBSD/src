@@ -1,5 +1,5 @@
 #! /bin/sh
-# $NetBSD: test-variants.sh,v 1.11 2021/09/12 09:51:14 rillig Exp $
+# $NetBSD: test-variants.sh,v 1.12 2021/09/12 10:28:40 rillig Exp $
 #
 # Build several variants of make and run the tests on them.
 #
@@ -10,6 +10,7 @@
 set -eu
 
 failed="no"
+filter="${1-}"
 
 fail() {
 	echo "failed"
@@ -17,6 +18,11 @@ fail() {
 }
 
 testcase() {
+	case "$*" in
+	*"$filter"*) ;;
+	*) return;;
+	esac
+
 	echo "===> Running $*"
 
 	env -i PATH="$PATH" USETOOLS="no" "$@" \
@@ -31,7 +37,7 @@ testcase() {
 }
 
 
-testcase # just the plain default options
+testcase DESCR="just the plain default options"
 
 # Try a different compiler, with slightly different warnings and error
 # messages.  One feature that is missing from GCC is a little stricter
