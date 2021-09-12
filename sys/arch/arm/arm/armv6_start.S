@@ -1,4 +1,4 @@
-/*	$NetBSD: armv6_start.S,v 1.35 2021/08/02 12:56:22 andvar Exp $	*/
+/*	$NetBSD: armv6_start.S,v 1.36 2021/09/12 07:14:50 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2012, 2017, 2018 The NetBSD Foundation, Inc.
@@ -472,6 +472,14 @@ generic_vstartv7:
 	add	sp, sp, R_VTOPDIFF
 
 	VPRINTF("virtual\n\r")
+
+	VPRINTF("prrr  : ")
+	mrc	p15, 0, r0, c10, c2, 0	// Primary Region Remap Register (PRRR)
+	VPRINTX(r0)
+	VPRINTF("\n\rnmrr  : ")
+	mrc	p15, 0, r0, c10, c2, 1	// Normal Memory Remap Register (NMRR)
+	VPRINTX(r0)
+	VPRINTF("\n\r")
 
 #if defined(KASAN)
 	ldr	r0, =start_stacks_bottom
