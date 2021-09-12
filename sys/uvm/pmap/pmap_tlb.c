@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_tlb.c,v 1.44 2021/05/04 09:05:34 skrll Exp $	*/
+/*	$NetBSD: pmap_tlb.c,v 1.45 2021/09/12 09:05:01 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap_tlb.c,v 1.44 2021/05/04 09:05:34 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_tlb.c,v 1.45 2021/09/12 09:05:01 skrll Exp $");
 
 /*
  * Manages address spaces in a TLB.
@@ -73,7 +73,7 @@ __KERNEL_RCSID(0, "$NetBSD: pmap_tlb.c,v 1.44 2021/05/04 09:05:34 skrll Exp $");
  * "current ASID" field, e.g. the ASID field of the COP 0 register EntryHi for
  * MIPS, or the ASID field of TTBR0 for AA64.  The bit number used in these
  * bitmaps comes from the CPU's cpu_index().  Even though these bitmaps contain
- * the bits for all CPUs, the bits that  correspond to the bits belonging to
+ * the bits for all CPUs, the bits that correspond to the bits belonging to
  * the CPUs sharing a TLB can only be manipulated while holding that TLB's
  * lock.  Atomic ops must be used to update them since multiple CPUs may be
  * changing different sets of bits at same time but these sets never overlap.
