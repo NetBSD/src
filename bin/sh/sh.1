@@ -1,4 +1,4 @@
-.\"	$NetBSD: sh.1,v 1.230 2021/09/11 20:43:32 christos Exp $
+.\"	$NetBSD: sh.1,v 1.231 2021/09/12 01:30:41 kre Exp $
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -2977,7 +2977,8 @@ or with
 there is no process group leader (should not happen),
 and otherwise exits with status 0.
 .\"
-.It Ic jobs Oo Fl l Ns \&| Ns Fl p \&| Fl Z Oc Op Ar job ...
+.It Ic jobs Oo Fl l Ns \&| Ns Fl p Oc Op Ar job ...
+.It Ic jobs Fl Z Op Ar title
 Without
 .Ar job
 arguments,
@@ -3009,6 +3010,13 @@ With the
 .Fl Z
 flag, the process command line is set using
 .Xr setproctitle 3 .
+If
+.Ar title
+is omitted or a null string,
+.Xr setproctitle 3
+is called with a NULL format.
+.Pp
+These options are mutually exclusive, the last specified is used.
 .Pp
 In an interactive shell, each job shown as completed in the output
 from the jobs command is implicitly waited for, and is removed from
@@ -4735,6 +4743,14 @@ to ensure that the filename is still valid after the input line has been
 processed.
 .Pp
 Job control of compound statements (loops, etc) is a complete mess.
+.Pp
+The
+.Fl Z
+option to the
+.Ic jobs
+built-in command is bizarre, but is implemented this way to be
+compatible with the similar option in
+.Xr zsh 1 .
 .Pp
 Many, many, more.
 (But less than there were...)
