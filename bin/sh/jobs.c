@@ -1,4 +1,4 @@
-/*	$NetBSD: jobs.c,v 1.111 2021/09/11 20:43:32 christos Exp $	*/
+/*	$NetBSD: jobs.c,v 1.112 2021/09/12 01:30:41 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)jobs.c	8.5 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: jobs.c,v 1.111 2021/09/11 20:43:32 christos Exp $");
+__RCSID("$NetBSD: jobs.c,v 1.112 2021/09/12 01:30:41 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -564,7 +564,10 @@ jobscmd(int argc, char **argv)
 		}
 
 	if (mode == SHOW_PROCTITLE) {
-		setproctitle("%s", *argptr);
+		if (*argptr && **argptr)
+			setproctitle("%s", *argptr);
+		else
+			setproctitle(NULL);
 		return 0;
 	}
 
