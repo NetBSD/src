@@ -1,4 +1,4 @@
-# $NetBSD: job-output-null.mk,v 1.2 2021/07/03 22:39:40 rillig Exp $
+# $NetBSD: job-output-null.mk,v 1.3 2021/09/12 10:26:49 rillig Exp $
 #
 # Test how null bytes in the output of a command are handled.  Make processes
 # them using null-terminated strings, which may cut off some of the output.
@@ -26,14 +26,14 @@ all: .PHONY
 	# The null byte from the command output is kept as-is.
 	# See CollectOutput, which looks like it intended to replace these
 	# null bytes with simple spaces.
-	@printf 'hello\0world\n'
+	@printf '1\0trailing\n'
 
 	# Give the parent process a chance to see the above output, but not
 	# yet the output from the next printf command.
 	@sleep 1
 
 	# All null bytes from the command output are kept as-is.
-	@printf 'hello\0world\n''hello\0world\n''hello\0world\n'
+	@printf '2a\0trailing\n''2b\0trailing\n''2c\0trailing\n'
 
 	@sleep 1
 
@@ -42,4 +42,4 @@ all: .PHONY
 	#
 	# The three null bytes in a row test whether this output is
 	# compressed to a single space like in DebugFailedTarget.  It isn't.
-	@printf 'hello\0without\0\0\0newline, hello\0without\0\0\0newline.'
+	@printf '3a\0without\0\0\0newline, 3b\0without\0\0\0newline.'
