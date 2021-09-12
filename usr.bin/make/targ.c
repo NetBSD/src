@@ -1,4 +1,4 @@
-/*	$NetBSD: targ.c,v 1.170 2021/09/12 07:52:21 rillig Exp $	*/
+/*	$NetBSD: targ.c,v 1.171 2021/09/12 08:03:48 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -113,7 +113,7 @@
 #include "dir.h"
 
 /*	"@(#)targ.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: targ.c,v 1.170 2021/09/12 07:52:21 rillig Exp $");
+MAKE_RCSID("$NetBSD: targ.c,v 1.171 2021/09/12 08:03:48 rillig Exp $");
 
 /*
  * All target nodes that appeared on the left-hand side of one of the
@@ -416,7 +416,7 @@ Targ_FmtTime(time_t tm)
 
 /* Print out a type field giving only those attributes the user can set. */
 void
-Targ_PrintType(int type)
+Targ_PrintType(GNodeType type)
 {
 	static const struct {
 		GNodeType bit;
