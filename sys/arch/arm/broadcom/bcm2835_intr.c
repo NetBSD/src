@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm2835_intr.c,v 1.40 2021/09/01 22:11:35 jmcneill Exp $	*/
+/*	$NetBSD: bcm2835_intr.c,v 1.41 2021/09/12 03:58:52 nat Exp $	*/
 
 /*-
  * Copyright (c) 2012, 2015, 2019 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm2835_intr.c,v 1.40 2021/09/01 22:11:35 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm2835_intr.c,v 1.41 2021/09/12 03:58:52 nat Exp $");
 
 #define _INTR_PRIVATE
 
@@ -892,11 +892,11 @@ bcm2836mp_ipi_handler(void *priv)
 static void
 bcm2836mp_intr_init(void *priv, struct cpu_info *ci)
 {
+#if defined(MULTIPROCESSOR)
 	const cpuid_t cpuid = ci->ci_core_id;
 
 	KASSERT(cpuid < BCM2836_NCPUS);
 
-#if defined(MULTIPROCESSOR)
 	intr_establish(BCM2836_INT_MAILBOX0_CPUN(cpuid), IPL_HIGH,
 	    IST_LEVEL | IST_MPSAFE, bcm2836mp_ipi_handler, ci);
 
