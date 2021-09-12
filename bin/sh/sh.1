@@ -1,4 +1,4 @@
-.\"	$NetBSD: sh.1,v 1.231 2021/09/12 01:30:41 kre Exp $
+.\"	$NetBSD: sh.1,v 1.232 2021/09/12 02:20:36 kre Exp $
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -2359,11 +2359,13 @@ be built in for efficiency (e.g.
 .Xr echo 1 ,
 .Xr test 1 ,
 etc).
-.Bl -tag -width 5n
+.Bl -tag -width 5n -compact
+.Pp
 .It Ic \&: Op Ar arg ...
 A null command that returns a 0 (true) exit value.
 Any arguments or redirects are evaluated, then ignored.
 .\"
+.Pp
 .It Ic \&. Ar file
 The dot command reads and executes the commands from the specified
 .Ar file
@@ -2384,6 +2386,7 @@ This implementation allows them to control loops surrounding the dot command,
 but obviously such behavior should not be relied on.
 It is now permitted by the standard, but not required.
 .\"
+.Pp
 .It Ic alias Op Ar name Ns Op Li = Ns Ar string ...
 If
 .Ar name Ns Li = Ns Ar string
@@ -2402,10 +2405,12 @@ built-in prints the
 names and values of all defined aliases (see
 .Ic unalias ) .
 .\"
+.Pp
 .It Ic bg Op Ar job ...
 Continue the specified jobs (or the current job if no
 jobs are given) in the background.
 .\"
+.Pp
 .It Ic command Oo Fl pVv Oc Ar command Op Ar arg ...
 Execute the specified command but ignore shell functions when searching
 for it.
@@ -2429,6 +2434,7 @@ search for the command and print the absolute pathname
 of utilities, the name for built-ins or the expansion of aliases.
 .El
 .\"
+.Pp
 .It Ic cd Oo Fl P Oc Op Ar directory Op Ar replace
 Switch to the specified directory (default
 .Ev $HOME ) .
@@ -2497,10 +2503,12 @@ or if the
 .Ar replace
 argument was used.
 .\"
+.Pp
 .It Ic eval Ar string ...
 Concatenate all the arguments with spaces.
 Then re-parse and execute the command.
 .\"
+.Pp
 .It Ic exec Op Ar command Op Ar arg ...
 Unless
 .Ar command
@@ -2544,6 +2552,7 @@ Alternatively, see the
 command below, which can set, or clear, this, and other,
 file descriptor flags.
 .\"
+.Pp
 .It Ic exit Op Ar exitstatus
 Terminate the shell process.
 If
@@ -2551,6 +2560,7 @@ If
 is given it is used as the exit status of the shell; otherwise the
 exit status of the preceding command (the current value of $?) is used.
 .\"
+.Pp
 .It Ic export Oo Fl nx Oc Ar name Ns Oo =value Oc ...
 .It Ic export Oo Fl x Oc Oo Fl p Oo Ar name ... Oc Oc
 .It Ic export Fl q Oo Fl x Oc Ar name ...
@@ -2666,6 +2676,7 @@ or un-exporting, read-only variables.
 The no-export flag can be reset by unsetting the variable
 and creating it again \(en provided the variable is not also read-only.
 .\"
+.Pp
 .It Ic fc Oo Fl e Ar editor Oc Op Ar first Op Ar last
 .It Ic fc Fl l Oo Fl nr Oc Op Ar first Op Ar last
 .It Ic fc Fl s Oo Ar old=new Oc Op Ar first
@@ -2758,11 +2769,13 @@ Name of the editor to use.
 The number of previous commands that are accessible.
 .El
 .\"
+.Pp
 .It Ic fg Op Ar job
 Move the specified job or the current job to the foreground.
 A foreground job can interact with the user via standard input,
 and receive signals from the terminal.
 .\"
+.Pp
 .It Ic fdflags Oo Fl v Oc Op Ar fd ...
 .It Ic fdflags Oo Fl v Oc Fl s Ar flags fd Op ...
 Get or set file descriptor flags.
@@ -2800,6 +2813,7 @@ and
 .Xr open 2
 for more information.
 .\"
+.Pp
 .It Ic getopts Ar optstring var
 The POSIX
 .Ic getopts
@@ -2901,6 +2915,7 @@ cmd \-carg -a file file
 cmd \-a \-carg \-\- file file
 .Ed
 .\"
+.Pp
 .It Ic hash Oo Fl rv Oc Op Ar command ...
 The shell maintains a hash table which remembers the
 locations of commands.
@@ -2925,12 +2940,14 @@ The
 option causes the hash command to delete all the entries in the hash table
 except for functions.
 .\"
+.Pp
 .It Ic inputrc Ar file
 Read the
 .Ar file
 to set key bindings as defined by
 .Xr editrc 5 .
 .\"
+.Pp
 .It Ic jobid Oo Fl g Ns \&| Ns Fl j Ns \&| Ns Fl p Oc  Op Ar job
 With no flags, print the process identifiers of the processes in the job.
 If the
@@ -2977,6 +2994,7 @@ or with
 there is no process group leader (should not happen),
 and otherwise exits with status 0.
 .\"
+.Pp
 .It Ic jobs Oo Fl l Ns \&| Ns Fl p Oc Op Ar job ...
 .It Ic jobs Fl Z Op Ar title
 Without
@@ -3032,6 +3050,7 @@ Non-interactive shells need to execute
 .Ic wait
 commands to clean up terminated background jobs.
 .\"
+.Pp
 .It Ic local Oo Fl INx Oc Oo Ar variable | \- Oc ...
 Define local variables for a function.
 Local variables have their attributes, and values,
@@ -3230,6 +3249,7 @@ below for details of the effects of making the variable
 .Dv LINENO
 local.
 .\"
+.Pp
 .It Ic pwd Op Fl \&LP
 Print the current directory.
 If
@@ -3271,6 +3291,7 @@ the program will use
 .Ev PWD
 and the built-in uses a separately cached value.
 .\"
+.Pp
 .It Ic read Oo Fl p Ar prompt Oc Oo Fl r Oc Ar variable Op Ar ...
 The
 .Ar prompt
@@ -3302,6 +3323,7 @@ literally.
 If a backslash is followed by a newline, the backslash and the
 newline will be deleted.
 .\"
+.Pp
 .It Ic readonly Ar name Ns Oo =value Oc ...
 .It Ic readonly Oo Fl p Oo Ar name ... Oc Oc
 .It Ic readonly Fl q Ar name ...
@@ -3351,6 +3373,7 @@ the exit status will not be zero, a diagnostic
 message will be written to the standard error output,
 and a non-interactive shell will terminate.
 .\"
+.Pp
 .It Ic return Op Ar n
 Stop executing the current function or a dot command with return value of
 .Ar n
@@ -3369,6 +3392,7 @@ Use the
 command instead, if you want to return from a script or exit
 your shell.
 .\"
+.Pp
 .It Ic set Oo { Fl options | Cm +options | Cm \-- } Oc Ar arg ...
 The
 .Ic set
@@ -3434,6 +3458,7 @@ and
 .Li \&$#
 is set to the number of arguments present.
 .\"
+.Pp
 .It Ic setvar Ar variable Ar value
 Assigns
 .Ar value
@@ -3448,6 +3473,7 @@ is intended to be used in
 functions that assign values to variables whose names are passed as
 parameters.)
 .\"
+.Pp
 .It Ic shift Op Ar n
 Shift the positional parameters
 .Ar n
@@ -3474,6 +3500,7 @@ positional parameters (
 .Dq Li $# )
 before the shift.
 .\"
+.Pp
 .It Ic specialvar Ar variable ...
 For each
 .Ar variable
@@ -3507,6 +3534,7 @@ of most of the special variables should use this command,
 naming the variables required,
 to ensure that their special properties are available.
 .\"
+.Pp
 .It Ic times
 Prints two lines to standard output.
 Each line contains two accumulated time values, expressed
@@ -3526,6 +3554,7 @@ for more information.
 has no parameters, and exits with an exit status of 0 unless
 an attempt is made to give it an option.
 .\"
+.Pp
 .It Ic trap Ar action signal ...
 .It Ic trap \-
 .It Ic trap Op Fl l
@@ -3657,6 +3686,7 @@ and which were altered during the intermediate code,
 would not be reset by the final
 .Ic eval .
 .\"
+.Pp
 .It Ic type Op Ar name ...
 Interpret each
 .Ar name
@@ -3668,6 +3698,7 @@ For aliases the alias expansion is
 printed; for commands and tracked aliases the complete pathname of the
 command is printed.
 .\"
+.Pp
 .It Ic ulimit Oo Fl H Ns \*(Ba Ns Fl S Oc Op Fl a \*(Ba Fl btfdscmlrpnv Op Ar value
 Inquire about or set the hard or soft limits on processes or set new
 limits.
@@ -3735,6 +3766,8 @@ the current limit is displayed.
 Limits of an arbitrary process can be displayed or set using the
 .Xr sysctl 8
 utility.
+.\"
+.Pp
 .It Ic umask Oo Fl S Oc Op Ar mask
 Set the value of umask (see
 .Xr umask 2 )
@@ -3743,6 +3776,8 @@ If the argument is omitted, the umask value is printed.
 With
 .Fl S
 a symbolic form is used instead of an octal number.
+.\"
+.Pp
 .It Ic unalias Oo Fl a Oc Op Ar name
 If
 .Ar name
@@ -3750,6 +3785,8 @@ is specified, the shell removes that alias.
 If
 .Fl a
 is specified, all aliases are removed.
+.\"
+.Pp
 .It Ic unset Oo Fl efvx Oc Ar name ...
 If
 .Fl v
@@ -3791,6 +3828,7 @@ a readonly variable, in which case the exit status is 1.
 It is not an error to unset (or undefine) a variable (or function)
 that is not currently set (or defined.)
 .\"
+.Pp
 .It Ic wait Oo Fl n Oc Oo Fl p Ar var Oc Op Ar job ...
 Wait for the specified jobs to complete
 and return the exit status of the last job in the parameter list,
