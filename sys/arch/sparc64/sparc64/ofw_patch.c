@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw_patch.c,v 1.7.14.6 2021/09/12 18:38:06 thorpej Exp $ */
+/*	$NetBSD: ofw_patch.c,v 1.7.14.7 2021/09/12 19:23:27 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2020, 2021 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofw_patch.c,v 1.7.14.6 2021/09/12 18:38:06 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofw_patch.c,v 1.7.14.7 2021/09/12 19:23:27 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>
@@ -152,7 +152,19 @@ static void
 add_i2c_devices(device_t dev, const struct i2c_deventry *i2c_adds,
     unsigned int nadds)
 {
+	devhandle_t devhandle = device_handle(dev);
 	struct i2c_fixup_container *fixup;
+
+	/*
+	 * Because we're matching on the phandle's firmware path, it's
+	 * possible to be visited multiple times (once for the controller,
+	 * once for the "iic" bus instance, which inherits the controller's
+	 * phandle).  Detect this condition, and avoid doing allocating an
+	 * additional i2c_fixup_container (and thus leaking our previously-
+	 * allocated i2c_fixup_container).
+	 */
+	if (devhandle.impl->lookup_device_call == i2c_fixup_lookup_device_call)
+		return;
 
 	fixup = kmem_alloc(sizeof(*fixup), KM_SLEEP);
 
@@ -160,7 +172,6 @@ add_i2c_devices(device_t dev, const struct i2c_deventry *i2c_adds,
 	fixup->i2c_nadditions = nadds;
 
 	/* Stash away the super-class handle. */
-	devhandle_t devhandle = device_handle(dev);
 	fixup->i2c_super_handle = devhandle;
 
 	/* Sub-class it so we can override "i2c-enumerate-devices". */
@@ -736,7 +747,13 @@ sparc64_device_tree_fixup(device_t dev, void *aux)
 
 	devhandle = device_handle(dev);
 
-	if (! system_fixup_entry_initialized) {
+	/*
+	 * We can be called before machine_mode[] is set up (it gets
+	 * initialized in mainbus_attach()).  This is not a problem;
+	 * we don't need it until after than anyway.  Just patiently
+	 * wait until it's there for us.
+	 */
+	if (! system_fixup_entry_initialized && machine_model[0] != '\0') {
 		cptab[0] = machine_model;
 		dce = device_compatible_lookup(cptab, 1, system_fixup_table);
 		if (dce != NULL) {
