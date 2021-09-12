@@ -1,4 +1,4 @@
-/*	$NetBSD: pcf8584.c,v 1.19.2.1 2021/08/09 01:29:52 thorpej Exp $	*/
+/*	$NetBSD: pcf8584.c,v 1.19.2.2 2021/09/12 23:13:02 thorpej Exp $	*/
 /*	$OpenBSD: pcf8584.c,v 1.9 2007/10/20 18:46:21 kettenis Exp $ */
 
 /*
@@ -120,9 +120,17 @@ pcfiic_attach(struct pcfiic_softc *sc, i2c_addr_t addr, uint8_t clock,
 
 	printf("\n");
 
+	/*
+	 * Sun has a clone of this chip that also has an
+	 * associated MUX, which means we treat this as
+	 * a multi-channel controller.  If the front-end
+	 * did not already allocate channels for us, then
+	 * assume we're just a simple single-channel device.
+	 */
+
 	if (sc->sc_channels == NULL) {
 		KASSERT(sc->sc_nchannels == 0);
-		ch = kmem_alloc(sizeof(*sc->sc_channels), KM_SLEEP);
+		ch = kmem_alloc(sizeof(*ch), KM_SLEEP);
 		ch->ch_channel = 0;
 		ch->ch_devhandle = device_handle(sc->sc_dev);
 
@@ -139,6 +147,7 @@ pcfiic_attach(struct pcfiic_softc *sc, i2c_addr_t addr, uint8_t clock,
 		ch->ch_sc = sc;
 		iic_tag_init(&ch->ch_i2c);
 		ch->ch_i2c.ic_cookie = ch;
+		ch->ch_i2c.ic_channel = ch->ch_channel;
 		ch->ch_i2c.ic_exec = pcfiic_i2c_exec;
 		ch->ch_i2c.ic_acquire_bus = sc->sc_acquire_bus;
 		ch->ch_i2c.ic_release_bus = sc->sc_release_bus;
@@ -165,7 +174,8 @@ int
 pcfiic_i2c_exec(void *arg, i2c_op_t op, i2c_addr_t addr,
     const void *cmdbuf, size_t cmdlen, void *buf, size_t len, int flags)
 {
-	struct pcfiic_softc	*sc = arg;
+	struct pcfiic_channel	*ch = arg;
+	struct pcfiic_softc	*sc = ch->ch_sc;
 	int			ret = 0;
 
 #if 0
