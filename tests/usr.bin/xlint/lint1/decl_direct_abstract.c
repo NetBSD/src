@@ -1,0 +1,63 @@
+/*	$NetBSD: decl_direct_abstract.c,v 1.1 2021/09/13 22:09:06 rillig Exp $	*/
+# 3 "decl_direct_abstract.c"
+
+/*
+ * Test parsing of direct-abstract-declarator (C99 6.7.6), which are a tricky
+ * part of the C standard since they require lookahead and are so complicated
+ * that GCC's parser dedicates 34 lines of comments to this topic.
+ *
+ * See msg_155.c.
+ */
+
+/*
+ * The following tests do not use int, to avoid confusion with the implicit
+ * return type.
+ */
+
+char func0001(short (*)(long));
+
+/* GCC says 'char (*)(short int (*)(long int))' */
+/* Clang says 'char (short (*)(long))' */
+/* cdecl says 'function (pointer to function (long) returning short) returning char' */
+/* expect+1: 'pointer to function(pointer to function(long) returning short) returning char' */
+double type_of_func0001 = func0001;
+
+char func0002(short *(long));
+
+/* GCC says 'char (*)(short int * (*)(long int))' */
+/* Clang says 'char (short *(*)(long))' */
+/* cdecl says 'syntax error' */
+/* FIXME: lint is wrong, it discards the 'short *' */
+/* expect+1: 'pointer to function(long) returning char' */
+double type_of_func0002 = func0002;
+
+void c99_6_7_6_example_a(int);
+void c99_6_7_6_example_b(int *);
+void c99_6_7_6_example_c(int *[3]);
+void c99_6_7_6_example_d(int (*)[3]);
+void c99_6_7_6_example_e(int (*)[*]);
+void c99_6_7_6_example_f(int *());
+void c99_6_7_6_example_g(int (*)(void));
+void c99_6_7_6_example_h(int (*const[])(unsigned int, ...));
+
+struct incompatible {
+	int member;
+} x;
+
+/* expect+1: 'pointer to function(int) returning void' */
+double type_of_c99_6_7_6_example_a = c99_6_7_6_example_a;
+/* expect+1: 'pointer to function(pointer to int) returning void' */
+double type_of_c99_6_7_6_example_b = c99_6_7_6_example_b;
+/* expect+1: 'pointer to function(pointer to pointer to int) returning void' */
+double type_of_c99_6_7_6_example_c = c99_6_7_6_example_c;
+/* expect+1: 'pointer to function(pointer to array[3] of int) returning void' */
+double type_of_c99_6_7_6_example_d = c99_6_7_6_example_d;
+/* expect+1: 'pointer to function(pointer to array[unknown_size] of int) returning void' */
+double type_of_c99_6_7_6_example_e = c99_6_7_6_example_e;
+/* FIXME: see msg_155.c, msg_347.c */
+/* expect+1: 'pointer to function(void) returning void' */
+double type_of_c99_6_7_6_example_f = c99_6_7_6_example_f;
+/* expect+1: 'pointer to function(pointer to function(void) returning int) returning void' */
+double type_of_c99_6_7_6_example_g = c99_6_7_6_example_g;
+/* expect+1: 'pointer to function(pointer to const pointer to function(unsigned int, ...) returning int) returning void' */
+double type_of_c99_6_7_6_example_h = c99_6_7_6_example_h;
