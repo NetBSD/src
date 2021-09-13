@@ -1,7 +1,7 @@
-/* $NetBSD: exynos_uart.c,v 1.5 2021/03/14 08:16:57 skrll Exp $ */
+/* $NetBSD: exynos_uart.c,v 1.6 2021/09/13 23:31:23 jmcneill Exp $ */
 
 /*-
- * Copyright (c) 2013-2018 The NetBSD Foundation, Inc.
+ * Copyright (c) 2013-2021 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: exynos_uart.c,v 1.5 2021/03/14 08:16:57 skrll Exp $");
+__KERNEL_RCSID(1, "$NetBSD: exynos_uart.c,v 1.6 2021/09/13 23:31:23 jmcneill Exp $");
 
 #define cn_trap()			\
 	do {				\
@@ -73,6 +73,18 @@ static int	exynos_uart_param(struct tty *, struct termios *);
 
 extern struct cfdriver exuart_cd;
 
+enum exynos_uart_type {
+	EXYNOS_UART_SAMSUNG,
+	EXYNOS_UART_APPLE,
+};
+
+struct exynos_uart_config {
+	enum exynos_uart_type type;
+	uint32_t rxfull;
+	uint32_t txfull;
+	uint32_t rxcount;
+};
+
 struct exynos_uart_softc {
 	device_t sc_dev;
 	bus_space_tag_t	sc_bst;
@@ -86,6 +98,8 @@ struct exynos_uart_softc {
 
 	int sc_ospeed;
 	tcflag_t sc_cflag;
+
+	const struct exynos_uart_config *sc_conf;
 
 	u_char sc_buf[1024];
 };
@@ -135,8 +149,23 @@ const struct cdevsw exuart_cdevsw = {
 
 static int exynos_uart_cmajor = -1;
 
+static const struct exynos_uart_config exynos_uart_samsung = {
+	.type = EXYNOS_UART_SAMSUNG,
+	.rxfull = UFSTAT_RXFULL,
+	.txfull = UFSTAT_TXFULL,
+	.rxcount = UFSTAT_RXCOUNT,
+};
+
+static const struct exynos_uart_config exynos_uart_apple = {
+	.type = EXYNOS_UART_APPLE,
+	.rxfull = UFSTAT_S5L_RXFULL,
+	.txfull = UFSTAT_S5L_TXFULL,
+	.rxcount = UFSTAT_S5L_RXCOUNT,
+};
+
 static const struct device_compatible_entry compat_data[] = {
-	{ .compat = "samsung,exynos4210-uart" },
+	{ .compat = "samsung,exynos4210-uart",	.data = &exynos_uart_samsung },
+	{ .compat = "apple,s5l-uart",		.data = &exynos_uart_apple },
 	DEVICE_COMPAT_EOL
 };
 
@@ -163,6 +192,7 @@ exynos_uart_attach(device_t parent, device_t self, void *aux)
 	int major, minor;
 	bus_addr_t addr;
 	bus_size_t size;
+	uint32_t ucon;
 
 	if (fdtbus_get_reg(phandle, 0, &addr, &size) != 0) {
 		aprint_error(": couldn't get registers\n");
@@ -187,6 +217,7 @@ exynos_uart_attach(device_t parent, device_t self, void *aux)
 
 	sc->sc_dev = self;
 	sc->sc_bst = faa->faa_bst;
+	sc->sc_conf = of_compatible_lookup(phandle, compat_data)->data;
 	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_HIGH);
 	sc->sc_console = is_console;
 	if (is_console) {
@@ -245,14 +276,21 @@ exynos_uart_attach(device_t parent, device_t self, void *aux)
 	    __SHIFTIN(1, UFCON_RXTRIGGER) |
 	    UFCON_TXFIFO_RESET | UFCON_RXFIFO_RESET |
 	    UFCON_FIFO_ENABLE);
-	/* Configure PIO mode with RX timeout interrupts */
-	WR4(sc, SSCOM_UCON,
-	    __SHIFTIN(3, UCON_RXTO) |
-	    UCON_TOINT | UCON_ERRINT |
-	    UCON_TXMODE_INT | UCON_RXMODE_INT);
 
-	/* Disable interrupts */
-	WR4(sc, SSCOM_UINTM, ~0u);
+	/* Configure PIO mode with RX timeout interrupts */
+	ucon = UCON_TOINT | UCON_ERRINT |
+	    UCON_TXMODE_INT | UCON_RXMODE_INT;
+	WR4(sc, SSCOM_UCON, ucon);
+
+	switch (sc->sc_conf->type) {
+	case EXYNOS_UART_SAMSUNG:
+		WR4(sc, SSCOM_UCON, ucon | __SHIFTIN(3, UCON_RXTO));
+		/* Disable interrupts */
+		WR4(sc, SSCOM_UINTM, ~0u);
+		break;
+	case EXYNOS_UART_APPLE:
+		break;
+	}
 
 	aprint_normal_dev(self, "interrupting on %s\n", intrstr);
 }
@@ -267,19 +305,19 @@ exynos_uart_cngetc(dev_t dev)
 	s = splserial();
 
 	ufstat = RD4(sc, SSCOM_UFSTAT);
-	if (__SHIFTOUT(ufstat, UFSTAT_RXCOUNT) == 0) {
+	if (__SHIFTOUT(ufstat, sc->sc_conf->rxcount) == 0) {
 		splx(s);
 		return -1;
 	}
 
-	c = bus_space_read_1(sc->sc_bst, sc->sc_bsh, SSCOM_URXH);
+	c = RD4(sc, SSCOM_URXH);
 #if defined(DDB)
 	extern int db_active;
 	if (!db_active)
 #endif
 	{
 		int cn_trapped __unused = 0;
-		cn_check_magic(dev, c, exynos_uart_cnm_state);
+		cn_check_magic(dev, c & 0xff, exynos_uart_cnm_state);
 	}
 
 	splx(s);
@@ -294,10 +332,10 @@ exynos_uart_cnputc(dev_t dev, int c)
 	int s;
 
 	s = splserial();
-	while ((RD4(sc, SSCOM_UFSTAT) & UFSTAT_TXFULL) != 0)
+	while ((RD4(sc, SSCOM_UFSTAT) & sc->sc_conf->txfull) != 0)
 		;
 
-	bus_space_write_1(sc->sc_bst, sc->sc_bsh, SSCOM_UTXH, c);
+	WR4(sc, SSCOM_UTXH, c & 0xff);
 
 	splx(s);
 }
@@ -310,7 +348,7 @@ exynos_uart_cnpollc(dev_t dev, int on)
 
 static void
 exynos_uart_cnattach(bus_space_tag_t bst, bus_space_handle_t bsh,
-    int ospeed, tcflag_t cflag)
+    int ospeed, tcflag_t cflag, const struct exynos_uart_config *conf)
 {
 	struct exynos_uart_softc *sc = &exynos_uart_cnsc;
 
@@ -322,6 +360,7 @@ exynos_uart_cnattach(bus_space_tag_t bst, bus_space_handle_t bsh,
 	sc->sc_bsh = bsh;
 	sc->sc_ospeed = ospeed;
 	sc->sc_cflag = cflag;
+	sc->sc_conf = conf;
 }
 
 static int
@@ -330,6 +369,7 @@ exynos_uart_open(dev_t dev, int flag, int mode, lwp_t *l)
 	struct exynos_uart_softc *sc =
 	    device_lookup_private(&exuart_cd, minor(dev));
 	struct tty *tp = sc->sc_tty;
+	uint32_t ucon;
 
 	if (kauth_authorize_device_tty(l->l_cred,
 	    KAUTH_DEVICE_TTY_OPEN, tp) != 0) {
@@ -356,7 +396,16 @@ exynos_uart_open(dev_t dev, int flag, int mode, lwp_t *l)
 	tp->t_state |= TS_CARR_ON;
 
 	/* Enable RX and error interrupts */
-	WR4(sc, SSCOM_UINTM, ~0u & ~(UINT_RXD|UINT_ERROR));
+	switch (sc->sc_conf->type) {
+	case EXYNOS_UART_SAMSUNG:
+		WR4(sc, SSCOM_UINTM, ~0u & ~(UINT_RXD|UINT_ERROR));
+		break;
+	case EXYNOS_UART_APPLE:
+		ucon = RD4(sc, SSCOM_UCON);
+		ucon |= UCON_S5L_RXTHRESH | UCON_S5L_RX_TIMEOUT;
+		WR4(sc, SSCOM_UCON, ucon);
+		break;
+	}
 
 	mutex_exit(&sc->sc_lock);
 
@@ -369,6 +418,7 @@ exynos_uart_close(dev_t dev, int flag, int mode, lwp_t *l)
 	struct exynos_uart_softc *sc =
 	    device_lookup_private(&exuart_cd, minor(dev));
 	struct tty *tp = sc->sc_tty;
+	uint32_t ucon;
 
 	mutex_enter(&sc->sc_lock);
 
@@ -376,7 +426,16 @@ exynos_uart_close(dev_t dev, int flag, int mode, lwp_t *l)
 	ttyclose(tp);
 
 	/* Disable interrupts */
-	WR4(sc, SSCOM_UINTM, ~0u);
+	switch (sc->sc_conf->type) {
+	case EXYNOS_UART_SAMSUNG:
+		WR4(sc, SSCOM_UINTM, ~0u);
+		break;
+	case EXYNOS_UART_APPLE:
+		ucon = RD4(sc, SSCOM_UCON);
+		ucon &= ~(UCON_S5L_RXTHRESH | UCON_S5L_RX_TIMEOUT);
+		WR4(sc, SSCOM_UCON, ucon);
+		break;
+	}
 
 	mutex_exit(&sc->sc_lock);
 
@@ -460,11 +519,10 @@ exynos_uart_start(struct tty *tp)
 	for (brem = q_to_b(&tp->t_outq, sc->sc_buf, sizeof(sc->sc_buf));
 	     brem > 0;
 	     brem--, p++) {
-		while ((RD4(sc, SSCOM_UFSTAT) & UFSTAT_TXFULL) != 0)
+		while ((RD4(sc, SSCOM_UFSTAT) & sc->sc_conf->txfull) != 0)
 			;
 
-		bus_space_write_1(sc->sc_bst, sc->sc_bsh,
-		    SSCOM_UTXH, *p);
+		WR4(sc, SSCOM_UTXH, *p);
 	}
 
 	tp->t_state &= ~TS_BUSY;
@@ -533,11 +591,15 @@ exynos_uart_intr(void *priv)
 {
 	struct exynos_uart_softc *sc = priv;
 	struct tty *tp = sc->sc_tty;
-	uint32_t uintp, uerstat, ufstat, c;
+	uint32_t ack, uerstat, ufstat, c;
 
 	mutex_enter(&sc->sc_lock);
 
-	uintp = RD4(sc, SSCOM_UINTP);
+	if (sc->sc_conf->type == EXYNOS_UART_APPLE) {
+		ack = RD4(sc, SSCOM_UTRSTAT);
+	} else {
+		ack = RD4(sc, SSCOM_UINTP);
+	}
 
 	for (;;) {
 		int cn_trapped = 0;
@@ -551,18 +613,22 @@ exynos_uart_intr(void *priv)
 		}
 
 		ufstat = RD4(sc, SSCOM_UFSTAT);
-		if (__SHIFTOUT(ufstat, UFSTAT_RXCOUNT) == 0) {
+		if (__SHIFTOUT(ufstat, sc->sc_conf->rxcount) == 0) {
 			break;
 		}
 
-		c = bus_space_read_1(sc->sc_bst, sc->sc_bsh, SSCOM_URXH);
+		c = RD4(sc, SSCOM_URXH);
 		cn_check_magic(tp->t_dev, c & 0xff, exynos_uart_cnm_state);
 		if (cn_trapped)
 			continue;
 		tp->t_linesw->l_rint(c & 0xff, tp);
 	}
 
-	WR4(sc, SSCOM_UINTP, uintp);
+	if (sc->sc_conf->type == EXYNOS_UART_APPLE) {
+		WR4(sc, SSCOM_UTRSTAT, ack);
+	} else {
+		WR4(sc, SSCOM_UINTP, ack);
+	}
 
 	mutex_exit(&sc->sc_lock);
 
@@ -589,11 +655,13 @@ exynos_uart_console_consinit(struct fdt_attach_args *faa, u_int uart_freq)
 	bus_size_t size;
 	tcflag_t flags;
 	int speed;
+	const struct exynos_uart_config *conf;
 
 	speed = fdtbus_get_stdout_speed();
 	if (speed < 0)
 		speed = 115200; /* default */
 	flags = fdtbus_get_stdout_flags();
+	conf = of_compatible_lookup(phandle, compat_data)->data;
 
 	if (fdtbus_get_reg(phandle, 0, &addr, &size) != 0)
 		panic("exynos_uart: couldn't get registers");
@@ -602,7 +670,7 @@ exynos_uart_console_consinit(struct fdt_attach_args *faa, u_int uart_freq)
 
 	exynos_uart_consaddr = addr;
 
-	exynos_uart_cnattach(bst, bsh, speed, flags);
+	exynos_uart_cnattach(bst, bsh, speed, flags, conf);
 }
 
 static const struct fdt_console exynos_uart_console = {
