@@ -1,4 +1,4 @@
-/*	$NetBSD: i2c.c,v 1.80.2.7 2021/09/12 22:02:19 thorpej Exp $	*/
+/*	$NetBSD: i2c.c,v 1.80.2.8 2021/09/13 14:47:28 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2021 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i2c.c,v 1.80.2.7 2021/09/12 22:02:19 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i2c.c,v 1.80.2.8 2021/09/13 14:47:28 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -629,41 +629,6 @@ iic_enumerate_devices_callback(device_t self,
 		KASSERT(rv);
 	}
 	return true;				/* keep enumerating */
-}
-
-/*
- * i2c_enumerate_deventries:
- *
- *	Helper for enumerating known i2c devices that can be used
- *	by a platform's i2c-emumerate-devices device call if needed.
- */
-int
-i2c_enumerate_deventries(device_t dev, devhandle_t call_handle,
-    struct i2c_enumerate_devices_args *args,
-    const struct i2c_deventry *entries, unsigned int nentries)
-{
-	unsigned int i;
-	bool cbrv;
-
-	for (i = 0; i < nentries; i++) {
-		args->ia->ia_addr = entries[i].addr;
-		args->ia->ia_name = entries[i].name;
-		args->ia->ia_clist = entries[i].compat;
-		args->ia->ia_clist_size =
-		    entries[i].compat != NULL ? strlen(entries[i].compat) + 1
-					      : 0;
-
-		/* no devhandle for child devices. */
-		devhandle_invalidate(&args->ia->ia_devhandle);
-
-		cbrv = args->callback(dev, args);
-
-		if (!cbrv) {
-			break;
-		}
-	}
-
-	return 0;
 }
 
 static int

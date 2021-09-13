@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw_patch.c,v 1.7.14.7 2021/09/12 19:23:27 thorpej Exp $ */
+/*	$NetBSD: ofw_patch.c,v 1.7.14.8 2021/09/13 14:47:28 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2020, 2021 The NetBSD Foundation, Inc.
@@ -29,12 +29,13 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofw_patch.c,v 1.7.14.7 2021/09/12 19:23:27 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofw_patch.c,v 1.7.14.8 2021/09/13 14:47:28 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>
 
-#include <dev/i2c/i2cvar.h>
+#include <dev/i2c/i2c_enum.h>
+
 #include <dev/scsipi/scsipiconf.h>
 
 #include <machine/autoconf.h>

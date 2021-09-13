@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.29.16.4 2021/09/11 01:03:18 thorpej Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.29.16.5 2021/09/13 14:47:28 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.29.16.4 2021/09/11 01:03:18 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.29.16.5 2021/09/13 14:47:28 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -44,7 +44,8 @@ __KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.29.16.4 2021/09/11 01:03:18 thorpej E
 
 #include <dev/cons.h>
 #include <dev/pci/pcivar.h>
-#include <dev/i2c/i2cvar.h>
+
+#include <dev/i2c/i2c_enum.h>
 
 #include <net/if.h>
 #include <net/if_ether.h>

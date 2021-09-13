@@ -1,4 +1,4 @@
-/*	$NetBSD: cuda.c,v 1.29.2.5 2021/09/11 17:22:35 thorpej Exp $ */
+/*	$NetBSD: cuda.c,v 1.29.2.6 2021/09/13 14:47:28 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2006 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cuda.c,v 1.29.2.5 2021/09/11 17:22:35 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cuda.c,v 1.29.2.6 2021/09/13 14:47:28 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -41,6 +41,7 @@ __KERNEL_RCSID(0, "$NetBSD: cuda.c,v 1.29.2.5 2021/09/11 17:22:35 thorpej Exp $"
 #include <machine/pio.h>
 #include <dev/clock_subr.h>
 #include <dev/i2c/i2cvar.h>
+#include <dev/i2c/i2c_enum.h>
 
 #include <macppc/dev/viareg.h>
 #include <macppc/dev/cudavar.h>

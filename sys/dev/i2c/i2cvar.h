@@ -1,4 +1,4 @@
-/*	$NetBSD: i2cvar.h,v 1.24.12.3 2021/09/11 01:03:18 thorpej Exp $	*/
+/*	$NetBSD: i2cvar.h,v 1.24.12.4 2021/09/13 14:47:28 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -173,19 +173,6 @@ struct i2c_enumerate_devices_args {
 	struct i2c_attach_args *ia;
 	bool (*callback)(device_t, struct i2c_enumerate_devices_args *);
 };
-
-/*
- * Helpers for enumerating known i2c devices, that can be used from
- * the i2c-enumerate-devices device call.
- */
-struct i2c_deventry {
-	const char *name;
-	const char *compat;
-	i2c_addr_t addr;
-};
-int	i2c_enumerate_deventries(device_t, devhandle_t,
-	    struct i2c_enumerate_devices_args *,
-	    const struct i2c_deventry *, unsigned int);
 
 /*
  * API presented to i2c controllers.
