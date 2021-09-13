@@ -1,4 +1,4 @@
-/* $NetBSD: mkdir.c,v 1.38 2011/08/29 14:45:28 joerg Exp $ */
+/* $NetBSD: mkdir.c,v 1.39 2021/09/13 22:46:02 kre Exp $ */
 
 /*
  * Copyright (c) 1983, 1992, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1992, 1993\
 #if 0
 static char sccsid[] = "@(#)mkdir.c	8.2 (Berkeley) 1/25/94";
 #else
-__RCSID("$NetBSD: mkdir.c,v 1.38 2011/08/29 14:45:28 joerg Exp $");
+__RCSID("$NetBSD: mkdir.c,v 1.39 2021/09/13 22:46:02 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -162,7 +162,7 @@ mkpath(char *path, mode_t mode, mode_t dir_mode)
 		slash += strspn(slash, "/");
 		slash += strcspn(slash, "/");
 
-		done = (*slash == '\0');
+		done = (*(slash + strspn(slash, "/")) == '\0');
 		*slash = '\0';
 
 		rv = mkdir(path, done ? mode : dir_mode);
