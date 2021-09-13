@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.237 2021/09/12 17:30:53 rillig Exp $ */
+/* $NetBSD: decl.c,v 1.238 2021/09/13 05:21:30 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: decl.c,v 1.237 2021/09/12 17:30:53 rillig Exp $");
+__RCSID("$NetBSD: decl.c,v 1.238 2021/09/13 05:21:30 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -1431,7 +1431,6 @@ new_style_function(sym_t *decl, sym_t *args)
 {
 	sym_t	*arg, *sym;
 	scl_t	sc;
-	int	n;
 
 	/*
 	 * Declarations of structs/unions/enums in param lists are legal,
@@ -1445,16 +1444,13 @@ new_style_function(sym_t *decl, sym_t *args)
 		}
 	}
 
-	n = 1;
 	for (arg = args; arg != NULL; arg = arg->s_next) {
-		if (arg->s_type->t_tspec == VOID) {
-			if (n > 1 || arg->s_next != NULL) {
-				/* void must be sole parameter */
-				error(60);
-				arg->s_type = gettyp(INT);
-			}
+		if (arg->s_type->t_tspec == VOID &&
+		    !(arg == args && arg->s_next == NULL)) {
+			/* void must be sole parameter */
+			error(60);
+			arg->s_type = gettyp(INT);
 		}
-		n++;
 	}
 
 	/* return NULL if first param is VOID */
