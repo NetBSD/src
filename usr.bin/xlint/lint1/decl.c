@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.239 2021/09/13 05:25:27 rillig Exp $ */
+/* $NetBSD: decl.c,v 1.240 2021/09/13 06:11:51 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: decl.c,v 1.239 2021/09/13 05:25:27 rillig Exp $");
+__RCSID("$NetBSD: decl.c,v 1.240 2021/09/13 06:11:51 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -2867,6 +2867,16 @@ abstract_name(void)
 	if (dcs->d_ctx == PROTO_ARG)
 		sym->s_arg = true;
 
+	/*
+	 * At this point, dcs->d_type contains only the basic type.  That
+	 * type will be updated later, adding pointers, arrays and functions
+	 * as necessary.
+	 */
+	/*
+	 * XXX: This is not the correct type.  For example in msg_347, it is
+	 * the type of the last prototype parameter, but it should rather be
+	 * the return type of the function.
+	 */
 	sym->s_type = dcs->d_type;
 	dcs->d_redeclared_symbol = NULL;
 	dcs->d_vararg = false;
