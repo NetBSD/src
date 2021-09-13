@@ -1,4 +1,4 @@
-/* $NetBSD: apple_platform.c,v 1.3 2021/09/02 20:57:57 jmcneill Exp $ */
+/* $NetBSD: apple_platform.c,v 1.4 2021/09/13 23:30:52 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2021 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: apple_platform.c,v 1.3 2021/09/02 20:57:57 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: apple_platform.c,v 1.4 2021/09/13 23:30:52 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -60,6 +60,8 @@ __KERNEL_RCSID(0, "$NetBSD: apple_platform.c,v 1.3 2021/09/02 20:57:57 jmcneill 
 
 extern struct bus_space arm_generic_bs_tag;
 
+static struct bus_space apple_nonposted_bs_tag;
+
 struct arm32_bus_dma_tag apple_coherent_dma_tag;
 static struct arm32_dma_range apple_coherent_ranges[] = {
 	[0] = {
@@ -70,10 +72,24 @@ static struct arm32_dma_range apple_coherent_ranges[] = {
 	}
 };
 
+static int
+apple_nonposted_bs_map(void *t, bus_addr_t bpa, bus_size_t size, int flag,
+    bus_space_handle_t *bshp)
+{
+	if (flag == 0) {
+		flag |= _ARM_BUS_SPACE_MAP_STRONGLY_ORDERED;
+	}
+
+	return bus_space_map(&arm_generic_bs_tag, bpa, size, flag, bshp);
+}
+
 static void
 apple_platform_bootstrap(void)
 {
 	extern struct arm32_bus_dma_tag arm_generic_dma_tag;
+
+	apple_nonposted_bs_tag = arm_generic_bs_tag;
+	apple_nonposted_bs_tag.bs_map = apple_nonposted_bs_map;
 
 	apple_coherent_dma_tag = arm_generic_dma_tag;
 	apple_coherent_dma_tag._ranges = apple_coherent_ranges;
@@ -85,7 +101,7 @@ apple_platform_bootstrap(void)
 static void
 apple_platform_init_attach_args(struct fdt_attach_args *faa)
 {
-	faa->faa_bst = &arm_generic_bs_tag;
+	faa->faa_bst = &apple_nonposted_bs_tag;
 	faa->faa_dmat = &apple_coherent_dma_tag;
 }
 
