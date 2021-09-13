@@ -1,4 +1,4 @@
-#	$NetBSD: files.generic64,v 1.18 2021/08/30 23:26:26 jmcneill Exp $
+#	$NetBSD: files.generic64,v 1.19 2021/09/13 23:31:23 jmcneill Exp $
 #
 # A generic (aarch64) kernel configuration info
 #
@@ -17,6 +17,7 @@ include "arch/arm/broadcom/files.bcm2835"
 include "arch/arm/nvidia/files.tegra"
 include "arch/arm/nxp/files.imx"
 include "arch/arm/rockchip/files.rockchip"
+include "arch/arm/samsung/files.exynos"
 include "arch/arm/sunxi/files.sunxi"
 include "arch/arm/virt/files.virt"
 include "arch/arm/sociox/files.sociox"

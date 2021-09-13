@@ -1,4 +1,4 @@
-/* $NetBSD: sscom_reg.h,v 1.3 2018/07/05 13:11:58 jmcneill Exp $ */
+/* $NetBSD: sscom_reg.h,v 1.4 2021/09/13 23:31:23 jmcneill Exp $ */
 
 /*
  * Copyright (c) 2002, 2003 Fujitsu Component Limited
@@ -66,11 +66,14 @@
 #define  UCON_RXDMA_BRST_8	__SHIFTIN(2, UCON_RXDMA)
 #define  UCON_RXDMA_BRST_16	__SHIFTIN(3, UCON_RXDMA)
 #define  UCON_RXTO		__BITS(15,12)
+#define	 UCON_S5L_TXTHRESH	__BIT(13)	/* Apple specific */
+#define	 UCON_S5L_RXTHRESH	__BIT(12)	/* Apple specific */
 #define  UCON_RXTO_FIFO_EMPTY   __BIT(11)
 #define  UCON_RXTO_DMA_FSM_STOP __BIT(10)
 #define	 UCON_TXINT_TYPE	__BIT(9)	/* Tx interrupt. 0=pulse,1=level */
 #define	 UCON_TXINT_TYPE_LEVEL  UCON_TXINT_TYPE	/* 4412 mandatory */
 #define	 UCON_TXINT_TYPE_PULSE  0
+#define  UCON_S5L_RX_TIMEOUT	__BIT(9)	/* Apple specific */
 #define	 UCON_RXINT_TYPE	__BIT(8)	/* Rx interrupt */
 #define	 UCON_RXINT_TYPE_LEVEL  UCON_RXINT_TYPE	/* 4412 mandatory */
 #define	 UCON_RXINT_TYPE_PULSE  __SHIFTIN(0,UCON_RXINT_TYPE)
@@ -103,6 +106,9 @@
 #define  UTRSTAT_RXFIFOCNT	__BITS(23,16)
 #define  UTRSTAT_TXDMA_FSM	__BITS(15,12)
 #define  UTRSTAT_RXDMA_FSM	__BITS(11,8)
+#define	 UTRSTAT_S5L_RX_TIMEOUT	__BIT(9)	/* Apple specific */
+#define	 UTRSTAT_S5L_TXTHRESH	__BIT(5)	/* Apple specific */
+#define	 UTRSTAT_S5L_RXTHRESH	__BIT(4)	/* Apple specific */
 #define  UTRSTAT_RXTIMEOUT	__BIT(3)
 #define	 UTRSTAT_TXSHIFTER_EMPTY __BIT(2)
 #define	 UTRSTAT_TXEMPTY	__BIT(1) /* TX fifo or buffer empty */
@@ -117,8 +123,11 @@
 #define	 UFSTAT_TXFULL		__BIT(24) /* Tx fifo full */
 #define	 UFSTAT_TXCOUNT	  	__BITS(23,16)	/* TX FIFO count */
 #define  UFSTAT_RXERROR		__BIT(9)
+#define	 UFSTAT_S5L_TXFULL	__BIT(9) /* Tx fifo full (Apple) */
 #define	 UFSTAT_RXFULL		__BIT(8) /* Rx fifo full */
+#define	 UFSTAT_S5L_RXFULL	__BIT(8) /* Rx fifo full (Apple) */
 #define	 UFSTAT_RXCOUNT		__BITS(7,0)	/* RX FIFO count */
+#define	 UFSTAT_S5L_RXCOUNT	__BITS(3,0)	/* RX FIFO count (Apple) */
 #define	SSCOM_UMSTAT		0x1c	/* Modem status register */
 #define  UMSTAT_DCTS		__BIT(4)
 #define	 UMSTAT_CTS		__BIT(0) /* Clear to send */

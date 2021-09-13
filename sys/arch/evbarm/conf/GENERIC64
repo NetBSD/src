@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC64,v 1.184 2021/09/07 10:09:34 msaitoh Exp $
+#	$NetBSD: GENERIC64,v 1.185 2021/09/13 23:31:23 jmcneill Exp $
 #
 #	GENERIC ARM (aarch64) kernel
 #
@@ -307,6 +307,7 @@ ukphy*		at mii? phy ?		# generic unknown PHYs
 # UART
 com*		at fdt?	pass 4			# UART
 com*		at acpi?
+exuart*		at fdt? pass 4			# SSCOM UART
 imxuart*	at fdt? pass 4			# IMX UART
 options 	IMXUARTCONSOLE
 mesonuart*	at fdt? pass 4			# Amlogic Meson UART
