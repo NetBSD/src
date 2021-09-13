@@ -1,4 +1,4 @@
-/*	$NetBSD: lock.h,v 1.15 2020/03/01 23:23:36 rin Exp $	*/
+/*	$NetBSD: lock.h,v 1.16 2021/09/13 11:54:42 rin Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2007 The NetBSD Foundation, Inc.
@@ -80,12 +80,12 @@ __cpu_simple_lock(__cpu_simple_lock_t *alp)
 2:	lwzx	%0,0,%1		\n\
 	cmpwi	%0,%2		\n\
 	beq+	1b		\n\
-	b	2b		\n"
+	b	2b		\n\
+3:				\n"
 #ifdef IBM405_ERRATA77
 	"dcbt	0,%1		\n"
 #endif
-"				\
-3:	stwcx.	%3,0,%1		\n\
+	"stwcx.	%3,0,%1		\n\
 	bne-	1b		\n\
 	isync			\n\
 				\n"
@@ -108,12 +108,12 @@ __cpu_simple_lock_try(__cpu_simple_lock_t *alp)
 	"dcbt	0,%1		\n"
 #endif
 	"stwcx.	%3,0,%1		\n\
-	bne-	1b		\n"
+	bne-	1b		\n\
+2:				\n"
 #ifdef IBM405_ERRATA77
 	"dcbt	0,%4		\n"
 #endif
-"				\
-2:	stwcx.	%3,0,%4		\n\
+	"stwcx.	%3,0,%4		\n\
 	isync			\n\
 				\n"
 	: "=&r"(old)
