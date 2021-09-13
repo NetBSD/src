@@ -1,4 +1,4 @@
-/* $NetBSD: apple_pcie.c,v 1.3 2021/09/06 14:03:17 jmcneill Exp $ */
+/* $NetBSD: apple_pcie.c,v 1.4 2021/09/13 23:30:05 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2021 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: apple_pcie.c,v 1.3 2021/09/06 14:03:17 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: apple_pcie.c,v 1.4 2021/09/13 23:30:05 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -51,6 +51,8 @@ __KERNEL_RCSID(0, "$NetBSD: apple_pcie.c,v 1.3 2021/09/06 14:03:17 jmcneill Exp 
 #define	 PCIE_MSI_CTRL_32	(5U << 4)
 #define	PCIE_MSI_REMAP		0x0128
 #define	PCIE_MSI_DOORBELL	0x0168
+
+extern struct bus_space arm_generic_bs_tag;
 
 struct apple_pcie_softc {
 	struct pcihost_softc	sc_pcihost;
@@ -110,7 +112,7 @@ apple_pcie_attach(device_t parent, device_t self, void *aux)
 	 * Create a new bus tag for PCIe devices that does not inherit the
 	 * nonposted MMIO flag from the host controller.
 	 */
-	sc->sc_pci_bst = fdtbus_bus_tag_create(phandle, 0);
+	sc->sc_pci_bst = &arm_generic_bs_tag;
 	sc->sc_phandle = phandle;
 	error = bus_space_map(faa->faa_bst, cs_addr, cs_size, 0, &sc->sc_bsh);
 	if (error) {
