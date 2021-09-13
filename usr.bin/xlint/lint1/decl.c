@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.238 2021/09/13 05:21:30 rillig Exp $ */
+/* $NetBSD: decl.c,v 1.239 2021/09/13 05:25:27 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: decl.c,v 1.238 2021/09/13 05:21:30 rillig Exp $");
+__RCSID("$NetBSD: decl.c,v 1.239 2021/09/13 05:25:27 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -1453,8 +1453,9 @@ new_style_function(sym_t *decl, sym_t *args)
 		}
 	}
 
-	/* return NULL if first param is VOID */
-	return args != NULL && args->s_type->t_tspec != VOID ? args : NULL;
+	if (args == NULL || args->s_type->t_tspec == VOID)
+		return NULL;
+	return args;
 }
 
 /*
