@@ -8,3 +8,7 @@ decl_direct_abstract.c(56): error: cannot initialize 'double' from 'pointer to f
 decl_direct_abstract.c(59): error: cannot initialize 'double' from 'pointer to function(void) returning void' [185]
 decl_direct_abstract.c(61): error: cannot initialize 'double' from 'pointer to function(pointer to function(void) returning int) returning void' [185]
 decl_direct_abstract.c(63): error: cannot initialize 'double' from 'pointer to function(pointer to const pointer to function(unsigned int, ...) returning int) returning void' [185]
+decl_direct_abstract.c(69): error: syntax error ']' [249]
+decl_direct_abstract.c(71): error: null dimension [17]
+decl_direct_abstract.c(74): error: null dimension [17]
+decl_direct_abstract.c(80): error: syntax error ']' [249]
