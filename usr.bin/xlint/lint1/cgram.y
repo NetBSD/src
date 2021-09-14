@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.362 2021/09/13 06:11:51 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.363 2021/09/14 19:06:27 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: cgram.y,v 1.362 2021/09/13 06:11:51 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.363 2021/09/14 19:06:27 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -1410,7 +1410,10 @@ direct_abstract_declarator:
 	| T_LBRACK T_RBRACK {
 		$$ = add_array(abstract_name(), false, 0);
 	  }
-	/* TODO: T_LBRACK T_ASTERISK T_RBRACK; see below */
+	| T_LBRACK T_ASTERISK T_RBRACK {
+		/* since C99 */
+		$$ = add_array(abstract_name(), false, 0);
+	  }
 	| T_LBRACK array_size T_RBRACK {
 		$$ = add_array(abstract_name(), true,
 		    to_int_constant($2, false));
@@ -1421,7 +1424,8 @@ direct_abstract_declarator:
 	| direct_abstract_declarator T_LBRACK T_RBRACK {
 		$$ = add_array($1, false, 0);
 	  }
-	| direct_abstract_declarator T_LBRACK T_ASTERISK T_RBRACK { /* C99 */
+	| direct_abstract_declarator T_LBRACK T_ASTERISK T_RBRACK {
+		/* since C99 */
 		$$ = add_array($1, false, 0);
 	  }
 	| direct_abstract_declarator T_LBRACK array_size T_RBRACK {
