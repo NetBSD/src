@@ -1,4 +1,4 @@
-/* $NetBSD: acpi.c,v 1.50 2021/01/20 15:27:51 skrll Exp $ */
+/* $NetBSD: acpi.c,v 1.51 2021/09/14 20:34:36 rillig Exp $ */
 
 /*-
  * Copyright (c) 1998 Doug Rabson
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: acpi.c,v 1.50 2021/01/20 15:27:51 skrll Exp $");
+__RCSID("$NetBSD: acpi.c,v 1.51 2021/09/14 20:34:36 rillig Exp $");
 
 #include <sys/param.h>
 #include <sys/endian.h>
@@ -83,7 +83,7 @@ static void	acpi_print_io_apic(uint32_t apic_id, uint32_t int_base,
 		    uint64_t apic_addr);
 static void	acpi_print_mps_flags(uint16_t flags);
 static void	acpi_print_intr(uint32_t intr, uint16_t mps_flags);
-static void	acpi_print_local_nmi(u_int lint, uint16_t mps_flags);
+static void	acpi_print_local_nmi(u_int local_int, uint16_t mps_flags);
 static void	acpi_print_madt(ACPI_SUBTABLE_HEADER *mp);
 static void	acpi_handle_bert(ACPI_TABLE_HEADER *sdp);
 static void	acpi_handle_bgrt(ACPI_TABLE_HEADER *sdp);
@@ -1001,10 +1001,10 @@ acpi_print_intr(uint32_t intr, uint16_t mps_flags)
 }
 
 static void
-acpi_print_local_nmi(u_int lint, uint16_t mps_flags)
+acpi_print_local_nmi(u_int local_int, uint16_t mps_flags)
 {
 
-	printf("\tLINT Pin=%d\n", lint);
+	printf("\tLINT Pin=%d\n", local_int);
 	acpi_print_mps_flags(mps_flags);
 }
 
@@ -2419,7 +2419,7 @@ acpi_print_lpit(ACPI_LPIT_HEADER *lpit)
 #undef PRINTFLAG
 
 	if (lpit->Type == ACPI_LPIT_TYPE_NATIVE_CSTATE)
-		return acpi_print_native_lpit((ACPI_LPIT_NATIVE *)lpit);
+		acpi_print_native_lpit((ACPI_LPIT_NATIVE *)lpit);
 }
 
 static void
