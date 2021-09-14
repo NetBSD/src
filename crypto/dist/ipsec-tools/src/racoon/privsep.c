@@ -1,4 +1,4 @@
-/*	$NetBSD: privsep.c,v 1.25 2018/08/28 09:10:28 christos Exp $	*/
+/*	$NetBSD: privsep.c,v 1.26 2021/09/14 21:49:31 rillig Exp $	*/
 
 /* Id: privsep.c,v 1.15 2005/08/08 11:23:44 vanhu Exp */
 
@@ -1762,8 +1762,10 @@ privsep_cleanup_pam(port)
 	size_t len;
 	char *data;
 
-	if (geteuid() == 0)
-		return cleanup_pam(port);
+	if (geteuid() == 0) {
+		cleanup_pam(port);
+		return;
+	}
 
 	len = sizeof(*msg) 
 	    + sizeof(port)
