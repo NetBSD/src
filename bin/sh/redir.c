@@ -1,4 +1,4 @@
-/*	$NetBSD: redir.c,v 1.66 2019/03/01 06:15:01 kre Exp $	*/
+/*	$NetBSD: redir.c,v 1.67 2021/09/14 14:49:39 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)redir.c	8.2 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: redir.c,v 1.66 2019/03/01 06:15:01 kre Exp $");
+__RCSID("$NetBSD: redir.c,v 1.67 2021/09/14 14:49:39 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -237,10 +237,14 @@ redirect(union node *redir, int flags)
 		}
 
 		if ((flags & REDIR_PUSH) && !is_renamed(sv->renamed, fd)) {
+			int bigfd;
+
 			INTOFF;
 			if (big_sh_fd < 10)
 				find_big_fd();
-			if ((i = fcntl(fd, F_DUPFD, big_sh_fd)) == -1) {
+			if ((bigfd = big_sh_fd) < max_user_fd)
+				bigfd = max_user_fd;
+			if ((i = fcntl(fd, F_DUPFD, bigfd + 1)) == -1) {
 				switch (errno) {
 				case EBADF:
 					i = CLOSED;
@@ -253,8 +257,7 @@ redirect(union node *redir, int flags)
 						break;
 					/* FALLTHRU */
 				default:
-					i = errno;
-					error("%d: %s", fd, strerror(i));
+					error("%d: %s", fd, strerror(errno));
 					/* NOTREACHED */
 				}
 			}
@@ -350,6 +353,9 @@ openredirect(union node *redir, char memory[10], int flags)
 	case NTOFD:
 	case NFROMFD:
 		if (redir->ndup.dupfd >= 0) {	/* if not ">&-" */
+			if (sh_fd(redir->ndup.dupfd) != NULL)
+				error("Redirect (from %d to %d) failed: %s",
+				    redir->ndup.dupfd, fd, strerror(EBADF));
 			if (fd < 10 && redir->ndup.dupfd < 10 &&
 			    memory[redir->ndup.dupfd])
 				memory[fd] = 1;
@@ -684,7 +690,7 @@ renumber_sh_fd(struct shell_fds *fp)
 		find_big_fd();
 
 	to = fcntl(fp->fd, F_DUPFD_CLOEXEC, big_sh_fd);
-	if (to == -1)
+	if (to == -1 && big_sh_fd >= 22)
 		to = fcntl(fp->fd, F_DUPFD_CLOEXEC, big_sh_fd/2);
 	if (to == -1)
 		to = fcntl(fp->fd, F_DUPFD_CLOEXEC, fp->fd + 1);
@@ -828,8 +834,7 @@ getflags(int fd, int p)
 	if (sh_fd(fd) != NULL) {
 		if (!p)
 			return -1;
-		error("Can't get status for fd=%d (%s)", fd,
-		    "Bad file descriptor");			/*XXX*/
+		error("Can't get status for fd=%d (%s)", fd, strerror(EBADF));
 	}
 
 	if ((c = fcntl(fd, F_GETFD)) == -1) {
