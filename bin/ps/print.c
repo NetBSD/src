@@ -1,4 +1,4 @@
-/*	$NetBSD: print.c,v 1.136 2021/09/14 17:09:18 christos Exp $	*/
+/*	$NetBSD: print.c,v 1.137 2021/09/14 22:01:17 christos Exp $	*/
 
 /*
  * Copyright (c) 2000, 2007 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
 #if 0
 static char sccsid[] = "@(#)print.c	8.6 (Berkeley) 4/16/94";
 #else
-__RCSID("$NetBSD: print.c,v 1.136 2021/09/14 17:09:18 christos Exp $");
+__RCSID("$NetBSD: print.c,v 1.137 2021/09/14 22:01:17 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -77,6 +77,7 @@ __RCSID("$NetBSD: print.c,v 1.136 2021/09/14 17:09:18 christos Exp $");
 #include <sys/ucred.h>
 #include <sys/sysctl.h>
 #include <sys/acct.h>
+#include <sys/ktrace.h>
 
 #include <err.h>
 #include <grp.h>
@@ -1170,9 +1171,7 @@ printsig(VAR *v, const sigset_t *s, enum mode mode)
 		strprintorsetwidth(v, buf + i, mode);
 	} else {
 		size_t maxlen = 1024, len = 0;
-		char *buf = malloc(maxlen);
-		if (buf == NULL)
-			err(EXIT_FAILURE, NULL);
+		char *buf = emalloc(maxlen);
 		*buf = '\0';
 		for (size_t i = 0; i < SIGSETSIZE; i++) {
 			uint32_t m = s->__bits[i];
@@ -1185,9 +1184,7 @@ printsig(VAR *v, const sigset_t *s, enum mode mode)
 					sn++;
 				if (len + sn >= maxlen) {
 					maxlen += 1024;
-					buf = realloc(buf, maxlen);
-					if (buf == NULL)
-						err(EXIT_FAILURE, NULL);
+					buf = erealloc(buf, maxlen);
 				}
 				snprintf(buf + len, sn + 1, "%s%s",
 				    len == 0 ? "" : ",", n);
@@ -1204,15 +1201,23 @@ static void
 printflag(VAR *v, int flag, enum mode mode)
 {
 	char buf[1024];
-	snprintb(buf, sizeof(buf), __SYSCTL_PROC_FLAG_BITS, flag);
-	strprintorsetwidth(v, buf, mode);
-}
+	const char *fmt;
 
-static void
-printacflag(VAR *v, int flag, enum mode mode)
-{
-	char buf[1024];
-	snprintb(buf, sizeof(buf), __ACCT_FLAG_BITS, flag);
+	switch (v->type) {
+	case PROCFLAG:
+		fmt = __SYSCTL_PROC_FLAG_BITS;
+		break;
+	case KTRACEFLAG:
+		fmt = __KTRACE_FLAG_BITS;
+		break;
+	case PROCACFLAG:
+		fmt = __ACCT_FLAG_BITS;
+		break;
+	default:
+		err(EXIT_FAILURE, "Bad type %d", v->type);
+	}
+
+	snprintb(buf, sizeof(buf), fmt, (unsigned)flag);
 	strprintorsetwidth(v, buf, mode);
 }
 
@@ -1271,6 +1276,7 @@ printval(void *bp, VAR *v, enum mode mode)
 			val = GET(int32_t);
 			vok = VSIGN;
 			break;
+		case KTRACEFLAG:
 		case PROCFLAG:
 			if (v->flag & ALTPR)
 				break;
@@ -1367,13 +1373,14 @@ printval(void *bp, VAR *v, enum mode mode)
 		return;
 	case PROCACFLAG:
 		if (v->flag & ALTPR) {
-			printacflag(v, CHK_INF127(GET(u_short)), mode);
+			printflag(v, CHK_INF127(GET(u_short)), mode);
 			return;
 		}
 		/*FALLTHROUGH*/
 	case USHORT:
 		(void)printf(ofmt, width, CHK_INF127(GET(u_short)));
 		return;
+	case KTRACEFLAG:
 	case PROCFLAG:
 		if (v->flag & ALTPR) {
 			printflag(v, GET(int), mode);
