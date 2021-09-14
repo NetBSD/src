@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.363 2021/09/14 19:06:27 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.364 2021/09/14 19:44:40 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: cgram.y,v 1.363 2021/09/14 19:06:27 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.364 2021/09/14 19:44:40 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -143,6 +143,7 @@ anonymize(sym_t *s)
 	qual_ptr *y_qual_ptr;
 	bool	y_seen_statement;
 	struct generic_association *y_generic;
+	struct array_size y_array_size;
 };
 
 %token			T_LBRACE T_RBRACE T_LBRACK T_RBRACK T_LPAREN T_RPAREN
@@ -335,6 +336,7 @@ anonymize(sym_t *s)
 %type	<y_sym>		direct_param_declarator
 %type	<y_sym>		direct_notype_param_declarator
 %type	<y_sym>		param_list
+%type	<y_array_size>	array_size_opt
 %type	<y_tnode>	array_size
 %type	<y_sym>		identifier_list
 %type	<y_type>	type_name
@@ -1225,11 +1227,8 @@ notype_direct_declarator:
 	| type_attribute notype_direct_declarator {
 		$$ = $2;
 	  }
-	| notype_direct_declarator T_LBRACK T_RBRACK {
-		$$ = add_array($1, false, 0);
-	  }
-	| notype_direct_declarator T_LBRACK array_size T_RBRACK {
-		$$ = add_array($1, true, to_int_constant($3, false));
+	| notype_direct_declarator T_LBRACK array_size_opt T_RBRACK {
+		$$ = add_array($1, $3.has_dim, $3.dim);
 	  }
 	| notype_direct_declarator param_list asm_or_symbolrename_opt {
 		$$ = add_function(symbolrename($1, $3), $2);
@@ -1249,11 +1248,8 @@ type_direct_declarator:
 	| type_attribute type_direct_declarator {
 		$$ = $2;
 	  }
-	| type_direct_declarator T_LBRACK T_RBRACK {
-		$$ = add_array($1, false, 0);
-	  }
-	| type_direct_declarator T_LBRACK array_size T_RBRACK {
-		$$ = add_array($1, true, to_int_constant($3, false));
+	| type_direct_declarator T_LBRACK array_size_opt T_RBRACK {
+		$$ = add_array($1, $3.has_dim, $3.dim);
 	  }
 	| type_direct_declarator param_list asm_or_symbolrename_opt {
 		$$ = add_function(symbolrename($1, $3), $2);
@@ -1294,12 +1290,9 @@ direct_param_declarator:
 	| T_LPAREN notype_param_declarator T_RPAREN {
 		$$ = $2;
 	  }
-	| direct_param_declarator T_LBRACK T_RBRACK gcc_attribute_list_opt {
-		$$ = add_array($1, false, 0);
-	  }
-	| direct_param_declarator T_LBRACK array_size T_RBRACK
+	| direct_param_declarator T_LBRACK array_size_opt T_RBRACK
 	    gcc_attribute_list_opt {
-		$$ = add_array($1, true, to_int_constant($3, false));
+		$$ = add_array($1, $3.has_dim, $3.dim);
 	  }
 	| direct_param_declarator param_list asm_or_symbolrename_opt {
 		$$ = add_function(symbolrename($1, $3), $2);
@@ -1315,11 +1308,8 @@ direct_notype_param_declarator:
 	| T_LPAREN notype_param_declarator T_RPAREN {
 		$$ = $2;
 	  }
-	| direct_notype_param_declarator T_LBRACK T_RBRACK {
-		$$ = add_array($1, false, 0);
-	  }
-	| direct_notype_param_declarator T_LBRACK array_size T_RBRACK {
-		$$ = add_array($1, true, to_int_constant($3, false));
+	| direct_notype_param_declarator T_LBRACK array_size_opt T_RBRACK {
+		$$ = add_array($1, $3.has_dim, $3.dim);
 	  }
 	| direct_notype_param_declarator param_list asm_or_symbolrename_opt {
 		$$ = add_function(symbolrename($1, $3), $2);
@@ -1339,6 +1329,22 @@ id_list_lparen:
 	  T_LPAREN {
 		block_level++;
 		begin_declaration_level(PROTO_ARG);
+	  }
+	;
+
+array_size_opt:
+	  /* empty */ {
+		$$.has_dim = false;
+		$$.dim = 0;
+	  }
+	| T_ASTERISK {
+		/* since C99; variable length array of unspecified size */
+		$$.has_dim = false; /* TODO: maybe change to true */
+		$$.dim = 0;	/* just as a placeholder */
+	  }
+	| array_size {
+		$$.has_dim = true;
+		$$.dim = to_int_constant($1, false);
 	  }
 	;
 
@@ -1407,29 +1413,14 @@ direct_abstract_declarator:
 	  T_LPAREN abstract_declarator T_RPAREN {
 		$$ = $2;
 	  }
-	| T_LBRACK T_RBRACK {
-		$$ = add_array(abstract_name(), false, 0);
-	  }
-	| T_LBRACK T_ASTERISK T_RBRACK {
-		/* since C99 */
-		$$ = add_array(abstract_name(), false, 0);
-	  }
-	| T_LBRACK array_size T_RBRACK {
-		$$ = add_array(abstract_name(), true,
-		    to_int_constant($2, false));
+	| T_LBRACK array_size_opt T_RBRACK {
+		$$ = add_array(abstract_name(), $2.has_dim, $2.dim);
 	  }
 	| type_attribute direct_abstract_declarator {
 		$$ = $2;
 	  }
-	| direct_abstract_declarator T_LBRACK T_RBRACK {
-		$$ = add_array($1, false, 0);
-	  }
-	| direct_abstract_declarator T_LBRACK T_ASTERISK T_RBRACK {
-		/* since C99 */
-		$$ = add_array($1, false, 0);
-	  }
-	| direct_abstract_declarator T_LBRACK array_size T_RBRACK {
-		$$ = add_array($1, true, to_int_constant($3, false));
+	| direct_abstract_declarator T_LBRACK array_size_opt T_RBRACK {
+		$$ = add_array($1, $3.has_dim, $3.dim);
 	  }
 	| abstract_decl_param_list asm_or_symbolrename_opt {
 		$$ = add_function(symbolrename(abstract_name(), $2), $1);

@@ -1,4 +1,4 @@
-/* $NetBSD: lint1.h,v 1.128 2021/08/31 17:51:30 rillig Exp $ */
+/* $NetBSD: lint1.h,v 1.129 2021/09/14 19:44:40 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -333,6 +333,11 @@ struct generic_association {
 	type_t *ga_arg;		/* NULL means default or error */
 	tnode_t *ga_result;	/* NULL means error */
 	struct generic_association *ga_prev;
+};
+
+struct array_size {
+	bool has_dim;
+	int dim;
 };
 
 /*
