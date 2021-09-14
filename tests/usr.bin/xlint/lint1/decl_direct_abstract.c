@@ -1,4 +1,4 @@
-/*	$NetBSD: decl_direct_abstract.c,v 1.3 2021/09/14 19:06:27 rillig Exp $	*/
+/*	$NetBSD: decl_direct_abstract.c,v 1.4 2021/09/14 19:08:40 rillig Exp $	*/
 # 3 "decl_direct_abstract.c"
 
 /*
@@ -64,7 +64,7 @@ double type_of_c99_6_7_6_example_h = c99_6_7_6_example_h;
 
 void int_array(int[]);
 void int_array_3(int[3]);
-/* supported since cgram.y 1.362 from 2021-09-14 */
+/* supported since cgram.y 1.363 from 2021-09-14 */
 void int_array_ast(int[*]);
 /* expect+1: error: null dimension [17] */
 void int_array_7_array(int[7][]);
@@ -74,5 +74,5 @@ void int_array_7_array_ast(int[7][*]);
 
 void int_array_array(int[][7]);
 void int_array_3_array(int[3][7]);
-/* supported since cgram.y 1.362 from 2021-09-14 */
+/* supported since cgram.y 1.363 from 2021-09-14 */
 void int_array_ast_array(int[*][7]);
