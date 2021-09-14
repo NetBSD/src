@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.h,v 1.234 2021/07/24 13:28:14 simonb Exp $	*/
+/*	$NetBSD: sysctl.h,v 1.235 2021/09/14 17:10:46 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -547,6 +547,34 @@ struct kinfo_proc2 {
  * LWP compat flags.
  */
 #define	L_DETACHED		0x00800000
+
+#define	__SYSCTL_PROC_FLAG_BITS \
+	"\20" \
+	"\1ADVLOCK" \
+	"\2CONTROLT" \
+	"\3INMEM" \
+	"\4NOCLDSTOP" \
+	"\5PPWAIT" \
+	"\6PROFIL" \
+	"\7SELECT" \
+	"\10SINTR" \
+	"\11SUGID" \
+	"\12SYSTEM" \
+	"\13SA" \
+	"\14TRACED" \
+	"\15WAITED" \
+	"\16WEXIT" \
+	"\17EXEC" \
+	"\20OWEUPC" \
+	"\22NOCLDWAIT" \
+	"\22P32" \
+	"\24CLDSIGIGN" \
+	"\26SYSTRACE" \
+	"\27CHTRACED" \
+	"\30STOPFORK" \
+	"\31STOPEXEC" \
+	"\32STOPEXIT" \
+	"\33SYSCALL"
 
 /*
  * KERN_LWP structure. See notes on KERN_PROC2 about adding elements.
