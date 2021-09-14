@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.22 2020/09/07 03:19:04 mrg Exp $
+#	$NetBSD: Makefile,v 1.23 2021/09/14 20:13:03 rillig Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/5/93
 
 WARNS?=	3	# XXX: sign-compare issues
@@ -18,5 +18,10 @@ CPPFLAGS+=-I${.CURDIR} -I${FSCK} -DIN_FSCK_LFS
 
 LDADD+=-lutil
 DPADD+=${LIBUTIL}
+
+# As of 2021-09-14, lint does not recognize the types as equal, but it should.
+# vnode.c(104): error: redeclaration of register_vget [27]
+# vnode.h(75): previous declaration of register_vget [260]
+LINT_SUPPORTED=	no
 
 .include <bsd.prog.mk>

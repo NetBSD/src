@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2020/05/24 14:41:26 jmcneill Exp $
+#	$NetBSD: Makefile,v 1.7 2021/09/14 20:13:03 rillig Exp $
 
 .include <bsd.own.mk>
 
@@ -13,5 +13,8 @@ LDADD+= -lutil
 
 .PATH: ${NETBSDSRCDIR}/sys/ufs/ffs
 .PATH: ${NETBSDSRCDIR}/sbin/fsck
+
+# resize_ffs.c(90): error: cannot take size/alignment of incomplete type [143]
+LINT_SUPPORTED=	no
 
 .include <bsd.prog.mk>
