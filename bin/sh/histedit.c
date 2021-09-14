@@ -1,4 +1,4 @@
-/*	$NetBSD: histedit.c,v 1.56 2021/08/15 10:17:55 christos Exp $	*/
+/*	$NetBSD: histedit.c,v 1.57 2021/09/14 15:04:09 christos Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)histedit.c	8.2 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: histedit.c,v 1.56 2021/08/15 10:17:55 christos Exp $");
+__RCSID("$NetBSD: histedit.c,v 1.57 2021/09/14 15:04:09 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -622,9 +622,9 @@ out:
 unsigned char
 sh_complete(EditLine *sel, int ch __unused)
 {
-	return (unsigned char)fn_complete(sel, NULL, sh_matches,
+	return (unsigned char)fn_complete2(sel, NULL, sh_matches,
 		L" \t\n\"\\'`@$><=;|&{(", NULL, NULL, (size_t)100,
-		NULL, &((int) {0}), NULL, NULL);
+		NULL, &((int) {0}), NULL, NULL, FN_QUOTE_MATCH);
 }
 
 static int
