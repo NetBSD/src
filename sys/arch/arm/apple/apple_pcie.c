@@ -1,4 +1,4 @@
-/* $NetBSD: apple_pcie.c,v 1.4 2021/09/13 23:30:05 jmcneill Exp $ */
+/* $NetBSD: apple_pcie.c,v 1.5 2021/09/14 01:33:19 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2021 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: apple_pcie.c,v 1.4 2021/09/13 23:30:05 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: apple_pcie.c,v 1.5 2021/09/14 01:33:19 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -504,13 +504,22 @@ apple_pcie_msi_init(struct apple_pcie_softc *sc)
 	int len;
 
 	const u_int *data = fdtbus_get_prop(phandle, "msi-ranges", &len);
-	if (len != 8) {
+	switch (len) {
+	case 8:
+		/* two cells: start and count */
+		sc->sc_msi_start = be32toh(data[0]);
+		sc->sc_nmsi = be32toh(data[1]);
+		break;
+	case 20:
+		/* 5 cells: xref, specifier (3 cells), and count */
+		sc->sc_msi_start = be32toh(data[2]);
+		sc->sc_nmsi = be32toh(data[4]);
+		break;
+	default:
 		aprint_error_dev(sc->sc_pcihost.sc_dev,
 		    "WARNING: bad msi-ranges property, MSI not enabled!\n");
 		return ENXIO;
 	}
-	sc->sc_msi_start = be32toh(data[0]);
-	sc->sc_nmsi = be32toh(data[1]);
 	sc->sc_msi_pa = kmem_zalloc(sizeof(*sc->sc_msi_pa) * sc->sc_nmsi,
 	    KM_SLEEP);
 	sc->sc_msi_ih = kmem_zalloc(sizeof(*sc->sc_msi_ih) * sc->sc_nmsi,
