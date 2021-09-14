@@ -1,4 +1,4 @@
-/*	$NetBSD: partman.c,v 1.52 2021/07/17 11:32:50 martin Exp $ */
+/*	$NetBSD: partman.c,v 1.53 2021/09/14 21:45:20 rillig Exp $ */
 
 /*
  * Copyright 2012 Eugene Lozovoy
@@ -403,12 +403,12 @@ pm_dev_list(int type)
 		(num_devs+1<3)?3:num_devs+1, 13,
 		MC_SCROLL | MC_NOCLEAR, NULL, NULL, NULL, NULL, MSG_cancel);
 	if (menu_no == -1)
-		return (struct part_entry) { };
+		return (struct part_entry) { 0 };
 	process_menu(menu_no, &dev_num);
 	free_menu(menu_no);
 
 	if (dev_num < 0 || dev_num >= num_devs)
-		return (struct part_entry) { };
+		return (struct part_entry) { 0 };
 
 	pm_retvalue = dev_num;
 	return disk_entries[dev_num];
