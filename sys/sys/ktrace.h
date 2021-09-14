@@ -1,4 +1,4 @@
-/*	$NetBSD: ktrace.h,v 1.66 2018/04/19 21:19:07 christos Exp $	*/
+/*	$NetBSD: ktrace.h,v 1.67 2021/09/14 22:01:40 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -248,6 +248,27 @@ struct ktr_execfd {
 #define KTRFAC_EXEC_ENV	(1<<KTR_EXEC_ENV)
 #define	KTRFAC_MIB	(1<<KTR_MIB)
 #define	KTRFAC_EXEC_FD	(1<<KTR_EXEC_FD)
+
+#define __KTRACE_FLAG_BITS \
+    "\177\020" \
+    "b\1SYSCALL\0" \
+    "b\2SYSRET\0" \
+    "b\3NAMEI\0" \
+    "b\4GENIO\0" \
+    "b\5PSIG\0" \
+    "b\6CSW\0" \
+    "b\7EMUL\0" \
+    "b\10USER\0" \
+    "b\12EXEC_ARG\0" \
+    "b\13EXEC_ENV\0" \
+    "b\15SAUPCALL\0" \
+    "b\16MIB\0" \
+    "b\17EXEC_FD\0" \
+    "f\30\4VERSION\0" \
+    "b\36TRC_EMUL\0" \
+    "b\37INHERIT\0" \
+    "b\40PERSISTENT\0"
+
 /*
  * trace flags (also in p_traceflags)
  */
