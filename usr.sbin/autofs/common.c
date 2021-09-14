@@ -1,4 +1,4 @@
-/*	$NetBSD: common.c,v 1.3 2019/11/16 12:21:06 tkusumi Exp $	*/
+/*	$NetBSD: common.c,v 1.4 2021/09/14 20:40:55 rillig Exp $	*/
 
 /*-
  * Copyright (c) 2017 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  * $FreeBSD: head/usr.sbin/autofs/common.c 303527 2016-07-30 01:10:05Z bapt $
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: common.c,v 1.3 2019/11/16 12:21:06 tkusumi Exp $");
+__RCSID("$NetBSD: common.c,v 1.4 2021/09/14 20:40:55 rillig Exp $");
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -1031,7 +1031,8 @@ parse_map(struct node *parent, const char *map, const char *key,
 	if (map[0] == '-') {
 		if (wildcards != NULL)
 			*wildcards = true;
-		return parse_special_map(parent, map, key);
+		parse_special_map(parent, map, key);
+		return;
 	}
 
 	if (map[0] == '/') {
@@ -1050,7 +1051,8 @@ parse_map(struct node *parent, const char *map, const char *key,
 		if (error != 0) {
 			log_debugx("map file \"%s\" does not exist; falling "
 			    "back to directory services", path);
-			return parse_included_map(parent, map);
+			parse_included_map(parent, map);
+			return;
 		}
 	}
 
