@@ -1,4 +1,4 @@
-/*	$NetBSD: decl_direct_abstract.c,v 1.1 2021/09/13 22:09:06 rillig Exp $	*/
+/*	$NetBSD: decl_direct_abstract.c,v 1.2 2021/09/14 19:02:15 rillig Exp $	*/
 # 3 "decl_direct_abstract.c"
 
 /*
@@ -61,3 +61,20 @@ double type_of_c99_6_7_6_example_f = c99_6_7_6_example_f;
 double type_of_c99_6_7_6_example_g = c99_6_7_6_example_g;
 /* expect+1: 'pointer to function(pointer to const pointer to function(unsigned int, ...) returning int) returning void' */
 double type_of_c99_6_7_6_example_h = c99_6_7_6_example_h;
+
+void int_array(int[]);
+void int_array_3(int[3]);
+/* TODO: support this in direct_abstract_declarator */
+/* expect+1: syntax error ']' [249] */
+void int_array_ast(int[*]);
+/* expect+1: error: null dimension [17] */
+void int_array_7_array(int[7][]);
+void int_array_7_array_3(int[7][3]);
+/* expect+1: error: null dimension [17] */
+void int_array_7_array_ast(int[7][*]);
+
+void int_array_array(int[][7]);
+void int_array_3_array(int[3][7]);
+/* TODO: support this in direct_abstract_declarator */
+/* expect+1: syntax error ']' [249] */
+void int_array_ast_array(int[*][7]);
