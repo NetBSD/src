@@ -1,4 +1,4 @@
-/*	$NetBSD: print.c,v 1.135 2021/04/17 08:35:33 maya Exp $	*/
+/*	$NetBSD: print.c,v 1.136 2021/09/14 17:09:18 christos Exp $	*/
 
 /*
  * Copyright (c) 2000, 2007 The NetBSD Foundation, Inc.
@@ -63,18 +63,20 @@
 #if 0
 static char sccsid[] = "@(#)print.c	8.6 (Berkeley) 4/16/94";
 #else
-__RCSID("$NetBSD: print.c,v 1.135 2021/04/17 08:35:33 maya Exp $");
+__RCSID("$NetBSD: print.c,v 1.136 2021/09/14 17:09:18 christos Exp $");
 #endif
 #endif /* not lint */
 
 #include <sys/param.h>
 #include <sys/time.h>
 #include <sys/resource.h>
+#include <sys/sysctl.h>
 #include <sys/lwp.h>
 #include <sys/proc.h>
 #include <sys/stat.h>
 #include <sys/ucred.h>
 #include <sys/sysctl.h>
+#include <sys/acct.h>
 
 #include <err.h>
 #include <grp.h>
@@ -87,8 +89,10 @@ __RCSID("$NetBSD: print.c,v 1.135 2021/04/17 08:35:33 maya Exp $");
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
+#include <util.h>
 #include <tzfile.h>
 #include <unistd.h>
+#include <signal.h>
 
 #include "ps.h"
 
@@ -1145,6 +1149,73 @@ tsize(struct pinfo *pi, VARENT *ve, enum mode mode)
 	intprintorsetwidth(v, pgtok(k->p_vm_tsize), mode);
 }
 
+static void
+printsig(VAR *v, const sigset_t *s, enum mode mode)
+{
+#define	SIGSETSIZE	__arraycount(s->__bits)
+	if ((v->flag & ALTPR) == 0) {
+		char buf[SIGSETSIZE * 8 + 1];
+		size_t i;
+
+		for (i = 0; i < SIGSETSIZE; i++)
+			(void)snprintf(&buf[i * 8], 9, "%.8x",
+			    s->__bits[(SIGSETSIZE - 1) - i]);
+
+		/* Skip leading zeroes */
+		for (i = 0; buf[i] == '0'; i++)
+			continue;
+
+		if (buf[i] == '\0')
+			i--;
+		strprintorsetwidth(v, buf + i, mode);
+	} else {
+		size_t maxlen = 1024, len = 0;
+		char *buf = malloc(maxlen);
+		if (buf == NULL)
+			err(EXIT_FAILURE, NULL);
+		*buf = '\0';
+		for (size_t i = 0; i < SIGSETSIZE; i++) {
+			uint32_t m = s->__bits[i];
+			for (uint32_t j = 0; j < 32; j++) {
+				if ((m & (1 << j)) == 0)
+					continue;
+				const char *n = signalname(j + 1);
+				size_t sn = strlen(n);
+				if (len)
+					sn++;
+				if (len + sn >= maxlen) {
+					maxlen += 1024;
+					buf = realloc(buf, maxlen);
+					if (buf == NULL)
+						err(EXIT_FAILURE, NULL);
+				}
+				snprintf(buf + len, sn + 1, "%s%s",
+				    len == 0 ? "" : ",", n);
+				len += sn;
+			}
+		}
+		strprintorsetwidth(v, buf, mode);
+		free(buf);
+#undef SIGSETSIZE
+	}
+}
+
+static void
+printflag(VAR *v, int flag, enum mode mode)
+{
+	char buf[1024];
+	snprintb(buf, sizeof(buf), __SYSCTL_PROC_FLAG_BITS, flag);
+	strprintorsetwidth(v, buf, mode);
+}
+
+static void
+printacflag(VAR *v, int flag, enum mode mode)
+{
+	char buf[1024];
+	snprintb(buf, sizeof(buf), __ACCT_FLAG_BITS, flag);
+	strprintorsetwidth(v, buf, mode);
+}
+
 /*
  * Generic output routines.  Print fields from various prototype
  * structures.
@@ -1188,6 +1259,10 @@ printval(void *bp, VAR *v, enum mode mode)
 			val = GET(short);
 			vok = VSIGN;
 			break;
+		case PROCACFLAG:
+			if (v->flag & ALTPR)
+				break;
+			/*FALLTHROUGH*/
 		case USHORT:
 			uval = CHK_INF127(GET(u_short));
 			vok = VUNSIGN;
@@ -1196,6 +1271,10 @@ printval(void *bp, VAR *v, enum mode mode)
 			val = GET(int32_t);
 			vok = VSIGN;
 			break;
+		case PROCFLAG:
+			if (v->flag & ALTPR)
+				break;
+			/*FALLTHROUGH*/
 		case INT:
 			val = GET(int);
 			vok = VSIGN;
@@ -1286,9 +1365,21 @@ printval(void *bp, VAR *v, enum mode mode)
 	case SHORT:
 		(void)printf(ofmt, width, GET(short));
 		return;
+	case PROCACFLAG:
+		if (v->flag & ALTPR) {
+			printacflag(v, CHK_INF127(GET(u_short)), mode);
+			return;
+		}
+		/*FALLTHROUGH*/
 	case USHORT:
 		(void)printf(ofmt, width, CHK_INF127(GET(u_short)));
 		return;
+	case PROCFLAG:
+		if (v->flag & ALTPR) {
+			printflag(v, GET(int), mode);
+			return;
+		}
+		/*FALLTHROUGH*/
 	case INT:
 		(void)printf(ofmt, width, GET(int));
 		return;
@@ -1313,32 +1404,14 @@ printval(void *bp, VAR *v, enum mode mode)
 	case UINT32:
 		(void)printf(ofmt, width, CHK_INF127(GET(u_int32_t)));
 		return;
-	case SIGLIST:
-		{
-			sigset_t *s = (sigset_t *)(void *)bp;
-			size_t i;
-#define	SIGSETSIZE	(sizeof(s->__bits) / sizeof(s->__bits[0]))
-			char buf[SIGSETSIZE * 8 + 1];
-
-			for (i = 0; i < SIGSETSIZE; i++)
-				(void)snprintf(&buf[i * 8], 9, "%.8x",
-				    s->__bits[(SIGSETSIZE - 1) - i]);
-
-			/* Skip leading zeroes */
-			for (i = 0; buf[i] == '0'; i++)
-				continue;
-
-			if (buf[i] == '\0')
-				i--;
-			strprintorsetwidth(v, buf + i, mode);
-#undef SIGSETSIZE
-		}
-		return;
 	case INT64:
 		(void)printf(ofmt, width, GET(int64_t));
 		return;
 	case UINT64:
 		(void)printf(ofmt, width, CHK_INF127(GET(u_int64_t)));
+		return;
+	case SIGLIST:
+		printsig(v, (const sigset_t *)(void *)bp, mode);
 		return;
 	default:
 		errx(EXIT_FAILURE, "unknown type %d", v->type);
