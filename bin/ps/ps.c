@@ -1,4 +1,4 @@
-/*	$NetBSD: ps.c,v 1.96 2021/06/04 22:39:41 christos Exp $	*/
+/*	$NetBSD: ps.c,v 1.97 2021/09/14 22:01:17 christos Exp $	*/
 
 /*
  * Copyright (c) 2000-2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@ __COPYRIGHT("@(#) Copyright (c) 1990, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)ps.c	8.4 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: ps.c,v 1.96 2021/06/04 22:39:41 christos Exp $");
+__RCSID("$NetBSD: ps.c,v 1.97 2021/09/14 22:01:17 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -98,6 +98,7 @@ __RCSID("$NetBSD: ps.c,v 1.96 2021/06/04 22:39:41 christos Exp $");
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <util.h>
 
 #include "ps.h"
 
@@ -449,7 +450,7 @@ main(int argc, char *argv[])
 	/*
 	 * sort proc list
 	 */
-	qsort(pinfo, nentries, sizeof(struct pinfo), pscomp);
+	qsort(pinfo, nentries, sizeof(*pinfo), pscomp);
 
 	/*
 	 * We want things in descendant order
@@ -472,7 +473,7 @@ main(int argc, char *argv[])
 			continue;
 
 		kl = kvm_getlwps(kd, ki->p_pid, ki->p_paddr,
-		    sizeof(struct kinfo_lwp), &nlwps);
+		    sizeof(*kl), &nlwps);
 		if (kl == 0)
 			nlwps = 0;
 		if (showlwps == 0) {
@@ -507,7 +508,7 @@ main(int argc, char *argv[])
 		    (ki->p_flag & P_CONTROLT ) == 0))
 			continue;
 		kl = kvm_getlwps(kd, ki->p_pid, (u_long)ki->p_paddr,
-		    sizeof(struct kinfo_lwp), &nlwps);
+		    sizeof(*kl), &nlwps);
 		if (kl == 0)
 			nlwps = 0;
 		if (showlwps == 0) {
@@ -609,8 +610,8 @@ static struct kinfo_proc2 *
 getkinfo_kvm(kvm_t *kdp, int what, int flag, int *nentriesp)
 {
 
-	return (kvm_getproc2(kdp, what, flag, sizeof(struct kinfo_proc2),
-	    nentriesp));
+	return kvm_getproc2(kdp, what, flag, sizeof(struct kinfo_proc2),
+	    nentriesp);
 }
 
 static struct pinfo *
@@ -619,10 +620,7 @@ setpinfo(struct kinfo_proc2 *ki, int nentries, int calc_pcpu, int rawcpu)
 	struct pinfo *pi;
 	int i;
 
-	pi = calloc(nentries, sizeof(*pi));
-	if (pi == NULL)
-		err(EXIT_FAILURE, "calloc");
-
+	pi = ecalloc(nentries, sizeof(*pi));
 	if (calc_pcpu && !nlistread)
 		donlist();
 
@@ -781,8 +779,7 @@ kludge_oldps_options(char *s)
 	char *newopts, *ns, *cp;
 
 	len = strlen(s);
-	if ((newopts = ns = malloc(len + 3)) == NULL)
-		err(EXIT_FAILURE, NULL);
+	newopts = ns = emalloc(len + 3);
 	/*
 	 * options begin with '-'
 	 */
@@ -890,7 +887,7 @@ descendant_sort(struct pinfo *ki, int items)
 			if (src < dst) {
 				kn = ki[src];
 				memmove(ki + src, ki + src + 1,
-				    (dst - src + ndst - 1) * sizeof *ki);
+				    (dst - src + ndst - 1) * sizeof(*ki));
 				ki[dst + ndst - 1] = kn;
 				nsrc--;
 				dst--;
@@ -898,7 +895,7 @@ descendant_sort(struct pinfo *ki, int items)
 			} else if (src != dst + ndst) {
 				kn = ki[src];
 				memmove(ki + dst + ndst + 1, ki + dst + ndst,
-				    (src - dst - ndst) * sizeof *ki);
+				    (src - dst - ndst) * sizeof(*ki));
 				ki[dst + ndst] = kn;
 				ndst++;
 				nsrc--;
@@ -915,15 +912,13 @@ descendant_sort(struct pinfo *ki, int items)
 	 * Now populate prefix (instead of level) with the command
 	 * prefix used to show descendancies.
 	 */
-	path = malloc((maxlvl + 7) / 8);
-	memset(path, '\0', (maxlvl + 7) / 8);
+	path = ecalloc((maxlvl + 7) / 8, 1);
 	for (src = 0; src < items; src++) {
 		if ((lvl = ki[src].level) == 0) {
 			ki[src].prefix = NULL;
 			continue;
 		}
-		if ((ki[src].prefix = malloc(lvl * 2 + 1)) == NULL)
-			errx(EXIT_FAILURE, "malloc failed");
+		ki[src].prefix = emalloc(lvl * 2 + 1);
 		for (n = 0; n < lvl - 2; n++) {
 			ki[src].prefix[n * 2] =
 			    path[n / 8] & 1 << (n % 8) ? '|' : ' ';
