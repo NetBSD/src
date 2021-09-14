@@ -1,4 +1,4 @@
-/*	$NetBSD: acct.h,v 1.27 2009/01/11 02:45:55 christos Exp $	*/
+/*	$NetBSD: acct.h,v 1.28 2021/09/14 17:10:46 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -65,6 +65,14 @@ struct acct {
 #define	AXSIG	0x10		/* killed by a signal */
 	uint8_t   ac_flag;	/* accounting flags */
 };
+
+#define	__ACCT_FLAG_BITS \
+	"\020" \
+	"\1FORK" \
+	"\2SU" \
+	"\3COMPAT" \
+	"\4CORE" \
+	"\5XSIG"
 
 /*
  * 1/AHZ is the granularity of the data encoded in the comp_t fields.
