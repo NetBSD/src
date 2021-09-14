@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.3 2019/07/27 20:10:29 nakayama Exp $
+# $NetBSD: Makefile,v 1.4 2021/09/14 20:45:19 rillig Exp $
 
 .include <bsd.own.mk>
 
@@ -8,7 +8,7 @@ PROG=		bta2dpd
 SRCS=		bta2dpd.c avdtp.c sbc_encode.c
 MAN=		bta2dpd.8
 
-CFLAGS+=	-I.
+CPPFLAGS+=	-I.
 DPADD+=		${LIBBLUETOOTH} ${LIBEVENT} ${LIBUTIL}
 LDADD+=		-lbluetooth -levent -lutil
 CLEANFILES+=	sbc_crc.h sbc_coeffs.h
