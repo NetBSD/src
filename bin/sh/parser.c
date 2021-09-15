@@ -1,4 +1,4 @@
-/*	$NetBSD: parser.c,v 1.173 2021/09/14 14:49:39 kre Exp $	*/
+/*	$NetBSD: parser.c,v 1.174 2021/09/15 18:29:45 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)parser.c	8.7 (Berkeley) 5/16/95";
 #else
-__RCSID("$NetBSD: parser.c,v 1.173 2021/09/14 14:49:39 kre Exp $");
+__RCSID("$NetBSD: parser.c,v 1.174 2021/09/15 18:29:45 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -746,9 +746,12 @@ fixredir(union node *n, const char *text, int err)
 	if (!err)
 		n->ndup.vname = NULL;
 
-	if (is_number(text))
+	if (is_number(text)) {
 		n->ndup.dupfd = number(text);
-	else if (text[0] == '-' && text[1] == '\0')
+		if (n->ndup.dupfd < user_fd_limit &&
+		    n->ndup.dupfd > max_user_fd)
+			max_user_fd = n->ndup.dupfd;
+	} else if (text[0] == '-' && text[1] == '\0')
 		n->ndup.dupfd = -1;
 	else {
 
@@ -757,8 +760,6 @@ fixredir(union node *n, const char *text, int err)
 		else
 			n->ndup.vname = makeword(startlinno - elided_nl);
 	}
-	if (n->ndup.dupfd > max_user_fd)
-		max_user_fd = n->ndup.dupfd;
 }
 
 
@@ -1592,8 +1593,9 @@ parseredir(const char *out,  int c)
 	fd = (*out == '\0') ? -1 : number(out);		/* number(out) >= 0 */
 	np->nfile.fd = fd;	/* do this again later with updated fd */
 	if (fd != np->nfile.fd)
-		error("file descriptor (%d) out of range", fd);
-	if (fd > max_user_fd)
+		error("file descriptor (%d) out of range (max %ld)",
+		    fd, user_fd_limit - 1);
+	if (fd < user_fd_limit && fd > max_user_fd)
 		max_user_fd = fd;
 
 	VTRACE(DBG_LEXER, ("parseredir after '%s%c' ", out, c));
