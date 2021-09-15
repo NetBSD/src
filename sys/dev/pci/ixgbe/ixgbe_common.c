@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe_common.c,v 1.13.2.10 2020/09/02 12:24:08 martin Exp $ */
+/* $NetBSD: ixgbe_common.c,v 1.13.2.11 2021/09/15 16:38:01 martin Exp $ */
 
 /******************************************************************************
   SPDX-License-Identifier: BSD-3-Clause
@@ -34,6 +34,9 @@
 
 ******************************************************************************/
 /*$FreeBSD: head/sys/dev/ixgbe/ixgbe_common.c 331224 2018-03-19 20:55:05Z erj $*/
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ixgbe_common.c,v 1.13.2.11 2021/09/15 16:38:01 martin Exp $");
 
 #include "ixgbe_common.h"
 #include "ixgbe_phy.h"
@@ -1138,7 +1141,7 @@ s32 ixgbe_stop_adapter_generic(struct ixgbe_hw *hw)
 	 * This function is called in the state of both interrupt disabled
 	 * and interrupt enabled, e.g.
 	 * + interrupt disabled case:
-	 *   - ixgbe_stop()
+	 *   - ixgbe_stop_locked()
 	 *     - ixgbe_disable_intr() // interrupt disabled here
 	 *     - ixgbe_stop_adapter()
 	 *       - hw->mac.ops.stop_adapter()
@@ -5048,8 +5051,8 @@ s32 ixgbe_bypass_rw_generic(struct ixgbe_hw *hw, u32 cmd, u32 *status)
  * ixgbe_bypass_valid_rd_generic - Verify valid return from bit-bang.
  *
  * If we send a write we can't be sure it took until we can read back
- * that same register.  It can be a problem as some of the feilds may
- * for valid reasons change inbetween the time wrote the register and
+ * that same register.  It can be a problem as some of the fields may
+ * for valid reasons change in-between the time wrote the register and
  * we read it again to verify.  So this function check everything we
  * can check and then assumes it worked.
  *
@@ -5102,7 +5105,7 @@ bool ixgbe_bypass_valid_rd_generic(u32 in_reg, u32 out_reg)
 }
 
 /**
- *  ixgbe_bypass_set_generic - Set a bypass field in the FW CTRL Regiter.
+ *  ixgbe_bypass_set_generic - Set a bypass field in the FW CTRL Register.
  *
  *  @hw: pointer to hardware structure
  *  @cmd: The control word we are setting.
@@ -5148,7 +5151,7 @@ s32 ixgbe_bypass_set_generic(struct ixgbe_hw *hw, u32 ctrl, u32 event,
 }
 
 /**
- *  ixgbe_bypass_rd_eep_generic - Read the bypass FW eeprom addres.
+ *  ixgbe_bypass_rd_eep_generic - Read the bypass FW eeprom address.
  *
  *  @hw: pointer to hardware structure
  *  @addr: The bypass eeprom address to read.

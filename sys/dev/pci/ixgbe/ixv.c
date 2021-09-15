@@ -1,4 +1,4 @@
-/*$NetBSD: ixv.c,v 1.56.2.31 2021/03/11 16:04:25 martin Exp $*/
+/* $NetBSD: ixv.c,v 1.56.2.32 2021/09/15 16:38:01 martin Exp $ */
 
 /******************************************************************************
 
@@ -34,11 +34,13 @@
 ******************************************************************************/
 /*$FreeBSD: head/sys/dev/ixgbe/if_ixv.c 331224 2018-03-19 20:55:05Z erj $*/
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ixv.c,v 1.56.2.32 2021/09/15 16:38:01 martin Exp $");
+
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
 #include "opt_inet6.h"
 #include "opt_net_mpsafe.h"
-#include "opt_ixgbe.h"
 #endif
 
 #include "ixgbe.h"
@@ -91,7 +93,7 @@ static int	ixv_ioctl(struct ifnet *, u_long, void *);
 static int	ixv_init(struct ifnet *);
 static void	ixv_init_locked(struct adapter *);
 static void	ixv_ifstop(struct ifnet *, int);
-static void	ixv_stop(void *);
+static void	ixv_stop_locked(void *);
 static void	ixv_init_device_features(struct adapter *);
 static void	ixv_media_status(struct ifnet *, struct ifmediareq *);
 static int	ixv_media_change(struct ifnet *);
@@ -139,10 +141,12 @@ static void	ixv_set_sysctl_value(struct adapter *, const char *,
 		    const char *, int *, int);
 static int	ixv_sysctl_interrupt_rate_handler(SYSCTLFN_PROTO);
 static int	ixv_sysctl_next_to_check_handler(SYSCTLFN_PROTO);
+static int	ixv_sysctl_next_to_refresh_handler(SYSCTLFN_PROTO);
 static int	ixv_sysctl_rdh_handler(SYSCTLFN_PROTO);
 static int	ixv_sysctl_rdt_handler(SYSCTLFN_PROTO);
 static int	ixv_sysctl_tdt_handler(SYSCTLFN_PROTO);
 static int	ixv_sysctl_tdh_handler(SYSCTLFN_PROTO);
+static int	ixv_sysctl_rx_copy_len(SYSCTLFN_PROTO);
 
 /* The MSI-X Interrupt handlers */
 static int	ixv_msix_que(void *);
@@ -332,7 +336,7 @@ ixv_attach(device_t parent, device_t dev, void *aux)
 	hw = &adapter->hw;
 
 	adapter->init_locked = ixv_init_locked;
-	adapter->stop_locked = ixv_stop;
+	adapter->stop_locked = ixv_stop_locked;
 
 	adapter->osdep.pc = pa->pa_pc;
 	adapter->osdep.tag = pa->pa_tag;
@@ -511,7 +515,8 @@ ixv_attach(device_t parent, device_t dev, void *aux)
 	} else
 		adapter->num_rx_desc = ixv_rxd;
 
-	adapter->num_jcl = adapter->num_rx_desc * IXGBE_JCLNUM_MULTI;
+	/* Set default high limit of copying mbuf in rxeof */
+	adapter->rx_copy_len = IXGBE_RX_COPY_LEN_MAX;
 
 	/* Setup MSI-X */
 	error = ixv_configure_interrupts(adapter);
@@ -671,7 +676,7 @@ ixv_detach(device_t dev, int flags)
 		evcnt_detach(&rxr->rx_packets);
 		evcnt_detach(&rxr->rx_bytes);
 		evcnt_detach(&rxr->rx_copies);
-		evcnt_detach(&rxr->no_jmbuf);
+		evcnt_detach(&rxr->no_mbuf);
 		evcnt_detach(&rxr->rx_discarded);
 	}
 	evcnt_detach(&stats->ipcs);
@@ -745,7 +750,7 @@ ixv_init_locked(struct adapter *adapter)
 	/* Prepare transmit descriptors and buffers */
 	if (ixgbe_setup_transmit_structures(adapter)) {
 		aprint_error_dev(dev, "Could not setup transmit structures\n");
-		ixv_stop(adapter);
+		ixv_stop_locked(adapter);
 		return;
 	}
 
@@ -762,19 +767,15 @@ ixv_init_locked(struct adapter *adapter)
 	/* Setup Multicast table */
 	ixv_set_rxfilter(adapter);
 
-	/*
-	 * Determine the correct mbuf pool
-	 * for doing jumbo/headersplit
-	 */
-	if (adapter->max_frame_size <= MCLBYTES)
-		adapter->rx_mbuf_sz = MCLBYTES;
-	else
-		adapter->rx_mbuf_sz = MJUMPAGESIZE;
+	/* Use fixed buffer size, even for jumbo frames */
+	adapter->rx_mbuf_sz = MCLBYTES;
 
 	/* Prepare receive descriptors and buffers */
-	if (ixgbe_setup_receive_structures(adapter)) {
-		device_printf(dev, "Could not setup receive structures\n");
-		ixv_stop(adapter);
+	error = ixgbe_setup_receive_structures(adapter);
+	if (error) {
+		device_printf(dev,
+		    "Could not setup receive structures (err = %d)\n", error);
+		ixv_stop_locked(adapter);
 		return;
 	}
 
@@ -1433,12 +1434,12 @@ ixv_ifstop(struct ifnet *ifp, int disable)
 	struct adapter *adapter = ifp->if_softc;
 
 	IXGBE_CORE_LOCK(adapter);
-	ixv_stop(adapter);
+	ixv_stop_locked(adapter);
 	IXGBE_CORE_UNLOCK(adapter);
 }
 
 static void
-ixv_stop(void *arg)
+ixv_stop_locked(void *arg)
 {
 	struct ifnet	*ifp;
 	struct adapter	*adapter = arg;
@@ -1448,7 +1449,7 @@ ixv_stop(void *arg)
 
 	KASSERT(mutex_owned(&adapter->core_mtx));
 
-	INIT_DEBUGOUT("ixv_stop: begin\n");
+	INIT_DEBUGOUT("ixv_stop_locked: begin\n");
 	ixv_disable_intr(adapter);
 
 	/* Tell the stack that the interface is no longer active */
@@ -1463,7 +1464,7 @@ ixv_stop(void *arg)
 	hw->mac.ops.set_rar(hw, 0, hw->mac.addr, 0, IXGBE_RAH_AV);
 
 	return;
-} /* ixv_stop */
+} /* ixv_stop_locked */
 
 
 /************************************************************************
@@ -1981,6 +1982,32 @@ ixv_sysctl_next_to_check_handler(SYSCTLFN_ARGS)
 } /* ixv_sysctl_next_to_check_handler */
 
 /************************************************************************
+ * ixv_sysctl_next_to_refresh_handler - Receive Descriptor next to refresh
+ * handler function
+ *
+ *   Retrieves the next_to_refresh value
+ ************************************************************************/
+static int
+ixv_sysctl_next_to_refresh_handler(SYSCTLFN_ARGS)
+{
+	struct sysctlnode node = *rnode;
+	struct rx_ring *rxr = (struct rx_ring *)node.sysctl_data;
+	struct adapter *adapter;
+	uint32_t val;
+
+	if (!rxr)
+		return (0);
+
+	adapter = rxr->adapter;
+	if (ixgbe_fw_recovery_mode_swflag(adapter))
+		return (EPERM);
+
+	val = rxr->next_to_refresh;
+	node.sysctl_data = &val;
+	return sysctl_lookup(SYSCTLFN_CALL(&node));
+} /* ixv_sysctl_next_to_refresh_handler */
+
+/************************************************************************
  * ixv_sysctl_rdh_handler - Receive Descriptor Head handler function
  *
  *   Retrieves the RDH value from the hardware
@@ -2427,28 +2454,29 @@ ixv_add_device_sysctls(struct adapter *adapter)
 	}
 
 	if (sysctl_createv(log, 0, &rnode, &cnode,
-	    CTLFLAG_READWRITE, CTLTYPE_INT,
-	    "debug", SYSCTL_DESCR("Debug Info"),
+	    CTLFLAG_READWRITE, CTLTYPE_INT, "debug",
+	    SYSCTL_DESCR("Debug Info"),
 	    ixv_sysctl_debug, 0, (void *)adapter, 0, CTL_CREATE, CTL_EOL) != 0)
 		aprint_error_dev(dev, "could not create sysctl\n");
 
 	if (sysctl_createv(log, 0, &rnode, &cnode,
-	    CTLFLAG_READONLY, CTLTYPE_INT, "num_jcl_per_queue",
-	    SYSCTL_DESCR("Number of jumbo buffers per queue"),
-	    NULL, 0, &adapter->num_jcl, 0, CTL_CREATE,
-	    CTL_EOL) != 0)
+	    CTLFLAG_READWRITE, CTLTYPE_INT,
+	    "rx_copy_len", SYSCTL_DESCR("RX Copy Length"),
+	    ixv_sysctl_rx_copy_len, 0,
+	    (void *)adapter, 0, CTL_CREATE, CTL_EOL) != 0)
 		aprint_error_dev(dev, "could not create sysctl\n");
 
 	if (sysctl_createv(log, 0, &rnode, &cnode,
-	    CTLFLAG_READWRITE, CTLTYPE_BOOL,
-	    "enable_aim", SYSCTL_DESCR("Interrupt Moderation"),
+	    CTLFLAG_READWRITE, CTLTYPE_BOOL, "enable_aim",
+	    SYSCTL_DESCR("Interrupt Moderation"),
 	    NULL, 0, &adapter->enable_aim, 0, CTL_CREATE, CTL_EOL) != 0)
 		aprint_error_dev(dev, "could not create sysctl\n");
 
 	if (sysctl_createv(log, 0, &rnode, &cnode,
-	    CTLFLAG_READWRITE, CTLTYPE_BOOL,
-	    "txrx_workqueue", SYSCTL_DESCR("Use workqueue for packet processing"),
-		NULL, 0, &adapter->txrx_use_workqueue, 0, CTL_CREATE, CTL_EOL) != 0)
+	    CTLFLAG_READWRITE, CTLTYPE_BOOL, "txrx_workqueue",
+	    SYSCTL_DESCR("Use workqueue for packet processing"),
+	    NULL, 0, &adapter->txrx_use_workqueue, 0, CTL_CREATE, CTL_EOL)
+	    != 0)
 		aprint_error_dev(dev, "could not create sysctl\n");
 }
 
@@ -2554,37 +2582,43 @@ ixv_add_stats_sysctls(struct adapter *adapter)
 #endif /* LRO */
 
 		if (sysctl_createv(log, 0, &rnode, &cnode,
-		    CTLFLAG_READONLY,
-		    CTLTYPE_INT,
-		    "rxd_nxck", SYSCTL_DESCR("Receive Descriptor next to check"),
-			ixv_sysctl_next_to_check_handler, 0, (void *)rxr, 0,
+		    CTLFLAG_READONLY, CTLTYPE_INT, "rxd_nxck",
+		    SYSCTL_DESCR("Receive Descriptor next to check"),
+		    ixv_sysctl_next_to_check_handler, 0, (void *)rxr, 0,
 		    CTL_CREATE, CTL_EOL) != 0)
 			break;
 
 		if (sysctl_createv(log, 0, &rnode, &cnode,
-		    CTLFLAG_READONLY,
-		    CTLTYPE_INT,
-		    "rxd_head", SYSCTL_DESCR("Receive Descriptor Head"),
+		    CTLFLAG_READONLY, CTLTYPE_INT, "rxd_nxrf",
+		    SYSCTL_DESCR("Receive Descriptor next to refresh"),
+		    ixv_sysctl_next_to_refresh_handler, 0, (void *)rxr, 0,
+		    CTL_CREATE, CTL_EOL) != 0)
+			break;
+
+		if (sysctl_createv(log, 0, &rnode, &cnode,
+		    CTLFLAG_READONLY, CTLTYPE_INT, "rxd_head",
+		    SYSCTL_DESCR("Receive Descriptor Head"),
 		    ixv_sysctl_rdh_handler, 0, (void *)rxr, 0,
 		    CTL_CREATE, CTL_EOL) != 0)
 			break;
 
 		if (sysctl_createv(log, 0, &rnode, &cnode,
-		    CTLFLAG_READONLY,
-		    CTLTYPE_INT,
-		    "rxd_tail", SYSCTL_DESCR("Receive Descriptor Tail"),
+		    CTLFLAG_READONLY, CTLTYPE_INT, "rxd_tail",
+		    SYSCTL_DESCR("Receive Descriptor Tail"),
 		    ixv_sysctl_rdt_handler, 0, (void *)rxr, 0,
 		    CTL_CREATE, CTL_EOL) != 0)
 			break;
 
 		evcnt_attach_dynamic(&rxr->rx_packets, EVCNT_TYPE_MISC,
-		    NULL, adapter->queues[i].evnamebuf, "Queue Packets Received");
+		    NULL, adapter->queues[i].evnamebuf,
+		    "Queue Packets Received");
 		evcnt_attach_dynamic(&rxr->rx_bytes, EVCNT_TYPE_MISC,
-		    NULL, adapter->queues[i].evnamebuf, "Queue Bytes Received");
+		    NULL, adapter->queues[i].evnamebuf,
+		    "Queue Bytes Received");
 		evcnt_attach_dynamic(&rxr->rx_copies, EVCNT_TYPE_MISC,
 		    NULL, adapter->queues[i].evnamebuf, "Copied RX Frames");
-		evcnt_attach_dynamic(&rxr->no_jmbuf, EVCNT_TYPE_MISC,
-		    NULL, adapter->queues[i].evnamebuf, "Rx no jumbo mbuf");
+		evcnt_attach_dynamic(&rxr->no_mbuf, EVCNT_TYPE_MISC,
+		    NULL, adapter->queues[i].evnamebuf, "Rx no mbuf");
 		evcnt_attach_dynamic(&rxr->rx_discarded, EVCNT_TYPE_MISC,
 		    NULL, adapter->queues[i].evnamebuf, "Rx discarded");
 #ifdef LRO
@@ -2680,7 +2714,7 @@ ixv_clear_evcnt(struct adapter *adapter)
 		rxr->rx_packets.ev_count = 0;
 		rxr->rx_bytes.ev_count = 0;
 		rxr->rx_copies.ev_count = 0;
-		rxr->no_jmbuf.ev_count = 0;
+		rxr->no_mbuf.ev_count = 0;
 		rxr->rx_discarded.ev_count = 0;
 	}
 
@@ -2800,6 +2834,31 @@ ixv_sysctl_debug(SYSCTLFN_ARGS)
 } /* ixv_sysctl_debug */
 
 /************************************************************************
+ * ixv_sysctl_rx_copy_len
+ ************************************************************************/
+static int
+ixv_sysctl_rx_copy_len(SYSCTLFN_ARGS)
+{
+	struct sysctlnode node = *rnode;
+	struct adapter *adapter = (struct adapter *)node.sysctl_data;
+	int error;
+	int result = adapter->rx_copy_len;
+
+	node.sysctl_data = &result;
+	error = sysctl_lookup(SYSCTLFN_CALL(&node));
+
+	if (error || newp == NULL)
+		return error;
+
+	if ((result < 0) || (result > IXGBE_RX_COPY_LEN_MAX))
+		return EINVAL;
+
+	adapter->rx_copy_len = result;
+
+	return 0;
+} /* ixgbe_sysctl_rx_copy_len */
+
+/************************************************************************
  * ixv_init_device_features
  ************************************************************************/
 static void
@@ -2855,7 +2914,7 @@ ixv_shutdown(device_t dev)
 {
 	struct adapter *adapter = device_private(dev);
 	IXGBE_CORE_LOCK(adapter);
-	ixv_stop(adapter);
+	ixv_stop_locked(adapter);
 	IXGBE_CORE_UNLOCK(adapter);
 
 	return (0);
@@ -3198,7 +3257,8 @@ ixv_allocate_msix(struct adapter *adapter, const struct pci_attach_args *pa)
 	    ixgbe_deferred_mq_start_work, adapter, IXGBE_WORKQUEUE_PRI, IPL_NET,
 	    IXGBE_WORKQUEUE_FLAGS);
 	if (error) {
-		aprint_error_dev(dev, "couldn't create workqueue for deferred Tx\n");
+		aprint_error_dev(dev,
+		    "couldn't create workqueue for deferred Tx\n");
 	}
 	adapter->txr_wq_enqueued = percpu_alloc(sizeof(u_int));
 
@@ -3207,8 +3267,7 @@ ixv_allocate_msix(struct adapter *adapter, const struct pci_attach_args *pa)
 	    ixv_handle_que_work, adapter, IXGBE_WORKQUEUE_PRI, IPL_NET,
 	    IXGBE_WORKQUEUE_FLAGS);
 	if (error) {
-		aprint_error_dev(dev,
-		    "couldn't create workqueue\n");
+		aprint_error_dev(dev, "couldn't create workqueue for Tx/Rx\n");
 	}
 
 	/* and Mailbox */

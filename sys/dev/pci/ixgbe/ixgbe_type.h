@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe_type.h,v 1.22.2.12 2020/09/02 12:27:54 martin Exp $ */
+/* $NetBSD: ixgbe_type.h,v 1.22.2.13 2021/09/15 16:38:01 martin Exp $ */
 
 /******************************************************************************
   SPDX-License-Identifier: BSD-3-Clause
@@ -2773,7 +2773,7 @@ enum {
 #define IXGBE_RXDADV_ERR_FDIR_LEN	0x00100000 /* FDIR Length error */
 #define IXGBE_RXDADV_ERR_FDIR_DROP	0x00200000 /* FDIR Drop error */
 #define IXGBE_RXDADV_ERR_FDIR_COLL	0x00400000 /* FDIR Collision error */
-#define IXGBE_RXDADV_ERR_HBO	0x00800000 /*Header Buffer Overflow */
+#define IXGBE_RXDADV_ERR_HBO	0x00800000 /* Header Buffer Overflow */
 #define IXGBE_RXDADV_ERR_CE	0x01000000 /* CRC Error */
 #define IXGBE_RXDADV_ERR_LE	0x02000000 /* Length Error */
 #define IXGBE_RXDADV_ERR_PE	0x08000000 /* Packet Error */
