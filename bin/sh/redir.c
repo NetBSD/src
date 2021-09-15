@@ -1,4 +1,4 @@
-/*	$NetBSD: redir.c,v 1.68 2021/09/15 18:29:45 kre Exp $	*/
+/*	$NetBSD: redir.c,v 1.69 2021/09/15 20:21:47 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)redir.c	8.2 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: redir.c,v 1.68 2021/09/15 18:29:45 kre Exp $");
+__RCSID("$NetBSD: redir.c,v 1.69 2021/09/15 20:21:47 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -245,6 +245,18 @@ redirect(union node *redir, int flags)
 		    fd, max_user_fd, user_fd_limit));
 		if (fd < user_fd_limit && fd > max_user_fd)
 			max_user_fd = fd;
+		if ((n->nfile.type == NTOFD || n->nfile.type == NFROMFD) &&
+		    n->ndup.dupfd == fd) {
+			VTRACE(DBG_REDIR, ("!cloexec\n"));
+			if (sh_fd(fd) != NULL ||
+			    saved_redirected_fd(fd) != NULL)
+				error("fd %d: %s", fd, strerror(EBADF));
+			/* redirect from/to same file descriptor */
+			/* make sure it stays open */
+			if (fcntl(fd, F_SETFD, 0) < 0)
+				error("fd %d: %s", fd, strerror(errno));
+			continue;
+		}
 		if ((renamed = saved_redirected_fd(fd)) != NULL) {
 			int to = pick_new_fd(fd);
 
@@ -255,15 +267,6 @@ redirect(union node *redir, int flags)
 				(void)close(fd);
 		}
 		renumber_sh_fd(sh_fd(fd));
-		if ((n->nfile.type == NTOFD || n->nfile.type == NFROMFD) &&
-		    n->ndup.dupfd == fd) {
-			/* redirect from/to same file descriptor */
-			/* make sure it stays open */
-			if (fcntl(fd, F_SETFD, 0) < 0)
-				error("fd %d: %s", fd, strerror(errno));
-			VTRACE(DBG_REDIR, ("!cloexec\n"));
-			continue;
-		}
 
 		if ((flags & REDIR_PUSH) && !is_renamed(sv->renamed, fd)) {
 			int bigfd;
@@ -421,6 +424,7 @@ openredirect(union node *redir, char memory[10], int flags)
 		if (copyfd(f, fd, cloexec) < 0) {
 			int e = errno;
 
+			VTRACE(DBG_REDIR, (" failed: %s\n", strerror(e)));
 			close(f);
 			error("redirect reassignment (fd %d) failed: %s", fd,
 			    strerror(e));
