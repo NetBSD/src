@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe.c,v 1.199.2.13 2021/03/11 16:00:24 martin Exp $ */
+/* $NetBSD: ixgbe.c,v 1.199.2.14 2021/09/15 16:30:50 martin Exp $ */
 
 /******************************************************************************
 
@@ -63,11 +63,13 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ixgbe.c,v 1.199.2.14 2021/09/15 16:30:50 martin Exp $");
+
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
 #include "opt_inet6.h"
 #include "opt_net_mpsafe.h"
-#include "opt_ixgbe.h"
 #endif
 
 #include "ixgbe.h"
@@ -172,7 +174,7 @@ static int	ixgbe_ioctl(struct ifnet *, u_long, void *);
 static int	ixgbe_init(struct ifnet *);
 static void	ixgbe_init_locked(struct adapter *);
 static void	ixgbe_ifstop(struct ifnet *, int);
-static void	ixgbe_stop(void *);
+static void	ixgbe_stop_locked(void *);
 static void	ixgbe_init_device_features(struct adapter *);
 static void	ixgbe_check_fan_failure(struct adapter *, u32, bool);
 static void	ixgbe_add_media_types(struct adapter *);
@@ -246,12 +248,14 @@ static int	ixgbe_sysctl_power_state(SYSCTLFN_PROTO);
 static int	ixgbe_sysctl_print_rss_config(SYSCTLFN_PROTO);
 #endif
 static int	ixgbe_sysctl_next_to_check_handler(SYSCTLFN_PROTO);
+static int	ixgbe_sysctl_next_to_refresh_handler(SYSCTLFN_PROTO);
 static int	ixgbe_sysctl_rdh_handler(SYSCTLFN_PROTO);
 static int	ixgbe_sysctl_rdt_handler(SYSCTLFN_PROTO);
 static int	ixgbe_sysctl_tdt_handler(SYSCTLFN_PROTO);
 static int	ixgbe_sysctl_tdh_handler(SYSCTLFN_PROTO);
 static int	ixgbe_sysctl_eee_state(SYSCTLFN_PROTO);
 static int	ixgbe_sysctl_debug(SYSCTLFN_PROTO);
+static int	ixgbe_sysctl_rx_copy_len(SYSCTLFN_PROTO);
 static int	ixgbe_sysctl_wol_enable(SYSCTLFN_PROTO);
 static int	ixgbe_sysctl_wufc(SYSCTLFN_PROTO);
 
@@ -944,7 +948,8 @@ ixgbe_attach(device_t parent, device_t dev, void *aux)
 	} else
 		adapter->num_rx_desc = ixgbe_rxd;
 
-	adapter->num_jcl = adapter->num_rx_desc * IXGBE_JCLNUM_MULTI;
+	/* Set default high limit of copying mbuf in rxeof */
+	adapter->rx_copy_len = IXGBE_RX_COPY_LEN_MAX;
 
 	/* Allocate our TX/RX Queues */
 	if (ixgbe_allocate_queues(adapter)) {
@@ -968,7 +973,8 @@ ixgbe_attach(device_t parent, device_t dev, void *aux)
 		unsupported_sfp = true;
 		error = IXGBE_SUCCESS;
 	} else if (error) {
-		aprint_error_dev(dev, "Hardware initialization failed\n");
+		aprint_error_dev(dev,
+		    "Hardware initialization failed(error = %d)\n", error);
 		error = EIO;
 		goto err_late;
 	}
@@ -1210,7 +1216,7 @@ ixgbe_attach(device_t parent, device_t dev, void *aux)
 
 	/* For Netmap */
 	adapter->init_locked = ixgbe_init_locked;
-	adapter->stop_locked = ixgbe_stop;
+	adapter->stop_locked = ixgbe_stop_locked;
 
 	if (adapter->feat_en & IXGBE_FEATURE_NETMAP)
 		ixgbe_netmap_attach(adapter);
@@ -1644,17 +1650,20 @@ ixgbe_update_stats_counters(struct adapter *adapter)
 		stats->gorc.ev_count += IXGBE_READ_REG(hw, IXGBE_GORCL) +
 		    ((u64)IXGBE_READ_REG(hw, IXGBE_GORCH) << 32);
 		stats->gotc.ev_count += IXGBE_READ_REG(hw, IXGBE_GOTCL) +
-		    ((u64)IXGBE_READ_REG(hw, IXGBE_GOTCH) << 32) - total * ETHER_MIN_LEN;
+		    ((u64)IXGBE_READ_REG(hw, IXGBE_GOTCH) << 32)
+		    - total * ETHER_MIN_LEN;
 		stats->tor.ev_count += IXGBE_READ_REG(hw, IXGBE_TORL) +
 		    ((u64)IXGBE_READ_REG(hw, IXGBE_TORH) << 32);
 		stats->lxonrxc.ev_count += IXGBE_READ_REG(hw, IXGBE_LXONRXCNT);
-		stats->lxoffrxc.ev_count += IXGBE_READ_REG(hw, IXGBE_LXOFFRXCNT);
+		stats->lxoffrxc.ev_count
+		    += IXGBE_READ_REG(hw, IXGBE_LXOFFRXCNT);
 	} else {
 		stats->lxonrxc.ev_count += IXGBE_READ_REG(hw, IXGBE_LXONRXC);
 		stats->lxoffrxc.ev_count += IXGBE_READ_REG(hw, IXGBE_LXOFFRXC);
 		/* 82598 only has a counter in the high register */
 		stats->gorc.ev_count += IXGBE_READ_REG(hw, IXGBE_GORCH);
-		stats->gotc.ev_count += IXGBE_READ_REG(hw, IXGBE_GOTCH) - total * ETHER_MIN_LEN;
+		stats->gotc.ev_count += IXGBE_READ_REG(hw, IXGBE_GOTCH)
+		    - total * ETHER_MIN_LEN;
 		stats->tor.ev_count += IXGBE_READ_REG(hw, IXGBE_TORH);
 	}
 
@@ -1868,42 +1877,42 @@ ixgbe_add_hw_stats(struct adapter *adapter)
 #endif
 
 		if (sysctl_createv(log, 0, &rnode, &cnode,
-		    CTLFLAG_READONLY,
-		    CTLTYPE_INT,
-		    "rxd_nxck", SYSCTL_DESCR("Receive Descriptor next to check"),
-			ixgbe_sysctl_next_to_check_handler, 0, (void *)rxr, 0,
+		    CTLFLAG_READONLY, CTLTYPE_INT, "rxd_nxck",
+		    SYSCTL_DESCR("Receive Descriptor next to check"),
+		    ixgbe_sysctl_next_to_check_handler, 0, (void *)rxr, 0,
 		    CTL_CREATE, CTL_EOL) != 0)
 			break;
 
 		if (sysctl_createv(log, 0, &rnode, &cnode,
-		    CTLFLAG_READONLY,
-		    CTLTYPE_INT,
-		    "rxd_head", SYSCTL_DESCR("Receive Descriptor Head"),
+		    CTLFLAG_READONLY, CTLTYPE_INT, "rxd_nxrf",
+		    SYSCTL_DESCR("Receive Descriptor next to refresh"),
+		    ixgbe_sysctl_next_to_refresh_handler, 0, (void *)rxr, 0,
+		    CTL_CREATE, CTL_EOL) != 0)
+			break;
+
+		if (sysctl_createv(log, 0, &rnode, &cnode,
+		    CTLFLAG_READONLY, CTLTYPE_INT, "rxd_head",
+		    SYSCTL_DESCR("Receive Descriptor Head"),
 		    ixgbe_sysctl_rdh_handler, 0, (void *)rxr, 0,
 		    CTL_CREATE, CTL_EOL) != 0)
 			break;
 
 		if (sysctl_createv(log, 0, &rnode, &cnode,
-		    CTLFLAG_READONLY,
-		    CTLTYPE_INT,
-		    "rxd_tail", SYSCTL_DESCR("Receive Descriptor Tail"),
+		    CTLFLAG_READONLY, CTLTYPE_INT, "rxd_tail",
+		    SYSCTL_DESCR("Receive Descriptor Tail"),
 		    ixgbe_sysctl_rdt_handler, 0, (void *)rxr, 0,
 		    CTL_CREATE, CTL_EOL) != 0)
 			break;
 
 		if (i < __arraycount(stats->qprc)) {
-			evcnt_attach_dynamic(&stats->qprc[i],
-			    EVCNT_TYPE_MISC, NULL, adapter->queues[i].evnamebuf,
-			    "qprc");
-			evcnt_attach_dynamic(&stats->qptc[i],
-			    EVCNT_TYPE_MISC, NULL, adapter->queues[i].evnamebuf,
-			    "qptc");
-			evcnt_attach_dynamic(&stats->qbrc[i],
-			    EVCNT_TYPE_MISC, NULL, adapter->queues[i].evnamebuf,
-			    "qbrc");
-			evcnt_attach_dynamic(&stats->qbtc[i],
-			    EVCNT_TYPE_MISC, NULL, adapter->queues[i].evnamebuf,
-			    "qbtc");
+			evcnt_attach_dynamic(&stats->qprc[i], EVCNT_TYPE_MISC,
+			    NULL, adapter->queues[i].evnamebuf, "qprc");
+			evcnt_attach_dynamic(&stats->qptc[i], EVCNT_TYPE_MISC,
+			    NULL, adapter->queues[i].evnamebuf, "qptc");
+			evcnt_attach_dynamic(&stats->qbrc[i], EVCNT_TYPE_MISC,
+			    NULL, adapter->queues[i].evnamebuf, "qbrc");
+			evcnt_attach_dynamic(&stats->qbtc[i], EVCNT_TYPE_MISC,
+			    NULL, adapter->queues[i].evnamebuf, "qbtc");
 			if (hw->mac.type >= ixgbe_mac_82599EB)
 				evcnt_attach_dynamic(&stats->qprdc[i],
 				    EVCNT_TYPE_MISC, NULL,
@@ -1911,13 +1920,15 @@ ixgbe_add_hw_stats(struct adapter *adapter)
 		}
 
 		evcnt_attach_dynamic(&rxr->rx_packets, EVCNT_TYPE_MISC,
-		    NULL, adapter->queues[i].evnamebuf, "Queue Packets Received");
+		    NULL, adapter->queues[i].evnamebuf,
+		    "Queue Packets Received");
 		evcnt_attach_dynamic(&rxr->rx_bytes, EVCNT_TYPE_MISC,
-		    NULL, adapter->queues[i].evnamebuf, "Queue Bytes Received");
+		    NULL, adapter->queues[i].evnamebuf,
+		    "Queue Bytes Received");
 		evcnt_attach_dynamic(&rxr->rx_copies, EVCNT_TYPE_MISC,
 		    NULL, adapter->queues[i].evnamebuf, "Copied RX Frames");
-		evcnt_attach_dynamic(&rxr->no_jmbuf, EVCNT_TYPE_MISC,
-		    NULL, adapter->queues[i].evnamebuf, "Rx no jumbo mbuf");
+		evcnt_attach_dynamic(&rxr->no_mbuf, EVCNT_TYPE_MISC,
+		    NULL, adapter->queues[i].evnamebuf, "Rx no mbuf");
 		evcnt_attach_dynamic(&rxr->rx_discarded, EVCNT_TYPE_MISC,
 		    NULL, adapter->queues[i].evnamebuf, "Rx discarded");
 #ifdef LRO
@@ -2115,7 +2126,7 @@ ixgbe_clear_evcnt(struct adapter *adapter)
 		rxr->rx_packets.ev_count = 0;
 		rxr->rx_bytes.ev_count = 0;
 		rxr->rx_copies.ev_count = 0;
-		rxr->no_jmbuf.ev_count = 0;
+		rxr->no_mbuf.ev_count = 0;
 		rxr->rx_discarded.ev_count = 0;
 	}
 	stats->ipcs.ev_count = 0;
@@ -2250,6 +2261,32 @@ ixgbe_sysctl_next_to_check_handler(SYSCTLFN_ARGS)
 	node.sysctl_data = &val;
 	return sysctl_lookup(SYSCTLFN_CALL(&node));
 } /* ixgbe_sysctl_next_to_check_handler */
+
+/************************************************************************
+ * ixgbe_sysctl_next_to_refresh_handler - Receive Descriptor next to check
+ * handler function
+ *
+ *   Retrieves the next_to_refresh value
+ ************************************************************************/
+static int
+ixgbe_sysctl_next_to_refresh_handler(SYSCTLFN_ARGS)
+{
+	struct sysctlnode node = *rnode;
+	struct rx_ring *rxr = (struct rx_ring *)node.sysctl_data;
+	struct adapter *adapter;
+	uint32_t val;
+
+	if (!rxr)
+		return (0);
+
+	adapter = rxr->adapter;
+	if (ixgbe_fw_recovery_mode_swflag(adapter))
+		return (EPERM);
+
+	val = rxr->next_to_refresh;
+	node.sysctl_data = &val;
+	return sysctl_lookup(SYSCTLFN_CALL(&node));
+} /* ixgbe_sysctl_next_to_refresh_handler */
 
 /************************************************************************
  * ixgbe_sysctl_rdh_handler - Receive Descriptor Head handler function
@@ -3136,8 +3173,11 @@ ixgbe_msix_link(void *arg)
 				retval = hw->phy.ops.check_overtemp(hw);
 				if (retval != IXGBE_ERR_OVERTEMP)
 					break;
-				device_printf(adapter->dev, "CRITICAL: OVER TEMP!! PHY IS SHUT DOWN!!\n");
-				device_printf(adapter->dev, "System shutdown required!\n");
+				device_printf(adapter->dev,
+				    "CRITICAL: OVER TEMP!! "
+				    "PHY IS SHUT DOWN!!\n");
+				device_printf(adapter->dev,
+				    "System shutdown required!\n");
 				break;
 			default:
 				if (!(eicr & IXGBE_EICR_TS))
@@ -3291,20 +3331,21 @@ ixgbe_add_device_sysctls(struct adapter *adapter)
 	if (sysctl_createv(log, 0, &rnode, &cnode,
 	    CTLFLAG_READWRITE, CTLTYPE_INT,
 	    "debug", SYSCTL_DESCR("Debug Info"),
-	    ixgbe_sysctl_debug, 0, (void *)adapter, 0, CTL_CREATE, CTL_EOL) != 0)
+	    ixgbe_sysctl_debug, 0, (void *)adapter, 0, CTL_CREATE, CTL_EOL)
+	    != 0)
+		aprint_error_dev(dev, "could not create sysctl\n");
+
+	if (sysctl_createv(log, 0, &rnode, &cnode,
+	    CTLFLAG_READWRITE, CTLTYPE_INT,
+	    "rx_copy_len", SYSCTL_DESCR("RX Copy Length"),
+	    ixgbe_sysctl_rx_copy_len, 0,
+	    (void *)adapter, 0, CTL_CREATE, CTL_EOL) != 0)
 		aprint_error_dev(dev, "could not create sysctl\n");
 
 	if (sysctl_createv(log, 0, &rnode, &cnode,
 	    CTLFLAG_READONLY, CTLTYPE_INT,
 	    "num_rx_desc", SYSCTL_DESCR("Number of rx descriptors"),
 	    NULL, 0, &adapter->num_rx_desc, 0, CTL_CREATE, CTL_EOL) != 0)
-		aprint_error_dev(dev, "could not create sysctl\n");
-
-	if (sysctl_createv(log, 0, &rnode, &cnode,
-	    CTLFLAG_READONLY, CTLTYPE_INT, "num_jcl_per_queue",
-	    SYSCTL_DESCR("Number of jumbo buffers per queue"),
-	    NULL, 0, &adapter->num_jcl, 0, CTL_CREATE,
-	    CTL_EOL) != 0)
 		aprint_error_dev(dev, "could not create sysctl\n");
 
 	if (sysctl_createv(log, 0, &rnode, &cnode,
@@ -3345,8 +3386,10 @@ ixgbe_add_device_sysctls(struct adapter *adapter)
 	 */
 	adapter->txrx_use_workqueue = ixgbe_txrx_workqueue;
 	if (sysctl_createv(log, 0, &rnode, &cnode, CTLFLAG_READWRITE,
-	    CTLTYPE_BOOL, "txrx_workqueue", SYSCTL_DESCR("Use workqueue for packet processing"),
-	    NULL, 0, &adapter->txrx_use_workqueue, 0, CTL_CREATE, CTL_EOL) != 0)
+	    CTLTYPE_BOOL, "txrx_workqueue",
+	    SYSCTL_DESCR("Use workqueue for packet processing"),
+	    NULL, 0, &adapter->txrx_use_workqueue, 0, CTL_CREATE,
+	    CTL_EOL) != 0)
 		aprint_error_dev(dev, "could not create sysctl\n");
 
 #ifdef IXGBE_DEBUG
@@ -3409,7 +3452,8 @@ ixgbe_add_device_sysctls(struct adapter *adapter)
 
 		if (sysctl_createv(log, 0, &phy_node, &cnode, CTLFLAG_READONLY,
 		    CTLTYPE_INT, "overtemp_occurred",
-		    SYSCTL_DESCR("External PHY High Temperature Event Occurred"),
+		    SYSCTL_DESCR(
+			    "External PHY High Temperature Event Occurred"),
 		    ixgbe_sysctl_phy_overtemp_occurred, 0, (void *)adapter, 0,
 		    CTL_CREATE, CTL_EOL) != 0)
 			aprint_error_dev(dev, "could not create sysctl\n");
@@ -3567,8 +3611,9 @@ ixgbe_detach(device_t dev, int flags)
 	}
 
 	/*
-	 * Stop the interface. ixgbe_setup_low_power_mode() calls ixgbe_stop(),
-	 * so it's not required to call ixgbe_stop() directly.
+	 * Stop the interface. ixgbe_setup_low_power_mode() calls
+	 * ixgbe_stop_locked(), so it's not required to call ixgbe_stop_locked()
+	 * directly.
 	 */
 	IXGBE_CORE_LOCK(adapter);
 	ixgbe_setup_low_power_mode(adapter);
@@ -3666,7 +3711,7 @@ ixgbe_detach(device_t dev, int flags)
 		evcnt_detach(&rxr->rx_packets);
 		evcnt_detach(&rxr->rx_bytes);
 		evcnt_detach(&rxr->rx_copies);
-		evcnt_detach(&rxr->no_jmbuf);
+		evcnt_detach(&rxr->no_mbuf);
 		evcnt_detach(&rxr->rx_discarded);
 	}
 	evcnt_detach(&stats->ipcs);
@@ -3752,7 +3797,7 @@ ixgbe_setup_low_power_mode(struct adapter *adapter)
 	    hw->phy.ops.enter_lplu) {
 		/* X550EM baseT adapters need a special LPLU flow */
 		hw->phy.reset_disable = true;
-		ixgbe_stop(adapter);
+		ixgbe_stop_locked(adapter);
 		error = hw->phy.ops.enter_lplu(hw);
 		if (error)
 			device_printf(dev,
@@ -3760,7 +3805,7 @@ ixgbe_setup_low_power_mode(struct adapter *adapter)
 		hw->phy.reset_disable = false;
 	} else {
 		/* Just stop for other adapters */
-		ixgbe_stop(adapter);
+		ixgbe_stop_locked(adapter);
 	}
 
 	if (!hw->wol_enabled) {
@@ -3909,7 +3954,7 @@ ixgbe_init_locked(struct adapter *adapter)
 	u32		rxdctl, rxctrl;
 	u32		ctrl_ext;
 	bool		unsupported_sfp = false;
-	int		i, j, err;
+	int		i, j, error;
 
 	/* XXX check IFF_UP and IFF_RUNNING, power-saving state! */
 
@@ -3945,7 +3990,7 @@ ixgbe_init_locked(struct adapter *adapter)
 	/* Prepare transmit descriptors and buffers */
 	if (ixgbe_setup_transmit_structures(adapter)) {
 		device_printf(dev, "Could not setup transmit structures\n");
-		ixgbe_stop(adapter);
+		ixgbe_stop_locked(adapter);
 		return;
 	}
 
@@ -3958,16 +4003,15 @@ ixgbe_init_locked(struct adapter *adapter)
 	/* Setup Multicast table */
 	ixgbe_set_rxfilter(adapter);
 
-	/* Determine the correct mbuf pool, based on frame size */
-	if (adapter->max_frame_size <= MCLBYTES)
-		adapter->rx_mbuf_sz = MCLBYTES;
-	else
-		adapter->rx_mbuf_sz = MJUMPAGESIZE;
+	/* Use fixed buffer size, even for jumbo frames */
+	adapter->rx_mbuf_sz = MCLBYTES;
 
 	/* Prepare receive descriptors and buffers */
-	if (ixgbe_setup_receive_structures(adapter)) {
-		device_printf(dev, "Could not setup receive structures\n");
-		ixgbe_stop(adapter);
+	error = ixgbe_setup_receive_structures(adapter);
+	if (error) {
+		device_printf(dev,
+		    "Could not setup receive structures (err = %d)\n", error);
+		ixgbe_stop_locked(adapter);
 		return;
 	}
 
@@ -4089,8 +4133,8 @@ ixgbe_init_locked(struct adapter *adapter)
 	 * need to be kick-started
 	 */
 	if (hw->phy.type == ixgbe_phy_none) {
-		err = hw->phy.ops.identify(hw);
-		if (err == IXGBE_ERR_SFP_NOT_SUPPORTED)
+		error = hw->phy.ops.identify(hw);
+		if (error == IXGBE_ERR_SFP_NOT_SUPPORTED)
 			unsupported_sfp = true;
 	} else if (hw->phy.type == ixgbe_phy_sfp_unsupported)
 		unsupported_sfp = true;
@@ -4566,7 +4610,7 @@ ixgbe_recovery_mode_timer(void *arg)
 			device_printf(adapter->dev, "Firmware recovery mode detected. Limiting functionality. Refer to the Intel(R) Ethernet Adapters and Devices User Guide for details on firmware recovery mode.\n");
 
 			if (hw->adapter_stopped == FALSE)
-				ixgbe_stop(adapter);
+				ixgbe_stop_locked(adapter);
 		}
 	} else
 		atomic_cas_uint(&adapter->recovery_mode, 1, 0);
@@ -4736,18 +4780,18 @@ ixgbe_ifstop(struct ifnet *ifp, int disable)
 	struct adapter *adapter = ifp->if_softc;
 
 	IXGBE_CORE_LOCK(adapter);
-	ixgbe_stop(adapter);
+	ixgbe_stop_locked(adapter);
 	IXGBE_CORE_UNLOCK(adapter);
 }
 
 /************************************************************************
- * ixgbe_stop - Stop the hardware
+ * ixgbe_stop_locked - Stop the hardware
  *
  *   Disables all traffic on the adapter by issuing a
  *   global reset on the MAC and deallocates TX/RX buffers.
  ************************************************************************/
 static void
-ixgbe_stop(void *arg)
+ixgbe_stop_locked(void *arg)
 {
 	struct ifnet	*ifp;
 	struct adapter	*adapter = arg;
@@ -4757,7 +4801,7 @@ ixgbe_stop(void *arg)
 
 	KASSERT(mutex_owned(&adapter->core_mtx));
 
-	INIT_DEBUGOUT("ixgbe_stop: begin\n");
+	INIT_DEBUGOUT("ixgbe_stop_locked: begin\n");
 	ixgbe_disable_intr(adapter);
 	callout_stop(&adapter->timer);
 
@@ -4780,7 +4824,7 @@ ixgbe_stop(void *arg)
 	ixgbe_set_rar(&adapter->hw, 0, adapter->hw.mac.addr, 0, IXGBE_RAH_AV);
 
 	return;
-} /* ixgbe_stop */
+} /* ixgbe_stop_locked */
 
 /************************************************************************
  * ixgbe_update_link_status - Update OS on link state
@@ -5393,8 +5437,7 @@ ixgbe_set_advertise(struct adapter *adapter, int advertise)
 	}
 
 	if (advertise < 0x0 || advertise > 0x3f) {
-		device_printf(dev,
-		    "Invalid advertised speed; valid modes are 0x0 through 0x3f\n");
+		device_printf(dev, "Invalid advertised speed; valid modes are 0x0 through 0x3f\n");
 		return (EINVAL);
 	}
 
@@ -6019,6 +6062,31 @@ ixgbe_sysctl_debug(SYSCTLFN_ARGS)
 } /* ixgbe_sysctl_debug */
 
 /************************************************************************
+ * ixgbe_sysctl_rx_copy_len
+ ************************************************************************/
+static int
+ixgbe_sysctl_rx_copy_len(SYSCTLFN_ARGS)
+{
+	struct sysctlnode node = *rnode;
+	struct adapter *adapter = (struct adapter *)node.sysctl_data;
+	int error;
+	int result = adapter->rx_copy_len;
+
+	node.sysctl_data = &result;
+	error = sysctl_lookup(SYSCTLFN_CALL(&node));
+
+	if (error || newp == NULL)
+		return error;
+
+	if ((result < 0) || (result > IXGBE_RX_COPY_LEN_MAX))
+		return EINVAL;
+
+	adapter->rx_copy_len = result;
+
+	return 0;
+} /* ixgbe_sysctl_rx_copy_len */
+
+/************************************************************************
  * ixgbe_init_device_features
  ************************************************************************/
 static void
@@ -6379,7 +6447,8 @@ ixgbe_check_fan_failure(struct adapter *adapter, u32 reg, bool in_interrupt)
 	    IXGBE_ESDP_SDP1;
 
 	if (reg & mask)
-		device_printf(adapter->dev, "\nCRITICAL: FAN FAILURE!! REPLACE IMMEDIATELY!!\n");
+		device_printf(adapter->dev,
+		    "\nCRITICAL: FAN FAILURE!! REPLACE IMMEDIATELY!!\n");
 } /* ixgbe_check_fan_failure */
 
 /************************************************************************
@@ -6520,7 +6589,8 @@ alloc_retry:
 		    softint_establish(SOFTINT_NET | IXGBE_SOFTINT_FLAGS,
 			ixgbe_deferred_mq_start, txr);
 
-		snprintf(wqname, sizeof(wqname), "%sdeferTx", device_xname(dev));
+		snprintf(wqname, sizeof(wqname), "%sdeferTx",
+		    device_xname(dev));
 		defertx_error = workqueue_create(&adapter->txr_wq, wqname,
 		    ixgbe_deferred_mq_start_work, adapter, IXGBE_WORKQUEUE_PRI,
 		    IPL_NET, IXGBE_WORKQUEUE_FLAGS);
@@ -6690,7 +6760,8 @@ ixgbe_allocate_msix(struct adapter *adapter, const struct pci_attach_args *pa)
 	    ixgbe_deferred_mq_start_work, adapter, IXGBE_WORKQUEUE_PRI, IPL_NET,
 	    IXGBE_WORKQUEUE_FLAGS);
 	if (error) {
-		aprint_error_dev(dev, "couldn't create workqueue for deferred Tx\n");
+		aprint_error_dev(dev,
+		    "couldn't create workqueue for deferred Tx\n");
 		goto err_out;
 	}
 	adapter->txr_wq_enqueued = percpu_alloc(sizeof(u_int));

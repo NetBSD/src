@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe_osdep.h,v 1.23.6.3 2020/07/10 11:35:51 martin Exp $ */
+/* $NetBSD: ixgbe_osdep.h,v 1.23.6.4 2021/09/15 16:30:50 martin Exp $ */
 
 /******************************************************************************
   SPDX-License-Identifier: BSD-3-Clause
@@ -167,25 +167,6 @@ void prefetch(void *x)
 #define prefetch(x)
 #endif
 
-/*
- * Optimized bcopy thanks to Luigi Rizzo's investigative work.  Assumes
- * non-overlapping regions and 32-byte padding on both src and dst.
- */
-static __inline int
-ixgbe_bcopy(void *restrict _src, void *restrict _dst, int l)
-{
-	uint64_t *src = _src;
-	uint64_t *dst = _dst;
-
-	for (; l > 0; l -= 32) {
-		*dst++ = *src++;
-		*dst++ = *src++;
-		*dst++ = *src++;
-		*dst++ = *src++;
-	}
-	return (0);
-}
-
 struct ixgbe_osdep
 {
 	struct ethercom    ec;
@@ -195,7 +176,6 @@ struct ixgbe_osdep
 	bus_space_handle_t mem_bus_space_handle;
 	bus_size_t         mem_size;
 	bus_dma_tag_t      dmat;
-	u16                last_rx_mbuf_sz;
 	pci_intr_handle_t  *intrs;
 	int		   nintrs;
 	void               *ihs[IXG_MAX_NINTR];

@@ -1,3 +1,4 @@
+/* $NetBSD: ixgbe_netmap.c,v 1.2.2.1 2021/09/15 16:30:50 martin Exp $ */
 /******************************************************************************
 
   Copyright (c) 2001-2017, Intel Corporation
@@ -68,6 +69,9 @@
  * by a single driver. To avoid replication of code we just #include
  * it near the beginning of the standard driver.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ixgbe_netmap.c,v 1.2.2.1 2021/09/15 16:30:50 martin Exp $");
 
 #ifdef DEV_NETMAP
 /*
