@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_util.c,v 1.25 2021/08/09 20:49:09 andvar Exp $ */
+/*	$NetBSD: acpi_util.c,v 1.26 2021/09/15 17:33:08 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2003, 2007, 2021 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_util.c,v 1.25 2021/08/09 20:49:09 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_util.c,v 1.26 2021/09/15 17:33:08 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>
@@ -74,6 +74,8 @@ __KERNEL_RCSID(0, "$NetBSD: acpi_util.c,v 1.25 2021/08/09 20:49:09 andvar Exp $"
 #include <dev/acpi/acpireg.h>
 #include <dev/acpi/acpivar.h>
 #include <dev/acpi/acpi_intr.h>
+
+#include <sys/device_calls.h>
 
 #include <machine/acpi_machdep.h>
 
@@ -153,7 +155,7 @@ acpi_device_enumerate_children(device_t dev, devhandle_t call_handle, void *v)
 
 	return 0;
 }
-ACPI_DEVICE_CALL_REGISTER("device-enumerate-children",
+ACPI_DEVICE_CALL_REGISTER(DEVICE_ENUMERATE_CHILDREN_STR,
 			  acpi_device_enumerate_children)
 
 /*

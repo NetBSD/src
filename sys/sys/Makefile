@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.176 2020/08/14 00:53:16 riastradh Exp $
+#	$NetBSD: Makefile,v 1.177 2021/09/15 17:33:08 thorpej Exp $
 
 .include <bsd.own.mk>
 
@@ -69,5 +69,11 @@ INCSYMLINKS+=	../soundcard.h ${INCSDIR}/soundcard.h
 
 namei: namei.src gennameih.awk
 	${TOOL_AWK} -f gennameih.awk < namei.src
+
+device_calls.h: ${.CURDIR}/../kern/device_calls
+	echo "${TOOL_AWK} -f ${.CURDIR}/../kern/gendevcalls.awk \
+	    ${.CURDIR}/../kern/device_calls > ${.CURDIR}/device_calls.h"
+	${TOOL_AWK} -f ${.CURDIR}/../kern/gendevcalls.awk \
+	    ${.CURDIR}/../kern/device_calls > ${.CURDIR}/device_calls.h
 
 .include <bsd.kinc.mk>
