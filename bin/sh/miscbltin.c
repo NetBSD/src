@@ -1,4 +1,4 @@
-/*	$NetBSD: miscbltin.c,v 1.44 2017/05/13 15:03:34 gson Exp $	*/
+/*	$NetBSD: miscbltin.c,v 1.45 2021/09/15 18:30:57 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)miscbltin.c	8.4 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: miscbltin.c,v 1.44 2017/05/13 15:03:34 gson Exp $");
+__RCSID("$NetBSD: miscbltin.c,v 1.45 2021/09/15 18:30:57 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -63,6 +63,7 @@ __RCSID("$NetBSD: miscbltin.c,v 1.44 2017/05/13 15:03:34 gson Exp $");
 #include "error.h"
 #include "builtins.h"
 #include "mystring.h"
+#include "redir.h"		/* for user_fd_limit */
 
 #undef rflag
 
@@ -357,7 +358,7 @@ ulimitcmd(int argc, char **argv)
 	int	c;
 	rlim_t val = 0;
 	enum { SOFT = 0x1, HARD = 0x2 }
-			how = SOFT | HARD;
+			how = 0, which;
 	const struct limits	*l;
 	int		set, all = 0;
 	int		optc, what;
@@ -367,10 +368,10 @@ ulimitcmd(int argc, char **argv)
 	while ((optc = nextopt("HSabtfdscmlrpnv")) != '\0')
 		switch (optc) {
 		case 'H':
-			how = HARD;
+			how |= HARD;
 			break;
 		case 'S':
-			how = SOFT;
+			how |= SOFT;
 			break;
 		case 'a':
 			all = 1;
@@ -390,38 +391,58 @@ ulimitcmd(int argc, char **argv)
 
 		if (all || argptr[1])
 			error("too many arguments");
+		if (how == 0)
+			how = HARD | SOFT;
+
 		if (strcmp(p, "unlimited") == 0)
 			val = RLIM_INFINITY;
 		else {
 			val = (rlim_t) 0;
 
-			while ((c = *p++) >= '0' && c <= '9')
-				val = (val * 10) + (long)(c - '0');
+			while ((c = *p++) >= '0' && c <= '9') {
+				if (val >= RLIM_INFINITY/10)
+					error("value overflow");
+				val = (val * 10);
+				if (val >= RLIM_INFINITY - (long)(c - '0'))
+					error("value overflow");
+				val += (long)(c - '0');
+			}
 			if (c)
 				error("bad number");
+			if (val > RLIM_INFINITY / l->factor)
+				error("value overflow");
 			val *= l->factor;
 		}
-	}
+	} else if (how == 0)
+		how = SOFT;
+
 	if (all) {
 		for (l = limits; l->name; l++) {
 			getrlimit(l->cmd, &limit);
-			if (how & SOFT)
-				val = limit.rlim_cur;
-			else if (how & HARD)
-				val = limit.rlim_max;
-
-			out1fmt("%-13s (-%c %-11s) ", l->name, l->option,
+			out1fmt("%-13s (-%c %-11s)    ", l->name, l->option,
 			    l->unit);
-			if (val == RLIM_INFINITY)
-				out1fmt("unlimited\n");
-			else
-			{
-				val /= l->factor;
+
+			which = how;
+			while (which != 0) {
+				if (which & SOFT) {
+					val = limit.rlim_cur;
+					which &= ~SOFT;
+				} else if (which & HARD) {
+					val = limit.rlim_max;
+					which &= ~HARD;
+				}
+
+				if (val == RLIM_INFINITY)
+					out1fmt("unlimited");
+				else {
+					val /= l->factor;
 #ifdef BSD4_4
-				out1fmt("%lld\n", (long long) val);
+					out1fmt("%9lld", (long long) val);
 #else
-				out1fmt("%ld\n", (long) val);
+					out1fmt("%9ld", (long) val);
 #endif
+				}
+				out1fmt("%c", which ? '\t' : '\n');
 			}
 		}
 		return 0;
@@ -436,6 +457,8 @@ ulimitcmd(int argc, char **argv)
 			limit.rlim_cur = val;
 		if (setrlimit(l->cmd, &limit) < 0)
 			error("error setting limit (%s)", strerror(errno));
+		if (l->cmd == RLIMIT_NOFILE)
+			user_fd_limit = sysconf(_SC_OPEN_MAX);
 	} else {
 		if (how & SOFT)
 			val = limit.rlim_cur;
