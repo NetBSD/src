@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.3,v 1.1.2.101 2021/09/15 16:34:29 martin Exp $
+# $NetBSD: CHANGES-8.3,v 1.1.2.102 2021/09/15 16:39:19 martin Exp $
 
 A complete list of changes from the NetBSD 8.2 release to the NetBSD 8.3
 release:
@@ -2023,3 +2023,89 @@ build.sh					1.348-1.352, 1.356
 	Support for MKREPRO and automatic timestamps when the source
 	tree is from git or mercurial.
 	[martin, ticket #1695]
+
+sys/dev/pci/ixgbe/ixgbe.c			1.252, 1.280-1.283, 1.286-1.287, 1.289-1.290 via patch
+sys/dev/pci/ixgbe/ixgbe.h			1.73, 1.76-1.80 via patch
+sys/dev/pci/ixgbe/ix_txrx.c			1.68-1.93
+sys/dev/pci/ixgbe/ixv.c				1.153, 1.157-1.161, 1.163-1.166 via patch
+sys/dev/pci/ixgbe/if_bypass.c			1.7-1.9
+sys/dev/pci/ixgbe/if_fdir.c			1.4-1.5
+sys/dev/pci/ixgbe/if_sriov.c			1.10-1.11
+sys/dev/pci/ixgbe/ixgbe_82598.c			1.16
+sys/dev/pci/ixgbe/ixgbe_82599.c			1.23
+sys/dev/pci/ixgbe/ixgbe_api.c			1.25
+sys/dev/pci/ixgbe/ixgbe_bypass.h		1.2
+sys/dev/pci/ixgbe/ixgbe_common.c		1.30-1.33
+sys/dev/pci/ixgbe/ixgbe_dcb.c			1.10-1.11
+sys/dev/pci/ixgbe/ixgbe_dcb.h			1.7
+sys/dev/pci/ixgbe/ixgbe_dcb_82598.c		1.8-1.9
+sys/dev/pci/ixgbe/ixgbe_dcb_82598.h		1.7
+sys/dev/pci/ixgbe/ixgbe_dcb_82599.c		1.8-1.9
+sys/dev/pci/ixgbe/ixgbe_dcb_82599.h		1.7
+sys/dev/pci/ixgbe/ixgbe_fdir.h			1.3
+sys/dev/pci/ixgbe/ixgbe_features.h		1.3
+sys/dev/pci/ixgbe/ixgbe_mbx.c			1.12
+sys/dev/pci/ixgbe/ixgbe_netbsd.c		1.16-1.17
+sys/dev/pci/ixgbe/ixgbe_netbsd.h		1.13-1.14
+sys/dev/pci/ixgbe/ixgbe_netmap.c		1.3-1.4
+sys/dev/pci/ixgbe/ixgbe_netmap.h		1.2
+sys/dev/pci/ixgbe/ixgbe_osdep.c			1.7
+sys/dev/pci/ixgbe/ixgbe_osdep.h			1.29-1.30
+sys/dev/pci/ixgbe/ixgbe_phy.c			1.24
+sys/dev/pci/ixgbe/ixgbe_rss.h			1.5
+sys/dev/pci/ixgbe/ixgbe_sriov.h			1.4
+sys/dev/pci/ixgbe/ixgbe_type.h			1.49
+sys/dev/pci/ixgbe/ixgbe_vf.c			1.27
+sys/dev/pci/ixgbe/ixgbe_x540.c			1.18-1.19
+sys/dev/pci/ixgbe/ixgbe_x540.h			1.9
+sys/dev/pci/ixgbe/ixgbe_x550.c			1.19-1.20
+sys/dev/pci/ixgbe/ixgbe_x550.h			1.6
+sys/dev/pci/files.pci				1.438
+share/man/man4/ixg.4				1.15
+share/man/man4/ixv.4				1.8
+
+	- Use MCLGET() instead of homegrown cluster (jcl) allocation mechanism.
+	  Before this commit, resource shortage was easily occurred because
+	  the total number of the clusters is small.
+	- Improve performance:
+	  - Use m_adj(ETHER_ALIGN) more.
+	  - Sprinkle __predict_false() in the RX path.
+	  - Don't pre-allocate a cluster for RXCOPY case to improve short
+	    packet's performance.
+	- Call bus_dmamap_unload(9) via ixgbe_dmamap_unload(), before freeing
+	  DMA buffer. Also, when the buffer is already freed, do not call
+	  bus_dmamap_unload(9) (no resource leaks with this change). This
+	  change is required to make ixg(4) work on alpha.
+	- Keep m_len and m_pkthdr.len consistent to prevent panic on arm.
+	- Fix panic when bus_dmamap_load_mbuf() failed in
+	  ixgbe_setup_receive_ring().
+	- Added BUS_DMA_COHERENT flag to bus_dmamem_map() to improve stability
+	  on aarch64.
+	- Use uint64_t instead of bus_addr_t for the TX descriptor's buffer
+	  address. At least, this change is required for macppc
+	  (sizeof(bus_addr_t) == 4) to make TX work.
+	- Fix little-endian dependence.
+	- Set rxr->next_to_refresh correctly in ixgbe_setup_receive_ring().
+	- Refresh unrefreshed descriptors' buffers correctly.
+	- Don't call bus_dmamap_sync with rx_mbuf_sz(== MCLBYTES) to prevent
+	  panic.
+	- Save the discard_multidesc state to not to forget the state by
+	  exiting rxeof().
+	- Add missing increment of no_mbuf error counter.
+	- Don't increment no_mbuf evcnt(9) when discarding multi-descriptor
+	  packet.
+	- ixv: Modify error message to sync with ixgbe.c
+	- Print the error value of ixgbe_reset_hw() for debugging.
+	- Remove extra unlock/lock processing around if_percpuq_enqueue().
+	- Refactor rxr->next_to_check updating.
+	- Add new sysctl "rx_copy_len".
+	- Add a new sysctl to read rxr->next_to_refresh.
+	- Print error number when error occurred.
+	- Rename ix{gbe,v}_stop() with ix{gbe,v}_stop_locked(). No functional
+	  change.
+	- Don't use fixed value.
+	- Comment out flow director processing in fast path.
+	- Add missing NetBSD RCS IDs and __KERNEL_RCSID()s.
+	- KNF.
+	- Fix typos.
+	[msaitoh, ticket #1696]
