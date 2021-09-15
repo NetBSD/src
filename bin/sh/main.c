@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.85 2020/02/07 01:25:08 fox Exp $	*/
+/*	$NetBSD: main.c,v 1.86 2021/09/15 18:29:45 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993\
 #if 0
 static char sccsid[] = "@(#)main.c	8.7 (Berkeley) 7/19/95";
 #else
-__RCSID("$NetBSD: main.c,v 1.85 2020/02/07 01:25:08 fox Exp $");
+__RCSID("$NetBSD: main.c,v 1.86 2021/09/15 18:29:45 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -85,6 +85,7 @@ int rootpid;
 int rootshell;
 struct jmploc main_handler;
 int max_user_fd;
+long user_fd_limit;
 #if PROFILE
 short profile_buf[16384];
 extern int etext();
@@ -131,6 +132,7 @@ main(int argc, char **argv)
 	max_user_fd = fcntl(0, F_MAXFD);
 	if (max_user_fd < 2)
 		max_user_fd = 2;
+	user_fd_limit = sysconf(_SC_OPEN_MAX);
 
 	setlocale(LC_ALL, "");
 
