@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.111 2021/09/12 08:23:57 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.112 2021/09/15 07:49:54 skrll Exp $	*/
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.111 2021/09/12 08:23:57 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.112 2021/09/15 07:49:54 skrll Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_ddb.h"
@@ -1449,7 +1449,9 @@ pmap_activate(struct lwp *l)
 	if (pm->pm_asid == -1)
 		pm->pm_asid = l->l_proc->p_pid;
 
-	ttbr0 = ((uint64_t)pm->pm_asid << 48) | pm->pm_l0table_pa;
+	ttbr0 =
+	     __SHIFTIN(pm->pm_asid, TTBR_ASID) |
+	     __SHIFTIN(pm->pm_l0table_pa, TTBR_BADDR);
 	cpu_set_ttbr0(ttbr0);
 
 	/* Re-enable translation table walks using TTBR0 */
