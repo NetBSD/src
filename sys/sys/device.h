@@ -1,4 +1,4 @@
-/* $NetBSD: device.h,v 1.174 2021/08/15 22:08:01 thorpej Exp $ */
+/* $NetBSD: device.h,v 1.175 2021/09/15 17:33:08 thorpej Exp $ */
 
 /*
  * Copyright (c) 2021 The NetBSD Foundation, Inc.
@@ -791,21 +791,20 @@ device_t	shutdown_next(struct shutdown_state *);
  * the device autoconfiguration subsystem.  It is the responsibility
  * of each device tree back end to implement these calls.
  *
- * device-enumerate-children
- *
- *	Enumerates the direct children of a device, invoking the
- *	callback for each one.  The callback is passed the devhandle_t
- *	corresponding to the child device, as well as a user-supplied
- *	argument.  If the callback returns true, then enumeration
- *	continues.  If the callback returns false, enumeration is stopped.
+ * We define a generic interface; individual device calls feature
+ * type checking of the argument structure.  The argument structures
+ * and the call binding data are automatically generated from device
+ * call interface descriptions by gendevcalls.awk.
  */
-
-struct device_enumerate_children_args {
-	bool	(*callback)(device_t, devhandle_t, void *);
-	void *	callback_arg;
+struct device_call_generic {
+	const char *name;
+	void *args;
 };
 
-int		device_call(device_t, const char *, void *);
+int	device_call_generic(device_t, const struct device_call_generic *);
+
+#define	device_call(dev, call)						\
+	device_call_generic((dev), &(call)->generic)
 
 #endif /* _KERNEL */
 

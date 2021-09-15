@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_pci.c,v 1.31 2021/05/12 23:22:33 thorpej Exp $ */
+/* $NetBSD: acpi_pci.c,v 1.32 2021/09/15 17:33:08 thorpej Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_pci.c,v 1.31 2021/05/12 23:22:33 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_pci.c,v 1.32 2021/09/15 17:33:08 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -40,6 +40,8 @@ __KERNEL_RCSID(0, "$NetBSD: acpi_pci.c,v 1.31 2021/05/12 23:22:33 thorpej Exp $"
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcidevs.h>
 #include <dev/pci/ppbreg.h>
+
+#include <dev/pci/pci_calls.h>
 
 #include <dev/acpi/acpireg.h>
 #include <dev/acpi/acpivar.h>
@@ -576,5 +578,5 @@ acpi_pci_bus_get_child_devhandle(device_t dev, devhandle_t call_handle, void *v)
 
 	return ENODEV;
 }
-ACPI_DEVICE_CALL_REGISTER("pci-bus-get-child-devhandle",
+ACPI_DEVICE_CALL_REGISTER(PCI_BUS_GET_CHILD_DEVHANDLE_STR,
 			  acpi_pci_bus_get_child_devhandle)
