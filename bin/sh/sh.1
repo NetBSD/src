@@ -1,4 +1,4 @@
-.\"	$NetBSD: sh.1,v 1.233 2021/09/12 06:53:08 wiz Exp $
+.\"	$NetBSD: sh.1,v 1.234 2021/09/15 18:30:57 kre Exp $
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -3720,13 +3720,20 @@ If neither
 nor
 .Fl S
 is specified, the soft limit is displayed or both limits are set.
-If both are specified, the last one wins.
+If both are specified,
+then with
+.Fl a
+both are displayed, the soft followed by the hard limit,
+otherwise for setting, both limits are set,
+and for interrogating the soft limit is displayed.
 .Pp
 The limit to be interrogated or set, then, is chosen by specifying
 any one of these flags:
 .Bl -tag -width Fl
 .It Fl a
-show all the current limits
+show all the current limits (it is an error to
+attempt to set the limits by giving a
+.Ar value )
 .It Fl b
 the socket buffer size of a process (bytes)
 .It Fl c
