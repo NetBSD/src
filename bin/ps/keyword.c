@@ -1,4 +1,4 @@
-/*	$NetBSD: keyword.c,v 1.59 2021/09/14 22:01:17 christos Exp $	*/
+/*	$NetBSD: keyword.c,v 1.60 2021/09/15 13:16:57 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)keyword.c	8.5 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: keyword.c,v 1.59 2021/09/14 22:01:17 christos Exp $");
+__RCSID("$NetBSD: keyword.c,v 1.60 2021/09/15 13:16:57 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -383,7 +383,6 @@ findvar(const char *p)
 
 	struct var *newvar = emalloc(sizeof(*newvar));
 	*newvar = *v;
-	v = newvar;
 
 	if (hp) {
 		/*
@@ -407,7 +406,7 @@ findvar(const char *p)
 	if (*p != *pp)
 		newvar->flag |= ALTPR|LJUST;
 
-	return v;
+	return newvar;
 }
 
 static int
