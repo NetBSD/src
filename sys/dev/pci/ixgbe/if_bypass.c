@@ -1,3 +1,4 @@
+/* $NetBSD: if_bypass.c,v 1.2.4.7 2021/09/15 16:38:00 martin Exp $ */
 /******************************************************************************
 
   Copyright (c) 2001-2017, Intel Corporation
@@ -32,6 +33,8 @@
 ******************************************************************************/
 /*$FreeBSD: head/sys/dev/ixgbe/if_bypass.c 327031 2017-12-20 18:15:06Z erj $*/
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: if_bypass.c,v 1.2.4.7 2021/09/15 16:38:00 martin Exp $");
 
 #include "ixgbe.h"
 
@@ -669,7 +672,7 @@ ixgbe_bp_log(SYSCTLFN_ARGS)
 		const char *action_str[] = {"ignore", "normal", "bypass",
 					    "isolate",};
 
-		/* verify vaild data  1 - 6 */
+		/* verify valid data  1 - 6 */
 		if (event < BYPASS_EVENT_MAIN_ON || event > BYPASS_EVENT_USR)
 			event = 0;
 

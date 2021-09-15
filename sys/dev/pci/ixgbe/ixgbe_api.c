@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe_api.c,v 1.15.8.6 2020/01/24 18:37:31 martin Exp $ */
+/* $NetBSD: ixgbe_api.c,v 1.15.8.7 2021/09/15 16:38:01 martin Exp $ */
 
 /******************************************************************************
   SPDX-License-Identifier: BSD-3-Clause
@@ -34,6 +34,9 @@
 
 ******************************************************************************/
 /*$FreeBSD: head/sys/dev/ixgbe/ixgbe_api.c 331224 2018-03-19 20:55:05Z erj $*/
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ixgbe_api.c,v 1.15.8.7 2021/09/15 16:38:01 martin Exp $");
 
 #include "ixgbe_api.h"
 #include "ixgbe_common.h"
