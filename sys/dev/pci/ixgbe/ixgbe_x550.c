@@ -1,3 +1,5 @@
+/* $NetBSD: ixgbe_x550.c,v 1.15.2.4 2021/09/15 16:30:50 martin Exp $ */
+
 /******************************************************************************
 
   Copyright (c) 2001-2017, Intel Corporation
@@ -31,6 +33,9 @@
 
 ******************************************************************************/
 /*$FreeBSD: head/sys/dev/ixgbe/ixgbe_x550.c 331224 2018-03-19 20:55:05Z erj $*/
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ixgbe_x550.c,v 1.15.2.4 2021/09/15 16:30:50 martin Exp $");
 
 #include "ixgbe_x550.h"
 #include "ixgbe_x540.h"

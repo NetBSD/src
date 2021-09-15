@@ -1,3 +1,4 @@
+/* $NetBSD: if_fdir.c,v 1.2.8.1 2021/09/15 16:30:50 martin Exp $ */
 /******************************************************************************
 
   Copyright (c) 2001-2017, Intel Corporation
@@ -31,6 +32,9 @@
 
 ******************************************************************************/
 /*$FreeBSD: head/sys/dev/ixgbe/if_fdir.c 327031 2017-12-20 18:15:06Z erj $*/
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: if_fdir.c,v 1.2.8.1 2021/09/15 16:30:50 martin Exp $");
 
 #include "ixgbe.h"
 

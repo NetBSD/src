@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe.h,v 1.56.2.4 2021/03/11 16:00:24 martin Exp $ */
+/* $NetBSD: ixgbe.h,v 1.56.2.5 2021/09/15 16:30:50 martin Exp $ */
 
 /******************************************************************************
   SPDX-License-Identifier: BSD-3-Clause
@@ -183,10 +183,7 @@
  * modern Intel CPUs, results in 40 bytes wasted and a significant drop
  * in observed efficiency of the optimization, 97.9% -> 81.8%.
  */
-#define	MPKTHSIZE		(offsetof(struct _mbuf_dummy, m_pktdat))
-#define IXGBE_RX_COPY_HDR_PADDED  ((((MPKTHSIZE - 1) / 32) + 1) * 32)
-#define IXGBE_RX_COPY_LEN         (MSIZE - IXGBE_RX_COPY_HDR_PADDED)
-#define IXGBE_RX_COPY_ALIGN       (IXGBE_RX_COPY_HDR_PADDED - MPKTHSIZE)
+#define IXGBE_RX_COPY_LEN_MAX     (MHLEN - ETHER_ALIGN)
 
 /* Keep older OS drivers building... */
 #if !defined(SYSCTL_ADD_UQUAD)
@@ -331,8 +328,8 @@ struct ix_queue {
 	struct evcnt     irqs;		/* Hardware interrupt */
 	struct evcnt     handleq;	/* software_interrupt */
 	struct evcnt     req;		/* deferred */
-	char             namebuf[32];
-	char             evnamebuf[32];
+	char             namebuf[32];	/* Name for sysctl */
+	char             evnamebuf[32];	/* Name for evcnt */
 
 	/* Lock for disabled_count and this queue's EIMS/EIMC bit */
 	kmutex_t         dc_mtx;
@@ -410,6 +407,7 @@ struct rx_ring {
 	bool			lro_enabled;
 	bool			hw_rsc;
 	bool			vtag_strip;
+	bool			discard_multidesc;
 	u16			next_to_refresh;
 	u16			next_to_check;
 	u16			num_desc;
@@ -419,9 +417,6 @@ struct rx_ring {
 #endif
 	struct ixgbe_rx_buf	*rx_buffers;
 	ixgbe_dma_tag_t		*ptag;
-	u16			last_rx_mbuf_sz;
-	u32			last_num_rx_desc;
-	ixgbe_extmem_head_t	jcl_head;
 
 	u64			bytes; /* Used for AIM calc */
 	u64			packets;
@@ -431,7 +426,7 @@ struct rx_ring {
 	struct evcnt		rx_packets;
 	struct evcnt		rx_bytes;
 	struct evcnt		rx_discarded;
-	struct evcnt		no_jmbuf;
+	struct evcnt		no_mbuf;
 	u64			rsc_num;
 
 	/* Flow Director */
@@ -560,7 +555,7 @@ struct adapter {
 	u64			active_queues;
 	u32			num_rx_desc;
 	u32			rx_process_limit;
-	int			num_jcl;
+	u32			rx_copy_len;
 
 	/* Multicast array memory */
 	struct ixgbe_mc_addr	*mta;
@@ -758,12 +753,8 @@ void ixgbe_free_receive_structures(struct adapter *);
 bool ixgbe_txeof(struct tx_ring *);
 bool ixgbe_rxeof(struct ix_queue *);
 
-const struct sysctlnode *ixgbe_sysctl_instance(struct adapter *);
-
 /* For NetBSD */
-void ixgbe_jcl_reinit(struct adapter *, bus_dma_tag_t, struct rx_ring *,
-    int, size_t);
-void ixgbe_jcl_destroy(struct adapter *,  struct rx_ring *);
+const struct sysctlnode *ixgbe_sysctl_instance(struct adapter *);
 
 #include "ixgbe_bypass.h"
 #include "ixgbe_fdir.h"
