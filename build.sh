@@ -1,5 +1,5 @@
 #! /usr/bin/env sh
-#	$NetBSD: build.sh,v 1.316.4.2 2018/02/26 13:52:00 martin Exp $
+#	$NetBSD: build.sh,v 1.316.4.3 2021/09/15 05:07:42 msaitoh Exp $
 #
 # Copyright (c) 2001-2011 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -1052,6 +1052,8 @@ Usage: ${progname} [-EhnoPRrUuxy] [-a arch] [-B buildid] [-C cdextras]
     list-arch           Display a list of valid MACHINE/MACHINE_ARCH values,
                         and exit.  The list may be narrowed by passing glob
                         patterns or exact values in MACHINE or MACHINE_ARCH.
+    mkrepro-timestamp   Show the latest source timestamp used for reproducable
+                        builds and exit.  Requires -P or -V MKREPRO=yes.
 
  Options:
     -a arch        Set MACHINE_ARCH to arch.  [Default: deduced from MACHINE]
@@ -1323,7 +1325,12 @@ parseoptions()
 
 		list-arch)
 			listarch "${MACHINE}" "${MACHINE_ARCH}"
-			exit $?
+			exit
+			;;
+		mkrepro-timestamp)
+			setup_mkrepro quiet
+			echo ${MKREPRO_TIMESTAMP:-0}
+			[ ${MKREPRO_TIMESTAMP:-0} -ne 0 ]; exit
 			;;
 
 		kernel=*|releasekernel=*|kernel.gdb=*)
@@ -1907,7 +1914,7 @@ createmakewrapper()
 	eval cat <<EOF ${makewrapout}
 #! ${HOST_SH}
 # Set proper variables to allow easy "make" building of a NetBSD subtree.
-# Generated from:  \$NetBSD: build.sh,v 1.316.4.2 2018/02/26 13:52:00 martin Exp $
+# Generated from:  \$NetBSD: build.sh,v 1.316.4.3 2021/09/15 05:07:42 msaitoh Exp $
 # with these arguments: ${_args}
 #
 
@@ -2203,22 +2210,71 @@ dorump()
 	statusmsg "Rump build&link tests successful"
 }
 
+repro_date() {
+	# try the bsd date fail back the the linux one
+	date -u -r "$1" 2> /dev/null || date -u -d "@$1"
+}
+
 setup_mkrepro()
 {
+	local quiet="$1"
+
 	if [ ${MKREPRO-no} != "yes" ]; then
 		return
 	fi
+	if [ ${MKREPRO_TIMESTAMP-0} -ne 0 ]; then
+		return;
+	fi
+
 	local dirs=${NETBSDSRCDIR-/usr/src}/
 	if [ ${MKX11-no} = "yes" ]; then
 		dirs="$dirs ${X11SRCDIR-/usr/xsrc}/"
 	fi
+
 	local cvslatest=$(print_tooldir_program cvslatest)
 	if [ ! -x "${cvslatest}" ]; then
 		buildtools
 	fi
-	MKREPRO_TIMESTAMP=$("${cvslatest}" ${dirs})
-	[ -n "${MKREPRO_TIMESTAMP}" ] || bomb "Failed to compute timestamp"
-	statusmsg2 "MKREPRO_TIMESTAMP" "$(TZ=UTC date -r ${MKREPRO_TIMESTAMP})"
+
+	local cvslatestflags=
+	if ${do_expertmode}; then
+		cvslatestflags=-i
+	fi
+
+	MKREPRO_TIMESTAMP=0
+	local d
+	local t
+	local vcs
+	for d in ${dirs}; do
+		if [ -d "${d}CVS" ]; then
+			t=$("${cvslatest}" ${cvslatestflags} "${d}")
+			vcs=cvs
+		elif [ -d "${d}.git" ]; then
+			t=$(cd "${d}" && git log -1 --format=%ct)
+			vcs=git
+		elif [ -d "${d}.hg" ]; then
+			t=$(cd "${d}" &&
+			    hg log -r . --template '{date(date, "%s")}\n')
+			vcs=hg
+		else
+			bomb "Cannot determine VCS for '$d'"
+		fi
+
+		if [ -z "$t" ]; then
+			bomb "Failed to get timestamp for vcs=$vcs in '$d'"
+		fi
+
+		#echo "latest $d $vcs $t"
+		if [ "$t" -gt "$MKREPRO_TIMESTAMP" ]; then
+			MKREPRO_TIMESTAMP="$t"
+		fi
+	done
+
+	[ "${MKREPRO_TIMESTAMP}" != "0" ] || bomb "Failed to compute timestamp"
+	if [ -z "${quiet}" ]; then
+		statusmsg2 "MKREPRO_TIMESTAMP" \
+			"$(repro_date "${MKREPRO_TIMESTAMP}")"
+	fi
 	export MKREPRO MKREPRO_TIMESTAMP
 }
 
