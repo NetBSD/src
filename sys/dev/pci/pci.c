@@ -1,4 +1,4 @@
-/*	$NetBSD: pci.c,v 1.161 2021/08/07 16:19:14 thorpej Exp $	*/
+/*	$NetBSD: pci.c,v 1.162 2021/09/15 17:33:08 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997, 1998
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci.c,v 1.161 2021/08/07 16:19:14 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci.c,v 1.162 2021/09/15 17:33:08 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pci.h"
@@ -52,6 +52,8 @@ __KERNEL_RCSID(0, "$NetBSD: pci.c,v 1.161 2021/08/07 16:19:14 thorpej Exp $");
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcidevs.h>
 #include <dev/pci/ppbvar.h>
+
+#include <dev/pci/pci_calls.h>
 
 #include <net/if.h>
 
@@ -275,8 +277,7 @@ pci_bus_get_child_devhandle(struct pci_softc *sc, pcitag_t tag)
 		.tag = tag,
 	};
 
-	if (device_call(sc->sc_dev, "pci-bus-get-child-devhandle",
-			&args) != 0) {
+	if (device_call(sc->sc_dev, PCI_BUS_GET_CHILD_DEVHANDLE(&args)) != 0) {
 		/*
 		 * The call is either not supported or the requested
 		 * device was not found in the platform device tree.

@@ -1,4 +1,4 @@
-/*	$NetBSD: promlib.c,v 1.48 2021/05/10 13:59:30 thorpej Exp $ */
+/*	$NetBSD: promlib.c,v 1.49 2021/09/15 17:33:08 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: promlib.c,v 1.48 2021/05/10 13:59:30 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: promlib.c,v 1.49 2021/09/15 17:33:08 thorpej Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_sparc_arch.h"
@@ -44,6 +44,8 @@ __KERNEL_RCSID(0, "$NetBSD: promlib.c,v 1.48 2021/05/10 13:59:30 thorpej Exp $")
 #include <sys/param.h>
 #include <sys/kernel.h>
 #include <sys/device.h>
+
+#include <sys/device_calls.h>
 
 #ifdef _STANDALONE
 #include <lib/libsa/stand.h>
@@ -276,7 +278,7 @@ obp_device_enumerate_children(device_t dev, devhandle_t call_handle, void *v)
 
 	return 0;
 }
-OBP_DEVICE_CALL_REGISTER("device-enumerate-children",
+OBP_DEVICE_CALL_REGISTER(DEVICE_ENUMERATE_CHILDREN_STR,
 			 obp_device_enumerate_children)
 #endif /* ! _STANDALONE */
 

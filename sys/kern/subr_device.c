@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_device.c,v 1.8 2021/08/07 18:16:42 thorpej Exp $	*/
+/*	$NetBSD: subr_device.c,v 1.9 2021/09/15 17:33:08 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2006, 2021 The NetBSD Foundation, Inc.
@@ -27,11 +27,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_device.c,v 1.8 2021/08/07 18:16:42 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_device.c,v 1.9 2021/09/15 17:33:08 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
 #include <sys/systm.h>
+
+#include <sys/device_calls.h>
 
 /* Root device. */
 device_t			root_device;
@@ -285,17 +287,17 @@ device_handle(device_t dev)
 }
 
 int
-device_call(device_t dev, const char *name, void *arg)
+device_call_generic(device_t dev, const struct device_call_generic *gen)
 {
 	devhandle_t handle = device_handle(dev);
 	device_call_t call;
 	devhandle_t call_handle;
 
-	call = devhandle_lookup_device_call(handle, name, &call_handle);
+	call = devhandle_lookup_device_call(handle, gen->name, &call_handle);
 	if (call == NULL) {
 		return ENOTSUP;
 	}
-	return call(dev, call_handle, arg);
+	return call(dev, call_handle, gen->args);
 }
 
 int
@@ -308,5 +310,5 @@ device_enumerate_children(device_t dev,
 		.callback_arg = callback_arg,
 	};
 
-	return device_call(dev, "device-enumerate-children", &args);
+	return device_call(dev, DEVICE_ENUMERATE_CHILDREN(&args));
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw_subr.c,v 1.58 2021/04/24 23:36:57 thorpej Exp $	*/
+/*	$NetBSD: ofw_subr.c,v 1.59 2021/09/15 17:33:08 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2021 The NetBSD Foundation, Inc.
@@ -60,12 +60,15 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofw_subr.c,v 1.58 2021/04/24 23:36:57 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofw_subr.c,v 1.59 2021/09/15 17:33:08 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
 #include <sys/kmem.h>
 #include <sys/systm.h>
+
+#include <sys/device_calls.h>
+
 #include <dev/ofw/openfirm.h>
 
 #define	OFW_MAX_STACK_BUF_SIZE	256
@@ -130,7 +133,7 @@ of_device_enumerate_children(device_t dev, devhandle_t call_handle, void *v)
 
 	return 0;
 }
-OF_DEVICE_CALL_REGISTER("device-enumerate-children",
+OF_DEVICE_CALL_REGISTER(DEVICE_ENUMERATE_CHILDREN_STR,
 			of_device_enumerate_children)
 
 /*
