@@ -1,4 +1,4 @@
-/*	$NetBSD: exception.c,v 1.73 2019/12/03 12:42:21 ad Exp $	*/
+/*	$NetBSD: exception.c,v 1.74 2021/09/15 11:03:24 rin Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2019 The NetBSD Foundation, Inc. All rights reserved.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exception.c,v 1.73 2019/12/03 12:42:21 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exception.c,v 1.74 2021/09/15 11:03:24 rin Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -196,11 +196,10 @@ general_exception(struct lwp *l, struct trapframe *tf, uint32_t va)
 	case EXPEVT_ADDR_ERR_LD: /* FALLTHROUGH */
 	case EXPEVT_ADDR_ERR_ST:
 		pcb = lwp_getpcb(l);
-		KDASSERT(pcb->pcb_onfault != NULL);
+		if (__predict_false(pcb->pcb_onfault == NULL))
+			goto do_panic;
 		tf->tf_spc = (int)pcb->pcb_onfault;
 		tf->tf_r0 = EFAULT;
-		if (tf->tf_spc == 0)
-			goto do_panic;
 		break;
 
 	case EXPEVT_ADDR_ERR_LD | EXP_USER: /* FALLTHROUGH */
