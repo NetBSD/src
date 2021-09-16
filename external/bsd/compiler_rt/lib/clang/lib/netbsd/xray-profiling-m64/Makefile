@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2019/08/08 14:00:32 kamil Exp $
+#	$NetBSD: Makefile,v 1.2 2021/09/16 23:32:50 christos Exp $
 
 NOSANITIZER=    # defined
 
@@ -31,6 +31,7 @@ CPPFLAGS+=	-I${TOPDIR}/lib
 CPPFLAGS+=	-I${TOPDIR}/include
 
 CWARNFLAGS.clang+=	-Wno-error=cast-qual-unrelated
+CWARNFLAGS.gcc+=	-Wno-error=stringop-overflow
 
 COPTS+=		-fPIC
 
