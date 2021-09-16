@@ -1,4 +1,4 @@
-/* $NetBSD: pci_machdep.c,v 1.32 2021/07/04 22:36:43 thorpej Exp $ */
+/* $NetBSD: pci_machdep.c,v 1.33 2021/09/16 20:17:46 andvar Exp $ */
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.32 2021/07/04 22:36:43 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.33 2021/09/16 20:17:46 andvar Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -274,7 +274,7 @@ alpha_pci_generic_intr_select_cpu(pci_chipset_tag_t const pc, u_int const irq,
 
 	/*
 	 * If the back-end didn't tell us where we can route, then
-	 * they all go to the primry CPU.
+	 * they all go to the primary CPU.
 	 */
 	if (pc->pc_eligible_cpus == 0) {
 		return &cpu_info_primary;

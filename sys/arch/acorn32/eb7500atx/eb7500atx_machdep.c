@@ -1,4 +1,4 @@
-/*	$NetBSD: eb7500atx_machdep.c,v 1.35 2021/08/17 22:00:26 andvar Exp $	*/
+/*	$NetBSD: eb7500atx_machdep.c,v 1.36 2021/09/16 20:17:46 andvar Exp $	*/
 
 /*
  * Copyright (c) 2000-2002 Reinoud Zandijk.
@@ -54,7 +54,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: eb7500atx_machdep.c,v 1.35 2021/08/17 22:00:26 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: eb7500atx_machdep.c,v 1.36 2021/09/16 20:17:46 andvar Exp $");
 
 #include <sys/systm.h>
 #include <sys/kernel.h>
@@ -370,7 +370,7 @@ initarm(void *cookie)
 	 */
 	set_cpufuncs();
 
-	/* canonicalise the boot configuration structure to alow versioning */
+	/* canonicalise the boot configuration structure to allow versioning */
 	canonicalise_bootconfig(&bootconfig, raw_bootconf);
 	booted_kernel = bootconfig.kernelname;
 

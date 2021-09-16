@@ -1,4 +1,4 @@
-/*	$NetBSD: res_debug.c,v 1.15 2018/12/13 08:45:29 maya Exp $	*/
+/*	$NetBSD: res_debug.c,v 1.16 2021/09/16 20:17:46 andvar Exp $	*/
 
 /*
  * Portions Copyright (C) 2004, 2005, 2008, 2009  Internet Systems Consortium, Inc. ("ISC")
@@ -97,7 +97,7 @@
 static const char sccsid[] = "@(#)res_debug.c	8.1 (Berkeley) 6/4/93";
 static const char rcsid[] = "Id: res_debug.c,v 1.19 2009/02/26 11:20:20 tbox Exp";
 #else
-__RCSID("$NetBSD: res_debug.c,v 1.15 2018/12/13 08:45:29 maya Exp $");
+__RCSID("$NetBSD: res_debug.c,v 1.16 2021/09/16 20:17:46 andvar Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -509,7 +509,7 @@ const struct res_sym __p_type_syms[] = {
 	{ns_t_naptr,	"NAPTR",	"naptr"},
 	{ns_t_kx,	"KX",		"key exchange"},
 	{ns_t_cert,	"CERT",		"certificate"},
-	{ns_t_a6,	"A",		"IPv6 address (experminental)"},
+	{ns_t_a6,	"A",		"IPv6 address (experimental)"},
 	{ns_t_dname,	"DNAME",	"non-terminal redirection"},
 	{ns_t_opt,	"OPT",		"opt"},
 	{ns_t_apl,	"apl",		"apl"},
@@ -680,7 +680,7 @@ p_option(u_long option) {
 	case RES_DEBUG:		return "debug";
 	case RES_AAONLY:	return "aaonly(unimpl)";
 	case RES_USEVC:		return "usevc";
-	case RES_PRIMARY:	return "primry(unimpl)";
+	case RES_PRIMARY:	return "primary(unimpl)";
 	case RES_IGNTC:		return "igntc";
 	case RES_RECURSE:	return "recurs";
 	case RES_DEFNAMES:	return "defnam";

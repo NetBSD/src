@@ -1,4 +1,4 @@
-/*	$NetBSD: flashio.h,v 1.4 2011/06/28 20:49:43 ahoka Exp $	*/
+/*	$NetBSD: flashio.h,v 1.5 2021/09/16 20:17:48 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2011 Department of Software Engineering,
@@ -37,7 +37,7 @@
 
 #include <sys/ioctl.h>
 
-/* this header may be used fron the kernel */
+/* this header may be used from the kernel */
 #if defined(_KERNEL) || defined(_STANDALONE)
 #include <sys/types.h>
 #else

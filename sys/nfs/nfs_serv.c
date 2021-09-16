@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_serv.c,v 1.181 2020/09/05 16:30:12 riastradh Exp $	*/
+/*	$NetBSD: nfs_serv.c,v 1.182 2021/09/16 20:17:47 andvar Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_serv.c,v 1.181 2020/09/05 16:30:12 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_serv.c,v 1.182 2021/09/16 20:17:47 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -353,7 +353,7 @@ nfsrv_setattr(struct nfsrv_descript *nfsd, struct nfssvc_sock *slp, struct lwp *
 	}
 
 	/*
-	 * If the size is being changed write acces is required, otherwise
+	 * If the size is being changed write access is required, otherwise
 	 * just check for a read only file system.
 	 */
 	if (va.va_size == ((u_quad_t)((quad_t) -1))) {
