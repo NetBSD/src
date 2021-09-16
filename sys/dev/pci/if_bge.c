@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.348 2021/09/03 21:55:00 andvar Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.349 2021/09/16 20:17:47 andvar Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.348 2021/09/03 21:55:00 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.349 2021/09/16 20:17:47 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2903,7 +2903,7 @@ bge_blockinit(struct bge_softc *sc)
 		/*
 		 * Enable fix for read DMA FIFO overruns.
 		 * The fix is to limit the number of RX BDs
-		 * the hardware would fetch at a fime.
+		 * the hardware would fetch at a time.
 		 */
 		CSR_WRITE_4(sc, rdmareg, dmactl |
 		    BGE_RDMA_RSRVCTRL_FIFO_OFLW_FIX);

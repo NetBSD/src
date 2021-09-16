@@ -1,4 +1,4 @@
-/*	$NetBSD: le_bus.c,v 1.21 2021/01/03 17:42:10 thorpej Exp $	*/
+/*	$NetBSD: le_bus.c,v 1.22 2021/09/16 20:17:47 andvar Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: le_bus.c,v 1.21 2021/01/03 17:42:10 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: le_bus.c,v 1.22 2021/09/16 20:17:47 andvar Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -41,7 +41,7 @@ __KERNEL_RCSID(0, "$NetBSD: le_bus.c,v 1.21 2021/01/03 17:42:10 thorpej Exp $");
 #include <sys/bus.h>
 
 /*
- * This file contains the common functions for using a litte endian (linear)
+ * This file contains the common functions for using a little endian (linear)
  * bus on a big endian atari.
  */
 

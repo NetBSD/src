@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.487 2021/07/01 22:08:13 blymn Exp $	*/
+/*	$NetBSD: if.c,v 1.488 2021/09/16 20:17:47 andvar Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.487 2021/07/01 22:08:13 blymn Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.488 2021/09/16 20:17:47 andvar Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -1326,7 +1326,7 @@ if_detach(struct ifnet *ifp)
 	/*
 	 * Unset all queued link states and pretend a
 	 * link state change is scheduled.
-	 * This stops any more link state changes occuring for this
+	 * This stops any more link state changes occurring for this
 	 * interface while it's being detached so it's safe
 	 * to drain the workqueue.
 	 */

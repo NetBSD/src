@@ -1,4 +1,4 @@
-/*	$NetBSD: rmixl_obio_el_space.c,v 1.3 2011/07/01 19:01:31 dyoung Exp $	*/
+/*	$NetBSD: rmixl_obio_el_space.c,v 1.4 2021/09/16 20:17:47 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,11 +30,11 @@
  */
 
 /*
- * Litle Endian bus_space(9) support for RMI {XLP,XLR,XLS} obio
+ * Little Endian bus_space(9) support for RMI {XLP,XLR,XLS} obio
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rmixl_obio_el_space.c,v 1.3 2011/07/01 19:01:31 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rmixl_obio_el_space.c,v 1.4 2021/09/16 20:17:47 andvar Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
