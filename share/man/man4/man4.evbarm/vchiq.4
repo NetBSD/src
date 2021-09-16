@@ -1,4 +1,4 @@
-.\" $NetBSD: vchiq.4,v 1.1 2021/02/26 10:33:46 nia Exp $
+.\" $NetBSD: vchiq.4,v 1.2 2021/09/16 02:53:28 nat Exp $
 .\"
 .\" Copyright (c) 2021 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -46,7 +46,16 @@ interface exposed to userland.
 Audio output support is provided by the kernel through
 .Xr vcaudio 4 ,
 which uses this messaging interface to the GPU internally.
+.Pp
+Debugging information may be obtained reading the device with
+.Xr cat 1 .
+eg:
+.Dl cat /dev/vchiq
+.Pp
+Information such as slots and usage by particular functions of the VideoCore 4
+device are displayed.
 .Sh SEE ALSO
+.Xr cat 1 ,
 .Xr bcmgpio 4 ,
 .Xr vcaudio 4 ,
 .Pa pkgsrc/misc/raspberrypi-userland ,
