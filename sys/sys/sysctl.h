@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.h,v 1.235 2021/09/14 17:10:46 christos Exp $	*/
+/*	$NetBSD: sysctl.h,v 1.236 2021/09/16 22:47:29 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -567,7 +567,7 @@ struct kinfo_proc2 {
 	"\17EXEC" \
 	"\20OWEUPC" \
 	"\22NOCLDWAIT" \
-	"\22P32" \
+	"\23P32" \
 	"\24CLDSIGIGN" \
 	"\26SYSTRACE" \
 	"\27CHTRACED" \
