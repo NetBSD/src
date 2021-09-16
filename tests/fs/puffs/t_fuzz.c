@@ -1,4 +1,4 @@
-/*	$NetBSD: t_fuzz.c,v 1.6 2017/01/13 21:30:40 christos Exp $	*/
+/*	$NetBSD: t_fuzz.c,v 1.7 2021/09/16 22:19:11 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -197,7 +197,7 @@ respondthread(void *arg)
 				break;
 			}
 
-			/* just say it was succesful */
+			/* just say it was successful */
 			preq->preq_rv = 0;
 			rump_sys_write(dafd, buf, n);
 			pthread_mutex_lock(&damtx);

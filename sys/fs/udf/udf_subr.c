@@ -1,4 +1,4 @@
-/* $NetBSD: udf_subr.c,v 1.157 2021/09/03 21:55:00 andvar Exp $ */
+/* $NetBSD: udf_subr.c,v 1.158 2021/09/16 22:19:11 andvar Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_subr.c,v 1.157 2021/09/03 21:55:00 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_subr.c,v 1.158 2021/09/16 22:19:11 andvar Exp $");
 #endif /* not lint */
 
 
@@ -1521,7 +1521,7 @@ udf_writeout_lvint(struct udf_mount *ump, int lvflag)
 		"space = %d\n", trace->start, trace->end, trace->pos,
 		trace->wpos, space));
 	DPRINTF(VOLUMES, ("finished writing out logvol integrity descriptor "
-		"successfull\n"));
+		"successfully\n"));
 
 	return error;
 }

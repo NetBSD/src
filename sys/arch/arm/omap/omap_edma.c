@@ -1,4 +1,4 @@
-/* $NetBSD: omap_edma.c,v 1.4 2017/03/14 15:11:41 skrll Exp $ */
+/* $NetBSD: omap_edma.c,v 1.5 2021/09/16 22:19:10 andvar Exp $ */
 
 /*-
  * Copyright (c) 2014 Jared D. McNeill <jmcneill@invisible.ca>
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: omap_edma.c,v 1.4 2017/03/14 15:11:41 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: omap_edma.c,v 1.5 2021/09/16 22:19:10 andvar Exp $");
 
 #include "opt_omap.h"
 
@@ -494,7 +494,7 @@ edma_transfer_start(struct edma_channel *ch)
 }
 
 /*
- * Halt a DMA transfer. Called after successfull transfer, or to abort
+ * Halt a DMA transfer. Called after successful transfer, or to abort
  * a transfer.
  */
 void
