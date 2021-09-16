@@ -69,7 +69,7 @@ You can also or alternatively compile getround.c with
 -DUSE_MY_LOCALE (when ../gdtoa.a is compiled with -DUSE_LOCALE)
 to test multi-byte decimal points.
 
-If in the parent directory, you have sucessfully invoked "make Printf"
+If in the parent directory, you have successfully invoked "make Printf"
 to add a "printf" (called Printf and accessed via ../stdio1.h), then
 here you can use "make pf_test" and (if you have both a 64-bit long
 double and a 113-bit "quad" double type) "make pf_testLq" for a brief

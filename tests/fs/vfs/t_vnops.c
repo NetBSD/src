@@ -1,4 +1,4 @@
-/*	$NetBSD: t_vnops.c,v 1.60 2021/08/19 20:56:36 andvar Exp $	*/
+/*	$NetBSD: t_vnops.c,v 1.61 2021/09/16 21:29:42 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -195,7 +195,7 @@ dir_notempty(const atf_tc_t *tc, const char *mountpath)
 
 	rv = rump_sys_rmdir(pb);
 	if (rv != -1 || errno != ENOTEMPTY)
-		atf_tc_fail("non-empty directory removed succesfully");
+		atf_tc_fail("non-empty directory removed successfully");
 
 	if (rump_sys_unlink(pb2) == -1)
 		atf_tc_fail_errno("cannot remove dir/file");

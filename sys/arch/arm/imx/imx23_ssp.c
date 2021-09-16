@@ -1,4 +1,4 @@
-/* $Id: imx23_ssp.c,v 1.6 2021/08/07 16:18:44 thorpej Exp $ */
+/* $Id: imx23_ssp.c,v 1.7 2021/09/16 21:29:41 andvar Exp $ */
 
 /*
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -332,7 +332,7 @@ issp_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-	/* Device instance was succesfully attached. */
+	/* Device instance was successfully attached. */
 	if (aa->aa_addr == HW_SSP1_BASE)
 		ssp_attached |= SSP1_ATTACHED;
 	if (aa->aa_addr == HW_SSP2_BASE)

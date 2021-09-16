@@ -1,4 +1,4 @@
-/*	$NetBSD: rb.c,v 1.15 2019/05/09 10:56:24 skrll Exp $	*/
+/*	$NetBSD: rb.c,v 1.16 2021/09/16 21:29:41 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -45,10 +45,10 @@
 #define KASSERT(s)	do { } while (/*CONSTCOND*/ 0)
 #define	__rbt_unused	__unused
 #endif
-__RCSID("$NetBSD: rb.c,v 1.15 2019/05/09 10:56:24 skrll Exp $");
+__RCSID("$NetBSD: rb.c,v 1.16 2021/09/16 21:29:41 andvar Exp $");
 #else
 #include <lib/libkern/libkern.h>
-__KERNEL_RCSID(0, "$NetBSD: rb.c,v 1.15 2019/05/09 10:56:24 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rb.c,v 1.16 2021/09/16 21:29:41 andvar Exp $");
 #ifndef DIAGNOSTIC
 #define	__rbt_unused	__unused
 #else
@@ -313,7 +313,7 @@ rb_tree_insert_node(struct rb_tree *rbt, void *object)
 		KASSERT(rb_tree_check_node(rbt, self, NULL, true));
 	}
 
-	/* Succesfully inserted, return our node pointer. */
+	/* Successfully inserted, return our node pointer. */
 	return object;
 }
 

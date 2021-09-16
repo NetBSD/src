@@ -36,7 +36,7 @@
 #if 0
 __FBSDID("$FreeBSD: head/sys/dev/ena/ena.c 333456 2018-05-10 09:37:54Z mw $");
 #endif
-__KERNEL_RCSID(0, "$NetBSD: if_ena.c,v 1.30 2021/07/24 21:31:37 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ena.c,v 1.31 2021/09/16 21:29:41 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2816,7 +2816,7 @@ ena_check_and_collapse_mbuf(struct ena_ring *tx_ring, struct mbuf **mbuf)
 		return (ENOMEM);
 	}
 
-	/* If mbuf was collapsed succesfully, original mbuf is released. */
+	/* If mbuf was collapsed successfully, original mbuf is released. */
 	*mbuf = collapsed_mbuf;
 
 	return (0);

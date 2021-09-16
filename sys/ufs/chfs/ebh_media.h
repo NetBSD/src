@@ -1,4 +1,4 @@
-/*	$NetBSD: ebh_media.h,v 1.1 2011/11/24 15:51:32 ahoka Exp $	*/
+/*	$NetBSD: ebh_media.h,v 1.2 2021/09/16 21:29:42 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2010 Department of Software Engineering,
@@ -85,10 +85,10 @@ struct chfs_eb_ec_hdr {
  *
  * @lid contains the logical block reference but only the first 31 bit (0-30) is
  * used. The 32th bit is for marking a lid dirty (marked for recovery purposes).
- * If a new eraseblock is succesfully assigned with the same lid then the lid of
- * the old one is zeroed. If power failure happened during this operation then
- * the recovery detects that there is two eraseblock with the same lid, but one
- * of them is marked (the old one).
+ * If a new eraseblock is successfully assigned with the same lid then the lid
+ * of the old one is zeroed. If power failure happened during this operation
+ * then the recovery detects that there are two eraseblocks with the same lid,
+ * but one of them is marked (the old one).
  *
  * Invalidated eraseblock header means that the @crc and @lid is set to 0.
  */

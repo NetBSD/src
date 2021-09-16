@@ -1,4 +1,4 @@
-/*	$NetBSD: node.c,v 1.65 2016/10/07 21:09:57 christos Exp $	*/
+/*	$NetBSD: node.c,v 1.66 2021/09/16 21:29:42 andvar Exp $	*/
 
 /*
  * Copyright (c) 2006-2009  Antti Kantee.  All Rights Reserved.
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: node.c,v 1.65 2016/10/07 21:09:57 christos Exp $");
+__RCSID("$NetBSD: node.c,v 1.66 2021/09/16 21:29:42 andvar Exp $");
 #endif /* !lint */
 
 #include <assert.h>
@@ -277,7 +277,7 @@ psshfs_node_create(struct puffs_usermount *pu, puffs_cookie_t opc,
  * reading potentially cached information.  Rather, we defer the wait
  * to read/write and therefore allow cached access without a wait.
  *
- * If we have not yet succesfully opened a type of handle, we do wait
+ * If we have not yet successfully opened a type of handle, we do wait
  * here.  Also, if a lazy open fails, we revert back to the same
  * state of waiting.
  */

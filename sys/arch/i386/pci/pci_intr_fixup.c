@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_intr_fixup.c,v 1.51 2019/11/10 21:16:28 chs Exp $	*/
+/*	$NetBSD: pci_intr_fixup.c,v 1.52 2021/09/16 21:29:41 andvar Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_intr_fixup.c,v 1.51 2019/11/10 21:16:28 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_intr_fixup.c,v 1.52 2021/09/16 21:29:41 andvar Exp $");
 
 #include "opt_pcibios.h"
 #include "opt_pcifixup.h"
@@ -585,7 +585,7 @@ pciintr_link_route(uint16_t *pciirq)
 			rv = 1;
 		} else {
 			/*
-			 * Succssfully routed interrupt.  Mark this as
+			 * Successfully routed interrupt.  Mark this as
 			 * a PCI interrupt.
 			 */
 			*pciirq |= (1 << l->irq);
