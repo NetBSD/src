@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2391 2021/08/16 06:56:28 mrg Exp $
+#	$NetBSD: mi,v 1.2392 2021/09/16 23:32:49 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -3619,20 +3619,34 @@
 ./usr/lib/clang/7.0.0/include/xray/xray_records.h	comp-obsolete		obsolete
 ./usr/lib/clang/7.0.0/share/asan_blacklist.txt	comp-obsolete		obsolete
 ./usr/lib/clang/7.0.0/share/msan_blacklist.txt	comp-obsolete		obsolete
-./usr/lib/clang/9.0.0/include/sanitizer/allocator_interface.h	comp-cxx-include		llvm
-./usr/lib/clang/9.0.0/include/sanitizer/asan_interface.h	comp-cxx-include		llvm
-./usr/lib/clang/9.0.0/include/sanitizer/common_interface_defs.h	comp-cxx-include		llvm
-./usr/lib/clang/9.0.0/include/sanitizer/coverage_interface.h	comp-cxx-include		llvm
-./usr/lib/clang/9.0.0/include/sanitizer/lsan_interface.h	comp-cxx-include		llvm
-./usr/lib/clang/9.0.0/include/sanitizer/msan_interface.h	comp-cxx-include		llvm
-./usr/lib/clang/9.0.0/include/sanitizer/netbsd_syscall_hooks.h	comp-cxx-include		llvm
-./usr/lib/clang/9.0.0/include/sanitizer/tsan_interface.h	comp-cxx-include		llvm
-./usr/lib/clang/9.0.0/include/sanitizer/tsan_interface_atomic.h	comp-cxx-include		llvm
-./usr/lib/clang/9.0.0/include/xray/xray_interface.h	comp-cxx-include		llvm
-./usr/lib/clang/9.0.0/include/xray/xray_log_interface.h	comp-cxx-include		llvm
-./usr/lib/clang/9.0.0/include/xray/xray_records.h	comp-cxx-include		llvm
-./usr/lib/clang/9.0.0/share/asan_blacklist.txt	comp-cxx-include		llvm
-./usr/lib/clang/9.0.0/share/msan_blacklist.txt	comp-cxx-include		llvm
+./usr/lib/clang/9.0.0/include/sanitizer/allocator_interface.h	comp-obsolete	obsolete		llvm
+./usr/lib/clang/9.0.0/include/sanitizer/asan_interface.h	comp-obsolete	obsolete		llvm
+./usr/lib/clang/9.0.0/include/sanitizer/common_interface_defs.h	comp-obsolete	obsolete		llvm
+./usr/lib/clang/9.0.0/include/sanitizer/coverage_interface.h	comp-obsolete	obsolete		llvm
+./usr/lib/clang/9.0.0/include/sanitizer/lsan_interface.h	comp-obsolete	obsolete		llvm
+./usr/lib/clang/9.0.0/include/sanitizer/msan_interface.h	comp-obsolete	obsolete		llvm
+./usr/lib/clang/9.0.0/include/sanitizer/netbsd_syscall_hooks.h	comp-obsolete	obsolete		llvm
+./usr/lib/clang/9.0.0/include/sanitizer/tsan_interface.h	comp-obsolete	obsolete		llvm
+./usr/lib/clang/9.0.0/include/sanitizer/tsan_interface_atomic.h	comp-obsolete	obsolete		llvm
+./usr/lib/clang/9.0.0/include/xray/xray_interface.h	comp-obsolete	obsolete		llvm
+./usr/lib/clang/9.0.0/include/xray/xray_log_interface.h	comp-obsolete	obsolete		llvm
+./usr/lib/clang/9.0.0/include/xray/xray_records.h	comp-obsolete	obsolete		llvm
+./usr/lib/clang/9.0.0/share/asan_blacklist.txt	comp-obsolete	obsolete		llvm
+./usr/lib/clang/9.0.0/share/msan_blacklist.txt	comp-obsolete	obsolete		llvm
+./usr/lib/clang/13.0.0/include/sanitizer/allocator_interface.h	comp-cxx-include		llvm
+./usr/lib/clang/13.0.0/include/sanitizer/asan_interface.h	comp-cxx-include		llvm
+./usr/lib/clang/13.0.0/include/sanitizer/common_interface_defs.h	comp-cxx-include		llvm
+./usr/lib/clang/13.0.0/include/sanitizer/coverage_interface.h	comp-cxx-include		llvm
+./usr/lib/clang/13.0.0/include/sanitizer/lsan_interface.h	comp-cxx-include		llvm
+./usr/lib/clang/13.0.0/include/sanitizer/msan_interface.h	comp-cxx-include		llvm
+./usr/lib/clang/13.0.0/include/sanitizer/netbsd_syscall_hooks.h	comp-cxx-include		llvm
+./usr/lib/clang/13.0.0/include/sanitizer/tsan_interface.h	comp-cxx-include		llvm
+./usr/lib/clang/13.0.0/include/sanitizer/tsan_interface_atomic.h	comp-cxx-include		llvm
+./usr/lib/clang/13.0.0/include/xray/xray_interface.h	comp-cxx-include		llvm
+./usr/lib/clang/13.0.0/include/xray/xray_log_interface.h	comp-cxx-include		llvm
+./usr/lib/clang/13.0.0/include/xray/xray_records.h	comp-cxx-include		llvm
+./usr/lib/clang/13.0.0/share/asan_blacklist.txt	comp-cxx-include		llvm
+./usr/lib/clang/13.0.0/share/msan_blacklist.txt	comp-cxx-include		llvm
 ./usr/lib/crt0.o				comp-c-lib		compatfile
 ./usr/lib/gcrt0.o				comp-c-lib		compatfile
 ./usr/lib/i18n/libBIG5.a			comp-i18n-lib		compatfile
