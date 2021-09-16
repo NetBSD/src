@@ -1,4 +1,4 @@
-/*	$NetBSD: c_ksh.c,v 1.29 2018/06/03 12:18:29 kamil Exp $	*/
+/*	$NetBSD: c_ksh.c,v 1.30 2021/09/16 19:43:33 christos Exp $	*/
 
 /*
  * built-in Korn commands: c_*
@@ -6,7 +6,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: c_ksh.c,v 1.29 2018/06/03 12:18:29 kamil Exp $");
+__RCSID("$NetBSD: c_ksh.c,v 1.30 2021/09/16 19:43:33 christos Exp $");
 #endif
 
 #include <sys/stat.h>
@@ -1072,9 +1072,10 @@ c_jobs(wp)
 	int optc;
 	int flag = 0;
 	int nflag = 0;
+	int Zflag = 0;
 	int rv = 0;
 
-	while ((optc = ksh_getopt(wp, &builtin_opt, "lpnz")) != EOF)
+	while ((optc = ksh_getopt(wp, &builtin_opt, "lpnzZ")) != EOF)
 		switch (optc) {
 		  case 'l':
 			flag = 1;
@@ -1088,10 +1089,21 @@ c_jobs(wp)
 		  case 'z':	/* debugging: print zombies */
 			nflag = -1;
 			break;
+		  case 'Z':
+			Zflag = 1;
+			break;
 		  case '?':
 			return 1;
 		}
 	wp += builtin_opt.optind;
+	if (Zflag) {
+		if (*wp && **wp) {
+			setproctitle("%s", *wp);
+		} else {
+			setproctitle(NULL);
+		}
+		return 0;
+	}
 	if (!*wp) {
 		if (j_jobs((char *) 0, flag, nflag))
 			rv = 1;
