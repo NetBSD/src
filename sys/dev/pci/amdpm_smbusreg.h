@@ -1,4 +1,4 @@
-/*	$NetBSD: amdpm_smbusreg.h,v 1.2 2009/02/03 16:27:13 pgoyette Exp $ */
+/*	$NetBSD: amdpm_smbusreg.h,v 1.3 2021/09/16 21:29:41 andvar Exp $ */
 
 /*
  * Copyright (c) 2005 Anil Gopinath (anil_public@yahoo.com)
@@ -47,7 +47,7 @@
 #define AMDPM_8111_SMBUS_GSR_RB      0x000A /* GSR contents to read a byte */
 #define AMDPM_8111_SMBUS_GSR_WB      0x000A /* GSR contents to write a byte */
 
-#define AMDPM_8111_GSR_CYCLE_DONE    0x0010 /* indicates cycle done successfuly */
+#define AMDPM_8111_GSR_CYCLE_DONE    0x0010 /* indicates cycle done successfully */
 
 #define AMDPM_8111_SMBUS_READ        0x0001 /* smbus read cycle indicator */
 #define AMDPM_8111_SMBUS_RX          0x0001 /* smbus receive cycle indicator */
