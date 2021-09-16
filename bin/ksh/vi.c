@@ -1,4 +1,4 @@
-/*	$NetBSD: vi.c,v 1.20 2018/05/08 16:37:59 kamil Exp $	*/
+/*	$NetBSD: vi.c,v 1.21 2021/09/16 19:44:01 christos Exp $	*/
 
 /*
  *	vi command editing
@@ -9,7 +9,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: vi.c,v 1.20 2018/05/08 16:37:59 kamil Exp $");
+__RCSID("$NetBSD: vi.c,v 1.21 2021/09/16 19:44:01 christos Exp $");
 #endif
 
 #include "config.h"
@@ -793,6 +793,7 @@ vi_cmd(argcnt, cmd)
 		case 'Y':
 			cmd = "y$";
 			/* ahhhhhh... */
+			/*FALLTHROUGH*/
 		case 'c':
 		case 'd':
 		case 'y':
@@ -1004,6 +1005,7 @@ vi_cmd(argcnt, cmd)
 			if (hnum == hlast)
 				hnum = -1;
 			/* ahhh */
+			/*FALLTHROUGH*/
 		case '/':
 			c3 = 1;
 			srchlen = 0;
@@ -1131,6 +1133,7 @@ vi_cmd(argcnt, cmd)
 		case Ctrl('['):			/* some annoying at&t ksh's */
 			if (!Flag(FVIESCCOMPLETE))
 				return -1;
+			/*FALLTHROUGH*/
 		case '\\':			/* at&t ksh */
 		case Ctrl('f'):			/* Nonstandard vi/ksh */
 			complete_word(1, argcnt);
@@ -1194,7 +1197,7 @@ domove(argcnt, cmd, sub)
 		fsavecmd = *cmd;
 		fsavech = cmd[1];
 		/* drop through */
-
+		/*FALLTHROUGH*/
 	case ',':
 	case ';':
 		if (fsavecmd == ' ')

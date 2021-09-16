@@ -1,4 +1,4 @@
-/*	$NetBSD: c_test.c,v 1.9 2017/06/30 04:41:19 kamil Exp $	*/
+/*	$NetBSD: c_test.c,v 1.10 2021/09/16 19:44:01 christos Exp $	*/
 
 /*
  * test(1); version 7-like  --  author Erik Baalbergen
@@ -11,7 +11,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: c_test.c,v 1.9 2017/06/30 04:41:19 kamil Exp $");
+__RCSID("$NetBSD: c_test.c,v 1.10 2021/09/16 19:44:01 christos Exp $");
 #endif
 
 #include <sys/stat.h>
@@ -393,6 +393,7 @@ test_eval(te, op, opnd1, opnd2, do_eval)
 				return v1 < v2;
 			}
 		}
+		abort();
 	  case TO_FILNT: /* -nt */
 		{
 			int s2;

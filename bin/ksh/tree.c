@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.9 2018/05/08 16:37:59 kamil Exp $	*/
+/*	$NetBSD: tree.c,v 1.10 2021/09/16 19:44:01 christos Exp $	*/
 
 /*
  * command tree climbing
@@ -6,7 +6,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: tree.c,v 1.9 2018/05/08 16:37:59 kamil Exp $");
+__RCSID("$NetBSD: tree.c,v 1.10 2021/09/16 19:44:01 christos Exp $");
 #endif
 
 
@@ -106,8 +106,8 @@ ptree(t, indent, shf)
 #ifdef KSH
 	  case TSELECT:
 		fptreef(shf, indent, "select %s ", t->str);
-		/* fall through */
 #endif /* KSH */
+		/*FALLTHROUGH*/
 	  case TFOR:
 		if (t->type == TFOR)
 			fptreef(shf, indent, "for %s ", t->str);
