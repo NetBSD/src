@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist.base,v 1.237 2021/08/16 06:56:28 mrg Exp $
+#	$NetBSD: NetBSD.dist.base,v 1.238 2021/09/16 23:32:50 christos Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 # Do not customize this file as it may be overwritten on upgrades.
@@ -267,13 +267,13 @@
 ./usr/include/uvm
 ./usr/lib
 ./usr/lib/clang
-./usr/lib/clang/9.0.0
-./usr/lib/clang/9.0.0/include
-./usr/lib/clang/9.0.0/include/sanitizer
-./usr/lib/clang/9.0.0/include/xray
-./usr/lib/clang/9.0.0/lib
-./usr/lib/clang/9.0.0/lib/netbsd
-./usr/lib/clang/9.0.0/share
+./usr/lib/clang/13.0.0
+./usr/lib/clang/13.0.0/include
+./usr/lib/clang/13.0.0/include/sanitizer
+./usr/lib/clang/13.0.0/include/xray
+./usr/lib/clang/13.0.0/lib
+./usr/lib/clang/13.0.0/lib/netbsd
+./usr/lib/clang/13.0.0/share
 ./usr/lib/i18n
 ./usr/lib/lua
 ./usr/lib/lua/5.3
