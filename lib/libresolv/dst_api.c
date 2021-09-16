@@ -1,4 +1,4 @@
-/*	$NetBSD: dst_api.c,v 1.3 2012/11/16 02:16:38 christos Exp $	*/
+/*	$NetBSD: dst_api.c,v 1.4 2021/09/16 22:19:10 andvar Exp $	*/
 
 /*
  * Portions Copyright (c) 1995-1998 by Trusted Information Systems, Inc.
@@ -40,7 +40,7 @@
 #if 0
 static const char rcsid[] = "Header: /proj/cvs/prod/libbind/dst/dst_api.c,v 1.17 2007/09/24 17:18:25 each Exp ";
 #else
-__RCSID("$NetBSD: dst_api.c,v 1.3 2012/11/16 02:16:38 christos Exp $");
+__RCSID("$NetBSD: dst_api.c,v 1.4 2021/09/16 22:19:10 andvar Exp $");
 #endif
 
 
@@ -240,7 +240,7 @@ dst_compare_keys(const DST_KEY *key1, const DST_KEY *key2)
  *	      The location to which the signature will be written.
  *	sig_len Length of the signature field in bytes.
  * Return
- *	 0      Successfull INIT or Update operation
+ *	 0      Successful INIT or Update operation
  *	&gt;0      success FINAL (sign) operation
  *	&lt;0      failure
  */

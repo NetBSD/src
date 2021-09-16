@@ -1,4 +1,4 @@
-/* $NetBSD: udf_vfsops.c,v 1.81 2021/07/24 21:31:38 andvar Exp $ */
+/* $NetBSD: udf_vfsops.c,v 1.82 2021/09/16 22:19:11 andvar Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_vfsops.c,v 1.81 2021/07/24 21:31:38 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_vfsops.c,v 1.82 2021/09/16 22:19:11 andvar Exp $");
 #endif /* not lint */
 
 
@@ -411,7 +411,7 @@ udf_mount(struct mount *mp, const char *path,
 	spec_node_setmountedfs(devvp, mp);
 
 	/* successfully mounted */
-	DPRINTF(VOLUMES, ("udf_mount() successfull\n"));
+	DPRINTF(VOLUMES, ("udf_mount() successful\n"));
 
 	error = set_statvfs_info(path, UIO_USERSPACE, args->fspec, UIO_USERSPACE,
 			mp->mnt_op->vfs_name, mp, l);
