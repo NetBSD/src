@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_module.c,v 1.152 2021/06/11 23:41:47 pgoyette Exp $	*/
+/*	$NetBSD: kern_module.c,v 1.153 2021/09/16 21:29:42 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.152 2021/06/11 23:41:47 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.153 2021/09/16 21:29:42 andvar Exp $");
 
 #define _MODULE_INTERNAL
 
@@ -897,7 +897,7 @@ module_do_builtin(const module_t *pmod, const char *name, module_t **modp,
 		/*
 		 * XXX: We'd like to panic here, but currently in some
 		 * cases (such as nfsserver + nfs), the dependee can be
-		 * succesfully linked without the dependencies.
+		 * successfully linked without the dependencies.
 		 */
 		module_error("built-in module %s can't find builtin "
 		    "dependency `%s'", pmod->mod_info->mi_name, name);
