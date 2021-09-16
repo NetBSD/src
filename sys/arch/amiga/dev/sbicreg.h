@@ -1,4 +1,4 @@
-/*	$NetBSD: sbicreg.h,v 1.8 2010/02/05 12:13:36 phx Exp $	*/
+/*	$NetBSD: sbicreg.h,v 1.9 2021/09/16 20:17:46 andvar Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -115,7 +115,7 @@
  */
 
 #define SBIC_CTL_DMA		0x80	/* Single byte dma */
-#define SBIC_CTL_DBA_DMA	0x40	/* direct buffer acces (bus master)*/
+#define SBIC_CTL_DBA_DMA	0x40	/* direct buffer access (bus master)*/
 #define SBIC_CTL_BURST_DMA	0x20	/* continuous mode (8237) */
 #define SBIC_CTL_NO_DMA		0x00	/* Programmed I/O */
 #define SBIC_CTL_HHP		0x10	/* Halt on host parity error */

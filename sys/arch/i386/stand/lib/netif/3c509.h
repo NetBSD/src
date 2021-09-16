@@ -1,4 +1,4 @@
-/*	$NetBSD: 3c509.h,v 1.6 2006/11/24 22:52:16 wiz Exp $	*/
+/*	$NetBSD: 3c509.h,v 1.7 2021/09/16 20:17:47 andvar Exp $	*/
 
 /*
  * Copyright (c) 1993 Herb Peyerl
@@ -60,7 +60,7 @@
 #define EP_ID_PORT      0x100
 
 /*
- * some macros to acces long named fields
+ * some macros to access long named fields
  */
 #define IS_BASE (eth_base)
 #define BASE 	(eth_base)
