@@ -1,4 +1,4 @@
-/*	$NetBSD: aic7xxx.c,v 1.143 2021/07/24 21:31:37 andvar Exp $	*/
+/*	$NetBSD: aic7xxx.c,v 1.144 2021/09/16 22:19:11 andvar Exp $	*/
 
 /*
  * Core routines and tables shareable across OS platforms.
@@ -39,7 +39,7 @@
  * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGES.
  *
- * $Id: aic7xxx.c,v 1.143 2021/07/24 21:31:37 andvar Exp $
+ * $Id: aic7xxx.c,v 1.144 2021/09/16 22:19:11 andvar Exp $
  *
  * //depot/aic7xxx/aic7xxx/aic7xxx.c#112 $
  *
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aic7xxx.c,v 1.143 2021/07/24 21:31:37 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aic7xxx.c,v 1.144 2021/09/16 22:19:11 andvar Exp $");
 
 #include <dev/ic/aic7xxx_osm.h>
 #include <dev/ic/aic7xxx_inline.h>
@@ -4244,7 +4244,7 @@ ahc_init_scbdata(struct ahc_softc *ahc)
 	ahc_outb(ahc, NEXT_QUEUED_SCB, ahc->next_queued_scb->hscb->tag);
 
 	/*
-	 * Note that we were successfull
+	 * Note that we were successful
 	 */
 	return (0);
 

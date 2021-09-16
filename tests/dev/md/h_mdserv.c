@@ -1,4 +1,4 @@
-/*	$NetBSD: h_mdserv.c,v 1.4 2011/02/10 13:29:02 pooka Exp $	*/
+/*	$NetBSD: h_mdserv.c,v 1.5 2021/09/16 22:19:11 andvar Exp $	*/
 
 #include <sys/types.h>
 #include <sys/mman.h>
@@ -94,7 +94,7 @@ main(int argc, char *argv[])
 	 * (process may exit between calling ioctl1 and ioctl2).
 	 * So, start a probe thread which attempts to read the md
 	 * and declares the md as configured when the read is
-	 * succesful.
+	 * successful.
 	 */
 	error = pthread_create(&pt, NULL, prober, argv[1]);
 	REQUIRE(error, "pthread_create");

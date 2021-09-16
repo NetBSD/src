@@ -1,4 +1,4 @@
-/*	$NetBSD: dtfs_subr.c,v 1.4 2013/10/19 17:45:00 christos Exp $	*/
+/*	$NetBSD: dtfs_subr.c,v 1.5 2021/09/16 22:19:12 andvar Exp $	*/
 
 /*
  * Copyright (c) 2006  Antti Kantee.  All Rights Reserved.
@@ -73,7 +73,7 @@ dtfs_baseattrs(struct vattr *vap, enum vtype type, ino_t id)
 
 /*
  * Well, as you can probably see, this interface has the slight problem
- * of assuming file creation will always be succesful, or at least not
+ * of assuming file creation will always be successful, or at least not
  * giving a reason for the failure.  Be sure to do better when you
  * implement your own fs.
  */

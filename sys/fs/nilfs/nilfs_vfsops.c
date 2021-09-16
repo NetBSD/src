@@ -1,4 +1,4 @@
-/* $NetBSD: nilfs_vfsops.c,v 1.26 2020/03/16 21:20:10 pgoyette Exp $ */
+/* $NetBSD: nilfs_vfsops.c,v 1.27 2021/09/16 22:19:11 andvar Exp $ */
 
 /*
  * Copyright (c) 2008, 2009 Reinoud Zandijk
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: nilfs_vfsops.c,v 1.26 2020/03/16 21:20:10 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nilfs_vfsops.c,v 1.27 2021/09/16 22:19:11 andvar Exp $");
 #endif /* not lint */
 
 
@@ -962,7 +962,7 @@ nilfs_mount(struct mount *mp, const char *path,
 	}
 
 	/* successfully mounted */
-	DPRINTF(VOLUMES, ("nilfs_mount() successfull\n"));
+	DPRINTF(VOLUMES, ("nilfs_mount() successful\n"));
 
 	return 0;
 }
