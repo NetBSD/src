@@ -1,4 +1,4 @@
-$NetBSD: acronyms,v 1.311 2021/09/05 17:29:27 alnsn Exp $
+$NetBSD: acronyms,v 1.312 2021/09/16 08:33:24 leot Exp $
 10Q	thank you
 10X	thanks
 1337	elite ("leet")
@@ -137,6 +137,7 @@ DS	Dual Screen
 DSTM	don't shoot the messenger
 DTRT	do the right thing
 DTWT	do the wrong thing
+DW	don't worry
 DWIM	do what I mean
 DYAC	damn you autocorrect
 DYK	do you know?
