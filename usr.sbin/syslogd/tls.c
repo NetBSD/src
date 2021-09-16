@@ -1,4 +1,4 @@
-/*	$NetBSD: tls.c,v 1.17 2019/10/24 08:21:18 hannken Exp $	*/
+/*	$NetBSD: tls.c,v 1.18 2021/09/16 22:19:12 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: tls.c,v 1.17 2019/10/24 08:21:18 hannken Exp $");
+__RCSID("$NetBSD: tls.c,v 1.18 2021/09/16 22:19:12 andvar Exp $");
 
 #ifndef DISABLE_TLS
 #include <sys/stat.h>
@@ -141,7 +141,7 @@ getVerifySetting(const char *x509verifystring)
 /*
  * init OpenSSL lib and one context.
  * returns NULL if global context already exists.
- * returns a status message on successfull init (to be free()d by caller).
+ * returns a status message on successful init (to be free()d by caller).
  * calls die() on serious error.
  */
 char*

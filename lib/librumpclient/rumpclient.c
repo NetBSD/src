@@ -1,4 +1,4 @@
-/*      $NetBSD: rumpclient.c,v 1.68 2021/09/11 14:23:04 christos Exp $	*/
+/*      $NetBSD: rumpclient.c,v 1.69 2021/09/16 22:19:10 andvar Exp $	*/
 
 /*
  * Copyright (c) 2010, 2011 Antti Kantee.  All Rights Reserved.
@@ -50,7 +50,7 @@
 #define USE_SIGNALFD
 #endif
 
-__RCSID("$NetBSD: rumpclient.c,v 1.68 2021/09/11 14:23:04 christos Exp $");
+__RCSID("$NetBSD: rumpclient.c,v 1.69 2021/09/16 22:19:10 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/mman.h>
@@ -200,7 +200,7 @@ send_with_recon(struct spclient *spc, struct iovec *iov, size_t iovlen)
 				continue;
 
 			/*
-			 * ok, reconnect succesful.  we need to return to
+			 * ok, reconnect successful.  we need to return to
 			 * the upper layer to get the entire PDU resent.
 			 */
 			if (reconretries != 1)

@@ -1,4 +1,4 @@
-/* $NetBSD: ti_edma.c,v 1.3 2021/01/27 03:10:20 thorpej Exp $ */
+/* $NetBSD: ti_edma.c,v 1.4 2021/09/16 22:19:10 andvar Exp $ */
 
 /*-
  * Copyright (c) 2014 Jared D. McNeill <jmcneill@invisible.ca>
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ti_edma.c,v 1.3 2021/01/27 03:10:20 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ti_edma.c,v 1.4 2021/09/16 22:19:10 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -464,7 +464,7 @@ edma_transfer_start(struct edma_channel *ch)
 }
 
 /*
- * Halt a DMA transfer. Called after successfull transfer, or to abort
+ * Halt a DMA transfer. Called after successful transfer, or to abort
  * a transfer.
  */
 void

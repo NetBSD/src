@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.c,v 1.241 2021/07/14 06:50:22 yamaguchi Exp $	*/
+/*	$NetBSD: bpf.c,v 1.242 2021/09/16 22:19:11 andvar Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.241 2021/07/14 06:50:22 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.242 2021/09/16 22:19:11 andvar Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_bpf.h"
@@ -2661,7 +2661,7 @@ bpf_modcmd(modcmd_t cmd, void *arg)
 		 *
 		 * NOTE: change won't be atomic to the outside.  some
 		 * packets may be not captured even if unload is
-		 * not succesful.  I think packet capture not working
+		 * not successful.  I think packet capture not working
 		 * is a perfectly logical consequence of trying to
 		 * disable packet capture.
 		 */

@@ -1,4 +1,4 @@
-/*	$NetBSD: smbios.c,v 1.3 2021/07/24 22:33:23 jmcneill Exp $	*/
+/*	$NetBSD: smbios.c,v 1.4 2021/09/16 22:19:10 andvar Exp $	*/
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smbios.c,v 1.3 2021/07/24 22:33:23 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smbios.c,v 1.4 2021/09/16 22:19:10 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -273,7 +273,7 @@ smbios_find_table(uint8_t type, struct smbtable *st)
 	/*
 	 * The cookie field of the smtable structure is used to locate
 	 * multiple instances of a table of an arbitrary type. Following the
-	 * sucessful location of a table, the type is encoded as bits 0:7 of
+	 * successful location of a table, the type is encoded as bits 0:7 of
 	 * the cookie value, the offset in terms of the number of structures
 	 * preceding that referenced by the handle is encoded in bits 15:31.
 	 */

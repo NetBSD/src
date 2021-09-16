@@ -1,4 +1,4 @@
-/*	$NetBSD: umass.c,v 1.185 2021/05/23 08:42:47 riastradh Exp $	*/
+/*	$NetBSD: umass.c,v 1.186 2021/09/16 22:19:11 andvar Exp $	*/
 
 /*
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -124,7 +124,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umass.c,v 1.185 2021/05/23 08:42:47 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umass.c,v 1.186 2021/09/16 22:19:11 andvar Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -1564,7 +1564,7 @@ umass_bbb_state(struct usbd_xfer *xfer, void *priv,
 			DPRINTFM(UDMASS_BBB, "sc %#jx: Command Failed, "
 			    "res = %jd", (uintptr_t)sc, residue, 0, 0);
 
-			/* SCSI command failed but transfer was succesful */
+			/* SCSI command failed but transfer was successful */
 			umass_transfer_done(sc, residue, STATUS_CMD_FAILED);
 			return;
 

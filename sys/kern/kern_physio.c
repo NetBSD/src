@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_physio.c,v 1.98 2020/03/14 15:31:29 ad Exp $	*/
+/*	$NetBSD: kern_physio.c,v 1.99 2021/09/16 22:19:11 andvar Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_physio.c,v 1.98 2020/03/14 15:31:29 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_physio.c,v 1.99 2021/09/16 22:19:11 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -355,7 +355,7 @@ physio(void (*strategy)(struct buf *), struct buf *obp, dev_t dev, int flags,
 			}
 
 			/*
-			 * Beware vmapbuf(); if succesful it clobbers
+			 * Beware vmapbuf(); if successful it clobbers
 			 * b_data and saves it in b_saveaddr.
 			 * However, vunmapbuf() restores b_data.
 			 */

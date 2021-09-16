@@ -1,4 +1,4 @@
-# $NetBSD: t_enable_quotas.sh,v 1.2 2011/03/06 17:08:41 bouyer Exp $ 
+# $NetBSD: t_enable_quotas.sh,v 1.3 2021/09/16 22:19:12 andvar Exp $ 
 #
 #  Copyright (c) 2011 Manuel Bouyer
 #  All rights reserved.
@@ -32,9 +32,9 @@ for e in le be; do
     test_case unallocated_${e}_${v} unallocated_quotas \
 		"recovery of unallocated" ${e} ${v}
     test_case dir1_${e}_${v} dir1_quotas \
-		"successfull clear of wrong type of" ${e} ${v}
+		"successful clear of wrong type of" ${e} ${v}
     test_case notreg_${e}_${v} notreg_quotas \
-		"successfull clear of wrong type of" ${e} ${v}
+		"successful clear of wrong type of" ${e} ${v}
   done
 done
 
