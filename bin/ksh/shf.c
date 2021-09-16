@@ -1,4 +1,4 @@
-/*	$NetBSD: shf.c,v 1.13 2017/06/30 03:56:12 kamil Exp $	*/
+/*	$NetBSD: shf.c,v 1.14 2021/09/16 19:44:01 christos Exp $	*/
 
 /*
  *  Shell file I/O routines
@@ -6,7 +6,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: shf.c,v 1.13 2017/06/30 03:56:12 kamil Exp $");
+__RCSID("$NetBSD: shf.c,v 1.14 2021/09/16 19:44:01 christos Exp $");
 #endif
 
 #include <sys/stat.h>
@@ -984,6 +984,7 @@ shf_vfprintf(shf, fmt, args)
 			if (sizeof(char *) > sizeof(int))
 				flags |= FL_LONG; /* hope it fits.. */
 			/* aaahhh... */
+			/*FALLTHROUGH*/
 		case 'd':
 		case 'i':
 		case 'o':
@@ -1000,7 +1001,7 @@ shf_vfprintf(shf, fmt, args)
 				else
 					tmp = 0;
 				/* aaahhhh..... */
-
+				/*FALLTHROUGH*/
 			case 'u':
 				do {
 					*--s = lnum % 10 + '0';
