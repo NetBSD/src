@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe.c,v 1.290 2021/08/26 09:03:47 msaitoh Exp $ */
+/* $NetBSD: ixgbe.c,v 1.291 2021/09/16 07:08:26 msaitoh Exp $ */
 
 /******************************************************************************
 
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixgbe.c,v 1.290 2021/08/26 09:03:47 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixgbe.c,v 1.291 2021/09/16 07:08:26 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -4102,7 +4102,7 @@ ixgbe_init_locked(struct adapter *adapter)
 		txdctl = IXGBE_READ_REG(hw, IXGBE_TXDCTL(txr->me));
 		txdctl |= IXGBE_TXDCTL_ENABLE;
 		/* Set WTHRESH to 8, burst writeback */
-		txdctl |= (8 << 16);
+		txdctl |= (8 << IXGBE_TXDCTL_WTHRESH_SHIFT);
 		/*
 		 * When the internal queue falls below PTHRESH (32),
 		 * start prefetching as long as there are at least

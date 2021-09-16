@@ -1,4 +1,4 @@
-/* $NetBSD: ixv.c,v 1.166 2021/08/26 09:03:47 msaitoh Exp $ */
+/* $NetBSD: ixv.c,v 1.167 2021/09/16 07:08:26 msaitoh Exp $ */
 
 /******************************************************************************
 
@@ -35,7 +35,7 @@
 /*$FreeBSD: head/sys/dev/ixgbe/if_ixv.c 331224 2018-03-19 20:55:05Z erj $*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixv.c,v 1.166 2021/08/26 09:03:47 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixv.c,v 1.167 2021/09/16 07:08:26 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1716,7 +1716,7 @@ ixv_initialize_transmit_units(struct adapter *adapter)
 
 		/* Set WTHRESH to 8, burst writeback */
 		txdctl = IXGBE_READ_REG(hw, IXGBE_VFTXDCTL(j));
-		txdctl |= (8 << 16);
+		txdctl |= (8 << IXGBE_TXDCTL_WTHRESH_SHIFT);
 		IXGBE_WRITE_REG(hw, IXGBE_VFTXDCTL(j), txdctl);
 
 		/* Set the HW Tx Head and Tail indices */
