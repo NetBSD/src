@@ -1,4 +1,4 @@
-/*	$NetBSD: if_urtwn.c,v 1.97 2021/09/17 12:55:10 nat Exp $	*/
+/*	$NetBSD: if_urtwn.c,v 1.98 2021/09/17 12:58:31 nat Exp $	*/
 /*	$OpenBSD: if_urtwn.c,v 1.42 2015/02/10 23:25:46 mpi Exp $	*/
 
 /*-
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_urtwn.c,v 1.97 2021/09/17 12:55:10 nat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_urtwn.c,v 1.98 2021/09/17 12:58:31 nat Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1106,7 +1106,6 @@ urtwn_fw_cmd(struct urtwn_softc *sc, uint8_t id, const void *buf, int len)
 	mutex_enter(&sc->sc_fwcmd_mtx);
 	fwcur = sc->fwcur;
 	sc->fwcur = (sc->fwcur + 1) % R92C_H2C_NBOX;
-	mutex_exit(&sc->sc_fwcmd_mtx);
 
 	/* Wait for current FW box to be empty. */
 	for (ntries = 0; ntries < 100; ntries++) {
@@ -1117,6 +1116,7 @@ urtwn_fw_cmd(struct urtwn_softc *sc, uint8_t id, const void *buf, int len)
 	if (ntries == 100) {
 		aprint_error_dev(sc->sc_dev,
 		    "could not send firmware command %d\n", id);
+		mutex_exit(&sc->sc_fwcmd_mtx);
 		return ETIMEDOUT;
 	}
 
@@ -1145,6 +1145,7 @@ urtwn_fw_cmd(struct urtwn_softc *sc, uint8_t id, const void *buf, int len)
 	} else {
 		urtwn_write_region(sc, R92C_HMEBOX(fwcur), cp, len);
 	}
+	mutex_exit(&sc->sc_fwcmd_mtx);
 
 	return 0;
 }
