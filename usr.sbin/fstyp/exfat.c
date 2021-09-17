@@ -1,4 +1,4 @@
-/*	$NetBSD: exfat.c,v 1.4 2021/01/24 14:37:32 tkusumi Exp $	*/
+/*	$NetBSD: exfat.c,v 1.5 2021/09/17 14:49:03 christos Exp $	*/
 
 /*
  * Copyright (c) 2017 Conrad Meyer <cem@FreeBSD.org>
@@ -26,7 +26,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: exfat.c,v 1.4 2021/01/24 14:37:32 tkusumi Exp $");
+__RCSID("$NetBSD: exfat.c,v 1.5 2021/09/17 14:49:03 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/endian.h>
@@ -116,7 +116,9 @@ struct exfat_dirent {
 #define	xde_set_chksum		u.xde_primary_.xde_set_chksum_
 #define	xde_prim_flags		u.xde_primary_.xde_prim_flags_
 #define	xde_sec_flags		u.xde_secondary_.xde_sec_flags_
+#ifndef __lint__
 _Static_assert(sizeof(struct exfat_dirent) == 32, "spec");
+#endif
 
 struct exfat_de_label {
 	uint8_t		xdel_type;	/* XDE_TYPE_VOL_LABEL */
@@ -124,7 +126,9 @@ struct exfat_de_label {
 	uint16_t	xdel_vol_lbl[11];
 	uint8_t		xdel_reserved[8];
 } __packed;
+#ifndef __lint__
 _Static_assert(sizeof(struct exfat_de_label) == 32, "spec");
+#endif
 
 #define	MAIN_BOOT_REGION_SECT	0
 #define	BACKUP_BOOT_REGION_SECT	12
