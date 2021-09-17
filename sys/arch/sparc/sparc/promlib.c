@@ -1,4 +1,4 @@
-/*	$NetBSD: promlib.c,v 1.49 2021/09/15 17:33:08 thorpej Exp $ */
+/*	$NetBSD: promlib.c,v 1.50 2021/09/17 16:16:18 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: promlib.c,v 1.49 2021/09/15 17:33:08 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: promlib.c,v 1.50 2021/09/17 16:16:18 thorpej Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_sparc_arch.h"
@@ -45,12 +45,11 @@ __KERNEL_RCSID(0, "$NetBSD: promlib.c,v 1.49 2021/09/15 17:33:08 thorpej Exp $")
 #include <sys/kernel.h>
 #include <sys/device.h>
 
-#include <sys/device_calls.h>
-
 #ifdef _STANDALONE
 #include <lib/libsa/stand.h>
 #define malloc(s,t,f)	alloc(s)
 #else
+#include <sys/device_calls.h>
 #include <sys/systm.h>
 #include <sys/malloc.h>
 #endif /* _STANDALONE */
