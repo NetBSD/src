@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: checkver,v 1.16 2013/02/17 02:36:21 christos Exp $
+#	$NetBSD: checkver,v 1.17 2021/09/17 02:12:16 christos Exp $
 #
 # Copyright (c) 1998 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -96,11 +96,17 @@ usedir=0
 usefile=0
 usesets=0
 CWD=$(pwd)
+: ${AWK:=awk}
 
 fixone() {
-	local instmajor=$(basename $1 | awk 'BEGIN { FS="." } { print $3 }')
-	local instminor=$(basename $1 | awk 'BEGIN { FS="." } { print $4 }')
-	local instteeny=$(basename $1 | awk 'BEGIN { FS="." } { print $5 + 0 }')
+	eval $(${AWK} -v 'LIB=$1' '
+BEGIN {
+	gsub(".*\.so\.", "", LIB);
+	split(LIB, VER, ".");
+	printf("local instmajor=%d\n", V[1] + 0);
+	printf("local instminor=%d\n", V[2] + 0);
+	printf("local instteeny=%d\n", V[3] + 0);
+}')
 	local ms="The following libraries have versions greater than the source"
 
 	# If they're greater than the source, complain.
