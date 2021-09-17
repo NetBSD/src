@@ -1,5 +1,5 @@
-/*	$Id: at91sam9261reg.h,v 1.3 2009/10/23 06:53:13 snj Exp $	*/
-/*	$NetBSD: at91sam9261reg.h,v 1.3 2009/10/23 06:53:13 snj Exp $	*/
+/*	$Id: at91sam9261reg.h,v 1.4 2021/09/17 08:13:06 andvar Exp $	*/
+/*	$NetBSD: at91sam9261reg.h,v 1.4 2021/09/17 08:13:06 andvar Exp $	*/
 
 /*
  * Copyright (c) 2007 Embedtronics Oy
@@ -84,7 +84,7 @@
  *
  * Some device registers are statically mapped on upper address region.
  * because we have to access them before bus_space is initialized.
- * Most devices are dynamicaly mapped by bus_space_map(). In this case,
+ * Most devices are dynamically mapped by bus_space_map(). In this case,
  * the actual mapped (virtual) address are not cared by device drivers.
  */
 

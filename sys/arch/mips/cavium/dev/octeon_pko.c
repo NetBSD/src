@@ -1,4 +1,4 @@
-/*	$NetBSD: octeon_pko.c,v 1.6 2021/01/04 17:22:59 thorpej Exp $	*/
+/*	$NetBSD: octeon_pko.c,v 1.7 2021/09/17 08:13:06 andvar Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: octeon_pko.c,v 1.6 2021/01/04 17:22:59 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: octeon_pko.c,v 1.7 2021/09/17 08:13:06 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -107,7 +107,7 @@ octpko_port_enable(struct octpko_softc *sc, int enable)
 	reg_read_idx = 0;
 	SET(reg_read_idx, sc->sc_port & PKO_REG_READ_IDX_IDX);
 
-	/* XXX assume one queue maped one port */
+	/* XXX assume one queue mapped one port */
 	/* Enable packet output by enabling all queues for this port */
 	mem_queue_qos = 0;
 	SET(mem_queue_qos, __SHIFTIN(sc->sc_port, PKO_MEM_QUEUE_QOS_PID));
@@ -136,7 +136,7 @@ octpko_port_config(struct octpko_softc *sc)
 
 	KASSERT(buf_ptr != 0);
 
-	/* assume one queue maped one port */
+	/* assume one queue mapped one port */
 	mem_queue_ptrs = 0;
 	SET(mem_queue_ptrs, PKO_MEM_QUEUE_PTRS_TAIL);
 	SET(mem_queue_ptrs, __SHIFTIN(0, PKO_MEM_QUEUE_PTRS_IDX));

@@ -1,4 +1,4 @@
-/*  $NetBSD: fuse.h,v 1.7 2016/10/18 17:56:31 christos Exp $ */
+/*  $NetBSD: fuse.h,v 1.8 2021/09/17 08:13:06 andvar Exp $ */
 
 /*-
  *  Copyright (c) 2010 Emmanuel Dreyfus. All rights reserved.
@@ -453,7 +453,7 @@ struct fuse_fallocate_in {
 };
 
 #if 0 /* Duplicated in perfuse.h to avoid making fuse.h public */
-/* Send from kernel to proces */
+/* Send from kernel to process */
 struct fuse_in_header {
 	uint32_t	len;
 	uint32_t	opcode;
