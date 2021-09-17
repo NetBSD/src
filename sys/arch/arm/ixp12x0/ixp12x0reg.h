@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp12x0reg.h,v 1.8 2021/08/02 12:56:22 andvar Exp $ */
+/*	$NetBSD: ixp12x0reg.h,v 1.9 2021/09/17 08:13:06 andvar Exp $ */
 
 /*
  * Copyright (c) 2002, 2003
@@ -83,9 +83,9 @@
  * To make user process space wider, we map the registers at lower address
  * to upper address using address translation of virtual memory system.
  *
- * Some device registers are staticaly mapped on upper address region.
+ * Some device registers are statically mapped on upper address region.
  * because we have to access them before bus_space is initialized.
- * Most device is dinamicaly mapped by bus_space_map().  In this case,
+ * Most device is dynamically mapped by bus_space_map().  In this case,
  * the actual mapped (virtual) address are not cared by device drivers.
  */
 

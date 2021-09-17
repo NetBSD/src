@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mvxpe.c,v 1.35 2021/08/13 21:04:44 andvar Exp $	*/
+/*	$NetBSD: if_mvxpe.c,v 1.36 2021/09/17 08:13:06 andvar Exp $	*/
 /*
  * Copyright (c) 2015 Internet Initiative Japan Inc.
  * All rights reserved.
@@ -25,7 +25,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mvxpe.c,v 1.35 2021/08/13 21:04:44 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mvxpe.c,v 1.36 2021/09/17 08:13:06 andvar Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -875,7 +875,7 @@ mvxpe_initreg(struct ifnet *ifp)
 	/* Tx MTU Limit */
 	MVXPE_WRITE(sc, MVXPE_TXMTU, MVXPE_MTU);
 
-	/* Check SGMII or SERDES(asume IPL/U-BOOT initialize this) */
+	/* Check SGMII or SERDES(assume IPL/U-BOOT initialize this) */
 	reg = MVXPE_READ(sc, MVXPE_PMACC0);
 	if ((reg & MVXPE_PMACC0_PORTTYPE) != 0)
 		serdes = 1;
