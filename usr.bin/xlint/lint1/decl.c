@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.240 2021/09/13 06:11:51 rillig Exp $ */
+/* $NetBSD: decl.c,v 1.241 2021/09/17 21:15:19 christos Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: decl.c,v 1.240 2021/09/13 06:11:51 rillig Exp $");
+__RCSID("$NetBSD: decl.c,v 1.241 2021/09/17 21:15:19 christos Exp $");
 #endif
 
 #include <sys/param.h>
@@ -1129,7 +1129,7 @@ declare_bit_field(sym_t *dsym, tspec_t *inout_t, type_t **const inout_tp)
 	}
 	if (dsym->s_scl == MOU) {
 		/* illegal use of bit-field */
-		error(41);
+		warning(41);
 		dsym->s_type->t_bitfield = false;
 		dsym->s_bitfield = false;
 	}
