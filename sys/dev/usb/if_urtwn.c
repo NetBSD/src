@@ -1,4 +1,4 @@
-/*	$NetBSD: if_urtwn.c,v 1.99 2021/09/17 13:00:20 nat Exp $	*/
+/*	$NetBSD: if_urtwn.c,v 1.100 2021/09/17 13:02:52 nat Exp $	*/
 /*	$OpenBSD: if_urtwn.c,v 1.42 2015/02/10 23:25:46 mpi Exp $	*/
 
 /*-
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_urtwn.c,v 1.99 2021/09/17 13:00:20 nat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_urtwn.c,v 1.100 2021/09/17 13:02:52 nat Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -3088,6 +3088,7 @@ urtwn_r92c_power_on(struct urtwn_softc *sc)
 
 	/* Unlock ISO/CLK/Power control register. */
 	urtwn_write_1(sc, R92C_RSV_CTRL, 0);
+	DELAY(5);
 	/* Move SPS into PWM mode. */
 	urtwn_write_1(sc, R92C_SPS0_CTRL, 0x2b);
 	DELAY(5);
@@ -3153,6 +3154,9 @@ urtwn_r92c_power_on(struct urtwn_softc *sc)
 	urtwn_write_2(sc, R92C_CR, reg);
 
 	urtwn_write_1(sc, 0xfe10, 0x19);
+
+	urtwn_delay_ms(sc, 1);
+
 	return 0;
 }
 
