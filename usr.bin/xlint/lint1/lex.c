@@ -1,4 +1,4 @@
-/* $NetBSD: lex.c,v 1.82 2021/09/17 20:17:30 christos Exp $ */
+/* $NetBSD: lex.c,v 1.83 2021/09/17 21:06:04 christos Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: lex.c,v 1.82 2021/09/17 20:17:30 christos Exp $");
+__RCSID("$NetBSD: lex.c,v 1.83 2021/09/17 21:06:04 christos Exp $");
 #endif
 
 #include <ctype.h>
@@ -217,7 +217,7 @@ static	struct	kwtab {
 	kwdef_type(	"signed",	SIGNED,			1,0,0,0,3),
 	kwdef_keyword(	"sizeof",	T_SIZEOF),
 	kwdef_sclass(	"static",	STATIC,			0,0,0,0,1),
-	kwdef_keyword(	"_Static_assert",T_STATIC_ASSERT),
+	kwdef_keyword(	"_Static_assert",	T_STATIC_ASSERT),
 	kwdef_gcc_attr(	"strfmon",	T_AT_FORMAT_STRFMON),
 	kwdef_gcc_attr(	"strftime",	T_AT_FORMAT_STRFTIME),
 	kwdef_gcc_attr(	"string",	T_AT_STRING),
