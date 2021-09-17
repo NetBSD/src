@@ -1,4 +1,4 @@
-/*	$NetBSD: hfsplus.c,v 1.1 2019/12/27 11:06:23 tkusumi Exp $	*/
+/*	$NetBSD: hfsplus.c,v 1.2 2021/09/17 14:49:03 christos Exp $	*/
 /*
  * Copyright (c) 2019 Conrad Meyer <cem@FreeBSD.org>.  All rights reserved.
  *
@@ -24,7 +24,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: hfsplus.c,v 1.1 2019/12/27 11:06:23 tkusumi Exp $");
+__RCSID("$NetBSD: hfsplus.c,v 1.2 2021/09/17 14:49:03 christos Exp $");
 
 #include <assert.h>
 #include <err.h>
@@ -96,7 +96,9 @@ struct hfsp_vol_hdr {
 	hfsp_fork_data	hp_attributesFile;
 	hfsp_fork_data	hp_startupFile;
 };
+#ifndef __lint__
 _Static_assert(sizeof(struct hfsp_vol_hdr) == 512, "");
+#endif
 
 int
 fstyp_hfsp(FILE *fp, char *label, size_t size)
