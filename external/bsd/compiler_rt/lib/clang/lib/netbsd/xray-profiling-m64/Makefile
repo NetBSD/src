@@ -1,13 +1,7 @@
-#	$NetBSD: Makefile,v 1.2 2021/09/16 23:32:50 christos Exp $
-
-NOSANITIZER=    # defined
+#	$NetBSD: Makefile,v 1.3 2021/09/17 02:18:05 christos Exp $
 
 .include "../common.mk"
 .include "../sources.mk"
-
-.include <bsd.own.mk>
-
-TOPDIR=	${NETBSDSRCDIR}/sys/external/bsd/compiler_rt/dist
 
 LIB=	libclang_rt.xray-profiling-x86_64
 

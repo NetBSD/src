@@ -1,13 +1,7 @@
-#	$NetBSD: Makefile,v 1.6 2021/05/04 17:23:54 rillig Exp $
-
-NOSANITIZER=    # defined
+#	$NetBSD: Makefile,v 1.7 2021/09/17 02:18:03 christos Exp $
 
 .include "../common.mk"
 .include "../sources.mk"
-
-.include <bsd.own.mk>
-
-TOPDIR=	${NETBSDSRCDIR}/sys/external/bsd/compiler_rt/dist
 
 LIB=	libclang_rt.tsan_cxx-x86_64
 
