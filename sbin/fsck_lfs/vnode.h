@@ -1,4 +1,4 @@
-/* $NetBSD: vnode.h,v 1.5 2017/06/09 00:13:08 chs Exp $ */
+/* $NetBSD: vnode.h,v 1.6 2021/09/17 22:41:48 christos Exp $ */
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -72,5 +72,5 @@ int raw_vop_bmap(struct uvnode *, daddr_t, daddr_t *);
 
 void vnode_destroy(struct uvnode *);
 struct uvnode *vget(void *, ino_t);
-void register_vget(void *, struct uvnode *(void *, ino_t));
+void register_vget(void *, struct uvnode *(*)(void *, ino_t));
 void vfs_init(void);
