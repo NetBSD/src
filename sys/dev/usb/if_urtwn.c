@@ -1,4 +1,4 @@
-/*	$NetBSD: if_urtwn.c,v 1.98 2021/09/17 12:58:31 nat Exp $	*/
+/*	$NetBSD: if_urtwn.c,v 1.99 2021/09/17 13:00:20 nat Exp $	*/
 /*	$OpenBSD: if_urtwn.c,v 1.42 2015/02/10 23:25:46 mpi Exp $	*/
 
 /*-
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_urtwn.c,v 1.98 2021/09/17 12:58:31 nat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_urtwn.c,v 1.99 2021/09/17 13:00:20 nat Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -3362,7 +3362,10 @@ urtwn_fw_reset(struct urtwn_softc *sc)
 	KASSERT(mutex_owned(&sc->sc_write_mtx));
 
 	/* Tell 8051 to reset itself. */
+	mutex_enter(&sc->sc_fwcmd_mtx);
 	urtwn_write_1(sc, R92C_HMETFR + 3, 0x20);
+	sc->fwcur = 0;
+	mutex_exit(&sc->sc_fwcmd_mtx);
 
 	/* Wait until 8051 resets by itself. */
 	for (ntries = 0; ntries < 100; ntries++) {
@@ -3403,6 +3406,11 @@ urtwn_r88e_fw_reset(struct urtwn_softc *sc)
 		urtwn_write_2(sc,R92C_RSV_CTRL, reg);
 	}
 	DELAY(50);
+
+	mutex_enter(&sc->sc_fwcmd_mtx);
+	/* Init firmware commands ring. */
+	sc->fwcur = 0;
+	mutex_exit(&sc->sc_fwcmd_mtx);
 
 }
 
