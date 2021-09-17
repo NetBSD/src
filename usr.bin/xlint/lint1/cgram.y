@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.364 2021/09/14 19:44:40 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.365 2021/09/17 20:17:30 christos Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: cgram.y,v 1.364 2021/09/14 19:44:40 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.365 2021/09/17 20:17:30 christos Exp $");
 #endif
 
 #include <limits.h>
@@ -211,6 +211,7 @@ anonymize(sym_t *s)
 %token			T_SWITCH
 %token			T_SYMBOLRENAME
 %token			T_WHILE
+%token			T_STATIC_ASSERT
 
 %token			T_ATTRIBUTE
 %token			T_AT_ALIAS
@@ -761,6 +762,7 @@ declaration:			/* C99 6.7 */
 	  }
 	| begin_type_declaration_specifiers end_type
 	    type_init_declarators T_SEMI
+	| static_assert_declaration
 	;
 
 begin_type_declaration_specifiers:	/* see C99 6.7 */
@@ -993,6 +995,7 @@ struct_declaration:		/* C99 6.7.2.1 */
 			$$ = NULL;
 		}
 	  }
+	| static_assert_declaration
 	| error T_SEMI {
 		symtyp = FVFT;
 		$$ = NULL;
@@ -1566,6 +1569,11 @@ designator:			/* C99 6.7.8 "Initialization" */
 		add_designator_member($2);
 	  }
 	;
+
+static_assert_declaration:
+	  T_STATIC_ASSERT T_LPAREN constant_expr T_COMMA T_STRING T_RPAREN T_SEMI
+	| T_STATIC_ASSERT T_LPAREN constant_expr T_RPAREN T_SEMI
+ 	;
 
 range:
 	  constant_expr {
