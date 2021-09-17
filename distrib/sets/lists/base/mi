@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1282 2021/09/16 23:32:49 christos Exp $
+# $NetBSD: mi,v 1.1283 2021/09/17 14:09:00 kre Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -1350,6 +1350,7 @@
 ./usr/lib/clang/13.0.0/lib			base-sys-usr
 ./usr/lib/clang/13.0.0/lib/netbsd		base-sys-usr
 ./usr/lib/clang/13.0.0/share			base-sys-usr
+./usr/lib/dtrace				base-sys-usr		dtrace
 ./usr/lib/dtrace/errno.d			base-sys-usr		dtrace
 ./usr/lib/dtrace/psinfo.d			base-sys-usr		dtrace
 ./usr/lib/dtrace/signal.d			base-sys-usr		dtrace
