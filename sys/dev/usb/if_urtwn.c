@@ -1,4 +1,4 @@
-/*	$NetBSD: if_urtwn.c,v 1.96 2021/03/02 22:21:38 nat Exp $	*/
+/*	$NetBSD: if_urtwn.c,v 1.97 2021/09/17 12:55:10 nat Exp $	*/
 /*	$OpenBSD: if_urtwn.c,v 1.42 2015/02/10 23:25:46 mpi Exp $	*/
 
 /*-
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_urtwn.c,v 1.96 2021/03/02 22:21:38 nat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_urtwn.c,v 1.97 2021/09/17 12:55:10 nat Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1112,7 +1112,7 @@ urtwn_fw_cmd(struct urtwn_softc *sc, uint8_t id, const void *buf, int len)
 	for (ntries = 0; ntries < 100; ntries++) {
 		if (!(urtwn_read_1(sc, R92C_HMETFR) & (1 << fwcur)))
 			break;
-		DELAY(2000);
+		urtwn_delay_ms(sc, 2);
 	}
 	if (ntries == 100) {
 		aprint_error_dev(sc->sc_dev,
@@ -1195,16 +1195,16 @@ urtwn_rf_read(struct urtwn_softc *sc, int chain, uint8_t addr)
 
 	urtwn_bb_write(sc, R92C_HSSI_PARAM2(0),
 	    reg[0] & ~R92C_HSSI_PARAM2_READ_EDGE);
-	DELAY(1000);
+	urtwn_delay_ms(sc, 1);
 
 	urtwn_bb_write(sc, R92C_HSSI_PARAM2(chain),
 	    RW(reg[chain], R92C_HSSI_PARAM2_READ_ADDR, addr) |
 	    R92C_HSSI_PARAM2_READ_EDGE);
-	DELAY(1000);
+	urtwn_delay_ms(sc, 1);
 
 	urtwn_bb_write(sc, R92C_HSSI_PARAM2(0),
 	    reg[0] | R92C_HSSI_PARAM2_READ_EDGE);
-	DELAY(1000);
+	urtwn_delay_ms(sc, 1);
 
 	if (urtwn_bb_read(sc, R92C_HSSI_PARAM1(chain)) & R92C_HSSI_PARAM1_PI) {
 		val = urtwn_bb_read(sc, R92C_HSPI_READBACK(chain));
