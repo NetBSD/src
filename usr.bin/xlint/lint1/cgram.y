@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.365 2021/09/17 20:17:30 christos Exp $ */
+/* $NetBSD: cgram.y,v 1.366 2021/09/17 21:06:04 christos Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: cgram.y,v 1.365 2021/09/17 20:17:30 christos Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.366 2021/09/17 21:06:04 christos Exp $");
 #endif
 
 #include <limits.h>
@@ -1571,8 +1571,8 @@ designator:			/* C99 6.7.8 "Initialization" */
 	;
 
 static_assert_declaration:
-	  T_STATIC_ASSERT T_LPAREN constant_expr T_COMMA T_STRING T_RPAREN T_SEMI
-	| T_STATIC_ASSERT T_LPAREN constant_expr T_RPAREN T_SEMI
+	  T_STATIC_ASSERT T_LPAREN constant_expr T_COMMA T_STRING T_RPAREN T_SEMI /* C11 */
+	| T_STATIC_ASSERT T_LPAREN constant_expr T_RPAREN T_SEMI /* C23 */
  	;
 
 range:
