@@ -1,4 +1,4 @@
-/*	$NetBSD: mkbd.c,v 1.31 2021/08/07 16:18:48 thorpej Exp $	*/
+/*	$NetBSD: mkbd.c,v 1.32 2021/09/18 15:14:40 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 2001 Marcus Comstedt
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mkbd.c,v 1.31 2021/08/07 16:18:48 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mkbd.c,v 1.32 2021/09/18 15:14:40 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -216,7 +216,6 @@ mkbd_ioctl(void *v, u_long cmd, void *data, int flag, struct lwp *l)
 	case WSKBDIO_GETLEDS:
 		*(int *) data = 0;
 		return 0;
-	case WSKBDIO_BELL:
 	case WSKBDIO_COMPLEXBELL:
 		return 0;
 	}
