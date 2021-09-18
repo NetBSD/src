@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2020/06/13 10:49:17 lukem Exp $
+#	$NetBSD: Makefile,v 1.4 2021/09/18 01:47:11 christos Exp $
 
 .include <bsd.hostinit.mk>
 
@@ -15,7 +15,7 @@ CONFIGURE_ARGS+=	--silent
 
 config.status: ${XZSRCDIR}/configure
 	${HOST_SH} ${XZSRCDIR}/configure ${CONFIGURE_ARGS} \
-	    CC=${HOST_CC:Q}
+	    CC=${HOST_CC:Q} CPPFLAGS=${HOST_CPPFLAGS:Q}
 
 CLEANFILES+=	config.log config.status config.h libtool stamp-h1
 

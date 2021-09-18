@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.89 2021/02/25 13:41:58 christos Exp $
+#	$NetBSD: Makefile,v 1.90 2021/09/18 01:47:10 christos Exp $
 
 HOSTLIB=	nbcompat
 
@@ -31,13 +31,13 @@ BUILD_OSTYPE!=  uname -s
 
 # Disable use of pre-compiled headers on Darwin.
 .if ${BUILD_OSTYPE} == "Darwin"
-CPPFLAGS+=	-no-cpp-precomp
+HOST_CPPFLAGS+=	-no-cpp-precomp
 .endif
 
 # -D_FILE_OFFSET_BITS=64 produces a much more amenable `struct stat', and
 # other file ops, on many systems, without changing function names.
 
-CPPFLAGS+=	-I. -I./include -I${.CURDIR} -I${.CURDIR}/sys \
+HOST_CPPFLAGS+=	-I. -I./include -I${.CURDIR} -I${.CURDIR}/sys \
 		-DHAVE_NBTOOL_CONFIG_H=1 -D_FILE_OFFSET_BITS=64
 
 .PATH:		${.CURDIR}/../../lib/libc/cdb \
@@ -84,7 +84,8 @@ CONFIGURE_ARGS+=--silent
 
 config.cache: include/.stamp configure nbtool_config.h.in defs.mk.in
 	rm -f ${.TARGET}
-	CC=${HOST_CC:Q} CFLAGS=${HOST_CFLAGS:Q} LDFLAGS=${HOST_LDFLAGS:Q} \
+	CC=${HOST_CC:Q} CFLAGS=${HOST_CFLAGS:Q} CPPFLAGS=${HOST_CPPFLAGS:Q} \
+		LDFLAGS=${HOST_LDFLAGS:Q} \
 		${HOST_SH} ${.CURDIR}/configure ${CONFIGURE_ARGS}
 
 defs.mk: config.cache
@@ -149,8 +150,7 @@ ${HOST_SHAREDIR}/compat/defs.mk: defs.mk
 
 # bsd.hostlib.mk wants HOST_CPPFLAGS, not CPPFLAGS
 
-HOST_CPPFLAGS:=	${CPPFLAGS}
-CPPFLAGS:=	# empty
+HOST_CPPFLAGS+=	${CPPFLAGS}
 
 .include <bsd.hostlib.mk>
 
