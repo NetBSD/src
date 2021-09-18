@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_in_cksum.S,v 1.8 2021/09/18 14:57:10 uwe Exp $	*/
+/*	$NetBSD: cpu_in_cksum.S,v 1.9 2021/09/18 15:09:05 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2000 SHIMIZU Ryo <ryo@misakimix.org>
@@ -34,10 +34,9 @@
 #include <machine/asm.h>
 #include "assym.h"
 
-__KERNEL_RCSID(0, "$NetBSD: cpu_in_cksum.S,v 1.8 2021/09/18 14:57:10 uwe Exp $")
+__KERNEL_RCSID(0, "$NetBSD: cpu_in_cksum.S,v 1.9 2021/09/18 15:09:05 uwe Exp $")
 
 
-#define	reg_tmp0		r0
 #define	reg_byte_swapped	r1
 #define	reg_mlen		r2
 #define	reg_tmp3		r3
@@ -49,39 +48,39 @@ __KERNEL_RCSID(0, "$NetBSD: cpu_in_cksum.S,v 1.8 2021/09/18 14:57:10 uwe Exp $")
 
 
 #define	REDUCE	\
-	swap.w	reg_sum, reg_tmp0	; \
+	swap.w	reg_sum, r0		; \
 	extu.w	reg_sum, reg_sum	; \
-	extu.w	reg_tmp0, reg_tmp0	; \
-	add	reg_tmp0, reg_sum
+	extu.w	r0, r0			; \
+	add	r0, reg_sum
 
 #define	ROL	\
 	shll8	reg_sum
 
 #if _BYTE_ORDER == BIG_ENDIAN
 #define	ADDB	\
-	mov.b	@reg_w+, reg_tmp0	; \
+	mov.b	@reg_w+, r0		; \
 	ROL				; \
-	extu.b	reg_tmp0, reg_tmp0	; \
-	add	reg_tmp0, reg_sum	; \
+	extu.b	r0, r0	; \
+	add	r0, reg_sum	; \
 	not	reg_byte_swapped, reg_byte_swapped
 #else
 #define	ADDB	\
-	mov.b	@reg_w+, reg_tmp0	; \
-	extu.b	reg_tmp0, reg_tmp0	; \
-	add	reg_tmp0, reg_sum	; \
-	ROL				; \
+	mov.b	@reg_w+, r0	; \
+	extu.b	r0, r0		; \
+	add	r0, reg_sum	; \
+	ROL			; \
 	not	reg_byte_swapped, reg_byte_swapped
 #endif
 
 
 #define	ADDS	\
-	mov.w	@reg_w+, reg_tmp0	; \
-	extu.w	reg_tmp0, reg_tmp0	; \
-	add	reg_tmp0, reg_sum
+	mov.w	@reg_w+, r0	; \
+	extu.w	r0, r0		; \
+	add	r0, reg_sum
 
 #define	ADDCL	\
-	mov.l	@reg_w+, reg_tmp0	; \
-	addc	reg_tmp0, reg_sum
+	mov.l	@reg_w+, r0	; \
+	addc	r0, reg_sum
 
 #define	FORWARD1	\
 	add	#-1, reg_mlen
@@ -149,38 +148,38 @@ mbuf_loop:
 	sub	reg_mlen, reg_len
 
 
-	mov	reg_w, reg_tmp0
-	tst	#1, reg_tmp0
+	mov	reg_w, r0
+	tst	#1, r0
 	bt/s	1f
-	REDUCE		/* 1st instruction break only reg_tmp0(r0) */
+	REDUCE		/* 1st instruction break only r0 */
 	ADDB
 	FORWARD1
 1:
 
 
-	mov	#1, reg_tmp0
-	cmp/gt	reg_tmp0, reg_mlen
+	mov	#1, r0
+	cmp/gt	r0, reg_mlen
 	bf/s	1f
-	mov	reg_w, reg_tmp0
-	tst	#2, reg_tmp0
+	mov	reg_w, r0
+	tst	#2, r0
 	bt/s	1f
-	REDUCE		/* 1st instruction break only reg_tmp0(r0) */
+	REDUCE		/* 1st instruction break only r0 */
 	ADDS
 	FORWARD2
 1:
 
 
 
-	mov	#127, reg_tmp0
-	cmp/hi	reg_tmp0, reg_mlen
+	mov	#127, r0
+	cmp/hi	r0, reg_mlen
 	bf	1f
 
 do_cksum128:
 	bsr	cksum128
 	 nop
 
-	mov	#127, reg_tmp0
-	cmp/hi	reg_tmp0, reg_mlen
+	mov	#127, r0
+	cmp/hi	r0, reg_mlen
 	bt	do_cksum128
 1:
 
@@ -190,8 +189,8 @@ do_cksum128:
 
 	REDUCE
 
-	mov	#1, reg_tmp0
-	cmp/gt	reg_tmp0, reg_mlen
+	mov	#1, r0
+	cmp/gt	r0, reg_mlen
 	bf	1f
 	ADDS
 	FORWARD2
@@ -214,7 +213,7 @@ mbuf_loop_done:
 
 	tst	reg_byte_swapped, reg_byte_swapped
 	bt/s	1f
-	REDUCE		/* 1st instruction break only reg_tmp0(r0) */
+	REDUCE		/* 1st instruction break only r0(r0) */
 	ROL
 1:
 
@@ -230,13 +229,13 @@ in_cksum_return:
 
 
 out_of_mbufs:
-	mova	.L_message_out_of_data, reg_tmp0
+	mova	.L_message_out_of_data, r0
 	mov.l	.L_printf, reg_tmp3
 
 	mov.l	reg_sum, @-sp	/* save: call clobbered register */
 
 1:	CALL	reg_tmp3
-	 mov	reg_tmp0, r4
+	 mov	r0, r4
 
 	bra	in_cksum_return
 	 mov.l	@sp+, reg_sum	/* restore */
@@ -256,14 +255,14 @@ out_of_mbufs:
 
 	.align	2
 cksum128mod:
-	mov	reg_mlen, reg_tmp0
-	and	#124, reg_tmp0
-	sub	reg_tmp0, reg_mlen
-	mov	reg_tmp0, reg_tmp3
+	mov	reg_mlen, r0
+	and	#124, r0
+	sub	r0, reg_mlen
+	mov	r0, reg_tmp3
 
-	mova	cksum128_tail, reg_tmp0
-	sub	reg_tmp3, reg_tmp0
-	jmp	@reg_tmp0
+	mova	cksum128_tail, r0
+	sub	reg_tmp3, r0
+	jmp	@r0
 	 clrt
 
 	.align	2
@@ -305,6 +304,6 @@ cksum128_unroll:
 	ADDCL
 	ADDCL
 cksum128_tail:
-	mov	#0, reg_tmp0
+	mov	#0, r0
 	rts
-	 addc	reg_tmp0, reg_sum
+	 addc	r0, reg_sum
