@@ -1,9 +1,11 @@
-#	$NetBSD: Makefile,v 1.4 2020/09/26 20:56:53 mrg Exp $
+#	$NetBSD: Makefile,v 1.5 2021/09/18 01:47:10 christos Exp $
 #
 
 GNUHOSTDIST=   ${.CURDIR}/../../external/lgpl3/gmp/dist
 
 CONFIGURE_ARGS+=--disable-shared
+
+CPPFLAGS+=	${HOST_CPPFLAGS}
 
 .include "${.CURDIR}/../Makefile.gnuhost"
 

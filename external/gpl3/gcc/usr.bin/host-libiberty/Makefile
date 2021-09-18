@@ -1,14 +1,16 @@
-#	$NetBSD: Makefile,v 1.3 2014/03/16 00:07:58 uwe Exp $
+#	$NetBSD: Makefile,v 1.4 2021/09/18 01:47:08 christos Exp $
 
 libiberty/libiberty.a:
 	[ ! -d libiberty ] && mkdir libiberty || true
 	(cd libiberty; \
 		CC=${HOST_CC:Q} \
 		CFLAGS=${HOST_CFLAGS:Q} \
+		CPPFLAGS=${HOST_CPPFLAGS:Q} \
 		MAKE=${MAKE:Q} \
 		CONFIG_SHELL=${HOST_SH:Q} \
 		${HOST_SH} ${DIST}/libiberty/configure \
-		&& CC=${HOST_CC:Q} CFLAGS=${HOST_CFLAGS:Q} ${MAKE})
+		&& CC=${HOST_CC:Q} CFLAGS=${HOST_CFLAGS:Q} \
+		CPPFLAGS=${HOST_CPPFLAGS:Q} ${MAKE})
 
 cleandir:
 	-rm -rf libiberty
