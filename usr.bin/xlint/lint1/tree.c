@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.381 2021/09/12 10:06:03 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.382 2021/09/18 10:46:17 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.381 2021/09/12 10:06:03 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.382 2021/09/18 10:46:17 jmcneill Exp $");
 #endif
 
 #include <float.h>
@@ -3333,7 +3333,7 @@ fold_float(tnode_t *tn)
 	}
 
 	lint_assert(fpe != 0 || isnan((double)v->v_ldbl) == 0);
-	if (fpe != 0 || finite((double)v->v_ldbl) == 0 ||
+	if (fpe != 0 || isfinite((double)v->v_ldbl) == 0 ||
 	    (t == FLOAT &&
 	     (v->v_ldbl > FLT_MAX || v->v_ldbl < -FLT_MAX)) ||
 	    (t == DOUBLE &&
