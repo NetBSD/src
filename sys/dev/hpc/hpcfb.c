@@ -1,4 +1,4 @@
-/*	$NetBSD: hpcfb.c,v 1.63 2021/08/07 16:19:11 thorpej Exp $	*/
+/*	$NetBSD: hpcfb.c,v 1.64 2021/09/18 15:14:41 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1999
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpcfb.c,v 1.63 2021/08/07 16:19:11 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpcfb.c,v 1.64 2021/09/18 15:14:41 tsutsui Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_hpcfb.h"
@@ -563,10 +563,6 @@ hpcfb_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
 
 	DPRINTF(("hpcfb_ioctl(cmd=0x%lx)\n", cmd));
 	switch (cmd) {
-	case WSKBDIO_BELL:
-		return (0);
-		break;
-
 	case WSDISPLAYIO_GTYPE:
 		*(u_int *)data = WSDISPLAY_TYPE_HPCFB;
 		return (0);
