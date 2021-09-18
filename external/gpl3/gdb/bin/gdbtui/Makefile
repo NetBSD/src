@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.14 2020/12/06 03:28:26 christos Exp $
+#	$NetBSD: Makefile,v 1.15 2021/09/18 01:47:09 christos Exp $
 NOCTF=
 .include "../Makefile.inc"
 
@@ -33,6 +33,7 @@ NOMAN=		# defined
 # Force c++
 CWARNFLAGS.clang+=	-Wno-deprecated
 HOST_CC:=		${HOST_CXX}
+HOST_CFLAGS+=		${HOST_CXXFLAGS}
 CC:=			${CXX}
 CFLAGS:=		${CXXFLAGS} -std=gnu++11 -Wno-error=stack-protector
 

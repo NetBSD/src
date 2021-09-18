@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.32 2021/05/07 23:00:04 christos Exp $
+#	$NetBSD: Makefile,v 1.33 2021/09/18 01:47:10 christos Exp $
 
 .include <bsd.hostinit.mk>
 
@@ -36,6 +36,7 @@ INSTALL_TARGET+=install-gprof
 
 CCADDFLAGS=	-I${GNUHOSTDIST}/include  -I${DESTDIR}/usr/include
 CCADDFLAGS+=	-B${DESTDIR}/usr/lib/
+CCADDFLAGS+=	${HOST_CPPFLAGS}
 LDADDFLAGS=	-L${DESTDIR}/lib -L${DESTDIR}/usr/lib
 
 # Force avoiding possibly non-executable install-sh.

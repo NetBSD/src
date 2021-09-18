@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.10 2020/09/05 14:24:26 mrg Exp $
+#	$NetBSD: Makefile,v 1.11 2021/09/18 01:47:08 christos Exp $
 
 LIBISPRIVATE=	yes
 
@@ -34,6 +34,7 @@ ${SRCS}: ${GCCARCH}/defs.mk
 
 # Force using C++ for this
 HOST_CC:=	${HOST_CXX}
+HOST_CFLAGS:=	${HOST_CXXFLAGS}
 CC:=		${CXX}
 CFLAGS:=	${CXXFLAGS}
 

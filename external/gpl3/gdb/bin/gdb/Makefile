@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.20 2020/12/06 03:28:25 christos Exp $
+#	$NetBSD: Makefile,v 1.21 2021/09/18 01:47:09 christos Exp $
 
 NOCTF=
 .include <bsd.own.mk>
@@ -108,6 +108,7 @@ DPADD+=		${LIBEXPAT} ${LIBLZMA} ${LIBZ} ${LIBCURSES} ${LIBINTL} ${LIBM} ${LIBKVM
 # Force c++
 CWARNFLAGS.clang+=	-Wno-deprecated
 HOST_CC:=		${HOST_CXX}
+HOST_CFLAGS+=		${HOST_CXXFLAGS}
 CC:=			${CXX}
 CFLAGS:=		${CXXFLAGS} -std=gnu++11 -Wno-error=stack-protector
 

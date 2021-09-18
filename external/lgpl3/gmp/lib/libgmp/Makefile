@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.28 2018/09/04 06:09:31 mrg Exp $
+#	$NetBSD: Makefile,v 1.29 2021/09/18 01:47:10 christos Exp $
 
 .include <bsd.init.mk>
 
@@ -160,13 +160,13 @@ DPSRCS= fac_table.h fib_table.h fib_table.c jacobitab.h mp_bases.h \
 	mp_bases.c perfsqr.h trialdivtab.h
 
 gen-fac: gen-fac.c
-	${HOST_CC} -o ${.OBJDIR}/gen-fac ${.ALLSRC}
+	${HOST_CC} ${HOST_CPPFLAGS} -o ${.OBJDIR}/gen-fac ${.ALLSRC}
 
 fac_table.h: gen-fac
 	${.OBJDIR}/gen-fac ${GMP_LIMB_BITS} 0 > ${.OBJDIR}/fac_table.h
 
 gen-fib: gen-fib.c
-	${HOST_CC} -o ${.OBJDIR}/gen-fib ${.ALLSRC}
+	${HOST_CC} ${HOST_CPPFLAGS} -o ${.OBJDIR}/gen-fib ${.ALLSRC}
 
 fib_table.h: gen-fib
 	${.OBJDIR}/gen-fib header ${GMP_LIMB_BITS} 0 > ${.OBJDIR}/fib_table.h
@@ -175,7 +175,7 @@ fib_table.c: gen-fib
 	${.OBJDIR}/gen-fib table ${GMP_LIMB_BITS} 0 > ${.OBJDIR}/fib_table.c
 
 gen-bases: gen-bases.c
-	${HOST_CC} -o ${.OBJDIR}/gen-bases ${.ALLSRC} -lm
+	${HOST_CC} ${HOST_CPPFLAGS} -o ${.OBJDIR}/gen-bases ${.ALLSRC} -lm
 
 mp_bases.h: gen-bases
 	${.OBJDIR}/gen-bases header ${GMP_LIMB_BITS} 0 > ${.OBJDIR}/mp_bases.h
@@ -184,17 +184,17 @@ mp_bases.c: gen-bases
 	${.OBJDIR}/gen-bases table ${GMP_LIMB_BITS} 0 > ${.OBJDIR}/mp_bases.c
 
 gen-jacobitab: gen-jacobitab.c
-	${HOST_CC} -o ${.OBJDIR}/gen-jacobitab ${.ALLSRC} -lm
+	${HOST_CC} ${HOST_CPPFLAGS} -o ${.OBJDIR}/gen-jacobitab ${.ALLSRC} -lm
 
 jacobitab.h: gen-jacobitab
 	${.OBJDIR}/gen-jacobitab > ${.OBJDIR}/jacobitab.h
 
 perfsqr.h: gen-psqr.c
-	${HOST_CC} -o ${.OBJDIR}/gen-psqr ${.ALLSRC}
+	${HOST_CC} ${HOST_CPPFLAGS} -o ${.OBJDIR}/gen-psqr ${.ALLSRC}
 	${.OBJDIR}/gen-psqr ${GMP_LIMB_BITS} 0 > ${.OBJDIR}/perfsqr.h
 
 gen-trialdivtab: gen-trialdivtab.c
-	${HOST_CC} -o ${.OBJDIR}/gen-trialdivtab ${.ALLSRC} -lm
+	${HOST_CC} ${HOST_CPPFLAGS} -o ${.OBJDIR}/gen-trialdivtab ${.ALLSRC} -lm
 
 trialdiv.c: trialdivtab.h
 trialdivtab.h: gen-trialdivtab Makefile
