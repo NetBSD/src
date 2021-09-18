@@ -1,4 +1,4 @@
-/*	$NetBSD: fs.h,v 1.68 2020/05/16 18:31:53 christos Exp $	*/
+/*	$NetBSD: fs.h,v 1.69 2021/09/18 03:05:20 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -422,7 +422,7 @@ struct fs {
  * FS_POSIX1EACLS indicates that POSIX.1e ACLs are administratively enabled
  * for the file system, so they should be loaded from extended attributes,
  * observed for access control purposes, and be administered by object
- * owners.  FS_ACLS indicates that NFSv4 ACLs are administratively
+ * owners.  FS_NFS4ACLS indicates that NFSv4 ACLs are administratively
  * enabled.  This flag is mutually exclusive with FS_POSIX1EACLS.
  */
 #define	FS_UNCLEAN	0x001	/* file system not clean at mount (unused) */
@@ -430,6 +430,7 @@ struct fs {
 #define	FS_NEEDSFSCK	0x004	/* needs sync fsck (FreeBSD compat, unused) */
 #define	FS_SUJ		0x008	/* file system using journaled softupdates */
 #define	FS_POSIX1EACLS	0x010	/* file system has POSIX.1e ACLs enabled */
+#define	FS_ACLS		FS_POSIX1EACLS	/* alias */
 #define	FS_MULTILABEL	0x020	/* file system is MAC multi-label */
 #define	FS_GJOURNAL	0x40	/* gjournaled file system */
 #define	FS_FLAGS_UPDATED 0x80	/* flags have been moved to new location */
@@ -438,11 +439,11 @@ struct fs {
 #define	FS_DOQUOTA2	0x200	/* in-filesystem quotas */
 /*     	FS_INDEXDIRS	0x200	   kernel supports indexed directories (FBSD)*/
 #define	FS_TRIM		0x400	/* discard deleted blocks in storage layer */
-#define FS_ACLS		0x800	/* file system has NFSv4 ACLs enabled */
+#define	FS_NFS4ACLS	0x800	/* file system has NFSv4 ACLs enabled */
 
 /* File system flags that are ok for NetBSD if set in fs_flags */
 #define	FS_KNOWN_FLAGS	(FS_DOSOFTDEP | FS_DOWAPBL | FS_DOQUOTA2 | \
-	FS_POSIX1EACLS | FS_ACLS)
+	FS_POSIX1EACLS | FS_NFS4ACLS)
 
 /*
  * File system internal flags, also in fs_flags.

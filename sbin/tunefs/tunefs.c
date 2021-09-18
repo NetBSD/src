@@ -1,4 +1,4 @@
-/*	$NetBSD: tunefs.c,v 1.54 2020/11/26 02:06:01 dholland Exp $	*/
+/*	$NetBSD: tunefs.c,v 1.55 2021/09/18 03:05:20 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\
 #if 0
 static char sccsid[] = "@(#)tunefs.c	8.3 (Berkeley) 5/3/95";
 #else
-__RCSID("$NetBSD: tunefs.c,v 1.54 2020/11/26 02:06:01 dholland Exp $");
+__RCSID("$NetBSD: tunefs.c,v 1.55 2021/09/18 03:05:20 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -361,21 +361,21 @@ main(int argc, char *argv[])
 	if (aflag) {
 		name = "ACLs";
 		if (strcmp(avalue, "enable") == 0) {
-			if (sblock.fs_flags & FS_ACLS) {
+			if (sblock.fs_flags & FS_NFS4ACLS) {
 				warnx("%s remains unchanged as enabled", name);
 			} else if (sblock.fs_flags & FS_POSIX1EACLS) {
 				warnx("%s and POSIX.1e ACLs are mutually "
 				    "exclusive", name);
 			} else {
-				sblock.fs_flags |= FS_ACLS;
+				sblock.fs_flags |= FS_NFS4ACLS;
 				printf("%s set\n", name);
 			}
 		} else if (strcmp(avalue, "disable") == 0) {
-			if ((~sblock.fs_flags & FS_ACLS) == FS_ACLS) {
+			if ((~sblock.fs_flags & FS_NFS4ACLS) == FS_NFS4ACLS) {
 				warnx("%s remains unchanged as disabled",
 				    name);
 			} else {
-				sblock.fs_flags &= ~FS_ACLS;
+				sblock.fs_flags &= ~FS_NFS4ACLS;
 				printf("%s cleared\n", name);
 			}
  		}
@@ -386,7 +386,7 @@ main(int argc, char *argv[])
 		if (strcmp(pvalue, "enable") == 0) {
 			if (sblock.fs_flags & FS_POSIX1EACLS) {
 				warnx("%s remains unchanged as enabled", name);
-			} else if (sblock.fs_flags & FS_ACLS) {
+			} else if (sblock.fs_flags & FS_NFS4ACLS) {
 				warnx("%s and ACLs are mutually "
 				    "exclusive", name);
 			} else {
@@ -434,8 +434,8 @@ main(int argc, char *argv[])
 		}
 		printf("\tPOSIX.1e ACLs %s\n",
 		    (sblock.fs_flags & FS_POSIX1EACLS) ? "enabled" : "disabled");
-		printf("\tACLs %s\n",
-		    (sblock.fs_flags & FS_ACLS) ? "enabled" : "disabled");
+		printf("\tNFS4 ACLs %s\n",
+		    (sblock.fs_flags & FS_NFS4ACLS) ? "enabled" : "disabled");
 		printf("%s: no changes made\n", getprogname());
 		return 0;
 	}

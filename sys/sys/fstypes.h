@@ -1,4 +1,4 @@
-/*	$NetBSD: fstypes.h,v 1.40 2020/07/05 20:41:50 christos Exp $	*/
+/*	$NetBSD: fstypes.h,v 1.41 2021/09/18 03:05:20 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993
@@ -94,7 +94,7 @@ typedef struct fhandle	fhandle_t;
 #define	MNT_NOCOREDUMP	0x00008000	/* don't write core dumps to this FS */
 #define	MNT_RELATIME	0x00020000	/* only update access time if mod/ch */
 #define	MNT_IGNORE	0x00100000	/* don't show entry in df */
-#define	MNT_ACLS	0x00200000	/* uses Access Control Lists */
+#define	MNT_NFS4ACLS	0x00200000	/* uses NFS4 Access Control Lists */
 #define	MNT_DISCARD	0x00800000	/* use DISCARD/TRIM if supported */
 #define	MNT_EXTATTR	0x01000000	/* enable extended attributes */
 #define	MNT_LOG		0x02000000	/* Use logging */
@@ -104,11 +104,12 @@ typedef struct fhandle	fhandle_t;
 #define	MNT_NODEVMTIME	0x40000000	/* Never update mod times for devs */
 #define	MNT_SOFTDEP	0x80000000	/* Use soft dependencies */
 #define	MNT_POSIX1EACLS	0x00000800	/* shared with EXKERB */
+#define	MNT_ACLS	MNT_POSIX1EACLS	/* synonym */
 
 #define	__MNT_BASIC_FLAGS \
 	{ MNT_ASYNC,		0,	"asynchronous" }, \
 	{ MNT_AUTOMOUNTED,	0,	"automounted" }, \
-	{ MNT_ACLS,		0,	"acls" }, \
+	{ MNT_NFS4ACLS,		0,	"nfs4acls" }, \
 	{ MNT_POSIX1EACLS,	0,	"posix1eacls" }, \
 	{ MNT_DISCARD,		0,	"discard" }, \
 	{ MNT_EXTATTR,		0,	"extattr" }, \
@@ -130,7 +131,7 @@ typedef struct fhandle	fhandle_t;
 #define MNT_BASIC_FLAGS (MNT_ASYNC | MNT_AUTOMOUNTED | MNT_DISCARD | \
     MNT_EXTATTR | MNT_LOG | MNT_NOATIME | MNT_NOCOREDUMP | MNT_NODEV | \
     MNT_NODEVMTIME | MNT_NOEXEC | MNT_NOSUID | MNT_RDONLY | MNT_RELATIME | \
-    MNT_SOFTDEP | MNT_SYMPERM | MNT_SYNCHRONOUS | MNT_UNION | MNT_ACLS | \
+    MNT_SOFTDEP | MNT_SYMPERM | MNT_SYNCHRONOUS | MNT_UNION | MNT_NFS4ACLS | \
     MNT_POSIX1EACLS)
 /*
  * exported mount flags.
@@ -174,7 +175,7 @@ typedef struct fhandle	fhandle_t;
      MNT_NOSUID | \
      MNT_NODEV | \
      MNT_UNION | \
-     MNT_ACLS | \
+     MNT_NFS4ACLS | \
      MNT_ASYNC | \
      MNT_NOCOREDUMP | \
      MNT_IGNORE | \
@@ -251,7 +252,7 @@ typedef struct fhandle	fhandle_t;
 	"\31MNT_EXTATTR" \
 	"\30MNT_DISCARD" \
 	"\27MNT_GETARGS" \
-	"\26MNT_ACL" \
+	"\26MNT_NFS4ACLS" \
 	"\25MNT_IGNORE" \
 	"\24MNT_FORCE" \
 	"\23MNT_RELOAD" \
