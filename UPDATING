@@ -1,4 +1,4 @@
-$NetBSD: UPDATING,v 1.320 2021/08/21 09:59:45 andvar Exp $
+$NetBSD: UPDATING,v 1.321 2021/09/18 03:05:19 christos Exp $
 
 This file (UPDATING) is intended to be a brief reference to recent
 changes that might cause problems in the build process, and a guide for
@@ -18,6 +18,11 @@ See also: BUILDING, build.sh, Makefile.
 
 Recent changes:
 ^^^^^^^^^^^^^^^
+
+20210917:
+	Changed MNT_ACLS to default to POSIX1e ACLs instead of NFSv4
+	ACLs, to be compatible with FreeBSD. If you are using NFSv4 ACLs
+	and have "acls" in /etc/fstab you'll need to change it to "nfs4acls".
 
 20210711:
 	Updated GMP sources may require cleaning in tools/gmp and/or in
