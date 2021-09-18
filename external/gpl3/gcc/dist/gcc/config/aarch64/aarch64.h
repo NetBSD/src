@@ -1200,7 +1200,7 @@ extern const char *aarch64_rewrite_mcpu (int argc, const char **argv);
 #define MCPU_TO_MARCH_SPEC_FUNCTIONS \
   { "rewrite_mcpu", aarch64_rewrite_mcpu },
 
-#if defined(__aarch64__) && defined(__linux__)
+#if defined(__aarch64__) && (defined(__linux__) || defined(__NetBSD__))
 extern const char *host_detect_local_cpu (int argc, const char **argv);
 #define HAVE_LOCAL_CPU_DETECT
 # define EXTRA_SPEC_FUNCTIONS						\
