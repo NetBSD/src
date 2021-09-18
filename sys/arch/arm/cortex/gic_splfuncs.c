@@ -1,4 +1,4 @@
-/* $NetBSD: gic_splfuncs.c,v 1.1 2021/08/10 15:33:09 jmcneill Exp $ */
+/* $NetBSD: gic_splfuncs.c,v 1.2 2021/09/18 12:25:07 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2021 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gic_splfuncs.c,v 1.1 2021/08/10 15:33:09 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gic_splfuncs.c,v 1.2 2021/09/18 12:25:07 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -75,26 +75,52 @@ gic_spllower(int newipl)
 static void
 gic_splx(int newipl)
 {
-	struct cpu_info * const ci = curcpu();
+	struct cpu_info *ci = curcpu();
+	register_t psw;
 
 	if (newipl >= ci->ci_cpl) {
 		return;
 	}
 
-	if (ci->ci_hwpl <= newipl) {
-		ci->ci_cpl = newipl;
+	/*
+	 * Try to avoid touching any hardware registers (DAIF, PMR) as an
+	 * optimization for the common case of splraise followed by splx
+	 * with no interrupts in between.
+	 *
+	 * If an interrupt fires in this critical section, the vector
+	 * handler is responsible for returning to the address pointed
+	 * to by ci_splx_restart to restart the sequence.
+	 */
+	if (__predict_true(ci->ci_intr_depth == 0)) {
+		ci->ci_splx_savedipl = newipl;
+		ci->ci_splx_restart = &&restart;
+		__insn_barrier();
+checkhwpl:
 		if (ci->ci_hwpl <= newipl) {
-			return;
+			ci->ci_cpl = newipl;
+			__insn_barrier();
+			ci->ci_splx_restart = NULL;
+			goto dosoft;
+		} else {
+			ci->ci_splx_restart = NULL;
+			goto dohard;
 		}
+restart:
+		ci = curcpu();
+		newipl = ci->ci_splx_savedipl;
+		goto checkhwpl;
 	}
 
-	register_t psw = DISABLE_INTERRUPT_SAVE();
+dohard:
+	psw = DISABLE_INTERRUPT_SAVE();
 	ci->ci_intr_depth++;
 	pic_do_pending_ints(psw, newipl, NULL);
 	ci->ci_intr_depth--;
 	if ((psw & I32_bit) == 0) {
 		ENABLE_INTERRUPT();
 	}
+
+dosoft:
 	cpu_dosoftints();
 }
 
