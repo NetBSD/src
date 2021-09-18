@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_in_cksum.S,v 1.5 2015/01/06 17:43:16 christos Exp $	*/
+/*	$NetBSD: cpu_in_cksum.S,v 1.6 2021/09/18 06:31:46 rin Exp $	*/
 
 /*-
  * Copyright (c) 2000 SHIMIZU Ryo <ryo@misakimix.org>
@@ -34,7 +34,7 @@
 #include <machine/asm.h>
 #include "assym.h"
 
-__KERNEL_RCSID(0, "$NetBSD: cpu_in_cksum.S,v 1.5 2015/01/06 17:43:16 christos Exp $")
+__KERNEL_RCSID(0, "$NetBSD: cpu_in_cksum.S,v 1.6 2021/09/18 06:31:46 rin Exp $")
 
 
 #define	reg_tmp0		r0
@@ -255,16 +255,12 @@ cksum128mod:
 	mov	reg_mlen,reg_tmp0
 	and	#124,reg_tmp0
 	sub	reg_tmp0,reg_mlen
+	mov	reg_tmp0,reg_tmp3
 
-	mov.l	.L_cksum128_tail_p,reg_tmp3
-	sub	reg_tmp0,reg_tmp3
-	jmp	@reg_tmp3
+	mova	cksum128_tail,reg_tmp0
+	sub	reg_tmp3,reg_tmp0
+	jmp	@reg_tmp0
 	 clrt
-
-	.align	2
-.L_cksum128_tail_p:
-	.long	cksum128_tail
-
 
 	.align	2
 cksum128:
