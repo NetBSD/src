@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_stubs.c,v 1.2 2021/09/08 11:02:05 jmcneill Exp $	*/
+/*	$NetBSD: bus_stubs.c,v 1.3 2021/09/18 09:49:57 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_stubs.c,v 1.2 2021/09/08 11:02:05 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_stubs.c,v 1.3 2021/09/18 09:49:57 jmcneill Exp $");
 
 #include <sys/systm.h>
 #include <sys/asan.h>
@@ -40,7 +40,11 @@ __KERNEL_RCSID(0, "$NetBSD: bus_stubs.c,v 1.2 2021/09/08 11:02:05 jmcneill Exp $
 bool
 bus_space_is_equal(bus_space_tag_t t1, bus_space_tag_t t2)
 {
-	return t1->bs_cookie == t2->bs_cookie;
+	if (t1 == t2) {
+		return true;
+	}
+
+	return t1 != NULL && t2 != NULL && t1->bs_cookie == t2->bs_cookie;
 }
 
 int
