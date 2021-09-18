@@ -1,4 +1,4 @@
-/* $NetBSD: lunaws.c,v 1.34 2021/09/04 18:38:03 tsutsui Exp $ */
+/* $NetBSD: lunaws.c,v 1.35 2021/09/18 13:44:02 tsutsui Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: lunaws.c,v 1.34 2021/09/04 18:38:03 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lunaws.c,v 1.35 2021/09/18 13:44:02 tsutsui Exp $");
 
 #include "opt_wsdisplay_compat.h"
 #include "wsmouse.h"
@@ -57,10 +57,43 @@ __KERNEL_RCSID(0, "$NetBSD: lunaws.c,v 1.34 2021/09/04 18:38:03 tsutsui Exp $");
 #define OMKBD_RXQ_LEN		64
 #define OMKBD_RXQ_LEN_MASK	(OMKBD_RXQ_LEN - 1)
 #define OMKBD_NEXTRXQ(x)	(((x) + 1) & OMKBD_RXQ_LEN_MASK)
+#define OMKBD_TXQ_LEN		16
+#define OMKBD_TXQ_LEN_MASK	(OMKBD_TXQ_LEN - 1)
+#define OMKBD_NEXTTXQ(x)	(((x) + 1) & OMKBD_TXQ_LEN_MASK)
+
+/* Keyboard commands */
+/*  000XXXXXb : LED commands */
+#define OMKBD_LED_ON_KANA	0x10	/* kana LED on */
+#define OMKBD_LED_OFF_KANA	0x00	/* kana LED off */
+#define OMKBD_LED_ON_CAPS	0x11	/* caps LED on */
+#define OMKBD_LED_OFF_CAPS	0x01	/* caps LED off */
+/*  010XXXXXb : buzzer commands */
+#define OMKBD_BUZZER		0x40
+#define OMKBD_BUZZER_PERIOD	0x18
+#define OMKBD_BUZZER_40MS	0x00
+#define OMKBD_BUZZER_150MS	0x08
+#define OMKBD_BUZZER_400MS	0x10
+#define OMKBD_BUZZER_700MS	0x18
+#define OMKBD_BUZZER_PITCH	0x07
+#define OMKBD_BUZZER_6000HZ	0x00
+#define OMKBD_BUZZER_3000HZ	0x01
+#define OMKBD_BUZZER_1500HZ	0x02
+#define OMKBD_BUZZER_1000HZ	0x03
+#define OMKBD_BUZZER_600HZ	0x04
+#define OMKBD_BUZZER_300HZ	0x05
+#define OMKBD_BUZZER_150HZ	0x06
+#define OMKBD_BUZZER_100HZ	0x07
+/*  011XXXXXb : mouse on command */
+#define OMKBD_MOUSE_ON		0x60
+/*  001XXXXXb : mouse off command */
+#define OMKBD_MOUSE_OFF		0x20
+
+#define OMKBD_BUZZER_DEFAULT	\
+	(OMKBD_BUZZER | OMKBD_BUZZER_40MS | OMKBD_BUZZER_1500HZ)
 
 static const uint8_t ch1_regs[6] = {
 	WR0_RSTINT,				/* Reset E/S Interrupt */
-	WR1_RXALLS,				/* Rx per char, No Tx */
+	WR1_RXALLS | WR1_TXENBL,		/* Rx per char, Tx */
 	0,					/* */
 	WR3_RX8BIT | WR3_RXENBL,		/* Rx */
 	WR4_BAUD96 | WR4_STOP1 | WR4_NPARITY,	/* Tx/Rx */
@@ -75,6 +108,12 @@ struct ws_softc {
 	uint8_t		sc_rxq[OMKBD_RXQ_LEN];
 	u_int		sc_rxqhead;
 	u_int		sc_rxqtail;
+	uint8_t		sc_txq[OMKBD_TXQ_LEN];
+	u_int		sc_txqhead;
+	u_int		sc_txqtail;
+	bool		sc_tx_busy;
+	bool		sc_tx_done;
+	int		sc_leds;
 #if NWSMOUSE > 0
 	device_t	sc_wsmousedev;
 	int		sc_msbuttons, sc_msdx, sc_msdy;
@@ -84,28 +123,36 @@ struct ws_softc {
 	int		sc_rawkbd;
 };
 
-static void omkbd_input(void *, int);
-static void omkbd_decode(void *, int, u_int *, int *);
+static void omkbd_input(struct ws_softc *, int);
+static void omkbd_send(struct ws_softc *, uint8_t);
+static void omkbd_decode(struct ws_softc *, int, u_int *, int *);
+
 static int  omkbd_enable(void *, int);
 static void omkbd_set_leds(void *, int);
 static int  omkbd_ioctl(void *, u_long, void *, int, struct lwp *);
 
+static void omkbd_complex_buzzer(struct ws_softc *, struct wskbd_bell_data *);
+static uint8_t omkbd_get_buzcmd(struct ws_softc *, struct wskbd_bell_data *,
+    uint8_t);
+
 static const struct wskbd_mapdata omkbd_keymapdata = {
-	omkbd_keydesctab,
-	KB_JP,
+	.keydesc = omkbd_keydesctab,
+	.layout  = KB_JP,
 };
 static const struct wskbd_accessops omkbd_accessops = {
-	omkbd_enable,
-	omkbd_set_leds,
-	omkbd_ioctl,
+	.enable   = omkbd_enable,
+	.set_leds = omkbd_set_leds,
+	.ioctl    = omkbd_ioctl,
 };
 
 void	ws_cnattach(void);
 static void ws_cngetc(void *, u_int *, int *);
 static void ws_cnpollc(void *, int);
+static void ws_cnbell(void *, u_int, u_int, u_int);
 static const struct wskbd_consops ws_consops = {
-	ws_cngetc,
-	ws_cnpollc,
+	.getc  = ws_cngetc,
+	.pollc = ws_cnpollc,
+	.bell  = ws_cnbell,
 };
 
 #if NWSMOUSE > 0
@@ -128,6 +175,18 @@ static void wsattach(device_t, device_t, void *);
 
 CFATTACH_DECL_NEW(ws, sizeof(struct ws_softc),
     wsmatch, wsattach, NULL, NULL);
+
+/* #define LUNAWS_DEBUG */
+
+#ifdef LUNAWS_DEBUG
+#define DEBUG_KBDTX	0x01
+#define DEBUG_RXSOFT	0x02
+#define DEBUG_BUZZER	0x04
+uint32_t lunaws_debug = 0x00 /* | DEBUG_BUZZER | DEBUG_KBDTX | DEBUG_RXSOFT */;
+#define DPRINTF(x, y)   if (lunaws_debug & (x)) printf y
+#else
+#define DPRINTF(x, y)   __nothing
+#endif
 
 static int
 wsmatch(device_t parent, cfdata_t cf, void *aux)
@@ -159,16 +218,23 @@ wsattach(device_t parent, device_t self, void *aux)
 	setsioreg(sc->sc_ctl, WR3, sc->sc_wr[WR3]);
 	setsioreg(sc->sc_ctl, WR5, sc->sc_wr[WR5]);
 	setsioreg(sc->sc_ctl, WR0, sc->sc_wr[WR0]);
-	setsioreg(sc->sc_ctl, WR1, sc->sc_wr[WR1]);
-
-	syscnputc((dev_t)1, 0x20); /* keep quiet mouse */
 
 	sc->sc_rxqhead = 0;
 	sc->sc_rxqtail = 0;
+	sc->sc_txqhead = 0;
+	sc->sc_txqtail = 0;
+	sc->sc_tx_busy = false;
+	sc->sc_tx_done = false;
 
 	sc->sc_si = softint_establish(SOFTINT_SERIAL, wssoftintr, sc);
 
+	/* enable interrupt */
+	setsioreg(sc->sc_ctl, WR1, sc->sc_wr[WR1]);
+
 	aprint_normal("\n");
+
+	/* keep mouse quiet */
+	omkbd_send(sc, OMKBD_MOUSE_OFF);
 
 	a.console = (args->hwflags == 1);
 	a.keymap = &omkbd_keymapdata;
@@ -189,7 +255,6 @@ wsattach(device_t parent, device_t self, void *aux)
 	sc->sc_msreport = 0;
 }
 
-/*ARGSUSED*/
 static void
 wsintr(void *arg)
 {
@@ -197,6 +262,7 @@ wsintr(void *arg)
 	struct sioreg *sio = sc->sc_ctl;
 	uint8_t code;
 	int rr;
+	bool handled = false;
 
 	rr = getsiocsr(sio);
 	if ((rr & RR_RXRDY) != 0) {
@@ -209,11 +275,18 @@ wsintr(void *arg)
 			sc->sc_rxq[sc->sc_rxqtail] = code;
 			sc->sc_rxqtail = OMKBD_NEXTRXQ(sc->sc_rxqtail);
 		} while (((rr = getsiocsr(sio)) & RR_RXRDY) != 0);
-		softint_schedule(sc->sc_si);
+		handled = true;
 	}
-	if ((rr & RR_TXRDY) != 0)
+	if ((rr & RR_TXRDY) != 0) {
 		sio->sio_cmd = WR0_RSTPEND;
-	/* not capable of transmit, yet */
+		if (sc->sc_tx_busy) {
+			sc->sc_tx_busy = false;
+			sc->sc_tx_done = true;
+			handled = true;
+		}
+	}
+	if (handled)
+		softint_schedule(sc->sc_si);
 }
 
 static void
@@ -222,8 +295,32 @@ wssoftintr(void *arg)
 	struct ws_softc *sc = arg;
 	uint8_t code;
 
+	/* handle pending keyboard commands */
+	if (sc->sc_tx_done) {
+		int s;
+
+		s = splserial();
+		sc->sc_tx_done = false;
+		DPRINTF(DEBUG_KBDTX, ("%s: tx complete\n", __func__));
+		if (sc->sc_txqhead != sc->sc_txqtail) {
+			struct sioreg *sio = sc->sc_ctl;
+
+			sc->sc_tx_busy = true;
+			sio->sio_data = sc->sc_txq[sc->sc_txqhead];
+			DPRINTF(DEBUG_KBDTX,
+			    ("%s: sio_data <- txq[%2d] (%02x)\n", __func__,
+			    sc->sc_txqhead, sc->sc_txq[sc->sc_txqhead]));
+
+			sc->sc_txqhead = OMKBD_NEXTTXQ(sc->sc_txqhead);
+		}
+		splx(s);
+	}
+
+	/* handle received keyboard and mouse data */
 	while (sc->sc_rxqhead != sc->sc_rxqtail) {
 		code = sc->sc_rxq[sc->sc_rxqhead];
+		DPRINTF(DEBUG_RXSOFT, ("%s: %02x <- rxq[%2d]\n", __func__,
+		    code, sc->sc_rxqhead));
 		sc->sc_rxqhead = OMKBD_NEXTRXQ(sc->sc_rxqhead);
 		/*
 		 * if (code >= 0x80 && code <= 0x87), i.e.
@@ -265,13 +362,38 @@ wssoftintr(void *arg)
 }
 
 static void
-omkbd_input(void *v, int data)
+omkbd_send(struct ws_softc *sc, uint8_t txdata)
 {
-	struct ws_softc *sc = v;
+	int s;
+
+	if (!sc->sc_tx_busy) {
+		struct sioreg *sio = sc->sc_ctl;
+
+		DPRINTF(DEBUG_KBDTX,
+		    ("%s: sio_data <- %02x\n", __func__, txdata));
+		s = splserial();
+		sc->sc_tx_busy = true;
+		sio->sio_data = txdata;
+		splx(s);
+	} else {
+		s = splsoftserial();
+		sc->sc_txq[sc->sc_txqtail] = txdata;
+		DPRINTF(DEBUG_KBDTX,
+		    ("%s: txq[%2d] <- %02x\n", __func__,
+		    sc->sc_txqtail, sc->sc_txq[sc->sc_txqtail]));
+		sc->sc_txqtail = OMKBD_NEXTTXQ(sc->sc_txqtail);
+		splx(s);
+		softint_schedule(sc->sc_si);
+	}
+}
+
+static void
+omkbd_input(struct ws_softc *sc, int data)
+{
 	u_int type;
 	int key;
 
-	omkbd_decode(v, data, &type, &key);
+	omkbd_decode(sc, data, &type, &key);
 
 #ifdef WSDISPLAY_COMPAT_RAWKBD
 	if (sc->sc_rawkbd) {
@@ -299,7 +421,7 @@ omkbd_input(void *v, int data)
 }
 
 static void
-omkbd_decode(void *v, int datain, u_int *type, int *dataout)
+omkbd_decode(struct ws_softc *sc, int datain, u_int *type, int *dataout)
 {
 
 	*type = (datain & 0x80) ? WSCONS_EVENT_KEY_UP : WSCONS_EVENT_KEY_DOWN;
@@ -307,17 +429,96 @@ omkbd_decode(void *v, int datain, u_int *type, int *dataout)
 }
 
 static void
-ws_cngetc(void *v, u_int *type, int *data)
+omkbd_complex_buzzer(struct ws_softc *sc, struct wskbd_bell_data *wbd)
 {
-	int code;
+	uint8_t buzcmd;
 
-	code = syscngetc((dev_t)1);
-	omkbd_decode(v, code, type, data);
+	buzcmd = omkbd_get_buzcmd(sc, wbd, OMKBD_BUZZER_DEFAULT);
+	omkbd_send(sc, buzcmd);
+}
+
+static uint8_t
+omkbd_get_buzcmd(struct ws_softc *sc, struct wskbd_bell_data *wbd,
+    uint8_t obuzcmd)
+{
+	u_int pitch, period;
+	uint8_t buzcmd;
+
+	pitch  = wbd->pitch;
+	period = wbd->period;
+	buzcmd = OMKBD_BUZZER;
+
+	if ((wbd->which & WSKBD_BELL_DOPERIOD) == 0)
+		buzcmd |= obuzcmd & OMKBD_BUZZER_PERIOD;
+	else if (period >= 700)
+		buzcmd |= OMKBD_BUZZER_700MS;
+	else if (period >= 400)
+		buzcmd |= OMKBD_BUZZER_400MS;
+	else if (period >= 150)
+		buzcmd |= OMKBD_BUZZER_150MS;
+	else
+		buzcmd |= OMKBD_BUZZER_40MS;
+
+	if ((wbd->which & WSKBD_BELL_DOPITCH) == 0)
+		buzcmd |= obuzcmd & OMKBD_BUZZER_PITCH;
+	else if (pitch >= 6000)
+		buzcmd |= OMKBD_BUZZER_6000HZ;
+	else if (pitch >= 3000)
+		buzcmd |= OMKBD_BUZZER_3000HZ;
+	else if (pitch >= 1500)
+		buzcmd |= OMKBD_BUZZER_1500HZ;
+	else if (pitch >= 1000)
+		buzcmd |= OMKBD_BUZZER_1000HZ;
+	else if (pitch >= 600)
+		buzcmd |= OMKBD_BUZZER_600HZ;
+	else if (pitch >= 300)
+		buzcmd |= OMKBD_BUZZER_300HZ;
+	else if (pitch >= 150)
+		buzcmd |= OMKBD_BUZZER_150HZ;
+	else
+		buzcmd |= OMKBD_BUZZER_100HZ;
+		
+	/* no volume control for buzzer on the LUNA keyboards */
+
+	return buzcmd;
 }
 
 static void
-ws_cnpollc(void *v, int on)
+ws_cngetc(void *cookie, u_int *type, int *data)
 {
+	struct ws_softc *sc = cookie;
+	int code;
+
+	code = syscngetc((dev_t)1);
+	omkbd_decode(sc, code, type, data);
+}
+
+static void
+ws_cnpollc(void *cookie, int on)
+{
+}
+
+static void
+ws_cnbell(void *cookie, u_int pitch, u_int period, u_int volume)
+{
+	struct ws_softc *sc = cookie;
+	struct wskbd_bell_data wbd;
+	uint8_t buzcmd;
+
+	/*
+	 * XXX cnbell(9) man page should describe each args..
+	 *     (it looks similar to the struct wskbd_bell_data)
+	 * pitch:  bell frequency in hertz
+	 * period: bell period in ms
+	 * volume: bell volume as a percentage (0-100) (as spkr(4))
+	 */
+	wbd.which  = WSKBD_BELL_DOALL;
+	wbd.period = period;
+	wbd.pitch  = pitch;
+	wbd.volume = volume;
+	buzcmd = omkbd_get_buzcmd(sc, &wbd, OMKBD_BUZZER_DEFAULT);
+
+	syscnputc((dev_t)1, buzcmd);
 }
 
 /* EXPORT */ void
@@ -331,39 +532,67 @@ ws_cnattach(void)
 }
 
 static int
-omkbd_enable(void *v, int on)
+omkbd_enable(void *cookie, int on)
 {
 
 	return 0;
 }
 
 static void
-omkbd_set_leds(void *v, int leds)
+omkbd_set_leds(void *cookie, int leds)
 {
+	struct ws_softc *sc = cookie;
+	uint8_t ledcmd;
 
-#if 0
-	syscnputc((dev_t)1, 0x10); /* kana LED on */
-	syscnputc((dev_t)1, 0x00); /* kana LED off */
-	syscnputc((dev_t)1, 0x11); /* caps LED on */
-	syscnputc((dev_t)1, 0x01); /* caps LED off */
+	sc->sc_leds = leds;
+	if ((leds & WSKBD_LED_CAPS) != 0) {
+		ledcmd = OMKBD_LED_ON_CAPS;
+	} else {
+		ledcmd = OMKBD_LED_OFF_CAPS;
+	}
+	omkbd_send(sc, ledcmd);
+
+#if 0	/* no KANA lock support in wskbd */
+	if ((leds & WSKBD_LED_KANA) != 0) {
+		ledcmd = OMKBD_LED_ON_KANA;
+	} else
 #endif
+	{
+		ledcmd = OMKBD_LED_OFF_KANA;
+	}
+	omkbd_send(sc, ledcmd);
 }
 
 static int
-omkbd_ioctl(void *v, u_long cmd, void *data, int flag, struct lwp *l)
+omkbd_ioctl(void *cookie, u_long cmd, void *data, int flag, struct lwp *l)
 {
-#ifdef WSDISPLAY_COMPAT_RAWKBD
-	struct ws_softc *sc = v;
-#endif
+	struct ws_softc *sc = cookie;
+	struct wskbd_bell_data *wbd;
 
 	switch (cmd) {
 	case WSKBDIO_GTYPE:
 		*(int *)data = WSKBD_TYPE_LUNA;
 		return 0;
 	case WSKBDIO_SETLEDS:
-	case WSKBDIO_GETLEDS:
-	case WSKBDIO_COMPLEXBELL:	/* XXX capable of complex bell */
+		omkbd_set_leds(cookie, *(int *)data);
 		return 0;
+	case WSKBDIO_GETLEDS:
+		*(int *)data = sc->sc_leds;
+		return 0;
+
+	/*
+	 * Note all WSKBDIO_*BELL ioctl(2)s except WSKBDIO_COMPLEXBELL
+	 * are handled MI wskbd(4) layer.
+	 * (wskbd_displayioctl() in src/sys/dev/wscons/wskbd.c)
+	 */
+	case WSKBDIO_COMPLEXBELL:
+		wbd = data;
+		DPRINTF(DEBUG_BUZZER,
+		    ("%s: WSKBDIO_COMPLEXBELL: pitch = %d, period = %d\n",
+		    __func__, wbd->pitch, wbd->period));
+		omkbd_complex_buzzer(sc, wbd);
+		return 0;
+
 #ifdef WSDISPLAY_COMPAT_RAWKBD
 	case WSKBDIO_SETMODE:
 		sc->sc_rawkbd = *(int *)data == WSKBD_RAW;
@@ -379,15 +608,19 @@ omkbd_ioctl(void *v, u_long cmd, void *data, int flag, struct lwp *l)
 #if NWSMOUSE > 0
 
 static int
-omms_enable(void *v)
+omms_enable(void *cookie)
 {
-	syscnputc((dev_t)1, 0x60); /* enable 3 byte long mouse reporting */
+	struct ws_softc *sc = cookie;
+
+	/* enable 3 byte long mouse reporting */
+	omkbd_send(sc, OMKBD_MOUSE_ON);
+
 	return 0;
 }
 
 /*ARGUSED*/
 static int
-omms_ioctl(void *v, u_long cmd, void *data, int flag, struct lwp *l)
+omms_ioctl(void *cookie, u_long cmd, void *data, int flag, struct lwp *l)
 {
 
 	if (cmd == WSMOUSEIO_GTYPE) {
@@ -398,8 +631,10 @@ omms_ioctl(void *v, u_long cmd, void *data, int flag, struct lwp *l)
 }
 
 static void
-omms_disable(void *v)
+omms_disable(void *cookie)
 {
-	syscnputc((dev_t)1, 0x20); /* quiet mouse */
+	struct ws_softc *sc = cookie;
+
+	omkbd_send(sc, OMKBD_MOUSE_OFF);
 }
 #endif
