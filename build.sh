@@ -1,5 +1,5 @@
 #! /usr/bin/env sh
-#	$NetBSD: build.sh,v 1.357 2021/09/17 21:22:38 joerg Exp $
+#	$NetBSD: build.sh,v 1.358 2021/09/18 01:47:07 christos Exp $
 #
 # Copyright (c) 2001-2011 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -473,6 +473,8 @@ level of source directory"
 	# These variables can be overridden via "-V var=value" if
 	# you know what you are doing.
 	#
+	unsetmakeenv C_INCLUDE_PATH
+	unsetmakeenv CPLUS_INCLUDE_PATH
 	unsetmakeenv INFODIR
 	unsetmakeenv LESSCHARSET
 	unsetmakeenv MAKEFLAGS
@@ -1972,7 +1974,7 @@ createmakewrapper()
 	eval cat <<EOF ${makewrapout}
 #! ${HOST_SH}
 # Set proper variables to allow easy "make" building of a NetBSD subtree.
-# Generated from:  \$NetBSD: build.sh,v 1.357 2021/09/17 21:22:38 joerg Exp $
+# Generated from:  \$NetBSD: build.sh,v 1.358 2021/09/18 01:47:07 christos Exp $
 # with these arguments: ${_args}
 #
 

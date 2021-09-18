@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: maketars,v 1.91 2020/05/18 21:19:34 jmcneill Exp $
+# $NetBSD: maketars,v 1.92 2021/09/18 01:47:07 christos Exp $
 #
 # Make release tar files for some or all lists.  Usage:
 # maketars [-b] [-x] [-i installdir] [-a arch] [-m machine] [-s setsdir]
@@ -166,7 +166,7 @@ TMPFILES=
 cleanup()
 {
 	es=$?
-	/bin/rm -rf "${SDIR}" ${TMPFILES}
+	rm -rf "${SDIR}" ${TMPFILES}
 	trap - 0
 	exit ${es}
 }
