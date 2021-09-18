@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_in_cksum.S,v 1.6 2021/09/18 06:31:46 rin Exp $	*/
+/*	$NetBSD: cpu_in_cksum.S,v 1.7 2021/09/18 06:32:41 rin Exp $	*/
 
 /*-
  * Copyright (c) 2000 SHIMIZU Ryo <ryo@misakimix.org>
@@ -34,7 +34,7 @@
 #include <machine/asm.h>
 #include "assym.h"
 
-__KERNEL_RCSID(0, "$NetBSD: cpu_in_cksum.S,v 1.6 2021/09/18 06:31:46 rin Exp $")
+__KERNEL_RCSID(0, "$NetBSD: cpu_in_cksum.S,v 1.7 2021/09/18 06:32:41 rin Exp $")
 
 
 #define	reg_tmp0		r0
@@ -98,6 +98,7 @@ __KERNEL_RCSID(0, "$NetBSD: cpu_in_cksum.S,v 1.6 2021/09/18 06:31:46 rin Exp $")
  */
 ENTRY(cpu_in_cksum)
 	sts.l	pr,@-sp
+	PIC_PROLOGUE(.L_got)
 
 	tst	reg_len, reg_len
 	bt/s	mbuf_loop_done
@@ -222,6 +223,7 @@ mbuf_loop_done:
 
 in_cksum_return:
 	not	reg_sum,r0
+	PIC_EPILOGUE
 	lds.l	@sp+,pr
 	rts
 	 extu.w	r0,r0
@@ -233,15 +235,17 @@ out_of_mbufs:
 
 	mov.l	reg_sum,@-sp	/* save: call clobbered register */
 
-	jsr	@reg_tmp3
+1:	CALL	reg_tmp3
 	 mov	reg_tmp0,r4
 
 	bra	in_cksum_return
 	 mov.l	@sp+,reg_sum	/* restore */
 
 	.align 2
+.L_got:
+	PIC_GOT_DATUM
 .L_printf:
-	.long	_C_LABEL(printf)
+	CALL_DATUM(_C_LABEL(printf), 1b)
 
 	.align 2	/* mova target */
 .L_message_out_of_data:
