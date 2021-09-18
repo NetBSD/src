@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_in_cksum.S,v 1.10 2021/09/18 19:21:39 uwe Exp $	*/
+/*	$NetBSD: cpu_in_cksum.S,v 1.11 2021/09/18 21:34:56 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2000 SHIMIZU Ryo <ryo@misakimix.org>
@@ -34,7 +34,7 @@
 #include <machine/asm.h>
 #include "assym.h"
 
-__KERNEL_RCSID(0, "$NetBSD: cpu_in_cksum.S,v 1.10 2021/09/18 19:21:39 uwe Exp $")
+__KERNEL_RCSID(0, "$NetBSD: cpu_in_cksum.S,v 1.11 2021/09/18 21:34:56 uwe Exp $")
 
 
 #define	reg_byte_swapped	r1
@@ -58,9 +58,9 @@ __KERNEL_RCSID(0, "$NetBSD: cpu_in_cksum.S,v 1.10 2021/09/18 19:21:39 uwe Exp $"
 
 #if _BYTE_ORDER == BIG_ENDIAN
 #define	ADDB	\
-	mov.b	@reg_w+, r0		; \
-	ROL				; \
-	extu.b	r0, r0	; \
+	mov.b	@reg_w+, r0	; \
+	ROL			; \
+	extu.b	r0, r0		; \
 	add	r0, reg_sum	; \
 	not	reg_byte_swapped, reg_byte_swapped
 #else
