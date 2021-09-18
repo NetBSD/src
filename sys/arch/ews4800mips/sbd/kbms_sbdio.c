@@ -1,4 +1,4 @@
-/*	$NetBSD: kbms_sbdio.c,v 1.13 2021/08/07 16:18:53 thorpej Exp $	*/
+/*	$NetBSD: kbms_sbdio.c,v 1.14 2021/09/18 15:14:40 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2005 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kbms_sbdio.c,v 1.13 2021/08/07 16:18:53 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kbms_sbdio.c,v 1.14 2021/09/18 15:14:40 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -408,7 +408,6 @@ kbd_ioctl(void *arg, u_long cmd, void *data, int flag, struct lwp *l)
 	case WSKBDIO_GETLEDS:
 		*(int *)data = sc->sc_leds;
 		return 0;
-	case WSKBDIO_BELL:
 	case WSKBDIO_COMPLEXBELL:
 		return 0;
 	}

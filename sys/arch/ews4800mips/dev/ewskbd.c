@@ -1,4 +1,4 @@
-/*	$NetBSD: ewskbd.c,v 1.13 2021/08/07 16:18:53 thorpej Exp $	*/
+/*	$NetBSD: ewskbd.c,v 1.14 2021/09/18 15:14:40 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 2005 Izumi Tsutsui.  All rights reserved.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ewskbd.c,v 1.13 2021/08/07 16:18:53 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ewskbd.c,v 1.14 2021/09/18 15:14:40 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>
@@ -494,12 +494,7 @@ ewskbd_wskbd_ioctl(void *cookie, u_long cmd, void *data, int flag,
 		break;
 
 #ifdef notyet
-	case WSKBDIO_BELL:
 	case WSKBDIO_COMPLEXBELL:
-	case WSKBDIO_SETBELL:
-	case WSKBDIO_GETBELL:
-	case WSKBDIO_SETDEFAULTBELL:
-	case WSKBDIO_GETDEFAULTBELL:
 	case WSKBDIO_SETKEYREPEAT:
 	case WSKBDIO_GETKEYREPEAT:
 	case WSKBDIO_SETDEFAULTKEYREPEAT:

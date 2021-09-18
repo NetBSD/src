@@ -1,4 +1,4 @@
-/*	$NetBSD: zs_kbd.c,v 1.13 2021/08/07 16:19:04 thorpej Exp $	*/
+/*	$NetBSD: zs_kbd.c,v 1.14 2021/09/18 15:14:41 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 2004 Steve Rumble
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zs_kbd.c,v 1.13 2021/08/07 16:19:04 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs_kbd.c,v 1.14 2021/09/18 15:14:41 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>
@@ -536,12 +536,7 @@ zskbd_wskbd_ioctl(void *cookie, u_long cmd,
 		break;
 
 #ifdef notyet
-	case WSKBDIO_BELL:
 	case WSKBDIO_COMPLEXBELL:
-	case WSKBDIO_SETBELL:
-	case WSKBDIO_GETBELL:
-	case WSKBDIO_SETDEFAULTBELL:
-	case WSKBDIO_GETDEFAULTBELL:
 	case WSKBDIO_SETKEYREPEAT:
 	case WSKBDIO_GETKEYREPEAT:
 	case WSKBDIO_SETDEFAULTKEYREPEAT:
