@@ -133,7 +133,7 @@ enum FQDN {
 #define DHCP_OPTION_LEN         (MTU_MAX - DHCP_FIXED_LEN)
 
 /* Some crappy DHCP servers require the BOOTP minimum length */
-#define BOOTP_MESSAGE_LENTH_MIN 300
+#define BOOTP_MESSAGE_LENGTH_MIN 300
 
 struct dhcp_message {
 	uint8_t op;           /* message type */
