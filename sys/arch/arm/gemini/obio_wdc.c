@@ -1,4 +1,4 @@
-/*	$NetBSD: obio_wdc.c,v 1.10 2021/09/19 10:34:08 andvar Exp $	*/
+/*	$NetBSD: obio_wdc.c,v 1.11 2021/09/19 20:52:47 andvar Exp $	*/
 
 /* adapted from iq31244/wdc_obio.c:
  *	NetBSD: wdc_obio.c,v 1.5 2008/04/28 20:23:16 martin Exp
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: obio_wdc.c,v 1.10 2021/09/19 10:34:08 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: obio_wdc.c,v 1.11 2021/09/19 20:52:47 andvar Exp $");
 
 #include "locators.h"
 
@@ -93,7 +93,7 @@ wdc_obio_attach(device_t parent, device_t self, void *aux)
 	/*
 	 * we treat the two channels of the Gemini MIDE controller
 	 * as separate wdc controllers, because they have
-	 * independent interrupts.  'chan' here is an MIDE channel,
+	 * independent interrupts.  'chan' here is a MIDE channel,
 	 * (not to be confused with ATA channel).
 	 */
 	switch (obio->obio_addr) {
