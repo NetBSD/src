@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwn.c,v 1.96 2021/06/16 00:21:18 riastradh Exp $	*/
+/*	$NetBSD: if_iwn.c,v 1.97 2021/09/19 11:37:01 andvar Exp $	*/
 /*	$OpenBSD: if_iwn.c,v 1.135 2014/09/10 07:22:09 dcoppa Exp $	*/
 
 /*-
@@ -22,7 +22,7 @@
  * adapters.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iwn.c,v 1.96 2021/06/16 00:21:18 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iwn.c,v 1.97 2021/09/19 11:37:01 andvar Exp $");
 
 #define IWN_USE_RBUF	/* Use local storage for RX */
 #undef IWN_HWCRYPTO	/* XXX does not even compile yet */
@@ -4477,14 +4477,14 @@ iwn_config_bt_coex_adv_config(struct iwn_softc *sc, struct iwn_bt_basic *basic,
 	btprot.type = 1;
 	error = iwn_cmd(sc, IWN_CMD_BT_COEX_PROT, &btprot, sizeof btprot, 1);
 	if (error != 0) {
-		aprint_error_dev(sc->sc_dev, "could not open BT protcol\n");
+		aprint_error_dev(sc->sc_dev, "could not open BT protocol\n");
 		return error;
 	}
 
 	btprot.open = 0;
 	error = iwn_cmd(sc, IWN_CMD_BT_COEX_PROT, &btprot, sizeof btprot, 1);
 	if (error != 0) {
-		aprint_error_dev(sc->sc_dev, "could not close BT protcol\n");
+		aprint_error_dev(sc->sc_dev, "could not close BT protocol\n");
 		return error;
 	}
 	return 0;
