@@ -1,4 +1,4 @@
-/*	$NetBSD: auth.c,v 1.24 2018/12/16 16:06:39 maya Exp $	*/
+/*	$NetBSD: auth.c,v 1.25 2021/09/19 20:52:47 andvar Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)auth.c	8.3 (Berkeley) 5/30/95"
 #else
-__RCSID("$NetBSD: auth.c,v 1.24 2018/12/16 16:06:39 maya Exp $");
+__RCSID("$NetBSD: auth.c,v 1.25 2021/09/19 20:52:47 andvar Exp $");
 #endif
 #endif /* not lint */
 
@@ -93,7 +93,7 @@ static	int	auth_send_cnt = 0;
 static void auth_intr(int);
 
 /*
- * Authentication types supported.  Plese note that these are stored
+ * Authentication types supported.  Please note that these are stored
  * in priority order, i.e. try the first one first.
  */
 Authenticator authenticators[] = {
