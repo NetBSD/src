@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe.h,v 1.81 2021/09/16 09:55:28 msaitoh Exp $ */
+/* $NetBSD: ixgbe.h,v 1.82 2021/09/19 10:34:09 andvar Exp $ */
 
 /******************************************************************************
   SPDX-License-Identifier: BSD-3-Clause
@@ -197,7 +197,7 @@
  * 33 should be large enough even for 64K TSO
  * (32 * 2K mbuf cluster and 1 x mbuf header).
  *
- * Rerefence: 82599-X550 dataseet 7.2.1.1 "Transmit Storage in System Memory".
+ * Reference: 82599-X550 dataseet 7.2.1.1 "Transmit Storage in System Memory".
  */
 #define IXGBE_82599_SCATTER_MAX	(40 - IXGBE_TX_WTHRESH - 2)
 #define IXGBE_SCATTER_DEFAULT	33

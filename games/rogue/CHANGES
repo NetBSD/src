@@ -1,4 +1,4 @@
-$NetBSD: CHANGES,v 1.3 2000/03/13 22:53:22 soren Exp $
+$NetBSD: CHANGES,v 1.4 2021/09/19 10:34:07 andvar Exp $
 
 From:    tektronix!zeus.TEK.COM!tims@ucbvax.Berkeley.EDU
 Date:    30 Nov 87 15:08:15 PST (Mon)
@@ -6,7 +6,7 @@ To:      okeeffe.Berkeley.EDU!mckusick@ucbvax.Berkeley.EDU (Kirk McKusick)
 Subject: Re: Public domain rogue
 Return-Path: tektronix!zeus.TEK.COM!tims@ucbvax.Berkeley.EDU
 
-Here is a list of discrepencies from the documentation you sent me:
+Here is a list of discrepancies from the documentation you sent me:
 
 The -d option not implemented.
 The -r option not implemented, use "rogue save_file" instead.
@@ -14,7 +14,7 @@ Strength is between 1 and 99, not 3 and 32.
 The D command is not implemented.
 Only scrolls,potions,wands,and rings may be "call"ed something.
 The ^P command may be used to go 4 messages back, instead of just 1.
-The @ comand is not implemented.
+The @ command is not implemented.
 There are no dark rooms.
 ROGUEOPTS of flush,terse,seefloor,askme,inventory are ignored.
 	'askquit' is added to prevent ^\ from terminating the game accidentally.
