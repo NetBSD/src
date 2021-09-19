@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1125 2021/09/13 22:09:06 rillig Exp $
+# $NetBSD: mi,v 1.1126 2021/09/19 15:51:28 thorpej Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -3145,6 +3145,7 @@
 ./usr/tests/lib/libc/sys/t_connect			tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libc/sys/t_context			tests-obsolete		obsolete
 ./usr/tests/lib/libc/sys/t_dup				tests-lib-tests		compattestfile,atf
+./usr/tests/lib/libc/sys/t_eventfd			tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libc/sys/t_fork				tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libc/sys/t_fsync			tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libc/sys/t_futex_ops			tests-lib-tests		compattestfile,atf
@@ -3212,6 +3213,7 @@
 ./usr/tests/lib/libc/sys/t_swapcontext			tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libc/sys/t_syscall			tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libc/sys/t_timer_create			tests-lib-tests		compattestfile,atf
+./usr/tests/lib/libc/sys/t_timerfd			tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libc/sys/t_truncate			tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libc/sys/t_ucontext			tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libc/sys/t_umask			tests-lib-tests		compattestfile,atf
