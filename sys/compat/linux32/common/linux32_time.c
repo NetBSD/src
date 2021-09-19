@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_time.c,v 1.38 2021/09/07 11:43:04 riastradh Exp $ */
+/*	$NetBSD: linux32_time.c,v 1.39 2021/09/19 23:01:50 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2006 Emmanuel Dreyfus, all rights reserved.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: linux32_time.c,v 1.38 2021/09/07 11:43:04 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_time.c,v 1.39 2021/09/19 23:01:50 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -77,10 +77,9 @@ __KERNEL_RCSID(0, "$NetBSD: linux32_time.c,v 1.38 2021/09/07 11:43:04 riastradh 
 #include <compat/linux32/common/linux32_sched.h>
 #include <compat/linux32/linux32_syscallargs.h>
 
-extern struct timezone linux_sys_tz;
+CTASSERT(LINUX_TIMER_ABSTIME == TIMER_ABSTIME);
 
-void native_to_linux32_timespec(struct linux32_timespec *, struct timespec *);
-void linux32_to_native_timespec(struct timespec *, struct linux32_timespec *);
+extern struct timezone linux_sys_tz;
 
 int
 linux32_sys_gettimeofday(struct lwp *l, const struct linux32_sys_gettimeofday_args *uap, register_t *retval)
@@ -237,7 +236,8 @@ linux32_sys_utime(struct lwp *l, const struct linux32_sys_utime_args *uap, regis
 }
 
 void
-native_to_linux32_timespec(struct linux32_timespec *ltp, struct timespec *ntp)
+native_to_linux32_timespec(struct linux32_timespec *ltp,
+    const struct timespec *ntp)
 {
 
 	memset(ltp, 0, sizeof(*ltp));
@@ -246,12 +246,31 @@ native_to_linux32_timespec(struct linux32_timespec *ltp, struct timespec *ntp)
 }
 
 void
-linux32_to_native_timespec(struct timespec *ntp, struct linux32_timespec *ltp)
+linux32_to_native_timespec(struct timespec *ntp,
+    const struct linux32_timespec *ltp)
 {
 
 	memset(ntp, 0, sizeof(*ntp));
 	ntp->tv_sec = ltp->tv_sec;
 	ntp->tv_nsec = ltp->tv_nsec;
+}
+
+void
+native_to_linux32_itimerspec(struct linux32_itimerspec *litp,
+    const struct itimerspec *nitp)
+{
+	memset(litp, 0, sizeof(*litp));
+	native_to_linux32_timespec(&litp->it_interval, &nitp->it_interval);
+	native_to_linux32_timespec(&litp->it_value, &nitp->it_value);
+}
+
+void
+linux32_to_native_itimerspec(struct itimerspec *nitp,
+    const struct linux32_itimerspec *litp)
+{
+	memset(nitp, 0, sizeof(*nitp));
+	linux32_to_native_timespec(&nitp->it_interval, &litp->it_interval);
+	linux32_to_native_timespec(&nitp->it_value, &litp->it_value);
 }
 
 int
@@ -390,3 +409,92 @@ linux32_sys_clock_nanosleep(struct lwp *l,
 	error1 = copyout(&lrmts, SCARG_P32(uap, rmtp), sizeof lrmts);
 	return error1 ? error1 : error;
 }
+
+int
+linux32_sys_timer_create(struct lwp *l,
+    const struct linux32_sys_timer_create_args *uap, register_t *retval)
+{
+	/* {
+		syscallarg(clockid_t) clockid;
+		syscallarg(struct linux32_sigevent *) evp;
+		syscallarg(timer_t *) timerid;
+	} */
+	clockid_t id;
+	int error;
+
+	error = linux_to_native_timer_create_clockid(&id, SCARG(uap, clockid));
+	if (error == 0) {
+		error = timer_create1(SCARG(uap, timerid), id,
+		    (void *)SCARG(uap, evp), linux32_sigevent_copyin, l);
+	}
+
+	return error;
+}
+
+int
+linux32_sys_timer_settime(struct lwp *l,
+    const struct linux32_sys_timer_settime_args *uap, register_t *retval)
+{
+	/* {
+		syscallarg(timer_t) timerid;
+		syscallarg(int) flags;
+		syscallarg(const struct linux32_itimerspec *) tim;
+		syscallarg(struct linux32_itimerspec *) otim;
+	} */
+	struct itimerspec value, ovalue, *ovp = NULL;
+	struct linux32_itimerspec tim, otim;
+	int error;
+
+	error = copyin(SCARG(uap, tim), &tim, sizeof(tim));
+	if (error) {
+		return error;
+	}
+	linux32_to_native_itimerspec(&value, &tim);
+
+	if (SCARG(uap, otim)) {
+		ovp = &ovalue;
+	}
+
+	if (SCARG(uap, flags) & ~TIMER_ABSTIME) {
+		return EINVAL;
+	}
+
+	error = dotimer_settime(SCARG(uap, timerid), &value, ovp,
+	    SCARG(uap, flags), l->l_proc);
+	if (error) {
+		return error;
+	}
+
+	if (ovp) {
+		native_to_linux32_itimerspec(&otim, ovp);
+		error = copyout(&otim, SCARG(uap, otim), sizeof(otim));
+	}
+
+	return error;
+}
+
+int
+linux32_sys_timer_gettime(struct lwp *l,
+    const struct linux32_sys_timer_gettime_args *uap, register_t *retval)
+{
+	/* {
+		syscallarg(timer_t) timerid;
+		syscallarg(struct linux32_itimerspec *) tim;
+	} */
+	struct itimerspec its;
+	struct linux32_itimerspec lits;
+	int error;
+
+	error = dotimer_gettime(SCARG(uap, timerid), l->l_proc, &its);
+	if (error == 0) {
+		native_to_linux32_itimerspec(&lits, &its);
+		error = copyout(&lits, SCARG(uap, tim), sizeof(lits));
+	}
+
+	return error;
+}
+
+/*
+ * timer_gettoverrun(2) and timer_delete(2) are handled directly
+ * by the native calls.
+ */
