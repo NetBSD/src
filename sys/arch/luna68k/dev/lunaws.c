@@ -1,4 +1,4 @@
-/* $NetBSD: lunaws.c,v 1.36 2021/09/19 07:55:17 tsutsui Exp $ */
+/* $NetBSD: lunaws.c,v 1.37 2021/09/19 11:43:54 tsutsui Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: lunaws.c,v 1.36 2021/09/19 07:55:17 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lunaws.c,v 1.37 2021/09/19 11:43:54 tsutsui Exp $");
 
 #include "opt_wsdisplay_compat.h"
 #include "wsmouse.h"
@@ -161,9 +161,9 @@ static int  omms_ioctl(void *, u_long, void *, int, struct lwp *);
 static void omms_disable(void *);
 
 static const struct wsmouse_accessops omms_accessops = {
-	omms_enable,
-	omms_ioctl,
-	omms_disable,
+	.enable  = omms_enable,
+	.ioctl   = omms_ioctl,
+	.disable = omms_disable,
 };
 #endif
 
