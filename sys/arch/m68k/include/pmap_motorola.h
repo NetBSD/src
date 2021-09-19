@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_motorola.h,v 1.36 2020/03/14 14:05:43 ad Exp $	*/
+/*	$NetBSD: pmap_motorola.h,v 1.37 2021/09/19 10:34:09 andvar Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -116,7 +116,7 @@ struct pmap {
  * Even on 68040/060, we still appropriate 2-level ste-pte pmap structures
  * for 68020/030 (derived from 4.4BSD/hp300) to handle 040's 3-level MMU.
  * TIA_SIZE and TIB_SIZE are used to represent such pmap structures and
- * they are also refered on 040/060.
+ * they are also referred on 040/060.
  *
  * NBSEG and SEGOFSET are used to check l2 STE of the specified VA,
  * so they have different values between 020/030 and 040/060.

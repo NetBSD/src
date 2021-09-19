@@ -27,7 +27,7 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2013\
  The NetBSD Foundation, inc. All rights reserved.");
-__RCSID("$NetBSD: t_kauth_pr_47598.c,v 1.4 2020/02/10 16:51:48 riastradh Exp $");
+__RCSID("$NetBSD: t_kauth_pr_47598.c,v 1.5 2021/09/19 10:34:10 andvar Exp $");
 
 #include <errno.h>
 #include <unistd.h>
@@ -140,7 +140,7 @@ ATF_TC_BODY(kauth_curtain, tc)
 	printf("port is %d\n", ntohs(sa.sin_port));
 	err = connect(s2, (struct sockaddr *)&sa, sizeof(sa));
 	ATF_REQUIRE_MSG(err == -1 && errno == EINPROGRESS,
-	    "conect returned %d with errno %d", err, errno);
+	    "connect returned %d with errno %d", err, errno);
 	fflush(stdout);
 	fflush(stderr);
 

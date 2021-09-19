@@ -1,4 +1,4 @@
-/*	$NetBSD: viewvar.h,v 1.4 2002/01/26 13:41:00 aymeric Exp $	*/
+/*	$NetBSD: viewvar.h,v 1.5 2021/09/19 10:34:07 andvar Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -34,7 +34,7 @@
  * simply to map the semantics of a graphics dipslay to
  * the semantics of a character block device.  In other
  * words the graphics system as currently built does not like to be
- * refered to by open/close/ioctl.  This device serves as
+ * referred to by open/close/ioctl.  This device serves as
  * a interface to graphics. */
 
 struct view_softc {

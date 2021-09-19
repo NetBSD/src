@@ -1,4 +1,4 @@
-/*	$NetBSD: if_se.c,v 1.113 2021/06/16 00:21:19 riastradh Exp $	*/
+/*	$NetBSD: if_se.c,v 1.114 2021/09/19 10:34:09 andvar Exp $	*/
 
 /*
  * Copyright (c) 1997 Ian W. Dall <ian.dall@dsto.defence.gov.au>
@@ -37,7 +37,7 @@
  *
  * Acknowledgement: Thanks are due to Philip L. Budne <budd@cs.bu.edu>
  * who reverse engineered the EA41x. In developing this code,
- * Phil's userland daemon "etherd", was refered to extensively in lieu
+ * Phil's userland daemon "etherd", was referred to extensively in lieu
  * of accurate documentation for the device.
  *
  * This is a weird device! It doesn't conform to the scsi spec in much
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_se.c,v 1.113 2021/06/16 00:21:19 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_se.c,v 1.114 2021/09/19 10:34:09 andvar Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"

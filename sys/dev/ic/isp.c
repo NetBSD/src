@@ -1,4 +1,4 @@
-/* $NetBSD: isp.c,v 1.129 2021/09/11 20:28:06 andvar Exp $ */
+/* $NetBSD: isp.c,v 1.130 2021/09/19 10:34:09 andvar Exp $ */
 /*
  * Machine and OS Independent (well, as best as possible)
  * code for the Qlogic ISP SCSI adapters.
@@ -43,7 +43,7 @@
  */
 #ifdef	__NetBSD__
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isp.c,v 1.129 2021/09/11 20:28:06 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isp.c,v 1.130 2021/09/19 10:34:09 andvar Exp $");
 #include <dev/ic/isp_netbsd.h>
 #endif
 #ifdef	__FreeBSD__
@@ -2149,7 +2149,7 @@ isp_plogx(ispsoftc_t *isp, int chan, uint16_t handle, uint32_t portid, int flags
 		goto out;
 	} else if (plp->plogx_status != PLOGX_STATUS_IOCBERR) {
 		isp_prt(isp, ISP_LOGWARN,
-		    "status 0x%x on port login IOCB chanel %d",
+		    "status 0x%x on port login IOCB channel %d",
 		    plp->plogx_status, chan);
 		rval = -1;
 		goto out;

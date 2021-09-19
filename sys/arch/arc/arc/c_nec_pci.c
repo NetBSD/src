@@ -1,4 +1,4 @@
-/*	$NetBSD: c_nec_pci.c,v 1.20 2012/10/13 17:58:53 jdc Exp $	*/
+/*	$NetBSD: c_nec_pci.c,v 1.21 2021/09/19 10:34:07 andvar Exp $	*/
 
 /*-
  * Copyright (C) 2000 Shuichiro URATA.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: c_nec_pci.c,v 1.20 2012/10/13 17:58:53 jdc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: c_nec_pci.c,v 1.21 2021/09/19 10:34:07 andvar Exp $");
 
 #define __INTR_PRIVATE
 #include <sys/param.h>
@@ -222,7 +222,7 @@ c_nec_pci_init(void)
 	 * If you met this symptom, please report it to
 	 * port-arc-maintainer@NetBSD.org.
 	 *
-	 * kseg2iobufsize will be refered from pmap_bootstrap().
+	 * kseg2iobufsize will be referred from pmap_bootstrap().
 	 */
 	kseg2iobufsize = 0x02000000; /* 32MB: consumes 32KB for PTEs */
 
