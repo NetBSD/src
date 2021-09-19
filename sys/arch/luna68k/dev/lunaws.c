@@ -1,4 +1,4 @@
-/* $NetBSD: lunaws.c,v 1.35 2021/09/18 13:44:02 tsutsui Exp $ */
+/* $NetBSD: lunaws.c,v 1.36 2021/09/19 07:55:17 tsutsui Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: lunaws.c,v 1.35 2021/09/18 13:44:02 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lunaws.c,v 1.36 2021/09/19 07:55:17 tsutsui Exp $");
 
 #include "opt_wsdisplay_compat.h"
 #include "wsmouse.h"
@@ -401,6 +401,14 @@ omkbd_input(struct ws_softc *sc, int data)
 		int c, j = 0;
 
 		c = omkbd_raw[key];
+		if (c == 0x70 /* Kana */ ||
+		    c == 0x3a /* CAP  */) {
+			/* See comment in !sc->sc_rawkbd case */
+			cbuf[0] = c;
+			wskbd_rawinput(sc->sc_wskbddev, cbuf, 1);
+			cbuf[0] = c | 0x80;
+			wskbd_rawinput(sc->sc_wskbddev, cbuf, 1);
+		} else
 		if (c != 0x00) {
 			/* fake extended scancode if necessary */
 			if (c & 0x80)
@@ -415,8 +423,27 @@ omkbd_input(struct ws_softc *sc, int data)
 	} else
 #endif
 	{
-		if (sc->sc_wskbddev != NULL)
-			wskbd_input(sc->sc_wskbddev, type, key);
+		if (sc->sc_wskbddev != NULL) {
+			if (key == 0x0b /* Kana */ ||
+			    key == 0x0e /* CAP  */) {
+				/*
+				 * LUNA's keyboard doesn't send any keycode
+				 * when these modifier keys are released.
+				 * Instead, it sends a pressed or released code
+				 * per how each modifier LED status will be
+				 * changed when the modifier keys are pressed.
+				 * To handle this quirk in MI wskbd(4) layer,
+				 * we have to send a faked
+				 * "pressed and released" sequence here.
+				 */
+				wskbd_input(sc->sc_wskbddev,
+				    WSCONS_EVENT_KEY_DOWN, key);
+				wskbd_input(sc->sc_wskbddev,
+				    WSCONS_EVENT_KEY_UP, key);
+			} else {
+				wskbd_input(sc->sc_wskbddev, type, key);
+			}
+		}
 	}
 }
 
