@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.29 2013/10/18 20:47:06 christos Exp $	*/
+/*	$NetBSD: init.c,v 1.30 2021/09/19 11:37:01 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2000-2003 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
 
 #include "sort.h"
 
-__RCSID("$NetBSD: init.c,v 1.29 2013/10/18 20:47:06 christos Exp $");
+__RCSID("$NetBSD: init.c,v 1.30 2021/09/19 11:37:01 andvar Exp $");
 
 #include <ctype.h>
 #include <string.h>
@@ -402,7 +402,7 @@ fixit(int *argc, char **argv, const char *opts)
  * Numeric sorts don't need any tables, they are reversed by negation.
  *
  * Global reverse sorts are done by writing the sorted keys in reverse
- * order - the sort itself is stil forwards.
+ * order - the sort itself is still forwards.
  * This means that weights are only ever used when generating keys, any
  * sort of the original data bytes is always forwards and unweighted.
  *
