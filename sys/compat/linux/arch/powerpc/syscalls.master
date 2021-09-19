@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.75 2021/09/19 23:01:50 thorpej Exp $  
+	$NetBSD: syscalls.master,v 1.76 2021/09/19 23:51:37 thorpej Exp $  
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -533,14 +533,18 @@
 304	STD		{ int|linux_sys||utimensat(int fd, const char *path, \
 			    struct linux_timespec *times, int flag); }
 305	UNIMPL		signalfd
-306	UNIMPL		timerfd_create
+306	STD		{ int|linux_sys||timerfd_create(clockid_t clock_id, \
+			    int flags); }
 307	UNIMPL		eventfd
 308	UNIMPL		sync_file_range2
 309	STD		{ int|linux_sys||fallocate(int fd, int mode, \
 			    off_t offset, off_t len); }
 310	UNIMPL		subpage_prot
-311	UNIMPL		timerfd_settime
-312	UNIMPL		timerfd_gettime
+311	STD		{ int|linux_sys||timerfd_settime(int fd, int flags, \
+			    const struct linux_itimerspec *tim, \
+			    struct linux_itimerspec *otim); }
+312	STD		{ int|linux_sys||timerfd_gettime(int fd, \
+			    struct linux_itimerspec *tim); }
 313	UNIMPL		signalfd4
 314	UNIMPL		eventfd2
 315	UNIMPL		epoll_create1
