@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.69 2020/04/26 18:53:32 thorpej Exp $
+	$NetBSD: syscalls.master,v 1.70 2021/09/19 23:01:49 thorpej Exp $
 
 ; Derived from sys/compat/linux/arch/*/syscalls.master
 ; and from Linux 2.4.12 arch/arm/kernel/calls.S
@@ -431,11 +431,15 @@
 254	UNIMPL		set_thread_area
 255	UNIMPL		get_thread_area
 256	STD		{ int|linux_sys||set_tid_address(int *tid); }
-257	UNIMPL		timer_create
-258	UNIMPL		timer_settime
-259	UNIMPL		timer_gettime
-260	UNIMPL		timer_getoverrun
-261	UNIMPL		timer_delete
+257	STD		{ int|linux_sys||timer_create(clockid_t clockid, \
+			    struct linux_sigevent *evp, timer_t *timerid); }
+258	STD		{ int|linux_sys||timer_settime(timer_t timerid, \
+			    int flags, const struct linux_itimerspec *tim, \
+			    struct linux_itimerspec *otim); }
+259	STD		{ int|linux_sys||timer_gettime(timer_t timerid, \
+			    struct linux_itimerspec *tim); }
+260	NOARGS		{ int|sys||timer_getoverrun(timer_t timerid); }
+261	NOARGS		{ int|sys||timer_delete(timer_t timerid); }
 262	STD		{ int|linux_sys||clock_settime(clockid_t which, \
 			    struct linux_timespec *tp); }
 263	STD		{ int|linux_sys||clock_gettime(clockid_t which, \
