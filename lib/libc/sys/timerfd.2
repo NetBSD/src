@@ -1,4 +1,4 @@
-.\"     $NetBSD: timerfd.2,v 1.1 2021/09/19 15:51:28 thorpej Exp $
+.\"     $NetBSD: timerfd.2,v 1.2 2021/09/19 17:10:41 wiz Exp $
 .\"
 .\" Copyright (c) 2021 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -34,7 +34,7 @@
 .Nm timerfd ,
 .Nm timerfd_create ,
 .Nm timerfd_gettime ,
-.Nm timerfd_settime ,
+.Nm timerfd_settime
 .Nd create and interact with a timer descriptor
 .Sh SYNOPSIS
 .In sys/timerfd.h
@@ -225,16 +225,16 @@ system call fails if:
 The argument
 .Fa fd
 is not a valid file descriptor.
+.It Bq Er EFAULT
+The
+.Fa tim
+argument points outside the allocated address space.
 .It Bq Er EINVAL
 The argument
 .Fa fd
 does not refer to a
 .Nm timerfd
 object.
-.It Bq Er EFAULT
-The
-.Fa tim
-argument points outside the allocated address space.
 .El
 .Pp
 The
@@ -245,6 +245,12 @@ system call fails if:
 The argument
 .Fa fd
 is not a valid file descriptor.
+.It Bq Er EFAULT
+The
+.Fa tim
+or
+.Fa otim
+arguments point outside the allocated address space.
 .It Bq Er EINVAL
 The argument
 .Fa fd
@@ -264,21 +270,12 @@ A nanosecond field in the
 .Fa tim
 argument specified a value less than zero or greater than or equal to
 .Dv 10e9 .
-.It Bq Er EFAULT
-The
-.Fa tim
-or
-.Fa otim
-arguments point outside the allocated address space.
 .El
 .Pp
 A read from a
 .Nm
 object fails if:
 .Bl -tag -width Er
-.It Bq Er EINVAL
-The size of the read buffer is less than 8 bytes
-.Pq the size required to hold an unsigned 64-bit integer .
 .It Bq Er EAGAIN
 The value of the
 .Nm
@@ -298,6 +295,9 @@ flag, and the system realtime clock was changed with
 .Xr clock_settime 2
 or
 .Xr settimeofday 2 .
+.It Bq Er EINVAL
+The size of the read buffer is less than 8 bytes
+.Pq the size required to hold an unsigned 64-bit integer .
 .El
 .Sh SEE ALSO
 .Xr clock_settime 2 ,
