@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.2 2021/08/03 09:25:43 rin Exp $	*/
+/*	$NetBSD: machdep.c,v 1.3 2021/09/19 11:37:00 andvar Exp $	*/
 
 /*
  * Taken from src/sys/arch/evbppc/walnut/machdep.c:
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.2 2021/08/03 09:25:43 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.3 2021/09/19 11:37:00 andvar Exp $");
 
 #include "opt_ddb.h"
 #include "opt_pci.h"
@@ -301,7 +301,7 @@ ibm4xx_pci_conf_interrupt(void *v, int bus, int dev, int pin, int swiz,
 	if (bus != 0) {
 		/*
 		 * XXX
-		 * See coment above.
+		 * See comment above.
 		 */
 		dev = PARENT_DEV(swiz, dev);
 		goto out;
