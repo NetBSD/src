@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_ioctl.c,v 1.58 2014/03/23 06:03:38 dholland Exp $	*/
+/*	$NetBSD: linux_ioctl.c,v 1.59 2021/09/19 23:51:37 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_ioctl.c,v 1.58 2014/03/23 06:03:38 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_ioctl.c,v 1.59 2021/09/19 23:51:37 thorpej Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "sequencer.h"
@@ -144,46 +144,49 @@ linux_sys_ioctl(struct lwp *l, const struct linux_sys_ioctl_args *uap, register_
 		error = linux_ioctl_mtio(l, uap, retval);
 		break;
 	case 'T':
-	{
-#if NSEQUENCER > 0
-/* XXX XAX 2x check this. */
+	    {
 		/*
-		 * Both termios and the MIDI sequencer use 'T' to identify
-		 * the ioctl, so we have to differentiate them in another
-		 * way.  We do it by indexing in the cdevsw with the major
-		 * device number and check if that is the sequencer entry.
+		 * Termios, the MIDI sequencer, and timerfd use 'T' to
+		 * identify the ioctl, so we have to differentiate them
+		 * in another way.
+		 *
+		 * XXX XAX 2x check this.
 		 */
-		bool is_sequencer = false;
 		struct file *fp;
-		struct vnode *vp;
-		struct vattr va;
-		extern const struct cdevsw sequencer_cdevsw;
 
 		if ((fp = fd_getfile(SCARG(uap, fd))) == NULL)
 			return EBADF;
+
+		if (fp->f_type == DTYPE_TIMERFD) {
+			error = linux_ioctl_timerfd(l, uap, retval);
+			fd_putfile(SCARG(uap, fd));
+			break;
+		}
+#if NSEQUENCER > 0
+		struct vnode *vp;
+
 		if (fp->f_type == DTYPE_VNODE &&
 		    (vp = (struct vnode *)fp->f_data) != NULL &&
 		    vp->v_type == VCHR) {
+			struct vattr va;
+			extern const struct cdevsw sequencer_cdevsw;
+
 			vn_lock(vp, LK_SHARED | LK_RETRY);
 			error = VOP_GETATTR(vp, &va, l->l_cred);
 			VOP_UNLOCK(vp);
 			if (error == 0 &&
-			    cdevsw_lookup(va.va_rdev) == &sequencer_cdevsw)
-				is_sequencer = true;
+			    cdevsw_lookup(va.va_rdev) == &sequencer_cdevsw) {
+				error = oss_ioctl_sequencer(l,
+				    (const void *)LINUX_TO_OSS(uap), retval);
+				fd_putfile(SCARG(uap, fd));
+				break;
+			}
 		}
-		if (is_sequencer) {
-			error = oss_ioctl_sequencer(l, (const void *)LINUX_TO_OSS(uap),
-						   retval);
-		}
-		else {
-			error = linux_ioctl_termios(l, uap, retval);
-		}
-		fd_putfile(SCARG(uap, fd));
-#else
+#endif /* NSEQUENCER > 0 */
 		error = linux_ioctl_termios(l, uap, retval);
-#endif
-	}
+		fd_putfile(SCARG(uap, fd));
 		break;
+	    }
 	case '"':
 		error = linux_ioctl_sg(l, uap, retval);
 		break;

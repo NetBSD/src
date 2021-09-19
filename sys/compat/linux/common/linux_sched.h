@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_sched.h,v 1.9 2021/09/19 23:01:50 thorpej Exp $	*/
+/*	$NetBSD: linux_sched.h,v 1.10 2021/09/19 23:51:37 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -105,5 +105,7 @@ void	linux_to_native_itimerspec(struct itimerspec *,
 	    const struct linux_itimerspec *);
 
 int	linux_to_native_timer_create_clockid(clockid_t *, clockid_t);
+
+int	linux_to_native_timerfd_settime_flags(int *, int);
 
 #endif /* _LINUX_SCHED_H */

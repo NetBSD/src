@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_ioctl.h,v 1.27 2013/06/08 12:50:32 stacktic Exp $	*/
+/*	$NetBSD: linux_ioctl.h,v 1.28 2021/09/19 23:51:37 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -40,6 +40,8 @@ int linux_machdepioctl(struct lwp *, const struct linux_sys_ioctl_args *, regist
 int linux_ioctl_cdrom(struct lwp *, const struct linux_sys_ioctl_args *,
     register_t *);
 int linux_ioctl_termios(struct lwp *, const struct linux_sys_ioctl_args *,
+    register_t *);
+int linux_ioctl_timerfd(struct lwp *, const struct linux_sys_ioctl_args *,
     register_t *);
 int linux_ioctl_socket(struct lwp *, const struct linux_sys_ioctl_args *,
     register_t *);
