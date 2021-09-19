@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_sched.h,v 1.1 2011/11/18 04:08:56 christos Exp $	*/
+/*	$NetBSD: linux32_sched.h,v 1.2 2021/09/19 22:09:31 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -33,53 +33,14 @@
 #ifndef _LINUX32_SCHED_H
 #define	_LINUX32_SCHED_H
 
-/*
- * Flags passed to the Linux __clone(2) system call.
- */
-#define	LINUX32_CLONE_CSIGNAL	0x000000ff	/* signal to be sent at exit */
-#define	LINUX32_CLONE_VM		0x00000100	/* share address space */
-#define	LINUX32_CLONE_FS		0x00000200	/* share "file system" info */
-#define	LINUX32_CLONE_FILES	0x00000400	/* share file descriptors */
-#define	LINUX32_CLONE_SIGHAND	0x00000800	/* share signal actions */
-#define	LINUX32_CLONE_PID		0x00001000	/* share process ID */
-#define	LINUX32_CLONE_PTRACE	0x00002000	/* ptrace(2) continues on
-						   child */
-#define	LINUX32_CLONE_VFORK	0x00004000	/* parent blocks until child
-						   exits */
-#define LINUX32_CLONE_PARENT	0x00008000	/* want same parent as cloner */
-#define LINUX32_CLONE_THREAD	0x00010000	/* same thread group */
-#define LINUX32_CLONE_NEWNS	0x00020000	/* new namespace group */
-#define LINUX32_CLONE_SYSVSEM	0x00040000	/* share SysV SEM_UNDO */
-#define LINUX32_CLONE_SETTLS	0x00080000	/* create new TLS for child */
-#define LINUX32_CLONE_PARENT_SETTID \
-				0x00100000	/* set TID in the parent */
-#define LINUX32_CLONE_CHILD_CLEARTID \
-				0x00200000	/* clear TID in the child */
-#define LINUX32_CLONE_DETACHED	0x00400000	/* unused */
-#define LINUX32_CLONE_UNTRACED	0x00800000	/* set if parent cannot force CLONE_PTRACE */
-#define LINUX32_CLONE_CHILD_SETTID \
-				0x01000000	/* set TID in the child */
-#define LINUX32_CLONE_STOPPED	0x02000000	/* start in stopped state */
-
 struct linux32_sched_param {
 	int	sched_priority;
 };
-
-#define LINUX32_SCHED_OTHER	0
-#define LINUX32_SCHED_FIFO	1
-#define LINUX32_SCHED_RR		2
 
 struct linux32_timespec {
 	linux32_time_t	tv_sec;		/* seconds */
 	int		tv_nsec;	/* nanoseconds */
 };
-
-#define LINUX32_CLOCK_REALTIME		0
-#define LINUX32_CLOCK_MONOTONIC		1
-#define LINUX32_CLOCK_PROCESS_CPUTIME_ID	2
-#define LINUX32_CLOCK_THREAD_CPUTIME_ID	3
-#define LINUX32_CLOCK_REALTIME_HR		4
-#define LINUX32_CLOCK_MONOTONIC_HR	5
 
 int linux32_to_native_clockid(clockid_t *, clockid_t);
 void native_to_linux32_timespec(struct linux32_timespec *, struct timespec *);
