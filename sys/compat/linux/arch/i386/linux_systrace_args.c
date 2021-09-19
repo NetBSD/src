@@ -1,4 +1,4 @@
-/* $NetBSD: linux_systrace_args.c,v 1.12 2021/09/19 23:02:22 thorpej Exp $ */
+/* $NetBSD: linux_systrace_args.c,v 1.13 2021/09/19 23:52:07 thorpej Exp $ */
 
 /*
  * System call argument to DTrace register array conversion.
@@ -1946,6 +1946,14 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 		*n_args = 4;
 		break;
 	}
+	/* linux_sys_timerfd_create */
+	case 322: {
+		const struct linux_sys_timerfd_create_args *p = params;
+		iarg[0] = SCARG(p, clock_id); /* clockid_t */
+		iarg[1] = SCARG(p, flags); /* int */
+		*n_args = 2;
+		break;
+	}
 	/* linux_sys_fallocate */
 	case 324: {
 		const struct linux_sys_fallocate_args *p = params;
@@ -1954,6 +1962,24 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 		iarg[2] = SCARG(p, offset); /* off_t */
 		iarg[3] = SCARG(p, len); /* off_t */
 		*n_args = 4;
+		break;
+	}
+	/* linux_sys_timerfd_settime */
+	case 325: {
+		const struct linux_sys_timerfd_settime_args *p = params;
+		iarg[0] = SCARG(p, fd); /* int */
+		iarg[1] = SCARG(p, flags); /* int */
+		uarg[2] = (intptr_t) SCARG(p, tim); /* const struct linux_itimerspec * */
+		uarg[3] = (intptr_t) SCARG(p, otim); /* struct linux_itimerspec * */
+		*n_args = 4;
+		break;
+	}
+	/* linux_sys_timerfd_gettime */
+	case 326: {
+		const struct linux_sys_timerfd_gettime_args *p = params;
+		iarg[0] = SCARG(p, fd); /* int */
+		uarg[1] = (intptr_t) SCARG(p, tim); /* struct linux_itimerspec * */
+		*n_args = 2;
 		break;
 	}
 	/* linux_sys_dup3 */
@@ -5138,6 +5164,19 @@ systrace_entry_setargdesc(int sysnum, int ndx, char *desc, size_t descsz)
 			break;
 		};
 		break;
+	/* linux_sys_timerfd_create */
+	case 322:
+		switch(ndx) {
+		case 0:
+			p = "clockid_t";
+			break;
+		case 1:
+			p = "int";
+			break;
+		default:
+			break;
+		};
+		break;
 	/* linux_sys_fallocate */
 	case 324:
 		switch(ndx) {
@@ -5152,6 +5191,38 @@ systrace_entry_setargdesc(int sysnum, int ndx, char *desc, size_t descsz)
 			break;
 		case 3:
 			p = "off_t";
+			break;
+		default:
+			break;
+		};
+		break;
+	/* linux_sys_timerfd_settime */
+	case 325:
+		switch(ndx) {
+		case 0:
+			p = "int";
+			break;
+		case 1:
+			p = "int";
+			break;
+		case 2:
+			p = "const struct linux_itimerspec *";
+			break;
+		case 3:
+			p = "struct linux_itimerspec *";
+			break;
+		default:
+			break;
+		};
+		break;
+	/* linux_sys_timerfd_gettime */
+	case 326:
+		switch(ndx) {
+		case 0:
+			p = "int";
+			break;
+		case 1:
+			p = "struct linux_itimerspec *";
 			break;
 		default:
 			break;
@@ -6328,8 +6399,23 @@ systrace_return_setargdesc(int sysnum, int ndx, char *desc, size_t descsz)
 		if (ndx == 0 || ndx == 1)
 			p = "int";
 		break;
+	/* linux_sys_timerfd_create */
+	case 322:
+		if (ndx == 0 || ndx == 1)
+			p = "int";
+		break;
 	/* linux_sys_fallocate */
 	case 324:
+		if (ndx == 0 || ndx == 1)
+			p = "int";
+		break;
+	/* linux_sys_timerfd_settime */
+	case 325:
+		if (ndx == 0 || ndx == 1)
+			p = "int";
+		break;
+	/* linux_sys_timerfd_gettime */
+	case 326:
 		if (ndx == 0 || ndx == 1)
 			p = "int";
 		break;
