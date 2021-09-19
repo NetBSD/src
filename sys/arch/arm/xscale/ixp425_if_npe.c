@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp425_if_npe.c,v 1.47 2020/02/18 14:49:32 thorpej Exp $ */
+/*	$NetBSD: ixp425_if_npe.c,v 1.48 2021/09/19 10:34:08 andvar Exp $ */
 
 /*-
  * Copyright (c) 2006 Sam Leffler.  All rights reserved.
@@ -28,7 +28,7 @@
 #if 0
 __FBSDID("$FreeBSD: src/sys/arm/xscale/ixp425/if_npe.c,v 1.1 2006/11/19 23:55:23 sam Exp $");
 #endif
-__KERNEL_RCSID(0, "$NetBSD: ixp425_if_npe.c,v 1.47 2020/02/18 14:49:32 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixp425_if_npe.c,v 1.48 2021/09/19 10:34:08 andvar Exp $");
 
 /*
  * Intel XScale NPE Ethernet driver.
@@ -616,7 +616,7 @@ npe_activate(struct npe_softc *sc)
 	 * frames to process or tx'd frames to reap.  These callbacks
 	 * are controlled by the q configurations; e.g. we get a
 	 * callback when tx_done has 2 or more frames to process and
-	 * when the rx q has at least one frame.  These setings can
+	 * when the rx q has at least one frame.  These settings can
 	 * changed at the time the q is configured.
 	 */
 	sc->rx_qid = npeconfig[unit].rx_qid;

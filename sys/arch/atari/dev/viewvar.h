@@ -1,4 +1,4 @@
-/*	$NetBSD: viewvar.h,v 1.7 2009/03/14 14:45:56 dsl Exp $	*/
+/*	$NetBSD: viewvar.h,v 1.8 2021/09/19 10:34:08 andvar Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -34,7 +34,7 @@
  * simply to map the semantics of a graphics dipslay to
  * the semantics of a character block device.  In other
  * words the graphics system as currently built does not like to be
- * refered to by open/close/ioctl.  This device serves as
+ * referred to by open/close/ioctl.  This device serves as
  * a interface to graphics. */
 
 #define	NOLWP	((struct lwp *)-1)	/* XXX */

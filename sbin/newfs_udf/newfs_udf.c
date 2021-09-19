@@ -1,4 +1,4 @@
-/* $NetBSD: newfs_udf.c,v 1.21 2021/08/20 20:25:26 andvar Exp $ */
+/* $NetBSD: newfs_udf.c,v 1.22 2021/09/19 10:34:07 andvar Exp $ */
 
 /*
  * Copyright (c) 2006, 2008, 2013 Reinoud Zandijk
@@ -759,7 +759,7 @@ main(int argc, char **argv)
 			emul_packetsize = MIN(emul_packetsize, 32);
 			break;
 		case 't' :
-			/* time zone overide */
+			/* time zone override */
 			context.gmtoff = a_num(optarg, "gmtoff");
 			break;
 		default  :
