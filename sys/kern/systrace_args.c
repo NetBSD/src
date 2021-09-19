@@ -1,4 +1,4 @@
-/* $NetBSD: systrace_args.c,v 1.47 2021/04/14 02:45:58 christos Exp $ */
+/* $NetBSD: systrace_args.c,v 1.48 2021/09/19 15:52:04 thorpej Exp $ */
 
 /*
  * System call argument to DTrace register array conversion.
@@ -1311,6 +1311,32 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 #else
 #endif
+	/* sys_timerfd_create */
+	case 177: {
+		const struct sys_timerfd_create_args *p = params;
+		iarg[0] = SCARG(p, clock_id); /* clockid_t */
+		iarg[1] = SCARG(p, flags); /* int */
+		*n_args = 2;
+		break;
+	}
+	/* sys_timerfd_settime */
+	case 178: {
+		const struct sys_timerfd_settime_args *p = params;
+		iarg[0] = SCARG(p, fd); /* int */
+		iarg[1] = SCARG(p, flags); /* int */
+		uarg[2] = (intptr_t) SCARG(p, new_value); /* const struct itimerspec * */
+		uarg[3] = (intptr_t) SCARG(p, old_value); /* struct itimerspec * */
+		*n_args = 4;
+		break;
+	}
+	/* sys_timerfd_gettime */
+	case 179: {
+		const struct sys_timerfd_gettime_args *p = params;
+		iarg[0] = SCARG(p, fd); /* int */
+		uarg[1] = (intptr_t) SCARG(p, curr_value); /* struct itimerspec * */
+		*n_args = 2;
+		break;
+	}
 	/* sys_setgid */
 	case 181: {
 		const struct sys_setgid_args *p = params;
@@ -1962,6 +1988,14 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 		uarg[3] = (intptr_t) SCARG(p, msg_prio); /* unsigned * */
 		uarg[4] = (intptr_t) SCARG(p, abs_timeout); /* const struct timespec50 * */
 		*n_args = 5;
+		break;
+	}
+	/* sys_eventfd */
+	case 267: {
+		const struct sys_eventfd_args *p = params;
+		uarg[0] = SCARG(p, val); /* unsigned int */
+		iarg[1] = SCARG(p, flags); /* int */
+		*n_args = 2;
 		break;
 	}
 	/* sys___posix_rename */
@@ -5980,6 +6014,51 @@ systrace_entry_setargdesc(int sysnum, int ndx, char *desc, size_t descsz)
 		break;
 #else
 #endif
+	/* sys_timerfd_create */
+	case 177:
+		switch(ndx) {
+		case 0:
+			p = "clockid_t";
+			break;
+		case 1:
+			p = "int";
+			break;
+		default:
+			break;
+		};
+		break;
+	/* sys_timerfd_settime */
+	case 178:
+		switch(ndx) {
+		case 0:
+			p = "int";
+			break;
+		case 1:
+			p = "int";
+			break;
+		case 2:
+			p = "const struct itimerspec *";
+			break;
+		case 3:
+			p = "struct itimerspec *";
+			break;
+		default:
+			break;
+		};
+		break;
+	/* sys_timerfd_gettime */
+	case 179:
+		switch(ndx) {
+		case 0:
+			p = "int";
+			break;
+		case 1:
+			p = "struct itimerspec *";
+			break;
+		default:
+			break;
+		};
+		break;
 	/* sys_setgid */
 	case 181:
 		switch(ndx) {
@@ -7086,6 +7165,19 @@ systrace_entry_setargdesc(int sysnum, int ndx, char *desc, size_t descsz)
 			break;
 		case 4:
 			p = "const struct timespec50 *";
+			break;
+		default:
+			break;
+		};
+		break;
+	/* sys_eventfd */
+	case 267:
+		switch(ndx) {
+		case 0:
+			p = "unsigned int";
+			break;
+		case 1:
+			p = "int";
 			break;
 		default:
 			break;
@@ -11159,6 +11251,21 @@ systrace_return_setargdesc(int sysnum, int ndx, char *desc, size_t descsz)
 		break;
 #else
 #endif
+	/* sys_timerfd_create */
+	case 177:
+		if (ndx == 0 || ndx == 1)
+			p = "int";
+		break;
+	/* sys_timerfd_settime */
+	case 178:
+		if (ndx == 0 || ndx == 1)
+			p = "int";
+		break;
+	/* sys_timerfd_gettime */
+	case 179:
+		if (ndx == 0 || ndx == 1)
+			p = "int";
+		break;
 	/* sys_setgid */
 	case 181:
 		if (ndx == 0 || ndx == 1)
@@ -11540,6 +11647,11 @@ systrace_return_setargdesc(int sysnum, int ndx, char *desc, size_t descsz)
 	case 266:
 		if (ndx == 0 || ndx == 1)
 			p = "ssize_t";
+		break;
+	/* sys_eventfd */
+	case 267:
+		if (ndx == 0 || ndx == 1)
+			p = "int";
 		break;
 	/* sys___posix_rename */
 	case 270:
