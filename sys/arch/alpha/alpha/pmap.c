@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.302 2021/09/19 10:34:07 andvar Exp $ */
+/* $NetBSD: pmap.c,v 1.303 2021/09/19 20:43:46 andvar Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001, 2007, 2008, 2020
@@ -135,7 +135,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.302 2021/09/19 10:34:07 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.303 2021/09/19 20:43:46 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -544,7 +544,7 @@ pmap_pvlist_free(struct pmap_pvlist * const list)
  * Some things that add complexity:
  *
  * ==> ASNs. A CPU may have valid TLB entries for other than the current
- *     address spaace.  We can only invalidate TLB entries for the current
+ *     address space.  We can only invalidate TLB entries for the current
  *     address space, so when asked to invalidate a VA for the non-current
  *     pmap on a given CPU, we simply invalidate the ASN for that pmap,CPU
  *     tuple so that new one is allocated on the next activation on that
@@ -587,7 +587,7 @@ pmap_pvlist_free(struct pmap_pvlist * const list)
  * global bitmap off CPUs to be notified, and then send the IPIs to
  * each victim.  While the other CPUs are in-flight, we then perform
  * any invalidations necessary on the local CPU.  Once that is done,
- * we then wait the the global context pointer to be cleared, which
+ * we then wait the global context pointer to be cleared, which
  * will be done by the final remote CPU to complete their work. This
  * method reduces cache line contention during processing.
  *
@@ -597,7 +597,7 @@ pmap_pvlist_free(struct pmap_pvlist * const list)
  * CPU might hold for the respective recursive VPT mappings.  This must
  * be done whenever an L1 or L2 PTE is invalidated.  Until these VPT
  * translations are invalidated, the PT pages must not be reused.  For
- * this reason, we keep a list of freed PT pages in the context stucture
+ * this reason, we keep a list of freed PT pages in the context structure
  * and drain them off once all invalidations are complete.
  *
  * NOTE: The value of TLB_CTX_MAXVA is tuned to accommodate the UBC
@@ -3635,7 +3635,7 @@ pmap_l1pt_ctor(void *arg, void *object, int flags)
 /*
  * pmap_l1pt_alloc:
  *
- *	Page alloctaor for L1 PT pages.
+ *	Page allocator for L1 PT pages.
  */
 static void *
 pmap_l1pt_alloc(struct pool *pp, int flags)
