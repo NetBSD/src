@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.68 2020/09/06 07:20:31 mrg Exp $
+# $NetBSD: Makefile,v 1.69 2021/09/19 15:51:28 thorpej Exp $
 
 MKMAN=	no
 
@@ -16,6 +16,7 @@ TESTS_C+=		t_clock_nanosleep
 TESTS_C+=		t_clone
 TESTS_C+=		t_connect
 TESTS_C+=		t_dup
+TESTS_C+=		t_eventfd
 TESTS_C+=		t_fork
 TESTS_C+=		t_fsync
 TESTS_C+=		t_futex_ops
@@ -81,6 +82,7 @@ TESTS_C+=		t_swapcontext
 TESTS_C+=		t_stat
 TESTS_C+=		t_syscall
 TESTS_C+=		t_timer_create
+TESTS_C+=		t_timerfd
 TESTS_C+=		t_truncate
 TESTS_C+=		t_ucontext
 TESTS_C+=		t_umask
@@ -93,7 +95,9 @@ TESTS_C+=		t_write
 
 SRCS.t_mprotect=	t_mprotect.c ${SRCS_EXEC_PROT} t_mprotect_helper.c
 
-LDADD.t_getpid+=        -lpthread
+LDADD.t_eventfd+=	-lpthread
+LDADD.t_getpid+=	-lpthread
+LDADD.t_timerfd+=	-lpthread
 
 LDADD.t_ptrace_sigchld+=	-pthread -lm
 

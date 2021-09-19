@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.360 2021/08/29 09:54:18 christos Exp $
+# $NetBSD: mi,v 1.361 2021/09/19 15:51:28 thorpej Exp $
 ./etc/mtree/set.debug                           comp-sys-root
 ./usr/lib					comp-sys-usr		compatdir
 ./usr/lib/i18n/libBIG5_g.a			comp-c-debuglib		debuglib,compatfile
@@ -2157,6 +2157,7 @@
 ./usr/libdata/debug/usr/tests/lib/libc/sys/t_connect.debug		tests-lib-debug		debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/lib/libc/sys/t_context.debug		tests-obsolete		obsolete,compattestfile
 ./usr/libdata/debug/usr/tests/lib/libc/sys/t_dup.debug			tests-lib-debug		debug,atf,compattestfile
+./usr/libdata/debug/usr/tests/lib/libc/sys/t_eventfd.debug		tests-lib-debug		debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/lib/libc/sys/t_fork.debug			tests-lib-debug		debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/lib/libc/sys/t_fsync.debug		tests-lib-debug		debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/lib/libc/sys/t_futex_ops.debug           	tests-lib-tests         debug,atf,compattestfile
@@ -2224,6 +2225,7 @@
 ./usr/libdata/debug/usr/tests/lib/libc/sys/t_swapcontext.debug		tests-lib-debug		debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/lib/libc/sys/t_syscall.debug		tests-lib-debug		debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/lib/libc/sys/t_timer_create.debug		tests-lib-debug		debug,atf,compattestfile
+./usr/libdata/debug/usr/tests/lib/libc/sys/t_timerfd.debug		tests-lib-debug		debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/lib/libc/sys/t_truncate.debug		tests-lib-debug		debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/lib/libc/sys/t_ucontext.debug		tests-lib-debug		debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/lib/libc/sys/t_umask.debug		tests-lib-debug		debug,atf,compattestfile
