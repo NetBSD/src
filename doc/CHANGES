@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2829 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2830 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -420,3 +420,5 @@ Changes from NetBSD 9.0 to NetBSD 10.0:
 	pxeboot: Add support for specifying a banner in boot.cfg. [nia 20210907]
 	luna68k: Add support for keyboard LED and buzzer controls via wskbd(4).
 		[tsutsui 20210918]
+	kernel: Added native eventfd(2) and timerfd(2) implementations.
+		[thorpej 20210919]
