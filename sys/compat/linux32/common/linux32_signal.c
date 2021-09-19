@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_signal.c,v 1.21 2021/09/07 11:43:04 riastradh Exp $ */
+/*	$NetBSD: linux32_signal.c,v 1.22 2021/09/19 22:30:28 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2006 Emmanuel Dreyfus, all rights reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux32_signal.c,v 1.21 2021/09/07 11:43:04 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_signal.c,v 1.22 2021/09/19 22:30:28 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/ucred.h>
@@ -46,9 +46,11 @@ __KERNEL_RCSID(0, "$NetBSD: linux32_signal.c,v 1.21 2021/09/07 11:43:04 riastrad
 
 #include <compat/linux/common/linux_types.h>
 #include <compat/linux/common/linux_signal.h>
+#include <compat/linux/common/linux_sigevent.h>
 
 #include <compat/linux32/common/linux32_types.h>
 #include <compat/linux32/common/linux32_signal.h>
+#include <compat/linux32/common/linux32_sigevent.h>
 #include <compat/linux32/common/linux32_siginfo.h>
 #include <compat/linux32/linux32_syscallargs.h>
 #include <compat/linux32/common/linux32_errno.h>
@@ -653,4 +655,57 @@ native_to_linux32_si_status(int code, int status)
 	}
 
 	return sts;
+}
+
+int
+linux32_to_native_sigevent(struct sigevent *nsep,
+    const struct linux32_sigevent *lsep)
+{
+	memset(nsep, 0, sizeof(*nsep));
+
+	switch (lsep->sigev_notify) {
+	case LINUX_SIGEV_SIGNAL:
+		nsep->sigev_notify = SIGEV_SIGNAL;
+		break;
+
+	case LINUX_SIGEV_NONE:
+		nsep->sigev_notify = SIGEV_NONE;
+		break;
+
+	case LINUX_SIGEV_THREAD:
+	case LINUX_SIGEV_THREAD_ID:
+	default:
+		return ENOTSUP;
+	}
+
+#if _BYTE_ORDER == _LITTLE_ENDIAN
+	nsep->sigev_value.sival_ptr =
+	    NETBSD32PTR64(lsep->sigev_value.sival_ptr);
+#else
+#error This is probably broken on big-endian platforms.
+#endif
+
+	if (lsep->sigev_signo < 0 || lsep->sigev_signo >= LINUX32__NSIG) {
+		return EINVAL;
+	}
+	nsep->sigev_signo = linux32_to_native_signo[lsep->sigev_signo];
+
+	return 0;
+}
+
+int
+linux32_sigevent_copyin(const void *src, void *dst, size_t size)
+{
+	struct linux32_sigevent lse;
+	struct sigevent *sep = dst;
+	int error;
+
+	KASSERT(size == sizeof(*sep));
+
+	error = copyin(src, &lse, sizeof(lse));
+	if (error) {
+		return error;
+	}
+
+	return linux32_to_native_sigevent(sep, &lse);
 }

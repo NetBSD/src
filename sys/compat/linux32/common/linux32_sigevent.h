@@ -1,11 +1,11 @@
-/*	$NetBSD: linux32_siginfo.h,v 1.2 2021/09/19 22:30:28 thorpej Exp $	*/
+/*	$NetBSD: linux32_sigevent.h,v 1.2 2021/09/19 22:30:28 thorpej Exp $	*/
 
 /*-
- * Copyright (c) 1998 The NetBSD Foundation, Inc.
+ * Copyright (c) 2005 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Eric Haszlakiewicz.
+ * by Frank van der Linden.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -29,60 +29,38 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _AMD64_LINUX32_SIGINFO_H
-#define _AMD64_LINUX32_SIGINFO_H
+#ifndef _LINUX32_SIGEVENT_H
+#define _LINUX32_SIGEVENT_H
 
-#include <compat/linux32/common/linux32_sigevent.h>
+typedef union linux32_sigval {
+	int		sival_int;
+	netbsd32_voidp	sival_ptr;
+} linux32_sigval_t;
 
-#define SI_MAX_SIZE	128
-#define SI_PAD_SIZE	((SI_MAX_SIZE/sizeof(int)) - 3)
+#define LINUX32_SIGEV_MAX  64
+#ifndef LINUX32_SIGEV_PAD
+#define LINUX32_SIGEV_PAD ((LINUX32_SIGEV_MAX -				\
+			    (sizeof(linux32_sigval_t) + (sizeof(int) * 2))) / \
+			   sizeof(int))
+#endif
 
-typedef struct linux32_siginfo {
-	int	lsi_signo;
-	int	lsi_errno;
-	int	lsi_code;
+typedef struct linux32_sigevent {
+	linux32_sigval_t sigev_value;	/* sizeof(pointer) */
+	int sigev_signo;
+	int sigev_notify;
+	/* guaranteed to have natural pointer alignment */
 	union {
-		int _pad[SI_PAD_SIZE];
-
-		/* kill() */
+		int pad[LINUX32_SIGEV_PAD];
+		int tid;
 		struct {
-			linux32_pid_t	_pid;
-			linux32_uid_t	_uid;
-		} _kill;
+			void (*func)(linux32_sigval_t);
+			void *attr;
+		} _sigev_thread;
+	} _sigev_un;
+} linux32_sigevent_t;
 
-		/* POSIX.1b signals */
-		struct {
-			linux32_pid_t	_pid;
-			linux32_uid_t	_uid;
-			linux32_sigval_t	_sigval;
-		} _rt;
+int	linux32_to_native_sigevent(struct sigevent *,
+	    const struct linux32_sigevent *);
+int	linux32_sigevent_copyin(const void *, void *, size_t);
 
-		/* POSIX.1b timers */
-		struct {
-			unsigned int	_timer1;
-			unsigned int	_timer2;
-		} _timer;
-
-		/* SIGCHLD */
-		struct {
-			linux32_pid_t	_pid;
-			linux32_uid_t	_uid;
-			int		_status;
-			linux32_clock_t	_utime;
-			linux32_clock_t	_stime;
-		} _sigchld;
-
-		/* SIGPOLL */
-		struct {
-			int _band;
-			int _fd;
-		} _sigpoll;
-
-		/* SIGILL, SIGFPE, SIGSEGV, SIGBUS */
-		struct {
-			netbsd32_voidp _addr;
-		} _sigfault;
-	} _sidata;
-} linux32_siginfo_t;
-
-#endif /* !_AMD64_LINUX32_SIGINFO_H */
+#endif /* _LINUX32_SIGEVENT_H */
