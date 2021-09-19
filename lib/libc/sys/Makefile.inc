@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.245 2020/08/14 00:53:16 riastradh Exp $
+#	$NetBSD: Makefile.inc,v 1.246 2021/09/19 15:51:28 thorpej Exp $
 #	@(#)Makefile.inc	8.3 (Berkeley) 10/24/94
 
 # sys sources
@@ -7,9 +7,10 @@
 # other sources shared with the kernel, used in syscalls
 SRCS+=	cpuset.c
 # glue to offer userland wrappers for some syscalls
-SRCS+=	accept4.c clock_getcpuclockid.c posix_fadvise.c posix_madvise.c \
-	ppoll.c sched.c sigqueue.c sigtimedwait.c sigwait.c sigwaitinfo.c \
-	statvfs.c swapon.c semctl.c vadvise.c
+SRCS+=	accept4.c clock_getcpuclockid.c eventfd_read.c eventfd_write.c \
+	posix_fadvise.c posix_madvise.c ppoll.c sched.c sigqueue.c \
+	sigtimedwait.c sigwait.c sigwaitinfo.c statvfs.c swapon.c semctl.c \
+	vadvise.c
 
 .if ${RUMPRUN} != "yes"
 # modules with non-default implementations on at least one architecture:
@@ -100,6 +101,7 @@ ASM=\
 		clock_getcpuclockid2.S \
 		__clock_getres50.S __clock_gettime50.S \
 	dup.S dup2.S dup3.S \
+	eventfd.S \
 	extattrctl.S \
 		extattr_delete_fd.S extattr_delete_file.S \
 		extattr_delete_link.S extattr_get_fd.S extattr_get_file.S \
@@ -154,6 +156,7 @@ ASM=\
 		__statvfs190.S swapctl.S symlink.S symlinkat.S __sysctl.S \
 	timer_create.S timer_delete.S __timer_gettime50.S timer_getoverrun.S \
 		____semctl50.S __timer_settime50.S \
+	timerfd_create.S timerfd_gettime.S timerfd_settime.S \
 	umask.S undelete.S unlink.S unlinkat.S unmount.S __utimes50.S \
 		utimensat.S utrace.S uuidgen.S
 
@@ -251,7 +254,7 @@ LintSysPseudoNoerr.c: ${LIBCDIR}/sys/makelintstub \
 MAN+=	accept.2 access.2 acct.2 adjtime.2 bind.2 brk.2 chdir.2 \
 	chflags.2 chmod.2 chown.2 chroot.2 clock_getcpuclockid2.2 \
 	clock_settime.2 clone.2 close.2 \
-	connect.2 dup.2 execve.2 _exit.2 extattr_get_file.2 \
+	connect.2 dup.2 eventfd.2 execve.2 _exit.2 extattr_get_file.2 \
 	fcntl.2 fdatasync.2 fdiscard.2 fhopen.2 \
 	flock.2 fork.2 fsync.2 getcontext.2 getdents.2 \
 	getfh.2 getvfsstat.2 getgid.2 getgroups.2 \
@@ -284,7 +287,7 @@ MAN+=	accept.2 access.2 acct.2 adjtime.2 bind.2 brk.2 chdir.2 \
 	socket.2 \
 	socketpair.2 stat.2 statvfs.2 swapctl.2 swapon.3 symlink.2 \
 	sync.2 sysarch.2 syscall.2 timer_create.2 timer_delete.2 \
-	timer_settime.2 truncate.2 umask.2 undelete.2 \
+	timer_settime.2 timerfd.2 truncate.2 umask.2 undelete.2 \
 	unlink.2 utimes.2 utrace.2 uuidgen.2 vfork.2 wait.2 write.2
 
 MLINKS+=_exit.2 _Exit.2
@@ -299,6 +302,8 @@ MLINKS+=chown.2 fchown.2 chown.2 lchown.2
 MLINKS+=chroot.2 fchroot.2
 MLINKS+=clock_settime.2 clock_gettime.2
 MLINKS+=clock_settime.2 clock_getres.2
+MLINKS+=eventfd.2 eventfd_read.2 \
+	eventfd.2 eventfd_write.2
 MLINKS+=extattr_get_file.2 extattr_set_file.2 \
 	extattr_get_file.2 extattr_delete_file.2 \
 	extattr_get_file.2 extattr_list_file.2 \
@@ -380,6 +385,9 @@ MLINKS+=statvfs.2 fstatvfs.2
 MLINKS+=statvfs.2 statvfs1.2
 MLINKS+=statvfs.2 fstatvfs1.2
 MLINKS+=syscall.2 __syscall.2
+MLINKS+=timerfd.2 timerfd_create.2 \
+	timerfd.2 timerfd_gettime.2 \
+	timerfd.2 timerfd_settime.2
 MLINKS+=truncate.2 ftruncate.2
 MLINKS+=unlink.2 unlinkat.2
 MLINKS+=utimes.2 futimes.2 utimes.2 lutimes.2

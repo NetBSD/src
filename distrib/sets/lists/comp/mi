@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2392 2021/09/16 23:32:49 christos Exp $
+#	$NetBSD: mi,v 1.2393 2021/09/19 15:51:27 thorpej Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -3279,6 +3279,7 @@
 ./usr/include/sys/errno.h			comp-c-include
 ./usr/include/sys/evcnt.h			comp-c-include
 ./usr/include/sys/event.h			comp-c-include
+./usr/include/sys/eventfd.h			comp-c-include
 ./usr/include/sys/exec.h			comp-c-include
 ./usr/include/sys/exec_aout.h			comp-c-include
 ./usr/include/sys/exec_coff.h			comp-c-include
@@ -3430,6 +3431,7 @@
 ./usr/include/sys/time.h			comp-c-include
 ./usr/include/sys/timeb.h			comp-c-include
 ./usr/include/sys/timepps.h			comp-c-include
+./usr/include/sys/timerfd.h			comp-c-include
 ./usr/include/sys/times.h			comp-c-include
 ./usr/include/sys/timespec.h			comp-c-include
 ./usr/include/sys/timex.h			comp-c-include
@@ -4659,6 +4661,9 @@
 ./usr/share/man/cat2/dup2.0			comp-c-catman		.cat
 ./usr/share/man/cat2/dup3.0			comp-c-catman		.cat
 ./usr/share/man/cat2/errno.0			comp-c-catman		.cat
+./usr/share/man/cat2/eventfd.0			comp-c-catman		.cat
+./usr/share/man/cat2/eventfd_read.0		comp-c-catman		.cat
+./usr/share/man/cat2/eventfd_write.0		comp-c-catman		.cat
 ./usr/share/man/cat2/execve.0			comp-c-catman		.cat
 ./usr/share/man/cat2/extattr_delete_fd.0	comp-c-catman		.cat
 ./usr/share/man/cat2/extattr_delete_file.0	comp-c-catman		.cat
@@ -4897,6 +4902,10 @@
 ./usr/share/man/cat2/timer_getoverrun.0		comp-c-catman		.cat
 ./usr/share/man/cat2/timer_gettime.0		comp-c-catman		.cat
 ./usr/share/man/cat2/timer_settime.0		comp-c-catman		.cat
+./usr/share/man/cat2/timerfd.0			comp-c-catman		.cat
+./usr/share/man/cat2/timerfd_create.0		comp-c-catman		.cat
+./usr/share/man/cat2/timerfd_gettime.0		comp-c-catman		.cat
+./usr/share/man/cat2/timerfd_settime.0		comp-c-catman		.cat
 ./usr/share/man/cat2/truncate.0			comp-c-catman		.cat
 ./usr/share/man/cat2/ucontext.0			comp-c-catman		.cat
 ./usr/share/man/cat2/umask.0			comp-c-catman		.cat
@@ -12994,6 +13003,9 @@
 ./usr/share/man/html2/dup2.html			comp-c-htmlman		html
 ./usr/share/man/html2/dup3.html			comp-c-htmlman		html
 ./usr/share/man/html2/errno.html		comp-c-htmlman		html
+./usr/share/man/html2/eventfd.html		comp-c-htmlman		html
+./usr/share/man/html2/eventfd_read.html		comp-c-htmlman		html
+./usr/share/man/html2/eventfd_write.html	comp-c-htmlman		html
 ./usr/share/man/html2/execve.html		comp-c-htmlman		html
 ./usr/share/man/html2/extattr_delete_fd.html	comp-c-htmlman		html
 ./usr/share/man/html2/extattr_delete_file.html	comp-c-htmlman		html
@@ -13218,6 +13230,10 @@
 ./usr/share/man/html2/timer_getoverrun.html	comp-c-htmlman		html
 ./usr/share/man/html2/timer_gettime.html	comp-c-htmlman		html
 ./usr/share/man/html2/timer_settime.html	comp-c-htmlman		html
+./usr/share/man/html2/timerfd.html		comp-c-htmlman		html
+./usr/share/man/html2/timerfd_create.html	comp-c-htmlman		html
+./usr/share/man/html2/timerfd_gettime.html	comp-c-htmlman		html
+./usr/share/man/html2/timerfd_settime.html	comp-c-htmlman		html
 ./usr/share/man/html2/truncate.html		comp-c-htmlman		html
 ./usr/share/man/html2/ucontext.html		comp-c-htmlman		html
 ./usr/share/man/html2/umask.html		comp-c-htmlman		html
@@ -21146,6 +21162,9 @@
 ./usr/share/man/man2/dup2.2			comp-c-man		.man
 ./usr/share/man/man2/dup3.2			comp-c-man		.man
 ./usr/share/man/man2/errno.2			comp-c-man		.man
+./usr/share/man/man2/eventfd.2			comp-c-man		.man
+./usr/share/man/man2/eventfd_read.2		comp-c-man		.man
+./usr/share/man/man2/eventfd_write.2		comp-c-man		.man
 ./usr/share/man/man2/execve.2			comp-c-man		.man
 ./usr/share/man/man2/extattr_delete_fd.2	comp-c-man		.man
 ./usr/share/man/man2/extattr_delete_file.2	comp-c-man		.man
@@ -21382,6 +21401,10 @@
 ./usr/share/man/man2/timer_getoverrun.2		comp-c-man		.man
 ./usr/share/man/man2/timer_gettime.2		comp-c-man		.man
 ./usr/share/man/man2/timer_settime.2		comp-c-man		.man
+./usr/share/man/man2/timerfd.2			comp-c-man		.man
+./usr/share/man/man2/timerfd_create.2		comp-c-man		.man
+./usr/share/man/man2/timerfd_gettime.2		comp-c-man		.man
+./usr/share/man/man2/timerfd_settime.2		comp-c-man		.man
 ./usr/share/man/man2/truncate.2			comp-c-man		.man
 ./usr/share/man/man2/ucontext.2			comp-c-man		.man
 ./usr/share/man/man2/umask.2			comp-c-man		.man

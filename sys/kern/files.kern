@@ -1,4 +1,4 @@
-#	$NetBSD: files.kern,v 1.56 2021/05/18 05:16:09 mrg Exp $
+#	$NetBSD: files.kern,v 1.57 2021/09/19 15:51:27 thorpej Exp $
 
 #
 # kernel sources
@@ -158,6 +158,7 @@ file	kern/subr_workqueue.c		kern
 file	kern/subr_xcall.c		kern
 file	kern/sys_aio.c			aio
 file	kern/sys_descrip.c		kern
+file	kern/sys_eventfd.c		kern
 file	kern/sys_futex.c		kern
 file	kern/sys_generic.c		kern
 file	kern/sys_getrandom.c		kern
@@ -174,6 +175,7 @@ file	kern/sys_select.c		kern
 file	kern/sys_sig.c			kern
 file	kern/sys_sched.c		kern
 file	kern/sys_socket.c		kern
+file	kern/sys_timerfd.c		kern
 file	kern/syscalls.c			syscall_debug | kdtrace_hooks
 file	kern/sysv_ipc.c			sysvshm | sysvsem | sysvmsg
 file	kern/sysv_msg.c			sysvmsg
