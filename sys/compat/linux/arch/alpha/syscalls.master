@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.97 2020/04/26 18:53:32 thorpej Exp $
+	$NetBSD: syscalls.master,v 1.98 2021/09/19 23:01:49 thorpej Exp $
 ;
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -663,11 +663,15 @@
 412	UNIMPL		restart_syscall
 413	STD		{ int|linux_sys||fadvise64(int fd, off_t offset, \
 			    size_t len, int advice); }
-414	UNIMPL		timer_create
-415	UNIMPL		timer_settime
-416	UNIMPL		timer_gettime
-417	UNIMPL		timer_getoverrun
-418	UNIMPL		timer_delete
+414	STD		{ int|linux_sys||timer_create(clockid_t clockid, \
+			    struct linux_sigevent *evp, timer_t *timerid); }
+415	STD		{ int|linux_sys||timer_settime(timer_t timerid, \
+			    int flags, const struct linux_itimerspec *tim, \
+			    struct linux_itimerspec *otim); }
+416	STD		{ int|linux_sys||timer_gettime(timer_t timerid, \
+			    struct linux_itimerspec *tim); }
+417	NOARGS		{ int|sys||timer_getoverrun(timer_t timerid); }
+418	NOARGS		{ int|sys||timer_delete(timer_t timerid); }
 419	STD		{ int|linux_sys||clock_settime(clockid_t which, \
 			    struct linux_timespec *tp); }
 420	STD		{ int|linux_sys||clock_gettime(clockid_t which, \

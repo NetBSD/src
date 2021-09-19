@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_sched.h,v 1.8 2011/11/18 04:07:44 christos Exp $	*/
+/*	$NetBSD: linux_sched.h,v 1.9 2021/09/19 23:01:50 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -74,15 +74,36 @@ struct linux_timespec {
 	long		tv_nsec;	/* nanoseconds */
 };
 
+struct linux_itimerspec {
+	struct linux_timespec it_interval;
+	struct linux_timespec it_value;
+};
+
 #define LINUX_CLOCK_REALTIME		0
 #define LINUX_CLOCK_MONOTONIC		1
 #define LINUX_CLOCK_PROCESS_CPUTIME_ID	2
 #define LINUX_CLOCK_THREAD_CPUTIME_ID	3
-#define LINUX_CLOCK_REALTIME_HR		4
-#define LINUX_CLOCK_MONOTONIC_HR	5
+#define LINUX_CLOCK_MONOTONIC_RAW	4
+#define	LINUX_CLOCK_REALTIME_COARSE	5
+#define	LINUX_CLOCK_MONOTONIC_COARSE	6
+#define	LINUX_CLOCK_BOOTTIME		7
+#define	LINUX_CLOCK_BOOTTIME_ALARM	8
+#define	LINUX_CLOCK_REALTIME_ALARM	9
 
-int linux_to_native_clockid(clockid_t *, clockid_t);
-void native_to_linux_timespec(struct linux_timespec *, struct timespec *);
-void linux_to_native_timespec(struct timespec *, struct linux_timespec *);
+#define LINUX_TIMER_ABSTIME		0x01
+
+int	linux_to_native_clockid(clockid_t *, clockid_t);
+
+void	native_to_linux_timespec(struct linux_timespec *,
+	    const struct timespec *);
+void	linux_to_native_timespec(struct timespec *,
+	    const struct linux_timespec *);
+
+void	native_to_linux_itimerspec(struct linux_itimerspec *,
+	    const struct itimerspec *);
+void	linux_to_native_itimerspec(struct itimerspec *,
+	    const struct linux_itimerspec *);
+
+int	linux_to_native_timer_create_clockid(clockid_t *, clockid_t);
 
 #endif /* _LINUX_SCHED_H */
