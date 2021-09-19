@@ -730,11 +730,11 @@ make_message(struct dhcp_message **message,
 	}
 	*p++ = DHO_END;
 
-#ifdef BOOTP_MESSAGE_LENTH_MIN
+#ifdef BOOTP_MESSAGE_LENGTH_MIN
 	/* Some crappy DHCP servers think they have to obey the BOOTP minimum
 	 * message length.
 	 * They are wrong, but we should still cater for them. */
-	while (p - m < BOOTP_MESSAGE_LENTH_MIN)
+	while (p - m < BOOTP_MESSAGE_LENGTH_MIN)
 		*p++ = DHO_PAD;
 #endif
 
