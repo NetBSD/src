@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_ioctl.c,v 1.14 2019/08/23 12:49:59 maxv Exp $ */
+/*	$NetBSD: linux32_ioctl.c,v 1.15 2021/09/19 23:51:37 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2006 Emmanuel Dreyfus, all rights reserved.
@@ -32,13 +32,15 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux32_ioctl.c,v 1.14 2019/08/23 12:49:59 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_ioctl.c,v 1.15 2021/09/19 23:51:37 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/time.h>
 #include <sys/ucred.h>
 #include <sys/ioctl.h>
+#include <sys/file.h>
+#include <sys/filedesc.h>
 
 #include <compat/netbsd32/netbsd32.h>
 #include <compat/netbsd32/netbsd32_syscallargs.h>
@@ -46,6 +48,7 @@ __KERNEL_RCSID(0, "$NetBSD: linux32_ioctl.c,v 1.14 2019/08/23 12:49:59 maxv Exp 
 #include <compat/linux/common/linux_types.h>
 #include <compat/linux/common/linux_signal.h>
 #include <compat/linux/common/linux_ipc.h>
+#include <compat/linux/common/linux_ioctl.h>
 #include <compat/linux/common/linux_sem.h>
 #include <compat/linux/linux_syscallargs.h>
 
@@ -80,8 +83,31 @@ linux32_sys_ioctl(struct lwp *l, const struct linux32_sys_ioctl_args *uap, regis
 
 	switch(group) {
 	case 'T':
-		error = linux32_ioctl_termios(l, uap, retval);
+	    {
+		/*
+		 * Termios, the MIDI sequencer, and timerfd use 'T' to
+		 * identify the ioctl, so we have to differentiate them
+		 * in another way.
+		 *
+		 * (XXX We don't bother with MIDI here.)
+		 */
+		struct file *fp;
+
+		if ((fp = fd_getfile(SCARG(uap, fd))) == NULL)
+			return EBADF;
+
+		if (fp->f_type == DTYPE_TIMERFD) {
+			struct linux_sys_ioctl_args ua;
+			SCARG(&ua, fd) = SCARG(uap, fd);
+			SCARG(&ua, com) = SCARG(uap, com);
+			SCARG(&ua, data) = SCARG_P32(uap, data);
+			error = linux_ioctl_timerfd(l, &ua, retval);
+		} else {
+			error = linux32_ioctl_termios(l, uap, retval);
+		}
+		fd_putfile(SCARG(uap, fd));
 		break;
+	    }
 	case 'M':
 	case 'Q':
 	case 'P':

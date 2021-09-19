@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_time.c,v 1.41 2021/09/19 23:01:50 thorpej Exp $ */
+/*	$NetBSD: linux_time.c,v 1.42 2021/09/19 23:51:37 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2001, 2020 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_time.c,v 1.41 2021/09/19 23:01:50 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_time.c,v 1.42 2021/09/19 23:51:37 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/ucred.h>
@@ -39,6 +39,7 @@ __KERNEL_RCSID(0, "$NetBSD: linux_time.c,v 1.41 2021/09/19 23:01:50 thorpej Exp 
 #include <sys/signal.h>
 #include <sys/stdint.h>
 #include <sys/time.h>
+#include <sys/timerfd.h>
 #include <sys/systm.h>
 #include <sys/sched.h>
 #include <sys/syscallargs.h>
@@ -46,6 +47,8 @@ __KERNEL_RCSID(0, "$NetBSD: linux_time.c,v 1.41 2021/09/19 23:01:50 thorpej Exp 
 #include <sys/proc.h>
 
 #include <compat/linux/common/linux_types.h>
+#include <compat/linux/common/linux_fcntl.h>
+#include <compat/linux/common/linux_ioctl.h>
 #include <compat/linux/common/linux_signal.h>
 #include <compat/linux/common/linux_sigevent.h>
 #include <compat/linux/common/linux_machdep.h>
@@ -441,3 +444,149 @@ linux_sys_timer_gettime(struct lwp *l,
  * timer_gettoverrun(2) and timer_delete(2) are handled directly
  * by the native calls.
  */
+
+#define	LINUX_TFD_TIMER_ABSTIME		0x0001
+#define	LINUX_TFD_TIMER_CANCEL_ON_SET	0x0002
+#define	LINUX_TFD_CLOEXEC		LINUX_O_CLOEXEC
+#define	LINUX_TFD_NONBLOCK		LINUX_O_NONBLOCK
+
+int
+linux_sys_timerfd_create(struct lwp *l,
+    const struct linux_sys_timerfd_create_args *uap, register_t *retval)
+{
+	/* {
+		syscallarg(clockid_t) clock_id;
+		syscallarg(int) flags;
+	} */
+	int nflags = 0;
+	clockid_t id;
+	int error;
+
+	error = linux_to_native_clockid(&id, SCARG(uap, clock_id));
+	if (error) {
+		return error;
+	}
+
+	if (SCARG(uap, flags) & ~(LINUX_TFD_CLOEXEC | LINUX_TFD_NONBLOCK)) {
+		return EINVAL;
+	}
+	if (SCARG(uap, flags) & LINUX_TFD_CLOEXEC) {
+		nflags |= TFD_CLOEXEC;
+	}
+	if (SCARG(uap, flags) & LINUX_TFD_NONBLOCK) {
+		nflags |= TFD_NONBLOCK;
+	}
+
+	return do_timerfd_create(l, id, nflags, retval);
+}
+
+int
+linux_sys_timerfd_gettime(struct lwp *l,
+    const struct linux_sys_timerfd_gettime_args *uap, register_t *retval)
+{
+	/* {
+		syscallarg(int) fd;
+		syscallarg(struct linux_itimerspec *) tim;
+	} */
+	struct itimerspec its;
+	struct linux_itimerspec lits;
+	int error;
+
+	error = do_timerfd_gettime(l, SCARG(uap, fd), &its, retval);
+	if (error == 0) {
+		native_to_linux_itimerspec(&lits, &its);
+		error = copyout(&lits, SCARG(uap, tim), sizeof(lits));
+	}
+
+	return error;
+}
+
+int
+linux_to_native_timerfd_settime_flags(int *nflagsp, int lflags)
+{
+	int nflags = 0;
+
+	if (lflags & ~(LINUX_TFD_TIMER_ABSTIME |
+		       LINUX_TFD_TIMER_CANCEL_ON_SET)) {
+		return EINVAL;
+	}
+	if (lflags & LINUX_TFD_TIMER_ABSTIME) {
+		nflags |= TFD_TIMER_ABSTIME;
+	}
+	if (lflags & LINUX_TFD_TIMER_CANCEL_ON_SET) {
+		nflags |= TFD_TIMER_CANCEL_ON_SET;
+	}
+
+	*nflagsp = nflags;
+
+	return 0;
+}
+
+int
+linux_sys_timerfd_settime(struct lwp *l,
+    const struct linux_sys_timerfd_settime_args *uap, register_t *retval)
+{
+	/* {
+		syscallarg(int) fd;
+		syscallarg(int) flags;
+		syscallarg(const struct linux_itimerspec *) tim;
+		syscallarg(struct linux_itimerspec *) otim;
+	} */
+	struct itimerspec nits, oits, *oitsp = NULL;
+	struct linux_itimerspec lits;
+	int nflags;
+	int error;
+
+	error = copyin(SCARG(uap, tim), &lits, sizeof(lits));
+	if (error) {
+		return error;
+	}
+	linux_to_native_itimerspec(&nits, &lits);
+
+	error = linux_to_native_timerfd_settime_flags(&nflags,
+	    SCARG(uap, flags));
+	if (error) {
+		return error;
+	}
+
+	if (SCARG(uap, otim)) {
+		oitsp = &oits;
+	}
+
+	error = do_timerfd_settime(l, SCARG(uap, fd), nflags,
+	    &nits, oitsp, retval);
+	if (error == 0 && oitsp != NULL) {
+		native_to_linux_itimerspec(&lits, oitsp);
+		error = copyout(&lits, SCARG(uap, otim), sizeof(lits));
+	}
+
+	return error;
+}
+
+#define	LINUX_TFD_IOC_SET_TICKS		_LINUX_IOW('T', 0, uint64_t)
+
+int
+linux_ioctl_timerfd(struct lwp *l, const struct linux_sys_ioctl_args *uap,
+    register_t *retval)
+{
+	/* {
+		syscallarg(int) fd;
+		syscallarg(u_long) com;
+		syscallarg(void *) data;
+	} */
+	struct sys_ioctl_args ua;
+
+	SCARG(&ua, fd) = SCARG(uap, fd);
+	SCARG(&ua, data) = SCARG(uap, data);
+
+	switch (SCARG(uap, com)) {
+	case LINUX_TFD_IOC_SET_TICKS:
+		SCARG(&ua, com) = TFD_IOC_SET_TICKS;
+		break;
+
+	default:
+		return EINVAL;
+	}
+
+	return sys_ioctl(l, (const void *)&ua, retval);
+}

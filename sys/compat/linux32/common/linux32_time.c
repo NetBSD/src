@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_time.c,v 1.39 2021/09/19 23:01:50 thorpej Exp $ */
+/*	$NetBSD: linux32_time.c,v 1.40 2021/09/19 23:51:37 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2006 Emmanuel Dreyfus, all rights reserved.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: linux32_time.c,v 1.39 2021/09/19 23:01:50 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_time.c,v 1.40 2021/09/19 23:51:37 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -45,6 +45,7 @@ __KERNEL_RCSID(0, "$NetBSD: linux32_time.c,v 1.39 2021/09/19 23:01:50 thorpej Ex
 #include <sys/fcntl.h>
 #include <sys/namei.h>
 #include <sys/select.h>
+#include <sys/timerfd.h>
 #include <sys/proc.h>
 #include <sys/resourcevar.h>
 #include <sys/ucred.h>
@@ -498,3 +499,69 @@ linux32_sys_timer_gettime(struct lwp *l,
  * timer_gettoverrun(2) and timer_delete(2) are handled directly
  * by the native calls.
  */
+
+/*
+ * timerfd_create() is handled by the standard COMPAT_LINUX call.
+ */
+
+int
+linux32_sys_timerfd_gettime(struct lwp *l,
+    const struct linux32_sys_timerfd_gettime_args *uap, register_t *retval)
+{
+	/* {
+		syscallarg(int) fd;
+		syscallarg(struct linux32_itimerspec *) tim;
+	} */
+	struct itimerspec its;
+	struct linux32_itimerspec lits;
+	int error;
+
+	error = do_timerfd_gettime(l, SCARG(uap, fd), &its, retval);
+	if (error == 0) {
+		native_to_linux32_itimerspec(&lits, &its);
+		error = copyout(&lits, SCARG(uap, tim), sizeof(lits));
+	}
+
+	return error;
+}
+
+int
+linux32_sys_timerfd_settime(struct lwp *l,
+    const struct linux32_sys_timerfd_settime_args *uap, register_t *retval)
+{
+	/* {
+		syscallarg(int) fd;
+		syscallarg(int) flags;
+		syscallarg(const struct linux32_itimerspec *) tim;
+		syscallarg(struct linux32_itimerspec *) otim;
+	} */
+	struct itimerspec nits, oits, *oitsp = NULL;
+	struct linux32_itimerspec lits;
+	int nflags;
+	int error;
+
+	error = copyin(SCARG(uap, tim), &lits, sizeof(lits));
+	if (error) {
+		return error;
+	}
+	linux32_to_native_itimerspec(&nits, &lits);
+
+	error = linux_to_native_timerfd_settime_flags(&nflags,
+	    SCARG(uap, flags));
+	if (error) {
+		return error;
+	}
+
+	if (SCARG(uap, otim)) {
+		oitsp = &oits;
+	}
+
+	error = do_timerfd_settime(l, SCARG(uap, fd), nflags,
+	    &nits, oitsp, retval);
+	if (error == 0 && oitsp != NULL) {
+		native_to_linux32_itimerspec(&lits, oitsp);
+		error = copyout(&lits, SCARG(uap, otim), sizeof(lits));
+	}
+
+	return error;
+}
