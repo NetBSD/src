@@ -1,4 +1,4 @@
-/*	$NetBSD: vidc20config.c,v 1.34 2014/10/25 10:58:12 skrll Exp $	*/
+/*	$NetBSD: vidc20config.c,v 1.35 2021/09/19 10:34:08 andvar Exp $	*/
 
 /*
  * Copyright (c) 2001 Reinoud Zandijk
@@ -48,7 +48,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: vidc20config.c,v 1.34 2014/10/25 10:58:12 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vidc20config.c,v 1.35 2021/09/19 10:34:08 andvar Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -371,7 +371,7 @@ vidcvideo_coldinit(void)
 
 
 /* simple function to abstract vidc variables ; returns virt start address of screen */
-/* XXX asumption that video memory is mapped in twice */
+/* XXX assumption that video memory is mapped in twice */
 void *vidcvideo_hwscroll(int bytes)
 {
 

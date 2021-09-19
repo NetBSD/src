@@ -1,4 +1,4 @@
-/*	$NetBSD: ubsan.c,v 1.10 2020/03/08 21:35:03 kamil Exp $	*/
+/*	$NetBSD: ubsan.c,v 1.11 2021/09/19 10:34:06 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -38,9 +38,9 @@
 
 #include <sys/cdefs.h>
 #if defined(_KERNEL)
-__KERNEL_RCSID(0, "$NetBSD: ubsan.c,v 1.10 2020/03/08 21:35:03 kamil Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ubsan.c,v 1.11 2021/09/19 10:34:06 andvar Exp $");
 #else
-__RCSID("$NetBSD: ubsan.c,v 1.10 2020/03/08 21:35:03 kamil Exp $");
+__RCSID("$NetBSD: ubsan.c,v 1.11 2021/09/19 10:34:06 andvar Exp $");
 #endif
 
 #if defined(_KERNEL)
@@ -744,7 +744,7 @@ HandleAlignmentAssumption(bool isFatal, struct CAlignmentAssumptionData *pData, 
 	if (pData->mAssumptionLocation.mFilename != NULL) {
 		DeserializeLocation(szAssumptionLocation, LOCATION_MAXLEN,
 		    &pData->mAssumptionLocation);
-		Report(isFatal, "UBSan: Undefined Behavior in %s, alignment assumption of %#lx for pointer %#lx (offset %#lx), asumption made in %s\n",
+		Report(isFatal, "UBSan: Undefined Behavior in %s, alignment assumption of %#lx for pointer %#lx (offset %#lx), assumption made in %s\n",
 		    szLocation, ulAlignment, ulRealPointer, ulOffset,
 		    szAssumptionLocation);
 	} else {

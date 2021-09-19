@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.301 2021/08/13 20:19:45 andvar Exp $ */
+/* $NetBSD: pmap.c,v 1.302 2021/09/19 10:34:07 andvar Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001, 2007, 2008, 2020
@@ -135,7 +135,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.301 2021/08/13 20:19:45 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.302 2021/09/19 10:34:07 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -3759,7 +3759,7 @@ pmap_l3pt_delref(pmap_t pmap, vaddr_t va, pt_entry_t *l3pte,
 			    "0x%lx\n", pmap_pte_pa(l2pte));
 #endif
 		/*
-		 * You can pass NULL if you know the last refrence won't
+		 * You can pass NULL if you know the last reference won't
 		 * be dropped.
 		 */
 		KASSERT(tlbctx != NULL);

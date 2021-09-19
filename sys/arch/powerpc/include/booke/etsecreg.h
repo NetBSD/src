@@ -1,4 +1,4 @@
-/*	$NetBSD: etsecreg.h,v 1.8 2015/02/26 02:27:40 nonaka Exp $	*/
+/*	$NetBSD: etsecreg.h,v 1.9 2021/09/19 10:34:09 andvar Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -153,7 +153,7 @@ struct rxfcb {
 #define	IEVENT_PERR	__PPCBIT(31)	/* Receive parse error for TOE */
 #define	IMASK		0x014	/* Interrupt mask register */
 #define	EDIS		0x018	/* error disabled register */
-#define	EMAPG		0x01c	/* group eror mapping register */
+#define	EMAPG		0x01c	/* group error mapping register */
 #define	ECNTRL		0x020	/* ethernet control register */
 #define	ECNTRL_FIFM	__PPCBIT(16)	/* FIFO mode enable */
 #define	ECNTRL_CLRCNT	__PPCBIT(17)	/* Clear all MIB counters */

@@ -1,4 +1,4 @@
-/*	$NetBSD: aic79xx.seq,v 1.14 2021/09/16 21:29:41 andvar Exp $	*/
+/*	$NetBSD: aic79xx.seq,v 1.15 2021/09/19 10:34:09 andvar Exp $	*/
 
 /*
  * Adaptec U320 device driver firmware for Linux and FreeBSD.
@@ -1926,7 +1926,7 @@ pkt_status_check_nonpackreq:
 	/*
 	 * The unexpected nonpkt phase handler assumes that any
 	 * data channel use will have a FIFO reference count.  It
-	 * turns out that the status handler doesn't need a refernce
+	 * turns out that the status handler doesn't need a reference
 	 * count since the status received flag, and thus completion
 	 * processing, cannot be set until the handler is finished.
 	 * We increment the count here to make the nonpkt handler

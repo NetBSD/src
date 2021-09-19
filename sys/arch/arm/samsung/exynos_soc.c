@@ -1,4 +1,4 @@
-/*	$NetBSD: exynos_soc.c,v 1.39 2018/10/31 08:41:47 skrll Exp $	*/
+/*	$NetBSD: exynos_soc.c,v 1.40 2021/09/19 10:34:08 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 #include "opt_exynos.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: exynos_soc.c,v 1.39 2018/10/31 08:41:47 skrll Exp $");
+__KERNEL_RCSID(1, "$NetBSD: exynos_soc.c,v 1.40 2021/09/19 10:34:08 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -824,7 +824,7 @@ exynos5410_usb2phy_enable(bus_space_handle_t usb2phy_bsh)
 	phyotg = bus_space_read_4(&armv7_generic_bs_tag, usb2phy_bsh,
 		USB_PHY_OTG_SYS);
 
-	/* otg phy refrence clock: assumption its 24 Mhz now */
+	/* otg phy reference clock: assumption its 24 Mhz now */
 	phyotg &= ~OTG_SYS_FSEL_MASK;
 	phyotg |= __SHIFTIN(OTG_SYS_FSEL_MASK, FSEL_CLKSEL_24M);
 

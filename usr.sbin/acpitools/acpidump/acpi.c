@@ -1,4 +1,4 @@
-/* $NetBSD: acpi.c,v 1.51 2021/09/14 20:34:36 rillig Exp $ */
+/* $NetBSD: acpi.c,v 1.52 2021/09/19 10:34:10 andvar Exp $ */
 
 /*-
  * Copyright (c) 1998 Doug Rabson
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: acpi.c,v 1.51 2021/09/14 20:34:36 rillig Exp $");
+__RCSID("$NetBSD: acpi.c,v 1.52 2021/09/19 10:34:10 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/endian.h>
@@ -2300,7 +2300,7 @@ acpi_print_iort_smmuv3(ACPI_IORT_NODE *node)
 	printf("\tSync GSIV=%u\n", smmu->SyncGsiv);
 	printf("\tProximity domain=%u\n", smmu->Pxm);
 
-	/* XXX should we print the refered contents? */
+	/* XXX should we print the referred contents? */
 	printf("\tDevice ID mapping index=%u\n", smmu->IdMappingIndex);
 }
 

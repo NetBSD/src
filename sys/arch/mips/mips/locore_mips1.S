@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_mips1.S,v 1.95 2020/08/22 05:52:00 simonb Exp $	*/
+/*	$NetBSD: locore_mips1.S,v 1.96 2021/09/19 10:34:09 andvar Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -57,7 +57,7 @@
 #include <mips/asm.h>
 #include <mips/cpuregs.h>
 
-RCSID("$NetBSD: locore_mips1.S,v 1.95 2020/08/22 05:52:00 simonb Exp $")
+RCSID("$NetBSD: locore_mips1.S,v 1.96 2021/09/19 10:34:09 andvar Exp $")
 
 #include "assym.h"
 
@@ -1529,7 +1529,7 @@ END(MIPSX(lwp_trampoline))
  * void mipsN_cpu_switch_resume(struct lwp *newlwp)
  *
  * Wiredown the USPACE of newproc with TLB entry#0 and #1.  Check
- * if target USPACE is already refered by any TLB entry before
+ * if target USPACE is already referred by any TLB entry before
  * doing that, and make sure TBIS(them) in the case.
  */
 LEAF_NOPROFILE(MIPSX(cpu_switch_resume))

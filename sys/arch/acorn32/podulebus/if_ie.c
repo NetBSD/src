@@ -1,4 +1,4 @@
-/* $NetBSD: if_ie.c,v 1.49 2021/07/24 22:30:59 andvar Exp $ */
+/* $NetBSD: if_ie.c,v 1.50 2021/09/19 10:34:07 andvar Exp $ */
 
 /*
  * Copyright (c) 1995 Melvin Tang-Richardson.
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ie.c,v 1.49 2021/07/24 22:30:59 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ie.c,v 1.50 2021/09/19 10:34:07 andvar Exp $");
 
 #define IGNORE_ETHER1_IDROM_CHECKSUM
 
@@ -456,7 +456,7 @@ ieattach(device_t parent, device_t self, void *aux)
 
 	/* "Hmm," said nuts, "what if the attach fails" */
 
-	/* Write some pretty things on the annoucement line */
+	/* Write some pretty things on the announcement line */
 	printf ( ": %s using %dk card ram",
 	    ether_sprintf(hwaddr),
 	    ((NRXBUF*IE_RXBUF_SIZE)+(NTXBUF*IE_TXBUF_SIZE))/1024 );

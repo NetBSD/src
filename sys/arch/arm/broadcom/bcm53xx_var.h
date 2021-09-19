@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm53xx_var.h,v 1.6 2013/10/28 22:51:16 matt Exp $	*/
+/*	$NetBSD: bcm53xx_var.h,v 1.7 2021/09/19 10:34:08 andvar Exp $	*/
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -70,7 +70,7 @@ struct bcm53xx_clock_info {
 	uint32_t clk_robo;	// GENPLL CH1
 	uint32_t clk_usb2;	// GENPLL CH2
 	uint32_t clk_iproc;	// GENPLL CH3
-	uint32_t clk_usb_ref;	// 1920MHz USB Refernce Clock
+	uint32_t clk_usb_ref;	// 1920MHz USB Reference Clock
 };
 
 /*

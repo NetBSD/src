@@ -1,4 +1,4 @@
-/*	$NetBSD: viewioctl.h,v 1.10 2015/09/07 03:49:45 dholland Exp $	*/
+/*	$NetBSD: viewioctl.h,v 1.11 2021/09/19 10:34:07 andvar Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -35,7 +35,7 @@
  * simply to map the semantics of a graphics dipslay to
  * the semantics of a character block device.  In other
  * words the graphics system as currently built does not like to be
- * refered to by open/close/ioctl.  This device serves as
+ * referred to by open/close/ioctl.  This device serves as
  * a interface to graphics.
  */
 

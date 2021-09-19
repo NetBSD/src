@@ -1,4 +1,4 @@
-/*	$NetBSD: dtfs_vfsops.c,v 1.4 2019/09/23 12:00:58 christos Exp $	*/
+/*	$NetBSD: dtfs_vfsops.c,v 1.5 2021/09/19 10:34:10 andvar Exp $	*/
 
 /*
  * Copyright (c) 2006  Antti Kantee.  All Rights Reserved.
@@ -160,7 +160,7 @@ dtfs_domount(struct puffs_usermount *pu, const char *typestr)
 			}
 		}
 		if (i == NTYPES) {
-			fprintf(stderr, "no maching type for %s\n", typestr);
+			fprintf(stderr, "no matching type for %s\n", typestr);
 			return 1;
 		}
 	}

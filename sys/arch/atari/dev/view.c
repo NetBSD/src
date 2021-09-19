@@ -1,4 +1,4 @@
-/*	$NetBSD: view.c,v 1.35 2015/08/20 14:40:16 christos Exp $	*/
+/*	$NetBSD: view.c,v 1.36 2021/09/19 10:34:08 andvar Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -34,11 +34,11 @@
  * simply to map the semantics of a graphics dipslay to 
  * the semantics of a character block device.  In other
  * words the graphics system as currently built does not like to be
- * refered to by open/close/ioctl.  This device serves as
+ * referred to by open/close/ioctl.  This device serves as
  * a interface to graphics. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: view.c,v 1.35 2015/08/20 14:40:16 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: view.c,v 1.36 2021/09/19 10:34:08 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
