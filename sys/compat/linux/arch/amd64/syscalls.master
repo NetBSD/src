@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.62 2020/04/26 18:53:32 thorpej Exp $
+	$NetBSD: syscalls.master,v 1.63 2021/09/19 23:01:49 thorpej Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -423,11 +423,15 @@
 220	UNIMPL		semtimedop
 221	STD		{ int|linux_sys||fadvise64(int fd, off_t offset, \
 			    size_t len, int advice); }
-222	UNIMPL		timer_create
-223	UNIMPL		timer_settime
-224	UNIMPL		timer_gettime
-225	UNIMPL		timer_getoverrun
-226	UNIMPL		timer_delete
+222	STD		{ int|linux_sys||timer_create(clockid_t clockid, \
+			    struct linux_sigevent *evp, timer_t *timerid); }
+223	STD		{ int|linux_sys||timer_settime(timer_t timerid, \
+			    int flags, const struct linux_itimerspec *tim, \
+			    struct linux_itimerspec *otim); }
+224	STD		{ int|linux_sys||timer_gettime(timer_t timerid, \
+			    struct linux_itimerspec *tim); }
+225	NOARGS		{ int|sys||timer_getoverrun(timer_t timerid); }
+226	NOARGS		{ int|sys||timer_delete(timer_t timerid); }
 227	STD		{ int|linux_sys||clock_settime(clockid_t which, \
 			    struct linux_timespec *tp); }
 228	STD		{ int|linux_sys||clock_gettime(clockid_t which, \

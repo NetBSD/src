@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_sched.h,v 1.2 2021/09/19 22:09:31 thorpej Exp $	*/
+/*	$NetBSD: linux32_sched.h,v 1.3 2021/09/19 23:01:50 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -42,8 +42,19 @@ struct linux32_timespec {
 	int		tv_nsec;	/* nanoseconds */
 };
 
-int linux32_to_native_clockid(clockid_t *, clockid_t);
-void native_to_linux32_timespec(struct linux32_timespec *, struct timespec *);
-void linux32_to_native_timespec(struct timespec *, struct linux32_timespec *);
+struct linux32_itimerspec {
+	struct linux32_timespec it_interval;
+	struct linux32_timespec it_value;
+};
+
+void	native_to_linux32_timespec(struct linux32_timespec *,
+	    const struct timespec *);
+void	linux32_to_native_timespec(struct timespec *,
+	    const struct linux32_timespec *);
+
+void	native_to_linux32_itimerspec(struct linux32_itimerspec *,
+	    const struct itimerspec *);
+void	linux32_to_native_itimerspec(struct itimerspec *,
+	    const struct linux32_itimerspec *);
 
 #endif /* _LINUX32_SCHED_H */

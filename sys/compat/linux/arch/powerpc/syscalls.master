@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.74 2020/04/26 18:53:32 thorpej Exp $  
+	$NetBSD: syscalls.master,v 1.75 2021/09/19 23:01:50 thorpej Exp $  
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -429,11 +429,15 @@
 237	UNIMPL		epoll_ctl
 238	UNIMPL		epoll_wait
 239	UNIMPL		remap_file_pages
-240	UNIMPL		timer_create
-241	UNIMPL		timer_settime
-242	UNIMPL		timer_gettime
-243	UNIMPL		timer_getoverrun
-244	UNIMPL		timer_delete
+240	STD		{ int|linux_sys||timer_create(clockid_t clockid, \
+			    struct linux_sigevent *evp, timer_t *timerid); }
+241	STD		{ int|linux_sys||timer_settime(timer_t timerid, \
+			    int flags, const struct linux_itimerspec *tim, \
+			    struct linux_itimerspec *otim); }
+242	STD		{ int|linux_sys||timer_gettime(timer_t timerid, \
+			    struct linux_itimerspec *tim); }
+243	NOARGS		{ int|sys||timer_getoverrun(timer_t timerid); }
+244	NOARGS		{ int|sys||timer_delete(timer_t timerid); }
 245	STD		{ int|linux_sys||clock_settime(clockid_t which, \
 			    struct linux_timespec *tp); }
 246	STD		{ int|linux_sys||clock_gettime(clockid_t which, \
