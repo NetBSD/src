@@ -1,4 +1,4 @@
-/* $NetBSD: linux32_systrace_args.c,v 1.10 2021/09/19 23:52:08 thorpej Exp $ */
+/* $NetBSD: linux32_systrace_args.c,v 1.11 2021/09/20 00:09:34 thorpej Exp $ */
 
 /*
  * System call argument to DTrace register array conversion.
@@ -1896,6 +1896,13 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 		*n_args = 2;
 		break;
 	}
+	/* linux32_sys_eventfd */
+	case 323: {
+		const struct linux32_sys_eventfd_args *p = params;
+		uarg[0] = SCARG(p, initval); /* unsigned int */
+		*n_args = 1;
+		break;
+	}
 	/* linux32_sys_fallocate */
 	case 324: {
 		const struct linux32_sys_fallocate_args *p = params;
@@ -1921,6 +1928,14 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 		const struct linux32_sys_timerfd_gettime_args *p = params;
 		iarg[0] = SCARG(p, fd); /* int */
 		uarg[1] = (intptr_t) SCARG(p, tim); /* struct linux32_itimerspec * */
+		*n_args = 2;
+		break;
+	}
+	/* linux32_sys_eventfd2 */
+	case 328: {
+		const struct linux32_sys_eventfd2_args *p = params;
+		uarg[0] = SCARG(p, initval); /* unsigned int */
+		iarg[1] = SCARG(p, flags); /* int */
 		*n_args = 2;
 		break;
 	}
@@ -5026,6 +5041,16 @@ systrace_entry_setargdesc(int sysnum, int ndx, char *desc, size_t descsz)
 			break;
 		};
 		break;
+	/* linux32_sys_eventfd */
+	case 323:
+		switch(ndx) {
+		case 0:
+			p = "unsigned int";
+			break;
+		default:
+			break;
+		};
+		break;
 	/* linux32_sys_fallocate */
 	case 324:
 		switch(ndx) {
@@ -5072,6 +5097,19 @@ systrace_entry_setargdesc(int sysnum, int ndx, char *desc, size_t descsz)
 			break;
 		case 1:
 			p = "struct linux32_itimerspec *";
+			break;
+		default:
+			break;
+		};
+		break;
+	/* linux32_sys_eventfd2 */
+	case 328:
+		switch(ndx) {
+		case 0:
+			p = "unsigned int";
+			break;
+		case 1:
+			p = "int";
 			break;
 		default:
 			break;
@@ -6216,6 +6254,11 @@ systrace_return_setargdesc(int sysnum, int ndx, char *desc, size_t descsz)
 		if (ndx == 0 || ndx == 1)
 			p = "int";
 		break;
+	/* linux32_sys_eventfd */
+	case 323:
+		if (ndx == 0 || ndx == 1)
+			p = "int";
+		break;
 	/* linux32_sys_fallocate */
 	case 324:
 		if (ndx == 0 || ndx == 1)
@@ -6228,6 +6271,11 @@ systrace_return_setargdesc(int sysnum, int ndx, char *desc, size_t descsz)
 		break;
 	/* linux32_sys_timerfd_gettime */
 	case 326:
+		if (ndx == 0 || ndx == 1)
+			p = "int";
+		break;
+	/* linux32_sys_eventfd2 */
+	case 328:
 		if (ndx == 0 || ndx == 1)
 			p = "int";
 		break;

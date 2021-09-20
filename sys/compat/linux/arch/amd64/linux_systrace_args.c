@@ -1,4 +1,4 @@
-/* $NetBSD: linux_systrace_args.c,v 1.17 2021/09/19 23:52:07 thorpej Exp $ */
+/* $NetBSD: linux_systrace_args.c,v 1.18 2021/09/20 00:09:33 thorpej Exp $ */
 
 /*
  * System call argument to DTrace register array conversion.
@@ -1792,6 +1792,13 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 		*n_args = 2;
 		break;
 	}
+	/* linux_sys_eventfd */
+	case 284: {
+		const struct linux_sys_eventfd_args *p = params;
+		uarg[0] = SCARG(p, initval); /* unsigned int */
+		*n_args = 1;
+		break;
+	}
 	/* linux_sys_fallocate */
 	case 285: {
 		const struct linux_sys_fallocate_args *p = params;
@@ -1828,6 +1835,14 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 		uarg[2] = (intptr_t) SCARG(p, anamelen); /* int * */
 		iarg[3] = SCARG(p, flags); /* int */
 		*n_args = 4;
+		break;
+	}
+	/* linux_sys_eventfd2 */
+	case 290: {
+		const struct linux_sys_eventfd2_args *p = params;
+		uarg[0] = SCARG(p, initval); /* unsigned int */
+		iarg[1] = SCARG(p, flags); /* int */
+		*n_args = 2;
 		break;
 	}
 	/* linux_sys_dup3 */
@@ -4845,6 +4860,16 @@ systrace_entry_setargdesc(int sysnum, int ndx, char *desc, size_t descsz)
 			break;
 		};
 		break;
+	/* linux_sys_eventfd */
+	case 284:
+		switch(ndx) {
+		case 0:
+			p = "unsigned int";
+			break;
+		default:
+			break;
+		};
+		break;
 	/* linux_sys_fallocate */
 	case 285:
 		switch(ndx) {
@@ -4909,6 +4934,19 @@ systrace_entry_setargdesc(int sysnum, int ndx, char *desc, size_t descsz)
 			p = "int *";
 			break;
 		case 3:
+			p = "int";
+			break;
+		default:
+			break;
+		};
+		break;
+	/* linux_sys_eventfd2 */
+	case 290:
+		switch(ndx) {
+		case 0:
+			p = "unsigned int";
+			break;
+		case 1:
 			p = "int";
 			break;
 		default:
@@ -6026,6 +6064,11 @@ systrace_return_setargdesc(int sysnum, int ndx, char *desc, size_t descsz)
 		if (ndx == 0 || ndx == 1)
 			p = "int";
 		break;
+	/* linux_sys_eventfd */
+	case 284:
+		if (ndx == 0 || ndx == 1)
+			p = "int";
+		break;
 	/* linux_sys_fallocate */
 	case 285:
 		if (ndx == 0 || ndx == 1)
@@ -6043,6 +6086,11 @@ systrace_return_setargdesc(int sysnum, int ndx, char *desc, size_t descsz)
 		break;
 	/* linux_sys_accept4 */
 	case 288:
+		if (ndx == 0 || ndx == 1)
+			p = "int";
+		break;
+	/* linux_sys_eventfd2 */
+	case 290:
 		if (ndx == 0 || ndx == 1)
 			p = "int";
 		break;
