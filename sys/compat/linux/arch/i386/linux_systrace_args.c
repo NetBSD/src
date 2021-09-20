@@ -1,4 +1,4 @@
-/* $NetBSD: linux_systrace_args.c,v 1.14 2021/09/20 00:09:33 thorpej Exp $ */
+/* $NetBSD: linux_systrace_args.c,v 1.15 2021/09/20 02:20:31 thorpej Exp $ */
 
 /*
  * System call argument to DTrace register array conversion.
@@ -2012,6 +2012,28 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 		uarg[0] = (intptr_t) SCARG(p, pfds); /* int * */
 		iarg[1] = SCARG(p, flags); /* int */
 		*n_args = 2;
+		break;
+	}
+	/* linux_sys_preadv */
+	case 333: {
+		const struct linux_sys_preadv_args *p = params;
+		iarg[0] = SCARG(p, fd); /* int */
+		uarg[1] = (intptr_t) SCARG(p, iovp); /* const struct iovec * */
+		iarg[2] = SCARG(p, iovcnt); /* int */
+		uarg[3] = SCARG(p, off_lo); /* unsigned long */
+		uarg[4] = SCARG(p, off_hi); /* unsigned long */
+		*n_args = 5;
+		break;
+	}
+	/* linux_sys_pwritev */
+	case 334: {
+		const struct linux_sys_pwritev_args *p = params;
+		iarg[0] = SCARG(p, fd); /* int */
+		uarg[1] = (intptr_t) SCARG(p, iovp); /* const struct iovcnt * */
+		iarg[2] = SCARG(p, iovcnt); /* int */
+		uarg[3] = SCARG(p, off_lo); /* unsigned long */
+		uarg[4] = SCARG(p, off_hi); /* unsigned long */
+		*n_args = 5;
 		break;
 	}
 	default:
@@ -5295,6 +5317,50 @@ systrace_entry_setargdesc(int sysnum, int ndx, char *desc, size_t descsz)
 			break;
 		};
 		break;
+	/* linux_sys_preadv */
+	case 333:
+		switch(ndx) {
+		case 0:
+			p = "int";
+			break;
+		case 1:
+			p = "const struct iovec *";
+			break;
+		case 2:
+			p = "int";
+			break;
+		case 3:
+			p = "unsigned long";
+			break;
+		case 4:
+			p = "unsigned long";
+			break;
+		default:
+			break;
+		};
+		break;
+	/* linux_sys_pwritev */
+	case 334:
+		switch(ndx) {
+		case 0:
+			p = "int";
+			break;
+		case 1:
+			p = "const struct iovcnt *";
+			break;
+		case 2:
+			p = "int";
+			break;
+		case 3:
+			p = "unsigned long";
+			break;
+		case 4:
+			p = "unsigned long";
+			break;
+		default:
+			break;
+		};
+		break;
 	default:
 		break;
 	};
@@ -6474,6 +6540,16 @@ systrace_return_setargdesc(int sysnum, int ndx, char *desc, size_t descsz)
 		break;
 	/* linux_sys_pipe2 */
 	case 331:
+		if (ndx == 0 || ndx == 1)
+			p = "int";
+		break;
+	/* linux_sys_preadv */
+	case 333:
+		if (ndx == 0 || ndx == 1)
+			p = "int";
+		break;
+	/* linux_sys_pwritev */
+	case 334:
 		if (ndx == 0 || ndx == 1)
 			p = "int";
 		break;
