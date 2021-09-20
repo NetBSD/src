@@ -1,4 +1,4 @@
-#	$NetBSD: BRANCHES,v 1.364 2021/08/09 20:49:08 andvar Exp $
+#	$NetBSD: BRANCHES,v 1.365 2021/09/20 02:26:05 thorpej Exp $
 #
 # This file contains a list of branches that exist in the NetBSD CVS
 # tree and their current state.
@@ -747,9 +747,9 @@ Notes:
 
 Branch:		thorpej-futex
 Description:	Overhaul of futex operations to fix thread priority issues
-Status:		Active
+Status:		Partially merged
 Start Date:	Sun Nov 1 2020
-End Date:
+End Date:	Sun Aug 19 2021
 Base Tag:	thorpej-futex-base
 Maintainer:	Jason Thorpe <thorpej@netbsd.org>
 Scope:		src/sys src/tests/lib/libc/sys src/distrib/sets/lists
@@ -761,6 +761,8 @@ Notes:		Normal futex operataions pass the test suite, but there are
 		futex operations with respect to Linux compatibility.
 		Also includes implementations of eventfd and timerfd, as
 		well as some additional improvements to COMPAT_LINUX{,32}.
+		Branch was partially merged, with follow-ups to take place
+		on thorpej-futex2.
 
 Branch:		thorpej-futex2
 Description:	Overhaul of futex operations to fix thread priority issues
