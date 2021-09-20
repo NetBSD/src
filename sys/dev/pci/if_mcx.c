@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mcx.c,v 1.18 2021/07/24 22:30:59 andvar Exp $ */
+/*	$NetBSD: if_mcx.c,v 1.19 2021/09/20 11:47:26 jmcneill Exp $ */
 /*	$OpenBSD: if_mcx.c,v 1.99 2021/02/15 03:42:00 dlg Exp $ */
 
 /*
@@ -23,7 +23,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mcx.c,v 1.18 2021/07/24 22:30:59 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mcx.c,v 1.19 2021/09/20 11:47:26 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -8245,7 +8245,8 @@ mcx_dmamem_alloc(struct mcx_softc *sc, struct mcx_dmamem *mxm,
 	    BUS_DMA_WAITOK) != 0)
 		goto destroy;
 	if (bus_dmamem_map(sc->sc_dmat, &mxm->mxm_seg, mxm->mxm_nsegs,
-	    mxm->mxm_size, &mxm->mxm_kva, BUS_DMA_WAITOK) != 0)
+	    mxm->mxm_size, &mxm->mxm_kva,
+	    BUS_DMA_WAITOK | BUS_DMA_COHERENT) != 0)
 		goto free;
 	if (bus_dmamap_load(sc->sc_dmat, mxm->mxm_map, mxm->mxm_kva,
 	    mxm->mxm_size, NULL, BUS_DMA_WAITOK) != 0)
