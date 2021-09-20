@@ -1,4 +1,4 @@
-/* $NetBSD: lunaws.c,v 1.37 2021/09/19 11:43:54 tsutsui Exp $ */
+/* $NetBSD: lunaws.c,v 1.38 2021/09/20 08:31:09 tsutsui Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: lunaws.c,v 1.37 2021/09/19 11:43:54 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lunaws.c,v 1.38 2021/09/20 08:31:09 tsutsui Exp $");
 
 #include "opt_wsdisplay_compat.h"
 #include "wsmouse.h"
@@ -570,6 +570,16 @@ omkbd_set_leds(void *cookie, int leds)
 {
 	struct ws_softc *sc = cookie;
 	uint8_t ledcmd;
+
+	/*
+	 * XXX:
+	 *  Why does MI wskbd(4) use a common .set_leds function
+	 *  for both kernel cons(9) and normal tty devices!?
+	 *
+	 *  When CAP key is pressed in cngetc(9) (like ddb(4) etc.)
+	 *  after wskbd(4) is attached, all LED commands are queued
+	 *  into txq[] and will never be sent until ddb(4) returns.
+	 */
 
 	sc->sc_leds = leds;
 	if ((leds & WSKBD_LED_CAPS) != 0) {
