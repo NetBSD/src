@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.74 2021/09/20 00:09:02 thorpej Exp $
+	$NetBSD: syscalls.master,v 1.75 2021/09/20 02:20:03 thorpej Exp $
 
 ; NetBSD i386 COMPAT_LINUX32 system call name/number "master" file.
 ; (See syscalls.conf to see what it is processed into.)
@@ -567,8 +567,12 @@
 330	STD	{ int|linux32_sys||dup3(int from, int to, int flags); }
 331     STD	{ int|linux32_sys||pipe2(netbsd32_intp fd, int flags); }
 332	UNIMPL	inotify_init1
-333	UNIMPL	preadv
-334	UNIMPL	pwritev
+333	STD	{ int|linux32_sys||preadv(int fd, \
+		    const netbsd32_iovecp_t iovp, int iovcnt, \
+		    netbsd32_u_long off_lo, netbsd32_u_long off_hi); }
+334	STD	{ int|linux32_sys||pwritev(int fd, \
+		    const netbsd32_iovecp_t iovp, int iovcnt, \
+		    netbsd32_u_long off_lo, netbsd32_u_long off_hi); }
 335	UNIMPL	rt_tgsigqueueinfo
 336	UNIMPL	perf_counter_open
 337	UNIMPL	recvmmsg
