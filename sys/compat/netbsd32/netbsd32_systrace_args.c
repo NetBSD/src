@@ -1,4 +1,4 @@
-/* $NetBSD: netbsd32_systrace_args.c,v 1.47 2021/04/14 02:48:00 christos Exp $ */
+/* $NetBSD: netbsd32_systrace_args.c,v 1.48 2021/09/20 01:01:05 thorpej Exp $ */
 
 /*
  * System call argument to DTrace register array conversion.
@@ -1297,6 +1297,32 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	}
 #else
 #endif
+	/* netbsd32_timerfd_create */
+	case 177: {
+		const struct netbsd32_timerfd_create_args *p = params;
+		iarg[0] = SCARG(p, clock_id); /* netbsd32_clockid_t */
+		iarg[1] = SCARG(p, flags); /* int */
+		*n_args = 2;
+		break;
+	}
+	/* netbsd32_timerfd_settime */
+	case 178: {
+		const struct netbsd32_timerfd_settime_args *p = params;
+		iarg[0] = SCARG(p, fd); /* int */
+		iarg[1] = SCARG(p, flags); /* int */
+		uarg[2] = (intptr_t) SCARG(p, new_value).i32; /* const netbsd32_itimerspecp_t */
+		uarg[3] = (intptr_t) SCARG(p, old_value).i32; /* netbsd32_itimerspecp_t */
+		*n_args = 4;
+		break;
+	}
+	/* netbsd32_timerfd_gettime */
+	case 179: {
+		const struct netbsd32_timerfd_gettime_args *p = params;
+		iarg[0] = SCARG(p, fd); /* int */
+		uarg[1] = (intptr_t) SCARG(p, curr_value).i32; /* netbsd32_itimerspecp_t */
+		*n_args = 2;
+		break;
+	}
 	/* netbsd32_setgid */
 	case 181: {
 		const struct netbsd32_setgid_args *p = params;
@@ -5785,6 +5811,51 @@ systrace_entry_setargdesc(int sysnum, int ndx, char *desc, size_t descsz)
 		break;
 #else
 #endif
+	/* netbsd32_timerfd_create */
+	case 177:
+		switch(ndx) {
+		case 0:
+			p = "netbsd32_clockid_t";
+			break;
+		case 1:
+			p = "int";
+			break;
+		default:
+			break;
+		};
+		break;
+	/* netbsd32_timerfd_settime */
+	case 178:
+		switch(ndx) {
+		case 0:
+			p = "int";
+			break;
+		case 1:
+			p = "int";
+			break;
+		case 2:
+			p = "const netbsd32_itimerspecp_t";
+			break;
+		case 3:
+			p = "netbsd32_itimerspecp_t";
+			break;
+		default:
+			break;
+		};
+		break;
+	/* netbsd32_timerfd_gettime */
+	case 179:
+		switch(ndx) {
+		case 0:
+			p = "int";
+			break;
+		case 1:
+			p = "netbsd32_itimerspecp_t";
+			break;
+		default:
+			break;
+		};
+		break;
 	/* netbsd32_setgid */
 	case 181:
 		switch(ndx) {
@@ -10679,6 +10750,21 @@ systrace_return_setargdesc(int sysnum, int ndx, char *desc, size_t descsz)
 		break;
 #else
 #endif
+	/* netbsd32_timerfd_create */
+	case 177:
+		if (ndx == 0 || ndx == 1)
+			p = "int";
+		break;
+	/* netbsd32_timerfd_settime */
+	case 178:
+		if (ndx == 0 || ndx == 1)
+			p = "int";
+		break;
+	/* netbsd32_timerfd_gettime */
+	case 179:
+		if (ndx == 0 || ndx == 1)
+			p = "int";
+		break;
 	/* netbsd32_setgid */
 	case 181:
 		if (ndx == 0 || ndx == 1)
