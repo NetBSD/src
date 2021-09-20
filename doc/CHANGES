@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2830 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2831 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -421,4 +421,7 @@ Changes from NetBSD 9.0 to NetBSD 10.0:
 	luna68k: Add support for keyboard LED and buzzer controls via wskbd(4).
 		[tsutsui 20210918]
 	kernel: Added native eventfd(2) and timerfd(2) implementations.
+		[thorpej 20210919]
+	compat_linux: Added eventfd, timerfd, POSIX timers, and preadv() /
+		pwritev() system calls to COMPAT_LINUX and COMPAT_LINXU32.
 		[thorpej 20210919]
