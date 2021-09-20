@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_file.c,v 1.119 2021/09/07 11:43:04 riastradh Exp $	*/
+/*	$NetBSD: linux_file.c,v 1.120 2021/09/20 02:20:03 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 2008 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_file.c,v 1.119 2021/09/07 11:43:04 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_file.c,v 1.120 2021/09/20 02:20:03 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -134,6 +134,23 @@ bsd_to_linux_ioflags(int bflags)
 	res |= cvtto_linux_mask(bflags, O_CLOEXEC, LINUX_O_CLOEXEC);
 
 	return res;
+}
+
+static inline off_t
+linux_hilo_to_off_t(unsigned long hi, unsigned long lo)
+{
+#ifdef _LP64
+	/*
+	 * Linux discards the "hi" portion on LP64 platforms; even though
+	 * glibc puts of the upper 32-bits of the offset into the "hi"
+	 * argument regardless, the "lo" argument has all the bits in
+	 * this case.
+	 */
+	(void) hi; 
+	return (off_t)lo;
+#else
+	return (((off_t)hi) << 32) | lo;
+#endif /* _LP64 */
 }
 
 /*
@@ -783,6 +800,56 @@ linux_sys_pwrite(struct lwp *l, const struct linux_sys_pwrite_args *uap, registe
 	SCARG(&pra, offset) = SCARG(uap, offset);
 
 	return sys_pwrite(l, &pra, retval);
+}
+
+/*
+ * preadv(2)
+ */
+int
+linux_sys_preadv(struct lwp *l, const struct linux_sys_preadv_args *uap,
+    register_t *retval)
+{
+	/* {
+		syscallarg(int) fd;
+		syscallarg(const struct iovec *) iovp;
+		syscallarg(int) iovcnt;
+		syscallarg(unsigned long) off_lo;
+		syscallarg(unsigned long) off_hi;
+	} */
+	struct sys_preadv_args ua;
+
+	SCARG(&ua, fd) = SCARG(uap, fd);
+	SCARG(&ua, iovp) = SCARG(uap, iovp);
+	SCARG(&ua, iovcnt) = SCARG(uap, iovcnt);
+	SCARG(&ua, PAD) = 0;
+	SCARG(&ua, offset) = linux_hilo_to_off_t(SCARG(uap, off_hi),
+						 SCARG(uap, off_lo));
+	return sys_preadv(l, &ua, retval);
+}
+
+/*
+ * pwritev(2)
+ */
+int
+linux_sys_pwritev(struct lwp *l, const struct linux_sys_pwritev_args *uap,
+    register_t *retval)
+{
+	/* {
+		syscallarg(int) fd;
+		syscallarg(const struct iovec *) iovp;
+		syscallarg(int) iovcnt;
+		syscallarg(unsigned long) off_lo;
+		syscallarg(unsigned long) off_hi;
+	} */
+	struct sys_pwritev_args ua;
+
+	SCARG(&ua, fd) = SCARG(uap, fd);
+	SCARG(&ua, iovp) = (const void *)SCARG(uap, iovp);
+	SCARG(&ua, iovcnt) = SCARG(uap, iovcnt);
+	SCARG(&ua, PAD) = 0;
+	SCARG(&ua, offset) = linux_hilo_to_off_t(SCARG(uap, off_hi),
+						 SCARG(uap, off_lo));
+	return sys_pwritev(l, &ua, retval);
 }
 
 int
