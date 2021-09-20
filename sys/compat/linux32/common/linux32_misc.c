@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_misc.c,v 1.31 2021/09/19 22:32:45 thorpej Exp $	*/
+/*	$NetBSD: linux32_misc.c,v 1.32 2021/09/20 00:09:02 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 1999 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux32_misc.c,v 1.31 2021/09/19 22:32:45 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_misc.c,v 1.32 2021/09/20 00:09:02 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -349,4 +349,34 @@ linux32_sys_ppoll(struct lwp *l, const struct linux32_sys_ppoll_args *uap,
 
 	return pollcommon(retval, SCARG_P32(uap, fds), SCARG(uap, nfds),
 	    ts, sigmask);
+}
+
+int
+linux32_sys_eventfd(struct lwp *l, const struct linux32_sys_eventfd_args *uap,
+    register_t *retval)
+{
+	/* {
+		syscallarg(unsigned int) initval;
+	} */
+	struct linux_sys_eventfd_args ua;
+
+	NETBSD32TO64_UAP(initval);
+
+	return linux_sys_eventfd(l, &ua, retval);
+}
+
+int
+linux32_sys_eventfd2(struct lwp *l, const struct linux32_sys_eventfd2_args *uap,
+    register_t *retval)
+{
+	/* {
+		syscallarg(unsigned int) initval;
+		syscallarg(int) flags;
+	} */
+	struct linux_sys_eventfd2_args ua;
+
+	NETBSD32TO64_UAP(initval);
+	NETBSD32TO64_UAP(flags);
+
+	return linux_sys_eventfd2(l, &ua, retval);
 }

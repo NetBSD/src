@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.64 2021/09/19 23:51:36 thorpej Exp $
+	$NetBSD: syscalls.master,v 1.65 2021/09/20 00:09:01 thorpej Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -521,7 +521,7 @@
 282	UNIMPL		signalfd
 283	STD		{ int|linux_sys||timerfd_create(clockid_t clock_id, \
 			    int flags); }
-284	UNIMPL		eventfd
+284	STD		{ int|linux_sys||eventfd(unsigned int initval); }
 285	STD		{ int|linux_sys||fallocate(int fd, int mode, \
 			    off_t offset, off_t len); }
 286	STD		{ int|linux_sys||timerfd_settime(int fd, int flags, \
@@ -533,7 +533,8 @@
 			    struct osockaddr *name, \
 			    int *anamelen, int flags); }
 289	UNIMPL		signalfd4
-290	UNIMPL		eventfd2
+290	STD		{ int|linux_sys||eventfd2(unsigned int initval, \
+			    int flags); }
 291	UNIMPL		epoll_create1
 292	STD		{ int|linux_sys||dup3(int from, int to, int flags); }
 293	STD		{ int|linux_sys||pipe2(int *pfds, int flags); }

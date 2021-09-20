@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.99 2021/09/19 23:51:36 thorpej Exp $
+	$NetBSD: syscalls.master,v 1.100 2021/09/20 00:09:01 thorpej Exp $
 ;
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -764,7 +764,7 @@
 			    struct linux_timespec *times, int flag); }
 476	UNIMPL		signalfd
 477	UNIMPL		timerfd
-478	UNIMPL		eventfd
+478	STD		{ int|linux_sys||eventfd(unsigned int initval); }
 479	STD		{ int|linux_sys||recvmmsg(int s, \
 			    struct linux_mmsghdr *msgvec, unsigned int vlen, \
 			    unsigned int flags, struct timespec *timeout); }
@@ -778,7 +778,8 @@
 483	STD		{ int|linux_sys||timerfd_gettime(int fd, \
 			    struct linux_itimerspec *tim); }
 484	UNIMPL		signalfd4
-485	UNIMPL		eventfd2
+485	STD		{ int|linux_sys||eventfd2(unsigned int initval, \
+			    int flags); }
 486	UNIMPL		epoll_create1
 487	STD		{ int|linux_sys||dup3(int from, int to, int flags); }
 488	STD		{ int|linux_sys||pipe2(int *pfds, int flags); }

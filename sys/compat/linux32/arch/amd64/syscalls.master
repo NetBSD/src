@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.73 2021/09/19 23:51:37 thorpej Exp $
+	$NetBSD: syscalls.master,v 1.74 2021/09/20 00:09:02 thorpej Exp $
 
 ; NetBSD i386 COMPAT_LINUX32 system call name/number "master" file.
 ; (See syscalls.conf to see what it is processed into.)
@@ -552,7 +552,7 @@
 321	UNIMPL	signalfd
 322	NOARGS	{ int|linux_sys||timerfd_create(clockid_t clock_id, \
 		    int flags); }
-323	UNIMPL	eventfd
+323	STD	{ int|linux32_sys||eventfd(unsigned int initval); }
 324	STD	{ int|linux32_sys||fallocate(int fd, int mode, \
 			    off_t offset, off_t len); }
 325	STD	{ int|linux32_sys||timerfd_settime(int fd, int flags, \
@@ -561,7 +561,8 @@
 326	STD	{ int|linux32_sys||timerfd_gettime(int fd, \
 		    struct linux32_itimerspec *tim); }
 327	UNIMPL	signalfd4
-328	UNIMPL	eventfd2
+328	STD	{ int|linux32_sys||eventfd2(unsigned int initval, \
+		    int flags); }
 329	UNIMPL	epoll_create1
 330	STD	{ int|linux32_sys||dup3(int from, int to, int flags); }
 331     STD	{ int|linux32_sys||pipe2(netbsd32_intp fd, int flags); }
