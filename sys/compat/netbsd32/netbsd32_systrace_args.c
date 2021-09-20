@@ -1,4 +1,4 @@
-/* $NetBSD: netbsd32_systrace_args.c,v 1.48 2021/09/20 01:01:05 thorpej Exp $ */
+/* $NetBSD: netbsd32_systrace_args.c,v 1.49 2021/09/20 01:07:56 thorpej Exp $ */
 
 /*
  * System call argument to DTrace register array conversion.
@@ -1927,6 +1927,14 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 		uarg[3] = (intptr_t) SCARG(p, msg_prio).i32; /* netbsd32_uintp */
 		uarg[4] = (intptr_t) SCARG(p, abs_timeout).i32; /* const netbsd32_timespec50p_t */
 		*n_args = 5;
+		break;
+	}
+	/* netbsd32_eventfd */
+	case 267: {
+		const struct netbsd32_eventfd_args *p = params;
+		uarg[0] = SCARG(p, val); /* unsigned int */
+		iarg[1] = SCARG(p, flags); /* int */
+		*n_args = 2;
 		break;
 	}
 	/* netbsd32___posix_rename */
@@ -6881,6 +6889,19 @@ systrace_entry_setargdesc(int sysnum, int ndx, char *desc, size_t descsz)
 			break;
 		};
 		break;
+	/* netbsd32_eventfd */
+	case 267:
+		switch(ndx) {
+		case 0:
+			p = "unsigned int";
+			break;
+		case 1:
+			p = "int";
+			break;
+		default:
+			break;
+		};
+		break;
 	/* netbsd32___posix_rename */
 	case 270:
 		switch(ndx) {
@@ -11121,6 +11142,11 @@ systrace_return_setargdesc(int sysnum, int ndx, char *desc, size_t descsz)
 	case 266:
 		if (ndx == 0 || ndx == 1)
 			p = "netbsd32_ssize_t";
+		break;
+	/* netbsd32_eventfd */
+	case 267:
+		if (ndx == 0 || ndx == 1)
+			p = "int";
 		break;
 	/* netbsd32___posix_rename */
 	case 270:
