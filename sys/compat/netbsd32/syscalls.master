@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.140 2021/09/20 01:00:55 thorpej Exp $
+	$NetBSD: syscalls.master,v 1.141 2021/09/20 01:07:45 thorpej Exp $
 
 ;	from: NetBSD: syscalls.master,v 1.81 1998/07/05 08:49:50 jonathan Exp
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
@@ -640,7 +640,7 @@
 			    netbsd32_charp msg_ptr, netbsd32_size_t msg_len, \
 			    netbsd32_uintp msg_prio, \
 			    const netbsd32_timespec50p_t abs_timeout); }
-267	UNIMPL
+267	STD		{ int|netbsd32||eventfd(unsigned int val, int flags); }
 268	UNIMPL
 269	UNIMPL
 270	STD		{ int|netbsd32||__posix_rename(netbsd32_charp from, \

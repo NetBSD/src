@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_netbsd.c,v 1.232 2021/01/19 03:41:22 simonb Exp $	*/
+/*	$NetBSD: netbsd32_netbsd.c,v 1.233 2021/09/20 01:07:45 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001, 2008, 2018 Matthew R. Green
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_netbsd.c,v 1.232 2021/01/19 03:41:22 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_netbsd.c,v 1.233 2021/09/20 01:07:45 thorpej Exp $");
 
 /*
  * below are all the standard NetBSD system calls, in the 32bit
@@ -2632,6 +2632,21 @@ netbsd32_getrandom(struct lwp *l, const struct netbsd32_getrandom_args *uap,
 	NETBSD32TOX_UAP(buflen, size_t);
 	NETBSD32TO64_UAP(flags);
 	return sys_getrandom(l, &ua, retval);
+}
+
+int
+netbsd32_eventfd(struct lwp *l,
+    const struct netbsd32_eventfd_args *uap, register_t *retval)
+{
+	/* {
+		syscallarg(unsigned int)	val;
+		syscallarg(int)			flags;
+	} */
+	struct sys_eventfd_args ua;
+
+	NETBSD32TO64_UAP(val);
+	NETBSD32TO64_UAP(flags);
+	return sys_eventfd(l, &ua, retval);
 }
 
 /*
