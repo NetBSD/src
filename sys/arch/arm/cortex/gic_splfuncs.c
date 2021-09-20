@@ -1,4 +1,4 @@
-/* $NetBSD: gic_splfuncs.c,v 1.2 2021/09/18 12:25:07 jmcneill Exp $ */
+/* $NetBSD: gic_splfuncs.c,v 1.3 2021/09/20 21:05:14 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2021 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gic_splfuncs.c,v 1.2 2021/09/18 12:25:07 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gic_splfuncs.c,v 1.3 2021/09/20 21:05:14 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -127,7 +127,7 @@ dosoft:
 void
 gic_spl_init(void)
 {
-	_splraise = gic_splraise;
-	_spllower = gic_spllower;
-	splx = gic_splx;
+	pic_splraise = gic_splraise;
+	pic_spllower = gic_spllower;
+	pic_splx = gic_splx;
 }
