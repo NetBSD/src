@@ -1,7 +1,7 @@
 /*
  * $OpenBSD: patch.c,v 1.45 2007/04/18 21:52:24 sobrado Exp $
  * $DragonFly: src/usr.bin/patch/patch.c,v 1.10 2008/08/10 23:39:56 joerg Exp $
- * $NetBSD: patch.c,v 1.32 2021/05/25 11:25:59 cjep Exp $
+ * $NetBSD: patch.c,v 1.33 2021/09/20 23:22:36 dholland Exp $
  */
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: patch.c,v 1.32 2021/05/25 11:25:59 cjep Exp $");
+__RCSID("$NetBSD: patch.c,v 1.33 2021/09/20 23:22:36 dholland Exp $");
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -284,12 +284,14 @@ main(int argc, char *argv[])
 							skip_rest_of_patch = true;
 						} else if (batch) {
 							if (verbose)
-								say("%seversed (or previously applied) patch detected!  %s -R.",
+								say("%seversed (or %spreviously applied) patch detected!  %s -R.",
 								    reverse ? "R" : "Unr",
+								    reverse ? "" : "not ",
 								    reverse ? "Assuming" : "Ignoring");
 						} else {
-							ask("%seversed (or previously applied) patch detected!  %s -R? [y] ",
+							ask("%seversed (or %spreviously applied) patch detected!  %s -R? [y] ",
 							    reverse ? "R" : "Unr",
+							    reverse ? "" : "not ",
 							    reverse ? "Assume" : "Ignore");
 							if (*buf == 'n') {
 								ask("Apply anyway? [n] ");
