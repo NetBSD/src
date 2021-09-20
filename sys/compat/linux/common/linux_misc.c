@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_misc.c,v 1.252 2021/09/07 11:43:04 riastradh Exp $	*/
+/*	$NetBSD: linux_misc.c,v 1.253 2021/09/20 00:09:02 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 1999, 2008 The NetBSD Foundation, Inc.
@@ -57,13 +57,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.252 2021/09/07 11:43:04 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.253 2021/09/20 00:09:02 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/namei.h>
 #include <sys/proc.h>
 #include <sys/dirent.h>
+#include <sys/eventfd.h>
 #include <sys/file.h>
 #include <sys/stat.h>
 #include <sys/filedesc.h>
@@ -1582,4 +1583,55 @@ linux_do_futex(int *uaddr, int op, int val, struct timespec *timeout,
 	 */
 	return do_futex(uaddr, op & ~FUTEX_PRIVATE_FLAG,
 			val, timeout, uaddr2, val2, val3, retval);
+}
+
+#define	LINUX_EFD_SEMAPHORE	0x0001
+#define	LINUX_EFD_CLOEXEC	LINUX_O_CLOEXEC
+#define	LINUX_EFD_NONBLOCK	LINUX_O_NONBLOCK
+
+static int
+linux_do_eventfd2(struct lwp *l, unsigned int initval, int flags,
+    register_t *retval)
+{
+	int nflags = 0;
+
+	if (flags & ~(LINUX_EFD_SEMAPHORE | LINUX_EFD_CLOEXEC |
+		      LINUX_EFD_NONBLOCK)) {
+		return EINVAL;
+	}
+	if (flags & LINUX_EFD_SEMAPHORE) {
+		nflags |= EFD_SEMAPHORE;
+	}
+	if (flags & LINUX_EFD_CLOEXEC) {
+		nflags |= EFD_CLOEXEC;
+	}
+	if (flags & LINUX_EFD_NONBLOCK) {
+		nflags |= EFD_NONBLOCK;
+	}
+
+	return do_eventfd(l, initval, nflags, retval);
+}
+
+int
+linux_sys_eventfd(struct lwp *l, const struct linux_sys_eventfd_args *uap,
+    register_t *retval)
+{
+	/* {
+		syscallarg(unsigned int) initval;
+	} */
+
+	return linux_do_eventfd2(l, SCARG(uap, initval), 0, retval);
+}
+
+int
+linux_sys_eventfd2(struct lwp *l, const struct linux_sys_eventfd2_args *uap,
+    register_t *retval)
+{
+	/* {
+		syscallarg(unsigned int) initval;
+		syscallarg(int) flags;
+	} */
+
+	return linux_do_eventfd2(l, SCARG(uap, initval), SCARG(uap, flags),
+				 retval);
 }
