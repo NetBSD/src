@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_time.c,v 1.56 2021/09/07 11:43:05 riastradh Exp $	*/
+/*	$NetBSD: netbsd32_time.c,v 1.57 2021/09/20 01:00:55 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_time.c,v 1.56 2021/09/07 11:43:05 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_time.c,v 1.57 2021/09/20 01:00:55 thorpej Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ntp.h"
@@ -38,6 +38,7 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_time.c,v 1.56 2021/09/07 11:43:05 riastradh
 #include <sys/systm.h>
 #include <sys/mount.h>
 #include <sys/time.h>
+#include <sys/timerfd.h>
 #include <sys/timex.h>
 #include <sys/timevar.h>
 #include <sys/proc.h>
@@ -521,6 +522,84 @@ netbsd32_timer_getoverrun(struct lwp *l, const struct netbsd32_timer_getoverrun_
 
 	NETBSD32TO64_UAP(timerid);
 	return sys_timer_getoverrun(l, (void *)&ua, retval);
+}
+
+int
+netbsd32_timerfd_create(struct lwp *l,
+    const struct netbsd32_timerfd_create_args *uap, register_t *retval)
+{
+	/* {
+		syscallarg(netbsd32_clockid_t) clock_id;
+		syscallarg(int) flags;
+	} */
+	struct sys_timerfd_create_args ua;
+
+	NETBSD32TO64_UAP(clock_id);
+	NETBSD32TO64_UAP(flags);
+	return sys_timerfd_create(l, (void *)&ua, retval);
+}
+
+int
+netbsd32_timerfd_settime(struct lwp *l,
+    const struct netbsd32_timerfd_settime_args *uap, register_t *retval)
+{
+	/* {
+		syscallarg(int) fd;
+		syscallarg(int) flags;
+		syscallarg(const netbsd32_itimerspecp_t) new_value;
+		syscallarg(netbsd32_itimerspecp_t) old_value;
+	} */
+	struct itimerspec its, oits, *oitsp = NULL;
+	struct netbsd32_itimerspec its32;
+	int error;
+
+	if ((error = copyin(SCARG_P32(uap, new_value), &its32,
+			    sizeof(its32))) != 0) {
+		return error;
+	}
+	netbsd32_to_timespec(&its32.it_interval, &its.it_interval);
+	netbsd32_to_timespec(&its32.it_value, &its.it_value);
+
+	if (SCARG_P32(uap, old_value)) {
+		oitsp = &oits;
+	}
+
+	error = do_timerfd_settime(l, SCARG(uap, fd), SCARG(uap, flags),
+	    &its, oitsp, retval);
+	if (error == 0 && oitsp != NULL) {
+		memset(&its32, 0, sizeof(its32));
+		netbsd32_from_timespec(&oitsp->it_interval, &its32.it_interval);
+		netbsd32_from_timespec(&oitsp->it_value, &its32.it_value);
+		error = copyout(&its32, SCARG_P32(uap, old_value),
+				sizeof(its32));
+	}
+
+	return error;
+}
+
+int
+netbsd32_timerfd_gettime(struct lwp *l,
+    const struct netbsd32_timerfd_gettime_args *uap, register_t *retval)
+{
+	/* {
+		syscallarg(int) fd;
+		syscallarg(int) flags;
+		syscallarg(netbsd32_itimerspecp_t) curr_value;
+	} */
+	int error;
+	struct itimerspec its;
+	struct netbsd32_itimerspec its32;
+
+	error = do_timerfd_gettime(l, SCARG(uap, fd), &its, retval);
+	if (error == 0) {
+		memset(&its32, 0, sizeof(its32));
+		netbsd32_from_timespec(&its.it_interval, &its32.it_interval);
+		netbsd32_from_timespec(&its.it_value, &its32.it_value);
+		error = copyout(&its32, SCARG_P32(uap, curr_value),
+				sizeof(its32));
+	}
+
+	return error;
 }
 
 int
