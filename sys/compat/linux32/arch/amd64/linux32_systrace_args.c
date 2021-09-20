@@ -1,4 +1,4 @@
-/* $NetBSD: linux32_systrace_args.c,v 1.11 2021/09/20 00:09:34 thorpej Exp $ */
+/* $NetBSD: linux32_systrace_args.c,v 1.12 2021/09/20 02:20:31 thorpej Exp $ */
 
 /*
  * System call argument to DTrace register array conversion.
@@ -1954,6 +1954,28 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 		uarg[0] = (intptr_t) SCARG(p, fd).i32; /* netbsd32_intp */
 		iarg[1] = SCARG(p, flags); /* int */
 		*n_args = 2;
+		break;
+	}
+	/* linux32_sys_preadv */
+	case 333: {
+		const struct linux32_sys_preadv_args *p = params;
+		iarg[0] = SCARG(p, fd); /* int */
+		uarg[1] = (intptr_t) SCARG(p, iovp).i32; /* const netbsd32_iovecp_t */
+		iarg[2] = SCARG(p, iovcnt); /* int */
+		iarg[3] = SCARG(p, off_lo); /* netbsd32_u_long */
+		iarg[4] = SCARG(p, off_hi); /* netbsd32_u_long */
+		*n_args = 5;
+		break;
+	}
+	/* linux32_sys_pwritev */
+	case 334: {
+		const struct linux32_sys_pwritev_args *p = params;
+		iarg[0] = SCARG(p, fd); /* int */
+		uarg[1] = (intptr_t) SCARG(p, iovp).i32; /* const netbsd32_iovecp_t */
+		iarg[2] = SCARG(p, iovcnt); /* int */
+		iarg[3] = SCARG(p, off_lo); /* netbsd32_u_long */
+		iarg[4] = SCARG(p, off_hi); /* netbsd32_u_long */
+		*n_args = 5;
 		break;
 	}
 	default:
@@ -5144,6 +5166,50 @@ systrace_entry_setargdesc(int sysnum, int ndx, char *desc, size_t descsz)
 			break;
 		};
 		break;
+	/* linux32_sys_preadv */
+	case 333:
+		switch(ndx) {
+		case 0:
+			p = "int";
+			break;
+		case 1:
+			p = "const netbsd32_iovecp_t";
+			break;
+		case 2:
+			p = "int";
+			break;
+		case 3:
+			p = "netbsd32_u_long";
+			break;
+		case 4:
+			p = "netbsd32_u_long";
+			break;
+		default:
+			break;
+		};
+		break;
+	/* linux32_sys_pwritev */
+	case 334:
+		switch(ndx) {
+		case 0:
+			p = "int";
+			break;
+		case 1:
+			p = "const netbsd32_iovecp_t";
+			break;
+		case 2:
+			p = "int";
+			break;
+		case 3:
+			p = "netbsd32_u_long";
+			break;
+		case 4:
+			p = "netbsd32_u_long";
+			break;
+		default:
+			break;
+		};
+		break;
 	default:
 		break;
 	};
@@ -6286,6 +6352,16 @@ systrace_return_setargdesc(int sysnum, int ndx, char *desc, size_t descsz)
 		break;
 	/* linux32_sys_pipe2 */
 	case 331:
+		if (ndx == 0 || ndx == 1)
+			p = "int";
+		break;
+	/* linux32_sys_preadv */
+	case 333:
+		if (ndx == 0 || ndx == 1)
+			p = "int";
+		break;
+	/* linux32_sys_pwritev */
+	case 334:
 		if (ndx == 0 || ndx == 1)
 			p = "int";
 		break;
