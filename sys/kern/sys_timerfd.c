@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_timerfd.c,v 1.2 2021/09/19 15:51:27 thorpej Exp $	*/
+/*	$NetBSD: sys_timerfd.c,v 1.3 2021/09/20 11:12:35 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_timerfd.c,v 1.2 2021/09/19 15:51:27 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_timerfd.c,v 1.3 2021/09/20 11:12:35 skrll Exp $");
 
 /*
  * timerfd
@@ -52,6 +52,7 @@ __KERNEL_RCSID(0, "$NetBSD: sys_timerfd.c,v 1.2 2021/09/19 15:51:27 thorpej Exp 
  * This implementation is API compatible with the Linux timerfd interface.
  */
 
+#include <sys/param.h>
 #include <sys/types.h>
 #include <sys/condvar.h>
 #include <sys/file.h>
