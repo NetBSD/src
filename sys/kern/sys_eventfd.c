@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_eventfd.c,v 1.3 2021/09/20 11:12:35 skrll Exp $	*/
+/*	$NetBSD: sys_eventfd.c,v 1.4 2021/09/20 14:30:05 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_eventfd.c,v 1.3 2021/09/20 11:12:35 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_eventfd.c,v 1.4 2021/09/20 14:30:05 thorpej Exp $");
 
 /*
  * eventfd
@@ -131,6 +131,8 @@ eventfd_destroy(struct eventfd * const efd)
 	seldestroy(&efd->efd_write_sel);
 
 	mutex_destroy(&efd->efd_lock);
+
+	kmem_free(efd, sizeof(*efd));
 }
 
 /*
