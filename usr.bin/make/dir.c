@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.c,v 1.272 2021/04/04 10:13:09 rillig Exp $	*/
+/*	$NetBSD: dir.c,v 1.273 2021/09/21 21:39:32 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -138,7 +138,7 @@
 #include "job.h"
 
 /*	"@(#)dir.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: dir.c,v 1.272 2021/04/04 10:13:09 rillig Exp $");
+MAKE_RCSID("$NetBSD: dir.c,v 1.273 2021/09/21 21:39:32 rillig Exp $");
 
 /*
  * A search path is a list of CachedDir structures. A CachedDir has in it the
@@ -1127,9 +1127,8 @@ found:
 }
 
 static bool
-FindFileAbsolute(SearchPath *path, bool const seenDotLast,
-		 const char *const name, const char *const base,
-		 char **out_file)
+FindFileAbsolute(SearchPath *path, bool seenDotLast,
+		 const char *name, const char *base, char **out_file)
 {
 	char *file;
 	SearchPathNode *ln;
