@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_nat.c,v 1.24 2021/05/26 14:48:02 christos Exp $	*/
+/*	$NetBSD: ip_nat.c,v 1.25 2021/09/21 14:50:53 christos Exp $	*/
 
 /*
  * Copyright (C) 2012 by Darren Reed.
@@ -112,7 +112,7 @@ extern struct ifnet vpnif;
 #if !defined(lint)
 #if defined(__NetBSD__)
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_nat.c,v 1.24 2021/05/26 14:48:02 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_nat.c,v 1.25 2021/09/21 14:50:53 christos Exp $");
 #else
 static const char sccsid[] = "@(#)ip_nat.c	1.11 6/5/96 (C) 1995 Darren Reed";
 static const char rcsid[] = "@(#)Id: ip_nat.c,v 1.1.1.2 2012/07/22 13:45:27 darrenr Exp";
@@ -988,10 +988,9 @@ ipf_nat_ioctl(ipf_main_softc_t *softc, void *data, ioctlcmd_t cmd, int mode,
 
 #if BSD_GE_YEAR(199306) && defined(_KERNEL)
 # if NETBSD_GE_REV(399002000)
-	if ((mode & FWRITE) &&
-	     kauth_authorize_network(curlwp->l_cred, KAUTH_NETWORK_FIREWALL,
-				     KAUTH_REQ_NETWORK_FIREWALL_FW,
-				     NULL, NULL, NULL))
+	if ((mode & FWRITE) && kauth_authorize_network(
+	    kauth_cred_get(), KAUTH_NETWORK_FIREWALL,
+	    KAUTH_REQ_NETWORK_FIREWALL_FW, NULL, NULL, NULL))
 # else
 #  if defined(__FreeBSD_version) && (__FreeBSD_version >= 500034)
 	if (securelevel_ge(curthread->td_ucred, 3) && (mode & FWRITE))

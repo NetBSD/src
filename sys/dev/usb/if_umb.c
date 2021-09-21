@@ -1,4 +1,4 @@
-/*	$NetBSD: if_umb.c,v 1.20 2021/06/16 00:21:19 riastradh Exp $ */
+/*	$NetBSD: if_umb.c,v 1.21 2021/09/21 14:49:01 christos Exp $ */
 /*	$OpenBSD: if_umb.c,v 1.20 2018/09/10 17:00:45 gerhard Exp $ */
 
 /*
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_umb.c,v 1.20 2021/06/16 00:21:19 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_umb.c,v 1.21 2021/09/21 14:49:01 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -773,7 +773,7 @@ umb_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 		usb_add_task(sc->sc_udev, &sc->sc_umb_task, USB_TASKQ_DRIVER);
 		break;
 	case SIOCGUMBINFO:
-		error = kauth_authorize_network(curlwp->l_cred,
+		error = kauth_authorize_network(kauth_cred_get(),
 		    KAUTH_NETWORK_INTERFACE,
 		    KAUTH_REQ_NETWORK_INTERFACE_SETPRIV, ifp, KAUTH_ARG(cmd),
 		    NULL);
@@ -783,7 +783,7 @@ umb_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 		    sizeof(sc->sc_info));
 		break;
 	case SIOCSUMBPARAM:
-		error = kauth_authorize_network(curlwp->l_cred,
+		error = kauth_authorize_network(kauth_cred_get(),
 		    KAUTH_NETWORK_INTERFACE,
 		    KAUTH_REQ_NETWORK_INTERFACE_SETPRIV, ifp, KAUTH_ARG(cmd),
 		    NULL);
