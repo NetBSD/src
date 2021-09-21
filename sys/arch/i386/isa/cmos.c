@@ -1,4 +1,4 @@
-/*	$NetBSD: cmos.c,v 1.12 2015/08/20 14:40:16 christos Exp $	*/
+/*	$NetBSD: cmos.c,v 1.13 2021/09/21 14:36:34 christos Exp $	*/
 
 /*
  * Copyright (C) 2003 JONE System Co., Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cmos.c,v 1.12 2015/08/20 14:40:16 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cmos.c,v 1.13 2021/09/21 14:36:34 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -124,7 +124,7 @@ int
 cmos_open(dev_t dev, int flags, int ifmt, struct lwp *l)
 {
 
-	return kauth_authorize_machdep(kauth_cred_get(),
+	return kauth_authorize_machdep(l->l_cred,
 	    KAUTH_MACHDEP_NVRAM, NULL, NULL, NULL, NULL);
 }
 
