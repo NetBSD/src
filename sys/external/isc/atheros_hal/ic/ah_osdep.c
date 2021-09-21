@@ -26,11 +26,11 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
  * THE POSSIBILITY OF SUCH DAMAGES.
  *
- * $Id: ah_osdep.c,v 1.6 2012/04/11 13:48:11 nakayama Exp $
+ * $Id: ah_osdep.c,v 1.7 2021/09/21 14:51:28 christos Exp $
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ah_osdep.c,v 1.6 2012/04/11 13:48:11 nakayama Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ah_osdep.c,v 1.7 2021/09/21 14:51:28 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_athhal.h"
@@ -211,7 +211,7 @@ ath_hal_setlogging(int enable)
 	int error;
 
 	if (enable) {
-		error = kauth_authorize_network(curlwp->l_cred,
+		error = kauth_authorize_network(kauth_cred_get(),
 		    KAUTH_NETWORK_INTERFACE,
 		    KAUTH_REQ_NETWORK_INTERFACE_SETPRIV, NULL, NULL, NULL);
 		if (error == 0) {
