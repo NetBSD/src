@@ -1,4 +1,4 @@
-/*	$NetBSD: cond.c,v 1.277 2021/09/21 22:48:04 rillig Exp $	*/
+/*	$NetBSD: cond.c,v 1.278 2021/09/21 22:53:35 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -95,7 +95,7 @@
 #include "dir.h"
 
 /*	"@(#)cond.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: cond.c,v 1.277 2021/09/21 22:48:04 rillig Exp $");
+MAKE_RCSID("$NetBSD: cond.c,v 1.278 2021/09/21 22:53:35 rillig Exp $");
 
 /*
  * The parsing of conditional expressions is based on this grammar:
@@ -186,7 +186,7 @@ static unsigned int cond_depth = 0;	/* current .if nesting level */
 static unsigned int cond_min_depth = 0;	/* depth at makefile open */
 
 /* Names for ComparisonOp. */
-static const char *opname[] = { "<", "<=", ">", ">=", "==", "!=" };
+static const char opname[][3] = { "<", "<=", ">", ">=", "==", "!=" };
 
 static bool
 is_token(const char *str, const char *tok, size_t len)
