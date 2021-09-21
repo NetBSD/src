@@ -1,4 +1,4 @@
-/*	$NetBSD: wi.c,v 1.256 2021/06/16 00:21:18 riastradh Exp $	*/
+/*	$NetBSD: wi.c,v 1.257 2021/09/21 14:50:12 christos Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -99,7 +99,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.256 2021/06/16 00:21:18 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.257 2021/09/21 14:50:12 christos Exp $");
 
 #define WI_HERMES_AUTOINC_WAR	/* Work around data write autoinc bug. */
 #define WI_HERMES_STATS_WAR	/* Work around stats counter bug. */
@@ -1459,7 +1459,7 @@ wi_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 		error = wi_get_cfg(ifp, cmd, data);
 		break;
 	case SIOCSIFGENERIC:
-		error = kauth_authorize_network(curlwp->l_cred,
+		error = kauth_authorize_network(kauth_cred_get(),
 		    KAUTH_NETWORK_INTERFACE,
 		    KAUTH_REQ_NETWORK_INTERFACE_SETPRIV, ifp, KAUTH_ARG(cmd),
 		    NULL);
