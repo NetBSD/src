@@ -1,4 +1,4 @@
-/*	$NetBSD: cond.c,v 1.272 2021/09/21 20:54:42 rillig Exp $	*/
+/*	$NetBSD: cond.c,v 1.273 2021/09/21 21:03:36 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -95,7 +95,7 @@
 #include "dir.h"
 
 /*	"@(#)cond.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: cond.c,v 1.272 2021/09/21 20:54:42 rillig Exp $");
+MAKE_RCSID("$NetBSD: cond.c,v 1.273 2021/09/21 21:03:36 rillig Exp $");
 
 /*
  * The parsing of conditional expressions is based on this grammar:
@@ -794,10 +794,10 @@ CondParser_FuncCall(CondParser *par, bool doEval, Token *out_token)
 	char *arg = NULL;
 	size_t arglen;
 	const char *cp = par->p;
-	const struct fn_def *fns_end = fns + sizeof fns / sizeof fns[0];
+	const struct fn_def *last_fn = fns + sizeof fns / sizeof fns[0] - 1;
 
 	for (fn = fns; !is_token(cp, fn->fn_name, fn->fn_name_len); fn++)
-		if (fn == fns_end)
+		if (fn == last_fn)
 			return false;
 
 	cp += fn->fn_name_len;
