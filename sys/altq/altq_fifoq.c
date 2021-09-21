@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_fifoq.c,v 1.17 2016/04/20 08:58:48 knakahara Exp $	*/
+/*	$NetBSD: altq_fifoq.c,v 1.18 2021/09/21 14:30:15 christos Exp $	*/
 /*	$KAME: altq_fifoq.c,v 1.12 2003/07/10 12:07:48 kjc Exp $	*/
 
 /*
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: altq_fifoq.c,v 1.17 2016/04/20 08:58:48 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: altq_fifoq.c,v 1.18 2021/09/21 14:30:15 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_altq.h"
@@ -131,15 +131,10 @@ fifoqioctl(dev_t dev, ioctlcmd_t cmd, void *addr, int flag,
 	case FIFOQ_GETSTATS:
 		break;
 	default:
-#if (__FreeBSD_version > 400000)
-		if ((error = suser(p)) != 0)
-			return (error);
-#else
 		if ((error = kauth_authorize_network(l->l_cred,
 		    KAUTH_NETWORK_ALTQ, KAUTH_REQ_NETWORK_ALTQ_FIFOQ, NULL,
 		    NULL, NULL)) != 0)
 			return (error);
-#endif
 		break;
 	}
 
