@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_cdnr.c,v 1.21 2016/06/10 13:31:43 ozaki-r Exp $	*/
+/*	$NetBSD: altq_cdnr.c,v 1.22 2021/09/21 14:30:15 christos Exp $	*/
 /*	$KAME: altq_cdnr.c,v 1.15 2005/04/13 03:44:24 suz Exp $	*/
 
 /*
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: altq_cdnr.c,v 1.21 2016/06/10 13:31:43 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: altq_cdnr.c,v 1.22 2021/09/21 14:30:15 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_altq.h"
@@ -1189,13 +1189,9 @@ cdnrioctl(dev_t dev, ioctlcmd_t cmd, void *addr, int flag,
 	case CDNR_GETSTATS:
 		break;
 	default:
-#if (__FreeBSD_version > 400000)
-		if ((error = suser(p)) != 0)
-#else
 		if ((error = kauth_authorize_network(l->l_cred,
 		    KAUTH_NETWORK_ALTQ, KAUTH_REQ_NETWORK_ALTQ_CDNR, NULL,
 		    NULL, NULL)) != 0)
-#endif
 			return (error);
 		break;
 	}
