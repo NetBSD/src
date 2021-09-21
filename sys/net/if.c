@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.489 2021/09/21 14:56:42 christos Exp $	*/
+/*	$NetBSD: if.c,v 1.490 2021/09/21 14:57:26 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.489 2021/09/21 14:56:42 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.490 2021/09/21 14:57:26 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -3346,7 +3346,7 @@ doifioctl(struct socket *so, u_long cmd, void *data, struct lwp *l)
 		bound = curlwp_bind();
 		if (l != NULL) {
 			ifp = if_get(ifr->ifr_name, &psref);
-			error = kauth_authorize_network(l->l_proc, l->l_cred,
+			error = kauth_authorize_network(l->l_cred,
 			    KAUTH_NETWORK_INTERFACE,
 			    KAUTH_REQ_NETWORK_INTERFACE_SETPRIV, ifp,
 			    KAUTH_ARG(cmd), NULL);
@@ -3411,7 +3411,7 @@ doifioctl(struct socket *so, u_long cmd, void *data, struct lwp *l)
 	case SIOCS80211CHANNEL:
 	case SIOCSLINKSTR:
 		if (l != NULL) {
-			error = kauth_authorize_network(l->l_proc, l->l_cred,
+			error = kauth_authorize_network(l->l_cred,
 			    KAUTH_NETWORK_INTERFACE,
 			    KAUTH_REQ_NETWORK_INTERFACE_SETPRIV, ifp,
 			    KAUTH_ARG(cmd), NULL);
