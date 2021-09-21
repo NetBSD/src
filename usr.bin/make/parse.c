@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.564 2021/09/21 21:39:32 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.565 2021/09/21 23:06:18 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -109,7 +109,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.564 2021/09/21 21:39:32 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.565 2021/09/21 23:06:18 rillig Exp $");
 
 /* types and constants */
 
@@ -261,7 +261,7 @@ SearchPath *defSysIncPath;	/* default for sysIncPath */
  * keyword is used as a source ("0" if the keyword isn't special as a source)
  */
 static const struct {
-	const char *name;	/* Name of keyword */
+	const char name[17];	/* Name of keyword */
 	ParseSpecial spec;	/* Type when used as a target */
 	GNodeType op;		/* Operator when used as a source */
 } parseKeywords[] = {

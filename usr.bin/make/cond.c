@@ -1,4 +1,4 @@
-/*	$NetBSD: cond.c,v 1.278 2021/09/21 22:53:35 rillig Exp $	*/
+/*	$NetBSD: cond.c,v 1.279 2021/09/21 23:06:18 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -95,7 +95,7 @@
 #include "dir.h"
 
 /*	"@(#)cond.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: cond.c,v 1.278 2021/09/21 22:53:35 rillig Exp $");
+MAKE_RCSID("$NetBSD: cond.c,v 1.279 2021/09/21 23:06:18 rillig Exp $");
 
 /*
  * The parsing of conditional expressions is based on this grammar:
@@ -778,8 +778,8 @@ static bool
 CondParser_FuncCall(CondParser *par, bool doEval, Token *out_token)
 {
 	static const struct fn_def {
-		const char *fn_name;
-		size_t fn_name_len;
+		const char fn_name[9];
+		unsigned char fn_name_len;
 		size_t (*fn_parse)(CondParser *, const char **, bool,
 				   const char *, char **);
 		bool (*fn_eval)(size_t, const char *);
