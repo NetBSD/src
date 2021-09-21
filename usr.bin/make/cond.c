@@ -1,4 +1,4 @@
-/*	$NetBSD: cond.c,v 1.275 2021/09/21 21:43:32 rillig Exp $	*/
+/*	$NetBSD: cond.c,v 1.276 2021/09/21 22:38:25 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -95,7 +95,7 @@
 #include "dir.h"
 
 /*	"@(#)cond.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: cond.c,v 1.275 2021/09/21 21:43:32 rillig Exp $");
+MAKE_RCSID("$NetBSD: cond.c,v 1.276 2021/09/21 22:38:25 rillig Exp $");
 
 /*
  * The parsing of conditional expressions is based on this grammar:
@@ -154,6 +154,20 @@ typedef struct CondParser {
 	bool (*evalBare)(size_t, const char *);
 	bool negateEvalBare;
 
+	/*
+	 * Whether the left-hand side of a comparison may NOT be an unquoted
+	 * string.  This is allowed for expressions of the form
+	 * ${condition:?:}, see ApplyModifier_IfElse.  Such a condition is
+	 * expanded before it is evaluated, due to ease of implementation.
+	 * This means that at the point where the condition is evaluated,
+	 * make cannot know anymore whether the left-hand side had originally
+	 * been a variable expression or a plain word.
+	 *
+	 * In all other contexts, the left-hand side must either be a
+	 * variable expression, a quoted string or a number.
+	 */
+	bool lhsStrict;
+
 	const char *p;		/* The remaining condition to parse */
 	Token curr;		/* Single push-back token used in parsing */
 
@@ -173,18 +187,6 @@ static unsigned int cond_min_depth = 0;	/* depth at makefile open */
 
 /* Names for ComparisonOp. */
 static const char *opname[] = { "<", "<=", ">", ">=", "==", "!=" };
-
-/*
- * Indicate when we should be strict about lhs of comparisons.
- * In strict mode, the lhs must be a variable expression or a string literal
- * in quotes. In non-strict mode it may also be an unquoted string literal.
- *
- * True when CondEvalExpression is called from Cond_EvalLine (.if etc).
- * False when CondEvalExpression is called from ApplyModifier_IfElse
- * since lhs is already expanded, and at that point we cannot tell if
- * it was a variable reference or not.
- */
-static bool lhsStrict;
 
 static bool
 is_token(const char *str, const char *tok, size_t len)
@@ -682,7 +684,7 @@ CondParser_Comparison(CondParser *par, bool doEval)
 	ComparisonOp op;
 	bool lhsQuoted, rhsQuoted;
 
-	CondParser_Leaf(par, doEval, lhsStrict, &lhs, &lhsQuoted);
+	CondParser_Leaf(par, doEval, par->lhsStrict, &lhs, &lhsQuoted);
 	if (lhs.str == NULL)
 		goto done_lhs;
 
@@ -1063,13 +1065,12 @@ CondEvalExpression(const char *cond, bool *out_value, bool plain,
 	CondParser par;
 	CondEvalResult rval;
 
-	lhsStrict = strictLHS;
-
 	cpp_skip_hspace(&cond);
 
 	par.plain = plain;
 	par.evalBare = evalBare;
 	par.negateEvalBare = negate;
+	par.lhsStrict = strictLHS;
 	par.p = cond;
 	par.curr = TOK_NONE;
 	par.printedError = false;

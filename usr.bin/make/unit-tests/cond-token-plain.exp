@@ -53,9 +53,9 @@ CondParser_Eval: left == right
 make: "cond-token-plain.mk" line 191: Malformed conditional (left == right)
 CondParser_Eval: ${0:?:} || left == right
 CondParser_Eval: 0
-lhs = "left", rhs = "right", op = ==
+make: "cond-token-plain.mk" line 197: Malformed conditional (${0:?:} || left == right)
 CondParser_Eval: left == right || ${0:?:}
-make: "cond-token-plain.mk" line 201: Malformed conditional (left == right || ${0:?:})
+make: "cond-token-plain.mk" line 202: Malformed conditional (left == right || ${0:?:})
 make: Fatal errors encountered -- cannot continue
 make: stopped in unit-tests
 exit status 1
