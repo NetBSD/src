@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sisfb.c,v 1.7 2021/08/07 16:19:14 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sisfb.c,v 1.8 2021/09/21 14:47:28 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -472,10 +472,13 @@ sisfb_mmap(void *v, void *vs, off_t offset, int prot)
 		}
 		return -1;
 	}
-	if (kauth_authorize_generic(kauth_cred_get(), KAUTH_GENERIC_ISSUSER,
-	    NULL) != 0) {
+
+	if (kauth_authorize_machdep(kauth_cred_get(), 
+	    KAUTH_MACHDEP_UNMANAGEDMEM, NULL, NULL, NULL, NULL) != 0) {
+		aprint_error_dev(sc->sc_dev, "mmap() rejected.\n");
 		return -1;
-	}
+	}       
+
 	if (offset >= (fb->fbbase & ~PAGE_MASK) &&
 	    offset <= ((fb->fbbase + fb->fbsize + PAGE_SIZE - 1) & ~PAGE_MASK)) {
 		pa = bus_space_mmap(fb->fbt, fb->fbbase, offset - fb->fbbase,
