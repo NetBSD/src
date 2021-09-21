@@ -1,4 +1,4 @@
-/*	$NetBSD: an.c,v 1.75 2021/06/16 00:21:18 riastradh Exp $	*/
+/*	$NetBSD: an.c,v 1.76 2021/09/21 14:40:14 christos Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: an.c,v 1.75 2021/06/16 00:21:18 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: an.c,v 1.76 2021/09/21 14:40:14 christos Exp $");
 
 
 #include <sys/param.h>
@@ -1287,7 +1287,7 @@ an_get_nwkey(struct an_softc *sc, struct ieee80211_nwkey *nwkey)
 			continue;
 		/* do not show any keys to non-root user */
 		/* XXX-elad: why is this inside a loop? */
-		if ((error = kauth_authorize_network(curlwp->l_cred,
+		if ((error = kauth_authorize_network(kauth_cred_get(),
 		    KAUTH_NETWORK_INTERFACE,
 		    KAUTH_REQ_NETWORK_INTERFACE_GETPRIV, sc->sc_ic.ic_ifp,
 		    KAUTH_ARG(SIOCG80211NWKEY), NULL)) != 0)
