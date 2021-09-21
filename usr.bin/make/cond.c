@@ -1,4 +1,4 @@
-/*	$NetBSD: cond.c,v 1.276 2021/09/21 22:38:25 rillig Exp $	*/
+/*	$NetBSD: cond.c,v 1.277 2021/09/21 22:48:04 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -95,7 +95,7 @@
 #include "dir.h"
 
 /*	"@(#)cond.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: cond.c,v 1.276 2021/09/21 22:38:25 rillig Exp $");
+MAKE_RCSID("$NetBSD: cond.c,v 1.277 2021/09/21 22:48:04 rillig Exp $");
 
 /*
  * The parsing of conditional expressions is based on this grammar:
@@ -155,7 +155,7 @@ typedef struct CondParser {
 	bool negateEvalBare;
 
 	/*
-	 * Whether the left-hand side of a comparison may NOT be an unquoted
+	 * Whether the left-hand side of a comparison may be an unquoted
 	 * string.  This is allowed for expressions of the form
 	 * ${condition:?:}, see ApplyModifier_IfElse.  Such a condition is
 	 * expanded before it is evaluated, due to ease of implementation.
@@ -166,7 +166,7 @@ typedef struct CondParser {
 	 * In all other contexts, the left-hand side must either be a
 	 * variable expression, a quoted string or a number.
 	 */
-	bool lhsStrict;
+	bool leftUnquotedOK;
 
 	const char *p;		/* The remaining condition to parse */
 	Token curr;		/* Single push-back token used in parsing */
@@ -479,7 +479,7 @@ CondParser_StringExpr(CondParser *par, const char *start,
  *	Sets out_quoted if the leaf was a quoted string literal.
  */
 static void
-CondParser_Leaf(CondParser *par, bool doEval, bool strictLHS,
+CondParser_Leaf(CondParser *par, bool doEval, bool unquotedOK,
 		  FStr *out_str, bool *out_quoted)
 {
 	Buffer buf;
@@ -527,11 +527,11 @@ CondParser_Leaf(CondParser *par, bool doEval, bool strictLHS,
 				goto cleanup;
 			continue;
 		default:
-			if (strictLHS && !quoted && *start != '$' &&
+			if (!unquotedOK && !quoted && *start != '$' &&
 			    !ch_isdigit(*start)) {
 				/*
 				 * The left-hand side must be quoted,
-				 * a variable reference or a number.
+				 * a variable expression or a number.
 				 */
 				str = FStr_InitRefer(NULL);
 				goto cleanup;
@@ -684,7 +684,7 @@ CondParser_Comparison(CondParser *par, bool doEval)
 	ComparisonOp op;
 	bool lhsQuoted, rhsQuoted;
 
-	CondParser_Leaf(par, doEval, par->lhsStrict, &lhs, &lhsQuoted);
+	CondParser_Leaf(par, doEval, par->leftUnquotedOK, &lhs, &lhsQuoted);
 	if (lhs.str == NULL)
 		goto done_lhs;
 
@@ -705,7 +705,7 @@ CondParser_Comparison(CondParser *par, bool doEval)
 		goto done_lhs;
 	}
 
-	CondParser_Leaf(par, doEval, false, &rhs, &rhsQuoted);
+	CondParser_Leaf(par, doEval, true, &rhs, &rhsQuoted);
 	if (rhs.str == NULL)
 		goto done_rhs;
 
@@ -1060,7 +1060,7 @@ CondParser_Eval(CondParser *par, bool *out_value)
 static CondEvalResult
 CondEvalExpression(const char *cond, bool *out_value, bool plain,
 		   bool (*evalBare)(size_t, const char *), bool negate,
-		   bool eprint, bool strictLHS)
+		   bool eprint, bool leftUnquotedOK)
 {
 	CondParser par;
 	CondEvalResult rval;
@@ -1070,7 +1070,7 @@ CondEvalExpression(const char *cond, bool *out_value, bool plain,
 	par.plain = plain;
 	par.evalBare = evalBare;
 	par.negateEvalBare = negate;
-	par.lhsStrict = strictLHS;
+	par.leftUnquotedOK = leftUnquotedOK;
 	par.p = cond;
 	par.curr = TOK_NONE;
 	par.printedError = false;
@@ -1091,7 +1091,7 @@ CondEvalResult
 Cond_EvalCondition(const char *cond, bool *out_value)
 {
 	return CondEvalExpression(cond, out_value, true,
-	    FuncDefined, false, false, false);
+	    FuncDefined, false, false, true);
 }
 
 static bool
@@ -1322,7 +1322,7 @@ Cond_EvalLine(const char *line)
 
 	/* And evaluate the conditional expression */
 	if (CondEvalExpression(p, &value, plain, evalBare, negate,
-	    true, true) == COND_INVALID) {
+	    true, false) == COND_INVALID) {
 		/* Syntax error in conditional, error message already output. */
 		/* Skip everything to matching .endif */
 		/* XXX: An extra '.else' is not detected in this case. */
