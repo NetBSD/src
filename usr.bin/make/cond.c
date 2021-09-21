@@ -1,4 +1,4 @@
-/*	$NetBSD: cond.c,v 1.270 2021/07/29 06:35:20 rillig Exp $	*/
+/*	$NetBSD: cond.c,v 1.271 2021/09/21 20:51:38 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -95,14 +95,14 @@
 #include "dir.h"
 
 /*	"@(#)cond.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: cond.c,v 1.270 2021/07/29 06:35:20 rillig Exp $");
+MAKE_RCSID("$NetBSD: cond.c,v 1.271 2021/09/21 20:51:38 rillig Exp $");
 
 /*
  * The parsing of conditional expressions is based on this grammar:
- *	Or -> And '||' Or
  *	Or -> And
- *	And -> Term '&&' And
+ *	Or -> Or '||' And
  *	And -> Term
+ *	And -> And '&&' Term
  *	Term -> Function '(' Argument ')'
  *	Term -> Leaf Operator Leaf
  *	Term -> Leaf
@@ -977,8 +977,8 @@ CondParser_Term(CondParser *par, bool doEval)
 }
 
 /*
- * And -> Term '&&' And
  * And -> Term
+ * And -> And '&&' Term
  */
 static CondResult
 CondParser_And(CondParser *par, bool doEval)
@@ -1004,8 +1004,8 @@ CondParser_And(CondParser *par, bool doEval)
 }
 
 /*
- * Or -> And '||' Or
  * Or -> And
+ * Or -> Or '||' And
  */
 static CondResult
 CondParser_Or(CondParser *par, bool doEval)
