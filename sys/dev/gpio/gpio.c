@@ -1,4 +1,4 @@
-/* $NetBSD: gpio.c,v 1.67 2021/08/09 20:49:09 andvar Exp $ */
+/* $NetBSD: gpio.c,v 1.68 2021/09/21 14:38:51 christos Exp $ */
 /*	$OpenBSD: gpio.c,v 1.6 2006/01/14 12:33:49 grange Exp $	*/
 
 /*
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gpio.c,v 1.67 2021/08/09 20:49:09 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gpio.c,v 1.68 2021/09/21 14:38:51 christos Exp $");
 
 /*
  * General Purpose Input/Output framework.
@@ -88,7 +88,7 @@ static int	gpio_ioctl(struct gpio_softc *, u_long, void *, int,
 #ifdef COMPAT_50
 /* Old API */
 static int	gpio_ioctl_oapi(struct gpio_softc *, u_long, void *, int,
-    kauth_cred_t);
+    struct lwp *);
 #endif
 
 CFATTACH_DECL3_NEW(gpio, sizeof(struct gpio_softc),
@@ -690,7 +690,6 @@ gpio_ioctl(struct gpio_softc *sc, u_long cmd, void *data, int flag,
 #endif
 	device_t dv;
 	cfdata_t cf;
-	kauth_cred_t cred;
 	int locs[GPIOCF_NLOCS];
 	int error, pin, value, flags, npins;
 
@@ -703,13 +702,11 @@ gpio_ioctl(struct gpio_softc *sc, u_long cmd, void *data, int flag,
 		return EBUSY;
 	}
 
-	cred = kauth_cred_get();
-
 	switch (cmd) {
 	case GPIOINFO:
 		info = data;
-		if (!kauth_authorize_device(cred, KAUTH_DEVICE_GPIO_PINSET,
-		    NULL, NULL, NULL, NULL))
+		if (!kauth_authorize_device(l->l_cred,
+		    KAUTH_DEVICE_GPIO_PINSET, NULL, NULL, NULL, NULL))
 			info->gpio_npins = sc->sc_npins;
 		else {
 			for (pin = npins = 0; pin < sc->sc_npins; pin++)
@@ -729,8 +726,8 @@ gpio_ioctl(struct gpio_softc *sc, u_long cmd, void *data, int flag,
 			return EINVAL;
 
 		if (!(sc->sc_pins[pin].pin_flags & GPIO_PIN_SET) &&
-		    kauth_authorize_device(cred, KAUTH_DEVICE_GPIO_PINSET,
-		    NULL, NULL, NULL, NULL))
+		    kauth_authorize_device(l->l_cred,
+		    KAUTH_DEVICE_GPIO_PINSET, NULL, NULL, NULL, NULL))
 			return EPERM;
 
 		/* return read value */
@@ -759,8 +756,8 @@ gpio_ioctl(struct gpio_softc *sc, u_long cmd, void *data, int flag,
 			return EBUSY;
 
 		if (!(sc->sc_pins[pin].pin_flags & GPIO_PIN_SET) &&
-		    kauth_authorize_device(cred, KAUTH_DEVICE_GPIO_PINSET,
-		    NULL, NULL, NULL, NULL))
+		    kauth_authorize_device(l->l_cred,
+		    KAUTH_DEVICE_GPIO_PINSET, NULL, NULL, NULL, NULL))
 			return EPERM;
 
 		value = req->gp_value;
@@ -791,8 +788,8 @@ gpio_ioctl(struct gpio_softc *sc, u_long cmd, void *data, int flag,
 			return EBUSY;
 
 		if (!(sc->sc_pins[pin].pin_flags & GPIO_PIN_SET) &&
-		    kauth_authorize_device(cred, KAUTH_DEVICE_GPIO_PINSET,
-		    NULL, NULL, NULL, NULL))
+		    kauth_authorize_device(l->l_cred,
+		    KAUTH_DEVICE_GPIO_PINSET, NULL, NULL, NULL, NULL))
 			return EPERM;
 
 		value = (sc->sc_pins[pin].pin_state == GPIO_PIN_LOW ?
@@ -818,8 +815,8 @@ gpio_ioctl(struct gpio_softc *sc, u_long cmd, void *data, int flag,
 		 */
 		attach = data;
 #endif
-		if (kauth_authorize_device(cred, KAUTH_DEVICE_GPIO_PINSET,
-		    NULL, NULL, NULL, NULL))
+		if (kauth_authorize_device(l->l_cred,
+		    KAUTH_DEVICE_GPIO_PINSET, NULL, NULL, NULL, NULL))
 			return EPERM;
 
 		/* do not try to attach if the pins are already mapped */
@@ -878,8 +875,8 @@ gpio_ioctl(struct gpio_softc *sc, u_long cmd, void *data, int flag,
 		mutex_exit(&sc->sc_mtx);
 		return error;
 	case GPIOSET:
-		if (kauth_authorize_device(cred, KAUTH_DEVICE_GPIO_PINSET,
-		    NULL, NULL, NULL, NULL))
+		if (kauth_authorize_device(l->l_cred,
+		    KAUTH_DEVICE_GPIO_PINSET, NULL, NULL, NULL, NULL))
 			return EPERM;
 
 		set = data;
@@ -935,8 +932,8 @@ gpio_ioctl(struct gpio_softc *sc, u_long cmd, void *data, int flag,
 		}
 		break;
 	case GPIOUNSET:
-		if (kauth_authorize_device(cred, KAUTH_DEVICE_GPIO_PINSET,
-		    NULL, NULL, NULL, NULL))
+		if (kauth_authorize_device(l->l_cred,
+		    KAUTH_DEVICE_GPIO_PINSET, NULL, NULL, NULL, NULL))
 			return EPERM;
 
 		set = data;
@@ -965,7 +962,7 @@ gpio_ioctl(struct gpio_softc *sc, u_long cmd, void *data, int flag,
 #ifdef COMPAT_50
 		/* Try the old API */
 		DPRINTF(("%s: trying the old API\n", device_xname(sc->sc_dev)));
-		return gpio_ioctl_oapi(sc, cmd, data, flag, cred);
+		return gpio_ioctl_oapi(sc, cmd, data, flag, l);
 #else
 		return ENOTTY;
 #endif
@@ -976,7 +973,7 @@ gpio_ioctl(struct gpio_softc *sc, u_long cmd, void *data, int flag,
 #ifdef COMPAT_50
 static int
 gpio_ioctl_oapi(struct gpio_softc *sc, u_long cmd, void *data, int flag,
-    kauth_cred_t cred)
+    struct lwp *l)
 {
 	gpio_chipset_tag_t gc;
 	struct gpio_pin_op *op;
@@ -998,8 +995,8 @@ gpio_ioctl_oapi(struct gpio_softc *sc, u_long cmd, void *data, int flag,
 			return EINVAL;
 
 		if (!(sc->sc_pins[pin].pin_flags & GPIO_PIN_SET) &&
-		    kauth_authorize_device(cred, KAUTH_DEVICE_GPIO_PINSET,
-		    NULL, NULL, NULL, NULL))
+		    kauth_authorize_device(l->l_cred,
+		    KAUTH_DEVICE_GPIO_PINSET, NULL, NULL, NULL, NULL))
 			return EPERM;
 
 		/* return read value */
@@ -1020,8 +1017,8 @@ gpio_ioctl_oapi(struct gpio_softc *sc, u_long cmd, void *data, int flag,
 			return EBUSY;
 
 		if (!(sc->sc_pins[pin].pin_flags & GPIO_PIN_SET) &&
-		    kauth_authorize_device(cred, KAUTH_DEVICE_GPIO_PINSET,
-		    NULL, NULL, NULL, NULL))
+		    kauth_authorize_device(l->l_cred,
+		    KAUTH_DEVICE_GPIO_PINSET, NULL, NULL, NULL, NULL))
 			return EPERM;
 
 		value = op->gp_value;
@@ -1049,8 +1046,8 @@ gpio_ioctl_oapi(struct gpio_softc *sc, u_long cmd, void *data, int flag,
 			return EBUSY;
 
 		if (!(sc->sc_pins[pin].pin_flags & GPIO_PIN_SET) &&
-		    kauth_authorize_device(cred, KAUTH_DEVICE_GPIO_PINSET,
-		    NULL, NULL, NULL, NULL))
+		    kauth_authorize_device(l->l_cred,
+		    KAUTH_DEVICE_GPIO_PINSET, NULL, NULL, NULL, NULL))
 			return EPERM;
 
 		value = (sc->sc_pins[pin].pin_state == GPIO_PIN_LOW ?
@@ -1064,8 +1061,8 @@ gpio_ioctl_oapi(struct gpio_softc *sc, u_long cmd, void *data, int flag,
 	case GPIOPINCTL:
 		ctl = data;
 
-		if (kauth_authorize_device(cred, KAUTH_DEVICE_GPIO_PINSET,
-		    NULL, NULL, NULL, NULL))
+		if (kauth_authorize_device(l->l_cred,
+		    KAUTH_DEVICE_GPIO_PINSET, NULL, NULL, NULL, NULL))
 			return EPERM;
 
 		pin = ctl->gp_pin;
@@ -1092,8 +1089,8 @@ gpio_ioctl_oapi(struct gpio_softc *sc, u_long cmd, void *data, int flag,
 	case GPIODETACH50:
 		/* FALLTHOUGH */
 	case GPIODETACH:
-		if (kauth_authorize_device(cred, KAUTH_DEVICE_GPIO_PINSET,
-		    NULL, NULL, NULL, NULL))
+		if (kauth_authorize_device(l->l_cred,
+		    KAUTH_DEVICE_GPIO_PINSET, NULL, NULL, NULL, NULL))
 			return EPERM;
 
 		error = 0;
