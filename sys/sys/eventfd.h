@@ -1,4 +1,4 @@
-/*	$NetBSD: eventfd.h,v 1.2 2021/09/19 15:51:27 thorpej Exp $	*/
+/*	$NetBSD: eventfd.h,v 1.3 2021/09/21 13:51:46 ryoon Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -49,9 +49,11 @@ typedef uint64_t eventfd_t;
 struct lwp;
 int	do_eventfd(struct lwp *, unsigned int, int, register_t *);
 #else /* ! _KERNEL */
+__BEGIN_DECLS
 int	eventfd(unsigned int, int);
 int	eventfd_read(int, eventfd_t *);
 int	eventfd_write(int, eventfd_t);
+__END_DECLS
 #endif /* _KERNEL */
 
 #endif /* _SYS_EVENTFD_H_ */
