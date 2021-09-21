@@ -1,8 +1,8 @@
-#	$NetBSD: Makefile,v 1.2 2020/02/07 19:00:10 kamil Exp $
-
-TOPDIR= ${NETBSDSRCDIR}/sys/external/bsd/compiler_rt/dist
+#	$NetBSD: Makefile,v 1.3 2021/09/21 20:34:37 christos Exp $
 
 NOOBJ=	# defined
+
+.include <bsd.init.mk>
 
 .PATH:	${TOPDIR}/include/xray
 
@@ -10,8 +10,6 @@ INCS+=	xray_interface.h
 INCS+=	xray_log_interface.h
 INCS+=	xray_records.h
 
-.include <bsd.own.mk>
-
-INCSDIR=	/usr/lib/clang/9.0.0/include/xray
+INCSDIR=	/usr/lib/clang/${CLANG_VER}/include/xray
 
 .include <bsd.prog.mk>
