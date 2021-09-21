@@ -1,4 +1,4 @@
-/*	$NetBSD: in.c,v 1.241 2020/09/29 19:33:36 roy Exp $	*/
+/*	$NetBSD: in.c,v 1.242 2021/09/21 15:05:41 christos Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in.c,v 1.241 2020/09/29 19:33:36 roy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in.c,v 1.242 2021/09/21 15:05:41 christos Exp $");
 
 #include "arp.h"
 
@@ -521,7 +521,8 @@ in_control0(struct socket *so, u_long cmd, void *data, struct ifnet *ifp)
 			goto out;
 		}
 
-		if (kauth_authorize_network(curlwp->l_cred, KAUTH_NETWORK_INTERFACE,
+		if (kauth_authorize_network(kauth_cred_get(),
+		    KAUTH_NETWORK_INTERFACE,
 		    KAUTH_REQ_NETWORK_INTERFACE_SETPRIV, ifp, (void *)cmd,
 		    NULL) != 0) {
 			error = EPERM;
@@ -565,7 +566,8 @@ in_control0(struct socket *so, u_long cmd, void *data, struct ifnet *ifp)
 		break;
 
 	case SIOCSIFBRDADDR:
-		if (kauth_authorize_network(curlwp->l_cred, KAUTH_NETWORK_INTERFACE,
+		if (kauth_authorize_network(kauth_cred_get(),
+		    KAUTH_NETWORK_INTERFACE,
 		    KAUTH_REQ_NETWORK_INTERFACE_SETPRIV, ifp, (void *)cmd,
 		    NULL) != 0) {
 			error = EPERM;

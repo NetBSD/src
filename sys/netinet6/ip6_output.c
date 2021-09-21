@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_output.c,v 1.228 2021/08/17 22:00:32 andvar Exp $	*/
+/*	$NetBSD: ip6_output.c,v 1.229 2021/09/21 15:07:43 christos Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.228 2021/08/17 22:00:32 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.229 2021/09/21 15:07:43 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1361,7 +1361,8 @@ ip6_ctloutput(int op, struct socket *so, struct sockopt *sopt)
 		case IPV6_RECVHOPOPTS:
 		case IPV6_RECVDSTOPTS:
 		case IPV6_RECVRTHDRDSTOPTS:
-			error = kauth_authorize_network(kauth_cred_get(),
+			error = kauth_authorize_network(
+			    kauth_cred_get(),
 			    KAUTH_NETWORK_IPV6, KAUTH_REQ_NETWORK_IPV6_HOPBYHOP,
 			    NULL, NULL, NULL);
 			if (error)
@@ -1612,8 +1613,8 @@ else 					\
 				 * Check super-user privilege.
 				 * See comments for IPV6_RECVHOPOPTS.
 				 */
-				error =
-				    kauth_authorize_network(kauth_cred_get(),
+				error = kauth_authorize_network(
+				    kauth_cred_get(),
 				    KAUTH_NETWORK_IPV6,
 				    KAUTH_REQ_NETWORK_IPV6_HOPBYHOP, NULL,
 				    NULL, NULL);
@@ -1622,8 +1623,8 @@ else 					\
 				OPTSET2292(IN6P_HOPOPTS);
 				break;
 			case IPV6_2292DSTOPTS:
-				error =
-				    kauth_authorize_network(kauth_cred_get(),
+				error = kauth_authorize_network(
+				    kauth_cred_get(),
 				    KAUTH_NETWORK_IPV6,
 				    KAUTH_REQ_NETWORK_IPV6_HOPBYHOP, NULL,
 				    NULL, NULL);
@@ -2358,7 +2359,8 @@ ip6_get_membership(const struct sockopt *sopt, struct ifnet **ifp,
 		 * all multicast addresses. Only super user is allowed
 		 * to do this.
 		 */
-		if (kauth_authorize_network(curlwp->l_cred, KAUTH_NETWORK_IPV6,
+		if (kauth_authorize_network(kauth_cred_get(),
+		    KAUTH_NETWORK_IPV6,
 		    KAUTH_REQ_NETWORK_IPV6_JOIN_MULTICAST, NULL, NULL, NULL))
 			return EACCES;
 	} else if (IN6_IS_ADDR_V4MAPPED(ia)) {
@@ -2973,7 +2975,8 @@ ip6_setpktopt(int optname, u_char *buf, int len, struct ip6_pktopts *opt,
 	case IPV6_2292NEXTHOP:
 #endif
 	case IPV6_NEXTHOP:
-		error = kauth_authorize_network(cred, KAUTH_NETWORK_IPV6,
+		error = kauth_authorize_network(cred,
+		    KAUTH_NETWORK_IPV6,
 		    KAUTH_REQ_NETWORK_IPV6_HOPBYHOP, NULL, NULL, NULL);
 		if (error)
 			return (error);
@@ -3031,7 +3034,8 @@ ip6_setpktopt(int optname, u_char *buf, int len, struct ip6_pktopts *opt,
 		 * options, since per-option restriction has too much
 		 * overhead.
 		 */
-		error = kauth_authorize_network(cred, KAUTH_NETWORK_IPV6,
+		error = kauth_authorize_network(cred,
+		    KAUTH_NETWORK_IPV6,
 		    KAUTH_REQ_NETWORK_IPV6_HOPBYHOP, NULL, NULL, NULL);
 		if (error)
 			return (error);
@@ -3069,7 +3073,8 @@ ip6_setpktopt(int optname, u_char *buf, int len, struct ip6_pktopts *opt,
 		int destlen;
 
 		/* XXX: see the comment for IPV6_HOPOPTS */
-		error = kauth_authorize_network(cred, KAUTH_NETWORK_IPV6,
+		error = kauth_authorize_network(cred,
+		    KAUTH_NETWORK_IPV6,
 		    KAUTH_REQ_NETWORK_IPV6_HOPBYHOP, NULL, NULL, NULL);
 		if (error)
 			return (error);

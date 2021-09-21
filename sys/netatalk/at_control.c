@@ -1,4 +1,4 @@
-/*	$NetBSD: at_control.c,v 1.41 2021/08/02 12:56:25 andvar Exp $	 */
+/*	$NetBSD: at_control.c,v 1.42 2021/09/21 15:01:59 christos Exp $	 */
 
 /*
  * Copyright (c) 1990,1994 Regents of The University of Michigan.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: at_control.c,v 1.41 2021/08/02 12:56:25 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: at_control.c,v 1.42 2021/09/21 15:01:59 christos Exp $");
 
 #include "opt_atalk.h"
 
@@ -127,7 +127,7 @@ at_control(u_long cmd, void *data, struct ifnet *ifp)
 		 * If we are not superuser, then we don't get to do these
 		 * ops.
 		 */
-		if (kauth_authorize_network(curlwp->l_cred,
+		if (kauth_authorize_network(kauth_cred_get(),
 		    KAUTH_NETWORK_INTERFACE,
 		    KAUTH_REQ_NETWORK_INTERFACE_SETPRIV, ifp, (void *)cmd,
 		    NULL) != 0)

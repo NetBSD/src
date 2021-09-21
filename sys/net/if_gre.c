@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gre.c,v 1.180 2021/02/14 19:33:29 roy Exp $ */
+/*	$NetBSD: if_gre.c,v 1.181 2021/09/21 14:59:14 christos Exp $ */
 
 /*
  * Copyright (c) 1998, 2008 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.180 2021/02/14 19:33:29 roy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.181 2021/09/21 14:59:14 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_atalk.h"
@@ -1195,7 +1195,7 @@ gre_ioctl(struct ifnet *ifp, const u_long cmd, void *data)
 	case GRESADDRS:
 	case GRESSOCK:
 	case GREDSOCK:
-		if (kauth_authorize_network(curlwp->l_cred,
+		if (kauth_authorize_network(kauth_cred_get(),
 		    KAUTH_NETWORK_INTERFACE,
 		    KAUTH_REQ_NETWORK_INTERFACE_SETPRIV, ifp, (void *)cmd,
 		    NULL) != 0)

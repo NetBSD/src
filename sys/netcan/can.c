@@ -1,4 +1,4 @@
-/*	$NetBSD: can.c,v 1.9 2020/01/29 05:20:26 thorpej Exp $	*/
+/*	$NetBSD: can.c,v 1.10 2021/09/21 15:04:27 christos Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2017 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: can.c,v 1.9 2020/01/29 05:20:26 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: can.c,v 1.10 2021/09/21 15:04:27 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -132,10 +132,10 @@ can_set_netlink(struct ifnet *ifp, struct ifdrv *ifd)
 	if (ifp->if_dlt != DLT_CAN_SOCKETCAN || csc == NULL)
 		return EOPNOTSUPP;
 
-	error = kauth_authorize_network(curlwp->l_cred,
-		    KAUTH_NETWORK_INTERFACE,
-		    KAUTH_REQ_NETWORK_INTERFACE_SETPRIV, ifp,
-	            (void *)SIOCSDRVSPEC, NULL);
+	error = kauth_authorize_network(kauth_cred_get(),
+	    KAUTH_NETWORK_INTERFACE,
+	    KAUTH_REQ_NETWORK_INTERFACE_SETPRIV, ifp,
+	    (void *)SIOCSDRVSPEC, NULL);
 	if (error != 0)
 		return error;
 

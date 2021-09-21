@@ -1,4 +1,4 @@
-/*	$NetBSD: ddp_usrreq.c,v 1.74 2019/11/29 17:40:16 maxv Exp $	 */
+/*	$NetBSD: ddp_usrreq.c,v 1.75 2021/09/21 15:01:59 christos Exp $	 */
 
 /*
  * Copyright (c) 1990,1991 Regents of The University of Michigan.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ddp_usrreq.c,v 1.74 2019/11/29 17:40:16 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ddp_usrreq.c,v 1.75 2021/09/21 15:01:59 christos Exp $");
 
 #include "opt_mbuftrace.h"
 #include "opt_atalk.h"
@@ -120,7 +120,8 @@ at_pcbsetaddr(struct ddpcb *ddp, struct sockaddr_at *sat)
 				return (EINVAL);
 
 			if (sat->sat_port < ATPORT_RESERVED &&
-			    (error = kauth_authorize_network(curlwp->l_cred,
+			    (error = kauth_authorize_network(
+			    kauth_cred_get(),
 			    KAUTH_NETWORK_BIND, KAUTH_REQ_NETWORK_BIND_PRIVPORT,
 			    ddpcb->ddp_socket, sat, NULL)) != 0)
 				return (error);
