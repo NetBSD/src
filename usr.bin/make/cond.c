@@ -1,4 +1,4 @@
-/*	$NetBSD: cond.c,v 1.274 2021/09/21 21:39:32 rillig Exp $	*/
+/*	$NetBSD: cond.c,v 1.275 2021/09/21 21:43:32 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -95,7 +95,7 @@
 #include "dir.h"
 
 /*	"@(#)cond.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: cond.c,v 1.274 2021/09/21 21:39:32 rillig Exp $");
+MAKE_RCSID("$NetBSD: cond.c,v 1.275 2021/09/21 21:43:32 rillig Exp $");
 
 /*
  * The parsing of conditional expressions is based on this grammar:
@@ -421,9 +421,8 @@ CondParser_StringExpr(CondParser *par, const char *start,
 	bool atStart;
 	VarParseResult parseResult;
 
-	/* if we are in quotes, an undefined variable is ok */
-	emode = doEval && !quoted ? VARE_UNDEFERR
-	    : doEval ? VARE_WANTRES
+	emode = doEval && quoted ? VARE_WANTRES
+	    : doEval ? VARE_UNDEFERR
 	    : VARE_PARSE_ONLY;
 
 	nested_p = par->p;
