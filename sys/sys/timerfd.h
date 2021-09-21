@@ -1,4 +1,4 @@
-/*	$NetBSD: timerfd.h,v 1.2 2021/09/19 15:51:27 thorpej Exp $	*/
+/*	$NetBSD: timerfd.h,v 1.3 2021/09/21 13:51:46 ryoon Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -56,10 +56,12 @@ int	do_timerfd_gettime(struct lwp *, int, struct itimerspec *,
 int	do_timerfd_settime(struct lwp *, int, int, const struct itimerspec *,
 	    struct itimerspec *, register_t *);
 #else /* ! _KERNEL */
+__BEGIN_DECLS
 int	timerfd_create(clockid_t, int);
 int	timerfd_gettime(int, struct itimerspec *);
 int	timerfd_settime(int, int, const struct itimerspec *,
 	    struct itimerspec *);
+__END_DECLS
 #endif /* _KERNEL */
 
 #endif /* _SYS_TIMERFD_H_ */
