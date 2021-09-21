@@ -1,4 +1,4 @@
-/*	$NetBSD: in6.c,v 1.282 2020/09/29 19:33:36 roy Exp $	*/
+/*	$NetBSD: in6.c,v 1.283 2021/09/21 15:06:21 christos Exp $	*/
 /*	$KAME: in6.c,v 1.198 2001/07/18 09:12:38 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.282 2020/09/29 19:33:36 roy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.283 2021/09/21 15:06:21 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -757,7 +757,7 @@ in6_control(struct socket *so, u_long cmd, void *data, struct ifnet *ifp)
 	case SIOCAADDRCTL_POLICY:
 	case SIOCDADDRCTL_POLICY:
 
-		if (kauth_authorize_network(curlwp->l_cred,
+		if (kauth_authorize_network(kauth_cred_get(),
 		    KAUTH_NETWORK_SOCKET,
 		    KAUTH_REQ_NETWORK_SOCKET_SETPRIV,
 		    so, NULL, NULL))
