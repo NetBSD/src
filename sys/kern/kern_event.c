@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_event.c,v 1.119 2021/09/21 14:52:40 christos Exp $	*/
+/*	$NetBSD: kern_event.c,v 1.120 2021/09/21 14:54:02 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_event.c,v 1.119 2021/09/21 14:52:40 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_event.c,v 1.120 2021/09/21 14:54:02 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -546,7 +546,7 @@ filt_procattach(struct knote *kn)
 	 */
 	mutex_enter(p->p_lock);
 	mutex_exit(&proc_lock);
-	if (kauth_authorize_process(curl->l_proc, curl->l_cred,
+	if (kauth_authorize_process(curl->l_cred,
 	    KAUTH_PROCESS_KEVENT_FILTER, p, NULL, NULL, NULL) != 0) {
 	    	mutex_exit(p->p_lock);
 		return EACCES;
