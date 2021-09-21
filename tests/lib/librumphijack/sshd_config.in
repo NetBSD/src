@@ -1,4 +1,4 @@
-# $NetBSD: sshd_config.in,v 1.1 2011/02/14 15:14:00 pooka Exp $
+# $NetBSD: sshd_config.in,v 1.2 2021/09/21 15:56:55 christos Exp $
 
 # Basic settings.
 Port 22
@@ -22,7 +22,6 @@ StrictModes no
 # Some settings to allow user runs of sshd.
 PidFile @WORKDIR@/sshd.pid
 UsePam no
-UsePrivilegeSeparation no
 
 # The root user should also be able to run the tests.
 PermitRootLogin yes
