@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_file64.c,v 1.62 2019/08/23 07:53:36 maxv Exp $	*/
+/*	$NetBSD: linux_file64.c,v 1.63 2021/09/21 09:24:15 rin Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 2000, 2008 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_file64.c,v 1.62 2019/08/23 07:53:36 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_file64.c,v 1.63 2021/09/21 09:24:15 rin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -180,7 +180,38 @@ linux_sys_fstatat64(struct lwp *l, const struct linux_sys_fstatat64_args *uap, r
 	} */
 	struct linux_stat64 tmplst;
 	struct stat tmpst;
-	int error, nd_flag;
+	struct vnode *vp;
+	int error, nd_flag, fd;
+	uint8_t c;
+
+	if (SCARG(uap, flag) & LINUX_AT_EMPTY_PATH) {
+		/*
+		 * If path is null string:
+		 */
+		error = ufetch_8(SCARG(uap, path), &c);
+		if (error != 0)
+			return error;
+		if (c == '\0') {
+			fd = SCARG(uap, fd);
+			if (fd == AT_FDCWD) {
+				/*
+				 * operate on current directory
+				 */
+				vp = l->l_proc->p_cwdi->cwdi_cdir;
+				vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
+				error = vn_stat(vp, &tmpst);
+				VOP_UNLOCK(vp);
+			} else {
+				/*
+				 * operate on fd
+				 */
+				error = do_sys_fstat(fd, &tmpst);
+			}
+			if (error != 0)
+				return error;
+			goto done;
+		}
+	}
 
 	if (SCARG(uap, flag) & LINUX_AT_SYMLINK_NOFOLLOW)
 		nd_flag = NOFOLLOW;
@@ -191,6 +222,7 @@ linux_sys_fstatat64(struct lwp *l, const struct linux_sys_fstatat64_args *uap, r
 	if (error != 0)
 		return error;
 
+done:
 	bsd_to_linux_stat(&tmpst, &tmplst);
 
 	return copyout(&tmplst, SCARG(uap, sp), sizeof tmplst);
