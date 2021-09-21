@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_entropy.c,v 1.30 2021/02/12 19:48:26 jmcneill Exp $	*/
+/*	$NetBSD: kern_entropy.c,v 1.31 2021/09/21 14:54:26 christos Exp $	*/
 
 /*-
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_entropy.c,v 1.30 2021/02/12 19:48:26 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_entropy.c,v 1.31 2021/09/21 14:54:26 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -2070,18 +2070,18 @@ entropy_ioctl(unsigned long cmd, void *data)
 	case RNDGETSRCNAME:
 	case RNDGETESTNUM:
 	case RNDGETESTNAME:
-		error = kauth_authorize_device(curlwp->l_cred,
+		error = kauth_authorize_device(kauth_cred_get(),
 		    KAUTH_DEVICE_RND_GETPRIV, NULL, NULL, NULL, NULL);
 		break;
 	case RNDCTL:
-		error = kauth_authorize_device(curlwp->l_cred,
+		error = kauth_authorize_device(kauth_cred_get(),
 		    KAUTH_DEVICE_RND_SETPRIV, NULL, NULL, NULL, NULL);
 		break;
 	case RNDADDDATA:
-		error = kauth_authorize_device(curlwp->l_cred,
+		error = kauth_authorize_device(kauth_cred_get(),
 		    KAUTH_DEVICE_RND_ADDDATA, NULL, NULL, NULL, NULL);
 		/* Ascertain whether the user's inputs should be counted.  */
-		if (kauth_authorize_device(curlwp->l_cred,
+		if (kauth_authorize_device(kauth_cred_get(),
 			KAUTH_DEVICE_RND_ADDDATA_ESTIMATE,
 			NULL, NULL, NULL, NULL) == 0)
 			privileged = true;

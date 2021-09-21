@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_cache.c,v 1.150 2021/07/21 06:35:45 skrll Exp $	*/
+/*	$NetBSD: vfs_cache.c,v 1.151 2021/09/21 14:56:08 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2019, 2020 The NetBSD Foundation, Inc.
@@ -172,7 +172,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_cache.c,v 1.150 2021/07/21 06:35:45 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_cache.c,v 1.151 2021/09/21 14:56:08 christos Exp $");
 
 #define __NAMECACHE_PRIVATE
 #ifdef _KERNEL_OPT
@@ -701,7 +701,8 @@ cache_lookup_linked(struct vnode *dvp, const char *name, size_t namelen,
 			return false;
 		}
 		KASSERT(dvi->vi_nc_uid != VNOVAL && dvi->vi_nc_gid != VNOVAL);
-		error = kauth_authorize_vnode(cred, KAUTH_ACCESS_ACTION(VEXEC,
+		error = kauth_authorize_vnode(cred,
+		    KAUTH_ACCESS_ACTION(VEXEC,
 		    dvp->v_type, dvi->vi_nc_mode & ALLPERMS), dvp, NULL,
 		    genfs_can_access(dvp, cred, dvi->vi_nc_uid, dvi->vi_nc_gid,
 		    dvi->vi_nc_mode & ALLPERMS, NULL, VEXEC));
@@ -796,7 +797,7 @@ cache_revlookup(struct vnode *vp, struct vnode **dvpp, char **bpp, char *bufp,
 			return -1;
 		}
 		KASSERT(vi->vi_nc_uid != VNOVAL && vi->vi_nc_gid != VNOVAL);
-		error = kauth_authorize_vnode(curlwp->l_cred,
+		error = kauth_authorize_vnode(kauth_cred_get(),
 		    KAUTH_ACCESS_ACTION(VEXEC, vp->v_type, vi->vi_nc_mode &
 		    ALLPERMS), vp, NULL, genfs_can_access(vp, curlwp->l_cred,
 		    vi->vi_nc_uid, vi->vi_nc_gid, vi->vi_nc_mode & ALLPERMS,

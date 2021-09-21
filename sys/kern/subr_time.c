@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_time.c,v 1.30 2021/03/18 14:05:37 nia Exp $	*/
+/*	$NetBSD: subr_time.c,v 1.31 2021/09/21 14:55:14 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_time.c,v 1.30 2021/03/18 14:05:37 nia Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_time.c,v 1.31 2021/09/21 14:55:14 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -278,7 +278,7 @@ clock_gettime1(clockid_t clock_id, struct timespec *ts)
 		mutex_exit(&proc_lock);
 
 		// XXX: Perhaps create a special kauth type
-		error = kauth_authorize_process(curlwp->l_cred,
+		error = kauth_authorize_process(kauth_cred_get(),
 		    KAUTH_PROCESS_PTRACE, p,
 		    KAUTH_ARG(KAUTH_REQ_PROCESS_CANSEE_ENTRY), NULL, NULL);
 		if (error)
