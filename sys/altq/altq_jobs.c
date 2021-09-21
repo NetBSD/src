@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_jobs.c,v 1.11 2017/07/28 13:53:17 riastradh Exp $	*/
+/*	$NetBSD: altq_jobs.c,v 1.12 2021/09/21 14:30:15 christos Exp $	*/
 /*	$KAME: altq_jobs.c,v 1.11 2005/04/13 03:44:25 suz Exp $	*/
 /*
  * Copyright (c) 2001, the Rector and Board of Visitors of the
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: altq_jobs.c,v 1.11 2017/07/28 13:53:17 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: altq_jobs.c,v 1.12 2021/09/21 14:30:15 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_altq.h"
@@ -1858,7 +1858,6 @@ jobsioctl(dev_t dev, ioctlcmd_t cmd, void *addr, int flag,
 {
 	struct jobs_if *jif;
 	struct jobs_interface *ifacep;
-	struct proc *p = l->l_proc;
 	int	error = 0;
 
 	/* check super-user privilege */
@@ -1866,15 +1865,10 @@ jobsioctl(dev_t dev, ioctlcmd_t cmd, void *addr, int flag,
 	case JOBS_GETSTATS:
 		break;
 	default:
-#if (__FreeBSD_version > 400000)
-		if ((error = suser(p)) != 0)
-			return (error);
-#else
-		if ((error = kauth_authorize_network(p->p_cred,
+		if ((error = kauth_authorize_network(l->l_cred,
 		    KAUTH_NETWORK_ALTQ, KAUTH_REQ_NETWORK_ALTQ_JOBS, NULL,
 		    NULL, NULL)) != 0)
 			return (error);
-#endif
 		break;
 	}
 

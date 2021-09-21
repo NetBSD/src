@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_conf.c,v 1.21 2014/07/25 08:10:31 dholland Exp $	*/
+/*	$NetBSD: altq_conf.c,v 1.22 2021/09/21 14:30:15 christos Exp $	*/
 /*	$KAME: altq_conf.c,v 1.24 2005/04/13 03:44:24 suz Exp $	*/
 
 /*
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: altq_conf.c,v 1.21 2014/07/25 08:10:31 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: altq_conf.c,v 1.22 2021/09/21 14:30:15 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_altq.h"
@@ -224,15 +224,11 @@ altqioctl(dev_t dev, ioctlcmd_t cmd, void *addr, int flag, struct lwp *l)
 		case ALTQTBRGET:
 			break;
 		default:
-#if (__FreeBSD_version > 400000)
-			if ((error = suser(p)) != 0)
+			if ((error = kauth_authorize_network(
+			    l->l_cred, KAUTH_NETWORK_ALTQ,
+			    KAUTH_REQ_NETWORK_ALTQ_CONF, NULL, NULL,
+			    NULL)) != 0)
 				return (error);
-#else
-			if ((error = kauth_authorize_network(l->l_cred,
-			    KAUTH_NETWORK_ALTQ, KAUTH_REQ_NETWORK_ALTQ_CONF,
-			    NULL, NULL, NULL)) != 0)
-				return (error);
-#endif
 			break;
 		}
 

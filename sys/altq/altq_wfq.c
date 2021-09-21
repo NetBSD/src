@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_wfq.c,v 1.22 2017/07/28 13:58:47 riastradh Exp $	*/
+/*	$NetBSD: altq_wfq.c,v 1.23 2021/09/21 14:30:15 christos Exp $	*/
 /*	$KAME: altq_wfq.c,v 1.14 2005/04/13 03:44:25 suz Exp $	*/
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: altq_wfq.c,v 1.22 2017/07/28 13:58:47 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: altq_wfq.c,v 1.23 2021/09/21 14:30:15 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_altq.h"
@@ -679,13 +679,9 @@ wfqioctl(dev_t dev, ioctlcmd_t cmd, void *addr, int flag,
 	case WFQ_GET_STATS:
 		break;
 	default:
-#if (__FreeBSD_version > 400000)
-		if ((error = suser(p)) != 0)
-#else
 		if ((error = kauth_authorize_network(l->l_cred,
 		    KAUTH_NETWORK_ALTQ, KAUTH_REQ_NETWORK_ALTQ_WFQ, NULL,
 		    NULL, NULL)) != 0)
-#endif
 			return (error);
 		break;
 	}
