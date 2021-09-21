@@ -1,4 +1,4 @@
-/*	$NetBSD: atw.c,v 1.171 2021/06/16 00:21:18 riastradh Exp $  */
+/*	$NetBSD: atw.c,v 1.172 2021/09/21 14:42:01 christos Exp $  */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002, 2003, 2004 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.171 2021/06/16 00:21:18 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.172 2021/09/21 14:42:01 christos Exp $");
 
 
 #include <sys/param.h>
@@ -3946,8 +3946,8 @@ atw_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 	case SIOCS80211:
 		ireq = data;
 		if (ireq->i_type == IEEE80211_IOC_FRAGTHRESHOLD) {
-			if ((error = kauth_authorize_network(curlwp->l_cred,
-			    KAUTH_NETWORK_INTERFACE,
+			if ((error = kauth_authorize_network(
+			    kauth_cred_get(), KAUTH_NETWORK_INTERFACE,
 			    KAUTH_REQ_NETWORK_INTERFACE_SETPRIV, ifp,
 			    (void *)cmd, NULL)) != 0)
 				break;
