@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.563 2021/08/14 13:39:43 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.564 2021/09/21 21:39:32 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -109,7 +109,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.563 2021/08/14 13:39:43 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.564 2021/09/21 21:39:32 rillig Exp $");
 
 /* types and constants */
 
@@ -1597,10 +1597,8 @@ ParseDependencySourcesMundane(char *start, char *end,
  * See the tests depsrc-*.mk.
  */
 static void
-ParseDependencySources(char *const line, char *const cp,
-		       GNodeType const tOp,
-		       ParseSpecial const specType,
-		       SearchPathList ** inout_paths)
+ParseDependencySources(char *line, char *cp, GNodeType tOp,
+		       ParseSpecial specType, SearchPathList **inout_paths)
 {
 	if (line[0] == '\0') {
 		ParseDependencySourcesEmpty(specType, *inout_paths);
