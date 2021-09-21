@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.950 2021/09/11 09:16:14 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.951 2021/09/21 23:06:18 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -140,7 +140,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.950 2021/09/11 09:16:14 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.951 2021/09/21 23:06:18 rillig Exp $");
 
 /*
  * Variables are defined using one of the VAR=value assignments.  Their
@@ -318,7 +318,7 @@ GNode *SCOPE_INTERNAL;
 
 static VarExportedMode var_exportedVars = VAR_EXPORTED_NONE;
 
-static const char *VarEvalMode_Name[] = {
+static const char VarEvalMode_Name[][32] = {
 	"parse-only",
 	"eval",
 	"eval-defined",
@@ -2010,7 +2010,7 @@ typedef enum ExprDefined {
 	DEF_DEFINED
 } ExprDefined;
 
-static const char *const ExprDefined_Name[] = {
+static const char ExprDefined_Name[][10] = {
 	"regular",
 	"undefined",
 	"defined"
