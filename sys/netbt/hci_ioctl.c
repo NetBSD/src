@@ -1,4 +1,4 @@
-/*	$NetBSD: hci_ioctl.c,v 1.14 2019/02/03 03:19:28 mrg Exp $	*/
+/*	$NetBSD: hci_ioctl.c,v 1.15 2021/09/21 15:03:08 christos Exp $	*/
 
 /*-
  * Copyright (c) 2005 Iain Hibbert.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hci_ioctl.c,v 1.14 2019/02/03 03:19:28 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hci_ioctl.c,v 1.15 2021/09/21 15:03:08 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/domain.h>
@@ -227,7 +227,7 @@ hci_ioctl_pcb(unsigned long cmd, void *data)
 		break;
 
 	case SIOCSBTFLAGS:	/* set unit flags (privileged) */
-		err = kauth_authorize_device(curlwp->l_cred,
+		err = kauth_authorize_device(kauth_cred_get(),
 		    KAUTH_DEVICE_BLUETOOTH_SETPRIV, unit, KAUTH_ARG(cmd),
 		    btr, NULL);
 		if (err)
@@ -255,7 +255,7 @@ hci_ioctl_pcb(unsigned long cmd, void *data)
 		break;
 
 	case SIOCSBTPOLICY:	/* set unit link policy (privileged) */
-		err = kauth_authorize_device(curlwp->l_cred,
+		err = kauth_authorize_device(kauth_cred_get(),
 		    KAUTH_DEVICE_BLUETOOTH_SETPRIV, unit, KAUTH_ARG(cmd),
 		    btr, NULL);
 		if (err)
@@ -267,7 +267,7 @@ hci_ioctl_pcb(unsigned long cmd, void *data)
 		break;
 
 	case SIOCSBTPTYPE:	/* set unit packet types (privileged) */
-		err = kauth_authorize_device(curlwp->l_cred,
+		err = kauth_authorize_device(kauth_cred_get(),
 		    KAUTH_DEVICE_BLUETOOTH_SETPRIV, unit, KAUTH_ARG(cmd),
 		    btr, NULL);
 		if (err)
@@ -283,7 +283,7 @@ hci_ioctl_pcb(unsigned long cmd, void *data)
 		break;
 
 	case SIOCZBTSTATS:	/* get & reset unit statistics */
-		err = kauth_authorize_device(curlwp->l_cred,
+		err = kauth_authorize_device(kauth_cred_get(),
 		    KAUTH_DEVICE_BLUETOOTH_SETPRIV, unit, KAUTH_ARG(cmd),
 		    btr, NULL);
 		if (err)
@@ -299,7 +299,7 @@ hci_ioctl_pcb(unsigned long cmd, void *data)
 		 * sent to USB bluetooth controllers that are not an
 		 * integer number of frame sizes, the USB bus locks up.
 		 */
-		err = kauth_authorize_device(curlwp->l_cred,
+		err = kauth_authorize_device(kauth_cred_get(),
 		    KAUTH_DEVICE_BLUETOOTH_SETPRIV, unit, KAUTH_ARG(cmd),
 		    btr, NULL);
 		if (err)
