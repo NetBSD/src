@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ksyms.c,v 1.104 2021/09/11 10:09:55 riastradh Exp $	*/
+/*	$NetBSD: kern_ksyms.c,v 1.105 2021/09/22 05:42:19 rin Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_ksyms.c,v 1.104 2021/09/11 10:09:55 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ksyms.c,v 1.105 2021/09/22 05:42:19 rin Exp $");
 
 #if defined(_KERNEL) && defined(_KERNEL_OPT)
 #include "opt_copy_symtab.h"
@@ -1406,6 +1406,7 @@ ksymsmmap(struct file *fp, off_t *offp, size_t nbytes, int prot, int *flagsp,
 		return EINVAL;	/* XXX ??? */
 
 	/* Success!  */
+	uao_reference(ks->ks_uobj);
 	*advicep = UVM_ADV_SEQUENTIAL;
 	*uobjp = ks->ks_uobj;
 	*maxprotp = prot & VM_PROT_READ;
