@@ -1,4 +1,4 @@
-/*	$NetBSD: wskbdmap_mfii.c,v 1.34 2021/05/11 10:16:48 nia Exp $	*/
+/*	$NetBSD: wskbdmap_mfii.c,v 1.35 2021/09/22 17:37:31 nia Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wskbdmap_mfii.c,v 1.34 2021/05/11 10:16:48 nia Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wskbdmap_mfii.c,v 1.35 2021/09/22 17:37:31 nia Exp $");
 
 #include "opt_wskbdmap.h"
 #include <sys/types.h>
@@ -488,6 +488,60 @@ static const keysym_t pckbd_keydesc_fr[] = {
     KC(52),  KS_colon,		KS_slash,
     KC(53),  KS_exclam,		KS_section,
     KC(86),  KS_less,		KS_greater,
+    KC(184), KS_Mode_switch,	KS_Multi_key,
+};
+
+static const keysym_t pckbd_keydesc_fr_bepo[] = {
+/*  pos	    normal		shifted		altgr		shift-altgr */
+    KC(41),  KS_dollar,		KS_numbersign,
+    KC(2),   KS_quotedbl,	KS_1,
+    KC(3),   KS_guillemotleft,	KS_2,		KS_less,
+    KC(4),   KS_guillemotright,	KS_3,		KS_greater,
+    KC(5),   KS_parenleft,	KS_4,		KS_bracketleft,
+    KC(6),   KS_parenright,	KS_5,		KS_bracketright,
+    KC(7),   KS_at,		KS_6,		KS_asciicircum,
+    KC(8),   KS_plus,		KS_7,		KS_plusminus,
+    KC(9),   KS_minus,		KS_8,
+    KC(10),  KS_slash,		KS_9,		KS_division,
+    KC(11),  KS_asterisk,	KS_0,		KS_multiply,
+    KC(12),  KS_equal,		KS_degree,
+    KC(13),  KS_percent,	KS_grave,
+    KC(16),  KS_b,		KS_B,		KS_bar,		KS_underscore,
+    KC(17),  KS_eacute,		KS_Eacute,	KS_dead_acute,
+    KC(18),  KS_p,		KS_P,		KS_ampersand,	KS_section,
+    KC(19),  KS_o,		KS_O,
+    KC(20),  KS_egrave,		KS_Egrave,	KS_dead_grave,	KS_grave,
+    KC(21),  KS_dead_circumflex,KS_exclam,	KS_exclamdown,
+    KC(22),  KS_v,		KS_V,		KS_dead_caron,
+    KC(23),  KS_d,		KS_D,
+    KC(24),  KS_l,		KS_L,		KS_sterling,
+    KC(25),  KS_j,		KS_J,
+    KC(26),  KS_z,		KS_Z,
+    KC(27),  KS_w,		KS_W,
+    KC(30),  KS_a,		KS_A,		KS_ae,		KS_AE,
+    KC(31),  KS_u,		KS_U,		KS_ugrave,	KS_Ugrave,
+    KC(32),  KS_i,		KS_I,		KS_dead_diaeresis,
+    KC(33),  KS_e,		KS_E,		KS_currency,
+    KC(34),  KS_comma,		KS_semicolon,	KS_apostrophe,
+    KC(35),  KS_c,		KS_C,		KS_dead_cedilla,KS_copyright,
+    KC(36),  KS_t,		KS_T,
+    KC(37),  KS_s,		KS_S,
+    KC(38),  KS_r,		KS_R,		KS_dead_breve,	KS_registered,
+    KC(39),  KS_n,		KS_N,		KS_dead_tilde,
+    KC(40),  KS_m,		KS_M,
+    KC(43),  KS_ccedilla,	KS_Ccedilla,
+    KC(44),  KS_agrave,		KS_Agrave,	KS_backslash,
+    KC(45),  KS_y,		KS_Y,		KS_braceleft,
+    KC(46),  KS_x,		KS_X,		KS_braceright,
+    KC(47),  KS_period,		KS_colon,
+    KC(48),  KS_k,		KS_K,		KS_asciitilde,
+    KC(49),  KS_apostrophe,	KS_question,	KS_questiondown,
+    KC(50),  KS_q,		KS_Q,		KS_dead_abovering,
+    KC(51),  KS_g,		KS_G,
+    KC(52),  KS_h,		KS_H,
+    KC(53),  KS_f,		KS_F,		KS_dead_ogonek,
+    KC(57),  KS_space,		KS_space,	KS_underscore,	KS_nobreakspace,
+    KC(86),  KS_ecircumflex,	KS_Ecircumflex,	KS_slash,	KS_asciicircum,
     KC(184), KS_Mode_switch,	KS_Multi_key,
 };
 
@@ -1036,9 +1090,9 @@ static const keysym_t pckbd_keydesc_cf[] = {
 const struct wscons_keydesc pckbd_keydesctab[] = {
 	KBD_MAP(KB_US,			0,	pckbd_keydesc_us),
 #ifndef WSKBD_USONLY
+	KBD_MAP(KB_BEPO,                KB_US,  pckbd_keydesc_fr_bepo),
 	KBD_MAP(KB_DE,			KB_US,	pckbd_keydesc_de),
 	KBD_MAP(KB_DE | KB_NODEAD,	KB_DE,	pckbd_keydesc_de_nodead),
-	KBD_MAP(KB_NEO,			KB_US,	pckbd_keydesc_de_neo),
 	KBD_MAP(KB_SG,			KB_US,	pckbd_keydesc_sg),
 	KBD_MAP(KB_SG | KB_NODEAD,	KB_SG,	pckbd_keydesc_sg_nodead),
 	KBD_MAP(KB_SF,			KB_SG,	pckbd_keydesc_sf),
@@ -1058,6 +1112,7 @@ const struct wscons_keydesc pckbd_keydesctab[] = {
 	KBD_MAP(KB_SV | KB_NODEAD,	KB_SV,	pckbd_keydesc_sv_nodead),
 	KBD_MAP(KB_EE,			KB_SV,	pckbd_keydesc_ee),
 	KBD_MAP(KB_EE | KB_NODEAD,	KB_EE,	pckbd_keydesc_ee_nodead),
+	KBD_MAP(KB_NEO,			KB_US,	pckbd_keydesc_de_neo),
 	KBD_MAP(KB_NO,			KB_DK,	pckbd_keydesc_no),
 	KBD_MAP(KB_NO | KB_NODEAD,	KB_NO,	pckbd_keydesc_no_nodead),
 	KBD_MAP(KB_US | KB_DECLK,	KB_US,	pckbd_keydesc_us_declk),
