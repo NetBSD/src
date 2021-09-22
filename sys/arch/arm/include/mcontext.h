@@ -1,4 +1,4 @@
-/*	$NetBSD: mcontext.h,v 1.21 2018/10/12 01:28:58 ryo Exp $	*/
+/*	$NetBSD: mcontext.h,v 1.22 2021/09/22 11:33:54 ryo Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  * General register state
  */
 #if defined(__aarch64__)
-#define _NGREG		35	/* GR0-30, SP, PC, APSR, TPIDR */
+#define _NGREG		35	/* GR0-30, SP, PC, SPSR, TPIDR */
 #define _NGREG32	17
 typedef __uint64_t	__greg_t;
 typedef unsigned int	__greg32_t;
