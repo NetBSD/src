@@ -1,4 +1,4 @@
-/*	$NetBSD: hidkbdmap.c,v 1.14 2021/07/21 06:35:45 skrll Exp $	*/
+/*	$NetBSD: hidkbdmap.c,v 1.15 2021/09/22 17:37:32 nia Exp $	*/
 
 /*
  * Copyright (c) 1999,2001 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hidkbdmap.c,v 1.14 2021/07/21 06:35:45 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hidkbdmap.c,v 1.15 2021/09/22 17:37:32 nia Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -496,6 +496,60 @@ Static const keysym_t hidkbd_keydesc_fr[] = {
     KC(230), KS_Mode_switch,	KS_Multi_key,
 };
 
+Static const keysym_t hidkbd_keydesc_fr_bepo[] = {
+/*  pos	    normal		shifted		altgr		shift-altgr */
+    KC(53),  KS_dollar,		KS_numbersign,
+    KC(30),  KS_quotedbl,	KS_1,
+    KC(31),  KS_guillemotleft,	KS_2,		KS_less,
+    KC(32),  KS_guillemotright,	KS_3,		KS_greater,
+    KC(33),  KS_parenleft,	KS_4,		KS_bracketleft,
+    KC(34),  KS_parenright,	KS_5,		KS_bracketright,
+    KC(35),  KS_at,		KS_6,		KS_asciicircum,
+    KC(36),  KS_plus,		KS_7,		KS_plusminus,
+    KC(37),  KS_minus,		KS_8,
+    KC(38),  KS_slash,		KS_9,		KS_division,
+    KC(39),  KS_asterisk,	KS_0,		KS_multiply,
+    KC(45),  KS_equal,		KS_degree,
+    KC(46),  KS_percent,	KS_grave,
+    KC(20),  KS_b,		KS_B,		KS_bar,		KS_underscore,
+    KC(26),  KS_eacute,		KS_Eacute,	KS_dead_acute,
+    KC(8),   KS_p,		KS_P,		KS_ampersand,	KS_section,
+    KC(21),  KS_o,		KS_O,
+    KC(23),  KS_egrave,		KS_Egrave,	KS_dead_grave,	KS_grave,
+    KC(28),  KS_dead_circumflex,KS_exclam,	KS_exclamdown,
+    KC(24),  KS_v,		KS_V,		KS_dead_caron,
+    KC(12),  KS_d,		KS_D,
+    KC(18),  KS_l,		KS_L,		KS_sterling,
+    KC(19),  KS_j,		KS_J,
+    KC(47),  KS_z,		KS_Z,
+    KC(48),  KS_w,		KS_W,
+    KC(4),   KS_a,		KS_A,		KS_ae,		KS_AE,
+    KC(22),  KS_u,		KS_U,		KS_ugrave,	KS_Ugrave,
+    KC(7),   KS_i,		KS_I,		KS_dead_diaeresis,
+    KC(9),   KS_e,		KS_E,		KS_currency,
+    KC(10),  KS_comma,		KS_semicolon,	KS_apostrophe,
+    KC(11),  KS_c,		KS_C,		KS_dead_cedilla,KS_copyright,
+    KC(13),  KS_t,		KS_T,
+    KC(14),  KS_s,		KS_S,
+    KC(15),  KS_r,		KS_R,		KS_dead_breve,	KS_registered,
+    KC(51),  KS_n,		KS_N,		KS_dead_tilde,
+    KC(52),  KS_m,		KS_M,
+    KC(50),  KS_ccedilla,	KS_Ccedilla,
+    KC(29),  KS_agrave,		KS_Agrave,	KS_backslash,
+    KC(27),  KS_y,		KS_Y,		KS_braceleft,
+    KC(6),   KS_x,		KS_X,		KS_braceright,
+    KC(25),  KS_period,		KS_colon,
+    KC(5),   KS_k,		KS_K,		KS_asciitilde,
+    KC(17),  KS_apostrophe,	KS_question,	KS_questiondown,
+    KC(16),  KS_q,		KS_Q,		KS_dead_abovering,
+    KC(54),  KS_g,		KS_G,
+    KC(55),  KS_h,		KS_H,
+    KC(56),  KS_f,		KS_F,		KS_dead_ogonek,
+    KC(44),  KS_space,		KS_space,	KS_underscore,	KS_nobreakspace,
+    KC(100), KS_ecircumflex,	KS_Ecircumflex,	KS_slash,	KS_asciicircum,
+    KC(230), KS_Mode_switch,	KS_Multi_key,
+};
+
 Static const keysym_t hidkbd_keydesc_be[] = {
 /*  pos	     normal		shifted		altgr		shift-altgr */
     KC(30),  KS_ampersand,	KS_1,		KS_bar,
@@ -881,9 +935,9 @@ const struct wscons_keydesc hidkbd_keydesctab[] = {
 	KBD_MAP(KB_JP | KB_SWAPCTRLCAPS,KB_JP,	hidkbd_keydesc_swapctrlcaps),
 	KBD_MAP(KB_DE,			KB_US,	hidkbd_keydesc_de),
 	KBD_MAP(KB_DE | KB_NODEAD,	KB_DE,	hidkbd_keydesc_de_nodead),
-	KBD_MAP(KB_NEO,			KB_US,	hidkbd_keydesc_de_neo),
 	KBD_MAP(KB_FR,                  KB_US,  hidkbd_keydesc_fr),
 	KBD_MAP(KB_FR | KB_SWAPCTRLCAPS,KB_FR,	hidkbd_keydesc_swapctrlcaps),
+	KBD_MAP(KB_BEPO,                KB_US,  hidkbd_keydesc_fr_bepo),
 	KBD_MAP(KB_BE,                  KB_FR,  hidkbd_keydesc_be),
 	KBD_MAP(KB_BR,                  KB_US,  hidkbd_keydesc_br),
 	KBD_MAP(KB_BR | KB_NODEAD,	KB_BR,  hidkbd_keydesc_br_nodead),
@@ -898,6 +952,7 @@ const struct wscons_keydesc hidkbd_keydesctab[] = {
 	KBD_MAP(KB_SV | KB_NODEAD,	KB_SV,	hidkbd_keydesc_sv_nodead),
 	KBD_MAP(KB_EE,			KB_SV,	hidkbd_keydesc_ee),
 	KBD_MAP(KB_EE | KB_NODEAD,	KB_EE,	hidkbd_keydesc_ee_nodead),
+	KBD_MAP(KB_NEO,			KB_US,	hidkbd_keydesc_de_neo),
 	KBD_MAP(KB_NO,			KB_DK,	hidkbd_keydesc_no),
 	KBD_MAP(KB_NO | KB_NODEAD,	KB_NO,	hidkbd_keydesc_no_nodead),
 	KBD_MAP(KB_ES ,			KB_US,	hidkbd_keydesc_es),
