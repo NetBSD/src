@@ -1,4 +1,4 @@
-/*	$NetBSD: keyboard.c,v 1.11 2020/09/13 07:35:15 mlelstv Exp $ */
+/*	$NetBSD: keyboard.c,v 1.12 2021/09/22 14:15:29 mlelstv Exp $ */
 
 /*-
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -200,7 +200,7 @@ keyboard_put_values(int fd)
 {
 
 	if (field_by_value(&kbmode)->flags & FLG_SET) {
-		if (ioctl(fd, WSKBDIO_SETMODE, &kbmode) == 0)
+		if (ioctl(fd, WSKBDIO_SETMODE, &kbmode) < 0)
 			err(EXIT_FAILURE, "WSKBDIO_SETMODE");
 		pr_field(field_by_value(&kbmode), " -> ");
 	}
