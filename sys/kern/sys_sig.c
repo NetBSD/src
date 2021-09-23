@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_sig.c,v 1.51 2020/05/23 23:42:43 ad Exp $	*/
+/*	$NetBSD: sys_sig.c,v 1.52 2021/09/23 06:58:47 ryo Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_sig.c,v 1.51 2020/05/23 23:42:43 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_sig.c,v 1.52 2021/09/23 06:58:47 ryo Exp $");
 
 #include "opt_dtrace.h"
 
@@ -410,9 +410,15 @@ sigaction1(struct lwp *l, int signum, const struct sigaction *nsa,
 	if (nsa != NULL && nsa->sa_handler != SIG_IGN
 	    && nsa->sa_handler != SIG_DFL) {
 		if (__predict_false(vers < 2)) {
-			if (p->p_flag & PK_32)
+			if (p->p_flag & PK_32) {
 				v0v1valid = true;
-			else if ((p->p_lflag & PL_SIGCOMPAT) == 0) {
+			} else if (vers == 0 &&
+			    p->p_sigctx.ps_sigcode != NULL) {
+				/*
+				 * if sigcode is used for this emulation,
+				 * version 0 is allowed.
+				 */
+			} else if ((p->p_lflag & PL_SIGCOMPAT) == 0) {
 				kernconfig_lock();
 				(void)module_autoload("compat_16",
 				    MODULE_CLASS_ANY);
@@ -439,7 +445,8 @@ sigaction1(struct lwp *l, int signum, const struct sigaction *nsa,
 		switch (vers) {
 		case 0:
 			/* sigcontext, kernel supplied trampoline. */
-			if (tramp != NULL || !v0v1valid) {
+			if (tramp != NULL ||
+			    (p->p_sigctx.ps_sigcode == NULL && !v0v1valid)) {
 				return EINVAL;
 			}
 			break;
