@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_syscalls.c,v 1.43 2008/04/28 20:23:42 martin Exp $	*/
+/*	$NetBSD: linux_syscalls.c,v 1.44 2021/09/23 06:56:27 ryo Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 /* XXX XXX This exists to keep kdump and friends happy. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: linux_syscalls.c,v 1.43 2008/04/28 20:23:42 martin Exp $");
+__KERNEL_RCSID(1, "$NetBSD: linux_syscalls.c,v 1.44 2021/09/23 06:56:27 ryo Exp $");
 
 #if defined(__i386__)
 #include "../../sys/compat/linux/arch/i386/linux_syscalls.c"
@@ -44,6 +44,8 @@ __KERNEL_RCSID(1, "$NetBSD: linux_syscalls.c,v 1.43 2008/04/28 20:23:42 martin E
 #include "../../sys/compat/linux/arch/powerpc/linux_syscalls.c"
 #elif defined(__mips__)
 #include "../../sys/compat/linux/arch/mips/linux_syscalls.c"
+#elif defined(__aarch64__)
+#include "../../sys/compat/linux/arch/aarch64/linux_syscalls.c"
 #elif defined(__arm__)
 #include "../../sys/compat/linux/arch/arm/linux_syscalls.c"
 #elif defined(__amd64__)

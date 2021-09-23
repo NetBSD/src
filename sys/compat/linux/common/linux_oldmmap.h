@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_oldmmap.h,v 1.5 2008/04/28 20:23:43 martin Exp $	*/
+/*	$NetBSD: linux_oldmmap.h,v 1.6 2021/09/23 06:56:27 ryo Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 /* Used on: arm, i386, m68k */
-/* Not used on: alpha, mips, ppc, sparc, sparc64 */
+/* Not used on: aarch64, alpha, mips, ppc, sparc, sparc64 */
 
 /*
  * Passed to the mmap() system call

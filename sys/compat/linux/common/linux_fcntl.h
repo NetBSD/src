@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_fcntl.h,v 1.18 2019/08/23 11:19:39 maxv Exp $	*/
+/*	$NetBSD: linux_fcntl.h,v 1.19 2021/09/23 06:56:27 ryo Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -79,6 +79,8 @@ struct linux_flock64 {
 #include <compat/linux/arch/powerpc/linux_fcntl.h>
 #elif defined(__mips__)
 #include <compat/linux/arch/mips/linux_fcntl.h>
+#elif defined(__aarch64__)
+#include <compat/linux/arch/aarch64/linux_fcntl.h>
 #elif defined(__arm__)
 #include <compat/linux/arch/arm/linux_fcntl.h>
 #elif defined(__amd64__)

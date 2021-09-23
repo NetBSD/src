@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_oldolduname.c,v 1.67 2021/09/07 11:43:04 riastradh Exp $	*/
+/*	$NetBSD: linux_oldolduname.c,v 1.68 2021/09/23 06:56:27 ryo Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_oldolduname.c,v 1.67 2021/09/07 11:43:04 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_oldolduname.c,v 1.68 2021/09/23 06:56:27 ryo Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -48,7 +48,7 @@ __KERNEL_RCSID(0, "$NetBSD: linux_oldolduname.c,v 1.67 2021/09/07 11:43:04 riast
 #include <compat/linux/linux_syscallargs.h>
 
 /* Used on: arm, i386, mips, ppc */
-/* Not used on: alpha, m68k, sparc, sparc64 */
+/* Not used on: aarch64, alpha, m68k, sparc, sparc64 */
 
 int
 linux_sys_oldolduname(struct lwp *l, const struct linux_sys_oldolduname_args *uap, register_t *retval)

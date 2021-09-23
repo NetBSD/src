@@ -1,4 +1,4 @@
-/* 	$NetBSD: linux_signal.h,v 1.32 2017/01/02 20:10:44 martin Exp $	*/
+/* 	$NetBSD: linux_signal.h,v 1.33 2021/09/23 06:56:27 ryo Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -42,6 +42,8 @@
 #include <compat/linux/arch/powerpc/linux_signal.h>
 #elif defined(__mips__)
 #include <compat/linux/arch/mips/linux_signal.h>
+#elif defined(__aarch64__)
+#include <compat/linux/arch/aarch64/linux_signal.h>
 #elif defined(__arm__)
 #include <compat/linux/arch/arm/linux_signal.h>
 #elif defined(__amd64__)
@@ -59,8 +61,10 @@ typedef struct {
 extern const int native_to_linux_signo[];
 extern const int linux_to_native_signo[];
 __BEGIN_DECLS
+#if !defined(__aarch64__)
 int linux_sigprocmask1(struct lwp *, int, const linux_old_sigset_t *,
 						linux_old_sigset_t *);
+#endif
 
 #if LINUX__NSIG_WORDS > 1
 void linux_old_extra_to_native_sigset(sigset_t *,
@@ -86,10 +90,12 @@ void native_to_linux_sigset(linux_sigset_t *, const sigset_t *);
 int linux_to_native_sigflags(const unsigned long);
 unsigned int native_to_linux_sigflags(const int);
 
+#if !defined(__aarch64__)
 void linux_old_to_native_sigaction(struct sigaction *,
     const struct linux_old_sigaction *);
 void native_to_linux_old_sigaction(struct linux_old_sigaction *,
     const struct sigaction *);
+#endif
 
 void linux_to_native_sigaction(struct sigaction *,
     const struct linux_sigaction *);

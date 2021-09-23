@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.h,v 1.19 2010/07/07 01:30:35 chs Exp $	*/
+/*	$NetBSD: linux_machdep.h,v 1.20 2021/09/23 06:56:27 ryo Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -42,6 +42,8 @@
 #include <compat/linux/arch/powerpc/linux_machdep.h>
 #elif defined(__mips__)
 #include <compat/linux/arch/mips/linux_machdep.h>
+#elif defined(__aarch64__)
+#include <compat/linux/arch/aarch64/linux_machdep.h>
 #elif defined(__arm__)
 #include <compat/linux/arch/arm/linux_machdep.h>
 #elif defined(__amd64__)

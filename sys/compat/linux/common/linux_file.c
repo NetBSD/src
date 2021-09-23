@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_file.c,v 1.120 2021/09/20 02:20:03 thorpej Exp $	*/
+/*	$NetBSD: linux_file.c,v 1.121 2021/09/23 06:56:27 ryo Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 2008 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_file.c,v 1.120 2021/09/20 02:20:03 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_file.c,v 1.121 2021/09/23 06:56:27 ryo Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -69,7 +69,7 @@ __KERNEL_RCSID(0, "$NetBSD: linux_file.c,v 1.120 2021/09/20 02:20:03 thorpej Exp
 #include <compat/linux/linux_syscallargs.h>
 
 static int bsd_to_linux_ioflags(int);
-#ifndef __amd64__
+#if !defined(__aarch64__) && !defined(__amd64__)
 static void bsd_to_linux_stat(struct stat *, struct linux_stat *);
 #endif
 
@@ -153,6 +153,7 @@ linux_hilo_to_off_t(unsigned long hi, unsigned long lo)
 #endif /* _LP64 */
 }
 
+#if !defined(__aarch64__)
 /*
  * creat(2) is an obsolete function, but it's present as a Linux
  * system call, so let's deal with it.
@@ -177,6 +178,7 @@ linux_sys_creat(struct lwp *l, const struct linux_sys_creat_args *uap, register_
 
 	return sys_open(l, &oa, retval);
 }
+#endif
 
 static void
 linux_open_ctty(struct lwp *l, int flags, int fd)
@@ -204,6 +206,7 @@ linux_open_ctty(struct lwp *l, int flags, int fd)
         }
 }
 
+#if !defined(__aarch64__)
 /*
  * open(2). Take care of the different flag values, and let the
  * NetBSD syscall do the real work. See if this operation
@@ -233,6 +236,7 @@ linux_sys_open(struct lwp *l, const struct linux_sys_open_args *uap, register_t 
 	linux_open_ctty(l, fl, *retval);
 	return 0;
 }
+#endif
 
 int
 linux_sys_openat(struct lwp *l, const struct linux_sys_openat_args *uap, register_t *retval)
@@ -449,7 +453,7 @@ linux_sys_fcntl(struct lwp *l, const struct linux_sys_fcntl_args *uap, register_
 	return sys_fcntl(l, &fca, retval);
 }
 
-#if !defined(__amd64__)
+#if !defined(__aarch64__) && !defined(__amd64__)
 /*
  * Convert a NetBSD stat structure to a Linux stat structure.
  * Only the order of the fields and the padding in the structure
@@ -548,7 +552,7 @@ linux_sys_lstat(struct lwp *l, const struct linux_sys_lstat_args *uap, register_
 
 	return linux_stat1((const void *)uap, retval, NOFOLLOW);
 }
-#endif /* !__amd64__ */
+#endif /* !__aarch64__ && !__amd64__ */
 
 /*
  * The following syscalls are mostly here because of the alternate path check.
@@ -608,6 +612,7 @@ linux_unlink_dircheck(const char *path)
 	return error ? error : EPERM;
 }
 
+#if !defined(__aarch64__)
 int
 linux_sys_unlink(struct lwp *l, const struct linux_sys_unlink_args *uap, register_t *retval)
 {
@@ -622,6 +627,7 @@ linux_sys_unlink(struct lwp *l, const struct linux_sys_unlink_args *uap, registe
 
 	return error;
 }
+#endif
 
 int
 linux_sys_unlinkat(struct lwp *l, const struct linux_sys_unlinkat_args *uap, register_t *retval)
@@ -645,6 +651,7 @@ linux_sys_unlinkat(struct lwp *l, const struct linux_sys_unlinkat_args *uap, reg
 	return error;
 }
 
+#if !defined(__aarch64__)
 int
 linux_sys_mknod(struct lwp *l, const struct linux_sys_mknod_args *uap, register_t *retval)
 {
@@ -662,6 +669,7 @@ linux_sys_mknod(struct lwp *l, const struct linux_sys_mknod_args *uap, register_
 
 	return linux_sys_mknodat(l, &ua, retval);
 }
+#endif
 
 int
 linux_sys_mknodat(struct lwp *l, const struct linux_sys_mknodat_args *uap, register_t *retval)

@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_oldolduname.h,v 1.2 2008/04/28 20:23:43 martin Exp $	*/
+/*	$NetBSD: linux_oldolduname.h,v 1.3 2021/09/23 06:56:27 ryo Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 #define _MULTIARCH_LINUX_OLDOLDUNAME_H
 
 /* Used on: arm, i386, mips, ppc */
-/* Not used on: alpha, m68k, sparc, sparc64 */
+/* Not used on: aarch64, alpha, m68k, sparc, sparc64 */
 
 struct linux_oldoldutsname {
 	char l_sysname[9];

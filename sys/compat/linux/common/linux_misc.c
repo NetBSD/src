@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_misc.c,v 1.253 2021/09/20 00:09:02 thorpej Exp $	*/
+/*	$NetBSD: linux_misc.c,v 1.254 2021/09/23 06:56:27 ryo Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 1999, 2008 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.253 2021/09/20 00:09:02 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.254 2021/09/23 06:56:27 ryo Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -652,6 +652,7 @@ linux_sys_times(struct lwp *l, const struct linux_sys_times_args *uap, register_
 
 #undef CONVTCK
 
+#if !defined(__aarch64__)
 /*
  * Linux 'readdir' call. This code is mostly taken from the
  * SunOS getdents call (see compat/sunos/sunos_misc.c), though
@@ -835,7 +836,9 @@ out1:
 	fd_putfile(SCARG(uap, fd));
 	return error;
 }
+#endif
 
+#if !defined(__aarch64__)
 /*
  * Even when just using registers to pass arguments to syscalls you can
  * have 5 of them on the i386. So this newer version of select() does
@@ -933,6 +936,7 @@ linux_select1(struct lwp *l, register_t *retval, int nfds, fd_set *readfds,
 
 	return 0;
 }
+#endif
 
 /*
  * Derived from FreeBSD's sys/compat/linux/linux_misc.c:linux_pselect6()
@@ -1439,7 +1443,7 @@ linux_sys_setrlimit(struct lwp *l, const struct linux_sys_setrlimit_args *uap, r
 	return dosetrlimit(l, l->l_proc, which, &rl);
 }
 
-# if !defined(__mips__) && !defined(__amd64__)
+# if !defined(__aarch64__) && !defined(__mips__) && !defined(__amd64__)
 /* XXX: this doesn't look 100% common, at least mips doesn't have it */
 int
 linux_sys_ugetrlimit(struct lwp *l, const struct linux_sys_ugetrlimit_args *uap, register_t *retval)
@@ -1612,6 +1616,7 @@ linux_do_eventfd2(struct lwp *l, unsigned int initval, int flags,
 	return do_eventfd(l, initval, nflags, retval);
 }
 
+#if !defined(__aarch64__)
 int
 linux_sys_eventfd(struct lwp *l, const struct linux_sys_eventfd_args *uap,
     register_t *retval)
@@ -1622,6 +1627,7 @@ linux_sys_eventfd(struct lwp *l, const struct linux_sys_eventfd_args *uap,
 
 	return linux_do_eventfd2(l, SCARG(uap, initval), 0, retval);
 }
+#endif
 
 int
 linux_sys_eventfd2(struct lwp *l, const struct linux_sys_eventfd2_args *uap,

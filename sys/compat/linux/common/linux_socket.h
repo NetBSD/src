@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_socket.h,v 1.24 2019/08/24 12:33:25 maxv Exp $	*/
+/*	$NetBSD: linux_socket.h,v 1.25 2021/09/23 06:56:27 ryo Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -104,6 +104,7 @@
 #define LINUX_IP_TOS		1
 #define LINUX_IP_TTL		2
 #define LINUX_IP_HDRINCL	3
+#define LINUX_IP_RECVERR	11
 #define	LINUX_IP_MULTICAST_IF	32
 #define	LINUX_IP_MULTICAST_TTL	33
 #define	LINUX_IP_MULTICAST_LOOP	34
@@ -219,6 +220,8 @@ struct linux_cmsghdr {
 #include <compat/linux/arch/powerpc/linux_socket.h>
 #elif defined(__mips__)
 #include <compat/linux/arch/mips/linux_socket.h>
+#elif defined(__aarch64__)
+#include <compat/linux/arch/aarch64/linux_socket.h>
 #elif defined(__arm__)
 #include <compat/linux/arch/arm/linux_socket.h>
 #elif defined(__amd64__)

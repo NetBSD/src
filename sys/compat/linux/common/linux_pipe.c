@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_pipe.c,v 1.68 2017/12/26 08:30:57 kamil Exp $	*/
+/*	$NetBSD: linux_pipe.c,v 1.69 2021/09/23 06:56:27 ryo Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_pipe.c,v 1.68 2017/12/26 08:30:57 kamil Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_pipe.c,v 1.69 2021/09/23 06:56:27 ryo Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -53,10 +53,11 @@ __KERNEL_RCSID(0, "$NetBSD: linux_pipe.c,v 1.68 2017/12/26 08:30:57 kamil Exp $"
 
 #include <compat/linux/linux_syscallargs.h>
 
-/* Used on: arm, i386, m68k, ppc, amd64 */
+/* Used on: aarch64, arm, i386, m68k, ppc, amd64 */
 /* Not used on: alpha, mips, sparc, sparc64 */
 /* Alpha, mips, sparc and sparc64 pass one of the fds in a register */
 
+#if !defined(__aarch64__)
 int
 linux_sys_pipe(struct lwp *l, const struct linux_sys_pipe_args *uap,
     register_t *retval)
@@ -74,6 +75,7 @@ linux_sys_pipe(struct lwp *l, const struct linux_sys_pipe_args *uap,
 	retval[0] = 0;
 	return 0;
 }
+#endif
 
 int
 linux_sys_pipe2(struct lwp *l, const struct linux_sys_pipe2_args *uap,

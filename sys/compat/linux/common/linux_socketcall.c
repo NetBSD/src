@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_socketcall.c,v 1.48 2017/02/09 22:01:48 christos Exp $	*/
+/*	$NetBSD: linux_socketcall.c,v 1.49 2021/09/23 06:56:27 ryo Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_socketcall.c,v 1.48 2017/02/09 22:01:48 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_socketcall.c,v 1.49 2021/09/23 06:56:27 ryo Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -74,7 +74,7 @@ __KERNEL_RCSID(0, "$NetBSD: linux_socketcall.c,v 1.48 2017/02/09 22:01:48 christ
 #endif
 
 /* Used on: arm, i386, m68k, mips, ppc, sparc, sparc64 */
-/* Not used on: alpha, amd64 */
+/* Not used on: aarch64, alpha, amd64 */
 
 /*
  * This file contains the linux_socketcall() multiplexer.  Arguments

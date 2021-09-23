@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_errno.h,v 1.15 2014/11/22 15:47:42 njoly Exp $	*/
+/*	$NetBSD: linux_errno.h,v 1.16 2021/09/23 06:56:27 ryo Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -80,6 +80,8 @@
 #include <compat/linux/arch/powerpc/linux_errno.h>
 #elif defined(__m68k__)
 #include <compat/linux/arch/m68k/linux_errno.h>
+#elif defined(__aarch64__)
+#include <compat/linux/arch/aarch64/linux_errno.h>
 #elif defined(__arm__)
 #include <compat/linux/arch/arm/linux_errno.h>
 #elif defined(__amd64__)

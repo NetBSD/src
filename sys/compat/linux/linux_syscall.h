@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_syscall.h,v 1.43 2008/04/28 20:23:42 martin Exp $	*/
+/*	$NetBSD: linux_syscall.h,v 1.44 2021/09/23 06:56:27 ryo Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -42,6 +42,8 @@
 #include <compat/linux/arch/powerpc/linux_syscall.h>
 #elif defined(__mips__)
 #include <compat/linux/arch/mips/linux_syscall.h>
+#elif defined(__aarch64__)
+#include <compat/linux/arch/aarch64/linux_syscall.h>
 #elif defined(__arm__)
 #include <compat/linux/arch/arm/linux_syscall.h>
 #elif defined(__amd64__)

@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_termios.h,v 1.22 2019/08/23 06:59:52 maxv Exp $	*/
+/*	$NetBSD: linux_termios.h,v 1.23 2021/09/23 06:56:27 ryo Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -42,6 +42,8 @@
 #include <compat/linux/arch/powerpc/linux_termios.h>
 #elif defined(__mips__)
 #include <compat/linux/arch/mips/linux_termios.h>
+#elif defined(__aarch64__)
+#include <compat/linux/arch/aarch64/linux_termios.h>
 #elif defined(__arm__)
 #include <compat/linux/arch/arm/linux_termios.h>
 #elif defined(__amd64__)

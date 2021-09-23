@@ -1,0 +1,9 @@
+#	$NetBSD: files.linux_aarch64,v 1.1 2021/09/23 06:56:27 ryo Exp $
+#
+# Config file description for aarch64-dependent Linux compat code.
+
+file	compat/linux/arch/aarch64/linux_machdep.c	compat_linux
+file	compat/linux/arch/aarch64/linux_commons.c	compat_linux
+file	compat/linux/arch/aarch64/linux_syscalls.c	compat_linux
+file	compat/linux/arch/aarch64/linux_sysent.c	compat_linux
+file	compat/linux/arch/aarch64/linux_sigcode.S	compat_linux

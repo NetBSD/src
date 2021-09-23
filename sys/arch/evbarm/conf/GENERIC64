@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC64,v 1.185 2021/09/13 23:31:23 jmcneill Exp $
+#	$NetBSD: GENERIC64,v 1.186 2021/09/23 06:56:27 ryo Exp $
 #
 #	GENERIC ARM (aarch64) kernel
 #
@@ -88,6 +88,10 @@ config		netbsd		root on ? type ?
 
 options 	COMPAT_NETBSD32
 options 	EXEC_ELF32
+
+#options 	COMPAT_LINUX	# binary compatibility with Linux
+#options 	COMPAT_50	# COMPAT_LINUX depends on
+#options 	COMPAT_OSSAUDIO # binary compatibility with Linux
 
 # EFI runtime support
 options 	EFI_RUNTIME

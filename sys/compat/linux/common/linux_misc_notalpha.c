@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_misc_notalpha.c,v 1.111 2020/12/04 00:26:16 thorpej Exp $	*/
+/*	$NetBSD: linux_misc_notalpha.c,v 1.112 2021/09/23 06:56:27 ryo Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 2008, 2020 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_misc_notalpha.c,v 1.111 2020/12/04 00:26:16 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_misc_notalpha.c,v 1.112 2021/09/23 06:56:27 ryo Exp $");
 
 /*
  * Note that we must NOT include "opt_compat_linux32.h" here,
@@ -75,7 +75,7 @@ __KERNEL_RCSID(0, "$NetBSD: linux_misc_notalpha.c,v 1.111 2020/12/04 00:26:16 th
  * on every linux architechture except the Alpha.
  */
 
-/* Used on: arm, i386, m68k, mips, ppc, sparc, sparc64 */
+/* Used on: arm, aarch64, i386, m68k, mips, ppc, sparc, sparc64 */
 /* Not used on: alpha */
 
 #ifdef DEBUG_LINUX
@@ -85,7 +85,7 @@ __KERNEL_RCSID(0, "$NetBSD: linux_misc_notalpha.c,v 1.111 2020/12/04 00:26:16 th
 #endif
 
 #ifndef COMPAT_LINUX32
-
+#if !defined(__aarch64__)
 /*
  * Alarm. This is a libc call which uses setitimer(2) in NetBSD.
  * Do the same here.
@@ -121,9 +121,10 @@ linux_sys_alarm(struct lwp *l, const struct linux_sys_alarm_args *uap, register_
 	*retval = oitv.it_value.tv_sec;
 	return 0;
 }
+#endif
 #endif /* !COMPAT_LINUX32 */
 
-#if !defined(__amd64__)
+#if !defined(__aarch64__) && !defined(__amd64__)
 int
 linux_sys_nice(struct lwp *l, const struct linux_sys_nice_args *uap, register_t *retval)
 {
@@ -141,10 +142,10 @@ linux_sys_nice(struct lwp *l, const struct linux_sys_nice_args *uap, register_t 
 	error = sys_setpriority(l, &bsa, retval);
 	return (error) ? EPERM : 0;
 }
-#endif /* !__amd64__ */
+#endif /* !__aarch64__ && !__amd64__ */
 
 #ifndef COMPAT_LINUX32
-#ifndef __amd64__
+#if !defined(__aarch64__) && !defined(__amd64__)
 /*
  * The old Linux readdir was only able to read one entry at a time,
  * even though it had a 'count' argument. In fact, the emulation
@@ -164,7 +165,7 @@ linux_sys_readdir(struct lwp *l, const struct linux_sys_readdir_args *uap, regis
 	} */
 	int error;
 	struct linux_sys_getdents_args da;
-
+v
 	SCARG(&da, fd) = SCARG(uap, fd);
 	SCARG(&da, dent) = SCARG(uap, dent);
 	SCARG(&da, count) = 1;
@@ -175,8 +176,9 @@ linux_sys_readdir(struct lwp *l, const struct linux_sys_readdir_args *uap, regis
 
 	return error;
 }
-#endif /* !amd64 */
+#endif /* !aarch64 && !amd64 */
 
+#if !defined(__aarch64__)
 /*
  * I wonder why Linux has gettimeofday() _and_ time().. Still, we
  * need to deal with it.
@@ -200,7 +202,9 @@ linux_sys_time(struct lwp *l, const struct linux_sys_time_args *uap, register_t 
 	retval[0] = tt;
 	return 0;
 }
+#endif
 
+#if !defined(__aarch64__)
 /*
  * utime(). Do conversion to things that utimes() understands,
  * and pass it on.
@@ -229,8 +233,9 @@ linux_sys_utime(struct lwp *l, const struct linux_sys_utime_args *uap, register_
 	return do_sys_utimes(l, NULL, SCARG(uap, path), FOLLOW,
 			   tvp,  UIO_SYSSPACE);
 }
+#endif
 
-#ifndef __amd64__
+#if !defined(__aarch64__) && !defined(__amd64__)
 /*
  * waitpid(2).  Just forward on to linux_sys_wait4 with a NULL rusage.
  */
@@ -251,7 +256,7 @@ linux_sys_waitpid(struct lwp *l, const struct linux_sys_waitpid_args *uap, regis
 
 	return linux_sys_wait4(l, &linux_w4a, retval);
 }
-#endif /* !amd64 */
+#endif /* !aarch64 && !amd64 */
 
 int
 linux_sys_setresgid(struct lwp *l, const struct linux_sys_setresgid_args *uap, register_t *retval)
@@ -306,7 +311,7 @@ linux_sys_getresgid(struct lwp *l, const struct linux_sys_getresgid_args *uap, r
 	return (copyout(&gid, SCARG(uap, sgid), sizeof(gid_t)));
 }
 
-#ifndef __amd64__
+#if !defined(__aarch64__) && !defined(__amd64__)
 /*
  * I wonder why Linux has settimeofday() _and_ stime().. Still, we
  * need to deal with it.
@@ -385,5 +390,5 @@ linux_sys_fstatfs64(struct lwp *l, const struct linux_sys_fstatfs64_args *uap, r
 	STATVFSBUF_PUT(sb);
 	return error;
 }
-#endif /* !__amd64__ */
+#endif /* !aarch64 && !__amd64__ */
 #endif /* !COMPAT_LINUX32 */
