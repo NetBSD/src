@@ -1,4 +1,4 @@
-.\"     $NetBSD: eventfd.2,v 1.1 2021/09/19 15:51:28 thorpej Exp $
+.\"     $NetBSD: eventfd.2,v 1.2 2021/09/23 13:16:13 uwe Exp $
 .\"
 .\" Copyright (c) 2021 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -30,11 +30,15 @@
 .Dd September 17, 2021
 .Dt EVENTFD 2
 .Os
+.\"
+.\"
 .Sh NAME
 .Nm eventfd ,
 .Nm eventfd_read ,
 .Nm eventfd_write
 .Nd create and interact with a counting event descriptor
+.\"
+.\"
 .Sh SYNOPSIS
 .In sys/eventfd.h
 .Ft int
@@ -43,6 +47,8 @@
 .Fn eventfd_read "int efd" "eventfd_t *valp"
 .Ft int
 .Fn eventfd_write "int efd" "eventfd_t val"
+.\"
+.\"
 .Sh DESCRIPTION
 The
 .Nm
@@ -52,10 +58,7 @@ respectively.
 When the object's value is non-zero, the file descriptor is considered
 .Dq readable ,
 and when the count is less than the maximum value
-.Po
-.Dv UINT64_MAX
-- 1
-.Pc
+.Li UINT64_MAX\^-\^1
 it is considered
 .Dq writable .
 When an
@@ -65,11 +68,11 @@ object is no longer needed, it may be disposed of using
 .Pp
 All I/O to an
 .Nm
-object is 8 bytes in length, which is the space required to store an
+object is 8\~bytes in length, which is the space required to store an
 unsigned 64-bit integer.
-Any read or write with a buffer smaller than 8 bytes will fail with
-.Dv EINVAL .
-Only the first 8 bytes of the buffer will be used.
+Any read or write with a buffer smaller than 8\~bytes will fail with
+.Er EINVAL .
+Only the first 8\~bytes of the buffer will be used.
 .Pp
 The
 .Fn eventfd
@@ -79,7 +82,7 @@ The initial value of the object is specified by the
 .Fa val
 argument.
 The following flags define the behavior of the resulting object:
-.Bl -tag -width "EFD_SEMAPHORE"
+.Bl -tag -width Dv
 .It Dv EFD_CLOEXEC
 This is an alias for the
 .Dv O_CLOEXEC
@@ -111,24 +114,20 @@ If the
 .Nm
 object was created in
 .Dq semaphore mode ,
-reads return the value
-.Dv 1
-and object's counter is decremented by
-.Dv 1 .
+reads return the value\~1
+and object's counter is decremented by\~1.
 .It
 If the
 .Nm
 object was not created in
 .Dq semaphore mode ,
 reads return the current value of the object's counter
-reset the counter to
-.Dv 0 .
+and reset the counter to\~0.
 .El
 .Pp
 If the value of the
 .Nm
-object's counter is
-.Dv 0 ,
+object's counter is\~0,
 then reads will block, unless the
 .Nm
 object is set for non-blocking I/O.
@@ -155,37 +154,32 @@ objects, and are simply wrappers around the
 and
 .Xr write 2
 system calls:
-.Bl -tag -width "eventfd_writeXX"
-.It Fn eventfd_read
+.Bl -tag -width Fn
+.It Fn eventfd_read efd valp
 Reads the unsigned 64-bit integer value of the
 .Nm
 object and returns it in
 .Fa valp .
-.It Fn eventfd_write
+.It Fn eventfd_write efd val
 Writes the unsigned 64-bit integer value
 .Fa val
 to the
 .Nm
 object.
 .El
+.\"
+.\"
 .Sh RETURN VALUES
 The
 .Fn eventfd
-system call returns
-.Dv -1
-if an error occurs, otherwise the return value is a descriptor representing the
+system call returns\~\-1 if an error occurs,
+otherwise the return value is a descriptor representing the
 .Nm
 object.
 .Pp
-The
-.Fn eventfd_read
-and
-.Fn eventfd_write
-functions return
-.Dv 0
-upon success or
-.Dv -1
-if an error occurs.
+.Rv -std eventfd_read eventfd_write
+.\"
+.\"
 .Sh ERRORS
 The
 .Fn eventfd
@@ -213,9 +207,7 @@ function fails if:
 .It Bq Er EAGAIN
 The value of the
 .Nm
-object is
-.Dv 0
-and the
+object is\~0 and the
 .Nm
 object is set for non-blocking I/O.
 .El
@@ -230,10 +222,7 @@ The resulting value of the
 object after adding the value
 .Fa val
 would exceed the maximum value
-.Po
-.Dv UINT64_MAX
-- 1
-.Pc
+.Li UINT64_MAX\^-\^1
 and the
 .Nm
 object is set for non-blocking I/O.
@@ -250,9 +239,11 @@ a read from or write to an
 object fails if:
 .Bl -tag -width Er
 .It Bq Er EINVAL
-The size of the buffer is less than 8 bytes
+The size of the buffer is less than 8\~bytes
 .Pq the size required to hold an unsigned 64-bit integer .
 .El
+.\"
+.\"
 .Sh SEE ALSO
 .Xr close 2 ,
 .Xr kevent 2 ,
@@ -261,6 +252,8 @@ The size of the buffer is less than 8 bytes
 .Xr read 2 ,
 .Xr select 2 ,
 .Xr write 2
+.\"
+.\"
 .Sh HISTORY
 The
 .Nm
