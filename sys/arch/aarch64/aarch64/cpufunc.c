@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.c,v 1.27 2021/01/11 17:12:13 skrll Exp $	*/
+/*	$NetBSD: cpufunc.c,v 1.28 2021/09/23 06:34:00 skrll Exp $	*/
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -30,7 +30,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpufunc.c,v 1.27 2021/01/11 17:12:13 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpufunc.c,v 1.28 2021/09/23 06:34:00 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -295,12 +295,12 @@ prt_cache(device_t self, struct aarch64_cache_info *cinfo, int level)
 		}
 
 		aprint_verbose_dev(self,
-		    "L%d %uKB/%uB*%uL*%uW %s %s cache\n",
+		    "L%d %uKB/%uB %u-way (%u set) %s %s cache\n",
 		    level + 1,
 		    cunit->cache_size / 1024,
 		    cunit->cache_line_size,
-		    cunit->cache_sets,
 		    cunit->cache_ways,
+		    cunit->cache_sets,
 		    cachetype, cacheable);
 
 		if (cinfo[level].cacheable != CACHE_CACHEABLE_IDCACHE)
