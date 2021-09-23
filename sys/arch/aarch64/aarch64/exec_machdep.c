@@ -1,4 +1,4 @@
-/* $NetBSD: exec_machdep.c,v 1.9 2020/12/11 18:03:33 skrll Exp $ */
+/* $NetBSD: exec_machdep.c,v 1.10 2021/09/23 15:19:03 ryo Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: exec_machdep.c,v 1.9 2020/12/11 18:03:33 skrll Exp $");
+__KERNEL_RCSID(1, "$NetBSD: exec_machdep.c,v 1.10 2021/09/23 15:19:03 ryo Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_netbsd32.h"
@@ -142,7 +142,7 @@ void
 setregs(struct lwp *l, struct exec_package *pack, vaddr_t stack)
 {
 	struct proc * const p = l->l_proc;
-	struct trapframe * const tf = l->l_md.md_utf;
+	struct trapframe * const tf = lwp_trapframe(l);
 
 	aarch64_setregs_ptrauth(l, true);
 

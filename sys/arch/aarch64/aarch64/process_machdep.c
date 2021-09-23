@@ -1,4 +1,4 @@
-/* $NetBSD: process_machdep.c,v 1.4 2018/12/13 10:44:25 ryo Exp $ */
+/* $NetBSD: process_machdep.c,v 1.5 2021/09/23 15:19:03 ryo Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: process_machdep.c,v 1.4 2018/12/13 10:44:25 ryo Exp $");
+__KERNEL_RCSID(1, "$NetBSD: process_machdep.c,v 1.5 2021/09/23 15:19:03 ryo Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -46,7 +46,7 @@ __KERNEL_RCSID(1, "$NetBSD: process_machdep.c,v 1.4 2018/12/13 10:44:25 ryo Exp 
 int
 process_read_regs(struct lwp *l, struct reg *regs)
 {
-	*regs = l->l_md.md_utf->tf_regs;
+	*regs = lwp_trapframe(l)->tf_regs;
 	regs->r_tpidr = (uint64_t)(uintptr_t)l->l_private;
 	return 0;
 }
@@ -59,7 +59,7 @@ process_write_regs(struct lwp *l, const struct reg *regs)
 	    || (regs->r_pc &  3) || regs->r_pc >= VM_MAXUSER_ADDRESS)
 		return EINVAL;
 
-	l->l_md.md_utf->tf_regs = *regs;
+	lwp_trapframe(l)->tf_regs = *regs;
 	l->l_private = (void *)regs->r_tpidr;
 	return 0;
 }
@@ -92,9 +92,9 @@ int
 process_sstep(struct lwp *l, int sstep)
 {
 	if (sstep)
-		l->l_md.md_utf->tf_spsr |= SPSR_SS;
+		lwp_trapframe(l)->tf_spsr |= SPSR_SS;
 	else
-		l->l_md.md_utf->tf_spsr &= ~SPSR_SS;
+		lwp_trapframe(l)->tf_spsr &= ~SPSR_SS;
 
 	return 0;
 }
@@ -103,7 +103,7 @@ int
 process_set_pc(struct lwp *l, void *addr)
 {
 
-	l->l_md.md_utf->tf_pc = (uintptr_t) addr;
+	lwp_trapframe(l)->tf_pc = (uintptr_t) addr;
 
 	return 0;
 }
