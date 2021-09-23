@@ -1,4 +1,4 @@
-/* $NetBSD: sig_machdep.c,v 1.5 2020/05/01 17:58:48 tnn Exp $ */
+/* $NetBSD: sig_machdep.c,v 1.6 2021/09/23 15:19:03 ryo Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: sig_machdep.c,v 1.5 2020/05/01 17:58:48 tnn Exp $");
+__KERNEL_RCSID(1, "$NetBSD: sig_machdep.c,v 1.6 2021/09/23 15:19:03 ryo Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -47,7 +47,7 @@ sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
 {
 	struct lwp * const l = curlwp;
 	struct proc * const p = l->l_proc;
-	struct trapframe * const tf = l->l_md.md_utf;
+	struct trapframe * const tf = lwp_trapframe(l);
 	struct sigaltstack * const ss = &l->l_sigstk;
 	const struct sigact_sigdesc * const sd =
 	    &p->p_sigacts->sa_sigdesc[ksi->ksi_signo];

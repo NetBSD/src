@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.7 2021/09/23 06:56:26 ryo Exp $	*/
+/*	$NetBSD: syscall.c,v 1.8 2021/09/23 15:19:03 ryo Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
 #define EMULNAME(x)	(x)
 #define EMULNAMEU(x)	(x)
 
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.7 2021/09/23 06:56:26 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.8 2021/09/23 15:19:03 ryo Exp $");
 
 void
 cpu_spawn_return(struct lwp *l)
@@ -73,7 +73,7 @@ cpu_spawn_return(struct lwp *l)
 void
 md_child_return(struct lwp *l)
 {
-	struct trapframe * const tf = l->l_md.md_utf;
+	struct trapframe * const tf = lwp_trapframe(l);
 
 	tf->tf_reg[0] = 0;
 	tf->tf_reg[1] = 1;

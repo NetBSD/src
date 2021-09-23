@@ -1,4 +1,4 @@
-/* $NetBSD: core_machdep.c,v 1.5 2019/11/20 19:37:51 pgoyette Exp $ */
+/* $NetBSD: core_machdep.c,v 1.6 2021/09/23 15:19:03 ryo Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: core_machdep.c,v 1.5 2019/11/20 19:37:51 pgoyette Exp $");
+__KERNEL_RCSID(1, "$NetBSD: core_machdep.c,v 1.6 2021/09/23 15:19:03 ryo Exp $");
 
 #include <sys/types.h>
 #include <sys/cpu.h>
@@ -66,7 +66,7 @@ cpu_coredump(struct lwp *l, struct coredump_iostate *iocookie,
 		return 0;
 	}
 
-	md_core.reg = l->l_md.md_utf->tf_regs;
+	md_core.reg = lwp_trapframe(l)->tf_regs;
 	md_core.reg.r_tpidr = (uint64_t)(uintptr_t)l->l_private;
 
 	fpu_save(l);

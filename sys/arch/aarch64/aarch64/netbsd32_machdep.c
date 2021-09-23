@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep.c,v 1.18 2021/05/30 05:40:56 rin Exp $	*/
+/*	$NetBSD: netbsd32_machdep.c,v 1.19 2021/09/23 15:19:03 ryo Exp $	*/
 
 /*
  * Copyright (c) 2018 Ryo Shimizu <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.18 2021/05/30 05:40:56 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.19 2021/09/23 15:19:03 ryo Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -63,7 +63,7 @@ void
 netbsd32_setregs(struct lwp *l, struct exec_package *pack, vaddr_t stack)
 {
 	struct proc * const p = l->l_proc;
-	struct trapframe * const tf = l->l_md.md_utf;
+	struct trapframe * const tf = lwp_trapframe(l);
 
 	netbsd32_adjust_limits(p);
 
@@ -132,7 +132,7 @@ int
 netbsd32_process_read_regs(struct lwp *l, struct reg32 *regs)
 {
 	struct proc * const p = l->l_proc;
-	struct trapframe *tf = l->l_md.md_utf;
+	struct trapframe *tf = lwp_trapframe(l);
 	int i;
 
 	if ((p->p_flag & PK_32) == 0)
@@ -201,7 +201,7 @@ int
 netbsd32_process_write_regs(struct lwp *l, const struct reg32 *regs)
 {
 	struct proc * const p = l->l_proc;
-	struct trapframe *tf = l->l_md.md_utf;
+	struct trapframe *tf = lwp_trapframe(l);
 	int i;
 
 	if ((p->p_flag & PK_32) == 0)
@@ -305,7 +305,7 @@ netbsd32_sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
 {
 	struct lwp * const l = curlwp;
 	struct proc * const p = l->l_proc;
-	struct trapframe * const tf = l->l_md.md_utf;
+	struct trapframe * const tf = lwp_trapframe(l);
 	struct sigaltstack * const ss = &l->l_sigstk;
 	const int signo = ksi->ksi_signo;
 	const struct sigaction * const sa = &SIGACTION(p, signo);
@@ -434,7 +434,7 @@ cpu_mcontext32_validate(struct lwp *l, const mcontext32_t *mcp)
 void
 cpu_getmcontext32(struct lwp *l, mcontext32_t *mcp, unsigned int *flagsp)
 {
-	struct trapframe * const tf = l->l_md.md_utf;
+	struct trapframe * const tf = lwp_trapframe(l);
 	__greg32_t *gr = mcp->__gregs;
 	__greg32_t ras_pc;
 
@@ -498,7 +498,7 @@ cpu_getmcontext32(struct lwp *l, mcontext32_t *mcp, unsigned int *flagsp)
 int
 cpu_setmcontext32(struct lwp *l, const mcontext32_t *mcp, unsigned int flags)
 {
-	struct trapframe * const tf = l->l_md.md_utf;
+	struct trapframe * const tf = lwp_trapframe(l);
 	const __greg32_t * const gr = mcp->__gregs;
 	struct proc * const p = l->l_proc;
 	int error, i, j;
