@@ -1,4 +1,4 @@
-.\"     $NetBSD: timerfd.2,v 1.3 2021/09/23 13:58:26 uwe Exp $
+.\"     $NetBSD: timerfd.2,v 1.4 2021/09/23 13:59:27 uwe Exp $
 .\"
 .\" Copyright (c) 2021 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -266,8 +266,8 @@ argument.
 .It Bq Er EINVAL
 A nanosecond field in the
 .Fa tim
-argument specified a value less than zero or greater than or equal to
-.Dv 10e9 .
+argument specified a value less than zero or greater than or equal
+to\~10^9.
 .El
 .Pp
 A read from a
