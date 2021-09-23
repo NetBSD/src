@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.6 2019/04/10 06:30:05 ryo Exp $	*/
+/*	$NetBSD: syscall.c,v 1.7 2021/09/23 06:56:26 ryo Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -29,8 +29,6 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-/* DO NOT INCLUDE opt_compat_XXX.h */
-
 #include <sys/param.h>
 #include <sys/cpu.h>
 #include <sys/ktrace.h>
@@ -58,10 +56,12 @@
 #ifndef EMULNAME
 #include <sys/syscall.h>
 
+#define SYSCALL_INDIRECT_CODE_REG	17	/* netbsd/aarch64 use x17 */
+
 #define EMULNAME(x)	(x)
 #define EMULNAMEU(x)	(x)
 
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.6 2019/04/10 06:30:05 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.7 2021/09/23 06:56:26 ryo Exp $");
 
 void
 cpu_spawn_return(struct lwp *l)
@@ -99,18 +99,33 @@ EMULNAME(syscall)(struct trapframe *tf)
 
 	curcpu()->ci_data.cpu_nsyscall++;
 
-	size_t code = tf->tf_esr & 0xffff;
 	register_t *params = (void *)tf->tf_reg;
 	size_t nargs = NARGREG;
+#ifdef SYSCALL_CODE_REG
+	/*
+	 * mov x<SYSCALL_CODE_REG>, #<syscall_no>
+	 * svc #<optional>
+	 */
+	size_t code = tf->tf_reg[SYSCALL_CODE_REG];
+#if (SYSCALL_CODE_REG == 0)
+	params++;
+#endif
+#else /* SYSCALL_CODE_REG */
+	/*
+	 * svc #<syscall_no>
+	 */
+	size_t code = tf->tf_esr & 0xffff;
+#endif /* SYSCALL_CODE_REG */
 
+#ifndef SYSCALL_NO_INDIRECT
 	switch (code) {
 	case EMULNAMEU(SYS_syscall):
-#if !defined(COMPAT_LINUX)
 	case EMULNAMEU(SYS___syscall):
-		code = tf->tf_reg[17];
-#else
+#if (SYSCALL_INDIRECT_CODE_REG == 0)
 		code = *params++;
 		nargs -= 1;
+#else
+		code = tf->tf_reg[SYSCALL_INDIRECT_CODE_REG];
 #endif
 		/*
 		 * code is first argument,
@@ -120,6 +135,7 @@ EMULNAME(syscall)(struct trapframe *tf)
 	default:
 		break;
 	}
+#endif /* !SYSCALL_NO_INDIRECT */
 
 	code &= EMULNAMEU(SYS_NSYSENT) - 1;
 	const struct sysent * const callp = p->p_emul->e_sysent + code;
@@ -209,6 +225,8 @@ EMULNAME(syscall)(struct trapframe *tf)
 #ifndef __HAVE_MINIMAL_EMUL
 			if (p->p_emul->e_errno)
 				error = p->p_emul->e_errno[error];
+#elif defined(SYSCALL_EMUL_ERRNO)
+			error = SYSCALL_EMUL_ERRNO(error);
 #endif
 			tf->tf_reg[0] = error;
 			tf->tf_spsr |= NZCV_C;

@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_llseek.c,v 1.34 2014/11/09 17:48:08 maxv Exp $	*/
+/*	$NetBSD: linux_llseek.c,v 1.35 2021/09/23 06:56:27 ryo Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_llseek.c,v 1.34 2014/11/09 17:48:08 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_llseek.c,v 1.35 2021/09/23 06:56:27 ryo Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -49,7 +49,7 @@ __KERNEL_RCSID(0, "$NetBSD: linux_llseek.c,v 1.34 2014/11/09 17:48:08 maxv Exp $
 #include <compat/linux/linux_syscallargs.h>
 
 /* Used on: arm, i386, m68k, mips, ppc, sparc */
-/* Not used on: alpha, sparc64 */
+/* Not used on: aarch64, alpha, sparc64 */
 
 /*
  * This appears to be part of a Linux attempt to switch to 64 bits file sizes.

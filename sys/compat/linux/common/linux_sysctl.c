@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_sysctl.c,v 1.46 2020/03/21 16:28:56 pgoyette Exp $	*/
+/*	$NetBSD: linux_sysctl.c,v 1.47 2021/09/23 06:56:27 ryo Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2008 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_sysctl.c,v 1.46 2020/03/21 16:28:56 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_sysctl.c,v 1.47 2021/09/23 06:56:27 ryo Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -84,6 +84,8 @@ linux_sysctl_fini(void)
 	sysctl_teardown(&linux_clog);
 	sysctl_free(&linux_sysctl_root);
 }
+
+#if !defined(__aarch64__)
 
 SYSCTL_SETUP(linux_sysctl_setup, "linux emulation sysctls")
 {
@@ -222,3 +224,4 @@ linux_sys___sysctl(struct lwp *l, const struct linux_sys___sysctl_args *uap, reg
 
 	return (error);
 }
+#endif

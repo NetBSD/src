@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_ipccall.c,v 1.33 2013/12/27 15:10:53 njoly Exp $	*/
+/*	$NetBSD: linux_ipccall.c,v 1.34 2021/09/23 06:56:27 ryo Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_ipccall.c,v 1.33 2013/12/27 15:10:53 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_ipccall.c,v 1.34 2021/09/23 06:56:27 ryo Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_sysv.h"
@@ -66,7 +66,7 @@ __KERNEL_RCSID(0, "$NetBSD: linux_ipccall.c,v 1.33 2013/12/27 15:10:53 njoly Exp
 #include <compat/linux/common/linux_ipccall.h>
 
 /* Used on: arm, i386, m68k, mips, ppc, sparc, sparc64 */
-/* Not used on: alpha */
+/* Not used on: aarch64, alpha */
 
 /*
  * Stuff to deal with the SysV ipc/shm/semaphore interface in Linux.

@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_olduname.c,v 1.67 2021/09/07 11:43:04 riastradh Exp $	*/
+/*	$NetBSD: linux_olduname.c,v 1.68 2021/09/23 06:56:27 ryo Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_olduname.c,v 1.67 2021/09/07 11:43:04 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_olduname.c,v 1.68 2021/09/23 06:56:27 ryo Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -50,7 +50,7 @@ __KERNEL_RCSID(0, "$NetBSD: linux_olduname.c,v 1.67 2021/09/07 11:43:04 riastrad
 #include <compat/linux/linux_syscallargs.h>
 
 /* Used on: (alpha), arm, i386, mips, ppc */
-/* Not used on: sparc */
+/* Not used on: aarch64, sparc */
 /* Alpha: XXX Only if we assume osf_utsname is used by Linux programs. */
 
 int

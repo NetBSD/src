@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_break.c,v 1.56 2008/04/28 20:23:43 martin Exp $	*/
+/*	$NetBSD: linux_break.c,v 1.57 2021/09/23 06:56:27 ryo Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_break.c,v 1.56 2008/04/28 20:23:43 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_break.c,v 1.57 2021/09/23 06:56:27 ryo Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -44,7 +44,7 @@ __KERNEL_RCSID(0, "$NetBSD: linux_break.c,v 1.56 2008/04/28 20:23:43 martin Exp 
 
 
 /* Used on: arm, (i386), ppc */
-/* Not used on: alpha, m68k, mips, sparc, sparc64 */
+/* Not used on: aarch64, alpha, m68k, mips, sparc, sparc64 */
 
 /* Defined as "not implemented" on arm and ppc */
 /* Not defined on i386 */
