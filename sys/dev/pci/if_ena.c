@@ -36,7 +36,7 @@
 #if 0
 __FBSDID("$FreeBSD: head/sys/dev/ena/ena.c 333456 2018-05-10 09:37:54Z mw $");
 #endif
-__KERNEL_RCSID(0, "$NetBSD: if_ena.c,v 1.31 2021/09/16 21:29:41 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ena.c,v 1.32 2021/09/23 10:31:23 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -721,7 +721,7 @@ ena_setup_tx_resources(struct ena_adapter *adapter, int qid)
 	for (i = 0; i < tx_ring->ring_size; i++) {
 		err = bus_dmamap_create(adapter->sc_dmat,
 		    ENA_TSO_MAXSIZE, adapter->max_tx_sgl_size - 1,
-		    ENA_TSO_MAXSIZE, 0, 0,
+		    ENA_TSO_MAXSIZE, 0, BUS_DMA_WAITOK | BUS_DMA_ALLOCNOW,
 		    &tx_ring->tx_buffer_info[i].map);
 		if (unlikely(err != 0)) {
 			ena_trace(ENA_ALERT,
@@ -915,7 +915,7 @@ ena_setup_rx_resources(struct ena_adapter *adapter, unsigned int qid)
 	for (i = 0; i < rx_ring->ring_size; i++) {
 		err = bus_dmamap_create(adapter->sc_dmat,
 		    MJUM16BYTES, adapter->max_rx_sgl_size, MJUM16BYTES,
-		    0, 0,
+		    0, BUS_DMA_WAITOK | BUS_DMA_ALLOCNOW,
 		    &(rx_ring->rx_buffer_info[i].map));
 		if (err != 0) {
 			ena_trace(ENA_ALERT,
@@ -2967,14 +2967,16 @@ ena_start_xmit(struct ena_ring *tx_ring)
 
 	nsr = IF_STAT_GETREF(adapter->ifp);
 
-	while ((mbuf = pcq_get(tx_ring->br)) != NULL) {
+	for (;;) {
+		if (unlikely(!ena_com_sq_have_enough_space(io_sq, adapter->max_tx_sgl_size)))
+			break;
+
+		if ((mbuf = pcq_get(tx_ring->br)) == NULL)
+			break;
+
 		ena_trace(ENA_DBG | ENA_TXPTH, "\ndequeued mbuf %p with flags %#x and"
 		    " header csum flags %#jx",
 		    mbuf, mbuf->m_flags, (uint64_t)mbuf->m_pkthdr.csum_flags);
-
-		if (unlikely(!ena_com_sq_have_enough_space(io_sq,
-		    ENA_TX_CLEANUP_THRESHOLD)))
-			ena_tx_cleanup(tx_ring);
 
 		if (likely((ret = ena_xmit_mbuf(tx_ring, &mbuf)) == 0)) {
 			if_statinc_ref(nsr, if_opackets);
@@ -2983,16 +2985,7 @@ ena_start_xmit(struct ena_ring *tx_ring)
 				if_statinc_ref(nsr, if_omcasts);
 		} else {
 			if_statinc_ref(nsr, if_oerrors);
-			/*
-			 * Since mbuf is restructured in ena_xmit_mbuf(),
-			 * we re-put mbuf.
-			 */
-			if (ret == ENA_COM_NO_MEM || ret == ENA_COM_NO_SPACE) {
-				pcq_put(tx_ring->br, mbuf);
-			} else {
-				m_freem(mbuf);
-			}
-
+			m_freem(mbuf);
 			break;
 		}
 
