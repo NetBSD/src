@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_sem.h,v 1.10 2008/04/28 20:23:44 martin Exp $	*/
+/*	$NetBSD: linux_sem.h,v 1.11 2021/09/23 06:56:27 ryo Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -81,7 +81,7 @@ union linux_semun {
 };
 
 /* Pretend the sys_semctl syscall is defined */
-#ifndef __amd64__
+#if !defined(__aarch64__) && !defined(__amd64__)
 struct linux_sys_semctl_args {
 	syscallarg(int) semid;
 	syscallarg(int) semnum;

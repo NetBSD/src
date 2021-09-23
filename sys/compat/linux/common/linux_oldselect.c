@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_oldselect.c,v 1.58 2008/06/18 12:24:18 tsutsui Exp $	*/
+/*	$NetBSD: linux_oldselect.c,v 1.59 2021/09/23 06:56:27 ryo Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_oldselect.c,v 1.58 2008/06/18 12:24:18 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_oldselect.c,v 1.59 2021/09/23 06:56:27 ryo Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -48,7 +48,7 @@ __KERNEL_RCSID(0, "$NetBSD: linux_oldselect.c,v 1.58 2008/06/18 12:24:18 tsutsui
 #include <compat/linux/linux_syscallargs.h>
 
 /* Used on: arm, i386, m68k */
-/* Not used on: alpha, mips, ppc, sparc, sparc64 */
+/* Not used on: aarch64, alpha, mips, ppc, sparc, sparc64 */
 
 /*
  * Not sure why the arguments to this older version of select() were put

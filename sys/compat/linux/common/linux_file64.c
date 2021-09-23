@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_file64.c,v 1.63 2021/09/21 09:24:15 rin Exp $	*/
+/*	$NetBSD: linux_file64.c,v 1.64 2021/09/23 06:56:27 ryo Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 2000, 2008 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_file64.c,v 1.63 2021/09/21 09:24:15 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_file64.c,v 1.64 2021/09/23 06:56:27 ryo Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -131,6 +131,7 @@ linux_sys_fstat64(struct lwp *l, const struct linux_sys_fstat64_args *uap, regis
 	return copyout(&tmplst, SCARG(uap, sp), sizeof tmplst);
 }
 
+#if !defined(__aarch64__)
 static int
 linux_do_stat64(struct lwp *l, const struct linux_sys_stat64_args *uap, register_t *retval, int flags)
 {
@@ -168,6 +169,7 @@ linux_sys_lstat64(struct lwp *l, const struct linux_sys_lstat64_args *uap, regis
 
 	return linux_do_stat64(l, (const void *)uap, retval, NOFOLLOW);
 }
+#endif
 
 int
 linux_sys_fstatat64(struct lwp *l, const struct linux_sys_fstatat64_args *uap, register_t *retval)

@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_socket.c,v 1.153 2021/09/07 11:43:04 riastradh Exp $	*/
+/*	$NetBSD: linux_socket.c,v 1.154 2021/09/23 06:56:27 ryo Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 2008 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_socket.c,v 1.153 2021/09/07 11:43:04 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_socket.c,v 1.154 2021/09/23 06:56:27 ryo Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -85,7 +85,7 @@ __KERNEL_RCSID(0, "$NetBSD: linux_socket.c,v 1.153 2021/09/07 11:43:04 riastradh
 #include <compat/linux/common/linux_sched.h>
 #include <compat/linux/common/linux_socket.h>
 #include <compat/linux/common/linux_fcntl.h>
-#if !defined(__alpha__) && !defined(__amd64__)
+#if !defined(__aarch64__) && !defined(__alpha__) && !defined(__amd64__)
 #include <compat/linux/common/linux_socketcall.h>
 #endif
 #include <compat/linux/common/linux_sockio.h>
@@ -957,6 +957,8 @@ linux_to_bsd_ip_sockopt(int lopt)
 		return IP_ADD_MEMBERSHIP;
 	case LINUX_IP_DROP_MEMBERSHIP:
 		return IP_DROP_MEMBERSHIP;
+	case LINUX_IP_RECVERR:
+		return -2;	/* ignored */
 	default:
 		return -1;
 	}
@@ -1075,6 +1077,8 @@ linux_sys_setsockopt(struct lwp *l, const struct linux_sys_setsockopt_args *uap,
 
 	if (name == -1)
 		return EINVAL;
+	if (name == -2)
+		return 0;
 	SCARG(&bsa, name) = name;
 
 	return sys_setsockopt(l, &bsa, retval);
@@ -1698,7 +1702,7 @@ linux_sa_put(struct osockaddr *osa)
 	return (0);
 }
 
-#ifndef __amd64__
+#if !defined(__aarch64__) && !defined(__amd64__)
 int
 linux_sys_recv(struct lwp *l, const struct linux_sys_recv_args *uap, register_t *retval)
 {

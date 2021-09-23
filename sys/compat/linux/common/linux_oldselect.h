@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_oldselect.h,v 1.3 2009/01/11 02:45:48 christos Exp $	*/
+/*	$NetBSD: linux_oldselect.h,v 1.4 2021/09/23 06:56:27 ryo Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 #define _MULTIARCH_LINUX_OLDSELECT_H
 
 /* Used on: arm, i386, m68k */
-/* Not used on: alpha, mips, ppc, sparc, sparc64 */
+/* Not used on: aarch64, alpha, mips, ppc, sparc, sparc64 */
 
 /*
  * Passed to the old select() system call
