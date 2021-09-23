@@ -1,4 +1,4 @@
-/* $NetBSD: cpu_machdep.c,v 1.11 2020/08/12 13:19:35 skrll Exp $ */
+/* $NetBSD: cpu_machdep.c,v 1.12 2021/09/23 15:19:03 ryo Exp $ */
 
 /*-
  * Copyright (c) 2014, 2019 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: cpu_machdep.c,v 1.11 2020/08/12 13:19:35 skrll Exp $");
+__KERNEL_RCSID(1, "$NetBSD: cpu_machdep.c,v 1.12 2021/09/23 15:19:03 ryo Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -181,7 +181,7 @@ CTASSERT(offsetof(struct fpreg, fpsr) == offsetof(__fregset_t, __fpsr));
 void
 cpu_getmcontext(struct lwp *l, mcontext_t *mcp, unsigned int *flagsp)
 {
-	const struct trapframe * const tf = l->l_md.md_utf;
+	const struct trapframe * const tf = lwp_trapframe(l);
 
 	memcpy(mcp->__gregs, &tf->tf_regs, sizeof(mcp->__gregs));
 	mcp->__gregs[_REG_TPIDR] = (uintptr_t)l->l_private;
@@ -202,7 +202,7 @@ cpu_setmcontext(struct lwp *l, const mcontext_t *mcp, unsigned int flags)
 	struct proc * const p = l->l_proc;
 
 	if (flags & _UC_CPU) {
-		struct trapframe * const tf = l->l_md.md_utf;
+		struct trapframe * const tf = lwp_trapframe(l);
 		int error = cpu_mcontext_validate(l, mcp);
 		if (error)
 			return error;
