@@ -1,4 +1,4 @@
-.\"	$NetBSD: timer_settime.2,v 1.9 2012/11/06 23:25:44 wiz Exp $
+.\"	$NetBSD: timer_settime.2,v 1.10 2021/09/23 13:49:59 uwe Exp $
 .\"
 .\" Copyright (c) 2003 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -160,7 +160,8 @@ function will fail if:
 .It Bq Er EINVAL
 A nanosecond field in the
 .Ar tim
-structure specified a value less than zero or greater than or equal to 10e9.
+structure specified a value less than zero or greater than or equal
+to\~10^9.
 .El
 .Sh SEE ALSO
 .Xr clock_gettime 2 ,
