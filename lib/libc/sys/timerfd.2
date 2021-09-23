@@ -1,4 +1,4 @@
-.\"     $NetBSD: timerfd.2,v 1.2 2021/09/19 17:10:41 wiz Exp $
+.\"     $NetBSD: timerfd.2,v 1.3 2021/09/23 13:58:26 uwe Exp $
 .\"
 .\" Copyright (c) 2021 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -30,12 +30,16 @@
 .Dd September 17, 2021
 .Dt TIMERFD 2
 .Os
+.\"
+.\"
 .Sh NAME
 .Nm timerfd ,
 .Nm timerfd_create ,
 .Nm timerfd_gettime ,
 .Nm timerfd_settime
 .Nd create and interact with a timer descriptor
+.\"
+.\"
 .Sh SYNOPSIS
 .In sys/timerfd.h
 .Ft int
@@ -45,6 +49,8 @@
 .Ft int
 .Fn timerfd_settime "int fd" "int flags" \
 "const struct itimerspec *tim" "struct itimerspec *otim"
+.\"
+.\"
 .Sh DESCRIPTION
 .Nm
 presents an interface to interval timers associated with a file descriptor.
@@ -75,7 +81,7 @@ are
 and
 .Dv CLOCK_MONOTONIC .
 The following flags define the behavior of the resulting object:
-.Bl -tag -width "TFD_NONBLOCK"
+.Bl -tag -width Dv
 .It Dv TFD_CLOEXEC
 This is an alias for the
 .Dv O_CLOEXEC
@@ -96,12 +102,10 @@ timer expires, an internal counter is incremented.
 Reads from an
 .Nm
 object return the value of this counter in the caller's buffer as an
-unsigned 64-bit integer and reset the counter to
-.Dv 0 .
+unsigned 64-bit integer and reset the counter to\~0.
 If the value of the
 .Nm
-object's counter is
-.Dv 0 ,
+object's counter is\~0,
 then reads will block, unless the
 .Nm
 object is set for non-blocking I/O.
@@ -123,8 +127,7 @@ see
 specified in the
 .Fa tim
 argument.
-If the value is
-.Dv 0 ,
+If the value is\~0,
 the timer is disarmed.
 If the argument
 .Fa otim
@@ -173,24 +176,19 @@ system call returns the current settings of the
 object in the
 .Fa tim
 argument.
+.\"
+.\"
 .Sh RETURN VALUES
 The
 .Fn timerfd_create
-system call returns
-.Dv -1
-if an error occurs, otherwise the return value is a descriptor representing the
+system call returns\~\-1 if an error occurs,
+otherwise the return value is a descriptor representing the
 .Nm
 object.
 .Pp
-The
-.Fn timerfd_gettime
-and
-.Fn timerfd_settime
-system calls return
-.Dv 0
-upon success or
-.Dv -1
-if an error occurs.
+.Rv -std timerfd_gettime timerfd_settime
+.\"
+.\"
 .Sh ERRORS
 The
 .Fn timerfd
@@ -299,6 +297,8 @@ or
 The size of the read buffer is less than 8 bytes
 .Pq the size required to hold an unsigned 64-bit integer .
 .El
+.\"
+.\"
 .Sh SEE ALSO
 .Xr clock_settime 2 ,
 .Xr close 2 ,
@@ -311,6 +311,8 @@ The size of the read buffer is less than 8 bytes
 .Xr timer_create 2 ,
 .Xr timer_gettime 2 ,
 .Xr timer_settime 2
+.\"
+.\"
 .Sh HISTORY
 The
 .Nm
