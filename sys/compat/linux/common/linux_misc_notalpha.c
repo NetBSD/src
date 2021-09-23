@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_misc_notalpha.c,v 1.112 2021/09/23 06:56:27 ryo Exp $	*/
+/*	$NetBSD: linux_misc_notalpha.c,v 1.113 2021/09/23 11:28:47 christos Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 2008, 2020 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_misc_notalpha.c,v 1.112 2021/09/23 06:56:27 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_misc_notalpha.c,v 1.113 2021/09/23 11:28:47 christos Exp $");
 
 /*
  * Note that we must NOT include "opt_compat_linux32.h" here,
@@ -165,7 +165,7 @@ linux_sys_readdir(struct lwp *l, const struct linux_sys_readdir_args *uap, regis
 	} */
 	int error;
 	struct linux_sys_getdents_args da;
-v
+
 	SCARG(&da, fd) = SCARG(uap, fd);
 	SCARG(&da, dent) = SCARG(uap, dent);
 	SCARG(&da, count) = 1;
