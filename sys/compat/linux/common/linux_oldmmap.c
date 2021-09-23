@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_oldmmap.c,v 1.72 2009/08/18 02:04:14 christos Exp $	*/
+/*	$NetBSD: linux_oldmmap.c,v 1.73 2021/09/23 06:56:27 ryo Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_oldmmap.c,v 1.72 2009/08/18 02:04:14 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_oldmmap.c,v 1.73 2021/09/23 06:56:27 ryo Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -59,7 +59,7 @@ __KERNEL_RCSID(0, "$NetBSD: linux_oldmmap.c,v 1.72 2009/08/18 02:04:14 christos 
 
 /* Used on: arm, i386, m68k */
 /* Used for linux32 on: amd64 */
-/* Not used on: alpha, mips, pcc, sparc, sparc64 */
+/* Not used on: aarch64, alpha, mips, pcc, sparc, sparc64 */
 
 #undef DPRINTF
 #ifdef DEBUG_LINUX

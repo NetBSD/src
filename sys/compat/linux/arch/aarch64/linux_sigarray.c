@@ -1,0 +1,95 @@
+/*	$NetBSD: linux_sigarray.c,v 1.1 2021/09/23 06:56:27 ryo Exp $	*/
+
+/*-
+ * Copyright (c) 2021 The NetBSD Foundation, Inc.
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
+
+const int linux_to_native_signo[LINUX__NSIG] = {
+	/*  0 */ [0]			= 0,
+	/*  1 */ [LINUX_SIGHUP]		= SIGHUP,
+	/*  2 */ [LINUX_SIGINT]		= SIGINT,
+	/*  3 */ [LINUX_SIGQUIT]	= SIGQUIT,
+	/*  4 */ [LINUX_SIGILL]		= SIGILL,
+	/*  5 */ [LINUX_SIGTRAP]	= SIGTRAP,
+	/*  6 */ [LINUX_SIGABRT]	= SIGABRT,
+	/*  7 */ [LINUX_SIGBUS]		= SIGBUS,
+	/*  8 */ [LINUX_SIGFPE]		= SIGFPE,
+	/*  9 */ [LINUX_SIGKILL]	= SIGKILL,
+	/* 10 */ [LINUX_SIGUSR1]	= SIGUSR1,
+	/* 11 */ [LINUX_SIGSEGV]	= SIGSEGV,
+	/* 12 */ [LINUX_SIGUSR2]	= SIGUSR2,
+	/* 13 */ [LINUX_SIGPIPE]	= SIGPIPE,
+	/* 14 */ [LINUX_SIGALRM]	= SIGALRM,
+	/* 15 */ [LINUX_SIGTERM]	= SIGTERM,
+	/* 16 */ [LINUX_SIGSTKFLT]	= 0,
+	/* 17 */ [LINUX_SIGCHLD]	= SIGCHLD,
+	/* 18 */ [LINUX_SIGCONT]	= SIGCONT,
+	/* 19 */ [LINUX_SIGSTOP]	= SIGSTOP,
+	/* 20 */ [LINUX_SIGTSTP]	= SIGTSTP,
+	/* 21 */ [LINUX_SIGTTIN]	= SIGTTIN,
+	/* 22 */ [LINUX_SIGTTOU]	= SIGTTOU,
+	/* 23 */ [LINUX_SIGURG]		= SIGURG,
+	/* 24 */ [LINUX_SIGXCPU]	= SIGXCPU,
+	/* 25 */ [LINUX_SIGXFSZ]	= SIGXFSZ,
+	/* 26 */ [LINUX_SIGVTALRM]	= SIGVTALRM,
+	/* 27 */ [LINUX_SIGPROF]	= SIGPROF,
+	/* 28 */ [LINUX_SIGWINCH]	= SIGWINCH,
+	/* 29 */ [LINUX_SIGIO]		= SIGIO,
+	/* 30 */ [LINUX_SIGPWR]		= SIGPWR,
+	/* 31 */ [LINUX_SIGSYS]		= SIGSYS,
+	/* 32 */ /* SIGCANCEL */
+	/* 33 */ /* SIGSETXID */
+	/* 34 */ [LINUX_SIGRTMIN + 0]	= SIGRTMIN + 0,
+	/* 35 */ [LINUX_SIGRTMIN + 1]	= SIGRTMIN + 1,
+	/* 36 */ [LINUX_SIGRTMIN + 2]	= SIGRTMIN + 2,
+	/* 37 */ [LINUX_SIGRTMIN + 3]	= SIGRTMIN + 3,
+	/* 38 */ [LINUX_SIGRTMIN + 4]	= SIGRTMIN + 4,
+	/* 39 */ [LINUX_SIGRTMIN + 5]	= SIGRTMIN + 5,
+	/* 40 */ [LINUX_SIGRTMIN + 6]	= SIGRTMIN + 6,
+	/* 41 */ [LINUX_SIGRTMIN + 7]	= SIGRTMIN + 7,
+	/* 42 */ [LINUX_SIGRTMIN + 8]	= SIGRTMIN + 8,
+	/* 43 */ [LINUX_SIGRTMIN + 9]	= SIGRTMIN + 9,
+	/* 44 */ [LINUX_SIGRTMIN + 10]	= SIGRTMIN + 10,
+	/* 45 */ [LINUX_SIGRTMIN + 11]	= SIGRTMIN + 11,
+	/* 46 */ [LINUX_SIGRTMIN + 12]	= SIGRTMIN + 12,
+	/* 47 */ [LINUX_SIGRTMIN + 13]	= SIGRTMIN + 13,
+	/* 48 */ [LINUX_SIGRTMIN + 14]	= SIGRTMIN + 14,
+	/* 49 */ [LINUX_SIGRTMIN + 15]	= SIGRTMIN + 15,
+	/* 50 */ [LINUX_SIGRTMIN + 16]	= SIGRTMIN + 16,
+	/* 51 */ [LINUX_SIGRTMIN + 17]	= SIGRTMIN + 17,
+	/* 52 */ [LINUX_SIGRTMIN + 18]	= SIGRTMIN + 18,
+	/* 53 */ [LINUX_SIGRTMIN + 19]	= SIGRTMIN + 19,
+	/* 54 */ [LINUX_SIGRTMIN + 20]	= SIGRTMIN + 20,
+	/* 55 */ [LINUX_SIGRTMIN + 21]	= SIGRTMIN + 21,
+	/* 56 */ [LINUX_SIGRTMIN + 22]	= SIGRTMIN + 22,
+	/* 57 */ [LINUX_SIGRTMIN + 23]	= SIGRTMIN + 23,
+	/* 58 */ [LINUX_SIGRTMIN + 24]	= SIGRTMIN + 24,
+	/* 59 */ [LINUX_SIGRTMIN + 25]	= SIGRTMIN + 25,
+	/* 60 */ [LINUX_SIGRTMIN + 26]	= SIGRTMIN + 26,
+	/* 61 */ [LINUX_SIGRTMIN + 27]	= SIGRTMIN + 27,
+	/* 62 */ [LINUX_SIGRTMIN + 28]	= SIGRTMIN + 28,
+	/* 63 */ [LINUX_SIGRTMIN + 29]	= SIGRTMIN + 29,
+	/* 64 */ [LINUX_SIGRTMIN + 30]	= SIGRTMIN + 30,
+};

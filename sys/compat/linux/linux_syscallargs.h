@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_syscallargs.h,v 1.42 2008/04/28 20:23:42 martin Exp $	*/
+/*	$NetBSD: linux_syscallargs.h,v 1.43 2021/09/23 06:56:27 ryo Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -44,6 +44,8 @@
 #include <compat/linux/arch/mips/linux_syscallargs.h>
 #elif defined(__arm__)
 #include <compat/linux/arch/arm/linux_syscallargs.h>
+#elif defined(__aarch64__)
+#include <compat/linux/arch/aarch64/linux_syscallargs.h>
 #elif defined(__amd64__)
 #include <compat/linux/arch/amd64/linux_syscallargs.h>
 #else
