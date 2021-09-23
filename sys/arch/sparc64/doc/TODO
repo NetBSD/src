@@ -1,4 +1,4 @@
-/* $NetBSD: TODO,v 1.44 2021/07/05 16:59:54 palle Exp $ */
+/* $NetBSD: TODO,v 1.45 2021/09/23 17:51:52 palle Exp $ */
 
 Things to be done:
 
@@ -13,15 +13,12 @@ sun4u:
 sun4v:
  - current status
      T5 ldom with 2 VCPU and 4GB  (primary ldom is Solaris 11.4 SRU30)::
-       - kernel boots from miniroot.fs via ldom fisk (vdsk)
+       - kernel boots from miniroot.fs via ldom disk (vdsk)
 	   - ldom virtual network interface (vnet) is working
 	     (verified by exiting sysinst and issuing a ping command)
-	   - the sysinst tool starts, disk setup is working,
-	     but the process crashes when selecting network installation method.
-		 The %i,%l and %o registers are corrupted, after a call to the libcurses
-		 wrefresh() function.
-		 If the sysinst insallation source is local directory, the sets are properly
-		 unpacked, but the system hangs afterwards when running the makedev script.
+	   - the sysinst tool starts, disk setup is working, network configuration is working,
+	     but after the selected (minimal) sets have been downloaded and installed
+		 the 'sh MAKEDEV all' comand hangs.
 	 T2000 ldom with 8 VCPU and 4GB:
 	   - crashes in /sbin/init doing an access() call where %o0 is corrupted (zero)
 	 S7 ldom with 8 VCPU and 16GB (primary ldom is Solaris 11.4 SRU33):
