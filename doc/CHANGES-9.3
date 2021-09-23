@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.3,v 1.1.2.30 2021/09/15 16:32:30 martin Exp $
+# $NetBSD: CHANGES-9.3,v 1.1.2.31 2021/09/23 10:13:28 martin Exp $
 
 A complete list of changes from the NetBSD 9.2 release to the NetBSD 9.3
 release:
@@ -729,4 +729,15 @@ share/man/man4/ixv.4				1.8
 	- KNF.
 	- Fix typos.
 	[msaitoh, ticket #1346]
+
+bin/mkdir/mkdir.c				1.39
+
+	mkdir(1): PR 56398: fix mode of final component of paths when -m
+	is used.
+	[kre, ticket #1347]
+
+bin/cp/utils.c					1.47
+
+	cp(1): PR 54564: cp of a fifo yields an empty file.
+	[skrll, ticket #1348]
 
