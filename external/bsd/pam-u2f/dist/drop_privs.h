@@ -31,6 +31,17 @@
 
 #ifdef HAVE_PAM_MODUTIL_DROP_PRIV
 #include <security/pam_modutil.h>
+#elif HAVE_OPENPAM_BORROW_CRED
+#include <sys/types.h>
+#include <security/pam_appl.h>
+#include <security/openpam.h>
+
+#define PAM_MODUTIL_DEF_PRIVS(n) /* noop */
+#define pam_modutil_drop_priv(pamh, privs, pwd)                                \
+  ((openpam_borrow_cred((pamh), (pwd)) == PAM_SUCCESS) ? 0 : -1)
+#define pam_modutil_regain_priv(pamh, privs)                                   \
+  ((openpam_restore_cred((pamh)) == PAM_SUCCESS) ? 0 : -1)
+
 #else
 
 #include <pwd.h>
@@ -67,5 +78,5 @@ int pam_modutil_drop_priv(pam_handle_t *, struct _ykpam_privs *,
                           struct passwd *);
 int pam_modutil_regain_priv(pam_handle_t *, struct _ykpam_privs *);
 
-#endif
-#endif
+#endif /* HAVE_PAM_MODUTIL_DROP_PRIV */
+#endif /* __PAM_U2F_DROP_PRIVS_H_INCLUDED__ */
