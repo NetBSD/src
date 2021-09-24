@@ -1,4 +1,4 @@
-/*	$NetBSD: omap2_intr.h,v 1.9 2013/06/15 21:55:09 matt Exp $ */
+/*	$NetBSD: omap2_intr.h,v 1.10 2021/09/24 08:07:40 skrll Exp $ */
 
 /*
  * Define the SDP2430 specific information and then include the generic OMAP
@@ -48,6 +48,10 @@
 #endif
 
 #ifndef _LOCORE
+
+#define	_splraise	pic_splraise
+#define	_spllower	pic_spllower
+#define	splx		pic_splx
 
 #include <arm/pic/picvar.h>
 
