@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2832 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2833 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -426,3 +426,5 @@ Changes from NetBSD 9.0 to NetBSD 10.0:
 		pwritev() system calls to COMPAT_LINUX and COMPAT_LINXU32.
 		[thorpej 20210919]
 	aarch64: Add initial COMPAT_LINUX support. [ryo 20210923]
+	libfido2: Import 1.8.0 [christos 20210924]
+	pam-u2f: Import pam u2f 1.2.0 [christos 20210924]
