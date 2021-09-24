@@ -1,8 +1,30 @@
-Copyright (c) 2014-2018 Yubico AB - See COPYING
+Copyright (c) 2014-2021 Yubico AB - See COPYING
 
 pam-u2f NEWS -- History of user-visible changes.          -*- outline -*-
 
-* Version 1.0.9 (unreleased)
+* Version 1.2.0 (released 2021-09-22)
+** Added support for EdDSA keys.
+** Added support for SSH ed25519-sk keys.
+** Added authenticator filtering based on user verification options.
+** Fixed an issue with privilege restoration on MacOS.
+** Fixed an issue where credentials created with pamu2fcfg 1.0.8 or earlier
+were not handled correctly if their origin and appid differed.
+** Miscellaneous improvements to the documentation.
+** Miscellaneous minor bug fixes found by fuzzing.
+
+* Version 1.1.1 (released 2021-05-19)
+** Fix an issue where PIN authentication could be bypassed (CVE-2021-31924).
+** Fix an issue with nodetect and non-resident credentials.
+** Fix build issues with musl libc.
+** Add support for self-attestation in pamu2fcfg.
+** Fix minor bugs found by fuzzing.
+
+* Version 1.1.0 (released 2020-09-17)
+ ** Add support to FIDO2 (move from libu2f-host+libu2f-server to libfido2).
+ ** Add support to User Verification
+ ** Add support to PIN Verification
+ ** Add support to Resident Credentials
+ ** Add support to SSH credential format
 
 * Version 1.0.8 (released 2019-06-04)
  ** Fix debug file descriptor leak CVE-2019-12210.

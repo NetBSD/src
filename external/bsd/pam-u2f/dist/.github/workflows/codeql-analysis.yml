@@ -1,0 +1,34 @@
+name: "Code scanning - action"
+
+on:
+  push:
+  pull_request:
+  schedule:
+    - cron: '0 8 * * 6'
+
+jobs:
+  CodeQL-Build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v2
+
+    # Initializes the CodeQL tools for scanning.
+    - name: Initialize CodeQL
+      uses: github/codeql-action/init@v1
+
+    - name: Build project
+      run: |
+        sudo apt -q update
+        sudo apt install -y libpam-dev asciidoc autoconf automake libtool \
+          software-properties-common libssl-dev pkg-config gengetopt
+        sudo apt-add-repository -u -y ppa:yubico/stable
+        sudo apt install -y libfido2-dev
+        ./autogen.sh
+        ./configure --disable-man
+        make
+
+    - name: Perform CodeQL Analysis
+      uses: github/codeql-action/analyze@v1
