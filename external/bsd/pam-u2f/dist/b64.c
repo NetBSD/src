@@ -4,6 +4,7 @@
 
 #include <openssl/bio.h>
 #include <openssl/evp.h>
+#include <limits.h>
 #include <stdint.h>
 #include <string.h>
 
@@ -75,7 +76,7 @@ int b64_decode(const char *in, void **ptr, size_t *len) {
   if (bio_b64 == NULL)
     goto fail;
 
-  bio_mem = BIO_new_mem_buf((void *) in, -1);
+  bio_mem = BIO_new_mem_buf((const void *) in, -1);
   if (bio_mem == NULL)
     goto fail;
 
