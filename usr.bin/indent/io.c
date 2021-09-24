@@ -1,4 +1,4 @@
-/*	$NetBSD: io.c,v 1.53 2021/09/24 18:37:03 rillig Exp $	*/
+/*	$NetBSD: io.c,v 1.54 2021/09/24 18:47:29 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -46,7 +46,7 @@ static char sccsid[] = "@(#)io.c	8.1 (Berkeley) 6/6/93";
 #include <sys/cdefs.h>
 #ifndef lint
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: io.c,v 1.53 2021/09/24 18:37:03 rillig Exp $");
+__RCSID("$NetBSD: io.c,v 1.54 2021/09/24 18:47:29 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/io.c 334927 2018-06-10 16:44:18Z pstef $");
 #endif
@@ -123,7 +123,7 @@ dump_line(void)
 	ps.procname[0] = 0;
     }
 
-    if (s_code == e_code && s_lab == e_lab && com.s == com.e) {
+    if (s_code == e_code && lab.s == lab.e && com.s == com.e) {
 	if (suppress_blanklines > 0)
 	    suppress_blanklines--;
 	else {
@@ -150,41 +150,41 @@ dump_line(void)
 				 * additional statement indentation if we are
 				 * at bracket level 0 */
 
-	if (e_lab != s_lab || e_code != s_code)
+	if (lab.e != lab.s || e_code != s_code)
 	    ++code_lines;	/* keep count of lines with code */
 
 
-	if (e_lab != s_lab) {	/* print lab, if any */
+	if (lab.e != lab.s) {	/* print lab, if any */
 	    if (comment_open) {
 		comment_open = 0;
 		output_string(".*/\n");
 	    }
-	    while (e_lab > s_lab && (e_lab[-1] == ' ' || e_lab[-1] == '\t'))
-		e_lab--;
-	    *e_lab = '\0';
+	    while (lab.e > lab.s && (lab.e[-1] == ' ' || lab.e[-1] == '\t'))
+		lab.e--;
+	    *lab.e = '\0';
 	    cur_col = 1 + output_indent(0, compute_label_indent());
-	    if (s_lab[0] == '#' && (strncmp(s_lab, "#else", 5) == 0
-				    || strncmp(s_lab, "#endif", 6) == 0)) {
-		char *s = s_lab;
-		if (e_lab[-1] == '\n') e_lab--;
+	    if (lab.s[0] == '#' && (strncmp(lab.s, "#else", 5) == 0
+				    || strncmp(lab.s, "#endif", 6) == 0)) {
+		char *s = lab.s;
+		if (lab.e[-1] == '\n') lab.e--;
 		do {
 		    output_char(*s++);
-		} while (s < e_lab && 'a' <= *s && *s <= 'z');
-		while ((*s == ' ' || *s == '\t') && s < e_lab)
+		} while (s < lab.e && 'a' <= *s && *s <= 'z');
+		while ((*s == ' ' || *s == '\t') && s < lab.e)
 		    s++;
-		if (s < e_lab) {
+		if (s < lab.e) {
 		    if (s[0] == '/' && s[1] == '*') {
 			output_char('\t');
-			output_range(s, e_lab);
+			output_range(s, lab.e);
 		    } else {
 		        output_string("\t/* ");
-			output_range(s, e_lab);
+			output_range(s, lab.e);
 			output_string(" */");
 		    }
 		}
 	    } else
-	        output_range(s_lab, e_lab);
-	    cur_col = 1 + indentation_after(cur_col - 1, s_lab);
+	        output_range(lab.s, lab.e);
+	    cur_col = 1 + indentation_after(cur_col - 1, lab.s);
 	} else
 	    cur_col = 1;	/* there is no label section */
 
@@ -272,7 +272,7 @@ dump_line(void)
 				 * are not in the middle of a declaration */
     ps.use_ff = false;
     ps.dumped_decl_indent = 0;
-    *(e_lab = s_lab) = '\0';	/* reset buffers */
+    *(lab.e = lab.s) = '\0';	/* reset buffers */
     *(e_code = s_code) = '\0';
     *(com.e = com.s = com.buf + 1) = '\0';
     ps.ind_level = ps.i_l_follow;
@@ -325,7 +325,7 @@ compute_label_indent(void)
 {
     if (ps.pcase)
 	return (int) (case_ind * opt.indent_size);
-    if (s_lab[0] == '#')
+    if (lab.s[0] == '#')
         return 0;
     return opt.indent_size * (ps.ind_level - label_offset);
 }
@@ -375,7 +375,7 @@ parse_indent_comment(void)
     if (!(p[0] == '*' && p[1] == '/' && p[2] == '\n'))
 	return;
 
-    if (com.s != com.e || s_lab != e_lab || s_code != e_code)
+    if (com.s != com.e || lab.s != lab.e || s_code != e_code)
 	dump_line();
 
     if (!(inhibit_formatting = on_off - 1)) {
