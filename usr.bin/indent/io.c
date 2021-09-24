@@ -1,4 +1,4 @@
-/*	$NetBSD: io.c,v 1.50 2021/09/24 16:29:31 rillig Exp $	*/
+/*	$NetBSD: io.c,v 1.51 2021/09/24 18:00:13 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -46,7 +46,7 @@ static char sccsid[] = "@(#)io.c	8.1 (Berkeley) 6/6/93";
 #include <sys/cdefs.h>
 #ifndef lint
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: io.c,v 1.50 2021/09/24 16:29:31 rillig Exp $");
+__RCSID("$NetBSD: io.c,v 1.51 2021/09/24 18:00:13 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/io.c 334927 2018-06-10 16:44:18Z pstef $");
 #endif
@@ -381,7 +381,7 @@ fill_buffer(void)
 	if (in_buffer[3] == 'I' && strncmp(in_buffer, "/**INDENT**", 11) == 0)
 	    fill_buffer();	/* flush indent error message */
 	else {
-	    int com = 0;
+	    int comena = 0;	/* 1 = ON, 2 = OFF */
 
 	    p = in_buffer;
 	    while (*p == ' ' || *p == '\t')
@@ -396,19 +396,19 @@ fill_buffer(void)
 		    while (*p == ' ' || *p == '\t')
 			p++;
 		    if (*p == '*')
-			com = 1;
+			comena = 1;
 		    else if (*p == 'O') {
 			if (*++p == 'N')
-			    p++, com = 1;
+			    p++, comena = 1;
 			else if (*p == 'F' && *++p == 'F')
-			    p++, com = 2;
+			    p++, comena = 2;
 		    }
 		    while (*p == ' ' || *p == '\t')
 			p++;
-		    if (p[0] == '*' && p[1] == '/' && p[2] == '\n' && com) {
+		    if (p[0] == '*' && p[1] == '/' && p[2] == '\n' && comena) {
 			if (s_com != e_com || s_lab != e_lab || s_code != e_code)
 			    dump_line();
-			if (!(inhibit_formatting = com - 1)) {
+			if (!(inhibit_formatting = comena - 1)) {
 			    n_real_blanklines = 0;
 			    postfix_blankline_requested = 0;
 			    prefix_blankline_requested = 0;
