@@ -14,6 +14,7 @@
 .Nm fido_dev_force_fido2 ,
 .Nm fido_dev_force_u2f ,
 .Nm fido_dev_is_fido2 ,
+.Nm fido_dev_is_winhello ,
 .Nm fido_dev_supports_credman ,
 .Nm fido_dev_supports_cred_prot ,
 .Nm fido_dev_supports_pin ,
@@ -44,6 +45,8 @@
 .Fn fido_dev_force_u2f "fido_dev_t *dev"
 .Ft bool
 .Fn fido_dev_is_fido2 "const fido_dev_t *dev"
+.Ft bool
+.Fn fido_dev_is_winhello "const fido_dev_t *dev"
 .Ft bool
 .Fn fido_dev_supports_credman "const fido_dev_t *dev"
 .Ft bool
@@ -145,6 +148,14 @@ function returns
 if
 .Fa dev
 is a FIDO 2 device.
+.Pp
+The
+.Fn fido_dev_is_winhello
+function returns
+.Dv true
+if
+.Fa dev
+is a Windows Hello device.
 .Pp
 The
 .Fn fido_dev_supports_credman
