@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018 Yubico AB. All rights reserved.
+ * Copyright (c) 2018-2021 Yubico AB. All rights reserved.
  * Use of this source code is governed by a BSD-style
  * license that can be found in the LICENSE file.
  */
@@ -576,6 +576,17 @@ plural(size_t x)
 int
 should_retry_with_pin(const fido_dev_t *dev, int r)
 {
-	return fido_dev_has_pin(dev) && (r == FIDO_ERR_PIN_REQUIRED ||
-	    r == FIDO_ERR_UV_INVALID || r == FIDO_ERR_UNAUTHORIZED_PERM);
+	if (fido_dev_has_pin(dev) == false) {
+		return 0;
+	}
+
+	switch (r) {
+	case FIDO_ERR_PIN_REQUIRED:
+	case FIDO_ERR_UNAUTHORIZED_PERM:
+	case FIDO_ERR_UV_BLOCKED:
+	case FIDO_ERR_UV_INVALID:
+		return 1;
+	}
+
+	return 0;
 }
