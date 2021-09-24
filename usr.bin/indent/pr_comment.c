@@ -1,4 +1,4 @@
-/*	$NetBSD: pr_comment.c,v 1.36 2021/09/24 18:14:06 rillig Exp $	*/
+/*	$NetBSD: pr_comment.c,v 1.37 2021/09/24 18:47:29 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -46,7 +46,7 @@ static char sccsid[] = "@(#)pr_comment.c	8.1 (Berkeley) 6/6/93";
 #include <sys/cdefs.h>
 #ifndef lint
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: pr_comment.c,v 1.36 2021/09/24 18:14:06 rillig Exp $");
+__RCSID("$NetBSD: pr_comment.c,v 1.37 2021/09/24 18:47:29 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/pr_comment.c 334927 2018-06-10 16:44:18Z pstef $");
 #endif
@@ -130,7 +130,7 @@ process_comment(void)
 				 * is nonzero (the default). */
 	    break_delim = false;
 	}
-	if ( /* ps.bl_line && */ s_lab == e_lab && s_code == e_code) {
+	if ( /* ps.bl_line && */ lab.s == lab.e && s_code == e_code) {
 	    /* klg: check only if this line is blank */
 	    /*
 	     * If this (*and previous lines are*) blank, dont put comment way
@@ -146,8 +146,8 @@ process_comment(void)
 	    int target_col;
 	    if (s_code != e_code)
 		target_col = 1 + indentation_after(compute_code_indent(), s_code);
-	    else if (s_lab != e_lab)
-		target_col = 1 + indentation_after(compute_label_indent(), s_lab);
+	    else if (lab.s != lab.e)
+		target_col = 1 + indentation_after(compute_label_indent(), lab.s);
 	    else
 		target_col = 1;
 

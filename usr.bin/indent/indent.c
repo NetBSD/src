@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.c,v 1.62 2021/09/24 18:14:06 rillig Exp $	*/
+/*	$NetBSD: indent.c,v 1.63 2021/09/24 18:47:29 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -46,7 +46,7 @@ static char sccsid[] = "@(#)indent.c	5.17 (Berkeley) 6/7/93";
 #include <sys/cdefs.h>
 #ifndef lint
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: indent.c,v 1.62 2021/09/24 18:14:06 rillig Exp $");
+__RCSID("$NetBSD: indent.c,v 1.63 2021/09/24 18:47:29 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/indent.c 340138 2018-11-04 19:24:49Z oshogbo $");
 #endif
@@ -71,17 +71,14 @@ __FBSDID("$FreeBSD: head/usr.bin/indent/indent.c 340138 2018-11-04 19:24:49Z osh
 struct options opt;
 struct parser_state ps;
 
-char       *labbuf;
-char       *s_lab;
-char       *e_lab;
-char       *l_lab;
+struct buffer lab;
 
 char       *codebuf;
 char       *s_code;
 char       *e_code;
 char       *l_code;
 
-struct comment_buffer com;
+struct buffer com;
 
 char       *tokenbuf;
 char	   *s_token;
@@ -149,17 +146,17 @@ check_size_code(size_t desired_size)
 static void
 check_size_label(size_t desired_size)
 {
-    if (e_lab + (desired_size) < l_lab)
+    if (lab.e + (desired_size) < lab.l)
         return;
 
-    size_t nsize = l_lab - s_lab + 400 + desired_size;
-    size_t label_len = e_lab - s_lab;
-    labbuf = realloc(labbuf, nsize);
-    if (labbuf == NULL)
+    size_t nsize = lab.l - lab.s + 400 + desired_size;
+    size_t label_len = lab.e - lab.s;
+    lab.buf = realloc(lab.buf, nsize);
+    if (lab.buf == NULL)
 	err(1, NULL);
-    e_lab = labbuf + label_len + 1;
-    l_lab = labbuf + nsize - 5;
-    s_lab = labbuf + 1;
+    lab.e = lab.buf + label_len + 1;
+    lab.l = lab.buf + nsize - 5;
+    lab.s = lab.buf + 1;
 }
 
 #if HAVE_CAPSICUM
@@ -377,8 +374,8 @@ main_init_globals(void)
     com.buf = malloc(bufsize);
     if (com.buf == NULL)
 	err(1, NULL);
-    labbuf = malloc(bufsize);
-    if (labbuf == NULL)
+    lab.buf = malloc(bufsize);
+    if (lab.buf == NULL)
 	err(1, NULL);
     codebuf = malloc(bufsize);
     if (codebuf == NULL)
@@ -389,14 +386,14 @@ main_init_globals(void)
     alloc_typenames();
     init_constant_tt();
     com.l = com.buf + bufsize - 5;
-    l_lab = labbuf + bufsize - 5;
+    lab.l = lab.buf + bufsize - 5;
     l_code = codebuf + bufsize - 5;
     l_token = tokenbuf + bufsize - 5;
-    com.buf[0] = codebuf[0] = labbuf[0] = ' ';	/* set up code, label, and
+    com.buf[0] = codebuf[0] = lab.buf[0] = ' ';	/* set up code, label, and
 						 * comment buffers */
-    com.buf[1] = codebuf[1] = labbuf[1] = tokenbuf[1] = '\0';
+    com.buf[1] = codebuf[1] = lab.buf[1] = tokenbuf[1] = '\0';
     opt.else_if = 1;		/* Default else-if special processing to on */
-    s_lab = e_lab = labbuf + 1;
+    lab.s = lab.e = lab.buf + 1;
     s_code = e_code = codebuf + 1;
     com.s = com.e = com.buf + 1;
     s_token = e_token = tokenbuf + 1;
@@ -546,7 +543,7 @@ main_prepare_parsing(void)
 static void __attribute__((__noreturn__))
 process_end_of_file(void)
 {
-    if (s_lab != e_lab || s_code != e_code || com.s != com.e)
+    if (lab.s != lab.e || s_code != e_code || com.s != com.e)
 	dump_line();
 
     if (ps.tos > 1)		/* check for balanced braces */
@@ -790,10 +787,10 @@ process_colon(int *inout_squest, int *inout_force_nl, int *inout_scase)
 	size_t len = e_code - s_code;
 
 	check_size_label(len + 3);
-	memcpy(e_lab, s_code, len);
-	e_lab += len;
-	*e_lab++ = ':';
-	*e_lab = '\0';
+	memcpy(lab.e, s_code, len);
+	lab.e += len;
+	*lab.e++ = ':';
+	*lab.e = '\0';
 	e_code = s_code;
     }
     *inout_force_nl = ps.pcase = *inout_scase;	/* ps.pcase will be used by
@@ -1120,10 +1117,10 @@ process_comma(int dec_ind, int tabs_to_var, int *inout_force_nl)
 static void
 process_preprocessing(void)
 {
-    if (com.s != com.e || s_lab != e_lab || s_code != e_code)
+    if (com.s != com.e || lab.s != lab.e || s_code != e_code)
 	dump_line();
     check_size_label(1);
-    *e_lab++ = '#';	/* move whole line to 'label' buffer */
+    *lab.e++ = '#';	/* move whole line to 'label' buffer */
 
     {
 	int         in_comment = 0;
@@ -1138,13 +1135,13 @@ process_preprocessing(void)
 	}
 	while (*buf_ptr != '\n' || (in_comment && !had_eof)) {
 	    check_size_label(2);
-	    *e_lab = *buf_ptr++;
+	    *lab.e = *buf_ptr++;
 	    if (buf_ptr >= buf_end)
 		fill_buffer();
-	    switch (*e_lab++) {
+	    switch (*lab.e++) {
 	    case '\\':
 		if (!in_comment) {
-		    *e_lab++ = *buf_ptr++;
+		    *lab.e++ = *buf_ptr++;
 		    if (buf_ptr >= buf_end)
 			fill_buffer();
 		}
@@ -1152,8 +1149,8 @@ process_preprocessing(void)
 	    case '/':
 		if (*buf_ptr == '*' && !in_comment && quote == '\0') {
 		    in_comment = 1;
-		    *e_lab++ = *buf_ptr++;
-		    com_start = (int)(e_lab - s_lab) - 2;
+		    *lab.e++ = *buf_ptr++;
+		    com_start = (int)(lab.e - lab.s) - 2;
 		}
 		break;
 	    case '"':
@@ -1171,16 +1168,16 @@ process_preprocessing(void)
 	    case '*':
 		if (*buf_ptr == '/' && in_comment) {
 		    in_comment = 0;
-		    *e_lab++ = *buf_ptr++;
-		    com_end = (int)(e_lab - s_lab);
+		    *lab.e++ = *buf_ptr++;
+		    com_end = (int)(lab.e - lab.s);
 		}
 		break;
 	    }
 	}
 
-	while (e_lab > s_lab && (e_lab[-1] == ' ' || e_lab[-1] == '\t'))
-	    e_lab--;
-	if (e_lab - s_lab == com_end && bp_save == NULL) {
+	while (lab.e > lab.s && (lab.e[-1] == ' ' || lab.e[-1] == '\t'))
+	    lab.e--;
+	if (lab.e - lab.s == com_end && bp_save == NULL) {
 	    /* comment on preprocessor line */
 	    if (sc_end == NULL) {	/* if this is the first comment,
 						 * we must set up the buffer */
@@ -1194,11 +1191,11 @@ process_preprocessing(void)
 	    }
 	    if (sc_end - save_com + com_end - com_start > sc_size)
 		errx(1, "input too long");
-	    memmove(sc_end, s_lab + com_start, (size_t)(com_end - com_start));
+	    memmove(sc_end, lab.s + com_start, (size_t)(com_end - com_start));
 	    sc_end += com_end - com_start;
-	    e_lab = s_lab + com_start;
-	    while (e_lab > s_lab && (e_lab[-1] == ' ' || e_lab[-1] == '\t'))
-		e_lab--;
+	    lab.e = lab.s + com_start;
+	    while (lab.e > lab.s && (lab.e[-1] == ' ' || lab.e[-1] == '\t'))
+		lab.e--;
 	    bp_save = buf_ptr;	/* save current input buffer */
 	    be_save = buf_end;
 	    buf_ptr = save_com;	/* fix so that subsequent calls to lexi will
@@ -1209,35 +1206,35 @@ process_preprocessing(void)
 	    debug_println("switched buf_ptr to save_com");
 	}
 	check_size_label(1);
-	*e_lab = '\0';	/* null terminate line */
+	*lab.e = '\0';	/* null terminate line */
 	ps.pcase = false;
     }
 
-    if (strncmp(s_lab, "#if", 3) == 0) { /* also ifdef, ifndef */
+    if (strncmp(lab.s, "#if", 3) == 0) { /* also ifdef, ifndef */
 	if ((size_t)ifdef_level < nitems(state_stack)) {
 	    match_state[ifdef_level].tos = -1;
 	    state_stack[ifdef_level++] = ps;
 	} else
 	    diag(1, "#if stack overflow");
-    } else if (strncmp(s_lab, "#el", 3) == 0) { /* else, elif */
+    } else if (strncmp(lab.s, "#el", 3) == 0) { /* else, elif */
 	if (ifdef_level <= 0)
-	    diag(1, s_lab[3] == 'i' ? "Unmatched #elif" : "Unmatched #else");
+	    diag(1, lab.s[3] == 'i' ? "Unmatched #elif" : "Unmatched #else");
 	else {
 	    match_state[ifdef_level - 1] = ps;
 	    ps = state_stack[ifdef_level - 1];
 	}
-    } else if (strncmp(s_lab, "#endif", 6) == 0) {
+    } else if (strncmp(lab.s, "#endif", 6) == 0) {
 	if (ifdef_level <= 0)
 	    diag(1, "Unmatched #endif");
 	else
 	    ifdef_level--;
     } else {
-	if (strncmp(s_lab + 1, "pragma", 6) != 0 &&
-	    strncmp(s_lab + 1, "error", 5) != 0 &&
-	    strncmp(s_lab + 1, "line", 4) != 0 &&
-	    strncmp(s_lab + 1, "undef", 5) != 0 &&
-	    strncmp(s_lab + 1, "define", 6) != 0 &&
-	    strncmp(s_lab + 1, "include", 7) != 0) {
+	if (strncmp(lab.s + 1, "pragma", 6) != 0 &&
+	    strncmp(lab.s + 1, "error", 5) != 0 &&
+	    strncmp(lab.s + 1, "line", 4) != 0 &&
+	    strncmp(lab.s + 1, "undef", 5) != 0 &&
+	    strncmp(lab.s + 1, "define", 6) != 0 &&
+	    strncmp(lab.s + 1, "include", 7) != 0) {
 	    diag(1, "Unrecognized cpp directive");
 	    return;
 	}
