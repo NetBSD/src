@@ -164,8 +164,8 @@ rx_preamble(fido_dev_t *d, uint8_t cmd, struct frame *fp, int ms)
 #ifdef FIDO_FUZZ
 		fp->cid = d->cid;
 #endif
-	} while (fp->cid == d->cid &&
-	    fp->body.init.cmd == (CTAP_FRAME_INIT | CTAP_KEEPALIVE));
+	} while (fp->cid != d->cid || (fp->cid == d->cid &&
+	    fp->body.init.cmd == (CTAP_FRAME_INIT | CTAP_KEEPALIVE)));
 
 	if (d->rx_len > sizeof(*fp))
 		return (-1);

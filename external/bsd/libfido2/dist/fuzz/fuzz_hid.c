@@ -15,9 +15,11 @@
 
 extern int fido_hid_get_usage(const uint8_t *, size_t, uint32_t *);
 extern int fido_hid_get_report_len(const uint8_t *, size_t, size_t *, size_t *);
+extern void set_udev_parameters(const char *, const struct blob *);
 
 struct param {
 	int seed;
+	char uevent[MAXSTR];
 	struct blob report_descriptor;
 };
 
@@ -32,6 +34,17 @@ static const uint8_t dummy_report_descriptor[] = {
 	0x02, 0xc0
 };
 
+/*
+ * Sample uevent file from a Yubico Security Key.
+ */
+static const char dummy_uevent[] =
+	"DRIVER=hid-generic\n"
+	"HID_ID=0003:00001050:00000120\n"
+	"HID_NAME=Yubico Security Key by Yubico\n"
+	"HID_PHYS=usb-0000:00:14.0-3/input0\n"
+	"HID_UNIQ=\n"
+	"MODALIAS=hid:b0003g0001v00001050p00000120\n";
+
 struct param *
 unpack(const uint8_t *ptr, size_t len)
 {
@@ -45,12 +58,13 @@ unpack(const uint8_t *ptr, size_t len)
 	    cbor.read != len ||
 	    cbor_isa_array(item) == false ||
 	    cbor_array_is_definite(item) == false ||
-	    cbor_array_size(item) != 2 ||
+	    cbor_array_size(item) != 3 ||
 	    (v = cbor_array_handle(item)) == NULL)
 		goto fail;
 
 	if (unpack_int(v[0], &p->seed) < 0 ||
-	    unpack_blob(v[1], &p->report_descriptor) < 0)
+	    unpack_string(v[1], p->uevent) < 0 ||
+	    unpack_blob(v[2], &p->report_descriptor) < 0)
 		goto fail;
 
 	ok = 0;
@@ -69,18 +83,19 @@ fail:
 size_t
 pack(uint8_t *ptr, size_t len, const struct param *p)
 {
-	cbor_item_t *argv[2], *array = NULL;
+	cbor_item_t *argv[3], *array = NULL;
 	size_t cbor_alloc_len, cbor_len = 0;
 	unsigned char *cbor = NULL;
 
 	memset(argv, 0, sizeof(argv));
 
-	if ((array = cbor_new_definite_array(2)) == NULL ||
+	if ((array = cbor_new_definite_array(3)) == NULL ||
 	    (argv[0] = pack_int(p->seed)) == NULL ||
-	    (argv[1] = pack_blob(&p->report_descriptor)) == NULL)
+	    (argv[1] = pack_string(p->uevent)) == NULL ||
+	    (argv[2] = pack_blob(&p->report_descriptor)) == NULL)
 		goto fail;
 
-	for (size_t i = 0; i < 2; i++)
+	for (size_t i = 0; i < 3; i++)
 		if (cbor_array_push(array, argv[i]) == false)
 			goto fail;
 
@@ -92,7 +107,7 @@ pack(uint8_t *ptr, size_t len, const struct param *p)
 
 	memcpy(ptr, cbor, cbor_len);
 fail:
-	for (size_t i = 0; i < 2; i++)
+	for (size_t i = 0; i < 3; i++)
 		if (argv[i])
 			cbor_decref(&argv[i]);
 
@@ -114,15 +129,13 @@ pack_dummy(uint8_t *ptr, size_t len)
 	memset(&dummy, 0, sizeof(dummy));
 
 	dummy.report_descriptor.len = sizeof(dummy_report_descriptor);
+	strlcpy(dummy.uevent, dummy_uevent, sizeof(dummy.uevent));
 	memcpy(&dummy.report_descriptor.body, &dummy_report_descriptor,
 	    dummy.report_descriptor.len);
 
 	assert((blob_len = pack(blob, sizeof(blob), &dummy)) != 0);
-
-	if (blob_len > len) {
-		memcpy(ptr, blob, len);
-		return len;
-	}
+	if (blob_len > len)
+		blob_len = len;
 
 	memcpy(ptr, blob, blob_len);
 
@@ -151,6 +164,32 @@ get_report_len(const struct param *p)
 	consume(&report_out_len, sizeof(report_out_len));
 }
 
+static void
+manifest(const struct param *p)
+{
+	size_t ndevs, nfound;
+	fido_dev_info_t *devlist;
+	int16_t vendor_id, product_id;
+
+	set_udev_parameters(p->uevent, &p->report_descriptor);
+	ndevs = uniform_random(64);
+	if ((devlist = fido_dev_info_new(ndevs)) == NULL ||
+	    fido_dev_info_manifest(devlist, ndevs, &nfound) != FIDO_OK)
+		goto out;
+	for (size_t i = 0; i < nfound; i++) {
+		const fido_dev_info_t *di = fido_dev_info_ptr(devlist, i);
+		consume_str(fido_dev_info_path(di));
+		consume_str(fido_dev_info_manufacturer_string(di));
+		consume_str(fido_dev_info_product_string(di));
+		vendor_id = fido_dev_info_vendor(di);
+		product_id = fido_dev_info_product(di);
+		consume(&vendor_id, sizeof(vendor_id));
+		consume(&product_id, sizeof(product_id));
+	}
+out:
+	fido_dev_info_free(&devlist, ndevs);
+}
+
 void
 test(const struct param *p)
 {
@@ -160,6 +199,7 @@ test(const struct param *p)
 
 	get_usage(p);
 	get_report_len(p);
+	manifest(p);
 }
 
 void
@@ -168,6 +208,8 @@ mutate(struct param *p, unsigned int seed, unsigned int flags) NO_MSAN
 	if (flags & MUTATE_SEED)
 		p->seed = (int)seed;
 
-	if (flags & MUTATE_PARAM)
+	if (flags & MUTATE_PARAM) {
 		mutate_blob(&p->report_descriptor);
+		mutate_string(p->uevent);
+	}
 }

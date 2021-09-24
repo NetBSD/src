@@ -10,6 +10,8 @@
 .Nm fido_cred_set_authdata_raw ,
 .Nm fido_cred_set_x509 ,
 .Nm fido_cred_set_sig ,
+.Nm fido_cred_set_id ,
+.Nm fido_cred_set_clientdata ,
 .Nm fido_cred_set_clientdata_hash ,
 .Nm fido_cred_set_rp ,
 .Nm fido_cred_set_user ,
@@ -38,6 +40,10 @@ typedef enum {
 .Fn fido_cred_set_x509 "fido_cred_t *cred" "const unsigned char *ptr" "size_t len"
 .Ft int
 .Fn fido_cred_set_sig "fido_cred_t *cred" "const unsigned char *ptr" "size_t len"
+.Ft int
+.Fn fido_cred_set_id "fido_cred_t *cred" "const unsigned char *ptr" "size_t len"
+.Ft int
+.Fn fido_cred_set_clientdata "fido_cred_t *cred" "const unsigned char *ptr" "size_t len"
 .Ft int
 .Fn fido_cred_set_clientdata_hash "fido_cred_t *cred" "const unsigned char *ptr" "size_t len"
 .Ft int
@@ -76,10 +82,11 @@ The
 .Fn fido_cred_set_authdata ,
 .Fn fido_cred_set_x509 ,
 .Fn fido_cred_set_sig ,
+.Fn fido_cred_set_id ,
 and
 .Fn fido_cred_set_clientdata_hash
 functions set the authenticator data, attestation certificate,
-signature and client data hash parts of
+signature, id, and client data hash parts of
 .Fa cred
 to
 .Fa ptr ,
@@ -97,6 +104,25 @@ must be a CBOR-encoded byte string, as obtained from
 .Fn fido_cred_authdata_ptr .
 Alternatively, a raw binary blob may be passed to
 .Fn fido_cred_set_authdata_raw .
+.Pp
+An application calling
+.Fn fido_cred_set_authdata
+does not need to call
+.Fn fido_cred_set_id .
+The latter is meant to be used in contexts where the
+credential's authenticator data is not available.
+.Pp
+The
+.Fn fido_cred_set_clientdata
+function allows an application to set the client data hash of
+.Fa cred
+by specifying the credential's unhashed client data.
+This is required by Windows Hello, which calculates the client data
+hash internally.
+For compatibility with Windows Hello, applications should use
+.Fn fido_cred_set_clientdata
+instead of
+.Fn fido_cred_set_clientdata_hash .
 .Pp
 The
 .Fn fido_cred_set_rp
@@ -214,18 +240,19 @@ by default, allowing the authenticator to use its default settings.
 .Pp
 The
 .Fn fido_cred_set_fmt
-function sets the format of
+function sets the attestation format of
 .Fa cred
 to
 .Fa fmt ,
 where
 .Fa fmt
-must be either
+must be
 .Vt "packed"
-.Pq the format used in FIDO2
-or
+.Pq the format used in FIDO2 ,
 .Vt "fido-u2f"
-.Pq the format used by U2F .
+.Pq the format used by U2F ,
+or
+.Vt "none" .
 A copy of
 .Fa fmt
 is made, and no references to the passed pointer are kept.

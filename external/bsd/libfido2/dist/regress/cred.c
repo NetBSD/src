@@ -630,6 +630,25 @@ junk_cdh(void)
 }
 
 static void
+junk_fmt(void)
+{
+	fido_cred_t *c;
+
+	c = alloc_cred();
+	assert(fido_cred_set_type(c, COSE_ES256) == FIDO_OK);
+	assert(fido_cred_set_clientdata_hash(c, cdh, sizeof(cdh)) == FIDO_OK);
+	assert(fido_cred_set_rp(c, rp_id, rp_name) == FIDO_OK);
+	assert(fido_cred_set_authdata(c, authdata, sizeof(authdata)) == FIDO_OK);
+	assert(fido_cred_set_rk(c, FIDO_OPT_FALSE) == FIDO_OK);
+	assert(fido_cred_set_uv(c, FIDO_OPT_FALSE) == FIDO_OK);
+	assert(fido_cred_set_x509(c, x509, sizeof(x509)) == FIDO_OK);
+	assert(fido_cred_set_sig(c, sig, sizeof(sig)) == FIDO_OK);
+	assert(fido_cred_set_fmt(c, "junk") == FIDO_ERR_INVALID_ARGUMENT);
+	assert(fido_cred_verify(c) == FIDO_ERR_INVALID_ARGUMENT);
+	free_cred(c);
+}
+
+static void
 junk_rp_id(void)
 {
 	fido_cred_t *c;
@@ -911,6 +930,30 @@ raw_authdata(void)
 	free_cred(c);
 }
 
+static void
+fmt_none(void)
+{
+	fido_cred_t *c;
+
+	c = alloc_cred();
+	assert(fido_cred_set_type(c, COSE_ES256) == FIDO_OK);
+	assert(fido_cred_set_clientdata_hash(c, cdh, sizeof(cdh)) == FIDO_OK);
+	assert(fido_cred_set_rp(c, rp_id, rp_name) == FIDO_OK);
+	assert(fido_cred_set_authdata(c, authdata, sizeof(authdata)) == FIDO_OK);
+	assert(fido_cred_set_rk(c, FIDO_OPT_FALSE) == FIDO_OK);
+	assert(fido_cred_set_uv(c, FIDO_OPT_FALSE) == FIDO_OK);
+	assert(fido_cred_set_fmt(c, "none") == FIDO_OK);
+	assert(fido_cred_verify(c) == FIDO_ERR_INVALID_ARGUMENT);
+	assert(fido_cred_prot(c) == 0);
+	assert(fido_cred_pubkey_len(c) == sizeof(pubkey));
+	assert(memcmp(fido_cred_pubkey_ptr(c), pubkey, sizeof(pubkey)) == 0);
+	assert(fido_cred_id_len(c) == sizeof(id));
+	assert(memcmp(fido_cred_id_ptr(c), id, sizeof(id)) == 0);
+	assert(fido_cred_aaguid_len(c) == sizeof(aaguid));
+	assert(memcmp(fido_cred_aaguid_ptr(c), aaguid, sizeof(aaguid)) == 0);
+	free_cred(c);
+}
+
 int
 main(void)
 {
@@ -926,6 +969,7 @@ main(void)
 	no_sig();
 	no_fmt();
 	junk_cdh();
+	junk_fmt();
 	junk_rp_id();
 	junk_rp_name();
 	junk_authdata();
@@ -938,6 +982,7 @@ main(void)
 	unsorted_keys();
 	wrong_credprot();
 	raw_authdata();
+	fmt_none();
 
 	exit(0);
 }

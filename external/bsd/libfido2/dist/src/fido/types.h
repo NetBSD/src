@@ -129,6 +129,7 @@ typedef struct fido_cred_ext {
 } fido_cred_ext_t;
 
 typedef struct fido_cred {
+	fido_blob_t       cd;            /* client data */
 	fido_blob_t       cdh;           /* client data hash */
 	fido_rp_t         rp;            /* relying party */
 	fido_user_t       user;          /* user entity */
@@ -172,6 +173,7 @@ typedef struct fido_assert_ext {
 
 typedef struct fido_assert {
 	char              *rp_id;        /* relying party id */
+	fido_blob_t        cd;           /* client data */
 	fido_blob_t        cdh;          /* client data hash */
 	fido_blob_array_t  allow_list;   /* list of allowed credentials */
 	fido_opt_t         up;           /* user presence */
@@ -198,13 +200,25 @@ typedef struct fido_byte_array {
 	size_t len;
 } fido_byte_array_t;
 
+typedef struct fido_algo {
+	char *type;
+	int cose;
+} fido_algo_t;
+
+typedef struct fido_algo_array {
+	fido_algo_t *ptr;
+	size_t len;
+} fido_algo_array_t;
+
 typedef struct fido_cbor_info {
 	fido_str_array_t  versions;      /* supported versions: fido2|u2f */
 	fido_str_array_t  extensions;    /* list of supported extensions */
+	fido_str_array_t  transports;    /* list of supported transports */
 	unsigned char     aaguid[16];    /* aaguid */
 	fido_opt_array_t  options;       /* list of supported options */
 	uint64_t          maxmsgsiz;     /* maximum message size */
 	fido_byte_array_t protocols;     /* supported pin protocols */
+	fido_algo_array_t algorithms;    /* list of supported algorithms */
 	uint64_t          maxcredcntlst; /* max number of credentials in list */
 	uint64_t          maxcredidlen;  /* max credential ID length */
 	uint64_t          fwversion;     /* firmware version */
