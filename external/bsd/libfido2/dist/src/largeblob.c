@@ -540,7 +540,6 @@ largeblob_get_uv_token(fido_dev_t *dev, const char *pin, fido_blob_t **token)
 	fido_blob_t *ecdh = NULL;
 	int r;
 
-	*token = NULL;
 	if ((*token = fido_blob_new()) == NULL)
 		return FIDO_ERR_INTERNAL;
 	if ((r = fido_do_ecdh(dev, &pk, &ecdh)) != FIDO_OK) {
@@ -600,10 +599,11 @@ largeblob_set_array(fido_dev_t *dev, const cbor_item_t *item, const char *pin)
 		goto fail;
 	}
 	totalsize = cbor.len + sizeof(dgst) - 16; /* the first 16 bytes only */
-	if (fido_dev_can_get_uv_token(dev, pin, FIDO_OPT_OMIT) == true &&
-	    (r = largeblob_get_uv_token(dev, pin, &token)) != FIDO_OK) {
-		fido_log_debug("%s: largeblob_get_uv_token", __func__);
-		goto fail;
+	if (pin != NULL || fido_dev_supports_permissions(dev)) {
+		if ((r = largeblob_get_uv_token(dev, pin, &token)) != FIDO_OK) {
+			fido_log_debug("%s: largeblob_get_uv_token", __func__);
+			goto fail;
+		}
 	}
 	for (size_t offset = 0; offset < cbor.len; offset += chunklen) {
 		if ((chunklen = cbor.len - offset) > maxchunklen)

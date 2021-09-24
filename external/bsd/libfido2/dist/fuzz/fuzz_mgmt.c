@@ -254,11 +254,24 @@ dev_get_cbor_info(const struct param *p)
 		consume(sa[i], strlen(sa[i]));
 	}
 
+	for (size_t i = 0; i < fido_cbor_info_transports_len(ci); i++) {
+		char * const *sa = fido_cbor_info_transports_ptr(ci);
+		consume(sa[i], strlen(sa[i]));
+	}
+
 	for (size_t i = 0; i < fido_cbor_info_options_len(ci); i++) {
 		char * const *sa = fido_cbor_info_options_name_ptr(ci);
 		const bool *va = fido_cbor_info_options_value_ptr(ci);
 		consume(sa[i], strlen(sa[i]));
 		consume(&va[i], sizeof(va[i]));
+	}
+
+	/* +1 on purpose */
+	for (size_t i = 0; i <= fido_cbor_info_algorithm_count(ci); i++) {
+		const char *type = fido_cbor_info_algorithm_type(ci, i);
+		int cose = fido_cbor_info_algorithm_cose(ci, i);
+		consume_str(type);
+		consume(&cose, sizeof(cose));
 	}
 
 	n = fido_cbor_info_maxmsgsiz(ci);

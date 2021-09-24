@@ -21,7 +21,7 @@ file for the full license text.
 
 === Supported Platforms
 
-*libfido2* is known to work on Linux, MacOS, Windows, OpenBSD, and FreeBSD.
+*libfido2* is known to work on Linux, macOS, Windows, OpenBSD, and FreeBSD.
 
 === Documentation
 
@@ -40,7 +40,7 @@ is also available.
 
 ==== Releases
 
-The current release of *libfido2* is 1.7.0. Please consult Yubico's
+The current release of *libfido2* is 1.8.0. Please consult Yubico's
 https://developers.yubico.com/libfido2/Releases[release page] for source
 and binary releases.
 
@@ -51,16 +51,16 @@ and binary releases.
   $ sudo apt install libfido2-doc
 
 Alternatively, newer versions of *libfido2* are available in Yubico's PPA.
-Follow the instructions for Ubuntu 18.04 (Bionic) and 16.04 (Xenial) below.
+Follow the instructions for Ubuntu 18.04 (Bionic) below.
 
-==== Ubuntu 18.04 (Bionic) and 16.04 (Xenial)
+==== Ubuntu 18.04 (Bionic)
 
   $ sudo apt install software-properties-common
   $ sudo apt-add-repository ppa:yubico/stable
   $ sudo apt update
   $ sudo apt install libfido2-dev
 
-==== MacOS
+==== macOS
 
   $ brew install libfido2
 
@@ -80,7 +80,7 @@ https://www.openssl.org[OpenSSL], and https://zlib.net[zlib]. On Linux, libudev
 required.
 
 For complete, OS-specific installation instructions, please refer to the
-`.actions/` (Linux, MacOS) and `windows/` directories.
+`.actions/` (Linux, macOS) and `windows/` directories.
 
 On Linux, you will need to add a udev rule to be able to access the FIDO
 device, or run as root. For example, the udev rule may contain the following:
@@ -91,7 +91,3 @@ device, or run as root. For example, the udev rule may contain the following:
 KERNEL=="hidraw*", SUBSYSTEM=="hidraw", \
   MODE="0664", GROUP="plugdev", ATTRS{idVendor}=="1050"
 ----
-
-On Windows 1903 and newer versions, access to FIDO devices has been restricted
-to applications using the operating system's native API. Use of *libfido2*
-is still possible in privileged applications.

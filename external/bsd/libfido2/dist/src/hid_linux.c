@@ -5,13 +5,15 @@
  */
 
 #include <sys/types.h>
-
+#include <sys/file.h>
 #include <sys/ioctl.h>
+
 #include <linux/hidraw.h>
 #include <linux/input.h>
 
 #include <errno.h>
 #include <libudev.h>
+#include <time.h>
 #include <unistd.h>
 
 #include "fido.h"
@@ -157,9 +159,10 @@ copy_info(fido_dev_info_t *di, struct udev *udev,
 #endif
 
 	di->path = strdup(path);
-	di->manufacturer = get_usb_attr(dev, "manufacturer");
-	di->product = get_usb_attr(dev, "product");
-
+	if ((di->manufacturer = get_usb_attr(dev, "manufacturer")) == NULL)
+		di->manufacturer = strdup("unknown");
+	if ((di->product = get_usb_attr(dev, "product")) == NULL)
+		di->product = strdup("unknown");
 	if (di->path == NULL || di->manufacturer == NULL || di->product == NULL)
 		goto fail;
 
@@ -236,15 +239,36 @@ fail:
 void *
 fido_hid_open(const char *path)
 {
-	struct hid_linux		*ctx;
-	struct hidraw_report_descriptor	 hrd;
+	struct hid_linux *ctx;
+	struct hidraw_report_descriptor hrd;
+	struct timespec tv_pause;
+	long interval_ms, retries = 0;
 
-	if ((ctx = calloc(1, sizeof(*ctx))) == NULL)
-		return (NULL);
-
-	if ((ctx->fd = fido_hid_unix_open(path)) == -1) {
+	if ((ctx = calloc(1, sizeof(*ctx))) == NULL ||
+	    (ctx->fd = fido_hid_unix_open(path)) == -1) {
 		free(ctx);
 		return (NULL);
+	}
+
+	while (flock(ctx->fd, LOCK_EX|LOCK_NB) == -1) {
+		if (errno != EWOULDBLOCK) {
+			fido_log_error(errno, "%s: flock", __func__);
+			fido_hid_close(ctx);
+			return (NULL);
+		}
+		if (retries++ >= 15) {
+			fido_log_debug("%s: flock timeout", __func__);
+			fido_hid_close(ctx);
+			return (NULL);
+		}
+		interval_ms = retries * 100000000L;
+		tv_pause.tv_sec = interval_ms / 1000000000L;
+		tv_pause.tv_nsec = interval_ms % 1000000000L;
+		if (nanosleep(&tv_pause, NULL) == -1) {
+			fido_log_error(errno, "%s: nanosleep", __func__);
+			fido_hid_close(ctx);
+			return (NULL);
+		}
 	}
 
 	if (get_report_descriptor(ctx->fd, &hrd) < 0 ||

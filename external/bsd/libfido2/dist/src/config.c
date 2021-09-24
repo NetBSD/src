@@ -22,9 +22,6 @@ config_prepare_hmac(uint8_t subcmd, const cbor_item_t *item, fido_blob_t *hmac)
 	prefix[sizeof(prefix) - 2] = CTAP_CBOR_CONFIG;
 	prefix[sizeof(prefix) - 1] = subcmd;
 
-	if (item == NULL)
-		return fido_blob_set(hmac, prefix, sizeof(prefix));
-
 	if ((cbor_len = cbor_serialize(item, cbor, sizeof(cbor))) == 0) {
 		fido_log_debug("%s: cbor_serialize", __func__);
 		return -1;
@@ -61,7 +58,8 @@ config_tx(fido_dev_t *dev, uint8_t subcmd, cbor_item_t **paramv, size_t paramc,
 	}
 
 	/* pinProtocol, pinAuth */
-	if (fido_dev_can_get_uv_token(dev, pin, FIDO_OPT_OMIT)) {
+	if (pin != NULL || (fido_dev_supports_permissions(dev) &&
+	    fido_dev_has_uv(dev))) {
 		if ((argv[1] = cbor_flatten_vector(paramv, paramc)) == NULL) {
 			fido_log_debug("%s: cbor_flatten_vector", __func__);
 			goto fail;

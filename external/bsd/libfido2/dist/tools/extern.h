@@ -20,7 +20,7 @@ struct blob {
 	size_t len;
 };
 
-#define TOKEN_OPT	"CDGILPRSVabcdefi:k:l:n:ru"
+#define TOKEN_OPT	"CDGILPRSVabcdefi:k:l:n:p:ru"
 
 #define FLAG_DEBUG	0x01
 #define FLAG_QUIET	0x02
@@ -66,6 +66,8 @@ int cose_type(const char *, int *);
 int cred_make(int, char **);
 int cred_verify(int, char **);
 int credman_delete_rk(const char *, const char *);
+int credman_update_rk(const char *, const char *, const char *, const char *,
+    const char *);
 int credman_get_metadata(fido_dev_t *, const char *);
 int credman_list_rk(const char *, const char *);
 int credman_list_rp(const char *);

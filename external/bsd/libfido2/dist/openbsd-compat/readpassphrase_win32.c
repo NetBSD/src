@@ -79,7 +79,7 @@ readpassphrase(const char *prompt, char *outBuf, size_t outBufLen, int flags)
 		return NULL;
 	}
 
-	while (_kbhit()) _getch();
+	while (_kbhit()) (void)_getch();
 
 	wtmp = utf8_to_utf16(prompt);
 	if (wtmp == NULL)
@@ -92,7 +92,7 @@ readpassphrase(const char *prompt, char *outBuf, size_t outBufLen, int flags)
 		ch = (char)_getch();
 		
 		if (ch == '\r') {
-			if (_kbhit()) _getch(); /* read linefeed if its there */
+			if (_kbhit()) (void)_getch(); /* read linefeed if its there */
 			break;
 		} else if (ch == '\n') {
 			break;
