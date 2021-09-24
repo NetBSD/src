@@ -33,14 +33,14 @@ log_on_stderr(const char *str)
 static void
 do_log(const char *suffix, const char *fmt, va_list args)
 {
-	char line[LINELEN], body[LINELEN - 3];
+	char line[LINELEN], body[LINELEN];
 
 	vsnprintf(body, sizeof(body), fmt, args);
 
 	if (suffix != NULL)
-		snprintf(line, sizeof(line), "%s: %s\n", body, suffix);
+		snprintf(line, sizeof(line), "%.180s: %.70s\n", body, suffix);
 	else
-		snprintf(line, sizeof(line), "%s\n", body);
+		snprintf(line, sizeof(line), "%.180s\n", body);
 
 	log_handler(line);
 }

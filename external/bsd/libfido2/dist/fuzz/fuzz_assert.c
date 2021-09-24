@@ -413,12 +413,9 @@ test(const struct param *p)
 		    fido_assert_user_id_len(assert, i));
 		consume(fido_assert_hmac_secret_ptr(assert, i),
 		    fido_assert_hmac_secret_len(assert, i));
-		consume(fido_assert_user_icon(assert, i),
-		    xstrlen(fido_assert_user_icon(assert, i)));
-		consume(fido_assert_user_name(assert, i),
-		    xstrlen(fido_assert_user_name(assert, i)));
-		consume(fido_assert_user_display_name(assert, i),
-		    xstrlen(fido_assert_user_display_name(assert, i)));
+		consume_str(fido_assert_user_icon(assert, i));
+		consume_str(fido_assert_user_name(assert, i));
+		consume_str(fido_assert_user_display_name(assert, i));
 		consume(fido_assert_blob_ptr(assert, i),
 		    fido_assert_blob_len(assert, i));
 		consume(fido_assert_largeblob_key_ptr(assert, i),

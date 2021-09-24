@@ -130,9 +130,8 @@ static void
 bio_reset_template(fido_bio_template_t *t)
 {
 	free(t->name);
-	free(t->id.ptr);
 	t->name = NULL;
-	memset(&t->id, 0, sizeof(t->id));
+	fido_blob_reset(&t->id);
 }
 
 static void
@@ -762,9 +761,7 @@ int
 fido_bio_template_set_id(fido_bio_template_t *t, const unsigned char *ptr,
     size_t len)
 {
-	free(t->id.ptr);
-	t->id.ptr = NULL;
-	t->id.len = 0;
+	fido_blob_reset(&t->id);
 
 	if (ptr && fido_blob_set(&t->id, ptr, len) < 0)
 		return (FIDO_ERR_INTERNAL);

@@ -8,6 +8,5 @@ Description: A FIDO2 library
 URL: https://github.com/yubico/libfido2
 Version: @FIDO_VERSION@
 Requires: libcrypto
-Requires.private: libcbor, zlib
 Libs: -L${libdir} -lfido2
 Cflags: -I${includedir}

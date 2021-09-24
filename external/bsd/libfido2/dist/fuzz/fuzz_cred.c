@@ -310,9 +310,8 @@ verify_cred(int type, const unsigned char *cdh_ptr, size_t cdh_len,
 	consume(fido_cred_id_ptr(cred), fido_cred_id_len(cred));
 	consume(fido_cred_aaguid_ptr(cred), fido_cred_aaguid_len(cred));
 	consume(fido_cred_user_id_ptr(cred), fido_cred_user_id_len(cred));
-	consume(fido_cred_user_name(cred), xstrlen(fido_cred_user_name(cred)));
-	consume(fido_cred_display_name(cred),
-	    xstrlen(fido_cred_display_name(cred)));
+	consume_str(fido_cred_user_name(cred));
+	consume_str(fido_cred_display_name(cred));
 	consume(fido_cred_largeblob_key_ptr(cred),
 	    fido_cred_largeblob_key_len(cred));
 
@@ -391,6 +390,20 @@ test_touch(const struct param *p)
 	fido_dev_free(&dev);
 }
 
+static void
+test_misc(const struct param *p)
+{
+	fido_cred_t *cred = NULL;
+
+	if ((cred = fido_cred_new()) == NULL)
+		return;
+
+	/* reuse user id as credential id */
+	fido_cred_set_id(cred, p->user_id.body, p->user_id.len);
+	consume(fido_cred_id_ptr(cred), fido_cred_id_len(cred));
+	fido_cred_free(&cred);
+}
+
 void
 test(const struct param *p)
 {
@@ -400,6 +413,7 @@ test(const struct param *p)
 
 	test_cred(p);
 	test_touch(p);
+	test_misc(p);
 }
 
 void

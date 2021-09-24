@@ -1,3 +1,23 @@
+* Version 1.8.0 (2021-07-22)
+ ** Dropped 'Requires.private' entry from pkg-config file.
+ ** Better support for FIDO 2.1 authenticators.
+ ** Support for Windows's native webauthn API.
+ ** Support for attestation format 'none'.
+ ** New API calls:
+  - fido_assert_set_clientdata;
+  - fido_cbor_info_algorithm_cose;
+  - fido_cbor_info_algorithm_count;
+  - fido_cbor_info_algorithm_type;
+  - fido_cbor_info_transports_len;
+  - fido_cbor_info_transports_ptr;
+  - fido_cred_set_clientdata;
+  - fido_cred_set_id;
+  - fido_credman_set_dev_rk;
+  - fido_dev_is_winhello.
+ ** fido2-token: new -Sc option to update a resident credential.
+ ** Documentation and reliability fixes.
+ ** HID access serialisation on Linux.
+
 * Version 1.7.0 (2021-03-29)
  ** New dependency on zlib.
  ** Fixed musl build; gh#259.

@@ -64,7 +64,6 @@ size_t pack_dummy(uint8_t *, size_t);
 void mutate(struct param *, unsigned int, unsigned int);
 void test(const struct param *);
 
-size_t xstrlen(const char *);
 void consume(const void *, size_t);
 void consume_str(const char *);
 

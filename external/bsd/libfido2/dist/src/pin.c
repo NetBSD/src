@@ -15,8 +15,8 @@
 #define CTAP21_UV_TOKEN_PERM_LARGEBLOB	0x10
 #define CTAP21_UV_TOKEN_PERM_CONFIG	0x20
 
-static int
-sha256(const unsigned char *data, size_t data_len, fido_blob_t *digest)
+int
+fido_sha256(fido_blob_t *digest, const u_char *data, size_t data_len)
 {
 	if ((digest->ptr = calloc(1, SHA256_DIGEST_LENGTH)) == NULL)
 		return (-1);
@@ -24,9 +24,7 @@ sha256(const unsigned char *data, size_t data_len, fido_blob_t *digest)
 	digest->len = SHA256_DIGEST_LENGTH;
 
 	if (SHA256(data, data_len, digest->ptr) != digest->ptr) {
-		free(digest->ptr);
-		digest->ptr = NULL;
-		digest->len = 0;
+		fido_blob_reset(digest);
 		return (-1);
 	}
 
@@ -46,7 +44,7 @@ pin_sha256_enc(const fido_dev_t *dev, const fido_blob_t *shared,
 		goto fail;
 	}
 
-	if (sha256(pin->ptr, pin->len, ph) < 0 || ph->len < 16) {
+	if (fido_sha256(ph, pin->ptr, pin->len) < 0 || ph->len < 16) {
 		fido_log_debug("%s: SHA256", __func__);
 		r = FIDO_ERR_INTERNAL;
 		goto fail;
@@ -159,7 +157,13 @@ ctap20_uv_token_tx(fido_dev_t *dev, const char *pin, const fido_blob_t *ecdh,
 	memset(&f, 0, sizeof(f));
 	memset(argv, 0, sizeof(argv));
 
-	if (pin == NULL || (p = fido_blob_new()) == NULL || fido_blob_set(p,
+	if (pin == NULL) {
+		fido_log_debug("%s: NULL pin", __func__);
+		r = FIDO_ERR_PIN_REQUIRED;
+		goto fail;
+	}
+
+	if ((p = fido_blob_new()) == NULL || fido_blob_set(p,
 	    (const unsigned char *)pin, strlen(pin)) < 0) {
 		fido_log_debug("%s: fido_blob_set", __func__);
 		r = FIDO_ERR_INVALID_ARGUMENT;
@@ -205,7 +209,7 @@ ctap21_uv_token_tx(fido_dev_t *dev, const char *pin, const fido_blob_t *ecdh,
 	fido_blob_t	*p = NULL;
 	fido_blob_t	*phe = NULL;
 	cbor_item_t	*argv[10];
-	uint8_t		 subcmd = 6;
+	uint8_t		 subcmd;
 	int		 r;
 
 	memset(&f, 0, sizeof(f));
@@ -222,7 +226,14 @@ ctap21_uv_token_tx(fido_dev_t *dev, const char *pin, const fido_blob_t *ecdh,
 			fido_log_debug("%s: pin_sha256_enc", __func__);
 			goto fail;
 		}
-		subcmd = 9;
+		subcmd = 9; /* getPinUvAuthTokenUsingPinWithPermissions */
+	} else {
+		if (fido_dev_has_uv(dev) == false) {
+			fido_log_debug("%s: fido_dev_has_uv", __func__);
+			r = FIDO_ERR_PIN_REQUIRED;
+			goto fail;
+		}
+		subcmd = 6; /* getPinUvAuthTokenUsingUvWithPermissions */
 	}
 
 	if ((argv[0] = cbor_encode_pin_opt(dev)) == NULL ||
@@ -676,18 +687,4 @@ fail:
 	fido_blob_free(&token);
 
 	return (r);
-}
-
-bool
-fido_dev_can_get_uv_token(const fido_dev_t *dev, const char *pin, fido_opt_t uv)
-{
-	if (pin != NULL)
-		return (true);
-	if (fido_dev_supports_permissions(dev)) {
-		if (uv != FIDO_OPT_OMIT)
-			return (uv == FIDO_OPT_TRUE);
-		return (fido_dev_has_uv(dev));
-	}
-
-	return (false);
 }

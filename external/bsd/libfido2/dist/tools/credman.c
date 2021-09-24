@@ -271,3 +271,59 @@ out:
 
 	exit(ok);
 }
+
+int
+credman_update_rk(const char *path, const char *user_id, const char *cred_id,
+    const char *name, const char *display_name)
+{
+	fido_dev_t *dev = NULL;
+	fido_cred_t *cred = NULL;
+	char *pin = NULL;
+	void *user_id_ptr = NULL;
+	void *cred_id_ptr = NULL;
+	size_t user_id_len = 0;
+	size_t cred_id_len = 0;
+	int r, ok = 1;
+
+	dev = open_dev(path);
+	if (base64_decode(user_id, &user_id_ptr, &user_id_len) < 0 ||
+	    base64_decode(cred_id, &cred_id_ptr, &cred_id_len) < 0) {
+		warnx("base64_decode");
+		goto out;
+	}
+	if ((cred = fido_cred_new()) == NULL) {
+		warnx("fido_cred_new");
+		goto out;
+	}
+	if ((r = fido_cred_set_id(cred, cred_id_ptr, cred_id_len)) != FIDO_OK) { 
+		warnx("fido_cred_set_id: %s",  fido_strerr(r));
+		goto out;
+	}
+	if ((r = fido_cred_set_user(cred, user_id_ptr, user_id_len, name,
+	    display_name, NULL)) != FIDO_OK) {
+		warnx("fido_cred_set_user: %s", fido_strerr(r));
+		goto out;
+	}
+	if ((r = fido_credman_set_dev_rk(dev, cred, NULL)) != FIDO_OK &&
+	    should_retry_with_pin(dev, r)) {
+		if ((pin = get_pin(path)) == NULL)
+			goto out;
+		r = fido_credman_set_dev_rk(dev, cred, pin);
+		freezero(pin, PINBUF_LEN);
+		pin = NULL;
+	}
+	if (r != FIDO_OK) {
+		warnx("fido_credman_set_dev_rk: %s", fido_strerr(r));
+		goto out;
+	}
+
+	ok = 0;
+out:
+	free(user_id_ptr);
+	free(cred_id_ptr);
+	fido_dev_close(dev);
+	fido_dev_free(&dev);
+	fido_cred_free(&cred);
+
+	exit(ok);
+}

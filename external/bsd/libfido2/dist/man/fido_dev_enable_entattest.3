@@ -81,15 +81,18 @@ Configuration settings are reflected in the payload returned by the
 authenticator in response to a
 .Xr fido_dev_get_cbor_info 3
 call.
+.Sh RETURN VALUES
+The error codes returned by
+.Fn fido_dev_enable_entattest ,
+.Fn fido_dev_toggle_always_uv ,
+.Fn fido_dev_force_pin_change ,
+and
+.Fn fido_dev_set_pin_minlen
+are defined in
+.In fido/err.h .
+On success,
+.Dv FIDO_OK
+is returned.
 .Sh SEE ALSO
 .Xr fido_dev_get_cbor_info 3 ,
 .Xr fido_dev_reset 3
-.Sh CAVEATS
-Authenticator configuration is a tentative feature of FIDO 2.1.
-Applications willing to strictly abide by FIDO 2.0 should refrain
-from using authenticator configuration.
-Applications using authenticator configuration should ensure the
-feature is supported by the authenticator prior to using the
-corresponding API.
-Since FIDO 2.1 hasn't been finalised, there is a chance the
-functionality and associated data structures may change.

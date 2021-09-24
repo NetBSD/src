@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019 Yubico AB. All rights reserved.
+ * Copyright (c) 2019-2021 Yubico AB. All rights reserved.
  * Use of this source code is governed by a BSD-style
  * license that can be found in the LICENSE file.
  */
@@ -16,6 +16,7 @@
 #define CMD_RK_BEGIN		0x04
 #define CMD_RK_NEXT		0x05
 #define CMD_DELETE_CRED		0x06
+#define CMD_UPDATE_CRED		0x07
 
 static int
 credman_grow_array(void **ptr, size_t *n_alloc, size_t *n_rx, size_t n,
@@ -50,10 +51,11 @@ credman_grow_array(void **ptr, size_t *n_alloc, size_t *n_rx, size_t n,
 }
 
 static int
-credman_prepare_hmac(uint8_t cmd, const fido_blob_t *body, cbor_item_t **param,
+credman_prepare_hmac(uint8_t cmd, const void *body, cbor_item_t **param,
     fido_blob_t *hmac_data)
 {
-	cbor_item_t *param_cbor[2];
+	cbor_item_t *param_cbor[3];
+	const fido_cred_t *cred;
 	size_t n;
 	int ok = -1;
 
@@ -65,21 +67,33 @@ credman_prepare_hmac(uint8_t cmd, const fido_blob_t *body, cbor_item_t **param,
 	switch (cmd) {
 	case CMD_RK_BEGIN:
 		n = 1;
-		param_cbor[n - 1] = fido_blob_encode(body);
+		if ((param_cbor[0] = fido_blob_encode(body)) == NULL) {
+			fido_log_debug("%s: cbor encode", __func__);
+			goto fail;
+		}
 		break;
 	case CMD_DELETE_CRED:
 		n = 2;
-		param_cbor[n - 1] = cbor_encode_pubkey(body);
+		if ((param_cbor[1] = cbor_encode_pubkey(body)) == NULL) {
+			fido_log_debug("%s: cbor encode", __func__);
+			goto fail;
+		}
+		break;
+	case CMD_UPDATE_CRED:
+		n = 3;
+		cred = body;
+		param_cbor[1] = cbor_encode_pubkey(&cred->attcred.id);
+		param_cbor[2] = cbor_encode_user_entity(&cred->user);
+		if (param_cbor[1] == NULL || param_cbor[2] == NULL) {
+			fido_log_debug("%s: cbor encode", __func__);
+			goto fail;
+		}
 		break;
 	default:
 		fido_log_debug("%s: unknown cmd=0x%02x", __func__, cmd);
 		return (-1);
 	}
 
-	if (param_cbor[n - 1] == NULL) {
-		fido_log_debug("%s: cbor encode", __func__);
-		return (-1);
-	}
 	if ((*param = cbor_flatten_vector(param_cbor, n)) == NULL) {
 		fido_log_debug("%s: cbor_flatten_vector", __func__);
 		goto fail;
@@ -97,8 +111,8 @@ fail:
 }
 
 static int
-credman_tx(fido_dev_t *dev, uint8_t subcmd, const fido_blob_t *param,
-    const char *pin, const char *rp_id, fido_opt_t uv)
+credman_tx(fido_dev_t *dev, uint8_t subcmd, const void *param, const char *pin,
+    const char *rp_id, fido_opt_t uv)
 {
 	fido_blob_t	 f;
 	fido_blob_t	*ecdh = NULL;
@@ -112,6 +126,12 @@ credman_tx(fido_dev_t *dev, uint8_t subcmd, const fido_blob_t *param,
 	memset(&hmac, 0, sizeof(hmac));
 	memset(&argv, 0, sizeof(argv));
 
+	if (fido_dev_is_fido2(dev) == false) {
+		fido_log_debug("%s: fido_dev_is_fido2", __func__);
+		r = FIDO_ERR_INVALID_COMMAND;
+		goto fail;
+	}
+
 	/* subCommand */
 	if ((argv[0] = cbor_build_uint8(subcmd)) == NULL) {
 		fido_log_debug("%s: cbor encode", __func__);
@@ -119,7 +139,7 @@ credman_tx(fido_dev_t *dev, uint8_t subcmd, const fido_blob_t *param,
 	}
 
 	/* pinProtocol, pinAuth */
-	if (fido_dev_can_get_uv_token(dev, pin, uv)) {
+	if (pin != NULL || uv == FIDO_OPT_TRUE) {
 		if (credman_prepare_hmac(subcmd, param, &argv[1], &hmac) < 0) {
 			fido_log_debug("%s: credman_prepare_hmac", __func__);
 			goto fail;
@@ -208,7 +228,7 @@ credman_get_metadata_wait(fido_dev_t *dev, fido_credman_metadata_t *metadata,
 	int r;
 
 	if ((r = credman_tx(dev, CMD_CRED_METADATA, NULL, pin, NULL,
-	    FIDO_OPT_OMIT)) != FIDO_OK ||
+	    FIDO_OPT_TRUE)) != FIDO_OK ||
 	    (r = credman_rx_metadata(dev, metadata, ms)) != FIDO_OK)
 		return (r);
 
@@ -219,9 +239,6 @@ int
 fido_credman_get_dev_metadata(fido_dev_t *dev, fido_credman_metadata_t *metadata,
     const char *pin)
 {
-	if (fido_dev_is_fido2(dev) == false)
-		return (FIDO_ERR_INVALID_COMMAND);
-
 	return (credman_get_metadata_wait(dev, metadata, pin, -1));
 }
 
@@ -388,7 +405,7 @@ credman_get_rk_wait(fido_dev_t *dev, const char *rp_id, fido_credman_rk_t *rk,
 	rp_dgst.len = sizeof(dgst);
 
 	if ((r = credman_tx(dev, CMD_RK_BEGIN, &rp_dgst, pin, rp_id,
-	    FIDO_OPT_OMIT)) != FIDO_OK ||
+	    FIDO_OPT_TRUE)) != FIDO_OK ||
 	    (r = credman_rx_rk(dev, rk, ms)) != FIDO_OK)
 		return (r);
 
@@ -407,9 +424,6 @@ int
 fido_credman_get_dev_rk(fido_dev_t *dev, const char *rp_id,
     fido_credman_rk_t *rk, const char *pin)
 {
-	if (fido_dev_is_fido2(dev) == false)
-		return (FIDO_ERR_INVALID_COMMAND);
-
 	return (credman_get_rk_wait(dev, rp_id, rk, pin, -1));
 }
 
@@ -426,7 +440,7 @@ credman_del_rk_wait(fido_dev_t *dev, const unsigned char *cred_id,
 		return (FIDO_ERR_INVALID_ARGUMENT);
 
 	if ((r = credman_tx(dev, CMD_DELETE_CRED, &cred, pin, NULL,
-	    FIDO_OPT_OMIT)) != FIDO_OK ||
+	    FIDO_OPT_TRUE)) != FIDO_OK ||
 	    (r = fido_rx_cbor_status(dev, ms)) != FIDO_OK)
 		goto fail;
 
@@ -441,9 +455,6 @@ int
 fido_credman_del_dev_rk(fido_dev_t *dev, const unsigned char *cred_id,
     size_t cred_id_len, const char *pin)
 {
-	if (fido_dev_is_fido2(dev) == false)
-		return (FIDO_ERR_INVALID_COMMAND);
-
 	return (credman_del_rk_wait(dev, cred_id, cred_id_len, pin, -1));
 }
 
@@ -477,9 +488,7 @@ credman_reset_rp(fido_credman_rp_t *rp)
 		free(rp->ptr[i].rp_entity.name);
 		rp->ptr[i].rp_entity.id = NULL;
 		rp->ptr[i].rp_entity.name = NULL;
-		free(rp->ptr[i].rp_id_hash.ptr);
-		memset(&rp->ptr[i].rp_id_hash, 0,
-		    sizeof(rp->ptr[i].rp_id_hash));
+		fido_blob_reset(&rp->ptr[i].rp_id_hash);
 	}
 
 	free(rp->ptr);
@@ -591,7 +600,7 @@ credman_get_rp_wait(fido_dev_t *dev, fido_credman_rp_t *rp, const char *pin,
 	int r;
 
 	if ((r = credman_tx(dev, CMD_RP_BEGIN, NULL, pin, NULL,
-	    FIDO_OPT_OMIT)) != FIDO_OK ||
+	    FIDO_OPT_TRUE)) != FIDO_OK ||
 	    (r = credman_rx_rp(dev, rp, ms)) != FIDO_OK)
 		return (r);
 
@@ -609,10 +618,27 @@ credman_get_rp_wait(fido_dev_t *dev, fido_credman_rp_t *rp, const char *pin,
 int
 fido_credman_get_dev_rp(fido_dev_t *dev, fido_credman_rp_t *rp, const char *pin)
 {
-	if (fido_dev_is_fido2(dev) == false)
-		return (FIDO_ERR_INVALID_COMMAND);
-
 	return (credman_get_rp_wait(dev, rp, pin, -1));
+}
+
+static int
+credman_set_dev_rk_wait(fido_dev_t *dev, fido_cred_t *cred, const char *pin,
+    int ms)
+{
+	int r;
+
+	if ((r = credman_tx(dev, CMD_UPDATE_CRED, cred, pin, NULL,
+	    FIDO_OPT_TRUE)) != FIDO_OK ||
+	    (r = fido_rx_cbor_status(dev, ms)) != FIDO_OK)
+		return (r);
+
+	return (FIDO_OK);
+}
+
+int
+fido_credman_set_dev_rk(fido_dev_t *dev, fido_cred_t *cred, const char *pin)
+{
+	return (credman_set_dev_rk_wait(dev, cred, pin, -1));
 }
 
 fido_credman_rk_t *

@@ -125,6 +125,15 @@ int fido_nfc_rx(fido_dev_t *, uint8_t, unsigned char *, size_t, int);
 int fido_nfc_tx(fido_dev_t *, uint8_t, const unsigned char *, size_t);
 int fido_nfc_set_sigmask(void *, const fido_sigset_t *);
 
+/* windows hello */
+int fido_winhello_manifest(fido_dev_info_t *, size_t, size_t *);
+int fido_winhello_open(fido_dev_t *);
+int fido_winhello_close(fido_dev_t *);
+int fido_winhello_cancel(fido_dev_t *);
+int fido_winhello_get_assert(fido_dev_t *, fido_assert_t *, const char *);
+int fido_winhello_get_cbor_info(fido_dev_t *, fido_cbor_info_t *);
+int fido_winhello_make_cred(fido_dev_t *, fido_cred_t *, const char *);
+
 /* generic i/o */
 int fido_rx_cbor_status(fido_dev_t *, int);
 int fido_rx(fido_dev_t *, uint8_t, void *, size_t, int);
@@ -168,17 +177,18 @@ int fido_dev_get_uv_token(fido_dev_t *, uint8_t, const char *,
 uint64_t fido_dev_maxmsgsize(const fido_dev_t *);
 int fido_do_ecdh(fido_dev_t *, es256_pk_t **, fido_blob_t **);
 bool fido_dev_supports_permissions(const fido_dev_t *);
-bool fido_dev_can_get_uv_token(const fido_dev_t *, const char *, fido_opt_t);
 
 /* misc */
 void fido_assert_reset_rx(fido_assert_t *);
 void fido_assert_reset_tx(fido_assert_t *);
 void fido_cred_reset_rx(fido_cred_t *);
 void fido_cred_reset_tx(fido_cred_t *);
-int fido_check_rp_id(const char *, const unsigned char *);
-int fido_check_flags(uint8_t, fido_opt_t, fido_opt_t);
-int fido_get_random(void *, size_t);
+void fido_cbor_info_reset(fido_cbor_info_t *);
 int fido_blob_serialise(fido_blob_t *, const cbor_item_t *);
+int fido_check_flags(uint8_t, fido_opt_t, fido_opt_t);
+int fido_check_rp_id(const char *, const unsigned char *);
+int fido_get_random(void *, size_t);
+int fido_sha256(fido_blob_t *, const u_char *, size_t);
 
 /* crypto */
 int fido_verify_sig_es256(const fido_blob_t *, const es256_pk_t *,
@@ -214,12 +224,14 @@ uint32_t uniform_random(uint32_t);
 #define FIDO_DEV_UV_SET 	0x040
 #define FIDO_DEV_UV_UNSET	0x080
 #define FIDO_DEV_TOKEN_PERMS	0x100
+#define FIDO_DEV_WINHELLO	0x200
 
 /* miscellanea */
 #define FIDO_DUMMY_CLIENTDATA	""
 #define FIDO_DUMMY_RP_ID	"localhost"
 #define FIDO_DUMMY_USER_NAME	"dummy"
 #define FIDO_DUMMY_USER_ID	1
+#define FIDO_WINHELLO_PATH	"windows://hello"
 
 #ifdef __cplusplus
 } /* extern "C" */

@@ -86,6 +86,16 @@ verify_cred(int type, const char *fmt, const unsigned char *authdata_ptr,
 	if (uv && (r = fido_cred_set_uv(cred, FIDO_OPT_TRUE)) != FIDO_OK)
 		errx(1, "fido_cred_set_uv: %s (0x%x)", fido_strerr(r), r);
 
+	/* fmt */
+	r = fido_cred_set_fmt(cred, fmt);
+	if (r != FIDO_OK)
+		errx(1, "fido_cred_set_fmt: %s (0x%x)", fido_strerr(r), r);
+
+	if (!strcmp(fido_cred_fmt(cred), "none")) {
+		warnx("no attestation data, skipping credential verification");
+		goto out;
+	}
+
 	/* x509 */
 	r = fido_cred_set_x509(cred, x509_ptr, x509_len);
 	if (r != FIDO_OK)
@@ -96,15 +106,11 @@ verify_cred(int type, const char *fmt, const unsigned char *authdata_ptr,
 	if (r != FIDO_OK)
 		errx(1, "fido_cred_set_sig: %s (0x%x)", fido_strerr(r), r);
 
-	/* fmt */
-	r = fido_cred_set_fmt(cred, fmt);
-	if (r != FIDO_OK)
-		errx(1, "fido_cred_set_fmt: %s (0x%x)", fido_strerr(r), r);
-
 	r = fido_cred_verify(cred);
 	if (r != FIDO_OK)
 		errx(1, "fido_cred_verify: %s (0x%x)", fido_strerr(r), r);
 
+out:
 	if (key_out != NULL) {
 		/* extract the credential pubkey */
 		if (type == COSE_ES256) {

@@ -37,6 +37,7 @@ list(APPEND FIDO_SOURCES
 if(FUZZ)
 	list(APPEND FIDO_SOURCES ../fuzz/prng.c)
 	list(APPEND FIDO_SOURCES ../fuzz/uniform_random.c)
+	list(APPEND FIDO_SOURCES ../fuzz/udev.c)
 	list(APPEND FIDO_SOURCES ../fuzz/wrap.c)
 endif()
 if(NFC_LINUX)
@@ -45,8 +46,14 @@ endif()
 
 if(USE_HIDAPI)
 	list(APPEND FIDO_SOURCES hid_hidapi.c)
+	if(NOT WIN32 AND NOT APPLE)
+		list(APPEND FIDO_SOURCES hid_unix.c)
+	endif()
 elseif(WIN32)
 	list(APPEND FIDO_SOURCES hid_win.c)
+	if(USE_WINHELLO)
+		list(APPEND FIDO_SOURCES winhello.c)
+	endif()
 elseif(APPLE)
 	list(APPEND FIDO_SOURCES hid_osx.c)
 elseif(CMAKE_SYSTEM_NAME STREQUAL "Linux")
@@ -78,22 +85,31 @@ list(APPEND COMPAT_SOURCES
 	../openbsd-compat/timingsafe_bcmp.c
 )
 
+if(WIN32)
+	list(APPEND BASE_LIBRARIES wsock32 ws2_32 bcrypt setupapi hid)
+	if(USE_WINHELLO)
+		list(APPEND BASE_LIBRARIES webauthn)
+	endif()
+elseif(APPLE)
+	list(APPEND BASE_LIBRARIES "-framework CoreFoundation" "-framework IOKit")
+endif()
+
+list(APPEND TARGET_LIBRARIES
+	${CBOR_LIBRARIES}
+	${CRYPTO_LIBRARIES}
+	${UDEV_LIBRARIES}
+	${BASE_LIBRARIES}
+	${HIDAPI_LIBRARIES}
+	${ZLIB_LIBRARIES}
+)
+
 # static library
 if(BUILD_STATIC_LIBS)
 	add_library(fido2 STATIC ${FIDO_SOURCES} ${COMPAT_SOURCES})
-	target_link_libraries(fido2 ${CBOR_LIBRARIES} ${CRYPTO_LIBRARIES}
-		${UDEV_LIBRARIES} ${BASE_LIBRARIES} ${HIDAPI_LIBRARIES} ${ZLIB_LIBRARIES})
-	if(WIN32)
-		if (MINGW)
-			target_link_libraries(fido2 wsock32 ws2_32 bcrypt setupapi hid)
-		else()
-			target_link_libraries(fido2 wsock32 ws2_32 bcrypt SetupAPI hid)
-			set_target_properties(fido2 PROPERTIES OUTPUT_NAME fido2_static)
-		endif()
-	elseif(APPLE)
-		target_link_libraries(fido2 "-framework CoreFoundation"
-			"-framework IOKit")
+	if(WIN32 AND NOT MINGW)
+		set_target_properties(fido2 PROPERTIES OUTPUT_NAME fido2_static)
 	endif()
+	target_link_libraries(fido2 ${TARGET_LIBRARIES})
 	install(TARGETS fido2 ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
 		LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR})
 endif()
@@ -101,26 +117,13 @@ endif()
 # dynamic library
 if(BUILD_SHARED_LIBS)
 	add_library(fido2_shared SHARED ${FIDO_SOURCES} ${COMPAT_SOURCES})
-	target_link_libraries(fido2_shared ${CBOR_LIBRARIES} ${CRYPTO_LIBRARIES}
-		${UDEV_LIBRARIES} ${BASE_LIBRARIES} ${HIDAPI_LIBRARIES} ${ZLIB_LIBRARIES})
-	if(WIN32)
-		if (MINGW)
-			target_link_libraries(fido2_shared wsock32 ws2_32 bcrypt
-				setupapi hid)
-		else()
-			target_link_libraries(fido2_shared wsock32 ws2_32 bcrypt
-				SetupAPI hid)
-		endif()
-	elseif(APPLE)
-		target_link_libraries(fido2_shared "-framework CoreFoundation"
-			"-framework IOKit")
-	endif()
 	set_target_properties(fido2_shared PROPERTIES OUTPUT_NAME fido2
 		VERSION ${FIDO_VERSION} SOVERSION ${FIDO_MAJOR})
+	target_link_libraries(fido2_shared ${TARGET_LIBRARIES})
 	install(TARGETS fido2_shared
 		ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
 		LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
-		RUNTIME DESTINATION ${CMAKE_INSTALL_LIBDIR})
+		RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
 endif()
 
 install(FILES fido.h DESTINATION include)

@@ -53,7 +53,7 @@
 .Ft const unsigned char *
 .Fn fido_assert_clientdata_hash_ptr "const fido_assert_t *assert"
 .Ft const unsigned char *
-.Fn fido_assert_blob_ptr "const fido_assert_t *assert"
+.Fn fido_assert_blob_ptr "const fido_assert_t *assert" "size_t idx"
 .Ft const unsigned char *
 .Fn fido_assert_hmac_secret_ptr "const fido_assert_t *assert" "size_t idx"
 .Ft const unsigned char *
@@ -69,7 +69,7 @@
 .Ft size_t
 .Fn fido_assert_clientdata_hash_len "const fido_assert_t *assert"
 .Ft size_t
-.Fn fido_assert_blob_len "const fido_assert_t *assert"
+.Fn fido_assert_blob_len "const fido_assert_t *assert" "size_t idx"
 .Ft size_t
 .Fn fido_assert_hmac_secret_len "const fido_assert_t *assert" "size_t idx"
 .Ft size_t

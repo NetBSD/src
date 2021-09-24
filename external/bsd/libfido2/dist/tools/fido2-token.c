@@ -27,6 +27,7 @@ usage(void)
 "       fido2-token -R [-d] device\n"
 "       fido2-token -S [-adefu] [-l pin_length] [-i template_id -n template_name] device\n"
 "       fido2-token -Sb [-k key_path] [-i cred_id -n rp_id] blob_path device\n"
+"       fido2-token -Sc -i cred_id -k user_id -n name -p display_name device\n"
 "       fido2-token -V\n"
 	);
 
@@ -59,6 +60,7 @@ main(int argc, char **argv)
 		case 'k':
 		case 'l':
 		case 'n':
+		case 'p':
 		case 'r':
 		case 'u':
 			break; /* ignore */
