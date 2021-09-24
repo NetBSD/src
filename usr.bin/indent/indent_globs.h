@@ -1,4 +1,4 @@
-/*	$NetBSD: indent_globs.h,v 1.21 2021/03/13 23:36:10 rillig Exp $	*/
+/*	$NetBSD: indent_globs.h,v 1.22 2021/09/24 18:14:06 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -63,10 +63,12 @@ extern char       *s_code;		/* start ... */
 extern char       *e_code;		/* .. and end of stored code */
 extern char       *l_code;		/* limit of code section */
 
-extern char       *combuf;		/* buffer for comments */
-extern char       *s_com;		/* start ... */
-extern char       *e_com;		/* ... and end of stored comments */
-extern char       *l_com;		/* limit of comment buffer */
+extern struct comment_buffer {
+    char *buf;				/* buffer for comments */
+    char *s;				/* start ... */
+    char *e;				/* ... and end of stored comments */
+    char *l;				/* limit of comment buffer */
+} com;
 
 #define token s_token
 extern char       *tokenbuf;		/* the last token scanned */

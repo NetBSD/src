@@ -1,4 +1,4 @@
-/*	$NetBSD: io.c,v 1.51 2021/09/24 18:00:13 rillig Exp $	*/
+/*	$NetBSD: io.c,v 1.52 2021/09/24 18:14:06 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -46,7 +46,7 @@ static char sccsid[] = "@(#)io.c	8.1 (Berkeley) 6/6/93";
 #include <sys/cdefs.h>
 #ifndef lint
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: io.c,v 1.51 2021/09/24 18:00:13 rillig Exp $");
+__RCSID("$NetBSD: io.c,v 1.52 2021/09/24 18:14:06 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/io.c 334927 2018-06-10 16:44:18Z pstef $");
 #endif
@@ -123,7 +123,7 @@ dump_line(void)
 	ps.procname[0] = 0;
     }
 
-    if (s_code == e_code && s_lab == e_lab && s_com == e_com) {
+    if (s_code == e_code && s_lab == e_lab && com.s == com.e) {
 	if (suppress_blanklines > 0)
 	    suppress_blanklines--;
 	else {
@@ -217,9 +217,9 @@ dump_line(void)
 	    output_range(s_code, e_code);
 	    cur_col = 1 + indentation_after(cur_col - 1, s_code);
 	}
-	if (s_com != e_com) {		/* print comment, if any */
+	if (com.s != com.e) {		/* print comment, if any */
 	    int target_col = ps.com_col;
-	    char *com_st = s_com;
+	    char *com_st = com.s;
 
 	    target_col += ps.comment_delta;
 	    while (*com_st == '\t')	/* consider original indentation in
@@ -239,10 +239,10 @@ dump_line(void)
 		cur_col = 1;
 		++ps.out_lines;
 	    }
-	    while (e_com > com_st && isspace((unsigned char)e_com[-1]))
-		e_com--;
+	    while (com.e > com_st && isspace((unsigned char)com.e[-1]))
+		com.e--;
 	    (void)output_indent(cur_col - 1, target_col - 1);
-	    output_range(com_st, e_com);
+	    output_range(com_st, com.e);
 	    ps.comment_delta = ps.n_comment_delta;
 	    ++ps.com_lines;	/* count lines with comments */
 	}
@@ -260,7 +260,7 @@ dump_line(void)
     }
 
     /* keep blank lines after '//' comments */
-    if (e_com - s_com > 1 && s_com[1] == '/'
+    if (com.e - com.s > 1 && com.s[1] == '/'
 	&& s_token < e_token && isspace((unsigned char)s_token[0]))
 	output_range(s_token, e_token);
 
@@ -274,7 +274,7 @@ dump_line(void)
     ps.dumped_decl_indent = 0;
     *(e_lab = s_lab) = '\0';	/* reset buffers */
     *(e_code = s_code) = '\0';
-    *(e_com = s_com = combuf + 1) = '\0';
+    *(com.e = com.s = com.buf + 1) = '\0';
     ps.ind_level = ps.i_l_follow;
     ps.paren_level = ps.p_l_follow;
     if (ps.paren_level > 0) {
@@ -406,7 +406,7 @@ fill_buffer(void)
 		    while (*p == ' ' || *p == '\t')
 			p++;
 		    if (p[0] == '*' && p[1] == '/' && p[2] == '\n' && comena) {
-			if (s_com != e_com || s_lab != e_lab || s_code != e_code)
+			if (com.s != com.e || s_lab != e_lab || s_code != e_code)
 			    dump_line();
 			if (!(inhibit_formatting = comena - 1)) {
 			    n_real_blanklines = 0;
