@@ -1,4 +1,4 @@
-/*	$NetBSD: rss_config.h,v 1.1 2018/02/16 04:48:32 knakahara Exp $  */
+/*	$NetBSD: rss_config.h,v 1.2 2021/09/24 04:11:02 knakahara Exp $  */
 
 /*
  * Copyright (c) 2018 Internet Initiative Japan Inc.
@@ -31,6 +31,12 @@
 
 #define RSS_KEYSIZE 40
 
+#define RSS_TOEPLITZ_USE_TCP_PORT __BIT(0)
+#define RSS_TOEPLITZ_USE_UDP_PORT __BIT(1)
+
 void	rss_getkey(uint8_t *);
+
+uint32_t rss_toeplitz_hash_from_mbuf_ipv4(const struct mbuf *, u_int);
+uint32_t rss_toeplitz_hash_from_mbuf_ipv6(const struct mbuf *, u_int);
 
 #endif /* _NET_RSS_CONFIG_H_ */
