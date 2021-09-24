@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.926 2021/09/19 15:51:27 thorpej Exp $
+# $NetBSD: shl.mi,v 1.927 2021/09/24 13:13:07 christos Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -328,8 +328,8 @@
 ./usr/lib/libfetch.so.3				base-sys-shlib		compatfile
 ./usr/lib/libfetch.so.3.0			base-sys-shlib		compatfile
 ./usr/lib/libfido2.so				base-sys-shlib		compatfile
-./usr/lib/libfido2.so.3				base-sys-shlib		compatfile
-./usr/lib/libfido2.so.3.0			base-sys-shlib		compatfile
+./usr/lib/libfido2.so.4				base-sys-shlib		compatfile
+./usr/lib/libfido2.so.4.0			base-sys-shlib		compatfile
 ./usr/lib/libform.so				base-sys-shlib		compatfile
 ./usr/lib/libform.so.8				base-sys-shlib		compatfile
 ./usr/lib/libform.so.8.0			base-sys-shlib		compatfile
