@@ -130,7 +130,8 @@ fido_dev_info_free(fido_dev_info_t **devlist_p, size_t n)
 		return;
 
 	for (size_t i = 0; i < n; i++) {
-		const fido_dev_info_t *di = &devlist[i];
+		const fido_dev_info_t *di;
+		di = &devlist[i];
 		free(di->path);
 		free(di->manufacturer);
 		free(di->product);

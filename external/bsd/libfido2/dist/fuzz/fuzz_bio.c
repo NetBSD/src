@@ -272,7 +272,7 @@ done:
 static void
 consume_template(const fido_bio_template_t *t)
 {
-	consume(fido_bio_template_name(t), xstrlen(fido_bio_template_name(t)));
+	consume_str(fido_bio_template_name(t));
 	consume(fido_bio_template_id_ptr(t), fido_bio_template_id_len(t));
 }
 

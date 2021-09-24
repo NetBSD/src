@@ -28,19 +28,20 @@ set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 set(CMAKE_COLOR_MAKEFILE OFF)
 set(CMAKE_VERBOSE_MAKEFILE ON)
 set(FIDO_MAJOR "1")
-set(FIDO_MINOR "7")
+set(FIDO_MINOR "8")
 set(FIDO_PATCH "0")
 set(FIDO_VERSION ${FIDO_MAJOR}.${FIDO_MINOR}.${FIDO_PATCH})
 
-option(BUILD_EXAMPLES    "Build example programs"             ON)
-option(BUILD_MANPAGES    "Build man pages"                    ON)
-option(BUILD_SHARED_LIBS "Build the shared library"           ON)
-option(BUILD_STATIC_LIBS "Build the static library"           ON)
-option(BUILD_TOOLS       "Build tool programs"                ON)
-option(FUZZ              "Enable fuzzing instrumentation"     OFF)
-option(LIBFUZZER         "Build libfuzzer harnesses"          OFF)
-option(USE_HIDAPI        "Use hidapi as the HID backend"      OFF)
-option(NFC_LINUX         "Experimental NFC support on Linux"  OFF)
+option(BUILD_EXAMPLES    "Build example programs"                  ON)
+option(BUILD_MANPAGES    "Build man pages"                         ON)
+option(BUILD_SHARED_LIBS "Build the shared library"                ON)
+option(BUILD_STATIC_LIBS "Build the static library"                ON)
+option(BUILD_TOOLS       "Build tool programs"                     ON)
+option(FUZZ              "Enable fuzzing instrumentation"          OFF)
+option(LIBFUZZER         "Build libfuzzer harnesses"               OFF)
+option(USE_HIDAPI        "Use hidapi as the HID backend"           OFF)
+option(USE_WINHELLO      "Abstract Windows Hello as a FIDO device" OFF)
+option(NFC_LINUX         "Experimental NFC support on Linux"       OFF)
 
 add_definitions(-D_FIDO_MAJOR=${FIDO_MAJOR})
 add_definitions(-D_FIDO_MINOR=${FIDO_MINOR})
@@ -67,6 +68,7 @@ if(NOT MSVC)
 		set(FIDO_CFLAGS "${FIDO_CFLAGS} -D_DARWIN_C_SOURCE")
 		set(FIDO_CFLAGS "${FIDO_CFLAGS} -D__STDC_WANT_LIB_EXT1__=1")
 	elseif(CMAKE_SYSTEM_NAME STREQUAL "Linux")
+		set(NFC_LINUX OFF)
 		set(FIDO_CFLAGS "${FIDO_CFLAGS} -D_GNU_SOURCE")
 		set(FIDO_CFLAGS "${FIDO_CFLAGS} -D_DEFAULT_SOURCE")
 	elseif(CMAKE_SYSTEM_NAME STREQUAL "FreeBSD")
@@ -86,6 +88,7 @@ check_include_files(openssl/opensslv.h HAVE_OPENSSLV_H)
 check_include_files(signal.h HAVE_SIGNAL_H)
 check_include_files(sys/random.h HAVE_SYS_RANDOM_H)
 check_include_files(unistd.h HAVE_UNISTD_H)
+check_include_files("windows.h;webauthn.h" HAVE_WEBAUTHN_H)
 
 check_symbol_exists(arc4random_buf stdlib.h HAVE_ARC4RANDOM_BUF)
 check_symbol_exists(clock_gettime time.h HAVE_CLOCK_GETTIME)
@@ -140,6 +143,7 @@ list(APPEND CHECK_VARIABLES
 	HAVE_TIMESPECSUB
 	HAVE_TIMINGSAFE_BCMP
 	HAVE_UNISTD_H
+	HAVE_WEBAUTHN_H
 )
 
 foreach(v ${CHECK_VARIABLES})
@@ -178,7 +182,8 @@ if(MSVC)
 			# initializer;
 		"C4706" # assignment within conditional expression;
 		"C4996" # The POSIX name for this item is deprecated. Instead,
-			# use the ISO C and C++ conformant name
+			# use the ISO C and C++ conformant name;
+		"C6287" # redundant code: the left and right subexpressions are identical
 		)
 	# The construction in the following 3 lines was taken from LibreSSL's
 	# CMakeLists.txt.
@@ -188,6 +193,10 @@ if(MSVC)
 	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -MP -W4 -WX ${MSVC_DISABLED_WARNINGS_STR}")
 	set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} /Z7 /guard:cf /sdl /RTCcsu")
 	set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} /Zi /guard:cf /sdl")
+	if (HAVE_WEBAUTHN_H)
+		add_definitions(-DUSE_WINHELLO)
+		set(USE_WINHELLO ON)
+	endif()
 else()
 	include(FindPkgConfig)
 	pkg_search_module(CBOR libcbor)
@@ -354,6 +363,8 @@ message(STATUS "CMAKE_C_COMPILER_ID: ${CMAKE_C_COMPILER_ID}")
 message(STATUS "CMAKE_C_FLAGS: ${CMAKE_C_FLAGS}")
 message(STATUS "CMAKE_INSTALL_LIBDIR: ${CMAKE_INSTALL_LIBDIR}")
 message(STATUS "CMAKE_INSTALL_PREFIX: ${CMAKE_INSTALL_PREFIX}")
+message(STATUS "CMAKE_SYSTEM_NAME: ${CMAKE_SYSTEM_NAME}")
+message(STATUS "CMAKE_SYSTEM_VERSION: ${CMAKE_SYSTEM_VERSION}")
 message(STATUS "CRYPTO_INCLUDE_DIRS: ${CRYPTO_INCLUDE_DIRS}")
 message(STATUS "CRYPTO_LIBRARIES: ${CRYPTO_LIBRARIES}")
 message(STATUS "CRYPTO_LIBRARY_DIRS: ${CRYPTO_LIBRARY_DIRS}")
@@ -378,6 +389,7 @@ message(STATUS "UDEV_LIBRARY_DIRS: ${UDEV_LIBRARY_DIRS}")
 message(STATUS "UDEV_RULES_DIR: ${UDEV_RULES_DIR}")
 message(STATUS "UDEV_VERSION: ${UDEV_VERSION}")
 message(STATUS "USE_HIDAPI: ${USE_HIDAPI}")
+message(STATUS "USE_WINHELLO: ${USE_WINHELLO}")
 message(STATUS "NFC_LINUX: ${NFC_LINUX}")
 
 subdirs(src)
