@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.3 2021/06/05 21:24:16 christos Exp $	*/
+/*	$NetBSD: intr.h,v 1.4 2021/09/24 08:07:40 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001, 2003 Wasabi Systems, Inc.
@@ -68,6 +68,10 @@
 
 #define PIC_MAXSOURCES		16
 #define PIC_MAXMAXSOURCES	16
+
+#define	_splraise	pic_splraise
+#define	_spllower	pic_spllower
+#define	splx		pic_splx
 
 #include <arm/pic/picvar.h>
 
