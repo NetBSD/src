@@ -1,4 +1,4 @@
-/* $NetBSD: opt-nfc1.0.stdout,v 1.2 2021/03/06 21:27:39 rillig Exp $ */
+/* $NetBSD: opt-nfc1.0.stdout,v 1.3 2021/09/24 17:37:55 rillig Exp $ */
 /* $FreeBSD$ */
 
 /*
@@ -8,3 +8,22 @@
  *
  *
  */
+
+/* $ No spaces got added around the comment text. */
+/*narrow*/
+
+/* $ The indentation of a single space was preserved. */
+/* $ FIXME: The line must not start with a space. */
+ /* space */
+
+/* $ The indentation was changed from a single tab to a single space. */
+/* $ FIXME: The line must not start with a space. */
+ /* tab	*/
+
+/* $ FIXME: The line must not start with a space. */
+ /* block1 *//* block2 */
+
+/* $ FIXME: The line must not start with a space. */
+/* $ FIXME: It's inconsistent that the first comment gets no spaces. */
+/* $ FIXME: It's inconsistent that the second comment gets spaces. */
+ /*block1*//* block2 */

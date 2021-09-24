@@ -1,4 +1,4 @@
-/* $NetBSD: opt-fc1.0.stdout,v 1.2 2021/03/06 21:27:39 rillig Exp $ */
+/* $NetBSD: opt-fc1.0.stdout,v 1.3 2021/09/24 17:37:55 rillig Exp $ */
 /* $FreeBSD$ */
 
 /*
@@ -7,3 +7,18 @@
  *
  *
  */
+
+/* $ The comment text got surrounded by spaces. */
+/* narrow */
+
+/* $ The indentation got removed. */
+/* space */
+
+/* $ The indentation got removed, only the leading tab got replaced by a space. */
+/* tab	*/
+
+/* $ The space between these comments got removed. */
+/* block1 *//* block2 */
+
+/* $ Both comment texts got surrounded by spaces. */
+/* block1 *//* block2 */
