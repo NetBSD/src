@@ -1,4 +1,4 @@
-/* $NetBSD: comment-line-end.0,v 1.6 2021/09/24 06:30:02 rillig Exp $ */
+/* $NetBSD: comment-line-end.0,v 1.7 2021/09/24 16:29:31 rillig Exp $ */
 /* $FreeBSD$ */
 
 /*
@@ -27,7 +27,6 @@ main(void)
 {
 }
 
-/* FIXME: in the formatted output, the word 'bar' is repeated. */
 void c99_comment(void)
 {
 foo(); // C++ comment
