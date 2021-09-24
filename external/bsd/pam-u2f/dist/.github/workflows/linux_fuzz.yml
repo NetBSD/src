@@ -1,0 +1,29 @@
+name: fuzzer
+
+on: [push, pull_request]
+
+jobs:
+  build:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-20.04]
+        cc: [clang-10]
+        sanitizer: [asan]
+    steps:
+    - uses: actions/checkout@v2
+    - name: Dependencies
+      env:
+        CC: ${{ matrix.cc }}
+      run: |
+        sudo apt -q update
+        sudo apt install -q -y autoconf automake libtool pkg-config \
+          libpam-dev gengetopt libz-dev libudev-dev
+          sudo apt install -q -y ${CC%-*}-tools-${CC#clang-}
+    - name: Fuzz
+      env:
+        CC: ${{ matrix.cc }}
+        SANITIZER: ${{ matrix.sanitizer }}
+      run: |
+        ./build-aux/ci/fuzz-linux-${SANITIZER}.sh

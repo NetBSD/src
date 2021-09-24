@@ -11,7 +11,8 @@ pamu2fcfg - Configuration tool for the U2F PAM module.
 *pamu2fcfg* [_OPTION_]...
 
 == DESCRIPTION
-Perform a U2F registration procedure using a connected U2F token and output a configuration line that can be used with the U2F PAM module.
+Perform a FIDO2/U2F registration procedure using a connected authenticator and
+output a configuration line that can be used with the U2F PAM module.
 
 == OPTIONS
 *-d*, *--debug*::
@@ -21,16 +22,22 @@ Print debug information (highly verbose)
 Print help and exit
 
 *-o*, *--origin*=_STRING_::
-Origin URL to use during registration. Defaults to pam://hostname
+Set the FIDO2 relying party ID to use during registration. Defaults to
+pam://hostname. Before pamu2fcfg v1.1.0, this set the U2F origin URL.
 
 *-i*, *--appid*=_STRING_::
-Application ID to use during registration. Defaults to *origin*
+Set the FIDO2 relying party name to use during registration. Defaults
+to *origin*. Before pamu2fcfg v1.1.0, this set the U2F application ID.
 
 *-r*, *--resident*::
 Generate a resident credential. Defaults to off.
 
 *-t*, *--type*=_STRING_::
-COSE type to use during registration (ES256 or RS256). Defaults to ES256.
+COSE type to use during registration (ES256, EDDSA, or RS256). Defaults to ES256.
+
+*-P*, *--no-user-presence*::
+Allow using the credential without ensuring the user's presence.
+Defaults to off.
 
 *-N*, *--pin-verification*::
 Require PIN verification during authentication. Defaults to off.
