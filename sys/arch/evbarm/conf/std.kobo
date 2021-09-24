@@ -1,4 +1,4 @@
-#	$NetBSD: std.kobo,v 1.5 2019/05/18 08:49:23 skrll Exp $
+#	$NetBSD: std.kobo,v 1.6 2021/09/24 08:04:15 skrll Exp $
 #
 # standard NetBSD/evbarm options for Kobo
 
@@ -27,3 +27,8 @@ options 	__HAVE_MM_MD_DIRECT_MAPPED_PHYS
 makeoptions 	LOADADDRESS_VIRT="0x80100000"
 makeoptions 	LOADADDRESS="0x70100000"
 makeoptions 	BOARDMKFRAG="${THISARM}/conf/mk.kobo"
+
+# Prevent the addition of a command line -DKERNEL_BASE_VOFFSET= as it
+# is done at runtime.
+makeoptions	KERNEL_VOFFSET_RUNTIME=1
+
