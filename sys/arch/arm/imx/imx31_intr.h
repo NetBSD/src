@@ -1,4 +1,4 @@
-/*	$NetBSD: imx31_intr.h,v 1.3 2008/04/28 20:23:14 martin Exp $	*/
+/*	$NetBSD: imx31_intr.h,v 1.4 2021/09/24 08:07:40 skrll Exp $	*/
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -121,11 +121,12 @@
 
 #define	PIC_MAXMAXSOURCES	(64+3*32+128)
 
+#define	_splraise	pic_splraise
+#define	_spllower	pic_spllower
+#define	splx		pic_splx
+
 #include <arm/pic/picvar.h>
 
-int	_splraise(int);
-int	_spllower(int);
-void	splx(int);
 const char *
 	intr_typename(int);
 
