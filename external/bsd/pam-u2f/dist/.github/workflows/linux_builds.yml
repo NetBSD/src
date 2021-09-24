@@ -1,0 +1,48 @@
+name: linux
+
+on: [push, pull_request]
+
+jobs:
+  build:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-20.04
+            cc: gcc-10
+          - os: ubuntu-20.04
+            cc: clang-11
+          - os: ubuntu-18.04
+            cc: gcc-10
+          - os: ubuntu-18.04
+            cc: clang-10
+    steps:
+    - uses: actions/checkout@v2
+    - name: Setup
+      if: ${{ matrix.os == 'ubuntu-18.04' }}
+      run: |
+        sudo add-apt-repository -y ppa:yubico/stable
+    - name: dependencies
+      env:
+        CC: ${{ matrix.cc }}
+      run: |
+        sudo apt -q update
+        sudo apt install --no-install-recommends -q -y \
+          autoconf automake libtool pkg-config libfido2-dev libpam-dev \
+          gengetopt git2cl asciidoc-base xsltproc
+        if [ "${CC%-*}" == "clang" ]; then
+          sudo apt install -q -y ${CC%-*}-tools-${CC#clang-}
+        else
+          sudo apt install -q -y "${CC}"
+        fi
+    - name: build
+      env:
+        CC: ${{ matrix.cc }}
+      run: |
+        /bin/bash -eux build-aux/ci/build-linux-${CC%-*}.sh
+    - name: distcheck
+      env:
+        CC: ${{ matrix.cc }}
+      run: |
+        /bin/bash -eux build-aux/ci/distcheck.sh
