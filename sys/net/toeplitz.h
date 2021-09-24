@@ -120,4 +120,10 @@ extern const struct stoeplitz_cache *const stoeplitz_cache;
 	stoeplitz_hash_ip6port(stoeplitz_cache, (_sa6), (_da6), (_sp), (_dp))
 #endif
 
+/*
+ * system also provided asymmetric toeplitz
+ */
+
+uint32_t	toeplitz_vhash(const uint8_t *, size_t, ...);
+
 #endif /* _SYS_NET_TOEPLITZ_H_ */
