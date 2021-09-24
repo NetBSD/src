@@ -1,5 +1,5 @@
 #! /bin/sh
-# $NetBSD: t_indent.sh,v 1.4 2021/03/08 22:13:05 rillig Exp $
+# $NetBSD: t_indent.sh,v 1.5 2021/09/24 06:30:02 rillig Exp $
 #
 # Copyright 2016 Dell EMC
 # All rights reserved.
@@ -40,8 +40,8 @@ check()
 	# to pass.
 	atf_check cp ${SRCDIR}/${tc}* .
 
-	# Remove single-line comments that start with '$'.  This removes RCS
-	# IDs, preventing them to be broken into several lines.  It also
+	# Remove single-line block comments that start with '$'.  This removes
+	# RCS IDs, preventing them to be broken into several lines.  It also
 	# allows for remarks that are only needed in either the input or the
 	# output.  These removals affect the line numbers in the diffs.
 	for fname in "$tc" "$tc.stdout" "$tc.stderr"; do
