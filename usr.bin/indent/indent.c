@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.c,v 1.61 2021/08/25 22:26:30 rillig Exp $	*/
+/*	$NetBSD: indent.c,v 1.62 2021/09/24 18:14:06 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -46,7 +46,7 @@ static char sccsid[] = "@(#)indent.c	5.17 (Berkeley) 6/7/93";
 #include <sys/cdefs.h>
 #ifndef lint
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: indent.c,v 1.61 2021/08/25 22:26:30 rillig Exp $");
+__RCSID("$NetBSD: indent.c,v 1.62 2021/09/24 18:14:06 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/indent.c 340138 2018-11-04 19:24:49Z oshogbo $");
 #endif
@@ -81,10 +81,7 @@ char       *s_code;
 char       *e_code;
 char       *l_code;
 
-char       *combuf;
-char       *s_com;
-char       *e_com;
-char       *l_com;
+struct comment_buffer com;
 
 char       *tokenbuf;
 char	   *s_token;
@@ -377,8 +374,8 @@ main_init_globals(void)
     ps.last_nl = true;		/* this is true if the last thing scanned was
 				 * a newline */
     ps.last_token = semicolon;
-    combuf = malloc(bufsize);
-    if (combuf == NULL)
+    com.buf = malloc(bufsize);
+    if (com.buf == NULL)
 	err(1, NULL);
     labbuf = malloc(bufsize);
     if (labbuf == NULL)
@@ -391,17 +388,17 @@ main_init_globals(void)
 	err(1, NULL);
     alloc_typenames();
     init_constant_tt();
-    l_com = combuf + bufsize - 5;
+    com.l = com.buf + bufsize - 5;
     l_lab = labbuf + bufsize - 5;
     l_code = codebuf + bufsize - 5;
     l_token = tokenbuf + bufsize - 5;
-    combuf[0] = codebuf[0] = labbuf[0] = ' ';	/* set up code, label, and
+    com.buf[0] = codebuf[0] = labbuf[0] = ' ';	/* set up code, label, and
 						 * comment buffers */
-    combuf[1] = codebuf[1] = labbuf[1] = tokenbuf[1] = '\0';
+    com.buf[1] = codebuf[1] = labbuf[1] = tokenbuf[1] = '\0';
     opt.else_if = 1;		/* Default else-if special processing to on */
     s_lab = e_lab = labbuf + 1;
     s_code = e_code = codebuf + 1;
-    s_com = e_com = combuf + 1;
+    com.s = com.e = com.buf + 1;
     s_token = e_token = tokenbuf + 1;
 
     in_buffer = malloc(10);
@@ -549,7 +546,7 @@ main_prepare_parsing(void)
 static void __attribute__((__noreturn__))
 process_end_of_file(void)
 {
-    if (s_lab != e_lab || s_code != e_code || s_com != e_com)
+    if (s_lab != e_lab || s_code != e_code || com.s != com.e)
 	dump_line();
 
     if (ps.tos > 1)		/* check for balanced braces */
@@ -584,18 +581,18 @@ process_comment_in_code(token_type type_code, int *inout_force_nl)
     ps.in_stmt = true;		/* turn on flag which causes an extra level of
 				 * indentation. this is turned off by a ; or
 				 * '}' */
-    if (s_com != e_com) {	/* the turkey has embedded a comment
+    if (com.s != com.e) {	/* the turkey has embedded a comment
 				 * in a line. fix it */
-	size_t len = e_com - s_com;
+	size_t len = com.e - com.s;
 
 	check_size_code(len + 3);
 	*e_code++ = ' ';
-	memcpy(e_code, s_com, len);
+	memcpy(e_code, com.s, len);
 	e_code += len;
 	*e_code++ = ' ';
 	*e_code = '\0';		/* null terminate code sect */
 	ps.want_blank = false;
-	e_com = s_com;
+	com.e = com.s;
     }
 }
 
@@ -611,7 +608,7 @@ static void
 process_newline(void)
 {
     if (ps.last_token != comma || ps.p_l_follow > 0
-	|| !opt.leave_comma || ps.block_init || !break_comma || s_com != e_com) {
+	|| !opt.leave_comma || ps.block_init || !break_comma || com.s != com.e) {
 	dump_line();
 	ps.want_blank = false;
     }
@@ -1123,7 +1120,7 @@ process_comma(int dec_ind, int tabs_to_var, int *inout_force_nl)
 static void
 process_preprocessing(void)
 {
-    if (s_com != e_com || s_lab != e_lab || s_code != e_code)
+    if (com.s != com.e || s_lab != e_lab || s_code != e_code)
 	dump_line();
     check_size_label(1);
     *e_lab++ = '#';	/* move whole line to 'label' buffer */
