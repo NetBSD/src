@@ -10,7 +10,7 @@ pushd "/tmp" &>/dev/null
     git checkout v0.5.0
     cmake -Bbuild -H.
     cmake --build build -- --jobs=2 VERBOSE=1
-    sudo make -C build install
+    sudo make -j $(sysctl -n hw.logicalcpu) -C build install
   popd &>/dev/null
 
   # Build and install libfido2
@@ -19,12 +19,12 @@ pushd "/tmp" &>/dev/null
   pushd "/tmp/libfido2" &>/dev/null
     cmake -Bbuild -H.
     cmake --build build -- --jobs=2 VERBOSE=1
-    sudo make -C build install
+    sudo make -j $(sysctl -n hw.logicalcpu) -C build install
   popd &>/dev/null
 popd &>/dev/null
 
 pushd "$BUILDROOT" &>/dev/null
   ./autogen.sh
   ./configure --disable-silent-rules --disable-man
-  make
+  make -j $(sysctl -n hw.logicalcpu)
 popd &>/dev/null

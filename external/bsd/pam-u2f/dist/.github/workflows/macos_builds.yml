@@ -1,0 +1,20 @@
+name: macos
+
+on: [push, pull_request]
+
+jobs:
+  build:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ macos-10.15 ]
+        cc: [ clang ]
+    steps:
+    - uses: actions/checkout@v2
+    - name: dependencies
+      run: brew install check cmake gengetopt help2man mandoc openssl@1.1 pkg-config automake
+    - name: build
+      env:
+        CC: ${{ matrix.cc }}
+      run: ./build-aux/ci/build-osx.sh
