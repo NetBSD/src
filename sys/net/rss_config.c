@@ -1,4 +1,4 @@
-/*	$NetBSD: rss_config.c,v 1.2 2019/11/20 08:17:01 knakahara Exp $  */
+/*	$NetBSD: rss_config.c,v 1.3 2021/09/24 04:11:02 knakahara Exp $  */
 
 /*
  * Copyright (c) 2018 Internet Initiative Japan Inc.
@@ -27,13 +27,21 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rss_config.c,v 1.2 2019/11/20 08:17:01 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rss_config.c,v 1.3 2021/09/24 04:11:02 knakahara Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
+#include <sys/mbuf.h>
 
 #include <net/rss_config.h>
+#include <net/toeplitz.h>
+
+#include <netinet/in.h>
+#include <netinet/ip.h>
+#include <netinet/tcp.h>
+#include <netinet/udp.h>
+#include <netinet/ip6.h>
 
 /*
  * Same as FreeBSD.
@@ -74,4 +82,202 @@ rss_getkey(uint8_t *key)
 {
 
 	memcpy(key, rss_default_key, sizeof(rss_default_key));
+}
+
+/*
+ * Calculate rss hash value from IPv4 mbuf.
+ * This function should be called before ip_input().
+ */
+uint32_t
+rss_toeplitz_hash_from_mbuf_ipv4(const struct mbuf *m, u_int flag)
+{
+	struct ip *ip;
+	int hlen;
+	uint8_t key[RSS_KEYSIZE];
+
+	KASSERT((m->m_flags & M_PKTHDR) != 0);
+	KASSERT(m->m_len >= sizeof (struct ip));
+
+	ip = mtod(m, struct ip *);
+	KASSERT(ip->ip_v == IPVERSION);
+
+	hlen = ip->ip_hl << 2;
+	if (hlen < sizeof(struct ip))
+		return 0;
+
+	rss_getkey(key);
+
+	switch (ip->ip_p) {
+	case IPPROTO_TCP:
+	{
+		if ((flag & RSS_TOEPLITZ_USE_TCP_PORT) != 0) {
+			if (m->m_len >= hlen + sizeof(struct tcphdr)) {
+				struct tcphdr *th;
+
+				th = (struct tcphdr *)(mtod(m, char *) + hlen);
+				return toeplitz_vhash(key, sizeof(key),
+				    /* ip_src and ip_dst in struct ip must be sequential */
+				    &ip->ip_src, sizeof(ip->ip_src) * 2,
+				    /* th_sport and th_dport in tcphdr must be sequential */
+				    &th->th_sport, sizeof(th->th_sport) * 2,
+				    NULL);
+			} else if (m->m_pkthdr.len >= hlen + sizeof(struct tcphdr)) {
+				uint16_t ports[2];
+
+				/* ditto */
+				m_copydata(__UNCONST(m), hlen + offsetof(struct tcphdr, th_sport),
+				    sizeof(ports), ports);
+				return toeplitz_vhash(key, sizeof(key),
+				    &ip->ip_src, sizeof(ip->ip_src) * 2,
+				    ports, sizeof(ports),
+				    NULL);
+			}
+		}
+		/*
+		 * Treat as raw packet.
+		 */
+		return toeplitz_vhash(key, sizeof(key),
+		    /* ditto */
+		    &ip->ip_src, sizeof(ip->ip_src) * 2,
+		    NULL);
+	}
+	case IPPROTO_UDP:
+	{
+		if ((flag & RSS_TOEPLITZ_USE_UDP_PORT) != 0) {
+			if (m->m_len >= hlen + sizeof(struct udphdr)) {
+				struct udphdr *uh;
+
+				uh = (struct udphdr *)(mtod(m, char *) + hlen);
+				return toeplitz_vhash(key, sizeof(key),
+				    /* ip_src and ip_dst in struct ip must sequential */
+				    &ip->ip_src, sizeof(ip->ip_src) * 2,
+				    /* uh_sport and uh_dport in udphdr must be sequential */
+				    &uh->uh_sport, sizeof(uh->uh_sport) * 2,
+				    NULL);
+			} else if (m->m_pkthdr.len >= hlen + sizeof(struct udphdr)) {
+				uint16_t ports[2];
+
+				/* ditto */
+				m_copydata(__UNCONST(m), hlen + offsetof(struct udphdr, uh_sport),
+				    sizeof(ports), ports);
+				return toeplitz_vhash(key, sizeof(key),
+				    &ip->ip_src, sizeof(ip->ip_src) * 2,
+				    ports, sizeof(ports),
+				    NULL);
+			}
+		}
+		/*
+		 * Treat as raw packet.
+		 */
+		return toeplitz_vhash(key, sizeof(key),
+		    /* ditto */
+		    &ip->ip_src, sizeof(ip->ip_src) * 2,
+		    NULL);
+	}
+	/*
+	 * Other protocols are treated as raw packets to apply RPS.
+	 */
+	default:
+		return toeplitz_vhash(key, sizeof(key),
+		    /* ditto */
+		    &ip->ip_src, sizeof(ip->ip_src) * 2,
+		    NULL);
+	}
+}
+
+/*
+ * Calculate rss hash value from IPv6 mbuf.
+ * This function should be called before ip6_input().
+ */
+uint32_t
+rss_toeplitz_hash_from_mbuf_ipv6(const struct mbuf *m, u_int flag)
+{
+	struct ip6_hdr *ip6;
+	int hlen;
+	uint8_t key[RSS_KEYSIZE];
+
+	KASSERT((m->m_flags & M_PKTHDR) != 0);
+	KASSERT(m->m_len >= sizeof (struct ip6_hdr));
+
+	ip6 = mtod(m, struct ip6_hdr *);
+	KASSERT((ip6->ip6_vfc & IPV6_VERSION_MASK) == IPV6_VERSION);
+
+	hlen = sizeof(struct ip6_hdr);
+	rss_getkey(key);
+
+	switch (ip6->ip6_nxt) {
+	case IPPROTO_TCP:
+	{
+		if ((flag & RSS_TOEPLITZ_USE_TCP_PORT) != 0) {
+			if (m->m_len >= hlen + sizeof(struct tcphdr)) {
+				struct tcphdr *th;
+
+				th = (struct tcphdr *)(mtod(m, char *) + hlen);
+				return toeplitz_vhash(key, sizeof(key),
+				    /* ip6_src and ip6_dst in ip6_hdr must be sequential */
+				    &ip6->ip6_src, sizeof(ip6->ip6_src) * 2,
+				    /* th_sport and th_dport in tcphdr must be sequential */
+				    &th->th_sport, sizeof(th->th_sport) * 2,
+				    NULL);
+			} else if (m->m_pkthdr.len >= hlen + sizeof(struct tcphdr)) {
+				uint16_t ports[2];
+
+				/* ditto */
+				m_copydata(__UNCONST(m), hlen + offsetof(struct tcphdr, th_sport),
+				    sizeof(ports), ports);
+				return toeplitz_vhash(key, sizeof(key),
+				    &ip6->ip6_src, sizeof(ip6->ip6_src) * 2,
+				    ports, sizeof(ports),
+				    NULL);
+			}
+		}
+		/*
+		 * Treat as raw packet.
+		 */
+		return toeplitz_vhash(key, sizeof(key),
+		    &ip6->ip6_src, sizeof(ip6->ip6_src) * 2,
+		    NULL);
+	}
+	case IPPROTO_UDP:
+	{
+		if ((flag & RSS_TOEPLITZ_USE_UDP_PORT) != 0) {
+			if (m->m_len >= hlen + sizeof(struct udphdr)) {
+				struct udphdr *uh;
+
+				uh = (struct udphdr *)(mtod(m, char *) + hlen);
+				return toeplitz_vhash(key, sizeof(key),
+				    /* ip6_src and ip6_dst in ip6_hdr must sequential */
+				    &ip6->ip6_src, sizeof(ip6->ip6_src) * 2,
+				    /* uh_sport and uh_dport in udphdr must be sequential */
+				    &uh->uh_sport, sizeof(uh->uh_sport) * 2,
+				    NULL);
+			} else if (m->m_pkthdr.len >= hlen + sizeof(struct udphdr)) {
+				uint16_t ports[2];
+
+				/* ditto */
+				m_copydata(__UNCONST(m), hlen + offsetof(struct udphdr, uh_sport),
+				    sizeof(ports), ports);
+				return toeplitz_vhash(key, sizeof(key),
+				    &ip6->ip6_src, sizeof(ip6->ip6_src) * 2,
+				    &ports, sizeof(ports),
+				    NULL);
+			}
+		}
+		/*
+		 * Treat as raw packet.
+		 */
+		return toeplitz_vhash(key, sizeof(key),
+		    &ip6->ip6_src, sizeof(ip6->ip6_src) * 2,
+		    NULL);
+	}
+	/*
+	 * Other protocols are treated as raw packets to apply RPS.
+	 */
+	default:
+		return toeplitz_vhash(key, sizeof(key),
+		    &ip6->ip6_src, sizeof(ip6->ip6_src) * 2,
+		    NULL);
+	}
+
+	return 0;
 }
