@@ -1,4 +1,4 @@
-#	$NetBSD: std.netwalker,v 1.13 2019/06/13 04:20:23 hkenken Exp $
+#	$NetBSD: std.netwalker,v 1.14 2021/09/24 08:04:15 skrll Exp $
 #
 # standard NetBSD/evbarm options for Sharp NetWalker
 
@@ -30,3 +30,8 @@ makeoptions 	BOARDMKFRAG="${THISARM}/conf/mk.netwalker"
 
 makeoptions	KERNEL_BASE_PHYS=0x90008000
 makeoptions	KERNEL_BASE_VIRT=0x80008000
+
+# Prevent the addition of a command line -DKERNEL_BASE_VOFFSET= as it
+# is done at runtime.
+makeoptions	KERNEL_VOFFSET_RUNTIME=1
+
