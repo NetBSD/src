@@ -1,4 +1,4 @@
-/*	$NetBSD: io.c,v 1.52 2021/09/24 18:14:06 rillig Exp $	*/
+/*	$NetBSD: io.c,v 1.53 2021/09/24 18:37:03 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -46,7 +46,7 @@ static char sccsid[] = "@(#)io.c	8.1 (Berkeley) 6/6/93";
 #include <sys/cdefs.h>
 #ifndef lint
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: io.c,v 1.52 2021/09/24 18:14:06 rillig Exp $");
+__RCSID("$NetBSD: io.c,v 1.53 2021/09/24 18:37:03 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/io.c 334927 2018-06-10 16:44:18Z pstef $");
 #endif
@@ -330,6 +330,61 @@ compute_label_indent(void)
     return opt.indent_size * (ps.ind_level - label_offset);
 }
 
+static void
+skip_hspace(const char **pp)
+{
+    while (**pp == ' ' || **pp == '\t')
+	(*pp)++;
+}
+
+static void
+parse_indent_comment(void)
+{
+    int on_off = 0;		/* 0 = keep, 1 = ON, 2 = OFF */
+
+    const char *p = in_buffer;
+
+    skip_hspace(&p);
+
+    if (!(*p == '/' && p[1] == '*'))
+	return;
+    p += 2;
+
+    skip_hspace(&p);
+
+    if (!(p[0] == 'I' && p[1] == 'N' && p[2] == 'D'
+	  && p[3] == 'E' && p[4] == 'N' && p[5] == 'T'))
+	return;
+    p += 6;
+
+    skip_hspace(&p);
+
+    if (*p == '*')
+	on_off = 1;
+    else if (*p == 'O') {
+	if (*++p == 'N')
+	    p++, on_off = 1;
+	else if (*p == 'F' && *++p == 'F')
+	    p++, on_off = 2;
+    }
+    if (on_off == 0)
+	return;
+
+    skip_hspace(&p);
+
+    if (!(p[0] == '*' && p[1] == '/' && p[2] == '\n'))
+	return;
+
+    if (com.s != com.e || s_lab != e_lab || s_code != e_code)
+	dump_line();
+
+    if (!(inhibit_formatting = on_off - 1)) {
+	n_real_blanklines = 0;
+	postfix_blankline_requested = 0;
+	prefix_blankline_requested = 0;
+	suppress_blanklines = 1;
+    }
+}
 
 /*
  * Copyright (C) 1976 by the Board of Trustees of the University of Illinois
@@ -380,44 +435,8 @@ fill_buffer(void)
     if (p - in_buffer > 2 && p[-2] == '/' && p[-3] == '*') {
 	if (in_buffer[3] == 'I' && strncmp(in_buffer, "/**INDENT**", 11) == 0)
 	    fill_buffer();	/* flush indent error message */
-	else {
-	    int comena = 0;	/* 1 = ON, 2 = OFF */
-
-	    p = in_buffer;
-	    while (*p == ' ' || *p == '\t')
-		p++;
-	    if (*p == '/' && p[1] == '*') {
-		p += 2;
-		while (*p == ' ' || *p == '\t')
-		    p++;
-		if (p[0] == 'I' && p[1] == 'N' && p[2] == 'D' && p[3] == 'E'
-			&& p[4] == 'N' && p[5] == 'T') {
-		    p += 6;
-		    while (*p == ' ' || *p == '\t')
-			p++;
-		    if (*p == '*')
-			comena = 1;
-		    else if (*p == 'O') {
-			if (*++p == 'N')
-			    p++, comena = 1;
-			else if (*p == 'F' && *++p == 'F')
-			    p++, comena = 2;
-		    }
-		    while (*p == ' ' || *p == '\t')
-			p++;
-		    if (p[0] == '*' && p[1] == '/' && p[2] == '\n' && comena) {
-			if (com.s != com.e || s_lab != e_lab || s_code != e_code)
-			    dump_line();
-			if (!(inhibit_formatting = comena - 1)) {
-			    n_real_blanklines = 0;
-			    postfix_blankline_requested = 0;
-			    prefix_blankline_requested = 0;
-			    suppress_blanklines = 1;
-			}
-		    }
-		}
-	    }
-	}
+	else
+	    parse_indent_comment();
     }
     if (inhibit_formatting) {
 	p = in_buffer;
