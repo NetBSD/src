@@ -1,0 +1,26 @@
+/* $NetBSD: lex_string.0.stdout,v 1.1 2021/09/25 09:46:29 rillig Exp $ */
+/* $FreeBSD$ */
+
+/*
+ * Test lexing of string literals.
+ */
+
+char simple[] = "x";
+char multi[] = "xy";
+char empty[] = "";
+char null[] = "\0";
+char escape_hex[] = "\x3f";
+char escape_octal[] = "\040";
+char escape_a[] = "\a";
+char escape_b[] = "\b";
+char escape_f[] = "\f";
+char escape_n[] = "\n";
+char escape_t[] = "\t";
+char escape_v[] = "\v";
+
+char escape_newline[] = "\
+";
+
+/* Concatenated string literals are separated with a single space. */
+char concat[] = "line 1\n"
+"line2" "has" "several" "words\n";

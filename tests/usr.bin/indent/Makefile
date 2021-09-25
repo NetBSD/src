@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 2021/03/12 00:13:06 rillig Exp $
+#	$NetBSD: Makefile,v 1.9 2021/09/25 09:46:29 rillig Exp $
 
 .include <bsd.own.mk>
 
@@ -30,6 +30,12 @@ FILES+=		indent_variables.0.stdout
 FILES+=		label.0
 FILES+=		label.0.stdout
 FILES+=		label.0.pro
+FILES+=		lex_char.0
+FILES+=		lex_char.0.pro
+FILES+=		lex_char.0.stdout
+FILES+=		lex_string.0
+FILES+=		lex_string.0.pro
+FILES+=		lex_string.0.stdout
 FILES+=		lineno.0
 FILES+=		lineno.0.pro
 FILES+=		lineno.0.stdout
@@ -406,7 +412,7 @@ add-test: .PHONY
 		'' \
 		'/*' \
 		' * TODO: Explain the purpose of the test.' \
-		'*/' \
+		' */' \
 		'' \
 		'// TODO: Add some code that passes.' \
 	> "$$test"; \
