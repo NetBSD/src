@@ -1,4 +1,4 @@
-/* $NetBSD: siovar.h,v 1.8 2014/02/02 15:35:06 tsutsui Exp $ */
+/* $NetBSD: siovar.h,v 1.9 2021/09/25 15:18:38 tsutsui Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -51,5 +51,56 @@ struct sio_softc {
 	} sc_intrhand[2];
 };
 
-uint16_t getsiocsr(struct sioreg *);
-void setsioreg(struct sioreg *, int, int);
+static inline uint16_t getsiocsr(struct sioreg *);
+static inline void setsioreg(struct sioreg *, int, int);
+
+static inline int siogetc(struct sioreg *);
+static inline void sioputc(struct sioreg *, int);
+
+static inline uint16_t
+getsiocsr(struct sioreg *sio)
+{
+	uint16_t val;
+
+	val = sio->sio_stat << 8;
+	sio->sio_cmd = RR1;
+	val |= sio->sio_stat;
+
+	return val;
+}
+
+static inline void
+setsioreg(struct sioreg *sio, int regno, int val)
+{
+
+	if (regno != WR0)
+		sio->sio_cmd = regno;
+	sio->sio_cmd = val;
+}
+
+static inline int
+siogetc(struct sioreg *sio)
+{
+	int s, c;
+
+	s = splhigh();
+	while ((getsiocsr(sio) & RR_RXRDY) == 0)
+		continue;
+	c = sio->sio_data;
+	splx(s);
+
+	return c;
+}
+
+static inline void
+sioputc(struct sioreg *sio, int c)
+{
+	int s;
+
+	s = splhigh();
+	while ((getsiocsr(sio) & RR_TXRDY) == 0)
+		continue;
+	sio->sio_cmd = WR0_RSTPEND;
+	sio->sio_data = c;
+	splx(s);
+}

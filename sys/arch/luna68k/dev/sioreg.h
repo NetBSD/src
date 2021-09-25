@@ -1,4 +1,4 @@
-/* $NetBSD: sioreg.h,v 1.4 2011/07/27 14:17:54 tsutsui Exp $ */
+/* $NetBSD: sioreg.h,v 1.5 2021/09/25 15:18:38 tsutsui Exp $ */
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -79,17 +79,12 @@
 #define WR6		0x06
 #define WR7		0x07
 
-#define WR2A		WR2
-#define WR2B		(WR2|0x10)
+#define WR2A		WR2	/* on channel A */
+#define WR2B		WR2	/* on channel B */
 
-#define RR0		0x08
-#define RR1		0x09
-#define RR2		0x0A
-#define RR3		0x0B
-#define RR4		0x0C
-
-#define RR2A		RR2
-#define RR2B		(RR2|0x10)
+#define RR0		0x00
+#define RR1		0x01
+#define RR2		0x02	/* only on channel B */
 
 #define WR0_NOP		0x00	/* No Operation */
 #define WR0_SNDABRT	0x08	/* Send Abort (HDLC) */
@@ -108,12 +103,14 @@
 #define WR1_RXALLS	0x10	/* Interrupt Every Characters Received (with Special Char.) */
 #define WR1_RXALL	0x18	/* Interrupt Every Characters Received (without Special Char.) */
 
-#define WR2_INTR_0	0x00	/* Interrupt Priority: RxA TxA RxB TxB E/SA E/SA */
-#define WR2_INTR_1	0x04	/* Interrupt Priority: RxA RxB TxA TxB E/SA E/SA */
-#define WR2_VEC85_1	0x00	/* 8085 Vectored Mode - 1 */
-#define WR2_VEC85_2	0x08	/* 8085 Vectored Mode - 2 */
-#define WR2_VEC86	0x10	/* 8086 Vectored */
-#define WR2_VEC85_3	0x18	/* 8085 Vectored Mode - 3 */
+#define WR2A_INTR_0	0x00	/* Interrupt Priority: RxA TxA RxB TxB E/SA E/SA */
+#define WR2A_INTR_1	0x04	/* Interrupt Priority: RxA RxB TxA TxB E/SA E/SA */
+#define WR2A_VEC85_1	0x00	/* 8085 Vectored Mode - 1 */
+#define WR2A_VEC85_2	0x08	/* 8085 Vectored Mode - 2 */
+#define WR2A_VEC86	0x10	/* 8086 Vectored */
+#define WR2A_VEC85_3	0x18	/* 8085 Vectored Mode - 3 */
+
+/* WR2B has interrupt vector value */
 
 #define WR3_RXENBL	0x01	/* Rx Enable */
 #define WR3_RXCRC	0x08	/* Rx CRC Check */
@@ -156,13 +153,14 @@
 #define RR1_OVERRUN	0x20	/* Data Over Run */
 #define RR1_FRAMING	0x40	/* Framing Error */
 
-#define RR_RXRDY	0x0100	/* Rx Character Available */
-#define RR_INTRPEND	0x0200	/* Interrupt Pending (Channel-A Only) */
-#define RR_TXRDY	0x0400	/* Tx Buffer Empty */
-#define RR_DCD		0x0800	/* Data Carrier Detect [DCD] */
-#define RR_SYNC		0x1000	/* Synchronization */
-#define RR_CTS		0x2000	/* Clear To Send       [CTS] */
-#define RR_BREAK	0x8000	/* Break Detected */
-#define RR_PARITY	0x0010	/* Parity Error */
-#define RR_OVERRUN	0x0020	/* Data Over Run */
-#define RR_FRAMING	0x0040	/* Framing Error */
+/* for getsiocsr() */
+#define RR_RXRDY	(RR0_RXAVAIL  << 8)
+#define RR_INTRPEND	(RR0_INTRPEND << 8)
+#define RR_TXRDY	(RR0_TXEMPTY  << 8)
+#define RR_DCD		(RR0_DCD      << 8)
+#define RR_SYNC		(RR0_SYNC     << 8)
+#define RR_CTS		(RR0_CTS      << 8)
+#define RR_BREAK	(RR0_BREAK    << 8)
+#define RR_PARITY	(RR1_PARITY)
+#define RR_OVERRUN	(RR1_OVERRUN)
+#define RR_FRAMING	(RR1_FRAMING)
