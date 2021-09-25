@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.c,v 1.82 2021/09/25 22:24:35 rillig Exp $	*/
+/*	$NetBSD: indent.c,v 1.83 2021/09/25 22:54:32 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)indent.c	5.17 (Berkeley) 6/7/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: indent.c,v 1.82 2021/09/25 22:24:35 rillig Exp $");
+__RCSID("$NetBSD: indent.c,v 1.83 2021/09/25 22:54:32 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/indent.c 340138 2018-11-04 19:24:49Z oshogbo $");
 #endif
@@ -105,7 +105,7 @@ char       *sc_end;
 char       *bp_save;
 char       *be_save;
 
-int         found_err;
+bool        found_err;
 int         n_real_blanklines;
 bool        prefix_blankline_requested;
 bool        postfix_blankline_requested;
@@ -376,7 +376,7 @@ buf_expand(struct buffer *buf, size_t desired_size)
 static void
 main_init_globals(void)
 {
-    found_err = 0;
+    found_err = false;
 
     ps.p_stack[0] = stmt;	/* this is the parser's stack */
     ps.last_nl = true;		/* this is true if the last thing scanned was
@@ -510,7 +510,7 @@ process_end_of_file(void)
     }
 
     fflush(output);
-    exit(found_err);
+    exit(found_err ? EXIT_FAILURE : EXIT_SUCCESS);
 }
 
 static void
