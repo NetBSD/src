@@ -1,4 +1,4 @@
-/*	$NetBSD: declarations.0.stdout,v 1.1 2019/04/04 15:27:35 kamil Exp $	*/
+/*	$NetBSD: declarations.0.stdout,v 1.2 2021/09/25 13:04:55 rillig Exp $	*/
 /* $FreeBSD: head/usr.bin/indent/tests/declarations.0.stdout 334480 2018-06-01 09:58:44Z pstef $ */
 /* See r303570 */
 
@@ -72,3 +72,53 @@ do_execve(td, args, mac_p)
 {
 
 }
+
+/* Trigger the warning about nested struct declarations. */
+struct s01 {
+	struct s02 {
+		struct s03 {
+			struct s04 {
+				struct s05 {
+					struct s06 {
+						struct s07 {
+							struct s08 {
+								struct s09 {
+									struct s00 {
+										struct s11 {
+											struct s12 {
+												struct s13 {
+													struct s14 {
+														struct s15 {
+															struct s16 {
+																struct s17 {
+																	struct s18 {
+																		struct s19 {
+																			struct s20 {
+																				struct s21 {
+																					struct s22 {
+																						struct s23 {
+																							struct s24 {
+																							};
+																						};
+																					};
+																				};
+																			};
+																		};
+																	};
+																};
+															};
+														};
+													};
+												};
+											};
+										};
+									};
+								};
+							};
+						};
+					};
+				};
+			};
+		};
+	};
+};
