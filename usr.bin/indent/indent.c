@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.c,v 1.71 2021/09/25 14:16:06 rillig Exp $	*/
+/*	$NetBSD: indent.c,v 1.72 2021/09/25 14:26:05 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)indent.c	5.17 (Berkeley) 6/7/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: indent.c,v 1.71 2021/09/25 14:16:06 rillig Exp $");
+__RCSID("$NetBSD: indent.c,v 1.72 2021/09/25 14:26:05 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/indent.c 340138 2018-11-04 19:24:49Z oshogbo $");
 #endif
@@ -366,6 +366,17 @@ search_brace(token_type *inout_ttype, int *inout_force_nl,
 }
 
 static void
+buf_init(struct buffer *buf)
+{
+    buf->buf = xmalloc(bufsize);
+    buf->buf[0] = ' ';			/* allow accessing buf->e[-1] */
+    buf->buf[1] = '\0';
+    buf->s = buf->buf + 1;
+    buf->e = buf->s;
+    buf->l = buf->buf + bufsize - 5;	/* safety margin, though unreliable */
+}
+
+static void
 main_init_globals(void)
 {
     found_err = 0;
@@ -374,24 +385,13 @@ main_init_globals(void)
     ps.last_nl = true;		/* this is true if the last thing scanned was
 				 * a newline */
     ps.last_token = semicolon;
-    com.buf = xmalloc(bufsize);
-    lab.buf = xmalloc(bufsize);
-    code.buf = xmalloc(bufsize);
-    token.buf = xmalloc(bufsize);
+    buf_init(&com);
+    buf_init(&lab);
+    buf_init(&code);
+    buf_init(&token);
     alloc_typenames();
     init_constant_tt();
-    com.l = com.buf + bufsize - 5;
-    lab.l = lab.buf + bufsize - 5;
-    code.l = code.buf + bufsize - 5;
-    token.l = token.buf + bufsize - 5;
-    com.buf[0] = code.buf[0] = lab.buf[0] = ' ';	/* set up code, label, and
-						 * comment buffers */
-    com.buf[1] = code.buf[1] = lab.buf[1] = token.buf[1] = '\0';
     opt.else_if = 1;		/* Default else-if special processing to on */
-    lab.s = lab.e = lab.buf + 1;
-    code.s = code.e = code.buf + 1;
-    com.s = com.e = com.buf + 1;
-    token.s = token.e = token.buf + 1;
 
     in_buffer = xmalloc(10);
     in_buffer_limit = in_buffer + 8;
