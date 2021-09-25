@@ -1,4 +1,4 @@
-/*	$NetBSD: io.c,v 1.54 2021/09/24 18:47:29 rillig Exp $	*/
+/*	$NetBSD: io.c,v 1.55 2021/09/25 07:55:24 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -46,7 +46,7 @@ static char sccsid[] = "@(#)io.c	8.1 (Berkeley) 6/6/93";
 #include <sys/cdefs.h>
 #ifndef lint
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: io.c,v 1.54 2021/09/24 18:47:29 rillig Exp $");
+__RCSID("$NetBSD: io.c,v 1.55 2021/09/25 07:55:24 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/io.c 334927 2018-06-10 16:44:18Z pstef $");
 #endif
@@ -123,7 +123,7 @@ dump_line(void)
 	ps.procname[0] = 0;
     }
 
-    if (s_code == e_code && lab.s == lab.e && com.s == com.e) {
+    if (code.s == code.e && lab.s == lab.e && com.s == com.e) {
 	if (suppress_blanklines > 0)
 	    suppress_blanklines--;
 	else {
@@ -150,7 +150,7 @@ dump_line(void)
 				 * additional statement indentation if we are
 				 * at bracket level 0 */
 
-	if (lab.e != lab.s || e_code != s_code)
+	if (lab.e != lab.s || code.e != code.s)
 	    ++code_lines;	/* keep count of lines with code */
 
 
@@ -190,7 +190,7 @@ dump_line(void)
 
 	ps.pcase = false;
 
-	if (s_code != e_code) {	/* print code section, if any */
+	if (code.s != code.e) {	/* print code section, if any */
 	    if (comment_open) {
 		comment_open = 0;
 		output_string(".*/\n");
@@ -214,8 +214,8 @@ dump_line(void)
 		}
 	    }
 	    cur_col = 1 + output_indent(cur_col - 1, target_col - 1);
-	    output_range(s_code, e_code);
-	    cur_col = 1 + indentation_after(cur_col - 1, s_code);
+	    output_range(code.s, code.e);
+	    cur_col = 1 + indentation_after(cur_col - 1, code.s);
 	}
 	if (com.s != com.e) {		/* print comment, if any */
 	    int target_col = ps.com_col;
@@ -273,7 +273,7 @@ dump_line(void)
     ps.use_ff = false;
     ps.dumped_decl_indent = 0;
     *(lab.e = lab.s) = '\0';	/* reset buffers */
-    *(e_code = s_code) = '\0';
+    *(code.e = code.s) = '\0';
     *(com.e = com.s = com.buf + 1) = '\0';
     ps.ind_level = ps.i_l_follow;
     ps.paren_level = ps.p_l_follow;
@@ -307,8 +307,8 @@ compute_code_indent(void)
 	    int w;
 	    int t = paren_indent;
 
-	    if ((w = 1 + indentation_after(t - 1, s_code) - opt.max_line_length) > 0
-		&& 1 + indentation_after(target_ind, s_code) <= opt.max_line_length) {
+	    if ((w = 1 + indentation_after(t - 1, code.s) - opt.max_line_length) > 0
+		&& 1 + indentation_after(target_ind, code.s) <= opt.max_line_length) {
 		t -= w + 1;
 		if (t > target_ind + 1)
 		    target_ind = t - 1;
@@ -375,7 +375,7 @@ parse_indent_comment(void)
     if (!(p[0] == '*' && p[1] == '/' && p[2] == '\n'))
 	return;
 
-    if (com.s != com.e || lab.s != lab.e || s_code != e_code)
+    if (com.s != com.e || lab.s != lab.e || code.s != code.e)
 	dump_line();
 
     if (!(inhibit_formatting = on_off - 1)) {

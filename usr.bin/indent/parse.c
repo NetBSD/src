@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.19 2021/09/25 07:46:41 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.20 2021/09/25 07:55:24 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -127,7 +127,7 @@ parse(token_type ttype)
 	    ++ps.i_l_follow;	/* it is a random, isolated stmt group or a
 				 * declaration */
 	else {
-	    if (s_code == e_code) {
+	    if (code.s == code.e) {
 		/*
 		 * only do this if there is nothing on the line
 		 */
