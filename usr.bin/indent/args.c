@@ -1,4 +1,4 @@
-/*	$NetBSD: args.c,v 1.24 2021/09/25 14:16:06 rillig Exp $	*/
+/*	$NetBSD: args.c,v 1.25 2021/09/25 17:11:23 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)args.c	8.1 (Berkeley) 6/6/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: args.c,v 1.24 2021/09/25 14:16:06 rillig Exp $");
+__RCSID("$NetBSD: args.c,v 1.25 2021/09/25 17:11:23 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/args.c 336318 2018-07-15 21:04:21Z pstef $");
 #endif
@@ -88,88 +88,99 @@ const char *option_source = "?";
 
 void add_typedefs_from_file(const char *str);
 
+#if __STDC_VERSION__ >= 201112L
+#define assert_type(expr, type) _Generic((expr), type : (expr))
+#else
+#define assert_type(expr, type) (expr)
+#endif
+#define bool_option(name, value, var) \
+	{name, PRO_BOOL, value, assert_type(&(var), ibool *)}
+#define int_option(name, value, var) \
+	{name, PRO_INT, value, assert_type(&(var), int *)}
+#define special_option(name, value) \
+	{name, PRO_SPECIAL, assert_type(value, int), NULL}
+
 /*
  * N.B.: because of the way the table here is scanned, options whose names are
  * substrings of other options must occur later; that is, with -lp vs -l, -lp
- * must be first.  Also, while (most) booleans occur more than once, the last
- * default value is the one actually assigned.
+ * must be first.
  */
 const struct pro {
     const char *p_name;		/* name, e.g. -bl, -cli */
     int         p_type;		/* type (int, bool, special) */
     int         p_special;	/* depends on type */
-    int        *p_obj;		/* the associated variable */
+    void        *p_obj;		/* the associated variable */
 }           pro[] = {
-    {"T", PRO_SPECIAL, KEY, 0},
-    {"U", PRO_SPECIAL, KEY_FILE, 0},
-    {"-version", PRO_SPECIAL, VERSION, 0},
-    {"P", PRO_SPECIAL, IGN, 0},
-    {"bacc", PRO_BOOL, ON, &opt.blanklines_around_conditional_compilation},
-    {"badp", PRO_BOOL, ON, &opt.blanklines_after_declarations_at_proctop},
-    {"bad", PRO_BOOL, ON, &opt.blanklines_after_declarations},
-    {"bap", PRO_BOOL, ON, &opt.blanklines_after_procs},
-    {"bbb", PRO_BOOL, ON, &opt.blanklines_before_blockcomments},
-    {"bc", PRO_BOOL, OFF, &opt.leave_comma},
-    {"bl", PRO_BOOL, OFF, &opt.btype_2},
-    {"br", PRO_BOOL, ON, &opt.btype_2},
-    {"bs", PRO_BOOL, ON, &opt.Bill_Shannon},
-    {"cdb", PRO_BOOL, ON, &opt.comment_delimiter_on_blankline},
-    {"cd", PRO_INT, 0, &opt.decl_comment_column},
-    {"ce", PRO_BOOL, ON, &opt.cuddle_else},
-    {"ci", PRO_INT, 0, &opt.continuation_indent},
-    {"cli", PRO_SPECIAL, CLI, 0},
-    {"cs", PRO_BOOL, ON, &opt.space_after_cast},
-    {"c", PRO_INT, 0, &opt.comment_column},
-    {"di", PRO_INT, 0, &opt.decl_indent},
-    {"dj", PRO_BOOL, ON, &opt.ljust_decl},
-    {"d", PRO_INT, 0, &opt.unindent_displace},
-    {"eei", PRO_BOOL, ON, &opt.extra_expression_indent},
-    {"ei", PRO_BOOL, ON, &opt.else_if},
-    {"fbs", PRO_BOOL, ON, &opt.function_brace_split},
-    {"fc1", PRO_BOOL, ON, &opt.format_col1_comments},
-    {"fcb", PRO_BOOL, ON, &opt.format_block_comments},
-    {"ip", PRO_BOOL, ON, &opt.indent_parameters},
-    {"i", PRO_INT, 0, &opt.indent_size},
-    {"lc", PRO_INT, 0, &opt.block_comment_max_line_length},
-    {"ldi", PRO_INT, 0, &opt.local_decl_indent},
-    {"lpl", PRO_BOOL, ON, &opt.lineup_to_parens_always},
-    {"lp", PRO_BOOL, ON, &opt.lineup_to_parens},
-    {"l", PRO_INT, 0, &opt.max_line_length},
-    {"nbacc", PRO_BOOL, OFF, &opt.blanklines_around_conditional_compilation},
-    {"nbadp", PRO_BOOL, OFF, &opt.blanklines_after_declarations_at_proctop},
-    {"nbad", PRO_BOOL, OFF, &opt.blanklines_after_declarations},
-    {"nbap", PRO_BOOL, OFF, &opt.blanklines_after_procs},
-    {"nbbb", PRO_BOOL, OFF, &opt.blanklines_before_blockcomments},
-    {"nbc", PRO_BOOL, ON, &opt.leave_comma},
-    {"nbs", PRO_BOOL, OFF, &opt.Bill_Shannon},
-    {"ncdb", PRO_BOOL, OFF, &opt.comment_delimiter_on_blankline},
-    {"nce", PRO_BOOL, OFF, &opt.cuddle_else},
-    {"ncs", PRO_BOOL, OFF, &opt.space_after_cast},
-    {"ndj", PRO_BOOL, OFF, &opt.ljust_decl},
-    {"neei", PRO_BOOL, OFF, &opt.extra_expression_indent},
-    {"nei", PRO_BOOL, OFF, &opt.else_if},
-    {"nfbs", PRO_BOOL, OFF, &opt.function_brace_split},
-    {"nfc1", PRO_BOOL, OFF, &opt.format_col1_comments},
-    {"nfcb", PRO_BOOL, OFF, &opt.format_block_comments},
-    {"nip", PRO_BOOL, OFF, &opt.indent_parameters},
-    {"nlpl", PRO_BOOL, OFF, &opt.lineup_to_parens_always},
-    {"nlp", PRO_BOOL, OFF, &opt.lineup_to_parens},
-    {"npcs", PRO_BOOL, OFF, &opt.proc_calls_space},
-    {"npro", PRO_SPECIAL, IGN, 0},
-    {"npsl", PRO_BOOL, OFF, &opt.procnames_start_line},
-    {"nsc", PRO_BOOL, OFF, &opt.star_comment_cont},
-    {"nsob", PRO_BOOL, OFF, &opt.swallow_optional_blanklines},
-    {"nut", PRO_BOOL, OFF, &opt.use_tabs},
-    {"nv", PRO_BOOL, OFF, &opt.verbose},
-    {"pcs", PRO_BOOL, ON, &opt.proc_calls_space},
-    {"psl", PRO_BOOL, ON, &opt.procnames_start_line},
-    {"sc", PRO_BOOL, ON, &opt.star_comment_cont},
-    {"sob", PRO_BOOL, ON, &opt.swallow_optional_blanklines},
-    {"st", PRO_SPECIAL, STDIN, 0},
-    {"ta", PRO_BOOL, ON, &opt.auto_typedefs},
-    {"ts", PRO_INT, 0, &opt.tabsize},
-    {"ut", PRO_BOOL, ON, &opt.use_tabs},
-    {"v", PRO_BOOL, ON, &opt.verbose},
+    special_option("T", KEY),
+    special_option("U", KEY_FILE),
+    special_option("-version", VERSION),
+    special_option("P", IGN),
+    bool_option("bacc", ON, opt.blanklines_around_conditional_compilation),
+    bool_option("badp", ON, opt.blanklines_after_declarations_at_proctop),
+    bool_option("bad", ON, opt.blanklines_after_declarations),
+    bool_option("bap", ON, opt.blanklines_after_procs),
+    bool_option("bbb", ON, opt.blanklines_before_blockcomments),
+    bool_option("bc", OFF, opt.leave_comma),
+    bool_option("bl", OFF, opt.btype_2),
+    bool_option("br", ON, opt.btype_2),
+    bool_option("bs", ON, opt.Bill_Shannon),
+    bool_option("cdb", ON, opt.comment_delimiter_on_blankline),
+    int_option("cd", 0, opt.decl_comment_column),
+    bool_option("ce", ON, opt.cuddle_else),
+    int_option("ci", 0, opt.continuation_indent),
+    special_option("cli", CLI),
+    bool_option("cs", ON, opt.space_after_cast),
+    int_option("c", 0, opt.comment_column),
+    int_option("di", 0, opt.decl_indent),
+    bool_option("dj", ON, opt.ljust_decl),
+    int_option("d", 0, opt.unindent_displace),
+    bool_option("eei", ON, opt.extra_expression_indent),
+    bool_option("ei", ON, opt.else_if),
+    bool_option("fbs", ON, opt.function_brace_split),
+    bool_option("fc1", ON, opt.format_col1_comments),
+    bool_option("fcb", ON, opt.format_block_comments),
+    bool_option("ip", ON, opt.indent_parameters),
+    int_option("i", 0, opt.indent_size),
+    int_option("lc", 0, opt.block_comment_max_line_length),
+    int_option("ldi", 0, opt.local_decl_indent),
+    bool_option("lpl", ON, opt.lineup_to_parens_always),
+    bool_option("lp", ON, opt.lineup_to_parens),
+    int_option("l", 0, opt.max_line_length),
+    bool_option("nbacc", OFF, opt.blanklines_around_conditional_compilation),
+    bool_option("nbadp", OFF, opt.blanklines_after_declarations_at_proctop),
+    bool_option("nbad", OFF, opt.blanklines_after_declarations),
+    bool_option("nbap", OFF, opt.blanklines_after_procs),
+    bool_option("nbbb", OFF, opt.blanklines_before_blockcomments),
+    bool_option("nbc", ON, opt.leave_comma),
+    bool_option("nbs", OFF, opt.Bill_Shannon),
+    bool_option("ncdb", OFF, opt.comment_delimiter_on_blankline),
+    bool_option("nce", OFF, opt.cuddle_else),
+    bool_option("ncs", OFF, opt.space_after_cast),
+    bool_option("ndj", OFF, opt.ljust_decl),
+    bool_option("neei", OFF, opt.extra_expression_indent),
+    bool_option("nei", OFF, opt.else_if),
+    bool_option("nfbs", OFF, opt.function_brace_split),
+    bool_option("nfc1", OFF, opt.format_col1_comments),
+    bool_option("nfcb", OFF, opt.format_block_comments),
+    bool_option("nip", OFF, opt.indent_parameters),
+    bool_option("nlpl", OFF, opt.lineup_to_parens_always),
+    bool_option("nlp", OFF, opt.lineup_to_parens),
+    bool_option("npcs", OFF, opt.proc_calls_space),
+    special_option("npro", IGN),
+    bool_option("npsl", OFF, opt.procnames_start_line),
+    bool_option("nsc", OFF, opt.star_comment_cont),
+    bool_option("nsob", OFF, opt.swallow_optional_blanklines),
+    bool_option("nut", OFF, opt.use_tabs),
+    bool_option("nv", OFF, opt.verbose),
+    bool_option("pcs", ON, opt.proc_calls_space),
+    bool_option("psl", ON, opt.procnames_start_line),
+    bool_option("sc", ON, opt.star_comment_cont),
+    bool_option("sob", ON, opt.swallow_optional_blanklines),
+    special_option("st", STDIN),
+    bool_option("ta", ON, opt.auto_typedefs),
+    int_option("ts", 0, opt.tabsize),
+    bool_option("ut", ON, opt.use_tabs),
+    bool_option("v", ON, opt.verbose),
     /* whew! */
     {0, 0, 0, 0}
 };
@@ -211,14 +222,14 @@ scan_profile(FILE *f)
 	p = buf;
 	comment_index = 0;
 	while ((i = getc(f)) != EOF) {
-	    if (i == '*' && !comment_index && p > buf && p[-1] == '/') {
+	    if (i == '*' && comment_index == 0 && p > buf && p[-1] == '/') {
 		comment_index = (int)(p - buf);
 		*p++ = i;
-	    } else if (i == '/' && comment_index && p > buf && p[-1] == '*') {
+	    } else if (i == '/' && comment_index != 0 && p > buf && p[-1] == '*') {
 		p = buf + comment_index - 1;
 		comment_index = 0;
 	    } else if (isspace((unsigned char)i)) {
-		if (p > buf && !comment_index)
+		if (p > buf && comment_index == 0)
 		    break;
 	    } else {
 		*p++ = i;
@@ -237,7 +248,7 @@ scan_profile(FILE *f)
 static const char *
 eqin(const char *s1, const char *s2)
 {
-    while (*s1) {
+    while (*s1 != '\0') {
 	if (*s1++ != *s2++)
 	    return NULL;
     }
@@ -251,7 +262,7 @@ set_option(char *arg)
     const char	*param_start;
 
     arg++;			/* ignore leading "-" */
-    for (p = pro; p->p_name; p++)
+    for (p = pro; p->p_name != NULL; p++)
 	if (*p->p_name == *arg && (param_start = eqin(p->p_name, arg)) != NULL)
 	    goto found;
     errx(1, "%s: unknown parameter \"%s\"", option_source, arg - 1);
@@ -301,9 +312,9 @@ found:
 
     case PRO_BOOL:
 	if (p->p_special == OFF)
-	    *p->p_obj = false;
+	    *(ibool *)p->p_obj = false;
 	else
-	    *p->p_obj = true;
+	    *(ibool *)p->p_obj = true;
 	break;
 
     case PRO_INT:
@@ -311,7 +322,7 @@ found:
     need_param:
 	    errx(1, "%s: ``%s'' requires a parameter", option_source, p->p_name);
 	}
-	*p->p_obj = atoi(param_start);
+	*(int *)p->p_obj = atoi(param_start);
 	break;
 
     default:
