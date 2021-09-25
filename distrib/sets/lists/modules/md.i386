@@ -1,4 +1,4 @@
-# $NetBSD: md.i386,v 1.90 2021/03/25 09:49:00 nia Exp $
+# $NetBSD: md.i386,v 1.91 2021/09/25 17:55:37 maya Exp $
 #
 ./@MODULEDIR@/acpiacad				modules-base-kernel	kmod
 ./@MODULEDIR@/acpiacad/acpiacad.kmod		modules-base-kernel	kmod
@@ -68,14 +68,14 @@
 ./@MODULEDIR@/cxdtv/cxdtv.kmod			modules-base-kernel	kmod
 ./@MODULEDIR@/drm				modules-base-kernel	kmod
 ./@MODULEDIR@/drm/drm.kmod			modules-base-kernel	kmod
-./@MODULEDIR@/drmkms				modules-base-kernel	kmod
-./@MODULEDIR@/drmkms/drmkms.kmod		modules-base-kernel	kmod
-./@MODULEDIR@/drmkms_agp			modules-base-kernel	kmod
-./@MODULEDIR@/drmkms_agp/drmkms_agp.kmod	modules-base-kernel	kmod
-./@MODULEDIR@/drmkms_linux			modules-base-kernel	kmod
-./@MODULEDIR@/drmkms_linux/drmkms_linux.kmod	modules-base-kernel	kmod
-./@MODULEDIR@/drmkms_pci			modules-base-kernel	kmod
-./@MODULEDIR@/drmkms_pci/drmkms_pci.kmod	modules-base-kernel	kmod
+./@MODULEDIR@/drmkms				modules-obsolete	obsolete
+./@MODULEDIR@/drmkms/drmkms.kmod		modules-obsolete	obsolete
+./@MODULEDIR@/drmkms_agp			modules-obsolete	obsolete
+./@MODULEDIR@/drmkms_agp/drmkms_agp.kmod	modules-obsolete	obsolete
+./@MODULEDIR@/drmkms_linux			modules-obsolete	obsolete
+./@MODULEDIR@/drmkms_linux/drmkms_linux.kmod	modules-obsolete	obsolete
+./@MODULEDIR@/drmkms_pci			modules-obsolete	obsolete
+./@MODULEDIR@/drmkms_pci/drmkms_pci.kmod	modules-obsolete	obsolete
 ./@MODULEDIR@/dtrace_syscall_linux		modules-base-kernel	kmod,dtrace
 ./@MODULEDIR@/dtrace_syscall_linux/dtrace_syscall_linux.kmod	modules-base-kernel	kmod,dtrace
 ./@MODULEDIR@/emdtv				modules-base-kernel	kmod
@@ -108,8 +108,8 @@
 ./@MODULEDIR@/hpqlb/hpqlb.kmod			modules-base-kernel	kmod
 ./@MODULEDIR@/i915drm				modules-base-kernel	kmod
 ./@MODULEDIR@/i915drm/i915drm.kmod		modules-base-kernel	kmod
-./@MODULEDIR@/i915drmkms			modules-base-kernel	kmod
-./@MODULEDIR@/i915drmkms/i915drmkms.kmod	modules-base-kernel	kmod
+./@MODULEDIR@/i915drmkms			modules-obsolete	obsolete
+./@MODULEDIR@/i915drmkms/i915drmkms.kmod	modules-obsolete	obsolete
 ./@MODULEDIR@/ichsmb				modules-base-kernel     kmod
 ./@MODULEDIR@/ichsmb/ichsmb.kmod		modules-base-kernel     kmod
 ./@MODULEDIR@/if_iavf				modules-base-kernel	kmod
