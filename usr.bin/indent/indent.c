@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.c,v 1.83 2021/09/25 22:54:32 rillig Exp $	*/
+/*	$NetBSD: indent.c,v 1.84 2021/09/25 22:57:04 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)indent.c	5.17 (Berkeley) 6/7/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: indent.c,v 1.83 2021/09/25 22:54:32 rillig Exp $");
+__RCSID("$NetBSD: indent.c,v 1.84 2021/09/25 22:57:04 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/indent.c 340138 2018-11-04 19:24:49Z oshogbo $");
 #endif
@@ -529,7 +529,7 @@ process_comment_in_code(token_type ttype, bool *inout_force_nl)
     }
 
     ps.in_stmt = true;		/* turn on flag which causes an extra level of
-				 * indentation. this is turned off by a ; or
+				 * indentation. this is turned off by a ';' or
 				 * '}' */
     if (com.s != com.e) {	/* the turkey has embedded a comment
 				 * in a line. fix it */
@@ -1210,7 +1210,7 @@ main_loop(void)
     int squest;			/* when this is positive, we have seen a '?'
 				 * without the matching ':' in a <c>?<s>:<s>
 				 * construct */
-    bool scase;			/* set to true when we see a case, so we will
+    bool scase;			/* set to true when we see a 'case', so we
 				 * know what to do with the following colon */
 
     sp_sw = force_nl = false;
