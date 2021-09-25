@@ -1,4 +1,4 @@
-/* $NetBSD: sio.c,v 1.15 2021/08/07 16:18:57 thorpej Exp $ */
+/* $NetBSD: sio.c,v 1.16 2021/09/25 15:18:38 tsutsui Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: sio.c,v 1.15 2021/08/07 16:18:57 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sio.c,v 1.16 2021/09/25 15:18:38 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -41,6 +41,7 @@ __KERNEL_RCSID(0, "$NetBSD: sio.c,v 1.15 2021/08/07 16:18:57 thorpej Exp $");
 #include <machine/autoconf.h>
 
 #include <luna68k/luna68k/isr.h>
+#include <luna68k/dev/sioreg.h>
 #include <luna68k/dev/siovar.h>
 
 #include "ioconf.h"

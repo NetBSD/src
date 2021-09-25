@@ -1,4 +1,4 @@
-/* $NetBSD: lunaws.c,v 1.38 2021/09/20 08:31:09 tsutsui Exp $ */
+/* $NetBSD: lunaws.c,v 1.39 2021/09/25 15:18:38 tsutsui Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: lunaws.c,v 1.38 2021/09/20 08:31:09 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lunaws.c,v 1.39 2021/09/25 15:18:38 tsutsui Exp $");
 
 #include "opt_wsdisplay_compat.h"
 #include "wsmouse.h"
@@ -50,7 +50,8 @@ __KERNEL_RCSID(0, "$NetBSD: lunaws.c,v 1.38 2021/09/20 08:31:09 tsutsui Exp $");
 #include <luna68k/dev/omkbdmap.h>
 #include <luna68k/dev/sioreg.h>
 #include <luna68k/dev/siovar.h>
-#include <luna68k/dev/syscn.h>
+
+#include <machine/board.h>
 
 #include "ioconf.h"
 
@@ -261,7 +262,7 @@ wsintr(void *arg)
 	struct ws_softc *sc = arg;
 	struct sioreg *sio = sc->sc_ctl;
 	uint8_t code;
-	int rr;
+	uint16_t rr;
 	bool handled = false;
 
 	rr = getsiocsr(sio);
@@ -513,10 +514,14 @@ omkbd_get_buzcmd(struct ws_softc *sc, struct wskbd_bell_data *wbd,
 static void
 ws_cngetc(void *cookie, u_int *type, int *data)
 {
-	struct ws_softc *sc = cookie;
+	struct ws_softc *sc = cookie;	/* currently unused */
+	struct sioreg *sio, *sio_base;
 	int code;
 
-	code = syscngetc((dev_t)1);
+	sio_base = (struct sioreg *)OBIO_SIO;
+	sio = &sio_base[1];	/* channel B */
+
+	code = siogetc(sio);
 	omkbd_decode(sc, code, type, data);
 }
 
@@ -528,9 +533,13 @@ ws_cnpollc(void *cookie, int on)
 static void
 ws_cnbell(void *cookie, u_int pitch, u_int period, u_int volume)
 {
-	struct ws_softc *sc = cookie;
+	struct ws_softc *sc = cookie;	/* currently unused */
+	struct sioreg *sio, *sio_base;
 	struct wskbd_bell_data wbd;
 	uint8_t buzcmd;
+
+	sio_base = (struct sioreg *)OBIO_SIO;
+	sio = &sio_base[1];	/* channel B */
 
 	/*
 	 * XXX cnbell(9) man page should describe each args..
@@ -545,7 +554,7 @@ ws_cnbell(void *cookie, u_int pitch, u_int period, u_int volume)
 	wbd.volume = volume;
 	buzcmd = omkbd_get_buzcmd(sc, &wbd, OMKBD_BUZZER_DEFAULT);
 
-	syscnputc((dev_t)1, buzcmd);
+	sioputc(sio, buzcmd);
 }
 
 /* EXPORT */ void

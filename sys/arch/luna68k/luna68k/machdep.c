@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.106 2020/06/11 19:20:44 ad Exp $ */
+/* $NetBSD: machdep.c,v 1.107 2021/09/25 15:18:38 tsutsui Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.106 2020/06/11 19:20:44 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.107 2021/09/25 15:18:38 tsutsui Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -84,7 +84,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.106 2020/06/11 19:20:44 ad Exp $");
 #include <machine/pte.h>
 #include <machine/kcore.h>	/* XXX should be pulled in by sys/kcore.h */
 
-#include <luna68k/dev/syscn.h>
+#include <luna68k/dev/siottyvar.h>
 
 #include <dev/cons.h>
 #include <dev/mm.h>
@@ -136,7 +136,6 @@ cpu_kcore_hdr_t cpu_kcore_hdr;
 int	machtype;	/* model: 1 for LUNA-1, 2 for LUNA-2 */
 int	sysconsole;	/* console: 0 for ttya, 1 for video */
 
-extern struct consdev syscons;
 extern void omfb_cnattach(void);
 extern void ws_cnattach(void);
 
@@ -166,7 +165,7 @@ luna68k_init(void)
 
 	/* initialize cn_tab for early console */
 #if 1
-	cn_tab = &syscons;
+	cn_tab = &siottycons;
 #else
 	cn_tab = &romcons;
 #endif
@@ -248,9 +247,10 @@ void
 consinit(void)
 {
 
-	if (sysconsole == 0)
-		syscninit(0);
-	else {
+	if (sysconsole == 0) {
+		cn_tab = &siottycons;
+		(*cn_tab->cn_init)(cn_tab);
+	} else {
 		omfb_cnattach();
 		ws_cnattach();
 	}
