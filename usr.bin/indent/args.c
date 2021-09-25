@@ -1,4 +1,4 @@
-/*	$NetBSD: args.c,v 1.26 2021/09/25 17:20:02 rillig Exp $	*/
+/*	$NetBSD: args.c,v 1.27 2021/09/25 18:49:03 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)args.c	8.1 (Berkeley) 6/6/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: args.c,v 1.26 2021/09/25 17:20:02 rillig Exp $");
+__RCSID("$NetBSD: args.c,v 1.27 2021/09/25 18:49:03 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/args.c 336318 2018-07-15 21:04:21Z pstef $");
 #endif
@@ -123,7 +123,7 @@ const struct pro {
     bool_option("bc", OFF, opt.leave_comma),
     bool_option("bl", OFF, opt.btype_2),
     bool_option("br", ON, opt.btype_2),
-    bool_option("bs", ON, opt.Bill_Shannon),
+    bool_option("bs", ON, opt.blank_after_sizeof),
     bool_option("cdb", ON, opt.comment_delimiter_on_blankline),
     int_option("cd", 0, opt.decl_comment_column),
     bool_option("ce", ON, opt.cuddle_else),
@@ -152,7 +152,7 @@ const struct pro {
     bool_option("nbap", OFF, opt.blanklines_after_procs),
     bool_option("nbbb", OFF, opt.blanklines_before_blockcomments),
     bool_option("nbc", ON, opt.leave_comma),
-    bool_option("nbs", OFF, opt.Bill_Shannon),
+    bool_option("nbs", OFF, opt.blank_after_sizeof),
     bool_option("ncdb", OFF, opt.comment_delimiter_on_blankline),
     bool_option("nce", OFF, opt.cuddle_else),
     bool_option("ncs", OFF, opt.space_after_cast),
