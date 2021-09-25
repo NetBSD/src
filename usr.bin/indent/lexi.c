@@ -1,4 +1,4 @@
-/*	$NetBSD: lexi.c,v 1.55 2021/09/25 17:36:51 rillig Exp $	*/
+/*	$NetBSD: lexi.c,v 1.56 2021/09/25 19:49:13 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)lexi.c	8.1 (Berkeley) 6/6/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: lexi.c,v 1.55 2021/09/25 17:36:51 rillig Exp $");
+__RCSID("$NetBSD: lexi.c,v 1.56 2021/09/25 19:49:13 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/lexi.c 337862 2018-08-15 18:19:45Z pstef $");
 #endif
@@ -52,6 +52,7 @@ __FBSDID("$FreeBSD: head/usr.bin/indent/lexi.c 337862 2018-08-15 18:19:45Z pstef
 #include <err.h>
 #include <stdio.h>
 #include <ctype.h>
+#include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/param.h>
@@ -133,7 +134,7 @@ int         typename_top = -1;
  * HP H* "." H+ P  FS? -> $float;    "0" O*          IS? -> $int;
  * HP H+ "."    P  FS  -> $float;    BP B+           IS? -> $int;
  */
-static char const *table[] = {
+static const char num_lex_state[][26] = {
     /*                examples:
                                      00
              s                      0xx
@@ -142,40 +143,42 @@ static char const *table[] = {
              r   11ee0001101lbuuxx.a.pp
              t.01.e+008bLuxll0Ll.aa.p+0
     states:  ABCDEFGHIJKLMNOPQRSTUVWXYZ */
-    ['0'] = "CEIDEHHHIJQ  U  Q  VUVVZZZ",
-    ['1'] = "DEIDEHHHIJQ  U  Q  VUVVZZZ",
-    ['7'] = "DEIDEHHHIJ   U     VUVVZZZ",
-    ['9'] = "DEJDEHHHJJ   U     VUVVZZZ",
-    ['a'] = "             U     VUVV   ",
-    ['b'] = "  K          U     VUVV   ",
-    ['e'] = "  FFF   FF   U     VUVV   ",
-    ['f'] = "    f  f     U     VUVV  f",
-    ['u'] = "  MM    M  i  iiM   M     ",
-    ['x'] = "  N                       ",
-    ['p'] = "                    FFX   ",
-    ['L'] = "  LLf  fL  PR   Li  L    f",
-    ['l'] = "  OOf  fO   S P O i O    f",
-    ['+'] = "     G                 Y  ",
-    ['.'] = "B EE    EE   T      W     ",
+    [0] =   "uuiifuufiuuiiuiiiiiuiuuuuu",
+    [1] =   "CEIDEHHHIJQ  U  Q  VUVVZZZ",
+    [2] =   "DEIDEHHHIJQ  U  Q  VUVVZZZ",
+    [3] =   "DEIDEHHHIJ   U     VUVVZZZ",
+    [4] =   "DEJDEHHHJJ   U     VUVVZZZ",
+    [5] =   "             U     VUVV   ",
+    [6] =   "  K          U     VUVV   ",
+    [7] =   "  FFF   FF   U     VUVV   ",
+    [8] =   "    f  f     U     VUVV  f",
+    [9] =   "  LLf  fL  PR   Li  L    f",
+    [10] =  "  OOf  fO   S P O i O    f",
+    [11] =  "                    FFX   ",
+    [12] =  "  MM    M  i  iiM   M     ",
+    [13] =  "  N                       ",
+    [14] =  "     G                 Y  ",
+    [15] =  "B EE    EE   T      W     ",
     /*       ABCDEFGHIJKLMNOPQRSTUVWXYZ */
-    [0]   = "uuiifuufiuuiiuiiiiiuiuuuuu",
 };
 
-/* Initialize constant transition table */
-void
-init_constant_tt(void)
-{
-    table['-'] = table['+'];
-    table['8'] = table['9'];
-    table['2'] = table['3'] = table['4'] = table['5'] = table['6'] = table['7'];
-    table['A'] = table['C'] = table['D'] = table['c'] = table['d'] = table['a'];
-    table['B'] = table['b'];
-    table['E'] = table['e'];
-    table['U'] = table['u'];
-    table['X'] = table['x'];
-    table['P'] = table['p'];
-    table['F'] = table['f'];
-}
+static const uint8_t num_lex_row[] = {
+    ['0'] = 1,
+    ['1'] = 2,
+    ['2'] = 3, ['3'] = 3, ['4'] = 3, ['5'] = 3, ['6'] = 3, ['7'] = 3,
+    ['8'] = 4, ['9'] = 4,
+    ['A'] = 5, ['a'] = 5, ['C'] = 5, ['c'] = 5, ['D'] = 5, ['d'] = 5,
+    ['B'] = 6, ['b'] = 6,
+    ['E'] = 7, ['e'] = 7,
+    ['F'] = 8, ['f'] = 8,
+    ['L'] = 9,
+    ['l'] = 10,
+    ['P'] = 11, ['p'] = 11,
+    ['U'] = 12, ['u'] = 12,
+    ['X'] = 13, ['x'] = 13,
+    ['+'] = 14, ['-'] = 14,
+    ['.'] = 15,
+};
 
 static char
 inbuf_peek(void)
@@ -275,21 +278,22 @@ lexi_end(token_type ttype)
 static void
 lex_number(void)
 {
-    char s;
-    unsigned char i;
-
-    for (s = 'A'; s != 'f' && s != 'i' && s != 'u'; ) {
-	i = (unsigned char)*buf_ptr;
-	if (i >= nitems(table) || table[i] == NULL ||
-	    table[i][s - 'A'] == ' ') {
-	    s = table[0][s - 'A'];
+    for (uint8_t s = 'A'; s != 'f' && s != 'i' && s != 'u'; ) {
+	uint8_t ch = (uint8_t)*buf_ptr;
+	if (ch >= nitems(num_lex_row) || num_lex_row[ch] == 0)
+	    break;
+	uint8_t row = num_lex_row[ch];
+	if (num_lex_state[row][s - 'A'] == ' ') {
+	    /*
+	     * num_lex_state[0][s - 'A'] now indicates the type:
+	     * f = floating, ch = integer, u = unknown
+	     */
 	    break;
 	}
-	s = table[i][s - 'A'];
+	s = num_lex_state[row][s - 'A'];
 	check_size_token(1);
 	*token.e++ = inbuf_next();
     }
-    /* s now indicates the type: f(loating), i(integer), u(nknown) */
 }
 
 static void
