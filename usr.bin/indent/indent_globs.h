@@ -1,4 +1,4 @@
-/*	$NetBSD: indent_globs.h,v 1.27 2021/09/25 10:41:03 rillig Exp $	*/
+/*	$NetBSD: indent_globs.h,v 1.28 2021/09/25 14:38:31 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -45,9 +45,6 @@
 #define label_offset 2		/* number of levels a label is placed to left
 				 * of code */
 
-
-#define false 0
-#define true  1
 
 struct buffer {
     char *buf;			/* buffer */
