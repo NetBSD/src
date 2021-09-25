@@ -1,4 +1,4 @@
-/* $NetBSD: opt-nfc1.0,v 1.3 2021/09/24 17:37:55 rillig Exp $ */
+/* $NetBSD: opt-nfc1.0,v 1.4 2021/09/25 18:02:48 rillig Exp $ */
 /* $FreeBSD$ */
 
 /*
@@ -23,3 +23,10 @@
 
 /* $ Both comment texts get surrounded by spaces. */
 /*block1*//*block2*/
+
+/*
+ * A multi-line comment that starts
+ * in column 1.
+ *//* followed by another multi-line comment
+ * that starts in column 4.
+ */
