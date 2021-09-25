@@ -1,4 +1,4 @@
-/*	$NetBSD: args.c,v 1.27 2021/09/25 18:49:03 rillig Exp $	*/
+/*	$NetBSD: args.c,v 1.28 2021/09/25 21:20:59 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)args.c	8.1 (Berkeley) 6/6/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: args.c,v 1.27 2021/09/25 18:49:03 rillig Exp $");
+__RCSID("$NetBSD: args.c,v 1.28 2021/09/25 21:20:59 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/args.c 336318 2018-07-15 21:04:21Z pstef $");
 #endif
@@ -106,7 +106,7 @@ void add_typedefs_from_file(const char *str);
  * must be first.
  */
 const struct pro {
-    const char *p_name;		/* name, e.g. -bl, -cli */
+    const char  p_name[9];	/* name, e.g. "bl", "cli" */
     int         p_type;		/* type (int, bool, special) */
     int         p_special;	/* depends on type */
     void        *p_obj;		/* the associated variable */
@@ -182,7 +182,7 @@ const struct pro {
     bool_option("ut", ON, opt.use_tabs),
     bool_option("v", ON, opt.verbose),
     /* whew! */
-    {0, 0, 0, 0}
+    {"", 0, 0, 0}
 };
 
 /*
@@ -262,7 +262,7 @@ set_option(char *arg)
     const char	*param_start;
 
     arg++;			/* ignore leading "-" */
-    for (p = pro; p->p_name != NULL; p++)
+    for (p = pro; p->p_name[0] != '\0'; p++)
 	if (*p->p_name == *arg && (param_start = eqin(p->p_name, arg)) != NULL)
 	    goto found;
     errx(1, "%s: unknown parameter \"%s\"", option_source, arg - 1);
