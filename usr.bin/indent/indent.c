@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.c,v 1.70 2021/09/25 13:38:32 rillig Exp $	*/
+/*	$NetBSD: indent.c,v 1.71 2021/09/25 14:16:06 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)indent.c	5.17 (Berkeley) 6/7/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: indent.c,v 1.70 2021/09/25 13:38:32 rillig Exp $");
+__RCSID("$NetBSD: indent.c,v 1.71 2021/09/25 14:16:06 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/indent.c 340138 2018-11-04 19:24:49Z oshogbo $");
 #endif
@@ -64,7 +64,28 @@ __FBSDID("$FreeBSD: head/usr.bin/indent/indent.c 340138 2018-11-04 19:24:49Z osh
 
 #include "indent.h"
 
-struct options opt;
+struct options opt = {
+	.leave_comma = true,
+	.btype_2 = true,
+	.comment_delimiter_on_blankline = true,
+	.cuddle_else = true,
+	.comment_column = 33,
+	.decl_indent = 16,
+	.else_if = true,
+	.function_brace_split = true,
+	.format_col1_comments = true,
+	.format_block_comments = true,
+	.indent_parameters = true,
+	.indent_size = 8,
+	.local_decl_indent = -1,
+	.lineup_to_parens = true,
+	.procnames_start_line = true,
+	.star_comment_cont = true,
+	.tabsize = 8,
+	.max_line_length = 78,
+	.use_tabs = true,
+};
+
 struct parser_state ps;
 
 struct buffer lab;
@@ -399,41 +420,11 @@ main_parse_command_line(int argc, char **argv)
     int i;
     const char *profile_name = NULL;
 
-#if 0
-    max_line_length = 78;	/* -l78 */
-    lineup_to_parens = 1;	/* -lp */
-    lineup_to_parens_always = 0; /* -nlpl */
-    ps.ljust_decl = 0;		/* -ndj */
-    ps.com_ind = 33;		/* -c33 */
-    star_comment_cont = 1;	/* -sc */
-    ps.ind_size = 8;		/* -i8 */
-    verbose = 0;
-    ps.decl_indent = 16;	/* -di16 */
-    ps.local_decl_indent = -1;	/* if this is not set to some nonnegative value
-				 * by an arg, we will set this equal to
-				 * ps.decl_ind */
-    ps.indent_parameters = 1;	/* -ip */
-    ps.decl_com_ind = 0;	/* if this is not set to some positive value
-				 * by an arg, we will set this equal to
-				 * ps.com_ind */
-    btype_2 = 1;		/* -br */
-    cuddle_else = 1;		/* -ce */
-    ps.unindent_displace = 0;	/* -d0 */
-    ps.case_indent = 0;		/* -cli0 */
-    format_block_comments = 1;	/* -fcb */
-    format_col1_comments = 1;	/* -fc1 */
-    procnames_start_line = 1;	/* -psl */
-    proc_calls_space = 0;	/* -npcs */
-    comment_delimiter_on_blankline = 1;	/* -cdb */
-    ps.leave_comma = 1;		/* -nbc */
-#endif
-
     for (i = 1; i < argc; ++i)
 	if (strcmp(argv[i], "-npro") == 0)
 	    break;
 	else if (argv[i][0] == '-' && argv[i][1] == 'P' && argv[i][2] != '\0')
 	    profile_name = argv[i];	/* non-empty -P (set profile) */
-    set_defaults();
     if (i >= argc)
 	set_profile(profile_name);
 
