@@ -1,4 +1,4 @@
-/*	$NetBSD: md.h,v 1.7 2020/10/05 12:28:45 martin Exp $	*/
+/*	$NetBSD: md.h,v 1.8 2021/09/25 08:54:31 maya Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -60,7 +60,7 @@
 /*
  *  Default filesets to fetch and install during installation
  *  or upgrade. The standard sets are:
- *      base etc comp games man misc rescue tests text xbase xcomp xetc xfont xserver
+ *      base etc comp games gpufw man misc rescue tests text xbase xcomp xetc xfont xserver
  */
 #if 0	/* XXX */
 #define SET_KERNEL_1_NAME	"kern-ADI_BRH"

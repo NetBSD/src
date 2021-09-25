@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.450 2021/05/26 20:22:28 christos Exp $
+#	$NetBSD: Makefile,v 1.451 2021/09/25 08:54:30 maya Exp $
 #	from: @(#)Makefile	8.7 (Berkeley) 5/25/95
 
 # Environment variables without default values:
@@ -374,6 +374,9 @@ OBSOLETE.files+=	debug
 .endif
 .if ${MKDTB} != "no"
 OBSOLETE.files+=	dtb
+.endif
+.if ${MKGPUFIRMWARE} != "no"
+OBSOLETE.files+=	gpufw
 .endif
 .if ${MKKMOD} != "no"
 OBSOLETE.files+=	modules

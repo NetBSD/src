@@ -1,5 +1,5 @@
 #!/bin/sh
-# $NetBSD: mkimage,v 1.77 2020/12/23 10:35:18 rin Exp $
+# $NetBSD: mkimage,v 1.78 2021/09/25 08:54:30 maya Exp $
 #
 # Copyright (c) 2013, 2014 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -62,7 +62,7 @@ MKUBOOTIMAGE=${TOOL_MKUBOOTIMAGE:-mkubootimage}
 GZIP_CMD=${TOOL_GZIP:-gzip} # ${GZIP} is special to gzip(1)
 
 src="/usr/src"
-sets="base comp etc games man misc modules rescue tests text"
+sets="base comp etc games gpufw man misc modules rescue tests text"
 xsets="xbase xcomp xetc xfont xserver" 
 minfree="10%"
 bar="==="

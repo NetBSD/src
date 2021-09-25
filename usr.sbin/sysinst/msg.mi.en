@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.en,v 1.35 2020/11/04 14:29:40 martin Exp $	*/
+/*	$NetBSD: msg.mi.en,v 1.36 2021/09/25 08:54:31 maya Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -817,6 +817,9 @@ message set_dtb
 
 message set_games
 {Games}
+
+message set_gpufw
+{Graphics driver firmware}
 
 message set_man_pages
 {Manual pages}
