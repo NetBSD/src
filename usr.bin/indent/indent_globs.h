@@ -1,4 +1,4 @@
-/*	$NetBSD: indent_globs.h,v 1.32 2021/09/25 17:36:51 rillig Exp $	*/
+/*	$NetBSD: indent_globs.h,v 1.33 2021/09/25 18:49:03 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -93,7 +93,7 @@ extern struct options {
 				 * commas */
     bool	btype_2;	/* whether brace should be on same line
 				 * as if, while, etc */
-    bool	Bill_Shannon;	/* whether a blank should always be
+    bool	blank_after_sizeof; /* whether a blank should always be
 				 * inserted after sizeof */
     bool	comment_delimiter_on_blankline;
     int         decl_comment_column; /* the column in which comments after
