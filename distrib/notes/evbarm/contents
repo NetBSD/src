@@ -1,4 +1,4 @@
-.\"	$NetBSD: contents,v 1.14 2020/09/15 07:15:21 nia Exp $
+.\"	$NetBSD: contents,v 1.15 2021/09/25 08:54:29 maya Exp $
 .\"
 .\" Copyright (c) 1999-2020 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -169,6 +169,9 @@ be used if you are upgrading.
 .
 .It Sy games
 This set includes the games and their manual pages.
+.
+.It Sy gpufw
+This set includes firmware for graphical drivers.
 .
 .\" Kernel set(s)
 .

@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.59 2021/08/03 13:40:33 martin Exp $	*/
+/*	$NetBSD: util.c,v 1.60 2021/09/25 08:54:31 maya Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -128,6 +128,9 @@ distinfo dist_list[] = {
 	{"etc",			SET_ETC,		false, MSG_set_system, NULL},
 	{"comp",		SET_COMPILER,		false, MSG_set_compiler, NULL},
 	{"games",		SET_GAMES,		false, MSG_set_games, NULL},
+#ifdef HAVE_GPUFW
+	{"gpufw",		SET_GPUFW,		false, MSG_set_gpufw, NULL},
+#endif
 	{"man",			SET_MAN_PAGES,		false, MSG_set_man_pages, NULL},
 	{"misc",		SET_MISC,		false, MSG_set_misc, NULL},
 	{"rescue",		SET_RESCUE,		false, MSG_set_rescue, NULL},

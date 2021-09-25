@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.bootimage,v 1.28 2021/07/24 13:59:28 jmcneill Exp $
+#	$NetBSD: Makefile.bootimage,v 1.29 2021/09/25 08:54:29 maya Exp $
 #
 # Copyright (c) 2009, 2010, 2011 Izumi Tsutsui.  All rights reserved.
 #
@@ -71,8 +71,8 @@
 #		(default: kern-GENERIC)
 #	SETS
 #		binary sets that should be extracted into image
-#		(default: modules base etc comp games man misc rescue tests
-#			  text xbase xcomp xetc xfont xserver)
+#		(default: modules base etc comp games gpufw man misc
+#		          rescue tests text xbase xcomp xetc xfont xserver)
 #	SETS_DIR
 #		directory path where binary sets are stored
 #		(default: ${RELEASEDIR}/${RELEASEMACHINEDIR}/binary/sets)
@@ -234,7 +234,7 @@ SWAPDISK_UUID=`${TOOL_GPT} ${GPT_TIMESSTAMP} ${WORKMBR} show -i 3 | ${TOOL_AWK} 
 #
 # definitions to create root fs
 #
-SETS_DEFAULT=	modules base etc comp games man misc rescue tests text
+SETS_DEFAULT=	modules base etc comp games gpufw man misc rescue tests text
 .if ${MKX11} != "no"
 SETS_DEFAULT+=	xbase xcomp xetc xfont xserver
 .endif

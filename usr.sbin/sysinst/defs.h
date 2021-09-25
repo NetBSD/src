@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.72 2021/08/12 09:33:59 martin Exp $	*/
+/*	$NetBSD: defs.h,v 1.73 2021/09/25 08:54:31 maya Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -141,6 +141,7 @@ enum {
     SET_COMPILER,	/* compiler tools */
     SET_DTB,		/* devicetree hardware descriptions */
     SET_GAMES,		/* text games */
+    SET_GPUFW,		/* GPU firmware files */
     SET_MAN_PAGES,	/* online manual pages */
     SET_MISC,		/* miscellaneuous */
     SET_MODULES,	/* kernel modules */
@@ -191,10 +192,16 @@ enum {
 #endif
 /* Core system sets */
 #ifdef HAVE_DTB
-#define SET_CORE WITH_MODULES SET_BASE, SET_DTB, SET_ETC
+#define	WITH_DTB	SET_DTB,
 #else
-#define SET_CORE WITH_MODULES SET_BASE, SET_ETC
+#define	WITH_DTB
 #endif
+#ifdef HAVE_GPUFW
+#define	WITH_GPUFW	SET_GPUFW,
+#else
+#define	WITH_GPUFW
+#endif
+#define SET_CORE WITH_MODULES SET_BASE, WITH_DTB WITH_GPUFW SET_ETC
 /* All system sets */
 #define SET_SYSTEM SET_CORE, SET_COMPILER, SET_GAMES, \
 		    SET_MAN_PAGES, SET_MISC, SET_RESCUE, \

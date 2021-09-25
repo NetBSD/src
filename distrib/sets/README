@@ -1,4 +1,4 @@
-# $NetBSD: README,v 1.15 2020/05/18 21:19:34 jmcneill Exp $
+# $NetBSD: README,v 1.16 2021/09/25 08:54:30 maya Exp $
 
 the scripts should be run from the directory where they reside.
 
@@ -53,6 +53,8 @@ the sets are as follows:
 		on an upgrade.
 
 	games:	the games and their man pages.
+
+	gpufw:	heavy firmware files used by graphical drivers.
 
 	man:	all of the man pages for the system, except those
 		listed elsewhere (e.g. in comp, games, misc, text).

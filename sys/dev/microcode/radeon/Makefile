@@ -1,10 +1,10 @@
-#	$NetBSD: Makefile,v 1.6 2019/09/03 15:34:08 riastradh Exp $
+#	$NetBSD: Makefile,v 1.7 2021/09/25 08:54:31 maya Exp $
 
 NOMAN=	# defined
 
 .include <bsd.own.mk>
 
-.if ${MKRADEONFIRMWARE} != "no"
+.if ${MKGPUFIRMWARE} != "no"
 
 FILES=	\
 	R100_cp.bin \

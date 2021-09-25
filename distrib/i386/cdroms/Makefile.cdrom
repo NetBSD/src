@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.cdrom,v 1.41 2017/02/10 16:43:59 christos Exp $
+# $NetBSD: Makefile.cdrom,v 1.42 2021/09/25 08:54:29 maya Exp $
 
 .include <bsd.own.mk>
 
@@ -10,7 +10,7 @@ CDMAKEFSOPTIONS= bootimage=i386;bootxx.${MACHINE},no-emul-boot,allow-multidot
 CDINSTKERNEL=	../../instkernel
 CDKERNELS=	netbsd-GENERIC.gz       netbsd
 CDRELEASE_NOISOS=	true
-CD_SETS=	base etc
+CD_SETS=	base etc gpufw
 .if ${MKKMOD} != "no"
 CD_SETS+=	modules
 .endif
