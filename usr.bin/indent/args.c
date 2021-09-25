@@ -1,4 +1,4 @@
-/*	$NetBSD: args.c,v 1.30 2021/09/25 22:16:58 rillig Exp $	*/
+/*	$NetBSD: args.c,v 1.31 2021/09/25 23:38:45 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)args.c	8.1 (Berkeley) 6/6/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: args.c,v 1.30 2021/09/25 22:16:58 rillig Exp $");
+__RCSID("$NetBSD: args.c,v 1.31 2021/09/25 23:38:45 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/args.c 336318 2018-07-15 21:04:21Z pstef $");
 #endif
@@ -70,20 +70,15 @@ __FBSDID("$FreeBSD: head/usr.bin/indent/args.c 336318 2018-07-15 21:04:21Z pstef
 #define	PRO_BOOL	2	/* boolean */
 #define	PRO_INT		3	/* integer */
 
-/* profile specials for booleans */
-#define	ON		1	/* turn it on */
-#define	OFF		0	/* turn it off */
-
 /* profile specials for specials */
 #define	IGN		1	/* ignore it */
 #define	CLI		2	/* case label indent (float) */
 #define	STDIN		3	/* use stdin */
 #define	KEY		4	/* type (keyword) */
-
-static void scan_profile(FILE *);
-
 #define	KEY_FILE	5	/* only used for args */
 #define VERSION		6	/* only used for args */
+
+static void scan_profile(FILE *);
 
 const char *option_source = "?";
 
@@ -95,9 +90,10 @@ void add_typedefs_from_file(const char *);
 #define assert_type(expr, type) (expr)
 #endif
 #define bool_option(name, value, var) \
-	{name, PRO_BOOL, value, assert_type(&(var), bool *)}
-#define int_option(name, value, var) \
-	{name, PRO_INT, value, assert_type(&(var), int *)}
+	{name, PRO_BOOL, /*CONSTCOND*/(value) ? 1 : 0, \
+	    assert_type(&(var), bool *)}
+#define int_option(name, var) \
+	{name, PRO_INT, 0, assert_type(&(var), int *)}
 #define special_option(name, value) \
 	{name, PRO_SPECIAL, assert_type(value, int), NULL}
 
@@ -116,72 +112,72 @@ static const struct pro {
     special_option("U", KEY_FILE),
     special_option("-version", VERSION),
     special_option("P", IGN),
-    bool_option("bacc", ON, opt.blanklines_around_conditional_compilation),
-    bool_option("badp", ON, opt.blanklines_after_declarations_at_proctop),
-    bool_option("bad", ON, opt.blanklines_after_declarations),
-    bool_option("bap", ON, opt.blanklines_after_procs),
-    bool_option("bbb", ON, opt.blanklines_before_blockcomments),
-    bool_option("bc", OFF, opt.leave_comma),
-    bool_option("bl", OFF, opt.btype_2),
-    bool_option("br", ON, opt.btype_2),
-    bool_option("bs", ON, opt.blank_after_sizeof),
-    bool_option("cdb", ON, opt.comment_delimiter_on_blankline),
-    int_option("cd", 0, opt.decl_comment_column),
-    bool_option("ce", ON, opt.cuddle_else),
-    int_option("ci", 0, opt.continuation_indent),
+    bool_option("bacc", true, opt.blanklines_around_conditional_compilation),
+    bool_option("badp", true, opt.blanklines_after_declarations_at_proctop),
+    bool_option("bad", true, opt.blanklines_after_declarations),
+    bool_option("bap", true, opt.blanklines_after_procs),
+    bool_option("bbb", true, opt.blanklines_before_blockcomments),
+    bool_option("bc", false, opt.leave_comma),
+    bool_option("bl", false, opt.btype_2),
+    bool_option("br", true, opt.btype_2),
+    bool_option("bs", true, opt.blank_after_sizeof),
+    bool_option("cdb", true, opt.comment_delimiter_on_blankline),
+    int_option("cd", opt.decl_comment_column),
+    bool_option("ce", true, opt.cuddle_else),
+    int_option("ci", opt.continuation_indent),
     special_option("cli", CLI),
-    bool_option("cs", ON, opt.space_after_cast),
-    int_option("c", 0, opt.comment_column),
-    int_option("di", 0, opt.decl_indent),
-    bool_option("dj", ON, opt.ljust_decl),
-    int_option("d", 0, opt.unindent_displace),
-    bool_option("eei", ON, opt.extra_expression_indent),
-    bool_option("ei", ON, opt.else_if),
-    bool_option("fbs", ON, opt.function_brace_split),
-    bool_option("fc1", ON, opt.format_col1_comments),
-    bool_option("fcb", ON, opt.format_block_comments),
-    bool_option("ip", ON, opt.indent_parameters),
-    int_option("i", 0, opt.indent_size),
-    int_option("lc", 0, opt.block_comment_max_line_length),
-    int_option("ldi", 0, opt.local_decl_indent),
-    bool_option("lpl", ON, opt.lineup_to_parens_always),
-    bool_option("lp", ON, opt.lineup_to_parens),
-    int_option("l", 0, opt.max_line_length),
-    bool_option("nbacc", OFF, opt.blanklines_around_conditional_compilation),
-    bool_option("nbadp", OFF, opt.blanklines_after_declarations_at_proctop),
-    bool_option("nbad", OFF, opt.blanklines_after_declarations),
-    bool_option("nbap", OFF, opt.blanklines_after_procs),
-    bool_option("nbbb", OFF, opt.blanklines_before_blockcomments),
-    bool_option("nbc", ON, opt.leave_comma),
-    bool_option("nbs", OFF, opt.blank_after_sizeof),
-    bool_option("ncdb", OFF, opt.comment_delimiter_on_blankline),
-    bool_option("nce", OFF, opt.cuddle_else),
-    bool_option("ncs", OFF, opt.space_after_cast),
-    bool_option("ndj", OFF, opt.ljust_decl),
-    bool_option("neei", OFF, opt.extra_expression_indent),
-    bool_option("nei", OFF, opt.else_if),
-    bool_option("nfbs", OFF, opt.function_brace_split),
-    bool_option("nfc1", OFF, opt.format_col1_comments),
-    bool_option("nfcb", OFF, opt.format_block_comments),
-    bool_option("nip", OFF, opt.indent_parameters),
-    bool_option("nlpl", OFF, opt.lineup_to_parens_always),
-    bool_option("nlp", OFF, opt.lineup_to_parens),
-    bool_option("npcs", OFF, opt.proc_calls_space),
+    bool_option("cs", true, opt.space_after_cast),
+    int_option("c", opt.comment_column),
+    int_option("di", opt.decl_indent),
+    bool_option("dj", true, opt.ljust_decl),
+    int_option("d", opt.unindent_displace),
+    bool_option("eei", true, opt.extra_expression_indent),
+    bool_option("ei", true, opt.else_if),
+    bool_option("fbs", true, opt.function_brace_split),
+    bool_option("fc1", true, opt.format_col1_comments),
+    bool_option("fcb", true, opt.format_block_comments),
+    bool_option("ip", true, opt.indent_parameters),
+    int_option("i", opt.indent_size),
+    int_option("lc", opt.block_comment_max_line_length),
+    int_option("ldi", opt.local_decl_indent),
+    bool_option("lpl", true, opt.lineup_to_parens_always),
+    bool_option("lp", true, opt.lineup_to_parens),
+    int_option("l", opt.max_line_length),
+    bool_option("nbacc", false, opt.blanklines_around_conditional_compilation),
+    bool_option("nbadp", false, opt.blanklines_after_declarations_at_proctop),
+    bool_option("nbad", false, opt.blanklines_after_declarations),
+    bool_option("nbap", false, opt.blanklines_after_procs),
+    bool_option("nbbb", false, opt.blanklines_before_blockcomments),
+    bool_option("nbc", true, opt.leave_comma),
+    bool_option("nbs", false, opt.blank_after_sizeof),
+    bool_option("ncdb", false, opt.comment_delimiter_on_blankline),
+    bool_option("nce", false, opt.cuddle_else),
+    bool_option("ncs", false, opt.space_after_cast),
+    bool_option("ndj", false, opt.ljust_decl),
+    bool_option("neei", false, opt.extra_expression_indent),
+    bool_option("nei", false, opt.else_if),
+    bool_option("nfbs", false, opt.function_brace_split),
+    bool_option("nfc1", false, opt.format_col1_comments),
+    bool_option("nfcb", false, opt.format_block_comments),
+    bool_option("nip", false, opt.indent_parameters),
+    bool_option("nlpl", false, opt.lineup_to_parens_always),
+    bool_option("nlp", false, opt.lineup_to_parens),
+    bool_option("npcs", false, opt.proc_calls_space),
     special_option("npro", IGN),
-    bool_option("npsl", OFF, opt.procnames_start_line),
-    bool_option("nsc", OFF, opt.star_comment_cont),
-    bool_option("nsob", OFF, opt.swallow_optional_blanklines),
-    bool_option("nut", OFF, opt.use_tabs),
-    bool_option("nv", OFF, opt.verbose),
-    bool_option("pcs", ON, opt.proc_calls_space),
-    bool_option("psl", ON, opt.procnames_start_line),
-    bool_option("sc", ON, opt.star_comment_cont),
-    bool_option("sob", ON, opt.swallow_optional_blanklines),
+    bool_option("npsl", false, opt.procnames_start_line),
+    bool_option("nsc", false, opt.star_comment_cont),
+    bool_option("nsob", false, opt.swallow_optional_blanklines),
+    bool_option("nut", false, opt.use_tabs),
+    bool_option("nv", false, opt.verbose),
+    bool_option("pcs", true, opt.proc_calls_space),
+    bool_option("psl", true, opt.procnames_start_line),
+    bool_option("sc", true, opt.star_comment_cont),
+    bool_option("sob", true, opt.swallow_optional_blanklines),
     special_option("st", STDIN),
-    bool_option("ta", ON, opt.auto_typedefs),
-    int_option("ts", 0, opt.tabsize),
-    bool_option("ut", ON, opt.use_tabs),
-    bool_option("v", ON, opt.verbose),
+    bool_option("ta", true, opt.auto_typedefs),
+    int_option("ts", opt.tabsize),
+    bool_option("ut", true, opt.use_tabs),
+    bool_option("v", true, opt.verbose),
     /* whew! */
     {"", 0, 0, 0}
 };
@@ -314,7 +310,7 @@ found:
 	break;
 
     case PRO_BOOL:
-	*(bool *)p->p_obj = p->p_special == ON;
+	*(bool *)p->p_obj = p->p_special != 0;
 	break;
 
     case PRO_INT:
