@@ -1,5 +1,5 @@
 #! /bin/sh
-# $NetBSD: t_indent.sh,v 1.6 2021/09/25 09:22:39 rillig Exp $
+# $NetBSD: t_indent.sh,v 1.7 2021/09/25 12:47:17 rillig Exp $
 #
 # Copyright 2016 Dell EMC
 # All rights reserved.
@@ -30,49 +30,41 @@
 
 # shellcheck disable=SC2039
 
-SRCDIR=$(atf_get_srcdir)
+srcdir=$(atf_get_srcdir)
+indent=$(atf_config_get usr.bin.indent.test_indent /usr/bin/indent)
 
 check()
 {
 	local tc=$1; shift
 
-	# shellcheck disable=SC2155
-	local indent=$(atf_config_get usr.bin.indent.test_indent /usr/bin/indent)
-
-	# All of the files need to be in the ATF sandbox in order for the tests
-	# to pass.
-	atf_check cp "$SRCDIR/$tc"* .
-
-	# Remove single-line block comments that start with '$'.  This removes
+	# Copy the test data to the working directory and while doing that,
+	# remove single-line block comments that start with '$'.  This removes
 	# RCS IDs, preventing them to be broken into several lines.  It also
 	# allows for remarks that are only needed in either the input or the
 	# output.  These removals affect the line numbers in the diffs.
-	for fname in "$tc" "$tc.stdout" "$tc.stderr"; do
-		if [ -f "$fname" ]; then
-			atf_check -o "save:$fname.clean" \
-			    sed -e '/^\/\*[[:space:]]$.*/d' "$fname"
-		fi
+	for fname in "$srcdir/$tc"*; do
+		atf_check -o "save:${fname##*/}" \
+		    sed -e '/^\/\*[[:space:]]$.*/d' "$fname"
 	done
 
 	local out_arg='empty'
-	if [ -f "$tc.stdout.clean" ]; then
-		out_arg="file:$tc.stdout.clean"
+	if [ -f "$tc.stdout" ]; then
+		out_arg="file:$tc.stdout"
 	fi
 
 	local err_arg='empty'
-	if [ -f "$tc.stderr.clean" ]; then
-		err_arg="file:$tc.stderr.clean"
+	if [ -f "$tc.stderr" ]; then
+		err_arg="file:$tc.stderr"
 	fi
 
-	# Make sure we don't implicitly use ~/.indent.pro from the test
-	# host, for determinism purposes.
+	# Do not implicitly use ~/.indent.pro from the test host.
 	local pro_arg='-npro'
 	if [ -f "$tc.pro" ]; then
 		pro_arg="-P$tc.pro"
 	fi
 
 	atf_check -s "exit:${tc##*.}" -o "$out_arg" -e "$err_arg" \
-	    "$indent" "$pro_arg" < "$tc.clean"
+	    "$indent" "$pro_arg" < "$tc"
 }
 
 add_testcase()
@@ -100,7 +92,7 @@ add_testcase()
 atf_init_test_cases()
 {
 	# shellcheck disable=SC2044
-	for path in $(find -Es "$SRCDIR" -regex '.*\.[0-9]+$'); do
+	for path in $(find -Es "$srcdir" -regex '.*\.[0-9]+$'); do
 		add_testcase "${path##*/}"
 	done
 }
