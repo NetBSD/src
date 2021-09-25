@@ -1,4 +1,4 @@
-/*	$NetBSD: indent_globs.h,v 1.36 2021/09/25 22:54:32 rillig Exp $	*/
+/*	$NetBSD: indent_globs.h,v 1.37 2021/09/25 22:57:04 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -137,7 +137,7 @@ extern struct options {
 				 * will be lined up to the open paren */
     bool	proc_calls_space; /* whether procedure calls look like:
 				 * foo (bar) rather than foo(bar) */
-    bool	procnames_start_line; /* whether, the names of procedures
+    bool	procnames_start_line; /* whether the names of procedures
 				 * being defined get placed in column 1 (i.e.
 				 * a newline is placed between the type of
 				 * the procedure and its name) */
@@ -208,11 +208,11 @@ extern struct parser_state {
     int         not_cast_mask;	/* indicates which close parens definitely
 				 * close off something else than casts */
     bool	block_init;	/* whether inside a block initialization */
-    int         block_init_level;	/* The level of brace nesting in an
-					 * initialization */
-    bool	last_nl;	/* this is true if the last thing scanned was
+    int         block_init_level; /* The level of brace nesting in an
+				 * initialization */
+    bool	last_nl;	/* whether the last thing scanned was
 				 * a newline */
-    bool	in_or_st;	/* Will be true iff there has been a
+    bool	in_or_st;	/* true iff there has been a
 				 * declarator (e.g. int or char) and no left
 				 * paren since the last semicolon. When true,
 				 * a '{' is starting a structure definition or
@@ -229,7 +229,7 @@ extern struct parser_state {
     bool	in_decl;	/* whether we are in a declaration stmt.
 				 * The processing of braces is then slightly
 				 * different */
-    bool	in_stmt;	/* whether in a stmt */
+    bool	in_stmt;
     int         ind_level;	/* the current indentation level */
     bool	ind_stmt;	/* whether the next line should have an extra
 				 * indentation level because we are in the
