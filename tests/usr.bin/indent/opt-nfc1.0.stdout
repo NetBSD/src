@@ -1,4 +1,4 @@
-/* $NetBSD: opt-nfc1.0.stdout,v 1.3 2021/09/24 17:37:55 rillig Exp $ */
+/* $NetBSD: opt-nfc1.0.stdout,v 1.4 2021/09/25 18:02:48 rillig Exp $ */
 /* $FreeBSD$ */
 
 /*
@@ -13,17 +13,34 @@
 /*narrow*/
 
 /* $ The indentation of a single space was preserved. */
-/* $ FIXME: The line must not start with a space. */
+/* $ If the comment were moved to column 1, it would change from the area */
+/* $ of 'comments that may be formatted' to the area of 'comments that must */
+/* $ not be formatted. The indentation of a single space prevents this. */
  /* space */
 
 /* $ The indentation was changed from a single tab to a single space. */
-/* $ FIXME: The line must not start with a space. */
  /* tab	*/
 
-/* $ FIXME: The line must not start with a space. */
+/* $ The space between these two comments got removed. */
+/* $ XXX: The option '-nfc1' says that comments in column 1 do not get */
+/* $ formatted, but the comment 'block1' was moved from column 1 to 2. */
+/* $ This is probably because there is a second comment in the same line. */
  /* block1 *//* block2 */
 
-/* $ FIXME: The line must not start with a space. */
-/* $ FIXME: It's inconsistent that the first comment gets no spaces. */
-/* $ FIXME: It's inconsistent that the second comment gets spaces. */
+/* $ It may seem strange at first that the left comment is not touched */
+/* $ but the right comment gets spaces added. This difference is the */
+/* $ exact purpose of the option '-nfc1', which says "do not touch comments */
+/* $ that start in column 1. The first comment starts in column 1, the */
+/* $ second comment doesn't. */
+/* $ XXX: The option '-nfc1' says that comments in column 1 do not get */
+/* $ formatted, but the comment 'block1' was moved from column 1 to 2. */
+/* $ This is probably because there is a second comment in the same line. */
  /*block1*//* block2 */
+
+/*
+ * A multi-line comment that starts
+ * in column 1.
+  *
+  * followed by another multi-line comment that starts in column 4.
+  */
+/* $ XXX: The two comments have been merged into a single comment. */
