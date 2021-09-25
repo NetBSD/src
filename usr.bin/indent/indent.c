@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.c,v 1.63 2021/09/24 18:47:29 rillig Exp $	*/
+/*	$NetBSD: indent.c,v 1.64 2021/09/25 07:46:41 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -46,7 +46,7 @@ static char sccsid[] = "@(#)indent.c	5.17 (Berkeley) 6/7/93";
 #include <sys/cdefs.h>
 #ifndef lint
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: indent.c,v 1.63 2021/09/24 18:47:29 rillig Exp $");
+__RCSID("$NetBSD: indent.c,v 1.64 2021/09/25 07:46:41 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/indent.c 340138 2018-11-04 19:24:49Z oshogbo $");
 #endif
@@ -178,11 +178,11 @@ init_capsicum(void)
 #endif
 
 static void
-search_brace(token_type *inout_type_code, int *inout_force_nl,
+search_brace(token_type *inout_ttype, int *inout_force_nl,
 	     int *inout_comment_buffered, int *inout_last_else)
 {
     while (ps.search_brace) {
-	switch (*inout_type_code) {
+	switch (*inout_ttype) {
 	case newline:
 	    if (sc_end == NULL) {
 		save_com = sc_buf;
@@ -264,10 +264,10 @@ search_brace(token_type *inout_type_code, int *inout_force_nl,
 
 	    remove_newlines =
 		    /* "} else" */
-		    (*inout_type_code == keyword_do_else && *token == 'e' &&
+		    (*inout_ttype == keyword_do_else && *token == 'e' &&
 		     e_code != s_code && e_code[-1] == '}')
 		    /* "else if" */
-		    || (*inout_type_code == keyword_for_if_while &&
+		    || (*inout_ttype == keyword_for_if_while &&
 			*token == 'i' && *inout_last_else && opt.else_if);
 	    if (remove_newlines)
 		*inout_force_nl = false;
@@ -317,7 +317,7 @@ search_brace(token_type *inout_type_code, int *inout_force_nl,
 	 * We must make this check, just in case there was an unexpected
 	 * EOF.
 	 */
-	if (*inout_type_code != end_of_file) {
+	if (*inout_ttype != end_of_file) {
 	    /*
 	     * The only intended purpose of calling lexi() below is to
 	     * categorize the next token in order to decide whether to
@@ -351,9 +351,9 @@ search_brace(token_type *inout_type_code, int *inout_force_nl,
 
 	    struct parser_state transient_state;
 	    transient_state = ps;
-	    *inout_type_code = lexi(&transient_state);	/* read another token */
-	    if (*inout_type_code != newline && *inout_type_code != form_feed &&
-		*inout_type_code != comment && !transient_state.search_brace) {
+	    *inout_ttype = lexi(&transient_state);	/* read another token */
+	    if (*inout_ttype != newline && *inout_ttype != form_feed &&
+		*inout_ttype != comment && !transient_state.search_brace) {
 		ps = transient_state;
 	    }
 	}
@@ -561,11 +561,11 @@ process_end_of_file(void)
 }
 
 static void
-process_comment_in_code(token_type type_code, int *inout_force_nl)
+process_comment_in_code(token_type ttype, int *inout_force_nl)
 {
     if (*inout_force_nl &&
-	type_code != semicolon &&
-	(type_code != lbrace || !opt.btype_2)) {
+	ttype != semicolon &&
+	(ttype != lbrace || !opt.btype_2)) {
 
 	/* we should force a broken line here */
 	if (opt.verbose)
@@ -587,7 +587,7 @@ process_comment_in_code(token_type type_code, int *inout_force_nl)
 	memcpy(e_code, com.s, len);
 	e_code += len;
 	*e_code++ = ' ';
-	*e_code = '\0';		/* null terminate code sect */
+	*e_code = '\0';
 	ps.want_blank = false;
 	com.e = com.s;
     }
@@ -1029,11 +1029,11 @@ process_decl(int *out_dec_ind, int *out_tabs_to_var)
 }
 
 static void
-process_ident(token_type type_code, int dec_ind, int tabs_to_var,
+process_ident(token_type ttype, int dec_ind, int tabs_to_var,
 	      int *inout_sp_sw, int *inout_force_nl, token_type hd_type)
 {
     if (ps.in_decl) {
-	if (type_code == funcname) {
+	if (ttype == funcname) {
 	    ps.in_decl = false;
 	    if (opt.procnames_start_line && s_code != e_code) {
 		*e_code = '\0';
@@ -1256,7 +1256,7 @@ process_preprocessing(void)
 static void __attribute__((__noreturn__))
 main_loop(void)
 {
-    token_type type_code;
+    token_type ttype;
     int force_nl;		/* when true, code must be broken */
     int last_else = false;	/* true iff last keyword was an else */
     int         dec_ind;	/* current indentation for declarations */
@@ -1283,9 +1283,8 @@ main_loop(void)
 				 * reach eof */
 	int comment_buffered = false;
 
-	type_code = lexi(&ps);	/* lexi reads one token.  The actual
-				 * characters read are stored in "token". lexi
-				 * returns a code indicating the type of token */
+	ttype = lexi(&ps);	/* Read the next token.  The actual characters
+				 * read are stored in "token". */
 
 	/*
 	 * The following code moves newlines and comments following an if (),
@@ -1293,21 +1292,21 @@ main_loop(void)
 	 * a buffer. This allows proper handling of both kinds of brace
 	 * placement (-br, -bl) and cuddling "else" (-ce).
 	 */
-	search_brace(&type_code, &force_nl, &comment_buffered, &last_else);
+	search_brace(&ttype, &force_nl, &comment_buffered, &last_else);
 
-	if (type_code == end_of_file) {
+	if (ttype == end_of_file) {
 	    process_end_of_file();
 	    /* NOTREACHED */
 	}
 
 	if (
-		type_code != comment &&
-		type_code != newline &&
-		type_code != preprocessing &&
-		type_code != form_feed) {
-	    process_comment_in_code(type_code, &force_nl);
+		ttype != comment &&
+		ttype != newline &&
+		ttype != preprocessing &&
+		ttype != form_feed) {
+	    process_comment_in_code(ttype, &force_nl);
 
-	} else if (type_code != comment) /* preserve force_nl thru a comment */
+	} else if (ttype != comment) /* preserve force_nl through a comment */
 	    force_nl = false;	/* cancel forced newline after newline, form
 				 * feed, etc */
 
@@ -1320,9 +1319,9 @@ main_loop(void)
 				 * before the next check_size_code or
 				 * dump_line() is 2. After that there's the
 				 * final increment for the null character. */
-	switch (type_code) {	/* now, decide what to do with the token */
+	switch (ttype) {
 
-	case form_feed:		/* found a form feed in line */
+	case form_feed:
 	    process_form_feed();
 	    break;
 
@@ -1410,11 +1409,11 @@ main_loop(void)
 
 	case funcname:
 	case ident:		/* got an identifier or constant */
-	    process_ident(type_code, dec_ind, tabs_to_var, &sp_sw, &force_nl,
-		hd_type);
+	    process_ident(ttype, dec_ind, tabs_to_var, &sp_sw, &force_nl,
+			  hd_type);
     copy_id:
 	    copy_id();
-	    if (type_code != funcname)
+	    if (ttype != funcname)
 		ps.want_blank = true;
 	    break;
 
@@ -1439,13 +1438,13 @@ main_loop(void)
 
 	default:
 	    break;
-	}			/* end of big switch stmt */
+	}
 
-	*e_code = '\0';		/* make sure code section is null terminated */
-	if (type_code != comment &&
-	    type_code != newline &&
-	    type_code != preprocessing)
-	    ps.last_token = type_code;
+	*e_code = '\0';
+	if (ttype != comment &&
+	    ttype != newline &&
+	    ttype != preprocessing)
+	    ps.last_token = ttype;
     }
 }
 
