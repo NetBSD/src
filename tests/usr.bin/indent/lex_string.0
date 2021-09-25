@@ -1,4 +1,4 @@
-/* $NetBSD: lex_string.0,v 1.1 2021/09/25 09:46:29 rillig Exp $ */
+/* $NetBSD: lex_string.0,v 1.2 2021/09/25 09:52:21 rillig Exp $ */
 /* $FreeBSD$ */
 
 /*
@@ -17,6 +17,9 @@ char escape_f[] = "\f";
 char escape_n[] = "\n";
 char escape_t[] = "\t";
 char escape_v[] = "\v";
+char escape_single_quote[] = "\'";
+char escape_double_quote[] = "\"";
+char escape_backslash[] = "\\";
 
 char escape_newline[] = "\
 ";
