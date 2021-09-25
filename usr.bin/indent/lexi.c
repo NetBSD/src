@@ -1,4 +1,4 @@
-/*	$NetBSD: lexi.c,v 1.51 2021/09/25 08:23:31 rillig Exp $	*/
+/*	$NetBSD: lexi.c,v 1.52 2021/09/25 10:24:10 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -46,7 +46,7 @@ static char sccsid[] = "@(#)lexi.c	8.1 (Berkeley) 6/6/93";
 #include <sys/cdefs.h>
 #ifndef lint
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: lexi.c,v 1.51 2021/09/25 08:23:31 rillig Exp $");
+__RCSID("$NetBSD: lexi.c,v 1.52 2021/09/25 10:24:10 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/lexi.c 337862 2018-08-15 18:19:45Z pstef $");
 #endif
@@ -319,27 +319,21 @@ lex_word(void)
 static void
 lex_char_or_string(void)
 {
-    char delim;
-
-    delim = *token.s;
-    do {			/* copy the string */
-	for (;;) {		/* move one character or [/<char>]<char> */
-	    if (*buf_ptr == '\n') {
-		diag(1, "Unterminated literal");
-		return;
-	    }
-	    check_size_token(2);
-	    *token.e = inbuf_next();
-	    if (*token.e == '\\') {	/* if escape, copy extra char */
-		if (*buf_ptr == '\n')	/* check for escaped newline */
-		    ++line_no;
-		*++token.e = inbuf_next();
-		++token.e;	/* we must increment this again because we
-				 * copied two chars */
-	    } else
-		break;		/* we copied one character */
-	}			/* end of while (1) */
-    } while (*token.e++ != delim);
+    for (char delim = *token.s;;) {
+	if (*buf_ptr == '\n') {
+	    diag(1, "Unterminated literal");
+	    return;
+	}
+	check_size_token(2);
+	*token.e++ = inbuf_next();
+	if (token.e[-1] == delim)
+	    return;
+	if (token.e[-1] == '\\') {
+	    if (*buf_ptr == '\n')
+		++line_no;
+	    *token.e++ = inbuf_next();
+	}
+    }
 }
 
 /* Reads the next token, placing it in the global variable "token". */
