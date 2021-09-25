@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.c,v 1.79 2021/09/25 20:56:53 rillig Exp $	*/
+/*	$NetBSD: indent.c,v 1.80 2021/09/25 21:42:43 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)indent.c	5.17 (Berkeley) 6/7/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: indent.c,v 1.79 2021/09/25 20:56:53 rillig Exp $");
+__RCSID("$NetBSD: indent.c,v 1.80 2021/09/25 21:42:43 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/indent.c 340138 2018-11-04 19:24:49Z oshogbo $");
 #endif
@@ -427,32 +427,27 @@ main_parse_command_line(int argc, char **argv)
 	set_profile(profile_name);
 
     for (i = 1; i < argc; ++i) {
-
-	/*
-	 * look thru args (if any) for changes to defaults
-	 */
-	if (argv[i][0] != '-') {/* no flag on parameter */
-	    if (input == NULL) {	/* we must have the input file */
-		in_name = argv[i];	/* remember name of input file */
-		input = fopen(in_name, "r");
-		if (input == NULL)	/* check for open error */
-			err(1, "%s", in_name);
-		continue;
-	    } else if (output == NULL) {	/* we have the output file */
-		out_name = argv[i];	/* remember name of output file */
-		if (strcmp(in_name, out_name) == 0) {	/* attempt to overwrite
-							 * the file */
-		    errx(1, "input and output files must be different");
-		}
-		output = fopen(out_name, "w");
-		if (output == NULL)	/* check for create error */
-			err(1, "%s", out_name);
-		continue;
-	    }
-	    errx(1, "unknown parameter: %s", argv[i]);
-	} else
+	if (argv[i][0] == '-') {
 	    set_option(argv[i]);
-    }				/* end of for */
+
+	} else if (input == NULL) {
+	    in_name = argv[i];
+	    input = fopen(in_name, "r");
+	    if (input == NULL)
+		err(1, "%s", in_name);
+
+	} else if (output == NULL) {
+	    out_name = argv[i];
+	    if (strcmp(in_name, out_name) == 0)
+		errx(1, "input and output files must be different");
+	    output = fopen(out_name, "w");
+	    if (output == NULL)
+		err(1, "%s", out_name);
+
+	} else
+	    errx(1, "unknown parameter: %s", argv[i]);
+    }
+
     if (input == NULL)
 	input = stdin;
     if (output == NULL) {
