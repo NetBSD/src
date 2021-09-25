@@ -1,4 +1,4 @@
-/*	$NetBSD: lexi.c,v 1.57 2021/09/25 20:05:55 rillig Exp $	*/
+/*	$NetBSD: lexi.c,v 1.58 2021/09/25 22:14:21 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)lexi.c	8.1 (Berkeley) 6/6/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: lexi.c,v 1.57 2021/09/25 20:05:55 rillig Exp $");
+__RCSID("$NetBSD: lexi.c,v 1.58 2021/09/25 22:14:21 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/lexi.c 337862 2018-08-15 18:19:45Z pstef $");
 #endif
@@ -205,15 +205,8 @@ inbuf_next(void)
 static void
 check_size_token(size_t desired_size)
 {
-    if (token.e + (desired_size) < token.l)
-        return;
-
-    size_t nsize = token.l - token.s + 400 + desired_size;
-    size_t token_len = token.e - token.s;
-    token.buf = xrealloc(token.buf, nsize);
-    token.e = token.buf + token_len + 1;
-    token.l = token.buf + nsize - 5;
-    token.s = token.buf + 1;
+    if (token.e + desired_size >= token.l)
+	buf_expand(&token, desired_size);
 }
 
 static int

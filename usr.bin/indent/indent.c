@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.c,v 1.80 2021/09/25 21:42:43 rillig Exp $	*/
+/*	$NetBSD: indent.c,v 1.81 2021/09/25 22:14:21 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)indent.c	5.17 (Berkeley) 6/7/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: indent.c,v 1.80 2021/09/25 21:42:43 rillig Exp $");
+__RCSID("$NetBSD: indent.c,v 1.81 2021/09/25 22:14:21 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/indent.c 340138 2018-11-04 19:24:49Z oshogbo $");
 #endif
@@ -137,29 +137,15 @@ char        bakfile[MAXPATHLEN] = "";
 static void
 check_size_code(size_t desired_size)
 {
-    if (code.e + desired_size < code.l)
-        return;
-
-    size_t nsize = code.l - code.s + 400 + desired_size;
-    size_t code_len = code.e - code.s;
-    code.buf = xrealloc(code.buf, nsize);
-    code.e = code.buf + code_len + 1;
-    code.l = code.buf + nsize - 5;
-    code.s = code.buf + 1;
+    if (code.e + desired_size >= code.l)
+	buf_expand(&code, desired_size);
 }
 
 static void
 check_size_label(size_t desired_size)
 {
-    if (lab.e + (desired_size) < lab.l)
-        return;
-
-    size_t nsize = lab.l - lab.s + 400 + desired_size;
-    size_t label_len = lab.e - lab.s;
-    lab.buf = xrealloc(lab.buf, nsize);
-    lab.e = lab.buf + label_len + 1;
-    lab.l = lab.buf + nsize - 5;
-    lab.s = lab.buf + 1;
+    if (lab.e + desired_size >= lab.l)
+	buf_expand(&lab, desired_size);
 }
 
 #if HAVE_CAPSICUM
@@ -374,6 +360,17 @@ buf_init(struct buffer *buf)
     buf->s = buf->buf + 1;
     buf->e = buf->s;
     buf->l = buf->buf + bufsize - 5;	/* safety margin, though unreliable */
+}
+
+void
+buf_expand(struct buffer *buf, size_t desired_size)
+{
+    size_t nsize = buf->l - buf->s + 400 + desired_size;
+    size_t code_len = buf->e - buf->s;
+    buf->buf = xrealloc(buf->buf, nsize);
+    buf->e = buf->buf + code_len + 1;
+    buf->l = buf->buf + nsize - 5;
+    buf->s = buf->buf + 1;
 }
 
 static void
