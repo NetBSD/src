@@ -1,4 +1,4 @@
-/*	$NetBSD: lexi.c,v 1.48 2021/09/25 07:55:24 rillig Exp $	*/
+/*	$NetBSD: lexi.c,v 1.49 2021/09/25 07:59:52 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -46,7 +46,7 @@ static char sccsid[] = "@(#)lexi.c	8.1 (Berkeley) 6/6/93";
 #include <sys/cdefs.h>
 #ifndef lint
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: lexi.c,v 1.48 2021/09/25 07:55:24 rillig Exp $");
+__RCSID("$NetBSD: lexi.c,v 1.49 2021/09/25 07:59:52 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/lexi.c 337862 2018-08-15 18:19:45Z pstef $");
 #endif
@@ -323,7 +323,7 @@ lex_char_or_string(void)
 {
     char delim;
 
-    delim = *token;
+    delim = *s_token;
     do {			/* copy the string */
 	for (;;) {		/* move one character or [/<char>]<char> */
 	    if (*buf_ptr == '\n') {
@@ -463,7 +463,7 @@ lexi(struct parser_state *state)
 	    while (tp < buf_end)
 		if (*tp++ == ')' && (*tp == ';' || *tp == ','))
 		    goto not_proc;
-	    strncpy(state->procname, token, sizeof state->procname - 1);
+	    strncpy(state->procname, s_token, sizeof state->procname - 1);
 	    if (state->in_decl)
 		state->in_parameter_declaration = 1;
 	    return lexi_end(funcname);
@@ -497,7 +497,7 @@ lexi(struct parser_state *state)
 				 * moved here */
     *e_token = '\0';
 
-    switch (*token) {
+    switch (*s_token) {
     case '\n':
 	unary_delim = state->last_u_d;
 	state->last_nl = true;	/* remember that we just had a newline */
@@ -574,7 +574,7 @@ lexi(struct parser_state *state)
 	ttype = state->last_u_d ? unary_op : binary_op;
 	unary_delim = true;
 
-	if (*buf_ptr == token[0]) {
+	if (*buf_ptr == s_token[0]) {
 	    /* check for doubled character */
 	    *e_token++ = *buf_ptr++;
 	    /* buffer overflow will be checked at end of loop */
@@ -650,7 +650,7 @@ lexi(struct parser_state *state)
 	break;
 
     default:
-	if (token[0] == '/' && (*buf_ptr == '*' || *buf_ptr == '/')) {
+	if (s_token[0] == '/' && (*buf_ptr == '*' || *buf_ptr == '/')) {
 	    /* it is start of comment */
 	    *e_token++ = inbuf_next();
 
