@@ -1,5 +1,5 @@
-/*	$NetBSD: if_mcx.c,v 1.19 2021/09/20 11:47:26 jmcneill Exp $ */
-/*	$OpenBSD: if_mcx.c,v 1.99 2021/02/15 03:42:00 dlg Exp $ */
+/*	$NetBSD: if_mcx.c,v 1.20 2021/09/25 15:16:36 jmcneill Exp $ */
+/*	$OpenBSD: if_mcx.c,v 1.101 2021/06/02 19:16:11 patrick Exp $ */
 
 /*
  * Copyright (c) 2017 David Gwynne <dlg@openbsd.org>
@@ -23,7 +23,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mcx.c,v 1.19 2021/09/20 11:47:26 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mcx.c,v 1.20 2021/09/25 15:16:36 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -6921,21 +6921,21 @@ mcx_process_rx(struct mcx_softc *sc, struct mcx_rx *rx,
 	struct ifnet *ifp = &sc->sc_ec.ec_if;
 	struct mcx_slot *ms;
 	struct mbuf *m;
-	uint32_t flags;
+	uint32_t flags, len;
 	int slot;
 
+	len = be32dec(&cqe->cq_byte_cnt);
 	slot = be16toh(cqe->cq_wqe_count) % (1 << MCX_LOG_RQ_SIZE);
 
 	ms = &rx->rx_slots[slot];
-	bus_dmamap_sync(sc->sc_dmat, ms->ms_map, 0, ms->ms_map->dm_mapsize,
-	    BUS_DMASYNC_POSTREAD);
+	bus_dmamap_sync(sc->sc_dmat, ms->ms_map, 0, len, BUS_DMASYNC_POSTREAD);
 	bus_dmamap_unload(sc->sc_dmat, ms->ms_map);
 
 	m = ms->ms_m;
 	ms->ms_m = NULL;
 
 	m_set_rcvif(m, &sc->sc_ec.ec_if);
-	m->m_pkthdr.len = m->m_len = be32dec(&cqe->cq_byte_cnt);
+	m->m_pkthdr.len = m->m_len = len;
 
 #if 0
 	if (cqe->cq_rx_hash_type) {
