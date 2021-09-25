@@ -1,4 +1,4 @@
-/*	$NetBSD: lexi.c,v 1.56 2021/09/25 19:49:13 rillig Exp $	*/
+/*	$NetBSD: lexi.c,v 1.57 2021/09/25 20:05:55 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)lexi.c	8.1 (Berkeley) 6/6/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: lexi.c,v 1.56 2021/09/25 19:49:13 rillig Exp $");
+__RCSID("$NetBSD: lexi.c,v 1.57 2021/09/25 20:05:55 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/lexi.c 337862 2018-08-15 18:19:45Z pstef $");
 #endif
@@ -336,6 +336,20 @@ lex_char_or_string(void)
     }
 }
 
+/*
+ * This hack attempts to guess whether the current token is in fact a
+ * declaration keyword -- one that has been defined by typedef.
+ */
+static bool
+probably_typedef(const struct parser_state *state)
+{
+    return state->p_l_follow == 0 && !state->block_init && !state->in_stmt &&
+	   ((*buf_ptr == '*' && buf_ptr[1] != '=') ||
+	    isalpha((unsigned char)*buf_ptr)) &&
+	   (state->last_token == semicolon || state->last_token == lbrace ||
+	    state->last_token == rbrace);
+}
+
 /* Reads the next token, placing it in the global variable "token". */
 token_type
 lexi(struct parser_state *state)
@@ -460,18 +474,7 @@ lexi(struct parser_state *state)
 		state->in_parameter_declaration = true;
 	    return lexi_end(funcname);
     not_proc:;
-	}
-	/*
-	 * The following hack attempts to guess whether or not the current
-	 * token is in fact a declaration keyword -- one that has been
-	 * typedefd
-	 */
-	else if (state->p_l_follow == 0 && !state->block_init &&
-	    !state->in_stmt &&
-	    ((*buf_ptr == '*' && buf_ptr[1] != '=') ||
-		isalpha((unsigned char)*buf_ptr)) &&
-	    (state->last_token == semicolon || state->last_token == lbrace ||
-		state->last_token == rbrace)) {
+	} else if (probably_typedef(state)) {
 	    state->keyword = rw_type;
 	    state->last_u_d = true;
 	    return lexi_end(decl);
