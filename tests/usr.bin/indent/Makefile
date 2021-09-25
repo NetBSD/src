@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.9 2021/09/25 09:46:29 rillig Exp $
+#	$NetBSD: Makefile,v 1.10 2021/09/25 12:20:44 rillig Exp $
 
 .include <bsd.own.mk>
 
@@ -30,6 +30,9 @@ FILES+=		indent_variables.0.stdout
 FILES+=		label.0
 FILES+=		label.0.stdout
 FILES+=		label.0.pro
+FILES+=		lex.0
+FILES+=		lex.0.pro
+FILES+=		lex.0.stdout
 FILES+=		lex_char.0
 FILES+=		lex_char.0.pro
 FILES+=		lex_char.0.stdout
