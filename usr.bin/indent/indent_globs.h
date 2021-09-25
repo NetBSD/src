@@ -1,4 +1,4 @@
-/*	$NetBSD: indent_globs.h,v 1.29 2021/09/25 17:11:23 rillig Exp $	*/
+/*	$NetBSD: indent_globs.h,v 1.30 2021/09/25 17:20:02 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -78,27 +78,27 @@ extern char       *be_save;		/* similarly saved value of buf_end */
 
 
 extern struct options {
-    ibool	blanklines_around_conditional_compilation;
-    ibool	blanklines_after_declarations_at_proctop; /* this is vaguely
+    bool	blanklines_around_conditional_compilation;
+    bool	blanklines_after_declarations_at_proctop; /* this is vaguely
 				 * similar to blanklines_after_declarations
 				 * except that it only applies to the first
 				 * set of declarations in a procedure (just
 				 * after the first '{') and it causes a blank
 				 * line to be generated even if there are no
 				 * declarations */
-    ibool	blanklines_after_declarations;
-    ibool	blanklines_after_procs;
-    ibool	blanklines_before_blockcomments;
-    ibool	leave_comma;	/* if true, never break declarations after
+    bool	blanklines_after_declarations;
+    bool	blanklines_after_procs;
+    bool	blanklines_before_blockcomments;
+    bool	leave_comma;	/* if true, never break declarations after
 				 * commas */
-    ibool	btype_2;	/* whether brace should be on same line
+    bool	btype_2;	/* whether brace should be on same line
 				 * as if, while, etc */
-    ibool	Bill_Shannon;	/* whether a blank should always be
+    bool	Bill_Shannon;	/* whether a blank should always be
 				 * inserted after sizeof */
-    ibool	comment_delimiter_on_blankline;
+    bool	comment_delimiter_on_blankline;
     int         decl_comment_column; /* the column in which comments after
 				 * declarations should be put */
-    ibool	cuddle_else;	/* whether 'else' should cuddle up to '}' */
+    bool	cuddle_else;	/* whether 'else' should cuddle up to '}' */
     int         continuation_indent; /* set to the indentation between the
 				 * edge of code and continuation lines */
     float       case_indent;	/* The distance (measured in tabsize) to
@@ -107,52 +107,52 @@ extern struct options {
     int         comment_column;	/* the column in which comments to the right
 				 * of code should start */
     int         decl_indent;	/* indentation of identifier in declaration */
-    ibool	ljust_decl;	/* true if declarations should be left
+    bool	ljust_decl;	/* true if declarations should be left
 				 * justified */
     int         unindent_displace; /* comments not to the right of code
 				 * will be placed this many
 				 * indentation levels to the left of
 				 * code */
-    ibool	extra_expression_indent; /* whether continuation lines from
+    bool	extra_expression_indent; /* whether continuation lines from
 				 * the expression part of "if(e)",
 				 * "while(e)", "for(e;e;e)" should be
 				 * indented an extra tab stop so that they
 				 * don't conflict with the code that follows */
-    ibool	else_if;	/* whether else-if pairs should be handled
+    bool	else_if;	/* whether else-if pairs should be handled
 				 * specially */
-    ibool	function_brace_split; /* split function declaration and
+    bool	function_brace_split; /* split function declaration and
 				 * brace onto separate lines */
-    ibool	format_col1_comments; /* If comments which start in column 1
+    bool	format_col1_comments; /* If comments which start in column 1
 				 * are to be magically reformatted (just
 				 * like comments that begin in later columns) */
-    ibool	format_block_comments; /* whether comments beginning with
+    bool	format_block_comments; /* whether comments beginning with
 				 * '/ * \n' are to be reformatted */
-    ibool	indent_parameters;
+    bool	indent_parameters;
     int         indent_size;	/* the size of one indentation level */
     int         block_comment_max_line_length;
     int         local_decl_indent; /* like decl_indent but for locals */
-    ibool	lineup_to_parens_always; /* whether to not(?) attempt to keep
+    bool	lineup_to_parens_always; /* whether to not(?) attempt to keep
 				 * lined-up code within the margin */
-    ibool	lineup_to_parens; /* whether continued code within parens
+    bool	lineup_to_parens; /* whether continued code within parens
 				 * will be lined up to the open paren */
-    ibool	proc_calls_space; /* whether procedure calls look like:
+    bool	proc_calls_space; /* whether procedure calls look like:
 				 * foo (bar) rather than foo(bar) */
-    ibool	procnames_start_line; /* whether, the names of procedures
+    bool	procnames_start_line; /* whether, the names of procedures
 				 * being defined get placed in column 1 (i.e.
 				 * a newline is placed between the type of
 				 * the procedure and its name) */
-    ibool	space_after_cast; /* "b = (int) a" vs "b = (int)a" */
-    ibool	star_comment_cont; /* whether comment continuation lines
+    bool	space_after_cast; /* "b = (int) a" vs "b = (int)a" */
+    bool	star_comment_cont; /* whether comment continuation lines
 				 * should have stars at the beginning of
 				 * each line. */
-    ibool	swallow_optional_blanklines;
-    ibool	auto_typedefs;	/* whether to recognize identifiers
+    bool	swallow_optional_blanklines;
+    bool	auto_typedefs;	/* whether to recognize identifiers
 				 * ending in "_t" like typedefs */
     int         tabsize;	/* the size of a tab */
     int         max_line_length;
-    ibool	use_tabs;	/* set true to use tabs for spacing, false
+    bool	use_tabs;	/* set true to use tabs for spacing, false
 				 * uses all spaces */
-    ibool	verbose;	/* whether non-essential error messages
+    bool	verbose;	/* whether non-essential error messages
 				 * are printed */
 } opt;
 
