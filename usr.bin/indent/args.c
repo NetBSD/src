@@ -1,4 +1,4 @@
-/*	$NetBSD: args.c,v 1.25 2021/09/25 17:11:23 rillig Exp $	*/
+/*	$NetBSD: args.c,v 1.26 2021/09/25 17:20:02 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)args.c	8.1 (Berkeley) 6/6/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: args.c,v 1.25 2021/09/25 17:11:23 rillig Exp $");
+__RCSID("$NetBSD: args.c,v 1.26 2021/09/25 17:20:02 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/args.c 336318 2018-07-15 21:04:21Z pstef $");
 #endif
@@ -94,7 +94,7 @@ void add_typedefs_from_file(const char *str);
 #define assert_type(expr, type) (expr)
 #endif
 #define bool_option(name, value, var) \
-	{name, PRO_BOOL, value, assert_type(&(var), ibool *)}
+	{name, PRO_BOOL, value, assert_type(&(var), bool *)}
 #define int_option(name, value, var) \
 	{name, PRO_INT, value, assert_type(&(var), int *)}
 #define special_option(name, value) \
@@ -312,9 +312,9 @@ found:
 
     case PRO_BOOL:
 	if (p->p_special == OFF)
-	    *(ibool *)p->p_obj = false;
+	    *(bool *)p->p_obj = false;
 	else
-	    *(ibool *)p->p_obj = true;
+	    *(bool *)p->p_obj = true;
 	break;
 
     case PRO_INT:
