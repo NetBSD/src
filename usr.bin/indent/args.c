@@ -1,4 +1,4 @@
-/*	$NetBSD: args.c,v 1.28 2021/09/25 21:20:59 rillig Exp $	*/
+/*	$NetBSD: args.c,v 1.29 2021/09/25 21:42:43 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)args.c	8.1 (Berkeley) 6/6/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: args.c,v 1.28 2021/09/25 21:20:59 rillig Exp $");
+__RCSID("$NetBSD: args.c,v 1.29 2021/09/25 21:42:43 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/args.c 336318 2018-07-15 21:04:21Z pstef $");
 #endif
@@ -56,6 +56,7 @@ __FBSDID("$FreeBSD: head/usr.bin/indent/args.c 336318 2018-07-15 21:04:21Z pstef
 #include <ctype.h>
 #include <err.h>
 #include <limits.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -102,14 +103,14 @@ void add_typedefs_from_file(const char *str);
 
 /*
  * N.B.: because of the way the table here is scanned, options whose names are
- * substrings of other options must occur later; that is, with -lp vs -l, -lp
- * must be first.
+ * a prefix of other options must occur later; that is, with -lp vs -l, -lp
+ * must be first and -l must be last.
  */
-const struct pro {
+static const struct pro {
     const char  p_name[9];	/* name, e.g. "bl", "cli" */
-    int         p_type;		/* type (int, bool, special) */
+    uint8_t     p_type;		/* type (int, bool, special) */
     int         p_special;	/* depends on type */
-    void        *p_obj;		/* the associated variable */
+    void        *p_obj;		/* the associated variable (bool, int) */
 }           pro[] = {
     special_option("T", KEY),
     special_option("U", KEY_FILE),
@@ -256,7 +257,7 @@ eqin(const char *s1, const char *s2)
 }
 
 void
-set_option(char *arg)
+set_option(const char *arg)
 {
     const struct pro *p;
     const char	*param_start;
@@ -311,10 +312,7 @@ found:
 	break;
 
     case PRO_BOOL:
-	if (p->p_special == OFF)
-	    *(bool *)p->p_obj = false;
-	else
-	    *(bool *)p->p_obj = true;
+	*(bool *)p->p_obj = p->p_special == ON;
 	break;
 
     case PRO_INT:
