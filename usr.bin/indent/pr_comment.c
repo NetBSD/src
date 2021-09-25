@@ -1,4 +1,4 @@
-/*	$NetBSD: pr_comment.c,v 1.42 2021/09/25 13:38:32 rillig Exp $	*/
+/*	$NetBSD: pr_comment.c,v 1.43 2021/09/25 17:11:23 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)pr_comment.c	8.1 (Berkeley) 6/6/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: pr_comment.c,v 1.42 2021/09/25 13:38:32 rillig Exp $");
+__RCSID("$NetBSD: pr_comment.c,v 1.43 2021/09/25 17:11:23 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/pr_comment.c 334927 2018-06-10 16:44:18Z pstef $");
 #endif
@@ -94,7 +94,7 @@ process_comment(void)
 				 * that spill over the right margin */
     ssize_t last_blank;		/* index of the last blank in com.buf */
     char       *t_ptr;		/* used for moving string */
-    int         break_delim = opt.comment_delimiter_on_blankline;
+    ibool break_delim = opt.comment_delimiter_on_blankline;
     int         l_just_saw_decl = ps.just_saw_decl;
 
     adj_max_line_length = opt.max_line_length;
@@ -133,7 +133,7 @@ process_comment(void)
 	    ps.com_col = (ps.ind_level - opt.unindent_displace) * opt.indent_size + 1;
 	    adj_max_line_length = opt.block_comment_max_line_length;
 	    if (ps.com_col <= 1)
-		ps.com_col = 1 + !opt.format_col1_comments;
+		ps.com_col = 1 + (!opt.format_col1_comments ? 1 : 0);
 	} else {
 	    break_delim = false;
 
@@ -209,7 +209,7 @@ process_comment(void)
 	com.e = com.s + 2;
 	*com.e = 0;
 	if (opt.blanklines_before_blockcomments && ps.last_token != lbrace)
-	    prefix_blankline_requested = 1;
+	    prefix_blankline_requested = true;
 	dump_line();
 	com.e = com.s = t;
 	if (!ps.box_com && opt.star_comment_cont)
@@ -264,7 +264,7 @@ process_comment(void)
 		if (!ps.box_com && opt.star_comment_cont)
 		    *com.e++ = ' ', *com.e++ = '*', *com.e++ = ' ';
 	    } else {
-		ps.last_nl = 1;
+		ps.last_nl = true;
 		if (!(com.e[-1] == ' ' || com.e[-1] == '\t'))
 		    *com.e++ = ' ';
 		last_blank = com.e - 1 - com.buf;
@@ -326,7 +326,7 @@ process_comment(void)
 		    last_blank = com.e - com.buf; /* remember we saw a blank */
 		++com.e;
 		now_len++;
-	    } while (!memchr("*\n\r\b\t", *buf_ptr, 6) &&
+	    } while (memchr("*\n\r\b\t", *buf_ptr, 6) == NULL &&
 		(now_len < adj_max_line_length || last_blank == -1));
 	    ps.last_nl = false;
 	    /* XXX: signed character comparison '>' does not work for UTF-8 */

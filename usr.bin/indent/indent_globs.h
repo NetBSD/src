@@ -1,4 +1,4 @@
-/*	$NetBSD: indent_globs.h,v 1.28 2021/09/25 14:38:31 rillig Exp $	*/
+/*	$NetBSD: indent_globs.h,v 1.29 2021/09/25 17:11:23 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -78,27 +78,27 @@ extern char       *be_save;		/* similarly saved value of buf_end */
 
 
 extern struct options {
-    int         blanklines_around_conditional_compilation;
-    int         blanklines_after_declarations_at_proctop; /* this is vaguely
+    ibool	blanklines_around_conditional_compilation;
+    ibool	blanklines_after_declarations_at_proctop; /* this is vaguely
 				 * similar to blanklines_after_declarations
 				 * except that it only applies to the first
 				 * set of declarations in a procedure (just
 				 * after the first '{') and it causes a blank
 				 * line to be generated even if there are no
 				 * declarations */
-    int         blanklines_after_declarations;
-    int         blanklines_after_procs;
-    int         blanklines_before_blockcomments;
-    int         leave_comma;	/* if true, never break declarations after
+    ibool	blanklines_after_declarations;
+    ibool	blanklines_after_procs;
+    ibool	blanklines_before_blockcomments;
+    ibool	leave_comma;	/* if true, never break declarations after
 				 * commas */
-    int         btype_2;	/* when true, brace should be on same line
+    ibool	btype_2;	/* whether brace should be on same line
 				 * as if, while, etc */
-    int         Bill_Shannon;	/* true iff a blank should always be
+    ibool	Bill_Shannon;	/* whether a blank should always be
 				 * inserted after sizeof */
-    int         comment_delimiter_on_blankline;
+    ibool	comment_delimiter_on_blankline;
     int         decl_comment_column; /* the column in which comments after
 				 * declarations should be put */
-    int         cuddle_else;	/* true if 'else' should cuddle up to '}' */
+    ibool	cuddle_else;	/* whether 'else' should cuddle up to '}' */
     int         continuation_indent; /* set to the indentation between the
 				 * edge of code and continuation lines */
     float       case_indent;	/* The distance (measured in tabsize) to
@@ -107,52 +107,52 @@ extern struct options {
     int         comment_column;	/* the column in which comments to the right
 				 * of code should start */
     int         decl_indent;	/* indentation of identifier in declaration */
-    int         ljust_decl;	/* true if declarations should be left
+    ibool	ljust_decl;	/* true if declarations should be left
 				 * justified */
     int         unindent_displace; /* comments not to the right of code
 				 * will be placed this many
 				 * indentation levels to the left of
 				 * code */
-    int         extra_expression_indent; /* true if continuation lines from
+    ibool	extra_expression_indent; /* whether continuation lines from
 				 * the expression part of "if(e)",
 				 * "while(e)", "for(e;e;e)" should be
 				 * indented an extra tab stop so that they
 				 * don't conflict with the code that follows */
-    int         else_if;	/* True iff else if pairs should be handled
+    ibool	else_if;	/* whether else-if pairs should be handled
 				 * specially */
-    int         function_brace_split; /* split function declaration and
+    ibool	function_brace_split; /* split function declaration and
 				 * brace onto separate lines */
-    int         format_col1_comments; /* If comments which start in column 1
+    ibool	format_col1_comments; /* If comments which start in column 1
 				 * are to be magically reformatted (just
 				 * like comments that begin in later columns) */
-    int         format_block_comments; /* true if comments beginning with
+    ibool	format_block_comments; /* whether comments beginning with
 				 * '/ * \n' are to be reformatted */
-    int         indent_parameters;
+    ibool	indent_parameters;
     int         indent_size;	/* the size of one indentation level */
     int         block_comment_max_line_length;
     int         local_decl_indent; /* like decl_indent but for locals */
-    int         lineup_to_parens_always; /* if true, do not attempt to keep
+    ibool	lineup_to_parens_always; /* whether to not(?) attempt to keep
 				 * lined-up code within the margin */
-    int         lineup_to_parens; /* if true, continued code within parens
+    ibool	lineup_to_parens; /* whether continued code within parens
 				 * will be lined up to the open paren */
-    int         proc_calls_space; /* If true, procedure calls look like:
+    ibool	proc_calls_space; /* whether procedure calls look like:
 				 * foo (bar) rather than foo(bar) */
-    int         procnames_start_line; /* if true, the names of procedures
-				 * being defined get placed in column 1 (ie.
+    ibool	procnames_start_line; /* whether, the names of procedures
+				 * being defined get placed in column 1 (i.e.
 				 * a newline is placed between the type of
 				 * the procedure and its name) */
-    int         space_after_cast; /* "b = (int) a" vs "b = (int)a" */
-    int         star_comment_cont; /* true iff comment continuation lines
+    ibool	space_after_cast; /* "b = (int) a" vs "b = (int)a" */
+    ibool	star_comment_cont; /* whether comment continuation lines
 				 * should have stars at the beginning of
 				 * each line. */
-    int         swallow_optional_blanklines;
-    int         auto_typedefs;	/* set true to recognize identifiers
+    ibool	swallow_optional_blanklines;
+    ibool	auto_typedefs;	/* whether to recognize identifiers
 				 * ending in "_t" like typedefs */
     int         tabsize;	/* the size of a tab */
     int         max_line_length;
-    int         use_tabs;	/* set true to use tabs for spacing, false
+    ibool	use_tabs;	/* set true to use tabs for spacing, false
 				 * uses all spaces */
-    int         verbose;	/* when true, non-essential error messages
+    ibool	verbose;	/* whether non-essential error messages
 				 * are printed */
 } opt;
 
@@ -175,15 +175,15 @@ enum rwcode {
 
 extern int         found_err;
 extern int         n_real_blanklines;
-extern int         prefix_blankline_requested;
-extern int         postfix_blankline_requested;
-extern int         break_comma;	/* when true and not in parens, break after a
+extern ibool	prefix_blankline_requested;
+extern ibool	postfix_blankline_requested;
+extern ibool	break_comma;	/* when true and not in parens, break after a
 				 * comma */
 extern float       case_ind;		/* indentation level to be used for a "case
 				 * n:" */
-extern int         had_eof;		/* set to true when input is exhausted */
+extern ibool	had_eof;		/* set to true when input is exhausted */
 extern int         line_no;		/* the current line number. */
-extern int         inhibit_formatting;	/* true if INDENT OFF is in effect */
+extern ibool	inhibit_formatting;	/* true if INDENT OFF is in effect */
 extern int         suppress_blanklines;/* set iff following blanklines should be
 				 * suppressed */
 
@@ -194,9 +194,9 @@ extern struct parser_state {
     token_type	p_stack[STACKSIZE];	/* this is the parsers stack */
     int         il[STACKSIZE];	/* this stack stores indentation levels */
     float       cstk[STACKSIZE];/* used to store case stmt indentation levels */
-    int         box_com;	/* set to true when we are in a "boxed"
-				 * comment. In that case, the first non-blank
-				 * char should be lined up with the / in / followed by * */
+    ibool	box_com;	/* whether we are in a "boxed" comment. In
+				 * that case, the first non-blank char should
+				 * be lined up with the '/' in '/' + '*' */
     int         comment_delta;	/* used to set up indentation for all lines
 				 * of a boxed comment after the first one */
     int         n_comment_delta;/* remembers how many columns there were
@@ -207,57 +207,57 @@ extern struct parser_state {
 				 * close off casts */
     int         not_cast_mask;	/* indicates which close parens definitely
 				 * close off something else than casts */
-    int         block_init;	/* true iff inside a block initialization */
+    ibool	block_init;	/* whether inside a block initialization */
     int         block_init_level;	/* The level of brace nesting in an
 					 * initialization */
-    int         last_nl;	/* this is true if the last thing scanned was
+    ibool	last_nl;	/* this is true if the last thing scanned was
 				 * a newline */
-    int         in_or_st;	/* Will be true iff there has been a
+    ibool	in_or_st;	/* Will be true iff there has been a
 				 * declarator (e.g. int or char) and no left
 				 * paren since the last semicolon. When true,
 				 * a '{' is starting a structure definition or
 				 * an initialization list */
-    int         bl_line;	/* set to 1 by dump_line if the line is blank */
-    int         col_1;		/* set to true if the last token started in
+    ibool	bl_line;	/* set to 1 by dump_line if the line is blank */
+    ibool	col_1;		/* set to true if the last token started in
 				 * column 1 */
     int         com_col;	/* this is the column in which the current
 				 * comment should start */
     int         dec_nest;	/* current nesting level for structure or init */
-    int         decl_on_line;	/* set to true if this line of code has part
+    ibool	decl_on_line;	/* set to true if this line of code has part
 				 * of a declaration on it */
     int         i_l_follow;	/* the level to which ind_level should be set
 				 * after the current line is printed */
-    int         in_decl;	/* set to true when we are in a declaration
+    ibool	in_decl;	/* set to true when we are in a declaration
 				 * stmt.  The processing of braces is then
 				 * slightly different */
-    int         in_stmt;	/* set to 1 while in a stmt */
+    ibool	in_stmt;	/* set to 1 while in a stmt */
     int         ind_level;	/* the current indentation level */
-    int         ind_stmt;	/* set to 1 if next line should have an extra
+    ibool	ind_stmt;	/* set to 1 if next line should have an extra
 				 * indentation level because we are in the
 				 * middle of a stmt */
-    int         last_u_d;	/* set to true after scanning a token which
+    ibool	last_u_d;	/* set to true after scanning a token which
 				 * forces a following operator to be unary */
-    int         p_l_follow;	/* used to remember how to indent following
-				 * statement */
+    int         p_l_follow;	/* used to remember how to indent the
+				 * following statement */
     int         paren_level;	/* parenthesization level. used to indent
 				 * within statements */
     short       paren_indents[20]; /* indentation of the operand/argument of
 				 * each level of parentheses or brackets,
 				 * relative to the enclosing statement */
-    int         pcase;		/* set to 1 if the current line label is a
+    ibool	pcase;		/* set to 1 if the current line label is a
 				 * case.  It is printed differently from a
 				 * regular label */
-    int         search_brace;	/* set to true by parse when it is necessary
+    ibool	search_brace;	/* set to true by parse when it is necessary
 				 * to buffer up all info up to the start of a
 				 * stmt after an if, while, etc */
-    int         use_ff;		/* set to one if the current line should be
+    ibool	use_ff;		/* set to one if the current line should be
 				 * terminated with a form feed */
-    int         want_blank;	/* set to true when the following token should
+    ibool	want_blank;	/* set to true when the following token should
 				 * be prefixed by a blank. (Said prefixing is
 				 * ignored in some cases.) */
     enum rwcode keyword;	/* the type of a keyword or 0 */
-    int         dumped_decl_indent;
-    int         in_parameter_declaration;
+    ibool	dumped_decl_indent;
+    ibool	in_parameter_declaration;
     int         tos;		/* pointer to top of stack */
     char        procname[100];	/* The name of the current procedure */
     int         just_saw_decl;
