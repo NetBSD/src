@@ -1,4 +1,4 @@
-/*	$NetBSD: lexi.c,v 1.52 2021/09/25 10:24:10 rillig Exp $	*/
+/*	$NetBSD: lexi.c,v 1.53 2021/09/25 13:38:32 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -38,18 +38,14 @@
  */
 
 #if 0
-#ifndef lint
 static char sccsid[] = "@(#)lexi.c	8.1 (Berkeley) 6/6/93";
-#endif /* not lint */
 #endif
 
 #include <sys/cdefs.h>
-#ifndef lint
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: lexi.c,v 1.52 2021/09/25 10:24:10 rillig Exp $");
+__RCSID("$NetBSD: lexi.c,v 1.53 2021/09/25 13:38:32 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/lexi.c 337862 2018-08-15 18:19:45Z pstef $");
-#endif
 #endif
 
 #include <assert.h>
