@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.10 2021/09/25 12:20:44 rillig Exp $
+#	$NetBSD: Makefile,v 1.11 2021/09/25 13:04:55 rillig Exp $
 
 .include <bsd.own.mk>
 
@@ -16,6 +16,7 @@ FILES+=		comments.0
 FILES+=		comments.0.pro
 FILES+=		comments.0.stdout
 FILES+=		declarations.0
+FILES+=		declarations.0.stderr
 FILES+=		declarations.0.stdout
 FILES+=		elsecomment.0
 FILES+=		elsecomment.0.stdout
