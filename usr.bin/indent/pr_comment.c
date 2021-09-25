@@ -1,4 +1,4 @@
-/*	$NetBSD: pr_comment.c,v 1.43 2021/09/25 17:11:23 rillig Exp $	*/
+/*	$NetBSD: pr_comment.c,v 1.44 2021/09/25 17:36:51 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)pr_comment.c	8.1 (Berkeley) 6/6/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: pr_comment.c,v 1.43 2021/09/25 17:11:23 rillig Exp $");
+__RCSID("$NetBSD: pr_comment.c,v 1.44 2021/09/25 17:36:51 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/pr_comment.c 334927 2018-06-10 16:44:18Z pstef $");
 #endif
@@ -94,7 +94,7 @@ process_comment(void)
 				 * that spill over the right margin */
     ssize_t last_blank;		/* index of the last blank in com.buf */
     char       *t_ptr;		/* used for moving string */
-    ibool break_delim = opt.comment_delimiter_on_blankline;
+    bool break_delim = opt.comment_delimiter_on_blankline;
     int         l_just_saw_decl = ps.just_saw_decl;
 
     adj_max_line_length = opt.max_line_length;

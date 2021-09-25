@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.24 2021/09/25 17:11:23 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.25 2021/09/25 17:36:51 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -234,7 +234,7 @@ parse(token_type ttype)
  * Try to combine the statement on the top of the parse stack with the symbol
  * directly below it, replacing these two symbols with a single symbol.
  */
-static ibool
+static bool
 reduce_stmt(void)
 {
     switch (ps.p_stack[ps.tos - 1]) {
