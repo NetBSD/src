@@ -1,4 +1,4 @@
-/*	$NetBSD: io.c,v 1.63 2021/09/25 20:23:42 rillig Exp $	*/
+/*	$NetBSD: io.c,v 1.64 2021/09/25 20:56:53 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)io.c	8.1 (Berkeley) 6/6/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: io.c,v 1.63 2021/09/25 20:23:42 rillig Exp $");
+__RCSID("$NetBSD: io.c,v 1.64 2021/09/25 20:56:53 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/io.c 334927 2018-06-10 16:44:18Z pstef $");
 #endif
@@ -268,7 +268,7 @@ dump_line(void)
     *(lab.e = lab.s) = '\0';	/* reset buffers */
     *(code.e = code.s) = '\0';
     *(com.e = com.s = com.buf + 1) = '\0';
-    ps.ind_level = ps.i_l_follow;
+    ps.ind_level = ps.ind_level_follow;
     ps.paren_level = ps.p_l_follow;
     if (ps.paren_level > 0) {
         /* TODO: explain what negative indentation means */

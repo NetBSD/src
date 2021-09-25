@@ -1,4 +1,4 @@
-/*	$NetBSD: indent_globs.h,v 1.34 2021/09/25 20:23:42 rillig Exp $	*/
+/*	$NetBSD: indent_globs.h,v 1.35 2021/09/25 20:56:53 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -99,7 +99,7 @@ extern struct options {
     int         decl_comment_column; /* the column in which comments after
 				 * declarations should be put */
     bool	cuddle_else;	/* whether 'else' should cuddle up to '}' */
-    int         continuation_indent; /* set to the indentation between the
+    int         continuation_indent; /* the indentation between the
 				 * edge of code and continuation lines */
     float       case_indent;	/* The distance (measured in tabsize) to
 				 * indent case labels from the switch
@@ -179,13 +179,13 @@ extern bool        prefix_blankline_requested;
 extern bool        postfix_blankline_requested;
 extern bool        break_comma;	/* when true and not in parens, break after a
 				 * comma */
-extern float       case_ind;		/* indentation level to be used for a "case
+extern float       case_ind;	/* indentation level to be used for a "case
 				 * n:" */
-extern bool        had_eof;		/* set to true when input is exhausted */
+extern bool        had_eof;		/* whether input is exhausted */
 extern int         line_no;		/* the current line number. */
 extern bool        inhibit_formatting;	/* true if INDENT OFF is in effect */
-extern int         suppress_blanklines;/* set iff following blanklines should be
-				 * suppressed */
+extern int         suppress_blanklines;/* set iff following blanklines should
+				 * be suppressed */
 
 #define	STACKSIZE 256
 
@@ -217,25 +217,25 @@ extern struct parser_state {
 				 * paren since the last semicolon. When true,
 				 * a '{' is starting a structure definition or
 				 * an initialization list */
-    bool	col_1;		/* set to true if the last token started in
+    bool	col_1;		/* whether the last token started in
 				 * column 1 */
     int         com_col;	/* this is the column in which the current
 				 * comment should start */
-    int         dec_nest;	/* current nesting level for structure or init */
-    bool	decl_on_line;	/* set to true if this line of code has part
+    int         decl_nest;	/* current nesting level for structure or init */
+    bool	decl_on_line;	/* whether this line of code has part
 				 * of a declaration on it */
-    int         i_l_follow;	/* the level to which ind_level should be set
+    int         ind_level_follow; /* the level to which ind_level should be set
 				 * after the current line is printed */
-    bool	in_decl;	/* set to true when we are in a declaration
-				 * stmt.  The processing of braces is then
-				 * slightly different */
-    bool	in_stmt;	/* set to 1 while in a stmt */
+    bool	in_decl;	/* whether we are in a declaration stmt.
+				 * The processing of braces is then slightly
+				 * different */
+    bool	in_stmt;	/* whether in a stmt */
     int         ind_level;	/* the current indentation level */
-    bool	ind_stmt;	/* set to 1 if next line should have an extra
+    bool	ind_stmt;	/* whether the next line should have an extra
 				 * indentation level because we are in the
 				 * middle of a stmt */
-    bool	last_u_d;	/* set to true after scanning a token which
-				 * forces a following operator to be unary */
+    bool	last_u_d;	/* whether the following operator should be
+				 * unary */
     int         p_l_follow;	/* used to remember how to indent the
 				 * following statement */
     int         paren_level;	/* parenthesization level. used to indent
@@ -243,15 +243,15 @@ extern struct parser_state {
     short       paren_indents[20]; /* indentation of the operand/argument of
 				 * each level of parentheses or brackets,
 				 * relative to the enclosing statement */
-    bool	pcase;		/* set to 1 if the current line label is a
+    bool	pcase;		/* whether the current line label is a
 				 * case.  It is printed differently from a
 				 * regular label */
-    bool	search_brace;	/* set to true by parse when it is necessary
+    bool	search_brace;	/* whether it is necessary
 				 * to buffer up all info up to the start of a
 				 * stmt after an if, while, etc */
-    bool	use_ff;		/* set to one if the current line should be
+    bool	use_ff;		/* whether the current line should be
 				 * terminated with a form feed */
-    bool	want_blank;	/* set to true when the following token should
+    bool	want_blank;	/* whether the following token should
 				 * be prefixed by a blank. (Said prefixing is
 				 * ignored in some cases.) */
     enum rwcode keyword;	/* the type of a keyword or 0 */
