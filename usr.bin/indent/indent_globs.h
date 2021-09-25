@@ -1,4 +1,4 @@
-/*	$NetBSD: indent_globs.h,v 1.31 2021/09/25 17:29:13 rillig Exp $	*/
+/*	$NetBSD: indent_globs.h,v 1.32 2021/09/25 17:36:51 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -175,15 +175,15 @@ enum rwcode {
 
 extern int         found_err;
 extern int         n_real_blanklines;
-extern ibool	prefix_blankline_requested;
-extern ibool	postfix_blankline_requested;
-extern ibool	break_comma;	/* when true and not in parens, break after a
+extern bool        prefix_blankline_requested;
+extern bool        postfix_blankline_requested;
+extern bool        break_comma;	/* when true and not in parens, break after a
 				 * comma */
 extern float       case_ind;		/* indentation level to be used for a "case
 				 * n:" */
-extern ibool	had_eof;		/* set to true when input is exhausted */
+extern bool        had_eof;		/* set to true when input is exhausted */
 extern int         line_no;		/* the current line number. */
-extern ibool	inhibit_formatting;	/* true if INDENT OFF is in effect */
+extern bool        inhibit_formatting;	/* true if INDENT OFF is in effect */
 extern int         suppress_blanklines;/* set iff following blanklines should be
 				 * suppressed */
 

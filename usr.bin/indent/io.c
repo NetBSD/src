@@ -1,4 +1,4 @@
-/*	$NetBSD: io.c,v 1.61 2021/09/25 17:29:13 rillig Exp $	*/
+/*	$NetBSD: io.c,v 1.62 2021/09/25 17:36:51 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)io.c	8.1 (Berkeley) 6/6/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: io.c,v 1.61 2021/09/25 17:29:13 rillig Exp $");
+__RCSID("$NetBSD: io.c,v 1.62 2021/09/25 17:36:51 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/io.c 334927 2018-06-10 16:44:18Z pstef $");
 #endif
@@ -57,7 +57,7 @@ __FBSDID("$FreeBSD: head/usr.bin/indent/io.c 334927 2018-06-10 16:44:18Z pstef $
 
 #include "indent.h"
 
-ibool comment_open;
+bool comment_open;
 static int  paren_indent;
 
 static void
@@ -112,7 +112,7 @@ void
 dump_line(void)
 {
     int cur_col;
-    static ibool not_first_line;
+    static bool not_first_line;
 
     if (ps.procname[0] != '\0') {
 	ps.ind_level = 0;
@@ -374,11 +374,7 @@ parse_indent_comment(void)
     if (com.s != com.e || lab.s != lab.e || code.s != code.e)
 	dump_line();
 
-#ifdef lint
-    if (!(inhibit_formatting = (on_off - 1) != 0)) {
-#else
-    if (!(inhibit_formatting = on_off - 1)) {
-#endif
+    if (!(inhibit_formatting = (on_off == 2))) {
 	n_real_blanklines = 0;
 	postfix_blankline_requested = false;
 	prefix_blankline_requested = false;
