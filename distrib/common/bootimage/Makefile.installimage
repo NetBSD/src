@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.installimage,v 1.9 2021/09/25 08:54:29 maya Exp $
+#	$NetBSD: Makefile.installimage,v 1.10 2021/09/25 21:26:03 maya Exp $
 #
 # Common Makefile to create a bootable installation image for USB flash etc.
 #
@@ -32,10 +32,7 @@ IMAGEMB=	${INSTIMAGEMB}
 SWAPMB=		0			# no swap
 
 KERN_SET?=	kern-GENERIC
-SETS?=		modules base etc
-.if ${MKGPUFIRMWARE:Uno} != "no"
-SETS+=		gpufw
-.endif
+SETS?=		gpufw modules base etc
 
 FSTAB_IN?=	${NETBSDSRCDIR}/distrib/common/bootimage/fstab.install.in
 
