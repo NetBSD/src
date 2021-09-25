@@ -1,4 +1,4 @@
-/* $NetBSD: eisa_machdep.h,v 1.12 2014/03/29 19:28:25 christos Exp $ */
+/* $NetBSD: eisa_machdep.h,v 1.13 2021/09/25 20:16:17 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.
@@ -51,29 +51,25 @@ struct alpha_eisa_chipset {
 /*
  * Functions provided to machine-independent EISA code.
  */
-#define	eisa_attach_hook(p, s, a)					\
-    (*(a)->eba_ec->ec_attach_hook)((p), (s), (a))
-#define	eisa_maxslots(c)						\
-    (*(c)->ec_maxslots)((c)->ec_v)
-#define	eisa_intr_map(c, i, hp)						\
-    (*(c)->ec_intr_map)((c)->ec_v, (i), (hp))
-#define	eisa_intr_string(c, h, buf, len)				\
-    (*(c)->ec_intr_string)((c)->ec_v, (h), (buf), (len))
-#define	eisa_intr_evcnt(c, h)						\
-    (*(c)->ec_intr_evcnt)((c)->ec_v, (h))
-#define	eisa_intr_establish(c, h, t, l, f, a)				\
-    (*(c)->ec_intr_establish)((c)->ec_v, (h), (t), (l), (f), (a))
-#define	eisa_intr_disestablish(c, h)					\
-    (*(c)->ec_intr_disestablish)((c)->ec_v, (h))
+void		eisa_attach_hook(device_t, device_t,
+		    struct eisabus_attach_args *);
+int		eisa_maxslots(eisa_chipset_tag_t);
+int		eisa_intr_map(eisa_chipset_tag_t, u_int, eisa_intr_handle_t *);
+const char *	eisa_intr_string(eisa_chipset_tag_t, eisa_intr_handle_t,
+		    char *, size_t);
+const struct evcnt *eisa_intr_evcnt(eisa_chipset_tag_t, eisa_intr_handle_t);
+void *		eisa_intr_establish(eisa_chipset_tag_t, eisa_intr_handle_t,
+		    int, int, int (*)(void *), void *);
+void		eisa_intr_disestablish(eisa_chipset_tag_t, void *);
 
-int	eisa_conf_read_mem(eisa_chipset_tag_t, int, int, int,
-	    struct eisa_cfg_mem *);
-int	eisa_conf_read_irq(eisa_chipset_tag_t, int, int, int,
-	    struct eisa_cfg_irq *);
-int	eisa_conf_read_dma(eisa_chipset_tag_t, int, int, int,
-	    struct eisa_cfg_dma *);
-int	eisa_conf_read_io(eisa_chipset_tag_t, int, int, int,
-	    struct eisa_cfg_io *);
+int		eisa_conf_read_mem(eisa_chipset_tag_t, int, int, int,
+		    struct eisa_cfg_mem *);
+int		eisa_conf_read_irq(eisa_chipset_tag_t, int, int, int,
+		    struct eisa_cfg_irq *);
+int		eisa_conf_read_dma(eisa_chipset_tag_t, int, int, int,
+		    struct eisa_cfg_dma *);
+int		eisa_conf_read_io(eisa_chipset_tag_t, int, int, int,
+		    struct eisa_cfg_io *);
 
 /*
  * Internal functions, NOT TO BE USED BY MACHINE-INDEPENDENT CODE!
