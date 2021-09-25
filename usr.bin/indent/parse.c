@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.25 2021/09/25 17:36:51 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.26 2021/09/25 20:56:53 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -83,7 +83,7 @@ parse(token_type ttype)
 	    break_comma = true;	/* while in declaration, newline should be
 				 * forced after comma */
 	    ps.p_stack[++ps.tos] = decl;
-	    ps.il[ps.tos] = ps.i_l_follow;
+	    ps.il[ps.tos] = ps.ind_level_follow;
 
 	    if (opt.ljust_decl) {/* only do if we want left justified
 				 * declarations */
@@ -92,7 +92,7 @@ parse(token_type ttype)
 		    if (ps.p_stack[i] == decl)
 			++ps.ind_level;	/* indentation is number of
 					 * declaration levels deep we are */
-		ps.i_l_follow = ps.ind_level;
+		ps.ind_level_follow = ps.ind_level;
 	    }
 	}
 	break;
@@ -104,15 +104,15 @@ parse(token_type ttype)
 	     * reducing "else if" to "if". This saves a lot of stack space
 	     * in case of a long "if-else-if ... else-if" sequence.
 	     */
-	    ps.i_l_follow = ps.il[ps.tos--];
+	    ps.ind_level_follow = ps.il[ps.tos--];
 	}
 	/* the rest is the same as for keyword_do and for_exprs */
 	/* FALLTHROUGH */
     case keyword_do:		/* 'do' */
     case for_exprs:		/* 'for' (...) */
 	ps.p_stack[++ps.tos] = ttype;
-	ps.il[ps.tos] = ps.ind_level = ps.i_l_follow;
-	++ps.i_l_follow;	/* subsequent statements should be indented 1 */
+	ps.il[ps.tos] = ps.ind_level = ps.ind_level_follow;
+	++ps.ind_level_follow;	/* subsequent statements should be indented 1 */
 	ps.search_brace = opt.btype_2;
 	break;
 
@@ -120,8 +120,8 @@ parse(token_type ttype)
 	break_comma = false;	/* don't break comma in an initial list */
 	if (ps.p_stack[ps.tos] == stmt || ps.p_stack[ps.tos] == decl
 		|| ps.p_stack[ps.tos] == stmt_list)
-	    ++ps.i_l_follow;	/* it is a random, isolated stmt group or a
-				 * declaration */
+	    ++ps.ind_level_follow;	/* it is a random, isolated stmt
+				 * group or a declaration */
 	else {
 	    if (code.s == code.e) {
 		/*
@@ -143,19 +143,19 @@ parse(token_type ttype)
 	ps.il[ps.tos] = ps.ind_level;
 	ps.p_stack[++ps.tos] = stmt;
 	/* allow null stmt between braces */
-	ps.il[ps.tos] = ps.i_l_follow;
+	ps.il[ps.tos] = ps.ind_level_follow;
 	break;
 
     case while_expr:		/* 'while' '(' <expr> ')' */
 	if (ps.p_stack[ps.tos] == do_stmt) {
 	    /* it is matched with do stmt */
-	    ps.ind_level = ps.i_l_follow = ps.il[ps.tos];
+	    ps.ind_level = ps.ind_level_follow = ps.il[ps.tos];
 	    ps.p_stack[++ps.tos] = while_expr;
-	    ps.il[ps.tos] = ps.ind_level = ps.i_l_follow;
+	    ps.il[ps.tos] = ps.ind_level = ps.ind_level_follow;
 	} else {		/* it is a while loop */
 	    ps.p_stack[++ps.tos] = while_expr;
-	    ps.il[ps.tos] = ps.i_l_follow;
-	    ++ps.i_l_follow;
+	    ps.il[ps.tos] = ps.ind_level_follow;
+	    ++ps.ind_level_follow;
 	    ps.search_brace = opt.btype_2;
 	}
 
@@ -167,8 +167,8 @@ parse(token_type ttype)
 	else {
 	    ps.ind_level = ps.il[ps.tos];	/* indentation for else should
 						 * be same as for if */
-	    ps.i_l_follow = ps.ind_level + 1;	/* everything following should
-						 * be in 1 level */
+	    ps.ind_level_follow = ps.ind_level + 1; /* everything following
+				 * should be 1 level deeper */
 	    ps.p_stack[ps.tos] = if_expr_stmt_else;
 	    /* remember if with else */
 	    ps.search_brace = opt.btype_2 | opt.else_if;
@@ -178,7 +178,7 @@ parse(token_type ttype)
     case rbrace:		/* scanned a } */
 	/* stack should have <lbrace> <stmt> or <lbrace> <stmt_list> */
 	if (ps.tos > 0 && ps.p_stack[ps.tos - 1] == lbrace) {
-	    ps.ind_level = ps.i_l_follow = ps.il[--ps.tos];
+	    ps.ind_level = ps.ind_level_follow = ps.il[--ps.tos];
 	    ps.p_stack[ps.tos] = stmt;
 	} else
 	    diag(1, "Statement nesting error");
@@ -188,12 +188,11 @@ parse(token_type ttype)
 	ps.p_stack[++ps.tos] = switch_expr;
 	ps.cstk[ps.tos] = case_ind;
 	/* save current case indent level */
-	ps.il[ps.tos] = ps.i_l_follow;
-	case_ind = ps.i_l_follow + opt.case_indent;	/* cases should be one
-							 * level down from
-							 * switch */
-	ps.i_l_follow += opt.case_indent + 1;	/* statements should be two
-						 * levels in */
+	ps.il[ps.tos] = ps.ind_level_follow;
+	case_ind = ps.ind_level_follow + opt.case_indent; /* cases should be
+				 * one level deeper than the switch */
+	ps.ind_level_follow += opt.case_indent + 1; /* statements should be
+				 * two levels deeper */
 	ps.search_brace = opt.btype_2;
 	break;
 
@@ -246,7 +245,7 @@ reduce_stmt(void)
 
     case keyword_do:	/* 'do' <stmt> */
 	ps.p_stack[--ps.tos] = do_stmt;
-	ps.i_l_follow = ps.il[ps.tos];
+	ps.ind_level_follow = ps.il[ps.tos];
 	return true;
 
     case if_expr:	/* 'if' '(' <expr> ')' <stmt> */
@@ -256,7 +255,7 @@ reduce_stmt(void)
 	       ps.p_stack[i] != stmt_list &&
 	       ps.p_stack[i] != lbrace)
 	    --i;
-	ps.i_l_follow = ps.il[i];
+	ps.ind_level_follow = ps.il[i];
 	/*
 	 * for the time being, we will assume that there is no else on
 	 * this if, and set the indentation level accordingly. If an
@@ -272,7 +271,7 @@ reduce_stmt(void)
     case for_exprs:	/* 'for' '(' ... ')' <stmt> */
     case while_expr:	/* 'while' '(' <expr> ')' <stmt> */
 	ps.p_stack[--ps.tos] = stmt;
-	ps.i_l_follow = ps.il[ps.tos];
+	ps.ind_level_follow = ps.il[ps.tos];
 	return true;
 
     default:		/* <anything else> <stmt> */

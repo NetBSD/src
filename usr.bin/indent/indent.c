@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.c,v 1.78 2021/09/25 20:23:42 rillig Exp $	*/
+/*	$NetBSD: indent.c,v 1.79 2021/09/25 20:56:53 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)indent.c	5.17 (Berkeley) 6/7/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: indent.c,v 1.78 2021/09/25 20:23:42 rillig Exp $");
+__RCSID("$NetBSD: indent.c,v 1.79 2021/09/25 20:56:53 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/indent.c 340138 2018-11-04 19:24:49Z oshogbo $");
 #endif
@@ -498,7 +498,7 @@ main_prepare_parsing(void)
 	p++;
     }
     if (col > opt.indent_size)
-	ps.ind_level = ps.i_l_follow = col / opt.indent_size;
+	ps.ind_level = ps.ind_level_follow = col / opt.indent_size;
 }
 
 static void __attribute__((__noreturn__))
@@ -769,7 +769,7 @@ process_semicolon(bool *inout_scase, int *inout_squest, int dec_ind,
 		  token_type hd_type,
 		  bool *inout_force_nl)
 {
-    if (ps.dec_nest == 0)
+    if (ps.decl_nest == 0)
 	ps.in_or_st = false;	/* we are not in an initialization or
 				 * structure declaration */
     *inout_scase = false; /* these will only need resetting in an error */
@@ -789,7 +789,7 @@ process_semicolon(bool *inout_scase, int *inout_squest, int dec_ind,
 	ps.dumped_decl_indent = true;
     }
 
-    ps.in_decl = (ps.dec_nest > 0);	/* if we were in a first level
+    ps.in_decl = (ps.decl_nest > 0);	/* if we were in a first level
 						 * structure declaration, we
 						 * arent any more */
 
@@ -837,7 +837,7 @@ process_lbrace(bool *inout_force_nl, bool *inout_sp_sw, token_type hd_type,
 	    dump_line();
 	    ps.want_blank = false;
 	} else if (ps.in_parameter_declaration && !ps.in_or_st) {
-	    ps.i_l_follow = 0;
+	    ps.ind_level_follow = 0;
 	    if (opt.function_brace_split) { /* dump the line prior
 				 * to the brace ... */
 		dump_line();
@@ -856,7 +856,7 @@ process_lbrace(bool *inout_force_nl, bool *inout_sp_sw, token_type hd_type,
 	if (*inout_sp_sw) {	/* check for unclosed if, for, etc. */
 	    *inout_sp_sw = false;
 	    parse(hd_type);
-	    ps.ind_level = ps.i_l_follow;
+	    ps.ind_level = ps.ind_level_follow;
 	}
     }
     if (code.s == code.e)
@@ -864,11 +864,11 @@ process_lbrace(bool *inout_force_nl, bool *inout_sp_sw, token_type hd_type,
 				 * with '{' */
     if (ps.in_decl && ps.in_or_st) {	/* this is either a structure
 				 * declaration or an init */
-	di_stack[ps.dec_nest] = *inout_dec_ind;
-	if (++ps.dec_nest == di_stack_cap) {
+	di_stack[ps.decl_nest] = *inout_dec_ind;
+	if (++ps.decl_nest == di_stack_cap) {
 	    diag(0, "Reached internal limit of %d struct levels",
 		 di_stack_cap);
-	    ps.dec_nest--;
+	    ps.decl_nest--;
 	}
 	/* ?		dec_ind = 0; */
     } else {
@@ -913,9 +913,9 @@ process_rbrace(bool *inout_sp_sw, int *inout_dec_ind, const int *di_stack)
     *code.e++ = '}';
     ps.want_blank = true;
     ps.in_stmt = ps.ind_stmt = false;
-    if (ps.dec_nest > 0) { /* we are in multi-level structure declaration */
-	*inout_dec_ind = di_stack[--ps.dec_nest];
-	if (ps.dec_nest == 0 && !ps.in_parameter_declaration)
+    if (ps.decl_nest > 0) { /* we are in multi-level structure declaration */
+	*inout_dec_ind = di_stack[--ps.decl_nest];
+	if (ps.decl_nest == 0 && !ps.in_parameter_declaration)
 	    ps.just_saw_decl = 2;
 	ps.in_decl = true;
     }
@@ -924,7 +924,7 @@ process_rbrace(bool *inout_sp_sw, int *inout_dec_ind, const int *di_stack)
     ps.search_brace = opt.cuddle_else
 		      && ps.p_stack[ps.tos] == if_expr_stmt
 		      && ps.il[ps.tos] >= ps.ind_level;
-    if (ps.tos <= 1 && opt.blanklines_after_procs && ps.dec_nest <= 0)
+    if (ps.tos <= 1 && opt.blanklines_after_procs && ps.decl_nest <= 0)
 	postfix_blankline_requested = true;
 }
 
@@ -965,20 +965,21 @@ process_decl(int *out_dec_ind, bool *out_tabs_to_var)
 	    ps.want_blank = false;
 	}
     }
-    if (ps.in_parameter_declaration && opt.indent_parameters && ps.dec_nest == 0) {
-	ps.ind_level = ps.i_l_follow = 1;
+    if (ps.in_parameter_declaration && opt.indent_parameters &&
+	ps.decl_nest == 0) {
+	ps.ind_level = ps.ind_level_follow = 1;
 	ps.ind_stmt = false;
     }
     ps.in_or_st = true;		/* this might be a structure or initialization
 				 * declaration */
     ps.in_decl = ps.decl_on_line = ps.last_token != type_def;
-    if ( /* !ps.in_or_st && */ ps.dec_nest <= 0)
+    if ( /* !ps.in_or_st && */ ps.decl_nest <= 0)
 	ps.just_saw_decl = 2;
     prefix_blankline_requested = false;
     int i;
     for (i = 0; token.s[i++] != '\0';);	/* get length of token */
 
-    if (ps.ind_level == 0 || ps.dec_nest > 0) {
+    if (ps.ind_level == 0 || ps.decl_nest > 0) {
 	/* global variable or struct member in local variable */
 	*out_dec_ind = opt.decl_indent > 0 ? opt.decl_indent : i;
 	*out_tabs_to_var = opt.use_tabs ? opt.decl_indent > 0 : false;
@@ -1235,7 +1236,7 @@ main_loop(void)
 
     sp_sw = force_nl = false;
     dec_ind = 0;
-    di_stack[ps.dec_nest = 0] = 0;
+    di_stack[ps.decl_nest = 0] = 0;
     scase = false;
     squest = 0;
     tabs_to_var = false;
