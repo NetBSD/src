@@ -1,6 +1,6 @@
 #! /bin/sh
 #
-# $NetBSD: regpkgset,v 1.16 2020/05/18 21:19:34 jmcneill Exp $
+# $NetBSD: regpkgset,v 1.17 2021/09/25 08:54:30 maya Exp $
 #
 # Copyright (c) 2003,2009 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -123,7 +123,7 @@ if [ $# -lt 1 ]; then
 fi
 
 case "$1" in
-all)	list="base comp dtb etc games man misc modules rescue tests text xbase xcomp xetc xfont xserver" ;;
+all)	list="base comp dtb etc games gpufw man misc modules rescue tests text xbase xcomp xetc xfont xserver" ;;
 *)	list="$*" ;;
 esac
 

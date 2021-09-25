@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.1260 2021/08/19 06:52:37 mrg Exp $
+#	$NetBSD: bsd.own.mk,v 1.1261 2021/09/25 08:54:30 maya Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -1235,13 +1235,10 @@ MKFIRMWARE.macppc=		yes
 MKFIRMWARE.sandpoint=		yes
 MKFIRMWARE.sparc64=		yes
 
-# Only install the nouveau and radeon firmwares on DRM-happy systems.
-MKNOUVEAUFIRMWARE.x86_64=	yes
-MKNOUVEAUFIRMWARE.i386=		yes
-MKNOUVEAUFIRMWARE.aarch64=	yes
-MKRADEONFIRMWARE.x86_64=	yes
-MKRADEONFIRMWARE.i386=		yes
-MKRADEONFIRMWARE.aarch64=	yes
+# Only install the GPU firmware on DRM-happy systems.
+MKGPUFIRMWARE.x86_64=		yes
+MKGPUFIRMWARE.i386=		yes
+MKGPUFIRMWARE.aarch64=		yes
 
 # Only install the tegra firmware on evbarm.
 MKTEGRAFIRMWARE.evbarm=		yes
@@ -1291,10 +1288,9 @@ _MKVARS.no= \
 	MKKYUA \
 	MKLIBCXX MKLLD MKLLDB MKLLVM MKLLVMRT MKLINT \
 	MKMANZ MKMCLINKER \
-	MKNOUVEAUFIRMWARE MKNSD \
-	MKOBJDIRS \
+	MKNSD MKOBJDIRS \
 	MKPCC MKPICINSTALL MKPIGZGZIP \
-	MKRADEONFIRMWARE MKREPRO \
+	MKGPUFIRMWARE MKREPRO \
 	MKSLJIT MKSOFTFLOAT MKSTRIPIDENT \
 	MKTEGRAFIRMWARE MKTPM \
 	MKUNPRIVED MKUPDATE \

@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.pl,v 1.35 2020/11/04 14:29:40 martin Exp $	*/
+/*	$NetBSD: msg.mi.pl,v 1.36 2021/09/25 08:54:31 maya Exp $	*/
 /*	Based on english version: */
 /*	NetBSD: msg.mi.pl,v 1.36 2004/04/17 18:55:35 atatat Exp       */
 
@@ -814,6 +814,9 @@ message set_dtb
 
 message set_games
 {Gry}
+
+message set_gpufw
+{Graphics driver firmware}
 
 message set_man_pages
 {Strony Podrecznika}
