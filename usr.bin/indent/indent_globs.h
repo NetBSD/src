@@ -1,4 +1,4 @@
-/*	$NetBSD: indent_globs.h,v 1.30 2021/09/25 17:20:02 rillig Exp $	*/
+/*	$NetBSD: indent_globs.h,v 1.31 2021/09/25 17:29:13 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -194,7 +194,7 @@ extern struct parser_state {
     token_type	p_stack[STACKSIZE];	/* this is the parsers stack */
     int         il[STACKSIZE];	/* this stack stores indentation levels */
     float       cstk[STACKSIZE];/* used to store case stmt indentation levels */
-    ibool	box_com;	/* whether we are in a "boxed" comment. In
+    bool	box_com;	/* whether we are in a "boxed" comment. In
 				 * that case, the first non-blank char should
 				 * be lined up with the '/' in '/' + '*' */
     int         comment_delta;	/* used to set up indentation for all lines
@@ -207,35 +207,35 @@ extern struct parser_state {
 				 * close off casts */
     int         not_cast_mask;	/* indicates which close parens definitely
 				 * close off something else than casts */
-    ibool	block_init;	/* whether inside a block initialization */
+    bool	block_init;	/* whether inside a block initialization */
     int         block_init_level;	/* The level of brace nesting in an
 					 * initialization */
-    ibool	last_nl;	/* this is true if the last thing scanned was
+    bool	last_nl;	/* this is true if the last thing scanned was
 				 * a newline */
-    ibool	in_or_st;	/* Will be true iff there has been a
+    bool	in_or_st;	/* Will be true iff there has been a
 				 * declarator (e.g. int or char) and no left
 				 * paren since the last semicolon. When true,
 				 * a '{' is starting a structure definition or
 				 * an initialization list */
-    ibool	bl_line;	/* set to 1 by dump_line if the line is blank */
-    ibool	col_1;		/* set to true if the last token started in
+    bool	bl_line;	/* set to 1 by dump_line if the line is blank */
+    bool	col_1;		/* set to true if the last token started in
 				 * column 1 */
     int         com_col;	/* this is the column in which the current
 				 * comment should start */
     int         dec_nest;	/* current nesting level for structure or init */
-    ibool	decl_on_line;	/* set to true if this line of code has part
+    bool	decl_on_line;	/* set to true if this line of code has part
 				 * of a declaration on it */
     int         i_l_follow;	/* the level to which ind_level should be set
 				 * after the current line is printed */
-    ibool	in_decl;	/* set to true when we are in a declaration
+    bool	in_decl;	/* set to true when we are in a declaration
 				 * stmt.  The processing of braces is then
 				 * slightly different */
-    ibool	in_stmt;	/* set to 1 while in a stmt */
+    bool	in_stmt;	/* set to 1 while in a stmt */
     int         ind_level;	/* the current indentation level */
-    ibool	ind_stmt;	/* set to 1 if next line should have an extra
+    bool	ind_stmt;	/* set to 1 if next line should have an extra
 				 * indentation level because we are in the
 				 * middle of a stmt */
-    ibool	last_u_d;	/* set to true after scanning a token which
+    bool	last_u_d;	/* set to true after scanning a token which
 				 * forces a following operator to be unary */
     int         p_l_follow;	/* used to remember how to indent the
 				 * following statement */
@@ -244,20 +244,20 @@ extern struct parser_state {
     short       paren_indents[20]; /* indentation of the operand/argument of
 				 * each level of parentheses or brackets,
 				 * relative to the enclosing statement */
-    ibool	pcase;		/* set to 1 if the current line label is a
+    bool	pcase;		/* set to 1 if the current line label is a
 				 * case.  It is printed differently from a
 				 * regular label */
-    ibool	search_brace;	/* set to true by parse when it is necessary
+    bool	search_brace;	/* set to true by parse when it is necessary
 				 * to buffer up all info up to the start of a
 				 * stmt after an if, while, etc */
-    ibool	use_ff;		/* set to one if the current line should be
+    bool	use_ff;		/* set to one if the current line should be
 				 * terminated with a form feed */
-    ibool	want_blank;	/* set to true when the following token should
+    bool	want_blank;	/* set to true when the following token should
 				 * be prefixed by a blank. (Said prefixing is
 				 * ignored in some cases.) */
     enum rwcode keyword;	/* the type of a keyword or 0 */
-    ibool	dumped_decl_indent;
-    ibool	in_parameter_declaration;
+    bool	dumped_decl_indent;
+    bool	in_parameter_declaration;
     int         tos;		/* pointer to top of stack */
     char        procname[100];	/* The name of the current procedure */
     int         just_saw_decl;
