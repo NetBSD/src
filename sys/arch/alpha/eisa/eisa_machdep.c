@@ -1,4 +1,4 @@
-/* $NetBSD: eisa_machdep.c,v 1.13 2020/11/18 02:04:29 thorpej Exp $ */
+/* $NetBSD: eisa_machdep.c,v 1.14 2021/09/25 20:16:17 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: eisa_machdep.c,v 1.13 2020/11/18 02:04:29 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: eisa_machdep.c,v 1.14 2021/09/25 20:16:17 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -44,6 +44,51 @@ __KERNEL_RCSID(0, "$NetBSD: eisa_machdep.c,v 1.13 2020/11/18 02:04:29 thorpej Ex
 
 #include <dev/eisa/eisareg.h>
 #include <dev/eisa/eisavar.h>
+
+void
+eisa_attach_hook(device_t parent, device_t self,
+    struct eisabus_attach_args *eba)
+{
+	eba->eba_ec->ec_attach_hook(parent, self, eba);
+}
+
+int
+eisa_maxslots(eisa_chipset_tag_t ec)
+{
+	return ec->ec_maxslots(ec->ec_v);
+}
+
+int
+eisa_intr_map(eisa_chipset_tag_t ec, u_int irq, eisa_intr_handle_t *ihp)
+{
+	return ec->ec_intr_map(ec->ec_v, irq, ihp);
+}
+
+const char *
+eisa_intr_string(eisa_chipset_tag_t ec, eisa_intr_handle_t ih, char *buf,
+    size_t len)
+{
+	return ec->ec_intr_string(ec->ec_v, ih, buf, len);
+}
+
+const struct evcnt *
+eisa_intr_evcnt(eisa_chipset_tag_t ec, eisa_intr_handle_t ih)
+{
+	return ec->ec_intr_evcnt(ec->ec_v, ih);
+}
+
+void *
+eisa_intr_establish(eisa_chipset_tag_t ec, eisa_intr_handle_t ih,
+    int type, int level, int (*func)(void *), void *arg)
+{
+	return ec->ec_intr_establish(ec->ec_v, ih, type, level, func, arg);
+}
+
+void
+eisa_intr_disestablish(eisa_chipset_tag_t ec, void *cookie)
+{
+	return ec->ec_intr_disestablish(ec->ec_v, cookie);
+}
 
 #define	EISA_SLOT_HEADER_SIZE	31
 #define	EISA_SLOT_INFO_OFFSET	20
