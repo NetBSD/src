@@ -1,4 +1,4 @@
-/*	$NetBSD: pr_comment.c,v 1.39 2021/09/25 08:04:13 rillig Exp $	*/
+/*	$NetBSD: pr_comment.c,v 1.40 2021/09/25 08:23:31 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -46,7 +46,7 @@ static char sccsid[] = "@(#)pr_comment.c	8.1 (Berkeley) 6/6/93";
 #include <sys/cdefs.h>
 #ifndef lint
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: pr_comment.c,v 1.39 2021/09/25 08:04:13 rillig Exp $");
+__RCSID("$NetBSD: pr_comment.c,v 1.40 2021/09/25 08:23:31 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/pr_comment.c 334927 2018-06-10 16:44:18Z pstef $");
 #endif
@@ -67,9 +67,7 @@ check_size_comment(size_t desired_size)
 
     size_t nsize = com.l - com.s + 400 + desired_size;
     size_t com_len = com.e - com.s;
-    com.buf = realloc(com.buf, nsize);
-    if (com.buf == NULL)
-	err(1, NULL);
+    com.buf = xrealloc(com.buf, nsize);
     com.s = com.buf + 1;
     com.e = com.s + com_len;
     com.l = com.buf + nsize - 5;

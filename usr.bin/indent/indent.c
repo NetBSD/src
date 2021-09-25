@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.c,v 1.67 2021/09/25 08:04:13 rillig Exp $	*/
+/*	$NetBSD: indent.c,v 1.68 2021/09/25 08:23:31 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -46,7 +46,7 @@ static char sccsid[] = "@(#)indent.c	5.17 (Berkeley) 6/7/93";
 #include <sys/cdefs.h>
 #ifndef lint
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: indent.c,v 1.67 2021/09/25 08:04:13 rillig Exp $");
+__RCSID("$NetBSD: indent.c,v 1.68 2021/09/25 08:23:31 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/indent.c 340138 2018-11-04 19:24:49Z oshogbo $");
 #endif
@@ -126,9 +126,7 @@ check_size_code(size_t desired_size)
 
     size_t nsize = code.l - code.s + 400 + desired_size;
     size_t code_len = code.e - code.s;
-    code.buf = realloc(code.buf, nsize);
-    if (code.buf == NULL)
-	err(1, NULL);
+    code.buf = xrealloc(code.buf, nsize);
     code.e = code.buf + code_len + 1;
     code.l = code.buf + nsize - 5;
     code.s = code.buf + 1;
@@ -142,9 +140,7 @@ check_size_label(size_t desired_size)
 
     size_t nsize = lab.l - lab.s + 400 + desired_size;
     size_t label_len = lab.e - lab.s;
-    lab.buf = realloc(lab.buf, nsize);
-    if (lab.buf == NULL)
-	err(1, NULL);
+    lab.buf = xrealloc(lab.buf, nsize);
     lab.e = lab.buf + label_len + 1;
     lab.l = lab.buf + nsize - 5;
     lab.s = lab.buf + 1;
@@ -362,18 +358,10 @@ main_init_globals(void)
     ps.last_nl = true;		/* this is true if the last thing scanned was
 				 * a newline */
     ps.last_token = semicolon;
-    com.buf = malloc(bufsize);
-    if (com.buf == NULL)
-	err(1, NULL);
-    lab.buf = malloc(bufsize);
-    if (lab.buf == NULL)
-	err(1, NULL);
-    code.buf = malloc(bufsize);
-    if (code.buf == NULL)
-	err(1, NULL);
-    token.buf = malloc(bufsize);
-    if (token.buf == NULL)
-	err(1, NULL);
+    com.buf = xmalloc(bufsize);
+    lab.buf = xmalloc(bufsize);
+    code.buf = xmalloc(bufsize);
+    token.buf = xmalloc(bufsize);
     alloc_typenames();
     init_constant_tt();
     com.l = com.buf + bufsize - 5;
@@ -389,9 +377,7 @@ main_init_globals(void)
     com.s = com.e = com.buf + 1;
     token.s = token.e = token.buf + 1;
 
-    in_buffer = malloc(10);
-    if (in_buffer == NULL)
-	err(1, NULL);
+    in_buffer = xmalloc(10);
     in_buffer_limit = in_buffer + 8;
     buf_ptr = buf_end = in_buffer;
     line_no = 1;
@@ -1571,3 +1557,29 @@ debug_vis_range(const char *prefix, const char *s, const char *e,
     debug_printf("%s", suffix);
 }
 #endif
+
+static void *
+nonnull(void *p)
+{
+    if (p == NULL)
+	err(EXIT_FAILURE, NULL);
+    return p;
+}
+
+void *
+xmalloc(size_t size)
+{
+    return nonnull(malloc(size));
+}
+
+void *
+xrealloc(void *p, size_t new_size)
+{
+    return nonnull(realloc(p, new_size));
+}
+
+char *
+xstrdup(const char *s)
+{
+    return nonnull(strdup(s));
+}

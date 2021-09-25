@@ -1,4 +1,4 @@
-/*	$NetBSD: lexi.c,v 1.50 2021/09/25 08:04:13 rillig Exp $	*/
+/*	$NetBSD: lexi.c,v 1.51 2021/09/25 08:23:31 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -46,7 +46,7 @@ static char sccsid[] = "@(#)lexi.c	8.1 (Berkeley) 6/6/93";
 #include <sys/cdefs.h>
 #ifndef lint
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: lexi.c,v 1.50 2021/09/25 08:04:13 rillig Exp $");
+__RCSID("$NetBSD: lexi.c,v 1.51 2021/09/25 08:23:31 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/lexi.c 337862 2018-08-15 18:19:45Z pstef $");
 #endif
@@ -211,9 +211,7 @@ check_size_token(size_t desired_size)
 
     size_t nsize = token.l - token.s + 400 + desired_size;
     size_t token_len = token.e - token.s;
-    token.buf = realloc(token.buf, nsize);
-    if (token.buf == NULL)
-	err(1, NULL);
+    token.buf = xrealloc(token.buf, nsize);
     token.e = token.buf + token_len + 1;
     token.l = token.buf + nsize - 5;
     token.s = token.buf + 1;
@@ -681,30 +679,25 @@ void
 alloc_typenames(void)
 {
 
-    typenames = malloc(sizeof(typenames[0]) * (typename_count = 16));
-    if (typenames == NULL)
-	err(1, NULL);
+    typenames = xmalloc(sizeof(typenames[0]) * (typename_count = 16));
 }
 
 void
 add_typename(const char *key)
 {
     int comparison;
-    const char *copy;
 
     if (typename_top + 1 >= typename_count) {
-	typenames = realloc((void *)typenames,
+	typenames = xrealloc((void *)typenames,
 	    sizeof(typenames[0]) * (typename_count *= 2));
-	if (typenames == NULL)
-	    err(1, NULL);
     }
     if (typename_top == -1)
-	typenames[++typename_top] = copy = strdup(key);
+	typenames[++typename_top] = xstrdup(key);
     else if ((comparison = strcmp(key, typenames[typename_top])) >= 0) {
 	/* take advantage of sorted input */
 	if (comparison == 0)	/* remove duplicates */
 	    return;
-	typenames[++typename_top] = copy = strdup(key);
+	typenames[++typename_top] = xstrdup(key);
     } else {
 	int p;
 
@@ -714,9 +707,6 @@ add_typename(const char *key)
 	    return;
 	memmove(&typenames[p + 1], &typenames[p],
 	    sizeof(typenames[0]) * (++typename_top - p));
-	typenames[p] = copy = strdup(key);
+	typenames[p] = xstrdup(key);
     }
-
-    if (copy == NULL)
-	err(1, NULL);
 }
