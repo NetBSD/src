@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.c,v 1.64 2021/09/25 07:46:41 rillig Exp $	*/
+/*	$NetBSD: indent.c,v 1.65 2021/09/25 07:55:24 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -46,7 +46,7 @@ static char sccsid[] = "@(#)indent.c	5.17 (Berkeley) 6/7/93";
 #include <sys/cdefs.h>
 #ifndef lint
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: indent.c,v 1.64 2021/09/25 07:46:41 rillig Exp $");
+__RCSID("$NetBSD: indent.c,v 1.65 2021/09/25 07:55:24 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/indent.c 340138 2018-11-04 19:24:49Z oshogbo $");
 #endif
@@ -72,12 +72,7 @@ struct options opt;
 struct parser_state ps;
 
 struct buffer lab;
-
-char       *codebuf;
-char       *s_code;
-char       *e_code;
-char       *l_code;
-
+struct buffer code;
 struct buffer com;
 
 char       *tokenbuf;
@@ -130,17 +125,17 @@ char        bakfile[MAXPATHLEN] = "";
 static void
 check_size_code(size_t desired_size)
 {
-    if (e_code + (desired_size) < l_code)
+    if (code.e + desired_size < code.l)
         return;
 
-    size_t nsize = l_code - s_code + 400 + desired_size;
-    size_t code_len = e_code - s_code;
-    codebuf = realloc(codebuf, nsize);
-    if (codebuf == NULL)
+    size_t nsize = code.l - code.s + 400 + desired_size;
+    size_t code_len = code.e - code.s;
+    code.buf = realloc(code.buf, nsize);
+    if (code.buf == NULL)
 	err(1, NULL);
-    e_code = codebuf + code_len + 1;
-    l_code = codebuf + nsize - 5;
-    s_code = codebuf + 1;
+    code.e = code.buf + code_len + 1;
+    code.l = code.buf + nsize - 5;
+    code.s = code.buf + 1;
 }
 
 static void
@@ -265,7 +260,7 @@ search_brace(token_type *inout_ttype, int *inout_force_nl,
 	    remove_newlines =
 		    /* "} else" */
 		    (*inout_ttype == keyword_do_else && *token == 'e' &&
-		     e_code != s_code && e_code[-1] == '}')
+		     code.e != code.s && code.e[-1] == '}')
 		    /* "else if" */
 		    || (*inout_ttype == keyword_for_if_while &&
 			*token == 'i' && *inout_last_else && opt.else_if);
@@ -377,8 +372,8 @@ main_init_globals(void)
     lab.buf = malloc(bufsize);
     if (lab.buf == NULL)
 	err(1, NULL);
-    codebuf = malloc(bufsize);
-    if (codebuf == NULL)
+    code.buf = malloc(bufsize);
+    if (code.buf == NULL)
 	err(1, NULL);
     tokenbuf = malloc(bufsize);
     if (tokenbuf == NULL)
@@ -387,14 +382,14 @@ main_init_globals(void)
     init_constant_tt();
     com.l = com.buf + bufsize - 5;
     lab.l = lab.buf + bufsize - 5;
-    l_code = codebuf + bufsize - 5;
+    code.l = code.buf + bufsize - 5;
     l_token = tokenbuf + bufsize - 5;
-    com.buf[0] = codebuf[0] = lab.buf[0] = ' ';	/* set up code, label, and
+    com.buf[0] = code.buf[0] = lab.buf[0] = ' ';	/* set up code, label, and
 						 * comment buffers */
-    com.buf[1] = codebuf[1] = lab.buf[1] = tokenbuf[1] = '\0';
+    com.buf[1] = code.buf[1] = lab.buf[1] = tokenbuf[1] = '\0';
     opt.else_if = 1;		/* Default else-if special processing to on */
     lab.s = lab.e = lab.buf + 1;
-    s_code = e_code = codebuf + 1;
+    code.s = code.e = code.buf + 1;
     com.s = com.e = com.buf + 1;
     s_token = e_token = tokenbuf + 1;
 
@@ -543,7 +538,7 @@ main_prepare_parsing(void)
 static void __attribute__((__noreturn__))
 process_end_of_file(void)
 {
-    if (lab.s != lab.e || s_code != e_code || com.s != com.e)
+    if (lab.s != lab.e || code.s != code.e || com.s != com.e)
 	dump_line();
 
     if (ps.tos > 1)		/* check for balanced braces */
@@ -583,11 +578,11 @@ process_comment_in_code(token_type ttype, int *inout_force_nl)
 	size_t len = com.e - com.s;
 
 	check_size_code(len + 3);
-	*e_code++ = ' ';
-	memcpy(e_code, com.s, len);
-	e_code += len;
-	*e_code++ = ' ';
-	*e_code = '\0';
+	*code.e++ = ' ';
+	memcpy(code.e, com.s, len);
+	code.e += len;
+	*code.e++ = ' ';
+	*code.e = '\0';
 	ps.want_blank = false;
 	com.e = com.s;
     }
@@ -633,12 +628,12 @@ process_lparen_or_lbracket(int dec_ind, int tabs_to_var, int sp_sw)
 	    opt.proc_calls_space ||
 	    (ps.keyword == rw_sizeof ? opt.Bill_Shannon :
 	    ps.keyword != rw_0 && ps.keyword != rw_offsetof)))
-	*e_code++ = ' ';
+	*code.e++ = ' ';
     ps.want_blank = false;
-    *e_code++ = token[0];
+    *code.e++ = token[0];
 
     ps.paren_indents[ps.p_l_follow - 1] =
-	indentation_after_range(0, s_code, e_code);
+	indentation_after_range(0, code.s, code.e);
     debug_println("paren_indent[%d] is now %d",
 	ps.p_l_follow - 1, ps.paren_indents[ps.p_l_follow - 1]);
 
@@ -679,10 +674,10 @@ process_rparen_or_rbracket(int *inout_sp_sw, int *inout_force_nl,
 	diag(0, "Extra %c", *token);
     }
 
-    if (e_code == s_code)	/* if the paren starts the line */
+    if (code.e == code.s)	/* if the paren starts the line */
 	ps.paren_level = ps.p_l_follow;	/* then indent it */
 
-    *e_code++ = token[0];
+    *code.e++ = token[0];
 
     if (*inout_sp_sw && (ps.p_l_follow == 0)) {	/* check for end of if
 				 * (...), or some such */
@@ -716,14 +711,14 @@ process_unary_op(int dec_ind, int tabs_to_var)
 	indent_declaration(dec_ind - i, tabs_to_var);
 	ps.dumped_decl_indent = true;
     } else if (ps.want_blank)
-	*e_code++ = ' ';
+	*code.e++ = ' ';
 
     {
 	size_t len = e_token - s_token;
 
 	check_size_code(len);
-	memcpy(e_code, token, len);
-	e_code += len;
+	memcpy(code.e, token, len);
+	code.e += len;
     }
     ps.want_blank = false;
 }
@@ -735,9 +730,9 @@ process_binary_op(void)
 
     check_size_code(len + 1);
     if (ps.want_blank)
-	*e_code++ = ' ';
-    memcpy(e_code, token, len);
-    e_code += len;
+	*code.e++ = ' ';
+    memcpy(code.e, token, len);
+    code.e += len;
 
     ps.want_blank = true;
 }
@@ -745,8 +740,8 @@ process_binary_op(void)
 static void
 process_postfix_op(void)
 {
-    *e_code++ = token[0];
-    *e_code++ = token[1];
+    *code.e++ = token[0];
+    *code.e++ = token[1];
     ps.want_blank = true;
 }
 
@@ -757,8 +752,8 @@ process_question(int *inout_squest)
 				 * appears so we can distinguish the
 				 * <c>?<n>:<n> construct */
     if (ps.want_blank)
-	*e_code++ = ' ';
-    *e_code++ = '?';
+	*code.e++ = ' ';
+    *code.e++ = '?';
     ps.want_blank = true;
 }
 
@@ -768,13 +763,13 @@ process_colon(int *inout_squest, int *inout_force_nl, int *inout_scase)
     if (*inout_squest > 0) {	/* it is part of the <c>?<n>: <n> construct */
 	--*inout_squest;
 	if (ps.want_blank)
-	    *e_code++ = ' ';
-	*e_code++ = ':';
+	    *code.e++ = ' ';
+	*code.e++ = ':';
 	ps.want_blank = true;
 	return;
     }
     if (ps.in_or_st) {
-	*e_code++ = ':';
+	*code.e++ = ':';
 	ps.want_blank = false;
 	return;
     }
@@ -784,14 +779,14 @@ process_colon(int *inout_squest, int *inout_force_nl, int *inout_scase)
      * turn everything so far into a label
      */
     {
-	size_t len = e_code - s_code;
+	size_t len = code.e - code.s;
 
 	check_size_label(len + 3);
-	memcpy(lab.e, s_code, len);
+	memcpy(lab.e, code.s, len);
 	lab.e += len;
 	*lab.e++ = ':';
 	*lab.e = '\0';
-	e_code = s_code;
+	code.e = code.s;
     }
     *inout_force_nl = ps.pcase = *inout_scase;	/* ps.pcase will be used by
 						 * dump_line to decide how to
@@ -821,7 +816,7 @@ process_semicolon(int *inout_scase, int *inout_squest, int const dec_ind,
     ps.block_init_level = 0;
     ps.just_saw_decl--;
 
-    if (ps.in_decl && s_code == e_code && !ps.block_init &&
+    if (ps.in_decl && code.s == code.e && !ps.block_init &&
 	!ps.dumped_decl_indent && ps.paren_level == 0) {
 	/* indent stray semicolons in declarations */
 	indent_declaration(dec_ind - 1, tabs_to_var);
@@ -847,7 +842,7 @@ process_semicolon(int *inout_scase, int *inout_squest, int const dec_ind,
 	    parse(hd_type);	/* dont lose the if, or whatever */
 	}
     }
-    *e_code++ = ';';
+    *code.e++ = ';';
     ps.want_blank = true;
     ps.in_stmt = (ps.p_l_follow > 0);	/* we are no longer in the
 				 * middle of a stmt */
@@ -871,7 +866,7 @@ process_lbrace(int *inout_force_nl, int *inout_sp_sw, token_type hd_type,
     else
 	ps.block_init_level++;
 
-    if (s_code != e_code && !ps.block_init) {
+    if (code.s != code.e && !ps.block_init) {
 	if (!opt.btype_2) {
 	    dump_line();
 	    ps.want_blank = false;
@@ -898,7 +893,7 @@ process_lbrace(int *inout_force_nl, int *inout_sp_sw, token_type hd_type,
 	    ps.ind_level = ps.i_l_follow;
 	}
     }
-    if (s_code == e_code)
+    if (code.s == code.e)
 	ps.ind_stmt = false;	/* dont put extra indentation on line
 				 * with '{' */
     if (ps.in_decl && ps.in_or_st) {	/* this is either a structure
@@ -925,9 +920,9 @@ process_lbrace(int *inout_force_nl, int *inout_sp_sw, token_type hd_type,
     parse(lbrace);	/* let parser know about this */
     if (ps.want_blank)	/* put a blank before '{' if '{' is not at
 				 * start of line */
-	*e_code++ = ' ';
+	*code.e++ = ' ';
     ps.want_blank = false;
-    *e_code++ = '{';
+    *code.e++ = '{';
     ps.just_saw_decl = 0;
 }
 
@@ -944,12 +939,12 @@ process_rbrace(int *inout_sp_sw, int *inout_dec_ind, const int *di_stack)
     }
     ps.just_saw_decl = 0;
     ps.block_init_level--;
-    if (s_code != e_code && !ps.block_init) {	/* '}' must be first on line */
+    if (code.s != code.e && !ps.block_init) {	/* '}' must be first on line */
 	if (opt.verbose)
 	    diag(0, "Line broken");
 	dump_line();
     }
-    *e_code++ = '}';
+    *code.e++ = '}';
     ps.want_blank = true;
     ps.in_stmt = ps.ind_stmt = false;
     if (ps.dec_nest > 0) { /* we are in multi-level structure declaration */
@@ -972,7 +967,7 @@ process_keyword_do_else(int *inout_force_nl, int *inout_last_else)
 {
     ps.in_stmt = false;
     if (*token == 'e') {
-	if (e_code != s_code && (!opt.cuddle_else || e_code[-1] != '}')) {
+	if (code.e != code.s && (!opt.cuddle_else || code.e[-1] != '}')) {
 	    if (opt.verbose)
 		diag(0, "Line broken");
 	    dump_line();	/* make sure this starts a line */
@@ -982,7 +977,7 @@ process_keyword_do_else(int *inout_force_nl, int *inout_last_else)
 	*inout_last_else = 1;
 	parse(keyword_else);
     } else {
-	if (e_code != s_code) {	/* make sure this starts a line */
+	if (code.e != code.s) {	/* make sure this starts a line */
 	    if (opt.verbose)
 		diag(0, "Line broken");
 	    dump_line();
@@ -999,7 +994,7 @@ process_decl(int *out_dec_ind, int *out_tabs_to_var)
 {
     parse(decl);		/* let parser worry about indentation */
     if (ps.last_token == rparen && ps.tos <= 1) {
-	if (s_code != e_code) {
+	if (code.s != code.e) {
 	    dump_line();
 	    ps.want_blank = 0;
 	}
@@ -1035,11 +1030,11 @@ process_ident(token_type ttype, int dec_ind, int tabs_to_var,
     if (ps.in_decl) {
 	if (ttype == funcname) {
 	    ps.in_decl = false;
-	    if (opt.procnames_start_line && s_code != e_code) {
-		*e_code = '\0';
+	    if (opt.procnames_start_line && code.s != code.e) {
+		*code.e = '\0';
 		dump_line();
 	    } else if (ps.want_blank) {
-		*e_code++ = ' ';
+		*code.e++ = ' ';
 	    }
 	    ps.want_blank = false;
 	} else if (!ps.block_init && !ps.dumped_decl_indent &&
@@ -1065,9 +1060,9 @@ copy_id(void)
 
     check_size_code(len + 1);
     if (ps.want_blank)
-	*e_code++ = ' ';
-    memcpy(e_code, s_token, len);
-    e_code += len;
+	*code.e++ = ' ';
+    memcpy(code.e, s_token, len);
+    code.e += len;
 }
 
 static void
@@ -1077,9 +1072,9 @@ process_string_prefix(void)
 
     check_size_code(len + 1);
     if (ps.want_blank)
-	*e_code++ = ' ';
-    memcpy(e_code, token, len);
-    e_code += len;
+	*code.e++ = ' ';
+    memcpy(code.e, token, len);
+    code.e += len;
 
     ps.want_blank = false;
 }
@@ -1087,14 +1082,14 @@ process_string_prefix(void)
 static void
 process_period(void)
 {
-    *e_code++ = '.';		/* move the period into line */
+    *code.e++ = '.';		/* move the period into line */
     ps.want_blank = false;	/* dont put a blank after a period */
 }
 
 static void
 process_comma(int dec_ind, int tabs_to_var, int *inout_force_nl)
 {
-    ps.want_blank = (s_code != e_code);	/* only put blank after comma
+    ps.want_blank = (code.s != code.e);	/* only put blank after comma
 				 * if comma does not start the line */
     if (ps.in_decl && ps.procname[0] == '\0' && !ps.block_init &&
 	!ps.dumped_decl_indent && ps.paren_level == 0) {
@@ -1102,13 +1097,13 @@ process_comma(int dec_ind, int tabs_to_var, int *inout_force_nl)
 	indent_declaration(dec_ind - 1, tabs_to_var);
 	ps.dumped_decl_indent = true;
     }
-    *e_code++ = ',';
+    *code.e++ = ',';
     if (ps.p_l_follow == 0) {
 	if (ps.block_init_level <= 0)
 	    ps.block_init = 0;
 	if (break_comma && (!opt.leave_comma ||
 			    indentation_after_range(
-				    compute_code_indent(), s_code, e_code)
+				    compute_code_indent(), code.s, code.e)
 			    >= opt.max_line_length - opt.tabsize))
 	    *inout_force_nl = true;
     }
@@ -1117,7 +1112,7 @@ process_comma(int dec_ind, int tabs_to_var, int *inout_force_nl)
 static void
 process_preprocessing(void)
 {
-    if (com.s != com.e || lab.s != lab.e || s_code != e_code)
+    if (com.s != com.e || lab.s != lab.e || code.s != code.e)
 	dump_line();
     check_size_label(1);
     *lab.e++ = '#';	/* move whole line to 'label' buffer */
@@ -1315,7 +1310,7 @@ main_loop(void)
 	/*-----------------------------------------------------*\
 	|	   do switch on type of token scanned		|
 	\*-----------------------------------------------------*/
-	check_size_code(3);	/* maximum number of increments of e_code
+	check_size_code(3);	/* maximum number of increments of code.e
 				 * before the next check_size_code or
 				 * dump_line() is 2. After that there's the
 				 * final increment for the null character. */
@@ -1440,7 +1435,7 @@ main_loop(void)
 	    break;
 	}
 
-	*e_code = '\0';
+	*code.e = '\0';
 	if (ttype != comment &&
 	    ttype != newline &&
 	    ttype != preprocessing)
@@ -1508,8 +1503,8 @@ bakcopy(void)
 static void
 indent_declaration(int cur_dec_ind, int tabs_to_var)
 {
-    int pos = (int)(e_code - s_code);
-    char *startpos = e_code;
+    int pos = (int)(code.e - code.s);
+    char *startpos = code.e;
 
     /*
      * get the tab math right for indentations that are not multiples of tabsize
@@ -1523,17 +1518,17 @@ indent_declaration(int cur_dec_ind, int tabs_to_var)
 
 	check_size_code((size_t)(cur_dec_ind / opt.tabsize));
 	while ((tpos = opt.tabsize * (1 + pos / opt.tabsize)) <= cur_dec_ind) {
-	    *e_code++ = '\t';
+	    *code.e++ = '\t';
 	    pos = tpos;
 	}
     }
     check_size_code((size_t)(cur_dec_ind - pos + 1));
     while (pos < cur_dec_ind) {
-	*e_code++ = ' ';
+	*code.e++ = ' ';
 	pos++;
     }
-    if (e_code == startpos && ps.want_blank) {
-	*e_code++ = ' ';
+    if (code.e == startpos && ps.want_blank) {
+	*code.e++ = ' ';
 	ps.want_blank = false;
     }
 }
