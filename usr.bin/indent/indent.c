@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.c,v 1.66 2021/09/25 07:59:52 rillig Exp $	*/
+/*	$NetBSD: indent.c,v 1.67 2021/09/25 08:04:13 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -46,7 +46,7 @@ static char sccsid[] = "@(#)indent.c	5.17 (Berkeley) 6/7/93";
 #include <sys/cdefs.h>
 #ifndef lint
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: indent.c,v 1.66 2021/09/25 07:59:52 rillig Exp $");
+__RCSID("$NetBSD: indent.c,v 1.67 2021/09/25 08:04:13 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/indent.c 340138 2018-11-04 19:24:49Z oshogbo $");
 #endif
@@ -74,11 +74,7 @@ struct parser_state ps;
 struct buffer lab;
 struct buffer code;
 struct buffer com;
-
-char       *tokenbuf;
-char	   *s_token;
-char       *e_token;
-char	   *l_token;
+struct buffer token;
 
 char       *in_buffer;
 char	   *in_buffer_limit;
@@ -259,11 +255,11 @@ search_brace(token_type *inout_ttype, int *inout_force_nl,
 
 	    remove_newlines =
 		    /* "} else" */
-		    (*inout_ttype == keyword_do_else && *s_token == 'e' &&
+		    (*inout_ttype == keyword_do_else && *token.s == 'e' &&
 		     code.e != code.s && code.e[-1] == '}')
 		    /* "else if" */
 		    || (*inout_ttype == keyword_for_if_while &&
-			*s_token == 'i' && *inout_last_else && opt.else_if);
+			*token.s == 'i' && *inout_last_else && opt.else_if);
 	    if (remove_newlines)
 		*inout_force_nl = false;
 	    if (sc_end == NULL) {	/* ignore buffering if
@@ -292,7 +288,7 @@ search_brace(token_type *inout_ttype, int *inout_force_nl,
 				 * not already broken */
 		    diag(0, "Line broken");
 	    }
-	    for (const char *t_ptr = s_token; *t_ptr; ++t_ptr)
+	    for (const char *t_ptr = token.s; *t_ptr; ++t_ptr)
 		*sc_end++ = *t_ptr;
 
 	    sw_buffer:
@@ -375,23 +371,23 @@ main_init_globals(void)
     code.buf = malloc(bufsize);
     if (code.buf == NULL)
 	err(1, NULL);
-    tokenbuf = malloc(bufsize);
-    if (tokenbuf == NULL)
+    token.buf = malloc(bufsize);
+    if (token.buf == NULL)
 	err(1, NULL);
     alloc_typenames();
     init_constant_tt();
     com.l = com.buf + bufsize - 5;
     lab.l = lab.buf + bufsize - 5;
     code.l = code.buf + bufsize - 5;
-    l_token = tokenbuf + bufsize - 5;
+    token.l = token.buf + bufsize - 5;
     com.buf[0] = code.buf[0] = lab.buf[0] = ' ';	/* set up code, label, and
 						 * comment buffers */
-    com.buf[1] = code.buf[1] = lab.buf[1] = tokenbuf[1] = '\0';
+    com.buf[1] = code.buf[1] = lab.buf[1] = token.buf[1] = '\0';
     opt.else_if = 1;		/* Default else-if special processing to on */
     lab.s = lab.e = lab.buf + 1;
     code.s = code.e = code.buf + 1;
     com.s = com.e = com.buf + 1;
-    s_token = e_token = tokenbuf + 1;
+    token.s = token.e = token.buf + 1;
 
     in_buffer = malloc(10);
     if (in_buffer == NULL)
@@ -616,7 +612,7 @@ process_lparen_or_lbracket(int dec_ind, int tabs_to_var, int sp_sw)
 	    nitems(ps.paren_indents));
 	ps.p_l_follow--;
     }
-    if (*s_token == '[')
+    if (*token.s == '[')
 	/* not a function pointer declaration or a function call */;
     else if (ps.in_decl && !ps.block_init && !ps.dumped_decl_indent &&
 	ps.procname[0] == '\0' && ps.paren_level == 0) {
@@ -630,7 +626,7 @@ process_lparen_or_lbracket(int dec_ind, int tabs_to_var, int sp_sw)
 	    ps.keyword != rw_0 && ps.keyword != rw_offsetof)))
 	*code.e++ = ' ';
     ps.want_blank = false;
-    *code.e++ = s_token[0];
+    *code.e++ = token.s[0];
 
     ps.paren_indents[ps.p_l_follow - 1] =
 	indentation_after_range(0, code.s, code.e);
@@ -642,7 +638,7 @@ process_lparen_or_lbracket(int dec_ind, int tabs_to_var, int sp_sw)
 	ps.paren_indents[0] = 2 * opt.indent_size;
 	debug_println("paren_indent[0] is now %d", ps.paren_indents[0]);
     }
-    if (ps.in_or_st && *s_token == '(' && ps.tos <= 2) {
+    if (ps.in_or_st && *token.s == '(' && ps.tos <= 2) {
 	/*
 	 * this is a kluge to make sure that declarations will be
 	 * aligned right if proc decl has an explicit type on it, i.e.
@@ -671,13 +667,13 @@ process_rparen_or_rbracket(int *inout_sp_sw, int *inout_force_nl,
 
     if (--ps.p_l_follow < 0) {
 	ps.p_l_follow = 0;
-	diag(0, "Extra %c", *s_token);
+	diag(0, "Extra %c", *token.s);
     }
 
     if (code.e == code.s)	/* if the paren starts the line */
 	ps.paren_level = ps.p_l_follow;	/* then indent it */
 
-    *code.e++ = s_token[0];
+    *code.e++ = token.s[0];
 
     if (*inout_sp_sw && (ps.p_l_follow == 0)) {	/* check for end of if
 				 * (...), or some such */
@@ -706,7 +702,7 @@ process_unary_op(int dec_ind, int tabs_to_var)
 	 * this token
 	 */
 	int i;
-	for (i = 0; s_token[i]; ++i)
+	for (i = 0; token.s[i]; ++i)
 	    /* find length of token */;
 	indent_declaration(dec_ind - i, tabs_to_var);
 	ps.dumped_decl_indent = true;
@@ -714,10 +710,10 @@ process_unary_op(int dec_ind, int tabs_to_var)
 	*code.e++ = ' ';
 
     {
-	size_t len = e_token - s_token;
+	size_t len = token.e - token.s;
 
 	check_size_code(len);
-	memcpy(code.e, s_token, len);
+	memcpy(code.e, token.s, len);
 	code.e += len;
     }
     ps.want_blank = false;
@@ -726,12 +722,12 @@ process_unary_op(int dec_ind, int tabs_to_var)
 static void
 process_binary_op(void)
 {
-    size_t len = e_token - s_token;
+    size_t len = token.e - token.s;
 
     check_size_code(len + 1);
     if (ps.want_blank)
 	*code.e++ = ' ';
-    memcpy(code.e, s_token, len);
+    memcpy(code.e, token.s, len);
     code.e += len;
 
     ps.want_blank = true;
@@ -740,8 +736,8 @@ process_binary_op(void)
 static void
 process_postfix_op(void)
 {
-    *code.e++ = s_token[0];
-    *code.e++ = s_token[1];
+    *code.e++ = token.s[0];
+    *code.e++ = token.s[1];
     ps.want_blank = true;
 }
 
@@ -966,7 +962,7 @@ static void
 process_keyword_do_else(int *inout_force_nl, int *inout_last_else)
 {
     ps.in_stmt = false;
-    if (*s_token == 'e') {
+    if (*token.s == 'e') {
 	if (code.e != code.s && (!opt.cuddle_else || code.e[-1] != '}')) {
 	    if (opt.verbose)
 		diag(0, "Line broken");
@@ -1010,7 +1006,7 @@ process_decl(int *out_dec_ind, int *out_tabs_to_var)
 	ps.just_saw_decl = 2;
     prefix_blankline_requested = 0;
     int i;
-    for (i = 0; s_token[i++];);	/* get length of token */
+    for (i = 0; token.s[i++];);	/* get length of token */
 
     if (ps.ind_level == 0 || ps.dec_nest > 0) {
 	/* global variable or struct member in local variable */
@@ -1056,24 +1052,24 @@ process_ident(token_type ttype, int dec_ind, int tabs_to_var,
 static void
 copy_id(void)
 {
-    size_t len = e_token - s_token;
+    size_t len = token.e - token.s;
 
     check_size_code(len + 1);
     if (ps.want_blank)
 	*code.e++ = ' ';
-    memcpy(code.e, s_token, len);
+    memcpy(code.e, token.s, len);
     code.e += len;
 }
 
 static void
 process_string_prefix(void)
 {
-    size_t len = e_token - s_token;
+    size_t len = token.e - token.s;
 
     check_size_code(len + 1);
     if (ps.want_blank)
 	*code.e++ = ' ';
-    memcpy(code.e, s_token, len);
+    memcpy(code.e, token.s, len);
     code.e += len;
 
     ps.want_blank = false;
@@ -1379,8 +1375,8 @@ main_loop(void)
 	case keyword_for_if_while:
 	    sp_sw = true;	/* the interesting stuff is done after the
 				 * expression is scanned */
-	    hd_type = (*s_token == 'i' ? if_expr :
-		       (*s_token == 'w' ? while_expr : for_exprs));
+	    hd_type = (*token.s == 'i' ? if_expr :
+		       (*token.s == 'w' ? while_expr : for_exprs));
 
 	    /* remember the type of header for later use by parser */
 	    goto copy_id;	/* copy the token into line */

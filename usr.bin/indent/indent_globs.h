@@ -1,4 +1,4 @@
-/*	$NetBSD: indent_globs.h,v 1.25 2021/09/25 07:59:52 rillig Exp $	*/
+/*	$NetBSD: indent_globs.h,v 1.26 2021/09/25 08:04:13 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -62,11 +62,7 @@ extern FILE       *output;		/* the output file */
 extern struct buffer lab;		/* label or preprocessor directive */
 extern struct buffer code;		/* code */
 extern struct buffer com;		/* comment */
-
-extern char       *tokenbuf;		/* the last token scanned */
-extern char	   *s_token;
-extern char       *e_token;
-extern char	   *l_token;
+extern struct buffer token;		/* the last token scanned */
 
 extern char       *in_buffer;		/* input buffer */
 extern char	   *in_buffer_limit;	/* the end of the input buffer */
