@@ -1,4 +1,4 @@
-/*	$NetBSD: lexi.c,v 1.49 2021/09/25 07:59:52 rillig Exp $	*/
+/*	$NetBSD: lexi.c,v 1.50 2021/09/25 08:04:13 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -46,7 +46,7 @@ static char sccsid[] = "@(#)lexi.c	8.1 (Berkeley) 6/6/93";
 #include <sys/cdefs.h>
 #ifndef lint
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: lexi.c,v 1.49 2021/09/25 07:59:52 rillig Exp $");
+__RCSID("$NetBSD: lexi.c,v 1.50 2021/09/25 08:04:13 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/lexi.c 337862 2018-08-15 18:19:45Z pstef $");
 #endif
@@ -206,17 +206,17 @@ inbuf_next(void)
 static void
 check_size_token(size_t desired_size)
 {
-    if (e_token + (desired_size) < l_token)
+    if (token.e + (desired_size) < token.l)
         return;
 
-    size_t nsize = l_token - s_token + 400 + desired_size;
-    size_t token_len = e_token - s_token;
-    tokenbuf = realloc(tokenbuf, nsize);
-    if (tokenbuf == NULL)
+    size_t nsize = token.l - token.s + 400 + desired_size;
+    size_t token_len = token.e - token.s;
+    token.buf = realloc(token.buf, nsize);
+    if (token.buf == NULL)
 	err(1, NULL);
-    e_token = tokenbuf + token_len + 1;
-    l_token = tokenbuf + nsize - 5;
-    s_token = tokenbuf + 1;
+    token.e = token.buf + token_len + 1;
+    token.l = token.buf + nsize - 5;
+    token.s = token.buf + 1;
 }
 
 static int
@@ -266,7 +266,7 @@ lexi_end(token_type ttype)
 {
     debug_printf("in line %d, lexi returns '%s'",
 	line_no, token_type_name(ttype));
-    print_buf("token", s_token, e_token);
+    print_buf("token", token.s, token.e);
     print_buf("label", lab.s, lab.e);
     print_buf("code", code.s, code.e);
     print_buf("comment", com.s, com.e);
@@ -293,7 +293,7 @@ lex_number(void)
 	}
 	s = table[i][s - 'A'];
 	check_size_token(1);
-	*e_token++ = inbuf_next();
+	*token.e++ = inbuf_next();
     }
     /* s now indicates the type: f(loating), i(integer), u(nknown) */
 }
@@ -314,7 +314,7 @@ lex_word(void)
 		break;
 	}
 	check_size_token(1);
-	*e_token++ = inbuf_next();
+	*token.e++ = inbuf_next();
     }
 }
 
@@ -323,7 +323,7 @@ lex_char_or_string(void)
 {
     char delim;
 
-    delim = *s_token;
+    delim = *token.s;
     do {			/* copy the string */
 	for (;;) {		/* move one character or [/<char>]<char> */
 	    if (*buf_ptr == '\n') {
@@ -331,17 +331,17 @@ lex_char_or_string(void)
 		return;
 	    }
 	    check_size_token(2);
-	    *e_token = inbuf_next();
-	    if (*e_token == '\\') {	/* if escape, copy extra char */
+	    *token.e = inbuf_next();
+	    if (*token.e == '\\') {	/* if escape, copy extra char */
 		if (*buf_ptr == '\n')	/* check for escaped newline */
 		    ++line_no;
-		*++e_token = inbuf_next();
-		++e_token;	/* we must increment this again because we
+		*++token.e = inbuf_next();
+		++token.e;	/* we must increment this again because we
 				 * copied two chars */
 	    } else
 		break;		/* we copied one character */
 	}			/* end of while (1) */
-    } while (*e_token++ != delim);
+    } while (*token.e++ != delim);
 }
 
 /* Reads the next token, placing it in the global variable "token". */
@@ -352,7 +352,7 @@ lexi(struct parser_state *state)
 				 * forces a following operator to be unary */
     token_type  ttype;
 
-    e_token = s_token;		/* point to start of place to save token */
+    token.e = token.s;		/* point to start of place to save token */
     unary_delim = false;
     state->col_1 = state->last_nl;	/* tell world that this token started
 					 * in column 1 iff the last thing
@@ -380,9 +380,9 @@ lexi(struct parser_state *state)
 	} else {
 	    lex_word();
 	}
-	*e_token = '\0';
+	*token.e = '\0';
 
-	if (s_token[0] == 'L' && s_token[1] == '\0' &&
+	if (token.s[0] == 'L' && token.s[1] == '\0' &&
 	      (*buf_ptr == '"' || *buf_ptr == '\''))
 	    return lexi_end(string_prefix);
 
@@ -401,15 +401,15 @@ lexi(struct parser_state *state)
 	 */
 	state->last_u_d = (state->last_token == keyword_struct_union_enum);
 
-	p = bsearch(s_token, specials, sizeof specials / sizeof specials[0],
+	p = bsearch(token.s, specials, sizeof specials / sizeof specials[0],
 	    sizeof specials[0], compare_templ_array);
 	if (p == NULL) {	/* not a special keyword... */
 	    char *u;
 
 	    /* ... so maybe a type_t or a typedef */
-	    if ((opt.auto_typedefs && ((u = strrchr(s_token, '_')) != NULL) &&
+	    if ((opt.auto_typedefs && ((u = strrchr(token.s, '_')) != NULL) &&
 	        strcmp(u, "_t") == 0) || (typename_top >= 0 &&
-		  bsearch(s_token, typenames, (size_t)typename_top + 1,
+		  bsearch(token.s, typenames, (size_t)typename_top + 1,
 		    sizeof typenames[0], compare_string_array))) {
 		state->keyword = rw_type;
 		state->last_u_d = true;
@@ -463,7 +463,7 @@ lexi(struct parser_state *state)
 	    while (tp < buf_end)
 		if (*tp++ == ')' && (*tp == ';' || *tp == ','))
 		    goto not_proc;
-	    strncpy(state->procname, s_token, sizeof state->procname - 1);
+	    strncpy(state->procname, token.s, sizeof state->procname - 1);
 	    if (state->in_decl)
 		state->in_parameter_declaration = 1;
 	    return lexi_end(funcname);
@@ -493,11 +493,11 @@ lexi(struct parser_state *state)
     /* Scan a non-alphanumeric token */
 
     check_size_token(3);	/* things like "<<=" */
-    *e_token++ = inbuf_next();	/* if it is only a one-character token, it is
+    *token.e++ = inbuf_next();	/* if it is only a one-character token, it is
 				 * moved here */
-    *e_token = '\0';
+    *token.e = '\0';
 
-    switch (*s_token) {
+    switch (*token.s) {
     case '\n':
 	unary_delim = state->last_u_d;
 	state->last_nl = true;	/* remember that we just had a newline */
@@ -574,9 +574,9 @@ lexi(struct parser_state *state)
 	ttype = state->last_u_d ? unary_op : binary_op;
 	unary_delim = true;
 
-	if (*buf_ptr == s_token[0]) {
+	if (*buf_ptr == token.s[0]) {
 	    /* check for doubled character */
-	    *e_token++ = *buf_ptr++;
+	    *token.e++ = *buf_ptr++;
 	    /* buffer overflow will be checked at end of loop */
 	    if (state->last_token == ident || state->last_token == rparen) {
 		ttype = state->last_u_d ? unary_op : postfix_op;
@@ -585,10 +585,10 @@ lexi(struct parser_state *state)
 	    }
 	} else if (*buf_ptr == '=')
 	    /* check for operator += */
-	    *e_token++ = *buf_ptr++;
+	    *token.e++ = *buf_ptr++;
 	else if (*buf_ptr == '>') {
 	    /* check for operator -> */
-	    *e_token++ = *buf_ptr++;
+	    *token.e++ = *buf_ptr++;
 	    unary_delim = false;
 	    ttype = unary_op;
 	    state->want_blank = false;
@@ -600,9 +600,9 @@ lexi(struct parser_state *state)
 	if (state->in_or_st)
 	    state->block_init = 1;
 	if (*buf_ptr == '=') {	/* == */
-	    *e_token++ = '=';	/* Flip =+ to += */
+	    *token.e++ = '=';	/* Flip =+ to += */
 	    buf_ptr++;
-	    *e_token = 0;
+	    *token.e = 0;
 	}
 	ttype = binary_op;
 	unary_delim = true;
@@ -613,9 +613,9 @@ lexi(struct parser_state *state)
     case '<':
     case '!':			/* ops like <, <<, <=, !=, etc */
 	if (*buf_ptr == '>' || *buf_ptr == '<' || *buf_ptr == '=')
-	    *e_token++ = inbuf_next();
+	    *token.e++ = inbuf_next();
 	if (*buf_ptr == '=')
-	    *e_token++ = *buf_ptr++;
+	    *token.e++ = *buf_ptr++;
 	ttype = state->last_u_d ? unary_op : binary_op;
 	unary_delim = true;
 	break;
@@ -624,14 +624,14 @@ lexi(struct parser_state *state)
 	unary_delim = true;
 	if (!state->last_u_d) {
 	    if (*buf_ptr == '=')
-		*e_token++ = *buf_ptr++;
+		*token.e++ = *buf_ptr++;
 	    ttype = binary_op;
 	    break;
 	}
 	while (*buf_ptr == '*' || isspace((unsigned char)*buf_ptr)) {
 	    if (*buf_ptr == '*') {
 		check_size_token(1);
-		*e_token++ = *buf_ptr;
+		*token.e++ = *buf_ptr;
 	    }
 	    inbuf_skip();
 	}
@@ -650,20 +650,20 @@ lexi(struct parser_state *state)
 	break;
 
     default:
-	if (s_token[0] == '/' && (*buf_ptr == '*' || *buf_ptr == '/')) {
+	if (token.s[0] == '/' && (*buf_ptr == '*' || *buf_ptr == '/')) {
 	    /* it is start of comment */
-	    *e_token++ = inbuf_next();
+	    *token.e++ = inbuf_next();
 
 	    ttype = comment;
 	    unary_delim = state->last_u_d;
 	    break;
 	}
-	while (e_token[-1] == *buf_ptr || *buf_ptr == '=') {
+	while (token.e[-1] == *buf_ptr || *buf_ptr == '=') {
 	    /*
 	     * handle ||, &&, etc, and also things as in int *****i
 	     */
 	    check_size_token(1);
-	    *e_token++ = inbuf_next();
+	    *token.e++ = inbuf_next();
 	}
 	ttype = state->last_u_d ? unary_op : binary_op;
 	unary_delim = true;
@@ -673,7 +673,7 @@ lexi(struct parser_state *state)
 	fill_buffer();
     state->last_u_d = unary_delim;
     check_size_token(1);
-    *e_token = '\0';
+    *token.e = '\0';
     return lexi_end(ttype);
 }
 
