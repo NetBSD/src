@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.91 2019/11/21 19:24:01 ad Exp $	*/
+/*	$NetBSD: trap.c,v 1.92 2021/09/25 19:16:31 tsutsui Exp $	*/
 
 /*
  * This file was taken from mvme68k/mvme68k/trap.c
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.91 2019/11/21 19:24:01 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.92 2021/09/25 19:16:31 tsutsui Exp $");
 
 #include "opt_ddb.h"
 #include "opt_execfmt.h"
@@ -314,7 +314,10 @@ trap(struct frame *fp, int type, unsigned code, unsigned v)
 			printf("trap during panic!\n");
 #ifdef DEBUG
 			/* XXX should be a machine-dependent hook */
-			printf("(press a key)\n"); (void)cngetc();
+			printf("(press a key)\n");
+			cnpollc(1);
+			(void)cngetc();
+			cnpollc(0);
 #endif
 		}
 		regdump((struct trapframe *)fp, 128);
