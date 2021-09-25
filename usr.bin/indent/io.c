@@ -1,4 +1,4 @@
-/*	$NetBSD: io.c,v 1.57 2021/09/25 08:23:31 rillig Exp $	*/
+/*	$NetBSD: io.c,v 1.58 2021/09/25 10:41:03 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -46,7 +46,7 @@ static char sccsid[] = "@(#)io.c	8.1 (Berkeley) 6/6/93";
 #include <sys/cdefs.h>
 #ifndef lint
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: io.c,v 1.57 2021/09/25 08:23:31 rillig Exp $");
+__RCSID("$NetBSD: io.c,v 1.58 2021/09/25 10:41:03 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/io.c 334927 2018-06-10 16:44:18Z pstef $");
 #endif
@@ -151,7 +151,7 @@ dump_line(void)
 				 * at bracket level 0 */
 
 	if (lab.e != lab.s || code.e != code.s)
-	    ++code_lines;	/* keep count of lines with code */
+	    ps.stats.code_lines++;
 
 
 	if (lab.e != lab.s) {	/* print lab, if any */
@@ -237,20 +237,20 @@ dump_line(void)
 				 * put it on next line */
 		output_char('\n');
 		cur_col = 1;
-		++ps.out_lines;
+		ps.stats.lines++;
 	    }
 	    while (com.e > com_st && isspace((unsigned char)com.e[-1]))
 		com.e--;
 	    (void)output_indent(cur_col - 1, target_col - 1);
 	    output_range(com_st, com.e);
 	    ps.comment_delta = ps.n_comment_delta;
-	    ++ps.com_lines;	/* count lines with comments */
+	    ps.stats.comment_lines++;
 	}
 	if (ps.use_ff)
 	    output_char('\014');
 	else
 	    output_char('\n');
-	++ps.out_lines;
+	ps.stats.lines++;
 	if (ps.just_saw_decl == 1 && opt.blanklines_after_declarations) {
 	    prefix_blankline_requested = 1;
 	    ps.just_saw_decl = 0;
