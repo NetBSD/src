@@ -1,4 +1,4 @@
-/*	$NetBSD: lexi.c,v 1.53 2021/09/25 13:38:32 rillig Exp $	*/
+/*	$NetBSD: lexi.c,v 1.54 2021/09/25 17:11:23 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)lexi.c	8.1 (Berkeley) 6/6/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: lexi.c,v 1.53 2021/09/25 13:38:32 rillig Exp $");
+__RCSID("$NetBSD: lexi.c,v 1.54 2021/09/25 17:11:23 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/lexi.c 337862 2018-08-15 18:19:45Z pstef $");
 #endif
@@ -336,7 +336,7 @@ lex_char_or_string(void)
 token_type
 lexi(struct parser_state *state)
 {
-    int         unary_delim;	/* this is set to 1 if the current token
+    ibool unary_delim;		/* whether the current token
 				 * forces a following operator to be unary */
     token_type  ttype;
 
@@ -378,7 +378,7 @@ lexi(struct parser_state *state)
 	    inbuf_next();
 	state->keyword = rw_0;
 	if (state->last_token == keyword_struct_union_enum &&
-	    !state->p_l_follow) {
+	    state->p_l_follow == 0) {
 	    /* if last token was 'struct' and we're not in parentheses, then
 	     * this token should be treated as a declaration */
 	    state->last_u_d = true;
@@ -398,7 +398,7 @@ lexi(struct parser_state *state)
 	    if ((opt.auto_typedefs && ((u = strrchr(token.s, '_')) != NULL) &&
 	        strcmp(u, "_t") == 0) || (typename_top >= 0 &&
 		  bsearch(token.s, typenames, (size_t)typename_top + 1,
-		    sizeof typenames[0], compare_string_array))) {
+		    sizeof typenames[0], compare_string_array) != NULL)) {
 		state->keyword = rw_type;
 		state->last_u_d = true;
 	        goto found_typename;
@@ -414,7 +414,7 @@ lexi(struct parser_state *state)
 	    case rw_struct_or_union_or_enum:
 	    case rw_type:
 	    found_typename:
-		if (state->p_l_follow) {
+		if (state->p_l_follow != 0) {
 		    /* inside parens: cast, param list, offsetof or sizeof */
 		    state->cast_mask |= (1 << state->p_l_follow) & ~state->not_cast_mask;
 		}
@@ -424,7 +424,7 @@ lexi(struct parser_state *state)
 		}
 		if (p != NULL && p->rwcode == rw_struct_or_union_or_enum)
 		    return lexi_end(keyword_struct_union_enum);
-		if (state->p_l_follow)
+		if (state->p_l_follow != 0)
 		    break;
 		return lexi_end(decl);
 
@@ -446,14 +446,14 @@ lexi(struct parser_state *state)
 	    }			/* end of switch */
 	}			/* end of if (found_it) */
 	if (*buf_ptr == '(' && state->tos <= 1 && state->ind_level == 0 &&
-	    state->in_parameter_declaration == 0 && state->block_init == 0) {
+	    !state->in_parameter_declaration && !state->block_init) {
 	    char *tp = buf_ptr;
 	    while (tp < buf_end)
 		if (*tp++ == ')' && (*tp == ';' || *tp == ','))
 		    goto not_proc;
 	    strncpy(state->procname, token.s, sizeof state->procname - 1);
 	    if (state->in_decl)
-		state->in_parameter_declaration = 1;
+		state->in_parameter_declaration = true;
 	    return lexi_end(funcname);
     not_proc:;
 	}
@@ -462,7 +462,7 @@ lexi(struct parser_state *state)
 	 * token is in fact a declaration keyword -- one that has been
 	 * typedefd
 	 */
-	else if (!state->p_l_follow && !state->block_init &&
+	else if (state->p_l_follow == 0 && !state->block_init &&
 	    !state->in_stmt &&
 	    ((*buf_ptr == '*' && buf_ptr[1] != '=') ||
 		isalpha((unsigned char)*buf_ptr)) &&
@@ -586,7 +586,7 @@ lexi(struct parser_state *state)
 
     case '=':
 	if (state->in_or_st)
-	    state->block_init = 1;
+	    state->block_init = true;
 	if (*buf_ptr == '=') {	/* == */
 	    *token.e++ = '=';	/* Flip =+ to += */
 	    buf_ptr++;

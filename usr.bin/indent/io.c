@@ -1,4 +1,4 @@
-/*	$NetBSD: io.c,v 1.59 2021/09/25 13:38:32 rillig Exp $	*/
+/*	$NetBSD: io.c,v 1.60 2021/09/25 17:11:23 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)io.c	8.1 (Berkeley) 6/6/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: io.c,v 1.59 2021/09/25 13:38:32 rillig Exp $");
+__RCSID("$NetBSD: io.c,v 1.60 2021/09/25 17:11:23 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/io.c 334927 2018-06-10 16:44:18Z pstef $");
 #endif
@@ -57,7 +57,7 @@ __FBSDID("$FreeBSD: head/usr.bin/indent/io.c 334927 2018-06-10 16:44:18Z pstef $
 
 #include "indent.h"
 
-int         comment_open;
+ibool comment_open;
 static int  paren_indent;
 
 static void
@@ -112,11 +112,11 @@ void
 dump_line(void)
 {
     int cur_col;
-    static int  not_first_line;
+    static ibool not_first_line;
 
-    if (ps.procname[0]) {
+    if (ps.procname[0] != '\0') {
 	ps.ind_level = 0;
-	ps.procname[0] = 0;
+	ps.procname[0] = '\0';
     }
 
     if (code.s == code.e && lab.s == lab.e && com.s == com.e) {
@@ -142,7 +142,7 @@ dump_line(void)
 	    output_char('\n');
 	n_real_blanklines = 0;
 	if (ps.ind_level == 0)
-	    ps.ind_stmt = 0;	/* this is a class A kludge. dont do
+	    ps.ind_stmt = false;/* this is a class A kludge. don't do
 				 * additional statement indentation if we are
 				 * at bracket level 0 */
 
@@ -152,7 +152,7 @@ dump_line(void)
 
 	if (lab.e != lab.s) {	/* print lab, if any */
 	    if (comment_open) {
-		comment_open = 0;
+		comment_open = false;
 		output_string(".*/\n");
 	    }
 	    while (lab.e > lab.s && (lab.e[-1] == ' ' || lab.e[-1] == '\t'))
@@ -188,7 +188,7 @@ dump_line(void)
 
 	if (code.s != code.e) {	/* print code section, if any */
 	    if (comment_open) {
-		comment_open = 0;
+		comment_open = false;
 		output_string(".*/\n");
 	    }
 	    int target_col = 1 + compute_code_indent();
@@ -248,11 +248,11 @@ dump_line(void)
 	    output_char('\n');
 	ps.stats.lines++;
 	if (ps.just_saw_decl == 1 && opt.blanklines_after_declarations) {
-	    prefix_blankline_requested = 1;
+	    prefix_blankline_requested = true;
 	    ps.just_saw_decl = 0;
 	} else
 	    prefix_blankline_requested = postfix_blankline_requested;
-	postfix_blankline_requested = 0;
+	postfix_blankline_requested = false;
     }
 
     /* keep blank lines after '//' comments */
@@ -263,11 +263,17 @@ dump_line(void)
     ps.decl_on_line = ps.in_decl; /* if we are in the middle of a declaration,
 				 * remember that fact for proper comment
 				 * indentation */
+#ifdef lint
+    ps.ind_stmt = ps.in_stmt && !ps.in_decl; /* next line should be indented if
+				 * we have not completed this stmt and if we
+				 * are not in the middle of a declaration */
+#else
     ps.ind_stmt = ps.in_stmt & ~ps.in_decl; /* next line should be indented if
 				 * we have not completed this stmt and if we
 				 * are not in the middle of a declaration */
+#endif
     ps.use_ff = false;
-    ps.dumped_decl_indent = 0;
+    ps.dumped_decl_indent = false;
     *(lab.e = lab.s) = '\0';	/* reset buffers */
     *(code.e = code.s) = '\0';
     *(com.e = com.s = com.buf + 1) = '\0';
@@ -278,7 +284,7 @@ dump_line(void)
 	paren_indent = -ps.paren_indents[ps.paren_level - 1];
 	debug_println("paren_indent is now %d", paren_indent);
     }
-    not_first_line = 1;
+    not_first_line = true;
 }
 
 int
@@ -374,10 +380,14 @@ parse_indent_comment(void)
     if (com.s != com.e || lab.s != lab.e || code.s != code.e)
 	dump_line();
 
+#ifdef lint
+    if (!(inhibit_formatting = (on_off - 1) != 0)) {
+#else
     if (!(inhibit_formatting = on_off - 1)) {
+#endif
 	n_real_blanklines = 0;
-	postfix_blankline_requested = 0;
-	prefix_blankline_requested = 0;
+	postfix_blankline_requested = false;
+	prefix_blankline_requested = false;
 	suppress_blanklines = 1;
     }
 }
@@ -468,7 +478,7 @@ diag(int level, const char *msg, ...)
     va_list ap;
     const char *s, *e;
 
-    if (level)
+    if (level != 0)
 	found_err = 1;
 
     if (output == stdout) {
