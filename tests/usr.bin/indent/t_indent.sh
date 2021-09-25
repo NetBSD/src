@@ -1,5 +1,5 @@
 #! /bin/sh
-# $NetBSD: t_indent.sh,v 1.5 2021/09/24 06:30:02 rillig Exp $
+# $NetBSD: t_indent.sh,v 1.6 2021/09/25 09:22:39 rillig Exp $
 #
 # Copyright 2016 Dell EMC
 # All rights reserved.
@@ -28,17 +28,20 @@
 #
 # $FreeBSD: head/usr.bin/indent/tests/functional_test.sh 314613 2017-03-03 20:15:22Z ngie $
 
+# shellcheck disable=SC2039
+
 SRCDIR=$(atf_get_srcdir)
 
 check()
 {
-	local tc=${1}; shift
+	local tc=$1; shift
 
+	# shellcheck disable=SC2155
 	local indent=$(atf_config_get usr.bin.indent.test_indent /usr/bin/indent)
 
 	# All of the files need to be in the ATF sandbox in order for the tests
 	# to pass.
-	atf_check cp ${SRCDIR}/${tc}* .
+	atf_check cp "$SRCDIR/$tc"* .
 
 	# Remove single-line block comments that start with '$'.  This removes
 	# RCS IDs, preventing them to be broken into several lines.  It also
@@ -74,14 +77,14 @@ check()
 
 add_testcase()
 {
-	local tc=${1}
+	local tc=$1
 	local tc_escaped word
 
 	case "${tc%.*}" in
 	*-*)
 		local IFS="-+"
 		for word in ${tc%.*}; do
-			tc_escaped="${tc_escaped:+${tc_escaped}_}${word}"
+			tc_escaped="${tc_escaped:+${tc_escaped}_}$word"
 		done
 		;;
 	*)
@@ -89,14 +92,15 @@ add_testcase()
 		;;
 	esac
 
-	atf_test_case ${tc_escaped}
-	eval "${tc_escaped}_body() { check ${tc}; }"
-	atf_add_test_case ${tc_escaped}
+	atf_test_case "$tc_escaped"
+	eval "${tc_escaped}_body() { check $tc; }"
+	atf_add_test_case "$tc_escaped"
 }
 
 atf_init_test_cases()
 {
-	for path in $(find -Es "${SRCDIR}" -regex '.*\.[0-9]+$'); do
-		add_testcase ${path##*/}
+	# shellcheck disable=SC2044
+	for path in $(find -Es "$SRCDIR" -regex '.*\.[0-9]+$'); do
+		add_testcase "${path##*/}"
 	done
 }
