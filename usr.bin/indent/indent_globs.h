@@ -1,4 +1,4 @@
-/*	$NetBSD: indent_globs.h,v 1.33 2021/09/25 18:49:03 rillig Exp $	*/
+/*	$NetBSD: indent_globs.h,v 1.34 2021/09/25 20:23:42 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -217,7 +217,6 @@ extern struct parser_state {
 				 * paren since the last semicolon. When true,
 				 * a '{' is starting a structure definition or
 				 * an initialization list */
-    bool	bl_line;	/* set to 1 by dump_line if the line is blank */
     bool	col_1;		/* set to true if the last token started in
 				 * column 1 */
     int         com_col;	/* this is the column in which the current
