@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.h,v 1.19 2021/09/25 14:16:06 rillig Exp $	*/
+/*	$NetBSD: indent.h,v 1.20 2021/09/25 14:38:31 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-FreeBSD
@@ -31,6 +31,8 @@
 #if 0
 __FBSDID("$FreeBSD: head/usr.bin/indent/indent.h 336333 2018-07-16 05:46:50Z pstef $");
 #endif
+
+#include <stdbool.h>
 
 #include "indent_codes.h"
 #include "indent_globs.h"
