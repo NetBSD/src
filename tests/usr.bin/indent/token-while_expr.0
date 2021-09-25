@@ -1,8 +1,9 @@
-/* $NetBSD: token-while_expr.0,v 1.1 2021/03/12 00:13:06 rillig Exp $ */
+/* $NetBSD: token-while_expr.0,v 1.2 2021/09/25 13:26:07 rillig Exp $ */
 /* $FreeBSD$ */
 
 /*
  * Tests for the keyword 'while', followed by a parenthesized expression.
  */
 
-/* TODO: Add some code to be formatted. */
+int main(int argc,char**argv){int o;while((o=getopt(argc,argv,"x:"))!=-1)
+switch(o){case'x':do{o++;}while(o<5);break;default:usage();}return 0;}
