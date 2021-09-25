@@ -1,10 +1,9 @@
-# $NetBSD: mi,v 1.1 2021/09/25 08:54:30 maya Exp $
+# $NetBSD: mi,v 1.2 2021/09/25 21:18:22 maya Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
 ./etc/mtree/set.gpufw				base-gpufw
 ./libdata/firmware/nouveau/nvidia/LICENCE.nvidia        base-gpufw       gpufirmware
-./libdata/firmware/nouveau/nvidia/gm206                 base-gpufw
 ./libdata/firmware/nouveau/nvidia/gm206/fecs_data.bin   base-gpufw       gpufirmware
 ./libdata/firmware/nouveau/nvidia/gm206/fecs_inst.bin   base-gpufw       gpufirmware
 ./libdata/firmware/nouveau/nvidia/gm206/gpccs_data.bin  base-gpufw       gpufirmware
