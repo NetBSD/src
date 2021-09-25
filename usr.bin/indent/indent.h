@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.h,v 1.24 2021/09/25 21:42:43 rillig Exp $	*/
+/*	$NetBSD: indent.h,v 1.25 2021/09/25 22:14:21 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-FreeBSD
@@ -70,3 +70,5 @@ void		set_profile(const char *);
 void		*xmalloc(size_t);
 void		*xrealloc(void *, size_t);
 char		*xstrdup(const char *);
+
+void		buf_expand(struct buffer *, size_t);

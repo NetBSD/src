@@ -1,4 +1,4 @@
-/*	$NetBSD: pr_comment.c,v 1.45 2021/09/25 20:23:42 rillig Exp $	*/
+/*	$NetBSD: pr_comment.c,v 1.46 2021/09/25 22:14:21 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,14 +43,12 @@ static char sccsid[] = "@(#)pr_comment.c	8.1 (Berkeley) 6/6/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: pr_comment.c,v 1.45 2021/09/25 20:23:42 rillig Exp $");
+__RCSID("$NetBSD: pr_comment.c,v 1.46 2021/09/25 22:14:21 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/pr_comment.c 334927 2018-06-10 16:44:18Z pstef $");
 #endif
 
-#include <err.h>
 #include <stdio.h>
-#include <stdlib.h>
 #include <string.h>
 
 #include "indent.h"
@@ -58,15 +56,8 @@ __FBSDID("$FreeBSD: head/usr.bin/indent/pr_comment.c 334927 2018-06-10 16:44:18Z
 static void
 check_size_comment(size_t desired_size)
 {
-    if (com.e + (desired_size) < com.l)
-        return;
-
-    size_t nsize = com.l - com.s + 400 + desired_size;
-    size_t com_len = com.e - com.s;
-    com.buf = xrealloc(com.buf, nsize);
-    com.s = com.buf + 1;
-    com.e = com.s + com_len;
-    com.l = com.buf + nsize - 5;
+    if (com.e + desired_size >= com.l)
+	buf_expand(&com, desired_size);
 }
 
 /*
