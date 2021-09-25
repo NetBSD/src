@@ -1,4 +1,4 @@
-/*	$NetBSD: lexi.c,v 1.46 2021/09/24 18:47:29 rillig Exp $	*/
+/*	$NetBSD: lexi.c,v 1.47 2021/09/25 07:46:41 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -46,17 +46,11 @@ static char sccsid[] = "@(#)lexi.c	8.1 (Berkeley) 6/6/93";
 #include <sys/cdefs.h>
 #ifndef lint
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: lexi.c,v 1.46 2021/09/24 18:47:29 rillig Exp $");
+__RCSID("$NetBSD: lexi.c,v 1.47 2021/09/25 07:46:41 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/lexi.c 337862 2018-08-15 18:19:45Z pstef $");
 #endif
 #endif
-
-/*
- * Here we have the token scanner for indent.  It scans off one token and puts
- * it in the global variable "token".  It returns a code, indicating the type
- * of token scanned.
- */
 
 #include <assert.h>
 #include <err.h>
@@ -239,7 +233,7 @@ compare_string_array(const void *key, const void *elem)
 
 #ifdef debug
 const char *
-token_type_name(token_type tk)
+token_type_name(token_type ttype)
 {
     static const char *const name[] = {
 	"end_of_file", "newline", "lparen", "rparen", "unary_op",
@@ -253,9 +247,9 @@ token_type_name(token_type tk)
 	"storage_class", "funcname", "type_def", "keyword_struct_union_enum"
     };
 
-    assert(0 <= tk && tk < sizeof name / sizeof name[0]);
+    assert(0 <= ttype && ttype < sizeof name / sizeof name[0]);
 
-    return name[tk];
+    return name[ttype];
 }
 
 static void
@@ -268,17 +262,17 @@ print_buf(const char *name, const char *s, const char *e)
 }
 
 static token_type
-lexi_end(token_type code)
+lexi_end(token_type ttype)
 {
     debug_printf("in line %d, lexi returns '%s'",
-	line_no, token_type_name(code));
+	line_no, token_type_name(ttype));
     print_buf("token", s_token, e_token);
     print_buf("label", lab.s, lab.e);
     print_buf("code", s_code, e_code);
     print_buf("comment", com.s, com.e);
     debug_printf("\n");
 
-    return code;
+    return ttype;
 }
 #else
 #  define lexi_end(tk) (tk)
@@ -350,12 +344,13 @@ lex_char_or_string(void)
     } while (*e_token++ != delim);
 }
 
+/* Reads the next token, placing it in the global variable "token". */
 token_type
 lexi(struct parser_state *state)
 {
     int         unary_delim;	/* this is set to 1 if the current token
 				 * forces a following operator to be unary */
-    token_type  code;		/* internal code to be returned */
+    token_type  ttype;
 
     e_token = s_token;		/* point to start of place to save token */
     unary_delim = false;
@@ -506,87 +501,77 @@ lexi(struct parser_state *state)
     case '\n':
 	unary_delim = state->last_u_d;
 	state->last_nl = true;	/* remember that we just had a newline */
-	code = (had_eof ? end_of_file : newline);
-
-	/*
-	 * if data has been exhausted, the newline is a dummy, and we should
-	 * return code to stop
-	 */
+	/* if data has been exhausted, the newline is a dummy. */
+	ttype = had_eof ? end_of_file : newline;
 	break;
 
     case '\'':
     case '"':
 	lex_char_or_string();
-	code = ident;
+	ttype = ident;
 	break;
 
     case '(':
     case '[':
 	unary_delim = true;
-	code = lparen;
+	ttype = lparen;
 	break;
 
     case ')':
     case ']':
-	code = rparen;
+	ttype = rparen;
 	break;
 
     case '#':
 	unary_delim = state->last_u_d;
-	code = preprocessing;
+	ttype = preprocessing;
 	break;
 
     case '?':
 	unary_delim = true;
-	code = question;
+	ttype = question;
 	break;
 
     case ':':
-	code = colon;
+	ttype = colon;
 	unary_delim = true;
 	break;
 
     case ';':
 	unary_delim = true;
-	code = semicolon;
+	ttype = semicolon;
 	break;
 
     case '{':
 	unary_delim = true;
-
-	/*
-	 * if (state->in_or_st) state->block_init = 1;
-	 */
-	/* ?	code = state->block_init ? lparen : lbrace; */
-	code = lbrace;
+	ttype = lbrace;
 	break;
 
     case '}':
 	unary_delim = true;
-	/* ?	code = state->block_init ? rparen : rbrace; */
-	code = rbrace;
+	ttype = rbrace;
 	break;
 
     case 014:			/* a form feed */
 	unary_delim = state->last_u_d;
 	state->last_nl = true;	/* remember this so we can set 'state->col_1'
 				 * right */
-	code = form_feed;
+	ttype = form_feed;
 	break;
 
     case ',':
 	unary_delim = true;
-	code = comma;
+	ttype = comma;
 	break;
 
     case '.':
 	unary_delim = false;
-	code = period;
+	ttype = period;
 	break;
 
     case '-':
     case '+':			/* check for -, +, --, ++ */
-	code = (state->last_u_d ? unary_op : binary_op);
+	ttype = state->last_u_d ? unary_op : binary_op;
 	unary_delim = true;
 
 	if (*buf_ptr == token[0]) {
@@ -594,7 +579,7 @@ lexi(struct parser_state *state)
 	    *e_token++ = *buf_ptr++;
 	    /* buffer overflow will be checked at end of loop */
 	    if (state->last_token == ident || state->last_token == rparen) {
-		code = (state->last_u_d ? unary_op : postfix_op);
+		ttype = state->last_u_d ? unary_op : postfix_op;
 		/* check for following ++ or -- */
 		unary_delim = false;
 	    }
@@ -605,7 +590,7 @@ lexi(struct parser_state *state)
 	    /* check for operator -> */
 	    *e_token++ = *buf_ptr++;
 	    unary_delim = false;
-	    code = unary_op;
+	    ttype = unary_op;
 	    state->want_blank = false;
 	}
 	break;			/* buffer overflow will be checked at end of
@@ -619,7 +604,7 @@ lexi(struct parser_state *state)
 	    buf_ptr++;
 	    *e_token = 0;
 	}
-	code = binary_op;
+	ttype = binary_op;
 	unary_delim = true;
 	break;
 	/* can drop thru!!! */
@@ -631,7 +616,7 @@ lexi(struct parser_state *state)
 	    *e_token++ = inbuf_next();
 	if (*buf_ptr == '=')
 	    *e_token++ = *buf_ptr++;
-	code = (state->last_u_d ? unary_op : binary_op);
+	ttype = state->last_u_d ? unary_op : binary_op;
 	unary_delim = true;
 	break;
 
@@ -640,7 +625,7 @@ lexi(struct parser_state *state)
 	if (!state->last_u_d) {
 	    if (*buf_ptr == '=')
 		*e_token++ = *buf_ptr++;
-	    code = binary_op;
+	    ttype = binary_op;
 	    break;
 	}
 	while (*buf_ptr == '*' || isspace((unsigned char)*buf_ptr)) {
@@ -661,7 +646,7 @@ lexi(struct parser_state *state)
 	    if (*tp == '(')
 		ps.procname[0] = ' ';
 	}
-	code = unary_op;
+	ttype = unary_op;
 	break;
 
     default:
@@ -669,7 +654,7 @@ lexi(struct parser_state *state)
 	    /* it is start of comment */
 	    *e_token++ = inbuf_next();
 
-	    code = comment;
+	    ttype = comment;
 	    unary_delim = state->last_u_d;
 	    break;
 	}
@@ -680,17 +665,16 @@ lexi(struct parser_state *state)
 	    check_size_token(1);
 	    *e_token++ = inbuf_next();
 	}
-	code = (state->last_u_d ? unary_op : binary_op);
+	ttype = state->last_u_d ? unary_op : binary_op;
 	unary_delim = true;
+    }
 
-
-    }				/* end of switch */
     if (buf_ptr >= buf_end)	/* check for input buffer empty */
 	fill_buffer();
     state->last_u_d = unary_delim;
     check_size_token(1);
-    *e_token = '\0';		/* null terminate the token */
-    return lexi_end(code);
+    *e_token = '\0';
+    return lexi_end(ttype);
 }
 
 void
