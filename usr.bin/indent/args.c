@@ -1,4 +1,4 @@
-/*	$NetBSD: args.c,v 1.29 2021/09/25 21:42:43 rillig Exp $	*/
+/*	$NetBSD: args.c,v 1.30 2021/09/25 22:16:58 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)args.c	8.1 (Berkeley) 6/6/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: args.c,v 1.29 2021/09/25 21:42:43 rillig Exp $");
+__RCSID("$NetBSD: args.c,v 1.30 2021/09/25 22:16:58 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/args.c 336318 2018-07-15 21:04:21Z pstef $");
 #endif
@@ -87,7 +87,7 @@ static void scan_profile(FILE *);
 
 const char *option_source = "?";
 
-void add_typedefs_from_file(const char *str);
+void add_typedefs_from_file(const char *);
 
 #if __STDC_VERSION__ >= 201112L
 #define assert_type(expr, type) _Generic((expr), type : (expr))
@@ -247,13 +247,13 @@ scan_profile(FILE *f)
 }
 
 static const char *
-eqin(const char *s1, const char *s2)
+skip_over(const char *s, const char *prefix)
 {
-    while (*s1 != '\0') {
-	if (*s1++ != *s2++)
+    while (*prefix != '\0') {
+	if (*prefix++ != *s++)
 	    return NULL;
     }
-    return s2;
+    return s;
 }
 
 void
@@ -264,9 +264,11 @@ set_option(const char *arg)
 
     arg++;			/* ignore leading "-" */
     for (p = pro; p->p_name[0] != '\0'; p++)
-	if (*p->p_name == *arg && (param_start = eqin(p->p_name, arg)) != NULL)
-	    goto found;
+	if (p->p_name[0] == arg[0])
+	    if ((param_start = skip_over(arg, p->p_name)) != NULL)
+		goto found;
     errx(1, "%s: unknown parameter \"%s\"", option_source, arg - 1);
+
 found:
     switch (p->p_type) {
 
@@ -277,7 +279,7 @@ found:
 	    break;
 
 	case CLI:
-	    if (*param_start == 0)
+	    if (param_start[0] == '\0')
 		goto need_param;
 	    opt.case_indent = atof(param_start);
 	    break;
@@ -290,13 +292,13 @@ found:
 	    break;
 
 	case KEY:
-	    if (*param_start == 0)
+	    if (param_start[0] == '\0')
 		goto need_param;
 	    add_typename(param_start);
 	    break;
 
 	case KEY_FILE:
-	    if (*param_start == 0)
+	    if (param_start[0] == '\0')
 		goto need_param;
 	    add_typedefs_from_file(param_start);
 	    break;
@@ -329,13 +331,13 @@ found:
 }
 
 void
-add_typedefs_from_file(const char *str)
+add_typedefs_from_file(const char *fname)
 {
     FILE *file;
     char line[BUFSIZ];
 
-    if ((file = fopen(str, "r")) == NULL) {
-	fprintf(stderr, "indent: cannot open file %s\n", str);
+    if ((file = fopen(fname, "r")) == NULL) {
+	fprintf(stderr, "indent: cannot open file %s\n", fname);
 	exit(1);
     }
     while ((fgets(line, BUFSIZ, file)) != NULL) {
