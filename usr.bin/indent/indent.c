@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.c,v 1.81 2021/09/25 22:14:21 rillig Exp $	*/
+/*	$NetBSD: indent.c,v 1.82 2021/09/25 22:24:35 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)indent.c	5.17 (Berkeley) 6/7/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: indent.c,v 1.81 2021/09/25 22:14:21 rillig Exp $");
+__RCSID("$NetBSD: indent.c,v 1.82 2021/09/25 22:24:35 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/indent.c 340138 2018-11-04 19:24:49Z oshogbo $");
 #endif
@@ -53,14 +53,14 @@ __FBSDID("$FreeBSD: head/usr.bin/indent/indent.c 340138 2018-11-04 19:24:49Z osh
 #include <sys/capsicum.h>
 #include <capsicum_helpers.h>
 #endif
+#include <ctype.h>
 #include <err.h>
 #include <errno.h>
 #include <fcntl.h>
-#include <unistd.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <ctype.h>
+#include <unistd.h>
 
 #include "indent.h"
 
@@ -658,15 +658,7 @@ process_unary_op(int dec_ind, bool tabs_to_var)
     if (!ps.dumped_decl_indent && ps.in_decl && !ps.block_init &&
 	ps.procname[0] == '\0' && ps.paren_level == 0) {
 	/* pointer declarations */
-
-	/*
-	 * if this is a unary op in a declaration, we should indent
-	 * this token
-	 */
-	int i;
-	for (i = 0; token.s[i] != '\0'; ++i)
-	    /* find length of token */;
-	indent_declaration(dec_ind - i, tabs_to_var);
+	indent_declaration(dec_ind - (int)strlen(token.s), tabs_to_var);
 	ps.dumped_decl_indent = true;
     } else if (ps.want_blank)
 	*code.e++ = ' ';
@@ -968,18 +960,13 @@ process_decl(int *out_dec_ind, bool *out_tabs_to_var)
     if ( /* !ps.in_or_st && */ ps.decl_nest <= 0)
 	ps.just_saw_decl = 2;
     prefix_blankline_requested = false;
-    int i;
-    for (i = 0; token.s[i++] != '\0';);	/* get length of token */
 
-    if (ps.ind_level == 0 || ps.decl_nest > 0) {
-	/* global variable or struct member in local variable */
-	*out_dec_ind = opt.decl_indent > 0 ? opt.decl_indent : i;
-	*out_tabs_to_var = opt.use_tabs ? opt.decl_indent > 0 : false;
-    } else {
-	/* local variable */
-	*out_dec_ind = opt.local_decl_indent > 0 ? opt.local_decl_indent : i;
-	*out_tabs_to_var = opt.use_tabs ? opt.local_decl_indent > 0 : false;
-    }
+    int len = (int)strlen(token.s) + 1;
+    int ind = ps.ind_level == 0 || ps.decl_nest > 0
+	    ? opt.decl_indent		/* global variable or local member */
+	    : opt.local_decl_indent;	/* local variable */
+    *out_dec_ind = ind > 0 ? ind : len;
+    *out_tabs_to_var = opt.use_tabs ? ind > 0 : false;
 }
 
 static void
