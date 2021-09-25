@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.c,v 1.68 2021/09/25 08:23:31 rillig Exp $	*/
+/*	$NetBSD: indent.c,v 1.69 2021/09/25 10:41:03 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -46,7 +46,7 @@ static char sccsid[] = "@(#)indent.c	5.17 (Berkeley) 6/7/93";
 #include <sys/cdefs.h>
 #ifndef lint
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: indent.c,v 1.68 2021/09/25 08:23:31 rillig Exp $");
+__RCSID("$NetBSD: indent.c,v 1.69 2021/09/25 10:41:03 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/indent.c 340138 2018-11-04 19:24:49Z oshogbo $");
 #endif
@@ -94,7 +94,6 @@ int         prefix_blankline_requested;
 int         postfix_blankline_requested;
 int         break_comma;
 float       case_ind;
-int         code_lines;
 int         had_eof;
 int         line_no;
 int         inhibit_formatting;
@@ -528,9 +527,9 @@ process_end_of_file(void)
 
     if (opt.verbose) {
 	printf("There were %d output lines and %d comments\n",
-	       ps.out_lines, ps.out_coms);
+	       ps.stats.lines, ps.stats.comments);
 	printf("(Lines with comments)/(Lines with code): %6.3f\n",
-	       (1.0 * ps.com_lines) / code_lines);
+	       (1.0 * ps.stats.comment_lines) / ps.stats.code_lines);
     }
 
     fflush(output);

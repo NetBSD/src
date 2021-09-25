@@ -1,4 +1,4 @@
-/*	$NetBSD: pr_comment.c,v 1.40 2021/09/25 08:23:31 rillig Exp $	*/
+/*	$NetBSD: pr_comment.c,v 1.41 2021/09/25 10:41:03 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -46,7 +46,7 @@ static char sccsid[] = "@(#)pr_comment.c	8.1 (Berkeley) 6/6/93";
 #include <sys/cdefs.h>
 #ifndef lint
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: pr_comment.c,v 1.40 2021/09/25 08:23:31 rillig Exp $");
+__RCSID("$NetBSD: pr_comment.c,v 1.41 2021/09/25 10:41:03 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/pr_comment.c 334927 2018-06-10 16:44:18Z pstef $");
 #endif
@@ -107,7 +107,7 @@ process_comment(void)
     ps.box_com = false;		/* at first, assume that we are not in
 				 * a boxed comment or some other
 				 * comment that should not be touched */
-    ++ps.out_coms;		/* keep track of number of comments */
+    ps.stats.comments++;
 
     /* Figure where to align and how to treat the comment */
 

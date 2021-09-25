@@ -1,4 +1,4 @@
-/*	$NetBSD: indent_globs.h,v 1.26 2021/09/25 08:04:13 rillig Exp $	*/
+/*	$NetBSD: indent_globs.h,v 1.27 2021/09/25 10:41:03 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -184,7 +184,6 @@ extern int         break_comma;	/* when true and not in parens, break after a
 				 * comma */
 extern float       case_ind;		/* indentation level to be used for a "case
 				 * n:" */
-extern int         code_lines;		/* count of lines with code */
 extern int         had_eof;		/* set to true when input is exhausted */
 extern int         line_no;		/* the current line number. */
 extern int         inhibit_formatting;	/* true if INDENT OFF is in effect */
@@ -226,8 +225,6 @@ extern struct parser_state {
 				 * column 1 */
     int         com_col;	/* this is the column in which the current
 				 * comment should start */
-    int         com_lines;	/* the number of lines with comments, set by
-				 * dump_line */
     int         dec_nest;	/* current nesting level for structure or init */
     int         decl_on_line;	/* set to true if this line of code has part
 				 * of a declaration on it */
@@ -243,10 +240,6 @@ extern struct parser_state {
 				 * middle of a stmt */
     int         last_u_d;	/* set to true after scanning a token which
 				 * forces a following operator to be unary */
-    int         out_coms;	/* the number of comments processed, set by
-				 * process_comment */
-    int         out_lines;	/* the number of lines written, set by
-				 * dump_line */
     int         p_l_follow;	/* used to remember how to indent following
 				 * statement */
     int         paren_level;	/* parenthesization level. used to indent
@@ -271,6 +264,13 @@ extern struct parser_state {
     int         tos;		/* pointer to top of stack */
     char        procname[100];	/* The name of the current procedure */
     int         just_saw_decl;
+
+    struct {
+	int	comments;
+	int	lines;
+	int	code_lines;
+	int	comment_lines;
+    }		stats;
 }           ps;
 
 extern int         ifdef_level;
