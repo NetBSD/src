@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.18 2021/03/12 23:10:18 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.19 2021/09/25 07:46:41 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -60,15 +60,15 @@ __FBSDID("$FreeBSD: head/usr.bin/indent/parse.c 337651 2018-08-11 19:20:06Z pste
 static void reduce(void);
 
 void
-parse(token_type tk)		/* tk: the code for the construct scanned */
+parse(token_type ttype)
 {
     int         i;
 
 #ifdef debug
-    printf("parse token: '%s' \"%s\"\n", token_type_name(tk), token);
+    printf("parse token: '%s' \"%s\"\n", token_type_name(ttype), token);
 #endif
 
-    while (ps.p_stack[ps.tos] == if_expr_stmt && tk != keyword_else) {
+    while (ps.p_stack[ps.tos] == if_expr_stmt && ttype != keyword_else) {
 	/* true if we have an if without an else */
 	ps.p_stack[ps.tos] = stmt;	/* apply the if(..) stmt ::= stmt
 					 * reduction */
@@ -76,7 +76,7 @@ parse(token_type tk)		/* tk: the code for the construct scanned */
     }
 
 
-    switch (tk) {		/* go on and figure out what to do with the
+    switch (ttype) {		/* go on and figure out what to do with the
 				 * input */
 
     case decl:			/* scanned a declaration word */
@@ -114,7 +114,7 @@ parse(token_type tk)		/* tk: the code for the construct scanned */
 	/* FALLTHROUGH */
     case keyword_do:		/* 'do' */
     case for_exprs:		/* 'for' (...) */
-	ps.p_stack[++ps.tos] = tk;
+	ps.p_stack[++ps.tos] = ttype;
 	ps.il[ps.tos] = ps.ind_level = ps.i_l_follow;
 	++ps.i_l_follow;	/* subsequent statements should be indented 1 */
 	ps.search_brace = opt.btype_2;
