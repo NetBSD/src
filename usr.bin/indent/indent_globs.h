@@ -1,4 +1,4 @@
-/*	$NetBSD: indent_globs.h,v 1.35 2021/09/25 20:56:53 rillig Exp $	*/
+/*	$NetBSD: indent_globs.h,v 1.36 2021/09/25 22:54:32 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -173,7 +173,7 @@ enum rwcode {
 };
 
 
-extern int         found_err;
+extern bool        found_err;
 extern int         n_real_blanklines;
 extern bool        prefix_blankline_requested;
 extern bool        postfix_blankline_requested;
