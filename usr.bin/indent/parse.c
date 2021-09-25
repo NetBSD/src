@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.20 2021/09/25 07:55:24 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.21 2021/09/25 07:59:52 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -65,7 +65,7 @@ parse(token_type ttype)
     int         i;
 
 #ifdef debug
-    printf("parse token: '%s' \"%s\"\n", token_type_name(ttype), token);
+    printf("parse token: '%s' \"%s\"\n", token_type_name(ttype), s_token);
 #endif
 
     while (ps.p_stack[ps.tos] == if_expr_stmt && ttype != keyword_else) {
