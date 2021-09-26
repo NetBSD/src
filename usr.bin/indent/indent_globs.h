@@ -1,4 +1,4 @@
-/*	$NetBSD: indent_globs.h,v 1.38 2021/09/26 19:57:23 rillig Exp $	*/
+/*	$NetBSD: indent_globs.h,v 1.39 2021/09/26 21:23:31 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -70,7 +70,6 @@ extern char       *buf_end;		/* ptr to first after last char in in_buffer */
 extern char        sc_buf[sc_size];	/* input text is saved here when looking for
 				 * the brace after an if, while, etc */
 extern char       *save_com;		/* start of the comment stored in sc_buf */
-extern char       *sc_end;		/* pointer into save_com buffer */
 
 extern char       *bp_save;		/* saved value of buf_ptr when taking input
 				 * from save_com */
@@ -184,8 +183,6 @@ extern float       case_ind;	/* indentation level to be used for a "case
 extern bool        had_eof;		/* whether input is exhausted */
 extern int         line_no;		/* the current line number. */
 extern bool        inhibit_formatting;	/* true if INDENT OFF is in effect */
-extern int         suppress_blanklines;/* set iff following blanklines should
-				 * be suppressed */
 
 #define	STACKSIZE 256
 
@@ -268,7 +265,3 @@ extern struct parser_state {
 	int	comment_lines;
     }		stats;
 }           ps;
-
-extern int         ifdef_level;
-extern struct parser_state state_stack[5];
-extern struct parser_state match_state[5];
