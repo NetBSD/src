@@ -1,4 +1,4 @@
-/*	$NetBSD: opms.c,v 1.25 2021/09/26 01:16:07 thorpej Exp $	*/
+/*	$NetBSD: opms.c,v 1.26 2021/09/26 16:36:18 thorpej Exp $	*/
 /*	$OpenBSD: pccons.c,v 1.22 1999/01/30 22:39:37 imp Exp $	*/
 /*	NetBSD: pms.c,v 1.21 1995/04/18 02:25:18 mycroft Exp	*/
 
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: opms.c,v 1.25 2021/09/26 01:16:07 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: opms.c,v 1.26 2021/09/26 16:36:18 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -491,7 +491,7 @@ opmskqfilter(dev_t dev, struct knote *kn)
 		break;
 
 	default:
-		return 1;
+		return EINVAL;
 	}
 
 	kn->kn_hook = sc;

@@ -1,4 +1,4 @@
-/*	$NetBSD: pxa2x0_apm.c,v 1.6 2021/09/26 01:16:07 thorpej Exp $	*/
+/*	$NetBSD: pxa2x0_apm.c,v 1.7 2021/09/26 16:36:18 thorpej Exp $	*/
 /*	$OpenBSD: pxa2x0_apm.c,v 1.28 2007/03/29 18:42:38 uwe Exp $	*/
 
 /*-
@@ -629,7 +629,7 @@ apmkqfilter(dev_t dev, struct knote *kn)
 		kn->kn_fop = &apmread_filtops;
 		break;
 	default:
-		return (1);
+		return (EINVAL);
 	}
 
 	kn->kn_hook = (caddr_t)sc;
