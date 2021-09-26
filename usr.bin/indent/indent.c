@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.c,v 1.84 2021/09/25 22:57:04 rillig Exp $	*/
+/*	$NetBSD: indent.c,v 1.85 2021/09/26 18:52:16 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)indent.c	5.17 (Berkeley) 6/7/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: indent.c,v 1.84 2021/09/25 22:57:04 rillig Exp $");
+__RCSID("$NetBSD: indent.c,v 1.85 2021/09/26 18:52:16 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/indent.c 340138 2018-11-04 19:24:49Z oshogbo $");
 #endif
@@ -1028,6 +1028,8 @@ process_string_prefix(void)
 static void
 process_period(void)
 {
+    if (code.e[-1] == ',')
+	*code.e++ = ' ';
     *code.e++ = '.';		/* move the period into line */
     ps.want_blank = false;	/* dont put a blank after a period */
 }
