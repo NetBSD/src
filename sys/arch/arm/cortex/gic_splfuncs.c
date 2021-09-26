@@ -1,4 +1,4 @@
-/* $NetBSD: gic_splfuncs.c,v 1.3 2021/09/20 21:05:14 jmcneill Exp $ */
+/* $NetBSD: gic_splfuncs.c,v 1.4 2021/09/26 20:55:15 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2021 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gic_splfuncs.c,v 1.3 2021/09/20 21:05:14 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gic_splfuncs.c,v 1.4 2021/09/26 20:55:15 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -93,6 +93,7 @@ gic_splx(int newipl)
 	 */
 	if (__predict_true(ci->ci_intr_depth == 0)) {
 		ci->ci_splx_savedipl = newipl;
+		__insn_barrier();
 		ci->ci_splx_restart = &&restart;
 		__insn_barrier();
 checkhwpl:
