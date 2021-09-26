@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.114 2021/09/26 08:04:35 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.115 2021/09/26 09:58:13 skrll Exp $	*/
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.114 2021/09/26 08:04:35 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.115 2021/09/26 09:58:13 skrll Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_ddb.h"
@@ -578,9 +578,7 @@ pmap_steal_memory(vsize_t size, vaddr_t *vstartp, vaddr_t *vendp)
 	uvm_physseg_t bank;
 
 	UVMHIST_FUNC(__func__);
-	UVMHIST_CALLED(pmaphist);
-
-	UVMHIST_LOG(pmaphist, "size=%llu, *vstartp=%llx, *vendp=%llx",
+	UVMHIST_CALLARGS(pmaphist, "size=%llu, *vstartp=%llx, *vendp=%llx",
 	    size, *vstartp, *vendp, 0);
 
 	size = round_page(size);
@@ -623,7 +621,8 @@ pmap_alloc_pdp(struct pmap *pm, struct vm_page **pgp, int flags, bool waitok)
 	struct vm_page *pg;
 
 	UVMHIST_FUNC(__func__);
-	UVMHIST_CALLED(pmaphist);
+	UVMHIST_CALLARGS(pmaphist, "pm=%p, flags=%08x, waitok=%d",
+	    pm, flags, waitok, 0);
 
 	if (uvm.page_init_done) {
 		int aflags = ((flags & PMAP_CANFAIL) ? 0 : UVM_PGA_USERESERVE) |
@@ -755,9 +754,7 @@ pmap_growkernel(vaddr_t maxkvaddr)
 	paddr_t pa;
 
 	UVMHIST_FUNC(__func__);
-	UVMHIST_CALLED(pmaphist);
-
-	UVMHIST_LOG(pmaphist, "maxkvaddr=%llx, pmap_maxkvaddr=%llx",
+	UVMHIST_CALLARGS(pmaphist, "maxkvaddr=%llx, pmap_maxkvaddr=%llx",
 	    maxkvaddr, pmap_maxkvaddr, 0, 0);
 
 	mutex_enter(&pm->pm_lock);
@@ -1109,9 +1106,7 @@ _pmap_remove_pv(struct pmap_page *pp, struct pmap *pm, vaddr_t va,
 	struct pv_entry *pv, *ppv;
 
 	UVMHIST_FUNC(__func__);
-	UVMHIST_CALLED(pmaphist);
-
-	UVMHIST_LOG(pmaphist, "pp=%p, pm=%p, va=%llx, pte=%llx",
+	UVMHIST_CALLARGS(pmaphist, "pp=%p, pm=%p, va=%llx, pte=%llx",
 	    pp, pm, va, pte);
 
 	KASSERT(mutex_owned(&pm->pm_lock));	/* for pv_proc */
@@ -1204,9 +1199,8 @@ _pmap_enter_pv(struct pmap_page *pp, struct pmap *pm, struct pv_entry **pvp,
 	struct pv_entry *pv;
 
 	UVMHIST_FUNC(__func__);
-	UVMHIST_CALLED(pmaphist);
-
-	UVMHIST_LOG(pmaphist, "pp=%p, pm=%p, va=%llx, pa=%llx", pp, pm, va, pa);
+	UVMHIST_CALLARGS(pmaphist, "pp=%p, pm=%p, va=%llx, pa=%llx", pp, pm, va,
+	    pa);
 	UVMHIST_LOG(pmaphist, "ptep=%p, flags=%08x", ptep, flags, 0, 0);
 
 	KASSERT(mutex_owned(&pp->pp_pvlock));
@@ -1263,9 +1257,7 @@ pmap_kremove(vaddr_t va, vsize_t size)
 	struct pmap *kpm = pmap_kernel();
 
 	UVMHIST_FUNC(__func__);
-	UVMHIST_CALLED(pmaphist);
-
-	UVMHIST_LOG(pmaphist, "va=%llx, size=%llx", va, size, 0, 0);
+	UVMHIST_CALLARGS(pmaphist, "va=%llx, size=%llx", va, size, 0, 0);
 
 	KDASSERT((va & PGOFSET) == 0);
 	KDASSERT((size & PGOFSET) == 0);
@@ -1285,9 +1277,8 @@ _pmap_protect_pv(struct pmap_page *pp, struct pv_entry *pv, vm_prot_t prot)
 	const bool user = (pv->pv_pmap != pmap_kernel());
 
 	UVMHIST_FUNC(__func__);
-	UVMHIST_CALLED(pmaphist);
+	UVMHIST_CALLARGS(pmaphist, "pp=%p, pv=%p, prot=%08x", pp, pv, prot, 0);
 
-	UVMHIST_LOG(pmaphist, "pp=%p, pv=%p, prot=%08x", pp, pv, prot, 0);
 	KASSERT(mutex_owned(&pv->pv_pmap->pm_lock));
 
 	/* get prot mask from referenced/modified */
@@ -1322,9 +1313,7 @@ pmap_protect(struct pmap *pm, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 	KASSERT((prot & VM_PROT_READ) || !(prot & VM_PROT_WRITE));
 
 	UVMHIST_FUNC(__func__);
-	UVMHIST_CALLED(pmaphist);
-
-	UVMHIST_LOG(pmaphist, "pm=%p, sva=%016lx, eva=%016lx, prot=%08x",
+	UVMHIST_CALLARGS(pmaphist, "pm=%p, sva=%016lx, eva=%016lx, prot=%08x",
 	    pm, sva, eva, prot);
 
 	KASSERT_PM_ADDR(pm, sva);
@@ -1434,7 +1423,8 @@ pmap_activate(struct lwp *l)
 	uint64_t ttbr0, tcr;
 
 	UVMHIST_FUNC(__func__);
-	UVMHIST_CALLED(pmaphist);
+	UVMHIST_CALLARGS(pmaphist, "lwp=%p asid=%d (pid=%d)", l, pm->pm_asid,
+	    l->l_proc->p_pid, 0);
 
 	if (pm == pmap_kernel())
 		return;
@@ -1443,7 +1433,6 @@ pmap_activate(struct lwp *l)
 
 	KASSERT(pm->pm_l0table != NULL);
 
-	UVMHIST_LOG(pmaphist, "lwp=%p (pid=%d)", l, l->l_proc->p_pid, 0, 0);
 
 	/* XXX: allocate asid, and regenerate if needed */
 	if (pm->pm_asid == -1)
@@ -1471,12 +1460,10 @@ pmap_deactivate(struct lwp *l)
 	uint64_t tcr;
 
 	UVMHIST_FUNC(__func__);
-	UVMHIST_CALLED(pmaphist);
+	UVMHIST_CALLARGS(pmaphist, "lwp=%p, asid=%d", l, pm->pm_asid, 0, 0);
 
 	if (pm == pmap_kernel())
 		return;
-
-	UVMHIST_LOG(pmaphist, "lwp=%p, asid=%d", l, pm->pm_asid, 0, 0);
 
 	/* Disable translation table walks using TTBR0 */
 	tcr = reg_tcr_el1_read();
@@ -1524,9 +1511,7 @@ pmap_destroy(struct pmap *pm)
 	unsigned int refcnt;
 
 	UVMHIST_FUNC(__func__);
-	UVMHIST_CALLED(pmaphist);
-
-	UVMHIST_LOG(pmaphist,
+	UVMHIST_CALLARGS(pmaphist,
 	    "pm=%p, pm_l0table=%016lx, pm_l0table_pa=%016lx, refcnt=%d",
 	    pm, pm->pm_l0table, pm->pm_l0table_pa, pm->pm_refcnt);
 
@@ -1769,9 +1754,7 @@ _pmap_enter(struct pmap *pm, vaddr_t va, paddr_t pa, vm_prot_t prot,
 	bool l3only = true;
 
 	UVMHIST_FUNC(__func__);
-	UVMHIST_CALLED(pmaphist);
-
-	UVMHIST_LOG(pmaphist, "pm=%p, kentermode=%d", pm, kenter, 0, 0);
+	UVMHIST_CALLARGS(pmaphist, "pm=%p, kentermode=%d", pm, kenter, 0, 0);
 	UVMHIST_LOG(pmaphist, "va=%016lx, pa=%016lx, prot=%08x, flags=%08x",
 	    va, pa, prot, flags);
 
@@ -2049,9 +2032,7 @@ pmap_remove_all(struct pmap *pm)
 	paddr_t pa;
 
 	UVMHIST_FUNC(__func__);
-	UVMHIST_CALLED(pmaphist);
-
-	UVMHIST_LOG(pmaphist, "pm=%p", pm, 0, 0, 0);
+	UVMHIST_CALLARGS(pmaphist, "pm=%p", pm, 0, 0, 0);
 
 	if (pm == pmap_kernel())
 		return false;
@@ -2116,9 +2097,7 @@ _pmap_remove(struct pmap *pm, vaddr_t sva, vaddr_t eva, bool kremove,
 	bool pdpremoved;
 
 	UVMHIST_FUNC(__func__);
-	UVMHIST_CALLED(pmaphist);
-
-	UVMHIST_LOG(pmaphist, "pm=%p, sva=%016lx, eva=%016lx, kremovemode=%d",
+	UVMHIST_CALLARGS(pmaphist, "pm=%p, sva=%016lx, eva=%016lx, kremove=%d",
 	    pm, sva, eva, kremove);
 
 	KASSERT(kremove || mutex_owned(&pm->pm_lock));
@@ -2254,10 +2233,7 @@ pmap_pv_protect(paddr_t pa, vm_prot_t prot)
 	struct pmap_page *pp;
 
 	UVMHIST_FUNC(__func__);
-	UVMHIST_CALLED(pmaphist);
-
-	UVMHIST_LOG(pmaphist, "pa=%016lx, prot=%08x",
-	    pa, prot, 0, 0);
+	UVMHIST_CALLARGS(pmaphist, "pa=%016lx, prot=%08x", pa, prot, 0, 0);
 
 	pp = pmap_pv_tracked(pa);
 	if (pp == NULL)
@@ -2277,12 +2253,10 @@ pmap_page_protect(struct vm_page *pg, vm_prot_t prot)
 
 	KASSERT((prot & VM_PROT_READ) || !(prot & VM_PROT_WRITE));
 
-	UVMHIST_FUNC(__func__);
-	UVMHIST_CALLED(pmaphist);
-
 	pp = VM_PAGE_TO_PP(pg);
 
-	UVMHIST_LOG(pmaphist, "pg=%p, pp=%p, pa=%016lx, prot=%08x",
+	UVMHIST_FUNC(__func__);
+	UVMHIST_CALLARGS(pmaphist, "pg=%p, pp=%p, pa=%016lx, prot=%08x",
 	    pg, pp, VM_PAGE_TO_PHYS(pg), prot);
 
 	/* do an unlocked check first */
@@ -2322,9 +2296,7 @@ pmap_unwire(struct pmap *pm, vaddr_t va)
 	pt_entry_t pte, *ptep;
 
 	UVMHIST_FUNC(__func__);
-	UVMHIST_CALLED(pmaphist);
-
-	UVMHIST_LOG(pmaphist, "pm=%p, va=%016lx", pm, va, 0, 0);
+	UVMHIST_CALLARGS(pmaphist, "pm=%p, va=%016lx", pm, va, 0, 0);
 
 	PMAP_COUNT(unwire);
 
@@ -2361,9 +2333,7 @@ pmap_fault_fixup(struct pmap *pm, vaddr_t va, vm_prot_t accessprot, bool user)
 	bool fixed = false;
 
 	UVMHIST_FUNC(__func__);
-	UVMHIST_CALLED(pmaphist);
-
-	UVMHIST_LOG(pmaphist, "pm=%p, va=%016lx, accessprot=%08x",
+	UVMHIST_CALLARGS(pmaphist, "pm=%p, va=%016lx, accessprot=%08x",
 	    pm, va, accessprot, 0);
 
 #if 0
@@ -2487,9 +2457,7 @@ pmap_clear_modify(struct vm_page *pg)
 	vaddr_t va;
 
 	UVMHIST_FUNC(__func__);
-	UVMHIST_CALLED(pmaphist);
-
-	UVMHIST_LOG(pmaphist, "pg=%p, flags=%08x",
+	UVMHIST_CALLARGS(pmaphist, "pg=%p, flags=%08x",
 	    pg, (int)(pp->pp_pv.pv_va & (PAGE_SIZE - 1)), 0, 0);
 
 	PMAP_COUNT(clear_modify);
@@ -2561,9 +2529,7 @@ pmap_clear_reference(struct vm_page *pg)
 	vaddr_t va;
 
 	UVMHIST_FUNC(__func__);
-	UVMHIST_CALLED(pmaphist);
-
-	UVMHIST_LOG(pmaphist, "pg=%p, pp=%p, flags=%08x",
+	UVMHIST_CALLARGS(pmaphist, "pg=%p, pp=%p, flags=%08x",
 	    pg, pp, (int)(pp->pp_pv.pv_va & (PAGE_SIZE - 1)), 0);
 
 	pmap_pv_lock(pp);
