@@ -1,4 +1,4 @@
-/*	$NetBSD: bpp.c,v 1.46 2020/12/18 02:04:17 thorpej Exp $ */
+/*	$NetBSD: bpp.c,v 1.47 2021/09/26 01:16:09 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bpp.c,v 1.46 2020/12/18 02:04:17 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bpp.c,v 1.47 2021/09/26 01:16:09 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -521,7 +521,7 @@ filt_bppread(struct knote *kn, long hint)
 }
 
 static const struct filterops bppread_filtops = {
-	.f_isfd = 1,
+	.f_flags = FILTEROP_ISFD,
 	.f_attach = NULL,
 	.f_detach = filt_bpprdetach,
 	.f_event = filt_bppread,
@@ -551,7 +551,7 @@ filt_bpfwrite(struct knote *kn, long hint)
 }
 
 static const struct filterops bppwrite_filtops = {
-	.f_isfd = 1,
+	.f_flags = FILTEROP_ISFD,
 	.f_attach = NULL,
 	.f_detach = filt_bppwdetach,
 	.f_event = filt_bpfwrite,

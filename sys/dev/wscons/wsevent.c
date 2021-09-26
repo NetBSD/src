@@ -1,4 +1,4 @@
-/* $NetBSD: wsevent.c,v 1.46 2020/12/18 01:41:23 thorpej Exp $ */
+/* $NetBSD: wsevent.c,v 1.47 2021/09/26 01:16:10 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2006, 2008 The NetBSD Foundation, Inc.
@@ -104,7 +104,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsevent.c,v 1.46 2020/12/18 01:41:23 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsevent.c,v 1.47 2021/09/26 01:16:10 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -326,7 +326,7 @@ filt_wseventread(struct knote *kn, long hint)
 }
 
 static const struct filterops wsevent_filtops = {
-	.f_isfd = 1,
+	.f_flags = FILTEROP_ISFD,
 	.f_attach = NULL,
 	.f_detach = filt_wseventrdetach,
 	.f_event = filt_wseventread,

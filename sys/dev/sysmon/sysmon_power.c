@@ -1,4 +1,4 @@
-/*	$NetBSD: sysmon_power.c,v 1.66 2020/12/18 01:46:39 thorpej Exp $	*/
+/*	$NetBSD: sysmon_power.c,v 1.67 2021/09/26 01:16:09 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2007 Juan Romero Pardines.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_power.c,v 1.66 2020/12/18 01:46:39 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_power.c,v 1.67 2021/09/26 01:16:09 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -554,14 +554,14 @@ filt_sysmon_power_read(struct knote *kn, long hint)
 }
 
 static const struct filterops sysmon_power_read_filtops = {
-	.f_isfd = 1,
+	.f_flags = FILTEROP_ISFD,
 	.f_attach = NULL,
 	.f_detach = filt_sysmon_power_rdetach,
 	.f_event = filt_sysmon_power_read,
 };
 
 static const struct filterops sysmon_power_write_filtops = {
-	.f_isfd = 1,
+	.f_flags = FILTEROP_ISFD,
 	.f_attach = NULL,
 	.f_detach = filt_sysmon_power_rdetach,
 	.f_event = filt_seltrue,

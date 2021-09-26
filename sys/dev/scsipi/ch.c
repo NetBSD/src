@@ -1,4 +1,4 @@
-/*	$NetBSD: ch.c,v 1.93 2020/12/18 01:55:22 thorpej Exp $	*/
+/*	$NetBSD: ch.c,v 1.94 2021/09/26 01:16:09 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 1999, 2004 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ch.c,v 1.93 2020/12/18 01:55:22 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ch.c,v 1.94 2021/09/26 01:16:09 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -488,14 +488,14 @@ filt_chread(struct knote *kn, long hint)
 }
 
 static const struct filterops chread_filtops = {
-	.f_isfd = 1,
+	.f_flags = FILTEROP_ISFD,
 	.f_attach = NULL,
 	.f_detach = filt_chdetach,
 	.f_event = filt_chread,
 };
 
 static const struct filterops chwrite_filtops = {
-	.f_isfd = 1,
+	.f_flags = FILTEROP_ISFD,
 	.f_attach = NULL,
 	.f_detach = filt_chdetach,
 	.f_event = filt_seltrue,

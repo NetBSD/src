@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_entropy.c,v 1.31 2021/09/21 14:54:26 christos Exp $	*/
+/*	$NetBSD: kern_entropy.c,v 1.32 2021/09/26 01:16:10 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_entropy.c,v 1.31 2021/09/21 14:54:26 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_entropy.c,v 1.32 2021/09/26 01:16:10 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -1466,7 +1466,7 @@ filt_entropy_read_event(struct knote *kn, long hint)
 }
 
 static const struct filterops entropy_read_filtops = {
-	.f_isfd = 1,		/* XXX Makes sense only for /dev/u?random.  */
+	.f_flags = FILTEROP_ISFD,/* XXX Makes sense only for /dev/u?random.  */
 	.f_attach = NULL,
 	.f_detach = filt_entropy_read_detach,
 	.f_event = filt_entropy_read_event,

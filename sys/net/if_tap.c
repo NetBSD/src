@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tap.c,v 1.122 2021/06/16 00:21:19 riastradh Exp $	*/
+/*	$NetBSD: if_tap.c,v 1.123 2021/09/26 01:16:10 thorpej Exp $	*/
 
 /*
  *  Copyright (c) 2003, 2004, 2008, 2009 The NetBSD Foundation.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tap.c,v 1.122 2021/06/16 00:21:19 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tap.c,v 1.123 2021/09/26 01:16:10 thorpej Exp $");
 
 #if defined(_KERNEL_OPT)
 
@@ -1169,14 +1169,14 @@ tap_dev_poll(int unit, int events, struct lwp *l)
 }
 
 static struct filterops tap_read_filterops = {
-	.f_isfd = 1,
+	.f_flags = FILTEROP_ISFD,
 	.f_attach = NULL,
 	.f_detach = tap_kqdetach,
 	.f_event = tap_kqread,
 };
 
 static struct filterops tap_seltrue_filterops = {
-	.f_isfd = 1,
+	.f_flags = FILTEROP_ISFD,
 	.f_attach = NULL,
 	.f_detach = tap_kqdetach,
 	.f_event = filt_seltrue,
