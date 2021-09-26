@@ -1,4 +1,4 @@
-/*	$NetBSD: args.c,v 1.38 2021/09/26 20:48:10 rillig Exp $	*/
+/*	$NetBSD: args.c,v 1.39 2021/09/26 21:05:48 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)args.c	8.1 (Berkeley) 6/6/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: args.c,v 1.38 2021/09/26 20:48:10 rillig Exp $");
+__RCSID("$NetBSD: args.c,v 1.39 2021/09/26 21:05:48 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/args.c 336318 2018-07-15 21:04:21Z pstef $");
 #endif
@@ -92,7 +92,7 @@ static const struct pro {
     bool p_is_bool;
     bool p_bool_value;
     bool p_may_negate;
-    void *p_obj;		/* the associated variable (bool, int) */
+    void *p_var;		/* the associated variable */
 }   pro[] = {
     bool_options("bacc", blanklines_around_conditional_compilation),
     bool_options("bad", blanklines_after_declarations),
@@ -285,12 +285,12 @@ set_option(const char *arg)
 
 found:
     if (p->p_is_bool)
-	*(bool *)p->p_obj = p->p_may_negate ? arg[0] != 'n' : p->p_bool_value;
+	*(bool *)p->p_var = p->p_may_negate ? arg[0] != 'n' : p->p_bool_value;
     else {
 	if (!isdigit((unsigned char)*param_start))
 	    errx(1, "%s: ``%s'' requires a parameter",
 		option_source, p->p_name);
-	*(int *)p->p_obj = atoi(param_start);
+	*(int *)p->p_var = atoi(param_start);
     }
 }
 

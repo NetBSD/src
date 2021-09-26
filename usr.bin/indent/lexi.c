@@ -1,4 +1,4 @@
-/*	$NetBSD: lexi.c,v 1.59 2021/09/26 19:37:11 rillig Exp $	*/
+/*	$NetBSD: lexi.c,v 1.60 2021/09/26 21:05:48 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)lexi.c	8.1 (Berkeley) 6/6/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: lexi.c,v 1.59 2021/09/26 19:37:11 rillig Exp $");
+__RCSID("$NetBSD: lexi.c,v 1.60 2021/09/26 21:05:48 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/lexi.c 337862 2018-08-15 18:19:45Z pstef $");
 #endif
@@ -59,17 +59,11 @@ __FBSDID("$FreeBSD: head/usr.bin/indent/lexi.c 337862 2018-08-15 18:19:45Z pstef
 
 #include "indent.h"
 
-struct templ {
+/* must be sorted alphabetically, is used in binary search */
+static const struct special {
     const char *rwd;
     enum rwcode rwcode;
-};
-
-/*
- * This table has to be sorted alphabetically, because it'll be used in binary
- * search.
- */
-const struct templ specials[] =
-{
+} specials[] = {
     {"_Bool", rw_type},
     {"_Complex", rw_type},
     {"_Imaginary", rw_type},
@@ -210,9 +204,9 @@ check_size_token(size_t desired_size)
 }
 
 static int
-compare_templ_array(const void *key, const void *elem)
+compare_special_array(const void *key, const void *elem)
 {
-    return strcmp(key, ((const struct templ *)elem)->rwd);
+    return strcmp(key, ((const struct special *)elem)->rwd);
 }
 
 static int
@@ -368,10 +362,7 @@ lexi(struct parser_state *state)
     if (isalnum((unsigned char)*buf_ptr) ||
 	*buf_ptr == '_' || *buf_ptr == '$' ||
 	(buf_ptr[0] == '.' && isdigit((unsigned char)buf_ptr[1]))) {
-	/*
-	 * we have a letter or number
-	 */
-	struct templ *p;
+	struct special *p;
 
 	if (isdigit((unsigned char)*buf_ptr) ||
 	    (buf_ptr[0] == '.' && isdigit((unsigned char)buf_ptr[1]))) {
@@ -388,12 +379,9 @@ lexi(struct parser_state *state)
 	while (*buf_ptr == ' ' || *buf_ptr == '\t')	/* get rid of blanks */
 	    inbuf_next();
 	state->keyword = rw_0;
+
 	if (state->last_token == keyword_struct_union_enum &&
-	    state->p_l_follow == 0) {
-	    /*
-	     * if last token was 'struct' and we're not in parentheses, then
-	     * this token should be treated as a declaration
-	     */
+		state->p_l_follow == 0) {
 	    state->last_u_d = true;
 	    return lexi_end(decl);
 	}
@@ -403,7 +391,7 @@ lexi(struct parser_state *state)
 	state->last_u_d = (state->last_token == keyword_struct_union_enum);
 
 	p = bsearch(token.s, specials, sizeof specials / sizeof specials[0],
-	    sizeof specials[0], compare_templ_array);
+	    sizeof specials[0], compare_special_array);
 	if (p == NULL) {	/* not a special keyword... */
 	    char *u;
 
