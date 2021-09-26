@@ -1,4 +1,4 @@
-/*	$NetBSD: uirda.c,v 1.51 2021/09/26 01:16:09 thorpej Exp $	*/
+/*	$NetBSD: uirda.c,v 1.52 2021/09/26 15:08:29 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uirda.c,v 1.51 2021/09/26 01:16:09 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uirda.c,v 1.52 2021/09/26 15:08:29 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -283,7 +283,6 @@ uirda_attach(device_t parent, device_t self, void *aux)
 	mutex_init(&sc->sc_wr_buf_lk, MUTEX_DEFAULT, IPL_NONE);
 	mutex_init(&sc->sc_rd_buf_lk, MUTEX_DEFAULT, IPL_NONE);
 	selinit(&sc->sc_rd_sel);
-	selinit(&sc->sc_wr_sel);
 
 	ia.ia_type = IR_TYPE_IRFRAME;
 	ia.ia_methods = sc->sc_irm ? sc->sc_irm : &uirda_methods;
@@ -346,7 +345,6 @@ uirda_detach(device_t self, int flags)
 	mutex_destroy(&sc->sc_wr_buf_lk);
 	mutex_destroy(&sc->sc_rd_buf_lk);
 	seldestroy(&sc->sc_rd_sel);
-	seldestroy(&sc->sc_wr_sel);
 
 	return rv;
 }
@@ -629,17 +627,6 @@ filt_uirdaread(struct knote *kn, long hint)
 	return kn->kn_data > 0;
 }
 
-static void
-filt_uirdawdetach(struct knote *kn)
-{
-	struct uirda_softc *sc = kn->kn_hook;
-	int s;
-
-	s = splusb();
-	selremove_knote(&sc->sc_wr_sel, kn);
-	splx(s);
-}
-
 static const struct filterops uirdaread_filtops = {
 	.f_flags = FILTEROP_ISFD,
 	.f_attach = NULL,
@@ -647,38 +634,28 @@ static const struct filterops uirdaread_filtops = {
 	.f_event = filt_uirdaread,
 };
 
-static const struct filterops uirdawrite_filtops = {
-	.f_flags = FILTEROP_ISFD,
-	.f_attach = NULL,
-	.f_detach = filt_uirdawdetach,
-	.f_event = filt_seltrue,
-};
-
 int
 uirda_kqfilter(void *h, struct knote *kn)
 {
 	struct uirda_softc *sc = kn->kn_hook;
-	struct selinfo *sip;
 	int s;
 
 	switch (kn->kn_filter) {
 	case EVFILT_READ:
-		sip = &sc->sc_rd_sel;
 		kn->kn_fop = &uirdaread_filtops;
+		kn->kn_hook = sc;
+		s = splusb();
+		selrecord_knote(&sc->sc_rd_sel, kn);
+		splx(s);
 		break;
+
 	case EVFILT_WRITE:
-		sip = &sc->sc_wr_sel;
-		kn->kn_fop = &uirdawrite_filtops;
+		kn->kn_fop = &seltrue_filtops;
 		break;
+
 	default:
 		return EINVAL;
 	}
-
-	kn->kn_hook = sc;
-
-	s = splusb();
-	selrecord_knote(sip, kn);
-	splx(s);
 
 	return 0;
 }
