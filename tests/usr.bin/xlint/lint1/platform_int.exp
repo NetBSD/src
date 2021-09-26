@@ -1,1 +1,1 @@
-platform_int.c(18): warning: argument #1 is converted from 'unsigned char' to 'unsigned int' due to prototype [259]
+platform_int.c(25): warning: argument #1 is converted from 'unsigned char' to 'unsigned int' due to prototype [259]

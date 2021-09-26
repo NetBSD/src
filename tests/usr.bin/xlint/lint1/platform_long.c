@@ -1,4 +1,4 @@
-/*	$NetBSD: platform_long.c,v 1.2 2021/09/26 14:28:22 rillig Exp $	*/
+/*	$NetBSD: platform_long.c,v 1.3 2021/09/26 14:52:37 rillig Exp $	*/
 # 3 "platform_long.c"
 
 /*
@@ -11,10 +11,22 @@
 
 void to_size(typeof(sizeof(int)));
 
+/* See should_warn_about_prototype_conversion. */
 void
 convert_unsigned_char_to_size(unsigned char uc)
 {
-	/* no warning, unlike in platform_int */
+	/*
+	 * In this function call, uc is first promoted to INT. It is then
+	 * converted to size_t, which is ULONG. The portable bit size of INT
+	 * is 24 (see INT_RSIZE in inittyp.c), which is less than the 32 of
+	 * ULONG. Since the portable bit size increases from 24 to 32, there
+	 * is no warning.
+	 *
+	 * XXX: Investigate whether this rule makes sense. Warning 259 is
+	 * about prototype mismatch, not about lossy integer conversions,
+	 * and there is a clear mismatch here between INT and LONG,
+	 * therefore a warning makes sense.
+	 */
 	to_size(uc);
 }
 

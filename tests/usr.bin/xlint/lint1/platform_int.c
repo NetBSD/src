@@ -1,4 +1,4 @@
-/*	$NetBSD: platform_int.c,v 1.2 2021/09/26 14:28:22 rillig Exp $	*/
+/*	$NetBSD: platform_int.c,v 1.3 2021/09/26 14:52:37 rillig Exp $	*/
 # 3 "platform_int.c"
 
 /*
@@ -11,9 +11,16 @@
 
 void to_size(typeof(sizeof(int)));
 
+/* See should_warn_about_prototype_conversion. */
 void
 convert_unsigned_char_to_size(unsigned char uc)
 {
+	/*
+	 * In this function call, uc is first promoted to INT. It is then
+	 * converted to size_t, which is UINT. The portable bit size of INT
+	 * and UINT is the same, 32, but the signedness changes, therefore
+	 * the warning.
+	 */
 	/* expect+1: warning: argument #1 is converted from 'unsigned char' to 'unsigned int' due to prototype [259] */
 	to_size(uc);
 }
