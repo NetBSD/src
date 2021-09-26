@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mcx.c,v 1.20 2021/09/25 15:16:36 jmcneill Exp $ */
+/*	$NetBSD: if_mcx.c,v 1.21 2021/09/26 15:01:55 jmcneill Exp $ */
 /*	$OpenBSD: if_mcx.c,v 1.101 2021/06/02 19:16:11 patrick Exp $ */
 
 /*
@@ -23,7 +23,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mcx.c,v 1.20 2021/09/25 15:16:36 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mcx.c,v 1.21 2021/09/26 15:01:55 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2764,7 +2764,12 @@ mcx_attach(device_t parent, device_t self, void *aux)
 	/* Map the PCI memory space */
 	memtype = pci_mapreg_type(sc->sc_pc, sc->sc_tag, MCX_HCA_BAR);
 	if (pci_mapreg_map(pa, MCX_HCA_BAR, memtype,
-	    0 /*BUS_SPACE_MAP_PREFETCHABLE*/, &sc->sc_memt, &sc->sc_memh,
+#ifdef __NetBSD__
+	    0,
+#else
+	    BUS_SPACE_MAP_PREFETCHABLE,
+#endif
+	    &sc->sc_memt, &sc->sc_memh,
 	    NULL, &sc->sc_mems)) {
 		aprint_error(": unable to map register memory\n");
 		return;
@@ -8206,7 +8211,9 @@ mcx_wr(struct mcx_softc *sc, bus_size_t r, uint32_t v)
 static inline void
 mcx_bar(struct mcx_softc *sc, bus_size_t r, bus_size_t l, int f)
 {
+#ifndef __NetBSD__
 	bus_space_barrier(sc->sc_memt, sc->sc_memh, r, l, f);
+#endif
 }
 
 static uint64_t
