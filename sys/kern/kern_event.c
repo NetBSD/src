@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_event.c,v 1.121 2021/09/26 01:16:10 thorpej Exp $	*/
+/*	$NetBSD: kern_event.c,v 1.122 2021/09/26 03:12:50 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_event.c,v 1.121 2021/09/26 01:16:10 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_event.c,v 1.122 2021/09/26 03:12:50 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -143,6 +143,12 @@ static const struct filterops proc_filtops = {
 	.f_event = filt_proc,
 };
 
+/*
+ * file_filtops is not marked MPSAFE because it's going to call
+ * fileops::fo_kqfilter(), which might not be.  That function,
+ * however, will override the knote's filterops, and thus will
+ * inherit the MPSAFE-ness of the back-end at that time.
+ */
 static const struct filterops file_filtops = {
 	.f_flags = FILTEROP_ISFD,
 	.f_attach = filt_fileattach,
@@ -240,6 +246,69 @@ static size_t		user_kfiltersz;		/* size of allocated memory */
  */
 static krwlock_t	kqueue_filter_lock;	/* lock on filter lists */
 static kmutex_t		kqueue_misc_lock;	/* miscellaneous */
+
+static int
+filter_attach(struct knote *kn)
+{
+	int rv;
+
+	KASSERT(kn->kn_fop != NULL);
+	KASSERT(kn->kn_fop->f_attach != NULL);
+
+	/*
+	 * N.B. that kn->kn_fop may change as the result of calling
+	 * f_attach().
+	 */
+	if (kn->kn_fop->f_flags & FILTEROP_MPSAFE) {
+		rv = kn->kn_fop->f_attach(kn);
+	} else {
+		KERNEL_LOCK(1, NULL);
+		rv = kn->kn_fop->f_attach(kn);
+		KERNEL_UNLOCK_ONE(NULL);
+	}
+
+	return rv;
+}
+
+static void
+filter_detach(struct knote *kn)
+{
+	KASSERT(kn->kn_fop != NULL);
+	KASSERT(kn->kn_fop->f_detach != NULL);
+
+	if (kn->kn_fop->f_flags & FILTEROP_MPSAFE) {
+		kn->kn_fop->f_detach(kn);
+	} else {
+		KERNEL_LOCK(1, NULL);
+		kn->kn_fop->f_detach(kn);
+		KERNEL_UNLOCK_ONE(NULL);
+	}
+}
+
+static int
+filter_event(struct knote *kn, long hint)
+{
+	int rv;
+
+	KASSERT(kn->kn_fop != NULL);
+	KASSERT(kn->kn_fop->f_event != NULL);
+
+	if (kn->kn_fop->f_flags & FILTEROP_MPSAFE) {
+		rv = kn->kn_fop->f_event(kn, hint);
+	} else {
+		KERNEL_LOCK(1, NULL);
+		rv = kn->kn_fop->f_event(kn, hint);
+		KERNEL_UNLOCK_ONE(NULL);
+	}
+
+	return rv;
+}
+
+static void
+filter_touch(struct knote *kn, struct kevent *kev, long type)
+{
+	kn->kn_fop->f_touch(kn, kev, type);
+}
 
 static kauth_listener_t	kqueue_listener;
 
@@ -1233,9 +1302,11 @@ kqueue_register(struct kqueue *kq, struct kevent *kev)
 			}
 			SLIST_INSERT_HEAD(list, kn, kn_link);
 
-			KERNEL_LOCK(1, NULL);		/* XXXSMP */
-			error = (*kfilter->filtops->f_attach)(kn);
-			KERNEL_UNLOCK_ONE(NULL);	/* XXXSMP */
+			/*
+			 * N.B. kn->kn_fop may change as the result
+			 * of filter_attach()!
+			 */
+			error = filter_attach(kn);
 			if (error != 0) {
 #ifdef DEBUG
 				struct proc *p = curlwp->l_proc;
@@ -1277,7 +1348,7 @@ kqueue_register(struct kqueue *kq, struct kevent *kev)
 	if (!(kn->kn_fop->f_flags & FILTEROP_ISFD) &&
 	    kn->kn_fop->f_touch != NULL) {
 		mutex_spin_enter(&kq->kq_lock);
-		(*kn->kn_fop->f_touch)(kn, kev, EVENT_REGISTER);
+		filter_touch(kn, kev, EVENT_REGISTER);
 		mutex_spin_exit(&kq->kq_lock);
 	} else {
 		kn->kn_sfflags = kev->fflags;
@@ -1291,11 +1362,7 @@ kqueue_register(struct kqueue *kq, struct kevent *kev)
 	 * broken and does not return an error.
 	 */
 done_ev_add:
-	KASSERT(kn->kn_fop != NULL);
-	KASSERT(kn->kn_fop->f_event != NULL);
-	KERNEL_LOCK(1, NULL);			/* XXXSMP */
-	rv = (*kn->kn_fop->f_event)(kn, 0);
-	KERNEL_UNLOCK_ONE(NULL);		/* XXXSMP */
+	rv = filter_event(kn, 0);
 	if (rv)
 		knote_activate(kn);
 
@@ -1507,12 +1574,8 @@ relock:
 		}
 		if ((kn->kn_flags & EV_ONESHOT) == 0) {
 			mutex_spin_exit(&kq->kq_lock);
-			KASSERT(kn->kn_fop != NULL);
-			KASSERT(kn->kn_fop->f_event != NULL);
-			KERNEL_LOCK(1, NULL);		/* XXXSMP */
 			KASSERT(mutex_owned(&fdp->fd_lock));
-			rv = (*kn->kn_fop->f_event)(kn, 0);
-			KERNEL_UNLOCK_ONE(NULL);	/* XXXSMP */
+			rv = filter_event(kn, 0);
 			mutex_spin_enter(&kq->kq_lock);
 			/* Re-poll if note was re-enqueued. */
 			if ((kn->kn_status & KN_QUEUED) != 0) {
@@ -1538,7 +1601,7 @@ relock:
 				kn->kn_fop->f_touch != NULL);
 		/* XXXAD should be got from f_event if !oneshot. */
 		if (touch) {
-			(*kn->kn_fop->f_touch)(kn, kevp, EVENT_PROCESS);
+			filter_touch(kn, kevp, EVENT_PROCESS);
 		} else {
 			*kevp = kn->kn_kevent;
 		}
@@ -1872,10 +1935,7 @@ knote_detach(struct knote *kn, filedesc_t *fdp, bool dofop)
 	KASSERT(kn->kn_fop != NULL);
 	/* Remove from monitored object. */
 	if (dofop) {
-		KASSERT(kn->kn_fop->f_detach != NULL);
-		KERNEL_LOCK(1, NULL);		/* XXXSMP */
-		(*kn->kn_fop->f_detach)(kn);
-		KERNEL_UNLOCK_ONE(NULL);	/* XXXSMP */
+		filter_detach(kn);
 	}
 
 	/* Remove from descriptor table. */
