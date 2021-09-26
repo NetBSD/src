@@ -1,4 +1,4 @@
-/*	$NetBSD: io.c,v 1.66 2021/09/25 22:57:04 rillig Exp $	*/
+/*	$NetBSD: io.c,v 1.67 2021/09/26 19:37:11 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)io.c	8.1 (Berkeley) 6/6/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: io.c,v 1.66 2021/09/25 22:57:04 rillig Exp $");
+__RCSID("$NetBSD: io.c,v 1.67 2021/09/26 19:37:11 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/io.c 334927 2018-06-10 16:44:18Z pstef $");
 #endif
@@ -56,7 +56,7 @@ __FBSDID("$FreeBSD: head/usr.bin/indent/io.c 334927 2018-06-10 16:44:18Z pstef $
 #include "indent.h"
 
 static bool comment_open;
-static int  paren_indent;
+static int paren_indent;
 
 static void
 output_char(char ch)
@@ -95,7 +95,7 @@ output_indent(int old_ind, int new_ind)
     }
 
     for (; ind < new_ind; ind++)
-        fputc(' ', output);
+	fputc(' ', output);
 
     debug_println("output_indent %d", ind);
     return ind;
@@ -137,9 +137,9 @@ dump_line(void)
 	    output_char('\n');
 	n_real_blanklines = 0;
 	if (ps.ind_level == 0)
-	    ps.ind_stmt = false;/* this is a class A kludge. don't do
-				 * additional statement indentation if we are
-				 * at bracket level 0 */
+	    ps.ind_stmt = false;	/* this is a class A kludge. don't do
+					 * additional statement indentation if
+					 * we are at bracket level 0 */
 
 	if (lab.e != lab.s || code.e != code.s)
 	    ps.stats.code_lines++;
@@ -155,9 +155,10 @@ dump_line(void)
 	    *lab.e = '\0';
 	    cur_col = 1 + output_indent(0, compute_label_indent());
 	    if (lab.s[0] == '#' && (strncmp(lab.s, "#else", 5) == 0
-				    || strncmp(lab.s, "#endif", 6) == 0)) {
+		    || strncmp(lab.s, "#endif", 6) == 0)) {
 		char *s = lab.s;
-		if (lab.e[-1] == '\n') lab.e--;
+		if (lab.e[-1] == '\n')
+		    lab.e--;
 		do {
 		    output_char(*s++);
 		} while (s < lab.e && 'a' <= *s && *s <= 'z');
@@ -168,13 +169,13 @@ dump_line(void)
 			output_char('\t');
 			output_range(s, lab.e);
 		    } else {
-		        output_string("\t/* ");
+			output_string("\t/* ");
 			output_range(s, lab.e);
 			output_string(" */");
 		    }
 		}
 	    } else
-	        output_range(lab.s, lab.e);
+		output_range(lab.s, lab.e);
 	    cur_col = 1 + indentation_after(cur_col - 1, lab.s);
 	} else
 	    cur_col = 1;	/* there is no label section */
@@ -208,13 +209,13 @@ dump_line(void)
 	    output_range(code.s, code.e);
 	    cur_col = 1 + indentation_after(cur_col - 1, code.s);
 	}
-	if (com.s != com.e) {		/* print comment, if any */
+	if (com.s != com.e) {	/* print comment, if any */
 	    int target_col = ps.com_col;
 	    char *com_st = com.s;
 
 	    target_col += ps.comment_delta;
 	    while (*com_st == '\t')	/* consider original indentation in
-				 * case this is a box comment */
+					 * case this is a box comment */
 		com_st++, target_col += opt.tabsize;
 	    while (target_col <= 0)
 		if (*com_st == ' ')
@@ -225,7 +226,7 @@ dump_line(void)
 		} else
 		    target_col = 1;
 	    if (cur_col > target_col) {	/* if comment can't fit on this line,
-				 * put it on next line */
+					 * put it on next line */
 		output_char('\n');
 		cur_col = 1;
 		ps.stats.lines++;
@@ -255,12 +256,14 @@ dump_line(void)
 	&& token.s < token.e && isspace((unsigned char)token.s[0]))
 	output_range(token.s, token.e);
 
-    ps.decl_on_line = ps.in_decl; /* if we are in the middle of a declaration,
-				 * remember that fact for proper comment
-				 * indentation */
-    ps.ind_stmt = ps.in_stmt && !ps.in_decl; /* next line should be indented if
-				 * we have not completed this stmt and if we
-				 * are not in the middle of a declaration */
+    ps.decl_on_line = ps.in_decl;	/* if we are in the middle of a
+					 * declaration, remember that fact for
+					 * proper comment indentation */
+    ps.ind_stmt = ps.in_stmt && !ps.in_decl;	/* next line should be
+						 * indented if we have not
+						 * completed this stmt and if
+						 * we are not in the middle of
+						 * a declaration */
     ps.use_ff = false;
     ps.dumped_decl_indent = false;
     *(lab.e = lab.s) = '\0';	/* reset buffers */
@@ -269,7 +272,7 @@ dump_line(void)
     ps.ind_level = ps.ind_level_follow;
     ps.paren_level = ps.p_l_follow;
     if (ps.paren_level > 0) {
-        /* TODO: explain what negative indentation means */
+	/* TODO: explain what negative indentation means */
 	paren_indent = -ps.paren_indents[ps.paren_level - 1];
 	debug_println("paren_indent is now %d", paren_indent);
     }
@@ -315,9 +318,9 @@ int
 compute_label_indent(void)
 {
     if (ps.pcase)
-	return (int) (case_ind * opt.indent_size);
+	return (int)(case_ind * opt.indent_size);
     if (lab.s[0] == '#')
-        return 0;
+	return 0;
     return opt.indent_size * (ps.ind_level - label_offset);
 }
 
@@ -344,7 +347,7 @@ parse_indent_comment(void)
     skip_hspace(&p);
 
     if (!(p[0] == 'I' && p[1] == 'N' && p[2] == 'D'
-	  && p[3] == 'E' && p[4] == 'N' && p[5] == 'T'))
+	    && p[3] == 'E' && p[4] == 'N' && p[5] == 'T'))
 	return;
     p += 6;
 
@@ -386,7 +389,8 @@ parse_indent_comment(void)
  */
 void
 fill_buffer(void)
-{				/* this routine reads stuff from the input */
+{
+    /* this routine reads stuff from the input */
     char *p;
     int i;
     FILE *f = input;

@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.26 2021/09/25 20:56:53 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.27 2021/09/26 19:37:11 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -58,7 +58,7 @@ static void reduce(void);
 void
 parse(token_type ttype)
 {
-    int         i;
+    int i;
 
 #ifdef debug
     printf("parse token: '%s' \"%s\"\n", token_type_name(ttype), token.s);
@@ -85,8 +85,8 @@ parse(token_type ttype)
 	    ps.p_stack[++ps.tos] = decl;
 	    ps.il[ps.tos] = ps.ind_level_follow;
 
-	    if (opt.ljust_decl) {/* only do if we want left justified
-				 * declarations */
+	    if (opt.ljust_decl) {	/* only do if we want left justified
+					 * declarations */
 		ps.ind_level = 0;
 		for (i = ps.tos - 1; i > 0; --i)
 		    if (ps.p_stack[i] == decl)
@@ -101,8 +101,8 @@ parse(token_type ttype)
 	if (ps.p_stack[ps.tos] == if_expr_stmt_else && opt.else_if) {
 	    /*
 	     * Note that the stack pointer here is decremented, effectively
-	     * reducing "else if" to "if". This saves a lot of stack space
-	     * in case of a long "if-else-if ... else-if" sequence.
+	     * reducing "else if" to "if". This saves a lot of stack space in
+	     * case of a long "if-else-if ... else-if" sequence.
 	     */
 	    ps.ind_level_follow = ps.il[ps.tos--];
 	}
@@ -167,8 +167,9 @@ parse(token_type ttype)
 	else {
 	    ps.ind_level = ps.il[ps.tos];	/* indentation for else should
 						 * be same as for if */
-	    ps.ind_level_follow = ps.ind_level + 1; /* everything following
-				 * should be 1 level deeper */
+	    ps.ind_level_follow = ps.ind_level + 1;	/* everything following
+							 * should be 1 level
+							 * deeper */
 	    ps.p_stack[ps.tos] = if_expr_stmt_else;
 	    /* remember if with else */
 	    ps.search_brace = opt.btype_2 | opt.else_if;
@@ -220,7 +221,7 @@ parse(token_type ttype)
     for (i = 1; i <= ps.tos; ++i)
 	printf(" ('%s' at %d)", token_type_name(ps.p_stack[i]), ps.il[i]);
     if (ps.tos == 0)
-        printf(" empty");
+	printf(" empty");
     printf("\n");
 #endif
 }
@@ -238,17 +239,17 @@ reduce_stmt(void)
 {
     switch (ps.p_stack[ps.tos - 1]) {
 
-    case stmt:		/* stmt stmt */
-    case stmt_list:	/* stmt_list stmt */
+    case stmt:			/* stmt stmt */
+    case stmt_list:		/* stmt_list stmt */
 	ps.p_stack[--ps.tos] = stmt_list;
 	return true;
 
-    case keyword_do:	/* 'do' <stmt> */
+    case keyword_do:		/* 'do' <stmt> */
 	ps.p_stack[--ps.tos] = do_stmt;
 	ps.ind_level_follow = ps.il[ps.tos];
 	return true;
 
-    case if_expr:	/* 'if' '(' <expr> ')' <stmt> */
+    case if_expr:		/* 'if' '(' <expr> ')' <stmt> */
 	ps.p_stack[--ps.tos] = if_expr_stmt;
 	int i = ps.tos - 1;
 	while (ps.p_stack[i] != stmt &&
@@ -257,24 +258,24 @@ reduce_stmt(void)
 	    --i;
 	ps.ind_level_follow = ps.il[i];
 	/*
-	 * for the time being, we will assume that there is no else on
-	 * this if, and set the indentation level accordingly. If an
-	 * else is scanned, it will be fixed up later
+	 * for the time being, we will assume that there is no else on this
+	 * if, and set the indentation level accordingly. If an else is
+	 * scanned, it will be fixed up later
 	 */
 	return true;
 
-    case switch_expr:	/* 'switch' '(' <expr> ')' <stmt> */
+    case switch_expr:		/* 'switch' '(' <expr> ')' <stmt> */
 	case_ind = ps.cstk[ps.tos - 1];
 	/* FALLTHROUGH */
-    case decl:		/* finish of a declaration */
-    case if_expr_stmt_else: /* 'if' '(' <expr> ')' <stmt> 'else' <stmt> */
-    case for_exprs:	/* 'for' '(' ... ')' <stmt> */
-    case while_expr:	/* 'while' '(' <expr> ')' <stmt> */
+    case decl:			/* finish of a declaration */
+    case if_expr_stmt_else:	/* 'if' '(' <expr> ')' <stmt> 'else' <stmt> */
+    case for_exprs:		/* 'for' '(' ... ')' <stmt> */
+    case while_expr:		/* 'while' '(' <expr> ')' <stmt> */
 	ps.p_stack[--ps.tos] = stmt;
 	ps.ind_level_follow = ps.il[ps.tos];
 	return true;
 
-    default:		/* <anything else> <stmt> */
+    default:			/* <anything else> <stmt> */
 	return false;
     }
 }

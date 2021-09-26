@@ -1,4 +1,4 @@
-/*	$NetBSD: pr_comment.c,v 1.46 2021/09/25 22:14:21 rillig Exp $	*/
+/*	$NetBSD: pr_comment.c,v 1.47 2021/09/26 19:37:11 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)pr_comment.c	8.1 (Berkeley) 6/6/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: pr_comment.c,v 1.46 2021/09/25 22:14:21 rillig Exp $");
+__RCSID("$NetBSD: pr_comment.c,v 1.47 2021/09/26 19:37:11 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/pr_comment.c 334927 2018-06-10 16:44:18Z pstef $");
 #endif
@@ -81,19 +81,19 @@ check_size_comment(size_t desired_size)
 void
 process_comment(void)
 {
-    int         adj_max_line_length; /* Adjusted max_line_length for comments
-				 * that spill over the right margin */
+    int adj_max_line_length;	/* Adjusted max_line_length for comments that
+				 * spill over the right margin */
     ssize_t last_blank;		/* index of the last blank in com.buf */
-    char       *t_ptr;		/* used for moving string */
+    char *t_ptr;		/* used for moving string */
     bool break_delim = opt.comment_delimiter_on_blankline;
-    int         l_just_saw_decl = ps.just_saw_decl;
+    int l_just_saw_decl = ps.just_saw_decl;
 
     adj_max_line_length = opt.max_line_length;
     ps.just_saw_decl = 0;
     last_blank = -1;		/* no blanks found so far */
-    ps.box_com = false;		/* at first, assume that we are not in
-				 * a boxed comment or some other
-				 * comment that should not be touched */
+    ps.box_com = false;		/* at first, assume that we are not in a boxed
+				 * comment or some other comment that should
+				 * not be touched */
     ps.stats.comments++;
 
     /* Figure where to align and how to treat the comment */
@@ -109,10 +109,10 @@ process_comment(void)
 	    ps.box_com = true;	/* A comment with a '-' or '*' immediately
 				 * after the /+* is assumed to be a boxed
 				 * comment. A comment with a newline
-				 * immediately after the /+* is assumed to
-				 * be a block comment and is treated as a
-				 * box comment unless format_block_comments
-				 * is nonzero (the default). */
+				 * immediately after the /+* is assumed to be
+				 * a block comment and is treated as a box
+				 * comment unless format_block_comments is
+				 * nonzero (the default). */
 	    break_delim = false;
 	}
 	if (lab.s == lab.e && code.s == code.e) {
@@ -136,7 +136,7 @@ process_comment(void)
 	    if (ps.com_col <= target_col)
 		ps.com_col = opt.tabsize * (1 + (target_col - 1) / opt.tabsize) + 1;
 	    if (ps.com_col + 24 > adj_max_line_length)
-	        /* XXX: mismatch between column and length */
+		/* XXX: mismatch between column and length */
 		adj_max_line_length = ps.com_col + 24;
 	}
     }
@@ -177,11 +177,11 @@ process_comment(void)
 	    if (t_ptr >= buf_end)
 		fill_buffer();
 	    if (t_ptr[0] == '*' && t_ptr[1] == '/') {
-	        /*
-	         * XXX: This computation ignores the leading " * ", as well
-	         * as the trailing ' ' '*' '/'.  In simple cases, these cancel
-	         * out since they are equally long.
-	         */
+		/*
+		 * XXX: This computation ignores the leading " * ", as well as
+		 * the trailing ' ' '*' '/'.  In simple cases, these cancel
+		 * out since they are equally long.
+		 */
 		int right_margin = indentation_after_range(ps.com_col - 1,
 		    buf_ptr, t_ptr + 2);
 		if (right_margin < adj_max_line_length)
@@ -191,7 +191,7 @@ process_comment(void)
 	}
 
     if (break_delim) {
-	char       *t = com.e;
+	char *t = com.e;
 	com.e = com.s + 2;
 	*com.e = 0;
 	if (opt.blanklines_before_blockcomments && ps.last_token != lbrace)
@@ -257,7 +257,7 @@ process_comment(void)
 	    }
 	    ++line_no;		/* keep track of input line number */
 	    if (!ps.box_com) {
-		int         nstar = 1;
+		int nstar = 1;
 		do {		/* flush any blanks and/or tabs at start of
 				 * next line */
 		    if (++buf_ptr >= buf_end)
@@ -309,7 +309,8 @@ process_comment(void)
 		if (buf_ptr >= buf_end)
 		    fill_buffer();
 		if (*com.e == ' ' || *com.e == '\t')
-		    last_blank = com.e - com.buf; /* remember we saw a blank */
+		    last_blank = com.e - com.buf;	/* remember we saw a
+							 * blank */
 		++com.e;
 		now_len++;
 	    } while (memchr("*\n\r\b\t", *buf_ptr, 6) == NULL &&
@@ -338,8 +339,8 @@ process_comment(void)
 		last_blank = -1;
 		/*
 		 * t_ptr will be somewhere between com.e (dump_line() reset)
-		 * and com.l. So it's safe to copy byte by byte from t_ptr
-		 * to com.e without any check_size_comment().
+		 * and com.l. So it's safe to copy byte by byte from t_ptr to
+		 * com.e without any check_size_comment().
 		 */
 		while (*t_ptr != '\0') {
 		    if (*t_ptr == ' ' || *t_ptr == '\t')

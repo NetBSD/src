@@ -1,4 +1,4 @@
-/*	$NetBSD: lexi.c,v 1.58 2021/09/25 22:14:21 rillig Exp $	*/
+/*	$NetBSD: lexi.c,v 1.59 2021/09/26 19:37:11 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)lexi.c	8.1 (Berkeley) 6/6/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: lexi.c,v 1.58 2021/09/25 22:14:21 rillig Exp $");
+__RCSID("$NetBSD: lexi.c,v 1.59 2021/09/26 19:37:11 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/lexi.c 337862 2018-08-15 18:19:45Z pstef $");
 #endif
@@ -115,8 +115,8 @@ const struct templ specials[] =
 };
 
 const char **typenames;
-int         typename_count;
-int         typename_top = -1;
+int typename_count;
+int typename_top = -1;
 
 /*
  * The transition table below was rewritten by hand from lx's output, given
@@ -337,19 +337,19 @@ static bool
 probably_typedef(const struct parser_state *state)
 {
     return state->p_l_follow == 0 && !state->block_init && !state->in_stmt &&
-	   ((*buf_ptr == '*' && buf_ptr[1] != '=') ||
-	    isalpha((unsigned char)*buf_ptr)) &&
-	   (state->last_token == semicolon || state->last_token == lbrace ||
-	    state->last_token == rbrace);
+	((*buf_ptr == '*' && buf_ptr[1] != '=') ||
+	isalpha((unsigned char)*buf_ptr)) &&
+	(state->last_token == semicolon || state->last_token == lbrace ||
+	state->last_token == rbrace);
 }
 
 /* Reads the next token, placing it in the global variable "token". */
 token_type
 lexi(struct parser_state *state)
 {
-    bool unary_delim;		/* whether the current token
-				 * forces a following operator to be unary */
-    token_type  ttype;
+    bool unary_delim;		/* whether the current token forces a
+				 * following operator to be unary */
+    token_type ttype;
 
     token.e = token.s;		/* point to start of place to save token */
     unary_delim = false;
@@ -382,7 +382,7 @@ lexi(struct parser_state *state)
 	*token.e = '\0';
 
 	if (token.s[0] == 'L' && token.s[1] == '\0' &&
-	      (*buf_ptr == '"' || *buf_ptr == '\''))
+	    (*buf_ptr == '"' || *buf_ptr == '\''))
 	    return lexi_end(string_prefix);
 
 	while (*buf_ptr == ' ' || *buf_ptr == '\t')	/* get rid of blanks */
@@ -390,8 +390,10 @@ lexi(struct parser_state *state)
 	state->keyword = rw_0;
 	if (state->last_token == keyword_struct_union_enum &&
 	    state->p_l_follow == 0) {
-	    /* if last token was 'struct' and we're not in parentheses, then
-	     * this token should be treated as a declaration */
+	    /*
+	     * if last token was 'struct' and we're not in parentheses, then
+	     * this token should be treated as a declaration
+	     */
 	    state->last_u_d = true;
 	    return lexi_end(decl);
 	}
@@ -407,14 +409,14 @@ lexi(struct parser_state *state)
 
 	    /* ... so maybe a type_t or a typedef */
 	    if ((opt.auto_typedefs && ((u = strrchr(token.s, '_')) != NULL) &&
-	        strcmp(u, "_t") == 0) || (typename_top >= 0 &&
-		  bsearch(token.s, typenames, (size_t)typename_top + 1,
-		    sizeof typenames[0], compare_string_array) != NULL)) {
+		    strcmp(u, "_t") == 0) || (typename_top >= 0 &&
+		    bsearch(token.s, typenames, (size_t)typename_top + 1,
+			sizeof typenames[0], compare_string_array) != NULL)) {
 		state->keyword = rw_type;
 		state->last_u_d = true;
-	        goto found_typename;
+		goto found_typename;
 	    }
-	} else {			/* we have a keyword */
+	} else {		/* we have a keyword */
 	    state->keyword = p->rwcode;
 	    state->last_u_d = true;
 	    switch (p->rwcode) {
@@ -475,7 +477,7 @@ lexi(struct parser_state *state)
 	if (state->last_token == decl)	/* if this is a declared variable,
 					 * then following sign is unary */
 	    state->last_u_d = true;	/* will make "int a -1" work */
-	return lexi_end(ident);		/* the ident is not in the list */
+	return lexi_end(ident);	/* the ident is not in the list */
     }				/* end of procesing for alpanum character */
 
     /* Scan a non-alphanumeric token */

@@ -1,4 +1,4 @@
-/*	$NetBSD: args.c,v 1.32 2021/09/26 00:57:28 rillig Exp $	*/
+/*	$NetBSD: args.c,v 1.33 2021/09/26 19:37:11 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)args.c	8.1 (Berkeley) 6/6/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: args.c,v 1.32 2021/09/26 00:57:28 rillig Exp $");
+__RCSID("$NetBSD: args.c,v 1.33 2021/09/26 19:37:11 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/args.c 336318 2018-07-15 21:04:21Z pstef $");
 #endif
@@ -87,11 +87,11 @@ static const char *option_source = "?";
  * See also set_special_option.
  */
 static const struct pro {
-    const char  p_name[6];	/* name, e.g. "bl", "cli" */
-    bool	p_is_bool;
-    bool	p_bool_value;
-    void        *p_obj;		/* the associated variable (bool, int) */
-}           pro[] = {
+    const char p_name[6];	/* name, e.g. "bl", "cli" */
+    bool p_is_bool;
+    bool p_bool_value;
+    void *p_obj;		/* the associated variable (bool, int) */
+}   pro[] = {
     bool_option("bacc", true, opt.blanklines_around_conditional_compilation),
     bool_option("badp", true, opt.blanklines_after_declarations_at_proctop),
     bool_option("bad", true, opt.blanklines_after_declarations),
@@ -174,11 +174,11 @@ set_profile(const char *profile_name)
 	snprintf(fname, sizeof(fname), "%s", profile_name + 2);
     if ((f = fopen(option_source = fname, "r")) != NULL) {
 	scan_profile(f);
-	(void) fclose(f);
+	(void)fclose(f);
     }
     if ((f = fopen(option_source = prof, "r")) != NULL) {
 	scan_profile(f);
-	(void) fclose(f);
+	(void)fclose(f);
     }
     option_source = "Command line";
 }
@@ -186,9 +186,9 @@ set_profile(const char *profile_name)
 static void
 scan_profile(FILE *f)
 {
-    int		comment_index, i;
-    char	*p;
-    char        buf[BUFSIZ];
+    int comment_index, i;
+    char *p;
+    char buf[BUFSIZ];
 
     for (;;) {
 	p = buf;
@@ -235,7 +235,7 @@ set_special_option(const char *arg)
     if (strncmp(arg, "-version", 8) == 0) {
 	printf("FreeBSD indent %s\n", INDENT_VERSION);
 	exit(0);
-	/*NOTREACHED*/
+	/* NOTREACHED */
     }
 
     if (arg[0] == 'P' || strncmp(arg, "npro", 4) == 0)
@@ -285,7 +285,7 @@ void
 set_option(const char *arg)
 {
     const struct pro *p;
-    const char	*param_start;
+    const char *param_start;
 
     arg++;			/* ignore leading "-" */
     if (set_special_option(arg))
