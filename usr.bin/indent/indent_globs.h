@@ -1,4 +1,4 @@
-/*	$NetBSD: indent_globs.h,v 1.39 2021/09/26 21:23:31 rillig Exp $	*/
+/*	$NetBSD: indent_globs.h,v 1.40 2021/09/26 21:32:58 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -100,9 +100,9 @@ extern struct options {
     bool	cuddle_else;	/* whether 'else' should cuddle up to '}' */
     int         continuation_indent; /* the indentation between the
 				 * edge of code and continuation lines */
-    float       case_indent;	/* The distance (measured in tabsize) to
-				 * indent case labels from the switch
-				 * statement */
+    float       case_indent;	/* The distance (measured in indentation
+				 * levels) to indent case labels from the
+				 * switch statement */
     int         comment_column;	/* the column in which comments to the right
 				 * of code should start */
     int         decl_indent;	/* indentation of identifier in declaration */
