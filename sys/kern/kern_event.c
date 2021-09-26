@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_event.c,v 1.122 2021/09/26 03:12:50 thorpej Exp $	*/
+/*	$NetBSD: kern_event.c,v 1.123 2021/09/26 18:13:58 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_event.c,v 1.122 2021/09/26 03:12:50 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_event.c,v 1.123 2021/09/26 18:13:58 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -130,7 +130,7 @@ static const struct fileops kqueueops = {
 };
 
 static const struct filterops kqread_filtops = {
-	.f_flags = FILTEROP_ISFD,
+	.f_flags = FILTEROP_ISFD | FILTEROP_MPSAFE,
 	.f_attach = NULL,
 	.f_detach = filt_kqdetach,
 	.f_event = filt_kqueue,
@@ -171,7 +171,7 @@ static const struct filterops fs_filtops = {
 };
 
 static const struct filterops user_filtops = {
-	.f_flags = 0,
+	.f_flags = FILTEROP_MPSAFE,
 	.f_attach = filt_userattach,
 	.f_detach = filt_userdetach,
 	.f_event = filt_user,
@@ -990,7 +990,7 @@ filt_seltruedetach(struct knote *kn)
 }
 
 const struct filterops seltrue_filtops = {
-	.f_flags = FILTEROP_ISFD,
+	.f_flags = FILTEROP_ISFD | FILTEROP_MPSAFE,
 	.f_attach = NULL,
 	.f_detach = filt_seltruedetach,
 	.f_event = filt_seltrue,
