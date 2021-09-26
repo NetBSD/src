@@ -1,4 +1,4 @@
-/*	$NetBSD: lexi.c,v 1.60 2021/09/26 21:05:48 rillig Exp $	*/
+/*	$NetBSD: lexi.c,v 1.61 2021/09/26 21:23:31 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)lexi.c	8.1 (Berkeley) 6/6/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: lexi.c,v 1.60 2021/09/26 21:05:48 rillig Exp $");
+__RCSID("$NetBSD: lexi.c,v 1.61 2021/09/26 21:23:31 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/lexi.c 337862 2018-08-15 18:19:45Z pstef $");
 #endif
@@ -108,9 +108,9 @@ static const struct special {
     {"while", rw_for_or_if_or_while}
 };
 
-const char **typenames;
-int typename_count;
-int typename_top = -1;
+static const char **typenames;
+static int typename_count;
+static int typename_top = -1;
 
 /*
  * The transition table below was rewritten by hand from lx's output, given
