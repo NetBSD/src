@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.c,v 1.87 2021/09/26 19:57:23 rillig Exp $	*/
+/*	$NetBSD: indent.c,v 1.88 2021/09/26 21:23:31 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)indent.c	5.17 (Berkeley) 6/7/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: indent.c,v 1.87 2021/09/26 19:57:23 rillig Exp $");
+__RCSID("$NetBSD: indent.c,v 1.88 2021/09/26 21:23:31 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/indent.c 340138 2018-11-04 19:24:49Z oshogbo $");
 #endif
@@ -99,7 +99,7 @@ char *buf_end;
 
 char sc_buf[sc_size];
 char *save_com;
-char *sc_end;
+static char *sc_end;		/* pointer into save_com buffer */
 
 char *bp_save;
 char *be_save;
@@ -113,11 +113,9 @@ float case_ind;
 bool had_eof;
 int line_no;
 bool inhibit_formatting;
-int suppress_blanklines;
 
-int ifdef_level;
-struct parser_state state_stack[5];
-struct parser_state match_state[5];
+static int ifdef_level;
+static struct parser_state state_stack[5];
 
 FILE *input;
 FILE *output;
@@ -125,13 +123,10 @@ FILE *output;
 static void bakcopy(void);
 static void indent_declaration(int, bool);
 
-const char *in_name = "Standard Input";	/* will always point to name of input
-					 * file */
-const char *out_name = "Standard Output";	/* will always point to name
-						 * of output file */
-const char *simple_backup_suffix = ".BAK";	/* Suffix to use for backup
-						 * files */
-char bakfile[MAXPATHLEN] = "";
+static const char *in_name = "Standard Input";
+static const char *out_name = "Standard Output";
+static const char *backup_suffix = ".BAK";
+static char bakfile[MAXPATHLEN] = "";
 
 static void
 check_size_code(size_t desired_size)
@@ -404,7 +399,7 @@ main_init_globals(void)
 
     const char *suffix = getenv("SIMPLE_BACKUP_SUFFIX");
     if (suffix != NULL)
-	simple_backup_suffix = suffix;
+	backup_suffix = suffix;
 }
 
 static void
@@ -1150,18 +1145,15 @@ process_preprocessing(void)
     }
 
     if (strncmp(lab.s, "#if", 3) == 0) {	/* also ifdef, ifndef */
-	if ((size_t)ifdef_level < nitems(state_stack)) {
-	    match_state[ifdef_level].tos = -1;
+	if ((size_t)ifdef_level < nitems(state_stack))
 	    state_stack[ifdef_level++] = ps;
-	} else
+	else
 	    diag(1, "#if stack overflow");
     } else if (strncmp(lab.s, "#el", 3) == 0) {	/* else, elif */
 	if (ifdef_level <= 0)
 	    diag(1, lab.s[3] == 'i' ? "Unmatched #elif" : "Unmatched #else");
-	else {
-	    match_state[ifdef_level - 1] = ps;
+	else
 	    ps = state_stack[ifdef_level - 1];
-	}
     } else if (strncmp(lab.s, "#endif", 6) == 0) {
 	if (ifdef_level <= 0)
 	    diag(1, "Unmatched #endif");
@@ -1418,7 +1410,7 @@ bakcopy(void)
 	p--;
     if (*p == '/')
 	p++;
-    sprintf(bakfile, "%s%s", p, simple_backup_suffix);
+    sprintf(bakfile, "%s%s", p, backup_suffix);
 
     /* copy in_name to backup file */
     bakchn = creat(bakfile, 0600);
