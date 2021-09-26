@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_event.c,v 1.124 2021/09/26 21:29:38 thorpej Exp $	*/
+/*	$NetBSD: kern_event.c,v 1.125 2021/09/26 23:34:46 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_event.c,v 1.124 2021/09/26 21:29:38 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_event.c,v 1.125 2021/09/26 23:34:46 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -154,7 +154,7 @@ static const struct filterops file_filtops = {
 };
 
 static const struct filterops timer_filtops = {
-	.f_flags = 0,
+	.f_flags = FILTEROP_MPSAFE,
 	.f_attach = filt_timerattach,
 	.f_detach = filt_timerdetach,
 	.f_event = filt_timer,
@@ -222,7 +222,7 @@ static size_t		user_kfiltersz;		/* size of allocated memory */
  *
  *	kqueue_filter_lock
  *	-> kn_kq->kq_fdp->fd_lock
- *	-> object lock (e.g., device driver lock, kqueue_misc_lock, &c.)
+ *	-> object lock (e.g., device driver lock, &c.)
  *	-> kn_kq->kq_lock
  *
  * Locking rules:
@@ -236,7 +236,7 @@ static size_t		user_kfiltersz;		/* size of allocated memory */
  *					acquires/releases object lock inside.
  */
 static krwlock_t	kqueue_filter_lock;	/* lock on filter lists */
-static kmutex_t		kqueue_misc_lock;	/* miscellaneous */
+static kmutex_t		kqueue_timer_lock;	/* for EVFILT_TIMER */
 
 static int
 filter_attach(struct knote *kn)
@@ -333,7 +333,7 @@ kqueue_init(void)
 {
 
 	rw_init(&kqueue_filter_lock);
-	mutex_init(&kqueue_misc_lock, MUTEX_DEFAULT, IPL_NONE);
+	mutex_init(&kqueue_timer_lock, MUTEX_DEFAULT, IPL_SOFTCLOCK);
 
 	kqueue_listener = kauth_listen_scope(KAUTH_SCOPE_PROCESS,
 	    kqueue_listener_cb, NULL);
@@ -735,7 +735,7 @@ filt_timerexpire(void *knx)
 	struct knote *kn = knx;
 	int tticks;
 
-	mutex_enter(&kqueue_misc_lock);
+	mutex_enter(&kqueue_timer_lock);
 	kn->kn_data++;
 	knote_activate(kn);
 	if ((kn->kn_flags & EV_ONESHOT) == 0) {
@@ -744,7 +744,7 @@ filt_timerexpire(void *knx)
 			tticks = 1;
 		callout_schedule((callout_t *)kn->kn_hook, tticks);
 	}
-	mutex_exit(&kqueue_misc_lock);
+	mutex_exit(&kqueue_timer_lock);
 }
 
 /*
@@ -790,13 +790,27 @@ filt_timerdetach(struct knote *kn)
 	callout_t *calloutp;
 	struct kqueue *kq = kn->kn_kq;
 
+	/*
+	 * We don't need to hold the kqueue_timer_lock here; even
+	 * if filt_timerexpire() misses our setting of EV_ONESHOT,
+	 * we are guaranteed that the callout will no longer be
+	 * scheduled even if we attempted to halt it after it already
+	 * started running, even if it rescheduled itself.
+	 */
+
 	mutex_spin_enter(&kq->kq_lock);
 	/* prevent rescheduling when we expire */
 	kn->kn_flags |= EV_ONESHOT;
 	mutex_spin_exit(&kq->kq_lock);
 
 	calloutp = (callout_t *)kn->kn_hook;
+
+	/*
+	 * Attempt to stop the callout.  This will block if it's
+	 * already running.
+	 */
 	callout_halt(calloutp, NULL);
+
 	callout_destroy(calloutp);
 	kmem_free(calloutp, sizeof(*calloutp));
 	atomic_dec_uint(&kq_ncallouts);
@@ -807,9 +821,9 @@ filt_timer(struct knote *kn, long hint)
 {
 	int rv;
 
-	mutex_enter(&kqueue_misc_lock);
+	mutex_enter(&kqueue_timer_lock);
 	rv = (kn->kn_data != 0);
-	mutex_exit(&kqueue_misc_lock);
+	mutex_exit(&kqueue_timer_lock);
 
 	return rv;
 }
