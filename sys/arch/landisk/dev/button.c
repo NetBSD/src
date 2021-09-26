@@ -1,4 +1,4 @@
-/*	$NetBSD: button.c,v 1.12 2021/09/26 01:16:07 thorpej Exp $	*/
+/*	$NetBSD: button.c,v 1.13 2021/09/26 14:32:02 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: button.c,v 1.12 2021/09/26 01:16:07 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: button.c,v 1.13 2021/09/26 14:32:02 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -312,13 +312,6 @@ static const struct filterops btn_read_filtops = {
     .f_event = filt_btn_read,
 };
 
-static const struct filterops btn_write_filtops = {
-    .f_flags = FILTEROP_ISFD,
-    .f_attach = NULL,
-    .f_detach = filt_btn_rdetach,
-    .f_event = filt_seltrue,
-};
-
 int
 btnkqfilter(dev_t dev, struct knote *kn)
 {
@@ -330,19 +323,18 @@ btnkqfilter(dev_t dev, struct knote *kn)
 	switch (kn->kn_filter) {
 	case EVFILT_READ:
 		kn->kn_fop = &btn_read_filtops;
+		mutex_enter(&btn_event_queue_lock);
+		selrecord_knote(&btn_event_queue_selinfo, kn);
+		mutex_exit(&btn_event_queue_lock);
 		break;
 
 	case EVFILT_WRITE:
-		kn->kn_fop = &btn_write_filtops;
+		kn->kn_fop = &seltrue_filtops;
 		break;
 
 	default:
 		return (1);
 	}
-
-	mutex_enter(&btn_event_queue_lock);
-	selrecord_knote(&btn_event_queue_selinfo, kn);
-	mutex_exit(&btn_event_queue_lock);
 
 	return (0);
 }
