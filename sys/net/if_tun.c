@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tun.c,v 1.163 2021/09/26 01:16:10 thorpej Exp $	*/
+/*	$NetBSD: if_tun.c,v 1.164 2021/09/26 15:58:33 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988, Julian Onions <jpo@cs.nott.ac.uk>
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tun.c,v 1.163 2021/09/26 01:16:10 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tun.c,v 1.164 2021/09/26 15:58:33 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1088,13 +1088,6 @@ static const struct filterops tunread_filtops = {
 	.f_event = filt_tunread,
 };
 
-static const struct filterops tun_seltrue_filtops = {
-	.f_flags = FILTEROP_ISFD,
-	.f_attach = NULL,
-	.f_detach = filt_tunrdetach,
-	.f_event = filt_seltrue,
-};
-
 int
 tunkqfilter(dev_t dev, struct knote *kn)
 {
@@ -1108,20 +1101,18 @@ tunkqfilter(dev_t dev, struct knote *kn)
 	switch (kn->kn_filter) {
 	case EVFILT_READ:
 		kn->kn_fop = &tunread_filtops;
+		kn->kn_hook = tp;
+		selrecord_knote(&tp->tun_rsel, kn);
 		break;
 
 	case EVFILT_WRITE:
-		kn->kn_fop = &tun_seltrue_filtops;
+		kn->kn_fop = &seltrue_filtops;
 		break;
 
 	default:
 		rv = EINVAL;
 		goto out;
 	}
-
-	kn->kn_hook = tp;
-
-	selrecord_knote(&tp->tun_rsel, kn);
 
 out:
 	mutex_exit(&tp->tun_lock);
