@@ -1,4 +1,4 @@
-/*	$NetBSD: args.c,v 1.36 2021/09/26 20:21:47 rillig Exp $	*/
+/*	$NetBSD: args.c,v 1.37 2021/09/26 20:43:44 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)args.c	8.1 (Berkeley) 6/6/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: args.c,v 1.36 2021/09/26 20:21:47 rillig Exp $");
+__RCSID("$NetBSD: args.c,v 1.37 2021/09/26 20:43:44 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/args.c 336318 2018-07-15 21:04:21Z pstef $");
 #endif
@@ -75,12 +75,11 @@ static const char *option_source = "?";
 #define assert_type(expr, type) (expr)
 #endif
 #define bool_option(name, value, var) \
-	{name, true, value, assert_type(&(var), bool *)}
+	{name, true, value, false, assert_type(&(var), bool *)}
 #define int_option(name, var) \
-	{name, false, false, assert_type(&(var), int *)}
+	{name, false, false, false, assert_type(&(var), int *)}
 #define bool_options(name, var) \
-	bool_option(name, true, var), \
-	bool_option("n" name, false, var)
+	{name, true, false, true, assert_type(&(var), bool *)}
 
 /*
  * N.B.: an option whose name is a prefix of another option must come earlier;
@@ -89,9 +88,10 @@ static const char *option_source = "?";
  * See set_special_option for special options.
  */
 static const struct pro {
-    const char p_name[6];	/* name, e.g. "bl", "cli" */
+    const char p_name[5];	/* name, e.g. "bl", "cli" */
     bool p_is_bool;
     bool p_bool_value;
+    bool p_may_negate;
     void *p_obj;		/* the associated variable (bool, int) */
 }   pro[] = {
     bool_options("bacc", opt.blanklines_around_conditional_compilation),
@@ -201,8 +201,10 @@ scan_profile(FILE *f)
 }
 
 static const char *
-skip_over(const char *s, const char *prefix)
+skip_over(const char *s, bool may_negate, const char *prefix)
 {
+    if (may_negate && s[0] == 'n')
+	s++;
     while (*prefix != '\0') {
 	if (*prefix++ != *s++)
 	    return NULL;
@@ -274,15 +276,16 @@ set_option(const char *arg)
     if (set_special_option(arg))
 	return;
 
-    for (p = pro + nitems(pro); p-- != pro; )
-	if (p->p_name[0] == arg[0])
-	    if ((param_start = skip_over(arg, p->p_name)) != NULL)
-		goto found;
+    for (p = pro + nitems(pro); p-- != pro;) {
+	param_start = skip_over(arg, p->p_may_negate, p->p_name);
+	if (param_start != NULL)
+	    goto found;
+    }
     errx(1, "%s: unknown parameter \"%s\"", option_source, arg - 1);
 
 found:
     if (p->p_is_bool)
-	*(bool *)p->p_obj = p->p_bool_value;
+	*(bool *)p->p_obj = p->p_may_negate ? arg[0] != 'n' : p->p_bool_value;
     else {
 	if (!isdigit((unsigned char)*param_start))
 	    errx(1, "%s: ``%s'' requires a parameter",
