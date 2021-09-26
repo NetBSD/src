@@ -1,4 +1,4 @@
-/*	$NetBSD: event.c,v 1.16 2021/09/26 01:16:07 thorpej Exp $	*/
+/*	$NetBSD: event.c,v 1.17 2021/09/26 16:36:18 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: event.c,v 1.16 2021/09/26 01:16:07 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: event.c,v 1.17 2021/09/26 16:36:18 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/fcntl.h>
@@ -208,7 +208,7 @@ ev_kqfilter(struct evvar *ev, struct knote *kn)
 		break;
 
 	default:
-		return (1);
+		return (EINVAL);
 	}
 
 	kn->kn_hook = ev;
