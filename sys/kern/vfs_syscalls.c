@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.552 2021/09/11 10:08:55 riastradh Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.553 2021/09/26 21:29:38 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009, 2019, 2020 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.552 2021/09/11 10:08:55 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.553 2021/09/26 21:29:38 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_fileassoc.h"
@@ -164,6 +164,63 @@ const char * const mountcompatnames[] = {
 };
 
 const u_int nmountcompatnames = __arraycount(mountcompatnames);
+
+/*
+ * Filter event method for EVFILT_FS.
+ */
+static struct klist fs_klist = SLIST_HEAD_INITIALIZER(&fs_klist);
+kmutex_t fs_klist_lock;
+
+CTASSERT((NOTE_SUBMIT & VQ_MOUNT) == 0);
+CTASSERT((NOTE_SUBMIT & VQ_UNMOUNT) == 0);
+
+static int
+filt_fsattach(struct knote *kn)
+{
+	mutex_enter(&fs_klist_lock);
+	kn->kn_flags |= EV_CLEAR;
+	SLIST_INSERT_HEAD(&fs_klist, kn, kn_selnext);
+	mutex_exit(&fs_klist_lock);
+
+	return 0;
+}
+
+static void
+filt_fsdetach(struct knote *kn)
+{
+	mutex_enter(&fs_klist_lock);
+	SLIST_REMOVE(&fs_klist, kn, knote, kn_selnext);
+	mutex_exit(&fs_klist_lock);
+}
+
+static int
+filt_fs(struct knote *kn, long hint)
+{
+	int rv;
+
+	if (hint & NOTE_SUBMIT) {
+		KASSERT(mutex_owned(&fs_klist_lock));
+		kn->kn_fflags |= hint & ~NOTE_SUBMIT;
+	} else {
+		mutex_enter(&fs_klist_lock);
+	}
+
+	rv = (kn->kn_fflags != 0);
+
+	if ((hint & NOTE_SUBMIT) == 0) {
+		mutex_exit(&fs_klist_lock);
+	}
+
+	return rv;
+}
+
+/* referenced in kern_event.c */
+const struct filterops fs_filtops = {
+	.f_flags = FILTEROP_MPSAFE,
+	.f_attach = filt_fsattach,
+	.f_detach = filt_fsdetach,
+	.f_event = filt_fs,
+};
 
 static int 
 fd_nameiat(struct lwp *l, int fdat, struct nameidata *ndp)
@@ -553,8 +610,11 @@ do_sys_mount(struct lwp *l, const char *type, enum uio_seg type_seg,
 		    &data_len);
 		vfsopsrele = false;
 	}
-	if (!error)
-		KNOTE(&fs_klist, VQ_MOUNT);
+	if (!error) {
+		mutex_enter(&fs_klist_lock);
+		KNOTE(&fs_klist, NOTE_SUBMIT | VQ_MOUNT);
+		mutex_exit(&fs_klist_lock);
+	}
 
     done:
 	if (vfsopsrele)
@@ -633,8 +693,11 @@ sys_unmount(struct lwp *l, const struct sys_unmount_args *uap, register_t *retva
 	vrele(vp);
 	error = dounmount(mp, SCARG(uap, flags), l);
 	vfs_rele(mp);
-	if (!error)
-		KNOTE(&fs_klist, VQ_UNMOUNT);
+	if (!error) {
+		mutex_enter(&fs_klist_lock);
+		KNOTE(&fs_klist, NOTE_SUBMIT | VQ_UNMOUNT);
+		mutex_exit(&fs_klist_lock);
+	}
 	return error;
 }
 

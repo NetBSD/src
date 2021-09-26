@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_init.c,v 1.52 2021/02/04 21:07:06 jdolecek Exp $	*/
+/*	$NetBSD: vfs_init.c,v 1.53 2021/09/26 21:29:38 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2008 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_init.c,v 1.52 2021/02/04 21:07:06 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_init.c,v 1.53 2021/09/26 21:29:38 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/mount.h>
@@ -455,6 +455,9 @@ vfsinit(void)
 	 * included in the kernel.
 	 */
 	module_init_class(MODULE_CLASS_VFS);
+
+	extern kmutex_t fs_klist_lock;
+	mutex_init(&fs_klist_lock, MUTEX_DEFAULT, IPL_NONE);
 }
 
 /*
