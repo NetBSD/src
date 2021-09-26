@@ -1,4 +1,4 @@
-/*	$NetBSD: declarations.0.stdout,v 1.2 2021/09/25 13:04:55 rillig Exp $	*/
+/*	$NetBSD: declarations.0.stdout,v 1.3 2021/09/26 18:42:46 rillig Exp $	*/
 /* $FreeBSD: head/usr.bin/indent/tests/declarations.0.stdout 334480 2018-06-01 09:58:44Z pstef $ */
 /* See r303570 */
 
@@ -122,3 +122,9 @@ struct s01 {
 		};
 	};
 };
+
+int
+/* $ FIXME: There must be a space before the ellipsis. */
+my_printf(const char *fmt,...)
+{
+}
