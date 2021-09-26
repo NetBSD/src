@@ -1,4 +1,4 @@
-/*	$NetBSD: tctrl.c,v 1.64 2021/09/26 01:16:08 thorpej Exp $	*/
+/*	$NetBSD: tctrl.c,v 1.65 2021/09/26 16:36:19 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2005, 2006 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tctrl.c,v 1.64 2021/09/26 01:16:08 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tctrl.c,v 1.65 2021/09/26 16:36:19 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1251,7 +1251,7 @@ tctrlkqfilter(dev_t dev, struct knote *kn)
 		break;
 
 	default:
-		return (1);
+		return (EINVAL);
 	}
 
 	kn->kn_hook = sc;

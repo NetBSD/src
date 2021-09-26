@@ -1,4 +1,4 @@
-/*	$NetBSD: button.c,v 1.13 2021/09/26 14:32:02 thorpej Exp $	*/
+/*	$NetBSD: button.c,v 1.14 2021/09/26 16:36:18 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: button.c,v 1.13 2021/09/26 14:32:02 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: button.c,v 1.14 2021/09/26 16:36:18 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -333,7 +333,7 @@ btnkqfilter(dev_t dev, struct knote *kn)
 		break;
 
 	default:
-		return (1);
+		return (EINVAL);
 	}
 
 	return (0);

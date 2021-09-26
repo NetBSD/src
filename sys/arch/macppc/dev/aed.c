@@ -1,4 +1,4 @@
-/*	$NetBSD: aed.c,v 1.33 2021/09/26 14:36:48 thorpej Exp $	*/
+/*	$NetBSD: aed.c,v 1.34 2021/09/26 16:36:19 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1994	Bradley A. Grantham
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aed.c,v 1.33 2021/09/26 14:36:48 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aed.c,v 1.34 2021/09/26 16:36:19 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -627,7 +627,7 @@ aedkqfilter(dev_t dev, struct knote *kn)
 		break;
 
 	default:
-		return (1);
+		return (EINVAL);
 	}
 
 	return (0);
