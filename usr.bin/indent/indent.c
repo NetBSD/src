@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.c,v 1.86 2021/09/26 19:37:11 rillig Exp $	*/
+/*	$NetBSD: indent.c,v 1.87 2021/09/26 19:57:23 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)indent.c	5.17 (Berkeley) 6/7/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: indent.c,v 1.86 2021/09/26 19:37:11 rillig Exp $");
+__RCSID("$NetBSD: indent.c,v 1.87 2021/09/26 19:57:23 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/indent.c 340138 2018-11-04 19:24:49Z oshogbo $");
 #endif
@@ -65,7 +65,6 @@ __FBSDID("$FreeBSD: head/usr.bin/indent/indent.c 340138 2018-11-04 19:24:49Z osh
 #include "indent.h"
 
 struct options opt = {
-    .leave_comma = true,
     .btype_2 = true,
     .comment_delimiter_on_blankline = true,
     .cuddle_else = true,
@@ -556,8 +555,8 @@ process_form_feed(void)
 static void
 process_newline(void)
 {
-    if (ps.last_token != comma || ps.p_l_follow > 0
-	|| !opt.leave_comma || ps.block_init || !break_comma || com.s != com.e) {
+    if (ps.last_token != comma || ps.p_l_follow > 0 || opt.break_after_comma
+	|| ps.block_init || !break_comma || com.s != com.e) {
 	dump_line();
 	ps.want_blank = false;
     }
@@ -1047,7 +1046,7 @@ process_comma(int dec_ind, bool tabs_to_var, bool *inout_force_nl)
     if (ps.p_l_follow == 0) {
 	if (ps.block_init_level <= 0)
 	    ps.block_init = false;
-	if (break_comma && (!opt.leave_comma ||
+	if (break_comma && (opt.break_after_comma ||
 			    indentation_after_range(
 				    compute_code_indent(), code.s, code.e)
 			    >= opt.max_line_length - opt.tabsize))
