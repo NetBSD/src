@@ -1,4 +1,4 @@
-/*	$NetBSD: picvar.h,v 1.36 2021/09/20 21:05:15 jmcneill Exp $	*/
+/*	$NetBSD: picvar.h,v 1.37 2021/09/26 13:38:49 jmcneill Exp $	*/
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -128,6 +128,7 @@ struct intrsource {
 	char is_source[16];
 	char *is_xname;
 	uint32_t is_mask_count;
+	bool is_percpu;
 };
 
 struct pic_percpu {
