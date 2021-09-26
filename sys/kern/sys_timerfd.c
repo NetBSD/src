@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_timerfd.c,v 1.3 2021/09/20 11:12:35 skrll Exp $	*/
+/*	$NetBSD: sys_timerfd.c,v 1.4 2021/09/26 01:16:10 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_timerfd.c,v 1.3 2021/09/20 11:12:35 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_timerfd.c,v 1.4 2021/09/26 01:16:10 thorpej Exp $");
 
 /*
  * timerfd
@@ -421,7 +421,7 @@ timerfd_filt_read(struct knote * const kn, long const hint)
 }
 
 static const struct filterops timerfd_read_filterops = {
-	.f_isfd = 1,
+	.f_flags = FILTEROP_ISFD,
 	.f_detach = timerfd_filt_read_detach,
 	.f_event = timerfd_filt_read,
 };

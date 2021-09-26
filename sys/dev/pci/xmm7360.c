@@ -1,4 +1,4 @@
-/*	$NetBSD: xmm7360.c,v 1.9 2021/08/07 16:19:14 thorpej Exp $	*/
+/*	$NetBSD: xmm7360.c,v 1.10 2021/09/26 01:16:09 thorpej Exp $	*/
 
 /*
  * Device driver for Intel XMM7360 LTE modems, eg. Fibocom L850-GL.
@@ -75,7 +75,7 @@ MODULE_DEVICE_TABLE(pci, xmm7360_ids);
 #include "opt_gateway.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xmm7360.c,v 1.9 2021/08/07 16:19:14 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xmm7360.c,v 1.10 2021/09/26 01:16:09 thorpej Exp $");
 #endif
 
 #include <sys/param.h>
@@ -261,7 +261,7 @@ typedef struct kmutex spinlock_t;
 		SLIST_INSERT_HEAD(klist, kn, kn_selnext)
 #define klist_remove(klist, kn)		\
 		SLIST_REMOVE(klist, kn, knote, kn_selnext)
-#define XMM_KQ_ISFD_INITIALIZER		.f_isfd = 1
+#define XMM_KQ_ISFD_INITIALIZER		.f_flags = FILTEROP_ISFD
 #define tty_lock()			mutex_spin_enter(&tty_lock)
 #define tty_unlock()			mutex_spin_exit(&tty_lock)
 #define tty_locked()			KASSERT(mutex_owned(&tty_lock))

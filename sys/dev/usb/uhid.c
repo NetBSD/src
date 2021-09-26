@@ -1,4 +1,4 @@
-/*	$NetBSD: uhid.c,v 1.117 2020/12/18 01:40:20 thorpej Exp $	*/
+/*	$NetBSD: uhid.c,v 1.118 2021/09/26 01:16:09 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2008, 2012 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhid.c,v 1.117 2020/12/18 01:40:20 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhid.c,v 1.118 2021/09/26 01:16:09 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -856,14 +856,14 @@ filt_uhidread(struct knote *kn, long hint)
 }
 
 static const struct filterops uhidread_filtops = {
-	.f_isfd = 1,
+	.f_flags = FILTEROP_ISFD,
 	.f_attach = NULL,
 	.f_detach = filt_uhidrdetach,
 	.f_event = filt_uhidread,
 };
 
 static const struct filterops uhid_seltrue_filtops = {
-	.f_isfd = 1,
+	.f_flags = FILTEROP_ISFD,
 	.f_attach = NULL,
 	.f_detach = filt_uhidrdetach,
 	.f_event = filt_seltrue,

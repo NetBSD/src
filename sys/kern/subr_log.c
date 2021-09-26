@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_log.c,v 1.60 2020/12/11 03:00:09 thorpej Exp $	*/
+/*	$NetBSD: subr_log.c,v 1.61 2021/09/26 01:16:10 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_log.c,v 1.60 2020/12/11 03:00:09 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_log.c,v 1.61 2021/09/26 01:16:10 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -290,7 +290,7 @@ filt_logread(struct knote *kn, long hint)
 }
 
 static const struct filterops logread_filtops = {
-	.f_isfd = 1,
+	.f_flags = FILTEROP_ISFD,
 	.f_attach = NULL,
 	.f_detach = filt_logrdetach,
 	.f_event = filt_logread,

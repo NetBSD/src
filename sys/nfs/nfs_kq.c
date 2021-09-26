@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_kq.c,v 1.27 2020/09/05 16:30:12 riastradh Exp $	*/
+/*	$NetBSD: nfs_kq.c,v 1.28 2021/09/26 01:16:10 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_kq.c,v 1.27 2020/09/05 16:30:12 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_kq.c,v 1.28 2021/09/26 01:16:10 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -277,14 +277,14 @@ filt_nfsvnode(struct knote *kn, long hint)
 
 
 static const struct filterops nfsread_filtops = {
-	.f_isfd = 1,
+	.f_flags = FILTEROP_ISFD,
 	.f_attach = NULL,
 	.f_detach = filt_nfsdetach,
 	.f_event = filt_nfsread,
 };
 
 static const struct filterops nfsvnode_filtops = {
-	.f_isfd = 1,
+	.f_flags = FILTEROP_ISFD,
 	.f_attach = NULL,
 	.f_detach = filt_nfsdetach,
 	.f_event = filt_nfsvnode,
