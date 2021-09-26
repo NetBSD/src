@@ -1,4 +1,4 @@
-/* $NetBSD: tprof_armv8.c,v 1.6 2020/10/30 18:54:37 skrll Exp $ */
+/* $NetBSD: tprof_armv8.c,v 1.7 2021/09/26 13:37:36 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tprof_armv8.c,v 1.6 2020/10/30 18:54:37 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tprof_armv8.c,v 1.7 2021/09/26 13:37:36 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -111,6 +111,7 @@ armv8_pmu_start_cpu(void *arg1, void *arg2)
 
 	/* Enable event counter */
 	reg_pmcntenset_el0_write(counter_mask);
+	reg_pmcr_el0_write(PMCR_E);
 }
 
 static void
@@ -123,6 +124,7 @@ armv8_pmu_stop_cpu(void *arg1, void *arg2)
 
 	/* Disable event counter */
 	reg_pmcntenclr_el0_write(counter_mask);
+	reg_pmcr_el0_write(0);
 }
 
 static uint64_t
@@ -130,15 +132,10 @@ armv8_pmu_estimate_freq(void)
 {
 	uint64_t cpufreq = curcpu()->ci_data.cpu_cc_freq;
 	uint64_t freq = 10000;
-	uint32_t pmcr;
 
 	counter_val = cpufreq / freq;
 	if (counter_val == 0)
 		counter_val = 4000000000ULL / freq;
-
-	pmcr = reg_pmcr_el0_read();
-	if (pmcr & PMCR_D)
-		counter_val /= 64;
 
 	return freq;
 }
@@ -206,9 +203,9 @@ armv8_pmu_intr(void *priv)
 	return 1;
 }
 
-int
-armv8_pmu_init(void)
-{
+static void
+armv8_pmu_init_cpu(void *arg1, void *arg2)
+{	
 	/* Disable EL0 access to performance monitors */
 	reg_pmuserenr_el0_write(0);
 
@@ -217,6 +214,15 @@ armv8_pmu_init(void)
 
 	/* Disable event counters */
 	reg_pmcntenclr_el0_write(PMCNTEN_P);
+}
+
+int
+armv8_pmu_init(void)
+{
+	uint64_t xc;
+
+	xc = xc_broadcast(0, armv8_pmu_init_cpu, NULL, NULL);
+	xc_wait(xc);
 
 	return tprof_backend_register("tprof_armv8", &tprof_armv8_pmu_ops,
 	    TPROF_BACKEND_VERSION);
