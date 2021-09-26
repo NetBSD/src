@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.112 2021/09/15 07:49:54 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.113 2021/09/26 08:02:48 skrll Exp $	*/
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.112 2021/09/15 07:49:54 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.113 2021/09/26 08:02:48 skrll Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_ddb.h"
@@ -1887,7 +1887,7 @@ _pmap_enter(struct pmap *pm, vaddr_t va, paddr_t pa, vm_prot_t prot,
 #endif
 		UVMHIST_LOG(pmaphist,
 		    "va=%016lx has already mapped."
-		    " old-pa=%016lx new-pa=%016lx, old-pte=%016llx\n",
+		    " old-pa=%016lx new-pa=%016lx, old-pte=%016llx",
 		    va, l3pte_pa(opte), pa, opte);
 
 		if (pa == l3pte_pa(opte)) {
