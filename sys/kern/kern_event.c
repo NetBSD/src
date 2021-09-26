@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_event.c,v 1.120 2021/09/21 14:54:02 christos Exp $	*/
+/*	$NetBSD: kern_event.c,v 1.121 2021/09/26 01:16:10 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_event.c,v 1.120 2021/09/21 14:54:02 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_event.c,v 1.121 2021/09/26 01:16:10 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -130,42 +130,42 @@ static const struct fileops kqueueops = {
 };
 
 static const struct filterops kqread_filtops = {
-	.f_isfd = 1,
+	.f_flags = FILTEROP_ISFD,
 	.f_attach = NULL,
 	.f_detach = filt_kqdetach,
 	.f_event = filt_kqueue,
 };
 
 static const struct filterops proc_filtops = {
-	.f_isfd = 0,
+	.f_flags = 0,
 	.f_attach = filt_procattach,
 	.f_detach = filt_procdetach,
 	.f_event = filt_proc,
 };
 
 static const struct filterops file_filtops = {
-	.f_isfd = 1,
+	.f_flags = FILTEROP_ISFD,
 	.f_attach = filt_fileattach,
 	.f_detach = NULL,
 	.f_event = NULL,
 };
 
 static const struct filterops timer_filtops = {
-	.f_isfd = 0,
+	.f_flags = 0,
 	.f_attach = filt_timerattach,
 	.f_detach = filt_timerdetach,
 	.f_event = filt_timer,
 };
 
 static const struct filterops fs_filtops = {
-	.f_isfd = 0,
+	.f_flags = 0,
 	.f_attach = filt_fsattach,
 	.f_detach = filt_fsdetach,
 	.f_event = filt_fs,
 };
 
 static const struct filterops user_filtops = {
-	.f_isfd = 0,
+	.f_flags = 0,
 	.f_attach = filt_userattach,
 	.f_detach = filt_userdetach,
 	.f_event = filt_user,
@@ -921,7 +921,7 @@ filt_seltruedetach(struct knote *kn)
 }
 
 const struct filterops seltrue_filtops = {
-	.f_isfd = 1,
+	.f_flags = FILTEROP_ISFD,
 	.f_attach = NULL,
 	.f_detach = filt_seltruedetach,
 	.f_event = filt_seltrue,
@@ -1145,7 +1145,7 @@ kqueue_register(struct kqueue *kq, struct kevent *kev)
 	}
 
 	/* search if knote already exists */
-	if (kfilter->filtops->f_isfd) {
+	if (kfilter->filtops->f_flags & FILTEROP_ISFD) {
 		/* monitoring a file descriptor */
 		/* validate descriptor */
 		if (kev->ident > INT_MAX
@@ -1211,7 +1211,7 @@ kqueue_register(struct kqueue *kq, struct kevent *kev)
 			 */
 			fp = NULL;
 
-			if (!kn->kn_fop->f_isfd) {
+			if (!(kn->kn_fop->f_flags & FILTEROP_ISFD)) {
 				/*
 				 * If knote is not on an fd, store on
 				 * internal hash table.
@@ -1274,7 +1274,8 @@ kqueue_register(struct kqueue *kq, struct kevent *kev)
 	 */
 	kn->kn_kevent.udata = kev->udata;
 	KASSERT(kn->kn_fop != NULL);
-	if (!kn->kn_fop->f_isfd && kn->kn_fop->f_touch != NULL) {
+	if (!(kn->kn_fop->f_flags & FILTEROP_ISFD) &&
+	    kn->kn_fop->f_touch != NULL) {
 		mutex_spin_enter(&kq->kq_lock);
 		(*kn->kn_fop->f_touch)(kn, kev, EVENT_REGISTER);
 		mutex_spin_exit(&kq->kq_lock);
@@ -1533,7 +1534,7 @@ relock:
 			}
 		}
 		KASSERT(kn->kn_fop != NULL);
-		touch = (!kn->kn_fop->f_isfd &&
+		touch = (!(kn->kn_fop->f_flags & FILTEROP_ISFD) &&
 				kn->kn_fop->f_touch != NULL);
 		/* XXXAD should be got from f_event if !oneshot. */
 		if (touch) {
@@ -1878,7 +1879,7 @@ knote_detach(struct knote *kn, filedesc_t *fdp, bool dofop)
 	}
 
 	/* Remove from descriptor table. */
-	if (kn->kn_fop->f_isfd)
+	if (kn->kn_fop->f_flags & FILTEROP_ISFD)
 		list = (struct klist *)&fdp->fd_dt->dt_ff[kn->kn_id]->ff_knlist;
 	else
 		list = &fdp->fd_knhash[KN_HASH(kn->kn_id, fdp->fd_knhashmask)];
@@ -1901,7 +1902,7 @@ again:
 	mutex_spin_exit(&kq->kq_lock);
 
 	mutex_exit(&fdp->fd_lock);
-	if (kn->kn_fop->f_isfd)
+	if (kn->kn_fop->f_flags & FILTEROP_ISFD)
 		fd_putfile(kn->kn_id);
 	atomic_dec_uint(&kn->kn_kfilter->refcnt);
 	kmem_free(kn, sizeof(*kn));

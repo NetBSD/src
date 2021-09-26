@@ -1,4 +1,4 @@
-/*	$NetBSD: putter.c,v 1.38 2020/12/18 02:54:34 thorpej Exp $	*/
+/*	$NetBSD: putter.c,v 1.39 2021/09/26 01:16:09 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: putter.c,v 1.38 2020/12/18 02:54:34 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: putter.c,v 1.39 2021/09/26 01:16:09 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -492,7 +492,7 @@ filt_putter(struct knote *kn, long hint)
 }
 
 static const struct filterops putter_filtops = {
-	.f_isfd = 1,
+	.f_flags = FILTEROP_ISFD,
 	.f_attach = NULL,
 	.f_detach = filt_putterdetach,
 	.f_event = filt_putter,

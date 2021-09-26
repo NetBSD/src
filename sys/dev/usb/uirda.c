@@ -1,4 +1,4 @@
-/*	$NetBSD: uirda.c,v 1.50 2021/08/07 16:19:17 thorpej Exp $	*/
+/*	$NetBSD: uirda.c,v 1.51 2021/09/26 01:16:09 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uirda.c,v 1.50 2021/08/07 16:19:17 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uirda.c,v 1.51 2021/09/26 01:16:09 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -641,14 +641,14 @@ filt_uirdawdetach(struct knote *kn)
 }
 
 static const struct filterops uirdaread_filtops = {
-	.f_isfd = 1,
+	.f_flags = FILTEROP_ISFD,
 	.f_attach = NULL,
 	.f_detach = filt_uirdardetach,
 	.f_event = filt_uirdaread,
 };
 
 static const struct filterops uirdawrite_filtops = {
-	.f_isfd = 1,
+	.f_flags = FILTEROP_ISFD,
 	.f_attach = NULL,
 	.f_detach = filt_uirdawdetach,
 	.f_event = filt_seltrue,

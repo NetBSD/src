@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.107 2021/09/07 13:24:46 andvar Exp $	*/
+/*	$NetBSD: audio.c,v 1.108 2021/09/26 01:16:08 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -138,7 +138,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.107 2021/09/07 13:24:46 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.108 2021/09/26 01:16:08 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "audio.h"
@@ -3296,7 +3296,7 @@ audio_poll(struct audio_softc *sc, int events, struct lwp *l,
 }
 
 static const struct filterops audioread_filtops = {
-	.f_isfd = 1,
+	.f_flags = FILTEROP_ISFD,
 	.f_attach = NULL,
 	.f_detach = filt_audioread_detach,
 	.f_event = filt_audioread_event,
@@ -3343,7 +3343,7 @@ filt_audioread_event(struct knote *kn, long hint)
 }
 
 static const struct filterops audiowrite_filtops = {
-	.f_isfd = 1,
+	.f_flags = FILTEROP_ISFD,
 	.f_attach = NULL,
 	.f_detach = filt_audiowrite_detach,
 	.f_event = filt_audiowrite_event,

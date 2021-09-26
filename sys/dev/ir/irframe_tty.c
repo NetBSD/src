@@ -1,4 +1,4 @@
-/*	$NetBSD: irframe_tty.c,v 1.64 2020/12/19 01:18:59 thorpej Exp $	*/
+/*	$NetBSD: irframe_tty.c,v 1.65 2021/09/26 01:16:09 thorpej Exp $	*/
 
 /*
  * TODO
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irframe_tty.c,v 1.64 2020/12/19 01:18:59 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irframe_tty.c,v 1.65 2021/09/26 01:16:09 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -830,14 +830,14 @@ filt_irframetwrite(struct knote *kn, long hint)
 }
 
 static const struct filterops irframetread_filtops = {
-	.f_isfd = 1,
+	.f_flags = FILTEROP_ISFD,
 	.f_attach = NULL,
 	.f_detach = filt_irframetrdetach,
 	.f_event = filt_irframetread,
 };
 
 static const struct filterops irframetwrite_filtops = {
-	.f_isfd = 1,
+	.f_flags = FILTEROP_ISFD,
 	.f_attach = NULL,
 	.f_detach = filt_irframetwdetach,
 	.f_event = filt_irframetwrite,

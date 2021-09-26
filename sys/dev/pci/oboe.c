@@ -1,4 +1,4 @@
-/*	$NetBSD: oboe.c,v 1.49 2021/08/07 16:19:14 thorpej Exp $	*/
+/*	$NetBSD: oboe.c,v 1.50 2021/09/26 01:16:09 thorpej Exp $	*/
 
 /*	XXXXFVDL THIS DRIVER IS BROKEN FOR NON-i386 -- vtophys() usage	*/
 
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: oboe.c,v 1.49 2021/08/07 16:19:14 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: oboe.c,v 1.50 2021/09/26 01:16:09 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -495,14 +495,14 @@ filt_oboewdetach(struct knote *kn)
 }
 
 static const struct filterops oboeread_filtops = {
-	.f_isfd = 1,
+	.f_flags = FILTEROP_ISFD,
 	.f_attach = NULL,
 	.f_detach = filt_oboerdetach,
 	.f_event = filt_oboeread,
 };
 
 static const struct filterops oboewrite_filtops = {
-	.f_isfd = 1,
+	.f_flags = FILTEROP_ISFD,
 	.f_attach = NULL,
 	.f_detach = filt_oboewdetach,
 	.f_event = filt_seltrue,
