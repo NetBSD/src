@@ -1,4 +1,4 @@
-/*	$NetBSD: sysmon_power.c,v 1.67 2021/09/26 01:16:09 thorpej Exp $	*/
+/*	$NetBSD: sysmon_power.c,v 1.68 2021/09/26 16:24:21 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2007 Juan Romero Pardines.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_power.c,v 1.67 2021/09/26 01:16:09 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_power.c,v 1.68 2021/09/26 16:24:21 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -419,8 +419,9 @@ sysmon_power_daemon_task(struct power_event_dictionary *ped,
 		ped->flags |= SYSMON_POWER_DICTIONARY_READY;
 		SIMPLEQ_INSERT_TAIL(&pev_dict_list, ped, pev_dict_head);
 		cv_broadcast(&sysmon_power_event_queue_cv);
+		selnotify(&sysmon_power_event_queue_selinfo,
+		    POLLIN | POLLRDNORM, NOTE_SUBMIT);
 		mutex_exit(&sysmon_power_event_queue_mtx);
-		selnotify(&sysmon_power_event_queue_selinfo, 0, 0);
 	}
 
 out:
@@ -546,25 +547,26 @@ static int
 filt_sysmon_power_read(struct knote *kn, long hint)
 {
 
-	mutex_enter(&sysmon_power_event_queue_mtx);
+	if (hint & NOTE_SUBMIT) {
+		KASSERT(mutex_owned(&sysmon_power_event_queue_mtx));
+	} else {
+		mutex_enter(&sysmon_power_event_queue_mtx);
+	}
+
 	kn->kn_data = sysmon_power_event_queue_count;
-	mutex_exit(&sysmon_power_event_queue_mtx);
+
+	if ((hint & NOTE_SUBMIT) == 0) {
+		mutex_exit(&sysmon_power_event_queue_mtx);
+	}
 
 	return kn->kn_data > 0;
 }
 
 static const struct filterops sysmon_power_read_filtops = {
-	.f_flags = FILTEROP_ISFD,
+	.f_flags = FILTEROP_ISFD | FILTEROP_MPSAFE,
 	.f_attach = NULL,
 	.f_detach = filt_sysmon_power_rdetach,
 	.f_event = filt_sysmon_power_read,
-};
-
-static const struct filterops sysmon_power_write_filtops = {
-	.f_flags = FILTEROP_ISFD,
-	.f_attach = NULL,
-	.f_detach = filt_sysmon_power_rdetach,
-	.f_event = filt_seltrue,
 };
 
 /*
@@ -579,19 +581,18 @@ sysmonkqfilter_power(dev_t dev, struct knote *kn)
 	switch (kn->kn_filter) {
 	case EVFILT_READ:
 		kn->kn_fop = &sysmon_power_read_filtops;
+		mutex_enter(&sysmon_power_event_queue_mtx);
+		selrecord_knote(&sysmon_power_event_queue_selinfo, kn);
+		mutex_exit(&sysmon_power_event_queue_mtx);
 		break;
 
 	case EVFILT_WRITE:
-		kn->kn_fop = &sysmon_power_write_filtops;
+		kn->kn_fop = &seltrue_filtops;
 		break;
 
 	default:
 		return EINVAL;
 	}
-
-	mutex_enter(&sysmon_power_event_queue_mtx);
-	selrecord_knote(&sysmon_power_event_queue_selinfo, kn);
-	mutex_exit(&sysmon_power_event_queue_mtx);
 
 	return 0;
 }
