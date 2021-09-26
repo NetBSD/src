@@ -1,4 +1,4 @@
-/*	$NetBSD: ch.c,v 1.94 2021/09/26 01:16:09 thorpej Exp $	*/
+/*	$NetBSD: ch.c,v 1.95 2021/09/26 14:57:19 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 1999, 2004 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ch.c,v 1.94 2021/09/26 01:16:09 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ch.c,v 1.95 2021/09/26 14:57:19 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -494,13 +494,6 @@ static const struct filterops chread_filtops = {
 	.f_event = filt_chread,
 };
 
-static const struct filterops chwrite_filtops = {
-	.f_flags = FILTEROP_ISFD,
-	.f_attach = NULL,
-	.f_detach = filt_chdetach,
-	.f_event = filt_seltrue,
-};
-
 static int
 chkqfilter(dev_t dev, struct knote *kn)
 {
@@ -509,19 +502,17 @@ chkqfilter(dev_t dev, struct knote *kn)
 	switch (kn->kn_filter) {
 	case EVFILT_READ:
 		kn->kn_fop = &chread_filtops;
+		kn->kn_hook = sc;
+		selrecord_knote(&sc->sc_selq, kn);
 		break;
 
 	case EVFILT_WRITE:
-		kn->kn_fop = &chwrite_filtops;
+		kn->kn_fop = &seltrue_filtops;
 		break;
 
 	default:
 		return (EINVAL);
 	}
-
-	kn->kn_hook = sc;
-
-	selrecord_knote(&sc->sc_selq, kn);
 
 	return (0);
 }
