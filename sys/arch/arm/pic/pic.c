@@ -1,4 +1,4 @@
-/*	$NetBSD: pic.c,v 1.71 2021/08/08 19:28:08 skrll Exp $	*/
+/*	$NetBSD: pic.c,v 1.72 2021/09/26 13:38:49 jmcneill Exp $	*/
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -33,7 +33,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pic.c,v 1.71 2021/08/08 19:28:08 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pic.c,v 1.72 2021/09/26 13:38:49 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -704,6 +704,16 @@ pic_percpu_evcnt_attach(void *v0, void *v1, struct cpu_info *ci)
 	    pcpu->pcpu_name, is->is_source);
 }
 
+static void
+pic_unblock_percpu(void *arg1, void *arg2)
+{
+	struct pic_softc *pic = arg1;
+	struct intrsource *is = arg2;
+
+	(*pic->pic_ops->pic_unblock_irqs)(pic, is->is_irq & ~0x1f,
+	    __BIT(is->is_irq & 0x1f));
+}
+
 void *
 pic_establish_intr(struct pic_softc *pic, int irq, int ipl, int type,
 	int (*func)(void *), void *arg, const char *xname)
@@ -780,8 +790,13 @@ pic_establish_intr(struct pic_softc *pic, int irq, int ipl, int type,
 	(*pic->pic_ops->pic_establish_irq)(pic, is);
 
 unblock:
-	(*pic->pic_ops->pic_unblock_irqs)(pic, is->is_irq & ~0x1f,
-	    __BIT(is->is_irq & 0x1f));
+	if (cold || !is->is_mpsafe) {
+		(*pic->pic_ops->pic_unblock_irqs)(pic, is->is_irq & ~0x1f,
+		    __BIT(is->is_irq & 0x1f));
+	} else {
+		uint64_t xc = xc_broadcast(0, pic_unblock_percpu, pic, is);
+		xc_wait(xc);
+	}
 
 	if (xname) {
 		if (is->is_xname == NULL)
