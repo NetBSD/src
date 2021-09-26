@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.113 2021/09/26 08:02:48 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.114 2021/09/26 08:04:35 skrll Exp $	*/
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.113 2021/09/26 08:02:48 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.114 2021/09/26 08:04:35 skrll Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_ddb.h"
@@ -300,22 +300,22 @@ phys_to_pp(paddr_t pa)
 		if ((pm) == pmap_kernel()) {				\
 			KASSERTMSG(space == AARCH64_ADDRSPACE_UPPER,	\
 			    "%s: kernel pm %p: va=%016lx"		\
-			    " is out of upper address space\n",		\
+			    " is out of upper address space",		\
 			    __func__, (pm), (va));			\
 			KASSERTMSG(IN_RANGE((va), VM_MIN_KERNEL_ADDRESS, \
 			    VM_MAX_KERNEL_ADDRESS),			\
 			    "%s: kernel pm %p: va=%016lx"		\
-			    " is not kernel address\n",			\
+			    " is not kernel address",			\
 			    __func__, (pm), (va));			\
 		} else {						\
 			KASSERTMSG(space == AARCH64_ADDRSPACE_LOWER,	\
 			    "%s: user pm %p: va=%016lx"			\
-			    " is out of lower address space\n",		\
+			    " is out of lower address space",		\
 			    __func__, (pm), (va));			\
 			KASSERTMSG(IN_RANGE((va),			\
 			    VM_MIN_ADDRESS, VM_MAX_ADDRESS),		\
 			    "%s: user pm %p: va=%016lx"			\
-			    " is not user address\n",			\
+			    " is not user address",			\
 			    __func__, (pm), (va));			\
 		}							\
 	} while (0 /* CONSTCOND */)
@@ -2063,7 +2063,7 @@ pmap_remove_all(struct pmap *pm)
 		pte = *ptep;
 
 		KASSERTMSG(lxpde_valid(pte),
-		    "pte is not valid: pmap=%p, asid=%d, va=%016lx\n",
+		    "pte is not valid: pmap=%p, asid=%d, va=%016lx",
 		    pm, pm->pm_asid, pv->pv_va);
 
 		pa = lxpde_pa(pte);
@@ -2071,7 +2071,7 @@ pmap_remove_all(struct pmap *pm)
 
 		KASSERTMSG(pp != NULL,
 		    "no pmap_page of physical address:%016lx, "
-		    "pmap=%p, asid=%d, va=%016lx\n",
+		    "pmap=%p, asid=%d, va=%016lx",
 		    pa, pm, pm->pm_asid, pv->pv_va);
 
 		pmap_pv_lock(pp);
