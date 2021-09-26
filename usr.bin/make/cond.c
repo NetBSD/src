@@ -1,4 +1,4 @@
-/*	$NetBSD: cond.c,v 1.279 2021/09/21 23:06:18 rillig Exp $	*/
+/*	$NetBSD: cond.c,v 1.280 2021/09/26 03:23:06 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -95,7 +95,7 @@
 #include "dir.h"
 
 /*	"@(#)cond.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: cond.c,v 1.279 2021/09/21 23:06:18 rillig Exp $");
+MAKE_RCSID("$NetBSD: cond.c,v 1.280 2021/09/26 03:23:06 rillig Exp $");
 
 /*
  * The parsing of conditional expressions is based on this grammar:
@@ -189,9 +189,9 @@ static unsigned int cond_min_depth = 0;	/* depth at makefile open */
 static const char opname[][3] = { "<", "<=", ">", ">=", "==", "!=" };
 
 static bool
-is_token(const char *str, const char *tok, size_t len)
+is_token(const char *str, const char *tok, unsigned char len)
 {
-	return strncmp(str, tok, len) == 0 && !ch_isalpha(str[len]);
+	return strncmp(str, tok, (size_t)len) == 0 && !ch_isalpha(str[len]);
 }
 
 static Token
