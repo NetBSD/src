@@ -1,4 +1,4 @@
-/*	$NetBSD: gic.c,v 1.49 2021/08/10 17:12:31 jmcneill Exp $	*/
+/*	$NetBSD: gic.c,v 1.50 2021/09/26 13:38:50 jmcneill Exp $	*/
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -35,7 +35,7 @@
 #define _INTR_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gic.c,v 1.49 2021/08/10 17:12:31 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gic.c,v 1.50 2021/09/26 13:38:50 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -462,6 +462,7 @@ armgic_establish_irq(struct pic_softc *pic, struct intrsource *is)
 		 * default.
 		 */
 		is->is_mpsafe = true;
+		is->is_percpu = true;
 #endif
 	}
 
