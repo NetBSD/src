@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.398 2021/09/26 01:16:10 thorpej Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.399 2021/09/26 17:34:19 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008, 2019 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.398 2021/09/26 01:16:10 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.399 2021/09/26 17:34:19 thorpej Exp $");
 
 #include "opt_execfmt.h"
 #include "opt_ptrace.h"
@@ -2693,7 +2693,7 @@ filt_signal(struct knote *kn, long hint)
 }
 
 const struct filterops sig_filtops = {
-	.f_flags = 0,
+	.f_flags = FILTEROP_MPSAFE,
 	.f_attach = filt_sigattach,
 	.f_detach = filt_sigdetach,
 	.f_event = filt_signal,
