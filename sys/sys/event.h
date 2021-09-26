@@ -1,4 +1,4 @@
-/*	$NetBSD: event.h,v 1.41 2021/09/26 01:16:10 thorpej Exp $	*/
+/*	$NetBSD: event.h,v 1.42 2021/09/26 03:12:50 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999,2000,2001 Jonathan Lemon <jlemon@FreeBSD.org>
@@ -221,6 +221,7 @@ struct filterops {
 
 /* filterops flags */
 #define	FILTEROP_ISFD	__BIT(0)	/* ident == file descriptor */
+#define	FILTEROP_MPSAFE	__BIT(1)	/* does not require KERNEL_LOCK */
 
 /*
  * Field locking:
