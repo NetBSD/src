@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mcx.c,v 1.21 2021/09/26 15:01:55 jmcneill Exp $ */
+/*	$NetBSD: if_mcx.c,v 1.22 2021/09/26 20:14:07 jmcneill Exp $ */
 /*	$OpenBSD: if_mcx.c,v 1.101 2021/06/02 19:16:11 patrick Exp $ */
 
 /*
@@ -23,7 +23,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mcx.c,v 1.21 2021/09/26 15:01:55 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mcx.c,v 1.22 2021/09/26 20:14:07 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2743,6 +2743,7 @@ mcx_attach(device_t parent, device_t self, void *aux)
 	struct mcx_softc *sc = device_private(self);
 	struct ifnet *ifp = &sc->sc_ec.ec_if;
 	struct pci_attach_args *pa = aux;
+	struct ifcapreq ifcr;
 	uint8_t enaddr[ETHER_ADDR_LEN];
 	int counts[PCI_INTR_TYPE_SIZE];
 	char intrxname[32];
@@ -2993,6 +2994,12 @@ mcx_attach(device_t parent, device_t self, void *aux)
 	ifmedia_set(&sc->sc_media, IFM_ETHER | IFM_AUTO);
 
 	if_attach(ifp);
+
+	/* Enable hardware offload by default */
+	memset(&ifcr, 0, sizeof(ifcr));
+	ifcr.ifcr_capenable = ifp->if_capabilities;
+	ifioctl_common(ifp, SIOCSIFCAP, &ifcr);
+
 	if_deferred_start_init(ifp, NULL);
 
 	ether_ifattach(ifp, enaddr);
