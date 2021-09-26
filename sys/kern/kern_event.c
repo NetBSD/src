@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_event.c,v 1.125 2021/09/26 23:34:46 thorpej Exp $	*/
+/*	$NetBSD: kern_event.c,v 1.126 2021/09/26 23:37:40 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_event.c,v 1.125 2021/09/26 23:34:46 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_event.c,v 1.126 2021/09/26 23:37:40 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1834,7 +1834,7 @@ kqueue_kqfilter(file_t *fp, struct knote *kn)
 	KASSERT(fp == kn->kn_obj);
 
 	if (kn->kn_filter != EVFILT_READ)
-		return 1;
+		return EINVAL;
 
 	kn->kn_fop = &kqread_filtops;
 	mutex_enter(&kq->kq_lock);
