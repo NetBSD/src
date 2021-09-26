@@ -1,4 +1,4 @@
-/*	$NetBSD: args.c,v 1.34 2021/09/26 19:57:23 rillig Exp $	*/
+/*	$NetBSD: args.c,v 1.35 2021/09/26 20:12:37 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)args.c	8.1 (Berkeley) 6/6/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: args.c,v 1.34 2021/09/26 19:57:23 rillig Exp $");
+__RCSID("$NetBSD: args.c,v 1.35 2021/09/26 20:12:37 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/args.c 336318 2018-07-15 21:04:21Z pstef $");
 #endif
@@ -78,6 +78,9 @@ static const char *option_source = "?";
 	{name, true, value, assert_type(&(var), bool *)}
 #define int_option(name, var) \
 	{name, false, false, assert_type(&(var), int *)}
+#define bool_options(name, var) \
+	bool_option(name, true, var), \
+	bool_option("n" name, false, var)
 
 /*
  * N.B.: because of the way the table here is scanned, options whose names are
@@ -92,69 +95,44 @@ static const struct pro {
     bool p_bool_value;
     void *p_obj;		/* the associated variable (bool, int) */
 }   pro[] = {
-    bool_option("bacc", true, opt.blanklines_around_conditional_compilation),
-    bool_option("badp", true, opt.blanklines_after_declarations_at_proctop),
-    bool_option("bad", true, opt.blanklines_after_declarations),
-    bool_option("bap", true, opt.blanklines_after_procs),
-    bool_option("bbb", true, opt.blanklines_before_blockcomments),
-    bool_option("bc", true, opt.break_after_comma),
+    bool_options("bacc", opt.blanklines_around_conditional_compilation),
+    bool_options("badp", opt.blanklines_after_declarations_at_proctop),
+    bool_options("bad", opt.blanklines_after_declarations),
+    bool_options("bap", opt.blanklines_after_procs),
+    bool_options("bbb", opt.blanklines_before_blockcomments),
+    bool_options("bc", opt.break_after_comma),
     bool_option("bl", false, opt.btype_2),
     bool_option("br", true, opt.btype_2),
-    bool_option("bs", true, opt.blank_after_sizeof),
-    bool_option("cdb", true, opt.comment_delimiter_on_blankline),
+    bool_options("bs", opt.blank_after_sizeof),
+    bool_options("cdb", opt.comment_delimiter_on_blankline),
     int_option("cd", opt.decl_comment_column),
-    bool_option("ce", true, opt.cuddle_else),
+    bool_options("ce", opt.cuddle_else),
     int_option("ci", opt.continuation_indent),
-    bool_option("cs", true, opt.space_after_cast),
+    bool_options("cs", opt.space_after_cast),
     int_option("c", opt.comment_column),
     int_option("di", opt.decl_indent),
-    bool_option("dj", true, opt.ljust_decl),
+    bool_options("dj", opt.ljust_decl),
     int_option("d", opt.unindent_displace),
-    bool_option("eei", true, opt.extra_expression_indent),
-    bool_option("ei", true, opt.else_if),
-    bool_option("fbs", true, opt.function_brace_split),
-    bool_option("fc1", true, opt.format_col1_comments),
-    bool_option("fcb", true, opt.format_block_comments),
-    bool_option("ip", true, opt.indent_parameters),
+    bool_options("eei", opt.extra_expression_indent),
+    bool_options("ei", opt.else_if),
+    bool_options("fbs", opt.function_brace_split),
+    bool_options("fc1", opt.format_col1_comments),
+    bool_options("fcb", opt.format_block_comments),
+    bool_options("ip", opt.indent_parameters),
     int_option("i", opt.indent_size),
     int_option("lc", opt.block_comment_max_line_length),
     int_option("ldi", opt.local_decl_indent),
-    bool_option("lpl", true, opt.lineup_to_parens_always),
-    bool_option("lp", true, opt.lineup_to_parens),
+    bool_options("lpl", opt.lineup_to_parens_always),
+    bool_options("lp", opt.lineup_to_parens),
     int_option("l", opt.max_line_length),
-    bool_option("nbacc", false, opt.blanklines_around_conditional_compilation),
-    bool_option("nbadp", false, opt.blanklines_after_declarations_at_proctop),
-    bool_option("nbad", false, opt.blanklines_after_declarations),
-    bool_option("nbap", false, opt.blanklines_after_procs),
-    bool_option("nbbb", false, opt.blanklines_before_blockcomments),
-    bool_option("nbc", false, opt.break_after_comma),
-    bool_option("nbs", false, opt.blank_after_sizeof),
-    bool_option("ncdb", false, opt.comment_delimiter_on_blankline),
-    bool_option("nce", false, opt.cuddle_else),
-    bool_option("ncs", false, opt.space_after_cast),
-    bool_option("ndj", false, opt.ljust_decl),
-    bool_option("neei", false, opt.extra_expression_indent),
-    bool_option("nei", false, opt.else_if),
-    bool_option("nfbs", false, opt.function_brace_split),
-    bool_option("nfc1", false, opt.format_col1_comments),
-    bool_option("nfcb", false, opt.format_block_comments),
-    bool_option("nip", false, opt.indent_parameters),
-    bool_option("nlpl", false, opt.lineup_to_parens_always),
-    bool_option("nlp", false, opt.lineup_to_parens),
-    bool_option("npcs", false, opt.proc_calls_space),
-    bool_option("npsl", false, opt.procnames_start_line),
-    bool_option("nsc", false, opt.star_comment_cont),
-    bool_option("nsob", false, opt.swallow_optional_blanklines),
-    bool_option("nut", false, opt.use_tabs),
-    bool_option("nv", false, opt.verbose),
-    bool_option("pcs", true, opt.proc_calls_space),
-    bool_option("psl", true, opt.procnames_start_line),
-    bool_option("sc", true, opt.star_comment_cont),
-    bool_option("sob", true, opt.swallow_optional_blanklines),
+    bool_options("pcs", opt.proc_calls_space),
+    bool_options("psl", opt.procnames_start_line),
+    bool_options("sc", opt.star_comment_cont),
+    bool_options("sob", opt.swallow_optional_blanklines),
     bool_option("ta", true, opt.auto_typedefs),
     int_option("ts", opt.tabsize),
-    bool_option("ut", true, opt.use_tabs),
-    bool_option("v", true, opt.verbose),
+    bool_options("ut", opt.use_tabs),
+    bool_options("v", opt.verbose),
 };
 
 /*
