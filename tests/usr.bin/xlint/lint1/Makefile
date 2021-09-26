@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.112 2021/09/13 22:09:06 rillig Exp $
+# $NetBSD: Makefile,v 1.113 2021/09/26 03:17:59 rillig Exp $
 
 NOMAN=		# defined
 MAX_MESSAGE=	347		# see lint1/err.c
@@ -236,6 +236,24 @@ FILES+=		parse_stmt_iter_error.c
 FILES+=		parse_stmt_iter_error.exp
 FILES+=		parse_type_name.c
 FILES+=		parse_type_name.exp
+FILES+=		platform_ilp32.c
+FILES+=		platform_ilp32.exp
+FILES+=		platform_int.c
+FILES+=		platform_int.exp
+FILES+=		platform_ldbl128.c
+FILES+=		platform_ldbl128.exp
+FILES+=		platform_ldbl64.c
+FILES+=		platform_ldbl64.exp
+FILES+=		platform_ldbl96.c
+FILES+=		platform_ldbl96.exp
+FILES+=		platform_long.c
+FILES+=		platform_long.exp
+FILES+=		platform_lp64.c
+FILES+=		platform_lp64.exp
+FILES+=		platform_schar.c
+FILES+=		platform_schar.exp
+FILES+=		platform_uchar.c
+FILES+=		platform_uchar.exp
 FILES+=		stmt_for.c
 FILES+=		stmt_for.exp
 FILES+=		stmt_goto.c
