@@ -1,4 +1,4 @@
-/*	$NetBSD: args.c,v 1.31 2021/09/25 23:38:45 rillig Exp $	*/
+/*	$NetBSD: args.c,v 1.32 2021/09/26 00:57:28 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)args.c	8.1 (Berkeley) 6/6/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: args.c,v 1.31 2021/09/25 23:38:45 rillig Exp $");
+__RCSID("$NetBSD: args.c,v 1.32 2021/09/26 00:57:28 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/args.c 336318 2018-07-15 21:04:21Z pstef $");
 #endif
@@ -56,7 +56,6 @@ __FBSDID("$FreeBSD: head/usr.bin/indent/args.c 336318 2018-07-15 21:04:21Z pstef
 #include <ctype.h>
 #include <err.h>
 #include <limits.h>
-#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -65,24 +64,10 @@ __FBSDID("$FreeBSD: head/usr.bin/indent/args.c 336318 2018-07-15 21:04:21Z pstef
 
 #define INDENT_VERSION	"2.0"
 
-/* profile types */
-#define	PRO_SPECIAL	1	/* special case */
-#define	PRO_BOOL	2	/* boolean */
-#define	PRO_INT		3	/* integer */
-
-/* profile specials for specials */
-#define	IGN		1	/* ignore it */
-#define	CLI		2	/* case label indent (float) */
-#define	STDIN		3	/* use stdin */
-#define	KEY		4	/* type (keyword) */
-#define	KEY_FILE	5	/* only used for args */
-#define VERSION		6	/* only used for args */
-
 static void scan_profile(FILE *);
-
-const char *option_source = "?";
-
 void add_typedefs_from_file(const char *);
+
+static const char *option_source = "?";
 
 #if __STDC_VERSION__ >= 201112L
 #define assert_type(expr, type) _Generic((expr), type : (expr))
@@ -90,28 +75,23 @@ void add_typedefs_from_file(const char *);
 #define assert_type(expr, type) (expr)
 #endif
 #define bool_option(name, value, var) \
-	{name, PRO_BOOL, /*CONSTCOND*/(value) ? 1 : 0, \
-	    assert_type(&(var), bool *)}
+	{name, true, value, assert_type(&(var), bool *)}
 #define int_option(name, var) \
-	{name, PRO_INT, 0, assert_type(&(var), int *)}
-#define special_option(name, value) \
-	{name, PRO_SPECIAL, assert_type(value, int), NULL}
+	{name, false, false, assert_type(&(var), int *)}
 
 /*
  * N.B.: because of the way the table here is scanned, options whose names are
  * a prefix of other options must occur later; that is, with -lp vs -l, -lp
  * must be first and -l must be last.
+ *
+ * See also set_special_option.
  */
 static const struct pro {
-    const char  p_name[9];	/* name, e.g. "bl", "cli" */
-    uint8_t     p_type;		/* type (int, bool, special) */
-    int         p_special;	/* depends on type */
+    const char  p_name[6];	/* name, e.g. "bl", "cli" */
+    bool	p_is_bool;
+    bool	p_bool_value;
     void        *p_obj;		/* the associated variable (bool, int) */
 }           pro[] = {
-    special_option("T", KEY),
-    special_option("U", KEY_FILE),
-    special_option("-version", VERSION),
-    special_option("P", IGN),
     bool_option("bacc", true, opt.blanklines_around_conditional_compilation),
     bool_option("badp", true, opt.blanklines_after_declarations_at_proctop),
     bool_option("bad", true, opt.blanklines_after_declarations),
@@ -125,7 +105,6 @@ static const struct pro {
     int_option("cd", opt.decl_comment_column),
     bool_option("ce", true, opt.cuddle_else),
     int_option("ci", opt.continuation_indent),
-    special_option("cli", CLI),
     bool_option("cs", true, opt.space_after_cast),
     int_option("c", opt.comment_column),
     int_option("di", opt.decl_indent),
@@ -163,7 +142,6 @@ static const struct pro {
     bool_option("nlpl", false, opt.lineup_to_parens_always),
     bool_option("nlp", false, opt.lineup_to_parens),
     bool_option("npcs", false, opt.proc_calls_space),
-    special_option("npro", IGN),
     bool_option("npsl", false, opt.procnames_start_line),
     bool_option("nsc", false, opt.star_comment_cont),
     bool_option("nsob", false, opt.swallow_optional_blanklines),
@@ -173,13 +151,10 @@ static const struct pro {
     bool_option("psl", true, opt.procnames_start_line),
     bool_option("sc", true, opt.star_comment_cont),
     bool_option("sob", true, opt.swallow_optional_blanklines),
-    special_option("st", STDIN),
     bool_option("ta", true, opt.auto_typedefs),
     int_option("ts", opt.tabsize),
     bool_option("ut", true, opt.use_tabs),
     bool_option("v", true, opt.verbose),
-    /* whew! */
-    {"", 0, 0, 0}
 };
 
 /*
@@ -252,6 +227,60 @@ skip_over(const char *s, const char *prefix)
     return s;
 }
 
+static bool
+set_special_option(const char *arg)
+{
+    const char *arg_end;
+
+    if (strncmp(arg, "-version", 8) == 0) {
+	printf("FreeBSD indent %s\n", INDENT_VERSION);
+	exit(0);
+	/*NOTREACHED*/
+    }
+
+    if (arg[0] == 'P' || strncmp(arg, "npro", 4) == 0)
+	return true;
+
+    if (strncmp(arg, "cli", 3) == 0) {
+	arg_end = arg + 3;
+	if (arg_end[0] == '\0')
+	    goto need_param;
+	opt.case_indent = atof(arg_end);
+	return true;
+    }
+
+    if (strncmp(arg, "st", 2) == 0) {
+	if (input == NULL)
+	    input = stdin;
+	if (output == NULL)
+	    output = stdout;
+	return true;
+    }
+
+    if (arg[0] == 'T') {
+	arg_end = arg + 1;
+	if (arg_end[0] == '\0')
+	    goto need_param;
+	add_typename(arg_end);
+	return true;
+    }
+
+    if (arg[0] == 'U') {
+	arg_end = arg + 1;
+	if (arg_end[0] == '\0')
+	    goto need_param;
+	add_typedefs_from_file(arg_end);
+	return true;
+    }
+
+    return false;
+
+need_param:
+    errx(1, "%s: ``%.*s'' requires a parameter",
+	option_source, (int)(arg_end - arg), arg);
+    /* NOTREACHED */
+}
+
 void
 set_option(const char *arg)
 {
@@ -259,70 +288,23 @@ set_option(const char *arg)
     const char	*param_start;
 
     arg++;			/* ignore leading "-" */
-    for (p = pro; p->p_name[0] != '\0'; p++)
+    if (set_special_option(arg))
+	return;
+
+    for (p = pro; p != pro + nitems(pro); p++)
 	if (p->p_name[0] == arg[0])
 	    if ((param_start = skip_over(arg, p->p_name)) != NULL)
 		goto found;
     errx(1, "%s: unknown parameter \"%s\"", option_source, arg - 1);
 
 found:
-    switch (p->p_type) {
-
-    case PRO_SPECIAL:
-	switch (p->p_special) {
-
-	case IGN:
-	    break;
-
-	case CLI:
-	    if (param_start[0] == '\0')
-		goto need_param;
-	    opt.case_indent = atof(param_start);
-	    break;
-
-	case STDIN:
-	    if (input == NULL)
-		input = stdin;
-	    if (output == NULL)
-		output = stdout;
-	    break;
-
-	case KEY:
-	    if (param_start[0] == '\0')
-		goto need_param;
-	    add_typename(param_start);
-	    break;
-
-	case KEY_FILE:
-	    if (param_start[0] == '\0')
-		goto need_param;
-	    add_typedefs_from_file(param_start);
-	    break;
-
-	case VERSION:
-	    printf("FreeBSD indent %s\n", INDENT_VERSION);
-	    exit(0);
-	    /*NOTREACHED*/
-
-	default:
-	    errx(1, "set_option: internal error: p_special %d", p->p_special);
-	}
-	break;
-
-    case PRO_BOOL:
-	*(bool *)p->p_obj = p->p_special != 0;
-	break;
-
-    case PRO_INT:
-	if (!isdigit((unsigned char)*param_start)) {
-    need_param:
-	    errx(1, "%s: ``%s'' requires a parameter", option_source, p->p_name);
-	}
+    if (p->p_is_bool)
+	*(bool *)p->p_obj = p->p_bool_value;
+    else {
+	if (!isdigit((unsigned char)*param_start))
+	    errx(1, "%s: ``%s'' requires a parameter",
+		option_source, p->p_name);
 	*(int *)p->p_obj = atoi(param_start);
-	break;
-
-    default:
-	errx(1, "set_option: internal error: p_type %d", p->p_type);
     }
 }
 
