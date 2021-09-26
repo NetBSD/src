@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.451 2021/09/25 08:54:30 maya Exp $
+#	$NetBSD: Makefile,v 1.452 2021/09/26 15:52:40 maya Exp $
 #	from: @(#)Makefile	8.7 (Berkeley) 5/25/95
 
 # Environment variables without default values:
@@ -368,15 +368,12 @@ install-etc-files: .PHONY .MAKE check_DESTDIR MAKEDEV
 #	Install var/db/obsolete set lists; this is performed by "make build"
 #
 OBSOLETE.dir=		${.OBJDIR}/obsolete.dir
-OBSOLETE.files=		base comp etc games man misc rescue text
+OBSOLETE.files=		base comp etc games gpufw man misc rescue text
 .if ${MKDEBUG} != "no"
 OBSOLETE.files+=	debug
 .endif
 .if ${MKDTB} != "no"
 OBSOLETE.files+=	dtb
-.endif
-.if ${MKGPUFIRMWARE} != "no"
-OBSOLETE.files+=	gpufw
 .endif
 .if ${MKKMOD} != "no"
 OBSOLETE.files+=	modules
