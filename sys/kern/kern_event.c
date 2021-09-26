@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_event.c,v 1.123 2021/09/26 18:13:58 thorpej Exp $	*/
+/*	$NetBSD: kern_event.c,v 1.124 2021/09/26 21:29:38 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_event.c,v 1.123 2021/09/26 18:13:58 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_event.c,v 1.124 2021/09/26 21:29:38 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -108,9 +108,6 @@ static void	filt_timerexpire(void *x);
 static int	filt_timerattach(struct knote *);
 static void	filt_timerdetach(struct knote *);
 static int	filt_timer(struct knote *, long hint);
-static int	filt_fsattach(struct knote *kn);
-static void	filt_fsdetach(struct knote *kn);
-static int	filt_fs(struct knote *kn, long hint);
 static int	filt_userattach(struct knote *);
 static void	filt_userdetach(struct knote *);
 static int	filt_user(struct knote *, long hint);
@@ -163,13 +160,6 @@ static const struct filterops timer_filtops = {
 	.f_event = filt_timer,
 };
 
-static const struct filterops fs_filtops = {
-	.f_flags = 0,
-	.f_attach = filt_fsattach,
-	.f_detach = filt_fsdetach,
-	.f_event = filt_fs,
-};
-
 static const struct filterops user_filtops = {
 	.f_flags = FILTEROP_MPSAFE,
 	.f_attach = filt_userattach,
@@ -184,7 +174,8 @@ static int	kq_calloutmax = (4 * 1024);
 #define	KN_HASHSIZE		64		/* XXX should be tunable */
 #define	KN_HASH(val, mask)	(((val) ^ (val >> 8)) & (mask))
 
-extern const struct filterops sig_filtops;
+extern const struct filterops fs_filtops;	/* vfs_syscalls.c */
+extern const struct filterops sig_filtops;	/* kern_sig.c */
 
 #define KQ_FLUX_WAKEUP(kq)	cv_broadcast(&kq->kq_cv)
 
@@ -818,45 +809,6 @@ filt_timer(struct knote *kn, long hint)
 
 	mutex_enter(&kqueue_misc_lock);
 	rv = (kn->kn_data != 0);
-	mutex_exit(&kqueue_misc_lock);
-
-	return rv;
-}
-
-/*
- * Filter event method for EVFILT_FS.
- */
-struct klist fs_klist = SLIST_HEAD_INITIALIZER(&fs_klist);
-
-static int
-filt_fsattach(struct knote *kn)
-{
-
-	mutex_enter(&kqueue_misc_lock);
-	kn->kn_flags |= EV_CLEAR;
-	SLIST_INSERT_HEAD(&fs_klist, kn, kn_selnext);
-	mutex_exit(&kqueue_misc_lock);
-
-	return 0;
-}
-
-static void
-filt_fsdetach(struct knote *kn)
-{
-
-	mutex_enter(&kqueue_misc_lock);
-	SLIST_REMOVE(&fs_klist, kn, knote, kn_selnext);
-	mutex_exit(&kqueue_misc_lock);
-}
-
-static int
-filt_fs(struct knote *kn, long hint)
-{
-	int rv;
-
-	mutex_enter(&kqueue_misc_lock);
-	kn->kn_fflags |= hint;
-	rv = (kn->kn_fflags != 0);
 	mutex_exit(&kqueue_misc_lock);
 
 	return rv;

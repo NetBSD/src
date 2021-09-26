@@ -1,4 +1,4 @@
-/*	$NetBSD: event.h,v 1.42 2021/09/26 03:12:50 thorpej Exp $	*/
+/*	$NetBSD: event.h,v 1.43 2021/09/26 21:29:39 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999,2000,2001 Jonathan Lemon <jlemon@FreeBSD.org>
@@ -271,7 +271,7 @@ struct knote {
 #define	kn_data		kn_kevent.data
 };
 
-#include <sys/systm.h> /* for copyin_t */
+#include <sys/systm.h>	/* for copyin_t */
 
 struct lwp;
 struct timespec;
@@ -306,8 +306,6 @@ int	kfilter_unregister(const char *);
 
 int	filt_seltrue(struct knote *, long);
 extern const struct filterops seltrue_filtops;
-
-extern struct klist fs_klist;	/* EVFILT_FS */
 
 #else 	/* !_KERNEL */
 
