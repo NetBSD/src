@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_log.c,v 1.61 2021/09/26 01:16:10 thorpej Exp $	*/
+/*	$NetBSD: subr_log.c,v 1.62 2021/09/26 15:11:33 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_log.c,v 1.61 2021/09/26 01:16:10 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_log.c,v 1.62 2021/09/26 15:11:33 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -290,7 +290,7 @@ filt_logread(struct knote *kn, long hint)
 }
 
 static const struct filterops logread_filtops = {
-	.f_flags = FILTEROP_ISFD,
+	.f_flags = FILTEROP_ISFD | FILTEROP_MPSAFE,
 	.f_attach = NULL,
 	.f_detach = filt_logrdetach,
 	.f_event = filt_logread,
@@ -303,17 +303,14 @@ logkqfilter(dev_t dev, struct knote *kn)
 	switch (kn->kn_filter) {
 	case EVFILT_READ:
 		kn->kn_fop = &logread_filtops;
+		mutex_spin_enter(&log_lock);
+		selrecord_knote(&log_selp, kn);
+		mutex_spin_exit(&log_lock);
 		break;
 
 	default:
 		return (EINVAL);
 	}
-
-	kn->kn_hook = NULL;
-
-	mutex_spin_enter(&log_lock);
-	selrecord_knote(&log_selp, kn);
-	mutex_spin_exit(&log_lock);
 
 	return (0);
 }
