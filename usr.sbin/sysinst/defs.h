@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.73 2021/09/25 08:54:31 maya Exp $	*/
+/*	$NetBSD: defs.h,v 1.74 2021/09/26 15:52:40 maya Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -196,12 +196,7 @@ enum {
 #else
 #define	WITH_DTB
 #endif
-#ifdef HAVE_GPUFW
-#define	WITH_GPUFW	SET_GPUFW,
-#else
-#define	WITH_GPUFW
-#endif
-#define SET_CORE WITH_MODULES SET_BASE, WITH_DTB WITH_GPUFW SET_ETC
+#define SET_CORE WITH_MODULES SET_BASE, WITH_DTB SET_GPUFW, SET_ETC
 /* All system sets */
 #define SET_SYSTEM SET_CORE, SET_COMPILER, SET_GAMES, \
 		    SET_MAN_PAGES, SET_MISC, SET_RESCUE, \

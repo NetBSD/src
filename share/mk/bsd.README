@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.README,v 1.417 2021/09/25 08:54:30 maya Exp $
+#	$NetBSD: bsd.README,v 1.418 2021/09/26 15:52:40 maya Exp $
 #	@(#)bsd.README	8.2 (Berkeley) 4/2/94
 
 This is the README file for the make "include" files for the NetBSD
@@ -218,10 +218,6 @@ MKFIRMWARE      If not "no", install the /libdata/firmware directory,
 		Default: yes on amd64, cobalt, evbarm evbmips, evbppc, hpcarm,
 		hppa, i386, mac68k, macppc, sandpoint, and sparc64, no elsewhere.
 
-MKGPUFIRMWARE	If not "no", install the /libdata/firmware directory,
-		which is necessary for GPU drivers.
-		Default: yes on amd64, i386, evbarm. No elsewhere.
-
 MKGCC		If "no", don't build gcc(1) or any of the GCC-related
 		libraries (libgcc, libobjc, libstdc++).
 		Default: yes
@@ -372,6 +368,10 @@ MKMDNS		If "no", disables building of mDNS infrastructure
 MKNLS		If "no", don't build or install the NLS files and locale
 		definition files.
 		Default: yes
+
+MKNOUVEAUFIRMWARE If "yes", install the /libdata/firmware/nouveau directory,
+		which is necessary for the nouveau DRM driver.
+		Default: yes on amd64 and i386, no elsewhere.
 
 MKNPF		If "no", don't build or install the NPF and its modules.
 		Default: yes

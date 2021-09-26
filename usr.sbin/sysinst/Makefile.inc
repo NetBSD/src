@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.42 2021/09/25 08:54:31 maya Exp $
+#	$NetBSD: Makefile.inc,v 1.43 2021/09/26 15:52:40 maya Exp $
 #
 # Makefile for sysinst
 
@@ -79,10 +79,6 @@ CPPFLAGS+=	-DUSING_PAXASTAR
 
 .if ${MKDTB:Uno} != "no"
 CPPFLAGS+=	-DHAVE_DTB
-.endif
-
-.if ${MKGPUFIRMWARE:Uno} != "no"
-CPPFLAGS+=	-DHAVE_GPUFW
 .endif
 
 .if ${MKKMOD:Uno} != "no"
