@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.366 2021/09/17 21:06:04 christos Exp $ */
+/* $NetBSD: cgram.y,v 1.367 2021/09/26 01:28:43 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: cgram.y,v 1.366 2021/09/17 21:06:04 christos Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.367 2021/09/26 01:28:43 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -995,7 +995,9 @@ struct_declaration:		/* C99 6.7.2.1 */
 			$$ = NULL;
 		}
 	  }
-	| static_assert_declaration
+	| static_assert_declaration {
+		$$ = NULL;
+	  }
 	| error T_SEMI {
 		symtyp = FVFT;
 		$$ = NULL;
