@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_eventfd.c,v 1.5 2021/09/26 01:16:10 thorpej Exp $	*/
+/*	$NetBSD: sys_eventfd.c,v 1.6 2021/09/26 03:42:54 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_eventfd.c,v 1.5 2021/09/26 01:16:10 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_eventfd.c,v 1.6 2021/09/26 03:42:54 thorpej Exp $");
 
 /*
  * eventfd
@@ -425,7 +425,7 @@ eventfd_filt_read(struct knote * const kn, long const hint)
 }
 
 static const struct filterops eventfd_read_filterops = {
-	.f_flags = FILTEROP_ISFD,
+	.f_flags = FILTEROP_ISFD | FILTEROP_MPSAFE,
 	.f_detach = eventfd_filt_read_detach,
 	.f_event = eventfd_filt_read,
 };
@@ -462,7 +462,7 @@ eventfd_filt_write(struct knote * const kn, long const hint)
 }
 
 static const struct filterops eventfd_write_filterops = {
-	.f_flags = FILTEROP_ISFD,
+	.f_flags = FILTEROP_ISFD | FILTEROP_MPSAFE,
 	.f_detach = eventfd_filt_write_detach,
 	.f_event = eventfd_filt_write,
 };
