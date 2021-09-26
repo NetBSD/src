@@ -1,4 +1,4 @@
-/*	$NetBSD: vio9p.c,v 1.3 2021/01/20 19:46:48 reinoud Exp $	*/
+/*	$NetBSD: vio9p.c,v 1.4 2021/09/26 01:16:09 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2019 Internet Initiative Japan, Inc.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vio9p.c,v 1.3 2021/01/20 19:46:48 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vio9p.c,v 1.4 2021/09/26 01:16:09 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -408,7 +408,7 @@ filt_vio9p_read(struct knote *kn, long hint)
 }
 
 static const struct filterops vio9p_read_filtops = {
-	.f_isfd = 1,
+	.f_flags = FILTEROP_ISFD,
 	.f_attach = NULL,
 	.f_detach = filt_vio9p_detach,
 	.f_event = filt_vio9p_read,
@@ -424,7 +424,7 @@ filt_vio9p_write(struct knote *kn, long hint)
 }
 
 static const struct filterops vio9p_write_filtops = {
-	.f_isfd = 1,
+	.f_flags = FILTEROP_ISFD,
 	.f_attach = NULL,
 	.f_detach = filt_vio9p_detach,
 	.f_event = filt_vio9p_write,

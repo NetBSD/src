@@ -1,4 +1,4 @@
-/*	$NetBSD: button.c,v 1.11 2021/07/15 05:07:50 rin Exp $	*/
+/*	$NetBSD: button.c,v 1.12 2021/09/26 01:16:07 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: button.c,v 1.11 2021/07/15 05:07:50 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: button.c,v 1.12 2021/09/26 01:16:07 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -306,14 +306,14 @@ filt_btn_read(struct knote *kn, long hint)
 }
 
 static const struct filterops btn_read_filtops = {
-    .f_isfd = 1,
+    .f_flags = FILTEROP_ISFD,
     .f_attach = NULL,
     .f_detach = filt_btn_rdetach,
     .f_event = filt_btn_read,
 };
 
 static const struct filterops btn_write_filtops = {
-    .f_isfd = 1,
+    .f_flags = FILTEROP_ISFD,
     .f_attach = NULL,
     .f_detach = filt_btn_rdetach,
     .f_event = filt_seltrue,

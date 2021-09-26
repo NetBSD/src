@@ -1,4 +1,4 @@
-/*	$NetBSD: opms.c,v 1.24 2020/12/19 15:15:04 thorpej Exp $	*/
+/*	$NetBSD: opms.c,v 1.25 2021/09/26 01:16:07 thorpej Exp $	*/
 /*	$OpenBSD: pccons.c,v 1.22 1999/01/30 22:39:37 imp Exp $	*/
 /*	NetBSD: pms.c,v 1.21 1995/04/18 02:25:18 mycroft Exp	*/
 
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: opms.c,v 1.24 2020/12/19 15:15:04 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: opms.c,v 1.25 2021/09/26 01:16:07 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -473,7 +473,7 @@ filt_opmsread(struct knote *kn, long hint)
 }
 
 static const struct filterops opmsread_filtops = {
-	.f_isfd = 1,
+	.f_flags = FILTEROP_ISFD,
 	.f_attach = NULL,
 	.f_detach = filt_opmsrdetach,
 	.f_event = filt_opmsread,

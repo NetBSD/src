@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_pipe.c,v 1.153 2021/09/07 13:24:46 andvar Exp $	*/
+/*	$NetBSD: sys_pipe.c,v 1.154 2021/09/26 01:16:10 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_pipe.c,v 1.153 2021/09/07 13:24:46 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_pipe.c,v 1.154 2021/09/26 01:16:10 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1095,14 +1095,14 @@ filt_pipewrite(struct knote *kn, long hint)
 }
 
 static const struct filterops pipe_rfiltops = {
-	.f_isfd = 1,
+	.f_flags = FILTEROP_ISFD,
 	.f_attach = NULL,
 	.f_detach = filt_pipedetach,
 	.f_event = filt_piperead,
 };
 
 static const struct filterops pipe_wfiltops = {
-	.f_isfd = 1,
+	.f_flags = FILTEROP_ISFD,
 	.f_attach = NULL,
 	.f_detach = filt_pipedetach,
 	.f_event = filt_pipewrite,

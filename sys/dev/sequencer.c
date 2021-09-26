@@ -1,4 +1,4 @@
-/*	$NetBSD: sequencer.c,v 1.73 2020/12/19 01:18:58 thorpej Exp $	*/
+/*	$NetBSD: sequencer.c,v 1.74 2021/09/26 01:16:08 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998, 2008 The NetBSD Foundation, Inc.
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sequencer.c,v 1.73 2020/12/19 01:18:58 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sequencer.c,v 1.74 2021/09/26 01:16:08 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "sequencer.h"
@@ -927,7 +927,7 @@ filt_sequencerread(struct knote *kn, long hint)
 }
 
 static const struct filterops sequencerread_filtops = {
-	.f_isfd = 1,
+	.f_flags = FILTEROP_ISFD,
 	.f_attach = NULL,
 	.f_detach = filt_sequencerrdetach,
 	.f_event = filt_sequencerread,
@@ -965,7 +965,7 @@ filt_sequencerwrite(struct knote *kn, long hint)
 }
 
 static const struct filterops sequencerwrite_filtops = {
-	.f_isfd = 1,
+	.f_flags = FILTEROP_ISFD,
 	.f_attach = NULL,
 	.f_detach = filt_sequencerwdetach,
 	.f_event = filt_sequencerwrite,

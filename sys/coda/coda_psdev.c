@@ -1,4 +1,4 @@
-/*	$NetBSD: coda_psdev.c,v 1.59 2020/12/19 22:11:57 thorpej Exp $	*/
+/*	$NetBSD: coda_psdev.c,v 1.60 2021/09/26 01:16:08 thorpej Exp $	*/
 
 /*
  *
@@ -54,7 +54,7 @@
 /* These routines are the device entry points for Venus. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: coda_psdev.c,v 1.59 2020/12/19 22:11:57 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: coda_psdev.c,v 1.60 2021/09/26 01:16:08 thorpej Exp $");
 
 extern int coda_nc_initialized;    /* Set if cache has been initialized */
 
@@ -487,7 +487,7 @@ filt_vc_nb_read(struct knote *kn, long hint)
 }
 
 static const struct filterops vc_nb_read_filtops = {
-	.f_isfd = 1,
+	.f_flags = FILTEROP_ISFD,
 	.f_attach = NULL,
 	.f_detach = filt_vc_nb_detach,
 	.f_event = filt_vc_nb_read,

@@ -1,4 +1,4 @@
-/*	$NetBSD: ralink_gpio.c,v 1.12 2021/09/03 22:33:17 andvar Exp $	*/
+/*	$NetBSD: ralink_gpio.c,v 1.13 2021/09/26 01:16:07 thorpej Exp $	*/
 /*-
  * Copyright (c) 2011 CradlePoint Technology, Inc.
  * All rights reserved.
@@ -29,7 +29,7 @@
 /* ra_gpio.c -- Ralink 3052 gpio driver */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ralink_gpio.c,v 1.12 2021/09/03 22:33:17 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ralink_gpio.c,v 1.13 2021/09/26 01:16:07 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -495,7 +495,7 @@ static int  gpio_event_app_user_event(struct knote *, long);
 static struct klist knotes;
 static int app_filter_id;
 static struct filterops app_fops = {
-	.f_isfd = 0,
+	.f_flags = 0,
 	.f_attach = gpio_event_app_user_attach,
 	.f_detach = gpio_event_app_user_detach,
 	.f_event = gpio_event_app_user_event,

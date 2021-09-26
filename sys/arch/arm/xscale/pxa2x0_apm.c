@@ -1,4 +1,4 @@
-/*	$NetBSD: pxa2x0_apm.c,v 1.5 2020/10/30 22:20:38 christos Exp $	*/
+/*	$NetBSD: pxa2x0_apm.c,v 1.6 2021/09/26 01:16:07 thorpej Exp $	*/
 /*	$OpenBSD: pxa2x0_apm.c,v 1.28 2007/03/29 18:42:38 uwe Exp $	*/
 
 /*-
@@ -105,7 +105,7 @@ int	filt_apmread(struct knote *kn, long hint);
 int	apmkqfilter(dev_t dev, struct knote *kn);
 
 static const struct filterops apmread_filtops = {
-	.f_isfd = 1,
+	.f_flags = FILTEROP_ISFD,
 	.f_attach = NULL,
 	.f_detach = filt_apmrdetach,
 	.f_event = filt_apmread,

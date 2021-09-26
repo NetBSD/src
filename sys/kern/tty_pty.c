@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_pty.c,v 1.146 2020/12/11 03:00:09 thorpej Exp $	*/
+/*	$NetBSD: tty_pty.c,v 1.147 2021/09/26 01:16:10 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty_pty.c,v 1.146 2020/12/11 03:00:09 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty_pty.c,v 1.147 2021/09/26 01:16:10 thorpej Exp $");
 
 #include "opt_ptm.h"
 
@@ -1002,14 +1002,14 @@ filt_ptcwrite(struct knote *kn, long hint)
 }
 
 static const struct filterops ptcread_filtops = {
-	.f_isfd = 1,
+	.f_flags = FILTEROP_ISFD,
 	.f_attach = NULL,
 	.f_detach = filt_ptcrdetach,
 	.f_event = filt_ptcread,
 };
 
 static const struct filterops ptcwrite_filtops = {
-	.f_isfd = 1,
+	.f_flags = FILTEROP_ISFD,
 	.f_attach = NULL,
 	.f_detach = filt_ptcwdetach,
 	.f_event = filt_ptcwrite,

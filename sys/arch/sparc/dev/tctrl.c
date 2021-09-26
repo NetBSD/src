@@ -1,4 +1,4 @@
-/*	$NetBSD: tctrl.c,v 1.63 2021/01/04 15:29:34 thorpej Exp $	*/
+/*	$NetBSD: tctrl.c,v 1.64 2021/09/26 01:16:08 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2005, 2006 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tctrl.c,v 1.63 2021/01/04 15:29:34 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tctrl.c,v 1.64 2021/09/26 01:16:08 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1232,7 +1232,7 @@ filt_tctrlread(struct knote *kn, long hint)
 }
 
 static const struct filterops tctrlread_filtops = {
-	.f_isfd = 1,
+	.f_flags = FILTEROP_ISFD,
 	.f_attach = NULL,
 	.f_detach = filt_tctrlrdetach,
 	.f_event = filt_tctrlread,

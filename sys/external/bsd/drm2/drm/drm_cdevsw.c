@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_cdevsw.c,v 1.15 2020/12/19 22:09:15 thorpej Exp $	*/
+/*	$NetBSD: drm_cdevsw.c,v 1.16 2021/09/26 01:16:10 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_cdevsw.c,v 1.15 2020/12/19 22:09:15 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_cdevsw.c,v 1.16 2021/09/26 01:16:10 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -386,7 +386,7 @@ static void	filt_drm_detach(struct knote *);
 static int	filt_drm_event(struct knote *, long);
 
 static const struct filterops drm_filtops = {
-	.f_isfd = 1,
+	.f_flags = FILTEROP_ISFD,
 	.f_attach = NULL,
 	.f_detach = filt_drm_detach,
 	.f_event = filt_drm_event,

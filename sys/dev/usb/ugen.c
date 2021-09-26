@@ -1,4 +1,4 @@
-/*	$NetBSD: ugen.c,v 1.167 2021/09/07 10:44:04 riastradh Exp $	*/
+/*	$NetBSD: ugen.c,v 1.168 2021/09/26 01:16:09 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ugen.c,v 1.167 2021/09/07 10:44:04 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ugen.c,v 1.168 2021/09/26 01:16:09 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -2230,28 +2230,28 @@ filt_ugenwrite_bulk(struct knote *kn, long hint)
 }
 
 static const struct filterops ugenread_intr_filtops = {
-	.f_isfd = 1,
+	.f_flags = FILTEROP_ISFD,
 	.f_attach = NULL,
 	.f_detach = filt_ugenrdetach,
 	.f_event = filt_ugenread_intr,
 };
 
 static const struct filterops ugenread_isoc_filtops = {
-	.f_isfd = 1,
+	.f_flags = FILTEROP_ISFD,
 	.f_attach = NULL,
 	.f_detach = filt_ugenrdetach,
 	.f_event = filt_ugenread_isoc,
 };
 
 static const struct filterops ugenread_bulk_filtops = {
-	.f_isfd = 1,
+	.f_flags = FILTEROP_ISFD,
 	.f_attach = NULL,
 	.f_detach = filt_ugenrdetach,
 	.f_event = filt_ugenread_bulk,
 };
 
 static const struct filterops ugenwrite_bulk_filtops = {
-	.f_isfd = 1,
+	.f_flags = FILTEROP_ISFD,
 	.f_attach = NULL,
 	.f_detach = filt_ugenrdetach,
 	.f_event = filt_ugenwrite_bulk,
