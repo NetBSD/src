@@ -1,4 +1,4 @@
-/*	$NetBSD: ppp_tty.c,v 1.67 2020/01/29 04:28:27 thorpej Exp $	*/
+/*	$NetBSD: ppp_tty.c,v 1.68 2021/09/27 07:13:30 msaitoh Exp $	*/
 /*	Id: ppp_tty.c,v 1.3 1996/07/01 01:04:11 paulus Exp 	*/
 
 /*
@@ -93,7 +93,7 @@
 /* from NetBSD: if_ppp.c,v 1.15.2.2 1994/07/28 05:17:58 cgd Exp */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ppp_tty.c,v 1.67 2020/01/29 04:28:27 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ppp_tty.c,v 1.68 2021/09/27 07:13:30 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "ppp.h"
@@ -168,7 +168,7 @@ static void	pppdumpframe(struct ppp_softc *sc, struct mbuf* m, int xmit);
 /*
  * Does c need to be escaped?
  */
-#define ESCAPE_P(c)	(sc->sc_asyncmap[(c) >> 5] & (1 << ((c) & 0x1F)))
+#define ESCAPE_P(c)	(sc->sc_asyncmap[(c) >> 5] & (1U << ((c) & 0x1F)))
 
 /*
  * Procedures for using an async tty interface for PPP.
