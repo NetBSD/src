@@ -1,4 +1,4 @@
-/*	$NetBSD: lexi.c,v 1.63 2021/09/27 17:33:07 rillig Exp $	*/
+/*	$NetBSD: lexi.c,v 1.64 2021/09/27 18:21:47 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)lexi.c	8.1 (Berkeley) 6/6/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: lexi.c,v 1.63 2021/09/27 17:33:07 rillig Exp $");
+__RCSID("$NetBSD: lexi.c,v 1.64 2021/09/27 18:21:47 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/lexi.c 337862 2018-08-15 18:19:45Z pstef $");
 #endif
@@ -106,9 +106,11 @@ static const struct keyword {
     {"while", kw_for_or_if_or_while}
 };
 
-static const char **typenames;
-static int typename_count;
-static int typename_top = -1;
+struct {
+    const char **items;
+    unsigned int len;
+    unsigned int cap;
+} typenames;
 
 /*
  * The transition table below was rewritten by hand from lx's output, given
@@ -344,10 +346,10 @@ is_typename(void)
 	    return true;
     }
 
-    if (typename_top < 0)
+    if (typenames.len == 0)
 	return false;
-    return bsearch(token.s, typenames, (size_t)typename_top + 1,
-	sizeof(typenames[0]), cmp_type_by_name) != NULL;
+    return bsearch(token.s, typenames.items, (size_t)typenames.len,
+	sizeof(typenames.items[0]), cmp_type_by_name) != NULL;
 }
 
 /* Reads the next token, placing it in the global variable "token". */
@@ -662,38 +664,38 @@ lexi(struct parser_state *state)
     return lexi_end(ttype);
 }
 
-void
-alloc_typenames(void)
-{
+static int
+insert_pos(const char *key, const char **arr, unsigned int len) {
+    int lo = 0;
+    int hi = (int)len - 1;
 
-    typenames = xmalloc(sizeof(typenames[0]) * (typename_count = 16));
+    while (lo <= hi) {
+	int mid = (lo + hi) >> 1;
+	int cmp = strcmp(arr[mid], key);
+	if (cmp < 0)
+	    lo = mid + 1;
+	else if (cmp > 0)
+	    hi = mid - 1;
+	else
+	    return mid;
+    }
+    return -(lo + 1);
 }
 
 void
-add_typename(const char *key)
+add_typename(const char *name)
 {
-    int comparison;
-
-    if (typename_top + 1 >= typename_count) {
-	typenames = xrealloc((void *)typenames,
-	    sizeof(typenames[0]) * (typename_count *= 2));
+    if (typenames.len >= typenames.cap) {
+	typenames.cap = 16 + 2 * typenames.cap;
+	typenames.items = xrealloc(typenames.items,
+	    sizeof(typenames.items[0]) * typenames.cap);
     }
-    if (typename_top == -1)
-	typenames[++typename_top] = xstrdup(key);
-    else if ((comparison = strcmp(key, typenames[typename_top])) >= 0) {
-	/* take advantage of sorted input */
-	if (comparison == 0)	/* remove duplicates */
-	    return;
-	typenames[++typename_top] = xstrdup(key);
-    } else {
-	int p;
 
-	for (p = 0; (comparison = strcmp(key, typenames[p])) > 0; p++)
-	    /* find place for the new key */;
-	if (comparison == 0)	/* remove duplicates */
-	    return;
-	memmove(&typenames[p + 1], &typenames[p],
-	    sizeof(typenames[0]) * (++typename_top - p));
-	typenames[p] = xstrdup(key);
-    }
+    int pos = insert_pos(name, typenames.items, typenames.len);
+    if (pos >= 0)
+	return;			/* already in the list */
+    pos = -(pos + 1);
+    memmove(typenames.items + pos + 1, typenames.items + pos,
+	sizeof(typenames.items[0]) * (typenames.len++ - pos));
+    typenames.items[pos] = xstrdup(name);
 }

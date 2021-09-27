@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.h,v 1.25 2021/09/25 22:14:21 rillig Exp $	*/
+/*	$NetBSD: indent.h,v 1.26 2021/09/27 18:21:47 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-FreeBSD
@@ -42,7 +42,6 @@ __FBSDID("$FreeBSD: head/usr.bin/indent/indent.h 336333 2018-07-16 05:46:50Z pst
 #endif
 
 void		add_typename(const char *);
-void		alloc_typenames(void);
 int		compute_code_indent(void);
 int		compute_label_indent(void);
 int		indentation_after_range(int, const char *, const char *);
