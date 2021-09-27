@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.c,v 1.91 2021/09/27 20:00:41 rillig Exp $	*/
+/*	$NetBSD: indent.c,v 1.92 2021/09/27 20:09:55 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)indent.c	5.17 (Berkeley) 6/7/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: indent.c,v 1.91 2021/09/27 20:00:41 rillig Exp $");
+__RCSID("$NetBSD: indent.c,v 1.92 2021/09/27 20:09:55 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/indent.c 340138 2018-11-04 19:24:49Z oshogbo $");
 #endif
@@ -171,13 +171,12 @@ search_brace_newline(bool *inout_force_nl)
     *sc_end++ = '\n';
 
     /*
-     * We may have inherited a force_nl == true from the previous
-     * token (like a semicolon). But once we know that a newline has
-     * been scanned in this loop, force_nl should be false.
+     * We may have inherited a force_nl == true from the previous token (like
+     * a semicolon). But once we know that a newline has been scanned in this
+     * loop, force_nl should be false.
      *
-     * However, the force_nl == true must be preserved if newline is
-     * never scanned in this loop, so this assignment cannot be done
-     * earlier.
+     * However, the force_nl == true must be preserved if newline is never
+     * scanned in this loop, so this assignment cannot be done earlier.
      */
     *inout_force_nl = false;
 }
@@ -188,8 +187,8 @@ search_brace_comment(bool *inout_comment_buffered)
     if (sc_end == NULL) {
 	/*
 	 * Copy everything from the start of the line, because
-	 * process_comment() will use that to calculate original
-	 * indentation of a boxed comment.
+	 * process_comment() will use that to calculate original indentation
+	 * of a boxed comment.
 	 */
 	memcpy(sc_buf, in_buffer, (size_t)(buf_ptr - in_buffer) - 4);
 	save_com = sc_buf + (buf_ptr - in_buffer - 4);
@@ -197,14 +196,14 @@ search_brace_comment(bool *inout_comment_buffered)
 	sc_end = &save_com[2];
     }
     *inout_comment_buffered = true;
-    *sc_end++ = '/';	/* copy in start of comment */
+    *sc_end++ = '/';		/* copy in start of comment */
     *sc_end++ = '*';
-    for (;;) {		/* loop until the end of the comment */
+    for (;;) {			/* loop until the end of the comment */
 	*sc_end = *buf_ptr++;
 	if (buf_ptr >= buf_end)
 	    fill_buffer();
 	if (*sc_end++ == '*' && *buf_ptr == '/')
-	    break;	/* we are at end of comment */
+	    break;		/* we are at end of comment */
 	if (sc_end >= &save_com[sc_size]) {	/* check for temp buffer
 						 * overflow */
 	    diag(1, "Internal buffer overflow - Move big comment from right after if, while, or whatever");
@@ -212,7 +211,7 @@ search_brace_comment(bool *inout_comment_buffered)
 	    exit(1);
 	}
     }
-    *sc_end++ = '/';	/* add ending slash */
+    *sc_end++ = '/';		/* add ending slash */
     if (++buf_ptr >= buf_end)	/* get past / in buffer */
 	fill_buffer();
 }
@@ -221,17 +220,16 @@ static bool
 search_brace_lbrace(void)
 {
     /*
-     * Put KNF-style lbraces before the buffered up tokens and jump
-     * out of this loop in order to avoid copying the token again
-     * under the default case of the switch below.
+     * Put KNF-style lbraces before the buffered up tokens and jump out of
+     * this loop in order to avoid copying the token again under the default
+     * case of the switch below.
      */
     if (sc_end != NULL && opt.btype_2) {
 	save_com[0] = '{';
 	/*
-	 * Originally the lbrace may have been alone on its own line,
-	 * but it will be moved into "the else's line", so if there
-	 * was a newline resulting from the "{" before, it must be
-	 * scanned now and ignored.
+	 * Originally the lbrace may have been alone on its own line, but it
+	 * will be moved into "the else's line", so if there was a newline
+	 * resulting from the "{" before, it must be scanned now and ignored.
 	 */
 	while (isspace((unsigned char)*buf_ptr)) {
 	    if (++buf_ptr >= buf_end)
