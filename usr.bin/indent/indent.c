@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.c,v 1.90 2021/09/27 18:21:47 rillig Exp $	*/
+/*	$NetBSD: indent.c,v 1.91 2021/09/27 20:00:41 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)indent.c	5.17 (Berkeley) 6/7/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: indent.c,v 1.90 2021/09/27 18:21:47 rillig Exp $");
+__RCSID("$NetBSD: indent.c,v 1.91 2021/09/27 20:00:41 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/indent.c 340138 2018-11-04 19:24:49Z oshogbo $");
 #endif
@@ -161,184 +161,222 @@ init_capsicum(void)
 #endif
 
 static void
+search_brace_newline(bool *inout_force_nl)
+{
+    if (sc_end == NULL) {
+	save_com = sc_buf;
+	save_com[0] = save_com[1] = ' ';
+	sc_end = &save_com[2];
+    }
+    *sc_end++ = '\n';
+
+    /*
+     * We may have inherited a force_nl == true from the previous
+     * token (like a semicolon). But once we know that a newline has
+     * been scanned in this loop, force_nl should be false.
+     *
+     * However, the force_nl == true must be preserved if newline is
+     * never scanned in this loop, so this assignment cannot be done
+     * earlier.
+     */
+    *inout_force_nl = false;
+}
+
+static void
+search_brace_comment(bool *inout_comment_buffered)
+{
+    if (sc_end == NULL) {
+	/*
+	 * Copy everything from the start of the line, because
+	 * process_comment() will use that to calculate original
+	 * indentation of a boxed comment.
+	 */
+	memcpy(sc_buf, in_buffer, (size_t)(buf_ptr - in_buffer) - 4);
+	save_com = sc_buf + (buf_ptr - in_buffer - 4);
+	save_com[0] = save_com[1] = ' ';
+	sc_end = &save_com[2];
+    }
+    *inout_comment_buffered = true;
+    *sc_end++ = '/';	/* copy in start of comment */
+    *sc_end++ = '*';
+    for (;;) {		/* loop until the end of the comment */
+	*sc_end = *buf_ptr++;
+	if (buf_ptr >= buf_end)
+	    fill_buffer();
+	if (*sc_end++ == '*' && *buf_ptr == '/')
+	    break;	/* we are at end of comment */
+	if (sc_end >= &save_com[sc_size]) {	/* check for temp buffer
+						 * overflow */
+	    diag(1, "Internal buffer overflow - Move big comment from right after if, while, or whatever");
+	    fflush(output);
+	    exit(1);
+	}
+    }
+    *sc_end++ = '/';	/* add ending slash */
+    if (++buf_ptr >= buf_end)	/* get past / in buffer */
+	fill_buffer();
+}
+
+static bool
+search_brace_lbrace(void)
+{
+    /*
+     * Put KNF-style lbraces before the buffered up tokens and jump
+     * out of this loop in order to avoid copying the token again
+     * under the default case of the switch below.
+     */
+    if (sc_end != NULL && opt.btype_2) {
+	save_com[0] = '{';
+	/*
+	 * Originally the lbrace may have been alone on its own line,
+	 * but it will be moved into "the else's line", so if there
+	 * was a newline resulting from the "{" before, it must be
+	 * scanned now and ignored.
+	 */
+	while (isspace((unsigned char)*buf_ptr)) {
+	    if (++buf_ptr >= buf_end)
+		fill_buffer();
+	    if (*buf_ptr == '\n')
+		break;
+	}
+	return true;
+    }
+    return false;
+}
+
+static bool
+search_brace_other(token_type ttype, bool *inout_force_nl,
+    bool comment_buffered, bool last_else)
+{
+    bool remove_newlines;
+
+    remove_newlines =
+	    /* "} else" */
+	    (ttype == keyword_do_else && *token.s == 'e' &&
+	     code.e != code.s && code.e[-1] == '}')
+	    /* "else if" */
+	    || (ttype == keyword_for_if_while &&
+		*token.s == 'i' && last_else && opt.else_if);
+    if (remove_newlines)
+	*inout_force_nl = false;
+    if (sc_end == NULL) {	/* ignore buffering if comment wasn't saved
+				 * up */
+	ps.search_brace = false;
+	return false;
+    }
+    while (sc_end > save_com && isblank((unsigned char)sc_end[-1])) {
+	sc_end--;
+    }
+    if (opt.swallow_optional_blanklines ||
+	(!comment_buffered && remove_newlines)) {
+	*inout_force_nl = !remove_newlines;
+	while (sc_end > save_com && sc_end[-1] == '\n') {
+	    sc_end--;
+	}
+    }
+    if (*inout_force_nl) {	/* if we should insert a nl here, put it into
+				 * the buffer */
+	*inout_force_nl = false;
+	--line_no;		/* this will be re-increased when the newline
+				 * is read from the buffer */
+	*sc_end++ = '\n';
+	*sc_end++ = ' ';
+	if (opt.verbose)	/* print error msg if the line was not already
+				 * broken */
+	    diag(0, "Line broken");
+    }
+    for (const char *t_ptr = token.s; *t_ptr != '\0'; ++t_ptr)
+	*sc_end++ = *t_ptr;
+    return true;
+}
+
+static void
+switch_buffer(void)
+{
+    ps.search_brace = false;	/* stop looking for start of stmt */
+    bp_save = buf_ptr;		/* save current input buffer */
+    be_save = buf_end;
+    buf_ptr = save_com;		/* fix so that subsequent calls to lexi will
+				 * take tokens out of save_com */
+    *sc_end++ = ' ';		/* add trailing blank, just in case */
+    buf_end = sc_end;
+    sc_end = NULL;
+    debug_println("switched buf_ptr to save_com");
+}
+
+static void
+search_brace_lookahead(token_type *inout_ttype)
+{
+    /*
+     * We must make this check, just in case there was an unexpected EOF.
+     */
+    if (*inout_ttype != end_of_file) {
+	/*
+	 * The only intended purpose of calling lexi() below is to categorize
+	 * the next token in order to decide whether to continue buffering
+	 * forthcoming tokens. Once the buffering is over, lexi() will be
+	 * called again elsewhere on all of the tokens - this time for normal
+	 * processing.
+	 *
+	 * Calling it for this purpose is a bug, because lexi() also changes
+	 * the parser state and discards leading whitespace, which is needed
+	 * mostly for comment-related considerations.
+	 *
+	 * Work around the former problem by giving lexi() a copy of the
+	 * current parser state and discard it if the call turned out to be
+	 * just a look ahead.
+	 *
+	 * Work around the latter problem by copying all whitespace characters
+	 * into the buffer so that the later lexi() call will read them.
+	 */
+	if (sc_end != NULL) {
+	    while (*buf_ptr == ' ' || *buf_ptr == '\t') {
+		*sc_end++ = *buf_ptr++;
+		if (sc_end >= &save_com[sc_size]) {
+		    errx(1, "input too long");
+		}
+	    }
+	    if (buf_ptr >= buf_end) {
+		fill_buffer();
+	    }
+	}
+
+	struct parser_state transient_state;
+	transient_state = ps;
+	*inout_ttype = lexi(&transient_state);	/* read another token */
+	if (*inout_ttype != newline && *inout_ttype != form_feed &&
+	    *inout_ttype != comment && !transient_state.search_brace) {
+	    ps = transient_state;
+	}
+    }
+}
+
+static void
 search_brace(token_type *inout_ttype, bool *inout_force_nl,
     bool *inout_comment_buffered, bool *inout_last_else)
 {
     while (ps.search_brace) {
 	switch (*inout_ttype) {
 	case newline:
-	    if (sc_end == NULL) {
-		save_com = sc_buf;
-		save_com[0] = save_com[1] = ' ';
-		sc_end = &save_com[2];
-	    }
-	    *sc_end++ = '\n';
-	    /*
-	     * We may have inherited a force_nl == true from the previous
-	     * token (like a semicolon). But once we know that a newline has
-	     * been scanned in this loop, force_nl should be false.
-	     *
-	     * However, the force_nl == true must be preserved if newline is
-	     * never scanned in this loop, so this assignment cannot be done
-	     * earlier.
-	     */
-	    *inout_force_nl = false;
+	    search_brace_newline(inout_force_nl);
 	    break;
 	case form_feed:
 	    break;
 	case comment:
-	    if (sc_end == NULL) {
-		/*
-		 * Copy everything from the start of the line, because
-		 * process_comment() will use that to calculate original
-		 * indentation of a boxed comment.
-		 */
-		memcpy(sc_buf, in_buffer, (size_t)(buf_ptr - in_buffer) - 4);
-		save_com = sc_buf + (buf_ptr - in_buffer - 4);
-		save_com[0] = save_com[1] = ' ';
-		sc_end = &save_com[2];
-	    }
-	    *inout_comment_buffered = true;
-	    *sc_end++ = '/';	/* copy in start of comment */
-	    *sc_end++ = '*';
-	    for (;;) {		/* loop until the end of the comment */
-		*sc_end = *buf_ptr++;
-		if (buf_ptr >= buf_end)
-		    fill_buffer();
-		if (*sc_end++ == '*' && *buf_ptr == '/')
-		    break;	/* we are at end of comment */
-		if (sc_end >= &save_com[sc_size]) {	/* check for temp buffer
-							 * overflow */
-		    diag(1, "Internal buffer overflow - Move big comment from right after if, while, or whatever");
-		    fflush(output);
-		    exit(1);
-		}
-	    }
-	    *sc_end++ = '/';	/* add ending slash */
-	    if (++buf_ptr >= buf_end)	/* get past / in buffer */
-		fill_buffer();
+	    search_brace_comment(inout_comment_buffered);
 	    break;
 	case lbrace:
-	    /*
-	     * Put KNF-style lbraces before the buffered up tokens and jump
-	     * out of this loop in order to avoid copying the token again
-	     * under the default case of the switch below.
-	     */
-	    if (sc_end != NULL && opt.btype_2) {
-		save_com[0] = '{';
-		/*
-		 * Originally the lbrace may have been alone on its own line,
-		 * but it will be moved into "the else's line", so if there
-		 * was a newline resulting from the "{" before, it must be
-		 * scanned now and ignored.
-		 */
-		while (isspace((unsigned char)*buf_ptr)) {
-		    if (++buf_ptr >= buf_end)
-			fill_buffer();
-		    if (*buf_ptr == '\n')
-			break;
-		}
+	    if (search_brace_lbrace())
 		goto sw_buffer;
-	    }
 	    /* FALLTHROUGH */
 	default:		/* it is the start of a normal statement */
-	{
-	    bool remove_newlines;
-
-	    remove_newlines =
-		    /* "} else" */
-		    (*inout_ttype == keyword_do_else && *token.s == 'e' &&
-		     code.e != code.s && code.e[-1] == '}')
-		    /* "else if" */
-		    || (*inout_ttype == keyword_for_if_while &&
-			*token.s == 'i' && *inout_last_else && opt.else_if);
-	    if (remove_newlines)
-		*inout_force_nl = false;
-	    if (sc_end == NULL) {	/* ignore buffering if
-					 * comment wasn't saved up */
-		ps.search_brace = false;
+	    if (!search_brace_other(*inout_ttype, inout_force_nl,
+		    *inout_comment_buffered, *inout_last_else))
 		return;
-	    }
-	    while (sc_end > save_com && isblank((unsigned char)sc_end[-1])) {
-		sc_end--;
-	    }
-	    if (opt.swallow_optional_blanklines ||
-		(!*inout_comment_buffered && remove_newlines)) {
-		*inout_force_nl = !remove_newlines;
-		while (sc_end > save_com && sc_end[-1] == '\n') {
-		    sc_end--;
-		}
-	    }
-	    if (*inout_force_nl) {	/* if we should insert a nl here, put
-					 * it into the buffer */
-		*inout_force_nl = false;
-		--line_no;	/* this will be re-increased when the
-				 * newline is read from the buffer */
-		*sc_end++ = '\n';
-		*sc_end++ = ' ';
-		if (opt.verbose) /* print error msg if the line was
-				 * not already broken */
-		    diag(0, "Line broken");
-	    }
-	    for (const char *t_ptr = token.s; *t_ptr != '\0'; ++t_ptr)
-		*sc_end++ = *t_ptr;
-
-	    sw_buffer:
-	    ps.search_brace = false;	/* stop looking for start of stmt */
-	    bp_save = buf_ptr;	/* save current input buffer */
-	    be_save = buf_end;
-	    buf_ptr = save_com;	/* fix so that subsequent calls to
-				 * lexi will take tokens out of save_com */
-	    *sc_end++ = ' ';	/* add trailing blank, just in case */
-	    buf_end = sc_end;
-	    sc_end = NULL;
-	    debug_println("switched buf_ptr to save_com");
-	    break;
+	sw_buffer:
+	    switch_buffer();
 	}
-	}			/* end of switch */
-	/*
-	 * We must make this check, just in case there was an unexpected EOF.
-	 */
-	if (*inout_ttype != end_of_file) {
-	    /*
-	     * The only intended purpose of calling lexi() below is to
-	     * categorize the next token in order to decide whether to
-	     * continue buffering forthcoming tokens. Once the buffering is
-	     * over, lexi() will be called again elsewhere on all of the
-	     * tokens - this time for normal processing.
-	     *
-	     * Calling it for this purpose is a bug, because lexi() also
-	     * changes the parser state and discards leading whitespace, which
-	     * is needed mostly for comment-related considerations.
-	     *
-	     * Work around the former problem by giving lexi() a copy of the
-	     * current parser state and discard it if the call turned out to
-	     * be just a look ahead.
-	     *
-	     * Work around the latter problem by copying all whitespace
-	     * characters into the buffer so that the later lexi() call will
-	     * read them.
-	     */
-	    if (sc_end != NULL) {
-		while (*buf_ptr == ' ' || *buf_ptr == '\t') {
-		    *sc_end++ = *buf_ptr++;
-		    if (sc_end >= &save_com[sc_size]) {
-			errx(1, "input too long");
-		    }
-		}
-		if (buf_ptr >= buf_end) {
-		    fill_buffer();
-		}
-	    }
-
-	    struct parser_state transient_state;
-	    transient_state = ps;
-	    *inout_ttype = lexi(&transient_state);	/* read another token */
-	    if (*inout_ttype != newline && *inout_ttype != form_feed &&
-		*inout_ttype != comment && !transient_state.search_brace) {
-		ps = transient_state;
-	    }
-	}
+	search_brace_lookahead(inout_ttype);
     }
 
     *inout_last_else = false;
