@@ -1,4 +1,4 @@
-/*	$NetBSD: i386.c,v 1.120 2021/09/27 16:52:15 msaitoh Exp $	*/
+/*	$NetBSD: i386.c,v 1.121 2021/09/27 17:05:58 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: i386.c,v 1.120 2021/09/27 16:52:15 msaitoh Exp $");
+__RCSID("$NetBSD: i386.c,v 1.121 2021/09/27 17:05:58 msaitoh Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -1145,24 +1145,35 @@ intel_cpu_cacheinfo(struct cpu_info *ci)
 			else if (type == CPUID_DATP_TCTYPE_D)
 				caitype = CAI_L2_DTLB;
 			else if (type == CPUID_DATP_TCTYPE_U) {
-				switch (pgsize) {
-				case CPUID_DATP_PGSIZE_4KB:
+				if (pgsize == CPUID_DATP_PGSIZE_4KB)
 					caitype = CAI_L2_STLB;
-					break;
-				case CPUID_DATP_PGSIZE_4KB
-				    | CPUID_DATP_PGSIZE_2MB:
+				else if (pgsize == (CPUID_DATP_PGSIZE_4KB
+					| CPUID_DATP_PGSIZE_2MB))
 					caitype = CAI_L2_STLB2;
-					break;
-				case CPUID_DATP_PGSIZE_2MB
-				    | CPUID_DATP_PGSIZE_4MB:
+				else if (pgsize == (CPUID_DATP_PGSIZE_2MB
+					| CPUID_DATP_PGSIZE_4MB))
 					caitype = CAI_L2_STLB3;
-					break;
-				default:
-					aprint_error_dev(ci->ci_dev,
-					    "error: unknown L2 STLB size (%d)\n",
+				else if ((pgsize & CPUID_DATP_PGSIZE_1GB)
+				    != 0) {
+					/* FIXME: 1GB max TLB */
+					caitype = CAI_L2_STLB3;
+					linesize = 1024 * 1024 * 1024;
+				} else if ((pgsize & CPUID_DATP_PGSIZE_4MB)
+				    != 0) {
+					/* FIXME: 4MB max TLB */
+					caitype = CAI_L2_STLB3;
+					linesize = 4 * 1024 * 1024;
+				} else if ((pgsize & CPUID_DATP_PGSIZE_2MB)
+				    != 0) {
+					/* FIXME: 2MB max TLB */
+					caitype = CAI_L2_STLB2;
+					linesize = 2 * 1024 * 1024;
+				} else {
+					aprint_error_dev(ci->ci_dev, "error: "
+					    "unknown L2 STLB size (%d)\n",
 					    pgsize);
-					caitype = CAI_DTLB;
-					break;
+					caitype = CAI_L2_STLB;
+					linesize = 4 * 1024;
 				}
 			} else
 				caitype = -1;
@@ -1194,15 +1205,19 @@ intel_cpu_cacheinfo(struct cpu_info *ci)
 		case CPUID_DATP_PGSIZE_1GB:
 			linesize = 1024 * 1024 * 1024;
 			break;
-		case CPUID_DATP_PGSIZE_2MB | CPUID_DATP_PGSIZE_4MB:
-			aprint_error_dev(ci->ci_dev,
-			    "WARINING: Currently 2M/4M info can't print correctly\n");
-			linesize = 4 * 1024 * 1024;
-			break;
 		default:
-			aprint_error_dev(ci->ci_dev,
-			    "error: Unknown size combination\n");
-			linesize = 4 * 1024;
+			if ((pgsize & CPUID_DATP_PGSIZE_1GB) != 0)
+				linesize = 1024 * 1024 * 1024; /* MAX 1G */
+			else if ((pgsize & CPUID_DATP_PGSIZE_4MB) != 0)
+				linesize = 4 * 1024 * 1024; /* MAX 4M */
+			else if ((pgsize & CPUID_DATP_PGSIZE_2MB) != 0)
+				linesize = 2 * 1024 * 1024; /* MAX 2M */
+			else
+				linesize = 4 * 1024;	/* XXX default to 4K */
+			aprint_error_dev(ci->ci_dev, "WARNING: Currently "
+			    "this info can't print correctly "
+			    "(level = %d, pgsize = %d)\n",
+			    level, pgsize);
 			break;
 		}
 		ways = __SHIFTOUT(descs[1], CPUID_DATP_WAYS);
