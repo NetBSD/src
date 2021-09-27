@@ -1,4 +1,4 @@
-/*	$NetBSD: lexi.c,v 1.62 2021/09/27 16:56:35 rillig Exp $	*/
+/*	$NetBSD: lexi.c,v 1.63 2021/09/27 17:33:07 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)lexi.c	8.1 (Berkeley) 6/6/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: lexi.c,v 1.62 2021/09/27 16:56:35 rillig Exp $");
+__RCSID("$NetBSD: lexi.c,v 1.63 2021/09/27 17:33:07 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/lexi.c 337862 2018-08-15 18:19:45Z pstef $");
 #endif
@@ -335,6 +335,21 @@ probably_typedef(const struct parser_state *state)
 	state->last_token == rbrace);
 }
 
+static bool
+is_typename(void)
+{
+    if (opt.auto_typedefs) {
+	const char *u;
+	if ((u = strrchr(token.s, '_')) != NULL && strcmp(u, "_t") == 0)
+	    return true;
+    }
+
+    if (typename_top < 0)
+	return false;
+    return bsearch(token.s, typenames, (size_t)typename_top + 1,
+	sizeof(typenames[0]), cmp_type_by_name) != NULL;
+}
+
 /* Reads the next token, placing it in the global variable "token". */
 token_type
 lexi(struct parser_state *state)
@@ -391,13 +406,7 @@ lexi(struct parser_state *state)
 	kw = bsearch(token.s, keywords, nitems(keywords),
 	    sizeof(keywords[0]), cmp_keyword_by_name);
 	if (kw == NULL) {
-	    char *u;
-
-	    /* ... so maybe a type_t or a typedef */
-	    if ((opt.auto_typedefs && ((u = strrchr(token.s, '_')) != NULL) &&
-		    strcmp(u, "_t") == 0) || (typename_top >= 0 &&
-		    bsearch(token.s, typenames, (size_t)typename_top + 1,
-			sizeof(typenames[0]), cmp_type_by_name) != NULL)) {
+	    if (is_typename()) {
 		state->keyword = kw_type;
 		state->last_u_d = true;
 		goto found_typename;
