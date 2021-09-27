@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.c,v 1.88 2021/09/26 21:23:31 rillig Exp $	*/
+/*	$NetBSD: indent.c,v 1.89 2021/09/27 16:56:35 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)indent.c	5.17 (Berkeley) 6/7/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: indent.c,v 1.88 2021/09/26 21:23:31 rillig Exp $");
+__RCSID("$NetBSD: indent.c,v 1.89 2021/09/27 16:56:35 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/indent.c 340138 2018-11-04 19:24:49Z oshogbo $");
 #endif
@@ -577,8 +577,8 @@ process_lparen_or_lbracket(int dec_ind, bool tabs_to_var, bool sp_sw)
     } else if (ps.want_blank &&
 	    ((ps.last_token != ident && ps.last_token != funcname) ||
 	    opt.proc_calls_space ||
-	    (ps.keyword == rw_sizeof ? opt.blank_after_sizeof :
-	    ps.keyword != rw_0 && ps.keyword != rw_offsetof)))
+	    (ps.keyword == kw_sizeof ? opt.blank_after_sizeof :
+	    ps.keyword != kw_0 && ps.keyword != kw_offsetof)))
 	*code.e++ = ' ';
     ps.want_blank = false;
     *code.e++ = token.s[0];
@@ -603,7 +603,7 @@ process_lparen_or_lbracket(int dec_ind, bool tabs_to_var, bool sp_sw)
 				 * initialization */
     }
     /* parenthesized type following sizeof or offsetof is not a cast */
-    if (ps.keyword == rw_offsetof || ps.keyword == rw_sizeof)
+    if (ps.keyword == kw_offsetof || ps.keyword == kw_sizeof)
 	ps.not_cast_mask |= 1 << ps.p_l_follow;
 }
 

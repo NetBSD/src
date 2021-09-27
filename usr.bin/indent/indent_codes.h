@@ -1,4 +1,4 @@
-/*	$NetBSD: indent_codes.h,v 1.11 2021/03/09 19:23:08 rillig Exp $	*/
+/*	$NetBSD: indent_codes.h,v 1.12 2021/09/27 16:56:35 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -54,7 +54,7 @@ typedef enum token_type {
     semicolon,
     lbrace,
     rbrace,
-    ident,
+    ident,			/* identifier, constant or string */
     comma,
     comment,
     switch_expr,		/* 'switch' '(' <expr> ')' */
