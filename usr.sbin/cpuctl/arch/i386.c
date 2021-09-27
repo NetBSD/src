@@ -1,4 +1,4 @@
-/*	$NetBSD: i386.c,v 1.118 2021/09/27 16:22:58 msaitoh Exp $	*/
+/*	$NetBSD: i386.c,v 1.119 2021/09/27 16:47:15 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: i386.c,v 1.118 2021/09/27 16:22:58 msaitoh Exp $");
+__RCSID("$NetBSD: i386.c,v 1.119 2021/09/27 16:47:15 msaitoh Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -2421,7 +2421,7 @@ print_tlb_config(struct cpu_info *ci, int cache_tag, const char *name,
 		aprint_verbose_dev(ci->ci_dev, "");
 	else
 		aprint_verbose("%s", sep);
-	if (name != NULL)
+	if ((name != NULL) && (sep == NULL))
 		aprint_verbose("%s ", name);
 
 	if (cai->cai_string != NULL) {
@@ -2477,61 +2477,48 @@ x86_print_cache_and_tlb_info(struct cpu_info *ci)
 		if (sep != NULL)
 			aprint_verbose("\n");
 	}
-	if (ci->ci_cinfo[CAI_ITLB].cai_totalsize != 0) {
-		sep = print_tlb_config(ci, CAI_ITLB, "ITLB:", NULL);
-		sep = print_tlb_config(ci, CAI_ITLB2, NULL, sep);
-		if (sep != NULL)
-			aprint_verbose("\n");
-	}
-	if (ci->ci_cinfo[CAI_DTLB].cai_totalsize != 0) {
-		sep = print_tlb_config(ci, CAI_DTLB, "DTLB:", NULL);
-		sep = print_tlb_config(ci, CAI_DTLB2, NULL, sep);
-		if (sep != NULL)
-			aprint_verbose("\n");
-	}
-	if (ci->ci_cinfo[CAI_L2_ITLB].cai_totalsize != 0) {
-		sep = print_tlb_config(ci, CAI_L2_ITLB, "L2 ITLB:", NULL);
-		sep = print_tlb_config(ci, CAI_L2_ITLB2, NULL, sep);
-		if (sep != NULL)
-			aprint_verbose("\n");
-	}
-	if (ci->ci_cinfo[CAI_L2_DTLB].cai_totalsize != 0) {
-		sep = print_tlb_config(ci, CAI_L2_DTLB, "L2 DTLB:", NULL);
-		sep = print_tlb_config(ci, CAI_L2_DTLB2, NULL, sep);
-		if (sep != NULL)
-			aprint_verbose("\n");
-	}
-	if (ci->ci_cinfo[CAI_L2_STLB].cai_totalsize != 0) {
-		sep = print_tlb_config(ci, CAI_L2_STLB, "L2 STLB:", NULL);
-		sep = print_tlb_config(ci, CAI_L2_STLB2, NULL, sep);
-		sep = print_tlb_config(ci, CAI_L2_STLB3, NULL, sep);
-		if (sep != NULL)
-			aprint_verbose("\n");
-	}
-	if (ci->ci_cinfo[CAI_L1_1GBITLB].cai_totalsize != 0) {
-		sep = print_tlb_config(ci, CAI_L1_1GBITLB, "L1 1GB page ITLB:",
-		    NULL);
-		if (sep != NULL)
-			aprint_verbose("\n");
-	}
-	if (ci->ci_cinfo[CAI_L1_1GBDTLB].cai_totalsize != 0) {
-		sep = print_tlb_config(ci, CAI_L1_1GBDTLB, "L1 1GB page DTLB:",
-		    NULL);
-		if (sep != NULL)
-			aprint_verbose("\n");
-	}
-	if (ci->ci_cinfo[CAI_L2_1GBITLB].cai_totalsize != 0) {
-		sep = print_tlb_config(ci, CAI_L2_1GBITLB, "L2 1GB page ITLB:",
-		    NULL);
-		if (sep != NULL)
-			aprint_verbose("\n");
-	}
-	if (ci->ci_cinfo[CAI_L2_1GBDTLB].cai_totalsize != 0) {
-		sep = print_tlb_config(ci, CAI_L2_1GBDTLB, "L2 1GB page DTLB:",
-		    NULL);
-		if (sep != NULL)
-			aprint_verbose("\n");
-	}
+
+	sep = print_tlb_config(ci, CAI_ITLB, "ITLB:", NULL);
+	sep = print_tlb_config(ci, CAI_ITLB2, "ITLB:", sep);
+	if (sep != NULL)
+		aprint_verbose("\n");
+
+	sep = print_tlb_config(ci, CAI_DTLB, "DTLB:", NULL);
+	sep = print_tlb_config(ci, CAI_DTLB2, "DTLB:", sep);
+	if (sep != NULL)
+		aprint_verbose("\n");
+
+	sep = print_tlb_config(ci, CAI_L2_ITLB, "L2 ITLB:", NULL);
+	sep = print_tlb_config(ci, CAI_L2_ITLB2, "L2 ITLB:", sep);
+	if (sep != NULL)
+		aprint_verbose("\n");
+
+	sep = print_tlb_config(ci, CAI_L2_DTLB, "L2 DTLB:", NULL);
+	sep = print_tlb_config(ci, CAI_L2_DTLB2, "L2 DTLB:", sep);
+	if (sep != NULL)
+		aprint_verbose("\n");
+
+	sep = print_tlb_config(ci, CAI_L2_STLB, "L2 STLB:", NULL);
+	sep = print_tlb_config(ci, CAI_L2_STLB2, "L2 STLB:", sep);
+	sep = print_tlb_config(ci, CAI_L2_STLB3, "L2 STLB:", sep);
+	if (sep != NULL)
+		aprint_verbose("\n");
+
+	sep = print_tlb_config(ci, CAI_L1_1GBITLB, "L1 1GB page ITLB:", NULL);
+	if (sep != NULL)
+		aprint_verbose("\n");
+
+	sep = print_tlb_config(ci, CAI_L1_1GBDTLB, "L1 1GB page DTLB:", NULL);
+	if (sep != NULL)
+		aprint_verbose("\n");
+
+	sep = print_tlb_config(ci, CAI_L2_1GBITLB, "L2 1GB page ITLB:", NULL);
+	if (sep != NULL)
+		aprint_verbose("\n");
+
+	sep = print_tlb_config(ci, CAI_L2_1GBDTLB, "L2 1GB page DTLB:", NULL);
+	if (sep != NULL)
+		aprint_verbose("\n");
 }
 
 static void
