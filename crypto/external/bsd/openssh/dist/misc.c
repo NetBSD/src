@@ -1,5 +1,5 @@
-/*	$NetBSD: misc.c,v 1.27 2021/09/02 11:26:18 christos Exp $	*/
-/* $OpenBSD: misc.c,v 1.169 2021/08/09 23:47:44 djm Exp $ */
+/*	$NetBSD: misc.c,v 1.28 2021/09/27 17:03:13 christos Exp $	*/
+/* $OpenBSD: misc.c,v 1.170 2021/09/26 14:01:03 djm Exp $ */
 
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
@@ -20,7 +20,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: misc.c,v 1.27 2021/09/02 11:26:18 christos Exp $");
+__RCSID("$NetBSD: misc.c,v 1.28 2021/09/27 17:03:13 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/ioctl.h>
@@ -2634,6 +2634,12 @@ subprocess(const char *tag, const char *command,
 #define setresuid(a, b, c)      setuid(a)
 #endif
 
+		if (geteuid() == 0 &&
+		    initgroups(pw->pw_name, pw->pw_gid) == -1) {
+			error("%s: initgroups(%s, %u): %s", tag,
+			    pw->pw_name, (u_int)pw->pw_gid, strerror(errno));
+			_exit(1);
+		}
 		if (setresgid(pw->pw_gid, pw->pw_gid, pw->pw_gid) == -1) {
 			error("%s: setresgid %u: %s", tag, (u_int)pw->pw_gid,
 			    strerror(errno));

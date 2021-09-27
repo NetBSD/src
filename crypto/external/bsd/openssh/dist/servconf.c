@@ -1,6 +1,6 @@
-/*	$NetBSD: servconf.c,v 1.37 2021/09/02 11:26:18 christos Exp $	*/
+/*	$NetBSD: servconf.c,v 1.38 2021/09/27 17:03:13 christos Exp $	*/
 
-/* $OpenBSD: servconf.c,v 1.381 2021/07/02 05:11:21 dtucker Exp $ */
+/* $OpenBSD: servconf.c,v 1.382 2021/09/06 00:36:01 millert Exp $ */
 /*
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
  *                    All rights reserved
@@ -13,7 +13,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: servconf.c,v 1.37 2021/09/02 11:26:18 christos Exp $");
+__RCSID("$NetBSD: servconf.c,v 1.38 2021/09/27 17:03:13 christos Exp $");
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/queue.h>
@@ -603,8 +603,8 @@ typedef enum {
 	sKerberosAuthentication, sKerberosOrLocalPasswd, sKerberosTicketCleanup,
 	sKerberosGetAFSToken,
 	sKerberosTgtPassing, 
-	sPasswordAuthentication, sKbdInteractiveAuthentication,
-	sListenAddress, sAddressFamily,
+	sPasswordAuthentication,
+	sKbdInteractiveAuthentication, sListenAddress, sAddressFamily,
 	sPrintMotd, sPrintLastLog, sIgnoreRhosts,
 	sX11Forwarding, sX11DisplayOffset, sX11UseLocalhost,
 	sPermitTTY, sStrictModes, sEmptyPasswd, sTCPKeepAlive,

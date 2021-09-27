@@ -1,5 +1,5 @@
-/*	$NetBSD: sftp-client.c,v 1.28 2021/09/02 11:26:18 christos Exp $	*/
-/* $OpenBSD: sftp-client.c,v 1.154 2021/08/09 23:47:44 djm Exp $ */
+/*	$NetBSD: sftp-client.c,v 1.29 2021/09/27 17:03:13 christos Exp $	*/
+/* $OpenBSD: sftp-client.c,v 1.155 2021/09/03 05:12:25 dtucker Exp $ */
 
 /*
  * Copyright (c) 2001-2004 Damien Miller <djm@openbsd.org>
@@ -23,7 +23,7 @@
 /* XXX: copy between two remote sites */
 
 #include "includes.h"
-__RCSID("$NetBSD: sftp-client.c,v 1.28 2021/09/02 11:26:18 christos Exp $");
+__RCSID("$NetBSD: sftp-client.c,v 1.29 2021/09/27 17:03:13 christos Exp $");
 
 #include <sys/param.h>	/* MIN MAX */
 #include <sys/types.h>
@@ -2021,7 +2021,6 @@ upload_dir_internal(struct sftp_conn *conn, const char *src, const char *dst,
 	if (print_flag && print_flag != SFTP_PROGRESS_ONLY)
 		mprintf("Entering %s\n", src);
 
-	attrib_clear(&a);
 	stat_to_attrib(&sb, &a);
 	a.flags &= ~SSH2_FILEXFER_ATTR_SIZE;
 	a.flags &= ~SSH2_FILEXFER_ATTR_UIDGID;
