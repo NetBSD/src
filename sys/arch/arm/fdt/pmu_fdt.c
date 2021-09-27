@@ -1,4 +1,4 @@
-/* $NetBSD: pmu_fdt.c,v 1.8 2021/01/27 03:10:19 thorpej Exp $ */
+/* $NetBSD: pmu_fdt.c,v 1.9 2021/09/27 09:54:52 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmu_fdt.c,v 1.8 2021/01/27 03:10:19 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmu_fdt.c,v 1.9 2021/09/27 09:54:52 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -113,19 +113,12 @@ pmu_fdt_attach(device_t parent, device_t self, void *aux)
 }
 
 static void
-pmu_fdt_init_cpu(void *arg1, void *arg2)
-{
-	arm_pmu_init();
-}
-
-static void
 pmu_fdt_init(device_t self)
 {
 	struct pmu_fdt_softc * const sc = device_private(self);
 	const int phandle = sc->sc_phandle;
 	char intrstr[128];
 	int error, n;
-	uint64_t xc;
 	void **ih;
 
 	if (pmu_fdt_uses_ppi && pmu_fdt_count > 0) {
@@ -140,8 +133,7 @@ pmu_fdt_init(device_t self)
 	}
 
 	if (pmu_fdt_count == 0) {
-		xc = xc_broadcast(0, pmu_fdt_init_cpu, NULL, NULL);
-		xc_wait(xc);
+		arm_pmu_init();
 	}
 
 	ih = kmem_zalloc(sizeof(void *) * ncpu, KM_SLEEP);
