@@ -1,4 +1,4 @@
-/*	$NetBSD: lexi.c,v 1.61 2021/09/26 21:23:31 rillig Exp $	*/
+/*	$NetBSD: lexi.c,v 1.62 2021/09/27 16:56:35 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,16 +43,14 @@ static char sccsid[] = "@(#)lexi.c	8.1 (Berkeley) 6/6/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: lexi.c,v 1.61 2021/09/26 21:23:31 rillig Exp $");
+__RCSID("$NetBSD: lexi.c,v 1.62 2021/09/27 16:56:35 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/lexi.c 337862 2018-08-15 18:19:45Z pstef $");
 #endif
 
 #include <assert.h>
-#include <err.h>
 #include <stdio.h>
 #include <ctype.h>
-#include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/param.h>
@@ -60,52 +58,52 @@ __FBSDID("$FreeBSD: head/usr.bin/indent/lexi.c 337862 2018-08-15 18:19:45Z pstef
 #include "indent.h"
 
 /* must be sorted alphabetically, is used in binary search */
-static const struct special {
-    const char *rwd;
-    enum rwcode rwcode;
-} specials[] = {
-    {"_Bool", rw_type},
-    {"_Complex", rw_type},
-    {"_Imaginary", rw_type},
-    {"auto", rw_storage_class},
-    {"bool", rw_type},
-    {"break", rw_jump},
-    {"case", rw_case_or_default},
-    {"char", rw_type},
-    {"complex", rw_type},
-    {"const", rw_type},
-    {"continue", rw_jump},
-    {"default", rw_case_or_default},
-    {"do", rw_do_or_else},
-    {"double", rw_type},
-    {"else", rw_do_or_else},
-    {"enum", rw_struct_or_union_or_enum},
-    {"extern", rw_storage_class},
-    {"float", rw_type},
-    {"for", rw_for_or_if_or_while},
-    {"global", rw_type},
-    {"goto", rw_jump},
-    {"if", rw_for_or_if_or_while},
-    {"imaginary", rw_type},
-    {"inline", rw_inline_or_restrict},
-    {"int", rw_type},
-    {"long", rw_type},
-    {"offsetof", rw_offsetof},
-    {"register", rw_storage_class},
-    {"restrict", rw_inline_or_restrict},
-    {"return", rw_jump},
-    {"short", rw_type},
-    {"signed", rw_type},
-    {"sizeof", rw_sizeof},
-    {"static", rw_storage_class},
-    {"struct", rw_struct_or_union_or_enum},
-    {"switch", rw_switch},
-    {"typedef", rw_typedef},
-    {"union", rw_struct_or_union_or_enum},
-    {"unsigned", rw_type},
-    {"void", rw_type},
-    {"volatile", rw_type},
-    {"while", rw_for_or_if_or_while}
+static const struct keyword {
+    const char *name;
+    enum keyword_kind kind;
+} keywords[] = {
+    {"_Bool", kw_type},
+    {"_Complex", kw_type},
+    {"_Imaginary", kw_type},
+    {"auto", kw_storage_class},
+    {"bool", kw_type},
+    {"break", kw_jump},
+    {"case", kw_case_or_default},
+    {"char", kw_type},
+    {"complex", kw_type},
+    {"const", kw_type},
+    {"continue", kw_jump},
+    {"default", kw_case_or_default},
+    {"do", kw_do_or_else},
+    {"double", kw_type},
+    {"else", kw_do_or_else},
+    {"enum", kw_struct_or_union_or_enum},
+    {"extern", kw_storage_class},
+    {"float", kw_type},
+    {"for", kw_for_or_if_or_while},
+    {"global", kw_type},
+    {"goto", kw_jump},
+    {"if", kw_for_or_if_or_while},
+    {"imaginary", kw_type},
+    {"inline", kw_inline_or_restrict},
+    {"int", kw_type},
+    {"long", kw_type},
+    {"offsetof", kw_offsetof},
+    {"register", kw_storage_class},
+    {"restrict", kw_inline_or_restrict},
+    {"return", kw_jump},
+    {"short", kw_type},
+    {"signed", kw_type},
+    {"sizeof", kw_sizeof},
+    {"static", kw_storage_class},
+    {"struct", kw_struct_or_union_or_enum},
+    {"switch", kw_switch},
+    {"typedef", kw_typedef},
+    {"union", kw_struct_or_union_or_enum},
+    {"unsigned", kw_type},
+    {"void", kw_type},
+    {"volatile", kw_type},
+    {"while", kw_for_or_if_or_while}
 };
 
 static const char **typenames;
@@ -204,13 +202,13 @@ check_size_token(size_t desired_size)
 }
 
 static int
-compare_special_array(const void *key, const void *elem)
+cmp_keyword_by_name(const void *key, const void *elem)
 {
-    return strcmp(key, ((const struct special *)elem)->rwd);
+    return strcmp(key, ((const struct keyword *)elem)->name);
 }
 
 static int
-compare_string_array(const void *key, const void *elem)
+cmp_type_by_name(const void *key, const void *elem)
 {
     return strcmp(key, *((const char *const *)elem));
 }
@@ -231,7 +229,7 @@ token_type_name(token_type ttype)
 	"storage_class", "funcname", "type_def", "keyword_struct_union_enum"
     };
 
-    assert(0 <= ttype && ttype < sizeof name / sizeof name[0]);
+    assert(0 <= ttype && ttype < nitems(name));
 
     return name[ttype];
 }
@@ -362,7 +360,7 @@ lexi(struct parser_state *state)
     if (isalnum((unsigned char)*buf_ptr) ||
 	*buf_ptr == '_' || *buf_ptr == '$' ||
 	(buf_ptr[0] == '.' && isdigit((unsigned char)buf_ptr[1]))) {
-	struct special *p;
+	struct keyword *kw;
 
 	if (isdigit((unsigned char)*buf_ptr) ||
 	    (buf_ptr[0] == '.' && isdigit((unsigned char)buf_ptr[1]))) {
@@ -378,7 +376,7 @@ lexi(struct parser_state *state)
 
 	while (*buf_ptr == ' ' || *buf_ptr == '\t')	/* get rid of blanks */
 	    inbuf_next();
-	state->keyword = rw_0;
+	state->keyword = kw_0;
 
 	if (state->last_token == keyword_struct_union_enum &&
 		state->p_l_follow == 0) {
@@ -390,55 +388,55 @@ lexi(struct parser_state *state)
 	 */
 	state->last_u_d = (state->last_token == keyword_struct_union_enum);
 
-	p = bsearch(token.s, specials, sizeof specials / sizeof specials[0],
-	    sizeof specials[0], compare_special_array);
-	if (p == NULL) {	/* not a special keyword... */
+	kw = bsearch(token.s, keywords, nitems(keywords),
+	    sizeof(keywords[0]), cmp_keyword_by_name);
+	if (kw == NULL) {
 	    char *u;
 
 	    /* ... so maybe a type_t or a typedef */
 	    if ((opt.auto_typedefs && ((u = strrchr(token.s, '_')) != NULL) &&
 		    strcmp(u, "_t") == 0) || (typename_top >= 0 &&
 		    bsearch(token.s, typenames, (size_t)typename_top + 1,
-			sizeof typenames[0], compare_string_array) != NULL)) {
-		state->keyword = rw_type;
+			sizeof(typenames[0]), cmp_type_by_name) != NULL)) {
+		state->keyword = kw_type;
 		state->last_u_d = true;
 		goto found_typename;
 	    }
 	} else {		/* we have a keyword */
-	    state->keyword = p->rwcode;
+	    state->keyword = kw->kind;
 	    state->last_u_d = true;
-	    switch (p->rwcode) {
-	    case rw_switch:
+	    switch (kw->kind) {
+	    case kw_switch:
 		return lexi_end(switch_expr);
-	    case rw_case_or_default:
+	    case kw_case_or_default:
 		return lexi_end(case_label);
-	    case rw_struct_or_union_or_enum:
-	    case rw_type:
+	    case kw_struct_or_union_or_enum:
+	    case kw_type:
 	    found_typename:
 		if (state->p_l_follow != 0) {
 		    /* inside parens: cast, param list, offsetof or sizeof */
 		    state->cast_mask |= (1 << state->p_l_follow) & ~state->not_cast_mask;
 		}
 		if (state->last_token == period || state->last_token == unary_op) {
-		    state->keyword = rw_0;
+		    state->keyword = kw_0;
 		    break;
 		}
-		if (p != NULL && p->rwcode == rw_struct_or_union_or_enum)
+		if (kw != NULL && kw->kind == kw_struct_or_union_or_enum)
 		    return lexi_end(keyword_struct_union_enum);
 		if (state->p_l_follow != 0)
 		    break;
 		return lexi_end(decl);
 
-	    case rw_for_or_if_or_while:
+	    case kw_for_or_if_or_while:
 		return lexi_end(keyword_for_if_while);
 
-	    case rw_do_or_else:
+	    case kw_do_or_else:
 		return lexi_end(keyword_do_else);
 
-	    case rw_storage_class:
+	    case kw_storage_class:
 		return lexi_end(storage_class);
 
-	    case rw_typedef:
+	    case kw_typedef:
 		return lexi_end(type_def);
 
 	    default:		/* all others are treated like any other
@@ -458,7 +456,7 @@ lexi(struct parser_state *state)
 	    return lexi_end(funcname);
     not_proc:;
 	} else if (probably_typedef(state)) {
-	    state->keyword = rw_type;
+	    state->keyword = kw_type;
 	    state->last_u_d = true;
 	    return lexi_end(decl);
 	}
