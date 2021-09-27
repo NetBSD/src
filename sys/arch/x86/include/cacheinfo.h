@@ -1,4 +1,4 @@
-/*	$NetBSD: cacheinfo.h,v 1.28 2019/07/26 10:03:40 msaitoh Exp $	*/
+/*	$NetBSD: cacheinfo.h,v 1.29 2021/09/27 16:52:15 msaitoh Exp $	*/
 
 #ifndef _X86_CACHEINFO_H_
 #define _X86_CACHEINFO_H_
@@ -37,8 +37,10 @@ struct x86_cache_info {
 #define CAI_L2_STLB2	17		/* Shared L2 TLB (4K/2M pages) */
 #define CAI_L2_STLB3	18		/* Shared L2 TLB (2M/4M pages) */
 #define CAI_PREFETCH	19		/* Prefetch */
+#define CAI_L1_LD_TLB	20		/* L1 Load Only TLB */
+#define CAI_L1_ST_TLB	21		/* L1 Store Only TLB */
+#define	CAI_COUNT	22
 
-#define	CAI_COUNT	20
 
 /*
  * AMD Cache Info:
