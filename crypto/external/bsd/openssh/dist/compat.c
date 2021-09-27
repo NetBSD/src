@@ -1,5 +1,5 @@
-/*	$NetBSD: compat.c,v 1.23 2021/09/02 11:26:17 christos Exp $	*/
-/* $OpenBSD: compat.c,v 1.118 2021/06/06 03:40:39 djm Exp $ */
+/*	$NetBSD: compat.c,v 1.24 2021/09/27 17:03:13 christos Exp $	*/
+/* $OpenBSD: compat.c,v 1.119 2021/09/10 05:46:09 djm Exp $ */
 
 /*
  * Copyright (c) 1999, 2000, 2001, 2002 Markus Friedl.  All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: compat.c,v 1.23 2021/09/02 11:26:17 christos Exp $");
+__RCSID("$NetBSD: compat.c,v 1.24 2021/09/27 17:03:13 christos Exp $");
 #include <sys/types.h>
 
 #include <stdlib.h>
@@ -71,7 +71,6 @@ compat_banner(struct ssh *ssh, const char *version)
 		  "OpenSSH_7.1*,"
 		  "OpenSSH_7.2*,"
 		  "OpenSSH_7.3*,"
-		  "OpenSSH_7.4*,"
 		  "OpenSSH_7.5*,"
 		  "OpenSSH_7.6*,"
 		  "OpenSSH_7.7*",	SSH_NEW_OPENSSH|SSH_BUG_SIGTYPE},

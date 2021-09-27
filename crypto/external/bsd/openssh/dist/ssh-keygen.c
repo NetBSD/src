@@ -1,5 +1,5 @@
-/*	$NetBSD: ssh-keygen.c,v 1.40 2021/09/02 11:26:18 christos Exp $	*/
-/* $OpenBSD: ssh-keygen.c,v 1.435 2021/08/11 08:54:17 djm Exp $ */
+/*	$NetBSD: ssh-keygen.c,v 1.41 2021/09/27 17:03:13 christos Exp $	*/
+/* $OpenBSD: ssh-keygen.c,v 1.437 2021/09/08 03:23:44 djm Exp $ */
 
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -15,7 +15,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: ssh-keygen.c,v 1.40 2021/09/02 11:26:18 christos Exp $");
+__RCSID("$NetBSD: ssh-keygen.c,v 1.41 2021/09/27 17:03:13 christos Exp $");
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/stat.h>
@@ -2661,7 +2661,8 @@ sig_process_opts(char * const *opts, size_t nopts, uint64_t *verify_timep,
 	time_t now;
 
 	*verify_timep = 0;
-	*print_pubkey = 0;
+	if (print_pubkey != NULL)
+		*print_pubkey = 0;
 	for (i = 0; i < nopts; i++) {
 		if (strncasecmp(opts[i], "verify-time=", 12) == 0) {
 			if (parse_absolute_time(opts[i] + 12,

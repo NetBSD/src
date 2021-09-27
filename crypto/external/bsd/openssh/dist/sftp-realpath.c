@@ -1,4 +1,4 @@
-/*	$OpenBSD: sftp-realpath.c,v 1.1 2019/07/05 04:55:40 djm Exp $ */
+/*	$OpenBSD: sftp-realpath.c,v 1.2 2021/09/02 21:03:54 deraadt Exp $ */
 /*
  * Copyright (c) 2003 Constantin S. Svintsoff <kostik@iclub.nsu.ru>
  *
@@ -27,10 +27,9 @@
  * SUCH DAMAGE.
  */
 #include "includes.h"
-__RCSID("$NetBSD: sftp-realpath.c,v 1.2 2020/02/27 00:24:40 christos Exp $");
+__RCSID("$NetBSD: sftp-realpath.c,v 1.3 2021/09/27 17:03:13 christos Exp $");
 
 #include <sys/types.h>
-#include <sys/param.h>
 #include <sys/stat.h>
 
 #include <errno.h>

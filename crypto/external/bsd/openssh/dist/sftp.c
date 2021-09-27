@@ -1,5 +1,5 @@
-/*	$NetBSD: sftp.c,v 1.33 2021/09/02 11:26:18 christos Exp $	*/
-/* $OpenBSD: sftp.c,v 1.211 2021/08/12 09:59:00 schwarze Exp $ */
+/*	$NetBSD: sftp.c,v 1.34 2021/09/27 17:03:13 christos Exp $	*/
+/* $OpenBSD: sftp.c,v 1.212 2021/09/11 09:05:50 schwarze Exp $ */
 
 /*
  * Copyright (c) 2001-2004 Damien Miller <djm@openbsd.org>
@@ -18,7 +18,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: sftp.c,v 1.33 2021/09/02 11:26:18 christos Exp $");
+__RCSID("$NetBSD: sftp.c,v 1.34 2021/09/27 17:03:13 christos Exp $");
 
 #include <sys/param.h>	/* MIN MAX */
 #include <sys/types.h>
@@ -2214,29 +2214,29 @@ interactive_loop(struct sftp_conn *conn, const char *file1, const char *file2)
 	interactive = !batchmode && isatty(STDIN_FILENO);
 	err = 0;
 	for (;;) {
+		struct sigaction sa;
 		const char *line;
 		int count = 0;
 
+		interrupted = 0;
+		memset(&sa, 0, sizeof(sa));
+		sa.sa_handler = interactive ? read_interrupt : killchild;
+		if (sigaction(SIGINT, &sa, NULL) == -1) {
+			debug3("sigaction(%s): %s", strsignal(SIGINT),
+			    strerror(errno));
+			break;
+		}
 		if (el == NULL) {
-			ssh_signal(SIGINT, SIG_IGN);
 			if (interactive)
 				printf("sftp> ");
 			if (fgets(cmd, sizeof(cmd), infile) == NULL) {
 				if (interactive)
 					printf("\n");
+				if (interrupted)
+					continue;
 				break;
 			}
 		} else {
-		        struct sigaction sa;
-
-			interrupted = 0;
-		        memset(&sa, 0, sizeof(sa));
-		        sa.sa_handler = read_interrupt;
-        		if (sigaction(SIGINT, &sa, NULL) == -1) {
-		                debug3("sigaction(%s): %s",
-				    strsignal(SIGINT), strerror(errno));
-				break;
-        		}
 			if ((line = el_gets(el, &count)) == NULL ||
 			    count <= 0) {
 				printf("\n");
