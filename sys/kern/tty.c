@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.296 2021/09/26 01:16:10 thorpej Exp $	*/
+/*	$NetBSD: tty.c,v 1.297 2021/09/27 00:40:49 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2020 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.296 2021/09/26 01:16:10 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.297 2021/09/27 00:40:49 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -1477,14 +1477,16 @@ static int
 filt_ttyread(struct knote *kn, long hint)
 {
 	struct tty	*tp;
+	int rv;
 
 	tp = kn->kn_hook;
 	if ((hint & NOTE_SUBMIT) == 0)
 		mutex_spin_enter(&tty_lock);
 	kn->kn_data = ttnread(tp);
+	rv = kn->kn_data > 0;
 	if ((hint & NOTE_SUBMIT) == 0)
 		mutex_spin_exit(&tty_lock);
-	return (kn->kn_data > 0);
+	return rv;
 }
 
 static void

@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_timerfd.c,v 1.5 2021/09/26 03:42:54 thorpej Exp $	*/
+/*	$NetBSD: sys_timerfd.c,v 1.6 2021/09/27 00:40:49 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_timerfd.c,v 1.5 2021/09/26 03:42:54 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_timerfd.c,v 1.6 2021/09/27 00:40:49 thorpej Exp $");
 
 /*
  * timerfd
@@ -404,6 +404,7 @@ static int
 timerfd_filt_read(struct knote * const kn, long const hint)
 {
 	struct timerfd * const tfd = ((file_t *)kn->kn_obj)->f_timerfd;
+	int rv;
 
 	if (hint & NOTE_SUBMIT) {
 		KASSERT(itimer_lock_held());
@@ -412,12 +413,13 @@ timerfd_filt_read(struct knote * const kn, long const hint)
 	}
 
 	kn->kn_data = (int64_t)timerfd_fire_count(tfd);
+	rv = kn->kn_data != 0;
 
 	if ((hint & NOTE_SUBMIT) == 0) {
 		itimer_unlock();
 	}
 
-	return kn->kn_data != 0;
+	return rv;
 }
 
 static const struct filterops timerfd_read_filterops = {

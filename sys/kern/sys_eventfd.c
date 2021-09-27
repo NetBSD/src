@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_eventfd.c,v 1.6 2021/09/26 03:42:54 thorpej Exp $	*/
+/*	$NetBSD: sys_eventfd.c,v 1.7 2021/09/27 00:40:49 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_eventfd.c,v 1.6 2021/09/26 03:42:54 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_eventfd.c,v 1.7 2021/09/27 00:40:49 thorpej Exp $");
 
 /*
  * eventfd
@@ -408,6 +408,7 @@ static int
 eventfd_filt_read(struct knote * const kn, long const hint)
 {
 	struct eventfd * const efd = ((file_t *)kn->kn_obj)->f_eventfd;
+	int rv;
 
 	if (hint & NOTE_SUBMIT) {
 		KASSERT(mutex_owned(&efd->efd_lock));
@@ -416,12 +417,13 @@ eventfd_filt_read(struct knote * const kn, long const hint)
 	}
 
 	kn->kn_data = (int64_t)efd->efd_val;
+	rv = (eventfd_t)kn->kn_data > 0;
 
 	if ((hint & NOTE_SUBMIT) == 0) {
 		mutex_exit(&efd->efd_lock);
 	}
 
-	return (eventfd_t)kn->kn_data > 0;
+	return rv;
 }
 
 static const struct filterops eventfd_read_filterops = {
@@ -445,6 +447,7 @@ static int
 eventfd_filt_write(struct knote * const kn, long const hint)
 {
 	struct eventfd * const efd = ((file_t *)kn->kn_obj)->f_eventfd;
+	int rv;
 
 	if (hint & NOTE_SUBMIT) {
 		KASSERT(mutex_owned(&efd->efd_lock));
@@ -453,12 +456,13 @@ eventfd_filt_write(struct knote * const kn, long const hint)
 	}
 
 	kn->kn_data = (int64_t)efd->efd_val;
+	rv = (eventfd_t)kn->kn_data < EVENTFD_MAXVAL;
 
 	if ((hint & NOTE_SUBMIT) == 0) {
 		mutex_exit(&efd->efd_lock);
 	}
 
-	return (eventfd_t)kn->kn_data < EVENTFD_MAXVAL;
+	return rv;
 }
 
 static const struct filterops eventfd_write_filterops = {
