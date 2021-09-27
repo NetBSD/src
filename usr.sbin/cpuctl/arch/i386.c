@@ -1,4 +1,4 @@
-/*	$NetBSD: i386.c,v 1.119 2021/09/27 16:47:15 msaitoh Exp $	*/
+/*	$NetBSD: i386.c,v 1.120 2021/09/27 16:52:15 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: i386.c,v 1.119 2021/09/27 16:47:15 msaitoh Exp $");
+__RCSID("$NetBSD: i386.c,v 1.120 2021/09/27 16:52:15 msaitoh Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -1132,7 +1132,11 @@ intel_cpu_cacheinfo(struct cpu_info *ci)
 					caitype = CAI_DTLB;
 					break;
 				}
-			} else
+			} else if (type == CPUID_DATP_TCTYPE_L)
+				caitype = CAI_L1_LD_TLB;
+			else if (type == CPUID_DATP_TCTYPE_S)
+				caitype = CAI_L1_ST_TLB;
+			else
 				caitype = -1;
 			break;
 		case 2:
@@ -2485,6 +2489,14 @@ x86_print_cache_and_tlb_info(struct cpu_info *ci)
 
 	sep = print_tlb_config(ci, CAI_DTLB, "DTLB:", NULL);
 	sep = print_tlb_config(ci, CAI_DTLB2, "DTLB:", sep);
+	if (sep != NULL)
+		aprint_verbose("\n");
+
+	sep = print_tlb_config(ci, CAI_L1_LD_TLB, "Load only TLB:", NULL);
+	if (sep != NULL)
+		aprint_verbose("\n");
+
+	sep = print_tlb_config(ci, CAI_L1_ST_TLB, "Store only TLB:", NULL);
 	if (sep != NULL)
 		aprint_verbose("\n");
 
