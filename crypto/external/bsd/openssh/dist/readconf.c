@@ -1,4 +1,4 @@
-/*	$NetBSD: readconf.c,v 1.35 2021/09/02 11:26:18 christos Exp $	*/
+/*	$NetBSD: readconf.c,v 1.36 2021/09/27 11:05:50 kim Exp $	*/
 /* $OpenBSD: readconf.c,v 1.361 2021/07/23 04:04:52 djm Exp $ */
 
 /*
@@ -15,7 +15,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: readconf.c,v 1.35 2021/09/02 11:26:18 christos Exp $");
+__RCSID("$NetBSD: readconf.c,v 1.36 2021/09/27 11:05:50 kim Exp $");
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/socket.h>
@@ -248,6 +248,9 @@ static struct {
 	{ "passwordauthentication", oPasswordAuthentication },
 	{ "kbdinteractiveauthentication", oKbdInteractiveAuthentication },
 	{ "kbdinteractivedevices", oKbdInteractiveDevices },
+	{ "challengeresponseauthentication", oKbdInteractiveAuthentication }, /* alias */
+	{ "skeyauthentication", oKbdInteractiveAuthentication }, /* alias */
+	{ "tisauthentication", oKbdInteractiveAuthentication },  /* alias */
 	{ "pubkeyauthentication", oPubkeyAuthentication },
 	{ "dsaauthentication", oPubkeyAuthentication },		    /* alias */
 	{ "hostbasedauthentication", oHostbasedAuthentication },
