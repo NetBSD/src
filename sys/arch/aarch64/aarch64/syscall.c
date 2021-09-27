@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.9 2021/09/27 17:37:59 ryo Exp $	*/
+/*	$NetBSD: syscall.c,v 1.10 2021/09/27 17:40:39 ryo Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
 #define EMULNAME(x)	(x)
 #define EMULNAMEU(x)	(x)
 
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.9 2021/09/27 17:37:59 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.10 2021/09/27 17:40:39 ryo Exp $");
 
 void
 cpu_spawn_return(struct lwp *l)
@@ -208,7 +208,9 @@ EMULNAME(syscall)(struct trapframe *tf)
 #endif
 		} else {
 			tf->tf_reg[0] = rval[0];
+#ifndef SYSCALL_NO_RVAL1
 			tf->tf_reg[1] = rval[1];
+#endif
 		}
 		tf->tf_spsr &= ~NZCV_C;
 	} else {

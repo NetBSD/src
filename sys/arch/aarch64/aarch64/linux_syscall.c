@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_syscall.c,v 1.1 2021/09/23 06:56:26 ryo Exp $	*/
+/*	$NetBSD: linux_syscall.c,v 1.2 2021/09/27 17:40:39 ryo Exp $	*/
 
 /*
  * Copyright (c) 2021 Ryo Shimizu <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_syscall.c,v 1.1 2021/09/23 06:56:26 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_syscall.c,v 1.2 2021/09/27 17:40:39 ryo Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_linux.h"
@@ -54,5 +54,7 @@ __KERNEL_RCSID(0, "$NetBSD: linux_syscall.c,v 1.1 2021/09/23 06:56:26 ryo Exp $"
 /* used when __HAVE_MINIMAL_EMUL is not defined */
 #define SYSCALL_EMUL_ERRNO(x)	native_to_linux_errno[x]
 
+/* don't update x1 register with rval[1] */
+#define SYSCALL_NO_RVAL1
 
 #include "syscall.c"
