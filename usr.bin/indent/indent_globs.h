@@ -1,4 +1,4 @@
-/*	$NetBSD: indent_globs.h,v 1.40 2021/09/26 21:32:58 rillig Exp $	*/
+/*	$NetBSD: indent_globs.h,v 1.41 2021/09/27 16:56:35 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -155,20 +155,20 @@ extern struct options {
 				 * are printed */
 } opt;
 
-enum rwcode {
-    rw_0,
-    rw_offsetof,
-    rw_sizeof,
-    rw_struct_or_union_or_enum,
-    rw_type,
-    rw_for_or_if_or_while,
-    rw_do_or_else,
-    rw_switch,
-    rw_case_or_default,
-    rw_jump,
-    rw_storage_class,
-    rw_typedef,
-    rw_inline_or_restrict
+enum keyword_kind {
+    kw_0,
+    kw_offsetof,
+    kw_sizeof,
+    kw_struct_or_union_or_enum,
+    kw_type,
+    kw_for_or_if_or_while,
+    kw_do_or_else,
+    kw_switch,
+    kw_case_or_default,
+    kw_jump,
+    kw_storage_class,
+    kw_typedef,
+    kw_inline_or_restrict
 };
 
 
@@ -251,7 +251,7 @@ extern struct parser_state {
     bool	want_blank;	/* whether the following token should
 				 * be prefixed by a blank. (Said prefixing is
 				 * ignored in some cases.) */
-    enum rwcode keyword;	/* the type of a keyword or 0 */
+    enum keyword_kind keyword;
     bool	dumped_decl_indent;
     bool	in_parameter_declaration;
     int         tos;		/* pointer to top of stack */
