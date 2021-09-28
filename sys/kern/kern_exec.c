@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.507 2021/09/28 14:52:22 thorpej Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.508 2021/09/28 15:05:42 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2019, 2020 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.507 2021/09/28 14:52:22 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.508 2021/09/28 15:05:42 thorpej Exp $");
 
 #include "opt_exec.h"
 #include "opt_execfmt.h"
@@ -1211,8 +1211,7 @@ execve_runproc(struct lwp *l, struct execve_data * restrict data,
 	 * to dispose of.  Do that now.
 	 */
 	if (__predict_false(l->l_robust_head != 0)) {
-		KASSERT((l->l_lid & FUTEX_TID_MASK) == l->l_lid);
-		futex_release_all_lwp(l, l->l_lid);
+		futex_release_all_lwp(l);
 	}
 
 	/* Destroy any lwpctl info. */
