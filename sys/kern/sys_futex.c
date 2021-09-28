@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_futex.c,v 1.12 2021/07/21 06:35:45 skrll Exp $	*/
+/*	$NetBSD: sys_futex.c,v 1.13 2021/09/28 15:05:42 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2018, 2019, 2020 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_futex.c,v 1.12 2021/07/21 06:35:45 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_futex.c,v 1.13 2021/09/28 15:05:42 thorpej Exp $");
 
 /*
  * Futexes
@@ -1966,7 +1966,7 @@ futex_fetch_robust_entry(uintptr_t const uaddr, uintptr_t * const valp,
  *	the i's and cross the t's.
  */
 void
-futex_release_all_lwp(struct lwp * const l, lwpid_t const tid)
+futex_release_all_lwp(struct lwp * const l)
 {
 	u_long rhead[_FUTEX_ROBUST_HEAD_NWORDS];
 	int limit = 1000000;
@@ -1976,13 +1976,15 @@ futex_release_all_lwp(struct lwp * const l, lwpid_t const tid)
 	if (l->l_robust_head == 0)
 		return;
 
+	KASSERT((l->l_lid & FUTEX_TID_MASK) == l->l_lid);
+
 	/* Read the final snapshot of the robust list head. */
 	error = futex_fetch_robust_head(l->l_robust_head, rhead);
 	if (error) {
-		printf("WARNING: pid %jd (%s) lwp %jd tid %jd:"
+		printf("WARNING: pid %jd (%s) lwp %jd:"
 		    " unmapped robust futex list head\n",
 		    (uintmax_t)l->l_proc->p_pid, l->l_proc->p_comm,
-		    (uintmax_t)l->l_lid, (uintmax_t)tid);
+		    (uintmax_t)l->l_lid);
 		return;
 	}
 
@@ -2004,21 +2006,21 @@ futex_release_all_lwp(struct lwp * const l, lwpid_t const tid)
 	while (next != l->l_robust_head && limit-- > 0) {
 		/* pending handled below. */
 		if (next != pending)
-			release_futex(next + offset, tid, is_pi, false);
+			release_futex(next + offset, l->l_lid, is_pi, false);
 		error = futex_fetch_robust_entry(next, &next, &is_pi);
 		if (error)
 			break;
 		preempt_point();
 	}
 	if (limit <= 0) {
-		printf("WARNING: pid %jd (%s) lwp %jd tid %jd:"
+		printf("WARNING: pid %jd (%s) lwp %jd:"
 		    " exhausted robust futex limit\n",
 		    (uintmax_t)l->l_proc->p_pid, l->l_proc->p_comm,
-		    (uintmax_t)l->l_lid, (uintmax_t)tid);
+		    (uintmax_t)l->l_lid);
 	}
 
 	/* If there's a pending futex, it may need to be released too. */
 	if (pending != 0) {
-		release_futex(pending + offset, tid, pending_is_pi, true);
+		release_futex(pending + offset, l->l_lid, pending_is_pi, true);
 	}
 }
