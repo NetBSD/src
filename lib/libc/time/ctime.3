@@ -1,4 +1,4 @@
-.\" $NetBSD: ctime.3,v 1.61 2019/09/02 00:24:01 sevan Exp $
+.\" $NetBSD: ctime.3,v 1.62 2021/09/28 06:45:08 kim Exp $
 .\"
 .\" XXX: License missing?
 .\"
@@ -333,8 +333,7 @@ includes the following fields:
        int tm_year;     /* year - 1900 */
        int tm_wday;     /* day of week (Sunday = 0) */
        int tm_yday;     /* day of year (0 - 365) */
-       int tm_isdst;    /* is summer time in effect? */
-	int tm_isdst;	/* is daylight saving time in effect? */
+       int tm_isdst;    /* is daylight saving time in effect? */
        char *tm_zone;   /* abbreviation of timezone name (optional) */
        long tm_gmtoff;  /* offset from UT in seconds (optional) */
 .Ed
