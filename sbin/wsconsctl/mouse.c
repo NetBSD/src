@@ -1,4 +1,4 @@
-/*	$NetBSD: mouse.c,v 1.10 2012/12/24 01:29:20 khorben Exp $ */
+/*	$NetBSD: mouse.c,v 1.11 2021/09/28 06:20:09 nia Exp $ */
 
 /*-
  * Copyright (c) 1998, 2006, 2012 The NetBSD Foundation, Inc.
@@ -42,12 +42,18 @@
 
 #include "wsconsctl.h"
 
+static int reverse_scrolling;
+static int horiz_scroll_dist;
+static int vert_scroll_dist;
 static int mstype;
 static int resolution;
 static int samplerate;
 static struct wsmouse_calibcoords calibration;
 static char *calibration_samples;
 static struct wsmouse_repeat repeat;
+
+static void mouse_get_parameters(int);
+static void mouse_put_parameters(int);
 
 static void mouse_get_calibration(int);
 static void mouse_put_calibration(int);
@@ -56,27 +62,30 @@ static void mouse_get_repeat(int);
 static void mouse_put_repeat(int);
 
 struct field mouse_field_tab[] = {
-    { "resolution",		&resolution,	FMT_UINT,	FLG_WRONLY },
-    { "samplerate",		&samplerate,	FMT_UINT,	FLG_WRONLY },
-    { "type",			&mstype,	FMT_MSTYPE,	FLG_RDONLY },
+    { "resolution",		&resolution,		FMT_UINT,	FLG_WRONLY },
+    { "samplerate",		&samplerate,		FMT_UINT,	FLG_WRONLY },
+    { "type",			&mstype,		FMT_MSTYPE,	FLG_RDONLY },
+    { "scroll.reverse",		&reverse_scrolling,	FMT_INT,	FLG_MODIFY },
+    { "scroll.distance.x",	&horiz_scroll_dist,	FMT_INT,	FLG_MODIFY },
+    { "scroll.distance.y",	&vert_scroll_dist,	FMT_INT,	FLG_MODIFY },
     { "calibration.minx",	&calibration.minx,
-    						FMT_INT,	FLG_MODIFY },
+    								FMT_INT,	FLG_MODIFY },
     { "calibration.miny",	&calibration.miny,
-    						FMT_INT,	FLG_MODIFY },
+    							FMT_INT,	FLG_MODIFY },
     { "calibration.maxx",	&calibration.maxx,
-    						FMT_INT,	FLG_MODIFY },
+    							FMT_INT,	FLG_MODIFY },
     { "calibration.maxy",	&calibration.maxy,
-    						FMT_INT,	FLG_MODIFY },
+    							FMT_INT,	FLG_MODIFY },
     { "calibration.samples",	&calibration_samples,
-	    					FMT_STRING,	FLG_MODIFY },
+	    						FMT_STRING,	FLG_MODIFY },
     { "repeat.buttons",		&repeat.wr_buttons,
-    						FMT_BITFIELD, FLG_MODIFY },
+    							FMT_BITFIELD, FLG_MODIFY },
     { "repeat.delay.first",	&repeat.wr_delay_first,
-    						FMT_UINT, FLG_MODIFY },
+    							FMT_UINT, FLG_MODIFY },
     { "repeat.delay.decrement",	&repeat.wr_delay_decrement,
-    						FMT_UINT, FLG_MODIFY },
+    							FMT_UINT, FLG_MODIFY },
     { "repeat.delay.minimum",	&repeat.wr_delay_minimum,
- 		   				FMT_UINT, FLG_MODIFY },
+ 		   					FMT_UINT, FLG_MODIFY },
 };
 
 int mouse_field_tab_len = sizeof(mouse_field_tab)/
@@ -102,6 +111,53 @@ mouse_get_values(int fd)
 	    field_by_value(&repeat.wr_delay_decrement)->flags & FLG_GET ||
 	    field_by_value(&repeat.wr_delay_minimum)->flags & FLG_GET)
 		mouse_get_repeat(fd);
+
+	if (field_by_value(&horiz_scroll_dist)->flags & FLG_GET ||
+	    field_by_value(&vert_scroll_dist)->flags & FLG_GET ||
+	    field_by_value(&reverse_scrolling)->flags & FLG_GET)
+		mouse_get_parameters(fd);
+}
+
+static void
+mouse_get_parameters(int fd)
+{
+	struct wsmouse_param params[WSMOUSECFG_MAX];
+	struct wsmouse_parameters pl;
+	unsigned int i;
+
+	pl.nparams = 0;
+	pl.params = params;
+
+	if (field_by_value(&reverse_scrolling)->flags & FLG_GET)
+		params[pl.nparams++].key = WSMOUSECFG_REVERSE_SCROLLING;
+	if (field_by_value(&horiz_scroll_dist)->flags & FLG_GET)
+		params[pl.nparams++].key = WSMOUSECFG_HORIZSCROLLDIST;
+	if (field_by_value(&vert_scroll_dist)->flags & FLG_GET)
+		params[pl.nparams++].key = WSMOUSECFG_VERTSCROLLDIST;
+
+	if (ioctl(fd, WSMOUSEIO_GETPARAMS, &pl) < 0) {
+		if (field_by_value(&horiz_scroll_dist)->flags & FLG_GET)
+			field_disable_by_value(&horiz_scroll_dist);
+		if (field_by_value(&vert_scroll_dist)->flags & FLG_GET)
+			field_disable_by_value(&vert_scroll_dist);
+		if (field_by_value(&reverse_scrolling)->flags & FLG_GET)
+			field_disable_by_value(&reverse_scrolling);
+		return;
+	}
+
+	for (i = 0; i < pl.nparams; ++i) {
+		switch (params[i].key) {
+		case WSMOUSECFG_REVERSE_SCROLLING:
+			reverse_scrolling = params[i].value;
+			break;
+		case WSMOUSECFG_HORIZSCROLLDIST:
+			horiz_scroll_dist = params[i].value;
+			break;
+		case WSMOUSECFG_VERTSCROLLDIST:
+			vert_scroll_dist = params[i].value;
+			break;
+		}
+	}
 }
 
 static void
@@ -205,6 +261,46 @@ mouse_put_values(int fd)
 	    field_by_value(&repeat.wr_delay_decrement)->flags & FLG_SET ||
 	    field_by_value(&repeat.wr_delay_minimum)->flags & FLG_SET)
 		mouse_put_repeat(fd);
+
+	if (field_by_value(&horiz_scroll_dist)->flags & FLG_SET ||
+	    field_by_value(&vert_scroll_dist)->flags & FLG_SET ||
+	    field_by_value(&reverse_scrolling)->flags & FLG_SET)
+		mouse_put_parameters(fd);
+}
+
+static void
+mouse_put_parameters(int fd)
+{
+	struct wsmouse_param params[WSMOUSECFG_MAX];
+	struct wsmouse_parameters pl;
+
+	pl.nparams = 0;
+	pl.params = params;
+
+	if (field_by_value(&reverse_scrolling)->flags & FLG_SET) {
+		params[pl.nparams].key = WSMOUSECFG_REVERSE_SCROLLING;
+		params[pl.nparams++].value = reverse_scrolling;
+	}
+
+	if (field_by_value(&horiz_scroll_dist)->flags & FLG_SET) {
+		params[pl.nparams].key = WSMOUSECFG_HORIZSCROLLDIST;
+		params[pl.nparams++].value = horiz_scroll_dist;
+	}
+
+	if (field_by_value(&vert_scroll_dist)->flags & FLG_SET) {
+		params[pl.nparams].key = WSMOUSECFG_VERTSCROLLDIST;
+		params[pl.nparams++].value = vert_scroll_dist;
+	}
+
+	if (ioctl(fd, WSMOUSEIO_SETPARAMS, &pl) < 0) {
+		if (field_by_value(&horiz_scroll_dist)->flags & FLG_SET)
+			field_disable_by_value(&horiz_scroll_dist);
+		if (field_by_value(&vert_scroll_dist)->flags & FLG_SET)
+			field_disable_by_value(&vert_scroll_dist);
+		if (field_by_value(&vert_scroll_dist)->flags & FLG_SET)
+			field_disable_by_value(&reverse_scrolling);
+		return;
+	}
 }
 
 static void
