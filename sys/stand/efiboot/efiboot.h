@@ -1,4 +1,4 @@
-/*	$NetBSD: efiboot.h,v 1.16 2021/09/07 11:41:31 nia Exp $	*/
+/*	$NetBSD: efiboot.h,v 1.17 2021/09/28 11:37:45 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2016 Kimihiro Nonaka <nonaka@netbsd.org>
@@ -105,6 +105,12 @@ bool efi_pxe_match_booted_interface(const EFI_MAC_ADDRESS *, UINT32);
 
 /* efiwatchdog.c */
 void efi_set_watchdog(uint32_t, uint64_t);
+
+/* efigop.c */
+void efi_gop_probe(void);
+void efi_gop_show(void);
+void efi_gop_dump(void);
+void efi_gop_setmode(UINT32);
 
 /* exec.c */
 int exec_netbsd(const char *, const char *);
