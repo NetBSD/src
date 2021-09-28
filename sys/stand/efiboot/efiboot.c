@@ -1,4 +1,4 @@
-/* $NetBSD: efiboot.c,v 1.20 2020/06/26 03:23:04 thorpej Exp $ */
+/* $NetBSD: efiboot.c,v 1.21 2021/09/28 11:37:45 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -98,6 +98,7 @@ efi_main(EFI_HANDLE imageHandle, EFI_SYSTEM_TABLE *systemTable)
 	efi_file_system_probe();
 	efi_block_probe();
 	efi_rng_probe();
+	efi_gop_probe();
 
 	boot();
 
