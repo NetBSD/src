@@ -1,4 +1,4 @@
-/* $NetBSD: wsmousevar.h,v 1.11 2009/05/12 14:47:55 cegger Exp $ */
+/* $NetBSD: wsmousevar.h,v 1.12 2021/09/28 06:14:27 nia Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -73,3 +73,5 @@ int	wsmousedevprint(void *, const char *);
 #define WSMOUSE_INPUT_ABSOLUTE_Z	(1<<2)
 #define WSMOUSE_INPUT_ABSOLUTE_W	(1<<3)
 void	wsmouse_input(device_t, u_int, int, int, int, int, u_int);
+#define WSMOUSE_DEFAULT_SCROLL_DIST	(12)
+void	wsmouse_precision_scroll(device_t, int, int);
