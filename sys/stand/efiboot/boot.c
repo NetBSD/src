@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.36 2021/09/07 11:41:31 nia Exp $	*/
+/*	$NetBSD: boot.c,v 1.37 2021/09/28 11:37:45 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2016 Kimihiro Nonaka <nonaka@netbsd.org>
@@ -99,6 +99,7 @@ void	command_modules(char *);
 void	command_load(char *);
 void	command_unload(char *);
 void	command_ls(char *);
+void	command_gop(char *);
 void	command_mem(char *);
 void	command_menu(char *);
 void	command_reset(char *);
@@ -118,6 +119,7 @@ const struct boot_command commands[] = {
 	{ "load",	command_load,		"load <module_name>" },
 	{ "unload",	command_unload,		"unload <module_name>" },
 	{ "ls",		command_ls,		"ls [hdNn:/path]" },
+	{ "gop",	command_gop,		"gop [mode]" },
 	{ "mem",	command_mem,		"mem" },
 	{ "menu",	command_menu,		"menu" },
 	{ "reboot",	command_reset,		"reboot|reset" },
@@ -290,6 +292,20 @@ command_ls(char *arg)
 }
 
 void
+command_gop(char *arg)
+{
+	UINT32 mode;
+
+	if (!arg || !*arg) {
+		efi_gop_dump();
+		return;
+	}
+
+	mode = atoi(arg);
+	efi_gop_setmode(mode);
+}
+
+void
 command_mem(char *arg)
 {
 	EFI_MEMORY_DESCRIPTOR *md, *memmap;
@@ -347,6 +363,7 @@ command_version(char *arg)
 	efi_acpi_show();
 	efi_rng_show();
 	efi_md_show();
+	efi_gop_show();
 }
 
 void
