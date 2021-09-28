@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lwp.c,v 1.243 2021/01/13 07:36:56 skrll Exp $	*/
+/*	$NetBSD: kern_lwp.c,v 1.244 2021/09/28 15:05:42 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008, 2009, 2019, 2020
@@ -217,7 +217,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.243 2021/01/13 07:36:56 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.244 2021/09/28 15:05:42 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_lockdebug.h"
@@ -2060,11 +2060,8 @@ lwp_setprivate(struct lwp *l, void *ptr)
 void
 lwp_thread_cleanup(struct lwp *l)
 {
-	const lwpid_t tid = l->l_lid;
 
-	KASSERT((tid & FUTEX_TID_MASK) == tid);
 	KASSERT(mutex_owned(l->l_proc->p_lock));
-
 	mutex_exit(l->l_proc->p_lock);
 
 	/*
@@ -2072,7 +2069,7 @@ lwp_thread_cleanup(struct lwp *l)
 	 * now.
 	 */
 	if (__predict_false(l->l_robust_head != 0)) {
-		futex_release_all_lwp(l, tid);
+		futex_release_all_lwp(l);
 	}
 }
 
