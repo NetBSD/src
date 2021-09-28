@@ -1,4 +1,4 @@
-/* $NetBSD: wsconsio.h,v 1.125 2021/04/24 00:15:37 macallan Exp $ */
+/* $NetBSD: wsconsio.h,v 1.126 2021/09/28 06:14:27 nia Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -76,7 +76,8 @@ struct wscons_event {
 #define	WSCONS_EVENT_ASCII		13	/* key code is already ascii */
 #define	WSCONS_EVENT_MOUSE_DELTA_W	14	/* W delta amount */
 #define	WSCONS_EVENT_MOUSE_ABSOLUTE_W	15	/* W location */
-
+#define	WSCONS_EVENT_HSCROLL		16	/* X axis precision scrolling */
+#define	WSCONS_EVENT_VSCROLL		17	/* Y axis precision scrolling */
 
 /*
  * Keyboard ioctls (0 - 31)
@@ -269,6 +270,28 @@ struct wsmouse_repeat {
 
 #define WSMOUSEIO_SETVERSION	_IOW('W', 41, int)
 #define WSMOUSE_EVENT_VERSION	WSEVENT_VERSION
+
+enum wsmousecfg {
+	WSMOUSECFG_REVERSE_SCROLLING = 0,
+	/* Touchpad parameters */
+	WSMOUSECFG_HORIZSCROLLDIST,
+	WSMOUSECFG_VERTSCROLLDIST
+};
+
+struct wsmouse_param {
+	enum wsmousecfg key;
+	int value;
+};
+
+struct wsmouse_parameters {
+	struct wsmouse_param *params;
+	unsigned int nparams;
+};
+
+#define WSMOUSECFG_MAX		(128) /* maximum number of wsmouse_params */
+
+#define WSMOUSEIO_GETPARAMS	_IOW('W', 42, struct wsmouse_parameters)
+#define WSMOUSEIO_SETPARAMS	_IOW('W', 43, struct wsmouse_parameters)
 
 /*
  * Display ioctls (64 - 95)
