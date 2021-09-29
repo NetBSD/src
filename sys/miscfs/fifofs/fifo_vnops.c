@@ -1,4 +1,4 @@
-/*	$NetBSD: fifo_vnops.c,v 1.85 2021/09/29 02:47:22 thorpej Exp $	*/
+/*	$NetBSD: fifo_vnops.c,v 1.86 2021/09/29 13:15:45 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fifo_vnops.c,v 1.85 2021/09/29 02:47:22 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fifo_vnops.c,v 1.86 2021/09/29 13:15:45 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -578,14 +578,14 @@ filt_fifowrite(struct knote *kn, long hint)
 }
 
 static const struct filterops fiforead_filtops = {
-	.f_flags = FILTEROP_ISFD,
+	.f_flags = FILTEROP_ISFD | FILTEROP_MPSAFE,
 	.f_attach = NULL,
 	.f_detach = filt_fifordetach,
 	.f_event = filt_fiforead,
 };
 
 static const struct filterops fifowrite_filtops = {
-	.f_flags = FILTEROP_ISFD,
+	.f_flags = FILTEROP_ISFD | FILTEROP_MPSAFE,
 	.f_attach = NULL,
 	.f_detach = filt_fifowdetach,
 	.f_event = filt_fifowrite,
