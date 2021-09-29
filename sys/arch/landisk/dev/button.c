@@ -1,4 +1,4 @@
-/*	$NetBSD: button.c,v 1.14 2021/09/26 16:36:18 thorpej Exp $	*/
+/*	$NetBSD: button.c,v 1.15 2021/09/29 15:17:01 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: button.c,v 1.14 2021/09/26 16:36:18 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: button.c,v 1.15 2021/09/29 15:17:01 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -297,16 +297,26 @@ filt_btn_rdetach(struct knote *kn)
 static int
 filt_btn_read(struct knote *kn, long hint)
 {
+	int rv;
 
-	mutex_enter(&btn_event_queue_lock);
+	if (hint & NOTE_SUBMIT) {
+		KASSERT(mutex_owned(&btn_event_queue_lock));
+	} else {
+		mutex_enter(&btn_event_queue_lock);
+	}
+
 	kn->kn_data = btn_event_queue_count;
-	mutex_exit(&btn_event_queue_lock);
+	rv = kn->kn_data > 0;
 
-	return (kn->kn_data > 0);
+	if ((hint & NOTE_SUBMIT) == 0) {
+		mutex_exit(&btn_event_queue_lock);
+	}
+
+	return rv;
 }
 
 static const struct filterops btn_read_filtops = {
-    .f_flags = FILTEROP_ISFD,
+    .f_flags = FILTEROP_ISFD | FILTEROP_MPSAFE,
     .f_attach = NULL,
     .f_detach = filt_btn_rdetach,
     .f_event = filt_btn_read,
@@ -399,6 +409,6 @@ btn_event_send(struct btn_event *bev, int event)
 		btn_event_queue_flags &= ~BEVQ_F_WAITING;
 		cv_broadcast(&btn_event_queue_cv);
 	}
-	selnotify(&btn_event_queue_selinfo, 0, 0);
+	selnotify(&btn_event_queue_selinfo, POLLIN | POLLRDNORM, NOTE_SUBMIT);
 	mutex_exit(&btn_event_queue_lock);
 }
