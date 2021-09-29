@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.297 2021/09/27 00:40:49 thorpej Exp $	*/
+/*	$NetBSD: tty.c,v 1.298 2021/09/29 13:14:39 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2020 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.297 2021/09/27 00:40:49 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.298 2021/09/29 13:14:39 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -1517,14 +1517,14 @@ filt_ttywrite(struct knote *kn, long hint)
 }
 
 static const struct filterops ttyread_filtops = {
-	.f_flags = FILTEROP_ISFD,
+	.f_flags = FILTEROP_ISFD | FILTEROP_MPSAFE,
 	.f_attach = NULL,
 	.f_detach = filt_ttyrdetach,
 	.f_event = filt_ttyread,
 };
 
 static const struct filterops ttywrite_filtops = {
-	.f_flags = FILTEROP_ISFD,
+	.f_flags = FILTEROP_ISFD | FILTEROP_MPSAFE,
 	.f_attach = NULL,
 	.f_detach = filt_ttywdetach,
 	.f_event = filt_ttywrite,
