@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket.c,v 1.297 2021/09/29 02:47:22 thorpej Exp $	*/
+/*	$NetBSD: uipc_socket.c,v 1.298 2021/09/29 13:15:45 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2002, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.297 2021/09/29 02:47:22 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.298 2021/09/29 13:15:45 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -2320,21 +2320,21 @@ filt_solisten(struct knote *kn, long hint)
 }
 
 static const struct filterops solisten_filtops = {
-	.f_flags = FILTEROP_ISFD,
+	.f_flags = FILTEROP_ISFD | FILTEROP_MPSAFE,
 	.f_attach = NULL,
 	.f_detach = filt_sordetach,
 	.f_event = filt_solisten,
 };
 
 static const struct filterops soread_filtops = {
-	.f_flags = FILTEROP_ISFD,
+	.f_flags = FILTEROP_ISFD | FILTEROP_MPSAFE,
 	.f_attach = NULL,
 	.f_detach = filt_sordetach,
 	.f_event = filt_soread,
 };
 
 static const struct filterops sowrite_filtops = {
-	.f_flags = FILTEROP_ISFD,
+	.f_flags = FILTEROP_ISFD | FILTEROP_MPSAFE,
 	.f_attach = NULL,
 	.f_detach = filt_sowdetach,
 	.f_event = filt_sowrite,
