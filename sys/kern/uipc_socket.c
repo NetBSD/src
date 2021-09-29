@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket.c,v 1.296 2021/09/26 01:16:10 thorpej Exp $	*/
+/*	$NetBSD: uipc_socket.c,v 1.297 2021/09/29 02:47:22 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2002, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.296 2021/09/26 01:16:10 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.297 2021/09/29 02:47:22 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -2225,9 +2225,8 @@ filt_sordetach(struct knote *kn)
 
 	so = ((file_t *)kn->kn_obj)->f_socket;
 	solock(so);
-	selremove_knote(&so->so_rcv.sb_sel, kn);
-	if (SLIST_EMPTY(&so->so_rcv.sb_sel.sel_klist))	/* XXX select/kqueue */
-		so->so_rcv.sb_flags &= ~SB_KNOTE;	/* XXX internals */
+	if (selremove_knote(&so->so_rcv.sb_sel, kn))
+		so->so_rcv.sb_flags &= ~SB_KNOTE;
 	sounlock(so);
 }
 
@@ -2264,9 +2263,8 @@ filt_sowdetach(struct knote *kn)
 
 	so = ((file_t *)kn->kn_obj)->f_socket;
 	solock(so);
-	selremove_knote(&so->so_snd.sb_sel, kn);
-	if (SLIST_EMPTY(&so->so_snd.sb_sel.sel_klist))	/* XXX select/kqueue */
-		so->so_snd.sb_flags &= ~SB_KNOTE;	/* XXX internals */
+	if (selremove_knote(&so->so_snd.sb_sel, kn))
+		so->so_snd.sb_flags &= ~SB_KNOTE;
 	sounlock(so);
 }
 

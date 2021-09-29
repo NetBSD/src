@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_select.c,v 1.55 2020/12/11 01:25:29 thorpej Exp $	*/
+/*	$NetBSD: sys_select.c,v 1.56 2021/09/29 02:47:22 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2009, 2010, 2019, 2020 The NetBSD Foundation, Inc.
@@ -84,7 +84,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_select.c,v 1.55 2020/12/11 01:25:29 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_select.c,v 1.56 2021/09/29 02:47:22 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -682,11 +682,15 @@ selrecord_knote(struct selinfo *sip, struct knote *kn)
  * Remove a knote.
  *
  * The caller holds the same lock as for selrecord().
+ *
+ * Returns true if the last knote was removed and the list
+ * is now empty.
  */
-void
+bool
 selremove_knote(struct selinfo *sip, struct knote *kn)
 {
 	SLIST_REMOVE(&sip->sel_klist, kn, knote, kn_selnext);
+	return SLIST_EMPTY(&sip->sel_klist);
 }
 
 /*
