@@ -1,4 +1,4 @@
-/*	$NetBSD: specialreg.h,v 1.177 2021/07/10 17:08:37 msaitoh Exp $	*/
+/*	$NetBSD: specialreg.h,v 1.178 2021/09/30 15:54:55 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2014-2020 The NetBSD Foundation, Inc.
@@ -213,7 +213,7 @@
 	"\21" "PAT"	"\22" "PSE36"	"\23" "PN"	"\24" "CLFLUSH" \
 	"\25" "B20"	"\26" "DS"	"\27" "ACPI"	"\30" "MMX" \
 	"\31" "FXSR"	"\32" "SSE"	"\33" "SSE2"	"\34" "SS" \
-	"\35" "HTT"	"\36" "TM"	"\37" "IA64"	"\40" "SBF"
+	"\35" "HTT"	"\36" "TM"	"\37" "IA64"	"\40" "PBE"
 
 /* Blacklists of CPUID flags - used to mask certain features */
 #ifdef XENPV
