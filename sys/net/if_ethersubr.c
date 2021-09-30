@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ethersubr.c,v 1.297 2021/09/30 03:54:04 yamaguchi Exp $	*/
+/*	$NetBSD: if_ethersubr.c,v 1.298 2021/09/30 03:57:48 yamaguchi Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.297 2021/09/30 03:54:04 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.298 2021/09/30 03:57:48 yamaguchi Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1066,10 +1066,6 @@ ether_ifdetach(struct ifnet *ifp)
 	KASSERT(!simplehook_has_hooks(ec->ec_ifdetach_hooks));
 	simplehook_destroy(ec->ec_ifdetach_hooks);
 
-#if NBRIDGE > 0
-	if (ifp->if_bridge)
-		bridge_ifdetach(ifp);
-#endif
 	bpf_detach(ifp);
 #if NVLAN > 0
 	if (ec->ec_nvlans)
