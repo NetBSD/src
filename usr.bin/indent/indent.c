@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.c,v 1.94 2021/09/30 21:33:55 rillig Exp $	*/
+/*	$NetBSD: indent.c,v 1.95 2021/09/30 21:38:43 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)indent.c	5.17 (Berkeley) 6/7/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: indent.c,v 1.94 2021/09/30 21:33:55 rillig Exp $");
+__RCSID("$NetBSD: indent.c,v 1.95 2021/09/30 21:38:43 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/indent.c 340138 2018-11-04 19:24:49Z oshogbo $");
 #endif
@@ -596,11 +596,15 @@ process_newline(void)
 static bool
 want_blank_before_lparen(void)
 {
-    return ps.want_blank &&
-	   ((ps.last_token != ident && ps.last_token != funcname) ||
-	    opt.proc_calls_space ||
-	    (ps.keyword == kw_sizeof ? opt.blank_after_sizeof :
-	     ps.keyword != kw_0 && ps.keyword != kw_offsetof));
+    if (!ps.want_blank)
+	return false;
+    if (ps.last_token != ident && ps.last_token != funcname)
+	return true;
+    if (opt.proc_calls_space)
+	return true;
+    if (ps.keyword == kw_sizeof)
+	return opt.blank_after_sizeof;
+    return ps.keyword != kw_0 && ps.keyword != kw_offsetof;
 }
 
 static void
