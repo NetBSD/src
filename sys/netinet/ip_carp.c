@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_carp.c,v 1.115 2021/06/16 00:21:19 riastradh Exp $	*/
+/*	$NetBSD: ip_carp.c,v 1.116 2021/09/30 03:43:25 yamaguchi Exp $	*/
 /*	$OpenBSD: ip_carp.c,v 1.113 2005/11/04 08:11:54 mcbride Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_carp.c,v 1.115 2021/06/16 00:21:19 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_carp.c,v 1.116 2021/09/30 03:43:25 yamaguchi Exp $");
 
 /*
  * TODO:
@@ -113,6 +113,7 @@ struct carp_softc {
 	struct ethercom sc_ac;
 #define	sc_if		sc_ac.ec_if
 #define	sc_carpdev	sc_ac.ec_if.if_carpdev
+	void *sc_linkstate_hook;
 	int ah_cookie;
 	int lh_cookie;
 	struct ip_moptions sc_imo;
@@ -907,6 +908,7 @@ carp_clone_destroy(struct ifnet *ifp)
 static void
 carpdetach(struct carp_softc *sc)
 {
+	struct ifnet *ifp;
 	struct carp_if *cif;
 	int s;
 
@@ -929,13 +931,16 @@ carpdetach(struct carp_softc *sc)
 
 	KERNEL_LOCK(1, NULL);
 	s = splnet();
-	if (sc->sc_carpdev != NULL) {
-		/* XXX linkstatehook removal */
-		cif = (struct carp_if *)sc->sc_carpdev->if_carp;
+	ifp = sc->sc_carpdev;
+	if (ifp != NULL) {
+		if_linkstate_change_disestablish(ifp,
+		    sc->sc_linkstate_hook, NULL);
+
+		cif = (struct carp_if *)ifp->if_carp;
 		TAILQ_REMOVE(&cif->vhif_vrs, sc, sc_list);
 		if (!--cif->vhif_nvrs) {
-			ifpromisc(sc->sc_carpdev, 0);
-			sc->sc_carpdev->if_carp = NULL;
+			ifpromisc(ifp, 0);
+			ifp->if_carp = NULL;
 			free(cif, M_IFADDR);
 		}
 	}
@@ -1708,9 +1713,10 @@ carp_set_ifp(struct carp_softc *sc, struct ifnet *ifp)
 		if (sc->sc_naddrs || sc->sc_naddrs6)
 			sc->sc_if.if_flags |= IFF_UP;
 		carp_set_enaddr(sc);
+		sc->sc_linkstate_hook = if_linkstate_change_establish(ifp,
+		    carp_carpdev_state, (void *)ifp);
 		KERNEL_LOCK(1, NULL);
 		s = splnet();
-		/* XXX linkstatehooks establish */
 		carp_carpdev_state(ifp);
 		splx(s);
 		KERNEL_UNLOCK_ONE(NULL);
