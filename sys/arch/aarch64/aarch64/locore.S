@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.79 2021/08/30 22:24:39 jmcneill Exp $	*/
+/*	$NetBSD: locore.S,v 1.80 2021/09/30 21:19:16 skrll Exp $	*/
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -38,7 +38,7 @@
 #include <aarch64/hypervisor.h>
 #include "assym.h"
 
-RCSID("$NetBSD: locore.S,v 1.79 2021/08/30 22:24:39 jmcneill Exp $")
+RCSID("$NetBSD: locore.S,v 1.80 2021/09/30 21:19:16 skrll Exp $")
 
 #ifdef AARCH64_DEVICE_MEM_STRONGLY_ORDERED
 #define	MAIR_DEVICE_MEM		MAIR_DEVICE_nGnRnE
@@ -468,7 +468,27 @@ ENTRY_NP(cpu_mpstart)
 
 mp_vstart:
 	hint	0x24		/* bti j */
+
 	CPU_DPRINTREG("PC               = ", x20)
+	CPU_DPRINTREG("SP               = ", sp)
+
+	CPU_DPRINTSREG("TTBR0            = ", ttbr0_el1)
+	CPU_DPRINTSREG("TTBR1            = ", ttbr1_el1)
+
+	/* Set SP to VA */
+	adrl	x0, kern_vtopdiff
+	ldr	x0, [x0]
+	add	sp, sp, x0
+
+	/* stop using TTBR0 - CPU_DPRINT{,REG,SREG} no longer after this */
+	mrs	x0, tcr_el1
+	orr	x0, x0, #TCR_EPD0
+	msr	tcr_el1, x0
+	isb
+
+	tlbi	vmalle1is
+	dsb	ish
+	isb
 
 	/* set exception vector */
 	adrl	x0, _C_LABEL(el1_vectors)
