@@ -1,4 +1,4 @@
-/*	$NetBSD: net_stub.c,v 1.47 2021/09/30 03:57:48 yamaguchi Exp $	*/
+/*	$NetBSD: net_stub.c,v 1.48 2021/09/30 04:13:42 yamaguchi Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: net_stub.c,v 1.47 2021/09/30 03:57:48 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: net_stub.c,v 1.48 2021/09/30 04:13:42 yamaguchi Exp $");
 
 #include <sys/mutex.h>
 #include <sys/param.h>
@@ -73,7 +73,6 @@ __weak_alias(pppoedisc_input,rumpnet_stub);
 
 /* vlan */
 __weak_alias(vlan_input,rumpnet_stub);
-__weak_alias(vlan_ifdetach,rumpnet_stub);
 
 /* ipsec */
 /* FIXME: should modularize netipsec and reduce reverse symbol references */
