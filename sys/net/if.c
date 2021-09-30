@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.493 2021/09/30 03:35:55 yamaguchi Exp $	*/
+/*	$NetBSD: if.c,v 1.494 2021/09/30 03:39:39 yamaguchi Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.493 2021/09/30 03:35:55 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.494 2021/09/30 03:39:39 yamaguchi Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -159,11 +159,6 @@ __KERNEL_RCSID(0, "$NetBSD: if.c,v 1.493 2021/09/30 03:35:55 yamaguchi Exp $");
 #include "carp.h"
 #if NCARP > 0
 #include <netinet/ip_carp.h>
-#endif
-
-#include "lagg.h"
-#if NLAGG > 0
-#include <net/lagg/if_laggvar.h>
 #endif
 
 #include <compat/sys/sockio.h>
@@ -2409,11 +2404,6 @@ if_link_state_change_process(struct ifnet *ifp, int link_state)
 
 	if (ifp->if_link_state_changed != NULL)
 		ifp->if_link_state_changed(ifp, link_state);
-
-#if NLAGG > 0
-	if (ifp->if_type == IFT_IEEE8023ADLAG)
-		lagg_linkstate_changed(ifp);
-#endif
 
 	simplehook_dohooks(ifp->if_linkstate_hooks);
 

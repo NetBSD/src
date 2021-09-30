@@ -1,4 +1,4 @@
-/*	$NetBSD: if_lagg.c,v 1.6 2021/07/13 09:00:26 ozaki-r Exp $	*/
+/*	$NetBSD: if_lagg.c,v 1.7 2021/09/30 03:39:39 yamaguchi Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006 Reyk Floeter <reyk@openbsd.org>
@@ -20,7 +20,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_lagg.c,v 1.6 2021/07/13 09:00:26 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_lagg.c,v 1.7 2021/09/30 03:39:39 yamaguchi Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -147,6 +147,7 @@ static void	lagg_start(struct ifnet *);
 static int	lagg_media_change(struct ifnet *);
 static void	lagg_media_status(struct ifnet *, struct ifmediareq *);
 static int	lagg_vlan_cb(struct ethercom *, uint16_t, bool);
+static void	lagg_linkstate_changed(void *);
 static struct lagg_softc *
 		lagg_softc_alloc(enum lagg_iftypes);
 static void	lagg_softc_free(struct lagg_softc *);
@@ -1970,6 +1971,8 @@ lagg_addport_locked(struct lagg_softc *sc, struct lagg_port *lp)
 	lp->lp_ifcapenable = ifp_port->if_capenable;
 	lp->lp_mtu = mtu_port;
 	lp->lp_prio = LAGG_PORT_PRIO;
+	lp->lp_linkstate_hook = if_linkstate_change_establish(ifp_port,
+	    lagg_linkstate_changed, ifp_port);
 	psref_target_init(&lp->lp_psref, lagg_port_psref_class);
 
 	IFNET_LOCK(ifp_port);
@@ -2011,6 +2014,8 @@ remove_port:
 
 restore_lladdr:
 	lagg_lladdr_unset(sc, lp, if_type);
+	if_linkstate_change_disestablish(ifp_port,
+	    lp->lp_linkstate_hook, NULL);
 	psref_target_destroy(&lp->lp_psref, lagg_port_psref_class);
 
 	IFNET_LOCK(ifp_port);
@@ -2062,6 +2067,9 @@ lagg_delport_locked(struct lagg_softc *sc, struct lagg_port *lp)
 	sc->sc_nports--;
 	atomic_store_release(&ifp_port->if_lagg, NULL);
 	pserialize_perform(sc->sc_psz);
+
+	if_linkstate_change_disestablish(ifp_port,
+	    lp->lp_linkstate_hook, NULL);
 
 	lagg_proto_stopport(sc, lp);
 	psref_target_destroy(&lp->lp_psref, lagg_port_psref_class);
@@ -2338,8 +2346,9 @@ lagg_ifdetach(struct ifnet *ifp_port)
 }
 
 void
-lagg_linkstate_changed(struct ifnet *ifp)
+lagg_linkstate_changed(void *xifp)
 {
+	struct ifnet *ifp = xifp;
 	struct lagg_port *lp;
 	struct psref psref;
 	int s, bound;
