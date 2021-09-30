@@ -1,4 +1,4 @@
-/*	$NetBSD: hand.c,v 1.4 2018/08/16 18:22:05 jmcneill Exp $	*/
+/*	$NetBSD: hand.c,v 1.5 2021/09/30 19:02:48 jmcneill Exp $	*/
 
 /*++
 
@@ -490,6 +490,7 @@ LibInstallProtocolInterfaces (
 
         Index += 1;
     }
+    va_end (args);
 
     va_end (args);
 
@@ -511,6 +512,7 @@ LibInstallProtocolInterfaces (
 	va_end (args);
 
         *Handle = OldHandle;
+        va_end (args);
     }
 
     //
@@ -613,6 +615,7 @@ LibReinstallProtocolInterfaces (
 
         Index += 1;
     }
+    va_end (args);
 
     va_end (args);
 
@@ -632,8 +635,8 @@ LibReinstallProtocolInterfaces (
             uefi_call_wrapper(BS->ReinstallProtocolInterface, 4, Handle, Protocol, NewInterface, OldInterface);
 
             Index -= 1;
-        }        
-	va_end (args);
+        }
+        va_end (args);
     }
 
     //
