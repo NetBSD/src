@@ -62,12 +62,12 @@ OBJCOPY      := $(prefix)$(CROSS_COMPILE)objcopy
 
 # Host/target identification
 OS           := $(shell uname -s)
-HOSTARCH     ?= $(shell $(HOSTCC) -dumpmachine | cut -f1 -d- | sed -e s,i[3456789]86,ia32, -e 's,armv7.*,arm,' )
-ARCH         ?= $(shell $(HOSTCC) -dumpmachine | cut -f1 -d- | sed -e s,i[3456789]86,ia32, -e 's,armv7.*,arm,' )
+HOSTARCH     ?= $(shell $(HOSTCC) -dumpmachine | cut -f1 -d- | sed -e s,i[3456789]86,ia32, -e 's,armv[67].*,arm,' )
+ARCH         ?= $(shell $(HOSTCC) -dumpmachine | cut -f1 -d- | sed -e s,i[3456789]86,ia32, -e 's,armv[67].*,arm,' )
 
 # Get ARCH from the compiler if cross compiling 
 ifneq ($(CROSS_COMPILE),)
-  override ARCH := $(shell $(CC) -dumpmachine | cut -f1 -d-| sed -e s,i[3456789]86,ia32, -e 's,armv7.*,arm,' )
+  override ARCH := $(shell $(CC) -dumpmachine | cut -f1 -d-| sed -e s,i[3456789]86,ia32, -e 's,armv[67].*,arm,' )
 endif
 
 # FreeBSD (and possibly others) reports amd64 instead of x86_64
@@ -142,7 +142,9 @@ endif
 ifneq ($(ARCH),aarch64)
 ifneq ($(ARCH),arm)
 ifneq ($(ARCH),mips64el)
+ifneq ($(ARCH),riscv64)
 export HAVE_EFI_OBJCOPY=y
+endif
 endif
 endif
 endif

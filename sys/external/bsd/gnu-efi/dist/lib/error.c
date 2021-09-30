@@ -1,4 +1,4 @@
-/*	$NetBSD: error.c,v 1.1.1.2 2018/08/16 18:17:47 jmcneill Exp $	*/
+/*	$NetBSD: error.c,v 1.1.1.3 2021/09/30 18:50:09 jmcneill Exp $	*/
 
 /*++
 
@@ -58,7 +58,7 @@ struct {
 	{  EFI_COMPROMISED_DATA,       L"Compromised Data"},
 
 	// warnings
-	{  EFI_WARN_UNKOWN_GLYPH,      L"Warning Unknown Glyph"},
+	{  EFI_WARN_UNKNOWN_GLYPH,     L"Warning Unknown Glyph"},
 	{  EFI_WARN_DELETE_FAILURE,    L"Warning Delete Failure"},
 	{  EFI_WARN_WRITE_FAILURE,     L"Warning Write Failure"},
 	{  EFI_WARN_BUFFER_TOO_SMALL,  L"Warning Buffer Too Small"},
@@ -81,5 +81,5 @@ StatusToString (
         }
     }
 
-    SPrint (Buffer, 0, L"%X", Status);
+    UnicodeSPrint (Buffer, 0, L"%X", Status);
 }

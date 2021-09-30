@@ -1,4 +1,4 @@
-/*	$NetBSD: crt0-efi-ia32.S,v 1.1.1.1 2014/04/01 16:16:08 jakllsch Exp $	*/
+/*	$NetBSD: crt0-efi-ia32.S,v 1.1.1.2 2021/09/30 18:50:09 jmcneill Exp $	*/
 
 /* crt0-efi-ia32.S - x86 EFI startup code.
    Copyright (C) 1999 Hewlett-Packard Co.
@@ -74,5 +74,6 @@ dummy:	.long	0
 #define IMAGE_REL_ABSOLUTE	0
  	.section .reloc
  	.long	dummy					// Page RVA
- 	.long	10					// Block Size (2*4+2)
- 	.word	(IMAGE_REL_ABSOLUTE<<12) +  0		// reloc for dummy
+	.long	12					// Block Size (2*4+2*2), must be aligned by 32 Bits
+	.word	(IMAGE_REL_ABSOLUTE<<12) +  0		// reloc for dummy
+	.word	(IMAGE_REL_ABSOLUTE<<12) +  0		// reloc for dummy

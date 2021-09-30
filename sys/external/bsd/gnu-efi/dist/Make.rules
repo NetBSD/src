@@ -51,8 +51,14 @@
 %.o: %.c
 	$(CC) $(INCDIR) $(CFLAGS) $(CPPFLAGS) -c $< -o $@
 
-%.S: %.c
+%.s: %.c
 	$(CC) $(INCDIR) $(CFLAGS) $(CPPFLAGS) -S $< -o $@
 
-%.E: %.c
+%.i: %.c
+	$(CC) $(INCDIR) $(CFLAGS) $(CPPFLAGS) -E $< -o $@
+
+%.o: %.S
+	$(CC) $(INCDIR) $(CFLAGS) $(CPPFLAGS) -c $< -o $@
+
+%.s: %.S
 	$(CC) $(INCDIR) $(CFLAGS) $(CPPFLAGS) -E $< -o $@

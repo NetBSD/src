@@ -1,4 +1,4 @@
-/*	$NetBSD: libsmbios.h,v 1.1.1.1 2014/04/01 16:16:07 jakllsch Exp $	*/
+/*	$NetBSD: libsmbios.h,v 1.1.1.2 2021/09/30 18:50:09 jmcneill Exp $	*/
 
 #ifndef _LIB_SMBIOS_H
 #define _LIB_SMBIOS_H
@@ -9,7 +9,7 @@ Copyright (c) 2000  Intel Corporation
 Module Name:
 
     LibSmbios.h
-    
+
 Abstract:
 
     Lib include  for SMBIOS services. Used to get system serial number and GUID
@@ -38,6 +38,19 @@ typedef struct {
     UINT16  NumberOfSmbiosStructures;
     UINT8   SmbiosBcdRevision;
 } SMBIOS_STRUCTURE_TABLE;
+
+typedef struct {
+    UINT8   AnchorString[5];
+    UINT8   EntryPointStructureChecksum;
+    UINT8   EntryPointLength;
+    UINT8   MajorVersion;
+    UINT8   MinorVersion;
+    UINT8   DocRev;
+    UINT8   EntryPointRevision;
+    UINT8   Reserved;
+    UINT32  TableMaximumSize;
+    UINT64  TableAddress;
+} SMBIOS3_STRUCTURE_TABLE;
 
 //
 // Please note that SMBIOS structures can be odd byte aligned since the
@@ -73,7 +86,7 @@ typedef struct {
     // always byte copy this data to prevent alignment faults!
     //
     EFI_GUID        Uuid;
-    
+
     UINT8           WakeUpType;
 } SMBIOS_TYPE1;
 
@@ -129,6 +142,4 @@ typedef union {
 } SMBIOS_STRUCTURE_POINTER;
 #pragma pack()
 
-
 #endif
-

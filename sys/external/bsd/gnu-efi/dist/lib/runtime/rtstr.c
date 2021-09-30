@@ -1,4 +1,4 @@
-/*	$NetBSD: rtstr.c,v 1.1.1.2 2018/08/16 18:17:47 jmcneill Exp $	*/
+/*	$NetBSD: rtstr.c,v 1.1.1.3 2021/09/30 18:50:09 jmcneill Exp $	*/
 
 /*++
 
@@ -20,7 +20,7 @@ Revision History
 #include "lib.h"
 
 #ifndef __GNUC__
-#pragma RUNTIME_CODE(RtAcquireLock)
+#pragma RUNTIME_CODE(RtStrCmp)
 #endif
 INTN
 RUNTIMEFUNCTION
@@ -73,12 +73,12 @@ RtStrnCpy (
 {
     UINTN Size = RtStrnLen(Src, Len);
     if (Size != Len)
-	RtSetMem(Dest + Len, '\0', (Len - Size) * sizeof(CHAR16));
+        RtSetMem(Dest + Size, (Len - Size) * sizeof(CHAR16), '\0');
     RtCopyMem(Dest, Src, Size * sizeof(CHAR16));
 }
 
 #ifndef __GNUC__
-#pragma RUNTIME_CODE(RtStrCpy)
+#pragma RUNTIME_CODE(RtStpCpy)
 #endif
 CHAR16 *
 RUNTIMEFUNCTION
@@ -96,7 +96,7 @@ RtStpCpy (
 }
 
 #ifndef __GNUC__
-#pragma RUNTIME_CODE(RtStrnCpy)
+#pragma RUNTIME_CODE(RtStpnCpy)
 #endif
 CHAR16 *
 RUNTIMEFUNCTION
@@ -109,7 +109,7 @@ RtStpnCpy (
 {
     UINTN Size = RtStrnLen(Src, Len);
     if (Size != Len)
-	RtSetMem(Dest + Len, '\0', (Len - Size) * sizeof(CHAR16));
+        RtSetMem(Dest + Size, (Len - Size) * sizeof(CHAR16), '\0');
     RtCopyMem(Dest, Src, Size * sizeof(CHAR16));
     return Dest + Size;
 }
@@ -124,11 +124,11 @@ RtStrCat (
     IN CONST CHAR16   *Src
     )
 {
-    RtStrCpy(Dest+StrLen(Dest), Src);
+    RtStrCpy(Dest+RtStrLen(Dest), Src);
 }
 
 #ifndef __GNUC__
-#pragma RUNTIME_CODE(RtStrCat)
+#pragma RUNTIME_CODE(RtStrnCat)
 #endif
 VOID
 RUNTIMEFUNCTION
@@ -138,7 +138,12 @@ RtStrnCat (
     IN UINTN    Len
     )
 {
-    RtStrnCpy(Dest+StrLen(Dest), Src, Len);
+    UINTN DestSize, Size;
+
+    DestSize = RtStrLen(Dest);
+    Size = RtStrnLen(Src, Len);
+    RtCopyMem(Dest + DestSize, Src, Size * sizeof(CHAR16));
+    Dest[DestSize + Size] = '\0';
 }
 
 #ifndef __GNUC__
@@ -166,11 +171,11 @@ RtStrnLen (
     IN CONST CHAR16   *s1,
     IN UINTN           Len
     )
-// copy strings
+// string length
 {
     UINTN i;
     for (i = 0; *s1 && i < Len; i++)
-	    s1++;
+        s1++;
     return i;
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: efierr.h,v 1.1.1.1 2014/04/01 16:16:07 jakllsch Exp $	*/
+/*	$NetBSD: efierr.h,v 1.1.1.2 2021/09/30 18:50:09 jmcneill Exp $	*/
 
 #ifndef _EFI_ERR_H
 #define _EFI_ERR_H
@@ -61,6 +61,7 @@ Revision History
 #define EFI_COMPROMISED_DATA            EFIERR(33)
 
 #define EFI_WARN_UNKOWN_GLYPH           EFIWARN(1)
+#define EFI_WARN_UNKNOWN_GLYPH          EFIWARN(1)
 #define EFI_WARN_DELETE_FAILURE         EFIWARN(2)
 #define EFI_WARN_WRITE_FAILURE          EFIWARN(3)
 #define EFI_WARN_BUFFER_TOO_SMALL       EFIWARN(4)

@@ -1,4 +1,4 @@
-/*	$NetBSD: smbios.c,v 1.1.1.2 2018/08/16 18:17:47 jmcneill Exp $	*/
+/*	$NetBSD: smbios.c,v 1.1.1.3 2021/09/30 18:50:09 jmcneill Exp $	*/
 
 /*++
 
@@ -46,7 +46,7 @@ LibGetSmbiosSystemGuidAndSerialNumber (
     }
 
     Smbios.Hdr = (SMBIOS_HEADER *)SmbiosTable->TableAddress;
-    SmbiosEnd.Raw = (UINT8 *)(SmbiosTable->TableAddress + SmbiosTable->TableLength);
+    SmbiosEnd.Raw = (UINT8 *)((UINTN)SmbiosTable->TableAddress + SmbiosTable->TableLength);
     for (Index = 0; Index < SmbiosTable->TableLength ; Index++) {
         if (Smbios.Hdr->Type == 1) {
             if (Smbios.Hdr->Length < 0x19) {

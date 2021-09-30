@@ -1,4 +1,4 @@
-/*	$NetBSD: efi.h,v 1.1.1.2 2018/08/16 18:17:47 jmcneill Exp $	*/
+/*	$NetBSD: efi.h,v 1.1.1.3 2021/09/30 18:50:09 jmcneill Exp $	*/
 
 /*++
 
@@ -40,13 +40,31 @@ Revision History
 #define EFI_FIRMWARE_MINOR_REVISION 33
 #define EFI_FIRMWARE_REVISION ((EFI_FIRMWARE_MAJOR_REVISION <<16) | (EFI_FIRMWARE_MINOR_REVISION))
 
-#include "efibind.h"
+#if defined(_M_X64) || defined(__x86_64__) || defined(__amd64__)
+#include "x86_64/efibind.h"
+#elif defined(_M_IX86) || defined(__i386__)
+#include "ia32/efibind.h"
+#elif defined(_M_IA64) || defined(__ia64__)
+#include "ia64/efibind.h"
+#elif defined (_M_ARM64) || defined(__aarch64__)
+#include "aarch64/efibind.h"
+#elif defined (_M_ARM) || defined(__arm__)
+#include "arm/efibind.h"
+#elif defined (_M_MIPS64) || defined(__mips64__)
+#include "mips64el/efibind.h"
+#elif defined (__riscv) && __riscv_xlen == 64
+#include "riscv64/efibind.h"
+#else
+#error Usupported architecture
+#endif
+
 #include "eficompiler.h"
 #include "efidef.h"
 #include "efidevp.h"
 #include "efipciio.h"
 #include "efiprot.h"
 #include "eficon.h"
+#include "eficonex.h"
 #include "efiser.h"
 #include "efi_nii.h"
 #include "efipxebc.h"
@@ -59,6 +77,6 @@ Revision History
 #include "efiudp.h"
 #include "efitcp.h"
 #include "efipoint.h"
-#include "efisetjmp.h"
+#include "efishell.h"
 
 #endif

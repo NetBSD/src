@@ -1,6 +1,9 @@
-/*	$NetBSD: crt0-efi-ia64.S,v 1.1.1.2 2021/09/30 18:50:09 jmcneill Exp $	*/
+/*	$NetBSD: reloc_riscv64.c,v 1.1.1.1 2021/09/30 18:50:09 jmcneill Exp $	*/
 
-/* crt0-efi-ia64.S - IA-64 EFI startup code.
+// SPDX-License-Identifier: GPL-2.0+
+/* reloc_riscv.c - position independent ELF shared object relocator
+   Copyright (C) 2018 Alexander Graf <agraf@suse.de>
+   Copyright (C) 2014 Linaro Ltd. <ard.biesheuvel@linaro.org>
    Copyright (C) 1999 Hewlett-Packard Co.
 	Contributed by David Mosberger <davidm@hpl.hp.com>.
 
@@ -34,56 +37,57 @@
     THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
     SUCH DAMAGE.
 */
-	.text
-	.psr abi64
-	.psr lsb
-	.lsb
 
-	.proc _start
-_start:
-	alloc loc0=ar.pfs,2,2,2,0
-	mov loc1=rp
-	movl out0=@gprel(ImageBase)	// out0 <- ImageBase (ldbase)
-	;;
-	add out0=out0,gp
-	movl out1=@gprel(_DYNAMIC)	// out1 <- _DYNAMIC
-	;;		// avoid WAW on CFM
-	add out1=out1,gp
-	br.call.sptk.few rp=_relocate
-.Lret0:	
-	cmp.ne p6,p0=r0,r8		// r8 == EFI_SUCCESS?
-(p6)	br.cond.sptk.few .exit		// no ->
+#include <efi.h>
 
-.Lret1:
+#include <elf.h>
 
-	mov out0=in0			// image handle
-	mov out1=in1			// systab
-	br.call.sptk.few rp=efi_main
-.Lret2:
-.exit:
-	mov ar.pfs=loc0
-	mov rp=loc1
-	;;
-	br.ret.sptk.few rp
+#define Elf_Dyn		Elf64_Dyn
+#define Elf_Rela	Elf64_Rela
+#define ELF_R_TYPE	ELF64_R_TYPE
 
-	.endp _start
+EFI_STATUS EFIAPI _relocate(long ldbase, Elf_Dyn *dyn)
+{
+	long relsz = 0, relent = 0;
+	Elf_Rela *rel = NULL;
+	unsigned long *addr;
+	int i;
 
+	for (i = 0; dyn[i].d_tag != DT_NULL; ++i) {
+		switch (dyn[i].d_tag) {
+		case DT_RELA:
+			rel = (Elf_Rela *)((unsigned long)dyn[i].d_un.d_ptr + ldbase);
+			break;
+		case DT_RELASZ:
+			relsz = dyn[i].d_un.d_val;
+			break;
+		case DT_RELAENT:
+			relent = dyn[i].d_un.d_val;
+			break;
+		default:
+			break;
+		}
+	}
 
-	// PE32+ wants a PLABEL, not the code address of the entry point:
+	if (!rel && relent == 0)
+		return EFI_SUCCESS;
 
-	.align 16
-	.global _start_plabel
-	.section .plabel, "a"
-_start_plabel:
-	data8	_start
-	data8	__gp
+	if (!rel || relent == 0)
+		return EFI_LOAD_ERROR;
 
-	// hand-craft a .reloc section for the plabel:
-
-#define IMAGE_REL_BASED_DIR64	10
-
-	.section .reloc, "a"
-	data4	_start_plabel				// Page RVA
-	data4	12					// Block Size (2*4+2*2), must be aligned by 32 Bits
-	data2	(IMAGE_REL_BASED_DIR64<<12) +  0	// reloc for plabel's entry point
-	data2	(IMAGE_REL_BASED_DIR64<<12) +  8	// reloc for plabel's global pointer
+	while (relsz > 0) {
+		/* apply the relocs */
+		switch (ELF_R_TYPE(rel->r_info)) {
+		case R_RISCV_RELATIVE:
+			addr = (unsigned long *)(ldbase + rel->r_offset);
+			*addr = ldbase + rel->r_addend;
+			break;
+		default:
+			/* Panic */
+			while (1) ;
+		}
+		rel = (Elf_Rela *)((char *)rel + relent);
+		relsz -= relent;
+	}
+	return EFI_SUCCESS;
+}
