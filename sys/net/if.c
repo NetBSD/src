@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.495 2021/09/30 03:43:25 yamaguchi Exp $	*/
+/*	$NetBSD: if.c,v 1.496 2021/09/30 03:51:05 yamaguchi Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.495 2021/09/30 03:43:25 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.496 2021/09/30 03:51:05 yamaguchi Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -1198,8 +1198,6 @@ if_deactivate(struct ifnet *ifp)
 	ifp->if_stop	 = if_nullstop;
 	ifp->if_slowtimo = if_nullslowtimo;
 	ifp->if_drain	 = if_nulldrain;
-
-	ifp->if_link_state_changed = NULL;
 
 	/* No more packets may be enqueued. */
 	ifp->if_snd.ifq_maxlen = 0;
@@ -2396,9 +2394,6 @@ if_link_state_change_process(struct ifnet *ifp, int link_state)
 
 	/* Notify that the link state has changed. */
 	rt_ifmsg(ifp);
-
-	if (ifp->if_link_state_changed != NULL)
-		ifp->if_link_state_changed(ifp, link_state);
 
 	simplehook_dohooks(ifp->if_linkstate_hooks);
 

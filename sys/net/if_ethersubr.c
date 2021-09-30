@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ethersubr.c,v 1.295 2021/09/30 03:47:27 yamaguchi Exp $	*/
+/*	$NetBSD: if_ethersubr.c,v 1.296 2021/09/30 03:51:05 yamaguchi Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.295 2021/09/30 03:47:27 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.296 2021/09/30 03:51:05 yamaguchi Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1005,12 +1005,6 @@ ether_snprintf(char *buf, size_t len, const u_char *ap)
 	return buf;
 }
 
-static void
-ether_link_state_changed(struct ifnet *ifp, int link_state)
-{
-
-}
-
 /*
  * Perform common duties while attaching to interface list
  */
@@ -1025,7 +1019,6 @@ ether_ifattach(struct ifnet *ifp, const uint8_t *lla)
 	ifp->if_mtu = ETHERMTU;
 	ifp->if_output = ether_output;
 	ifp->_if_input = ether_input;
-	ifp->if_link_state_changed = ether_link_state_changed;
 	if (ifp->if_baudrate == 0)
 		ifp->if_baudrate = IF_Mbps(10);		/* just a default */
 
