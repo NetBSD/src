@@ -1,4 +1,4 @@
-/*	$NetBSD: res_init.c,v 1.31 2017/04/19 22:21:07 christos Exp $	*/
+/*	$NetBSD: res_init.c,v 1.32 2021/09/30 12:35:55 christos Exp $	*/
 
 /*
  * Copyright (c) 1985, 1989, 1993
@@ -72,7 +72,7 @@
 static const char sccsid[] = "@(#)res_init.c	8.1 (Berkeley) 6/7/93";
 static const char rcsid[] = "Id: res_init.c,v 1.26 2008/12/11 09:59:00 marka Exp";
 #else
-__RCSID("$NetBSD: res_init.c,v 1.31 2017/04/19 22:21:07 christos Exp $");
+__RCSID("$NetBSD: res_init.c,v 1.32 2021/09/30 12:35:55 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -188,6 +188,21 @@ const char *__res_conf_name = _PATH_RESCONF;
 int
 res_ninit(res_state statp) {
 	return (__res_vinit(statp, 0));
+}
+
+static int
+__res_kqinit(res_state statp)
+{
+	struct kevent kc;
+	struct __res_state_ext *ext = statp->_u._ext.ext;
+
+	ext->kq = kqueue1(O_CLOEXEC);
+	ext->kqpid = getpid();
+	EV_SET(&kc, ext->resfd, EVFILT_VNODE,
+	    EV_ADD|EV_ENABLE|EV_CLEAR, NOTE_DELETE|NOTE_WRITE| NOTE_EXTEND|
+	    NOTE_ATTRIB|NOTE_LINK|NOTE_RENAME|NOTE_REVOKE, 0, 0);
+	(void)kevent(ext->kq, &kc, 1, NULL, 0, &ts);
+	return ext->kq;
 }
 
 /*% This function has to be reachable by res_data.c but not publically. */
@@ -346,7 +361,6 @@ __res_vinit(res_state statp, int preinit) {
 	nserv = 0;
 	if ((fp = fopen(__res_conf_name, "re")) != NULL) {
 	    struct stat st;
-	    struct kevent kc;
 
 	    /* read the config file */
 	    while (fgets(buf, (int)sizeof(buf), fp) != NULL) {
@@ -500,11 +514,7 @@ __res_vinit(res_state statp, int preinit) {
 	    if (fstat(statp->_u._ext.ext->resfd, &st) != -1)
 		    __res_conf_time = statp->_u._ext.ext->res_conf_time =
 			st.st_mtimespec;
-	    statp->_u._ext.ext->kq = kqueue1(O_CLOEXEC);
-	    EV_SET(&kc, statp->_u._ext.ext->resfd, EVFILT_VNODE,
-		EV_ADD|EV_ENABLE|EV_CLEAR, NOTE_DELETE|NOTE_WRITE| NOTE_EXTEND|
-		NOTE_ATTRIB|NOTE_LINK|NOTE_RENAME|NOTE_REVOKE, 0, 0);
-	    (void)kevent(statp->_u._ext.ext->kq, &kc, 1, NULL, 0, &ts);
+	    __res_kqinit(statp);
 	} else {
 	    statp->_u._ext.ext->kq = -1;
 	    statp->_u._ext.ext->resfd = -1;
@@ -572,6 +582,9 @@ res_check(res_state statp, struct timespec *mtime)
 	    &__res_conf_time, ==)) {
 		struct kevent ke;
 		if (statp->_u._ext.ext->kq == -1)
+			goto out;
+		if (statp->_u._ext.ext->kqpid != getpid() &&
+		    __res_kqinit(statp) == -1)
 			goto out;
 
 		switch (kevent(statp->_u._ext.ext->kq, NULL, 0, &ke, 1, &ts)) {
@@ -812,13 +825,14 @@ res_nclose(res_state statp)
 void
 res_ndestroy(res_state statp)
 {
+	struct __res_state_ext *ext = statp->_u._ext.ext;
 	res_nclose(statp);
-	if (statp->_u._ext.ext != NULL) {
-		if (statp->_u._ext.ext->kq != -1)
-			(void)close(statp->_u._ext.ext->kq);
-		if (statp->_u._ext.ext->resfd != -1)
-			(void)close(statp->_u._ext.ext->resfd);
-		free(statp->_u._ext.ext);
+	if (ext != NULL) {
+		if (ext->kq != -1 && ext->kqpid == getpid())
+			(void)close(ext->kq);
+		if (ext->resfd != -1)
+			(void)close(ext->resfd);
+		free(ext);
 		statp->_u._ext.ext = NULL;
 	}
 	if (statp->_rnd != NULL) {
