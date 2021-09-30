@@ -1,12 +1,12 @@
-/*	$NetBSD: parens.0.stdout,v 1.1 2019/04/04 15:27:35 kamil Exp $	*/
+/*	$NetBSD: parens.0.stdout,v 1.2 2021/09/30 21:48:12 rillig Exp $	*/
 /* $FreeBSD: head/usr.bin/indent/tests/parens.0.stdout 334583 2018-06-03 19:05:20Z pstef $ */
-typedef void (*xxxxxxxxxxx) (int,
-							 char);
+typedef void (*xxxxxxxxxxx)(int,
+							char);
 
-typedef char (*xxxxxxxxxxxxxxxxxxxxxxxxxxxx) (int *,
-											  unsigned *,
-											  char,
-											  float *);
+typedef char (*xxxxxxxxxxxxxxxxxxxxxxxxxxxx)(int *,
+											 unsigned *,
+											 char,
+											 float *);
 
 void
 test(void)
