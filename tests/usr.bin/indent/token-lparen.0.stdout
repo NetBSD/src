@@ -1,4 +1,4 @@
-/* $NetBSD: token-lparen.0.stdout,v 1.3 2021/09/30 20:58:26 rillig Exp $ */
+/* $NetBSD: token-lparen.0.stdout,v 1.4 2021/09/30 21:48:12 rillig Exp $ */
 /* $FreeBSD$ */
 
 /*
@@ -18,8 +18,7 @@
 /* This is the maximum supported number of parentheses. */
 int zero = (((((((((((((((((((0)))))))))))))))))));
 
-/* $ XXX: The space between the parentheses is unusual. */
-void (*action) (void);
+void (*action)(void);
 
 #define macro(arg) ((arg) + 1)
 
