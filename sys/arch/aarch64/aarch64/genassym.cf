@@ -1,4 +1,4 @@
-# $NetBSD: genassym.cf,v 1.34 2021/09/18 12:25:06 jmcneill Exp $
+# $NetBSD: genassym.cf,v 1.35 2021/09/30 21:19:16 skrll Exp $
 #-
 # Copyright (c) 2014 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -137,6 +137,7 @@ define	TCR_IRGN0_NC		TCR_IRGN0_NC
 define	TCR_IRGN0_WB_WA		TCR_IRGN0_WB_WA
 define	TCR_IRGN0_WT		TCR_IRGN0_WT
 define	TCR_IRGN0_WB		TCR_IRGN0_WB
+define	TCR_EPD0		TCR_EPD0
 define	TCR_T0SZ		TCR_T0SZ
 
 define	EFAULT			EFAULT

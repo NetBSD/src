@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.115 2021/09/26 09:58:13 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.116 2021/09/30 21:19:16 skrll Exp $	*/
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.115 2021/09/26 09:58:13 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.116 2021/09/30 21:19:16 skrll Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_ddb.h"
@@ -1425,6 +1425,8 @@ pmap_activate(struct lwp *l)
 	UVMHIST_FUNC(__func__);
 	UVMHIST_CALLARGS(pmaphist, "lwp=%p asid=%d (pid=%d)", l, pm->pm_asid,
 	    l->l_proc->p_pid, 0);
+
+	KASSERT((reg_tcr_el1_read() & TCR_EPD0) != 0);
 
 	if (pm == pmap_kernel())
 		return;
