@@ -1,4 +1,4 @@
-/*	$NetBSD: if_lagg.c,v 1.7 2021/09/30 03:39:39 yamaguchi Exp $	*/
+/*	$NetBSD: if_lagg.c,v 1.8 2021/09/30 04:20:14 yamaguchi Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006 Reyk Floeter <reyk@openbsd.org>
@@ -20,7 +20,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_lagg.c,v 1.7 2021/09/30 03:39:39 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_lagg.c,v 1.8 2021/09/30 04:20:14 yamaguchi Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -2051,14 +2051,18 @@ lagg_addport(struct lagg_softc *sc, struct ifnet *ifp_port)
 }
 
 static void
-lagg_delport_locked(struct lagg_softc *sc, struct lagg_port *lp)
+lagg_delport_locked(struct lagg_softc *sc, struct lagg_port *lp,
+    bool is_ifdetach)
 {
 	struct ifnet *ifp_port;
 	struct ifreq ifr;
 	u_long if_type;
-	bool stopped, detaching;
+	bool stopped;
 
 	KASSERT(LAGG_LOCKED(sc));
+
+	if (lp == NULL)
+		return;
 
 	ifp_port = lp->lp_ifp;
 	stopped = false;
@@ -2093,7 +2097,6 @@ lagg_delport_locked(struct lagg_softc *sc, struct lagg_port *lp)
 	lagg_port_purgemulti(sc, lp);
 	lagg_port_purgevlan(sc, lp);
 
-	detaching = lp->lp_detaching;
 	IFNET_LOCK(ifp_port);
 	if_type = ifp_port->if_type;
 	ifp_port->if_type = lp->lp_iftype;
@@ -2111,7 +2114,7 @@ lagg_delport_locked(struct lagg_softc *sc, struct lagg_port *lp)
 		ifp_port->if_init(ifp_port);
 	}
 
-	if (!detaching) {
+	if (is_ifdetach == false) {
 		IFNET_LOCK(ifp_port);
 		lagg_in6_ifattach(ifp_port);
 		IFNET_UNLOCK(ifp_port);
@@ -2125,7 +2128,7 @@ lagg_delport_all(struct lagg_softc *sc)
 
 	LAGG_LOCK(sc);
 	LAGG_PORTS_FOREACH_SAFE(sc, lp, lp0) {
-		lagg_delport_locked(sc, lp);
+		lagg_delport_locked(sc, lp, false);
 	}
 	LAGG_UNLOCK(sc);
 }
@@ -2142,7 +2145,7 @@ lagg_delport(struct lagg_softc *sc, struct ifnet *ifp_port)
 		return ENOENT;
 
 	LAGG_LOCK(sc);
-	lagg_delport_locked(sc, lp);
+	lagg_delport_locked(sc, lp, false);
 	LAGG_UNLOCK(sc);
 
 	return 0;
@@ -2315,7 +2318,6 @@ lagg_ifdetach(struct ifnet *ifp_port)
 {
 	struct lagg_port *lp;
 	struct lagg_softc *sc;
-	struct psref psref;
 	int s;
 
 	IFNET_ASSERT_UNLOCKED(ifp_port);
@@ -2326,21 +2328,22 @@ lagg_ifdetach(struct ifnet *ifp_port)
 		pserialize_read_exit(s);
 		return;
 	}
-	lagg_port_getref(lp, &psref);
-	pserialize_read_exit(s);
 
 	sc = lp->lp_softc;
-	if (sc != NULL) {
-		IFNET_LOCK(&sc->sc_if);
-		LAGG_LOCK(sc);
-		lagg_port_putref(lp, &psref);
-	} else {
-		lagg_port_putref(lp, &psref);
+	if (sc == NULL) {
+		pserialize_read_exit(s);
 		return;
 	}
+	pserialize_read_exit(s);
 
-	lp->lp_detaching = true;
-	lagg_delport_locked(sc, lp);
+	IFNET_LOCK(&sc->sc_if);
+	LAGG_LOCK(sc);
+	/*
+	 * reload if_lagg because it may write
+	 * after pserialize_read_exit.
+	 */
+	lp = ifp_port->if_lagg;
+	lagg_delport_locked(sc, lp, true);
 	LAGG_UNLOCK(sc);
 	IFNET_UNLOCK(&sc->sc_if);
 }
