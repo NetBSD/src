@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.494 2021/09/30 03:39:39 yamaguchi Exp $	*/
+/*	$NetBSD: if.c,v 1.495 2021/09/30 03:43:25 yamaguchi Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.494 2021/09/30 03:39:39 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.495 2021/09/30 03:43:25 yamaguchi Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -2396,11 +2396,6 @@ if_link_state_change_process(struct ifnet *ifp, int link_state)
 
 	/* Notify that the link state has changed. */
 	rt_ifmsg(ifp);
-
-#if NCARP > 0
-	if (ifp->if_carp)
-		carp_carpdev_state(ifp);
-#endif
 
 	if (ifp->if_link_state_changed != NULL)
 		ifp->if_link_state_changed(ifp, link_state);
