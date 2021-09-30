@@ -1,4 +1,4 @@
-/*	$NetBSD: str.c,v 1.1.1.2 2018/08/16 18:17:47 jmcneill Exp $	*/
+/*	$NetBSD: str.c,v 1.1.1.3 2021/09/30 18:50:09 jmcneill Exp $	*/
 
 /*++
 
@@ -276,7 +276,7 @@ xtoi (
     CHAR16      c;
 
     // skip preceeding white space
-    while (*str && *str == ' ') {
+    while (*str == ' ') {
         str += 1;
     }
 
@@ -288,7 +288,7 @@ xtoi (
         }
 
         if ((c >= '0'  &&  c <= '9')  ||  (c >= 'A'  &&  c <= 'F')) {
-            u = (u << 4)  |  (c - (c >= 'A' ? 'A'-10 : '0'));
+            u = (u << 4)  |  ((UINTN)c - (c >= 'A' ? 'A'-10 : '0'));
         } else {
             break;
         }
@@ -307,7 +307,7 @@ Atoi (
     CHAR16      c;
 
     // skip preceeding white space
-    while (*str && *str == ' ') {
+    while (*str == ' ') {
         str += 1;
     }
 

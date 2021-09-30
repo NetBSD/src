@@ -1,4 +1,4 @@
-/*	$NetBSD: efibind.h,v 1.1.1.2 2018/08/16 18:17:47 jmcneill Exp $	*/
+/*	$NetBSD: efibind.h,v 1.1.1.3 2021/09/30 18:50:09 jmcneill Exp $	*/
 
 /*++
 
@@ -24,7 +24,9 @@ Revision History
 #pragma pack()
 #endif
 
-#if defined(GNU_EFI_USE_MS_ABI)
+#if defined(_MSC_VER)
+    #define HAVE_USE_MS_ABI 1
+#elif defined(GNU_EFI_USE_MS_ABI)
     #if (defined(__GNUC__) && (__GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 7)))||(defined(__clang__) && (__clang_major__ > 3 || (__clang_major__ == 3 && __clang_minor__ >= 2)))
         #define HAVE_USE_MS_ABI 1
     #else
@@ -36,7 +38,7 @@ Revision History
 // Basic int types of various widths
 //
 
-#if !defined(__STDC_VERSION__) || (__STDC_VERSION__ < 199901L )
+#if !defined(__STDC_VERSION__) || (__STDC_VERSION__ < 199901L ) && !defined(__cplusplus)
 
     // No ANSI C 1999/2000 stdint.h integer width declarations 
 
@@ -86,7 +88,9 @@ Revision History
        typedef unsigned char       uint8_t;
        typedef char                int8_t;
     #endif
-#elif defined(__GNUC__)
+    typedef uint64_t            uintptr_t;
+    typedef int64_t             intptr_t;
+#else
     #include <stdint.h>
 #endif
 

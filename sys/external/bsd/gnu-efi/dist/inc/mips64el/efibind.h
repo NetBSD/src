@@ -1,4 +1,4 @@
-/*	$NetBSD: efibind.h,v 1.1.1.1 2018/08/16 18:17:47 jmcneill Exp $	*/
+/*	$NetBSD: efibind.h,v 1.1.1.2 2021/09/30 18:50:09 jmcneill Exp $	*/
 
 /*
  * Copright (C) 2014 - 2015 Linaro Ltd.
@@ -19,7 +19,7 @@
  * either version 2 of the License, or (at your option) any later version.
  */
 
-#if !defined(__STDC_VERSION__) || (__STDC_VERSION__ < 199901L )
+#if !defined(__STDC_VERSION__) || (__STDC_VERSION__ < 199901L ) && !defined(__cplusplus)
 
 // ANSI C 1999/2000 stdint.h integer width declarations
 
@@ -31,6 +31,8 @@ typedef unsigned short      uint16_t;
 typedef short               int16_t;
 typedef unsigned char       uint8_t;
 typedef signed char         int8_t;   // unqualified 'char' is unsigned on ARM
+typedef uint64_t            uintptr_t;
+typedef int64_t             intptr_t;
 
 #else
 #include <stdint.h>

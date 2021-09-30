@@ -1,4 +1,4 @@
-/*	$NetBSD: efistdarg.h,v 1.1.1.2 2018/08/16 18:17:47 jmcneill Exp $	*/
+/*	$NetBSD: efistdarg.h,v 1.1.1.3 2021/09/30 18:50:09 jmcneill Exp $	*/
 
 #ifndef _EFISTDARG_H_
 #define _EFISTDARG_H_
@@ -21,7 +21,7 @@ Revision History
 
 --*/
 
-#ifndef GNU_EFI_USE_EXTERNAL_STDARG
+#if !defined(GNU_EFI_USE_EXTERNAL_STDARG) && !defined(_MSC_VER)
 typedef __builtin_va_list va_list;
 
 # define va_start(v,l)	__builtin_va_start(v,l)
