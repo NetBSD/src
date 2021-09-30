@@ -1,4 +1,4 @@
-/*	$NetBSD: if_laggproto.h,v 1.4 2021/09/30 03:39:39 yamaguchi Exp $	*/
+/*	$NetBSD: if_laggproto.h,v 1.5 2021/09/30 04:23:30 yamaguchi Exp $	*/
 
 /*
  * Copyright (c) 2021 Internet Initiative Japan Inc.
@@ -142,7 +142,12 @@ struct lagg_softc {
 	kmutex_t		 sc_lock;
 	struct ifmedia		 sc_media;
 	u_char			 sc_iftype;
+
+	/* interface link-layer address */
 	uint8_t			 sc_lladdr[ETHER_ADDR_LEN];
+	/* generated random lladdr */
+	uint8_t			 sc_lladdr_rand[ETHER_ADDR_LEN];
+
 	LIST_HEAD(, lagg_mc_entry)
 				 sc_mclist;
 	TAILQ_HEAD(, lagg_vlantag)
