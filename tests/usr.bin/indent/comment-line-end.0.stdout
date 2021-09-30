@@ -1,4 +1,4 @@
-/* $NetBSD: comment-line-end.0.stdout,v 1.7 2021/09/24 16:29:31 rillig Exp $ */
+/* $NetBSD: comment-line-end.0.stdout,v 1.8 2021/09/30 22:45:34 rillig Exp $ */
 /* $FreeBSD$ */
 
 /*
@@ -35,6 +35,17 @@ c99_comment(void)
 {
 	foo();			// C++ comment
 	bar();
+}
+
+void
+comment_at_end_of_function(void)
+{
+	if (cond)
+		statement();
+/* $ FIXME: The next line is indented with tab-space, should be tab. */
+	 // comment
+ 
+/* $ FIXME: The above line has 1 trailing space. */
 }
 
 // end-of-line comment at the end of the file
