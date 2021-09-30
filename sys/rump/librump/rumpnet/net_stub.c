@@ -1,4 +1,4 @@
-/*	$NetBSD: net_stub.c,v 1.43 2021/07/14 03:19:24 ozaki-r Exp $	*/
+/*	$NetBSD: net_stub.c,v 1.44 2021/09/30 03:35:55 yamaguchi Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: net_stub.c,v 1.43 2021/07/14 03:19:24 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: net_stub.c,v 1.44 2021/09/30 03:35:55 yamaguchi Exp $");
 
 #include <sys/mutex.h>
 #include <sys/param.h>
@@ -62,7 +62,6 @@ rumpnet_stub(void)
 __weak_alias(bridge_ifdetach,rumpnet_stub);
 __weak_alias(bridge_output,rumpnet_stub);
 __weak_alias(bridge_calc_csum_flags,rumpnet_stub);
-__weak_alias(bridge_calc_link_state,rumpnet_stub);
 
 /* agr */
 __weak_alias(agr_input,rumpnet_stub);
