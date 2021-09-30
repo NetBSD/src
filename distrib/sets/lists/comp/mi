@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2394 2021/09/30 01:26:07 yamaguchi Exp $
+#	$NetBSD: mi,v 1.2395 2021/09/30 02:00:19 yamaguchi Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -4062,6 +4062,8 @@
 ./usr/lib/librumpkern_ksem_p.a			comp-obsolete		obsolete
 ./usr/lib/librumpkern_nv.a			comp-c-lib		rump
 ./usr/lib/librumpkern_nv_p.a			comp-c-proflib		rump,profile
+./usr/lib/librumpkern_simplehook_tester.a	comp-c-lib		rump
+./usr/lib/librumpkern_simplehook_tester_p.a	comp-c-proflib		rump,profile
 ./usr/lib/librumpkern_sljit.a			comp-c-lib		rump,sljit
 ./usr/lib/librumpkern_sljit_p.a			comp-c-proflib		rump,sljit,profile
 ./usr/lib/librumpkern_solaris.a			comp-c-lib		rump,zfs

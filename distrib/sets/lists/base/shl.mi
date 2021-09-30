@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.927 2021/09/24 13:13:07 christos Exp $
+# $NetBSD: shl.mi,v 1.928 2021/09/30 02:00:19 yamaguchi Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -741,6 +741,9 @@
 ./usr/lib/librumpkern_nv.so			base-rump-shlib		rump
 ./usr/lib/librumpkern_nv.so.0			base-rump-shlib		rump
 ./usr/lib/librumpkern_nv.so.0.0			base-rump-shlib		rump
+./usr/lib/librumpkern_simplehook_tester.so	base-rump-shlib		rump
+./usr/lib/librumpkern_simplehook_tester.so.0	base-rump-shlib		rump
+./usr/lib/librumpkern_simplehook_tester.so.0.0	base-rump-shlib		rump
 ./usr/lib/librumpkern_sljit.so			base-rump-shlib		rump,sljit
 ./usr/lib/librumpkern_sljit.so.0		base-rump-shlib		rump,sljit
 ./usr/lib/librumpkern_sljit.so.0.0		base-rump-shlib		rump,sljit

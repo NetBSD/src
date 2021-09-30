@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.68 2020/07/01 13:49:26 jruoho Exp $
+# $NetBSD: Makefile,v 1.69 2021/09/30 02:00:20 yamaguchi Exp $
 
 NOMAN=		# defined
 
@@ -32,6 +32,7 @@ TESTS_SH+=	t_origin
 TESTS_SH+=	t_procpath
 TESTS_SH+=	t_fexecve
 TESTS_SH+=	t_fpufork
+TESTS_SH+=	t_simplehook
 
 BINDIR=		${TESTSDIR}
 PROGS=		h_fexecve
