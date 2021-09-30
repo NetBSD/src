@@ -1,4 +1,4 @@
-/*	$NetBSD: if_laggproto.h,v 1.3 2021/05/24 06:24:20 yamaguchi Exp $	*/
+/*	$NetBSD: if_laggproto.h,v 1.4 2021/09/30 03:39:39 yamaguchi Exp $	*/
 
 /*
  * Copyright (c) 2021 Internet Initiative Japan Inc.
@@ -68,6 +68,7 @@ struct lagg_port {
 	struct lagg_softc	*lp_softc;	/* parent lagg */
 	void			*lp_proto_ctx;
 	bool			 lp_detaching;
+	void			*lp_linkstate_hook;
 
 	uint32_t		 lp_prio;	/* port priority */
 	uint32_t		 lp_flags;	/* port flags */
