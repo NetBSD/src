@@ -1,4 +1,4 @@
-/*	$NetBSD: reloc_riscv64.c,v 1.1.1.1 2021/09/30 18:50:09 jmcneill Exp $	*/
+/*	$NetBSD: reloc_riscv64.c,v 1.2 2021/09/30 19:09:10 jmcneill Exp $	*/
 
 // SPDX-License-Identifier: GPL-2.0+
 /* reloc_riscv.c - position independent ELF shared object relocator
@@ -40,11 +40,18 @@
 
 #include <efi.h>
 
+#ifdef __NetBSD__
+#include <sys/types.h>
+#include <sys/exec_elf.h>
+#else
 #include <elf.h>
+#endif
 
 #define Elf_Dyn		Elf64_Dyn
 #define Elf_Rela	Elf64_Rela
 #define ELF_R_TYPE	ELF64_R_TYPE
+
+EFI_STATUS EFIAPI _relocate(long, Elf_Dyn *);
 
 EFI_STATUS EFIAPI _relocate(long ldbase, Elf_Dyn *dyn)
 {

@@ -1,4 +1,4 @@
-/*	$NetBSD: efibind.h,v 1.1.1.1 2021/09/30 18:50:09 jmcneill Exp $	*/
+/*	$NetBSD: efibind.h,v 1.2 2021/09/30 19:09:10 jmcneill Exp $	*/
 
 /*
  * Copright (C) 2014 - 2015 Linaro Ltd.
@@ -17,7 +17,11 @@
  * either version 2 of the License, or (at your option) any later version.
  */
 
+#if defined(__NetBSD__)
+#include <sys/stdint.h>
+#else
 #include <stdint.h>
+#endif
 
 //
 // Basic EFI types of various widths
