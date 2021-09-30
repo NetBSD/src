@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee8023ad_marker.c,v 1.4 2007/02/22 06:20:16 thorpej Exp $	*/
+/*	$NetBSD: ieee8023ad_marker.c,v 1.5 2021/09/30 03:15:25 yamaguchi Exp $	*/
 
 /*-
  * Copyright (c)2005 YAMAMOTO Takashi,
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ieee8023ad_marker.c,v 1.4 2007/02/22 06:20:16 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee8023ad_marker.c,v 1.5 2021/09/30 03:15:25 yamaguchi Exp $");
 
 #include <sys/param.h>
 #include <sys/callout.h>
@@ -60,7 +60,7 @@ ieee8023ad_marker_input(struct ifnet *ifp, struct mbuf *m)
 	struct agr_port *port;
 	int error = 0;
 
-	port = ifp->if_agrprivate; /* XXX race with agr_remport. */
+	port = ifp->if_lagg; /* XXX race with agr_remport. */
 	KASSERT(port);
 	if (__predict_false(port->port_flags & AGRPORT_DETACHING)) {
 		goto bad;

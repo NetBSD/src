@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ethersubr.c,v 1.293 2021/05/17 04:07:43 yamaguchi Exp $	*/
+/*	$NetBSD: if_ethersubr.c,v 1.294 2021/09/30 03:15:25 yamaguchi Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.293 2021/05/17 04:07:43 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.294 2021/09/30 03:15:25 yamaguchi Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -651,6 +651,9 @@ ether_input(struct ifnet *ifp, struct mbuf *m)
 	size_t ehlen;
 	static int earlypkts;
 	int isr = 0;
+#if NAGR > 0
+	void *agrprivate;
+#endif
 
 	KASSERT(!cpu_intr_p());
 	KASSERT((m->m_flags & M_PKTHDR) != 0);
@@ -753,7 +756,12 @@ ether_input(struct ifnet *ifp, struct mbuf *m)
 	}
 
 #if NAGR > 0
-	if (ifp->if_agrprivate &&
+	if (ifp->if_type != IFT_IEEE8023ADLAG) {
+		agrprivate = ifp->if_lagg;
+	} else {
+		agrprivate = NULL;
+	}
+	if (agrprivate != NULL &&
 	    __predict_true(etype != ETHERTYPE_SLOWPROTOCOLS)) {
 		m->m_flags &= ~M_PROMISC;
 		agr_input(ifp, m);
@@ -843,14 +851,14 @@ ether_input(struct ifnet *ifp, struct mbuf *m)
 		switch (subtype) {
 #if NAGR > 0
 		case SLOWPROTOCOLS_SUBTYPE_LACP:
-			if (ifp->if_agrprivate) {
+			if (agrprivate != NULL) {
 				ieee8023ad_lacp_input(ifp, m);
 				return;
 			}
 			break;
 
 		case SLOWPROTOCOLS_SUBTYPE_MARKER:
-			if (ifp->if_agrprivate) {
+			if (agrprivate != NULL) {
 				ieee8023ad_marker_input(ifp, m);
 				return;
 			}
