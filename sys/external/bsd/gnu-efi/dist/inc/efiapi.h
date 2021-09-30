@@ -1,4 +1,4 @@
-/*	$NetBSD: efiapi.h,v 1.3 2018/08/16 18:22:05 jmcneill Exp $	*/
+/*	$NetBSD: efiapi.h,v 1.4 2021/09/30 19:02:47 jmcneill Exp $	*/
 
 #ifndef _EFI_API_H
 #define _EFI_API_H
@@ -344,6 +344,18 @@ EFI_STATUS
 #define EFI_IMAGE_MACHINE_AARCH64   0xAA64
 #endif
 
+#if !defined(EFI_IMAGE_MACHINE_RISCV32)
+#define EFI_IMAGE_MACHINE_RISCV32   0x5032
+#endif
+
+#if !defined(EFI_IMAGE_MACHINE_RISCV64)
+#define EFI_IMAGE_MACHINE_RISCV64   0x5064
+#endif
+
+#if !defined(EFI_IMAGE_MACHINE_RISCV128)
+#define EFI_IMAGE_MACHINE_RISCV128  0x5128
+#endif
+
 // Image Entry prototype
 
 typedef 
@@ -578,7 +590,7 @@ EFI_STATUS
     IN EFI_TPL                  NotifyTpl,
     IN EFI_EVENT_NOTIFY         NotifyFunction OPTIONAL,
     IN const VOID               *NotifyContext OPTIONAL,
-    IN const EFI_GUID           EventGroup OPTIONAL,
+    IN const EFI_GUID           *EventGroup OPTIONAL,
     OUT EFI_EVENT               *Event
     );
 
@@ -928,6 +940,9 @@ typedef struct _EFI_BOOT_SERVICES {
 /* DIG64 Headless Console & Debug Port Table. */
 #define	HCDP_TABLE_GUID    \
     { 0xf951938d, 0x620b, 0x42ef, {0x82, 0x79, 0xa8, 0x4b, 0x79, 0x61, 0x78, 0x98} }
+
+#define EFI_DTB_TABLE_GUID \
+    { 0xb1b621d5, 0xf19c, 0x41a5, {0x83, 0x0b, 0xd9, 0x15, 0x2c, 0x69, 0xaa, 0xe0} }
 
 typedef struct _EFI_CONFIGURATION_TABLE {
     EFI_GUID                VendorGuid;

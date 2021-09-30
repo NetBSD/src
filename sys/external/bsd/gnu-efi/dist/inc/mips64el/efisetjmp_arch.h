@@ -1,4 +1,4 @@
-/*	$NetBSD: efisetjmp_arch.h,v 1.2 2018/08/16 18:24:36 jmcneill Exp $	*/
+/*	$NetBSD: efisetjmp_arch.h,v 1.3 2021/09/30 19:02:47 jmcneill Exp $	*/
 
 #ifndef GNU_EFI_MIPS64EL_SETJMP_H
 #define GNU_EFI_MIPS64EL_SETJMP_H
@@ -31,6 +31,6 @@ typedef struct {
 	UINT64	F30;
 	UINT64	F31;
 #endif
-} EFI_ALIGN(JMPBUF_ALIGN) jmp_buf;
+} EFI_ALIGN(JMPBUF_ALIGN) jmp_buf[1];
 
 #endif /* GNU_EFI_MIPS64EL_SETJMP_H */
