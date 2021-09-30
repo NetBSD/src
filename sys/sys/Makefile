@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.178 2021/09/19 15:51:27 thorpej Exp $
+#	$NetBSD: Makefile,v 1.179 2021/09/30 01:26:07 yamaguchi Exp $
 
 .include <bsd.own.mk>
 
@@ -23,7 +23,7 @@ INCS=	acct.h acl.h agpio.h aio.h ansi.h aout_mids.h ataio.h atomic.h \
 	fault.h \
 	fcntl.h fd_set.h fdio.h featuretest.h file.h filedesc.h filio.h \
 	flashio.h float_ieee754.h fstypes.h futex.h gcq.h gmon.h gpio.h hash.h \
-	idtype.h ieee754.h intr.h intrio.h inttypes.h ioccom.h ioctl.h \
+	hook.h idtype.h ieee754.h intr.h intrio.h inttypes.h ioccom.h ioctl.h \
 	ioctl_compat.h iostat.h ipc.h ipmi.h \
 	joystick.h \
 	kcore.h kcov.h kcpuset.h kgdb.h kmem.h ksem.h ksyms.h ktrace.h \
