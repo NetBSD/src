@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.c,v 1.92 2021/09/27 20:09:55 rillig Exp $	*/
+/*	$NetBSD: indent.c,v 1.93 2021/09/30 20:58:26 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)indent.c	5.17 (Berkeley) 6/7/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: indent.c,v 1.92 2021/09/27 20:09:55 rillig Exp $");
+__RCSID("$NetBSD: indent.c,v 1.93 2021/09/30 20:58:26 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/indent.c 340138 2018-11-04 19:24:49Z oshogbo $");
 #endif
@@ -602,9 +602,8 @@ process_lparen_or_lbracket(int dec_ind, bool tabs_to_var, bool sp_sw)
 	    nitems(ps.paren_indents));
 	ps.p_l_follow--;
     }
-    if (*token.s == '[')
-	/* not a function pointer declaration or a function call */;
-    else if (ps.in_decl && !ps.block_init && !ps.dumped_decl_indent &&
+    if (token.s[0] == '(' && ps.in_decl
+	&& !ps.block_init && !ps.dumped_decl_indent &&
 	ps.procname[0] == '\0' && ps.paren_level == 0) {
 	/* function pointer declarations */
 	indent_declaration(dec_ind, tabs_to_var);
