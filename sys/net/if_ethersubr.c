@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ethersubr.c,v 1.294 2021/09/30 03:15:25 yamaguchi Exp $	*/
+/*	$NetBSD: if_ethersubr.c,v 1.295 2021/09/30 03:47:27 yamaguchi Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.294 2021/09/30 03:15:25 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.295 2021/09/30 03:47:27 yamaguchi Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1008,12 +1008,7 @@ ether_snprintf(char *buf, size_t len, const u_char *ap)
 static void
 ether_link_state_changed(struct ifnet *ifp, int link_state)
 {
-#if NVLAN > 0
-	struct ethercom *ec = (void *)ifp;
 
-	if (ec->ec_nvlans)
-		vlan_link_state_changed(ifp, link_state);
-#endif
 }
 
 /*
