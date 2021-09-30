@@ -1,4 +1,4 @@
-/*	$NetBSD: data.c,v 1.1.1.2 2018/08/16 18:17:47 jmcneill Exp $	*/
+/*	$NetBSD: data.c,v 1.1.1.3 2021/09/30 18:50:09 jmcneill Exp $	*/
 
 /*++
 
@@ -97,6 +97,7 @@ EFI_GUID NullGuid = { 0,0,0,{0,0,0,0,0,0,0,0} };
 EFI_GUID gEfiDevicePathProtocolGuid                 = EFI_DEVICE_PATH_PROTOCOL_GUID;
 EFI_GUID gEfiDevicePathToTextProtocolGuid           = EFI_DEVICE_PATH_TO_TEXT_PROTOCOL_GUID;
 EFI_GUID gEfiDevicePathFromTextProtocolGuid         = EFI_DEVICE_PATH_FROM_TEXT_PROTOCOL_GUID;
+EFI_GUID gEfiDevicePathUtilitiesProtocolGuid        = EFI_DEVICE_PATH_UTILITIES_PROTOCOL_GUID;
 EFI_GUID gEfiLoadedImageProtocolGuid                = EFI_LOADED_IMAGE_PROTOCOL_GUID;
 EFI_GUID gEfiSimpleTextInProtocolGuid               = EFI_SIMPLE_TEXT_INPUT_PROTOCOL_GUID;
 EFI_GUID gEfiSimpleTextOutProtocolGuid              = EFI_SIMPLE_TEXT_OUTPUT_PROTOCOL_GUID;
@@ -131,7 +132,7 @@ EFI_GUID gEfiEbcProtocolGuid                        = EFI_EBC_PROTOCOL_GUID;
 
 EFI_GUID gEfiFileInfoGuid                           = EFI_FILE_INFO_ID;
 EFI_GUID gEfiFileSystemInfoGuid                     = EFI_FILE_SYSTEM_INFO_ID;
-EFI_GUID gEfiFileSystemVolumeLabelInfoIdGuid        = EFI_FILE_SYSTEM_VOLUME_LABEL_INFO_ID;
+EFI_GUID gEfiFileSystemVolumeLabelInfoIdGuid        = EFI_FILE_SYSTEM_VOLUME_LABEL_ID;
 
 //
 // Reference implementation public protocol IDs
@@ -180,7 +181,9 @@ EFI_GUID UnknownDevice      = UNKNOWN_DEVICE_GUID;
 EFI_GUID MpsTableGuid             = MPS_TABLE_GUID;
 EFI_GUID AcpiTableGuid            = ACPI_TABLE_GUID;
 EFI_GUID SMBIOSTableGuid          = SMBIOS_TABLE_GUID;
+EFI_GUID SMBIOS3TableGuid         = SMBIOS3_TABLE_GUID;
 EFI_GUID SalSystemTableGuid       = SAL_SYSTEM_TABLE_GUID;
+EFI_GUID EfiDtbTableGuid          = EFI_DTB_TABLE_GUID;
 
 //
 // Network protocol GUIDs
@@ -195,11 +198,23 @@ EFI_GUID Tcp4Protocol = EFI_TCP4_PROTOCOL;
 //
 // Pointer protocol GUIDs
 //
-EFI_GUID SimplePointerProtocol    = EFI_SIMPLE_POINTER_PROTOCOL_GUID;
-EFI_GUID AbsolutePointerProtocol  = EFI_ABSOLUTE_POINTER_PROTOCOL_GUID;
+EFI_GUID SimplePointerProtocol   = EFI_SIMPLE_POINTER_PROTOCOL_GUID;
+EFI_GUID AbsolutePointerProtocol = EFI_ABSOLUTE_POINTER_PROTOCOL_GUID;
 
 //
 // Debugger protocol GUIDs
 //
-EFI_GUID gEfiDebugImageInfoTableGuid           = EFI_DEBUG_IMAGE_INFO_TABLE_GUID;
-EFI_GUID gEfiDebugSupportProtocolGuid          = EFI_DEBUG_SUPPORT_PROTOCOL_GUID;
+EFI_GUID gEfiDebugImageInfoTableGuid  = EFI_DEBUG_IMAGE_INFO_TABLE_GUID;
+EFI_GUID gEfiDebugSupportProtocolGuid = EFI_DEBUG_SUPPORT_PROTOCOL_GUID;
+
+//
+// Console extension protocol GUIDs
+//
+EFI_GUID SimpleTextInputExProtocol = EFI_SIMPLE_TEXT_INPUT_EX_PROTOCOL_GUID;
+
+//
+// Shell protocol GUIDs
+//
+EFI_GUID ShellProtocolGuid               = EFI_SHELL_PROTOCOL_GUID;
+EFI_GUID ShellParametersProtocolGuid     = EFI_SHELL_PARAMETERS_PROTOCOL_GUID;
+EFI_GUID ShellDynamicCommandProtocolGuid = EFI_SHELL_DYNAMIC_COMMAND_PROTOCOL_GUID;

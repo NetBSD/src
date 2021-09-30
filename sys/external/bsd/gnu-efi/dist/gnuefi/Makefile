@@ -54,7 +54,9 @@ TARGETS	= crt0-efi-$(ARCH).o libgnuefi.a
 
 all:	$(TARGETS)
 
-libgnuefi.a: $(patsubst %,libgnuefi.a(%),$(OBJS))
+libgnuefi.a: $(OBJS)
+	$(AR) $(ARFLAGS) $@ $^
+
 
 clean:
 	rm -f $(TARGETS) *~ *.o $(OBJS)

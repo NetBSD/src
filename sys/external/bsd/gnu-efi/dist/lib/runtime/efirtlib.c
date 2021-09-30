@@ -1,4 +1,4 @@
-/*	$NetBSD: efirtlib.c,v 1.1.1.2 2018/08/16 18:17:47 jmcneill Exp $	*/
+/*	$NetBSD: efirtlib.c,v 1.1.1.3 2021/09/30 18:50:09 jmcneill Exp $	*/
 
 /*++
 
@@ -48,7 +48,7 @@ RUNTIMEFUNCTION
 RtSetMem (
     IN VOID     *Buffer,
     IN UINTN    Size,
-    IN UINT8    Value    
+    IN UINT8    Value
     )
 {
     INT8        *pt;
@@ -65,16 +65,26 @@ RtSetMem (
 VOID
 RUNTIMEFUNCTION
 RtCopyMem (
-    IN VOID     *Dest,
-    IN CONST VOID     *Src,
-    IN UINTN    len
+    IN VOID        *Dest,
+    IN CONST VOID  *Src,
+    IN UINTN       len
     )
 {
-    CHAR8   *d;
-    CONST CHAR8 *s = Src;
-    d = Dest;
-    while (len--) {
-        *(d++) = *(s++);
+    CHAR8 *d = (CHAR8*)Dest;
+    CHAR8 *s = (CHAR8*)Src;
+
+    if (d == NULL || s == NULL || s == d)
+        return;
+
+    // If the beginning of the destination range overlaps with the end of
+    // the source range, make sure to start the copy from the end so that
+    // we don't end up overwriting source data that we need for the copy.
+    if ((d > s) && (d < s + len)) {
+        for (d += len, s += len; len--; )
+            *--d = *--s;
+    } else {
+        while (len--)
+            *d++ = *s++;
     }
 }
 
