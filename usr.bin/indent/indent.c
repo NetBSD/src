@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.c,v 1.93 2021/09/30 20:58:26 rillig Exp $	*/
+/*	$NetBSD: indent.c,v 1.94 2021/09/30 21:33:55 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)indent.c	5.17 (Berkeley) 6/7/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: indent.c,v 1.93 2021/09/30 20:58:26 rillig Exp $");
+__RCSID("$NetBSD: indent.c,v 1.94 2021/09/30 21:33:55 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/indent.c 340138 2018-11-04 19:24:49Z oshogbo $");
 #endif
@@ -593,6 +593,16 @@ process_newline(void)
     ++line_no;			/* keep track of input line number */
 }
 
+static bool
+want_blank_before_lparen(void)
+{
+    return ps.want_blank &&
+	   ((ps.last_token != ident && ps.last_token != funcname) ||
+	    opt.proc_calls_space ||
+	    (ps.keyword == kw_sizeof ? opt.blank_after_sizeof :
+	     ps.keyword != kw_0 && ps.keyword != kw_offsetof));
+}
+
 static void
 process_lparen_or_lbracket(int dec_ind, bool tabs_to_var, bool sp_sw)
 {
@@ -608,11 +618,7 @@ process_lparen_or_lbracket(int dec_ind, bool tabs_to_var, bool sp_sw)
 	/* function pointer declarations */
 	indent_declaration(dec_ind, tabs_to_var);
 	ps.dumped_decl_indent = true;
-    } else if (ps.want_blank &&
-	    ((ps.last_token != ident && ps.last_token != funcname) ||
-	    opt.proc_calls_space ||
-	    (ps.keyword == kw_sizeof ? opt.blank_after_sizeof :
-	    ps.keyword != kw_0 && ps.keyword != kw_offsetof)))
+    } else if (want_blank_before_lparen())
 	*code.e++ = ' ';
     ps.want_blank = false;
     *code.e++ = token.s[0];
