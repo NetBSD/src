@@ -1,4 +1,4 @@
-/*	$NetBSD: dove.c,v 1.2 2021/08/30 00:04:30 rin Exp $	*/
+/*	$NetBSD: dove.c,v 1.3 2021/09/30 10:19:52 skrll Exp $	*/
 /*
  * Copyright (c) 2016 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dove.c,v 1.2 2021/08/30 00:04:30 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dove.c,v 1.3 2021/09/30 10:19:52 skrll Exp $");
 
 #define _INTR_PRIVATE
 
@@ -483,7 +483,7 @@ dove_dfs_slow(struct dove_pmu_softc *sc, bool slow)
 {
 	uint32_t control, status, psw, pmucr;
 	int rv;
-uint32_t cause0, cause1, cause2;
+	uint32_t cause0, cause1, cause2;
 
 	status = READ_PMUREG(sc, DOVE_PMU_CPUSDFSSR);
 	status &= DOVE_PMU_CPUSDFSSR_CPUSLOWMODESTTS_MASK;
@@ -491,7 +491,7 @@ uint32_t cause0, cause1, cause2;
 	    (!slow && status == DOVE_PMU_CPUSDFSSR_CPUSLOWMODESTTS_TURBO))
 		return 0;
 
-cause0 = READ_PMUREG(sc, DOVE_PMU_PMUICR);
+	cause0 = READ_PMUREG(sc, DOVE_PMU_PMUICR);
 	/*
 	 * 1. Disable the CPU FIQ and IRQ interrupts.
 	 */
@@ -525,7 +525,7 @@ cause0 = READ_PMUREG(sc, DOVE_PMU_PMUICR);
 	 *    core.
 	 */
 	pmucr = bus_space_read_4(sc->sc_iot, sc->sc_pmh, DOVE_PMU_PMUCR);
-cause1 = READ_PMUREG(sc, DOVE_PMU_PMUICR);
+	cause1 = READ_PMUREG(sc, DOVE_PMU_PMUICR);
 	bus_space_write_4(sc->sc_iot, sc->sc_pmh, DOVE_PMU_PMUCR,
 	    pmucr | DOVE_PMU_PMUCR_MASKFIQ | DOVE_PMU_PMUCR_MASKIRQ);
 
@@ -539,7 +539,7 @@ cause1 = READ_PMUREG(sc, DOVE_PMU_PMUICR);
 	 * 6. Use the WFI instruction (Wait for Interrupt), to place the CPU
 	 *    in Sleep mode.
 	 */
-cause2 = READ_PMUREG(sc, DOVE_PMU_PMUICR);
+	cause2 = READ_PMUREG(sc, DOVE_PMU_PMUICR);
 	__asm("wfi");
 
 	status = READ_PMUREG(sc, DOVE_PMU_CPUSDFSSR);
