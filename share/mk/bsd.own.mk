@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.1262 2021/09/26 15:52:40 maya Exp $
+#	$NetBSD: bsd.own.mk,v 1.1263 2021/09/30 20:02:54 jmcneill Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -153,7 +153,8 @@ HAVE_ACPI=	no
     ${MACHINE_ARCH} == "x86_64" || \
     ${MACHINE_ARCH} == "ia64" || \
     !empty(MACHINE_ARCH:Mearmv7*) || \
-    !empty(MACHINE_ARCH:Maarch64*)
+    !empty(MACHINE_ARCH:Maarch64*) || \
+    ${MACHINE_ARCH} == "riscv64"
 HAVE_UEFI=	yes
 .else
 HAVE_UEFI=	no
