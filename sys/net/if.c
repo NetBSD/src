@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.491 2021/09/30 03:15:25 yamaguchi Exp $	*/
+/*	$NetBSD: if.c,v 1.492 2021/09/30 03:23:48 yamaguchi Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.491 2021/09/30 03:15:25 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.492 2021/09/30 03:23:48 yamaguchi Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -122,6 +122,7 @@ __KERNEL_RCSID(0, "$NetBSD: if.c,v 1.491 2021/09/30 03:15:25 yamaguchi Exp $");
 #include <sys/module_hook.h>
 #include <sys/compat_stub.h>
 #include <sys/msan.h>
+#include <sys/hook.h>
 
 #include <net/if.h>
 #include <net/if_dl.h>
@@ -631,8 +632,13 @@ static void
 if_getindex(ifnet_t *ifp)
 {
 	bool hitlimit = false;
+	char xnamebuf[HOOKNAMSIZ];
 
 	ifp->if_index_gen = index_gen++;
+	snprintf(xnamebuf, sizeof(xnamebuf),
+	    "%s-lshk", ifp->if_xname);
+	ifp->if_linkstate_hooks = simplehook_create(IPL_NET,
+	    xnamebuf);
 
 	ifp->if_index = if_index;
 	if (ifindex2ifnet == NULL) {
@@ -1533,6 +1539,8 @@ restart:
 	ifp->if_ioctl_lock = NULL;
 	mutex_obj_free(ifp->if_snd.ifq_lock);
 	if_stats_fini(ifp);
+	KASSERT(!simplehook_has_hooks(ifp->if_linkstate_hooks));
+	simplehook_destroy(ifp->if_linkstate_hooks);
 
 	splx(s);
 
@@ -2412,6 +2420,8 @@ if_link_state_change_process(struct ifnet *ifp, int link_state)
 		lagg_linkstate_changed(ifp);
 #endif
 
+	simplehook_dohooks(ifp->if_linkstate_hooks);
+
 	DOMAIN_FOREACH(dp) {
 		if (dp->dom_if_link_state_change != NULL)
 			dp->dom_if_link_state_change(ifp, link_state);
@@ -2457,6 +2467,23 @@ if_link_state_change_work(struct work *work, void *arg)
 out:
 	splx(s);
 	KERNEL_UNLOCK_UNLESS_NET_MPSAFE();
+}
+
+void *
+if_linkstate_change_establish(struct ifnet *ifp, void (*fn)(void *), void *arg)
+{
+	khook_t *hk;
+
+	hk = simplehook_establish(ifp->if_linkstate_hooks, fn, arg);
+
+	return (void *)hk;
+}
+
+void
+if_linkstate_change_disestablish(struct ifnet *ifp, void *vhook, kmutex_t *lock)
+{
+
+	simplehook_disestablish(ifp->if_linkstate_hooks, vhook, lock);
 }
 
 /*
