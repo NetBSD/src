@@ -1,4 +1,4 @@
-/*	$NetBSD: res_private.h,v 1.3 2009/10/24 17:24:01 christos Exp $	*/
+/*	$NetBSD: res_private.h,v 1.4 2021/09/30 12:35:55 christos Exp $	*/
 
 #ifndef res_private_h
 #define res_private_h
@@ -16,6 +16,7 @@ struct __res_state_ext {
 	char nsuffix2[64];
 	struct timespec res_conf_time;
 	int kq, resfd;
+	pid_t kqpid;
 };
 
 extern int res_ourserver_p(const res_state, const struct sockaddr *);
