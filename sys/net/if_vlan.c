@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vlan.c,v 1.161 2021/07/17 15:37:04 hannken Exp $	*/
+/*	$NetBSD: if_vlan.c,v 1.162 2021/09/30 03:47:27 yamaguchi Exp $	*/
 
 /*
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vlan.c,v 1.161 2021/07/17 15:37:04 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vlan.c,v 1.162 2021/09/30 03:47:27 yamaguchi Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -156,6 +156,7 @@ struct ifvlan {
 					 */
 	kmutex_t ifv_lock;		/* writer lock for ifv_mib */
 	pserialize_t ifv_psz;
+	void *ifv_linkstate_hook;
 
 	LIST_HEAD(__vlan_mchead, vlan_mc_entry) ifv_mc_listhead;
 	LIST_ENTRY(ifvlan) ifv_list;
@@ -195,6 +196,7 @@ static int	vlan_config(struct ifvlan *, struct ifnet *, uint16_t);
 static int	vlan_ioctl(struct ifnet *, u_long, void *);
 static void	vlan_start(struct ifnet *);
 static int	vlan_transmit(struct ifnet *, struct mbuf *);
+static void	vlan_link_state_changed(void *);
 static void	vlan_unconfig(struct ifnet *);
 static int	vlan_unconfig_locked(struct ifvlan *, struct ifvlan_linkmib *);
 static void	vlan_hash_init(void);
@@ -549,10 +551,11 @@ vlan_config(struct ifvlan *ifv, struct ifnet *p, uint16_t tag)
 	nmib_psref = NULL;
 	omib_cleanup = true;
 
-
 	/*
 	 * We inherit the parents link state.
 	 */
+	ifv->ifv_linkstate_hook = if_linkstate_change_establish(p,
+	    vlan_link_state_changed, ifv);
 	if_link_state_change(&ifv->ifv_if, p->if_link_state);
 
 done:
@@ -684,6 +687,8 @@ vlan_unconfig_locked(struct ifvlan *ifv, struct ifvlan_linkmib *nmib)
 	pserialize_perform(vlan_psz);
 	mutex_exit(&ifv_hash.lock);
 	PSLIST_ENTRY_DESTROY(ifv, ifv_hash);
+	if_linkstate_change_disestablish(p,
+	    ifv->ifv_linkstate_hook, NULL);
 
 	vlan_linkmib_update(ifv, nmib);
 	if_link_state_change(ifp, LINK_STATE_DOWN);
@@ -1733,30 +1738,28 @@ out:
 /*
  * If the parent link state changed, the vlan link state should change also.
  */
-void
-vlan_link_state_changed(struct ifnet *p, int link_state)
+static void
+vlan_link_state_changed(void *xifv)
 {
-	struct ifvlan *ifv;
+	struct ifvlan *ifv = xifv;
+	struct ifnet *ifp, *p;
 	struct ifvlan_linkmib *mib;
 	struct psref psref;
-	struct ifnet *ifp;
 
-	mutex_enter(&ifv_list.lock);
+	mib = vlan_getref_linkmib(ifv, &psref);
+	if (mib == NULL)
+		return;
 
-	LIST_FOREACH(ifv, &ifv_list.list, ifv_list) {
-		mib = vlan_getref_linkmib(ifv, &psref);
-		if (mib == NULL)
-			continue;
-
-		if (mib->ifvm_p == p) {
-			ifp = &mib->ifvm_ifvlan->ifv_if;
-			if_link_state_change(ifp, link_state);
-		}
-
+	if (mib->ifvm_p == NULL) {
 		vlan_putref_linkmib(mib, &psref);
+		return;
 	}
 
-	mutex_exit(&ifv_list.lock);
+	ifp = &ifv->ifv_if;
+	p = mib->ifvm_p;
+	if_link_state_change(ifp, p->if_link_state);
+
+	vlan_putref_linkmib(mib, &psref);
 }
 
 /*
