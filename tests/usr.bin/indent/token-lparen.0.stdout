@@ -1,4 +1,4 @@
-/* $NetBSD: token-lparen.0.stdout,v 1.4 2021/09/30 21:48:12 rillig Exp $ */
+/* $NetBSD: token-lparen.0.stdout,v 1.5 2021/09/30 22:45:34 rillig Exp $ */
 /* $FreeBSD$ */
 
 /*
@@ -27,6 +27,21 @@ function(void)
 {
 	other_function();
 	other_function("first", 2, "last argument"[4]);
+
+	if (false)
+		(void)x;
+	if (false)
+		(func)(arg);
+	if (false)
+		(cond) ? 123 : 456;
+
+	/* C99 compound literal */
+	origin = (struct point){
+		0, 0
+	};
+
+	/* GCC statement expression */
+	/* expr = ({if(expr)debug();expr;}); */
 }
 
 int array[] = {
