@@ -1,4 +1,4 @@
-/*	$NetBSD: if_laggproto.h,v 1.5 2021/09/30 04:23:30 yamaguchi Exp $	*/
+/*	$NetBSD: if_laggproto.h,v 1.6 2021/09/30 04:29:17 yamaguchi Exp $	*/
 
 /*
  * Copyright (c) 2021 Internet Initiative Japan Inc.
@@ -67,8 +67,9 @@ struct lagg_port {
 	struct ifnet		*lp_ifp;	/* physical interface */
 	struct lagg_softc	*lp_softc;	/* parent lagg */
 	void			*lp_proto_ctx;
-	bool			 lp_detaching;
+	bool			 lp_ifdetaching;
 	void			*lp_linkstate_hook;
+	void			*lp_ifdetach_hook;
 
 	uint32_t		 lp_prio;	/* port priority */
 	uint32_t		 lp_flags;	/* port flags */
@@ -205,8 +206,7 @@ struct lagg_softc {
 
 #define	LAGG_PORTS_FOREACH(_sc, _lp)	\
     SIMPLEQ_FOREACH((_lp), &(_sc)->sc_ports, lp_entry)
-#define	LAGG_PORTS_FOREACH_SAFE(_sc, _lp, _lptmp)	\
-    SIMPLEQ_FOREACH_SAFE((_lp), &(_sc)->sc_ports, lp_entry, (_lptmp))
+#define	LAGG_PORTS_FIRST(_sc)	SIMPLEQ_FIRST(&(_sc)->sc_ports)
 #define LAGG_PORTS_EMPTY(_sc)	SIMPLEQ_EMPTY(&(_sc)->sc_ports)
 #define LAGG_PORT_IOCTL(_lp, _cmd, _data)	\
 	(_lp)->lp_ioctl == NULL ? ENOTTY :	\
