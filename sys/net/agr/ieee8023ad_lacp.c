@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee8023ad_lacp.c,v 1.11 2020/01/29 04:30:41 thorpej Exp $	*/
+/*	$NetBSD: ieee8023ad_lacp.c,v 1.12 2021/09/30 03:15:25 yamaguchi Exp $	*/
 
 /*-
  * Copyright (c)2005 YAMAMOTO Takashi,
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ieee8023ad_lacp.c,v 1.11 2020/01/29 04:30:41 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee8023ad_lacp.c,v 1.12 2021/09/30 03:15:25 yamaguchi Exp $");
 
 #include <sys/param.h>
 #include <sys/callout.h>
@@ -97,7 +97,7 @@ ieee8023ad_lacp_input(struct ifnet *ifp, struct mbuf *m)
 	struct lacp_port *lp;
 	int error = 0;
 
-	port = ifp->if_agrprivate; /* XXX race with agr_remport. */
+	port = ifp->if_lagg; /* XXX race with agr_remport. */
 	if (__predict_false(port->port_flags & AGRPORT_DETACHING)) {
 		goto bad;
 	}
