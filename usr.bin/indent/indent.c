@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.c,v 1.95 2021/09/30 21:38:43 rillig Exp $	*/
+/*	$NetBSD: indent.c,v 1.96 2021/09/30 21:48:12 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)indent.c	5.17 (Berkeley) 6/7/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: indent.c,v 1.95 2021/09/30 21:38:43 rillig Exp $");
+__RCSID("$NetBSD: indent.c,v 1.96 2021/09/30 21:48:12 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/indent.c 340138 2018-11-04 19:24:49Z oshogbo $");
 #endif
@@ -597,6 +597,8 @@ static bool
 want_blank_before_lparen(void)
 {
     if (!ps.want_blank)
+	return false;
+    if (ps.last_token == rparen)
 	return false;
     if (ps.last_token != ident && ps.last_token != funcname)
 	return true;
