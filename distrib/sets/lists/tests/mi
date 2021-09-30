@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1130 2021/09/26 03:17:59 rillig Exp $
+# $NetBSD: mi,v 1.1131 2021/09/30 02:00:19 yamaguchi Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2237,6 +2237,7 @@
 ./usr/tests/kernel/t_pty				tests-kernel-tests	compattestfile,atf
 ./usr/tests/kernel/t_rnd				tests-kernel-tests	atf,rump
 ./usr/tests/kernel/t_sigaction				tests-obsolete		obsolete
+./usr/tests/kernel/t_simplehook				tests-kernel-tests	atf,rump
 ./usr/tests/kernel/t_subr_prf				tests-kernel-tests	compattestfile,atf
 ./usr/tests/kernel/t_sysctl				tests-kernel-tests	compattestfile,atf
 ./usr/tests/kernel/t_sysv				tests-kernel-tests	compattestfile,atf
