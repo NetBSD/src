@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.490 2021/09/21 14:57:26 christos Exp $	*/
+/*	$NetBSD: if.c,v 1.491 2021/09/30 03:15:25 yamaguchi Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.490 2021/09/21 14:57:26 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.491 2021/09/30 03:15:25 yamaguchi Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -2408,7 +2408,7 @@ if_link_state_change_process(struct ifnet *ifp, int link_state)
 #endif
 
 #if NLAGG > 0
-	if (ifp->if_lagg != NULL)
+	if (ifp->if_type == IFT_IEEE8023ADLAG)
 		lagg_linkstate_changed(ifp);
 #endif
 
