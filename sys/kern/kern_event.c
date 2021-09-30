@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_event.c,v 1.127 2021/09/30 01:12:06 thorpej Exp $	*/
+/*	$NetBSD: kern_event.c,v 1.128 2021/09/30 01:20:53 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_event.c,v 1.127 2021/09/30 01:12:06 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_event.c,v 1.128 2021/09/30 01:20:53 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1755,7 +1755,10 @@ kqueue_stat(file_t *fp, struct stat *st)
 	memset(st, 0, sizeof(*st));
 	st->st_size = KQ_COUNT(kq);
 	st->st_blksize = sizeof(struct kevent);
-	st->st_mode = S_IFIFO;
+	st->st_mode = S_IFIFO | S_IRUSR | S_IWUSR;
+	st->st_blocks = 1;
+	st->st_uid = kauth_cred_geteuid(fp->f_cred);
+	st->st_gid = kauth_cred_getegid(fp->f_cred);
 
 	return 0;
 }
