@@ -1,4 +1,4 @@
-/*	$NetBSD: efibind.h,v 1.4 2019/09/13 20:56:29 tnn Exp $	*/
+/*	$NetBSD: efibind.h,v 1.5 2021/09/30 19:02:47 jmcneill Exp $	*/
 
 /*++
 
@@ -27,7 +27,7 @@ Revision History
 // Basic int types of various widths
 //
 
-#if !defined(__STDC_VERSION__) || (__STDC_VERSION__ < 199901L )
+#if !defined(__STDC_VERSION__) || (__STDC_VERSION__ < 199901L ) && !defined(__cplusplus)
 
     // No ANSI C 1999/2000 stdint.h integer width declarations 
 
@@ -77,6 +77,8 @@ Revision History
        typedef unsigned char       uint8_t;
        typedef char                int8_t;
     #endif
+    typedef uint32_t            uintptr_t;
+    typedef int32_t             intptr_t;
 #elif defined(__NetBSD__)
     #include <sys/stdint.h>
 #elif defined(__GNUC__)
