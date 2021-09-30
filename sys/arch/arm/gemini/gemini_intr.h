@@ -1,4 +1,4 @@
-/*	$NetBSD: gemini_intr.h,v 1.2 2008/10/24 16:17:08 matt Exp $	*/
+/*	$NetBSD: gemini_intr.h,v 1.3 2021/09/30 07:49:09 skrll Exp $	*/
 
 #ifndef _ARM_GEMINI_INTR_H_
 #define _ARM_GEMINI_INTR_H_
@@ -7,6 +7,11 @@
 
 #ifndef _LOCORE
 void	gemini_irq_handler(void *);
+
+#define	_splraise	pic_splraise
+#define	_spllower	pic_spllower
+#define	splx		pic_splx
+
 #include <arm/pic/picvar.h>
 #endif	/* _LOCORE */
 
