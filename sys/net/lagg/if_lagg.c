@@ -1,4 +1,4 @@
-/*	$NetBSD: if_lagg.c,v 1.9 2021/09/30 04:23:30 yamaguchi Exp $	*/
+/*	$NetBSD: if_lagg.c,v 1.10 2021/09/30 04:29:17 yamaguchi Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006 Reyk Floeter <reyk@openbsd.org>
@@ -20,7 +20,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_lagg.c,v 1.9 2021/09/30 04:23:30 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_lagg.c,v 1.10 2021/09/30 04:29:17 yamaguchi Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -148,6 +148,7 @@ static int	lagg_media_change(struct ifnet *);
 static void	lagg_media_status(struct ifnet *, struct ifmediareq *);
 static int	lagg_vlan_cb(struct ethercom *, uint16_t, bool);
 static void	lagg_linkstate_changed(void *);
+static void	lagg_ifdetach(void *);
 static struct lagg_softc *
 		lagg_softc_alloc(enum lagg_iftypes);
 static void	lagg_softc_free(struct lagg_softc *);
@@ -174,7 +175,7 @@ static int	lagg_pr_attach(struct lagg_softc *, lagg_proto);
 static void	lagg_pr_detach(struct lagg_softc *);
 static int	lagg_addport(struct lagg_softc *, struct ifnet *);
 static int	lagg_delport(struct lagg_softc *, struct ifnet *);
-static void	lagg_delport_all(struct lagg_softc *);
+static int	lagg_delport_all(struct lagg_softc *);
 static int	lagg_port_ioctl(struct ifnet *, u_long, void *);
 static int	lagg_port_output(struct ifnet *, struct mbuf *,
 		    const struct sockaddr *, const struct rtentry *);
@@ -440,12 +441,15 @@ static int
 lagg_clone_destroy(struct ifnet *ifp)
 {
 	struct lagg_softc *sc = (struct lagg_softc *)ifp->if_softc;
+	struct lagg_port *lp;
 
 	lagg_stop(ifp, 1);
 
-	IFNET_LOCK(ifp);
-	lagg_delport_all(sc);
-	IFNET_UNLOCK(ifp);
+	LAGG_LOCK(sc);
+	while ((lp = LAGG_PORTS_FIRST(sc)) != NULL) {
+		lagg_port_teardown(sc, lp, false);
+	}
+	LAGG_UNLOCK(sc);
 
 	switch (ifp->if_type) {
 	case IFT_ETHER:
@@ -552,7 +556,9 @@ lagg_config(struct lagg_softc *sc, struct lagg_req *lrq)
 			break;
 		}
 
-		lagg_delport_all(sc);
+		error = lagg_delport_all(sc);
+		if (error != 0)
+			break;
 		error = lagg_pr_attach(sc, lrq->lrq_proto);
 		if (error != 0)
 			break;
@@ -2020,6 +2026,8 @@ lagg_port_setup(struct lagg_softc *sc,
 	lp->lp_prio = LAGG_PORT_PRIO;
 	lp->lp_linkstate_hook = if_linkstate_change_establish(ifp_port,
 	    lagg_linkstate_changed, ifp_port);
+	lp->lp_ifdetach_hook = ether_ifdetachhook_establish(ifp_port,
+	    lagg_ifdetach, ifp_port);
 	psref_target_init(&lp->lp_psref, lagg_port_psref_class);
 
 	IFNET_LOCK(ifp_port);
@@ -2116,6 +2124,8 @@ restore_ipv6lla:
 	psref_target_destroy(&lp->lp_psref, lagg_port_psref_class);
 	if_linkstate_change_disestablish(ifp_port,
 	    lp->lp_linkstate_hook, NULL);
+	ether_ifdetachhook_disestablish(ifp_port,
+	    lp->lp_ifdetach_hook, &sc->sc_lock);
 
 	return error;
 }
@@ -2129,11 +2139,16 @@ lagg_port_teardown(struct lagg_softc *sc, struct lagg_port *lp,
 
 	KASSERT(LAGG_LOCKED(sc));
 
-	if (lp == NULL)
-		return;
-
 	ifp_port = lp->lp_ifp;
 	stopped = false;
+
+	ether_ifdetachhook_disestablish(ifp_port,
+	    lp->lp_ifdetach_hook, &sc->sc_lock);
+
+	if (ifp_port->if_lagg == NULL) {
+		/* already done in lagg_ifdetach() */
+		return;
+	}
 
 	SIMPLEQ_REMOVE(&sc->sc_ports, lp, lagg_port, lp_entry);
 	sc->sc_nports--;
@@ -2209,38 +2224,59 @@ lagg_delport(struct lagg_softc *sc, struct ifnet *ifp_port)
 {
 	struct lagg_port *lp;
 	uint8_t lladdr[ETHER_ADDR_LEN];
+	int error;
 
 	KASSERT(IFNET_LOCKED(&sc->sc_if));
 
+	error = 0;
 	LAGG_LOCK(sc);
 	lp = ifp_port->if_lagg;
 	if (lp == NULL || lp->lp_softc != sc) {
-		LAGG_UNLOCK(sc);
-		return ENOENT;
+		error = ENOENT;
+		goto out;
+	}
+
+	if (lp->lp_ifdetaching) {
+		error = EBUSY;
+		goto out;
 	}
 
 	lagg_lladdr_cpy(lladdr, sc->sc_lladdr);
 	lagg_port_teardown(sc, lp, false);
 	lagg_sadl_update(sc, lladdr);
+
+out:
 	LAGG_UNLOCK(sc);
 
-	return 0;
+	return error;
 }
 
-static void
+static int
 lagg_delport_all(struct lagg_softc *sc)
 {
-	struct lagg_port *lp, *lp0;
+	struct lagg_port *lp;
 	uint8_t lladdr[ETHER_ADDR_LEN];
+	int error;
+
+	KASSERT(IFNET_LOCKED(&sc->sc_if));
+
+	error = 0;
 
 	LAGG_LOCK(sc);
 	lagg_lladdr_cpy(lladdr, sc->sc_lladdr);
-	LAGG_PORTS_FOREACH_SAFE(sc, lp, lp0) {
+	while ((lp = LAGG_PORTS_FIRST(sc)) != NULL) {
+		if (lp->lp_ifdetaching) {
+			error = EBUSY;
+			continue;
+		}
+
 		lagg_port_teardown(sc, lp, false);
 	}
 
 	lagg_sadl_update(sc, lladdr);
 	LAGG_UNLOCK(sc);
+
+	return error;
 }
 
 static int
@@ -2406,8 +2442,9 @@ lagg_port_output(struct ifnet *ifp, struct mbuf *m,
 }
 
 void
-lagg_ifdetach(struct ifnet *ifp_port)
+lagg_ifdetach(void *xifp_port)
 {
+	struct ifnet *ifp_port = xifp_port;
 	struct lagg_port *lp;
 	struct lagg_softc *sc;
 	uint8_t lladdr[ETHER_ADDR_LEN];
@@ -2429,16 +2466,29 @@ lagg_ifdetach(struct ifnet *ifp_port)
 	}
 	pserialize_read_exit(s);
 
+	LAGG_LOCK(sc);
+	lp = ifp_port->if_lagg;
+	if (lp == NULL) {
+		LAGG_UNLOCK(sc);
+		return;
+	}
+
+	/*
+	 * mark as a detaching to prevent other
+	 * lagg_port_teardown() processings with IFNET_LOCK() held
+	 */
+	lp->lp_ifdetaching = true;
+
+	LAGG_UNLOCK(sc);
+
 	IFNET_LOCK(&sc->sc_if);
 	LAGG_LOCK(sc);
-	/*
-	 * reload if_lagg because it may write
-	 * after pserialize_read_exit.
-	 */
 	lp = ifp_port->if_lagg;
-	lagg_lladdr_cpy(lladdr, sc->sc_lladdr);
-	lagg_port_teardown(sc, lp, true);
-	lagg_sadl_update(sc, lladdr);
+	if (lp != NULL) {
+		lagg_lladdr_cpy(lladdr, sc->sc_lladdr);
+		lagg_port_teardown(sc, lp, true);
+		lagg_sadl_update(sc, lladdr);
+	}
 	LAGG_UNLOCK(sc);
 	IFNET_UNLOCK(&sc->sc_if);
 }
