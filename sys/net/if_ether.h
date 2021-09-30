@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ether.h,v 1.86 2021/02/14 19:35:37 roy Exp $	*/
+/*	$NetBSD: if_ether.h,v 1.87 2021/09/30 03:54:04 yamaguchi Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -198,6 +198,8 @@ struct ethercom {
 	 * being added or removed.
 	 */
 	ether_vlancb_t				ec_vlan_cb;
+	/* Hooks called at the beginning of detach of this interface */
+	khook_list_t				*ec_ifdetach_hooks;
 	kmutex_t				*ec_lock;
 	/* Flags used only by the kernel */
 	int					ec_flags;
@@ -385,6 +387,10 @@ void	ether_ifattach(struct ifnet *, const uint8_t *);
 void	ether_ifdetach(struct ifnet *);
 int	ether_mediachange(struct ifnet *);
 void	ether_mediastatus(struct ifnet *, struct ifmediareq *);
+void *	ether_ifdetachhook_establish(struct ifnet *,
+	    void (*)(void *), void *arg);
+void	ether_ifdetachhook_disestablish(struct ifnet *,
+	    void *, kmutex_t *);
 
 char	*ether_sprintf(const uint8_t *);
 char	*ether_snprintf(char *, size_t, const uint8_t *);

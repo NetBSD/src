@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ethersubr.c,v 1.296 2021/09/30 03:51:05 yamaguchi Exp $	*/
+/*	$NetBSD: if_ethersubr.c,v 1.297 2021/09/30 03:54:04 yamaguchi Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.296 2021/09/30 03:51:05 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.297 2021/09/30 03:54:04 yamaguchi Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -90,6 +90,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.296 2021/09/30 03:51:05 yamaguchi
 #include <sys/rndsource.h>
 #include <sys/cpu.h>
 #include <sys/kmem.h>
+#include <sys/hook.h>
 
 #include <net/if.h>
 #include <net/netisr.h>
@@ -1012,6 +1013,7 @@ void
 ether_ifattach(struct ifnet *ifp, const uint8_t *lla)
 {
 	struct ethercom *ec = (struct ethercom *)ifp;
+	char xnamebuf[HOOKNAMSIZ];
 
 	ifp->if_type = IFT_ETHER;
 	ifp->if_hdrlen = ETHER_HDR_LEN;
@@ -1031,6 +1033,9 @@ ether_ifattach(struct ifnet *ifp, const uint8_t *lla)
 	ec->ec_flags = 0;
 	ifp->if_broadcastaddr = etherbroadcastaddr;
 	bpf_attach(ifp, DLT_EN10MB, sizeof(struct ether_header));
+	snprintf(xnamebuf, sizeof(xnamebuf),
+	    "%s-ether_ifdetachhooks", ifp->if_xname);
+	ec->ec_ifdetach_hooks = simplehook_create(IPL_NET, xnamebuf);
 #ifdef MBUFTRACE
 	mowner_init_owner(&ec->ec_tx_mowner, ifp->if_xname, "tx");
 	mowner_init_owner(&ec->ec_rx_mowner, ifp->if_xname, "rx");
@@ -1056,6 +1061,10 @@ ether_ifdetach(struct ifnet *ifp)
 	 */
 	ifp->if_ioctl = __FPTRCAST(int (*)(struct ifnet *, u_long, void *),
 	    enxio);
+
+	simplehook_dohooks(ec->ec_ifdetach_hooks);
+	KASSERT(!simplehook_has_hooks(ec->ec_ifdetach_hooks));
+	simplehook_destroy(ec->ec_ifdetach_hooks);
 
 #if NBRIDGE > 0
 	if (ifp->if_bridge)
@@ -1087,6 +1096,36 @@ ether_ifdetach(struct ifnet *ifp)
 	ifp->if_mowner = NULL;
 	MOWNER_DETACH(&ec->ec_rx_mowner);
 	MOWNER_DETACH(&ec->ec_tx_mowner);
+}
+
+void *
+ether_ifdetachhook_establish(struct ifnet *ifp,
+    void (*fn)(void *), void *arg)
+{
+	struct ethercom *ec;
+	khook_t *hk;
+
+	if (ifp->if_type != IFT_ETHER)
+		return NULL;
+
+	ec = (struct ethercom *)ifp;
+	hk = simplehook_establish(ec->ec_ifdetach_hooks,
+	    fn, arg);
+
+	return (void *)hk;
+}
+
+void
+ether_ifdetachhook_disestablish(struct ifnet *ifp,
+    void *vhook, kmutex_t *lock)
+{
+	struct ethercom *ec;
+
+	if (vhook == NULL)
+		return;
+
+	ec = (struct ethercom *)ifp;
+	simplehook_disestablish(ec->ec_ifdetach_hooks, vhook, lock);
 }
 
 #if 0
