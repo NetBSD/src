@@ -1,4 +1,4 @@
-/*	$NetBSD: if_laggvar.h,v 1.2 2021/05/24 06:08:28 yamaguchi Exp $	*/
+/*	$NetBSD: if_laggvar.h,v 1.3 2021/09/30 03:39:39 yamaguchi Exp $	*/
 
 /*
  * Copyright (c) 2021 Internet Initiative Japan Inc.
@@ -30,7 +30,6 @@
 #define _NET_LAGG_IF_LAGGVAR_H_
 
 void		lagg_ifdetach(struct ifnet *);
-void		lagg_linkstate_changed(struct ifnet *);
 
 extern struct mbuf *
 		(*lagg_input_ethernet_p)(struct ifnet *,
