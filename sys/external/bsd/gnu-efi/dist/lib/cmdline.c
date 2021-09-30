@@ -1,10 +1,10 @@
-/*	$NetBSD: cmdline.c,v 1.1.1.1 2018/08/16 18:17:47 jmcneill Exp $	*/
+/*	$NetBSD: cmdline.c,v 1.1.1.2 2021/09/30 18:50:09 jmcneill Exp $	*/
 
 #include "lib.h"
 
 #include "efiprot.h"
+#include "efishell.h"
 #include "efishellintf.h"
-#include "efishellparm.h"
 
 #ifndef MAX_ARGV_CONTENTS_SIZE
 # define MAX_CMDLINE_SIZE 1024
@@ -79,8 +79,6 @@ INTN GetShellArgcArgv(EFI_HANDLE ImageHandle, CHAR16 **Argv[])
   // Code inspired from EDK2's
   // ShellPkg/Library/UefiShellCEntryLib/UefiShellCEntryLib.c (BSD)
   EFI_STATUS Status;
-  static const EFI_GUID EfiShellParametersProtocolGuid
-      = EFI_SHELL_PARAMETERS_PROTOCOL_GUID;
   static const EFI_GUID ShellInterfaceProtocolGuid
       = SHELL_INTERFACE_PROTOCOL_GUID;
   EFI_SHELL_PARAMETERS_PROTOCOL *EfiShellParametersProtocol = NULL;
@@ -88,7 +86,7 @@ INTN GetShellArgcArgv(EFI_HANDLE ImageHandle, CHAR16 **Argv[])
 
   Status = uefi_call_wrapper(BS->OpenProtocol, 6,
                              ImageHandle,
-                             (EFI_GUID*)&EfiShellParametersProtocolGuid,
+                             (EFI_GUID*)&ShellParametersProtocolGuid,
                              (VOID **)&EfiShellParametersProtocol,
                              ImageHandle,
                              NULL,

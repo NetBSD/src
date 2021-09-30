@@ -1,4 +1,4 @@
-/*	$NetBSD: crt0-efi-x86_64.S,v 1.1.1.1 2014/04/01 16:16:08 jakllsch Exp $	*/
+/*	$NetBSD: crt0-efi-x86_64.S,v 1.1.1.2 2021/09/30 18:50:09 jmcneill Exp $	*/
 
 /* crt0-efi-x86_64.S - x86_64 EFI startup code.
    Copyright (C) 1999 Hewlett-Packard Co.
@@ -73,6 +73,7 @@ dummy:	.long	0
  	.section .reloc, "a"
 label1:
 	.long	dummy-label1				// Page RVA
- 	.long	10					// Block Size (2*4+2)
+	.long	12					// Block Size (2*4+2*2), must be aligned by 32 Bits
+	.word	(IMAGE_REL_ABSOLUTE<<12) +  0		// reloc for dummy
 	.word	(IMAGE_REL_ABSOLUTE<<12) +  0		// reloc for dummy
 

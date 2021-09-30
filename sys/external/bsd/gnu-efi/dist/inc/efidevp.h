@@ -1,4 +1,4 @@
-/*	$NetBSD: efidevp.h,v 1.1.1.2 2018/08/16 18:17:47 jmcneill Exp $	*/
+/*	$NetBSD: efidevp.h,v 1.1.1.3 2021/09/30 18:50:09 jmcneill Exp $	*/
 
 #ifndef _DEVPATH_H
 #define _DEVPATH_H
@@ -124,7 +124,7 @@ typedef struct _CONTROLLER_DEVICE_PATH {
 /*
  * ACPI Device Path (UEFI 2.4 specification, version 2.4 § 9.3.3 and 9.3.4.)
  */
-#define ACPI_DEVICE_PATH                 0x02
+#define ACPI_DEVICE_PATH                0x02
 
 #define ACPI_DP                         0x01
 typedef struct _ACPI_HID_DEVICE_PATH {
@@ -133,13 +133,13 @@ typedef struct _ACPI_HID_DEVICE_PATH {
         UINT32                          UID;
 } ACPI_HID_DEVICE_PATH;
 
-#define EXPANDED_ACPI_DP		0x02
+#define EXPANDED_ACPI_DP                0x02
 typedef struct _EXPANDED_ACPI_HID_DEVICE_PATH {
-	EFI_DEVICE_PATH_PROTOCOL	Header;
-	UINT32				HID;
-	UINT32				UID;
-	UINT32				CID;
-	UINT8				HidStr[1];
+        EFI_DEVICE_PATH_PROTOCOL        Header;
+        UINT32                          HID;
+        UINT32                          UID;
+        UINT32                          CID;
+        UINT8                           HidStr[1];
 } EXPANDED_ACPI_HID_DEVICE_PATH;
 
 #define ACPI_ADR_DP 3
@@ -327,11 +327,11 @@ typedef struct _VLAN_DEVICE_PATH {
 #define MSG_INFINIBAND_DP               0x09
 typedef struct _INFINIBAND_DEVICE_PATH {
         EFI_DEVICE_PATH_PROTOCOL        Header;
-        UINT32                          ResourceFlags ;
-        UINT64                          PortGid ;
-        UINT64                          ServiceId ;
-        UINT64                          TargetPortId ;
-        UINT64                          DeviceId ;
+        UINT32                          ResourceFlags;
+        UINT8                           PortGid[16];
+        UINT64                          ServiceId;
+        UINT64                          TargetPortId;
+        UINT64                          DeviceId;
 } INFINIBAND_DEVICE_PATH;
 
 #define MSG_UART_DP                     0x0e
@@ -557,8 +557,8 @@ CHAR16*
     );
 
 typedef struct _EFI_DEVICE_PATH_TO_TEXT_PROTOCOL {
-	EFI_DEVICE_PATH_TO_TEXT_NODE         ConvertDeviceNodeToText;
-	EFI_DEVICE_PATH_TO_TEXT_PATH         ConvertDevicePathToText;
+    EFI_DEVICE_PATH_TO_TEXT_NODE         ConvertDeviceNodeToText;
+    EFI_DEVICE_PATH_TO_TEXT_PATH         ConvertDevicePathToText;
 } EFI_DEVICE_PATH_TO_TEXT_PROTOCOL;
 
 #define EFI_DEVICE_PATH_FROM_TEXT_PROTOCOL_GUID \
@@ -580,5 +580,73 @@ typedef struct {
     EFI_DEVICE_PATH_FROM_TEXT_NODE       ConvertTextToDeviceNode;
     EFI_DEVICE_PATH_FROM_TEXT_PATH       ConvertTextToDevicePath;
 } EFI_DEVICE_PATH_FROM_TEXT_PROTOCOL;
+
+#define EFI_DEVICE_PATH_UTILITIES_PROTOCOL_GUID \
+  { 0x379be4e, 0xd706, 0x437d, {0xb0, 0x37, 0xed, 0xb8, 0x2f, 0xb7, 0x72, 0xa4} }
+
+typedef
+UINTN
+(EFIAPI *EFI_DEVICE_PATH_UTILS_GET_DEVICE_PATH_SIZE) (
+    IN CONST EFI_DEVICE_PATH_PROTOCOL    *DevicePath
+    );
+
+typedef
+EFI_DEVICE_PATH_PROTOCOL*
+(EFIAPI *EFI_DEVICE_PATH_UTILS_DUP_DEVICE_PATH) (
+    IN CONST EFI_DEVICE_PATH_PROTOCOL    *DevicePath
+    );
+
+typedef
+EFI_DEVICE_PATH_PROTOCOL*
+(EFIAPI *EFI_DEVICE_PATH_UTILS_APPEND_PATH) (
+    IN CONST EFI_DEVICE_PATH_PROTOCOL    *Src1,
+    IN CONST EFI_DEVICE_PATH_PROTOCOL    *Src2
+    );
+
+typedef
+EFI_DEVICE_PATH_PROTOCOL*
+(EFIAPI *EFI_DEVICE_PATH_UTILS_APPEND_NODE) (
+    IN CONST EFI_DEVICE_PATH_PROTOCOL    *DevicePath,
+    IN CONST EFI_DEVICE_PATH_PROTOCOL    *DeviceNode
+);
+
+typedef
+EFI_DEVICE_PATH_PROTOCOL*
+(EFIAPI *EFI_DEVICE_PATH_UTILS_APPEND_INSTANCE) (
+    IN CONST EFI_DEVICE_PATH_PROTOCOL    *DevicePath,
+    IN CONST EFI_DEVICE_PATH_PROTOCOL    *DevicePathInstance
+);
+
+typedef
+EFI_DEVICE_PATH_PROTOCOL*
+(EFIAPI *EFI_DEVICE_PATH_UTILS_GET_NEXT_INSTANCE) (
+    IN OUT EFI_DEVICE_PATH_PROTOCOL      **DevicePathInstance,
+    OUT UINTN                            *DevicePathInstanceSize OPTIONAL
+);
+
+typedef
+EFI_DEVICE_PATH_PROTOCOL*
+(EFIAPI *EFI_DEVICE_PATH_UTILS_CREATE_NODE) (
+    IN UINT8                             NodeType,
+    IN UINT8                             NodeSubType,
+    IN UINT16                            NodeLength
+    );
+
+typedef
+BOOLEAN
+(EFIAPI *EFI_DEVICE_PATH_UTILS_IS_MULTI_INSTANCE) (
+    IN CONST EFI_DEVICE_PATH_PROTOCOL    *DevicePath
+    );
+
+typedef struct _EFI_DEVICE_PATH_UTILITIES_PROTOCOL {
+    EFI_DEVICE_PATH_UTILS_GET_DEVICE_PATH_SIZE   GetDevicePathSize;
+    EFI_DEVICE_PATH_UTILS_DUP_DEVICE_PATH        DuplicateDevicePath;
+    EFI_DEVICE_PATH_UTILS_APPEND_PATH            AppendDevicePath;
+    EFI_DEVICE_PATH_UTILS_APPEND_NODE            AppendDeviceNode;
+    EFI_DEVICE_PATH_UTILS_APPEND_INSTANCE        AppendDevicePathInstance;
+    EFI_DEVICE_PATH_UTILS_GET_NEXT_INSTANCE      GetNextDevicePathInstance;
+    EFI_DEVICE_PATH_UTILS_IS_MULTI_INSTANCE      IsDevicePathMultiInstance;
+    EFI_DEVICE_PATH_UTILS_CREATE_NODE            CreateDeviceNode;
+} EFI_DEVICE_PATH_UTILITIES_PROTOCOL;
 
 #endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: guid.c,v 1.1.1.2 2018/08/16 18:17:47 jmcneill Exp $	*/
+/*	$NetBSD: guid.c,v 1.1.1.3 2021/09/30 18:50:09 jmcneill Exp $	*/
 
 /*++
 
@@ -156,7 +156,7 @@ GuidToString (
 
     for (Index=0; KnownGuids[Index].Guid; Index++) {
         if (CompareGuid(Guid, KnownGuids[Index].Guid) == 0) {
-            SPrint (Buffer, 0, KnownGuids[Index].GuidName);
+            UnicodeSPrint (Buffer, 0, KnownGuids[Index].GuidName);
             return ;
         }
     }
@@ -165,7 +165,7 @@ GuidToString (
     // Else dump it
     //
 
-    SPrint (Buffer, 0, L"%08x-%04x-%04x-%02x%02x-%02x%02x%02x%02x%02x%02x",
+    UnicodeSPrint (Buffer, 0, L"%08x-%04x-%04x-%02x%02x-%02x%02x%02x%02x%02x%02x",
         Guid->Data1,
         Guid->Data2,
         Guid->Data3,
