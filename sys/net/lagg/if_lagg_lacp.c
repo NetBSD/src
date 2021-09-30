@@ -1,4 +1,4 @@
-/*	$NetBSD: if_lagg_lacp.c,v 1.3 2021/06/30 06:39:47 yamaguchi Exp $	*/
+/*	$NetBSD: if_lagg_lacp.c,v 1.4 2021/09/30 04:23:30 yamaguchi Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-NetBSD
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_lagg_lacp.c,v 1.3 2021/06/30 06:39:47 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_lagg_lacp.c,v 1.4 2021/09/30 04:23:30 yamaguchi Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_lagg.h"
@@ -535,6 +535,11 @@ lacp_up(struct lagg_proto_softc *xlsc)
 	KASSERT(LAGG_LOCKED(sc));
 
 	LACP_LOCK(lsc);
+	if (memcmp(lsc->lsc_system_mac, LAGG_CLLADDR(sc),
+	    sizeof(lsc->lsc_system_mac)) != 0) {
+		memcpy(lsc->lsc_system_mac, LAGG_CLLADDR(sc),
+		    sizeof(lsc->lsc_system_mac));
+	}
 	lsc->lsc_running = true;
 	callout_schedule(&lsc->lsc_tick, hz);
 	LACP_UNLOCK(lsc);
@@ -565,6 +570,9 @@ lacp_down_locked(struct lacp_softc *lsc)
 	LAGG_PORTS_FOREACH(sc, lp) {
 		lacp_port_disable(lsc, lp->lp_proto_ctx);
 	}
+
+	memset(lsc->lsc_system_mac, 0,
+	    sizeof(lsc->lsc_system_mac));
 
 	LACP_DPRINTF((lsc, NULL, "lacp stopped\n"));
 }
@@ -647,10 +655,6 @@ lacp_allocport(struct lagg_proto_softc *xlsc, struct lagg_port *lp)
 	lagg_work_set(&lacpp->lp_work_marker, lacp_marker_work, lsc);
 
 	LACP_LOCK(lsc);
-	if (LAGG_PORTS_EMPTY(sc)) {
-		memcpy(lsc->lsc_system_mac, LAGG_CLLADDR(sc),
-		    sizeof(lsc->lsc_system_mac));
-	}
 	lacp_sm_port_init(lsc, lacpp, lp);
 	LACP_UNLOCK(lsc);
 
@@ -700,9 +704,8 @@ void
 lacp_freeport(struct lagg_proto_softc *xlsc, struct lagg_port *lp)
 {
 	struct lacp_softc *lsc;
-	struct lacp_port *lacpp, *lacpp0;
+	struct lacp_port *lacpp;
 	struct lagg_softc *sc;
-	struct lagg_port *lp0;
 	struct ifreq ifr;
 
 	lsc = (struct lacp_softc *)xlsc;
@@ -719,22 +722,6 @@ lacp_freeport(struct lagg_proto_softc *xlsc, struct lagg_port *lp)
 	IFNET_LOCK(lp->lp_ifp);
 	(void)lp->lp_ioctl(lp->lp_ifp, SIOCDELMULTI, (void *)&ifr);
 	IFNET_UNLOCK(lp->lp_ifp);
-
-	LACP_LOCK(lsc);
-	if (LAGG_PORTS_EMPTY(sc)) {
-		memset(lsc->lsc_system_mac, 0,
-		    sizeof(lsc->lsc_system_mac));
-	} else if (memcmp(LAGG_CLLADDR(sc), lsc->lsc_system_mac,
-	    sizeof(lsc->lsc_system_mac)) != 0) {
-		memcpy(lsc->lsc_system_mac, LAGG_CLLADDR(sc),
-		    sizeof(lsc->lsc_system_mac));
-		LAGG_PORTS_FOREACH(sc, lp0) {
-			lacpp0 = lp0->lp_proto_ctx;
-			lacpp0->lp_selected = LACP_UNSELECTED;
-			/* reset state of the port at lacp_set_mux() */
-		}
-	}
-	LACP_UNLOCK(lsc);
 
 	lp->lp_proto_ctx = NULL;
 	kmem_free(lacpp, sizeof(*lacpp));
