@@ -1,4 +1,4 @@
-/* $NetBSD: types.h,v 1.18 2021/03/24 05:00:24 simonb Exp $ */
+/* $NetBSD: types.h,v 1.19 2021/09/30 18:33:28 skrll Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@ typedef __uint32_t register32_t;
 #define PRIxREGISTER	PRIx64
 #define PRIxREGISTER32	PRIx32
 
-typedef unsigned short	tlb_asid_t;
+typedef unsigned int	tlb_asid_t;
 
 #if defined(_KERNEL)
 #define LBL_X19	0
