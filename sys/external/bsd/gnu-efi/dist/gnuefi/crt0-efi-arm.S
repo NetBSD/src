@@ -1,4 +1,4 @@
-/*	$NetBSD: crt0-efi-arm.S,v 1.1.1.1 2018/08/16 18:17:47 jmcneill Exp $	*/
+/*	$NetBSD: crt0-efi-arm.S,v 1.1.1.2 2021/09/30 18:50:09 jmcneill Exp $	*/
 
 /*
  * crt0-efi-arm.S - PE/COFF header for ARM EFI applications
@@ -36,7 +36,7 @@ coff_header:
 	.short	2				// nr_sections
 	.long	0 				// TimeDateStamp
 	.long	0				// PointerToSymbolTable
-	.long	1				// NumberOfSymbols
+	.long	0				// NumberOfSymbols
 	.short	section_table - optional_header	// SizeOfOptionalHeader
 	.short	0x306				// Characteristics.
 						// IMAGE_FILE_32BIT_MACHINE |

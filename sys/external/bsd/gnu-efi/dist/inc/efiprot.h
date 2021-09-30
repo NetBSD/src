@@ -1,4 +1,4 @@
-/*	$NetBSD: efiprot.h,v 1.1.1.2 2018/08/16 18:17:47 jmcneill Exp $	*/
+/*	$NetBSD: efiprot.h,v 1.1.1.3 2021/09/30 18:50:09 jmcneill Exp $	*/
 
 #ifndef _EFI_PROT_H
 #define _EFI_PROT_H
@@ -519,14 +519,20 @@ typedef struct {
 
 #define SIZE_OF_EFI_FILE_SYSTEM_INFO EFI_FIELD_OFFSET(EFI_FILE_SYSTEM_INFO,VolumeLabel)
 
-#define EFI_FILE_SYSTEM_VOLUME_LABEL_INFO_ID    \
+#define EFI_FILE_SYSTEM_VOLUME_LABEL_ID    \
     { 0xDB47D7D3,0xFE81, 0x11d3, {0x9A, 0x35, 0x00, 0x90, 0x27, 0x3F, 0xC1, 0x4D} }
 
 typedef struct {
     CHAR16                  VolumeLabel[1];
-} EFI_FILE_SYSTEM_VOLUME_LABEL_INFO;
+} EFI_FILE_SYSTEM_VOLUME_LABEL;
 
-#define SIZE_OF_EFI_FILE_SYSTEM_VOLUME_LABEL_INFO EFI_FIELD_OFFSET(EFI_FILE_SYSTEM_VOLUME_LABEL_INFO,VolumeLabel)
+#define SIZE_OF_EFI_FILE_SYSTEM_VOLUME_LABEL_INFO EFI_FIELD_OFFSET(EFI_FILE_SYSTEM_VOLUME_LABEL,VolumeLabel)
+
+//
+// For compatibility with older versions of gnu-efi
+//
+#define EFI_FILE_SYSTEM_VOLUME_LABEL_INFO_ID EFI_FILE_SYSTEM_VOLUME_LABEL_ID
+#define EFI_FILE_SYSTEM_VOLUME_LABEL_INFO    EFI_FILE_SYSTEM_VOLUME_LABEL
 
 //
 // Load file protocol
@@ -1245,7 +1251,8 @@ typedef struct {
 
 typedef EFI_LOADED_IMAGE_PROTOCOL EFI_LOADED_IMAGE;
 
-
+#define EFI_LOADED_IMAGE_DEVICE_PATH_PROTOCOL_GUID \
+    {0xbc62157e, 0x3e33, 0x4fec, {0x99, 0x20, 0x2d, 0x3b, 0x36, 0xd7, 0x50, 0xdf} }
 
 /*
  * Random Number Generator Protocol
