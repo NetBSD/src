@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_event.c,v 1.126 2021/09/26 23:37:40 thorpej Exp $	*/
+/*	$NetBSD: kern_event.c,v 1.127 2021/09/30 01:12:06 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_event.c,v 1.126 2021/09/26 23:37:40 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_event.c,v 1.127 2021/09/30 01:12:06 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1856,10 +1856,9 @@ knote(struct klist *list, long hint)
 	struct knote *kn, *tmpkn;
 
 	SLIST_FOREACH_SAFE(kn, list, kn_selnext, tmpkn) {
-		KASSERT(kn->kn_fop != NULL);
-		KASSERT(kn->kn_fop->f_event != NULL);
-		if ((*kn->kn_fop->f_event)(kn, hint))
+		if (filter_event(kn, hint)) {
 			knote_activate(kn);
+		}
 	}
 }
 
