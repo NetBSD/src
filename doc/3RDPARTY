@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.1817 2021/09/27 17:04:12 christos Exp $
+#	$NetBSD: 3RDPARTY,v 1.1818 2021/09/30 19:11:22 jmcneill Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -1672,8 +1672,8 @@ License:        BSD-like (3-clause)
 Location:       usr.bin/nc
 
 Package:	gnu-efi
-Version:	3.0.8
-Current Vers:	3.0.8
+Version:	3.0.14
+Current Vers:	3.0.14
 Maintainer:	https://sourceforge.net/projects/gnu-efi/
 Archive Site:	https://sourceforge.net/projects/gnu-efi/
 Home Page:	https://sourceforge.net/projects/gnu-efi/
