@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_hook.c,v 1.10 2021/09/30 07:14:09 skrll Exp $	*/
+/*	$NetBSD: kern_hook.c,v 1.11 2021/09/30 07:15:02 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2002, 2007, 2008 The NetBSD Foundation, Inc.
@@ -31,10 +31,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_hook.c,v 1.10 2021/09/30 07:14:09 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_hook.c,v 1.11 2021/09/30 07:15:02 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/condvar.h>
+#include <sys/cpu.h>
 #include <sys/device.h>
 #include <sys/hook.h>
 #include <sys/kmem.h>
