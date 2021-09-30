@@ -1,4 +1,4 @@
-/*	$NetBSD: dpath.c,v 1.3 2018/08/16 18:22:05 jmcneill Exp $	*/
+/*	$NetBSD: dpath.c,v 1.4 2021/09/30 19:02:48 jmcneill Exp $	*/
 
 /*++
 
@@ -661,7 +661,8 @@ _DevPath1394 (
     F1394_DEVICE_PATH       *F1394;
 
     F1394 = DevPath;
-    CatPrint(Str, L"1394(%g)", &F1394->Guid);
+    // Guid has format of IEEE-EUI64
+    CatPrint(Str, L"I1394(%016lx)", F1394->Guid);
 }
 
 
@@ -865,9 +866,9 @@ _DevPathInfiniBand (
     INFINIBAND_DEVICE_PATH  *InfiniBand __unused;
 
     InfiniBand = DevPath;
-    CatPrint( Str , L"Infiniband(0x%x,%g,0x%lx,0x%lx,0x%lx)" ,
-        InfiniBand-> ResourceFlags , InfiniBand-> PortGid , InfiniBand-> ServiceId ,
-        InfiniBand-> TargetPortId , InfiniBand-> DeviceId ) ;
+    CatPrint(Str, L"Infiniband(0x%x,%g,0x%lx,0x%lx,0x%lx)",
+        InfiniBand->ResourceFlags, InfiniBand->PortGid, InfiniBand->ServiceId,
+        InfiniBand->TargetPortId, InfiniBand->DeviceId);
 }
 
 static VOID
@@ -891,16 +892,18 @@ _DevPathUart (
     }
 
     if (Uart->BaudRate == 0) {
-        CatPrint(Str, L"Uart(DEFAULT %c",Uart->BaudRate,Parity);
+        CatPrint(Str, L"Uart(DEFAULT,");
     } else {
-        CatPrint(Str, L"Uart(%d %c",Uart->BaudRate,Parity);
+        CatPrint(Str, L"Uart(%ld,", Uart->BaudRate);
     }
 
     if (Uart->DataBits == 0) {
-        CatPrint(Str, L"D");
+        CatPrint(Str, L"DEFAULT,");
     } else {
-        CatPrint(Str, L"%d",Uart->DataBits);
+        CatPrint(Str, L"%d,", Uart->DataBits);
     }
+
+    CatPrint(Str, L"%c,", Parity);
 
     switch (Uart->StopBits) {
         case 0  : CatPrint(Str, L"D)");   break;
@@ -935,21 +938,20 @@ _DevPathHardDrive (
     Hd = DevPath;
     switch (Hd->SignatureType) {
         case SIGNATURE_TYPE_MBR:
-            CatPrint(Str, L"HD(Part%d,Sig%08X)",
+            CatPrint(Str, L"HD(%d,MBR,0x%08x)",
                 Hd->PartitionNumber,
                 *((UINT32 *)(&(Hd->Signature[0])))
                 );
             break;
         case SIGNATURE_TYPE_GUID:
-            CatPrint(Str, L"HD(Part%d,Sig%g)",
+            CatPrint(Str, L"HD(%d,GPT,%g)",
                 Hd->PartitionNumber,
                 (EFI_GUID *) &(Hd->Signature[0])
                 );
             break;
         default:
-            CatPrint(Str, L"HD(Part%d,MBRType=%02x,SigType=%02x)",
+            CatPrint(Str, L"HD(%d,%d,0)",
                 Hd->PartitionNumber,
-                Hd->MBRType,
                 Hd->SignatureType
                 );
             break;

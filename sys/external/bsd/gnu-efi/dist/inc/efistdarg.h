@@ -1,4 +1,4 @@
-/*	$NetBSD: efistdarg.h,v 1.3 2018/08/16 18:22:05 jmcneill Exp $	*/
+/*	$NetBSD: efistdarg.h,v 1.4 2021/09/30 19:02:47 jmcneill Exp $	*/
 
 #ifndef _EFISTDARG_H_
 #define _EFISTDARG_H_
@@ -21,7 +21,7 @@ Revision History
 
 --*/
 
-#ifndef GNU_EFI_USE_EXTERNAL_STDARG
+#if !defined(GNU_EFI_USE_EXTERNAL_STDARG) && !defined(_MSC_VER)
 #ifdef __NetBSD__
 #include <sys/stdarg.h>
 #else

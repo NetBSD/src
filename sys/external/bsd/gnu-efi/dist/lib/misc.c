@@ -1,4 +1,4 @@
-/*	$NetBSD: misc.c,v 1.2 2021/04/12 09:24:24 mrg Exp $	*/
+/*	$NetBSD: misc.c,v 1.3 2021/09/30 19:02:48 jmcneill Exp $	*/
 
 /*++
 
@@ -248,7 +248,7 @@ LibGetVariableAndSize (
     OUT UINTN               *VarSize
     )
 {
-    EFI_STATUS              Status;
+    EFI_STATUS              Status = EFI_SUCCESS;
     VOID                    *Buffer;
     UINTN                   BufferSize;
 
@@ -389,7 +389,9 @@ LibInsertToTailOfBootOrder (
 
     VarSize += sizeof(UINT16);
     NewBootOptionArray = AllocatePool (VarSize);
-    
+    if (!NewBootOptionArray)
+        return EFI_OUT_OF_RESOURCES;
+
     for (Index = 0; Index < ((VarSize/sizeof(UINT16)) - 1); Index++) {
         NewBootOptionArray[Index] = BootOptionArray[Index];
     }
@@ -406,9 +408,7 @@ LibInsertToTailOfBootOrder (
                 VarSize, (VOID*) NewBootOptionArray
                 );
 
-    if (NewBootOptionArray) {
-        FreePool (NewBootOptionArray);
-    }
+    FreePool (NewBootOptionArray);
     if (BootOptionArray) {
         FreePool (BootOptionArray);
     }

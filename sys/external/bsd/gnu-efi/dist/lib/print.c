@@ -1,4 +1,4 @@
-/*	$NetBSD: print.c,v 1.4 2019/01/27 04:17:39 oster Exp $	*/
+/*	$NetBSD: print.c,v 1.5 2021/09/30 19:02:48 jmcneill Exp $	*/
 
 /*++
 
@@ -317,7 +317,7 @@ _SPrint (
     IN VOID     *Context,
     IN CHAR16   *Buffer
     )
-// Append string worker for SPrint, PoolPrint and CatPrint
+// Append string worker for UnicodeSPrint, PoolPrint and CatPrint
 {
     UINTN           len;
     POOL_PRINT      *spc;
@@ -407,7 +407,7 @@ _PoolCatPrint (
     IN OUT POOL_PRINT   *spc,
     IN INTN             (EFIAPI *Output)(VOID *context, CHAR16 *str)
     )
-// Dispath function for SPrint, PoolPrint, and CatPrint
+// Dispatch function for UnicodeSPrint, PoolPrint, and CatPrint
 {
     PRINT_STATE         ps;
 
@@ -423,7 +423,7 @@ _PoolCatPrint (
 
 
 UINTN
-VSPrint (
+UnicodeVSPrint (
     OUT CHAR16        *Str,
     IN UINTN          StrSize,
     IN CONST CHAR16   *fmt,
@@ -465,7 +465,7 @@ Returns:
 }
 
 UINTN
-SPrint (
+UnicodeSPrint (
     OUT CHAR16        *Str,
     IN UINTN          StrSize,
     IN CONST CHAR16   *fmt,
@@ -496,7 +496,7 @@ Returns:
     UINTN            len;
 
     va_start (args, fmt);
-    len = VSPrint(Str, StrSize, fmt, args);
+    len = UnicodeVSPrint(Str, StrSize, fmt, args);
     va_end (args);
 
     return len;
@@ -812,7 +812,7 @@ _IPrint (
 
 
 UINTN
-APrint (
+AsciiPrint (
     IN CONST CHAR8    *fmt,
     ...
     )
@@ -841,6 +841,64 @@ Returns:
     back = _IPrint ((UINTN) -1, (UINTN) -1, ST->ConOut, NULL, fmt, args);
     va_end (args);
     return back;
+}
+
+
+UINTN
+AsciiVSPrint (
+    OUT CHAR8         *Str,
+    IN UINTN          StrSize,
+    IN CONST CHAR8    *fmt,
+    va_list           args
+)
+/*++
+
+Routine Description:
+
+    Prints a formatted ascii string to a buffer using a va_list
+
+Arguments:
+
+    Str         - Output buffer to print the formatted string into
+
+    StrSize     - Size of Str.  String is truncated to this size.
+                  A size of 0 means there is no limit
+
+    fmt         - The format string
+
+    args        - va_list
+
+
+Returns:
+
+    String length returned in buffer
+
+--*/
+// Use UnicodeVSPrint() and convert back to ASCII
+{
+    CHAR16 *UnicodeStr, *UnicodeFmt;
+    UINTN i, Len;
+
+    UnicodeStr = AllocatePool(StrSize * sizeof(CHAR16));
+    if (!UnicodeStr)
+        return 0;
+
+    UnicodeFmt = PoolPrint(L"%a", fmt);
+    if (!UnicodeFmt) {
+        FreePool(UnicodeStr);
+        return 0;
+    }
+
+    Len = UnicodeVSPrint(UnicodeStr, StrSize, UnicodeFmt, args);
+    FreePool(UnicodeFmt);
+
+    // The strings are ASCII so just do a plain Unicode conversion
+    for (i = 0; i < Len; i++)
+        Str[i] = (CHAR8)UnicodeStr[i];
+    Str[Len] = 0;
+    FreePool(UnicodeStr);
+
+    return Len;
 }
 
 
@@ -1323,7 +1381,7 @@ ValueToString (
         *(p1++) = (CHAR8)r + '0';
     }
 
-    c = (Comma ? ca[(p1 - str) % 3] : 999) + 1;
+    c = (UINTN) (Comma ? ca[(p1 - str) % 3] : 999) + 1;
     while (p1 != str) {
 
         c -= 1;
@@ -1415,7 +1473,7 @@ TimeToString (
     Year = Time->Year % 100;
 
     // bugbug: for now just print it any old way
-    SPrint (Buffer, 0, L"%02d/%02d/%02d  %02d:%02d%c",
+    UnicodeSPrint (Buffer, 0, L"%02d/%02d/%02d  %02d:%02d%c",
         Time->Month,
         Time->Day,
         Year,
