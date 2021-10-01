@@ -161,6 +161,12 @@ static const struct regset alphanbsd_fpregset =
 
 /* Iterate over supported core file register note sections. */
 
+
+void
+alphanbsd_iterate_over_regset_sections (struct gdbarch *gdbarch,
+					iterate_over_regset_sections_cb *cb,
+					void *cb_data,
+					const struct regcache *regcache);
 void
 alphanbsd_iterate_over_regset_sections (struct gdbarch *gdbarch,
 					iterate_over_regset_sections_cb *cb,
@@ -239,8 +245,8 @@ alphanbsd_sigtramp_cache_init (const struct tramp_frame *self,
 			       struct trad_frame_cache *this_cache,
 			       CORE_ADDR func)
 {
-  struct gdbarch *gdbarch = get_frame_arch (this_frame);
-  struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
+  /* struct gdbarch *gdbarch = get_frame_arch (this_frame); */
+  /* struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch); */
   CORE_ADDR addr, sp;
   int i;
 
