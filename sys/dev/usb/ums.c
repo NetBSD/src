@@ -1,4 +1,4 @@
-/*	$NetBSD: ums.c,v 1.100 2021/02/03 23:26:08 thorpej Exp $	*/
+/*	$NetBSD: ums.c,v 1.101 2021/10/01 21:14:06 macallan Exp $	*/
 
 /*
  * Copyright (c) 1998, 2017 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ums.c,v 1.100 2021/02/03 23:26:08 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ums.c,v 1.101 2021/10/01 21:14:06 macallan Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -155,6 +155,8 @@ ums_attach(device_t parent, device_t self, void *aux)
 		sc->sc_ms.flags |= HIDMS_REVZ;
 	if (quirks & UQ_SPUR_BUT_UP)
 		sc->sc_ms.flags |= HIDMS_SPUR_BUT_UP;
+	if (quirks & UQ_ALWAYS_ON)
+		sc->sc_alwayson = true;
 
 	if (!pmf_device_register(self, NULL, NULL))
 		aprint_error_dev(self, "couldn't establish power handler\n");
@@ -199,25 +201,6 @@ ums_attach(device_t parent, device_t self, void *aux)
 				sc->sc_ms.hidms_loc_w.pos =
 				    sc->sc_ms.hidms_loc_z.pos + woffset;
 		}
-	}
-
-	if (uha->uiaa->uiaa_vendor == USB_VENDOR_HAILUCK &&
-	    uha->uiaa->uiaa_product == USB_PRODUCT_HAILUCK_KEYBOARD) {
-		/*
-		 * The HAILUCK USB Keyboard has a built-in touchpad, which
-		 * needs to be active for the keyboard to function properly.
-		 */
-		sc->sc_alwayson = true;
-	}
-
-	if (uha->uiaa->uiaa_vendor == USB_VENDOR_CHICONY &&
-	    uha->uiaa->uiaa_product == USB_PRODUCT_CHICONY_OPTMOUSE0939) {
-		/*
-		 * This cheap mouse will disconnect after 60 seconds,
-		 * reconnect, and then disconnect again (ad nauseum)
-		 * unless it's kept open.
-		 */
-		sc->sc_alwayson = true;
 	}
 
 	tpcalib_init(&sc->sc_ms.sc_tpcalib);
