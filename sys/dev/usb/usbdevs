@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.794 2021/06/13 09:23:42 mlelstv Exp $
+$NetBSD: usbdevs,v 1.795 2021/10/01 21:01:34 macallan Exp $
 
 /*-
  * Copyright (c) 1998-2004 The NetBSD Foundation, Inc.
@@ -368,6 +368,7 @@ vendor GARMIN		0x091e	Garmin International
 vendor GOHUBS		0x0921	GoHubs
 vendor BIOMETRIC	0x0929	American Biometric Company
 vendor TOSHIBA		0x0930	Toshiba
+vendor PIXART		0x093a	PixArt
 vendor PLEXTOR		0x093b	Plextor
 vendor INTREPIDCS	0x093c	Intrepid
 vendor YANO		0x094f	Yano
@@ -2714,6 +2715,9 @@ product PINNACLE PCTV800E	0x0227	PCTV 800e
 product PINNACLE PCTVDVBTFLASH	0x0228	Pinnacle PCTV DVB-T Flash
 product PINNACLE PCTV72E	0x0236	Pinnacle PCTV 72e
 product PINNACLE PCTV73E	0x0237	Pinnacle PCTV 73e
+
+/* PixArt */
+product PIXART RPIMOUSE		0x2510	Raspberry Pi Mouse
 
 /* Planex Communications products */
 product PLANEX  GW_US11H	0x14ea	GW-US11H WLAN
