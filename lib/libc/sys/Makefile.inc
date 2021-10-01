@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.246 2021/09/19 15:51:28 thorpej Exp $
+#	$NetBSD: Makefile.inc,v 1.247 2021/10/01 17:13:44 christos Exp $
 #	@(#)Makefile.inc	8.3 (Berkeley) 10/24/94
 
 # sys sources
@@ -97,7 +97,7 @@ ASM=\
     __acl_aclcheck_file.S __acl_aclcheck_fd.S \
     access.S acct.S \
 	    bind.S \
-	chdir.S chflags.S chmod.S chown.S chroot.S clock_nanosleep.S \
+	chdir.S chflags.S chmod.S chown.S chroot.S \
 		clock_getcpuclockid2.S \
 		__clock_getres50.S __clock_gettime50.S \
 	dup.S dup2.S dup3.S \
@@ -137,15 +137,14 @@ ASM=\
 		mprotect.S __msgctl50.S msgget.S munlock.S munlockall.S \
 		munmap.S \
 	nfssvc.S __ntp_gettime50.S \
-	openat.S \
 	pathconf.S pipe2.S \
 		__posix_chown.S __posix_fchown.S __posix_lchown.S \
 		__posix_rename.S profil.S \
 	__quotactl.S \
-	rasctl.S readlinkat.S reboot.S recvfrom.S recvmmsg.S recvmsg.S \
+	rasctl.S readlinkat.S reboot.S \
 		rename.S renameat.S revoke.S rmdir.S \
 	semconfig.S semget.S semop.S \
-		sendmmsg.S sendmsg.S sendto.S setegid.S seteuid.S \
+		setegid.S seteuid.S \
 		setgid.S setgroups.S __setitimer50.S __setlogin.S setpgid.S \
 		setpriority.S \
 		setregid.S setreuid.S setrlimit.S setsid.S setsockopt.S \
@@ -175,15 +174,19 @@ ASM_MD=	_lwp_getprivate.S mremap.S
 . endif
 .endfor
 
-WEAKASM= accept.S __aio_suspend50.S close.S connect.S execve.S \
+WEAKASM= accept.S __aio_suspend50.S clock_nanosleep.S close.S connect.S \
+	execve.S \
 	fcntl.S fdatasync.S fsync.S \
 	fsync_range.S __kevent50.S \
 	kill.S mq_receive.S mq_send.S __mq_timedreceive50.S __mq_timedsend50.S \
-	msgrcv.S msgsnd.S __msync13.S  __nanosleep50.S open.S paccept.S poll.S \
+	msgrcv.S msgsnd.S __msync13.S  __nanosleep50.S open.S openat.S \
+	paccept.S poll.S \
 	__pollts50.S __pselect50.S read.S readlink.S \
-	readv.S _sched_setparam.S _sched_getparam.S _sched_setaffinity.S \
+	readv.S recvfrom.S recvmmsg.S recvmsg.S \
+	_sched_setparam.S _sched_getparam.S _sched_setaffinity.S \
 	_sched_getaffinity.S sched_yield.S _sched_protect.S \
-	__select50.S setcontext.S __sigprocmask14.S __sigsuspend14.S sysarch.S \
+	__select50.S sendmmsg.S sendmsg.S sendto.S \
+	setcontext.S __sigprocmask14.S __sigsuspend14.S sysarch.S \
 	__wait450.S wait6.S write.S writev.S
 
 NOERR=	getegid.S geteuid.S getgid.S getpid.S getppid.S getuid.S \
