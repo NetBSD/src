@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_cancelstub.c,v 1.39 2021/10/01 17:13:44 christos Exp $	*/
+/*	$NetBSD: pthread_cancelstub.c,v 1.40 2021/10/01 20:13:38 christos Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2007 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 #undef _FORTIFY_SOURCE
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_cancelstub.c,v 1.39 2021/10/01 17:13:44 christos Exp $");
+__RCSID("$NetBSD: pthread_cancelstub.c,v 1.40 2021/10/01 20:13:38 christos Exp $");
 
 #ifndef lint
 
@@ -127,11 +127,10 @@ ssize_t	_sys_recvfrom(int, void * restrict, size_t, int,
 ssize_t _sys_recvmsg(int, struct msghdr *, int);
 int _sys_recvmmsg(int, struct mmsghdr *, unsigned int, unsigned int,
     struct timespec *);
-ssize_t _sys_sendto(int s, const void *msg, size_t len, int flags,
-    const struct sockaddr *to, socklen_t tolen);
-ssize_t _sys_sendmsg(int s, const struct msghdr *msg, int flags);
-int _sys_sendmmsg(int s, struct mmsghdr *mmsg, unsigned int vlen,
-    unsigned int flags);
+ssize_t _sys_sendto(int, const void *, size_t, int, const struct sockaddr *,
+    socklen_t);
+ssize_t _sys_sendmsg(int, const struct msghdr *, int);
+int _sys_sendmmsg(int, struct mmsghdr *, unsigned int, unsigned int);
 int	_sys___select50(int, fd_set *, fd_set *, fd_set *, struct timeval *);
 int	_sys___wait450(pid_t, int *, int, struct rusage *);
 ssize_t	_sys_write(int, const void *, size_t);
