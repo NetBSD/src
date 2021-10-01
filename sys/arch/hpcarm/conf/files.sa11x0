@@ -1,4 +1,4 @@
-#	$NetBSD: files.sa11x0,v 1.1 2010/04/17 13:36:21 nonaka Exp $
+#	$NetBSD: files.sa11x0,v 1.2 2021/10/01 06:07:12 rin Exp $
 #
 # SA-11x0 model specific configuration info
 #
@@ -6,7 +6,7 @@
 # SA-11x0 specific files.
 #file	arch/hpcarm/hpcarm/intr.c
 file	arch/hpcarm/hpcarm/sa11x0_hpc_machdep.c
-file	arch/hpcarm/hpcarm/spl.S
+#file	arch/hpcarm/hpcarm/spl.S
 file	arch/arm/arm32/intr.c
 file	arch/arm/arm32/spl.S
 
