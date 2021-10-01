@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_quirks.c,v 1.98 2021/08/17 22:00:32 andvar Exp $	*/
+/*	$NetBSD: usb_quirks.c,v 1.99 2021/10/01 21:09:50 macallan Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_quirks.c,v 1.30 2003/01/02 04:15:55 imp Exp $	*/
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb_quirks.c,v 1.98 2021/08/17 22:00:32 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb_quirks.c,v 1.99 2021/10/01 21:09:50 macallan Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -383,6 +383,23 @@ Static const struct usbd_quirk_entry {
 	{ UQ_DESC_CORRUPT | UQ_MISS_OUT_ACK, desc_pn533 }},
  { USB_VENDOR_SHUTTLE,		USB_PRODUCT_SHUTTLE_SCL3712,		ANY,
 	{ UQ_DESC_CORRUPT | UQ_MISS_OUT_ACK, desc_pn533 }},
+
+/*
+ * These cheap mice will disconnect after 60 seconds,
+ * reconnect, and then disconnect again (ad nauseum)
+ * unless it's kept open.
+ */
+ { USB_VENDOR_CHICONY,		USB_PRODUCT_CHICONY_OPTMOUSE0939,	ANY,
+	{ UQ_ALWAYS_ON, NULL }},
+ { USB_VENDOR_PIXART,		USB_PRODUCT_PIXART_RPIMOUSE,		ANY,
+	{ UQ_ALWAYS_ON, NULL }},
+/*
+ * The HAILUCK USB Keyboard has a built-in touchpad, which
+ * needs to be active for the keyboard to function properly.
+ */
+ { USB_VENDOR_HAILUCK,		USB_PRODUCT_HAILUCK_KEYBOARD,		ANY,
+	{ UQ_ALWAYS_ON, NULL }},
+ 
  { 0, 0, 0, { 0, NULL } }
 };
 
