@@ -1,4 +1,4 @@
-/*	$NetBSD: fifo_vnops.c,v 1.87 2021/10/02 02:07:41 thorpej Exp $	*/
+/*	$NetBSD: fifo_vnops.c,v 1.88 2021/10/02 17:32:55 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fifo_vnops.c,v 1.87 2021/10/02 02:07:41 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fifo_vnops.c,v 1.88 2021/10/02 17:32:55 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -156,6 +156,23 @@ fifo_open(void *v)
 			kmem_free(fip, sizeof(*fip));
 			return (error);
 		}
+
+		/*
+		 * FIFOs must be readable when there is at least 1
+		 * byte of data available in the receive buffer.
+		 *
+		 * FIFOs must be writable when there is space for
+		 * at least PIPE_BUF bytes in the send buffer.
+		 * If we're increasing the low water mark for the
+		 * send buffer, then mimick how soreserve() would
+		 * have set the high water mark.
+		 */
+		rso->so_rcv.sb_lowat = 1;
+		if (wso->so_snd.sb_lowat < PIPE_BUF) {
+			wso->so_snd.sb_hiwat = PIPE_BUF * 2;
+		}
+		wso->so_snd.sb_lowat = PIPE_BUF;
+
 		fip->fi_readers = 0;
 		fip->fi_writers = 0;
 		wso->so_state |= SS_CANTRCVMORE;
