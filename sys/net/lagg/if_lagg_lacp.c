@@ -1,4 +1,4 @@
-/*	$NetBSD: if_lagg_lacp.c,v 1.4 2021/09/30 04:23:30 yamaguchi Exp $	*/
+/*	$NetBSD: if_lagg_lacp.c,v 1.5 2021/10/02 22:14:32 mrg Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-NetBSD
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_lagg_lacp.c,v 1.4 2021/09/30 04:23:30 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_lagg_lacp.c,v 1.5 2021/10/02 22:14:32 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_lagg.h"
@@ -705,14 +705,12 @@ lacp_freeport(struct lagg_proto_softc *xlsc, struct lagg_port *lp)
 {
 	struct lacp_softc *lsc;
 	struct lacp_port *lacpp;
-	struct lagg_softc *sc;
 	struct ifreq ifr;
 
 	lsc = (struct lacp_softc *)xlsc;
-	sc = lsc->lsc_softc;
 	lacpp = lp->lp_proto_ctx;
 
-	KASSERT(LAGG_LOCKED(sc));
+	KASSERT(LAGG_LOCKED(lsc->lsc_softc));
 
 	lagg_workq_wait(lsc->lsc_workq, &lacpp->lp_work_smtx);
 	lagg_workq_wait(lsc->lsc_workq, &lacpp->lp_work_marker);
