@@ -1,4 +1,4 @@
-/*	$NetBSD: t_poll.c,v 1.6 2021/10/02 14:41:36 thorpej Exp $	*/
+/*	$NetBSD: t_poll.c,v 1.7 2021/10/02 15:50:06 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -39,6 +39,7 @@
 #include <paths.h>
 #include <poll.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <signal.h>
 #include <unistd.h>
 
@@ -252,6 +253,104 @@ fifo_support(void)
 	}
 }
 
+ATF_TC_WITH_CLEANUP(fifo_inout);
+ATF_TC_HEAD(fifo_inout, tc)
+{
+	atf_tc_set_md_var(tc, "descr",
+	    "Check POLLIN/POLLOUT behavior with fifos");
+}
+
+ATF_TC_BODY(fifo_inout, tc)
+{
+	struct pollfd pfd[2];
+	char *buf;
+	int rfd, wfd;
+	long pipe_buf;
+
+	fifo_support();
+
+	ATF_REQUIRE(mkfifo(fifo_path, 0600) == 0);
+	ATF_REQUIRE((rfd = open(fifo_path, O_RDONLY | O_NONBLOCK)) >= 0);
+	ATF_REQUIRE((wfd = open(fifo_path, O_WRONLY | O_NONBLOCK)) >= 0);
+
+	/* Get the maximum atomic pipe write size. */
+	pipe_buf = fpathconf(wfd, _PC_PIPE_BUF);
+	ATF_REQUIRE(pipe_buf > 1);
+
+	buf = malloc(pipe_buf);
+	ATF_REQUIRE(buf != NULL);
+
+	memset(&pfd, 0, sizeof(pfd));
+	pfd[0].fd = rfd;
+	pfd[0].events = POLLIN | POLLRDNORM;
+	pfd[1].fd = wfd;
+	pfd[1].events = POLLOUT | POLLWRNORM;
+
+	/* We expect the FIFO to be writable but not readable. */
+	ATF_REQUIRE(poll(pfd, 2, 0) == 1);
+	ATF_REQUIRE(pfd[0].revents == 0);
+	ATF_REQUIRE(pfd[1].revents == (POLLOUT | POLLWRNORM));
+
+	/* Write a single byte of data into the FIFO. */
+	ATF_REQUIRE(write(wfd, buf, 1) == 1);
+
+	/* We expect the FIFO to be readable and writable. */
+	ATF_REQUIRE(poll(pfd, 2, 0) == 2);
+	ATF_REQUIRE(pfd[0].revents == (POLLIN | POLLRDNORM));
+	ATF_REQUIRE(pfd[1].revents == (POLLOUT | POLLWRNORM));
+
+	/* Read that single byte back out. */
+	ATF_REQUIRE(read(rfd, buf, 1) == 1);
+
+	/*
+	 * Write data into the FIFO until it is full, which is
+	 * defined as insufficient buffer space to hold a the
+	 * maximum atomic pipe write size.
+	 */
+	while (write(wfd, buf, pipe_buf) != -1) {
+		continue;
+	}
+	ATF_REQUIRE(errno == EAGAIN);
+
+	/* We expect the FIFO to be readble but not writable. */
+	ATF_REQUIRE(poll(pfd, 2, 0) == 1);
+	ATF_REQUIRE(pfd[0].revents == (POLLIN | POLLRDNORM));
+	ATF_REQUIRE(pfd[1].revents == 0);
+
+	/* Read a single byte of data from the FIFO. */
+	ATF_REQUIRE(read(rfd, buf, 1) == 1);
+
+	/*
+	 * Because we have read only a single byte out, there will
+	 * be insufficient space for a pipe_buf-sized message, so
+	 * the FIFO should still not be writable.
+	 */
+	ATF_REQUIRE(poll(pfd, 2, 0) == 1);
+	ATF_REQUIRE(pfd[0].revents == (POLLIN | POLLRDNORM));
+	ATF_REQUIRE(pfd[1].revents == 0);
+
+	/*
+	 * Now read all of the data out of the FIFO and ensure that
+	 * we get back to the initial state.
+	 */
+	while (read(rfd, buf, pipe_buf) != -1) {
+		continue;
+	}
+	ATF_REQUIRE(errno == EAGAIN);
+
+	ATF_REQUIRE(poll(pfd, 2, 0) == 1);
+	ATF_REQUIRE(pfd[0].revents == 0);
+	ATF_REQUIRE(pfd[1].revents == (POLLOUT | POLLWRNORM));
+
+	(void)close(wfd);
+	(void)close(rfd);
+}
+
+ATF_TC_CLEANUP(fifo_inout, tc)
+{
+	(void)unlink(fifo_path);
+}
+
 ATF_TC_WITH_CLEANUP(fifo_hup1);
 ATF_TC_HEAD(fifo_hup1, tc)
 {
@@ -354,6 +453,7 @@ ATF_TP_ADD_TCS(tp)
 	ATF_TP_ADD_TC(tp, basic);
 	ATF_TP_ADD_TC(tp, err);
 
+	ATF_TP_ADD_TC(tp, fifo_inout);
 	ATF_TP_ADD_TC(tp, fifo_hup1);
 	ATF_TP_ADD_TC(tp, fifo_hup2);
 
