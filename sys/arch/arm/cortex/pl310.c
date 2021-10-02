@@ -1,4 +1,4 @@
-/*	$NetBSD: pl310.c,v 1.19 2019/01/19 20:52:26 jmcneill Exp $	*/
+/*	$NetBSD: pl310.c,v 1.20 2021/10/02 20:52:09 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pl310.c,v 1.19 2019/01/19 20:52:26 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pl310.c,v 1.20 2021/10/02 20:52:09 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -157,7 +157,7 @@ arml2cc_attach(device_t parent, device_t self, void *aux)
 
 	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_HIGH);
 
-	bus_space_subregion(sc->sc_memt, mpcaa->mpcaa_memh, 
+	bus_space_subregion(sc->sc_memt, mpcaa->mpcaa_memh,
 	    off, L2CC_SIZE, &sc->sc_memh);
 
 	uint32_t id = arml2cc_read_4(sc, L2C_CACHE_ID);
