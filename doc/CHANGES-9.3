@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.3,v 1.1.2.31 2021/09/23 10:13:28 martin Exp $
+# $NetBSD: CHANGES-9.3,v 1.1.2.32 2021/10/02 11:08:51 martin Exp $
 
 A complete list of changes from the NetBSD 9.2 release to the NetBSD 9.3
 release:
@@ -740,4 +740,16 @@ bin/cp/utils.c					1.47
 
 	cp(1): PR 54564: cp of a fifo yields an empty file.
 	[skrll, ticket #1348]
+
+external/gpl3/gcc/dist/libgomp/oacc-init.c	1.1.1.5
+
+	Fix a pthread_key leak.
+	[manu, ticket #1349]
+
+sys/kern/uipc_socket2.c				1.140
+sys/miscfs/fifofs/fifo_vnops.c			1.87
+tests/lib/libc/sys/t_poll.c			1.5
+
+	PR kern/56429: fix POLLHUP behavior with FIFOs.
+	[thorpej, ticket #1350]
 
