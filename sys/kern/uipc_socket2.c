@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket2.c,v 1.139 2021/03/04 01:35:31 msaitoh Exp $	*/
+/*	$NetBSD: uipc_socket2.c,v 1.140 2021/10/02 02:07:41 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_socket2.c,v 1.139 2021/03/04 01:35:31 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_socket2.c,v 1.140 2021/10/02 02:07:41 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -555,10 +555,27 @@ sowakeup(struct socket *so, struct sockbuf *sb, int code)
 	KASSERT(solocked(so));
 	KASSERT(sb->sb_so == so);
 
-	if (code == POLL_IN)
+	switch (code) {
+	case POLL_IN:
 		band = POLLIN|POLLRDNORM;
-	else
+		break;
+
+	case POLL_OUT:
 		band = POLLOUT|POLLWRNORM;
+		break;
+
+	case POLL_HUP:
+		band = POLLHUP;
+		break;
+
+	default:
+		band = 0;
+#ifdef DIAGNOSTIC
+		printf("bad siginfo code %d in socket notification.\n", code);
+#endif 
+		break;
+	}
+
 	sb->sb_flags &= ~SB_NOTIFY;
 	selnotify(&sb->sb_sel, band, NOTE_SUBMIT);
 	cv_broadcast(&sb->sb_cv);

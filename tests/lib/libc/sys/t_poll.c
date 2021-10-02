@@ -1,4 +1,4 @@
-/*	$NetBSD: t_poll.c,v 1.4 2020/07/17 15:34:16 kamil Exp $	*/
+/*	$NetBSD: t_poll.c,v 1.5 2021/10/02 02:07:41 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -29,6 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <sys/stat.h>
 #include <sys/time.h>
 #include <sys/wait.h>
 
@@ -233,12 +234,116 @@ ATF_TC_BODY(err, tc)
 	ATF_REQUIRE_ERRNO(EINVAL, poll(&pfd, 1, -2) == -1);
 }
 
+static const char	fifo_path[] = "pollhup_fifo";
+
+static void
+fifo_support(void)
+{
+	errno = 0;
+	if (mkfifo(fifo_path, 0600) == 0) {
+		ATF_REQUIRE(unlink(fifo_path) == 0);
+		return;
+	}
+
+	if (errno == EOPNOTSUPP) {
+		atf_tc_skip("the kernel does not support FIFOs");
+	} else {
+		atf_tc_fail("mkfifo(2) failed");
+	}
+}
+
+ATF_TC_WITH_CLEANUP(fifo_hup1);
+ATF_TC_HEAD(fifo_hup1, tc)
+{
+	atf_tc_set_md_var(tc, "descr",
+	    "Check POLLHUP behavior with fifos [1]");
+}
+
+ATF_TC_BODY(fifo_hup1, tc)
+{
+	struct pollfd pfd;
+	int rfd, wfd;
+
+	fifo_support();
+
+	ATF_REQUIRE(mkfifo(fifo_path, 0600) == 0);
+	ATF_REQUIRE((rfd = open(fifo_path, O_RDONLY | O_NONBLOCK)) >= 0);
+	ATF_REQUIRE((wfd = open(fifo_path, O_WRONLY)) >= 0);
+
+	memset(&pfd, 0, sizeof(pfd));
+	pfd.fd = rfd;
+	pfd.events = POLLIN;
+
+	(void)close(wfd);
+
+	ATF_REQUIRE(poll(&pfd, 1, 0) == 1);
+	ATF_REQUIRE((pfd.revents & POLLHUP) != 0);
+}
+
+ATF_TC_CLEANUP(fifo_hup1, tc)
+{
+	(void)unlink(fifo_path);
+}
+
+ATF_TC_WITH_CLEANUP(fifo_hup2);
+ATF_TC_HEAD(fifo_hup2, tc)
+{
+	atf_tc_set_md_var(tc, "descr",
+	    "Check POLLHUP behavior with fifos [2]");
+}
+
+ATF_TC_BODY(fifo_hup2, tc)
+{
+	struct pollfd pfd;
+	int rfd, wfd;
+	pid_t pid;
+	struct timespec ts1, ts2;
+
+	fifo_support();
+
+	ATF_REQUIRE(mkfifo(fifo_path, 0600) == 0);
+	ATF_REQUIRE((rfd = open(fifo_path, O_RDONLY | O_NONBLOCK)) >= 0);
+	ATF_REQUIRE((wfd = open(fifo_path, O_WRONLY)) >= 0);
+
+	memset(&pfd, 0, sizeof(pfd));
+	pfd.fd = rfd;
+	pfd.events = POLLIN;
+
+	pid = fork();
+	ATF_REQUIRE(pid >= 0);
+
+	if (pid == 0) {
+		(void)close(rfd);
+		sleep(5);
+		(void)close(wfd);
+		_exit(0);
+	}
+	(void)close(wfd);
+
+	ATF_REQUIRE(clock_gettime(CLOCK_MONOTONIC, &ts1) == 0);
+	ATF_REQUIRE(poll(&pfd, 1, INFTIM) == 1);
+	ATF_REQUIRE(clock_gettime(CLOCK_MONOTONIC, &ts2) == 0);
+
+	/* Make sure at least a couple of seconds have elapsed. */
+	ATF_REQUIRE(ts2.tv_sec - ts1.tv_sec >= 2);
+
+	ATF_REQUIRE((pfd.revents & POLLHUP) != 0);
+}
+
+ATF_TC_CLEANUP(fifo_hup2, tc)
+{
+	(void)unlink(fifo_path);
+}
+
 ATF_TP_ADD_TCS(tp)
 {
 
 	ATF_TP_ADD_TC(tp, 3way);
 	ATF_TP_ADD_TC(tp, basic);
 	ATF_TP_ADD_TC(tp, err);
+
+	ATF_TP_ADD_TC(tp, fifo_hup1);
+	ATF_TP_ADD_TC(tp, fifo_hup2);
 
 	return atf_no_error();
 }
