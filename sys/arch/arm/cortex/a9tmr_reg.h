@@ -1,4 +1,4 @@
-/*	$NetBSD: a9tmr_reg.h,v 1.2 2019/07/27 07:02:09 skrll Exp $	*/
+/*	$NetBSD: a9tmr_reg.h,v 1.3 2021/10/02 20:52:09 skrll Exp $	*/
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -87,7 +87,7 @@
 #define	TMR_GBL_CTL_PRESCALER	__BIT(15,8)
 #define	TMR_GBL_CTL_AUTO_INC	__BIT(3) // Auto Increment is enabled
 #define	TMR_GBL_CTL_INT_ENABLE	__BIT(2) // [banked] INT 27 is enabled
-#define	TMR_GBL_CTL_CMP_ENABLE	__BIT(1) // [banked] 
+#define	TMR_GBL_CTL_CMP_ENABLE	__BIT(1) // [banked]
 #define	TMR_GBL_CTL_ENABLE	__BIT(0)
 
 #endif /* !_ARM_CORTEX_A9TMR_REG_H_ */

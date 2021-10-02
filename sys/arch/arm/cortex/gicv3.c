@@ -1,4 +1,4 @@
-/* $NetBSD: gicv3.c,v 1.48 2021/09/26 13:38:50 jmcneill Exp $ */
+/* $NetBSD: gicv3.c,v 1.49 2021/10/02 20:52:09 skrll Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -32,7 +32,7 @@
 #define	_INTR_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gicv3.c,v 1.48 2021/09/26 13:38:50 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gicv3.c,v 1.49 2021/10/02 20:52:09 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -837,7 +837,7 @@ gicv3_quirk_rockchip_rk3399(struct gicv3_softc *sc)
 	/*
 	 * If we see fewer PMR bits than IPRIORITYRn bits here, it means
 	 * we have a secure view of IPRIORITYRn (this is not supposed to
-	 * happen!). 
+	 * happen!).
 	 */
 	if (pmrbits < pribits) {
 		aprint_verbose_dev(sc->sc_dev,

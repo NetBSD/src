@@ -29,7 +29,7 @@
 
 #include <machine/asm.h>
 
-RCSID("$NetBSD: cpu_in_cksum_asm_neon.S,v 1.3 2012/12/22 18:58:29 matt Exp $")
+RCSID("$NetBSD: cpu_in_cksum_asm_neon.S,v 1.4 2021/10/02 20:52:09 skrll Exp $")
 
 /*
  * uint32_t
@@ -52,7 +52,7 @@ ENTRY(cpu_in_cksum_neon)
 	 * Normally the lower addressed is in d6 but in this case we want to
 	 * reverse it since we might only have a single dword and the final
 	 * fold will want the dword to trim in d7 so put the first dword in
-	 * d7 until we know we are going to read more than one. 
+	 * d7 until we know we are going to read more than one.
 	 */
 	veor		d6, d6, d6	/* clear second dword */
 	vld1.64		{d7}, [ip:64]!	/* load first dword */
