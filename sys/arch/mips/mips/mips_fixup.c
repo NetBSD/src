@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_fixup.c,v 1.21 2021/02/16 06:06:58 simonb Exp $	*/
+/*	$NetBSD: mips_fixup.c,v 1.22 2021/10/02 14:28:04 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mips_fixup.c,v 1.21 2021/02/16 06:06:58 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_fixup.c,v 1.22 2021/10/02 14:28:04 skrll Exp $");
 
 #include "opt_mips3_wired.h"
 #include "opt_multiprocessor.h"
@@ -545,7 +545,7 @@ mips_fixup_stubs(uint32_t *start, uint32_t *end)
 void	mips_cpu_switch_resume(struct lwp *)		__stub;
 tlb_asid_t
 	tlb_get_asid(void)				__stub;
-void	tlb_set_asid(uint32_t)				__stub;
+void	tlb_set_asid(uint32_t, struct pmap *)		__stub;
 void	tlb_invalidate_all(void)			__stub;
 void	tlb_invalidate_globals(void)			__stub;
 void	tlb_invalidate_asids(uint32_t, uint32_t)	__stub;
@@ -575,7 +575,7 @@ tlb_get_asid(void)
 }
 
 void
-tlb_set_asid(uint32_t asid)
+tlb_set_asid(uint32_t asid, struct pmap *pm)
 {
 	(*mips_locore_jumpvec.ljv_tlb_set_asid)(asid);
 }

@@ -1,4 +1,4 @@
-/* $NetBSD: pmap_machdep.c,v 1.7 2021/05/01 07:41:24 skrll Exp $ */
+/* $NetBSD: pmap_machdep.c,v 1.8 2021/10/02 14:28:05 skrll Exp $ */
 
 /*
  * Copyright (c) 2014, 2019, 2021 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 
-__RCSID("$NetBSD: pmap_machdep.c,v 1.7 2021/05/01 07:41:24 skrll Exp $");
+__RCSID("$NetBSD: pmap_machdep.c,v 1.8 2021/10/02 14:28:05 skrll Exp $");
 
 #include <sys/param.h>
 
@@ -171,7 +171,7 @@ tlb_get_asid(void)
 }
 
 void
-tlb_set_asid(tlb_asid_t asid)
+tlb_set_asid(tlb_asid_t asid, struct pmap *pm)
 {
 	riscvreg_asid_write(asid);
 }
