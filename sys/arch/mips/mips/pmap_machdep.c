@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_machdep.c,v 1.34 2021/03/19 07:51:33 skrll Exp $	*/
+/*	$NetBSD: pmap_machdep.c,v 1.35 2021/10/02 13:41:50 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap_machdep.c,v 1.34 2021/03/19 07:51:33 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_machdep.c,v 1.35 2021/10/02 13:41:50 skrll Exp $");
 
 /*
  *	Manages physical address maps.
@@ -492,7 +492,7 @@ pmap_bootstrap(void)
 	pool_init(&pmap_pv_pool, sizeof(struct pv_entry), 0, 0, 0, "pvpl",
 	    &pmap_pv_page_allocator, IPL_NONE);
 
-	tlb_set_asid(0);
+	tlb_set_asid(KERNEL_PID);
 
 #ifdef MIPS3_PLUS	/* XXX mmu XXX */
 	/*
