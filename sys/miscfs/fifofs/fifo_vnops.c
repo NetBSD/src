@@ -1,4 +1,4 @@
-/*	$NetBSD: fifo_vnops.c,v 1.89 2021/10/02 17:37:21 thorpej Exp $	*/
+/*	$NetBSD: fifo_vnops.c,v 1.90 2021/10/02 18:39:15 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fifo_vnops.c,v 1.89 2021/10/02 17:37:21 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fifo_vnops.c,v 1.90 2021/10/02 18:39:15 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -612,7 +612,7 @@ filt_fiforead(struct knote *kn, long hint)
 		rv = 1;
 	} else {
 		kn->kn_flags &= ~EV_EOF;
-		rv = (kn->kn_data > 0);
+		rv = (kn->kn_data >= so->so_rcv.sb_lowat);
 	}
 	if (hint != NOTE_SUBMIT)
 		sounlock(so);
@@ -678,13 +678,14 @@ fifo_kqfilter(void *v)
 	struct socket	*so;
 	struct sockbuf	*sb;
 
-	so = (struct socket *)ap->a_vp->v_fifoinfo->fi_readsock;
 	switch (ap->a_kn->kn_filter) {
 	case EVFILT_READ:
+		so = (struct socket *)ap->a_vp->v_fifoinfo->fi_readsock;
 		ap->a_kn->kn_fop = &fiforead_filtops;
 		sb = &so->so_rcv;
 		break;
 	case EVFILT_WRITE:
+		so = (struct socket *)ap->a_vp->v_fifoinfo->fi_writesock;
 		ap->a_kn->kn_fop = &fifowrite_filtops;
 		sb = &so->so_snd;
 		break;
