@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_pipe.c,v 1.156 2021/09/27 00:51:10 thorpej Exp $	*/
+/*	$NetBSD: sys_pipe.c,v 1.157 2021/10/02 07:35:40 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_pipe.c,v 1.156 2021/09/27 00:51:10 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_pipe.c,v 1.157 2021/10/02 07:35:40 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -694,11 +694,6 @@ pipe_write(file_t *fp, off_t *offset, struct uio *uio, kauth_cred_t cred,
 				break;
 			}
 
-			pipeunlock(wpipe);
-			error = cv_wait_sig(&wpipe->pipe_wcv, lock);
-			(void)pipelock(wpipe, false);
-			if (error != 0)
-				break;
 			/*
 			 * If read side wants to go away, we just issue a signal
 			 * to ourselves.
@@ -707,6 +702,12 @@ pipe_write(file_t *fp, off_t *offset, struct uio *uio, kauth_cred_t cred,
 				error = EPIPE;
 				break;
 			}
+
+			pipeunlock(wpipe);
+			error = cv_wait_sig(&wpipe->pipe_wcv, lock);
+			(void)pipelock(wpipe, false);
+			if (error != 0)
+				break;
 			wakeup_state = wpipe->pipe_state;
 		}
 	}
