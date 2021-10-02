@@ -1,4 +1,4 @@
-/*	$NetBSD: t_poll.c,v 1.7 2021/10/02 15:50:06 thorpej Exp $	*/
+/*	$NetBSD: t_poll.c,v 1.8 2021/10/02 17:32:55 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -328,6 +328,15 @@ ATF_TC_BODY(fifo_inout, tc)
 	ATF_REQUIRE(poll(pfd, 2, 0) == 1);
 	ATF_REQUIRE(pfd[0].revents == (POLLIN | POLLRDNORM));
 	ATF_REQUIRE(pfd[1].revents == 0);
+
+	/*
+	 * Now read enough so that exactly pipe_buf space should
+	 * be available.  The FIFO should be writable after that.
+	 * N.B. we don't care if it's readable at this point.
+	 */
+	ATF_REQUIRE(read(rfd, buf, pipe_buf - 1) == pipe_buf - 1);
+	ATF_REQUIRE(poll(pfd, 2, 0) >= 1);
+	ATF_REQUIRE(pfd[1].revents == (POLLOUT | POLLWRNORM));
 
 	/*
 	 * Now read all of the data out of the FIFO and ensure that
