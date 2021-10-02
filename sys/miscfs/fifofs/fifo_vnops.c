@@ -1,4 +1,4 @@
-/*	$NetBSD: fifo_vnops.c,v 1.79 2017/10/25 08:12:39 maya Exp $	*/
+/*	$NetBSD: fifo_vnops.c,v 1.79.8.1 2021/10/02 11:07:55 martin Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fifo_vnops.c,v 1.79 2017/10/25 08:12:39 maya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fifo_vnops.c,v 1.79.8.1 2021/10/02 11:07:55 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -337,24 +337,69 @@ fifo_poll(void *v)
 	struct vop_poll_args /* {
 		struct vnode	*a_vp;
 		int		a_events;
-		struct lwp	*a_l;
 	} */ *ap = v;
-	struct socket	*so;
-	int		revents;
+	struct socket	*rso = ap->a_vp->v_fifoinfo->fi_readsock;
+	struct socket	*wso = ap->a_vp->v_fifoinfo->fi_writesock;
+	struct socket	*lso = NULL;
+	int		events;
 
-	revents = 0;
-	if (ap->a_events & (POLLIN | POLLPRI | POLLRDNORM | POLLRDBAND)) {
-		so = ap->a_vp->v_fifoinfo->fi_readsock;
-		if (so)
-			revents |= sopoll(so, ap->a_events);
-	}
-	if (ap->a_events & (POLLOUT | POLLWRNORM | POLLWRBAND)) {
-		so = ap->a_vp->v_fifoinfo->fi_writesock;
-		if (so)
-			revents |= sopoll(so, ap->a_events);
+	/*
+	 * N.B. We're using a slightly different naming convention
+	 * for these variables that most poll handlers.
+	 */
+	int		revents = 0;
+	int		wevents = 0;
+
+	if (rso != NULL) {
+		lso = rso;
+	} else if (wso != NULL) {
+		lso = wso;
 	}
 
-	return (revents);
+	if (lso == NULL) {
+		/* No associated sockets -> no events to report. */
+		return 0;
+	}
+
+	KASSERT(rso == NULL || lso->so_lock == rso->so_lock);
+	KASSERT(wso == NULL || lso->so_lock == wso->so_lock);
+
+	solock(lso);
+
+	if (rso != NULL) {
+		events = ap->a_events & (POLLIN | POLLRDNORM);
+		if (events != 0 && soreadable(rso)) {
+			revents |= events;
+		}
+		if (rso->so_state & SS_CANTRCVMORE) {
+			revents |= POLLHUP;
+		}
+		/*
+		 * We always selrecord the read side here regardless
+		 * of the caller's read interest because we need to
+		 * action POLLHUP.
+		 */
+		if (revents == 0) {
+			selrecord(curlwp, &rso->so_rcv.sb_sel);
+			rso->so_rcv.sb_flags |= SB_NOTIFY;
+		}
+	}
+
+	/* POSIX sez: POLLHUP and POLLOUT are mutually-exclusive. */
+	if (wso != NULL && (revents & POLLHUP) == 0) {
+		events = ap->a_events & (POLLOUT | POLLWRNORM);
+		if (events != 0 && sowritable(wso)) {
+			wevents |= events;
+		}
+		if (wevents == 0 && events != 0) {
+			selrecord(curlwp, &wso->so_snd.sb_sel);
+			wso->so_snd.sb_flags |= SB_NOTIFY;
+		}
+	}
+
+	sounlock(lso);
+
+	return (revents | wevents);
 }
 
 static int
@@ -392,6 +437,20 @@ fifo_bmap(void *v)
 }
 
 /*
+ * This is like socantrcvmore(), but we send the POLL_HUP code.
+ */
+static void
+fifo_socantrcvmore(struct socket *so)
+{
+	KASSERT(solocked(so));
+
+	so->so_state |= SS_CANTRCVMORE;
+	if (sb_notify(&so->so_rcv)) {
+		sowakeup(so, &so->so_rcv, POLL_HUP);
+	}
+}
+
+/*
  * Device close routine
  */
 /* ARGSUSED */
@@ -422,13 +481,13 @@ fifo_close(void *v)
 		}
 		if (fip->fi_writers != 0) {
 			fip->fi_writers = 0;
-			socantrcvmore(rso);
+			fifo_socantrcvmore(rso);
 		}
 	} else {
 		if ((ap->a_fflag & FREAD) && --fip->fi_readers == 0)
 			socantsendmore(wso);
 		if ((ap->a_fflag & FWRITE) && --fip->fi_writers == 0)
-			socantrcvmore(rso);
+			fifo_socantrcvmore(rso);
 	}
 	if ((fip->fi_readers + fip->fi_writers) == 0) {
 		sounlock(wso);
