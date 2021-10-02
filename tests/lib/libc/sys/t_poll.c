@@ -1,4 +1,4 @@
-/*	$NetBSD: t_poll.c,v 1.5 2021/10/02 02:07:41 thorpej Exp $	*/
+/*	$NetBSD: t_poll.c,v 1.6 2021/10/02 14:41:36 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -278,6 +278,18 @@ ATF_TC_BODY(fifo_hup1, tc)
 
 	ATF_REQUIRE(poll(&pfd, 1, 0) == 1);
 	ATF_REQUIRE((pfd.revents & POLLHUP) != 0);
+
+	/*
+	 * Check that POLLHUP is cleared when a writer re-connects.
+	 * Since the writer will not put any data into the FIFO, we
+	 * expect no events.
+	 */
+	memset(&pfd, 0, sizeof(pfd));
+	pfd.fd = rfd;
+	pfd.events = POLLIN;
+
+	ATF_REQUIRE((wfd = open(fifo_path, O_WRONLY)) >= 0);
+	ATF_REQUIRE(poll(&pfd, 1, 0) == 0);
 }
 
 ATF_TC_CLEANUP(fifo_hup1, tc)
