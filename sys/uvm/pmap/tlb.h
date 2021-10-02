@@ -1,4 +1,4 @@
-/*	$NetBSD: tlb.h,v 1.4 2017/06/24 05:31:03 skrll Exp $	*/
+/*	$NetBSD: tlb.h,v 1.5 2021/10/02 14:28:05 skrll Exp $	*/
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -33,6 +33,7 @@
 #if defined(_KERNEL) || defined(_KMEMUSER)
 
 struct tlbmask;
+struct pmap;
 
 typedef bool	(*tlb_walkfunc_t)(void *, vaddr_t, tlb_asid_t, pt_entry_t);
 
@@ -54,7 +55,7 @@ struct tlb_md_ops {
 
 tlb_asid_t
 	tlb_get_asid(void);
-void	tlb_set_asid(tlb_asid_t);
+void	tlb_set_asid(tlb_asid_t, struct pmap *);
 void	tlb_invalidate_all(void);
 void	tlb_invalidate_globals(void);
 void	tlb_invalidate_asids(tlb_asid_t, tlb_asid_t);

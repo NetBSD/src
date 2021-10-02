@@ -1,4 +1,4 @@
-/*	$NetBSD: booke_stubs.c,v 1.11 2020/07/06 09:34:16 rin Exp $	*/
+/*	$NetBSD: booke_stubs.c,v 1.12 2021/10/02 14:28:04 skrll Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: booke_stubs.c,v 1.11 2020/07/06 09:34:16 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: booke_stubs.c,v 1.12 2021/10/02 14:28:04 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -45,10 +45,10 @@ __KERNEL_RCSID(0, "$NetBSD: booke_stubs.c,v 1.11 2020/07/06 09:34:16 rin Exp $")
 
 #define	__stub	__section(".stub") __noprofile
 
-void tlb_set_asid(tlb_asid_t) __stub;
+void tlb_set_asid(tlb_asid_t,  struct pmap *) __stub;
 
 void
-tlb_set_asid(tlb_asid_t asid)
+tlb_set_asid(tlb_asid_t asid, struct pmap *pm)
 {
 	(*cpu_md_ops.md_tlb_ops->md_tlb_set_asid)(asid);
 }
