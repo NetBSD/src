@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.1434 2021/09/23 15:42:29 msaitoh Exp $
+$NetBSD: pcidevs,v 1.1435 2021/10/02 20:45:17 mrg Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -6602,7 +6602,8 @@ product INTEL CP_SS_REGS	0xd156	Core Processor Semaphore and Scratchpad Register
 product INTEL CP_SCS_REGS	0xd157	Core Processor System Control and Status Registers
 product INTEL CP_MISC_REGS	0xd158	Core Processor Miscellaneous Registers
 product INTEL HANKSVILLE	0xf0fe	HANKSVILLE LAN Controller
-product INTEL SSD_760P		0xf1a6	SSD 760p
+product INTEL SSD_760P		0xf1a6	NVMe SSD 760p/7600p/E-6100p
+product INTEL SSD_660P		0xf1a8	NVMe SSD 660p
 product INTEL XMM7360		0x7360  XMM 7360 LTE Modem
 
 /* Intergraph products */
