@@ -1,11 +1,11 @@
-/* $NetBSD: t_fifo.c,v 1.4 2017/01/13 21:30:41 christos Exp $ */
+/* $NetBSD: t_fifo.c,v 1.5 2021/10/02 18:21:05 thorpej Exp $ */
 
 /*-
- * Copyright (c) 2008 The NetBSD Foundation, Inc.
+ * Copyright (c) 2021 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Luke Mewburn and Jaromir Dolecek.
+ * by Jason R. Thorpe.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,13 +30,14 @@
  */
 
 #include <sys/cdefs.h>
-__COPYRIGHT("@(#) Copyright (c) 2008\
+__COPYRIGHT("@(#) Copyright (c) 2021\
  The NetBSD Foundation, inc. All rights reserved.");
-__RCSID("$NetBSD: t_fifo.c,v 1.4 2017/01/13 21:30:41 christos Exp $");
+__RCSID("$NetBSD: t_fifo.c,v 1.5 2021/10/02 18:21:05 thorpej Exp $");
 
 #include <sys/event.h>
 #include <sys/stat.h>
 
+#include <errno.h>
 #include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -46,48 +47,94 @@ __RCSID("$NetBSD: t_fifo.c,v 1.4 2017/01/13 21:30:41 christos Exp $");
 
 #include <atf-c.h>
 
-#include "h_macros.h"
+static const char	fifo_path[] = "fifo";
 
-#define FIFONAME "fifo"
+static void
+fifo_support(void)
+{
+	errno = 0;
+	if (mkfifo(fifo_path, 0600) == 0) {
+		ATF_REQUIRE(unlink(fifo_path) == 0);
+		return;
+	}
 
-ATF_TC(fifo);
+	if (errno == EOPNOTSUPP) {
+		atf_tc_skip("the kernel does not support FIFOs");
+	} else {
+		atf_tc_fail("mkfifo(2) failed");
+	}
+}
+
+ATF_TC_WITH_CLEANUP(fifo);
 ATF_TC_HEAD(fifo, tc)
 {
 	atf_tc_set_md_var(tc, "descr", "Checks EVFILT_READ on fifo");
 }
 ATF_TC_BODY(fifo, tc)
 {
-	int kq, n, fd;
+	const struct timespec to = { 0, 0 };
 	struct kevent event[1];
-	char buffer[128];
+	char *buf;
+	int rfd, wfd, kq;
+	long pipe_buf;
 
-	RL(mkfifo(FIFONAME, 0644));
-	RL(fd = open(FIFONAME, O_RDWR, 0644));
+	fifo_support();
 
-	RL(kq = kqueue());
+	ATF_REQUIRE(mkfifo(fifo_path, 0600) == 0);
+	ATF_REQUIRE((rfd = open(fifo_path, O_RDONLY | O_NONBLOCK)) >= 0);
+	ATF_REQUIRE((wfd = open(fifo_path, O_WRONLY | O_NONBLOCK)) >= 0);
+	ATF_REQUIRE((kq = kqueue()) >= 0);
 
-	EV_SET(&event[0], fd, EVFILT_READ, EV_ADD|EV_ENABLE, 0, 0, 0);
-	RL(kevent(kq, event, 1, NULL, 0, NULL));
+	/* Get the maximum atomic pipe write size. */
+	pipe_buf = fpathconf(wfd, _PC_PIPE_BUF);
+	ATF_REQUIRE(pipe_buf > 1);
 
-	/* make sure there is something in the fifo */
-	RL(write(fd, "foo", 3));
-	(void)printf("fifo: wrote 'foo'\n");
+	buf = malloc(pipe_buf);
+	ATF_REQUIRE(buf != NULL);
 
-	(void)memset(event, 0, sizeof(event));
+	EV_SET(&event[0], rfd, EVFILT_READ, EV_ADD|EV_ENABLE, 0, 0, 0);
+	ATF_REQUIRE(kevent(kq, event, 1, NULL, 0, NULL) == 0);
 
-	RL(n = kevent(kq, NULL, 0, event, 1, NULL));
+	/* We expect the FIFO to not be readable. */
+	ATF_REQUIRE(kevent(kq, NULL, 0, event, 1, &to) == 0);
 
-	(void)printf("kevent num %d filt %d flags: %#x, fflags: %#x, "
-	    "data: %" PRId64 "\n", n, event[0].filter, event[0].flags,
-	    event[0].fflags, event[0].data);
+	/* Write a single byte of data into the FIFO. */
+	ATF_REQUIRE(write(wfd, buf, 1) == 1);
 
-	ATF_REQUIRE_EQ(event[0].filter, EVFILT_READ);
+	/* We expect the FIFO to be readable. */
+	ATF_REQUIRE(kevent(kq, NULL, 0, event, 1, &to) == 1);
+	ATF_REQUIRE(event[0].ident == (uintptr_t)rfd);
+	ATF_REQUIRE(event[0].filter == EVFILT_READ);
+	ATF_REQUIRE((event[0].flags & EV_EOF) == 0);
 
-	RL(n = read(fd, buffer, event[0].data));
-	buffer[n] = '\0';
-	(void)printf("fifo: read '%s'\n", buffer);
+	/* Read that single byte back out. */
+	ATF_REQUIRE(read(rfd, buf, 1) == 1);
 
-	RL(close(fd));
+	/* We expect the FIFO to not be readable. */
+	ATF_REQUIRE(kevent(kq, NULL, 0, event, 1, &to) == 0); 
+
+	/* Close the writer.  We expect to get EV_EOF. */
+	(void)close(wfd);
+	ATF_REQUIRE(kevent(kq, NULL, 0, event, 1, &to) == 1);
+	ATF_REQUIRE(event[0].ident == (uintptr_t)rfd);
+	ATF_REQUIRE(event[0].filter == EVFILT_READ);
+	ATF_REQUIRE((event[0].flags & EV_EOF) != 0);
+
+	/*
+	 * Reconect the writer.  We expect EV_EOF to be cleared and
+	 * for the FIFO to no longer be readable once again.
+	 */
+	ATF_REQUIRE((wfd = open(fifo_path, O_WRONLY | O_NONBLOCK)) >= 0);
+	ATF_REQUIRE(kevent(kq, NULL, 0, event, 1, &to) == 0);
+
+	(void)close(wfd);
+	(void)close(rfd);
+	(void)close(kq);
+}
+
+ATF_TC_CLEANUP(fifo, tc)
+{
+	(void)unlink(fifo_path);
 }
 
 ATF_TP_ADD_TCS(tp)
