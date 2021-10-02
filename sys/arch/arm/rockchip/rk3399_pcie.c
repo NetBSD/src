@@ -1,4 +1,4 @@
-/* $NetBSD: rk3399_pcie.c,v 1.17 2021/09/06 14:03:17 jmcneill Exp $ */
+/* $NetBSD: rk3399_pcie.c,v 1.18 2021/10/02 20:41:47 mrg Exp $ */
 /*
  * Copyright (c) 2018 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -17,7 +17,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: rk3399_pcie.c,v 1.17 2021/09/06 14:03:17 jmcneill Exp $");
+__KERNEL_RCSID(1, "$NetBSD: rk3399_pcie.c,v 1.18 2021/10/02 20:41:47 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -255,8 +255,17 @@ rkpcie_attach(device_t parent, device_t self, void *aux)
 
 	ep_gpio = fdtbus_gpio_acquire(phandle, "ep-gpios", GPIO_PIN_OUTPUT);
 
+	/*
+	 * Let board-specific properties override the default, which is set
+	 * to PCIe 1.x, due to errata in the RK3399 CPU.  We don't know exactly
+	 * what these errata involved (not public), but posts from the
+	 * @rock-chips.com domain to u-boot and linux-kernel lists indicate
+	 * that there is a errata related to this, and indeed, the Datasheet
+	 * since at least Rev 1.6 and inluding the latest Rev 1.8 say that the
+	 * PCIe can handle 2.5GT/s (ie, PCIe 1.x).
+	 */
 	if (of_getprop_uint32(phandle, "max-link-speed", &max_link_speed) != 0)
-		max_link_speed = 2;
+		max_link_speed = 1;
 	if (of_getprop_uint32(phandle, "num-lanes", &num_lanes) != 0)
 		num_lanes = 1;
 
