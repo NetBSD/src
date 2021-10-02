@@ -1,4 +1,4 @@
-/* $NetBSD: rk3399-rockpro64.dts,v 1.12 2021/09/03 01:21:48 mrg Exp $ */
+/* $NetBSD: rk3399-rockpro64.dts,v 1.13 2021/10/02 20:41:47 mrg Exp $ */
 
 /*-
  * Copyright (c) 2019 Jared McNeill <jmcneill@invisible.ca>
@@ -181,7 +181,6 @@
 &pcie0 {
 	ep-gpios = <&gpio2 RK_PD4 GPIO_ACTIVE_HIGH>;
 	num-lanes = <4>;
-	max-link-speed = <2>;
 	pinctrl-names = "default";
 	pinctrl-0 = <&pcie_clkreqn>;
 	vpcie3v3-supply = <&vcc3v3_pcie>;
