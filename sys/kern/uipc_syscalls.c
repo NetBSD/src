@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_syscalls.c,v 1.201 2021/10/02 17:32:55 thorpej Exp $	*/
+/*	$NetBSD: uipc_syscalls.c,v 1.202 2021/10/02 17:37:21 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls.c,v 1.201 2021/10/02 17:32:55 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls.c,v 1.202 2021/10/02 17:37:21 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pipe.h"
@@ -1326,7 +1326,7 @@ pipe1(struct lwp *l, int *fildes, int flags)
 	 * Pipes must be writable when there is space for
 	 * at least PIPE_BUF bytes in the send buffer.
 	 * If we're increasing the low water mark for the
-	 * send buffer, then mimick how soreserve() would
+	 * send buffer, then mimic how soreserve() would
 	 * have set the high water mark.
 	 */
 	rso->so_rcv.sb_lowat = 1;
