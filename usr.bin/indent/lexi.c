@@ -1,4 +1,4 @@
-/*	$NetBSD: lexi.c,v 1.64 2021/09/27 18:21:47 rillig Exp $	*/
+/*	$NetBSD: lexi.c,v 1.65 2021/10/03 20:35:59 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)lexi.c	8.1 (Berkeley) 6/6/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: lexi.c,v 1.64 2021/09/27 18:21:47 rillig Exp $");
+__RCSID("$NetBSD: lexi.c,v 1.65 2021/10/03 20:35:59 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/lexi.c 337862 2018-08-15 18:19:45Z pstef $");
 #endif
@@ -670,7 +670,7 @@ insert_pos(const char *key, const char **arr, unsigned int len) {
     int hi = (int)len - 1;
 
     while (lo <= hi) {
-	int mid = (lo + hi) >> 1;
+	int mid = (int)((unsigned)(lo + hi) >> 1);
 	int cmp = strcmp(arr[mid], key);
 	if (cmp < 0)
 	    lo = mid + 1;
