@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.256 2021/09/25 17:55:37 maya Exp $
+#	$NetBSD: Makefile,v 1.257 2021/10/03 17:27:02 brad Exp $
 
 .include <bsd.own.mk>
 
@@ -69,6 +69,7 @@ SUBDIR+=	hfs
 SUBDIR+=	hythygtemp
 SUBDIR+=	si70xxtemp
 SUBDIR+=	am2315temp
+SUBDIR+=	sht4xtemp
 SUBDIR+=	i2cexec
 SUBDIR+=	i2c_bitbang
 SUBDIR+=	if_agr

@@ -1,0 +1,7 @@
+ioconf sht4xtemp
+
+include "conf/files"
+
+pseudo-root iic*
+
+sht4xtemp* at iic? addr 0x44
