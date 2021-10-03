@@ -1,4 +1,4 @@
-#	$NetBSD: files.i2c,v 1.116 2021/07/27 20:23:41 macallan Exp $
+#	$NetBSD: files.i2c,v 1.117 2021/10/03 17:27:02 brad Exp $
 
 obsolete defflag	opt_i2cbus.h		I2C_SCAN
 define	i2cbus { }
@@ -394,6 +394,11 @@ file	dev/i2c/es8316ac.c			es8316ac
 device	cwfg: sysmon_envsys
 attach	cwfg at iic
 file	dev/i2c/cwfg.c				cwfg
+
+# Sensirion SHT40/SHT41/SHT45 Temperature and Humidity sensor
+device sht4xtemp
+attach sht4xtemp at iic
+file dev/i2c/sht4x.c				sht4xtemp
 
 # Philips PCA955x GPIO
 device	pcagpio: leds
