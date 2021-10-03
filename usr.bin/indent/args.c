@@ -1,4 +1,4 @@
-/*	$NetBSD: args.c,v 1.39 2021/09/26 21:05:48 rillig Exp $	*/
+/*	$NetBSD: args.c,v 1.40 2021/10/03 18:41:36 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)args.c	8.1 (Berkeley) 6/6/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: args.c,v 1.39 2021/09/26 21:05:48 rillig Exp $");
+__RCSID("$NetBSD: args.c,v 1.40 2021/10/03 18:41:36 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/args.c 336318 2018-07-15 21:04:21Z pstef $");
 #endif
@@ -154,7 +154,7 @@ set_profile(const char *profile_name)
     if (profile_name == NULL)
 	snprintf(fname, sizeof(fname), "%s/%s", getenv("HOME"), prof);
     else
-	snprintf(fname, sizeof(fname), "%s", profile_name + 2);
+	snprintf(fname, sizeof(fname), "%s", profile_name);
     if ((f = fopen(option_source = fname, "r")) != NULL) {
 	scan_profile(f);
 	(void)fclose(f);

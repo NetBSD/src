@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.c,v 1.96 2021/09/30 21:48:12 rillig Exp $	*/
+/*	$NetBSD: indent.c,v 1.97 2021/10/03 18:41:36 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)indent.c	5.17 (Berkeley) 6/7/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: indent.c,v 1.96 2021/09/30 21:48:12 rillig Exp $");
+__RCSID("$NetBSD: indent.c,v 1.97 2021/10/03 18:41:36 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/indent.c 340138 2018-11-04 19:24:49Z oshogbo $");
 #endif
@@ -447,7 +447,7 @@ main_parse_command_line(int argc, char **argv)
 	if (strcmp(argv[i], "-npro") == 0)
 	    break;
 	else if (argv[i][0] == '-' && argv[i][1] == 'P' && argv[i][2] != '\0')
-	    profile_name = argv[i];	/* non-empty -P (set profile) */
+	    profile_name = argv[i] + 2;	/* non-empty -P (set profile) */
     if (i >= argc)
 	set_profile(profile_name);
 
