@@ -1,4 +1,4 @@
-/*	$NetBSD: multiboot2.c,v 1.6 2020/06/25 17:24:31 jdolecek Exp $	*/
+/*	$NetBSD: multiboot2.c,v 1.7 2021/10/03 18:47:16 fcambus Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2006 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: multiboot2.c,v 1.6 2020/06/25 17:24:31 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: multiboot2.c,v 1.7 2021/10/03 18:47:16 fcambus Exp $");
 
 #include "opt_multiboot.h"
 
@@ -1054,7 +1054,7 @@ multiboot2_ksyms_addsyms_elf(void)
 #elif __i386__
 	ehdr.e_machine = EM_386;
 #else
-	#error "Unknwo ELF machine type"
+	#error "Unknown ELF machine type"
 #endif
 	ehdr.e_version = 1;
 	ehdr.e_entry = (Elf_Addr)&start;
