@@ -1,4 +1,4 @@
-/*	$NetBSD: args.c,v 1.42 2021/10/03 18:53:37 rillig Exp $	*/
+/*	$NetBSD: args.c,v 1.43 2021/10/03 19:09:59 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)args.c	8.1 (Berkeley) 6/6/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: args.c,v 1.42 2021/10/03 18:53:37 rillig Exp $");
+__RCSID("$NetBSD: args.c,v 1.43 2021/10/03 19:09:59 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/args.c 336318 2018-07-15 21:04:21Z pstef $");
 #endif
@@ -143,7 +143,7 @@ static void
 load_profile(const char *fname)
 {
     FILE *f;
-    int comment_index, i;
+    int comment_index, ch;
     char *p;
     char buf[BUFSIZ];
 
@@ -154,26 +154,26 @@ load_profile(const char *fname)
     for (;;) {
 	p = buf;
 	comment_index = 0;
-	while ((i = getc(f)) != EOF) {
-	    if (i == '*' && comment_index == 0 && p > buf && p[-1] == '/') {
+	while ((ch = getc(f)) != EOF) {
+	    if (ch == '*' && comment_index == 0 && p > buf && p[-1] == '/') {
 		comment_index = (int)(p - buf);
-		*p++ = i;
-	    } else if (i == '/' && comment_index != 0 && p > buf && p[-1] == '*') {
+		*p++ = (char)ch;
+	    } else if (ch == '/' && comment_index != 0 && p > buf && p[-1] == '*') {
 		p = buf + comment_index - 1;
 		comment_index = 0;
-	    } else if (isspace((unsigned char)i)) {
+	    } else if (isspace((unsigned char)ch)) {
 		if (p > buf && comment_index == 0)
 		    break;
 	    } else {
-		*p++ = i;
+		*p++ = (char)ch;
 	    }
 	}
 	if (p != buf) {
-	    *p++ = 0;
+	    *p++ = '\0';
 	    if (opt.verbose)
 		printf("profile: %s\n", buf);
 	    set_option(buf);
-	} else if (i == EOF) {
+	} else if (ch == EOF) {
 	    (void)fclose(f);
 	    return;
 	}
