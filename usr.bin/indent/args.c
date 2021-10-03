@@ -1,4 +1,4 @@
-/*	$NetBSD: args.c,v 1.41 2021/10/03 18:44:51 rillig Exp $	*/
+/*	$NetBSD: args.c,v 1.42 2021/10/03 18:53:37 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)args.c	8.1 (Berkeley) 6/6/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: args.c,v 1.41 2021/10/03 18:44:51 rillig Exp $");
+__RCSID("$NetBSD: args.c,v 1.42 2021/10/03 18:53:37 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/args.c 336318 2018-07-15 21:04:21Z pstef $");
 #endif
@@ -140,11 +140,16 @@ static const struct pro {
 };
 
 static void
-load_profile(FILE *f)
+load_profile(const char *fname)
 {
+    FILE *f;
     int comment_index, i;
     char *p;
     char buf[BUFSIZ];
+
+    if ((f = fopen(fname, "r")) == NULL)
+	return;
+    option_source = fname;
 
     for (;;) {
 	p = buf;
@@ -168,30 +173,25 @@ load_profile(FILE *f)
 	    if (opt.verbose)
 		printf("profile: %s\n", buf);
 	    set_option(buf);
-	} else if (i == EOF)
+	} else if (i == EOF) {
+	    (void)fclose(f);
 	    return;
+	}
     }
 }
 
 void
 load_profiles(const char *profile_name)
 {
-    FILE *f;
     char fname[PATH_MAX];
-    static char prof[] = ".indent.pro";
 
-    if (profile_name == NULL)
-	snprintf(fname, sizeof(fname), "%s/%s", getenv("HOME"), prof);
-    else
-	snprintf(fname, sizeof(fname), "%s", profile_name);
-    if ((f = fopen(option_source = fname, "r")) != NULL) {
-	load_profile(f);
-	(void)fclose(f);
+    if (profile_name != NULL)
+	load_profile(profile_name);
+    else {
+	snprintf(fname, sizeof(fname), "%s/.indent.pro", getenv("HOME"));
+	load_profile(fname);
     }
-    if ((f = fopen(option_source = prof, "r")) != NULL) {
-	load_profile(f);
-	(void)fclose(f);
-    }
+    load_profile(".indent.pro");
     option_source = "Command line";
 }
 
