@@ -1,4 +1,4 @@
-.\" $NetBSD: sht4xtemp.4,v 1.1 2021/10/03 17:27:02 brad Exp $
+.\" $NetBSD: sht4xtemp.4,v 1.2 2021/10/03 18:20:13 wiz Exp $
 .\"
 .\" Copyright (c) 2021 Brad Spencer <brad@anduin.eldar.org>
 .\"
@@ -14,7 +14,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd September 28th, 2021
+.Dd September 28, 2021
 .Dt SHT4XTEMP 4
 .Os
 .Sh NAME
@@ -43,34 +43,38 @@ The following
 .Xr sysctl 3
 variables are provided:
 .Bl -tag -width indent
-.It hw.sht4xtemp0.resolutions
+.It Li hw.sht4xtemp0.resolutions
 Lists the resolutions supported by the driver and chip.
-.It hw.sht4xtemp0.resolution
+.It Li hw.sht4xtemp0.resolution
 Set the resolution, or number of bits, used for %RH and temperature.
-Use one of the strings listed in hw.sht4xtemp.resolutions.
-.It hw.sht4xtemp0.ignorecrc
+Use one of the strings listed in
+.Li hw.sht4xtemp.resolutions .
+.It Li hw.sht4xtemp0.ignorecrc
 If set, the crc calculation for %RH and temperature will be ignored.
-.It hw.sht4xtemp0.heateron
-Turn the heater on and off.  Please note that the heater is turned on right
-before the measurement and runs for a pulse width of time.  Then the measurement
-is taken and the heater is turned off.  There is no way to keep the heater running
-with this chip.
-.It hw.sht4xtemp0.heaterstrength
+.It Li hw.sht4xtemp0.heateron
+Turn the heater on and off.
+Please note that the heater is turned on right
+before the measurement and runs for a pulse width of time.
+Then the measurement is taken and the heater is turned off.
+There is no way to keep the heater running with this chip.
+.It Li hw.sht4xtemp0.heaterstrength
 From 1 to 3, the amount of energy put into the heater.
 The higher the number, the more power used.
-.It hw.sht4xtemp0.heaterpulses
+.It Li hw.sht4xtemp0.heaterpulses
 Lists the valid heater pulses supported by the driver and chip.
-.It hw.sht4xtemp0.heaterpulse
-Set the heater pulse length.  Use one of the strings listed in
-hw.sht4xtemp.heaterpulses
-.It hw.sht4xtemp0.debug
+.It Li hw.sht4xtemp0.heaterpulse
+Set the heater pulse length.
+Use one of the strings listed in
+.Li hw.sht4xtemp.heaterpulses .
+.It Li hw.sht4xtemp0.debug
 If the driver is compiled with
 .Dv SI70XX_DEBUG ,
 this node will appear and can be used to set the debugging level.
-.It hw.sht4xtemp0.readattempts
+.It Li hw.sht4xtemp0.readattempts
 To read %RH or temperature the chip requires that the command be sent,
 then a delay must be observed before a read can be done to get the values
-back.  The delays are documented in the datasheet for the chip.
+back.
+The delays are documented in the datasheet for the chip.
 The driver will attempt to read back the values readattempts number of
 times.
 The default is 10 which should be more than enough for most purposes.
