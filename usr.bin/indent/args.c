@@ -1,4 +1,4 @@
-/*	$NetBSD: args.c,v 1.40 2021/10/03 18:41:36 rillig Exp $	*/
+/*	$NetBSD: args.c,v 1.41 2021/10/03 18:44:51 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)args.c	8.1 (Berkeley) 6/6/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: args.c,v 1.40 2021/10/03 18:41:36 rillig Exp $");
+__RCSID("$NetBSD: args.c,v 1.41 2021/10/03 18:44:51 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/args.c 336318 2018-07-15 21:04:21Z pstef $");
 #endif
@@ -64,7 +64,6 @@ __FBSDID("$FreeBSD: head/usr.bin/indent/args.c 336318 2018-07-15 21:04:21Z pstef
 
 #define INDENT_VERSION	"2.0"
 
-static void scan_profile(FILE *);
 void add_typedefs_from_file(const char *);
 
 static const char *option_source = "?";
@@ -140,34 +139,8 @@ static const struct pro {
     bool_options("v", verbose),
 };
 
-/*
- * set_profile reads $HOME/.indent.pro and ./.indent.pro and handles arguments
- * given in these files.
- */
-void
-set_profile(const char *profile_name)
-{
-    FILE *f;
-    char fname[PATH_MAX];
-    static char prof[] = ".indent.pro";
-
-    if (profile_name == NULL)
-	snprintf(fname, sizeof(fname), "%s/%s", getenv("HOME"), prof);
-    else
-	snprintf(fname, sizeof(fname), "%s", profile_name);
-    if ((f = fopen(option_source = fname, "r")) != NULL) {
-	scan_profile(f);
-	(void)fclose(f);
-    }
-    if ((f = fopen(option_source = prof, "r")) != NULL) {
-	scan_profile(f);
-	(void)fclose(f);
-    }
-    option_source = "Command line";
-}
-
 static void
-scan_profile(FILE *f)
+load_profile(FILE *f)
 {
     int comment_index, i;
     char *p;
@@ -198,6 +171,28 @@ scan_profile(FILE *f)
 	} else if (i == EOF)
 	    return;
     }
+}
+
+void
+load_profiles(const char *profile_name)
+{
+    FILE *f;
+    char fname[PATH_MAX];
+    static char prof[] = ".indent.pro";
+
+    if (profile_name == NULL)
+	snprintf(fname, sizeof(fname), "%s/%s", getenv("HOME"), prof);
+    else
+	snprintf(fname, sizeof(fname), "%s", profile_name);
+    if ((f = fopen(option_source = fname, "r")) != NULL) {
+	load_profile(f);
+	(void)fclose(f);
+    }
+    if ((f = fopen(option_source = prof, "r")) != NULL) {
+	load_profile(f);
+	(void)fclose(f);
+    }
+    option_source = "Command line";
 }
 
 static const char *
