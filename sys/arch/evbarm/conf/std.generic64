@@ -1,4 +1,4 @@
-#	$NetBSD: std.generic64,v 1.15 2021/09/18 12:25:07 jmcneill Exp $
+#	$NetBSD: std.generic64,v 1.16 2021/10/03 23:19:26 jmcneill Exp $
 #
 #	generic NetBSD/evbarm64 with FDT support
 
@@ -16,7 +16,7 @@ options 	DRAM_BLOCKS=256
 options 	EVBARM_BOARDTYPE="FDT"
 options 	FDT				# Flattened Device Tree support
 options 	FPU_VFP
-options 	GIC_SPLFUNCS
+#options 	GIC_SPLFUNCS
 options 	MODULAR
 options 	MODULAR_DEFAULT_AUTOLOAD
 options 	PCI_NETBSD_CONFIGURE
