@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.61 2021/08/30 22:57:33 jmcneill Exp $ */
+/* $NetBSD: cpu.c,v 1.62 2021/10/04 09:39:18 skrll Exp $ */
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: cpu.c,v 1.61 2021/08/30 22:57:33 jmcneill Exp $");
+__KERNEL_RCSID(1, "$NetBSD: cpu.c,v 1.62 2021/10/04 09:39:18 skrll Exp $");
 
 #include "locators.h"
 #include "opt_arm_debug.h"
@@ -681,6 +681,7 @@ void
 cpu_hatch(struct cpu_info *ci)
 {
 	KASSERT(curcpu() == ci);
+	KASSERT((reg_tcr_el1_read() & TCR_EPD0) != 0);
 
 	mutex_enter(&cpu_hatch_lock);
 
