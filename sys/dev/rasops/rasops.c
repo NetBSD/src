@@ -1,4 +1,4 @@
-/*	 $NetBSD: rasops.c,v 1.123 2020/07/02 07:49:44 rin Exp $	*/
+/*	 $NetBSD: rasops.c,v 1.124 2021/10/04 12:26:29 rin Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rasops.c,v 1.123 2020/07/02 07:49:44 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rasops.c,v 1.124 2021/10/04 12:26:29 rin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_rasops.h"
@@ -376,11 +376,12 @@ rasops_reconfig(struct rasops_info *ri, int wantrows, int wantcols)
 				rasops_make_box_chars_32(ri);
 				break;
 			default:
-				aprint_error(
+				kmem_free(ri->ri_optfont.data, len);
+				ri->ri_optfont.data = NULL;
+				aprint_verbose(
 				    "%s: font stride assumptions botched",
 				    __func__);
-				splx(s);
-				return -1;
+				break;
 			}
 		}
 	} else
