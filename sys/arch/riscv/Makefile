@@ -1,5 +1,5 @@
-# $NetBSD: Makefile,v 1.2 2021/09/30 20:02:54 jmcneill Exp $
+# $NetBSD: Makefile,v 1.3 2021/10/04 18:16:48 mrg Exp $
 
-SUBDIR=	include stand
+SUBDIR=	compile include stand
 
 .include <bsd.subdir.mk>
