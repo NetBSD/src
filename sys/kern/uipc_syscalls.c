@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_syscalls.c,v 1.199 2018/11/12 09:21:13 hannken Exp $	*/
+/*	$NetBSD: uipc_syscalls.c,v 1.199.4.1 2021/10/04 14:32:38 martin Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls.c,v 1.199 2018/11/12 09:21:13 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls.c,v 1.199.4.1 2021/10/04 14:32:38 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pipe.h"
@@ -1319,6 +1319,21 @@ pipe1(struct lwp *l, int *fildes, int flags)
 	wf->f_socket = wso;
 	fildes[1] = fd;
 	solock(wso);
+	/*
+	 * Pipes must be readable when there is at least 1
+	 * byte of data available in the receive buffer.
+	 *
+	 * Pipes must be writable when there is space for
+	 * at least PIPE_BUF bytes in the send buffer.
+	 * If we're increasing the low water mark for the
+	 * send buffer, then mimick how soreserve() would
+	 * have set the high water mark.
+	 */
+	rso->so_rcv.sb_lowat = 1;
+	if (wso->so_snd.sb_lowat < PIPE_BUF) {
+		wso->so_snd.sb_hiwat = PIPE_BUF * 2;
+	}
+	wso->so_snd.sb_lowat = PIPE_BUF;
 	error = unp_connect2(wso, rso);
 	sounlock(wso);
 	if (error != 0)
