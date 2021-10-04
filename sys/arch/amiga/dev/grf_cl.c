@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_cl.c,v 1.52 2021/08/07 16:18:41 thorpej Exp $ */
+/*	$NetBSD: grf_cl.c,v 1.53 2021/10/04 20:48:05 andvar Exp $ */
 
 /*
  * Copyright (c) 1997 Klaus Burkert
@@ -36,7 +36,7 @@
 #include "opt_amigacons.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf_cl.c,v 1.52 2021/08/07 16:18:41 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grf_cl.c,v 1.53 2021/10/04 20:48:05 andvar Exp $");
 
 #include "grfcl.h"
 #include "ite.h"
@@ -1158,7 +1158,7 @@ cl_getcmap(struct grf_softc *gfp, struct grf_colormap *cmap)
  */
 
 /*
- * The source for the above comment is somewhat unknow to me.
+ * The source for the above comment is somewhat unknown to me.
  * The Spectrum, Piccolo and PiccoloSD64 have the analog Red and Blue
  * lines swapped. In 24BPP this provides RGB instead of BGR as it would
  * be native to the chipset. This requires special programming for the

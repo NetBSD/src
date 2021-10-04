@@ -1,4 +1,4 @@
-/* $Id: imx23_digfilt.c,v 1.3 2020/04/19 08:18:19 isaki Exp $ */
+/* $Id: imx23_digfilt.c,v 1.4 2021/10/04 20:48:05 andvar Exp $ */
 
 /*
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -1040,7 +1040,7 @@ digfilt_ao_set_rate(struct digfilt_softc *sc, int sr)
 		    __SHIFTIN(0x0E00, HW_AUDIOOUT_DACSRR_SRC_FRAC));
 		break;
 	default:
-		aprint_error_dev(sc->sc_dev, "uknown sample rate: %d\n", sr);
+		aprint_error_dev(sc->sc_dev, "unknown sample rate: %d\n", sr);
 	case 44100:
 		val |= (__SHIFTIN(0x1 ,HW_AUDIOOUT_DACSRR_BASEMULT) |
 		    __SHIFTIN(0x0, HW_AUDIOOUT_DACSRR_SRC_HOLD) |
