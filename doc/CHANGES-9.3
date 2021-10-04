@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.3,v 1.1.2.32 2021/10/02 11:08:51 martin Exp $
+# $NetBSD: CHANGES-9.3,v 1.1.2.33 2021/10/04 14:49:30 martin Exp $
 
 A complete list of changes from the NetBSD 9.2 release to the NetBSD 9.3
 release:
@@ -752,4 +752,25 @@ tests/lib/libc/sys/t_poll.c			1.5
 
 	PR kern/56429: fix POLLHUP behavior with FIFOs.
 	[thorpej, ticket #1350]
+
+sys/kern/uipc_syscalls.c			1.201
+sys/miscfs/fifofs/fifo_vnops.c			1.88
+tests/lib/libc/sys/t_poll.c			1.6-1.8
+
+	Ensure that FIFOs have the same select/poll thresholds as pipes.
+	[thorpej, ticket #1351]
+
+tests/kernel/kqueue/read/t_fifo.c		1.5
+
+	New EVFILT_READ test case for FIFOs; validates readability threshold
+	and EV_EOF behavior.
+	[thorpej, ticket #1352]
+
+sys/miscfs/fifofs/fifo_vnops.c			1.90
+tests/kernel/kqueue/write/t_fifo.c		1.5
+
+	- Add a new EVFILT_WRITE test case for FIFOs that correctly validates
+	  the writability thresholds.
+	- Fix a bug in fifo_kqfilter() exposed by the new test case.
+	[thorpej, ticket #1353]
 
