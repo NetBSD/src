@@ -1,4 +1,4 @@
-# $NetBSD: module.mi,v 1.12 2021/09/11 16:10:37 pgoyette Exp $
+# $NetBSD: module.mi,v 1.13 2021/10/04 07:04:39 brad Exp $
 ./usr/libdata/debug/@MODULEDIR@					modules-base-kernel	kmod,debug
 ./usr/libdata/debug/@MODULEDIR@/accf_dataready			modules-base-kernel	kmod,debug
 ./usr/libdata/debug/@MODULEDIR@/accf_dataready/accf_dataready.kmod.debug	modules-base-kernel	kmod,debug
@@ -332,7 +332,9 @@
 ./usr/libdata/debug/@MODULEDIR@/securelevel/securelevel.kmod.debug	modules-base-kernel	kmod,debug
 ./usr/libdata/debug/@MODULEDIR@/sequencer				modules-base-kernel	kmod,debug
 ./usr/libdata/debug/@MODULEDIR@/sequencer/sequencer.kmod.debug		modules-base-kernel	kmod,debug
-./usr/libdata/debug/@MODULEDIR@/si70xxtemp			modules-base-kernel	kmod,debug
+./usr/libdata/debug/@MODULEDIR@/sht4xtemp				modules-base-kernel	kmod,debug
+./usr/libdata/debug/@MODULEDIR@/sht4xtemp/sht4xtemp.kmod.debug		modules-base-kernel	kmod,debug
+./usr/libdata/debug/@MODULEDIR@/si70xxtemp				modules-base-kernel	kmod,debug
 ./usr/libdata/debug/@MODULEDIR@/si70xxtemp/si70xxtemp.kmod.debug	modules-base-kernel	kmod,debug
 ./usr/libdata/debug/@MODULEDIR@/skipjack				modules-base-kernel	kmod,debug
 ./usr/libdata/debug/@MODULEDIR@/skipjack/skipjack.kmod.debug		modules-base-kernel	kmod,debug
