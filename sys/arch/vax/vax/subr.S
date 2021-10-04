@@ -1,4 +1,4 @@
-/*	$NetBSD: subr.S,v 1.38 2020/06/30 16:20:02 maxv Exp $	   */
+/*	$NetBSD: subr.S,v 1.39 2021/10/04 20:25:20 andvar Exp $	   */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -505,7 +505,7 @@ ENTRY(copyoutstr, 0)
 	.align	2
 
 #define	UFETCHSTORE_PROLOGUE						 \
-	tstl	4(%ap)			/* uaddr in userpsace? */	;\
+	tstl	4(%ap)			/* uaddr in userspace? */	;\
 	blss	1f			/* nope, fault */		;\
 	mfpr	$PR_ESP,%r1		/* &pcb_onfault is in ESP */	;\
 	movab	2f,(%r1)		/* set pcb_onfault */
