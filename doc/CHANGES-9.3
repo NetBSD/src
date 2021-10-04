@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.3,v 1.1.2.33 2021/10/04 14:49:30 martin Exp $
+# $NetBSD: CHANGES-9.3,v 1.1.2.34 2021/10/04 15:43:41 martin Exp $
 
 A complete list of changes from the NetBSD 9.2 release to the NetBSD 9.3
 release:
@@ -773,4 +773,10 @@ tests/kernel/kqueue/write/t_fifo.c		1.5
 	  the writability thresholds.
 	- Fix a bug in fifo_kqfilter() exposed by the new test case.
 	[thorpej, ticket #1353]
+
+xsrc/external/mit/xf86-input-keyboard/dist/src/kbd.c	1.8
+
+	PR 56415: restore keyboard settings when the X server aborts on
+	ports that use WSDISPLAY_COMPAT_RAWKBD.
+	[tsutsui, ticket #1354]
 
