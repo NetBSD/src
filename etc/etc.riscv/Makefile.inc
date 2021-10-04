@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.2 2021/10/01 10:38:03 jmcneill Exp $
+#	$NetBSD: Makefile.inc,v 1.3 2021/10/04 06:50:35 skrll Exp $
 #
 #	etc.riscv/Makefile.inc -- riscv-specific etc Makefile targets
 #
@@ -15,5 +15,3 @@ snap_md_post:
 	cd ${KERNSRCDIR}/stand/efiboot/bootriscv64 && ${MAKE} release
 	${MAKESUMS} -t ${RELEASEDIR}/${RELEASEMACHINEDIR}/installation/misc '*.efi'
 .endif
-
-.include <bsd.own.mk>
