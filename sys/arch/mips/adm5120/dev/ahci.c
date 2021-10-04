@@ -1,4 +1,4 @@
-/*	$NetBSD: ahci.c,v 1.25 2021/08/07 16:18:58 thorpej Exp $	*/
+/*	$NetBSD: ahci.c,v 1.26 2021/10/04 21:02:40 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2007 Ruslan Ermilov and Vsevolod Lobko.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahci.c,v 1.25 2021/08/07 16:18:58 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahci.c,v 1.26 2021/10/04 21:02:40 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -445,7 +445,7 @@ ahci_poll_hub(void *arg)
 	 * another intr xfer has been submitted, let that one be dealt
 	 * with when the callout fires again.
 	 *
-	 * The call to callout_pending is racy, but the the transition
+	 * The call to callout_pending is racy, but the transition
 	 * from pending to invoking happens atomically.  The
 	 * callout_ack ensures callout_invoking does not return true
 	 * due to this invocation of the callout; the lock ensures the

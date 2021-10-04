@@ -1,4 +1,4 @@
-/* $NetBSD: fp_complete.c,v 1.27 2021/07/23 03:57:06 thorpej Exp $ */
+/* $NetBSD: fp_complete.c,v 1.28 2021/10/04 21:02:40 andvar Exp $ */
 
 /*-
  * Copyright (c) 2001 Ross Harvey
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: fp_complete.c,v 1.27 2021/07/23 03:57:06 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fp_complete.c,v 1.28 2021/10/04 21:02:40 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -648,7 +648,7 @@ alpha_fp_complete_at(unsigned long trigger_pc, struct lwp *l, uint64_t *ucode)
 	 * for it, and so we don't have to lock any memory locations or
 	 * pass a third parameter to every SoftFloat entry point.
 	 *
-	 * N.B. the rounding mode field of the the FLOAT format instructions
+	 * N.B. the rounding mode field of the FLOAT format instructions
 	 * matches that of the FPCR *except* for the value 3, which means
 	 * "dynamic" rounding mode (i.e. what is programmed into the FPCR).
 	 */
