@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_param.h,v 1.51 2021/05/31 14:38:56 simonb Exp $	*/
+/*	$NetBSD: mips_param.h,v 1.52 2021/10/04 21:02:40 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -138,7 +138,7 @@
 /*
  * Note for the non-LP64 case, cpu_switch_resume has the assumption
  * that UPAGES == 2.  For MIPS-I we wire USPACE in TLB #0 and #1.
- * For MIPS3+ we wire USPACE in the the TLB #0 pair.
+ * For MIPS3+ we wire USPACE in the TLB #0 pair.
  */
 #define	__MIN_USPACE	8192		/* otherwise use an 8kB stack */
 #endif

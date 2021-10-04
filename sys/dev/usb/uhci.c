@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci.c,v 1.306 2021/01/05 18:00:21 skrll Exp $	*/
+/*	$NetBSD: uhci.c,v 1.307 2021/10/04 21:02:39 andvar Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2011, 2012, 2016, 2020 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.306 2021/01/05 18:00:21 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.307 2021/10/04 21:02:39 andvar Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -1022,7 +1022,7 @@ uhci_poll_hub(void *addr)
 	 * another intr xfer has been submitted, let that one be dealt
 	 * with when the callout fires again.
 	 *
-	 * The call to callout_pending is racy, but the the transition
+	 * The call to callout_pending is racy, but the transition
 	 * from pending to invoking happens atomically.  The
 	 * callout_ack ensures callout_invoking does not return true
 	 * due to this invocation of the callout; the lock ensures the

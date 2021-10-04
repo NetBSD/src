@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.236 2021/09/07 13:24:46 andvar Exp $ */
+/*	$NetBSD: autoconf.c,v 1.237 2021/10/04 21:02:39 andvar Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.236 2021/09/07 13:24:46 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.237 2021/10/04 21:02:39 andvar Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -1166,7 +1166,7 @@ device_register(device_t dev, void *aux)
 		 * busdev now points to the direct descendent of the
 		 * controller ("atabus" or "scsibus").  Get the
 		 * controller's devhandle.  Hoist it up one more so
-		 * that busdev points at the the controller.
+		 * that busdev points at the controller.
 		 */
 		busdev = device_parent(busdev);
 		devhandle = device_handle(busdev);

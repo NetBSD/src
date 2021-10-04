@@ -6,7 +6,7 @@
 #include <machine/asm.h>
 
 #if defined(LIBC_SCCS)
-	RCSID("$NetBSD: strlen.S,v 1.2 2014/03/22 19:38:46 jakllsch Exp $")
+	RCSID("$NetBSD: strlen.S,v 1.3 2021/10/04 21:02:40 andvar Exp $")
 #endif
 
 ENTRY(strlen)
@@ -81,7 +81,7 @@ ENTRY(strlen)
 	 * presented above, code that uses it will be faster as long as
 	 * the rate of false positives is low.
 	 *
-	 * This is likely, because the the false positive can only occur
+	 * This is likely, because the false positive can only occur
 	 * if the most siginificant bit of a byte within the word is set.
 	 * The expression will never fail for typical 7-bit ASCII strings.
 	 *

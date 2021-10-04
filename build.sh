@@ -1,5 +1,5 @@
 #! /usr/bin/env sh
-#	$NetBSD: build.sh,v 1.358 2021/09/18 01:47:07 christos Exp $
+#	$NetBSD: build.sh,v 1.359 2021/10/04 21:02:40 andvar Exp $
 #
 # Copyright (c) 2001-2011 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -1974,7 +1974,7 @@ createmakewrapper()
 	eval cat <<EOF ${makewrapout}
 #! ${HOST_SH}
 # Set proper variables to allow easy "make" building of a NetBSD subtree.
-# Generated from:  \$NetBSD: build.sh,v 1.358 2021/09/18 01:47:07 christos Exp $
+# Generated from:  \$NetBSD: build.sh,v 1.359 2021/10/04 21:02:40 andvar Exp $
 # with these arguments: ${_args}
 #
 
@@ -2297,7 +2297,7 @@ dorump()
 }
 
 repro_date() {
-	# try the bsd date fail back the the linux one
+	# try the bsd date fail back the linux one
 	date -u -r "$1" 2> /dev/null || date -u -d "@$1"
 }
 
