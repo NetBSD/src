@@ -1,4 +1,4 @@
-/*	$NetBSD: firewire.c,v 1.52 2021/08/07 16:19:12 thorpej Exp $	*/
+/*	$NetBSD: firewire.c,v 1.53 2021/10/04 20:48:05 andvar Exp $	*/
 /*-
  * Copyright (c) 2003 Hidetoshi Shimokawa
  * Copyright (c) 1998-2002 Katsushi Kobayashi and Hidetoshi Shimokawa
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: firewire.c,v 1.52 2021/08/07 16:19:12 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: firewire.c,v 1.53 2021/10/04 20:48:05 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -1202,7 +1202,7 @@ fw_rcv(struct fw_rcv_buf *rb)
 		return;
 
 	default:
-		aprint_error_dev(rb->fc->bdev, "unknow tcode %d\n", tcode);
+		aprint_error_dev(rb->fc->bdev, "unknown tcode %d\n", tcode);
 		break;
 	}
 }
