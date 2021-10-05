@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_pcmcia.c,v 1.128 2021/10/05 08:08:40 rin Exp $ */
+/*	$NetBSD: wdc_pcmcia.c,v 1.129 2021/10/05 08:21:10 rin Exp $ */
 
 /*-
  * Copyright (c) 1998, 2003, 2004 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc_pcmcia.c,v 1.128 2021/10/05 08:08:40 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc_pcmcia.c,v 1.129 2021/10/05 08:21:10 rin Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -231,7 +231,7 @@ wdc_pcmcia_attach(device_t parent, device_t self, void *aux)
 	}
 
 	cfe = pa->pf->cfe;
-	sc->sc_wdcdev.sc_atac.atac_cap |= ATAC_CAP_DATA16;
+	sc->sc_wdcdev.sc_atac.atac_cap |= ATAC_CAP_DATA16 | ATAC_CAP_DATA32;
 
 	sc->sc_wdcdev.regs = wdr = &sc->wdc_regs;
 
@@ -286,7 +286,6 @@ wdc_pcmcia_attach(device_t parent, device_t self, void *aux)
 		aprint_normal_dev(self, "i/o mapped mode\n");
 		wdr->data32iot = wdr->cmd_iot;
 		wdr->data32ioh = wdr->cmd_iohs[wd_data];
-		sc->sc_wdcdev.sc_atac.atac_cap |= ATAC_CAP_DATA32;
 	}
 
 	sc->sc_wdcdev.sc_atac.atac_pio_cap = 0;
