@@ -1,4 +1,4 @@
-/*	$NetBSD: atavar.h,v 1.108 2020/05/25 18:29:25 jdolecek Exp $	*/
+/*	$NetBSD: atavar.h,v 1.109 2021/10/05 08:01:05 rin Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.
@@ -178,7 +178,9 @@ struct ata_xfer_ops {
 #define ATASTART_TH		1	/* xfer needs to be run in thread */
 #define ATASTART_POLL		2	/* xfer needs to be polled */
 #define ATASTART_ABORT		3	/* error occurred, abort xfer */
-	void	(*c_poll)(struct ata_channel *, struct ata_xfer *);
+	int	(*c_poll)(struct ata_channel *, struct ata_xfer *);
+#define	ATAPOLL_DONE		0
+#define	ATAPOLL_AGAIN		1
 	void	(*c_abort)(struct ata_channel *, struct ata_xfer *);
 	int	(*c_intr)(struct ata_channel *, struct ata_xfer *, int);
 	void	(*c_kill_xfer)(struct ata_channel *, struct ata_xfer *, int);

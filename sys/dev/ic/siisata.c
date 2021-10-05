@@ -1,4 +1,4 @@
-/* $NetBSD: siisata.c,v 1.48 2021/08/07 16:19:12 thorpej Exp $ */
+/* $NetBSD: siisata.c,v 1.49 2021/10/05 08:01:05 rin Exp $ */
 
 /* from ahcisata_core.c */
 
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: siisata.c,v 1.48 2021/08/07 16:19:12 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: siisata.c,v 1.49 2021/10/05 08:01:05 rin Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -149,7 +149,7 @@ void siisata_killpending(struct ata_drive_datas *);
 
 int siisata_cmd_start(struct ata_channel *, struct ata_xfer *);
 int siisata_cmd_complete(struct ata_channel *, struct ata_xfer *, int);
-void siisata_cmd_poll(struct ata_channel *, struct ata_xfer *);
+int siisata_cmd_poll(struct ata_channel *, struct ata_xfer *);
 void siisata_cmd_abort(struct ata_channel *, struct ata_xfer *);
 void siisata_cmd_done(struct ata_channel *, struct ata_xfer *, int);
 static void siisata_cmd_done_end(struct ata_channel *, struct ata_xfer *);
@@ -157,7 +157,7 @@ void siisata_cmd_kill_xfer(struct ata_channel *, struct ata_xfer *, int);
 
 int siisata_bio_start(struct ata_channel *, struct ata_xfer *);
 int siisata_bio_complete(struct ata_channel *, struct ata_xfer *, int);
-void siisata_bio_poll(struct ata_channel *, struct ata_xfer *);
+int siisata_bio_poll(struct ata_channel *, struct ata_xfer *);
 void siisata_bio_abort(struct ata_channel *, struct ata_xfer *);
 void siisata_bio_kill_xfer(struct ata_channel *, struct ata_xfer *, int);
 void siisata_exec_command(struct ata_drive_datas *, struct ata_xfer *);
@@ -175,7 +175,7 @@ void siisata_atapi_probe_device(struct atapibus_softc *, int);
 void siisata_atapi_minphys(struct buf *);
 int siisata_atapi_start(struct ata_channel *,struct ata_xfer *);
 int siisata_atapi_complete(struct ata_channel *, struct ata_xfer *, int);
-void siisata_atapi_poll(struct ata_channel *, struct ata_xfer *);
+int siisata_atapi_poll(struct ata_channel *, struct ata_xfer *);
 void siisata_atapi_abort(struct ata_channel *, struct ata_xfer *);
 void siisata_atapi_kill_xfer(struct ata_channel *, struct ata_xfer *, int);
 void siisata_atapi_scsipi_request(struct scsipi_channel *,
@@ -1006,7 +1006,7 @@ siisata_cmd_start(struct ata_channel *chp, struct ata_xfer *xfer)
 		return ATASTART_POLL;
 }
 
-void
+int
 siisata_cmd_poll(struct ata_channel *chp, struct ata_xfer *xfer)
 {
 	struct siisata_channel *schp = (struct siisata_channel *)chp;
@@ -1031,6 +1031,8 @@ siisata_cmd_poll(struct ata_channel *chp, struct ata_xfer *xfer)
 	SIISATA_DEBUG_PRINT(("%s: %s: done\n",
 	    SIISATANAME((struct siisata_softc *)chp->ch_atac), __func__),
 	    DEBUG_FUNCS);
+
+	return ATAPOLL_DONE;
 }
 
 void
@@ -1233,7 +1235,7 @@ siisata_bio_start(struct ata_channel *chp, struct ata_xfer *xfer)
 		return ATASTART_POLL;
 }
 
-void
+int
 siisata_bio_poll(struct ata_channel *chp, struct ata_xfer *xfer)
 {
 	struct siisata_channel *schp = (struct siisata_channel *)chp;
@@ -1257,6 +1259,8 @@ siisata_bio_poll(struct ata_channel *chp, struct ata_xfer *xfer)
 	SIISATA_DEBUG_PRINT(("%s: %s: done\n",
 	    SIISATANAME((struct siisata_softc *)chp->ch_atac), __func__),
 	    DEBUG_FUNCS);
+
+	return ATAPOLL_DONE;
 }
 
 void
@@ -1835,7 +1839,7 @@ siisata_atapi_start(struct ata_channel *chp, struct ata_xfer *xfer)
 		return ATASTART_POLL;
 }
 
-void
+int
 siisata_atapi_poll(struct ata_channel *chp, struct ata_xfer *xfer)
 {
 	struct siisata_channel *schp = (struct siisata_channel *)chp;
@@ -1858,6 +1862,8 @@ siisata_atapi_poll(struct ata_channel *chp, struct ata_xfer *xfer)
 	SIISATA_DEBUG_PRINT(("%s: %s: done\n",
 	    SIISATANAME((struct siisata_softc *)chp->ch_atac), __func__),
             DEBUG_FUNCS);
+
+	return ATAPOLL_DONE;
 }
 
 void

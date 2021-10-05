@@ -1,4 +1,4 @@
-/*	$NetBSD: mvsata.c,v 1.60 2021/08/07 16:19:12 thorpej Exp $	*/
+/*	$NetBSD: mvsata.c,v 1.61 2021/10/05 08:01:05 rin Exp $	*/
 /*
  * Copyright (c) 2008 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mvsata.c,v 1.60 2021/08/07 16:19:12 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mvsata.c,v 1.61 2021/10/05 08:01:05 rin Exp $");
 
 #include "opt_mvsata.h"
 
@@ -143,14 +143,14 @@ static void mvsata_setup_channel(struct ata_channel *);
 #ifndef MVSATA_WITHOUTDMA
 static int mvsata_bio_start(struct ata_channel *, struct ata_xfer *);
 static int mvsata_bio_intr(struct ata_channel *, struct ata_xfer *, int);
-static void mvsata_bio_poll(struct ata_channel *, struct ata_xfer *);
+static int mvsata_bio_poll(struct ata_channel *, struct ata_xfer *);
 static void mvsata_bio_kill_xfer(struct ata_channel *, struct ata_xfer *, int);
 static void mvsata_bio_done(struct ata_channel *, struct ata_xfer *);
 static int mvsata_bio_ready(struct mvsata_port *, struct ata_bio *, int,
 			    int);
 static int mvsata_wdc_cmd_start(struct ata_channel *, struct ata_xfer *);
 static int mvsata_wdc_cmd_intr(struct ata_channel *, struct ata_xfer *, int);
-static void mvsata_wdc_cmd_poll(struct ata_channel *, struct ata_xfer *);
+static int mvsata_wdc_cmd_poll(struct ata_channel *, struct ata_xfer *);
 static void mvsata_wdc_cmd_kill_xfer(struct ata_channel *, struct ata_xfer *,
 				     int);
 static void mvsata_wdc_cmd_done(struct ata_channel *, struct ata_xfer *);
@@ -158,7 +158,7 @@ static void mvsata_wdc_cmd_done_end(struct ata_channel *, struct ata_xfer *);
 #if NATAPIBUS > 0
 static int mvsata_atapi_start(struct ata_channel *, struct ata_xfer *);
 static int mvsata_atapi_intr(struct ata_channel *, struct ata_xfer *, int);
-static void mvsata_atapi_poll(struct ata_channel *, struct ata_xfer *);
+static int mvsata_atapi_poll(struct ata_channel *, struct ata_xfer *);
 static void mvsata_atapi_kill_xfer(struct ata_channel *, struct ata_xfer *,
 				   int);
 static void mvsata_atapi_reset(struct ata_channel *, struct ata_xfer *);
@@ -1245,7 +1245,7 @@ timeout:
 	return ATASTART_ABORT;
 }
 
-static void
+static int
 mvsata_bio_poll(struct ata_channel *chp, struct ata_xfer *xfer)
 {
 	struct mvsata_port *mvport = (struct mvsata_port *)chp;
@@ -1259,10 +1259,9 @@ mvsata_bio_poll(struct ata_channel *chp, struct ata_xfer *xfer)
 		chp->ch_flags &= ~ATACH_DMA_WAIT;
 	}
 
-	if ((xfer->c_bio.flags & ATA_ITSDONE) == 0) {
-		KASSERT(xfer->c_flags & C_TIMEOU);
-		mvsata_bio_intr(chp, xfer, 0);
-	}
+	mvsata_bio_intr(chp, xfer, 0);
+
+	return (xfer->c_bio.flags & ATA_ITSDONE) ? ATAPOLL_DONE : ATAPOLL_AGAIN;
 }
 
 static int
@@ -1385,7 +1384,10 @@ end:
 			/* Start the next operation */
 			ata_xfer_start(xfer);
 		} else {
-			/* Let mvsata_bio_start do the loop */
+			/*
+			 * Let ata_xfer_start() do the loop;
+			 * see mvsata_bio_poll().
+			 */
 		}
 		ata_channel_unlock(chp);
 	} else { /* Done with this transfer */
@@ -1680,7 +1682,7 @@ mvsata_wdc_cmd_start(struct ata_channel *chp, struct ata_xfer *xfer)
 	return ATASTART_POLL;
 }
 
-static void
+static int
 mvsata_wdc_cmd_poll(struct ata_channel *chp, struct ata_xfer *xfer)
 {
 	/*
@@ -1689,6 +1691,7 @@ mvsata_wdc_cmd_poll(struct ata_channel *chp, struct ata_xfer *xfer)
 	 */
 	delay(10);	/* 400ns delay */
 	mvsata_wdc_cmd_intr(chp, xfer, 0);
+	return ATAPOLL_DONE;
 }
 
 static int
@@ -2165,7 +2168,7 @@ error:
 	return ATASTART_ABORT;
 }
 
-static void
+static int
 mvsata_atapi_poll(struct ata_channel *chp, struct ata_xfer *xfer)
 {
 	/*
@@ -2180,7 +2183,7 @@ mvsata_atapi_poll(struct ata_channel *chp, struct ata_xfer *xfer)
 	mvsata_atapi_intr(chp, xfer, 0);
 
 	if (!poll)
-		return;
+		return ATAPOLL_DONE;
 
 	if (chp->ch_flags & ATACH_DMA_WAIT) {
 		wdc_dmawait(chp, xfer, xfer->c_scsipi->timeout);
@@ -2192,6 +2195,8 @@ mvsata_atapi_poll(struct ata_channel *chp, struct ata_xfer *xfer)
 		DELAY(1);
 		mvsata_atapi_intr(chp, xfer, 0);
 	}
+
+	return ATAPOLL_DONE;
 }
 
 static int

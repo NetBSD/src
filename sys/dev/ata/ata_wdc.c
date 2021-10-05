@@ -1,4 +1,4 @@
-/*	$NetBSD: ata_wdc.c,v 1.119 2020/12/25 08:55:40 skrll Exp $	*/
+/*	$NetBSD: ata_wdc.c,v 1.120 2021/10/05 08:01:05 rin Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001, 2003 Manuel Bouyer.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata_wdc.c,v 1.119 2020/12/25 08:55:40 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata_wdc.c,v 1.120 2021/10/05 08:01:05 rin Exp $");
 
 #include "opt_ata.h"
 #include "opt_wdc.h"
@@ -105,7 +105,7 @@ extern int wdcdebug_wd_mask; /* inited in wd.c */
 static void	wdc_ata_bio(struct ata_drive_datas*, struct ata_xfer *);
 static int	wdc_ata_bio_start(struct ata_channel *,struct ata_xfer *);
 static int	_wdc_ata_bio_start(struct ata_channel *,struct ata_xfer *);
-static void	wdc_ata_bio_poll(struct ata_channel *,struct ata_xfer *);
+static int	wdc_ata_bio_poll(struct ata_channel *,struct ata_xfer *);
 static int	wdc_ata_bio_intr(struct ata_channel *, struct ata_xfer *,
 				 int);
 static void	wdc_ata_bio_kill_xfer(struct ata_channel *,
@@ -609,7 +609,7 @@ timeout:
 	return ATASTART_ABORT;
 }
 
-static void
+static int
 wdc_ata_bio_poll(struct ata_channel *chp, struct ata_xfer *xfer)
 {
 	/* Wait for at last 400ns for status bit to be valid */
@@ -621,6 +621,7 @@ wdc_ata_bio_poll(struct ata_channel *chp, struct ata_xfer *xfer)
 	}
 #endif
 	wdc_ata_bio_intr(chp, xfer, 0);
+	return (xfer->c_bio.flags & ATA_ITSDONE) ? ATAPOLL_DONE : ATAPOLL_AGAIN;
 }
 
 static int
@@ -773,7 +774,10 @@ end:
 			callout_stop(&chp->c_timo_callout);
 			ata_xfer_start(xfer);
 		} else {
-			/* Let _wdc_ata_bio_start do the loop */
+			/*
+			 * Let ata_xfer_start() do the loop;
+			 * see wdc_ata_bio_poll().
+			 */
 		}
 		ata_channel_unlock(chp);
 		return 1;
