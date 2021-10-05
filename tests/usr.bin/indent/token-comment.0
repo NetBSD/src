@@ -1,4 +1,4 @@
-/* $NetBSD: token-comment.0,v 1.3 2021/10/05 18:09:13 rillig Exp $ */
+/* $NetBSD: token-comment.0,v 1.4 2021/10/05 18:21:03 rillig Exp $ */
 /* $FreeBSD$ */
 
 /*
@@ -77,6 +77,19 @@ function(void)
 
 	int decl;	// C99 declaration comment
 
+	{
+		int decl;	/* indented declaration */
+		{
+			int decl;	/* indented declaration */
+			{
+				int decl;	/* indented declaration */
+				{
+					int decl;	/* indented declaration */
+				}
+			}
+		}
+	}
+
 	code();			/* code comment */
 
 	code();			/* short
@@ -91,6 +104,13 @@ function(void)
  * the allowed line width */
 
 	code();			// C99 code comment
+
+	if (cond) /* comment */
+		if (cond) /* comment */
+			if (cond) /* comment */
+				if (cond) /* comment */
+					if (cond) /* comment */
+						code(); /* comment */
 }
 
 /*INDENT OFF*/
