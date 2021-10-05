@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.c,v 1.105 2021/10/05 16:33:25 rillig Exp $	*/
+/*	$NetBSD: indent.c,v 1.106 2021/10/05 17:12:20 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)indent.c	5.17 (Berkeley) 6/7/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: indent.c,v 1.105 2021/10/05 16:33:25 rillig Exp $");
+__RCSID("$NetBSD: indent.c,v 1.106 2021/10/05 17:12:20 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/indent.c 340138 2018-11-04 19:24:49Z oshogbo $");
 #endif
@@ -501,19 +501,19 @@ main_prepare_parsing(void)
     parse(semicolon);
 
     char *p = buf_ptr;
-    int col = 1;
+    int ind = 0;
 
     for (;;) {
 	if (*p == ' ')
-	    col++;
+	    ind++;
 	else if (*p == '\t')
-	    col = opt.tabsize * (1 + (col - 1) / opt.tabsize) + 1;
+	    ind = opt.tabsize * (1 + ind / opt.tabsize);
 	else
 	    break;
 	p++;
     }
-    if (col > opt.indent_size)
-	ps.ind_level = ps.ind_level_follow = col / opt.indent_size;
+    if (ind >= opt.indent_size)
+	ps.ind_level = ps.ind_level_follow = (ind + 1) / opt.indent_size;
 }
 
 static void __attribute__((__noreturn__))
