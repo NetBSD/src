@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.3,v 1.1.2.34 2021/10/04 15:43:41 martin Exp $
+# $NetBSD: CHANGES-9.3,v 1.1.2.35 2021/10/05 11:08:04 martin Exp $
 
 A complete list of changes from the NetBSD 9.2 release to the NetBSD 9.3
 release:
@@ -779,4 +779,17 @@ xsrc/external/mit/xf86-input-keyboard/dist/src/kbd.c	1.8
 	PR 56415: restore keyboard settings when the X server aborts on
 	ports that use WSDISPLAY_COMPAT_RAWKBD.
 	[tsutsui, ticket #1354]
+
+lib/libc/sys/Makefile.inc			1.247
+lib/libpthread/pthread_cancelstub.c		1.39,1.40
+
+	PR 56424: recvfrom() is not a cancelation point as documented
+	in pthread_setcanceltype.3
+	[christos, ticket #1355]
+
+lib/libc/resolv/res_init.c			1.32
+lib/libc/resolv/res_private.h			1.4
+
+	res_init(3): handle  kqueue close-on-fork semantics.
+	[christos, ticket #1356]
 
