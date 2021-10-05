@@ -1,4 +1,4 @@
-.\"	$NetBSD: iic.4,v 1.28 2021/09/10 22:48:19 nia Exp $
+.\"	$NetBSD: iic.4,v 1.29 2021/10/05 16:36:58 nia Exp $
 .\"	$OpenBSD: iic.4,v 1.74 2008/09/10 16:13:43 reyk Exp $
 .\"
 .\" Copyright (c) 2004, 2006 Alexander Yurchenko <grange@openbsd.org>
@@ -16,7 +16,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd September 10, 2021
+.Dd October 5, 2021
 .Dt IIC 4
 .Os
 .Sh NAME
@@ -207,8 +207,6 @@ Freescale MPL115A2 absolute pressure sensor
 NXP PCF8563 real-time clock
 .It Xr rs5c372rtc 4
 RICOH RS5C372A and RS5C372B real-time clock
-.It Xr si70xxtemp 4
-Silicon Labs SI7013/SI7020/SI7021 humidity/temperature sensors
 .It Xr s390rtc 4
 Seiko Instruments S-35390 real-time clock
 .It Xr sdtemp 4
@@ -217,6 +215,10 @@ JEDEC JC-42.4 compatible memory module temperature sensors
 24-series I2C EEPROM driver
 .It Xr sgsmix 4
 SGS 7433 Basic Audio Processor found in some Apple machines
+.It Xr sht4xtemp 4
+Sensirion SHT40/SHT41/SHT45 temperature/humidity sensors
+.It Xr si70xxtemp 4
+Silicon Labs SI7013/SI7020/SI7021 humidity/temperature sensors
 .It Xr smscmon 4
 Standard Microsystems Corporation LPC47M192 and LPC47M997 sensors
 .It Xr spdmem 4
