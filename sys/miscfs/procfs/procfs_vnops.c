@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_vnops.c,v 1.218 2021/07/18 23:57:14 dholland Exp $	*/
+/*	$NetBSD: procfs_vnops.c,v 1.219 2021/10/05 18:00:28 christos Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008, 2020 The NetBSD Foundation, Inc.
@@ -105,7 +105,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_vnops.c,v 1.218 2021/07/18 23:57:14 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_vnops.c,v 1.219 2021/10/05 18:00:28 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -1221,15 +1221,15 @@ procfs_root_readdir_callback(struct proc *p, void *arg)
 	if (uiop->uio_resid < UIO_MX)
 		return -1; /* no space */
 
-	if (ctxp->off < ctxp->startoff) {
-		ctxp->off++;
-		return 0;
-	}
-
 	if (kauth_authorize_process(kauth_cred_get(),
 	    KAUTH_PROCESS_CANSEE, p,
 	    KAUTH_ARG(KAUTH_REQ_PROCESS_CANSEE_ENTRY), NULL, NULL) != 0)
 		return 0;
+
+	if (ctxp->off < ctxp->startoff) {
+		ctxp->off++;
+		return 0;
+	}
 
 	memset(&d, 0, UIO_MX);
 	d.d_reclen = UIO_MX;
@@ -1483,6 +1483,7 @@ procfs_readdir(void *v)
 	 */
 
 	case PFSroot: {
+		struct proc *p;
 		int nc = 0;
 
 		if (ap->a_ncookies) {
@@ -1548,12 +1549,20 @@ procfs_readdir(void *v)
 			i = ctx.off;
 		if (i >= ctx.off + nproc_root_targets)
 			break;
+		error = procfs_proc_lock(vp->v_mount, pfs->pfs_pid, &p, ESRCH);
+		if (error)
+			break;
 		for (pt = &proc_root_targets[i - ctx.off];
 		    uio->uio_resid >= UIO_MX &&
 		    pt < &proc_root_targets[nproc_root_targets];
 		    pt++, i++) {
 			if (pt->pt_valid &&
 			    (*pt->pt_valid)(NULL, vp->v_mount) == 0)
+				continue;
+			if (kauth_authorize_process(kauth_cred_get(),
+			    KAUTH_PROCESS_CANSEE, p,
+			    KAUTH_ARG(KAUTH_REQ_PROCESS_CANSEE_ENTRY),
+			    NULL, NULL) != 0)
 				continue;
 			d.d_fileno = PROCFS_FILENO(0, pt->pt_pfstype, -1);
 			d.d_namlen = pt->pt_namlen;
@@ -1568,6 +1577,7 @@ procfs_readdir(void *v)
 		}
 
 		ncookies = nc;
+		procfs_proc_unlock(p);
 		break;
 	}
 
