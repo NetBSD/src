@@ -1,4 +1,4 @@
-/*	$NetBSD: lexi.c,v 1.65 2021/10/03 20:35:59 rillig Exp $	*/
+/*	$NetBSD: lexi.c,v 1.66 2021/10/05 05:39:14 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)lexi.c	8.1 (Berkeley) 6/6/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: lexi.c,v 1.65 2021/10/03 20:35:59 rillig Exp $");
+__RCSID("$NetBSD: lexi.c,v 1.66 2021/10/05 05:39:14 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/lexi.c 337862 2018-08-15 18:19:45Z pstef $");
 #endif
@@ -180,7 +180,7 @@ inbuf_peek(void)
     return *buf_ptr;
 }
 
-static void
+void
 inbuf_skip(void)
 {
     buf_ptr++;
@@ -188,7 +188,7 @@ inbuf_skip(void)
 	fill_buffer();
 }
 
-static char
+char
 inbuf_next(void)
 {
     char ch = inbuf_peek();
@@ -392,7 +392,7 @@ lexi(struct parser_state *state)
 	    return lexi_end(string_prefix);
 
 	while (*buf_ptr == ' ' || *buf_ptr == '\t')	/* get rid of blanks */
-	    inbuf_next();
+	    inbuf_skip();
 	state->keyword = kw_0;
 
 	if (state->last_token == keyword_struct_union_enum &&
