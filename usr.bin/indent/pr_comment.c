@@ -1,4 +1,4 @@
-/*	$NetBSD: pr_comment.c,v 1.52 2021/10/05 06:49:19 rillig Exp $	*/
+/*	$NetBSD: pr_comment.c,v 1.53 2021/10/05 19:58:38 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)pr_comment.c	8.1 (Berkeley) 6/6/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: pr_comment.c,v 1.52 2021/10/05 06:49:19 rillig Exp $");
+__RCSID("$NetBSD: pr_comment.c,v 1.53 2021/10/05 19:58:38 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/pr_comment.c 334927 2018-06-10 16:44:18Z pstef $");
 #endif
@@ -143,13 +143,13 @@ process_comment(void)
     if (ps.box_com) {
 	/*
 	 * Find out how much indentation there was originally, because that
-	 * much will have to be ignored by pad_output() in dump_line(). This
-	 * is a box comment, so nothing changes -- not even indentation.
+	 * much will have to be ignored by dump_line(). This is a box comment,
+	 * so nothing changes -- not even indentation.
 	 *
 	 * The comment we're about to read usually comes from in_buffer,
 	 * unless it has been copied into save_com.
 	 */
-	char *start;
+	const char *start;
 
 	/*
 	 * XXX: ordered comparison between pointers from different objects
