@@ -1,4 +1,4 @@
-/*	$NetBSD: lexi.c,v 1.69 2021/10/05 06:15:24 rillig Exp $	*/
+/*	$NetBSD: lexi.c,v 1.70 2021/10/05 21:55:22 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)lexi.c	8.1 (Berkeley) 6/6/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: lexi.c,v 1.69 2021/10/05 06:15:24 rillig Exp $");
+__RCSID("$NetBSD: lexi.c,v 1.70 2021/10/05 21:55:22 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/lexi.c 337862 2018-08-15 18:19:45Z pstef $");
 #endif
@@ -330,11 +330,19 @@ lex_char_or_string(void)
 static bool
 probably_typedef(const struct parser_state *state)
 {
-    return state->p_l_follow == 0 && !state->block_init && !state->in_stmt &&
-	((*buf_ptr == '*' && buf_ptr[1] != '=') ||
-	isalpha((unsigned char)*buf_ptr)) &&
-	(state->last_token == semicolon || state->last_token == lbrace ||
-	state->last_token == rbrace);
+    if (state->p_l_follow != 0)
+	return false;
+    if (state->block_init || state->in_stmt)
+	return false;
+    if (buf_ptr[0] == '*' && buf_ptr[1] != '=')
+	goto maybe;
+    if (isalpha((unsigned char)*buf_ptr))
+	goto maybe;
+    return false;
+maybe:
+    return state->last_token == semicolon ||
+	   state->last_token == lbrace ||
+	   state->last_token == rbrace;
 }
 
 static bool
