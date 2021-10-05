@@ -1,4 +1,4 @@
-/*	$NetBSD: pr_comment.c,v 1.47 2021/09/26 19:37:11 rillig Exp $	*/
+/*	$NetBSD: pr_comment.c,v 1.48 2021/10/05 05:39:14 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)pr_comment.c	8.1 (Berkeley) 6/6/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: pr_comment.c,v 1.47 2021/09/26 19:37:11 rillig Exp $");
+__RCSID("$NetBSD: pr_comment.c,v 1.48 2021/10/05 05:39:14 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/pr_comment.c 334927 2018-06-10 16:44:18Z pstef $");
 #endif
@@ -219,8 +219,7 @@ process_comment(void)
 		while (*++buf_ptr == ' ' || *buf_ptr == '\t')
 		    ;
 	    } else {
-		if (++buf_ptr >= buf_end)
-		    fill_buffer();
+		inbuf_skip();
 		*com.e++ = 014;
 	    }
 	    break;
@@ -260,28 +259,24 @@ process_comment(void)
 		int nstar = 1;
 		do {		/* flush any blanks and/or tabs at start of
 				 * next line */
-		    if (++buf_ptr >= buf_end)
-			fill_buffer();
+		    inbuf_skip();
 		    if (*buf_ptr == '*' && --nstar >= 0) {
-			if (++buf_ptr >= buf_end)
-			    fill_buffer();
+			inbuf_skip();
 			if (*buf_ptr == '/')
 			    goto end_of_comment;
 		    }
 		} while (*buf_ptr == ' ' || *buf_ptr == '\t');
-	    } else if (++buf_ptr >= buf_end)
-		fill_buffer();
+	    } else
+		inbuf_skip();
 	    break;		/* end of case for newline */
 
 	case '*':		/* must check for possibility of being at end
 				 * of comment */
-	    if (++buf_ptr >= buf_end)	/* get to next char after * */
-		fill_buffer();
+	    inbuf_skip();
 	    check_size_comment(4);
 	    if (*buf_ptr == '/') {	/* it is the end!!! */
 	end_of_comment:
-		if (++buf_ptr >= buf_end)
-		    fill_buffer();
+		inbuf_skip();
 		if (break_delim) {
 		    if (com.e > com.s + 3)
 			dump_line();
@@ -305,9 +300,7 @@ process_comment(void)
 	    int now_len = indentation_after_range(ps.com_col - 1, com.s, com.e);
 	    do {
 		check_size_comment(1);
-		*com.e = *buf_ptr++;
-		if (buf_ptr >= buf_end)
-		    fill_buffer();
+		*com.e = inbuf_next();
 		if (*com.e == ' ' || *com.e == '\t')
 		    last_blank = com.e - com.buf;	/* remember we saw a
 							 * blank */
