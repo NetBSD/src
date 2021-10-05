@@ -1,4 +1,4 @@
-/*	$NetBSD: io.c,v 1.68 2021/09/26 21:23:31 rillig Exp $	*/
+/*	$NetBSD: io.c,v 1.69 2021/10/05 06:09:42 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)io.c	8.1 (Berkeley) 6/6/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: io.c,v 1.68 2021/09/26 21:23:31 rillig Exp $");
+__RCSID("$NetBSD: io.c,v 1.69 2021/10/05 06:09:42 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/io.c 334927 2018-06-10 16:44:18Z pstef $");
 #endif
@@ -151,7 +151,7 @@ dump_line(void)
 		comment_open = false;
 		output_string(".*/\n");
 	    }
-	    while (lab.e > lab.s && (lab.e[-1] == ' ' || lab.e[-1] == '\t'))
+	    while (lab.e > lab.s && is_hspace(lab.e[-1]))
 		lab.e--;
 	    *lab.e = '\0';
 	    cur_col = 1 + output_indent(0, compute_label_indent());
@@ -163,7 +163,7 @@ dump_line(void)
 		do {
 		    output_char(*s++);
 		} while (s < lab.e && 'a' <= *s && *s <= 'z');
-		while ((*s == ' ' || *s == '\t') && s < lab.e)
+		while (s < lab.e && is_hspace(*s))
 		    s++;
 		if (s < lab.e) {
 		    if (s[0] == '/' && s[1] == '*') {
@@ -328,7 +328,7 @@ compute_label_indent(void)
 static void
 skip_hspace(const char **pp)
 {
-    while (**pp == ' ' || **pp == '\t')
+    while (is_hspace(**pp))
 	(*pp)++;
 }
 
