@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.h,v 1.27 2021/10/03 18:44:51 rillig Exp $	*/
+/*	$NetBSD: indent.h,v 1.28 2021/10/05 05:39:14 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-FreeBSD
@@ -57,6 +57,8 @@ const char *	token_type_name(token_type);
 #define		debug_println(fmt, ...) do { } while (false)
 #define		debug_vis_range(prefix, s, e, suffix) do { } while (false)
 #endif
+void		inbuf_skip(void);
+char		inbuf_next(void);
 token_type	lexi(struct parser_state *);
 void		diag(int, const char *, ...) __printflike(2, 3);
 void		dump_line(void);

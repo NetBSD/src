@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.c,v 1.98 2021/10/03 18:44:51 rillig Exp $	*/
+/*	$NetBSD: indent.c,v 1.99 2021/10/05 05:39:14 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)indent.c	5.17 (Berkeley) 6/7/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: indent.c,v 1.98 2021/10/03 18:44:51 rillig Exp $");
+__RCSID("$NetBSD: indent.c,v 1.99 2021/10/05 05:39:14 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/indent.c 340138 2018-11-04 19:24:49Z oshogbo $");
 #endif
@@ -199,9 +199,7 @@ search_brace_comment(bool *inout_comment_buffered)
     *sc_end++ = '/';		/* copy in start of comment */
     *sc_end++ = '*';
     for (;;) {			/* loop until the end of the comment */
-	*sc_end = *buf_ptr++;
-	if (buf_ptr >= buf_end)
-	    fill_buffer();
+	*sc_end = inbuf_next();
 	if (*sc_end++ == '*' && *buf_ptr == '/')
 	    break;		/* we are at end of comment */
 	if (sc_end >= &save_com[sc_size]) {	/* check for temp buffer
@@ -212,8 +210,7 @@ search_brace_comment(bool *inout_comment_buffered)
 	}
     }
     *sc_end++ = '/';		/* add ending slash */
-    if (++buf_ptr >= buf_end)	/* get past / in buffer */
-	fill_buffer();
+    inbuf_skip();		/* get past / in buffer */
 }
 
 static bool
@@ -232,8 +229,7 @@ search_brace_lbrace(void)
 	 * resulting from the "{" before, it must be scanned now and ignored.
 	 */
 	while (isspace((unsigned char)*buf_ptr)) {
-	    if (++buf_ptr >= buf_end)
-		fill_buffer();
+	    inbuf_skip();
 	    if (*buf_ptr == '\n')
 		break;
 	}
@@ -334,9 +330,8 @@ search_brace_lookahead(token_type *inout_ttype)
 		    errx(1, "input too long");
 		}
 	    }
-	    if (buf_ptr >= buf_end) {
+	    if (buf_ptr >= buf_end)
 		fill_buffer();
-	    }
 	}
 
 	struct parser_state transient_state;
@@ -1109,23 +1104,16 @@ process_preprocessing(void)
 	char quote = '\0';
 	int com_end = 0;
 
-	while (*buf_ptr == ' ' || *buf_ptr == '\t') {
-	    buf_ptr++;
-	    if (buf_ptr >= buf_end)
-		fill_buffer();
-	}
+	while (*buf_ptr == ' ' || *buf_ptr == '\t')
+	    inbuf_skip();
+
 	while (*buf_ptr != '\n' || (in_comment && !had_eof)) {
 	    check_size_label(2);
-	    *lab.e = *buf_ptr++;
-	    if (buf_ptr >= buf_end)
-		fill_buffer();
+	    *lab.e = inbuf_next();
 	    switch (*lab.e++) {
 	    case '\\':
-		if (!in_comment) {
-		    *lab.e++ = *buf_ptr++;
-		    if (buf_ptr >= buf_end)
-			fill_buffer();
-		}
+		if (!in_comment)
+		    *lab.e++ = inbuf_next();
 		break;
 	    case '/':
 		if (*buf_ptr == '*' && !in_comment && quote == '\0') {
