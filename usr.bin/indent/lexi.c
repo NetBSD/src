@@ -1,4 +1,4 @@
-/*	$NetBSD: lexi.c,v 1.70 2021/10/05 21:55:22 rillig Exp $	*/
+/*	$NetBSD: lexi.c,v 1.71 2021/10/05 22:09:05 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)lexi.c	8.1 (Berkeley) 6/6/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: lexi.c,v 1.70 2021/10/05 21:55:22 rillig Exp $");
+__RCSID("$NetBSD: lexi.c,v 1.71 2021/10/05 22:09:05 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/lexi.c 337862 2018-08-15 18:19:45Z pstef $");
 #endif
@@ -128,6 +128,7 @@ struct {
  * HP H* "." H+ P  FS? -> $float;    "0" O*          IS? -> $int;
  * HP H+ "."    P  FS  -> $float;    BP B+           IS? -> $int;
  */
+/* INDENT OFF */
 static const char num_lex_state[][26] = {
     /*                examples:
                                      00
@@ -155,6 +156,7 @@ static const char num_lex_state[][26] = {
     [15] =  "B EE    EE   T      W     ",
     /*       ABCDEFGHIJKLMNOPQRSTUVWXYZ */
 };
+/* INDENT ON */
 
 static const uint8_t num_lex_row[] = {
     ['0'] = 1,
@@ -259,19 +261,19 @@ lexi_end(token_type ttype)
     return ttype;
 }
 #else
-#  define lexi_end(tk) (tk)
+#define lexi_end(tk) (tk)
 #endif
 
 static void
 lex_number(void)
 {
-    for (uint8_t s = 'A'; s != 'f' && s != 'i' && s != 'u'; ) {
+    for (uint8_t s = 'A'; s != 'f' && s != 'i' && s != 'u';) {
 	uint8_t ch = (uint8_t)*buf_ptr;
 	if (ch >= nitems(num_lex_row) || num_lex_row[ch] == 0)
 	    break;
 	uint8_t row = num_lex_row[ch];
 	if (num_lex_state[row][s - 'A'] == ' ') {
-	    /*
+	    /*-
 	     * num_lex_state[0][s - 'A'] now indicates the type:
 	     * f = floating, ch = integer, u = unknown
 	     */
@@ -341,8 +343,8 @@ probably_typedef(const struct parser_state *state)
     return false;
 maybe:
     return state->last_token == semicolon ||
-	   state->last_token == lbrace ||
-	   state->last_token == rbrace;
+	state->last_token == lbrace ||
+	state->last_token == rbrace;
 }
 
 static bool
@@ -430,7 +432,7 @@ lexi(struct parser_state *state)
 		return lexi_end(case_label);
 	    case kw_struct_or_union_or_enum:
 	    case kw_type:
-	    found_typename:
+	found_typename:
 		if (state->p_l_follow != 0) {
 		    /* inside parens: cast, param list, offsetof or sizeof */
 		    state->cast_mask |= (1 << state->p_l_follow) & ~state->not_cast_mask;
@@ -672,7 +674,8 @@ lexi(struct parser_state *state)
 }
 
 static int
-insert_pos(const char *key, const char **arr, unsigned int len) {
+insert_pos(const char *key, const char **arr, unsigned int len)
+{
     int lo = 0;
     int hi = (int)len - 1;
 
