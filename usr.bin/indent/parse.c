@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.27 2021/09/26 19:37:11 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.28 2021/10/05 06:24:06 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -58,7 +58,6 @@ static void reduce(void);
 void
 parse(token_type ttype)
 {
-    int i;
 
 #ifdef debug
     printf("parse token: '%s' \"%s\"\n", token_type_name(ttype), token.s);
@@ -88,7 +87,7 @@ parse(token_type ttype)
 	    if (opt.ljust_decl) {	/* only do if we want left justified
 					 * declarations */
 		ps.ind_level = 0;
-		for (i = ps.tos - 1; i > 0; --i)
+		for (int i = ps.tos - 1; i > 0; --i)
 		    if (ps.p_stack[i] == decl)
 			++ps.ind_level;	/* indentation is number of
 					 * declaration levels deep we are */
@@ -218,7 +217,7 @@ parse(token_type ttype)
 
 #ifdef debug
     printf("parse stack:");
-    for (i = 1; i <= ps.tos; ++i)
+    for (int i = 1; i <= ps.tos; ++i)
 	printf(" ('%s' at %d)", token_type_name(ps.p_stack[i]), ps.il[i]);
     if (ps.tos == 0)
 	printf(" empty");

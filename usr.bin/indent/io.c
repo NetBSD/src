@@ -1,4 +1,4 @@
-/*	$NetBSD: io.c,v 1.70 2021/10/05 06:15:24 rillig Exp $	*/
+/*	$NetBSD: io.c,v 1.71 2021/10/05 06:24:06 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)io.c	8.1 (Berkeley) 6/6/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: io.c,v 1.70 2021/10/05 06:15:24 rillig Exp $");
+__RCSID("$NetBSD: io.c,v 1.71 2021/10/05 06:24:06 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/io.c 334927 2018-06-10 16:44:18Z pstef $");
 #endif
@@ -393,7 +393,7 @@ fill_buffer(void)
 {
     /* this routine reads stuff from the input */
     char *p;
-    int i;
+    int ch;
     FILE *f = input;
 
     if (bp_save != NULL) {	/* there is a partly filled input buffer left */
@@ -413,15 +413,15 @@ fill_buffer(void)
 	    p = in_buffer + offset;
 	    in_buffer_limit = in_buffer + size - 2;
 	}
-	if ((i = getc(f)) == EOF) {
+	if ((ch = getc(f)) == EOF) {
 	    *p++ = ' ';
 	    *p++ = '\n';
 	    had_eof = true;
 	    break;
 	}
-	if (i != '\0')
-	    *p++ = i;
-	if (i == '\n')
+	if (ch != '\0')
+	    *p++ = (char)ch;
+	if (ch == '\n')
 	    break;
     }
     buf_ptr = in_buffer;
