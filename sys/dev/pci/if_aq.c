@@ -1,4 +1,4 @@
-/*	$NetBSD: if_aq.c,v 1.27 2021/06/16 00:21:18 riastradh Exp $	*/
+/*	$NetBSD: if_aq.c,v 1.28 2021/10/05 14:18:17 ryo Exp $	*/
 
 /**
  * aQuantia Corporation Network Driver
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_aq.c,v 1.27 2021/06/16 00:21:18 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_aq.c,v 1.28 2021/10/05 14:18:17 ryo Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_if_aq.h"
@@ -877,6 +877,9 @@ struct aq_rxring {
 	int rxr_index;
 	kmutex_t rxr_mutex;
 	bool rxr_active;
+	bool rxr_discarding;
+	struct mbuf *rxr_receiving_m;		/* receiving jumboframe */
+	struct mbuf *rxr_receiving_m_last;	/* last mbuf of jumboframe */
 
 	aq_rx_desc_t *rxr_rxdesc;	/* aq_rx_desc_t[AQ_RXD_NUM] */
 	bus_dmamap_t rxr_rxdesc_dmamap;
@@ -4009,6 +4012,12 @@ aq_rxring_reset(struct aq_softc *sc, struct aq_rxring *rxring, bool start)
 
 	mutex_enter(&rxring->rxr_mutex);
 	rxring->rxr_active = false;
+	rxring->rxr_discarding = false;
+	if (rxring->rxr_receiving_m != NULL) {
+		m_freem(rxring->rxr_receiving_m);
+		rxring->rxr_receiving_m = NULL;
+		rxring->rxr_receiving_m_last = NULL;
+	}
 
 	/* disable DMA */
 	AQ_WRITE_REG_BIT(sc, RX_DMA_DESC_REG(ringidx), RX_DMA_DESC_EN, 0);
@@ -4268,6 +4277,7 @@ aq_rx_intr(void *arg)
 	uint16_t rxd_status, rxd_pktlen;
 	uint16_t rxd_nextdescptr __unused, rxd_vlan __unused;
 	unsigned int idx, n = 0;
+	bool discarding;
 
 	mutex_enter(&rxring->rxr_mutex);
 
@@ -4281,7 +4291,11 @@ aq_rx_intr(void *arg)
 
 	net_stat_ref_t nsr = IF_STAT_GETREF(ifp);
 
-	m0 = mprev = NULL;
+	/* restore ring context */
+	discarding = rxring->rxr_discarding;
+	m0 = rxring->rxr_receiving_m;
+	mprev = rxring->rxr_receiving_m_last;
+
 	for (idx = rxring->rxr_readidx;
 	    idx != AQ_READ_REG_BIT(sc, RX_DMA_DESC_HEAD_PTR_REG(ringidx),
 	    RX_DMA_DESC_HEAD_PTR); idx = RXRING_NEXTIDX(idx), n++) {
@@ -4302,9 +4316,21 @@ aq_rx_intr(void *arg)
 		rxd_hash = le32toh(rxd->wb.rss_hash);
 		rxd_vlan = le16toh(rxd->wb.vlan);
 
+		/*
+		 * Some segments are being dropped while receiving jumboframe.
+		 * Discard until EOP.
+		 */
+		if (discarding)
+			goto rx_next;
+
 		if ((rxd_status & RXDESC_STATUS_MACERR) ||
 		    (rxd_type & RXDESC_TYPE_MAC_DMA_ERR)) {
 			if_statinc_ref(nsr, if_ierrors);
+			if (m0 != NULL) {
+				m_freem(m0);
+				m0 = mprev = NULL;
+			}
+			discarding = true;
 			goto rx_next;
 		}
 
@@ -4320,6 +4346,11 @@ aq_rx_intr(void *arg)
 			 * discard this packet, and reuse mbuf for next.
 			 */
 			if_statinc_ref(nsr, if_iqdrops);
+			if (m0 != NULL) {
+				m_freem(m0);
+				m0 = mprev = NULL;
+			}
+			discarding = true;
 			goto rx_next;
 		}
 		rxring->rxr_mbufs[idx].m = NULL;
@@ -4335,9 +4366,10 @@ aq_rx_intr(void *arg)
 		mprev = m;
 
 		if ((rxd_status & RXDESC_STATUS_EOP) == 0) {
+			/* to be continued in the next segment */
 			m->m_len = MCLBYTES;
 		} else {
-			/* last buffer */
+			/* the last segment */
 			int mlen = rxd_pktlen % MCLBYTES;
 			if (mlen == 0)
 				mlen = MCLBYTES;
@@ -4431,10 +4463,17 @@ aq_rx_intr(void *arg)
 		}
 
  rx_next:
+		if (discarding && (rxd_status & RXDESC_STATUS_EOP) != 0)
+			discarding = false;
+
 		aq_rxring_reset_desc(sc, rxring, idx);
 		AQ_WRITE_REG(sc, RX_DMA_DESC_TAIL_PTR_REG(ringidx), idx);
 	}
+	/* save ring context */
 	rxring->rxr_readidx = idx;
+	rxring->rxr_discarding = discarding;
+	rxring->rxr_receiving_m = m0;
+	rxring->rxr_receiving_m_last = mprev;
 
 	IF_STAT_PUTREF(ifp);
 
