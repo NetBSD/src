@@ -1,11 +1,11 @@
-/*	$NetBSD: reader.c,v 1.19 2021/02/20 22:57:56 christos Exp $	*/
+/*	$NetBSD: reader.c,v 1.20 2021/10/05 22:15:32 rillig Exp $	*/
 
 /* Id: reader.c,v 1.84 2020/09/10 20:26:13 tom Exp  */
 
 #include "defs.h"
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: reader.c,v 1.19 2021/02/20 22:57:56 christos Exp $");
+__RCSID("$NetBSD: reader.c,v 1.20 2021/10/05 22:15:32 rillig Exp $");
 
 /*  The line size must be a positive integer.  One hundred was chosen	*/
 /*  because few lines in Yacc input grammars exceed 100 characters.	*/
@@ -2949,7 +2949,10 @@ copy_action(void)
 		trialaction = 0;
 		goto loop;
 	    }
-	    fprintf(f, "\nbreak;\n");
+	    fprintf(f, "\n");
+	    if (!lflag)
+		fprintf(f, line_format, 1, "");
+	    fprintf(f, "break;\n");
 	    FREE(a.a_line);
 	    if (maxoffset > 0)
 		FREE(offsets);
@@ -2969,7 +2972,10 @@ copy_action(void)
     case ';':
 	if (depth > 0)
 	    goto loop;
-	fprintf(f, "\nbreak;\n");
+	fprintf(f, "\n");
+	if (!lflag)
+	    fprintf(f, line_format, 1, "");
+	fprintf(f, "break;\n");
 	free(a.a_line);
 	if (maxoffset > 0)
 	    FREE(offsets);
@@ -3012,7 +3018,10 @@ copy_action(void)
 	    }
 	}
 #endif
-	fprintf(f, "\nbreak;\n");
+	fprintf(f, "\n");
+	if (!lflag)
+	    fprintf(f, line_format, 1, "");
+	fprintf(f, "break;\n");
 	free(a.a_line);
 	if (maxoffset > 0)
 	    FREE(offsets);
