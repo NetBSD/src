@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.c,v 1.101 2021/10/05 06:09:42 rillig Exp $	*/
+/*	$NetBSD: indent.c,v 1.102 2021/10/05 06:49:19 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)indent.c	5.17 (Berkeley) 6/7/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: indent.c,v 1.101 2021/10/05 06:09:42 rillig Exp $");
+__RCSID("$NetBSD: indent.c,v 1.102 2021/10/05 06:49:19 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/indent.c 340138 2018-11-04 19:24:49Z oshogbo $");
 #endif
@@ -547,7 +547,7 @@ process_comment_in_code(token_type ttype, bool *inout_force_nl)
 	if (opt.verbose)
 	    diag(0, "Line broken");
 	dump_line();
-	ps.want_blank = false;	/* dont insert blank at line start */
+	ps.want_blank = false;	/* don't insert blank at line start */
 	*inout_force_nl = false;
     }
 
@@ -676,7 +676,7 @@ process_rparen_or_rbracket(bool *inout_sp_sw, bool *inout_force_nl,
 	*inout_force_nl = true;	/* must force newline after if */
 	ps.last_u_d = true;	/* inform lexi that a following operator is
 				 * unary */
-	ps.in_stmt = false;	/* dont use stmt continuation indentation */
+	ps.in_stmt = false;	/* don't use stmt continuation indentation */
 
 	parse(hd_type);		/* let parser worry about if, or whatever */
     }
@@ -807,8 +807,8 @@ process_semicolon(bool *inout_scase, int *inout_squest, int dec_ind,
     }
 
     ps.in_decl = (ps.decl_nest > 0);	/* if we were in a first level
-					 * structure declaration, we arent any
-					 * more */
+					 * structure declaration, we aren't
+					 * anymore */
 
     if ((!*inout_sp_sw || hd_type != for_exprs) && ps.p_l_follow > 0) {
 
@@ -822,7 +822,7 @@ process_semicolon(bool *inout_scase, int *inout_squest, int dec_ind,
 	if (*inout_sp_sw) {	/* this is a check for an if, while, etc. with
 				 * unbalanced parens */
 	    *inout_sp_sw = false;
-	    parse(hd_type);	/* dont lose the if, or whatever */
+	    parse(hd_type);	/* don't lose the 'if', or whatever */
 	}
     }
     *code.e++ = ';';
@@ -840,7 +840,7 @@ static void
 process_lbrace(bool *inout_force_nl, bool *inout_sp_sw, token_type hd_type,
     int *di_stack, int di_stack_cap, int *inout_dec_ind)
 {
-    ps.in_stmt = false;		/* dont indent the {} */
+    ps.in_stmt = false;		/* don't indent the {} */
     if (!ps.block_init)
 	*inout_force_nl = true;	/* force other stuff on same line as '{' onto
 				 * new line */
@@ -876,7 +876,7 @@ process_lbrace(bool *inout_force_nl, bool *inout_sp_sw, token_type hd_type,
 	}
     }
     if (code.s == code.e)
-	ps.ind_stmt = false;	/* dont put extra indentation on line
+	ps.ind_stmt = false;	/* don't put extra indentation on a line
 				 * with '{' */
     if (ps.in_decl && ps.in_or_st) {	/* this is either a structure
 					 * declaration or an init */
@@ -1062,8 +1062,8 @@ process_period(void)
 {
     if (code.e[-1] == ',')
 	*code.e++ = ' ';
-    *code.e++ = '.';		/* move the period into line */
-    ps.want_blank = false;	/* dont put a blank after a period */
+    *code.e++ = '.';
+    ps.want_blank = false;
 }
 
 static void

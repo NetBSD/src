@@ -1,4 +1,4 @@
-/*	$NetBSD: pr_comment.c,v 1.51 2021/10/05 06:15:24 rillig Exp $	*/
+/*	$NetBSD: pr_comment.c,v 1.52 2021/10/05 06:49:19 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)pr_comment.c	8.1 (Berkeley) 6/6/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: pr_comment.c,v 1.51 2021/10/05 06:15:24 rillig Exp $");
+__RCSID("$NetBSD: pr_comment.c,v 1.52 2021/10/05 06:49:19 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/pr_comment.c 334927 2018-06-10 16:44:18Z pstef $");
 #endif
@@ -238,7 +238,7 @@ process_comment(void)
 	    last_blank = -1;
 	    check_size_comment(4);
 	    if (ps.box_com || ps.last_nl) {	/* if this is a boxed comment,
-						 * we dont ignore the newline */
+						 * we handle the newline */
 		if (com.s == com.e)
 		    *com.e++ = ' ';
 		if (!ps.box_com && com.e - com.s > 3) {
@@ -257,11 +257,11 @@ process_comment(void)
 	    }
 	    ++line_no;		/* keep track of input line number */
 	    if (!ps.box_com) {
-		int nstar = 1;
+		int asterisks_to_skip = 1;
 		do {		/* flush any blanks and/or tabs at start of
 				 * next line */
 		    inbuf_skip();
-		    if (*buf_ptr == '*' && --nstar >= 0) {
+		    if (*buf_ptr == '*' && --asterisks_to_skip >= 0) {
 			inbuf_skip();
 			if (*buf_ptr == '/')
 			    goto end_of_comment;
@@ -271,11 +271,10 @@ process_comment(void)
 		inbuf_skip();
 	    break;		/* end of case for newline */
 
-	case '*':		/* must check for possibility of being at end
-				 * of comment */
+	case '*':
 	    inbuf_skip();
 	    check_size_comment(4);
-	    if (*buf_ptr == '/') {	/* it is the end!!! */
+	    if (*buf_ptr == '/') {	/* end of the comment */
 	end_of_comment:
 		inbuf_skip();
 		if (break_delim) {
