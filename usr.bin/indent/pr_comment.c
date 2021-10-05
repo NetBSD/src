@@ -1,4 +1,4 @@
-/*	$NetBSD: pr_comment.c,v 1.48 2021/10/05 05:39:14 rillig Exp $	*/
+/*	$NetBSD: pr_comment.c,v 1.49 2021/10/05 05:56:49 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)pr_comment.c	8.1 (Berkeley) 6/6/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: pr_comment.c,v 1.48 2021/10/05 05:39:14 rillig Exp $");
+__RCSID("$NetBSD: pr_comment.c,v 1.49 2021/10/05 05:56:49 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/pr_comment.c 334927 2018-06-10 16:44:18Z pstef $");
 #endif
@@ -193,7 +193,7 @@ process_comment(void)
     if (break_delim) {
 	char *t = com.e;
 	com.e = com.s + 2;
-	*com.e = 0;
+	*com.e = '\0';
 	if (opt.blanklines_before_blockcomments && ps.last_token != lbrace)
 	    prefix_blankline_requested = true;
 	dump_line();
@@ -300,11 +300,10 @@ process_comment(void)
 	    int now_len = indentation_after_range(ps.com_col - 1, com.s, com.e);
 	    do {
 		check_size_comment(1);
-		*com.e = inbuf_next();
-		if (*com.e == ' ' || *com.e == '\t')
-		    last_blank = com.e - com.buf;	/* remember we saw a
-							 * blank */
-		++com.e;
+		char ch = inbuf_next();
+		if (ch == ' ' || ch == '\t')
+		    last_blank = com.e - com.buf;
+		*com.e++ = ch;
 		now_len++;
 	    } while (memchr("*\n\r\b\t", *buf_ptr, 6) == NULL &&
 		(now_len < adj_max_line_length || last_blank == -1));

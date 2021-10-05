@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.c,v 1.99 2021/10/05 05:39:14 rillig Exp $	*/
+/*	$NetBSD: indent.c,v 1.100 2021/10/05 05:56:49 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)indent.c	5.17 (Berkeley) 6/7/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: indent.c,v 1.99 2021/10/05 05:39:14 rillig Exp $");
+__RCSID("$NetBSD: indent.c,v 1.100 2021/10/05 05:56:49 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/indent.c 340138 2018-11-04 19:24:49Z oshogbo $");
 #endif
@@ -199,8 +199,8 @@ search_brace_comment(bool *inout_comment_buffered)
     *sc_end++ = '/';		/* copy in start of comment */
     *sc_end++ = '*';
     for (;;) {			/* loop until the end of the comment */
-	*sc_end = inbuf_next();
-	if (*sc_end++ == '*' && *buf_ptr == '/')
+	*sc_end++ = inbuf_next();
+	if (sc_end[-1] == '*' && *buf_ptr == '/')
 	    break;		/* we are at end of comment */
 	if (sc_end >= &save_com[sc_size]) {	/* check for temp buffer
 						 * overflow */
@@ -483,7 +483,7 @@ main_parse_command_line(int argc, char **argv)
 	opt.comment_column = 2;	/* don't put normal comments before column 2 */
     if (opt.block_comment_max_line_length <= 0)
 	opt.block_comment_max_line_length = opt.max_line_length;
-    if (opt.local_decl_indent < 0) /* if not specified by user, set this */
+    if (opt.local_decl_indent < 0)	/* if not specified by user, set this */
 	opt.local_decl_indent = opt.decl_indent;
     if (opt.decl_comment_column <= 0)	/* if not specified by user, set this */
 	opt.decl_comment_column = opt.ljust_decl
@@ -772,11 +772,10 @@ process_colon(int *inout_squest, bool *inout_force_nl, bool *inout_scase)
 	*lab.e = '\0';
 	code.e = code.s;
     }
-    *inout_force_nl = ps.pcase = *inout_scase;	/* ps.pcase will be used by
-						 * dump_line to decide how to
-						 * indent the label. force_nl
-						 * will force a case n: to be
-						 * on a line by itself */
+    ps.pcase = *inout_scase;	/* will be used by dump_line to decide how to
+				 * indent the label. */
+    *inout_force_nl = *inout_scase;	/* will force a 'case n:' to be on a
+					 * line by itself */
     *inout_scase = false;
     ps.want_blank = false;
 }
@@ -1109,8 +1108,8 @@ process_preprocessing(void)
 
 	while (*buf_ptr != '\n' || (in_comment && !had_eof)) {
 	    check_size_label(2);
-	    *lab.e = inbuf_next();
-	    switch (*lab.e++) {
+	    *lab.e++ = inbuf_next();
+	    switch (lab.e[-1]) {
 	    case '\\':
 		if (!in_comment)
 		    *lab.e++ = inbuf_next();
@@ -1151,7 +1150,7 @@ process_preprocessing(void)
 	    if (sc_end == NULL) {	/* if this is the first comment, we
 					 * must set up the buffer */
 		save_com = sc_buf;
-		sc_end = &save_com[0];
+		sc_end = save_com;
 	    } else {
 		*sc_end++ = '\n';	/* add newline between comments */
 		*sc_end++ = ' ';
