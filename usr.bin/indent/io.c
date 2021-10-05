@@ -1,4 +1,4 @@
-/*	$NetBSD: io.c,v 1.71 2021/10/05 06:24:06 rillig Exp $	*/
+/*	$NetBSD: io.c,v 1.72 2021/10/05 18:50:42 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)io.c	8.1 (Berkeley) 6/6/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: io.c,v 1.71 2021/10/05 06:24:06 rillig Exp $");
+__RCSID("$NetBSD: io.c,v 1.72 2021/10/05 18:50:42 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/io.c 334927 2018-06-10 16:44:18Z pstef $");
 #endif
@@ -122,21 +122,21 @@ dump_line(void)
 	if (suppress_blanklines > 0)
 	    suppress_blanklines--;
 	else
-	    n_real_blanklines++;
+	    next_blank_lines++;
     } else if (!inhibit_formatting) {
 	suppress_blanklines = 0;
 	if (prefix_blankline_requested && not_first_line) {
 	    if (opt.swallow_optional_blanklines) {
-		if (n_real_blanklines == 1)
-		    n_real_blanklines = 0;
+		if (next_blank_lines == 1)
+		    next_blank_lines = 0;
 	    } else {
-		if (n_real_blanklines == 0)
-		    n_real_blanklines = 1;
+		if (next_blank_lines == 0)
+		    next_blank_lines = 1;
 	    }
 	}
-	while (--n_real_blanklines >= 0)
+	while (--next_blank_lines >= 0)
 	    output_char('\n');
-	n_real_blanklines = 0;
+	next_blank_lines = 0;
 	if (ps.ind_level == 0)
 	    ps.ind_stmt = false;	/* this is a class A kludge. don't do
 					 * additional statement indentation if
@@ -374,7 +374,7 @@ parse_indent_comment(void)
 	dump_line();
 
     if (!(inhibit_formatting = (on_off == 2))) {
-	n_real_blanklines = 0;
+	next_blank_lines = 0;
 	postfix_blankline_requested = false;
 	prefix_blankline_requested = false;
 	suppress_blanklines = 1;
