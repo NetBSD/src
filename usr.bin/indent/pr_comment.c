@@ -1,4 +1,4 @@
-/*	$NetBSD: pr_comment.c,v 1.49 2021/10/05 05:56:49 rillig Exp $	*/
+/*	$NetBSD: pr_comment.c,v 1.50 2021/10/05 06:09:42 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)pr_comment.c	8.1 (Berkeley) 6/6/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: pr_comment.c,v 1.49 2021/10/05 05:56:49 rillig Exp $");
+__RCSID("$NetBSD: pr_comment.c,v 1.50 2021/10/05 06:09:42 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/pr_comment.c 334927 2018-06-10 16:44:18Z pstef $");
 #endif
@@ -160,7 +160,7 @@ process_comment(void)
 	ps.n_comment_delta = -indentation_after_range(0, start, buf_ptr - 2);
     } else {
 	ps.n_comment_delta = 0;
-	while (*buf_ptr == ' ' || *buf_ptr == '\t')
+	while (is_hspace(*buf_ptr))
 	    buf_ptr++;
     }
     ps.comment_delta = 0;
@@ -216,8 +216,9 @@ process_comment(void)
 		last_blank = -1;
 		if (!ps.box_com && opt.star_comment_cont)
 		    *com.e++ = ' ', *com.e++ = '*', *com.e++ = ' ';
-		while (*++buf_ptr == ' ' || *buf_ptr == '\t')
-		    ;
+		buf_ptr++;
+		while (is_hspace(*buf_ptr))
+		    buf_ptr++;
 	    } else {
 		inbuf_skip();
 		*com.e++ = 014;
@@ -250,7 +251,7 @@ process_comment(void)
 		    *com.e++ = ' ', *com.e++ = '*', *com.e++ = ' ';
 	    } else {
 		ps.last_nl = true;
-		if (!(com.e[-1] == ' ' || com.e[-1] == '\t'))
+		if (!is_hspace(com.e[-1]))
 		    *com.e++ = ' ';
 		last_blank = com.e - 1 - com.buf;
 	    }
@@ -265,7 +266,7 @@ process_comment(void)
 			if (*buf_ptr == '/')
 			    goto end_of_comment;
 		    }
-		} while (*buf_ptr == ' ' || *buf_ptr == '\t');
+		} while (is_hspace(*buf_ptr));
 	    } else
 		inbuf_skip();
 	    break;		/* end of case for newline */
@@ -284,7 +285,7 @@ process_comment(void)
 			com.s = com.e;
 		    *com.e++ = ' ';
 		}
-		if (com.e[-1] != ' ' && com.e[-1] != '\t' && !ps.box_com)
+		if (!is_hspace(com.e[-1]) && !ps.box_com)
 		    *com.e++ = ' ';	/* ensure blank before end */
 		if (token.e[-1] == '/')
 		    *com.e++ = '\n', *com.e = '\0';
@@ -301,7 +302,7 @@ process_comment(void)
 	    do {
 		check_size_comment(1);
 		char ch = inbuf_next();
-		if (ch == ' ' || ch == '\t')
+		if (is_hspace(ch))
 		    last_blank = com.e - com.buf;
 		*com.e++ = ch;
 		now_len++;
@@ -326,7 +327,7 @@ process_comment(void)
 		if (!ps.box_com && opt.star_comment_cont)
 		    *com.e++ = ' ', *com.e++ = '*', *com.e++ = ' ';
 		for (t_ptr = com.buf + last_blank + 1;
-		     *t_ptr == ' ' || *t_ptr == '\t'; t_ptr++)
+		     is_hspace(*t_ptr); t_ptr++)
 		    continue;
 		last_blank = -1;
 		/*
@@ -335,7 +336,7 @@ process_comment(void)
 		 * com.e without any check_size_comment().
 		 */
 		while (*t_ptr != '\0') {
-		    if (*t_ptr == ' ' || *t_ptr == '\t')
+		    if (is_hspace(*t_ptr))
 			last_blank = com.e - com.buf;
 		    *com.e++ = *t_ptr++;
 		}
