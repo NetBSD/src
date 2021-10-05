@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_cancelstub.c,v 1.38 2013/03/21 16:49:12 christos Exp $	*/
+/*	$NetBSD: pthread_cancelstub.c,v 1.38.32.1 2021/10/05 11:02:18 martin Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2007 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 #undef _FORTIFY_SOURCE
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_cancelstub.c,v 1.38 2013/03/21 16:49:12 christos Exp $");
+__RCSID("$NetBSD: pthread_cancelstub.c,v 1.38.32.1 2021/10/05 11:02:18 martin Exp $");
 
 #ifndef lint
 
@@ -90,6 +90,8 @@ int	_sys___aio_suspend50(const struct aiocb * const [], int,
 	    const struct timespec *);
 int	__aio_suspend50(const struct aiocb * const [], int,
 	    const struct timespec *);
+int	_sys_clock_nanosleep(clockid_t clock_id, int flags,
+		   const struct timespec *rqtp, struct timespec *rmtp);
 int	_sys_close(int);
 int	_sys_connect(int, const struct sockaddr *, socklen_t);
 int	_sys_fcntl(int, int, ...);
@@ -110,6 +112,7 @@ int	_sys___msync13(void *, size_t, int);
 int	_sys___nanosleep50(const struct timespec *, struct timespec *);
 int	__nanosleep50(const struct timespec *, struct timespec *);
 int	_sys_open(const char *, int, ...);
+int	_sys_openat(int, const char *, int, ...);
 int	_sys_poll(struct pollfd *, nfds_t, int);
 int	_sys___pollts50(struct pollfd *, nfds_t, const struct timespec *,
 	    const sigset_t *);
@@ -119,6 +122,15 @@ int	_sys___pselect50(int, fd_set *, fd_set *, fd_set *,
 ssize_t	_sys_pwrite(int, const void *, size_t, off_t);
 ssize_t	_sys_read(int, void *, size_t);
 ssize_t	_sys_readv(int, const struct iovec *, int);
+ssize_t	_sys_recvfrom(int, void * restrict, size_t, int,
+    struct sockaddr * restrict, socklen_t * restrict);
+ssize_t _sys_recvmsg(int, struct msghdr *, int);
+int _sys_recvmmsg(int, struct mmsghdr *, unsigned int, unsigned int,
+    struct timespec *);
+ssize_t _sys_sendto(int, const void *, size_t, int, const struct sockaddr *,
+    socklen_t);
+ssize_t _sys_sendmsg(int, const struct msghdr *, int);
+int _sys_sendmmsg(int, struct mmsghdr *, unsigned int, unsigned int);
 int	_sys___select50(int, fd_set *, fd_set *, fd_set *, struct timeval *);
 int	_sys___wait450(pid_t, int *, int, struct rusage *);
 ssize_t	_sys_write(int, const void *, size_t);
@@ -176,6 +188,21 @@ __kevent50(int fd, const struct kevent *ev, size_t nev, struct kevent *rev,
 	retval = _sys___kevent50(fd, ev, nev, rev, nrev, ts);
 	TESTCANCEL(self);
 
+	return retval;
+}
+
+int
+clock_nanosleep(clockid_t clock_id, int flags,
+    const struct timespec *rqtp, struct timespec *rmtp)
+{
+	int retval;
+	pthread_t self;
+
+	self = pthread__self();
+	TESTCANCEL(self);
+	retval = _sys_clock_nanosleep(clock_id, flags, rqtp, rmtp);
+	TESTCANCEL(self);
+	
 	return retval;
 }
 
@@ -384,6 +411,23 @@ open(const char *path, int flags, ...)
 }
 
 int
+openat(int fd, const char *path, int flags, ...)
+{
+	int retval;
+	pthread_t self;
+	va_list ap;
+
+	self = pthread__self();
+	TESTCANCEL(self);
+	va_start(ap, flags);
+	retval = _sys_openat(fd, path, flags, va_arg(ap, mode_t));
+	va_end(ap);
+	TESTCANCEL(self);
+
+	return retval;
+}
+
+int
 __nanosleep50(const struct timespec *rqtp, struct timespec *rmtp)
 {
 	int retval;
@@ -502,6 +546,50 @@ readv(int d, const struct iovec *iov, int iovcnt)
 	return retval;
 }
 
+ssize_t
+recvfrom(int s, void * restrict buf, size_t len, int flags,
+    struct sockaddr * restrict from, socklen_t * restrict fromlen)
+{
+	ssize_t retval;
+	pthread_t self;
+
+	self = pthread__self();
+	TESTCANCEL(self);
+	retval = _sys_recvfrom(s, buf, len, flags, from, fromlen);
+	TESTCANCEL(self);
+
+	return retval;
+}
+
+ssize_t
+recvmsg(int s, struct msghdr *msg, int flags)
+{
+	ssize_t retval;
+	pthread_t self;
+
+	self = pthread__self();
+	TESTCANCEL(self);
+	retval = _sys_recvmsg(s, msg, flags);
+	TESTCANCEL(self);
+
+	return retval;
+}
+
+int
+recvmmsg(int s, struct mmsghdr *mmsg, unsigned int vlen,
+    unsigned int flags, struct timespec *timeout)
+{
+	ssize_t retval;
+	pthread_t self;
+
+	self = pthread__self();
+	TESTCANCEL(self);
+	retval = _sys_recvmmsg(s, mmsg, vlen, flags, timeout);
+	TESTCANCEL(self);
+
+	return retval;
+}
+
 int
 __select50(int nfds, fd_set *readfds, fd_set *writefds, fd_set *exceptfds, 
     struct timeval *timeout)
@@ -516,6 +604,51 @@ __select50(int nfds, fd_set *readfds, fd_set *writefds, fd_set *exceptfds,
 
 	return retval;
 }
+
+ssize_t
+sendto(int s, const void *msg, size_t len, int flags,
+    const struct sockaddr *to, socklen_t tolen)
+{
+	int retval;
+	pthread_t self;
+
+	self = pthread__self();
+	TESTCANCEL(self);
+	retval = _sys_sendto(s, msg, len, flags, to, tolen);
+	TESTCANCEL(self);
+
+	return retval;
+}
+
+ssize_t
+sendmsg(int s, const struct msghdr *msg, int flags)
+{
+	int retval;
+	pthread_t self;
+
+	self = pthread__self();
+	TESTCANCEL(self);
+	retval = _sys_sendmsg(s, msg, flags);
+	TESTCANCEL(self);
+
+	return retval;
+}
+
+int
+sendmmsg(int s, struct mmsghdr *mmsg, unsigned int vlen,
+    unsigned int flags)
+{
+	int retval;
+	pthread_t self;
+
+	self = pthread__self();
+	TESTCANCEL(self);
+	retval = _sys_sendmmsg(s, mmsg, vlen, flags);
+	TESTCANCEL(self);
+
+	return retval;
+}
+
 
 pid_t
 __wait450(pid_t wpid, int *status, int options, struct rusage *rusage)
@@ -618,6 +751,7 @@ sigwait(const sigset_t * __restrict set, int * __restrict sig)
 }
 
 __strong_alias(_close, close)
+__strong_alias(_clock_nanosleep, clock_nanosleep)
 __strong_alias(_fcntl, fcntl)
 __strong_alias(_fdatasync, fdatasync)
 __strong_alias(_fsync, fsync)
@@ -629,11 +763,18 @@ __strong_alias(_msgsnd, msgsnd)
 __strong_alias(___msync13, __msync13)
 __strong_alias(___nanosleep50, __nanosleep50)
 __strong_alias(_open, open)
+__strong_alias(_openat, openat)
 __strong_alias(_poll, poll)
 __strong_alias(_pread, pread)
 __strong_alias(_pwrite, pwrite)
 __strong_alias(_read, read)
 __strong_alias(_readv, readv)
+__strong_alias(_recvfrom, recvfrom)
+__strong_alias(_recvmsg, recvmsg)
+__strong_alias(_recvmmsg, recvmmsg)
+__strong_alias(_sendmsg, sendmsg)
+__strong_alias(_sendmmsg, sendmmsg)
+__strong_alias(_sendto, sendto)
 __strong_alias(_sigwait, sigwait)
 __strong_alias(_write, write)
 __strong_alias(_writev, writev)
