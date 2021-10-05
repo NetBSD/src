@@ -1,6 +1,8 @@
-/* $NetBSD: .indent.pro,v 1.1 2021/09/26 19:02:35 rillig Exp $ */
+/* $NetBSD: .indent.pro,v 1.2 2021/10/05 22:09:05 rillig Exp $ */
 
 -di0		/* Do not indent variable names in global declarations. */
+/* XXX: -eei does not work; the expressions are indented only a single level. */
+-eei		/* Indent expressions in 'if' and 'while' once more. */
 -nfc1		/* Do not format CVS Id comments. */
 -i4		/* Indent by 4 spaces, for traditional reasons. */
 -ldi0		/* Do not indent variable names in local declarations. */
