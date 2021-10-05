@@ -1,4 +1,4 @@
-/*	$NetBSD: io.c,v 1.72 2021/10/05 18:50:42 rillig Exp $	*/
+/*	$NetBSD: io.c,v 1.73 2021/10/05 21:05:12 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)io.c	8.1 (Berkeley) 6/6/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: io.c,v 1.72 2021/10/05 18:50:42 rillig Exp $");
+__RCSID("$NetBSD: io.c,v 1.73 2021/10/05 21:05:12 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/io.c 334927 2018-06-10 16:44:18Z pstef $");
 #endif
@@ -332,48 +332,47 @@ skip_hspace(const char **pp)
 	(*pp)++;
 }
 
+static bool
+skip_string(const char **pp, const char *s)
+{
+    size_t len = strlen(s);
+    if (strncmp(*pp, s, len) == 0) {
+	*pp += len;
+	return true;
+    }
+    return false;
+}
+
 static void
 parse_indent_comment(void)
 {
-    int on_off = 0;		/* 0 = keep, 1 = ON, 2 = OFF */
+    bool on_off;
 
     const char *p = in_buffer;
 
     skip_hspace(&p);
-
-    if (!(*p == '/' && p[1] == '*'))
+    if (!skip_string(&p, "/*"))
 	return;
-    p += 2;
-
     skip_hspace(&p);
-
-    if (!(p[0] == 'I' && p[1] == 'N' && p[2] == 'D'
-	    && p[3] == 'E' && p[4] == 'N' && p[5] == 'T'))
+    if (!skip_string(&p, "INDENT"))
 	return;
-    p += 6;
-
     skip_hspace(&p);
-
-    if (*p == '*')
-	on_off = 1;
-    else if (*p == 'O') {
-	if (*++p == 'N')
-	    p++, on_off = 1;
-	else if (*p == 'F' && *++p == 'F')
-	    p++, on_off = 2;
-    }
-    if (on_off == 0)
+    if (*p == '*' || skip_string(&p, "ON"))
+	on_off = true;
+    else if (skip_string(&p, "OFF"))
+	on_off = false;
+    else
 	return;
 
     skip_hspace(&p);
-
-    if (!(p[0] == '*' && p[1] == '/' && p[2] == '\n'))
+    if (!skip_string(&p, "*/\n"))
 	return;
 
     if (com.s != com.e || lab.s != lab.e || code.s != code.e)
 	dump_line();
 
-    if (!(inhibit_formatting = (on_off == 2))) {
+    inhibit_formatting = !on_off;
+    if (on_off) {
 	next_blank_lines = 0;
 	postfix_blankline_requested = false;
 	prefix_blankline_requested = false;
