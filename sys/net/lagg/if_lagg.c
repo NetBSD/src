@@ -1,4 +1,4 @@
-/*	$NetBSD: if_lagg.c,v 1.10 2021/09/30 04:29:17 yamaguchi Exp $	*/
+/*	$NetBSD: if_lagg.c,v 1.11 2021/10/05 04:17:58 yamaguchi Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006 Reyk Floeter <reyk@openbsd.org>
@@ -20,7 +20,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_lagg.c,v 1.10 2021/09/30 04:29:17 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_lagg.c,v 1.11 2021/10/05 04:17:58 yamaguchi Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1104,6 +1104,27 @@ lagg_input_ethernet(struct ifnet *ifp_port, struct mbuf *m)
 	lagg_port_getref(lp, &psref);
 	pserialize_read_exit(s);
 
+	ifp = &lp->lp_softc->sc_if;
+
+	/*
+	 * Drop promiscuously received packets
+	 * if we are not in promiscuous mode.
+	 */
+	if ((m->m_flags & (M_BCAST | M_MCAST)) == 0 &&
+	    (ifp_port->if_flags & IFF_PROMISC) != 0 &&
+	    (ifp->if_flags & IFF_PROMISC) == 0) {
+		struct ether_header *eh;
+
+		eh = mtod(m, struct ether_header *);
+		if (memcmp(CLLADDR(ifp->if_sadl),
+		    eh->ether_dhost, ETHER_ADDR_LEN) != 0) {
+			m_freem(m);
+			m = NULL;
+			if_statinc(ifp, if_ierrors);
+			goto out;
+		}
+	}
+
 	if (pfil_run_hooks(ifp_port->if_pfil, &m,
 	    ifp_port, PFIL_IN) != 0) {
 		goto out;
@@ -1111,7 +1132,6 @@ lagg_input_ethernet(struct ifnet *ifp_port, struct mbuf *m)
 
 	m = lagg_proto_input(lp->lp_softc, lp, m);
 	if (m != NULL) {
-		ifp = &lp->lp_softc->sc_if;
 		m_set_rcvif(m, ifp);
 		if_input(ifp, m);
 		m = NULL;
