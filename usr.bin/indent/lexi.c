@@ -1,4 +1,4 @@
-/*	$NetBSD: lexi.c,v 1.68 2021/10/05 06:09:42 rillig Exp $	*/
+/*	$NetBSD: lexi.c,v 1.69 2021/10/05 06:15:24 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)lexi.c	8.1 (Berkeley) 6/6/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: lexi.c,v 1.68 2021/10/05 06:09:42 rillig Exp $");
+__RCSID("$NetBSD: lexi.c,v 1.69 2021/10/05 06:15:24 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/lexi.c 337862 2018-08-15 18:19:45Z pstef $");
 #endif
@@ -538,7 +538,7 @@ lexi(struct parser_state *state)
 	ttype = rbrace;
 	break;
 
-    case 014:			/* a form feed */
+    case '\f':
 	unary_delim = state->last_u_d;
 	state->last_nl = true;	/* remember this so we can set 'state->col_1'
 				 * right */
