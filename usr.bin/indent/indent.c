@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.c,v 1.100 2021/10/05 05:56:49 rillig Exp $	*/
+/*	$NetBSD: indent.c,v 1.101 2021/10/05 06:09:42 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)indent.c	5.17 (Berkeley) 6/7/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: indent.c,v 1.100 2021/10/05 05:56:49 rillig Exp $");
+__RCSID("$NetBSD: indent.c,v 1.101 2021/10/05 06:09:42 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/indent.c 340138 2018-11-04 19:24:49Z oshogbo $");
 #endif
@@ -324,7 +324,7 @@ search_brace_lookahead(token_type *inout_ttype)
 	 * into the buffer so that the later lexi() call will read them.
 	 */
 	if (sc_end != NULL) {
-	    while (*buf_ptr == ' ' || *buf_ptr == '\t') {
+	    while (is_hspace(*buf_ptr)) {
 		*sc_end++ = *buf_ptr++;
 		if (sc_end >= &save_com[sc_size]) {
 		    errx(1, "input too long");
@@ -1103,7 +1103,7 @@ process_preprocessing(void)
 	char quote = '\0';
 	int com_end = 0;
 
-	while (*buf_ptr == ' ' || *buf_ptr == '\t')
+	while (is_hspace(*buf_ptr))
 	    inbuf_skip();
 
 	while (*buf_ptr != '\n' || (in_comment && !had_eof)) {
@@ -1143,7 +1143,7 @@ process_preprocessing(void)
 	    }
 	}
 
-	while (lab.e > lab.s && (lab.e[-1] == ' ' || lab.e[-1] == '\t'))
+	while (lab.e > lab.s && is_hspace(lab.e[-1]))
 	    lab.e--;
 	if (lab.e - lab.s == com_end && bp_save == NULL) {
 	    /* comment on preprocessor line */
@@ -1161,7 +1161,7 @@ process_preprocessing(void)
 	    memmove(sc_end, lab.s + com_start, (size_t)(com_end - com_start));
 	    sc_end += com_end - com_start;
 	    lab.e = lab.s + com_start;
-	    while (lab.e > lab.s && (lab.e[-1] == ' ' || lab.e[-1] == '\t'))
+	    while (lab.e > lab.s && is_hspace(lab.e[-1]))
 		lab.e--;
 	    bp_save = buf_ptr;	/* save current input buffer */
 	    be_save = buf_end;
