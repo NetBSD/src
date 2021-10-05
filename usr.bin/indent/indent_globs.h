@@ -1,4 +1,4 @@
-/*	$NetBSD: indent_globs.h,v 1.41 2021/09/27 16:56:35 rillig Exp $	*/
+/*	$NetBSD: indent_globs.h,v 1.42 2021/10/05 18:50:42 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -173,7 +173,7 @@ enum keyword_kind {
 
 
 extern bool        found_err;
-extern int         n_real_blanklines;
+extern int         next_blank_lines;
 extern bool        prefix_blankline_requested;
 extern bool        postfix_blankline_requested;
 extern bool        break_comma;	/* when true and not in parens, break after a
