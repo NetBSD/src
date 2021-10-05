@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.c,v 1.102 2021/10/05 06:49:19 rillig Exp $	*/
+/*	$NetBSD: indent.c,v 1.103 2021/10/05 06:55:24 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)indent.c	5.17 (Berkeley) 6/7/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: indent.c,v 1.102 2021/10/05 06:49:19 rillig Exp $");
+__RCSID("$NetBSD: indent.c,v 1.103 2021/10/05 06:55:24 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/indent.c 340138 2018-11-04 19:24:49Z oshogbo $");
 #endif
@@ -607,7 +607,6 @@ want_blank_before_lparen(void)
 static void
 process_lparen_or_lbracket(int dec_ind, bool tabs_to_var, bool sp_sw)
 {
-    /* count parens to make Healy happy */
     if (++ps.p_l_follow == nitems(ps.paren_indents)) {
 	diag(0, "Reached internal limit of %zu unclosed parens",
 	    nitems(ps.paren_indents));
@@ -625,13 +624,13 @@ process_lparen_or_lbracket(int dec_ind, bool tabs_to_var, bool sp_sw)
     *code.e++ = token.s[0];
 
     ps.paren_indents[ps.p_l_follow - 1] =
-	indentation_after_range(0, code.s, code.e);
+	(short)indentation_after_range(0, code.s, code.e);
     debug_println("paren_indent[%d] is now %d",
 	ps.p_l_follow - 1, ps.paren_indents[ps.p_l_follow - 1]);
 
     if (sp_sw && ps.p_l_follow == 1 && opt.extra_expression_indent
 	    && ps.paren_indents[0] < 2 * opt.indent_size) {
-	ps.paren_indents[0] = 2 * opt.indent_size;
+	ps.paren_indents[0] = (short)(2 * opt.indent_size);
 	debug_println("paren_indent[0] is now %d", ps.paren_indents[0]);
     }
     if (ps.in_or_st && *token.s == '(' && ps.tos <= 2) {
@@ -733,7 +732,7 @@ static void
 process_question(int *inout_squest)
 {
     (*inout_squest)++;		/* this will be used when a later colon
-				 * appears so we can distinguish the
+				 * appears, so we can distinguish the
 				 * <c>?<n>:<n> construct */
     if (ps.want_blank)
 	*code.e++ = ' ';
@@ -1425,37 +1424,31 @@ main(int argc, char **argv)
 }
 
 /*
- * copy input file to backup file if in_name is /blah/blah/blah/file, then
- * backup file will be ".Bfile" then make the backup file the input and
- * original input file the output
+ * Copy the input file to the backup file, then make the backup file the input
+ * and the original input file the output.
  */
 static void
 bakcopy(void)
 {
     ssize_t n;
-    int bakchn;
+    int bak_fd;
     char buff[8 * 1024];
-    const char *p;
 
-    /* construct file name .Bfile */
-    for (p = in_name; *p != '\0'; p++);	/* skip to end of string */
-    while (p > in_name && *p != '/')	/* find last '/' */
-	p--;
-    if (*p == '/')
-	p++;
-    sprintf(bakfile, "%s%s", p, backup_suffix);
+    const char *last_slash = strrchr(in_name, '/');
+    snprintf(bakfile, sizeof(bakfile), "%s%s",
+	last_slash != NULL ? last_slash + 1 : in_name, backup_suffix);
 
     /* copy in_name to backup file */
-    bakchn = creat(bakfile, 0600);
-    if (bakchn < 0)
+    bak_fd = creat(bakfile, 0600);
+    if (bak_fd < 0)
 	err(1, "%s", bakfile);
     while ((n = read(fileno(input), buff, sizeof(buff))) > 0)
-	if (write(bakchn, buff, (size_t)n) != n)
+	if (write(bak_fd, buff, (size_t)n) != n)
 	    err(1, "%s", bakfile);
     if (n < 0)
 	err(1, "%s", in_name);
-    close(bakchn);
-    fclose(input);
+    close(bak_fd);
+    (void)fclose(input);
 
     /* re-open backup file as the input file */
     input = fopen(bakfile, "r");
@@ -1492,7 +1485,7 @@ indent_declaration(int cur_dec_ind, bool tabs_to_var)
 	    pos = tpos;
 	}
     }
-    check_size_code((size_t)(cur_dec_ind - pos + 1));
+    check_size_code((size_t)(cur_dec_ind - pos) + 1);
     while (pos < cur_dec_ind) {
 	*code.e++ = ' ';
 	pos++;
