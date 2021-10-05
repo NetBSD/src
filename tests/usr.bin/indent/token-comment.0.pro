@@ -1,8 +1,14 @@
-/* $NetBSD: token-comment.0.pro,v 1.1 2021/03/12 00:13:06 rillig Exp $ */
+/* $NetBSD: token-comment.0.pro,v 1.2 2021/10/05 18:09:13 rillig Exp $ */
 /* $FreeBSD$ */
 
-/*
- * TODO: Explain the command line options of the test.
- */
+-ldi0			/* do not indent local variable declarations */
 
-/* TODO: Add some command line options */
+/* For variations on this theme, try some of these options: */
+/* -c20 */
+/* -cd20 */
+/* -cdb */
+/* -d */
+/* -fc1 */
+/* -fcb */
+/* -lc60 */
+/* -sc */
