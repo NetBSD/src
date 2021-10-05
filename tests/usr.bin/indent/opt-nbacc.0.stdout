@@ -1,4 +1,4 @@
-/* $NetBSD: opt-nbacc.0.stdout,v 1.2 2021/03/06 23:09:17 rillig Exp $ */
+/* $NetBSD: opt-nbacc.0.stdout,v 1.3 2021/10/05 19:43:05 rillig Exp $ */
 /* $FreeBSD$ */
 
 int		a;
@@ -17,3 +17,13 @@ int		space_b;
 #endif
 
 int		space_c;
+
+const char     *
+os_name(void)
+{
+#if defined(__NetBSD__) || defined(__FreeBSD__)
+	return "BSD";
+#else
+	return "unknown";
+#endif
+}
