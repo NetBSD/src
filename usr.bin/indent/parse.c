@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.28 2021/10/05 06:24:06 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.29 2021/10/05 06:55:24 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -189,10 +189,10 @@ parse(token_type ttype)
 	ps.cstk[ps.tos] = case_ind;
 	/* save current case indent level */
 	ps.il[ps.tos] = ps.ind_level_follow;
-	case_ind = ps.ind_level_follow + opt.case_indent; /* cases should be
-				 * one level deeper than the switch */
-	ps.ind_level_follow += opt.case_indent + 1; /* statements should be
-				 * two levels deeper */
+	/* cases should be one level deeper than the switch */
+	case_ind = (float)ps.ind_level_follow + opt.case_indent;
+	/* statements should be two levels deeper */
+	ps.ind_level_follow += (int)opt.case_indent + 1;
 	ps.search_brace = opt.btype_2;
 	break;
 
@@ -258,7 +258,7 @@ reduce_stmt(void)
 	ps.ind_level_follow = ps.il[i];
 	/*
 	 * for the time being, we will assume that there is no else on this
-	 * if, and set the indentation level accordingly. If an else is
+	 * if, and set the indentation level accordingly. If an 'else' is
 	 * scanned, it will be fixed up later
 	 */
 	return true;
