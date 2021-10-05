@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vlan.c,v 1.163 2021/09/30 04:13:42 yamaguchi Exp $	*/
+/*	$NetBSD: if_vlan.c,v 1.164 2021/10/05 04:09:49 yamaguchi Exp $	*/
 
 /*
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vlan.c,v 1.163 2021/09/30 04:13:42 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vlan.c,v 1.164 2021/10/05 04:09:49 yamaguchi Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -160,7 +160,6 @@ struct ifvlan {
 	void *ifv_ifdetach_hook;
 
 	LIST_HEAD(__vlan_mchead, vlan_mc_entry) ifv_mc_listhead;
-	LIST_ENTRY(ifvlan) ifv_list;
 	struct pslist_entry ifv_hash;
 	int ifv_flags;
 	bool ifv_stopping;
@@ -212,12 +211,6 @@ static void	vlan_linkmib_update(struct ifvlan *, struct ifvlan_linkmib *);
 static struct ifvlan_linkmib*	vlan_lookup_tag_psref(struct ifnet *,
     uint16_t, struct psref *);
 
-static struct {
-	kmutex_t lock;
-	LIST_HEAD(vlan_ifvlist, ifvlan) list;
-} ifv_list __cacheline_aligned;
-
-
 #if !defined(VLAN_TAG_HASH_SIZE)
 #define VLAN_TAG_HASH_SIZE 32
 #endif
@@ -238,6 +231,8 @@ struct if_clone vlan_cloner =
 
 /* Used to pad ethernet frames with < ETHER_MIN_LEN bytes */
 static char vlan_zero_pad_buff[ETHER_MIN_LEN];
+
+static uint32_t nvlanifs;
 
 static inline int
 vlan_safe_ifpromisc(struct ifnet *ifp, int pswitch)
@@ -276,8 +271,7 @@ vlanattach(int n)
 static void
 vlaninit(void)
 {
-	mutex_init(&ifv_list.lock, MUTEX_DEFAULT, IPL_NONE);
-	LIST_INIT(&ifv_list.list);
+	nvlanifs = 0;
 
 	mutex_init(&ifv_hash.lock, MUTEX_DEFAULT, IPL_NONE);
 	vlan_psz = pserialize_create();
@@ -291,14 +285,9 @@ vlaninit(void)
 static int
 vlandetach(void)
 {
-	bool is_empty;
 	int error;
 
-	mutex_enter(&ifv_list.lock);
-	is_empty = LIST_EMPTY(&ifv_list.list);
-	mutex_exit(&ifv_list.lock);
-
-	if (!is_empty)
+	if (nvlanifs > 0)
 		return EBUSY;
 
 	error = vlan_hash_fini();
@@ -309,7 +298,6 @@ vlandetach(void)
 	psref_class_destroy(ifvm_psref_class);
 	pserialize_destroy(vlan_psz);
 	mutex_destroy(&ifv_hash.lock);
-	mutex_destroy(&ifv_list.lock);
 
 	MODULE_HOOK_UNSET(if_vlan_vlan_input_hook);
 	return 0;
@@ -352,9 +340,7 @@ vlan_clone_create(struct if_clone *ifc, int unit)
 	ifv->ifv_psz = pserialize_create();
 	ifv->ifv_mib = mib;
 
-	mutex_enter(&ifv_list.lock);
-	LIST_INSERT_HEAD(&ifv_list.list, ifv, ifv_list);
-	mutex_exit(&ifv_list.lock);
+	atomic_inc_uint(&nvlanifs);
 
 	if_initname(ifp, ifc->ifc_name, unit);
 	ifp->if_softc = ifv;
@@ -385,9 +371,7 @@ vlan_clone_destroy(struct ifnet *ifp)
 {
 	struct ifvlan *ifv = ifp->if_softc;
 
-	mutex_enter(&ifv_list.lock);
-	LIST_REMOVE(ifv, ifv_list);
-	mutex_exit(&ifv_list.lock);
+	atomic_dec_uint(&nvlanifs);
 
 	IFNET_LOCK(ifp);
 	vlan_unconfig(ifp);
