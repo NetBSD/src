@@ -1,4 +1,4 @@
-/* $NetBSD: locore.h,v 1.9 2021/10/05 07:05:40 skrll Exp $ */
+/* $NetBSD: locore.h,v 1.10 2021/10/05 11:01:49 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -88,7 +88,7 @@ struct trapframe32 {
 };
 #endif
 
-#define FB_A0	0
+#define	FB_A0	0
 #define	FB_RA	1
 #define	FB_SP	2
 #define	FB_GP	3
@@ -104,7 +104,7 @@ struct trapframe32 {
 #define	FB_S9	13
 #define	FB_S10	14
 #define	FB_S11	15
-#define FB_MAX	16
+#define	FB_MAX	16
 
 struct faultbuf {
 	register_t fb_reg[FB_MAX];
