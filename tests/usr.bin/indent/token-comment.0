@@ -1,4 +1,4 @@
-/* $NetBSD: token-comment.0,v 1.4 2021/10/05 18:21:03 rillig Exp $ */
+/* $NetBSD: token-comment.0,v 1.5 2021/10/05 21:01:10 rillig Exp $ */
 /* $FreeBSD$ */
 
 /*
@@ -118,3 +118,24 @@ function(void)
 int format( void ) {{{
 /*INDENT ON*/
 }}}
+
+/* INDENT OFF */
+void indent_off ( void ) ;
+/*  INDENT */
+void indent_on ( void ) ;
+/* INDENT OFF */
+void indent_off ( void ) ;
+	/* INDENT ON */
+void indent_on ( void ) ;	/* the comment may be indented */
+/* INDENT		OFF					*/
+void indent_off ( void ) ;
+/* INDENTATION ON */
+void indent_still_off ( void ) ;	/* due to the word 'INDENTATION' */
+/* INDENT ON * */
+void indent_still_off ( void ) ;	/* due to the extra '*' at the end */
+/* INDENT ON */
+void indent_on ( void ) ;
+/* INDENT: OFF */
+void indent_still_on ( void ) ;	/* due to the colon in the middle */
+/* INDENT OFF */		/* extra comment */
+void indent_still_on ( void ) ;	/* due to the extra comment to the right */
