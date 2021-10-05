@@ -1,4 +1,4 @@
-/*	$NetBSD: ahcisata_core.c,v 1.101 2021/09/03 01:23:33 mrg Exp $	*/
+/*	$NetBSD: ahcisata_core.c,v 1.102 2021/10/05 08:01:05 rin Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahcisata_core.c,v 1.101 2021/09/03 01:23:33 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahcisata_core.c,v 1.102 2021/10/05 08:01:05 rin Exp $");
 
 #include <sys/types.h>
 #include <sys/malloc.h>
@@ -69,13 +69,13 @@ static void ahci_killpending(struct ata_drive_datas *);
 
 static int  ahci_cmd_start(struct ata_channel *, struct ata_xfer *);
 static int  ahci_cmd_complete(struct ata_channel *, struct ata_xfer *, int);
-static void ahci_cmd_poll(struct ata_channel *, struct ata_xfer *);
+static int  ahci_cmd_poll(struct ata_channel *, struct ata_xfer *);
 static void ahci_cmd_abort(struct ata_channel *, struct ata_xfer *);
 static void ahci_cmd_done(struct ata_channel *, struct ata_xfer *);
 static void ahci_cmd_done_end(struct ata_channel *, struct ata_xfer *);
 static void ahci_cmd_kill_xfer(struct ata_channel *, struct ata_xfer *, int);
 static int  ahci_bio_start(struct ata_channel *, struct ata_xfer *);
-static void ahci_bio_poll(struct ata_channel *, struct ata_xfer *);
+static int  ahci_bio_poll(struct ata_channel *, struct ata_xfer *);
 static void ahci_bio_abort(struct ata_channel *, struct ata_xfer *);
 static int  ahci_bio_complete(struct ata_channel *, struct ata_xfer *, int);
 static void ahci_bio_kill_xfer(struct ata_channel *, struct ata_xfer *, int) ;
@@ -93,7 +93,7 @@ static void ahci_atapi_minphys(struct buf *);
 static void ahci_atapi_scsipi_request(struct scsipi_channel *,
     scsipi_adapter_req_t, void *);
 static int  ahci_atapi_start(struct ata_channel *, struct ata_xfer *);
-static void ahci_atapi_poll(struct ata_channel *, struct ata_xfer *);
+static int  ahci_atapi_poll(struct ata_channel *, struct ata_xfer *);
 static void ahci_atapi_abort(struct ata_channel *, struct ata_xfer *);
 static int  ahci_atapi_complete(struct ata_channel *, struct ata_xfer *, int);
 static void ahci_atapi_kill_xfer(struct ata_channel *, struct ata_xfer *, int);
@@ -1208,7 +1208,7 @@ ahci_cmd_start(struct ata_channel *chp, struct ata_xfer *xfer)
 		return ATASTART_POLL;
 }
 
-static void
+static int
 ahci_cmd_poll(struct ata_channel *chp, struct ata_xfer *xfer)
 {
 	struct ahci_softc *sc = AHCI_CH2SC(chp);
@@ -1245,6 +1245,8 @@ ahci_cmd_poll(struct ata_channel *chp, struct ata_xfer *xfer)
 	}
 	/* reenable interrupts */
 	AHCI_WRITE(sc, AHCI_GHC, AHCI_READ(sc, AHCI_GHC) | AHCI_GHC_IE);
+
+	return ATAPOLL_DONE;
 }
 
 static void
@@ -1456,7 +1458,7 @@ ahci_bio_start(struct ata_channel *chp, struct ata_xfer *xfer)
 		return ATASTART_POLL;
 }
 
-static void
+static int
 ahci_bio_poll(struct ata_channel *chp, struct ata_xfer *xfer)
 {
 	struct ahci_softc *sc = (struct ahci_softc *)chp->ch_atac;
@@ -1486,6 +1488,7 @@ ahci_bio_poll(struct ata_channel *chp, struct ata_xfer *xfer)
 	}
 	/* reenable interrupts */
 	AHCI_WRITE(sc, AHCI_GHC, AHCI_READ(sc, AHCI_GHC) | AHCI_GHC_IE);
+	return ATAPOLL_DONE;
 }
 
 static void
@@ -1953,7 +1956,7 @@ ahci_atapi_start(struct ata_channel *chp, struct ata_xfer *xfer)
 		return ATASTART_POLL;
 }
 
-static void
+static int
 ahci_atapi_poll(struct ata_channel *chp, struct ata_xfer *xfer)
 {
 	struct ahci_softc *sc = (struct ahci_softc *)chp->ch_atac;
@@ -1983,6 +1986,7 @@ ahci_atapi_poll(struct ata_channel *chp, struct ata_xfer *xfer)
 	}
 	/* reenable interrupts */
 	AHCI_WRITE(sc, AHCI_GHC, AHCI_READ(sc, AHCI_GHC) | AHCI_GHC_IE);
+	return ATAPOLL_DONE;
 }
 
 static void

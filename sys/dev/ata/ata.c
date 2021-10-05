@@ -1,4 +1,4 @@
-/*	$NetBSD: ata.c,v 1.163 2021/08/29 23:49:32 rin Exp $	*/
+/*	$NetBSD: ata.c,v 1.164 2021/10/05 08:01:05 rin Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.163 2021/08/29 23:49:32 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.164 2021/10/05 08:01:05 rin Exp $");
 
 #include "opt_ata.h"
 
@@ -1231,10 +1231,11 @@ int
 ata_xfer_start(struct ata_xfer *xfer)
 {
 	struct ata_channel *chp = xfer->c_chp;
-	int rv;
+	int rv, status;
 
 	KASSERT(mutex_owned(&chp->ch_lock));
 
+again:
 	rv = xfer->ops->c_start(chp, xfer);
 	switch (rv) {
 	case ATASTART_STARTED:
@@ -1248,8 +1249,10 @@ ata_xfer_start(struct ata_xfer *xfer)
 		/* can happen even in thread context for some ATAPI devices */
 		ata_channel_unlock(chp);
 		KASSERT(xfer->ops != NULL && xfer->ops->c_poll != NULL);
-		xfer->ops->c_poll(chp, xfer);
+		status = xfer->ops->c_poll(chp, xfer);
 		ata_channel_lock(chp);
+		if (status == ATAPOLL_AGAIN)
+			goto again;
 		break;
 	case ATASTART_ABORT:
 		ata_channel_unlock(chp);
