@@ -261,7 +261,7 @@ static int print_authfile_line(const struct gengetopt_args_info *const args,
     printf("%s", user);
   }
 
-  printf(":%s,%s,%s,%s%s%s", args->resident_given ? "*" : b64_kh, b64_pk,
+  printf(":%s,%s,%s,%s%s%s\n", args->resident_given ? "*" : b64_kh, b64_pk,
          cose_string(fido_cred_type(cred)),
          !args->no_user_presence_given ? "+presence" : "",
          args->user_verification_given ? "+verification" : "",
