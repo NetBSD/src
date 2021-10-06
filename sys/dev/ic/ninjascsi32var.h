@@ -1,4 +1,4 @@
-/*	$NetBSD: ninjascsi32var.h,v 1.7 2012/10/27 17:18:22 chs Exp $	*/
+/*	$NetBSD: ninjascsi32var.h,v 1.8 2021/10/06 20:42:44 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2007 The NetBSD Foundation, Inc.
@@ -114,7 +114,7 @@ struct njsc32_cmd {
 	bus_dmamap_t		c_dmamap_xfer;
 };
 
-/* -1 for unaligned acccess */
+/* -1 for unaligned access */
 #define NJSC32_MAX_XFER	((NJSC32_NUM_SG - 1) << PGSHIFT)
 
 struct njsc32_softc {
