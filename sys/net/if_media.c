@@ -1,4 +1,4 @@
-/*	$NetBSD: if_media.c,v 1.52 2020/03/15 23:04:51 thorpej Exp $	*/
+/*	$NetBSD: if_media.c,v 1.53 2021/10/06 20:42:44 andvar Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2020 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_media.c,v 1.52 2020/03/15 23:04:51 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_media.c,v 1.53 2021/10/06 20:42:44 andvar Exp $");
 
 #define	__IFMEDIA_PRIVATE
 
@@ -183,7 +183,7 @@ ifmedia_init_with_lock(struct ifmedia *ifm, int dontcare_mask,
 	 *
 	 *	!if_is_mpsafe(ifp) || ((if_is_mpsafe(ifp) && lock != NULL)
 	 *
-	 * ...but we don't have acccess to the ifnet here.
+	 * ...but we don't have access to the ifnet here.
 	 */
 
 	TAILQ_INIT(&ifm->ifm_list);
