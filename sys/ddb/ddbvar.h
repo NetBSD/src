@@ -1,4 +1,4 @@
-/*	$NetBSD: ddbvar.h,v 1.13 2018/02/17 00:41:09 sevan Exp $	*/
+/*	$NetBSD: ddbvar.h,v 1.14 2021/10/06 17:04:49 uwe Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -35,12 +35,11 @@
 /*
  * Externally-visible  debugger state and entrypoints
  */
-
-extern	int db_onpanic;
-extern	int db_fromconsole;
-extern	int db_panicstackframes;
-extern	int db_tee_msgbuf;
-extern	int db_dumpstack;
+extern	int db_dumpstack;		/* do automatic bt on panic */
+extern	int db_fromconsole;		/* can be entered from the console */
+extern	int db_onpanic;			/* enter ddb on panic */
+extern	int db_panicstackframes;	/* limit db_dumpstack */
+extern	int db_tee_msgbuf;		/* add ddb output to dmesg */
 
 extern	void db_panic(void);
 
