@@ -1,4 +1,4 @@
-/* $NetBSD: efifdt.c,v 1.30 2021/10/06 10:13:19 jmcneill Exp $ */
+/* $NetBSD: efifdt.c,v 1.31 2021/10/06 10:15:20 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2019 Jason R. Thorpe
@@ -387,6 +387,7 @@ efi_fdt_gop(void)
 		fdt_appendprop_u32(fdt_data, fb, "stride", mode->Info->PixelsPerScanLine * 4);	/* XXX */
 		fdt_appendprop_string(fdt_data, fb, "format", "a8b8g8r8");
 
+#ifdef EFIBOOT_ACPI
 		/*
 		 * In ACPI mode, use GOP as console.
 		 */
@@ -394,6 +395,7 @@ efi_fdt_gop(void)
 			snprintf(buf, sizeof(buf), "/chosen/framebuffer@%" PRIx64, mode->FrameBufferBase);
 			fdt_setprop_string(fdt_data, chosen, "stdout-path", buf);
 		}
+#endif
 
 		return;
 	}
