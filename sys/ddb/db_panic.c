@@ -1,4 +1,4 @@
-/*	$NetBSD: db_panic.c,v 1.10 2021/07/20 11:39:16 christos Exp $	*/
+/*	$NetBSD: db_panic.c,v 1.11 2021/10/06 12:18:20 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2002, 2006, 2007, 2009, 2013 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_panic.c,v 1.10 2021/07/20 11:39:16 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_panic.c,v 1.11 2021/10/06 12:18:20 uwe Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -41,7 +41,8 @@ __KERNEL_RCSID(0, "$NetBSD: db_panic.c,v 1.10 2021/07/20 11:39:16 christos Exp $
  * kernel debugger; may just return so that panic() will continue to
  * halt or reboot the system.
  */
-void db_panic(void)
+void
+db_panic(void)
 {
 
 	if (db_dumpstack > 0) {
