@@ -1,4 +1,4 @@
-#	$NetBSD: files.ddb,v 1.14 2021/10/06 12:12:39 uwe Exp $
+#	$NetBSD: files.ddb,v 1.15 2021/10/06 12:14:51 uwe Exp $
 
 #
 # DDB options
@@ -7,6 +7,7 @@ defflag opt_ddb.h		DDB DDB_VERBOSE_HELP
 
 defparam opt_ddbparam.h		DDB_BREAK_CHAR
 defparam opt_ddbparam.h		DDB_COMMANDONENTER
+defparam opt_ddbparam.h		DDB_DUMPSTACK
 defparam opt_ddbparam.h		DDB_FROMCONSOLE
 defparam opt_ddbparam.h		DDB_HISTORY_SIZE
 defparam opt_ddbparam.h		DDB_KEYCODE
