@@ -1,6 +1,6 @@
-/*	$NetBSD: fenv.h,v 1.5 2017/04/09 15:15:34 christos Exp $	*/
+/*	$NetBSD: fenv.h,v 1.6 2021/10/06 05:33:15 skrll Exp $	*/
 
-/* 
+/*
  * Based on ieeefp.h written by J.T. Conklin, Apr 28, 1995
  * Public domain.
  */
