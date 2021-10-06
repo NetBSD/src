@@ -1,4 +1,4 @@
-/*	$NetBSD: devreg.h,v 1.6 2008/04/28 20:23:35 martin Exp $	*/
+/*	$NetBSD: devreg.h,v 1.7 2021/10/06 20:36:58 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
 #ifndef _SH3_DEVREG_H_
 #define	_SH3_DEVREG_H_
 /*
- * SH embeded device register defines.
+ * SH embedded device register defines.
  */
 
 /*
