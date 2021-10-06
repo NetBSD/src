@@ -1,4 +1,4 @@
-/* $NetBSD: efiacpi.c,v 1.10 2021/07/23 21:33:00 jmcneill Exp $ */
+/* $NetBSD: efiacpi.c,v 1.11 2021/10/06 10:13:19 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -31,7 +31,6 @@
 
 #include "efiboot.h"
 #include "efiacpi.h"
-#include "efifdt.h"
 #include "smbios.h"
 
 struct acpi_rdsp {
@@ -45,10 +44,6 @@ struct acpi_rdsp {
 	uint8_t extcsum;
 	uint8_t reserved[3];
 };
-
-#include <libfdt.h>
-
-#define	ACPI_FDT_SIZE	(128 * 1024)
 
 static EFI_GUID Acpi20TableGuid = ACPI_20_TABLE_GUID;
 static EFI_GUID Smbios3TableGuid = SMBIOS3_TABLE_GUID;
@@ -96,9 +91,21 @@ efi_acpi_enable(int enable)
 	acpi_enable = enable;
 }
 
+void *
+efi_acpi_root(void)
+{
+	return acpi_root;
+}
+
+void *
+efi_acpi_smbios(void)
+{
+	return smbios_table;
+}
+
 static char model_buf[128];
 
-static const char *
+const char *
 efi_acpi_get_model(void)
 {
 	struct smbtable smbios;
@@ -143,39 +150,4 @@ efi_acpi_show(void)
 
 	if (smbios_table)
 		printf("SMBIOS: %s\n", efi_acpi_get_model());
-}
-
-int
-efi_acpi_create_fdt(void)
-{
-	int error;
-	void *fdt;
-
-	if (acpi_root == NULL)
-		return EINVAL;
-
-	fdt = AllocatePool(ACPI_FDT_SIZE);
-	if (fdt == NULL)
-		return ENOMEM;
-
-	error = fdt_create_empty_tree(fdt, ACPI_FDT_SIZE);
-	if (error)
-		return EIO;
-
-	const char *model = efi_acpi_get_model();
-
-	fdt_setprop_string(fdt, fdt_path_offset(fdt, "/"), "compatible", "netbsd,generic-acpi");
-	fdt_setprop_string(fdt, fdt_path_offset(fdt, "/"), "model", model);
-	fdt_setprop_cell(fdt, fdt_path_offset(fdt, "/"), "#address-cells", 2);
-	fdt_setprop_cell(fdt, fdt_path_offset(fdt, "/"), "#size-cells", 2);
-
-	fdt_add_subnode(fdt, fdt_path_offset(fdt, "/"), "chosen");
-	fdt_setprop_u64(fdt, fdt_path_offset(fdt, "/chosen"), "netbsd,acpi-root-table", (uint64_t)(uintptr_t)acpi_root);
-	if (smbios_table)
-		fdt_setprop_u64(fdt, fdt_path_offset(fdt, "/chosen"), "netbsd,smbios-table", (uint64_t)(uintptr_t)smbios_table);
-
-	fdt_add_subnode(fdt, fdt_path_offset(fdt, "/"), "acpi");
-	fdt_setprop_string(fdt, fdt_path_offset(fdt, "/acpi"), "compatible", "netbsd,acpi");
-
-	return efi_fdt_set_data(fdt);
 }

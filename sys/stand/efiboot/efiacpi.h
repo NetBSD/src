@@ -1,4 +1,4 @@
-/* $NetBSD: efiacpi.h,v 1.2 2021/05/21 21:53:15 jmcneill Exp $ */
+/* $NetBSD: efiacpi.h,v 1.3 2021/10/06 10:13:19 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -29,9 +29,16 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#if !defined(EFIBOOT_ACPI)
+#error ACPI support not enabled
+#endif
+
 int efi_acpi_probe(void);
 void efi_acpi_show(void);
 int efi_acpi_available(void);
 int efi_acpi_enabled(void);
 void efi_acpi_enable(int);
 int efi_acpi_create_fdt(void);
+const char *efi_acpi_get_model(void);
+void *efi_acpi_root(void);
+void *efi_acpi_smbios(void);

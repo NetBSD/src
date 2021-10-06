@@ -1,4 +1,4 @@
-/* $NetBSD: efigop.c,v 1.1 2021/09/28 11:38:07 jmcneill Exp $ */
+/* $NetBSD: efigop.c,v 1.2 2021/10/06 10:13:19 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2021 Jared McNeill <jmcneill@invisible.ca>
@@ -27,8 +27,6 @@
  */
 
 #include "efiboot.h"
-
-#include <libfdt.h>
 
 static EFI_GRAPHICS_OUTPUT_PROTOCOL *gop = NULL;
 
