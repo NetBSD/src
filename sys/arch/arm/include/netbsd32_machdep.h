@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep.h,v 1.2 2017/10/31 12:37:23 martin Exp $	*/
+/*	$NetBSD: netbsd32_machdep.h,v 1.3 2021/10/06 05:33:15 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -64,9 +64,9 @@ typedef netbsd32_pointer_t			netbsd32_sigcontextp_t;
 #define	NETBSD32_MID_MACHINE	MID_MACHINE
 #define	USRSTACK32		USRSTACK
 #define	MAXTSIZ32		MAXTSIZ
-#define	DFLDSIZ32		DFLDSIZ		
-#define	MAXDSIZ32		MAXDSIZ	
-#define	DFLSSIZ32		DFLSSIZ		
-#define	MAXSSIZ32		MAXSSIZ		
+#define	DFLDSIZ32		DFLDSIZ
+#define	MAXDSIZ32		MAXDSIZ
+#define	DFLSSIZ32		DFLSSIZ
+#define	MAXSSIZ32		MAXSSIZ
 
 #endif /* _ARM_NETBSD32_H_ */

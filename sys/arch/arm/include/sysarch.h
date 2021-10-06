@@ -1,4 +1,4 @@
-/*	$NetBSD: sysarch.h,v 1.14 2017/01/13 19:53:10 christos Exp $	*/
+/*	$NetBSD: sysarch.h,v 1.15 2021/10/06 05:33:15 skrll Exp $	*/
 
 /*
  * Copyright (c) 1996-1997 Mark Brinicombe.
@@ -71,7 +71,7 @@ struct arm_vfp_fpscr_args {
 };
 
 struct arm_unaligned_faults_args {
-	bool		enabled;	/* unaligned faults are enabled */ 
+	bool		enabled;	/* unaligned faults are enabled */
 };
 
 #ifndef _KERNEL

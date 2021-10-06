@@ -1,4 +1,4 @@
-/*	$NetBSD: signal.h,v 1.15 2018/04/01 04:35:04 ryo Exp $	*/
+/*	$NetBSD: signal.h,v 1.16 2021/10/06 05:33:15 skrll Exp $	*/
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -114,7 +114,7 @@ struct sigcontext {
 	unsigned int sc_usr_lr;
 	unsigned int sc_svc_lr;
 	unsigned int sc_pc;
-	
+
 	sigset_t sc_mask;		/* signal mask to restore (new style) */
 };
 

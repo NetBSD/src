@@ -1,6 +1,6 @@
-/*	$NetBSD: ieeefp.h,v 1.4 2017/03/22 23:11:09 chs Exp $	*/
+/*	$NetBSD: ieeefp.h,v 1.5 2021/10/06 05:33:15 skrll Exp $	*/
 
-/* 
+/*
  * Based on ieeefp.h written by J.T. Conklin, Apr 28, 1995
  * Public domain.
  */
@@ -20,7 +20,7 @@
 
 typedef int fp_except;
 
-/* adjust for FP_* and FE_* value differences */ 
+/* adjust for FP_* and FE_* value differences */
 #define	__FPE(x) (x)
 #define	__FEE(x) (x)
 #define	__FPR(x) (x)

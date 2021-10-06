@@ -1,4 +1,4 @@
-/*	$NetBSD: aeabi.h,v 1.5 2013/08/01 22:20:40 matt Exp $	*/
+/*	$NetBSD: aeabi.h,v 1.6 2021/10/06 05:33:15 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -127,7 +127,7 @@ long long __aeabi_lmul(long long, long long); // multiplication
 
 /*
  * A pair of (unsigned) long longs is returned in {{r0, r1}, {r2, r3}},
- * the quotient in {r0, r1}, and the remainder in {r2, r3}. 
+ * the quotient in {r0, r1}, and the remainder in {r2, r3}.
  */
 typedef struct { long long quot; long long rem; } lldiv_t;
 __value_in_regs lldiv_t __aeabi_ldivmod(long long n, long long d); // signed long long division and remainder, {q, r} = n / d [2]
