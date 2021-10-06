@@ -1,4 +1,4 @@
-/*	$NetBSD: loader.c,v 1.4 2008/04/28 20:23:18 martin Exp $	*/
+/*	$NetBSD: loader.c,v 1.5 2021/10/06 20:36:58 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -284,5 +284,5 @@ boot_usage(void)
 	printf("\tex).\n");
 	printf("\t Disk 0, Partition 10, /netbsd => sd0k:netbsd\n");
 	printf("\t NFS, /netbsd => nfs:netbsd\n");
-	printf("\t `kernel embeded in data section' => mem:\n");
+	printf("\t `kernel embedded in data section' => mem:\n");
 }

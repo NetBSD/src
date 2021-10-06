@@ -1,4 +1,4 @@
-/* -*-C++-*-	$NetBSD: sh.h,v 1.5 2008/04/28 20:23:20 martin Exp $	*/
+/* -*-C++-*-	$NetBSD: sh.h,v 1.6 2021/10/06 20:36:58 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 #define	_HPCBOOT_SH_DEV_SH_H_
 
 /*
- * SH3, SH4 embeded devices.
+ * SH3, SH4 embedded devices.
  */
 
 /*
