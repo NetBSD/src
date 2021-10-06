@@ -1,4 +1,4 @@
-/*	$NetBSD: mcontext.h,v 1.22 2021/09/22 11:33:54 ryo Exp $	*/
+/*	$NetBSD: mcontext.h,v 1.23 2021/10/06 05:33:15 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -277,7 +277,7 @@ __END_DECLS
 #if defined(_KERNEL)
 __BEGIN_DECLS
 void vfp_getcontext(struct lwp *, mcontext_t *, int *);
-void vfp_setcontext(struct lwp *, const mcontext_t *); 
+void vfp_setcontext(struct lwp *, const mcontext_t *);
 __END_DECLS
 #endif
 
