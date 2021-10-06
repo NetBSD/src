@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.efiboot,v 1.23 2021/09/28 11:37:45 jmcneill Exp $
+# $NetBSD: Makefile.efiboot,v 1.24 2021/10/06 10:13:19 jmcneill Exp $
 
 S=		${.CURDIR}/../../..
 
@@ -22,15 +22,24 @@ AFLAGS.start.S= ${${ACTIVE_CC} == "clang":?-no-integrated-as:}
 .PATH: ${EFIDIR}/gnuefi
 SOURCES=	crt0-efi-${GNUEFIARCH}.S reloc_${GNUEFIARCH}.c
 SOURCES+=	boot.c bootmenu.c conf.c console.c dev_net.c devopen.c exec.c \
-		module.c overlay.c panic.c prompt.c
-SOURCES+=	efiboot.c efichar.c efidev.c efigetsecs.c efifdt.c \
-		efifile.c efiblock.c efinet.c efipxe.c efiacpi.c efirng.c \
+		module.c panic.c prompt.c
+SOURCES+=	efiboot.c efichar.c efidev.c efigetsecs.c \
+		efifile.c efiblock.c efinet.c efipxe.c efirng.c \
 		efiwatchdog.c efigop.c smbios.c
 
+.if ${EFIBOOT_FDT:Uno} == "yes"
+CPPFLAGS+=	-DEFIBOOT_FDT
+SOURCES+=	efifdt.c overlay.c
 .PATH: ${S}/external/bsd/libfdt/dist
 CPPFLAGS+=	-I${S}/external/bsd/libfdt/dist
 SOURCES+=	fdt.c fdt_addresses.c fdt_empty_tree.c fdt_overlay.c
 SOURCES+=	fdt_ro.c fdt_rw.c fdt_strerror.c fdt_sw.c fdt_wip.c
+.endif
+
+.if ${EFIBOOT_ACPI:Uno} == "yes"
+CPPFLAGS+=	-DEFIBOOT_ACPI
+SOURCES+=	efiacpi.c
+.endif
 
 SRCS= ${SOURCES} ${EXTRA_SOURCES}
 
@@ -146,9 +155,9 @@ VERSIONMACHINE=${MACHINE}
 CLEANFILES+=	${PROG}.so ${PROG}.tmp
 
 ${PROG}: ${PROG}.so
-	${OBJCOPY} -j .text -j .sdata -j .data -j .dynamic -j .dynsym -j .rel \
+	${OBJCOPY} -j .text -j .sdata -j .data -j .dynamic -j .dynsym \
 	    -j .rela -j .rel.* -j .rela.* -j .rel* -j .rela* \
-	    -j .reloc -O binary ${PROG}.so ${.TARGET}
+	    -j .reloc ${OBJCOPY_FORMAT} ${PROG}.so ${.TARGET}
 
 .include <bsd.prog.mk>
 
