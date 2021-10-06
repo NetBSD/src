@@ -1,4 +1,4 @@
-/*	$NetBSD: eevar.h,v 1.5 2016/04/03 10:03:34 martin Exp $	*/
+/*	$NetBSD: eevar.h,v 1.6 2021/10/06 20:36:58 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 /*
- * EE embeded device's memory mapped register access method.
+ * EE embedded device's memory mapped register access method.
  */
 
 #define _PLAYSTATION2_BUS_SPACE_PRIVATE
