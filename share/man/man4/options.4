@@ -1,4 +1,4 @@
-.\"	$NetBSD: options.4,v 1.519 2021/06/03 20:18:06 riastradh Exp $
+.\"	$NetBSD: options.4,v 1.520 2021/10/06 05:25:53 msaitoh Exp $
 .\"
 .\" Copyright (c) 1996
 .\" 	Perry E. Metzger.  All rights reserved.
@@ -2076,15 +2076,20 @@ Mbuf clusters are MCLBYTES in size (usually 2k).
 This is used to compute the size of the kernel VM map
 .Em mb_map ,
 which maps mbuf clusters.
-Default on most ports is 1024 (2048 with
-.Dq options GATEWAY
-).
+The default value is calculated from the amount of physical memory.
+Architectures without direct mapping also limit it based on the kmem_map size,
+which is used as backing store.
+Some archs limit the value with
+.Sq NMBCLUSTERS_MAX .
 See
 .Pa /usr/include/machine/param.h
-for exact default information.
+for those archs.
+This value can be accessed via the kern.mbuf.nmbclusters sysctl variable.
 Increase this value if you get
 .Dq mclpool limit reached
 messages.
+.It Cd options NMBCLUSTERS_MAX=value
+The upper limit of NMBCLUSTERS.
 .It Cd options NKMEMPAGES=value
 .It Cd options NKMEMPAGES_MIN=value
 .It Cd options NKMEMPAGES_MAX=value
