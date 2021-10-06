@@ -1,4 +1,4 @@
-/*	$NetBSD: frame.h,v 1.21 2018/01/24 19:42:30 skrll Exp $	*/
+/*	$NetBSD: frame.h,v 1.22 2021/10/06 05:29:32 skrll Exp $	*/
 
 /*
  * Copyright (c) 1994-1997 Mark Brinicombe.
@@ -110,5 +110,5 @@ __END_DECLS
 #endif /* _LOCORE */
 
 #endif /* _ARM_FRAME_H_ */
-  
+
 /* End of frame.h */
