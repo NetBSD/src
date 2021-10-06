@@ -1,4 +1,4 @@
-/* $NetBSD: exec.c,v 1.22 2021/06/20 19:07:39 jmcneill Exp $ */
+/* $NetBSD: exec.c,v 1.23 2021/10/06 10:13:19 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2019 Jason R. Thorpe
@@ -28,11 +28,14 @@
  */
 
 #include "efiboot.h"
+#ifdef EFIBOOT_FDT
 #include "efifdt.h"
+#endif
+#ifdef EFIBOOT_ACPI
 #include "efiacpi.h"
+#endif
 #include "efirng.h"
 #include "module.h"
-#include "overlay.h"
 
 #include <sys/param.h>
 #include <sys/reboot.h>
@@ -41,13 +44,10 @@ extern char twiddle_toggle;
 
 u_long load_offset = 0;
 
-#define	FDT_SPACE	(4 * 1024 * 1024)
-#define	FDT_ALIGN	(2 * 1024 * 1024)
+EFI_PHYSICAL_ADDRESS efirng_addr;
+u_long efirng_size = 0;
 
-static EFI_PHYSICAL_ADDRESS initrd_addr, dtb_addr, rndseed_addr, efirng_addr;
-static u_long initrd_size = 0, dtb_size = 0, rndseed_size = 0, efirng_size = 0;
-
-static int
+int
 load_file(const char *path, u_long extra, bool quiet_errors,
     EFI_PHYSICAL_ADDRESS *paddr, u_long *psize)
 {
@@ -123,81 +123,6 @@ load_file(const char *path, u_long extra, bool quiet_errors,
 }
 
 static void
-apply_overlay(const char *path, void *dtbo)
-{
-
-	if (!efi_fdt_overlay_is_compatible(dtbo)) {
-		printf("boot: %s: incompatible overlay\n", path);
-		return;
-	}
-
-	int fdterr;
-
-	if (efi_fdt_overlay_apply(dtbo, &fdterr) != 0) {
-		printf("boot: %s: error %d applying overlay\n", path, fdterr);
-	}
-}
-
-static void
-apply_overlay_file(const char *path)
-{
-	EFI_PHYSICAL_ADDRESS dtbo_addr;
-	u_long dtbo_size;
-
-	if (strlen(path) == 0)
-		return;
-
-	if (load_file(path, 0, false, &dtbo_addr, &dtbo_size) != 0 ||
-	    dtbo_addr == 0) {
-		/* Error messages have already been displayed. */
-		goto out;
-	}
-
-	apply_overlay(path, (void *)(uintptr_t)dtbo_addr);
-
-out:
-	if (dtbo_addr) {
-		uefi_call_wrapper(BS->FreePages, 2, dtbo_addr,
-		    EFI_SIZE_TO_PAGES(dtbo_size));
-	}
-}
-
-static void
-load_fdt_overlays(void)
-{
-	if (!dtoverlay_enabled)
-		return;
-
-	dtoverlay_foreach(apply_overlay_file);
-}
-
-static void
-load_module(const char *module_name)
-{
-	EFI_PHYSICAL_ADDRESS addr;
-	u_long size;
-	char path[PATH_MAX];
-
-	snprintf(path, sizeof(path), "%s/%s/%s.kmod", module_prefix,
-	    module_name, module_name);
-
-	if (load_file(path, 0, false, &addr, &size) != 0 || addr == 0 || size == 0)
-		return;
-
-	efi_fdt_module(module_name, (u_long)addr, size);
-}
-
-static void
-load_modules(const char *kernel_name)
-{
-	if (!module_enabled)
-		return;
-
-	module_init(kernel_name);
-	module_foreach(load_module);
-}
-
-static void
 generate_efirng(void)
 {
 	EFI_PHYSICAL_ADDRESS addr;
@@ -248,8 +173,6 @@ exec_netbsd(const char *fname, const char *args)
 
 	twiddle_toggle = 0;
 
-	load_file(get_initrd_path(), 0, false, &initrd_addr, &initrd_size);
-	load_file(get_dtb_path(), 0, false, &dtb_addr, &dtb_size);
 	generate_efirng();
 
 	memset(marks, 0, sizeof(marks));
@@ -263,7 +186,7 @@ exec_netbsd(const char *fname, const char *args)
 	}
 	close(fd);
 	marks[MARK_END] = (((u_long) marks[MARK_END] + sizeof(int) - 1)) & -sizeof(int);
-	alloc_size = marks[MARK_END] - marks[MARK_START] + FDT_SPACE + EFIBOOT_ALIGN;
+	alloc_size = marks[MARK_END] - marks[MARK_START] + arch_alloc_size() + EFIBOOT_ALIGN;
 
 #ifdef EFIBOOT_ALLOCATE_MAX_ADDRESS
 	addr = EFIBOOT_ALLOCATE_MAX_ADDRESS;
@@ -290,45 +213,8 @@ exec_netbsd(const char *fname, const char *args)
 	close(fd);
 	load_offset = 0;
 
-#ifdef EFIBOOT_ACPI
-	/* ACPI support only works for little endian kernels */
-	efi_acpi_enable(netbsd_elf_data == ELFDATA2LSB);
-
-	if (efi_acpi_available() && efi_acpi_enabled()) {
-		efi_acpi_create_fdt();
-	} else
-#endif
-	if (dtb_addr && efi_fdt_set_data((void *)(uintptr_t)dtb_addr) != 0) {
-		printf("boot: invalid DTB data\n");
+	if (arch_prepare_boot(fname, args, marks) != 0) {
 		goto cleanup;
-	}
-
-	if (efi_fdt_size() > 0) {
-		/*
-		 * Load the rndseed as late as possible -- after we
-		 * have committed to using fdt and executing this
-		 * kernel -- so that it doesn't hang around in memory
-		 * if we have to bail or the kernel won't use it.
-		 */
-		load_file(get_rndseed_path(), 0, false,
-		    &rndseed_addr, &rndseed_size);
-
-		efi_fdt_init((marks[MARK_END] + FDT_ALIGN - 1) & -FDT_ALIGN, FDT_ALIGN);
-		load_modules(fname);
-		load_fdt_overlays();
-		efi_fdt_initrd(initrd_addr, initrd_size);
-		efi_fdt_rndseed(rndseed_addr, rndseed_size);
-		efi_fdt_efirng(efirng_addr, efirng_size);
-		efi_fdt_bootargs(args);
-		efi_fdt_system_table();
-		efi_fdt_gop();
-		efi_fdt_memory_map();
-	}
-
-	efi_cleanup();
-
-	if (efi_fdt_size() > 0) {
-		efi_fdt_fini();
 	}
 
 	efi_boot_kernel(marks);
@@ -338,15 +224,7 @@ exec_netbsd(const char *fname, const char *args)
 
 cleanup:
 	uefi_call_wrapper(BS->FreePages, 2, addr, EFI_SIZE_TO_PAGES(alloc_size));
-	if (initrd_addr) {
-		uefi_call_wrapper(BS->FreePages, 2, initrd_addr, EFI_SIZE_TO_PAGES(initrd_size));
-		initrd_addr = 0;
-		initrd_size = 0;
-	}
-	if (dtb_addr) {
-		uefi_call_wrapper(BS->FreePages, 2, dtb_addr, EFI_SIZE_TO_PAGES(dtb_size));
-		dtb_addr = 0;
-		dtb_size = 0;
-	}
+	arch_cleanup_boot();
+
 	return EIO;
 }

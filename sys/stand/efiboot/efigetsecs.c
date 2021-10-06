@@ -1,4 +1,4 @@
-/*	$NetBSD: efigetsecs.c,v 1.4 2019/03/30 12:47:53 jmcneill Exp $	*/
+/*	$NetBSD: efigetsecs.c,v 1.5 2021/10/06 10:13:19 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 2015 YASUOKA Masahiko <yasuoka@yasuoka.net>
@@ -55,7 +55,7 @@ getsecs_rtc(void)
 	return r;
 }
 
-static void
+static EFIAPI void
 getsecs_notify_func(EFI_EVENT ev, VOID *context)
 {
 	getsecs_val++;

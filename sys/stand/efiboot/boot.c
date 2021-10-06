@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.37 2021/09/28 11:37:45 jmcneill Exp $	*/
+/*	$NetBSD: boot.c,v 1.38 2021/10/06 10:13:19 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2016 Kimihiro Nonaka <nonaka@netbsd.org>
@@ -30,12 +30,18 @@
 #include "efiboot.h"
 #include "efiblock.h"
 #include "efifile.h"
-#include "efifdt.h"
-#include "efiacpi.h"
 #include "efirng.h"
 #include "module.h"
-#include "overlay.h"
 #include "bootmenu.h"
+
+#ifdef EFIBOOT_FDT
+#include "efifdt.h"
+#include "overlay.h"
+#endif
+
+#ifdef EFIBOOT_ACPI
+#include "efiacpi.h"
+#endif
 
 #include <sys/bootblock.h>
 #include <sys/boot_flag.h>
@@ -90,11 +96,13 @@ int	set_bootargs(const char *);
 
 void	command_boot(char *);
 void	command_dev(char *);
-void	command_dtb(char *);
 void	command_initrd(char *);
 void	command_rndseed(char *);
+#ifdef EFIBOOT_FDT
+void	command_dtb(char *);
 void	command_dtoverlay(char *);
 void	command_dtoverlays(char *);
+#endif
 void	command_modules(char *);
 void	command_load(char *);
 void	command_unload(char *);
@@ -109,12 +117,14 @@ void	command_quit(char *);
 const struct boot_command commands[] = {
 	{ "boot",	command_boot,		"boot [dev:][filename] [args]\n     (ex. \"hd0a:\\netbsd.old -s\"" },
 	{ "dev",	command_dev,		"dev" },
+#ifdef EFIBOOT_FDT
 	{ "dtb",	command_dtb,		"dtb [dev:][filename]" },
+	{ "dtoverlay",	command_dtoverlay,	"dtoverlay [dev:][filename]" },
+	{ "dtoverlays",	command_dtoverlays,	"dtoverlays [{on|off|reset}]" },
+#endif
 	{ "initrd",	command_initrd,		"initrd [dev:][filename]" },
 	{ "fs",		command_initrd,		NULL },
 	{ "rndseed",	command_rndseed,	"rndseed [dev:][filename]" },
-	{ "dtoverlay",	command_dtoverlay,	"dtoverlay [dev:][filename]" },
-	{ "dtoverlays",	command_dtoverlays,	"dtoverlays [{on|off|reset}]" },
 	{ "modules",	command_modules,	"modules [{on|off|reset}]" },
 	{ "load",	command_load,		"load <module_name>" },
 	{ "unload",	command_unload,		"unload <module_name>" },
@@ -196,12 +206,6 @@ command_dev(char *arg)
 }
 
 void
-command_dtb(char *arg)
-{
-	set_dtb_path(arg);
-}
-
-void
 command_initrd(char *arg)
 {
 	set_initrd_path(arg);
@@ -211,6 +215,13 @@ void
 command_rndseed(char *arg)
 {
 	set_rndseed_path(arg);
+}
+
+#ifdef EFIBOOT_FDT
+void
+command_dtb(char *arg)
+{
+	set_dtb_path(arg);
 }
 
 void
@@ -243,6 +254,7 @@ command_dtoverlay(char *arg)
 
 	dtoverlay_add(arg);
 }
+#endif
 
 void
 command_modules(char *arg)
@@ -359,8 +371,12 @@ command_version(char *arg)
 		printf("Config path: %s\n", pathbuf);
 	}
 
+#ifdef EFIBOOT_FDT
 	efi_fdt_show();
+#endif
+#ifdef EFIBOOT_ACPI
 	efi_acpi_show();
+#endif
 	efi_rng_show();
 	efi_md_show();
 	efi_gop_show();

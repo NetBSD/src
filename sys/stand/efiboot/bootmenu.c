@@ -1,4 +1,4 @@
-/*	$NetBSD: bootmenu.c,v 1.2 2020/06/26 03:23:04 thorpej Exp $	*/
+/*	$NetBSD: bootmenu.c,v 1.3 2021/10/06 10:13:19 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -64,8 +64,10 @@ do_bootcfg_command(const char *cmd, char *arg)
 	else if (strcmp(cmd, BOOTCFG_CMD_USERCONF) == 0)
 		userconf_add(arg);
 #endif
+#ifdef EFIBOOT_FDT
 	else if (strcmp(cmd, "dtoverlay") == 0)
 		dtoverlay_add(arg);
+#endif
 }
 
 int

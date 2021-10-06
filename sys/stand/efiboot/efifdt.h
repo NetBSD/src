@@ -1,4 +1,4 @@
-/* $NetBSD: efifdt.h,v 1.10 2020/10/10 19:17:39 jmcneill Exp $ */
+/* $NetBSD: efifdt.h,v 1.11 2021/10/06 10:13:19 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -25,6 +25,10 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
+
+#if !defined(EFIBOOT_FDT)
+#error FDT support not enabled
+#endif
 
 int efi_fdt_probe(void);
 void efi_fdt_memory_map(void);
