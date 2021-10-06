@@ -1,4 +1,4 @@
-/* $NetBSD: wss_acpi.c,v 1.36 2021/10/06 18:41:34 uwe Exp $ */
+/* $NetBSD: wss_acpi.c,v 1.37 2021/10/06 20:10:42 uwe Exp $ */
 
 /*
  * Copyright (c) 2002 Jared D. McNeill <jmcneill@invisible.ca>
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wss_acpi.c,v 1.36 2021/10/06 18:41:34 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wss_acpi.c,v 1.37 2021/10/06 20:10:42 uwe Exp $");
 
 #include <sys/param.h>
 #include <sys/audioio.h>
@@ -180,8 +180,8 @@ wss_acpi_attach(device_t parent, device_t self, void *aux)
 		goto out;
 	}
 
-	aprint_normal_dev(self, "");
 	/* Attach our wss device */
+	aprint_normal("%s", device_xname(self)); /* NB: sic! */
 	wssattach(sc);
 
 	arg.type = AUDIODEV_TYPE_OPL;
