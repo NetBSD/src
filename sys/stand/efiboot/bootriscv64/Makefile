@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.2 2021/10/06 10:13:20 jmcneill Exp $
+# $NetBSD: Makefile,v 1.3 2021/10/06 11:26:21 jmcneill Exp $
 
 PROG=		bootriscv64.efi
 OBJFMT=		binary
@@ -6,6 +6,8 @@ NEWVERSWHAT=	"efiboot (riscv64)"
 GNUEFIARCH=	riscv64
 LIBGNUEFI_ARCH=	riscv64
 OBJCOPY_FORMAT=	-O binary
+
+EFIBOOT_FDT=	yes
 
 EXTRA_SOURCES=	efibootriscv64.c
 
