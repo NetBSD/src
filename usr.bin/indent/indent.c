@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.c,v 1.111 2021/10/07 18:48:31 rillig Exp $	*/
+/*	$NetBSD: indent.c,v 1.112 2021/10/07 19:17:07 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)indent.c	5.17 (Berkeley) 6/7/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: indent.c,v 1.111 2021/10/07 18:48:31 rillig Exp $");
+__RCSID("$NetBSD: indent.c,v 1.112 2021/10/07 19:17:07 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/indent.c 340138 2018-11-04 19:24:49Z oshogbo $");
 #endif
@@ -127,20 +127,6 @@ static const char *in_name = "Standard Input";
 static const char *out_name = "Standard Output";
 static const char *backup_suffix = ".BAK";
 static char bakfile[MAXPATHLEN] = "";
-
-static void
-check_size_code(size_t desired_size)
-{
-    if (code.e + desired_size >= code.l)
-	buf_expand(&code, desired_size);
-}
-
-static void
-check_size_label(size_t desired_size)
-{
-    if (lab.e + desired_size >= lab.l)
-	buf_expand(&lab, desired_size);
-}
 
 #if HAVE_CAPSICUM
 static void
@@ -404,6 +390,42 @@ buf_expand(struct buffer *buf, size_t desired_size)
 }
 
 static void
+buf_reserve(struct buffer *buf, size_t n)
+{
+    if (buf->e + n >= buf->l)
+	buf_expand(buf, n);
+}
+
+static void
+buf_add_char(struct buffer *buf, char ch)
+{
+    buf_reserve(buf, 1);
+    *buf->e++ = ch;
+}
+
+static void
+buf_add_buf(struct buffer *buf, const struct buffer *add)
+{
+    size_t len = buf_len(add);
+    buf_reserve(buf, len);
+    memcpy(buf->e, add->s, len);
+    buf->e += len;
+}
+
+static void
+buf_terminate(struct buffer *buf)
+{
+    buf_reserve(buf, 1);
+    *buf->e = '\0';
+}
+
+static void
+buf_reset(struct buffer *buf)
+{
+    buf->e = buf->s;
+}
+
+static void
 main_init_globals(void)
 {
     found_err = false;
@@ -566,16 +588,12 @@ process_comment_in_code(token_type ttype, bool *force_nl)
 				 * '}' */
     if (com.s != com.e) {	/* the turkey has embedded a comment in a
 				 * line. fix it */
-	size_t len = buf_len(&com);
-
-	check_size_code(len + 3);
-	*code.e++ = ' ';
-	memcpy(code.e, com.s, len);
-	code.e += len;
-	*code.e++ = ' ';
-	*code.e = '\0';
+	buf_add_char(&code, ' ');
+	buf_add_buf(&code, &com);
+	buf_add_char(&code, ' ');
+	buf_terminate(&code);
+	buf_reset(&com);
 	ps.want_blank = false;
-	com.e = com.s;
     }
 }
 
@@ -706,27 +724,16 @@ process_unary_op(int decl_ind, bool tabs_to_var)
     } else if (ps.want_blank)
 	*code.e++ = ' ';
 
-    {
-	size_t len = buf_len(&token);
-
-	check_size_code(len);
-	memcpy(code.e, token.s, len);
-	code.e += len;
-    }
+    buf_add_buf(&code, &token);
     ps.want_blank = false;
 }
 
 static void
 process_binary_op(void)
 {
-    size_t len = buf_len(&token);
-
-    check_size_code(len + 1);
     if (ps.want_blank)
-	*code.e++ = ' ';
-    memcpy(code.e, token.s, len);
-    code.e += len;
-
+	buf_add_char(&code, ' ');
+    buf_add_buf(&code, &token);
     ps.want_blank = true;
 }
 
@@ -768,19 +775,13 @@ process_colon(int *seen_quest, bool *force_nl, bool *seen_case)
     }
     ps.in_stmt = false;		/* seeing a label does not imply we are in a
 				 * stmt */
-    /*
-     * turn everything so far into a label
-     */
-    {
-	size_t len = buf_len(&code);
 
-	check_size_label(len + 3);
-	memcpy(lab.e, code.s, len);
-	lab.e += len;
-	*lab.e++ = ':';
-	*lab.e = '\0';
-	code.e = code.s;
-    }
+    /* turn everything so far into a label */
+    buf_add_buf(&lab, &code);
+    buf_add_char(&lab, ':');
+    buf_terminate(&lab);
+    buf_reset(&code);
+
     ps.pcase = *seen_case;	/* will be used by dump_line to decide how to
 				 * indent the label. */
     *force_nl = *seen_case;	/* will force a 'case n:' to be on a
@@ -1042,26 +1043,15 @@ process_ident(token_type ttype, int decl_ind, bool tabs_to_var,
 static void
 copy_token(void)
 {
-    size_t len = buf_len(&token);
-
-    check_size_code(len + 1);
     if (ps.want_blank)
-	*code.e++ = ' ';
-    memcpy(code.e, token.s, len);
-    code.e += len;
+	buf_add_char(&code, ' ');
+    buf_add_buf(&code, &token);
 }
 
 static void
 process_string_prefix(void)
 {
-    size_t len = buf_len(&token);
-
-    check_size_code(len + 1);
-    if (ps.want_blank)
-	*code.e++ = ' ';
-    memcpy(code.e, token.s, len);
-    code.e += len;
-
+    copy_token();
     ps.want_blank = false;
 }
 
@@ -1097,13 +1087,14 @@ process_comma(int decl_ind, bool tabs_to_var, bool *force_nl)
     }
 }
 
+/* move the whole line to the 'label' buffer */
 static void
 process_preprocessing(void)
 {
     if (com.s != com.e || lab.s != lab.e || code.s != code.e)
 	dump_line();
-    check_size_label(1);
-    *lab.e++ = '#';		/* move whole line to 'label' buffer */
+
+    buf_add_char(&lab, '#');
 
     {
 	bool in_comment = false;
@@ -1115,7 +1106,7 @@ process_preprocessing(void)
 	    inbuf_skip();
 
 	while (*buf_ptr != '\n' || (in_comment && !had_eof)) {
-	    check_size_label(2);
+	    buf_reserve(&lab, 2);
 	    *lab.e++ = inbuf_next();
 	    switch (lab.e[-1]) {
 	    case '\\':
@@ -1126,7 +1117,7 @@ process_preprocessing(void)
 		if (*buf_ptr == '*' && !in_comment && quote == '\0') {
 		    in_comment = true;
 		    *lab.e++ = *buf_ptr++;
-		    com_start = (int)(lab.e - lab.s) - 2;
+		    com_start = (int)buf_len(&lab) - 2;
 		}
 		break;
 	    case '"':
@@ -1145,7 +1136,7 @@ process_preprocessing(void)
 		if (*buf_ptr == '/' && in_comment) {
 		    in_comment = false;
 		    *lab.e++ = *buf_ptr++;
-		    com_end = (int)(lab.e - lab.s);
+		    com_end = (int)buf_len(&lab);
 		}
 		break;
 	    }
@@ -1180,8 +1171,7 @@ process_preprocessing(void)
 	    sc_end = NULL;
 	    debug_println("switched buf_ptr to save_com");
 	}
-	check_size_label(1);
-	*lab.e = '\0';		/* null terminate line */
+	buf_terminate(&lab);
 	ps.pcase = false;
     }
 
@@ -1282,15 +1272,8 @@ main_loop(void)
 	    force_nl = false;	/* cancel forced newline after newline, form
 				 * feed, etc */
 
+	buf_reserve(&code, 3);	/* space for 2 characters plus '\0' */
 
-
-	/*-----------------------------------------------------*\
-	|	   do switch on type of token scanned		|
-	\*-----------------------------------------------------*/
-	check_size_code(3);	/* maximum number of increments of code.e
-				 * before the next check_size_code or
-				 * dump_line() is 2. After that there's the
-				 * final increment for the null character. */
 	switch (ttype) {
 
 	case form_feed:
@@ -1485,20 +1468,21 @@ indent_declaration(int cur_decl_ind, bool tabs_to_var)
 	pos += (ps.ind_level * opt.indent_size) % opt.tabsize;
 	cur_decl_ind += (ps.ind_level * opt.indent_size) % opt.tabsize;
     }
+
     if (tabs_to_var) {
 	int tpos;
 
-	check_size_code((size_t)(cur_decl_ind / opt.tabsize));
 	while ((tpos = opt.tabsize * (1 + pos / opt.tabsize)) <= cur_decl_ind) {
-	    *code.e++ = '\t';
+	    buf_add_char(&code, '\t');
 	    pos = tpos;
 	}
     }
-    check_size_code((size_t)(cur_decl_ind - pos) + 1);
+
     while (pos < cur_decl_ind) {
-	*code.e++ = ' ';
+	buf_add_char(&code, ' ');
 	pos++;
     }
+
     if (code.e == startpos && ps.want_blank) {
 	*code.e++ = ' ';
 	ps.want_blank = false;
