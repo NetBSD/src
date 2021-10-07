@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.c,v 1.110 2021/10/07 18:32:09 rillig Exp $	*/
+/*	$NetBSD: indent.c,v 1.111 2021/10/07 18:48:31 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)indent.c	5.17 (Berkeley) 6/7/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: indent.c,v 1.110 2021/10/07 18:32:09 rillig Exp $");
+__RCSID("$NetBSD: indent.c,v 1.111 2021/10/07 18:48:31 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/indent.c 340138 2018-11-04 19:24:49Z oshogbo $");
 #endif
@@ -1040,7 +1040,7 @@ process_ident(token_type ttype, int decl_ind, bool tabs_to_var,
 }
 
 static void
-copy_id(void)
+copy_token(void)
 {
     size_t len = buf_len(&token);
 
@@ -1327,7 +1327,7 @@ main_loop(void)
 
 	case case_label:	/* got word 'case' or 'default' */
 	    seen_case = true;	/* so we can process the later colon properly */
-	    goto copy_id;
+	    goto copy_token;
 
 	case colon:		/* got a ':' */
 	    process_colon(&seen_quest, &force_nl, &seen_case);
@@ -1351,7 +1351,7 @@ main_loop(void)
 	    sp_sw = true;
 	    hd_type = switch_expr;	/* keep this for when we have seen the
 					 * expression */
-	    goto copy_id;	/* go move the token into buffer */
+	    goto copy_token;
 
 	case keyword_for_if_while:
 	    sp_sw = true;	/* the interesting stuff is done after the
@@ -1360,31 +1360,31 @@ main_loop(void)
 		(*token.s == 'w' ? while_expr : for_exprs));
 
 	    /* remember the type of header for later use by parser */
-	    goto copy_id;	/* copy the token into line */
+	    goto copy_token;
 
 	case keyword_do_else:
 	    process_keyword_do_else(&force_nl, &last_else);
-	    goto copy_id;	/* move the token into line */
+	    goto copy_token;
 
 	case type_def:
 	case storage_class:
 	    prefix_blankline_requested = false;
-	    goto copy_id;
+	    goto copy_token;
 
 	case keyword_struct_union_enum:
 	    if (ps.p_l_follow > 0)
-		goto copy_id;
+		goto copy_token;
 	    /* FALLTHROUGH */
 	case decl:		/* we have a declaration type (int, etc.) */
 	    process_decl(&decl_ind, &tabs_to_var);
-	    goto copy_id;
+	    goto copy_token;
 
 	case funcname:
 	case ident:		/* got an identifier or constant */
 	    process_ident(ttype, decl_ind, tabs_to_var, &sp_sw, &force_nl,
 		hd_type);
-    copy_id:
-	    copy_id();
+    copy_token:
+	    copy_token();
 	    if (ttype != funcname)
 		ps.want_blank = true;
 	    break;
