@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.12 2021/10/05 17:09:45 rillig Exp $
+#	$NetBSD: Makefile,v 1.13 2021/10/07 18:07:25 rillig Exp $
 
 .include <bsd.own.mk>
 
@@ -261,6 +261,9 @@ FILES+=		opt-ut.0.stdout
 FILES+=		opt-v.0
 FILES+=		opt-v.0.pro
 FILES+=		opt-v.0.stdout
+FILES+=		opt.0
+FILES+=		opt.0.pro
+FILES+=		opt.0.stdout
 FILES+=		parens.0
 FILES+=		parens.0.stdout
 FILES+=		parens.0.pro

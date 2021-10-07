@@ -1,4 +1,4 @@
-/*	$NetBSD: args.c,v 1.46 2021/10/07 17:38:21 rillig Exp $	*/
+/*	$NetBSD: args.c,v 1.47 2021/10/07 18:07:25 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)args.c	8.1 (Berkeley) 6/6/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: args.c,v 1.46 2021/10/07 17:38:21 rillig Exp $");
+__RCSID("$NetBSD: args.c,v 1.47 2021/10/07 18:07:25 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/args.c 336318 2018-07-15 21:04:21Z pstef $");
 #endif
@@ -282,9 +282,10 @@ set_option(const char *arg)
     errx(1, "%s: unknown parameter \"%s\"", option_source, arg - 1);
 
 found:
-    if (p->p_is_bool)
+    if (p->p_is_bool) {
+	/* XXX: Trailing garbage in param_start is silently ignored. */
 	*(bool *)p->p_var = p->p_may_negate ? arg[0] != 'n' : p->p_bool_value;
-    else {
+    } else {
 	if (!isdigit((unsigned char)*param_start))
 	    errx(1, "%s: ``%s'' requires a parameter",
 		option_source, p->p_name);
