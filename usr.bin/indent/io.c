@@ -1,4 +1,4 @@
-/*	$NetBSD: io.c,v 1.74 2021/10/07 18:32:09 rillig Exp $	*/
+/*	$NetBSD: io.c,v 1.75 2021/10/07 19:35:50 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)io.c	8.1 (Berkeley) 6/6/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: io.c,v 1.74 2021/10/07 18:32:09 rillig Exp $");
+__RCSID("$NetBSD: io.c,v 1.75 2021/10/07 19:35:50 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/io.c 334927 2018-06-10 16:44:18Z pstef $");
 #endif
@@ -181,7 +181,7 @@ dump_line(void)
 	} else
 	    cur_col = 1;	/* there is no label section */
 
-	ps.pcase = false;
+	ps.is_case_label = false;
 
 	if (code.s != code.e) {	/* print code section, if any */
 	    if (comment_open) {
@@ -318,7 +318,7 @@ compute_code_indent(void)
 int
 compute_label_indent(void)
 {
-    if (ps.pcase)
+    if (ps.is_case_label)
 	return (int)(case_ind * (float)opt.indent_size);
     if (lab.s[0] == '#')
 	return 0;
