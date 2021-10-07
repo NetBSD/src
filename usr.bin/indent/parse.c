@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.30 2021/10/07 21:38:25 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.31 2021/10/07 21:43:20 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -55,6 +55,10 @@ __FBSDID("$FreeBSD: head/usr.bin/indent/parse.c 337651 2018-08-11 19:20:06Z pste
 
 static void reduce(void);
 
+/*
+ * Shift the token onto the parser stack, or reduce it by combining it with
+ * previous tokens.
+ */
 void
 parse(token_type ttype)
 {
@@ -101,7 +105,6 @@ parse(token_type ttype)
 	     */
 	    ps.ind_level_follow = ps.il[ps.tos--];
 	}
-	/* the rest is the same as for keyword_do and for_exprs */
 	/* FALLTHROUGH */
     case keyword_do:
     case for_exprs:		/* 'for' (...) */
@@ -119,15 +122,13 @@ parse(token_type ttype)
 				 * group or a declaration */
 	else {
 	    if (code.s == code.e) {
+		/* it is a group as part of a while, for, etc. */
 		--ps.ind_level;
-		/*
-		 * it is a group as part of a while, for, etc.
-		 */
-		if (ps.p_stack[ps.tos] == switch_expr && opt.case_indent >= 1)
-		    --ps.ind_level;
 		/*
 		 * for a switch, brace should be two levels out from the code
 		 */
+		if (ps.p_stack[ps.tos] == switch_expr && opt.case_indent >= 1)
+		    --ps.ind_level;
 	    }
 	}
 

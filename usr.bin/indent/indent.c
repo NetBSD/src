@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.c,v 1.117 2021/10/07 21:41:59 rillig Exp $	*/
+/*	$NetBSD: indent.c,v 1.118 2021/10/07 21:43:20 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)indent.c	5.17 (Berkeley) 6/7/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: indent.c,v 1.117 2021/10/07 21:41:59 rillig Exp $");
+__RCSID("$NetBSD: indent.c,v 1.118 2021/10/07 21:43:20 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/indent.c 340138 2018-11-04 19:24:49Z oshogbo $");
 #endif
@@ -577,11 +577,10 @@ process_comment_in_code(token_type ttype, bool *force_nl)
 	*force_nl = false;
     }
 
-    ps.in_stmt = true;		/* turn on flag which causes an extra level of
-				 * indentation. this is turned off by a ';' or
-				 * '}' */
-    if (com.s != com.e) {	/* the turkey has embedded a comment in a
-				 * line. fix it */
+    /* add an extra level of indentation; turned off again by a ';' or '}' */
+    ps.in_stmt = true;
+
+    if (com.s != com.e) {	/* a comment embedded in a line */
 	buf_add_char(&code, ' ');
 	buf_add_buf(&code, &com);
 	buf_add_char(&code, ' ');
@@ -877,8 +876,7 @@ process_lbrace(bool *force_nl, bool *sp_sw, token_type hd_type,
 	}
     }
     if (code.s == code.e)
-	ps.ind_stmt = false;	/* don't put extra indentation on a line
-				 * with '{' */
+	ps.ind_stmt = false;	/* don't indent the '{' itself */
     if (ps.in_decl && ps.in_or_st) {	/* this is either a structure
 					 * declaration or an init */
 	di_stack[ps.decl_nest] = *decl_ind;
@@ -1243,10 +1241,10 @@ main_loop(void)
 				 * read are stored in "token". */
 
 	/*
-	 * The following code moves newlines and comments following an if (),
-	 * while (), else, etc. up to the start of the following stmt to a
-	 * buffer. This allows proper handling of both kinds of brace
-	 * placement (-br, -bl) and cuddling "else" (-ce).
+	 * Move newlines and comments following an if (), while (), else, etc.
+	 * up to the start of the following stmt to a buffer. This allows
+	 * proper handling of both kinds of brace placement (-br, -bl) and
+	 * cuddling "else" (-ce).
 	 */
 	search_brace(&ttype, &force_nl, &comment_buffered, &last_else);
 
@@ -1352,7 +1350,7 @@ main_loop(void)
 	    if (ps.p_l_follow > 0)
 		goto copy_token;
 	    /* FALLTHROUGH */
-	case decl:		/* we have a declaration type (int, etc.) */
+	case decl:		/* a declaration type (int, etc.) */
 	    process_decl(&decl_ind, &tabs_to_var);
 	    goto copy_token;
 
@@ -1378,7 +1376,7 @@ main_loop(void)
 	    process_comma(decl_ind, tabs_to_var, &force_nl);
 	    break;
 
-	case preprocessing:	/* '#' */
+	case preprocessing:	/* the initial '#' */
 	    process_preprocessing();
 	    break;
 	case comment:		/* the initial '/' '*' or '//' of a comment */
