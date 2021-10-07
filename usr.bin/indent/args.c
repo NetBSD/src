@@ -1,4 +1,4 @@
-/*	$NetBSD: args.c,v 1.43 2021/10/03 19:09:59 rillig Exp $	*/
+/*	$NetBSD: args.c,v 1.44 2021/10/07 16:45:38 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)args.c	8.1 (Berkeley) 6/6/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: args.c,v 1.43 2021/10/03 19:09:59 rillig Exp $");
+__RCSID("$NetBSD: args.c,v 1.44 2021/10/07 16:45:38 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/args.c 336318 2018-07-15 21:04:21Z pstef $");
 #endif
@@ -164,6 +164,10 @@ load_profile(const char *fname)
 	    } else if (isspace((unsigned char)ch)) {
 		if (p > buf && comment_index == 0)
 		    break;
+	    } else if ((size_t)(p - buf) >= nitems(buf) - 5) {
+		diag(1, "buffer overflow in %s, starting with '%.10s'",
+		     option_source, buf);
+		exit(1);
 	    } else {
 		*p++ = (char)ch;
 	    }
