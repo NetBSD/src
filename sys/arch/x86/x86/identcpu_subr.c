@@ -1,4 +1,4 @@
-/* $NetBSD: identcpu_subr.c,v 1.8 2021/01/16 15:26:23 jmcneill Exp $ */
+/* $NetBSD: identcpu_subr.c,v 1.9 2021/10/07 13:04:18 msaitoh Exp $ */
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  * See src/usr.sbin/cpuctl/{Makefile, arch/i386.c}).
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: identcpu_subr.c,v 1.8 2021/01/16 15:26:23 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: identcpu_subr.c,v 1.9 2021/10/07 13:04:18 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "lapic.h"
@@ -47,6 +47,7 @@ __KERNEL_RCSID(0, "$NetBSD: identcpu_subr.c,v 1.8 2021/01/16 15:26:23 jmcneill E
 #include <sys/systm.h>
 #include <x86/cpuvar.h>
 #include <x86/apicvar.h>
+#include <x86/cacheinfo.h>
 #include <machine/cpufunc.h>
 #include <machine/cputypes.h>
 #include <machine/specialreg.h>
@@ -56,6 +57,7 @@ __KERNEL_RCSID(0, "$NetBSD: identcpu_subr.c,v 1.8 2021/01/16 15:26:23 jmcneill E
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <x86/cacheinfo.h>
 #include "cpuctl.h"
 #include "cpuctl_i386.h"
 #endif
@@ -142,4 +144,77 @@ cpu_tsc_freq_cpuid(struct cpu_info *ci)
 		    " Hz\n", freq);
 
 	return freq;
+}
+
+const struct x86_cache_info *
+cpu_cacheinfo_lookup(const struct x86_cache_info *cai, uint8_t desc)
+{
+	int i;
+
+	for (i = 0; cai[i].cai_desc != 0; i++) {
+		if (cai[i].cai_desc == desc)
+			return &cai[i];
+	}
+
+	return NULL;
+}
+
+/*
+ * Get cache info from one of the following:
+ *	Intel Deterministic Cache Parameter Leaf (0x04)
+ *	AMD Cache Topology Information Leaf (0x8000001d)
+ */
+void
+cpu_dcp_cacheinfo(struct cpu_info *ci, uint32_t leaf)
+{
+	u_int descs[4];
+	int type, level, ways, partitions, linesize, sets, totalsize;
+	int caitype = -1;
+	int i;
+
+	for (i = 0; ; i++) {
+		x86_cpuid2(leaf, i, descs);
+		type = __SHIFTOUT(descs[0], CPUID_DCP_CACHETYPE);
+		if (type == CPUID_DCP_CACHETYPE_N)
+			break;
+		level = __SHIFTOUT(descs[0], CPUID_DCP_CACHELEVEL);
+		switch (level) {
+		case 1:
+			if (type == CPUID_DCP_CACHETYPE_I)
+				caitype = CAI_ICACHE;
+			else if (type == CPUID_DCP_CACHETYPE_D)
+				caitype = CAI_DCACHE;
+			else
+				caitype = -1;
+			break;
+		case 2:
+			if (type == CPUID_DCP_CACHETYPE_U)
+				caitype = CAI_L2CACHE;
+			else
+				caitype = -1;
+			break;
+		case 3:
+			if (type == CPUID_DCP_CACHETYPE_U)
+				caitype = CAI_L3CACHE;
+			else
+				caitype = -1;
+			break;
+		default:
+			caitype = -1;
+			break;
+		}
+		if (caitype == -1)
+			continue;
+
+		ways = __SHIFTOUT(descs[1], CPUID_DCP_WAYS) + 1;
+		partitions =__SHIFTOUT(descs[1], CPUID_DCP_PARTITIONS)
+		    + 1;
+		linesize = __SHIFTOUT(descs[1], CPUID_DCP_LINESIZE)
+		    + 1;
+		sets = descs[2] + 1;
+		totalsize = ways * partitions * linesize * sets;
+		ci->ci_cinfo[caitype].cai_totalsize = totalsize;
+		ci->ci_cinfo[caitype].cai_associativity = ways;
+		ci->ci_cinfo[caitype].cai_linesize = linesize;
+	}
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: cacheinfo.h,v 1.29 2021/09/27 16:52:15 msaitoh Exp $	*/
+/*	$NetBSD: cacheinfo.h,v 1.30 2021/10/07 13:04:18 msaitoh Exp $	*/
 
 #ifndef _X86_CACHEINFO_H_
 #define _X86_CACHEINFO_H_
@@ -358,5 +358,8 @@ __CI_TBL(0, 0x0e,  128, 0, 0, NULL), \
 __CI_TBL(0, 0x0f, 0xff, 0, 0, NULL), \
 __CI_TBL(0, 0x00,    0, 0, 0, NULL)  \
 }
+
+const struct x86_cache_info *cpu_cacheinfo_lookup(
+	const struct x86_cache_info *, uint8_t);
 
 #endif /* _X86_CACHEINFO_H_ */
