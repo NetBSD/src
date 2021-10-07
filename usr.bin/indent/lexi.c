@@ -1,4 +1,4 @@
-/*	$NetBSD: lexi.c,v 1.77 2021/10/07 22:52:13 rillig Exp $	*/
+/*	$NetBSD: lexi.c,v 1.78 2021/10/07 23:15:15 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)lexi.c	8.1 (Berkeley) 6/6/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: lexi.c,v 1.77 2021/10/07 22:52:13 rillig Exp $");
+__RCSID("$NetBSD: lexi.c,v 1.78 2021/10/07 23:15:15 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/lexi.c 337862 2018-08-15 18:19:45Z pstef $");
 #endif
@@ -179,14 +179,14 @@ static const uint8_t num_lex_row[] = {
 static char
 inbuf_peek(void)
 {
-    return *buf_ptr;
+    return *inp.s;
 }
 
 void
 inbuf_skip(void)
 {
-    buf_ptr++;
-    if (buf_ptr >= buf_end)
+    inp.s++;
+    if (inp.s >= inp.e)
 	fill_buffer();
 }
 
@@ -268,7 +268,7 @@ static void
 lex_number(void)
 {
     for (uint8_t s = 'A'; s != 'f' && s != 'i' && s != 'u';) {
-	uint8_t ch = (uint8_t)*buf_ptr;
+	uint8_t ch = (uint8_t)*inp.s;
 	if (ch >= nitems(num_lex_row) || num_lex_row[ch] == 0)
 	    break;
 
@@ -290,15 +290,15 @@ lex_number(void)
 static void
 lex_word(void)
 {
-    while (isalnum((unsigned char)*buf_ptr) ||
-	   *buf_ptr == '\\' ||
-	   *buf_ptr == '_' || *buf_ptr == '$') {
+    while (isalnum((unsigned char)*inp.s) ||
+	   *inp.s == '\\' ||
+	   *inp.s == '_' || *inp.s == '$') {
 
 	/* fill_buffer() terminates buffer with newline */
-	if (*buf_ptr == '\\') {
-	    if (buf_ptr[1] == '\n') {
-		buf_ptr += 2;
-		if (buf_ptr >= buf_end)
+	if (*inp.s == '\\') {
+	    if (inp.s[1] == '\n') {
+		inp.s += 2;
+		if (inp.s >= inp.e)
 		    fill_buffer();
 	    } else
 		break;
@@ -313,7 +313,7 @@ static void
 lex_char_or_string(void)
 {
     for (char delim = *token.s;;) {
-	if (*buf_ptr == '\n') {
+	if (*inp.s == '\n') {
 	    diag(1, "Unterminated literal");
 	    return;
 	}
@@ -324,7 +324,7 @@ lex_char_or_string(void)
 	    return;
 
 	if (token.e[-1] == '\\') {
-	    if (*buf_ptr == '\n')
+	    if (*inp.s == '\n')
 		++line_no;
 	    *token.e++ = inbuf_next();
 	}
@@ -342,9 +342,9 @@ probably_typedef(const struct parser_state *state)
 	return false;
     if (state->block_init || state->in_stmt)
 	return false;
-    if (buf_ptr[0] == '*' && buf_ptr[1] != '=')
+    if (inp.s[0] == '*' && inp.s[1] != '=')
 	goto maybe;
-    if (isalpha((unsigned char)*buf_ptr))
+    if (isalpha((unsigned char)*inp.s))
 	goto maybe;
     return false;
 maybe:
@@ -383,19 +383,19 @@ lexi(struct parser_state *state)
 					 * scanned was a newline */
     state->last_nl = false;
 
-    while (is_hspace(*buf_ptr)) {
+    while (is_hspace(*inp.s)) {
 	state->col_1 = false;
 	inbuf_skip();
     }
 
     /* Scan an alphanumeric token */
-    if (isalnum((unsigned char)*buf_ptr) ||
-	*buf_ptr == '_' || *buf_ptr == '$' ||
-	(buf_ptr[0] == '.' && isdigit((unsigned char)buf_ptr[1]))) {
+    if (isalnum((unsigned char)*inp.s) ||
+	*inp.s == '_' || *inp.s == '$' ||
+	(inp.s[0] == '.' && isdigit((unsigned char)inp.s[1]))) {
 	struct keyword *kw;
 
-	if (isdigit((unsigned char)*buf_ptr) ||
-	    (buf_ptr[0] == '.' && isdigit((unsigned char)buf_ptr[1]))) {
+	if (isdigit((unsigned char)*inp.s) ||
+	    (inp.s[0] == '.' && isdigit((unsigned char)inp.s[1]))) {
 	    lex_number();
 	} else {
 	    lex_word();
@@ -403,7 +403,7 @@ lexi(struct parser_state *state)
 	*token.e = '\0';
 
 	if (token.s[0] == 'L' && token.s[1] == '\0' &&
-	    (*buf_ptr == '"' || *buf_ptr == '\''))
+	    (*inp.s == '"' || *inp.s == '\''))
 	    return lexi_end(string_prefix);
 
 	while (is_hspace(inbuf_peek()))
@@ -475,10 +475,10 @@ lexi(struct parser_state *state)
 	    }			/* end of switch */
 	}			/* end of if (found_it) */
 
-	if (*buf_ptr == '(' && state->tos <= 1 && state->ind_level == 0 &&
+	if (*inp.s == '(' && state->tos <= 1 && state->ind_level == 0 &&
 	    !state->in_parameter_declaration && !state->block_init) {
 
-	    for (char *tp = buf_ptr; tp < buf_end;)
+	    for (char *tp = inp.s; tp < inp.e;)
 		if (*tp++ == ')' && (*tp == ';' || *tp == ','))
 		    goto not_proc;
 
@@ -585,9 +585,9 @@ lexi(struct parser_state *state)
 	ttype = state->last_u_d ? unary_op : binary_op;
 	unary_delim = true;
 
-	if (*buf_ptr == token.s[0]) {
+	if (*inp.s == token.s[0]) {
 	    /* check for doubled character */
-	    *token.e++ = *buf_ptr++;
+	    *token.e++ = *inp.s++;
 	    /* buffer overflow will be checked at end of loop */
 	    if (state->last_token == ident || state->last_token == rparen) {
 		ttype = state->last_u_d ? unary_op : postfix_op;
@@ -595,13 +595,13 @@ lexi(struct parser_state *state)
 		unary_delim = false;
 	    }
 
-	} else if (*buf_ptr == '=') {
+	} else if (*inp.s == '=') {
 	    /* check for operator += */
-	    *token.e++ = *buf_ptr++;
+	    *token.e++ = *inp.s++;
 
-	} else if (*buf_ptr == '>') {
+	} else if (*inp.s == '>') {
 	    /* check for operator -> */
-	    *token.e++ = *buf_ptr++;
+	    *token.e++ = *inp.s++;
 	    unary_delim = false;
 	    ttype = unary_op;
 	    state->want_blank = false;
@@ -612,8 +612,8 @@ lexi(struct parser_state *state)
     case '=':
 	if (state->in_or_st)
 	    state->block_init = true;
-	if (*buf_ptr == '=') {	/* == */
-	    *token.e++ = *buf_ptr++;
+	if (*inp.s == '=') {	/* == */
+	    *token.e++ = *inp.s++;
 	    *token.e = '\0';
 	}
 	ttype = binary_op;
@@ -623,10 +623,10 @@ lexi(struct parser_state *state)
     case '>':
     case '<':
     case '!':			/* ops like <, <<, <=, !=, etc */
-	if (*buf_ptr == '>' || *buf_ptr == '<' || *buf_ptr == '=')
+	if (*inp.s == '>' || *inp.s == '<' || *inp.s == '=')
 	    *token.e++ = inbuf_next();
-	if (*buf_ptr == '=')
-	    *token.e++ = *buf_ptr++;
+	if (*inp.s == '=')
+	    *token.e++ = *inp.s++;
 	ttype = state->last_u_d ? unary_op : binary_op;
 	unary_delim = true;
 	break;
@@ -634,26 +634,26 @@ lexi(struct parser_state *state)
     case '*':
 	unary_delim = true;
 	if (!state->last_u_d) {
-	    if (*buf_ptr == '=')
-		*token.e++ = *buf_ptr++;
+	    if (*inp.s == '=')
+		*token.e++ = *inp.s++;
 	    ttype = binary_op;
 	    break;
 	}
 
-	while (*buf_ptr == '*' || isspace((unsigned char)*buf_ptr)) {
-	    if (*buf_ptr == '*') {
+	while (*inp.s == '*' || isspace((unsigned char)*inp.s)) {
+	    if (*inp.s == '*') {
 		check_size_token(1);
-		*token.e++ = *buf_ptr;
+		*token.e++ = *inp.s;
 	    }
 	    inbuf_skip();
 	}
 
 	if (ps.in_decl) {
-	    char *tp = buf_ptr;
+	    char *tp = inp.s;
 
 	    while (isalpha((unsigned char)*tp) ||
 		   isspace((unsigned char)*tp)) {
-		if (++tp >= buf_end)
+		if (++tp >= inp.e)
 		    fill_buffer();
 	    }
 	    if (*tp == '(')
@@ -664,7 +664,7 @@ lexi(struct parser_state *state)
 	break;
 
     default:
-	if (token.s[0] == '/' && (*buf_ptr == '*' || *buf_ptr == '/')) {
+	if (token.s[0] == '/' && (*inp.s == '*' || *inp.s == '/')) {
 	    /* it is start of comment */
 	    *token.e++ = inbuf_next();
 
@@ -673,7 +673,7 @@ lexi(struct parser_state *state)
 	    break;
 	}
 
-	while (token.e[-1] == *buf_ptr || *buf_ptr == '=') {
+	while (token.e[-1] == *inp.s || *inp.s == '=') {
 	    /*
 	     * handle ||, &&, etc, and also things as in int *****i
 	     */
@@ -685,7 +685,7 @@ lexi(struct parser_state *state)
 	unary_delim = true;
     }
 
-    if (buf_ptr >= buf_end)	/* check for input buffer empty */
+    if (inp.s >= inp.e)	/* check for input buffer empty */
 	fill_buffer();
 
     state->last_u_d = unary_delim;
