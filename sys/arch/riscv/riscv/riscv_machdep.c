@@ -1,4 +1,4 @@
-/*	$NetBSD: riscv_machdep.c,v 1.14 2021/05/01 06:53:08 skrll Exp $	*/
+/*	$NetBSD: riscv_machdep.c,v 1.15 2021/10/07 07:13:35 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2014, 2019 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 
 #include "opt_modular.h"
 
-__RCSID("$NetBSD: riscv_machdep.c,v 1.14 2021/05/01 06:53:08 skrll Exp $");
+__RCSID("$NetBSD: riscv_machdep.c,v 1.15 2021/10/07 07:13:35 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -157,7 +157,9 @@ startlwp(void *arg)
 // We've worked hard to make sure struct reg and __gregset_t are the same.
 // Ditto for struct fpreg and fregset_t.
 
+#ifdef _LP64
 CTASSERT(sizeof(struct reg) == sizeof(__gregset_t));
+#endif
 CTASSERT(sizeof(struct fpreg) == sizeof(__fregset_t));
 
 void
