@@ -1,4 +1,4 @@
-/*	$NetBSD: indent_globs.h,v 1.44 2021/10/07 21:41:59 rillig Exp $	*/
+/*	$NetBSD: indent_globs.h,v 1.45 2021/10/07 22:56:49 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -90,7 +90,7 @@ extern struct options {
     bool	blanklines_before_blockcomments;
     bool	break_after_comma; /* whether to break declarations after
 				 * commas */
-    bool	btype_2;	/* whether brace should be on same line
+    bool	brace_same_line;/* whether brace should be on same line
 				 * as if, while, etc */
     bool	blank_after_sizeof; /* whether a blank should always be
 				 * inserted after sizeof */

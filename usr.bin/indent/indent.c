@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.c,v 1.121 2021/10/07 22:52:13 rillig Exp $	*/
+/*	$NetBSD: indent.c,v 1.122 2021/10/07 22:56:49 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)indent.c	5.17 (Berkeley) 6/7/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: indent.c,v 1.121 2021/10/07 22:52:13 rillig Exp $");
+__RCSID("$NetBSD: indent.c,v 1.122 2021/10/07 22:56:49 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/indent.c 340138 2018-11-04 19:24:49Z oshogbo $");
 #endif
@@ -65,7 +65,7 @@ __FBSDID("$FreeBSD: head/usr.bin/indent/indent.c 340138 2018-11-04 19:24:49Z osh
 #include "indent.h"
 
 struct options opt = {
-    .btype_2 = true,
+    .brace_same_line = true,
     .comment_delimiter_on_blankline = true,
     .cuddle_else = true,
     .comment_column = 33,
@@ -209,7 +209,7 @@ search_brace_lbrace(void)
      * Put KNF-style lbraces before the buffered up tokens and jump out of
      * this loop in order to avoid copying the token again.
      */
-    if (sc_end != NULL && opt.btype_2) {
+    if (sc_end != NULL && opt.brace_same_line) {
 	save_com[0] = '{';
 	/*
 	 * Originally the lbrace may have been alone on its own line, but it
@@ -576,7 +576,7 @@ process_comment_in_code(token_type ttype, bool *force_nl)
 {
     if (*force_nl &&
 	ttype != semicolon &&
-	(ttype != lbrace || !opt.btype_2)) {
+	(ttype != lbrace || !opt.brace_same_line)) {
 
 	/* we should force a broken line here */
 	if (opt.verbose)
@@ -712,10 +712,12 @@ process_rparen_or_rbracket(bool *sp_sw, bool *force_nl,
 
 	parse(hd_type);		/* let parser worry about if, or whatever */
     }
-    ps.search_brace = opt.btype_2;	/* this should ensure that constructs
-					 * such as main(){...} and int[]{...}
-					 * have their braces put in the right
-					 * place */
+
+    /*
+     * This should ensure that constructs such as main(){...} and int[]{...}
+     * have their braces put in the right place.
+     */
+    ps.search_brace = opt.brace_same_line;
 }
 
 static void
@@ -863,7 +865,7 @@ process_lbrace(bool *force_nl, bool *sp_sw, token_type hd_type,
 	ps.block_init_level++;
 
     if (code.s != code.e && !ps.block_init) {
-	if (!opt.btype_2) {
+	if (!opt.brace_same_line) {
 	    dump_line();
 	    ps.want_blank = false;
 	} else if (ps.in_parameter_declaration && !ps.in_or_st) {

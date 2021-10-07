@@ -1,4 +1,4 @@
-/*	$NetBSD: args.c,v 1.50 2021/10/07 21:41:59 rillig Exp $	*/
+/*	$NetBSD: args.c,v 1.51 2021/10/07 22:56:49 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)args.c	8.1 (Berkeley) 6/6/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: args.c,v 1.50 2021/10/07 21:41:59 rillig Exp $");
+__RCSID("$NetBSD: args.c,v 1.51 2021/10/07 22:56:49 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/args.c 336318 2018-07-15 21:04:21Z pstef $");
 #endif
@@ -94,8 +94,8 @@ static const struct pro {
     bool_options("bap", blanklines_after_procs),
     bool_options("bbb", blanklines_before_blockcomments),
     bool_options("bc", break_after_comma),
-    bool_option("bl", false, btype_2),
-    bool_option("br", true, btype_2),
+    bool_option("bl", false, brace_same_line),
+    bool_option("br", true, brace_same_line),
     bool_options("bs", blank_after_sizeof),
     int_option("c", comment_column),
     int_option("cd", decl_comment_column),
