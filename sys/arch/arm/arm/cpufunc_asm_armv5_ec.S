@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc_asm_armv5_ec.S,v 1.6 2014/03/30 01:15:03 matt Exp $	*/
+/*	$NetBSD: cpufunc_asm_armv5_ec.S,v 1.7 2021/10/07 09:58:27 rin Exp $	*/
 
 /*
  * Copyright (c) 2002, 2005 ARM Limited
@@ -58,16 +58,16 @@ ENTRY(armv5_ec_setttb)
 	 * For armv5_ec_settb, the idcache_wbinv_all is simple enough, I just
 	 * do it directly and entirely avoid the problem.
 	 */
-	cmp	r1, #0			@ need to flush cache / TLB?
-	beq	2f			@   nope, so don't
+	cmp	r1, #0
+	beq	1f
 
 	mcr	p15, 0, r0, c7, c5, 0	/* Invalidate ICache */
-1:	mrc	p15, 0, APSR_nzcv, c7, c14, 3	/* Test, clean and invalidate DCache */
-	bne	1b			/* More to do? */
+2:	mrc	p15, 0, APSR_nzcv, c7, c14, 3	/* Test, clean and invalidate DCache */
+	bne	2b			/* More to do? */
 	mcr	p15, 0, r0, c7, c10, 4	/* drain the write buffer */
 	cmp	r0, #1
 
-2:	mcr	p15, 0, r0, c2, c0, 0	/* load new TTB */
+1:	mcr	p15, 0, r0, c2, c0, 0	/* load new TTB */
 	mcrne	p15, 0, r0, c8, c7, 0	/* invalidate I+D TLBs */
 	RET
 
@@ -199,7 +199,7 @@ ENTRY_NP(armv5_ec_idcache_wbinv_all)
 	 * dcache, so that we can safely flush the Icache and fall through
 	 * into the Dcache purging code.
 	 */
-	mcr	p15, 0, r0, c7, c5, 0	/* Invalidate ICache */
+	mcr	p15, 0, r0, c7, c5, 0	/* Flush I cache */
 	/* Fall through to purge Dcache. */
 
 ENTRY(armv5_ec_dcache_wbinv_all)
