@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.32 2021/10/07 21:52:54 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.33 2021/10/07 22:56:49 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -77,7 +77,7 @@ parse(token_type ttype)
     switch (ttype) {
 
     case decl:			/* scanned a declaration word */
-	ps.search_brace = opt.btype_2;
+	ps.search_brace = opt.brace_same_line;
 	/* indicate that following brace should be on same line */
 
 	if (ps.p_stack[ps.tos] != decl) {	/* only put one declaration
@@ -112,7 +112,7 @@ parse(token_type ttype)
 	ps.p_stack[++ps.tos] = ttype;
 	ps.il[ps.tos] = ps.ind_level = ps.ind_level_follow;
 	++ps.ind_level_follow;	/* subsequent statements should be indented 1 */
-	ps.search_brace = opt.btype_2;
+	ps.search_brace = opt.brace_same_line;
 	break;
 
     case lbrace:
@@ -152,7 +152,7 @@ parse(token_type ttype)
 	    ps.p_stack[++ps.tos] = while_expr;
 	    ps.il[ps.tos] = ps.ind_level_follow;
 	    ++ps.ind_level_follow;
-	    ps.search_brace = opt.btype_2;
+	    ps.search_brace = opt.brace_same_line;
 	}
 
 	break;
@@ -166,7 +166,7 @@ parse(token_type ttype)
 	    ps.ind_level_follow = ps.ind_level + 1;
 	    ps.p_stack[ps.tos] = if_expr_stmt_else;
 	    /* remember if with else */
-	    ps.search_brace = opt.btype_2 | opt.else_if;
+	    ps.search_brace = opt.brace_same_line | opt.else_if;
 	}
 	break;
 
@@ -188,7 +188,7 @@ parse(token_type ttype)
 	case_ind = (float)ps.ind_level_follow + opt.case_indent;
 	/* statements should be two levels deeper */
 	ps.ind_level_follow += (int)opt.case_indent + 1;
-	ps.search_brace = opt.btype_2;
+	ps.search_brace = opt.brace_same_line;
 	break;
 
     case semicolon:		/* this indicates a simple stmt */
