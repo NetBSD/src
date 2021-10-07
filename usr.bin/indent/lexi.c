@@ -1,4 +1,4 @@
-/*	$NetBSD: lexi.c,v 1.73 2021/10/07 18:32:09 rillig Exp $	*/
+/*	$NetBSD: lexi.c,v 1.74 2021/10/07 21:41:59 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)lexi.c	8.1 (Berkeley) 6/6/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: lexi.c,v 1.73 2021/10/07 18:32:09 rillig Exp $");
+__RCSID("$NetBSD: lexi.c,v 1.74 2021/10/07 21:41:59 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/lexi.c 337862 2018-08-15 18:19:45Z pstef $");
 #endif
@@ -275,7 +275,7 @@ lex_number(void)
 	if (num_lex_state[row][s - 'A'] == ' ') {
 	    /*-
 	     * num_lex_state[0][s - 'A'] now indicates the type:
-	     * f = floating, ch = integer, u = unknown
+	     * f = floating, i = integer, u = unknown
 	     */
 	    break;
 	}
@@ -484,7 +484,7 @@ lexi(struct parser_state *state)
 					 * then following sign is unary */
 	    state->last_u_d = true;	/* will make "int a -1" work */
 	return lexi_end(ident);	/* the ident is not in the list */
-    }				/* end of procesing for alpanum character */
+    }				/* end of processing for alphanum character */
 
     /* Scan a non-alphanumeric token */
 
@@ -550,7 +550,7 @@ lexi(struct parser_state *state)
 
     case '\f':
 	unary_delim = state->last_u_d;
-	state->last_nl = true;	/* remember this so we can set 'state->col_1'
+	state->last_nl = true;	/* remember this, so we can set 'state->col_1'
 				 * right */
 	ttype = form_feed;
 	break;

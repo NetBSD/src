@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.c,v 1.116 2021/10/07 21:38:25 rillig Exp $	*/
+/*	$NetBSD: indent.c,v 1.117 2021/10/07 21:41:59 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)indent.c	5.17 (Berkeley) 6/7/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: indent.c,v 1.116 2021/10/07 21:38:25 rillig Exp $");
+__RCSID("$NetBSD: indent.c,v 1.117 2021/10/07 21:41:59 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/indent.c 340138 2018-11-04 19:24:49Z oshogbo $");
 #endif
@@ -204,8 +204,7 @@ search_brace_lbrace(void)
 {
     /*
      * Put KNF-style lbraces before the buffered up tokens and jump out of
-     * this loop in order to avoid copying the token again under the default
-     * case of the switch below.
+     * this loop in order to avoid copying the token again.
      */
     if (sc_end != NULL && opt.btype_2) {
 	save_com[0] = '{';
@@ -254,15 +253,14 @@ search_brace_other(token_type ttype, bool *force_nl,
 	    sc_end--;
 	}
     }
-    if (*force_nl) {	/* if we should insert a nl here, put it into
+    if (*force_nl) {		/* if we should insert a nl here, put it into
 				 * the buffer */
 	*force_nl = false;
 	--line_no;		/* this will be re-increased when the newline
 				 * is read from the buffer */
 	*sc_end++ = '\n';
 	*sc_end++ = ' ';
-	if (opt.verbose)	/* print error msg if the line was not already
-				 * broken */
+	if (opt.verbose)	/* warn if the line was not already broken */
 	    diag(0, "Line broken");
     }
     for (const char *t_ptr = token.s; *t_ptr != '\0'; ++t_ptr)
@@ -1359,7 +1357,7 @@ main_loop(void)
 	    goto copy_token;
 
 	case funcname:
-	case ident:		/* got an identifier or constant */
+	case ident:		/* an identifier, constant or string */
 	    process_ident(ttype, decl_ind, tabs_to_var, &sp_sw, &force_nl,
 		hd_type);
     copy_token:

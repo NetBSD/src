@@ -1,4 +1,4 @@
-/*	$NetBSD: indent_globs.h,v 1.43 2021/10/07 19:35:50 rillig Exp $	*/
+/*	$NetBSD: indent_globs.h,v 1.44 2021/10/07 21:41:59 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -188,7 +188,7 @@ extern bool        inhibit_formatting;	/* true if INDENT OFF is in effect */
 
 extern struct parser_state {
     token_type  last_token;
-    token_type	p_stack[STACKSIZE];	/* this is the parsers stack */
+    token_type	p_stack[STACKSIZE];	/* this is the parser's stack */
     int         il[STACKSIZE];	/* this stack stores indentation levels */
     float       cstk[STACKSIZE];/* used to store case stmt indentation levels */
     bool	box_com;	/* whether we are in a "boxed" comment. In
