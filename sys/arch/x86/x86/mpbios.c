@@ -1,4 +1,4 @@
-/*	$NetBSD: mpbios.c,v 1.70 2021/08/07 16:19:08 thorpej Exp $	*/
+/*	$NetBSD: mpbios.c,v 1.71 2021/10/07 12:52:27 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -96,7 +96,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpbios.c,v 1.70 2021/08/07 16:19:08 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpbios.c,v 1.71 2021/10/07 12:52:27 msaitoh Exp $");
 
 #include "acpica.h"
 #include "lapic.h"
@@ -149,10 +149,10 @@ int mpbios_nioapic;
 
 /* descriptions of MP basetable entries */
 struct mpbios_baseentry {
-	uint8_t  	type;
-	uint8_t  	length;
+	uint8_t		type;
+	uint8_t		length;
 	uint16_t	count;
-	const char    	*name;
+	const char	*name;
 };
 
 static const char *loc_where[] = {
@@ -163,10 +163,10 @@ static const char *loc_where[] = {
 
 struct mp_map
 {
-	vaddr_t 	baseva;
-	int	 	vsize;
-	paddr_t 	pa;
-	paddr_t 	pg;
+	vaddr_t		baseva;
+	int		vsize;
+	paddr_t		pa;
+	paddr_t		pg;
 	int		psize;
 };
 
@@ -199,7 +199,7 @@ static void mpbios_dflt_conf_cpu(device_t);
 static void mpbios_dflt_conf_bus(device_t, const struct dflt_conf_entry *);
 static void mpbios_dflt_conf_ioapic(device_t);
 static void mpbios_dflt_conf_int(device_t, const struct dflt_conf_entry *,
-                                 const int *);
+				 const int *);
 
 static void mpbios_cpu(const uint8_t *, device_t);
 static void mpbios_bus(const uint8_t *, device_t);
@@ -228,7 +228,7 @@ mp_cpuprint(void *aux, const char *pnp)
 	if (pnp)
 		aprint_normal("cpu at %s", pnp);
 	aprint_normal(" apid %d", caa->cpu_number);
-	return (UNCONF);
+	return UNCONF;
 }
 
 int
@@ -239,7 +239,7 @@ mp_ioapicprint(void *aux, const char *pnp)
 	if (pnp)
 		aprint_normal("ioapic at %s", pnp);
 	aprint_normal(" apid %d", aaa->apic_id);
-	return (UNCONF);
+	return UNCONF;
 }
 
 /*
@@ -285,12 +285,12 @@ mpbios_unmap(struct mp_map *handle)
 int
 mpbios_probe(device_t self)
 {
-	paddr_t  	ebda, memtop;
+	paddr_t		ebda, memtop;
 
 	paddr_t		cthpa;
 	int		cthlen;
 	const uint8_t	*mpbios_page;
-	int 		scan_loc;
+	int		scan_loc;
 
 	struct		mp_map t;
 
@@ -550,7 +550,7 @@ static const uint8_t dflt_lint_tab[2] = {
 void
 mpbios_scan(device_t self, int *ncpup)
 {
-	const uint8_t 	*position, *end;
+	const uint8_t	*position, *end;
 	size_t          i;
 	int		count;
 	int		type;
@@ -632,7 +632,7 @@ mpbios_scan(device_t self, int *ncpup)
 		KASSERT(mp_nbus != 0);
 
 		mp_busses = kmem_zalloc(sizeof(struct mp_bus) * mp_nbus,
-		                        KM_SLEEP);
+					KM_SLEEP);
 		KASSERT(mp_busses != NULL);
 
 		/* INTIN0 */
@@ -649,7 +649,7 @@ mpbios_scan(device_t self, int *ncpup)
 			intr_cnt++;
 
 		mp_intrs = kmem_zalloc(sizeof(struct mp_intr_map) * intr_cnt,
-		                       KM_SLEEP);
+				       KM_SLEEP);
 		KASSERT(mp_intrs != NULL);
 		mp_nintr = intr_cnt;
 
@@ -877,7 +877,7 @@ mpbios_dflt_conf_ioapic(device_t self)
 
 static void
 mpbios_dflt_conf_int(device_t self, const struct dflt_conf_entry *dflt_conf,
-                     const int *dflt_bus_irq)
+		     const int *dflt_bus_irq)
 {
 	struct   mpbios_int mpi;
 	size_t   i;
@@ -901,7 +901,7 @@ mpbios_dflt_conf_int(device_t self, const struct dflt_conf_entry *dflt_conf,
 		mpi.dst_apic_id = DFLT_IOAPIC_ID;
 		mpi.dst_apic_int = 0;
 		mpbios_int((u_int8_t *)&mpi, MPS_MCT_IOINT,
-		           &mp_intrs[cur_intr++]);
+			   &mp_intrs[cur_intr++]);
 	}
 
 	/*
@@ -938,12 +938,12 @@ mpbios_dflt_conf_int(device_t self, const struct dflt_conf_entry *dflt_conf,
 			mpi.src_bus_irq = (uint8_t)dflt_bus_irq[i];
 			if (level_inv & (1U << mpi.src_bus_irq))
 				mpi.int_flags = (MPS_INTTR_LEVEL << 2)
-				                | MPS_INTPO_ACTHI;
+						| MPS_INTPO_ACTHI;
 			else
 				mpi.int_flags = 0; /* conforms to bus spec. */
 			mpi.dst_apic_int = (uint8_t)i;
 			mpbios_int((u_int8_t *)&mpi, MPS_MCT_IOINT,
-			           &mp_intrs[cur_intr++]);
+				   &mp_intrs[cur_intr++]);
 		}
 	}
 
@@ -959,7 +959,7 @@ mpbios_dflt_conf_int(device_t self, const struct dflt_conf_entry *dflt_conf,
 		mpi.int_type = dflt_lint_tab[i];
 		mpi.dst_apic_int = (uint8_t)i;
 		mpbios_int((u_int8_t *)&mpi, MPS_MCT_LINT,
-		           &mp_intrs[cur_intr++]);
+			   &mp_intrs[cur_intr++]);
 	}
 }
 

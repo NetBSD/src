@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_machdep.c,v 1.41 2021/07/10 17:33:28 msaitoh Exp $ */
+/*	$NetBSD: procfs_machdep.c,v 1.42 2021/10/07 12:52:27 msaitoh Exp $ */
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_machdep.c,v 1.41 2021/07/10 17:33:28 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_machdep.c,v 1.42 2021/10/07 12:52:27 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -280,7 +280,7 @@ procfs_getonecpufeatures(struct cpu_info *ci, char *p, size_t *left)
 
 	/* x86_features[2] is for Transmeta */
 	/* x86_features[3] is Linux defined mapping */
-	
+
 	procfs_getonefeatreg(ci->ci_feat_val[1], x86_features[4], p + diff,
 	    left);
 	diff = last - *left;

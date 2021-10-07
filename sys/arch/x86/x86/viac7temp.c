@@ -1,4 +1,4 @@
-/* $NetBSD: viac7temp.c,v 1.8 2014/08/10 16:44:34 tls Exp $ */
+/* $NetBSD: viac7temp.c,v 1.9 2021/10/07 12:52:27 msaitoh Exp $ */
 
 /*-
  * Copyright (c) 2009 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: viac7temp.c,v 1.8 2014/08/10 16:44:34 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: viac7temp.c,v 1.9 2021/10/07 12:52:27 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -44,8 +44,8 @@ __KERNEL_RCSID(0, "$NetBSD: viac7temp.c,v 1.8 2014/08/10 16:44:34 tls Exp $");
 struct viac7temp_softc {
 	device_t		 sc_dev;
 	struct cpu_info		*sc_ci;
-	struct sysmon_envsys 	*sc_sme;
-	envsys_data_t 		 sc_sensor;
+	struct sysmon_envsys	*sc_sme;
+	envsys_data_t		 sc_sensor;
 };
 
 static int	viac7temp_match(device_t, cfdata_t, void *);

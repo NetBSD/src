@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.155 2021/08/09 21:20:50 andvar Exp $	*/
+/*	$NetBSD: intr.c,v 1.156 2021/10/07 12:52:27 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2009, 2019 The NetBSD Foundation, Inc.
@@ -133,7 +133,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.155 2021/08/09 21:20:50 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.156 2021/10/07 12:52:27 msaitoh Exp $");
 
 #include "opt_intrdebug.h"
 #include "opt_multiprocessor.h"
@@ -458,7 +458,7 @@ intr_allocate_slot_cpu(struct cpu_info *ci, struct pic *pic, int pin,
 			start = NUM_LEGACY_IRQS;
 		/* don't step over Xen's slots */
 		if (vm_guest == VM_GUEST_XENPVH)
-			max = SIR_XENIPL_VM; 
+			max = SIR_XENIPL_VM;
 		/*
 		 * intr_allocate_slot has checked for an existing mapping.
 		 * Now look for a free slot.
@@ -555,7 +555,7 @@ intr_allocate_slot(struct pic *pic, int pin, int level,
 #if 0
 			if (ci == NULL ||
 			    ci->ci_nintrhand > lci->ci_nintrhand) {
-			    	ci = lci;
+				ci = lci;
 			}
 #else
 			ci = &cpu_info_primary;
@@ -938,7 +938,7 @@ intr_establish_xname(int legacy_irq, struct pic *pic, int pin, int type,
 		    pic->pic_name, type == IST_EDGE ? "edge" : "level", pin,
 		    level, device_xname(ci->ci_dev), slot, idt_vec);
 
-	return (ih);
+	return ih;
 }
 
 void *
@@ -1904,7 +1904,8 @@ intr_set_affinity(struct intrsource *isp, const kcpuset_t *cpuset)
 		if (new_idtvec == 0)
 			return EBUSY;
 		DPRINTF(("interrupt from cpu%d vec %d to cpu%d vec %d\n",
-		    cpu_index(oldci), old_idtvec, cpu_index(newci), new_idtvec));
+		    cpu_index(oldci), old_idtvec, cpu_index(newci),
+			new_idtvec));
 	} else {
 		new_idtvec = isp->is_idtvec;
 	}
@@ -2104,7 +2105,7 @@ interrupt_get_assigned(const char *intrid, kcpuset_t *cpuset)
 
 	mutex_enter(&cpu_lock);
 	isp = intr_get_io_intrsource(intrid);
-	if (isp != NULL) 
+	if (isp != NULL)
 		isp->is_pic->pic_intr_get_assigned(intrid, cpuset);
 	mutex_exit(&cpu_lock);
 }

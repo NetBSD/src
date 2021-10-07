@@ -1,4 +1,4 @@
-/*	$NetBSD: powernow.c,v 1.11 2020/10/25 16:39:00 nia Exp $ */
+/*	$NetBSD: powernow.c,v 1.12 2021/10/07 12:52:27 msaitoh Exp $ */
 /*	$OpenBSD: powernow-k8.c,v 1.8 2006/06/16 05:58:50 gwk Exp $ */
 
 /*-
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: powernow.c,v 1.11 2020/10/25 16:39:00 nia Exp $");
+__KERNEL_RCSID(0, "$NetBSD: powernow.c,v 1.12 2021/10/07 12:52:27 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -95,7 +95,7 @@ static struct powernow_k7_quirk {
 	uint32_t rcpusig;	/* Correct cpu signature */
 	uint32_t pcpusig;	/* PST cpu signature */
 } powernow_k7_quirk[] = {
-	{ 0x680, 0x780 }, 	/* Reported by Olaf 'Rhialto' Seibert */
+	{ 0x680, 0x780 },	/* Reported by Olaf 'Rhialto' Seibert */
 	{ 0x6a0, 0x781 },	/* Reported by Eric Schnoebelen */
 	{ 0x6a0, 0x7a0 },	/* Reported by Nino Dehne */
 	{ 0, 0 }
@@ -493,7 +493,7 @@ powernow_k7_states(device_t self, unsigned int fid, unsigned int vid)
 				    __func__, cpusig, pst->signature));
 
 				cpusig_ok = powernow_k7_check(cpusig,
-				                              pst->signature);
+							      pst->signature);
 
 				if ((cpusig_ok != false &&
 				    (fid == pst->fid && vid == pst->vid))) {
@@ -754,7 +754,7 @@ powernow_k8_states(device_t self, unsigned int fid, unsigned int vid)
 
 		p += sizeof(struct powernow_psb_s);
 
-		for(i = 0; i < psb->n_pst; ++i) {
+		for (i = 0; i < psb->n_pst; ++i) {
 
 			pst = (struct powernow_pst_s *)p;
 

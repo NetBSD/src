@@ -1,4 +1,4 @@
-/*	$NetBSD: est.c,v 1.32 2020/10/25 16:39:00 nia Exp $	*/
+/*	$NetBSD: est.c,v 1.33 2021/10/07 12:52:27 msaitoh Exp $	*/
 /*
  * Copyright (c) 2003 Michael Eriksson.
  * All rights reserved.
@@ -76,7 +76,7 @@
  *   http://www.codemonkey.org.uk/projects/cpufreq/cpufreq-2.4.22-pre6-1.gz
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: est.c,v 1.32 2020/10/25 16:39:00 nia Exp $");
+__KERNEL_RCSID(0, "$NetBSD: est.c,v 1.33 2021/10/07 12:52:27 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -1206,10 +1206,10 @@ est_tables(device_t self)
 		aprint_normal_dev(self, "cur  = 0x%x\n", cur);
 #endif
 
-                /*
-                 * Generate a fake table with the power states we know,
+		/*
+		 * Generate a fake table with the power states we know,
 		 * interpolating the voltages and frequencies between the
-		 * high and low values.  The (milli)voltages are always
+		 * high and low values.	 The (milli)voltages are always
 		 * rounded up when computing the table.
                  */
 		minfreq = MSR2FREQINC(idlo);

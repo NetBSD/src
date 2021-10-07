@@ -1,4 +1,4 @@
-/*	$NetBSD: db_memrw.c,v 1.11 2019/04/21 06:37:21 maxv Exp $	*/
+/*	$NetBSD: db_memrw.c,v 1.12 2021/10/07 12:52:27 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1996, 2000 The NetBSD Foundation, Inc.
@@ -48,12 +48,12 @@
  * Jason R. Thorpe <thorpej@zembu.com>.
  *
  * Basic copy to amd64 by fvdl.
- * 
+ *
  * i386 and amd64 merge by jym.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_memrw.c,v 1.11 2019/04/21 06:37:21 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_memrw.c,v 1.12 2021/10/07 12:52:27 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: spectre.c,v 1.35 2020/05/02 11:37:17 maxv Exp $	*/
+/*	$NetBSD: spectre.c,v 1.36 2021/10/07 12:52:27 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2018-2019 NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spectre.c,v 1.35 2020/05/02 11:37:17 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spectre.c,v 1.36 2021/10/07 12:52:27 msaitoh Exp $");
 
 #include "opt_spectre.h"
 
@@ -440,7 +440,7 @@ v4_detect_method(void)
 			if (cpu_info_primary.ci_max_ext_cpuid < 0x80000008) {
 				break;
 			}
-	 		x86_cpuid(0x80000008, descs);
+			x86_cpuid(0x80000008, descs);
 			if (descs[1] & CPUID_CAPEX_SSB_NO) {
 				/* Not vulnerable to SpectreV4. */
 				v4_mitigation_method = V4_MITIGATION_AMD_SSB_NO;

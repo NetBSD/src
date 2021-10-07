@@ -1,4 +1,4 @@
-/*	$NetBSD: lapic.c,v 1.85 2020/10/27 08:57:11 ryo Exp $	*/
+/*	$NetBSD: lapic.c,v 1.86 2021/10/07 12:52:27 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2008, 2020 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lapic.c,v 1.85 2020/10/27 08:57:11 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lapic.c,v 1.86 2021/10/07 12:52:27 msaitoh Exp $");
 
 #include "acpica.h"
 #include "ioapic.h"
@@ -98,8 +98,8 @@ void		lapic_clockintr(void *, struct intrframe *);
 
 static void	lapic_delay(unsigned int);
 static uint32_t lapic_gettick(void);
-static void 	lapic_setup_bsp(paddr_t);
-static void 	lapic_map(paddr_t);
+static void	lapic_setup_bsp(paddr_t);
+static void	lapic_map(paddr_t);
 
 static void lapic_hwmask(struct pic *, int);
 static void lapic_hwunmask(struct pic *, int);
@@ -889,7 +889,7 @@ i82489_ipi(int vec, int target, int dl)
 	result = (i82489_readreg(LAPIC_ICRLO) & LAPIC_DLSTAT_BUSY) ? EBUSY : 0;
 #else
 	/* Don't wait - if it doesn't go, we're in big trouble anyway. */
-        result = 0;
+	result = 0;
 #endif
 	splx(s);
 

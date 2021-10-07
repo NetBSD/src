@@ -1,4 +1,4 @@
-/*	$NetBSD: identcpu.c,v 1.121 2021/04/12 02:23:01 mrg Exp $	*/
+/*	$NetBSD: identcpu.c,v 1.122 2021/10/07 12:52:27 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.121 2021/04/12 02:23:01 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.122 2021/10/07 12:52:27 msaitoh Exp $");
 
 #include "opt_xen.h"
 
@@ -548,7 +548,7 @@ cpu_probe_c3(struct cpu_info *ci)
 
 	if (cpu_vendor != CPUVENDOR_IDT ||
 	    CPUID_TO_FAMILY(ci->ci_signature) < 6)
-	    	return;
+		return;
 
 	family = CPUID_TO_FAMILY(ci->ci_signature);
 	model = CPUID_TO_MODEL(ci->ci_signature);
@@ -586,7 +586,7 @@ cpu_probe_c3(struct cpu_info *ci)
 		    ci->ci_feat_val[4] = lfunc;
 		    /* Check for and enable RNG */
 		    if (lfunc & CPUID_VIA_HAS_RNG) {
-		    	if (!(lfunc & CPUID_VIA_DO_RNG)) {
+			if (!(lfunc & CPUID_VIA_DO_RNG)) {
 			    rng_enable++;
 			    ci->ci_feat_val[4] |= CPUID_VIA_DO_RNG;
 			}
@@ -1135,7 +1135,7 @@ identify_hypervisor(void)
 	const char *p;
 	int i;
 
-	switch(vm_guest) {
+	switch (vm_guest) {
 	case VM_GUEST_XENPV:
 	case VM_GUEST_XENPVH:
 		/* guest type already known, no bios info */
