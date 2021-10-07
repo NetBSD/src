@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.29 2021/10/05 06:55:24 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.30 2021/10/07 21:38:25 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -70,9 +70,7 @@ parse(token_type ttype)
 	reduce();		/* see if this allows any reduction */
     }
 
-
-    switch (ttype) {		/* go on and figure out what to do with the
-				 * input */
+    switch (ttype) {
 
     case decl:			/* scanned a declaration word */
 	ps.search_brace = opt.btype_2;
@@ -84,8 +82,7 @@ parse(token_type ttype)
 	    ps.p_stack[++ps.tos] = decl;
 	    ps.il[ps.tos] = ps.ind_level_follow;
 
-	    if (opt.ljust_decl) {	/* only do if we want left justified
-					 * declarations */
+	    if (opt.ljust_decl) {
 		ps.ind_level = 0;
 		for (int i = ps.tos - 1; i > 0; --i)
 		    if (ps.p_stack[i] == decl)
@@ -99,15 +96,14 @@ parse(token_type ttype)
     case if_expr:		/* 'if' '(' <expr> ')' */
 	if (ps.p_stack[ps.tos] == if_expr_stmt_else && opt.else_if) {
 	    /*
-	     * Note that the stack pointer here is decremented, effectively
-	     * reducing "else if" to "if". This saves a lot of stack space in
+	     * Reduce "else if" to "if". This saves a lot of stack space in
 	     * case of a long "if-else-if ... else-if" sequence.
 	     */
 	    ps.ind_level_follow = ps.il[ps.tos--];
 	}
 	/* the rest is the same as for keyword_do and for_exprs */
 	/* FALLTHROUGH */
-    case keyword_do:		/* 'do' */
+    case keyword_do:
     case for_exprs:		/* 'for' (...) */
 	ps.p_stack[++ps.tos] = ttype;
 	ps.il[ps.tos] = ps.ind_level = ps.ind_level_follow;
@@ -115,7 +111,7 @@ parse(token_type ttype)
 	ps.search_brace = opt.btype_2;
 	break;
 
-    case lbrace:		/* scanned { */
+    case lbrace:
 	break_comma = false;	/* don't break comma in an initial list */
 	if (ps.p_stack[ps.tos] == stmt || ps.p_stack[ps.tos] == decl
 		|| ps.p_stack[ps.tos] == stmt_list)
@@ -123,9 +119,6 @@ parse(token_type ttype)
 				 * group or a declaration */
 	else {
 	    if (code.s == code.e) {
-		/*
-		 * only do this if there is nothing on the line
-		 */
 		--ps.ind_level;
 		/*
 		 * it is a group as part of a while, for, etc.
@@ -166,16 +159,14 @@ parse(token_type ttype)
 	else {
 	    ps.ind_level = ps.il[ps.tos];	/* indentation for else should
 						 * be same as for if */
-	    ps.ind_level_follow = ps.ind_level + 1;	/* everything following
-							 * should be 1 level
-							 * deeper */
+	    ps.ind_level_follow = ps.ind_level + 1;
 	    ps.p_stack[ps.tos] = if_expr_stmt_else;
 	    /* remember if with else */
 	    ps.search_brace = opt.btype_2 | opt.else_if;
 	}
 	break;
 
-    case rbrace:		/* scanned a } */
+    case rbrace:
 	/* stack should have <lbrace> <stmt> or <lbrace> <stmt_list> */
 	if (ps.tos > 0 && ps.p_stack[ps.tos - 1] == lbrace) {
 	    ps.ind_level = ps.ind_level_follow = ps.il[--ps.tos];
@@ -203,12 +194,10 @@ parse(token_type ttype)
 	ps.il[ps.tos] = ps.ind_level;
 	break;
 
-    default:			/* this is an error */
+    default:
 	diag(1, "Unknown code to parser");
 	return;
-
-
-    }				/* end of switch */
+    }
 
     if (ps.tos >= STACKSIZE - 1)
 	errx(1, "Parser stack overflow");

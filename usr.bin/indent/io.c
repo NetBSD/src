@@ -1,4 +1,4 @@
-/*	$NetBSD: io.c,v 1.75 2021/10/07 19:35:50 rillig Exp $	*/
+/*	$NetBSD: io.c,v 1.76 2021/10/07 21:38:25 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)io.c	8.1 (Berkeley) 6/6/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: io.c,v 1.75 2021/10/07 19:35:50 rillig Exp $");
+__RCSID("$NetBSD: io.c,v 1.76 2021/10/07 21:38:25 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/io.c 334927 2018-06-10 16:44:18Z pstef $");
 #endif
@@ -257,14 +257,8 @@ dump_line(void)
 	&& token.s < token.e && isspace((unsigned char)token.s[0]))
 	output_range(token.s, token.e);
 
-    ps.decl_on_line = ps.in_decl;	/* if we are in the middle of a
-					 * declaration, remember that fact for
-					 * proper comment indentation */
-    ps.ind_stmt = ps.in_stmt && !ps.in_decl;	/* next line should be
-						 * indented if we have not
-						 * completed this stmt and if
-						 * we are not in the middle of
-						 * a declaration */
+    ps.decl_on_line = ps.in_decl;	/* for proper comment indentation */
+    ps.ind_stmt = ps.in_stmt && !ps.in_decl;
     ps.use_ff = false;
     ps.dumped_decl_indent = false;
     *(lab.e = lab.s) = '\0';	/* reset buffers */

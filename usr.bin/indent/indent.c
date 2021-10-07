@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.c,v 1.115 2021/10/07 21:16:36 rillig Exp $	*/
+/*	$NetBSD: indent.c,v 1.116 2021/10/07 21:38:25 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)indent.c	5.17 (Berkeley) 6/7/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: indent.c,v 1.115 2021/10/07 21:16:36 rillig Exp $");
+__RCSID("$NetBSD: indent.c,v 1.116 2021/10/07 21:38:25 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/indent.c 340138 2018-11-04 19:24:49Z oshogbo $");
 #endif
@@ -427,9 +427,8 @@ main_init_globals(void)
 {
     found_err = false;
 
-    ps.p_stack[0] = stmt;	/* this is the parser's stack */
-    ps.last_nl = true;		/* this is true if the last thing scanned was
-				 * a newline */
+    ps.p_stack[0] = stmt;
+    ps.last_nl = true;
     ps.last_token = semicolon;
     buf_init(&com);
     buf_init(&lab);
@@ -597,7 +596,7 @@ process_comment_in_code(token_type ttype, bool *force_nl)
 static void
 process_form_feed(void)
 {
-    ps.use_ff = true;		/* a form feed is treated much like a newline */
+    ps.use_ff = true;
     dump_line();
     ps.want_blank = false;
 }
@@ -610,7 +609,7 @@ process_newline(void)
 	dump_line();
 	ps.want_blank = false;
     }
-    ++line_no;			/* keep track of input line number */
+    ++line_no;
 }
 
 static bool
@@ -901,9 +900,8 @@ process_lbrace(bool *force_nl, bool *sp_sw, token_type hd_type,
 	ps.in_decl = false;
     }
     *decl_ind = 0;
-    parse(lbrace);		/* let parser know about this */
-    if (ps.want_blank)		/* put a blank before '{' if '{' is not at
-				 * start of line */
+    parse(lbrace);
+    if (ps.want_blank)
 	*code.e++ = ' ';
     ps.want_blank = false;
     *code.e++ = '{';
@@ -1290,41 +1288,41 @@ main_loop(void)
 	    process_rparen_or_rbracket(&sp_sw, &force_nl, hd_type);
 	    break;
 
-	case unary_op:		/* this could be any unary operation */
+	case unary_op:
 	    process_unary_op(decl_ind, tabs_to_var);
 	    break;
 
-	case binary_op:		/* any binary operation */
+	case binary_op:
 	    process_binary_op();
 	    break;
 
-	case postfix_op:	/* got a trailing ++ or -- */
+	case postfix_op:
 	    process_postfix_op();
 	    break;
 
-	case question:		/* got a ? */
+	case question:
 	    process_question(&seen_quest);
 	    break;
 
 	case case_label:	/* got word 'case' or 'default' */
-	    seen_case = true;	/* so we can process the later colon properly */
+	    seen_case = true;
 	    goto copy_token;
 
-	case colon:		/* got a ':' */
+	case colon:
 	    process_colon(&seen_quest, &force_nl, &seen_case);
 	    break;
 
-	case semicolon:		/* got a ';' */
+	case semicolon:
 	    process_semicolon(&seen_case, &seen_quest, decl_ind, tabs_to_var,
 		&sp_sw, hd_type, &force_nl);
 	    break;
 
-	case lbrace:		/* got a '{' */
+	case lbrace:
 	    process_lbrace(&force_nl, &sp_sw, hd_type, di_stack,
 		(int)nitems(di_stack), &decl_ind);
 	    break;
 
-	case rbrace:		/* got a '}' */
+	case rbrace:
 	    process_rbrace(&sp_sw, &decl_ind, di_stack);
 	    break;
 
