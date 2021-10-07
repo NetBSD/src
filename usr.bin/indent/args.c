@@ -1,4 +1,4 @@
-/*	$NetBSD: args.c,v 1.44 2021/10/07 16:45:38 rillig Exp $	*/
+/*	$NetBSD: args.c,v 1.45 2021/10/07 17:31:33 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)args.c	8.1 (Berkeley) 6/6/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: args.c,v 1.44 2021/10/07 16:45:38 rillig Exp $");
+__RCSID("$NetBSD: args.c,v 1.45 2021/10/07 17:31:33 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/args.c 336318 2018-07-15 21:04:21Z pstef $");
 #endif
@@ -143,45 +143,41 @@ static void
 load_profile(const char *fname)
 {
     FILE *f;
-    int comment_index, ch;
-    char *p;
-    char buf[BUFSIZ];
 
     if ((f = fopen(fname, "r")) == NULL)
 	return;
     option_source = fname;
 
     for (;;) {
-	p = buf;
-	comment_index = 0;
+	char buf[BUFSIZ];
+	size_t n = 0;
+	int ch, comment_ch = -1;
+
 	while ((ch = getc(f)) != EOF) {
-	    if (ch == '*' && comment_index == 0 && p > buf && p[-1] == '/') {
-		comment_index = (int)(p - buf);
-		*p++ = (char)ch;
-	    } else if (ch == '/' && comment_index != 0 && p > buf && p[-1] == '*') {
-		p = buf + comment_index - 1;
-		comment_index = 0;
+	    if (ch == '*' && comment_ch < 0 && n > 0 && buf[n - 1] == '/') {
+		n--;
+		comment_ch = ch;
+	    } else if (comment_ch >= 0) {
+		comment_ch = ch == '/' && comment_ch == '*' ? -1 : ch;
 	    } else if (isspace((unsigned char)ch)) {
-		if (p > buf && comment_index == 0)
-		    break;
-	    } else if ((size_t)(p - buf) >= nitems(buf) - 5) {
+		break;
+	    } else if (n >= nitems(buf) - 5) {
 		diag(1, "buffer overflow in %s, starting with '%.10s'",
 		     option_source, buf);
 		exit(1);
-	    } else {
-		*p++ = (char)ch;
-	    }
+	    } else
+		buf[n++] = (char)ch;
 	}
-	if (p != buf) {
-	    *p++ = '\0';
+
+	if (n > 0) {
+	    buf[n] = '\0';
 	    if (opt.verbose)
 		printf("profile: %s\n", buf);
 	    set_option(buf);
-	} else if (ch == EOF) {
-	    (void)fclose(f);
-	    return;
-	}
+	} else if (ch == EOF)
+	    break;
     }
+    (void)fclose(f);
 }
 
 void
