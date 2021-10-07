@@ -1,4 +1,4 @@
-/*	$NetBSD: pr_comment.c,v 1.56 2021/10/07 21:52:54 rillig Exp $	*/
+/*	$NetBSD: pr_comment.c,v 1.57 2021/10/07 21:57:21 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)pr_comment.c	8.1 (Berkeley) 6/6/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: pr_comment.c,v 1.56 2021/10/07 21:52:54 rillig Exp $");
+__RCSID("$NetBSD: pr_comment.c,v 1.57 2021/10/07 21:57:21 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/pr_comment.c 334927 2018-06-10 16:44:18Z pstef $");
 #endif
@@ -175,7 +175,7 @@ process_comment(void)
 	*com.e++ = ' ';
 
     /* Don't put a break delimiter if this is a one-liner that won't wrap. */
-    if (break_delim)
+    if (break_delim) {
 	for (t_ptr = buf_ptr; *t_ptr != '\0' && *t_ptr != '\n'; t_ptr++) {
 	    if (t_ptr >= buf_end)
 		fill_buffer();
@@ -192,6 +192,7 @@ process_comment(void)
 		break;
 	    }
 	}
+    }
 
     if (break_delim) {
 	char *t = com.e;
