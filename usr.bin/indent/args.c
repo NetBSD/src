@@ -1,4 +1,4 @@
-/*	$NetBSD: args.c,v 1.47 2021/10/07 18:07:25 rillig Exp $	*/
+/*	$NetBSD: args.c,v 1.48 2021/10/07 18:32:09 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)args.c	8.1 (Berkeley) 6/6/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: args.c,v 1.47 2021/10/07 18:07:25 rillig Exp $");
+__RCSID("$NetBSD: args.c,v 1.48 2021/10/07 18:32:09 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/args.c 336318 2018-07-15 21:04:21Z pstef $");
 #endif
@@ -228,7 +228,7 @@ set_special_option(const char *arg)
 	arg_end = arg + 3;
 	if (arg_end[0] == '\0')
 	    goto need_param;
-	opt.case_indent = atof(arg_end);
+	opt.case_indent = (float)atof(arg_end);
 	return true;
     }
 

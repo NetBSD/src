@@ -1,4 +1,4 @@
-/*	$NetBSD: lexi.c,v 1.72 2021/10/05 22:22:46 rillig Exp $	*/
+/*	$NetBSD: lexi.c,v 1.73 2021/10/07 18:32:09 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)lexi.c	8.1 (Berkeley) 6/6/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: lexi.c,v 1.72 2021/10/05 22:22:46 rillig Exp $");
+__RCSID("$NetBSD: lexi.c,v 1.73 2021/10/07 18:32:09 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/lexi.c 337862 2018-08-15 18:19:45Z pstef $");
 #endif
@@ -129,7 +129,7 @@ struct {
  * HP H+ "."    P  FS  -> $float;    BP B+           IS? -> $int;
  */
 /* INDENT OFF */
-static const char num_lex_state[][26] = {
+static const unsigned char num_lex_state[][26] = {
     /*                examples:
                                      00
              s                      0xx
@@ -706,6 +706,6 @@ add_typename(const char *name)
 	return;			/* already in the list */
     pos = -(pos + 1);
     memmove(typenames.items + pos + 1, typenames.items + pos,
-	sizeof(typenames.items[0]) * (typenames.len++ - pos));
+	sizeof(typenames.items[0]) * (typenames.len++ - (unsigned)pos));
     typenames.items[pos] = xstrdup(name);
 }
