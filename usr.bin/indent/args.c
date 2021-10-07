@@ -1,4 +1,4 @@
-/*	$NetBSD: args.c,v 1.48 2021/10/07 18:32:09 rillig Exp $	*/
+/*	$NetBSD: args.c,v 1.49 2021/10/07 19:42:41 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)args.c	8.1 (Berkeley) 6/6/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: args.c,v 1.48 2021/10/07 18:32:09 rillig Exp $");
+__RCSID("$NetBSD: args.c,v 1.49 2021/10/07 19:42:41 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/args.c 336318 2018-07-15 21:04:21Z pstef $");
 #endif
@@ -65,8 +65,6 @@ __FBSDID("$FreeBSD: head/usr.bin/indent/args.c 336318 2018-07-15 21:04:21Z pstef
 #define INDENT_VERSION	"2.0"
 
 void add_typedefs_from_file(const char *);
-
-static const char *option_source = "?";
 
 #if __STDC_VERSION__ >= 201112L
 #define assert_type(expr, type) _Generic((expr), type : (expr))
@@ -149,7 +147,6 @@ load_profile(const char *fname, bool must_exist)
 	    err(EXIT_FAILURE, "profile %s", fname);
 	return;
     }
-    option_source = fname;
 
     for (;;) {
 	char buf[BUFSIZ];
@@ -166,7 +163,7 @@ load_profile(const char *fname, bool must_exist)
 		break;
 	    } else if (n >= nitems(buf) - 5) {
 		diag(1, "buffer overflow in %s, starting with '%.10s'",
-		     option_source, buf);
+		     fname, buf);
 		exit(1);
 	    } else
 		buf[n++] = (char)ch;
@@ -176,7 +173,7 @@ load_profile(const char *fname, bool must_exist)
 	    buf[n] = '\0';
 	    if (opt.verbose)
 		printf("profile: %s\n", buf);
-	    set_option(buf);
+	    set_option(buf, fname);
 	} else if (ch == EOF)
 	    break;
     }
@@ -195,7 +192,6 @@ load_profiles(const char *profile_name)
 	load_profile(fname, false);
     }
     load_profile(".indent.pro", false);
-    option_source = "Command line";
 }
 
 static const char *
@@ -211,7 +207,7 @@ skip_over(const char *s, bool may_negate, const char *prefix)
 }
 
 static bool
-set_special_option(const char *arg)
+set_special_option(const char *arg, const char *option_source)
 {
     const char *arg_end;
 
@@ -265,13 +261,13 @@ need_param:
 }
 
 void
-set_option(const char *arg)
+set_option(const char *arg, const char *option_source)
 {
     const struct pro *p;
     const char *param_start;
 
     arg++;			/* skip leading '-' */
-    if (set_special_option(arg))
+    if (set_special_option(arg, option_source))
 	return;
 
     for (p = pro + nitems(pro); p-- != pro;) {
