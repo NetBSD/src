@@ -1,4 +1,4 @@
-/*.$NetBSD: setjmp.S,v 1.3 2020/05/10 14:05:59 skrll Exp $.*/
+/*.$NetBSD: setjmp.S,v 1.4 2021/10/07 06:44:18 skrll Exp $.*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -114,8 +114,11 @@ ENTRY(__longjmp14)
 	bl	_C_LABEL(__sigprocmask14)
 
 	ldp	x29, x30, [sp, #16]
-	ldr	x0, [sp, #8]
+	ldr	x1, [sp, #8]
 	add	sp, sp, #32
+
+	cmp     x1, #0
+	csinc   x0, x1, xzr, ne
 	ret
 
 	/* validation failed, die die die. */
