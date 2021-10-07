@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.c,v 1.118 2021/10/07 21:43:20 rillig Exp $	*/
+/*	$NetBSD: indent.c,v 1.119 2021/10/07 21:52:54 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)indent.c	5.17 (Berkeley) 6/7/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: indent.c,v 1.118 2021/10/07 21:43:20 rillig Exp $");
+__RCSID("$NetBSD: indent.c,v 1.119 2021/10/07 21:52:54 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/indent.c 340138 2018-11-04 19:24:49Z oshogbo $");
 #endif
@@ -181,9 +181,11 @@ search_brace_comment(bool *comment_buffered)
 	save_com[0] = save_com[1] = ' ';
 	sc_end = &save_com[2];
     }
+
     *comment_buffered = true;
     *sc_end++ = '/';		/* copy in start of comment */
     *sc_end++ = '*';
+
     for (;;) {			/* loop until the end of the comment */
 	*sc_end++ = inbuf_next();
 	if (sc_end[-1] == '*' && *buf_ptr == '/')
@@ -195,6 +197,7 @@ search_brace_comment(bool *comment_buffered)
 	    exit(1);
 	}
     }
+
     *sc_end++ = '/';		/* add ending slash */
     inbuf_skip();		/* get past / in buffer */
 }
@@ -238,14 +241,17 @@ search_brace_other(token_type ttype, bool *force_nl,
 		*token.s == 'i' && last_else && opt.else_if);
     if (remove_newlines)
 	*force_nl = false;
+
     if (sc_end == NULL) {	/* ignore buffering if comment wasn't saved
 				 * up */
 	ps.search_brace = false;
 	return false;
     }
+
     while (sc_end > save_com && isblank((unsigned char)sc_end[-1])) {
 	sc_end--;
     }
+
     if (opt.swallow_optional_blanklines ||
 	(!comment_buffered && remove_newlines)) {
 	*force_nl = !remove_newlines;
@@ -253,6 +259,7 @@ search_brace_other(token_type ttype, bool *force_nl,
 	    sc_end--;
 	}
     }
+
     if (*force_nl) {		/* if we should insert a nl here, put it into
 				 * the buffer */
 	*force_nl = false;
@@ -263,6 +270,7 @@ search_brace_other(token_type ttype, bool *force_nl,
 	if (opt.verbose)	/* warn if the line was not already broken */
 	    diag(0, "Line broken");
     }
+
     for (const char *t_ptr = token.s; *t_ptr != '\0'; ++t_ptr)
 	*sc_end++ = *t_ptr;
     return true;
@@ -432,6 +440,7 @@ main_init_globals(void)
     buf_init(&lab);
     buf_init(&code);
     buf_init(&token);
+
     opt.else_if = true;		/* XXX: redundant? */
 
     in_buffer = xmalloc(10);
@@ -439,10 +448,11 @@ main_init_globals(void)
     buf_ptr = buf_end = in_buffer;
     line_no = 1;
     had_eof = ps.in_decl = ps.decl_on_line = (break_comma = false);
+
     ps.in_or_st = false;
     ps.want_blank = ps.in_stmt = ps.ind_stmt = false;
-
     ps.is_case_label = false;
+
     sc_end = NULL;
     bp_save = NULL;
     be_save = NULL;
@@ -633,6 +643,7 @@ process_lparen_or_lbracket(int decl_ind, bool tabs_to_var, bool sp_sw)
 	    nitems(ps.paren_indents));
 	ps.p_l_follow--;
     }
+
     if (token.s[0] == '(' && ps.in_decl
 	&& !ps.block_init && !ps.dumped_decl_indent &&
 	ps.procname[0] == '\0' && ps.paren_level == 0) {
@@ -654,6 +665,7 @@ process_lparen_or_lbracket(int decl_ind, bool tabs_to_var, bool sp_sw)
 	ps.paren_indents[0] = (short)(2 * opt.indent_size);
 	debug_println("paren_indent[0] is now %d", ps.paren_indents[0]);
     }
+
     if (ps.in_or_st && *token.s == '(' && ps.tos <= 2) {
 	/*
 	 * this is a kluge to make sure that declarations will be aligned
@@ -663,6 +675,7 @@ process_lparen_or_lbracket(int decl_ind, bool tabs_to_var, bool sp_sw)
 	ps.in_or_st = false;	/* turn off flag for structure decl or
 				 * initialization */
     }
+
     /* parenthesized type following sizeof or offsetof is not a cast */
     if (ps.keyword == kw_offsetof || ps.keyword == kw_sizeof)
 	ps.not_cast_mask |= 1 << ps.p_l_follow;
@@ -841,6 +854,7 @@ process_lbrace(bool *force_nl, bool *sp_sw, token_type hd_type,
     int *di_stack, int di_stack_cap, int *decl_ind)
 {
     ps.in_stmt = false;		/* don't indent the {} */
+
     if (!ps.block_init)
 	*force_nl = true;	/* force other stuff on same line as '{' onto
 				 * new line */
@@ -863,6 +877,7 @@ process_lbrace(bool *force_nl, bool *sp_sw, token_type hd_type,
 		ps.want_blank = true;
 	}
     }
+
     if (ps.in_parameter_declaration)
 	prefix_blankline_requested = false;
 
@@ -875,6 +890,7 @@ process_lbrace(bool *force_nl, bool *sp_sw, token_type hd_type,
 	    ps.ind_level = ps.ind_level_follow;
 	}
     }
+
     if (code.s == code.e)
 	ps.ind_stmt = false;	/* don't indent the '{' itself */
     if (ps.in_decl && ps.in_or_st) {	/* this is either a structure
@@ -895,6 +911,7 @@ process_lbrace(bool *force_nl, bool *sp_sw, token_type hd_type,
 	ps.in_parameter_declaration = false;
 	ps.in_decl = false;
     }
+
     *decl_ind = 0;
     parse(lbrace);
     if (ps.want_blank)
@@ -911,32 +928,39 @@ process_rbrace(bool *sp_sw, int *decl_ind, const int *di_stack)
 							 * omitted in
 							 * declarations */
 	parse(semicolon);
+
     if (ps.p_l_follow != 0) {	/* check for unclosed if, for, else. */
 	diag(1, "Unbalanced parens");
 	ps.p_l_follow = 0;
 	*sp_sw = false;
     }
+
     ps.just_saw_decl = 0;
     ps.block_init_level--;
+
     if (code.s != code.e && !ps.block_init) {	/* '}' must be first on line */
 	if (opt.verbose)
 	    diag(0, "Line broken");
 	dump_line();
     }
+
     *code.e++ = '}';
     ps.want_blank = true;
     ps.in_stmt = ps.ind_stmt = false;
+
     if (ps.decl_nest > 0) { /* we are in multi-level structure declaration */
 	*decl_ind = di_stack[--ps.decl_nest];
 	if (ps.decl_nest == 0 && !ps.in_parameter_declaration)
 	    ps.just_saw_decl = 2;
 	ps.in_decl = true;
     }
+
     prefix_blankline_requested = false;
     parse(rbrace);		/* let parser know about this */
     ps.search_brace = opt.cuddle_else
 	&& ps.p_stack[ps.tos] == if_expr_stmt
 	&& ps.il[ps.tos] >= ps.ind_level;
+
     if (ps.tos <= 1 && opt.blanklines_after_procs && ps.decl_nest <= 0)
 	postfix_blankline_requested = true;
 }
@@ -945,6 +969,7 @@ static void
 process_keyword_do_else(bool *force_nl, bool *last_else)
 {
     ps.in_stmt = false;
+
     if (*token.s == 'e') {
 	if (code.e != code.s && (!opt.cuddle_else || code.e[-1] != '}')) {
 	    if (opt.verbose)
@@ -952,9 +977,11 @@ process_keyword_do_else(bool *force_nl, bool *last_else)
 	    dump_line();	/* make sure this starts a line */
 	    ps.want_blank = false;
 	}
+
 	*force_nl = true;	/* following stuff must go onto new line */
 	*last_else = true;
 	parse(keyword_else);
+
     } else {
 	if (code.e != code.s) {	/* make sure this starts a line */
 	    if (opt.verbose)
@@ -962,6 +989,7 @@ process_keyword_do_else(bool *force_nl, bool *last_else)
 	    dump_line();
 	    ps.want_blank = false;
 	}
+
 	*force_nl = true;	/* following stuff must go onto new line */
 	*last_else = false;
 	parse(keyword_do);
@@ -972,22 +1000,26 @@ static void
 process_decl(int *out_decl_ind, bool *out_tabs_to_var)
 {
     parse(decl);		/* let parser worry about indentation */
+
     if (ps.last_token == rparen && ps.tos <= 1) {
 	if (code.s != code.e) {
 	    dump_line();
 	    ps.want_blank = false;
 	}
     }
+
     if (ps.in_parameter_declaration && opt.indent_parameters &&
 	ps.decl_nest == 0) {
 	ps.ind_level = ps.ind_level_follow = 1;
 	ps.ind_stmt = false;
     }
+
     ps.in_or_st = true;		/* this might be a structure or initialization
 				 * declaration */
     ps.in_decl = ps.decl_on_line = ps.last_token != type_def;
     if ( /* !ps.in_or_st && */ ps.decl_nest <= 0)
 	ps.just_saw_decl = 2;
+
     prefix_blankline_requested = false;
 
     int len = (int)strlen(token.s) + 1;
@@ -1012,6 +1044,7 @@ process_ident(token_type ttype, int decl_ind, bool tabs_to_var,
 		*code.e++ = ' ';
 	    }
 	    ps.want_blank = false;
+
 	} else if (!ps.block_init && !ps.dumped_decl_indent &&
 	    ps.paren_level == 0) {	/* if we are in a declaration, we must
 					 * indent identifier */
@@ -1019,6 +1052,7 @@ process_ident(token_type ttype, int decl_ind, bool tabs_to_var,
 	    ps.dumped_decl_indent = true;
 	    ps.want_blank = false;
 	}
+
     } else if (*sp_sw && ps.p_l_follow == 0) {
 	*sp_sw = false;
 	*force_nl = true;
@@ -1057,13 +1091,16 @@ process_comma(int decl_ind, bool tabs_to_var, bool *force_nl)
 {
     ps.want_blank = (code.s != code.e);	/* only put blank after comma if comma
 					 * does not start the line */
+
     if (ps.in_decl && ps.procname[0] == '\0' && !ps.block_init &&
 	!ps.dumped_decl_indent && ps.paren_level == 0) {
 	/* indent leading commas and not the actual identifiers */
 	indent_declaration(decl_ind - 1, tabs_to_var);
 	ps.dumped_decl_indent = true;
     }
+
     *code.e++ = ',';
+
     if (ps.p_l_follow == 0) {
 	if (ps.block_init_level <= 0)
 	    ps.block_init = false;
@@ -1172,16 +1209,19 @@ process_preprocessing(void)
 	    state_stack[ifdef_level++] = ps;
 	else
 	    diag(1, "#if stack overflow");
+
     } else if (strncmp(lab.s, "#el", 3) == 0) {	/* else, elif */
 	if (ifdef_level <= 0)
 	    diag(1, lab.s[3] == 'i' ? "Unmatched #elif" : "Unmatched #else");
 	else
 	    ps = state_stack[ifdef_level - 1];
+
     } else if (strncmp(lab.s, "#endif", 6) == 0) {
 	if (ifdef_level <= 0)
 	    diag(1, "Unmatched #endif");
 	else
 	    ifdef_level--;
+
     } else {
 	if (strncmp(lab.s + 1, "pragma", 6) != 0 &&
 	    strncmp(lab.s + 1, "error", 5) != 0 &&
@@ -1193,6 +1233,7 @@ process_preprocessing(void)
 	    return;
 	}
     }
+
     if (opt.blanklines_around_conditional_compilation) {
 	postfix_blankline_requested = true;
 	next_blank_lines = 0;
@@ -1379,6 +1420,7 @@ main_loop(void)
 	case preprocessing:	/* the initial '#' */
 	    process_preprocessing();
 	    break;
+
 	case comment:		/* the initial '/' '*' or '//' of a comment */
 	    process_comment();
 	    break;
@@ -1426,11 +1468,13 @@ bakcopy(void)
     bak_fd = creat(bakfile, 0600);
     if (bak_fd < 0)
 	err(1, "%s", bakfile);
+
     while ((n = read(fileno(input), buff, sizeof(buff))) > 0)
 	if (write(bak_fd, buff, (size_t)n) != n)
 	    err(1, "%s", bakfile);
     if (n < 0)
 	err(1, "%s", in_name);
+
     close(bak_fd);
     (void)fclose(input);
 

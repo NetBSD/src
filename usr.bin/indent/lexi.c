@@ -1,4 +1,4 @@
-/*	$NetBSD: lexi.c,v 1.74 2021/10/07 21:41:59 rillig Exp $	*/
+/*	$NetBSD: lexi.c,v 1.75 2021/10/07 21:52:54 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)lexi.c	8.1 (Berkeley) 6/6/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: lexi.c,v 1.74 2021/10/07 21:41:59 rillig Exp $");
+__RCSID("$NetBSD: lexi.c,v 1.75 2021/10/07 21:52:54 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/lexi.c 337862 2018-08-15 18:19:45Z pstef $");
 #endif
@@ -271,6 +271,7 @@ lex_number(void)
 	uint8_t ch = (uint8_t)*buf_ptr;
 	if (ch >= nitems(num_lex_row) || num_lex_row[ch] == 0)
 	    break;
+
 	uint8_t row = num_lex_row[ch];
 	if (num_lex_state[row][s - 'A'] == ' ') {
 	    /*-
@@ -279,6 +280,7 @@ lex_number(void)
 	     */
 	    break;
 	}
+
 	s = num_lex_state[row][s - 'A'];
 	check_size_token(1);
 	*token.e++ = inbuf_next();
@@ -291,6 +293,7 @@ lex_word(void)
     while (isalnum((unsigned char)*buf_ptr) ||
 	   *buf_ptr == '\\' ||
 	   *buf_ptr == '_' || *buf_ptr == '$') {
+
 	/* fill_buffer() terminates buffer with newline */
 	if (*buf_ptr == '\\') {
 	    if (buf_ptr[1] == '\n') {
@@ -300,6 +303,7 @@ lex_word(void)
 	    } else
 		break;
 	}
+
 	check_size_token(1);
 	*token.e++ = inbuf_next();
     }
@@ -313,10 +317,12 @@ lex_char_or_string(void)
 	    diag(1, "Unterminated literal");
 	    return;
 	}
+
 	check_size_token(2);
 	*token.e++ = inbuf_next();
 	if (token.e[-1] == delim)
 	    return;
+
 	if (token.e[-1] == '\\') {
 	    if (*buf_ptr == '\n')
 		++line_no;
@@ -422,14 +428,18 @@ lexi(struct parser_state *state)
 		state->last_u_d = true;
 		goto found_typename;
 	    }
+
 	} else {		/* we have a keyword */
 	    state->keyword = kw->kind;
 	    state->last_u_d = true;
+
 	    switch (kw->kind) {
 	    case kw_switch:
 		return lexi_end(switch_expr);
+
 	    case kw_case_or_default:
 		return lexi_end(case_label);
+
 	    case kw_struct_or_union_or_enum:
 	    case kw_type:
 	found_typename:
@@ -464,25 +474,31 @@ lexi(struct parser_state *state)
 		return lexi_end(ident);
 	    }			/* end of switch */
 	}			/* end of if (found_it) */
+
 	if (*buf_ptr == '(' && state->tos <= 1 && state->ind_level == 0 &&
 	    !state->in_parameter_declaration && !state->block_init) {
+
 	    char *tp = buf_ptr;
 	    while (tp < buf_end)
 		if (*tp++ == ')' && (*tp == ';' || *tp == ','))
 		    goto not_proc;
+
 	    strncpy(state->procname, token.s, sizeof state->procname - 1);
 	    if (state->in_decl)
 		state->in_parameter_declaration = true;
 	    return lexi_end(funcname);
     not_proc:;
+
 	} else if (probably_typedef(state)) {
 	    state->keyword = kw_type;
 	    state->last_u_d = true;
 	    return lexi_end(decl);
 	}
+
 	if (state->last_token == decl)	/* if this is a declared variable,
 					 * then following sign is unary */
 	    state->last_u_d = true;	/* will make "int a -1" work */
+
 	return lexi_end(ident);	/* the ident is not in the list */
     }				/* end of processing for alphanum character */
 
@@ -579,9 +595,11 @@ lexi(struct parser_state *state)
 		/* check for following ++ or -- */
 		unary_delim = false;
 	    }
+
 	} else if (*buf_ptr == '=')
 	    /* check for operator += */
 	    *token.e++ = *buf_ptr++;
+
 	else if (*buf_ptr == '>') {
 	    /* check for operator -> */
 	    *token.e++ = *buf_ptr++;
@@ -624,6 +642,7 @@ lexi(struct parser_state *state)
 	    ttype = binary_op;
 	    break;
 	}
+
 	while (*buf_ptr == '*' || isspace((unsigned char)*buf_ptr)) {
 	    if (*buf_ptr == '*') {
 		check_size_token(1);
@@ -631,6 +650,7 @@ lexi(struct parser_state *state)
 	    }
 	    inbuf_skip();
 	}
+
 	if (ps.in_decl) {
 	    char *tp = buf_ptr;
 
@@ -642,6 +662,7 @@ lexi(struct parser_state *state)
 	    if (*tp == '(')
 		ps.procname[0] = ' ';
 	}
+
 	ttype = unary_op;
 	break;
 
@@ -654,6 +675,7 @@ lexi(struct parser_state *state)
 	    unary_delim = state->last_u_d;
 	    break;
 	}
+
 	while (token.e[-1] == *buf_ptr || *buf_ptr == '=') {
 	    /*
 	     * handle ||, &&, etc, and also things as in int *****i
@@ -661,15 +683,19 @@ lexi(struct parser_state *state)
 	    check_size_token(1);
 	    *token.e++ = inbuf_next();
 	}
+
 	ttype = state->last_u_d ? unary_op : binary_op;
 	unary_delim = true;
     }
 
     if (buf_ptr >= buf_end)	/* check for input buffer empty */
 	fill_buffer();
+
     state->last_u_d = unary_delim;
+
     check_size_token(1);
     *token.e = '\0';
+
     return lexi_end(ttype);
 }
 
@@ -704,6 +730,7 @@ add_typename(const char *name)
     int pos = insert_pos(name, typenames.items, typenames.len);
     if (pos >= 0)
 	return;			/* already in the list */
+
     pos = -(pos + 1);
     memmove(typenames.items + pos + 1, typenames.items + pos,
 	sizeof(typenames.items[0]) * (typenames.len++ - (unsigned)pos));
