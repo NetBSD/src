@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.c,v 1.114 2021/10/07 19:42:41 rillig Exp $	*/
+/*	$NetBSD: indent.c,v 1.115 2021/10/07 21:16:36 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)indent.c	5.17 (Berkeley) 6/7/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: indent.c,v 1.114 2021/10/07 19:42:41 rillig Exp $");
+__RCSID("$NetBSD: indent.c,v 1.115 2021/10/07 21:16:36 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/indent.c 340138 2018-11-04 19:24:49Z oshogbo $");
 #endif
@@ -287,46 +287,43 @@ switch_buffer(void)
 static void
 search_brace_lookahead(token_type *ttype)
 {
-    /*
-     * We must make this check, just in case there was an unexpected EOF.
-     */
-    if (*ttype != end_of_file) {
-	/*
-	 * The only intended purpose of calling lexi() below is to categorize
-	 * the next token in order to decide whether to continue buffering
-	 * forthcoming tokens. Once the buffering is over, lexi() will be
-	 * called again elsewhere on all of the tokens - this time for normal
-	 * processing.
-	 *
-	 * Calling it for this purpose is a bug, because lexi() also changes
-	 * the parser state and discards leading whitespace, which is needed
-	 * mostly for comment-related considerations.
-	 *
-	 * Work around the former problem by giving lexi() a copy of the
-	 * current parser state and discard it if the call turned out to be
-	 * just a look ahead.
-	 *
-	 * Work around the latter problem by copying all whitespace characters
-	 * into the buffer so that the later lexi() call will read them.
-	 */
-	if (sc_end != NULL) {
-	    while (is_hspace(*buf_ptr)) {
-		*sc_end++ = *buf_ptr++;
-		if (sc_end >= &save_com[sc_size]) {
-		    errx(1, "input too long");
-		}
-	    }
-	    if (buf_ptr >= buf_end)
-		fill_buffer();
-	}
+    if (*ttype == end_of_file)
+	return;
 
-	struct parser_state transient_state;
-	transient_state = ps;
-	*ttype = lexi(&transient_state);	/* read another token */
-	if (*ttype != newline && *ttype != form_feed &&
-	    *ttype != comment && !transient_state.search_brace) {
-	    ps = transient_state;
+    /*
+     * The only intended purpose of calling lexi() below is to categorize
+     * the next token in order to decide whether to continue buffering
+     * forthcoming tokens. Once the buffering is over, lexi() will be
+     * called again elsewhere on all of the tokens - this time for normal
+     * processing.
+     *
+     * Calling it for this purpose is a bug, because lexi() also changes
+     * the parser state and discards leading whitespace, which is needed
+     * mostly for comment-related considerations.
+     *
+     * Work around the former problem by giving lexi() a copy of the
+     * current parser state and discard it if the call turned out to be
+     * just a lookahead.
+     *
+     * Work around the latter problem by copying all whitespace characters
+     * into the buffer so that the later lexi() call will read them.
+     */
+    if (sc_end != NULL) {
+	while (is_hspace(*buf_ptr)) {
+	    *sc_end++ = *buf_ptr++;
+	    if (sc_end >= &save_com[sc_size])
+		errx(1, "input too long");
 	}
+	if (buf_ptr >= buf_end)
+	    fill_buffer();
+    }
+
+    struct parser_state transient_state;
+    transient_state = ps;
+    *ttype = lexi(&transient_state);	/* read another token */
+    if (*ttype != newline && *ttype != form_feed &&
+	*ttype != comment && !transient_state.search_brace) {
+	ps = transient_state;
     }
 }
 
@@ -346,13 +343,13 @@ search_brace(token_type *ttype, bool *force_nl,
 	    break;
 	case lbrace:
 	    if (search_brace_lbrace())
-		goto sw_buffer;
+		goto switch_buffer;
 	    /* FALLTHROUGH */
 	default:		/* it is the start of a normal statement */
 	    if (!search_brace_other(*ttype, force_nl,
 		    *comment_buffered, *last_else))
 		return;
-	sw_buffer:
+	switch_buffer:
 	    switch_buffer();
 	}
 	search_brace_lookahead(ttype);
@@ -1086,91 +1083,95 @@ process_comma(int decl_ind, bool tabs_to_var, bool *force_nl)
 
 /* move the whole line to the 'label' buffer */
 static void
+read_preprocessing_line(void)
+{
+    buf_add_char(&lab, '#');
+
+    bool in_comment = false;
+    int com_start = 0, com_end = 0;
+    char quote = '\0';
+
+    while (is_hspace(*buf_ptr))
+	inbuf_skip();
+
+    while (*buf_ptr != '\n' || (in_comment && !had_eof)) {
+	buf_reserve(&lab, 2);
+	*lab.e++ = inbuf_next();
+	switch (lab.e[-1]) {
+	case '\\':
+	    if (!in_comment)
+		*lab.e++ = inbuf_next();
+	    break;
+	case '/':
+	    if (*buf_ptr == '*' && !in_comment && quote == '\0') {
+		in_comment = true;
+		*lab.e++ = *buf_ptr++;
+		com_start = (int)buf_len(&lab) - 2;
+	    }
+	    break;
+	case '"':
+	    if (quote == '"')
+		quote = '\0';
+	    else if (quote == '\0')
+		quote = '"';
+	    break;
+	case '\'':
+	    if (quote == '\'')
+		quote = '\0';
+	    else if (quote == '\0')
+		quote = '\'';
+	    break;
+	case '*':
+	    if (*buf_ptr == '/' && in_comment) {
+		in_comment = false;
+		*lab.e++ = *buf_ptr++;
+		com_end = (int)buf_len(&lab);
+	    }
+	    break;
+	}
+    }
+
+    while (lab.e > lab.s && is_hspace(lab.e[-1]))
+	lab.e--;
+    if (lab.e - lab.s == com_end && bp_save == NULL) {
+	/* comment on preprocessor line */
+	if (sc_end == NULL) {	/* if this is the first comment, we must set
+				 * up the buffer */
+	    save_com = sc_buf;
+	    sc_end = save_com;
+	} else {
+	    *sc_end++ = '\n';	/* add newline between comments */
+	    *sc_end++ = ' ';
+	    --line_no;
+	}
+	if (sc_end - save_com + com_end - com_start > sc_size)
+	    errx(1, "input too long");
+	memmove(sc_end, lab.s + com_start, (size_t)(com_end - com_start));
+	sc_end += com_end - com_start;
+	lab.e = lab.s + com_start;
+	while (lab.e > lab.s && is_hspace(lab.e[-1]))
+	    lab.e--;
+	bp_save = buf_ptr;	/* save current input buffer */
+	be_save = buf_end;
+	buf_ptr = save_com;	/* fix so that subsequent calls to lexi will
+				 * take tokens out of save_com */
+	*sc_end++ = ' ';	/* add trailing blank, just in case */
+	buf_end = sc_end;
+	sc_end = NULL;
+	debug_println("switched buf_ptr to save_com");
+    }
+    buf_terminate(&lab);
+}
+
+static void
 process_preprocessing(void)
 {
     if (com.s != com.e || lab.s != lab.e || code.s != code.e)
 	dump_line();
 
-    buf_add_char(&lab, '#');
+    read_preprocessing_line();
 
-    {
-	bool in_comment = false;
-	int com_start = 0;
-	char quote = '\0';
-	int com_end = 0;
-
-	while (is_hspace(*buf_ptr))
-	    inbuf_skip();
-
-	while (*buf_ptr != '\n' || (in_comment && !had_eof)) {
-	    buf_reserve(&lab, 2);
-	    *lab.e++ = inbuf_next();
-	    switch (lab.e[-1]) {
-	    case '\\':
-		if (!in_comment)
-		    *lab.e++ = inbuf_next();
-		break;
-	    case '/':
-		if (*buf_ptr == '*' && !in_comment && quote == '\0') {
-		    in_comment = true;
-		    *lab.e++ = *buf_ptr++;
-		    com_start = (int)buf_len(&lab) - 2;
-		}
-		break;
-	    case '"':
-		if (quote == '"')
-		    quote = '\0';
-		else if (quote == '\0')
-		    quote = '"';
-		break;
-	    case '\'':
-		if (quote == '\'')
-		    quote = '\0';
-		else if (quote == '\0')
-		    quote = '\'';
-		break;
-	    case '*':
-		if (*buf_ptr == '/' && in_comment) {
-		    in_comment = false;
-		    *lab.e++ = *buf_ptr++;
-		    com_end = (int)buf_len(&lab);
-		}
-		break;
-	    }
-	}
-
-	while (lab.e > lab.s && is_hspace(lab.e[-1]))
-	    lab.e--;
-	if (lab.e - lab.s == com_end && bp_save == NULL) {
-	    /* comment on preprocessor line */
-	    if (sc_end == NULL) {	/* if this is the first comment, we
-					 * must set up the buffer */
-		save_com = sc_buf;
-		sc_end = save_com;
-	    } else {
-		*sc_end++ = '\n';	/* add newline between comments */
-		*sc_end++ = ' ';
-		--line_no;
-	    }
-	    if (sc_end - save_com + com_end - com_start > sc_size)
-		errx(1, "input too long");
-	    memmove(sc_end, lab.s + com_start, (size_t)(com_end - com_start));
-	    sc_end += com_end - com_start;
-	    lab.e = lab.s + com_start;
-	    while (lab.e > lab.s && is_hspace(lab.e[-1]))
-		lab.e--;
-	    bp_save = buf_ptr;	/* save current input buffer */
-	    be_save = buf_end;
-	    buf_ptr = save_com;	/* fix so that subsequent calls to lexi will
-				 * take tokens out of save_com */
-	    *sc_end++ = ' ';	/* add trailing blank, just in case */
-	    buf_end = sc_end;
-	    sc_end = NULL;
-	    debug_println("switched buf_ptr to save_com");
-	}
-	buf_terminate(&lab);
-	ps.is_case_label = false;
-    }
+    ps.is_case_label = false;
 
     if (strncmp(lab.s, "#if", 3) == 0) {	/* also ifdef, ifndef */
 	if ((size_t)ifdef_level < nitems(state_stack))
