@@ -1,4 +1,4 @@
-/* 	$NetBSD: ioapic.c,v 1.64 2020/04/25 15:26:18 bouyer Exp $	*/
+/*	$NetBSD: ioapic.c,v 1.65 2021/10/07 12:52:27 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2009 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ioapic.c,v 1.64 2020/04/25 15:26:18 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ioapic.c,v 1.65 2021/10/07 12:52:27 msaitoh Exp $");
 
 #include "opt_ddb.h"
 
@@ -112,8 +112,8 @@ bool ioapic_trymask(struct pic *, int);
 static void ioapic_addroute(struct pic *, struct cpu_info *, int, int, int);
 static void ioapic_delroute(struct pic *, struct cpu_info *, int, int, int);
 
-struct ioapic_softc *ioapics;	 /* head of linked list */
-int nioapics = 0;	   	 /* number attached */
+struct ioapic_softc *ioapics;	/* head of linked list */
+int nioapics = 0;		/* number attached */
 static int ioapic_vecbase;
 
 static inline u_long
@@ -422,7 +422,7 @@ apic_set_redir(struct ioapic_softc *sc, int pin, int idt_vec,
 
 	if (delmode == IOAPIC_REDLO_DEL_FIXED ||
 	    delmode == IOAPIC_REDLO_DEL_LOPRI) {
-	    	if (pp->ip_type == IST_NONE) {
+		if (pp->ip_type == IST_NONE) {
 			redlo |= IOAPIC_REDLO_MASK;
 		} else {
 			redhi = (ci->ci_cpuid << IOAPIC_REDHI_DEST_SHIFT);

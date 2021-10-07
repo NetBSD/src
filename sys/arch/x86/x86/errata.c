@@ -1,4 +1,4 @@
-/*	$NetBSD: errata.c,v 1.26 2019/05/18 07:49:31 maxv Exp $	*/
+/*	$NetBSD: errata.c,v 1.27 2021/10/07 12:52:27 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: errata.c,v 1.26 2019/05/18 07:49:31 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: errata.c,v 1.27 2021/10/07 12:52:27 msaitoh Exp $");
 
 #include <sys/types.h>
 #include <sys/systm.h>
@@ -127,7 +127,7 @@ static const uint8_t x86_errata_set7[] = {
 static const uint8_t x86_errata_set8[] = {
 	BH_E4, CH_CG, CH_CG, CH_D0, CH_D0, DH_CG, DH_CG, DH_CG,
 	DH_D0, DH_D0, DH_E3, DH_E3, DH_E6, DH_E6, JH_E1, JH_E6,
-	JH_E6, SH_B0, SH_B3, SH_C0, SH_C0, SH_CG, SH_CG, SH_CG, 
+	JH_E6, SH_B0, SH_B3, SH_C0, SH_C0, SH_CG, SH_CG, SH_CG,
 	SH_D0, SH_D0, SH_D0, SH_E4, SH_E4, SH_E5, OINK
 };
 
@@ -361,7 +361,7 @@ static errata_t errata[] = {
 	},
 };
 
-static bool 
+static bool
 x86_errata_testmsr(struct cpu_info *ci, errata_t *e)
 {
 	uint64_t val;
@@ -376,7 +376,7 @@ x86_errata_testmsr(struct cpu_info *ci, errata_t *e)
 	return TRUE;
 }
 
-static bool 
+static bool
 x86_errata_setmsr(struct cpu_info *ci, errata_t *e)
 {
 	uint64_t val;

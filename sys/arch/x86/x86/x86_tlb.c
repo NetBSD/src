@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_tlb.c,v 1.18 2020/03/22 00:16:16 ad Exp $	*/
+/*	$NetBSD: x86_tlb.c,v 1.19 2021/10/07 12:52:27 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 2008-2020 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x86_tlb.c,v 1.18 2020/03/22 00:16:16 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x86_tlb.c,v 1.19 2021/10/07 12:52:27 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -99,18 +99,18 @@ typedef struct {
 
 #define	TP_SET_USERPMAP(tp)	((tp)->tp_store[TP_USERPMAP] |= 1)
 #define	TP_SET_GLOBAL(tp)	((tp)->tp_store[TP_GLOBAL] |= 1)
-#define	TP_SET_DONE(tp) \
-do { \
-	uintptr_t v = atomic_load_relaxed(&(tp)->tp_store[TP_DONE]); \
-	atomic_store_relaxed(&(tp)->tp_store[TP_DONE], v | 1); \
-} while (/* CONSTCOND */ 0);
+#define	TP_SET_DONE(tp)							     \
+	do {								     \
+		uintptr_t v = atomic_load_relaxed(&(tp)->tp_store[TP_DONE]); \
+		atomic_store_relaxed(&(tp)->tp_store[TP_DONE], v | 1);	     \
+	} while (/* CONSTCOND */ 0);
 
 #define	TP_CLEAR(tp)		memset(__UNVOLATILE(tp), 0, sizeof(*(tp)));
 
 /*
  * TLB shootdown state.
  */
-static volatile pmap_tlb_packet_t * volatile pmap_tlb_packet __cacheline_aligned;
+static volatile pmap_tlb_packet_t *volatile pmap_tlb_packet __cacheline_aligned;
 static volatile u_int		pmap_tlb_pendcount	__cacheline_aligned;
 static struct evcnt		pmap_tlb_evcnt		__cacheline_aligned;
 
@@ -432,7 +432,7 @@ pmap_tlb_shootnow(void)
 			return;
 		}
 	}
-	
+
 	/*
 	 * Ownership of the global pointer provides serialization of the
 	 * update to the count and the event counter.  With those values

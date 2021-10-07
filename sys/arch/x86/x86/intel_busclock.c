@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_busclock.c,v 1.24 2015/07/02 05:11:50 msaitoh Exp $	*/
+/*	$NetBSD: intel_busclock.c,v 1.25 2021/10/07 12:52:27 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intel_busclock.c,v 1.24 2015/07/02 05:11:50 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intel_busclock.c,v 1.25 2021/10/07 12:52:27 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -95,7 +95,7 @@ p3_get_bus_clock(struct cpu_info *ci)
 	uint32_t model;
 
 	model = CPUID_TO_MODEL(ci->ci_signature);
-		
+
 	switch (model) {
 	case 0x9: /* Pentium M (130 nm, Banias) */
 		bus_clock = 10000;

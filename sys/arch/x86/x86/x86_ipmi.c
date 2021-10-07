@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_ipmi.c,v 1.2 2021/07/21 23:16:09 jmcneill Exp $ */
+/*	$NetBSD: x86_ipmi.c,v 1.3 2021/10/07 12:52:27 msaitoh Exp $ */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x86_ipmi.c,v 1.2 2021/07/21 23:16:09 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x86_ipmi.c,v 1.3 2021/10/07 12:52:27 msaitoh Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -145,11 +145,11 @@ ipmi_smbios_probe(struct smbios_ipmi *pipmi, struct ipmi_attach_args *ia)
 	if (platform != NULL &&
 	    strcmp(platform, "ProLiant MicroServer") == 0 &&
 	    pipmi->smipmi_base_address != 0) {
-                ia->iaa_if_iospacing = 1;
-                ia->iaa_if_iobase = pipmi->smipmi_base_address & ~0x7;
-                ia->iaa_if_iotype = 'i';
-                return;
-        }
+		ia->iaa_if_iospacing = 1;
+		ia->iaa_if_iobase = pipmi->smipmi_base_address & ~0x7;
+		ia->iaa_if_iotype = 'i';
+		return;
+	}
 
 	if (pipmi->smipmi_base_flags == 0x7f) {
 		/* IBM 325 eServer workaround */
@@ -169,12 +169,12 @@ scan_sig(long start, long end, int skip, int len, const void *data)
 	while (start < end) {
 		va = ISA_HOLE_VADDR(start);
 		if (memcmp(va, data, len) == 0)
-			return (va);
-			       
+			return va;
+
 		start += skip;
-	}		  
- 
-	return (NULL);
+	}
+
+	return NULL;
 }
 
 int

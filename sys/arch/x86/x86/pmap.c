@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.411 2021/08/02 12:56:23 andvar Exp $	*/
+/*	$NetBSD: pmap.c,v 1.412 2021/10/07 12:52:27 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2008, 2010, 2016, 2017, 2019, 2020 The NetBSD Foundation, Inc.
@@ -130,7 +130,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.411 2021/08/02 12:56:23 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.412 2021/10/07 12:52:27 msaitoh Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -232,7 +232,7 @@ __KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.411 2021/08/02 12:56:23 andvar Exp $");
  *
  * pg->uobject->vmobjlock, pg->uanon->an_lock
  *
- * 	For managed pages, these per-object locks are taken by the VM system
+ *	For managed pages, these per-object locks are taken by the VM system
  *	before calling into the pmap module - either a read or write hold.
  *	The lock hold prevent pages from changing identity while the pmap is
  *	operating on them.  For example, the same lock is held across a call
@@ -2887,7 +2887,7 @@ pmap_create(void)
 	pmap->pm_ldt = NULL;
 	pmap->pm_ldt_sel = GSYSSEL(GLDT_SEL, SEL_KPL);
 
-	return (pmap);
+	return pmap;
 }
 
 /*
@@ -3285,10 +3285,10 @@ retry:
 		mutex_enter(&cpu_lock);
 	}
 
- 	/*
+	/*
 	 * Now that we have cpu_lock, ensure the LDT status is the same.
 	 */
- 	if (pmap1->pm_ldt != NULL) {
+	if (pmap1->pm_ldt != NULL) {
 		if (new_ldt == NULL) {
 			/* A wild LDT just appeared. */
 			mutex_exit(&cpu_lock);
@@ -3434,7 +3434,7 @@ pmap_activate(struct lwp *l)
 #define	KASSERT_PDIRPA(pmap) \
 	KASSERT(pmap_pdirpa(pmap, 0) == pmap_pte2pa(rcr3()))
 #else
-#define	KASSERT_PDIRPA(pmap) 	KASSERT(true)	/* nothing to do */
+#define	KASSERT_PDIRPA(pmap)	KASSERT(true)	/* nothing to do */
 #endif
 
 /*
@@ -4145,7 +4145,7 @@ pmap_remove_locked(struct pmap *pmap, vaddr_t sva, vaddr_t eva)
 		if (!pmap_pdes_valid(va, pdes, &pde, &lvl)) {
 			/* Skip a range corresponding to an invalid pde. */
 			blkendva = (va & ptp_frames[lvl - 1]) + nbpd[lvl - 1];
- 			continue;
+			continue;
 		}
 		KASSERT(lvl == 1);
 
@@ -4323,7 +4323,7 @@ pmap_pp_remove(struct pmap_page *pp, paddr_t pa)
 	sum |= (uintptr_t)atomic_load_relaxed(&pp->pp_pte.pte_ptp);
 	sum |= (uintptr_t)atomic_load_relaxed(&pp->pp_pvlist.lh_first);
 	if (sum == 0) {
-	    	return;
+		return;
 	}
 
 	kpreempt_disable();
@@ -4826,7 +4826,7 @@ pmap_enter_ma(struct pmap *pmap, vaddr_t va, paddr_t ma, paddr_t pa,
 	npte = ma | protection_codes[prot] | PTE_P;
 	npte |= pmap_pat_flags(flags);
 	if (wired)
-	        npte |= PTE_WIRED;
+		npte |= PTE_WIRED;
 	if (va < VM_MAXUSER_ADDRESS)
 		npte |= PTE_U;
 
@@ -4901,9 +4901,9 @@ pmap_enter_ma(struct pmap *pmap, vaddr_t va, paddr_t ma, paddr_t pa,
 	samepage = false;
 	new_embedded = false;
 
-    	if (new_pp != NULL) {
-    		error = pmap_enter_pv(pmap, new_pp, ptp, va, &new_pve,
-    		    &old_pve, &samepage, &new_embedded, tree);
+	if (new_pp != NULL) {
+		error = pmap_enter_pv(pmap, new_pp, ptp, va, &new_pve,
+		    &old_pve, &samepage, &new_embedded, tree);
 
 		/*
 		 * If a new pv_entry was needed and none was available, we
@@ -6155,9 +6155,9 @@ pmap_ept_enter(struct pmap *pmap, vaddr_t va, paddr_t pa, vm_prot_t prot,
 	samepage = false;
 	new_embedded = false;
 
-    	if (new_pp != NULL) {
-    		error = pmap_enter_pv(pmap, new_pp, ptp, va, &new_pve,
-    		    &old_pve, &samepage, &new_embedded, tree);
+	if (new_pp != NULL) {
+		error = pmap_enter_pv(pmap, new_pp, ptp, va, &new_pve,
+		    &old_pve, &samepage, &new_embedded, tree);
 
 		/*
 		 * If a new pv_entry was needed and none was available, we
@@ -6482,7 +6482,7 @@ pmap_ept_remove(struct pmap *pmap, vaddr_t sva, vaddr_t eva)
 		if (lvl != 0) {
 			/* Skip a range corresponding to an invalid pde. */
 			blkendva = (va & ptp_frames[lvl - 1]) + nbpd[lvl - 1];
- 			continue;
+			continue;
 		}
 
 		/* PA of the PTP */
