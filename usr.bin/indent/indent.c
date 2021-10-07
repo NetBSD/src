@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.c,v 1.113 2021/10/07 19:35:50 rillig Exp $	*/
+/*	$NetBSD: indent.c,v 1.114 2021/10/07 19:42:41 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)indent.c	5.17 (Berkeley) 6/7/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: indent.c,v 1.113 2021/10/07 19:35:50 rillig Exp $");
+__RCSID("$NetBSD: indent.c,v 1.114 2021/10/07 19:42:41 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/indent.c 340138 2018-11-04 19:24:49Z oshogbo $");
 #endif
@@ -476,7 +476,7 @@ main_parse_command_line(int argc, char **argv)
 
     for (i = 1; i < argc; ++i) {
 	if (argv[i][0] == '-') {
-	    set_option(argv[i]);
+	    set_option(argv[i], "Command line");
 
 	} else if (input == NULL) {
 	    in_name = argv[i];
