@@ -1,4 +1,4 @@
-/*	$NetBSD: args.c,v 1.49 2021/10/07 19:42:41 rillig Exp $	*/
+/*	$NetBSD: args.c,v 1.50 2021/10/07 21:41:59 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,15 +43,12 @@ static char sccsid[] = "@(#)args.c	8.1 (Berkeley) 6/6/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: args.c,v 1.49 2021/10/07 19:42:41 rillig Exp $");
+__RCSID("$NetBSD: args.c,v 1.50 2021/10/07 21:41:59 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/args.c 336318 2018-07-15 21:04:21Z pstef $");
 #endif
 
-/*
- * Argument scanning and profile reading code.  Default parameters are set
- * here as well.
- */
+/* Read options from profile files and from the command line. */
 
 #include <ctype.h>
 #include <err.h>
