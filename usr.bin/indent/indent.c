@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.c,v 1.122 2021/10/07 22:56:49 rillig Exp $	*/
+/*	$NetBSD: indent.c,v 1.123 2021/10/07 23:01:32 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)indent.c	5.17 (Berkeley) 6/7/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: indent.c,v 1.122 2021/10/07 22:56:49 rillig Exp $");
+__RCSID("$NetBSD: indent.c,v 1.123 2021/10/07 23:01:32 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/indent.c 340138 2018-11-04 19:24:49Z oshogbo $");
 #endif
@@ -366,12 +366,13 @@ search_brace(token_type *ttype, bool *force_nl,
 static void
 buf_init(struct buffer *buf)
 {
-    buf->buf = xmalloc(bufsize);
+    size_t size = 200;
+    buf->buf = xmalloc(size);
     buf->buf[0] = ' ';		/* allow accessing buf->e[-1] */
     buf->buf[1] = '\0';
     buf->s = buf->buf + 1;
     buf->e = buf->s;
-    buf->l = buf->buf + bufsize - 5;	/* safety margin, though unreliable */
+    buf->l = buf->buf + size - 5;	/* safety margin */
 }
 
 static size_t
