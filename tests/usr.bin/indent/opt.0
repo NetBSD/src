@@ -1,0 +1,12 @@
+/* $NetBSD: opt.0,v 1.1 2021/10/07 18:07:25 rillig Exp $ */
+/* $FreeBSD$ */
+
+/*
+ * Test parsing of command line options from a profile file.
+ */
+
+int global_var;
+
+int function(int expr) {
+switch (expr) { case 1: return 1; default: return 0; }
+}

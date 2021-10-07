@@ -1,0 +1,24 @@
+/* $NetBSD: opt.0.stdout,v 1.1 2021/10/07 18:07:25 rillig Exp $ */
+/* $FreeBSD$ */
+
+/*
+ * Test parsing of command line options from a profile file.
+ */
+
+/* $ The variable name is indented by 12 characters due to -di12. */
+int	    global_var;
+
+int
+function(int expr)
+{
+   switch (expr) {
+/* $ The indentation is 3 + (int)(3.5 * 3), so 3 + 10.5, so 13. */
+/* $ See parse.c, function parse, 'case switch_expr'. */
+	     case 1:
+/* $ The indentation is 3 + (int)3.5 * 3 + 3, so 3 + 9 + 3, so 15. */
+/* $ See parse.c, function parse, 'case switch_expr'. */
+	       return 1;
+	     default:
+	       return 0;
+   }
+}
