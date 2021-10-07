@@ -1,4 +1,4 @@
-/*	$NetBSD: pr_comment.c,v 1.54 2021/10/07 21:38:25 rillig Exp $	*/
+/*	$NetBSD: pr_comment.c,v 1.55 2021/10/07 21:43:20 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)pr_comment.c	8.1 (Berkeley) 6/6/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: pr_comment.c,v 1.54 2021/10/07 21:38:25 rillig Exp $");
+__RCSID("$NetBSD: pr_comment.c,v 1.55 2021/10/07 21:43:20 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/pr_comment.c 334927 2018-06-10 16:44:18Z pstef $");
 #endif
@@ -169,9 +169,7 @@ process_comment(void)
     if (*buf_ptr != ' ' && !ps.box_com)
 	*com.e++ = ' ';
 
-    /*
-     * Don't put a break delimiter if this is a one-liner that won't wrap.
-     */
+    /* Don't put a break delimiter if this is a one-liner that won't wrap. */
     if (break_delim)
 	for (t_ptr = buf_ptr; *t_ptr != '\0' && *t_ptr != '\n'; t_ptr++) {
 	    if (t_ptr >= buf_end)
@@ -310,9 +308,7 @@ process_comment(void)
 	    /* XXX: signed character comparison '>' does not work for UTF-8 */
 	    if (now_len > adj_max_line_length &&
 		    !ps.box_com && com.e[-1] > ' ') {
-		/*
-		 * the comment is too long, it must be broken up
-		 */
+		/* the comment is too long, it must be broken up */
 		if (last_blank == -1) {
 		    dump_line();
 		    if (!ps.box_com && opt.star_comment_cont)
