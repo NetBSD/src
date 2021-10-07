@@ -1,4 +1,4 @@
-/*	$NetBSD: io.c,v 1.77 2021/10/07 21:52:54 rillig Exp $	*/
+/*	$NetBSD: io.c,v 1.78 2021/10/07 21:57:21 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)io.c	8.1 (Berkeley) 6/6/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: io.c,v 1.77 2021/10/07 21:52:54 rillig Exp $");
+__RCSID("$NetBSD: io.c,v 1.78 2021/10/07 21:57:21 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/io.c 334927 2018-06-10 16:44:18Z pstef $");
 #endif
@@ -296,13 +296,13 @@ compute_code_indent(void)
     int target_ind = opt.indent_size * ps.ind_level;
 
     if (ps.paren_level != 0) {
-	if (!opt.lineup_to_parens)
+	if (!opt.lineup_to_parens) {
 	    if (2 * opt.continuation_indent == opt.indent_size)
 		target_ind += opt.continuation_indent;
 	    else
 		target_ind += opt.continuation_indent * ps.paren_level;
 
-	else if (opt.lineup_to_parens_always)
+	} else if (opt.lineup_to_parens_always) {
 	    /*
 	     * XXX: where does this '- 1' come from?  It looks strange but is
 	     * nevertheless needed for proper indentation, as demonstrated in
@@ -310,7 +310,7 @@ compute_code_indent(void)
 	     */
 	    target_ind = paren_indent - 1;
 
-	else {
+	} else {
 	    int w;
 	    int t = paren_indent;
 
