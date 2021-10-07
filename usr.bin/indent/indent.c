@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.c,v 1.124 2021/10/07 23:15:15 rillig Exp $	*/
+/*	$NetBSD: indent.c,v 1.125 2021/10/07 23:18:47 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)indent.c	5.17 (Berkeley) 6/7/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: indent.c,v 1.124 2021/10/07 23:15:15 rillig Exp $");
+__RCSID("$NetBSD: indent.c,v 1.125 2021/10/07 23:18:47 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/indent.c 340138 2018-11-04 19:24:49Z oshogbo $");
 #endif
@@ -98,8 +98,8 @@ char sc_buf[sc_size];
 char *save_com;
 static char *sc_end;		/* pointer into save_com buffer */
 
-char *bp_save;
-char *be_save;
+char *saved_inp_s;
+char *saved_inp_e;
 
 bool found_err;
 int next_blank_lines;
@@ -276,8 +276,8 @@ static void
 switch_buffer(void)
 {
     ps.search_brace = false;	/* stop looking for start of stmt */
-    bp_save = inp.s;		/* save current input buffer */
-    be_save = inp.e;
+    saved_inp_s = inp.s;		/* save current input buffer */
+    saved_inp_e = inp.e;
     inp.s = save_com;		/* fix so that subsequent calls to lexi will
 				 * take tokens out of save_com */
     *sc_end++ = ' ';		/* add trailing blank, just in case */
@@ -451,8 +451,8 @@ main_init_globals(void)
     ps.is_case_label = false;
 
     sc_end = NULL;
-    bp_save = NULL;
-    be_save = NULL;
+    saved_inp_s = NULL;
+    saved_inp_e = NULL;
 
     output = NULL;
 
@@ -1163,7 +1163,7 @@ read_preprocessing_line(void)
 
     while (lab.e > lab.s && is_hspace(lab.e[-1]))
 	lab.e--;
-    if (lab.e - lab.s == com_end && bp_save == NULL) {
+    if (lab.e - lab.s == com_end && saved_inp_s == NULL) {
 	/* comment on preprocessor line */
 	if (sc_end == NULL) {	/* if this is the first comment, we must set
 				 * up the buffer */
@@ -1181,8 +1181,8 @@ read_preprocessing_line(void)
 	lab.e = lab.s + com_start;
 	while (lab.e > lab.s && is_hspace(lab.e[-1]))
 	    lab.e--;
-	bp_save = inp.s;	/* save current input buffer */
-	be_save = inp.e;
+	saved_inp_s = inp.s;	/* save current input buffer */
+	saved_inp_e = inp.e;
 	inp.s = save_com;	/* fix so that subsequent calls to lexi will
 				 * take tokens out of save_com */
 	*sc_end++ = ' ';	/* add trailing blank, just in case */

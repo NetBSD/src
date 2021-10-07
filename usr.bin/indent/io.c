@@ -1,4 +1,4 @@
-/*	$NetBSD: io.c,v 1.79 2021/10/07 23:15:15 rillig Exp $	*/
+/*	$NetBSD: io.c,v 1.80 2021/10/07 23:18:47 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)io.c	8.1 (Berkeley) 6/6/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: io.c,v 1.79 2021/10/07 23:15:15 rillig Exp $");
+__RCSID("$NetBSD: io.c,v 1.80 2021/10/07 23:18:47 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/io.c 334927 2018-06-10 16:44:18Z pstef $");
 #endif
@@ -410,11 +410,11 @@ fill_buffer(void)
     int ch;
     FILE *f = input;
 
-    if (bp_save != NULL) {	/* there is a partly filled input buffer left */
-	inp.s = bp_save;	/* do not read anything, just switch buffers */
-	inp.e = be_save;
-	bp_save = be_save = NULL;
-	debug_println("switched inp.s back to bp_save");
+    if (saved_inp_s != NULL) {	/* there is a partly filled input buffer left */
+	inp.s = saved_inp_s;	/* do not read anything, just switch buffers */
+	inp.e = saved_inp_e;
+	saved_inp_s = saved_inp_e = NULL;
+	debug_println("switched inp.s back to saved_inp_s");
 	if (inp.s < inp.e)
 	    return;		/* only return if there is really something in
 				 * this buffer */
