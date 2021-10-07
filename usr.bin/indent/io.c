@@ -1,4 +1,4 @@
-/*	$NetBSD: io.c,v 1.78 2021/10/07 21:57:21 rillig Exp $	*/
+/*	$NetBSD: io.c,v 1.79 2021/10/07 23:15:15 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)io.c	8.1 (Berkeley) 6/6/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: io.c,v 1.78 2021/10/07 21:57:21 rillig Exp $");
+__RCSID("$NetBSD: io.c,v 1.79 2021/10/07 23:15:15 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/io.c 334927 2018-06-10 16:44:18Z pstef $");
 #endif
@@ -362,7 +362,7 @@ parse_indent_comment(void)
 {
     bool on_off;
 
-    const char *p = in_buffer;
+    const char *p = inp.buf;
 
     skip_hspace(&p);
     if (!skip_string(&p, "/*"))
@@ -411,22 +411,22 @@ fill_buffer(void)
     FILE *f = input;
 
     if (bp_save != NULL) {	/* there is a partly filled input buffer left */
-	buf_ptr = bp_save;	/* do not read anything, just switch buffers */
-	buf_end = be_save;
+	inp.s = bp_save;	/* do not read anything, just switch buffers */
+	inp.e = be_save;
 	bp_save = be_save = NULL;
-	debug_println("switched buf_ptr back to bp_save");
-	if (buf_ptr < buf_end)
+	debug_println("switched inp.s back to bp_save");
+	if (inp.s < inp.e)
 	    return;		/* only return if there is really something in
 				 * this buffer */
     }
 
-    for (p = in_buffer;;) {
-	if (p >= in_buffer_limit) {
-	    size_t size = (size_t)(in_buffer_limit - in_buffer) * 2 + 10;
-	    size_t offset = (size_t)(p - in_buffer);
-	    in_buffer = xrealloc(in_buffer, size);
-	    p = in_buffer + offset;
-	    in_buffer_limit = in_buffer + size - 2;
+    for (p = inp.buf;;) {
+	if (p >= inp.l) {
+	    size_t size = (size_t)(inp.l - inp.buf) * 2 + 10;
+	    size_t offset = (size_t)(p - inp.buf);
+	    inp.buf = xrealloc(inp.buf, size);
+	    p = inp.buf + offset;
+	    inp.l = inp.buf + size - 2;
 	}
 
 	if ((ch = getc(f)) == EOF) {
@@ -442,18 +442,18 @@ fill_buffer(void)
 	    break;
     }
 
-    buf_ptr = in_buffer;
-    buf_end = p;
+    inp.s = inp.buf;
+    inp.e = p;
 
-    if (p - in_buffer > 2 && p[-2] == '/' && p[-3] == '*') {
-	if (in_buffer[3] == 'I' && strncmp(in_buffer, "/**INDENT**", 11) == 0)
+    if (p - inp.buf > 2 && p[-2] == '/' && p[-3] == '*') {
+	if (inp.buf[3] == 'I' && strncmp(inp.buf, "/**INDENT**", 11) == 0)
 	    fill_buffer();	/* flush indent error message */
 	else
 	    parse_indent_comment();
     }
 
     if (inhibit_formatting) {
-	p = in_buffer;
+	p = inp.buf;
 	do {
 	    output_char(*p);
 	} while (*p++ != '\n');
