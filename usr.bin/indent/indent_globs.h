@@ -1,4 +1,4 @@
-/*	$NetBSD: indent_globs.h,v 1.42 2021/10/05 18:50:42 rillig Exp $	*/
+/*	$NetBSD: indent_globs.h,v 1.43 2021/10/07 19:35:50 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -240,9 +240,8 @@ extern struct parser_state {
     short       paren_indents[20]; /* indentation of the operand/argument of
 				 * each level of parentheses or brackets,
 				 * relative to the enclosing statement */
-    bool	pcase;		/* whether the current line label is a
-				 * case.  It is printed differently from a
-				 * regular label */
+    bool	is_case_label;	/* 'case' and 'default' labels are indented
+				 * differently from regular labels */
     bool	search_brace;	/* whether it is necessary
 				 * to buffer up all info up to the start of a
 				 * stmt after an if, while, etc */
