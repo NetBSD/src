@@ -1,4 +1,4 @@
-/*	$NetBSD: lexi.c,v 1.76 2021/10/07 21:57:21 rillig Exp $	*/
+/*	$NetBSD: lexi.c,v 1.77 2021/10/07 22:52:13 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)lexi.c	8.1 (Berkeley) 6/6/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: lexi.c,v 1.76 2021/10/07 21:57:21 rillig Exp $");
+__RCSID("$NetBSD: lexi.c,v 1.77 2021/10/07 22:52:13 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/lexi.c 337862 2018-08-15 18:19:45Z pstef $");
 #endif
@@ -478,8 +478,7 @@ lexi(struct parser_state *state)
 	if (*buf_ptr == '(' && state->tos <= 1 && state->ind_level == 0 &&
 	    !state->in_parameter_declaration && !state->block_init) {
 
-	    char *tp = buf_ptr;
-	    while (tp < buf_end)
+	    for (char *tp = buf_ptr; tp < buf_end;)
 		if (*tp++ == ')' && (*tp == ';' || *tp == ','))
 		    goto not_proc;
 
@@ -614,14 +613,12 @@ lexi(struct parser_state *state)
 	if (state->in_or_st)
 	    state->block_init = true;
 	if (*buf_ptr == '=') {	/* == */
-	    *token.e++ = '=';	/* Flip =+ to += */
-	    buf_ptr++;
+	    *token.e++ = *buf_ptr++;
 	    *token.e = '\0';
 	}
 	ttype = binary_op;
 	unary_delim = true;
 	break;
-	/* can drop thru!!! */
 
     case '>':
     case '<':
