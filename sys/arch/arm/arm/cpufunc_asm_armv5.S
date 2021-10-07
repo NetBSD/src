@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc_asm_armv5.S,v 1.7 2014/03/30 01:15:03 matt Exp $	*/
+/*	$NetBSD: cpufunc_asm_armv5.S,v 1.8 2021/10/07 09:57:27 rin Exp $	*/
 
 /*
  * Copyright (c) 2002, 2005 ARM Limited
@@ -32,7 +32,7 @@
  * These routines can be used by any core that supports the set/index
  * operations.
  */
- 
+
 #include "assym.h"
 #include <machine/asm.h>
 #include <arm/locore.h>
@@ -130,7 +130,7 @@ ENTRY(armv5_dcache_wb_range)
 	bpl	1b
 	mcr	p15, 0, r0, c7, c10, 4	/* drain the write buffer */
 	RET
-	
+
 ENTRY(armv5_dcache_wbinv_range)
 	ldr	ip, .Larmv5_line_size
 	cmp	r1, #0x4000
@@ -148,7 +148,7 @@ ENTRY(armv5_dcache_wbinv_range)
 	bpl	1b
 	mcr	p15, 0, r0, c7, c10, 4	/* drain the write buffer */
 	RET
-	
+
 /*
  * Note, we must not invalidate everything.  If the range is too big we
  * must use wb-inv of the entire cache.
