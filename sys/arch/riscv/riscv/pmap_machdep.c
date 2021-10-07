@@ -1,4 +1,4 @@
-/* $NetBSD: pmap_machdep.c,v 1.8 2021/10/02 14:28:05 skrll Exp $ */
+/* $NetBSD: pmap_machdep.c,v 1.9 2021/10/07 07:13:35 skrll Exp $ */
 
 /*
  * Copyright (c) 2014, 2019, 2021 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 
-__RCSID("$NetBSD: pmap_machdep.c,v 1.8 2021/10/02 14:28:05 skrll Exp $");
+__RCSID("$NetBSD: pmap_machdep.c,v 1.9 2021/10/07 07:13:35 skrll Exp $");
 
 #include <sys/param.h>
 
@@ -57,21 +57,29 @@ pmap_bootstrap(void)
 void
 pmap_zero_page(paddr_t pa)
 {
+#ifdef _LP64
 #ifdef PMAP_DIRECT_MAP
 	memset((void *)PMAP_DIRECT_MAP(pa), 0, PAGE_SIZE);
 #else
 #error "no direct map"
+#endif
+#else
+	KASSERT(false);
 #endif
 }
 
 void
 pmap_copy_page(paddr_t src, paddr_t dst)
 {
+#ifdef _LP64
 #ifdef PMAP_DIRECT_MAP
 	memcpy((void *)PMAP_DIRECT_MAP(dst), (const void *)PMAP_DIRECT_MAP(src),
 	    PAGE_SIZE);
 #else
 #error "no direct map"
+#endif
+#else
+	KASSERT(false);
 #endif
 }
 
@@ -113,9 +121,14 @@ paddr_t
 pmap_md_direct_mapped_vaddr_to_paddr(vaddr_t va)
 {
 #ifdef _LP64
+#ifdef PMAP_DIRECT_MAP
 	return PMAP_DIRECT_UNMAP(va);
 #else
 #error "no direct map"
+#endif
+#else
+	KASSERT(false);
+	return 0;
 #endif
 }
 

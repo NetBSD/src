@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.15 2020/12/20 16:38:26 skrll Exp $	*/
+/*	$NetBSD: trap.c,v 1.16 2021/10/07 07:13:35 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
 #define __PMAP_PRIVATE
 #define __UFETCHSTORE_PRIVATE
 
-__RCSID("$NetBSD: trap.c,v 1.15 2020/12/20 16:38:26 skrll Exp $");
+__RCSID("$NetBSD: trap.c,v 1.16 2021/10/07 07:13:35 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -379,6 +379,7 @@ cpu_trap(struct trapframe *tf, register_t epc, register_t status,
 
 	if (__predict_true(fault_mask & FAULT_TRAP_MASK)) {
 #ifndef _LP64
+#if 0
 		// This fault may be cause the kernel's page table got a new
 		// page table page and this pmap's page table doesn't know
 		// about it.  See
@@ -388,6 +389,7 @@ cpu_trap(struct trapframe *tf, register_t epc, register_t status,
 		    && pmap_pdetab_fixup(pmap, addr)) {
 			return;
 		}
+#endif
 #endif
 		ok = trap_pagefault(tf, epc, status, cause, addr,
 		    usertrap_p, &ksi);

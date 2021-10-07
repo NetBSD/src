@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.2 2020/03/14 16:12:16 skrll Exp $	*/
+/*	$NetBSD: syscall.c,v 1.3 2021/10/07 07:13:35 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.2 2020/03/14 16:12:16 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.3 2021/10/07 07:13:35 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -81,7 +81,6 @@ EMULNAME(syscall)(struct trapframe *tf)
 	register_t retval[2];
 	const struct sysent *callp;
 	int code, error;
-	size_t i;
 #ifdef _LP64
 	const bool pk32_p = (p->p_flag & PK_32) != 0;
 	register_t copyargs[EMULNAME(SYS_MAXSYSARGS)];
@@ -110,8 +109,8 @@ EMULNAME(syscall)(struct trapframe *tf)
 	else
 		callp += code;
 
-	const size_t nargs = callp->sy_narg;
 #ifdef _LP64
+	const size_t nargs = callp->sy_narg;
 	/*
 	 * If there are no 64bit arguments, we still need "sanitize" the
 	 * 32-bit arguments in case they try to slip through a 64-bit pointer.
@@ -141,7 +140,7 @@ EMULNAME(syscall)(struct trapframe *tf)
 		 * encounter a 64 bit argument, we grab two adjacent 32bit
 		 * values and synthesize the 64bit argument.
 		 */
-		for (i = 0; i < nargs + narg64; ) {
+		for (size_t i = 0; i < nargs + narg64; ) {
 			register_t arg = *args32++;
 			if (__predict_true((arg64mask & 1) == 0)) {
 				/*
