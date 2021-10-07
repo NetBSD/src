@@ -1,4 +1,4 @@
-/*	$NetBSD: pr_comment.c,v 1.53 2021/10/05 19:58:38 rillig Exp $	*/
+/*	$NetBSD: pr_comment.c,v 1.54 2021/10/07 21:38:25 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)pr_comment.c	8.1 (Berkeley) 6/6/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: pr_comment.c,v 1.53 2021/10/05 19:58:38 rillig Exp $");
+__RCSID("$NetBSD: pr_comment.c,v 1.54 2021/10/07 21:38:25 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/pr_comment.c 334927 2018-06-10 16:44:18Z pstef $");
 #endif
@@ -211,7 +211,6 @@ process_comment(void)
 	    check_size_comment(3);
 	    if (!ps.box_com) {	/* in a text comment, break the line here */
 		ps.use_ff = true;
-		/* fix so dump_line uses a form feed */
 		dump_line();
 		last_blank = -1;
 		if (!ps.box_com && opt.star_comment_cont)
@@ -230,7 +229,7 @@ process_comment(void)
 		++line_no;
 		goto end_of_comment;
 	    }
-	    if (had_eof) {	/* check for unexpected eof */
+	    if (had_eof) {
 		printf("Unterminated comment\n");
 		dump_line();
 		return;
@@ -255,7 +254,7 @@ process_comment(void)
 		    *com.e++ = ' ';
 		last_blank = com.e - 1 - com.buf;
 	    }
-	    ++line_no;		/* keep track of input line number */
+	    ++line_no;
 	    if (!ps.box_com) {
 		int asterisks_to_skip = 1;
 		do {		/* flush any blanks and/or tabs at start of
@@ -274,7 +273,7 @@ process_comment(void)
 	case '*':
 	    inbuf_skip();
 	    check_size_comment(4);
-	    if (*buf_ptr == '/') {	/* end of the comment */
+	    if (*buf_ptr == '/') {
 	end_of_comment:
 		inbuf_skip();
 		if (break_delim) {
