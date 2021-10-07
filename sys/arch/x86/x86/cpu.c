@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.201 2021/08/07 16:19:08 thorpej Exp $	*/
+/*	$NetBSD: cpu.c,v 1.202 2021/10/07 12:52:27 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2000-2020 NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.201 2021/08/07 16:19:08 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.202 2021/10/07 12:52:27 msaitoh Exp $");
 
 #include "opt_ddb.h"
 #include "opt_mpbios.h"		/* for MPDEBUG */
@@ -1341,7 +1341,7 @@ cpu_get_tsc_freq(struct cpu_info *ci)
 #endif
 		if (freq == 0) {
 			/*
-			 * Work out the approximate overhead involved below. 
+			 * Work out the approximate overhead involved below.
 			 * Discard the result of the first go around the
 			 * loop.
 			 */

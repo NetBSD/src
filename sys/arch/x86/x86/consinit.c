@@ -1,4 +1,4 @@
-/*	$NetBSD: consinit.c,v 1.33 2020/05/02 16:44:36 bouyer Exp $	*/
+/*	$NetBSD: consinit.c,v 1.34 2021/10/07 12:52:27 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1998
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: consinit.c,v 1.33 2020/05/02 16:44:36 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: consinit.c,v 1.34 2021/10/07 12:52:27 msaitoh Exp $");
 
 #include "opt_kgdb.h"
 #include "opt_puc.h"
@@ -277,7 +277,7 @@ void
 kgdb_port_init(void)
 {
 #if (NCOM > 0)
-	if(!strcmp(kgdb_devname, "com")) {
+	if (!strcmp(kgdb_devname, "com")) {
 		com_kgdb_attach(x86_bus_space_io, comkgdbaddr, comkgdbrate,
 		    COM_FREQ, COM_TYPE_NORMAL, comkgdbmode);
 	}

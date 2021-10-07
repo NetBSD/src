@@ -1,4 +1,4 @@
-/*	$NetBSD: svs.c,v 1.39 2020/07/19 07:35:08 maxv Exp $	*/
+/*	$NetBSD: svs.c,v 1.40 2021/10/07 12:52:27 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2018-2020 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svs.c,v 1.39 2020/07/19 07:35:08 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svs.c,v 1.40 2021/10/07 12:52:27 msaitoh Exp $");
 
 #include "opt_svs.h"
 #include "opt_user_ldt.h"
@@ -60,7 +60,7 @@ __KERNEL_RCSID(0, "$NetBSD: svs.c,v 1.39 2020/07/19 07:35:08 maxv Exp $");
  * entries containing the userland pages.
  *
  * ~~~~~~~~~~ The UTLS Page ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
- * 
+ *
  * We use a special per-cpu page that we call UTLS, for User Thread Local
  * Storage. Each CPU has one UTLS page. This page has two VAs:
  *
@@ -138,7 +138,7 @@ __KERNEL_RCSID(0, "$NetBSD: svs.c,v 1.39 2020/07/19 07:35:08 maxv Exp $");
  * During a context switch, svs_lwp_switch() gets called first. This function
  * does the kenter job described above, not in the kernel page tables (that
  * are currently loaded), but in the user page tables (that are not loaded).
- * 
+ *
  *           VIRTUAL ADDRESSES                     PHYSICAL ADDRESSES
  *
  * +-----------------------------+

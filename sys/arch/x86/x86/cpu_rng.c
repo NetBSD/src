@@ -1,4 +1,4 @@
-/* $NetBSD: cpu_rng.c,v 1.19 2020/07/30 17:26:23 riastradh Exp $ */
+/* $NetBSD: cpu_rng.c,v 1.20 2021/10/07 12:52:27 msaitoh Exp $ */
 
 /*-
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -154,7 +154,7 @@ cpu_rng_rdseed(uint64_t *out)
 	uint32_t lo, hi;
 
 	__asm __volatile("rdseed %0; setc %1" : "=r"(lo), "=qm"(rndsts));
-        if (rndsts != 1)
+	if (rndsts != 1)
 		return 0;
 	__asm __volatile("rdseed %0; setc %1" : "=r"(hi), "=qm"(rndsts));
 	if (rndsts != 1)
