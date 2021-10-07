@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space.c,v 1.45 2020/04/25 15:26:18 bouyer Exp $	*/
+/*	$NetBSD: bus_space.c,v 1.46 2021/10/07 12:52:27 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.45 2020/04/25 15:26:18 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.46 2021/10/07 12:52:27 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -57,7 +57,7 @@ __KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.45 2020/04/25 15:26:18 bouyer Exp $"
  * could lead to performance improvements, and help catch problems
  * with drivers that would creep up on other architectures.
  */
-#ifdef BUS_SPACE_DEBUG 
+#ifdef BUS_SPACE_DEBUG
 #define	BUS_SPACE_ALIGNED_ADDRESS(p, t)				\
 	((((u_long)(p)) & (sizeof(t)-1)) == 0)
 

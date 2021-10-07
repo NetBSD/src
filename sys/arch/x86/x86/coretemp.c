@@ -1,4 +1,4 @@
-/* $NetBSD: coretemp.c,v 1.37 2020/03/27 09:47:03 msaitoh Exp $ */
+/* $NetBSD: coretemp.c,v 1.38 2021/10/07 12:52:27 msaitoh Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: coretemp.c,v 1.37 2020/03/27 09:47:03 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: coretemp.c,v 1.38 2021/10/07 12:52:27 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -334,7 +334,7 @@ coretemp_refresh(struct sysmon_envsys *sme, envsys_data_t *edata)
 static void
 coretemp_refresh_xcall(void *arg0, void *arg1)
 {
-        struct coretemp_softc *sc = arg0;
+	struct coretemp_softc *sc = arg0;
 	envsys_data_t *edata = arg1;
 	uint64_t msr;
 

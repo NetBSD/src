@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_autoconf.c,v 1.84 2020/07/09 22:45:54 jdolecek Exp $	*/
+/*	$NetBSD: x86_autoconf.c,v 1.85 2021/10/07 12:52:27 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x86_autoconf.c,v 1.84 2020/07/09 22:45:54 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x86_autoconf.c,v 1.85 2021/10/07 12:52:27 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -95,8 +95,8 @@ is_valid_disk(device_t dv)
 {
 
 	if (device_class(dv) != DV_DISK)
-		return (0);
-	
+		return 0;
+
 	return (device_is_a(dv, "dk") ||
 		device_is_a(dv, "sd") ||
 		device_is_a(dv, "wd") ||
@@ -292,7 +292,7 @@ match_bootdisk(device_t dv, struct btinfo_bootdisk *bid)
 		DPRINTF(("%s: no label %s\n", __func__, device_xname(dv)));
 		return 0;
 	}
-	
+
 	if ((tmpvn = opendisk(dv)) == NULL) {
 		DPRINTF(("%s: can't open %s\n", __func__, device_xname(dv)));
 		return 0;
@@ -319,7 +319,7 @@ match_bootdisk(device_t dv, struct btinfo_bootdisk *bid)
  closeout:
 	VOP_CLOSE(tmpvn, FREAD, NOCRED);
 	vput(tmpvn);
-	return (found);
+	return found;
 }
 
 /*
@@ -340,7 +340,7 @@ findroot(void)
 
 	if (booted_device)
 		return;
-	
+
 	if (lookup_bootinfo(BTINFO_NETIF) != NULL) {
 		/*
 		 * We got netboot interface information, but device_register()
@@ -409,7 +409,7 @@ findroot(void)
 				 */
 				if ((biw->biosdev & 0x80) == 0 ||
 				    match_bootwedge(dv, biw) == 0)
-				    	continue;
+					continue;
 				goto bootwedge_found;
 			}
 
@@ -456,7 +456,7 @@ findroot(void)
 				/* XXX device_unit() abuse */
 				if ((bid->biosdev & 0x80) != 0 ||
 				    device_unit(dv) != bid->biosdev)
-				    	continue;
+					continue;
 				goto bootdisk_found;
 			}
 
@@ -468,7 +468,7 @@ findroot(void)
 				 */
 				if ((bid->biosdev & 0x80) == 0 ||
 				    match_bootdisk(dv, bid) == 0)
-				    	continue;
+					continue;
 				goto bootdisk_found;
 			}
 

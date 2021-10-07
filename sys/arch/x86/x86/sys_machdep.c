@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_machdep.c,v 1.56 2020/06/19 16:20:22 maxv Exp $	*/
+/*	$NetBSD: sys_machdep.c,v 1.57 2021/10/07 12:52:27 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1998, 2007, 2009, 2017 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.56 2020/06/19 16:20:22 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.57 2021/10/07 12:52:27 msaitoh Exp $");
 
 #include "opt_mtrr.h"
 #include "opt_user_ldt.h"
@@ -434,7 +434,7 @@ x86_set_ioperm(struct lwp *l, void *args, register_t *retval)
 	void *new;
 	void *old;
 
-  	error = kauth_authorize_machdep(l->l_cred, KAUTH_MACHDEP_IOPERM_SET,
+	error = kauth_authorize_machdep(l->l_cred, KAUTH_MACHDEP_IOPERM_SET,
 	    NULL, NULL, NULL, NULL);
 	if (error)
 		return error;
@@ -479,7 +479,7 @@ x86_get_mtrr(struct lwp *l, void *args, register_t *retval)
 	if (mtrr_funcs == NULL)
 		return ENOSYS;
 
- 	error = kauth_authorize_machdep(l->l_cred, KAUTH_MACHDEP_MTRR_GET,
+	error = kauth_authorize_machdep(l->l_cred, KAUTH_MACHDEP_MTRR_GET,
 	    NULL, NULL, NULL, NULL);
 	if (error)
 		return error;
@@ -514,7 +514,7 @@ x86_set_mtrr(struct lwp *l, void *args, register_t *retval)
 	if (mtrr_funcs == NULL)
 		return ENOSYS;
 
- 	error = kauth_authorize_machdep(l->l_cred, KAUTH_MACHDEP_MTRR_SET,
+	error = kauth_authorize_machdep(l->l_cred, KAUTH_MACHDEP_MTRR_SET,
 	    NULL, NULL, NULL, NULL);
 	if (error)
 		return error;
@@ -626,7 +626,7 @@ x86_set_sdbase(void *arg, char which, lwp_t *l, bool direct)
 	pcb = lwp_getpcb(l);
 
 	kpreempt_disable();
-	switch(which) {
+	switch (which) {
 	case 'f':
 		pcb->pcb_fs = base;
 		if (l == curlwp)
@@ -682,7 +682,7 @@ x86_get_sdbase(void *arg, char which)
 
 	pcb = lwp_getpcb(curlwp);
 
-	switch(which) {
+	switch (which) {
 	case 'f':
 		base = pcb->pcb_fs;
 		break;
@@ -698,7 +698,8 @@ x86_get_sdbase(void *arg, char which)
 }
 
 int
-sys_sysarch(struct lwp *l, const struct sys_sysarch_args *uap, register_t *retval)
+sys_sysarch(struct lwp *l, const struct sys_sysarch_args *uap,
+    register_t *retval)
 {
 	/* {
 		syscallarg(int) op;
@@ -706,8 +707,8 @@ sys_sysarch(struct lwp *l, const struct sys_sysarch_args *uap, register_t *retva
 	} */
 	int error = 0;
 
-	switch(SCARG(uap, op)) {
-	case X86_IOPL: 
+	switch (SCARG(uap, op)) {
+	case X86_IOPL:
 		error = x86_iopl(l, SCARG(uap, parms), retval);
 		break;
 
@@ -715,20 +716,20 @@ sys_sysarch(struct lwp *l, const struct sys_sysarch_args *uap, register_t *retva
 	/*
 	 * On amd64, this is done via netbsd32_sysarch.
 	 */
-	case X86_GET_LDT: 
+	case X86_GET_LDT:
 		error = x86_get_ldt(l, SCARG(uap, parms), retval);
 		break;
 
-	case X86_SET_LDT: 
+	case X86_SET_LDT:
 		error = x86_set_ldt(l, SCARG(uap, parms), retval);
 		break;
 #endif
 
-	case X86_GET_IOPERM: 
+	case X86_GET_IOPERM:
 		error = x86_get_ioperm(l, SCARG(uap, parms), retval);
 		break;
 
-	case X86_SET_IOPERM: 
+	case X86_SET_IOPERM:
 		error = x86_set_ioperm(l, SCARG(uap, parms), retval);
 		break;
 
@@ -770,6 +771,6 @@ cpu_lwp_setprivate(lwp_t *l, void *addr)
 	if ((l->l_proc->p_flag & PK_32) == 0) {
 		return x86_set_sdbase(addr, 'f', l, true);
 	}
-#endif	
+#endif
 	return x86_set_sdbase(addr, 'g', l, true);
 }

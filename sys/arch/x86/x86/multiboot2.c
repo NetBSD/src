@@ -1,4 +1,4 @@
-/*	$NetBSD: multiboot2.c,v 1.7 2021/10/03 18:47:16 fcambus Exp $	*/
+/*	$NetBSD: multiboot2.c,v 1.8 2021/10/07 12:52:27 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2006 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: multiboot2.c,v 1.7 2021/10/03 18:47:16 fcambus Exp $");
+__KERNEL_RCSID(0, "$NetBSD: multiboot2.c,v 1.8 2021/10/07 12:52:27 msaitoh Exp $");
 
 #include "opt_multiboot.h"
 
@@ -72,7 +72,7 @@ typedef Elf_Addr locore_Elf_Addr;
  * it causes EFI to try to handle interrupts while the kernel
  * already took that over, hence we get a reboot.
  */
-#define BS_PRINT(efisystbl, wstring) 					\
+#define BS_PRINT(efisystbl, wstring)					\
 	efi_systbl->st_coutif->ei_outputstring(efi_systbl->st_coutif,	\
 	    (efi_char *)__UNCONST(wstring))
 
@@ -81,7 +81,7 @@ struct multiboot_symbols {
 	uint32_t s_symsize;
 	uint32_t s_strstart;
 	uint32_t s_strsize;
-};	
+};
 
 void multiboot2_copy_syms(struct multiboot_tag_elf_sections *,
 			  struct multiboot_symbols *,
@@ -93,7 +93,7 @@ void multiboot2_copy_syms(struct multiboot_tag_elf_sections *,
 void            multiboot2_pre_reloc(char *);
 void            multiboot2_post_reloc(void);
 void            multiboot2_print_info(void);
-bool            multiboot2_ksyms_addsyms_elf(void); 
+bool            multiboot2_ksyms_addsyms_elf(void);
 
 extern int              biosbasemem;
 extern int              biosextmem;
@@ -104,11 +104,11 @@ extern int              boothowto;
 extern struct bootinfo  bootinfo;
 extern int              end;
 extern int *            esym;
-extern char             start;    
+extern char             start;
 
-/* 
+/*
  * There is no way to perform dynamic allocation
- * at this time, hence we need to waste memory, 
+ * at this time, hence we need to waste memory,
  * with the hope data will fit.
  */
 char multiboot_info[16384] = "\0\0\0\0";
@@ -169,7 +169,7 @@ exit_bs:
 }
 
 void
-multiboot2_copy_syms(struct multiboot_tag_elf_sections *mbt_elf, 
+multiboot2_copy_syms(struct multiboot_tag_elf_sections *mbt_elf,
 		     struct multiboot_symbols *ms,
 		     bool *has_symsp, int **esymp, void *endp,
 		     vaddr_t kernbase)
@@ -229,15 +229,15 @@ multiboot2_copy_syms(struct multiboot_tag_elf_sections *mbt_elf,
 	 * that if the tables start before the kernel's end address,
 	 * they will not grow over this address.
 	 */
-        if ((void *)(uintptr_t)symaddr < endp &&
+	if ((void *)(uintptr_t)symaddr < endp &&
 	    (void *)(uintptr_t)straddr < endp) {
 		cp1src = symaddr; cp1size = symsize;
 		cp2src = straddr; cp2size = strsize;
-        } else if ((void *)(uintptr_t)symaddr > endp &&
+	} else if ((void *)(uintptr_t)symaddr > endp &&
 		   (void *)(uintptr_t)straddr < endp) {
 		cp1src = symaddr; cp1size = symsize;
 		cp2src = straddr; cp2size = strsize;
-        } else if ((void *)(uintptr_t)symaddr < endp &&
+	} else if ((void *)(uintptr_t)symaddr < endp &&
 		   (void *)(uintptr_t)straddr > endp) {
 		cp1src = straddr; cp1size = strsize;
 		cp2src = symaddr; cp2size = symsize;
@@ -332,7 +332,7 @@ multiboot2_pre_reloc(char *mbi)
 
 	/* Broken */
 	if (has_bs)
-		efi_exit_bs(efi_systbl, efi_ih);	
+		efi_exit_bs(efi_systbl, efi_ih);
 
 	if (mbt_elf)
 		multiboot2_copy_syms(mbt_elf,
@@ -348,7 +348,7 @@ multiboot2_pre_reloc(char *mbi)
 static struct btinfo_common *
 bootinfo_init(int type, int len)
 {
-	int i;  
+	int i;
 	struct bootinfo *bip = (struct bootinfo *)&bootinfo;
 	vaddr_t data;
 
@@ -391,38 +391,38 @@ mbi_cmdline(struct multiboot_tag_string *mbt)
 	char *cl;
 
 	if (optstr_get(cmdline, "console", bic.devname, sizeof(bic.devname))) {
-                if (strncmp(bic.devname, "com", sizeof(bic.devname)) == 0) {
-                        char opt[10];
-                
-                        if (optstr_get(cmdline, "console_speed",
-                        	       opt, sizeof(opt))) 
-                                bic.speed = strtoul(opt, NULL, 10);
-                        else
-                                bic.speed = 0; /* Use default speed. */
+		if (strncmp(bic.devname, "com", sizeof(bic.devname)) == 0) {
+			char opt[10];
 
-                        if (optstr_get(cmdline, "console_addr",
-                        	       opt, sizeof(opt))) {
-                                if (opt[0] == '0' && opt[1] == 'x')
-                                        bic.addr = strtoul(opt + 2, NULL, 16);
-                                else
-                                        bic.addr = strtoul(opt, NULL, 10);
-                        } else {
-                                bic.addr = 0; /* Use default address. */
+			if (optstr_get(cmdline, "console_speed",
+				       opt, sizeof(opt)))
+				bic.speed = strtoul(opt, NULL, 10);
+			else
+				bic.speed = 0; /* Use default speed. */
+
+			if (optstr_get(cmdline, "console_addr",
+				       opt, sizeof(opt))) {
+				if (opt[0] == '0' && opt[1] == 'x')
+					bic.addr = strtoul(opt + 2, NULL, 16);
+				else
+					bic.addr = strtoul(opt, NULL, 10);
+			} else {
+				bic.addr = 0; /* Use default address. */
 			}
 
-                        bootinfo_add((struct btinfo_common *)&bic,
-                        	     BTINFO_CONSOLE, sizeof(bic));
+			bootinfo_add((struct btinfo_common *)&bic,
+				     BTINFO_CONSOLE, sizeof(bic));
 
-                }
+		}
 
 		if (strncmp(bic.devname, "pc", sizeof(bic.devname)) == 0)
-                        bootinfo_add((struct btinfo_common *)&bic,
-                        	     BTINFO_CONSOLE, sizeof(bic));
-        }
+			bootinfo_add((struct btinfo_common *)&bic,
+				     BTINFO_CONSOLE, sizeof(bic));
+	}
 
 	if (optstr_get(cmdline, "root", bir.devname, sizeof(bir.devname)))
-                bootinfo_add((struct btinfo_common *)&bir, BTINFO_ROOTDEVICE,
-                    sizeof(bir));
+		bootinfo_add((struct btinfo_common *)&bir, BTINFO_ROOTDEVICE,
+		    sizeof(bir));
 
 	/*
 	 * Parse boot flags (-s and friends)
@@ -492,19 +492,19 @@ mbi_modules(char *mbi, uint32_t mbi_size, int module_count)
 static void
 mbi_basic_meminfo(struct multiboot_tag_basic_meminfo *mbt)
 {
-        /* Make sure we don't override user-set variables. */
-        if (biosbasemem == 0) {
-                biosbasemem = mbt->mem_lower;
+	/* Make sure we don't override user-set variables. */
+	if (biosbasemem == 0) {
+		biosbasemem = mbt->mem_lower;
 #ifdef __i386__
-                biosmem_implicit = 1;
+		biosmem_implicit = 1;
 #endif
-        }
-        if (biosextmem == 0) {
-                biosextmem = mbt->mem_upper;
+	}
+	if (biosextmem == 0) {
+		biosextmem = mbt->mem_upper;
 #ifdef __i386__
-                biosmem_implicit = 1;
+		biosmem_implicit = 1;
 #endif
-        }
+	}
 
 	return;
 }
@@ -517,9 +517,9 @@ mbi_bootdev(struct multiboot_tag_bootdev *mbt)
 	bid.labelsector = -1;
 	bid.biosdev = mbt->biosdev;
 	bid.partition = mbt->slice;
-	
+
 	bootinfo_add((struct btinfo_common *)&bid,
-           BTINFO_BOOTDISK, sizeof(bid));
+	   BTINFO_BOOTDISK, sizeof(bid));
 }
 
 static void
@@ -594,9 +594,9 @@ mbi_framebuffer(struct multiboot_tag_framebuffer *mbt,
      struct btinfo_framebuffer *bif)
 {
 	bif->physaddr = mbt->common.framebuffer_addr;
-	bif->width = mbt->common.framebuffer_width;	
-	bif->height = mbt->common.framebuffer_height;	
-	bif->depth = mbt->common.framebuffer_bpp;	
+	bif->width = mbt->common.framebuffer_width;
+	bif->height = mbt->common.framebuffer_height;
+	bif->depth = mbt->common.framebuffer_bpp;
 	bif->stride = mbt->common.framebuffer_pitch;
 
 	return;
@@ -609,9 +609,8 @@ mbi_efi32(struct multiboot_tag_efi32 *mbt)
 
 	bie.systblpa = mbt->pointer;
 	bie.flags = BI_EFI_32BIT;
-	
-	bootinfo_add((struct btinfo_common *)&bie,
-           BTINFO_EFI, sizeof(bie));
+
+	bootinfo_add((struct btinfo_common *)&bie, BTINFO_EFI, sizeof(bie));
 }
 
 static void
@@ -620,9 +619,8 @@ mbi_efi64(struct multiboot_tag_efi64 *mbt)
 	struct btinfo_efi bie;
 
 	bie.systblpa = mbt->pointer;
-	
-	bootinfo_add((struct btinfo_common *)&bie,
-           BTINFO_EFI, sizeof(bie));
+
+	bootinfo_add((struct btinfo_common *)&bie, BTINFO_EFI, sizeof(bie));
 }
 
 static void
@@ -672,7 +670,7 @@ multiboot2_post_reloc(void)
 	     cp - mbi < mbi_size;
 	     cp += roundup(mbt->size, MULTIBOOT_INFO_ALIGN)) {
 		mbt = (struct multiboot_tag *)cp;
-		switch(mbt->type) {
+		switch (mbt->type) {
 		case MULTIBOOT_TAG_TYPE_CMDLINE:
 			mbi_cmdline((void *)mbt);
 			break;
@@ -726,7 +724,7 @@ multiboot2_post_reloc(void)
 
 	if (has_fbinfo)
 		bootinfo_add((struct btinfo_common *)&fbinfo,
-       		    BTINFO_FRAMEBUFFER, sizeof(fbinfo));
+		    BTINFO_FRAMEBUFFER, sizeof(fbinfo));
 
 	if (module_count > 0)
 		mbi_modules(mbi, mbi_size, module_count);
@@ -746,7 +744,7 @@ mbi_hexdump(char *addr, size_t len)
 		printf("  %p ", addr + i);
 		for (j = 0; j < 16 && i + j < len; j++) {
 			char *cp = addr + i + j;
-			printf("%s%s%x", 
+			printf("%s%s%x",
 			       (i+j) % 4 ? "" : " ",
 			       (unsigned char)*cp < 0x10 ? "0" : "",
 			       (unsigned char)*cp);
@@ -894,10 +892,10 @@ multiboot2_print_info(void)
 
 			if (entry_version != 0)
 				break;
-			
+
 			for (mmap = ((struct multiboot_tag_mmap *)mbt)->entries;
-		 	    (char *)mmap - (char *)mbt < mbt->size;
-		 	    mmap = (void *)((char *)mmap + entry_size))
+			    (char *)mmap - (char *)mbt < mbt->size;
+			    mmap = (void *)((char *)mmap + entry_size))
 				printf("  0x%016"PRIx64" @ 0x%016"PRIx64" "
 				    "type 0x%x\n",
 				    (uint64_t)mmap->len, (uint64_t)mmap->addr,
@@ -952,7 +950,7 @@ multiboot2_print_info(void)
 		case MULTIBOOT_TAG_TYPE_SMBIOS:
 			printf("major = %d, minor = %d\n",
 			    ((struct multiboot_tag_smbios *)mbt)->major,
-		 	    ((struct multiboot_tag_smbios *)mbt)->minor);
+			    ((struct multiboot_tag_smbios *)mbt)->minor);
 #ifdef DEBUG
 			mbi_hexdump((char *)mbt, mbt->size);
 #endif
@@ -985,7 +983,7 @@ multiboot2_print_info(void)
 			printf("\n");
 			break;
 		case MULTIBOOT_TAG_TYPE_EFI32_IH:
-			printf("0x%"PRIx32"\n", 
+			printf("0x%"PRIx32"\n",
 			    ((struct multiboot_tag_efi32_ih *)mbt)->pointer);
 			break;
 		case MULTIBOOT_TAG_TYPE_EFI64_IH:

@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.82 2020/03/14 18:08:38 ad Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.83 2021/10/07 12:52:27 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2007, 2020 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.82 2020/03/14 18:08:38 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.83 2021/10/07 12:52:27 msaitoh Exp $");
 
 /*
  * The following is included because _bus_dma_uiomove is derived from
@@ -212,8 +212,8 @@ _bus_dmamem_alloc_range(bus_dma_tag_t t, bus_size_t size,
 	 * Allocate pages from the VM system.
 	 * We accept boundaries < size, splitting in multiple segments
 	 * if needed. uvm_pglistalloc does not, so compute an appropriate
-         * boundary: next power of 2 >= size
-         */
+	 * boundary: next power of 2 >= size
+	 */
 
 	if (boundary == 0)
 		uboundary = 0;
@@ -1172,8 +1172,8 @@ _bus_dmamem_unmap(bus_dma_tag_t t, void *kva, size_t size)
 	eva = sva + size;
 
 	/*
-         * mark pages cacheable again.
-         */
+	 * mark pages cacheable again.
+	 */
 	for (va = sva; va < eva; va += PAGE_SIZE) {
 		pte = kvtopte(va);
 		opte = *pte;
