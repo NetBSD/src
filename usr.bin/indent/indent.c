@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.c,v 1.112 2021/10/07 19:17:07 rillig Exp $	*/
+/*	$NetBSD: indent.c,v 1.113 2021/10/07 19:35:50 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)indent.c	5.17 (Berkeley) 6/7/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: indent.c,v 1.112 2021/10/07 19:17:07 rillig Exp $");
+__RCSID("$NetBSD: indent.c,v 1.113 2021/10/07 19:35:50 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/indent.c 340138 2018-11-04 19:24:49Z oshogbo $");
 #endif
@@ -448,7 +448,7 @@ main_init_globals(void)
     ps.in_or_st = false;
     ps.want_blank = ps.in_stmt = ps.ind_stmt = false;
 
-    ps.pcase = false;
+    ps.is_case_label = false;
     sc_end = NULL;
     bp_save = NULL;
     be_save = NULL;
@@ -760,7 +760,7 @@ process_question(int *seen_quest)
 static void
 process_colon(int *seen_quest, bool *force_nl, bool *seen_case)
 {
-    if (*seen_quest > 0) {	/* it is part of the <c>?<n>: <n> construct */
+    if (*seen_quest > 0) {	/* part of a '?:' operator */
 	--*seen_quest;
 	if (ps.want_blank)
 	    *code.e++ = ' ';
@@ -768,24 +768,21 @@ process_colon(int *seen_quest, bool *force_nl, bool *seen_case)
 	ps.want_blank = true;
 	return;
     }
-    if (ps.in_or_st) {
+
+    if (ps.in_or_st) {		/* bit-field */
 	*code.e++ = ':';
 	ps.want_blank = false;
 	return;
     }
-    ps.in_stmt = false;		/* seeing a label does not imply we are in a
-				 * stmt */
 
-    /* turn everything so far into a label */
-    buf_add_buf(&lab, &code);
+    buf_add_buf(&lab, &code);	/* 'case' or 'default' or named label */
     buf_add_char(&lab, ':');
     buf_terminate(&lab);
     buf_reset(&code);
 
-    ps.pcase = *seen_case;	/* will be used by dump_line to decide how to
-				 * indent the label. */
-    *force_nl = *seen_case;	/* will force a 'case n:' to be on a
-				 * line by itself */
+    ps.in_stmt = false;
+    ps.is_case_label = *seen_case;
+    *force_nl = *seen_case;
     *seen_case = false;
     ps.want_blank = false;
 }
@@ -1172,7 +1169,7 @@ process_preprocessing(void)
 	    debug_println("switched buf_ptr to save_com");
 	}
 	buf_terminate(&lab);
-	ps.pcase = false;
+	ps.is_case_label = false;
     }
 
     if (strncmp(lab.s, "#if", 3) == 0) {	/* also ifdef, ifndef */
