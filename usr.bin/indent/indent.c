@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.c,v 1.109 2021/10/07 18:19:07 rillig Exp $	*/
+/*	$NetBSD: indent.c,v 1.110 2021/10/07 18:32:09 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)indent.c	5.17 (Berkeley) 6/7/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: indent.c,v 1.109 2021/10/07 18:19:07 rillig Exp $");
+__RCSID("$NetBSD: indent.c,v 1.110 2021/10/07 18:32:09 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/indent.c 340138 2018-11-04 19:24:49Z oshogbo $");
 #endif
@@ -386,13 +386,19 @@ buf_init(struct buffer *buf)
     buf->l = buf->buf + bufsize - 5;	/* safety margin, though unreliable */
 }
 
+static size_t
+buf_len(const struct buffer *buf)
+{
+    return (size_t)(buf->e - buf->s);
+}
+
 void
 buf_expand(struct buffer *buf, size_t desired_size)
 {
-    size_t nsize = buf->l - buf->s + 400 + desired_size;
-    size_t code_len = buf->e - buf->s;
+    size_t nsize = (size_t)(buf->l - buf->s) + 400 + desired_size;
+    size_t len = buf_len(buf);
     buf->buf = xrealloc(buf->buf, nsize);
-    buf->e = buf->buf + code_len + 1;
+    buf->e = buf->buf + len + 1;
     buf->l = buf->buf + nsize - 5;
     buf->s = buf->buf + 1;
 }
@@ -560,7 +566,7 @@ process_comment_in_code(token_type ttype, bool *force_nl)
 				 * '}' */
     if (com.s != com.e) {	/* the turkey has embedded a comment in a
 				 * line. fix it */
-	size_t len = com.e - com.s;
+	size_t len = buf_len(&com);
 
 	check_size_code(len + 3);
 	*code.e++ = ' ';
@@ -701,7 +707,7 @@ process_unary_op(int decl_ind, bool tabs_to_var)
 	*code.e++ = ' ';
 
     {
-	size_t len = token.e - token.s;
+	size_t len = buf_len(&token);
 
 	check_size_code(len);
 	memcpy(code.e, token.s, len);
@@ -713,7 +719,7 @@ process_unary_op(int decl_ind, bool tabs_to_var)
 static void
 process_binary_op(void)
 {
-    size_t len = token.e - token.s;
+    size_t len = buf_len(&token);
 
     check_size_code(len + 1);
     if (ps.want_blank)
@@ -766,7 +772,7 @@ process_colon(int *seen_quest, bool *force_nl, bool *seen_case)
      * turn everything so far into a label
      */
     {
-	size_t len = code.e - code.s;
+	size_t len = buf_len(&code);
 
 	check_size_label(len + 3);
 	memcpy(lab.e, code.s, len);
@@ -1036,7 +1042,7 @@ process_ident(token_type ttype, int decl_ind, bool tabs_to_var,
 static void
 copy_id(void)
 {
-    size_t len = token.e - token.s;
+    size_t len = buf_len(&token);
 
     check_size_code(len + 1);
     if (ps.want_blank)
@@ -1048,7 +1054,7 @@ copy_id(void)
 static void
 process_string_prefix(void)
 {
-    size_t len = token.e - token.s;
+    size_t len = buf_len(&token);
 
     check_size_code(len + 1);
     if (ps.want_blank)

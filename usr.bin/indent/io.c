@@ -1,4 +1,4 @@
-/*	$NetBSD: io.c,v 1.73 2021/10/05 21:05:12 rillig Exp $	*/
+/*	$NetBSD: io.c,v 1.74 2021/10/07 18:32:09 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)io.c	8.1 (Berkeley) 6/6/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: io.c,v 1.73 2021/10/05 21:05:12 rillig Exp $");
+__RCSID("$NetBSD: io.c,v 1.74 2021/10/07 18:32:09 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/io.c 334927 2018-06-10 16:44:18Z pstef $");
 #endif
@@ -199,7 +199,7 @@ dump_line(void)
 			 * XXX: this mix of 'indent' and 'column' smells like
 			 * an off-by-one error.
 			 */
-			ps.paren_indents[i] = -(ind + target_col);
+			ps.paren_indents[i] = (short)-(ind + target_col);
 			debug_println(
 			    "setting pi[%d] from %d to %d for column %d",
 			    i, ind, ps.paren_indents[i], target_col);
@@ -319,7 +319,7 @@ int
 compute_label_indent(void)
 {
     if (ps.pcase)
-	return (int)(case_ind * opt.indent_size);
+	return (int)(case_ind * (float)opt.indent_size);
     if (lab.s[0] == '#')
 	return 0;
     return opt.indent_size * (ps.ind_level - label_offset);
@@ -406,8 +406,8 @@ fill_buffer(void)
     }
     for (p = in_buffer;;) {
 	if (p >= in_buffer_limit) {
-	    size_t size = (in_buffer_limit - in_buffer) * 2 + 10;
-	    size_t offset = p - in_buffer;
+	    size_t size = (size_t)(in_buffer_limit - in_buffer) * 2 + 10;
+	    size_t offset = (size_t)(p - in_buffer);
 	    in_buffer = xrealloc(in_buffer, size);
 	    p = in_buffer + offset;
 	    in_buffer_limit = in_buffer + size - 2;
