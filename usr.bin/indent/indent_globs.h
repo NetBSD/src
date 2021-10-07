@@ -1,4 +1,4 @@
-/*	$NetBSD: indent_globs.h,v 1.46 2021/10/07 23:01:32 rillig Exp $	*/
+/*	$NetBSD: indent_globs.h,v 1.47 2021/10/07 23:15:15 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -60,19 +60,15 @@ extern struct buffer code;		/* code */
 extern struct buffer com;		/* comment */
 extern struct buffer token;		/* the last token scanned */
 
-extern char       *in_buffer;		/* input buffer */
-extern char	   *in_buffer_limit;	/* the end of the input buffer */
-extern char       *buf_ptr;		/* ptr to next character to be taken from
-				 * in_buffer */
-extern char       *buf_end;		/* ptr to first after last char in in_buffer */
+extern struct buffer inp;
 
 extern char        sc_buf[sc_size];	/* input text is saved here when looking for
 				 * the brace after an if, while, etc */
 extern char       *save_com;		/* start of the comment stored in sc_buf */
 
-extern char       *bp_save;		/* saved value of buf_ptr when taking input
+extern char       *bp_save;		/* saved value of inp.s when taking input
 				 * from save_com */
-extern char       *be_save;		/* similarly saved value of buf_end */
+extern char       *be_save;		/* similarly saved value of inp.e */
 
 
 extern struct options {

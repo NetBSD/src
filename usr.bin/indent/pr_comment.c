@@ -1,4 +1,4 @@
-/*	$NetBSD: pr_comment.c,v 1.57 2021/10/07 21:57:21 rillig Exp $	*/
+/*	$NetBSD: pr_comment.c,v 1.58 2021/10/07 23:15:15 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)pr_comment.c	8.1 (Berkeley) 6/6/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: pr_comment.c,v 1.57 2021/10/07 21:57:21 rillig Exp $");
+__RCSID("$NetBSD: pr_comment.c,v 1.58 2021/10/07 23:15:15 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/pr_comment.c 334927 2018-06-10 16:44:18Z pstef $");
 #endif
@@ -105,8 +105,8 @@ process_comment(void)
 	ps.com_col = 1;
 
     } else {
-	if (*buf_ptr == '-' || *buf_ptr == '*' || token.e[-1] == '/' ||
-	    (*buf_ptr == '\n' && !opt.format_block_comments)) {
+	if (*inp.s == '-' || *inp.s == '*' || token.e[-1] == '/' ||
+	    (*inp.s == '\n' && !opt.format_block_comments)) {
 	    ps.box_com = true;	/* A comment with a '-' or '*' immediately
 				 * after the /+* is assumed to be a boxed
 				 * comment. A comment with a newline
@@ -150,7 +150,7 @@ process_comment(void)
 	 * much will have to be ignored by dump_line(). This is a box comment,
 	 * so nothing changes -- not even indentation.
 	 *
-	 * The comment we're about to read usually comes from in_buffer,
+	 * The comment we're about to read usually comes from inp.buf,
 	 * unless it has been copied into save_com.
 	 */
 	const char *start;
@@ -159,25 +159,25 @@ process_comment(void)
 	 * XXX: ordered comparison between pointers from different objects
 	 * invokes undefined behavior (C99 6.5.8).
 	 */
-	start = buf_ptr >= save_com && buf_ptr < save_com + sc_size ?
-	    sc_buf : in_buffer;
-	ps.n_comment_delta = -indentation_after_range(0, start, buf_ptr - 2);
+	start = inp.s >= save_com && inp.s < save_com + sc_size ?
+	    sc_buf : inp.buf;
+	ps.n_comment_delta = -indentation_after_range(0, start, inp.s - 2);
     } else {
 	ps.n_comment_delta = 0;
-	while (is_hspace(*buf_ptr))
-	    buf_ptr++;
+	while (is_hspace(*inp.s))
+	    inp.s++;
     }
 
     ps.comment_delta = 0;
     *com.e++ = '/';
     *com.e++ = token.e[-1];
-    if (*buf_ptr != ' ' && !ps.box_com)
+    if (*inp.s != ' ' && !ps.box_com)
 	*com.e++ = ' ';
 
     /* Don't put a break delimiter if this is a one-liner that won't wrap. */
     if (break_delim) {
-	for (t_ptr = buf_ptr; *t_ptr != '\0' && *t_ptr != '\n'; t_ptr++) {
-	    if (t_ptr >= buf_end)
+	for (t_ptr = inp.s; *t_ptr != '\0' && *t_ptr != '\n'; t_ptr++) {
+	    if (t_ptr >= inp.e)
 		fill_buffer();
 	    if (t_ptr[0] == '*' && t_ptr[1] == '/') {
 		/*
@@ -186,7 +186,7 @@ process_comment(void)
 		 * out since they are equally long.
 		 */
 		int right_margin = indentation_after_range(ps.com_col - 1,
-		    buf_ptr, t_ptr + 2);
+		    inp.s, t_ptr + 2);
 		if (right_margin < adj_max_line_length)
 		    break_delim = false;
 		break;
@@ -210,7 +210,7 @@ process_comment(void)
 
     for (;;) {			/* this loop will go until the comment is
 				 * copied */
-	switch (*buf_ptr) {	/* this checks for various special cases */
+	switch (*inp.s) {	/* this checks for various special cases */
 	case '\f':
 	    check_size_comment(3);
 	    if (!ps.box_com) {	/* in a text comment, break the line here */
@@ -219,9 +219,9 @@ process_comment(void)
 		last_blank = -1;
 		if (!ps.box_com && opt.star_comment_cont)
 		    *com.e++ = ' ', *com.e++ = '*', *com.e++ = ' ';
-		buf_ptr++;
-		while (is_hspace(*buf_ptr))
-		    buf_ptr++;
+		inp.s++;
+		while (is_hspace(*inp.s))
+		    inp.s++;
 	    } else {
 		inbuf_skip();
 		*com.e++ = '\f';
@@ -267,12 +267,12 @@ process_comment(void)
 		do {		/* flush any blanks and/or tabs at start of
 				 * next line */
 		    inbuf_skip();
-		    if (*buf_ptr == '*' && --asterisks_to_skip >= 0) {
+		    if (*inp.s == '*' && --asterisks_to_skip >= 0) {
 			inbuf_skip();
-			if (*buf_ptr == '/')
+			if (*inp.s == '/')
 			    goto end_of_comment;
 		    }
-		} while (is_hspace(*buf_ptr));
+		} while (is_hspace(*inp.s));
 	    } else
 		inbuf_skip();
 	    break;		/* end of case for newline */
@@ -280,7 +280,7 @@ process_comment(void)
 	case '*':
 	    inbuf_skip();
 	    check_size_comment(4);
-	    if (*buf_ptr == '/') {
+	    if (*inp.s == '/') {
 	end_of_comment:
 		inbuf_skip();
 
@@ -316,7 +316,7 @@ process_comment(void)
 		    last_blank = com.e - com.buf;
 		*com.e++ = ch;
 		now_len++;
-	    } while (memchr("*\n\r\b\t", *buf_ptr, 6) == NULL &&
+	    } while (memchr("*\n\r\b\t", *inp.s, 6) == NULL &&
 		(now_len < adj_max_line_length || last_blank == -1));
 
 	    ps.last_nl = false;
