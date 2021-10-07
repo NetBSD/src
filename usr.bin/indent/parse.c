@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.31 2021/10/07 21:43:20 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.32 2021/10/07 21:52:54 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -79,6 +79,7 @@ parse(token_type ttype)
     case decl:			/* scanned a declaration word */
 	ps.search_brace = opt.btype_2;
 	/* indicate that following brace should be on same line */
+
 	if (ps.p_stack[ps.tos] != decl) {	/* only put one declaration
 						 * onto stack */
 	    break_comma = true;	/* while in declaration, newline should be
@@ -124,6 +125,7 @@ parse(token_type ttype)
 	    if (code.s == code.e) {
 		/* it is a group as part of a while, for, etc. */
 		--ps.ind_level;
+
 		/*
 		 * for a switch, brace should be two levels out from the code
 		 */
@@ -145,6 +147,7 @@ parse(token_type ttype)
 	    ps.ind_level = ps.ind_level_follow = ps.il[ps.tos];
 	    ps.p_stack[++ps.tos] = while_expr;
 	    ps.il[ps.tos] = ps.ind_level = ps.ind_level_follow;
+
 	} else {		/* it is a while loop */
 	    ps.p_stack[++ps.tos] = while_expr;
 	    ps.il[ps.tos] = ps.ind_level_follow;
