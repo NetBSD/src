@@ -1,4 +1,4 @@
-/*	$NetBSD: pr_comment.c,v 1.60 2021/10/08 17:19:49 rillig Exp $	*/
+/*	$NetBSD: pr_comment.c,v 1.61 2021/10/08 17:26:56 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)pr_comment.c	8.1 (Berkeley) 6/6/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: pr_comment.c,v 1.60 2021/10/08 17:19:49 rillig Exp $");
+__RCSID("$NetBSD: pr_comment.c,v 1.61 2021/10/08 17:26:56 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/pr_comment.c 334927 2018-06-10 16:44:18Z pstef $");
 #endif
@@ -84,7 +84,6 @@ process_comment(void)
     int adj_max_line_length;	/* Adjusted max_line_length for comments that
 				 * spill over the right margin */
     ssize_t last_blank;		/* index of the last blank in com.buf */
-    char *t_ptr;		/* used for moving string */
     bool break_delim = opt.comment_delimiter_on_blankline;
     int l_just_saw_decl = ps.just_saw_decl;
 
@@ -176,17 +175,17 @@ process_comment(void)
 
     /* Don't put a break delimiter if this is a one-liner that won't wrap. */
     if (break_delim) {
-	for (t_ptr = inp.s; *t_ptr != '\0' && *t_ptr != '\n'; t_ptr++) {
-	    if (t_ptr >= inp.e)
+	for (const char *p = inp.s; *p != '\0' && *p != '\n'; p++) {
+	    if (p >= inp.e)
 		fill_buffer();
-	    if (t_ptr[0] == '*' && t_ptr[1] == '/') {
+	    if (p[0] == '*' && p[1] == '/') {
 		/*
 		 * XXX: This computation ignores the leading " * ", as well as
 		 * the trailing ' ' '*' '/'.  In simple cases, these cancel
 		 * out since they are equally long.
 		 */
 		int right_margin = indentation_after_range(ps.com_ind,
-		    inp.s, t_ptr + 2);
+		    inp.s, p + 2);
 		if (right_margin < adj_max_line_length)
 		    break_delim = false;
 		break;
@@ -340,20 +339,20 @@ process_comment(void)
 		if (!ps.box_com && opt.star_comment_cont)
 		    *com.e++ = ' ', *com.e++ = '*', *com.e++ = ' ';
 
-		for (t_ptr = com.buf + last_blank + 1;
-		     is_hspace(*t_ptr); t_ptr++)
-		    continue;
+		const char *p = com.buf + last_blank + 1;
+		while (is_hspace(*p))
+		    p++;
 		last_blank = -1;
 
 		/*
-		 * t_ptr will be somewhere between com.e (dump_line() reset)
-		 * and com.l. So it's safe to copy byte by byte from t_ptr to
+		 * p will be somewhere between com.e (dump_line() reset)
+		 * and com.l. So it's safe to copy byte by byte from p to
 		 * com.e without any check_size_comment().
 		 */
-		while (*t_ptr != '\0') {
-		    if (is_hspace(*t_ptr))
+		while (*p != '\0') {
+		    if (is_hspace(*p))
 			last_blank = com.e - com.buf;
-		    *com.e++ = *t_ptr++;
+		    *com.e++ = *p++;
 		}
 	    }
 	    break;
