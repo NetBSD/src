@@ -1,4 +1,4 @@
-/* $NetBSD: token-preprocessing.0.stdout,v 1.5 2021/10/08 20:04:26 rillig Exp $ */
+/* $NetBSD: token-preprocessing.0.stdout,v 1.6 2021/10/08 20:14:52 rillig Exp $ */
 /* $FreeBSD$ */
 
 /*-
@@ -49,12 +49,12 @@ int		this_is_an_ordinary_line_again;
  */
 int		d1;
 #define confuse_d /*"*/ "/*"
-int d2 ;
+int		d2;
 #define resolve_d "*/"
 int		d3;
 
 int		s1;
 #define confuse_s /*'*/ '/*'
-int s2 ;
+int		s2;
 #define resolve_s '*/'
 int		s3;
