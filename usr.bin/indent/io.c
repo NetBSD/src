@@ -1,4 +1,4 @@
-/*	$NetBSD: io.c,v 1.81 2021/10/08 17:00:21 rillig Exp $	*/
+/*	$NetBSD: io.c,v 1.82 2021/10/08 17:04:13 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)io.c	8.1 (Berkeley) 6/6/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: io.c,v 1.81 2021/10/08 17:00:21 rillig Exp $");
+__RCSID("$NetBSD: io.c,v 1.82 2021/10/08 17:04:13 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/io.c 334927 2018-06-10 16:44:18Z pstef $");
 #endif
@@ -110,7 +110,7 @@ output_indent(int old_ind, int new_ind)
 void
 dump_line(void)
 {
-    int cur_col;
+    int cur_ind;
     static bool not_first_line;
 
     if (ps.procname[0] != '\0') {
@@ -158,7 +158,7 @@ dump_line(void)
 		lab.e--;
 	    *lab.e = '\0';
 
-	    cur_col = 1 + output_indent(0, compute_label_indent());
+	    cur_ind = output_indent(0, compute_label_indent());
 
 	    if (lab.s[0] == '#' && (strncmp(lab.s, "#else", 5) == 0
 		    || strncmp(lab.s, "#endif", 6) == 0)) {
@@ -184,9 +184,9 @@ dump_line(void)
 		}
 	    } else
 		output_range(lab.s, lab.e);
-	    cur_col = 1 + indentation_after(cur_col - 1, lab.s);
+	    cur_ind = indentation_after(cur_ind, lab.s);
 	} else
-	    cur_col = 1;	/* there is no label section */
+	    cur_ind = 0;	/* there is no label section */
 
 	ps.is_case_label = false;
 
@@ -211,9 +211,9 @@ dump_line(void)
 		}
 	    }
 
-	    cur_col = 1 + output_indent(cur_col - 1, target_col - 1);
+	    cur_ind = output_indent(cur_ind, target_col - 1);
 	    output_range(code.s, code.e);
-	    cur_col = 1 + indentation_after(cur_col - 1, code.s);
+	    cur_ind = indentation_after(cur_ind, code.s);
 	}
 
 	if (com.s != com.e) {	/* print comment, if any */
@@ -233,15 +233,15 @@ dump_line(void)
 		} else
 		    target_col = 1;
 	    }
-	    if (cur_col > target_col) {	/* if comment can't fit on this line,
+	    if (cur_ind + 1 > target_col) {	/* if comment can't fit on this line,
 					 * put it on next line */
 		output_char('\n');
-		cur_col = 1;
+		cur_ind = 0;
 		ps.stats.lines++;
 	    }
 	    while (com.e > com_st && isspace((unsigned char)com.e[-1]))
 		com.e--;
-	    (void)output_indent(cur_col - 1, target_col - 1);
+	    (void)output_indent(cur_ind, target_col - 1);
 	    output_range(com_st, com.e);
 	    ps.comment_delta = ps.n_comment_delta;
 	    ps.stats.comment_lines++;
