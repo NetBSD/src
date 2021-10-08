@@ -1,4 +1,4 @@
-/* $NetBSD: token-comment.0,v 1.5 2021/10/05 21:01:10 rillig Exp $ */
+/* $NetBSD: token-comment.0,v 1.6 2021/10/08 22:11:26 rillig Exp $ */
 /* $FreeBSD$ */
 
 /*
@@ -139,3 +139,15 @@ void indent_on ( void ) ;
 void indent_still_on ( void ) ;	/* due to the colon in the middle */
 /* INDENT OFF */		/* extra comment */
 void indent_still_on ( void ) ;	/* due to the extra comment to the right */
+
+/*
+	 * this
+		 * is a boxed
+			 * staircase.
+*
+* Its paragraphs get wrapped.
+
+There may also be
+		lines without asterisks.
+
+ */
