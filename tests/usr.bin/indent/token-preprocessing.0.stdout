@@ -1,4 +1,4 @@
-/* $NetBSD: token-preprocessing.0.stdout,v 1.6 2021/10/08 20:14:52 rillig Exp $ */
+/* $NetBSD: token-preprocessing.0.stdout,v 1.7 2021/10/08 21:32:28 rillig Exp $ */
 /* $FreeBSD$ */
 
 /*-
@@ -58,3 +58,14 @@ int		s1;
 int		s2;
 #define resolve_s '*/'
 int		s3;
+
+/*
+ * A preprocessing directive inside an expression keeps the state about
+ * whether the next operator is unary or binary.
+ */
+int		binary_plus = 3
+#define intermediate 1
++ 4;
+int		unary_plus =
+#define intermediate 1
++4;
