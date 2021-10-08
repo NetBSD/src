@@ -1,4 +1,4 @@
-/* $NetBSD: token-keyword_else.0,v 1.1 2021/03/12 00:13:06 rillig Exp $ */
+/* $NetBSD: token-keyword_else.0,v 1.2 2021/10/08 21:48:33 rillig Exp $ */
 /* $FreeBSD$ */
 
 /*
@@ -9,4 +9,21 @@
  * innermost incomplete 'if' statement.
  */
 
-/* TODO: Add some code to be formatted. */
+/*
+ * In 'parse', an if_expr_stmt is reduced to a simple statement, unless the
+ * next token is 'else'. The comment does not influence this since it never
+ * reaches 'parse'.
+ */
+void
+example(bool cond)
+{
+	if (cond)
+	if (cond)
+	if (cond)
+	stmt();
+	else
+	stmt();
+	/* comment */
+	else
+	stmt();
+}

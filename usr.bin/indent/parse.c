@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.33 2021/10/07 22:56:49 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.34 2021/10/08 21:48:33 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -62,16 +62,14 @@ static void reduce(void);
 void
 parse(token_type ttype)
 {
+    debug_println("parse token: '%s' \"%s\"",
+	token_type_name(ttype), token.s);
 
-#ifdef debug
-    printf("parse token: '%s' \"%s\"\n", token_type_name(ttype), token.s);
-#endif
-
-    while (ps.p_stack[ps.tos] == if_expr_stmt && ttype != keyword_else) {
-	/* true if we have an if without an else */
-	ps.p_stack[ps.tos] = stmt;	/* apply the if(..) stmt ::= stmt
-					 * reduction */
-	reduce();		/* see if this allows any reduction */
+    if (ttype != keyword_else) {
+	while (ps.p_stack[ps.tos] == if_expr_stmt) {
+	    ps.p_stack[ps.tos] = stmt;
+	    reduce();
+	}
     }
 
     switch (ttype) {
