@@ -1,4 +1,4 @@
-/* $NetBSD: token-preprocessing.0.stdout,v 1.4 2021/03/13 13:14:14 rillig Exp $ */
+/* $NetBSD: token-preprocessing.0.stdout,v 1.5 2021/10/08 20:04:26 rillig Exp $ */
 /* $FreeBSD$ */
 
 /*-
@@ -35,3 +35,26 @@
 
 #define comment_in_string_literal "/* no comment "
 int		this_is_an_ordinary_line_again;
+
+/*
+ * Before indent.c 1.129 from 2021-10-08, indent mistakenly interpreted quotes
+ * in comments as starting a string literal. The '"' in the comment started a
+ * string, the next '"' finished the string, and the following '/' '*' was
+ * interpreted as the beginning of a comment. This comment lasted until the
+ * next '*' '/', which in this test is another preprocessor directive, solely
+ * for symmetry.
+ *
+ * The effect was that the extra space after d2 was not formatted, as that
+ * line was considered part of the comment.
+ */
+int		d1;
+#define confuse_d /*"*/ "/*"
+int d2 ;
+#define resolve_d "*/"
+int		d3;
+
+int		s1;
+#define confuse_s /*'*/ '/*'
+int s2 ;
+#define resolve_s '*/'
+int		s3;
