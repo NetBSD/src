@@ -1,4 +1,4 @@
-/*      $NetBSD: msg.entropy.es,v 1.3 2021/10/08 15:59:55 martin Exp $  */
+/*      $NetBSD: msg.entropy.es,v 1.4 2021/10/08 22:07:11 nia Exp $  */
 
 /*
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@ If you own a USB random number device, connect it now and select
 the "Re-test" option.}
 
 message entropy_add_manually		{Manual input of random data}
-message entropy_download_raw		{Load raw binary random random data}
+message entropy_download_raw		{Load raw binary random data}
 message	entropy_download_seed		{Import a NetBSD entropy file}
 message entropy_retry			{Re-test}
 
