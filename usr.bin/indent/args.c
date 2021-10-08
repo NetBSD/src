@@ -1,4 +1,4 @@
-/*	$NetBSD: args.c,v 1.53 2021/10/08 19:27:20 rillig Exp $	*/
+/*	$NetBSD: args.c,v 1.54 2021/10/08 20:07:44 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)args.c	8.1 (Berkeley) 6/6/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: args.c,v 1.53 2021/10/08 19:27:20 rillig Exp $");
+__RCSID("$NetBSD: args.c,v 1.54 2021/10/08 20:07:44 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/args.c 336318 2018-07-15 21:04:21Z pstef $");
 #endif
@@ -66,12 +66,13 @@ __FBSDID("$FreeBSD: head/usr.bin/indent/args.c 336318 2018-07-15 21:04:21Z pstef
 #else
 #define assert_type(expr, type) (expr)
 #endif
+
 #define bool_option(name, value, var) \
 	{name, true, value, false, assert_type(&(opt.var), bool *)}
-#define int_option(name, var) \
-	{name, false, false, false, assert_type(&(opt.var), int *)}
 #define bool_options(name, var) \
 	{name, true, false, true, assert_type(&(opt.var), bool *)}
+#define int_option(name, var) \
+	{name, false, false, false, assert_type(&(opt.var), int *)}
 
 /*
  * N.B.: an option whose name is a prefix of another option must come earlier;
@@ -80,7 +81,7 @@ __FBSDID("$FreeBSD: head/usr.bin/indent/args.c 336318 2018-07-15 21:04:21Z pstef
  * See set_special_option for special options.
  */
 static const struct pro {
-    const char p_name[5];	/* name, e.g. "bl", "cli" */
+    const char p_name[5];	/* e.g. "bl", "cli" */
     bool p_is_bool;
     bool p_bool_value;
     bool p_may_negate;
@@ -227,7 +228,6 @@ set_special_option(const char *arg, const char *option_source)
     if (strncmp(arg, "-version", 8) == 0) {
 	printf("FreeBSD indent %s\n", INDENT_VERSION);
 	exit(0);
-	/* NOTREACHED */
     }
 
     if (arg[0] == 'P' || strncmp(arg, "npro", 4) == 0)
