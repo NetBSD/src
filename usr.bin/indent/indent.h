@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.h,v 1.31 2021/10/08 16:16:54 rillig Exp $	*/
+/*	$NetBSD: indent.h,v 1.32 2021/10/08 16:20:33 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-FreeBSD
@@ -73,8 +73,8 @@ __FBSDID("$FreeBSD: head/usr.bin/indent/indent.h 336333 2018-07-16 05:46:50Z pst
 typedef enum token_type {
     end_of_file,
     newline,
-    lparen,			/* '(' or '[' */
-    rparen,			/* ')' or ']' */
+    lparen_or_lbracket,
+    rparen_or_rbracket,
     unary_op,			/* e.g. '+' or '&' */
     binary_op,			/* e.g. '<<' or '+' or '&&' or '/=' */
     postfix_op,			/* trailing '++' or '--' */
