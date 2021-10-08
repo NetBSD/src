@@ -1,4 +1,4 @@
-/*	$NetBSD: dd_swab.c,v 1.1 2019/10/04 08:57:38 mrg Exp $	*/
+/*	$NetBSD: dd_swab.c,v 1.2 2021/10/08 14:44:48 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)swab.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: dd_swab.c,v 1.1 2019/10/04 08:57:38 mrg Exp $");
+__RCSID("$NetBSD: dd_swab.c,v 1.2 2021/10/08 14:44:48 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -71,7 +71,7 @@ dd_swab(const void * from, void * to, ssize_t len)
 	}
 
 	/* round to multiple of 8 */
-	while ((--len % 8) != 0)
+	for (; (len % 8) != 0; --len)
 		STEP;
 	len /= 8;
 	if (len == 0)
