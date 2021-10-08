@@ -1,4 +1,4 @@
-/*	$NetBSD: reloc_x86_64.c,v 1.1.1.2 2018/08/16 18:17:47 jmcneill Exp $	*/
+/*	$NetBSD: reloc_x86_64.c,v 1.2 2021/10/08 23:08:06 jmcneill Exp $	*/
 
 /* reloc_x86_64.c - position independent x86_64 ELF shared object relocator
    Copyright (C) 1999 Hewlett-Packard Co.
@@ -40,7 +40,14 @@
 #include <efi.h>
 #include <efilib.h>
 
+#ifdef __NetBSD__
+#include <sys/types.h>
+#include <sys/exec_elf.h>
+#else
 #include <elf.h>
+#endif
+
+EFI_STATUS _relocate (long, Elf64_Dyn *, EFI_HANDLE, EFI_SYSTEM_TABLE *);
 
 EFI_STATUS _relocate (long ldbase, Elf64_Dyn *dyn,
 		      EFI_HANDLE image EFI_UNUSED,
