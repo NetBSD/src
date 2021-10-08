@@ -1,4 +1,4 @@
-/* $NetBSD: opt-v.0.stdout,v 1.2 2021/03/07 10:12:18 rillig Exp $ */
+/* $NetBSD: opt-v.0.stdout,v 1.3 2021/10/08 20:23:23 rillig Exp $ */
 /* $FreeBSD$ */
 
 /*
@@ -9,5 +9,9 @@ example(void)
 {
 	printf("A very long message template with %d arguments: %s, %s, %s", 3, "first", "second", "third");
 }
-There were 8 output lines and 1 comments
-(Lines with comments)/(Lines with code):  0.600
+
+#define macro1 /* prefix */ suffix
+
+#define macro2 prefix		/* suffix */
+There were 10 output lines and 2 comments
+(Lines with comments)/(Lines with code):  0.571
