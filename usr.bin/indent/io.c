@@ -1,4 +1,4 @@
-/*	$NetBSD: io.c,v 1.85 2021/10/08 17:19:49 rillig Exp $	*/
+/*	$NetBSD: io.c,v 1.86 2021/10/08 17:56:12 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)io.c	8.1 (Berkeley) 6/6/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: io.c,v 1.85 2021/10/08 17:19:49 rillig Exp $");
+__RCSID("$NetBSD: io.c,v 1.86 2021/10/08 17:56:12 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/io.c 334927 2018-06-10 16:44:18Z pstef $");
 #endif
@@ -102,15 +102,123 @@ output_indent(int old_ind, int new_ind)
     return ind;
 }
 
+static int
+dump_line_label(void)
+{
+    int ind;
+
+    if (comment_open) {
+	comment_open = false;
+	output_string(".*/\n");
+    }
+
+    while (lab.e > lab.s && is_hspace(lab.e[-1]))
+	lab.e--;
+    *lab.e = '\0';
+
+    ind = output_indent(0, compute_label_indent());
+
+    if (lab.s[0] == '#' && (strncmp(lab.s, "#else", 5) == 0
+	    || strncmp(lab.s, "#endif", 6) == 0)) {
+	const char *s = lab.s;
+	if (lab.e[-1] == '\n')
+	    lab.e--;
+	do {
+	    output_char(*s++);
+	} while (s < lab.e && 'a' <= *s && *s <= 'z');
+
+	while (s < lab.e && is_hspace(*s))
+	    s++;
+
+	if (s < lab.e) {
+	    if (s[0] == '/' && s[1] == '*') {
+		output_char('\t');
+		output_range(s, lab.e);
+	    } else {
+		output_string("\t/* ");
+		output_range(s, lab.e);
+		output_string(" */");
+	    }
+	}
+    } else
+	output_range(lab.s, lab.e);
+    ind = indentation_after(ind, lab.s);
+
+    ps.is_case_label = false;
+    return ind;
+}
+
+static int
+dump_line_code(int ind)
+{
+    if (comment_open) {
+	comment_open = false;
+	output_string(".*/\n");
+    }
+
+    int target_ind = compute_code_indent();
+    for (int i = 0; i < ps.p_l_follow; i++) {
+	if (ps.paren_indents[i] >= 0) {
+	    int paren_ind = ps.paren_indents[i];
+	    /* XXX: the '+ 1' smells like an off-by-one error. */
+	    ps.paren_indents[i] = (short)-(paren_ind + target_ind + 1);
+	    debug_println(
+		"setting pi[%d] from %d to %d for column %d",
+		i, paren_ind, ps.paren_indents[i], target_ind + 1);
+	}
+    }
+
+    ind = output_indent(ind, target_ind);
+    output_range(code.s, code.e);
+    return indentation_after(ind, code.s);
+}
+
+static void
+dump_line_comment(int ind)
+{
+    int target_ind = ps.com_ind;
+    char *com_st = com.s;
+
+    target_ind += ps.comment_delta;
+
+    /* consider original indentation in case this is a box comment */
+    while (*com_st == '\t')
+	com_st++, target_ind += opt.tabsize;
+
+    while (target_ind < 0) {
+	if (*com_st == ' ')
+	    target_ind++, com_st++;
+	else if (*com_st == '\t') {
+	    target_ind = opt.tabsize * (1 + target_ind / opt.tabsize);
+	    com_st++;
+	} else
+	    target_ind = 0;
+    }
+
+    /* if comment can't fit on this line, put it on next line */
+    if (ind > target_ind) {
+	output_char('\n');
+	ind = 0;
+	ps.stats.lines++;
+    }
+
+    while (com.e > com_st && isspace((unsigned char)com.e[-1]))
+	com.e--;
+
+    (void)output_indent(ind, target_ind);
+    output_range(com_st, com.e);
+
+    ps.comment_delta = ps.n_comment_delta;
+    ps.stats.comment_lines++;
+}
+
 /*
- * dump_line is the routine that actually effects the printing of the new
- * source. It prints the label section, followed by the code section with
- * the appropriate nesting level, followed by any comments.
+ * Write a line of formatted source to the output file. The line consists of a
+ * label, the code and the comment.
  */
 void
 dump_line(void)
 {
-    int cur_ind;
     static bool not_first_line;
 
     if (ps.procname[0] != '\0') {
@@ -148,101 +256,13 @@ dump_line(void)
 	if (lab.e != lab.s || code.e != code.s)
 	    ps.stats.code_lines++;
 
-	if (lab.e != lab.s) {	/* print lab, if any */
-	    if (comment_open) {
-		comment_open = false;
-		output_string(".*/\n");
-	    }
-
-	    while (lab.e > lab.s && is_hspace(lab.e[-1]))
-		lab.e--;
-	    *lab.e = '\0';
-
-	    cur_ind = output_indent(0, compute_label_indent());
-
-	    if (lab.s[0] == '#' && (strncmp(lab.s, "#else", 5) == 0
-		    || strncmp(lab.s, "#endif", 6) == 0)) {
-		char *s = lab.s;
-		if (lab.e[-1] == '\n')
-		    lab.e--;
-		do {
-		    output_char(*s++);
-		} while (s < lab.e && 'a' <= *s && *s <= 'z');
-
-		while (s < lab.e && is_hspace(*s))
-		    s++;
-
-		if (s < lab.e) {
-		    if (s[0] == '/' && s[1] == '*') {
-			output_char('\t');
-			output_range(s, lab.e);
-		    } else {
-			output_string("\t/* ");
-			output_range(s, lab.e);
-			output_string(" */");
-		    }
-		}
-	    } else
-		output_range(lab.s, lab.e);
-	    cur_ind = indentation_after(cur_ind, lab.s);
-	} else
-	    cur_ind = 0;	/* there is no label section */
-
-	ps.is_case_label = false;
-
-	if (code.s != code.e) {	/* print code section, if any */
-	    if (comment_open) {
-		comment_open = false;
-		output_string(".*/\n");
-	    }
-
-	    int target_ind = compute_code_indent();
-	    for (int i = 0; i < ps.p_l_follow; i++) {
-		if (ps.paren_indents[i] >= 0) {
-		    int ind = ps.paren_indents[i];
-		    /* XXX: the '+ 1' smells like an off-by-one error. */
-		    ps.paren_indents[i] = (short)-(ind + target_ind + 1);
-		    debug_println(
-			"setting pi[%d] from %d to %d for column %d",
-			i, ind, ps.paren_indents[i], target_ind + 1);
-		}
-	    }
-
-	    cur_ind = output_indent(cur_ind, target_ind);
-	    output_range(code.s, code.e);
-	    cur_ind = indentation_after(cur_ind, code.s);
-	}
-
-	if (com.s != com.e) {	/* print comment, if any */
-	    int target_ind = ps.com_ind;
-	    char *com_st = com.s;
-
-	    target_ind += ps.comment_delta;
-	    while (*com_st == '\t')	/* consider original indentation in
-					 * case this is a box comment */
-		com_st++, target_ind += opt.tabsize;
-	    while (target_ind < 0) {
-		if (*com_st == ' ')
-		    target_ind++, com_st++;
-		else if (*com_st == '\t') {
-		    target_ind = opt.tabsize * (1 + target_ind / opt.tabsize);
-		    com_st++;
-		} else
-		    target_ind = 0;
-	    }
-	    if (cur_ind > target_ind) {	/* if comment can't fit on this line,
-					 * put it on next line */
-		output_char('\n');
-		cur_ind = 0;
-		ps.stats.lines++;
-	    }
-	    while (com.e > com_st && isspace((unsigned char)com.e[-1]))
-		com.e--;
-	    (void)output_indent(cur_ind, target_ind);
-	    output_range(com_st, com.e);
-	    ps.comment_delta = ps.n_comment_delta;
-	    ps.stats.comment_lines++;
-	}
+	int ind = 0;
+	if (lab.e != lab.s)
+	    ind = dump_line_label();
+	if (code.e != code.s)
+	    ind = dump_line_code(ind);
+	if (com.e != com.s)
+	    dump_line_comment(ind);
 
 	if (ps.use_ff)
 	    output_char('\f');
