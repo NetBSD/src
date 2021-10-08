@@ -1,4 +1,4 @@
-/*	$NetBSD: lexi.c,v 1.80 2021/10/08 19:22:19 rillig Exp $	*/
+/*	$NetBSD: lexi.c,v 1.81 2021/10/08 21:13:58 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)lexi.c	8.1 (Berkeley) 6/6/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: lexi.c,v 1.80 2021/10/08 19:22:19 rillig Exp $");
+__RCSID("$NetBSD: lexi.c,v 1.81 2021/10/08 21:13:58 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/lexi.c 337862 2018-08-15 18:19:45Z pstef $");
 #endif
@@ -187,7 +187,7 @@ inbuf_skip(void)
 {
     inp.s++;
     if (inp.s >= inp.e)
-	fill_buffer();
+	inbuf_read_line();
 }
 
 char
@@ -295,12 +295,11 @@ lex_word(void)
 	   *inp.s == '\\' ||
 	   *inp.s == '_' || *inp.s == '$') {
 
-	/* fill_buffer() terminates buffer with newline */
 	if (*inp.s == '\\') {
 	    if (inp.s[1] == '\n') {
 		inp.s += 2;
 		if (inp.s >= inp.e)
-		    fill_buffer();
+		    inbuf_read_line();
 	    } else
 		break;
 	}
@@ -656,7 +655,7 @@ lexi(struct parser_state *state)
 	    while (isalpha((unsigned char)*tp) ||
 		   isspace((unsigned char)*tp)) {
 		if (++tp >= inp.e)
-		    fill_buffer();
+		    inbuf_read_line();
 	    }
 	    if (*tp == '(')
 		ps.procname[0] = ' ';
@@ -688,7 +687,7 @@ lexi(struct parser_state *state)
     }
 
     if (inp.s >= inp.e)	/* check for input buffer empty */
-	fill_buffer();
+	inbuf_read_line();
 
     state->last_u_d = unary_delim;
 
