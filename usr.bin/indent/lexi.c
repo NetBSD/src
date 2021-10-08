@@ -1,4 +1,4 @@
-/*	$NetBSD: lexi.c,v 1.81 2021/10/08 21:13:58 rillig Exp $	*/
+/*	$NetBSD: lexi.c,v 1.82 2021/10/08 21:16:23 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)lexi.c	8.1 (Berkeley) 6/6/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: lexi.c,v 1.81 2021/10/08 21:13:58 rillig Exp $");
+__RCSID("$NetBSD: lexi.c,v 1.82 2021/10/08 21:16:23 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/lexi.c 337862 2018-08-15 18:19:45Z pstef $");
 #endif
@@ -129,7 +129,7 @@ struct {
  * HP H+ "."    P  FS  -> $float;    BP B+           IS? -> $int;
  */
 /* INDENT OFF */
-static const unsigned char num_lex_state[][26] = {
+static const unsigned char lex_number_state[][26] = {
     /*                examples:
                                      00
              s                      0xx
@@ -158,7 +158,7 @@ static const unsigned char num_lex_state[][26] = {
 };
 /* INDENT ON */
 
-static const uint8_t num_lex_row[] = {
+static const uint8_t lex_number_row[] = {
     ['0'] = 1,
     ['1'] = 2,
     ['2'] = 3, ['3'] = 3, ['4'] = 3, ['5'] = 3, ['6'] = 3, ['7'] = 3,
@@ -270,19 +270,19 @@ lex_number(void)
 {
     for (uint8_t s = 'A'; s != 'f' && s != 'i' && s != 'u';) {
 	uint8_t ch = (uint8_t)*inp.s;
-	if (ch >= nitems(num_lex_row) || num_lex_row[ch] == 0)
+	if (ch >= nitems(lex_number_row) || lex_number_row[ch] == 0)
 	    break;
 
-	uint8_t row = num_lex_row[ch];
-	if (num_lex_state[row][s - 'A'] == ' ') {
+	uint8_t row = lex_number_row[ch];
+	if (lex_number_state[row][s - 'A'] == ' ') {
 	    /*-
-	     * num_lex_state[0][s - 'A'] now indicates the type:
+	     * lex_number_state[0][s - 'A'] now indicates the type:
 	     * f = floating, i = integer, u = unknown
 	     */
 	    break;
 	}
 
-	s = num_lex_state[row][s - 'A'];
+	s = lex_number_state[row][s - 'A'];
 	check_size_token(1);
 	*token.e++ = inbuf_next();
     }

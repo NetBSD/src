@@ -1,4 +1,4 @@
-/*	$NetBSD: io.c,v 1.89 2021/10/08 21:13:58 rillig Exp $	*/
+/*	$NetBSD: io.c,v 1.90 2021/10/08 21:16:23 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)io.c	8.1 (Berkeley) 6/6/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: io.c,v 1.89 2021/10/08 21:13:58 rillig Exp $");
+__RCSID("$NetBSD: io.c,v 1.90 2021/10/08 21:16:23 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/io.c 334927 2018-06-10 16:44:18Z pstef $");
 #endif
@@ -219,7 +219,7 @@ dump_line_comment(int ind)
 void
 dump_line(void)
 {
-    static bool not_first_line;
+    static bool first_line = true;
 
     if (ps.procname[0] != '\0') {
 	ps.ind_level = 0;
@@ -234,7 +234,7 @@ dump_line(void)
 
     } else if (!inhibit_formatting) {
 	suppress_blanklines = 0;
-	if (prefix_blankline_requested && not_first_line) {
+	if (prefix_blankline_requested && !first_line) {
 	    if (opt.swallow_optional_blanklines) {
 		if (next_blank_lines == 1)
 		    next_blank_lines = 0;
@@ -296,7 +296,7 @@ dump_line(void)
 	debug_println("paren_indent is now %d", paren_indent);
     }
 
-    not_first_line = true;
+    first_line = false;
 }
 
 int
@@ -369,7 +369,7 @@ skip_string(const char **pp, const char *s)
 static void
 parse_indent_comment(void)
 {
-    bool on_off;
+    bool on;
 
     const char *p = inp.buf;
 
@@ -382,9 +382,9 @@ parse_indent_comment(void)
     skip_hspace(&p);
 
     if (*p == '*' || skip_string(&p, "ON"))
-	on_off = true;
+	on = true;
     else if (skip_string(&p, "OFF"))
-	on_off = false;
+	on = false;
     else
 	return;
 
@@ -395,8 +395,8 @@ parse_indent_comment(void)
     if (com.s != com.e || lab.s != lab.e || code.s != code.e)
 	dump_line();
 
-    inhibit_formatting = !on_off;
-    if (on_off) {
+    inhibit_formatting = !on;
+    if (on) {
 	next_blank_lines = 0;
 	postfix_blankline_requested = false;
 	prefix_blankline_requested = false;
