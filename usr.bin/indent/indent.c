@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.c,v 1.134 2021/10/08 23:43:33 rillig Exp $	*/
+/*	$NetBSD: indent.c,v 1.135 2021/10/08 23:47:40 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)indent.c	5.17 (Berkeley) 6/7/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: indent.c,v 1.134 2021/10/08 23:43:33 rillig Exp $");
+__RCSID("$NetBSD: indent.c,v 1.135 2021/10/08 23:47:40 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/indent.c 340138 2018-11-04 19:24:49Z oshogbo $");
 #endif
@@ -264,6 +264,7 @@ search_brace_other(token_type ttype, bool *force_nl,
 	    diag(0, "Line broken");
     }
 
+    /* XXX: buffer overflow? This is essentially a strcpy. */
     for (const char *t_ptr = token.s; *t_ptr != '\0'; ++t_ptr)
 	*sc_end++ = *t_ptr;
     return true;
@@ -727,13 +728,13 @@ process_lparen_or_lbracket(int decl_ind, bool tabs_to_var, bool sp_sw)
 
     ps.paren_indents[ps.p_l_follow - 1] =
 	(short)indentation_after_range(0, code.s, code.e);
-    debug_println("paren_indent[%d] is now %d",
+    debug_println("paren_indents[%d] is now %d",
 	ps.p_l_follow - 1, ps.paren_indents[ps.p_l_follow - 1]);
 
     if (sp_sw && ps.p_l_follow == 1 && opt.extra_expr_indent
 	    && ps.paren_indents[0] < 2 * opt.indent_size) {
 	ps.paren_indents[0] = (short)(2 * opt.indent_size);
-	debug_println("paren_indent[0] is now %d", ps.paren_indents[0]);
+	debug_println("paren_indents[0] is now %d", ps.paren_indents[0]);
     }
 
     if (ps.init_or_struct && *token.s == '(' && ps.tos <= 2) {
@@ -772,8 +773,8 @@ process_rparen_or_rbracket(bool *sp_sw, bool *force_nl,
 
     *code.e++ = token.s[0];
 
-    if (*sp_sw && (ps.p_l_follow == 0)) {	/* check for end of if (...),
-						 * or some such */
+    if (*sp_sw && ps.p_l_follow == 0) {	/* check for end of if (...), or some
+					 * such */
 	*sp_sw = false;
 	*force_nl = true;	/* must force newline after if */
 	ps.last_u_d = true;	/* inform lexi that a following operator is
@@ -825,9 +826,7 @@ process_postfix_op(void)
 static void
 process_question(int *seen_quest)
 {
-    (*seen_quest)++;		/* this will be used when a later colon
-				 * appears, so we can distinguish the
-				 * <c>?<n>:<n> construct */
+    (*seen_quest)++;
     if (ps.want_blank)
 	*code.e++ = ' ';
     *code.e++ = '?';
@@ -871,8 +870,7 @@ process_semicolon(bool *seen_case, int *seen_quest, int decl_ind,
     bool *force_nl)
 {
     if (ps.decl_nest == 0)
-	ps.init_or_struct = false;	/* we are not in an initialization or
-					 * structure declaration */
+	ps.init_or_struct = false;
     *seen_case = false;		/* these will only need resetting in an error */
     *seen_quest = 0;
     if (ps.last_token == rparen_or_rbracket)
@@ -890,16 +888,15 @@ process_semicolon(bool *seen_case, int *seen_quest, int decl_ind,
 	ps.dumped_decl_indent = true;
     }
 
-    ps.in_decl = (ps.decl_nest > 0);	/* if we were in a first level
+    ps.in_decl = ps.decl_nest > 0;	/* if we were in a first level
 					 * structure declaration, we aren't
 					 * anymore */
 
     if ((!*sp_sw || hd_type != for_exprs) && ps.p_l_follow > 0) {
 
 	/*
-	 * This should be true iff there were unbalanced parens in the stmt.
-	 * It is a bit complicated, because the semicolon might be in a for
-	 * stmt
+	 * There were unbalanced parens in the statement. It is a bit
+	 * complicated, because the semicolon might be in a for statement.
 	 */
 	diag(1, "Unbalanced parens");
 	ps.p_l_follow = 0;
@@ -1160,7 +1157,7 @@ process_period(void)
 static void
 process_comma(int decl_ind, bool tabs_to_var, bool *force_nl)
 {
-    ps.want_blank = (code.s != code.e);	/* only put blank after comma if comma
+    ps.want_blank = code.s != code.e;	/* only put blank after comma if comma
 					 * does not start the line */
 
     if (ps.in_decl && ps.procname[0] == '\0' && !ps.block_init &&
@@ -1333,8 +1330,8 @@ main_loop(void)
     bool tabs_to_var;		/* true if using tabs to indent to var name */
     bool sp_sw;			/* when true, we are in the expression of
 				 * if(...), while(...), etc. */
-    token_type hd_type = end_of_file;	/* used to store type of stmt for if
-					 * (...), for (...), etc */
+    token_type hd_type = end_of_file;	/* the type of statement for if (...),
+				 * for (...), etc */
     int seen_quest;		/* when this is positive, we have seen a '?'
 				 * without the matching ':' in a <c>?<s>:<s>
 				 * construct */
@@ -1440,8 +1437,8 @@ main_loop(void)
 	case keyword_for_if_while:
 	    sp_sw = true;	/* the interesting stuff is done after the
 				 * expression is scanned */
-	    hd_type = (*token.s == 'i' ? if_expr :
-		(*token.s == 'w' ? while_expr : for_exprs));
+	    hd_type = *token.s == 'i' ? if_expr :
+		*token.s == 'w' ? while_expr : for_exprs;
 
 	    /* remember the type of header for later use by parser */
 	    goto copy_token;
