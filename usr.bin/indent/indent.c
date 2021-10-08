@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.c,v 1.129 2021/10/08 20:14:52 rillig Exp $	*/
+/*	$NetBSD: indent.c,v 1.130 2021/10/08 20:28:56 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)indent.c	5.17 (Berkeley) 6/7/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: indent.c,v 1.129 2021/10/08 20:14:52 rillig Exp $");
+__RCSID("$NetBSD: indent.c,v 1.130 2021/10/08 20:28:56 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/indent.c 340138 2018-11-04 19:24:49Z oshogbo $");
 #endif
@@ -1298,16 +1298,10 @@ main_loop(void)
 	    /* NOTREACHED */
 	}
 
-	if (
-		ttype != comment &&
-		ttype != newline &&
-		ttype != preprocessing &&
-		ttype != form_feed) {
+	if (ttype == newline || ttype == form_feed || ttype == preprocessing)
+	    force_nl = false;
+	else if (ttype != comment)
 	    process_comment_in_code(ttype, &force_nl);
-
-	} else if (ttype != comment)	/* preserve force_nl through a comment */
-	    force_nl = false;	/* cancel forced newline after newline, form
-				 * feed, etc */
 
 	buf_reserve(&code, 3);	/* space for 2 characters plus '\0' */
 
