@@ -1,4 +1,4 @@
-/*	$NetBSD: io.c,v 1.80 2021/10/07 23:18:47 rillig Exp $	*/
+/*	$NetBSD: io.c,v 1.81 2021/10/08 17:00:21 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)io.c	8.1 (Berkeley) 6/6/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: io.c,v 1.80 2021/10/07 23:18:47 rillig Exp $");
+__RCSID("$NetBSD: io.c,v 1.81 2021/10/08 17:00:21 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/io.c 334927 2018-06-10 16:44:18Z pstef $");
 #endif
@@ -197,21 +197,17 @@ dump_line(void)
 	    }
 
 	    int target_col = 1 + compute_code_indent();
-	    {
-		int i;
-
-		for (i = 0; i < ps.p_l_follow; i++) {
-		    if (ps.paren_indents[i] >= 0) {
-			int ind = ps.paren_indents[i];
-			/*
-			 * XXX: this mix of 'indent' and 'column' smells like
-			 * an off-by-one error.
-			 */
-			ps.paren_indents[i] = (short)-(ind + target_col);
-			debug_println(
-			    "setting pi[%d] from %d to %d for column %d",
-			    i, ind, ps.paren_indents[i], target_col);
-		    }
+	    for (int i = 0; i < ps.p_l_follow; i++) {
+		if (ps.paren_indents[i] >= 0) {
+		    int ind = ps.paren_indents[i];
+		    /*
+		     * XXX: this mix of 'indent' and 'column' smells like
+		     * an off-by-one error.
+		     */
+		    ps.paren_indents[i] = (short)-(ind + target_col);
+		    debug_println(
+			"setting pi[%d] from %d to %d for column %d",
+			i, ind, ps.paren_indents[i], target_col);
 		}
 	    }
 
@@ -228,7 +224,7 @@ dump_line(void)
 	    while (*com_st == '\t')	/* consider original indentation in
 					 * case this is a box comment */
 		com_st++, target_col += opt.tabsize;
-	    while (target_col <= 0)
+	    while (target_col <= 0) {
 		if (*com_st == ' ')
 		    target_col++, com_st++;
 		else if (*com_st == '\t') {
@@ -236,6 +232,7 @@ dump_line(void)
 		    com_st++;
 		} else
 		    target_col = 1;
+	    }
 	    if (cur_col > target_col) {	/* if comment can't fit on this line,
 					 * put it on next line */
 		output_char('\n');
