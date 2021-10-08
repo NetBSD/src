@@ -1,4 +1,4 @@
-/*	$NetBSD: pr_comment.c,v 1.67 2021/10/08 22:27:52 rillig Exp $	*/
+/*	$NetBSD: pr_comment.c,v 1.68 2021/10/08 22:37:33 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,11 +43,12 @@ static char sccsid[] = "@(#)pr_comment.c	8.1 (Berkeley) 6/6/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: pr_comment.c,v 1.67 2021/10/08 22:27:52 rillig Exp $");
+__RCSID("$NetBSD: pr_comment.c,v 1.68 2021/10/08 22:37:33 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/pr_comment.c 334927 2018-06-10 16:44:18Z pstef $");
 #endif
 
+#include <assert.h>
 #include <stdio.h>
 #include <string.h>
 
@@ -169,9 +170,9 @@ process_comment(void)
 
     /* Don't put a break delimiter if this is a one-liner that won't wrap. */
     if (break_delim) {
-	for (const char *p = inp.s; *p != '\0' && *p != '\n'; p++) {
-	    if (p >= inp.e)
-		inbuf_read_line();
+	for (const char *p = inp.s; *p != '\n'; p++) {
+	    assert(*p != '\0');
+	    assert(p < inp.e);
 	    if (p[0] == '*' && p[1] == '/') {
 		/*
 		 * XXX: This computation ignores the leading " * ", as well as
