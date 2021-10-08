@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.34 2021/10/08 21:48:33 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.35 2021/10/08 23:47:41 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -114,7 +114,7 @@ parse(token_type ttype)
 	break;
 
     case lbrace:
-	break_comma = false;	/* don't break comma in an initial list */
+	break_comma = false;	/* don't break comma in an initializer list */
 	if (ps.p_stack[ps.tos] == stmt || ps.p_stack[ps.tos] == decl
 		|| ps.p_stack[ps.tos] == stmt_list)
 	    ++ps.ind_level_follow;	/* it is a random, isolated stmt
@@ -164,7 +164,7 @@ parse(token_type ttype)
 	    ps.ind_level_follow = ps.ind_level + 1;
 	    ps.p_stack[ps.tos] = if_expr_stmt_else;
 	    /* remember if with else */
-	    ps.search_brace = opt.brace_same_line | opt.else_if;
+	    ps.search_brace = opt.brace_same_line || opt.else_if;
 	}
 	break;
 
