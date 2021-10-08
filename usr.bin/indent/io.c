@@ -1,4 +1,4 @@
-/*	$NetBSD: io.c,v 1.83 2021/10/08 17:07:36 rillig Exp $	*/
+/*	$NetBSD: io.c,v 1.84 2021/10/08 17:12:08 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)io.c	8.1 (Berkeley) 6/6/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: io.c,v 1.83 2021/10/08 17:07:36 rillig Exp $");
+__RCSID("$NetBSD: io.c,v 1.84 2021/10/08 17:12:08 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/io.c 334927 2018-06-10 16:44:18Z pstef $");
 #endif
@@ -196,22 +196,19 @@ dump_line(void)
 		output_string(".*/\n");
 	    }
 
-	    int target_col = 1 + compute_code_indent();
+	    int target_ind = compute_code_indent();
 	    for (int i = 0; i < ps.p_l_follow; i++) {
 		if (ps.paren_indents[i] >= 0) {
 		    int ind = ps.paren_indents[i];
-		    /*
-		     * XXX: this mix of 'indent' and 'column' smells like
-		     * an off-by-one error.
-		     */
-		    ps.paren_indents[i] = (short)-(ind + target_col);
+		    /* XXX: the '+ 1' smells like an off-by-one error. */
+		    ps.paren_indents[i] = (short)-(ind + target_ind + 1);
 		    debug_println(
 			"setting pi[%d] from %d to %d for column %d",
-			i, ind, ps.paren_indents[i], target_col);
+			i, ind, ps.paren_indents[i], target_ind + 1);
 		}
 	    }
 
-	    cur_ind = output_indent(cur_ind, target_col - 1);
+	    cur_ind = output_indent(cur_ind, target_ind);
 	    output_range(code.s, code.e);
 	    cur_ind = indentation_after(cur_ind, code.s);
 	}

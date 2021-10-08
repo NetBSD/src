@@ -1,4 +1,4 @@
-/*	$NetBSD: pr_comment.c,v 1.58 2021/10/07 23:15:15 rillig Exp $	*/
+/*	$NetBSD: pr_comment.c,v 1.59 2021/10/08 17:12:08 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)pr_comment.c	8.1 (Berkeley) 6/6/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: pr_comment.c,v 1.58 2021/10/07 23:15:15 rillig Exp $");
+__RCSID("$NetBSD: pr_comment.c,v 1.59 2021/10/08 17:12:08 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/pr_comment.c 334927 2018-06-10 16:44:18Z pstef $");
 #endif
@@ -126,18 +126,18 @@ process_comment(void)
 	} else {
 	    break_delim = false;
 
-	    int target_col;
+	    int target_ind;
 	    if (code.s != code.e)
-		target_col = 1 + indentation_after(compute_code_indent(), code.s);
+		target_ind = indentation_after(compute_code_indent(), code.s);
 	    else if (lab.s != lab.e)
-		target_col = 1 + indentation_after(compute_label_indent(), lab.s);
+		target_ind = indentation_after(compute_label_indent(), lab.s);
 	    else
-		target_col = 1;
+		target_ind = 0;
 
 	    ps.com_col = ps.decl_on_line || ps.ind_level == 0
 		? opt.decl_comment_column : opt.comment_column;
-	    if (ps.com_col <= target_col)
-		ps.com_col = opt.tabsize * (1 + (target_col - 1) / opt.tabsize) + 1;
+	    if (ps.com_col <= target_ind + 1)
+		ps.com_col = opt.tabsize * (1 + target_ind / opt.tabsize) + 1;
 	    if (ps.com_col + 24 > adj_max_line_length)
 		/* XXX: mismatch between column and length */
 		adj_max_line_length = ps.com_col + 24;
