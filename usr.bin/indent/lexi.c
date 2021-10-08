@@ -1,4 +1,4 @@
-/*	$NetBSD: lexi.c,v 1.82 2021/10/08 21:16:23 rillig Exp $	*/
+/*	$NetBSD: lexi.c,v 1.83 2021/10/08 21:18:43 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)lexi.c	8.1 (Berkeley) 6/6/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: lexi.c,v 1.82 2021/10/08 21:16:23 rillig Exp $");
+__RCSID("$NetBSD: lexi.c,v 1.83 2021/10/08 21:18:43 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/lexi.c 337862 2018-08-15 18:19:45Z pstef $");
 #endif
@@ -138,22 +138,22 @@ static const unsigned char lex_number_state[][26] = {
              r   11ee0001101lbuuxx.a.pp
              t.01.e+008bLuxll0Ll.aa.p+0
     states:  ABCDEFGHIJKLMNOPQRSTUVWXYZ */
-    [0] =   "uuiifuufiuuiiuiiiiiuiuuuuu",
-    [1] =   "CEIDEHHHIJQ  U  Q  VUVVZZZ",
-    [2] =   "DEIDEHHHIJQ  U  Q  VUVVZZZ",
-    [3] =   "DEIDEHHHIJ   U     VUVVZZZ",
-    [4] =   "DEJDEHHHJJ   U     VUVVZZZ",
-    [5] =   "             U     VUVV   ",
-    [6] =   "  K          U     VUVV   ",
-    [7] =   "  FFF   FF   U     VUVV   ",
-    [8] =   "    f  f     U     VUVV  f",
-    [9] =   "  LLf  fL  PR   Li  L    f",
-    [10] =  "  OOf  fO   S P O i O    f",
-    [11] =  "                    FFX   ",
-    [12] =  "  MM    M  i  iiM   M     ",
-    [13] =  "  N                       ",
-    [14] =  "     G                 Y  ",
-    [15] =  "B EE    EE   T      W     ",
+    [0] =   "uuiifuufiuuiiuiiiiiuiuuuuu",	/* (other) */
+    [1] =   "CEIDEHHHIJQ  U  Q  VUVVZZZ",	/* 0 */
+    [2] =   "DEIDEHHHIJQ  U  Q  VUVVZZZ",	/* 1 */
+    [3] =   "DEIDEHHHIJ   U     VUVVZZZ",	/* 2 3 4 5 6 7 */
+    [4] =   "DEJDEHHHJJ   U     VUVVZZZ",	/* 8 9 */
+    [5] =   "             U     VUVV   ",	/* A a C c D d */
+    [6] =   "  K          U     VUVV   ",	/* B b */
+    [7] =   "  FFF   FF   U     VUVV   ",	/* E e */
+    [8] =   "    f  f     U     VUVV  f",	/* F f */
+    [9] =   "  LLf  fL  PR   Li  L    f",	/* L */
+    [10] =  "  OOf  fO   S P O i O    f",	/* l */
+    [11] =  "                    FFX   ",	/* P p */
+    [12] =  "  MM    M  i  iiM   M     ",	/* U u */
+    [13] =  "  N                       ",	/* X x */
+    [14] =  "     G                 Y  ",	/* + - */
+    [15] =  "B EE    EE   T      W     ",	/* . */
     /*       ABCDEFGHIJKLMNOPQRSTUVWXYZ */
 };
 /* INDENT ON */
