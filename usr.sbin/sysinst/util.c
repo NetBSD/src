@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.61 2021/09/26 15:52:40 maya Exp $	*/
+/*	$NetBSD: util.c,v 1.62 2021/10/08 15:59:55 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -1122,7 +1122,7 @@ char entropy_file[PATH_MAX];
 /*
  * Are we short of entropy?
  */
-static size_t
+size_t
 entropy_needed(void)
 {
 	int needed;
@@ -1154,9 +1154,10 @@ static void
 entropy_add_manual(void)
 {
 	SHA256_CTX ctx;
-	char buf[256], line[25];
-	size_t line_no, l;
+	char buf[256];
 	uint8_t digest[SHA256_DIGEST_LENGTH];
+	size_t l;
+	int txt_y, maxy, init_y;
 	bool ok = false;
 
 	msg_display(MSG_entropy_enter_manual1);
@@ -1166,17 +1167,33 @@ entropy_add_manual(void)
 	msg_display_add(MSG_entropy_enter_manual3);
 	msg_printf("\n\n");
 	SHA256_Init(&ctx);
-	line_no = 1;
+	txt_y = getcury(mainwin);
+	maxy = getmaxy(mainwin);
+	init_y = txt_y;
+
+	echo();
 	do {
-		sprintf(line, "%zu", line_no);
-		msg_prompt_win(line, -1, 15, 0, 0, "", buf, sizeof(buf));
+		txt_y++;
+		if (txt_y >= maxy) {
+			txt_y = init_y;
+			wmove(mainwin, txt_y, 0);
+			wclrtobot(mainwin);
+		} else {
+			wmove(mainwin, txt_y, 0);
+		}
+		msg_fmt_table_add(0, "> ");
+		mvwgetnstr(mainwin, txt_y, 2, buf, sizeof buf);
 		l = strlen(buf);
 		if (l > 0)
 			SHA256_Update(&ctx, (const uint8_t*)buf, l);
-		line_no++;
-	} while(buf[0] != 0);
+	} while(l > 0);
+	noecho();
 	ok = ctx.bitcount >= 256;
 	SHA256_Final(digest, &ctx);
+
+	wmove(mainwin, init_y, 0);
+	wclrtobot(mainwin);
+	wrefresh(mainwin);
 
 	if (ok)
 		entropy_write_to_kernel(digest, sizeof digest);
@@ -1332,12 +1349,9 @@ entropy_add_seed(void)
  * return true if we have enough entropy
  */
 bool
-do_check_entropy(void)
+do_add_entropy(void)
 {
 	int rv;
-
-	if (entropy_needed() == 0)
-		return true;
 
 	for (;;) {
 		if (entropy_needed() == 0)
@@ -1516,14 +1530,7 @@ get_and_unpack_sets(int update, msg setupdone_msg, msg success_msg, msg failure_
 	if (set_status[SET_BASE] & SET_INSTALLED)
 		run_makedev();
 
-	if (update) {
-#ifdef CHECK_ENTROPY
-		if (!do_check_entropy()) {
-			hit_enter_to_continue(NULL, MSG_abortupgr);
-			return 1;
-		}
-#endif
-	} else {
+	if (!update) {
 		struct stat sb1, sb2;
 
 		if (stat(target_expand("/"), &sb1) == 0

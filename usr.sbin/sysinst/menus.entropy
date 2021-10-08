@@ -1,4 +1,4 @@
-/*	$NetBSD: menus.entropy,v 1.1 2020/11/04 14:29:40 martin Exp $	*/
+/*	$NetBSD: menus.entropy,v 1.2 2021/10/08 15:59:55 martin Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 
 /* arg is an int*, returning a magic value for the selected menu option */
 menu not_enough_entropy, title MSG_not_enough_entropy, y=-1, no box, clear,
-    exit, exitstring MSG_abort_installation;
+    exit, exitstring MSG_continue_without_entropy;
 	option MSG_entropy_add_manually, exit,
 	    action { *((int*)arg) = 1; };
 	option MSG_entropy_download_seed, exit,
