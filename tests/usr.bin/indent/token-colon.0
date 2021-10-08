@@ -1,4 +1,4 @@
-/* $NetBSD: token-colon.0,v 1.1 2021/03/12 00:13:06 rillig Exp $ */
+/* $NetBSD: token-colon.0,v 1.2 2021/10/08 23:04:02 rillig Exp $ */
 /* $FreeBSD$ */
 
 /*
@@ -14,4 +14,21 @@
  * In the declaration of a struct member that is a bit-field.
  */
 
-/* TODO: Add some code to be formatted. */
+void endless(void)
+{
+label1:
+goto label2;
+
+    if (true)if (true)if (true)if (true)label2 :goto label1;
+}
+
+int constant_expression = true?4:12345;
+
+struct bit_field {
+bool flag:1;
+int maybe_signed : 4;
+signed int definitely_signed:3;
+signed int : 0;/* finish the storage unit for the bit-field */
+unsigned int definitely_unsigned:3;
+unsigned int:0;/* finish the storage unit for the bit-field */
+};
