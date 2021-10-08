@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.74 2021/09/26 15:52:40 maya Exp $	*/
+/*	$NetBSD: defs.h,v 1.75 2021/10/08 15:59:55 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -632,6 +632,10 @@ extern char dist_tgz_postfix[SSTRSIZE];
 /* needed prototypes */
 void set_menu_numopts(int, int);
 void remove_color_options(void);
+#ifdef CHECK_ENTROPY
+bool do_add_entropy(void);
+size_t entropy_needed(void);
+#endif
 void remove_raid_options(void);
 void remove_lvm_options(void);
 void remove_cgd_options(void);
@@ -892,7 +896,6 @@ bool	install_desc_from_parts(struct install_partition_desc *,
 	    struct disk_partitions*);
 void	free_install_desc(struct install_partition_desc*);
 bool	may_swap_if_not_sdmmc(const char*);
-bool	do_check_entropy(void);
 
 /* from target.c */
 #if defined(DEBUG)  ||	defined(DEBUG_ROOT)
