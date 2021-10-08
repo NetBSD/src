@@ -1,4 +1,4 @@
-/* $NetBSD: token-comment.0.stdout,v 1.7 2021/10/08 22:11:26 rillig Exp $ */
+/* $NetBSD: token-comment.0.stdout,v 1.8 2021/10/08 23:53:37 rillig Exp $ */
 /* $FreeBSD$ */
 
 /*
@@ -160,3 +160,14 @@ indent_still_on(void);		/* due to the extra comment to the right */
  * There may also be lines without asterisks.
  *
  */
+
+void
+loop(void)
+{
+	while (cond)		/* comment */
+		;
+
+	while (cond)
+/* $ XXX: The spaces around the comment look unintentional. */
+		 /* comment */ ;
+}
