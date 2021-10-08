@@ -1,4 +1,4 @@
-/*	$NetBSD: pr_comment.c,v 1.64 2021/10/08 21:13:58 rillig Exp $	*/
+/*	$NetBSD: pr_comment.c,v 1.65 2021/10/08 22:17:35 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)pr_comment.c	8.1 (Berkeley) 6/6/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: pr_comment.c,v 1.64 2021/10/08 21:13:58 rillig Exp $");
+__RCSID("$NetBSD: pr_comment.c,v 1.65 2021/10/08 22:17:35 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/pr_comment.c 334927 2018-06-10 16:44:18Z pstef $");
 #endif
@@ -90,7 +90,7 @@ process_comment(void)
     adj_max_line_length = opt.max_line_length;
     ps.just_saw_decl = 0;
     last_blank = -1;		/* no blanks found so far */
-    ps.box_com = false;		/* at first, assume that we are not in a boxed
+    bool box_com = false;	/* at first, assume that we are not in a boxed
 				 * comment or some other comment that should
 				 * not be touched */
     ps.stats.comments++;
@@ -99,20 +99,14 @@ process_comment(void)
 
     if (ps.col_1 && !opt.format_col1_comments) { /* if the comment starts in
 				 * column 1, it should not be touched */
-	ps.box_com = true;
+	box_com = true;
 	break_delim = false;
 	ps.com_ind = 0;
 
     } else {
 	if (*inp.s == '-' || *inp.s == '*' || token.e[-1] == '/' ||
 	    (*inp.s == '\n' && !opt.format_block_comments)) {
-	    ps.box_com = true;	/* A comment with a '-' or '*' immediately
-				 * after the /+* is assumed to be a boxed
-				 * comment. A comment with a newline
-				 * immediately after the /+* is assumed to be
-				 * a block comment and is treated as a box
-				 * comment unless format_block_comments is
-				 * nonzero (the default). */
+	    box_com = true;
 	    break_delim = false;
 	}
 
@@ -143,7 +137,7 @@ process_comment(void)
 	}
     }
 
-    if (ps.box_com) {
+    if (box_com) {
 	/*
 	 * Find out how much indentation there was originally, because that
 	 * much will have to be ignored by dump_line(). This is a box comment,
@@ -170,7 +164,7 @@ process_comment(void)
     ps.comment_delta = 0;
     *com.e++ = '/';
     *com.e++ = token.e[-1];
-    if (*inp.s != ' ' && !ps.box_com)
+    if (*inp.s != ' ' && !box_com)
 	*com.e++ = ' ';
 
     /* Don't put a break delimiter if this is a one-liner that won't wrap. */
@@ -201,7 +195,7 @@ process_comment(void)
 	    prefix_blankline_requested = true;
 	dump_line();
 	com.e = com.s = t;
-	if (!ps.box_com && opt.star_comment_cont)
+	if (!box_com && opt.star_comment_cont)
 	    *com.e++ = ' ', *com.e++ = '*', *com.e++ = ' ';
     }
 
@@ -212,11 +206,11 @@ process_comment(void)
 	switch (*inp.s) {	/* this checks for various special cases */
 	case '\f':
 	    check_size_comment(3);
-	    if (!ps.box_com) {	/* in a text comment, break the line here */
+	    if (!box_com) {	/* in a text comment, break the line here */
 		ps.use_ff = true;
 		dump_line();
 		last_blank = -1;
-		if (!ps.box_com && opt.star_comment_cont)
+		if (!box_com && opt.star_comment_cont)
 		    *com.e++ = ' ', *com.e++ = '*', *com.e++ = ' ';
 		inp.s++;
 		while (is_hspace(*inp.s))
@@ -239,17 +233,17 @@ process_comment(void)
 
 	    last_blank = -1;
 	    check_size_comment(4);
-	    if (ps.box_com || ps.last_nl) {	/* if this is a boxed comment,
+	    if (box_com || ps.last_nl) {	/* if this is a boxed comment,
 						 * we handle the newline */
 		if (com.s == com.e)
 		    *com.e++ = ' ';
-		if (!ps.box_com && com.e - com.s > 3) {
+		if (!box_com && com.e - com.s > 3) {
 		    dump_line();
 		    if (opt.star_comment_cont)
 			*com.e++ = ' ', *com.e++ = '*', *com.e++ = ' ';
 		}
 		dump_line();
-		if (!ps.box_com && opt.star_comment_cont)
+		if (!box_com && opt.star_comment_cont)
 		    *com.e++ = ' ', *com.e++ = '*', *com.e++ = ' ';
 
 	    } else {
@@ -259,7 +253,7 @@ process_comment(void)
 		last_blank = com.e - 1 - com.buf;
 	    }
 	    ++line_no;
-	    if (!ps.box_com) {
+	    if (!box_com) {
 		int asterisks_to_skip = 1;
 		do {		/* flush any blanks and/or tabs at start of
 				 * next line */
@@ -290,7 +284,7 @@ process_comment(void)
 		    *com.e++ = ' ';
 		}
 
-		if (!is_hspace(com.e[-1]) && !ps.box_com)
+		if (!is_hspace(com.e[-1]) && !box_com)
 		    *com.e++ = ' ';	/* ensure blank before end */
 		if (token.e[-1] == '/')
 		    *com.e = '\0';
@@ -321,12 +315,12 @@ process_comment(void)
 
 	    /* XXX: signed character comparison '>' does not work for UTF-8 */
 	    if (now_len > adj_max_line_length &&
-		    !ps.box_com && com.e[-1] > ' ') {
+		    !box_com && com.e[-1] > ' ') {
 
 		/* the comment is too long, it must be broken up */
 		if (last_blank == -1) {
 		    dump_line();
-		    if (!ps.box_com && opt.star_comment_cont)
+		    if (!box_com && opt.star_comment_cont)
 			*com.e++ = ' ', *com.e++ = '*', *com.e++ = ' ';
 		    break;
 		}
@@ -335,7 +329,7 @@ process_comment(void)
 		com.e = com.buf + last_blank;
 		dump_line();
 
-		if (!ps.box_com && opt.star_comment_cont)
+		if (!box_com && opt.star_comment_cont)
 		    *com.e++ = ' ', *com.e++ = '*', *com.e++ = ' ';
 
 		const char *p = com.buf + last_blank + 1;
