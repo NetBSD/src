@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.c,v 1.130 2021/10/08 20:28:56 rillig Exp $	*/
+/*	$NetBSD: indent.c,v 1.131 2021/10/08 20:33:18 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)indent.c	5.17 (Berkeley) 6/7/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: indent.c,v 1.130 2021/10/08 20:28:56 rillig Exp $");
+__RCSID("$NetBSD: indent.c,v 1.131 2021/10/08 20:33:18 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/indent.c 340138 2018-11-04 19:24:49Z oshogbo $");
 #endif
@@ -116,9 +116,6 @@ static struct parser_state state_stack[5];
 
 FILE *input;
 FILE *output;
-
-static void bakcopy(void);
-static void indent_declaration(int, bool);
 
 static const char *in_name = "Standard Input";
 static const char *out_name = "Standard Output";
@@ -461,6 +458,47 @@ main_init_globals(void)
 	backup_suffix = suffix;
 }
 
+/*
+ * Copy the input file to the backup file, then make the backup file the input
+ * and the original input file the output.
+ */
+static void
+bakcopy(void)
+{
+    ssize_t n;
+    int bak_fd;
+    char buff[8 * 1024];
+
+    const char *last_slash = strrchr(in_name, '/');
+    snprintf(bakfile, sizeof(bakfile), "%s%s",
+	     last_slash != NULL ? last_slash + 1 : in_name, backup_suffix);
+
+    /* copy in_name to backup file */
+    bak_fd = creat(bakfile, 0600);
+    if (bak_fd < 0)
+	err(1, "%s", bakfile);
+
+    while ((n = read(fileno(input), buff, sizeof(buff))) > 0)
+	if (write(bak_fd, buff, (size_t)n) != n)
+	    err(1, "%s", bakfile);
+    if (n < 0)
+	err(1, "%s", in_name);
+
+    close(bak_fd);
+    (void)fclose(input);
+
+    /* re-open backup file as the input file */
+    input = fopen(bakfile, "r");
+    if (input == NULL)
+	err(1, "%s", bakfile);
+    /* now the original input file will be the output */
+    output = fopen(in_name, "w");
+    if (output == NULL) {
+	unlink(bakfile);
+	err(1, "%s", in_name);
+    }
+}
+
 static void
 main_parse_command_line(int argc, char **argv)
 {
@@ -547,6 +585,41 @@ main_prepare_parsing(void)
     }
     if (ind >= opt.indent_size)
 	ps.ind_level = ps.ind_level_follow = ind / opt.indent_size;
+}
+
+static void
+indent_declaration(int cur_decl_ind, bool tabs_to_var)
+{
+    int pos = (int)buf_len(&code);
+    char *orig_code_e = code.e;
+
+    /*
+     * get the tab math right for indentations that are not multiples of
+     * tabsize
+     */
+    if ((ps.ind_level * opt.indent_size) % opt.tabsize != 0) {
+	pos += (ps.ind_level * opt.indent_size) % opt.tabsize;
+	cur_decl_ind += (ps.ind_level * opt.indent_size) % opt.tabsize;
+    }
+
+    if (tabs_to_var) {
+	int tpos;
+
+	while ((tpos = opt.tabsize * (1 + pos / opt.tabsize)) <= cur_decl_ind) {
+	    buf_add_char(&code, '\t');
+	    pos = tpos;
+	}
+    }
+
+    while (pos < cur_decl_ind) {
+	buf_add_char(&code, ' ');
+	pos++;
+    }
+
+    if (code.e == orig_code_e && ps.want_blank) {
+	*code.e++ = ' ';
+	ps.want_blank = false;
+    }
 }
 
 static void __attribute__((__noreturn__))
@@ -1446,82 +1519,6 @@ main(int argc, char **argv)
 #endif
     main_prepare_parsing();
     main_loop();
-}
-
-/*
- * Copy the input file to the backup file, then make the backup file the input
- * and the original input file the output.
- */
-static void
-bakcopy(void)
-{
-    ssize_t n;
-    int bak_fd;
-    char buff[8 * 1024];
-
-    const char *last_slash = strrchr(in_name, '/');
-    snprintf(bakfile, sizeof(bakfile), "%s%s",
-	last_slash != NULL ? last_slash + 1 : in_name, backup_suffix);
-
-    /* copy in_name to backup file */
-    bak_fd = creat(bakfile, 0600);
-    if (bak_fd < 0)
-	err(1, "%s", bakfile);
-
-    while ((n = read(fileno(input), buff, sizeof(buff))) > 0)
-	if (write(bak_fd, buff, (size_t)n) != n)
-	    err(1, "%s", bakfile);
-    if (n < 0)
-	err(1, "%s", in_name);
-
-    close(bak_fd);
-    (void)fclose(input);
-
-    /* re-open backup file as the input file */
-    input = fopen(bakfile, "r");
-    if (input == NULL)
-	err(1, "%s", bakfile);
-    /* now the original input file will be the output */
-    output = fopen(in_name, "w");
-    if (output == NULL) {
-	unlink(bakfile);
-	err(1, "%s", in_name);
-    }
-}
-
-static void
-indent_declaration(int cur_decl_ind, bool tabs_to_var)
-{
-    int pos = (int)(code.e - code.s);
-    char *startpos = code.e;
-
-    /*
-     * get the tab math right for indentations that are not multiples of
-     * tabsize
-     */
-    if ((ps.ind_level * opt.indent_size) % opt.tabsize != 0) {
-	pos += (ps.ind_level * opt.indent_size) % opt.tabsize;
-	cur_decl_ind += (ps.ind_level * opt.indent_size) % opt.tabsize;
-    }
-
-    if (tabs_to_var) {
-	int tpos;
-
-	while ((tpos = opt.tabsize * (1 + pos / opt.tabsize)) <= cur_decl_ind) {
-	    buf_add_char(&code, '\t');
-	    pos = tpos;
-	}
-    }
-
-    while (pos < cur_decl_ind) {
-	buf_add_char(&code, ' ');
-	pos++;
-    }
-
-    if (code.e == startpos && ps.want_blank) {
-	*code.e++ = ' ';
-	ps.want_blank = false;
-    }
 }
 
 #ifdef debug
