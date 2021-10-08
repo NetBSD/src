@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.c,v 1.127 2021/10/08 16:47:42 rillig Exp $	*/
+/*	$NetBSD: indent.c,v 1.128 2021/10/08 19:03:34 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)indent.c	5.17 (Berkeley) 6/7/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: indent.c,v 1.127 2021/10/08 16:47:42 rillig Exp $");
+__RCSID("$NetBSD: indent.c,v 1.128 2021/10/08 19:03:34 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/indent.c 340138 2018-11-04 19:24:49Z oshogbo $");
 #endif
@@ -657,7 +657,7 @@ process_lparen_or_lbracket(int decl_ind, bool tabs_to_var, bool sp_sw)
     debug_println("paren_indent[%d] is now %d",
 	ps.p_l_follow - 1, ps.paren_indents[ps.p_l_follow - 1]);
 
-    if (sp_sw && ps.p_l_follow == 1 && opt.extra_expression_indent
+    if (sp_sw && ps.p_l_follow == 1 && opt.extra_expr_indent
 	    && ps.paren_indents[0] < 2 * opt.indent_size) {
 	ps.paren_indents[0] = (short)(2 * opt.indent_size);
 	debug_println("paren_indent[0] is now %d", ps.paren_indents[0]);
@@ -904,8 +904,7 @@ process_lbrace(bool *force_nl, bool *sp_sw, token_type hd_type,
 	ps.decl_on_line = false;	/* we can't be in the middle of a
 					 * declaration, so don't do special
 					 * indentation of comments */
-	if (opt.blanklines_after_declarations_at_proctop
-	    && ps.in_parameter_declaration)
+	if (opt.blanklines_after_decl_at_top && ps.in_parameter_declaration)
 	    postfix_blankline_requested = true;
 	ps.in_parameter_declaration = false;
 	ps.in_decl = false;
