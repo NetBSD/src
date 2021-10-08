@@ -1,4 +1,4 @@
-/*	$NetBSD: lexi.c,v 1.86 2021/10/08 23:43:33 rillig Exp $	*/
+/*	$NetBSD: lexi.c,v 1.87 2021/10/08 23:55:44 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)lexi.c	8.1 (Berkeley) 6/6/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: lexi.c,v 1.86 2021/10/08 23:43:33 rillig Exp $");
+__RCSID("$NetBSD: lexi.c,v 1.87 2021/10/08 23:55:44 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/lexi.c 337862 2018-08-15 18:19:45Z pstef $");
 #endif
@@ -204,6 +204,13 @@ check_size_token(size_t desired_size)
 	buf_expand(&token, desired_size);
 }
 
+static void
+token_add_char(char ch)
+{
+    check_size_token(1);
+    *token.e++ = ch;
+}
+
 static int
 cmp_keyword_by_name(const void *key, const void *elem)
 {
@@ -276,8 +283,7 @@ lex_number(void)
 	}
 
 	s = lex_number_state[row][s - 'A'];
-	check_size_token(1);
-	*token.e++ = inbuf_next();
+	token_add_char(inbuf_next());
     }
 }
 
@@ -297,8 +303,7 @@ lex_word(void)
 		break;
 	}
 
-	check_size_token(1);
-	*token.e++ = inbuf_next();
+	token_add_char(inbuf_next());
     }
 }
 
@@ -311,15 +316,14 @@ lex_char_or_string(void)
 	    return;
 	}
 
-	check_size_token(2);
-	*token.e++ = inbuf_next();
+	token_add_char(inbuf_next());
 	if (token.e[-1] == delim)
 	    return;
 
 	if (token.e[-1] == '\\') {
 	    if (*inp.s == '\n')
 		++line_no;
-	    *token.e++ = inbuf_next();
+	    token_add_char(inbuf_next());
 	}
     }
 }
@@ -647,10 +651,8 @@ lexi(struct parser_state *state)
 	}
 
 	while (*inp.s == '*' || isspace((unsigned char)*inp.s)) {
-	    if (*inp.s == '*') {
-		check_size_token(1);
-		*token.e++ = *inp.s;
-	    }
+	    if (*inp.s == '*')
+		token_add_char('*');
 	    inbuf_skip();
 	}
 
@@ -680,11 +682,8 @@ lexi(struct parser_state *state)
 	}
 
 	while (token.e[-1] == *inp.s || *inp.s == '=') {
-	    /*
-	     * handle ||, &&, etc, and also things as in int *****i
-	     */
-	    check_size_token(1);
-	    *token.e++ = inbuf_next();
+	    /* handle '||', '&&', etc., and also things as in 'int *****i' */
+	    token_add_char(inbuf_next());
 	}
 
 	ttype = state->last_u_d ? unary_op : binary_op;
