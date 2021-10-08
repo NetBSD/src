@@ -1,4 +1,4 @@
-/*	$NetBSD: args.c,v 1.52 2021/10/08 19:03:34 rillig Exp $	*/
+/*	$NetBSD: args.c,v 1.53 2021/10/08 19:27:20 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)args.c	8.1 (Berkeley) 6/6/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: args.c,v 1.52 2021/10/08 19:03:34 rillig Exp $");
+__RCSID("$NetBSD: args.c,v 1.53 2021/10/08 19:27:20 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/args.c 336318 2018-07-15 21:04:21Z pstef $");
 #endif
@@ -60,8 +60,6 @@ __FBSDID("$FreeBSD: head/usr.bin/indent/args.c 336318 2018-07-15 21:04:21Z pstef
 #include "indent.h"
 
 #define INDENT_VERSION	"2.0"
-
-void add_typedefs_from_file(const char *);
 
 #if __STDC_VERSION__ >= 201112L
 #define assert_type(expr, type) _Generic((expr), type : (expr))
@@ -203,6 +201,24 @@ skip_over(const char *s, bool may_negate, const char *prefix)
     return s;
 }
 
+static void
+add_typedefs_from_file(const char *fname)
+{
+    FILE *file;
+    char line[BUFSIZ];
+
+    if ((file = fopen(fname, "r")) == NULL) {
+	fprintf(stderr, "indent: cannot open file %s\n", fname);
+	exit(1);
+    }
+    while ((fgets(line, BUFSIZ, file)) != NULL) {
+	/* Remove trailing whitespace */
+	line[strcspn(line, " \t\n\r")] = '\0';
+	add_typename(line);
+    }
+    (void)fclose(file);
+}
+
 static bool
 set_special_option(const char *arg, const char *option_source)
 {
@@ -284,22 +300,4 @@ found:
 		option_source, p->p_name);
 	*(int *)p->p_var = atoi(param_start);
     }
-}
-
-void
-add_typedefs_from_file(const char *fname)
-{
-    FILE *file;
-    char line[BUFSIZ];
-
-    if ((file = fopen(fname, "r")) == NULL) {
-	fprintf(stderr, "indent: cannot open file %s\n", fname);
-	exit(1);
-    }
-    while ((fgets(line, BUFSIZ, file)) != NULL) {
-	/* Remove trailing whitespace */
-	line[strcspn(line, " \t\n\r")] = '\0';
-	add_typename(line);
-    }
-    fclose(file);
 }
