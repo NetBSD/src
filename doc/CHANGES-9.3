@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.3,v 1.1.2.35 2021/10/05 11:08:04 martin Exp $
+# $NetBSD: CHANGES-9.3,v 1.1.2.36 2021/10/08 14:59:08 martin Exp $
 
 A complete list of changes from the NetBSD 9.2 release to the NetBSD 9.3
 release:
@@ -792,4 +792,9 @@ lib/libc/resolv/res_private.h			1.4
 
 	res_init(3): handle  kqueue close-on-fork semantics.
 	[christos, ticket #1356]
+
+sys/kern/sys_pipe.c				1.157
+
+	PR 56422: fix a deadlock in "pipe_write()".
+	[hannken, ticket #1357]
 
