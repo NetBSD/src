@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.c,v 1.126 2021/10/08 16:20:33 rillig Exp $	*/
+/*	$NetBSD: indent.c,v 1.127 2021/10/08 16:47:42 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)indent.c	5.17 (Berkeley) 6/7/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: indent.c,v 1.126 2021/10/08 16:20:33 rillig Exp $");
+__RCSID("$NetBSD: indent.c,v 1.127 2021/10/08 16:47:42 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/indent.c 340138 2018-11-04 19:24:49Z oshogbo $");
 #endif
@@ -965,34 +965,37 @@ process_rbrace(bool *sp_sw, int *decl_ind, const int *di_stack)
 }
 
 static void
-process_keyword_do_else(bool *force_nl, bool *last_else)
+process_keyword_do(bool *force_nl, bool *last_else)
 {
     ps.in_stmt = false;
 
-    if (*token.s == 'e') {
-	if (code.e != code.s && (!opt.cuddle_else || code.e[-1] != '}')) {
-	    if (opt.verbose)
-		diag(0, "Line broken");
-	    dump_line();	/* make sure this starts a line */
-	    ps.want_blank = false;
-	}
-
-	*force_nl = true;	/* following stuff must go onto new line */
-	*last_else = true;
-	parse(keyword_else);
-
-    } else {
-	if (code.e != code.s) {	/* make sure this starts a line */
-	    if (opt.verbose)
-		diag(0, "Line broken");
-	    dump_line();
-	    ps.want_blank = false;
-	}
-
-	*force_nl = true;	/* following stuff must go onto new line */
-	*last_else = false;
-	parse(keyword_do);
+    if (code.e != code.s) {	/* make sure this starts a line */
+	if (opt.verbose)
+	    diag(0, "Line broken");
+	dump_line();
+	ps.want_blank = false;
     }
+
+    *force_nl = true;		/* following stuff must go onto new line */
+    *last_else = false;
+    parse(keyword_do);
+}
+
+static void
+process_keyword_else(bool *force_nl, bool *last_else)
+{
+    ps.in_stmt = false;
+
+    if (code.e != code.s && (!opt.cuddle_else || code.e[-1] != '}')) {
+	if (opt.verbose)
+	    diag(0, "Line broken");
+	dump_line();		/* make sure this starts a line */
+	ps.want_blank = false;
+    }
+
+    *force_nl = true;		/* following stuff must go onto new line */
+    *last_else = true;
+    parse(keyword_else);
 }
 
 static void
@@ -1378,7 +1381,10 @@ main_loop(void)
 	    goto copy_token;
 
 	case keyword_do_else:
-	    process_keyword_do_else(&force_nl, &last_else);
+	    if (*token.s == 'd')
+		process_keyword_do(&force_nl, &last_else);
+	    else
+		process_keyword_else(&force_nl, &last_else);
 	    goto copy_token;
 
 	case type_def:
