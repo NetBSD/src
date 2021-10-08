@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.c,v 1.133 2021/10/08 21:13:58 rillig Exp $	*/
+/*	$NetBSD: indent.c,v 1.134 2021/10/08 23:43:33 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)indent.c	5.17 (Berkeley) 6/7/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: indent.c,v 1.133 2021/10/08 21:13:58 rillig Exp $");
+__RCSID("$NetBSD: indent.c,v 1.134 2021/10/08 23:43:33 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/indent.c 340138 2018-11-04 19:24:49Z oshogbo $");
 #endif
@@ -443,7 +443,7 @@ main_init_globals(void)
     line_no = 1;
     had_eof = ps.in_decl = ps.decl_on_line = break_comma = false;
 
-    ps.in_or_st = false;
+    ps.init_or_struct = false;
     ps.want_blank = ps.in_stmt = ps.ind_stmt = false;
     ps.is_case_label = false;
 
@@ -736,14 +736,13 @@ process_lparen_or_lbracket(int decl_ind, bool tabs_to_var, bool sp_sw)
 	debug_println("paren_indent[0] is now %d", ps.paren_indents[0]);
     }
 
-    if (ps.in_or_st && *token.s == '(' && ps.tos <= 2) {
+    if (ps.init_or_struct && *token.s == '(' && ps.tos <= 2) {
 	/*
 	 * this is a kluge to make sure that declarations will be aligned
 	 * right if proc decl has an explicit type on it, i.e. "int a(x) {..."
 	 */
 	parse(semicolon);	/* I said this was a kluge... */
-	ps.in_or_st = false;	/* turn off flag for structure decl or
-				 * initialization */
+	ps.init_or_struct = false;
     }
 
     /* parenthesized type following sizeof or offsetof is not a cast */
@@ -847,7 +846,7 @@ process_colon(int *seen_quest, bool *force_nl, bool *seen_case)
 	return;
     }
 
-    if (ps.in_or_st) {		/* bit-field */
+    if (ps.init_or_struct) {		/* bit-field */
 	*code.e++ = ':';
 	ps.want_blank = false;
 	return;
@@ -872,8 +871,8 @@ process_semicolon(bool *seen_case, int *seen_quest, int decl_ind,
     bool *force_nl)
 {
     if (ps.decl_nest == 0)
-	ps.in_or_st = false;	/* we are not in an initialization or
-				 * structure declaration */
+	ps.init_or_struct = false;	/* we are not in an initialization or
+					 * structure declaration */
     *seen_case = false;		/* these will only need resetting in an error */
     *seen_quest = 0;
     if (ps.last_token == rparen_or_rbracket)
@@ -939,7 +938,7 @@ process_lbrace(bool *force_nl, bool *sp_sw, token_type hd_type,
 	if (!opt.brace_same_line) {
 	    dump_line();
 	    ps.want_blank = false;
-	} else if (ps.in_parameter_declaration && !ps.in_or_st) {
+	} else if (ps.in_parameter_declaration && !ps.init_or_struct) {
 	    ps.ind_level_follow = 0;
 	    if (opt.function_brace_split) {	/* dump the line prior to the
 						 * brace ... */
@@ -965,8 +964,7 @@ process_lbrace(bool *force_nl, bool *sp_sw, token_type hd_type,
 
     if (code.s == code.e)
 	ps.ind_stmt = false;	/* don't indent the '{' itself */
-    if (ps.in_decl && ps.in_or_st) {	/* this is either a structure
-					 * declaration or an init */
+    if (ps.in_decl && ps.init_or_struct) {
 	di_stack[ps.decl_nest] = *decl_ind;
 	if (++ps.decl_nest == di_stack_cap) {
 	    diag(0, "Reached internal limit of %d struct levels",
@@ -1088,10 +1086,9 @@ process_decl(int *decl_ind, bool *tabs_to_var)
 	ps.ind_stmt = false;
     }
 
-    ps.in_or_st = true;		/* this might be a structure or initialization
-				 * declaration */
+    ps.init_or_struct = /* maybe */ true;
     ps.in_decl = ps.decl_on_line = ps.last_token != type_def;
-    if ( /* !ps.in_or_st && */ ps.decl_nest <= 0)
+    if (ps.decl_nest <= 0)
 	ps.just_saw_decl = 2;
 
     prefix_blankline_requested = false;
