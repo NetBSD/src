@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.c,v 1.125 2021/10/07 23:18:47 rillig Exp $	*/
+/*	$NetBSD: indent.c,v 1.126 2021/10/08 16:20:33 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)indent.c	5.17 (Berkeley) 6/7/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: indent.c,v 1.125 2021/10/07 23:18:47 rillig Exp $");
+__RCSID("$NetBSD: indent.c,v 1.126 2021/10/08 16:20:33 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/indent.c 340138 2018-11-04 19:24:49Z oshogbo $");
 #endif
@@ -621,7 +621,7 @@ want_blank_before_lparen(void)
 {
     if (!ps.want_blank)
 	return false;
-    if (ps.last_token == rparen)
+    if (ps.last_token == rparen_or_rbracket)
 	return false;
     if (ps.last_token != ident && ps.last_token != funcname)
 	return true;
@@ -803,7 +803,7 @@ process_semicolon(bool *seen_case, int *seen_quest, int decl_ind,
 				 * structure declaration */
     *seen_case = false;		/* these will only need resetting in an error */
     *seen_quest = 0;
-    if (ps.last_token == rparen)
+    if (ps.last_token == rparen_or_rbracket)
 	ps.in_parameter_declaration = false;
     ps.cast_mask = 0;
     ps.not_cast_mask = 0;
@@ -1000,7 +1000,7 @@ process_decl(int *out_decl_ind, bool *out_tabs_to_var)
 {
     parse(decl);		/* let parser worry about indentation */
 
-    if (ps.last_token == rparen && ps.tos <= 1) {
+    if (ps.last_token == rparen_or_rbracket && ps.tos <= 1) {
 	if (code.s != code.e) {
 	    dump_line();
 	    ps.want_blank = false;
@@ -1316,11 +1316,11 @@ main_loop(void)
 	    process_newline();
 	    break;
 
-	case lparen:		/* got a '(' or '[' */
+	case lparen_or_lbracket:
 	    process_lparen_or_lbracket(decl_ind, tabs_to_var, sp_sw);
 	    break;
 
-	case rparen:		/* got a ')' or ']' */
+	case rparen_or_rbracket:
 	    process_rparen_or_rbracket(&sp_sw, &force_nl, hd_type);
 	    break;
 

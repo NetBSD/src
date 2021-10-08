@@ -1,4 +1,4 @@
-/*	$NetBSD: lexi.c,v 1.78 2021/10/07 23:15:15 rillig Exp $	*/
+/*	$NetBSD: lexi.c,v 1.79 2021/10/08 16:20:33 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)lexi.c	8.1 (Berkeley) 6/6/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: lexi.c,v 1.78 2021/10/07 23:15:15 rillig Exp $");
+__RCSID("$NetBSD: lexi.c,v 1.79 2021/10/08 16:20:33 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/lexi.c 337862 2018-08-15 18:19:45Z pstef $");
 #endif
@@ -222,8 +222,9 @@ const char *
 token_type_name(token_type ttype)
 {
     static const char *const name[] = {
-	"end_of_file", "newline", "lparen", "rparen", "unary_op",
-	"binary_op", "postfix_op", "question", "case_label", "colon",
+	"end_of_file", "newline", "lparen_or_lbracket", "rparen_or_rbracket",
+	"unary_op", "binary_op", "postfix_op", "question",
+	"case_label", "colon",
 	"semicolon", "lbrace", "rbrace", "ident", "comma",
 	"comment", "switch_expr", "preprocessing", "form_feed", "decl",
 	"keyword_for_if_while", "keyword_do_else",
@@ -525,12 +526,12 @@ lexi(struct parser_state *state)
     case '(':
     case '[':
 	unary_delim = true;
-	ttype = lparen;
+	ttype = lparen_or_lbracket;
 	break;
 
     case ')':
     case ']':
-	ttype = rparen;
+	ttype = rparen_or_rbracket;
 	break;
 
     case '#':
@@ -589,7 +590,8 @@ lexi(struct parser_state *state)
 	    /* check for doubled character */
 	    *token.e++ = *inp.s++;
 	    /* buffer overflow will be checked at end of loop */
-	    if (state->last_token == ident || state->last_token == rparen) {
+	    if (state->last_token == ident ||
+		    state->last_token == rparen_or_rbracket) {
 		ttype = state->last_u_d ? unary_op : postfix_op;
 		/* check for following ++ or -- */
 		unary_delim = false;
