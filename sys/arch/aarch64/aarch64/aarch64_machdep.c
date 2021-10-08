@@ -1,4 +1,4 @@
-/* $NetBSD: aarch64_machdep.c,v 1.61 2021/06/03 07:02:59 skrll Exp $ */
+/* $NetBSD: aarch64_machdep.c,v 1.62 2021/10/08 21:41:29 ryo Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: aarch64_machdep.c,v 1.61 2021/06/03 07:02:59 skrll Exp $");
+__KERNEL_RCSID(1, "$NetBSD: aarch64_machdep.c,v 1.62 2021/10/08 21:41:29 ryo Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_cpuoptions.h"
@@ -42,6 +42,7 @@ __KERNEL_RCSID(1, "$NetBSD: aarch64_machdep.c,v 1.61 2021/06/03 07:02:59 skrll E
 #include <sys/param.h>
 #include <sys/types.h>
 #include <sys/asan.h>
+#include <sys/boot_flag.h>
 #include <sys/bus.h>
 #include <sys/core.h>
 #include <sys/conf.h>
@@ -537,24 +538,26 @@ SYSCTL_SETUP(sysctl_machdep_setup, "sysctl machdep subtree setup")
 void
 parse_mi_bootargs(char *args)
 {
-	int val;
+	const char *p = args;
 
-	if (get_bootconf_option(args, "-1", BOOTOPT_TYPE_BOOLEAN, &val) && val)
-		boothowto |= RB_MD1;
-	if (get_bootconf_option(args, "-s", BOOTOPT_TYPE_BOOLEAN, &val) && val)
-		boothowto |= RB_SINGLE;
-	if (get_bootconf_option(args, "-d", BOOTOPT_TYPE_BOOLEAN, &val) && val)
-		boothowto |= RB_KDB;
-	if (get_bootconf_option(args, "-a", BOOTOPT_TYPE_BOOLEAN, &val) && val)
-		boothowto |= RB_ASKNAME;
-	if (get_bootconf_option(args, "-q", BOOTOPT_TYPE_BOOLEAN, &val) && val)
-		boothowto |= AB_QUIET;
-	if (get_bootconf_option(args, "-v", BOOTOPT_TYPE_BOOLEAN, &val) && val)
-		boothowto |= AB_VERBOSE;
-	if (get_bootconf_option(args, "-x", BOOTOPT_TYPE_BOOLEAN, &val) && val)
-		boothowto |= AB_DEBUG;
-	if (get_bootconf_option(args, "-z", BOOTOPT_TYPE_BOOLEAN, &val) && val)
-		boothowto |= AB_SILENT;
+	while (*p != '\0') {
+		while (isspace(*p))
+			p++;
+
+		/* parse single dash (`-') options */
+		if (*p == '-') {
+			p++;
+			while (!isspace(*p) && *p != '\0') {
+				BOOT_FLAG(*p, boothowto);
+				p++;
+			}
+			continue;
+		}
+
+		/* skip normal argument */
+		while (!isspace(*p) && *p != '\0')
+			p++;
+	}
 }
 
 void
