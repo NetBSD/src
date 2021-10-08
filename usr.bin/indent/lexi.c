@@ -1,4 +1,4 @@
-/*	$NetBSD: lexi.c,v 1.79 2021/10/08 16:20:33 rillig Exp $	*/
+/*	$NetBSD: lexi.c,v 1.80 2021/10/08 19:22:19 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)lexi.c	8.1 (Berkeley) 6/6/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: lexi.c,v 1.79 2021/10/08 16:20:33 rillig Exp $");
+__RCSID("$NetBSD: lexi.c,v 1.80 2021/10/08 19:22:19 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/lexi.c 337862 2018-08-15 18:19:45Z pstef $");
 #endif
@@ -479,8 +479,8 @@ lexi(struct parser_state *state)
 	if (*inp.s == '(' && state->tos <= 1 && state->ind_level == 0 &&
 	    !state->in_parameter_declaration && !state->block_init) {
 
-	    for (char *tp = inp.s; tp < inp.e;)
-		if (*tp++ == ')' && (*tp == ';' || *tp == ','))
+	    for (const char *p = inp.s; p < inp.e;)
+		if (*p++ == ')' && (*p == ';' || *p == ','))
 		    goto not_proc;
 
 	    strncpy(state->procname, token.s, sizeof state->procname - 1);
