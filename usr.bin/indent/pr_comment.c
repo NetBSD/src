@@ -1,4 +1,4 @@
-/*	$NetBSD: pr_comment.c,v 1.59 2021/10/08 17:12:08 rillig Exp $	*/
+/*	$NetBSD: pr_comment.c,v 1.60 2021/10/08 17:19:49 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)pr_comment.c	8.1 (Berkeley) 6/6/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: pr_comment.c,v 1.59 2021/10/08 17:12:08 rillig Exp $");
+__RCSID("$NetBSD: pr_comment.c,v 1.60 2021/10/08 17:19:49 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/pr_comment.c 334927 2018-06-10 16:44:18Z pstef $");
 #endif
@@ -102,7 +102,7 @@ process_comment(void)
 				 * column 1, it should not be touched */
 	ps.box_com = true;
 	break_delim = false;
-	ps.com_col = 1;
+	ps.com_ind = 0;
 
     } else {
 	if (*inp.s == '-' || *inp.s == '*' || token.e[-1] == '/' ||
@@ -118,10 +118,10 @@ process_comment(void)
 	}
 
 	if (lab.s == lab.e && code.s == code.e) {
-	    ps.com_col = (ps.ind_level - opt.unindent_displace) * opt.indent_size + 1;
+	    ps.com_ind = (ps.ind_level - opt.unindent_displace) * opt.indent_size;
 	    adj_max_line_length = opt.block_comment_max_line_length;
-	    if (ps.com_col <= 1)
-		ps.com_col = 1 + (!opt.format_col1_comments ? 1 : 0);
+	    if (ps.com_ind <= 0)
+		ps.com_ind = opt.format_col1_comments ? 0 : 1;
 
 	} else {
 	    break_delim = false;
@@ -134,13 +134,13 @@ process_comment(void)
 	    else
 		target_ind = 0;
 
-	    ps.com_col = ps.decl_on_line || ps.ind_level == 0
-		? opt.decl_comment_column : opt.comment_column;
-	    if (ps.com_col <= target_ind + 1)
-		ps.com_col = opt.tabsize * (1 + target_ind / opt.tabsize) + 1;
-	    if (ps.com_col + 24 > adj_max_line_length)
-		/* XXX: mismatch between column and length */
-		adj_max_line_length = ps.com_col + 24;
+	    ps.com_ind = ps.decl_on_line || ps.ind_level == 0
+		? opt.decl_comment_column - 1 : opt.comment_column - 1;
+	    if (ps.com_ind <= target_ind)
+		ps.com_ind = opt.tabsize * (1 + target_ind / opt.tabsize);
+	    /* XXX: the '+ 1' smells like an off-by-one error */
+	    if (ps.com_ind + 1 + 24 > adj_max_line_length)
+		adj_max_line_length = ps.com_ind + 1 + 24;
 	}
     }
 
@@ -185,7 +185,7 @@ process_comment(void)
 		 * the trailing ' ' '*' '/'.  In simple cases, these cancel
 		 * out since they are equally long.
 		 */
-		int right_margin = indentation_after_range(ps.com_col - 1,
+		int right_margin = indentation_after_range(ps.com_ind,
 		    inp.s, t_ptr + 2);
 		if (right_margin < adj_max_line_length)
 		    break_delim = false;
@@ -308,7 +308,7 @@ process_comment(void)
 
 	default:		/* we have a random char */
 	    ;
-	    int now_len = indentation_after_range(ps.com_col - 1, com.s, com.e);
+	    int now_len = indentation_after_range(ps.com_ind, com.s, com.e);
 	    do {
 		check_size_comment(1);
 		char ch = inbuf_next();

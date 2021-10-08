@@ -1,4 +1,4 @@
-/*	$NetBSD: io.c,v 1.84 2021/10/08 17:12:08 rillig Exp $	*/
+/*	$NetBSD: io.c,v 1.85 2021/10/08 17:19:49 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)io.c	8.1 (Berkeley) 6/6/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: io.c,v 1.84 2021/10/08 17:12:08 rillig Exp $");
+__RCSID("$NetBSD: io.c,v 1.85 2021/10/08 17:19:49 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/io.c 334927 2018-06-10 16:44:18Z pstef $");
 #endif
@@ -214,7 +214,7 @@ dump_line(void)
 	}
 
 	if (com.s != com.e) {	/* print comment, if any */
-	    int target_ind = ps.com_col - 1;
+	    int target_ind = ps.com_ind;
 	    char *com_st = com.s;
 
 	    target_ind += ps.comment_delta;
