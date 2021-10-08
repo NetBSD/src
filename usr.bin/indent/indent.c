@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.c,v 1.132 2021/10/08 20:45:22 rillig Exp $	*/
+/*	$NetBSD: indent.c,v 1.133 2021/10/08 21:13:58 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)indent.c	5.17 (Berkeley) 6/7/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: indent.c,v 1.132 2021/10/08 20:45:22 rillig Exp $");
+__RCSID("$NetBSD: indent.c,v 1.133 2021/10/08 21:13:58 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/indent.c 340138 2018-11-04 19:24:49Z oshogbo $");
 #endif
@@ -314,7 +314,7 @@ search_brace_lookahead(token_type *ttype)
 		errx(1, "input too long");
 	}
 	if (inp.s >= inp.e)
-	    fill_buffer();
+	    inbuf_read_line();
     }
 
     struct parser_state transient_state;
@@ -567,7 +567,7 @@ main_parse_command_line(int argc, char **argv)
 static void
 main_prepare_parsing(void)
 {
-    fill_buffer();		/* get first batch of stuff into input buffer */
+    inbuf_read_line();
 
     parse(semicolon);
 

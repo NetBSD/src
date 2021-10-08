@@ -1,4 +1,4 @@
-/*	$NetBSD: io.c,v 1.88 2021/10/08 19:03:34 rillig Exp $	*/
+/*	$NetBSD: io.c,v 1.89 2021/10/08 21:13:58 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)io.c	8.1 (Berkeley) 6/6/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: io.c,v 1.88 2021/10/08 19:03:34 rillig Exp $");
+__RCSID("$NetBSD: io.c,v 1.89 2021/10/08 21:13:58 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/io.c 334927 2018-06-10 16:44:18Z pstef $");
 #endif
@@ -408,13 +408,10 @@ parse_indent_comment(void)
  * Copyright (C) 1976 by the Board of Trustees of the University of Illinois
  *
  * All rights reserved
- *
- * FUNCTION: Reads one block of input into the input buffer
  */
 void
-fill_buffer(void)
+inbuf_read_line(void)
 {
-    /* this routine reads stuff from the input */
     char *p;
     int ch;
     FILE *f = input;
@@ -454,9 +451,9 @@ fill_buffer(void)
     inp.s = inp.buf;
     inp.e = p;
 
-    if (p - inp.buf > 2 && p[-2] == '/' && p[-3] == '*') {
-	if (inp.buf[3] == 'I' && strncmp(inp.buf, "/**INDENT**", 11) == 0)
-	    fill_buffer();	/* flush indent error message */
+    if (p - inp.buf >= 3 && p[-3] == '*' && p[-2] == '/') {
+	if (strncmp(inp.buf, "/**INDENT**", 11) == 0)
+	    inbuf_read_line();	/* flush indent error message */
 	else
 	    parse_indent_comment();
     }
