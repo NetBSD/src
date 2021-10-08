@@ -1,4 +1,4 @@
-/*	$NetBSD: pr_comment.c,v 1.61 2021/10/08 17:26:56 rillig Exp $	*/
+/*	$NetBSD: pr_comment.c,v 1.62 2021/10/08 18:29:36 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)pr_comment.c	8.1 (Berkeley) 6/6/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: pr_comment.c,v 1.61 2021/10/08 17:26:56 rillig Exp $");
+__RCSID("$NetBSD: pr_comment.c,v 1.62 2021/10/08 18:29:36 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/pr_comment.c 334927 2018-06-10 16:44:18Z pstef $");
 #endif
@@ -228,10 +228,8 @@ process_comment(void)
 	    break;
 
 	case '\n':
-	    if (token.e[-1] == '/') {
-		++line_no;
-		goto end_of_comment;
-	    }
+	    if (token.e[-1] == '/')
+		goto end_of_line_comment;
 
 	    if (had_eof) {
 		printf("Unterminated comment\n");
@@ -283,6 +281,7 @@ process_comment(void)
 	end_of_comment:
 		inbuf_skip();
 
+	end_of_line_comment:
 		if (break_delim) {
 		    if (com.e > com.s + 3)
 			dump_line();
@@ -294,7 +293,7 @@ process_comment(void)
 		if (!is_hspace(com.e[-1]) && !ps.box_com)
 		    *com.e++ = ' ';	/* ensure blank before end */
 		if (token.e[-1] == '/')
-		    *com.e++ = '\n', *com.e = '\0';
+		    *com.e = '\0';
 		else
 		    *com.e++ = '*', *com.e++ = '/', *com.e = '\0';
 

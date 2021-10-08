@@ -1,4 +1,4 @@
-/* $NetBSD: comment-line-end.0.stdout,v 1.8 2021/09/30 22:45:34 rillig Exp $ */
+/* $NetBSD: comment-line-end.0.stdout,v 1.9 2021/10/08 18:29:36 rillig Exp $ */
 /* $FreeBSD$ */
 
 /*
@@ -9,11 +9,11 @@
  * unpredictable ways.
  */
 
-int		dummy // comment
- = // eq
- 1 // one
- + // plus
- 2;				// two
+int		dummy		// comment
+=				// eq
+1				// one
++				// plus
+2;				// two
 
 /////separator/////
 
@@ -42,12 +42,7 @@ comment_at_end_of_function(void)
 {
 	if (cond)
 		statement();
-/* $ FIXME: The next line is indented with tab-space, should be tab. */
-	 // comment
- 
-/* $ FIXME: The above line has 1 trailing space. */
+	// comment
 }
 
 // end-of-line comment at the end of the file
-
-/* $ FIXME: the extra empty line above this line is wrong. */
