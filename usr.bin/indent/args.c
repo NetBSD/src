@@ -1,4 +1,4 @@
-/*	$NetBSD: args.c,v 1.51 2021/10/07 22:56:49 rillig Exp $	*/
+/*	$NetBSD: args.c,v 1.52 2021/10/08 19:03:34 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)args.c	8.1 (Berkeley) 6/6/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: args.c,v 1.51 2021/10/07 22:56:49 rillig Exp $");
+__RCSID("$NetBSD: args.c,v 1.52 2021/10/08 19:03:34 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/args.c 336318 2018-07-15 21:04:21Z pstef $");
 #endif
@@ -89,10 +89,10 @@ static const struct pro {
     void *p_var;		/* the associated variable */
 }   pro[] = {
     bool_options("bacc", blanklines_around_conditional_compilation),
-    bool_options("bad", blanklines_after_declarations),
-    bool_options("badp", blanklines_after_declarations_at_proctop),
+    bool_options("bad", blanklines_after_decl),
+    bool_options("badp", blanklines_after_decl_at_top),
     bool_options("bap", blanklines_after_procs),
-    bool_options("bbb", blanklines_before_blockcomments),
+    bool_options("bbb", blanklines_before_block_comments),
     bool_options("bc", break_after_comma),
     bool_option("bl", false, brace_same_line),
     bool_option("br", true, brace_same_line),
@@ -107,7 +107,7 @@ static const struct pro {
     int_option("d", unindent_displace),
     int_option("di", decl_indent),
     bool_options("dj", ljust_decl),
-    bool_options("eei", extra_expression_indent),
+    bool_options("eei", extra_expr_indent),
     bool_options("ei", else_if),
     bool_options("fbs", function_brace_split),
     bool_options("fc1", format_col1_comments),
