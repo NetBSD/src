@@ -1,4 +1,4 @@
-/*	$NetBSD: lexi.c,v 1.83 2021/10/08 21:18:43 rillig Exp $	*/
+/*	$NetBSD: lexi.c,v 1.84 2021/10/08 21:24:40 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)lexi.c	8.1 (Berkeley) 6/6/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: lexi.c,v 1.83 2021/10/08 21:18:43 rillig Exp $");
+__RCSID("$NetBSD: lexi.c,v 1.84 2021/10/08 21:24:40 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/lexi.c 337862 2018-08-15 18:19:45Z pstef $");
 #endif
@@ -106,7 +106,7 @@ static const struct keyword {
     {"while", kw_for_or_if_or_while}
 };
 
-struct {
+static struct {
     const char **items;
     unsigned int len;
     unsigned int cap;
@@ -209,12 +209,6 @@ static int
 cmp_keyword_by_name(const void *key, const void *elem)
 {
     return strcmp(key, ((const struct keyword *)elem)->name);
-}
-
-static int
-cmp_type_by_name(const void *key, const void *elem)
-{
-    return strcmp(key, *((const char *const *)elem));
 }
 
 #ifdef debug
@@ -331,12 +325,9 @@ lex_char_or_string(void)
     }
 }
 
-/*
- * This hack attempts to guess whether the current token is in fact a
- * declaration keyword -- one that has been defined by typedef.
- */
+/* Guess whether the current token is a declared type. */
 static bool
-probably_typedef(const struct parser_state *state)
+probably_typename(const struct parser_state *state)
 {
     if (state->p_l_follow != 0)
 	return false;
@@ -353,19 +344,34 @@ maybe:
 	state->last_token == rbrace;
 }
 
+static int
+bsearch_typenames(const char *key)
+{
+    const char **arr = typenames.items;
+    int lo = 0;
+    int hi = (int)typenames.len - 1;
+
+    while (lo <= hi) {
+	int mid = (int)((unsigned)(lo + hi) >> 1);
+	int cmp = strcmp(arr[mid], key);
+	if (cmp < 0)
+	    lo = mid + 1;
+	else if (cmp > 0)
+	    hi = mid - 1;
+	else
+	    return mid;
+    }
+    return -(lo + 1);
+}
+
 static bool
 is_typename(void)
 {
-    if (opt.auto_typedefs) {
-	const char *u;
-	if ((u = strrchr(token.s, '_')) != NULL && strcmp(u, "_t") == 0)
-	    return true;
-    }
+    if (opt.auto_typedefs &&
+	token.e - token.s >= 2 && memcmp(token.e - 2, "_t", 2) == 0)
+	return true;
 
-    if (typenames.len == 0)
-	return false;
-    return bsearch(token.s, typenames.items, (size_t)typenames.len,
-	sizeof(typenames.items[0]), cmp_type_by_name) != NULL;
+    return bsearch_typenames(token.s) >= 0;
 }
 
 /* Reads the next token, placing it in the global variable "token". */
@@ -488,7 +494,7 @@ lexi(struct parser_state *state)
 	    return lexi_end(funcname);
     not_proc:;
 
-	} else if (probably_typedef(state)) {
+	} else if (probably_typename(state)) {
 	    state->keyword = kw_type;
 	    state->last_u_d = true;
 	    return lexi_end(decl);
@@ -697,25 +703,6 @@ lexi(struct parser_state *state)
     return lexi_end(ttype);
 }
 
-static int
-insert_pos(const char *key, const char **arr, unsigned int len)
-{
-    int lo = 0;
-    int hi = (int)len - 1;
-
-    while (lo <= hi) {
-	int mid = (int)((unsigned)(lo + hi) >> 1);
-	int cmp = strcmp(arr[mid], key);
-	if (cmp < 0)
-	    lo = mid + 1;
-	else if (cmp > 0)
-	    hi = mid - 1;
-	else
-	    return mid;
-    }
-    return -(lo + 1);
-}
-
 void
 add_typename(const char *name)
 {
@@ -725,7 +712,7 @@ add_typename(const char *name)
 	    sizeof(typenames.items[0]) * typenames.cap);
     }
 
-    int pos = insert_pos(name, typenames.items, typenames.len);
+    int pos = bsearch_typenames(name);
     if (pos >= 0)
 	return;			/* already in the list */
 
