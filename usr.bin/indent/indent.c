@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.c,v 1.128 2021/10/08 19:03:34 rillig Exp $	*/
+/*	$NetBSD: indent.c,v 1.129 2021/10/08 20:14:52 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)indent.c	5.17 (Berkeley) 6/7/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: indent.c,v 1.128 2021/10/08 19:03:34 rillig Exp $");
+__RCSID("$NetBSD: indent.c,v 1.129 2021/10/08 20:14:52 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/indent.c 340138 2018-11-04 19:24:49Z oshogbo $");
 #endif
@@ -1117,45 +1117,48 @@ process_comma(int decl_ind, bool tabs_to_var, bool *force_nl)
 static void
 read_preprocessing_line(void)
 {
+    enum {
+	PLAIN, STR, CHR, COMM
+    } state;
+
     buf_add_char(&lab, '#');
 
-    bool in_comment = false;
+    state = PLAIN;
     int com_start = 0, com_end = 0;
-    char quote = '\0';
 
     while (is_hspace(*inp.s))
 	inbuf_skip();
 
-    while (*inp.s != '\n' || (in_comment && !had_eof)) {
+    while (*inp.s != '\n' || (state == COMM && !had_eof)) {
 	buf_reserve(&lab, 2);
 	*lab.e++ = inbuf_next();
 	switch (lab.e[-1]) {
 	case '\\':
-	    if (!in_comment)
+	    if (state != COMM)
 		*lab.e++ = inbuf_next();
 	    break;
 	case '/':
-	    if (*inp.s == '*' && !in_comment && quote == '\0') {
-		in_comment = true;
+	    if (*inp.s == '*' && state == PLAIN) {
+		state = COMM;
 		*lab.e++ = *inp.s++;
 		com_start = (int)buf_len(&lab) - 2;
 	    }
 	    break;
 	case '"':
-	    if (quote == '"')
-		quote = '\0';
-	    else if (quote == '\0')
-		quote = '"';
+	    if (state == STR)
+		state = PLAIN;
+	    else if (state == PLAIN)
+		state = STR;
 	    break;
 	case '\'':
-	    if (quote == '\'')
-		quote = '\0';
-	    else if (quote == '\0')
-		quote = '\'';
+	    if (state == CHR)
+		state = PLAIN;
+	    else if (state == PLAIN)
+		state = CHR;
 	    break;
 	case '*':
-	    if (*inp.s == '/' && in_comment) {
-		in_comment = false;
+	    if (*inp.s == '/' && state == COMM) {
+		state = PLAIN;
 		*lab.e++ = *inp.s++;
 		com_end = (int)buf_len(&lab);
 	    }
