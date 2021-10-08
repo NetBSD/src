@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.h,v 1.32 2021/10/08 16:20:33 rillig Exp $	*/
+/*	$NetBSD: indent.h,v 1.33 2021/10/08 17:19:49 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-FreeBSD
@@ -282,8 +282,7 @@ extern struct parser_state {
 				 * an initialization list */
     bool	col_1;		/* whether the last token started in
 				 * column 1 */
-    int         com_col;	/* this is the column in which the current
-				 * comment should start */
+    int         com_ind;	/* indentation of the current comment */
     int         decl_nest;	/* current nesting level for structure or init */
     bool	decl_on_line;	/* whether this line of code has part
 				 * of a declaration on it */
