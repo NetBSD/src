@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.h,v 1.35 2021/10/08 21:13:58 rillig Exp $	*/
+/*	$NetBSD: indent.h,v 1.36 2021/10/08 22:17:35 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-FreeBSD
@@ -254,9 +254,6 @@ extern struct parser_state {
     token_type p_stack[STACKSIZE];
     int il[STACKSIZE];		/* this stack stores indentation levels */
     float cstk[STACKSIZE];	/* used to store case stmt indentation levels */
-    bool box_com;		/* whether we are in a "boxed" comment. In
-				 * that case, the first non-blank char should
-				 * be lined up with the '/' in '/' + '*' */
     int comment_delta;		/* used to set up indentation for all lines of
 				 * a boxed comment after the first one */
     int n_comment_delta;	/* remembers how many columns there were
