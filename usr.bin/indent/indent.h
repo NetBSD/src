@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.h,v 1.36 2021/10/08 22:17:35 rillig Exp $	*/
+/*	$NetBSD: indent.h,v 1.37 2021/10/08 23:43:33 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-FreeBSD
@@ -269,9 +269,9 @@ extern struct parser_state {
 				 * initialization */
     bool last_nl;		/* whether the last thing scanned was a
 				 * newline */
-    bool in_or_st;		/* true iff there has been a declarator (e.g.
-				 * int or char) and no left paren since the
-				 * last semicolon. When true, a '{' is
+    bool init_or_struct;	/* whether there has been a declarator (e.g.
+				 * int or char) and no left parenthesis since
+				 * the last semicolon. When true, a '{' is
 				 * starting a structure definition or an
 				 * initialization list */
     bool col_1;			/* whether the last token started in column 1 */
