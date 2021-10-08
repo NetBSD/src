@@ -1,4 +1,4 @@
-/*	$NetBSD: lexi.c,v 1.84 2021/10/08 21:24:40 rillig Exp $	*/
+/*	$NetBSD: lexi.c,v 1.85 2021/10/08 23:40:08 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)lexi.c	8.1 (Berkeley) 6/6/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: lexi.c,v 1.84 2021/10/08 21:24:40 rillig Exp $");
+__RCSID("$NetBSD: lexi.c,v 1.85 2021/10/08 23:40:08 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/lexi.c 337862 2018-08-15 18:19:45Z pstef $");
 #endif
@@ -81,7 +81,6 @@ static const struct keyword {
     {"extern", kw_storage_class},
     {"float", kw_type},
     {"for", kw_for_or_if_or_while},
-    {"global", kw_type},
     {"goto", kw_jump},
     {"if", kw_for_or_if_or_while},
     {"imaginary", kw_type},
