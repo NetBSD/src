@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.3,v 1.1.2.103 2021/09/23 10:08:35 martin Exp $
+# $NetBSD: CHANGES-8.3,v 1.1.2.104 2021/10/08 15:01:21 martin Exp $
 
 A complete list of changes from the NetBSD 8.2 release to the NetBSD 8.3
 release:
@@ -2115,4 +2115,9 @@ bin/mkdir/mkdir.c				1.39
 	mkdir(1): PR 56398: fix mode of final component of paths when -m
 	is used.
 	[kre, ticket #1697]
+
+sys/kern/sys_pipe.c				1.157
+
+	PR 56422: fix a deadlock in "pipe_write()".
+	[hannken, ticket #1698]
 
