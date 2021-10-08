@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.c,v 1.131 2021/10/08 20:33:18 rillig Exp $	*/
+/*	$NetBSD: indent.c,v 1.132 2021/10/08 20:45:22 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)indent.c	5.17 (Berkeley) 6/7/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: indent.c,v 1.131 2021/10/08 20:33:18 rillig Exp $");
+__RCSID("$NetBSD: indent.c,v 1.132 2021/10/08 20:45:22 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/indent.c 340138 2018-11-04 19:24:49Z oshogbo $");
 #endif
@@ -797,7 +797,7 @@ process_unary_op(int decl_ind, bool tabs_to_var)
     if (!ps.dumped_decl_indent && ps.in_decl && !ps.block_init &&
 	ps.procname[0] == '\0' && ps.paren_level == 0) {
 	/* pointer declarations */
-	indent_declaration(decl_ind - (int)strlen(token.s), tabs_to_var);
+	indent_declaration(decl_ind - (int)buf_len(&token), tabs_to_var);
 	ps.dumped_decl_indent = true;
     } else if (ps.want_blank)
 	*code.e++ = ' ';
@@ -1071,7 +1071,7 @@ process_keyword_else(bool *force_nl, bool *last_else)
 }
 
 static void
-process_decl(int *out_decl_ind, bool *out_tabs_to_var)
+process_decl(int *decl_ind, bool *tabs_to_var)
 {
     parse(decl);		/* let parser worry about indentation */
 
@@ -1096,12 +1096,12 @@ process_decl(int *out_decl_ind, bool *out_tabs_to_var)
 
     prefix_blankline_requested = false;
 
-    int len = (int)strlen(token.s) + 1;
+    int len = (int)buf_len(&token) + 1;
     int ind = ps.ind_level == 0 || ps.decl_nest > 0
 	    ? opt.decl_indent		/* global variable or local member */
 	    : opt.local_decl_indent;	/* local variable */
-    *out_decl_ind = ind > 0 ? ind : len;
-    *out_tabs_to_var = opt.use_tabs ? ind > 0 : false;
+    *decl_ind = ind > 0 ? ind : len;
+    *tabs_to_var = opt.use_tabs && ind > 0;
 }
 
 static void
