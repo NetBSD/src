@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_338.c,v 1.5 2021/08/22 22:15:07 rillig Exp $	*/
+/*	$NetBSD: msg_338.c,v 1.6 2021/10/09 13:57:55 rillig Exp $	*/
 # 3 "msg_338.c"
 
 // Test for message: option '%c' should be handled in the switch [338]
@@ -75,6 +75,77 @@ question_option(int argc, char **argv)
 		default:
 			usage();
 			return 1;
+		}
+	}
+	return 0;
+}
+
+/*
+ * If the first character of the options string is ':', getopt does not print
+ * its own error messages. Getopt returns ':' if an option is missing its
+ * argument; that is handled by the 'default:' already.
+ */
+int
+suppress_errors(int argc, char **argv)
+{
+	int c;
+
+	/* expect+1: warning: option 'o' should be handled in the switch [338] */
+	while ((c = getopt(argc, argv, ":b:o")) != -1) {
+		switch (c) {
+		case 'b':
+			return 'b';
+		default:
+			usage();
+		}
+	}
+	return 0;
+}
+
+/*
+ * If the first character of the options string is ':', getopt returns ':'
+ * if an option is missing its argument. This condition can be handled
+ * separately from '?', which getopt returns for unknown options.
+ */
+int
+missing_argument(int argc, char **argv)
+{
+	int c;
+
+	/* expect+1: warning: option 'o' should be handled in the switch [338] */
+	while ((c = getopt(argc, argv, ":b:o")) != -1) {
+		switch (c) {
+		case 'b':
+			return 'b';
+		case ':':
+			return 'm';
+		default:
+			usage();
+		}
+	}
+	return 0;
+}
+
+/*
+ * Getopt only returns ':' if ':' is the first character in the options
+ * string. Everywhere else, a ':' marks the preceding option as having a
+ * required argument. In theory, if the options string contained "a::x",
+ * that could be interpreted as '-a argument', followed by '-:' and '-x',
+ * but nobody does that.
+ */
+int
+unreachable_colon(int argc, char **argv)
+{
+	int c;
+
+	/* expect+1: warning: option 'b' should be handled in the switch [338] */
+	while ((c = getopt(argc, argv, "b:")) != -1) {
+		switch (c) {
+		/* TODO: expect+1: warning: option ':' should be listed in the options string [339] */
+		case ':':
+			return 'm';
+		default:
+			usage();
 		}
 	}
 	return 0;
