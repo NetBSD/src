@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.107 2021/09/25 15:18:38 tsutsui Exp $ */
+/* $NetBSD: machdep.c,v 1.108 2021/10/09 20:00:41 tsutsui Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.107 2021/09/25 15:18:38 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.108 2021/10/09 20:00:41 tsutsui Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -472,7 +472,9 @@ haltsys:
 	}
 	if (howto & RB_HALT) {
 		printf("System halted.	Hit any key to reboot.\n\n");
+		cnpollc(1);
 		(void)cngetc();
+		cnpollc(0);
 	}
 
 	printf("rebooting...\n");

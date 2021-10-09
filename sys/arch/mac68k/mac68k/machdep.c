@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.362 2021/04/28 02:28:05 rin Exp $	*/
+/*	$NetBSD: machdep.c,v 1.363 2021/10/09 20:00:41 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.362 2021/04/28 02:28:05 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.363 2021/10/09 20:00:41 tsutsui Exp $");
 
 #include "opt_adb.h"
 #include "opt_compat_netbsd.h"
@@ -500,7 +500,9 @@ cpu_reboot(int howto, char *bootstr)
 		printf("\n");
 		printf("The operating system has halted.\n");
 		printf("Please press any key to reboot.\n\n");
+		cnpollc(1);
 		(void)cngetc();
+		cnpollc(0);
 	}
 
 	/* Map the last physical page VA = PA for doboot() */

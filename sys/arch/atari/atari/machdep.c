@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.184 2021/01/03 17:42:10 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.185 2021/10/09 20:00:41 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.184 2021/01/03 17:42:10 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.185 2021/10/09 20:00:41 tsutsui Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -440,7 +440,10 @@ dumpsys(void)
 
 #if defined(DDB) || defined(PANICWAIT)
 	printf("Do you want to dump memory? [y]");
-	cnputc(i = cngetc());
+	cnpollc(1);
+	i = cngetc();
+	cnpollc(0);
+	cnputc(i);
 	switch (i) {
 	case 'n':
 	case 'N':
