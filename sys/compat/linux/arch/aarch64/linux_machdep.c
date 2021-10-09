@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.1 2021/09/23 06:56:27 ryo Exp $	*/
+/*	$NetBSD: linux_machdep.c,v 1.2 2021/10/09 07:01:34 ryo Exp $	*/
 
 /*-
  * Copyright (c) 2021 Ryo Shimizu <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.1 2021/09/23 06:56:27 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.2 2021/10/09 07:01:34 ryo Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -42,6 +42,8 @@ __KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.1 2021/09/23 06:56:27 ryo Exp $"
 #include <compat/linux/common/linux_ioctl.h>
 #include <compat/linux/common/linux_prctl.h>
 #include <compat/linux/common/linux_machdep.h>
+#include <compat/linux/common/linux_ipc.h>
+#include <compat/linux/common/linux_sem.h>
 #include <compat/linux/linux_syscall.h>
 #include <compat/linux/linux_syscallargs.h>
 
