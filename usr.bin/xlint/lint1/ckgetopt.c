@@ -1,4 +1,4 @@
-/* $NetBSD: ckgetopt.c,v 1.11 2021/08/22 22:15:07 rillig Exp $ */
+/* $NetBSD: ckgetopt.c,v 1.12 2021/10/09 14:22:42 rillig Exp $ */
 
 /*-
  * Copyright (c) 2021 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: ckgetopt.c,v 1.11 2021/08/22 22:15:07 rillig Exp $");
+__RCSID("$NetBSD: ckgetopt.c,v 1.12 2021/10/09 14:22:42 rillig Exp $");
 #endif
 
 #include <stdbool.h>
@@ -113,13 +113,16 @@ check_unlisted_option(char opt)
 {
 	lint_assert(ck.options != NULL);
 
+	if (opt == ':' && ck.options[0] != ':')
+		goto warn;
+
 	char *optptr = strchr(ck.options, opt);
 	if (optptr != NULL)
 		*optptr = ' ';
 	else if (opt != '?') {
+	warn:
 		/* option '%c' should be listed in the options string */
 		warning(339, opt);
-		return;
 	}
 }
 

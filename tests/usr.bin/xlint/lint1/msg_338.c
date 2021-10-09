@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_338.c,v 1.6 2021/10/09 13:57:55 rillig Exp $	*/
+/*	$NetBSD: msg_338.c,v 1.7 2021/10/09 14:22:42 rillig Exp $	*/
 # 3 "msg_338.c"
 
 // Test for message: option '%c' should be handled in the switch [338]
@@ -141,7 +141,7 @@ unreachable_colon(int argc, char **argv)
 	/* expect+1: warning: option 'b' should be handled in the switch [338] */
 	while ((c = getopt(argc, argv, "b:")) != -1) {
 		switch (c) {
-		/* TODO: expect+1: warning: option ':' should be listed in the options string [339] */
+		/* expect+1: warning: option ':' should be listed in the options string [339] */
 		case ':':
 			return 'm';
 		default:
