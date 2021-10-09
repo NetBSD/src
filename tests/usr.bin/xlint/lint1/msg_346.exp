@@ -7,3 +7,4 @@ msg_346.c(48): warning: call to 'strpbrk' effectively discards 'const' from argu
 msg_346.c(50): warning: call to 'strrchr' effectively discards 'const' from argument [346]
 msg_346.c(52): warning: call to 'strstr' effectively discards 'const' from argument [346]
 msg_346.c(60): error: argument mismatch: 0 arg passed, 2 expected [150]
+msg_346.c(87): warning: call to 'bsearch' effectively discards 'const' from argument [346]
