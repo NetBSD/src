@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.384 2021/10/09 20:03:20 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.385 2021/10/09 21:56:12 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.384 2021/10/09 20:03:20 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.385 2021/10/09 21:56:12 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -4255,12 +4255,19 @@ check_integer_comparison(op_t op, tnode_t *ln, tnode_t *rn)
 	if (!is_integer(lt) || !is_integer(rt))
 		return;
 
-	if ((hflag || pflag) && ((lt == CHAR && is_out_of_char_range(rn)) ||
-				 (rt == CHAR && is_out_of_char_range(ln)))) {
-		/* nonportable character comparison, op %s */
-		warning(230, op_name(op));
-		return;
+	if (hflag || pflag) {
+		if (lt == CHAR && is_out_of_char_range(rn)) {
+			/* nonportable character comparison '%s %d' */
+			warning(230, op_name(op), (int)rn->tn_val->v_quad);
+			return;
+		}
+		if (rt == CHAR && is_out_of_char_range(ln)) {
+			/* nonportable character comparison '%s %d' */
+			warning(230, op_name(op), (int)ln->tn_val->v_quad);
+			return;
+		}
 	}
+
 	if (is_uinteger(lt) && !is_uinteger(rt) &&
 	    rn->tn_op == CON && rn->tn_val->v_quad <= 0) {
 		if (rn->tn_val->v_quad < 0) {
