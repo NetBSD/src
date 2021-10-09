@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.127 2020/07/18 03:00:37 lukem Exp $	*/
+/*	$NetBSD: main.c,v 1.128 2021/10/09 09:07:20 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1996-2015 The NetBSD Foundation, Inc.
@@ -98,7 +98,7 @@ __COPYRIGHT("@(#) Copyright (c) 1985, 1989, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)main.c	8.6 (Berkeley) 10/9/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.127 2020/07/18 03:00:37 lukem Exp $");
+__RCSID("$NetBSD: main.c,v 1.128 2021/10/09 09:07:20 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -267,7 +267,7 @@ main(int volatile argc, char **volatile argv)
 		}
 	}
 
-	while ((ch = getopt(argc, argv, "?46AadefginN:o:pP:q:r:Rs:tT:u:vVx:")) != -1) {
+	while ((ch = getopt(argc, argv, ":46AadefginN:o:pP:q:r:Rs:tT:u:vVx:")) != -1) {
 		switch (ch) {
 		case '4':
 			family = AF_INET;
@@ -420,6 +420,11 @@ main(int volatile argc, char **volatile argv)
 			if (optopt == '?') {
 				return usage_help();
 			}
+			warnx("-%c: unknown option", optopt);
+			return usage();
+
+		case ':':
+			warnx("-%c: missing argument", optopt);
 			return usage();
 
 		default:
