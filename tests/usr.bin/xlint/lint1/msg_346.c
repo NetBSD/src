@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_346.c,v 1.5 2021/10/09 19:18:52 rillig Exp $	*/
+/*	$NetBSD: msg_346.c,v 1.6 2021/10/09 20:03:20 rillig Exp $	*/
 # 3 "msg_346.c"
 
 // Test for message: call to '%s' effectively discards 'const' from argument [346]
@@ -71,18 +71,18 @@ void *bsearch(const void *key, const void *base, size_t nmemb, size_t size,
 int cmp(const void *, const void *);
 
 void take_void_ptr(void *);
-void take_const_void_ptr(void *);
+void take_const_void_ptr(const void *);
 
 void
 bsearch_example(void)
 {
+	int arr[] = { 1 };
 	const int const_arr[] = { 1 };
-	const int arr[] = { 1 };
 
 	take_const_void_ptr(bsearch("", const_arr, 4, 1, cmp));
 	take_const_void_ptr(bsearch("", arr, 4, 1, cmp));
 	take_void_ptr(bsearch("", arr, 4, 1, cmp));
 
-	/* TODO: expect+1: warning: call to 'bsearch' effectively discards 'const' from argument [346] */
+	/* expect+1: warning: call to 'bsearch' effectively discards 'const' from argument [346] */
 	take_void_ptr(bsearch("", const_arr, 4, 1, cmp));
 }
