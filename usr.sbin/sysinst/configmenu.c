@@ -1,4 +1,4 @@
-/* $NetBSD: configmenu.c,v 1.13 2021/10/08 15:59:55 martin Exp $ */
+/* $NetBSD: configmenu.c,v 1.14 2021/10/09 09:06:28 martin Exp $ */
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -45,7 +45,9 @@ static int set_timezone_menu(struct menudesc *, void *);
 static int set_root_shell(struct menudesc *, void *);
 static int change_root_password(struct menudesc *, void *);
 static int add_new_user(struct menudesc *, void *);
+#if CHECK_ENTROPY
 static int add_entropy(struct menudesc *, void *);
+#endif
 static int set_binpkg(struct menudesc *, void *);
 static int set_pkgsrc(struct menudesc *, void *);
 static void config_list_init(void);
