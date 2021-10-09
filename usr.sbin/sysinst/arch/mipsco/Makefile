@@ -1,6 +1,11 @@
-#	$NetBSD: Makefile,v 1.1 2014/07/26 19:30:46 dholland Exp $
+#	$NetBSD: Makefile,v 1.2 2021/10/09 08:21:03 martin Exp $
 #
 # Makefile for mipsco
 #
+
+.ifdef SMALLPROG
+NOPARTMAN=	yes
+NO_CLONES=	yes
+.endif
 
 .include "../../Makefile.inc"
