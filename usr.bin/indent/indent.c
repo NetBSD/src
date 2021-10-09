@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.c,v 1.136 2021/10/09 11:00:27 rillig Exp $	*/
+/*	$NetBSD: indent.c,v 1.137 2021/10/09 11:13:25 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)indent.c	5.17 (Berkeley) 6/7/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: indent.c,v 1.136 2021/10/09 11:00:27 rillig Exp $");
+__RCSID("$NetBSD: indent.c,v 1.137 2021/10/09 11:13:25 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/indent.c 340138 2018-11-04 19:24:49Z oshogbo $");
 #endif
@@ -572,18 +572,16 @@ main_prepare_parsing(void)
 
     parse(semicolon);
 
-    char *p = inp.s;
     int ind = 0;
-
-    for (;;) {
+    for (const char *p = inp.s;; p++) {
 	if (*p == ' ')
 	    ind++;
 	else if (*p == '\t')
 	    ind = next_tab(ind);
 	else
 	    break;
-	p++;
     }
+
     if (ind >= opt.indent_size)
 	ps.ind_level = ps.ind_level_follow = ind / opt.indent_size;
 }
@@ -591,7 +589,7 @@ main_prepare_parsing(void)
 static void
 indent_declaration(int cur_decl_ind, bool tabs_to_var)
 {
-    int pos = (int)buf_len(&code);
+    int ind = (int)buf_len(&code);
     char *orig_code_e = code.e;
 
     /*
@@ -599,23 +597,17 @@ indent_declaration(int cur_decl_ind, bool tabs_to_var)
      * tabsize
      */
     if ((ps.ind_level * opt.indent_size) % opt.tabsize != 0) {
-	pos += (ps.ind_level * opt.indent_size) % opt.tabsize;
+	ind += (ps.ind_level * opt.indent_size) % opt.tabsize;
 	cur_decl_ind += (ps.ind_level * opt.indent_size) % opt.tabsize;
     }
 
     if (tabs_to_var) {
-	int tpos;
-
-	while ((tpos = next_tab(pos)) <= cur_decl_ind) {
+	for (int next; (next = next_tab(ind)) <= cur_decl_ind; ind = next)
 	    buf_add_char(&code, '\t');
-	    pos = tpos;
-	}
     }
 
-    while (pos < cur_decl_ind) {
+    for (; ind < cur_decl_ind; ind++)
 	buf_add_char(&code, ' ');
-	pos++;
-    }
 
     if (code.e == orig_code_e && ps.want_blank) {
 	*code.e++ = ' ';
