@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_160.c,v 1.5 2021/01/31 12:20:00 rillig Exp $	*/
+/*	$NetBSD: msg_160.c,v 1.6 2021/10/09 21:25:39 rillig Exp $	*/
 # 3 "msg_160.c"
 
 // Test for message: operator '==' found where '=' was expected [160]
@@ -55,4 +55,16 @@ unparenthesized(int a, int b, int c, _Bool z)
 	 * surprising about it.
 	 */
 	eval(a == (b == c));
+}
+
+/* Seen in bin/csh/dir.c 1.35 from 2020-08-09, line 223. */
+void
+assignment_in_comma_expression(void)
+{
+	int len;
+
+	/* FIXME: The following code is totally fine. */
+	/* expect+1: warning: operator '==' found where '=' was expected [160] */
+	if ((len = 3, len == 0))
+		return;
 }
