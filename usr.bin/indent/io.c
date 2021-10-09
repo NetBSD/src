@@ -1,4 +1,4 @@
-/*	$NetBSD: io.c,v 1.90 2021/10/08 21:16:23 rillig Exp $	*/
+/*	$NetBSD: io.c,v 1.91 2021/10/09 11:00:27 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)io.c	8.1 (Berkeley) 6/6/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: io.c,v 1.90 2021/10/08 21:16:23 rillig Exp $");
+__RCSID("$NetBSD: io.c,v 1.91 2021/10/09 11:00:27 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/io.c 334927 2018-06-10 16:44:18Z pstef $");
 #endif
@@ -189,7 +189,7 @@ dump_line_comment(int ind)
 	if (*com_st == ' ')
 	    target_ind++, com_st++;
 	else if (*com_st == '\t') {
-	    target_ind = opt.tabsize * (1 + target_ind / opt.tabsize);
+	    target_ind = next_tab(target_ind);
 	    com_st++;
 	} else
 	    target_ind = 0;
@@ -473,7 +473,7 @@ indentation_after_range(int ind, const char *start, const char *end)
 	if (*p == '\n' || *p == '\f')
 	    ind = 0;
 	else if (*p == '\t')
-	    ind = opt.tabsize * (ind / opt.tabsize + 1);
+	    ind = next_tab(ind);
 	else if (*p == '\b')
 	    --ind;
 	else

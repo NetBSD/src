@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.c,v 1.135 2021/10/08 23:47:40 rillig Exp $	*/
+/*	$NetBSD: indent.c,v 1.136 2021/10/09 11:00:27 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)indent.c	5.17 (Berkeley) 6/7/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: indent.c,v 1.135 2021/10/08 23:47:40 rillig Exp $");
+__RCSID("$NetBSD: indent.c,v 1.136 2021/10/09 11:00:27 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/indent.c 340138 2018-11-04 19:24:49Z oshogbo $");
 #endif
@@ -579,7 +579,7 @@ main_prepare_parsing(void)
 	if (*p == ' ')
 	    ind++;
 	else if (*p == '\t')
-	    ind = opt.tabsize * (1 + ind / opt.tabsize);
+	    ind = next_tab(ind);
 	else
 	    break;
 	p++;
@@ -606,7 +606,7 @@ indent_declaration(int cur_decl_ind, bool tabs_to_var)
     if (tabs_to_var) {
 	int tpos;
 
-	while ((tpos = opt.tabsize * (1 + pos / opt.tabsize)) <= cur_decl_ind) {
+	while ((tpos = next_tab(pos)) <= cur_decl_ind) {
 	    buf_add_char(&code, '\t');
 	    pos = tpos;
 	}
