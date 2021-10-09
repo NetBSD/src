@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.206 2021/08/06 04:21:56 isaki Exp $	*/
+/*	$NetBSD: machdep.c,v 1.207 2021/10/09 20:00:42 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.206 2021/08/06 04:21:56 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.207 2021/10/09 20:00:42 tsutsui Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -518,7 +518,9 @@ cpu_reboot(int howto, char *bootstr)
 #if defined(PANICWAIT) && !defined(DDB)
 	if ((howto & RB_HALT) == 0 && panicstr) {
 		printf("hit any key to reboot...\n");
+		cnpollc(1);
 		(void)cngetc();
+		cnpollc(0);
 		printf("\n");
 	}
 #endif
@@ -551,7 +553,9 @@ cpu_reboot(int howto, char *bootstr)
 		/* PASSTHROUGH even if came back */
 	} else if ((howto & RB_HALT) == RB_HALT) {
 		printf("System halted.  Hit any key to reboot.\n\n");
+		cnpollc(1);
 		(void)cngetc();
+		cnpollc(0);
 	}
 
 	printf("rebooting...\n");
