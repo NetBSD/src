@@ -1,4 +1,4 @@
-/*	$NetBSD: pr_comment.c,v 1.68 2021/10/08 22:37:33 rillig Exp $	*/
+/*	$NetBSD: pr_comment.c,v 1.69 2021/10/09 11:00:27 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)pr_comment.c	8.1 (Berkeley) 6/6/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: pr_comment.c,v 1.68 2021/10/08 22:37:33 rillig Exp $");
+__RCSID("$NetBSD: pr_comment.c,v 1.69 2021/10/09 11:00:27 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/pr_comment.c 334927 2018-06-10 16:44:18Z pstef $");
 #endif
@@ -131,7 +131,7 @@ process_comment(void)
 	    ps.com_ind = ps.decl_on_line || ps.ind_level == 0
 		? opt.decl_comment_column - 1 : opt.comment_column - 1;
 	    if (ps.com_ind <= target_ind)
-		ps.com_ind = opt.tabsize * (1 + target_ind / opt.tabsize);
+		ps.com_ind = next_tab(target_ind);
 	    /* XXX: the '+ 1' smells like an off-by-one error */
 	    if (ps.com_ind + 1 + 24 > adj_max_line_length)
 		adj_max_line_length = ps.com_ind + 1 + 24;
