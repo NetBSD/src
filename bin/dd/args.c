@@ -1,4 +1,4 @@
-/*	$NetBSD: args.c,v 1.40 2019/01/30 01:40:02 mrg Exp $	*/
+/*	$NetBSD: args.c,v 1.41 2021/10/09 21:31:36 rillig Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)args.c	8.3 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: args.c,v 1.40 2019/01/30 01:40:02 mrg Exp $");
+__RCSID("$NetBSD: args.c,v 1.41 2021/10/09 21:31:36 rillig Exp $");
 #endif
 #endif /* not lint */
 
@@ -127,7 +127,8 @@ static const struct arg {
 void
 jcl(char **argv)
 {
-	struct arg *ap, tmp;
+	const struct arg *ap;
+	struct arg tmp;
 	char *oper, *arg;
 
 	in.dbsz = out.dbsz = 512;
@@ -375,7 +376,8 @@ static const struct conv {
 static void
 f_conv(char *arg)
 {
-	struct conv *cp, tmp;
+	const struct conv *cp;
+	struct conv tmp;
 
 	while (arg != NULL) {
 		tmp.name = strsep(&arg, ",");
@@ -466,7 +468,8 @@ static u_int
 f_ioflag(char *arg, u_int flagtype)
 {
 	u_int ioflag = 0;
-	struct ioflag *cp, tmp;
+	const struct ioflag *cp;
+	struct ioflag tmp;
 	const char *flagstr = (flagtype == C_IFLAG) ? "iflag" : "oflag";
 
 	while (arg != NULL) {
