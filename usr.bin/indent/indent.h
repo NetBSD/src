@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.h,v 1.37 2021/10/08 23:43:33 rillig Exp $	*/
+/*	$NetBSD: indent.h,v 1.38 2021/10/09 11:00:27 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-FreeBSD
@@ -366,4 +366,10 @@ static inline bool
 is_hspace(char ch)
 {
     return ch == ' ' || ch == '\t';
+}
+
+static inline int
+next_tab(int ind)
+{
+    return ind - ind % opt.tabsize + opt.tabsize;
 }
