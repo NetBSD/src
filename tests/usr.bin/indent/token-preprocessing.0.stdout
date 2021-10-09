@@ -1,4 +1,4 @@
-/* $NetBSD: token-preprocessing.0.stdout,v 1.7 2021/10/08 21:32:28 rillig Exp $ */
+/* $NetBSD: token-preprocessing.0.stdout,v 1.8 2021/10/09 10:56:13 rillig Exp $ */
 /* $FreeBSD$ */
 
 /*-
@@ -69,3 +69,27 @@ int		binary_plus = 3
 int		unary_plus =
 #define intermediate 1
 +4;
+
+/*
+ * Preprocessing lines that don't expect an argument but have one are fixed.
+ * They are indented with a single tab.
+ */
+#if 0
+#elif 1
+#else	/* if 3 */
+#endif	/* 0 */
+
+/*
+ * Existing comments are indented just like code comments.
+ *
+ * This means that the above wrong preprocessing lines need to be fed through
+ * indent twice until they become stable. Since compilers issue warnings about
+ * these invalid lines, not much code still has these.
+ */
+#if 0				/* comment */
+#else				/* comment */
+#endif				/* comment */
+
+#if 0				/* comment */
+#else				/* comment */
+#endif				/* comment */
