@@ -1,6 +1,8 @@
-# $NetBSD: module.ad.aarch64,v 1.2 2020/11/01 18:51:34 pgoyette Exp $
+# $NetBSD: module.ad.aarch64,v 1.3 2021/10/09 07:01:34 ryo Exp $
 ./usr/libdata/debug/@MODULEDIR@/bpfjit				modules-base-kernel	kmod,sljit,debug
 ./usr/libdata/debug/@MODULEDIR@/bpfjit/bpfjit.kmod.debug		modules-base-kernel	kmod,sljit,debug
+./usr/libdata/debug/@MODULEDIR@/compat_linux			modules-base-kernel	kmod,debug
+./usr/libdata/debug/@MODULEDIR@/compat_linux/compat_linux.kmod.debug	modules-base-kernel	kmod,debug
 ./usr/libdata/debug/@MODULEDIR@/compat_netbsd32			modules-base-kernel	kmod,debug
 ./usr/libdata/debug/@MODULEDIR@/compat_netbsd32/compat_netbsd32.kmod.debug modules-base-kernel	kmod,debug
 ./usr/libdata/debug/@MODULEDIR@/compat_netbsd32_09		modules-base-kernel	kmod,debug

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2019/02/17 04:05:45 rin Exp $
+#	$NetBSD: Makefile,v 1.6 2021/10/09 07:01:35 ryo Exp $
 
 .include "../Makefile.inc"
 .include "../Makefile.assym"
@@ -13,6 +13,15 @@ SRCS+=	linux_fdio.c linux_file.c linux_hdio.c linux_ioctl.c
 SRCS+=	linux_ipc.c linux_misc.c linux_mtio.c linux_sched.c
 SRCS+=	linux_sg.c linux_signal.c linux_signo.c linux_socket.c
 SRCS+=	linux_sysctl.c linux_termios.c linux_time.c linux_mod.c
+
+.if ${MACHINE_CPU} == "aarch64"
+CPPFLAGS+=	-DEXEC_ELF64
+.PATH:	${S}/arch/aarch64/aarch64
+.PATH:	${S}/compat/linux/arch/aarch64
+SRCS+=	linux_machdep.c linux_syscalls.c linux_sysent.c linux_commons.c
+SRCS+=	linux_exec_elf64.c
+SRCS+=	linux_sigcode.c linux_syscall.c
+.endif
 
 .if ${MACHINE_ARCH} == "i386"
 CPPFLAGS+=	-DEXEC_ELF32 -DEXEC_AOUT
