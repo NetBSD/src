@@ -1,4 +1,4 @@
-/*	$NetBSD: err.c,v 1.145 2021/09/12 16:28:45 rillig Exp $	*/
+/*	$NetBSD: err.c,v 1.146 2021/10/09 21:56:12 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: err.c,v 1.145 2021/09/12 16:28:45 rillig Exp $");
+__RCSID("$NetBSD: err.c,v 1.146 2021/10/09 21:56:12 rillig Exp $");
 #endif
 
 #include <sys/types.h>
@@ -284,7 +284,7 @@ const char *const msgs[] = {
 	"const object %s should have initializer",		      /* 227 */
 	"function cannot return const or volatile object",	      /* 228 */
 	"converting '%s' to '%s' is questionable",		      /* 229 */
-	"nonportable character comparison, op %s",		      /* 230 */
+	"nonportable character comparison '%s %d'",		      /* 230 */
 	"argument '%s' unused in function '%s'",		      /* 231 */
 	"label '%s' unused in function '%s'",			      /* 232 */
 	"struct %s never defined",				      /* 233 */
