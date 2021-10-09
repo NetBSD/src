@@ -1,4 +1,4 @@
-/*	$NetBSD: misc.c,v 1.25 2021/10/09 20:29:23 rillig Exp $	*/
+/*	$NetBSD: misc.c,v 1.26 2021/10/09 20:44:55 rillig Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)misc.c	8.3 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: misc.c,v 1.25 2021/10/09 20:29:23 rillig Exp $");
+__RCSID("$NetBSD: misc.c,v 1.26 2021/10/09 20:44:55 rillig Exp $");
 #endif
 #endif /* not lint */
 
@@ -78,13 +78,11 @@ summary(void)
 #ifdef NO_MSGFMT
 	posix_summary();
 #else /* NO_MSGFMT */
-	if (strcmp(msgfmt, "human") == 0) {
+	if (strcmp(msgfmt, "human") == 0)
 		human_summary();
-		return;
-	} else if (strcmp(msgfmt, "posix") == 0) {
+	else if (strcmp(msgfmt, "posix") == 0)
 		posix_summary();
-		return;
-	} else if (strcmp(msgfmt, "quiet") == 0)
+	else if (strcmp(msgfmt, "quiet") == 0)
 		quiet_summary();
 	else
 		custom_summary();
