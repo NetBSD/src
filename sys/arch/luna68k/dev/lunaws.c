@@ -1,4 +1,4 @@
-/* $NetBSD: lunaws.c,v 1.39 2021/09/25 15:18:38 tsutsui Exp $ */
+/* $NetBSD: lunaws.c,v 1.40 2021/10/09 20:59:47 tsutsui Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: lunaws.c,v 1.39 2021/09/25 15:18:38 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lunaws.c,v 1.40 2021/10/09 20:59:47 tsutsui Exp $");
 
 #include "opt_wsdisplay_compat.h"
 #include "wsmouse.h"
@@ -101,6 +101,12 @@ static const uint8_t ch1_regs[6] = {
 	WR5_TX8BIT | WR5_TXENBL,		/* Tx */
 };
 
+struct ws_conscookie {
+	struct sioreg	*cc_sio;
+	int		cc_polling;
+	struct ws_softc	*cc_sc;
+};
+
 struct ws_softc {
 	device_t	sc_dev;
 	struct sioreg	*sc_ctl;
@@ -122,6 +128,8 @@ struct ws_softc {
 	int		sc_msreport;
 	void		*sc_si;
 	int		sc_rawkbd;
+
+	struct ws_conscookie *sc_conscookie;
 };
 
 static void omkbd_input(struct ws_softc *, int);
@@ -155,6 +163,7 @@ static const struct wskbd_consops ws_consops = {
 	.pollc = ws_cnpollc,
 	.bell  = ws_cnbell,
 };
+static struct ws_conscookie ws_conscookie;
 
 #if NWSMOUSE > 0
 static int  omms_enable(void *);
@@ -213,6 +222,10 @@ wsattach(device_t parent, device_t self, void *aux)
 	memcpy(sc->sc_wr, ch1_regs, sizeof(ch1_regs));
 	siosc->sc_intrhand[channel].ih_func = wsintr;
 	siosc->sc_intrhand[channel].ih_arg = sc;
+
+	sc->sc_conscookie = &ws_conscookie;
+	sc->sc_conscookie->cc_sc = sc;
+	sc->sc_conscookie->cc_polling = 0;
 
 	setsioreg(sc->sc_ctl, WR0, sc->sc_wr[WR0]);
 	setsioreg(sc->sc_ctl, WR4, sc->sc_wr[WR4]);
@@ -514,12 +527,10 @@ omkbd_get_buzcmd(struct ws_softc *sc, struct wskbd_bell_data *wbd,
 static void
 ws_cngetc(void *cookie, u_int *type, int *data)
 {
-	struct ws_softc *sc = cookie;	/* currently unused */
-	struct sioreg *sio, *sio_base;
+	struct ws_conscookie *conscookie = cookie;
+	struct sioreg *sio = conscookie->cc_sio;
+	struct ws_softc *sc = conscookie->cc_sc;	/* currently unused */
 	int code;
-
-	sio_base = (struct sioreg *)OBIO_SIO;
-	sio = &sio_base[1];	/* channel B */
 
 	code = siogetc(sio);
 	omkbd_decode(sc, code, type, data);
@@ -528,18 +539,19 @@ ws_cngetc(void *cookie, u_int *type, int *data)
 static void
 ws_cnpollc(void *cookie, int on)
 {
+	struct ws_conscookie *conscookie = cookie;
+
+	conscookie->cc_polling = on;
 }
 
 static void
 ws_cnbell(void *cookie, u_int pitch, u_int period, u_int volume)
 {
-	struct ws_softc *sc = cookie;	/* currently unused */
-	struct sioreg *sio, *sio_base;
+	struct ws_conscookie *conscookie = cookie;
+	struct sioreg *sio = conscookie->cc_sio;
+	struct ws_softc *sc = conscookie->cc_sc;	/* currently unused */
 	struct wskbd_bell_data wbd;
 	uint8_t buzcmd;
-
-	sio_base = (struct sioreg *)OBIO_SIO;
-	sio = &sio_base[1];	/* channel B */
 
 	/*
 	 * XXX cnbell(9) man page should describe each args..
@@ -560,11 +572,14 @@ ws_cnbell(void *cookie, u_int pitch, u_int period, u_int volume)
 /* EXPORT */ void
 ws_cnattach(void)
 {
-	static int voidfill;
+	struct sioreg *sio_base;
+
+	sio_base = (struct sioreg *)OBIO_SIO;
+	ws_conscookie.cc_sio = &sio_base[1];	/* channel B */
 
 	/* XXX need CH.B initialization XXX */
 
-	wskbd_cnattach(&ws_consops, &voidfill, &omkbd_keymapdata);
+	wskbd_cnattach(&ws_consops, &ws_conscookie, &omkbd_keymapdata);
 }
 
 static int
@@ -578,35 +593,41 @@ static void
 omkbd_set_leds(void *cookie, int leds)
 {
 	struct ws_softc *sc = cookie;
-	uint8_t ledcmd;
+	uint8_t capsledcmd, kanaledcmd;
 
-	/*
-	 * XXX:
-	 *  Why does MI wskbd(4) use a common .set_leds function
-	 *  for both kernel cons(9) and normal tty devices!?
-	 *
-	 *  When CAP key is pressed in cngetc(9) (like ddb(4) etc.)
-	 *  after wskbd(4) is attached, all LED commands are queued
-	 *  into txq[] and will never be sent until ddb(4) returns.
-	 */
+	if (sc == NULL) {
+		/*
+		 * This has been checked by the caller in wskbd(9) layer
+		 * for the early console, but just for sanity.
+		 */
+		return;
+	}
 
 	sc->sc_leds = leds;
 	if ((leds & WSKBD_LED_CAPS) != 0) {
-		ledcmd = OMKBD_LED_ON_CAPS;
+		capsledcmd = OMKBD_LED_ON_CAPS;
 	} else {
-		ledcmd = OMKBD_LED_OFF_CAPS;
+		capsledcmd = OMKBD_LED_OFF_CAPS;
 	}
-	omkbd_send(sc, ledcmd);
 
 #if 0	/* no KANA lock support in wskbd */
 	if ((leds & WSKBD_LED_KANA) != 0) {
-		ledcmd = OMKBD_LED_ON_KANA;
+		kanaledcmd = OMKBD_LED_ON_KANA;
 	} else
 #endif
 	{
-		ledcmd = OMKBD_LED_OFF_KANA;
+		kanaledcmd = OMKBD_LED_OFF_KANA;
 	}
-	omkbd_send(sc, ledcmd);
+
+	if (sc->sc_conscookie->cc_polling != 0) {
+		struct sioreg *sio = sc->sc_ctl;
+
+		sioputc(sio, capsledcmd);
+		sioputc(sio, kanaledcmd);
+	} else {
+		omkbd_send(sc, capsledcmd);
+		omkbd_send(sc, kanaledcmd);
+	}
 }
 
 static int
