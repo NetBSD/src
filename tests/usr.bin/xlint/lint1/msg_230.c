@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_230.c,v 1.9 2021/10/09 21:56:12 rillig Exp $	*/
+/*	$NetBSD: msg_230.c,v 1.10 2021/10/09 22:03:38 rillig Exp $	*/
 # 3 "msg_230.c"
 
 // Test for message: nonportable character comparison '%s %d' [230]
@@ -110,5 +110,23 @@ compare_lt(char c)
 		return;
 	/* expect+1: warning: nonportable character comparison '>= 129' [230] */
 	if (c >= 129)
+		return;
+}
+
+void
+compare_with_character_literal(char ch)
+{
+	/*
+	 * FIXME: These comparisons are portable since the character constant
+	 *  is interpreted using the type 'char' on the exact same platform
+	 *  as where the comparison takes place.
+	 */
+	/* expect+1: warning: nonportable character comparison '== -128' [230] */
+	if (ch == '\200')
+		return;
+	/* expect+1: warning: nonportable character comparison '== -1' [230] */
+	if (ch == '\377')
+		return;
+	if (ch == '\000')
 		return;
 }
