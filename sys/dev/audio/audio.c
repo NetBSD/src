@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.108 2021/09/26 01:16:08 thorpej Exp $	*/
+/*	$NetBSD: audio.c,v 1.109 2021/10/10 11:20:29 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -114,7 +114,7 @@
  *	halt_output 		x	x +
  *	halt_input 		x	x +
  *	speaker_ctl 		x	x
- *	getdev 			-	x
+ *	getdev 			-	-
  *	set_port 		-	x +
  *	get_port 		-	x +
  *	query_devinfo 		-	x
@@ -138,7 +138,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.108 2021/09/26 01:16:08 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.109 2021/10/10 11:20:29 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "audio.h"
@@ -3113,9 +3113,7 @@ audio_ioctl(dev_t dev, struct audio_softc *sc, u_long cmd, void *addr, int flag,
 		break;
 
 	case AUDIO_GETDEV:
-		mutex_enter(sc->sc_lock);
 		error = sc->hw_if->getdev(sc->hw_hdl, (audio_device_t *)addr);
-		mutex_exit(sc->sc_lock);
 		break;
 
 	case AUDIO_GETENC:
@@ -8291,9 +8289,7 @@ mixer_ioctl(struct audio_softc *sc, u_long cmd, void *addr, int flag,
 
 	case AUDIO_GETDEV:
 		TRACE(2, "AUDIO_GETDEV");
-		mutex_enter(sc->sc_lock);
 		error = sc->hw_if->getdev(sc->hw_hdl, (audio_device_t *)addr);
-		mutex_exit(sc->sc_lock);
 		break;
 
 	case AUDIO_MIXER_DEVINFO:
