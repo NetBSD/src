@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_fork.c,v 1.226 2020/05/23 23:42:43 ad Exp $	*/
+/*	$NetBSD: kern_fork.c,v 1.227 2021/10/10 18:07:51 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2001, 2004, 2006, 2007, 2008, 2019
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.226 2020/05/23 23:42:43 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.227 2021/10/10 18:07:51 thorpej Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_dtrace.h"
@@ -547,7 +547,7 @@ fork1(struct lwp *l1, int flags, int exitsig, void *stack, size_t stacksize,
 	 */
 	if (!SLIST_EMPTY(&p1->p_klist)) {
 		mutex_exit(&proc_lock);
-		KNOTE(&p1->p_klist, NOTE_FORK | p2->p_pid);
+		knote_proc_fork(p1, p2);
 		mutex_enter(&proc_lock);
 	}
 

@@ -1,7 +1,7 @@
-/*	$NetBSD: kern_event.c,v 1.128 2021/09/30 01:20:53 thorpej Exp $	*/
+/*	$NetBSD: kern_event.c,v 1.129 2021/10/10 18:07:51 thorpej Exp $	*/
 
 /*-
- * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
+ * Copyright (c) 2008, 2009, 2021 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -58,8 +58,10 @@
  * FreeBSD: src/sys/kern/kern_event.c,v 1.27 2001/07/05 17:10:44 rwatson Exp
  */
 
+#include "opt_ddb.h"
+
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_event.c,v 1.128 2021/09/30 01:20:53 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_event.c,v 1.129 2021/10/10 18:07:51 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -134,7 +136,7 @@ static const struct filterops kqread_filtops = {
 };
 
 static const struct filterops proc_filtops = {
-	.f_flags = 0,
+	.f_flags = FILTEROP_MPSAFE,
 	.f_attach = filt_procattach,
 	.f_detach = filt_procdetach,
 	.f_event = filt_proc,
@@ -176,8 +178,6 @@ static int	kq_calloutmax = (4 * 1024);
 
 extern const struct filterops fs_filtops;	/* vfs_syscalls.c */
 extern const struct filterops sig_filtops;	/* kern_sig.c */
-
-#define KQ_FLUX_WAKEUP(kq)	cv_broadcast(&kq->kq_cv)
 
 /*
  * Table for for all system-defined filters.
@@ -234,9 +234,188 @@ static size_t		user_kfiltersz;		/* size of allocated memory */
  *		Typically,	f_event(NOTE_SUBMIT) via knote: object lock
  *				f_event(!NOTE_SUBMIT) via knote: nothing,
  *					acquires/releases object lock inside.
+ *
+ * Locking rules when detaching knotes:
+ *
+ * There are some situations where knote submission may require dropping
+ * locks (see knote_proc_fork()).  In order to support this, it's possible
+ * to mark a knote as being 'in-flux'.  Such a knote is guaranteed not to
+ * be detached while it remains in-flux.  Because it will not be detached,
+ * locks can be dropped so e.g. memory can be allocated, locks on other
+ * data structures can be acquired, etc.  During this time, any attempt to
+ * detach an in-flux knote must wait until the knote is no longer in-flux.
+ * When this happens, the knote is marked for death (KN_WILLDETACH) and the
+ * LWP who gets to finish the detach operation is recorded in the knote's
+ * 'udata' field (which is no longer required for its original purpose once
+ * a knote is so marked).  Code paths that lead to knote_detach() must ensure
+ * that their LWP is the one tasked with its final demise after waiting for
+ * the in-flux status of the knote to clear.  Note that once a knote is
+ * marked KN_WILLDETACH, no code paths may put it into an in-flux state.
+ *
+ * Once the special circumstances have been handled, the locks are re-
+ * acquired in the proper order (object lock -> kq_lock), the knote taken
+ * out of flux, and any waiters are notified.  Because waiters must have
+ * also dropped *their* locks in order to safely block, they must re-
+ * validate all of their assumptions; see knote_detach_quiesce().  See also
+ * the kqueue_register() (EV_ADD, EV_DELETE) and kqueue_scan() (EV_ONESHOT)
+ * cases.
+ *
+ * When kqueue_scan() encounters an in-flux knote, the situation is
+ * treated like another LWP's list marker.
+ *
+ * LISTEN WELL: It is important to not hold knotes in flux for an
+ * extended period of time! In-flux knotes effectively block any
+ * progress of the kqueue_scan() operation.  Any code paths that place
+ * knotes in-flux should be careful to not block for indefinite periods
+ * of time, such as for memory allocation (i.e. KM_NOSLEEP is OK, but
+ * KM_SLEEP is not).
  */
 static krwlock_t	kqueue_filter_lock;	/* lock on filter lists */
 static kmutex_t		kqueue_timer_lock;	/* for EVFILT_TIMER */
+
+#define	KQ_FLUX_WAIT(kq)	(void)cv_wait(&kq->kq_cv, &kq->kq_lock)
+#define	KQ_FLUX_WAKEUP(kq)	cv_broadcast(&kq->kq_cv)
+
+static inline bool
+kn_in_flux(struct knote *kn)
+{
+	KASSERT(mutex_owned(&kn->kn_kq->kq_lock));
+	return kn->kn_influx != 0;
+}
+
+static inline bool
+kn_enter_flux(struct knote *kn)
+{
+	KASSERT(mutex_owned(&kn->kn_kq->kq_lock));
+
+	if (kn->kn_status & KN_WILLDETACH) {
+		return false;
+	}
+
+	KASSERT(kn->kn_influx < UINT_MAX);
+	kn->kn_influx++;
+
+	return true;
+}
+
+static inline bool
+kn_leave_flux(struct knote *kn)
+{
+	KASSERT(mutex_owned(&kn->kn_kq->kq_lock));
+	KASSERT(kn->kn_influx > 0);
+	kn->kn_influx--;
+	return kn->kn_influx == 0;
+}
+
+static void
+kn_wait_flux(struct knote *kn, bool can_loop)
+{
+	bool loop;
+
+	KASSERT(mutex_owned(&kn->kn_kq->kq_lock));
+
+	/*
+	 * It may not be safe for us to touch the knote again after
+	 * dropping the kq_lock.  The caller has let us know in
+	 * 'can_loop'.
+	 */
+	for (loop = true; loop && kn->kn_influx != 0; loop = can_loop) {
+		KQ_FLUX_WAIT(kn->kn_kq);
+	}
+}
+
+#define	KNOTE_WILLDETACH(kn)						\
+do {									\
+	(kn)->kn_status |= KN_WILLDETACH;				\
+	(kn)->kn_kevent.udata = curlwp;					\
+} while (/*CONSTCOND*/0)
+
+/*
+ * Wait until the specified knote is in a quiescent state and
+ * safe to detach.  Returns true if we potentially blocked (and
+ * thus dropped our locks).
+ */
+static bool
+knote_detach_quiesce(struct knote *kn)
+{
+	struct kqueue *kq = kn->kn_kq;
+	filedesc_t *fdp = kq->kq_fdp;
+
+	KASSERT(mutex_owned(&fdp->fd_lock));
+
+	mutex_spin_enter(&kq->kq_lock);
+	/*
+	 * There are two cases where we might see KN_WILLDETACH here:
+	 *
+	 * 1. Someone else has already started detaching the knote but
+	 *    had to wait for it to settle first.
+	 *
+	 * 2. We had to wait for it to settle, and had to come back
+	 *    around after re-acquiring the locks.
+	 *
+	 * When KN_WILLDETACH is set, we also set the LWP that claimed
+	 * the prize of finishing the detach in the 'udata' field of the
+	 * knote (which will never be used again for its usual purpose
+	 * once the note is in this state).  If it doesn't point to us,
+	 * we must drop the locks and let them in to finish the job.
+	 *
+	 * Otherwise, once we have claimed the knote for ourselves, we
+	 * can finish waiting for it to settle.  The is the only scenario
+	 * where touching a detaching knote is safe after dropping the
+	 * locks.
+	 */
+	if ((kn->kn_status & KN_WILLDETACH) != 0 &&
+	    kn->kn_kevent.udata != curlwp) {
+		/*
+		 * N.B. it is NOT safe for us to touch the knote again
+		 * after dropping the locks here.  The caller must go
+		 * back around and re-validate everything.  However, if
+		 * the knote is in-flux, we want to block to minimize
+		 * busy-looping.
+		 */
+		mutex_exit(&fdp->fd_lock);
+		if (kn_in_flux(kn)) {
+			kn_wait_flux(kn, false);
+			mutex_spin_exit(&kq->kq_lock);
+			return true;
+		}
+		mutex_spin_exit(&kq->kq_lock);
+		preempt_point();
+		return true;
+	}
+	/*
+	 * If we get here, we know that we will be claiming the
+	 * detach responsibilies, or that we already have and
+	 * this is the second attempt after re-validation.
+	 */
+	KASSERT((kn->kn_status & KN_WILLDETACH) == 0 ||
+		kn->kn_kevent.udata == curlwp);
+	/*
+	 * Similarly, if we get here, either we are just claiming it
+	 * and may have to wait for it to settle, or if this is the
+	 * second attempt after re-validation that no other code paths
+	 * have put it in-flux.
+	 */
+	KASSERT((kn->kn_status & KN_WILLDETACH) == 0 ||
+		kn_in_flux(kn) == false);
+	KNOTE_WILLDETACH(kn);
+	if (kn_in_flux(kn)) {
+		mutex_exit(&fdp->fd_lock);
+		kn_wait_flux(kn, true);
+		/*
+		 * It is safe for us to touch the knote again after
+		 * dropping the locks, but the caller must still
+		 * re-validate everything because other aspects of
+		 * the environment may have changed while we blocked.
+		 */
+		KASSERT(kn_in_flux(kn) == false);
+		mutex_spin_exit(&kq->kq_lock);
+		return true;
+	}
+	mutex_spin_exit(&kq->kq_lock);
+
+	return false;
+}
 
 static int
 filter_attach(struct knote *kn)
@@ -577,24 +756,9 @@ static int
 filt_procattach(struct knote *kn)
 {
 	struct proc *p;
-	struct lwp *curl;
-
-	curl = curlwp;
 
 	mutex_enter(&proc_lock);
-	if (kn->kn_flags & EV_FLAG1) {
-		/*
-		 * NOTE_TRACK attaches to the child process too early
-		 * for proc_find, so do a raw look up and check the state
-		 * explicitly.
-		 */
-		p = proc_find_raw(kn->kn_id);
-		if (p != NULL && p->p_stat != SIDL)
-			p = NULL;
-	} else {
-		p = proc_find(kn->kn_id);
-	}
-
+	p = proc_find(kn->kn_id);
 	if (p == NULL) {
 		mutex_exit(&proc_lock);
 		return ESRCH;
@@ -606,7 +770,7 @@ filt_procattach(struct knote *kn)
 	 */
 	mutex_enter(p->p_lock);
 	mutex_exit(&proc_lock);
-	if (kauth_authorize_process(curl->l_cred,
+	if (kauth_authorize_process(curlwp->l_cred,
 	    KAUTH_PROCESS_KEVENT_FILTER, p, NULL, NULL, NULL) != 0) {
 	    	mutex_exit(p->p_lock);
 		return EACCES;
@@ -616,13 +780,11 @@ filt_procattach(struct knote *kn)
 	kn->kn_flags |= EV_CLEAR;	/* automatically set */
 
 	/*
-	 * internal flag indicating registration done by kernel
+	 * NOTE_CHILD is only ever generated internally; don't let it
+	 * leak in from user-space.  See knote_proc_fork_track().
 	 */
-	if (kn->kn_flags & EV_FLAG1) {
-		kn->kn_data = kn->kn_sdata;	/* ppid */
-		kn->kn_fflags = NOTE_CHILD;
-		kn->kn_flags &= ~EV_FLAG1;
-	}
+	kn->kn_sfflags &= ~NOTE_CHILD;
+
 	SLIST_INSERT_HEAD(&p->p_klist, kn, kn_selnext);
     	mutex_exit(p->p_lock);
 
@@ -642,91 +804,350 @@ filt_procattach(struct knote *kn)
 static void
 filt_procdetach(struct knote *kn)
 {
+	struct kqueue *kq = kn->kn_kq;
 	struct proc *p;
 
-	if (kn->kn_status & KN_DETACHED)
-		return;
-
-	p = kn->kn_obj;
-
-	mutex_enter(p->p_lock);
-	SLIST_REMOVE(&p->p_klist, kn, knote, kn_selnext);
-	mutex_exit(p->p_lock);
+	/*
+	 * We have to synchronize with knote_proc_exit(), but we
+	 * are forced to acquire the locks in the wrong order here
+	 * because we can't be sure kn->kn_obj is valid unless
+	 * KN_DETACHED is not set.
+	 */
+ again:
+	mutex_spin_enter(&kq->kq_lock);
+	if ((kn->kn_status & KN_DETACHED) == 0) {
+		p = kn->kn_obj;
+		if (!mutex_tryenter(p->p_lock)) {
+			mutex_spin_exit(&kq->kq_lock);
+			preempt_point();
+			goto again;
+		}
+		kn->kn_status |= KN_DETACHED;
+		SLIST_REMOVE(&p->p_klist, kn, knote, kn_selnext);
+		mutex_exit(p->p_lock);
+	}
+	mutex_spin_exit(&kq->kq_lock);
 }
 
 /*
  * Filter event method for EVFILT_PROC.
+ *
+ * Due to some of the complexities of process locking, we have special
+ * entry points for delivering knote submissions.  filt_proc() is used
+ * only to check for activation from kqueue_register() and kqueue_scan().
  */
 static int
 filt_proc(struct knote *kn, long hint)
 {
-	u_int event, fflag;
-	struct kevent kev;
-	struct kqueue *kq;
-	int error;
+	struct kqueue *kq = kn->kn_kq;
+	uint32_t fflags;
 
-	event = (u_int)hint & NOTE_PCTRLMASK;
-	kq = kn->kn_kq;
-	fflag = 0;
-
-	/* If the user is interested in this event, record it. */
-	if (kn->kn_sfflags & event)
-		fflag |= event;
-
-	if (event == NOTE_EXIT) {
-		struct proc *p = kn->kn_obj;
-
-		if (p != NULL)
-			kn->kn_data = P_WAITSTATUS(p);
-		/*
-		 * Process is gone, so flag the event as finished.
-		 *
-		 * Detach the knote from watched process and mark
-		 * it as such. We can't leave this to kqueue_scan(),
-		 * since the process might not exist by then. And we
-		 * have to do this now, since psignal KNOTE() is called
-		 * also for zombies and we might end up reading freed
-		 * memory if the kevent would already be picked up
-		 * and knote g/c'ed.
-		 */
-		filt_procdetach(kn);
-
-		mutex_spin_enter(&kq->kq_lock);
-		kn->kn_status |= KN_DETACHED;
-		/* Mark as ONESHOT, so that the knote it g/c'ed when read */
-		kn->kn_flags |= (EV_EOF | EV_ONESHOT);
-		kn->kn_fflags |= fflag;
-		mutex_spin_exit(&kq->kq_lock);
-
-		return 1;
-	}
+	/*
+	 * Because we share the same klist with signal knotes, just
+	 * ensure that we're not being invoked for the proc-related
+	 * submissions.
+	 */
+	KASSERT((hint & (NOTE_EXEC | NOTE_EXIT | NOTE_FORK)) == 0);
 
 	mutex_spin_enter(&kq->kq_lock);
-	if ((event == NOTE_FORK) && (kn->kn_sfflags & NOTE_TRACK)) {
-		/*
-		 * Process forked, and user wants to track the new process,
-		 * so attach a new knote to it, and immediately report an
-		 * event with the parent's pid.  Register knote with new
-		 * process.
-		 */
-		memset(&kev, 0, sizeof(kev));
-		kev.ident = hint & NOTE_PDATAMASK;	/* pid */
-		kev.filter = kn->kn_filter;
-		kev.flags = kn->kn_flags | EV_ADD | EV_ENABLE | EV_FLAG1;
-		kev.fflags = kn->kn_sfflags;
-		kev.data = kn->kn_id;			/* parent */
-		kev.udata = kn->kn_kevent.udata;	/* preserve udata */
-		mutex_spin_exit(&kq->kq_lock);
-		error = kqueue_register(kq, &kev);
-		mutex_spin_enter(&kq->kq_lock);
-		if (error != 0)
-			kn->kn_fflags |= NOTE_TRACKERR;
-	}
-	kn->kn_fflags |= fflag;
-	fflag = kn->kn_fflags;
+	fflags = kn->kn_fflags;
 	mutex_spin_exit(&kq->kq_lock);
 
-	return fflag != 0;
+	return fflags != 0;
+}
+
+void
+knote_proc_exec(struct proc *p)
+{
+	struct knote *kn, *tmpkn;
+	struct kqueue *kq;
+	uint32_t fflags;
+
+	mutex_enter(p->p_lock);
+
+	SLIST_FOREACH_SAFE(kn, &p->p_klist, kn_selnext, tmpkn) {
+		/* N.B. EVFILT_SIGNAL knotes are on this same list. */
+		if (kn->kn_fop == &sig_filtops) {
+			continue;
+		}
+		KASSERT(kn->kn_fop == &proc_filtops);
+
+		kq = kn->kn_kq;
+		mutex_spin_enter(&kq->kq_lock);
+		fflags = (kn->kn_fflags |= (kn->kn_sfflags & NOTE_EXEC));
+		mutex_spin_exit(&kq->kq_lock);
+		if (fflags) {
+			knote_activate(kn);
+		}
+	}
+
+	mutex_exit(p->p_lock);
+}
+
+static int __noinline
+knote_proc_fork_track(struct proc *p1, struct proc *p2, struct knote *okn)
+{
+	struct kqueue *kq = okn->kn_kq;
+
+	KASSERT(mutex_owned(&kq->kq_lock));
+	KASSERT(mutex_owned(p1->p_lock));
+
+	/*
+	 * We're going to put this knote into flux while we drop
+	 * the locks and create and attach a new knote to track the
+	 * child.  If we are not able to enter flux, then this knote
+	 * is about to go away, so skip the notification.
+	 */
+	if (!kn_enter_flux(okn)) {
+		return 0;
+	}
+
+	mutex_spin_exit(&kq->kq_lock);
+	mutex_exit(p1->p_lock);
+
+	/*
+	 * We actually have to register *two* new knotes:
+	 *
+	 * ==> One for the NOTE_CHILD notification.  This is a forced
+	 *     ONESHOT note.
+	 *
+	 * ==> One to actually track the child process as it subsequently
+	 *     forks, execs, and, ultimately, exits.
+	 *
+	 * If we only register a single knote, then it's possible for
+	 * for the NOTE_CHILD and NOTE_EXIT to be collapsed into a single
+	 * notification if the child exits before the tracking process
+	 * has received the NOTE_CHILD notification, which applications
+	 * aren't expecting (the event's 'data' field would be clobbered,
+	 * for exmaple).
+	 *
+	 * To do this, what we have here is an **extremely** stripped-down
+	 * version of kqueue_register() that has the following properties:
+	 *
+	 * ==> Does not block to allocate memory.  If we are unable
+	 *     to allocate memory, we return ENOMEM.
+	 *
+	 * ==> Does not search for existing knotes; we know there
+	 *     are not any because this is a new process that isn't
+	 *     even visible to other processes yet.
+	 *
+	 * ==> Assumes that the knhash for our kq's descriptor table
+	 *     already exists (after all, we're already tracking
+	 *     processes with knotes if we got here).
+	 *
+	 * ==> Directly attaches the new tracking knote to the child
+	 *     process.
+	 *
+	 * The whole point is to do the minimum amount of work while the
+	 * knote is held in-flux, and to avoid doing extra work in general
+	 * (we already have the new child process; why bother looking it
+	 * up again?).
+	 */
+	filedesc_t *fdp = kq->kq_fdp;
+	struct knote *knchild, *kntrack;
+	int error = 0;
+
+	knchild = kmem_zalloc(sizeof(*knchild), KM_NOSLEEP);
+	kntrack = kmem_zalloc(sizeof(*knchild), KM_NOSLEEP);
+	if (__predict_false(knchild == NULL || kntrack == NULL)) {
+		error = ENOMEM;
+		goto out;
+	}
+
+	kntrack->kn_obj = p2;
+	kntrack->kn_id = p2->p_pid;
+	kntrack->kn_kq = kq;
+	kntrack->kn_fop = okn->kn_fop;
+	kntrack->kn_kfilter = okn->kn_kfilter;
+	kntrack->kn_sfflags = okn->kn_sfflags;
+	kntrack->kn_sdata = p1->p_pid;
+
+	kntrack->kn_kevent.ident = p2->p_pid;
+	kntrack->kn_kevent.filter = okn->kn_filter;
+	kntrack->kn_kevent.flags =
+	    okn->kn_flags | EV_ADD | EV_ENABLE | EV_CLEAR;
+	kntrack->kn_kevent.fflags = 0;
+	kntrack->kn_kevent.data = 0;
+	kntrack->kn_kevent.udata = okn->kn_kevent.udata; /* preserve udata */
+
+	/*
+	 * The child note does not need to be attached to the
+	 * new proc's klist at all.
+	 */
+	*knchild = *kntrack;
+	knchild->kn_status = KN_DETACHED;
+	knchild->kn_sfflags = 0;
+	knchild->kn_kevent.flags |= EV_ONESHOT;
+	knchild->kn_kevent.fflags = NOTE_CHILD;
+	knchild->kn_kevent.data = p1->p_pid;		 /* parent */
+
+	mutex_enter(&fdp->fd_lock);
+
+	/*
+	 * We need to check to see if the kq is closing, and skip
+	 * attaching the knote if so.  Normally, this isn't necessary
+	 * when coming in the front door because the file descriptor
+	 * layer will synchronize this.
+	 *
+	 * It's safe to test KQ_CLOSING without taking the kq_lock
+	 * here because that flag is only ever set when the fd_lock
+	 * is also held.
+	 */
+	if (__predict_false(kq->kq_count & KQ_CLOSING)) {
+		mutex_exit(&fdp->fd_lock);
+		goto out;
+	}
+
+	/*
+	 * We do the "insert into FD table" and "attach to klist" steps
+	 * in the opposite order of kqueue_register() here to avoid
+	 * having to take p2->p_lock twice.  But this is OK because we
+	 * hold fd_lock across the entire operation.
+	 */
+
+	mutex_enter(p2->p_lock);
+	error = kauth_authorize_process(curlwp->l_cred,
+	    KAUTH_PROCESS_KEVENT_FILTER, p2, NULL, NULL, NULL);
+	if (__predict_false(error != 0)) {
+		mutex_exit(p2->p_lock);
+		mutex_exit(&fdp->fd_lock);
+		error = EACCES;
+		goto out;
+	}
+	SLIST_INSERT_HEAD(&p2->p_klist, kntrack, kn_selnext);
+	mutex_exit(p2->p_lock);
+
+	KASSERT(fdp->fd_knhashmask != 0);
+	KASSERT(fdp->fd_knhash != NULL);
+	struct klist *list = &fdp->fd_knhash[KN_HASH(kntrack->kn_id,
+	    fdp->fd_knhashmask)];
+	SLIST_INSERT_HEAD(list, kntrack, kn_link);
+	SLIST_INSERT_HEAD(list, knchild, kn_link);
+
+	/* This adds references for knchild *and* kntrack. */
+	atomic_add_int(&kntrack->kn_kfilter->refcnt, 2);
+
+	knote_activate(knchild);
+
+	kntrack = NULL;
+	knchild = NULL;
+
+	mutex_exit(&fdp->fd_lock);
+
+ out:
+	if (__predict_false(knchild != NULL)) {
+		kmem_free(knchild, sizeof(*knchild));
+	}
+	if (__predict_false(kntrack != NULL)) {
+		kmem_free(kntrack, sizeof(*kntrack));
+	}
+	mutex_enter(p1->p_lock);
+	mutex_spin_enter(&kq->kq_lock);
+
+	if (kn_leave_flux(okn)) {
+		KQ_FLUX_WAKEUP(kq);
+	}
+
+	return error;
+}
+
+void
+knote_proc_fork(struct proc *p1, struct proc *p2)
+{
+	struct knote *kn;
+	struct kqueue *kq;
+	uint32_t fflags;
+
+	mutex_enter(p1->p_lock);
+
+	/*
+	 * N.B. We DO NOT use SLIST_FOREACH_SAFE() here because we
+	 * don't want to pre-fetch the next knote; in the event we
+	 * have to drop p_lock, we will have put the knote in-flux,
+	 * meaning that no one will be able to detach it until we
+	 * have taken the knote out of flux.  However, that does
+	 * NOT stop someone else from detaching the next note in the
+	 * list while we have it unlocked.  Thus, we want to fetch
+	 * the next note in the list only after we have re-acquired
+	 * the lock, and using SLIST_FOREACH() will satisfy that.
+	 */
+	SLIST_FOREACH(kn, &p1->p_klist, kn_selnext) {
+		/* N.B. EVFILT_SIGNAL knotes are on this same list. */
+		if (kn->kn_fop == &sig_filtops) {
+			continue;
+		}
+		KASSERT(kn->kn_fop == &proc_filtops);
+
+		kq = kn->kn_kq;
+		mutex_spin_enter(&kq->kq_lock);
+		kn->kn_fflags |= (kn->kn_sfflags & NOTE_FORK);
+		if (__predict_false(kn->kn_sfflags & NOTE_TRACK)) {
+			/*
+			 * This will drop kq_lock and p_lock and
+			 * re-acquire them before it returns.
+			 */
+			if (knote_proc_fork_track(p1, p2, kn)) {
+				kn->kn_fflags |= NOTE_TRACKERR;
+			}
+			KASSERT(mutex_owned(p1->p_lock));
+			KASSERT(mutex_owned(&kq->kq_lock));
+		}
+		fflags = kn->kn_fflags;
+		mutex_spin_exit(&kq->kq_lock);
+		if (fflags) {
+			knote_activate(kn);
+		}
+	}
+
+	mutex_exit(p1->p_lock);
+}
+
+void
+knote_proc_exit(struct proc *p)
+{
+	struct knote *kn;
+	struct kqueue *kq;
+
+	KASSERT(mutex_owned(p->p_lock));
+
+	while (!SLIST_EMPTY(&p->p_klist)) {
+		kn = SLIST_FIRST(&p->p_klist);
+		kq = kn->kn_kq;
+
+		KASSERT(kn->kn_obj == p);
+
+		mutex_spin_enter(&kq->kq_lock);
+		kn->kn_data = P_WAITSTATUS(p);
+		/*
+		 * Mark as ONESHOT, so that the knote is g/c'ed
+		 * when read.
+		 */
+		kn->kn_flags |= (EV_EOF | EV_ONESHOT);
+		kn->kn_fflags |= kn->kn_sfflags & NOTE_EXIT;
+
+		/*
+		 * Detach the knote from the process and mark it as such.
+		 * N.B. EVFILT_SIGNAL are also on p_klist, but by the
+		 * time we get here, all open file descriptors for this
+		 * process have been released, meaning that signal knotes
+		 * will have already been detached.
+		 *
+		 * We need to synchronize this with filt_procdetach().
+		 */
+		KASSERT(kn->kn_fop == &proc_filtops);
+		if ((kn->kn_status & KN_DETACHED) == 0) {
+			kn->kn_status |= KN_DETACHED;
+			SLIST_REMOVE_HEAD(&p->p_klist, kn_selnext);
+		}
+		mutex_spin_exit(&kq->kq_lock);
+
+		/*
+		 * Always activate the knote for NOTE_EXIT regardless
+		 * of whether or not the listener cares about it.
+		 * This matches historical behavior.
+		 */
+		knote_activate(kn);
+	}
 }
 
 static void
@@ -1220,6 +1641,10 @@ kqueue_register(struct kqueue *kq, struct kevent *kev)
 		}
 	}
 
+	/* It's safe to test KQ_CLOSING while holding only the fd_lock. */
+	KASSERT(mutex_owned(&fdp->fd_lock));
+	KASSERT((kq->kq_count & KQ_CLOSING) == 0);
+
 	/*
 	 * kn now contains the matching knote, or NULL if no match
 	 */
@@ -1285,7 +1710,17 @@ kqueue_register(struct kqueue *kq, struct kevent *kev)
 				    ft ? ft->f_ops->fo_name : "?", error);
 #endif
 
-				/* knote_detach() drops fdp->fd_lock */
+				/*
+				 * N.B. no need to check for this note to
+				 * be in-flux, since it was never visible
+				 * to the monitored object.
+				 *
+				 * knote_detach() drops fdp->fd_lock
+				 */
+				mutex_enter(&kq->kq_lock);
+				KNOTE_WILLDETACH(kn);
+				KASSERT(kn_in_flux(kn) == false);
+				mutex_exit(&kq->kq_lock);
 				knote_detach(kn, fdp, false);
 				goto done;
 			}
@@ -1299,6 +1734,36 @@ kqueue_register(struct kqueue *kq, struct kevent *kev)
 	}
 
 	if (kev->flags & EV_DELETE) {
+		/*
+		 * Let the world know that this knote is about to go
+		 * away, and wait for it to settle if it's currently
+		 * in-flux.
+		 */
+		mutex_spin_enter(&kq->kq_lock);
+		if (kn->kn_status & KN_WILLDETACH) {
+			/*
+			 * This knote is already on its way out,
+			 * so just be done.
+			 */
+			mutex_spin_exit(&kq->kq_lock);
+			goto doneunlock;
+		}
+		KNOTE_WILLDETACH(kn);
+		if (kn_in_flux(kn)) {
+			mutex_exit(&fdp->fd_lock);
+			/*
+			 * It's safe for us to conclusively wait for
+			 * this knote to settle because we know we'll
+			 * be completing the detach.
+			 */
+			kn_wait_flux(kn, true);
+			KASSERT(kn_in_flux(kn) == false);
+			mutex_spin_exit(&kq->kq_lock);
+			mutex_enter(&fdp->fd_lock);
+		} else {
+			mutex_spin_exit(&kq->kq_lock);
+		}
+
 		/* knote_detach() drops fdp->fd_lock */
 		knote_detach(kn, fdp, true);
 		goto done;
@@ -1355,10 +1820,46 @@ doneunlock:
 	return (error);
 }
 
-#if defined(DEBUG)
 #define KN_FMT(buf, kn) \
     (snprintb((buf), sizeof(buf), __KN_FLAG_BITS, (kn)->kn_status), buf)
 
+#if defined(DDB)
+void
+kqueue_printit(struct kqueue *kq, bool full, void (*pr)(const char *, ...))
+{
+	const struct knote *kn;
+	u_int count;
+	int nmarker;
+	char buf[128];
+
+	count = 0;
+	nmarker = 0;
+
+	(*pr)("kqueue %p (restart=%d count=%u):\n", kq,
+	    !!(kq->kq_count & KQ_RESTART), KQ_COUNT(kq));
+	(*pr)("  Queued knotes:\n");
+	TAILQ_FOREACH(kn, &kq->kq_head, kn_tqe) {
+		if (kn->kn_status & KN_MARKER) {
+			nmarker++;
+		} else {
+			count++;
+		}
+		(*pr)("    knote %p: kq=%p status=%s\n",
+		    kn, kn->kn_kq, KN_FMT(buf, kn));
+		(*pr)("      id=0x%lx (%lu) filter=%d\n",
+		    (u_long)kn->kn_id, (u_long)kn->kn_id, kn->kn_filter);
+		if (kn->kn_kq != kq) {
+			(*pr)("      !!! kn->kn_kq != kq\n");
+		}
+	}
+	if (count != KQ_COUNT(kq)) {
+		(*pr)("  !!! count(%u) != KQ_COUNT(%u)\n",
+		    count, KQ_COUNT(kq));
+	}
+}
+#endif /* DDB */
+
+#if defined(DEBUG)
 static void
 kqueue_check(const char *func, size_t line, const struct kqueue *kq)
 {
@@ -1368,7 +1869,6 @@ kqueue_check(const char *func, size_t line, const struct kqueue *kq)
 	char buf[128];
 
 	KASSERT(mutex_owned(&kq->kq_lock));
-	KASSERT(KQ_COUNT(kq) < UINT_MAX / 2);
 
 	count = 0;
 	nmarker = 0;
@@ -1389,7 +1889,7 @@ kqueue_check(const char *func, size_t line, const struct kqueue *kq)
 			}
 			count++;
 			if (count > KQ_COUNT(kq)) {
-				panic("%s,%zu: kq=%p kq->kq_count(%d) != "
+				panic("%s,%zu: kq=%p kq->kq_count(%u) != "
 				    "count(%d), nmarker=%d",
 		    		    func, line, kq, KQ_COUNT(kq), count,
 				    nmarker);
@@ -1461,6 +1961,7 @@ kqueue_scan(file_t *fp, size_t maxevents, struct kevent *ulistp,
 
 	memset(&morker, 0, sizeof(morker));
 	marker = &morker;
+	marker->kn_kq = kq;
 	marker->kn_status = KN_MARKER;
 	mutex_spin_enter(&kq->kq_lock);
  retry:
@@ -1498,21 +1999,47 @@ kqueue_scan(file_t *fp, size_t maxevents, struct kevent *ulistp,
 	 * Acquire the fdp->fd_lock interlock to avoid races with
 	 * file creation/destruction from other threads.
 	 */
-relock:
 	mutex_spin_exit(&kq->kq_lock);
+relock:
 	mutex_enter(&fdp->fd_lock);
 	mutex_spin_enter(&kq->kq_lock);
 
 	while (count != 0) {
-		kn = TAILQ_FIRST(&kq->kq_head);	/* get next knote */
+		/*
+		 * Get next knote.  We are guaranteed this will never
+		 * be NULL because of the marker we inserted above.
+		 */
+		kn = TAILQ_FIRST(&kq->kq_head);
 
-		if ((kn->kn_status & KN_MARKER) != 0 && kn != marker) {
+		bool kn_is_other_marker =
+		    (kn->kn_status & KN_MARKER) != 0 && kn != marker;
+		bool kn_is_detaching = (kn->kn_status & KN_WILLDETACH) != 0;
+		bool kn_is_in_flux = kn_in_flux(kn);
+
+		/*
+		 * If we found a marker that's not ours, or this knote
+		 * is in a state of flux, then wait for everything to
+		 * settle down and go around again.
+		 */
+		if (kn_is_other_marker || kn_is_detaching || kn_is_in_flux) {
 			if (influx) {
 				influx = 0;
 				KQ_FLUX_WAKEUP(kq);
 			}
 			mutex_exit(&fdp->fd_lock);
-			(void)cv_wait(&kq->kq_cv, &kq->kq_lock);
+			if (kn_is_other_marker || kn_is_in_flux) {
+				KQ_FLUX_WAIT(kq);
+				mutex_spin_exit(&kq->kq_lock);
+			} else {
+				/*
+				 * Detaching but not in-flux?  Someone is
+				 * actively trying to finish the job; just
+				 * go around and try again.
+				 */
+				KASSERT(kn_is_detaching);
+				mutex_spin_exit(&kq->kq_lock);
+				preempt_point();
+			}
 			goto relock;
 		}
 
@@ -1553,14 +2080,22 @@ relock:
 			}
 			if (rv == 0) {
 				/*
-				 * non-ONESHOT event that hasn't
-				 * triggered again, so de-queue.
+				 * non-ONESHOT event that hasn't triggered
+				 * again, so it will remain de-queued.
 				 */
 				kn->kn_status &= ~(KN_ACTIVE|KN_BUSY);
 				kq->kq_count--;
 				influx = 1;
 				continue;
 			}
+		} else {
+			/*
+			 * This ONESHOT note is going to be detached
+			 * below.  Mark the knote as not long for this
+			 * world before we release the kq lock so that
+			 * no one else will put it in a state of flux.
+			 */
+			KNOTE_WILLDETACH(kn);
 		}
 		KASSERT(kn->kn_fop != NULL);
 		touch = (!(kn->kn_fop->f_flags & FILTEROP_ISFD) &&
@@ -1578,6 +2113,9 @@ relock:
 			/* delete ONESHOT events after retrieval */
 			kn->kn_status &= ~KN_BUSY;
 			kq->kq_count--;
+			KASSERT(kn_in_flux(kn) == false);
+			KASSERT((kn->kn_status & KN_WILLDETACH) != 0 &&
+				kn->kn_kevent.udata == curlwp);
 			mutex_spin_exit(&kq->kq_lock);
 			knote_detach(kn, fdp, true);
 			mutex_enter(&fdp->fd_lock);
@@ -1773,17 +2311,21 @@ kqueue_doclose(struct kqueue *kq, struct klist *list, int fd)
 
 	KASSERT(mutex_owned(&fdp->fd_lock));
 
+ again:
 	for (kn = SLIST_FIRST(list); kn != NULL;) {
 		if (kq != kn->kn_kq) {
 			kn = SLIST_NEXT(kn, kn_link);
 			continue;
+		}
+		if (knote_detach_quiesce(kn)) {
+			mutex_enter(&fdp->fd_lock);
+			goto again;
 		}
 		knote_detach(kn, fdp, true);
 		mutex_enter(&fdp->fd_lock);
 		kn = SLIST_FIRST(list);
 	}
 }
-
 
 /*
  * fileops close method for a kqueue descriptor.
@@ -1801,7 +2343,27 @@ kqueue_close(file_t *fp)
 	fp->f_type = 0;
 	fdp = curlwp->l_fd;
 
+	KASSERT(kq->kq_fdp == fdp);
+
 	mutex_enter(&fdp->fd_lock);
+
+	/*
+	 * We're doing to drop the fd_lock multiple times while
+	 * we detach knotes.  During this time, attempts to register
+	 * knotes via the back door (e.g. knote_proc_fork_track())
+	 * need to fail, lest they sneak in to attach a knote after
+	 * we've already drained the list it's destined for.
+	 *
+	 * We must aquire kq_lock here to set KQ_CLOSING (to serialize
+	 * with other code paths that modify kq_count without holding
+	 * the fd_lock), but once this bit is set, it's only safe to
+	 * test it while holding the fd_lock, and holding kq_lock while
+	 * doing so is not necessary.
+	 */
+	mutex_enter(&kq->kq_lock);
+	kq->kq_count |= KQ_CLOSING;
+	mutex_exit(&kq->kq_lock);
+
 	for (i = 0; i <= fdp->fd_lastkqfile; i++) {
 		if ((ff = fdp->fd_dt->dt_ff[i]) == NULL)
 			continue;
@@ -1812,8 +2374,15 @@ kqueue_close(file_t *fp)
 			kqueue_doclose(kq, &fdp->fd_knhash[i], -1);
 		}
 	}
+
 	mutex_exit(&fdp->fd_lock);
 
+#if defined(DEBUG)
+	mutex_enter(&kq->kq_lock);
+	kq_check(kq);
+	mutex_exit(&kq->kq_lock);
+#endif /* DEBUG */
+	KASSERT(TAILQ_EMPTY(&kq->kq_head));
 	KASSERT(KQ_COUNT(kq) == 0);
 	mutex_destroy(&kq->kq_lock);
 	cv_destroy(&kq->kq_cv);
@@ -1875,10 +2444,14 @@ knote_fdclose(int fd)
 	struct knote *kn;
 	filedesc_t *fdp;
 
+ again:
 	fdp = curlwp->l_fd;
 	mutex_enter(&fdp->fd_lock);
 	list = (struct klist *)&fdp->fd_dt->dt_ff[fd]->ff_knlist;
 	while ((kn = SLIST_FIRST(list)) != NULL) {
+		if (knote_detach_quiesce(kn)) {
+			goto again;
+		}
 		knote_detach(kn, fdp, true);
 		mutex_enter(&fdp->fd_lock);
 	}
@@ -1898,9 +2471,10 @@ knote_detach(struct knote *kn, filedesc_t *fdp, bool dofop)
 	kq = kn->kn_kq;
 
 	KASSERT((kn->kn_status & KN_MARKER) == 0);
+	KASSERT((kn->kn_status & KN_WILLDETACH) != 0);
+	KASSERT(kn->kn_fop != NULL);
 	KASSERT(mutex_owned(&fdp->fd_lock));
 
-	KASSERT(kn->kn_fop != NULL);
 	/* Remove from monitored object. */
 	if (dofop) {
 		filter_detach(kn);
@@ -1917,8 +2491,10 @@ knote_detach(struct knote *kn, filedesc_t *fdp, bool dofop)
 	/* Remove from kqueue. */
 again:
 	mutex_spin_enter(&kq->kq_lock);
+	KASSERT(kn_in_flux(kn) == false);
 	if ((kn->kn_status & KN_QUEUED) != 0) {
 		kq_check(kq);
+		KASSERT(KQ_COUNT(kq) != 0);
 		kq->kq_count--;
 		TAILQ_REMOVE(&kq->kq_head, kn, kn_tqe);
 		kn->kn_status &= ~KN_QUEUED;
@@ -1949,6 +2525,10 @@ knote_enqueue(struct knote *kn)
 	kq = kn->kn_kq;
 
 	mutex_spin_enter(&kq->kq_lock);
+	if (__predict_false(kn->kn_status & KN_WILLDETACH)) {
+		/* Don't bother enqueueing a dying knote. */
+		goto out;
+	}
 	if ((kn->kn_status & KN_DISABLED) != 0) {
 		kn->kn_status &= ~KN_DISABLED;
 	}
@@ -1956,11 +2536,13 @@ knote_enqueue(struct knote *kn)
 		kq_check(kq);
 		kn->kn_status |= KN_QUEUED;
 		TAILQ_INSERT_TAIL(&kq->kq_head, kn, kn_tqe);
+		KASSERT(KQ_COUNT(kq) < KQ_MAXCOUNT);
 		kq->kq_count++;
 		kq_check(kq);
 		cv_broadcast(&kq->kq_cv);
 		selnotify(&kq->kq_sel, 0, NOTE_SUBMIT);
 	}
+ out:
 	mutex_spin_exit(&kq->kq_lock);
 }
 /*
@@ -1976,15 +2558,21 @@ knote_activate(struct knote *kn)
 	kq = kn->kn_kq;
 
 	mutex_spin_enter(&kq->kq_lock);
+	if (__predict_false(kn->kn_status & KN_WILLDETACH)) {
+		/* Don't bother enqueueing a dying knote. */
+		goto out;
+	}
 	kn->kn_status |= KN_ACTIVE;
 	if ((kn->kn_status & (KN_QUEUED | KN_DISABLED)) == 0) {
 		kq_check(kq);
 		kn->kn_status |= KN_QUEUED;
 		TAILQ_INSERT_TAIL(&kq->kq_head, kn, kn_tqe);
+		KASSERT(KQ_COUNT(kq) < KQ_MAXCOUNT);
 		kq->kq_count++;
 		kq_check(kq);
 		cv_broadcast(&kq->kq_cv);
 		selnotify(&kq->kq_sel, 0, NOTE_SUBMIT);
 	}
+ out:
 	mutex_spin_exit(&kq->kq_lock);
 }

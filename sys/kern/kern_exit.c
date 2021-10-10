@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exit.c,v 1.291 2020/12/05 18:17:01 thorpej Exp $	*/
+/*	$NetBSD: kern_exit.c,v 1.292 2021/10/10 18:07:51 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2006, 2007, 2008, 2020 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.291 2020/12/05 18:17:01 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.292 2021/10/10 18:07:51 thorpej Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_dtrace.h"
@@ -435,16 +435,6 @@ exit1(struct lwp *l, int exitcode, int signo)
 	proc_finispecific(p);
 
 	/*
-	 * Notify interested parties of our demise.
-	 */
-	KNOTE(&p->p_klist, NOTE_EXIT);
-
-	SDT_PROBE(proc, kernel, , exit,
-		((p->p_sflag & PS_COREDUMP) ? CLD_DUMPED :
-		 (p->p_xsig ? CLD_KILLED : CLD_EXITED)),
-		0,0,0,0);
-
-	/*
 	 * Reset p_opptr pointer of all former children which got
 	 * traced by another process and were reparented. We reset
 	 * it to NULL here; the trace detach code then reparents
@@ -509,6 +499,15 @@ exit1(struct lwp *l, int exitcode, int signo)
 	 */
 	p->p_stat = SDEAD;
 
+	/*
+	 * Let anyone watching this DTrace probe know what we're
+	 * on our way out.
+	 */
+	SDT_PROBE(proc, kernel, , exit,
+		((p->p_sflag & PS_COREDUMP) ? CLD_DUMPED :
+		 (p->p_xsig ? CLD_KILLED : CLD_EXITED)),
+		0,0,0,0);
+
 	/* Put in front of parent's sibling list for parent to collect it */
 	old_parent = p->p_pptr;
 	old_parent->p_nstopchild++;
@@ -559,6 +558,19 @@ exit1(struct lwp *l, int exitcode, int signo)
 	pcu_discard_all(l);
 
 	mutex_enter(p->p_lock);
+	/*
+	 * Notify other processes tracking us with a knote that
+	 * we're exiting.
+	 *
+	 * N.B. we do this here because the process is now SDEAD,
+	 * and thus cannot have any more knotes attached.  Also,
+	 * knote_proc_exit() expects that p->p_lock is already
+	 * held (and will assert so).
+	 */
+	if (!SLIST_EMPTY(&p->p_klist)) {
+		knote_proc_exit(p);
+	}
+
 	/* Free the LWP ID */
 	proc_free_lwpid(p, l->l_lid);
 	lwp_drainrefs(l);
