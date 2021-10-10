@@ -1,4 +1,4 @@
-/* $NetBSD: t_scan.c,v 1.1 2021/10/10 17:47:39 thorpej Exp $ */
+/* $NetBSD: t_scan.c,v 1.2 2021/10/10 19:17:31 wiz Exp $ */
 
 /*-
  * Copyright (c) 2021 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_scan.c,v 1.1 2021/10/10 17:47:39 thorpej Exp $");
+__RCSID("$NetBSD: t_scan.c,v 1.2 2021/10/10 19:17:31 wiz Exp $");
 
 #include <sys/event.h>
 #include <sys/time.h>
@@ -44,7 +44,7 @@ __RCSID("$NetBSD: t_scan.c,v 1.1 2021/10/10 17:47:39 thorpej Exp $");
 /*
  * Each kevent thread will make this many kevent() calls, and if it
  * achieves this mark, we assume the race condition has not occurred
- * the delcare the test passes.
+ * the declare the test passes.
  */
 #define	NKEVENT_CALLS		10000
 
