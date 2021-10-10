@@ -1,4 +1,4 @@
-/*	$NetBSD: event.h,v 1.43 2021/09/26 21:29:39 thorpej Exp $	*/
+/*	$NetBSD: event.h,v 1.44 2021/10/10 18:07:51 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999,2000,2001 Jonathan Lemon <jlemon@FreeBSD.org>
@@ -246,6 +246,7 @@ struct knote {
 	struct kfilter		*kn_kfilter;
 	void 			*kn_hook;
 	int			kn_hookid;
+	unsigned int		kn_influx;	/* q: in-flux counter */
 
 #define	KN_ACTIVE	0x01U			/* event has been triggered */
 #define	KN_QUEUED	0x02U			/* event is on queue */
@@ -253,6 +254,7 @@ struct knote {
 #define	KN_DETACHED	0x08U			/* knote is detached */
 #define	KN_MARKER	0x10U			/* is a marker */
 #define	KN_BUSY		0x20U			/* is being scanned */
+#define	KN_WILLDETACH	0x40U			/* being detached imminently */
 /* Toggling KN_BUSY also requires kn_kq->kq_fdp->fd_lock. */
 #define __KN_FLAG_BITS \
     "\20" \
@@ -261,7 +263,8 @@ struct knote {
     "\3DISABLED" \
     "\4DETACHED" \
     "\5MARKER" \
-    "\6BUSY"
+    "\6BUSY" \
+    "\7WILLDETACH"
 
 
 #define	kn_id		kn_kevent.ident

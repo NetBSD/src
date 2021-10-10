@@ -1,4 +1,4 @@
-/*	$NetBSD: eventvar.h,v 1.9 2021/05/02 19:13:43 jdolecek Exp $	*/
+/*	$NetBSD: eventvar.h,v 1.10 2021/10/10 18:07:51 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999,2000 Jonathan Lemon <jlemon@FreeBSD.org>
@@ -51,9 +51,21 @@ struct kqueue {
 	filedesc_t	*kq_fdp;
 	struct selinfo	kq_sel;
 	kcondvar_t	kq_cv;
-	u_int		kq_count;		/* number of pending events */
-#define	KQ_RESTART	0x80000000		/* force ERESTART */
-#define KQ_COUNT(kq)	((kq)->kq_count & ~KQ_RESTART)
+	uint32_t	kq_count;		/* number of pending events */
 };
+
+#define	KQ_RESTART	__BIT(31)		/* force ERESTART */
+#define	KQ_CLOSING	__BIT(30)		/* kqueue is closing for good */
+#define	KQ_MAXCOUNT	__BITS(0,29)
+#define	KQ_COUNT(kq)	((unsigned int)((kq)->kq_count & KQ_MAXCOUNT))
+
+#ifdef _KERNEL
+
+#if defined(DDB)
+void	kqueue_printit(struct kqueue *, bool,
+	    void (*)(const char *, ...));
+#endif /* DDB */
+
+#endif /* _KERNEL */
 
 #endif /* !_SYS_EVENTVAR_H_ */
