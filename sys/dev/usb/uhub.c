@@ -1,4 +1,4 @@
-/*	$NetBSD: uhub.c,v 1.153 2021/06/13 14:48:10 riastradh Exp $	*/
+/*	$NetBSD: uhub.c,v 1.154 2021/10/10 23:39:50 jmcneill Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhub.c,v 1.18 1999/11/17 22:33:43 n_hibma Exp $	*/
 /*	$OpenBSD: uhub.c,v 1.86 2015/06/29 18:27:40 mpi Exp $ */
 
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhub.c,v 1.153 2021/06/13 14:48:10 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhub.c,v 1.154 2021/10/10 23:39:50 jmcneill Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -123,6 +123,8 @@ struct uhub_softc {
 
 	struct lwp		*sc_exploring;
 };
+
+typedef __BITMAP_TYPE(, uint8_t, UHD_NPORTS_MAX + 1) usb_port_mask;
 
 #define UHUB_IS_HIGH_SPEED(sc) \
     ((sc)->sc_proto == UDPROTO_HSHUBSTT || (sc)->sc_proto == UDPROTO_HSHUBMTT)
@@ -494,6 +496,8 @@ uhub_explore(struct usbd_device *dev)
 	int speed;
 	int port;
 	int change, status, reconnect, rescan;
+	usb_port_mask powerup_port;
+	int powerup_port_count = 0;
 
 	UHUBHIST_FUNC();
 	UHUBHIST_CALLARGS("uhub%jd dev=%#jx addr=%jd speed=%ju",
@@ -545,6 +549,8 @@ uhub_explore(struct usbd_device *dev)
 						       UHF_C_HUB_OVER_CURRENT);
 		}
 	}
+
+	__BITMAP_ZERO(&powerup_port);
 
 	for (port = 1; port <= hd->bNbrPorts; port++) {
 		up = &dev->ud_hub->uh_ports[port - 1];
@@ -676,8 +682,24 @@ uhub_explore(struct usbd_device *dev)
 		DPRINTF("unit %jd dev->speed=%ju dev->depth=%ju",
 		    device_unit(sc->sc_dev), dev->ud_speed, dev->ud_depth, 0);
 
-		/* Wait for maximum device power up time. */
-		usbd_delay_ms(dev, USB_PORT_POWERUP_DELAY);
+		__BITMAP_SET(port, &powerup_port);
+		powerup_port_count++;
+	}
+
+	if (powerup_port_count == 0) {
+		goto explore;
+	}
+
+	aprint_debug_dev(sc->sc_dev, "power up %u port(s)\n",
+	    powerup_port_count);
+
+	/* Wait for maximum device power up time. */
+	usbd_delay_ms(dev, USB_PORT_POWERUP_DELAY);
+
+	for (port = 1; port <= hd->bNbrPorts; port++) {
+		if (!__BITMAP_ISSET(port, &powerup_port)) {
+			continue;
+		}
 
 		/* Reset port, which implies enabling it. */
 		if (usbd_reset_port(dev, port, &up->up_status)) {
@@ -815,6 +837,8 @@ uhub_explore(struct usbd_device *dev)
 				up->up_dev->ud_hub->uh_explore(up->up_dev);
 		}
 	}
+
+explore:
 	mutex_enter(&sc->sc_lock);
 	sc->sc_explorepending = false;
 	for (int i = 0; i < sc->sc_statuslen; i++) {
