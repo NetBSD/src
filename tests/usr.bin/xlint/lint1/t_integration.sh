@@ -1,4 +1,4 @@
-# $NetBSD: t_integration.sh,v 1.71 2021/09/26 03:17:59 rillig Exp $
+# $NetBSD: t_integration.sh,v 1.72 2021/10/10 08:45:51 skrll Exp $
 #
 # Copyright (c) 2008, 2010 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -37,7 +37,7 @@ configure_test_case()
 	awk='
 		BEGIN {
 			# see usr.bin/xlint/arch/*/targparam.h
-			platform["aarch64"]	= "schar lp64  long ldbl-128"
+			platform["aarch64"]	= "uchar lp64  long ldbl-128"
 			platform["alpha"]	= "schar lp64  long ldbl-64"
 			platform["arm"]		= "uchar ilp32 long ldbl-64"
 			platform["coldfire"]	= "schar ilp32 int  ldbl-64"
