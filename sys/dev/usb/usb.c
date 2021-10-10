@@ -1,4 +1,4 @@
-/*	$NetBSD: usb.c,v 1.197 2021/09/26 01:16:09 thorpej Exp $	*/
+/*	$NetBSD: usb.c,v 1.198 2021/10/10 20:14:09 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 1998, 2002, 2008, 2012 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb.c,v 1.197 2021/09/26 01:16:09 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb.c,v 1.198 2021/10/10 20:14:09 jmcneill Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -724,7 +724,9 @@ usb_event_thread(void *arg)
 	 * know how to synchronize the creation of the threads so it
 	 * will work.
 	 */
-	usb_delay_ms(bus, 500);
+	if (bus->ub_revision < USBREV_2_0) {
+		usb_delay_ms(bus, 500);
+	}
 
 	/* Make sure first discover does something. */
 	mutex_enter(bus->ub_lock);
