@@ -1,4 +1,4 @@
-/* $NetBSD: efi.c,v 1.1 2021/10/10 13:03:09 jmcneill Exp $ */
+/* $NetBSD: efi.c,v 1.2 2021/10/10 14:52:30 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2021 Jared McNeill <jmcneill@invisible.ca>
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: efi.c,v 1.1 2021/10/10 13:03:09 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: efi.c,v 1.2 2021/10/10 14:52:30 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -151,6 +151,7 @@ efi_ioctl_var_get(struct efi_var_ioc *var)
 {
 	uint16_t *namebuf;
 	void *databuf = NULL;
+	size_t datasize;
 	efi_status status;
 	int error;
 
@@ -171,9 +172,10 @@ efi_ioctl_var_get(struct efi_var_ioc *var)
 		error = EINVAL;
 		goto done;
 	}
-	if (var->datasize != 0) {
-		databuf = kmem_alloc(var->datasize, KM_SLEEP);
-		error = copyin(var->data, databuf, var->datasize);
+	datasize = var->datasize;
+	if (datasize != 0) {
+		databuf = kmem_alloc(datasize, KM_SLEEP);
+		error = copyin(var->data, databuf, datasize);
 		if (error != 0) {
 			goto done;
 		}
@@ -194,7 +196,7 @@ efi_ioctl_var_get(struct efi_var_ioc *var)
 done:
 	kmem_free(namebuf, var->namesize);
 	if (databuf != NULL) {
-		kmem_free(databuf, var->datasize);
+		kmem_free(databuf, datasize);
 	}
 	return error;
 }
@@ -204,6 +206,7 @@ efi_ioctl_var_next(struct efi_var_ioc *var)
 {
 	efi_status status;
 	uint16_t *namebuf;
+	size_t namesize;
 	int error;
 
 	if (var->name == NULL || var->namesize == 0) {
@@ -213,8 +216,9 @@ efi_ioctl_var_next(struct efi_var_ioc *var)
 		return ENOMEM;
 	}
 
-	namebuf = kmem_alloc(var->namesize, KM_SLEEP);
-	error = copyin(var->name, namebuf, var->namesize);
+	namesize = var->namesize;
+	namebuf = kmem_alloc(namesize, KM_SLEEP);
+	error = copyin(var->name, namebuf, namesize);
 	if (error != 0) {
 		goto done;
 	}
@@ -231,7 +235,7 @@ efi_ioctl_var_next(struct efi_var_ioc *var)
 	}
 
 done:
-	kmem_free(namebuf, var->namesize);
+	kmem_free(namebuf, namesize);
 	return error;
 }
 
