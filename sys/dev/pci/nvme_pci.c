@@ -1,4 +1,4 @@
-/*	$NetBSD: nvme_pci.c,v 1.30 2021/05/29 08:46:38 riastradh Exp $	*/
+/*	$NetBSD: nvme_pci.c,v 1.31 2021/10/10 07:50:53 skrll Exp $	*/
 /*	$OpenBSD: nvme_pci.c,v 1.3 2016/04/14 11:18:32 dlg Exp $ */
 
 /*
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nvme_pci.c,v 1.30 2021/05/29 08:46:38 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nvme_pci.c,v 1.31 2021/10/10 07:50:53 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -137,7 +137,7 @@ nvme_pci_match(device_t parent, cfdata_t match, void *aux)
 
 	if (PCI_CLASS(pa->pa_class) == PCI_CLASS_MASS_STORAGE &&
 	    PCI_SUBCLASS(pa->pa_class) == PCI_SUBCLASS_MASS_STORAGE_NVM &&
-	    PCI_INTERFACE(pa->pa_class) == PCI_INTERFACE_NVM_NVME)
+	    PCI_INTERFACE(pa->pa_class) == PCI_INTERFACE_NVM_NVME_IO)
 		return 1;
 
 	return 0;
