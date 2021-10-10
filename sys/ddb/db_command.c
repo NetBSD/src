@@ -1,4 +1,4 @@
-/*	$NetBSD: db_command.c,v 1.178 2021/08/21 23:00:31 andvar Exp $	*/
+/*	$NetBSD: db_command.c,v 1.179 2021/10/10 18:08:12 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1998, 1999, 2002, 2009, 2019
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_command.c,v 1.178 2021/08/21 23:00:31 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_command.c,v 1.179 2021/10/10 18:08:12 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_aio.h"
@@ -79,6 +79,7 @@ __KERNEL_RCSID(0, "$NetBSD: db_command.c,v 1.178 2021/08/21 23:00:31 andvar Exp 
 #include <sys/systm.h>
 #include <sys/reboot.h>
 #include <sys/device.h>
+#include <sys/eventvar.h>
 #include <sys/lwp.h>
 #include <sys/mbuf.h>
 #include <sys/namei.h>
@@ -204,6 +205,7 @@ static void	db_show_all_freelists(db_expr_t, bool, db_expr_t, const char *);
 static void	db_mount_print_cmd(db_expr_t, bool, db_expr_t, const char *);
 static void	db_show_all_mount(db_expr_t, bool, db_expr_t, const char *);
 static void	db_mbuf_print_cmd(db_expr_t, bool, db_expr_t, const char *);
+static void	db_kqueue_print_cmd(db_expr_t, bool, db_expr_t, const char *);
 static void	db_map_print_cmd(db_expr_t, bool, db_expr_t, const char *);
 static void	db_namecache_print_cmd(db_expr_t, bool, db_expr_t,
 		    const char *);
@@ -269,6 +271,8 @@ static const struct db_command db_show_cmds[] = {
 	{ DDB_ADD_CMD("lockstats",
 				db_show_lockstats,	0,
 	    "Print statistics of locks", NULL, NULL) },
+	{ DDB_ADD_CMD("kqueue",	db_kqueue_print_cmd,	0,
+	    "Print the kqueue at address.", "[/f] address",NULL) },
 	{ DDB_ADD_CMD("map",	db_map_print_cmd,	0,
 	    "Print the vm_map at address.", "[/f] address",NULL) },
 	{ DDB_ADD_CMD("mbuf",	db_mbuf_print_cmd,	0,NULL,NULL,
@@ -1010,6 +1014,28 @@ const char *modif)
 #endif
 
 	db_skip_to_eol();
+}
+
+/*ARGSUSED*/
+static void
+db_kqueue_print_cmd(db_expr_t addr, bool have_addr, db_expr_t count,
+    const char *modif)
+{
+#ifdef _KERNEL
+	bool full = false;
+
+	if (modif[0] == 'f')
+		full = true;
+
+	if (have_addr == false) {
+		db_printf("%s: must specify kqueue address\n", __func__);
+		return;
+	}
+
+	kqueue_printit((struct kqueue *)(uintptr_t) addr, full, db_printf);
+#else
+	db_kernelonly();
+#endif	/* XXX CRASH(8) */
 }
 
 /*ARGSUSED*/
