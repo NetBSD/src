@@ -1,4 +1,4 @@
-/*	$NetBSD: pcireg.h,v 1.158 2021/09/09 08:11:42 mrg Exp $	*/
+/*	$NetBSD: pcireg.h,v 1.159 2021/10/10 07:09:20 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1999, 2000
@@ -567,7 +567,7 @@ typedef u_int8_t pci_revision_t;
 #define	PCI_CAP_SUBVENDOR	0x0d
 #define	PCI_CAP_AGP8		0x0e
 #define	PCI_CAP_SECURE		0x0f
-#define	PCI_CAP_PCIEXPRESS     	0x10
+#define	PCI_CAP_PCIEXPRESS	0x10
 #define	PCI_CAP_MSIX		0x11
 #define	PCI_CAP_SATA		0x12
 #define	PCI_CAP_PCIAF		0x13
@@ -1050,7 +1050,7 @@ typedef u_int8_t pci_revision_t;
 #define	PCIE_LCSR_NLW		__BITS(25, 20) /* Negotiated Link Width */
 #define	PCIE_LCSR_LINKTRAIN_ERR	__BIT(10 + 16) /* Link Training Error */
 #define	PCIE_LCSR_LINKTRAIN	__BIT(11 + 16) /* Link Training */
-#define	PCIE_LCSR_SLOTCLKCFG 	__BIT(12 + 16) /* Slot Clock Configuration */
+#define	PCIE_LCSR_SLOTCLKCFG	__BIT(12 + 16) /* Slot Clock Configuration */
 #define	PCIE_LCSR_DLACTIVE	__BIT(13 + 16) /* Data Link Layer Link Active*/
 #define	PCIE_LCSR_LINK_BW_MGMT	__BIT(14 + 16) /* Link BW Management Status */
 #define	PCIE_LCSR_LINK_AUTO_BW	__BIT(15 + 16) /* Link Autonomous BW Status */
@@ -1984,9 +1984,9 @@ struct pci_rom {
 #define	PCI_TPH_REQ_CAP_DEVSPEC	__BIT(2)   /* Device Specific Mode Supported */
 #define	PCI_TPH_REQ_CAP_XTPHREQ	__BIT(8)    /* Extend TPH Requester Supported */
 #define	PCI_TPH_REQ_CAP_STTBLLOC __BITS(10, 9)	/* ST Table Location */
-#define	PCI_TPH_REQ_STTBLLOC_NONE 	0	/* not present */
-#define	PCI_TPH_REQ_STTBLLOC_TPHREQ 	1	/* in the TPHREQ cap */
-#define	PCI_TPH_REQ_STTBLLOC_MSIX 	2	/* in the MSI-X table */
+#define	PCI_TPH_REQ_STTBLLOC_NONE	0	 /* not present */
+#define	PCI_TPH_REQ_STTBLLOC_TPHREQ	1	 /* in the TPHREQ cap */
+#define	PCI_TPH_REQ_STTBLLOC_MSIX	2	 /* in the MSI-X table */
 #define	PCI_TPH_REQ_CAP_STTBLSIZ __BITS(26, 16)	/* ST Table Size */
 #define	PCI_TPH_REQ_CTL	0x08	/* TPH Requester Control */
 #define	PCI_TPH_REQ_CTL_STSEL	__BITS(2, 0)	/* ST Mode Select */
