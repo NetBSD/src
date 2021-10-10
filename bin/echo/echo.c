@@ -1,4 +1,4 @@
-/* $NetBSD: echo.c,v 1.20 2021/05/19 22:12:36 kre Exp $	*/
+/* $NetBSD: echo.c,v 1.21 2021/10/10 19:07:19 rillig Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -30,22 +30,19 @@
  */
 
 #include <sys/cdefs.h>
-#ifndef lint
 __COPYRIGHT(
 "@(#) Copyright (c) 1989, 1993\
  The Regents of the University of California.  All rights reserved.");
-#endif /* not lint */
 
-#ifndef lint
 #if 0
 static char sccsid[] = "@(#)echo.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: echo.c,v 1.20 2021/05/19 22:12:36 kre Exp $");
+__RCSID("$NetBSD: echo.c,v 1.21 2021/10/10 19:07:19 rillig Exp $");
 #endif
-#endif /* not lint */
 
 #include <err.h>
 #include <locale.h>
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -54,29 +51,24 @@ __RCSID("$NetBSD: echo.c,v 1.20 2021/05/19 22:12:36 kre Exp $");
 int
 main(int argc, char *argv[])
 {
-	int nflag;
+	bool nflag;
 
 	setprogname(argv[0]);
 	(void)setlocale(LC_ALL, "");
 
 	/* This utility may NOT do getopt(3) option parsing. */
-	if (*++argv && !strcmp(*argv, "-n")) {
+	nflag = *++argv != NULL && strcmp(*argv, "-n") == 0;
+	if (nflag)
 		++argv;
-		nflag = 1;
-	}
-	else
-		nflag = 0;
 
-	while (*argv) {
+	while (*argv != NULL) {
 		(void)printf("%s", *argv);
-		if (*++argv)
+		if (*++argv != NULL)
 			(void)putchar(' ');
 	}
-	if (nflag == 0)
+	if (!nflag)
 		(void)putchar('\n');
 	fflush(stdout);
 	if (ferror(stdout))
 		err(1, "write error");
-	exit(0);
-	/* NOTREACHED */
 }
