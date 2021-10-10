@@ -1,4 +1,4 @@
-/*	$NetBSD: event.h,v 1.44 2021/10/10 18:07:51 thorpej Exp $	*/
+/*	$NetBSD: event.h,v 1.45 2021/10/10 23:30:44 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999,2000,2001 Jonathan Lemon <jlemon@FreeBSD.org>
@@ -237,7 +237,7 @@ struct knote {
 	SLIST_ENTRY(knote)	kn_selnext;	/* o: for struct selinfo */
 	TAILQ_ENTRY(knote)	kn_tqe;		/* q: for struct kqueue */
 	struct kqueue		*kn_kq;		/* q: which queue we are on */
-	struct kevent		kn_kevent;
+	struct kevent		kn_kevent;	/* (see below for locking) */
 	uint32_t		kn_status;	/* q: flags below */
 	uint32_t		kn_sfflags;	/*    saved filter flags */
 	uintptr_t		kn_sdata;	/*    saved data field */
@@ -269,9 +269,9 @@ struct knote {
 
 #define	kn_id		kn_kevent.ident
 #define	kn_filter	kn_kevent.filter
-#define	kn_flags	kn_kevent.flags
-#define	kn_fflags	kn_kevent.fflags
-#define	kn_data		kn_kevent.data
+#define	kn_flags	kn_kevent.flags		/* q */
+#define	kn_fflags	kn_kevent.fflags	/* o */
+#define	kn_data		kn_kevent.data		/* o */
 };
 
 #include <sys/systm.h>	/* for copyin_t */
