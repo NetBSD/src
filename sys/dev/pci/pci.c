@@ -1,4 +1,4 @@
-/*	$NetBSD: pci.c,v 1.162 2021/09/15 17:33:08 thorpej Exp $	*/
+/*	$NetBSD: pci.c,v 1.163 2021/10/10 23:28:36 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997, 1998
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci.c,v 1.162 2021/09/15 17:33:08 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci.c,v 1.163 2021/10/10 23:28:36 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pci.h"
@@ -735,7 +735,7 @@ pci_enumerate_bus(struct pci_softc *sc, const int *locators,
 		if (pci_get_capability(ppbpc, ppbtag, PCI_CAP_PCIEXPRESS,
 		    &pciecap, &capreg) != 0) {
 			switch (PCIE_XCAP_TYPE(capreg)) {
-			case PCIE_XCAP_TYPE_ROOT:
+			case PCIE_XCAP_TYPE_RP:
 			case PCIE_XCAP_TYPE_DOWN:
 			case PCIE_XCAP_TYPE_PCI2PCIE:
 				downstream_port = true;

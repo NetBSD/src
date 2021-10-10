@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_subr.c,v 1.231 2021/10/10 07:20:01 msaitoh Exp $	*/
+/*	$NetBSD: pci_subr.c,v 1.232 2021/10/10 23:28:36 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1997 Zubin D. Dittia.  All rights reserved.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.231 2021/10/10 07:20:01 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.232 2021/10/10 23:28:36 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pci.h"
@@ -914,7 +914,7 @@ pci_conf_print_common(
 
 		if (pci_conf_find_cap(regs, PCI_CAP_PCIEXPRESS, &pcie_capoff)) {
 			reg = regs[o2i(pcie_capoff + PCIE_XCAP)];
-			if (PCIE_XCAP_TYPE(reg) == PCIE_XCAP_TYPE_ROOT_EVNTC)
+			if (PCIE_XCAP_TYPE(reg) == PCIE_XCAP_TYPE_RC_EVNTC)
 				subclass = PCI_SUBCLASS_SYSTEM_RCEC;
 		}
 	}
@@ -1861,7 +1861,7 @@ pci_conf_print_pcie_cap(const pcireg_t *regs, int capoff)
 		printf("Legacy PCI Express Endpoint device\n");
 		check_upstreamport = true;
 		break;
-	case PCIE_XCAP_TYPE_ROOT:	/* 0x4 */
+	case PCIE_XCAP_TYPE_RP:		/* 0x4 */
 		printf("Root Port of PCI Express Root Complex\n");
 		check_slot = true;
 		break;
@@ -1882,10 +1882,10 @@ pci_conf_print_pcie_cap(const pcireg_t *regs, int capoff)
 		/* Upstream port is not PCIe */
 		check_slot = true;
 		break;
-	case PCIE_XCAP_TYPE_ROOT_INTEP:	/* 0x9 */
+	case PCIE_XCAP_TYPE_RCIEP:	/* 0x9 */
 		printf("Root Complex Integrated Endpoint\n");
 		break;
-	case PCIE_XCAP_TYPE_ROOT_EVNTC:	/* 0xa */
+	case PCIE_XCAP_TYPE_RC_EVNTC:	/* 0xa */
 		printf("Root Complex Event Collector\n");
 		break;
 	default:
@@ -2930,8 +2930,8 @@ pci_conf_print_aer_cap(const pcireg_t *regs, int extcapoff)
 	    extcapoff + PCI_AER_ROOTERR_CMD);
 
 	switch (pcie_devtype) {
-	case PCIE_XCAP_TYPE_ROOT: /* Root Port of PCI Express Root Complex */
-	case PCIE_XCAP_TYPE_ROOT_EVNTC:	/* Root Complex Event Collector */
+	case PCIE_XCAP_TYPE_RP:	/* Root Port of PCI Express Root Complex */
+	case PCIE_XCAP_TYPE_RC_EVNTC:	/* Root Complex Event Collector */
 		reg = regs[o2i(extcapoff + PCI_AER_ROOTERR_CMD)];
 		printf("    Root Error Command register: 0x%08x\n", reg);
 		pci_conf_print_aer_cap_rooterr_cmd(reg);
@@ -4149,7 +4149,7 @@ pci_conf_print_l1pm_cap(const pcireg_t *regs, int extcapoff)
 	if (pci_conf_find_cap(regs, PCI_CAP_PCIEXPRESS, &pcie_capoff)) {
 		uint32_t t = regs[o2i(pcie_capoff)];
 
-		if ((t == PCIE_XCAP_TYPE_ROOT) || (t == PCIE_XCAP_TYPE_DOWN))
+		if ((t == PCIE_XCAP_TYPE_RP) || (t == PCIE_XCAP_TYPE_DOWN))
 			onoff("Link Activation Supported", reg,
 			    PCI_L1PM_CAP_LA);
 	}

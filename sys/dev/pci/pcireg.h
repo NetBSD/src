@@ -1,4 +1,4 @@
-/*	$NetBSD: pcireg.h,v 1.160 2021/10/10 07:20:01 msaitoh Exp $	*/
+/*	$NetBSD: pcireg.h,v 1.161 2021/10/10 23:28:36 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1999, 2000
@@ -983,13 +983,13 @@ typedef u_int8_t pci_revision_t;
 #define	PCIE_XCAP_TYPE(x)	__SHIFTOUT((x), PCIE_XCAP_TYPE_MASK)
 #define	 PCIE_XCAP_TYPE_PCIE_DEV	0x0
 #define	 PCIE_XCAP_TYPE_PCI_DEV		0x1
-#define	 PCIE_XCAP_TYPE_ROOT		0x4
+#define	 PCIE_XCAP_TYPE_RP		0x4
 #define	 PCIE_XCAP_TYPE_UP		0x5
 #define	 PCIE_XCAP_TYPE_DOWN		0x6
 #define	 PCIE_XCAP_TYPE_PCIE2PCI	0x7
 #define	 PCIE_XCAP_TYPE_PCI2PCIE	0x8
-#define	 PCIE_XCAP_TYPE_ROOT_INTEP	0x9
-#define	 PCIE_XCAP_TYPE_ROOT_EVNTC	0xa
+#define	 PCIE_XCAP_TYPE_RCIEP		0x9
+#define	 PCIE_XCAP_TYPE_RC_EVNTC	0xa
 #define PCIE_XCAP_SI		__SHIFTIN(__BIT(8), PCIE_XCAP_MASK) /* Slot Implemented */
 #define PCIE_XCAP_IRQ		__SHIFTIN(__BITS(13, 9), PCIE_XCAP_MASK)
 #define PCIE_DCAP	0x04	/* Device Capabilities Register */
@@ -1198,12 +1198,12 @@ typedef u_int8_t pci_revision_t;
  * Other than Root Complex Integrated Endpoint and Root Complex Event Collector
  * have link related registers.
  */
-#define PCIE_HAS_LINKREGS(type) (((type) != PCIE_XCAP_TYPE_ROOT_INTEP) && \
-	    ((type) != PCIE_XCAP_TYPE_ROOT_EVNTC))
+#define PCIE_HAS_LINKREGS(type) (((type) != PCIE_XCAP_TYPE_RCIEP) &&	\
+	    ((type) != PCIE_XCAP_TYPE_RC_EVNTC))
 
 /* Only root port and root complex event collector have PCIE_RCR & PCIE_RSR */
-#define PCIE_HAS_ROOTREGS(type) (((type) == PCIE_XCAP_TYPE_ROOT) || \
-	    ((type) == PCIE_XCAP_TYPE_ROOT_EVNTC))
+#define PCIE_HAS_ROOTREGS(type) (((type) == PCIE_XCAP_TYPE_RP) || \
+	    ((type) == PCIE_XCAP_TYPE_RC_EVNTC))
 
 
 /*
