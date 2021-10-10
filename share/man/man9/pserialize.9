@@ -1,4 +1,4 @@
-.\"	$NetBSD: pserialize.9,v 1.13 2017/07/03 21:28:48 wiz Exp $
+.\"	$NetBSD: pserialize.9,v 1.14 2021/10/10 11:20:46 riastradh Exp $
 .\"
 .\" Copyright (c) 2011 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -67,9 +67,10 @@ Takes the IPL value returned by
 .It Fn pserialize_perform
 Perform the passive serialization on the writer side.
 Passing of this function ensures that no readers are in action.
-Writers must be additionally serialized with a separate mechanism,
-e.g.
-.Xr mutex 9 .
+Writers are typically additionally serialized with a separate
+mechanism, e.g.
+.Xr mutex 9 ,
+to remove objects used by readers from a published list.
 Operation blocks and it may only be performed from thread context.
 .El
 .\" -----
@@ -152,14 +153,15 @@ readers:
 			break;
 		}
 	}
+	mutex_exit(&frobbotzim.lock);
+
 	/*
 	 * Wait for all existing readers to complete.  New readers will
 	 * not see f because the list no longer points to it.
 	 */
 	pserialize_perform(frobbotzim.psz);
-	/* Now nobody else can be touching f, so it is safe to free.  */
-	mutex_exit(&frobbotzim.lock);
 
+	/* Now nobody else can be touching f, so it is safe to free.  */
 	if (f != NULL)
 		pool_put(&frotz_pool, f);
 .Ed
