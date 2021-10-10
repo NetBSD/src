@@ -1,4 +1,4 @@
-# $NetBSD: majors,v 1.98 2021/07/24 11:39:19 jmcneill Exp $
+# $NetBSD: majors,v 1.99 2021/10/10 13:03:09 jmcneill Exp $
 #
 # Device majors for Machine-Independent drivers.
 #
@@ -92,3 +92,4 @@ device-major fault     char 357		   fault
 device-major wwanc     char 358	           wwanc
 device-major acpi      char 359            acpi
 device-major smbios    char 360            smbios
+device-major efi       char 361            efi

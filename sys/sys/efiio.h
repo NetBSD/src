@@ -1,7 +1,7 @@
-/* $NetBSD: efi_runtime.h,v 1.4 2021/10/10 13:03:09 jmcneill Exp $ */
+/* $NetBSD: efiio.h,v 1.1 2021/10/10 13:03:10 jmcneill Exp $ */
 
 /*-
- * Copyright (c) 2018 The NetBSD Foundation, Inc.
+ * Copyright (c) 2021 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -29,29 +29,36 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _ARM_EFI_RUNTIME_H
-#define _ARM_EFI_RUNTIME_H
+#ifndef _SYS_EFIIO_H
+#define _SYS_EFIIO_H
 
-#include <arm/efi.h>
+#include <sys/types.h>
+#include <sys/ioccom.h>
+#include <sys/uuid.h>
 
-int		arm_efirt_init(paddr_t);
-efi_status	arm_efirt_gettime(struct efi_tm *, struct efi_tmcap *);
-efi_status	arm_efirt_settime(struct efi_tm *);
-efi_status	arm_efirt_getvar(uint16_t *, struct uuid *, uint32_t *,
-				 u_long *, void *);
-efi_status	arm_efirt_nextvar(u_long *, uint16_t *, struct uuid *);
-efi_status	arm_efirt_setvar(uint16_t *, struct uuid *, uint32_t,
-				 u_long, void *);
-int		arm_efirt_reset(enum efi_reset);
+/*
+ * Variable attributes
+ */
+#define	EFI_VARIABLE_NON_VOLATILE				0x00000001
+#define	EFI_VARIABLE_BOOTSERVICE_ACCESS				0x00000002
+#define	EFI_VARIABLE_RUNTIME_ACCESS				0x00000004
+#define	EFI_VARIABLE_HARDWARE_ERROR_RECORD			0x00000008
+#define	EFI_VARIABLE_AUTHENTICATED_WRITE_ACCESS			0x00000010
+#define	EFI_VARIABLE_TIME_BASED_AUTHENTICATED_WRITE_ACCESS	0x00000020
+#define	EFI_VARIABLE_APPEND_WRITE				0x00000040
+#define	EFI_VARIABLE_ENHANCED_AUTHENTICATED_ACCESS		0x00000080
 
-enum arm_efirt_mem_type {
-	ARM_EFIRT_MEM_CODE,
-	ARM_EFIRT_MEM_DATA,
-	ARM_EFIRT_MEM_MMIO,
+struct efi_var_ioc {
+	uint16_t *	name;		/* vendor's variable name */
+	size_t		namesize;	/* size in bytes of the name buffer */
+	struct uuid	vendor;		/* unique identifier for vendor */
+	uint32_t	attrib;		/* variable attribute bitmask */
+	void *		data;		/* buffer containing variable data */
+	size_t		datasize;	/* size in bytes of the data buffer */
 };
 
-void		arm_efirt_md_map_range(vaddr_t, paddr_t, size_t, enum arm_efirt_mem_type);
-int		arm_efirt_md_enter(void);
-void		arm_efirt_md_exit(void);
+#define	EFIIOC_VAR_GET		_IOWR('E', 4, struct efi_var_ioc)
+#define	EFIIOC_VAR_NEXT		_IOWR('E', 5, struct efi_var_ioc)
+#define	EFIIOC_VAR_SET		_IOWR('E', 7, struct efi_var_ioc)
 
-#endif /* !_ARM_EFI_RUNTIME_H */
+#endif /* _SYS_EFIIO_H */
