@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.509 2021/09/28 15:35:44 thorpej Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.510 2021/10/10 18:07:51 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2019, 2020 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.509 2021/09/28 15:35:44 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.510 2021/10/10 18:07:51 thorpej Exp $");
 
 #include "opt_exec.h"
 #include "opt_execfmt.h"
@@ -1367,8 +1367,17 @@ execve_runproc(struct lwp *l, struct execve_data * restrict data,
 
 	pool_put(&exec_pool, data->ed_argp);
 
-	/* notify others that we exec'd */
-	KNOTE(&p->p_klist, NOTE_EXEC);
+	/*
+	 * Notify anyone who might care that we've exec'd.
+	 *
+	 * This is slightly racy; someone could sneak in and
+	 * attach a knote after we've decided not to notify,
+	 * or vice-versa, but that's not particularly bothersome.
+	 * knote_proc_exec() will acquire p->p_lock as needed.
+	 */
+	if (!SLIST_EMPTY(&p->p_klist)) {
+		knote_proc_exec(p);
+	}
 
 	kmem_free(epp->ep_hdr, epp->ep_hdrlen);
 
