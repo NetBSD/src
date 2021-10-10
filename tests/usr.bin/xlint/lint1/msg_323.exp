@@ -1,1 +1,2 @@
-msg_323.c(20): error: continue in 'do ... while (0)' loop [323]
+msg_323.c(24): error: continue in 'do ... while (0)' loop [323]
+msg_323.c(44): error: continue in 'do ... while (0)' loop [323]
