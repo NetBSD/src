@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.h,v 1.39 2021/09/18 12:25:06 jmcneill Exp $ */
+/* $NetBSD: cpu.h,v 1.40 2021/10/10 07:15:25 skrll Exp $ */
 
 /*-
  * Copyright (c) 2014, 2020 The NetBSD Foundation, Inc.
@@ -113,6 +113,8 @@ struct cpu_info {
 
 	int ci_kfpu_spl;
 
+	tlb_asid_t	ci_pmap_asid_cur;
+
 	/* event counters */
 	struct evcnt ci_vfp_use;
 	struct evcnt ci_vfp_reuse;
@@ -157,22 +159,6 @@ static __inline struct cpu_info *lwp_getcpu(struct lwp *);
 #define	setsoftast(ci)		(cpu_signotify((ci)->ci_onproc))
 #undef curlwp
 #define	curlwp			(aarch64_curlwp())
-
-static inline int
-cpu_maxproc(void)
-{
-	/*
-	 * the pmap uses PID for ASID.
-	 */
-	switch (__SHIFTOUT(reg_id_aa64mmfr0_el1_read(), ID_AA64MMFR0_EL1_ASIDBITS)) {
-	case ID_AA64MMFR0_EL1_ASIDBITS_8BIT:
-		return (1U << 8) - 1;
-	case ID_AA64MMFR0_EL1_ASIDBITS_16BIT:
-		return (1U << 16) - 1;
-	default:
-		return 0;
-	}
-}
 
 void	cpu_signotify(struct lwp *l);
 void	cpu_need_proftick(struct lwp *l);
