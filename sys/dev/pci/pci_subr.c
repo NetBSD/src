@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_subr.c,v 1.230 2021/09/11 19:56:51 mrg Exp $	*/
+/*	$NetBSD: pci_subr.c,v 1.231 2021/10/10 07:20:01 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1997 Zubin D. Dittia.  All rights reserved.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.230 2021/09/11 19:56:51 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.231 2021/10/10 07:20:01 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pci.h"
@@ -174,7 +174,15 @@ static const struct pci_class pci_interface_sata[] = {
 static const struct pci_class pci_interface_nvm[] = {
 	{ "vendor specific",	PCI_INTERFACE_NVM_VND,		NULL,	},
 	{ "NVMHCI 1.0",		PCI_INTERFACE_NVM_NVMHCI10,	NULL,	},
-	{ "NVMe",		PCI_INTERFACE_NVM_NVME,		NULL,	},
+	{ "NVMe I/O",		PCI_INTERFACE_NVM_NVME_IO,	NULL,	},
+	{ "NVMe admin",		PCI_INTERFACE_NVM_NVME_ADMIN,	NULL,	},
+	{ NULL,			0,				NULL,	},
+};
+
+/* UFS programming interface */
+static const struct pci_class pci_interface_ufs[] = {
+	{ "vendor specific",	PCI_INTERFACE_UFS_VND,		NULL,	},
+	{ "UFSHCI",		PCI_INTERFACE_UFS_UFSHCI,	NULL,	},
 	{ NULL,			0,				NULL,	},
 };
 
@@ -192,6 +200,8 @@ static const struct pci_class pci_subclass_mass_storage[] = {
 	{ "SAS",		PCI_SUBCLASS_MASS_STORAGE_SAS,	NULL,	},
 	{ "Flash",		PCI_SUBCLASS_MASS_STORAGE_NVM,
 	  pci_interface_nvm,	},
+	{ "UFS",		PCI_SUBCLASS_MASS_STORAGE_UFS,
+	  pci_interface_ufs,	},
 	{ "miscellaneous",	PCI_SUBCLASS_MASS_STORAGE_MISC,	NULL,	},
 	{ NULL,			0,				NULL,	},
 };
@@ -208,6 +218,8 @@ static const struct pci_class pci_subclass_network[] = {
 	{ "ISDN",		PCI_SUBCLASS_NETWORK_ISDN,	NULL,	},
 	{ "WorldFip",		PCI_SUBCLASS_NETWORK_WORLDFIP,	NULL,	},
 	{ "PCMIG Multi Computing", PCI_SUBCLASS_NETWORK_PCIMGMULTICOMP, NULL, },
+	{ "InfiniBand",		PCI_SUBCLASS_NETWORK_INFINIBAND, NULL, },
+	{ "Host fabric",	PCI_SUBCLASS_NETWORK_HFC,	NULL, },
 	{ "miscellaneous",	PCI_SUBCLASS_NETWORK_MISC,	NULL,	},
 	{ NULL,			0,				NULL,	},
 };
@@ -236,11 +248,20 @@ static const struct pci_class pci_subclass_display[] = {
  * Class 0x04.
  * Multimedia device.
  */
+
+/* HD Audio programming interface */
+static const struct pci_class pci_interface_hda[] = {
+	{ "HD Audio 1.0",	PCI_INTERFACE_HDAUDIO,		NULL,	},
+	{ "HD Audio 1.0 + vendor ext",	PCI_INTERFACE_HDAUDIO_VND, NULL, },
+	{ NULL,			0,				NULL,	},
+};
+
 static const struct pci_class pci_subclass_multimedia[] = {
 	{ "video",		PCI_SUBCLASS_MULTIMEDIA_VIDEO,	NULL,	},
 	{ "audio",		PCI_SUBCLASS_MULTIMEDIA_AUDIO,	NULL,	},
 	{ "telephony",		PCI_SUBCLASS_MULTIMEDIA_TELEPHONY, NULL,},
-	{ "mixed mode",		PCI_SUBCLASS_MULTIMEDIA_HDAUDIO, NULL, },
+	{ "mixed mode",		PCI_SUBCLASS_MULTIMEDIA_HDAUDIO,
+	  pci_interface_hda, },
 	{ "miscellaneous",	PCI_SUBCLASS_MULTIMEDIA_MISC,	NULL,	},
 	{ NULL,			0,				NULL,	},
 };
@@ -476,6 +497,7 @@ static const struct pci_class pci_interface_usb[] = {
 	{ "OHCI",		PCI_INTERFACE_USB_OHCI,		NULL,	},
 	{ "EHCI",		PCI_INTERFACE_USB_EHCI,		NULL,	},
 	{ "xHCI",		PCI_INTERFACE_USB_XHCI,		NULL,	},
+	{ "USB4 HCI",		PCI_INTERFACE_USB_USB4HCI,	NULL,	},
 	{ "other HC",		PCI_INTERFACE_USB_OTHERHC,	NULL,	},
 	{ "device",		PCI_INTERFACE_USB_DEVICE,	NULL,	},
 	{ NULL,			0,				NULL,	},
@@ -505,6 +527,7 @@ static const struct pci_class pci_subclass_serialbus[] = {
 	  pci_interface_ipmi, },
 	{ "SERCOS",		PCI_SUBCLASS_SERIALBUS_SERCOS,	NULL,	},
 	{ "CANbus",		PCI_SUBCLASS_SERIALBUS_CANBUS,	NULL,	},
+	{ "MIPI I3C",		PCI_SUBCLASS_SERIALBUS_MIPI_I3C, NULL,	},
 	{ "miscellaneous",	PCI_SUBCLASS_SERIALBUS_MISC,	NULL,	},
 	{ NULL,			0,				NULL,	},
 };
@@ -521,6 +544,8 @@ static const struct pci_class pci_subclass_wireless[] = {
 	{ "broadband",		PCI_SUBCLASS_WIRELESS_BROADBAND, NULL,	},
 	{ "802.11a (5 GHz)",	PCI_SUBCLASS_WIRELESS_802_11A,	NULL,	},
 	{ "802.11b (2.4 GHz)",	PCI_SUBCLASS_WIRELESS_802_11B,	NULL,	},
+	{ "Cellular",		PCI_SUBCLASS_WIRELESS_CELL,	NULL,	},
+	{ "Cellular + Ethernet", PCI_SUBCLASS_WIRELESS_CELL_E,	NULL,	},
 	{ "miscellaneous",	PCI_SUBCLASS_WIRELESS_MISC,	NULL,	},
 	{ NULL,			0,				NULL,	},
 };
@@ -4326,9 +4351,9 @@ static struct {
 	  NULL },
 	{ PCI_EXTCAP_VF_RESIZBAR, "VF Resizable BARs",
 	  NULL },
-	{ PCI_EXTCAP_DLF, "Data link Feature", pci_conf_print_dlf_cap },
+	{ PCI_EXTCAP_DLF,	"Data link Feature", pci_conf_print_dlf_cap },
 	{ PCI_EXTCAP_PYSLAY_16GT, "Physical Layer 16.0 GT/s", NULL },
-	{ 0x27, "unknown", NULL },
+	{ PCI_EXTCAP_LMR,	"Lane Margining at the Receiver", NULL },
 	{ PCI_EXTCAP_HIERARCHYID, "Hierarchy ID",
 	  NULL },
 	{ PCI_EXTCAP_NPEM,	"Native PCIe Enclosure Management",
