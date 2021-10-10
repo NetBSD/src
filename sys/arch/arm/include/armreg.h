@@ -1,4 +1,4 @@
-/*	$NetBSD: armreg.h,v 1.131 2021/09/03 21:55:00 andvar Exp $	*/
+/*	$NetBSD: armreg.h,v 1.132 2021/10/10 08:36:49 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Ben Harris
@@ -538,6 +538,7 @@
 #define PRRR_TR_STRONG	0		// Strongly Ordered
 #define PRRR_TR_DEVICE	1		// Device
 #define PRRR_TR_NORMAL	2		// Normal Memory
+					// 3 is reserved
 
 /* ARMv7 MPIDR, Multiprocessor Affinity Register generic format  */
 #define MPIDR_MP		__BIT(31)	/* 1 = Have MP Extension */
