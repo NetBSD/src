@@ -1,7 +1,7 @@
-/* $NetBSD: t_sig.c,v 1.3 2017/01/13 21:30:41 christos Exp $ */
+/* $NetBSD: t_sig.c,v 1.4 2021/10/10 18:11:31 thorpej Exp $ */
 
 /*-
- * Copyright (c) 2002, 2008 The NetBSD Foundation, Inc.
+ * Copyright (c) 2002, 2008, 2021 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -32,7 +32,7 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2008\
  The NetBSD Foundation, inc. All rights reserved.");
-__RCSID("$NetBSD: t_sig.c,v 1.3 2017/01/13 21:30:41 christos Exp $");
+__RCSID("$NetBSD: t_sig.c,v 1.4 2021/10/10 18:11:31 thorpej Exp $");
 
 #include <sys/event.h>
 #include <sys/ioctl.h>
@@ -125,9 +125,87 @@ ATF_TC_BODY(sig, tc)
 	(void)printf("sig: finished successfully\n");
 }
 
+/*
+ * This test case exercises code paths in the kernel that KASSERT()
+ * some assumptions about EVFILT_SIGNAL and EVFILT_PROC implementation
+ * details.
+ */
+ATF_TC(sig_and_proc);
+ATF_TC_HEAD(sig_and_proc, tc)
+{
+	atf_tc_set_md_var(tc, "descr",
+	    "Validates implementation detail assumptions about "
+	    "EVFILT_SIGNAL and EVFILT_PROC");
+}
+ATF_TC_BODY(sig_and_proc, tc)
+{
+	struct kevent events[3];
+	pid_t pid;
+	int kq;
+
+	pid = fork();
+	ATF_REQUIRE(pid != -1);
+
+	if (pid == 0) {
+		/*
+		 * Child: create a kqueue and attach signal knotes
+		 * to curproc->p_klist.
+		 */
+		kq = kqueue();
+		ATF_REQUIRE(kq >= 0);
+
+		ATF_REQUIRE(signal(SIGUSR1, SIG_IGN) != SIG_ERR);
+		ATF_REQUIRE(signal(SIGUSR2, SIG_IGN) != SIG_ERR);
+
+		EV_SET(&events[0], SIGUSR1, EVFILT_SIGNAL, EV_ADD, 0, 0, NULL);
+		EV_SET(&events[1], SIGUSR2, EVFILT_SIGNAL, EV_ADD, 0, 0, NULL);
+
+		ATF_REQUIRE(kevent(kq, events, 2, &events[2], 1, NULL) == 1);
+		ATF_REQUIRE(events[2].filter == EVFILT_SIGNAL);
+		ATF_REQUIRE(events[2].ident == SIGUSR1);
+
+		/*
+		 * When we exit here, the kernel will close all of
+		 * its file descriptors (including our kq), which
+		 * will in turn remove the signal notes from
+		 * curproc->p_klist.
+		 *
+		 * Then, later on, the kernel will post a NOTE_EXIT
+		 * on our parent's kqueue using the proc note that
+		 * our parent attached to (our) curproc->p_klist.
+		 * That code path KASSERT()s that the signal knotes
+		 * have already been removed.
+		 */
+		_exit(0);
+	}
+
+	/*
+	 * Parent: create a kqueue and attach a proc note to
+	 * child->p_klist.
+	 */
+	kq = kqueue();
+	ATF_REQUIRE(kq >= 0);
+
+	EV_SET(&events[0], pid, EVFILT_PROC, EV_ADD, NOTE_EXIT, 0, NULL);
+
+	ATF_REQUIRE(kevent(kq, events, 1, NULL, 0, NULL) == 0);
+
+	/* Ensure we never see stale data. */
+	memset(events, 0, sizeof(events));
+
+	/* Signal child to exit. */
+	ATF_REQUIRE(kill(pid, SIGUSR1) == 0);
+
+	ATF_REQUIRE(kevent(kq, NULL, 0, events, 1, NULL) == 1);
+	ATF_REQUIRE(events[0].filter == EVFILT_PROC);
+	ATF_REQUIRE(events[0].ident == (uintptr_t)pid);
+	ATF_REQUIRE(events[0].fflags = NOTE_EXIT);
+}
+
 ATF_TP_ADD_TCS(tp)
 {
 	ATF_TP_ADD_TC(tp, sig);
+	ATF_TP_ADD_TC(tp, sig_and_proc);
 
 	return atf_no_error();
 }
