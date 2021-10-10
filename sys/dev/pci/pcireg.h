@@ -1,4 +1,4 @@
-/*	$NetBSD: pcireg.h,v 1.159 2021/10/10 07:09:20 msaitoh Exp $	*/
+/*	$NetBSD: pcireg.h,v 1.160 2021/10/10 07:20:01 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1999, 2000
@@ -203,7 +203,11 @@ typedef u_int8_t pci_revision_t;
 #define	PCI_SUBCLASS_MASS_STORAGE_NVM		0x08
 #define		PCI_INTERFACE_NVM_VND			0x00
 #define		PCI_INTERFACE_NVM_NVMHCI10		0x01
-#define		PCI_INTERFACE_NVM_NVME			0x02
+#define		PCI_INTERFACE_NVM_NVME_IO		0x02
+#define		PCI_INTERFACE_NVM_NVME_ADMIN		0x03
+#define	PCI_SUBCLASS_MASS_STORAGE_UFS		0x09
+#define		PCI_INTERFACE_UFS_VND			0x00
+#define		PCI_INTERFACE_UFS_UFSHCI		0x01
 #define	PCI_SUBCLASS_MASS_STORAGE_MISC		0x80
 
 /* 0x02 network subclasses */
@@ -215,6 +219,7 @@ typedef u_int8_t pci_revision_t;
 #define	PCI_SUBCLASS_NETWORK_WORLDFIP		0x05
 #define	PCI_SUBCLASS_NETWORK_PCIMGMULTICOMP	0x06
 #define	PCI_SUBCLASS_NETWORK_INFINIBAND		0x07
+#define	PCI_SUBCLASS_NETWORK_HFC		0x08
 #define	PCI_SUBCLASS_NETWORK_MISC		0x80
 
 /* 0x03 display subclasses */
@@ -230,6 +235,8 @@ typedef u_int8_t pci_revision_t;
 #define	PCI_SUBCLASS_MULTIMEDIA_AUDIO		0x01
 #define	PCI_SUBCLASS_MULTIMEDIA_TELEPHONY	0x02
 #define	PCI_SUBCLASS_MULTIMEDIA_HDAUDIO		0x03
+#define		PCI_INTERFACE_HDAUDIO			0x00
+#define		PCI_INTERFACE_HDAUDIO_VND		0x80
 #define	PCI_SUBCLASS_MULTIMEDIA_MISC		0x80
 
 /* 0x05 memory subclasses */
@@ -345,6 +352,7 @@ typedef u_int8_t pci_revision_t;
 #define		PCI_INTERFACE_USB_OHCI			0x10
 #define		PCI_INTERFACE_USB_EHCI			0x20
 #define		PCI_INTERFACE_USB_XHCI			0x30
+#define		PCI_INTERFACE_USB_USB4HCI		0x40
 #define		PCI_INTERFACE_USB_OTHERHC		0x80
 #define		PCI_INTERFACE_USB_DEVICE		0xfe
 #define	PCI_SUBCLASS_SERIALBUS_FIBER		0x04	/* XXX _FIBRECHANNEL */
@@ -356,6 +364,7 @@ typedef u_int8_t pci_revision_t;
 #define		PCI_INTERFACE_IPMI_BLOCKXFER		0x02
 #define	PCI_SUBCLASS_SERIALBUS_SERCOS		0x08
 #define	PCI_SUBCLASS_SERIALBUS_CANBUS		0x09
+#define	PCI_SUBCLASS_SERIALBUS_MIPI_I3C		0x0a
 #define	PCI_SUBCLASS_SERIALBUS_MISC		0x80
 
 /* 0x0d wireless subclasses */
@@ -368,6 +377,8 @@ typedef u_int8_t pci_revision_t;
 #define	PCI_SUBCLASS_WIRELESS_BROADBAND		0x12
 #define	PCI_SUBCLASS_WIRELESS_802_11A		0x20
 #define	PCI_SUBCLASS_WIRELESS_802_11B		0x21
+#define	PCI_SUBCLASS_WIRELESS_CELL		0x40
+#define	PCI_SUBCLASS_WIRELESS_CELL_E		0x41
 #define	PCI_SUBCLASS_WIRELESS_MISC		0x80
 
 /* 0x0e I2O (Intelligent I/O) subclasses */
@@ -1557,6 +1568,7 @@ struct pci_rom {
 #define	PCI_EXTCAP_VF_RESIZBAR	0x0024	/* VF Resizable BAR */
 #define	PCI_EXTCAP_DLF		0x0025	/* Data link Feature */
 #define	PCI_EXTCAP_PYSLAY_16GT	0x0026	/* Physical Layer 16.0 GT/s */
+#define	PCI_EXTCAP_LMR		0x0027	/* Lane Margining at the Receiver */
 #define	PCI_EXTCAP_HIERARCHYID	0x0028	/* Hierarchy ID */
 #define	PCI_EXTCAP_NPEM		0x0029	/* Native PCIe Enclosure Management */
 
