@@ -1,4 +1,4 @@
-/* $NetBSD: arm_fdt.c,v 1.19 2021/09/05 13:20:34 jmcneill Exp $ */
+/* $NetBSD: arm_fdt.c,v 1.20 2021/10/10 13:03:09 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared D. McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,7 @@
 #include "opt_modular.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arm_fdt.c,v 1.19 2021/09/05 13:20:34 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arm_fdt.c,v 1.20 2021/10/10 13:03:09 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -308,7 +308,7 @@ arm_fdt_efi_init(device_t dev)
 
 	aprint_debug_dev(dev, "EFI system table at %#" PRIx64 "\n", efi_system_table);
 
-	if (arm_efirt_gettime(&tm) == 0) {
+	if (arm_efirt_gettime(&tm, NULL) == 0) {
 		aprint_normal_dev(dev, "using EFI runtime services for RTC\n");
 		efi_todr.cookie = NULL;
 		efi_todr.todr_gettime_ymdhms = arm_fdt_efi_rtc_gettime;
@@ -321,11 +321,11 @@ static int
 arm_fdt_efi_rtc_gettime(todr_chip_handle_t tch, struct clock_ymdhms *dt)
 {
 	struct efi_tm tm;
-	int error;
+	efi_status status;
 
-	error = arm_efirt_gettime(&tm);
-	if (error)
-		return error;
+	status = arm_efirt_gettime(&tm, NULL);
+	if (status != 0)
+		return EIO;
 
 	dt->dt_year = tm.tm_year;
 	dt->dt_mon = tm.tm_mon;
@@ -342,6 +342,7 @@ static int
 arm_fdt_efi_rtc_settime(todr_chip_handle_t tch, struct clock_ymdhms *dt)
 {
 	struct efi_tm tm;
+	efi_status status;
 
 	memset(&tm, 0, sizeof(tm));
 	tm.tm_year = dt->dt_year;
@@ -351,6 +352,10 @@ arm_fdt_efi_rtc_settime(todr_chip_handle_t tch, struct clock_ymdhms *dt)
 	tm.tm_min = dt->dt_min;
 	tm.tm_sec = dt->dt_sec;
 
-	return arm_efirt_settime(&tm);
+	status = arm_efirt_settime(&tm);
+	if (status != 0)
+		return EIO;
+
+	return 0;
 }
 #endif

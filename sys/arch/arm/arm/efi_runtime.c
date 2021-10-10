@@ -1,4 +1,4 @@
-/* $NetBSD: efi_runtime.c,v 1.5 2020/12/18 07:40:27 skrll Exp $ */
+/* $NetBSD: efi_runtime.c,v 1.6 2021/10/10 13:03:09 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -29,8 +29,10 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include "efi.h"
+
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: efi_runtime.c,v 1.5 2020/12/18 07:40:27 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: efi_runtime.c,v 1.6 2021/10/10 13:03:09 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/mutex.h>
@@ -38,11 +40,32 @@ __KERNEL_RCSID(0, "$NetBSD: efi_runtime.c,v 1.5 2020/12/18 07:40:27 skrll Exp $"
 
 #include <uvm/uvm_extern.h>
 
+#include <dev/efivar.h>
+
 #include <arm/arm/efi_runtime.h>
+
+#ifdef _LP64
+#define	EFIERR(x)	(0x8000000000000000 | x)
+#else
+#define	EFIERR(x)	(0x80000000 | x)
+#endif
+
+#define	EFI_UNSUPPORTED		EFIERR(3)
+#define	EFI_DEVICE_ERROR	EFIERR(7)
 
 static kmutex_t efi_lock;
 
 static struct efi_rt *RT = NULL;
+
+#if NEFI > 0 && BYTE_ORDER == LITTLE_ENDIAN
+static const struct efi_ops arm_efi_ops = {
+	.efi_gettime	= arm_efirt_gettime,
+	.efi_settime	= arm_efirt_settime,
+	.efi_getvar	= arm_efirt_getvar,
+	.efi_setvar	= arm_efirt_setvar,
+	.efi_nextvar	= arm_efirt_nextvar,
+};
+#endif
 
 int
 arm_efirt_init(paddr_t efi_system_table)
@@ -75,6 +98,8 @@ arm_efirt_init(paddr_t efi_system_table)
 	RT = ST->st_rt;
 	mutex_init(&efi_lock, MUTEX_DEFAULT, IPL_HIGH);
 
+	efi_register_ops(&arm_efi_ops);
+
 	return 0;
 #else
 	/* EFI runtime not supported in big endian mode */
@@ -82,42 +107,101 @@ arm_efirt_init(paddr_t efi_system_table)
 #endif
 }
 
-int
-arm_efirt_gettime(struct efi_tm *tm)
+efi_status
+arm_efirt_gettime(struct efi_tm *tm, struct efi_tmcap *tmcap)
 {
-	int error;
+	efi_status status = EFI_DEVICE_ERROR;
 
-	if (RT == NULL || RT->rt_gettime == NULL)
-		return ENXIO;
+	if (RT == NULL || RT->rt_gettime == NULL) {
+		return EFI_UNSUPPORTED;
+	}
 
 	mutex_enter(&efi_lock);
-	if ((error = arm_efirt_md_enter()) == 0) {
-		if (RT->rt_gettime(tm, NULL) != 0)
-			error = EIO;
+	if (arm_efirt_md_enter() == 0) {
+		status = RT->rt_gettime(tm, tmcap);
 	}
 	arm_efirt_md_exit();
 	mutex_exit(&efi_lock);
 
-	return error;
+	return status;
 }
 
-int
+efi_status
 arm_efirt_settime(struct efi_tm *tm)
 {
-	int error;
+	efi_status status = EFI_DEVICE_ERROR;
 
-	if (RT == NULL || RT->rt_settime == NULL)
-		return ENXIO;
+	if (RT == NULL || RT->rt_settime == NULL) {
+		return EFI_UNSUPPORTED;
+	}
 
 	mutex_enter(&efi_lock);
-	if ((error = arm_efirt_md_enter()) == 0) {
-		if (RT->rt_settime(tm) != 0)
-			error = EIO;
+	if (arm_efirt_md_enter() == 0) {
+		status = RT->rt_settime(tm);
 	}
 	arm_efirt_md_exit();
 	mutex_exit(&efi_lock);
 
-	return error;
+	return status;
+}
+
+efi_status
+arm_efirt_getvar(uint16_t *name, struct uuid *vendor, uint32_t *attrib,
+    u_long *datasize, void *data)
+{
+	efi_status status = EFI_DEVICE_ERROR;
+
+	if (RT == NULL || RT->rt_getvar == NULL) {
+		return EFI_UNSUPPORTED;
+	}
+
+	mutex_enter(&efi_lock);
+	if (arm_efirt_md_enter() == 0) {
+		status = RT->rt_getvar(name, vendor, attrib, datasize, data);
+	}
+	arm_efirt_md_exit();
+	mutex_exit(&efi_lock);
+
+	return status;
+}
+
+efi_status
+arm_efirt_nextvar(u_long *namesize, efi_char *name, struct uuid *vendor)
+{
+	efi_status status = EFI_DEVICE_ERROR;
+
+	if (RT == NULL || RT->rt_scanvar == NULL) {
+		return EFI_UNSUPPORTED;
+	}
+
+	mutex_enter(&efi_lock);
+	if (arm_efirt_md_enter() == 0) {
+		status = RT->rt_scanvar(namesize, name, vendor);
+	}
+	arm_efirt_md_exit();
+	mutex_exit(&efi_lock);
+
+	return status;
+}
+
+efi_status
+arm_efirt_setvar(uint16_t *name, struct uuid *vendor, uint32_t attrib,
+    u_long datasize, void *data)
+{
+	efi_status status = EFI_DEVICE_ERROR;
+
+	if (RT == NULL || RT->rt_setvar == NULL) {
+		return EFI_UNSUPPORTED;
+	}
+
+	mutex_enter(&efi_lock);
+	if (arm_efirt_md_enter() == 0) {
+		status = RT->rt_setvar(name, vendor, attrib, datasize, data);
+	}
+	arm_efirt_md_exit();
+	mutex_exit(&efi_lock);
+
+	return status;
 }
 
 int
@@ -133,8 +217,9 @@ arm_efirt_reset(enum efi_reset type)
 	if (reset_called == false) {
 		reset_called = true;
 		if ((error = arm_efirt_md_enter()) == 0) {
-			if (RT->rt_reset(type, 0, 0, NULL) != 0)
+			if (RT->rt_reset(type, 0, 0, NULL) != 0) {
 				error = EIO;
+			}
 		}
 		arm_efirt_md_exit();
 	} else {
