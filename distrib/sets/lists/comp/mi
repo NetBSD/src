@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2395 2021/09/30 02:00:19 yamaguchi Exp $
+#	$NetBSD: mi,v 1.2396 2021/10/10 13:03:09 jmcneill Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -3273,6 +3273,7 @@
 ./usr/include/sys/domain.h			comp-c-include
 ./usr/include/sys/drvctlio.h			comp-c-include
 ./usr/include/sys/dvdio.h			comp-c-include
+./usr/include/sys/efiio.h			comp-c-include
 ./usr/include/sys/elfdefinitions.h		comp-c-include
 ./usr/include/sys/endian.h			comp-c-include
 ./usr/include/sys/envsys.h			comp-c-include
