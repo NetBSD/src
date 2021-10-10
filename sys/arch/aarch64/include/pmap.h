@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.h,v 1.48 2021/05/19 12:16:01 skrll Exp $ */
+/* $NetBSD: pmap.h,v 1.49 2021/10/10 07:15:25 skrll Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -42,6 +42,7 @@
 #include <sys/types.h>
 #include <sys/pool.h>
 #include <sys/queue.h>
+
 #include <uvm/uvm_pglist.h>
 
 #include <aarch64/armreg.h>
@@ -53,6 +54,43 @@
 
 #define __HAVE_VM_PAGE_MD
 #define __HAVE_PMAP_PV_TRACK	1
+
+#define	PMAP_HWPAGEWALKER		1
+
+#define	PMAP_TLB_MAX			1
+#if PMAP_TLB_MAX > 1
+#define	PMAP_TLB_NEED_SHOOTDOWN		1
+#endif
+
+#define	PMAP_TLB_FLUSH_ASID_ON_RESET	(true)
+
+/* Maximum number of ASIDs. Some CPUs have less.*/
+#define	PMAP_TLB_NUM_PIDS		65536
+#define	PMAP_TLB_BITMAP_LENGTH		PMAP_TLB_NUM_PIDS
+#define	cpu_set_tlb_info(ci, ti)        ((void)((ci)->ci_tlb_info = (ti)))
+#if PMAP_TLB_MAX > 1
+#define	cpu_tlb_info(ci)		((ci)->ci_tlb_info)
+#else
+#define	cpu_tlb_info(ci)		(&pmap_tlb0_info)
+#endif
+
+static inline tlb_asid_t
+pmap_md_tlb_asid_max(void)
+{
+	switch (__SHIFTOUT(reg_id_aa64mmfr0_el1_read(), ID_AA64MMFR0_EL1_ASIDBITS)) {
+	case ID_AA64MMFR0_EL1_ASIDBITS_8BIT:
+		return (1U << 8) - 1;
+	case ID_AA64MMFR0_EL1_ASIDBITS_16BIT:
+		return (1U << 16) - 1;
+	default:
+		return 0;
+	}
+}
+
+#include <uvm/pmap/tlb.h>
+#include <uvm/pmap/pmap_tlb.h>
+
+#define KERNEL_PID		0	/* The kernel uses ASID 0 */
 
 #ifndef KASAN
 #define PMAP_MAP_POOLPAGE(pa)		AARCH64_PA_TO_KVA(pa)
@@ -81,9 +119,20 @@ struct pmap {
 	struct pmap_statistics pm_stats;
 	unsigned int pm_refcnt;
 	unsigned int pm_idlepdp;
-	int pm_asid;
+
+	kcpuset_t *pm_onproc;
+	kcpuset_t *pm_active;
+
+	struct pmap_asid_info pm_pai[PMAP_TLB_MAX];
 	bool pm_activated;
+	bool pm_remove_all;
 };
+
+static inline paddr_t
+pmap_l0pa(struct pmap *pm)
+{
+	return pm->pm_l0table_pa;
+}
 
 /*
  * should be kept <=32 bytes sized to reduce memory consumption & cache misses,
@@ -172,6 +221,19 @@ struct vm_page_md {
 #define l3pte_valid(pde)	lxpde_valid(pde)
 #define l3pte_is_page(pde)	(((pde) & LX_TYPE) == L3_TYPE_PAG)
 /* l3pte contains always page entries */
+
+
+static inline uint64_t
+pte_value(pt_entry_t pte)
+{
+	return pte;
+}
+
+static inline bool
+pte_valid_p(pt_entry_t pte)
+{
+	return l3pte_valid(pte);
+}
 
 void pmap_bootstrap(vaddr_t, vaddr_t);
 bool pmap_fault_fixup(struct pmap *, vaddr_t, vm_prot_t, bool user);
@@ -322,7 +384,6 @@ aarch64_mmap_flags(paddr_t mdpgno)
 #define pmap_phys_address(pa)		aarch64_ptob((pa))
 #define pmap_mmap_flags(ppn)		aarch64_mmap_flags((ppn))
 
-#define pmap_update(pmap)		((void)0)
 #define pmap_copy(dp,sp,d,l,s)		((void)0)
 #define pmap_wired_count(pmap)		((pmap)->pm_stats.wired_count)
 #define pmap_resident_count(pmap)	((pmap)->pm_stats.resident_count)
