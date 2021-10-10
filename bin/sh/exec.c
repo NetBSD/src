@@ -1,4 +1,4 @@
-/*	$NetBSD: exec.c,v 1.55 2021/02/16 15:30:12 kre Exp $	*/
+/*	$NetBSD: exec.c,v 1.56 2021/10/10 08:19:02 rillig Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)exec.c	8.4 (Berkeley) 6/8/95";
 #else
-__RCSID("$NetBSD: exec.c,v 1.55 2021/02/16 15:30:12 kre Exp $");
+__RCSID("$NetBSD: exec.c,v 1.56 2021/10/10 08:19:02 rillig Exp $");
 #endif
 #endif /* not lint */
 
@@ -548,31 +548,23 @@ find_command(char *name, struct cmdentry *entry, int act, const char *path)
 
 	/* If name is in the table, check answer will be ok */
 	if ((cmdp = cmdlookup(name, 0)) != NULL) {
-		do {
-			switch (cmdp->cmdtype) {
-			case CMDNORMAL:
-				if (act & DO_ALTPATH) {
-					cmdp = NULL;
-					continue;
-				}
-				break;
-			case CMDFUNCTION:
-				if (act & DO_NOFUNC) {
-					cmdp = NULL;
-					continue;
-				}
-				break;
-			case CMDBUILTIN:
-				if ((act & DO_ALTBLTIN) || builtinloc >= 0) {
-					cmdp = NULL;
-					continue;
-				}
-				break;
-			}
-			/* if not invalidated by cd, we're done */
-			if (cmdp->rehash == 0)
-				goto success;
-		} while (0);
+		switch (cmdp->cmdtype) {
+		case CMDNORMAL:
+			if (act & DO_ALTPATH)
+				cmdp = NULL;
+			break;
+		case CMDFUNCTION:
+			if (act & DO_NOFUNC)
+				cmdp = NULL;
+			break;
+		case CMDBUILTIN:
+			if ((act & DO_ALTBLTIN) || builtinloc >= 0)
+				cmdp = NULL;
+			break;
+		}
+		/* if not invalidated by cd, we're done */
+		if (cmdp != NULL && cmdp->rehash == 0)
+			goto success;
 	}
 
 	/* If %builtin not in path, check for builtin next */
