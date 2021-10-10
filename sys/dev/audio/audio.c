@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.109 2021/10/10 11:20:29 riastradh Exp $	*/
+/*	$NetBSD: audio.c,v 1.110 2021/10/10 11:21:05 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -138,7 +138,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.109 2021/10/10 11:20:29 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.110 2021/10/10 11:21:05 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "audio.h"
@@ -1322,6 +1322,7 @@ audiodetach(device_t self, int flags)
 	SLIST_FOREACH(file, &sc->sc_files, entry) {
 		atomic_store_relaxed(&file->dying, true);
 	}
+	mutex_exit(sc->sc_lock);
 
 	/*
 	 * Wait for existing users to drain.
@@ -1331,7 +1332,6 @@ audiodetach(device_t self, int flags)
 	 *   be psref_released.
 	 */
 	pserialize_perform(sc->sc_psz);
-	mutex_exit(sc->sc_lock);
 	psref_target_destroy(&sc->sc_psref, audio_psref_class);
 
 	/*
