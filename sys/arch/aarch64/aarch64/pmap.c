@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.116 2021/09/30 21:19:16 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.117 2021/10/10 07:15:25 skrll Exp $	*/
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.116 2021/09/30 21:19:16 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.117 2021/10/10 07:15:25 skrll Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_ddb.h"
@@ -41,6 +41,7 @@ __KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.116 2021/09/30 21:19:16 skrll Exp $");
 
 #include <sys/asan.h>
 #include <sys/atomic.h>
+#include <sys/cpu.h>
 #include <sys/kmem.h>
 #include <sys/vmem.h>
 
@@ -181,10 +182,10 @@ PMAP_COUNTER(unwire_failure, "pmap_unwire failure");
  * change the pte to accessible temporarly before cpu_icache_sync_range().
  * this macro modifies PTE (*ptep). need to update PTE after this.
  */
-#define PTE_ICACHE_SYNC_PAGE(pte, ptep, pm, va, ll)			\
+#define PTE_ICACHE_SYNC_PAGE(pte, ptep, asid, va, ll)			\
 	do {								\
 		atomic_swap_64((ptep), (pte) | LX_BLKPAG_AF);		\
-		AARCH64_TLBI_BY_ASID_VA((pm)->pm_asid, (va), (ll));	\
+		AARCH64_TLBI_BY_ASID_VA((asid), (va), (ll));		\
 		cpu_icache_sync_range((va), PAGE_SIZE);			\
 	} while (0/*CONSTCOND*/)
 
@@ -336,7 +337,6 @@ pmap_map_chunk(vaddr_t va, paddr_t pa, vsize_t size,
 	attr = _pmap_pte_adjust_prot(0, prot, VM_PROT_ALL, false);
 	attr = _pmap_pte_adjust_cacheflags(attr, flags);
 	pmapboot_enter_range(va, pa, resid, attr, printf);
-	aarch64_tlbi_all();
 
 	return resid;
 }
@@ -472,18 +472,23 @@ pmap_bootstrap(vaddr_t vstart, vaddr_t vend)
 	virtual_end = vend;
 	pmap_maxkvaddr = vstart;
 
-	aarch64_tlbi_all();
-
 	l0pa = reg_ttbr1_el1_read();
 	l0 = (void *)AARCH64_PA_TO_KVA(l0pa);
 
+	pmap_tlb_info_init(&pmap_tlb0_info);
+
 	memset(&kernel_pmap, 0, sizeof(kernel_pmap));
+
 	kpm = pmap_kernel();
-	kpm->pm_asid = 0;
+	struct pmap_asid_info * const pai = PMAP_PAI(kpm, cpu_tlb_info(ci));
+
+	pai->pai_asid = KERNEL_PID;
 	kpm->pm_refcnt = 1;
 	kpm->pm_idlepdp = 0;
 	kpm->pm_l0table = l0;
 	kpm->pm_l0table_pa = l0pa;
+	kpm->pm_onproc = kcpuset_running;
+	kpm->pm_active = kcpuset_running;
 	kpm->pm_activated = true;
 	LIST_INIT(&kpm->pm_vmlist);
 	LIST_INIT(&kpm->pm_pvlist);	/* not used for kernel pmap */
@@ -491,6 +496,12 @@ pmap_bootstrap(vaddr_t vstart, vaddr_t vend)
 
 	CTASSERT(sizeof(kpm->pm_stats.wired_count) == sizeof(long));
 	CTASSERT(sizeof(kpm->pm_stats.resident_count) == sizeof(long));
+}
+
+void
+pmap_md_tlb_info_attach(struct pmap_tlb_info *ti, struct cpu_info *ci)
+{
+	/* nothing */
 }
 
 static inline void
@@ -556,9 +567,7 @@ pmap_init(void)
 	    32, 0, PR_LARGECACHE, "pvpl", NULL, IPL_NONE, _pmap_pv_ctor,
 	    NULL, NULL);
 
-	int nmaxproc = cpu_maxproc();
-	if (maxproc > nmaxproc)
-		maxproc = nmaxproc;
+	pmap_tlb_info_evcnt_attach(&pmap_tlb0_info);
 }
 
 void
@@ -674,18 +683,16 @@ pmap_free_pdp(struct pmap *pm, struct vm_page *pg)
 }
 
 /* free empty page table pages */
-static int
+static void
 _pmap_sweep_pdp(struct pmap *pm)
 {
 	struct vm_page *pg, *tmp;
 	pd_entry_t *ptep_in_parent, opte __diagused;
 	paddr_t pa, pdppa;
-	int nsweep;
 	uint16_t wirecount __diagused;
 
 	KASSERT(mutex_owned(&pm->pm_lock) || pm->pm_refcnt == 0);
 
-	nsweep = 0;
 	LIST_FOREACH_SAFE(pg, &pm->pm_vmlist, pageq.list, tmp) {
 		if (pg->wire_count != 1)
 			continue;
@@ -698,7 +705,6 @@ _pmap_sweep_pdp(struct pmap *pm)
 		if (ptep_in_parent == NULL) {
 			/* no parent */
 			pmap_free_pdp(pm, pg);
-			nsweep++;
 			continue;
 		}
 
@@ -708,7 +714,6 @@ _pmap_sweep_pdp(struct pmap *pm)
 		wirecount = --pg->wire_count; /* 1 -> 0 */
 		KASSERT(wirecount == 0);
 		pmap_free_pdp(pm, pg);
-		nsweep++;
 
 		/* L3->L2->L1. no need for L0 */
 		pdppa = AARCH64_KVA_TO_PA(trunc_page((vaddr_t)ptep_in_parent));
@@ -722,12 +727,10 @@ _pmap_sweep_pdp(struct pmap *pm)
 		/* decrement wire_count of parent */
 		wirecount = --pg->wire_count;
 		KASSERTMSG(pg->wire_count <= (Ln_ENTRIES + 1),
-		    "pm=%p[%d], pg=%p, wire_count=%d",
-		    pm, pm->pm_asid, pg, pg->wire_count);
+		    "pm=%p, pg=%p, wire_count=%d",
+		    pm, pg, pg->wire_count);
 	}
 	pm->pm_idlepdp = 0;
-
-	return nsweep;
 }
 
 static void
@@ -977,11 +980,14 @@ pmap_icache_sync_range(pmap_t pm, vaddr_t sva, vaddr_t eva)
 			 * change to accessible temporally
 			 * to do cpu_icache_sync_range()
 			 */
+			struct pmap_asid_info * const pai = PMAP_PAI(pm,
+			    cpu_tlb_info(ci));
+
 			atomic_swap_64(ptep, pte | LX_BLKPAG_AF);
-			AARCH64_TLBI_BY_ASID_VA(pm->pm_asid, va, true);
+			AARCH64_TLBI_BY_ASID_VA(pai->pai_asid, va, true);
 			cpu_icache_sync_range(va, len);
 			atomic_swap_64(ptep, pte);
-			AARCH64_TLBI_BY_ASID_VA(pm->pm_asid, va, true);
+			AARCH64_TLBI_BY_ASID_VA(pai->pai_asid, va, true);
 		}
 	}
 
@@ -1179,14 +1185,15 @@ pmap_db_mdpg_print(struct vm_page *pg, void (*pr)(const char *, ...) __printflik
 			KASSERT(pv == &pp->pp_pv);
 			continue;
 		}
-		pr("  pv[%d] pv=%p\n",
-		    i, pv);
-		pr("    pv[%d].pv_pmap = %p (asid=%d)\n",
-		    i, pv->pv_pmap, pv->pv_pmap->pm_asid);
-		pr("    pv[%d].pv_va   = %016lx (color=%d)\n",
-		    i, trunc_page(pv->pv_va), _pmap_color(pv->pv_va));
-		pr("    pv[%d].pv_ptep = %p\n",
-		    i, pv->pv_ptep);
+		struct pmap * const pm = pv->pv_pmap;
+		struct pmap_asid_info * const pai = PMAP_PAI(pm,
+		    cpu_tlb_info(ci));
+
+		pr("  pv[%d] pv=%p\n", i, pv);
+		pr("    pv[%d].pv_pmap = %p (asid=%d)\n", i, pm, pai->pai_asid);
+		pr("    pv[%d].pv_va   = %016lx (color=%d)\n", i,
+		    trunc_page(pv->pv_va), _pmap_color(pv->pv_va));
+		pr("    pv[%d].pv_ptep = %p\n", i, pv->pv_ptep);
 		i++;
 	}
 }
@@ -1298,7 +1305,11 @@ _pmap_protect_pv(struct pmap_page *pp, struct pv_entry *pv, vm_prot_t prot)
 	/* new prot = prot & pteprot & mdattr */
 	pte = _pmap_pte_adjust_prot(pte, prot & pteprot, mdattr, user);
 	atomic_swap_64(ptep, pte);
-	AARCH64_TLBI_BY_ASID_VA(pv->pv_pmap->pm_asid, trunc_page(pv->pv_va),
+
+	struct pmap * const pm = pv->pv_pmap;
+	struct pmap_asid_info * const pai = PMAP_PAI(pm, cpu_tlb_info(ci));
+
+	AARCH64_TLBI_BY_ASID_VA(pai->pai_asid, trunc_page(pv->pv_va),
 	    true);
 }
 
@@ -1392,23 +1403,27 @@ pmap_protect(struct pmap *pm, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 		executable = l3pte_executable(pte, user);
 		pte = _pmap_pte_adjust_prot(pte, prot, mdattr, user);
 
+		struct pmap_asid_info * const pai = PMAP_PAI(pm,
+		    cpu_tlb_info(ci));
 		if (!executable && (prot & VM_PROT_EXECUTE)) {
 			/* non-exec -> exec */
 			UVMHIST_LOG(pmaphist, "icache_sync: "
 			    "pm=%p, va=%016lx, pte: %016lx -> %016lx",
 			    pm, va, opte, pte);
+
 			if (!l3pte_readable(pte)) {
-				PTE_ICACHE_SYNC_PAGE(pte, ptep, pm, va, true);
+				PTE_ICACHE_SYNC_PAGE(pte, ptep, pai->pai_asid,
+				    va, true);
 				atomic_swap_64(ptep, pte);
-				AARCH64_TLBI_BY_ASID_VA(pm->pm_asid, va, true);
+				AARCH64_TLBI_BY_ASID_VA(pai->pai_asid, va, true);
 			} else {
 				atomic_swap_64(ptep, pte);
-				AARCH64_TLBI_BY_ASID_VA(pm->pm_asid, va, true);
+				AARCH64_TLBI_BY_ASID_VA(pai->pai_asid, va, true);
 				cpu_icache_sync_range(va, PAGE_SIZE);
 			}
 		} else {
 			atomic_swap_64(ptep, pte);
-			AARCH64_TLBI_BY_ASID_VA(pm->pm_asid, va, true);
+			AARCH64_TLBI_BY_ASID_VA(pai->pai_asid, va, true);
 		}
 	}
 
@@ -1420,11 +1435,11 @@ void
 pmap_activate(struct lwp *l)
 {
 	struct pmap *pm = l->l_proc->p_vmspace->vm_map.pmap;
-	uint64_t ttbr0, tcr;
+	uint64_t tcr;
 
 	UVMHIST_FUNC(__func__);
-	UVMHIST_CALLARGS(pmaphist, "lwp=%p asid=%d (pid=%d)", l, pm->pm_asid,
-	    l->l_proc->p_pid, 0);
+	UVMHIST_CALLARGS(pmaphist, "lwp=%p (pid=%d, kernel=%u)", l,
+	    l->l_proc->p_pid, pm == pmap_kernel() ? 1 : 0, 0);
 
 	KASSERT((reg_tcr_el1_read() & TCR_EPD0) != 0);
 
@@ -1435,15 +1450,13 @@ pmap_activate(struct lwp *l)
 
 	KASSERT(pm->pm_l0table != NULL);
 
+	/* this calls tlb_set_asid which calls cpu_set_ttbr0 */
+	pmap_tlb_asid_acquire(pm, l);
 
-	/* XXX: allocate asid, and regenerate if needed */
-	if (pm->pm_asid == -1)
-		pm->pm_asid = l->l_proc->p_pid;
+	struct pmap_asid_info * const pai __debugused = PMAP_PAI(pm,
+	    cpu_tlb_info(ci));
 
-	ttbr0 =
-	     __SHIFTIN(pm->pm_asid, TTBR_ASID) |
-	     __SHIFTIN(pm->pm_l0table_pa, TTBR_BADDR);
-	cpu_set_ttbr0(ttbr0);
+	UVMHIST_LOG(pmaphist, "lwp=%p, asid=%d", l, pai->pai_asid, 0, 0);
 
 	/* Re-enable translation table walks using TTBR0 */
 	tcr = reg_tcr_el1_read();
@@ -1462,17 +1475,21 @@ pmap_deactivate(struct lwp *l)
 	uint64_t tcr;
 
 	UVMHIST_FUNC(__func__);
-	UVMHIST_CALLARGS(pmaphist, "lwp=%p, asid=%d", l, pm->pm_asid, 0, 0);
-
-	if (pm == pmap_kernel())
-		return;
+	UVMHIST_CALLARGS(pmaphist, "lwp=%p (pid=%d, (kernel=%u))", l,
+	    l->l_proc->p_pid, pm == pmap_kernel() ? 1 : 0, 0);
 
 	/* Disable translation table walks using TTBR0 */
 	tcr = reg_tcr_el1_read();
 	reg_tcr_el1_write(tcr | TCR_EPD0);
 	isb();
 
-	/* XXX */
+	struct pmap_asid_info * const pai __debugused = PMAP_PAI(pm,
+	    cpu_tlb_info(ci));
+
+	UVMHIST_LOG(pmaphist, "lwp=%p, asid=%d", l, pai->pai_asid, 0, 0);
+
+	pmap_tlb_asid_deactivate(pm);
+
 	pm->pm_activated = false;
 
 	PMAP_COUNT(deactivate);
@@ -1490,10 +1507,13 @@ pmap_create(void)
 	memset(pm, 0, sizeof(*pm));
 	pm->pm_refcnt = 1;
 	pm->pm_idlepdp = 0;
-	pm->pm_asid = -1;
 	LIST_INIT(&pm->pm_vmlist);
 	LIST_INIT(&pm->pm_pvlist);
 	mutex_init(&pm->pm_lock, MUTEX_DEFAULT, IPL_NONE);
+
+	kcpuset_create(&pm->pm_active, true);
+	kcpuset_create(&pm->pm_onproc, true);
+	pm->pm_remove_all = false;
 
 	pm->pm_l0table_pa = pmap_alloc_pdp(pm, NULL, 0, true);
 	KASSERT(pm->pm_l0table_pa != POOL_PADDR_INVALID);
@@ -1514,8 +1534,8 @@ pmap_destroy(struct pmap *pm)
 
 	UVMHIST_FUNC(__func__);
 	UVMHIST_CALLARGS(pmaphist,
-	    "pm=%p, pm_l0table=%016lx, pm_l0table_pa=%016lx, refcnt=%d",
-	    pm, pm->pm_l0table, pm->pm_l0table_pa, pm->pm_refcnt);
+	    "pm=%p, pm_l0table=%016lx, pm_remove_all=%jd, refcnt=%jd",
+	    pm, pm->pm_l0table, pm->pm_remove_all, pm->pm_refcnt);
 
 	if (pm == NULL)
 		return;
@@ -1523,18 +1543,22 @@ pmap_destroy(struct pmap *pm)
 	if (pm == pmap_kernel())
 		panic("cannot destroy kernel pmap");
 
+	if (pm->pm_remove_all) {
+		pmap_tlb_asid_release_all(pm);
+		pm->pm_remove_all = false;
+	}
+
 	refcnt = atomic_dec_uint_nv(&pm->pm_refcnt);
 	if (refcnt > 0)
 		return;
 
 	KASSERT(LIST_EMPTY(&pm->pm_pvlist));
 
-	/*
-	 * no need to call aarch64_tlbi_by_asid(pm->pm_asid).
-	 * TLB should already be invalidated in pmap_remove_all()
-	 */
 	_pmap_free_pdp_all(pm, true);
 	mutex_destroy(&pm->pm_lock);
+
+	kcpuset_destroy(pm->pm_active);
+	kcpuset_destroy(pm->pm_onproc);
 
 	pool_cache_put(&_pmap_cache, pm);
 
@@ -1653,8 +1677,8 @@ _pmap_pdp_delref(struct pmap *pm, paddr_t pdppa, bool do_free_pdp)
 		/* decrement wire_count of parent */
 		wirecount = atomic_add_32_nv(&pg->wire_count, -1);
 		KASSERTMSG(pg->wire_count <= (Ln_ENTRIES + 1),
-		    "pm=%p[%d], pg=%p, wire_count=%d",
-		    pm, pm->pm_asid, pg, pg->wire_count);
+		    "pm=%p, pg=%p, wire_count=%d",
+		    pm, pg, pg->wire_count);
 	}
 
 	return removed;
@@ -1822,10 +1846,8 @@ _pmap_enter(struct pmap *pm, vaddr_t va, paddr_t pa, vm_prot_t prot,
 		}
 
 		pm_lock(pm);
-		if (pm->pm_idlepdp >= PDPSWEEP_TRIGGER &&
-		    _pmap_sweep_pdp(pm) != 0) {
-			/* several L1-L3 page table pages have been freed */
-			aarch64_tlbi_by_asid(pm->pm_asid);
+		if (pm->pm_idlepdp >= PDPSWEEP_TRIGGER) {
+			_pmap_sweep_pdp(pm);
 		}
 	}
 
@@ -1937,7 +1959,10 @@ _pmap_enter(struct pmap *pm, vaddr_t va, paddr_t pa, vm_prot_t prot,
 				bool pdpremoved = _pmap_pdp_delref(pm,
 				    AARCH64_KVA_TO_PA(trunc_page(
 				    (vaddr_t)ptep)), true);
-				AARCH64_TLBI_BY_ASID_VA(pm->pm_asid,
+				struct pmap_asid_info * const pai = PMAP_PAI(pm,
+				    cpu_tlb_info(ci));
+
+				AARCH64_TLBI_BY_ASID_VA(pai->pai_asid,
 				    va, !pdpremoved);
 			}
 			PMAP_COUNT(pv_entry_cannotalloc);
@@ -1963,7 +1988,8 @@ _pmap_enter(struct pmap *pm, vaddr_t va, paddr_t pa, vm_prot_t prot,
 	}
 #endif
 
-	attr = _pmap_pte_adjust_prot(L3_PAGE, prot, mdattr, user);
+	attr = L3_PAGE | (kenter ? 0 : LX_BLKPAG_NG);
+	attr = _pmap_pte_adjust_prot(attr, prot, mdattr, user);
 	attr = _pmap_pte_adjust_cacheflags(attr, flags);
 	if (VM_MAXUSER_ADDRESS > va)
 		attr |= LX_BLKPAG_APUSER;
@@ -1975,23 +2001,27 @@ _pmap_enter(struct pmap *pm, vaddr_t va, paddr_t pa, vm_prot_t prot,
 
 	pte = pa | attr;
 
+	struct pmap_asid_info * const pai = PMAP_PAI(pm, cpu_tlb_info(ci));
+	const tlb_asid_t asid = pai->pai_asid;
+
 	if (need_sync_icache) {
 		/* non-exec -> exec */
 		UVMHIST_LOG(pmaphist,
 		    "icache_sync: pm=%p, va=%016lx, pte: %016lx -> %016lx",
 		    pm, va, opte, pte);
+
 		if (!l3pte_readable(pte)) {
-			PTE_ICACHE_SYNC_PAGE(pte, ptep, pm, va, l3only);
+			PTE_ICACHE_SYNC_PAGE(pte, ptep, asid, va, l3only);
 			atomic_swap_64(ptep, pte);
-			AARCH64_TLBI_BY_ASID_VA(pm->pm_asid, va ,true);
+			AARCH64_TLBI_BY_ASID_VA(asid, va ,true);
 		} else {
 			atomic_swap_64(ptep, pte);
-			AARCH64_TLBI_BY_ASID_VA(pm->pm_asid, va, l3only);
+			AARCH64_TLBI_BY_ASID_VA(asid, va, l3only);
 			cpu_icache_sync_range(va, PAGE_SIZE);
 		}
 	} else {
 		atomic_swap_64(ptep, pte);
-		AARCH64_TLBI_BY_ASID_VA(pm->pm_asid, va, l3only);
+		AARCH64_TLBI_BY_ASID_VA(asid, va, l3only);
 	}
 
 	if (pte & LX_BLKPAG_OS_WIRED) {
@@ -2025,6 +2055,42 @@ pmap_enter(struct pmap *pm, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 	return _pmap_enter(pm, va, pa, prot, flags, false);
 }
 
+
+
+void
+pmap_update(pmap_t pm)
+{
+
+	UVMHIST_FUNC(__func__);
+	UVMHIST_CALLARGS(maphist, "pm=%#jx remove_all %jd", (uintptr_t)pm,
+	    pm->pm_remove_all, 0, 0);
+
+	kpreempt_disable();
+	/*
+	 * If pmap_remove_all was called, we deactivated ourselves and released
+	 * our ASID.  Now we have to reactivate ourselves.
+	 */
+	if (__predict_false(pm->pm_remove_all)) {
+		pm->pm_remove_all = false;
+
+		KASSERT(pm != pmap_kernel());
+
+		/* this calls tlb_set_asid which calls cpu_set_ttbr0 */
+		pmap_tlb_asid_acquire(pm, curlwp);
+
+		/* Enable translation table walks using TTBR0 */
+		uint64_t tcr = reg_tcr_el1_read();
+		reg_tcr_el1_write(tcr & ~TCR_EPD0);
+		isb();
+
+		pm->pm_activated = true;
+	}
+
+	kpreempt_enable();
+
+	UVMHIST_LOG(maphist, "  <-- done", 0, 0, 0, 0);
+}
+
 bool
 pmap_remove_all(struct pmap *pm)
 {
@@ -2036,8 +2102,28 @@ pmap_remove_all(struct pmap *pm)
 	UVMHIST_FUNC(__func__);
 	UVMHIST_CALLARGS(pmaphist, "pm=%p", pm, 0, 0, 0);
 
-	if (pm == pmap_kernel())
-		return false;
+	KASSERT(pm != pmap_kernel());
+
+	struct cpu_info * const ci = curcpu();
+	// This should be the last CPU with this pmap onproc
+	KASSERT(!kcpuset_isotherset(pm->pm_onproc, cpu_index(ci)));
+	if (kcpuset_isset(pm->pm_onproc, cpu_index(ci))) {
+		/* Disable translation table walks using TTBR0 */
+		uint64_t tcr = reg_tcr_el1_read();
+		reg_tcr_el1_write(tcr | TCR_EPD0);
+		isb();
+
+		pmap_tlb_asid_deactivate(pm);
+	}
+
+	KASSERT(kcpuset_iszero(pm->pm_onproc));
+
+	pmap_tlb_asid_release_all(pm);
+	pm->pm_remove_all = true;
+
+	struct pmap_asid_info * const pai __debugused = PMAP_PAI(pm,
+	    cpu_tlb_info(ci));
+	UVMHIST_LOG(pmaphist, "pm=%p, asid=%d", pm, pai->pai_asid, 0, 0);
 
 	pm_lock(pm);
 
@@ -2046,16 +2132,16 @@ pmap_remove_all(struct pmap *pm)
 		pte = *ptep;
 
 		KASSERTMSG(lxpde_valid(pte),
-		    "pte is not valid: pmap=%p, asid=%d, va=%016lx",
-		    pm, pm->pm_asid, pv->pv_va);
+		    "pte is not valid: pmap=%p, va=%016lx",
+		    pm, pv->pv_va);
 
 		pa = lxpde_pa(pte);
 		pp = phys_to_pp(pa);
 
 		KASSERTMSG(pp != NULL,
 		    "no pmap_page of physical address:%016lx, "
-		    "pmap=%p, asid=%d, va=%016lx",
-		    pa, pm, pm->pm_asid, pv->pv_va);
+		    "pmap=%p, va=%016lx",
+		    pa, pm, pv->pv_va);
 
 		pmap_pv_lock(pp);
 		opv = _pmap_remove_pv(pp, pm, trunc_page(pv->pv_va), pte);
@@ -2071,7 +2157,6 @@ pmap_remove_all(struct pmap *pm)
 
 	/* clear L0 page table page */
 	pmap_zero_page(pm->pm_l0table_pa);
-	aarch64_tlbi_by_asid(pm->pm_asid);
 
 	/* free L1-L3 page table pages, but not L0 */
 	_pmap_free_pdp_all(pm, false);
@@ -2135,10 +2220,12 @@ _pmap_remove(struct pmap *pm, vaddr_t sva, vaddr_t eva, bool kremove,
 		pte = atomic_swap_64(ptep, 0);
 		if (!lxpde_valid(pte))
 			continue;
+		struct pmap_asid_info * const pai = PMAP_PAI(pm,
+		    cpu_tlb_info(ci));
 
 		pdpremoved = _pmap_pdp_delref(pm,
 		    AARCH64_KVA_TO_PA(trunc_page((vaddr_t)ptep)), true);
-		AARCH64_TLBI_BY_ASID_VA(pm->pm_asid, va, !pdpremoved);
+		AARCH64_TLBI_BY_ASID_VA(pai->pai_asid, va, !pdpremoved);
 
 		if (pdpremoved) {
 			/*
@@ -2196,12 +2283,14 @@ pmap_page_remove(struct pmap_page *pp, vm_prot_t prot)
 			continue;
 		}
 		opte = atomic_swap_64(pv->pv_ptep, 0);
+		struct pmap_asid_info * const pai = PMAP_PAI(pm, cpu_tlb_info(ci));
 		const vaddr_t va = trunc_page(pv->pv_va);
+
 		if (lxpde_valid(opte)) {
 			_pmap_pdp_delref(pm,
 			    AARCH64_KVA_TO_PA(trunc_page(
 			    (vaddr_t)pv->pv_ptep)), false);
-			AARCH64_TLBI_BY_ASID_VA(pm->pm_asid, va, true);
+			AARCH64_TLBI_BY_ASID_VA(pai->pai_asid, va, true);
 
 			if ((opte & LX_BLKPAG_OS_WIRED) != 0) {
 				_pmap_adj_wired_count(pm, -1);
@@ -2441,7 +2530,8 @@ pmap_fault_fixup(struct pmap *pm, vaddr_t va, vm_prot_t accessprot, bool user)
 	pmap_pv_unlock(pp);
 
 	atomic_swap_64(ptep, pte);
-	AARCH64_TLBI_BY_ASID_VA(pm->pm_asid, va, true);
+	struct pmap_asid_info * const pai = PMAP_PAI(pm, cpu_tlb_info(ci));
+	AARCH64_TLBI_BY_ASID_VA(pai->pai_asid, va, true);
 
 	fixed = true;
 
@@ -2510,7 +2600,9 @@ pmap_clear_modify(struct vm_page *pg)
 			goto tryagain;
 		}
 
-		AARCH64_TLBI_BY_ASID_VA(pv->pv_pmap->pm_asid, va, true);
+		struct pmap * const pm = pv->pv_pmap;
+		struct pmap_asid_info * const pai = PMAP_PAI(pm, cpu_tlb_info(ci));
+		AARCH64_TLBI_BY_ASID_VA(pai->pai_asid, va, true);
 
 		UVMHIST_LOG(pmaphist,
 		    "va=%016llx, ptep=%p, pa=%016lx, RW -> RO",
@@ -2568,7 +2660,9 @@ pmap_clear_reference(struct vm_page *pg)
 			goto tryagain;
 		}
 
-		AARCH64_TLBI_BY_ASID_VA(pv->pv_pmap->pm_asid, va, true);
+		struct pmap * const pm = pv->pv_pmap;
+		struct pmap_asid_info * const pai = PMAP_PAI(pm, cpu_tlb_info(ci));
+		AARCH64_TLBI_BY_ASID_VA(pai->pai_asid, va, true);
 
 		UVMHIST_LOG(pmaphist, "va=%016llx, ptep=%p, pa=%016lx, unse AF",
 		    va, ptep, l3pte_pa(pte), 0);
@@ -2610,8 +2704,9 @@ void
 pmap_db_pmap_print(struct pmap *pm,
     void (*pr)(const char *, ...) __printflike(1, 2))
 {
+	struct pmap_asid_info * const pai = PMAP_PAI(pm, cpu_tlb_info(ci));
 
-	pr(" pm_asid       = %d\n", pm->pm_asid);
+	pr(" pm_asid       = %d\n", pai->pai_asid);
 	pr(" pm_l0table    = %p\n", pm->pm_l0table);
 	pr(" pm_l0table_pa = %lx\n", pm->pm_l0table_pa);
 	pr(" pm_activated  = %d\n\n", pm->pm_activated);

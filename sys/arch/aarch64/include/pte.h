@@ -1,4 +1,4 @@
-/* $NetBSD: pte.h,v 1.12 2020/02/29 21:34:37 ryo Exp $ */
+/* $NetBSD: pte.h,v 1.13 2021/10/10 07:15:25 skrll Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -110,7 +110,7 @@ typedef uint64_t pt_entry_t;	/* L3(4k) table entry */
 #define L1_SIZE			(1UL << L1_SHIFT)
 #define L1_OFFSET		(L1_SIZE - 1UL)
 #define L1_FRAME		(~L1_OFFSET)
-#define L1_BLOCK		(LX_BLKPAG_NG | LX_TYPE_BLK | LX_VALID)
+#define L1_BLOCK		(LX_TYPE_BLK | LX_VALID)
 #define L1_TABLE		(LX_TYPE_TBL | LX_VALID)
 
 /* L2 table, 2MB/entry * 512 */
@@ -119,7 +119,7 @@ typedef uint64_t pt_entry_t;	/* L3(4k) table entry */
 #define L2_SIZE			(1UL << L2_SHIFT)
 #define L2_OFFSET		(L2_SIZE - 1UL)
 #define L2_FRAME		(~L2_OFFSET)
-#define L2_BLOCK		(LX_BLKPAG_NG | LX_TYPE_BLK | LX_VALID)
+#define L2_BLOCK		(LX_TYPE_BLK | LX_VALID)
 #define L2_TABLE		(LX_TYPE_TBL | LX_VALID)
 #define L2_BLOCK_MASK		__BITS(47,21)
 
@@ -129,7 +129,7 @@ typedef uint64_t pt_entry_t;	/* L3(4k) table entry */
 #define L3_SIZE			(1UL << L3_SHIFT)
 #define L3_OFFSET		(L3_SIZE - 1UL)
 #define L3_FRAME		(~L3_OFFSET)
-#define L3_PAGE			(LX_BLKPAG_NG | L3_TYPE_PAG | LX_VALID)
+#define L3_PAGE			(L3_TYPE_PAG | LX_VALID)
 
 #define Ln_ENTRIES_SHIFT	9
 #define Ln_ENTRIES		(1 << Ln_ENTRIES_SHIFT)
