@@ -1,4 +1,4 @@
-/*	$NetBSD: jobs.c,v 1.113 2021/10/10 08:35:34 rillig Exp $	*/
+/*	$NetBSD: jobs.c,v 1.114 2021/10/10 18:46:25 rillig Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)jobs.c	8.5 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: jobs.c,v 1.113 2021/10/10 08:35:34 rillig Exp $");
+__RCSID("$NetBSD: jobs.c,v 1.114 2021/10/10 18:46:25 rillig Exp $");
 #endif
 #endif /* not lint */
 
@@ -187,18 +187,16 @@ setjobctl(int on)
 		out2str("sh: Need FIOCLEX or FD_CLOEXEC to support job control");
 		goto out;
 #endif
-		do { /* while we are in the background */
-			if ((initialpgrp = tcgetpgrp(ttyfd)) < 0) {
+		if ((initialpgrp = tcgetpgrp(ttyfd)) < 0) {
  out:
-				out2str("sh: can't access tty; job control turned off\n");
-				mflag = 0;
-				return;
-			}
-			if (initialpgrp == -1)
-				initialpgrp = getpgrp();
-			else if (initialpgrp != getpgrp())
-				killpg(0, SIGTTIN);
-		} while (0);
+			out2str("sh: can't access tty; job control turned off\n");
+			mflag = 0;
+			return;
+		}
+		if (initialpgrp == -1)
+			initialpgrp = getpgrp();
+		else if (initialpgrp != getpgrp())
+			killpg(0, SIGTTIN);
 
 #ifdef OLD_TTY_DRIVER
 		if (ioctl(ttyfd, TIOCGETD, (char *)&ldisc) < 0
