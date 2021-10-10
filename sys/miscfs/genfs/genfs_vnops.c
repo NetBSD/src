@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_vnops.c,v 1.212 2021/09/26 01:16:10 thorpej Exp $	*/
+/*	$NetBSD: genfs_vnops.c,v 1.213 2021/10/10 23:46:23 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.212 2021/09/26 01:16:10 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.213 2021/10/10 23:46:23 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -68,6 +68,7 @@ __KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.212 2021/09/26 01:16:10 thorpej Ex
 #include <sys/namei.h>
 #include <sys/vnode_impl.h>
 #include <sys/fcntl.h>
+#include <sys/eventvar.h>		/* XXX for kq->kq_lock */
 #include <sys/kmem.h>
 #include <sys/poll.h>
 #include <sys/mman.h>
@@ -525,7 +526,9 @@ filt_genfsread(struct knote *kn, long hint)
 	switch (hint) {
 	case NOTE_REVOKE:
 		KASSERT(mutex_owned(vp->v_interlock));
+		mutex_spin_enter(&kn->kn_kq->kq_lock);
 		kn->kn_flags |= (EV_EOF | EV_ONESHOT);
+		mutex_spin_exit(&kn->kn_kq->kq_lock);
 		return (1);
 	case 0:
 		mutex_enter(vp->v_interlock);
@@ -552,7 +555,9 @@ filt_genfswrite(struct knote *kn, long hint)
 	switch (hint) {
 	case NOTE_REVOKE:
 		KASSERT(mutex_owned(vp->v_interlock));
+		mutex_spin_enter(&kn->kn_kq->kq_lock);
 		kn->kn_flags |= (EV_EOF | EV_ONESHOT);
+		mutex_spin_exit(&kn->kn_kq->kq_lock);
 		return (1);
 	case 0:
 		mutex_enter(vp->v_interlock);
@@ -575,7 +580,9 @@ filt_genfsvnode(struct knote *kn, long hint)
 	switch (hint) {
 	case NOTE_REVOKE:
 		KASSERT(mutex_owned(vp->v_interlock));
+		mutex_spin_enter(&kn->kn_kq->kq_lock);
 		kn->kn_flags |= EV_EOF;
+		mutex_spin_exit(&kn->kn_kq->kq_lock);
 		if ((kn->kn_sfflags & hint) != 0)
 			kn->kn_fflags |= hint;
 		return (1);
