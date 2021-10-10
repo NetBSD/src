@@ -1,4 +1,4 @@
-/*	$NetBSD: jobs.c,v 1.112 2021/09/12 01:30:41 kre Exp $	*/
+/*	$NetBSD: jobs.c,v 1.113 2021/10/10 08:35:34 rillig Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)jobs.c	8.5 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: jobs.c,v 1.112 2021/09/12 01:30:41 kre Exp $");
+__RCSID("$NetBSD: jobs.c,v 1.113 2021/10/10 08:35:34 rillig Exp $");
 #endif
 #endif /* not lint */
 
@@ -196,10 +196,8 @@ setjobctl(int on)
 			}
 			if (initialpgrp == -1)
 				initialpgrp = getpgrp();
-			else if (initialpgrp != getpgrp()) {
+			else if (initialpgrp != getpgrp())
 				killpg(0, SIGTTIN);
-				continue;
-			}
 		} while (0);
 
 #ifdef OLD_TTY_DRIVER

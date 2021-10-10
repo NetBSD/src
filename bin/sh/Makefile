@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.119 2021/10/09 21:06:31 rillig Exp $
+#	$NetBSD: Makefile,v 1.120 2021/10/10 08:35:34 rillig Exp $
 #	@(#)Makefile	8.4 (Berkeley) 5/5/95
 
 .include <bsd.own.mk>
@@ -30,7 +30,6 @@ CPPFLAGS+= -DUSE_LRAND48
 #COPTS+=-g
 #CFLAGS+=-funsigned-char
 #TARGET_CHARFLAG?= -DTARGET_CHAR="unsigned char" -funsigned-char
-LINTFLAGS+=	-X 323		# continue in 'do ... while (0)' loop
 
 # Reproducible build parameters ... export into sh for NETBSD_SHELL setting
 .if ${MKREPRO_TIMESTAMP:Uno} != "no"
