@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_event.c,v 1.129 2021/10/10 18:07:51 thorpej Exp $	*/
+/*	$NetBSD: kern_event.c,v 1.130 2021/10/10 19:11:56 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009, 2021 The NetBSD Foundation, Inc.
@@ -58,10 +58,12 @@
  * FreeBSD: src/sys/kern/kern_event.c,v 1.27 2001/07/05 17:10:44 rwatson Exp
  */
 
+#ifdef _KERNEL_OPT
 #include "opt_ddb.h"
+#endif /* _KERNEL_OPT */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_event.c,v 1.129 2021/10/10 18:07:51 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_event.c,v 1.130 2021/10/10 19:11:56 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
