@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_pserialize.c,v 1.17 2019/12/05 03:21:29 riastradh Exp $	*/
+/*	$NetBSD: subr_pserialize.c,v 1.18 2021/10/10 11:20:46 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_pserialize.c,v 1.17 2019/12/05 03:21:29 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_pserialize.c,v 1.18 2021/10/10 11:20:46 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -43,7 +43,7 @@ __KERNEL_RCSID(0, "$NetBSD: subr_pserialize.c,v 1.17 2019/12/05 03:21:29 riastra
 #include <sys/xcall.h>
 
 struct pserialize {
-	lwp_t *			psz_owner;
+	char			psz_dummy;
 };
 
 static kmutex_t			psz_lock	__cacheline_aligned;
@@ -86,16 +86,13 @@ void
 pserialize_destroy(pserialize_t psz)
 {
 
-	KASSERT(psz->psz_owner == NULL);
 	kmem_free(psz, sizeof(*psz));
 }
 
 /*
  * pserialize_perform:
  *
- *	Perform the write side of passive serialization.  This operation
- *	MUST be serialized at a caller level (e.g. with a mutex or by a
- *	single-threaded use).
+ *	Perform the write side of passive serialization.
  */
 void
 pserialize_perform(pserialize_t psz)
@@ -107,22 +104,17 @@ pserialize_perform(pserialize_t psz)
 	if (__predict_false(panicstr != NULL)) {
 		return;
 	}
-	KASSERT(psz->psz_owner == NULL);
 
 	if (__predict_false(mp_online == false)) {
 		psz_ev_excl.ev_count++;
 		return;
 	}
 
-	psz->psz_owner = curlwp;
-
 	/*
 	 * Broadcast a NOP to all CPUs and wait until all of them complete.
 	 */
 	xc_barrier(XC_HIGHPRI);
 
-	KASSERT(psz->psz_owner == curlwp);
-	psz->psz_owner = NULL;
 	mutex_enter(&psz_lock);
 	psz_ev_excl.ev_count++;
 	mutex_exit(&psz_lock);
