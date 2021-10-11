@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.1288 2021/10/11 03:50:45 msaitoh Exp $
+#	$NetBSD: files,v 1.1289 2021/10/11 13:42:33 jmcneill Exp $
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
 version 	20171118
@@ -1035,6 +1035,7 @@ device	njata: ata, ata_piobm, wdc_common
 file	dev/ic/ninjaata32.c		njata
 
 # AHCI-compatible SATA controllers
+defflag	opt_ahcisata.h	AHCISATA_EXTRA_DELAY
 define ahcisata_core
 file dev/ic/ahcisata_core.c ahcisata_core
 device ahcisata: ata, ata_dma, ata_udma, sata, sata_fis, sata_pmp, ahcisata_core
