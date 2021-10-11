@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.108 2020/06/22 07:50:53 msaitoh Exp $	*/
+/*	$NetBSD: init.c,v 1.109 2021/10/11 20:23:25 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993\
 #if 0
 static char sccsid[] = "@(#)init.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: init.c,v 1.108 2020/06/22 07:50:53 msaitoh Exp $");
+__RCSID("$NetBSD: init.c,v 1.109 2021/10/11 20:23:25 jmcneill Exp $");
 #endif
 #endif /* not lint */
 
@@ -91,6 +91,7 @@ __RCSID("$NetBSD: init.c,v 1.108 2020/06/22 07:50:53 msaitoh Exp $");
  */
 #define	GETTY_SPACING		 5	/* N secs minimum getty spacing */
 #define	GETTY_SLEEP		30	/* sleep N secs after spacing problem */
+#define	GETTY_NSPACE		 5	/* N retries before spacing problem */
 #define	WINDOW_WAIT		 3	/* wait N secs after starting window */
 #define	STALL_TIMEOUT		30	/* wait N secs after warning */
 #define	DEATH_WATCH		10	/* wait N secs for procs to die */
@@ -151,6 +152,7 @@ typedef struct init_session {
 	int	se_index;		/* index of entry in ttys file */
 	pid_t	se_process;		/* controlling process */
 	struct timeval	se_started;	/* used to avoid thrashing */
+	int	se_nspace;		/* spacing count */
 	int	se_flags;		/* status of session */
 #define	SE_SHUTDOWN	0x1		/* session won't be restarted */
 #define	SE_PRESENT	0x2		/* session is in /etc/ttys */
@@ -1270,6 +1272,17 @@ start_getty(session_t *sp)
 	pid_t pid;
 	sigset_t mask;
 	time_t current_time = time(NULL);
+	bool do_sleep = false;
+
+	if (current_time >= sp->se_started.tv_sec &&
+	    current_time - sp->se_started.tv_sec < GETTY_SPACING) {
+		if (++sp->se_nspace > GETTY_NSPACE) {
+			sp->se_nspace = 0;
+			do_sleep = true;
+		}
+	} else {
+		sp->se_nspace = 0;
+	}
 
 	/*
 	 * fork(), not vfork() -- we can't afford to block.
@@ -1293,8 +1306,7 @@ start_getty(session_t *sp)
 		}
 #endif /* CHROOT */
 
-	if (current_time > sp->se_started.tv_sec &&
-	    current_time - sp->se_started.tv_sec < GETTY_SPACING) {
+	if (do_sleep) {
 		warning("getty repeating too quickly on port `%s', sleeping",
 		    sp->se_device);
 		(void)sleep(GETTY_SLEEP);
@@ -1555,6 +1567,8 @@ clean_ttys(void)
 				sp->se_flags |= SE_SHUTDOWN;
 				if (sp->se_process != 0)
 					(void)kill(sp->se_process, SIGHUP);
+			} else {
+				sp->se_nspace = 0;
 			}
 			continue;
 		}
