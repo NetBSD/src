@@ -1,4 +1,4 @@
-/*      $NetBSD: ukbd.c,v 1.152 2021/08/07 16:19:17 thorpej Exp $        */
+/*      $NetBSD: ukbd.c,v 1.153 2021/10/11 00:00:03 jmcneill Exp $        */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ukbd.c,v 1.152 2021/08/07 16:19:17 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ukbd.c,v 1.153 2021/10/11 00:00:03 jmcneill Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -343,6 +343,7 @@ Static void	ukbd_delayed_decode(void *);
 Static int	ukbd_enable(void *, int);
 Static void	ukbd_set_leds(void *, int);
 Static void	ukbd_set_leds_task(void *);
+Static void	ukbd_delayed_leds_off(void *);
 
 Static int	ukbd_ioctl(void *, u_long, void *, int, struct lwp *);
 #if  defined(WSDISPLAY_COMPAT_RAWKBD) && defined(UKBD_REPEAT)
@@ -486,8 +487,7 @@ ukbd_attach(device_t parent, device_t self, void *aux)
 	/* Flash the leds; no real purpose, just shows we're alive. */
 	ukbd_set_leds(sc, WSKBD_LED_SCROLL | WSKBD_LED_NUM | WSKBD_LED_CAPS
 			| WSKBD_LED_COMPOSE);
-	usbd_delay_ms(uha->parent->sc_udev, 400);
-	ukbd_set_leds(sc, 0);
+	callout_reset(&sc->sc_delay, mstohz(400), ukbd_delayed_leds_off, sc);
 
 	sc->sc_wskbddev = config_found(self, &a, wskbddevprint, CFARGS_NONE);
 
@@ -704,6 +704,14 @@ ukbd_intr(struct uhidev *addr, void *ibuf, u_int len)
 	} else {
 		ukbd_decode(sc, ud);
 	}
+}
+
+Static void
+ukbd_delayed_leds_off(void *addr)
+{
+	struct ukbd_softc *sc = addr;
+
+	ukbd_set_leds(sc, 0);
 }
 
 void
