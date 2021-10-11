@@ -1,4 +1,4 @@
-/*	$NetBSD: event.h,v 1.45 2021/10/10 23:30:44 thorpej Exp $	*/
+/*	$NetBSD: event.h,v 1.46 2021/10/11 01:07:36 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999,2000,2001 Jonathan Lemon <jlemon@FreeBSD.org>
@@ -282,6 +282,8 @@ struct timespec;
 void	kqueue_init(void);
 void	knote(struct klist *, long);
 void	knote_fdclose(int);
+void	knote_set_eof(struct knote *, uint32_t);
+void	knote_clear_eof(struct knote *);
 
 typedef	int (*kevent_fetch_changes_t)(void *, const struct kevent *,
     struct kevent *, size_t, int);

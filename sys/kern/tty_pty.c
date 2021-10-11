@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_pty.c,v 1.148 2021/09/29 13:14:39 thorpej Exp $	*/
+/*	$NetBSD: tty_pty.c,v 1.149 2021/10/11 01:07:36 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty_pty.c,v 1.148 2021/09/29 13:14:39 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty_pty.c,v 1.149 2021/10/11 01:07:36 thorpej Exp $");
 
 #include "opt_ptm.h"
 
@@ -939,7 +939,7 @@ filt_ptcread(struct knote *kn, long hint)
 			kn->kn_data++;
 	}
 	if (!ISSET(tp->t_state, TS_CARR_ON)) {
-		kn->kn_flags |= EV_EOF;
+		knote_set_eof(kn, 0);
 		canread = 1;
 	}
 

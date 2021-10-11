@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_event.c,v 1.130 2021/10/10 19:11:56 thorpej Exp $	*/
+/*	$NetBSD: kern_event.c,v 1.131 2021/10/11 01:07:36 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009, 2021 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
 #endif /* _KERNEL_OPT */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_event.c,v 1.130 2021/10/10 19:11:56 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_event.c,v 1.131 2021/10/11 01:07:36 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2576,5 +2576,32 @@ knote_activate(struct knote *kn)
 		selnotify(&kq->kq_sel, 0, NOTE_SUBMIT);
 	}
  out:
+	mutex_spin_exit(&kq->kq_lock);
+}
+
+/*
+ * Set EV_EOF on the specified knote.  Also allows additional
+ * EV_* flags to be set (e.g. EV_ONESHOT).
+ */
+void
+knote_set_eof(struct knote *kn, uint32_t flags)
+{
+	struct kqueue *kq = kn->kn_kq;
+
+	mutex_spin_enter(&kq->kq_lock);
+	kn->kn_flags |= EV_EOF | flags;
+	mutex_spin_exit(&kq->kq_lock);
+}
+
+/*
+ * Clear EV_EOF on the specified knote.
+ */
+void
+knote_clear_eof(struct knote *kn)
+{
+	struct kqueue *kq = kn->kn_kq;
+
+	mutex_spin_enter(&kq->kq_lock);
+	kn->kn_flags &= ~EV_EOF;
 	mutex_spin_exit(&kq->kq_lock);
 }
