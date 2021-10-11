@@ -1,4 +1,4 @@
-/*	$NetBSD: uhub.c,v 1.155 2021/10/11 00:08:31 jmcneill Exp $	*/
+/*	$NetBSD: uhub.c,v 1.156 2021/10/11 00:16:08 jmcneill Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhub.c,v 1.18 1999/11/17 22:33:43 n_hibma Exp $	*/
 /*	$OpenBSD: uhub.c,v 1.86 2015/06/29 18:27:40 mpi Exp $ */
 
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhub.c,v 1.155 2021/10/11 00:08:31 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhub.c,v 1.156 2021/10/11 00:16:08 jmcneill Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -388,8 +388,9 @@ uhub_attach(device_t parent, device_t self, void *aux)
 		goto bad;
 	}
 
-	/* Wait with power off for a while. */
-	usbd_delay_ms(dev, USB_POWER_DOWN_TIME);
+	/* Wait with power off for a while if we are not a root hub */
+	if (dev->ud_powersrc->up_parent != NULL)
+		usbd_delay_ms(dev, USB_POWER_DOWN_TIME);
 
 	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, dev, sc->sc_dev);
 
