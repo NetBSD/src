@@ -1,4 +1,4 @@
-/*	$NetBSD: ahcisata_core.c,v 1.102 2021/10/05 08:01:05 rin Exp $	*/
+/*	$NetBSD: ahcisata_core.c,v 1.103 2021/10/11 12:48:10 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahcisata_core.c,v 1.102 2021/10/05 08:01:05 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahcisata_core.c,v 1.103 2021/10/11 12:48:10 jmcneill Exp $");
 
 #include <sys/types.h>
 #include <sys/malloc.h>
@@ -49,6 +49,8 @@ __KERNEL_RCSID(0, "$NetBSD: ahcisata_core.c,v 1.102 2021/10/05 08:01:05 rin Exp 
 #include <dev/scsipi/scsi_all.h> /* for SCSI status */
 
 #include "atapibus.h"
+
+#include "opt_ahcisata.h"
 
 #ifdef AHCI_DEBUG
 int ahcidebug_mask = 0;
@@ -968,7 +970,9 @@ again:
 	    AHCI_READ(sc, AHCI_P_CMD(chp->ch_channel))), DEBUG_PROBE);
 end:
 	ahci_channel_stop(sc, chp, flags);
+#ifdef AHCISATA_EXTRA_DELAY
 	ata_delay(chp, 500, "ahcirst", flags);
+#endif
 	/* clear port interrupt register */
 	AHCI_WRITE(sc, AHCI_P_IS(chp->ch_channel), 0xffffffff);
 	ahci_channel_start(sc, chp, flags,
@@ -992,7 +996,9 @@ ahci_reset_channel(struct ata_channel *chp, int flags)
 		/* XXX and then ? */
 	}
 	ata_kill_active(chp, KILL_RESET, flags);
+#ifdef AHCISATA_EXTRA_DELAY
 	ata_delay(chp, 500, "ahcirst", flags);
+#endif
 	/* clear port interrupt register */
 	AHCI_WRITE(sc, AHCI_P_IS(chp->ch_channel), 0xffffffff);
 	/* clear SErrors and start operations */
@@ -1062,7 +1068,9 @@ ahci_probe_drive(struct ata_channel *chp)
 	switch (sata_reset_interface(chp, sc->sc_ahcit, achp->ahcic_scontrol,
 	    achp->ahcic_sstatus, AT_WAIT)) {
 	case SStatus_DET_DEV:
+#ifdef AHCISATA_EXTRA_DELAY
 		ata_delay(chp, 500, "ahcidv", AT_WAIT);
+#endif
 
 		/* Initial value, used in case the soft reset fails */
 		sig = AHCI_READ(sc, AHCI_P_SIG(chp->ch_channel));
@@ -1101,8 +1109,10 @@ ahci_probe_drive(struct ata_channel *chp)
 		    AHCI_P_IX_IFS |
 		    AHCI_P_IX_OFS | AHCI_P_IX_DPS | AHCI_P_IX_UFS |
 		    AHCI_P_IX_PSS | AHCI_P_IX_DHRS | AHCI_P_IX_SDBS);
+#ifdef AHCISATA_EXTRA_DELAY
 		/* wait 500ms before actually starting operations */
 		ata_delay(chp, 500, "ahciprb", AT_WAIT);
+#endif
 		break;
 
 	default:
