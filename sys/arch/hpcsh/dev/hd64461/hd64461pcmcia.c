@@ -1,4 +1,4 @@
-/*	$NetBSD: hd64461pcmcia.c,v 1.54 2021/08/07 16:18:54 thorpej Exp $	*/
+/*	$NetBSD: hd64461pcmcia.c,v 1.55 2021/10/11 02:30:00 rin Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2004 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hd64461pcmcia.c,v 1.54 2021/08/07 16:18:54 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hd64461pcmcia.c,v 1.55 2021/10/11 02:30:00 rin Exp $");
 
 #include "opt_hd64461pcmcia.h"
 
@@ -223,17 +223,37 @@ STATIC void hd64461_set_bus_width(enum controller_channel, int);
 #ifdef HD64461PCMCIA_DEBUG
 STATIC void hd64461pcmcia_info(struct hd64461pcmcia_softc *);
 #endif
-/* fix SH3 Area[56] bug */
-STATIC void fixup_sh3_pcmcia_area(bus_space_tag_t);
+
+/*
+ * Workaround for SH-3 PCMCIA bug on area 6:
+ *
+ * According to TECH I vol. 14 (CQ Publishing, Tokyo, 2002) p. 184,
+ * byte-access to area 6 becomes word-access if preceding access is
+ * word-wise. Inserting a dummy byte-access works around the problem.
+ * Area 5 is not affected by this bug.
+ *
+ * Therefore, we insert a dummy byte-wise read to HD64461_PCC0_MEMBASE
+ * before any byte-access to area 6 (channel 0).
+ *
+ * Note that we used to use HD64461_PCC0_IOBASE for this purpose. But,
+ * read access to that register can modify device states, which breaks
+ * ep(4) at least. On the other hand, since HD64461_PCC0_MEMBASE is
+ * assigned to attribute memory, read access should be harmless.
+ */
+STATIC void fixup_sh3_pcmcia_area6(bus_space_tag_t);
 #define	_BUS_SPACE_ACCESS_HOOK()					\
-do {									\
-	uint8_t dummy __attribute__((__unused__)) =			\
-	 *(volatile uint8_t *)0xba000000;				\
-} while (/*CONSTCOND*/0)
+    do {								\
+	uint8_t dummy __unused =					\
+	    *(volatile uint8_t *)HD64461_PCC0_MEMBASE;			\
+    } while (0)
+_BUS_SPACE_READ(_sh3_pcmcia_bug, 1, 8)
+_BUS_SPACE_READ_MULTI(_sh3_pcmcia_bug, 1, 8)
+_BUS_SPACE_READ_REGION(_sh3_pcmcia_bug, 1, 8)
 _BUS_SPACE_WRITE(_sh3_pcmcia_bug, 1, 8)
 _BUS_SPACE_WRITE_MULTI(_sh3_pcmcia_bug, 1, 8)
 _BUS_SPACE_WRITE_REGION(_sh3_pcmcia_bug, 1, 8)
 _BUS_SPACE_SET_MULTI(_sh3_pcmcia_bug, 1, 8)
+_BUS_SPACE_COPY_REGION(_sh3_pcmcia_bug, 1, 8)
 #undef _BUS_SPACE_ACCESS_HOOK
 
 #define	DELAY_MS(x)	delay((x) * 1000)
@@ -386,7 +406,8 @@ hd64461pcmcia_attach_channel(struct hd64461pcmcia_softc *sc,
 	bus_space_alloc(ch->ch_memt, 0, 0x00ffffff, 0x01000000,
 	    0x01000000, 0x01000000, 0, &ch->ch_membase_addr,
 	    &ch->ch_memh);
-	fixup_sh3_pcmcia_area(ch->ch_memt);
+	if (channel == CHANNEL_0)
+		fixup_sh3_pcmcia_area6(ch->ch_memt);
 
 	/* Common memory space extent */
 	ch->ch_memsize = 0x01000000;
@@ -394,7 +415,8 @@ hd64461pcmcia_attach_channel(struct hd64461pcmcia_softc *sc,
 		ch->ch_cmemt[i] = bus_space_create(0, "PCMCIA common memory",
 		    membase + 0x01000000,
 		    ch->ch_memsize);
-		fixup_sh3_pcmcia_area(ch->ch_cmemt[i]);
+		if (channel == CHANNEL_0)
+			fixup_sh3_pcmcia_area6(ch->ch_cmemt[i]);
 	}
 
 	/* I/O port extent and interrupt staff */
@@ -406,7 +428,7 @@ hd64461pcmcia_attach_channel(struct hd64461pcmcia_softc *sc,
 		ch->ch_iot = bus_space_create(0, "PCMCIA I/O port",
 		    HD64461_PCC0_IOBASE,
 		    ch->ch_iosize);
-		fixup_sh3_pcmcia_area(ch->ch_iot);
+		fixup_sh3_pcmcia_area6(ch->ch_iot);
 
 		hd6446x_intr_establish(HD64461_INTC_PCC0, IST_LEVEL, IPL_TTY,
 		    hd64461pcmcia_channel0_intr, ch);
@@ -1081,14 +1103,18 @@ hd64461_set_bus_width(enum controller_channel channel, int width)
 }
 
 STATIC void
-fixup_sh3_pcmcia_area(bus_space_tag_t t)
+fixup_sh3_pcmcia_area6(bus_space_tag_t t)
 {
 	struct hpcsh_bus_space *hbs = (void *)t;
 
+	hbs->hbs_r_1	= _sh3_pcmcia_bug_read_1;
+	hbs->hbs_rm_1	= _sh3_pcmcia_bug_read_multi_1;
+	hbs->hbs_rr_1	= _sh3_pcmcia_bug_read_region_1;
 	hbs->hbs_w_1	= _sh3_pcmcia_bug_write_1;
 	hbs->hbs_wm_1	= _sh3_pcmcia_bug_write_multi_1;
 	hbs->hbs_wr_1	= _sh3_pcmcia_bug_write_region_1;
 	hbs->hbs_sm_1	= _sh3_pcmcia_bug_set_multi_1;
+	hbs->hbs_c_1	= _sh3_pcmcia_bug_copy_region_1;
 }
 
 #ifdef HD64461PCMCIA_DEBUG
