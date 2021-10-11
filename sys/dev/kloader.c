@@ -1,4 +1,4 @@
-/*	$NetBSD: kloader.c,v 1.30 2021/10/11 14:14:40 rin Exp $	*/
+/*	$NetBSD: kloader.c,v 1.31 2021/10/11 14:16:43 rin Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2004 The NetBSD Foundation, Inc.
@@ -27,17 +27,18 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kloader.c,v 1.30 2021/10/11 14:14:40 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kloader.c,v 1.31 2021/10/11 14:16:43 rin Exp $");
 
 #include "debug_kloader.h"
 
 #include <sys/param.h>
-#include <sys/systm.h>
-#include <sys/malloc.h>
-#include <sys/proc.h>
-#include <sys/vnode.h>
-#include <sys/namei.h>
 #include <sys/fcntl.h>
+#include <sys/malloc.h>
+#include <sys/namei.h>
+#include <sys/proc.h>
+#include <sys/systm.h>
+#include <sys/vnode.h>
+
 #define	ELFSIZE	32
 #include <sys/exec_elf.h>
 
