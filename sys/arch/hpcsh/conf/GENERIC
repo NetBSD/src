@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.113 2020/03/25 17:06:19 jdolecek Exp $
+# $NetBSD: GENERIC,v 1.114 2021/10/11 02:35:18 rin Exp $
 #
 # GENERIC machine description file
 #
@@ -291,6 +291,7 @@ atabus1 at wdc1 channel ?		# PC Card slot
 wd*	at atabus? drive ? flags 0x0000
 
 # PCMCIA network interfaces
+#ep*	at pcmcia0 function ?		# 3Com EtherLink III Ethernet
 mbe*	at pcmcia0 function ?		# MB8696x based Ethernet
 ne*	at pcmcia0 function ?		# NE2000-compatible Ethernet
 wi*	at pcmcia0 function ?		# Lucent/Intersil WaveLan IEEE (802.11)
@@ -298,6 +299,7 @@ wi*	at pcmcia0 function ?		# Lucent/Intersil WaveLan IEEE (802.11)
 # MII/PHY support
 lxtphy*	at mii? phy ?			# Level One LXT-970 PHYs
 nsphyter* at mii? phy ?			# NS83843 PHYs
+#tqphy* at mii? phy?			# TDK Semiconductor PHYs
 ukphy*	at mii? phy ?			# generic unknown PHYs
 
 # PCMCIA Serial Devices
