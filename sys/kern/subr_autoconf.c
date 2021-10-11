@@ -1,4 +1,4 @@
-/* $NetBSD: subr_autoconf.c,v 1.289 2021/08/07 16:19:18 thorpej Exp $ */
+/* $NetBSD: subr_autoconf.c,v 1.290 2021/10/11 10:59:09 jmcneill Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.289 2021/08/07 16:19:18 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.290 2021/10/11 10:59:09 jmcneill Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -2406,9 +2406,16 @@ config_finalize(void)
 	mutex_enter(&config_misc_lock);
 	while (!TAILQ_EMPTY(&config_pending)) {
 		device_t dev;
-		TAILQ_FOREACH(dev, &config_pending, dv_pending_list)
-			aprint_debug_dev(dev, "holding up boot\n");
-		cv_wait(&config_misc_cv, &config_misc_lock);
+		int error;
+
+		error = cv_timedwait(&config_misc_cv, &config_misc_lock,
+		    mstohz(1000));
+		if (error == EWOULDBLOCK) {
+			aprint_debug("waiting for devices:");
+			TAILQ_FOREACH(dev, &config_pending, dv_pending_list)
+				aprint_debug(" %s", device_xname(dev));
+			aprint_debug("\n");
+		}
 	}
 	mutex_exit(&config_misc_lock);
 
