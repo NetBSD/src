@@ -1,4 +1,4 @@
-.\"     $NetBSD: wsmouse.9,v 1.18 2020/12/18 02:29:50 pgoyette Exp $
+.\"     $NetBSD: wsmouse.9,v 1.19 2021/10/11 18:19:27 nia Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd November 12, 2006
+.Dd October 11, 2021
 .Dt WSMOUSE 9
 .Os
 .Sh NAME
@@ -171,6 +171,30 @@ Absolute mode in
 axis.
 .El
 .El
+.It Fn wsmouse_precision_scroll "msdev" "x" "y"
+Callback from the mouse driver to the wsmouse interface driver.
+.Pp
+This is used when higher precision scrolling events are required
+than what can be provided by a typical scroll wheel.
+This function generates
+.Dv WSCONS_EVENT_HSCROLL
+(for scrolling on the X axis) and
+.Dv WSCONS_EVENT_VSCROLL
+(for scrolling on the X axis) events.
+.Pp
+The coordinates are adjusted for speed according to the formula:
+.Li x * 4096 / scroll_unit
+.Pp
+The
+.Dv scroll_unit
+is configured through the
+.Xr wsmouse 4
+ioctl interface, specifically the
+.Dv WSMOUSEIO_SETPARAMS
+keys
+.Dv WSMOUSECFG_HORIZSCROLLDIST
+and
+.Dv WSMOUSECFG_VERTSCROLLDIST .
 .It Fn wsmousedevprint "aux" "pnp"
 The default wsmouse printing routine used by
 .Fn config_found .
