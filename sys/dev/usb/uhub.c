@@ -1,4 +1,4 @@
-/*	$NetBSD: uhub.c,v 1.154 2021/10/10 23:39:50 jmcneill Exp $	*/
+/*	$NetBSD: uhub.c,v 1.155 2021/10/11 00:08:31 jmcneill Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhub.c,v 1.18 1999/11/17 22:33:43 n_hibma Exp $	*/
 /*	$OpenBSD: uhub.c,v 1.86 2015/06/29 18:27:40 mpi Exp $ */
 
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhub.c,v 1.154 2021/10/10 23:39:50 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhub.c,v 1.155 2021/10/11 00:08:31 jmcneill Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -700,6 +700,8 @@ uhub_explore(struct usbd_device *dev)
 		if (!__BITMAP_ISSET(port, &powerup_port)) {
 			continue;
 		}
+
+		up = &dev->ud_hub->uh_ports[port - 1];
 
 		/* Reset port, which implies enabling it. */
 		if (usbd_reset_port(dev, port, &up->up_status)) {
