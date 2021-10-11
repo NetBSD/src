@@ -1,4 +1,4 @@
-/*	$NetBSD: spl.S,v 1.10 2013/12/02 18:36:10 joerg Exp $	*/
+/*	$NetBSD: spl.S,v 1.11 2021/10/11 07:26:17 rin Exp $	*/
 
 /*
  * Copyright (c) 1996-1998 Mark Brinicombe.
@@ -43,7 +43,7 @@
 #include <arm/locore.h>
 #include <arm/arm32/psl.h>
 
-	RCSID("$NetBSD: spl.S,v 1.10 2013/12/02 18:36:10 joerg Exp $")
+	RCSID("$NetBSD: spl.S,v 1.11 2021/10/11 07:26:17 rin Exp $")
 
 	.text
 	.align	0
@@ -111,8 +111,8 @@ ENTRY(splx)
 	str	r3, [r1, #CI_CPL]	/* Store the new spl level */
 
 	bl	_C_LABEL(irq_setmasks)	/* Update the actual masks */
+	msr	cpsr_c, r4
 #ifdef __HAVE_FAST_SOFTINTS
 	bl	_C_LABEL(dosoftints)	/* Process any pending soft ints */
 #endif
-	msr	cpsr_c, r4
 	ldmfd	sp!, {r0, r1, r4, pc}
