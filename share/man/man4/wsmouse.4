@@ -1,4 +1,4 @@
-.\" $NetBSD: wsmouse.4,v 1.22 2012/05/27 12:05:40 wiz Exp $
+.\" $NetBSD: wsmouse.4,v 1.23 2021/10/11 18:06:06 nia Exp $
 .\"
 .\" Copyright (c) 1999
 .\" 	Matthias Drochner.  All rights reserved.
@@ -27,7 +27,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd May 27, 2012
+.Dd September 25, 2021
 .Dt WSMOUSE 4
 .Os
 .Sh NAME
@@ -78,6 +78,36 @@ driver or by devices which use it.
 Their definitions are found in
 .Pa dev/wscons/wsconsio.h .
 .Bl -tag -width Dv
+.It Dv WSMOUSEIO_GETPARAMS Pq Li "struct wsmouse_parameters"
+.It Dv WSMOUSEIO_SETPARAMS Pq Li "struct wsmouse_parameters"
+Obtain and set various mouse parameters as a key/value set.
+Currently these primarily relate to touchpads.
+The structure
+.Vt struct wsmouse_parameters
+is defined as follows:
+.Bd -literal -offset indent
+struct wsmouse_param {
+	enum wsmousecfg key;
+	int value;
+};
+
+struct wsmouse_parameters {
+	struct wsmouse_param *params;
+	unsigned int nparams;
+};
+.Ed
+.Pp
+The number of parameters to read or write must be specified in
+.Va nparams .
+For each parameter, when
+.Dv WSMOUSEIO_GETPARAMS
+is used, a key must be specified.
+When
+.Dv WSMOUSEIO_SETPARAMS
+is used, a key and a value must be specified.
+A single ioctl may retrieve up to
+.Dv WSMOUSECFG_MAX
+.Va nparams .
 .It Dv WSMOUSEIO_GETREPEAT Pq Li "struct wsmouse_repeat"
 Retrieve the current automatic button repeating configuration.
 The structure returned is as follows:
