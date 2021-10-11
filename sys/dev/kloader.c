@@ -1,4 +1,4 @@
-/*	$NetBSD: kloader.c,v 1.31 2021/10/11 14:16:43 rin Exp $	*/
+/*	$NetBSD: kloader.c,v 1.32 2021/10/11 14:25:05 rin Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2004 The NetBSD Foundation, Inc.
@@ -27,13 +27,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kloader.c,v 1.31 2021/10/11 14:16:43 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kloader.c,v 1.32 2021/10/11 14:25:05 rin Exp $");
 
 #include "debug_kloader.h"
 
 #include <sys/param.h>
 #include <sys/fcntl.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 #include <sys/namei.h>
 #include <sys/proc.h>
 #include <sys/systm.h>
@@ -174,7 +174,7 @@ kloader_load(void)
 	Elf_Addr entry;
 	vaddr_t kv;
 	size_t sz;
-	size_t shstrsz;
+	size_t phsz, shsz, shstrsz;
 	char *shstrtab;
 	int symndx, strndx;
 	size_t ksymsz;
@@ -199,30 +199,30 @@ kloader_load(void)
 	}
 
 	/* read program headers */
-	sz = eh.e_phentsize * eh.e_phnum;
-	if ((ph = malloc(sz, M_TEMP, M_NOWAIT)) == NULL) {
+	phsz = eh.e_phentsize * eh.e_phnum;
+	if ((ph = kmem_alloc(phsz, KM_NOSLEEP)) == NULL) {
 		PRINTF("can't allocate program header table.\n");
 		goto err;
 	}
-	if (kloader_read(eh.e_phoff, sz, ph) != 0) {
+	if (kloader_read(eh.e_phoff, phsz, ph) != 0) {
 		PRINTF("program header read error.\n");
 		goto err;
 	}
 
 	/* read section headers */
-	sz = eh.e_shentsize * eh.e_shnum;
-	if ((sh = malloc(sz, M_TEMP, M_NOWAIT)) == NULL) {
+	shsz = eh.e_shentsize * eh.e_shnum;
+	if ((sh = kmem_alloc(shsz, KM_NOSLEEP)) == NULL) {
 		PRINTF("can't allocate section header table.\n");
 		goto err;
 	}
-	if (kloader_read(eh.e_shoff, eh.e_shentsize * eh.e_shnum, sh) != 0) {
+	if (kloader_read(eh.e_shoff, shsz, sh) != 0) {
 		PRINTF("section header read error.\n");
 		goto err;
 	}
 
 	/* read section names */
 	shstrsz = ROUND4(sh[eh.e_shstrndx].sh_size);
-	shstrtab = malloc(shstrsz, M_TEMP, M_NOWAIT);
+	shstrtab = kmem_alloc(shstrsz, KM_NOSLEEP);
 	if (shstrtab == NULL) {
 		PRINTF("unable to allocate memory for .shstrtab\n");
 		goto err;
@@ -416,11 +416,11 @@ kloader_load(void)
 	return (0);
  err:
 	if (ph != NULL)
-		free(ph, M_TEMP);
+		kmem_free(ph, phsz);
 	if (sh != NULL)
-		free(sh, M_TEMP);
+		kmem_free(sh, shsz);
 	if (shstrtab != NULL)
-		free(shstrtab, M_TEMP);
+		kmem_free(shstrtab, shstrsz);
 
 	return 1;
 }
