@@ -1,4 +1,4 @@
-/*	$NetBSD: sa11x0_hpc_machdep.c,v 1.19 2021/10/11 14:30:30 rin Exp $	*/
+/*	$NetBSD: sa11x0_hpc_machdep.c,v 1.20 2021/10/11 14:33:31 rin Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sa11x0_hpc_machdep.c,v 1.19 2021/10/11 14:30:30 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sa11x0_hpc_machdep.c,v 1.20 2021/10/11 14:33:31 rin Exp $");
 
 #include "opt_ddb.h"
 #include "opt_dram_pages.h"
@@ -277,12 +277,16 @@ init_sa11x0(int argc, char **argv, struct bootinfo *bi)
 #endif
 
 	/* Define a macro to simplify memory allocation */
-#define	valloc_pages(var, np)			\
-	alloc_pages((var).pv_pa, (np));		\
-	(var).pv_va = KERNEL_BASE + (var).pv_pa - physical_start;
-#define	alloc_pages(var, np)			\
-	(var) = freemempos;			\
-	freemempos += (np) * PAGE_SIZE;
+#define	valloc_pages(var, np)						\
+    do {								\
+	alloc_pages((var).pv_pa, (np));					\
+	(var).pv_va = KERNEL_BASE + (var).pv_pa - physical_start;	\
+    } while (0)
+#define	alloc_pages(var, np)						\
+    do {								\
+	(var) = freemempos;						\
+	freemempos += (np) * PAGE_SIZE;					\
+    } while (0)
 
 	valloc_pages(kernel_l1pt, L1_TABLE_SIZE / PAGE_SIZE);
 	for (loop = 0; loop < NUM_KERNEL_PTS; ++loop) {
