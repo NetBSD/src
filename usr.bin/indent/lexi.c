@@ -1,4 +1,4 @@
-/*	$NetBSD: lexi.c,v 1.89 2021/10/11 19:55:35 rillig Exp $	*/
+/*	$NetBSD: lexi.c,v 1.90 2021/10/11 20:13:46 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)lexi.c	8.1 (Berkeley) 6/6/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: lexi.c,v 1.89 2021/10/11 19:55:35 rillig Exp $");
+__RCSID("$NetBSD: lexi.c,v 1.90 2021/10/11 20:13:46 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/lexi.c 337862 2018-08-15 18:19:45Z pstef $");
 #endif
@@ -377,13 +377,14 @@ is_typename(void)
     return bsearch_typenames(token.s) >= 0;
 }
 
+/* Read an alphanumeric token into 'token', or return end_of_file. */
 static token_type
 lexi_alnum(struct parser_state *state)
 {
     if (!(isalnum((unsigned char)*inp.s) ||
 	*inp.s == '_' || *inp.s == '$' ||
 	(inp.s[0] == '.' && isdigit((unsigned char)inp.s[1]))))
-	return end_of_file;
+	return end_of_file;	/* just as a placeholder */
 
     if (isdigit((unsigned char)*inp.s) ||
 	(inp.s[0] == '.' && isdigit((unsigned char)inp.s[1]))) {
@@ -462,8 +463,8 @@ lexi_alnum(struct parser_state *state)
 	default:		/* all others are treated like any other
 				 * identifier */
 	    return ident;
-	}			/* end of switch */
-    }				/* end of if (found_it) */
+	}
+    }
 
     if (*inp.s == '(' && state->tos <= 1 && state->ind_level == 0 &&
 	!state->in_parameter_declaration && !state->block_init) {
@@ -495,10 +496,8 @@ not_proc:;
 token_type
 lexi(struct parser_state *state)
 {
-    token.e = token.s;		/* point to start of place to save token */
-    state->col_1 = state->last_nl;	/* tell world that this token started
-					 * in column 1 iff the last thing
-					 * scanned was a newline */
+    token.e = token.s;
+    state->col_1 = state->last_nl;
     state->last_nl = false;
 
     while (is_hspace(*inp.s)) {
@@ -512,9 +511,8 @@ lexi(struct parser_state *state)
 
     /* Scan a non-alphanumeric token */
 
-    check_size_token(3);	/* things like "<<=" */
-    *token.e++ = inbuf_next();	/* if it is only a one-character token, it is
-				 * moved here */
+    check_size_token(3);	/* for things like "<<=" */
+    *token.e++ = inbuf_next();
     *token.e = '\0';
 
     bool unary_delim = false;	/* whether the current token forces a
@@ -593,34 +591,28 @@ lexi(struct parser_state *state)
 	break;
 
     case '-':
-    case '+':			/* check for -, +, --, ++ */
+    case '+':
 	ttype = state->last_u_d ? unary_op : binary_op;
 	unary_delim = true;
 
-	if (*inp.s == token.s[0]) {
-	    /* check for doubled character */
+	if (*inp.s == token.s[0]) {	/* ++, -- */
 	    *token.e++ = *inp.s++;
-	    /* buffer overflow will be checked at end of loop */
 	    if (state->last_token == ident ||
 		    state->last_token == rparen_or_rbracket) {
 		ttype = state->last_u_d ? unary_op : postfix_op;
-		/* check for following ++ or -- */
 		unary_delim = false;
 	    }
 
-	} else if (*inp.s == '=') {
-	    /* check for operator += */
+	} else if (*inp.s == '=') {	/* += */
 	    *token.e++ = *inp.s++;
 
-	} else if (*inp.s == '>') {
-	    /* check for operator -> */
+	} else if (*inp.s == '>') {	/* -> */
 	    *token.e++ = *inp.s++;
 	    unary_delim = false;
 	    ttype = unary_op;
 	    state->want_blank = false;
 	}
-	break;			/* buffer overflow will be checked at end of
-				 * switch */
+	break;
 
     case '=':
 	if (state->init_or_struct)
