@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.1435 2021/10/02 20:45:17 mrg Exp $
+$NetBSD: pcidevs,v 1.1436 2021/10/11 13:25:19 msaitoh Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -3588,38 +3588,6 @@ product INTEL CMTLK_SDXC	0x02f5	Comet Lake SDXC
 product INTEL CMTLK_THERM	0x02f9	Comet Lake Thermal
 product INTEL CMTLK_SPI_2	0x02fb	Comet Lake SPI 2
 product INTEL CMTLK_ISH		0x02fc	Comet Lake Integrated Sensor Hub
-product INTEL CMTLK_PCIE_9	0x02b0	Comet Lake PCIe Root Port 9
-product INTEL CMTLK_PCIE_10	0x02b1	Comet Lake PCIe Root Port 10
-product INTEL CMTLK_PCIE_11	0x02b2	Comet Lake PCIe Root Port 11
-product INTEL CMTLK_PCIE_12	0x02b3	Comet Lake PCIe Root Port 12
-product INTEL CMTLK_PCIE_13	0x02b4	Comet Lake PCIe Root Port 13
-product INTEL CMTLK_PCIE_14	0x02b5	Comet Lake PCIe Root Port 14
-product INTEL CMTLK_PCIE_15	0x02b6	Comet Lake PCIe Root Port 15
-product INTEL CMTLK_PCIE_16	0x02b7	Comet Lake PCIe Root Port 16
-product INTEL CMTLK_PCIE_1	0x02b8	Comet Lake PCIe Root Port 1
-product INTEL CMTLK_PCIE_2	0x02b9	Comet Lake PCIe Root Port 2
-product INTEL CMTLK_PCIE_3	0x02ba	Comet Lake PCIe Root Port 3
-product INTEL CMTLK_PCIE_4	0x02bb	Comet Lake PCIe Root Port 4
-product INTEL CMTLK_PCIE_5	0x02bc	Comet Lake PCIe Root Port 5
-product INTEL CMTLK_PCIE_6	0x02bd	Comet Lake PCIe Root Port 6
-product INTEL CMTLK_PCIE_7	0x02be	Comet Lake PCIe Root Port 7
-product INTEL CMTLK_PCIE_8	0x02bf	Comet Lake PCIe Root Port 8
-product INTEL CMTLK_HDA		0x02c8	Comet Lake HD Audio
-product INTEL CMTLK_SATA_AHCI_0 0x02d3	Comet Lake SATA (AHCI)
-product INTEL CMTLK_MEI_1	0x02e0	Comet Lake MEI Controller #1
-product INTEL CMTLK_MEI_2	0x02e1	Comet Lake MEI Controller #2
-product INTEL CMTLK_IDE_R	0x02e2	Comet Lake IDE-R
-product INTEL CMTLK_KT		0x02e3	Comet Lake KT
-product INTEL CMTLK_MEI_3	0x02e4	Comet Lake MEI Controller #3
-product INTEL CMTLK_MEI_4	0x02e5	Comet Lake MEI Controller #4
-product INTEL CMTLK_I2C_0	0x02e8	Comet Lake I2C #0
-product INTEL CMTLK_I2C_1	0x02e9	Comet Lake I2C #1
-product INTEL CMTLK_I2C_2	0x02ea	Comet Lake I2C #2
-product INTEL CMTLK_I2C_3	0x02eb	Comet Lake I2C #3
-product INTEL CMTLK_XHCI	0x02ed	Comet Lake USB 3.2 Gen 2 xHCI
-product INTEL CMTLK_SSRAM	0x02ef	Comet Lake Shared SRAM
-product INTEL CMTLK_CNVI_WIFI	0x02f0	Comet Lake CNVi Wi-Fi
-product INTEL CMTLK_THERM	0x02f9	Comet Lake Thermal
 product INTEL 80312		0x030d	80312 I/O Companion Chip
 product INTEL 80321		0x0319	80321 I/O Processor
 product INTEL 6700PXH_IOXAPIC	0x0326	6700PXH IOxAPIC
