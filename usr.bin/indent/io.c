@@ -1,4 +1,4 @@
-/*	$NetBSD: io.c,v 1.92 2021/10/09 11:13:25 rillig Exp $	*/
+/*	$NetBSD: io.c,v 1.93 2021/10/11 18:55:49 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)io.c	8.1 (Berkeley) 6/6/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: io.c,v 1.92 2021/10/09 11:13:25 rillig Exp $");
+__RCSID("$NetBSD: io.c,v 1.93 2021/10/11 18:55:49 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/io.c 334927 2018-06-10 16:44:18Z pstef $");
 #endif
@@ -55,7 +55,6 @@ __FBSDID("$FreeBSD: head/usr.bin/indent/io.c 334927 2018-06-10 16:44:18Z pstef $
 
 #include "indent.h"
 
-static bool comment_open;
 static int paren_indent;
 static int suppress_blanklines;
 
@@ -107,11 +106,6 @@ dump_line_label(void)
 {
     int ind;
 
-    if (comment_open) {
-	comment_open = false;
-	output_string(".*/\n");
-    }
-
     while (lab.e > lab.s && is_hspace(lab.e[-1]))
 	lab.e--;
     *lab.e = '\0';
@@ -151,10 +145,6 @@ dump_line_label(void)
 static int
 dump_line_code(int ind)
 {
-    if (comment_open) {
-	comment_open = false;
-	output_string(".*/\n");
-    }
 
     int target_ind = compute_code_indent();
     for (int i = 0; i < ps.p_l_follow; i++) {
