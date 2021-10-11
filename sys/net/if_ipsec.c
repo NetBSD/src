@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ipsec.c,v 1.30 2020/10/14 18:48:05 roy Exp $  */
+/*	$NetBSD: if_ipsec.c,v 1.31 2021/10/11 05:13:11 knakahara Exp $  */
 
 /*
  * Copyright (c) 2017 Internet Initiative Japan Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ipsec.c,v 1.30 2020/10/14 18:48:05 roy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ipsec.c,v 1.31 2021/10/11 05:13:11 knakahara Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -151,6 +151,8 @@ static int max_ipsec_nesting = MAX_IPSEC_NEST;
 
 static struct sysctllog *if_ipsec_sysctl;
 
+static pktq_rps_hash_func_t if_ipsec_pktq_rps_hash_p;
+
 #ifdef INET6
 static int
 sysctl_if_ipsec_pmtu_global(SYSCTLFN_ARGS)
@@ -206,6 +208,8 @@ sysctl_if_ipsec_pmtu_perif(SYSCTLFN_ARGS)
 static void
 if_ipsec_sysctl_setup(void)
 {
+	const struct sysctlnode *node = NULL;
+
 	if_ipsec_sysctl = NULL;
 
 #ifdef INET6
@@ -241,6 +245,21 @@ if_ipsec_sysctl_setup(void)
 		       CTL_NET, PF_INET6, IPPROTO_IPV6,
 		       IPV6CTL_IPSEC_PMTU, CTL_EOL);
 #endif
+
+	sysctl_createv(&if_ipsec_sysctl, 0, NULL, &node,
+	    CTLFLAG_PERMANENT,
+	    CTLTYPE_NODE, "ipsecif",
+	    SYSCTL_DESCR("ipsecif global control"),
+	    NULL, 0, NULL, 0,
+	    CTL_NET, CTL_CREATE, CTL_EOL);
+
+	sysctl_createv(&if_ipsec_sysctl, 0, &node, NULL,
+	    CTLFLAG_PERMANENT | CTLFLAG_READWRITE,
+	    CTLTYPE_STRING, "rps_hash",
+	    SYSCTL_DESCR("Interface rps hash function control"),
+	    sysctl_pktq_rps_hash_handler, 0, (void *)&if_ipsec_pktq_rps_hash_p,
+	    PKTQ_RPS_HASH_NAME_LEN,
+	    CTL_CREATE, CTL_EOL);
 }
 
 static void
@@ -291,6 +310,7 @@ ipsecifattach(int count)
 
 	iv_psref_class = psref_class_create("ipsecvar", IPL_SOFTNET);
 
+	if_ipsec_pktq_rps_hash_p = pktq_rps_hash_default;
 	if_ipsec_sysctl_setup();
 
 	if_clone_attach(&ipsec_cloner);
@@ -615,11 +635,7 @@ if_ipsec_in_enqueue(struct mbuf *m, int af, struct ifnet *ifp)
 		return;
 	}
 
-#if 1
-	const u_int h = curcpu()->ci_index;
-#else
-	const uint32_t h = pktq_rps_hash(m);
-#endif
+	const uint32_t h = pktq_rps_hash(&if_ipsec_pktq_rps_hash_p, m);
 	pktlen = m->m_pkthdr.len;
 	if (__predict_true(pktq_enqueue(pktq, m, h))) {
 		if_statadd2(ifp, if_ibytes, pktlen, if_ipackets, 1);

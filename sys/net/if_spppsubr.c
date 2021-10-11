@@ -1,4 +1,4 @@
-/*	$NetBSD: if_spppsubr.c,v 1.258 2021/06/02 00:47:59 yamaguchi Exp $	 */
+/*	$NetBSD: if_spppsubr.c,v 1.259 2021/10/11 05:13:11 knakahara Exp $	 */
 
 /*
  * Synchronous PPP/Cisco link level subroutines.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.258 2021/06/02 00:47:59 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.259 2021/10/11 05:13:11 knakahara Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -303,6 +303,8 @@ static struct sppp *spppq;
 static kmutex_t *spppq_lock = NULL;
 static callout_t keepalive_ch;
 static unsigned int sppp_keepalive_cnt = 0;
+
+pktq_rps_hash_func_t sppp_pktq_rps_hash_p;
 
 #define SPPPQ_LOCK()	if (spppq_lock) \
 				mutex_enter(spppq_lock);
@@ -779,7 +781,9 @@ sppp_input(struct ifnet *ifp, struct mbuf *m)
 
 	/* Check queue. */
 	if (__predict_true(pktq)) {
-		if (__predict_false(!pktq_enqueue(pktq, m, 0))) {
+		uint32_t hash = pktq_rps_hash(&sppp_pktq_rps_hash_p, m);
+
+		if (__predict_false(!pktq_enqueue(pktq, m, hash))) {
 			goto drop;
 		}
 		SPPP_UNLOCK(sp);
