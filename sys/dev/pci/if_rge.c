@@ -1,4 +1,4 @@
-/*	$NetBSD: if_rge.c,v 1.21 2021/10/11 15:11:07 msaitoh Exp $	*/
+/*	$NetBSD: if_rge.c,v 1.22 2021/10/11 15:11:49 msaitoh Exp $	*/
 /*	$OpenBSD: if_rge.c,v 1.9 2020/12/12 11:48:53 jan Exp $	*/
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_rge.c,v 1.21 2021/10/11 15:11:07 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_rge.c,v 1.22 2021/10/11 15:11:49 msaitoh Exp $");
 
 #include <sys/types.h>
 
@@ -2077,8 +2077,10 @@ rge_set_macaddr(struct rge_softc *sc, const uint8_t *addr)
 void
 rge_get_macaddr(struct rge_softc *sc, uint8_t *addr)
 {
-	*(uint32_t *)&addr[0] = RGE_READ_4(sc, RGE_ADDR0);
-	*(uint16_t *)&addr[4] = RGE_READ_2(sc, RGE_ADDR1);
+	int i;
+
+	for (i = 0; i < ETHER_ADDR_LEN; i++)
+		addr[i] = RGE_READ_1(sc, RGE_ADDR0 + i);
 }
 
 void
