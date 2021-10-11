@@ -1,4 +1,4 @@
-/*	$NetBSD: lexi.c,v 1.88 2021/10/09 20:07:37 rillig Exp $	*/
+/*	$NetBSD: lexi.c,v 1.89 2021/10/11 19:55:35 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)lexi.c	8.1 (Berkeley) 6/6/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: lexi.c,v 1.88 2021/10/09 20:07:37 rillig Exp $");
+__RCSID("$NetBSD: lexi.c,v 1.89 2021/10/11 19:55:35 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/lexi.c 337862 2018-08-15 18:19:45Z pstef $");
 #endif
@@ -377,16 +377,125 @@ is_typename(void)
     return bsearch_typenames(token.s) >= 0;
 }
 
+static token_type
+lexi_alnum(struct parser_state *state)
+{
+    if (!(isalnum((unsigned char)*inp.s) ||
+	*inp.s == '_' || *inp.s == '$' ||
+	(inp.s[0] == '.' && isdigit((unsigned char)inp.s[1]))))
+	return end_of_file;
+
+    if (isdigit((unsigned char)*inp.s) ||
+	(inp.s[0] == '.' && isdigit((unsigned char)inp.s[1]))) {
+	lex_number();
+    } else {
+	lex_word();
+    }
+    *token.e = '\0';
+
+    if (token.s[0] == 'L' && token.s[1] == '\0' &&
+	(*inp.s == '"' || *inp.s == '\''))
+	return string_prefix;
+
+    while (is_hspace(inbuf_peek()))
+	inbuf_skip();
+    state->keyword = kw_0;
+
+    if (state->last_token == keyword_struct_union_enum &&
+	    state->p_l_follow == 0) {
+	state->last_u_d = true;
+	return decl;
+    }
+
+    /* Operator after identifier is binary unless last token was 'struct'. */
+    state->last_u_d = (state->last_token == keyword_struct_union_enum);
+
+    const struct keyword *kw = bsearch(token.s, keywords,
+	nitems(keywords), sizeof(keywords[0]), cmp_keyword_by_name);
+    if (kw == NULL) {
+	if (is_typename()) {
+	    state->keyword = kw_type;
+	    state->last_u_d = true;
+	    goto found_typename;
+	}
+
+    } else {			/* we have a keyword */
+	state->keyword = kw->kind;
+	state->last_u_d = true;
+
+	switch (kw->kind) {
+	case kw_switch:
+	    return switch_expr;
+
+	case kw_case_or_default:
+	    return case_label;
+
+	case kw_struct_or_union_or_enum:
+	case kw_type:
+    found_typename:
+	    if (state->p_l_follow != 0) {
+		/* inside parens: cast, param list, offsetof or sizeof */
+		state->cast_mask |= (1 << state->p_l_follow) & ~state->not_cast_mask;
+	    }
+	    if (state->last_token == period || state->last_token == unary_op) {
+		state->keyword = kw_0;
+		break;
+	    }
+	    if (kw != NULL && kw->kind == kw_struct_or_union_or_enum)
+		return keyword_struct_union_enum;
+	    if (state->p_l_follow != 0)
+		break;
+	    return decl;
+
+	case kw_for_or_if_or_while:
+	    return keyword_for_if_while;
+
+	case kw_do_or_else:
+	    return keyword_do_else;
+
+	case kw_storage_class:
+	    return storage_class;
+
+	case kw_typedef:
+	    return type_def;
+
+	default:		/* all others are treated like any other
+				 * identifier */
+	    return ident;
+	}			/* end of switch */
+    }				/* end of if (found_it) */
+
+    if (*inp.s == '(' && state->tos <= 1 && state->ind_level == 0 &&
+	!state->in_parameter_declaration && !state->block_init) {
+
+	for (const char *p = inp.s; p < inp.e;)
+	    if (*p++ == ')' && (*p == ';' || *p == ','))
+		goto not_proc;
+
+	strncpy(state->procname, token.s, sizeof state->procname - 1);
+	if (state->in_decl)
+	    state->in_parameter_declaration = true;
+	return funcname;
+not_proc:;
+
+    } else if (probably_typename(state)) {
+	state->keyword = kw_type;
+	state->last_u_d = true;
+	return decl;
+    }
+
+    if (state->last_token == decl)	/* if this is a declared variable,
+					 * then following sign is unary */
+	state->last_u_d = true;	/* will make "int a -1" work */
+
+    return ident;		/* the ident is not in the list */
+}
+
 /* Reads the next token, placing it in the global variable "token". */
 token_type
 lexi(struct parser_state *state)
 {
-    bool unary_delim;		/* whether the current token forces a
-				 * following operator to be unary */
-    token_type ttype;
-
     token.e = token.s;		/* point to start of place to save token */
-    unary_delim = false;
     state->col_1 = state->last_nl;	/* tell world that this token started
 					 * in column 1 iff the last thing
 					 * scanned was a newline */
@@ -397,117 +506,9 @@ lexi(struct parser_state *state)
 	inbuf_skip();
     }
 
-    /* Scan an alphanumeric token */
-    if (isalnum((unsigned char)*inp.s) ||
-	*inp.s == '_' || *inp.s == '$' ||
-	(inp.s[0] == '.' && isdigit((unsigned char)inp.s[1]))) {
-
-	if (isdigit((unsigned char)*inp.s) ||
-	    (inp.s[0] == '.' && isdigit((unsigned char)inp.s[1]))) {
-	    lex_number();
-	} else {
-	    lex_word();
-	}
-	*token.e = '\0';
-
-	if (token.s[0] == 'L' && token.s[1] == '\0' &&
-	    (*inp.s == '"' || *inp.s == '\''))
-	    return lexi_end(string_prefix);
-
-	while (is_hspace(inbuf_peek()))
-	    inbuf_skip();
-	state->keyword = kw_0;
-
-	if (state->last_token == keyword_struct_union_enum &&
-		state->p_l_follow == 0) {
-	    state->last_u_d = true;
-	    return lexi_end(decl);
-	}
-	/*
-	 * Operator after identifier is binary unless last token was 'struct'
-	 */
-	state->last_u_d = (state->last_token == keyword_struct_union_enum);
-
-	const struct keyword *kw = bsearch(token.s, keywords,
-	    nitems(keywords), sizeof(keywords[0]), cmp_keyword_by_name);
-	if (kw == NULL) {
-	    if (is_typename()) {
-		state->keyword = kw_type;
-		state->last_u_d = true;
-		goto found_typename;
-	    }
-
-	} else {		/* we have a keyword */
-	    state->keyword = kw->kind;
-	    state->last_u_d = true;
-
-	    switch (kw->kind) {
-	    case kw_switch:
-		return lexi_end(switch_expr);
-
-	    case kw_case_or_default:
-		return lexi_end(case_label);
-
-	    case kw_struct_or_union_or_enum:
-	    case kw_type:
-	found_typename:
-		if (state->p_l_follow != 0) {
-		    /* inside parens: cast, param list, offsetof or sizeof */
-		    state->cast_mask |= (1 << state->p_l_follow) & ~state->not_cast_mask;
-		}
-		if (state->last_token == period || state->last_token == unary_op) {
-		    state->keyword = kw_0;
-		    break;
-		}
-		if (kw != NULL && kw->kind == kw_struct_or_union_or_enum)
-		    return lexi_end(keyword_struct_union_enum);
-		if (state->p_l_follow != 0)
-		    break;
-		return lexi_end(decl);
-
-	    case kw_for_or_if_or_while:
-		return lexi_end(keyword_for_if_while);
-
-	    case kw_do_or_else:
-		return lexi_end(keyword_do_else);
-
-	    case kw_storage_class:
-		return lexi_end(storage_class);
-
-	    case kw_typedef:
-		return lexi_end(type_def);
-
-	    default:		/* all others are treated like any other
-				 * identifier */
-		return lexi_end(ident);
-	    }			/* end of switch */
-	}			/* end of if (found_it) */
-
-	if (*inp.s == '(' && state->tos <= 1 && state->ind_level == 0 &&
-	    !state->in_parameter_declaration && !state->block_init) {
-
-	    for (const char *p = inp.s; p < inp.e;)
-		if (*p++ == ')' && (*p == ';' || *p == ','))
-		    goto not_proc;
-
-	    strncpy(state->procname, token.s, sizeof state->procname - 1);
-	    if (state->in_decl)
-		state->in_parameter_declaration = true;
-	    return lexi_end(funcname);
-    not_proc:;
-
-	} else if (probably_typename(state)) {
-	    state->keyword = kw_type;
-	    state->last_u_d = true;
-	    return lexi_end(decl);
-	}
-
-	if (state->last_token == decl)	/* if this is a declared variable,
-					 * then following sign is unary */
-	    state->last_u_d = true;	/* will make "int a -1" work */
-
-	return lexi_end(ident);	/* the ident is not in the list */
-    }				/* end of processing for alphanum character */
+    token_type ttype = lexi_alnum(state);
+    if (ttype != end_of_file)
+	return lexi_end(ttype);
 
     /* Scan a non-alphanumeric token */
 
@@ -515,6 +516,9 @@ lexi(struct parser_state *state)
     *token.e++ = inbuf_next();	/* if it is only a one-character token, it is
 				 * moved here */
     *token.e = '\0';
+
+    bool unary_delim = false;	/* whether the current token forces a
+				 * following operator to be unary */
 
     switch (*token.s) {
     case '\n':
