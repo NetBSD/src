@@ -1,4 +1,4 @@
-/*	$NetBSD: kloader.c,v 1.29 2021/06/29 22:40:53 dholland Exp $	*/
+/*	$NetBSD: kloader.c,v 1.30 2021/10/11 14:14:40 rin Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2004 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kloader.c,v 1.29 2021/06/29 22:40:53 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kloader.c,v 1.30 2021/10/11 14:14:40 rin Exp $");
 
 #include "debug_kloader.h"
 
@@ -263,9 +263,11 @@ kloader_load(void)
 			symndx = i;
 		else if (strcmp(shstrtab + sh[i].sh_name, ".strtab") == 0)
 			strndx = i;
-		else if (i != eh.e_shstrndx)
+		else if (i != eh.e_shstrndx) {
 			/* while here, mark all other sections as unused */
 			sh[i].sh_type = SHT_NULL;
+			sh[i].sh_offset = 0;
+		}
 	}
 
 	if (symndx < 0 || strndx < 0) {
