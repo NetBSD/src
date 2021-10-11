@@ -1,4 +1,4 @@
-/*	$NetBSD: pucdata.c,v 1.110 2021/07/17 10:45:58 riastradh Exp $	*/
+/*	$NetBSD: pucdata.c,v 1.111 2021/10/11 15:43:19 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Christopher G. Demetriou.  All rights reserved.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pucdata.c,v 1.110 2021/07/17 10:45:58 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pucdata.c,v 1.111 2021/10/11 15:43:19 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2028,6 +2028,42 @@ const struct puc_device_description puc_devices[] = {
 	    },
 	},
 
+	/* Intel Comet Lake KT */
+	{   "Intel Comet Lake KT",
+	    {	PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_CMTLK_KT, 0, 0 },
+	    {	0xffff,	0xffff,	0,	0	},
+	    {
+		{ PUC_PORT_TYPE_COM, PCI_BAR0, 0x00, COM_FREQ },
+	    },
+	},
+
+	/* Intel 400 Series (H) KT */
+	{   "Intel 400 Series (H) KT",
+	    {	PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_4HS_H_KT, 0, 0 },
+	    {	0xffff,	0xffff,	0,	0	},
+	    {
+		{ PUC_PORT_TYPE_COM, PCI_BAR0, 0x00, COM_FREQ },
+	    },
+	},
+
+	/* Intel 495 Series KT */
+	{   "Intel 495 Series KT",
+	    {	PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_495_YU_KT, 0, 0 },
+	    {	0xffff,	0xffff,	0,	0	},
+	    {
+		{ PUC_PORT_TYPE_COM, PCI_BAR0, 0x00, COM_FREQ },
+	    },
+	},
+
+	/* Intel 500 Series (H) KT */
+	{   "Intel 500 Series (H) KT",
+	    {	PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_5HS_H_KT, 0, 0 },
+	    {	0xffff,	0xffff,	0,	0	},
+	    {
+		{ PUC_PORT_TYPE_COM, PCI_BAR0, 0x00, COM_FREQ },
+	    },
+	},
+	
 	/* Intel C600/X79 Series KT */
 	{   "Intel C600/X79 Series KT",
 	    {	PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_C600_KT, 0, 0 },
