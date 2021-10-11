@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.1287 2021/07/21 23:16:09 jmcneill Exp $
+#	$NetBSD: files,v 1.1288 2021/10/11 03:50:45 msaitoh Exp $
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
 version 	20171118
@@ -301,6 +301,7 @@ defparam opt_sppp.h		SPPP_KEEPALIVE_INTERVAL
 #
 defflag				GATEWAY
 defparam opt_nmbclusters.h	NMBCLUSTERS
+	 			NMBCLUSTERS_MAX
 defparam			SB_MAX
 
 # file system options
