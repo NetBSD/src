@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ethersubr.c,v 1.300 2021/09/30 04:29:16 yamaguchi Exp $	*/
+/*	$NetBSD: if_ethersubr.c,v 1.301 2021/10/11 05:13:11 knakahara Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.300 2021/09/30 04:29:16 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.301 2021/10/11 05:13:11 knakahara Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -182,6 +182,8 @@ const uint8_t etherbroadcastaddr[ETHER_ADDR_LEN] =
 const uint8_t ethermulticastaddr_slowprotocols[ETHER_ADDR_LEN] =
     { 0x01, 0x80, 0xc2, 0x00, 0x00, 0x02 };
 #define senderr(e) { error = (e); goto bad;}
+
+static pktq_rps_hash_func_t ether_pktq_rps_hash_p;
 
 /* if_lagg(4) support */
 struct mbuf *(*lagg_input_ethernet_p)(struct ifnet *, struct mbuf *);
@@ -955,11 +957,7 @@ ether_input(struct ifnet *ifp, struct mbuf *m)
 	}
 
 	if (__predict_true(pktq)) {
-#ifdef NET_MPSAFE
-		const u_int h = curcpu()->ci_index;
-#else
-		const uint32_t h = pktq_rps_hash(m);
-#endif
+		const uint32_t h = pktq_rps_hash(&ether_pktq_rps_hash_p, m);
 		if (__predict_false(!pktq_enqueue(pktq, m, h))) {
 			m_freem(m);
 		}
@@ -1766,6 +1764,14 @@ ether_sysctl_setup(struct sysctllog **clog)
 		       SYSCTL_DESCR("multicast addresses"),
 		       ether_multicast_sysctl, 0, NULL, 0,
 		       CTL_CREATE, CTL_EOL);
+
+	sysctl_createv(clog, 0, &rnode, NULL,
+		       CTLFLAG_PERMANENT | CTLFLAG_READWRITE,
+		       CTLTYPE_STRING, "rps_hash",
+		       SYSCTL_DESCR("Interface rps hash function control"),
+		       sysctl_pktq_rps_hash_handler, 0, (void *)&ether_pktq_rps_hash_p,
+		       PKTQ_RPS_HASH_NAME_LEN,
+		       CTL_CREATE, CTL_EOL);
 }
 
 void
@@ -1775,5 +1781,6 @@ etherinit(void)
 #ifdef DIAGNOSTIC
 	mutex_init(&bigpktpps_lock, MUTEX_DEFAULT, IPL_NET);
 #endif
+	ether_pktq_rps_hash_p = pktq_rps_hash_default;
 	ether_sysctl_setup(NULL);
 }

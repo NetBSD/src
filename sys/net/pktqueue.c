@@ -1,4 +1,4 @@
-/*	$NetBSD: pktqueue.c,v 1.13 2021/03/25 08:18:03 skrll Exp $	*/
+/*	$NetBSD: pktqueue.c,v 1.14 2021/10/11 05:13:11 knakahara Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -36,7 +36,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pktqueue.c,v 1.13 2021/03/25 08:18:03 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pktqueue.c,v 1.14 2021/10/11 05:13:11 knakahara Exp $");
+
+#ifdef _KERNEL_OPT
+#include "opt_net_mpsafe.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -51,6 +55,11 @@ __KERNEL_RCSID(0, "$NetBSD: pktqueue.c,v 1.13 2021/03/25 08:18:03 skrll Exp $");
 #include <sys/xcall.h>
 
 #include <net/pktqueue.h>
+#include <net/rss_config.h>
+
+#include <netinet/in.h>
+#include <netinet/ip.h>
+#include <netinet/ip6.h>
 
 struct pktqueue {
 	/*
@@ -214,14 +223,144 @@ pktq_get_count(pktqueue_t *pq, pktq_count_t c)
 }
 
 uint32_t
-pktq_rps_hash(const struct mbuf *m __unused)
+pktq_rps_hash(pktq_rps_hash_func_t *funcp, const struct mbuf *m)
 {
-	/*
-	 * XXX: No distribution yet; the softnet_lock contention
-	 * XXX: must be eliminated first.
-	 */
+	pktq_rps_hash_func_t func = atomic_load_relaxed(funcp);
+
+	KASSERT(func != NULL);
+
+	return (*func)(m);
+}
+
+static uint32_t
+pktq_rps_hash_zero(const struct mbuf *m __unused)
+{
+
 	return 0;
 }
+
+static uint32_t
+pktq_rps_hash_curcpu(const struct mbuf *m __unused)
+{
+
+	return cpu_index(curcpu());
+}
+
+static uint32_t
+pktq_rps_hash_toeplitz(const struct mbuf *m)
+{
+	struct ip *ip;
+	/*
+	 * Disable UDP port - IP fragments aren't currently being handled
+	 * and so we end up with a mix of 2-tuple and 4-tuple
+	 * traffic.
+	 */
+	const u_int flag = RSS_TOEPLITZ_USE_TCP_PORT;
+
+	/* glance IP version */
+	if ((m->m_flags & M_PKTHDR) == 0)
+		return 0;
+
+	ip = mtod(m, struct ip *);
+	if (ip->ip_v == IPVERSION) {
+		if (__predict_false(m->m_len < sizeof(struct ip)))
+			return 0;
+		return rss_toeplitz_hash_from_mbuf_ipv4(m, flag);
+	} else if (ip->ip_v == 6) {
+		if (__predict_false(m->m_len < sizeof(struct ip6_hdr)))
+			return 0;
+		return rss_toeplitz_hash_from_mbuf_ipv6(m, flag);
+	}
+
+	return 0;
+}
+
+/*
+ * topelitz without curcpu.
+ * Generally, this has better performance than topelitz.
+ */
+static uint32_t
+pktq_rps_hash_toeplitz_othercpus(const struct mbuf *m)
+{
+	uint32_t hash;
+
+	hash = pktq_rps_hash_toeplitz(m);
+	hash %= ncpu - 1;
+	if (hash >= cpu_index(curcpu()))
+		return hash + 1;
+	else
+		return hash;
+}
+
+static struct pktq_rps_hash_table {
+	const char* prh_type;
+	pktq_rps_hash_func_t prh_func;
+} const pktq_rps_hash_tab[] = {
+	{ "zero", pktq_rps_hash_zero },
+	{ "curcpu", pktq_rps_hash_curcpu },
+	{ "toeplitz", pktq_rps_hash_toeplitz },
+	{ "toeplitz-othercpus", pktq_rps_hash_toeplitz_othercpus },
+};
+const pktq_rps_hash_func_t pktq_rps_hash_default =
+#ifdef NET_MPSAFE
+	pktq_rps_hash_curcpu;
+#else
+	pktq_rps_hash_zero;
+#endif
+
+static const char *
+pktq_get_rps_hash_type(pktq_rps_hash_func_t func)
+{
+
+	for (int i = 0; i < __arraycount(pktq_rps_hash_tab); i++) {
+		if (func == pktq_rps_hash_tab[i].prh_func) {
+			return pktq_rps_hash_tab[i].prh_type;
+		}
+	}
+
+	return NULL;
+}
+
+static int
+pktq_set_rps_hash_type(pktq_rps_hash_func_t *func, const char *type)
+{
+
+	if (strcmp(type, pktq_get_rps_hash_type(*func)) == 0)
+		return 0;
+
+	for (int i = 0; i < __arraycount(pktq_rps_hash_tab); i++) {
+		if (strcmp(type, pktq_rps_hash_tab[i].prh_type) == 0) {
+			atomic_store_relaxed(func, pktq_rps_hash_tab[i].prh_func);
+			return 0;
+		}
+	}
+
+	return ENOENT;
+}
+
+int
+sysctl_pktq_rps_hash_handler(SYSCTLFN_ARGS)
+{
+	struct sysctlnode node;
+	pktq_rps_hash_func_t *func;
+	int error;
+	char type[PKTQ_RPS_HASH_NAME_LEN];
+
+	node = *rnode;
+	func = node.sysctl_data;
+
+	strlcpy(type, pktq_get_rps_hash_type(*func), PKTQ_RPS_HASH_NAME_LEN);
+
+	node.sysctl_data = &type;
+	node.sysctl_size = sizeof(type);
+	error = sysctl_lookup(SYSCTLFN_CALL(&node));
+	if (error || newp == NULL)
+		return error;
+
+	error = pktq_set_rps_hash_type(func, type);
+
+	return error;
+ }
 
 /*
  * pktq_enqueue: inject the packet into the end of the queue.

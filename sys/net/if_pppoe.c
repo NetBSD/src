@@ -1,4 +1,4 @@
-/* $NetBSD: if_pppoe.c,v 1.177 2021/06/16 00:21:19 riastradh Exp $ */
+/* $NetBSD: if_pppoe.c,v 1.178 2021/10/11 05:13:11 knakahara Exp $ */
 
 /*
  * Copyright (c) 2002, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.177 2021/06/16 00:21:19 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.178 2021/10/11 05:13:11 knakahara Exp $");
 
 #ifdef _KERNEL_OPT
 #include "pppoe.h"
@@ -2146,6 +2146,9 @@ static void
 sysctl_net_pppoe_setup(struct sysctllog **clog)
 {
 	const struct sysctlnode *node = NULL;
+	extern pktq_rps_hash_func_t sppp_pktq_rps_hash_p;
+
+	sppp_pktq_rps_hash_p = pktq_rps_hash_default;
 
 	sysctl_createv(clog, 0, NULL, &node,
 	    CTLFLAG_PERMANENT,
@@ -2162,6 +2165,14 @@ sysctl_net_pppoe_setup(struct sysctllog **clog)
 	    CTLTYPE_BOOL, "term_unknown",
 	    SYSCTL_DESCR("Terminate unknown sessions"),
 	    NULL, 0, &pppoe_term_unknown, sizeof(pppoe_term_unknown),
+	    CTL_CREATE, CTL_EOL);
+
+	sysctl_createv(clog, 0, &node, NULL,
+	    CTLFLAG_PERMANENT | CTLFLAG_READWRITE,
+	    CTLTYPE_STRING, "rps_hash",
+	    SYSCTL_DESCR("Interface rps hash function control"),
+	    sysctl_pktq_rps_hash_handler, 0, (void *)&sppp_pktq_rps_hash_p,
+	    PKTQ_RPS_HASH_NAME_LEN,
 	    CTL_CREATE, CTL_EOL);
 }
 
