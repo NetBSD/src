@@ -1,4 +1,4 @@
-/*	$NetBSD: event.h,v 1.46 2021/10/11 01:07:36 thorpej Exp $	*/
+/*	$NetBSD: event.h,v 1.47 2021/10/11 01:21:28 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999,2000,2001 Jonathan Lemon <jlemon@FreeBSD.org>
@@ -267,6 +267,12 @@ struct knote {
     "\7WILLDETACH"
 
 
+/*
+ * The only time knote::kn_flags can be modified without synchronization
+ * is during filter attach, because the knote has not yet been published.
+ * This is usually to set EV_CLEAR or EV_ONESHOT as mandatory flags for
+ * that filter.
+ */
 #define	kn_id		kn_kevent.ident
 #define	kn_filter	kn_kevent.filter
 #define	kn_flags	kn_kevent.flags		/* q */
