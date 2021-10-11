@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_vnops.c,v 1.214 2021/10/11 01:07:36 thorpej Exp $	*/
+/*	$NetBSD: genfs_vnops.c,v 1.215 2021/10/11 01:49:08 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.214 2021/10/11 01:07:36 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.215 2021/10/11 01:49:08 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -596,21 +596,21 @@ filt_genfsvnode(struct knote *kn, long hint)
 }
 
 static const struct filterops genfsread_filtops = {
-	.f_flags = FILTEROP_ISFD,
+	.f_flags = FILTEROP_ISFD | FILTEROP_MPSAFE,
 	.f_attach = NULL,
 	.f_detach = filt_genfsdetach,
 	.f_event = filt_genfsread,
 };
 
 static const struct filterops genfswrite_filtops = {
-	.f_flags = FILTEROP_ISFD,
+	.f_flags = FILTEROP_ISFD | FILTEROP_MPSAFE,
 	.f_attach = NULL,
 	.f_detach = filt_genfsdetach,
 	.f_event = filt_genfswrite,
 };
 
 static const struct filterops genfsvnode_filtops = {
-	.f_flags = FILTEROP_ISFD,
+	.f_flags = FILTEROP_ISFD | FILTEROP_MPSAFE,
 	.f_attach = NULL,
 	.f_detach = filt_genfsdetach,
 	.f_event = filt_genfsvnode,
