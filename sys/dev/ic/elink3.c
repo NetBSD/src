@@ -1,4 +1,4 @@
-/*	$NetBSD: elink3.c,v 1.152 2020/02/07 01:19:46 thorpej Exp $	*/
+/*	$NetBSD: elink3.c,v 1.153 2021/10/11 02:42:46 rin Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: elink3.c,v 1.152 2020/02/07 01:19:46 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: elink3.c,v 1.153 2021/10/11 02:42:46 rin Exp $");
 
 #include "opt_inet.h"
 
@@ -1638,12 +1638,7 @@ epget(struct ep_softc *sc, int totlen)
 			    rxreg, (u_int8_t *) offset, remaining);
 		}
 	} else {
-		if ((remaining > 1) && (offset & 1)) {
-			bus_space_read_multi_1(iot, ioh,
-			    rxreg, (u_int8_t *) offset, 1);
-			remaining -= 1;
-			offset += 1;
-		}
+		/* (offset & 1) == 0 since IP header is aligned */
 		if (remaining > 1) {
 			bus_space_read_multi_stream_2(iot, ioh,
 			    rxreg, (u_int16_t *) offset,
@@ -1651,8 +1646,8 @@ epget(struct ep_softc *sc, int totlen)
 			offset += remaining & ~1;
 		}
 		if (remaining & 1) {
-				bus_space_read_multi_1(iot, ioh,
-			    rxreg, (u_int8_t *) offset, remaining & 1);
+			*(uint8_t *)offset =
+			    bus_space_read_1(iot, ioh, rxreg);
 		}
 	}
 
