@@ -1,4 +1,4 @@
-.\"	$NetBSD: msgc.1,v 1.26 2012/03/06 16:26:01 mbalmer Exp $
+.\"	$NetBSD: msgc.1,v 1.27 2021/10/11 18:08:12 rillig Exp $
 .\"
 .\" Copyright 1997 Piermont Information Systems Inc.
 .\" All rights reserved.
@@ -29,7 +29,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
 .\" THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd March 3, 2012
+.Dd October 11, 2021
 .Dt MSGC 1
 .Os
 .Sh NAME
@@ -114,18 +114,17 @@ Each message is started with the word
 followed by the name of the message.
 The body of the message is next and is started by a { and closed by a }.
 The braces are not part of the message.
-Everything, including newlines between the braces are part of the message.
+Everything, including newlines between the braces, is part of the message.
 .Sh MESSAGE FUNCTIONS
-The defined messages are used through calls routines that manipulate
+The defined messages are used through calls to routines that manipulate
 the messages.
 You first need to set the
 .Xr curses 3
 environment up and then tell the message system which window to use
-for displaying message by calling the function
+for displaying the messages by calling the function
 .Fn msg_window .
 .Pp
-All variable argument lists in the functions are used as
-are arguments to
+All variable argument lists in the functions are used as arguments to
 .Xr sprintf 3 .
 The messages may have
 .Xr sprintf 3
@@ -135,7 +134,7 @@ Messages are identified by name using the notation
 where
 .Dq name
 is the name in the message source file.
-(The definitions are accessed by including the generated .h file into a
+(The definitions are accessed by including the generated .h file into each
 source file wanting to use the message routines.)
 .Pp
 The function
@@ -153,7 +152,7 @@ The functions
 .Fn msg_display
 and
 .Fn msg_display_add
-cause a defined message to be displayed in the message window and does
+cause the given message to be displayed in the message window and do
 the requested conversions before printing.
 The difference is that
 .Fn msg_display
@@ -199,7 +198,7 @@ The functions
 .Fn msg_echo
 and
 .Fn msg_noecho
-control whether the prompt routine echo or don't echo the input that
+control whether the prompt routines echo or don't echo the input that
 is typed by the user.
 .Pp
 .Fn msg_prompt_win
