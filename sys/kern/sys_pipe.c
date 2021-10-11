@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_pipe.c,v 1.157 2021/10/02 07:35:40 hannken Exp $	*/
+/*	$NetBSD: sys_pipe.c,v 1.158 2021/10/11 01:07:36 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_pipe.c,v 1.157 2021/10/02 07:35:40 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_pipe.c,v 1.158 2021/10/11 01:07:36 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1056,7 +1056,7 @@ filt_piperead(struct knote *kn, long hint)
 
 	if ((rpipe->pipe_state & PIPE_EOF) ||
 	    (wpipe == NULL) || (wpipe->pipe_state & PIPE_EOF)) {
-		kn->kn_flags |= EV_EOF;
+		knote_set_eof(kn, 0);
 		rv = 1;
 	} else {
 		rv = kn->kn_data > 0;
@@ -1082,7 +1082,7 @@ filt_pipewrite(struct knote *kn, long hint)
 
 	if ((wpipe == NULL) || (wpipe->pipe_state & PIPE_EOF)) {
 		kn->kn_data = 0;
-		kn->kn_flags |= EV_EOF;
+		knote_set_eof(kn, 0);
 		rv = 1;
 	} else {
 		kn->kn_data = wpipe->pipe_buffer.size - wpipe->pipe_buffer.cnt;

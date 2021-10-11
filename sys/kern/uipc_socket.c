@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket.c,v 1.298 2021/09/29 13:15:45 thorpej Exp $	*/
+/*	$NetBSD: uipc_socket.c,v 1.299 2021/10/11 01:07:36 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2002, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.298 2021/09/29 13:15:45 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.299 2021/10/11 01:07:36 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -2242,7 +2242,7 @@ filt_soread(struct knote *kn, long hint)
 		solock(so);
 	kn->kn_data = so->so_rcv.sb_cc;
 	if (so->so_state & SS_CANTRCVMORE) {
-		kn->kn_flags |= EV_EOF;
+		knote_set_eof(kn, 0);
 		kn->kn_fflags = so->so_error;
 		rv = 1;
 	} else if (so->so_error || so->so_rerror)
@@ -2280,7 +2280,7 @@ filt_sowrite(struct knote *kn, long hint)
 		solock(so);
 	kn->kn_data = sbspace(&so->so_snd);
 	if (so->so_state & SS_CANTSENDMORE) {
-		kn->kn_flags |= EV_EOF;
+		knote_set_eof(kn, 0);
 		kn->kn_fflags = so->so_error;
 		rv = 1;
 	} else if (so->so_error)

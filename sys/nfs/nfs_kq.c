@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_kq.c,v 1.29 2021/10/10 23:46:22 thorpej Exp $	*/
+/*	$NetBSD: nfs_kq.c,v 1.30 2021/10/11 01:07:36 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_kq.c,v 1.29 2021/10/10 23:46:22 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_kq.c,v 1.30 2021/10/11 01:07:36 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -43,7 +43,6 @@ __KERNEL_RCSID(0, "$NetBSD: nfs_kq.c,v 1.29 2021/10/10 23:46:22 thorpej Exp $");
 #include <sys/vnode.h>
 #include <sys/unistd.h>
 #include <sys/file.h>
-#include <sys/eventvar.h>		/* XXX for kq->kq_lock */
 #include <sys/kthread.h>
 
 #include <nfs/rpcv2.h>
@@ -232,9 +231,7 @@ filt_nfsread(struct knote *kn, long hint)
 	switch (hint) {
 	case NOTE_REVOKE:
 		KASSERT(mutex_owned(vp->v_interlock));
-		mutex_spin_enter(&kn->kn_kq->kq_lock);
-		kn->kn_flags |= (EV_EOF | EV_ONESHOT);
-		mutex_spin_exit(&kn->kn_kq->kq_lock);
+		knote_set_eof(kn, EV_ONESHOT);
 		return (1);
 	case 0:
 		mutex_enter(vp->v_interlock);
@@ -258,9 +255,7 @@ filt_nfsvnode(struct knote *kn, long hint)
 	switch (hint) {
 	case NOTE_REVOKE:
 		KASSERT(mutex_owned(vp->v_interlock));
-		mutex_spin_enter(&kn->kn_kq->kq_lock);
-		kn->kn_flags |= EV_EOF;
-		mutex_spin_exit(&kn->kn_kq->kq_lock);
+		knote_set_eof(kn, 0);
 		if ((kn->kn_sfflags & hint) != 0)
 			kn->kn_fflags |= hint;
 		return (1);

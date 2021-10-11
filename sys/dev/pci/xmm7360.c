@@ -1,4 +1,4 @@
-/*	$NetBSD: xmm7360.c,v 1.10 2021/09/26 01:16:09 thorpej Exp $	*/
+/*	$NetBSD: xmm7360.c,v 1.11 2021/10/11 01:07:36 thorpej Exp $	*/
 
 /*
  * Device driver for Intel XMM7360 LTE modems, eg. Fibocom L850-GL.
@@ -75,7 +75,7 @@ MODULE_DEVICE_TABLE(pci, xmm7360_ids);
 #include "opt_gateway.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xmm7360.c,v 1.10 2021/09/26 01:16:09 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xmm7360.c,v 1.11 2021/10/11 01:07:36 thorpej Exp $");
 #endif
 
 #include <sys/param.h>
@@ -166,6 +166,7 @@ typedef struct mutex spinlock_t;
 #define device_private(devt)			(void *)devt;
 #define if_deferred_start_init(ifp, arg)	/* nothing */
 #define IF_OUTPUT_CONST				/* nothing */
+#define knote_set_eof(kn, f)			(kn)->kn_flags |= EV_EOF | (f)
 #define tty_lock()				int s = spltty()
 #define tty_unlock()				splx(s)
 #define tty_locked()				/* nothing */
@@ -2762,7 +2763,7 @@ filt_wwancread(struct knote *kn, long hint)
 	kn->kn_data = 0;
 
 	if (!qp->open) {
-		kn->kn_flags |= EV_EOF;
+		knote_set_eof(kn, 0);
 		return (1);
 	} else {
 		kn->kn_data = xmm7360_qp_has_data(qp) ? 1 : 0;
