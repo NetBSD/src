@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.149 2021/09/23 06:34:00 skrll Exp $	*/
+/*	$NetBSD: cpu.c,v 1.150 2021/10/11 07:19:37 rin Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -46,7 +46,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.149 2021/09/23 06:34:00 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.150 2021/10/11 07:19:37 rin Exp $");
 
 #include <sys/param.h>
 
@@ -476,8 +476,8 @@ const struct cpuidtab cpuids[] = {
 
 	{ CPU_ID_ARM1026EJS,	CPU_CLASS_ARM10EJ,	"ARM1026EJ-S",
 	  generic_steppings, "5TEJ" },
-	{ CPU_ID_ARM926EJS,	CPU_CLASS_ARM9EJS,	"ARM926EJ-S",
-	  generic_steppings, "5TEJ" },
+	{ CPU_ID_ARM926EJS,	CPU_CLASS_ARM9EJS,	"ARM926EJ-S r0",
+	  pN_steppings, "5TEJ" },
 
 	{ CPU_ID_ARM1136JS,	CPU_CLASS_ARM11J,	"ARM1136J-S r0",
 	  pN_steppings, "6J" },
