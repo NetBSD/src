@@ -1,4 +1,4 @@
-/*	$NetBSD: sa11x0_hpc_machdep.c,v 1.18 2021/08/17 22:00:29 andvar Exp $	*/
+/*	$NetBSD: sa11x0_hpc_machdep.c,v 1.19 2021/10/11 14:30:30 rin Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sa11x0_hpc_machdep.c,v 1.18 2021/08/17 22:00:29 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sa11x0_hpc_machdep.c,v 1.19 2021/10/11 14:30:30 rin Exp $");
 
 #include "opt_ddb.h"
 #include "opt_dram_pages.h"
@@ -134,6 +134,10 @@ vaddr_t init_sa11x0(int, char **, struct bootinfo *);
 
 #ifdef BOOT_DUMP
 void    dumppages(char *, int);
+#endif
+
+#ifdef DEBUG_BEFOREMMU
+static void fakecninit(void);
 #endif
 
 /* Mode dependent sleep function holder */
