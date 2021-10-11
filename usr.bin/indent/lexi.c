@@ -1,4 +1,4 @@
-/*	$NetBSD: lexi.c,v 1.90 2021/10/11 20:13:46 rillig Exp $	*/
+/*	$NetBSD: lexi.c,v 1.91 2021/10/11 20:31:06 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)lexi.c	8.1 (Berkeley) 6/6/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: lexi.c,v 1.90 2021/10/11 20:13:46 rillig Exp $");
+__RCSID("$NetBSD: lexi.c,v 1.91 2021/10/11 20:31:06 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/lexi.c 337862 2018-08-15 18:19:45Z pstef $");
 #endif
@@ -505,9 +505,9 @@ lexi(struct parser_state *state)
 	inbuf_skip();
     }
 
-    token_type ttype = lexi_alnum(state);
-    if (ttype != end_of_file)
-	return lexi_end(ttype);
+    token_type alnum_ttype = lexi_alnum(state);
+    if (alnum_ttype != end_of_file)
+	return lexi_end(alnum_ttype);
 
     /* Scan a non-alphanumeric token */
 
@@ -515,6 +515,7 @@ lexi(struct parser_state *state)
     *token.e++ = inbuf_next();
     *token.e = '\0';
 
+    token_type ttype;
     bool unary_delim = false;	/* whether the current token forces a
 				 * following operator to be unary */
 
