@@ -1,4 +1,4 @@
-/*	$NetBSD: if_rge.c,v 1.19 2021/05/08 00:27:02 thorpej Exp $	*/
+/*	$NetBSD: if_rge.c,v 1.20 2021/10/11 15:10:19 msaitoh Exp $	*/
 /*	$OpenBSD: if_rge.c,v 1.9 2020/12/12 11:48:53 jan Exp $	*/
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_rge.c,v 1.19 2021/05/08 00:27:02 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_rge.c,v 1.20 2021/10/11 15:10:19 msaitoh Exp $");
 
 #include <sys/types.h>
 
@@ -352,6 +352,11 @@ rge_attach(device_t parent, device_t self, void *aux)
 
 	if_attach(ifp);
 	ether_ifattach(ifp, eaddr);
+
+	if (pmf_device_register(self, NULL, NULL))
+		pmf_class_network_register(self, ifp);
+	else
+		aprint_error_dev(self, "couldn't establish power handler\n");
 }
 
 int
