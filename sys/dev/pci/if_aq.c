@@ -1,4 +1,4 @@
-/*	$NetBSD: if_aq.c,v 1.28 2021/10/05 14:18:17 ryo Exp $	*/
+/*	$NetBSD: if_aq.c,v 1.29 2021/10/11 15:08:17 msaitoh Exp $	*/
 
 /**
  * aQuantia Corporation Network Driver
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_aq.c,v 1.28 2021/10/05 14:18:17 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_aq.c,v 1.29 2021/10/11 15:08:17 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_if_aq.h"
@@ -1529,6 +1529,11 @@ aq_attach(device_t parent, device_t self, void *aux)
 	AQ_EVCNT_ATTACH_MISC(sc, dpc, "DMA drop packet");
 	AQ_EVCNT_ATTACH_MISC(sc, cprc, "RX coalesced packet");
 #endif
+
+	if (pmf_device_register(self, NULL, NULL))
+		pmf_class_network_register(self, ifp);
+	else
+		aprint_error_dev(self, "couldn't establish power handler\n");
 
 	return;
 
