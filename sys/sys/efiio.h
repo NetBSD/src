@@ -1,4 +1,4 @@
-/* $NetBSD: efiio.h,v 1.1 2021/10/10 13:03:10 jmcneill Exp $ */
+/* $NetBSD: efiio.h,v 1.2 2021/10/11 10:23:02 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2021 The NetBSD Foundation, Inc.
@@ -57,8 +57,8 @@ struct efi_var_ioc {
 	size_t		datasize;	/* size in bytes of the data buffer */
 };
 
-#define	EFIIOC_VAR_GET		_IOWR('E', 4, struct efi_var_ioc)
-#define	EFIIOC_VAR_NEXT		_IOWR('E', 5, struct efi_var_ioc)
-#define	EFIIOC_VAR_SET		_IOWR('E', 7, struct efi_var_ioc)
+#define	EFIIOC_VAR_GET		_IOWR('e', 4, struct efi_var_ioc)
+#define	EFIIOC_VAR_NEXT		_IOWR('e', 5, struct efi_var_ioc)
+#define	EFIIOC_VAR_SET		_IOWR('e', 7, struct efi_var_ioc)
 
 #endif /* _SYS_EFIIO_H */
