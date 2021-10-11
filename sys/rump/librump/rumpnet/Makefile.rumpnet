@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.rumpnet,v 1.23 2018/11/15 09:38:57 maxv Exp $
+#	$NetBSD: Makefile.rumpnet,v 1.24 2021/10/11 05:13:11 knakahara Exp $
 #
 
 LIB=		rumpnet
@@ -24,7 +24,7 @@ SRCS+=	sys_socket.c uipc_accf.c uipc_domain.c uipc_mbuf.c	\
 	uipc_socket.c uipc_socket2.c uipc_syscalls.c
 
 # sys/net
-SRCS+=	pktqueue.c pfil.c
+SRCS+=	pktqueue.c pfil.c rss_config.c toeplitz.c
 
 # formatters
 SRCS+= at_print.c dl_print.c in_print.c in6_print.c

@@ -1,4 +1,4 @@
-/*	$NetBSD: xmm7360.c,v 1.11 2021/10/11 01:07:36 thorpej Exp $	*/
+/*	$NetBSD: xmm7360.c,v 1.12 2021/10/11 05:13:10 knakahara Exp $	*/
 
 /*
  * Device driver for Intel XMM7360 LTE modems, eg. Fibocom L850-GL.
@@ -75,7 +75,7 @@ MODULE_DEVICE_TABLE(pci, xmm7360_ids);
 #include "opt_gateway.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xmm7360.c,v 1.11 2021/10/11 01:07:36 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xmm7360.c,v 1.12 2021/10/11 05:13:10 knakahara Exp $");
 #endif
 
 #include <sys/param.h>
@@ -3110,11 +3110,7 @@ wwan_if_input(struct ifnet *ifp, struct mbuf *m)
 	/* No errors.  Receive the packet. */
 	m_set_rcvif(m, ifp);
 
-#ifdef NET_MPSAFE
-	const u_int h = curcpu()->ci_index;
-#else
-	const uint32_t h = pktq_rps_hash(m);
-#endif
+	const uint32_t h = pktq_rps_hash(&pktq_rps_hash_default, m);
 	if (__predict_false(!pktq_enqueue(pktq, m, h))) {
 		m_freem(m);
 	}
