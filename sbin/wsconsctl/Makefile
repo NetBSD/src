@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.14 2008/10/26 14:55:17 apb Exp $
+#	$NetBSD: Makefile,v 1.15 2021/10/11 13:27:47 rillig Exp $
 
 PROG=	wsconsctl
 SRCS=	display.c keyboard.c keysym.c map_parse.y map_scan.l \
@@ -9,6 +9,7 @@ YHEADER=	1
 CPPFLAGS+=	-I. -I${.CURDIR}
 DPSRCS+=	keysym.h
 CLEANFILES+=	keysym.h
+LINTFLAGS+=	-I${NETBSDSRCDIR}/sys
 
 .include <bsd.prog.mk>
 
