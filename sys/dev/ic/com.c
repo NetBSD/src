@@ -1,4 +1,4 @@
-/* $NetBSD: com.c,v 1.365 2021/07/31 10:04:12 tnn Exp $ */
+/* $NetBSD: com.c,v 1.366 2021/10/11 18:39:06 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2004, 2008 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.365 2021/07/31 10:04:12 tnn Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.366 2021/10/11 18:39:06 jmcneill Exp $");
 
 #include "opt_com.h"
 #include "opt_ddb.h"
@@ -891,10 +891,8 @@ com_shutdown(struct com_softc *sc)
 	 */
 	if (ISSET(tp->t_cflag, HUPCL)) {
 		com_modem(sc, 0);
-		mutex_spin_exit(&sc->sc_lock);
-		/* XXX will only timeout */
-		(void) kpause(ttclos, false, hz, NULL);
-		mutex_spin_enter(&sc->sc_lock);
+		getmicrotime(&sc->sc_hup_pending);
+		sc->sc_hup_pending.tv_sec++;
 	}
 
 	/* Turn off interrupts. */
@@ -967,6 +965,7 @@ comopen(dev_t dev, int flag, int mode, struct lwp *l)
 	 */
 	if (!ISSET(tp->t_state, TS_ISOPEN) && tp->t_wopen == 0) {
 		struct termios t;
+		struct timeval now, diff;
 
 		tp->t_dev = dev;
 
@@ -982,6 +981,18 @@ comopen(dev_t dev, int flag, int mode, struct lwp *l)
 			com_config(sc);
 		} else {
 			mutex_spin_enter(&sc->sc_lock);
+		}
+
+		if (timerisset(&sc->sc_hup_pending)) {
+			getmicrotime(&now);
+			while (timercmp(&now, &sc->sc_hup_pending, <)) {
+				timersub(&sc->sc_hup_pending, &now, &diff);
+				int ms = now.tv_sec * 1000 +
+				    uimin(now.tv_usec / 1000, 1);
+				kpause("comopen", false, mstohz(ms),
+				    &sc->sc_lock);
+			}
+			timerclear(&sc->sc_hup_pending);
 		}
 
 		/* Turn on interrupts. */
