@@ -1,4 +1,4 @@
-/*	$NetBSD: kloader_pxa2x0.S,v 1.1 2012/03/31 14:02:54 nonaka Exp $	*/
+/*	$NetBSD: kloader_pxa2x0.S,v 1.2 2021/10/11 14:29:15 rin Exp $	*/
 
 /*-
  * Copyright (C) 2012 NONAKA Kimihiro <nonaka@netbsd.org>
@@ -28,20 +28,6 @@
 #include <machine/asm.h>
 
 #include <arm/armreg.h>
-
-/*
- * CPWAIT -- Canonical method to wait for CP15 update.
- * NOTE: Clobbers the specified temp reg.
- * copied from arm/arm/cpufunc_asm_xscale.S
- * XXX: better be in a common header file.
- */
-#define	CPWAIT_BRANCH							 \
-	sub	pc, pc, #4
-
-#define	CPWAIT(tmp)							 \
-	mrc	p15, 0, tmp, c2, c0, 0	/* arbitrary read of CP15 */	;\
-	mov	tmp, tmp		/* wait for it to complete */	;\
-	CPWAIT_BRANCH			/* branch to next insn */
 
 #define	VATOPA(reg)							\
 	bic	reg, reg, #0xff000000	/* clear upper 8 bits */	;\
