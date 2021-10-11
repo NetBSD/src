@@ -1,5 +1,5 @@
 #! /bin/sh
-#	$NetBSD: msg_xlat.sh,v 1.5 2021/07/12 19:03:20 kre Exp $
+#	$NetBSD: msg_xlat.sh,v 1.6 2021/10/11 18:46:34 rillig Exp $
 
 #-
 # Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -104,7 +104,7 @@ done
 
 last_msg_number="$msg_number"
 
-# Read message definition file and set up map of munbers to strings
+# Read message definition file and set up map of numbers to strings
 
 exec <&3 3<&-
 
@@ -163,7 +163,7 @@ do
 
 	# For our purposes, empty messages are the same as words without %
 	if [ $# -eq 0 ]; then set -- x; fi
-	
+
 	if $count_fmtargs; then
 		echo $number $#
 		continue
