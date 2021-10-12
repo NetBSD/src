@@ -1,4 +1,4 @@
-/* $NetBSD: token-comment.0.stdout,v 1.12 2021/10/12 20:52:02 rillig Exp $ */
+/* $NetBSD: token-comment.0.stdout,v 1.13 2021/10/12 21:08:37 rillig Exp $ */
 /* $FreeBSD$ */
 
 /*
@@ -26,14 +26,8 @@
 
 /* x							. line length 75 */
 /* x							.. line length 76 */
-/* $ FIXME: the following comment is short enough for a single line. */
-/*
- * x							... line length 77
- */
-/* $ FIXME: the following comment is short enough for a single line. */
-/*
- * x							.... line length 78
- */
+/* x							... line length 77 */
+/* x							.... line length 78 */
 /*
  * x							..... line length 79
  */
@@ -45,6 +39,12 @@
  */
 /*
  * x							........ line length 82
+ */
+
+/* And now the same idea but the comment ends with a space already. */
+/* x							.... line length 78 */
+/*
+ * x							..... line length 79
  */
 
 /* This is a traditional C block comment. */
