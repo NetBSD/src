@@ -1,4 +1,4 @@
-/*	$NetBSD: socket.h,v 1.129 2018/11/04 16:30:29 christos Exp $	*/
+/*	$NetBSD: socket.h,v 1.130 2021/10/12 17:06:26 christos Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -392,10 +392,13 @@ struct sockcred {
 
 /*
  * Compute size of a sockcred structure with groups.
+ *
+ * The (ngrps - 1) is to account for struct sockcred being defined with
+ * already one group member. This code works correctly when ngroups == 0
+ * because of unsigned arithmetic wrap-around.
  */
 #define	SOCKCREDSIZE(ngrps) \
-	(/*CONSTCOND*/sizeof(struct sockcred) + (sizeof(gid_t) * \
-	    ((ngrps) ? ((ngrps) - 1) : 0)))
+	(/*LINTED*/sizeof(struct sockcred) + (sizeof(gid_t) * ((ngrps) - 1)))
 #endif /* _NETBSD_SOURCE */
 
 
