@@ -1,4 +1,4 @@
-/*	$NetBSD: cd.c,v 1.352 2021/08/21 23:00:32 andvar Exp $	*/
+/*	$NetBSD: cd.c,v 1.353 2021/10/12 08:36:29 andvar Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001, 2003, 2004, 2005, 2008 The NetBSD Foundation,
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.352 2021/08/21 23:00:32 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.353 2021/10/12 08:36:29 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -942,7 +942,7 @@ cd_interpret_sense(struct scsipi_xfer *xs)
 	int retval = EJUSTRETURN;
 
 	/*
-	 * If it isn't a extended or extended/deferred error, let
+	 * If it isn't an extended or extended/deferred error, let
 	 * the generic code handle it.
 	 */
 	if (SSD_RCODE(sense->response_code) != SSD_RCODE_CURRENT &&
@@ -1092,7 +1092,7 @@ lba2msf(u_long lba, u_char *m, u_char *s, u_char *f)
 #endif /* XXX Not used */
 
 /*
- * Convert an hour:minute:second:frame address to a logical block adres. In
+ * Convert an hour:minute:second:frame address to a logical block address. In
  * theory the number of secs/minute and number of frames/second could be
  * configured differently in the device  as could the block offset but in
  * practice these values are rock solid and most drives don't even allow
@@ -3118,7 +3118,7 @@ mmc_gettrackinfo_dvdrom(struct scsipi_periph *periph,
 	toc_hdr = (struct scsipi_toc_header *) buffer;
 	if (_2btol(toc_hdr->length) > buffer_size - 2) {
 #ifdef DIAGNOSTIC
-		printf("incease buffersize in mmc_readtrackinfo_dvdrom\n");
+		printf("increase buffersize in mmc_readtrackinfo_dvdrom\n");
 #endif
 		error = ENOBUFS;
 		goto out;
@@ -3139,7 +3139,7 @@ mmc_gettrackinfo_dvdrom(struct scsipi_periph *periph,
 	toc     = (struct scsipi_toc_formatted *) (buffer + 4);
 
 	/* as in read disc info, all sessions are converted to tracks      */
-	/* track 1..  -> offsets, sizes can be (rougly) estimated (16 ECC) */
+	/* track 1..  -> offsets, sizes can be (roughly) estimated (16 ECC) */
 	/* last track -> we got the size from the lead-out                 */
 
 	tracknr      = 0;
@@ -3552,7 +3552,7 @@ mmc_setup_writeparams(struct scsipi_periph *periph,
 	if (error)
 		return error;
 
-	/* set page length for reasurance */
+	/* set page length for reassurance */
 	page5[1] = P5LEN;	/* page length */
 
 	/* write type packet/incremental */
