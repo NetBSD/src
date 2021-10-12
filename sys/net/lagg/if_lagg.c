@@ -1,4 +1,4 @@
-/*	$NetBSD: if_lagg.c,v 1.11 2021/10/05 04:17:58 yamaguchi Exp $	*/
+/*	$NetBSD: if_lagg.c,v 1.12 2021/10/12 08:26:47 yamaguchi Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006 Reyk Floeter <reyk@openbsd.org>
@@ -20,7 +20,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_lagg.c,v 1.11 2021/10/05 04:17:58 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_lagg.c,v 1.12 2021/10/12 08:26:47 yamaguchi Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -194,6 +194,7 @@ static void	lagg_port_teardown(struct lagg_softc *, struct lagg_port *,
 static void	lagg_port_syncvlan(struct lagg_softc *, struct lagg_port *);
 static void	lagg_port_purgevlan(struct lagg_softc *, struct lagg_port *);
 static void	lagg_lladdr_update(struct lagg_softc *);
+static void	lagg_capabilities_update(struct lagg_softc *);
 
 static struct if_clone	 lagg_cloner =
     IF_CLONE_INITIALIZER("lagg", lagg_clone_create, lagg_clone_destroy);
@@ -213,6 +214,10 @@ static enum lagg_iftypes
 } while (0)
 #else
 #define LAGG_DPRINTF(_sc, _fmt, _args...)	__nothing
+#endif
+
+#ifndef LAGG_SETCAPS_RETRY
+#define LAGG_SETCAPS_RETRY	(LAGG_MAX_PORTS * 2)
 #endif
 
 static size_t
@@ -1806,6 +1811,181 @@ lagg_port_purgevlan(struct lagg_softc *sc, struct lagg_port *lp)
 }
 
 static int
+lagg_setifcaps(struct lagg_port *lp, uint64_t cap)
+{
+	struct ifcapreq ifcr;
+	int error;
+
+	if (lp->lp_ifp->if_capenable == cap)
+		return 0;
+
+	memset(&ifcr, 0, sizeof(ifcr));
+	ifcr.ifcr_capenable = cap;
+
+	IFNET_LOCK(lp->lp_ifp);
+	error = LAGG_PORT_IOCTL(lp, SIOCSIFCAP, &ifcr);
+	IFNET_UNLOCK(lp->lp_ifp);
+
+	return error;
+}
+
+static int
+lagg_setethcaps(struct lagg_port *lp, int cap)
+{
+	struct ethercom *ec;
+	struct eccapreq eccr;
+	int error;
+
+	KASSERT(lp->lp_iftype == IFT_ETHER);
+	ec = (struct ethercom *)lp->lp_ifp;
+
+	if (ec->ec_capenable == cap)
+		return 0;
+
+	memset(&eccr, 0, sizeof(eccr));
+	eccr.eccr_capenable = cap;
+
+	IFNET_LOCK(lp->lp_ifp);
+	error = LAGG_PORT_IOCTL(lp, SIOCSETHERCAP, &eccr);
+	IFNET_UNLOCK(lp->lp_ifp);
+
+	return error;
+}
+
+static void
+lagg_ifcap_update(struct lagg_softc *sc)
+{
+	struct ifnet *ifp;
+	struct lagg_port *lp;
+	uint64_t cap, ena, pena;
+	size_t i;
+
+	KASSERT(LAGG_LOCKED(sc));
+
+	/* Get common capabilities for the lagg ports */
+	ena = ~(uint64_t)0;
+	cap = ~(uint64_t)0;
+	LAGG_PORTS_FOREACH(sc, lp) {
+		ena &= lp->lp_ifp->if_capenable;
+		cap &= lp->lp_ifp->if_capabilities;
+	}
+
+	if (ena == ~(uint64_t)0)
+		ena = 0;
+	if (cap == ~(uint64_t)0)
+		cap = 0;
+
+	/*
+	 * Apply common enabled capabilities back to the lagg ports.
+	 * May require several iterations if they are dependent.
+	 */
+	for (i = 0; i < LAGG_SETCAPS_RETRY; i++) {
+		pena = ena;
+		LAGG_PORTS_FOREACH(sc, lp) {
+			lagg_setifcaps(lp, ena);
+			ena &= lp->lp_ifp->if_capenable;
+		}
+
+		if (pena == ena)
+			break;
+	}
+
+	if (pena != ena) {
+		lagg_log(sc, LOG_DEBUG, "couldn't set "
+		    "capabilities 0x%08"PRIx64, pena);
+	}
+
+	ifp = &sc->sc_if;
+
+	if (ifp->if_capabilities != cap ||
+	    ifp->if_capenable != ena) {
+		ifp->if_capabilities = cap;
+		ifp->if_capenable = ena;
+
+		lagg_log(sc, LOG_DEBUG,"capabilities "
+		    "0x%08"PRIx64" enabled 0x%08"PRIx64,
+		    cap, ena);
+	}
+}
+
+static void
+lagg_ethercap_update(struct lagg_softc *sc)
+{
+	struct ethercom *ec;
+	struct lagg_port *lp;
+	int cap, ena, pena;
+	size_t i;
+
+	KASSERT(LAGG_LOCKED(sc));
+
+	if (sc->sc_if.if_type != IFT_ETHER)
+		return;
+
+	/* Get common enabled capabilities for the lagg ports */
+	ena = ~0;
+	cap = ~0;
+	LAGG_PORTS_FOREACH(sc, lp) {
+		if (lp->lp_iftype == IFT_ETHER) {
+			ec = (struct ethercom *)lp->lp_ifp;
+			ena &= ec->ec_capenable;
+			cap &= ec->ec_capabilities;
+		} else {
+			ena = 0;
+			cap = 0;
+		}
+	}
+
+	if (ena == ~0)
+		ena = 0;
+	if (cap == ~0)
+		cap = 0;
+
+	/*
+	 * Apply common enabled capabilities back to the lagg ports.
+	 * May require several iterations if they are dependent.
+	 */
+	for (i = 0; i < LAGG_SETCAPS_RETRY; i++) {
+		pena = ena;
+		LAGG_PORTS_FOREACH(sc, lp) {
+			if (lp->lp_iftype != IFT_ETHER)
+				continue;
+
+			ec = (struct ethercom *)lp->lp_ifp;
+			lagg_setethcaps(lp, ena);
+			ena &= ec->ec_capenable;
+		}
+
+		if (pena == ena)
+			break;
+	}
+
+	if (pena != ena) {
+		lagg_log(sc, LOG_DEBUG, "couldn't set "
+		    "ether capabilities 0x%08x", pena);
+	}
+
+	ec = (struct ethercom *)&sc->sc_if;
+
+	if (ec->ec_capabilities != cap ||
+	    ec->ec_capenable != ena) {
+		ec->ec_capabilities = cap;
+		ec->ec_capenable = ena;
+
+		lagg_log(sc, LOG_DEBUG,
+		    "ether capabilities 0x%08x"
+		    " enabled 0x%08x", cap, ena);
+	}
+}
+
+static void
+lagg_capabilities_update(struct lagg_softc *sc)
+{
+
+	lagg_ifcap_update(sc);
+	lagg_ethercap_update(sc);
+}
+
+static int
 lagg_setup_mtu(struct lagg_softc *sc, struct lagg_port *lp)
 {
 	struct ifnet *ifp_port;
@@ -2056,8 +2236,13 @@ lagg_port_setup(struct lagg_softc *sc,
 	lp->lp_output = ifp_port->if_output;
 	lp->lp_ifcapenable = ifp_port->if_capenable;
 	lp->lp_mtu = ifp_port->if_mtu;
-	if (lp->lp_iftype == IFT_ETHER)
+	if (lp->lp_iftype == IFT_ETHER) {
+		struct ethercom *ec;
+		ec = (struct ethercom *)ifp_port;
+
 		lagg_lladdr_cpy(lp->lp_lladdr, CLLADDR(ifp_port->if_sadl));
+		lp->lp_eccapenable = ec->ec_capenable;
+	}
 
 	ifp_port->if_type = if_type;
 	ifp_port->if_ioctl = lagg_port_ioctl;
@@ -2103,6 +2288,7 @@ lagg_port_setup(struct lagg_softc *sc,
 	}
 
 	lagg_proto_startport(sc, lp);
+	lagg_capabilities_update(sc);
 
 	return 0;
 
@@ -2196,24 +2382,30 @@ lagg_port_teardown(struct lagg_softc *sc, struct lagg_port *lp,
 	if (ifp_port->if_ioctl == lagg_port_ioctl)
 		ifp_port->if_ioctl = lp->lp_ioctl;
 	ifp_port->if_output = lp->lp_output;
-	ifp_port->if_capenable = lp->lp_ifcapenable;
 	lagg_teardown_mtu(sc, lp);
-	lagg_port_setsadl(lp, lp->lp_lladdr, iftype_changed);
 	IFNET_UNLOCK(ifp_port);
-
-	lagg_proto_freeport(sc, lp);
-	kmem_free(lp, sizeof(*lp));
 
 	if (stopped) {
 		ifp_port->if_init(ifp_port);
 	}
 
 	if (is_ifdetach == false) {
+		lagg_setifcaps(lp, lp->lp_ifcapenable);
+		if (lp->lp_iftype == IFT_ETHER)
+			lagg_setethcaps(lp, lp->lp_eccapenable);
+
 		IFNET_LOCK(ifp_port);
+		if (ifp_port->if_type == IFT_ETHER)
+			lagg_port_setsadl(lp, lp->lp_lladdr, iftype_changed);
+
 		lagg_in6_ifattach(ifp_port);
 		IFNET_UNLOCK(ifp_port);
 	}
 
+	lagg_capabilities_update(sc);
+
+	lagg_proto_freeport(sc, lp);
+	kmem_free(lp, sizeof(*lp));
 }
 
 static int
@@ -2411,6 +2603,7 @@ lagg_port_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 		break;
 	case SIOCSIFCAP:
 	case SIOCSIFMTU:
+	case SIOCSETHERCAP:
 		/* Do not allow the setting to be cahanged once joined */
 		error = EINVAL;
 		break;

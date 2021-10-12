@@ -1,4 +1,4 @@
-/*	$NetBSD: if_laggproto.h,v 1.6 2021/09/30 04:29:17 yamaguchi Exp $	*/
+/*	$NetBSD: if_laggproto.h,v 1.7 2021/10/12 08:26:47 yamaguchi Exp $	*/
 
 /*
  * Copyright (c) 2021 Internet Initiative Japan Inc.
@@ -76,12 +76,14 @@ struct lagg_port {
 
 	u_char			 lp_iftype;
 	uint8_t			 lp_lladdr[ETHER_ADDR_LEN];
+	int			 lp_eccapenable;
+	uint64_t		 lp_ifcapenable;
+	uint64_t		 lp_mtu;
+
 	int			(*lp_ioctl)(struct ifnet *, u_long, void *);
 	int			(*lp_output)(struct ifnet *, struct mbuf *,
 				    const struct sockaddr *,
 				    const struct rtentry *);
-	uint64_t		 lp_ifcapenable;
-	uint64_t		 lp_mtu;
 
 	SIMPLEQ_ENTRY(lagg_port)
 				 lp_entry;
