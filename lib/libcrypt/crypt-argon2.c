@@ -95,14 +95,23 @@ static int decode_option(argon2_context * ctx, argon2_type * atype, const char *
 
 	a = strsep(&inp, "$");
 
-	if ((getnum(a, &tmp))<0) { /* on error, default to current */
-				/* should start thinking about aborting */
-		ctx->version = ARGON2_VERSION_NUMBER;
+	/* parse the version number of the hash, if it's there */
+	if (strncmp(a, "v=", 2) == 0) {
+		a += 2;
+		if ((getnum(a, &tmp))<0) { /* on error, default to current */
+			/* should start thinking about aborting */
+			ctx->version = ARGON2_VERSION_NUMBER;
+		} else {
+			ctx->version = tmp;
+		}
+		a = strsep(&inp, "$");
 	} else {
-		ctx->version = tmp;
+		/*
+		 * This is a parameter list, not a version number, use the
+		 * default version.
+		 */
+		ctx->version = ARGON2_VERSION_NUMBER;
 	}
-
-	a = strsep(&inp, "$");
 
 	/* parse labelled argon2 params */
 	/* m_cost (m)
@@ -143,12 +152,12 @@ static int decode_option(argon2_context * ctx, argon2_type * atype, const char *
 
 	a = strsep(&inp, "$");
 
-	snprintf((char *)ctx->salt,ctx->saltlen, "%s", a);
+	snprintf((char *)ctx->salt, ctx->saltlen, "%s", a);
 
 	a = strsep(&inp, "$");
 
-	if (*a) {
-		snprintf((char *)ctx->pwd,ctx->pwdlen, "%s", a);
+	if (a) {
+		snprintf((char *)ctx->pwd, ctx->pwdlen, "%s", a);
 	} else {
 		/* don't care if passwd hash is missing */
 		/* if missing, most likely coming from */
@@ -212,7 +221,7 @@ __crypt_argon2(const char *pw, const char * salt)
 	rc = decode_option(&ctx, &atype, salt);
 
 	if (rc < 0) {
-	/* unable to parse input params */
+		/* unable to parse input params */
 		return 0;
 	}
 
@@ -221,7 +230,8 @@ __crypt_argon2(const char *pw, const char * salt)
 		ebuf, sizeof(ebuf), encodebuf, sizeof(encodebuf), atype, ctx.version);
 
 	if (rc != ARGON2_OK) {
-		fprintf(stderr, "Failed: %s\n", argon2_error_message(rc));
+		fprintf(stderr, "argon2: failed: %s\n",
+		    argon2_error_message(rc));
 		return 0;
 	}
 
