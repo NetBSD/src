@@ -1,4 +1,4 @@
-/*	$NetBSD: comvar.h,v 1.94 2021/03/25 05:34:49 rin Exp $	*/
+/*	$NetBSD: comvar.h,v 1.95 2021/10/12 00:21:34 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -125,6 +125,7 @@ struct com_softc {
 
 	callout_t sc_diag_callout;
 	callout_t sc_poll_callout;
+	struct timeval sc_hup_pending;
 
 	int sc_frequency;
 
