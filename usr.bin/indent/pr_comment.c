@@ -1,4 +1,4 @@
-/*	$NetBSD: pr_comment.c,v 1.74 2021/10/12 22:04:03 rillig Exp $	*/
+/*	$NetBSD: pr_comment.c,v 1.75 2021/10/12 22:20:22 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)pr_comment.c	8.1 (Berkeley) 6/6/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: pr_comment.c,v 1.74 2021/10/12 22:04:03 rillig Exp $");
+__RCSID("$NetBSD: pr_comment.c,v 1.75 2021/10/12 22:20:22 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/pr_comment.c 334927 2018-06-10 16:44:18Z pstef $");
 #endif
@@ -112,23 +112,20 @@ process_comment(void)
     adj_max_line_length = opt.max_line_length;
     ps.just_saw_decl = 0;
     last_blank = -1;		/* no blanks found so far */
-    bool box_com = false;	/* at first, assume that we are not in a boxed
-				 * comment or some other comment that should
-				 * not be touched */
+    bool may_wrap = true;
     ps.stats.comments++;
 
     /* Figure where to align and how to treat the comment */
 
-    if (ps.col_1 && !opt.format_col1_comments) { /* if the comment starts in
-				 * column 1, it should not be touched */
-	box_com = true;
+    if (ps.col_1 && !opt.format_col1_comments) {
+	may_wrap = false;
 	break_delim = false;
 	ps.com_ind = 0;
 
     } else {
 	if (*inp.s == '-' || *inp.s == '*' || token.e[-1] == '/' ||
 	    (*inp.s == '\n' && !opt.format_block_comments)) {
-	    box_com = true;
+	    may_wrap = false;
 	    break_delim = false;
 	}
 
@@ -159,7 +156,7 @@ process_comment(void)
 	}
     }
 
-    if (box_com) {
+    if (!may_wrap) {
 	/*
 	 * Find out how much indentation there was originally, because that
 	 * much will have to be ignored by dump_line(). This is a box comment,
@@ -186,7 +183,7 @@ process_comment(void)
     ps.comment_delta = 0;
     com_add_char('/');
     com_add_char(token.e[-1]);	/* either '*' or '/' */
-    if (*inp.s != ' ' && !box_com)
+    if (*inp.s != ' ' && may_wrap)
 	com_add_char(' ');
 
     /* Don't put a break delimiter if this is a one-liner that won't wrap. */
@@ -213,8 +210,7 @@ process_comment(void)
 	    prefix_blankline_requested = true;
 	dump_line();
 	com.e = com.s = t;
-	if (!box_com)
-	    com_add_delim();
+	com_add_delim();
     }
 
     /* Start to copy the comment */
@@ -223,7 +219,7 @@ process_comment(void)
 				 * copied */
 	switch (*inp.s) {	/* this checks for various special cases */
 	case '\f':
-	    if (!box_com) {	/* in a text comment, break the line here */
+	    if (may_wrap) {	/* in a text comment, break the line here */
 		ps.use_ff = true;
 		dump_line();
 		last_blank = -1;
@@ -248,16 +244,16 @@ process_comment(void)
 	    }
 
 	    last_blank = -1;
-	    if (box_com || ps.last_nl) {	/* if this is a boxed comment,
+	    if (!may_wrap || ps.last_nl) {	/* if this is a boxed comment,
 						 * we handle the newline */
 		if (com.s == com.e)
 		    com_add_char(' ');
-		if (!box_com && com.e - com.s > 3) {
+		if (may_wrap && com.e - com.s > 3) {
 		    dump_line();
 		    com_add_delim();
 		}
 		dump_line();
-		if (!box_com)
+		if (may_wrap)
 		    com_add_delim();
 
 	    } else {
@@ -267,7 +263,7 @@ process_comment(void)
 		last_blank = com.e - 1 - com.buf;
 	    }
 	    ++line_no;
-	    if (!box_com) {
+	    if (may_wrap) {
 		int asterisks_to_skip = 1;
 		do {		/* flush any blanks and/or tabs at start of
 				 * next line */
@@ -297,7 +293,7 @@ process_comment(void)
 		    com_add_char(' ');
 		}
 
-		if (!is_hspace(com.e[-1]) && !box_com)
+		if (!is_hspace(com.e[-1]) && may_wrap)
 		    com_add_char(' ');
 		if (token.e[-1] != '/') {
 		    com_add_char('*');
@@ -331,7 +327,7 @@ process_comment(void)
 
 	    /* XXX: signed character comparison '>' does not work for UTF-8 */
 	    if (now_len > adj_max_line_length &&
-		    !box_com && com.e[-1] > ' ') {
+		    may_wrap && com.e[-1] > ' ') {
 
 		/* the comment is too long, it must be broken up */
 		if (last_blank == -1) {
