@@ -1,4 +1,4 @@
-/* $NetBSD: token-comment.0,v 1.7 2021/10/08 23:53:37 rillig Exp $ */
+/* $NetBSD: token-comment.0,v 1.8 2021/10/12 18:54:56 rillig Exp $ */
 /* $FreeBSD$ */
 
 /*
@@ -91,6 +91,11 @@ function(void)
 	}
 
 	code();			/* code comment */
+	code();			/* code comment _________ to line length 78 */
+	code();			/* code comment __________ to line length 79 */
+	code();			/* code comment ___________ to line length 80 */
+	code();			/* code comment ____________ to line length 81 */
+	code();			/* code comment _____________ to line length 82 */
 
 	code();			/* short
 				 * multi-line
@@ -104,6 +109,11 @@ function(void)
  * the allowed line width */
 
 	code();			// C99 code comment
+	code();			// C99 code comment ________ to line length 78
+	code();			// C99 code comment _________ to line length 79
+	code();			// C99 code comment __________ to line length 80
+	code();			// C99 code comment ___________ to line length 81
+	code();			// C99 code comment ____________ to line length 82
 
 	if (cond) /* comment */
 		if (cond) /* comment */
