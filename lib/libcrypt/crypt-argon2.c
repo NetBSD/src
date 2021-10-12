@@ -100,7 +100,7 @@ static int decode_option(argon2_context * ctx, argon2_type * atype, const char *
 		a += 2;
 		if ((getnum(a, &tmp))<0) { /* on error, default to current */
 			/* should start thinking about aborting */
-			ctx->version = ARGON2_VERSION_NUMBER;
+			ctx->version = ARGON2_VERSION_10;
 		} else {
 			ctx->version = tmp;
 		}
@@ -110,7 +110,7 @@ static int decode_option(argon2_context * ctx, argon2_type * atype, const char *
 		 * This is a parameter list, not a version number, use the
 		 * default version.
 		 */
-		ctx->version = ARGON2_VERSION_NUMBER;
+		ctx->version = ARGON2_VERSION_10;
 	}
 
 	/* parse labelled argon2 params */
@@ -184,7 +184,6 @@ __crypt_argon2(const char *pw, const char * salt)
 	/* argon2 variable, default to id */
 	argon2_type atype = Argon2_id;
 	/* default to current argon2 version */
-	int version=ARGON2_VERSION_NUMBER;
 	/* argon2 context to collect params */
 	argon2_context ctx = ARGON2_CONTEXT_INITIALIZER;
 	/* argon2 encoded buffer */
@@ -247,7 +246,7 @@ __crypt_argon2(const char *pw, const char * salt)
 	/* same encoding format as argon2 api, but with original salt */
 	snprintf(rbuf, sizeof(rbuf)-1, "$%s$v=%d$m=%d,t=%d,p=%d$%s$%s",
 			argon2_type2string(atype,0),
-			version,
+			ctx.version,
 			ctx.m_cost,
 			ctx.t_cost,
 			ctx.threads,
