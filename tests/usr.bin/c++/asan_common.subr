@@ -1,4 +1,4 @@
-#	$NetBSD: asan_common.subr,v 1.2 2019/01/29 20:07:03 mgorny Exp $
+#	$NetBSD: asan_common.subr,v 1.3 2021/10/12 18:40:01 skrll Exp $
 #
 # Copyright (c) 2018, 2019 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -27,6 +27,10 @@
 
 SUPPORT='n'
 test_target() {
+	if uname -p | grep -q "aarch64"; then
+		SUPPORT='y'
+	fi
+
 	if uname -m | grep -q "amd64"; then
 		SUPPORT='y'
 	fi
