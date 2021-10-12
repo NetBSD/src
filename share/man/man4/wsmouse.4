@@ -1,4 +1,4 @@
-.\" $NetBSD: wsmouse.4,v 1.23 2021/10/11 18:06:06 nia Exp $
+.\" $NetBSD: wsmouse.4,v 1.24 2021/10/12 07:43:49 wiz Exp $
 .\"
 .\" Copyright (c) 1999
 .\" 	Matthias Drochner.  All rights reserved.
@@ -137,7 +137,6 @@ decreased by the value given in this variable.
 .Va wr_delay_minimum
 specifies the minimum delay, in milliseconds, between two consecutive
 events.
-.Pp
 .It Dv WSMOUSEIO_SETREPEAT Pq Li "struct wsmouse_repeat"
 Set the automatic button repeating configuration.
 See
@@ -167,8 +166,9 @@ if (ioctl(fd, WSMOUSEIO_SETVERSION, &ver) == -1)
 .El
 .Sh SEE ALSO
 .Xr btms 4 ,
-.Xr lms 4 ,
-.Xr mms 4 ,
+.Xr dreamcast/mms 4 ,
+.Xr i386/lms 4 ,
+.Xr i386/mms 4 ,
 .Xr pms 4 ,
 .Xr uep 4 ,
 .Xr ums 4 ,
