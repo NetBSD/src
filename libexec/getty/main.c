@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.67 2020/02/26 15:44:57 riastradh Exp $	*/
+/*	$NetBSD: main.c,v 1.68 2021/10/12 23:40:38 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1993
@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\
 #if 0
 static char sccsid[] = "from: @(#)main.c	8.1 (Berkeley) 6/20/93";
 #else
-__RCSID("$NetBSD: main.c,v 1.67 2020/02/26 15:44:57 riastradh Exp $");
+__RCSID("$NetBSD: main.c,v 1.68 2021/10/12 23:40:38 jmcneill Exp $");
 #endif
 #endif /* not lint */
 
@@ -229,11 +229,6 @@ main(int argc, char *argv[], char *envp[])
 			if (ttyaction(ttyn, "getty", "root"))
 				syslog(LOG_WARNING, "%s: ttyaction failed",
 					ttyn);
-			/*
-			 * Delay the open so DTR stays down long enough
-			 * to be detected.
-			 */
-			(void)sleep(2);
 			while ((i = open(ttyn, O_RDWR)) == -1) {
 				if ((repcnt % 10 == 0) &&
 				    (errno != ENXIO || !failopenlogged)) {
