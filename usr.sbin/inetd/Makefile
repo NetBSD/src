@@ -1,12 +1,12 @@
 #	from: @(#)Makefile	8.1 (Berkeley) 6/6/93
-#	$NetBSD: Makefile,v 1.29 2021/09/03 20:24:28 rillig Exp $
+#	$NetBSD: Makefile,v 1.30 2021/10/12 19:08:04 christos Exp $
 
 .include <bsd.own.mk>
 
 USE_FORT?= yes	# network server
 
 PROG=	inetd
-SRCS=	inetd.c parse_v2.c
+SRCS=	inetd.c parse.c parse_v2.c ratelimit.c
 MAN=	inetd.8
 MLINKS=	inetd.8 inetd.conf.5
 WARNS=	6
