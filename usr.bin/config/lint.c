@@ -1,4 +1,4 @@
-/*	$NetBSD: lint.c,v 1.15 2014/10/29 17:14:50 christos Exp $	*/
+/*	$NetBSD: lint.c,v 1.16 2021/10/12 17:14:10 christos Exp $	*/
 
 /*
  *  Copyright (c) 2007 The NetBSD Foundation.
@@ -31,7 +31,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: lint.c,v 1.15 2014/10/29 17:14:50 christos Exp $");
+__RCSID("$NetBSD: lint.c,v 1.16 2021/10/12 17:14:10 christos Exp $");
 
 #include <assert.h>
 #include <stdlib.h>
@@ -80,11 +80,11 @@ do_emit_option(const char *name, struct defoptlist *dl, void *v)
 	printf("%s\t%s", ot->ot_name, dl->dl_name);
 	if (ot->ot_type == OT_PARAM) {
 		struct defoptlist *dl2 = dlhash_lookup(defoptlint, dl->dl_name);
-		if (dl2 != NULL)
+		if (dl2 != NULL) {
+			assert(dl2 == dl);
 			value = dl2->dl_lintvalue;
-		else
+		} else
 			value = dl->dl_value;
-		assert(dl2 == dl);
 		printf("=\"%s\"", value ? value : "1");
 	}
 	printf("\n");
