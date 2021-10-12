@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_motorola.c,v 1.74 2021/04/16 00:13:48 mrg Exp $        */
+/*	$NetBSD: pmap_motorola.c,v 1.75 2021/10/12 08:36:28 andvar Exp $        */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -119,7 +119,7 @@
 #include "opt_m68k_arch.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_motorola.c,v 1.74 2021/04/16 00:13:48 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_motorola.c,v 1.75 2021/10/12 08:36:28 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -696,7 +696,7 @@ pmap_destroy(pmap_t pmap)
 /*
  * pmap_release:
  *
- *	Relese the resources held by a pmap.
+ *	Release the resources held by a pmap.
  *
  *	Note: THIS FUNCTION SHOULD BE MOVED INTO pmap_destroy().
  */

@@ -1,4 +1,4 @@
-/*	$NetBSD: i2c_exec.c,v 1.16 2020/04/19 17:08:14 thorpej Exp $	*/
+/*	$NetBSD: i2c_exec.c,v 1.17 2021/10/12 08:36:29 andvar Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i2c_exec.c,v 1.16 2020/04/19 17:08:14 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i2c_exec.c,v 1.17 2021/10/12 08:36:29 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -151,7 +151,7 @@ iic_acquire_bus(i2c_tag_t tag, int flags)
 /*
  * iic_release_bus:
  *
- *	Relese the I2C bus, allowing another client to use it.
+ *	Release the I2C bus, allowing another client to use it.
  */
 void
 iic_release_bus(i2c_tag_t tag, int flags)
