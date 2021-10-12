@@ -1,4 +1,4 @@
-.\"	$NetBSD: inetd.8,v 1.66 2021/10/12 22:42:01 rillig Exp $
+.\"	$NetBSD: inetd.8,v 1.67 2021/10/12 22:47:18 rillig Exp $
 .\"
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -113,17 +113,17 @@ the
 .Fl d
 option is also given on the command line.
 .Pp
-Services can be specified using the legacy `positional' notation or the 
+Services can be specified using the legacy `positional' notation or the
 `key-values' notation described in the sections
 .Sx Positional Notation
-and 
+and
 .Sx Key-Values Notation
 below.
 .Ss Positional Notation
 There must be an entry for each field of the configuration
 file, with entries for each field separated by a tab or
 a space.
-Comments are denoted by a ``#'' at the beginning of a line (see subsection 
+Comments are denoted by a ``#'' at the beginning of a line (see subsection
 .Sx Key-Values Notation
 for defining comments in key-values definitions).
 There must be an entry for each field (except for one
@@ -160,7 +160,7 @@ Note that restricted listen addresses are meaningless and ignored for
 UNIX-domain services, and are not supported for
 .Em Sun-RPC
 services.
-All 
+All
 .Em Sun-RPC
 services always listen on all interfaces.
 .Pp
@@ -205,7 +205,7 @@ parameter is the path name to listen on.
 The
 .Em service-spec
 parameter must not begin with a dot.
-See 
+See
 .Sx Directives .
 .Pp
 The
@@ -400,49 +400,49 @@ It is possible to quote an argument using either single or double quotes.
 This allows you to have, e.g., spaces in paths and parameters.
 .Ss Key-Values Notation
 In key-values notation, keys are separated from their associated values by `=',
-values are separated by whitespace, and key-values options are separated by 
+values are separated by whitespace, and key-values options are separated by
 commas.
 A service definition is terminated by a semicolon.
 Multiple definitions may exist on a single line (and a line may
 end with a positional definition.
 A key-values definition has the following form:
 .Bd -filled -offset indent
-[listen-addr:]service-spec {on|off} <option> = [value1], 
+[listen-addr:]service-spec {on|off} <option> = [value1],
 <option> = [value1] [value2] ..., <option> =, ...;
 .Ed
 .Pp
 Values may be in quotes, and support the following escape sequences.
 .Bl -hang -width "\xXX" -offset indent
-.It Sy \e\e 
+.It Sy \e\e
 Backslash.
-.It Sy \en 
+.It Sy \en
 Line feed.
-.It Sy \et 
+.It Sy \et
 Tab.
-.It Sy \er 
+.It Sy \er
 Carriage return.
-.It Sy \e' 
+.It Sy \e'
 Single quote.
-.It Sy \e" 
+.It Sy \e"
 Double quote.
-.It Sy \exXX 
+.It Sy \exXX
 Hexadecimal byte value, replace XX.
 .El
 .Pp
-.Em [listen-addr:]service-spec 
-has the same form as in positional notation. If 
+.Em [listen-addr:]service-spec
+has the same form as in positional notation. If
 .Em service-spec
 is followed by
 .Em on
 then the service definition is active by default.
 If
 .Em service-spec
-is followed by 
+is followed by
 .Em off
 then the service definition is parsed and errors are output to
 the system log, but the service is not active and no sockets are created.
 .Pp
-Comments that exist between the initial on/off directive 
+Comments that exist between the initial on/off directive
 and the closing semicolon may begin in any column and may exist on the same line
 as non-comment text.
 Note: editor syntax highlighting may be misleading!
@@ -450,12 +450,12 @@ Note: editor syntax highlighting may be misleading!
 Syntax and semantic error detection is performed on a best-effort basis.
 If an error with a service definition is easily detectable, it will
 log the error using
-.Xr syslog 3 
-and continue reading the configuration file if possible, skipping the erroneous 
-definition or file. 
-Otherwise, it is up to the user to write definitions that conform to the 
+.Xr syslog 3
+and continue reading the configuration file if possible, skipping the erroneous
+definition or file.
+Otherwise, it is up to the user to write definitions that conform to the
 documentation.
-Errors may be worded differently depending on the ordering of 
+Errors may be worded differently depending on the ordering of
 options in the service definition.
 .Pp
 The following are the available values for
@@ -466,33 +466,33 @@ Set the listen address for this service.
 This can be an IPv4 or IPv6 address or a hostname.
 .It Sy socktype
 Equivalent to
-.Em socket-type 
+.Em socket-type
 in positional notation.
 .Em socktype
-is optional if 
+is optional if
 .Em protocol
 is specified and is
 .Li udp{4,6}
 or
 .Li tcp{4,6} .
 .It Sy acceptfilter
-An accept filter, equivalent to 
+An accept filter, equivalent to
 .Em accept
-in positional notation (see 
-.Xr accept_filter 9 
+in positional notation (see
+.Xr accept_filter 9
 and
 .Dv SO_ACCEPTFITLER
-in 
+in
 .Xr setsockopt 2 ) .
 .It Sy protocol
-Equivalent to 
+Equivalent to
 .Em protocol
 in positional notation.
 If specified as
 .Li tcp
 or
 .Li udp
-with no version specifier, the associated hostname or 
+with no version specifier, the associated hostname or
 .Em bind
 value is used to determine the IP version.
 If the version is not specified and the hostname string or
@@ -500,15 +500,15 @@ If the version is not specified and the hostname string or
 value is not an IPv4 or IPv6 address, the service definition is
 invalid.
 .It Sy sndbuf
-Equivalent to 
+Equivalent to
 .Em sndbuf
 in positional notation.
 .It Sy recvbuf
-Equivalent to 
+Equivalent to
 .Em recvbuf
 in positional notation.
 .It Sy wait
-The value 
+The value
 .Li yes
 or
 .Li no .
@@ -540,17 +540,17 @@ Equivalent to
 in positional notation.
 .It Sy group
 The primary group to run the program as.
-Equivalent to 
+Equivalent to
 .Em group
 in positional notation.
 .It Sy exec
-The path to the program's executable or 
+The path to the program's executable or
 .Dq internal
-for a built-in service. 
-If not specified, this will be assumed to be 
+for a built-in service.
+If not specified, this will be assumed to be
 .Dq internal
-(and will fail if 
-.Em socktype 
+(and will fail if
+.Em socktype
 is not specified).
 .It Sy args
 The program arguments.
@@ -564,7 +564,7 @@ IPsec will be disabled for this service.
 See the
 .Sx Directives
 section for details.
-Currently only one value is allowed, so all IPsec policies 
+Currently only one value is allowed, so all IPsec policies
 should be in a quoted string, separated by semicolons.
 .El
 .Ss Directives
@@ -614,26 +614,26 @@ from other files not affected by the IPsec directive.
 .Pp
 \&.include <glob-path>
 .Pp
-Other files can be read by inetd by specifying an include directive in an inetd 
-config file. 
+Other files can be read by inetd by specifying an include directive in an inetd
+config file.
 .Em glob-path
-is an 
-absolute path or a path relative (including parent directories) to the directory 
-containing the current config 
+is an
+absolute path or a path relative (including parent directories) to the directory
+containing the current config
 file, and may contain glob patterns as specified by
 .Xr glob 7 .
 .Pp
 To include a specific file, include the relative or absolute path of the file.
-To include all files in a directory, 
-.Em glob-path 
+To include all files in a directory,
+.Em glob-path
 should be the directory of the files to include followed by "/*".
 .Pp
 The listening address and IPsec configuration strings of the current config file
 are inherited by files included by this directive.
 .Pp
-Files included by this directive using a glob path match are not read in a 
+Files included by this directive using a glob path match are not read in a
 specific order.
-If a specific order is desired, files or directories should be 
+If a specific order is desired, files or directories should be
 included individually without the use of glob patterns.
 Behavior is undefined if
 multiple include directives include the same file and
@@ -870,11 +870,11 @@ on IPv6 is not tested enough.
 For automatic IP version detection in key-values syntax (see the
 .Em protocol
 key), addresses with an interface specifier in the form <address>%<iface>
-are not currently supported, as addresses of that form are not parsed by 
+are not currently supported, as addresses of that form are not parsed by
 .Xr inet_pton 3 .
 .Pp
 If a positional service definition has an invalid parameter and extends
-across multiple lines using tab characters, the subsequent lines after the 
+across multiple lines using tab characters, the subsequent lines after the
 error are treated as new service definitions.
 .Sh SECURITY CONSIDERATIONS
 Enabling the
