@@ -276,7 +276,6 @@ __crypt_argon2(const char *pw, const char * salt)
 		return 0;
 	}
 
-	puts(encodebuf);
 	memcpy(rbuf, encodebuf, sizeof(encodebuf));
 
 	/* clear buffers */
