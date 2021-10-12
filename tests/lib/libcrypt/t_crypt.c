@@ -1,4 +1,4 @@
-/* $NetBSD: t_crypt.c,v 1.5 2021/10/12 13:24:00 nia Exp $ */
+/* $NetBSD: t_crypt.c,v 1.6 2021/10/12 13:24:21 nia Exp $ */
 
 /*
  * This version is derived from the original implementation of FreeSec
@@ -61,7 +61,7 @@
  *	by now.	 The code requires a 32-bit integer type, though.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_crypt.c,v 1.5 2021/10/12 13:24:00 nia Exp $");
+__RCSID("$NetBSD: t_crypt.c,v 1.6 2021/10/12 13:24:21 nia Exp $");
 
 #include <atf-c.h>
 #include <stdio.h>
@@ -111,10 +111,6 @@ static const struct {
 /* 31 */	{ "_/!......", "" }, /* invalid character in count */
 /* 32 */	{ "_/......!", "" }, /* invalid character in salt */
 #if defined(HAVE_ARGON2)
-/*
- * The below are reference values from the official Argon2 test suite. 
- * NOTE: Upstream Argon2 uses base64-encoded salts, whereas NetBSD doesn't...
- */
 /* Argon2i version number 16 */
 /* 33 */	{ "$argon2i$v=16$m=256,t=2,p=1$c29tZXNhbHQ$/U3YPXYsSb3q9XxHvc0MLxur+GP960kN9j7emXX8zwY", "password" },
 /* 34 */	{ "$argon2i$v=16$m=65536,t=1,p=1$c29tZXNhbHQ$gWMFUrjzsfSM2xmSxMZ4ZD1JCytetP9sSzQ4tWIXJLI", "password" },
