@@ -1,4 +1,4 @@
-/*	$NetBSD: elsecomment.0.stdout,v 1.1 2019/04/04 15:27:35 kamil Exp $	*/
+/*	$NetBSD: elsecomment.0.stdout,v 1.2 2021/10/12 18:22:01 rillig Exp $	*/
 /* $FreeBSD: head/usr.bin/indent/tests/elsecomment.0.stdout 334559 2018-06-03 14:03:20Z pstef $ */
 /* See r303484 and r309342 */
 void
@@ -23,7 +23,9 @@ t(void)
 
 
 
-	/* Old indent would remove the 3 blank lines above, awaiting "else". */
+	/*
+	 * Old indent would remove the 3 blank lines above, awaiting "else".
+	 */
 
 	if (1)
 	{
