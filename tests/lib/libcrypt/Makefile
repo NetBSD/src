@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.1 2011/12/27 00:47:23 christos Exp $
+# $NetBSD: Makefile,v 1.2 2021/10/12 10:52:40 nia Exp $
 
 NOMAN=		# defined 
 
@@ -11,5 +11,9 @@ DPADD+=		${LIBCRYPT}
 WARNS?=		4
 
 TESTS_C=	t_crypt
+
+.if defined(MKARGON2) && ${MKARGON2} != "no"
+CPPFLAGS+=	-DHAVE_ARGON2
+.endif
 
 .include <bsd.test.mk>
