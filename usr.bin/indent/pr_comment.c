@@ -1,4 +1,4 @@
-/*	$NetBSD: pr_comment.c,v 1.69 2021/10/09 11:00:27 rillig Exp $	*/
+/*	$NetBSD: pr_comment.c,v 1.70 2021/10/12 18:22:01 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)pr_comment.c	8.1 (Berkeley) 6/6/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: pr_comment.c,v 1.69 2021/10/09 11:00:27 rillig Exp $");
+__RCSID("$NetBSD: pr_comment.c,v 1.70 2021/10/12 18:22:01 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/pr_comment.c 334927 2018-06-10 16:44:18Z pstef $");
 #endif
@@ -172,19 +172,14 @@ process_comment(void)
     if (break_delim) {
 	for (const char *p = inp.s; *p != '\n'; p++) {
 	    assert(*p != '\0');
-	    assert(p < inp.e);
-	    if (p[0] == '*' && p[1] == '/') {
-		/*
-		 * XXX: This computation ignores the leading " * ", as well as
-		 * the trailing ' ' '*' '/'.  In simple cases, these cancel
-		 * out since they are equally long.
-		 */
-		int right_margin = indentation_after_range(ps.com_ind,
-		    inp.s, p + 2);
-		if (right_margin < adj_max_line_length)
-		    break_delim = false;
-		break;
-	    }
+	    assert(inp.e - p >= 2);
+	    if (!(p[0] == '*' && p[1] == '/'))
+		continue;
+
+	    int len = 3 + indentation_after_range(ps.com_ind, inp.s, p + 2);
+	    if (len <= adj_max_line_length)
+		break_delim = false;
+	    break;
 	}
     }
 
