@@ -1,4 +1,4 @@
-/* $NetBSD: token-comment.0.stdout,v 1.10 2021/10/12 18:54:56 rillig Exp $ */
+/* $NetBSD: token-comment.0.stdout,v 1.11 2021/10/12 19:05:22 rillig Exp $ */
 /* $FreeBSD$ */
 
 /*
@@ -95,6 +95,14 @@ function(void)
 	}
 
 	code();			/* code comment */
+	code();			/* code comment _________ to line length 78 */
+	code();			/* code comment __________ to line length 79 */
+	code();			/* code comment ___________ to line length 80 */
+	code();			/* code comment ____________ to line length 81 */
+	code();			/* code comment _____________ to line length
+				 * 82 */
+
+/* $ In the following comments, the line length is measured after formatting. */
 	code();			/* code comment _________ to line length 78 */
 	code();			/* code comment __________ to line length 79 */
 	code();			/* code comment ___________ to line length 80 */
