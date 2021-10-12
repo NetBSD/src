@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.34 2020/11/01 22:28:32 christos Exp $
+#	$NetBSD: Makefile,v 1.35 2021/10/12 17:24:36 nia Exp $
 #
 
 .include <bsd.own.mk>
@@ -14,10 +14,6 @@ TESTS_SUBDIRS=	awk basename bzip2 cc cmp config cpio col cut \
 
 .if ${MKCXX} != "no"
 TESTS_SUBDIRS+=	c++
-.endif
-
-.if (defined(MKARGON2) && ${MKARGON2} != "no")
-TESTS_SUBDIRS+=	argon2
 .endif
 
 .include <bsd.test.mk>
