@@ -1,10 +1,6 @@
-#	$NetBSD: Makefile,v 1.3 2019/11/11 22:44:57 joerg Exp $
+#	$NetBSD: Makefile,v 1.4 2021/10/12 17:24:36 nia Exp $
 
 .include <bsd.own.mk>
-
-.if (defined(MKARGON2) && ${MKARGON2} != "no")
-SUBDIR+= argon2
-.endif
 
 .if (${MKLLVM} != "no" || ${MKLLVMRT} != "no")
 SUBDIR+= llvm
