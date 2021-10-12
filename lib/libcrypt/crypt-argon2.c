@@ -7,6 +7,7 @@
 #include <pwd.h>
 #include <errno.h>
 #include <argon2.h>
+#include <resolv.h> /* for b64_pton... */
 
 #include <err.h>
 #include "crypt.h"
@@ -30,32 +31,6 @@
 #define ARGON2_ARGON2I_STR	"argon2i"
 #define ARGON2_ARGON2D_STR	"argon2d"
 #define ARGON2_ARGON2ID_STR	"argon2id"
-
-/* getnum also declared in pw_getsalt.c */
-/* maybe move to util.h?? */
-static int
-getnum(const char *str, size_t *num)
-{
-        char *ep;
-        unsigned long rv;
- 
-        if (str == NULL) {
-                *num = 0;
-                return 0;
-        }
-
-        rv = strtoul(str, &ep, 0);
-
-        if (str == ep || *ep) {
-                errno = EINVAL;
-                return -1;
-        }
-
-        if (errno == ERANGE && rv == ULONG_MAX)
-                return -1;
-        *num = (size_t)rv;
-        return 0;  
-}
 
 /* process params to argon2 */
 /* we don't force param order as input, */
@@ -152,7 +127,7 @@ static int decode_option(argon2_context * ctx, argon2_type * atype, const char *
 
 	a = strsep(&inp, "$");
 
-	snprintf((char *)ctx->salt, ctx->saltlen, "%s", a);
+	b64_pton(a, ctx->salt, ctx->saltlen);
 
 	a = strsep(&inp, "$");
 
@@ -196,10 +171,7 @@ __crypt_argon2(const char *pw, const char * salt)
 	static char rbuf[512];
 
 	/* clear buffers */
-	memset(encodebuf, 0, sizeof(encodebuf));
-	memset(saltbuf, 0, sizeof(saltbuf));
-	memset(pwdbuf, 0, sizeof(pwdbuf));
-	memset(rbuf, 0, sizeof(rbuf));
+	explicit_memset(rbuf, 0, sizeof(rbuf));
 
 	/* we use static buffers to avoid allocation */
 	/* and easier cleanup */
@@ -242,18 +214,10 @@ __crypt_argon2(const char *pw, const char * salt)
 	/* skip over '$' */
 	blkp++;
 
-	/* we don't use encoded here because it base64 encodes salt */
-	/* same encoding format as argon2 api, but with original salt */
-	snprintf(rbuf, sizeof(rbuf)-1, "$%s$v=%d$m=%d,t=%d,p=%d$%s$%s",
-			argon2_type2string(atype,0),
-			ctx.version,
-			ctx.m_cost,
-			ctx.t_cost,
-			ctx.threads,
-			ctx.salt,
-			blkp);
+	memcpy(rbuf, encodebuf, sizeof(encodebuf));
 
 	/* clear buffers */
+	explicit_memset(ebuf, 0, sizeof(ebuf));
 	explicit_memset(encodebuf, 0, sizeof(encodebuf));
 	explicit_memset(saltbuf, 0, sizeof(saltbuf));
 	explicit_memset(pwdbuf, 0, sizeof(pwdbuf));

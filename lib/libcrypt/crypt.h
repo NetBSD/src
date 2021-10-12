@@ -1,6 +1,9 @@
 /*
- * $NetBSD: crypt.h,v 1.5 2019/10/21 02:36:48 jhigh Exp $
+ * $NetBSD: crypt.h,v 1.6 2021/10/12 13:24:00 nia Exp $
  */
+
+#define crypt_private     __attribute__((__visibility__("hidden")))
+
 char	*__md5crypt(const char *pw, const char *salt);	/* XXX */
 char *__bcrypt(const char *, const char *);	/* XXX */
 char *__crypt_sha1(const char *pw, const char *salt);
@@ -21,6 +24,8 @@ int __gensalt_old(char *salt, size_t saltsiz, const char *option);
 int __gensalt_new(char *salt, size_t saltsiz, const char *option);
 int __gensalt_md5(char *salt, size_t saltsiz, const char *option);
 int __gensalt_sha1(char *salt, size_t saltsiz, const char *option);
+
+crypt_private int getnum(const char *, size_t *);
 
 #define SHA1_MAGIC "$sha1$"
 #define SHA1_SIZE 20
