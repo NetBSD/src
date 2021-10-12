@@ -1,4 +1,4 @@
-/*	$NetBSD: pw_gensalt.c,v 1.9 2020/05/14 08:34:19 msaitoh Exp $	*/
+/*	$NetBSD: pw_gensalt.c,v 1.10 2021/10/12 13:24:00 nia Exp $	*/
 
 /*
  * Copyright 1997 Niels Provos <provos@physnet.uni-hamburg.de>
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: pw_gensalt.c,v 1.9 2020/05/14 08:34:19 msaitoh Exp $");
+__RCSID("$NetBSD: pw_gensalt.c,v 1.10 2021/10/12 13:24:00 nia Exp $");
 #endif /* not lint */
 
 #include <sys/syslimits.h>
@@ -80,30 +80,6 @@ static const struct pw_salt {
 #endif /* HAVE_ARGON2 */
 	{ NULL, NULL }
 };
-
-static int
-getnum(const char *str, size_t *num)
-{
-	char *ep;
-	unsigned long rv;
-
-	if (str == NULL) {
-		*num = 0;
-		return 0;
-	}
-
-	rv = strtoul(str, &ep, 0);
-
-	if (str == ep || *ep) {
-		errno = EINVAL;
-		return -1;
-	}
-
-	if (errno == ERANGE && rv == ULONG_MAX)
-		return -1;
-	*num = (size_t)rv;
-	return 0;
-}
 
 int
 /*ARGSUSED2*/
