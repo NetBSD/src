@@ -1,4 +1,4 @@
-.\"	$NetBSD: inetd.8,v 1.65 2021/10/12 19:08:04 christos Exp $
+.\"	$NetBSD: inetd.8,v 1.66 2021/10/12 22:42:01 rillig Exp $
 .\"
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -92,9 +92,13 @@ The options available for
 .Nm :
 .Bl -tag -width Ds
 .It Fl d
-Turns on debugging and runs inetd in the foreground.
+Turns on debugging and runs
+.Nm
+in the foreground.
 .It Fl f
-Runs inetd in the foreground.
+Runs
+.Nm
+in the foreground.
 .It Fl l
 Turns on libwrap connection logging.
 .El
@@ -508,10 +512,10 @@ The value
 .Li yes
 or
 .Li no .
-Equivalent to 
-.Em wait/nowait 
+Equivalent to
+.Em wait/nowait
 in positional notation.
-This option is automatically determined for internal 
+This option is automatically determined for internal
 services, and is mandatory for all others.
 .It Sy service_max
 Equivalent to
@@ -521,12 +525,14 @@ Defaults to 40 if not specified.
 .It Sy ip_max
 Specifies the maximum number of server instances that may be spawned from
 .Nm
-within an interval of 60 seconds for a given IP address. Other address types 
-may also work if supported by
-.Xr getnameinfo 3
-, test thoroughly using -d. For example, connections from unnamed Unix sockets
-do not work, but connections from named Unix sockets may work. However, there is
-no way to only accept named Unix sockets.
+within an interval of 60 seconds for a given IP address.
+Other address types may also work if supported by
+.Xr getnameinfo 3 ,
+test thoroughly using
+.Fl d .
+For example, connections from unnamed Unix sockets
+do not work, but connections from named Unix sockets may work.
+However, there is no way to only accept named Unix sockets.
 .It Sy user
 The user to run the program as.
 Equivalent to
