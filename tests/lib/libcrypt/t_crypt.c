@@ -1,4 +1,4 @@
-/* $NetBSD: t_crypt.c,v 1.3 2011/12/28 22:07:40 christos Exp $ */
+/* $NetBSD: t_crypt.c,v 1.4 2021/10/12 10:52:40 nia Exp $ */
 
 /*
  * This version is derived from the original implementation of FreeSec
@@ -61,7 +61,7 @@
  *	by now.	 The code requires a 32-bit integer type, though.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_crypt.c,v 1.3 2011/12/28 22:07:40 christos Exp $");
+__RCSID("$NetBSD: t_crypt.c,v 1.4 2021/10/12 10:52:40 nia Exp $");
 
 #include <atf-c.h>
 #include <stdio.h>
@@ -110,7 +110,28 @@ static const struct {
 /* 30 */	{ "_........", "" }, /* zero iteration count */
 /* 31 */	{ "_/!......", "" }, /* invalid character in count */
 /* 32 */	{ "_/......!", "" }, /* invalid character in salt */
-/* 33 */	{ NULL, NULL }
+#if defined(HAVE_ARGON2)
+/*
+ * The below are reference values from the official Argon2 test suite. 
+ * NOTE: Upstream Argon2 uses base64-encoded salts, whereas NetBSD doesn't...
+ */
+/* Argon2i version number 16 */
+/* 33 */	{ "$argon2i$v=16$m=256,t=2,p=1$somesalt$/U3YPXYsSb3q9XxHvc0MLxur+GP960kN9j7emXX8zwY", "password" },
+/* 34 */	{ "$argon2i$v=16$m=65536,t=1,p=1$somesalt$gWMFUrjzsfSM2xmSxMZ4ZD1JCytetP9sSzQ4tWIXJLI", "password" },
+/* 35 */	{ "$argon2i$v=16$m=65536,t=2,p=1$diffsalt$eaEDuQ/orvhXDLMfyLIiWXeJFvgza3vaw4kladTxxJc", "password" },
+/* 36 */	{ "$argon2i$v=16$m=65536,t=2,p=1$somesalt$6ckCB0tnVFMaOgvlGeW69ASzDOabPwGsO/ISKZYBCaM", "differentpassword" },
+/* Argon2i version number 19 */
+/* 37 */	{ "$argon2i$v=19$m=256,t=2,p=1$somesalt$iekCn0Y3spW+sCcFanM2xBT63UP2sghkUoHLIUpWRS8", "password" },
+/* 38 */	{ "$argon2i$v=19$m=65536,t=1,p=1$somesalt$0WgHXE2YXhPr6uVgz4uUw7XYoWxRkWtvSsLaOsEbvs8", "password" },
+/* 39 */	{ "$argon2i$v=19$m=65536,t=2,p=1$diffsalt$sDV8zPvvkfOGCw26RHsjSMvv7K2vmQq/6cxAcmxSEnE", "password" },
+/* 40 */	{ "$argon2i$v=19$m=65536,t=2,p=1$somesalt$FK6NoBr+qHAMI1jc73xTWNkCEoK9iGY6RWL1n7dNIu4", "differentpassword" },
+/* Argon2id version number 19 */
+/* 41 */	{ "$argon2id$v=19$m=256,t=2,p=2$somesalt$bQk8UB/VmZZF4Oo79iDXuL5/0ttZwg2f/5U52iv1cDc", "password" },
+/* 42 */	{ "$argon2id$v=19$m=65536,t=4,p=1$somesalt$kCXUjmjvc5XMqQedpMTsOv+zyJEf5PhtGiUghW9jFyw", "password" },
+/* 43 */	{ "$argon2id$v=19$m=65536,t=2,p=1$diffsalt$vfMrBczELrFdWP0ZsfhWsRPaHppYdP3MVEMIVlqoFBw", "password" },
+/* 44 */	{ "$argon2id$v=19$m=65536,t=2,p=1$somesalt$C4TWUs9rDEvq7w3+J4umqA32aWKB1+DSiRuBfYxFj94", "differentpassword" },
+#endif
+/* 45 */	{ NULL, NULL }
 };
 
 ATF_TC(crypt_salts);
