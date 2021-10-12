@@ -1,4 +1,4 @@
-/*	$NetBSD: parse_v2.c,v 1.5 2021/09/03 20:24:28 rillig Exp $	*/
+/*	$NetBSD: parse_v2.c,v 1.6 2021/10/12 19:08:04 christos Exp $	*/
 
 /*-
  * Copyright (c) 2021 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: parse_v2.c,v 1.5 2021/09/03 20:24:28 rillig Exp $");
+__RCSID("$NetBSD: parse_v2.c,v 1.6 2021/10/12 19:08:04 christos Exp $");
 
 #include <ctype.h>
 #include <errno.h>
@@ -153,11 +153,9 @@ parse_syntax_v2(struct servtab *sep, char **cpp)
 	bool is_valid_definition = true;
 	/* Line number of service for error logging. */
 	size_t line_number_start = line_number;
-	invoke_result result;
 
 	for (;;) {
-		switch(result =
-			parse_invoke_handler(&is_valid_definition, cpp, sep)) {
+		switch(parse_invoke_handler(&is_valid_definition, cpp, sep)) {
 		case INVOKE_SUCCESS:
 			/* Keep reading more options in. */
 			continue;
@@ -658,6 +656,7 @@ is_internal(struct servtab *sep)
  */
 
 static hresult
+/*ARGSUSED*/
 unknown_handler(struct servtab *sep, vlist values)
 {
 	/* Return failure for an unknown service name. */

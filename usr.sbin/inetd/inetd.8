@@ -1,4 +1,4 @@
-.\"	$NetBSD: inetd.8,v 1.64 2021/08/31 11:16:00 wiz Exp $
+.\"	$NetBSD: inetd.8,v 1.65 2021/10/12 19:08:04 christos Exp $
 .\"
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -57,7 +57,7 @@
 .\"
 .\"     from: @(#)inetd.8       8.4 (Berkeley) 6/1/94
 .\"
-.Dd August 29, 2021
+.Dd October 12, 2021
 .Dt INETD 8
 .Os
 .Sh NAME
@@ -92,7 +92,9 @@ The options available for
 .Nm :
 .Bl -tag -width Ds
 .It Fl d
-Turns on debugging.
+Turns on debugging and runs inetd in the foreground.
+.It Fl f
+Runs inetd in the foreground.
 .It Fl l
 Turns on libwrap connection logging.
 .El
@@ -519,7 +521,12 @@ Defaults to 40 if not specified.
 .It Sy ip_max
 Specifies the maximum number of server instances that may be spawned from
 .Nm
-within an interval of 60 seconds for a given IP address.
+within an interval of 60 seconds for a given IP address. Other address types 
+may also work if supported by
+.Xr getnameinfo 3
+, test thoroughly using -d. For example, connections from unnamed Unix sockets
+do not work, but connections from named Unix sockets may work. However, there is
+no way to only accept named Unix sockets.
 .It Sy user
 The user to run the program as.
 Equivalent to
@@ -859,9 +866,6 @@ For automatic IP version detection in key-values syntax (see the
 key), addresses with an interface specifier in the form <address>%<iface>
 are not currently supported, as addresses of that form are not parsed by 
 .Xr inet_pton 3 .
-.Pp
-.Dq tcpmux
-on IPv6 is not tested enough.
 .Pp
 If a positional service definition has an invalid parameter and extends
 across multiple lines using tab characters, the subsequent lines after the 
