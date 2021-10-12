@@ -1,4 +1,4 @@
-/* $NetBSD: token-comment.0.stdout,v 1.9 2021/10/12 18:22:01 rillig Exp $ */
+/* $NetBSD: token-comment.0.stdout,v 1.10 2021/10/12 18:54:56 rillig Exp $ */
 /* $FreeBSD$ */
 
 /*
@@ -95,6 +95,12 @@ function(void)
 	}
 
 	code();			/* code comment */
+	code();			/* code comment _________ to line length 78 */
+	code();			/* code comment __________ to line length 79 */
+	code();			/* code comment ___________ to line length 80 */
+	code();			/* code comment ____________ to line length 81 */
+	code();			/* code comment _____________ to line length
+				 * 82 */
 
 	code();			/* short multi-line code comment */
 
@@ -104,7 +110,15 @@ function(void)
 	code();			/* long multi-line code comment that is longer
 				 * than the allowed line width */
 
+/* $ Trailing C99 comments are not wrapped, as indent would not correctly */
+/* $ recognize the continuation lines as continued comments. For block */
+/* $ comments this works since the comment has not ended yet. */
 	code();			// C99 code comment
+	code();			// C99 code comment ________ to line length 78
+	code();			// C99 code comment _________ to line length 79
+	code();			// C99 code comment __________ to line length 80
+	code();			// C99 code comment ___________ to line length 81
+	code();			// C99 code comment ____________ to line length 82
 
 	if (cond)		/* comment */
 		if (cond)	/* comment */
