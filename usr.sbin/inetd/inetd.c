@@ -1,4 +1,4 @@
-/*	$NetBSD: inetd.c,v 1.137 2021/10/12 19:08:04 christos Exp $	*/
+/*	$NetBSD: inetd.c,v 1.138 2021/10/12 22:51:28 rillig Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1991, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)inetd.c	8.4 (Berkeley) 4/13/94";
 #else
-__RCSID("$NetBSD: inetd.c,v 1.137 2021/10/12 19:08:04 christos Exp $");
+__RCSID("$NetBSD: inetd.c,v 1.138 2021/10/12 22:51:28 rillig Exp $");
 #endif
 #endif /* not lint */
 
@@ -1399,7 +1399,7 @@ allocchange(void)
 bool
 try_biltin(struct servtab *sep)
 {
-	for(size_t i = 0; i < __arraycount(biltins); i++) {
+	for (size_t i = 0; i < __arraycount(biltins); i++) {
 		if (biltins[i].bi_socktype == sep->se_socktype &&
 		    strcmp(biltins[i].bi_service, sep->se_service) == 0) {
 			sep->se_bi = &biltins[i];
