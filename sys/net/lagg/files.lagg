@@ -1,7 +1,8 @@
-#	$NetBSD: files.lagg,v 1.1 2021/05/17 04:07:43 yamaguchi Exp $
+#	$NetBSD: files.lagg,v 1.2 2021/10/12 08:26:47 yamaguchi Exp $
 
 file	net/lagg/if_lagg.c		lagg & ether	needs-flag
 file	net/lagg/if_lagg_lacp.c		lagg & ether
 file	net/lagg/if_laggproto.c		lagg
 
 defflag opt_lagg.h			LAGG_DEBUG LACP_DEBUG
+defparam opt_lagg.h			LAGG_SETCAPS_RETRY
