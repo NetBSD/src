@@ -1,4 +1,4 @@
-/*	$NetBSD: inetd.h,v 1.4 2021/10/12 19:08:04 christos Exp $	*/
+/*	$NetBSD: inetd.h,v 1.5 2021/10/12 22:51:28 rillig Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003 The NetBSD Foundation, Inc.
@@ -197,8 +197,8 @@ struct rl_ip_node {
 		/* align for efficient comparison in rl_try_get, could use 8 instead */
 		struct in6_addr	ipv6_addr __attribute__((aligned(16)));
 #endif
-		/* 
-		 * other_addr is used for other address types besides the 
+		/*
+		 * other_addr is used for other address types besides the
 		 * special cases (IPv4/IPv6), using getnameinfo.
 		 */
 		struct {
@@ -208,13 +208,13 @@ struct rl_ip_node {
 			char other_addr[];
 		};
 	};
-	/* 
+	/*
 	 * Do not declare further members after union, offsetof is used to
 	 * determine malloc size.
 	 */
 };
 
-/* 
+/*
  * From inetd.c
  */
 
@@ -262,7 +262,7 @@ extern char	*defhost;
 extern char	*policy;
 
 /*
- * From ratelimit.c 
+ * From ratelimit.c
  */
 
 int	rl_process(struct servtab *, int);
