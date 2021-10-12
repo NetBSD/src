@@ -1,4 +1,4 @@
-.\"	$NetBSD: pwhash.1,v 1.9 2019/10/21 02:36:48 jhigh Exp $
+.\"	$NetBSD: pwhash.1,v 1.10 2021/10/12 17:24:37 nia Exp $
 .\"	$OpenBSD: encrypt.1,v 1.16 2000/11/09 17:52:07 aaron Exp $
 .\"
 .\" Copyright (c) 1996, Jason Downs.  All rights reserved.
@@ -79,12 +79,15 @@ Following the required
 .Ar variant 
 name, three optional comma-delimited parameters may be provided,
 
-t=n Specify the number of iterations to n.  The default is 3.
+t=n Specify the number of iterations to n.
+The default is 3.
 
-m=n Specify the memory usage in KB  to n. The default is 4096.
+m=n Specify the memory usage in KB  to n.
+The default is 4096.
 
-p=n Specify the number of threads to n. The default is 1.
-
+p=n Specify the number of threads to n.
+This is currently ignored.
+The default is 1.
 .It Fl s Ar salt
 Encrypt the string using DES, with the specified
 .Ar salt .

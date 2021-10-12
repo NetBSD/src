@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.27 2020/03/25 17:11:06 christos Exp $
+#	$NetBSD: Makefile,v 1.28 2021/10/12 17:24:36 nia Exp $
 
 .include <bsd.own.mk>
 
@@ -14,9 +14,18 @@ SRCS=	crypt.c md5crypt.c bcrypt.c crypt-sha1.c util.c pw_gensalt.c
 SRCS+=	hmac_sha1.c
 
 .if defined(HAVE_ARGON2)
+ARGON2DIR=	${NETBSDSRCDIR}/external/apache2/argon2
+.PATH: ${ARGON2DIR}/dist/phc-winner-argon2/src \
+	${ARGON2DIR}/dist/phc-winner-argon2/src/blake2 \
+	${ARGON2DIR}/dist/phc-winner-argon2/include
+CPPFLAGS+=	-DHAVE_ARGON2 -DARGON2_NO_THREADS
+CPPFLAGS+=	-I${ARGON2DIR}/dist/phc-winner-argon2/include
 SRCS+=		crypt-argon2.c
-CFLAGS+=	-DHAVE_ARGON2 -I../../external/apache2/argon2/dist/phc-winner-argon2/include/
-LDADD+=		-largon2 
+# libargon2 sources
+.  for src in argon2.c core.c blake2b.c encoding.c ref.c
+SRCS+=		${src}
+COPTS.${src}+=	-Wno-error
+.  endfor
 .endif
 
 WARNS?=	5
