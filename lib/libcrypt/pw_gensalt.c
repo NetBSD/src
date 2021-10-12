@@ -1,4 +1,4 @@
-/*	$NetBSD: pw_gensalt.c,v 1.10 2021/10/12 13:24:00 nia Exp $	*/
+/*	$NetBSD: pw_gensalt.c,v 1.11 2021/10/12 15:25:39 nia Exp $	*/
 
 /*
  * Copyright 1997 Niels Provos <provos@physnet.uni-hamburg.de>
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: pw_gensalt.c,v 1.10 2021/10/12 13:24:00 nia Exp $");
+__RCSID("$NetBSD: pw_gensalt.c,v 1.11 2021/10/12 15:25:39 nia Exp $");
 #endif /* not lint */
 
 #include <sys/syslimits.h>
@@ -242,10 +242,10 @@ __gensalt_argon2(char *salt, size_t saltsiz, const char *option,argon2_type atyp
 		return 0;
 	}
 
-	__crypt_to64(&salt[n], arc4random(), 4);
-	__crypt_to64(&salt[n + 4], arc4random(), 4);
-	__crypt_to64(&salt[n + 8], arc4random(), 4);
-	__crypt_to64(&salt[n + 12], arc4random(), 4);
+	__crypt_tobase64(&salt[n], arc4random(), 4);
+	__crypt_tobase64(&salt[n + 4], arc4random(), 4);
+	__crypt_tobase64(&salt[n + 8], arc4random(), 4);
+	__crypt_tobase64(&salt[n + 12], arc4random(), 4);
 
 	salt[n + 16] = '$';
 	salt[n + 17] = '\0';

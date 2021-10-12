@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.2 2021/10/12 13:24:00 nia Exp $	*/
+/*	$NetBSD: util.c,v 1.3 2021/10/12 15:25:39 nia Exp $	*/
 /*
  * Copyright 1997 Niels Provos <provos@physnet.uni-hamburg.de>
  * All rights reserved.
@@ -30,7 +30,7 @@
  */
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: util.c,v 1.2 2021/10/12 13:24:00 nia Exp $");
+__RCSID("$NetBSD: util.c,v 1.3 2021/10/12 15:25:39 nia Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -41,8 +41,13 @@ __RCSID("$NetBSD: util.c,v 1.2 2021/10/12 13:24:00 nia Exp $");
 
 #include "crypt.h"
 
+/* traditional unix "B64" encoding */
 static const unsigned char itoa64[] =		/* 0 ... 63 => ascii - 64 */
 	"./0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
+
+/* standard base64 encoding, used by Argon2 */
+static const unsigned char itoabase64[] =
+	"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 
 crypt_private int
 getnum(const char *str, size_t *num)
@@ -68,12 +73,22 @@ getnum(const char *str, size_t *num)
 	return 0;
 }
 
-void
+crypt_private void
 __crypt_to64(char *s, uint32_t v, int n)
 {
 
 	while (--n >= 0) {
 		*s++ = itoa64[v & 0x3f];
+		v >>= 6;
+	}
+}
+
+crypt_private void
+__crypt_tobase64(char *s, uint32_t v, int n)
+{
+
+	while (--n >= 0) {
+		*s++ = itoabase64[v & 0x3f];
 		v >>= 6;
 	}
 }
