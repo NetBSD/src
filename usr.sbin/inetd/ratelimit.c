@@ -1,4 +1,4 @@
-/*	$NetBSD: ratelimit.c,v 1.1 2021/10/12 19:08:04 christos Exp $	*/
+/*	$NetBSD: ratelimit.c,v 1.2 2021/10/12 22:51:28 rillig Exp $	*/
 
 /*-
  * Copyright (c) 2021 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: ratelimit.c,v 1.1 2021/10/12 19:08:04 christos Exp $");
+__RCSID("$NetBSD: ratelimit.c,v 1.2 2021/10/12 22:51:28 rillig Exp $");
 
 #include <sys/queue.h>
 
@@ -89,7 +89,7 @@ rl_process(struct servtab *sep, int ctrl)
 		sep->se_time = now;
 	}
 
-	if(!rl_process_service_max(sep, ctrl, &now) 
+	if (!rl_process_service_max(sep, ctrl, &now)
 	    || !rl_process_ip_max(sep, ctrl, &now)) {
 		return -1;
 	}
@@ -225,7 +225,7 @@ static time_t
 rl_time(void)
 {
 	struct timespec ts;
-	if(clock_gettime(CLOCK_MONOTONIC, &ts) == -1) {
+	if (clock_gettime(CLOCK_MONOTONIC, &ts) == -1) {
 		syslog(LOG_ERR, "clock_gettime for rate limiting failed: %s; "
 		    "exiting", strerror(errno));
 		/* Exit inetd if rate limiting fails */
@@ -265,7 +265,7 @@ rl_add(struct servtab *sep, union addr *addr)
 
 	node = malloc(node_size);
 	if (node == NULL) {
-		if(errno == ENOMEM) {
+		if (errno == ENOMEM) {
 			return NULL;
 		} else {
 			syslog(LOG_ERR, "malloc failed unexpectedly: %s",
@@ -343,14 +343,14 @@ static bool
 rl_process_service_max(struct servtab *sep, int ctrl, time_t *now)
 {
 	if (sep->se_count >= sep->se_service_max) {
-		if(*now == -1) {
+		if (*now == -1) {
 			/* Only get the clock time if we didn't already */
 			*now = rl_time();
 		}
 
 		if (*now - sep->se_time > CNT_INTVL) {
 			rl_reset(sep, *now);
-		} else { 
+		} else {
 			syslog(LOG_ERR, SERV_FMT
 			    ": max spawn rate (%zu in %ji seconds) "
 			    "already met; closing for %ju seconds",
@@ -397,7 +397,7 @@ rl_process_ip_max(struct servtab *sep, int ctrl, time_t *now) {
 				DPRINTF("Cannot allocate rl_ip_node");
 				return false;
 			}
-		} 
+		}
 #ifdef DEBUG_ENABLE		
 		else {
 			/*
@@ -464,7 +464,7 @@ rl_ip_eq(struct servtab *sep, union addr *addr, struct rl_ip_node *cur) {
 		break;
 #ifdef INET6
 	case AF_INET6:
-		if(rl_ipv6_eq(&addr->ipv6_addr, &cur->ipv6_addr)) {
+		if (rl_ipv6_eq(&addr->ipv6_addr, &cur->ipv6_addr)) {
 			return true;
 		}
 		break;

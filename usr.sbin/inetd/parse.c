@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.1 2021/10/12 19:08:04 christos Exp $	*/
+/*	$NetBSD: parse.c,v 1.2 2021/10/12 22:51:28 rillig Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
 #if 0
 static char sccsid[] = "@(#)inetd.c	8.4 (Berkeley) 4/13/94";
 #else
-__RCSID("$NetBSD: parse.c,v 1.1 2021/10/12 19:08:04 christos Exp $");
+__RCSID("$NetBSD: parse.c,v 1.2 2021/10/12 22:51:28 rillig Exp $");
 #endif
 #endif /* not lint */
 
@@ -453,11 +453,11 @@ more:
 		goto more;
 	}
 
-	if(arg[0] == '.') {
+	if (arg[0] == '.') {
 		if (strcmp(&arg[1], "include") == 0) {
 			/* include directive */
 			arg = skip(&cp);
-			if(arg == NULL) {
+			if (arg == NULL) {
 				LOG_TOO_FEW_ARGS();
 				return NULL;
 			}
@@ -736,7 +736,7 @@ do { \
 
 	/* Parse user:group token */
 	arg = skip(&cp);
-	if(arg == NULL) {
+	if (arg == NULL) {
 		LOG_TOO_FEW_ARGS();
 		freeconfig(sep);
 		goto more;
