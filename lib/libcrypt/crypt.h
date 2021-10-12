@@ -1,5 +1,5 @@
 /*
- * $NetBSD: crypt.h,v 1.6 2021/10/12 13:24:00 nia Exp $
+ * $NetBSD: crypt.h,v 1.7 2021/10/12 15:25:39 nia Exp $
  */
 
 #define crypt_private     __attribute__((__visibility__("hidden")))
@@ -10,7 +10,6 @@ char *__crypt_sha1(const char *pw, const char *salt);
 unsigned int __crypt_sha1_iterations (unsigned int hint);
 void __hmac_sha1(const unsigned char *, size_t, const unsigned char *, size_t,
 		 unsigned char *);
-void __crypt_to64(char *s, u_int32_t v, int n);
 
 #ifdef HAVE_ARGON2
 char *__crypt_argon2(const char *pw, const char *salt);
@@ -26,6 +25,8 @@ int __gensalt_md5(char *salt, size_t saltsiz, const char *option);
 int __gensalt_sha1(char *salt, size_t saltsiz, const char *option);
 
 crypt_private int getnum(const char *, size_t *);
+crypt_private void __crypt_to64(char *s, uint32_t v, int n);
+crypt_private void __crypt_tobase64(char *s, uint32_t v, int n);
 
 #define SHA1_MAGIC "$sha1$"
 #define SHA1_SIZE 20
