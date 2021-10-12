@@ -7,7 +7,6 @@
 #include <pwd.h>
 #include <errno.h>
 #include <argon2.h>
-#include <resolv.h> /* for b64_pton... */
 
 #include <err.h>
 #include "crypt.h"
@@ -32,17 +31,84 @@
 #define ARGON2_ARGON2D_STR	"argon2d"
 #define ARGON2_ARGON2ID_STR	"argon2id"
 
+
+/*
+ * Some macros for constant-time comparisons. These work over values in
+ * the 0..255 range. Returned value is 0x00 on "false", 0xFF on "true".
+ */
+#define EQ(x, y) ((((0U - ((unsigned)(x) ^ (unsigned)(y))) >> 8) & 0xFF) ^ 0xFF)
+#define GT(x, y) ((((unsigned)(y) - (unsigned)(x)) >> 8) & 0xFF)
+#define GE(x, y) (GT(y, x) ^ 0xFF)
+#define LT(x, y) GT(y, x)
+#define LE(x, y) GE(y, x)
+
+static unsigned
+b64_char_to_byte(int c)
+{
+    unsigned x;
+
+    x = (GE(c, 'A') & LE(c, 'Z') & (c - 'A')) |
+        (GE(c, 'a') & LE(c, 'z') & (c - ('a' - 26))) |
+        (GE(c, '0') & LE(c, '9') & (c - ('0' - 52))) | (EQ(c, '+') & 62) |
+        (EQ(c, '/') & 63);
+    return x | (EQ(x, 0) & (EQ(c, 'A') ^ 0xFF));
+}
+
+static const char *
+from_base64(void *dst, size_t *dst_len, const char *src)
+{
+	size_t len;
+	unsigned char *buf;
+	unsigned acc, acc_len;
+
+	buf = (unsigned char *)dst;
+	len = 0;
+	acc = 0;
+	acc_len = 0;
+	for (;;) {
+		unsigned d;
+
+		d = b64_char_to_byte(*src);
+		if (d == 0xFF) {
+			break;
+		}
+		src++;
+		acc = (acc << 6) + d;
+		acc_len += 6;
+		if (acc_len >= 8) {
+			acc_len -= 8;
+			if ((len++) >= *dst_len) {
+				return NULL;
+			}
+			*buf++ = (acc >> acc_len) & 0xFF;
+		}
+	}
+
+	/*
+	 * If the input length is equal to 1 modulo 4 (which is
+	 * invalid), then there will remain 6 unprocessed bits;
+	 * otherwise, only 0, 2 or 4 bits are buffered. The buffered
+	 * bits must also all be zero.
+	 */
+	if (acc_len > 4 || (acc & (((unsigned)1 << acc_len) - 1)) != 0) {
+		return NULL;
+	}
+	*dst_len = len;
+	return src;
+}
+
 /* process params to argon2 */
 /* we don't force param order as input, */
 /* but we do provide the expected order to argon2 api */
-static int decode_option(argon2_context * ctx, argon2_type * atype, const char * option) 
+static int
+decode_option(argon2_context *ctx, argon2_type *atype, const char *option) 
 {
-	size_t tmp=0;
-        char * in = 0,*inp;
-        char * a=0;
-        char * p=0;
+	size_t tmp = 0;
+        char *in = 0, *inp;
+        char *a = 0;
+        char *p = 0;
 	size_t sl;
-	int    error=0;
+	int error = 0;
 
         in = (char *)strdup(option);
 	inp = in;
@@ -127,7 +193,12 @@ static int decode_option(argon2_context * ctx, argon2_type * atype, const char *
 
 	a = strsep(&inp, "$");
 
-	b64_pton(a, ctx->salt, ctx->saltlen);
+	sl = ctx->saltlen;
+
+	if (from_base64(ctx->salt, &sl, a) == NULL)
+		return -1;
+
+	ctx->saltlen = sl;
 
 	a = strsep(&inp, "$");
 
@@ -151,11 +222,9 @@ __crypt_argon2(const char *pw, const char * salt)
 {
 	/* we use the libargon2 api to generate */
 	/* return code */
-	int rc=0;
+	int rc = 0;
 	/* output buffer */
 	char ebuf[32];
-	/* ptr into argon2 encoded buffer */
-	char * blkp=0;
 	/* argon2 variable, default to id */
 	argon2_type atype = Argon2_id;
 	/* default to current argon2 version */
@@ -184,7 +253,7 @@ __crypt_argon2(const char *pw, const char * salt)
 	ctx.salt = (uint8_t *)saltbuf;
 	ctx.saltlen = sizeof(saltbuf);
 
-	ctx.pwd= (uint8_t *)pwdbuf;
+	ctx.pwd = (uint8_t *)pwdbuf;
 	ctx.pwdlen = sizeof(pwdbuf);
 
 	/* decode salt string to argon2 params */
@@ -197,8 +266,9 @@ __crypt_argon2(const char *pw, const char * salt)
 	}
 
 	rc = argon2_hash(ctx.t_cost, ctx.m_cost,
-		ctx.threads, pw, strlen(pw), ctx.salt, strlen((char*)ctx.salt),
-		ebuf, sizeof(ebuf), encodebuf, sizeof(encodebuf), atype, ctx.version);
+	    ctx.threads, pw, strlen(pw), ctx.salt, ctx.saltlen,
+	    ebuf, sizeof(ebuf), encodebuf, sizeof(encodebuf),
+	    atype, ctx.version);
 
 	if (rc != ARGON2_OK) {
 		fprintf(stderr, "argon2: failed: %s\n",
@@ -206,14 +276,7 @@ __crypt_argon2(const char *pw, const char * salt)
 		return 0;
 	}
 
-	/* get encoded passwd */
-	if ((blkp = strrchr(encodebuf, '$')) == NULL) {
-		return 0;
-	}
-
-	/* skip over '$' */
-	blkp++;
-
+	puts(encodebuf);
 	memcpy(rbuf, encodebuf, sizeof(encodebuf));
 
 	/* clear buffers */
