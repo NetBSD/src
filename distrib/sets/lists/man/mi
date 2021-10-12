@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1726 2021/10/03 17:27:02 brad Exp $
+# $NetBSD: mi,v 1.1727 2021/10/12 04:55:19 msaitoh Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1261,6 +1261,7 @@
 ./usr/share/man/cat4/hppa/wax.0			man-sys-catman		.cat
 ./usr/share/man/cat4/hpqlb.0			man-sys-catman		.cat
 ./usr/share/man/cat4/hptide.0			man-sys-catman		.cat
+./usr/share/man/cat4/hvn.0			man-sys-catman		.cat
 ./usr/share/man/cat4/hythygtemp.0		man-sys-catman		.cat
 ./usr/share/man/cat4/i386/PCIBIOS.0		man-sys-catman		.cat
 ./usr/share/man/cat4/i386/apm.0			man-sys-catman		.cat
@@ -4488,6 +4489,7 @@
 ./usr/share/man/html4/hppa/wax.html		man-sys-htmlman		html
 ./usr/share/man/html4/hpqlb.html		man-sys-htmlman		html
 ./usr/share/man/html4/hptide.html		man-sys-htmlman		html
+./usr/share/man/html4/hvn.html			man-sys-htmlman		html
 ./usr/share/man/html4/hythygtemp.html		man-sys-htmlman		html
 ./usr/share/man/html4/i386/PCIBIOS.html		man-sys-htmlman		html
 ./usr/share/man/html4/i386/apm.html		man-sys-htmlman		html
@@ -7511,6 +7513,7 @@
 ./usr/share/man/man4/hppa/wax.4			man-sys-man		.man
 ./usr/share/man/man4/hpqlb.4			man-sys-man		.man
 ./usr/share/man/man4/hptide.4			man-sys-man		.man
+./usr/share/man/man4/hvn.4			man-sys-man		.man
 ./usr/share/man/man4/hythygtemp.4		man-sys-man		.man
 ./usr/share/man/man4/i386/PCIBIOS.4		man-sys-man		.man
 ./usr/share/man/man4/i386/apm.4			man-sys-man		.man
