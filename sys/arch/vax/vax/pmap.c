@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.192 2021/08/02 12:56:23 andvar Exp $	   */
+/*	$NetBSD: pmap.c,v 1.193 2021/10/12 08:36:28 andvar Exp $	   */
 /*
  * Copyright (c) 1994, 1998, 1999, 2003 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.192 2021/08/02 12:56:23 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.193 2021/10/12 08:36:28 andvar Exp $");
 
 #include "opt_ddb.h"
 #include "opt_cputype.h"
@@ -859,7 +859,7 @@ pmap_pinit(pmap_t pmap)
 
 	/*
 	 * Do not allocate any pte's here, we don't know the size and 
-	 * we'll get a page pault anyway when some page is referenced,
+	 * we'll get a page fault anyway when some page is referenced,
 	 * so do it then.
 	 */
 	pmap->pm_p0br = (struct pte *)KERNBASE;
@@ -935,8 +935,8 @@ pmap_release(struct pmap *pmap)
 
 /*
  * pmap_destroy(pmap): Remove a reference from the pmap. 
- * If the pmap is NULL then just return else decrese pm_count.
- * If this was the last reference we call's pmap_relaese to release this pmap.
+ * If the pmap is NULL then just return else decrease pm_count.
+ * If this was the last reference we call's pmap_release to release this pmap.
  */
 
 void
