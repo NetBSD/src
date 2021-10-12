@@ -254,9 +254,9 @@ __crypt_argon2(const char *pw, const char * salt)
 			blkp);
 
 	/* clear buffers */
-	memset(encodebuf, 0, sizeof(encodebuf));
-	memset(saltbuf, 0, sizeof(saltbuf));
-	memset(pwdbuf, 0, sizeof(pwdbuf));
+	explicit_memset(encodebuf, 0, sizeof(encodebuf));
+	explicit_memset(saltbuf, 0, sizeof(saltbuf));
+	explicit_memset(pwdbuf, 0, sizeof(pwdbuf));
 
 	/* return encoded str */
 	return rbuf;
