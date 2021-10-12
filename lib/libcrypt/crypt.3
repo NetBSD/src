@@ -1,4 +1,4 @@
-.\"	$NetBSD: crypt.3,v 1.31 2021/10/12 17:27:26 nia Exp $
+.\"	$NetBSD: crypt.3,v 1.32 2021/10/12 21:41:13 wiz Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -252,7 +252,7 @@ We parameterize on three variables.
 First, m_cost (m), specifies the memory usage in KB.
 Second, t_cost (t), specifies the number of iterations.
 Third, parallelism (p) specifies the number of threads.
-this is currently ignored and one thread will always be used.
+This is currently ignored and one thread will always be used.
 A valid Argon2 encoded password looks similar to
 .Bd -literal
 $argon2id$v=19$m=4096,t=6,p=1$qCatF9a1s/6TgcYB$ \
