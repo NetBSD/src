@@ -1,4 +1,4 @@
-/*	$NetBSD: pr_comment.c,v 1.73 2021/10/12 21:08:37 rillig Exp $	*/
+/*	$NetBSD: pr_comment.c,v 1.74 2021/10/12 22:04:03 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)pr_comment.c	8.1 (Berkeley) 6/6/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: pr_comment.c,v 1.73 2021/10/12 21:08:37 rillig Exp $");
+__RCSID("$NetBSD: pr_comment.c,v 1.74 2021/10/12 22:04:03 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/pr_comment.c 334927 2018-06-10 16:44:18Z pstef $");
 #endif
@@ -315,14 +315,17 @@ process_comment(void)
 	default:		/* we have a random char */
 	    ;
 	    int now_len = indentation_after_range(ps.com_ind, com.s, com.e);
-	    do {
+	    for (;;) {
 		char ch = inbuf_next();
 		if (is_hspace(ch))
 		    last_blank = com.e - com.buf;
 		com_add_char(ch);
 		now_len++;
-	    } while (memchr("*\n\r\b\t", *inp.s, 6) == NULL &&
-		(now_len < adj_max_line_length || last_blank == -1));
+		if (memchr("*\n\r\b\t", *inp.s, 6) != NULL)
+		    break;
+		if (now_len >= adj_max_line_length && last_blank != -1)
+		    break;
+	    }
 
 	    ps.last_nl = false;
 
