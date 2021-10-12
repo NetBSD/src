@@ -1,4 +1,4 @@
-/*	$NetBSD: if_lagg.c,v 1.12 2021/10/12 08:26:47 yamaguchi Exp $	*/
+/*	$NetBSD: if_lagg.c,v 1.13 2021/10/12 08:30:58 yamaguchi Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006 Reyk Floeter <reyk@openbsd.org>
@@ -20,7 +20,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_lagg.c,v 1.12 2021/10/12 08:26:47 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_lagg.c,v 1.13 2021/10/12 08:30:58 yamaguchi Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -180,6 +180,7 @@ static int	lagg_port_ioctl(struct ifnet *, u_long, void *);
 static int	lagg_port_output(struct ifnet *, struct mbuf *,
 		    const struct sockaddr *, const struct rtentry *);
 static int	lagg_config_promisc(struct lagg_softc *, struct lagg_port *);
+static void	lagg_unconfig_promisc(struct lagg_softc *, struct lagg_port *);
 static struct lagg_variant *
 		lagg_variant_getref(struct lagg_softc *, struct psref *);
 static void	lagg_variant_putref(struct lagg_variant *, struct psref *);
@@ -2287,6 +2288,7 @@ lagg_port_setup(struct lagg_softc *sc,
 			goto remove_port;
 	}
 
+	lagg_config_promisc(sc, lp);
 	lagg_proto_startport(sc, lp);
 	lagg_capabilities_update(sc);
 
@@ -2390,6 +2392,7 @@ lagg_port_teardown(struct lagg_softc *sc, struct lagg_port *lp,
 	}
 
 	if (is_ifdetach == false) {
+		lagg_unconfig_promisc(sc, lp);
 		lagg_setifcaps(lp, lp->lp_ifcapenable);
 		if (lp->lp_iftype == IFT_ETHER)
 			lagg_setethcaps(lp, lp->lp_eccapenable);
@@ -2543,15 +2546,36 @@ static int
 lagg_config_promisc(struct lagg_softc *sc, struct lagg_port *lp)
 {
 	struct ifnet *ifp;
+	uint64_t chg_flags;
 	int error;
-	int status;
 
+	error = 0;
 	ifp = &sc->sc_if;
-	status = ISSET(ifp->if_flags, IFF_PROMISC) ? 1 : 0;
+	chg_flags = ifp->if_flags ^ lp->lp_ifflags;
 
-	error = ifpromisc(lp->lp_ifp, status);
+	if (ISSET(chg_flags, IFF_PROMISC)) {
+		error = ifpromisc(lp->lp_ifp,
+		    ISSET(ifp->if_flags, IFF_PROMISC) ? 1 : 0);
+		if (error == 0) {
+			lp->lp_ifflags ^= IFF_PROMISC;
+		}
+	}
 
 	return error;
+}
+
+static void
+lagg_unconfig_promisc(struct lagg_softc *sc, struct lagg_port *lp)
+{
+	int error;
+
+	if (ISSET(lp->lp_ifflags, IFF_PROMISC)) {
+		error = ifpromisc(lp->lp_ifp, 0);
+		if (error != 0) {
+			lagg_log(sc, LOG_DEBUG,
+			    "couldn't unset promiscuous mode");
+		}
+	}
 }
 
 static int
