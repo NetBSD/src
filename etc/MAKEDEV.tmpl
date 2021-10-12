@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: MAKEDEV.tmpl,v 1.225 2021/10/10 13:03:08 jmcneill Exp $
+#	$NetBSD: MAKEDEV.tmpl,v 1.226 2021/10/12 17:19:20 christos Exp $
 #
 # Copyright (c) 2003,2007,2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -2127,8 +2127,10 @@ atabus[0-9]*)
 
 drm[0-9]*)
 	unit=${i#drm}
+	unit2=$((unit + 128))
 	makedir dri 755
 	mkdev dri/card$unit c %drm_chr% $unit 660
+	mkdev dri/renderD${unit2} c %drm_chr% ${unit2} 660
 	;;
 
 drvctl)
