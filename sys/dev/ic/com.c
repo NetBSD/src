@@ -1,4 +1,4 @@
-/* $NetBSD: com.c,v 1.367 2021/10/12 06:25:17 kre Exp $ */
+/* $NetBSD: com.c,v 1.368 2021/10/12 08:09:50 kre Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2004, 2008 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.367 2021/10/12 06:25:17 kre Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.368 2021/10/12 08:09:50 kre Exp $");
 
 #include "opt_com.h"
 #include "opt_ddb.h"
@@ -994,6 +994,7 @@ comopen(dev_t dev, int flag, int mode, struct lwp *l)
 				    uimax(diff.tv_usec / 1000, 1);
 				kpause("comopen", false, mstohz(ms),
 				    &sc->sc_lock);
+				getmicrotime(&now);
 			}
 			timerclear(&sc->sc_hup_pending);
 		}
