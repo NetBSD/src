@@ -1,4 +1,4 @@
-.\"	$NetBSD: pw_gensalt.3,v 1.7 2020/03/25 22:09:48 wiz Exp $
+.\"	$NetBSD: pw_gensalt.3,v 1.8 2021/10/12 12:03:47 nia Exp $
 .\"
 .\" Copyright (c) 2020 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -28,7 +28,7 @@
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
 .\"
-.Dd March 25, 2020
+.Dd October 12, 2021
 .Dt PW_GENSALT 3
 .Os
 .Sh NAME
@@ -132,10 +132,22 @@ This is of the form:
 The
 .Li 2
 in the salt string indicates the current blowfish version.
-.\" .It argon2
-.\" .It argon2id
-.\" .It argon2i
-.\" .It argon2
+.It argon2d
+This is of the form:
+.Li $argon2d$v=19$m=MEMORY,t=TIME,p=THREADS$????????????????$
+.It argon2i
+This is of the form:
+.Li $argon2i$v=19$m=MEMORY,t=TIME,p=THREADS$????????????????$
+.It argon2id
+This is of the form:
+.Li $argon2id$v=19$m=MEMORY,t=TIME,p=THREADS$????????????????$
+.It argon2
+An alias for
+.Dq argon2id .
+.Pp
+See
+.Xr crypt 3
+for details on the Argon2 parameters.
 .El
 .Sh RETURN VALUES
 Upon successful completion, a value of 0 is returned.
