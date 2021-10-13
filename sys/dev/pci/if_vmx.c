@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vmx.c,v 1.4 2020/10/15 04:37:48 ryo Exp $	*/
+/*	$NetBSD: if_vmx.c,v 1.5 2021/10/13 01:11:29 knakahara Exp $	*/
 /*	$OpenBSD: if_vmx.c,v 1.16 2014/01/22 06:04:17 brad Exp $	*/
 
 /*
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vmx.c,v 1.4 2020/10/15 04:37:48 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vmx.c,v 1.5 2021/10/13 01:11:29 knakahara Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -253,6 +253,7 @@ struct vmxnet3_queue {
 
 	void *vxq_si;
 	bool vxq_workqueue;
+	bool vxq_wq_enqueued;
 	struct work vxq_wq_cookie;
 };
 
@@ -2484,8 +2485,15 @@ vmxnet3_sched_handle_queue(struct vmxnet3_softc *sc, struct vmxnet3_queue *vmxq)
 {
 
 	if (vmxq->vxq_workqueue) {
-		workqueue_enqueue(sc->vmx_queue_wq, &vmxq->vxq_wq_cookie,
-		    curcpu());
+		/*
+		 * When this function is called, "vmxq" is owned by one CPU.
+		 * so, atomic operation is not required here.
+		 */
+		if (!vmxq->vxq_wq_enqueued) {
+			vmxq->vxq_wq_enqueued = true;
+			workqueue_enqueue(sc->vmx_queue_wq,
+			    &vmxq->vxq_wq_cookie, curcpu());
+		}
 	} else {
 		softint_schedule(vmxq->vxq_si);
 	}
@@ -2625,6 +2633,7 @@ vmxnet3_handle_queue_work(struct work *wk, void *context)
 	struct vmxnet3_queue *vmxq;
 
 	vmxq = container_of(wk, struct vmxnet3_queue, vxq_wq_cookie);
+	vmxq->vxq_wq_enqueued = false;
 	vmxnet3_handle_queue(vmxq);
 }
 
