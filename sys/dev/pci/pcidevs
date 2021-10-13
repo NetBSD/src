@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.1438 2021/10/12 14:12:06 msaitoh Exp $
+$NetBSD: pcidevs,v 1.1439 2021/10/13 07:04:59 msaitoh Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -3763,12 +3763,12 @@ product INTEL S1200_ILB		0x0c60	Atom S1200 LPC bridge
 product INTEL S1200_S1220	0x0c72	Atom S1220 Internal
 product INTEL S1200_S1240	0x0c73	Atom S1240 Internal
 product INTEL S1200_S1260	0x0c75	Atom S1260 Internal
-product INTEL I219_LM11		0x0d4c	I219-LM Ethernet Connection
-product INTEL I219_V11		0x0d4d	I219-V Ethernet Connection
-product INTEL I219_LM10		0x0d4e	I219-LM Ethernet Connection
-product INTEL I219_V10		0x0d4f	I219-V Ethernet Connection
-product INTEL I219_LM12		0x0d53	I219-LM Ethernet Connection
-product INTEL I219_V12		0x0d55	I219-V Ethernet Connection
+product INTEL I219_LM11		0x0d4c	I219-LM (11) Ethernet Connection
+product INTEL I219_V11		0x0d4d	I219-V (11) Ethernet Connection
+product INTEL I219_LM10		0x0d4e	I219-LM (10) Ethernet Connection
+product INTEL I219_V10		0x0d4f	I219-V (10) Ethernet Connection
+product INTEL I219_LM12		0x0d53	I219-LM (12) Ethernet Connection
+product INTEL I219_V12		0x0d55	I219-V (12) Ethernet Connection
 product INTEL E5V2_DMI2		0x0e00	E5 v2 DMI2
 product INTEL E5V2_PCIE_1	0x0e01	E5 v2 PCIe x4 (DMI2 Mode)
 product INTEL E5V2_PCIE_2	0x0e02	E5 v2 PCIe
@@ -4172,13 +4172,13 @@ product INTEL X557_AT2		0x15ad	X557-AT2
 product INTEL X552_1G_T		0x15ae	X552 1000Base-T
 product INTEL X552_XFI		0x15b0	X552 XFI
 product INTEL C3K_X553_VF_HYPV	0x15b4	C3000 X553 VF (Hyper-V)
-product INTEL I219_LM2		0x15b7	I219-LM Ethernet Connection
-product INTEL I219_V2		0x15b8	I219-V Ethernet Connection
-product INTEL I219_LM3		0x15b9	I219-LM Ethernet Connection
-product INTEL I219_LM7		0x15bb	I219-LM Ethernet Connection
-product INTEL I219_V7		0x15bc	I219-V Ethernet Connection
-product INTEL I219_LM6		0x15bd	I219-LM Ethernet Connection
-product INTEL I219_V6		0x15be	I219-V Ethernet Connection
+product INTEL I219_LM2		0x15b7	I219-LM (2) Ethernet Connection
+product INTEL I219_V2		0x15b8	I219-V (2) Ethernet Connection
+product INTEL I219_LM3		0x15b9	I219-LM (3) Ethernet Connection
+product INTEL I219_LM7		0x15bb	I219-LM (7) Ethernet Connection
+product INTEL I219_V7		0x15bc	I219-V (7) Ethernet Connection
+product INTEL I219_LM6		0x15bd	I219-LM (6) Ethernet Connection
+product INTEL I219_V6		0x15be	I219-V (6) Ethernet Connection
 product INTEL C3K_X553_KRKX	0x15c2	C3000 X553 Backplane (KR/KX 10G SKU)
 product INTEL C3K_X553_KX_25G	0x15c3	C3000 X553 Backplane (KX 2.5G)
 product INTEL C3K_X553_SFI_SFP	0x15c4	C3000 X553 10G SFP+ (SFI)
@@ -4190,24 +4190,24 @@ product INTEL C3K_X553_QSFP	0x15ca	C3000 X553 10G QSFP
 product INTEL C3K_X553_QSFP_N	0x15cc	C3000 X553 10G QSFP
 product INTEL C3K_X553_KR_SFP	0x15ce	C3000 X553 10G SFP+ (KR)
 product INTEL X550T1	 	0x15d1	X550 10G Ethernet
-product INTEL I219_V5		0x15d6	I219-V Ethernet Connection
-product INTEL I219_LM4		0x15d7	I219-LM Ethernet Connection
-product INTEL I219_V4		0x15d8	I219-V Ethernet Connection
-product INTEL I219_LM8		0x15df	I219-LM Ethernet Connection
-product INTEL I219_V8		0x15e0	I219-V Ethernet Connection
-product INTEL I219_LM9		0x15e1	I219-LM Ethernet Connection
-product INTEL I219_V9		0x15e2	I219-V Ethernet Connection
-product INTEL I219_LM5		0x15e3	I219-LM Ethernet Connection
+product INTEL I219_V5		0x15d6	I219-V (5) Ethernet Connection
+product INTEL I219_LM4		0x15d7	I219-LM (4) Ethernet Connection
+product INTEL I219_V4		0x15d8	I219-V (4) Ethernet Connection
+product INTEL I219_LM8		0x15df	I219-LM (8) Ethernet Connection
+product INTEL I219_V8		0x15e0	I219-V (8) Ethernet Connection
+product INTEL I219_LM9		0x15e1	I219-LM (9) Ethernet Connection
+product INTEL I219_V9		0x15e2	I219-V (9) Ethernet Connection
+product INTEL I219_LM5		0x15e3	I219-LM (5) Ethernet Connection
 product INTEL C3K_X553_SGMII	0x15e4	C3000 X553 1GbE SGMII (10G SKU)
 product INTEL C3K_X553_SGMII_L	0x15e5	C3000 X553 1GbE SGMII (non-10G SKU)
 product INTEL I225_LM		0x15f2	I225 LM Ethernet
 product INTEL I225_V		0x15f3	I225 V Ethernet
-product INTEL I219_LM15		0x15f4	I219-LM Ethernet Connection
+product INTEL I219_LM15		0x15f4	I219-LM (15) Ethernet Connection
 product INTEL I210_SGMII_WOF	0x15f6	I210 Ethernet (SGMII)
-product INTEL I219_LM14		0x15f9	I219-LM Ethernet Connection
-product INTEL I219_V14		0x15fa	I219-V Ethernet Connection
-product INTEL I219_LM13		0x15fb	I219-LM Ethernet Connection
-product INTEL I219_V13		0x15fc	I219-V Ethernet Connection
+product INTEL I219_LM14		0x15f9	I219-LM (14) Ethernet Connection
+product INTEL I219_V14		0x15fa	I219-V (14) Ethernet Connection
+product INTEL I219_LM13		0x15fb	I219-LM (13) Ethernet Connection
+product INTEL I219_V13		0x15fc	I219-V (13) Ethernet Connection
 product INTEL CORE5G_HB_1	0x1604	Core 5G Host Bridge
 product INTEL CORE5G_M_GT1	0x1606	HD Graphics (GT1)
 product INTEL CORE5G_HDA_1	0x160c	Core 5G HD Audio
