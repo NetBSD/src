@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.6 2021/10/10 17:47:39 thorpej Exp $
+# $NetBSD: Makefile,v 1.7 2021/10/13 04:57:19 thorpej Exp $
 
 WARNS?=6
 NOMAN=		# defined
@@ -17,6 +17,7 @@ TESTS_C+=	t_proc3
 TESTS_C+=	t_proc4
 TESTS_C+=	t_scan
 TESTS_C+=	t_sig
+TESTS_C+=	t_timer
 TESTS_C+=	t_vnode
 
 LDADD.t_scan+=	-lpthread

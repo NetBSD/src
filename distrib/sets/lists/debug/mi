@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.364 2021/10/10 17:47:38 thorpej Exp $
+# $NetBSD: mi,v 1.365 2021/10/13 04:57:19 thorpej Exp $
 ./etc/mtree/set.debug                           comp-sys-root
 ./usr/lib					comp-sys-usr		compatdir
 ./usr/lib/i18n/libBIG5_g.a			comp-c-debuglib		debuglib,compatfile
@@ -1767,6 +1767,7 @@
 ./usr/libdata/debug/usr/tests/kernel/kqueue/t_proc4.debug		tests-kernel-tests	debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/kernel/kqueue/t_scan.debug		tests-kernel-tests	debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/kernel/kqueue/t_sig.debug			tests-kernel-tests	debug,atf,compattestfile
+./usr/libdata/debug/usr/tests/kernel/kqueue/t_timer.debug		tests-kernel-tests	debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/kernel/kqueue/t_vnode.debug		tests-kernel-tests	debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/kernel/kqueue/write/t_fifo.debug		tests-kernel-tests	debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/kernel/kqueue/write/t_pipe.debug		tests-kernel-tests	debug,atf,compattestfile
