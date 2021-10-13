@@ -1,4 +1,4 @@
-/* $NetBSD: _setjmp.S,v 1.3.6.1 2020/05/13 12:34:41 martin Exp $ */
+/* $NetBSD: _setjmp.S,v 1.3.6.2 2021/10/13 16:03:07 martin Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -99,7 +99,8 @@ ENTRY(_longjmp)
 	mov	x29, x4
 	mov	x30, x5
 
-	mov	x0, x1
+	cmp     x1, #0
+	csinc   x0, x1, xzr, ne
 	ret
 
 	/* validation failed, die die die. */
