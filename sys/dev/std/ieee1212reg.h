@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee1212reg.h,v 1.11 2008/04/28 20:23:58 martin Exp $	*/
+/*	$NetBSD: ieee1212reg.h,v 1.12 2021/10/13 21:49:10 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -32,9 +32,9 @@
 #ifndef _DEV_STD_IEEE1212REG_H_
 #define _DEV_STD_IEEE1212REG_H_
 
-/* This file contains definitions from ISO/IEC 1312 or ANSI/IEEE Std 1212
- *	Informaton techonology
- *		Microprocessor systes
+/* This file contains definitions from ISO/IEC 13213 or ANSI/IEEE Std 1212
+ *	Information technology
+ *		Microprocessor systems
  *			Control and Status Registers (CSR)
  *			Architecture for microcomputer buses
  *	First edition 1994-10-05
@@ -195,7 +195,7 @@
 	"Textual-Descriptor", "Bus-Dependent-Info", "Module-Vendor-Id", \
 	"Module-Hw-Version", "Module-Spec-Id", "Module-Sw-Version", \
 	"Module-Dependent-Info", "Node-Vendor-Id", "Node-Hw_Version", \
-	"Node-Spec-Id", "Node-Sw-Verson", "Node-Capabilities", \
+	"Node-Spec-Id", "Node-Sw-Version", "Node-Capabilities", \
 	"Node-Unique-Id", "Node-Units-Extent", "Node-Memory-Extent", \
 	"Node-Dependent-Info", "Unit-Directory", "Unit-Spec-Id", \
 	"Unit-Sw-Version", "Unit-Dependent-Info", "Unit-Location", \
