@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.707 2021/10/13 08:09:46 msaitoh Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.708 2021/10/13 08:12:36 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.707 2021/10/13 08:09:46 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.708 2021/10/13 08:12:36 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -1640,6 +1640,18 @@ static const struct wm_product {
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_I219_LM15,
 	  "I219 LM (15) Ethernet Connection",
 	  WM_T_PCH_CNP,		WMP_F_COPPER },
+	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_I219_LM16,
+	  "I219 LM (16) Ethernet Connection",
+	  WM_T_PCH_CNP,		WMP_F_COPPER },
+	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_I219_LM17,
+	  "I219 LM (17) Ethernet Connection",
+	  WM_T_PCH_CNP,		WMP_F_COPPER },
+	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_I219_LM18,
+	  "I219 LM (18) Ethernet Connection",
+	  WM_T_PCH_CNP,		WMP_F_COPPER },
+	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_I219_LM19,
+	  "I219 LM (19) Ethernet Connection",
+	  WM_T_PCH_CNP,		WMP_F_COPPER },
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_I219_V,
 	  "I219 V Ethernet Connection",
 	  WM_T_PCH_SPT,		WMP_F_COPPER },
@@ -1678,6 +1690,21 @@ static const struct wm_product {
 	  WM_T_PCH_CNP,		WMP_F_COPPER },
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_I219_V14,
 	  "I219 V (14) Ethernet Connection",
+	  WM_T_PCH_CNP,		WMP_F_COPPER },
+	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_I219_V15,
+	  "I219 V (15) Ethernet Connection",
+	  WM_T_PCH_CNP,		WMP_F_COPPER },
+	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_I219_V16,
+	  "I219 V (16) Ethernet Connection",
+	  WM_T_PCH_CNP,		WMP_F_COPPER },
+	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_I219_V17,
+	  "I219 V (17) Ethernet Connection",
+	  WM_T_PCH_CNP,		WMP_F_COPPER },
+	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_I219_V18,
+	  "I219 V (18) Ethernet Connection",
+	  WM_T_PCH_CNP,		WMP_F_COPPER },
+	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_I219_V19,
+	  "I219 V (19) Ethernet Connection",
 	  WM_T_PCH_CNP,		WMP_F_COPPER },
 	{ 0,			0,
 	  NULL,
