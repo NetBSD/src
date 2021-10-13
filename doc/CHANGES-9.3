@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.3,v 1.1.2.36 2021/10/08 14:59:08 martin Exp $
+# $NetBSD: CHANGES-9.3,v 1.1.2.37 2021/10/13 16:08:44 martin Exp $
 
 A complete list of changes from the NetBSD 9.2 release to the NetBSD 9.3
 release:
@@ -797,4 +797,17 @@ sys/kern/sys_pipe.c				1.157
 
 	PR 56422: fix a deadlock in "pipe_write()".
 	[hannken, ticket #1357]
+
+lib/libc/arch/aarch64/gen/_setjmp.S		1.5
+lib/libc/arch/aarch64/gen/setjmp.S		1.4
+
+	Fix failure of the lib/libc/setjmp/t_setjmp:{,_}longjmp_zero
+	test cases.
+	[skrll, ticket #1358]
+
+share/man/man4/man4.amiga/amidisplaycc.4	1.14
+sys/arch/amiga/dev/amidisplaycc.c		1.33,1.35,1.36
+
+	amiga: enable wsfb based X11.
+	[abs, ticket #1359]
 
