@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2837 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2838 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -435,3 +435,5 @@ Changes from NetBSD 9.0 to NetBSD 10.0:
 		xf86-input-ws. [nia 20210928]
 	gnu-efi: Import version 3.0.14. [jmcneill 20210930]
 	tzdata partly updated to 2021b [kre 20211001] 
+	wm(4): Add Tiger Lake and newer devices (I219 LM10-LM15 and V10-V14).
+		[msaitoh 20211013]
