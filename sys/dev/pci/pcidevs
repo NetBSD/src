@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.1439 2021/10/13 07:04:59 msaitoh Exp $
+$NetBSD: pcidevs,v 1.1440 2021/10/13 07:06:23 msaitoh Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -4203,6 +4203,7 @@ product INTEL C3K_X553_SGMII_L	0x15e5	C3000 X553 1GbE SGMII (non-10G SKU)
 product INTEL I225_LM		0x15f2	I225 LM Ethernet
 product INTEL I225_V		0x15f3	I225 V Ethernet
 product INTEL I219_LM15		0x15f4	I219-LM (15) Ethernet Connection
+product INTEL I219_V15		0x15f5	I219-V (15) Ethernet Connection
 product INTEL I210_SGMII_WOF	0x15f6	I210 Ethernet (SGMII)
 product INTEL I219_LM14		0x15f9	I219-LM (14) Ethernet Connection
 product INTEL I219_V14		0x15fa	I219-V (14) Ethernet Connection
@@ -4314,6 +4315,10 @@ product INTEL C3K_IE_HECI_1	0x19e5	C3000 IE HECI 1
 product INTEL C3K_IE_HECI_2	0x19e6	C3000 IE HECI 2
 product INTEL C3K_IE_KT		0x19e8	C3000 IE KT
 product INTEL C3K_IE_HECI_3	0x19e9	C3000 IE HECI 3
+product INTEL I219_LM17		0x1a1c	I219-LM (17) Ethernet Connection
+product INTEL I219_V17		0x1a1d	I219-V (17) Ethernet Connection
+product INTEL I219_LM16		0x1a1e	I219-LM (16) Ethernet Connection
+product INTEL I219_V16		0x1a1f	I219-V (16) Ethernet Connection
 product INTEL 82840_HB		0x1a21	82840 Host
 product INTEL 82840_AGP		0x1a23	82840 AGP
 product INTEL 82840_PCI		0x1a24	82840 PCI
@@ -5694,6 +5699,10 @@ product INTEL EP80579_LAN_1	0x5040	EP80579 LAN
 product INTEL EP80579_LAN_2	0x5044	EP80579 LAN
 product INTEL EP80579_LAN_3	0x5048	EP80579 LAN
 product INTEL 80312_ATU		0x530d	80310 ATU
+product INTEL I219_LM18		0x550a	I219-LM (18) Ethernet Connection
+product INTEL I219_V18		0x550b	I219-V (18) Ethernet Connection
+product INTEL I219_LM19		0x550c	I219-LM (19) Ethernet Connection
+product INTEL I219_V19		0x550d	I219-V (19) Ethernet Connection
 product INTEL CORE7G_H_M_D_HOST_DRAM 0x5900 Core 7G (H, Mobile, Dual) Host Bridge, DRAM
 product INTEL CORE7G_PCIE_X16	0x5901	Core 7G PCIe x16
 product INTEL CORE7G_S_GT1	0x5902	HD Graphics 610 (GT1)
