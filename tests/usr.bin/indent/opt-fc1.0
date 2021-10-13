@@ -1,4 +1,4 @@
-/* $NetBSD: opt-fc1.0,v 1.4 2021/09/25 18:02:48 rillig Exp $ */
+/* $NetBSD: opt-fc1.0,v 1.5 2021/10/13 23:03:10 rillig Exp $ */
 /* $FreeBSD$ */
 
 /*
@@ -30,3 +30,7 @@
  *//* followed by another multi-line comment
  * that starts in column 4.
  */
+
+/* comment */ int decl2; /* comment */
+/* looooooooooooooooooooooooooooooooooooooooong first comment */ int decl2; /* second comment */
+/* first comment */ int decl2; /* looooooooooooooooooooooooooooooooooooooooong second comment */
