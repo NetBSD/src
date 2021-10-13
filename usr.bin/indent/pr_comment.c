@@ -1,4 +1,4 @@
-/*	$NetBSD: pr_comment.c,v 1.76 2021/10/12 22:22:35 rillig Exp $	*/
+/*	$NetBSD: pr_comment.c,v 1.77 2021/10/13 22:38:02 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)pr_comment.c	8.1 (Berkeley) 6/6/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: pr_comment.c,v 1.76 2021/10/12 22:22:35 rillig Exp $");
+__RCSID("$NetBSD: pr_comment.c,v 1.77 2021/10/13 22:38:02 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/pr_comment.c 334927 2018-06-10 16:44:18Z pstef $");
 #endif
@@ -80,6 +80,23 @@ com_terminate(void)
     if (com.e + 1 >= com.l)
 	buf_expand(&com, 1);
     *com.e = '\0';
+}
+
+static bool
+fits_in_one_line(int max_line_length)
+{
+    for (const char *p = inp.s; *p != '\n'; p++) {
+	assert(*p != '\0');
+	assert(inp.e - p >= 2);
+	if (!(p[0] == '*' && p[1] == '/'))
+	    continue;
+
+	int len = indentation_after_range(ps.com_ind + 3, inp.s, p);
+	len += is_hspace(p[-1]) ? 2 : 3;
+	if (len <= max_line_length)
+	    return true;
+    }
+    return false;
 }
 
 /*
@@ -186,21 +203,8 @@ process_comment(void)
     if (*inp.s != ' ' && may_wrap)
 	com_add_char(' ');
 
-    /* Don't put a break delimiter if this is a one-liner that won't wrap. */
-    if (break_delim) {
-	for (const char *p = inp.s; *p != '\n'; p++) {
-	    assert(*p != '\0');
-	    assert(inp.e - p >= 2);
-	    if (!(p[0] == '*' && p[1] == '/'))
-		continue;
-
-	    int len = indentation_after_range(ps.com_ind + 3, inp.s, p) +
-		(is_hspace(p[-1]) ? 2 : 3);
-	    if (len <= adj_max_line_length)
-		break_delim = false;
-	    break;
-	}
-    }
+    if (break_delim && fits_in_one_line(adj_max_line_length))
+	break_delim = false;
 
     if (break_delim) {
 	char *t = com.e;
