@@ -1,4 +1,4 @@
-# $NetBSD: HACKS,v 1.224 2021/07/16 10:02:50 rin Exp $
+# $NetBSD: HACKS,v 1.225 2021/10/13 20:11:54 nia Exp $
 #
 # This file is intended to document workarounds for currently unsolved
 # (mostly) compiler bugs.
@@ -1009,4 +1009,14 @@ descr	GCC 9 and 10 miscompile initdecl() due to mischoice of register,
 	around the problem.
 	The problem has been reported to upstream as GCC Bug 101469:
 	https://gcc.gnu.org/bugzilla/show_bug.cgi?id=101469
+kcah
+
+port	vax
+hack	compile blake2b.c with -O0 for vax
+cdate	Wed Oct 13 14:28:32 UTC 2021
+mdate	Wed Oct 13 14:28:32 UTC 2021
+who	nia
+file	src/lib/libcrypt/Makefile: 1.200
+descr	GCC 10 fails to build blake2b.c with an internal compiler
+	error unless optimization is disabled.
 kcah
