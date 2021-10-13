@@ -1,4 +1,4 @@
-/* $NetBSD: opt.0.pro,v 1.1 2021/10/07 18:07:25 rillig Exp $ */
+/* $NetBSD: opt.0.pro,v 1.2 2021/10/13 23:33:52 rillig Exp $ */
 /* $FreeBSD$ */
 
 /* The latter of the two options wins. */
@@ -18,10 +18,3 @@
 -cli3.5garbage
 
 -b/*/acc	/* The comment is '/' '*' '/', making the option '-bacc'. */
-
-/*
- * For boolean options, trailing garbage is ignored.
- *
- * See strncmp
- */
--bacchus	/* Is interpreted as '-bacc'. */

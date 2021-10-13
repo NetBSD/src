@@ -1,4 +1,4 @@
-/*	$NetBSD: args.c,v 1.54 2021/10/08 20:07:44 rillig Exp $	*/
+/*	$NetBSD: args.c,v 1.55 2021/10/13 23:33:52 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)args.c	8.1 (Berkeley) 6/6/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: args.c,v 1.54 2021/10/08 20:07:44 rillig Exp $");
+__RCSID("$NetBSD: args.c,v 1.55 2021/10/13 23:33:52 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/args.c 336318 2018-07-15 21:04:21Z pstef $");
 #endif
@@ -288,15 +288,16 @@ set_option(const char *arg, const char *option_source)
 	if (param_start != NULL)
 	    goto found;
     }
-    errx(1, "%s: unknown parameter \"%s\"", option_source, arg - 1);
+    errx(1, "%s: unknown option \"-%s\"", option_source, arg);
 
 found:
     if (p->p_is_bool) {
-	/* XXX: Trailing garbage in param_start is silently ignored. */
+	if (param_start[0] != '\0')
+	    errx(1, "%s: unknown option \"-%s\"", option_source, arg);
 	*(bool *)p->p_var = p->p_may_negate ? arg[0] != 'n' : p->p_bool_value;
     } else {
 	if (!isdigit((unsigned char)*param_start))
-	    errx(1, "%s: ``%s'' requires a parameter",
+	    errx(1, "%s: option \"-%s\" requires an integer parameter",
 		option_source, p->p_name);
 	*(int *)p->p_var = atoi(param_start);
     }
