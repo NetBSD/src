@@ -1,4 +1,4 @@
-/*	$NetBSD: event.h,v 1.47 2021/10/11 01:21:28 thorpej Exp $	*/
+/*	$NetBSD: event.h,v 1.48 2021/10/13 04:57:19 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999,2000,2001 Jonathan Lemon <jlemon@FreeBSD.org>
@@ -159,6 +159,16 @@ _EV_SET(struct kevent *_kevp, uintptr_t _ident, uint32_t _filter,
 #define	NOTE_TRACK	0x00000001U		/* follow across forks */
 #define	NOTE_TRACKERR	0x00000002U		/* could not track child */
 #define	NOTE_CHILD	0x00000004U		/* am a child process */
+
+/* additional flags for EVFILT_TIMER */
+#define	NOTE_MSECONDS	0x00000000U		/* data is milliseconds */
+#define	NOTE_SECONDS	0x00000001U		/* data is seconds */
+#define	NOTE_USECONDS	0x00000002U		/* data is microseconds */
+#define	NOTE_NSECONDS	0x00000003U		/* data is nanoseconds */
+#define	NOTE_ABSTIME	0x00000010U		/* timeout is absolute */
+#ifdef _KERNEL
+#define	NOTE_TIMER_UNITMASK 0x0003U
+#endif /* _KERNEL */
 
 /*
  * This is currently visible to userland to work around broken
