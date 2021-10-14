@@ -1,4 +1,4 @@
-/* $NetBSD: token-comment.0.stdout,v 1.13 2021/10/12 21:08:37 rillig Exp $ */
+/* $NetBSD: token-comment.0.stdout,v 1.14 2021/10/14 20:00:59 rillig Exp $ */
 /* $FreeBSD$ */
 
 /*
@@ -220,3 +220,53 @@ loop(void)
 /* $ XXX: The spaces around the comment look unintentional. */
 		 /* comment */ ;
 }
+
+/*
+ * The following comment starts really far to the right. To avoid that each
+ * line only contains a single word, the maximum allowed line width is
+ * extended such that each comment line may contain 22 characters.
+ */
+int		global_variable_with_really_long_name_that_reaches_up_to_column_xx;	/* 1234567890123456789 1
+											 * 1234567890123456789 12
+											 * 1234567890123456789
+											 * 123
+											 * 1234567890123456789
+											 * 1234
+											 * 1234567890123456789
+											 * 12345
+											 * 1234567890123456789
+											 * 123456 */
+
+/*-
+ * TODO: systematically test comments
+ *
+ * - starting in column 1, with opt.format_col1_comments
+ * - starting in column 1, without opt.format_col1_comments
+ * - starting in column 9, independent of opt.format_col1_comments
+ * - starting in column 33, the default
+ * - starting in column 65, which is already close to the default right margin
+ * - starting in column 81, spilling into the right margin
+ *
+ * - block comment starting with '/' '*' '-'
+ * - block comment starting with '/' '*' '*'
+ * - block comment starting with '/' '*' '\n'
+ * - end-of-line comment starting with '//'
+ * - end-of-line comment starting with '//x', so without leading space
+ * - block comment starting with '/' '*' 'x', so without leading space
+ *
+ * - block/end-of-line comment to the right of a label
+ * - block/end-of-line comment to the right of code
+ * - block/end-of-line comment to the right of label with code
+ *
+ * - with/without opt.comment_delimiter_on_blankline
+ * - with/without opt.star_comment_cont
+ * - with/without opt.format_block_comments
+ * - with varying opt.max_line_length (32, 64, 80, 140)
+ * - with varying opt.unindent_displace (0, 2, -5)
+ * - with varying opt.indent_size (3, 4, 8)
+ * - with varying opt.tabsize (3, 4, 8, 16)
+ * - with varying opt.block_comment_max_line_length (60, 78, 90)
+ * - with varying opt.decl_comment_column (0, 1, 33, 80)
+ * - with/without ps.decl_on_line
+ * - with/without ps.last_nl
+ */
