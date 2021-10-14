@@ -1,4 +1,4 @@
-.\"	$NetBSD: iic.4,v 1.29 2021/10/05 16:36:58 nia Exp $
+.\"	$NetBSD: iic.4,v 1.30 2021/10/14 20:23:31 nia Exp $
 .\"	$OpenBSD: iic.4,v 1.74 2008/09/10 16:13:43 reyk Exp $
 .\"
 .\" Copyright (c) 2004, 2006 Alexander Yurchenko <grange@openbsd.org>
@@ -16,7 +16,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd October 5, 2021
+.Dd October 14, 2021
 .Dt IIC 4
 .Os
 .Sh NAME
@@ -213,6 +213,8 @@ Seiko Instruments S-35390 real-time clock
 JEDEC JC-42.4 compatible memory module temperature sensors
 .It Xr seeprom 4
 24-series I2C EEPROM driver
+.It Xr sgp40mox 4
+Sensirion SGP40 MOx gas sensors
 .It Xr sgsmix 4
 SGS 7433 Basic Audio Processor found in some Apple machines
 .It Xr sht4xtemp 4
