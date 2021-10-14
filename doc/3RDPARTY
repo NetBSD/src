@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.1820 2021/10/02 11:01:53 kre Exp $
+#	$NetBSD: 3RDPARTY,v 1.1821 2021/10/14 14:53:41 brad Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -2259,4 +2259,17 @@ Mailing List:	sodium-subscribe@pureftpd.org
 Responsible:	riastradh
 License:	bsd
 Location:	sys/external/bsd/libsodium
+Notes:
+
+Package:	Sensirion VOC index algorithm
+Version:	git commit hash 4f69c0d8e2f7192aeaf0d268211b1f54af50146b
+Current Vers:	git commit hash 4f69c0d8e2f7192aeaf0d268211b1f54af50146b
+Maintainer:	Brad Spencer
+Archive Site:	https://github.com/Sensirion/embedded-sgp
+Home Page:	https://github.com/Sensirion
+Date:		2021-09-30
+Mailing List:
+Responsible:	brad
+License:	BSD (3-clause)
+Location:	sys/dev/i2c/sensirion_voc_algorithm.c sys/dev/i2c/sensirion_voc_algorithm.h
 Notes:
