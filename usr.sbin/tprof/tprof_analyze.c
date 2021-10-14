@@ -1,4 +1,4 @@
-/*	$NetBSD: tprof_analyze.c,v 1.4 2021/01/30 11:46:25 jmcneill Exp $	*/
+/*	$NetBSD: tprof_analyze.c,v 1.5 2021/10/14 09:52:40 skrll Exp $	*/
 
 /*
  * Copyright (c) 2010,2011,2012 YAMAMOTO Takashi,
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: tprof_analyze.c,v 1.4 2021/01/30 11:46:25 jmcneill Exp $");
+__RCSID("$NetBSD: tprof_analyze.c,v 1.5 2021/10/14 09:52:40 skrll Exp $");
 #endif /* not lint */
 
 #include <assert.h>
@@ -423,8 +423,8 @@ tprof_analyze(int argc, char **argv)
 	 */
 	printf("File: %s\n", argv[0]);
 	printf("Number of samples: %zu\n\n", nsamples);
-	printf("percentage   nsamples pid    lwp  cpu  k address          symbol\n");
-	printf("------------ -------- ------ ---- ---- - ---------------- ------\n");
+	printf("percentage   nsamples pid    lwp    cpu  k address          symbol\n");
+	printf("------------ -------- ------ ------ ---- - ---------------- ------\n");
 	for (i = 0; i < naddrs; i++) {
 		const char *name;
 		char buf[100];
@@ -448,7 +448,7 @@ tprof_analyze(int argc, char **argv)
 
 		perc = ((float)a->nsamples / (float)nsamples) * 100.0;
 
-		printf("%11f%% %8u %6" PRIu32 " %4" PRIu32 " %4" PRIu32 " %u %016"
+		printf("%11f%% %8u %6" PRIu32 " %6" PRIu32 " %4" PRIu32 " %u %016"
 		    PRIx64 " %s\n",
 		    perc,
 		    a->nsamples, a->pid, a->lwpid, a->cpuid, a->in_kernel,
