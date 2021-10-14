@@ -1,10 +1,11 @@
-#	$NetBSD: Makefile,v 1.14 2021/10/13 23:33:52 rillig Exp $
+#	$NetBSD: Makefile,v 1.15 2021/10/14 17:42:13 rillig Exp $
 
 .include <bsd.own.mk>
 
 TESTSDIR=	${TESTSBASE}/usr.bin/indent
 TESTS_SH=	t_errors
 TESTS_SH+=	t_indent
+TESTS_SH+=	t_misc
 
 FILESDIR=	${TESTSDIR}
 FILES=		binary.0
