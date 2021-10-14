@@ -1,5 +1,5 @@
 #! /bin/sh
-# $NetBSD: t_misc.sh,v 1.1 2021/10/14 17:42:13 rillig Exp $
+# $NetBSD: t_misc.sh,v 1.2 2021/10/14 18:55:41 rillig Exp $
 #
 # Copyright (c) 2021 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -31,6 +31,27 @@
 # used in t_indent.
 
 indent=$(atf_config_get usr.bin.indent.test_indent /usr/bin/indent)
+nl='
+'
+
+atf_test_case 'in_place'
+in_place_body()
+{
+	cat <<-\EOF > code.c
+		int decl;
+	EOF
+	cat <<-\EOF > code.c.exp
+		int		decl;
+	EOF
+	cp code.c code.c.orig
+
+	atf_check \
+	    env SIMPLE_BACKUP_SUFFIX=".bak" "$indent" code.c
+	atf_check -o 'file:code.c.exp' \
+	    cat code.c
+	atf_check -o 'file:code.c.orig' \
+	    cat code.c.bak
+}
 
 atf_test_case 'verbose_profile'
 verbose_profile_body()
@@ -72,5 +93,6 @@ verbose_profile_body()
 
 atf_init_test_cases()
 {
+	atf_add_test_case 'in_place'
 	atf_add_test_case 'verbose_profile'
 }

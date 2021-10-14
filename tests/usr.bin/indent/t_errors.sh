@@ -1,5 +1,5 @@
 #! /bin/sh
-# $NetBSD: t_errors.sh,v 1.2 2021/10/14 17:42:13 rillig Exp $
+# $NetBSD: t_errors.sh,v 1.3 2021/10/14 18:55:41 rillig Exp $
 #
 # Copyright (c) 2021 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -85,6 +85,48 @@ option_typedefs_not_found_body()
 	    -U./nonexistent
 }
 
+atf_test_case 'option_tabsize_negative'
+option_tabsize_negative_body()
+{
+	expect_error \
+	    'indent: Command line: option "-ts" requires an integer parameter' \
+	    -ts-1
+}
+
+atf_test_case 'option_tabsize_zero'
+option_tabsize_zero_body()
+{
+	expect_error \
+	    'indent: invalid tabsize 0' \
+	    -ts0
+}
+
+atf_test_case 'option_tabsize_large'
+option_tabsize_large_body()
+{
+	# Integer overflow, on both ILP32 and LP64 platforms.
+	expect_error \
+	    'indent: invalid tabsize 81' \
+	    -ts81
+}
+
+atf_test_case 'option_tabsize_very_large'
+option_tabsize_very_large_body()
+{
+	# Integer overflow, on both ILP32 and LP64 platforms.
+	expect_error \
+	    'indent: invalid tabsize -1294967296' \
+	    -ts3000000000
+}
+
+atf_test_case 'option_indent_size_zero'
+option_indent_size_zero_body()
+{
+	expect_error \
+	    'indent: invalid indentation 0' \
+	    -i0
+}
+
 atf_test_case 'option_buffer_overflow'
 option_buffer_overflow_body()
 {
@@ -128,6 +170,168 @@ unterminated_comment_body()
 	    "$indent" -st < comment.c
 }
 
+atf_test_case 'in_place_wrong_backup'
+in_place_wrong_backup_body()
+{
+	cat <<-\EOF > code.c
+		int decl;
+	EOF
+	cp code.c code.c.orig
+
+	# Due to the strange backup suffix '/subdir', indent tries to create
+	# a file named 'code.c/subdir', but 'code.c' is already a regular
+	# file, not a directory.
+	atf_check -s 'exit:1' \
+	    -e 'inline:indent: code.c/subdir: Not a directory'"$nl" \
+	    env SIMPLE_BACKUP_SUFFIX="/subdir" "$indent" code.c
+
+	# Since there was an early error, the original file is kept as is.
+	atf_check -o 'file:code.c.orig' \
+	    cat code.c
+}
+
+atf_test_case 'argument_input_enoent'
+argument_input_enoent_body()
+{
+	atf_check -s 'exit:1' \
+	    -e 'inline:indent: ./nonexistent.c: No such file or directory'"$nl" \
+	    "$indent" ./nonexistent.c
+}
+
+atf_test_case 'argument_output_equals_input_name'
+argument_output_equals_input_name_body()
+{
+	echo '/* comment */' > code.c
+
+	atf_check -s 'exit:1' \
+	    -e 'inline:indent: input and output files must be different'"$nl" \
+	    "$indent" code.c code.c
+}
+
+atf_test_case 'argument_output_equals_input_file'
+argument_output_equals_input_file_body()
+{
+	echo '/* comment */' > code.c
+
+	atf_check \
+	    "$indent" code.c ./code.c
+
+	# Oops, the file has become empty since the output is first emptied,
+	# before reading any of the input.
+	atf_check \
+	    cat code.c
+}
+
+atf_test_case 'argument_output_enoent'
+argument_output_enoent_body()
+{
+	expect_error \
+	    'indent: subdir/nonexistent.c: No such file or directory' \
+	    /dev/null subdir/nonexistent.c
+}
+
+atf_test_case 'argument_too_many'
+argument_too_many_body()
+{
+	echo '/* comment */' > arg1.c
+
+	expect_error \
+	    'indent: unknown parameter: arg3.c' \
+	    arg1.c arg2.c arg3.c arg4.c
+}
+
+atf_test_case 'unexpected_end_of_file'
+unexpected_end_of_file_body()
+{
+	echo 'struct{' > code.c
+
+	expect_error \
+	    'Error@1: Stuff missing from end of file' \
+	    code.c
+
+	atf_check \
+	    -o 'inline:struct {'"$nl" \
+	    cat code.c
+}
+
+atf_test_case 'unexpected_closing_brace_top_level'
+unexpected_closing_brace_top_level_body()
+{
+	echo '}' > code.c
+
+	expect_error \
+	    'Error@1: Statement nesting error' \
+	    code.c
+	atf_check \
+	    -o 'inline:}'"$nl" \
+	    cat code.c
+}
+
+atf_test_case 'unexpected_closing_brace_decl'
+unexpected_closing_brace_decl_body()
+{
+	echo 'int i = 3};' > code.c
+
+	expect_error \
+	    'Error@1: Statement nesting error' \
+	    code.c
+	# Despite the error message, the original file got overwritten with a
+	# best-effort rewrite of the code.
+	atf_check \
+	    -o 'inline:int		i = 3};'"$nl" \
+	    cat code.c
+}
+
+atf_test_case 'preprocessing_overflow'
+preprocessing_overflow_body()
+{
+	cat <<-\EOF > code.c
+		#if 1
+		#if 2
+		#if 3
+		#if 4
+		#if 5
+		#if 6
+		#endif 6
+		#endif 5
+		#endif 4
+		#endif 3
+		#endif 2
+		#endif 1
+		#endif too much
+	EOF
+	cat <<-\EOF > stderr.exp
+		Error@6: #if stack overflow
+		Error@12: Unmatched #endif
+		Error@13: Unmatched #endif
+	EOF
+
+	atf_check -s 'exit:1' \
+	    -e 'file:stderr.exp' \
+	    "$indent" code.c
+}
+
+atf_test_case 'preprocessing_unrecognized'
+preprocessing_unrecognized_body()
+{
+	cat <<-\EOF > code.c
+		#unknown
+		# 3 "file.c"
+		#elif 3
+		#else
+	EOF
+	cat <<-\EOF > stderr.exp
+		Error@1: Unrecognized cpp directive
+		Error@2: Unrecognized cpp directive
+		Error@3: Unmatched #elif
+		Error@4: Unmatched #else
+	EOF
+
+	atf_check -s 'exit:1' \
+	    -e 'file:stderr.exp' \
+	    "$indent" code.c
+}
+
 atf_init_test_cases()
 {
 	atf_add_test_case 'option_unknown'
@@ -137,5 +341,21 @@ atf_init_test_cases()
 	atf_add_test_case 'option_buffer_overflow'
 	atf_add_test_case 'option_typedefs_not_found'
 	atf_add_test_case 'option_special_missing_param'
+	atf_add_test_case 'option_tabsize_negative'
+	atf_add_test_case 'option_tabsize_zero'
+	atf_add_test_case 'option_tabsize_large'
+	atf_add_test_case 'option_tabsize_very_large'
+	atf_add_test_case 'option_indent_size_zero'
 	atf_add_test_case 'unterminated_comment'
+	atf_add_test_case 'in_place_wrong_backup'
+	atf_add_test_case 'argument_input_enoent'
+	atf_add_test_case 'argument_output_equals_input_name'
+	atf_add_test_case 'argument_output_equals_input_file'
+	atf_add_test_case 'argument_output_enoent'
+	atf_add_test_case 'argument_too_many'
+	atf_add_test_case 'unexpected_end_of_file'
+	atf_add_test_case 'unexpected_closing_brace_top_level'
+	atf_add_test_case 'unexpected_closing_brace_decl'
+	atf_add_test_case 'preprocessing_overflow'
+	atf_add_test_case 'preprocessing_unrecognized'
 }
