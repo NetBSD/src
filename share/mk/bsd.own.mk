@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.1265 2021/10/14 11:46:45 nia Exp $
+#	$NetBSD: bsd.own.mk,v 1.1266 2021/10/14 12:58:30 nia Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -1110,6 +1110,8 @@ MKCTF?=		yes
 .if !defined(COVERITY_TOP_CONFIG) && \
     (${MACHINE_ARCH} == "i386" || \
     ${MACHINE_ARCH} == "x86_64" || \
+    ${MACHINE_ARCH} == "aarch64" || \
+    ${MACHINE_ARCH} == "aarch64eb" || \
     ${MACHINE_CPU} == "arm" || \
     ${MACHINE_CPU} == "m68k" || \
     ${MACHINE_CPU} == "mips" || \
