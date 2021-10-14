@@ -1,4 +1,4 @@
-/* $NetBSD: com.c,v 1.368 2021/10/12 08:09:50 kre Exp $ */
+/* $NetBSD: com.c,v 1.369 2021/10/14 09:56:12 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2004, 2008 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.368 2021/10/12 08:09:50 kre Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.369 2021/10/14 09:56:12 jmcneill Exp $");
 
 #include "opt_com.h"
 #include "opt_ddb.h"
@@ -891,7 +891,7 @@ com_shutdown(struct com_softc *sc)
 	 */
 	if (ISSET(tp->t_cflag, HUPCL)) {
 		com_modem(sc, 0);
-		getmicrotime(&sc->sc_hup_pending);
+		microtime(&sc->sc_hup_pending);
 		sc->sc_hup_pending.tv_sec++;
 	}
 
@@ -984,17 +984,14 @@ comopen(dev_t dev, int flag, int mode, struct lwp *l)
 		}
 
 		if (timerisset(&sc->sc_hup_pending)) {
-			getmicrotime(&now);
+			microtime(&now);
 			while (timercmp(&now, &sc->sc_hup_pending, <)) {
-				int ms;
-
-
 				timersub(&sc->sc_hup_pending, &now, &diff);
-				ms = diff.tv_sec * 1000 +
+				const int ms = diff.tv_sec * 1000 +
 				    uimax(diff.tv_usec / 1000, 1);
-				kpause("comopen", false, mstohz(ms),
+				kpause(ttclos, false, mstohz(ms),
 				    &sc->sc_lock);
-				getmicrotime(&now);
+				microtime(&now);
 			}
 			timerclear(&sc->sc_hup_pending);
 		}
