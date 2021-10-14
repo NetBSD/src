@@ -1,4 +1,4 @@
-#	$NetBSD: files.i2c,v 1.117 2021/10/03 17:27:02 brad Exp $
+#	$NetBSD: files.i2c,v 1.118 2021/10/14 13:54:46 brad Exp $
 
 obsolete defflag	opt_i2cbus.h		I2C_SCAN
 define	i2cbus { }
@@ -399,6 +399,12 @@ file	dev/i2c/cwfg.c				cwfg
 device sht4xtemp
 attach sht4xtemp at iic
 file dev/i2c/sht4x.c				sht4xtemp
+
+# Sensirion SGP40 MOx gas sensor
+device sgp40mox
+attach sgp40mox at iic
+file dev/i2c/sgp40.c				sgp40mox
+file dev/i2c/sensirion_voc_algorithm.c		sgp40mox
 
 # Philips PCA955x GPIO
 device	pcagpio: leds

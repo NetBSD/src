@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.147 2021/10/03 17:27:02 brad Exp $
+# $NetBSD: mi,v 1.148 2021/10/14 13:54:46 brad Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -397,6 +397,8 @@
 ./@MODULEDIR@/securelevel/securelevel.kmod	modules-base-kernel	kmod
 ./@MODULEDIR@/sequencer				modules-base-kernel	kmod
 ./@MODULEDIR@/sequencer/sequencer.kmod		modules-base-kernel	kmod
+./@MODULEDIR@/sgp40mox				modules-base-kernel	kmod
+./@MODULEDIR@/sgp40mox/sgp40mox.kmod		modules-base-kernel	kmod
 ./@MODULEDIR@/sht4xtemp				modules-base-kernel     kmod
 ./@MODULEDIR@/sht4xtemp/sht4xtemp.kmod		modules-base-kernel     kmod
 ./@MODULEDIR@/si70xxtemp			modules-base-kernel	kmod

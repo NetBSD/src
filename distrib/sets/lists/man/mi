@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1727 2021/10/12 04:55:19 msaitoh Exp $
+# $NetBSD: mi,v 1.1728 2021/10/14 13:54:46 brad Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1720,6 +1720,7 @@
 ./usr/share/man/cat4/sgimips/pic.0		man-sys-catman		.cat
 ./usr/share/man/cat4/sgimips/sq.0		man-sys-catman		.cat
 ./usr/share/man/cat4/sgimips/wdsc.0		man-sys-catman		.cat
+./usr/share/man/cat4/sgp40mox.0			man-sys-catman		.cat
 ./usr/share/man/cat4/sgsmix.0			man-sys-catman		.cat
 ./usr/share/man/cat4/shb.0			man-sys-catman		.cat
 ./usr/share/man/cat4/shmif.0			man-sys-catman		.cat
@@ -4895,6 +4896,7 @@
 ./usr/share/man/html4/sgimips/pic.html		man-sys-htmlman		html
 ./usr/share/man/html4/sgimips/sq.html		man-sys-htmlman		html
 ./usr/share/man/html4/sgimips/wdsc.html		man-sys-htmlman		html
+./usr/share/man/html4/sgp40mox.html		man-sys-htmlman		html
 ./usr/share/man/html4/sgsmix.html		man-sys-htmlman		html
 ./usr/share/man/html4/shb.html			man-sys-htmlman		html
 ./usr/share/man/html4/shmif.html		man-sys-htmlman		html
@@ -7976,6 +7978,7 @@
 ./usr/share/man/man4/sgimips/pic.4		man-sys-man		.man
 ./usr/share/man/man4/sgimips/sq.4		man-sys-man		.man
 ./usr/share/man/man4/sgimips/wdsc.4		man-sys-man		.man
+./usr/share/man/man4/sgp40mox.4			man-sys-man		.man
 ./usr/share/man/man4/sgsmix.4			man-sys-man		.man
 ./usr/share/man/man4/shb.4			man-sys-man		.man
 ./usr/share/man/man4/shmif.4			man-sys-man		.man
