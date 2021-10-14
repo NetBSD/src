@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.1263 2021/09/30 20:02:54 jmcneill Exp $
+#	$NetBSD: bsd.own.mk,v 1.1264 2021/10/14 11:45:46 nia Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -1140,6 +1140,7 @@ MKSTATICPIE?=	no
 # MK* options which default to "yes".
 #
 _MKVARS.yes= \
+	MKARGON2 \
 	MKATF \
 	MKBINUTILS \
 	MKBSDTAR \
@@ -1281,7 +1282,6 @@ MKLLVMRT.aarch64=	yes
 # sorted with at most one letter per line.
 #
 _MKVARS.no= \
-	MKARGON2 \
 	MKARZERO \
 	MKBSDGREP \
 	MKCATPAGES MKCOMPATTESTS MKCOMPATX11 MKCTF \
