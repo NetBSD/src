@@ -1,4 +1,4 @@
-/*      $NetBSD: t_ptrace_register_wait.h,v 1.3 2020/05/11 12:17:57 kamil Exp $   */
+/*      $NetBSD: t_ptrace_register_wait.h,v 1.4 2021/10/14 13:50:36 gson Exp $   */
 
 /*-
  * Copyright (c) 2016, 2017, 2018, 2019, 2020 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@ access_regs(const char *regset, const char *aux)
 #if defined(HAVE_FPREGS)
 	struct fpreg fpr;
 #endif
-	
+
 #if !defined(HAVE_GPREGS)
 	if (strcmp(regset, "regs") == 0)
 		atf_tc_fail("Impossible test scenario!");
