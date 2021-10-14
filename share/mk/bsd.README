@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.README,v 1.418 2021/09/26 15:52:40 maya Exp $
+#	$NetBSD: bsd.README,v 1.419 2021/10/14 11:45:46 nia Exp $
 #	@(#)bsd.README	8.2 (Berkeley) 4/2/94
 
 This is the README file for the make "include" files for the NetBSD
@@ -112,6 +112,9 @@ MAKEVERBOSE	Control how "verbose" the standard make(1) rules are.
 		    2	Describe what is occurring and echo the actual command
 		    3	Ignore the effect of the "@" prefix in make commands
 		    4	Trace shell commands using the shell's -x flag
+
+MKARGON2	If "no", don't build support for Argon2 into libcrypt.
+		Default: yes
 
 MKATF		If "no", don't build the Automated Testing Framework (ATF),
 		which includes the libatf-c, libatf-c++ and libatf-sh libraries
