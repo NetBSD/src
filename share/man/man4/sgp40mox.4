@@ -1,4 +1,4 @@
-.\" $NetBSD: sgp40mox.4,v 1.1 2021/10/14 13:54:45 brad Exp $
+.\" $NetBSD: sgp40mox.4,v 1.2 2021/10/14 21:35:45 wiz Exp $
 .\"
 .\" Copyright (c) 2021 Brad Spencer <brad@anduin.eldar.org>
 .\"
@@ -41,9 +41,9 @@ nodes.
 .Pp
 In order to calculate the VOC index, the volatile organic compounds index, which
 is the measure of air quality the sensor is polled once a second and the raw sensor
-value is fed into the Sensirion VOC algorithm.  This VOC algorithm used in this driver
-is licensed under a 3 clause BSD license and was pulled from the Sensirion Github
-repository at
+value is fed into the Sensirion VOC algorithm.
+This VOC algorithm used in this driver is licensed under a 3 clause
+BSD license and was pulled from the Sensirion Github repository at
 .Rs
 .%U https://github.com/Sensirion/embedded-sgp
 .Re
@@ -54,10 +54,11 @@ variables are provided:
 .Bl -tag -width indent
 .It Li hw.sgp40mox0.compensation.temperature
 This should be set to the temperature in Celsius of the environment that the sensor
-is in.  The valid values are from -45 to 130 degrees Celsius.
+is in.
+The valid values are from -45 to 130 degrees Celsius.
 .It Li hw.sgp40mox0.compensation.humidity
-This should be set to the %RH of the environment that the sensor is in.  The valid
-values are from 0 to 100.
+This should be set to the %RH of the environment that the sensor is in.
+The valid values are from 0 to 100.
 .Pp
 For the best performance of the VOC algorithm it is important that the temperature
 and %RH compensation values be current and set using the
@@ -98,10 +99,12 @@ The
 driver was written by
 .An Brad Spencer Aq Mt brad@anduin.eldar.org .
 .Sh BUGS
-The driver does not make complete use of the VOC algorithm.  In particular, there is no
-need to restart the algorithm from scratch if there is a stoppage of polling for less than
-10 minutes.  The driver does not have the ability to determine that, and therefore
+The driver does not make complete use of the VOC algorithm.
+In particular, there is no need to restart the algorithm from
+scratch if there is a stoppage of polling for less than 10 minutes.
+The driver does not have the ability to determine that, and therefore
 assumes that the sensor is completely cold each time the driver attaches to the chip.
 .Pp
 The temperature and humidity compensation could be allowed to contain fractional degrees Celsius
-and %RH.  The driver only supports setting whole numbers for either of those.
+and %RH.
+The driver only supports setting whole numbers for either of those.
