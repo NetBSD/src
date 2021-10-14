@@ -1,5 +1,5 @@
 #! /bin/sh
-# $NetBSD: t_errors.sh,v 1.1 2021/10/13 23:33:52 rillig Exp $
+# $NetBSD: t_errors.sh,v 1.2 2021/10/14 17:42:13 rillig Exp $
 #
 # Copyright (c) 2021 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -27,32 +27,105 @@
 #
 # $FreeBSD$
 
+# Tests for error handling in indent.
+
 indent=$(atf_config_get usr.bin.indent.test_indent /usr/bin/indent)
 nl='
 '
 
+expect_error()
+{
+	local msg
+
+	msg="$1"
+	shift
+
+	atf_check -s 'exit:1' \
+	    -e "inline:$msg$nl" \
+	    "$indent" "$@"
+}
+
 atf_test_case 'option_unknown'
 option_unknown_body()
 {
-	atf_check -s 'exit:1' \
-	    -e 'inline:indent: Command line: unknown option "-Z-unknown"'"$nl" \
-	    "$indent" -Z-unknown
+	expect_error \
+	    'indent: Command line: unknown option "-Z-unknown"' \
+	    -Z-unknown
 }
 
 atf_test_case 'option_bool_trailing_garbage'
 option_bool_trailing_garbage_body()
 {
-	atf_check -s 'exit:1' \
-	    -e 'inline:indent: Command line: unknown option "-bacchus"'"$nl" \
-	    "$indent" -bacchus
+	expect_error \
+	    'indent: Command line: unknown option "-bacchus"' \
+	    -bacchus
 }
 
 atf_test_case 'option_int_missing_parameter'
 option_int_missing_parameter_body()
 {
+	expect_error \
+	    'indent: Command line: option "-ts" requires an integer parameter' \
+	    -tsx
+}
+
+atf_test_case 'option_profile_not_found'
+option_profile_not_found_body()
+{
+	expect_error \
+	    'indent: profile ./nonexistent: No such file or directory' \
+	    -P./nonexistent
+}
+
+atf_test_case 'option_typedefs_not_found'
+option_typedefs_not_found_body()
+{
+	expect_error \
+	    'indent: cannot open file ./nonexistent' \
+	    -U./nonexistent
+}
+
+atf_test_case 'option_buffer_overflow'
+option_buffer_overflow_body()
+{
+	opt='12345678123456781234567812345678'	# 32
+	opt="$opt$opt$opt$opt$opt$opt$opt$opt"	# 256
+	opt="$opt$opt$opt$opt$opt$opt$opt$opt"	# 2048
+	opt="$opt$opt$opt$opt$opt$opt$opt$opt"	# 16384
+	printf '%s\n' "-$opt" > indent.pro
+
+	# TODO: The call to 'diag' should be replaced with 'errx'.
+	expect_error \
+	    'Error@1: buffer overflow in indent.pro, starting with '\''-123456781'\''' \
+	    -Pindent.pro
+}
+
+atf_test_case 'option_special_missing_param'
+option_special_missing_param_body()
+{
+	# TODO: Write '-cli' instead of only 'cli'.
+	expect_error \
+	    'indent: Command line: ``cli'\'\'' requires a parameter' \
+	    -cli
+
+	expect_error \
+	    'indent: Command line: ``T'\'\'' requires a parameter' \
+	    -T
+
+	expect_error \
+	    'indent: Command line: ``U'\'\'' requires a parameter' \
+	    -U
+}
+
+atf_test_case 'unterminated_comment'
+unterminated_comment_body()
+{
+	echo '/*' > comment.c
+
 	atf_check -s 'exit:1' \
-	    -e 'inline:indent: Command line: option "-ts" requires an integer parameter'"$nl" \
-	    "$indent" -tsx
+	    -o 'inline:/*'"$nl"' *'"$nl" \
+	    -e 'inline:/**INDENT** Error@2: Unterminated comment */'"$nl" \
+	    "$indent" -st < comment.c
 }
 
 atf_init_test_cases()
@@ -60,4 +133,9 @@ atf_init_test_cases()
 	atf_add_test_case 'option_unknown'
 	atf_add_test_case 'option_bool_trailing_garbage'
 	atf_add_test_case 'option_int_missing_parameter'
+	atf_add_test_case 'option_profile_not_found'
+	atf_add_test_case 'option_buffer_overflow'
+	atf_add_test_case 'option_typedefs_not_found'
+	atf_add_test_case 'option_special_missing_param'
+	atf_add_test_case 'unterminated_comment'
 }
