@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.3,v 1.1.2.37 2021/10/13 16:08:44 martin Exp $
+# $NetBSD: CHANGES-9.3,v 1.1.2.38 2021/10/15 15:15:52 martin Exp $
 
 A complete list of changes from the NetBSD 9.2 release to the NetBSD 9.3
 release:
@@ -810,4 +810,15 @@ sys/arch/amiga/dev/amidisplaycc.c		1.33,1.35,1.36
 
 	amiga: enable wsfb based X11.
 	[abs, ticket #1359]
+
+distrib/amd64/Makefile				1.15
+distrib/amd64/installimage-bios/Makefile	1.1
+distrib/amd64/installimage-bios/boot.cfg.in	1.1
+distrib/amd64/installimage-bios/etc.rc		1.1
+distrib/amd64/installimage-bios/etc.ttys	1.1
+distrib/amd64/installimage-bios/install.sh	1.1
+distrib/amd64/installimage-bios/spec.inst	1.1
+
+	Restore having a BIOS-only amd64 USB image.
+	[maya, ticket #1360]
 
