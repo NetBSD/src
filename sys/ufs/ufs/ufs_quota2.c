@@ -1,4 +1,4 @@
-/* $NetBSD: ufs_quota2.c,v 1.43 2020/12/05 17:33:54 thorpej Exp $ */
+/* $NetBSD: ufs_quota2.c,v 1.44 2021/10/15 22:32:29 andvar Exp $ */
 /*-
   * Copyright (c) 2010 Manuel Bouyer
   * All rights reserved.
@@ -26,7 +26,7 @@
   */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_quota2.c,v 1.43 2020/12/05 17:33:54 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_quota2.c,v 1.44 2021/10/15 22:32:29 andvar Exp $");
 
 #include <sys/buf.h>
 #include <sys/param.h>
@@ -304,7 +304,7 @@ quota2_q2ealloc(struct ufsmount *ump, int type, uid_t uid, struct dquot *dq)
 		struct vnode *vp = ump->um_quotas[type];
 		struct inode *ip = VTOI(vp);
 		uint64_t size = ip->i_size;
-		/* need to alocate a new disk block */
+		/* need to allocate a new disk block */
 		error = UFS_BALLOC(vp, size, ump->umq2_bsize,
 		    ump->um_cred[type], B_CLRBUF | B_SYNC, &bp);
 		if (error) {

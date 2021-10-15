@@ -1,4 +1,4 @@
-/*	$NetBSD: bf_locl.h,v 1.6 2019/02/04 08:23:53 mrg Exp $	*/
+/*	$NetBSD: bf_locl.h,v 1.7 2021/10/15 22:32:28 andvar Exp $	*/
 /*	$KAME: bf_locl.h,v 1.5 2000/08/31 06:03:48 itojun Exp $	*/
 
 /* crypto/bf/bf_local.h */
@@ -179,7 +179,7 @@
 
 #if defined(BF_PTR2)
 
-/* This is basically a special pentium verson */
+/* This is basically a special pentium version */
 #define BF_ENC(LL,R,S,P) \
 	{ \
 	BF_LONG t,u,v; \
