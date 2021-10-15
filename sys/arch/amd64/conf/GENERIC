@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.590 2021/09/09 13:22:50 jakllsch Exp $
+# $NetBSD: GENERIC,v 1.591 2021/10/15 19:22:12 jmcneill Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/amd64/conf/std.amd64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.590 $"
+#ident		"GENERIC-$Revision: 1.591 $"
 
 maxusers	64		# estimated number of users
 
@@ -338,7 +338,8 @@ aibs*		at acpi?		# ASUSTeK AI Booster hardware monitor
 asus*		at acpi?		# ASUS hotkeys
 attimer*	at acpi?		# AT Timer
 #com*		at acpi?		# Serial communications interface
-#fdc*		at acpi?		# Floppy disk controller
+fdc*		at acpi?		# Floppy disk controller
+fd*		at fdc? drive ?		# the drives themselves
 fujbp*		at acpi?		# Fujitsu Brightness & Pointer
 fujhk*		at acpi?		# Fujitsu Hotkeys
 #hpacel* 	at acpi?		# HP 3D DriveGuard accelerometer
@@ -784,11 +785,8 @@ ld*	at nvme? nsid ?
 # Miscellaneous mass storage devices
 
 # ISA floppy
-fdc0	at isa? port 0x3f0 irq 6 drq 2	# standard PC floppy controllers
+#fdc0	at isa? port 0x3f0 irq 6 drq 2	# standard PC floppy controllers
 #fdc1	at isa? port 0x370 irq ? drq ?
-fd*	at fdc? drive ?			# the drives themselves
-# some machines need you to do this instead of fd*
-#fd0	at fdc0 drive 0
 
 # Network Interfaces
 
