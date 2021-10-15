@@ -1,4 +1,4 @@
-/*	$NetBSD: unistd.h,v 1.161 2020/12/04 23:04:58 kre Exp $	*/
+/*	$NetBSD: unistd.h,v 1.162 2021/10/15 22:32:28 andvar Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2008 The NetBSD Foundation, Inc.
@@ -187,7 +187,7 @@ off_t	 lseek(int, off_t, int);
 int	 truncate(const char *, off_t);
 /*
  * IEEE Std 1003.1b-93,
- * also found in X/Open Portability Guide >= Issue 4 Verion 2
+ * also found in X/Open Portability Guide >= Issue 4 Version 2
  */
 #if (_POSIX_C_SOURCE - 0) >= 199309L || \
     (defined(_XOPEN_SOURCE) && defined(_XOPEN_SOURCE_EXTENDED)) || \
