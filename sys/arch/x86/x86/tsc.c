@@ -1,4 +1,4 @@
-/*	$NetBSD: tsc.c,v 1.56 2021/06/02 06:48:10 nia Exp $	*/
+/*	$NetBSD: tsc.c,v 1.57 2021/10/15 18:12:48 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2020 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tsc.c,v 1.56 2021/06/02 06:48:10 nia Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tsc.c,v 1.57 2021/10/15 18:12:48 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -151,7 +151,7 @@ tsc_is_invariant(void)
 	return invariant;
 }
 
-/* Setup function porniters for rdtsc() and timecounter(9). */
+/* Setup function pointers for rdtsc() and timecounter(9). */
 void
 tsc_setfunc(struct cpu_info *ci)
 {
