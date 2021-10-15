@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.c,v 1.47 2021/10/15 18:44:53 jmcneill Exp $	*/
+/*	$NetBSD: isa_machdep.c,v 1.48 2021/10/15 19:01:52 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isa_machdep.c,v 1.47 2021/10/15 18:44:53 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isa_machdep.c,v 1.48 2021/10/15 19:01:52 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -94,6 +94,10 @@ __KERNEL_RCSID(0, "$NetBSD: isa_machdep.c,v 1.47 2021/10/15 18:44:53 jmcneill Ex
 #if NIOAPIC > 0
 #include <machine/i82093var.h>
 #include <machine/mpbiosvar.h>
+#endif
+
+#if NACPICA > 0
+#include <dev/acpi/acpivar.h>
 #endif
 
 static int _isa_dma_may_bounce(bus_dma_tag_t, bus_dmamap_t, int, int *);
