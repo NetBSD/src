@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.88 2021/01/28 01:57:31 jmcneill Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.89 2021/10/15 18:51:38 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.88 2021/01/28 01:57:31 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.89 2021/10/15 18:51:38 jmcneill Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -534,6 +534,16 @@ pci_attach_hook(device_t parent, device_t self, struct pcibus_attach_args *pba)
 		aprint_verbose("\n");
 		aprint_verbose_dev(self,
 		    "This pci host does not support MSI-X.");
+#if NACPICA > 0
+	} else if (acpi_active &&
+		   AcpiGbl_FADT.Header.Revision >= 4 &&
+		   (AcpiGbl_FADT.BootFlags & ACPI_FADT_NO_MSI) != 0) {
+		pba->pba_flags &= ~PCI_FLAGS_MSI_OKAY;
+		pba->pba_flags &= ~PCI_FLAGS_MSIX_OKAY;
+		aprint_verbose("\n");
+		aprint_verbose_dev(self,
+		    "MSI support disabled via ACPI IAPC_BOOT_ARCH flag.\n");
+#endif
 	} else {
 		pba->pba_flags |= PCI_FLAGS_MSI_OKAY;
 		pba->pba_flags |= PCI_FLAGS_MSIX_OKAY;
