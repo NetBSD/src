@@ -1,4 +1,4 @@
-/* $NetBSD: fdc_acpi.c,v 1.46 2021/01/29 15:49:55 thorpej Exp $ */
+/* $NetBSD: fdc_acpi.c,v 1.47 2021/10/15 19:21:45 jmcneill Exp $ */
 
 /*
  * Copyright (c) 2002 Jared D. McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdc_acpi.c,v 1.46 2021/01/29 15:49:55 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdc_acpi.c,v 1.47 2021/10/15 19:21:45 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -245,7 +245,7 @@ fdc_acpi_enumerate(struct fdc_acpi_softc *asc)
 	drives = 0;
 	for (i = 0; i < 4; i++) {
 		if (p[i]) drives |= (1 << i);
-		aprint_normal_dev(sc->sc_dev, "drive %d %sattached\n", i,
+		aprint_debug_dev(sc->sc_dev, "drive %d %sattached\n", i,
 		    p[i] ? "" : "not ");
 	}
 
@@ -278,17 +278,14 @@ fdc_acpi_getknownfds(struct fdc_acpi_softc *asc)
 			continue;
 		rv = acpi_eval_struct(asc->sc_node->ad_handle, "_FDI", &abuf);
 		if (ACPI_FAILURE(rv)) {
-			aprint_normal_dev(sc->sc_dev,
-			    "failed to evaluate _FDI: %s on drive %d\n",
-			    AcpiFormatException(rv), i);
-			/* XXX if _FDI fails, assume 1.44MB floppy */
+			/* if _FDI fails, assume 1.44MB floppy */
 			sc->sc_knownfds[i] = &fdc_acpi_fdtypes[0];
 			continue;
 		}
 		fdi = abuf.Pointer;
 		if (fdi->Type != ACPI_TYPE_PACKAGE) {
 			aprint_error_dev(sc->sc_dev,
-			    "expected PACKAGE, got %u\n", fdi->Type);
+			    "_FDI: expected PACKAGE, got %u\n", fdi->Type);
 			goto out;
 		}
 		e = fdi->Package.Elements;
