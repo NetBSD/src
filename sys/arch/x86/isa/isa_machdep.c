@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.c,v 1.46 2020/05/02 16:44:35 bouyer Exp $	*/
+/*	$NetBSD: isa_machdep.c,v 1.47 2021/10/15 18:44:53 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isa_machdep.c,v 1.46 2020/05/02 16:44:35 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isa_machdep.c,v 1.47 2021/10/15 18:44:53 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -369,13 +369,20 @@ device_isa_register(device_t dev, void *aux)
 		prop_dictionary_set_bool(device_properties(dev),
 		    "no-legacy-devices", true);
 #if NACPICA > 0
-#if notyet
 	if (device_is_a(dev, "isa") && acpi_active) {
-		if (!(AcpiGbl_FADT.BootFlags & ACPI_FADT_LEGACY_DEVICES))
+		/*
+		 * For FACP >= 2, the LEGACY_DEVICES flag indicates that
+		 * the motherboard supports user-visible devices on the LPC
+		 * or ISA bus. If clear, assume that no such devices are
+		 * present and we can enumerate everything we need using
+		 * ACPI tables.
+		 */
+		if (AcpiGbl_FADT.Header.Revision >= 2 &&
+		    !(AcpiGbl_FADT.BootFlags & ACPI_FADT_LEGACY_DEVICES)) {
 			prop_dictionary_set_bool(device_properties(dev),
 			    "no-legacy-devices", true);
+		}
 	}
-#endif
 #endif /* NACPICA > 0 */
 	return NULL;
 }
