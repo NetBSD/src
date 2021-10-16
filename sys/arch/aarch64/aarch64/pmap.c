@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.117 2021/10/10 07:15:25 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.118 2021/10/16 06:34:30 ryo Exp $	*/
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.117 2021/10/10 07:15:25 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.118 2021/10/16 06:34:30 ryo Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_ddb.h"
@@ -498,11 +498,13 @@ pmap_bootstrap(vaddr_t vstart, vaddr_t vend)
 	CTASSERT(sizeof(kpm->pm_stats.resident_count) == sizeof(long));
 }
 
+#ifdef MULTIPROCESSOR
 void
 pmap_md_tlb_info_attach(struct pmap_tlb_info *ti, struct cpu_info *ci)
 {
 	/* nothing */
 }
+#endif /* MULTIPROCESSOR */
 
 static inline void
 _pmap_adj_wired_count(struct pmap *pm, int adj)
