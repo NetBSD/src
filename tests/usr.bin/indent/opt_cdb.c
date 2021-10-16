@@ -1,5 +1,16 @@
-/* $NetBSD: opt_cdb.c,v 1.2 2021/10/16 05:40:17 rillig Exp $ */
+/* $NetBSD: opt_cdb.c,v 1.3 2021/10/16 21:32:10 rillig Exp $ */
 /* $FreeBSD$ */
+
+/*
+ * Tests for the options '-cdb' and '-ncdb'.
+ *
+ * The option '-cdb' forces the comment delimiter '/' '*' and '*' '/' to be on
+ * a separate line. This only affects block comments, not comments to the
+ * right of the code.
+ *
+ * The option '-ncdb' compresses multi-line comments to single-line comments,
+ * as far as possible.
+ */
 
 #indent input
 /* A single-line comment. */
@@ -13,7 +24,33 @@
  * multi-line
  * comment.
  */
+#indent end
 
+#indent run -cdb
+/* A single-line comment. */
+
+/*
+ * A multi-line comment.
+ */
+
+/*
+ * A multi-line comment.
+ */
+#indent end
+
+#indent run -ncdb
+/* A single-line comment. */
+
+/* A multi-line comment. */
+
+/* A multi-line comment. */
+#indent end
+
+
+/*
+ * Code comments on global declarations.
+ */
+#indent input
 int		ga;		/* A single-line comment. */
 
 int		gb;		/* A
@@ -25,7 +62,28 @@ int		gc;		/*
 				 * multi-line
 				 * comment.
 				 */
+#indent end
 
+#indent run -cdb
+int		ga;		/* A single-line comment. */
+
+int		gb;		/* A multi-line comment. */
+
+int		gc;		/* A multi-line comment. */
+#indent end
+
+#indent run -ncdb
+int		ga;		/* A single-line comment. */
+
+int		gb;		/* A multi-line comment. */
+
+int		gc;		/* A multi-line comment. */
+#indent end
+
+/*
+ * Block comments that are inside a function.
+ */
+#indent input
 void
 example(void)
 {
@@ -47,22 +105,6 @@ example(void)
 #indent end
 
 #indent run -cdb
-/* A single-line comment. */
-
-/*
- * A multi-line comment.
- */
-
-/*
- * A multi-line comment.
- */
-
-int		ga;		/* A single-line comment. */
-
-int		gb;		/* A multi-line comment. */
-
-int		gc;		/* A multi-line comment. */
-
 void
 example(void)
 {
@@ -82,18 +124,6 @@ example(void)
 #indent end
 
 #indent run -ncdb
-/* A single-line comment. */
-
-/* A multi-line comment. */
-
-/* A multi-line comment. */
-
-int		ga;		/* A single-line comment. */
-
-int		gb;		/* A multi-line comment. */
-
-int		gc;		/* A multi-line comment. */
-
 void
 example(void)
 {

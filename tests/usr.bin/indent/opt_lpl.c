@@ -1,5 +1,20 @@
-/* $NetBSD: opt_lpl.c,v 1.2 2021/10/16 05:40:17 rillig Exp $ */
+/* $NetBSD: opt_lpl.c,v 1.3 2021/10/16 21:32:10 rillig Exp $ */
 /* $FreeBSD$ */
+
+/*
+ * Tests for the options '-lpl' and '-nlpl'.
+ *
+ * The option '-lpl' lines up code surrounded by parentheses in continuation
+ * lines, even if it would extend past the right margin.
+ *
+ * The option '-nlpl' moves continuation lines that would stick over the right
+ * margin to the left, to keep it within the margin, if that does not require
+ * placing it to the left of the prevailing indentation level.
+ *
+ * These switches have no effect if '-nlp' is selected.
+ */
+
+/* $ TODO: Add code that differs between -lpl and -nlpl. */
 
 #indent input
 void
@@ -26,7 +41,6 @@ example(void)
 #indent end
 
 #indent run -lpl
-/* $ TODO: Add code that differs between -lpl and -nlpl. */
 void
 example(void)
 {
@@ -53,7 +67,6 @@ example(void)
 #indent end
 
 #indent run -nlpl
-/* $ TODO: Add code that differs between -lpl and -nlpl. */
 void
 example(void)
 {
