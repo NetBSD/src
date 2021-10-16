@@ -1,4 +1,4 @@
-/*	$NetBSD: bcrypt.c,v 1.21 2020/03/25 21:02:26 christos Exp $	*/
+/*	$NetBSD: bcrypt.c,v 1.22 2021/10/16 10:53:33 nia Exp $	*/
 /*	$OpenBSD: bcrypt.c,v 1.16 2002/02/19 19:39:36 millert Exp $	*/
 
 /*
@@ -46,7 +46,7 @@
  *
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: bcrypt.c,v 1.21 2020/03/25 21:02:26 christos Exp $");
+__RCSID("$NetBSD: bcrypt.c,v 1.22 2021/10/16 10:53:33 nia Exp $");
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -74,7 +74,7 @@ static void encode_salt(char *, u_int8_t *, u_int16_t, u_int8_t);
 static void encode_base64(u_int8_t *, u_int8_t *, u_int16_t);
 static void decode_base64(u_int8_t *, u_int16_t, const u_int8_t *);
 
-char *__bcrypt(const char *, const char *);	/* XXX */
+crypt_private char *__bcrypt(const char *, const char *);	/* XXX */
 
 static char    encrypted[_PASSWORD_LEN];
 
@@ -149,7 +149,7 @@ encode_salt(char *salt, u_int8_t *csalt, u_int16_t clen, u_int8_t logr)
 	encode_base64((u_int8_t *) salt + 7, csalt, clen);
 }
 
-int
+crypt_private int
 __gensalt_blowfish(char *salt, size_t saltlen, const char *option)
 {
 	size_t i;
@@ -209,7 +209,7 @@ bcrypt_gensalt(u_int8_t log_rounds)
 /* We handle $Vers$log2(NumRounds)$salt+passwd$
    i.e. $2$04$iwouldntknowwhattosayetKdJ6iFtacBqJdKe6aW7ou */
 
-char   *
+crypt_private char   *
 __bcrypt(const char *key, const char *salt)
 {
 	blf_ctx state;
