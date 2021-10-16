@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_quirks.c,v 1.99 2021/10/01 21:09:50 macallan Exp $	*/
+/*	$NetBSD: usb_quirks.c,v 1.100 2021/10/16 05:40:46 mrg Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_quirks.c,v 1.30 2003/01/02 04:15:55 imp Exp $	*/
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb_quirks.c,v 1.99 2021/10/01 21:09:50 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb_quirks.c,v 1.100 2021/10/16 05:40:46 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -392,6 +392,8 @@ Static const struct usbd_quirk_entry {
  { USB_VENDOR_CHICONY,		USB_PRODUCT_CHICONY_OPTMOUSE0939,	ANY,
 	{ UQ_ALWAYS_ON, NULL }},
  { USB_VENDOR_PIXART,		USB_PRODUCT_PIXART_RPIMOUSE,		ANY,
+	{ UQ_ALWAYS_ON, NULL }},
+ { USB_VENDOR_LOGITECH, 	USB_PRODUCT_LOGITECH_B100,		ANY,
 	{ UQ_ALWAYS_ON, NULL }},
 /*
  * The HAILUCK USB Keyboard has a built-in touchpad, which
