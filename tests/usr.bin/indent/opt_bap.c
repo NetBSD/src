@@ -1,13 +1,21 @@
-/* $NetBSD: opt_bap.c,v 1.1 2021/10/16 03:20:13 rillig Exp $ */
+/* $NetBSD: opt_bap.c,v 1.2 2021/10/16 21:32:10 rillig Exp $ */
 /* $FreeBSD$ */
 
+/*
+ * Tests for the options '-bap' and '-nbap'.
+ *
+ * The option '-bap' forces a blank line after every function body.
+ *
+ * The option '-nbap' keeps everything as is.
+ */
+
 #indent input
-static void one_liner(void) { /* FIXME: needs empty line below */ }
-static void several_lines(void) {
+static void one_liner(void){}
+static void several_lines(void)
+{
 	action();
-	/* FIXME: needs empty line below */
 }
-int main(void){/* FIXME: needs empty line below */}
+int main(void){}
 int global_variable;
 
 void already_has_blank_line_below(void)
@@ -26,18 +34,20 @@ int		the_end;
 #indent run -bap
 static void
 one_liner(void)
-{				/* FIXME: needs empty line below */
+{
 }
+/* $ FIXME: needs a blank line here */
 static void
 several_lines(void)
 {
 	action();
-	/* FIXME: needs empty line below */
 }
+/* $ FIXME: needs a blank line here */
 int
 main(void)
-{				/* FIXME: needs empty line below */
+{
 }
+/* $ FIXME: needs a blank line here */
 int		global_variable;
 
 void
@@ -47,27 +57,6 @@ already_has_blank_line_below(void)
 
 void
 has_several_blank_lines_below(void)
-{
-}
-
-
-
-int		the_end;
-#indent end
-
-#indent input
-static void one_liner(void) {}
-static void several_lines(void) {
-	action();
-}
-int main(void){}
-int global_variable;
-
-void already_has_blank_line_below(void)
-{
-}
-
-void has_several_blank_lines_below(void)
 {
 }
 

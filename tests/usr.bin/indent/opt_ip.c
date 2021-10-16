@@ -1,9 +1,17 @@
-/* $NetBSD: opt_ip.c,v 1.2 2021/10/16 05:40:17 rillig Exp $ */
+/* $NetBSD: opt_ip.c,v 1.3 2021/10/16 21:32:10 rillig Exp $ */
 /* $FreeBSD$ */
 
-#indent input
+/*
+ * Tests for the options '-ip' and '-nip'.
+ *
+ * The option '-ip' indents parameter declarations from the left margin.
+ *
+ * The option '-nip' TODO.
+ */
+
 /* FIXME: The options -ip and -nip produce the same output. */
 
+#indent input
 int
 several_parameters_1(int a,
 int b,
@@ -23,8 +31,6 @@ const char *cp);
 #indent end
 
 #indent run -ip
-/* FIXME: The options -ip and -nip produce the same output. */
-
 int
 several_parameters_1(int a,
 		     int b,
@@ -44,8 +50,6 @@ several_parameters_3(
 #indent end
 
 #indent run -nip
-/* FIXME: The options -ip and -nip produce the same output. */
-
 int
 several_parameters_1(int a,
 		     int b,

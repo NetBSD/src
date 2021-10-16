@@ -1,5 +1,14 @@
-/* $NetBSD: opt_ce.c,v 1.2 2021/10/16 05:40:17 rillig Exp $ */
+/* $NetBSD: opt_ce.c,v 1.3 2021/10/16 21:32:10 rillig Exp $ */
 /* $FreeBSD$ */
+
+/*
+ * Tests for the options '-ce' and '-nce'.
+ *
+ * The option '-ce' places the 'else if' in a single line, as if it were only
+ * a single keyword.
+ *
+ * The option '-nce' places the 'else' on the next line.
+ */
 
 #indent input
 void

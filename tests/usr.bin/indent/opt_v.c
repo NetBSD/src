@@ -1,5 +1,16 @@
-/* $NetBSD: opt_v.c,v 1.1 2021/10/16 03:20:13 rillig Exp $ */
+/* $NetBSD: opt_v.c,v 1.2 2021/10/16 21:32:10 rillig Exp $ */
 /* $FreeBSD$ */
+
+/*
+ * Tests for the options '-v' and '-nv'.
+ *
+ * The option '-v' enables verbose mode. It outputs some information about
+ * what's going on under the hood, especially when lines are broken. It also
+ * outputs a few statistics about line counts and comments at the end.
+ *
+ * The option '-nv' disables verbose mode. Only errors and warnings are output
+ * in this mode, but no progress messages.
+ */
 
 #indent input
 /*

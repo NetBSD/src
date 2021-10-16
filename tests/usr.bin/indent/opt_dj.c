@@ -1,6 +1,15 @@
-/* $NetBSD: opt_dj.c,v 1.1 2021/10/16 03:20:13 rillig Exp $ */
+/* $NetBSD: opt_dj.c,v 1.2 2021/10/16 21:32:10 rillig Exp $ */
 /* $FreeBSD$ */
 
+/*
+ * Tests for the options '-dj' and '-ndj'.
+ *
+ * The option '-dj' left-justifies declarations.
+ *
+ * The option '-ndj' indents declarations the same as code.
+ */
+
+/* For top-level declarations, '-dj' and '-ndj' produce the same output. */
 #indent input
 int i;
 int *ip;
@@ -19,24 +28,36 @@ const void ******vpppppp;
 const void ********vpppppppp;
 #indent end
 
-#indent input
-/* FIXME: The options -dj and -ndj produce the same output. */
-
-int i;
-int *ip;
-const char *ccp;
-const void *****vppppp;
-const void ******vpppppp;
-const void ********vpppppppp;
-#indent end
-
 #indent run -ndj
-/* FIXME: The options -dj and -ndj produce the same output. */
-
 int		i;
 int	       *ip;
 const char     *ccp;
 const void *****vppppp;
 const void ******vpppppp;
 const void ********vpppppppp;
+#indent end
+
+#indent input
+void example(void) {
+	int decl;
+	code();
+}
+#indent end
+
+#indent run -dj
+void
+example(void)
+{
+int		decl;
+	code();
+}
+#indent end
+
+#indent run -ndj
+void
+example(void)
+{
+	int		decl;
+	code();
+}
 #indent end

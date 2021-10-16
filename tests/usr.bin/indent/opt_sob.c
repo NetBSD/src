@@ -1,9 +1,22 @@
-/* $NetBSD: opt_sob.c,v 1.2 2021/10/16 05:40:17 rillig Exp $ */
+/* $NetBSD: opt_sob.c,v 1.3 2021/10/16 21:32:10 rillig Exp $ */
 /* $FreeBSD$ */
 
+/*
+ * Tests for the options '-sob' and '-nsob'.
+ *
+ * The option '-sob' swallows optional blank lines.
+ *
+ * XXX: The manual page says: "You can use this to get rid of blank lines
+ * after declarations."; double check this.
+ *
+ * The option '-nsob' keeps optional blank lines as is.
+ */
+
+/*
+ * FIXME: There are lots of 'optional blank lines' here that should be
+ *  swallowed.
+ */
 #indent input
-/* $ FIXME: There are lots of 'optional blank lines' here that should */
-/* $ FIXME: be swallowed. */
 void		function_declaration(void);
 
 

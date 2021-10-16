@@ -1,5 +1,13 @@
-/* $NetBSD: opt_fc1.c,v 1.2 2021/10/16 05:40:17 rillig Exp $ */
+/* $NetBSD: opt_fc1.c,v 1.3 2021/10/16 21:32:10 rillig Exp $ */
 /* $FreeBSD$ */
+
+/*
+ * Tests for the options '-fc1' and '-nfc1'.
+ *
+ * The option '-fc1' formats comments in column 1.
+ *
+ * The option '-nfc1' prevents comments in column 1 as is.
+ */
 
 #indent input
 /*
@@ -9,7 +17,29 @@
  *
  *
  */
+#indent end
 
+#indent run -fc1
+/*
+ * A comment in column 1.
+ *
+ *
+ *
+ */
+#indent end
+
+#indent run -nfc1
+/*
+ * A comment
+ * in column 1.
+ *
+ *
+ *
+ */
+#indent end
+
+
+#indent input
 /* $ Neither indentation nor surrounding spaces. */
 /*narrow*/
 
@@ -24,27 +54,9 @@
 
 /* $ Both comment texts get surrounded by spaces. */
 /*block1*//*block2*/
-
-/*
- * A multi-line comment that starts
- * in column 1.
- *//* followed by another multi-line comment
- * that starts in column 4.
- */
-
-/* comment */ int decl2; /* comment */
-/* looooooooooooooooooooooooooooooooooooooooong first comment */ int decl2; /* second comment */
-/* first comment */ int decl2; /* looooooooooooooooooooooooooooooooooooooooong second comment */
 #indent end
 
 #indent run -fc1
-/*
- * A comment in column 1.
- *
- *
- *
- */
-
 /* $ The comment text got surrounded by spaces. */
 /* narrow */
 
@@ -59,29 +71,9 @@
 
 /* $ Both comment texts got surrounded by spaces. */
 /* block1 *//* block2 */
-
-/*
- * A multi-line comment that starts in column 1.
- *
- * followed by another multi-line comment that starts in column 4.
- */
-/* $ XXX: The two comments have been merged into a single comment. */
-
- /* comment */ int decl2;	/* comment */
- /* looooooooooooooooooooooooooooooooooooooooong first comment */ int decl2;	/* second comment */
- /* first comment */ int decl2;	/* looooooooooooooooooooooooooooooooooooooooong
-				 * second comment */
 #indent end
 
 #indent run -nfc1
-/*
- * A comment
- * in column 1.
- *
- *
- *
- */
-
 /* $ No spaces got added around the comment text. */
 /*narrow*/
 
@@ -109,7 +101,28 @@
 /* $ formatted, but the comment 'block1' was moved from column 1 to 2. */
 /* $ This is probably because there is a second comment in the same line. */
  /*block1*//* block2 */
+#indent end
 
+
+#indent input
+/*
+ * A multi-line comment that starts
+ * in column 1.
+ *//* followed by another multi-line comment
+ * that starts in column 4.
+ */
+#indent end
+
+#indent run -fc1
+/*
+ * A multi-line comment that starts in column 1.
+ *
+ * followed by another multi-line comment that starts in column 4.
+ */
+/* $ XXX: The two comments have been merged into a single comment. */
+#indent end
+
+#indent run -nfc1
 /*
  * A multi-line comment that starts
  * in column 1.
@@ -117,7 +130,23 @@
   * followed by another multi-line comment that starts in column 4.
   */
 /* $ XXX: The two comments have been merged into a single comment. */
+#indent end
 
+
+#indent input
+/* comment */ int decl2; /* comment */
+/* looooooooooooooooooooooooooooooooooooooooong first comment */ int decl2; /* second comment */
+/* first comment */ int decl2; /* looooooooooooooooooooooooooooooooooooooooong second comment */
+#indent end
+
+#indent run -fc1
+ /* comment */ int decl2;	/* comment */
+ /* looooooooooooooooooooooooooooooooooooooooong first comment */ int decl2;	/* second comment */
+ /* first comment */ int decl2;	/* looooooooooooooooooooooooooooooooooooooooong
+				 * second comment */
+#indent end
+
+#indent run -nfc1
  /* comment */ int decl2;	/* comment */
  /* looooooooooooooooooooooooooooooooooooooooong first comment */ int decl2;	/* second comment */
  /* first comment */ int decl2;	/* looooooooooooooooooooooooooooooooooooooooong
