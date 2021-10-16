@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.c,v 1.48 2021/10/15 19:01:52 jmcneill Exp $	*/
+/*	$NetBSD: isa_machdep.c,v 1.49 2021/10/16 13:15:01 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isa_machdep.c,v 1.48 2021/10/15 19:01:52 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isa_machdep.c,v 1.49 2021/10/16 13:15:01 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -386,6 +386,11 @@ device_isa_register(device_t dev, void *aux)
 			prop_dictionary_set_bool(device_properties(dev),
 			    "no-legacy-devices", true);
 		}
+	}
+	if (vm_guest == VM_GUEST_VMWARE &&
+	    device_is_a(dev, "isa") && acpi_active) {
+		prop_dictionary_set_bool(device_properties(dev),
+		    "no-legacy-devices", true);
 	}
 #endif /* NACPICA > 0 */
 	return NULL;
