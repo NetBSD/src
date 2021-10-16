@@ -1,4 +1,4 @@
-/*	$NetBSD: pw_gensalt.c,v 1.11 2021/10/12 15:25:39 nia Exp $	*/
+/*	$NetBSD: pw_gensalt.c,v 1.12 2021/10/16 10:53:33 nia Exp $	*/
 
 /*
  * Copyright 1997 Niels Provos <provos@physnet.uni-hamburg.de>
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: pw_gensalt.c,v 1.11 2021/10/12 15:25:39 nia Exp $");
+__RCSID("$NetBSD: pw_gensalt.c,v 1.12 2021/10/16 10:53:33 nia Exp $");
 #endif /* not lint */
 
 #include <sys/syslimits.h>
@@ -81,7 +81,7 @@ static const struct pw_salt {
 	{ NULL, NULL }
 };
 
-int
+crypt_private int
 /*ARGSUSED2*/
 __gensalt_old(char *salt, size_t saltsiz, const char *option)
 {
@@ -94,7 +94,7 @@ __gensalt_old(char *salt, size_t saltsiz, const char *option)
 	return 0;
 }
 
-int
+crypt_private int
 /*ARGSUSED2*/
 __gensalt_new(char *salt, size_t saltsiz, const char* option)
 {
@@ -120,7 +120,7 @@ __gensalt_new(char *salt, size_t saltsiz, const char* option)
 	return 0;
 }
 
-int
+crypt_private int
 /*ARGSUSED2*/
 __gensalt_md5(char *salt, size_t saltsiz, const char *option)
 {
@@ -138,7 +138,7 @@ __gensalt_md5(char *salt, size_t saltsiz, const char *option)
 	return 0;
 }
 
-int
+crypt_private int
 __gensalt_sha1(char *salt, size_t saltsiz, const char *option)
 {
 	int n;
@@ -162,7 +162,8 @@ __gensalt_sha1(char *salt, size_t saltsiz, const char *option)
 }
 
 #ifdef HAVE_ARGON2
-static int __gensalt_argon2_decode_option(char * dst, size_t dlen, const char * option)
+static int
+__gensalt_argon2_decode_option(char *dst, size_t dlen, const char *option)
 {
 
 	char * in = 0;
@@ -254,19 +255,19 @@ __gensalt_argon2(char *salt, size_t saltsiz, const char *option,argon2_type atyp
 }
 
 /* argon2 variant-specific hooks to generic */
-int
+crypt_private int
 __gensalt_argon2id(char *salt, size_t saltsiz, const char *option)
 {
 	return __gensalt_argon2(salt, saltsiz, option, Argon2_id);
 }
 
-int
+crypt_private int
 __gensalt_argon2i(char *salt, size_t saltsiz, const char *option)
 {
 	return __gensalt_argon2(salt, saltsiz, option, Argon2_i);
 }
 
-int
+crypt_private int
 __gensalt_argon2d(char *salt, size_t saltsiz, const char *option)
 {
 	return __gensalt_argon2(salt, saltsiz, option, Argon2_d);

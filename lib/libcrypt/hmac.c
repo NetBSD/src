@@ -1,4 +1,4 @@
-/* $NetBSD: hmac.c,v 1.3 2011/05/16 10:39:12 drochner Exp $ */
+/* $NetBSD: hmac.c,v 1.4 2021/10/16 10:53:33 nia Exp $ */
 
 /*
  * Copyright (c) 2004, Juniper Networks, Inc.
@@ -42,7 +42,7 @@
  */
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: hmac.c,v 1.3 2011/05/16 10:39:12 drochner Exp $");
+__RCSID("$NetBSD: hmac.c,v 1.4 2021/10/16 10:53:33 nia Exp $");
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -63,7 +63,7 @@ __RCSID("$NetBSD: hmac.c,v 1.3 2011/05/16 10:39:12 drochner Exp $");
  * XOR with the pad byte, we just fill with the pad byte and
  * XOR with the key.
  */
-void
+crypt_private void
 HMAC_FUNC (const unsigned char *text, size_t text_len,
 	   const unsigned char *key, size_t key_len,
 	   unsigned char *digest)
