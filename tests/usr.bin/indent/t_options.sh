@@ -1,5 +1,5 @@
 #! /bin/sh
-# $NetBSD: t_options.sh,v 1.1 2021/10/16 03:20:13 rillig Exp $
+# $NetBSD: t_options.sh,v 1.2 2021/10/16 05:40:17 rillig Exp $
 #
 # Copyright (c) 2021 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -50,8 +50,11 @@ indent=$(atf_config_get usr.bin.indent.test_indent /usr/bin/indent)
 check_awk='
 function die(msg)
 {
-	print msg > "/dev/stderr"
-	exit(1)
+	if (!died) {
+		died = 1
+		print msg > "/dev/stderr"
+		exit(1)
+	}
 }
 
 # Skip comments starting with dollar; they are used for marking bugs and
@@ -68,6 +71,8 @@ function die(msg)
 			die(FILENAME ":" unused ": input is not used")
 		mode = "input"
 		in_lines_len = 0
+		prev_input_all = input_all
+		input_all = ""
 		unused = NR
 	} else if ($2 == "run") {
 		mode = "run"
@@ -89,6 +94,8 @@ function die(msg)
 		close(cmd)
 		unused = 0
 	} else if ($2 == "end") {
+		if (mode == "input" && input_all == prev_input_all)
+			die(FILENAME ":" NR ": error: duplicate input")
 		mode = ""
 	} else {
 		die(FILENAME ":" NR ": error: invalid line \"" $0 "\"")
@@ -99,6 +106,7 @@ function die(msg)
 
 mode == "input" {
 	in_lines[++in_lines_len] = $0
+	input_all = input_all $0 "\n"
 }
 
 mode == "run" {

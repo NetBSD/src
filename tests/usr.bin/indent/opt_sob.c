@@ -1,4 +1,4 @@
-/* $NetBSD: opt_sob.c,v 1.1 2021/10/16 03:20:13 rillig Exp $ */
+/* $NetBSD: opt_sob.c,v 1.2 2021/10/16 05:40:17 rillig Exp $ */
 /* $FreeBSD$ */
 
 #indent input
@@ -102,62 +102,6 @@ function_with_2_blank_lines(void)
 
 	if (var > 0)
 		var--;
-
-
-	return var;
-
-
-}
-#indent end
-
-#indent input
-void		function_declaration(void);
-
-
-int
-function_with_0_blank_lines(void)
-{
-	int		var;
-	var = value;
-	if (var > 0)
-		var--;
-	return var;
-}
-
-int
-function_with_1_blank_line(void)
-{
-
-	int		var;
-
-	var = value;
-
-	if (var > 0)
-/* $ The following line is "optional" but is not removed due to '-nsob'. */
-
-		var--;
-
-	return var;
-
-}
-
-
-int
-function_with_2_blank_lines(void)
-{
-
-
-	int		var;
-
-
-	var = value;
-
-
-	if (var > 0)
-/* $ The following 2 lines are "optional" and are not removed due to '-nsob'. */
-
-
-	    var--;
 
 
 	return var;

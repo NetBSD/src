@@ -1,4 +1,4 @@
-/* $NetBSD: opt_psl.c,v 1.1 2021/10/16 03:20:13 rillig Exp $ */
+/* $NetBSD: opt_psl.c,v 1.2 2021/10/16 05:40:17 rillig Exp $ */
 /* $FreeBSD$ */
 
 #indent input
@@ -14,12 +14,6 @@ void
 function_definition(void)
 {
 }
-#indent end
-
-#indent input
-void function_declaration(void);
-
-void function_definition(void) {}
 #indent end
 
 #indent run -npsl
