@@ -1,4 +1,4 @@
-/* $NetBSD: apple_intc.c,v 1.2 2021/09/06 14:03:17 jmcneill Exp $ */
+/* $NetBSD: apple_intc.c,v 1.3 2021/10/16 06:37:43 ryo Exp $ */
 
 /*-
  * Copyright (c) 2021 Jared McNeill <jmcneill@invisible.ca>
@@ -27,11 +27,12 @@
  */
 
 #include "opt_ddb.h"
+#include "opt_multiprocessor.h"
 
 #define	_INTR_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: apple_intc.c,v 1.2 2021/09/06 14:03:17 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: apple_intc.c,v 1.3 2021/10/16 06:37:43 ryo Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -167,7 +168,9 @@ static const struct pic_ops apple_intc_picops = {
 	.pic_block_irqs = apple_intc_block_irqs,
 	.pic_establish_irq = apple_intc_establish_irq,
 	.pic_set_priority = apple_intc_set_priority,
+#ifdef MULTIPROCESSOR
 	.pic_cpu_init = apple_intc_cpu_init,
+#endif
 };
 
 static void
@@ -199,6 +202,7 @@ apple_intc_local_establish_irq(struct pic_softc *pic, struct intrsource *is)
 {
 }
 
+#ifdef MULTIPROCESSOR
 static void
 apple_intc_local_ipi_send(struct pic_softc *pic, const kcpuset_t *kcp, u_long ipi)
 {
@@ -209,12 +213,15 @@ apple_intc_local_ipi_send(struct pic_softc *pic, const kcpuset_t *kcp, u_long ip
 	atomic_or_32(&pc->pc_ipimask, __BIT(ipi));
 	AIC_WRITE(sc, AIC_IPI_SEND, __BIT(target));
 }
+#endif /* MULTIPROCESSOR */
 
 static const struct pic_ops apple_intc_localpicops = {
 	.pic_unblock_irqs = apple_intc_local_unblock_irqs,
 	.pic_block_irqs = apple_intc_local_block_irqs,
 	.pic_establish_irq = apple_intc_local_establish_irq,
+#ifdef MULTIPROCESSOR
 	.pic_ipi_send = apple_intc_local_ipi_send,
+#endif
 };
 
 static void *
@@ -366,6 +373,7 @@ apple_intc_fiq_handler(void *frame)
 	}
 }
 
+#ifdef MULTIPROCESSOR
 static int
 apple_intc_ipi_handler(void *priv)
 {
@@ -411,6 +419,7 @@ apple_intc_ipi_handler(void *priv)
 
 	return 1;
 }
+#endif /* MULTIPROCESSOR */
 
 static void
 apple_intc_percpu_init(void *priv, struct cpu_info *ci)
@@ -420,10 +429,13 @@ apple_intc_percpu_init(void *priv, struct cpu_info *ci)
 	struct apple_intc_percpu * const pc = &sc->sc_pc[cpuno];
 	struct pic_softc * const pic = &pc->pc_pic;
 
+#ifdef MULTIPROCESSOR
 	pic->pic_cpus = ci->ci_kcpuset;
+#endif
 
 	pic_add(pic, PIC_IRQBASE_ALLOC);
 
+#ifdef MULTIPROCESSOR
 	if (cpuno != 0) {
 		struct intrsource * const is =
 		    sc->sc_pc[0].pc_pic.pic_sources[LOCALPIC_SOURCE_TIMER];
@@ -436,7 +448,7 @@ apple_intc_percpu_init(void *priv, struct cpu_info *ci)
 
 	intr_establish_xname(pic->pic_irqbase + LOCALPIC_SOURCE_IPI, IPL_HIGH,
 	    IST_LEVEL | IST_MPSAFE, apple_intc_ipi_handler, pc, "ipi");
-
+#endif
 }
 
 static int
