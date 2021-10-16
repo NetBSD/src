@@ -1,4 +1,4 @@
-/* $NetBSD: opt_pcs.c,v 1.1 2021/10/16 03:20:13 rillig Exp $ */
+/* $NetBSD: opt_pcs.c,v 1.2 2021/10/16 05:40:17 rillig Exp $ */
 /* $FreeBSD$ */
 
 #indent input
@@ -18,16 +18,6 @@ example(void)
 	function_call ();
 	function_call (1);
 	function_call (1, 2, 3);
-}
-#indent end
-
-#indent input
-void
-example(void)
-{
-	function_call();
-	function_call(1);
-	function_call(1,2,3);
 }
 #indent end
 

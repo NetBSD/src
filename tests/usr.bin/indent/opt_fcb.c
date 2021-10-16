@@ -1,4 +1,4 @@
-/* $NetBSD: opt_fcb.c,v 1.1 2021/10/16 03:20:13 rillig Exp $ */
+/* $NetBSD: opt_fcb.c,v 1.2 2021/10/16 05:40:17 rillig Exp $ */
 /* $FreeBSD$ */
 
 #indent input
@@ -56,38 +56,6 @@ example(void)
 	 *
 	 * so carefully formatted comment
 	 */
-
-	/*-
-	 * car         mat         men
-	 *    efu   for   ted   com   t
-	 *       lly         box       .
-	 */
-}
-#indent end
-
-#indent input
-/* FIXME: The options -fcb and -nfcb result in exactly the same output. */
-
-/* Not
- *
- * so carefully
- * formatted
- *      comment */
-
-/*-
- * car         mat         men
- *    efu   for   ted   com   t
- *       lly         box       .
- */
-
-void
-example(void)
-{
-	/* Not
-	 *
-	 * so carefully
-	 * formatted
-	 *      comment */
 
 	/*-
 	 * car         mat         men

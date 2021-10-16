@@ -1,4 +1,4 @@
-/* $NetBSD: opt_bc.c,v 1.1 2021/10/16 03:20:13 rillig Exp $ */
+/* $NetBSD: opt_bc.c,v 1.2 2021/10/16 05:40:17 rillig Exp $ */
 /* $FreeBSD$ */
 
 #indent input
@@ -11,11 +11,6 @@ int		a,
 		b,
 		c;
 void		function_declaration(int a, int b, int c);
-#indent end
-
-#indent input
-int a,b,c;
-void function_declaration(int a,int b,int c);
 #indent end
 
 #indent run -nbc
