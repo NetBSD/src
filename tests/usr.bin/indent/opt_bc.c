@@ -1,5 +1,13 @@
-/* $NetBSD: opt_bc.c,v 1.2 2021/10/16 05:40:17 rillig Exp $ */
+/* $NetBSD: opt_bc.c,v 1.3 2021/10/16 21:32:10 rillig Exp $ */
 /* $FreeBSD$ */
+
+/*
+ * Tests for the options '-bc' and '-nbc'.
+ *
+ * The option '-bc' forces a newline after each comma in a declaration.
+ *
+ * The option '-nbc' keeps everything as is.
+ */
 
 #indent input
 int a,b,c;

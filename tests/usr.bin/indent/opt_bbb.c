@@ -1,5 +1,13 @@
-/* $NetBSD: opt_bbb.c,v 1.2 2021/10/16 05:40:17 rillig Exp $ */
+/* $NetBSD: opt_bbb.c,v 1.3 2021/10/16 21:32:10 rillig Exp $ */
 /* $FreeBSD$ */
+
+/*
+ * Tests for the options '-bbb' and '-nbbb'.
+ *
+ * The option '-bbb' forces a blank line before every block comment.
+ *
+ * The option '-nbbb' keeps everything as is.
+ */
 
 #indent input
 /*

@@ -1,33 +1,25 @@
-/* $NetBSD: opt_sc.c,v 1.2 2021/10/16 05:40:17 rillig Exp $ */
+/* $NetBSD: opt_sc.c,v 1.3 2021/10/16 21:32:10 rillig Exp $ */
 /* $FreeBSD$ */
+
+/*
+ * Tests for the options '-sc' and '-nsc'.
+ *
+ * The option '-sc' starts continuation lines of block comments with " * ".
+ *
+ * The option '-nsc' does not use asterisks for aligning the continuation
+ * lines of comments.
+ */
 
 #indent input
 /* comment
 without
 asterisks
 */
-
-/*
-** This comment style is used by Lua.
-*/
-
-/**
- * Javadoc, adopted by several other programming languages.
- */
 #indent end
 
 #indent run -sc
 /*
  * comment without asterisks
- */
-
-/* $ XXX: The additional '*' is debatable. */
-/*
- * * This comment style is used by Lua.
- */
-
-/**
- * Javadoc, adopted by several other programming languages.
  */
 #indent end
 
@@ -35,12 +27,45 @@ asterisks
 /*
 comment without asterisks
  */
+#indent end
 
-/* $ This comment, as rewritten by indent, is not actually used by Lua. */
+
+#indent input
+/*
+** This comment style is used by Lua.
+*/
+#indent end
+
+/* XXX: The additional '*' is debatable. */
+#indent run -sc
+/*
+ * * This comment style is used by Lua.
+ */
+#indent end
+
+/* This comment, as rewritten by indent, is not actually used by Lua. */
+#indent run -nsc
 /*
  * This comment style is used by Lua.
  */
+#indent end
 
+/*
+ * Comments that start with '*' or '-' do not get modified at all.
+ */
+#indent input
+/**
+ * Javadoc, adopted by several other programming languages.
+ */
+#indent end
+
+#indent run -sc
+/**
+ * Javadoc, adopted by several other programming languages.
+ */
+#indent end
+
+#indent run -nsc
 /**
  * Javadoc, adopted by several other programming languages.
  */

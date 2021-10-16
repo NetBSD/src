@@ -1,9 +1,18 @@
-/* $NetBSD: opt_fcb.c,v 1.2 2021/10/16 05:40:17 rillig Exp $ */
+/* $NetBSD: opt_fcb.c,v 1.3 2021/10/16 21:32:10 rillig Exp $ */
 /* $FreeBSD$ */
 
-#indent input
+/*
+ * Tests for the options '-fcb' and '-nfcb'.
+ *
+ * The option '-fcb' formats block comments (ones that begin with '/' '*'
+ * '\n').
+ *
+ * The option '-nfcb' formats block comments like other box comments.
+ */
+
 /* FIXME: The options -fcb and -nfcb result in exactly the same output. */
 
+#indent input
 /* Not
  *
  * so carefully
@@ -15,7 +24,38 @@
  *    efu   for   ted   com   t
  *       lly         box       .
  */
+#indent end
 
+#indent run -fcb
+/*
+ * Not
+ *
+ * so carefully formatted comment
+ */
+
+/*-
+ * car         mat         men
+ *    efu   for   ted   com   t
+ *       lly         box       .
+ */
+#indent end
+
+#indent run -nfcb
+/*
+ * Not
+ *
+ * so carefully formatted comment
+ */
+
+/*-
+ * car         mat         men
+ *    efu   for   ted   com   t
+ *       lly         box       .
+ */
+#indent end
+
+
+#indent input
 void
 example(void)
 {
@@ -34,20 +74,6 @@ example(void)
 #indent end
 
 #indent run -fcb
-/* FIXME: The options -fcb and -nfcb result in exactly the same output. */
-
-/*
- * Not
- *
- * so carefully formatted comment
- */
-
-/*-
- * car         mat         men
- *    efu   for   ted   com   t
- *       lly         box       .
- */
-
 void
 example(void)
 {
@@ -66,20 +92,6 @@ example(void)
 #indent end
 
 #indent run -nfcb
-/* FIXME: The options -fcb and -nfcb result in exactly the same output. */
-
-/*
- * Not
- *
- * so carefully formatted comment
- */
-
-/*-
- * car         mat         men
- *    efu   for   ted   com   t
- *       lly         box       .
- */
-
 void
 example(void)
 {
