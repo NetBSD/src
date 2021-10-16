@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.490 2021/02/04 21:07:06 jdolecek Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.491 2021/10/16 07:12:01 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005, 2007, 2008, 2019, 2020
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.490 2021/02/04 21:07:06 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.491 2021/10/16 07:12:01 simonb Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -1619,10 +1619,10 @@ vfs_mount_print(struct mount *mp, int full, void (*pr)(const char *, ...))
 	char sbuf[256];
 
 	(*pr)("vnodecovered = %p data = %p\n",
-			mp->mnt_vnodecovered,mp->mnt_data);
+			mp->mnt_vnodecovered, mp->mnt_data);
 
 	(*pr)("fs_bshift %d dev_bshift = %d\n",
-			mp->mnt_fs_bshift,mp->mnt_dev_bshift);
+			mp->mnt_fs_bshift, mp->mnt_dev_bshift);
 
 	snprintb(sbuf, sizeof(sbuf), __MNT_FLAG_BITS, mp->mnt_flag);
 	(*pr)("flag = %s\n", sbuf);
@@ -1633,37 +1633,37 @@ vfs_mount_print(struct mount *mp, int full, void (*pr)(const char *, ...))
 	(*pr)("refcnt = %d updating @ %p\n", mp->mnt_refcnt, mp->mnt_updating);
 
 	(*pr)("statvfs cache:\n");
-	(*pr)("\tbsize = %lu\n",mp->mnt_stat.f_bsize);
-	(*pr)("\tfrsize = %lu\n",mp->mnt_stat.f_frsize);
-	(*pr)("\tiosize = %lu\n",mp->mnt_stat.f_iosize);
+	(*pr)("\tbsize = %lu\n", mp->mnt_stat.f_bsize);
+	(*pr)("\tfrsize = %lu\n", mp->mnt_stat.f_frsize);
+	(*pr)("\tiosize = %lu\n", mp->mnt_stat.f_iosize);
 
-	(*pr)("\tblocks = %"PRIu64"\n",mp->mnt_stat.f_blocks);
-	(*pr)("\tbfree = %"PRIu64"\n",mp->mnt_stat.f_bfree);
-	(*pr)("\tbavail = %"PRIu64"\n",mp->mnt_stat.f_bavail);
-	(*pr)("\tbresvd = %"PRIu64"\n",mp->mnt_stat.f_bresvd);
+	(*pr)("\tblocks = %"PRIu64"\n", mp->mnt_stat.f_blocks);
+	(*pr)("\tbfree = %"PRIu64"\n", mp->mnt_stat.f_bfree);
+	(*pr)("\tbavail = %"PRIu64"\n", mp->mnt_stat.f_bavail);
+	(*pr)("\tbresvd = %"PRIu64"\n", mp->mnt_stat.f_bresvd);
 
-	(*pr)("\tfiles = %"PRIu64"\n",mp->mnt_stat.f_files);
-	(*pr)("\tffree = %"PRIu64"\n",mp->mnt_stat.f_ffree);
-	(*pr)("\tfavail = %"PRIu64"\n",mp->mnt_stat.f_favail);
-	(*pr)("\tfresvd = %"PRIu64"\n",mp->mnt_stat.f_fresvd);
+	(*pr)("\tfiles = %"PRIu64"\n", mp->mnt_stat.f_files);
+	(*pr)("\tffree = %"PRIu64"\n", mp->mnt_stat.f_ffree);
+	(*pr)("\tfavail = %"PRIu64"\n", mp->mnt_stat.f_favail);
+	(*pr)("\tfresvd = %"PRIu64"\n", mp->mnt_stat.f_fresvd);
 
 	(*pr)("\tf_fsidx = { 0x%"PRIx32", 0x%"PRIx32" }\n",
 			mp->mnt_stat.f_fsidx.__fsid_val[0],
 			mp->mnt_stat.f_fsidx.__fsid_val[1]);
 
-	(*pr)("\towner = %"PRIu32"\n",mp->mnt_stat.f_owner);
-	(*pr)("\tnamemax = %lu\n",mp->mnt_stat.f_namemax);
+	(*pr)("\towner = %"PRIu32"\n", mp->mnt_stat.f_owner);
+	(*pr)("\tnamemax = %lu\n", mp->mnt_stat.f_namemax);
 
 	snprintb(sbuf, sizeof(sbuf), __MNT_FLAG_BITS, mp->mnt_stat.f_flag);
 
-	(*pr)("\tflag = %s\n",sbuf);
-	(*pr)("\tsyncwrites = %" PRIu64 "\n",mp->mnt_stat.f_syncwrites);
-	(*pr)("\tasyncwrites = %" PRIu64 "\n",mp->mnt_stat.f_asyncwrites);
-	(*pr)("\tsyncreads = %" PRIu64 "\n",mp->mnt_stat.f_syncreads);
-	(*pr)("\tasyncreads = %" PRIu64 "\n",mp->mnt_stat.f_asyncreads);
-	(*pr)("\tfstypename = %s\n",mp->mnt_stat.f_fstypename);
-	(*pr)("\tmntonname = %s\n",mp->mnt_stat.f_mntonname);
-	(*pr)("\tmntfromname = %s\n",mp->mnt_stat.f_mntfromname);
+	(*pr)("\tflag = %s\n", sbuf);
+	(*pr)("\tsyncwrites = %" PRIu64 "\n", mp->mnt_stat.f_syncwrites);
+	(*pr)("\tasyncwrites = %" PRIu64 "\n", mp->mnt_stat.f_asyncwrites);
+	(*pr)("\tsyncreads = %" PRIu64 "\n", mp->mnt_stat.f_syncreads);
+	(*pr)("\tasyncreads = %" PRIu64 "\n", mp->mnt_stat.f_asyncreads);
+	(*pr)("\tfstypename = %s\n", mp->mnt_stat.f_fstypename);
+	(*pr)("\tmntonname = %s\n", mp->mnt_stat.f_mntonname);
+	(*pr)("\tmntfromname = %s\n", mp->mnt_stat.f_mntfromname);
 
 	{
 		int cnt = 0;
