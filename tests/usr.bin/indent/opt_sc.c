@@ -1,4 +1,4 @@
-/* $NetBSD: opt_sc.c,v 1.1 2021/10/16 03:20:13 rillig Exp $ */
+/* $NetBSD: opt_sc.c,v 1.2 2021/10/16 05:40:17 rillig Exp $ */
 /* $FreeBSD$ */
 
 #indent input
@@ -25,21 +25,6 @@ asterisks
 /*
  * * This comment style is used by Lua.
  */
-
-/**
- * Javadoc, adopted by several other programming languages.
- */
-#indent end
-
-#indent input
-/* comment
-without
-asterisks
-*/
-
-/*
-** This comment style is used by Lua.
-*/
 
 /**
  * Javadoc, adopted by several other programming languages.

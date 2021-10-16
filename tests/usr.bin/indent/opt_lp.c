@@ -1,4 +1,4 @@
-/* $NetBSD: opt_lp.c,v 1.1 2021/10/16 03:20:13 rillig Exp $ */
+/* $NetBSD: opt_lp.c,v 1.2 2021/10/16 05:40:17 rillig Exp $ */
 /* $FreeBSD$ */
 
 #indent input
@@ -26,20 +26,6 @@ example(void)
 					      p3),
 			     third_procedure(p4,
 					     p5));
-}
-#indent end
-
-#indent input
-void
-example(void)
-{
-	p1 = first_procedure(second_procedure(p2, p3),
-	    third_procedure(p4, p5));
-
-	p1 = first_procedure(second_procedure(p2,
-	    p3),
-	    third_procedure(p4,
-	        p5));
 }
 #indent end
 

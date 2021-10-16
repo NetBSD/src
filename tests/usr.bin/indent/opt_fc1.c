@@ -1,4 +1,4 @@
-/* $NetBSD: opt_fc1.c,v 1.1 2021/10/16 03:20:13 rillig Exp $ */
+/* $NetBSD: opt_fc1.c,v 1.2 2021/10/16 05:40:17 rillig Exp $ */
 /* $FreeBSD$ */
 
 #indent input
@@ -71,42 +71,6 @@
  /* looooooooooooooooooooooooooooooooooooooooong first comment */ int decl2;	/* second comment */
  /* first comment */ int decl2;	/* looooooooooooooooooooooooooooooooooooooooong
 				 * second comment */
-#indent end
-
-#indent input
-/*
- * A comment
- * in column 1.
- *
- *
- *
- */
-
-/* $ Neither indentation nor surrounding spaces. */
-/*narrow*/
-
-/* $ Indented by a single space, single spaces around the text. */
- /* space */
-
-/* $ Indented by a single tab, single tabs around the text. */
-	/*	tab	*/
-
-/* $ The space between these comments gets removed. */
-/* block1 */ /* block2 */
-
-/* $ Both comment texts get surrounded by spaces. */
-/*block1*//*block2*/
-
-/*
- * A multi-line comment that starts
- * in column 1.
- *//* followed by another multi-line comment
- * that starts in column 4.
- */
-
-/* comment */ int decl2; /* comment */
-/* looooooooooooooooooooooooooooooooooooooooong first comment */ int decl2; /* second comment */
-/* first comment */ int decl2; /* looooooooooooooooooooooooooooooooooooooooong second comment */
 #indent end
 
 #indent run -nfc1
