@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.347 2021/07/14 03:19:24 ozaki-r Exp $
+# $NetBSD: shl.mi,v 1.348 2021/10/16 07:01:03 skrll Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -277,8 +277,6 @@
 ./usr/lib/libtermlib_pic.a			comp-c-piclib		compatfile,picinstall
 ./usr/lib/libtpm_unseal_pic.a			comp-tpm-lib		compatfile,picinstall,tpm
 ./usr/lib/libtre_pic.a				comp-c-piclib		compatfile,picinstall
-./usr/lib/libtsan_pic.a				comp-c-piclib		arch64,picinstall,cxx,gcc=9,machine=amd64
-./usr/lib/libtsan_pic.a				comp-c-piclib		arch64,picinstall,cxx,gcc=10,machine=amd64
 ./usr/lib/libtspi_pic.a				comp-c-piclib		compatfile,picinstall,tpm
 ./usr/lib/libubsan_pic.a			comp-c-piclib		compatfile,picinstall,cxx,gcc
 ./usr/lib/libukfs_pic.a				comp-c-piclib		compatfile,picinstall,rump

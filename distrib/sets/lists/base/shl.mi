@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.928 2021/09/30 02:00:19 yamaguchi Exp $
+# $NetBSD: shl.mi,v 1.929 2021/10/16 07:01:02 skrll Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -911,12 +911,6 @@
 ./usr/lib/libtre.so				base-sys-shlib		compatfile
 ./usr/lib/libtre.so.0				base-sys-shlib		compatfile
 ./usr/lib/libtre.so.0.8				base-sys-shlib		compatfile
-./usr/lib/libtsan.so				base-sys-shlib		arch64,cxx,gcc=9,machine=amd64
-./usr/lib/libtsan.so.1				base-sys-shlib		arch64,cxx,gcc=9,machine=amd64
-./usr/lib/libtsan.so.1.0			base-sys-shlib		arch64,cxx,gcc=9,machine=amd64
-./usr/lib/libtsan.so				base-sys-shlib		arch64,cxx,gcc=10,machine=amd64
-./usr/lib/libtsan.so.1				base-sys-shlib		arch64,cxx,gcc=10,machine=amd64
-./usr/lib/libtsan.so.1.0			base-sys-shlib		arch64,cxx,gcc=10,machine=amd64
 ./usr/lib/libtspi.so				base-sys-shlib		compatfile,tpm
 ./usr/lib/libtspi.so.3				base-sys-shlib		compatfile,tpm
 ./usr/lib/libtspi.so.3.0			base-sys-shlib		compatfile,tpm

@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.285 2021/09/30 02:00:19 yamaguchi Exp $
+# $NetBSD: shl.mi,v 1.286 2021/10/16 07:01:03 skrll Exp $
 ./usr/lib/libbfd_g.a						comp-c-debuglib	debuglib,compatfile,binutils
 ./usr/libdata/debug/lib						base-sys-usr	debug,dynamicroot,compatdir
 ./usr/libdata/debug/lib/libavl.so.0.0.debug			comp-zfs-debug	debug,dynamicroot,zfs
@@ -317,8 +317,6 @@
 ./usr/libdata/debug/usr/lib/libterminfo.so.2.0.debug		comp-sys-debug	debug,compatfile
 ./usr/libdata/debug/usr/lib/libtpm_unseal.so.1.0.debug		comp-tpm-debug	debug,compatfile,tpm
 ./usr/libdata/debug/usr/lib/libtre.so.0.8.debug			comp-sys-debug	debug,compatfile
-./usr/libdata/debug/usr/lib/libtsan.so.1.0.debug		comp-sys-debug	debug,arch64,cxx,gcc=9,machine=amd64
-./usr/libdata/debug/usr/lib/libtsan.so.1.0.debug		comp-sys-debug	debug,arch64,cxx,gcc=10,machine=amd64
 ./usr/libdata/debug/usr/lib/libtspi.so.3.0.debug		comp-tpm-debug	debug,compatfile,tpm
 ./usr/libdata/debug/usr/lib/libubsan.so.4.0.debug		comp-sys-debug	debug,compatfile,cxx,gcc=9
 ./usr/libdata/debug/usr/lib/libubsan.so.4.0.debug		comp-sys-debug	debug,compatfile,cxx,gcc=10
