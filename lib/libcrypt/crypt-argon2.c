@@ -243,7 +243,7 @@ decode_option(argon2_context *ctx, argon2_type *atype, const char *option)
         return error;
 }
 
-char * 
+crypt_private char * 
 __crypt_argon2(const char *pw, const char * salt)
 {
 	/* we use the libargon2 api to generate */

@@ -1,4 +1,4 @@
-/* $NetBSD: crypt-sha1.c,v 1.8 2013/08/28 17:47:07 riastradh Exp $ */
+/* $NetBSD: crypt-sha1.c,v 1.9 2021/10/16 10:53:33 nia Exp $ */
 
 /*
  * Copyright (c) 2004, Juniper Networks, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: crypt-sha1.c,v 1.8 2013/08/28 17:47:07 riastradh Exp $");
+__RCSID("$NetBSD: crypt-sha1.c,v 1.9 2021/10/16 10:53:33 nia Exp $");
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -68,7 +68,7 @@ __RCSID("$NetBSD: crypt-sha1.c,v 1.8 2013/08/28 17:47:07 riastradh Exp $");
  * The number is varied to frustrate those attempting to generate a
  * dictionary of pre-computed hashes.
  */
-unsigned int
+crypt_private unsigned int
 __crypt_sha1_iterations (unsigned int hint)
 {
     static int once = 1;
@@ -115,7 +115,7 @@ __crypt_sha1_iterations (unsigned int hint)
  * strength, and avoid the need to hash it before using as the 
  * hmac key.
  */
-char *
+crypt_private char *
 __crypt_sha1 (const char *pw, const char *salt)
 {
     static const char *magic = SHA1_MAGIC;
