@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.591 2021/10/15 19:22:12 jmcneill Exp $
+# $NetBSD: GENERIC,v 1.592 2021/10/16 13:09:40 jmcneill Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/amd64/conf/std.amd64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.591 $"
+#ident		"GENERIC-$Revision: 1.592 $"
 
 maxusers	64		# estimated number of users
 
@@ -337,7 +337,9 @@ acpiwmi*	at acpi?		# ACPI WMI Mapper
 aibs*		at acpi?		# ASUSTeK AI Booster hardware monitor
 asus*		at acpi?		# ASUS hotkeys
 attimer*	at acpi?		# AT Timer
-#com*		at acpi?		# Serial communications interface
+com0		at acpi?		# Serial communications interface
+com1		at acpi?		# Serial communications interface
+com*		at acpi?		# Serial communications interface
 fdc*		at acpi?		# Floppy disk controller
 fd*		at fdc? drive ?		# the drives themselves
 fujbp*		at acpi?		# Fujitsu Brightness & Pointer
@@ -347,7 +349,9 @@ fujhk*		at acpi?		# Fujitsu Hotkeys
 hpet*		at acpihpetbus?		# High Precision Event Timer (table)
 hpet*		at acpinodebus?		# High Precision Event Timer (device)
 joy*		at acpi?		# Joystick/Game port
-#lpt*		at acpi?		# Parallel port
+lpt0		at acpi?		# Parallel port
+lpt1		at acpi?		# Parallel port
+lpt*		at acpi?		# Parallel port
 mpu*		at acpi?		# Roland MPU-401 MIDI UART
 pckbc*		at acpi?		# PC keyboard controller
 pcppi*		at acpi?		# AT-style speaker sound
