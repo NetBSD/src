@@ -1,4 +1,4 @@
-/*	$NetBSD: bootcfg.c,v 1.7 2021/09/07 11:41:31 nia Exp $	*/
+/*	$NetBSD: bootcfg.c,v 1.8 2021/10/17 14:12:21 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -38,7 +38,9 @@
 #define MENUFORMAT_LETTER 2
 
 #define DEFAULT_FORMAT  MENUFORMAT_AUTO
+#ifndef DEFAULT_TIMEOUT
 #define DEFAULT_TIMEOUT 10
+#endif
 
 struct bootcfg_def bootcfg_info;
 
