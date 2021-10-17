@@ -1,4 +1,4 @@
-/* $NetBSD: opt.0.pro,v 1.2 2021/10/13 23:33:52 rillig Exp $ */
+/* $NetBSD: opt.0.pro,v 1.3 2021/10/17 18:13:00 rillig Exp $ */
 /* $FreeBSD$ */
 
 /* The latter of the two options wins. */
@@ -9,12 +9,14 @@
 -/* comment */bacc
 -T/* define a type */custom_type
 
+/* For int options, trailing garbage would lead to an error message. */
+-i3
+
 /*
- * For int or float options, trailing garbage is ignored.
+ * For float options, trailing garbage is ignored.
  *
- * See atoi, atof.
+ * See atof.
  */
--i3garbage
 -cli3.5garbage
 
 -b/*/acc	/* The comment is '/' '*' '/', making the option '-bacc'. */

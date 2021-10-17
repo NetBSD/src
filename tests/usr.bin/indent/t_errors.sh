@@ -1,5 +1,5 @@
 #! /bin/sh
-# $NetBSD: t_errors.sh,v 1.3 2021/10/14 18:55:41 rillig Exp $
+# $NetBSD: t_errors.sh,v 1.4 2021/10/17 18:13:00 rillig Exp $
 #
 # Copyright (c) 2021 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -97,7 +97,7 @@ atf_test_case 'option_tabsize_zero'
 option_tabsize_zero_body()
 {
 	expect_error \
-	    'indent: invalid tabsize 0' \
+	    'indent: Command line: invalid argument "0" for option "-ts"' \
 	    -ts0
 }
 
@@ -106,7 +106,7 @@ option_tabsize_large_body()
 {
 	# Integer overflow, on both ILP32 and LP64 platforms.
 	expect_error \
-	    'indent: invalid tabsize 81' \
+	    'indent: Command line: invalid argument "81" for option "-ts"' \
 	    -ts81
 }
 
@@ -115,7 +115,7 @@ option_tabsize_very_large_body()
 {
 	# Integer overflow, on both ILP32 and LP64 platforms.
 	expect_error \
-	    'indent: invalid tabsize -1294967296' \
+	    'indent: Command line: invalid argument "3000000000" for option "-ts"' \
 	    -ts3000000000
 }
 
@@ -123,8 +123,16 @@ atf_test_case 'option_indent_size_zero'
 option_indent_size_zero_body()
 {
 	expect_error \
-	    'indent: invalid indentation 0' \
+	    'indent: Command line: invalid argument "0" for option "-i"' \
 	    -i0
+}
+
+atf_test_case 'option_int_trailing_garbage'
+option_int_trailing_garbage_body()
+{
+	expect_error \
+	    'indent: Command line: invalid argument "3garbage" for option "-i"' \
+	    -i3garbage
 }
 
 atf_test_case 'option_buffer_overflow'
@@ -345,6 +353,7 @@ atf_init_test_cases()
 	atf_add_test_case 'option_tabsize_zero'
 	atf_add_test_case 'option_tabsize_large'
 	atf_add_test_case 'option_tabsize_very_large'
+	atf_add_test_case 'option_int_trailing_garbage'
 	atf_add_test_case 'option_indent_size_zero'
 	atf_add_test_case 'unterminated_comment'
 	atf_add_test_case 'in_place_wrong_backup'

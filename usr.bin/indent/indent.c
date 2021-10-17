@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.c,v 1.137 2021/10/09 11:13:25 rillig Exp $	*/
+/*	$NetBSD: indent.c,v 1.138 2021/10/17 18:13:00 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)indent.c	5.17 (Berkeley) 6/7/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: indent.c,v 1.137 2021/10/09 11:13:25 rillig Exp $");
+__RCSID("$NetBSD: indent.c,v 1.138 2021/10/17 18:13:00 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/indent.c 340138 2018-11-04 19:24:49Z oshogbo $");
 #endif
@@ -559,10 +559,6 @@ main_parse_command_line(int argc, char **argv)
 	    : opt.comment_column;
     if (opt.continuation_indent == 0)
 	opt.continuation_indent = opt.indent_size;
-    if (!(1 <= opt.tabsize && opt.tabsize <= 80))
-	errx(EXIT_FAILURE, "invalid tabsize %d", opt.tabsize);
-    if (!(1 <= opt.indent_size && opt.indent_size <= 80))
-	errx(EXIT_FAILURE, "invalid indentation %d", opt.indent_size);
 }
 
 static void
