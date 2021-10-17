@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.952 2021/09/23 22:54:09 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.953 2021/10/17 18:40:14 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -140,7 +140,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.952 2021/09/23 22:54:09 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.953 2021/10/17 18:40:14 rillig Exp $");
 
 /*
  * Variables are defined using one of the VAR=value assignments.  Their
@@ -1057,9 +1057,9 @@ Var_Set(GNode *scope, const char *name, const char *val)
  * Otherwise the new value overwrites and replaces the old value.
  *
  * Input:
+ *	scope		scope in which to set it
  *	name		name of the variable to set, is expanded once
  *	val		value to give to the variable
- *	scope		scope in which to set it
  */
 void
 Var_SetExpand(GNode *scope, const char *name, const char *val)
@@ -1135,9 +1135,9 @@ Var_Append(GNode *scope, const char *name, const char *val)
  * concatenated, with a space in between.
  *
  * Input:
+ *	scope		scope in which this should occur
  *	name		name of the variable to modify, is expanded once
  *	val		string to append to it
- *	scope		scope in which this should occur
  *
  * Notes:
  *	Only if the variable is being sought in the global scope is the
@@ -1196,8 +1196,8 @@ Var_Exists(GNode *scope, const char *name)
  * fallback scopes.
  *
  * Input:
- *	name		Variable to find, is expanded once
- *	scope		Scope in which to start search
+ *	scope		scope in which to start search
+ *	name		name of the variable to find, is expanded once
  */
 bool
 Var_ExistsExpand(GNode *scope, const char *name)
@@ -1222,8 +1222,8 @@ Var_ExistsExpand(GNode *scope, const char *name)
  * or the usual scopes.
  *
  * Input:
- *	name		name to find, is not expanded any further
  *	scope		scope in which to search for it
+ *	name		name to find, is not expanded any further
  *
  * Results:
  *	The value if the variable exists, NULL if it doesn't.
