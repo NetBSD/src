@@ -1,4 +1,4 @@
-/*      $NetBSD: vfp_init.c,v 1.74 2021/06/01 00:30:22 rin Exp $ */
+/*      $NetBSD: vfp_init.c,v 1.75 2021/10/17 08:47:21 skrll Exp $ */
 
 /*
  * Copyright (c) 2008 ARM Ltd
@@ -32,7 +32,7 @@
 #include "opt_cputypes.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfp_init.c,v 1.74 2021/06/01 00:30:22 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfp_init.c,v 1.75 2021/10/17 08:47:21 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -435,7 +435,7 @@ vfp_handler(u_int address, u_int insn, trapframe_t *frame, int fault_code)
 		return 1;
 	}
 
-	/* 
+	/*
 	 * If we already own the FPU and it's enabled (and no exception), raise
 	 * SIGILL.  If there is an exception, raise SIGFPE.
 	 */
