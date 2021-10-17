@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.39 2021/10/09 13:09:17 jmcneill Exp $	*/
+/*	$NetBSD: boot.c,v 1.40 2021/10/17 14:12:54 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2016 Kimihiro Nonaka <nonaka@netbsd.org>
@@ -88,7 +88,6 @@ static char netbsd_path[255];
 static char netbsd_args[255];
 static char rndseed_path[255];
 
-#define	DEFTIMEOUT	5
 #define DEFFILENAME	names[0]
 
 int	set_bootfile(const char *);
@@ -549,7 +548,7 @@ boot(void)
 		printf("booting %s%s%s - starting in ", netbsd_path,
 		    netbsd_args[0] != '\0' ? " " : "", netbsd_args);
 
-		c = awaitkey(DEFTIMEOUT, 1);
+		c = awaitkey(bootcfg_info.timeout, 1);
 		if (c != '\r' && c != '\n' && c != '\0')
 			bootprompt(); /* does not return */
 
