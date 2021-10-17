@@ -1,4 +1,4 @@
-/*	$NetBSD: plcomvar.h,v 1.17 2017/10/12 20:05:42 skrll Exp $	*/
+/*	$NetBSD: plcomvar.h,v 1.18 2021/10/17 22:34:17 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -103,6 +103,8 @@ struct plcom_softc {
 	int sc_hwflags,
 	    sc_swflags;
 	u_int sc_fifolen;
+
+	struct timeval sc_hup_pending;
 
 	u_int sc_r_hiwat,
 	      sc_r_lowat;
