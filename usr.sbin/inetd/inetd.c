@@ -1,4 +1,4 @@
-/*	$NetBSD: inetd.c,v 1.138 2021/10/12 22:51:28 rillig Exp $	*/
+/*	$NetBSD: inetd.c,v 1.139 2021/10/17 04:14:49 ryo Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1991, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)inetd.c	8.4 (Berkeley) 4/13/94";
 #else
-__RCSID("$NetBSD: inetd.c,v 1.138 2021/10/12 22:51:28 rillig Exp $");
+__RCSID("$NetBSD: inetd.c,v 1.139 2021/10/17 04:14:49 ryo Exp $");
 #endif
 #endif /* not lint */
 
@@ -269,6 +269,11 @@ size_t		changes;
 
 struct servtab *servtab;
 
+static ssize_t	recvfromto(int, void * restrict, size_t, int,
+    struct sockaddr * restrict, socklen_t * restrict,
+    struct sockaddr * restrict, socklen_t * restrict);
+static ssize_t	sendfromto(int, const void *, size_t, int,
+    const struct sockaddr *, socklen_t, const struct sockaddr *, socklen_t);
 static void	chargen_dg(int, struct servtab *);
 static void	chargen_stream(int, struct servtab *);
 static void	daytime_dg(int, struct servtab *);
@@ -809,6 +814,26 @@ setsockopt(fd, SOL_SOCKET, opt, &on, (socklen_t)sizeof(on))
 	if (sep->se_socktype == SOCK_STREAM)
 		listen(sep->se_fd, 10);
 
+	/* for internal dgram, setsockopt() is required for recvfromto() */
+	if (sep->se_socktype == SOCK_DGRAM && sep->se_bi != NULL) {
+		switch (sep->se_family) {
+		case AF_INET:
+			if (setsockopt(sep->se_fd, IPPROTO_IP,
+			    IP_RECVDSTADDR, &on, sizeof(on)) < 0)
+				syslog(LOG_ERR,
+				    "setsockopt (IP_RECVDSTADDR): %m");
+			break;
+#ifdef INET6
+		case AF_INET6:
+			if (setsockopt(sep->se_fd, IPPROTO_IPV6,
+			    IPV6_RECVPKTINFO, &on, sizeof(on)) < 0)
+				syslog(LOG_ERR,
+				    "setsockopt (IPV6_RECVPKTINFO): %m");
+			break;
+#endif
+		}
+	}
+
 	/* Set the accept filter, if specified. To be done after listen.*/
 	if (sep->se_accf.af_name[0] != 0 && setsockopt(sep->se_fd, SOL_SOCKET,
 	    SO_ACCEPTFILTER, &sep->se_accf,
@@ -955,6 +980,189 @@ bump_nofile(void)
 }
 
 /*
+ * In order to get the destination address (`to') with recvfromto(),
+ * IP_RECVDSTADDR or IP_RECVPKTINFO for AF_INET, or IPV6_RECVPKTINFO
+ * for AF_INET6, must be enabled with setsockopt(2).
+ *
+ * .sin_port and .sin6_port in 'to' are always stored as zero.
+ * If necessary, extract them using getsockname(2).
+ */
+static ssize_t
+recvfromto(int s, void * restrict buf, size_t len, int flags,
+    struct sockaddr * restrict from, socklen_t * restrict fromlen,
+    struct sockaddr * restrict to, socklen_t * restrict tolen)
+{
+	struct msghdr msg;
+	struct iovec vec;
+	struct cmsghdr *cmsg;
+	struct sockaddr_storage ss;
+	char cmsgbuf[1024];
+	ssize_t rc;
+
+	if (to == NULL)
+		return recvfrom(s, buf, len, flags, from, fromlen);
+
+	if (tolen == NULL || fromlen == NULL) {
+		errno = EFAULT;
+		return -1;
+	}
+
+	vec.iov_base = buf;
+	vec.iov_len = len;
+	msg.msg_name = from;
+	msg.msg_namelen = *fromlen;
+	msg.msg_iov = &vec;
+	msg.msg_iovlen = 1;
+	msg.msg_control = cmsgbuf;
+	msg.msg_controllen = sizeof(cmsgbuf);
+
+	rc = recvmsg(s, &msg, flags);
+	if (rc < 0)
+		return rc;
+	*fromlen = msg.msg_namelen;
+
+	memset(&ss, 0, sizeof(ss));
+	for (cmsg = (struct cmsghdr *)CMSG_FIRSTHDR(&msg); cmsg != NULL;
+	    cmsg = (struct cmsghdr *)CMSG_NXTHDR(&msg, cmsg)) {
+		if (cmsg->cmsg_level == IPPROTO_IP &&
+		    cmsg->cmsg_type == IP_RECVDSTADDR) {
+			struct in_addr *dst = (struct in_addr *)CMSG_DATA(cmsg);
+			struct sockaddr_in *sin = (struct sockaddr_in *)&ss;
+
+			sin->sin_len = sizeof(*sin);
+			sin->sin_family = AF_INET;
+			sin->sin_addr = *dst;
+			break;
+		}
+		if (cmsg->cmsg_level == IPPROTO_IP &&
+		    cmsg->cmsg_type == IP_PKTINFO) {
+			struct in_pktinfo *pi =
+			    (struct in_pktinfo *)CMSG_DATA(cmsg);
+			struct sockaddr_in *sin = (struct sockaddr_in *)&ss;
+
+			sin->sin_len = sizeof(*sin);
+			sin->sin_family = AF_INET;
+			sin->sin_addr = pi->ipi_addr;
+			break;
+		}
+#ifdef INET6
+		if (cmsg->cmsg_level == IPPROTO_IPV6 &&
+		    cmsg->cmsg_type == IPV6_PKTINFO) {
+			struct in6_pktinfo *pi6 =
+			    (struct in6_pktinfo *)CMSG_DATA(cmsg);
+			struct sockaddr_in6 *sin6 = (struct sockaddr_in6 *)&ss;
+
+			sin6->sin6_len = sizeof(*sin6);
+			sin6->sin6_family = AF_INET6;
+			sin6->sin6_addr = pi6->ipi6_addr;
+			if (IN6_IS_ADDR_LINKLOCAL(&sin6->sin6_addr) ||
+			    IN6_IS_ADDR_MC_LINKLOCAL(&sin6->sin6_addr))
+				sin6->sin6_scope_id = pi6->ipi6_ifindex;
+			else
+				sin6->sin6_scope_id = 0;
+			break;
+		}
+#endif /* INET6 */
+	}
+
+	socklen_t sslen = (*tolen < ss.ss_len) ? *tolen : ss.ss_len;
+	if (sslen > 0)
+		memcpy(to, &ss, sslen);
+	*tolen = sslen;
+
+	return rc;
+}
+
+/*
+ * When sending, the source port is selected as the one bind(2)'ed
+ * to the socket.
+ * .sin_port and .sin6_port in `from' are always ignored.
+ */
+static ssize_t
+sendfromto(int s, const void *buf, size_t len, int flags,
+    const struct sockaddr *from, socklen_t fromlen,
+    const struct sockaddr *to, socklen_t tolen)
+{
+	struct msghdr msg;
+	struct iovec vec;
+	struct cmsghdr *cmsg;
+	char cmsgbuf[256];
+	__CTASSERT(sizeof(cmsgbuf) > CMSG_SPACE(sizeof(struct in_pktinfo)));
+#ifdef INET6
+	__CTASSERT(sizeof(cmsgbuf) > CMSG_SPACE(sizeof(struct in6_pktinfo)));
+#endif
+
+	if (from == NULL || fromlen == 0)
+		return sendto(s, buf, len, flags, to, tolen);
+
+	vec.iov_base = __UNCONST(buf);
+	vec.iov_len = len;
+	msg.msg_name = __UNCONST(to);
+	msg.msg_namelen = tolen;
+	msg.msg_iov = &vec;
+	msg.msg_iovlen = 1;
+	msg.msg_control = cmsgbuf;
+	msg.msg_controllen = 0;
+
+	if (fromlen < 2) {	/* sa_len + sa_family */
+		errno = EINVAL;
+		return -1;
+	}
+
+	cmsg = (struct cmsghdr *)cmsgbuf;
+	if (from->sa_family == AF_INET) {
+		const struct sockaddr_in *from4 =
+		    (const struct sockaddr_in *)from;
+		struct in_pktinfo *pi;
+
+		if (fromlen != sizeof(struct sockaddr_in) ||
+		    from4->sin_family != AF_INET) {
+			errno = EINVAL;
+			return -1;
+		}
+
+		msg.msg_controllen += CMSG_SPACE(sizeof(struct in_pktinfo));
+		cmsg->cmsg_len = CMSG_LEN(sizeof(struct in_pktinfo));
+		cmsg->cmsg_level = IPPROTO_IP;
+		cmsg->cmsg_type = IP_PKTINFO;
+
+		pi = (struct in_pktinfo *)CMSG_DATA(cmsg);
+		pi->ipi_addr = from4->sin_addr;
+		pi->ipi_ifindex = 0;
+#ifdef INET6
+	} else if (from->sa_family == AF_INET6) {
+		const struct sockaddr_in6 *from6 =
+		    (const struct sockaddr_in6 *)from;
+		struct in6_pktinfo *pi6;
+
+		if (fromlen != sizeof(struct sockaddr_in6) ||
+		    from6->sin6_family != AF_INET6) {
+			errno = EINVAL;
+			return -1;
+		}
+
+		msg.msg_controllen += CMSG_SPACE(sizeof(struct in6_pktinfo));
+		cmsg->cmsg_len = CMSG_LEN(sizeof(struct in6_pktinfo));
+		cmsg->cmsg_level = IPPROTO_IPV6;
+		cmsg->cmsg_type = IPV6_PKTINFO;
+
+		pi6 = (struct in6_pktinfo *)CMSG_DATA(cmsg);
+		pi6->ipi6_addr = from6->sin6_addr;
+		if (IN6_IS_ADDR_LINKLOCAL(&from6->sin6_addr) ||
+		    IN6_IS_ADDR_MC_LINKLOCAL(&from6->sin6_addr)) {
+			pi6->ipi6_ifindex = from6->sin6_scope_id;
+		} else {
+			pi6->ipi6_ifindex = 0;
+		}
+#endif /* INET6 */
+	} else {
+		return sendto(s, buf, len, flags, to, tolen);
+	}
+
+	return sendmsg(s, &msg, flags);
+}
+
+/*
  * Internet services provided internally by inetd:
  */
 #define	BUFSIZE	4096
@@ -978,16 +1186,20 @@ echo_dg(int s, struct servtab *sep)	/* Echo service -- echo data back */
 {
 	char buffer[BUFSIZE];
 	ssize_t i;
-	socklen_t size;
-	struct sockaddr_storage ss;
-	struct sockaddr *sa;
+	socklen_t rsize, lsize;
+	struct sockaddr_storage remote, local;
+	struct sockaddr *lsa, *rsa;
 
-	sa = (struct sockaddr *)(void *)&ss;
-	size = sizeof(ss);
-	if ((i = recvfrom(s, buffer, sizeof(buffer), 0, sa, &size)) < 0)
+	rsa = (struct sockaddr *)(void *)&remote;
+	lsa = (struct sockaddr *)(void *)&local;
+	rsize = sizeof(remote);
+	lsize = sizeof(local);
+	if ((i = recvfromto(s, buffer, sizeof(buffer), 0,
+	    rsa, &rsize, lsa, &lsize)) < 0)
 		return;
-	if (port_good_dg(sa))
-		(void) sendto(s, buffer, (size_t)i, 0, sa, size);
+	if (port_good_dg(rsa))
+		(void) sendfromto(s, buffer, (size_t)i, 0,
+		    lsa, lsize, rsa, rsize);
 }
 
 /* ARGSUSED */
@@ -1062,11 +1274,11 @@ chargen_stream(int s, struct servtab *sep)	/* Character generator */
 static void
 chargen_dg(int s, struct servtab *sep)		/* Character generator */
 {
-	struct sockaddr_storage ss;
-	struct sockaddr *sa;
+	struct sockaddr_storage remote, local;
+	struct sockaddr *rsa, *lsa;
 	static char *rs;
 	size_t len;
-	socklen_t size;
+	socklen_t rsize, lsize;
 	char text[LINESIZ+2];
 
 	if (endring == 0) {
@@ -1074,12 +1286,15 @@ chargen_dg(int s, struct servtab *sep)		/* Character generator */
 		rs = ring;
 	}
 
-	sa = (struct sockaddr *)(void *)&ss;
-	size = sizeof(ss);
-	if (recvfrom(s, text, sizeof(text), 0, sa, &size) < 0)
+	rsa = (struct sockaddr *)(void *)&remote;
+	lsa = (struct sockaddr *)(void *)&local;
+	rsize = sizeof(remote);
+	lsize = sizeof(local);
+	if (recvfromto(s, text, sizeof(text), 0,
+	    rsa, &rsize, lsa, &lsize) < 0)
 		return;
 
-	if (!port_good_dg(sa))
+	if (!port_good_dg(rsa))
 		return;
 
 	if ((len = (size_t)(endring - rs)) >= LINESIZ)
@@ -1092,7 +1307,7 @@ chargen_dg(int s, struct servtab *sep)		/* Character generator */
 		rs = ring;
 	text[LINESIZ] = '\r';
 	text[LINESIZ + 1] = '\n';
-	(void) sendto(s, text, sizeof(text), 0, sa, size);
+	(void) sendfromto(s, text, sizeof(text), 0, lsa, lsize, rsa, rsize);
 }
 
 /*
@@ -1132,18 +1347,21 @@ void
 machtime_dg(int s, struct servtab *sep)
 {
 	uint32_t result;
-	struct sockaddr_storage ss;
-	struct sockaddr *sa;
-	socklen_t size;
+	struct sockaddr_storage remote, local;
+	struct sockaddr *rsa, *lsa;
+	socklen_t rsize, lsize;
 
-	sa = (struct sockaddr *)(void *)&ss;
-	size = sizeof(ss);
-	if (recvfrom(s, &result, sizeof(result), 0, sa, &size) < 0)
+	rsa = (struct sockaddr *)(void *)&remote;
+	lsa = (struct sockaddr *)(void *)&local;
+	rsize = sizeof(remote);
+	lsize = sizeof(local);
+	if (recvfromto(s, &result, sizeof(result), 0,
+	    rsa, &rsize, lsa, &lsize) < 0)
 		return;
-	if (!port_good_dg(sa))
+	if (!port_good_dg(rsa))
 		return;
 	result = machtime();
-	(void)sendto(s, &result, sizeof(result), 0, sa, size);
+	(void)sendfromto(s, &result, sizeof(result), 0, lsa, lsize, rsa, rsize);
 }
 
 /* ARGSUSED */
@@ -1168,21 +1386,24 @@ daytime_dg(int s, struct servtab *sep)
 {
 	char buffer[256];
 	time_t clk;
-	struct sockaddr_storage ss;
-	struct sockaddr *sa;
-	socklen_t size;
+	struct sockaddr_storage remote, local;
+	struct sockaddr *rsa, *lsa;
+	socklen_t rsize, lsize;
 	int len;
 
 	clk = time((time_t *) 0);
 
-	sa = (struct sockaddr *)(void *)&ss;
-	size = sizeof(ss);
-	if (recvfrom(s, buffer, sizeof(buffer), 0, sa, &size) < 0)
+	rsa = (struct sockaddr *)(void *)&remote;
+	lsa = (struct sockaddr *)(void *)&local;
+	rsize = sizeof(remote);
+	lsize = sizeof(local);
+	if (recvfromto(s, buffer, sizeof(buffer), 0,
+	    rsa, &rsize, lsa, &lsize) < 0)
 		return;
-	if (!port_good_dg(sa))
+	if (!port_good_dg(rsa))
 		return;
 	len = snprintf(buffer, sizeof buffer, "%.24s\r\n", ctime(&clk));
-	(void) sendto(s, buffer, (size_t)len, 0, sa, size);
+	(void) sendfromto(s, buffer, (size_t)len, 0, lsa, lsize, rsa, rsize);
 }
 
 static void
