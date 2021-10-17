@@ -1,4 +1,4 @@
-/*	$NetBSD: su.c,v 1.72 2015/06/16 22:54:11 christos Exp $	*/
+/*	$NetBSD: su.c,v 1.73 2021/10/17 10:33:57 nia Exp $	*/
 
 /*
  * Copyright (c) 1988 The Regents of the University of California.
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988\
 #if 0
 static char sccsid[] = "@(#)su.c	8.3 (Berkeley) 4/2/94";*/
 #else
-__RCSID("$NetBSD: su.c,v 1.72 2015/06/16 22:54:11 christos Exp $");
+__RCSID("$NetBSD: su.c,v 1.73 2021/10/17 10:33:57 nia Exp $");
 #endif
 #endif /* not lint */
 
@@ -285,7 +285,8 @@ main(int argc, char **argv)
 
 			} else
 #endif
-			if (strcmp(pass, crypt(p, pass)) != 0) {
+			if (consttime_memequal(pass,
+			    crypt(p, pass), strlen(pass)) == 0) {
 #ifdef SKEY
  badlogin:
 #endif
