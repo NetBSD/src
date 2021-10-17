@@ -1,4 +1,4 @@
-/* $NetBSD: cpu_acpi.c,v 1.10 2021/01/23 12:34:19 jmcneill Exp $ */
+/* $NetBSD: cpu_acpi.c,v 1.11 2021/10/17 12:41:05 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_acpi.c,v 1.10 2021/01/23 12:34:19 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_acpi.c,v 1.11 2021/10/17 12:41:05 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -168,7 +168,7 @@ cpu_acpi_tprof_intr_establish(ACPI_SUBTABLE_HEADER *hdrp, void *aux)
 	if ((gicc->Flags & ACPI_MADT_ENABLED) == 0)
 		return AE_OK;
 
-	const bool cpu_primary_p = cpu_mpidr_aff_read() == gicc->ArmMpidr;
+	const bool cpu_primary_p = cpu_info_store[0].ci_cpuid == gicc->ArmMpidr;
 	const bool intr_ppi_p = gicc->PerformanceInterrupt < 32;
 	const int type = (gicc->Flags & ACPI_MADT_PERFORMANCE_IRQ_MODE) ?
 	    IST_EDGE : IST_LEVEL;
