@@ -1,4 +1,4 @@
-/*	$NetBSD: adiantum.c,v 1.6 2021/04/14 21:29:57 christos Exp $	*/
+/*	$NetBSD: adiantum.c,v 1.7 2021/10/17 14:45:45 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: adiantum.c,v 1.6 2021/04/14 21:29:57 christos Exp $");
+__KERNEL_RCSID(1, "$NetBSD: adiantum.c,v 1.7 2021/10/17 14:45:45 jmcneill Exp $");
 
 #include <sys/types.h>
 #include <sys/endian.h>
@@ -1938,7 +1938,7 @@ adiantum_modcmd(modcmd_t cmd, void *opaque)
 		result |= adiantum_selftest();
 		if (result)
 			panic("adiantum self-test failed");
-		aprint_verbose("adiantum: self-test passed\n");
+		aprint_debug("adiantum: self-test passed\n");
 		return 0;
 	}
 	case MODULE_CMD_FINI:

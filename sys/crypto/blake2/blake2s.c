@@ -1,4 +1,4 @@
-/*	$NetBSD: blake2s.c,v 1.1 2020/08/20 21:21:05 riastradh Exp $	*/
+/*	$NetBSD: blake2s.c,v 1.2 2021/10/17 14:45:45 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2015 Taylor R. Campbell
@@ -29,7 +29,7 @@
 #ifdef _KERNEL
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: blake2s.c,v 1.1 2020/08/20 21:21:05 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: blake2s.c,v 1.2 2021/10/17 14:45:45 jmcneill Exp $");
 
 #include <sys/types.h>
 #include <sys/module.h>
@@ -338,7 +338,7 @@ blake2s_modcmd(modcmd_t cmd, void *opaque)
 	case MODULE_CMD_INIT:
 		if (blake2s_selftest())
 			panic("blake2s: self-test failed");
-		aprint_verbose("blake2s: self-test passed\n");
+		aprint_debug("blake2s: self-test passed\n");
 		return 0;
 	case MODULE_CMD_FINI:
 		return 0;
