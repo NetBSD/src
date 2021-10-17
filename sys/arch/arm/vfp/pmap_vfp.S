@@ -32,7 +32,7 @@
 #include <machine/asm.h>
 #include "assym.h"
 
-RCSID("$NetBSD: pmap_vfp.S,v 1.6 2012/12/31 01:19:36 matt Exp $")
+RCSID("$NetBSD: pmap_vfp.S,v 1.7 2021/10/17 08:48:10 skrll Exp $")
 
 /*
  * This zeroes a page 64-bytes at a time.  64 was chosen over 32 since
@@ -88,7 +88,7 @@ ENTRY(bcopy_page_vfp)
 	pop	{r0, r1}
 	ldr	lr, [sp], #8		/* fetch LR */
 	add	r2, r0, #PAGE_SIZE-128
-1:	
+1:
 #ifdef _ARM_ARCH_DWORD_OK
 	pld	[r0, #128]		@ preload the next 128
 	pld	[r0, #160]
