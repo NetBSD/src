@@ -1,4 +1,4 @@
-/* $NetBSD: opt_badp.c,v 1.2 2021/10/16 09:39:21 rillig Exp $ */
+/* $NetBSD: opt_badp.c,v 1.3 2021/10/17 17:20:47 rillig Exp $ */
 /* $FreeBSD$ */
 
 /*
@@ -76,35 +76,4 @@ declaration_with_several_blank_lines(void)
 }
 #indent end
 
-#indent run -nbadp
-static void
-no_declarations(void)
-{
-	action();
-}
-
-static void
-declarations_without_blank_line(void)
-{
-	int		local_variable;
-	action();
-}
-
-static void
-declaration_with_blank_line(void)
-{
-	int		local_variable;
-
-	action();
-}
-
-static void
-declaration_with_several_blank_lines(void)
-{
-	int		local_variable;
-
-
-
-	action();
-}
-#indent end
+#indent run-identity -nbadp -ldi0
