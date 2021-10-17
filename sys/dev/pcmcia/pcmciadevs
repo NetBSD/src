@@ -1,4 +1,4 @@
-$NetBSD: pcmciadevs,v 1.235 2019/04/06 04:52:44 msaitoh Exp $
+$NetBSD: pcmciadevs,v 1.236 2021/10/17 20:33:05 andvar Exp $
 /* $FreeBSD: src/sys/dev/pccard/pccarddevs,v 1.20 2001/11/19 05:02:55 imp Exp $*/
 
 /*-
@@ -289,7 +289,7 @@ product LINKSYS ETHERFAST	0x0230 Linksys Etherfast 10/100 Ethernet
 product LINKSYS ECARD_1		0x0265 Linksys EthernetCard or D-Link DE-650
 product LINKSYS COMBO_ECARD	0xc1ab Linksys Combo EthernetCard
 product LINKSYS2 IWN		0x1612 Instant Wireless Network PC Card
-product LINKSYS2 IWN3		0x1613 Instant Wireless Network PC Card, Versin 3
+product LINKSYS2 IWN3		0x1613 Instant Wireless Network PC Card, Version 3
 product LINKSYS2 WCF11		0x3301 Instant Wireless Network CF Card
 
 /* Lucent */
