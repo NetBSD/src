@@ -1,10 +1,10 @@
-/*	$NetBSD: pcmciadevs.h,v 1.234 2018/03/16 01:58:42 sevan Exp $	*/
+/*	$NetBSD: pcmciadevs.h,v 1.235 2021/10/17 20:33:27 andvar Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcmciadevs,v 1.234 2018/03/16 01:49:15 sevan Exp
+ *	NetBSD: pcmciadevs,v 1.235 2019/04/06 04:52:44 msaitoh Exp
  */
 /* $FreeBSD: src/sys/dev/pccard/pccarddevs,v 1.20 2001/11/19 05:02:55 imp Exp $*/
 
@@ -38,8 +38,8 @@
  */
 
 /*
- * Use "make -f Makefile.pcmciadevs" to regenerate pcmicadevs.h and
- * pcmicadevs_data.h
+ * Use "make -f Makefile.pcmciadevs" to regenerate pcmciadevs.h and
+ * pcmciadevs_data.h
  */
 
 /*
