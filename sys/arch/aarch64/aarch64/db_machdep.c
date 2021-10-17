@@ -1,4 +1,4 @@
-/* $NetBSD: db_machdep.c,v 1.40 2021/04/30 20:07:22 skrll Exp $ */
+/* $NetBSD: db_machdep.c,v 1.41 2021/10/17 22:44:34 ryo Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_machdep.c,v 1.40 2021/04/30 20:07:22 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_machdep.c,v 1.41 2021/10/17 22:44:34 ryo Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd32.h"
@@ -1145,25 +1145,26 @@ kdb_trap(int type, struct trapframe *tf)
 	}
 
 #ifdef MULTIPROCESSOR
-	/*
-	 * Try to take ownership of DDB.
-	 * If we do, tell all other CPUs to enter DDB too.
-	 */
-	if ((ncpu > 1) &&
-	    (atomic_cas_ptr(&db_onproc, NULL, ci) == NULL)) {
-		intr_ipi_send(NULL, IPI_DDB);
-		db_trigger = ci;
-	} else {
+	if (ncpu > 1) {
 		/*
-		 * If multiple CPUs catch kdb_trap() that is not IPI_DDB derived
-		 * at the same time, only the CPU that was able to get db_onproc
-		 * first will execute db_trap.
-		 * The CPU that could not get db_onproc will be set to type = -1
-		 * once, and kdb_trap will be called again with the correct type
-		 * after kdb_trap returns.
+		 * Try to take ownership of DDB.
+		 * If we do, tell all other CPUs to enter DDB too.
 		 */
-		type = -1;
-		restore_hw_watchpoints = true;
+		if (atomic_cas_ptr(&db_onproc, NULL, ci) == NULL) {
+			intr_ipi_send(NULL, IPI_DDB);
+			db_trigger = ci;
+		} else {
+			/*
+			 * If multiple CPUs catch kdb_trap() that is not IPI_DDB
+			 * derived at the same time, only the CPU that was able
+			 * to get db_onproc first will execute db_trap.
+			 * The CPU that could not get db_onproc will be set to
+			 * type = -1 once, and kdb_trap will be called again
+			 * with the correct type after kdb_trap returns.
+			 */
+			type = -1;
+			restore_hw_watchpoints = true;
+		}
 	}
 	db_readytoswitch[ci->ci_index] = tf;
 #endif
