@@ -1,5 +1,5 @@
 #! /bin/sh
-# $NetBSD: t_options.sh,v 1.2 2021/10/16 05:40:17 rillig Exp $
+# $NetBSD: t_options.sh,v 1.3 2021/10/17 17:20:47 rillig Exp $
 #
 # Copyright (c) 2021 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -39,13 +39,18 @@
 #	#indent run [options]
 #		Runs indent on the input, using the given options.
 #	#indent end [description]
-#		Finishes an 'input' or 'run' section.
+#		Finishes an '#indent input' or '#indent run' section.
+#	#indent run-identity [options]
+#		Runs indent on the input, expecting unmodified output.
 #
 # All text between these directives is not passed to indent.
 
 srcdir=$(atf_get_srcdir)
 indent=$(atf_config_get usr.bin.indent.test_indent /usr/bin/indent)
 
+# Read the test specification from stdin, output the actual test output on
+# stdout, write the expected test output to 'expected.out'.
+#
 # shellcheck disable=SC2016
 check_awk='
 function die(msg)
@@ -66,6 +71,8 @@ function die(msg)
 
 /^#/ && $1 == "#indent" {
 	print $0
+	print $0 > "expected.out"
+
 	if ($2 == "input") {
 		if (unused != 0)
 			die(FILENAME ":" unused ": input is not used")
@@ -74,6 +81,7 @@ function die(msg)
 		prev_input_all = input_all
 		input_all = ""
 		unused = NR
+
 	} else if ($2 == "run") {
 		mode = "run"
 		cmd = ENVIRON["INDENT"]
@@ -83,6 +91,7 @@ function die(msg)
 			print in_lines[i] | cmd
 		close(cmd)
 		unused = 0
+
 	} else if ($2 == "run-identity") {
 		cmd = ENVIRON["INDENT"]
 		for (i = 3; i <= NF; i++)
@@ -93,14 +102,16 @@ function die(msg)
 		}
 		close(cmd)
 		unused = 0
+
 	} else if ($2 == "end") {
 		if (mode == "input" && input_all == prev_input_all)
 			die(FILENAME ":" NR ": error: duplicate input")
 		mode = ""
+
 	} else {
 		die(FILENAME ":" NR ": error: invalid line \"" $0 "\"")
 	}
-	print $0 > "expected.out"
+
 	next
 }
 
