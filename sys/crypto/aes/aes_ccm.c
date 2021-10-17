@@ -1,4 +1,4 @@
-/*	$NetBSD: aes_ccm.c,v 1.5 2020/08/10 06:27:29 rin Exp $	*/
+/*	$NetBSD: aes_ccm.c,v 1.6 2021/10/17 14:45:45 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: aes_ccm.c,v 1.5 2020/08/10 06:27:29 rin Exp $");
+__KERNEL_RCSID(1, "$NetBSD: aes_ccm.c,v 1.6 2021/10/17 14:45:45 jmcneill Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -611,7 +611,7 @@ aes_ccm_modcmd(modcmd_t cmd, void *opaque)
 	case MODULE_CMD_INIT:
 		if (aes_ccm_selftest())
 			return EIO;
-		aprint_verbose("aes_ccm: self-test passed\n");
+		aprint_debug("aes_ccm: self-test passed\n");
 		return 0;
 	case MODULE_CMD_FINI:
 		return 0;
