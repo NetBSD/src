@@ -1,4 +1,4 @@
-/*	$NetBSD: args.c,v 1.55 2021/10/13 23:33:52 rillig Exp $	*/
+/*	$NetBSD: args.c,v 1.56 2021/10/17 18:13:00 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)args.c	8.1 (Berkeley) 6/6/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: args.c,v 1.55 2021/10/13 23:33:52 rillig Exp $");
+__RCSID("$NetBSD: args.c,v 1.56 2021/10/17 18:13:00 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/args.c 336318 2018-07-15 21:04:21Z pstef $");
 #endif
@@ -56,6 +56,7 @@ __FBSDID("$FreeBSD: head/usr.bin/indent/args.c 336318 2018-07-15 21:04:21Z pstef
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <errno.h>
 
 #include "indent.h"
 
@@ -68,11 +69,11 @@ __FBSDID("$FreeBSD: head/usr.bin/indent/args.c 336318 2018-07-15 21:04:21Z pstef
 #endif
 
 #define bool_option(name, value, var) \
-	{name, true, value, false, assert_type(&(opt.var), bool *)}
+	{name, true, value, false, 0, 0, assert_type(&(opt.var), bool *)}
 #define bool_options(name, var) \
-	{name, true, false, true, assert_type(&(opt.var), bool *)}
-#define int_option(name, var) \
-	{name, false, false, false, assert_type(&(opt.var), int *)}
+	{name, true, false, true, 0, 0, assert_type(&(opt.var), bool *)}
+#define int_option(name, var, min, max) \
+	{name, false, false, false, min, max, assert_type(&(opt.var), int *)}
 
 /*
  * N.B.: an option whose name is a prefix of another option must come earlier;
@@ -85,6 +86,8 @@ static const struct pro {
     bool p_is_bool;
     bool p_bool_value;
     bool p_may_negate;
+    short i_min;
+    short i_max;
     void *p_var;		/* the associated variable */
 }   pro[] = {
     bool_options("bacc", blanklines_around_conditional_compilation),
@@ -96,26 +99,26 @@ static const struct pro {
     bool_option("bl", false, brace_same_line),
     bool_option("br", true, brace_same_line),
     bool_options("bs", blank_after_sizeof),
-    int_option("c", comment_column),
-    int_option("cd", decl_comment_column),
+    int_option("c", comment_column, 1, 999),
+    int_option("cd", decl_comment_column, 1, 999),
     bool_options("cdb", comment_delimiter_on_blankline),
     bool_options("ce", cuddle_else),
-    int_option("ci", continuation_indent),
+    int_option("ci", continuation_indent, 0, 999),
     /* "cli" is special */
     bool_options("cs", space_after_cast),
-    int_option("d", unindent_displace),
-    int_option("di", decl_indent),
+    int_option("d", unindent_displace, -999, 999),
+    int_option("di", decl_indent, 0, 999),
     bool_options("dj", ljust_decl),
     bool_options("eei", extra_expr_indent),
     bool_options("ei", else_if),
     bool_options("fbs", function_brace_split),
     bool_options("fc1", format_col1_comments),
     bool_options("fcb", format_block_comments),
-    int_option("i", indent_size),
+    int_option("i", indent_size, 1, 80),
     bool_options("ip", indent_parameters),
-    int_option("l", max_line_length),
-    int_option("lc", block_comment_max_line_length),
-    int_option("ldi", local_decl_indent),
+    int_option("l", max_line_length, 1, 999),
+    int_option("lc", block_comment_max_line_length, 1, 999),
+    int_option("ldi", local_decl_indent, 0, 999),
     bool_options("lp", lineup_to_parens),
     bool_options("lpl", lineup_to_parens_always),
     /* "npro" is special */
@@ -127,7 +130,7 @@ static const struct pro {
     /* "st" is special */
     bool_option("ta", true, auto_typedefs),
     /* "T" is special */
-    int_option("ts", tabsize),
+    int_option("ts", tabsize, 1, 80),
     /* "U" is special */
     bool_options("ut", use_tabs),
     bool_options("v", verbose),
@@ -299,6 +302,13 @@ found:
 	if (!isdigit((unsigned char)*param_start))
 	    errx(1, "%s: option \"-%s\" requires an integer parameter",
 		option_source, p->p_name);
-	*(int *)p->p_var = atoi(param_start);
+	errno = 0;
+	char *end;
+	long num = strtol(param_start, &end, 10);
+	if (!(errno == 0 && *end == '\0' &&
+		p->i_min <= num && num <= p->i_max))
+	    errx(1, "%s: invalid argument \"%s\" for option \"-%s\"",
+		 option_source, param_start, p->p_name);
+	*(int *)p->p_var = (int)num;
     }
 }
