@@ -1,5 +1,5 @@
 #! /bin/sh
-# $NetBSD: t_options.sh,v 1.3 2021/10/17 17:20:47 rillig Exp $
+# $NetBSD: t_options.sh,v 1.4 2021/10/17 17:23:59 rillig Exp $
 #
 # Copyright (c) 2021 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -87,7 +87,7 @@ function die(msg)
 		cmd = ENVIRON["INDENT"]
 		for (i = 3; i <= NF; i++)
 			cmd = cmd " " $i
-		for (i = 1; i <= in_lines_len; i++)
+		for (i = 0; i < in_lines_len; i++)
 			print in_lines[i] | cmd
 		close(cmd)
 		unused = 0
@@ -96,7 +96,7 @@ function die(msg)
 		cmd = ENVIRON["INDENT"]
 		for (i = 3; i <= NF; i++)
 			cmd = cmd " " $i
-		for (i = 1; i <= in_lines_len; i++) {
+		for (i = 0; i < in_lines_len; i++) {
 			print in_lines[i] | cmd
 			print in_lines[i] > "expected.out"
 		}
@@ -116,7 +116,7 @@ function die(msg)
 }
 
 mode == "input" {
-	in_lines[++in_lines_len] = $0
+	in_lines[in_lines_len++] = $0
 	input_all = input_all $0 "\n"
 }
 
