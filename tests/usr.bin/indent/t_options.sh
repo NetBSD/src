@@ -1,5 +1,5 @@
 #! /bin/sh
-# $NetBSD: t_options.sh,v 1.6 2021/10/18 18:10:20 rillig Exp $
+# $NetBSD: t_options.sh,v 1.7 2021/10/18 19:36:30 rillig Exp $
 #
 # Copyright (c) 2021 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -65,6 +65,16 @@ function die(lineno, msg)
 	}
 }
 
+function warn(lineno, msg)
+{
+	print FILENAME ":" lineno ": warning: " msg > "/dev/stderr"
+}
+
+function quote(s)
+{
+	return "'\''" s "'\''"
+}
+
 BEGIN {
 	section = ""		# "", "input" or "run"
 	section_excl_comm = ""	# without dollar comments
@@ -91,7 +101,7 @@ BEGIN {
 function check_unused_input()
 {
 	if (unused_input_lineno != 0)
-		die(unused_input_lineno, "input is not used")
+		warn(unused_input_lineno, "input is not used")
 }
 
 function run_indent(inp,   i, cmd)
@@ -108,6 +118,7 @@ function run_indent(inp,   i, cmd)
 	print $0 > "expected.out"
 
 	if ($2 == "input") {
+		check_unused_input()
 		section = "input"
 		section_excl_comm = ""
 		section_incl_comm = ""
@@ -130,30 +141,32 @@ function run_indent(inp,   i, cmd)
 	} else if ($2 == "run-equals-prev-output") {
 		run_indent(input_excl_comm)
 		printf("%s", output_excl_comm) > "expected.out"
-		unused_input_lineno = 0
 
-	} else if ($2 == "end") {
-		if (section == "input" && section_incl_comm == input_incl_comm)
-			die(NR, "duplicate input; remove this section")
-		if (section == "run" && section_incl_comm == input_incl_comm)
-			die(output_lineno,
-			    "output == input; use run-equals-input")
-		if (section == "run" && section_incl_comm == output_incl_comm)
-			die(output_lineno,
-			    "duplicate output; use run-equals-prev-output")
+	} else if ($2 == "end" && section == "input") {
+		if (section_incl_comm == input_incl_comm)
+			warn(NR, "duplicate input; remove this section")
 
-		if (section == "input") {
-			input_excl_comm = section_excl_comm
-			input_incl_comm = section_incl_comm
-		}
-		if (section == "run") {
-			output_excl_comm = section_excl_comm
-			output_incl_comm = section_incl_comm
-		}
+		input_excl_comm = section_excl_comm
+		input_incl_comm = section_incl_comm
 		section = ""
 
+	} else if ($2 == "end" && section == "run") {
+		if (section_incl_comm == input_incl_comm)
+			warn(output_lineno,
+			    "output == input; use run-equals-input")
+		if (section_incl_comm == output_incl_comm)
+			warn(output_lineno,
+			    "duplicate output; use run-equals-prev-output")
+
+		output_excl_comm = section_excl_comm
+		output_incl_comm = section_incl_comm
+		section = ""
+
+	} else if ($2 == "end") {
+		warn(NR, "misplaced " quote("#indent end"))
+
 	} else {
-		die(NR, "invalid line \"" $0 "\"")
+		die(NR, "invalid line " quote($0))
 	}
 
 	next
@@ -170,7 +183,7 @@ section == "run" {
 
 END {
 	if (section != "")
-		die(NR, "still in section \"" section "\"")
+		die(NR, "still in section " quote(section))
 	check_unused_input()
 }
 '
