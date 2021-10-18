@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1146 2021/10/18 22:46:33 rillig Exp $
+# $NetBSD: mi,v 1.1147 2021/10/18 23:01:10 rillig Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -4773,9 +4773,9 @@
 ./usr/tests/usr.bin/indent/lineno.0.stdout				tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/indent/list_head.0					tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/indent/list_head.0.stdout				tests-usr.bin-tests	compattestfile,atf
-./usr/tests/usr.bin/indent/ncs.0					tests-usr.bin-tests	compattestfile,atf
-./usr/tests/usr.bin/indent/ncs.0.pro					tests-usr.bin-tests	compattestfile,atf
-./usr/tests/usr.bin/indent/ncs.0.stdout					tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/indent/ncs.0					tests-obsolete		obsolete,atf
+./usr/tests/usr.bin/indent/ncs.0.pro					tests-obsolete		obsolete,atf
+./usr/tests/usr.bin/indent/ncs.0.stdout					tests-obsolete		obsolete,atf
 ./usr/tests/usr.bin/indent/offsetof.0					tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/indent/offsetof.0.stdout				tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/indent/opt--version.0				tests-usr.bin-tests	compattestfile,atf
@@ -5020,9 +5020,9 @@
 ./usr/tests/usr.bin/indent/parens.0					tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/indent/parens.0.pro					tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/indent/parens.0.stdout				tests-usr.bin-tests	compattestfile,atf
-./usr/tests/usr.bin/indent/pcs.0					tests-usr.bin-tests	compattestfile,atf
-./usr/tests/usr.bin/indent/pcs.0.pro					tests-usr.bin-tests	compattestfile,atf
-./usr/tests/usr.bin/indent/pcs.0.stdout					tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/indent/pcs.0					tests-obsolete		obsolete,atf
+./usr/tests/usr.bin/indent/pcs.0.pro					tests-obsolete		obsolete,atf
+./usr/tests/usr.bin/indent/pcs.0.stdout					tests-obsolete		obsolete,atf
 ./usr/tests/usr.bin/indent/ps_ind_level.0				tests-obsolete		obsolete,atf
 ./usr/tests/usr.bin/indent/ps_ind_level.0.pro				tests-obsolete		obsolete,atf
 ./usr/tests/usr.bin/indent/ps_ind_level.0.stdout			tests-obsolete		obsolete,atf
