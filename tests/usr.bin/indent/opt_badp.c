@@ -1,4 +1,4 @@
-/* $NetBSD: opt_badp.c,v 1.3 2021/10/17 17:20:47 rillig Exp $ */
+/* $NetBSD: opt_badp.c,v 1.4 2021/10/18 07:11:31 rillig Exp $ */
 /* $FreeBSD$ */
 
 /*
@@ -76,4 +76,4 @@ declaration_with_several_blank_lines(void)
 }
 #indent end
 
-#indent run-identity -nbadp -ldi0
+#indent run-equals-input -nbadp -ldi0

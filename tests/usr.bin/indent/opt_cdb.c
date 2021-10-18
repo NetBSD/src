@@ -1,4 +1,4 @@
-/* $NetBSD: opt_cdb.c,v 1.3 2021/10/16 21:32:10 rillig Exp $ */
+/* $NetBSD: opt_cdb.c,v 1.4 2021/10/18 07:11:31 rillig Exp $ */
 /* $FreeBSD$ */
 
 /*
@@ -72,13 +72,7 @@ int		gb;		/* A multi-line comment. */
 int		gc;		/* A multi-line comment. */
 #indent end
 
-#indent run -ncdb
-int		ga;		/* A single-line comment. */
-
-int		gb;		/* A multi-line comment. */
-
-int		gc;		/* A multi-line comment. */
-#indent end
+#indent run-equals-prev-output -ncdb
 
 /*
  * Block comments that are inside a function.

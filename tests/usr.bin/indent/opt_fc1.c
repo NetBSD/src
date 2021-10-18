@@ -1,4 +1,4 @@
-/* $NetBSD: opt_fc1.c,v 1.3 2021/10/16 21:32:10 rillig Exp $ */
+/* $NetBSD: opt_fc1.c,v 1.4 2021/10/18 07:11:31 rillig Exp $ */
 /* $FreeBSD$ */
 
 /*
@@ -28,15 +28,7 @@
  */
 #indent end
 
-#indent run -nfc1
-/*
- * A comment
- * in column 1.
- *
- *
- *
- */
-#indent end
+#indent run-equals-input -nfc1
 
 
 #indent input
@@ -146,9 +138,4 @@
 				 * second comment */
 #indent end
 
-#indent run -nfc1
- /* comment */ int decl2;	/* comment */
- /* looooooooooooooooooooooooooooooooooooooooong first comment */ int decl2;	/* second comment */
- /* first comment */ int decl2;	/* looooooooooooooooooooooooooooooooooooooooong
-				 * second comment */
-#indent end
+#indent run-equals-prev-output -nfc1

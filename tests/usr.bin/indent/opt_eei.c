@@ -1,4 +1,4 @@
-/* $NetBSD: opt_eei.c,v 1.3 2021/10/16 21:32:10 rillig Exp $ */
+/* $NetBSD: opt_eei.c,v 1.4 2021/10/18 07:11:31 rillig Exp $ */
 /* $FreeBSD$ */
 
 /*
@@ -40,19 +40,7 @@ less(int a, int b)
 }
 #indent end
 
-#indent run -neei
-bool
-less(int a, int b)
-{
-	if (a <
-	    b)
-		return true;
-	if (a
-	    <
-	    b)
-		return true;
-}
-#indent end
+#indent run-equals-input -neei
 
 /*
  * When the indentation level is the same as the continuation indentation, the

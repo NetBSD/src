@@ -1,4 +1,4 @@
-/* $NetBSD: opt_ip.c,v 1.3 2021/10/16 21:32:10 rillig Exp $ */
+/* $NetBSD: opt_ip.c,v 1.4 2021/10/18 07:11:31 rillig Exp $ */
 /* $FreeBSD$ */
 
 /*
@@ -49,21 +49,4 @@ several_parameters_3(
 		     const char *cp);
 #indent end
 
-#indent run -nip
-int
-several_parameters_1(int a,
-		     int b,
-		     const char *cp);
-
-int
-several_parameters_2(
-		     int a,
-		     int b,
-		     const char *cp);
-
-int
-several_parameters_3(
-		     int a1, int a2,
-		     int b1, int b2,
-		     const char *cp);
-#indent end
+#indent run-equals-prev-output -nip

@@ -1,4 +1,4 @@
-/* $NetBSD: opt_fcb.c,v 1.3 2021/10/16 21:32:10 rillig Exp $ */
+/* $NetBSD: opt_fcb.c,v 1.4 2021/10/18 07:11:31 rillig Exp $ */
 /* $FreeBSD$ */
 
 /*
@@ -40,19 +40,7 @@
  */
 #indent end
 
-#indent run -nfcb
-/*
- * Not
- *
- * so carefully formatted comment
- */
-
-/*-
- * car         mat         men
- *    efu   for   ted   com   t
- *       lly         box       .
- */
-#indent end
+#indent run-equals-prev-output -nfcb
 
 
 #indent input
@@ -91,20 +79,4 @@ example(void)
 }
 #indent end
 
-#indent run -nfcb
-void
-example(void)
-{
-	/*
-	 * Not
-	 *
-	 * so carefully formatted comment
-	 */
-
-	/*-
-	 * car         mat         men
-	 *    efu   for   ted   com   t
-	 *       lly         box       .
-	 */
-}
-#indent end
+#indent run-equals-prev-output -nfcb

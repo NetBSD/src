@@ -1,4 +1,4 @@
-/* $NetBSD: opt_bacc.c,v 1.2 2021/10/16 06:02:18 rillig Exp $ */
+/* $NetBSD: opt_bacc.c,v 1.3 2021/10/18 07:11:31 rillig Exp $ */
 /* $FreeBSD$ */
 
 /*
@@ -39,13 +39,7 @@ int		c;
  * With '-nbacc' the code is unchanged since there are no blank lines to
  * remove.
  */
-#indent run -nbacc
-int		a;
-#if 0
-int		b;
-#endif
-int		c;
-#indent end
+#indent run-equals-input -nbacc
 
 
 /* Example code containing blank lines. */
@@ -74,17 +68,7 @@ int		space_c;
 #indent end
 
 /* The option '-nbacc' does not remove anything. */
-#indent run -nbacc
-int		space_a;
-
-#if 0
-
-int		space_b;
-
-#endif
-
-int		space_c;
-#indent end
+#indent run-equals-input -nbacc
 
 /*
  * Preprocessing directives can also occur in function bodies.
