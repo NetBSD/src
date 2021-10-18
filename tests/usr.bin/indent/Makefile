@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.21 2021/10/18 22:46:33 rillig Exp $
+#	$NetBSD: Makefile,v 1.22 2021/10/18 23:01:10 rillig Exp $
 
 .include <bsd.own.mk>
 
@@ -37,9 +37,6 @@ FILES+=		lineno.0.pro
 FILES+=		lineno.0.stdout
 FILES+=		list_head.0
 FILES+=		list_head.0.stdout
-FILES+=		ncs.0
-FILES+=		ncs.0.stdout
-FILES+=		ncs.0.pro
 FILES+=		offsetof.0
 FILES+=		offsetof.0.stdout
 FILES+=		opt--version.0
@@ -134,9 +131,6 @@ FILES+=		opt_v.c
 FILES+=		parens.0
 FILES+=		parens.0.stdout
 FILES+=		parens.0.pro
-FILES+=		pcs.0
-FILES+=		pcs.0.stdout
-FILES+=		pcs.0.pro
 FILES+=		ps_ind_level.c
 FILES+=		struct.0
 FILES+=		struct.0.stdout
