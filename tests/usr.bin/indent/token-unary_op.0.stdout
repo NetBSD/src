@@ -1,8 +1,0 @@
-/* $NetBSD: token-unary_op.0.stdout,v 1.1 2021/03/12 00:13:06 rillig Exp $ */
-/* $FreeBSD$ */
-
-/*
- * Tests for unary operators, such as '+', '-', '*', '&'.
- */
-
-/* TODO: Add some code to be formatted. */
