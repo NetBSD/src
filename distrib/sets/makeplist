@@ -111,7 +111,7 @@ xargs echo ${SELECTDIRS} < "${filename}" | \
 while read ignore ignore ignore args; do
 	[ -z "${args}" ] && break 
 	${FIND} ${args} ${SELECTDIRS}
-done | ${AWK} '{ print "@dirrm " $1; }' > "${dfilename}"
+done | ${AWK} '{ print "@pkgdir " $1; }' > "${dfilename}"
 
 #
 # Match the non-directories.  Use find(1) to avoid repeat calls to

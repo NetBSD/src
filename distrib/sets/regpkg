@@ -1,6 +1,6 @@
 #! /bin/sh
 #
-# $NetBSD: regpkg,v 1.24 2019/10/24 16:52:11 rhialto Exp $
+# $NetBSD: regpkg,v 1.25 2021/10/18 10:47:44 uki Exp $
 #
 # Copyright (c) 2003,2009 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -247,7 +247,7 @@ init_allfiles()
 	allfiles="$(${AWK} '
 		BEGIN { destdir = "'"${DESTDIR%/}"'" }
 		/^@cwd/ { prefix = $2; next }
-		/^@dirrm/ { next }
+		/^@pkgdir/ { next }
 		{ printf("%s%s%s\n", destdir, prefix, $0) }' "${PLIST}")"
 }
 
@@ -439,7 +439,7 @@ print_dir_exec_lines()
 	local dot_slash_dir
 	local no_dot_dir
 	local word line
-	${AWK} '/^@dirrm/ { print $2 }' <"${PLIST}" | \
+	${AWK} '/^@pkgdir/ { print $2 }' <"${PLIST}" | \
 	${SORT} | \
 	while read dir; do
 		# Sanitise the name. ${dir} could be an absolute or
@@ -628,7 +628,7 @@ EOF
 	# "@name" line and a lot of "@comment MD5:" lines.
 	#
 	{
-		rcsid='$NetBSD: regpkg,v 1.24 2019/10/24 16:52:11 rhialto Exp $'
+		rcsid='$NetBSD: regpkg,v 1.25 2021/10/18 10:47:44 uki Exp $'
 		utcdate="$(${ENV_CMD} TZ=UTC LOCALE=C \
 			${DATE} '+%Y-%m-%d %H:%M')"
 		user="${USER:-root}"
@@ -691,16 +691,16 @@ EOF
 		# ${dbfile}.  The results look like absolute paths,
 		# but they are really relative to ${DESTDIR}.
 		#
-		# "@dirrm ."		-> "/"
-		# "@dirrm foo/bar"	-> "/foo/bar"
-		# "@dirrm ./foo/bar"	-> "/foo/bar"
+		# "@pkgdir ."		-> "/"
+		# "@pkgdir foo/bar"	-> "/foo/bar"
+		# "@pkgdir ./foo/bar"	-> "/foo/bar"
 		# "foo/bar/baz"		-> "/foo/bar/baz"
 		# "./foo/bar/baz"	-> "/foo/bar/baz"
 		#
 		dblist="${SCRATCH}/dblist"
-		${AWK} '/^@dirrm \.\//	{gsub("^.", "", $2); print $2; next}
-			/^@dirrm \.$/	{print "/"; next}
-			/^@dirrm/	{print "/" $2; next}
+		${AWK} '/^@pkgdir \.\//	{gsub("^.", "", $2); print $2; next}
+			/^@pkgdir \.$/	{print "/"; next}
+			/^@pkgdir/	{print "/" $2; next}
 			/^@/		{next}
 			/^\.\//		{gsub("^.", "", $0); print $0; next}
 			/./		{print "/" $0; next}' \
@@ -789,17 +789,17 @@ create_syspkg_tgz()
 
 		# Transform ${PLIST} into simple specfile format:
 		#
-		# "@dirrm ."		-> ". type=dir"
-		# "@dirrm foo/bar"	-> "./foo/bar type=dir"
-		# "@dirrm ./foo/bar"	-> "./foo/bar type=dir"
+		# "@pkgdir ."		-> ". type=dir"
+		# "@pkgdir foo/bar"	-> "./foo/bar type=dir"
+		# "@pkgdir ./foo/bar"	-> "./foo/bar type=dir"
 		# "foo/bar/baz"		-> "./foo/bar/baz"
 		# "./foo/bar/baz"	-> "./foo/bar/baz"
 		#
 		# Ignores @cwd lines.  This should be safe, given how
 		# makeplist works.
-		${AWK} '/^@dirrm \.\//	{print $2 " type=dir"; next}
-			/^@dirrm \.$/	{print ". type=dir"; next}
-			/^@dirrm/	{print "./" $2 " type=dir"; next}
+		${AWK} '/^@pkgdir \.\//	{print $2 " type=dir"; next}
+			/^@pkgdir \.$/	{print ". type=dir"; next}
+			/^@pkgdir/	{print "./" $2 " type=dir"; next}
 			/^@/		{next}
 			/^\.\//		{print $0; next}
 			/./		{print "./" $0; next}' \
