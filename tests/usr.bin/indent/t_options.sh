@@ -1,5 +1,5 @@
 #! /bin/sh
-# $NetBSD: t_options.sh,v 1.4 2021/10/17 17:23:59 rillig Exp $
+# $NetBSD: t_options.sh,v 1.5 2021/10/18 07:11:31 rillig Exp $
 #
 # Copyright (c) 2021 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -40,10 +40,13 @@
 #		Runs indent on the input, using the given options.
 #	#indent end [description]
 #		Finishes an '#indent input' or '#indent run' section.
-#	#indent run-identity [options]
+#	#indent run-equals-input [options]
 #		Runs indent on the input, expecting unmodified output.
+#	#indent run-equals-prev-output [options]
+#		Runs indent on the input, expecting the same output as from
+#		the previous run.
 #
-# All text between these directives is not passed to indent.
+# All text outside these directives is not passed to indent.
 
 srcdir=$(atf_get_srcdir)
 indent=$(atf_config_get usr.bin.indent.test_indent /usr/bin/indent)
@@ -53,20 +56,51 @@ indent=$(atf_config_get usr.bin.indent.test_indent /usr/bin/indent)
 #
 # shellcheck disable=SC2016
 check_awk='
-function die(msg)
+function die(lineno, msg)
 {
 	if (!died) {
 		died = 1
-		print msg > "/dev/stderr"
+		print FILENAME ":" lineno ": error: " msg > "/dev/stderr"
 		exit(1)
 	}
 }
 
-# Skip comments starting with dollar; they are used for marking bugs and
-# adding other remarks directly in the input or output sections.
+BEGIN {
+	section = ""		# "", "input" or "run"
+	section_excl_comm = ""	# without dollar comments
+	section_incl_comm = ""	# with dollar comments
+
+	input_excl_comm = ""	# stdin for indent
+	input_incl_comm = ""	# used for duplicate checks
+	unused_input_lineno = 0
+
+	output_excl_comm = ""	# expected output
+	output_incl_comm = ""	# used for duplicate checks
+	output_lineno = 0
+}
+
+# Hide comments starting with dollar from indent; they are used for marking
+# bugs and adding other remarks directly in the input or output sections.
 /^[[:space:]]*\/[*][[:space:]]*[$].*[*]\/$/ ||
     /^[[:space:]]*\/\/[[:space:]]*[$]/ {
+	if (section != "")
+		section_incl_comm = section_incl_comm $0 "\n"
 	next
+}
+
+function check_unused_input()
+{
+	if (unused_input_lineno != 0)
+		die(unused_input_lineno, "input is not used")
+}
+
+function run_indent(inp,   i, cmd)
+{
+	cmd = ENVIRON["INDENT"]
+	for (i = 3; i <= NF; i++)
+		cmd = cmd " " $i
+	printf("%s", inp) | cmd
+	close(cmd)
 }
 
 /^#/ && $1 == "#indent" {
@@ -74,61 +108,70 @@ function die(msg)
 	print $0 > "expected.out"
 
 	if ($2 == "input") {
-		if (unused != 0)
-			die(FILENAME ":" unused ": input is not used")
-		mode = "input"
-		in_lines_len = 0
-		prev_input_all = input_all
-		input_all = ""
-		unused = NR
+		section = "input"
+		section_excl_comm = ""
+		section_incl_comm = ""
+		unused_input_lineno = NR
 
 	} else if ($2 == "run") {
-		mode = "run"
-		cmd = ENVIRON["INDENT"]
-		for (i = 3; i <= NF; i++)
-			cmd = cmd " " $i
-		for (i = 0; i < in_lines_len; i++)
-			print in_lines[i] | cmd
-		close(cmd)
-		unused = 0
+		section = "run"
+		output_lineno = NR
+		section_excl_comm = ""
+		section_incl_comm = ""
 
-	} else if ($2 == "run-identity") {
-		cmd = ENVIRON["INDENT"]
-		for (i = 3; i <= NF; i++)
-			cmd = cmd " " $i
-		for (i = 0; i < in_lines_len; i++) {
-			print in_lines[i] | cmd
-			print in_lines[i] > "expected.out"
-		}
-		close(cmd)
-		unused = 0
+		run_indent(input_excl_comm)
+		unused_input_lineno = 0
+
+	} else if ($2 == "run-equals-input") {
+		run_indent(input_excl_comm)
+		printf("%s", input_excl_comm) > "expected.out"
+		unused_input_lineno = 0
+
+	} else if ($2 == "run-equals-prev-output") {
+		run_indent(input_excl_comm)
+		printf("%s", output_excl_comm) > "expected.out"
+		unused_input_lineno = 0
 
 	} else if ($2 == "end") {
-		if (mode == "input" && input_all == prev_input_all)
-			die(FILENAME ":" NR ": error: duplicate input")
-		mode = ""
+		if (section == "input" && section_incl_comm == input_incl_comm)
+			die(NR, "duplicate input; remove this section")
+		if (section == "run" && section_incl_comm == input_incl_comm)
+			die(output_lineno,
+			    "output == input; use run-equals-input")
+		if (section == "run" && section_incl_comm == output_incl_comm)
+			die(output_lineno,
+			    "duplicate output; use run-equals-prev-output")
+
+		if (section == "input") {
+			input_excl_comm = section_excl_comm
+			input_incl_comm = section_incl_comm
+		}
+		if (section == "run") {
+			output_excl_comm = section_excl_comm
+			output_incl_comm = section_incl_comm
+		}
+		section = ""
 
 	} else {
-		die(FILENAME ":" NR ": error: invalid line \"" $0 "\"")
+		die(NR, "invalid line \"" $0 "\"")
 	}
 
 	next
 }
 
-mode == "input" {
-	in_lines[in_lines_len++] = $0
-	input_all = input_all $0 "\n"
+section == "input" || section == "run" {
+	section_excl_comm = section_excl_comm $0 "\n"
+	section_incl_comm = section_incl_comm $0 "\n"
 }
 
-mode == "run" {
+section == "run" {
 	print $0 > "expected.out"
 }
 
 END {
-	if (mode != "")
-		die(FILENAME ":" NR ": still in mode \"" mode "\"")
-	if (unused != 0)
-		die(FILENAME ":" unused ": input is not used")
+	if (section != "")
+		die(NR, "still in section \"" section "\"")
+	check_unused_input()
 }
 '
 

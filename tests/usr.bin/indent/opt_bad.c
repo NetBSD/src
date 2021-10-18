@@ -1,4 +1,4 @@
-/* $NetBSD: opt_bad.c,v 1.2 2021/10/16 09:39:21 rillig Exp $ */
+/* $NetBSD: opt_bad.c,v 1.3 2021/10/18 07:11:31 rillig Exp $ */
 /* $FreeBSD$ */
 
 /*
@@ -28,13 +28,7 @@ void		function_declaration(void);
 /* comment */
 #indent end
 
-#indent run -nbad
-int		global_variable;
-void		function_declaration(void);
-#if 0
-#endif
-/* comment */
-#indent end
+#indent run-equals-prev-output -nbad
 
 /* Test local declarations. */
 #indent input
