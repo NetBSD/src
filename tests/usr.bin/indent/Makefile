@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.17 2021/10/18 18:10:20 rillig Exp $
+#	$NetBSD: Makefile,v 1.18 2021/10/18 19:36:30 rillig Exp $
 
 .include <bsd.own.mk>
 
@@ -11,11 +11,6 @@ TESTS_SH+=	t_options
 FILESDIR=	${TESTSDIR}
 FILES=		block.0
 FILES+=		block.0.stdout
-FILES+=		comment-line-end.0
-FILES+=		comment-line-end.0.stdout
-FILES+=		comments.0
-FILES+=		comments.0.pro
-FILES+=		comments.0.stdout
 FILES+=		declarations.0
 FILES+=		declarations.0.stderr
 FILES+=		declarations.0.stdout
@@ -164,9 +159,6 @@ FILES+=		token-colon.0.stdout
 FILES+=		token-comma.0
 FILES+=		token-comma.0.pro
 FILES+=		token-comma.0.stdout
-FILES+=		token-comment.0
-FILES+=		token-comment.0.pro
-FILES+=		token-comment.0.stdout
 FILES+=		token-decl.0
 FILES+=		token-decl.0.pro
 FILES+=		token-decl.0.stdout
@@ -263,6 +255,7 @@ FILES+=		token-unary_op.0.stdout
 FILES+=		token-while_expr.0
 FILES+=		token-while_expr.0.pro
 FILES+=		token-while_expr.0.stdout
+FILES+=		token_comment.c
 FILES+=		token_ident.c
 FILES+=		types_from_file.0
 FILES+=		types_from_file.0.stdout
