@@ -1,5 +1,5 @@
 #! /bin/sh
-# $NetBSD: t_options.sh,v 1.5 2021/10/18 07:11:31 rillig Exp $
+# $NetBSD: t_options.sh,v 1.6 2021/10/18 18:10:20 rillig Exp $
 #
 # Copyright (c) 2021 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -185,7 +185,7 @@ check()
 
 atf_init_test_cases()
 {
-	for fname in "$srcdir"/opt_*.c; do
+	for fname in "$srcdir"/*.c; do
 		test_name=${fname##*/}
 		test_name=${test_name%.c}
 

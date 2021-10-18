@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.16 2021/10/16 03:20:12 rillig Exp $
+#	$NetBSD: Makefile,v 1.17 2021/10/18 18:10:20 rillig Exp $
 
 .include <bsd.own.mk>
 
@@ -9,9 +9,7 @@ TESTS_SH+=	t_misc
 TESTS_SH+=	t_options
 
 FILESDIR=	${TESTSDIR}
-FILES=		binary.0
-FILES+=		binary.0.stdout
-FILES+=		block.0
+FILES=		block.0
 FILES+=		block.0.stdout
 FILES+=		comment-line-end.0
 FILES+=		comment-line-end.0.stdout
@@ -26,8 +24,6 @@ FILES+=		elsecomment.0.stdout
 FILES+=		elsecomment.0.pro
 FILES+=		f_decls.0
 FILES+=		f_decls.0.stdout
-FILES+=		float.0
-FILES+=		float.0.stdout
 FILES+=		indent_variables.0
 FILES+=		indent_variables.0.pro
 FILES+=		indent_variables.0.stdout
@@ -151,9 +147,6 @@ FILES+=		pcs.0.pro
 FILES+=		ps_ind_level.0
 FILES+=		ps_ind_level.0.pro
 FILES+=		ps_ind_level.0.stdout
-FILES+=		cs.0
-FILES+=		cs.0.stdout
-FILES+=		cs.0.pro
 FILES+=		struct.0
 FILES+=		struct.0.stdout
 FILES+=		surplusbad.0
@@ -192,9 +185,6 @@ FILES+=		token-form_feed.0.stdout
 FILES+=		token-funcname.0
 FILES+=		token-funcname.0.pro
 FILES+=		token-funcname.0.stdout
-FILES+=		token-ident.0
-FILES+=		token-ident.0.pro
-FILES+=		token-ident.0.stdout
 FILES+=		token-if_expr.0
 FILES+=		token-if_expr.0.pro
 FILES+=		token-if_expr.0.stdout
@@ -273,6 +263,7 @@ FILES+=		token-unary_op.0.stdout
 FILES+=		token-while_expr.0
 FILES+=		token-while_expr.0.pro
 FILES+=		token-while_expr.0.stdout
+FILES+=		token_ident.c
 FILES+=		types_from_file.0
 FILES+=		types_from_file.0.stdout
 FILES+=		types_from_file.0.list
