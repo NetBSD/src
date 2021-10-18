@@ -1,4 +1,4 @@
-/* $NetBSD: opt_sc.c,v 1.3 2021/10/16 21:32:10 rillig Exp $ */
+/* $NetBSD: opt_sc.c,v 1.4 2021/10/18 07:11:31 rillig Exp $ */
 /* $FreeBSD$ */
 
 /*
@@ -59,14 +59,6 @@ comment without asterisks
  */
 #indent end
 
-#indent run -sc
-/**
- * Javadoc, adopted by several other programming languages.
- */
-#indent end
+#indent run-equals-input -sc
 
-#indent run -nsc
-/**
- * Javadoc, adopted by several other programming languages.
- */
-#indent end
+#indent run-equals-input -nsc

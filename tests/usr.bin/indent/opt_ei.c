@@ -1,4 +1,4 @@
-/* $NetBSD: opt_ei.c,v 1.3 2021/10/16 21:32:10 rillig Exp $ */
+/* $NetBSD: opt_ei.c,v 1.4 2021/10/18 07:11:31 rillig Exp $ */
 /* $FreeBSD$ */
 
 /*
@@ -27,21 +27,7 @@ example(int n)
 }
 #indent end
 
-#indent run -ei
-void
-example(int n)
-{
-	if (n > 99) {
-		print("large");
-	} else if (n > 9) {
-		print("double-digit");
-	} else if (n > 0)
-		print("positive");
-	else {
-		print("negative");
-	}
-}
-#indent end
+#indent run-equals-input -ei
 
 #indent run -nei
 void
