@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.20 2021/10/18 22:30:34 rillig Exp $
+#	$NetBSD: Makefile,v 1.21 2021/10/18 22:46:33 rillig Exp $
 
 .include <bsd.own.mk>
 
@@ -137,9 +137,7 @@ FILES+=		parens.0.pro
 FILES+=		pcs.0
 FILES+=		pcs.0.stdout
 FILES+=		pcs.0.pro
-FILES+=		ps_ind_level.0
-FILES+=		ps_ind_level.0.pro
-FILES+=		ps_ind_level.0.stdout
+FILES+=		ps_ind_level.c
 FILES+=		struct.0
 FILES+=		struct.0.stdout
 FILES+=		surplusbad.0
