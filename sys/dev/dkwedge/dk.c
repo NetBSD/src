@@ -1,4 +1,4 @@
-/*	$NetBSD: dk.c,v 1.108 2021/10/16 07:05:45 simonb Exp $	*/
+/*	$NetBSD: dk.c,v 1.109 2021/10/18 11:40:56 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.108 2021/10/16 07:05:45 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.109 2021/10/18 11:40:56 simonb Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_dkwedge.h"
@@ -1542,7 +1542,7 @@ dkioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 		return (error);
 
 	error = 0;
-	
+
 	switch (cmd) {
 	case DIOCGSTRATEGY:
 	case DIOCGCACHE:
@@ -1773,4 +1773,3 @@ dkwedge_get_parent_name(dev_t dev)
 		return NULL;
 	return sc->sc_parent->dk_name;
 }
-
