@@ -1,4 +1,4 @@
-/*	$NetBSD: if_lagg.c,v 1.15 2021/10/19 07:52:33 yamaguchi Exp $	*/
+/*	$NetBSD: if_lagg.c,v 1.16 2021/10/19 08:02:42 yamaguchi Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006 Reyk Floeter <reyk@openbsd.org>
@@ -20,7 +20,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_lagg.c,v 1.15 2021/10/19 07:52:33 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_lagg.c,v 1.16 2021/10/19 08:02:42 yamaguchi Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -2271,7 +2271,6 @@ lagg_port_setup(struct lagg_softc *sc,
 
 	switch (ifp_port->if_type) {
 	case IFT_ETHER:
-	case IFT_L2VLAN:
 	case IFT_L2TP:
 		if_type = IFT_IEEE8023ADLAG;
 		break;
