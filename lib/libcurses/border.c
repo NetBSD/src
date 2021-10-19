@@ -1,4 +1,4 @@
-/*	$NetBSD: border.c,v 1.20 2021/09/06 07:45:48 rin Exp $	*/
+/*	$NetBSD: border.c,v 1.21 2021/10/19 06:41:03 blymn Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: border.c,v 1.20 2021/09/06 07:45:48 rin Exp $");
+__RCSID("$NetBSD: border.c,v 1.21 2021/10/19 06:41:03 blymn Exp $");
 #endif				/* not lint */
 
 #include <stdlib.h>
@@ -87,6 +87,7 @@ wborder(WINDOW *win, chtype left, chtype right, chtype top, chtype bottom,
 	if (!(botright & __CHARTEXT))
 		botright |= ACS_LRCORNER;
 
+	__CTRACE(__CTRACE_INPUT, "wborder: window 0x%p\n", win);
 	__CTRACE(__CTRACE_INPUT, "wborder: left = %c, 0x%x\n",
 	    left & __CHARTEXT, left & __ATTRIBUTES);
 	__CTRACE(__CTRACE_INPUT, "wborder: right = %c, 0x%x\n",
@@ -237,6 +238,7 @@ int wborder_set(WINDOW *win, const cchar_t *ls, const cchar_t *rs,
 	else
 		memcpy(&botright, WACS_LRCORNER, sizeof(cchar_t));
 
+	__CTRACE(__CTRACE_INPUT, "wborder_set: window 0x%p\n", win);
 	__CTRACE(__CTRACE_INPUT, "wborder_set: left = %c, 0x%x\n",
 	    left.vals[0], left.attributes );
 	__CTRACE(__CTRACE_INPUT, "wborder_set: right = %c, 0x%x\n",
