@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.163 2021/10/14 02:22:25 rin Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.164 2021/10/19 03:47:33 rin Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.163 2021/10/14 02:22:25 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.164 2021/10/19 03:47:33 rin Exp $");
 
 #include "opt_ddb.h"
 #include "opt_cputype.h"
@@ -176,13 +176,15 @@ cpu_uarea_alloc(bool system)
 #ifdef PMAP_MAP_POOLPAGE
 
 	struct pglist pglist;
+#ifdef _LP64
 	const paddr_t high = pmap_limits.avail_end;
-#ifndef _LP64
+#else
+	const paddr_t high = MIPS_KSEG1_START - MIPS_KSEG0_START;
 	/*
 	 * Don't allocate a direct mapped uarea if we aren't allocating for a
 	 * system lwp and we have memory that can't be mapped via KSEG0.
 	 */
-	if (!system && high > MIPS_KSEG1_START - MIPS_KSEG0_START)
+	if (!system && high < pmap_limits.avail_end)
 		return NULL;
 #endif
 	int error;
