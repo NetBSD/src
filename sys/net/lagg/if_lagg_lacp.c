@@ -1,4 +1,4 @@
-/*	$NetBSD: if_lagg_lacp.c,v 1.5 2021/10/02 22:14:32 mrg Exp $	*/
+/*	$NetBSD: if_lagg_lacp.c,v 1.6 2021/10/19 07:52:33 yamaguchi Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-NetBSD
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_lagg_lacp.c,v 1.5 2021/10/02 22:14:32 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_lagg_lacp.c,v 1.6 2021/10/19 07:52:33 yamaguchi Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_lagg.h"
@@ -111,6 +111,7 @@ struct lacp_portinfo {
 
 struct lacp_port {
 	struct lagg_port	*lp_laggport;
+	bool			 lp_added_multi;
 	int			 lp_timer[LACP_NTIMER];
 	uint32_t		 lp_marker_xid;
 	enum lacp_selected	 lp_selected;
@@ -629,6 +630,7 @@ lacp_allocport(struct lagg_proto_softc *xlsc, struct lagg_port *lp)
 	struct lacp_softc *lsc;
 	struct lacp_port *lacpp;
 	struct ifreq ifr;
+	bool added_multi;
 	int error;
 
 	lsc = (struct lacp_softc *)xlsc;
@@ -641,7 +643,14 @@ lacp_allocport(struct lagg_proto_softc *xlsc, struct lagg_port *lp)
 	error = lp->lp_ioctl(lp->lp_ifp, SIOCADDMULTI, (void *)&ifr);
 	IFNET_UNLOCK(lp->lp_ifp);
 
-	if (error != 0) {
+	switch (error) {
+	case 0:
+		added_multi = true;
+		break;
+	case EAFNOSUPPORT:
+		added_multi = false;
+		break;
+	default:
 		lagg_log(sc, LOG_ERR, "SIOCADDMULTI failed on %s\n",
 		    lp->lp_ifp->if_xname);
 		return error;
@@ -651,6 +660,7 @@ lacp_allocport(struct lagg_proto_softc *xlsc, struct lagg_port *lp)
 	if (lacpp == NULL)
 		return ENOMEM;
 
+	lacpp->lp_added_multi = added_multi;
 	lagg_work_set(&lacpp->lp_work_smtx, lacp_sm_tx_work, lsc);
 	lagg_work_set(&lacpp->lp_work_marker, lacp_marker_work, lsc);
 
@@ -715,11 +725,13 @@ lacp_freeport(struct lagg_proto_softc *xlsc, struct lagg_port *lp)
 	lagg_workq_wait(lsc->lsc_workq, &lacpp->lp_work_smtx);
 	lagg_workq_wait(lsc->lsc_workq, &lacpp->lp_work_marker);
 
-	lacp_mcastaddr(&ifr, LACP_PORT_XNAME(lacpp));
+	if (lacpp->lp_added_multi) {
+		lacp_mcastaddr(&ifr, LACP_PORT_XNAME(lacpp));
 
-	IFNET_LOCK(lp->lp_ifp);
-	(void)lp->lp_ioctl(lp->lp_ifp, SIOCDELMULTI, (void *)&ifr);
-	IFNET_UNLOCK(lp->lp_ifp);
+		IFNET_LOCK(lp->lp_ifp);
+		(void)lp->lp_ioctl(lp->lp_ifp, SIOCDELMULTI, (void *)&ifr);
+		IFNET_UNLOCK(lp->lp_ifp);
+	}
 
 	lp->lp_proto_ctx = NULL;
 	kmem_free(lacpp, sizeof(*lacpp));
