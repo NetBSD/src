@@ -1,4 +1,4 @@
-/*	$NetBSD: in_pcb.c,v 1.185 2020/09/08 14:12:57 christos Exp $	*/
+/*	$NetBSD: in_pcb.c,v 1.186 2021/10/19 20:01:09 roy Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -93,7 +93,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in_pcb.c,v 1.185 2020/09/08 14:12:57 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in_pcb.c,v 1.186 2021/10/19 20:01:09 roy Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -436,8 +436,6 @@ in_pcbbind(void *v, struct sockaddr_in *sin, struct lwp *l)
 	if (inp->inp_af != AF_INET)
 		return (EINVAL);
 
-	if (IN_ADDRLIST_READER_EMPTY())
-		return (EADDRNOTAVAIL);
 	if (inp->inp_lport || !in_nullhost(inp->inp_laddr))
 		return (EINVAL);
 
