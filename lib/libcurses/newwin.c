@@ -1,4 +1,4 @@
-/*	$NetBSD: newwin.c,v 1.62 2021/09/07 01:23:09 rin Exp $	*/
+/*	$NetBSD: newwin.c,v 1.63 2021/10/19 06:41:03 blymn Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)newwin.c	8.3 (Berkeley) 7/27/94";
 #else
-__RCSID("$NetBSD: newwin.c,v 1.62 2021/09/07 01:23:09 rin Exp $");
+__RCSID("$NetBSD: newwin.c,v 1.63 2021/10/19 06:41:03 blymn Exp $");
 #endif
 #endif				/* not lint */
 
@@ -365,6 +365,8 @@ __makenew(SCREEN *screen, int nlines, int ncols, int by, int bx, int sub,
 		win->smaxx = 0;
 	} else
 		__swflags(win);
+	__CTRACE(__CTRACE_WINDOW, "makenew: sub = %d\n", sub);
+	__CTRACE(__CTRACE_WINDOW, "makenew: ispad = %d\n", ispad);
 	__CTRACE(__CTRACE_WINDOW, "makenew: win->wattr = %08x\n", win->wattr);
 	__CTRACE(__CTRACE_WINDOW, "makenew: win->flags = %#.4x\n", win->flags);
 	__CTRACE(__CTRACE_WINDOW, "makenew: win->maxy = %d\n", win->maxy);
