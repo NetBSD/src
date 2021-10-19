@@ -1,4 +1,4 @@
-/*	$NetBSD: if_laggproto.h,v 1.8 2021/10/12 08:30:58 yamaguchi Exp $	*/
+/*	$NetBSD: if_laggproto.h,v 1.9 2021/10/19 07:52:33 yamaguchi Exp $	*/
 
 /*
  * Copyright (c) 2021 Internet Initiative Japan Inc.
@@ -68,6 +68,7 @@ struct lagg_port {
 	struct lagg_softc	*lp_softc;	/* parent lagg */
 	void			*lp_proto_ctx;
 	bool			 lp_ifdetaching;
+	bool			 lp_promisc;
 	void			*lp_linkstate_hook;
 	void			*lp_ifdetach_hook;
 
@@ -214,7 +215,6 @@ struct lagg_softc {
 #define LAGG_PORT_IOCTL(_lp, _cmd, _data)	\
 	(_lp)->lp_ioctl == NULL ? ENOTTY :	\
 	(_lp)->lp_ioctl((_lp)->lp_ifp, (_cmd), (_data))
-
 
 static inline const void *
 lagg_m_extract(struct mbuf *m, size_t off, size_t reqlen, void *buf)
