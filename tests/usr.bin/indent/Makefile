@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.23 2021/10/19 19:59:05 rillig Exp $
+#	$NetBSD: Makefile,v 1.24 2021/10/19 20:20:24 rillig Exp $
 
 .include <bsd.own.mk>
 
@@ -19,6 +19,7 @@ FILES+=		elsecomment.0.stdout
 FILES+=		elsecomment.0.pro
 FILES+=		f_decls.0
 FILES+=		f_decls.0.stdout
+FILES+=		indent_off_on.c
 FILES+=		indent_variables.0
 FILES+=		indent_variables.0.pro
 FILES+=		indent_variables.0.stdout
