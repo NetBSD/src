@@ -1,4 +1,4 @@
-/* $NetBSD: token_comment.c,v 1.3 2021/10/19 18:18:23 rillig Exp $ */
+/* $NetBSD: token_comment.c,v 1.4 2021/10/19 18:29:59 rillig Exp $ */
 /* $FreeBSD$ */
 
 /*
@@ -526,8 +526,6 @@ function(void)
 }
 /* $ FIXME: Missing empty line. */
 /*INDENT OFF*/
- 
-/* $ FIXME: The line above has a trailing space. */
 #indent end
 
 /*
