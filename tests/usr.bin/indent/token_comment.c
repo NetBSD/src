@@ -1,4 +1,4 @@
-/* $NetBSD: token_comment.c,v 1.4 2021/10/19 18:29:59 rillig Exp $ */
+/* $NetBSD: token_comment.c,v 1.5 2021/10/19 20:41:42 rillig Exp $ */
 /* $FreeBSD$ */
 
 /*
@@ -508,102 +508,6 @@ function(void)
 }
 #indent end
 
-#indent input
-void
-function(void)
-{
-	code();
-}
-
-/*INDENT OFF*/
-#indent end
-
-#indent run
-void
-function(void)
-{
-	code();
-}
-/* $ FIXME: Missing empty line. */
-/*INDENT OFF*/
-#indent end
-
-/*
- * The special comments 'INDENT OFF' and 'INDENT ON' toggle whether the code
- * is formatted or kept as is.
- */
-#indent input
-/*INDENT OFF*/
-/* No formatting takes place here. */
-int format( void ) {{{
-/*INDENT ON*/
-}}}
-
-/* INDENT OFF */
-void indent_off ( void ) ;
-/*  INDENT */
-void indent_on ( void ) ;
-/* INDENT OFF */
-void indent_off ( void ) ;
-	/* INDENT ON */
-void indent_on ( void ) ;	/* the comment may be indented */
-/* INDENT		OFF					*/
-void indent_off ( void ) ;
-/* INDENTATION ON */
-void indent_still_off ( void ) ;	/* due to the word 'INDENTATION' */
-/* INDENT ON * */
-void indent_still_off ( void ) ;	/* due to the extra '*' at the end */
-/* INDENT ON */
-void indent_on ( void ) ;
-/* INDENT: OFF */
-void indent_still_on ( void ) ;	/* due to the colon in the middle */
-/* INDENT OFF */		/* extra comment */
-void indent_still_on ( void ) ;	/* due to the extra comment to the right */
-#indent end
-
-#indent run
-/*INDENT OFF*/
-/* No formatting takes place here. */
-int format( void ) {{{
-/* $ XXX: Why is the INDENT ON comment indented? */
-/* $ XXX: Why does the INDENT ON comment get spaces, but not the OFF comment? */
-			/* INDENT ON */
-}
-}
-}
-/* $ FIXME: The empty line disappeared but shouldn't. */
-/* INDENT OFF */
-void indent_off ( void ) ;
-/* $ XXX: The double space from the below comment got merged to a single */
-/* $ XXX: space even though the comment might be regarded to be still in */
-/* $ XXX: the OFF section. */
-/* INDENT */
-void
-indent_on(void);
-/* INDENT OFF */
-void indent_off ( void ) ;
-/* $ XXX: The below comment got moved from column 9 to column 1. */
-/* INDENT ON */
-void
-indent_on(void);		/* the comment may be indented */
-/* INDENT		OFF					*/
-void indent_off ( void ) ;
-/* INDENTATION ON */
-void indent_still_off ( void ) ;	/* due to the word 'INDENTATION' */
-/* INDENT ON * */
-void indent_still_off ( void ) ;	/* due to the extra '*' at the end */
-/* INDENT ON */
-void
-indent_on(void);
-/* INDENT: OFF */
-void
-indent_still_on(void);		/* due to the colon in the middle */
-/* $ The extra comment got moved to the left since there is no code in */
-/* $ that line. */
-/* INDENT OFF *//* extra comment */
-void
-indent_still_on(void);		/* due to the extra comment to the right */
-#indent end
 
 #indent input
 /*
