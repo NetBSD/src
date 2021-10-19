@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.c,v 1.138 2021/10/17 18:13:00 rillig Exp $	*/
+/*	$NetBSD: indent.c,v 1.139 2021/10/19 18:29:59 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)indent.c	5.17 (Berkeley) 6/7/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: indent.c,v 1.138 2021/10/17 18:13:00 rillig Exp $");
+__RCSID("$NetBSD: indent.c,v 1.139 2021/10/19 18:29:59 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/indent.c 340138 2018-11-04 19:24:49Z oshogbo $");
 #endif
@@ -274,7 +274,7 @@ static void
 switch_buffer(void)
 {
     ps.search_brace = false;	/* stop looking for start of stmt */
-    saved_inp_s = inp.s;		/* save current input buffer */
+    saved_inp_s = inp.s;	/* save current input buffer */
     saved_inp_e = inp.e;
     inp.s = save_com;		/* fix so that subsequent calls to lexi will
 				 * take tokens out of save_com */
