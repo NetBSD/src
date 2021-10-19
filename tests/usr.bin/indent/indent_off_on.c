@@ -1,4 +1,4 @@
-/* $NetBSD: indent_off_on.c,v 1.2 2021/10/19 20:41:42 rillig Exp $ */
+/* $NetBSD: indent_off_on.c,v 1.3 2021/10/19 21:21:07 rillig Exp $ */
 /* $FreeBSD$ */
 
 /*
@@ -28,6 +28,24 @@
 
 {
 }
+#indent end
+
+
+#indent input
+{}
+
+
+/*INDENT OFF*/
+/*INDENT ON*/
+#indent end
+
+#indent run
+{
+}
+/* $ FIXME: This empty line must stay. */
+/* $ FIXME: This empty line must stay. */
+/*INDENT OFF*/
+/* INDENT ON */
 #indent end
 
 
