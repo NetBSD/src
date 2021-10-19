@@ -1,4 +1,4 @@
-/* $NetBSD: token_comment.c,v 1.2 2021/10/18 22:30:34 rillig Exp $ */
+/* $NetBSD: token_comment.c,v 1.3 2021/10/19 18:18:23 rillig Exp $ */
 /* $FreeBSD$ */
 
 /*
@@ -12,9 +12,9 @@
 /*-
  * TODO: systematically test comments
  *
- * - starting in column 1, with opt.format_col1_comments
- * - starting in column 1, without opt.format_col1_comments
- * - starting in column 9, independent of opt.format_col1_comments
+ * - starting in column 1, with opt.format_col1_comments (-fc1)
+ * - starting in column 1, without opt.format_col1_comments (-fc1)
+ * - starting in column 9, independent of opt.format_col1_comments (-fc1)
  * - starting in column 33, the default
  * - starting in column 65, which is already close to the default right margin
  * - starting in column 81, spilling into the right margin
@@ -30,352 +30,27 @@
  * - block/end-of-line comment to the right of code
  * - block/end-of-line comment to the right of label with code
  *
- * - with/without opt.comment_delimiter_on_blankline
- * - with/without opt.star_comment_cont
- * - with/without opt.format_block_comments
+ * - with/without opt.comment_delimiter_on_blankline (-cdb)
+ * - with/without opt.star_comment_cont (-sc)
+ * - with/without opt.format_block_comments (-fbc)
  * - with varying opt.max_line_length (32, 64, 80, 140)
- * - with varying opt.unindent_displace (0, 2, -5)
+ * - with varying opt.unindent_displace (-d0, -d2, -d-5)
  * - with varying opt.indent_size (3, 4, 8)
  * - with varying opt.tabsize (3, 4, 8, 16)
- * - with varying opt.block_comment_max_line_length (60, 78, 90)
- * - with varying opt.decl_comment_column (0, 1, 33, 80)
+ * - with varying opt.block_comment_max_line_length (-lc60, -lc78, -lc90)
+ * - with varying opt.comment_column (-c0, -c1, -c33, -c80)
+ * - with varying opt.decl_comment_column (-cd0, -cd1, -cd20, -cd33, -cd80)
  * - with/without ps.decl_on_line
  * - with/without ps.last_nl
- */
-
-#include <assert.h>
-#include <stdio.h>
-#include <string.h>
-
-#include "indent.h"
-
-static void
-com_add_char(char ch)
-{
-    if (com.e + 1 >= com.l)
-	buf_expand(&com, 1);
-    *com.e++ = ch;
-}
-
-static void
-com_add_delim(void)
-{
-    if (!opt.star_comment_cont)
-	return;
-    size_t len = 3;
-    if (com.e + len >= com.l)
-	buf_expand(&com, len);
-    memcpy(com.e, " * ", len);
-    com.e += len;
-}
-
-static void
-com_terminate(void)
-{
-    if (com.e + 1 >= com.l)
-	buf_expand(&com, 1);
-    *com.e = '\0';
-}
-
-static bool
-fits_in_one_line(int max_line_length)
-{
-    for (const char *p = inp.s; *p != '\n'; p++) {
-	assert(*p != '\0');
-	assert(inp.e - p >= 2);
-	if (!(p[0] == '*' && p[1] == '/'))
-	    continue;
-
-	int len = indentation_after_range(ps.com_ind + 3, inp.s, p);
-	len += is_hspace(p[-1]) ? 2 : 3;
-	if (len <= max_line_length)
-	    return true;
-    }
-    return false;
-}
-
-/*
- * Scan, reformat and output a single comment, which is either a block comment
- * starting with '/' '*' or an end-of-line comment starting with '//'.
  *
- * Try to keep comments from going over the maximum line length.  If a line is
- * too long, move everything starting from the last blank to the next comment
- * line.  Blanks and tabs from the beginning of the input line are removed.
- *
- * ALGORITHM:
- *	1) Decide where the comment should be aligned, and if lines should
- *	   be broken.
- *	2) If lines should not be broken and filled, just copy up to end of
- *	   comment.
- *	3) If lines should be filled, then scan through the input buffer,
- *	   copying characters to com_buf.  Remember where the last blank,
- *	   tab, or newline was.  When line is filled, print up to last blank
- *	   and continue copying.
+ * - very long comments that overflow the buffer 'com'
+ * - comments that come from save_com
+ * - very long word that already spills over the right margin
+ * - wrap/nowrap comment containing '\n'
+ * - wrap/nowrap comment containing '\f'
+ * - wrap/nowrap comment containing '\t'
+ * - wrap/nowrap comment containing '\b'
  */
-void
-process_comment(void)
-{
-    int adj_max_line_length;	/* Adjusted max_line_length for comments that
-				 * spill over the right margin */
-    ssize_t last_blank;		/* index of the last blank in com.buf */
-    bool break_delim = opt.comment_delimiter_on_blankline;
-    int l_just_saw_decl = ps.just_saw_decl;
-    int com_ind;
-
-    adj_max_line_length = opt.max_line_length;
-    ps.just_saw_decl = 0;
-    last_blank = -1;		/* no blanks found so far */
-    bool may_wrap = true;
-    ps.stats.comments++;
-
-    /* Figure where to align and how to treat the comment */
-
-    if (ps.col_1 && !opt.format_col1_comments) {
-	may_wrap = false;
-	break_delim = false;
-	com_ind = 0;
-
-    } else {
-	if (*inp.s == '-' || *inp.s == '*' || token.e[-1] == '/' ||
-	    (*inp.s == '\n' && !opt.format_block_comments)) {
-	    may_wrap = false;
-	    break_delim = false;
-	}
-
-	if (lab.s == lab.e && code.s == code.e) {
-	    com_ind = (ps.ind_level - opt.unindent_displace) * opt.indent_size;
-	    adj_max_line_length = opt.block_comment_max_line_length;
-	    if (com_ind <= 0)
-		com_ind = opt.format_col1_comments ? 0 : 1;
-
-	} else {
-	    break_delim = false;
-
-	    int target_ind;
-	    if (code.s != code.e)
-		target_ind = indentation_after(compute_code_indent(), code.s);
-	    else if (lab.s != lab.e)
-		target_ind = indentation_after(compute_label_indent(), lab.s);
-	    else
-		target_ind = 0;
-
-	    com_ind = ps.decl_on_line || ps.ind_level == 0
-		      ? opt.decl_comment_column - 1 : opt.comment_column - 1;
-	    if (com_ind <= target_ind)
-		com_ind = next_tab(target_ind);
-	    if (com_ind + 25 > adj_max_line_length)
-		adj_max_line_length = com_ind + 25;
-	}
-    }
-
-    ps.com_ind = com_ind;
-
-    if (!may_wrap) {
-	/*
-	 * Find out how much indentation there was originally, because that
-	 * much will have to be ignored by dump_line(). This is a box comment,
-	 * so nothing changes -- not even indentation.
-	 *
-	 * The comment we're about to read usually comes from inp.buf,
-	 * unless it has been copied into save_com.
-	 */
-	const char *start;
-
-	/*
-	 * XXX: ordered comparison between pointers from different objects
-	 * invokes undefined behavior (C99 6.5.8).
-	 */
-	start = inp.s >= save_com && inp.s < save_com + sc_size ?
-		sc_buf : inp.buf;
-	ps.n_comment_delta = -indentation_after_range(0, start, inp.s - 2);
-    } else {
-	ps.n_comment_delta = 0;
-	while (is_hspace(*inp.s))
-	    inp.s++;
-    }
-
-    ps.comment_delta = 0;
-    com_add_char('/');
-    com_add_char(token.e[-1]);	/* either '*' or '/' */
-    if (*inp.s != ' ' && may_wrap)
-	com_add_char(' ');
-
-    if (break_delim && fits_in_one_line(adj_max_line_length))
-	break_delim = false;
-
-    if (break_delim) {
-	char *t = com.e;
-	com.e = com.s + 2;
-	*com.e = '\0';
-	if (opt.blanklines_before_block_comments && ps.last_token != lbrace)
-	    prefix_blankline_requested = true;
-	dump_line();
-	com.e = com.s = t;
-	com_add_delim();
-    }
-
-    /* Start to copy the comment */
-
-    for (;;) {			/* this loop will go until the comment is
-				 * copied */
-	switch (*inp.s) {	/* this checks for various special cases */
-	case '\f':
-	    if (may_wrap) {	/* in a text comment, break the line here */
-		ps.use_ff = true;
-		dump_line();
-		last_blank = -1;
-		com_add_delim();
-		inp.s++;
-		while (is_hspace(*inp.s))
-		    inp.s++;
-	    } else {
-		inbuf_skip();
-		com_add_char('\f');
-	    }
-	    break;
-
-	case '\n':
-	    if (token.e[-1] == '/')
-		goto end_of_line_comment;
-
-	    if (had_eof) {
-		diag(1, "Unterminated comment");
-		dump_line();
-		return;
-	    }
-
-	    last_blank = -1;
-	    if (!may_wrap || ps.last_nl) {	/* if this is a boxed comment,
-						 * we handle the newline */
-		if (com.s == com.e)
-		    com_add_char(' ');
-		if (may_wrap && com.e - com.s > 3) {
-		    dump_line();
-		    com_add_delim();
-		}
-		dump_line();
-		if (may_wrap)
-		    com_add_delim();
-
-	    } else {
-		ps.last_nl = true;
-		if (!is_hspace(com.e[-1]))
-		    com_add_char(' ');
-		last_blank = com.e - 1 - com.buf;
-	    }
-	    ++line_no;
-	    if (may_wrap) {
-		bool skip_asterisk = true;
-		do {		/* flush any blanks and/or tabs at start of
-				 * next line */
-		    inbuf_skip();
-		    if (*inp.s == '*' && skip_asterisk) {
-			skip_asterisk = false;
-			inbuf_skip();
-			if (*inp.s == '/')
-			    goto end_of_comment;
-		    }
-		} while (is_hspace(*inp.s));
-	    } else
-		inbuf_skip();
-	    break;		/* end of case for newline */
-
-	case '*':
-	    inbuf_skip();
-	    if (*inp.s == '/') {
-		end_of_comment:
-		inbuf_skip();
-
-		end_of_line_comment:
-		if (break_delim) {
-		    if (com.e > com.s + 3)
-			dump_line();
-		    else
-			com.s = com.e;	/* XXX: why not e = s? */
-		    com_add_char(' ');
-		}
-
-		if (!is_hspace(com.e[-1]) && may_wrap)
-		    com_add_char(' ');
-		if (token.e[-1] != '/') {
-		    com_add_char('*');
-		    com_add_char('/');
-		}
-		com_terminate();
-
-		ps.just_saw_decl = l_just_saw_decl;
-		return;
-
-	    } else		/* handle isolated '*' */
-		com_add_char('*');
-	    break;
-
-	default:		/* we have a random char */
-	    ;
-	    int now_len = indentation_after_range(ps.com_ind, com.s, com.e);
-	    for (;;) {
-		char ch = inbuf_next();
-		if (is_hspace(ch))
-		    last_blank = com.e - com.buf;
-		com_add_char(ch);
-		now_len++;
-		if (memchr("*\n\r\b\t", *inp.s, 6) != NULL)
-		    break;
-		if (now_len >= adj_max_line_length && last_blank != -1)
-		    break;
-	    }
-
-	    ps.last_nl = false;
-
-	    /* XXX: signed character comparison '>' does not work for UTF-8 */
-	    if (now_len > adj_max_line_length &&
-		may_wrap && com.e[-1] > ' ') {
-
-		/* the comment is too long, it must be broken up */
-		if (last_blank == -1) {
-		    dump_line();
-		    com_add_delim();
-		    break;
-		}
-
-		com_terminate();	/* mark the end of the last word */
-		com.e = com.buf + last_blank;
-		dump_line();
-
-		com_add_delim();
-
-		const char *p = com.buf + last_blank + 1;
-		while (is_hspace(*p))
-		    p++;
-		last_blank = -1;
-
-		/*
-		 * p still points to the last word from the previous line, in
-		 * the same buffer that it is copied to, but to the right of
-		 * the writing region [com.s, com.e). Calling dump_line only
-		 * moved com.e back to com.s, it did not clear the contents of
-		 * the buffer. This ensures that the buffer is already large
-		 * enough.
-		 */
-		while (*p != '\0') {
-		    assert(!is_hspace(*p));
-		    *com.e++ = *p++;
-		}
-	    }
-	    break;
-	}
-    }
-}
-
-/* For variations on this theme, try some of these options: */
-/* -c20 */
-/* -cd20 */
-/* -cdb */
-/* -d */
-/* -fc1 */
-/* -fcb */
-/* -lc60 */
-/* -sc */
 
 #indent input
 typedef enum x {
