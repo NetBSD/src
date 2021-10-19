@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.283 2021/08/30 17:08:13 rillig Exp $
+# $NetBSD: Makefile,v 1.284 2021/10/19 15:59:26 sjg Exp $
 #
 # Unit tests for make(1)
 #
@@ -530,9 +530,7 @@ SED_CMDS.varname-dot-parsefile=	-e '/in some cases/ s,^make: "[^"]*,make: "<norm
 SED_CMDS.varname-dot-shell=	-e 's, = /[^ ]*, = (details omitted),g'
 SED_CMDS.varname-dot-shell+=	-e 's,"/[^" ]*","(details omitted)",g'
 SED_CMDS.varname-dot-shell+=	-e 's,\[/[^] ]*\],[(details omitted)],g'
-SED_CMDS.varname-empty=		-e 's,${.CURDIR},<curdir>,g'
-SED_CMDS.varname-empty+=	-e '/\.PARSEDIR/d'
-SED_CMDS.varname-empty+=	-e '/\.SHELL/d'
+SED_CMDS.varname-empty=		${.OBJDIR .PARSEDIR .PATH .SHELL:L:@v@-e '/\\$v/d'@}
 
 # Some tests need an additional round of postprocessing.
 POSTPROC.deptgt-suffixes=	awk '/^\#\*\*\* Suffixes/,/^never-stop/'
@@ -689,8 +687,14 @@ _SED_CMDS+=	-e 's,^usage: ${TEST_MAKE:T:S,.,\\.,g} ,usage: make ,'
 # replace anything after 'stopped in' with unit-tests
 _SED_CMDS+=	-e '/stopped/s, /.*, unit-tests,'
 _SED_CMDS+=	-e 's,${TMPDIR},TMPDIR,g'
-# strip ${.CURDIR}/ from the output
-_SED_CMDS+=	-e 's,${.CURDIR:S,.,\\.,g}/,,g'
+# canonicalize ${.OBJDIR} and ${.CURDIR}
+.if ${.OBJDIR} != ${.CURDIR}
+# yes this is inaccurate but none of the tests expect <objdir> anywhere
+# which we get depending on how MAKEOBJDIR is set.
+_SED_CMDS+=	-e 's,${.OBJDIR},<curdir>,g'
+.endif
+_SED_CMDS+=	-e 's,${.CURDIR},<curdir>,g'
+_SED_CMDS+=	-e 's,<curdir>/,,g'
 _SED_CMDS+=	-e 's,${UNIT_TESTS:S,.,\\.,g}/,,g'
 
 .rawout.out:
