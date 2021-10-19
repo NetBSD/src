@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_diskqueue.c,v 1.55 2019/02/10 17:13:33 christos Exp $	*/
+/*	$NetBSD: rf_diskqueue.c,v 1.55.4.1 2021/10/19 10:55:15 martin Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -66,7 +66,7 @@
  ****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_diskqueue.c,v 1.55 2019/02/10 17:13:33 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_diskqueue.c,v 1.55.4.1 2021/10/19 10:55:15 martin Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -83,6 +83,8 @@ __KERNEL_RCSID(0, "$NetBSD: rf_diskqueue.c,v 1.55 2019/02/10 17:13:33 christos E
 #include "rf_sstf.h"
 #include "rf_fifo.h"
 #include "rf_kintf.h"
+
+#include <sys/buf.h>
 
 static void rf_ShutdownDiskQueueSystem(void *);
 
@@ -147,10 +149,15 @@ static const RF_DiskQueueSW_t diskqueuesw[] = {
 };
 #define NUM_DISK_QUEUE_TYPES (sizeof(diskqueuesw)/sizeof(RF_DiskQueueSW_t))
 
+
 #define RF_MAX_FREE_DQD 256
 #define RF_MIN_FREE_DQD  64
 
-#include <sys/buf.h>
+/* XXX: scale these... */
+#define RF_MAX_FREE_BUFIO 256
+#define RF_MIN_FREE_BUFIO  64
+
+
 
 /* configures a single disk queue */
 
@@ -189,6 +196,7 @@ static void
 rf_ShutdownDiskQueueSystem(void *ignored)
 {
 	pool_destroy(&rf_pools.dqd);
+	pool_destroy(&rf_pools.bufio);
 }
 
 int
@@ -197,6 +205,8 @@ rf_ConfigureDiskQueueSystem(RF_ShutdownList_t **listp)
 
 	rf_pool_init(&rf_pools.dqd, sizeof(RF_DiskQueueData_t),
 		     "rf_dqd_pl", RF_MIN_FREE_DQD, RF_MAX_FREE_DQD);
+	rf_pool_init(&rf_pools.bufio, sizeof(buf_t),
+		     "rf_bufio_pl", RF_MIN_FREE_BUFIO, RF_MAX_FREE_BUFIO);
 	rf_ShutdownCreate(listp, rf_ShutdownDiskQueueSystem, NULL);
 
 	return (0);
@@ -367,19 +377,20 @@ rf_CreateDiskQueueData(RF_IoType_t typ, RF_SectorNum_t ssect,
 {
 	RF_DiskQueueData_t *p;
 
-	p = pool_get(&rf_pools.dqd, waitflag | PR_ZERO);
-	if (p == NULL)
-		return (NULL);
+	p = pool_get(&rf_pools.dqd, PR_WAITOK | PR_ZERO);
+	KASSERT(p != NULL);
 
-	if (waitflag == PR_WAITOK) {
-		p->bp = getiobuf(NULL, true);
-	} else {
-		p->bp = getiobuf(NULL, false);
-	}
-	if (p->bp == NULL) {
-		pool_put(&rf_pools.dqd, p);
-		return (NULL);
-	}
+	/* Obtain a buffer from our own pool.  It is possible for the
+	   regular getiobuf() to run out of memory and return NULL.
+	   We need to guarantee that never happens, as RAIDframe
+	   doesn't have a good way to recover if memory allocation
+	   fails here.
+	*/
+	p->bp = pool_get(&rf_pools.bufio, PR_WAITOK | PR_ZERO);
+	KASSERT(p->bp != NULL);
+	
+	buf_init(p->bp);
+		
 	SET(p->bp->b_cflags, BC_BUSY);	/* mark buffer busy */
 
 	p->sectorOffset = ssect + rf_protectedSectors;
@@ -402,9 +413,6 @@ rf_CreateDiskQueueData(RF_IoType_t typ, RF_SectorNum_t ssect,
 void
 rf_FreeDiskQueueData(RF_DiskQueueData_t *p)
 {
-	int s;
-	s = splbio();		/* XXX protect only pool_put, or neither? */
-	putiobuf(p->bp);
+	pool_put(&rf_pools.bufio, p->bp);
 	pool_put(&rf_pools.dqd, p);
-	splx(s);
 }
