@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.22 2021/10/18 23:01:10 rillig Exp $
+#	$NetBSD: Makefile,v 1.23 2021/10/19 19:59:05 rillig Exp $
 
 .include <bsd.own.mk>
 
@@ -185,11 +185,11 @@ FILES+=		wchar.0.stdout
 
 add-test: .PHONY
 	@set -eu; \
-	test=${NAME:Q}; \
-	[ "$$test" ] || { \
+	test=${NAME:Q}.c; \
+	if [ "$$test" = ".c" ]; then \
 		echo "usage: ${MAKE} add-test NAME=<name>"; \
 		exit; \
-	}; \
+	fi; \
 	\
 	if [ -f "$$test" ]; then \
 		echo "error: test $$test already exists." 1>&2; \
@@ -205,25 +205,18 @@ add-test: .PHONY
 		' * TODO: Explain the purpose of the test.' \
 		' */' \
 		'' \
-		'// TODO: Add some code that passes.' \
+		'#indent input' \
+		'// TODO: add input' \
+		'#indent end' \
+		'' \
+		'#indent run [-options]' \
+		'// TODO: add expected output' \
+		'#indent end' \
 	> "$$test"; \
-	printf '%s\n' \
-		'/* $$''NetBSD$$ */' \
-		'/* $$''FreeBSD$$ */' \
-		'' \
-		'/*' \
-		' * TODO: Explain the command line options of the test.' \
-		' */' \
-		'' \
-		'/* TODO: Add some command line options */' \
-	> "$$test.pro"; \
-	cat < "$$test" > "$$test.stdout"; \
-	cvs add "$$test" "$$test.pro" "$$test.stdout"; \
+	cvs add "$$test"; \
 	printf '%s\n' \
 		'/^FILES+=/i' \
 		"FILES+=		$$test" \
-		"FILES+=		$$test.pro" \
-		"FILES+=		$$test.stdout" \
 		'.' 'w' 'q' \
 	| ed Makefile; \
 	${MAKE} sync-mi
