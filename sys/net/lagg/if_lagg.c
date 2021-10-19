@@ -1,4 +1,4 @@
-/*	$NetBSD: if_lagg.c,v 1.13 2021/10/12 08:30:58 yamaguchi Exp $	*/
+/*	$NetBSD: if_lagg.c,v 1.14 2021/10/19 07:40:52 yamaguchi Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006 Reyk Floeter <reyk@openbsd.org>
@@ -20,7 +20,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_lagg.c,v 1.13 2021/10/12 08:30:58 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_lagg.c,v 1.14 2021/10/19 07:40:52 yamaguchi Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -416,6 +416,8 @@ lagg_clone_create(struct if_clone *ifc, int unit)
 	switch (lagg_iftype) {
 	case LAGG_IF_TYPE_ETHERNET:
 		cprng_fast(sc->sc_lladdr_rand, sizeof(sc->sc_lladdr_rand));
+		sc->sc_lladdr_rand[0] &= 0xFE; /* clear I/G bit */
+		sc->sc_lladdr_rand[0] |= 0x02; /* set G/L bit */
 		lagg_lladdr_cpy(sc->sc_lladdr, sc->sc_lladdr_rand);
 		ether_set_vlan_cb((struct ethercom *)ifp, lagg_vlan_cb);
 		ether_ifattach(ifp, sc->sc_lladdr);
