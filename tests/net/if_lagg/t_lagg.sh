@@ -1,4 +1,4 @@
-#	$NetBSD: t_lagg.sh,v 1.2 2021/05/25 00:38:30 yamaguchi Exp $
+#	$NetBSD: t_lagg.sh,v 1.3 2021/10/19 07:57:15 yamaguchi Exp $
 #
 # Copyright (c) 2021 Internet Initiative Japan Inc.
 # All rights reserved.
@@ -83,6 +83,59 @@ expected_inactive()
 	sleep 3 # wait a little
 	atf_check -s exit:0 -o not-match:"${if_port}.*ACTIVE" \
 	    rump.ifconfig ${if_lagg}
+}
+
+setup_l2tp_ipv4tunnel()
+{
+	local atf_ifconfig="atf_check -s exit:0 rump.ifconfig"
+
+	local a_addr0=10.0.0.1
+	local a_addr1=10.0.0.2
+	local b_addr0=10.0.1.1
+	local b_addr1=10.0.1.2
+	local c_addr0=10.0.2.1
+	local c_addr1=10.0.2.2
+
+	local a_session0=1001
+	local a_session1=1002
+	local b_session0=1011
+	local b_session1=1012
+	local c_session0=1021
+	local c_session1=1022
+
+	rump_server_add_iface $SOCK_HOST0 l2tp0
+	rump_server_add_iface $SOCK_HOST0 l2tp1
+	rump_server_add_iface $SOCK_HOST0 l2tp2
+	rump_server_add_iface $SOCK_HOST1 l2tp0
+	rump_server_add_iface $SOCK_HOST1 l2tp1
+	rump_server_add_iface $SOCK_HOST1 l2tp2
+
+
+	export RUMP_SERVER=$SOCK_HOST0
+	$atf_ifconfig shmif0 $a_addr0/24
+	$atf_ifconfig l2tp0  tunnel  $a_addr0    $a_addr1
+	$atf_ifconfig l2tp0  session $a_session0 $a_session1
+
+	$atf_ifconfig shmif1 $b_addr0/24
+	$atf_ifconfig l2tp1  tunnel  $b_addr0    $b_addr1
+	$atf_ifconfig l2tp1  session $b_session0 $b_session1
+
+	$atf_ifconfig shmif2 $c_addr0/24
+	$atf_ifconfig l2tp2  tunnel  $c_addr0    $c_addr1
+	$atf_ifconfig l2tp2  session $c_session0 $c_session1
+
+	export RUMP_SERVER=$SOCK_HOST1
+	$atf_ifconfig shmif0 $a_addr1/24
+	$atf_ifconfig l2tp0  tunnel  $a_addr1    $a_addr0
+	$atf_ifconfig l2tp0  session $a_session1 $a_session0
+
+	$atf_ifconfig shmif1 $b_addr1/24
+	$atf_ifconfig l2tp1  tunnel  $b_addr1    $b_addr0
+	$atf_ifconfig l2tp1  session $b_session1 $b_session0
+
+	$atf_ifconfig shmif2 $c_addr1/24
+	$atf_ifconfig l2tp2  tunnel  $c_addr1    $c_addr0
+	$atf_ifconfig l2tp2  session $c_session1 $c_session0
 }
 
 atf_test_case lagg_ifconfig cleanup
@@ -403,6 +456,7 @@ lagg_lacp_ping()
 	local atf_ifconfig="atf_check -s exit:0 rump.ifconfig"
 
 	local af=$1
+	local l2proto=$2
 	local atf_ping="atf_check -s exit:0 -o ignore rump.ping -c 1"
 	local ping=rump.ping
 	local rumplib=""
@@ -423,6 +477,20 @@ lagg_lacp_ping()
 		;;
 	esac
 
+	case $l2proto in
+	"ether")
+		iface0=shmif0
+		iface1=shmif1
+		iface2=shmif2
+		;;
+	"l2tp")
+		rumplib="$rumplib l2tp"
+		iface0=l2tp0
+		iface1=l2tp1
+		iface2=l2tp2
+		;;
+	esac
+
 	rump_server_start $SOCK_HOST0 lagg $rumplib
 	rump_server_start $SOCK_HOST1 lagg $rumplib
 
@@ -434,18 +502,22 @@ lagg_lacp_ping()
 	rump_server_add_iface $SOCK_HOST1 shmif1 $BUS1
 	rump_server_add_iface $SOCK_HOST1 shmif2 $BUS2
 
+	if [ x"$l2proto" = x"l2tp" ];then
+		setup_l2tp_ipv4tunnel
+	fi
+
 	export RUMP_SERVER=$SOCK_HOST0
 	$atf_ifconfig lagg0 create
-	$atf_ifconfig lagg0 laggproto lacp laggport shmif0
+	$atf_ifconfig lagg0 laggproto lacp laggport $iface0
 	$atf_ifconfig lagg0 $af $addr_host0/$pfx
-	$atf_ifconfig shmif0 up
+	$atf_ifconfig $iface0 up
 	$atf_ifconfig lagg0 up
 
 	export RUMP_SERVER=$SOCK_HOST1
 	$atf_ifconfig lagg0 create
-	$atf_ifconfig lagg0 laggproto lacp laggport shmif0
+	$atf_ifconfig lagg0 laggproto lacp laggport $iface0
 	$atf_ifconfig lagg0 $af $addr_host1/$pfx
-	$atf_ifconfig shmif0 up
+	$atf_ifconfig $iface0 up
 	$atf_ifconfig lagg0 up
 
 	export RUMP_SERVER=$SOCK_HOST0
@@ -459,22 +531,22 @@ lagg_lacp_ping()
 	$atf_ping $addr_host0
 
 	export RUMP_SERVER=$SOCK_HOST0
-	$atf_ifconfig shmif1 up
-	$atf_ifconfig lagg0 laggport shmif1 laggport shmif2
-	$atf_ifconfig shmif2 up
+	$atf_ifconfig $iface1 up
+	$atf_ifconfig lagg0 laggport $iface1 laggport $iface2
+	$atf_ifconfig $iface2 up
 
 	export RUMP_SERVER=$SOCK_HOST1
-	$atf_ifconfig shmif1 up
-	$atf_ifconfig lagg0 laggport shmif1 laggport shmif2
-	$atf_ifconfig shmif2 up
+	$atf_ifconfig $iface1 up
+	$atf_ifconfig lagg0 laggport $iface1 laggport $iface2
+	$atf_ifconfig $iface2 up
 
 	export RUMP_SERVER=$SOCK_HOST0
-	wait_for_distributing lagg0 shmif1
-	wait_for_distributing lagg0 shmif2
+	wait_for_distributing lagg0 $iface1
+	wait_for_distributing lagg0 $iface2
 
 	export RUMP_SERVER=$SOCK_HOST1
-	wait_for_distributing lagg0 shmif1
-	wait_for_distributing lagg0 shmif2
+	wait_for_distributing lagg0 $iface1
+	wait_for_distributing lagg0 $iface2
 
 	$atf_ping $addr_host0
 }
@@ -490,7 +562,7 @@ lagg_lacp_ipv4_head()
 lagg_lacp_ipv4_body()
 {
 
-	lagg_lacp_ping "inet"
+	lagg_lacp_ping "inet" "ether"
 }
 
 lagg_lacp_ipv4_cleanup()
@@ -511,10 +583,52 @@ lagg_lacp_ipv6_head()
 lagg_lacp_ipv6_body()
 {
 
-	lagg_lacp_ping "inet6"
+	lagg_lacp_ping "inet6" "ether"
 }
 
 lagg_lacp_ipv6_cleanup()
+{
+
+	$DEBUG && dump
+	cleanup
+}
+
+atf_test_case lagg_lacp_l2tp_ipv4 cleanup
+lagg_lacp_l2tp_ipv4_head()
+{
+
+	atf_set "descr" "tests for LACP over l2tp by using IPv4"
+	atf_set "require.progs" "rump_server"
+}
+
+lagg_lacp_l2tp_ipv4_body()
+{
+
+	lagg_lacp_ping "inet" "l2tp"
+}
+
+lagg_lacp_l2tp_ipv4_cleanup()
+{
+
+	$DEBUG && dump
+	cleanup
+}
+
+atf_test_case lagg_lacp_l2tp_ipv6 cleanup
+lagg_lacp_l2tp_ipv6_head()
+{
+
+	atf_set "descr" "tests for LACP over l2tp using IPv6"
+	atf_set "require.progs" "rump_server"
+}
+
+lagg_lacp_l2tp_ipv6_body()
+{
+
+	lagg_lacp_ping "inet6" "l2tp"
+}
+
+lagg_lacp_l2tp_ipv6_cleanup()
 {
 
 	$DEBUG && dump
@@ -757,6 +871,7 @@ lagg_failover()
 	local atf_ifconfig="atf_check -s exit:0 rump.ifconfig"
 
 	local af=$1
+	local l2proto=$2
 	local ping="rump.ping -c 1"
 	local rumplib=""
 	local pfx=24
@@ -776,6 +891,20 @@ lagg_failover()
 		;;
 	esac
 
+	case $l2proto in
+	"ether")
+		iface0="shmif0"
+		iface1="shmif1"
+		iface2="shmif2"
+		;;
+	"l2tp")
+		rumplib="$rumplib l2tp"
+		iface0="l2tp0"
+		iface1="l2tp1"
+		iface2="l2tp2"
+		;;
+	esac
+
 	local atf_ping="atf_check -s exit:0 -o ignore ${ping}"
 
 	rump_server_start $SOCK_HOST0 lagg $rumplib
@@ -789,73 +918,77 @@ lagg_failover()
 	rump_server_add_iface $SOCK_HOST1 shmif1 $BUS1
 	rump_server_add_iface $SOCK_HOST1 shmif2 $BUS2
 
+	if [ x"$l2proto" = x"l2tp" ]; then
+		setup_l2tp_ipv4tunnel
+	fi
+
 	export RUMP_SERVER=$SOCK_HOST0
 	$atf_ifconfig lagg0 create
 	$atf_ifconfig lagg0 laggproto failover
 
-	$atf_ifconfig lagg0 laggport shmif0 pri 1000
-	$atf_ifconfig lagg0 laggport shmif1 pri 2000
-	$atf_ifconfig lagg0 laggport shmif2 pri 3000
+	$atf_ifconfig lagg0 laggport $iface0 pri 1000
+	$atf_ifconfig lagg0 laggport $iface1 pri 2000
+	$atf_ifconfig lagg0 laggport $iface2 pri 3000
 	$atf_ifconfig lagg0 $af $addr_host0/$pfx
 
 	export RUMP_SERVER=$SOCK_HOST1
 	$atf_ifconfig lagg0 create
 	$atf_ifconfig lagg0 laggproto failover
 
-	$atf_ifconfig lagg0 laggport shmif0 pri 1000
-	$atf_ifconfig lagg0 laggport shmif1 pri 3000
-	$atf_ifconfig lagg0 laggport shmif2 pri 2000
+	$atf_ifconfig lagg0 laggport $iface0 pri 1000
+	$atf_ifconfig lagg0 laggport $iface1 pri 3000
+	$atf_ifconfig lagg0 laggport $iface2 pri 2000
 	$atf_ifconfig lagg0 $af $addr_host1/$pfx
 
 	export RUMP_SERVER=$SOCK_HOST0
-	$atf_ifconfig shmif0 up
-	$atf_ifconfig shmif1 up
-	$atf_ifconfig shmif2 up
+	$atf_ifconfig $iface0 up
+	$atf_ifconfig $iface1 up
+	$atf_ifconfig $iface2 up
 	$atf_ifconfig lagg0 up
 
 	export RUMP_SERVER=$SOCK_HOST1
-	$atf_ifconfig shmif0 up
-	$atf_ifconfig shmif1 up
-	$atf_ifconfig shmif2 up
+	$atf_ifconfig $iface0 up
+	$atf_ifconfig $iface1 up
+	$atf_ifconfig $iface2 up
 	$atf_ifconfig lagg0 up
 
 	export RUMP_SERVER=$SOCK_HOST0
 	$atf_ifconfig -w 10
-	wait_for_distributing lagg0 shmif0
-	wait_state "COLLECTING" lagg0 shmif0
-	wait_state "COLLECTING" lagg0 shmif1
-	wait_state "COLLECTING" lagg0 shmif2
+	wait_for_distributing lagg0 $iface0
+	wait_state "COLLECTING" lagg0 $iface0
+	wait_state "COLLECTING" lagg0 $iface1
+	wait_state "COLLECTING" lagg0 $iface2
 
 	export RUMP_SERVER=$SOCK_HOST1
 	$atf_ifconfig -w 10
-	wait_for_distributing lagg0 shmif0
-	wait_state "COLLECTING" lagg0 shmif0
-	wait_state "COLLECTING" lagg0 shmif1
-	wait_state "COLLECTING" lagg0 shmif2
+	wait_for_distributing lagg0 $iface0
+	wait_state "COLLECTING" lagg0 $iface0
+	wait_state "COLLECTING" lagg0 $iface1
+	wait_state "COLLECTING" lagg0 $iface2
 
 	export RUMP_SERVER=$SOCK_HOST0
 	$atf_ping $addr_host1
 
-	$atf_ifconfig shmif0 down
-	wait_for_distributing lagg0 shmif1
-	wait_state "COLLECTING" lagg0 shmif1
-	wait_state "COLLECTING" lagg0 shmif2
+	$atf_ifconfig $iface0 down
+	wait_for_distributing lagg0 $iface1
+	wait_state "COLLECTING" lagg0 $iface1
+	wait_state "COLLECTING" lagg0 $iface2
 
 	export RUMP_SERVER=$SOCK_HOST1
-	$atf_ifconfig shmif0 down
-	wait_for_distributing lagg0 shmif2
-	wait_state "COLLECTING" lagg0 shmif2
-	wait_state "COLLECTING" lagg0 shmif1
+	$atf_ifconfig $iface0 down
+	wait_for_distributing lagg0 $iface2
+	wait_state "COLLECTING" lagg0 $iface2
+	wait_state "COLLECTING" lagg0 $iface1
 
 	export RUMP_SERVER=$SOCK_HOST0
 	$atf_ping $addr_host1
 
 	$atf_ifconfig lagg0 laggfailover -rx-all
-	atf_check -s exit:0 -o not-match:'shmif2.+COLLECTING' rump.ifconfig lagg0
+	atf_check -s exit:0 -o not-match:'$iface2.+COLLECTING' rump.ifconfig lagg0
 
 	export RUMP_SERVER=$SOCK_HOST1
 	$atf_ifconfig lagg0 laggfailover -rx-all
-	atf_check -s exit:0 -o not-match:'shmif1.+COLLECTING' rump.ifconfig lagg0
+	atf_check -s exit:0 -o not-match:'$iface1.+COLLECTING' rump.ifconfig lagg0
 
 	export RUMP_SERVER=$SOCK_HOST0
 	atf_check -s not-exit:0 -o ignore -e ignore $ping -c 1 $addr_host1
@@ -872,7 +1005,7 @@ lagg_failover_ipv4_head()
 lagg_failover_ipv4_body()
 {
 
-	lagg_failover "inet"
+	lagg_failover "inet" "ether"
 }
 
 lagg_failover_ipv4_cleanup()
@@ -893,7 +1026,7 @@ lagg_failover_ipv6_head()
 lagg_failover_ipv6_body()
 {
 
-	lagg_failover "inet6"
+	lagg_failover "inet6" "ether"
 }
 
 lagg_failover_ipv6_cleanup()
@@ -903,11 +1036,52 @@ lagg_failover_ipv6_cleanup()
 	cleanup
 }
 
+atf_test_case lagg_failover_l2tp_ipv4 cleanup
+lagg_failover_l2tp_ipv4_head()
+{
+
+	atf_set "descr" "tests for failover over l2tp using IPv4"
+	atf_set "require.progs" "rump_server"
+}
+
+lagg_failover_l2tp_ipv4_body()
+{
+
+	lagg_failover "inet" "l2tp"
+}
+
+lagg_failover_l2tp_ipv4_cleanup()
+{
+	$DEBUG && dump
+	cleanup
+}
+
+atf_test_case lagg_failover_l2tp_ipv6 cleanup
+lagg_failover_l2tp_ipv6_head()
+{
+
+	atf_set "descr" "tests for failover over l2tp using IPv6"
+	atf_set "require.progs" "rump_server"
+}
+
+lagg_failover_l2tp_ipv6_body()
+{
+
+	lagg_failover "inet6" "l2tp"
+}
+
+lagg_failover_l2tp_ipv6_cleanup()
+{
+	$DEBUG && dump
+	cleanup
+}
+
 lagg_loadbalance()
 {
 	local atf_ifconfig="atf_check -s exit:0 rump.ifconfig"
 
 	local af=$1
+	local l2proto=$2
 	local ping="rump.ping -c 1"
 	local rumplib=""
 	local pfx=24
@@ -927,6 +1101,20 @@ lagg_loadbalance()
 		;;
 	esac
 
+	case $l2proto in
+	"ether")
+		iface0=shmif0
+		iface1=shmif1
+		iface2=shmif2
+		;;
+	"l2tp")
+		rumplib="$rumplib l2tp"
+		iface0=l2tp0
+		iface1=l2tp1
+		iface2=l2tp2
+		;;
+	esac
+
 	local atf_ping="atf_check -s exit:0 -o ignore ${ping}"
 
 	rump_server_start $SOCK_HOST0 lagg $rumplib
@@ -940,60 +1128,64 @@ lagg_loadbalance()
 	rump_server_add_iface $SOCK_HOST1 shmif1 $BUS1
 	rump_server_add_iface $SOCK_HOST1 shmif2 $BUS2
 
+	if [ x"$l2proto" = x"l2tp" ]; then
+		setup_l2tp_ipv4tunnel
+	fi
+
 	export RUMP_SERVER=$SOCK_HOST0
 	$atf_ifconfig lagg0 create
 	$atf_ifconfig lagg0 laggproto loadbalance
 
-	$atf_ifconfig lagg0 laggport shmif0 pri 1000
-	$atf_ifconfig lagg0 laggport shmif1 pri 2000
-	$atf_ifconfig lagg0 laggport shmif2 pri 3000
+	$atf_ifconfig lagg0 laggport $iface0 pri 1000
+	$atf_ifconfig lagg0 laggport $iface1 pri 2000
+	$atf_ifconfig lagg0 laggport $iface2 pri 3000
 	$atf_ifconfig lagg0 $af $addr_host0/$pfx
 
 	export RUMP_SERVER=$SOCK_HOST1
 	$atf_ifconfig lagg0 create
 	$atf_ifconfig lagg0 laggproto loadbalance
 
-	$atf_ifconfig lagg0 laggport shmif0 pri 1000
-	$atf_ifconfig lagg0 laggport shmif1 pri 3000
-	$atf_ifconfig lagg0 laggport shmif2 pri 2000
+	$atf_ifconfig lagg0 laggport $iface0 pri 1000
+	$atf_ifconfig lagg0 laggport $iface1 pri 3000
+	$atf_ifconfig lagg0 laggport $iface2 pri 2000
 	$atf_ifconfig lagg0 $af $addr_host1/$pfx
 
 	export RUMP_SERVER=$SOCK_HOST0
-	$atf_ifconfig shmif0 up
-	$atf_ifconfig shmif1 up
-	$atf_ifconfig shmif2 up
+	$atf_ifconfig $iface0 up
+	$atf_ifconfig $iface1 up
+	$atf_ifconfig $iface2 up
 	$atf_ifconfig lagg0 up
 
 	export RUMP_SERVER=$SOCK_HOST1
-	$atf_ifconfig shmif0 up
-	$atf_ifconfig shmif1 up
-	$atf_ifconfig shmif2 up
+	$atf_ifconfig $iface0 up
+	$atf_ifconfig $iface1 up
+	$atf_ifconfig $iface2 up
 	$atf_ifconfig lagg0 up
 
 	export RUMP_SERVER=$SOCK_HOST0
 	$atf_ifconfig -w 10
-	wait_for_distributing lagg0 shmif0
-	wait_state "COLLECTING" lagg0 shmif0
-	wait_state "COLLECTING" lagg0 shmif1
-	wait_state "COLLECTING" lagg0 shmif2
+	wait_for_distributing lagg0 $iface0
+	wait_state "COLLECTING" lagg0 $iface0
+	wait_state "COLLECTING" lagg0 $iface1
+	wait_state "COLLECTING" lagg0 $iface2
 
 	export RUMP_SERVER=$SOCK_HOST1
 	$atf_ifconfig -w 10
-	wait_state "COLLECTING,DISTRIBUTING" lagg0 shmif0
-	wait_state "COLLECTING,DISTRIBUTING" lagg0 shmif1
-	wait_state "COLLECTING,DISTRIBUTING" lagg0 shmif2
+	wait_state "COLLECTING,DISTRIBUTING" lagg0 $iface0
+	wait_state "COLLECTING,DISTRIBUTING" lagg0 $iface1
+	wait_state "COLLECTING,DISTRIBUTING" lagg0 $iface2
 
 	export RUMP_SERVER=$SOCK_HOST0
 	$atf_ping $addr_host1
 
-	$atf_ifconfig shmif0 down
-	wait_state "COLLECTING,DISTRIBUTING" lagg0 shmif1
-	wait_state "COLLECTING,DISTRIBUTING" lagg0 shmif2
+	$atf_ifconfig $iface0 down
+	wait_state "COLLECTING,DISTRIBUTING" lagg0 $iface1
+	wait_state "COLLECTING,DISTRIBUTING" lagg0 $iface2
 
 	export RUMP_SERVER=$SOCK_HOST1
-	$atf_ifconfig shmif0 down
-	wait_state "COLLECTING,DISTRIBUTING" lagg0 shmif1
-	wait_state "COLLECTING,DISTRIBUTING" lagg0 shmif2
+	$atf_ifconfig $iface0 down
+	wait_state "COLLECTING,DISTRIBUTING" lagg0 $iface1
+	wait_state "COLLECTING,DISTRIBUTING" lagg0 $iface2
 
 	export RUMP_SERVER=$SOCK_HOST0
 	$atf_ping $addr_host1
@@ -1010,7 +1202,7 @@ lagg_loadbalance_ipv4_head()
 lagg_loadbalance_ipv4_body()
 {
 
-	lagg_loadbalance "inet"
+	lagg_loadbalance "inet" "ether"
 }
 
 lagg_loadbalance_ipv4_cleanup()
@@ -1031,10 +1223,52 @@ lagg_loadbalance_ipv6_head()
 lagg_loadbalance_ipv6_body()
 {
 
-	lagg_loadbalance "inet6"
+	lagg_loadbalance "inet6" "ether"
 }
 
 lagg_loadbalance_ipv6_cleanup()
+{
+
+	$DEBUG && dump
+	cleanup
+}
+
+atf_test_case lagg_loadbalance_l2tp_ipv4 cleanup
+lagg_loadbalance_l2tp_ipv4_head()
+{
+
+	atf_set "descr" "tests for loadbalance over l2tp using IPv4"
+	atf_set "require.progs" "rump_server"
+}
+
+lagg_loadbalance_l2tp_ipv4_body()
+{
+
+	lagg_loadbalance "inet" "l2tp"
+}
+
+lagg_loadbalance_l2tp_ipv4_cleanup()
+{
+
+	$DEBUG && dump
+	cleanup
+}
+
+atf_test_case lagg_loadbalance_l2tp_ipv6 cleanup
+lagg_loadbalance_l2tp_ipv4_head()
+{
+
+	atf_set "descr" "tests for loadbalance over l2tp using IPv6"
+	atf_set "require.progs" "rump_server"
+}
+
+lagg_loadbalance_l2tp_ipv6_body()
+{
+
+	lagg_loadbalance "inet6" "l2tp"
+}
+
+lagg_loadbalance_l2tp_ipv6_cleanup()
 {
 
 	$DEBUG && dump
@@ -1050,11 +1284,17 @@ atf_init_test_cases()
 	atf_add_test_case lagg_lacp_basic
 	atf_add_test_case lagg_lacp_ipv4
 	atf_add_test_case lagg_lacp_ipv6
+	atf_add_test_case lagg_lacp_l2tp_ipv4
+	atf_add_test_case lagg_lacp_l2tp_ipv6
 	atf_add_test_case lagg_lacp_vlan_ipv4
 	atf_add_test_case lagg_lacp_vlan_ipv6
 	atf_add_test_case lagg_lacp_portpri
 	atf_add_test_case lagg_failover_ipv4
 	atf_add_test_case lagg_failover_ipv6
+	atf_add_test_case lagg_failover_l2tp_ipv4
+	atf_add_test_case lagg_failover_l2tp_ipv6
 	atf_add_test_case lagg_loadbalance_ipv4
 	atf_add_test_case lagg_loadbalance_ipv6
+	atf_add_test_case lagg_loadbalance_l2tp_ipv4
+	atf_add_test_case lagg_loadbalance_l2tp_ipv6
 }
