@@ -1,4 +1,4 @@
-/*	$NetBSD: io.c,v 1.96 2021/10/19 21:21:07 rillig Exp $	*/
+/*	$NetBSD: io.c,v 1.97 2021/10/19 21:39:19 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)io.c	8.1 (Berkeley) 6/6/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: io.c,v 1.96 2021/10/19 21:21:07 rillig Exp $");
+__RCSID("$NetBSD: io.c,v 1.97 2021/10/19 21:39:19 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/io.c 334927 2018-06-10 16:44:18Z pstef $");
 #endif
@@ -235,9 +235,8 @@ dump_line(void)
 	    }
 	}
 
-	while (--next_blank_lines >= 0)
+	for (; next_blank_lines > 0; next_blank_lines--)
 	    output_char('\n');
-	next_blank_lines = 0;
 
 	if (ps.ind_level == 0)
 	    ps.ind_stmt = false;	/* this is a class A kludge. don't do
