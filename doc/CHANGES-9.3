@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.3,v 1.1.2.38 2021/10/15 15:15:52 martin Exp $
+# $NetBSD: CHANGES-9.3,v 1.1.2.39 2021/10/19 10:56:08 martin Exp $
 
 A complete list of changes from the NetBSD 9.2 release to the NetBSD 9.3
 release:
@@ -821,4 +821,10 @@ distrib/amd64/installimage-bios/spec.inst	1.1
 
 	Restore having a BIOS-only amd64 USB image.
 	[maya, ticket #1360]
+
+sys/dev/raidframe/rf_diskqueue.c		1.58-1.59
+sys/dev/raidframe/rf_netbsd.h			1.36 (patch)
+
+	RAIDframe could run out of IO buffers.
+	[oster, ticket #1361]
 
