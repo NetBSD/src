@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.c,v 1.140 2021/10/20 05:00:37 rillig Exp $	*/
+/*	$NetBSD: indent.c,v 1.141 2021/10/20 05:07:08 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)indent.c	5.17 (Berkeley) 6/7/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: indent.c,v 1.140 2021/10/20 05:00:37 rillig Exp $");
+__RCSID("$NetBSD: indent.c,v 1.141 2021/10/20 05:07:08 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/indent.c 340138 2018-11-04 19:24:49Z oshogbo $");
 #endif
@@ -670,11 +670,15 @@ process_form_feed(void)
 static void
 process_newline(void)
 {
-    if (ps.last_token != comma || ps.p_l_follow > 0 || opt.break_after_comma
-	|| ps.block_init || !break_comma || com.s != com.e) {
-	dump_line();
-	ps.want_blank = false;
-    }
+    if (ps.last_token == comma && ps.p_l_follow == 0 && !ps.block_init &&
+	!opt.break_after_comma && break_comma &&
+	com.s == com.e)
+	goto stay_in_line;
+
+    dump_line();
+    ps.want_blank = false;
+
+stay_in_line:
     ++line_no;
 }
 
