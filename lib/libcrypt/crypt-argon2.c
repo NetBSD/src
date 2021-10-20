@@ -156,7 +156,7 @@ estimate_argon2_params(argon2_type atype, uint32_t *etime,
 	size_t max_mem_sz = sizeof(max_mem);
 	/* low values from argon2 test suite... */
 	uint32_t memory = 256;
-	uint32_t time = 2;
+	uint32_t time = 3;
 	uint32_t threads = 1;
 
 	if (*ememory < ARGON2_MIN_MEMORY) {
@@ -226,7 +226,7 @@ error:
 	*ethreads = threads;
 	return 0;
 reset:
-	time = 2;
+	time = 3;
 	memory = 256;
 	threads = 1;
 	goto error;
