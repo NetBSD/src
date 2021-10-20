@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.709 2021/10/18 11:36:11 jmcneill Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.710 2021/10/20 02:05:15 knakahara Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.709 2021/10/18 11:36:11 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.710 2021/10/20 02:05:15 knakahara Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -9831,6 +9831,7 @@ static int
 wm_intr_legacy(void *arg)
 {
 	struct wm_softc *sc = arg;
+	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	struct wm_queue *wmq = &sc->sc_queue[0];
 	struct wm_txqueue *txq = &wmq->wmq_txq;
 	struct wm_rxqueue *rxq = &wmq->wmq_rxq;
@@ -9890,6 +9891,8 @@ wm_intr_legacy(void *arg)
 		}
 #endif
 		more |= wm_txeof(txq, UINT_MAX);
+		if (!IF_IS_EMPTY(&ifp->if_snd))
+			more = true;
 
 		mutex_exit(txq->txq_lock);
 		WM_CORE_LOCK(sc);
