@@ -24,6 +24,11 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <sys/resource.h>
+#include <sys/param.h>
+#include <sys/sysctl.h>
+#include <sys/syslimits.h>
+
 #include <stdlib.h>
 #include <stdio.h> 
 #include <unistd.h>
@@ -36,6 +41,10 @@
 
 #include <err.h>
 #include "crypt.h"
+
+crypt_private int
+estimate_argon2_params(argon2_type, uint32_t *,
+    uint32_t *, uint32_t *);
 
 /* defaults pulled from run.c */
 #define HASHLEN		32
@@ -57,6 +66,10 @@
 #define ARGON2_ARGON2D_STR	"argon2d"
 #define ARGON2_ARGON2ID_STR	"argon2id"
 
+/*
+ * Unpadded Base64 calculations are taken from the Apache2/CC-0
+ * licensed libargon2 for compatibility
+ */
 
 /*
  * Some macros for constant-time comparisons. These work over values in
@@ -122,6 +135,103 @@ from_base64(void *dst, size_t *dst_len, const char *src)
 	*dst_len = len;
 	return src;
 }
+
+/*
+ * Used to find default parameters that perform well on the host
+ * machine.  Inputs should dereference to either 0 (to estimate),
+ * or desired value.
+ */
+crypt_private int
+estimate_argon2_params(argon2_type atype, uint32_t *etime,
+    uint32_t *ememory, uint32_t *ethreads)
+{
+	const int mib[] = { CTL_HW, HW_USERMEM64 };
+	struct timespec tp1, tp2, delta;
+	char tmp_salt[16];
+	char tmp_pwd[16];
+	uint32_t tmp_hash[32];
+	char tmp_encoded[256];
+	struct rlimit rlim;
+	uint64_t max_mem;
+	size_t max_mem_sz = sizeof(max_mem);
+	/* low values from argon2 test suite... */
+	uint32_t memory = 256;
+	uint32_t time = 2;
+	uint32_t threads = 1;
+
+	if (*ememory < ARGON2_MIN_MEMORY) {
+		/*
+		 * attempt to find a reasonble bound for memory use
+		 */
+		if (sysctl(mib, __arraycount(mib),
+		    &max_mem, &max_mem_sz, NULL, 0) < 0) {
+			goto error;
+		}
+		if (getrlimit(RLIMIT_AS, &rlim) < 0)
+			goto error;
+		if (max_mem > rlim.rlim_cur && rlim.rlim_cur != RLIM_INFINITY)
+			max_mem = rlim.rlim_cur;
+
+		/*
+		 * Note that adding memory also greatly slows the algorithm.
+		 * Do we need to be concerned about memory usage during
+		 * concurrent connections?
+		 */
+		max_mem /= 1000000;
+		if (max_mem > 30000) {
+			memory = 8192;
+		} else if (max_mem > 7000) {
+			memory = 4096;
+		} else if (max_mem > 24) {
+			memory = 256;
+		} else {
+			memory = ARGON2_MIN_MEMORY;
+		}
+	} else {
+		memory = *ememory;
+	}
+
+	if (*etime < ARGON2_MIN_TIME) {
+		/*
+		 * just fill these with random stuff since we'll immediately
+		 * discard them after calculating hashes for 1 second
+		 */
+		arc4random_buf(tmp_pwd, sizeof(tmp_pwd));
+		arc4random_buf(tmp_salt, sizeof(tmp_salt));
+
+		if (clock_gettime(CLOCK_MONOTONIC, &tp1) == -1)
+			goto error;
+		for (; delta.tv_sec < 1 && time < ARGON2_MAX_TIME; ++time) {
+			if (argon2_hash(time, memory, threads,
+			    tmp_pwd, sizeof(tmp_pwd), 
+			    tmp_salt, sizeof(tmp_salt), 
+			    tmp_hash, sizeof(tmp_hash), 
+			    tmp_encoded, sizeof(tmp_encoded), 
+			    atype, ARGON2_VERSION_NUMBER) != ARGON2_OK) {
+				goto reset;
+			}
+			if (clock_gettime(CLOCK_MONOTONIC, &tp2) == -1)
+				break;
+			if (timespeccmp(&tp1, &tp2, >))
+				break; /* broken system... */
+			timespecsub(&tp2, &tp1, &delta);
+		}
+	} else {
+		time = *etime;
+	}
+
+error:
+	*etime = time;
+	*ememory = memory;
+	*ethreads = threads;
+	return 0;
+reset:
+	time = 2;
+	memory = 256;
+	threads = 1;
+	goto error;
+}
+
 
 /* process params to argon2 */
 /* we don't force param order as input, */
