@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_platform.c,v 1.28 2021/08/07 21:24:56 jmcneill Exp $ */
+/* $NetBSD: acpi_platform.c,v 1.29 2021/10/20 23:03:40 jakllsch Exp $ */
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_platform.c,v 1.28 2021/08/07 21:24:56 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_platform.c,v 1.29 2021/10/20 23:03:40 jakllsch Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -93,7 +93,7 @@ static const struct acpi_spcr_baud_rate {
 	uint8_t		id;
 	uint32_t	baud_rate;
 } acpi_spcr_baud_rates[] = {
-	{ SPCR_BAUD_DEFAULT,	0 },
+	{ SPCR_BAUD_DEFAULT,	-1 },
 	{ SPCR_BAUD_9600,	9600 },
 	{ SPCR_BAUD_19200,	19200 },
 	{ SPCR_BAUD_57600,	57600 },
