@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_rename.c,v 1.5 2020/09/05 02:47:03 riastradh Exp $	*/
+/*	$NetBSD: genfs_rename.c,v 1.6 2021/10/20 03:08:18 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_rename.c,v 1.5 2020/09/05 02:47:03 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_rename.c,v 1.6 2021/10/20 03:08:18 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/kauth.h>
@@ -129,7 +129,7 @@ static void genfs_rename_exit(const struct genfs_rename_ops *, struct mount *,
     struct vnode *, struct vnode *);
 static int genfs_rename_remove(const struct genfs_rename_ops *, struct mount *,
     kauth_cred_t,
-    struct vnode *, struct componentname *, void *, struct vnode *);
+    struct vnode *, struct componentname *, void *, struct vnode *, nlink_t *);
 
 /*
  * genfs_insane_rename: Generic implementation of the insane API for
@@ -163,7 +163,7 @@ genfs_insane_rename(void *v,
 	struct vnode *tdvp, struct componentname *tcnp,
 	kauth_cred_t cred, bool posixly_correct))
 {
-	struct vop_rename_args	/* {
+	struct vop_rename_args /* {
 		struct vnode *a_fdvp;
 		struct vnode *a_fvp;
 		struct componentname *a_fcnp;
@@ -247,6 +247,7 @@ genfs_sane_rename(const struct genfs_rename_ops *ops,
 {
 	struct mount *mp;
 	struct vnode *fvp = NULL, *tvp = NULL;
+	nlink_t tvp_new_nlink = 0;
 	int error;
 
 	KASSERT(ops != NULL);
@@ -314,7 +315,7 @@ genfs_sane_rename(const struct genfs_rename_ops *ops,
 		else
 			/* XXX Can't use VOP_REMOVE because of locking.  */
 			error = genfs_rename_remove(ops, mp, cred,
-			    fdvp, fcnp, fde, fvp);
+			    fdvp, fcnp, fde, fvp, &tvp_new_nlink);
 		goto out;
 	}
 	KASSERT(fvp != tvp);
@@ -363,25 +364,29 @@ genfs_sane_rename(const struct genfs_rename_ops *ops,
 	 */
 	error = ops->gro_rename(mp, cred,
 	    fdvp, fcnp, fde, fvp,
-	    tdvp, tcnp, tde, tvp);
+	    tdvp, tcnp, tde, tvp,
+	    &tvp_new_nlink);
 	if (error)
 		goto out;
 
 	/* Success!  */
 
-out:	genfs_rename_exit(ops, mp, fdvp, fvp, tdvp, tvp);
+out:	if (error == 0) {
+		genfs_rename_knote(fdvp, fvp, tdvp, tvp, tvp_new_nlink);
+	}
+	genfs_rename_exit(ops, mp, fdvp, fvp, tdvp, tvp);
 	return error;
 }
 
 /*
  * genfs_rename_knote: Note events about the various vnodes in a
  * rename.  To be called by gro_rename on success.  The only pair of
- * vnodes that may be identical is {fdvp, tdvp}.  deleted_p is true iff
- * the rename overwrote the last link to tvp.
+ * vnodes that may be identical is {fdvp, tdvp}.  tvp_new_nlink is
+ * the resulting link count of tvp.
  */
 void
 genfs_rename_knote(struct vnode *fdvp, struct vnode *fvp,
-    struct vnode *tdvp, struct vnode *tvp, bool deleted_p)
+    struct vnode *tdvp, struct vnode *tvp, nlink_t tvp_new_nlink)
 {
 	long fdvp_events, tdvp_events;
 	bool directory_p, reparent_p, replaced_p;
@@ -404,7 +409,6 @@ genfs_rename_knote(struct vnode *fdvp, struct vnode *fvp,
 	replaced_p = (tvp != NULL);
 
 	KASSERT((tvp == NULL) || (directory_p == (tvp->v_type == VDIR)));
-	KASSERT(!deleted_p || replaced_p);
 
 	fdvp_events = NOTE_WRITE;
 	if (directory_p && reparent_p)
@@ -424,7 +428,7 @@ genfs_rename_knote(struct vnode *fdvp, struct vnode *fvp,
 	}
 
 	if (replaced_p)
-		VN_KNOTE(tvp, (deleted_p? NOTE_DELETE : NOTE_LINK));
+		VN_KNOTE(tvp, (tvp_new_nlink == 0 ? NOTE_DELETE : NOTE_LINK));
 }
 
 /*
@@ -994,15 +998,15 @@ genfs_rename_exit(const struct genfs_rename_ops *ops,
 /*
  * genfs_rename_remove: Remove the entry for the non-directory vp with
  * componentname cnp from the directory dvp, using the lookup results
- * de.  It is the responsibility of gro_remove to purge the name cache
- * and note kevents.
+ * de.  It is the responsibility of gro_remove to purge the name cache.
  *
  * Everything must be locked and referenced.
  */
 static int
 genfs_rename_remove(const struct genfs_rename_ops *ops,
     struct mount *mp, kauth_cred_t cred,
-    struct vnode *dvp, struct componentname *cnp, void *de, struct vnode *vp)
+    struct vnode *dvp, struct componentname *cnp, void *de, struct vnode *vp,
+    nlink_t *tvp_nlinkp)
 {
 	int error;
 
@@ -1029,7 +1033,7 @@ genfs_rename_remove(const struct genfs_rename_ops *ops,
 	if (error)
 		return error;
 
-	error = ops->gro_remove(mp, cred, dvp, cnp, de, vp);
+	error = ops->gro_remove(mp, cred, dvp, cnp, de, vp, tvp_nlinkp);
 	if (error)
 		return error;
 

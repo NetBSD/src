@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_vnops.c,v 1.222 2021/07/24 21:31:38 andvar Exp $	*/
+/*	$NetBSD: puffs_vnops.c,v 1.223 2021/10/20 03:08:17 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.222 2021/07/24 21:31:38 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.223 2021/10/20 03:08:17 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -1796,11 +1796,12 @@ callremove(struct puffs_mount *pmp, puffs_cookie_t dck, puffs_cookie_t ck,
 int
 puffs_vnop_remove(void *v)
 {
-	struct vop_remove_v2_args /* {
+	struct vop_remove_v3_args /* {
 		const struct vnodeop_desc *a_desc;
 		struct vnode *a_dvp;
 		struct vnode *a_vp;
 		struct componentname *a_cnp;
+		nlink_t ctx_vp_new_nlink;
 	} */ *ap = v;
 	PUFFS_MSG_VARS(vn, remove);
 	struct vnode *dvp = ap->a_dvp;
@@ -2172,6 +2173,8 @@ puffs_vnop_rename(void *v)
 		if (PUFFS_USE_DOTDOTCACHE(pmp) &&
 		    (VPTOPP(fvp)->pn_parent != tdvp))
 			update_parent(fvp, tdvp);
+
+		/* XXX Update ap->ctx_vp_new_nlink */
 	}
 
 

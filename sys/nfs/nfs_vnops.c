@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vnops.c,v 1.320 2021/07/18 23:57:15 dholland Exp $	*/
+/*	$NetBSD: nfs_vnops.c,v 1.321 2021/10/20 03:08:18 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.320 2021/07/18 23:57:15 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.321 2021/10/20 03:08:18 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_nfs.h"
@@ -652,7 +652,6 @@ nfs_setattr(void *v)
 		}
 		genfs_node_unlock(vp);
 	}
-	VN_KNOTE(vp, NOTE_ATTRIB);
 	return (error);
 }
 
@@ -1536,7 +1535,6 @@ nfs_mknod(void *v)
 	int error;
 
 	error = nfs_mknodrpc(dvp, ap->a_vpp, cnp, ap->a_vap);
-	VN_KNOTE(dvp, NOTE_WRITE);
 	if (error == 0 || error == EEXIST)
 		cache_purge1(dvp, cnp->cn_nameptr, cnp->cn_namelen, 0);
 	return (error);
@@ -1677,7 +1675,6 @@ again:
 	VTONFS(dvp)->n_flag |= NMODIFIED;
 	if (!wccflag)
 		NFS_INVALIDATE_ATTRCACHE(VTONFS(dvp));
-	VN_KNOTE(ap->a_dvp, NOTE_WRITE);
 	return (error);
 }
 
@@ -1695,11 +1692,12 @@ again:
 int
 nfs_remove(void *v)
 {
-	struct vop_remove_v2_args /* {
+	struct vop_remove_v3_args /* {
 		struct vnodeop_desc *a_desc;
 		struct vnode * a_dvp;
 		struct vnode * a_vp;
 		struct componentname * a_cnp;
+		nlink_t ctx_vp_new_nlink;
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 	struct vnode *dvp = ap->a_dvp;
@@ -1736,13 +1734,12 @@ nfs_remove(void *v)
 				cnp->cn_namelen, cnp->cn_cred, curlwp);
 	} else if (!np->n_sillyrename)
 		error = nfs_sillyrename(dvp, vp, cnp, false);
-	if (!error && nfs_getattrcache(vp, &vattr) == 0 &&
-	    vattr.va_nlink == 1) {
-		np->n_flag |= NREMOVED;
+	if (error == 0 && nfs_getattrcache(vp, &vattr) == 0) {
+		ap->ctx_vp_new_nlink = vattr.va_nlink - 1;
+		if (vattr.va_nlink == 1)
+			np->n_flag |= NREMOVED;
 	}
 	NFS_INVALIDATE_ATTRCACHE(np);
-	VN_KNOTE(vp, NOTE_DELETE);
-	VN_KNOTE(dvp, NOTE_WRITE);
 	if (dvp == vp)
 		vrele(vp);
 	else
@@ -1812,7 +1809,7 @@ nfs_removerpc(struct vnode *dvp, const char *name, int namelen, kauth_cred_t cre
 int
 nfs_rename(void *v)
 {
-	struct vop_rename_args  /* {
+	struct vop_rename_args /* {
 		struct vnode *a_fdvp;
 		struct vnode *a_fvp;
 		struct componentname *a_fcnp;
@@ -2029,8 +2026,6 @@ nfs_link(void *v)
 		cache_purge1(dvp, cnp->cn_nameptr, cnp->cn_namelen, 0);
 	}
 	VOP_UNLOCK(vp);
-	VN_KNOTE(vp, NOTE_LINK);
-	VN_KNOTE(dvp, NOTE_WRITE);
 	return (error);
 }
 
@@ -2120,7 +2115,6 @@ nfs_symlink(void *v)
 	VTONFS(dvp)->n_flag |= NMODIFIED;
 	if (!wccflag)
 		NFS_INVALIDATE_ATTRCACHE(VTONFS(dvp));
-	VN_KNOTE(dvp, NOTE_WRITE);
 	return (error);
 }
 
@@ -2207,7 +2201,6 @@ nfs_mkdir(void *v)
 				vrele(newvp);
 		}
 	} else {
-		VN_KNOTE(dvp, NOTE_WRITE | NOTE_LINK);
 		nfs_cache_enter(dvp, newvp, cnp);
 		*ap->a_vpp = newvp;
 		VOP_UNLOCK(newvp);
@@ -2262,8 +2255,6 @@ nfs_rmdir(void *v)
 	VTONFS(dvp)->n_flag |= NMODIFIED;
 	if (!wccflag)
 		NFS_INVALIDATE_ATTRCACHE(VTONFS(dvp));
-	VN_KNOTE(dvp, NOTE_WRITE | NOTE_LINK);
-	VN_KNOTE(vp, NOTE_DELETE);
 	cache_purge(vp);
 	vput(vp);
 	/*

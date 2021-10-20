@@ -36,7 +36,7 @@
 #if 0
 __FBSDID("$FreeBSD: head/sys/ufs/ufs/ufs_acl.c 356669 2020-01-13 02:31:51Z mjg $");
 #endif
-__KERNEL_RCSID(0, "$NetBSD: ufs_acl.c,v 1.2 2021/10/10 23:02:10 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_acl.c,v 1.3 2021/10/20 03:08:19 thorpej Exp $");
 
 #if defined(_KERNEL_OPT) 
 #include "opt_ffs.h"
@@ -425,8 +425,6 @@ ufs_setacl_nfs4_internal(struct vnode *vp, struct acl *aclp,
 	DIP_ASSIGN(ip, mode, ip->i_mode);
 	ip->i_flag |= IN_CHANGE;
 
-	VN_KNOTE(vp, NOTE_REVOKE);
-
 	error = UFS_UPDATE(vp, NULL, NULL, 0);
 	if (lock)
 		UFS_WAPBL_END(vp->v_mount);
@@ -607,7 +605,6 @@ ufs_setacl_posix1e(struct vnode *vp, int type, struct acl *aclp,
 		UFS_WAPBL_END(vp->v_mount);
 	}
 
-	VN_KNOTE(vp, NOTE_ATTRIB);
 	return (error);
 }
 

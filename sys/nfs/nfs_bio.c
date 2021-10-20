@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_bio.c,v 1.199 2020/09/05 16:30:12 riastradh Exp $	*/
+/*	$NetBSD: nfs_bio.c,v 1.200 2021/10/20 03:08:18 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_bio.c,v 1.199 2020/09/05 16:30:12 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_bio.c,v 1.200 2021/10/20 03:08:18 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_nfs.h"
@@ -455,7 +455,6 @@ nfs_write(void *v)
 	vsize_t bytelen;
 	int error = 0;
 	int ioflag = ap->a_ioflag;
-	int extended = 0, wrotedata = 0;
 
 #ifdef DIAGNOSTIC
 	if (uio->uio_rw != UIO_WRITE)
@@ -545,7 +544,6 @@ nfs_write(void *v)
 			}
 			break;
 		}
-		wrotedata = 1;
 
 		/*
 		 * update UVM's notion of the size now that we've
@@ -554,7 +552,6 @@ nfs_write(void *v)
 
 		if (vp->v_size < uio->uio_offset) {
 			uvm_vnp_setsize(vp, uio->uio_offset);
-			extended = 1;
 		}
 
 		if ((oldoff & ~(nmp->nm_wsize - 1)) !=
@@ -566,8 +563,6 @@ nfs_write(void *v)
 				       ~(nmp->nm_wsize - 1)), PGO_CLEANIT);
 		}
 	} while (uio->uio_resid > 0);
-	if (wrotedata)
-		VN_KNOTE(vp, NOTE_WRITE | (extended ? NOTE_EXTEND : 0));
 	if (error == 0 && (ioflag & IO_SYNC) != 0) {
 		rw_enter(vp->v_uobj.vmobjlock, RW_WRITER);
 		error = VOP_PUTPAGES(vp,

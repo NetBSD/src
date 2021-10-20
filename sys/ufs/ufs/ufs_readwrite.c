@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_readwrite.c,v 1.126 2020/04/23 21:47:09 ad Exp $	*/
+/*	$NetBSD: ufs_readwrite.c,v 1.127 2021/10/20 03:08:19 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: ufs_readwrite.c,v 1.126 2020/04/23 21:47:09 ad Exp $");
+__KERNEL_RCSID(1, "$NetBSD: ufs_readwrite.c,v 1.127 2021/10/20 03:08:19 thorpej Exp $");
 
 #define	FS			struct fs
 #define	I_FS			i_fs
@@ -50,7 +50,7 @@ __KERNEL_RCSID(1, "$NetBSD: ufs_readwrite.c,v 1.126 2020/04/23 21:47:09 ad Exp $
 
 static int	ufs_post_read_update(struct vnode *, int, int);
 static int	ufs_post_write_update(struct vnode *, struct uio *, int,
-		    kauth_cred_t, off_t, int, int, int);
+		    kauth_cred_t, off_t, int, int);
 
 /*
  * Vnode op for reading.
@@ -245,7 +245,6 @@ WRITE(void *v)
 	off_t osize, origoff, oldoff, preallocoff, endallocoff, nsize;
 	int blkoffset, error, flags, ioflag, resid;
 	int aflag;
-	int extended=0;
 	vsize_t bytelen;
 	bool async;
 	struct ufsmount *ump;
@@ -419,7 +418,6 @@ WRITE(void *v)
 
 		if (vp->v_size < newoff) {
 			uvm_vnp_setsize(vp, newoff);
-			extended = 1;
 		}
 
 		if (error)
@@ -448,7 +446,7 @@ WRITE(void *v)
 
 out:
 	error = ufs_post_write_update(vp, uio, ioflag, cred, osize, resid,
-	    extended, error);
+	    error);
 	UFS_WAPBL_END(vp->v_mount);
 
 	return (error);
@@ -468,7 +466,6 @@ BUFWR(struct vnode *vp, struct uio *uio, int ioflag, kauth_cred_t cred)
 	off_t osize;
 	int resid, xfersize, size, blkoffset;
 	daddr_t lbn;
-	int extended=0;
 	int error;
 
 	KASSERT(ISSET(ioflag, IO_NODELOCKED));
@@ -520,7 +517,6 @@ BUFWR(struct vnode *vp, struct uio *uio, int ioflag, kauth_cred_t cred)
 			ip->i_size = uio->uio_offset + xfersize;
 			DIP_ASSIGN(ip, size, ip->i_size);
 			uvm_vnp_setsize(vp, ip->i_size);
-			extended = 1;
 		}
 		size = ufs_blksize(fs, ip, lbn) - bp->b_resid;
 		if (xfersize > size)
@@ -548,14 +544,14 @@ BUFWR(struct vnode *vp, struct uio *uio, int ioflag, kauth_cred_t cred)
 	}
 
 	error = ufs_post_write_update(vp, uio, ioflag, cred, osize, resid,
-	    extended, error);
+	    error);
 
 	return (error);
 }
 
 static int
 ufs_post_write_update(struct vnode *vp, struct uio *uio, int ioflag,
-    kauth_cred_t cred, off_t osize, int resid, int extended, int oerror)
+    kauth_cred_t cred, off_t osize, int resid, int oerror)
 {
 	struct inode *ip = VTOI(vp);
 	int error = oerror;
@@ -587,10 +583,6 @@ ufs_post_write_update(struct vnode *vp, struct uio *uio, int ioflag,
 			}
 		}
 	}
-
-	/* If we successfully wrote anything, notify kevent listeners.  */
-	if (resid > uio->uio_resid)
-		VN_KNOTE(vp, NOTE_WRITE | (extended ? NOTE_EXTEND : 0));
 
 	/*
 	 * Update the size on disk: truncate back to original size on

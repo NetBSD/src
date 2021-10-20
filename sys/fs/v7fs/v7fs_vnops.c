@@ -1,4 +1,4 @@
-/*	$NetBSD: v7fs_vnops.c,v 1.31 2020/06/27 17:29:18 christos Exp $	*/
+/*	$NetBSD: v7fs_vnops.c,v 1.32 2021/10/20 03:08:18 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2011 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: v7fs_vnops.c,v 1.31 2020/06/27 17:29:18 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: v7fs_vnops.c,v 1.32 2021/10/20 03:08:18 thorpej Exp $");
 #if defined _KERNEL_OPT
 #include "opt_v7fs.h"
 #endif
@@ -683,11 +683,12 @@ v7fs_fsync(void *v)
 int
 v7fs_remove(void *v)
 {
-	struct vop_remove_v2_args /* {
+	struct vop_remove_v3_args /* {
 				  struct vnodeop_desc *a_desc;
 				  struct vnode * a_dvp;
 				  struct vnode * a_vp;
 				  struct componentname * a_cnp;
+				  nlink_t ctx_vp_new_nlink;
 				  } */ *a = v;
 	struct v7fs_node *parent_node = a->a_dvp->v_data;
 	struct v7fs_mount *v7fsmount = parent_node->v7fsmount;
