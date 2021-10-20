@@ -398,7 +398,7 @@ __crypt_argon2(const char *pw, const char * salt)
 
 	if (rc < 0) {
 		/* unable to parse input params */
-		return 0;
+		return NULL;
 	}
 
 	rc = argon2_hash(ctx.t_cost, ctx.m_cost,
@@ -409,7 +409,7 @@ __crypt_argon2(const char *pw, const char * salt)
 	if (rc != ARGON2_OK) {
 		fprintf(stderr, "argon2: failed: %s\n",
 		    argon2_error_message(rc));
-		return 0;
+		return NULL;
 	}
 
 	memcpy(rbuf, encodebuf, sizeof(encodebuf));
