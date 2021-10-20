@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.711 2021/10/20 02:12:36 knakahara Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.712 2021/10/20 07:04:28 knakahara Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.711 2021/10/20 02:12:36 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.712 2021/10/20 07:04:28 knakahara Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -9853,7 +9853,7 @@ wm_intr_legacy(void *arg)
 
 	if (rxq->rxq_stopping) {
 		mutex_exit(rxq->rxq_lock);
-		return 0;
+		return 1;
 	}
 
 #if defined(WM_DEBUG) || defined(WM_EVENT_COUNTERS)
@@ -9877,7 +9877,7 @@ wm_intr_legacy(void *arg)
 
 	if (txq->txq_stopping) {
 		mutex_exit(txq->txq_lock);
-		return 0;
+		return 1;
 	}
 
 #if defined(WM_DEBUG) || defined(WM_EVENT_COUNTERS)
@@ -9897,7 +9897,7 @@ wm_intr_legacy(void *arg)
 
 	if (sc->sc_core_stopping) {
 		WM_CORE_UNLOCK(sc);
-		return 0;
+		return 1;
 	}
 
 	if (icr & (ICR_LSC | ICR_RXSEQ)) {
@@ -9997,7 +9997,7 @@ wm_txrxintr_msix(void *arg)
 
 	if (txq->txq_stopping) {
 		mutex_exit(txq->txq_lock);
-		return 0;
+		return 1;
 	}
 
 	WM_Q_EVCNT_INCR(txq, txdw);
@@ -10011,7 +10011,7 @@ wm_txrxintr_msix(void *arg)
 
 	if (rxq->rxq_stopping) {
 		mutex_exit(rxq->rxq_lock);
-		return 0;
+		return 1;
 	}
 
 	WM_Q_EVCNT_INCR(rxq, intr);
