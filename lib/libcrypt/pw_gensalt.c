@@ -1,4 +1,4 @@
-/*	$NetBSD: pw_gensalt.c,v 1.12 2021/10/16 10:53:33 nia Exp $	*/
+/*	$NetBSD: pw_gensalt.c,v 1.13 2021/10/20 13:03:29 nia Exp $	*/
 
 /*
  * Copyright 1997 Niels Provos <provos@physnet.uni-hamburg.de>
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: pw_gensalt.c,v 1.12 2021/10/16 10:53:33 nia Exp $");
+__RCSID("$NetBSD: pw_gensalt.c,v 1.13 2021/10/20 13:03:29 nia Exp $");
 #endif /* not lint */
 
 #include <sys/syslimits.h>
@@ -59,6 +59,9 @@ __RCSID("$NetBSD: pw_gensalt.c,v 1.12 2021/10/16 10:53:33 nia Exp $");
 #define ARGON2_ARGON2I_STR      "argon2i"
 #define ARGON2_ARGON2D_STR      "argon2d"
 #define ARGON2_ARGON2ID_STR     "argon2id"
+
+crypt_private int
+estimate_argon2_params(argon2_type, uint32_t *, uint32_t *, uint32_t *);
 #endif /* HAVE_ARGON2 */
 
 static const struct pw_salt {
@@ -163,15 +166,16 @@ __gensalt_sha1(char *salt, size_t saltsiz, const char *option)
 
 #ifdef HAVE_ARGON2
 static int
-__gensalt_argon2_decode_option(char *dst, size_t dlen, const char *option)
+__gensalt_argon2_decode_option(char *dst, size_t dlen,
+    const char *option, argon2_type atype)
 {
-
-	char * in = 0;
-	char * a = 0;
+	char *in = 0;
+	char *a = 0;
 	size_t tmp = 0;
 	int error = 0;
-	/* ob buffer: m_cost, t_cost, threads */
-	uint32_t ob[3] = {4096, 3, 1}; 
+	uint32_t memory = 0;
+	uint32_t time = 0;
+	uint32_t threads = 0;
 
 	memset(dst, 0, dlen);
 
@@ -179,37 +183,33 @@ __gensalt_argon2_decode_option(char *dst, size_t dlen, const char *option)
 		goto done;
 	}
 
-	in = (char *)strdup(option);
+	in = strdup(option);
 
 	while ((a = strsep(&in, ",")) != NULL) {
-		switch(*a) {
-
+		switch (*a) {
 			case 'm':
 				a += strlen("m=");
 				if ((getnum(a, &tmp)) == -1) {
 					--error;
 				} else {
-					ob[0] = tmp;
+					memory = tmp;
 				}
-
 				break;
 			case 't':
 				a += strlen("t=");
 				if ((getnum(a, &tmp)) == -1) {
 					--error;
 				} else {
-					ob[1] = tmp;
+					time = tmp;
 				}
-
 				break;
 			case 'p':
 				a += strlen("p=");
 				if ((getnum(a, &tmp)) == -1) {
 					--error;
 				} else {
-					ob[2] = tmp;
+					threads = tmp;
 				}
-
 				break;
 			default:
 				--error;
@@ -217,22 +217,35 @@ __gensalt_argon2_decode_option(char *dst, size_t dlen, const char *option)
 	}
 
 	free(in);
+
 done:
-	snprintf(dst, dlen, "m=%d,t=%d,p=%d", ob[0], ob[1], ob[2]);
+	/*
+	 * If parameters are unspecified, calculate some reasonable
+	 * ones based on system time.
+	 */
+	if (memory < ARGON2_MIN_MEMORY ||
+	    time < ARGON2_MIN_TIME ||
+	    threads < ARGON2_MIN_THREADS) {
+		estimate_argon2_params(atype, &time, &memory, &threads);
+	}
+
+	snprintf(dst, dlen, "m=%d,t=%d,p=%d", memory, time, threads);
 
 	return error;
 }
 
 
 static int
-__gensalt_argon2(char *salt, size_t saltsiz, const char *option,argon2_type atype)
+__gensalt_argon2(char *salt, size_t saltsiz,
+    const char *option, argon2_type atype)
 {
 	int rc;
 	int n;
 	char buf[64];
 
 	/* get param, enforcing order and applying defaults */
-	if ((rc = __gensalt_argon2_decode_option(buf, sizeof(buf), option)) < 0) {
+	if ((rc = __gensalt_argon2_decode_option(buf,
+	    sizeof(buf), option, atype)) < 0) {
 		return 0;
 	}
 
