@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_rename.c,v 1.24 2020/09/05 16:30:13 riastradh Exp $	*/
+/*	$NetBSD: lfs_rename.c,v 1.25 2021/10/20 03:08:19 thorpej Exp $	*/
 /*  from NetBSD: ufs_rename.c,v 1.12 2015/03/27 17:27:56 riastradh Exp  */
 
 /*-
@@ -89,7 +89,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_rename.c,v 1.24 2020/09/05 16:30:13 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_rename.c,v 1.25 2021/10/20 03:08:19 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -477,7 +477,8 @@ next:
  */
 static int
 ulfs_gro_remove(struct mount *mp, kauth_cred_t cred,
-    struct vnode *dvp, struct componentname *cnp, void *de, struct vnode *vp)
+    struct vnode *dvp, struct componentname *cnp, void *de, struct vnode *vp,
+    nlink_t *tvp_nlinkp)
 {
 	struct ulfs_lookup_results *ulr = de;
 	int error;
@@ -498,13 +499,9 @@ ulfs_gro_remove(struct mount *mp, kauth_cred_t cred,
 
 	/* XXX ulfs_dirremove decrements vp's link count for us.  */
 	error = ulfs_dirremove(dvp, ulr, VTOI(vp), cnp->cn_flags, 0);
-	if (error)
-		goto out1;
 
-	VN_KNOTE(dvp, NOTE_WRITE);
-	VN_KNOTE(vp, (VTOI(vp)->i_nlink? NOTE_LINK : NOTE_DELETE));
+	*tvp_nlinkp = VTOI(vp)->i_nlink;
 
-out1:
 	return error;
 }
 
@@ -732,7 +729,7 @@ ulfs_gro_rename(struct mount *mp, kauth_cred_t cred,
     struct vnode *fdvp, struct componentname *fcnp,
     void *fde, struct vnode *fvp,
     struct vnode *tdvp, struct componentname *tcnp,
-    void *tde, struct vnode *tvp)
+    void *tde, struct vnode *tvp, nlink_t *tvp_nlinkp)
 {
 	struct lfs *fs;
 	struct ulfs_lookup_results *fulr = fde;
@@ -987,13 +984,9 @@ ulfs_gro_rename(struct mount *mp, kauth_cred_t cred,
 #endif
 		goto arghmybrainhurts;
 
-	/*
-	 * XXX Perhaps this should go at the top, in case the file
-	 * system is modified but incompletely so because of an
-	 * intermediate error.
-	 */
-	genfs_rename_knote(fdvp, fvp, tdvp, tvp,
-	    ((tvp != NULL) && (VTOI(tvp)->i_nlink == 0)));
+	if (tvp != NULL) {
+		*tvp_nlinkp = VTOI(tvp)->i_nlink;
+	}
 #if 0				/* XXX */
 	genfs_rename_cache_purge(fdvp, fvp, tdvp, tvp);
 #endif
@@ -1019,7 +1012,7 @@ lfs_gro_rename(struct mount *mp, kauth_cred_t cred,
     struct vnode *fdvp, struct componentname *fcnp,
     void *fde, struct vnode *fvp,
     struct vnode *tdvp, struct componentname *tcnp,
-    void *tde, struct vnode *tvp)
+    void *tde, struct vnode *tvp, nlink_t *tvp_nlinkp)
 {
 	int error;
 
@@ -1054,7 +1047,8 @@ lfs_gro_rename(struct mount *mp, kauth_cred_t cred,
 
 	error = ulfs_gro_rename(mp, cred,
 	    fdvp, fcnp, fde, fvp,
-	    tdvp, tcnp, tde, tvp);
+	    tdvp, tcnp, tde, tvp,
+	    tvp_nlinkp);
 
 	if (tvp && VTOI(tvp)->i_nlink == 0)
 		lfs_orphan(VTOI(tvp)->i_lfs, VTOI(tvp)->i_number);

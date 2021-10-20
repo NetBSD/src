@@ -4477,7 +4477,7 @@ zfs_rename(vnode_t *sdvp, vnode_t **svpp, struct componentname *scnp,
 				    NOTE_DELETE : NOTE_LINK));
 			} else {
 				genfs_rename_knote(sdvp, *svpp, tdvp, *tvpp,
-				    ((tzp != NULL) && (tzp->z_links == 0)));
+				    tzp != NULL ? tzp->z_links : 0);
 			}
 #endif
 		}
@@ -5147,9 +5147,6 @@ zfs_netbsd_write(void *v)
 
 	resid = uio->uio_resid;
 	error = zfs_write(vp, uio, ioflags(ap->a_ioflag), ap->a_cred, NULL);
-	if (resid > uio->uio_resid)
-		VN_KNOTE(vp, NOTE_WRITE |
-		    (zp->z_size > osize ? NOTE_EXTEND : 0));
 
 	return error;
 }
@@ -5342,8 +5339,6 @@ zfs_netbsd_create(void *v)
 
 	KASSERT((error == 0) == (*vpp != NULL));
 	KASSERT(VOP_ISLOCKED(dvp) == LK_EXCLUSIVE);
-	if (error == 0)
-		VN_KNOTE(dvp, NOTE_WRITE);
 	if (*vpp != NULL)
 		VOP_UNLOCK(*vpp, 0);
 
@@ -5383,8 +5378,6 @@ zfs_netbsd_mknod(void *v)
 
 	KASSERT((error == 0) == (*vpp != NULL));
 	KASSERT(VOP_ISLOCKED(dvp) == LK_EXCLUSIVE);
-	if (error == 0)
-		VN_KNOTE(dvp, NOTE_WRITE);
 	if (*vpp != NULL)
 		VOP_UNLOCK(*vpp, 0);
 
@@ -5394,10 +5387,11 @@ zfs_netbsd_mknod(void *v)
 static int
 zfs_netbsd_remove(void *v)
 {
-	struct vop_remove_v2_args /* {
+	struct vop_remove_v3_args /* {
 		struct vnode *a_dvp;
 		struct vnode *a_vp;
 		struct componentname *a_cnp;
+		nlink_t ctx_vp_new_nlink;
 	} */ *ap = v;
 	struct vnode *dvp = ap->a_dvp;
 	struct vnode *vp = ap->a_vp;
@@ -5414,11 +5408,12 @@ zfs_netbsd_remove(void *v)
 
 	error = zfs_remove(dvp, vp, nm, cnp->cn_cred);
 
+	/*
+	 * XXX Should update ctx_vp_new_nlink, but for now the
+	 * XXX the kevent sent on "vp"  matches historical behavior.
+	 */
+
 	PNBUF_PUT(nm);
-	if (error == 0) {
-		VN_KNOTE(vp, NOTE_DELETE);
-		VN_KNOTE(dvp, NOTE_WRITE);
-	}
 	vput(vp);
 	KASSERT(VOP_ISLOCKED(dvp) == LK_EXCLUSIVE);
 	return (error);
@@ -5454,8 +5449,6 @@ zfs_netbsd_mkdir(void *v)
 
 	KASSERT((error == 0) == (*vpp != NULL));
 	KASSERT(VOP_ISLOCKED(dvp) == LK_EXCLUSIVE);
-	if (error == 0)
-		VN_KNOTE(dvp, NOTE_WRITE | NOTE_LINK);
 	if (*vpp != NULL)
 		VOP_UNLOCK(*vpp, 0);
 
@@ -5486,10 +5479,6 @@ zfs_netbsd_rmdir(void *v)
 	error = zfs_rmdir(dvp, vp, nm, cnp->cn_cred);
 
 	PNBUF_PUT(nm);
-	if (error == 0) {
-		VN_KNOTE(dvp, NOTE_WRITE | NOTE_LINK);
-		VN_KNOTE(vp, NOTE_DELETE);
-	}
 	vput(vp);
 	KASSERT(VOP_ISLOCKED(dvp) == LK_EXCLUSIVE);
 	return error;
@@ -5653,7 +5642,6 @@ zfs_netbsd_setattr(void *v)
 	if (error)
 		return error;
 
-	VN_KNOTE(vp, NOTE_ATTRIB);
 	cache_enter_id(vp, zp->z_mode, zp->z_uid, zp->z_gid, true);
 
 	return error;
@@ -5662,7 +5650,7 @@ zfs_netbsd_setattr(void *v)
 static int
 zfs_netbsd_rename(void *v)
 {
-	struct vop_rename_args  /* {
+	struct vop_rename_args /* {
 		struct vnode *a_fdvp;
 		struct vnode *a_fvp;
 		struct componentname *a_fcnp;
@@ -5760,8 +5748,6 @@ zfs_netbsd_symlink(void *v)
 	error = zfs_symlink(dvp, vpp, nm, vap, target, cnp->cn_cred, 0);
 
 	PNBUF_PUT(nm);
-	if (error == 0)
-		VN_KNOTE(ap->a_dvp, NOTE_WRITE);
 	KASSERT((error == 0) == (*vpp != NULL));
 	KASSERT(VOP_ISLOCKED(dvp) == LK_EXCLUSIVE);
 	if (*vpp != NULL)
@@ -5803,10 +5789,6 @@ zfs_netbsd_link(void *v)
 	    NULL, 0);
 
 	PNBUF_PUT(nm);
-	if (error == 0) {
-		VN_KNOTE(vp, NOTE_LINK);
-		VN_KNOTE(dvp, NOTE_WRITE);
-	}
 	VOP_UNLOCK(vp, 0);
 	return error;
 }

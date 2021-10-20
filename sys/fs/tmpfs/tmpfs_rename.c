@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_rename.c,v 1.10 2019/12/03 04:59:05 riastradh Exp $	*/
+/*	$NetBSD: tmpfs_rename.c,v 1.11 2021/10/20 03:08:17 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_rename.c,v 1.10 2019/12/03 04:59:05 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_rename.c,v 1.11 2021/10/20 03:08:17 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -264,7 +264,7 @@ tmpfs_gro_rename(struct mount *mp, kauth_cred_t cred,
     struct vnode *fdvp, struct componentname *fcnp,
     void *fde, struct vnode *fvp,
     struct vnode *tdvp, struct componentname *tcnp,
-    void *tde, struct vnode *tvp)
+    void *tde, struct vnode *tvp, nlink_t *tvp_nlinkp)
 {
 	tmpfs_node_t *fdnode = VP_TO_TMPFS_DIR(fdvp);
 	tmpfs_node_t *tdnode = VP_TO_TMPFS_DIR(tdvp);
@@ -317,14 +317,6 @@ tmpfs_gro_rename(struct mount *mp, kauth_cred_t cred,
 	if (fdvp != tdvp) {
 		tmpfs_dir_detach(fdnode, *fdep);
 		tmpfs_dir_attach(tdnode, *fdep, VP_TO_TMPFS_NODE(fvp));
-	} else if (tvp == NULL) {
-		/*
-		 * We are changing the directory.  tmpfs_dir_attach and
-		 * tmpfs_dir_detach note the events for us, but for
-		 * this case we don't call them, so we must note the
-		 * event explicitly.
-		 */
-		VN_KNOTE(fdvp, NOTE_WRITE);
 	}
 
 	/*
@@ -350,6 +342,8 @@ tmpfs_gro_rename(struct mount *mp, kauth_cred_t cred,
 		}
 		tmpfs_dir_detach(tdnode, *tdep);
 		tmpfs_free_dirent(VFS_TO_TMPFS(mp), *tdep);
+
+		*tvp_nlinkp = VP_TO_TMPFS_NODE(tvp)->tn_links;
 	}
 
 	/*
@@ -377,8 +371,6 @@ tmpfs_gro_rename(struct mount *mp, kauth_cred_t cred,
 	tmpfs_update(tdvp, TMPFS_UPDATE_MTIME | TMPFS_UPDATE_CTIME);
 	tmpfs_update(fvp, TMPFS_UPDATE_CTIME);
 
-	VN_KNOTE(fvp, NOTE_RENAME);
-
 	genfs_rename_cache_purge(fdvp, fvp, tdvp, tvp);
 
 	return 0;
@@ -390,7 +382,8 @@ tmpfs_gro_rename(struct mount *mp, kauth_cred_t cred,
  */
 static int
 tmpfs_gro_remove(struct mount *mp, kauth_cred_t cred,
-    struct vnode *dvp, struct componentname *cnp, void *de, struct vnode *vp)
+    struct vnode *dvp, struct componentname *cnp, void *de, struct vnode *vp,
+    nlink_t *tvp_nlinkp)
 {
 	tmpfs_node_t *dnode = VP_TO_TMPFS_DIR(dvp);
 	struct tmpfs_dirent **dep = de;
@@ -412,6 +405,9 @@ tmpfs_gro_remove(struct mount *mp, kauth_cred_t cred,
 	tmpfs_dir_detach(dnode, *dep);
 	tmpfs_free_dirent(VFS_TO_TMPFS(mp), *dep);
 	tmpfs_update(dvp, TMPFS_UPDATE_MTIME | TMPFS_UPDATE_CTIME);
+
+	KASSERT((*dep)->td_node == VP_TO_TMPFS_NODE(vp));
+	*tvp_nlinkp = VP_TO_TMPFS_NODE(vp)->tn_links;
 
 	return 0;
 }

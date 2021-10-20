@@ -893,7 +893,7 @@ unionfs_fsync(void *v)
 static int
 unionfs_remove(void *v)
 {
-	struct vop_remove_v2_args *ap = v;
+	struct vop_remove_v3_args *ap = v;
 	int		error;
 	struct unionfs_node *dunp;
 	struct unionfs_node *unp;

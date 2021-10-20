@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_vnops.c,v 1.147 2021/07/18 23:57:14 dholland Exp $	*/
+/*	$NetBSD: tmpfs_vnops.c,v 1.148 2021/10/20 03:08:17 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007, 2020 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_vnops.c,v 1.147 2021/07/18 23:57:14 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_vnops.c,v 1.148 2021/10/20 03:08:17 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/dirent.h>
@@ -648,7 +648,6 @@ tmpfs_write(void *v)
 	}
 
 	tmpfs_update(vp, TMPFS_UPDATE_MTIME | TMPFS_UPDATE_CTIME);
-	VN_KNOTE(vp, NOTE_WRITE);
 out:
 	if (error) {
 		KASSERT(oldsize == node->tn_size);
@@ -685,10 +684,11 @@ tmpfs_fsync(void *v)
 int
 tmpfs_remove(void *v)
 {
-	struct vop_remove_v2_args /* {
+	struct vop_remove_v3_args /* {
 		struct vnode *a_dvp;
 		struct vnode *a_vp;
 		struct componentname *a_cnp;
+		nlink_t ctx_vp_new_nlink;
 	} */ *ap = v;
 	vnode_t *dvp = ap->a_dvp, *vp = ap->a_vp;
 	tmpfs_node_t *dnode, *node;
@@ -747,6 +747,7 @@ tmpfs_remove(void *v)
 		/* We removed a hard link. */
 		tflags |= TMPFS_UPDATE_CTIME;
 	}
+	ap->ctx_vp_new_nlink = node->tn_links;
 	tmpfs_update(dvp, tflags);
 	error = 0;
 out:
@@ -814,10 +815,7 @@ tmpfs_link(void *v)
 	tmpfs_dir_attach(dnode, de, node);
 	tmpfs_update(dvp, TMPFS_UPDATE_MTIME | TMPFS_UPDATE_CTIME);
 
-	/* Update the timestamps and trigger the event. */
-	if (node->tn_vnode) {
-		VN_KNOTE(node->tn_vnode, NOTE_LINK);
-	}
+	/* Update the timestamps. */
 	tmpfs_update(vp, TMPFS_UPDATE_CTIME);
 	error = 0;
 out:

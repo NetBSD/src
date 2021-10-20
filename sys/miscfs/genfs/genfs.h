@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs.h,v 1.37 2021/06/29 22:34:08 dholland Exp $	*/
+/*	$NetBSD: genfs.h,v 1.38 2021/10/20 03:08:18 thorpej Exp $	*/
 
 #ifndef	_MISCFS_GENFS_GENFS_H_
 #define	_MISCFS_GENFS_GENFS_H_
@@ -84,7 +84,7 @@ int	genfs_sane_rename(const struct genfs_rename_ops *,
 	    kauth_cred_t, bool);
 
 void	genfs_rename_knote(struct vnode *, struct vnode *, struct vnode *,
-	    struct vnode *, bool);
+	    struct vnode *, nlink_t);
 void	genfs_rename_cache_purge(struct vnode *, struct vnode *, struct vnode *,
 	    struct vnode *);
 
@@ -119,10 +119,10 @@ struct genfs_rename_ops {
 	    struct vnode *fdvp, struct componentname *fcnp,
 	    void *fde, struct vnode *fvp,
 	    struct vnode *tdvp, struct componentname *tcnp,
-	    void *tde, struct vnode *tvp);
+	    void *tde, struct vnode *tvp, nlink_t *tvp_nlinkp);
 	int (*gro_remove)(struct mount *mp, kauth_cred_t cred,
 	    struct vnode *dvp, struct componentname *cnp, void *de,
-	    struct vnode *vp);
+	    struct vnode *vp, nlink_t *tvp_nlinkp);
 	int (*gro_lookup)(struct mount *mp, struct vnode *dvp,
 	    struct componentname *cnp, void *de_ret, struct vnode **vp_ret);
 	int (*gro_genealogy)(struct mount *mp, kauth_cred_t cred,

@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnode.c,v 1.127 2021/04/01 06:26:14 simonb Exp $	*/
+/*	$NetBSD: vfs_vnode.c,v 1.128 2021/10/20 03:08:18 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997-2011, 2019, 2020 The NetBSD Foundation, Inc.
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_vnode.c,v 1.127 2021/04/01 06:26:14 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_vnode.c,v 1.128 2021/10/20 03:08:18 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pax.h"
@@ -1826,6 +1826,10 @@ vcache_reclaim(vnode_t *vp)
 	vp->v_vflag |= VV_LOCKSWORK;
 	VSTATE_CHANGE(vp, VS_RECLAIMING, VS_RECLAIMED);
 	vp->v_tag = VT_NON;
+	/*
+	 * Don't check for interest in NOTE_REVOKE; it's always posted
+	 * because it sets EV_EOF.
+	 */
 	KNOTE(&vp->v_klist, NOTE_REVOKE);
 	mutex_exit(vp->v_interlock);
 

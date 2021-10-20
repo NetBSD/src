@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vnops.c,v 1.106 2021/07/18 23:57:14 dholland Exp $	*/
+/*	$NetBSD: msdosfs_vnops.c,v 1.107 2021/10/20 03:08:17 thorpej Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_vnops.c,v 1.106 2021/07/18 23:57:14 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_vnops.c,v 1.107 2021/10/20 03:08:17 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -151,7 +151,6 @@ msdosfs_create(void *v)
 	DETIMES(&ndirent, NULL, NULL, NULL, pdep->de_pmp->pm_gmtoff);
 	if ((error = createde(&ndirent, pdep, &dep, cnp)) != 0)
 		goto bad;
-	VN_KNOTE(ap->a_dvp, NOTE_WRITE);
 	*ap->a_vpp = DETOV(dep);
 	cache_enter(ap->a_dvp, *ap->a_vpp, cnp->cn_nameptr, cnp->cn_namelen,
 	    cnp->cn_flags);
@@ -427,7 +426,6 @@ msdosfs_setattr(void *v)
 	}
 
 	if (de_changed) {
-		VN_KNOTE(vp, NOTE_ATTRIB);
 		error = deupdat(dep, 1);
 		if (error)
 			goto bad;
@@ -545,7 +543,7 @@ msdosfs_write(void *v)
 		int a_ioflag;
 		kauth_cred_t a_cred;
 	} */ *ap = v;
-	int resid, extended = 0;
+	int resid;
 	int error = 0;
 	int ioflag = ap->a_ioflag;
 	u_long osize;
@@ -625,7 +623,6 @@ msdosfs_write(void *v)
 		if (rem > 0)
 			ubc_zerorange(&vp->v_uobj, (off_t)dep->de_FileSize,
 			    rem, UBC_VNODE_FLAGS(vp));
-		extended = 1;
 	}
 
 	do {
@@ -664,8 +661,6 @@ msdosfs_write(void *v)
 	 * to the size it was before the write was attempted.
 	 */
 errexit:
-	if (resid > uio->uio_resid)
-		VN_KNOTE(vp, NOTE_WRITE | (extended ? NOTE_EXTEND : 0));
 	if (error) {
 		detrunc(dep, osize, ioflag & IO_SYNC, NOCRED);
 		uio->uio_offset -= resid - uio->uio_resid;
@@ -717,10 +712,11 @@ msdosfs_update(struct vnode *vp, const struct timespec *acc,
 int
 msdosfs_remove(void *v)
 {
-	struct vop_remove_v2_args /* {
+	struct vop_remove_v3_args /* {
 		struct vnode *a_dvp;
 		struct vnode *a_vp;
 		struct componentname *a_cnp;
+		nlink_t ctx_vp_new_nlink;
 	} */ *ap = v;
 	struct denode *dep = VTODE(ap->a_vp);
 	struct denode *ddep = VTODE(ap->a_dvp);
@@ -734,8 +730,6 @@ msdosfs_remove(void *v)
 	printf("msdosfs_remove(), dep %p, usecount %d\n",
 		dep, vrefcnt(ap->a_vp));
 #endif
-	VN_KNOTE(ap->a_vp, NOTE_DELETE);
-	VN_KNOTE(ap->a_dvp, NOTE_WRITE);
 	if (ddep == dep)
 		vrele(ap->a_vp);
 	else
@@ -1255,7 +1249,6 @@ msdosfs_mkdir(void *v)
 	ndirent.de_devvp = pdep->de_devvp;
 	if ((error = createde(&ndirent, pdep, &dep, cnp)) != 0)
 		goto bad;
-	VN_KNOTE(ap->a_dvp, NOTE_WRITE | NOTE_LINK);
 	*ap->a_vpp = DETOV(dep);
 	return (0);
 
@@ -1315,7 +1308,6 @@ msdosfs_rmdir(void *v)
 	 * directory.  Since dos filesystems don't do this we just purge
 	 * the name cache and let go of the parent directory denode.
 	 */
-	VN_KNOTE(dvp, NOTE_WRITE | NOTE_LINK);
 	cache_purge(dvp);
 	/*
 	 * Truncate the directory that is being deleted.
@@ -1323,7 +1315,6 @@ msdosfs_rmdir(void *v)
 	error = detrunc(ip, (u_long)0, IO_SYNC, cnp->cn_cred);
 	cache_purge(vp);
 out:
-	VN_KNOTE(vp, NOTE_DELETE);
 	vput(vp);
 	return (error);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: coda_vnops.c,v 1.115 2021/06/29 22:34:05 dholland Exp $	*/
+/*	$NetBSD: coda_vnops.c,v 1.116 2021/10/20 03:08:16 thorpej Exp $	*/
 
 /*
  *
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: coda_vnops.c,v 1.115 2021/06/29 22:34:05 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: coda_vnops.c,v 1.116 2021/10/20 03:08:16 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1075,7 +1075,7 @@ int
 coda_remove(void *v)
 {
 /* true args */
-    struct vop_remove_v2_args *ap = v;
+    struct vop_remove_v3_args *ap = v;
     vnode_t *dvp = ap->a_dvp;
     struct cnode *cp = VTOC(dvp);
     vnode_t *vp = ap->a_vp;

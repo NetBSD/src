@@ -1,4 +1,4 @@
-/*	$NetBSD: dead_vnops.c,v 1.65 2021/07/18 23:57:14 dholland Exp $	*/
+/*	$NetBSD: dead_vnops.c,v 1.66 2021/10/20 03:08:18 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dead_vnops.c,v 1.65 2021/07/18 23:57:14 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dead_vnops.c,v 1.66 2021/10/20 03:08:18 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -225,10 +225,11 @@ dead_poll(void *v)
 int
 dead_remove(void *v)
 {
-	struct vop_remove_v2_args /* {
+	struct vop_remove_v3_args /* {
 		struct vnode *a_dvp;
 		struct vnode *a_vp;
 		struct componentname *a_cnp;
+		nlink_t ctx_vp_new_nlink;
 	} */ *ap = v;
 
 	vput(ap->a_vp);

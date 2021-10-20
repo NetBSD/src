@@ -1,4 +1,4 @@
-/*	$NetBSD: nilfs_vnops.c,v 1.44 2021/07/24 21:31:38 andvar Exp $	*/
+/*	$NetBSD: nilfs_vnops.c,v 1.45 2021/10/20 03:08:17 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2008, 2009 Reinoud Zandijk
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: nilfs_vnops.c,v 1.44 2021/07/24 21:31:38 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nilfs_vnops.c,v 1.45 2021/10/20 03:08:17 thorpej Exp $");
 #endif /* not lint */
 
 
@@ -213,7 +213,7 @@ nilfs_write(void *v)
 	struct nilfs_node      *nilfs_node = VTOI(vp);
 	uint64_t file_size;
 	vsize_t len;
-	int error, resid, extended;
+	int error, resid;
 
 	DPRINTF(WRITE, ("nilfs_write called\n"));
 
@@ -284,10 +284,6 @@ nilfs_write(void *v)
 	 * XXX TODO FFS has code here to reset setuid & setgid when we're not
 	 * the superuser as a precaution against tampering.
 	 */
-
-	/* if we wrote a thing, note write action on vnode */
-	if (resid > uio->uio_resid)
-		VN_KNOTE(vp, NOTE_WRITE | (extended ? NOTE_EXTEND : 0));
 
 	if (error) {
 		/* bring back file size to its former size */
@@ -1196,9 +1192,6 @@ nilfs_link(void *v)
 	if (error)
 		VOP_ABORTOP(dvp, cnp);
 
-	VN_KNOTE(vp, NOTE_LINK);
-	VN_KNOTE(dvp, NOTE_WRITE);
-
 	return error;
 }
 
@@ -1362,7 +1355,7 @@ nilfs_rename(void *v)
 	}
 
 	/* remove existing entry if present */
-	if (tvp) 
+	if (tvp)
 		nilfs_dir_detach(tdnode->ump, tdnode, tnode, tcnp);
 
 	/* create new directory entry for the node */
@@ -1401,10 +1394,11 @@ out_unlocked:
 int
 nilfs_remove(void *v)
 {
-	struct vop_remove_v2_args /* {
+	struct vop_remove_v3_args /* {
 		struct vnode *a_dvp;
 		struct vnode *a_vp;
 		struct componentname *a_cnp;
+		nlink_t ctx_vp_new_nlink;
 	} */ *ap = v;
 	struct vnode *dvp = ap->a_dvp;
 	struct vnode *vp  = ap->a_vp;
@@ -1421,11 +1415,6 @@ nilfs_remove(void *v)
 	} else {
 		DPRINTF(NODE, ("\tis a directory: perm. denied\n"));
 		error = EPERM;
-	}
-
-	if (error == 0) {
-		VN_KNOTE(vp, NOTE_DELETE);
-		VN_KNOTE(dvp, NOTE_WRITE);
 	}
 
 	if (dvp == vp)
@@ -1476,7 +1465,6 @@ nilfs_rmdir(void *v)
 	if (error == 0) {
 		cache_purge(vp);
 //		cache_purge(dvp);	/* XXX from msdosfs, why? */
-		VN_KNOTE(vp, NOTE_DELETE);
 	}
 	DPRINTFIF(NODE, error, ("\tgot error removing file\n"));
 

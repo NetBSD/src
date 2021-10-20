@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_vnops.c,v 1.215 2021/10/11 01:49:08 thorpej Exp $	*/
+/*	$NetBSD: genfs_vnops.c,v 1.216 2021/10/20 03:08:18 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.215 2021/10/11 01:49:08 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.216 2021/10/20 03:08:18 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -507,9 +507,7 @@ filt_genfsdetach(struct knote *kn)
 {
 	struct vnode *vp = (struct vnode *)kn->kn_hook;
 
-	mutex_enter(vp->v_interlock);
-	SLIST_REMOVE(&vp->v_klist, kn, knote, kn_selnext);
-	mutex_exit(vp->v_interlock);
+	vn_knote_detach(vp, kn);
 }
 
 static int
@@ -644,9 +642,7 @@ genfs_kqfilter(void *v)
 
 	kn->kn_hook = vp;
 
-	mutex_enter(vp->v_interlock);
-	SLIST_INSERT_HEAD(&vp->v_klist, kn, kn_selnext);
-	mutex_exit(vp->v_interlock);
+	vn_knote_attach(vp, kn);
 
 	return (0);
 }

@@ -509,25 +509,198 @@ ATF_TC_CLEANUP(dir_note_write_mv_file_within, tc)
 	cleanup();
 }
 
+static const char testfile[] = "testfile";
+
+ATF_TC_WITH_CLEANUP(open_write_read_close);
+ATF_TC_HEAD(open_write_read_close, tc)
+{
+	atf_tc_set_md_var(tc, "descr", "This test case exercises "
+		"that kevent(2) returns NOTE_OPEN, NOTE_READ, NOTE_WRITE, "
+		"NOTE_CLOSE, and NOTE_CLOSE_WRITE.");
+}
+ATF_TC_BODY(open_write_read_close, tc)
+{
+	struct kevent event[1];
+	char buf[sizeof(testfile)];
+	int fd;
+
+	ATF_REQUIRE((kq = kqueue()) != -1);
+
+	/*
+	 * Create the test file and register an event on it.  We need
+	 * to keep the fd open to keep receiving events, so we'll just
+	 * leak it and re-use the fd variable.
+	 */
+	ATF_REQUIRE((fd = open(testfile,
+			       O_RDWR | O_CREAT | O_TRUNC, 0600)) != -1);
+	EV_SET(&event[0], fd, EVFILT_VNODE, EV_ADD | EV_CLEAR,
+	       NOTE_OPEN | NOTE_READ | NOTE_WRITE |
+	       NOTE_CLOSE | NOTE_CLOSE_WRITE, 0, NULL);
+	ATF_REQUIRE(kevent(kq, event, 1, NULL, 0, NULL) == 0);
+
+	/*
+	 * Open the file for writing, check for NOTE_OPEN.
+	 * Write to the file, check for NOTE_WRITE | NOTE_EXTEND.
+	 * Re-write the file, check for NOTE_WRITE and !NOTE_EXTEND.
+	 * Write one additional byte, check for NOTE_WRITE | NOTE_EXTEND.
+	 * Close the file, check for NOTE_CLOSE_WRITE.
+	 */
+	ATF_REQUIRE((fd = open(testfile, O_RDWR)) != -1);
+	ATF_REQUIRE(kevent(kq, NULL, 0, event, 1, &ts) == 1);
+	ATF_REQUIRE(event[0].fflags & NOTE_OPEN);
+
+	ATF_REQUIRE((pwrite(fd, testfile,
+			    sizeof(testfile), 0)) == sizeof(testfile));
+	ATF_REQUIRE(kevent(kq, NULL, 0, event, 1, &ts) == 1);
+	ATF_REQUIRE(event[0].fflags & NOTE_WRITE);
+	ATF_REQUIRE(event[0].fflags & NOTE_EXTEND);
+
+	ATF_REQUIRE((pwrite(fd, testfile,
+			    sizeof(testfile), 0)) == sizeof(testfile));
+	ATF_REQUIRE(kevent(kq, NULL, 0, event, 1, &ts) == 1);
+	ATF_REQUIRE(event[0].fflags & NOTE_WRITE);
+	ATF_REQUIRE((event[0].fflags & NOTE_EXTEND) == 0);
+
+	ATF_REQUIRE((pwrite(fd, testfile,
+			    1, sizeof(testfile))) == 1);
+	ATF_REQUIRE(kevent(kq, NULL, 0, event, 1, &ts) == 1);
+	ATF_REQUIRE(event[0].fflags & NOTE_WRITE);
+	ATF_REQUIRE(event[0].fflags & NOTE_EXTEND);
+
+	(void)close(fd);
+	ATF_REQUIRE(kevent(kq, NULL, 0, event, 1, &ts) == 1);
+	ATF_REQUIRE(event[0].fflags & NOTE_CLOSE_WRITE);
+	ATF_REQUIRE((event[0].fflags & NOTE_CLOSE) == 0);
+
+	/*
+	 * Open the file for reading, check for NOTE_OPEN.
+	 * Read from the file, check for NOTE_READ.
+	 * Close the file., check for NOTE_CLOSE.
+	 */
+	ATF_REQUIRE((fd = open(testfile, O_RDONLY)) != -1);
+	ATF_REQUIRE(kevent(kq, NULL, 0, event, 1, &ts) == 1);
+	ATF_REQUIRE(event[0].fflags & NOTE_OPEN);
+
+	ATF_REQUIRE((read(fd, buf, sizeof(buf))) == sizeof(buf));
+	ATF_REQUIRE(kevent(kq, NULL, 0, event, 1, &ts) == 1);
+	ATF_REQUIRE(event[0].fflags & NOTE_READ);
+
+	(void)close(fd);
+	ATF_REQUIRE(kevent(kq, NULL, 0, event, 1, &ts) == 1);
+	ATF_REQUIRE(event[0].fflags & NOTE_CLOSE);
+	ATF_REQUIRE((event[0].fflags & NOTE_CLOSE_WRITE) == 0);
+}
+ATF_TC_CLEANUP(open_write_read_close, tc)
+{
+	(void)unlink(testfile);
+}
+
+ATF_TC_WITH_CLEANUP(interest);
+ATF_TC_HEAD(interest, tc)
+{
+	atf_tc_set_md_var(tc, "descr", "This test case exercises "
+		"the kernel code that computes vnode kevent interest");
+}
+ATF_TC_BODY(interest, tc)
+{
+	struct kevent event[3];
+	int open_ev_fd, write_ev_fd, close_ev_fd;
+	int fd;
+
+	/*
+	 * This test cases exercises some implementation details
+	 * regarding how "kevent interest" is computed for a vnode.
+	 *
+	 * We are going to add events, one at a time, in a specific
+	 * order, and then remove one of them, with the knowledge that
+	 * a specific code path in vfs_vnops.c:vn_knote_detach() will
+	 * be taken.  There are several KASSERT()s in this code path
+	 * that will be validated.
+	 *
+	 * In order to ensure distinct knotes are attached to the vnodes,
+	 * we must use a different file descriptor to register interest
+	 * in each kind of event.
+	 */
+
+	ATF_REQUIRE((kq = kqueue()) != -1);
+
+	/*
+	 * Create the test file and register an event on it.  We need
+	 * to keep the fd open to keep receiving events, so we'll just
+	 * leak it and re-use the fd variable.
+	 */
+	ATF_REQUIRE((open_ev_fd = open(testfile,
+	    O_RDWR | O_CREAT | O_TRUNC, 0600)) != -1);
+	ATF_REQUIRE((write_ev_fd = dup(open_ev_fd)) != -1);
+	ATF_REQUIRE((close_ev_fd = dup(open_ev_fd)) != -1);
+
+	EV_SET(&event[0], open_ev_fd, EVFILT_VNODE, EV_ADD | EV_CLEAR,
+	       NOTE_OPEN, 0, NULL);
+	EV_SET(&event[1], write_ev_fd, EVFILT_VNODE, EV_ADD | EV_CLEAR,
+	       NOTE_WRITE, 0, NULL);
+	EV_SET(&event[2], close_ev_fd, EVFILT_VNODE, EV_ADD | EV_CLEAR,
+	       NOTE_CLOSE | NOTE_CLOSE_WRITE, 0, NULL);
+	ATF_REQUIRE(kevent(kq, event, 3, NULL, 0, NULL) == 0);
+
+	/*
+	 * The testfile vnode now has 3 knotes attached, in "LIFO"
+	 * order:
+	 *
+	 *	NOTE_CLOSE -> NOTE_WRITE -> NOTE_OPEN
+	 *
+	 * We will now remove the NOTE_WRITE knote.
+	 */
+	(void)close(write_ev_fd);
+
+	ATF_REQUIRE((fd = open(testfile, O_RDWR)) != -1);
+	ATF_REQUIRE(kevent(kq, NULL, 0, event, 1, &ts) == 1);
+	ATF_REQUIRE(event[0].fflags & NOTE_OPEN);
+
+	ATF_REQUIRE((pwrite(fd, testfile,
+			    sizeof(testfile), 0)) == sizeof(testfile));
+	ATF_REQUIRE(kevent(kq, NULL, 0, event, 1, &ts) == 0);
+
+	(void)close(fd);
+	ATF_REQUIRE(kevent(kq, NULL, 0, event, 1, &ts) == 1);
+	ATF_REQUIRE(event[0].fflags & NOTE_CLOSE_WRITE);
+	ATF_REQUIRE((event[0].fflags & NOTE_CLOSE) == 0);
+
+}
+ATF_TC_CLEANUP(interest, tc)
+{
+	(void)unlink(testfile);
+}
+
+
 ATF_TP_ADD_TCS(tp)
 {
 	ATF_TP_ADD_TC(tp, dir_no_note_link_create_file_in);
 	ATF_TP_ADD_TC(tp, dir_no_note_link_delete_file_in);
+
 	ATF_TP_ADD_TC(tp, dir_no_note_link_mv_dir_within);
 	ATF_TP_ADD_TC(tp, dir_no_note_link_mv_file_within);
+
 	ATF_TP_ADD_TC(tp, dir_note_link_create_dir_in);
 	ATF_TP_ADD_TC(tp, dir_note_link_delete_dir_in);
+
 	ATF_TP_ADD_TC(tp, dir_note_link_mv_dir_in);
 	ATF_TP_ADD_TC(tp, dir_note_link_mv_dir_out);
+
 	ATF_TP_ADD_TC(tp, dir_note_write_create_dir_in);
 	ATF_TP_ADD_TC(tp, dir_note_write_create_file_in);
+
 	ATF_TP_ADD_TC(tp, dir_note_write_delete_dir_in);
 	ATF_TP_ADD_TC(tp, dir_note_write_delete_file_in);
+
 	ATF_TP_ADD_TC(tp, dir_note_write_mv_dir_in);
 	ATF_TP_ADD_TC(tp, dir_note_write_mv_dir_out);
 	ATF_TP_ADD_TC(tp, dir_note_write_mv_dir_within);
 	ATF_TP_ADD_TC(tp, dir_note_write_mv_file_in);
 	ATF_TP_ADD_TC(tp, dir_note_write_mv_file_out);
 	ATF_TP_ADD_TC(tp, dir_note_write_mv_file_within);
+
+	ATF_TP_ADD_TC(tp, open_write_read_close);
+	ATF_TP_ADD_TC(tp, interest);
+
 	return atf_no_error();
 }

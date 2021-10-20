@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_vnops.c,v 1.259 2020/09/05 16:30:13 riastradh Exp $	*/
+/*	$NetBSD: ufs_vnops.c,v 1.260 2021/10/20 03:08:19 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2020 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.259 2020/09/05 16:30:13 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.260 2021/10/20 03:08:19 thorpej Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -165,7 +165,6 @@ ufs_create(void *v)
 		return (error);
 	}
 	UFS_WAPBL_END(dvp->v_mount);
-	VN_KNOTE(dvp, NOTE_WRITE);
 	VOP_UNLOCK(*ap->a_vpp);
 	return (0);
 }
@@ -202,7 +201,6 @@ ufs_mknod(void *v)
 	 */
 	if ((error = ufs_makeinode(vap, ap->a_dvp, ulr, vpp, ap->a_cnp)) != 0)
 		goto out;
-	VN_KNOTE(ap->a_dvp, NOTE_WRITE);
 	ip = VTOI(*vpp);
 	ip->i_flag |= IN_ACCESS | IN_CHANGE | IN_UPDATE;
 	UFS_WAPBL_UPDATE(*vpp, NULL, NULL, 0);
@@ -672,7 +670,6 @@ ufs_setattr(void *v)
 		error = ufs_chmod(vp, (int)vap->va_mode, cred, l);
 		UFS_WAPBL_END(vp->v_mount);
 	}
-	VN_KNOTE(vp, NOTE_ATTRIB);
 out:
 	cache_enter_id(vp, ip->i_mode, ip->i_uid, ip->i_gid, !HAS_ACLS(ip));
 	return (error);
@@ -822,10 +819,11 @@ ufs_chown(struct vnode *vp, uid_t uid, gid_t gid, kauth_cred_t cred,
 int
 ufs_remove(void *v)
 {
-	struct vop_remove_v2_args /* {
+	struct vop_remove_v3_args /* {
 		struct vnode		*a_dvp;
 		struct vnode		*a_vp;
 		struct componentname	*a_cnp;
+		nlink_t 		 ctx_vp_new_nlink;
 	} */ *ap = v;
 	struct vnode	*vp, *dvp;
 	struct inode	*ip;
@@ -863,10 +861,11 @@ ufs_remove(void *v)
 			error = ufs_dirremove(dvp, ulr,
 					      ip, ap->a_cnp->cn_flags, 0);
 			UFS_WAPBL_END(mp);
+			if (error == 0) {
+				ap->ctx_vp_new_nlink = ip->i_nlink;
+			}
 		}
 	}
-	VN_KNOTE(vp, NOTE_DELETE);
-	VN_KNOTE(dvp, NOTE_WRITE);
 #ifdef notyet
 err:
 #endif
@@ -946,8 +945,6 @@ ufs_link(void *v)
  out1:
 	VOP_UNLOCK(vp);
  out2:
-	VN_KNOTE(vp, NOTE_LINK);
-	VN_KNOTE(dvp, NOTE_WRITE);
 	return (error);
 }
 
@@ -1351,7 +1348,6 @@ ufs_mkdir(void *v)
 	pool_cache_put(ufs_direct_cache, newdir);
  bad:
 	if (error == 0) {
-		VN_KNOTE(dvp, NOTE_WRITE | NOTE_LINK);
 		VOP_UNLOCK(tvp);
 		UFS_WAPBL_END(dvp->v_mount);
 	} else {
@@ -1447,7 +1443,6 @@ ufs_rmdir(void *v)
 		UFS_WAPBL_END(dvp->v_mount);
 		goto out;
 	}
-	VN_KNOTE(dvp, NOTE_WRITE | NOTE_LINK);
 	cache_purge(dvp);
 	/*
 	 * Truncate inode.  The only stuff left in the directory is "." and
@@ -1473,7 +1468,6 @@ ufs_rmdir(void *v)
 		ufsdirhash_free(ip);
 #endif
  out:
-	VN_KNOTE(vp, NOTE_DELETE);
 	vput(vp);
 	return error;
  err:
@@ -1516,7 +1510,6 @@ ufs_symlink(void *v)
 	error = ufs_makeinode(ap->a_vap, ap->a_dvp, ulr, vpp, ap->a_cnp);
 	if (error)
 		goto out;
-	VN_KNOTE(ap->a_dvp, NOTE_WRITE);
 	vp = *vpp;
 	len = strlen(ap->a_target);
 	ip = VTOI(vp);

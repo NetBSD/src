@@ -29,7 +29,7 @@ copyright="\
  * SUCH DAMAGE.
  */
 "
-SCRIPT_ID='$NetBSD: vnode_if.sh,v 1.71 2021/08/12 19:15:15 andvar Exp $'
+SCRIPT_ID='$NetBSD: vnode_if.sh,v 1.72 2021/10/20 03:08:18 thorpej Exp $'
 
 # Script to produce VFS front-end sugar.
 #
@@ -99,8 +99,13 @@ awk_parser='
 	name=$1;
 	args_name=$1;
 	argc=0;
+	have_context=0;
+	is_context=0;
+	ncontext=0;
 	willmake=-1;
 	fstrans="";
+	do_pre="";
+	do_post="";
 	next;
 }
 # Last line of description
@@ -117,39 +122,64 @@ awk_parser='
 		fstrans = $1;
 		sub("FSTRANS=", "", fstrans);
 		next;
+	} else if ($1 ~ "^PRE=") {
+		do_pre = $1;
+		sub("PRE=", "", do_pre);
+		next;
+	} else if ($1 ~ "^POST=") {
+		do_post = $1;
+		sub("POST=", "", do_post);
+		next;
 	}
 
-	argdir[argc] = $1; i=2;
-
-	if ($2 == "LOCKED=YES") {
-		lockstate[argc] = 1;
-		i++;
-	} else if ($2 == "LOCKED=NO") {
-		lockstate[argc] = 0;
-		i++;
-	} else
-		lockstate[argc] = -1;
-
-	if ($2 == "WILLRELE" ||
-	    $3 == "WILLRELE") {
-		willrele[argc] = 1;
-		i++;
-	} else if ($2 == "WILLPUT" ||
-		   $3 == "WILLPUT") {
-		willrele[argc] = 3;
-		i++;
-	} else
-		willrele[argc] = 0;
-
-	if ($2 == "WILLMAKE") {
-		willmake=argc;
-		i++;
+	if ($1 == "CONTEXT") {
+		# CONTEXT require PRE and POST handlers.
+		if (do_pre == "" || do_post == "")
+			next;
+		is_context=1;
+		have_context=1;
+	} else {
+		if (have_context) {
+			# CONTEXT members must come at the end of
+			# the args structure, so everything else
+			# is ignored.
+			next;
+		}
+		argdir[argc] = $1;
 	}
-	if (argc == 0 && fstrans == "") {
-		if (lockstate[0] == 1)
-			fstrans = "NO";
-		else
-			fstrans = "YES";
+	i=2;
+
+	if (is_context == 0) {
+		if ($2 == "LOCKED=YES") {
+			lockstate[argc] = 1;
+			i++;
+		} else if ($2 == "LOCKED=NO") {
+			lockstate[argc] = 0;
+			i++;
+		} else
+			lockstate[argc] = -1;
+
+		if ($2 == "WILLRELE" ||
+		    $3 == "WILLRELE") {
+			willrele[argc] = 1;
+			i++;
+		} else if ($2 == "WILLPUT" ||
+			   $3 == "WILLPUT") {
+			willrele[argc] = 3;
+			i++;
+		} else
+			willrele[argc] = 0;
+
+		if ($2 == "WILLMAKE") {
+			willmake=argc;
+			i++;
+		}
+		if (argc == 0 && fstrans == "") {
+			if (lockstate[0] == 1)
+				fstrans = "NO";
+			else
+				fstrans = "YES";
+		}
 	}
 
 	# XXX: replace non-portable types for rump.  We should really
@@ -166,14 +196,17 @@ awk_parser='
 		if (at == "daddr_t")
 			at = "int64_t"
 	}
-	argtype[argc] = at;
+	argtype[argc + ncontext] = at;
 	i++;
 	while (i < NF) {
-		argtype[argc] = argtype[argc]" "$i;
+		argtype[argc + ncontext] = argtype[argc + ncontext]" "$i;
 		i++;
 	}
-	argname[argc] = $i;
-	argc++;
+	argname[argc + ncontext] = $i;
+	if (is_context)
+		ncontext++;
+	else
+		argc++;
 	next;
 }
 '
@@ -239,6 +272,10 @@ function doit() {
 		printf("\tconst struct vnodeop_desc * a_desc;\n");
 		for (i=0; i<argc; i++) {
 			printf("\t%s a_%s;\n", argtype[i], argname[i]);
+		}
+		for (i=0; i<ncontext; i++) {
+			printf("\t%s ctx_%s;\n", argtype[argc+i], \
+			    argname[argc+i]);
 		}
 		printf("};\n");
 		printf("extern const struct vnodeop_desc %s_desc;\n", name);
@@ -312,6 +349,7 @@ echo '
 #include <sys/param.h>
 #include <sys/mount.h>
 #include <sys/buf.h>
+#include <sys/fcntl.h>
 #include <sys/vnode.h>
 #include <sys/lock.h>'
 [ -z "${rump}" ] && echo '#include <sys/fstrans.h>'
@@ -359,6 +397,199 @@ vop_pre(vnode_t *vp, struct mount **mp, bool *mpsafe, enum fst_op op)
 
 	return 0;
 }
+
+static inline u_quad_t
+vop_pre_get_size(struct vnode *vp)
+{
+	mutex_enter(vp->v_interlock);
+	KASSERT(vp->v_size != VSIZENOTSET);
+	u_quad_t rv = (u_quad_t)vp->v_size;
+	mutex_exit(vp->v_interlock);
+
+	return rv;
+}
+
+/*
+ * VOP_RMDIR(), VOP_REMOVE(), and VOP_RENAME() need special handling
+ * because they each drop the caller's references on one or more of
+ * their arguments.  While there must be an open file descriptor in
+ * associated with a vnode in order for knotes to be attached to it,
+ * that status could change during the course of the operation.  So,
+ * for the vnode arguments that are WILLRELE or WILLPUT, we check
+ * pre-op if there are registered knotes, take a hold count if so,
+ * and post-op release the hold after activating any knotes still
+ * associated with the vnode.
+ */
+
+#define	VOP_POST_KNOTE(thisvp, e, n)					\\
+do {									\\
+	if (__predict_true((e) == 0)) {					\\
+		/*							\\
+		 * VN_KNOTE() does the VN_KEVENT_INTEREST()		\\
+		 * check for us.					\\
+		 */							\\
+		VN_KNOTE((thisvp), (n));				\\
+	}								\\
+} while (/*CONSTCOND*/0)
+
+#define	VOP_POST_KNOTE_HELD(thisvp, e, n)				\\
+do {									\\
+	/*								\\
+	 * We don't perform a VN_KEVENT_INTEREST() check here; it	\\
+	 * was already performed when we did the pre-op work that	\\
+	 * caused the vnode to be held in the first place.		\\
+	 */								\\
+	mutex_enter((thisvp)->v_interlock);				\\
+	if (__predict_true((e) == 0)) {					\\
+		knote(&(thisvp)->v_klist, (n));				\\
+	}								\\
+	holdrelel((thisvp));						\\
+	mutex_exit((thisvp)->v_interlock);				\\
+	/*								\\
+	 * thisvp might be gone now!  Don't touch!			\\
+	 */								\\
+} while (/*CONSTCOND*/0)
+
+#define	vop_create_post(ap, e)						\\
+	VOP_POST_KNOTE((ap)->a_dvp, (e), NOTE_WRITE)
+
+#define	vop_mknod_post(ap, e)						\\
+	VOP_POST_KNOTE((ap)->a_dvp, (e), NOTE_WRITE)
+
+#define	vop_setattr_pre(ap)						\\
+	u_quad_t osize = 0;						\\
+	long vp_events =						\\
+	    VN_KEVENT_INTEREST((ap)->a_vp, NOTE_ATTRIB | NOTE_EXTEND)	\\
+	    ? NOTE_ATTRIB : 0;						\\
+	bool check_extend = false;					\\
+	if (__predict_false(vp_events != 0 &&				\\
+	    (ap)->a_vap->va_size != VNOVALSIZE)) {			\\
+		check_extend = true;					\\
+		osize = vop_pre_get_size((ap)->a_vp);			\\
+	}
+
+#define	vop_setattr_post(ap, e)						\\
+do {									\\
+	if (__predict_false(vp_events != 0)) {				\\
+		if (__predict_false(check_extend &&			\\
+		    (ap)->a_vap->va_size > osize)) {			\\
+			vp_events |= NOTE_EXTEND;			\\
+		}							\\
+		VOP_POST_KNOTE((ap)->a_vp, (e), vp_events);		\\
+	}								\\
+} while (/*CONSTCOND*/0)
+
+#define	vop_setacl_post(ap, e)						\\
+	VOP_POST_KNOTE((ap)->a_vp, (e), NOTE_ATTRIB)
+
+#define	vop_link_post(ap, e)						\\
+do {									\\
+	VOP_POST_KNOTE((ap)->a_dvp, (e), NOTE_WRITE);			\\
+	VOP_POST_KNOTE((ap)->a_vp, (e), NOTE_LINK);			\\
+} while (/*CONSTCOND*/0)
+
+#define	vop_mkdir_post(ap, e)						\\
+	VOP_POST_KNOTE((ap)->a_dvp, (e), NOTE_WRITE | NOTE_LINK)
+
+#define	vop_remove_pre_common(ap)					\\
+	bool post_event_vp =						\\
+	    VN_KEVENT_INTEREST((ap)->a_vp, NOTE_DELETE | NOTE_LINK);	\\
+	if (__predict_false(post_event_vp)) {				\\
+		vhold((ap)->a_vp);					\\
+	}
+
+#define	vop_remove_post_common(ap, e, dn, lc)				\\
+do {									\\
+	VOP_POST_KNOTE((ap)->a_dvp, (e), (dn));				\\
+	if (__predict_false(post_event_vp)) {				\\
+		VOP_POST_KNOTE_HELD((ap)->a_vp, (e),			\\
+		    (lc) ? NOTE_LINK : NOTE_DELETE);			\\
+	}								\\
+} while (/*CONSTCOND*/0)
+
+/*
+ * One could make the argument that VOP_REMOVE() should send NOTE_LINK
+ * on vp if the resulting link count is not zero, but that's not what
+ * the documentation says.
+ *
+ * We could change this easily by passing ap->ctx_vp_new_nlink to
+ * vop_remove_post_common().
+ */
+#define	vop_remove_pre(ap)						\\
+	vop_remove_pre_common((ap));					\\
+	/*								\\
+	 * We will assume that the file being removed is deleted unless	\\
+	 * the file system tells us otherwise by updating vp_new_nlink.	\\
+	 */								\\
+	(ap)->ctx_vp_new_nlink = 0;
+
+#define	vop_remove_post(ap, e)						\\
+	vop_remove_post_common((ap), (e), NOTE_WRITE, 0)
+
+#define	vop_rmdir_pre(ap)						\\
+	vop_remove_pre_common(ap)
+
+#define	vop_rmdir_post(ap, e)						\\
+	vop_remove_post_common((ap), (e), NOTE_WRITE | NOTE_LINK, 0)
+
+#define	vop_symlink_post(ap, e)						\\
+	VOP_POST_KNOTE((ap)->a_dvp, (e), NOTE_WRITE)
+
+#define	vop_open_post(ap, e)						\\
+	VOP_POST_KNOTE((ap)->a_vp, (e), NOTE_OPEN)
+
+#define	vop_close_post(ap, e)						\\
+do {									\\
+	extern int (**dead_vnodeop_p)(void *);				\\
+									\\
+	/* See the definition of VN_KNOTE() in <sys/vnode.h>. */	\\
+	if (__predict_false(VN_KEVENT_INTEREST((ap)->a_vp,		\\
+	    NOTE_CLOSE_WRITE | NOTE_CLOSE) && (e) == 0)) {		\\
+		struct vnode *thisvp = (ap)->a_vp;			\\
+		mutex_enter(thisvp->v_interlock);			\\
+		/*							\\
+		 * Don't send NOTE_CLOSE when closing a vnode that's	\\
+		 * been reclaimed or otherwise revoked; a NOTE_REVOKE	\\
+		 * has already been sent, and this close is effectively	\\
+		 * meaningless from the watcher's perspective.		\\
+		 */							\\
+		if (__predict_true(thisvp->v_op != dead_vnodeop_p)) {	\\
+			knote(&thisvp->v_klist,				\\
+			    ((ap)->a_fflag & FWRITE)			\\
+			    ? NOTE_CLOSE_WRITE : NOTE_CLOSE);		\\
+		}							\\
+		mutex_exit(thisvp->v_interlock);			\\
+	}								\\
+} while (/*CONSTCOND*/0)
+
+#define	vop_read_post(ap, e)						\\
+	VOP_POST_KNOTE((ap)->a_vp, (e), NOTE_READ)
+
+#define	vop_write_pre(ap)						\\
+	off_t ooffset = 0, noffset = 0;					\\
+	u_quad_t osize = 0;						\\
+	long vp_events =						\\
+	    VN_KEVENT_INTEREST((ap)->a_vp, NOTE_WRITE | NOTE_EXTEND)	\\
+	    ? NOTE_WRITE : 0;						\\
+	if (__predict_false(vp_events != 0)) {				\\
+		ooffset = (ap)->a_uio->uio_offset;			\\
+		osize = vop_pre_get_size((ap)->a_vp);			\\
+	}
+
+#define	vop_write_post(ap, e)						\\
+do {									\\
+	/*								\\
+	 * If any data was written, we'll post an event, even if	\\
+	 * there was an error.						\\
+	 */								\\
+	noffset = (ap)->a_uio->uio_offset;				\\
+	if (__predict_false(vp_events != 0 && noffset > ooffset)) {	\\
+		if (noffset > osize) {					\\
+			vp_events |= NOTE_EXTEND;			\\
+		}							\\
+		VN_KNOTE((ap)->a_vp, vp_events);			\\
+	}								\\
+} while (/*CONSTCOND*/0)
 
 static inline void
 vop_post(vnode_t *vp, struct mount *mp, bool mpsafe, enum fst_op op)
@@ -481,6 +712,10 @@ function bodynorm() {
 			printf("#endif\n");
 		}
 	}
+	# This is done before generic vop_pre() because we want
+	# to do any setup before beginning an fstrans.
+	if (do_pre != "")
+		printf("\t%s(&a);\n", do_pre);
 	if (fstrans == "LOCK")
 		printf("\terror = vop_pre(%s, &mp, &mpsafe, %s);\n",
 			argname[0], "(!(flags & (LK_SHARED|LK_EXCLUSIVE)) ? FST_NO : (flags & LK_NOWAIT ? FST_TRY : FST_YES))");
@@ -502,6 +737,11 @@ function bodynorm() {
 	else
 		printf("\tvop_post(%s, mp, mpsafe, FST_%s);\n",
 			argname[0], fstrans);
+	# This is done after generic vop_post() in order to minimize
+	# time spent with the KERNEL_LOCK held for file systems that
+	# still require it.
+	if (do_post != "")
+		printf("\t%s(&a, error);\n", do_post);
 	if (willmake != -1) {
 		printf("#ifdef DIAGNOSTIC\n");
 		printf("\tif (error == 0)\n"				\

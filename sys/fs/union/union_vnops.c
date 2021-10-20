@@ -1,4 +1,4 @@
-/*	$NetBSD: union_vnops.c,v 1.78 2021/07/04 11:24:09 hannken Exp $	*/
+/*	$NetBSD: union_vnops.c,v 1.79 2021/10/20 03:08:17 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994, 1995
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: union_vnops.c,v 1.78 2021/07/04 11:24:09 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: union_vnops.c,v 1.79 2021/10/20 03:08:17 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1179,10 +1179,11 @@ union_seek(void *v)
 int
 union_remove(void *v)
 {
-	struct vop_remove_v2_args /* {
+	struct vop_remove_v3_args /* {
 		struct vnode *a_dvp;
 		struct vnode *a_vp;
 		struct componentname *a_cnp;
+		nlink_t ctx_vp_new_nlink;
 	} */ *ap = v;
 	int error;
 	struct union_node *dun = VTOUNION(ap->a_dvp);
@@ -1296,7 +1297,7 @@ union_link(void *v)
 int
 union_rename(void *v)
 {
-	struct vop_rename_args  /* {
+	struct vop_rename_args /* {
 		struct vnode *a_fdvp;
 		struct vnode *a_fvp;
 		struct componentname *a_fcnp;

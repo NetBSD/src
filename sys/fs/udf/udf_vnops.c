@@ -1,4 +1,4 @@
-/* $NetBSD: udf_vnops.c,v 1.116 2021/07/24 21:31:38 andvar Exp $ */
+/* $NetBSD: udf_vnops.c,v 1.117 2021/10/20 03:08:17 thorpej Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_vnops.c,v 1.116 2021/07/24 21:31:38 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_vnops.c,v 1.117 2021/10/20 03:08:17 thorpej Exp $");
 #endif /* not lint */
 
 
@@ -397,10 +397,6 @@ udf_write(void *v)
 	 * XXX TODO FFS has code here to reset setuid & setgid when we're not
 	 * the superuser as a precaution against tampering.
 	 */
-
-	/* if we wrote a thing, note write action on vnode */
-	if (resid > uio->uio_resid)
-		VN_KNOTE(vp, NOTE_WRITE | (extended ? NOTE_EXTEND : 0));
 
 	if (error) {
 		/* bring back file size to its former size */
@@ -1139,7 +1135,6 @@ udf_chsize(struct vnode *vp, u_quad_t newsize, kauth_cred_t cred)
 		udf_node->i_flags |= IN_CHANGE | IN_MODIFY;
 		if (vp->v_mount->mnt_flag & MNT_RELATIME)
 			udf_node->i_flags |= IN_ACCESS;
-		VN_KNOTE(vp, NOTE_ATTRIB | (extended ? NOTE_EXTEND : 0));
 		udf_update(vp, NULL, NULL, NULL, 0);
 	}
 
@@ -1273,7 +1268,6 @@ udf_setattr(void *v)
 		error = udf_chtimes(vp, &vap->va_atime, &vap->va_mtime,
 		    &vap->va_birthtime, vap->va_vaflags, cred);
 	}
-	VN_KNOTE(vp, NOTE_ATTRIB);
 
 	return error;
 }
@@ -1598,9 +1592,6 @@ udf_link(void *v)
 	error = udf_do_link(dvp, vp, cnp);
 	if (error)
 		VOP_ABORTOP(dvp, cnp);
-
-	VN_KNOTE(vp, NOTE_LINK);
-	VN_KNOTE(dvp, NOTE_WRITE);
 
 	return error;
 }
@@ -1939,10 +1930,11 @@ udf_readlink(void *v)
 int
 udf_remove(void *v)
 {
-	struct vop_remove_v2_args /* {
+	struct vop_remove_v3_args /* {
 		struct vnode *a_dvp;
 		struct vnode *a_vp;
 		struct componentname *a_cnp;
+		nlink_t ctx_vp_new_nlink;
 	} */ *ap = v;
 	struct vnode *dvp = ap->a_dvp;
 	struct vnode *vp  = ap->a_vp;
@@ -1956,14 +1948,19 @@ udf_remove(void *v)
 	if (vp->v_type != VDIR) {
 		error = udf_dir_detach(ump, dir_node, udf_node, cnp);
 		DPRINTFIF(NODE, error, ("\tgot error removing file\n"));
+		if (error == 0) {
+			if (udf_node->fe) {
+				ap->ctx_vp_new_nlink =
+				    udf_rw16(udf_node->fe->link_cnt);
+			} else {
+				KASSERT(udf_node->efe != NULL);
+				ap->ctx_vp_new_nlink =
+				    udf_rw16(udf_node->efe->link_cnt);
+			}
+		}
 	} else {
 		DPRINTF(NODE, ("\tis a directory: perm. denied\n"));
 		error = EPERM;
-	}
-
-	if (error == 0) {
-		VN_KNOTE(vp, NOTE_DELETE);
-		VN_KNOTE(dvp, NOTE_WRITE);
 	}
 
 	if (dvp == vp)
@@ -2031,7 +2028,6 @@ udf_rmdir(void *v)
 		 */
 		dirhash_purge(&udf_node->dir_hash);
 		udf_shrink_node(udf_node, 0);
-		VN_KNOTE(vp, NOTE_DELETE);
 	}
 	DPRINTFIF(NODE, error, ("\tgot error removing dir\n"));
 

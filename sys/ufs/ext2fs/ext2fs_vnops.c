@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_vnops.c,v 1.135 2021/07/18 23:57:15 dholland Exp $	*/
+/*	$NetBSD: ext2fs_vnops.c,v 1.136 2021/10/20 03:08:19 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_vnops.c,v 1.135 2021/07/18 23:57:15 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_vnops.c,v 1.136 2021/10/20 03:08:19 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -140,7 +140,6 @@ ext2fs_create(void *v)
 
 	if (error)
 		return error;
-	VN_KNOTE(ap->a_dvp, NOTE_WRITE);
 	VOP_UNLOCK(*ap->a_vpp);
 	return 0;
 }
@@ -165,7 +164,6 @@ ext2fs_mknod(void *v)
 
 	if ((error = ext2fs_makeinode(vap, ap->a_dvp, vpp, ap->a_cnp, 1)) != 0)
 		return error;
-	VN_KNOTE(ap->a_dvp, NOTE_WRITE);
 	ip = VTOI(*vpp);
 	ip->i_flag |= IN_ACCESS | IN_CHANGE | IN_UPDATE;
 	VOP_UNLOCK(*vpp);
@@ -453,7 +451,6 @@ ext2fs_setattr(void *v)
 			return EROFS;
 		error = ext2fs_chmod(vp, (int)vap->va_mode, cred, l);
 	}
-	VN_KNOTE(vp, NOTE_ATTRIB);
 	return error;
 }
 
@@ -531,10 +528,11 @@ ext2fs_chown(struct vnode *vp, uid_t uid, gid_t gid, kauth_cred_t cred,
 int
 ext2fs_remove(void *v)
 {
-	struct vop_remove_v2_args /* {
+	struct vop_remove_v3_args /* {
 		struct vnode *a_dvp;
 		struct vnode *a_vp;
 		struct componentname *a_cnp;
+		nlink_t ctx_vp_new_nlink;
 	} */ *ap = v;
 	struct inode *ip;
 	struct vnode *vp = ap->a_vp;
@@ -556,11 +554,10 @@ ext2fs_remove(void *v)
 		if (error == 0) {
 			ip->i_e2fs_nlink--;
 			ip->i_flag |= IN_CHANGE;
+			ap->ctx_vp_new_nlink = ip->i_e2fs_nlink;
 		}
 	}
 
-	VN_KNOTE(vp, NOTE_DELETE);
-	VN_KNOTE(dvp, NOTE_WRITE);
 	if (dvp == vp)
 		vrele(vp);
 	else
@@ -622,8 +619,6 @@ ext2fs_link(void *v)
 out1:
 	VOP_UNLOCK(vp);
 out2:
-	VN_KNOTE(vp, NOTE_LINK);
-	VN_KNOTE(dvp, NOTE_WRITE);
 	return error;
 }
 
@@ -748,7 +743,6 @@ bad:
 		ip->i_flag |= IN_CHANGE;
 		vput(tvp);
 	} else {
-		VN_KNOTE(dvp, NOTE_WRITE | NOTE_LINK);
 		VOP_UNLOCK(tvp);
 		*ap->a_vpp = tvp;
 	}
@@ -817,7 +811,6 @@ ext2fs_rmdir(void *v)
 	if (dp->i_e2fs_nlink != EXT2FS_LINK_INF)
 		dp->i_e2fs_nlink--;
 	dp->i_flag |= IN_CHANGE;
-	VN_KNOTE(dvp, NOTE_WRITE | NOTE_LINK);
 	cache_purge(dvp);
 	/*
 	 * Truncate inode.  The only stuff left
@@ -834,7 +827,6 @@ ext2fs_rmdir(void *v)
 	error = ext2fs_truncate(vp, (off_t)0, IO_SYNC, cnp->cn_cred);
 	cache_purge(ITOV(ip));
 out:
-	VN_KNOTE(vp, NOTE_DELETE);
 	vput(vp);
 	return error;
 }
@@ -861,7 +853,6 @@ ext2fs_symlink(void *v)
 	error = ext2fs_makeinode(ap->a_vap, ap->a_dvp, vpp, ap->a_cnp, 1);
 	if (error)
 		return error;
-	VN_KNOTE(ap->a_dvp, NOTE_WRITE);
 	vp = *vpp;
 	len = strlen(ap->a_target);
 	ip = VTOI(vp);

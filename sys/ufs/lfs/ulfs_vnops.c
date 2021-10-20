@@ -1,4 +1,4 @@
-/*	$NetBSD: ulfs_vnops.c,v 1.54 2020/09/05 16:30:13 riastradh Exp $	*/
+/*	$NetBSD: ulfs_vnops.c,v 1.55 2021/10/20 03:08:19 thorpej Exp $	*/
 /*  from NetBSD: ufs_vnops.c,v 1.232 2016/05/19 18:32:03 riastradh Exp  */
 
 /*-
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ulfs_vnops.c,v 1.54 2020/09/05 16:30:13 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ulfs_vnops.c,v 1.55 2021/10/20 03:08:19 thorpej Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_lfs.h"
@@ -410,7 +410,6 @@ ulfs_setattr(void *v)
 		}
 		error = ulfs_chmod(vp, (int)vap->va_mode, cred, l);
 	}
-	VN_KNOTE(vp, NOTE_ATTRIB);
 out:
 	return (error);
 }
@@ -506,10 +505,11 @@ ulfs_chown(struct vnode *vp, uid_t uid, gid_t gid, kauth_cred_t cred,
 int
 ulfs_remove(void *v)
 {
-	struct vop_remove_v2_args /* {
+	struct vop_remove_v3_args /* {
 		struct vnode		*a_dvp;
 		struct vnode		*a_vp;
 		struct componentname	*a_cnp;
+		nlink_t			 ctx_vp_new_nlink;
 	} */ *ap = v;
 	struct vnode	*vp, *dvp;
 	struct inode	*ip;
@@ -535,9 +535,10 @@ ulfs_remove(void *v)
 	else {
 		error = ulfs_dirremove(dvp, ulr,
 				      ip, ap->a_cnp->cn_flags, 0);
+		if (error == 0) {
+			ap->ctx_vp_new_nlink = ip->i_nlink;
+		}
 	}
-	VN_KNOTE(vp, NOTE_DELETE);
-	VN_KNOTE(dvp, NOTE_WRITE);
 	if (dvp == vp)
 		vrele(vp);
 	else
@@ -608,8 +609,6 @@ ulfs_link(void *v)
  out1:
 	VOP_UNLOCK(vp);
  out2:
-	VN_KNOTE(vp, NOTE_LINK);
-	VN_KNOTE(dvp, NOTE_WRITE);
 	return (error);
 }
 
@@ -734,7 +733,6 @@ ulfs_rmdir(void *v)
 	if (error) {
 		goto out;
 	}
-	VN_KNOTE(dvp, NOTE_WRITE | NOTE_LINK);
 	cache_purge(dvp);
 	/*
 	 * Truncate inode.  The only stuff left in the directory is "." and
@@ -754,7 +752,6 @@ ulfs_rmdir(void *v)
 		ulfsdirhash_free(ip);
 #endif
  out:
-	VN_KNOTE(vp, NOTE_DELETE);
 	vput(vp);
 	return (error);
 }

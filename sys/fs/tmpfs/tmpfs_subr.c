@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_subr.c,v 1.113 2020/09/05 16:30:12 riastradh Exp $	*/
+/*	$NetBSD: tmpfs_subr.c,v 1.114 2021/10/20 03:08:17 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2005-2020 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_subr.c,v 1.113 2020/09/05 16:30:12 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_subr.c,v 1.114 2021/10/20 03:08:17 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/cprng.h>
@@ -537,7 +537,6 @@ tmpfs_dir_attach(tmpfs_node_t *dnode, tmpfs_dirent_t *de, tmpfs_node_t *node)
 
 		TMPFS_VALIDATE_DIR(node);
 	}
-	VN_KNOTE(dvp, events);
 }
 
 /*
@@ -554,8 +553,7 @@ void
 tmpfs_dir_detach(tmpfs_node_t *dnode, tmpfs_dirent_t *de)
 {
 	tmpfs_node_t *node = de->td_node;
-	vnode_t *vp, *dvp = dnode->tn_vnode;
-	int events = NOTE_WRITE;
+	vnode_t *dvp = dnode->tn_vnode;
 
 	KASSERT(dvp == NULL || VOP_ISLOCKED(dvp));
 
@@ -566,11 +564,6 @@ tmpfs_dir_detach(tmpfs_node_t *dnode, tmpfs_dirent_t *de)
 		KASSERT(node->tn_links > 0);
 		node->tn_links--;
 
-		if ((vp = node->tn_vnode) != NULL) {
-			KASSERT(VOP_ISLOCKED(vp));
-			VN_KNOTE(vp, node->tn_links ? NOTE_LINK : NOTE_DELETE);
-		}
-
 		/* If directory - decrease the link count of parent. */
 		if (node->tn_type == VDIR) {
 			KASSERT(node->tn_spec.tn_dir.tn_parent == dnode);
@@ -578,7 +571,6 @@ tmpfs_dir_detach(tmpfs_node_t *dnode, tmpfs_dirent_t *de)
 
 			KASSERT(dnode->tn_links > 0);
 			dnode->tn_links--;
-			events |= NOTE_LINK;
 		}
 	}
 	de->td_node = NULL;
@@ -593,7 +585,6 @@ tmpfs_dir_detach(tmpfs_node_t *dnode, tmpfs_dirent_t *de)
 
 	if (dvp) {
 		uvm_vnp_setsize(dvp, dnode->tn_size);
-		VN_KNOTE(dvp, events);
 	}
 }
 
@@ -952,9 +943,6 @@ tmpfs_reg_resize(struct vnode *vp, off_t newsize)
 		/* Decrease the used-memory counter. */
 		tmpfs_mem_decr(tmp, (oldpages - newpages) << PAGE_SHIFT);
 	}
-	if (newsize > oldsize) {
-		VN_KNOTE(vp, NOTE_EXTEND);
-	}
 	return 0;
 }
 
@@ -1014,7 +1002,6 @@ tmpfs_chflags(vnode_t *vp, int flags, kauth_cred_t cred, lwp_t *l)
 		node->tn_flags = flags;
 	}
 	tmpfs_update(vp, TMPFS_UPDATE_CTIME);
-	VN_KNOTE(vp, NOTE_ATTRIB);
 	return 0;
 }
 
@@ -1044,7 +1031,6 @@ tmpfs_chmod(vnode_t *vp, mode_t mode, kauth_cred_t cred, lwp_t *l)
 	}
 	node->tn_mode = (mode & ALLPERMS);
 	tmpfs_update(vp, TMPFS_UPDATE_CTIME);
-	VN_KNOTE(vp, NOTE_ATTRIB);
 	cache_enter_id(vp, node->tn_mode, node->tn_uid, node->tn_gid, true);
 	return 0;
 }
@@ -1089,7 +1075,6 @@ tmpfs_chown(vnode_t *vp, uid_t uid, gid_t gid, kauth_cred_t cred, lwp_t *l)
 	node->tn_uid = uid;
 	node->tn_gid = gid;
 	tmpfs_update(vp, TMPFS_UPDATE_CTIME);
-	VN_KNOTE(vp, NOTE_ATTRIB);
 	cache_enter_id(vp, node->tn_mode, node->tn_uid, node->tn_gid, true);
 	return 0;
 }
@@ -1185,7 +1170,6 @@ tmpfs_chtimes(vnode_t *vp, const struct timespec *atime,
 		node->tn_birthtime = *btime;
 	}
 	mutex_exit(&node->tn_timelock);
-	VN_KNOTE(vp, NOTE_ATTRIB);
 	return 0;
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode.h,v 1.297 2021/06/29 22:40:53 dholland Exp $	*/
+/*	$NetBSD: vnode.h,v 1.298 2021/10/20 03:08:18 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2020 The NetBSD Foundation, Inc.
@@ -180,6 +180,7 @@ struct vnode {
 	enum vtagtype	v_tag;			/* -   type of underlying data */
 	void 		*v_data;		/* -   private data for fs */
 	struct klist	v_klist;		/* i   notes attached to vnode */
+	long		v_klist_interest;	/* i   what the noes are interested in */
 	void		*v_segvguard;		/* e   for PAX_SEGVGUARD */
 };
 #define	v_mountedhere	v_un.vu_mountedhere
@@ -411,14 +412,31 @@ void vref(struct vnode *);
 
 #define	NULLVP	((struct vnode *)NULL)
 
-static __inline void
+/*
+ * Macro to determine kevent interest on a vnode.
+ */
+#define	VN_KEVENT_INTEREST(vp, n)					\
+	((vp)->v_klist_interest != 0)
+
+static inline void
 VN_KNOTE(struct vnode *vp, long hint)
 {
-
-	mutex_enter(vp->v_interlock);
-	KNOTE(&vp->v_klist, hint);
-	mutex_exit(vp->v_interlock);
+	/*
+	 * Testing for klist interest unlocked is fine here, as registering
+	 * interest in vnode events is inherently racy with respect to other
+	 * system activity anyway.  Having knotes attached to vnodes is
+	 * actually incredibly rare, so we want to void having to take locks,
+	 * etc. in what is the overwhelmingly common case.
+	 */
+	if (__predict_false(VN_KEVENT_INTEREST(vp, hint))) {
+		mutex_enter(vp->v_interlock);
+		knote(&vp->v_klist, hint);
+		mutex_exit(vp->v_interlock);
+	}
 }
+
+void	vn_knote_attach(struct vnode *, struct knote *);
+void	vn_knote_detach(struct vnode *, struct knote *);
 
 /*
  * Global vnode data.

@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vnops.c,v 1.339 2021/07/18 23:57:15 dholland Exp $	*/
+/*	$NetBSD: lfs_vnops.c,v 1.340 2021/10/20 03:08:19 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -125,7 +125,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.339 2021/07/18 23:57:15 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.340 2021/10/20 03:08:19 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -685,7 +685,6 @@ lfs_symlink(void *v)
 	}
 	KASSERT(VOP_ISLOCKED(*vpp) == LK_EXCLUSIVE);
 
-	VN_KNOTE(ap->a_dvp, NOTE_WRITE);
 	ip = VTOI(*vpp);
 
 	/*
@@ -780,7 +779,6 @@ lfs_mknod(void *v)
 	}
 	KASSERT(VOP_ISLOCKED(*vpp) == LK_EXCLUSIVE);
 
-	VN_KNOTE(dvp, NOTE_WRITE);
 	ip = VTOI(*vpp);
 	ino = ip->i_number;
 	ip->i_state |= IN_ACCESS | IN_CHANGE | IN_UPDATE;
@@ -850,7 +848,6 @@ lfs_create(void *v)
 		goto out;
 	}
 	KASSERT(VOP_ISLOCKED(*vpp) == LK_EXCLUSIVE);
-	VN_KNOTE(dvp, NOTE_WRITE);
 	VOP_UNLOCK(*vpp);
 
 out:
@@ -1002,7 +999,6 @@ lfs_mkdir(void *v)
 			      cnp, ip->i_number, LFS_IFTODT(ip->i_mode), bp);
  bad:
 	if (error == 0) {
-		VN_KNOTE(dvp, NOTE_WRITE | NOTE_LINK);
 		VOP_UNLOCK(tvp);
 	} else {
 		dp->i_nlink--;
@@ -1035,10 +1031,11 @@ out:
 int
 lfs_remove(void *v)
 {
-	struct vop_remove_v2_args /* {
+	struct vop_remove_v3_args /* {
 		struct vnode *a_dvp;
 		struct vnode *a_vp;
 		struct componentname *a_cnp;
+		nlink_t ctx_vp_new_nlink;
 	} */ *ap = v;
 	struct vnode *dvp, *vp;
 	struct inode *ip;
