@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_rename.c,v 1.6 2021/10/20 03:08:18 thorpej Exp $	*/
+/*	$NetBSD: genfs_rename.c,v 1.7 2021/10/20 13:29:06 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_rename.c,v 1.6 2021/10/20 03:08:18 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_rename.c,v 1.7 2021/10/20 13:29:06 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/kauth.h>
@@ -312,10 +312,14 @@ genfs_sane_rename(const struct genfs_rename_ops *ops,
 			fcnp->cn_namelen) == 0))
 			/* Renaming an entry over itself does nothing.  */
 			error = 0;
-		else
+		else {
 			/* XXX Can't use VOP_REMOVE because of locking.  */
 			error = genfs_rename_remove(ops, mp, cred,
 			    fdvp, fcnp, fde, fvp, &tvp_new_nlink);
+			VN_KNOTE(fdvp, NOTE_WRITE);
+			VN_KNOTE(fvp,
+			    tvp_new_nlink == 0 ? NOTE_DELETE : NOTE_LINK);
+		}
 		goto out;
 	}
 	KASSERT(fvp != tvp);
@@ -370,10 +374,9 @@ genfs_sane_rename(const struct genfs_rename_ops *ops,
 		goto out;
 
 	/* Success!  */
+	genfs_rename_knote(fdvp, fvp, tdvp, tvp, tvp_new_nlink);
 
-out:	if (error == 0) {
-		genfs_rename_knote(fdvp, fvp, tdvp, tvp, tvp_new_nlink);
-	}
+out:
 	genfs_rename_exit(ops, mp, fdvp, fvp, tdvp, tvp);
 	return error;
 }
