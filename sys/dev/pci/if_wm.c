@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.713 2021/10/20 08:02:07 msaitoh Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.714 2021/10/20 08:06:45 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.713 2021/10/20 08:02:07 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.714 2021/10/20 08:06:45 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -4890,8 +4890,9 @@ wm_flush_desc_rings(struct wm_softc *sc)
 	 * the data of the next descriptor. We don't care about the data we are
 	 * about to reset the HW.
 	 */
-	device_printf(sc->sc_dev, "Need TX flush (reg = %08x, len = %u)\n",
-	    preg, reg);
+#ifdef WM_DEBUG
+	device_printf(sc->sc_dev, "Need TX flush (reg = %08x)\n", preg);
+#endif
 	reg = CSR_READ(sc, WMREG_TCTL);
 	CSR_WRITE(sc, WMREG_TCTL, reg | TCTL_EN);
 
@@ -4921,7 +4922,9 @@ wm_flush_desc_rings(struct wm_softc *sc)
 	 * Mark all descriptors in the RX ring as consumed and disable the
 	 * rx ring.
 	 */
+#ifdef WM_DEBUG
 	device_printf(sc->sc_dev, "Need RX flush (reg = %08x)\n", preg);
+#endif
 	rctl = CSR_READ(sc, WMREG_RCTL);
 	CSR_WRITE(sc, WMREG_RCTL, rctl & ~RCTL_EN);
 	CSR_WRITE_FLUSH(sc);
