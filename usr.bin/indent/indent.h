@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.h,v 1.38 2021/10/09 11:00:27 rillig Exp $	*/
+/*	$NetBSD: indent.h,v 1.39 2021/10/20 05:00:37 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-FreeBSD
@@ -236,7 +236,7 @@ enum keyword_kind {
 
 
 extern bool found_err;
-extern int next_blank_lines;
+extern int blank_lines_to_output;
 extern bool prefix_blankline_requested;
 extern bool postfix_blankline_requested;
 extern bool break_comma;	/* when true and not in parens, break after a
