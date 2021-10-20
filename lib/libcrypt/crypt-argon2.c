@@ -179,9 +179,15 @@ estimate_argon2_params(argon2_type atype, uint32_t *etime,
 		 */
 		max_mem /= 1000000;
 		if (max_mem > 30000) {
-			memory = 8192;
+			memory = 32768;
+		} else if (max_mem > 15000) {
+			memory = 16384;
 		} else if (max_mem > 7000) {
+			memory = 8192;
+		} else if (max_mem > 3000) {
 			memory = 4096;
+		} else if (max_mem > 900) {
+			memory = 1024;
 		} else if (max_mem > 24) {
 			memory = 256;
 		} else {
