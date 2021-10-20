@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_extern.h,v 1.87 2021/07/18 23:57:15 dholland Exp $	*/
+/*	$NetBSD: ufs_extern.h,v 1.88 2021/10/20 03:08:19 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -133,9 +133,11 @@ int	ufs_gro_remove_check_permitted(struct mount *, kauth_cred_t,
 	    struct vnode *, struct vnode *);
 int	ufs_gro_rename(struct mount *, kauth_cred_t,
 	    struct vnode *, struct componentname *, void *, struct vnode *,
-	    struct vnode *, struct componentname *, void *, struct vnode *);
+	    struct vnode *, struct componentname *, void *, struct vnode *,
+	    nlink_t *);
 int	ufs_gro_remove(struct mount *, kauth_cred_t,
-	    struct vnode *, struct componentname *, void *, struct vnode *);
+	    struct vnode *, struct componentname *, void *, struct vnode *,
+	    nlink_t *);
 int	ufs_gro_lookup(struct mount *, struct vnode *,
 	    struct componentname *, void *, struct vnode **);
 int	ufs_gro_genealogy(struct mount *, kauth_cred_t,

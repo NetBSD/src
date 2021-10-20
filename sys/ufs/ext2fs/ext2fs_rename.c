@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_rename.c,v 1.11 2016/08/15 18:38:10 jdolecek Exp $	*/
+/*	$NetBSD: ext2fs_rename.c,v 1.12 2021/10/20 03:08:19 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_rename.c,v 1.11 2016/08/15 18:38:10 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_rename.c,v 1.12 2021/10/20 03:08:19 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -272,7 +272,7 @@ ext2fs_gro_rename(struct mount *mp, kauth_cred_t cred,
     struct vnode *fdvp, struct componentname *fcnp,
     void *fde, struct vnode *fvp,
     struct vnode *tdvp, struct componentname *tcnp,
-    void *tde, struct vnode *tvp)
+    void *tde, struct vnode *tvp, nlink_t *tvp_nlinkp)
 {
 	struct ufs_lookup_results *fulr = fde;
 	struct ufs_lookup_results *tulr = tde;
@@ -445,6 +445,7 @@ ext2fs_gro_rename(struct mount *mp, kauth_cred_t cred,
 				goto whymustithurtsomuch;
 #endif
 		}
+		*tvp_nlinkp = VTOI(tvp)->i_e2fs_nlink;
 		/*
 		 * XXX Why is this here, and not above the preceding
 		 * conditional?
@@ -489,13 +490,6 @@ ext2fs_gro_rename(struct mount *mp, kauth_cred_t cred,
 	if (error)
 		goto whymustithurtsomuch;
 
-	/*
-	 * XXX Perhaps this should go at the top, in case the file
-	 * system is modified but incompletely so because of an
-	 * intermediate error.
-	 */
-	genfs_rename_knote(fdvp, fvp, tdvp, tvp,
-	    ((tvp != NULL) && (VTOI(tvp)->i_e2fs_nlink == 0)));
 #if 0				/* XXX */
 	genfs_rename_cache_purge(fdvp, fvp, tdvp, tvp);
 #endif
@@ -691,7 +685,8 @@ next:
  */
 static int
 ext2fs_gro_remove(struct mount *mp, kauth_cred_t cred,
-    struct vnode *dvp, struct componentname *cnp, void *de, struct vnode *vp)
+    struct vnode *dvp, struct componentname *cnp, void *de, struct vnode *vp,
+    nlink_t *tvp_nlinkp)
 {
 	struct ufs_lookup_results *ulr = de;
 	int error;
@@ -718,8 +713,7 @@ ext2fs_gro_remove(struct mount *mp, kauth_cred_t cred,
 	VTOI(vp)->i_e2fs_nlink--;
 	VTOI(vp)->i_flag |= IN_CHANGE;
 
-	VN_KNOTE(dvp, NOTE_WRITE);
-	VN_KNOTE(vp, (VTOI(vp)->i_e2fs_nlink? NOTE_LINK : NOTE_DELETE));
+	*tvp_nlinkp = VTOI(vp)->i_e2fs_nlink;
 
 	return 0;
 }

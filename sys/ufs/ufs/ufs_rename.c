@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_rename.c,v 1.13 2016/10/28 20:38:12 jdolecek Exp $	*/
+/*	$NetBSD: ufs_rename.c,v 1.14 2021/10/20 03:08:19 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_rename.c,v 1.13 2016/10/28 20:38:12 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_rename.c,v 1.14 2021/10/20 03:08:19 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -282,7 +282,7 @@ ufs_gro_rename(struct mount *mp, kauth_cred_t cred,
     struct vnode *fdvp, struct componentname *fcnp,
     void *fde, struct vnode *fvp,
     struct vnode *tdvp, struct componentname *tcnp,
-    void *tde, struct vnode *tvp)
+    void *tde, struct vnode *tvp, nlink_t *tvp_nlinkp)
 {
 	struct ufs_lookup_results *fulr = fde;
 	struct ufs_lookup_results *tulr = tde;
@@ -528,13 +528,9 @@ ufs_gro_rename(struct mount *mp, kauth_cred_t cred,
 #endif
 		goto arghmybrainhurts;
 
-	/*
-	 * XXX Perhaps this should go at the top, in case the file
-	 * system is modified but incompletely so because of an
-	 * intermediate error.
-	 */
-	genfs_rename_knote(fdvp, fvp, tdvp, tvp,
-	    ((tvp != NULL) && (VTOI(tvp)->i_nlink == 0)));
+	if (tvp != NULL) {
+		*tvp_nlinkp = VTOI(tvp)->i_nlink;
+	}
 #if 0				/* XXX */
 	genfs_rename_cache_purge(fdvp, fvp, tdvp, tvp);
 #endif
@@ -762,7 +758,8 @@ ufs_direct_namlen(const struct direct *ep, const struct vnode *vp)
  */
 int
 ufs_gro_remove(struct mount *mp, kauth_cred_t cred,
-    struct vnode *dvp, struct componentname *cnp, void *de, struct vnode *vp)
+    struct vnode *dvp, struct componentname *cnp, void *de, struct vnode *vp,
+    nlink_t *tvp_nlinkp)
 {
 	struct ufs_lookup_results *ulr = de;
 	int error;
@@ -783,18 +780,14 @@ ufs_gro_remove(struct mount *mp, kauth_cred_t cred,
 
 	error = UFS_WAPBL_BEGIN(mp);
 	if (error)
-		goto out0;
+		goto out;
 
 	/* XXX ufs_dirremove decrements vp's link count for us.  */
 	error = ufs_dirremove(dvp, ulr, VTOI(vp), cnp->cn_flags, 0);
-	if (error)
-		goto out1;
+	UFS_WAPBL_END(mp);
 
-	VN_KNOTE(dvp, NOTE_WRITE);
-	VN_KNOTE(vp, (VTOI(vp)->i_nlink? NOTE_LINK : NOTE_DELETE));
-
-out1:	UFS_WAPBL_END(mp);
-out0:
+	*tvp_nlinkp = VTOI(vp)->i_nlink;
+out:
 	return error;
 }
 

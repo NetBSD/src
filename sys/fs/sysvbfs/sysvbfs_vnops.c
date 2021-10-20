@@ -1,4 +1,4 @@
-/*	$NetBSD: sysvbfs_vnops.c,v 1.67 2020/06/27 17:29:18 christos Exp $	*/
+/*	$NetBSD: sysvbfs_vnops.c,v 1.68 2021/10/20 03:08:17 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysvbfs_vnops.c,v 1.67 2020/06/27 17:29:18 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysvbfs_vnops.c,v 1.68 2021/10/20 03:08:17 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -474,7 +474,6 @@ sysvbfs_write(void *arg)
 	struct uio *uio = a->a_uio;
 	int advice = IO_ADV_DECODE(a->a_ioflag);
 	struct sysvbfs_node *bnode = v->v_data;
-	bool extended = false;
 	vsize_t sz;
 	int err = 0;
 
@@ -489,7 +488,6 @@ sysvbfs_write(void *arg)
 
 	if (bnode->size < uio->uio_offset + uio->uio_resid) {
 		sysvbfs_file_setsize(v, uio->uio_offset + uio->uio_resid);
-		extended = true;
 	}
 
 	while (uio->uio_resid > 0) {
@@ -503,19 +501,18 @@ sysvbfs_write(void *arg)
 	if (err)
 		sysvbfs_file_setsize(v, bnode->size - uio->uio_resid);
 
-	VN_KNOTE(v, NOTE_WRITE | (extended ? NOTE_EXTEND : 0));
-
 	return err;
 }
 
 int
 sysvbfs_remove(void *arg)
 {
-	struct vop_remove_v2_args /* {
+	struct vop_remove_v3_args /* {
 		struct vnodeop_desc *a_desc;
 		struct vnode * a_dvp;
 		struct vnode * a_vp;
 		struct componentname * a_cnp;
+		nlink_t ctx_vp_new_nlink;
 	} */ *ap = arg;
 	struct vnode *vp = ap->a_vp;
 	struct vnode *dvp = ap->a_dvp;
@@ -534,8 +531,6 @@ sysvbfs_remove(void *arg)
 	if ((err = bfs_file_delete(bfs, ap->a_cnp->cn_nameptr, true)) != 0)
 		DPRINTF("%s: bfs_file_delete failed.\n", __func__);
 
-	VN_KNOTE(ap->a_vp, NOTE_DELETE);
-	VN_KNOTE(ap->a_dvp, NOTE_WRITE);
 	if (dvp == vp)
 		vrele(vp);
 	else

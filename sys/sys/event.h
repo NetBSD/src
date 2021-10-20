@@ -1,4 +1,4 @@
-/*	$NetBSD: event.h,v 1.48 2021/10/13 04:57:19 thorpej Exp $	*/
+/*	$NetBSD: event.h,v 1.49 2021/10/20 03:08:18 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999,2000,2001 Jonathan Lemon <jlemon@FreeBSD.org>
@@ -145,6 +145,10 @@ _EV_SET(struct kevent *_kevp, uintptr_t _ident, uint32_t _filter,
 #define	NOTE_LINK	0x0010U			/* link count changed */
 #define	NOTE_RENAME	0x0020U			/* vnode was renamed */
 #define	NOTE_REVOKE	0x0040U			/* vnode access was revoked */
+#define	NOTE_OPEN	0x0080U			/* vnode was opened */
+#define	NOTE_CLOSE	0x0100U			/* file closed (no FWRITE) */
+#define	NOTE_CLOSE_WRITE 0x0200U		/* file closed (FWRITE) */
+#define	NOTE_READ	0x0400U			/* file was read */
 
 /*
  * data/hint flags for EVFILT_PROC, shared with userspace

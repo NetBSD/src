@@ -1,4 +1,4 @@
-/*	$NetBSD: ptyfs_vnops.c,v 1.66 2021/07/18 23:57:34 dholland Exp $	*/
+/*	$NetBSD: ptyfs_vnops.c,v 1.67 2021/10/20 03:08:17 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1993, 1995
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ptyfs_vnops.c,v 1.66 2021/07/18 23:57:34 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ptyfs_vnops.c,v 1.67 2021/10/20 03:08:17 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -477,7 +477,6 @@ ptyfs_setattr(void *v)
 		if (error)
 			return error;
 	}
-	VN_KNOTE(vp, NOTE_ATTRIB);
 	return 0;
 }
 

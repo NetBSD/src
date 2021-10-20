@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnops.c,v 1.223 2021/09/11 10:09:13 riastradh Exp $	*/
+/*	$NetBSD: vfs_vnops.c,v 1.224 2021/10/20 03:08:18 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.223 2021/09/11 10:09:13 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.224 2021/10/20 03:08:18 thorpej Exp $");
 
 #include "veriexec.h"
 
@@ -1364,4 +1364,92 @@ vn_bdev_openpath(struct pathbuf *pb, struct vnode **vpp, struct lwp *l)
 		return ENOTBLK;
 
 	return vn_bdev_open(dev, vpp, l);
+}
+
+static long
+vn_knote_to_interest(const struct knote *kn)
+{
+	switch (kn->kn_filter) {
+	case EVFILT_READ:
+		/*
+		 * Writing to the file or changing its attributes can
+		 * set the file size, which impacts the readability
+		 * filter.
+		 *
+		 * (No need to set NOTE_EXTEND here; it's only ever
+		 * send with other hints; see vnode_if.c.)
+		 */
+		return NOTE_WRITE | NOTE_ATTRIB;
+
+	case EVFILT_VNODE:
+		return kn->kn_sfflags;
+
+	case EVFILT_WRITE:
+	default:
+		return 0;
+	}
+}
+
+void
+vn_knote_attach(struct vnode *vp, struct knote *kn)
+{
+	long interest = 0;
+
+	/*
+	 * We maintain a bitmask of the kevents that there is interest in,
+	 * to minimize the impact of having watchers.  It's silly to have
+	 * to traverse vn_klist every time a read or write happens simply
+	 * because there is someone interested in knowing when the file
+	 * is deleted, for example.
+	 */
+
+	mutex_enter(vp->v_interlock);
+	SLIST_INSERT_HEAD(&vp->v_klist, kn, kn_selnext);
+	SLIST_FOREACH(kn, &vp->v_klist, kn_selnext) {
+		interest |= vn_knote_to_interest(kn);
+	}
+	vp->v_klist_interest = interest;
+	mutex_exit(vp->v_interlock);
+}
+
+void
+vn_knote_detach(struct vnode *vp, struct knote *kn)
+{
+	int interest = 0;
+
+	/*
+	 * We special case removing the head of the list, beacuse:
+	 *
+	 * 1. It's extremely likely that we're detaching the only
+	 *    knote.
+	 *
+	 * 2. We're already traversing the whole list, so we don't
+	 *    want to use the generic SLIST_REMOVE() which would
+	 *    traverse it *again*.
+	 */
+
+	mutex_enter(vp->v_interlock);
+	if (__predict_true(kn == SLIST_FIRST(&vp->v_klist))) {
+		SLIST_REMOVE_HEAD(&vp->v_klist, kn_selnext);
+		SLIST_FOREACH(kn, &vp->v_klist, kn_selnext) {
+			interest |= vn_knote_to_interest(kn);
+		}
+		vp->v_klist_interest = interest;
+	} else {
+		struct knote *thiskn, *nextkn, *prevkn = NULL;
+
+		SLIST_FOREACH_SAFE(thiskn, &vp->v_klist, kn_selnext, nextkn) {
+			if (thiskn == kn) {
+				KASSERT(kn != NULL);
+				KASSERT(prevkn != NULL);
+				SLIST_REMOVE_AFTER(prevkn, kn_selnext);
+				kn = NULL;
+			} else {
+				interest |= vn_knote_to_interest(thiskn);
+				prevkn = thiskn;
+			}
+		}
+		vp->v_klist_interest = interest;
+	}
+	mutex_exit(vp->v_interlock);
 }
