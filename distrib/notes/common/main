@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.566 2021/10/20 23:30:30 gutteridge Exp $
+.\"	$NetBSD: main,v 1.567 2021/10/20 23:45:09 gutteridge Exp $
 .\"
 .\" Copyright (c) 1999-2012 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -266,8 +266,8 @@ Many commercial and freeware programs are available to burn CD-ROMs.
 If installing via USB, you must first uncompress the USB image, which
 is gzipped.
 .if \n[amd64] \{\
-Note the \*M architecture has two images, NetBSD-\*V-\*M-install.img and
-NetBSD-\*V-\*M-bios-install.img. The latter is intended for older
+Note the \*M architecture has two images, NetBSD-\*V-\*M-install.img.gz
+and NetBSD-\*V-\*M-bios-install.img.gz. The latter is intended for older
 hardware which is unable to boot using a hybrid MBR and GPT image.
 .\}
 .Dl $ Ic "gunzip NetBSD-\*V-\*M-install.img.gz"
