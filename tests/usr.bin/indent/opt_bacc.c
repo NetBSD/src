@@ -1,4 +1,4 @@
-/* $NetBSD: opt_bacc.c,v 1.3 2021/10/18 07:11:31 rillig Exp $ */
+/* $NetBSD: opt_bacc.c,v 1.4 2021/10/20 05:14:21 rillig Exp $ */
 /* $FreeBSD$ */
 
 /*
@@ -23,7 +23,7 @@ int		c;
 
 /*
  * XXX: As of 2021-10-05, the option -bacc has no effect on declarations since
- * process_decl resets prefix_blankline_requested unconditionally.
+ * process_decl resets blank_line_before unconditionally.
  */
 #indent run -bacc
 int		a;

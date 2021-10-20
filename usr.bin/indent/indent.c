@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.c,v 1.141 2021/10/20 05:07:08 rillig Exp $	*/
+/*	$NetBSD: indent.c,v 1.142 2021/10/20 05:14:21 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)indent.c	5.17 (Berkeley) 6/7/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: indent.c,v 1.141 2021/10/20 05:07:08 rillig Exp $");
+__RCSID("$NetBSD: indent.c,v 1.142 2021/10/20 05:14:21 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/indent.c 340138 2018-11-04 19:24:49Z oshogbo $");
 #endif
@@ -103,8 +103,8 @@ char *saved_inp_e;
 
 bool found_err;
 int blank_lines_to_output;
-bool prefix_blankline_requested;
-bool postfix_blankline_requested;
+bool blank_line_before;
+bool blank_line_after;
 bool break_comma;
 float case_ind;
 bool had_eof;
@@ -939,7 +939,7 @@ process_lbrace(bool *force_nl, bool *sp_sw, token_type hd_type,
     }
 
     if (ps.in_parameter_declaration)
-	prefix_blankline_requested = false;
+	blank_line_before = false;
 
     if (ps.p_l_follow > 0) {	/* check for preceding unbalanced parens */
 	diag(1, "Unbalanced parens");
@@ -965,7 +965,7 @@ process_lbrace(bool *force_nl, bool *sp_sw, token_type hd_type,
 					 * declaration, so don't do special
 					 * indentation of comments */
 	if (opt.blanklines_after_decl_at_top && ps.in_parameter_declaration)
-	    postfix_blankline_requested = true;
+	    blank_line_after = true;
 	ps.in_parameter_declaration = false;
 	ps.in_decl = false;
     }
@@ -1013,14 +1013,14 @@ process_rbrace(bool *sp_sw, int *decl_ind, const int *di_stack)
 	ps.in_decl = true;
     }
 
-    prefix_blankline_requested = false;
+    blank_line_before = false;
     parse(rbrace);		/* let parser know about this */
     ps.search_brace = opt.cuddle_else
 	&& ps.p_stack[ps.tos] == if_expr_stmt
 	&& ps.il[ps.tos] >= ps.ind_level;
 
     if (ps.tos <= 1 && opt.blanklines_after_procs && ps.decl_nest <= 0)
-	postfix_blankline_requested = true;
+	blank_line_after = true;
 }
 
 static void
@@ -1080,7 +1080,7 @@ process_decl(int *decl_ind, bool *tabs_to_var)
     if (ps.decl_nest <= 0)
 	ps.just_saw_decl = 2;
 
-    prefix_blankline_requested = false;
+    blank_line_before = false;
 
     int len = (int)buf_len(&token) + 1;
     int ind = ps.ind_level == 0 || ps.decl_nest > 0
@@ -1298,11 +1298,11 @@ process_preprocessing(void)
     }
 
     if (opt.blanklines_around_conditional_compilation) {
-	postfix_blankline_requested = true;
+	blank_line_after = true;
 	blank_lines_to_output = 0;
     } else {
-	postfix_blankline_requested = false;
-	prefix_blankline_requested = false;
+	blank_line_after = false;
+	blank_line_before = false;
     }
 
     /*
@@ -1444,7 +1444,7 @@ main_loop(void)
 
 	case type_def:
 	case storage_class:
-	    prefix_blankline_requested = false;
+	    blank_line_before = false;
 	    goto copy_token;
 
 	case keyword_struct_union_enum:
