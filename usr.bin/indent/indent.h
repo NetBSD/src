@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.h,v 1.42 2021/10/20 05:37:21 rillig Exp $	*/
+/*	$NetBSD: indent.h,v 1.43 2021/10/20 05:41:57 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-FreeBSD
@@ -249,6 +249,7 @@ extern bool inhibit_formatting;	/* true if INDENT OFF is in effect */
 
 #define	STACKSIZE 256
 
+/* TODO: group the members by purpose, don't sort them alphabetically */
 extern struct parser_state {
     token_type last_token;
 
