@@ -1,4 +1,4 @@
-/*	$NetBSD: sgp40.c,v 1.1 2021/10/14 13:54:46 brad Exp $	*/
+/*	$NetBSD: sgp40.c,v 1.2 2021/10/20 17:52:44 christos Exp $	*/
 
 /*
  * Copyright (c) 2021 Brad Spencer <brad@anduin.eldar.org>
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sgp40.c,v 1.1 2021/10/14 13:54:46 brad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sgp40.c,v 1.2 2021/10/20 17:52:44 christos Exp $");
 
 /*
   Driver for the Sensirion SGP40 MOx gas sensor for air quality
@@ -42,7 +42,8 @@ __KERNEL_RCSID(0, "$NetBSD: sgp40.c,v 1.1 2021/10/14 13:54:46 brad Exp $");
 #include <dev/i2c/sensirion_voc_algorithm.h>
 
 static uint8_t 	sgp40_crc(uint8_t *, size_t);
-static int      sgp40_cmdr(struct sgp40_sc *, uint16_t, uint8_t *, uint8_t, uint8_t *, size_t);
+static int      sgp40_cmdr(struct sgp40_sc *, uint16_t, uint8_t *, uint8_t,
+    uint8_t *, size_t);
 static int 	sgp40_poke(i2c_tag_t, i2c_addr_t, bool);
 static int 	sgp40_match(device_t, cfdata_t, void *);
 static void 	sgp40_attach(device_t, device_t, void *);
@@ -110,9 +111,10 @@ sgp40_thread(void *aux)
 
 	VocAlgorithm_init(&voc_algorithm_params);
 
-	while (sc->sc_stopping == false) {
-		rv = cv_timedwait(&sc->sc_condvar, &sc->sc_threadmutex, mstohz(1000));
-		if (rv == EWOULDBLOCK && sc->sc_stopping == false) {
+	while (!sc->sc_stopping) {
+		rv = cv_timedwait(&sc->sc_condvar, &sc->sc_threadmutex,
+		    mstohz(1000));
+		if (rv == EWOULDBLOCK && !sc->sc_stopping) {
 			sgp40_take_measurement(sc,&voc_algorithm_params);
 		}
 	}
@@ -138,35 +140,37 @@ sgp40_stop_thread(void *aux)
 	mutex_enter(&sc->sc_mutex);
 	error = iic_acquire_bus(sc->sc_tag, 0);
 	if (error) {
-		DPRINTF(sc, 2, ("%s: Could not acquire iic bus for heater off in stop thread: %d\n",
-		    device_xname(sc->sc_dev), error));
-	} else {
-		error = sgp40_cmdr(sc, SGP40_HEATER_OFF,NULL,0,NULL,0);
-		if (error) {
-			DPRINTF(sc, 2, ("%s: Error turning heater off: %d\n",
-			    device_xname(sc->sc_dev), error));
-		}
-		iic_release_bus(sc->sc_tag, 0);
+		DPRINTF(sc, 2, ("%s: Could not acquire iic bus for heater off "
+		    "in stop thread: %d\n", device_xname(sc->sc_dev), error));
+		goto out;
 	}
+	error = sgp40_cmdr(sc, SGP40_HEATER_OFF, NULL, 0, NULL, 0);
+	if (error) {
+		DPRINTF(sc, 2, ("%s: Error turning heater off: %d\n",
+		    device_xname(sc->sc_dev), error));
+	}
+out:
+	iic_release_bus(sc->sc_tag, 0);
 	mutex_exit(&sc->sc_mutex);
 }
 
 static int
 sgp40_compute_temp_comp(int unconverted)
 {
-	/* The published algorithm for this conversion is:
-	   (temp_in_celcius + 45) * 65535 / 175
-
-	   However, this did not exactly yield the results that
-	   the example in the data sheet, so something a little
-	   different was done.
-
-	   (temp_in_celcius + 45) * 65536 / 175
-
-	   This was also scaled up by 10^2 and then scaled back to
-	   preserve some percision.  37449 is simply (65536 * 100) / 175
-	   and rounded.
-	*/
+	/*
+	 * The published algorithm for this conversion is:
+	 * (temp_in_celcius + 45) * 65535 / 175
+	 *
+	 * However, this did not exactly yield the results that
+	 * the example in the data sheet, so something a little
+	 * different was done.
+	 *
+	 * (temp_in_celcius + 45) * 65536 / 175
+	 *
+	 * This was also scaled up by 10^2 and then scaled back to
+	 * preserve some percision.  37449 is simply (65536 * 100) / 175
+	 * and rounded.
+	 */
 
 	return (((unconverted + 45) * 100) * 37449) / 10000;
 }
@@ -176,19 +180,20 @@ sgp40_compute_rh_comp(int unconverted)
 {
 	int q;
 
-	/* The published algorithm for this conversion is:
-	   %rh * 65535 / 100
-
-	   However, this did not exactly yield the results that
-	   the example in the data sheet, so something a little
-	   different was done.
-
-	   %rh * 65536 / 100
-
-	   This was also scaled up by 10^2 and then scaled back to
-	   preserve some percision.  The value is also latched to 65535
-	   as an upper limit.
-	*/
+	/*
+	 * The published algorithm for this conversion is:
+	 * %rh * 65535 / 100
+	 *
+	 * However, this did not exactly yield the results that
+	 * the example in the data sheet, so something a little
+	 * different was done.
+	 *
+	 * %rh * 65536 / 100
+	 *
+	 * This was also scaled up by 10^2 and then scaled back to
+	 * preserve some percision.  The value is also latched to 65535
+	 * as an upper limit.
+	 */
 
 	q = ((unconverted * 100) * 65536) / 10000;
 	if (q > 65535)
@@ -218,49 +223,55 @@ sgp40_take_measurement(void *aux, VocAlgorithmParams* params)
 
 	args[0] = convertedrh >> 8;
 	args[1] = convertedrh & 0x00ff;
-	args[2] = sgp40_crc(&args[0],2);
+	args[2] = sgp40_crc(&args[0], 2);
 	args[3] = convertedtemp >> 8;
 	args[4] = convertedtemp & 0x00ff;
-	args[5] = sgp40_crc(&args[3],2);
+	args[5] = sgp40_crc(&args[3], 2);
 
-	/* The VOC algoritm has a black out time when it first starts to run
-	   and does not return any indicator that is going on, so voc_index
-	   in that case would be 0..  however, that is also a valid response
-	   otherwise, although an unlikely one.
-	*/
+	/*
+	 * The VOC algoritm has a black out time when it first starts to run
+	 * and does not return any indicator that is going on, so voc_index
+	 * in that case would be 0..  however, that is also a valid response
+	 * otherwise, although an unlikely one.
+	 */
 	error = iic_acquire_bus(sc->sc_tag, 0);
 	if (error) {
-		DPRINTF(sc, 2, ("%s: Could not acquire iic bus for take measurement: %d\n",
-		    device_xname(sc->sc_dev), error));
+		DPRINTF(sc, 2, ("%s: Could not acquire iic bus for take "
+		    "measurement: %d\n", device_xname(sc->sc_dev), error));
 		sc->sc_voc = 0;
 		sc->sc_vocvalid = false;
-	} else {
-		error = sgp40_cmdr(sc, SGP40_MEASURE_RAW, args, 6, buf, 3);
-		iic_release_bus(sc->sc_tag, 0);
-		if (error == 0) {
-			crc = sgp40_crc(&buf[0],2);
-			DPRINTF(sc, 2, ("%s: Raw ticks and crc: %02x%02x %02x %02x\n",
-			    device_xname(sc->sc_dev), buf[0], buf[1], buf[2],crc));
-			if (buf[2] == crc) {
-				rawmeasurement = buf[0] << 8;
-				rawmeasurement |= buf[1];
-				VocAlgorithm_process(params, rawmeasurement, &voc_index);
-				DPRINTF(sc, 2, ("%s: VOC index: %d\n",
-				    device_xname(sc->sc_dev), voc_index));
-				sc->sc_voc = voc_index;
-				sc->sc_vocvalid = true;
-			} else {
-				sc->sc_voc = 0;
-				sc->sc_vocvalid = false;
-			}
-		} else {
-			DPRINTF(sc, 2, ("%s: Failed to get measurement %d\n",
-			    device_xname(sc->sc_dev), error));
-			sc->sc_voc = 0;
-			sc->sc_vocvalid = false;
-		}
+		goto out;
 	}
 
+	error = sgp40_cmdr(sc, SGP40_MEASURE_RAW, args, 6, buf, 3);
+	iic_release_bus(sc->sc_tag, 0);
+	if (error) {
+		DPRINTF(sc, 2, ("%s: Failed to get measurement %d\n",
+		    device_xname(sc->sc_dev), error));
+		goto out;
+	}
+
+	crc = sgp40_crc(&buf[0], 2);
+	DPRINTF(sc, 2, ("%s: Raw ticks and crc: %02x%02x %02x "
+	    "%02x\n", device_xname(sc->sc_dev), buf[0], buf[1],
+	    buf[2], crc));
+	if (buf[2] != crc)
+		goto out;
+
+	rawmeasurement = buf[0] << 8;
+	rawmeasurement |= buf[1];
+	VocAlgorithm_process(params, rawmeasurement,
+	    &voc_index);
+	DPRINTF(sc, 2, ("%s: VOC index: %d\n",
+	    device_xname(sc->sc_dev), voc_index));
+	sc->sc_voc = voc_index;
+	sc->sc_vocvalid = true;
+
+	mutex_exit(&sc->sc_mutex);
+	return;
+out:
+	sc->sc_voc = 0;
+	sc->sc_vocvalid = false;
 	mutex_exit(&sc->sc_mutex);
 }
 
@@ -340,7 +351,8 @@ sgp40_cmddelay(uint16_t cmd)
 	}
 
 	if (r == -1) {
-		panic("Bad command look up in cmd delay: cmd: %d\n",cmd);
+		panic("sgp40: Bad command look up in cmd delay: cmd: %d\n",
+		    cmd);
 	}
 
 	return r;
@@ -357,37 +369,47 @@ sgp40_cmd(i2c_tag_t tag, i2c_addr_t addr, uint8_t *cmd,
 	cmd16 = cmd[0] << 8;
 	cmd16 = cmd16 | cmd[1];
 
-	error = iic_exec(tag,I2C_OP_WRITE_WITH_STOP,addr,cmd,clen,NULL,0,0);
+	error = iic_exec(tag, I2C_OP_WRITE_WITH_STOP, addr, cmd, clen, NULL, 0,
+	    0);
+	if (error)
+		return error;
 
-	/* Every command returns something except for turning the heater off
-	   and the general soft reset which returns nothing.  */
-	if (error == 0 && cmd16 != SGP40_HEATER_OFF) {
-		/* Every command has a particular delay for how long
-		   it typically takes and the max time it will take. */
-		cmddelay = sgp40_cmddelay(cmd16);
-		delay(cmddelay);
+	/* 
+	 * Every command returns something except for turning the heater off
+	 * and the general soft reset which returns nothing.
+	 */
+	if (cmd16 == SGP40_HEATER_OFF)
+		return 0;
+	/*
+	 * Every command has a particular delay for how long
+	 * it typically takes and the max time it will take.
+	 */
+	cmddelay = sgp40_cmddelay(cmd16);
+	delay(cmddelay);
 
-		for (int aint = 0; aint < readattempts; aint++) {
-			error = iic_exec(tag,I2C_OP_READ_WITH_STOP,addr,NULL,0,buf,blen,0);
-			if (error == 0)
-				break;
-			delay(1000);
-		}
+	for (int aint = 0; aint < readattempts; aint++) {
+		error = iic_exec(tag, I2C_OP_READ_WITH_STOP, addr, NULL, 0,
+		    buf, blen, 0);
+		if (error == 0)
+			break;
+		delay(1000);
 	}
 
 	return error;
 }
 
 static int
-sgp40_cmdr(struct sgp40_sc *sc, uint16_t cmd, uint8_t *extraargs, uint8_t argslen, uint8_t *buf, size_t blen)
+sgp40_cmdr(struct sgp40_sc *sc, uint16_t cmd, uint8_t *extraargs,
+    uint8_t argslen, uint8_t *buf, size_t blen)
 {
 	uint8_t fullcmd[8];
 	uint8_t cmdlen;
 	int n;
 
-	/* The biggest documented command + arguments is 8 uint8_t bytes long. */
-	/* Catch anything that ties to have an arglen more than 6 */
-
+	/*
+	 * The biggest documented command + arguments is 8 uint8_t bytes long.
+	 * Catch anything that ties to have an arglen more than 6
+	 */
 	KASSERT(argslen <= 6);
 
 	memset(fullcmd, 0, 8);
@@ -402,11 +424,13 @@ sgp40_cmdr(struct sgp40_sc *sc, uint16_t cmd, uint8_t *extraargs, uint8_t argsle
 		cmdlen++;
 		n++;
 	}
-	DPRINTF(sc, 2, ("%s: Full command and arguments: %02x %02x %02x %02x %02x %02x %02x %02x\n",
+	DPRINTF(sc, 2, ("%s: Full command and arguments: %02x %02x %02x %02x "
+	    "%02x %02x %02x %02x\n",
 	    device_xname(sc->sc_dev), fullcmd[0], fullcmd[1],
 	    fullcmd[2], fullcmd[3], fullcmd[4], fullcmd[5],
 	    fullcmd[6], fullcmd[7]));
-	return sgp40_cmd(sc->sc_tag, sc->sc_addr, fullcmd, cmdlen, buf, blen, sc->sc_readattempts);
+	return sgp40_cmd(sc->sc_tag, sc->sc_addr, fullcmd, cmdlen, buf, blen,
+	    sc->sc_readattempts);
 }
 
 static	uint8_t
@@ -433,9 +457,10 @@ sgp40_poke(i2c_tag_t tag, i2c_addr_t addr, bool matchdebug)
 	uint8_t buf[9];
 	int error;
 
-	/* Possible bug...  this command may not work if the chip is not idle,
-	   however, it appears to be used by a lot of other code as a probe.
-	*/
+	/*
+	 * Possible bug...  this command may not work if the chip is not idle,
+	 * however, it appears to be used by a lot of other code as a probe.
+	 */
 	reg[0] = SGP40_GET_SERIAL_NUMBER >> 8;
 	reg[1] = SGP40_GET_SERIAL_NUMBER & 0x00ff;
 
@@ -486,8 +511,8 @@ sgp40_sysctl_init(struct sgp40_sc *sc)
 
 	if ((error = sysctl_createv(&sc->sc_sgp40log, 0, NULL, &cnode,
 	    0, CTLTYPE_NODE, "compensation",
-	    SYSCTL_DESCR("SGP40 measurement compensations"), NULL, 0, NULL, 0, CTL_HW,
-	    sysctlroot_num, CTL_CREATE, CTL_EOL)) != 0)
+	    SYSCTL_DESCR("SGP40 measurement compensations"), NULL, 0, NULL, 0,
+	    CTL_HW, sysctlroot_num, CTL_CREATE, CTL_EOL)) != 0)
 		return error;
 	int compensation_num = cnode->sysctl_num;
 
@@ -597,11 +622,12 @@ sgp40_attach(device_t parent, device_t self, void *aux)
 		goto out;
 	}
 
-	/* Usually one would reset the chip here, but that is not possible
-	   without resetting the entire bus, so we won't do that.
-
-	   What we will do is make sure that the chip is idle by running the
-	   turn-the-heater command.
+	/*
+	 * Usually one would reset the chip here, but that is not possible
+	 * without resetting the entire bus, so we won't do that.
+	 *
+	 * What we will do is make sure that the chip is idle by running the
+	 * turn-the-heater command.
 	 */
 
 	error = sgp40_cmdr(sc, SGP40_HEATER_OFF, NULL, 0, NULL, 0);
@@ -618,9 +644,9 @@ sgp40_attach(device_t parent, device_t self, void *aux)
 		ecount++;
 	}
 
-	sn_crc1 = sgp40_crc(&buf[0],2);
-	sn_crc2 = sgp40_crc(&buf[3],2);
-	sn_crc3 = sgp40_crc(&buf[6],2);
+	sn_crc1 = sgp40_crc(&buf[0], 2);
+	sn_crc2 = sgp40_crc(&buf[3], 2);
+	sn_crc3 = sgp40_crc(&buf[6], 2);
 	sn_crcv1 = buf[2];
 	sn_crcv2 = buf[5];
 	sn_crcv3 = buf[8];
@@ -631,7 +657,8 @@ sgp40_attach(device_t parent, device_t self, void *aux)
 	serial_number = (serial_number << 8) | buf[6];
 	serial_number = (serial_number << 8) | buf[7];
 
-	DPRINTF(sc, 2, ("%s: raw serial number: %02x %02x %02x %02x %02x %02x %02x %02x %02x\n",
+	DPRINTF(sc, 2, ("%s: raw serial number: %02x %02x %02x %02x %02x %02x "
+	    "%02x %02x %02x\n",
 	    device_xname(sc->sc_dev), buf[0], buf[1], buf[2], buf[3], buf[4],
 	    buf[5], buf[6], buf[7], buf[8]));
 
@@ -642,7 +669,7 @@ sgp40_attach(device_t parent, device_t self, void *aux)
 		ecount++;
 	}
 
-	fs_crc = sgp40_crc(&buf[0],2);
+	fs_crc = sgp40_crc(&buf[0], 2);
 	fs_crcv = buf[2];
 	featureset = buf[0];
 	featureset = (featureset << 8) | buf[1];
@@ -657,7 +684,7 @@ sgp40_attach(device_t parent, device_t self, void *aux)
 		ecount++;
 	}
 
-	tstcrc = sgp40_crc(&buf[0],2);
+	tstcrc = sgp40_crc(&buf[0], 2);
 
 	DPRINTF(sc, 2, ("%s: chip test values: %02x%02x - %02x ; %02x\n",
 	    device_xname(sc->sc_dev), buf[0], buf[1], buf[2], tstcrc));
@@ -705,20 +732,22 @@ sgp40_attach(device_t parent, device_t self, void *aux)
 	}
 
 	error = kthread_create(PRI_NONE, KTHREAD_MUSTJOIN, NULL,
-	    sgp40_thread, sc, &sc->sc_thread,
-	    device_xname(sc->sc_dev));
+	    sgp40_thread, sc, &sc->sc_thread, "%s", device_xname(sc->sc_dev));
 	if (error) {
 		aprint_error_dev(self,"Unable to create measurement thread\n");
 		goto out;
 	}
 
-	aprint_normal_dev(self, "Sensirion SGP40, Serial number: %jx%sFeature set word: 0x%jx%s%s%s",
-	    serial_number,
-	    (sn_crc1 == sn_crcv1 && sn_crc2 == sn_crcv2 && sn_crc3 == sn_crcv3) ? ", " : " (bad crc), ",
+	aprint_normal_dev(self, "Sensirion SGP40, Serial number: %jx%s"
+	    "Feature set word: 0x%jx%s%s%s", serial_number,
+	    (sn_crc1 == sn_crcv1 && sn_crc2 == sn_crcv2 && sn_crc3 == sn_crcv3)
+	    ? ", " : " (bad crc), ",
 	    (uintmax_t)featureset,
 	    (fs_crc == fs_crcv) ? ", " : " (bad crc), ",
-	    (chiptestvalue == SGP40_TEST_RESULTS_ALL_PASSED) ? "All chip tests passed" :
-	    (chiptestvalue == SGP40_TEST_RESULTS_SOME_FAILED) ? "Some chip tests failed" :
+	    (chiptestvalue == SGP40_TEST_RESULTS_ALL_PASSED) ?
+		"All chip tests passed" :
+	    (chiptestvalue == SGP40_TEST_RESULTS_SOME_FAILED) ?
+		"Some chip tests failed" :
 	    "Unknown test results",
 	    (tstcrc == buf[2]) ? "\n" : " (bad crc)\n");
 	return;
