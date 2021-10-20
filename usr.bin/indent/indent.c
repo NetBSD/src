@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.c,v 1.143 2021/10/20 05:26:46 rillig Exp $	*/
+/*	$NetBSD: indent.c,v 1.144 2021/10/20 05:37:21 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)indent.c	5.17 (Berkeley) 6/7/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: indent.c,v 1.143 2021/10/20 05:26:46 rillig Exp $");
+__RCSID("$NetBSD: indent.c,v 1.144 2021/10/20 05:37:21 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/indent.c 340138 2018-11-04 19:24:49Z oshogbo $");
 #endif
@@ -748,7 +748,7 @@ process_rparen_or_rbracket(bool *sp_sw, bool *force_nl,
     token_type hd_type)
 {
     if ((ps.cast_mask & (1 << ps.p_l_follow) & ~ps.not_cast_mask) != 0) {
-	ps.last_u_d = true;
+	ps.next_unary = true;
 	ps.cast_mask &= (1 << ps.p_l_follow) - 1;
 	ps.want_blank = opt.space_after_cast;
     } else
@@ -769,8 +769,7 @@ process_rparen_or_rbracket(bool *sp_sw, bool *force_nl,
 					 * such */
 	*sp_sw = false;
 	*force_nl = true;	/* must force newline after if */
-	ps.last_u_d = true;	/* inform lexi that a following operator is
-				 * unary */
+	ps.next_unary = true;
 	ps.in_stmt = false;	/* don't use stmt continuation indentation */
 
 	parse(hd_type);		/* let parser worry about if, or whatever */
@@ -1116,7 +1115,7 @@ process_ident(token_type ttype, int decl_ind, bool tabs_to_var,
     } else if (*sp_sw && ps.p_l_follow == 0) {
 	*sp_sw = false;
 	*force_nl = true;
-	ps.last_u_d = true;
+	ps.next_unary = true;
 	ps.in_stmt = false;
 	parse(hd_type);
     }

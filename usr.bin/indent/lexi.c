@@ -1,4 +1,4 @@
-/*	$NetBSD: lexi.c,v 1.91 2021/10/11 20:31:06 rillig Exp $	*/
+/*	$NetBSD: lexi.c,v 1.92 2021/10/20 05:37:21 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)lexi.c	8.1 (Berkeley) 6/6/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: lexi.c,v 1.91 2021/10/11 20:31:06 rillig Exp $");
+__RCSID("$NetBSD: lexi.c,v 1.92 2021/10/20 05:37:21 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/lexi.c 337862 2018-08-15 18:19:45Z pstef $");
 #endif
@@ -404,25 +404,25 @@ lexi_alnum(struct parser_state *state)
 
     if (state->last_token == keyword_struct_union_enum &&
 	    state->p_l_follow == 0) {
-	state->last_u_d = true;
+	state->next_unary = true;
 	return decl;
     }
 
     /* Operator after identifier is binary unless last token was 'struct'. */
-    state->last_u_d = (state->last_token == keyword_struct_union_enum);
+    state->next_unary = state->last_token == keyword_struct_union_enum;
 
     const struct keyword *kw = bsearch(token.s, keywords,
 	nitems(keywords), sizeof(keywords[0]), cmp_keyword_by_name);
     if (kw == NULL) {
 	if (is_typename()) {
 	    state->keyword = kw_type;
-	    state->last_u_d = true;
+	    state->next_unary = true;
 	    goto found_typename;
 	}
 
     } else {			/* we have a keyword */
 	state->keyword = kw->kind;
-	state->last_u_d = true;
+	state->next_unary = true;
 
 	switch (kw->kind) {
 	case kw_switch:
@@ -481,13 +481,13 @@ not_proc:;
 
     } else if (probably_typename(state)) {
 	state->keyword = kw_type;
-	state->last_u_d = true;
+	state->next_unary = true;
 	return decl;
     }
 
     if (state->last_token == decl)	/* if this is a declared variable,
 					 * then following sign is unary */
-	state->last_u_d = true;	/* will make "int a -1" work */
+	state->next_unary = true;	/* will make "int a -1" work */
 
     return ident;		/* the ident is not in the list */
 }
@@ -521,7 +521,7 @@ lexi(struct parser_state *state)
 
     switch (*token.s) {
     case '\n':
-	unary_delim = state->last_u_d;
+	unary_delim = state->next_unary;
 	state->last_nl = true;	/* remember that we just had a newline */
 	/* if data has been exhausted, the newline is a dummy. */
 	ttype = had_eof ? end_of_file : newline;
@@ -545,7 +545,7 @@ lexi(struct parser_state *state)
 	break;
 
     case '#':
-	unary_delim = state->last_u_d;
+	unary_delim = state->next_unary;
 	ttype = preprocessing;
 	break;
 
@@ -575,7 +575,7 @@ lexi(struct parser_state *state)
 	break;
 
     case '\f':
-	unary_delim = state->last_u_d;
+	unary_delim = state->next_unary;
 	state->last_nl = true;	/* remember this, so we can set 'state->col_1'
 				 * right */
 	ttype = form_feed;
@@ -593,14 +593,14 @@ lexi(struct parser_state *state)
 
     case '-':
     case '+':
-	ttype = state->last_u_d ? unary_op : binary_op;
+	ttype = state->next_unary ? unary_op : binary_op;
 	unary_delim = true;
 
 	if (*inp.s == token.s[0]) {	/* ++, -- */
 	    *token.e++ = *inp.s++;
 	    if (state->last_token == ident ||
 		    state->last_token == rparen_or_rbracket) {
-		ttype = state->last_u_d ? unary_op : postfix_op;
+		ttype = state->next_unary ? unary_op : postfix_op;
 		unary_delim = false;
 	    }
 
@@ -633,13 +633,13 @@ lexi(struct parser_state *state)
 	    *token.e++ = inbuf_next();
 	if (*inp.s == '=')
 	    *token.e++ = *inp.s++;
-	ttype = state->last_u_d ? unary_op : binary_op;
+	ttype = state->next_unary ? unary_op : binary_op;
 	unary_delim = true;
 	break;
 
     case '*':
 	unary_delim = true;
-	if (!state->last_u_d) {
+	if (!state->next_unary) {
 	    if (*inp.s == '=')
 		*token.e++ = *inp.s++;
 	    ttype = binary_op;
@@ -673,7 +673,7 @@ lexi(struct parser_state *state)
 	    *token.e++ = inbuf_next();
 
 	    ttype = comment;
-	    unary_delim = state->last_u_d;
+	    unary_delim = state->next_unary;
 	    break;
 	}
 
@@ -682,14 +682,14 @@ lexi(struct parser_state *state)
 	    token_add_char(inbuf_next());
 	}
 
-	ttype = state->last_u_d ? unary_op : binary_op;
+	ttype = state->next_unary ? unary_op : binary_op;
 	unary_delim = true;
     }
 
     if (inp.s >= inp.e)	/* check for input buffer empty */
 	inbuf_read_line();
 
-    state->last_u_d = unary_delim;
+    state->next_unary = unary_delim;
 
     check_size_token(1);
     *token.e = '\0';
