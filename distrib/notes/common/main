@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.564 2021/05/27 15:47:42 martin Exp $
+.\"	$NetBSD: main,v 1.565 2021/10/20 23:23:59 gutteridge Exp $
 .\"
 .\" Copyright (c) 1999-2012 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -257,7 +257,7 @@ and
 .Pa etc.\*[setsuffix] .
 In a typical workstation installation you will probably want
 all the installation sets.
-.ie \n[i386]:\n[amd64] \{\
+.if \n[i386]:\n[amd64] \{\
 .It
 Write the boot images
 .Pp
@@ -280,7 +280,6 @@ On Windows, you will need to use a program such as
 .Lk http://sourceforge.net/projects/win32diskimager/ "Win32 Disk Imager" ,
 or
 .Lk https://www.NetBSD.org/~martin/rawrite32 Rawrite32 .
-.if \n[amd64]:\n[i386] \{\
 If you have problems writing a raw image to a floppy,
 the
 .Ic rawrite.exe
@@ -288,7 +287,6 @@ MS-DOS program
 in the
 .Pa \*M/installation/misc/
 directory may be of help.
-.\}
 .\}
 .if \n[macppc] \{\
 .It
@@ -640,7 +638,7 @@ Changes after the release of \n[major].\n[minor].
 Changes in previous
 .Nx
 releases.
-.ie \n[FOR_RELEASE] \{\
+.if \n[FOR_RELEASE] \{\
 .It Li LAST_MINUTE
 Last minute changes and notes about the release.
 .\} \" \n[FOR_RELEASE]
