@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.c,v 1.142 2021/10/20 05:14:21 rillig Exp $	*/
+/*	$NetBSD: indent.c,v 1.143 2021/10/20 05:26:46 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)indent.c	5.17 (Berkeley) 6/7/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: indent.c,v 1.142 2021/10/20 05:14:21 rillig Exp $");
+__RCSID("$NetBSD: indent.c,v 1.143 2021/10/20 05:26:46 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/indent.c 340138 2018-11-04 19:24:49Z oshogbo $");
 #endif
@@ -428,7 +428,7 @@ main_init_globals(void)
 {
     found_err = false;
 
-    ps.p_stack[0] = stmt;
+    ps.s_ttype[0] = stmt;
     ps.last_nl = true;
     ps.last_token = semicolon;
     buf_init(&com);
@@ -982,7 +982,7 @@ process_lbrace(bool *force_nl, bool *sp_sw, token_type hd_type,
 static void
 process_rbrace(bool *sp_sw, int *decl_ind, const int *di_stack)
 {
-    if (ps.p_stack[ps.tos] == decl && !ps.block_init)	/* semicolons can be
+    if (ps.s_ttype[ps.tos] == decl && !ps.block_init)	/* semicolons can be
 							 * omitted in
 							 * declarations */
 	parse(semicolon);
@@ -1016,8 +1016,8 @@ process_rbrace(bool *sp_sw, int *decl_ind, const int *di_stack)
     blank_line_before = false;
     parse(rbrace);		/* let parser know about this */
     ps.search_brace = opt.cuddle_else
-	&& ps.p_stack[ps.tos] == if_expr_stmt
-	&& ps.il[ps.tos] >= ps.ind_level;
+	&& ps.s_ttype[ps.tos] == if_expr_stmt
+	&& ps.s_ind_level[ps.tos] >= ps.ind_level;
 
     if (ps.tos <= 1 && opt.blanklines_after_procs && ps.decl_nest <= 0)
 	blank_line_after = true;
