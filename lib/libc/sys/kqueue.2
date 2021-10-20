@@ -1,4 +1,4 @@
-.\"	$NetBSD: kqueue.2,v 1.55 2021/10/20 03:08:19 thorpej Exp $
+.\"	$NetBSD: kqueue.2,v 1.56 2021/10/20 03:26:20 thorpej Exp $
 .\"
 .\" Copyright (c) 2000 Jonathan Lemon
 .\" All rights reserved.
@@ -858,5 +858,16 @@ and
 .Dv NOTE_ABSTIME
 filter flags for
 .Dv EVFILT_TIMER
+was added in
+.Nx 10.0 .
+.Pp
+Support for
+.Dv NOTE_OPEN ,
+.Dv NOTE_CLOSE ,
+.Dv NOTE_CLOSE_WRITE ,
+and
+NOTE_READ
+filter flags for
+.Dv EVFILT_VNODE
 was added in
 .Nx 10.0 .
