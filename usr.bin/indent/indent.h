@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.h,v 1.41 2021/10/20 05:26:46 rillig Exp $	*/
+/*	$NetBSD: indent.h,v 1.42 2021/10/20 05:37:21 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-FreeBSD
@@ -292,7 +292,7 @@ extern struct parser_state {
     bool ind_stmt;		/* whether the next line should have an extra
 				 * indentation level because we are in the
 				 * middle of a stmt */
-    bool last_u_d;		/* whether the following operator should be
+    bool next_unary;		/* whether the following operator should be
 				 * unary */
     int p_l_follow;		/* used to remember how to indent the
 				 * following statement */
