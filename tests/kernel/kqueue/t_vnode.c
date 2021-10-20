@@ -671,6 +671,53 @@ ATF_TC_CLEANUP(interest, tc)
 	(void)unlink(testfile);
 }
 
+ATF_TC_WITH_CLEANUP(rename_over_self_hardlink);
+ATF_TC_HEAD(rename_over_self_hardlink, tc)
+{
+	atf_tc_set_md_var(tc, "descr", "This test case tests "
+		"renaming a file over a hard-link to itself");
+}
+ATF_TC_BODY(rename_over_self_hardlink, tc)
+{
+	struct kevent event[2], *dir_ev, *file_ev;
+	int dir_fd, file_fd;
+
+	ATF_REQUIRE((kq = kqueue()) != -1);
+
+	ATF_REQUIRE((mkdir(dir_target, 0700)) == 0);
+	ATF_REQUIRE((dir_fd = open(dir_target, O_RDONLY)) != -1);
+
+	ATF_REQUIRE((file_fd = open(file_inside1, O_RDONLY | O_CREAT,
+	    0600)) != -1);
+	ATF_REQUIRE(link(file_inside1, file_inside2) == 0);
+
+	EV_SET(&event[0], dir_fd, EVFILT_VNODE, EV_ADD,
+	    NOTE_WRITE | NOTE_EXTEND | NOTE_LINK, 0, NULL);
+	EV_SET(&event[1], file_fd, EVFILT_VNODE, EV_ADD,
+	    NOTE_LINK | NOTE_DELETE, 0, NULL);
+	ATF_REQUIRE(kevent(kq, event, 2, NULL, 0, NULL) == 0);
+
+	ATF_REQUIRE(rename(file_inside1, file_inside2) == 0);
+
+	ATF_REQUIRE(kevent(kq, NULL, 0, event, 2, &ts) == 2);
+	ATF_REQUIRE(event[0].ident == (uintptr_t)dir_fd ||
+		    event[0].ident == (uintptr_t)file_fd);
+	ATF_REQUIRE(event[1].ident == (uintptr_t)dir_fd ||
+		    event[1].ident == (uintptr_t)file_fd);
+	if (event[0].ident == (uintptr_t)dir_fd) {
+		dir_ev = &event[0];
+		file_ev = &event[1];
+	} else {
+		dir_ev = &event[1];
+		file_ev = &event[0];
+	}
+	ATF_REQUIRE(dir_ev->fflags == NOTE_WRITE);
+	ATF_REQUIRE(file_ev->fflags == NOTE_LINK);
+}
+ATF_TC_CLEANUP(rename_over_self_hardlink, tc)
+{
+	cleanup();
+}
 
 ATF_TP_ADD_TCS(tp)
 {
@@ -698,6 +745,8 @@ ATF_TP_ADD_TCS(tp)
 	ATF_TP_ADD_TC(tp, dir_note_write_mv_file_in);
 	ATF_TP_ADD_TC(tp, dir_note_write_mv_file_out);
 	ATF_TP_ADD_TC(tp, dir_note_write_mv_file_within);
+
+	ATF_TP_ADD_TC(tp, rename_over_self_hardlink);
 
 	ATF_TP_ADD_TC(tp, open_write_read_close);
 	ATF_TP_ADD_TC(tp, interest);
