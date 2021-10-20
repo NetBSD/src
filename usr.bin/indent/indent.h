@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.h,v 1.40 2021/10/20 05:14:21 rillig Exp $	*/
+/*	$NetBSD: indent.h,v 1.41 2021/10/20 05:26:46 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-FreeBSD
@@ -251,9 +251,12 @@ extern bool inhibit_formatting;	/* true if INDENT OFF is in effect */
 
 extern struct parser_state {
     token_type last_token;
-    token_type p_stack[STACKSIZE];
-    int il[STACKSIZE];		/* this stack stores indentation levels */
-    float cstk[STACKSIZE];	/* used to store case stmt indentation levels */
+
+    int tos;			/* pointer to top of stack */
+    token_type s_ttype[STACKSIZE];
+    int s_ind_level[STACKSIZE];
+    float s_case_ind_level[STACKSIZE];
+
     int comment_delta;		/* used to set up indentation for all lines of
 				 * a boxed comment after the first one */
     int n_comment_delta;	/* remembers how many columns there were
@@ -311,7 +314,6 @@ extern struct parser_state {
     enum keyword_kind keyword;
     bool dumped_decl_indent;
     bool in_parameter_declaration;
-    int tos;			/* pointer to top of stack */
     char procname[100];		/* The name of the current procedure */
     int just_saw_decl;
 
