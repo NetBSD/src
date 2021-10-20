@@ -1,4 +1,4 @@
-/*	$NetBSD: io.c,v 1.98 2021/10/20 05:00:37 rillig Exp $	*/
+/*	$NetBSD: io.c,v 1.99 2021/10/20 05:14:21 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)io.c	8.1 (Berkeley) 6/6/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: io.c,v 1.98 2021/10/20 05:00:37 rillig Exp $");
+__RCSID("$NetBSD: io.c,v 1.99 2021/10/20 05:14:21 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/io.c 334927 2018-06-10 16:44:18Z pstef $");
 #endif
@@ -225,7 +225,7 @@ dump_line(void)
 
     } else if (!inhibit_formatting) {
 	suppress_blanklines = false;
-	if (prefix_blankline_requested && !first_line) {
+	if (blank_line_before && !first_line) {
 	    if (opt.swallow_optional_blanklines) {
 		if (blank_lines_to_output == 1)
 		    blank_lines_to_output = 0;
@@ -261,11 +261,11 @@ dump_line(void)
 	ps.stats.lines++;
 
 	if (ps.just_saw_decl == 1 && opt.blanklines_after_decl) {
-	    prefix_blankline_requested = true;
+	    blank_line_before = true;
 	    ps.just_saw_decl = 0;
 	} else
-	    prefix_blankline_requested = postfix_blankline_requested;
-	postfix_blankline_requested = false;
+	    blank_line_before = blank_line_after;
+	blank_line_after = false;
     }
 
     ps.decl_on_line = ps.in_decl;	/* for proper comment indentation */
@@ -388,8 +388,8 @@ parse_indent_comment(void)
     inhibit_formatting = !on;
     if (on) {
 	blank_lines_to_output = 0;
-	postfix_blankline_requested = false;
-	prefix_blankline_requested = false;
+	blank_line_after = false;
+	blank_line_before = false;
 	suppress_blanklines = true;
     }
 }
