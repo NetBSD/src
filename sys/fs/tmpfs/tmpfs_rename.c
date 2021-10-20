@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_rename.c,v 1.11 2021/10/20 03:08:17 thorpej Exp $	*/
+/*	$NetBSD: tmpfs_rename.c,v 1.12 2021/10/20 14:28:21 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_rename.c,v 1.11 2021/10/20 03:08:17 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_rename.c,v 1.12 2021/10/20 14:28:21 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -402,11 +402,12 @@ tmpfs_gro_remove(struct mount *mp, kauth_cred_t cred,
 	KASSERT(VOP_ISLOCKED(dvp) == LK_EXCLUSIVE);
 	KASSERT(VOP_ISLOCKED(vp) == LK_EXCLUSIVE);
 
+	KASSERT((*dep)->td_node == VP_TO_TMPFS_NODE(vp));
+
 	tmpfs_dir_detach(dnode, *dep);
 	tmpfs_free_dirent(VFS_TO_TMPFS(mp), *dep);
 	tmpfs_update(dvp, TMPFS_UPDATE_MTIME | TMPFS_UPDATE_CTIME);
 
-	KASSERT((*dep)->td_node == VP_TO_TMPFS_NODE(vp));
 	*tvp_nlinkp = VP_TO_TMPFS_NODE(vp)->tn_links;
 
 	return 0;
