@@ -1,4 +1,4 @@
-/*	$NetBSD: plcom.c,v 1.63 2021/10/17 22:34:17 jmcneill Exp $	*/
+/*	$NetBSD: plcom.c,v 1.64 2021/10/20 01:09:49 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2001 ARM Ltd
@@ -94,7 +94,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: plcom.c,v 1.63 2021/10/17 22:34:17 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: plcom.c,v 1.64 2021/10/20 01:09:49 jmcneill Exp $");
 
 #include "opt_plcom.h"
 #include "opt_ddb.h"
@@ -686,7 +686,7 @@ plcom_shutdown(struct plcom_softc *sc)
 	 */
 	if (ISSET(tp->t_cflag, HUPCL)) {
 		plcom_modem(sc, 0);
-		microtime(&sc->sc_hup_pending);
+		microuptime(&sc->sc_hup_pending);
 		sc->sc_hup_pending.tv_sec++;
 	}
 
@@ -790,13 +790,14 @@ plcomopen(dev_t dev, int flag, int mode, struct lwp *l)
 		}
 
 		if (timerisset(&sc->sc_hup_pending)) {
-			microtime(&now);
+			microuptime(&now);
 			while (timercmp(&now, &sc->sc_hup_pending, <)) {
 				timersub(&sc->sc_hup_pending, &now, &diff);
 				const int ms = diff.tv_sec * 100 +
-				    uimax(diff.tv_usec / 1000, 1);
-				kpause(ttclos, false, mstohz(ms), &sc->sc_lock);
-				microtime(&now);
+				    diff.tv_usec / 1000;
+				kpause(ttclos, false, uimax(mstohz(ms), 1),
+				    &sc->sc_lock);
+				microuptime(&now);
 			}
 			timerclear(&sc->sc_hup_pending);
 		}
