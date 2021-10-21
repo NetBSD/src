@@ -1,4 +1,4 @@
-/*	$NetBSD: mfc.c,v 1.59 2021/08/07 16:18:41 thorpej Exp $ */
+/*	$NetBSD: mfc.c,v 1.60 2021/10/21 13:21:54 andvar Exp $ */
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -55,7 +55,7 @@
 #include "opt_kgdb.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mfc.c,v 1.59 2021/08/07 16:18:41 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mfc.c,v 1.60 2021/10/21 13:21:54 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1053,7 +1053,7 @@ mfcsxintr(int unit)
 	s1 = spltty();
 
 	/*
-	 * pass along any acumulated information
+	 * pass along any accumulated information
 	 * while input is not blocked
 	 */
 	while (sc->incnt && (tp->t_state & TS_TBLOCK) == 0) {

@@ -1,4 +1,4 @@
-.\" $NetBSD: pdc.4,v 1.3 2017/07/03 21:30:59 wiz Exp $
+.\" $NetBSD: pdc.4,v 1.4 2021/10/21 13:21:53 andvar Exp $
 .\"
 .\" $OpenBSD: pdc.4,v 1.6 2007/06/01 19:54:10 aanriot Exp $
 .\"
@@ -61,7 +61,7 @@ Perform a read operation attempt at the physical address
 without causing a HPMC, in order to verify that the address is valid
 and there is a device to respond to it.
 The implementation may choose to call the caller's HPMC handler and
-raise error conditions on the bus convertors.
+raise error conditions on the bus converters.
 .It Fn pdc "PDC_ALLOC" "PDC_ALLOC_DFLT" "ptr" "size"
 Allocate static storage for IODC use of
 .Ar size

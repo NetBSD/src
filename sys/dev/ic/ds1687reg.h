@@ -1,4 +1,4 @@
-/*	$NetBSD: ds1687reg.h,v 1.11 2018/11/08 06:43:52 msaitoh Exp $ 	*/
+/*	$NetBSD: ds1687reg.h,v 1.12 2021/10/21 13:21:54 andvar Exp $ 	*/
 
 /*
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
  * DS1287, which in turn is register-compatible with the MC146818 and/or
  * MC146818A RTCs.
  *
- * Plucked right from the Dallas Semicomductor specs available at:
+ * Plucked right from the Dallas Semiconductor specs available at:
  *	http://pdfserv.maxim-ic.com/arpdf/DS1685-DS1687.pdf
  *
  * The DS1686 contains 14 basic clock-related registers and 50 bytes of
@@ -104,7 +104,7 @@
  * register for Y2k compatibility and memory address/data registers which
  * allow indirect access to a larger extended user RAM address space.  It
  * is worth noting that the extended user RAM is distinct from the "basic"
- * 114 bytes of user RAM which are accesible in bank 0.
+ * 114 bytes of user RAM which are accessible in bank 0.
  */
 
 /*

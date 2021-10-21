@@ -1,4 +1,4 @@
-/*	$NetBSD: panic_string.c,v 1.2 2020/01/30 07:58:33 kamil Exp $	*/
+/*	$NetBSD: panic_string.c,v 1.3 2021/10/21 13:21:55 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: panic_string.c,v 1.2 2020/01/30 07:58:33 kamil Exp $");
+__KERNEL_RCSID(0, "$NetBSD: panic_string.c,v 1.3 2021/10/21 13:21:55 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -53,7 +53,7 @@ __KERNEL_RCSID(0, "$NetBSD: panic_string.c,v 1.2 2020/01/30 07:58:33 kamil Exp $
  *
  * Commentary:
  * This module manages the device /dev/panic,
- * tranfers a string from userspace to kernel space
+ * transfers a string from userspace to kernel space
  * and calls kernel panic with the passed string.
  *
  *  echo 'string' > /dev/panic

@@ -1,4 +1,4 @@
-/*	$NetBSD: ds1286reg.h,v 1.8 2005/12/11 12:21:26 christos Exp $ 	*/
+/*	$NetBSD: ds1286reg.h,v 1.9 2021/10/21 13:21:54 andvar Exp $ 	*/
 
 /*
  * Copyright (c) 2001 Rafal K. Boni
@@ -56,7 +56,7 @@
 /*
  * Definitions for the Dallas Semiconductor DS1286/DS1386 Real Time Clock.
  *
- * Plucked right from the Dallas Semicomductor specs available at
+ * Plucked right from the Dallas Semiconductor specs available at
  * http://pdfserv.maxim-ic.com/arpdf/DS1286.pdf and
  * http://pdfserv.maxim-ic.com/arpdf/DS1386-DS1386P.pdf
  *
