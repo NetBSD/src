@@ -36,7 +36,7 @@
 %#ifndef __lint__
 %/*static char sccsid[] = "from: @(#)mount.x 1.2 87/09/18 Copyr 1987 Sun Micro";*/
 %/*static char sccsid[] = "from: @(#)mount.x	2.1 88/08/01 4.0 RPCSRC";*/
-%__RCSID("$NetBSD: mount.x,v 1.6 2004/07/01 22:52:34 kleink Exp $");
+%__RCSID("$NetBSD: mount.x,v 1.7 2021/10/21 13:21:53 andvar Exp $");
 %/*	$FreeBSD: src/include/rpcsvc/mount.x,v 1.7 2003/05/04 02:51:42 obrien Exp $	*/
 %#endif /* not __lint__ */
 #endif
@@ -144,8 +144,8 @@ program MOUNTPROG {
 	 */
 	version MOUNTVERS {
 		/*
-		 * Does no work. It is made available in all RPC services
-		 * to allow server reponse testing and timing
+		 * Does not work. It is made available in all RPC services
+		 * to allow server response testing and timing
 		 */
 		void
 		MOUNTPROC_NULL(void) = 0;
@@ -198,8 +198,8 @@ program MOUNTPROG {
 	} = 1;
 	version MOUNTVERS3 {
 		/*
-		 * Does no work. It is made available in all RPC services
-		 * to allow server reponse testing and timing
+		 * Does not work. It is made available in all RPC services
+		 * to allow server response testing and timing
 		 */
 		void
 		MOUNTPROC_NULL(void) = 0;

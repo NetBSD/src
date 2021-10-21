@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_futex.c,v 1.13 2021/09/28 15:05:42 thorpej Exp $	*/
+/*	$NetBSD: sys_futex.c,v 1.14 2021/10/21 13:21:54 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2018, 2019, 2020 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_futex.c,v 1.13 2021/09/28 15:05:42 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_futex.c,v 1.14 2021/10/21 13:21:54 andvar Exp $");
 
 /*
  * Futexes
@@ -745,7 +745,7 @@ futex_lookup_create(int *uaddr, bool shared, struct futex **fp)
 	}
 
 	/*
-	 * Create a futex recoard.  This tranfers ownership of the key
+	 * Create a futex record.  This transfers ownership of the key
 	 * in all cases.
 	 */
 	f = futex_create(&fk, shared);

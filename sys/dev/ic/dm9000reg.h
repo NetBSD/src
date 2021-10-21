@@ -1,4 +1,4 @@
-/*	$NetBSD: dm9000reg.h,v 1.6 2020/10/08 21:00:25 nisimura Exp $	*/
+/*	$NetBSD: dm9000reg.h,v 1.7 2021/10/21 13:21:54 andvar Exp $	*/
 
 /*
  * Copyright (c) 2009 Paul Fleischer
@@ -30,7 +30,7 @@
 #define _DEV_IC_DM9000REG_H_
 
 /*
- * Registers accesible on the DM9000, extracted from pp. 11-12 from
+ * Registers accessible on the DM9000, extracted from pp. 11-12 from
  * the data sheet
  */
 

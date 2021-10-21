@@ -1,4 +1,4 @@
-/*	$NetBSD: sctp_output.c,v 1.25 2021/09/07 13:24:46 andvar Exp $ */
+/*	$NetBSD: sctp_output.c,v 1.26 2021/10/21 13:21:55 andvar Exp $ */
 /*	$KAME: sctp_output.c,v 1.48 2005/06/16 18:29:24 jinmei Exp $	*/
 
 /*
@@ -30,7 +30,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sctp_output.c,v 1.25 2021/09/07 13:24:46 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sctp_output.c,v 1.26 2021/10/21 13:21:55 andvar Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ipsec.h"
@@ -4360,7 +4360,7 @@ sctp_msg_append(struct sctp_tcb *stcb,
 		chk->send_size = dataout;
 		chk->book_size = chk->send_size;
 		chk->mbcnt = mbcnt;
-		/* ok, we are commited */
+		/* ok, we are committed */
 		if ((srcv->sinfo_flags & SCTP_UNORDERED) == 0) {
 			/* bump the ssn if we are unordered. */
 			strq->next_sequence_sent++;
@@ -4475,7 +4475,7 @@ sctp_msg_append(struct sctp_tcb *stcb,
 		 * chain of mbufs by going through our temp array
 		 * and breaking the pointers.
 		 */
-		/* ok, we are commited */
+		/* ok, we are committed */
 		if ((srcv->sinfo_flags & SCTP_UNORDERED) == 0) {
 			/* bump the ssn if we are unordered. */
 			strq->next_sequence_sent++;
@@ -9577,7 +9577,7 @@ sctp_copy_it_in(struct sctp_inpcb *inp,
 		/* fix up the send_size if it is not present */
 		chk->send_size = tot_out;
 		chk->book_size = chk->send_size;
-		/* ok, we are commited */
+		/* ok, we are committed */
 		if ((srcv->sinfo_flags & SCTP_UNORDERED) == 0) {
 			/* bump the ssn if we are unordered. */
 			strq->next_sequence_sent++;

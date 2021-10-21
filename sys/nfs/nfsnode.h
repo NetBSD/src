@@ -1,4 +1,4 @@
-/*	 $NetBSD: nfsnode.h,v 1.75 2021/07/18 23:57:15 dholland Exp $	*/
+/*	 $NetBSD: nfsnode.h,v 1.76 2021/10/21 13:21:55 andvar Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -98,7 +98,7 @@ struct nfsnode_spec {
 };
 
 struct nfsnode_reg {
-	off_t nreg_pushedlo;		/* 1st blk in commited range */
+	off_t nreg_pushedlo;		/* 1st blk in committed range */
 	off_t nreg_pushedhi;		/* Last block in range */
 	off_t nreg_pushlo;		/* 1st block in commit range */
 	off_t nreg_pushhi;		/* Last block in range */
