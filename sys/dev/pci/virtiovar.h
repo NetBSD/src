@@ -1,4 +1,4 @@
-/*	$NetBSD: virtiovar.h,v 1.20 2021/02/05 19:18:23 reinoud Exp $	*/
+/*	$NetBSD: virtiovar.h,v 1.21 2021/10/21 05:32:27 yamaguchi Exp $	*/
 
 /*
  * Copyright (c) 2010 Minoura Makoto.
@@ -139,8 +139,9 @@ struct virtio_ops {
 	void		(*setup_queue)(struct virtio_softc *, uint16_t, uint64_t);
 	void		(*set_status)(struct virtio_softc *, int);
 	void		(*neg_features)(struct virtio_softc *, uint64_t);
-	int		(*setup_interrupts)(struct virtio_softc *);
+	int		(*alloc_interrupts)(struct virtio_softc *);
 	void		(*free_interrupts)(struct virtio_softc *);
+	int		(*setup_interrupts)(struct virtio_softc *);
 };
 
 struct virtio_softc {
