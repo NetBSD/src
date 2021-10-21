@@ -1,4 +1,4 @@
-/*	$NetBSD: gic.c,v 1.50 2021/09/26 13:38:50 jmcneill Exp $	*/
+/*	$NetBSD: gic.c,v 1.51 2021/10/21 04:47:57 skrll Exp $	*/
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -35,7 +35,7 @@
 #define _INTR_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gic.c,v 1.50 2021/09/26 13:38:50 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gic.c,v 1.51 2021/10/21 04:47:57 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -331,9 +331,17 @@ armgic_irq_handler(void *tf)
 
 	ci->ci_data.cpu_nintr++;
 
-	if (ci->ci_hwpl != old_ipl) {
+	/*
+	 * Raise ci_hwpl (and PMR) to ci_cpl and IAR will tell us if the
+	 * interrupt that got us here can have its handler run or not.
+	 */
+	if (ci->ci_hwpl <= old_ipl) {
 		ci->ci_hwpl = old_ipl;
 		gicc_write(sc, GICC_PMR, armgic_ipl_to_priority(old_ipl));
+		/*
+		 * we'll get no interrupts when PMR is IPL_HIGH, so bail
+		 * early.
+		 */
 		if (old_ipl == IPL_HIGH) {
 			return;
 		}
@@ -373,11 +381,13 @@ armgic_irq_handler(void *tf)
 		 *
 		 * However, if are just raising ipl, we can just update ci_cpl.
 		 */
+
+		/* Surely we can KASSERT(ipl < ci->ci_cpl); */
 		const int ipl = is->is_ipl;
 		if (__predict_false(ipl < ci->ci_cpl)) {
 			pic_do_pending_ints(I32_bit, ipl, tf);
 			KASSERT(ci->ci_cpl == ipl);
-		} else {
+		} else if (ci->ci_cpl != ipl) {
 			KASSERTMSG(ipl > ci->ci_cpl, "ipl %d cpl %d hw-ipl %#x",
 			    ipl, ci->ci_cpl,
 			    gicc_read(sc, GICC_PMR));
