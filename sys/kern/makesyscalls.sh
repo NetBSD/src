@@ -1,4 +1,4 @@
-#	$NetBSD: makesyscalls.sh,v 1.185 2021/04/14 02:45:40 christos Exp $
+#	$NetBSD: makesyscalls.sh,v 1.186 2021/10/21 11:01:03 andvar Exp $
 #
 # Copyright (c) 1994, 1996, 2000 Christopher G. Demetriou
 # All rights reserved.
@@ -58,7 +58,7 @@ esac
 #	nsysent		the size of the sysent table
 #	sys_nosys	[optional] name of function called for unsupported
 #			syscalls, if not sys_nosys()
-#       maxsysargs	[optiona] the maximum number or arguments
+#       maxsysargs	[optional] the maximum number or arguments
 #	rumpcalls	???
 #	rumpcallshdr	???
 #	rumpsysmap	???
