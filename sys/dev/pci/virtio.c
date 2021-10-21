@@ -1,4 +1,4 @@
-/*	$NetBSD: virtio.c,v 1.49 2021/02/07 09:29:53 skrll Exp $	*/
+/*	$NetBSD: virtio.c,v 1.50 2021/10/21 05:32:27 yamaguchi Exp $	*/
 
 /*
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: virtio.c,v 1.49 2021/02/07 09:29:53 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: virtio.c,v 1.50 2021/10/21 05:32:27 yamaguchi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1199,10 +1199,15 @@ virtio_child_attach_finish(struct virtio_softc *sc)
 	int r;
 
 	sc->sc_finished_called = true;
+	r = sc->sc_ops->alloc_interrupts(sc);
+	if (r != 0) {
+		aprint_error_dev(sc->sc_dev, "failed to allocate interrupts\n");
+		goto fail;
+	}
+
 	r = sc->sc_ops->setup_interrupts(sc);
 	if (r != 0) {
 		aprint_error_dev(sc->sc_dev, "failed to setup interrupts\n");
-		goto fail;
 	}
 
 	KASSERT(sc->sc_soft_ih == NULL);
