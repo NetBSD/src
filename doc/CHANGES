@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2841 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2842 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -437,6 +437,8 @@ Changes from NetBSD 9.0 to NetBSD 10.0:
 	tzdata partly updated to 2021b [kre 20211001] 
 	sht4xtemp(4): Driver for the Sensirion SHT40/SHT41/SHT45 temperature
 		and humidity sensor [brad 20211003]
+	network: Make pktq_rps_hash() pluggable for each interface type.
+		[knakahara 20211011]
 	wm(4): Add Tiger Lake and newer devices (I219V 15-V9 and LM 16-19).
 		[msaitoh 20211013]
 	sgp40mox(4): Driver for the Sensirion SGP40 MOx gas sensor for air quality
