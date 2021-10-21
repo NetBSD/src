@@ -1,4 +1,4 @@
-.\" $NetBSD: pms.4,v 1.38 2020/10/01 17:13:19 nia Exp $
+.\" $NetBSD: pms.4,v 1.39 2021/10/21 04:51:10 blymn Exp $
 .\"
 .\" Copyright (c) 1993 Christopher G. Demetriou
 .\" All rights reserved.
@@ -170,6 +170,17 @@ event (default 32 for x and y, 2 for z).
 .It Dv hw.synaptics.movement_threshold
 Movements of less than this value (in Synaptics coordinates) are
 ignored (default 4).
+.It Dv hw.synaptics.movement_enable
+This value determines whether or not the touchpad will respond to
+touch.
+If set to 1 then the touchpad will respond to touch, if set to 0
+will not respond effectively disabling the touchpad.
+.It Dv hw.synaptics.button_region_movement_enable
+This value determines if finger movement events will be reported for
+fingers that are located in the button emulation region defined by
+.Va hw.synaptics.button_boundary
+If set to 0 (the default) finger movements will not be reported.
+If set to 1 finger movements will be reported.
 .It Dv hw.synaptics.button_boundary
 Sets the top edge of the button emulation region on a clickpad.
 Since a clickpad only reports left clicks this region is used to emulate
