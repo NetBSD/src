@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sip.c,v 1.182 2020/03/16 01:54:23 thorpej Exp $	*/
+/*	$NetBSD: if_sip.c,v 1.183 2021/10/21 13:21:54 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sip.c,v 1.182 2020/03/16 01:54:23 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sip.c,v 1.183 2021/10/21 13:21:54 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -888,7 +888,7 @@ sipcom_dp83820_attach(struct sip_softc *sc, struct pci_attach_args *pa)
 		} else {
 			using64 = "disabled in EEPROM";
 		}
-		printf("%s: 64-bit slot detected, 64-bit tranfers %s\n",
+		printf("%s: 64-bit slot detected, 64-bit transfers %s\n",
 		    device_xname(sc->sc_dev), using64);
 	}
 	

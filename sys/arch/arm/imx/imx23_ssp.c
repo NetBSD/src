@@ -1,4 +1,4 @@
-/* $Id: imx23_ssp.c,v 1.7 2021/09/16 21:29:41 andvar Exp $ */
+/* $Id: imx23_ssp.c,v 1.8 2021/10/21 13:21:54 andvar Exp $ */
 
 /*
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -550,7 +550,7 @@ issp_exec_command(sdmmc_chipset_handle_t sch, struct sdmmc_command *cmd)
 		cmd->c_error = sc->sc_irq_error >> 8;
 	}
 
-	/* Check reponse from the card if such was requested. */
+	/* Check response from the card if such was requested. */
 	if (ISSET(cmd->c_flags, SCF_RSP_PRESENT)) {
 		cmd->c_resp[0] = SSP_RD(sc, HW_SSP_SDRESP0);
 		if (ISSET(cmd->c_flags, SCF_RSP_136)) {

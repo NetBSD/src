@@ -1,4 +1,4 @@
-/* $NetBSD: isp.c,v 1.130 2021/09/19 10:34:09 andvar Exp $ */
+/* $NetBSD: isp.c,v 1.131 2021/10/21 13:21:54 andvar Exp $ */
 /*
  * Machine and OS Independent (well, as best as possible)
  * code for the Qlogic ISP SCSI adapters.
@@ -43,7 +43,7 @@
  */
 #ifdef	__NetBSD__
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isp.c,v 1.130 2021/09/19 10:34:09 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isp.c,v 1.131 2021/10/21 13:21:54 andvar Exp $");
 #include <dev/ic/isp_netbsd.h>
 #endif
 #ifdef	__FreeBSD__
@@ -6232,7 +6232,7 @@ isp_parse_status(ispsoftc_t *isp, ispstatusreq_t *sp, XS_T *xs, long *rp)
 		 * isn't an error, per se.
 		 *
 		 * Unfortunately, some QLogic f/w writers have, in
-		 * some cases, ommitted to *set* status to QFULL.
+		 * some cases, omitted to *set* status to QFULL.
 		 *
 
 		if (*XS_STSP(xs) != SCSI_GOOD && XS_NOERR(xs)) {

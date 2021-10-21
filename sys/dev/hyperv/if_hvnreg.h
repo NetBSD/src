@@ -1,4 +1,4 @@
-/*	$NetBSD: if_hvnreg.h,v 1.1 2019/02/15 08:54:01 nonaka Exp $	*/
+/*	$NetBSD: if_hvnreg.h,v 1.2 2021/10/21 13:21:54 andvar Exp $	*/
 /*	$OpenBSD: if_hvnreg.h,v 1.3 2016/09/14 17:48:28 mikeb Exp $	*/
 
 /*-
@@ -96,7 +96,7 @@ struct hvn_nvs_init_resp {
 	uint32_t	nvs_status;	/* HVN_NVS_STATUS_ */
 } __packed;
 
-/* No reponse */
+/* No response */
 struct hvn_nvs_ndis_conf {
 	uint32_t	nvs_type;	/* HVN_NVS_TYPE_NDIS_CONF */
 	uint32_t	nvs_mtu;

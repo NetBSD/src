@@ -1,4 +1,4 @@
-/*	$NetBSD: ser.c,v 1.83 2014/07/25 08:10:31 dholland Exp $ */
+/*	$NetBSD: ser.c,v 1.84 2021/10/21 13:21:54 andvar Exp $ */
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -40,7 +40,7 @@
 #include "opt_kgdb.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ser.c,v 1.83 2014/07/25 08:10:31 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ser.c,v 1.84 2021/10/21 13:21:54 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -542,7 +542,7 @@ serintr(void)
 	s1 = spltty();
 
 	/*
-	 * pass along any acumulated information
+	 * pass along any accumulated information
 	 */
 	while (sbcnt > 0 && (tp->t_state & TS_TBLOCK) == 0) {
 		/*

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.26 2021/04/26 07:17:30 mrg Exp $
+#	$NetBSD: Makefile,v 1.27 2021/10/21 13:21:53 andvar Exp $
 
 WARNS=	3
 
@@ -37,7 +37,7 @@ COPTS.inflate.c+=	${GCC_NO_IMPLICIT_FALLTHRU}
 test: minigzip
 	echo hello world | ./minigzip | ./minigzip -d
 
-# Note: CFLAGS ommitted by intention!
+# Note: CFLAGS omitted by intention!
 # This is to verify that zlib.h works standalone.
 minigzip: ${ZLIBDIR}/test/minigzip.c libz.a
 	${CC} -o minigzip ${ZLIBDIR}/test/minigzip.c libz.a

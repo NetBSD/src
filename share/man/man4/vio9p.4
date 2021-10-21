@@ -1,4 +1,4 @@
-.\" $NetBSD: vio9p.4,v 1.3 2019/10/28 13:43:10 wiz Exp $
+.\" $NetBSD: vio9p.4,v 1.4 2021/10/21 13:21:53 andvar Exp $
 .\"
 .\" Copyright (c) 2019 Internet Initiative Japan, Inc.
 .\" All rights reserved.
@@ -44,7 +44,7 @@ by the host via virtio-9p.
 It exports a 9p end-point of virtio-9p via a character device file for
 .Xr mount_9p 8 .
 .Pp
-Each exported file system is assigned a character device and accesible via
+Each exported file system is assigned a character device and accessible via
 .Pa /dev/vio9p0 ,
 .Pa /dev/vio9p1
 and so on, respectively, in exporting order by the host.

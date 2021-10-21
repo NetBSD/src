@@ -1,4 +1,4 @@
-/* $NetBSD: isp_library.c,v 1.8 2019/01/10 09:12:47 martin Exp $ */
+/* $NetBSD: isp_library.c,v 1.9 2021/10/21 13:21:54 andvar Exp $ */
 /*
  * Copyright (c) 2006-2007 by Matthew Jacob
  * All rights reserved.
@@ -30,7 +30,7 @@
  */
 #ifdef	__NetBSD__
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isp_library.c,v 1.8 2019/01/10 09:12:47 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isp_library.c,v 1.9 2021/10/21 13:21:54 andvar Exp $");
 #include <dev/ic/isp_netbsd.h>
 #endif
 #ifdef	__FreeBSD__
@@ -2266,7 +2266,7 @@ isp_allocate_xs_tgt(ispsoftc_t *isp, void *xs, uint32_t *handlep)
 	hdp->handle |= (ISP_HANDLE_TARGET << ISP_HANDLE_USAGE_SHIFT);
 	/*
 	 * Target handles for SCSI cards are only 16 bits, so
-	 * sequence number protection will be ommitted.
+	 * sequence number protection will be omitted.
 	 */
 	if (IS_FC(isp)) {
 		hdp->handle |= (isp->isp_seqno++ << ISP_HANDLE_SEQ_SHIFT);

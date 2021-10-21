@@ -1,4 +1,4 @@
-$NetBSD: storage,v 1.27 2019/05/29 02:34:19 msaitoh Exp $
+$NetBSD: storage,v 1.28 2021/10/21 13:21:53 andvar Exp $
 
 NetBSD Storage Roadmap
 ======================
@@ -223,7 +223,7 @@ optimizations, such as DragonFly pbuf(9) or something similar.
 
 Semi-relatedly, it is also time for scsipi to become MPSAFE.
 
- - As of May 2016 a port of OpenBSD's driver has been commited. This
+ - As of May 2016 a port of OpenBSD's driver has been committed. This
    will be in -8.
  - The nvme driver is a backend to ld(4) and is fully is MPSAFE, but we
    still need to attend to I/O path bottlenecks like kern/53124.
@@ -328,11 +328,11 @@ people; this is a harder project than it looks.
    hashes; jdolecek also implemented several frequently used ext4 features
    so most contemporary ext filesystems should be possible to mount
    read-write
- - still need rw dir_nhash and xattr (semi-easy), and eventually journalling
+ - still need rw dir_nhash and xattr (semi-easy), and eventually journaling
    (hard)
  - There is no clear timeframe or release target.
- - jdolecek is working on improving ext3/ext4 support (particularily
-   journalling) 
+ - jdolecek is working on improving ext3/ext4 support (particularly
+   journaling) 
 
 
 14. Port hammer from Dragonfly

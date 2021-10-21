@@ -1,4 +1,4 @@
-/*	$NetBSD: mtrace.c,v 1.42 2019/02/03 03:19:31 mrg Exp $	*/
+/*	$NetBSD: mtrace.c,v 1.43 2021/10/21 13:21:55 andvar Exp $	*/
 
 /*
  * mtrace.c
@@ -52,7 +52,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mtrace.c,v 1.42 2019/02/03 03:19:31 mrg Exp $");
+__RCSID("$NetBSD: mtrace.c,v 1.43 2021/10/21 13:21:55 andvar Exp $");
 #endif
 
 #include <sys/types.h>
@@ -1186,7 +1186,7 @@ main(int argc, char **argv)
 		    break;
 		} else
 		    goto usage;
-	      case 'M':			/* Use multicast for reponse */
+	      case 'M':			/* Use multicast for response */
 		multicast = TRUE;
 		break;
 	      case 'l':			/* Loop updating stats indefinitely */
