@@ -1,4 +1,4 @@
-/* $NetBSD: com_acpi.c,v 1.42 2021/03/25 05:33:59 rin Exp $ */
+/* $NetBSD: com_acpi.c,v 1.43 2021/10/21 00:56:52 jmcneill Exp $ */
 
 /*
  * Copyright (c) 2002 Jared D. McNeill <jmcneill@invisible.ca>
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_acpi.c,v 1.42 2021/03/25 05:33:59 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_acpi.c,v 1.43 2021/10/21 00:56:52 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -118,6 +118,7 @@ com_acpi_attach(device_t parent, device_t self, void *aux)
 	bus_size_t size;
 	ACPI_STATUS rv;
 	ACPI_INTEGER clock_freq;
+	ACPI_INTEGER reg_shift;
 
 	sc->sc_dev = self;
 
@@ -158,7 +159,14 @@ com_acpi_attach(device_t parent, device_t self, void *aux)
 			aprint_error_dev(self, "can't map i/o space\n");
 			goto out;
 		}
-	com_init_regs(&sc->sc_regs, iot, ioh, base);
+
+	rv = acpi_dsd_integer(aa->aa_node->ad_handle, "reg-shift",
+	    &reg_shift);
+	if (ACPI_FAILURE(rv)) {
+		reg_shift = 0;
+	}
+
+	com_init_regs_stride(&sc->sc_regs, iot, ioh, base, reg_shift);
 
 	aprint_normal("%s", device_xname(self));
 
