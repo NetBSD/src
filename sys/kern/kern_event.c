@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_event.c,v 1.133 2021/10/21 00:54:15 thorpej Exp $	*/
+/*	$NetBSD: kern_event.c,v 1.134 2021/10/21 01:11:21 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009, 2021 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
 #endif /* _KERNEL_OPT */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_event.c,v 1.133 2021/10/21 00:54:15 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_event.c,v 1.134 2021/10/21 01:11:21 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1153,6 +1153,97 @@ knote_proc_exit(struct proc *p)
 
 #define	FILT_TIMER_NOSCHED	((uintptr_t)-1)
 
+static int
+filt_timercompute(struct kevent *kev, uintptr_t *tticksp)
+{
+	struct timespec ts;
+	uintptr_t tticks;
+
+	if (kev->fflags & ~(NOTE_TIMER_UNITMASK | NOTE_ABSTIME)) {
+		return EINVAL;
+	}
+
+	/*
+	 * Convert the event 'data' to a timespec, then convert the
+	 * timespec to callout ticks.
+	 */
+	switch (kev->fflags & NOTE_TIMER_UNITMASK) {
+	case NOTE_SECONDS:
+		ts.tv_sec = kev->data;
+		ts.tv_nsec = 0;
+		break;
+
+	case NOTE_MSECONDS:		/* == historical value 0 */
+		ts.tv_sec = kev->data / 1000;
+		ts.tv_nsec = (kev->data % 1000) * 1000000;
+		break;
+
+	case NOTE_USECONDS:
+		ts.tv_sec = kev->data / 1000000;
+		ts.tv_nsec = (kev->data % 1000000) * 1000;
+		break;
+
+	case NOTE_NSECONDS:
+		ts.tv_sec = kev->data / 1000000000;
+		ts.tv_nsec = kev->data % 1000000000;
+		break;
+
+	default:
+		return EINVAL;
+	}
+
+	if (kev->fflags & NOTE_ABSTIME) {
+		struct timespec deadline = ts;
+
+		/*
+		 * Get current time.
+		 *
+		 * XXX This is CLOCK_REALTIME.  There is no way to
+		 * XXX specify CLOCK_MONOTONIC.
+		 */
+		nanotime(&ts);
+
+		/* Absolute timers do not repeat. */
+		kev->data = FILT_TIMER_NOSCHED;
+
+		/* If we're past the deadline, then the event will fire. */
+		if (timespeccmp(&deadline, &ts, <=)) {
+			tticks = FILT_TIMER_NOSCHED;
+			goto out;
+		}
+
+		/* Calculate how much time is left. */
+		timespecsub(&deadline, &ts, &ts);
+	} else {
+		/* EV_CLEAR automatically set for relative timers. */
+		kev->flags |= EV_CLEAR;
+	}
+
+	tticks = tstohz(&ts);
+
+	/* if the supplied value is under our resolution, use 1 tick */
+	if (tticks == 0) {
+		if (kev->data == 0)
+			return EINVAL;
+		tticks = 1;
+	} else if (tticks > INT_MAX) {
+		return EINVAL;
+	}
+
+	if ((kev->flags & EV_ONESHOT) != 0) {
+		/* Timer does not repeat. */
+		kev->data = FILT_TIMER_NOSCHED;
+	} else {
+		KASSERT((uintptr_t)tticks != FILT_TIMER_NOSCHED);
+		kev->data = tticks;
+	}
+
+ out:
+	*tticksp = tticks;
+
+	return 0;
+}
+
 static void
 filt_timerexpire(void *knx)
 {
@@ -1175,82 +1266,18 @@ filt_timerattach(struct knote *kn)
 {
 	callout_t *calloutp;
 	struct kqueue *kq;
-	struct timespec ts;
-	int tticks, flags = 0;
+	uintptr_t tticks;
+	int error;
 
-	if (kn->kn_sfflags & ~(NOTE_TIMER_UNITMASK | NOTE_ABSTIME)) {
-		return EINVAL;
-	}
+	struct kevent kev = {
+		.flags = kn->kn_flags,
+		.fflags = kn->kn_sfflags,
+		.data = kn->kn_sdata,
+	};
 
-	/*
-	 * Convert the event 'data' to a timespec, then convert the
-	 * timespec to callout ticks.
-	 */
-	switch (kn->kn_sfflags & NOTE_TIMER_UNITMASK) {
-	case NOTE_SECONDS:
-		ts.tv_sec = kn->kn_sdata;
-		ts.tv_nsec = 0;
-		break;
-
-	case NOTE_MSECONDS:		/* == historical value 0 */
-		ts.tv_sec = kn->kn_sdata / 1000;
-		ts.tv_nsec = (kn->kn_sdata % 1000) * 1000000;
-		break;
-
-	case NOTE_USECONDS:
-		ts.tv_sec = kn->kn_sdata / 1000000;
-		ts.tv_nsec = (kn->kn_sdata % 1000000) * 1000;
-		break;
-
-	case NOTE_NSECONDS:
-		ts.tv_sec = kn->kn_sdata / 1000000000;
-		ts.tv_nsec = kn->kn_sdata % 1000000000;
-		break;
-
-	default:
-		return EINVAL;
-	}
-
-	if (kn->kn_sfflags & NOTE_ABSTIME) {
-		struct timespec deadline = ts;
-
-		/*
-		 * Get current time.
-		 *
-		 * XXX This is CLOCK_REALTIME.  There is no way to
-		 * XXX specify CLOCK_MONOTONIC.
-		 */
-		nanotime(&ts);
-
-		/* If we're past the deadline, then the event will fire. */
-		if (timespeccmp(&deadline, &ts, <=)) {
-			kn->kn_data = 1;
-			return 0;
-		}
-
-		/* Calculate how much time is left. */
-		timespecsub(&deadline, &ts, &ts);
-	} else {
-		/* EV_CLEAR automatically set for relative timers. */
-		flags |= EV_CLEAR;
-	}
-
-	tticks = tstohz(&ts);
-
-	/* if the supplied value is under our resolution, use 1 tick */
-	if (tticks == 0) {
-		if (kn->kn_sdata == 0)
-			return EINVAL;
-		tticks = 1;
-	}
-
-	if ((kn->kn_flags & EV_ONESHOT) != 0 ||
-	    (kn->kn_sfflags & NOTE_ABSTIME) != 0) {
-		/* Timer does not repeat. */
-		kn->kn_sdata = FILT_TIMER_NOSCHED;
-	} else {
-		KASSERT((uintptr_t)tticks != FILT_TIMER_NOSCHED);
-		kn->kn_sdata = tticks;
+	error = filt_timercompute(&kev, &tticks);
+	if (error) {
+		return error;
 	}
 
 	if (atomic_inc_uint_nv(&kq_ncallouts) >= kq_calloutmax ||
@@ -1262,11 +1289,20 @@ filt_timerattach(struct knote *kn)
 
 	kq = kn->kn_kq;
 	mutex_spin_enter(&kq->kq_lock);
-	kn->kn_flags |= flags;
-	kn->kn_hook = calloutp;
-	mutex_spin_exit(&kq->kq_lock);
 
-	callout_reset(calloutp, tticks, filt_timerexpire, kn);
+	kn->kn_sdata = kev.data;
+	kn->kn_flags = kev.flags;
+	KASSERT(kn->kn_sfflags == kev.fflags);
+	kn->kn_hook = calloutp;
+
+	if (__predict_false(tticks == FILT_TIMER_NOSCHED)) {
+		kn->kn_data = 1;
+	} else {
+		KASSERT(tticks <= INT_MAX);
+		callout_reset(calloutp, (int)tticks, filt_timerexpire, kn);
+	}
+
+	mutex_spin_exit(&kq->kq_lock);
 
 	return (0);
 }
