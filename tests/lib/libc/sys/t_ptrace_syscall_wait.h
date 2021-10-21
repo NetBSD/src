@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ptrace_syscall_wait.h,v 1.1 2020/05/04 21:21:30 kamil Exp $	*/
+/*	$NetBSD: t_ptrace_syscall_wait.h,v 1.2 2021/10/21 17:02:37 gson Exp $	*/
 
 /*-
  * Copyright (c) 2016, 2017, 2018, 2019, 2020 The NetBSD Foundation, Inc.
@@ -55,11 +55,13 @@ syscall_body(const char *op)
 
 	memset(&info, 0, sizeof(info));
 
-#if defined(TWAIT_HAVE_STATUS)
 	if (strstr(op, "signal") != NULL) {
+#if defined(TWAIT_HAVE_STATUS)
 		atf_tc_expect_fail("XXX: behavior under investigation");
-	}
+#else
+		atf_tc_skip("PR lib/55087");
 #endif
+	}
 
 	DPRINTF("Before forking process PID=%d\n", getpid());
 	SYSCALL_REQUIRE((child = fork()) != -1);
