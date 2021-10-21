@@ -1,4 +1,4 @@
-/* $NetBSD: com.c,v 1.370 2021/10/20 01:09:49 jmcneill Exp $ */
+/* $NetBSD: com.c,v 1.371 2021/10/21 10:22:54 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2004, 2008 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.370 2021/10/20 01:09:49 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.371 2021/10/21 10:22:54 jmcneill Exp $");
 
 #include "opt_com.h"
 #include "opt_ddb.h"
@@ -574,6 +574,7 @@ com_attach_subr(struct com_softc *sc)
 			SET(sc->sc_hwflags, COM_HW_FIFO);
 
 			fifo_msg = "ns16550a";
+			sc->sc_fifolen = 16;
 
 			/*
 			 * IIR changes into the EFR if LCR is set to LCR_EERS
