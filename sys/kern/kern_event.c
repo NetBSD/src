@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_event.c,v 1.134 2021/10/21 01:11:21 thorpej Exp $	*/
+/*	$NetBSD: kern_event.c,v 1.135 2021/10/21 02:34:03 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009, 2021 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
 #endif /* _KERNEL_OPT */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_event.c,v 1.134 2021/10/21 01:11:21 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_event.c,v 1.135 2021/10/21 02:34:03 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -116,7 +116,7 @@ static int	filt_timer(struct knote *, long hint);
 static int	filt_userattach(struct knote *);
 static void	filt_userdetach(struct knote *);
 static int	filt_user(struct knote *, long hint);
-static void	filt_usertouch(struct knote *, struct kevent *, long type);
+static int	filt_usertouch(struct knote *, struct kevent *, long type);
 
 static const struct fileops kqueueops = {
 	.fo_name = "kqueue",
@@ -476,10 +476,10 @@ filter_event(struct knote *kn, long hint)
 	return rv;
 }
 
-static void
+static int
 filter_touch(struct knote *kn, struct kevent *kev, long type)
 {
-	kn->kn_fop->f_touch(kn, kev, type);
+	return kn->kn_fop->f_touch(kn, kev, type);
 }
 
 static kauth_listener_t	kqueue_listener;
@@ -1384,7 +1384,7 @@ filt_user(struct knote *kn, long hint)
 	return hookid;
 }
 
-static void
+static int
 filt_usertouch(struct knote *kn, struct kevent *kev, long type)
 {
 	int ffctrl;
@@ -1441,6 +1441,8 @@ filt_usertouch(struct knote *kn, struct kevent *kev, long type)
 		panic("filt_usertouch() - invalid type (%ld)", type);
 		break;
 	}
+
+	return 0;
 }
 
 /*
@@ -1874,8 +1876,13 @@ kqueue_register(struct kqueue *kq, struct kevent *kev)
 	if (!(kn->kn_fop->f_flags & FILTEROP_ISFD) &&
 	    kn->kn_fop->f_touch != NULL) {
 		mutex_spin_enter(&kq->kq_lock);
-		filter_touch(kn, kev, EVENT_REGISTER);
+		error = filter_touch(kn, kev, EVENT_REGISTER);
 		mutex_spin_exit(&kq->kq_lock);
+		if (__predict_false(error != 0)) {
+			/* Never a new knote (which would consume newkn). */
+			KASSERT(newkn != NULL);
+			goto doneunlock;
+		}
 	} else {
 		kn->kn_sfflags = kev->fflags;
 		kn->kn_sdata = kev->data;
@@ -1887,7 +1894,7 @@ kqueue_register(struct kqueue *kq, struct kevent *kev)
 	 * support events, and the attach routine is
 	 * broken and does not return an error.
 	 */
-done_ev_add:
+ done_ev_add:
 	rv = filter_event(kn, 0);
 	if (rv)
 		knote_activate(kn);
@@ -1904,7 +1911,7 @@ done_ev_add:
 	if ((kev->flags & EV_ENABLE)) {
 		knote_enqueue(kn);
 	}
-doneunlock:
+ doneunlock:
 	mutex_exit(&fdp->fd_lock);
  done:
 	rw_exit(&kqueue_filter_lock);
@@ -2197,7 +2204,7 @@ relock:
 				kn->kn_fop->f_touch != NULL);
 		/* XXXAD should be got from f_event if !oneshot. */
 		if (touch) {
-			filter_touch(kn, kevp, EVENT_PROCESS);
+			(void)filter_touch(kn, kevp, EVENT_PROCESS);
 		} else {
 			*kevp = kn->kn_kevent;
 		}

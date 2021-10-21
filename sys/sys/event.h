@@ -1,4 +1,4 @@
-/*	$NetBSD: event.h,v 1.49 2021/10/20 03:08:18 thorpej Exp $	*/
+/*	$NetBSD: event.h,v 1.50 2021/10/21 02:34:04 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999,2000,2001 Jonathan Lemon <jlemon@FreeBSD.org>
@@ -230,7 +230,7 @@ struct filterops {
 					/* called when knote is DELETEd */
 	int	(*f_event)	(struct knote *, long);
 					/* called when event is triggered */
-	void	(*f_touch)	(struct knote *, struct kevent *, long);
+	int	(*f_touch)	(struct knote *, struct kevent *, long);
 };
 
 /* filterops flags */
