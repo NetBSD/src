@@ -1,5 +1,5 @@
 #! /bin/sh
-# $NetBSD: t_misc.sh,v 1.3 2021/10/22 19:27:53 rillig Exp $
+# $NetBSD: t_misc.sh,v 1.4 2021/10/22 20:54:36 rillig Exp $
 #
 # Copyright (c) 2021 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -172,9 +172,28 @@ nested_struct_declarations_body()
 	    "$indent" -i1 -nut < 'code.c'
 }
 
+atf_test_case 'option_P_in_profile_file'
+option_P_in_profile_file_body()
+{
+	# Mentioning another profile via -P has no effect since only a single
+	# profile can be specified on the command line, and there is no
+	# 'include' option.
+
+	# It's syntactically possible to specify a profile file inside another
+	# profile file.  Such a profile file is ignored since only a single
+	# profile file is ever loaded.
+	printf '%s\n' '-P/nonexistent' > .indent.pro
+
+	echo 'syntax # error' > code.c
+
+	atf_check -o 'inline:syntax'"$nl"'#error'"$nl" \
+	    "$indent" < code.c
+}
+
 atf_init_test_cases()
 {
 	atf_add_test_case 'in_place'
 	atf_add_test_case 'verbose_profile'
 	atf_add_test_case 'nested_struct_declarations'
+	atf_add_test_case 'option_P_in_profile_file'
 }
