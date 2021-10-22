@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1152 2021/10/22 21:06:21 rillig Exp $
+# $NetBSD: mi,v 1.1153 2021/10/22 22:31:55 rillig Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -5000,29 +5000,44 @@
 ./usr/tests/usr.bin/indent/opt.0					tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/indent/opt.0.pro					tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/indent/opt.0.stdout					tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/indent/opt_P.c					tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/indent/opt_T.c					tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/indent/opt_bacc.c					tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/indent/opt_bad.c					tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/indent/opt_badp.c					tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/indent/opt_bap.c					tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/indent/opt_bbb.c					tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/indent/opt_bc.c					tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/indent/opt_bl_br.c					tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/indent/opt_bs.c					tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/indent/opt_c.c					tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/indent/opt_cd.c					tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/indent/opt_cdb.c					tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/indent/opt_ce.c					tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/indent/opt_ci.c					tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/indent/opt_cli.c					tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/indent/opt_cs.c					tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/indent/opt_d.c					tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/indent/opt_di.c					tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/indent/opt_dj.c					tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/indent/opt_eei.c					tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/indent/opt_ei.c					tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/indent/opt_fbs.c					tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/indent/opt_fc1.c					tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/indent/opt_fcb.c					tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/indent/opt_i.c					tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/indent/opt_ip.c					tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/indent/opt_l.c					tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/indent/opt_lc.c					tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/indent/opt_ldi.c					tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/indent/opt_lp.c					tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/indent/opt_lpl.c					tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/indent/opt_pcs.c					tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/indent/opt_psl.c					tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/indent/opt_sc.c					tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/indent/opt_sob.c					tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/indent/opt_ta.c					tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/indent/opt_ts.c					tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/indent/opt_ut.c					tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/indent/opt_v.c					tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/indent/parens.0					tests-obsolete		obsolete,atf
