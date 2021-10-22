@@ -1,7 +1,7 @@
 /* SPDX-License-Identifier: BSD-2-Clause */
 /*
  * Privilege Separation for dhcpcd, BSD driver
- * Copyright (c) 2006-2020 Roy Marples <roy@marples.name>
+ * Copyright (c) 2006-2021 Roy Marples <roy@marples.name>
  * All rights reserved
 
  * Redistribution and use in source and binary forms, with or without
@@ -29,10 +29,20 @@
 #include <sys/ioctl.h>
 
 /* Need these for filtering the ioctls */
+#include <arpa/inet.h>
 #include <net/if.h>
+#include <netinet/if_ether.h>
 #include <netinet/in.h>
 #include <netinet6/in6_var.h>
 #include <netinet6/nd6.h>
+#ifdef __NetBSD__
+#include <netinet/if_ether.h>
+#include <net/if_vlanvar.h> /* Needs netinet/if_ether.h */
+#elif defined(__DragonFly__)
+#include <net/vlan/if_vlan_var.h>
+#else
+#include <net/if_vlan_var.h>
+#endif
 #ifdef __DragonFly__
 #  include <netproto/802_11/ieee80211_ioctl.h>
 #else

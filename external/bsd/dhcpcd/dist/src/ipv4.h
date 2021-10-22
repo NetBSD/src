@@ -1,7 +1,7 @@
 /* SPDX-License-Identifier: BSD-2-Clause */
 /*
  * dhcpcd - DHCP client daemon
- * Copyright (c) 2006-2020 Roy Marples <roy@marples.name>
+ * Copyright (c) 2006-2021 Roy Marples <roy@marples.name>
  * All rights reserved
 
  * Redistribution and use in source and binary forms, with or without
@@ -142,6 +142,8 @@ struct ipv4_addr *ipv4_iffindaddr(struct interface *,
 struct ipv4_addr *ipv4_iffindlladdr(struct interface *);
 struct ipv4_addr *ipv4_findaddr(struct dhcpcd_ctx *, const struct in_addr *);
 struct ipv4_addr *ipv4_findmaskaddr(struct dhcpcd_ctx *,
+    const struct in_addr *);
+struct ipv4_addr *ipv4_findmaskbrd(struct dhcpcd_ctx *,
     const struct in_addr *);
 void ipv4_markaddrsstale(struct interface *);
 void ipv4_deletestaleaddrs(struct interface *);

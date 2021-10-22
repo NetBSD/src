@@ -1,7 +1,7 @@
 /* SPDX-License-Identifier: BSD-2-Clause */
 /*
  * dhcpcd - DHCP client daemon
- * Copyright (c) 2006-2020 Roy Marples <roy@marples.name>
+ * Copyright (c) 2006-2021 Roy Marples <roy@marples.name>
  * All rights reserved
 
  * Redistribution and use in source and binary forms, with or without
@@ -26,7 +26,7 @@
  * SUCH DAMAGE.
  */
 
-static const char dhcpcd_copyright[] = "Copyright (c) 2006-2020 Roy Marples";
+static const char dhcpcd_copyright[] = "Copyright (c) 2006-2021 Roy Marples";
 
 #include <sys/file.h>
 #include <sys/ioctl.h>
@@ -107,7 +107,7 @@ printf("usage: "PACKAGE"\t[-146ABbDdEGgHJKLMNPpqTV]\n"
 	"\t\t[-C, --nohook hook] [-c, --script script]\n"
 	"\t\t[-e, --env value] [-F, --fqdn FQDN] [-f, --config file]\n"
 	"\t\t[-h, --hostname hostname] [-I, --clientid clientid]\n"
-	"\t\t[-i, --vendorclassid vendorclassid] [-j, --logfile logfile]\n" 
+	"\t\t[-i, --vendorclassid vendorclassid] [-j, --logfile logfile]\n"
 	"\t\t[-l, --leasetime seconds] [-m, --metric metric]\n"
 	"\t\t[-O, --nooption option] [-o, --option option]\n"
 	"\t\t[-Q, --require option] [-r, --request address]\n"
@@ -196,7 +196,7 @@ handle_exit_timeout(void *arg)
 
 	ctx = arg;
 	logerrx("timed out");
-	if (!(ctx->options & DHCPCD_MASTER)) {
+	if (!(ctx->options & DHCPCD_MANAGER)) {
 		struct interface *ifp;
 
 		TAILQ_FOREACH(ifp, ctx->ifaces, next) {
@@ -370,12 +370,12 @@ dhcpcd_daemonise(struct dhcpcd_ctx *ctx)
 
 	/*
 	 * Stop writing to stderr.
-	 * On the happy path, only the master process writes to stderr,
+	 * On the happy path, only the manager process writes to stderr,
 	 * so this just stops wasting fprintf calls to nowhere.
 	 * All other calls - ie errors in privsep processes or script output,
 	 * will error when printing.
 	 * If we *really* want to fix that, then we need to suck
-	 * stderr/stdout in the master process and either disacrd it or pass
+	 * stderr/stdout in the manager process and either disacrd it or pass
 	 * it to the launcher process and then to stderr.
 	 */
 	logopts &= ~LOGERR_ERR;
@@ -427,7 +427,7 @@ stop_interface(struct interface *ifp, const char *reason)
 	ifp->active = IF_INACTIVE;
 	ifp->options->options &= ~DHCPCD_STOPPING;
 
-	if (!(ctx->options & (DHCPCD_MASTER | DHCPCD_TEST)))
+	if (!(ctx->options & (DHCPCD_MANAGER | DHCPCD_TEST)))
 		eloop_exit(ctx->eloop, EXIT_FAILURE);
 }
 
@@ -980,7 +980,7 @@ dhcpcd_prestartinterface(void *arg)
 	} else
 		randmac_down = false;
 
-	if ((!(ctx->options & DHCPCD_MASTER) ||
+	if ((!(ctx->options & DHCPCD_MANAGER) ||
 	    ifp->options->options & DHCPCD_IF_UP || randmac_down) &&
 	    !(ifp->flags & IFF_UP))
 	{
@@ -1311,8 +1311,8 @@ reload_config(struct dhcpcd_ctx *ctx)
 	/* We need to preserve these options. */
 	if (ctx->options & DHCPCD_STARTED)
 		ifo->options |= DHCPCD_STARTED;
-	if (ctx->options & DHCPCD_MASTER)
-		ifo->options |= DHCPCD_MASTER;
+	if (ctx->options & DHCPCD_MANAGER)
+		ifo->options |= DHCPCD_MANAGER;
 	if (ctx->options & DHCPCD_DAEMONISED)
 		ifo->options |= DHCPCD_DAEMONISED;
 	if (ctx->options & DHCPCD_PRIVSEP)
@@ -1988,7 +1988,7 @@ main(int argc, char **argv, char **envp)
 	}
 
 	if (optind != argc - 1)
-		ctx.options |= DHCPCD_MASTER;
+		ctx.options |= DHCPCD_MANAGER;
 
 	logsetopts(logopts);
 	logopen(ctx.logfile);
@@ -2068,7 +2068,7 @@ main(int argc, char **argv, char **envp)
 printpidfile:
 		/* If we have any other args, we should run as a single dhcpcd
 		 *  instance for that interface. */
-		if (optind == argc - 1 && !(ctx.options & DHCPCD_MASTER)) {
+		if (optind == argc - 1 && !(ctx.options & DHCPCD_MANAGER)) {
 			const char *per;
 			const char *ifname;
 
@@ -2094,7 +2094,7 @@ printpidfile:
 		} else {
 			snprintf(ctx.pidfile, sizeof(ctx.pidfile),
 			    PIDFILE, "", "", "");
-			ctx.options |= DHCPCD_MASTER;
+			ctx.options |= DHCPCD_MANAGER;
 		}
 		if (ctx.options & DHCPCD_PRINT_PIDFILE) {
 			printf("%s\n", ctx.pidfile);
@@ -2170,7 +2170,7 @@ printpidfile:
 	{
 		ctx.options |= DHCPCD_FORKED; /* pretend child process */
 #ifdef PRIVSEP
-		if (IN_PRIVSEP(&ctx) && ps_mastersandbox(&ctx, NULL) == -1)
+		if (IN_PRIVSEP(&ctx) && ps_managersandbox(&ctx, NULL) == -1)
 			goto exit_failure;
 #endif
 		ifp = calloc(1, sizeof(*ifp));
@@ -2214,10 +2214,10 @@ printpidfile:
 	    !(ctx.options & DHCPCD_TEST))
 	{
 		ctx.options |= DHCPCD_FORKED; /* avoid socket unlink */
-		if (!(ctx.options & DHCPCD_MASTER))
+		if (!(ctx.options & DHCPCD_MANAGER))
 			ctx.control_fd = control_open(argv[optind], family,
 			    ctx.options & DHCPCD_DUMPLEASE);
-		if (!(ctx.options & DHCPCD_MASTER) && ctx.control_fd == -1)
+		if (!(ctx.options & DHCPCD_MANAGER) && ctx.control_fd == -1)
 			ctx.control_fd = control_open(argv[optind], AF_UNSPEC,
 			    ctx.options & DHCPCD_DUMPLEASE);
 		if (ctx.control_fd == -1)
@@ -2226,7 +2226,7 @@ printpidfile:
 		if (ctx.control_fd != -1) {
 #ifdef PRIVSEP
 			if (IN_PRIVSEP(&ctx) &&
-			    ps_mastersandbox(&ctx, NULL) == -1)
+			    ps_managersandbox(&ctx, NULL) == -1)
 				goto exit_failure;
 #endif
 			if (!(ctx.options & DHCPCD_DUMPLEASE))
@@ -2284,7 +2284,7 @@ printpidfile:
 
 #if defined(USE_SIGNALS) && !defined(THERE_IS_NO_FORK)
 	if (!(ctx.options & DHCPCD_DAEMONISE))
-		goto start_master;
+		goto start_manager;
 
 	if (xsocketpair(AF_UNIX, SOCK_DGRAM | SOCK_CXNB, 0, fork_fd) == -1 ||
 	    (ctx.stderr_valid &&
@@ -2368,7 +2368,7 @@ printpidfile:
 			    dhcpcd_stderr_cb, &ctx);
 		}
 #ifdef PRIVSEP
-		if (IN_PRIVSEP(&ctx) && ps_mastersandbox(&ctx, NULL) == -1)
+		if (IN_PRIVSEP(&ctx) && ps_managersandbox(&ctx, NULL) == -1)
 			goto exit_failure;
 #endif
 		goto run_loop;
@@ -2376,8 +2376,8 @@ printpidfile:
 
 	/* We have now forked, setsid, forked once more.
 	 * From this point on, we are the controlling daemon. */
-	logdebugx("spawned master process on PID %d", getpid());
-start_master:
+	logdebugx("spawned manager process on PID %d", getpid());
+start_manager:
 	ctx.options |= DHCPCD_STARTED;
 	if ((pid = pidfile_lock(ctx.pidfile)) != 0) {
 		logerr("%s: pidfile_lock %d", __func__, pid);
@@ -2408,7 +2408,7 @@ start_master:
 
 	if (!(ctx.options & DHCPCD_TEST)) {
 		if (control_start(&ctx,
-		    ctx.options & DHCPCD_MASTER ?
+		    ctx.options & DHCPCD_MANAGER ?
 		    NULL : argv[optind], family) == -1)
 		{
 			logerr("%s: control_start", __func__);
@@ -2420,13 +2420,13 @@ start_master:
 	/* Start any dev listening plugin which may want to
 	 * change the interface name provided by the kernel */
 	if (!IN_PRIVSEP(&ctx) &&
-	    (ctx.options & (DHCPCD_MASTER | DHCPCD_DEV)) ==
-	    (DHCPCD_MASTER | DHCPCD_DEV))
+	    (ctx.options & (DHCPCD_MANAGER | DHCPCD_DEV)) ==
+	    (DHCPCD_MANAGER | DHCPCD_DEV))
 		dev_start(&ctx, dhcpcd_handleinterface);
 #endif
 
 	setproctitle("%s%s%s",
-	    ctx.options & DHCPCD_MASTER ? "[master]" : argv[optind],
+	    ctx.options & DHCPCD_MANAGER ? "[manager]" : argv[optind],
 	    ctx.options & DHCPCD_IPV4 ? " [ip4]" : "",
 	    ctx.options & DHCPCD_IPV6 ? " [ip6]" : "");
 
@@ -2450,7 +2450,7 @@ start_master:
 	eloop_event_add(ctx.eloop, ctx.link_fd, dhcpcd_handlelink, &ctx);
 
 #ifdef PRIVSEP
-	if (IN_PRIVSEP(&ctx) && ps_mastersandbox(&ctx, "stdio route") == -1)
+	if (IN_PRIVSEP(&ctx) && ps_managersandbox(&ctx, "stdio route") == -1)
 		goto exit_failure;
 #endif
 
@@ -2511,7 +2511,7 @@ start_master:
 	}
 
 	if (!(ctx.options & DHCPCD_BACKGROUND)) {
-		if (ctx.options & DHCPCD_MASTER)
+		if (ctx.options & DHCPCD_MANAGER)
 			t = ifo->timeout;
 		else {
 			t = 0;

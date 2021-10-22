@@ -1,7 +1,7 @@
 /* SPDX-License-Identifier: BSD-2-Clause */
 /*
  * logerr: errx with logging
- * Copyright (c) 2006-2020 Roy Marples <roy@marples.name>
+ * Copyright (c) 2006-2021 Roy Marples <roy@marples.name>
  * All rights reserved
 
  * Redistribution and use in source and binary forms, with or without
@@ -484,13 +484,14 @@ logclose(void)
 #endif
 
 	closelog();
+#if defined(__linux__)
+	free(_logprog);
+	_logprog = NULL;
+#endif
 #ifndef SMALL
 	if (ctx->log_file == NULL)
 		return;
 	fclose(ctx->log_file);
 	ctx->log_file = NULL;
-#endif
-#if defined(__linux__)
-	free(_logprog);
 #endif
 }

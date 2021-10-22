@@ -1,7 +1,7 @@
 /* SPDX-License-Identifier: BSD-2-Clause */
 /*
  * Privilege Separation BPF Initiator
- * Copyright (c) 2006-2020 Roy Marples <roy@marples.name>
+ * Copyright (c) 2006-2021 Roy Marples <roy@marples.name>
  * All rights reserved
 
  * Redistribution and use in source and binary forms, with or without
@@ -254,10 +254,8 @@ ps_bpf_cmd(struct dhcpcd_ctx *ctx, struct ps_msghdr *psm, struct msghdr *msg)
 		ps_entersandbox("stdio", NULL);
 		break;
 	default:
-#ifdef PRIVSEP_DEBUG
 		logdebugx("%s: spawned BPF %s on PID %d",
 		    psp->psp_ifname, psp->psp_protostr, start);
-#endif
 		break;
 	}
 	return start;
