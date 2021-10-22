@@ -1,4 +1,4 @@
-/* $NetBSD: t_timer.c,v 1.2 2021/10/22 04:49:24 thorpej Exp $ */
+/* $NetBSD: t_timer.c,v 1.3 2021/10/22 13:53:20 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2021 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_timer.c,v 1.2 2021/10/22 04:49:24 thorpej Exp $");
+__RCSID("$NetBSD: t_timer.c,v 1.3 2021/10/22 13:53:20 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/event.h>
@@ -207,6 +207,12 @@ ATF_TC_BODY(modify, tc)
 	 */
 	EV_SET(&event[0], 1, EVFILT_TIMER, EV_ADD, 0, 4000, NULL);
 	ATF_REQUIRE(kevent(kq, event, 1, NULL, 0, NULL) == 0);
+
+	/*
+	 * Before we sleep, verify that the knote for this timer is
+	 * no longer activated.
+	 */
+	ATF_REQUIRE(kevent(kq, NULL, 0, event, 1, &ts) == 0);
 
 	sleepts.tv_sec = 5;
 	sleepts.tv_nsec = 0;
