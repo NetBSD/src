@@ -1,7 +1,7 @@
 /* SPDX-License-Identifier: BSD-2-Clause */
 /*
  * Privilege Separation for dhcpcd, control proxy
- * Copyright (c) 2006-2020 Roy Marples <roy@marples.name>
+ * Copyright (c) 2006-2021 Roy Marples <roy@marples.name>
  * All rights reserved
 
  * Redistribution and use in source and binary forms, with or without
@@ -42,7 +42,7 @@ ps_ctl_startcb(void *arg)
 	struct dhcpcd_ctx *ctx = arg;
 	sa_family_t af;
 
-	if (ctx->options & DHCPCD_MASTER) {
+	if (ctx->options & DHCPCD_MANAGER) {
 		setproctitle("[control proxy]");
 		af = AF_UNSPEC;
 	} else {
@@ -63,7 +63,7 @@ ps_ctl_startcb(void *arg)
 	ctx->ps_control_pid = getpid();
 
 	return control_start(ctx,
-	    ctx->options & DHCPCD_MASTER ? NULL : *ctx->ifv, af);
+	    ctx->options & DHCPCD_MANAGER ? NULL : *ctx->ifv, af);
 }
 
 static ssize_t

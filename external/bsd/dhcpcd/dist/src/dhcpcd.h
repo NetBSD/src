@@ -1,7 +1,7 @@
 /* SPDX-License-Identifier: BSD-2-Clause */
 /*
  * dhcpcd - DHCP client daemon
- * Copyright (c) 2006-2020 Roy Marples <roy@marples.name>
+ * Copyright (c) 2006-2021 Roy Marples <roy@marples.name>
  * All rights reserved
 
  * Redistribution and use in source and binary forms, with or without
@@ -199,7 +199,7 @@ struct dhcpcd_ctx {
 #ifdef PRIVSEP
 	struct passwd *ps_user;	/* struct passwd for privsep user */
 	pid_t ps_root_pid;
-	int ps_root_fd;		/* Privileged Actioneer commands */
+	int ps_root_fd;		/* Privileged Proxy commands */
 	int ps_log_fd;		/* chroot logging */
 	int ps_data_fd;		/* Data from root spawned processes */
 	struct eloop *ps_eloop;	/* eloop for polling root data */

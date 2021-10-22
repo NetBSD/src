@@ -1,7 +1,7 @@
 /* SPDX-License-Identifier: BSD-2-Clause */
 /*
  * Privilege Separation for dhcpcd, network proxy
- * Copyright (c) 2006-2020 Roy Marples <roy@marples.name>
+ * Copyright (c) 2006-2021 Roy Marples <roy@marples.name>
  * All rights reserved
 
  * Redistribution and use in source and binary forms, with or without
@@ -94,8 +94,8 @@ ps_inet_canstart(const struct dhcpcd_ctx *ctx)
 {
 
 #ifdef INET
-	if ((ctx->options & (DHCPCD_IPV4 | DHCPCD_MASTER)) ==
-	    (DHCPCD_IPV4 | DHCPCD_MASTER))
+	if ((ctx->options & (DHCPCD_IPV4 | DHCPCD_MANAGER)) ==
+	    (DHCPCD_IPV4 | DHCPCD_MANAGER))
 		return true;
 #endif
 #if defined(INET6) && !defined(__sun)
@@ -103,8 +103,8 @@ ps_inet_canstart(const struct dhcpcd_ctx *ctx)
 		return true;
 #endif
 #ifdef DHCP6
-	if ((ctx->options & (DHCPCD_IPV6 | DHCPCD_MASTER)) ==
-	    (DHCPCD_IPV6 | DHCPCD_MASTER))
+	if ((ctx->options & (DHCPCD_IPV6 | DHCPCD_MANAGER)) ==
+	    (DHCPCD_IPV6 | DHCPCD_MANAGER))
 		return true;
 #endif
 
@@ -117,7 +117,7 @@ ps_inet_startcb(void *arg)
 	struct dhcpcd_ctx *ctx = arg;
 	int ret = 0;
 
-	if (ctx->options & DHCPCD_MASTER)
+	if (ctx->options & DHCPCD_MANAGER)
 		setproctitle("[network proxy]");
 	else
 		setproctitle("[network proxy] %s%s%s",
@@ -132,8 +132,8 @@ ps_inet_startcb(void *arg)
 	errno = 0;
 
 #ifdef INET
-	if ((ctx->options & (DHCPCD_IPV4 | DHCPCD_MASTER)) ==
-	    (DHCPCD_IPV4 | DHCPCD_MASTER))
+	if ((ctx->options & (DHCPCD_IPV4 | DHCPCD_MANAGER)) ==
+	    (DHCPCD_IPV4 | DHCPCD_MANAGER))
 	{
 		ctx->udp_rfd = dhcp_openudp(NULL);
 		if (ctx->udp_rfd == -1)
@@ -178,8 +178,8 @@ ps_inet_startcb(void *arg)
 	}
 #endif
 #ifdef DHCP6
-	if ((ctx->options & (DHCPCD_IPV6 | DHCPCD_MASTER)) ==
-	    (DHCPCD_IPV6 | DHCPCD_MASTER))
+	if ((ctx->options & (DHCPCD_IPV6 | DHCPCD_MANAGER)) ==
+	    (DHCPCD_IPV6 | DHCPCD_MANAGER))
 	{
 		ctx->dhcp6_rfd = dhcp6_openudp(0, NULL);
 		if (ctx->dhcp6_rfd == -1)

@@ -1,7 +1,7 @@
 /* SPDX-License-Identifier: BSD-2-Clause */
 /*
  * dhcpcd - route management
- * Copyright (c) 2006-2020 Roy Marples <roy@marples.name>
+ * Copyright (c) 2006-2021 Roy Marples <roy@marples.name>
  * All rights reserved
 
  * Redistribution and use in source and binary forms, with or without
@@ -96,17 +96,6 @@ rt_maskedaddr(struct sockaddr *dst,
 		memset(dstp, 0, (size_t)(addre - dstp));
 }
 
-int
-rt_cmp_dest(const struct rt *rt1, const struct rt *rt2)
-{
-	union sa_ss ma1 = { .sa.sa_family = AF_UNSPEC };
-	union sa_ss ma2 = { .sa.sa_family = AF_UNSPEC };
-
-	rt_maskedaddr(&ma1.sa, &rt1->rt_dest, &rt1->rt_netmask);
-	rt_maskedaddr(&ma2.sa, &rt2->rt_dest, &rt2->rt_netmask);
-	return sa_cmp(&ma1.sa, &ma2.sa);
-}
-
 /*
  * On some systems, host routes have no need for a netmask.
  * However DHCP specifies host routes using an all-ones netmask.
@@ -120,6 +109,22 @@ rt_cmp_netmask(const struct rt *rt1, const struct rt *rt2)
 	if (rt1->rt_flags & RTF_HOST && rt2->rt_flags & RTF_HOST)
 		return 0;
 	return sa_cmp(&rt1->rt_netmask, &rt2->rt_netmask);
+}
+
+int
+rt_cmp_dest(const struct rt *rt1, const struct rt *rt2)
+{
+	union sa_ss ma1 = { .sa.sa_family = AF_UNSPEC };
+	union sa_ss ma2 = { .sa.sa_family = AF_UNSPEC };
+	int c;
+
+	rt_maskedaddr(&ma1.sa, &rt1->rt_dest, &rt1->rt_netmask);
+	rt_maskedaddr(&ma2.sa, &rt2->rt_dest, &rt2->rt_netmask);
+	c = sa_cmp(&ma1.sa, &ma2.sa);
+	if (c != 0)
+		return c;
+
+	return rt_cmp_netmask(rt1, rt2);
 }
 
 static int
@@ -409,6 +414,7 @@ rt_proto_add_ctx(rb_tree_t *tree, struct rt *rt, struct dhcpcd_ctx *ctx)
 		return rt;
 
 	rt_free(rt);
+	errno = EEXIST;
 	return NULL;
 }
 

@@ -1,7 +1,7 @@
 /* SPDX-License-Identifier: BSD-2-Clause */
 /*
  * dhcpcd - DHCP client daemon
- * Copyright (c) 2006-2020 Roy Marples <roy@marples.name>
+ * Copyright (c) 2006-2021 Roy Marples <roy@marples.name>
  * All rights reserved
 
  * Redistribution and use in source and binary forms, with or without
@@ -213,6 +213,7 @@ struct dhcp6_state {
 	uint16_t lerror; /* Last error received from DHCPv6 reply. */
 	bool has_no_binding;
 	bool failed; /* Entered the failed state - used to rate limit log. */
+	bool new_start; /* New external start, to determine log type. */
 #ifdef AUTH
 	struct authstate auth;
 #endif

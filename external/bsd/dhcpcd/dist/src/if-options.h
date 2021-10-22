@@ -1,7 +1,7 @@
 /* SPDX-License-Identifier: BSD-2-Clause */
 /*
  * dhcpcd - DHCP client daemon
- * Copyright (c) 2006-2020 Roy Marples <roy@marples.name>
+ * Copyright (c) 2006-2021 Roy Marples <roy@marples.name>
  * All rights reserved
 
  * Redistribution and use in source and binary forms, with or without
@@ -74,7 +74,7 @@
 #define DHCPCD_DAEMONISE		(1ULL << 14)
 #define DHCPCD_DAEMONISED		(1ULL << 15)
 #define DHCPCD_TEST			(1ULL << 16)
-#define DHCPCD_MASTER			(1ULL << 17)
+#define DHCPCD_MANAGER			(1ULL << 17)
 #define DHCPCD_HOSTNAME			(1ULL << 18)
 #define DHCPCD_CLIENTID			(1ULL << 19)
 #define DHCPCD_LINK			(1ULL << 20)
