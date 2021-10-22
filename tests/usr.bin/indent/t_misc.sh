@@ -1,5 +1,5 @@
 #! /bin/sh
-# $NetBSD: t_misc.sh,v 1.2 2021/10/14 18:55:41 rillig Exp $
+# $NetBSD: t_misc.sh,v 1.3 2021/10/22 19:27:53 rillig Exp $
 #
 # Copyright (c) 2021 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -91,8 +91,90 @@ verbose_profile_body()
 	     cat after.c
 }
 
+atf_test_case 'nested_struct_declarations'
+nested_struct_declarations_body()
+{
+	# Trigger the warning about nested struct declarations.
+
+	cat <<-\EOF > code.c
+		struct s01 { struct s02 { struct s03 { struct s04 {
+		struct s05 { struct s06 { struct s07 { struct s08 {
+		struct s09 { struct s10 { struct s11 { struct s12 {
+		struct s13 { struct s14 { struct s15 { struct s16 {
+		struct s17 { struct s18 { struct s19 { struct s20 {
+		struct s21 { struct s22 { struct s23 { struct s24 {
+		};};};};
+		};};};};
+		};};};};
+		};};};};
+		};};};};
+		};};};};
+	EOF
+	cat <<-\EOF > expected.out
+		struct s01 {
+		 struct s02 {
+		  struct s03 {
+		   struct s04 {
+		    struct s05 {
+		     struct s06 {
+		      struct s07 {
+		       struct s08 {
+		        struct s09 {
+		         struct s10 {
+		          struct s11 {
+		           struct s12 {
+		            struct s13 {
+		             struct s14 {
+		              struct s15 {
+		               struct s16 {
+		                struct s17 {
+		                 struct s18 {
+		                  struct s19 {
+		                   struct s20 {
+		                    struct s21 {
+		                     struct s22 {
+		                      struct s23 {
+		                       struct s24 {
+		                       };
+		                      };
+		                     };
+		                    };
+		                   };
+		                  };
+		                 };
+		                };
+		               };
+		              };
+		             };
+		            };
+		           };
+		          };
+		         };
+		        };
+		       };
+		      };
+		     };
+		    };
+		   };
+		  };
+		 };
+		};
+	EOF
+	cat <<-\EOF > expected.err
+		/**INDENT** Warning@5: Reached internal limit of 20 struct levels */
+		/**INDENT** Warning@6: Reached internal limit of 20 struct levels */
+		/**INDENT** Warning@6: Reached internal limit of 20 struct levels */
+		/**INDENT** Warning@6: Reached internal limit of 20 struct levels */
+		/**INDENT** Warning@6: Reached internal limit of 20 struct levels */
+	EOF
+
+	atf_check -o 'file:expected.out' -e 'file:expected.err' \
+	    "$indent" -i1 -nut < 'code.c'
+}
+
 atf_init_test_cases()
 {
 	atf_add_test_case 'in_place'
 	atf_add_test_case 'verbose_profile'
+	atf_add_test_case 'nested_struct_declarations'
 }

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.24 2021/10/19 20:20:24 rillig Exp $
+#	$NetBSD: Makefile,v 1.25 2021/10/22 19:27:53 rillig Exp $
 
 .include <bsd.own.mk>
 
@@ -9,33 +9,20 @@ TESTS_SH+=	t_misc
 TESTS_SH+=	t_options
 
 FILESDIR=	${TESTSDIR}
-FILES=		block.0
-FILES+=		block.0.stdout
-FILES+=		declarations.0
-FILES+=		declarations.0.stderr
-FILES+=		declarations.0.stdout
-FILES+=		elsecomment.0
-FILES+=		elsecomment.0.stdout
-FILES+=		elsecomment.0.pro
+FILES=		fmt_block.c
+FILES+=		fmt_decl.c
+FILES+=		fmt_else_comment.c
 FILES+=		f_decls.0
 FILES+=		f_decls.0.stdout
 FILES+=		indent_off_on.c
-FILES+=		indent_variables.0
-FILES+=		indent_variables.0.pro
-FILES+=		indent_variables.0.stdout
 FILES+=		label.c
-FILES+=		lex.0
-FILES+=		lex.0.pro
-FILES+=		lex.0.stdout
+FILES+=		lex_ident.c
 FILES+=		lex_char.0
 FILES+=		lex_char.0.pro
 FILES+=		lex_char.0.stdout
 FILES+=		lex_string.0
 FILES+=		lex_string.0.pro
 FILES+=		lex_string.0.stdout
-FILES+=		lineno.0
-FILES+=		lineno.0.pro
-FILES+=		lineno.0.stdout
 FILES+=		list_head.0
 FILES+=		list_head.0.stdout
 FILES+=		offsetof.0
