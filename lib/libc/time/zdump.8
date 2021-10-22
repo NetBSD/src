@@ -1,5 +1,5 @@
-.\"	$NetBSD: zdump.8,v 1.20 2020/05/25 14:52:48 christos Exp $
-.Dd May 25, 2020
+.\"	$NetBSD: zdump.8,v 1.21 2021/10/22 14:26:04 christos Exp $
+.Dd October 22, 2021
 .Dt ZDUMP 8
 .Os
 .Sh NAME
@@ -42,12 +42,14 @@ Output a verbose description of time intervals.
 For each
 .Ar timezon
 on the command line,
-print the time at the lowest possible time value,
-the time one day after the lowest possible time value,
+print the times at the two extreme time values,
+the times (if present) at and just beyond the boundaries of years that
+.BR localtime (3)
+and
+.BR gmtime (3)
+can represent, and
 the times both one second before and exactly at
-each detected time discontinuity,
-the time at one day less than the highest possible time value,
-and the time at the highest possible time value.
+each detected time discontinuity.
 Each line is followed by
 .Em isdst=D
 where
@@ -65,10 +67,10 @@ Cut off interval output at the given year(s).
 Cutoff times are computed using the proleptic Gregorian calendar with year 0
 and with Universal Time (UT) ignoring leap seconds.
 Cutoffs are at the start of each year, where the lower-bound
-timestamp is exclusive and the upper is inclusive; for example,
+timestamp is inclusive and the upper is exclusive; for example,
 .Em "\&-c 1970,2070"
-selects transitions after 1970-01-01 00:00:00 UTC
-and on or before 2070-01-01 00:00:00 UTC.
+selects transitions on or after 1970-01-01 00:00:00 UTC
+and before 2070-01-01 00:00:00 UTC.
 The default cutoff is
 .Em \&-500,2500 .
 .It Fl t Ar [lotime,]hightime
@@ -80,11 +82,11 @@ The
 determines whether the count includes leap seconds.
 As with
 .Fl c ,
-the cutoff's lower bound is exclusive and its upper bound is inclusive.
+the cutoff's lower bound is inclusive and its upper bound is exclusive.
 .It Fl V
 Like
 .Fl v ,
-except omit the times relative to the extreme time values.
+except omit output concerning extreme time and year values.
 This generates output that is easier to compare to that of
 implementations with different time representations.
 .El
@@ -189,7 +191,8 @@ This time zone is east of UT, so its UT offsets are positive.  Also,
 many of its time zone abbreviations are omitted since they duplicate
 the text of the UT offset.
 .Sh LIMITATIONS
-Time discontinuities are found by sampling the results returned by localtime
+Time discontinuities are found by sampling the results returned by
+.Xr localtime 3
 at twelve-hour intervals.
 This works in all real-world cases;
 one can construct artificial time zones for which this fails.
@@ -211,6 +214,7 @@ for newer and
 for older timestamps, partly because the exact date of the
 introduction of UTC is problematic.
 .Sh SEE ALSO
+.Xr localtime 3 ,
 .Xr tzfile 5 ,
 .Xr zic 8
 .\" @(#)zdump.8	8.2
