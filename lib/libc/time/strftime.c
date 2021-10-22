@@ -1,4 +1,4 @@
-/*	$NetBSD: strftime.c,v 1.48 2020/10/09 18:38:48 christos Exp $	*/
+/*	$NetBSD: strftime.c,v 1.49 2021/10/22 14:26:04 christos Exp $	*/
 
 /* Convert a broken-down timestamp to a string.  */
 
@@ -35,7 +35,7 @@
 static char	elsieid[] = "@(#)strftime.c	7.64";
 static char	elsieid[] = "@(#)strftime.c	8.3";
 #else
-__RCSID("$NetBSD: strftime.c,v 1.48 2020/10/09 18:38:48 christos Exp $");
+__RCSID("$NetBSD: strftime.c,v 1.49 2021/10/22 14:26:04 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -394,11 +394,15 @@ label:
 							return NULL;
 					}
 					/* CONSTCOND */
-					if (TYPE_SIGNED(time_t))
+					if (TYPE_SIGNED(time_t)) {
+						intmax_t n = mkt;
 						(void)snprintf(buf, sizeof(buf),
-						    "%jd", (intmax_t) mkt);
-					else	(void)snprintf(buf, sizeof(buf),
-						    "%ju", (uintmax_t) mkt);
+						    "%"PRIdMAX, n);
+					} else {
+						uintmax_t n = mkt;
+						(void)snprintf(buf, sizeof(buf),
+						    "%"PRIuMAX, n);
+					}
 					pt = _add(buf, pt, ptlim);
 				}
 				continue;

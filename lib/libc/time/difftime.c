@@ -1,4 +1,4 @@
-/*	$NetBSD: difftime.c,v 1.22 2019/04/04 19:25:38 christos Exp $	*/
+/*	$NetBSD: difftime.c,v 1.23 2021/10/22 14:26:04 christos Exp $	*/
 
 /* Return the difference between two timestamps.  */
 
@@ -12,7 +12,7 @@
 #if 0
 static char	elsieid[] = "@(#)difftime.c	8.1";
 #else
-__RCSID("$NetBSD: difftime.c,v 1.22 2019/04/04 19:25:38 christos Exp $");
+__RCSID("$NetBSD: difftime.c,v 1.23 2021/10/22 14:26:04 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -35,7 +35,7 @@ difftime(time_t time1, time_t time0)
 	** (assuming that the larger type has more precision).
 	*/
 	/*CONSTCOND*/
-	if (sizeof (time_t) < sizeof (double)) {
+	if (sizeof(time_t) < sizeof(double)) {
 		double t1 = time1, t0 = time0;
 		return t1 - t0;
  	}
@@ -50,7 +50,7 @@ difftime(time_t time1, time_t time0)
 
 	/* Use uintmax_t if wide enough.  */
 	/*CONSTCOND*/
-	if (sizeof (time_t) <= sizeof (uintmax_t)) {
+	if (sizeof(time_t) <= sizeof(uintmax_t)) {
 		uintmax_t t1 = time1, t0 = time0;
 		return time0 <= time1 ? t1 - t0 : dminus((double)(t0 - t1));
 	}
