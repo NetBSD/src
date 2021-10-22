@@ -1,10 +1,11 @@
-/* $NetBSD: lex_char.0.stdout,v 1.2 2021/09/25 09:52:21 rillig Exp $ */
+/* $NetBSD: lex_char.c,v 1.1 2021/10/22 20:54:36 rillig Exp $ */
 /* $FreeBSD$ */
 
 /*
  * Test lexing of character constants.
  */
 
+#indent input
 int simple = 'x';
 int multi = 'xy';
 int empty = '';
@@ -20,3 +21,6 @@ int escape_v = '\v';
 int escape_single_quote = '\'';
 int escape_double_quote = '\"';
 int escape_backslash = '\\';
+#indent end
+
+#indent run-equals-input -di0

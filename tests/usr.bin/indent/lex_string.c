@@ -1,10 +1,11 @@
-/* $NetBSD: lex_string.0.stdout,v 1.2 2021/09/25 09:52:21 rillig Exp $ */
+/* $NetBSD: lex_string.c,v 1.1 2021/10/22 20:54:36 rillig Exp $ */
 /* $FreeBSD$ */
 
 /*
  * Test lexing of string literals.
  */
 
+#indent input
 char simple[] = "x";
 char multi[] = "xy";
 char empty[] = "";
@@ -23,7 +24,17 @@ char escape_backslash[] = "\\";
 
 char escape_newline[] = "\
 ";
+#indent end
+
+#indent run-equals-input -di0
 
 /* Concatenated string literals are separated with a single space. */
+#indent input
+char concat[] = "line 1\n"
+"line2"		"has"   "several""words\n";
+#indent end
+
+#indent run -di0
 char concat[] = "line 1\n"
 "line2" "has" "several" "words\n";
+#indent end
