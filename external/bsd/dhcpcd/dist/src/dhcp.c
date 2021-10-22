@@ -1,7 +1,7 @@
 /* SPDX-License-Identifier: BSD-2-Clause */
 /*
  * dhcpcd - DHCP client daemon
- * Copyright (c) 2006-2020 Roy Marples <roy@marples.name>
+ * Copyright (c) 2006-2021 Roy Marples <roy@marples.name>
  * All rights reserved
 
  * Redistribution and use in source and binary forms, with or without
@@ -2031,13 +2031,13 @@ dhcp_finish_dad(struct interface *ifp, struct in_addr *ia)
 
 #ifdef IPV4LL
 	/* Stop IPv4LL now we have a working DHCP address */
-	ipv4ll_drop(ifp);
+	if (!IN_LINKLOCAL(ntohl(ia->s_addr)))
+		ipv4ll_drop(ifp);
 #endif
 
 	if (ifp->options->options & DHCPCD_INFORM)
 		dhcp_inform(ifp);
 }
-
 
 static bool
 dhcp_addr_duplicated(struct interface *ifp, struct in_addr *ia)
@@ -2069,7 +2069,7 @@ dhcp_addr_duplicated(struct interface *ifp, struct in_addr *ia)
 	if (opts & (DHCPCD_STATIC | DHCPCD_INFORM)) {
 		state->reason = "EXPIRE";
 		script_runreason(ifp, state->reason);
-#define NOT_ONLY_SELF (DHCPCD_MASTER | DHCPCD_IPV6RS | DHCPCD_DHCP6)
+#define NOT_ONLY_SELF (DHCPCD_MANAGER | DHCPCD_IPV6RS | DHCPCD_DHCP6)
 		if (!(ctx->options & NOT_ONLY_SELF))
 			eloop_exit(ifp->ctx->eloop, EXIT_FAILURE);
 		return deleted;
@@ -2380,8 +2380,9 @@ dhcp_bind(struct interface *ifp)
 	dhcp_closebpf(ifp);
 
 openudp:
-	/* If not in master mode, open an address specific socket. */
-	if (ctx->options & DHCPCD_MASTER ||
+	/* If not in manager mode, open an address specific socket. */
+	if (ctx->options & DHCPCD_MANAGER ||
+	    ifo->options & DHCPCD_STATIC ||
 	    (state->old != NULL &&
 	     state->old->yiaddr == state->new->yiaddr &&
 	     old_state & STATE_ADDED && !(old_state & STATE_FAKE)))
@@ -2399,7 +2400,7 @@ openudp:
 	state->udp_rfd = dhcp_openudp(&state->addr->addr);
 	if (state->udp_rfd == -1) {
 		logerr(__func__);
-		/* Address sharing without master mode is not supported.
+		/* Address sharing without manager mode is not supported.
 		 * It's also possible another DHCP client could be running,
 		 * which is even worse.
 		 * We still need to work, so re-open BPF. */
@@ -2569,7 +2570,6 @@ dhcp_inform(struct interface *ifp)
 	state = D_STATE(ifp);
 	ifo = ifp->options;
 
-	state->state = DHS_INFORM;
 	free(state->offer);
 	state->offer = NULL;
 	state->offer_len = 0;
@@ -2610,6 +2610,7 @@ dhcp_inform(struct interface *ifp)
 		}
 	}
 
+	state->state = DHS_INFORM;
 	state->addr = ia;
 	state->offer_len = dhcp_message_new(&state->offer,
 	    &ia->addr, &ia->mask);
@@ -3952,9 +3953,9 @@ dhcp_start1(void *arg)
 
 	/* Listen on *.*.*.*:bootpc so that the kernel never sends an
 	 * ICMP port unreachable message back to the DHCP server.
-	 * Only do this in master mode so we don't swallow messages
+	 * Only do this in manager mode so we don't swallow messages
 	 * for dhcpcd running on another interface. */
-	if ((ctx->options & (DHCPCD_MASTER|DHCPCD_PRIVSEP)) == DHCPCD_MASTER
+	if ((ctx->options & (DHCPCD_MANAGER|DHCPCD_PRIVSEP)) == DHCPCD_MANAGER
 	    && ctx->udp_rfd == -1)
 	{
 		ctx->udp_rfd = dhcp_openudp(NULL);
@@ -4244,7 +4245,7 @@ dhcp_handleifa(int cmd, struct ipv4_addr *ia, pid_t pid)
 
 #ifdef PRIVSEP
 	if (IN_PRIVSEP_SE(ifp->ctx) &&
-	    !(ifp->ctx->options & (DHCPCD_MASTER | DHCPCD_CONFIGURE)) &&
+	    !(ifp->ctx->options & (DHCPCD_MANAGER | DHCPCD_CONFIGURE)) &&
 	    IN_ARE_ADDR_EQUAL(&state->lease.addr, &ia->addr))
 	{
 		state->addr = ia;
@@ -4255,15 +4256,21 @@ dhcp_handleifa(int cmd, struct ipv4_addr *ia, pid_t pid)
 	}
 #endif
 
+	/* If we have requested a specific address, return now.
+	 * The below code is only for when inform or static has been
+	 * requested without a specific address. */
+	if (ifo->req_addr.s_addr != INADDR_ANY)
+		return ia;
+
+	/* Only inform if we are NOT in the inform state or bound. */
 	if (ifo->options & DHCPCD_INFORM) {
-		if (state->state != DHS_INFORM)
+		if (state->state != DHS_INFORM && state->state != DHS_BOUND)
 			dhcp_inform(ifp);
 		return ia;
 	}
 
+	/* Static and inform are mutually exclusive. If not static, return. */
 	if (!(ifo->options & DHCPCD_STATIC))
-		return ia;
-	if (ifo->req_addr.s_addr != INADDR_ANY)
 		return ia;
 
 	free(state->old);
@@ -4271,21 +4278,16 @@ dhcp_handleifa(int cmd, struct ipv4_addr *ia, pid_t pid)
 	state->new_len = dhcp_message_new(&state->new, &ia->addr, &ia->mask);
 	if (state->new == NULL)
 		return ia;
+
 	if (ifp->flags & IFF_POINTOPOINT) {
 		for (i = 1; i < 255; i++)
 			if (i != DHO_ROUTER && has_option_mask(ifo->dstmask,i))
 				dhcp_message_add_addr(state->new, i, ia->brd);
 	}
+
 	state->reason = "STATIC";
 	rt_build(ifp->ctx, AF_INET);
 	script_runreason(ifp, state->reason);
-	if (ifo->options & DHCPCD_INFORM) {
-		state->state = DHS_INFORM;
-		dhcp_new_xid(ifp);
-		state->lease.server.s_addr = INADDR_ANY;
-		state->addr = ia;
-		dhcp_inform(ifp);
-	}
 
 	return ia;
 }

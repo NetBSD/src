@@ -1,7 +1,7 @@
 /* SPDX-License-Identifier: BSD-2-Clause */
 /*
  * BSD interface driver for dhcpcd
- * Copyright (c) 2006-2020 Roy Marples <roy@marples.name>
+ * Copyright (c) 2006-2021 Roy Marples <roy@marples.name>
  * All rights reserved
 
  * Redistribution and use in source and binary forms, with or without
@@ -235,6 +235,7 @@ if_closesockets_os(struct dhcpcd_ctx *ctx)
 		close(priv->pf_inet6_fd);
 	free(priv);
 	ctx->priv = NULL;
+	free(ctx->rt_missfilter);
 }
 
 #if defined(SIOCALIFADDR) && defined(IFLR_ACTIVE) /*NetBSD */
@@ -625,6 +626,8 @@ if_findsa(struct dhcpcd_ctx *ctx, const struct sockaddr *sa)
 
 		sin = (const void *)sa;
 		if ((ia = ipv4_findmaskaddr(ctx, &sin->sin_addr)))
+			return ia->iface;
+		if ((ia = ipv4_findmaskbrd(ctx, &sin->sin_addr)))
 			return ia->iface;
 		break;
 	}

@@ -1,7 +1,7 @@
 /* SPDX-License-Identifier: BSD-2-Clause */
 /*
  * dhcpcd - DHCP client daemon
- * Copyright (c) 2006-2020 Roy Marples <roy@marples.name>
+ * Copyright (c) 2006-2021 Roy Marples <roy@marples.name>
  * All rights reserved
 
  * Redistribution and use in source and binary forms, with or without
@@ -596,7 +596,7 @@ ipv6_deletedaddr(struct ipv6_addr *ia)
 
 #ifdef DHCP6
 #ifdef PRIVSEP
-	if (!(ia->iface->ctx->options & DHCPCD_MASTER))
+	if (!(ia->iface->ctx->options & DHCPCD_MANAGER))
 		ps_inet_closedhcp6(ia);
 #elif defined(SMALL)
 	UNUSED(ia);

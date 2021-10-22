@@ -17,7 +17,7 @@
 
 # If we used to set the hostname, but relinquish control of it, we should
 # reset to the default value.
-: ${hostname_default=@DEFAULT_HOSTNAME@}
+: ${hostname_default=}
 
 # Some systems don't have hostname(1)
 _hostname()
