@@ -1,4 +1,4 @@
-/*	$NetBSD: mgx.c,v 1.16 2021/08/07 16:19:15 thorpej Exp $ */
+/*	$NetBSD: mgx.c,v 1.17 2021/10/22 19:21:12 macallan Exp $ */
 
 /*-
  * Copyright (c) 2014 Michael Lorenz
@@ -29,7 +29,7 @@
 /* a console driver for the SSB 4096V-MGX graphics card */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mgx.c,v 1.16 2021/08/07 16:19:15 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mgx.c,v 1.17 2021/10/22 19:21:12 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -977,21 +977,21 @@ mgx_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
 	struct vcons_screen *ms = vd->active;
 
 	switch (cmd) {
-		case WSDISPLAYIO_GTYPE:
-			*(u_int *)data = WSDISPLAY_TYPE_MGX;
-			return 0;
+	case WSDISPLAYIO_GTYPE:
+		*(u_int *)data = WSDISPLAY_TYPE_MGX;
+		return 0;
 
-		case WSDISPLAYIO_GINFO:
-			wdf = (void *)data;
-			wdf->height = sc->sc_height;
-			wdf->width = sc->sc_width;
-			wdf->depth = 8;
-			wdf->cmsize = 256;
-			return 0;
+	case WSDISPLAYIO_GINFO:
+		wdf = (void *)data;
+		wdf->height = sc->sc_height;
+		wdf->width = sc->sc_width;
+		wdf->depth = 8;
+		wdf->cmsize = 256;
+		return 0;
 
 	case FBIOGTYPE:
 		*(struct fbtype *)data = sc->sc_fb.fb_type;
-		break;
+		return 0;
 
 	case FBIOGATTR:
 #define fba ((struct fbgattr *)data)
@@ -1004,104 +1004,105 @@ mgx_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
 		fba->emu_types[0] = sc->sc_fb.fb_type.fb_type;
 		fba->emu_types[1] = -1;
 #undef fba
-		break;
-		case FBIOGVIDEO:
-		case WSDISPLAYIO_GVIDEO:
-			*(int *)data = sc->sc_video;
-			return 0;
+		return 0;
+	case FBIOGVIDEO:
+	case WSDISPLAYIO_GVIDEO:
+		*(int *)data = sc->sc_video;
+		return 0;
 
-		case WSDISPLAYIO_SVIDEO:
-		case FBIOSVIDEO:
-			mgx_set_video(sc, *(int *)data);
-			return 0;
+	case WSDISPLAYIO_SVIDEO:
+	case FBIOSVIDEO:
+		mgx_set_video(sc, *(int *)data);
+		return 0;
 
-		case WSDISPLAYIO_LINEBYTES:
+	case WSDISPLAYIO_LINEBYTES:
+		{
+			int *ret = (int *)data;
+			*ret = sc->sc_stride;
+		}
+		return 0;
+
+	case WSDISPLAYIO_SMODE:
+		{
+			int new_mode = *(int*)data;
+			if (new_mode != sc->sc_mode)
 			{
-				int *ret = (int *)data;
-				*ret = sc->sc_stride;
-			}
-			return 0;
-
-		case WSDISPLAYIO_SMODE:
-			{
-				int new_mode = *(int*)data;
-				if (new_mode != sc->sc_mode)
+				sc->sc_mode = new_mode;
+				if (new_mode == WSDISPLAYIO_MODE_EMUL)
 				{
-					sc->sc_mode = new_mode;
-					if (new_mode == WSDISPLAYIO_MODE_EMUL)
-					{
-						mgx_setup(sc, MGX_DEPTH);
-						glyphcache_wipe(&sc->sc_gc);
-						mgx_init_palette(sc);
-						vcons_redraw_screen(ms);
-					} else {
-						mgx_setup(sc, 32);
-						mgx_init_palette(sc);
-					}
+					mgx_setup(sc, MGX_DEPTH);
+					glyphcache_wipe(&sc->sc_gc);
+					mgx_init_palette(sc);
+					vcons_redraw_screen(ms);
+				} else {
+					mgx_setup(sc, 32);
+					mgx_init_palette(sc);
 				}
 			}
-			return 0;
+		}
+		return 0;
 
-		case WSDISPLAYIO_GETCMAP:
-			return mgx_getcmap(sc, (struct wsdisplay_cmap *)data);
+	case WSDISPLAYIO_GETCMAP:
+		return mgx_getcmap(sc, (struct wsdisplay_cmap *)data);
 
-		case WSDISPLAYIO_PUTCMAP:
-			return mgx_putcmap(sc, (struct wsdisplay_cmap *)data);
+	case WSDISPLAYIO_PUTCMAP:
+		return mgx_putcmap(sc, (struct wsdisplay_cmap *)data);
 
-		case WSDISPLAYIO_GCURPOS:
-			{
-				struct wsdisplay_curpos *cp = (void *)data;
+	case WSDISPLAYIO_GCURPOS:
+		{
+			struct wsdisplay_curpos *cp = (void *)data;
 
-				cp->x = sc->sc_cursor_x;
-				cp->y = sc->sc_cursor_y;
-			}
-			return 0;
+			cp->x = sc->sc_cursor_x;
+			cp->y = sc->sc_cursor_y;
+		}
+		return 0;
 
-		case WSDISPLAYIO_SCURPOS:
-			{
-				struct wsdisplay_curpos *cp = (void *)data;
+	case WSDISPLAYIO_SCURPOS:
+		{
+			struct wsdisplay_curpos *cp = (void *)data;
 
-				sc->sc_cursor_x = cp->x;
-				sc->sc_cursor_y = cp->y;
-				mgx_set_cursor(sc);
-			}
-			return 0;
+			sc->sc_cursor_x = cp->x;
+			sc->sc_cursor_y = cp->y;
+			mgx_set_cursor(sc);
+		}
+		return 0;
 
-		case WSDISPLAYIO_GCURMAX:
-			{
-				struct wsdisplay_curpos *cp = (void *)data;
+	case WSDISPLAYIO_GCURMAX:
+		{
+			struct wsdisplay_curpos *cp = (void *)data;
 
-				cp->x = 64;
-				cp->y = 64;
-			}
-			return 0;
+			cp->x = 64;
+			cp->y = 64;
+		}
+		return 0;
 
-		case WSDISPLAYIO_SCURSOR:
-			{
-				struct wsdisplay_cursor *cursor = (void *)data;
+	case WSDISPLAYIO_SCURSOR:
+		{
+			struct wsdisplay_cursor *cursor = (void *)data;
 
-				return mgx_do_cursor(sc, cursor);
-			}
-		case WSDISPLAYIO_GET_FBINFO:
-			{
-				struct wsdisplayio_fbinfo *fbi = data;
+			return mgx_do_cursor(sc, cursor);
+		}
+
+	case WSDISPLAYIO_GET_FBINFO:
+		{
+			struct wsdisplayio_fbinfo *fbi = data;
 	
-				fbi->fbi_fbsize = sc->sc_fbsize - 1024;
-				fbi->fbi_width = sc->sc_width;
-				fbi->fbi_height = sc->sc_height;
-				fbi->fbi_bitsperpixel = sc->sc_depth;
-				fbi->fbi_stride = sc->sc_stride;
-				fbi->fbi_pixeltype = WSFB_RGB;
-				fbi->fbi_subtype.fbi_rgbmasks.red_offset = 8;
-				fbi->fbi_subtype.fbi_rgbmasks.red_size = 8;
-				fbi->fbi_subtype.fbi_rgbmasks.green_offset = 16;
-				fbi->fbi_subtype.fbi_rgbmasks.green_size = 8;
-				fbi->fbi_subtype.fbi_rgbmasks.blue_offset = 24;
-				fbi->fbi_subtype.fbi_rgbmasks.blue_size = 8;
-				fbi->fbi_subtype.fbi_rgbmasks.alpha_offset = 0;
-				fbi->fbi_subtype.fbi_rgbmasks.alpha_size = 8;
-				return 0;
-			}
+			fbi->fbi_fbsize = sc->sc_fbsize - 1024;
+			fbi->fbi_width = sc->sc_width;
+			fbi->fbi_height = sc->sc_height;
+			fbi->fbi_bitsperpixel = sc->sc_depth;
+			fbi->fbi_stride = sc->sc_stride;
+			fbi->fbi_pixeltype = WSFB_RGB;
+			fbi->fbi_subtype.fbi_rgbmasks.red_offset = 8;
+			fbi->fbi_subtype.fbi_rgbmasks.red_size = 8;
+			fbi->fbi_subtype.fbi_rgbmasks.green_offset = 16;
+			fbi->fbi_subtype.fbi_rgbmasks.green_size = 8;
+			fbi->fbi_subtype.fbi_rgbmasks.blue_offset = 24;
+			fbi->fbi_subtype.fbi_rgbmasks.blue_size = 8;
+			fbi->fbi_subtype.fbi_rgbmasks.alpha_offset = 0;
+			fbi->fbi_subtype.fbi_rgbmasks.alpha_size = 8;
+			return 0;
+		}
 	}
 	return EPASSTHROUGH;
 }
