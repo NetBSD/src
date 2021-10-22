@@ -1,4 +1,4 @@
-/* $NetBSD: virtio_acpi.c,v 1.9 2021/08/07 16:19:09 thorpej Exp $ */
+/* $NetBSD: virtio_acpi.c,v 1.10 2021/10/22 02:57:23 yamaguchi Exp $ */
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: virtio_acpi.c,v 1.9 2021/08/07 16:19:09 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: virtio_acpi.c,v 1.10 2021/10/22 02:57:23 yamaguchi Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -56,7 +56,7 @@ static void	virtio_acpi_attach(device_t, device_t, void *);
 static int	virtio_acpi_rescan(device_t, const char *, const int *);
 static int	virtio_acpi_detach(device_t, int);
 
-static int	virtio_acpi_setup_interrupts(struct virtio_mmio_softc *);
+static int	virtio_acpi_alloc_interrupts(struct virtio_mmio_softc *);
 static void	virtio_acpi_free_interrupts(struct virtio_mmio_softc *);
 
 CFATTACH_DECL3_NEW(virtio_acpi, sizeof(struct virtio_acpi_softc),
@@ -127,7 +127,7 @@ virtio_acpi_attach(device_t parent, device_t self, void *aux)
 	}
 	msc->sc_iosize = mem->ar_length;
 
-	msc->sc_setup_interrupts = virtio_acpi_setup_interrupts;
+	msc->sc_alloc_interrupts = virtio_acpi_alloc_interrupts;
 	msc->sc_free_interrupts = virtio_acpi_free_interrupts;
 
 	virtio_mmio_common_attach(msc);
@@ -169,7 +169,7 @@ virtio_acpi_rescan(device_t self, const char *ifattr, const int *locs)
 }
 
 static int
-virtio_acpi_setup_interrupts(struct virtio_mmio_softc *msc)
+virtio_acpi_alloc_interrupts(struct virtio_mmio_softc *msc)
 {
 	struct virtio_acpi_softc * const sc = (struct virtio_acpi_softc *)msc;
 	struct virtio_softc * const vsc = &msc->sc_sc;
