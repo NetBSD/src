@@ -1,4 +1,4 @@
-/*	$NetBSD: if_lagg.c,v 1.16 2021/10/19 08:02:42 yamaguchi Exp $	*/
+/*	$NetBSD: if_lagg.c,v 1.17 2021/10/22 06:20:47 yamaguchi Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006 Reyk Floeter <reyk@openbsd.org>
@@ -20,7 +20,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_lagg.c,v 1.16 2021/10/19 08:02:42 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_lagg.c,v 1.17 2021/10/22 06:20:47 yamaguchi Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -876,7 +876,7 @@ lagg_hashmbuf(struct lagg_softc *sc, struct mbuf *m)
 	const struct ip6_hdr *ip6;
 	const struct tcphdr *th;
 	const struct udphdr *uh;
-	uint32_t hash = HASH32_BUF_INIT;
+	uint32_t hash, hash_src, hash_dst;
 	uint32_t flowlabel;
 	uint16_t etype, vlantag;
 	uint8_t proto;
@@ -884,9 +884,17 @@ lagg_hashmbuf(struct lagg_softc *sc, struct mbuf *m)
 
 	KASSERT(ISSET(m->m_flags, M_PKTHDR));
 
+	hash = HASH32_BUF_INIT;
+	hash_src = HASH32_BUF_INIT;
+	hash_dst = HASH32_BUF_INIT;
+
+#define LAGG_HASH_ADD(hp, v) do {		\
+	*(hp) = hash32_buf(&(v), sizeof(v), *(hp));	\
+} while(0)
+
 	eh = lagg_m_extract(m, 0, sizeof(*eh), &buf);
 	if (eh == NULL) {
-		return hash;
+		goto out;
 	}
 	off = ETHER_HDR_LEN;
 	etype = ntohs(eh->ether_type);
@@ -894,7 +902,7 @@ lagg_hashmbuf(struct lagg_softc *sc, struct mbuf *m)
 	if (etype == ETHERTYPE_VLAN) {
 		evl = lagg_m_extract(m, 0, sizeof(*evl), &buf);
 		if (evl == NULL) {
-			return hash;
+			goto out;
 		}
 
 		vlantag = ntohs(evl->evl_tag);
@@ -907,26 +915,22 @@ lagg_hashmbuf(struct lagg_softc *sc, struct mbuf *m)
 	}
 
 	if (sc->sc_hash_mac) {
-		hash = hash32_buf(&eh->ether_dhost,
-		    sizeof(eh->ether_dhost), hash);
-		hash = hash32_buf(&eh->ether_shost,
-		    sizeof(eh->ether_shost), hash);
-		hash = hash32_buf(&vlantag, sizeof(vlantag), hash);
+		LAGG_HASH_ADD(&hash_dst, eh->ether_dhost);
+		LAGG_HASH_ADD(&hash_src, eh->ether_shost);
+		LAGG_HASH_ADD(&hash, vlantag);
 	}
 
 	switch (etype) {
 	case ETHERTYPE_IP:
 		ip = lagg_m_extract(m, off, sizeof(*ip), &buf);
 		if (ip == NULL) {
-			return hash;
+			goto out;
 		}
 
 		if (sc->sc_hash_ipaddr) {
-			hash = hash32_buf(&ip->ip_src,
-			    sizeof(ip->ip_src), hash);
-			hash = hash32_buf(&ip->ip_dst,
-			    sizeof(ip->ip_dst), hash);
-			hash = hash32_buf(&ip->ip_p, sizeof(ip->ip_p), hash);
+			LAGG_HASH_ADD(&hash_src, ip->ip_src);
+			LAGG_HASH_ADD(&hash_dst, ip->ip_dst);
+			LAGG_HASH_ADD(&hash, ip->ip_p);
 		}
 		off += ip->ip_hl << 2;
 		proto = ip->ip_p;
@@ -934,22 +938,19 @@ lagg_hashmbuf(struct lagg_softc *sc, struct mbuf *m)
 	case ETHERTYPE_IPV6:
 		ip6 = lagg_m_extract(m, off, sizeof(*ip6), &buf);
 		if (ip6 == NULL) {
-			return hash;
+			goto out;
 		}
 
 		if (sc->sc_hash_ip6addr) {
-			hash = hash32_buf(&ip6->ip6_src,
-			    sizeof(ip6->ip6_src), hash);
-			hash = hash32_buf(&ip6->ip6_dst,
-			    sizeof(ip6->ip6_dst), hash);
+			LAGG_HASH_ADD(&hash_src, ip6->ip6_src);
+			LAGG_HASH_ADD(&hash_dst, ip6->ip6_dst);
 			flowlabel = ip6->ip6_flow & IPV6_FLOWLABEL_MASK;
-			hash = hash32_buf(&flowlabel, sizeof(flowlabel), hash);
+			LAGG_HASH_ADD(&hash, flowlabel);
 		}
 		proto = ip6->ip6_nxt;
 		off += sizeof(*ip6);
+		break;
 
-		/* L4 header is not supported */
-		return hash;
 	default:
 		return hash;
 	}
@@ -958,30 +959,31 @@ lagg_hashmbuf(struct lagg_softc *sc, struct mbuf *m)
 	case IPPROTO_TCP:
 		th = lagg_m_extract(m, off, sizeof(*th), &buf);
 		if (th == NULL) {
-			return hash;
+			goto out;
 		}
 
 		if (sc->sc_hash_tcp) {
-			hash = hash32_buf(&th->th_sport,
-			    sizeof(th->th_sport), hash);
-			hash = hash32_buf(&th->th_dport,
-			    sizeof(th->th_dport), hash);
+			LAGG_HASH_ADD(&hash_src, th->th_sport);
+			LAGG_HASH_ADD(&hash_dst, th->th_dport);
 		}
 		break;
 	case IPPROTO_UDP:
 		uh = lagg_m_extract(m, off, sizeof(*uh), &buf);
 		if (uh == NULL) {
-			return hash;
+			goto out;
 		}
 
 		if (sc->sc_hash_udp) {
-			hash = hash32_buf(&uh->uh_sport,
-			    sizeof(uh->uh_sport), hash);
-			hash = hash32_buf(&uh->uh_dport,
-			    sizeof(uh->uh_dport), hash);
+			LAGG_HASH_ADD(&hash_src, uh->uh_sport);
+			LAGG_HASH_ADD(&hash_dst, uh->uh_dport);
 		}
 		break;
 	}
+
+out:
+	hash_src ^= hash_dst;
+	LAGG_HASH_ADD(&hash, hash_src);
+#undef LAGG_HASH_ADD
 
 	return hash;
 }
