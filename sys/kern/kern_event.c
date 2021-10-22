@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_event.c,v 1.135 2021/10/21 02:34:03 thorpej Exp $	*/
+/*	$NetBSD: kern_event.c,v 1.136 2021/10/22 04:49:24 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009, 2021 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
 #endif /* _KERNEL_OPT */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_event.c,v 1.135 2021/10/21 02:34:03 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_event.c,v 1.136 2021/10/22 04:49:24 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -102,6 +102,7 @@ static void	knote_detach(struct knote *, filedesc_t *fdp, bool);
 static void	knote_enqueue(struct knote *);
 static void	knote_activate(struct knote *);
 static void	knote_activate_locked(struct knote *);
+static void	knote_deactivate_locked(struct knote *);
 
 static void	filt_kqdetach(struct knote *);
 static int	filt_kqueue(struct knote *, long hint);
@@ -113,6 +114,7 @@ static void	filt_timerexpire(void *x);
 static int	filt_timerattach(struct knote *);
 static void	filt_timerdetach(struct knote *);
 static int	filt_timer(struct knote *, long hint);
+static int	filt_timertouch(struct knote *, struct kevent *, long type);
 static int	filt_userattach(struct knote *);
 static void	filt_userdetach(struct knote *);
 static int	filt_user(struct knote *, long hint);
@@ -163,6 +165,7 @@ static const struct filterops timer_filtops = {
 	.f_attach = filt_timerattach,
 	.f_detach = filt_timerdetach,
 	.f_event = filt_timer,
+	.f_touch = filt_timertouch,
 };
 
 static const struct filterops user_filtops = {
@@ -1261,6 +1264,22 @@ filt_timerexpire(void *knx)
 	mutex_spin_exit(&kq->kq_lock);
 }
 
+static inline void
+filt_timerstart(struct knote *kn, uintptr_t tticks)
+{
+	callout_t *calloutp = kn->kn_hook;
+
+	KASSERT(mutex_owned(&kn->kn_kq->kq_lock));
+	KASSERT(!callout_pending(calloutp));
+
+	if (__predict_false(tticks == FILT_TIMER_NOSCHED)) {
+		kn->kn_data = 1;
+	} else {
+		KASSERT(tticks <= INT_MAX);
+		callout_reset(calloutp, (int)tticks, filt_timerexpire, kn);
+	}
+}
+
 static int
 filt_timerattach(struct knote *kn)
 {
@@ -1295,12 +1314,7 @@ filt_timerattach(struct knote *kn)
 	KASSERT(kn->kn_sfflags == kev.fflags);
 	kn->kn_hook = calloutp;
 
-	if (__predict_false(tticks == FILT_TIMER_NOSCHED)) {
-		kn->kn_data = 1;
-	} else {
-		KASSERT(tticks <= INT_MAX);
-		callout_reset(calloutp, (int)tticks, filt_timerexpire, kn);
-	}
+	filt_timerstart(kn, tticks);
 
 	mutex_spin_exit(&kq->kq_lock);
 
@@ -1329,6 +1343,61 @@ filt_timerdetach(struct knote *kn)
 	callout_destroy(calloutp);
 	kmem_free(calloutp, sizeof(*calloutp));
 	atomic_dec_uint(&kq_ncallouts);
+}
+
+static int
+filt_timertouch(struct knote *kn, struct kevent *kev, long type)
+{
+	struct kqueue *kq = kn->kn_kq;
+	callout_t *calloutp;
+	uintptr_t tticks;
+	int error;
+
+	KASSERT(mutex_owned(&kq->kq_lock));
+
+	switch (type) {
+	case EVENT_REGISTER:
+		/* Only relevant for EV_ADD. */
+		if ((kev->flags & EV_ADD) == 0) {
+			return 0;
+		}
+
+		/*
+		 * Stop the timer, under the assumption that if
+		 * an application is re-configuring the timer,
+		 * they no longer care about the old one.  We
+		 * can safely drop the kq_lock while we wait
+		 * because fdp->fd_lock will be held throughout,
+		 * ensuring that no one can sneak in with an
+		 * EV_DELETE or close the kq.
+		 */
+		KASSERT(mutex_owned(&kq->kq_fdp->fd_lock));
+
+		calloutp = kn->kn_hook;
+		callout_halt(calloutp, &kq->kq_lock);
+		KASSERT(mutex_owned(&kq->kq_lock));
+		knote_deactivate_locked(kn);
+		kn->kn_data = 0;
+
+		error = filt_timercompute(kev, &tticks);
+		if (error) {
+			return error;
+		}
+		kn->kn_sdata = kev->data;
+		kn->kn_flags = kev->flags;
+		kn->kn_sfflags = kev->fflags;
+		filt_timerstart(kn, tticks);
+		break;
+
+	case EVENT_PROCESS:
+		*kev = kn->kn_kevent;
+		break;
+
+	default:
+		panic("%s: invalid type (%ld)", __func__, type);
+	}
+
+	return 0;
 }
 
 static int
@@ -2684,6 +2753,22 @@ knote_activate(struct knote *kn)
 	mutex_spin_enter(&kq->kq_lock);
 	knote_activate_locked(kn);
 	mutex_spin_exit(&kq->kq_lock);
+}
+
+static void
+knote_deactivate_locked(struct knote *kn)
+{
+	struct kqueue *kq = kn->kn_kq;
+
+	if (kn->kn_status & KN_QUEUED) {
+		kq_check(kq);
+		kn->kn_status &= ~KN_QUEUED;
+		TAILQ_REMOVE(&kq->kq_head, kn, kn_tqe);
+		KASSERT(KQ_COUNT(kq) > 0);
+		kq->kq_count--;
+		kq_check(kq);
+	}
+	kn->kn_status &= ~KN_ACTIVE;
 }
 
 /*
