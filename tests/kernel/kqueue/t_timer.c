@@ -1,4 +1,4 @@
-/* $NetBSD: t_timer.c,v 1.1 2021/10/13 04:57:19 thorpej Exp $ */
+/* $NetBSD: t_timer.c,v 1.2 2021/10/22 04:49:24 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2021 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_timer.c,v 1.1 2021/10/13 04:57:19 thorpej Exp $");
+__RCSID("$NetBSD: t_timer.c,v 1.2 2021/10/22 04:49:24 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/event.h>
@@ -170,6 +170,82 @@ ATF_TC_BODY(count_expirations, tc)
 		    event[0].data == TIME1_COUNT + 1);
 }
 
+ATF_TC(modify);
+ATF_TC_HEAD(modify, tc)
+{
+	atf_tc_set_md_var(tc, "descr",
+	    "tests modifying a timer");
+}
+
+ATF_TC_BODY(modify, tc)
+{
+	struct kevent event[1];
+	struct timespec ts = { 0, 0 };
+	struct timespec sleepts;
+	int kq;
+
+	ATF_REQUIRE((kq = kqueue()) >= 0);
+
+	/*
+	 * Start a 500ms timer, sleep for 5 seconds, and check
+	 * the total count.
+	 */
+	EV_SET(&event[0], 1, EVFILT_TIMER, EV_ADD, 0, 500, NULL);
+	ATF_REQUIRE(kevent(kq, event, 1, NULL, 0, NULL) == 0);
+
+	sleepts.tv_sec = 5;
+	sleepts.tv_nsec = 0;
+	ATF_REQUIRE(nanosleep(&sleepts, NULL) == 0);
+
+	ATF_REQUIRE(kevent(kq, NULL, 0, event, 1, &ts) == 1);
+	ATF_REQUIRE(event[0].ident == 1);
+	ATF_REQUIRE(event[0].data >= 9 && event[0].data <= 11);
+
+	/*
+	 * Modify to a 4 second timer, sleep for 5 seconds, and check
+	 * the total count.
+	 */
+	EV_SET(&event[0], 1, EVFILT_TIMER, EV_ADD, 0, 4000, NULL);
+	ATF_REQUIRE(kevent(kq, event, 1, NULL, 0, NULL) == 0);
+
+	sleepts.tv_sec = 5;
+	sleepts.tv_nsec = 0;
+	ATF_REQUIRE(nanosleep(&sleepts, NULL) == 0);
+
+	ATF_REQUIRE(kevent(kq, NULL, 0, event, 1, &ts) == 1);
+	ATF_REQUIRE(event[0].ident == 1);
+	ATF_REQUIRE(event[0].data == 1);
+
+	/*
+	 * Start a 500ms timer, sleep for 2 seconds.
+	 */
+	EV_SET(&event[0], 1, EVFILT_TIMER, EV_ADD, 0, 500, NULL);
+	ATF_REQUIRE(kevent(kq, event, 1, NULL, 0, NULL) == 0);
+
+	sleepts.tv_sec = 2;
+	sleepts.tv_nsec = 0;
+	ATF_REQUIRE(nanosleep(&sleepts, NULL) == 0);
+
+	/*
+	 * Set the SAME timer, sleep for 2 seconds.
+	 */
+	EV_SET(&event[0], 1, EVFILT_TIMER, EV_ADD, 0, 500, NULL);
+	ATF_REQUIRE(kevent(kq, event, 1, NULL, 0, NULL) == 0);
+
+	sleepts.tv_sec = 2;
+	sleepts.tv_nsec = 0;
+	ATF_REQUIRE(nanosleep(&sleepts, NULL) == 0);
+
+	/*
+	 * The kernel should have reset the count when modifying the
+	 * timer, so we should only expect to see the expiration count
+	 * for the second sleep.
+	 */
+	ATF_REQUIRE(kevent(kq, NULL, 0, event, 1, &ts) == 1);
+	ATF_REQUIRE(event[0].ident == 1);
+	ATF_REQUIRE(event[0].data >= 3 && event[0].data <= 5);
+}
+
 ATF_TC(abstime);
 ATF_TC_HEAD(abstime, tc)
 {
@@ -269,6 +345,7 @@ ATF_TP_ADD_TCS(tp)
 	ATF_TP_ADD_TC(tp, count_expirations);
 	ATF_TP_ADD_TC(tp, abstime);
 	ATF_TP_ADD_TC(tp, timer_units);
+	ATF_TP_ADD_TC(tp, modify);
 
 	return atf_no_error();
 }
