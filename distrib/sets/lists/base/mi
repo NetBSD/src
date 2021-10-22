@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1284 2021/09/25 08:54:30 maya Exp $
+# $NetBSD: mi,v 1.1285 2021/10/22 21:03:01 kre Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -5856,6 +5856,7 @@
 ./usr/share/zoneinfo/Pacific/Guam		base-sys-share		share
 ./usr/share/zoneinfo/Pacific/Honolulu		base-sys-share		share
 ./usr/share/zoneinfo/Pacific/Johnston		base-sys-share		share
+./usr/share/zoneinfo/Pacific/Kanton		base-sys-share		share
 ./usr/share/zoneinfo/Pacific/Kiritimati		base-sys-share		share
 ./usr/share/zoneinfo/Pacific/Kosrae		base-sys-share		share
 ./usr/share/zoneinfo/Pacific/Kwajalein		base-sys-share		share
