@@ -1,4 +1,4 @@
-/*	$NetBSD: zdump.c,v 1.54 2021/10/22 14:26:04 christos Exp $	*/
+/*	$NetBSD: zdump.c,v 1.55 2021/10/22 16:57:14 ryoon Exp $	*/
 /* Dump time zone data in a textual format.  */
 
 /*
@@ -8,7 +8,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: zdump.c,v 1.54 2021/10/22 14:26:04 christos Exp $");
+__RCSID("$NetBSD: zdump.c,v 1.55 2021/10/22 16:57:14 ryoon Exp $");
 #endif /* !defined lint */
 
 #ifndef NETBSD_INSPIRED
@@ -699,12 +699,6 @@ hunt(timezone_t tz, char *name, time_t lot, time_t hit, bool only_ok)
 			    + hit / 2);
 		if (t == lot)
 			break;
-		t = lot;
-		t += diff / 2;
-		if (t <= lot)
-			++t;
-		else if (t >= hit)
-			--t;
 		tm_ok = my_localtime_rz(tz, &t, &tm) != NULL;
 		if (lotm_ok == tm_ok
 		    && (only_ok
@@ -1176,10 +1170,10 @@ dumptime(const struct tm *timeptr)
 	*/
 	printf("%s %s%3d %.2d:%.2d:%.2d ",
 		((0 <= timeptr->tm_wday
-		  && timeptr->tm_wday < sizeof wday_name / sizeof wday_name[0])
+		  && timeptr->tm_wday < (int) (sizeof wday_name / sizeof wday_name[0]))
 		 ? wday_name[timeptr->tm_wday] : "???"),
 		((0 <= timeptr->tm_mon
-		  && timeptr->tm_mon < sizeof mon_name / sizeof mon_name[0])
+		  && timeptr->tm_mon < (int) (sizeof mon_name / sizeof mon_name[0]))
 		 ? mon_name[timeptr->tm_mon] : "???"),
 		timeptr->tm_mday, timeptr->tm_hour,
 		timeptr->tm_min, timeptr->tm_sec);
