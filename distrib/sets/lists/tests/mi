@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1151 2021/10/22 20:54:36 rillig Exp $
+# $NetBSD: mi,v 1.1152 2021/10/22 21:06:21 rillig Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -4766,7 +4766,7 @@
 ./usr/tests/usr.bin/indent/lex.0					tests-obsolete		obsolete,atf
 ./usr/tests/usr.bin/indent/lex.0.pro					tests-obsolete		obsolete,atf
 ./usr/tests/usr.bin/indent/lex.0.stdout					tests-obsolete		obsolete,atf
-./usr/tests/usr.bin/indent/lex.c					tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/indent/lex.c					tests-obsolete		obsolete,atf
 ./usr/tests/usr.bin/indent/lex_char.0					tests-obsolete		obsolete,atf
 ./usr/tests/usr.bin/indent/lex_char.0.pro				tests-obsolete		obsolete,atf
 ./usr/tests/usr.bin/indent/lex_char.0.stdout				tests-obsolete		obsolete,atf
