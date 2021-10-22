@@ -1,7 +1,7 @@
 /* SPDX-License-Identifier: BSD-2-Clause */
 /*
  * eloop - portable event based main loop.
- * Copyright (c) 2006-2020 Roy Marples <roy@marples.name>
+ * Copyright (c) 2006-2021 Roy Marples <roy@marples.name>
  * All rights reserved.
 
  * Redistribution and use in source and binary forms, with or without
@@ -32,6 +32,7 @@
 #include <errno.h>
 #include <limits.h>
 #include <poll.h>
+#include <stdbool.h>
 #include <signal.h>
 #include <stdint.h>
 #include <stdlib.h>
@@ -136,6 +137,7 @@ struct eloop {
 	TAILQ_HEAD (event_head, eloop_event) events;
 	size_t nevents;
 	struct event_head free_events;
+	bool events_need_setup;
 
 	struct timespec now;
 	TAILQ_HEAD (timeout_head, eloop_timeout) timeouts;
@@ -282,11 +284,16 @@ eloop_reduce_timers(struct eloop *eloop)
 static void
 eloop_event_setup_fds(struct eloop *eloop)
 {
-	struct eloop_event *e;
+	struct eloop_event *e, *ne;
 	struct pollfd *pfd;
 
 	pfd = eloop->fds;
-	TAILQ_FOREACH(e, &eloop->events, next) {
+	TAILQ_FOREACH_SAFE(e, &eloop->events, next, ne) {
+		if (e->fd == -1) {
+			TAILQ_REMOVE(&eloop->events, e, next);
+			TAILQ_INSERT_TAIL(&eloop->free_events, e, next);
+			continue;
+		}
 #ifdef ELOOP_DEBUG
 		fprintf(stderr, "%s(%d) fd=%d, rcb=%p, wcb=%p\n",
 		    __func__, getpid(), e->fd, e->read_cb, e->write_cb);
@@ -301,6 +308,7 @@ eloop_event_setup_fds(struct eloop *eloop)
 		pfd->revents = 0;
 		pfd++;
 	}
+	eloop->events_need_setup = false;
 }
 
 size_t
@@ -368,7 +376,8 @@ eloop_event_add_rw(struct eloop *eloop, int fd,
 	}
 
 setup:
-	eloop_event_setup_fds(eloop);
+	e->pollfd = NULL;
+	eloop->events_need_setup = true;
 	return 0;
 }
 
@@ -394,6 +403,10 @@ eloop_event_delete_write(struct eloop *eloop, int fd, int write_only)
 	struct eloop_event *e;
 
 	assert(eloop != NULL);
+	if (fd == -1) {
+		errno = EINVAL;
+		return -1;
+	}
 
 	TAILQ_FOREACH(e, &eloop->events, next) {
 		if (e->fd == fd)
@@ -409,16 +422,17 @@ eloop_event_delete_write(struct eloop *eloop, int fd, int write_only)
 			goto remove;
 		e->write_cb = NULL;
 		e->write_cb_arg = NULL;
-		goto done;
+		if (e->pollfd != NULL) {
+			e->pollfd->events &= ~POLLOUT;
+			e->pollfd->revents &= ~POLLOUT;
+		}
+		return 1;
 	}
 
 remove:
-	TAILQ_REMOVE(&eloop->events, e, next);
-	TAILQ_INSERT_TAIL(&eloop->free_events, e, next);
+	e->fd = -1;
 	eloop->nevents--;
-
-done:
-	eloop_event_setup_fds(eloop);
+	eloop->events_need_setup = true;
 	return 1;
 }
 
@@ -736,6 +750,9 @@ eloop_start(struct eloop *eloop, sigset_t *signals)
 		} else
 			tsp = NULL;
 
+		if (eloop->events_need_setup)
+			eloop_event_setup_fds(eloop);
+
 		n = ppoll(eloop->fds, (nfds_t)eloop->nevents, tsp, signals);
 		if (n == -1) {
 			if (errno == EINTR)
@@ -746,18 +763,23 @@ eloop_start(struct eloop *eloop, sigset_t *signals)
 			continue;
 
 		TAILQ_FOREACH(e, &eloop->events, next) {
-			if (e->pollfd->revents & POLLOUT) {
-				if (e->write_cb != NULL) {
+			/* Skip freshly added events */
+			if (e->pollfd == NULL)
+				continue;
+			if (e->pollfd->revents)
+				n--;
+			if (e->fd != -1 && e->pollfd->revents & POLLOUT) {
+				if (e->write_cb != NULL)
 					e->write_cb(e->write_cb_arg);
-					break;
-				}
 			}
-			if (e->pollfd->revents) {
-				if (e->read_cb != NULL) {
+			if (e->fd != -1 &&
+			    e->pollfd != NULL && e->pollfd->revents)
+			{
+				if (e->read_cb != NULL)
 					e->read_cb(e->read_cb_arg);
-					break;
-				}
 			}
+			if (n == 0)
+				break;
 		}
 	}
 

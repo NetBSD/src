@@ -1,7 +1,7 @@
 /* SPDX-License-Identifier: BSD-2-Clause */
 /*
  * Privilege Separation for dhcpcd
- * Copyright (c) 2006-2020 Roy Marples <roy@marples.name>
+ * Copyright (c) 2006-2021 Roy Marples <roy@marples.name>
  * All rights reserved
 
  * Redistribution and use in source and binary forms, with or without
@@ -85,7 +85,7 @@
 				 sizeof(struct ps_msghdr) +	\
 				 sizeof(struct msghdr) +	\
 				 CMSG_SPACE(sizeof(struct in6_pktinfo) + \
-				            sizeof(int)))
+					    sizeof(int)))
 
 /* Handy macro to work out if in the privsep engine or not. */
 #define	IN_PRIVSEP(ctx)	\
@@ -176,7 +176,7 @@ int ps_init(struct dhcpcd_ctx *);
 int ps_start(struct dhcpcd_ctx *);
 int ps_stop(struct dhcpcd_ctx *);
 int ps_entersandbox(const char *, const char **);
-int ps_mastersandbox(struct dhcpcd_ctx *, const char *);
+int ps_managersandbox(struct dhcpcd_ctx *, const char *);
 
 int ps_unrollmsg(struct msghdr *, struct ps_msghdr *, const void *, size_t);
 ssize_t ps_sendpsmmsg(struct dhcpcd_ctx *, int,

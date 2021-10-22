@@ -22,14 +22,9 @@ to ensure they can co-exist.
 
 See [BUILDING.md](BUILDING.md) for how to build dhcpcd.
 
-If you wish to file a support ticket or help out with development, please
-[visit the Development Area](https://dev.marples.name/project/profile/101/)
-or join the mailing list below.
-
 ## Configuration
 
-You should read the
-[dhcpcd.conf man page](http://roy.marples.name/man/html5/dhcpcd.conf.html)
+You should read the dhcpcd.conf man page
 and put your options into `/etc/dhcpcd.conf`.
 The default configuration file should work for most people just fine.
 Here it is, in case you lose it.
@@ -78,7 +73,8 @@ require dhcp_server_identifier
 slaac private
 ```
 
-The [dhcpcd man page](/man/html8/dhcpcd.html) has a lot of the same options and more, which only apply to calling dhcpcd from the command line.
+The dhcpcd man page has a lot of the same options and more,
+which only apply to calling dhcpcd from the command line.
 
 
 ## Compatibility
@@ -96,5 +92,5 @@ dhcpcd-9 defaults the run directory to `/var/run/dhcpcd` instead of
 ## ChangeLog
 We no longer supply a ChangeLog.
 However, you're more than welcome to read the
-[commit log](http://roy.marples.name/git/dhcpcd.git/log/) and
+[commit log](https://roy.marples.name/git/dhcpcd/log) and
 [archived release announcements](http://roy.marples.name/archives/dhcpcd-discuss/).

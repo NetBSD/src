@@ -1,7 +1,7 @@
 /* SPDX-License-Identifier: BSD-2-Clause */
 /*
- * Privilege Separation for dhcpcd, privileged actioneer
- * Copyright (c) 2006-2020 Roy Marples <roy@marples.name>
+ * Privilege Separation for dhcpcd, privileged proxy
+ * Copyright (c) 2006-2021 Roy Marples <roy@marples.name>
  * All rights reserved
 
  * Redistribution and use in source and binary forms, with or without
@@ -641,10 +641,10 @@ ps_root_startcb(void *arg)
 {
 	struct dhcpcd_ctx *ctx = arg;
 
-	if (ctx->options & DHCPCD_MASTER)
-		setproctitle("[privileged actioneer]");
+	if (ctx->options & DHCPCD_MANAGER)
+		setproctitle("[privileged proxy]");
 	else
-		setproctitle("[privileged actioneer] %s%s%s",
+		setproctitle("[privileged proxy] %s%s%s",
 		    ctx->ifv[0],
 		    ctx->options & DHCPCD_IPV4 ? " [ip4]" : "",
 		    ctx->options & DHCPCD_IPV6 ? " [ip6]" : "");
@@ -653,7 +653,7 @@ ps_root_startcb(void *arg)
 
 	/* Open network sockets for sending.
 	 * This is a small bit wasteful for non sandboxed OS's
-	 * but makes life very easy for unicasting DHCPv6 in non master
+	 * but makes life very easy for unicasting DHCPv6 in non manager
 	 * mode as we no longer care about address selection.
 	 * We can't call shutdown SHUT_RD on the socket because it's
 	 * not connectd. All we can do is try and set a zero sized
@@ -700,8 +700,8 @@ ps_root_startcb(void *arg)
 #ifdef PLUGIN_DEV
 	/* Start any dev listening plugin which may want to
 	 * change the interface name provided by the kernel */
-	if ((ctx->options & (DHCPCD_MASTER | DHCPCD_DEV)) ==
-	    (DHCPCD_MASTER | DHCPCD_DEV))
+	if ((ctx->options & (DHCPCD_MANAGER | DHCPCD_DEV)) ==
+	    (DHCPCD_MANAGER | DHCPCD_DEV))
 		dev_start(ctx, ps_root_handleinterface);
 #endif
 
