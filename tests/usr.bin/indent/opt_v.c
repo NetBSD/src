@@ -1,4 +1,4 @@
-/* $NetBSD: opt_v.c,v 1.2 2021/10/16 21:32:10 rillig Exp $ */
+/* $NetBSD: opt_v.c,v 1.3 2021/10/22 19:27:53 rillig Exp $ */
 /* $FreeBSD$ */
 
 /*
@@ -65,3 +65,28 @@ example(void)
 	int		sum2 = (1 + 2 + 3 + 4 + 5 + 6 + 7 + 8 + 9 + 10 + 11 + 12 + 13 + 14 + 15 + 16 + 17 + 18 + 19 + 20 + 21);
 }
 #indent end
+
+
+#indent input
+/* Demonstrates line number counting in verbose mode. */
+
+int *function(void)
+{}
+#indent end
+
+#indent run -v
+/* Demonstrates line number counting in verbose mode. */
+
+int *
+function(void)
+{
+}
+There were 5 output lines and 1 comments
+(Lines with comments)/(Lines with code):  0.250
+#indent end
+/* In the above output, the '5' means 5 non-empty lines. */
+
+/*
+ * XXX: It's rather strange that -v writes to stdout, even in filter mode.
+ * This output belongs on stderr instead.
+ */
