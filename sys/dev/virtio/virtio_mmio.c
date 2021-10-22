@@ -1,4 +1,4 @@
-/*	$NetBSD: virtio_mmio.c,v 1.6 2021/02/05 21:25:36 reinoud Exp $	*/
+/*	$NetBSD: virtio_mmio.c,v 1.7 2021/10/22 02:57:23 yamaguchi Exp $	*/
 /*	$OpenBSD: virtio_mmio.c,v 1.2 2017/02/24 17:12:31 patrick Exp $	*/
 
 /*
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: virtio_mmio.c,v 1.6 2021/02/05 21:25:36 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: virtio_mmio.c,v 1.7 2021/10/22 02:57:23 yamaguchi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -90,8 +90,9 @@ static uint16_t	virtio_mmio_read_queue_size(struct virtio_softc *, uint16_t);
 static void	virtio_mmio_setup_queue(struct virtio_softc *, uint16_t, uint64_t);
 static void	virtio_mmio_set_status(struct virtio_softc *, int);
 static void	virtio_mmio_negotiate_features(struct virtio_softc *, uint64_t);
-static int	virtio_mmio_setup_interrupts(struct virtio_softc *);
+static int	virtio_mmio_alloc_interrupts(struct virtio_softc *);
 static void	virtio_mmio_free_interrupts(struct virtio_softc *);
+static int	virtio_mmio_setup_interrupts(struct virtio_softc *, int);
 
 static const struct virtio_ops virtio_mmio_ops = {
 	.kick = virtio_mmio_kick,
@@ -99,8 +100,9 @@ static const struct virtio_ops virtio_mmio_ops = {
 	.setup_queue = virtio_mmio_setup_queue,
 	.set_status = virtio_mmio_set_status,
 	.neg_features = virtio_mmio_negotiate_features,
-	.setup_interrupts = virtio_mmio_setup_interrupts,
+	.alloc_interrupts = virtio_mmio_alloc_interrupts,
 	.free_interrupts = virtio_mmio_free_interrupts,
+	.setup_interrupts = virtio_mmio_setup_interrupts,
 };
 
 static uint16_t
@@ -289,11 +291,11 @@ virtio_mmio_kick(struct virtio_softc *vsc, uint16_t idx)
 }
 
 static int
-virtio_mmio_setup_interrupts(struct virtio_softc *vsc)
+virtio_mmio_alloc_interrupts(struct virtio_softc *vsc)
 {
 	struct virtio_mmio_softc * const sc = (struct virtio_mmio_softc *)vsc;
 
-	return sc->sc_setup_interrupts(sc);
+	return sc->sc_alloc_interrupts(sc);
 }
 
 static void
@@ -302,4 +304,12 @@ virtio_mmio_free_interrupts(struct virtio_softc *vsc)
 	struct virtio_mmio_softc * const sc = (struct virtio_mmio_softc *)vsc;
 
 	sc->sc_free_interrupts(sc);
+}
+
+static int
+virtio_mmio_setup_interrupts(struct virtio_softc *vsc __unused,
+    int reinit __unused)
+{
+
+	return 0;
 }
