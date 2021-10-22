@@ -1,4 +1,4 @@
-/* $NetBSD: opt_bad.c,v 1.3 2021/10/18 07:11:31 rillig Exp $ */
+/* $NetBSD: opt_bad.c,v 1.4 2021/10/22 19:46:41 rillig Exp $ */
 /* $FreeBSD$ */
 
 /*
@@ -29,6 +29,29 @@ void		function_declaration(void);
 #indent end
 
 #indent run-equals-prev-output -nbad
+
+
+/* See FreeBSD r303599. */
+#indent input
+#if defined(__i386__)
+int a;
+#elif defined(__amd64__)
+int b;
+#else
+#error "Port me"
+#endif
+#indent end
+
+#indent run -bad
+#if defined(__i386__)
+int		a;
+#elif defined(__amd64__)
+int		b;
+#else
+#error "Port me"
+#endif
+#indent end
+
 
 /* Test local declarations. */
 #indent input
