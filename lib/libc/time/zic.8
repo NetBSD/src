@@ -1,4 +1,4 @@
-.\"	$NetBSD: zic.8,v 1.36 2021/03/01 04:42:14 christos Exp $
+.\"	$NetBSD: zic.8,v 1.37 2021/10/22 14:26:04 christos Exp $
 .Dd Fabruary 28, 2021
 .Dt ZIC 8
 .Os
@@ -23,7 +23,8 @@
 The
 .Nm
 program reads text from the file(s) named on the command line
-and creates the time conversion information files specified in this input.
+and creates the timezone information format (TZif) files
+specified in this input.
 If a
 .Ar filename
 is
@@ -101,7 +102,7 @@ is
 .Dv \&- ,
 any already-existing link is removed.
 .It Fl r Op Ar @lo / Op Ar @hi
-Reduce the size of output files by limiting their applicability
+Limit the applicability of output files
 to timestamps in the range from
 .Ar lo
 (inclusive) to
@@ -113,6 +114,10 @@ and
 are possibly-signed decimal counts of seconds since the Epoch
 (1970-01-01 00:00:00 UTC).
 Omitted counts default to extreme values.
+The output files use UT offset 0 and abbreviation
+.q "\*-00"
+in place of the omitted timestamp data;
+this typically reduces the files' sizes.
 For example,
 .Bd literal
 zic -r @0
@@ -199,6 +204,15 @@ output formats.
 These compatibility issues affect only timestamps
 before 1970 or after the start of 2038.
 .It
+The output contains a truncated leap second table,
+which can cause some older TZif readers to misbehave.
+This can occur if the
+.Fl L
+option is used, and either an Expires line is present or
+the
+.Fl r
+option is also used.
+.It
 The output file contains more than 1200 transitions,
 which may be mishandled by some clients.
 The current reference client supports at most 2000 transitions;
@@ -230,7 +244,7 @@ The input text's encoding
 is typically UTF-8 or ASCII; it should have a unibyte representation
 for the POSIX Portable Character Set (PPCS)
 .Rs
-.%U http://pubs.opengroup.org/onlinepubs/9699919799/basedefs/V1_chap06.html
+.%U https://pubs.opengroup.org/onlinepubs/9699919799/basedefs/V1_chap06.html
 .Re
 and the encoding's non-unibyte characters should consist entirely of
 non-PPCS bytes.
@@ -496,8 +510,8 @@ begin the field with a minus sign if time must be subtracted from UT.
 .It RULES
 The name of the rules that apply in the timezone or,
 alternatively, a field in the same format as a rule-line SAVE column,
-giving of the amount of time to be added to local standard time
-effect, and whether the resulting time is standard or daylight saving.
+giving the amount of time to be added to local standard time
+and whether the resulting time is standard or daylight saving.
 If this field is
 .Em \&-
 then standard time always applies.
@@ -522,7 +536,7 @@ using the shortest form that does not lose information, where
 .Em mm ,
 and
 .Em ss
-are the hours, minutes, and seconds east (+) or west (\(mi) of UT.
+are the hours, minutes, and seconds east (+) or west (\-) of UT.
 Alternatively,
 a slash
 .Pq \&/
@@ -532,6 +546,9 @@ alphanumeric ASCII characters,
 .Qq +
 and
 .Qq \&- .
+By convention, the time zone abbreviation
+.Qq \&-00
+is a placeholder that means local time is unspecified.
 .It UNTIL
 The time at which the UT offset or the rule(s) change for a location.
 It takes the form of one to four fields YEAR [MONTH [DAY [TIME]]].
@@ -667,6 +684,19 @@ or
 if the leap second time given by the other fields should be interpreted as
 local (wall clock) time.
 .Pp
+Rolling leap seconds were implemented back when it was not
+clear whether common practice was rolling or stationary,
+with concerns that one would see
+Times Square ball drops where there'd be a
+.Qq 3... 2... 1... leap... Happy New Year
+countdown, placing the leap second at
+midnight New York time rather than midnight UTC.
+However, this countdown style does not seem to have caught on,
+which means rolling leap seconds are not used in practice;
+also, they are not supported if the
+.Fl r
+option is used.
+.Pp
 The expiration line, if present, has the form:
 .Pp
 .Dl Expires	YEAR	MONTH	DAY	HH:MM:SS
@@ -682,22 +712,6 @@ The
 and
 .Em HH:MM:SS
 fields give the expiration timestamp in UTC for the leap second table;
-.Nm
-outputs this expiration timestamp by truncating the end of the output
-file to the timestamp.
-If there is no expiration line,
-.Nm
-also accepts a comment
-.Qq "#expires \fIE\fP ...\&"
-where
-.Em E
-is the expiration timestamp as a decimal integer count of seconds
-since the Epoch, not counting leap seconds.
-However, the
-.Qq "#expires"
-comment is an obsolescent feature,
-and the leap second file should use an expiration line
-instead of relying on a comment.
 .Sh EXTENDED EXAMPLE
 Here is an extended example of
 .Ic zic
