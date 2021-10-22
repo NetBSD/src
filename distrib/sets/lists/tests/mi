@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1149 2021/10/22 19:27:53 rillig Exp $
+# $NetBSD: mi,v 1.1150 2021/10/22 19:46:41 rillig Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -5023,9 +5023,9 @@
 ./usr/tests/usr.bin/indent/opt_sob.c					tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/indent/opt_ut.c					tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/indent/opt_v.c					tests-usr.bin-tests	compattestfile,atf
-./usr/tests/usr.bin/indent/parens.0					tests-usr.bin-tests	compattestfile,atf
-./usr/tests/usr.bin/indent/parens.0.pro					tests-usr.bin-tests	compattestfile,atf
-./usr/tests/usr.bin/indent/parens.0.stdout				tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/indent/parens.0					tests-obsolete		obsolete,atf
+./usr/tests/usr.bin/indent/parens.0.pro					tests-obsolete		obsolete,atf
+./usr/tests/usr.bin/indent/parens.0.stdout				tests-obsolete		obsolete,atf
 ./usr/tests/usr.bin/indent/pcs.0					tests-obsolete		obsolete,atf
 ./usr/tests/usr.bin/indent/pcs.0.pro					tests-obsolete		obsolete,atf
 ./usr/tests/usr.bin/indent/pcs.0.stdout					tests-obsolete		obsolete,atf
@@ -5033,11 +5033,11 @@
 ./usr/tests/usr.bin/indent/ps_ind_level.0.pro				tests-obsolete		obsolete,atf
 ./usr/tests/usr.bin/indent/ps_ind_level.0.stdout			tests-obsolete		obsolete,atf
 ./usr/tests/usr.bin/indent/ps_ind_level.c				tests-usr.bin-tests	compattestfile,atf
-./usr/tests/usr.bin/indent/struct.0					tests-usr.bin-tests	compattestfile,atf
-./usr/tests/usr.bin/indent/struct.0.stdout				tests-usr.bin-tests	compattestfile,atf
-./usr/tests/usr.bin/indent/surplusbad.0					tests-usr.bin-tests	compattestfile,atf
-./usr/tests/usr.bin/indent/surplusbad.0.pro				tests-usr.bin-tests	compattestfile,atf
-./usr/tests/usr.bin/indent/surplusbad.0.stdout				tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/indent/struct.0					tests-obsolete		obsolete,atf
+./usr/tests/usr.bin/indent/struct.0.stdout				tests-obsolete		obsolete,atf
+./usr/tests/usr.bin/indent/surplusbad.0					tests-obsolete		obsolete,atf
+./usr/tests/usr.bin/indent/surplusbad.0.pro				tests-obsolete		obsolete,atf
+./usr/tests/usr.bin/indent/surplusbad.0.stdout				tests-obsolete		obsolete,atf
 ./usr/tests/usr.bin/indent/t_errors					tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/indent/t_indent					tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/indent/t_misc					tests-usr.bin-tests	compattestfile,atf
@@ -5199,8 +5199,8 @@
 ./usr/tests/usr.bin/indent/types_from_file.0.list			tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/indent/types_from_file.0.pro			tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/indent/types_from_file.0.stdout			tests-usr.bin-tests	compattestfile,atf
-./usr/tests/usr.bin/indent/wchar.0					tests-usr.bin-tests	compattestfile,atf
-./usr/tests/usr.bin/indent/wchar.0.stdout				tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/indent/wchar.0					tests-obsolete		obsolete,atf
+./usr/tests/usr.bin/indent/wchar.0.stdout				tests-obsolete		obsolete,atf
 ./usr/tests/usr.bin/infocmp				tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/infocmp/Atffile			tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/infocmp/Kyuafile			tests-usr.bin-tests	compattestfile,atf,kyua

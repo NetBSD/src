@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.25 2021/10/22 19:27:53 rillig Exp $
+#	$NetBSD: Makefile,v 1.26 2021/10/22 19:46:41 rillig Exp $
 
 .include <bsd.own.mk>
 
@@ -116,15 +116,7 @@ FILES+=		opt_sc.c
 FILES+=		opt_sob.c
 FILES+=		opt_ut.c
 FILES+=		opt_v.c
-FILES+=		parens.0
-FILES+=		parens.0.stdout
-FILES+=		parens.0.pro
 FILES+=		ps_ind_level.c
-FILES+=		struct.0
-FILES+=		struct.0.stdout
-FILES+=		surplusbad.0
-FILES+=		surplusbad.0.stdout
-FILES+=		surplusbad.0.pro
 FILES+=		t_options.awk
 FILES+=		token_binary_op.c
 FILES+=		token_case_label.c
@@ -168,8 +160,6 @@ FILES+=		types_from_file.0
 FILES+=		types_from_file.0.stdout
 FILES+=		types_from_file.0.list
 FILES+=		types_from_file.0.pro
-FILES+=		wchar.0
-FILES+=		wchar.0.stdout
 
 add-test: .PHONY
 	@set -eu; \
