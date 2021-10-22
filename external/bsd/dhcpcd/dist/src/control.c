@@ -1,7 +1,7 @@
 /* SPDX-License-Identifier: BSD-2-Clause */
 /*
  * dhcpcd - DHCP client daemon
- * Copyright (c) 2006-2020 Roy Marples <roy@marples.name>
+ * Copyright (c) 2006-2021 Roy Marples <roy@marples.name>
  * All rights reserved
 
  * Redistribution and use in source and binary forms, with or without
@@ -50,7 +50,7 @@
 
 #ifndef SUN_LEN
 #define SUN_LEN(su) \
-            (sizeof(*(su)) - sizeof((su)->sun_path) + strlen((su)->sun_path))
+	    (sizeof(*(su)) - sizeof((su)->sun_path) + strlen((su)->sun_path))
 #endif
 
 static void
@@ -84,7 +84,8 @@ control_free(struct fd_list *fd)
 		fd->ctx->ps_control_client = NULL;
 #endif
 
-	eloop_event_remove_writecb(fd->ctx->eloop, fd->fd);
+	if (eloop_event_remove_writecb(fd->ctx->eloop, fd->fd) == -1)
+		logerr(__func__);
 	TAILQ_REMOVE(&fd->ctx->control_fds, fd, next);
 	control_queue_free(fd);
 	free(fd);
@@ -350,12 +351,12 @@ control_start1(struct dhcpcd_ctx *ctx, const char *ifname, sa_family_t family,
 	}
 #endif
 
-	if ((fmode & S_PRIV) == S_PRIV)
-		strlcpy(ctx->control_sock, sa.sun_path,
-		    sizeof(ctx->control_sock));
-	else
+	if ((fmode & S_UNPRIV) == S_UNPRIV)
 		strlcpy(ctx->control_sock_unpriv, sa.sun_path,
 		    sizeof(ctx->control_sock_unpriv));
+	else
+		strlcpy(ctx->control_sock, sa.sun_path,
+		    sizeof(ctx->control_sock));
 	return fd;
 }
 
@@ -368,7 +369,8 @@ control_start(struct dhcpcd_ctx *ctx, const char *ifname, sa_family_t family)
 	if (IN_PRIVSEP_SE(ctx)) {
 		make_path(ctx->control_sock, sizeof(ctx->control_sock),
 		    ifname, family, false);
-		make_path(ctx->control_sock_unpriv, sizeof(ctx->control_sock),
+		make_path(ctx->control_sock_unpriv,
+		    sizeof(ctx->control_sock_unpriv),
 		    ifname, family, true);
 		return 0;
 	}
@@ -528,7 +530,8 @@ control_writeone(void *arg)
 	if (TAILQ_FIRST(&fd->queue) != NULL)
 		return;
 
-	eloop_event_remove_writecb(fd->ctx->eloop, fd->fd);
+	if (eloop_event_remove_writecb(fd->ctx->eloop, fd->fd) == -1)
+		logerr(__func__);
 #ifdef PRIVSEP
 	if (IN_PRIVSEP_SE(fd->ctx) && !(fd->flags & FD_LISTEN)) {
 		if (ps_ctl_sendeof(fd) == -1)
