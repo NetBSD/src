@@ -1,7 +1,7 @@
 /* SPDX-License-Identifier: BSD-2-Clause */
 /*
  * dhcpcd - DHCP client daemon
- * Copyright (c) 2006-2020 Roy Marples <roy@marples.name>
+ * Copyright (c) 2006-2021 Roy Marples <roy@marples.name>
  * All rights reserved
 
  * Redistribution and use in source and binary forms, with or without
@@ -637,7 +637,7 @@ dhcp6_makemessage(struct interface *ifp)
 	uint8_t type;
 	uint16_t si_len, uni_len, n_options;
 	uint8_t *o_lenp;
-	struct if_options *ifo;
+	struct if_options *ifo = ifp->options;
 	const struct dhcp_opt *opt, *opt2;
 	const struct ipv6_addr *ap;
 	char hbuf[HOSTNAME_MAX_LEN + 1];
@@ -658,8 +658,50 @@ dhcp6_makemessage(struct interface *ifp)
 		state->send = NULL;
 	}
 
-	ifo = ifp->options;
-	fqdn = ifo->fqdn;
+	switch(state->state) {
+	case DH6S_INIT: /* FALLTHROUGH */
+	case DH6S_DISCOVER:
+		type = DHCP6_SOLICIT;
+		break;
+	case DH6S_REQUEST:
+		type = DHCP6_REQUEST;
+		break;
+	case DH6S_CONFIRM:
+		type = DHCP6_CONFIRM;
+		break;
+	case DH6S_REBIND:
+		type = DHCP6_REBIND;
+		break;
+	case DH6S_RENEW:
+		type = DHCP6_RENEW;
+		break;
+	case DH6S_INFORM:
+		type = DHCP6_INFORMATION_REQ;
+		break;
+	case DH6S_RELEASE:
+		type = DHCP6_RELEASE;
+		break;
+	case DH6S_DECLINE:
+		type = DHCP6_DECLINE;
+		break;
+	default:
+		errno = EINVAL;
+		return -1;
+	}
+
+	/* RFC 4704 Section 5 says we can only send FQDN for these
+	 * message types. */
+	switch(type) {
+	case DHCP6_SOLICIT:
+	case DHCP6_REQUEST:
+	case DHCP6_RENEW:
+	case DHCP6_REBIND:
+		fqdn = ifo->fqdn;
+		break;
+	default:
+		fqdn = FQDN_DISABLE;
+		break;
+	}
 
 	if (fqdn == FQDN_DISABLE && ifo->options & DHCPCD_HOSTNAME) {
 		/* We're sending the DHCPv4 hostname option, so send FQDN as
@@ -823,37 +865,6 @@ dhcp6_makemessage(struct interface *ifp)
 	}
 
 	switch(state->state) {
-	case DH6S_INIT: /* FALLTHROUGH */
-	case DH6S_DISCOVER:
-		type = DHCP6_SOLICIT;
-		break;
-	case DH6S_REQUEST:
-		type = DHCP6_REQUEST;
-		break;
-	case DH6S_CONFIRM:
-		type = DHCP6_CONFIRM;
-		break;
-	case DH6S_REBIND:
-		type = DHCP6_REBIND;
-		break;
-	case DH6S_RENEW:
-		type = DHCP6_RENEW;
-		break;
-	case DH6S_INFORM:
-		type = DHCP6_INFORMATION_REQ;
-		break;
-	case DH6S_RELEASE:
-		type = DHCP6_RELEASE;
-		break;
-	case DH6S_DECLINE:
-		type = DHCP6_DECLINE;
-		break;
-	default:
-		errno = EINVAL;
-		return -1;
-	}
-
-	switch(state->state) {
 	case DH6S_REQUEST: /* FALLTHROUGH */
 	case DH6S_RENEW:   /* FALLTHROUGH */
 	case DH6S_RELEASE:
@@ -868,11 +879,11 @@ dhcp6_makemessage(struct interface *ifp)
 		break;
 	}
 
-	/* In non master mode we listen and send from fixed addresses.
+	/* In non manager mode we listen and send from fixed addresses.
 	 * We should try and match an address we have to unicast to,
 	 * but for now this is the safest policy. */
-	if (unicast != NULL && !(ifp->ctx->options & DHCPCD_MASTER)) {
-		logdebugx("%s: ignoring unicast option as not master",
+	if (unicast != NULL && !(ifp->ctx->options & DHCPCD_MANAGER)) {
+		logdebugx("%s: ignoring unicast option as not manager",
 		    ifp->name);
 		unicast = NULL;
 	}
@@ -1638,7 +1649,7 @@ dhcp6_startinform(void *arg)
 
 	ifp = arg;
 	state = D6_STATE(ifp);
-	if (state->new == NULL && !state->failed)
+	if (state->new_start || (state->new == NULL && !state->failed))
 		llevel = LOG_INFO;
 	else
 		llevel = LOG_DEBUG;
@@ -3035,18 +3046,25 @@ static void
 dhcp6_bind(struct interface *ifp, const char *op, const char *sfrom)
 {
 	struct dhcp6_state *state = D6_STATE(ifp);
-	bool timedout = (op == NULL), has_new = false, confirmed;
+	bool timedout = (op == NULL), confirmed;
 	struct ipv6_addr *ia;
 	int loglevel;
 	struct timespec now;
 
-	TAILQ_FOREACH(ia, &state->addrs, next) {
-		if (ia->flags & IPV6_AF_NEW) {
-			has_new = true;
-			break;
+	if (state->state == DH6S_RENEW && !state->new_start) {
+		loglevel = LOG_DEBUG;
+		TAILQ_FOREACH(ia, &state->addrs, next) {
+			if (ia->flags & IPV6_AF_NEW) {
+				loglevel = LOG_INFO;
+				break;
+			}
 		}
-	}
-	loglevel = has_new || state->state != DH6S_RENEW ? LOG_INFO : LOG_DEBUG;
+	} else if (state->state == DH6S_INFORM)
+		loglevel = state->new_start ? LOG_INFO : LOG_DEBUG;
+	else
+		loglevel = LOG_INFO;
+	state->new_start = false;
+
 	if (!timedout) {
 		logmessage(loglevel, "%s: %s received from %s",
 		    ifp->name, op, sfrom);
@@ -3245,7 +3263,7 @@ dhcp6_bind(struct interface *ifp, const char *op, const char *sfrom)
 
 	if (ifp->ctx->options & DHCPCD_TEST ||
 	    (ifp->options->options & DHCPCD_INFORM &&
-	    !(ifp->ctx->options & DHCPCD_MASTER)))
+	    !(ifp->ctx->options & DHCPCD_MANAGER)))
 	{
 		eloop_exit(ifp->ctx->eloop, EXIT_SUCCESS);
 	}
@@ -3852,7 +3870,7 @@ dhcp6_start1(void *arg)
 	size_t i;
 	const struct dhcp_compat *dhc;
 
-	if ((ctx->options & (DHCPCD_MASTER|DHCPCD_PRIVSEP)) == DHCPCD_MASTER &&
+	if ((ctx->options & (DHCPCD_MANAGER|DHCPCD_PRIVSEP)) == DHCPCD_MANAGER &&
 	    ctx->dhcp6_rfd == -1)
 	{
 		ctx->dhcp6_rfd = dhcp6_openudp(0, NULL);
@@ -3923,7 +3941,13 @@ dhcp6_start(struct interface *ifp, enum DH6S init_state)
 			    (state->state == DH6S_DISCOVER &&
 			    !(ifp->options->options & DHCPCD_IA_FORCED) &&
 			    !ipv6nd_hasradhcp(ifp, true)))
+			{
+				/* We don't want log spam when the RA
+				 * has just adjusted it's prefix times. */
+				if (state->state != DH6S_INFORMED)
+					state->new_start = true;
 				dhcp6_startinform(ifp);
+			}
 			break;
 		case DH6S_REQUEST:
 			if (ifp->options->options & DHCPCD_DHCP6 &&
@@ -3972,6 +3996,7 @@ dhcp6_start(struct interface *ifp, enum DH6S init_state)
 	TAILQ_INIT(&state->addrs);
 
 gogogo:
+	state->new_start = true;
 	state->state = init_state;
 	state->lerror = 0;
 	state->failed = false;
@@ -4155,11 +4180,11 @@ dhcp6_handleifa(int cmd, struct ipv6_addr *ia, pid_t pid)
 	struct dhcp6_state *state;
 	struct interface *ifp = ia->iface;
 
-	/* If not running in master mode, listen to this address */
+	/* If not running in manager mode, listen to this address */
 	if (cmd == RTM_NEWADDR &&
 	    !(ia->addr_flags & IN6_IFF_NOTUSEABLE) &&
 	    ifp->active == IF_ACTIVE_USER &&
-	    !(ifp->ctx->options & DHCPCD_MASTER) &&
+	    !(ifp->ctx->options & DHCPCD_MANAGER) &&
 	    ifp->options->options & DHCPCD_DHCP6)
 	{
 #ifdef PRIVSEP
