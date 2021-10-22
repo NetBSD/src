@@ -1,7 +1,7 @@
 /* SPDX-License-Identifier: BSD-2-Clause */
 /*
  * dhcpcd - DHCP client daemon
- * Copyright (c) 2006-2020 Roy Marples <roy@marples.name>
+ * Copyright (c) 2006-2021 Roy Marples <roy@marples.name>
  * All rights reserved
 
  * Redistribution and use in source and binary forms, with or without
@@ -170,6 +170,23 @@ ipv4_iffindmaskaddr(struct interface *ifp, const struct in_addr *addr)
 	return NULL;
 }
 
+static struct ipv4_addr *
+ipv4_iffindmaskbrd(struct interface *ifp, const struct in_addr *addr)
+{
+	struct ipv4_state *state;
+	struct ipv4_addr *ap;
+
+	state = IPV4_STATE(ifp);
+	if (state) {
+		TAILQ_FOREACH (ap, &state->addrs, next) {
+			if ((ap->brd.s_addr & ap->mask.s_addr) ==
+			    (addr->s_addr & ap->mask.s_addr))
+				return ap;
+		}
+	}
+	return NULL;
+}
+
 struct ipv4_addr *
 ipv4_findaddr(struct dhcpcd_ctx *ctx, const struct in_addr *addr)
 {
@@ -192,6 +209,20 @@ ipv4_findmaskaddr(struct dhcpcd_ctx *ctx, const struct in_addr *addr)
 
 	TAILQ_FOREACH(ifp, ctx->ifaces, next) {
 		ap = ipv4_iffindmaskaddr(ifp, addr);
+		if (ap)
+			return ap;
+	}
+	return NULL;
+}
+
+struct ipv4_addr *
+ipv4_findmaskbrd(struct dhcpcd_ctx *ctx, const struct in_addr *addr)
+{
+	struct interface *ifp;
+	struct ipv4_addr *ap;
+
+	TAILQ_FOREACH(ifp, ctx->ifaces, next) {
+		ap = ipv4_iffindmaskbrd(ifp, addr);
 		if (ap)
 			return ap;
 	}
