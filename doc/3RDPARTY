@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.1823 2021/10/22 14:27:38 christos Exp $
+#	$NetBSD: 3RDPARTY,v 1.1824 2021/10/22 21:03:50 kre Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -1411,7 +1411,7 @@ Added changes from a5 -> a12 manually.
 
 Package:	tz
 Version:	tzcode2021e / tzdata2021e
-Current Vers:	tzcode2021e / tzdata2021c
+Current Vers:	tzcode2021e / tzdata2021e
 Maintainer:	Paul Eggert <eggert@cs.ucla.edu>
 Archive Site:	ftp://ftp.iana.org/tz/releases/
 Archive Site:	ftp://munnari.oz.au/pub/oldtz/
@@ -1427,7 +1427,8 @@ Don't use src/lib/libc/time/tzcode2netbsd to prepare the source tree for import.
 Diffs are now applied by hand, since we have too many diffs (re-entrant tzcode,
 register removal) to apply. The diffs have been submitted upstream but there
 is too much inertia to apply them. Check for .gitignore files.
-For the data files, do use external/public-domain/tz/tzdata2netbsd.
+For the data files, do use external/public-domain/tz/tzdata2netbsd (usually,
+for now, late 2021, do it manually).
 
 Package:	wpa_supplicant/hostapd
 Version:	2.9
