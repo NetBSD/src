@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_platform.c,v 1.30 2021/10/21 00:09:28 jmcneill Exp $ */
+/* $NetBSD: acpi_platform.c,v 1.31 2021/10/23 17:45:55 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_platform.c,v 1.30 2021/10/21 00:09:28 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_platform.c,v 1.31 2021/10/23 17:45:55 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -82,6 +82,8 @@ __KERNEL_RCSID(0, "$NetBSD: acpi_platform.c,v 1.30 2021/10/21 00:09:28 jmcneill 
 #include <arm/acpi/acpi_table.h>
 
 #include <libfdt.h>
+
+#define	ACPI_DBG2_16550_GAS			0x0012
 
 #define	SPCR_BAUD_DEFAULT			0
 #define	SPCR_BAUD_9600				3
@@ -188,11 +190,18 @@ acpi_platform_attach_uart(ACPI_TABLE_SPCR *spcr)
 #if NCOM > 0
 	case ACPI_DBG2_16550_COMPATIBLE:
 	case ACPI_DBG2_16550_SUBSET:
+	case ACPI_DBG2_16550_GAS:
 		memset(&dummy_bsh, 0, sizeof(dummy_bsh));
-		if (ACPI_ACCESS_BIT_WIDTH(spcr->SerialPort.AccessWidth) == 8) {
+		if (spcr->InterfaceType == ACPI_DBG2_16550_COMPATIBLE) {
 			reg_shift = 0;
-		} else {
+		} else if (spcr->InterfaceType == ACPI_DBG2_16550_SUBSET) {
 			reg_shift = 2;
+		} else {
+			if (ACPI_ACCESS_BIT_WIDTH(spcr->SerialPort.AccessWidth) == 8) {
+				reg_shift = 0;
+			} else {
+				reg_shift = 2;
+			}
 		}
 		com_init_regs_stride(&regs, &arm_generic_bs_tag, dummy_bsh,
 		    le64toh(spcr->SerialPort.Address), reg_shift);
