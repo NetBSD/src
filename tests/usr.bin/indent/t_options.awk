@@ -1,4 +1,4 @@
-# $NetBSD: t_options.awk,v 1.1 2021/10/18 20:18:00 rillig Exp $
+# $NetBSD: t_options.awk,v 1.2 2021/10/23 20:35:18 rillig Exp $
 #
 # Copyright (c) 2021 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -181,6 +181,10 @@ section == "input" || section == "run" {
 
 section == "run" {
 	print $0 > "expected.out"
+}
+
+section == "" && !/^$/ && !/^#/ && !/^\// && !/^ \*/ {
+	warn(NR, "non-comment line outside 'input' or 'run' section")
 }
 
 END {
