@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.30 2021/10/23 20:17:08 rillig Exp $
+#	$NetBSD: Makefile,v 1.31 2021/10/23 20:23:27 rillig Exp $
 
 .include <bsd.own.mk>
 
@@ -18,9 +18,6 @@ FILES+=		label.c
 FILES+=		lex_ident.c
 FILES+=		lex_char.c
 FILES+=		lex_string.c
-FILES+=		opt--version.0
-FILES+=		opt--version.0.pro
-FILES+=		opt--version.0.stdout
 FILES+=		opt-U.0
 FILES+=		opt-U.0.list
 FILES+=		opt-U.0.pro
@@ -74,6 +71,7 @@ FILES+=		opt_ta.c
 FILES+=		opt_ts.c
 FILES+=		opt_ut.c
 FILES+=		opt_v.c
+FILES+=		opt_version.c
 FILES+=		ps_ind_level.c
 FILES+=		t_options.awk
 FILES+=		token_binary_op.c
