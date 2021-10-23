@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.31 2021/10/23 20:23:27 rillig Exp $
+#	$NetBSD: Makefile,v 1.32 2021/10/23 20:30:23 rillig Exp $
 
 .include <bsd.own.mk>
 
@@ -22,9 +22,6 @@ FILES+=		opt-U.0
 FILES+=		opt-U.0.list
 FILES+=		opt-U.0.pro
 FILES+=		opt-U.0.stdout
-FILES+=		opt-bap+sob.0
-FILES+=		opt-bap+sob.0.pro
-FILES+=		opt-bap+sob.0.stdout
 FILES+=		opt-npro.0
 FILES+=		opt-npro.0.pro
 FILES+=		opt-npro.0.stdout
@@ -37,6 +34,7 @@ FILES+=		opt_bacc.c
 FILES+=		opt_bad.c
 FILES+=		opt_badp.c
 FILES+=		opt_bap.c
+FILES+=		opt_bap_sob.c
 FILES+=		opt_bbb.c
 FILES+=		opt_bc.c
 FILES+=		opt_bl_br.c
