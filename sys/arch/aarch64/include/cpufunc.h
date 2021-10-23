@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.h,v 1.20 2021/05/27 06:11:20 ryo Exp $	*/
+/*	$NetBSD: cpufunc.h,v 1.21 2021/10/23 05:32:40 skrll Exp $	*/
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -108,7 +108,6 @@ void aarch64_tlbi_by_asid_va_ll(int, vaddr_t);	/*  an ASID, a VA, lastlevel */
 #define cpu_idnum()			aarch64_cpuid()
 
 /* cache op */
-
 #define cpu_dcache_wbinv_all()		aarch64_dcache_wbinv_all()
 #define cpu_dcache_inv_all()		aarch64_dcache_inv_all()
 #define cpu_dcache_wb_all()		aarch64_dcache_wb_all()
