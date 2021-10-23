@@ -1,4 +1,4 @@
-/*	$NetBSD: socketvar.h,v 1.163 2020/11/23 00:52:53 chs Exp $	*/
+/*	$NetBSD: socketvar.h,v 1.164 2021/10/23 01:28:33 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -422,6 +422,17 @@ sbspace_oob(const struct sockbuf *sb)
 	if (hiwat <= sb->sb_cc || sb->sb_mbmax <= sb->sb_mbcnt)
 		return 0;
 	return lmin(hiwat - sb->sb_cc, sb->sb_mbmax - sb->sb_mbcnt);
+}
+
+/*
+ * How much socket buffer space has been used?
+ */
+static __inline u_long
+sbused(const struct sockbuf *sb)
+{
+
+	KASSERT(solocked(sb->sb_so));
+	return sb->sb_cc;
 }
 
 /* do we have to send all at once on a socket? */
