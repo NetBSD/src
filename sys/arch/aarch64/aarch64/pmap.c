@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.118 2021/10/16 06:34:30 ryo Exp $	*/
+/*	$NetBSD: pmap.c,v 1.119 2021/10/23 06:49:46 skrll Exp $	*/
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.118 2021/10/16 06:34:30 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.119 2021/10/23 06:49:46 skrll Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_ddb.h"
@@ -1455,10 +1455,8 @@ pmap_activate(struct lwp *l)
 	/* this calls tlb_set_asid which calls cpu_set_ttbr0 */
 	pmap_tlb_asid_acquire(pm, l);
 
-	struct pmap_asid_info * const pai __debugused = PMAP_PAI(pm,
-	    cpu_tlb_info(ci));
-
-	UVMHIST_LOG(pmaphist, "lwp=%p, asid=%d", l, pai->pai_asid, 0, 0);
+	UVMHIST_LOG(pmaphist, "lwp=%p, asid=%d", l,
+	    PMAP_PAI(pm, cpu_tlb_info(ci))->pai_asid, 0, 0);
 
 	/* Re-enable translation table walks using TTBR0 */
 	tcr = reg_tcr_el1_read();
@@ -1485,10 +1483,8 @@ pmap_deactivate(struct lwp *l)
 	reg_tcr_el1_write(tcr | TCR_EPD0);
 	isb();
 
-	struct pmap_asid_info * const pai __debugused = PMAP_PAI(pm,
-	    cpu_tlb_info(ci));
-
-	UVMHIST_LOG(pmaphist, "lwp=%p, asid=%d", l, pai->pai_asid, 0, 0);
+	UVMHIST_LOG(pmaphist, "lwp=%p, asid=%d", l,
+	    PMAP_PAI(pm, cpu_tlb_info(ci))->pai_asid, 0, 0);
 
 	pmap_tlb_asid_deactivate(pm);
 
@@ -2123,9 +2119,8 @@ pmap_remove_all(struct pmap *pm)
 	pmap_tlb_asid_release_all(pm);
 	pm->pm_remove_all = true;
 
-	struct pmap_asid_info * const pai __debugused = PMAP_PAI(pm,
-	    cpu_tlb_info(ci));
-	UVMHIST_LOG(pmaphist, "pm=%p, asid=%d", pm, pai->pai_asid, 0, 0);
+	UVMHIST_LOG(pmaphist, "pm=%p, asid=%d", pm,
+	    PMAP_PAI(pm, cpu_tlb_info(ci))->pai_asid, 0, 0);
 
 	pm_lock(pm);
 
