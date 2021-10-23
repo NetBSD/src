@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.3,v 1.1.2.104 2021/10/08 15:01:21 martin Exp $
+# $NetBSD: CHANGES-8.3,v 1.1.2.105 2021/10/23 11:53:10 martin Exp $
 
 A complete list of changes from the NetBSD 8.2 release to the NetBSD 8.3
 release:
@@ -2120,4 +2120,56 @@ sys/kern/sys_pipe.c				1.157
 
 	PR 56422: fix a deadlock in "pipe_write()".
 	[hannken, ticket #1698]
+
+sys/dev/pci/pcidevs				1.1420-1.1440 (patch)
+sys/dev/pci/pcidevs.h				(regen)
+sys/dev/pci/pcidevs_data.h			(regen)
+
+	- Add modern QUMRANET/Red Hat VIRTIO range PCI devices.
+	- Add some more product IDs for mcx(4).
+	- Add current generation NVIDIA graphics cards (3050-3090 etc.).
+	- Add RDC R6022 PCI-Host bridge.
+	- Add a whole bunch of radeon devices.
+	- Add Realtek RTL8821CE.
+	- Add Intel 660p SSD, and expand the 760p description.
+	- Add Intel I219's version number.
+	- Add Intel I219V 15-19 and I219LM 16-19.
+	- Add Intel I225V, I225LM and WiFi 6 AX201.
+	- Add newer Intel PCH internal devices.
+	- Add Intel Jasper Lake devices.
+	- PDC20265 is Ultra/100, not 66.
+	- Fix Realtek RTL8125 description.
+	- Sort Cavium devices.
+	[msaitoh, ticket #1700]
+
+share/man/man4/wm.4				1.42
+sys/dev/pci/files.pci				1.434
+sys/dev/pci/if_wm.c				1.686-1.687,1.692-1.693,1.697,1.699-1.703,1.706-1.715 via patch
+sys/dev/pci/if_wmvar.h				1.46
+
+	wm(4):
+	- Add missing drain for pcq in wm_stop_locked().
+	- Add support for I219V 15-19 and I219LM 16-19.
+	- Fix Tx stall.
+	- Use wm_flush_desc_rings() workaround more on I219.
+	- Change DMA physical address in wm_flush_desc_rings() to match other
+	  OSes.
+	- Check return value correctly in wm_lv_jumbo_workaround_ich8lan().
+	- Add new sysctl hw.wmN.debug_flags. This sysctl can be used if
+	  WM_DEBUG is set.
+	- Add some sysctl values for debugging TX/RX queues.
+	- WM_EVENT_COUNTER is enabled by default on 64 bit architectures.
+	- Remove extra unlock/lock processing around if_percpuq_enqueue().
+	- Refactor rxq->rxq_ptr updating.
+	- Stop legacy interrupts before calling softint.
+	- Disable printf()s in wm_flush_desc_rings() because the code is
+	  verified.
+	- Print I219's version number.
+	- Uniform INTx/MSI handler's Tx/Rx behavior to MSI-X's one.
+	- Fix return value of interrupt handler.
+	- Only print an error about missing I/O BARs for chips that need it.
+	- Do not return a void value from a void function.
+	- Add new flag named WM_F_CRC_STRIP and use it. No functional change.
+	- Whitespace fixes. Fix comments. No functional change.
+	[msaitoh, ticket #1701]
 
