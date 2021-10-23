@@ -1,4 +1,4 @@
-/*	$NetBSD: fmt_decl.c,v 1.2 2021/10/23 20:01:14 rillig Exp $	*/
+/*	$NetBSD: fmt_decl.c,v 1.3 2021/10/23 20:07:03 rillig Exp $	*/
 /* $FreeBSD: head/usr.bin/indent/tests/declarations.0 334478 2018-06-01 09:41:15Z pstef $ */
 
 /* See FreeBSD r303570 */
@@ -193,6 +193,7 @@ print_error(const char *fmt, ...)
 #indent end
 
 
+/* See FreeBSD r309380 */
 #indent input
 static LIST_HEAD(, alq) ald_active;
 static int ald_shutingdown = 0;
