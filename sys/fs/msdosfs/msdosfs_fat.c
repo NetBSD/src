@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_fat.c,v 1.35 2020/09/07 01:35:25 mrg Exp $	*/
+/*	$NetBSD: msdosfs_fat.c,v 1.36 2021/10/23 16:58:17 thorpej Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -52,7 +52,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_fat.c,v 1.35 2020/09/07 01:35:25 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_fat.c,v 1.36 2021/10/23 16:58:17 thorpej Exp $");
 
 /*
  * kernel include files.
@@ -179,11 +179,11 @@ fatblock(struct msdosfsmount *pmp, u_long ofs, u_long *bnp, u_long *sizep, u_lon
  *  If cnp is null, nothing is returned.
  */
 int
-pcbmap(struct denode *dep, u_long findcn, daddr_t *bnp, u_long *cnp, int *sp)
-	/* findcn:		 file relative cluster to get		 */
-	/* bnp:		 returned filesys rel sector number	 */
-	/* cnp:		 returned cluster number		 */
-	/* sp:		 returned block size			 */
+msdosfs_pcbmap(struct denode *dep,
+    u_long findcn,	/* file relative cluster to get */
+    daddr_t *bnp,	/* returned filesys rel sector number */
+    u_long *cnp,	/* returned cluster number */
+    int *sp)		/* returned block size */
 {
 	int error;
 	u_long i;
@@ -254,7 +254,7 @@ pcbmap(struct denode *dep, u_long findcn, daddr_t *bnp, u_long *cnp, int *sp)
 	 * off the cache was from where we wanted to be.
 	 */
 	i = 0;
-	fc_lookup(dep, findcn, &i, &cn);
+	msdosfs_fc_lookup(dep, findcn, &i, &cn);
 	DPRINTF(("%s(bpcluster=%lu i=%lu cn=%lu\n", __func__, pmp->pm_bpcluster,
 	    i, cn));
 	if ((bn = findcn - i) >= LMMAX) {
@@ -348,7 +348,8 @@ hiteof:;
  * for.
  */
 void
-fc_lookup(struct denode *dep, u_long findcn, u_long *frcnp, u_long *fsrcnp)
+msdosfs_fc_lookup(struct denode *dep, u_long findcn, u_long *frcnp,
+    u_long *fsrcnp)
 {
 	int i;
 	u_long cn;
@@ -372,7 +373,7 @@ fc_lookup(struct denode *dep, u_long findcn, u_long *frcnp, u_long *fsrcnp)
  * relative cluster frcn and beyond.
  */
 void
-fc_purge(struct denode *dep, u_int frcn)
+msdosfs_fc_purge(struct denode *dep, u_int frcn)
 {
 	int i;
 	struct fatcache *fcp;
@@ -522,13 +523,14 @@ usemap_free(struct msdosfsmount *pmp, u_long cn)
 }
 
 int
-clusterfree(struct msdosfsmount *pmp, u_long cluster, u_long *oldcnp)
+msdosfs_clusterfree(struct msdosfsmount *pmp, u_long cluster, u_long *oldcnp)
 {
 	int error;
 	u_long oldcn;
 
 	usemap_free(pmp, cluster);
-	error = fatentry(FAT_GET_AND_SET, pmp, cluster, &oldcn, MSDOSFSFREE);
+	error = msdosfs_fatentry(FAT_GET_AND_SET, pmp, cluster, &oldcn,
+	    MSDOSFSFREE);
 	if (error) {
 		usemap_alloc(pmp, cluster);
 		return (error);
@@ -563,7 +565,8 @@ clusterfree(struct msdosfsmount *pmp, u_long cluster, u_long *oldcnp)
  * the msdosfsmount structure. This is left to the caller.
  */
 int
-fatentry(int function, struct msdosfsmount *pmp, u_long cn, u_long *oldcontents, u_long newcontents)
+msdosfs_fatentry(int function, struct msdosfsmount *pmp, u_long cn,
+    u_long *oldcontents, u_long newcontents)
 {
 	int error;
 	u_long readcn;
@@ -804,7 +807,8 @@ chainalloc(struct msdosfsmount *pmp, u_long start, u_long count, u_long fillwith
  * got	      - how many clusters were actually allocated.
  */
 int
-clusteralloc(struct msdosfsmount *pmp, u_long start, u_long count, u_long *retcluster, u_long *got)
+msdosfs_clusteralloc(struct msdosfsmount *pmp, u_long start, u_long count,
+    u_long *retcluster, u_long *got)
 {
 	u_long idx;
 	u_long len, newst, foundl, cn, l;
@@ -888,7 +892,7 @@ clusteralloc(struct msdosfsmount *pmp, u_long start, u_long count, u_long *retcl
  *		  freed.
  */
 int
-freeclusterchain(struct msdosfsmount *pmp, u_long cluster)
+msdosfs_freeclusterchain(struct msdosfsmount *pmp, u_long cluster)
 {
 	int error;
 	struct buf *bp = NULL;
@@ -947,7 +951,7 @@ freeclusterchain(struct msdosfsmount *pmp, u_long cluster)
  * found turn off its corresponding bit in the pm_inusemap.
  */
 int
-fillinusemap(struct msdosfsmount *pmp)
+msdosfs_fillinusemap(struct msdosfsmount *pmp)
 {
 	struct buf *bp = NULL;
 	u_long cn, readcn;
@@ -1014,7 +1018,8 @@ fillinusemap(struct msdosfsmount *pmp)
  */
 
 int
-extendfile(struct denode *dep, u_long count, struct buf **bpp, u_long *ncp, int flags)
+msdosfs_extendfile(struct denode *dep, u_long count, struct buf **bpp,
+    u_long *ncp, int flags)
 {
 	int error;
 	u_long frcn = 0, cn, got;
@@ -1038,7 +1043,7 @@ extendfile(struct denode *dep, u_long count, struct buf **bpp, u_long *ncp, int 
 	if (dep->de_fc[FC_LASTFC].fc_frcn == FCE_EMPTY &&
 	    dep->de_StartCluster != 0) {
 		fc_lfcempty++;
-		error = pcbmap(dep, CLUST_END, 0, &cn, 0);
+		error = msdosfs_pcbmap(dep, CLUST_END, 0, &cn, 0);
 		/* we expect it to return E2BIG */
 		if (error != E2BIG)
 			return (error);
@@ -1062,7 +1067,7 @@ extendfile(struct denode *dep, u_long count, struct buf **bpp, u_long *ncp, int 
 			cn = 0;
 		else
 			cn = dep->de_fc[FC_LASTFC].fc_fsrcn + 1;
-		error = clusteralloc(pmp, cn, count, &cn, &got);
+		error = msdosfs_clusteralloc(pmp, cn, count, &cn, &got);
 		if (error)
 			return (error);
 
@@ -1081,11 +1086,11 @@ extendfile(struct denode *dep, u_long count, struct buf **bpp, u_long *ncp, int 
 			dep->de_StartCluster = cn;
 			frcn = 0;
 		} else {
-			error = fatentry(FAT_SET, pmp,
+			error = msdosfs_fatentry(FAT_SET, pmp,
 					 dep->de_fc[FC_LASTFC].fc_fsrcn,
 					 0, cn);
 			if (error) {
-				clusterfree(pmp, cn, NULL);
+				msdosfs_clusterfree(pmp, cn, NULL);
 				return (error);
 			}
 			frcn = dep->de_fc[FC_LASTFC].fc_frcn + 1;

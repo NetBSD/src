@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_conv.c,v 1.17 2016/06/30 09:34:01 nonaka Exp $	*/
+/*	$NetBSD: msdosfs_conv.c,v 1.18 2021/10/23 16:58:17 thorpej Exp $	*/
 
 /*-
  * Copyright (C) 1995, 1997 Wolfgang Solfrank.
@@ -58,7 +58,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_conv.c,v 1.17 2016/06/30 09:34:01 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_conv.c,v 1.18 2021/10/23 16:58:17 thorpej Exp $");
 
 /*
  * System include files.
@@ -117,7 +117,8 @@ static int char8match(u_int16_t *, u_int16_t *, int n);
  * file timestamps. The passed in unix time is assumed to be in GMT.
  */
 void
-unix2dostime(const struct timespec *tsp, int gmtoff, u_int16_t *ddp, u_int16_t *dtp, u_int8_t *dhp)
+msdosfs_unix2dostime(const struct timespec *tsp, int gmtoff,
+    u_int16_t *ddp, u_int16_t *dtp, u_int8_t *dhp)
 {
 	u_long t;
 	struct clock_ymdhms ymd;
@@ -170,7 +171,8 @@ invalid_dos_date:
  * not be too efficient.
  */
 void
-dos2unixtime(u_int dd, u_int dt, u_int dh, int gmtoff, struct timespec *tsp)
+msdosfs_dos2unixtime(u_int dd, u_int dt, u_int dh, int gmtoff,
+    struct timespec *tsp)
 {
 	time_t seconds;
 	struct clock_ymdhms ymd;
@@ -320,7 +322,7 @@ u2l[256] = {
  * null.
  */
 int
-dos2unixfn(u_char dn[11], u_char *un, int lower)
+msdosfs_dos2unixfn(u_char dn[11], u_char *un, int lower)
 {
 	int i, j;
 	int thislong = 1;
@@ -383,7 +385,7 @@ dos2unixfn(u_char dn[11], u_char *un, int lower)
  *	3 if conversion was successful and generation number was inserted
  */
 int
-unix2dosfn(const u_char *un, u_char dn[12], int unlen, u_int gen)
+msdosfs_unix2dosfn(const u_char *un, u_char dn[12], int unlen, u_int gen)
 {
 	int i, j, l;
 	int conv = 1;
@@ -536,7 +538,8 @@ unix2dosfn(const u_char *un, u_char dn[12], int unlen, u_int gen)
  *	 i.e. doesn't consist solely of blanks and dots
  */
 int
-unix2winfn(const u_char *un, int unlen, struct winentry *wep, int cnt, int chksum, int utf8)
+msdosfs_unix2winfn(const u_char *un, int unlen, struct winentry *wep, int cnt,
+    int chksum, int utf8)
 {
 	u_int16_t wn[WIN_MAXLEN], *p;
 	int i, len;
@@ -592,7 +595,8 @@ unix2winfn(const u_char *un, int unlen, struct winentry *wep, int cnt, int chksu
  * Returns the checksum or -1 if no match
  */
 int
-winChkName(const u_char *un, int unlen, struct winentry *wep, int chksum, int utf8)
+msdosfs_winChkName(const u_char *un, int unlen, struct winentry *wep,
+    int chksum, int utf8)
 {
 	u_int16_t wn[WIN_MAXLEN], *p;
 	u_int16_t buf[WIN_CHARS];
@@ -648,7 +652,7 @@ winChkName(const u_char *un, int unlen, struct winentry *wep, int chksum, int ut
  * Returns the checksum or -1 if impossible
  */
 int
-win2unixfn(struct winentry *wep, struct dirent *dp, int chksum,
+msdosfs_win2unixfn(struct winentry *wep, struct dirent *dp, int chksum,
     uint16_t *namlen, int utf8)
 {
 	u_int16_t wn[WIN_CHARS], *p;
@@ -722,7 +726,7 @@ win2unixfn(struct winentry *wep, struct dirent *dp, int chksum,
  * Compute the checksum of a DOS filename for Win95 use
  */
 u_int8_t
-winChksum(u_int8_t *name)
+msdosfs_winChksum(u_int8_t *name)
 {
 	int i;
 	u_int8_t s;
@@ -736,7 +740,7 @@ winChksum(u_int8_t *name)
  * Determine the number of slots necessary for Win95 names
  */
 int
-winSlotCnt(const u_char *un, int unlen, int utf8)
+msdosfs_winSlotCnt(const u_char *un, int unlen, int utf8)
 {
 	const u_char *cp;
 	int len;
