@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1153 2021/10/22 22:31:55 rillig Exp $
+# $NetBSD: mi,v 1.1154 2021/10/23 01:28:34 thorpej Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2180,6 +2180,7 @@
 ./usr/tests/kernel/kqueue/read/t_file2			tests-kernel-tests	compattestfile,atf
 ./usr/tests/kernel/kqueue/read/t_pipe			tests-kernel-tests	compattestfile,atf
 ./usr/tests/kernel/kqueue/read/t_ttypty			tests-kernel-tests	compattestfile,atf
+./usr/tests/kernel/kqueue/t_empty			tests-kernel-tests	compattestfile,atf
 ./usr/tests/kernel/kqueue/t_ioctl			tests-kernel-tests	compattestfile,atf
 ./usr/tests/kernel/kqueue/t_proc1			tests-kernel-tests	compattestfile,atf
 ./usr/tests/kernel/kqueue/t_proc2			tests-kernel-tests	compattestfile,atf

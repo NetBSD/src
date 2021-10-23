@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.7 2021/10/13 04:57:19 thorpej Exp $
+# $NetBSD: Makefile,v 1.8 2021/10/23 01:28:33 thorpej Exp $
 
 WARNS?=6
 NOMAN=		# defined
@@ -10,7 +10,8 @@ TESTSDIR=	${TESTSBASE}/kernel/kqueue
 TESTS_SUBDIRS=	read
 TESTS_SUBDIRS+=	write
 
-TESTS_C=	t_ioctl
+TESTS_C=	t_empty
+TESTS_C+=	t_ioctl
 TESTS_C+=	t_proc1
 TESTS_C+=	t_proc2
 TESTS_C+=	t_proc3
