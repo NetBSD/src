@@ -1,4 +1,4 @@
-/*	$NetBSD: fmt_decl.c,v 1.1 2021/10/22 19:27:53 rillig Exp $	*/
+/*	$NetBSD: fmt_decl.c,v 1.2 2021/10/23 20:01:14 rillig Exp $	*/
 /* $FreeBSD: head/usr.bin/indent/tests/declarations.0 334478 2018-06-01 09:41:15Z pstef $ */
 
 /* See FreeBSD r303570 */
@@ -147,7 +147,6 @@ _attribute_printf(1, 2)
 void
 print_error(const char *fmt,...)
 {
-
 }
 #indent end
 
@@ -157,7 +156,39 @@ _attribute_printf(1, 2)
 void
 print_error(const char *fmt, ...)
 {
+}
+#indent end
 
+
+#indent input
+static _attribute_printf(1, 2)
+void
+print_error(const char *fmt,...)
+{
+}
+#indent end
+
+#indent run
+static _attribute_printf(1, 2)
+void
+print_error(const char *fmt, ...)
+{
+}
+#indent end
+
+
+#indent input
+static void _attribute_printf(1, 2)
+print_error(const char *fmt,...)
+{
+}
+#indent end
+
+#indent run
+static void
+_attribute_printf(1, 2)
+print_error(const char *fmt, ...)
+{
 }
 #indent end
 
@@ -177,10 +208,10 @@ struct thread  *ald_thread;
 
 #indent input
 static int
-do_execve(td, args, mac_p)
-	struct thread *td;
-	struct image_args *args;
-	struct mac *mac_p;
+old_style_definition(a, b, c)
+	struct thread *a;
+	int b;
+	double ***c;
 {
 
 }
@@ -188,24 +219,14 @@ do_execve(td, args, mac_p)
 
 #indent run
 static int
-do_execve(td, args, mac_p)
-	struct thread  *td;
-	struct image_args *args;
-	struct mac     *mac_p;
+old_style_definition(a, b, c)
+	struct thread  *a;
+	int		b;
+	double	     ***c;
 {
 
 }
 #indent end
-
-
-#indent input
-int
-my_printf(const char *fmt, ...)
-{
-}
-#indent end
-
-#indent run-equals-input
 
 
 /*
@@ -259,4 +280,77 @@ struct s0123456789012 a,
                b;
 struct s01234567890123 a,
                 b;
+#indent end
+
+
+#indent input
+char * x(void)
+{
+    type identifier;
+    type *pointer;
+    unused * value;
+    (void)unused * value;
+
+    dmax = (double)3 * 10.0;
+    dmin = (double)dmax * 10.0;
+    davg = (double)dmax * dmin;
+
+    return NULL;
+}
+#indent end
+
+#indent run
+char *
+x(void)
+{
+	type		identifier;
+	type	       *pointer;
+	unused	       *value;
+	(void)unused * value;
+
+	dmax = (double)3 * 10.0;
+	dmin = (double)dmax * 10.0;
+	davg = (double)dmax * dmin;
+
+	return NULL;
+}
+#indent end
+
+#indent input
+int *
+y(void) {
+
+}
+
+int
+z(void) {
+
+}
+#indent end
+
+#indent run
+int *
+y(void)
+{
+
+}
+
+int
+z(void)
+{
+
+}
+#indent end
+
+
+#indent input
+int x;
+int *y;
+int * * * * z;
+#indent end
+
+#indent run
+int		x;
+int	       *y;
+int	    ****z;
 #indent end
