@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1155 2021/10/23 18:46:26 thorpej Exp $
+# $NetBSD: mi,v 1.1156 2021/10/23 20:01:14 rillig Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -4750,8 +4750,8 @@
 ./usr/tests/usr.bin/indent/elsecomment.0				tests-obsolete		obsolete,atf
 ./usr/tests/usr.bin/indent/elsecomment.0.pro				tests-obsolete		obsolete,atf
 ./usr/tests/usr.bin/indent/elsecomment.0.stdout				tests-obsolete		obsolete,atf
-./usr/tests/usr.bin/indent/f_decls.0					tests-usr.bin-tests	compattestfile,atf
-./usr/tests/usr.bin/indent/f_decls.0.stdout				tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/indent/f_decls.0					tests-obsolete		obsolete,atf
+./usr/tests/usr.bin/indent/f_decls.0.stdout				tests-obsolete		obsolete,atf
 ./usr/tests/usr.bin/indent/float.0					tests-obsolete		obsolete,atf
 ./usr/tests/usr.bin/indent/float.0.stdout				tests-obsolete		obsolete,atf
 ./usr/tests/usr.bin/indent/fmt_block.c					tests-usr.bin-tests	compattestfile,atf
