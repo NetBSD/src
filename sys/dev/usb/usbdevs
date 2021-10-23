@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.770.4.8 2021/03/27 13:00:45 martin Exp $
+$NetBSD: usbdevs,v 1.770.4.9 2021/10/23 11:17:43 martin Exp $
 
 /*-
  * Copyright (c) 1998-2004 The NetBSD Foundation, Inc.
@@ -1492,6 +1492,7 @@ product EDIMAX EW7722UTN	0x7722	EW-7722UTn
 product EDIMAX RTL8188CU	0x7811	RTL8188CU
 product EDIMAX RTL8192CU	0x7822	RTL8192CU
 product EDIMAX ELECOM_WDC433SU2M 0xb711	ELECOM WDC-433SU2M
+product EDIMAX EW7811UNV2	0xb811	EW-7811Un V2
 
 /* eGalax Products */
 product EGALAX TPANEL		0x0001	Touch Panel
