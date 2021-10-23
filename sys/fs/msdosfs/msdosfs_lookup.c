@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_lookup.c,v 1.38 2021/10/23 07:38:33 hannken Exp $	*/
+/*	$NetBSD: msdosfs_lookup.c,v 1.39 2021/10/23 07:41:37 hannken Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -52,7 +52,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_lookup.c,v 1.38 2021/10/23 07:38:33 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_lookup.c,v 1.39 2021/10/23 07:41:37 hannken Exp $");
 
 #include <sys/param.h>
 
@@ -827,116 +827,6 @@ dosdirempty(struct denode *dep)
 		brelse(bp, 0);
 	}
 	/* NOTREACHED */
-}
-
-/*
- * Check to see if the directory described by target is in some
- * subdirectory of source.  This prevents something like the following from
- * succeeding and leaving a bunch or files and directories orphaned. mv
- * /a/b/c /a/b/c/d/e/f Where c and f are directories.
- *
- * source - the inode for /a/b/c
- * target - the inode for /a/b/c/d/e/f
- *
- * Returns 0 if target is NOT a subdirectory of source.
- * Otherwise returns a non-zero error number.
- * The target inode is always unlocked on return.
- */
-int
-doscheckpath(struct denode *source, struct denode *target)
-{
-	u_long scn;
-	struct msdosfsmount *pmp;
-	struct direntry *ep;
-	struct denode *dep;
-	struct buf *bp = NULL;
-	int error = 0;
-
-	dep = target;
-	if ((target->de_Attributes & ATTR_DIRECTORY) == 0 ||
-	    (source->de_Attributes & ATTR_DIRECTORY) == 0) {
-		error = ENOTDIR;
-		goto out;
-	}
-	if (dep->de_StartCluster == source->de_StartCluster) {
-		error = EEXIST;
-		goto out;
-	}
-	if (dep->de_StartCluster == MSDOSFSROOT)
-		goto out;
-	pmp = dep->de_pmp;
-#ifdef	DIAGNOSTIC
-	if (pmp != source->de_pmp)
-		panic("doscheckpath: source and target on different filesystems");
-#endif
-	if (FAT32(pmp) && dep->de_StartCluster == pmp->pm_rootdirblk)
-		goto out;
-
-	for (;;) {
-		if ((dep->de_Attributes & ATTR_DIRECTORY) == 0) {
-			error = ENOTDIR;
-			break;
-		}
-		scn = dep->de_StartCluster;
-		error = bread(pmp->pm_devvp, de_bn2kb(pmp, cntobn(pmp, scn)),
-			      pmp->pm_bpcluster, 0, &bp);
-		if (error)
-			break;
-
-		ep = (struct direntry *) bp->b_data + 1;
-		if ((ep->deAttributes & ATTR_DIRECTORY) == 0 ||
-		    memcmp(ep->deName, "..         ", 11) != 0) {
-			error = ENOTDIR;
-			break;
-		}
-		scn = getushort(ep->deStartCluster);
-		if (FAT32(pmp))
-			scn |= getushort(ep->deHighClust) << 16;
-
-		if (scn == source->de_StartCluster) {
-			error = EINVAL;
-			break;
-		}
-		if (scn == MSDOSFSROOT)
-			break;
-		if (FAT32(pmp) && scn == pmp->pm_rootdirblk) {
-			/*
-			 * scn should be 0 in this case,
-			 * but we silently ignore the error.
-			 */
-			break;
-		}
-
-		vput(DETOV(dep));
-		brelse(bp, 0);
-		bp = NULL;
-#ifdef MAKEFS
-		/* NOTE: deget() clears dep on error */
-		if ((error = deget(pmp, scn, 0, &dep)) != 0)
-			break;
-#else
-		struct vnode *vp;
-
-		dep = NULL;
-		error = deget(pmp, scn, 0, &vp);
-		if (error)
-			break;
-		error = vn_lock(vp, LK_EXCLUSIVE);
-		if (error) {
-			vrele(vp);
-			break;
-		}
-		dep = VTODE(vp);
-#endif
-	}
-out:
-	if (bp)
-		brelse(bp, 0);
-	if (error == ENOTDIR)
-		printf("doscheckpath(): .. not a directory?\n");
-	if (dep != NULL)
-		vput(DETOV(dep));
-	return (error);
 }
 
 /*
