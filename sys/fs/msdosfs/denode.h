@@ -1,4 +1,4 @@
-/*	$NetBSD: denode.h,v 1.26 2021/07/18 23:57:14 dholland Exp $	*/
+/*	$NetBSD: denode.h,v 1.27 2021/10/23 07:38:33 hannken Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -147,7 +147,14 @@ struct fatcache {
 		(dep)->de_fc[FC_NEXTTOLASTFC].fc_frcn = (dep)->de_fc[FC_LASTFC].fc_frcn; \
 		(dep)->de_fc[FC_NEXTTOLASTFC].fc_fsrcn = (dep)->de_fc[FC_LASTFC].fc_fsrcn; \
 	} while (0)
-	 
+
+/*
+ * Auxiliary results from an msdosfs_lookup operation
+ */
+struct msdosfs_lookup_results {
+	u_long mlr_fndoffset;	/* offset of found dir entry */
+	int mlr_fndcnt;		/* number of slots before de_fndoffset */
+};
 
 /*
  * This is the in memory variant of a dos directory entry.  It is usually
@@ -168,8 +175,7 @@ struct denode {
 #define de_dirclust de_key.dk_dirclust
 #define de_diroffset de_key.dk_diroffset
 #define de_dirgen de_key.dk_dirgen
-	u_long de_fndoffset;	/* offset of found dir entry */
-	int de_fndcnt;		/* number of slots before de_fndoffset */
+	struct msdosfs_lookup_results de_crap;	/* results from lookup */
 	long de_refcnt;		/* reference count */
 	struct msdosfsmount *de_pmp;	/* addr of our mount struct */
 	struct lockf *de_lockf;	/* byte level lock list */
@@ -302,6 +308,7 @@ struct kauth_cred;
 int msdosfs_update(struct vnode *, const struct timespec *,
 	    const struct timespec *, int);
 int createde(struct denode *, struct denode *,
+		const struct msdosfs_lookup_results *,
 		struct denode **, struct componentname *);
 int deextend(struct denode *, u_long, struct kauth_cred *);
 #ifdef MAKEFS
@@ -316,7 +323,8 @@ int dosdirempty(struct denode *);
 int readde(struct denode *, struct buf **, struct direntry **);
 int readep(struct msdosfsmount *, u_long, u_long,
 		struct buf **, struct direntry **);
-int removede(struct denode *, struct denode *);
+int removede(struct denode *, struct denode *,
+		const struct msdosfs_lookup_results *);
 int uniqdosname(struct denode *, struct componentname *, u_char *);
 int findwin95(struct denode *);
 int msdosfs_gop_alloc(struct vnode *, off_t, off_t, int, struct kauth_cred *);

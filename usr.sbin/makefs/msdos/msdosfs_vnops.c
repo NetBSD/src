@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vnops.c,v 1.19 2017/04/13 17:10:12 christos Exp $ */
+/*	$NetBSD: msdosfs_vnops.c,v 1.20 2021/10/23 07:38:33 hannken Exp $ */
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -51,7 +51,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_vnops.c,v 1.19 2017/04/13 17:10:12 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_vnops.c,v 1.20 2021/10/23 07:38:33 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/mman.h>
@@ -281,8 +281,8 @@ msdosfs_findslot(struct denode *dp, struct componentname *cnp)
 				 * entry came from for whoever did
 				 * this lookup.
 				 */
-				dp->de_fndoffset = diroff;
-				dp->de_fndcnt = 0;
+				dp->de_crap.mlr_fndoffset = diroff;
+				dp->de_crap.mlr_fndcnt = 0;
 
 				return EEXIST;
 			}
@@ -323,8 +323,8 @@ notfound:
 	 * Return an indication of where the new directory
 	 * entry should be put.
 	 */
-	dp->de_fndoffset = slotoffset;
-	dp->de_fndcnt = wincnt - 1;
+	dp->de_crap.mlr_fndoffset = slotoffset;
+	dp->de_crap.mlr_fndcnt = wincnt - 1;
 
 	/*
 	 * We return with the directory locked, so that
@@ -366,7 +366,7 @@ msdosfs_mkfile(const char *path, struct denode *pdep, fsnode *node)
 	 * change size.
 	 */
 	if (pdep->de_StartCluster == MSDOSFSROOT
-	    && pdep->de_fndoffset >= pdep->de_FileSize) {
+	    && pdep->de_crap.mlr_fndoffset >= pdep->de_FileSize) {
 		error = ENOSPC;
 		goto bad;
 	}
@@ -392,7 +392,7 @@ msdosfs_mkfile(const char *path, struct denode *pdep, fsnode *node)
 	msdosfs_times(pmp, &ndirent, st);
 	if ((error = msdosfs_findslot(pdep, &cn)) != 0)
 		goto bad;
-	if ((error = createde(&ndirent, pdep, &dep, &cn)) != 0)
+	if ((error = createde(&ndirent, pdep, &pdep->de_crap, &dep, &cn)) != 0)
 		goto bad;
 	if ((error = msdosfs_wfile(path, dep, node)) != 0)
 		goto bad;
@@ -556,7 +556,7 @@ msdosfs_mkdire(const char *path, struct denode *pdep, fsnode *node) {
 	 * change size.
 	 */
 	if (pdep->de_StartCluster == MSDOSFSROOT
-	    && pdep->de_fndoffset >= pdep->de_FileSize) {
+	    && pdep->de_crap.mlr_fndoffset >= pdep->de_FileSize) {
 		error = ENOSPC;
 		goto bad2;
 	}
@@ -633,7 +633,7 @@ msdosfs_mkdire(const char *path, struct denode *pdep, fsnode *node) {
 	ndirent.de_pmp = pdep->de_pmp;
 	if ((error = msdosfs_findslot(pdep, &cn)) != 0)
 		goto bad;
-	if ((error = createde(&ndirent, pdep, &dep, &cn)) != 0)
+	if ((error = createde(&ndirent, pdep, &pdep->de_crap, &dep, &cn)) != 0)
 		goto bad;
 	if ((error = msdosfs_updatede(dep)) != 0)
 		goto bad;

@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vnops.c,v 1.107 2021/10/20 03:08:17 thorpej Exp $	*/
+/*	$NetBSD: msdosfs_vnops.c,v 1.108 2021/10/23 07:38:33 hannken Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_vnops.c,v 1.107 2021/10/20 03:08:17 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_vnops.c,v 1.108 2021/10/23 07:38:33 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -125,7 +125,7 @@ msdosfs_create(void *v)
 	 * change size.
 	 */
 	if (pdep->de_StartCluster == MSDOSFSROOT
-	    && pdep->de_fndoffset >= pdep->de_FileSize) {
+	    && pdep->de_crap.mlr_fndoffset >= pdep->de_FileSize) {
 		error = ENOSPC;
 		goto bad;
 	}
@@ -149,7 +149,7 @@ msdosfs_create(void *v)
 	ndirent.de_pmp = pdep->de_pmp;
 	ndirent.de_flag = DE_ACCESS | DE_CREATE | DE_UPDATE;
 	DETIMES(&ndirent, NULL, NULL, NULL, pdep->de_pmp->pm_gmtoff);
-	if ((error = createde(&ndirent, pdep, &dep, cnp)) != 0)
+	if ((error = createde(&ndirent, pdep, &pdep->de_crap, &dep, cnp)) != 0)
 		goto bad;
 	*ap->a_vpp = DETOV(dep);
 	cache_enter(ap->a_dvp, *ap->a_vpp, cnp->cn_nameptr, cnp->cn_namelen,
@@ -725,7 +725,7 @@ msdosfs_remove(void *v)
 	if (ap->a_vp->v_type == VDIR)
 		error = EPERM;
 	else
-		error = removede(ddep, dep);
+		error = removede(ddep, dep, &ddep->de_crap);
 #ifdef MSDOSFS_DEBUG
 	printf("msdosfs_remove(), dep %p, usecount %d\n",
 		dep, vrefcnt(ap->a_vp));
@@ -896,8 +896,8 @@ abortit:
 	/*
 	 * Remember direntry place to use for destination
 	 */
-	to_diroffset = dp->de_fndoffset;
-	to_count = dp->de_fndcnt;
+	to_diroffset = dp->de_crap.mlr_fndoffset;
+	to_count = dp->de_crap.mlr_fndcnt;
 
 	/*
 	 * If ".." must be changed (ie the directory gets a new
@@ -957,7 +957,7 @@ abortit:
 			error = EISDIR;
 			goto tdvpbad;
 		}
-		if ((error = removede(dp, xp)) != 0)
+		if ((error = removede(dp, xp, &dp->de_crap)) != 0)
 			goto tdvpbad;
 		VN_KNOTE(tdvp, NOTE_WRITE);
 		VN_KNOTE(tvp, NOTE_DELETE);
@@ -1004,7 +1004,7 @@ abortit:
 	VOP_UNLOCK(fdvp);
 	xp = VTODE(fvp);
 	zp = VTODE(fdvp);
-	from_diroffset = zp->de_fndoffset;
+	from_diroffset = zp->de_crap.mlr_fndoffset;
 
 	/*
 	 * Ensure that the directory entry still exists and has not
@@ -1033,17 +1033,18 @@ abortit:
 		 */
 		memcpy(oldname, ip->de_Name, 11);
 		memcpy(ip->de_Name, toname, 11);	/* update denode */
-		dp->de_fndoffset = to_diroffset;
-		dp->de_fndcnt = to_count;
-		error = createde(ip, dp, (struct denode **)0, tcnp);
+		dp->de_crap.mlr_fndoffset = to_diroffset;
+		dp->de_crap.mlr_fndcnt = to_count;
+		error = createde(ip, dp, &dp->de_crap, (struct denode **)0,
+		    tcnp);
 		if (error) {
 			memcpy(ip->de_Name, oldname, 11);
 			VOP_UNLOCK(fvp);
 			goto bad;
 		}
 		ip->de_refcnt++;
-		zp->de_fndoffset = from_diroffset;
-		if ((error = removede(zp, ip)) != 0) {
+		zp->de_crap.mlr_fndoffset = from_diroffset;
+		if ((error = removede(zp, ip, &zp->de_crap)) != 0) {
 			/* XXX should really panic here, fs is corrupt */
 			VOP_UNLOCK(fvp);
 			goto bad;
@@ -1175,7 +1176,7 @@ msdosfs_mkdir(void *v)
 	 * change size.
 	 */
 	if (pdep->de_StartCluster == MSDOSFSROOT
-	    && pdep->de_fndoffset >= pdep->de_FileSize) {
+	    && pdep->de_crap.mlr_fndoffset >= pdep->de_FileSize) {
 		error = ENOSPC;
 		goto bad2;
 	}
@@ -1247,7 +1248,7 @@ msdosfs_mkdir(void *v)
 	ndirent.de_FileSize = 0;
 	ndirent.de_dev = pdep->de_dev;
 	ndirent.de_devvp = pdep->de_devvp;
-	if ((error = createde(&ndirent, pdep, &dep, cnp)) != 0)
+	if ((error = createde(&ndirent, pdep, &pdep->de_crap, &dep, cnp)) != 0)
 		goto bad;
 	*ap->a_vpp = DETOV(dep);
 	return (0);
@@ -1301,7 +1302,7 @@ msdosfs_rmdir(void *v)
 	 * up access and eventually msdosfs_reclaim() will be called which
 	 * will remove it from the denode cache.
 	 */
-	if ((error = removede(dp, ip)) != 0)
+	if ((error = removede(dp, ip, &dp->de_crap)) != 0)
 		goto out;
 	/*
 	 * This is where we decrement the link count in the parent
