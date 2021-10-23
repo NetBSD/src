@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.28 2021/10/23 20:01:14 rillig Exp $
+#	$NetBSD: Makefile,v 1.29 2021/10/23 20:07:03 rillig Exp $
 
 .include <bsd.own.mk>
 
@@ -17,8 +17,6 @@ FILES+=		label.c
 FILES+=		lex_ident.c
 FILES+=		lex_char.c
 FILES+=		lex_string.c
-FILES+=		list_head.0
-FILES+=		list_head.0.stdout
 FILES+=		offsetof.0
 FILES+=		offsetof.0.stdout
 FILES+=		opt--version.0
