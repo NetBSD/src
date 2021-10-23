@@ -1,4 +1,4 @@
-/* $NetBSD: opt-bap+sob.0,v 1.1 2021/03/08 22:13:05 rillig Exp $ */
+/* $NetBSD: opt_bap_sob.c,v 1.1 2021/10/23 20:30:23 rillig Exp $ */
 /* $FreeBSD$ */
 
 /*
@@ -7,6 +7,7 @@
  * separator.  Seen in games/cgram/cgram.c.
  */
 
+#indent input
 void
 function1(void)
 {
@@ -18,3 +19,18 @@ void
 function2(void)
 {
 }
+#indent end
+
+#indent run -bap -sob
+void
+function1(void)
+{
+}
+/* $ FIXME: Keep the empty line between the '}' and the '//'. */
+///// separator /////
+
+void
+function2(void)
+{
+}
+#indent end
