@@ -1,10 +1,9 @@
-#	$NetBSD: Makefile,v 1.32 2021/10/23 20:30:23 rillig Exp $
+#	$NetBSD: Makefile,v 1.33 2021/10/23 21:45:14 rillig Exp $
 
 .include <bsd.own.mk>
 
 TESTSDIR=	${TESTSBASE}/usr.bin/indent
 TESTS_SH=	t_errors
-TESTS_SH+=	t_indent
 TESTS_SH+=	t_misc
 TESTS_SH+=	t_options
 
@@ -18,16 +17,6 @@ FILES+=		label.c
 FILES+=		lex_ident.c
 FILES+=		lex_char.c
 FILES+=		lex_string.c
-FILES+=		opt-U.0
-FILES+=		opt-U.0.list
-FILES+=		opt-U.0.pro
-FILES+=		opt-U.0.stdout
-FILES+=		opt-npro.0
-FILES+=		opt-npro.0.pro
-FILES+=		opt-npro.0.stdout
-FILES+=		opt.0
-FILES+=		opt.0.pro
-FILES+=		opt.0.stdout
 FILES+=		opt_P.c
 FILES+=		opt_T.c
 FILES+=		opt_bacc.c
@@ -110,10 +99,6 @@ FILES+=		token_switch_expr.c
 FILES+=		token_type_def.c
 FILES+=		token_unary_op.c
 FILES+=		token_while_expr.c
-FILES+=		types_from_file.0
-FILES+=		types_from_file.0.stdout
-FILES+=		types_from_file.0.list
-FILES+=		types_from_file.0.pro
 
 add-test: .PHONY
 	@set -eu; \
