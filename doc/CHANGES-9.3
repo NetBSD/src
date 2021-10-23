@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.3,v 1.1.2.40 2021/10/21 14:33:59 martin Exp $
+# $NetBSD: CHANGES-9.3,v 1.1.2.41 2021/10/23 11:23:05 martin Exp $
 
 A complete list of changes from the NetBSD 9.2 release to the NetBSD 9.3
 release:
@@ -880,3 +880,12 @@ sys/dev/pci/if_wm.c				1.690,1.692-1.693,1.697-1.704,
 	- Fix comment.
 	- Whitespace fixes. No functional change.
 	[msaitoh, ticket #1363]
+
+sys/dev/usb/if_urtwn.c				1.101
+sys/dev/usb/usbdevs				1.798
+sys/dev/usb/usbdevs.h				(regen)
+sys/dev/usb/usbdevs_data.h			(regen)
+
+	urtwn(4): add Edimax N150 adapter.
+	[jnemeth, ticket #1364]
+
