@@ -1,4 +1,4 @@
-/*	$NetBSD: denode.h,v 1.27 2021/10/23 07:38:33 hannken Exp $	*/
+/*	$NetBSD: denode.h,v 1.28 2021/10/23 07:45:03 hannken Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -318,7 +318,6 @@ int deget(struct msdosfsmount *, u_long, u_long, struct vnode **);
 #endif
 int detrunc(struct denode *, u_long, int, struct kauth_cred *);
 int deupdat(struct denode *, int);
-int doscheckpath(struct denode *, struct denode *);
 int dosdirempty(struct denode *);
 int readde(struct denode *, struct buf **, struct direntry **);
 int readep(struct msdosfsmount *, u_long, u_long,
