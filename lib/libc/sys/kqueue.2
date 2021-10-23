@@ -1,4 +1,4 @@
-.\"	$NetBSD: kqueue.2,v 1.56 2021/10/20 03:26:20 thorpej Exp $
+.\"	$NetBSD: kqueue.2,v 1.57 2021/10/23 01:28:34 thorpej Exp $
 .\"
 .\" Copyright (c) 2000 Jonathan Lemon
 .\" All rights reserved.
@@ -32,7 +32,7 @@
 .\"
 .\" $FreeBSD: src/lib/libc/sys/kqueue.2,v 1.22 2001/06/27 19:55:57 dd Exp $
 .\"
-.Dd October 15, 2021
+.Dd October 22, 2021
 .Dt KQUEUE 2
 .Os
 .Sh NAME
@@ -406,6 +406,13 @@ Note that this filter is not supported for vnodes.
 .Pp
 For sockets, the low water mark and socket error handling is
 identical to the EVFILT_READ case.
+.It Dv EVFILT_EMPTY
+Takes a descriptor as the identifier, and returns whenever
+there is no remaining data in the write buffer.
+This is currently implemented only for sockets.
+It's primary purpose is to provide visibility to an application that all
+previously written data has been acknowledged by the receiver at the TCP
+layer.
 .It Dv EVFILT_AIO
 This is not implemented in
 .Nx .
@@ -869,5 +876,10 @@ and
 NOTE_READ
 filter flags for
 .Dv EVFILT_VNODE
+was added in
+.Nx 10.0 .
+.Pp
+Support for
+.Dv EVFILT_EMPTY
 was added in
 .Nx 10.0 .

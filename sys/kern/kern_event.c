@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_event.c,v 1.136 2021/10/22 04:49:24 thorpej Exp $	*/
+/*	$NetBSD: kern_event.c,v 1.137 2021/10/23 01:28:33 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009, 2021 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
 #endif /* _KERNEL_OPT */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_event.c,v 1.136 2021/10/22 04:49:24 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_event.c,v 1.137 2021/10/23 01:28:33 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -212,6 +212,7 @@ static struct kfilter sys_kfilters[] = {
 	{ "EVFILT_TIMER",	EVFILT_TIMER,	0, &timer_filtops, 0 },
 	{ "EVFILT_FS",		EVFILT_FS,	0, &fs_filtops, 0 },
 	{ "EVFILT_USER",	EVFILT_USER,	0, &user_filtops, 0 },
+	{ "EVFILT_EMPTY",	EVFILT_EMPTY,	0, &file_filtops, 0 },
 	{ NULL,			0,		0, NULL, 0 },
 };
 

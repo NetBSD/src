@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket.c,v 1.299 2021/10/11 01:07:36 thorpej Exp $	*/
+/*	$NetBSD: uipc_socket.c,v 1.300 2021/10/23 01:28:33 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2002, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.299 2021/10/11 01:07:36 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.300 2021/10/23 01:28:33 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -2297,6 +2297,22 @@ filt_sowrite(struct knote *kn, long hint)
 	return rv;
 }
 
+static int
+filt_soempty(struct knote *kn, long hint)
+{
+	struct socket *so;
+	int rv;
+
+	so = ((file_t *)kn->kn_obj)->f_socket;
+	if (hint != NOTE_SUBMIT)
+		solock(so);
+	rv = (kn->kn_data = sbused(&so->so_snd)) == 0 ||
+	     (so->so_options & SO_ACCEPTCONN) != 0;
+	if (hint != NOTE_SUBMIT)
+		sounlock(so);
+	return rv;
+}
+
 /*ARGSUSED*/
 static int
 filt_solisten(struct knote *kn, long hint)
@@ -2340,6 +2356,13 @@ static const struct filterops sowrite_filtops = {
 	.f_event = filt_sowrite,
 };
 
+static const struct filterops soempty_filtops = {
+	.f_flags = FILTEROP_ISFD | FILTEROP_MPSAFE,
+	.f_attach = NULL,
+	.f_detach = filt_sowdetach,
+	.f_event = filt_soempty,
+};
+
 int
 soo_kqfilter(struct file *fp, struct knote *kn)
 {
@@ -2358,6 +2381,10 @@ soo_kqfilter(struct file *fp, struct knote *kn)
 		break;
 	case EVFILT_WRITE:
 		kn->kn_fop = &sowrite_filtops;
+		sb = &so->so_snd;
+		break;
+	case EVFILT_EMPTY:
+		kn->kn_fop = &soempty_filtops;
 		sb = &so->so_snd;
 		break;
 	default:
