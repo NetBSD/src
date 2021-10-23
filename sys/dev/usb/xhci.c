@@ -1,4 +1,4 @@
-/*	$NetBSD: xhci.c,v 1.149 2021/10/10 20:10:12 jmcneill Exp $	*/
+/*	$NetBSD: xhci.c,v 1.150 2021/10/23 20:40:23 jakllsch Exp $	*/
 
 /*
  * Copyright (c) 2013 Jonathan A. Kollasch
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.149 2021/10/10 20:10:12 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.150 2021/10/23 20:40:23 jakllsch Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -344,17 +344,13 @@ xhci_op_read_8(const struct xhci_softc * const sc, bus_size_t offset)
 {
 	uint64_t value;
 
-	if (XHCI_HCC_AC64(sc->sc_hcc)) {
 #ifdef XHCI_USE_BUS_SPACE_8
-		value = bus_space_read_8(sc->sc_iot, sc->sc_obh, offset);
+	value = bus_space_read_8(sc->sc_iot, sc->sc_obh, offset);
 #else
-		value = bus_space_read_4(sc->sc_iot, sc->sc_obh, offset);
-		value |= (uint64_t)bus_space_read_4(sc->sc_iot, sc->sc_obh,
-		    offset + 4) << 32;
+	value = bus_space_read_4(sc->sc_iot, sc->sc_obh, offset);
+	value |= (uint64_t)bus_space_read_4(sc->sc_iot, sc->sc_obh,
+	    offset + 4) << 32;
 #endif
-	} else {
-		value = bus_space_read_4(sc->sc_iot, sc->sc_obh, offset);
-	}
 
 	return value;
 }
@@ -363,18 +359,14 @@ static inline void
 xhci_op_write_8(const struct xhci_softc * const sc, bus_size_t offset,
     uint64_t value)
 {
-	if (XHCI_HCC_AC64(sc->sc_hcc)) {
 #ifdef XHCI_USE_BUS_SPACE_8
-		bus_space_write_8(sc->sc_iot, sc->sc_obh, offset, value);
+	bus_space_write_8(sc->sc_iot, sc->sc_obh, offset, value);
 #else
-		bus_space_write_4(sc->sc_iot, sc->sc_obh, offset + 0,
-		    (value >> 0) & 0xffffffff);
-		bus_space_write_4(sc->sc_iot, sc->sc_obh, offset + 4,
-		    (value >> 32) & 0xffffffff);
+	bus_space_write_4(sc->sc_iot, sc->sc_obh, offset + 0,
+	    (value >> 0) & 0xffffffff);
+	bus_space_write_4(sc->sc_iot, sc->sc_obh, offset + 4,
+	    (value >> 32) & 0xffffffff);
 #endif
-	} else {
-		bus_space_write_4(sc->sc_iot, sc->sc_obh, offset, value);
-	}
 }
 
 static inline uint32_t
@@ -395,17 +387,13 @@ xhci_rt_read_8(const struct xhci_softc * const sc, bus_size_t offset)
 {
 	uint64_t value;
 
-	if (XHCI_HCC_AC64(sc->sc_hcc)) {
 #ifdef XHCI_USE_BUS_SPACE_8
-		value = bus_space_read_8(sc->sc_iot, sc->sc_rbh, offset);
+	value = bus_space_read_8(sc->sc_iot, sc->sc_rbh, offset);
 #else
-		value = bus_space_read_4(sc->sc_iot, sc->sc_rbh, offset);
-		value |= (uint64_t)bus_space_read_4(sc->sc_iot, sc->sc_rbh,
-		    offset + 4) << 32;
+	value = bus_space_read_4(sc->sc_iot, sc->sc_rbh, offset);
+	value |= (uint64_t)bus_space_read_4(sc->sc_iot, sc->sc_rbh,
+	    offset + 4) << 32;
 #endif
-	} else {
-		value = bus_space_read_4(sc->sc_iot, sc->sc_rbh, offset);
-	}
 
 	return value;
 }
@@ -414,18 +402,14 @@ static inline void
 xhci_rt_write_8(const struct xhci_softc * const sc, bus_size_t offset,
     uint64_t value)
 {
-	if (XHCI_HCC_AC64(sc->sc_hcc)) {
 #ifdef XHCI_USE_BUS_SPACE_8
-		bus_space_write_8(sc->sc_iot, sc->sc_rbh, offset, value);
+	bus_space_write_8(sc->sc_iot, sc->sc_rbh, offset, value);
 #else
-		bus_space_write_4(sc->sc_iot, sc->sc_rbh, offset + 0,
-		    (value >> 0) & 0xffffffff);
-		bus_space_write_4(sc->sc_iot, sc->sc_rbh, offset + 4,
-		    (value >> 32) & 0xffffffff);
+	bus_space_write_4(sc->sc_iot, sc->sc_rbh, offset + 0,
+	    (value >> 0) & 0xffffffff);
+	bus_space_write_4(sc->sc_iot, sc->sc_rbh, offset + 4,
+	    (value >> 32) & 0xffffffff);
 #endif
-	} else {
-		bus_space_write_4(sc->sc_iot, sc->sc_rbh, offset, value);
-	}
 }
 
 #if 0 /* unused */
