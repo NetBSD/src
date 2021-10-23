@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.c,v 1.29 2021/10/23 05:42:49 skrll Exp $	*/
+/*	$NetBSD: cpufunc.c,v 1.30 2021/10/23 06:48:31 skrll Exp $	*/
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -30,7 +30,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpufunc.c,v 1.29 2021/10/23 05:42:49 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpufunc.c,v 1.30 2021/10/23 06:48:31 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -159,7 +159,7 @@ aarch64_getcacheinfo(int unit)
 
 #ifdef MULTIPROCESSOR
 	if (coherency_unit < arm_dcache_align)
-		panic("coherency_unit %ld < arm_dcache_align %d; increase COHERENCY_UNIT",
+		panic("coherency_unit %ld < %d; increase COHERENCY_UNIT",
 		    coherency_unit, arm_dcache_align);
 #endif
 
