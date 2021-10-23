@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.27 2021/10/22 20:54:36 rillig Exp $
+#	$NetBSD: Makefile,v 1.28 2021/10/23 20:01:14 rillig Exp $
 
 .include <bsd.own.mk>
 
@@ -12,8 +12,6 @@ FILESDIR=	${TESTSDIR}
 FILES=		fmt_block.c
 FILES+=		fmt_decl.c
 FILES+=		fmt_else_comment.c
-FILES+=		f_decls.0
-FILES+=		f_decls.0.stdout
 FILES+=		indent_off_on.c
 FILES+=		label.c
 FILES+=		lex_ident.c
