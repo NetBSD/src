@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_event.c,v 1.137 2021/10/23 01:28:33 thorpej Exp $	*/
+/*	$NetBSD: kern_event.c,v 1.138 2021/10/23 18:46:26 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009, 2021 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
 #endif /* _KERNEL_OPT */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_event.c,v 1.137 2021/10/23 01:28:33 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_event.c,v 1.138 2021/10/23 18:46:26 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2262,17 +2262,15 @@ relock:
 			}
 		} else {
 			/*
-			 * This ONESHOT note is going to be detached
-			 * below.  Mark the knote as not long for this
-			 * world before we release the kq lock so that
-			 * no one else will put it in a state of flux.
+			 * Must NOT drop kq_lock until we can do
+			 * the KNOTE_WILLDETACH() below.
 			 */
-			KNOTE_WILLDETACH(kn);
 		}
 		KASSERT(kn->kn_fop != NULL);
 		touch = (!(kn->kn_fop->f_flags & FILTEROP_ISFD) &&
 				kn->kn_fop->f_touch != NULL);
 		/* XXXAD should be got from f_event if !oneshot. */
+		KASSERT((kn->kn_status & KN_WILLDETACH) == 0);
 		if (touch) {
 			(void)filter_touch(kn, kevp, EVENT_PROCESS);
 		} else {
@@ -2283,6 +2281,7 @@ relock:
 		influx = 1;
 		if (kn->kn_flags & EV_ONESHOT) {
 			/* delete ONESHOT events after retrieval */
+			KNOTE_WILLDETACH(kn);
 			kn->kn_status &= ~KN_BUSY;
 			kq->kq_count--;
 			KASSERT(kn_in_flux(kn) == false);
