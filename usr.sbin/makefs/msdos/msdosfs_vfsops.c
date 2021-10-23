@@ -50,7 +50,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_vfsops.c,v 1.11 2018/01/27 02:07:33 sevan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_vfsops.c,v 1.12 2021/10/23 16:58:17 thorpej Exp $");
 
 #include <sys/param.h>
 
@@ -382,7 +382,7 @@ msdosfs_mount(struct vnode *devvp, int flags)
 	/*
 	 * Have the inuse map filled in.
 	 */
-	if ((error = fillinusemap(pmp)) != 0) {
+	if ((error = msdosfs_fillinusemap(pmp)) != 0) {
 		DPRINTF(("fillinusemap %d\n", error));
 		goto error_exit;
 	}
@@ -423,7 +423,8 @@ msdosfs_root(struct msdosfsmount *pmp, struct vnode *vp) {
 	int error;
 
 	*vp = *pmp->pm_devvp;
-	if ((error = deget(pmp, MSDOSFSROOT, MSDOSFSROOT_OFS, &ndep)) != 0) {
+	if ((error = msdosfs_deget(pmp, MSDOSFSROOT, MSDOSFSROOT_OFS,
+	    &ndep)) != 0) {
 		errno = error;
 		return -1;
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: denode.h,v 1.28 2021/10/23 07:45:03 hannken Exp $	*/
+/*	$NetBSD: denode.h,v 1.29 2021/10/23 16:58:17 thorpej Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -305,34 +305,36 @@ int	msdosfs_pathconf	(void *);
 struct componentname;
 struct direntry;
 struct kauth_cred;
-int msdosfs_update(struct vnode *, const struct timespec *,
+int	msdosfs_update(struct vnode *, const struct timespec *,
 	    const struct timespec *, int);
-int createde(struct denode *, struct denode *,
+int	msdosfs_createde(struct denode *, struct denode *,
 		const struct msdosfs_lookup_results *,
 		struct denode **, struct componentname *);
-int deextend(struct denode *, u_long, struct kauth_cred *);
+int	msdosfs_deextend(struct denode *, u_long, struct kauth_cred *);
 #ifdef MAKEFS
-int deget(struct msdosfsmount *, u_long, u_long, struct denode **);
+int	msdosfs_deget(struct msdosfsmount *, u_long, u_long, struct denode **);
 #else
-int deget(struct msdosfsmount *, u_long, u_long, struct vnode **);
+int	msdosfs_deget(struct msdosfsmount *, u_long, u_long, struct vnode **);
 #endif
-int detrunc(struct denode *, u_long, int, struct kauth_cred *);
-int deupdat(struct denode *, int);
-int dosdirempty(struct denode *);
-int readde(struct denode *, struct buf **, struct direntry **);
-int readep(struct msdosfsmount *, u_long, u_long,
+int	msdosfs_detrunc(struct denode *, u_long, int, struct kauth_cred *);
+int	msdosfs_deupdat(struct denode *, int);
+int	msdosfs_dosdirempty(struct denode *);
+int	msdosfs_readde(struct denode *, struct buf **, struct direntry **);
+int	msdosfs_readep(struct msdosfsmount *, u_long, u_long,
 		struct buf **, struct direntry **);
-int removede(struct denode *, struct denode *,
+int	msdosfs_removede(struct denode *, struct denode *,
 		const struct msdosfs_lookup_results *);
-int uniqdosname(struct denode *, struct componentname *, u_char *);
-int findwin95(struct denode *);
-int msdosfs_gop_alloc(struct vnode *, off_t, off_t, int, struct kauth_cred *);
-void msdosfs_gop_markupdate(struct vnode *, int);
-void msdosfs_detimes(struct denode *, const struct timespec *,
-    const struct timespec *, const struct timespec *, int);
-int msdosfs_fh_enter(struct msdosfsmount *, uint32_t, uint32_t, uint32_t *);
-int msdosfs_fh_remove(struct msdosfsmount *, uint32_t, uint32_t);
-int msdosfs_fh_lookup(struct msdosfsmount *, uint32_t, uint32_t, uint32_t *);
-void msdosfs_fh_destroy(struct msdosfsmount *);
+int	msdosfs_uniqdosname(struct denode *, struct componentname *, u_char *);
+int	msdosfs_findwin95(struct denode *);
+int	msdosfs_gop_alloc(struct vnode *, off_t, off_t, int,
+	    struct kauth_cred *);
+void	msdosfs_gop_markupdate(struct vnode *, int);
+void	msdosfs_detimes(struct denode *, const struct timespec *,
+	    const struct timespec *, const struct timespec *, int);
+int	msdosfs_fh_enter(struct msdosfsmount *, uint32_t, uint32_t, uint32_t *);
+int	msdosfs_fh_remove(struct msdosfsmount *, uint32_t, uint32_t);
+int	msdosfs_fh_lookup(struct msdosfsmount *, uint32_t, uint32_t,
+	    uint32_t *);
+void	msdosfs_fh_destroy(struct msdosfsmount *);
 #endif	/* _KERNEL || MAKEFS */
 #endif /* _MSDOSFS_DENODE_H_ */

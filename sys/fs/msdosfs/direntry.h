@@ -1,4 +1,4 @@
-/*	$NetBSD: direntry.h,v 1.11 2016/02/01 02:59:33 christos Exp $	*/
+/*	$NetBSD: direntry.h,v 1.12 2021/10/23 16:58:17 thorpej Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -128,20 +128,20 @@ struct winentry {
 
 #if defined(_KERNEL) || defined(MAKEFS)
 struct dirent;
-void	unix2dostime(const struct timespec *tsp, int gmtoff, uint16_t *ddp,
-	    uint16_t *dtp, uint8_t *dhp);
-void	dos2unixtime(unsigned int dd, unsigned int dt, unsigned int dh,
+void	msdosfs_unix2dostime(const struct timespec *tsp, int gmtoff,
+	    uint16_t *ddp, uint16_t *dtp, uint8_t *dhp);
+void	msdosfs_dos2unixtime(unsigned int dd, unsigned int dt, unsigned int dh,
 	    int gmtoff, struct timespec *tsp);
-int	dos2unixfn(unsigned char dn[11], unsigned char *un, int lower);
-int	unix2dosfn(const unsigned char *un, unsigned char dn[12], int unlen,
-	    unsigned int gen);
-int	unix2winfn(const unsigned char *un, int unlen, struct winentry *wep,
-	    int cnt, int chksum, int utf8);
-int	winChkName(const unsigned char *un, int unlen, struct winentry *wep,
-	    int chksum, int utf8);
-int	win2unixfn(struct winentry *wep, struct dirent *dp, int chksum,	
+int	msdosfs_dos2unixfn(unsigned char dn[11], unsigned char *un, int lower);
+int	msdosfs_unix2dosfn(const unsigned char *un, unsigned char dn[12],
+	    int unlen, unsigned int gen);
+int	msdosfs_unix2winfn(const unsigned char *un, int unlen,
+	    struct winentry *wep, int cnt, int chksum, int utf8);
+int	msdosfs_winChkName(const unsigned char *un, int unlen,
+	    struct winentry *wep, int chksum, int utf8);
+int	msdosfs_win2unixfn(struct winentry *wep, struct dirent *dp, int chksum,	
 	    uint16_t *namlen, int utf8);
-uint8_t winChksum(uint8_t *name);
-int	winSlotCnt(const unsigned char *un, int unlen, int utf8);
+uint8_t msdosfs_winChksum(uint8_t *name);
+int	msdosfs_winSlotCnt(const unsigned char *un, int unlen, int utf8);
 #endif /* _KERNEL || MAKEFS */
 #endif /* _MSDOSFS_DIRENTRY_H_ */
