@@ -1,4 +1,4 @@
-/* $NetBSD: armreg.h,v 1.57 2021/06/19 13:40:00 jmcneill Exp $ */
+/* $NetBSD: armreg.h,v 1.58 2021/10/23 05:31:53 skrll Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -1636,7 +1636,7 @@ struct aarch64_sysctl_cpu_id {
 	uint32_t ac_mvfr2;	/* Media and VFP Feature Register 2 */
 	uint32_t ac_pad;
 
-	uint64_t ac_clidr;	/* Cacle Level ID Register */
+	uint64_t ac_clidr;	/* Cache Level ID Register */
 	uint64_t ac_ctr;	/* Cache Type Register */
 };
 
