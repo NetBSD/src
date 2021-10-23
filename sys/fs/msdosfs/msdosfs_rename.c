@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_rename.c,v 1.2 2021/10/23 07:45:03 hannken Exp $	*/
+/*	$NetBSD: msdosfs_rename.c,v 1.3 2021/10/23 16:58:17 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_rename.c,v 1.2 2021/10/23 07:45:03 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_rename.c,v 1.3 2021/10/23 16:58:17 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -211,7 +211,7 @@ msdosfs_gro_directory_empty_p(struct mount *mp, kauth_cred_t cred,
 	KASSERT(VOP_ISLOCKED(vp) == LK_EXCLUSIVE);
 	KASSERT(VOP_ISLOCKED(dvp) == LK_EXCLUSIVE);
 
-	return dosdirempty(VTODE(vp));
+	return msdosfs_dosdirempty(VTODE(vp));
 }
 
 /*
@@ -439,7 +439,7 @@ msdosfs_gro_rename(struct mount *mp, kauth_cred_t cred,
 	 * there will be something at the target pathname?
 	 */
 	if (tvp != NULL) {
-		error = removede(VTODE(tdvp), VTODE(tvp), tmlr);
+		error = msdosfs_removede(VTODE(tdvp), VTODE(tvp), tmlr);
 		if (error)
 			goto out;
 	}
@@ -449,7 +449,7 @@ msdosfs_gro_rename(struct mount *mp, kauth_cred_t cred,
 	 * into the denode and directory entry for the destination
 	 * file/directory.
 	 */
-	error = uniqdosname(VTODE(tdvp), tcnp, toname);
+	error = msdosfs_uniqdosname(VTODE(tdvp), tcnp, toname);
 	if (error)
 		goto out;
 
@@ -466,7 +466,7 @@ msdosfs_gro_rename(struct mount *mp, kauth_cred_t cred,
 	memcpy(oldname, VTODE(fvp)->de_Name, 11);
 	memcpy(VTODE(fvp)->de_Name, toname, 11);
 
-	error = createde(VTODE(fvp), VTODE(tdvp), tmlr, 0, tcnp);
+	error = msdosfs_createde(VTODE(fvp), VTODE(tdvp), tmlr, 0, tcnp);
 	if (error) {
 		/* Directory entry didn't take -- back out the name change.  */
 		memcpy(VTODE(fvp)->de_Name, oldname, 11);
@@ -483,10 +483,10 @@ msdosfs_gro_rename(struct mount *mp, kauth_cred_t cred,
 	/*
 	 * XXX Yes, createde and removede have arguments swapped.  Go figure.
 	 */
-	error = removede(VTODE(fdvp), VTODE(fvp), fmlr);
+	error = msdosfs_removede(VTODE(fdvp), VTODE(fvp), fmlr);
 	if (error) {
 #if 0		/* XXX Back out the new directory entry?  Panic?  */
-		(void)removede(VTODE(tdvp), VTODE(fvp), tmlr);
+		(void)msdosfs_removede(VTODE(tdvp), VTODE(fvp), tmlr);
 		memcpy(VTODE(fvp)->de_Name, oldname, 11);
 #endif
 		goto out;
@@ -498,7 +498,7 @@ msdosfs_gro_rename(struct mount *mp, kauth_cred_t cred,
 		struct denode_key old_key = VTODE(fvp)->de_key;
 		struct denode_key new_key = VTODE(fvp)->de_key;
 
-		error = pcbmap(VTODE(tdvp),
+		error = msdosfs_pcbmap(VTODE(tdvp),
 		    de_cluster(pmp, tmlr->mlr_fndoffset), NULL,
 		    &new_key.dk_dirclust, NULL);
 		if (error)	/* XXX Back everything out?  Panic?  */
@@ -561,7 +561,7 @@ msdosfs_gro_remove(struct mount *mp, kauth_cred_t cred,
 	KASSERT(VOP_ISLOCKED(dvp) == LK_EXCLUSIVE);
 	KASSERT(VOP_ISLOCKED(vp) == LK_EXCLUSIVE);
 
-	error = removede(VTODE(dvp), VTODE(vp), mlr);
+	error = msdosfs_removede(VTODE(dvp), VTODE(vp), mlr);
 
 	*tvp_nlinkp = (error ? 1 : 0);
 
@@ -691,7 +691,8 @@ msdosfs_gro_genealogy(struct mount *mp, kauth_cred_t cred,
 
 		/* Neither -- keep ascending.  */
 
-		error = deget(pmp, dotdot_cn, (dotdot_cn ? 0 : MSDOSFSROOT_OFS), &dvp);
+		error = msdosfs_deget(pmp, dotdot_cn,
+		    (dotdot_cn ? 0 : MSDOSFSROOT_OFS), &dvp);
 		vput(vp);
 		if (error)
 			return error;

@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_denode.c,v 1.59 2020/04/23 21:47:07 ad Exp $	*/
+/*	$NetBSD: msdosfs_denode.c,v 1.60 2021/10/23 16:58:17 thorpej Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_denode.c,v 1.59 2020/04/23 21:47:07 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_denode.c,v 1.60 2021/10/23 16:58:17 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -179,7 +179,7 @@ msdosfs_done(void)
  * vpp	     - returns the address of the gotten vnode.
  */
 int
-deget(struct msdosfsmount *pmp, u_long dirclust, u_long diroffset,
+msdosfs_deget(struct msdosfsmount *pmp, u_long dirclust, u_long diroffset,
     struct vnode **vpp)
 	/* pmp:	 so we know the maj/min number */
 	/* dirclust:		 cluster this dir entry came from */
@@ -243,7 +243,7 @@ msdosfs_loadvnode(struct mount *mp, struct vnode *vp,
 	ldep->de_pmp = pmp;
 	ldep->de_devvp = pmp->pm_devvp;
 	ldep->de_refcnt = 1;
-	fc_purge(ldep, 0);	/* init the FAT cache for this denode */
+	msdosfs_fc_purge(ldep, 0);	/* init the FAT cache for this denode */
 
 	/*
 	 * Copy the directory entry into the denode area of the vnode.
@@ -280,8 +280,8 @@ msdosfs_loadvnode(struct mount *mp, struct vnode *vp,
 		ldep->de_MDate = ldep->de_CDate;
 		/* leave the other fields as garbage */
 	} else {
-		error = readep(pmp, ldep->de_dirclust, ldep->de_diroffset,
-		    &bp, &direntptr);
+		error = msdosfs_readep(pmp, ldep->de_dirclust,
+		    ldep->de_diroffset, &bp, &direntptr);
 		if (error) {
 			pool_put(&msdosfs_denode_pool, ldep);
 			return error;
@@ -305,7 +305,7 @@ msdosfs_loadvnode(struct mount *mp, struct vnode *vp,
 
 		vp->v_type = VDIR;
 		if (ldep->de_StartCluster != MSDOSFSROOT) {
-			error = pcbmap(ldep, CLUST_END, 0, &size, 0);
+			error = msdosfs_pcbmap(ldep, CLUST_END, 0, &size, 0);
 			if (error == E2BIG) {
 				ldep->de_FileSize = de_cn2off(pmp, size);
 				error = 0;
@@ -330,7 +330,7 @@ msdosfs_loadvnode(struct mount *mp, struct vnode *vp,
 }
 
 int
-deupdat(struct denode *dep, int waitfor)
+msdosfs_deupdat(struct denode *dep, int waitfor)
 {
 
 	return (msdosfs_update(DETOV(dep), NULL, NULL,
@@ -341,7 +341,7 @@ deupdat(struct denode *dep, int waitfor)
  * Truncate the file described by dep to the length specified by length.
  */
 int
-detrunc(struct denode *dep, u_long length, int flags, kauth_cred_t cred)
+msdosfs_detrunc(struct denode *dep, u_long length, int flags, kauth_cred_t cred)
 {
 	int error;
 	int allerror;
@@ -374,7 +374,7 @@ detrunc(struct denode *dep, u_long length, int flags, kauth_cred_t cred)
 	uvm_vnp_setsize(DETOV(dep), length);
 
 	if (dep->de_FileSize < length)
-		return (deextend(dep, length, cred));
+		return (msdosfs_deextend(dep, length, cred));
 	lastblock = de_clcount(pmp, length) - 1;
 
 	/*
@@ -391,7 +391,7 @@ detrunc(struct denode *dep, u_long length, int flags, kauth_cred_t cred)
 		dep->de_StartCluster = 0;
 		eofentry = ~0;
 	} else {
-		error = pcbmap(dep, lastblock, 0, &eofentry, 0);
+		error = msdosfs_pcbmap(dep, lastblock, 0, &eofentry, 0);
 		if (error) {
 #ifdef MSDOSFS_DEBUG
 			printf("detrunc(): pcbmap fails %d\n", error);
@@ -437,20 +437,20 @@ detrunc(struct denode *dep, u_long length, int flags, kauth_cred_t cred)
 	if (!isadir)
 		dep->de_flag |= DE_UPDATE|DE_MODIFIED;
 	vtruncbuf(DETOV(dep), lastblock + 1, 0, 0);
-	allerror = deupdat(dep, 1);
+	allerror = msdosfs_deupdat(dep, 1);
 #ifdef MSDOSFS_DEBUG
 	printf("detrunc(): allerror %d, eofentry %lu\n",
 	       allerror, eofentry);
 #endif
 
-	fc_purge(dep, lastblock + 1);
+	msdosfs_fc_purge(dep, lastblock + 1);
 
 	/*
 	 * If we need to break the cluster chain for the file then do it
 	 * now.
 	 */
 	if (eofentry != ~0) {
-		error = fatentry(FAT_GET_AND_SET, pmp, eofentry,
+		error = msdosfs_fatentry(FAT_GET_AND_SET, pmp, eofentry,
 				 &chaintofree, CLUST_EOFE);
 		if (error) {
 #ifdef MSDOSFS_DEBUG
@@ -467,7 +467,7 @@ detrunc(struct denode *dep, u_long length, int flags, kauth_cred_t cred)
 	 * truncation.
 	 */
 	if (chaintofree != 0 && !MSDOSFSEOF(chaintofree, pmp->pm_fatmask))
-		freeclusterchain(pmp, chaintofree);
+		msdosfs_freeclusterchain(pmp, chaintofree);
 
 	return (allerror);
 }
@@ -476,7 +476,7 @@ detrunc(struct denode *dep, u_long length, int flags, kauth_cred_t cred)
  * Extend the file described by dep to length specified by length.
  */
 int
-deextend(struct denode *dep, u_long length, kauth_cred_t cred)
+msdosfs_deextend(struct denode *dep, u_long length, kauth_cred_t cred)
 {
 	struct msdosfsmount *pmp = dep->de_pmp;
 	u_long count, osize;
@@ -504,10 +504,10 @@ deextend(struct denode *dep, u_long length, kauth_cred_t cred)
 	if (count > 0) {
 		if (count > pmp->pm_freeclustercount)
 			return (ENOSPC);
-		error = extendfile(dep, count, NULL, NULL, DE_CLEAR);
+		error = msdosfs_extendfile(dep, count, NULL, NULL, DE_CLEAR);
 		if (error) {
 			/* truncate the added clusters away again */
-			(void) detrunc(dep, dep->de_FileSize, 0, cred);
+			(void) msdosfs_detrunc(dep, dep->de_FileSize, 0, cred);
 			return (error);
 		}
 	}
@@ -525,7 +525,7 @@ deextend(struct denode *dep, u_long length, kauth_cred_t cred)
 	    (size_t)(round_page(dep->de_FileSize) - osize),
 	    UBC_VNODE_FLAGS(DETOV(dep)));
 	uvm_vnp_setsize(DETOV(dep), (voff_t)dep->de_FileSize);
-	return (deupdat(dep, 1));
+	return (msdosfs_deupdat(dep, 1));
 }
 
 int
@@ -598,13 +598,13 @@ msdosfs_inactive(void *v)
 #endif
 	if (dep->de_refcnt <= 0 && (vp->v_mount->mnt_flag & MNT_RDONLY) == 0) {
 		if (dep->de_FileSize != 0) {
-			error = detrunc(dep, (u_long)0, 0, NOCRED);
+			error = msdosfs_detrunc(dep, (u_long)0, 0, NOCRED);
 		}
 		dep->de_Name[0] = SLOT_DELETED;
 		msdosfs_fh_remove(dep->de_pmp,
 		    dep->de_dirclust, dep->de_diroffset);
 	}
-	deupdat(dep, 0);
+	msdosfs_deupdat(dep, 0);
 out:
 	/*
 	 * If we are done with the denode, reclaim it

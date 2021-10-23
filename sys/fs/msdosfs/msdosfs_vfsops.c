@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vfsops.c,v 1.136 2021/02/11 00:15:55 ryoon Exp $	*/
+/*	$NetBSD: msdosfs_vfsops.c,v 1.137 2021/10/23 16:58:17 thorpej Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_vfsops.c,v 1.136 2021/02/11 00:15:55 ryoon Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_vfsops.c,v 1.137 2021/10/23 16:58:17 thorpej Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -213,7 +213,7 @@ update_mp(struct mount *mp, struct msdosfs_args *argp)
 			error = msdosfs_root(mp, LK_EXCLUSIVE, &rtvp);
 			if (error != 0)
 				return error;
-			pmp->pm_flags |= findwin95(VTODE(rtvp))
+			pmp->pm_flags |= msdosfs_findwin95(VTODE(rtvp))
 				? MSDOSFSMNT_LONGNAME
 					: MSDOSFSMNT_SHORTNAME;
 			vput(rtvp);
@@ -849,7 +849,7 @@ msdosfs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l, struct msd
 	/*
 	 * Have the inuse map filled in.
 	 */
-	if ((error = fillinusemap(pmp)) != 0) {
+	if ((error = msdosfs_fillinusemap(pmp)) != 0) {
 		DPRINTF("fillinusemap %d", error);
 		goto error_exit;
 	}
@@ -969,7 +969,8 @@ msdosfs_root(struct mount *mp, int lktype, struct vnode **vpp)
 #ifdef MSDOSFS_DEBUG
 	printf("msdosfs_root(); mp %p, pmp %p\n", mp, pmp);
 #endif
-	if ((error = deget(pmp, MSDOSFSROOT, MSDOSFSROOT_OFS, vpp)) != 0)
+	if ((error = msdosfs_deget(pmp, MSDOSFSROOT, MSDOSFSROOT_OFS,
+	    vpp)) != 0)
 		return error;
 	error = vn_lock(*vpp, lktype);
 	if (error) {
@@ -1095,7 +1096,7 @@ msdosfs_fhtovp(struct mount *mp, struct fid *fhp, int lktype, struct vnode **vpp
 		*vpp = NULLVP;
 		return error;
 	}
-	error = deget(pmp, defh.defid_dirclust, defh.defid_dirofs, vpp);
+	error = msdosfs_deget(pmp, defh.defid_dirclust, defh.defid_dirofs, vpp);
 	if (error) {
 		DPRINTF("deget %d", error);
 		*vpp = NULLVP;

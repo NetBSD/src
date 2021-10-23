@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vnops.c,v 1.109 2021/10/23 07:41:37 hannken Exp $	*/
+/*	$NetBSD: msdosfs_vnops.c,v 1.110 2021/10/23 16:58:17 thorpej Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_vnops.c,v 1.109 2021/10/23 07:41:37 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_vnops.c,v 1.110 2021/10/23 16:58:17 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -137,7 +137,7 @@ msdosfs_create(void *v)
 	 * readonly.
 	 */
 	memset(&ndirent, 0, sizeof(ndirent));
-	if ((error = uniqdosname(pdep, cnp, ndirent.de_Name)) != 0)
+	if ((error = msdosfs_uniqdosname(pdep, cnp, ndirent.de_Name)) != 0)
 		goto bad;
 
 	ndirent.de_Attributes = (ap->a_vap->va_mode & S_IWUSR) ?
@@ -149,7 +149,8 @@ msdosfs_create(void *v)
 	ndirent.de_pmp = pdep->de_pmp;
 	ndirent.de_flag = DE_ACCESS | DE_CREATE | DE_UPDATE;
 	DETIMES(&ndirent, NULL, NULL, NULL, pdep->de_pmp->pm_gmtoff);
-	if ((error = createde(&ndirent, pdep, &pdep->de_crap, &dep, cnp)) != 0)
+	if ((error = msdosfs_createde(&ndirent, pdep, &pdep->de_crap, &dep,
+	    cnp)) != 0)
 		goto bad;
 	*ap->a_vpp = DETOV(dep);
 	cache_enter(ap->a_dvp, *ap->a_vpp, cnp->cn_nameptr, cnp->cn_namelen,
@@ -286,12 +287,12 @@ msdosfs_getattr(void *v)
 	vap->va_nlink = 1;
 	vap->va_rdev = 0;
 	vap->va_size = ap->a_vp->v_size;
-	dos2unixtime(dep->de_MDate, dep->de_MTime, 0, pmp->pm_gmtoff,
+	msdosfs_dos2unixtime(dep->de_MDate, dep->de_MTime, 0, pmp->pm_gmtoff,
 	    &vap->va_mtime);
 	if (dep->de_pmp->pm_flags & MSDOSFSMNT_LONGNAME) {
-		dos2unixtime(dep->de_ADate, 0, 0, pmp->pm_gmtoff,
+		msdosfs_dos2unixtime(dep->de_ADate, 0, 0, pmp->pm_gmtoff,
 		    &vap->va_atime);
-		dos2unixtime(dep->de_CDate, dep->de_CTime, dep->de_CHun,
+		msdosfs_dos2unixtime(dep->de_CDate, dep->de_CTime, dep->de_CHun,
 		    pmp->pm_gmtoff, &vap->va_ctime);
 	} else {
 		vap->va_atime = vap->va_mtime;
@@ -359,7 +360,7 @@ msdosfs_setattr(void *v)
 			error = EROFS;
 			goto bad;
 		}
-		error = detrunc(dep, (u_long)vap->va_size, 0, cred);
+		error = msdosfs_detrunc(dep, (u_long)vap->va_size, 0, cred);
 		if (error)
 			goto bad;
 		de_changed = 1;
@@ -376,9 +377,11 @@ msdosfs_setattr(void *v)
 			goto bad;
 		if ((pmp->pm_flags & MSDOSFSMNT_NOWIN95) == 0 &&
 		    vap->va_atime.tv_sec != VNOVAL)
-			unix2dostime(&vap->va_atime, pmp->pm_gmtoff, &dep->de_ADate, NULL, NULL);
+			msdosfs_unix2dostime(&vap->va_atime, pmp->pm_gmtoff,
+			    &dep->de_ADate, NULL, NULL);
 		if (vap->va_mtime.tv_sec != VNOVAL)
-			unix2dostime(&vap->va_mtime, pmp->pm_gmtoff, &dep->de_MDate, &dep->de_MTime, NULL);
+			msdosfs_unix2dostime(&vap->va_mtime, pmp->pm_gmtoff,
+			    &dep->de_MDate, &dep->de_MTime, NULL);
 		dep->de_Attributes |= ATTR_ARCHIVE;
 		dep->de_flag |= DE_MODIFIED;
 		de_changed = 1;
@@ -426,7 +429,7 @@ msdosfs_setattr(void *v)
 	}
 
 	if (de_changed) {
-		error = deupdat(dep, 1);
+		error = msdosfs_deupdat(dep, 1);
 		if (error)
 			goto bad;
 	}
@@ -500,7 +503,7 @@ msdosfs_read(void *v)
 			n = (long) diff;
 
 		/* convert cluster # to sector # */
-		error = pcbmap(dep, lbn, &lbn, 0, &blsize);
+		error = msdosfs_pcbmap(dep, lbn, &lbn, 0, &blsize);
 		if (error)
 			goto bad;
 
@@ -523,7 +526,7 @@ out:
 	if ((ap->a_ioflag & IO_SYNC) == IO_SYNC) {
 		int uerror;
 
-		uerror = deupdat(dep, 1);
+		uerror = msdosfs_deupdat(dep, 1);
 		if (error == 0)
 			error = uerror;
 	}
@@ -593,7 +596,8 @@ msdosfs_write(void *v)
 	 * with zeroed blocks.
 	 */
 	if (uio->uio_offset > dep->de_FileSize) {
-		if ((error = deextend(dep, uio->uio_offset, cred)) != 0) {
+		if ((error = msdosfs_deextend(dep, uio->uio_offset,
+		    cred)) != 0) {
 			return (error);
 		}
 	}
@@ -612,7 +616,7 @@ msdosfs_write(void *v)
 	if (uio->uio_offset + resid > osize) {
 		count = de_clcount(pmp, uio->uio_offset + resid) -
 			de_clcount(pmp, osize);
-		if ((error = extendfile(dep, count, NULL, NULL, 0)))
+		if ((error = msdosfs_extendfile(dep, count, NULL, NULL, 0)))
 			goto errexit;
 
 		dep->de_FileSize = uio->uio_offset + resid;
@@ -662,11 +666,11 @@ msdosfs_write(void *v)
 	 */
 errexit:
 	if (error) {
-		detrunc(dep, osize, ioflag & IO_SYNC, NOCRED);
+		msdosfs_detrunc(dep, osize, ioflag & IO_SYNC, NOCRED);
 		uio->uio_offset -= resid - uio->uio_resid;
 		uio->uio_resid = resid;
 	} else if ((ioflag & IO_SYNC) == IO_SYNC)
-		error = deupdat(dep, 1);
+		error = msdosfs_deupdat(dep, 1);
 	KASSERT(vp->v_size == dep->de_FileSize);
 	return (error);
 }
@@ -691,7 +695,7 @@ msdosfs_update(struct vnode *vp, const struct timespec *acc,
 		return (0);
 	if (dep->de_refcnt <= 0)
 		return (0);
-	error = readde(dep, &bp, &dirp);
+	error = msdosfs_readde(dep, &bp, &dirp);
 	if (error)
 		return (error);
 	DE_EXTERNALIZE(dirp, dep);
@@ -725,7 +729,7 @@ msdosfs_remove(void *v)
 	if (ap->a_vp->v_type == VDIR)
 		error = EPERM;
 	else
-		error = removede(ddep, dep, &ddep->de_crap);
+		error = msdosfs_removede(ddep, dep, &ddep->de_crap);
 #ifdef MSDOSFS_DEBUG
 	printf("msdosfs_remove(), dep %p, usecount %d\n",
 		dep, vrefcnt(ap->a_vp));
@@ -801,7 +805,7 @@ msdosfs_mkdir(void *v)
 	/*
 	 * Allocate a cluster to hold the about to be created directory.
 	 */
-	error = clusteralloc(pmp, 0, 1, &newcluster, NULL);
+	error = msdosfs_clusteralloc(pmp, 0, 1, &newcluster, NULL);
 	if (error)
 		goto bad2;
 
@@ -857,7 +861,7 @@ msdosfs_mkdir(void *v)
 	 * cluster.  This will be written to an empty slot in the parent
 	 * directory.
 	 */
-	if ((error = uniqdosname(pdep, cnp, ndirent.de_Name)) != 0)
+	if ((error = msdosfs_uniqdosname(pdep, cnp, ndirent.de_Name)) != 0)
 		goto bad;
 
 	ndirent.de_Attributes = ATTR_DIRECTORY;
@@ -865,13 +869,14 @@ msdosfs_mkdir(void *v)
 	ndirent.de_FileSize = 0;
 	ndirent.de_dev = pdep->de_dev;
 	ndirent.de_devvp = pdep->de_devvp;
-	if ((error = createde(&ndirent, pdep, &pdep->de_crap, &dep, cnp)) != 0)
+	if ((error = msdosfs_createde(&ndirent, pdep, &pdep->de_crap, &dep,
+	    cnp)) != 0)
 		goto bad;
 	*ap->a_vpp = DETOV(dep);
 	return (0);
 
 bad:
-	clusterfree(pmp, newcluster, NULL);
+	msdosfs_clusterfree(pmp, newcluster, NULL);
 bad2:
 	return (error);
 }
@@ -907,7 +912,7 @@ msdosfs_rmdir(void *v)
 	 *  non-empty.)
 	 */
 	error = 0;
-	if (!dosdirempty(ip) || ip->de_flag & DE_RENAME) {
+	if (!msdosfs_dosdirempty(ip) || ip->de_flag & DE_RENAME) {
 		error = ENOTEMPTY;
 		goto out;
 	}
@@ -919,7 +924,7 @@ msdosfs_rmdir(void *v)
 	 * up access and eventually msdosfs_reclaim() will be called which
 	 * will remove it from the denode cache.
 	 */
-	if ((error = removede(dp, ip, &dp->de_crap)) != 0)
+	if ((error = msdosfs_removede(dp, ip, &dp->de_crap)) != 0)
 		goto out;
 	/*
 	 * This is where we decrement the link count in the parent
@@ -930,7 +935,7 @@ msdosfs_rmdir(void *v)
 	/*
 	 * Truncate the directory that is being deleted.
 	 */
-	error = detrunc(ip, (u_long)0, IO_SYNC, cnp->cn_cred);
+	error = msdosfs_detrunc(ip, (u_long)0, IO_SYNC, cnp->cn_cred);
 	cache_purge(vp);
 out:
 	vput(vp);
@@ -1074,7 +1079,7 @@ msdosfs_readdir(void *v)
 		if (diff <= 0)
 			break;
 		n = MIN(n, diff);
-		if ((error = pcbmap(dep, lbn, &bn, &cn, &blsize)) != 0)
+		if ((error = msdosfs_pcbmap(dep, lbn, &bn, &cn, &blsize)) != 0)
 			break;
 		error = bread(pmp->pm_devvp, de_bn2kb(pmp, bn), blsize,
 		    0, &bp);
@@ -1116,7 +1121,8 @@ msdosfs_readdir(void *v)
 			if (dentp->deAttributes == ATTR_WIN95) {
 				if (pmp->pm_flags & MSDOSFSMNT_SHORTNAME)
 					continue;
-				chksum = win2unixfn((struct winentry *)dentp,
+				chksum =
+				    msdosfs_win2unixfn((struct winentry *)dentp,
 				    dirbuf, chksum, &namlen,
 				    pmp->pm_flags & MSDOSFSMNT_UTF8);
 				if (chksum != -1)
@@ -1157,8 +1163,9 @@ msdosfs_readdir(void *v)
 				    offset / sizeof(struct direntry);
 				dirbuf->d_type = DT_REG;
 			}
-			if (chksum != winChksum(dentp->deName))
-				dirbuf->d_namlen = dos2unixfn(dentp->deName,
+			if (chksum != msdosfs_winChksum(dentp->deName))
+				dirbuf->d_namlen =
+				    msdosfs_dos2unixfn(dentp->deName,
 				    (u_char *)dirbuf->d_name,
 				    pmp->pm_flags & MSDOSFSMNT_SHORTNAME);
 			else
@@ -1236,7 +1243,7 @@ msdosfs_bmap(void *v)
 		*ap->a_vpp = dep->de_devvp;
 	if (ap->a_bnp == NULL)
 		return (0);
-	status = pcbmap(dep, ap->a_bn, ap->a_bnp, 0, 0);
+	status = msdosfs_pcbmap(dep, ap->a_bn, ap->a_bnp, 0, 0);
 
 	/*
 	 * From FreeBSD:
@@ -1251,8 +1258,8 @@ msdosfs_bmap(void *v)
 		maxrun = ulmin(MAXPHYS / dep->de_pmp->pm_bpcluster - 1,
 			       dep->de_pmp->pm_maxcluster - ap->a_bn);
 		for (run = 1; run <= maxrun; run++) {
-			if (pcbmap(dep, ap->a_bn + run, &runbn, NULL, NULL)
-			    != 0 || runbn !=
+			if (msdosfs_pcbmap(dep, ap->a_bn + run, &runbn, NULL,
+			    NULL) != 0 || runbn !=
 			            *ap->a_bnp + de_cn2bn(dep->de_pmp, run))
 				break;
 		}
@@ -1287,7 +1294,7 @@ msdosfs_strategy(void *v)
 	 * don't allow files with holes, so we shouldn't ever see this.
 	 */
 	if (bp->b_blkno == bp->b_lblkno) {
-		error = pcbmap(dep, de_bn2cn(dep->de_pmp, bp->b_lblkno),
+		error = msdosfs_pcbmap(dep, de_bn2cn(dep->de_pmp, bp->b_lblkno),
 			       &bp->b_blkno, 0, 0);
 		if (error)
 			bp->b_blkno = -1;
@@ -1424,7 +1431,8 @@ msdosfs_detimes(struct denode *dep, const struct timespec *acc,
 			getnanotime(&tsb);
 			mod = ts = &tsb;
 		}
-		unix2dostime(mod, gmtoff, &dep->de_MDate, &dep->de_MTime, NULL);
+		msdosfs_unix2dostime(mod, gmtoff, &dep->de_MDate,
+		    &dep->de_MTime, NULL);
 		dep->de_Attributes |= ATTR_ARCHIVE;
 	}
 	if ((dep->de_pmp->pm_flags & MSDOSFSMNT_NOWIN95) == 0) {
@@ -1432,13 +1440,14 @@ msdosfs_detimes(struct denode *dep, const struct timespec *acc,
 			if (acc == NULL)
 				acc = ts == NULL ?
 				    (getnanotime(&tsb), ts = &tsb) : ts;
-			unix2dostime(acc, gmtoff, &dep->de_ADate, NULL, NULL);
+			msdosfs_unix2dostime(acc, gmtoff, &dep->de_ADate,
+			    NULL, NULL);
 		}
 		if (dep->de_flag & DE_CREATE) {
 			if (cre == NULL)
 				cre = ts == NULL ?
 				    (getnanotime(&tsb), ts = &tsb) : ts;
-			unix2dostime(cre, gmtoff, &dep->de_CDate,
+			msdosfs_unix2dostime(cre, gmtoff, &dep->de_CDate,
 			    &dep->de_CTime, &dep->de_CHun);
 		}
 	}
