@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_lookup.c,v 1.37 2021/07/24 21:31:38 andvar Exp $	*/
+/*	$NetBSD: msdosfs_lookup.c,v 1.38 2021/10/23 07:38:33 hannken Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -52,7 +52,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_lookup.c,v 1.37 2021/07/24 21:31:38 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_lookup.c,v 1.38 2021/10/23 07:38:33 hannken Exp $");
 
 #include <sys/param.h>
 
@@ -320,21 +320,21 @@ msdosfs_lookup(void *v)
 				 * entry came from for whoever did
 				 * this lookup.
 				 */
-				dp->de_fndoffset = diroff;
+				dp->de_crap.mlr_fndoffset = diroff;
 				if (chksum_ok && nameiop == RENAME) {
 					/*
 					 * Target had correct long name
 					 * directory entries, reuse them
 					 * as needed.
 					 */
-					dp->de_fndcnt = wincnt - 1;
+					dp->de_crap.mlr_fndcnt = wincnt - 1;
 				} else {
 					/*
 					 * Long name directory entries
 					 * not present or corrupt, can only
 					 * reuse dos directory entry.
 					 */
-					dp->de_fndcnt = 0;
+					dp->de_crap.mlr_fndcnt = 0;
 				}
 
 				goto found;
@@ -389,8 +389,8 @@ notfound:
 		 * Return an indication of where the new directory
 		 * entry should be put.
 		 */
-		dp->de_fndoffset = slotoffset;
-		dp->de_fndcnt = wincnt - 1;
+		dp->de_crap.mlr_fndoffset = slotoffset;
+		dp->de_crap.mlr_fndcnt = wincnt - 1;
 
 		/*
 		 * We return with the directory locked, so that
@@ -552,7 +552,9 @@ foundroot:
  * cnp  - componentname needed for Win95 long filenames
  */
 int
-createde(struct denode *dep, struct denode *ddep, struct denode **depp, struct componentname *cnp)
+createde(struct denode *dep, struct denode *ddep,
+    const struct msdosfs_lookup_results *mlr,
+    struct denode **depp, struct componentname *cnp)
 {
 	int error, rberror;
 	u_long dirclust, clusoffset;
@@ -581,9 +583,9 @@ createde(struct denode *dep, struct denode *ddep, struct denode **depp, struct c
 	 * to extend the root directory.  We just return an error in that
 	 * case.
 	 */
-	if (ddep->de_fndoffset >= ddep->de_FileSize) {
-		u_long needlen = ddep->de_fndoffset + sizeof(struct direntry)
-		    - ddep->de_FileSize;
+	if (mlr->mlr_fndoffset >= ddep->de_FileSize) {
+		u_long needlen = ddep->de_crap.mlr_fndoffset
+		    + sizeof(struct direntry) - ddep->de_FileSize;
 		dirclust = de_clcount(pmp, needlen);
 		if ((error = extendfile(ddep, dirclust, 0, 0, DE_CLEAR)) != 0) {
 			(void)detrunc(ddep, ddep->de_FileSize, 0, NOCRED);
@@ -601,11 +603,11 @@ createde(struct denode *dep, struct denode *ddep, struct denode **depp, struct c
 	 * entry in.  Then write it to disk. NOTE:  DOS directories
 	 * do not get smaller as clusters are emptied.
 	 */
-	error = pcbmap(ddep, de_cluster(pmp, ddep->de_fndoffset),
+	error = pcbmap(ddep, de_cluster(pmp, mlr->mlr_fndoffset),
 		       &bn, &dirclust, &blsize);
 	if (error)
 		goto err_norollback;
-	clusoffset = ddep->de_fndoffset;
+	clusoffset = mlr->mlr_fndoffset;
 	if (dirclust != MSDOSFSROOT)
 		clusoffset &= pmp->pm_crbomask;
 	if ((error = bread(pmp->pm_devvp, de_bn2kb(pmp, bn), blsize,
@@ -619,14 +621,14 @@ createde(struct denode *dep, struct denode *ddep, struct denode **depp, struct c
 	/*
 	 * Now write the Win95 long name
 	 */
-	if (ddep->de_fndcnt > 0) {
+	if (mlr->mlr_fndcnt > 0) {
 		u_int8_t chksum = winChksum(ndep->deName);
 		const u_char *un = (const u_char *)cnp->cn_nameptr;
 		int unlen = cnp->cn_namelen;
 		u_long xhavecnt;
 
-		fndoffset = ddep->de_fndoffset;
-		xhavecnt = ddep->de_fndcnt + 1;
+		fndoffset = mlr->mlr_fndoffset;
+		xhavecnt = mlr->mlr_fndcnt + 1;
 
 		for(; wcnt < xhavecnt; wcnt++) {
 			if ((fndoffset & pmp->pm_crbomask) == 0) {
@@ -705,7 +707,7 @@ createde(struct denode *dep, struct denode *ddep, struct denode **depp, struct c
 	 * can't just call removede(), since directory is not in
 	 * consistent state.
 	 */
-	fndoffset = ddep->de_fndoffset;
+	fndoffset = mlr->mlr_fndoffset;
 	rberror = pcbmap(ddep, de_cluster(pmp, fndoffset),
 	       &bn, NULL, &blsize);
 	if (rberror)
@@ -716,7 +718,7 @@ createde(struct denode *dep, struct denode *ddep, struct denode **depp, struct c
 	}
 	ndep = bptoep(pmp, bp, clusoffset);
 
-	havecnt = ddep->de_fndcnt + 1;
+	havecnt = mlr->mlr_fndcnt + 1;
 	for(i = wcnt; i <= havecnt; i++) {
 		/* mark entry as deleted */
 		ndep->deName[0] = SLOT_DELETED;
@@ -985,9 +987,11 @@ readde(struct denode *dep, struct buf **bpp, struct direntry **epp)
  * msdosfs_reclaim() which will remove the denode from the denode cache.
  */
 int
-removede(struct denode *pdep, struct denode *dep)
+removede(struct denode *pdep, struct denode *dep,
+    const struct msdosfs_lookup_results *mlr)
 	/* pdep:	 directory where the entry is removed */
 	/* dep:	 file to be removed */
+	/* mlr:	 position of dep in pdep from lookup */
 {
 	int error;
 	struct direntry *ep;
@@ -995,7 +999,7 @@ removede(struct denode *pdep, struct denode *dep)
 	daddr_t bn;
 	int blsize;
 	struct msdosfsmount *pmp = pdep->de_pmp;
-	u_long offset = pdep->de_fndoffset;
+	u_long offset = mlr->mlr_fndoffset;
 #ifdef _KERNEL
 	int async = pdep->de_pmp->pm_mountp->mnt_flag & MNT_ASYNC;
 #else
@@ -1039,7 +1043,7 @@ removede(struct denode *pdep, struct denode *dep)
 		 * entry in this block is a longfilename entry, too.
 		 */
 		if (ep->deAttributes != ATTR_WIN95
-		    && offset != pdep->de_fndoffset) {
+		    && offset != mlr->mlr_fndoffset) {
 			brelse(bp, 0);
 			break;
 		}
