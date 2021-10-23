@@ -1,4 +1,4 @@
-/*	$NetBSD: sread.c,v 1.1.1.1 2014/04/01 16:16:07 jakllsch Exp $	*/
+/*	$NetBSD: sread.c,v 1.2 2021/10/23 15:20:26 jmcneill Exp $	*/
 
 /*++
 
@@ -61,11 +61,13 @@ Returns:
     EFI_DEVICE_PATH             *TempFilePath;
     EFI_DEVICE_PATH             *TempFilePathPtr;
     FILEPATH_DEVICE_PATH        *FilePathNode;
+    EFI_DEVICE_PATH_PROTOCOL    *AlignedFilePath;
     EFI_FILE_HANDLE             FileHandle, LastHandle;
     EFI_STATUS                  Status;
     EFI_LOAD_FILE_INTERFACE     *LoadFile;
   
     FHand = NULL;
+    AlignedFilePath = NULL;
     UserFilePath = *FilePath;
 
     //
@@ -106,12 +108,24 @@ Returns:
     Status = FileHandle ? EFI_SUCCESS : EFI_UNSUPPORTED;
 
     //
+    // Duplicate FilePath to make sure it is aligned so that
+    // FilePathNode->PathName below is 16-bit aligned.
+    //
+    AlignedFilePath = DuplicateDevicePath(*FilePath);
+    if (AlignedFilePath == NULL) {
+        if (FileHandle != NULL) {
+            uefi_call_wrapper(FileHandle->Close, 1, FileHandle);
+        }
+        return EFI_OUT_OF_RESOURCES;
+    }
+
+    //
     // To access as a filesystem, the filepath should only
     // contain filepath components.  Follow the filepath nodes
     // and find the target file
     //
 
-    FilePathNode = (FILEPATH_DEVICE_PATH *) *FilePath;
+    FilePathNode = (FILEPATH_DEVICE_PATH *)AlignedFilePath;
     while (!IsDevicePathEnd(&FilePathNode->Header)) {
 
         //
@@ -261,6 +275,10 @@ Returns:
     Status = EFI_UNSUPPORTED;
 
 Done:
+
+    if (AlignedFilePath) {
+        FreePool (AlignedFilePath);
+    }
 
     //
     // If the file was not accessed, clean up
