@@ -1,4 +1,4 @@
-/*	$NetBSD: t_renamerace.c,v 1.41 2021/06/16 23:58:07 riastradh Exp $	*/
+/*	$NetBSD: t_renamerace.c,v 1.42 2021/10/23 17:43:08 hannken Exp $	*/
 
 /*
  * Modified for rump and atf from a program supplied
@@ -183,19 +183,6 @@ renamerace(const atf_tc_t *tc, const char *mp)
 
 	if (FSTYPE_UDF(tc))
 		atf_tc_fail("race did not trigger this time");
-
-	if (FSTYPE_MSDOS(tc)) {
-		atf_tc_expect_fail("PR kern/43626");
-		/*
-		 * XXX: race does not trigger every time at least
-		 * on amd64/qemu.
-		 */
-		if (msdosfs_fstest_unmount(tc, mp, 0) != 0) {
-			rump_pub_vfs_mount_print(mp, 1);
-			atf_tc_fail_errno("unmount failed");
-		}
-		atf_tc_fail("race did not trigger this time");
-	}
 }
 
 static void
@@ -209,10 +196,6 @@ renamerace_dirs(const atf_tc_t *tc, const char *mp)
 		atf_tc_skip("rename not supported by file system");
 	if (FSTYPE_UDF(tc))
 		atf_tc_expect_fail("PR kern/53865");
-
-	/* XXX: msdosfs also sometimes hangs */
-	if (FSTYPE_MSDOS(tc))
-		atf_tc_expect_signal(-1, "PR kern/43626");
 
 	RZ(rump_pub_lwproc_rfork(RUMP_RFCFDG));
 	RL(wrkpid = rump_sys_getpid());
@@ -230,13 +213,6 @@ renamerace_dirs(const atf_tc_t *tc, const char *mp)
 
 	if (FSTYPE_UDF(tc))
 		atf_tc_fail("race did not trigger this time");
-
-	/*
-	 * Doesn't always trigger when run on a slow backend
-	 * (i.e. not on tmpfs/mfs).  So do the usual kludge.
-	 */
-	if (FSTYPE_MSDOS(tc))
-		abort();
 }
 
 static void
@@ -256,10 +232,6 @@ renamerace_cycle(const atf_tc_t *tc, const char *mp)
 		atf_tc_expect_fail("mkdir fails with ESTALE");
 	if (FSTYPE_UDF(tc))
 		atf_tc_expect_fail("sometimes fails with ENOSPC, PR kern/56253");
-
-	/* XXX: msdosfs also sometimes hangs */
-	if (FSTYPE_MSDOS(tc))
-		atf_tc_expect_signal(-1, "PR kern/43626");
 
 	RZ(rump_pub_lwproc_rfork(RUMP_RFCFDG));
 	RL(wrkpid = rump_sys_getpid());
@@ -281,13 +253,6 @@ renamerace_cycle(const atf_tc_t *tc, const char *mp)
 
 	if (FSTYPE_UDF(tc))
 		atf_tc_fail("PR kern/56253 did not trigger this time");
-
-	/*
-	 * Doesn't always trigger when run on a slow backend
-	 * (i.e. not on tmpfs/mfs).  So do the usual kludge.
-	 */
-	if (FSTYPE_MSDOS(tc))
-		abort();
 }
 
 ATF_TC_FSAPPLY(renamerace, "rename(2) race with file unlinked mid-operation");
