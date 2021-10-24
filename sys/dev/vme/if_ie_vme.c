@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ie_vme.c,v 1.33 2020/08/14 10:31:40 martin Exp $	*/
+/*	$NetBSD: if_ie_vme.c,v 1.34 2021/10/24 20:00:12 andvar Exp $	*/
 
 /*
  * Copyright (c) 1995 Charles D. Cranor
@@ -35,7 +35,7 @@
  * sun-4/200's, and VME based suns.  The byte order is all wrong for a
  * SUN, making life difficult.  Programming this chip is mostly the same,
  * but certain details differ from system to system.  This driver is
- * written so that different "ie" interfaces can be controled by the same
+ * written so that different "ie" interfaces can be controlled by the same
  * driver.
  */
 
@@ -101,7 +101,7 @@
  *
  * 	Note that the last entry of the page map maps the top of the
  * 	24 bit address space and that the SCP is supposed to be at
- * 	0xfffff4 (taking into account allignment).   so,
+ * 	0xfffff4 (taking into account alignment).   so,
  *	for multibus, that entry in the page map has to be used for the SCP.
  *
  * 	The page map effects BOTH how the ie chip sees the
@@ -112,7 +112,7 @@
  *	The page map to control where ram appears in the address space.
  *	We choose to have RAM start at 0 in the 24 bit address space.
  *
- *	to get the phyiscal address of the board's RAM you must take the
+ *	to get the physical address of the board's RAM you must take the
  *	top 12 bits of the physical address of the register address and
  *	or in the 4 bits from the status word as bits 17-20 (remember that
  *	the board ignores the chip's top 4 address lines). For example:
@@ -140,7 +140,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ie_vme.c,v 1.33 2020/08/14 10:31:40 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ie_vme.c,v 1.34 2021/10/24 20:00:12 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -176,7 +176,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_ie_vme.c,v 1.33 2020/08/14 10:31:40 martin Exp $"
  * PTE for the page map
  */
 #define IEVME_SBORDR 0x8000	/* sun byte order */
-#define IEVME_IBORDR 0x0000	/* intel byte ordr */
+#define IEVME_IBORDR 0x0000	/* intel byte order */
 
 #define IEVME_P2MEM  0x2000	/* memory is on P2 */
 #define IEVME_OBMEM  0x0000	/* memory is on board */

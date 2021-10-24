@@ -1,4 +1,4 @@
-/*	$NetBSD: psh3lcd.c,v 1.7 2013/11/09 02:54:11 christos Exp $	*/
+/*	$NetBSD: psh3lcd.c,v 1.8 2021/10/24 20:00:11 andvar Exp $	*/
 /*
  * Copyright (c) 2005 KIYOHARA Takashi
  * All rights reserved.
@@ -59,7 +59,7 @@
 #define PSH3LCD_CONTRAST_UD		0x01
 
 /*
- * LCD brightness: controled by HG71C105FE at AREA2.
+ * LCD brightness: controlled by HG71C105FE at AREA2.
  *	XXXX: That is custom IC. We don't know spec.  X-<
  */
 #define PSH3LCD_BRIGHTNESS_REG0		0xaa000072

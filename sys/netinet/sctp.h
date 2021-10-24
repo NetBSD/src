@@ -1,5 +1,5 @@
 /*	$KAME: sctp.h,v 1.18 2005/03/06 16:04:16 itojun Exp $	*/
-/*	$NetBSD: sctp.h,v 1.4 2021/09/06 21:56:04 andvar Exp $ */
+/*	$NetBSD: sctp.h,v 1.5 2021/10/24 20:00:12 andvar Exp $ */
 
 #ifndef _NETINET_SCTP_H_
 #define _NETINET_SCTP_H_
@@ -107,7 +107,7 @@ struct sctp_paramhdr {
  * peeled off UDP model, but we do allow you to do so. You just use
  * the normal syscall to toggle SS_NBIO the way you want.
  */
-/* Blocking I/O is controled by the SS_NBIO flag on the
+/* Blocking I/O is controlled by the SS_NBIO flag on the
  * socket state so_state field.
  */
 #define SCTP_GET_SNDBUF_USE		0x0000000f

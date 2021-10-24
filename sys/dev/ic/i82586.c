@@ -1,4 +1,4 @@
-/*	$NetBSD: i82586.c,v 1.89 2020/03/19 14:10:56 thorpej Exp $	*/
+/*	$NetBSD: i82586.c,v 1.90 2021/10/24 20:00:11 andvar Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -96,7 +96,7 @@
  * sun-4/200's, and VME based suns.  The byte order is all wrong for a
  * SUN, making life difficult.  Programming this chip is mostly the same,
  * but certain details differ from system to system.  This driver is
- * written so that different "ie" interfaces can be controled by the same
+ * written so that different "ie" interfaces can be controlled by the same
  * driver.
  */
 
@@ -137,7 +137,7 @@ Mode of operation:
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i82586.c,v 1.89 2020/03/19 14:10:56 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i82586.c,v 1.90 2021/10/24 20:00:11 andvar Exp $");
 
 
 #include <sys/param.h>
