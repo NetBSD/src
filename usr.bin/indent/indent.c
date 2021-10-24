@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.c,v 1.149 2021/10/24 19:14:33 rillig Exp $	*/
+/*	$NetBSD: indent.c,v 1.150 2021/10/24 19:33:26 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)indent.c	5.17 (Berkeley) 6/7/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: indent.c,v 1.149 2021/10/24 19:14:33 rillig Exp $");
+__RCSID("$NetBSD: indent.c,v 1.150 2021/10/24 19:33:26 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/indent.c 340138 2018-11-04 19:24:49Z oshogbo $");
 #endif
@@ -1328,35 +1328,30 @@ process_preprocessing(void)
 static void __attribute__((__noreturn__))
 main_loop(void)
 {
-    token_type ttype;
-    bool force_nl;		/* when true, code must be broken */
+    bool force_nl = false;	/* when true, code must be broken */
     bool last_else = false;	/* true iff last keyword was an else */
-    int decl_ind;		/* current indentation for declarations */
+    int decl_ind = 0;		/* current indentation for declarations */
     int di_stack[20];		/* a stack of structure indentation levels */
-    bool tabs_to_var;		/* true if using tabs to indent to var name */
-    bool sp_sw;			/* when true, we are in the expression of
+    bool tabs_to_var = false;	/* true if using tabs to indent to var name */
+    bool sp_sw = false;		/* when true, we are in the expression of
 				 * if(...), while(...), etc. */
     token_type hd_type = end_of_file;	/* the type of statement for if (...),
 				 * for (...), etc */
-    int seen_quest;		/* when this is positive, we have seen a '?'
+    int seen_quest = 0;		/* when this is positive, we have seen a '?'
 				 * without the matching ':' in a <c>?<s>:<s>
 				 * construct */
-    bool seen_case;		/* set to true when we see a 'case', so we
+    bool seen_case = false;	/* set to true when we see a 'case', so we
 				 * know what to do with the following colon */
 
-    sp_sw = force_nl = false;
-    decl_ind = 0;
     di_stack[ps.decl_nest = 0] = 0;
-    seen_case = false;
-    seen_quest = 0;
-    tabs_to_var = false;
 
     for (;;) {			/* this is the main loop.  it will go until we
 				 * reach eof */
 	bool comment_buffered = false;
 
-	ttype = lexi(&ps);	/* Read the next token.  The actual characters
-				 * read are stored in "token". */
+	token_type ttype = lexi(&ps);	/* Read the next token.  The actual
+					 * characters read are stored in
+					 * "token". */
 
 	/*
 	 * Move newlines and comments following an if (), while (), else, etc.
