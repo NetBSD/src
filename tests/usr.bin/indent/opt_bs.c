@@ -1,4 +1,4 @@
-/* $NetBSD: opt_bs.c,v 1.3 2021/10/16 21:32:10 rillig Exp $ */
+/* $NetBSD: opt_bs.c,v 1.4 2021/10/24 11:42:57 rillig Exp $ */
 /* $FreeBSD$ */
 
 /*
@@ -59,4 +59,41 @@ example(int i)
 	print(sizeof(i));
 	print(sizeof(int));
 }
+#indent end
+
+/*
+ * The option '-bs' only affects 'sizeof', not 'offsetof', even though these
+ * two keywords are syntactically similar.
+ */
+#indent input
+int sizeof_type = sizeof   (int);
+int sizeof_type = sizeof(int);
+int sizeof_expr = sizeof   (0);
+int sizeof_expr = sizeof(0);
+int sizeof_expr = sizeof   0;
+
+int offset = offsetof(struct s, member);
+int offset = offsetof   (struct s, member);
+#indent end
+
+#indent run -pcs -di0
+int sizeof_type = sizeof (int);
+int sizeof_type = sizeof (int);
+int sizeof_expr = sizeof (0);
+int sizeof_expr = sizeof (0);
+int sizeof_expr = sizeof 0;
+
+int offset = offsetof (struct s, member);
+int offset = offsetof (struct s, member);
+#indent end
+
+#indent run -npcs -di0
+int sizeof_type = sizeof(int);
+int sizeof_type = sizeof(int);
+int sizeof_expr = sizeof(0);
+int sizeof_expr = sizeof(0);
+int sizeof_expr = sizeof 0;
+
+int offset = offsetof(struct s, member);
+int offset = offsetof(struct s, member);
 #indent end

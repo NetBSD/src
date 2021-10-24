@@ -1,4 +1,4 @@
-/* $NetBSD: opt_pcs.c,v 1.4 2021/10/24 11:31:37 rillig Exp $ */
+/* $NetBSD: opt_pcs.c,v 1.5 2021/10/24 11:42:57 rillig Exp $ */
 /* $FreeBSD$ */
 
 /*
@@ -56,7 +56,8 @@ int offset = offsetof(struct s, member);
 int offset = offsetof   (struct s, member);
 #indent end
 
-#indent run -pcs -di0
+/* The option '-pcs' overrides '-nbs'. */
+#indent run -pcs -di0 -nbs
 int sizeof_type = sizeof (int);
 int sizeof_type = sizeof (int);
 int sizeof_expr = sizeof (0);
@@ -65,6 +66,21 @@ int sizeof_expr = sizeof 0;
 
 int offset = offsetof (struct s, member);
 int offset = offsetof (struct s, member);
+#indent end
+
+/*
+ * If the option '-npcs' is given, '-bs' can still specialize it. This only
+ * applies to 'sizeof', but not 'offsetof'.
+ */
+#indent run -npcs -di0 -bs
+int sizeof_type = sizeof (int);
+int sizeof_type = sizeof (int);
+int sizeof_expr = sizeof (0);
+int sizeof_expr = sizeof (0);
+int sizeof_expr = sizeof 0;
+
+int offset = offsetof(struct s, member);
+int offset = offsetof(struct s, member);
 #indent end
 
 #indent run -npcs -di0
