@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.37 2021/10/24 19:14:33 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.38 2021/10/24 22:28:06 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -65,7 +65,7 @@ parse(token_type ttype)
     debug_println("parse token: '%s' \"%s\"",
 	token_type_name(ttype), token.s);
 
-    if (ttype != keyword_else) {
+    if (ttype != tt_ps_else) {
 	while (ps.s_ttype[ps.tos] == if_expr_stmt) {
 	    ps.s_ttype[ps.tos] = stmt;
 	    reduce();
@@ -105,7 +105,7 @@ parse(token_type ttype)
 	    ps.ind_level_follow = ps.s_ind_level[ps.tos--];
 	}
 	/* FALLTHROUGH */
-    case keyword_do:
+    case tt_ps_do:
     case for_exprs:		/* 'for' (...) */
 	ps.s_ttype[++ps.tos] = ttype;
 	ps.s_ind_level[ps.tos] = ps.ind_level = ps.ind_level_follow;
@@ -155,7 +155,7 @@ parse(token_type ttype)
 
 	break;
 
-    case keyword_else:
+    case tt_ps_else:
 	if (ps.s_ttype[ps.tos] != if_expr_stmt)
 	    diag(1, "Unmatched 'else'");
 	else {
@@ -235,7 +235,7 @@ reduce_stmt(void)
 	ps.s_ttype[--ps.tos] = stmt_list;
 	return true;
 
-    case keyword_do:		/* 'do' <stmt> */
+    case tt_ps_do:		/* 'do' <stmt> */
 	ps.s_ttype[--ps.tos] = do_stmt;
 	ps.ind_level_follow = ps.s_ind_level[ps.tos];
 	return true;

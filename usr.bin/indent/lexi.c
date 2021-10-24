@@ -1,4 +1,4 @@
-/*	$NetBSD: lexi.c,v 1.96 2021/10/24 20:47:00 rillig Exp $	*/
+/*	$NetBSD: lexi.c,v 1.97 2021/10/24 22:28:06 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)lexi.c	8.1 (Berkeley) 6/6/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: lexi.c,v 1.96 2021/10/24 20:47:00 rillig Exp $");
+__RCSID("$NetBSD: lexi.c,v 1.97 2021/10/24 22:28:06 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/lexi.c 337862 2018-08-15 18:19:45Z pstef $");
 #endif
@@ -74,9 +74,9 @@ static const struct keyword {
     {"const", kw_type},
     {"continue", kw_jump},
     {"default", kw_case_or_default},
-    {"do", kw_do_or_else},
+    {"do", kw_do},
     {"double", kw_type},
-    {"else", kw_do_or_else},
+    {"else", kw_else},
     {"enum", kw_struct_or_union_or_enum},
     {"extern", kw_storage_class},
     {"float", kw_type},
@@ -227,14 +227,15 @@ token_type_name(token_type ttype)
 	"case_label", "colon",
 	"semicolon", "lbrace", "rbrace", "ident", "comma",
 	"comment", "switch_expr", "preprocessing", "form_feed", "decl",
-	"keyword_for_if_while", "keyword_do_else",
+	"keyword_for_if_while", "tt_lex_do", "tt_lex_else",
 	"if_expr", "while_expr", "for_exprs",
-	"stmt", "stmt_list", "keyword_else", "keyword_do", "do_stmt",
+	"stmt", "stmt_list", "tt_ps_else", "tt_ps_do", "do_stmt",
 	"if_expr_stmt", "if_expr_stmt_else", "period", "string_prefix",
 	"storage_class", "funcname", "type_def", "keyword_struct_union_enum"
     };
 
     assert(0 <= ttype && ttype < array_length(name));
+    assert(array_length(name) == (int)keyword_struct_union_enum + 1);
 
     return name[ttype];
 }
@@ -451,8 +452,11 @@ lexi_alnum(struct parser_state *state)
 	case kw_for_or_if_or_while:
 	    return keyword_for_if_while;
 
-	case kw_do_or_else:
-	    return keyword_do_else;
+	case kw_do:
+	    return tt_lex_do;
+
+	case kw_else:
+	    return tt_lex_else;
 
 	case kw_storage_class:
 	    return storage_class;
