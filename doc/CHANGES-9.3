@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.3,v 1.1.2.41 2021/10/23 11:23:05 martin Exp $
+# $NetBSD: CHANGES-9.3,v 1.1.2.42 2021/10/24 10:19:01 martin Exp $
 
 A complete list of changes from the NetBSD 9.2 release to the NetBSD 9.3
 release:
@@ -888,4 +888,20 @@ sys/dev/usb/usbdevs_data.h			(regen)
 
 	urtwn(4): add Edimax N150 adapter.
 	[jnemeth, ticket #1364]
+
+usr.bin/ftp/fetch.c				1.233
+
+	ftp(1): use raw write(2) instead of fwrite(3) to avoid stream
+	corruption because of the progress bar interrupts.
+	[lukem, ticket #1365]
+
+usr.bin/ftp/ftp.c				1.173
+
+	ftp(1): validate address from PASV and LPSV response.
+	[lukem, ticket #1366]
+
+usr.bin/ftp/ftp.c				1.174
+
+	ftp(1): cleanup after previous security fix.
+	[lukem, ticket #1367]
 
