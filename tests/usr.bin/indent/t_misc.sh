@@ -1,5 +1,5 @@
 #! /bin/sh
-# $NetBSD: t_misc.sh,v 1.5 2021/10/23 21:45:14 rillig Exp $
+# $NetBSD: t_misc.sh,v 1.6 2021/10/24 16:46:12 rillig Exp $
 #
 # Copyright (c) 2021 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -306,6 +306,25 @@ opt_U_body()
 	    "$indent" -Ucode.types code.c -di0 -st
 }
 
+atf_test_case 'line_no_counting'
+line_no_counting_body()
+{
+	cat <<-\EOF > code.c
+		void line_no_counting(void)
+		{
+			())
+		}
+	EOF
+
+	# FIXME: the wrong ')' is in line 3, not 2.
+	cat <<-\EOF > code.err
+		/**INDENT** Warning@2: Extra ) */
+	EOF
+
+	atf_check -o 'ignore' -e 'file:code.err' \
+	    "$indent" code.c -st
+}
+
 atf_init_test_cases()
 {
 	atf_add_test_case 'in_place'
@@ -315,4 +334,5 @@ atf_init_test_cases()
 	atf_add_test_case 'opt'
 	atf_add_test_case 'opt_npro'
 	atf_add_test_case 'opt_U'
+	atf_add_test_case 'line_no_counting'
 }
