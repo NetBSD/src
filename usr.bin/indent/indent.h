@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.h,v 1.44 2021/10/24 11:17:05 rillig Exp $	*/
+/*	$NetBSD: indent.h,v 1.45 2021/10/24 11:19:25 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-FreeBSD
@@ -325,9 +325,7 @@ extern struct parser_state {
 }            ps;
 
 
-#ifndef nitems
-#define nitems(array) (sizeof (array) / sizeof (array[0]))
-#endif
+#define array_length(array) (sizeof (array) / sizeof (array[0]))
 
 void add_typename(const char *);
 int compute_code_indent(void);
