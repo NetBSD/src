@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.h,v 1.46 2021/10/24 22:28:06 rillig Exp $	*/
+/*	$NetBSD: indent.h,v 1.47 2021/10/24 22:38:20 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-FreeBSD
@@ -91,7 +91,9 @@ typedef enum token_type {
     preprocessing,		/* '#' */
     form_feed,
     decl,
-    keyword_for_if_while,	/* 'for', 'if' or 'while' */
+    tt_lex_for,
+    tt_lex_if,
+    tt_lex_while,
     tt_lex_do,
     tt_lex_else,
     if_expr,			/* 'if' '(' <expr> ')' */
@@ -225,7 +227,9 @@ enum keyword_kind {
     kw_sizeof,
     kw_struct_or_union_or_enum,
     kw_type,
-    kw_for_or_if_or_while,
+    kw_for,
+    kw_if,
+    kw_while,
     kw_do,
     kw_else,
     kw_switch,
