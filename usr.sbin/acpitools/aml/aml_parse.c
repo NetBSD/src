@@ -1,4 +1,4 @@
-/*	$NetBSD: aml_parse.c,v 1.4 2013/10/19 17:16:37 christos Exp $	*/
+/*	$NetBSD: aml_parse.c,v 1.5 2021/10/24 20:00:12 andvar Exp $	*/
 
 /*-
  * Copyright (c) 1999 Doug Rabson
@@ -30,7 +30,7 @@
  *	$FreeBSD: src/usr.sbin/acpi/amldb/aml/aml_parse.c,v 1.7 2001/10/23 14:54:15 takawata Exp $
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: aml_parse.c,v 1.4 2013/10/19 17:16:37 christos Exp $");
+__RCSID("$NetBSD: aml_parse.c,v 1.5 2021/10/24 20:00:12 andvar Exp $");
 
 #include <sys/param.h>
 
@@ -714,7 +714,7 @@ aml_parse_field(struct aml_environ *env, struct aml_field *template)
 		template->bitlen = width;
 		aml_print_namestring(name);
 		AML_CREATE_NAME(aname, env, name, 0);
-		/* Allignment */
+		/* Alignment */
 		if (width == 16) {
 			template->bitoffset += 15;
 			template->bitoffset &= (~15);

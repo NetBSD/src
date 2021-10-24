@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iereg.h,v 1.1 1996/05/17 21:18:29 chuck Exp $	*/
+/*	$NetBSD: if_iereg.h,v 1.2 2021/10/24 20:00:11 andvar Exp $	*/
 
 /*
  * if_sunie.h
@@ -68,7 +68,7 @@
  *
  * 	note that the last entry of the page map maps the top of the
  * 	24 bit address space and that the SCP is supposed to be at
- * 	0xfffff4 (taking into account allignment).   so,
+ * 	0xfffff4 (taking into account alignment).   so,
  *	for multibus, that entry in the page map has to be used for the SCP.
  *
  * 	the page map effects BOTH how the ie chip sees the
@@ -99,7 +99,7 @@
  * PTE for the page map
  */
 #define IEVME_SBORDR 0x8000	/* sun byte order */
-#define IEVME_IBORDR 0x0000	/* intel byte ordr */
+#define IEVME_IBORDR 0x0000	/* intel byte order */
 
 #define IEVME_P2MEM  0x2000	/* memory is on P2 */
 #define IEVME_OBMEM  0x0000	/* memory is on board */

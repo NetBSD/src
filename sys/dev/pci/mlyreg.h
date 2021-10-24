@@ -1,4 +1,4 @@
-/*	$NetBSD: mlyreg.h,v 1.7 2019/12/28 03:09:18 gutteridge Exp $	*/
+/*	$NetBSD: mlyreg.h,v 1.8 2021/10/24 20:00:11 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -387,8 +387,8 @@ struct mly_status {
 #define	MDACMD_MEMCOPY		0x1	/* memory to memory copy */
 #define	MDACMD_SCSIPT		0x2	/* SCSI passthrough (small command) */
 #define	MDACMD_SCSILCPT		0x3	/* SCSI passthrough (large command) */
-#define	MDACMD_SCSI		0x4	/* SCSI command for logical/phyiscal device (small command) */
-#define	MDACMD_SCSILC		0x5	/* SCSI command for logical/phyiscal device (large command) */
+#define	MDACMD_SCSI		0x4	/* SCSI command for logical/physical device (small command) */
+#define	MDACMD_SCSILC		0x5	/* SCSI command for logical/physical device (large command) */
 #define	MDACMD_IOCTL		0x20	/* Management command */
 #define	MDACMD_IOCTLCHECK	0x23	/* Validate management command (not implemented) */
 

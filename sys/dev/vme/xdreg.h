@@ -1,4 +1,4 @@
-/*	$NetBSD: xdreg.h,v 1.7 2011/02/01 19:36:24 chuck Exp $	*/
+/*	$NetBSD: xdreg.h,v 1.8 2021/10/24 20:00:12 andvar Exp $	*/
 
 /*
  * Copyright (c) 1995 Charles D. Cranor
@@ -74,7 +74,7 @@ struct xdc {
  * the driver in case it ever gets ported to an environment that needs it.
  */
 
-#define XDC_ADDRMOD   0x3d    /* standard address modifer, 24 bit max */
+#define XDC_ADDRMOD   0x3d    /* standard address modifier, 24 bit max */
 #define XDC_ADDRMOD32 0x0d    /* 32 bit version above */
 
 /*
@@ -182,7 +182,7 @@ struct xd_iopb {
                                  /* section 4.1.13: byte e */
   volatile u_char addrmod;       /* addr modifier (bits 7,6 must be zero) */
                                  /* section 4.1.14: byte f */
-  volatile u_char naddrmod;      /* next (in chain) address iobp ad. modifer */
+  volatile u_char naddrmod;      /* next (in chain) address iobp ad. modifier */
                                  /* section 4.1.15: bytes 0x10 to 0x13 */
   volatile u_long daddr;         /* DMA data address */
                                  /* section 4.1.16: bytes 0x14 to 0x17 */
@@ -200,7 +200,7 @@ struct xd_iopb {
  * these commands include:
  *   section 4.2: controller parameters
  *   section 4.3: drive parameters
- *   sectino 4.4: format parameters
+ *   section 4.4: format parameters
  *
  * note that the commands that overload the iopb are not part of the
  * "critical data path" of the driver.   so, we handle them by defining
@@ -236,7 +236,7 @@ struct xd_iopb_ctrl {
                                  /* section 4.2.3: byte a */
   volatile u_char param_c;       /* param C (see below) */
 #define XDPC_OVS  0x80           /* over-lapped seek */
-#define XDPC_COP  0x40           /* command optimiziation (elevator alg.) */
+#define XDPC_COP  0x40           /* command optimization (elevator alg.) */
 #define XDPC_ASR  0x10           /* auto-seek retry */
 #define XDPC_RBC  0x04           /* retry before correction if ECC error */
 #define XDPC_ECCM 0x03           /* ECC mode (0, 1, and 2) */
@@ -309,7 +309,7 @@ struct xd_iopb_drive {
  */
 
 struct xd_iopb_format {
-  volatile u_char same[6];       /* smae as xd_iopb */
+  volatile u_char same[6];       /* same as xd_iopb */
                                  /* section 4.4.1: byte 6 */
   volatile u_char interleave_ipl;/* (interleave << 4) | interrupt level */
                                  /* interleave ratio 1:1 to 16:1 */
@@ -371,7 +371,7 @@ struct xd_iopb_format {
 #define XD_ERR_IF7  0x1b         /* illegal field 7 */
 #define XD_ERR_ISG  0x1c         /* illegal scatter/gather */
 #define XD_ERR_ISPT 0x1d         /* not enough sectors per track */
-#define XD_ERR_ALGN 0x1e         /* next iopb allignment error */
+#define XD_ERR_ALGN 0x1e         /* next iopb alignment error */
 #define XD_ERR_SGAL 0x1f         /* scatter gather address alignment error */
 #define XD_ERR_SGEC 0x20         /* scatter gather with auto ECC */
 /* successfully recovered soft errors */
@@ -410,9 +410,9 @@ struct xd_iopb_format {
 #define XD_ERR_MT6  0xe6         /* maint test 6 failed (REGCEL chip) */
 #define XD_ERR_MT7  0xe7         /* maint test 7 failed (buff. parity) */
 #define XD_ERR_MT8  0xe8         /* maint test 8 failed (fifo) */
-#define XD_ERR_IOCK 0xf0         /* iopb checksume miscompare */
+#define XD_ERR_IOCK 0xf0         /* iopb checksum miscompare */
 #define XD_ERR_IODM 0xf1         /* iopb DMA fatal */
-#define XD_ERR_IOAL 0xf2         /* iopb allignment error */
+#define XD_ERR_IOAL 0xf2         /* iopb alignment error */
 #define XD_ERR_FIRM 0xf3         /* firmware error n*/
 #define XD_ERR_MMOD 0xf5         /* illegal maint mode test number */
 #define XD_ERR_ACFL 0xf6         /* ACFAIL asserted */

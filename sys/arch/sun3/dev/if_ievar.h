@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ievar.h,v 1.16 2019/09/13 07:55:06 msaitoh Exp $	*/
+/*	$NetBSD: if_ievar.h,v 1.17 2021/10/24 20:00:11 andvar Exp $	*/
 
 /*
  * Machine-dependent glue for the Intel Ethernet (ie) driver.
@@ -35,7 +35,7 @@ enum ie_hardware {
  * on the vme/multibus we have the page map to control where ram appears
  * in the address space.   we choose to have RAM start at 0 in the
  * 24 bit address space.   this means that sc_iobase == sc_maddr!
- * to get the phyiscal address of the board's RAM you must take the
+ * to get the physical address of the board's RAM you must take the
  * top 12 bits of the physical address of the register address
  * and or in the 4 bits from the status word as bits 17-20 (remember that
  * the board ignores the chip's top 4 address lines).

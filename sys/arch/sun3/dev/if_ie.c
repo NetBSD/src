@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ie.c,v 1.72 2020/03/19 14:06:32 thorpej Exp $ */
+/*	$NetBSD: if_ie.c,v 1.73 2021/10/24 20:00:11 andvar Exp $ */
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles M. Hannum.
@@ -68,7 +68,7 @@
  * sun-4/200's, and VME based suns.  The byte order is all wrong for a
  * SUN, making life difficult.  Programming this chip is mostly the same,
  * but certain details differ from system to system.  This driver is
- * written so that different "ie" interfaces can be controled by the same
+ * written so that different "ie" interfaces can be controlled by the same
  * driver.
  */
 
@@ -98,7 +98,7 @@
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ie.c,v 1.72 2020/03/19 14:06:32 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ie.c,v 1.73 2021/10/24 20:00:11 andvar Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
