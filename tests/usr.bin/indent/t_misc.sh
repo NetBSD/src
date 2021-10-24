@@ -1,5 +1,5 @@
 #! /bin/sh
-# $NetBSD: t_misc.sh,v 1.6 2021/10/24 16:46:12 rillig Exp $
+# $NetBSD: t_misc.sh,v 1.7 2021/10/24 16:51:44 rillig Exp $
 #
 # Copyright (c) 2021 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -309,6 +309,9 @@ opt_U_body()
 atf_test_case 'line_no_counting'
 line_no_counting_body()
 {
+	# Before NetBSD indent.c 1.147 from 2021-10-24, indent reported the
+	# warning in line 2 instead of the correct line 3.
+
 	cat <<-\EOF > code.c
 		void line_no_counting(void)
 		{
@@ -316,9 +319,8 @@ line_no_counting_body()
 		}
 	EOF
 
-	# FIXME: the wrong ')' is in line 3, not 2.
 	cat <<-\EOF > code.err
-		/**INDENT** Warning@2: Extra ) */
+		/**INDENT** Warning@3: Extra ) */
 	EOF
 
 	atf_check -o 'ignore' -e 'file:code.err' \
