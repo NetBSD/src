@@ -1,4 +1,4 @@
-/*      $NetBSD: meta.c,v 1.183 2021/08/19 15:50:30 rillig Exp $ */
+/*      $NetBSD: meta.c,v 1.184 2021/10/24 18:45:46 sjg Exp $ */
 
 /*
  * Implement 'meta' mode.
@@ -145,11 +145,11 @@ meta_open_filemon(BuildMon *pbm)
     else
 	pbm->mon_fd = mkTempFile("filemon.XXXXXX", NULL, 0);
     if ((dupfd = dup(pbm->mon_fd)) == -1) {
-	err(1, "Could not dup filemon output!");
+	Punt("Could not dup filemon output: %s", strerror(errno));
     }
     (void)fcntl(dupfd, F_SETFD, FD_CLOEXEC);
     if (filemon_setfd(pbm->filemon, dupfd) == -1) {
-	err(1, "Could not set filemon file descriptor!");
+	Punt("Could not set filemon file descriptor: %s", strerror(errno));
     }
     /* we don't need these once we exec */
     (void)fcntl(pbm->mon_fd, F_SETFD, FD_CLOEXEC);
@@ -187,7 +187,9 @@ filemon_read(FILE *mfp, int fd)
 		error = EIO;
 	}
     }
-    fflush(mfp);
+    if (fflush(mfp) != 0)
+	Punt("Cannot write filemon data to meta file: %s",
+	    strerror(errno));
     if (close(fd) < 0)
 	error = errno;
     return error;
@@ -518,7 +520,7 @@ meta_create(BuildMon *pbm, GNode *gn)
 #endif
 
     if ((fp = fopen(fname, "w")) == NULL)
-	err(1, "Could not open meta file '%s'", fname);
+	Punt("Could not open meta file '%s': %s", fname, strerror(errno));
 
     fprintf(fp, "# Meta data file %s\n", fname);
 
@@ -536,7 +538,9 @@ meta_create(BuildMon *pbm, GNode *gn)
     }
 
     fprintf(fp, "-- command output --\n");
-    fflush(fp);
+    if (fflush(fp) != 0)
+	Punt("Cannot write expanded command to meta file: %s",
+	    strerror(errno));
 
     Global_Append(".MAKE.META.FILES", fname);
     Global_Append(".MAKE.META.CREATED", fname);
@@ -710,7 +714,7 @@ meta_job_child(Job *job)
 
 	    pid = getpid();
 	    if (filemon_setpid_child(pbm->filemon, pid) == -1) {
-		err(1, "Could not set filemon pid!");
+		Punt("Could not set filemon pid: %s", strerror(errno));
 	    }
 	}
     }
@@ -850,8 +854,10 @@ meta_cmd_finish(void *pbmp)
     if (pbm->filemon != NULL) {
 	while (filemon_process(pbm->filemon) > 0)
 	    continue;
-	if (filemon_close(pbm->filemon) == -1)
+	if (filemon_close(pbm->filemon) == -1) {
 	    error = errno;
+	    Punt("filemon failed: %s", strerror(errno));
+	}
 	x = filemon_read(pbm->mfp, pbm->mon_fd);
 	if (error == 0 && x != 0)
 	    error = x;
