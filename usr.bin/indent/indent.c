@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.c,v 1.152 2021/10/24 20:57:11 rillig Exp $	*/
+/*	$NetBSD: indent.c,v 1.153 2021/10/24 22:28:06 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)indent.c	5.17 (Berkeley) 6/7/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: indent.c,v 1.152 2021/10/24 20:57:11 rillig Exp $");
+__RCSID("$NetBSD: indent.c,v 1.153 2021/10/24 22:28:06 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/indent.c 340138 2018-11-04 19:24:49Z oshogbo $");
 #endif
@@ -246,8 +246,7 @@ search_brace_other(token_type ttype, bool *force_nl,
 
     remove_newlines =
 	    /* "} else" */
-	    (ttype == keyword_do_else && *token.s == 'e' &&
-	     code.e != code.s && code.e[-1] == '}')
+	    (ttype == tt_lex_else && code.e != code.s && code.e[-1] == '}')
 	    /* "else if" */
 	    || (ttype == keyword_for_if_while &&
 		*token.s == 'i' && last_else && opt.else_if);
@@ -1055,7 +1054,7 @@ process_keyword_do(bool *force_nl, bool *last_else)
 
     *force_nl = true;		/* following stuff must go onto new line */
     *last_else = false;
-    parse(keyword_do);
+    parse(tt_ps_do);
 }
 
 static void
@@ -1072,7 +1071,7 @@ process_keyword_else(bool *force_nl, bool *last_else)
 
     *force_nl = true;		/* following stuff must go onto new line */
     *last_else = true;
-    parse(keyword_else);
+    parse(tt_ps_else);
 }
 
 static void
@@ -1447,11 +1446,12 @@ main_loop(void)
 	    /* remember the type of header for later use by parser */
 	    goto copy_token;
 
-	case keyword_do_else:
-	    if (*token.s == 'd')
-		process_keyword_do(&force_nl, &last_else);
-	    else
-		process_keyword_else(&force_nl, &last_else);
+	case tt_lex_do:
+	    process_keyword_do(&force_nl, &last_else);
+	    goto copy_token;
+
+	case tt_lex_else:
+	    process_keyword_else(&force_nl, &last_else);
 	    goto copy_token;
 
 	case type_def:
