@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.c,v 1.146 2021/10/24 11:19:25 rillig Exp $	*/
+/*	$NetBSD: indent.c,v 1.147 2021/10/24 16:51:44 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)indent.c	5.17 (Berkeley) 6/7/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: indent.c,v 1.146 2021/10/24 11:19:25 rillig Exp $");
+__RCSID("$NetBSD: indent.c,v 1.147 2021/10/24 16:51:44 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/indent.c 340138 2018-11-04 19:24:49Z oshogbo $");
 #endif
@@ -149,6 +149,8 @@ search_brace_newline(bool *force_nl)
 	sc_end = &save_com[2];
     }
     *sc_end++ = '\n';
+
+    line_no++;
 
     /*
      * We may have inherited a force_nl == true from the previous token (like
