@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.c,v 1.148 2021/10/24 17:19:48 rillig Exp $	*/
+/*	$NetBSD: indent.c,v 1.149 2021/10/24 19:14:33 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)indent.c	5.17 (Berkeley) 6/7/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: indent.c,v 1.148 2021/10/24 17:19:48 rillig Exp $");
+__RCSID("$NetBSD: indent.c,v 1.149 2021/10/24 19:14:33 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/indent.c 340138 2018-11-04 19:24:49Z oshogbo $");
 #endif
@@ -309,19 +309,18 @@ search_brace_lookahead(token_type *ttype)
 	return;
 
     /*
-     * The only intended purpose of calling lexi() below is to categorize
-     * the next token in order to decide whether to continue buffering
-     * forthcoming tokens. Once the buffering is over, lexi() will be
-     * called again elsewhere on all of the tokens - this time for normal
-     * processing.
+     * The only intended purpose of calling lexi() below is to categorize the
+     * next token in order to decide whether to continue buffering forthcoming
+     * tokens. Once the buffering is over, lexi() will be called again
+     * elsewhere on all of the tokens - this time for normal processing.
      *
-     * Calling it for this purpose is a bug, because lexi() also changes
-     * the parser state and discards leading whitespace, which is needed
-     * mostly for comment-related considerations.
+     * Calling it for this purpose is a bug, because lexi() also changes the
+     * parser state and discards leading whitespace, which is needed mostly
+     * for comment-related considerations.
      *
-     * Work around the former problem by giving lexi() a copy of the
-     * current parser state and discard it if the call turned out to be
-     * just a lookahead.
+     * Work around the former problem by giving lexi() a copy of the current
+     * parser state and discard it if the call turned out to be just a
+     * lookahead.
      *
      * Work around the latter problem by copying all whitespace characters
      * into the buffer so that the later lexi() call will read them.
@@ -367,7 +366,7 @@ search_brace(token_type *ttype, bool *force_nl,
 	    if (!search_brace_other(*ttype, force_nl,
 		    *comment_buffered, *last_else))
 		return;
-	switch_buffer:
+    switch_buffer:
 	    switch_buffer();
 	}
 	search_brace_lookahead(ttype);
@@ -490,7 +489,7 @@ bakcopy(void)
 
     const char *last_slash = strrchr(in_name, '/');
     snprintf(bakfile, sizeof(bakfile), "%s%s",
-	     last_slash != NULL ? last_slash + 1 : in_name, backup_suffix);
+	last_slash != NULL ? last_slash + 1 : in_name, backup_suffix);
 
     /* copy in_name to backup file */
     bak_fd = creat(bakfile, 0600);
@@ -853,7 +852,7 @@ process_colon(int *seen_quest, bool *force_nl, bool *seen_case)
 	return;
     }
 
-    if (ps.init_or_struct) {		/* bit-field */
+    if (ps.init_or_struct) {	/* bit-field */
 	*code.e++ = ':';
 	ps.want_blank = false;
 	return;
@@ -1100,8 +1099,8 @@ process_decl(int *decl_ind, bool *tabs_to_var)
 
     int len = (int)buf_len(&token) + 1;
     int ind = ps.ind_level == 0 || ps.decl_nest > 0
-	    ? opt.decl_indent		/* global variable or local member */
-	    : opt.local_decl_indent;	/* local variable */
+	? opt.decl_indent	/* global variable or local member */
+	: opt.local_decl_indent;	/* local variable */
     *decl_ind = ind > 0 ? ind : len;
     *tabs_to_var = opt.use_tabs && ind > 0;
 }
@@ -1181,9 +1180,8 @@ process_comma(int decl_ind, bool tabs_to_var, bool *force_nl)
 	if (ps.block_init_level <= 0)
 	    ps.block_init = false;
 	if (break_comma && (opt.break_after_comma ||
-			    indentation_after_range(
-				    compute_code_indent(), code.s, code.e)
-			    >= opt.max_line_length - opt.tabsize))
+		indentation_after_range(compute_code_indent(), code.s, code.e)
+		>= opt.max_line_length - opt.tabsize))
 	    *force_nl = true;
     }
 }
