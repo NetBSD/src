@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.c,v 1.153 2021/10/24 22:28:06 rillig Exp $	*/
+/*	$NetBSD: indent.c,v 1.154 2021/10/24 22:38:20 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)indent.c	5.17 (Berkeley) 6/7/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: indent.c,v 1.153 2021/10/24 22:28:06 rillig Exp $");
+__RCSID("$NetBSD: indent.c,v 1.154 2021/10/24 22:38:20 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/indent.c 340138 2018-11-04 19:24:49Z oshogbo $");
 #endif
@@ -248,8 +248,7 @@ search_brace_other(token_type ttype, bool *force_nl,
 	    /* "} else" */
 	    (ttype == tt_lex_else && code.e != code.s && code.e[-1] == '}')
 	    /* "else if" */
-	    || (ttype == keyword_for_if_while &&
-		*token.s == 'i' && last_else && opt.else_if);
+	    || (ttype == tt_lex_if && last_else && opt.else_if);
     if (remove_newlines)
 	*force_nl = false;
 
@@ -1437,13 +1436,21 @@ main_loop(void)
 					 * expression */
 	    goto copy_token;
 
-	case keyword_for_if_while:
+	case tt_lex_for:
 	    sp_sw = true;	/* the interesting stuff is done after the
-				 * expression is scanned */
-	    hd_type = *token.s == 'i' ? if_expr :
-		*token.s == 'w' ? while_expr : for_exprs;
+				 * expressions are scanned */
+	    hd_type = for_exprs;	/* remember the type of header for
+					 * later use by parser */
+	    goto copy_token;
 
-	    /* remember the type of header for later use by parser */
+	case tt_lex_if:
+	    sp_sw = true;
+	    hd_type = if_expr;
+	    goto copy_token;
+
+	case tt_lex_while:
+	    sp_sw = true;
+	    hd_type = while_expr;
 	    goto copy_token;
 
 	case tt_lex_do:
