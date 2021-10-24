@@ -1,4 +1,4 @@
-/* $NetBSD: token_comment.c,v 1.5 2021/10/19 20:41:42 rillig Exp $ */
+/* $NetBSD: token_comment.c,v 1.6 2021/10/24 21:48:16 rillig Exp $ */
 /* $FreeBSD$ */
 
 /*
@@ -678,3 +678,39 @@ int		decl;
 // end-of-line comment at the end of the file
 #indent end
 #indent run-equals-input
+
+
+/* A form feed in the middle of a comment is an ordinary character. */
+#indent input
+/*
+ * AE
+ */
+/*-AE*/
+#indent end
+#indent run-equals-input
+
+/*
+ * At the beginning of a block comment or after a '*', '\f' is special. This
+ * is an implementation detail that should not be visible from the outside.
+ * Form feeds in comments are seldom used though, so this is no problem.
+ */
+#indent input
+/* comment*/
+/*text* comment*/
+#indent end
+
+#indent run
+/* * comment */
+/* text* * comment */
+#indent end
+
+/*
+ * Without 'star_comment_cont', there is no separator between the form feed
+ * and the surrounding text.
+ */
+#indent run -nsc
+/*comment */
+/* text*comment */
+#indent end
+
+#indent run-equals-input -nfc1
