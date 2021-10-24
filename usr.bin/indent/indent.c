@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.c,v 1.154 2021/10/24 22:38:20 rillig Exp $	*/
+/*	$NetBSD: indent.c,v 1.155 2021/10/24 22:44:13 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)indent.c	5.17 (Berkeley) 6/7/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: indent.c,v 1.154 2021/10/24 22:38:20 rillig Exp $");
+__RCSID("$NetBSD: indent.c,v 1.155 2021/10/24 22:44:13 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/indent.c 340138 2018-11-04 19:24:49Z oshogbo $");
 #endif
@@ -336,7 +336,7 @@ search_brace_lookahead(token_type *ttype)
     struct parser_state transient_state;
     transient_state = ps;
     *ttype = lexi(&transient_state);	/* read another token */
-    if (*ttype != newline && *ttype != form_feed &&
+    if (*ttype != newline && *ttype != tt_lex_form_feed &&
 	*ttype != comment && !transient_state.search_brace) {
 	ps = transient_state;
     }
@@ -351,7 +351,7 @@ search_brace(token_type *ttype, bool *force_nl,
 	case newline:
 	    search_brace_newline(force_nl);
 	    break;
-	case form_feed:
+	case tt_lex_form_feed:
 	    break;
 	case comment:
 	    search_brace_comment(comment_buffered);
@@ -1367,7 +1367,8 @@ main_loop(void)
 	    /* NOTREACHED */
 	}
 
-	if (ttype == newline || ttype == form_feed || ttype == preprocessing)
+	if (ttype == newline || ttype == tt_lex_form_feed ||
+		ttype == preprocessing)
 	    force_nl = false;
 	else if (ttype != comment)
 	    process_comment_in_code(ttype, &force_nl);
@@ -1376,7 +1377,7 @@ main_loop(void)
 
 	switch (ttype) {
 
-	case form_feed:
+	case tt_lex_form_feed:
 	    process_form_feed();
 	    break;
 

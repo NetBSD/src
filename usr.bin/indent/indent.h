@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.h,v 1.47 2021/10/24 22:38:20 rillig Exp $	*/
+/*	$NetBSD: indent.h,v 1.48 2021/10/24 22:44:13 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-FreeBSD
@@ -89,7 +89,7 @@ typedef enum token_type {
     comment,
     switch_expr,		/* 'switch' '(' <expr> ')' */
     preprocessing,		/* '#' */
-    form_feed,
+    tt_lex_form_feed,
     decl,
     tt_lex_for,
     tt_lex_if,
