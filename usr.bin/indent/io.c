@@ -1,4 +1,4 @@
-/*	$NetBSD: io.c,v 1.100 2021/10/24 10:54:12 rillig Exp $	*/
+/*	$NetBSD: io.c,v 1.101 2021/10/24 11:17:05 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)io.c	8.1 (Berkeley) 6/6/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: io.c,v 1.100 2021/10/24 10:54:12 rillig Exp $");
+__RCSID("$NetBSD: io.c,v 1.101 2021/10/24 11:17:05 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/io.c 334927 2018-06-10 16:44:18Z pstef $");
 #endif
@@ -207,8 +207,8 @@ dump_line_comment(int ind)
  * Write a line of formatted source to the output file. The line consists of a
  * label, the code and the comment.
  */
-void
-dump_line(void)
+static void
+output_line(char line_terminator)
 {
     static bool first_line = true;
 
@@ -254,10 +254,7 @@ dump_line(void)
 	if (com.e != com.s)
 	    dump_line_comment(ind);
 
-	if (ps.use_ff)
-	    output_char('\f');
-	else
-	    output_char('\n');
+	output_char(line_terminator);
 	ps.stats.lines++;
 
 	if (ps.just_saw_decl == 1 && opt.blanklines_after_decl) {
@@ -270,7 +267,6 @@ dump_line(void)
 
     ps.decl_on_line = ps.in_decl;	/* for proper comment indentation */
     ps.ind_stmt = ps.in_stmt && !ps.in_decl;
-    ps.use_ff = false;
     ps.dumped_decl_indent = false;
 
     *(lab.e = lab.s) = '\0';	/* reset buffers */
@@ -287,6 +283,18 @@ dump_line(void)
     }
 
     first_line = false;
+}
+
+void
+dump_line(void)
+{
+    output_line('\n');
+}
+
+void
+dump_line_ff(void)
+{
+    output_line('\f');
 }
 
 int
