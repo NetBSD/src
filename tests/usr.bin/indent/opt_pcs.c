@@ -1,4 +1,4 @@
-/* $NetBSD: opt_pcs.c,v 1.3 2021/10/16 21:32:10 rillig Exp $ */
+/* $NetBSD: opt_pcs.c,v 1.4 2021/10/24 11:31:37 rillig Exp $ */
 /* $FreeBSD$ */
 
 /*
@@ -39,4 +39,41 @@ example(void)
 	function_call(1);
 	function_call(1, 2, 3);
 }
+#indent end
+
+/*
+ * The option '-pcs' also applies to 'sizeof' and 'offsetof', even though
+ * these are not functions.
+ */
+#indent input
+int sizeof_type = sizeof   (int);
+int sizeof_type = sizeof(int);
+int sizeof_expr = sizeof   (0);
+int sizeof_expr = sizeof(0);
+int sizeof_expr = sizeof   0;
+
+int offset = offsetof(struct s, member);
+int offset = offsetof   (struct s, member);
+#indent end
+
+#indent run -pcs -di0
+int sizeof_type = sizeof (int);
+int sizeof_type = sizeof (int);
+int sizeof_expr = sizeof (0);
+int sizeof_expr = sizeof (0);
+int sizeof_expr = sizeof 0;
+
+int offset = offsetof (struct s, member);
+int offset = offsetof (struct s, member);
+#indent end
+
+#indent run -npcs -di0
+int sizeof_type = sizeof(int);
+int sizeof_type = sizeof(int);
+int sizeof_expr = sizeof(0);
+int sizeof_expr = sizeof(0);
+int sizeof_expr = sizeof 0;
+
+int offset = offsetof(struct s, member);
+int offset = offsetof(struct s, member);
 #indent end
