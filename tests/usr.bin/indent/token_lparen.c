@@ -1,4 +1,4 @@
-/* $NetBSD: token_lparen.c,v 1.2 2021/10/24 15:44:13 rillig Exp $ */
+/* $NetBSD: token_lparen.c,v 1.3 2021/10/24 16:38:00 rillig Exp $ */
 /* $FreeBSD$ */
 
 /*
@@ -96,54 +96,70 @@ int array[] = {
 
 /*
  * Test want_blank_before_lparen for all possible token types.
+ *
+ * FIXME: As a side effect, this test demonstrates that line_no counting is
+ *  broken. lparen_or_lbracket is in line 5, but during debugging it is said
+ *  to be in line 4.
  */
 #indent input
 void cover_want_blank_before_lparen(void)
 {
-	int newline = (3
-	);
+	/* ps.last_token can never be 'newline'. */
+	int newline =
+	(3);
+
 	int lparen_or_lbracket = a[(3)];
 	int rparen_or_rbracket = a[3](5);
 	+(unary_op);
-	(3) + (binary_op);
+	3 + (binary_op);
 	a++(postfix_op);	/* unlikely to be seen in practice */
 	cond ? (question) : (5);
 	switch (expr) {
 	case (case_label):;
 	}
-	a ? (3) : (colon);
-	;(semicolon) = 3;
+	a ? 3 : (colon);
+	(semicolon) = 3;
 	int lbrace[] = {(3)};
 	int rbrace_in_decl = {{3}(4)};	/* syntax error */
 	{}
 	(rbrace_in_stmt)();
-	int ident = func(3);
-	int ident = int(3);	/* syntax error in C, OK in C++ */
-	int comma = func(a, (3));
-	int comment = /* comment */ (3);
+	ident(3);
+	int(decl);
+	a++, (comma)();
+	int comment = /* comment */ (3);	/* comment is skipped */
 	switch (expr) {}
 #define preprocessing
 	(preprocessing)();
-	(form_feed)();
-	int(*decl)(void);
+	/* $ XXX: form_feed should be skipped, just as newline. */
+	(form_feed)();		/* XXX: should be skipped */
 	for(;;);
 	do(keyword_do_else)=3;while(0);
+	// $ TODO: is if_expr possible?
 	if(cond)(if_expr)();
+	// $ TODO: is while_expr possible?
 	while(cond)(while_expr)();
+	// $ TODO: is for_exprs possible?
 	for(;;)(for_exprs)();
+	// $ TODO: is stmt possible?
 	(stmt);
+	// $ TODO: is stmt_list possible?
 	(stmt_list);
+	// $ TODO: is keyword_else possible? keyword_do_else is.
 	if(cond);else(keyword_else)();
+	// $ TODO: is keyword_do possible? keyword_do_else is.
 	do(keyword_do);while(0);
-	// The following line Would generate 'Statement nesting error'.
+	// The following line would generate 'Statement nesting error'.
 	// do stmt;(do_stmt());while(0);
+	// $ TODO: is if_expr_stmt possible?
 	if(cond)stmt;(if_expr_stmt)();
+	// $ TODO: is if_expr_stmt_else possible?
 	if(cond)stmt;else(if_expr_stmt_else());
 	str.(member);		/* syntax error */
-	L("string_prefix");
+	L("string_prefix");		/* impossible */
 	static (int)storage_class;	/* syntax error */
 	funcname(3);
 	typedef (type_def) new_type;
+	// $ TODO: is keyword_struct_union_enum possible?
 	struct (keyword_struct_union_enum);	/* syntax error */
 }
 #indent end
@@ -152,36 +168,36 @@ void cover_want_blank_before_lparen(void)
 void
 cover_want_blank_before_lparen(void)
 {
-	int newline = (3
-	);
+	/* ps.last_token can never be 'newline'. */
+	int newline =
+	(3);
+
 	int lparen_or_lbracket = a[(3)];
 	int rparen_or_rbracket = a[3](5);
 	+(unary_op);
-	(3) + (binary_op);
+	3 + (binary_op);
 	a++ (postfix_op);	/* unlikely to be seen in practice */
 	cond ? (question) : (5);
 	switch (expr) {
 	case (case_label):;
 	}
-	a ? (3) : (colon);
-	;
+	a ? 3 : (colon);
 	(semicolon) = 3;
 	int lbrace[] = {(3)};
 	int rbrace_in_decl = {{3} (4)};	/* syntax error */
 	{
 	}
 	(rbrace_in_stmt)();
-	int ident = func(3);
-	int ident = int (3);	/* syntax error in C, OK in C++ */
-	int comma = func(a, (3));
-	int comment = /* comment */ (3);
+	ident(3);
+	int (decl);
+	a++, (comma)();
+	int comment = /* comment */ (3);	/* comment is skipped */
 	switch (expr) {
 	}
 #define preprocessing
 	(preprocessing)();
 
-	(form_feed)();
-	int (*decl)(void);
+	(form_feed)();		/* XXX: should be skipped */
 	for (;;);
 	do
 		(keyword_do_else) = 3;
@@ -200,7 +216,7 @@ cover_want_blank_before_lparen(void)
 	do
 		(keyword_do);
 	while (0);
-	// The following line Would generate 'Statement nesting error'.
+	// The following line would generate 'Statement nesting error'.
 	// do stmt;(do_stmt());while(0);
 	if (cond)
 		stmt;
@@ -210,7 +226,7 @@ cover_want_blank_before_lparen(void)
 	else
 		(if_expr_stmt_else());
 	str.(member);		/* syntax error */
-	L("string_prefix");
+	L("string_prefix");	/* impossible */
 	static (int)storage_class;	/* syntax error */
 	funcname(3);
 	typedef (type_def) new_type;
