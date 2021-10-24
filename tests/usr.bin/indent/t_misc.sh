@@ -1,5 +1,5 @@
 #! /bin/sh
-# $NetBSD: t_misc.sh,v 1.7 2021/10/24 16:51:44 rillig Exp $
+# $NetBSD: t_misc.sh,v 1.8 2021/10/24 17:19:49 rillig Exp $
 #
 # Copyright (c) 2021 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -161,11 +161,11 @@ nested_struct_declarations_body()
 		};
 	EOF
 	cat <<-\EOF > expected.err
-		/**INDENT** Warning@5: Reached internal limit of 20 struct levels */
-		/**INDENT** Warning@6: Reached internal limit of 20 struct levels */
-		/**INDENT** Warning@6: Reached internal limit of 20 struct levels */
-		/**INDENT** Warning@6: Reached internal limit of 20 struct levels */
-		/**INDENT** Warning@6: Reached internal limit of 20 struct levels */
+		warning: Standard Input:5: Reached internal limit of 20 struct levels
+		warning: Standard Input:6: Reached internal limit of 20 struct levels
+		warning: Standard Input:6: Reached internal limit of 20 struct levels
+		warning: Standard Input:6: Reached internal limit of 20 struct levels
+		warning: Standard Input:6: Reached internal limit of 20 struct levels
 	EOF
 
 	atf_check -o 'file:expected.out' -e 'file:expected.err' \
@@ -320,7 +320,7 @@ line_no_counting_body()
 	EOF
 
 	cat <<-\EOF > code.err
-		/**INDENT** Warning@3: Extra ) */
+		warning: code.c:3: Extra )
 	EOF
 
 	atf_check -o 'ignore' -e 'file:code.err' \

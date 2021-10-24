@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.c,v 1.147 2021/10/24 16:51:44 rillig Exp $	*/
+/*	$NetBSD: indent.c,v 1.148 2021/10/24 17:19:48 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)indent.c	5.17 (Berkeley) 6/7/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: indent.c,v 1.147 2021/10/24 16:51:44 rillig Exp $");
+__RCSID("$NetBSD: indent.c,v 1.148 2021/10/24 17:19:48 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/indent.c 340138 2018-11-04 19:24:49Z oshogbo $");
 #endif
@@ -139,6 +139,22 @@ init_capsicum(void)
 	err(EXIT_FAILURE, "unable to enter capability mode");
 }
 #endif
+
+void
+diag(int level, const char *msg, ...)
+{
+    va_list ap;
+
+    if (level != 0)
+	found_err = true;
+
+    va_start(ap, msg);
+    fprintf(stderr, "%s: %s:%d: ",
+	level == 0 ? "warning" : "error", in_name, line_no);
+    vfprintf(stderr, msg, ap);
+    fprintf(stderr, "\n");
+    va_end(ap);
+}
 
 static void
 search_brace_newline(bool *force_nl)
