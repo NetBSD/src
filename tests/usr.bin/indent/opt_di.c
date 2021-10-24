@@ -1,4 +1,4 @@
-/* $NetBSD: opt_di.c,v 1.3 2021/10/24 19:24:22 rillig Exp $ */
+/* $NetBSD: opt_di.c,v 1.4 2021/10/24 20:43:28 rillig Exp $ */
 /* $FreeBSD$ */
 
 /*
@@ -101,6 +101,15 @@ struct long_name long_name;
 #indent end
 
 
+/*
+ * A variable that has an ad-hoc struct/union/enum type does not need to be
+ * indented to the right of the keyword 'struct', it only needs a single space
+ * of indentation.
+ *
+ * Before NetBSD indent.c 1.151 from 2021-10-24, the indentation depended on
+ * the length of the keyword 'struct', 'union' or 'enum', together with type
+ * qualifiers like 'const' or the storage class like 'static'.
+ */
 #indent input
 struct {
 	int member;
@@ -109,14 +118,7 @@ struct {
 };
 #indent end
 
-/* FIXME: The variable name is indented by 6 spaces, should be 1. */
-#indent run -di0
-struct {
-	int member;
-}      var = {
-	3,
-};
-#indent end
+#indent run-equals-input -di0
 
 #indent run
 struct {
