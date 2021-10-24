@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.h,v 1.43 2021/10/20 05:41:57 rillig Exp $	*/
+/*	$NetBSD: indent.h,v 1.44 2021/10/24 11:17:05 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-FreeBSD
@@ -307,8 +307,6 @@ extern struct parser_state {
     bool search_brace;		/* whether it is necessary to buffer up all
 				 * info up to the start of a stmt after an if,
 				 * while, etc */
-    bool use_ff;		/* whether the current line should be
-				 * terminated with a form feed */
     bool want_blank;		/* whether the following token should be
 				 * prefixed by a blank. (Said prefixing is
 				 * ignored in some cases.) */
@@ -353,6 +351,7 @@ char inbuf_next(void);
 token_type lexi(struct parser_state *);
 void diag(int, const char *, ...)__printflike(2, 3);
 void dump_line(void);
+void dump_line_ff(void);
 void inbuf_read_line(void);
 void parse(token_type);
 void process_comment(void);
