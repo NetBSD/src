@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.c,v 1.151 2021/10/24 20:43:27 rillig Exp $	*/
+/*	$NetBSD: indent.c,v 1.152 2021/10/24 20:57:11 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)indent.c	5.17 (Berkeley) 6/7/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: indent.c,v 1.151 2021/10/24 20:43:27 rillig Exp $");
+__RCSID("$NetBSD: indent.c,v 1.152 2021/10/24 20:57:11 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/indent.c 340138 2018-11-04 19:24:49Z oshogbo $");
 #endif
@@ -831,9 +831,9 @@ process_postfix_op(void)
 }
 
 static void
-process_question(int *seen_quest)
+process_question(int *quest_level)
 {
-    (*seen_quest)++;
+    (*quest_level)++;
     if (ps.want_blank)
 	*code.e++ = ' ';
     *code.e++ = '?';
@@ -841,10 +841,10 @@ process_question(int *seen_quest)
 }
 
 static void
-process_colon(int *seen_quest, bool *force_nl, bool *seen_case)
+process_colon(int *quest_level, bool *force_nl, bool *seen_case)
 {
-    if (*seen_quest > 0) {	/* part of a '?:' operator */
-	--*seen_quest;
+    if (*quest_level > 0) {	/* part of a '?:' operator */
+	--*quest_level;
 	if (ps.want_blank)
 	    *code.e++ = ' ';
 	*code.e++ = ':';
@@ -871,7 +871,7 @@ process_colon(int *seen_quest, bool *force_nl, bool *seen_case)
 }
 
 static void
-process_semicolon(bool *seen_case, int *seen_quest, int decl_ind,
+process_semicolon(bool *seen_case, int *quest_level, int decl_ind,
     bool tabs_to_var, bool *sp_sw,
     token_type hd_type,
     bool *force_nl)
@@ -879,7 +879,7 @@ process_semicolon(bool *seen_case, int *seen_quest, int decl_ind,
     if (ps.decl_nest == 0)
 	ps.init_or_struct = false;
     *seen_case = false;		/* these will only need resetting in an error */
-    *seen_quest = 0;
+    *quest_level = 0;
     if (ps.last_token == rparen_or_rbracket)
 	ps.in_parameter_declaration = false;
     ps.cast_mask = 0;
@@ -1340,9 +1340,9 @@ main_loop(void)
 				 * if(...), while(...), etc. */
     token_type hd_type = end_of_file;	/* the type of statement for if (...),
 				 * for (...), etc */
-    int seen_quest = 0;		/* when this is positive, we have seen a '?'
-				 * without the matching ':' in a <c>?<s>:<s>
-				 * construct */
+    int quest_level = 0;	/* when this is positive, we have seen a '?'
+				 * without the matching ':' in a '?:'
+				 * expression */
     bool seen_case = false;	/* set to true when we see a 'case', so we
 				 * know what to do with the following colon */
 
@@ -1407,7 +1407,7 @@ main_loop(void)
 	    break;
 
 	case question:
-	    process_question(&seen_quest);
+	    process_question(&quest_level);
 	    break;
 
 	case case_label:	/* got word 'case' or 'default' */
@@ -1415,11 +1415,11 @@ main_loop(void)
 	    goto copy_token;
 
 	case colon:
-	    process_colon(&seen_quest, &force_nl, &seen_case);
+	    process_colon(&quest_level, &force_nl, &seen_case);
 	    break;
 
 	case semicolon:
-	    process_semicolon(&seen_case, &seen_quest, decl_ind, tabs_to_var,
+	    process_semicolon(&seen_case, &quest_level, decl_ind, tabs_to_var,
 		&sp_sw, hd_type, &force_nl);
 	    break;
 
