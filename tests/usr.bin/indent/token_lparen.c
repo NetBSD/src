@@ -1,4 +1,4 @@
-/* $NetBSD: token_lparen.c,v 1.1 2021/10/18 22:30:34 rillig Exp $ */
+/* $NetBSD: token_lparen.c,v 1.2 2021/10/24 15:44:13 rillig Exp $ */
 /* $FreeBSD$ */
 
 /*
@@ -92,3 +92,128 @@ int array[] = {
 #indent end
 
 #indent run-equals-input -di0
+
+
+/*
+ * Test want_blank_before_lparen for all possible token types.
+ */
+#indent input
+void cover_want_blank_before_lparen(void)
+{
+	int newline = (3
+	);
+	int lparen_or_lbracket = a[(3)];
+	int rparen_or_rbracket = a[3](5);
+	+(unary_op);
+	(3) + (binary_op);
+	a++(postfix_op);	/* unlikely to be seen in practice */
+	cond ? (question) : (5);
+	switch (expr) {
+	case (case_label):;
+	}
+	a ? (3) : (colon);
+	;(semicolon) = 3;
+	int lbrace[] = {(3)};
+	int rbrace_in_decl = {{3}(4)};	/* syntax error */
+	{}
+	(rbrace_in_stmt)();
+	int ident = func(3);
+	int ident = int(3);	/* syntax error in C, OK in C++ */
+	int comma = func(a, (3));
+	int comment = /* comment */ (3);
+	switch (expr) {}
+#define preprocessing
+	(preprocessing)();
+	(form_feed)();
+	int(*decl)(void);
+	for(;;);
+	do(keyword_do_else)=3;while(0);
+	if(cond)(if_expr)();
+	while(cond)(while_expr)();
+	for(;;)(for_exprs)();
+	(stmt);
+	(stmt_list);
+	if(cond);else(keyword_else)();
+	do(keyword_do);while(0);
+	// The following line Would generate 'Statement nesting error'.
+	// do stmt;(do_stmt());while(0);
+	if(cond)stmt;(if_expr_stmt)();
+	if(cond)stmt;else(if_expr_stmt_else());
+	str.(member);		/* syntax error */
+	L("string_prefix");
+	static (int)storage_class;	/* syntax error */
+	funcname(3);
+	typedef (type_def) new_type;
+	struct (keyword_struct_union_enum);	/* syntax error */
+}
+#indent end
+
+#indent run -ldi0
+void
+cover_want_blank_before_lparen(void)
+{
+	int newline = (3
+	);
+	int lparen_or_lbracket = a[(3)];
+	int rparen_or_rbracket = a[3](5);
+	+(unary_op);
+	(3) + (binary_op);
+	a++ (postfix_op);	/* unlikely to be seen in practice */
+	cond ? (question) : (5);
+	switch (expr) {
+	case (case_label):;
+	}
+	a ? (3) : (colon);
+	;
+	(semicolon) = 3;
+	int lbrace[] = {(3)};
+	int rbrace_in_decl = {{3} (4)};	/* syntax error */
+	{
+	}
+	(rbrace_in_stmt)();
+	int ident = func(3);
+	int ident = int (3);	/* syntax error in C, OK in C++ */
+	int comma = func(a, (3));
+	int comment = /* comment */ (3);
+	switch (expr) {
+	}
+#define preprocessing
+	(preprocessing)();
+
+	(form_feed)();
+	int (*decl)(void);
+	for (;;);
+	do
+		(keyword_do_else) = 3;
+	while (0);
+	if (cond)
+		(if_expr)();
+	while (cond)
+		(while_expr)();
+	for (;;)
+		(for_exprs)();
+	(stmt);
+	(stmt_list);
+	if (cond);
+	else
+		(keyword_else)();
+	do
+		(keyword_do);
+	while (0);
+	// The following line Would generate 'Statement nesting error'.
+	// do stmt;(do_stmt());while(0);
+	if (cond)
+		stmt;
+	(if_expr_stmt)();
+	if (cond)
+		stmt;
+	else
+		(if_expr_stmt_else());
+	str.(member);		/* syntax error */
+	L("string_prefix");
+	static (int)storage_class;	/* syntax error */
+	funcname(3);
+	typedef (type_def) new_type;
+	struct (keyword_struct_union_enum);	/* syntax error */
+}
+#indent end
