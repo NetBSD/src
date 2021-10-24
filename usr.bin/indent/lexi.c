@@ -1,4 +1,4 @@
-/*	$NetBSD: lexi.c,v 1.97 2021/10/24 22:28:06 rillig Exp $	*/
+/*	$NetBSD: lexi.c,v 1.98 2021/10/24 22:38:20 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)lexi.c	8.1 (Berkeley) 6/6/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: lexi.c,v 1.97 2021/10/24 22:28:06 rillig Exp $");
+__RCSID("$NetBSD: lexi.c,v 1.98 2021/10/24 22:38:20 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/lexi.c 337862 2018-08-15 18:19:45Z pstef $");
 #endif
@@ -80,9 +80,9 @@ static const struct keyword {
     {"enum", kw_struct_or_union_or_enum},
     {"extern", kw_storage_class},
     {"float", kw_type},
-    {"for", kw_for_or_if_or_while},
+    {"for", kw_for},
     {"goto", kw_jump},
-    {"if", kw_for_or_if_or_while},
+    {"if", kw_if},
     {"imaginary", kw_type},
     {"inline", kw_inline_or_restrict},
     {"int", kw_type},
@@ -102,7 +102,7 @@ static const struct keyword {
     {"unsigned", kw_type},
     {"void", kw_type},
     {"volatile", kw_type},
-    {"while", kw_for_or_if_or_while}
+    {"while", kw_while}
 };
 
 static struct {
@@ -227,7 +227,7 @@ token_type_name(token_type ttype)
 	"case_label", "colon",
 	"semicolon", "lbrace", "rbrace", "ident", "comma",
 	"comment", "switch_expr", "preprocessing", "form_feed", "decl",
-	"keyword_for_if_while", "tt_lex_do", "tt_lex_else",
+	"tt_lex_for", "tt_lex_if", "tt_lex_while", "tt_lex_do", "tt_lex_else",
 	"if_expr", "while_expr", "for_exprs",
 	"stmt", "stmt_list", "tt_ps_else", "tt_ps_do", "do_stmt",
 	"if_expr_stmt", "if_expr_stmt_else", "period", "string_prefix",
@@ -449,8 +449,14 @@ lexi_alnum(struct parser_state *state)
 		break;
 	    return decl;
 
-	case kw_for_or_if_or_while:
-	    return keyword_for_if_while;
+	case kw_for:
+	    return tt_lex_for;
+
+	case kw_if:
+	    return tt_lex_if;
+
+	case kw_while:
+	    return tt_lex_while;
 
 	case kw_do:
 	    return tt_lex_do;
