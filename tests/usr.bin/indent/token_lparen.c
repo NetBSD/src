@@ -1,4 +1,4 @@
-/* $NetBSD: token_lparen.c,v 1.5 2021/10/24 22:28:06 rillig Exp $ */
+/* $NetBSD: token_lparen.c,v 1.6 2021/10/24 22:44:13 rillig Exp $ */
 /* $FreeBSD$ */
 
 /*
@@ -130,8 +130,8 @@ void cover_want_blank_before_lparen(void)
 	switch (expr) {}
 #define preprocessing
 	(preprocessing)();
-	/* $ XXX: form_feed should be skipped, just as newline. */
-	(form_feed)();		/* XXX: should be skipped */
+	/* $ XXX: tt_lex_form_feed should be skipped, just as newline. */
+	(tt_lex_form_feed)();	/* XXX: should be skipped */
 	for(;;);
 	do(tt_lex_do)=3;while(0);
 	// $ TODO: is if_expr possible?
@@ -197,7 +197,8 @@ cover_want_blank_before_lparen(void)
 #define preprocessing
 	(preprocessing)();
 
-	(form_feed)();		/* XXX: should be skipped */
+/* $ XXX: Where has the '\f' gone? It should have been preserved. */
+	(tt_lex_form_feed)();	/* XXX: should be skipped */
 	for (;;);
 	do
 		(tt_lex_do) = 3;
