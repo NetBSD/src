@@ -1,4 +1,4 @@
-/*	$NetBSD: args.c,v 1.58 2021/10/24 11:19:25 rillig Exp $	*/
+/*	$NetBSD: args.c,v 1.59 2021/10/24 19:14:33 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)args.c	8.1 (Berkeley) 6/6/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: args.c,v 1.58 2021/10/24 11:19:25 rillig Exp $");
+__RCSID("$NetBSD: args.c,v 1.59 2021/10/24 19:14:33 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/args.c 336318 2018-07-15 21:04:21Z pstef $");
 #endif
@@ -162,7 +162,7 @@ load_profile(const char *fname, bool must_exist)
 		break;
 	    } else if (n >= array_length(buf) - 5) {
 		diag(1, "buffer overflow in %s, starting with '%.10s'",
-		     fname, buf);
+		    fname, buf);
 		exit(1);
 	    } else
 		buf[n++] = (char)ch;
@@ -308,7 +308,7 @@ found:
 	if (!(errno == 0 && *end == '\0' &&
 		p->i_min <= num && num <= p->i_max))
 	    errx(1, "%s: invalid argument \"%s\" for option \"-%s\"",
-		 option_source, param_start, p->p_name);
+		option_source, param_start, p->p_name);
 	*(int *)p->p_var = (int)num;
     }
 }
