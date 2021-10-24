@@ -1,4 +1,4 @@
-.\"	$NetBSD: setlocale.3,v 1.21 2004/01/24 16:58:54 wiz Exp $
+.\"	$NetBSD: setlocale.3,v 1.22 2021/10/24 17:30:19 gutteridge Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -32,7 +32,7 @@
 .\"
 .\"	@(#)setlocale.3	8.1 (Berkeley) 6/9/93
 .\"
-.Dd May 30, 2003
+.Dd October 24, 2021
 .Dt SETLOCALE 3
 .Os
 .Sh NAME
@@ -81,9 +81,6 @@ functions.
 This controls recognition of upper and lower case,
 alphabetic or non-alphabetic characters,
 and so on.
-The real work is done by the
-.Fn setrunelocale
-function.
 .It Dv LC_MESSAGES
 Set a locale for message catalogs.
 This controls the selection of message catalogs by the
@@ -336,7 +333,9 @@ following manner before using any of the locale-specific information:
 .Bd -literal
 	setlocale(LC_ALL, "");
 .Ed
-.\" .Sh FILES							XXX
+.Sh FILES
+The use of multibyte locales requires shared libraries located in
+.Pa /usr/lib/i18n .
 .\" .Bl -tag -width /usr/share/locale/locale/category -compact	XXX
 .\" .It Pa $PATH_LOCALE/\fIlocale\fP/\fIcategory\fP		XXX
 .\" .It Pa /usr/share/locale/\fIlocale\fP/\fIcategory\fP	XXX
