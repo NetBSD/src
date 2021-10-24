@@ -1,4 +1,4 @@
-/* $NetBSD: token_comment.c,v 1.6 2021/10/24 21:48:16 rillig Exp $ */
+/* $NetBSD: token_comment.c,v 1.7 2021/10/24 21:55:07 rillig Exp $ */
 /* $FreeBSD$ */
 
 /*
@@ -711,6 +711,21 @@ int		decl;
 #indent run -nsc
 /*comment */
 /* text*comment */
+#indent end
+
+#indent run-equals-input -nfc1
+
+/*
+ * A completely empty line in a box comment must be copied unmodified to the
+ * output. This is done in process_comment by adding a space to the end of an
+ * otherwise empty comment. This space forces dump_line to add some output,
+ * but the trailing space is discarded, resulting in an empty line.
+ */
+#indent input
+/*- comment
+
+
+end */
 #indent end
 
 #indent run-equals-input -nfc1
