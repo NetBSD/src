@@ -1,4 +1,4 @@
-/*	$NetBSD: lexi.c,v 1.93 2021/10/24 10:54:12 rillig Exp $	*/
+/*	$NetBSD: lexi.c,v 1.94 2021/10/24 11:19:25 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)lexi.c	8.1 (Berkeley) 6/6/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: lexi.c,v 1.93 2021/10/24 10:54:12 rillig Exp $");
+__RCSID("$NetBSD: lexi.c,v 1.94 2021/10/24 11:19:25 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/lexi.c 337862 2018-08-15 18:19:45Z pstef $");
 #endif
@@ -234,7 +234,7 @@ token_type_name(token_type ttype)
 	"storage_class", "funcname", "type_def", "keyword_struct_union_enum"
     };
 
-    assert(0 <= ttype && ttype < nitems(name));
+    assert(0 <= ttype && ttype < array_length(name));
 
     return name[ttype];
 }
@@ -270,7 +270,7 @@ lex_number(void)
 {
     for (uint8_t s = 'A'; s != 'f' && s != 'i' && s != 'u';) {
 	uint8_t ch = (uint8_t)*inp.s;
-	if (ch >= nitems(lex_number_row) || lex_number_row[ch] == 0)
+	if (ch >= array_length(lex_number_row) || lex_number_row[ch] == 0)
 	    break;
 
 	uint8_t row = lex_number_row[ch];
@@ -412,7 +412,7 @@ lexi_alnum(struct parser_state *state)
     state->next_unary = state->last_token == keyword_struct_union_enum;
 
     const struct keyword *kw = bsearch(token.s, keywords,
-	nitems(keywords), sizeof(keywords[0]), cmp_keyword_by_name);
+	array_length(keywords), sizeof(keywords[0]), cmp_keyword_by_name);
     if (kw == NULL) {
 	if (is_typename()) {
 	    state->keyword = kw_type;

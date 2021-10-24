@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.c,v 1.145 2021/10/24 11:17:05 rillig Exp $	*/
+/*	$NetBSD: indent.c,v 1.146 2021/10/24 11:19:25 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)indent.c	5.17 (Berkeley) 6/7/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: indent.c,v 1.145 2021/10/24 11:17:05 rillig Exp $");
+__RCSID("$NetBSD: indent.c,v 1.146 2021/10/24 11:19:25 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/indent.c 340138 2018-11-04 19:24:49Z oshogbo $");
 #endif
@@ -700,9 +700,9 @@ want_blank_before_lparen(void)
 static void
 process_lparen_or_lbracket(int decl_ind, bool tabs_to_var, bool sp_sw)
 {
-    if (++ps.p_l_follow == nitems(ps.paren_indents)) {
+    if (++ps.p_l_follow == array_length(ps.paren_indents)) {
 	diag(0, "Reached internal limit of %zu unclosed parens",
-	    nitems(ps.paren_indents));
+	    array_length(ps.paren_indents));
 	ps.p_l_follow--;
     }
 
@@ -1266,7 +1266,7 @@ process_preprocessing(void)
     ps.is_case_label = false;
 
     if (strncmp(lab.s, "#if", 3) == 0) {	/* also ifdef, ifndef */
-	if ((size_t)ifdef_level < nitems(state_stack))
+	if ((size_t)ifdef_level < array_length(state_stack))
 	    state_stack[ifdef_level++] = ps;
 	else
 	    diag(1, "#if stack overflow");
@@ -1411,7 +1411,7 @@ main_loop(void)
 
 	case lbrace:
 	    process_lbrace(&force_nl, &sp_sw, hd_type, di_stack,
-		(int)nitems(di_stack), &decl_ind);
+		(int)array_length(di_stack), &decl_ind);
 	    break;
 
 	case rbrace:
