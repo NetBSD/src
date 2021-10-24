@@ -1,4 +1,4 @@
-/* $NetBSD: token_lparen.c,v 1.3 2021/10/24 16:38:00 rillig Exp $ */
+/* $NetBSD: token_lparen.c,v 1.4 2021/10/24 17:19:49 rillig Exp $ */
 /* $FreeBSD$ */
 
 /*
@@ -52,7 +52,7 @@ function(void)
 
     /* GCC statement expression */
     /* expr = ({if(expr)debug();expr;}); */
-/* $ XXX: Generates wrong 'Error@36: Unbalanced parens'. */
+/* $ XXX: Generates wrong 'error: Standard Input:36: Unbalanced parens'. */
 }
 #indent end
 

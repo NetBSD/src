@@ -1,5 +1,5 @@
 #! /bin/sh
-# $NetBSD: t_errors.sh,v 1.4 2021/10/17 18:13:00 rillig Exp $
+# $NetBSD: t_errors.sh,v 1.5 2021/10/24 17:19:49 rillig Exp $
 #
 # Copyright (c) 2021 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -146,7 +146,7 @@ option_buffer_overflow_body()
 
 	# TODO: The call to 'diag' should be replaced with 'errx'.
 	expect_error \
-	    'Error@1: buffer overflow in indent.pro, starting with '\''-123456781'\''' \
+	    'error: Standard Input:1: buffer overflow in indent.pro, starting with '\''-123456781'\''' \
 	    -Pindent.pro
 }
 
@@ -174,7 +174,7 @@ unterminated_comment_body()
 
 	atf_check -s 'exit:1' \
 	    -o 'inline:/*'"$nl"' *'"$nl" \
-	    -e 'inline:/**INDENT** Error@2: Unterminated comment */'"$nl" \
+	    -e 'inline:error: Standard Input:2: Unterminated comment'"$nl" \
 	    "$indent" -st < comment.c
 }
 
@@ -254,7 +254,7 @@ unexpected_end_of_file_body()
 	echo 'struct{' > code.c
 
 	expect_error \
-	    'Error@1: Stuff missing from end of file' \
+	    'error: code.c:1: Stuff missing from end of file' \
 	    code.c
 
 	atf_check \
@@ -268,7 +268,7 @@ unexpected_closing_brace_top_level_body()
 	echo '}' > code.c
 
 	expect_error \
-	    'Error@1: Statement nesting error' \
+	    'error: code.c:1: Statement nesting error' \
 	    code.c
 	atf_check \
 	    -o 'inline:}'"$nl" \
@@ -281,7 +281,7 @@ unexpected_closing_brace_decl_body()
 	echo 'int i = 3};' > code.c
 
 	expect_error \
-	    'Error@1: Statement nesting error' \
+	    'error: code.c:1: Statement nesting error' \
 	    code.c
 	# Despite the error message, the original file got overwritten with a
 	# best-effort rewrite of the code.
@@ -309,9 +309,9 @@ preprocessing_overflow_body()
 		#endif too much
 	EOF
 	cat <<-\EOF > stderr.exp
-		Error@6: #if stack overflow
-		Error@12: Unmatched #endif
-		Error@13: Unmatched #endif
+		error: code.c:6: #if stack overflow
+		error: code.c:12: Unmatched #endif
+		error: code.c:13: Unmatched #endif
 	EOF
 
 	atf_check -s 'exit:1' \
@@ -329,10 +329,10 @@ preprocessing_unrecognized_body()
 		#else
 	EOF
 	cat <<-\EOF > stderr.exp
-		Error@1: Unrecognized cpp directive
-		Error@2: Unrecognized cpp directive
-		Error@3: Unmatched #elif
-		Error@4: Unmatched #else
+		error: code.c:1: Unrecognized cpp directive
+		error: code.c:2: Unrecognized cpp directive
+		error: code.c:3: Unmatched #elif
+		error: code.c:4: Unmatched #else
 	EOF
 
 	atf_check -s 'exit:1' \

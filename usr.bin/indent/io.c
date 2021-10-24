@@ -1,4 +1,4 @@
-/*	$NetBSD: io.c,v 1.101 2021/10/24 11:17:05 rillig Exp $	*/
+/*	$NetBSD: io.c,v 1.102 2021/10/24 17:19:48 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)io.c	8.1 (Berkeley) 6/6/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: io.c,v 1.101 2021/10/24 11:17:05 rillig Exp $");
+__RCSID("$NetBSD: io.c,v 1.102 2021/10/24 17:19:48 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/io.c 334927 2018-06-10 16:44:18Z pstef $");
 #endif
@@ -482,27 +482,4 @@ int
 indentation_after(int ind, const char *s)
 {
     return indentation_after_range(ind, s, NULL);
-}
-
-void
-diag(int level, const char *msg, ...)
-{
-    va_list ap;
-    const char *s, *e;
-
-    if (level != 0)
-	found_err = true;
-
-    if (output == stdout) {
-	s = "/**INDENT** ";
-	e = " */";
-    } else {
-	s = e = "";
-    }
-
-    va_start(ap, msg);
-    fprintf(stderr, "%s%s@%d: ", s, level == 0 ? "Warning" : "Error", line_no);
-    vfprintf(stderr, msg, ap);
-    fprintf(stderr, "%s\n", e);
-    va_end(ap);
 }
