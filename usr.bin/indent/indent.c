@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.c,v 1.150 2021/10/24 19:33:26 rillig Exp $	*/
+/*	$NetBSD: indent.c,v 1.151 2021/10/24 20:43:27 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)indent.c	5.17 (Berkeley) 6/7/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: indent.c,v 1.150 2021/10/24 19:33:26 rillig Exp $");
+__RCSID("$NetBSD: indent.c,v 1.151 2021/10/24 20:43:27 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/indent.c 340138 2018-11-04 19:24:49Z oshogbo $");
 #endif
@@ -1023,8 +1023,11 @@ process_rbrace(bool *sp_sw, int *decl_ind, const int *di_stack)
 
     if (ps.decl_nest > 0) { /* we are in multi-level structure declaration */
 	*decl_ind = di_stack[--ps.decl_nest];
-	if (ps.decl_nest == 0 && !ps.in_parameter_declaration)
+	if (ps.decl_nest == 0 && !ps.in_parameter_declaration) {
 	    ps.just_saw_decl = 2;
+	    *decl_ind = ps.ind_level == 0
+		? opt.decl_indent : opt.local_decl_indent;
+	}
 	ps.in_decl = true;
     }
 

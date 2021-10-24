@@ -1,4 +1,4 @@
-/* $NetBSD: token_semicolon.c,v 1.1 2021/10/18 22:30:34 rillig Exp $ */
+/* $NetBSD: token_semicolon.c,v 1.2 2021/10/24 20:43:28 rillig Exp $ */
 /* $FreeBSD$ */
 
 /*
@@ -14,7 +14,7 @@
 #indent input
 struct {
 	int member;
-}      global_var;
+} global_var;
 #indent end
 
 #indent run-equals-input -di0
