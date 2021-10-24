@@ -1,6 +1,6 @@
 .\" -*- nroff -*-
 .\"
-.\"	$NetBSD: bpf.4,v 1.63 2020/06/12 20:58:43 wiz Exp $
+.\"	$NetBSD: bpf.4,v 1.64 2021/10/24 17:46:06 gutteridge Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1992, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -24,7 +24,7 @@
 .\" This document is derived in part from the enet man page (enet.4)
 .\" distributed with 4.3BSD Unix.
 .\"
-.Dd June 11, 2020
+.Dd October 24, 2021
 .Dt BPF 4
 .Os
 .Sh NAME
@@ -75,7 +75,8 @@ A packet can be sent out on the network by writing to a
 .Nm
 file descriptor.
 The writes are unbuffered, meaning only one packet can be processed per write.
-Currently, only writes to Ethernets and SLIP links are supported.
+Currently, only writes to Ethernet-based (including Wi-Fi) and SLIP
+links are supported.
 .Sh IOCTLS
 The
 .Xr ioctl 2
