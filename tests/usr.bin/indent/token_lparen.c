@@ -1,4 +1,4 @@
-/* $NetBSD: token_lparen.c,v 1.4 2021/10/24 17:19:49 rillig Exp $ */
+/* $NetBSD: token_lparen.c,v 1.5 2021/10/24 22:28:06 rillig Exp $ */
 /* $FreeBSD$ */
 
 /*
@@ -133,7 +133,7 @@ void cover_want_blank_before_lparen(void)
 	/* $ XXX: form_feed should be skipped, just as newline. */
 	(form_feed)();		/* XXX: should be skipped */
 	for(;;);
-	do(keyword_do_else)=3;while(0);
+	do(tt_lex_do)=3;while(0);
 	// $ TODO: is if_expr possible?
 	if(cond)(if_expr)();
 	// $ TODO: is while_expr possible?
@@ -144,10 +144,10 @@ void cover_want_blank_before_lparen(void)
 	(stmt);
 	// $ TODO: is stmt_list possible?
 	(stmt_list);
-	// $ TODO: is keyword_else possible? keyword_do_else is.
-	if(cond);else(keyword_else)();
-	// $ TODO: is keyword_do possible? keyword_do_else is.
-	do(keyword_do);while(0);
+	// $ TODO: is tt_ps_else possible? tt_lex_else is.
+	if(cond);else(tt_ps_else)();
+	// $ TODO: is tt_ps_do possible? tt_lex_do is.
+	do(tt_ps_do);while(0);
 	// The following line would generate 'Statement nesting error'.
 	// do stmt;(do_stmt());while(0);
 	// $ TODO: is if_expr_stmt possible?
@@ -200,7 +200,7 @@ cover_want_blank_before_lparen(void)
 	(form_feed)();		/* XXX: should be skipped */
 	for (;;);
 	do
-		(keyword_do_else) = 3;
+		(tt_lex_do) = 3;
 	while (0);
 	if (cond)
 		(if_expr)();
@@ -212,9 +212,9 @@ cover_want_blank_before_lparen(void)
 	(stmt_list);
 	if (cond);
 	else
-		(keyword_else)();
+		(tt_ps_else)();
 	do
-		(keyword_do);
+		(tt_ps_do);
 	while (0);
 	// The following line would generate 'Statement nesting error'.
 	// do stmt;(do_stmt());while(0);
