@@ -1,4 +1,4 @@
-/*	$NetBSD: pr_comment.c,v 1.82 2021/10/24 11:17:05 rillig Exp $	*/
+/*	$NetBSD: pr_comment.c,v 1.83 2021/10/24 19:14:33 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)pr_comment.c	8.1 (Berkeley) 6/6/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: pr_comment.c,v 1.82 2021/10/24 11:17:05 rillig Exp $");
+__RCSID("$NetBSD: pr_comment.c,v 1.83 2021/10/24 19:14:33 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/pr_comment.c 334927 2018-06-10 16:44:18Z pstef $");
 #endif
@@ -181,8 +181,8 @@ process_comment(void)
 	 * much will have to be ignored by dump_line(). This is a box comment,
 	 * so nothing changes -- not even indentation.
 	 *
-	 * The comment we're about to read usually comes from inp.buf,
-	 * unless it has been copied into save_com.
+	 * The comment we're about to read usually comes from inp.buf, unless
+	 * it has been copied into save_com.
 	 */
 	const char *start;
 

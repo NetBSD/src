@@ -1,4 +1,4 @@
-/*	$NetBSD: lexi.c,v 1.94 2021/10/24 11:19:25 rillig Exp $	*/
+/*	$NetBSD: lexi.c,v 1.95 2021/10/24 19:14:33 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)lexi.c	8.1 (Berkeley) 6/6/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: lexi.c,v 1.94 2021/10/24 11:19:25 rillig Exp $");
+__RCSID("$NetBSD: lexi.c,v 1.95 2021/10/24 19:14:33 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/lexi.c 337862 2018-08-15 18:19:45Z pstef $");
 #endif
@@ -291,8 +291,8 @@ static void
 lex_word(void)
 {
     while (isalnum((unsigned char)*inp.s) ||
-	   *inp.s == '\\' ||
-	   *inp.s == '_' || *inp.s == '$') {
+	    *inp.s == '\\' ||
+	    *inp.s == '_' || *inp.s == '$') {
 
 	if (*inp.s == '\\') {
 	    if (inp.s[1] == '\n') {
@@ -382,8 +382,8 @@ static token_type
 lexi_alnum(struct parser_state *state)
 {
     if (!(isalnum((unsigned char)*inp.s) ||
-	*inp.s == '_' || *inp.s == '$' ||
-	(inp.s[0] == '.' && isdigit((unsigned char)inp.s[1]))))
+	    *inp.s == '_' || *inp.s == '$' ||
+	    (inp.s[0] == '.' && isdigit((unsigned char)inp.s[1]))))
 	return end_of_file;	/* just as a placeholder */
 
     if (isdigit((unsigned char)*inp.s) ||
@@ -686,7 +686,7 @@ lexi(struct parser_state *state)
 	unary_delim = true;
     }
 
-    if (inp.s >= inp.e)	/* check for input buffer empty */
+    if (inp.s >= inp.e)		/* check for input buffer empty */
 	inbuf_read_line();
 
     state->next_unary = unary_delim;
