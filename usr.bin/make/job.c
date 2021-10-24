@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.435 2021/06/16 09:47:51 rillig Exp $	*/
+/*	$NetBSD: job.c,v 1.436 2021/10/24 18:45:46 sjg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -142,7 +142,7 @@
 #include "trace.h"
 
 /*	"@(#)job.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: job.c,v 1.435 2021/06/16 09:47:51 rillig Exp $");
+MAKE_RCSID("$NetBSD: job.c,v 1.436 2021/10/24 18:45:46 sjg Exp $");
 
 /*
  * A shell defines how the commands are run.  All commands for a target are
@@ -765,8 +765,8 @@ ShellWriter_WriteFmt(ShellWriter *wr, const char *fmt, const char *arg)
 	DEBUG1(JOB, fmt, arg);
 
 	(void)fprintf(wr->f, fmt, arg);
-	/* XXX: Is flushing needed in any case, or only if f == stdout? */
-	(void)fflush(wr->f);
+	if (wr->f == stdout)
+		(void)fflush(wr->f);
 }
 
 static void
@@ -1163,7 +1163,9 @@ JobFinish(Job *job, int status)
 
 		JobClosePipes(job);
 		if (job->cmdFILE != NULL && job->cmdFILE != stdout) {
-			(void)fclose(job->cmdFILE);
+			if (fclose(job->cmdFILE) != 0)
+				Punt("Cannot write shell script for '%s': %s",
+				    job->node->name, strerror(errno));
 			job->cmdFILE = NULL;
 		}
 		done = true;
@@ -1526,7 +1528,9 @@ JobExec(Job *job, char **argv)
 	watchfd(job);
 
 	if (job->cmdFILE != NULL && job->cmdFILE != stdout) {
-		(void)fclose(job->cmdFILE);
+		if (fclose(job->cmdFILE) != 0)
+			Punt("Cannot write shell script for '%s': %s",
+			    job->node->name, strerror(errno));
 		job->cmdFILE = NULL;
 	}
 
