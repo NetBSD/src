@@ -1,4 +1,4 @@
-/*	$NetBSD: lexi.c,v 1.95 2021/10/24 19:14:33 rillig Exp $	*/
+/*	$NetBSD: lexi.c,v 1.96 2021/10/24 20:47:00 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)lexi.c	8.1 (Berkeley) 6/6/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: lexi.c,v 1.95 2021/10/24 19:14:33 rillig Exp $");
+__RCSID("$NetBSD: lexi.c,v 1.96 2021/10/24 20:47:00 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/lexi.c 337862 2018-08-15 18:19:45Z pstef $");
 #endif
@@ -247,10 +247,12 @@ debug_print_buf(const char *name, const struct buffer *buf)
 	debug_vis_range("\"", buf->s, buf->e, "\"");
     }
 }
+#endif
 
 static token_type
 lexi_end(token_type ttype)
 {
+#ifdef debug
     debug_printf("in line %d, lexi returns '%s'",
 	line_no, token_type_name(ttype));
     debug_print_buf("token", &token);
@@ -258,12 +260,10 @@ lexi_end(token_type ttype)
     debug_print_buf("code", &code);
     debug_print_buf("comment", &com);
     debug_printf("\n");
+#endif
 
     return ttype;
 }
-#else
-#define lexi_end(tk) (tk)
-#endif
 
 static void
 lex_number(void)
