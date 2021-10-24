@@ -1,4 +1,4 @@
-/*	$NetBSD: ftp.c,v 1.168.2.5 2021/10/24 10:16:05 martin Exp $	*/
+/*	$NetBSD: ftp.c,v 1.168.2.6 2021/10/24 10:18:02 martin Exp $	*/
 
 /*-
  * Copyright (c) 1996-2021 The NetBSD Foundation, Inc.
@@ -92,7 +92,7 @@
 #if 0
 static char sccsid[] = "@(#)ftp.c	8.6 (Berkeley) 10/27/94";
 #else
-__RCSID("$NetBSD: ftp.c,v 1.168.2.5 2021/10/24 10:16:05 martin Exp $");
+__RCSID("$NetBSD: ftp.c,v 1.168.2.6 2021/10/24 10:18:02 martin Exp $");
 #endif
 #endif /* not lint */
 
@@ -1381,13 +1381,11 @@ initconn(void)
 			if (data_addr.su_family != AF_INET) {
 				fputs(
     "Passive mode AF mismatch. Shouldn't happen!\n", ttyout);
-				error = 1;
 				goto bad;
 			}
 			if (code / 10 == 22 && code != 227) {
 				fputs("wrong server: return code must be 227\n",
 					ttyout);
-				error = 1;
 				goto bad;
 			}
 			error = sscanf(pasv, "%u,%u,%u,%u,%u,%u",
@@ -1396,10 +1394,8 @@ initconn(void)
 			if (error != 6) {
 				fputs(
 "Passive mode address scan failure. Shouldn't happen!\n", ttyout);
-				error = 1;
 				goto bad;
 			}
-			error = 0;
 			memset(&data_addr, 0, sizeof(data_addr));
 			data_addr.su_family = AF_INET;
 			data_addr.su_len = sizeof(struct sockaddr_in);
@@ -1416,7 +1412,6 @@ initconn(void)
 			if (code / 10 == 22 && code != 228) {
 				fputs("wrong server: return code must be 228\n",
 					ttyout);
-				error = 1;
 				goto bad;
 			}
 			switch (data_addr.su_family) {
@@ -1429,17 +1424,14 @@ initconn(void)
 				if (error != 9) {
 					fputs(
 "Passive mode address scan failure. Shouldn't happen!\n", ttyout);
-					error = 1;
 					goto bad;
 				}
 				if (af != 4 || hal != 4 || pal != 2) {
 					fputs(
 "Passive mode AF mismatch. Shouldn't happen!\n", ttyout);
-					error = 1;
 					goto bad;
 				}
 
-				error = 0;
 				memset(&data_addr, 0, sizeof(data_addr));
 				data_addr.su_family = AF_INET;
 				data_addr.su_len = sizeof(struct sockaddr_in);
@@ -1467,17 +1459,14 @@ initconn(void)
 				if (error != 21) {
 					fputs(
 "Passive mode address scan failure. Shouldn't happen!\n", ttyout);
-					error = 1;
 					goto bad;
 				}
 				if (af != 6 || hal != 16 || pal != 2) {
 					fputs(
 "Passive mode AF mismatch. Shouldn't happen!\n", ttyout);
-					error = 1;
 					goto bad;
 				}
 
-				error = 0;
 				memset(&data_addr, 0, sizeof(data_addr));
 				data_addr.su_family = AF_INET6;
 				data_addr.su_len = sizeof(struct sockaddr_in6);
@@ -1500,7 +1489,8 @@ initconn(void)
 				break;
 #endif
 			default:
-				error = 1;
+				fputs("Unknown passive mode AF.\n", ttyout);
+				goto bad;
 			}
 		} else if (strcmp(pasvcmd, "EPSV") == 0) {
 			char delim[4];
@@ -1509,20 +1499,17 @@ initconn(void)
 			if (code / 10 == 22 && code != 229) {
 				fputs("wrong server: return code must be 229\n",
 					ttyout);
-				error = 1;
 				goto bad;
 			}
 			if (sscanf(pasv, "%c%c%c%d%c", &delim[0],
 					&delim[1], &delim[2], &port[1],
 					&delim[3]) != 5) {
 				fputs("parse error!\n", ttyout);
-				error = 1;
 				goto bad;
 			}
 			if (delim[0] != delim[1] || delim[0] != delim[2]
 			 || delim[0] != delim[3]) {
 				fputs("parse error!\n", ttyout);
-				error = 1;
 				goto bad;
 			}
 			data_addr = hisctladdr;
