@@ -1,4 +1,4 @@
-/* $NetBSD: opt_di.c,v 1.2 2021/10/24 17:51:19 rillig Exp $ */
+/* $NetBSD: opt_di.c,v 1.3 2021/10/24 19:24:22 rillig Exp $ */
 /* $FreeBSD$ */
 
 /*
@@ -98,4 +98,30 @@ int	space;
 int	tab;
 int	tab16;
 struct long_name long_name;
+#indent end
+
+
+#indent input
+struct {
+	int member;
+} var = {
+	3,
+};
+#indent end
+
+/* FIXME: The variable name is indented by 6 spaces, should be 1. */
+#indent run -di0
+struct {
+	int member;
+}      var = {
+	3,
+};
+#indent end
+
+#indent run
+struct {
+	int		member;
+}		var = {
+	3,
+};
 #indent end
