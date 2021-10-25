@@ -1,4 +1,4 @@
-/*	$NetBSD: lexi.c,v 1.100 2021/10/25 00:54:37 rillig Exp $	*/
+/*	$NetBSD: lexi.c,v 1.101 2021/10/25 21:33:24 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)lexi.c	8.1 (Berkeley) 6/6/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: lexi.c,v 1.100 2021/10/25 00:54:37 rillig Exp $");
+__RCSID("$NetBSD: lexi.c,v 1.101 2021/10/25 21:33:24 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/lexi.c 337862 2018-08-15 18:19:45Z pstef $");
 #endif
@@ -260,13 +260,52 @@ lsym_name(lexer_symbol sym)
     return name[sym];
 }
 
+static const char *
+kw_name(enum keyword_kind kw) {
+    static const char *name[] = {
+	"0",
+	"offsetof",
+	"sizeof",
+	"struct_or_union_or_enum",
+	"type",
+	"for",
+	"if",
+	"while",
+	"do",
+	"else",
+	"switch",
+	"case_or_default",
+	"jump",
+	"storage_class",
+	"typedef",
+	"inline_or_restrict",
+    };
+
+    return name[kw];
+}
+
 static void
 debug_print_buf(const char *name, const struct buffer *buf)
 {
     if (buf->s < buf->e) {
-	debug_printf(" %s ", name);
-	debug_vis_range("\"", buf->s, buf->e, "\"");
+	debug_printf("%s ", name);
+	debug_vis_range("\"", buf->s, buf->e, "\"\n");
     }
+}
+
+static void
+debug_lexi(lexer_symbol lsym)
+{
+    debug_printf("\n");
+    debug_printf("line %d\n", line_no);
+    debug_print_buf("label", &lab);
+    debug_print_buf("code", &code);
+    debug_print_buf("comment", &com);
+    debug_printf("lexi returns '%s'", lsym_name(lsym));
+    if (ps.keyword != kw_0)
+	debug_printf(" keyword '%s'", kw_name(ps.keyword));
+    debug_printf("\n");
+    debug_print_buf("token", &token);
 }
 #endif
 
@@ -274,15 +313,8 @@ static lexer_symbol
 lexi_end(lexer_symbol lsym)
 {
 #ifdef debug
-    debug_printf("in line %d, lexi returns '%s'",
-	line_no, lsym_name(lsym));
-    debug_print_buf("token", &token);
-    debug_print_buf("label", &lab);
-    debug_print_buf("code", &code);
-    debug_print_buf("comment", &com);
-    debug_printf("\n");
+    debug_lexi(lsym);
 #endif
-
     return lsym;
 }
 
