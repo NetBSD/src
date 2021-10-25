@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.lib.mk,v 1.385 2021/08/21 11:55:24 andvar Exp $
+#	$NetBSD: bsd.lib.mk,v 1.386 2021/10/25 07:54:44 ryo Exp $
 #	@(#)bsd.lib.mk	8.3 (Berkeley) 4/22/94
 
 .include <bsd.init.mk>
@@ -51,7 +51,8 @@ CFLAGS+=        ${PIE_CFLAGS}
 AFLAGS+=        ${PIE_AFLAGS}
 .endif
 
-PGFLAGS+=	-pg
+PROF?=		-pg
+PGFLAGS+=	${PROF.${.IMPSRC:T}:U${PROF}}
 .if ${MKPIC} != "no"
 PGFLAGS+=	-fPIC
 .endif
