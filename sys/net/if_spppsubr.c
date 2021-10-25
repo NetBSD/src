@@ -1,4 +1,4 @@
-/*	$NetBSD: if_spppsubr.c,v 1.259 2021/10/11 05:13:11 knakahara Exp $	 */
+/*	$NetBSD: if_spppsubr.c,v 1.260 2021/10/25 02:06:29 knakahara Exp $	 */
 
 /*
  * Synchronous PPP/Cisco link level subroutines.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.259 2021/10/11 05:13:11 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.260 2021/10/25 02:06:29 knakahara Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -5591,7 +5591,7 @@ sppp_get_ip_addrs(struct sppp *sp, uint32_t *src, uint32_t *dst, uint32_t *srcma
 	struct ifaddr *ifa;
 	struct sockaddr_in *si, *sm;
 	uint32_t ssrc, ddst;
-	int s;
+	int bound, s;
 	struct psref psref;
 
 	sm = NULL;
@@ -5601,6 +5601,7 @@ sppp_get_ip_addrs(struct sppp *sp, uint32_t *src, uint32_t *dst, uint32_t *srcma
 	 * aliases don't make any sense on a p2p link anyway.
 	 */
 	si = 0;
+	bound = curlwp_bind();
 	s = pserialize_read_enter();
 	IFADDR_READER_FOREACH(ifa, ifp) {
 		if (ifa->ifa_addr->sa_family == AF_INET) {
@@ -5625,6 +5626,7 @@ sppp_get_ip_addrs(struct sppp *sp, uint32_t *src, uint32_t *dst, uint32_t *srcma
 			ddst = si->sin_addr.s_addr;
 		ifa_release(ifa, &psref);
 	}
+	curlwp_bindx(bound);
 
 	if (dst) *dst = ntohl(ddst);
 	if (src) *src = ntohl(ssrc);
@@ -5783,7 +5785,7 @@ sppp_get_ip6_addrs(struct sppp *sp, struct in6_addr *src, struct in6_addr *dst,
 	struct ifaddr *ifa;
 	struct sockaddr_in6 *si, *sm;
 	struct in6_addr ssrc, ddst;
-	int s;
+	int bound, s;
 	struct psref psref;
 
 	sm = NULL;
@@ -5794,6 +5796,7 @@ sppp_get_ip6_addrs(struct sppp *sp, struct in6_addr *src, struct in6_addr *dst,
 	 * aliases don't make any sense on a p2p link anyway.
 	 */
 	si = 0;
+	bound = curlwp_bind();
 	s = pserialize_read_enter();
 	IFADDR_READER_FOREACH(ifa, ifp) {
 		if (ifa->ifa_addr->sa_family == AF_INET6) {
@@ -5821,6 +5824,7 @@ sppp_get_ip6_addrs(struct sppp *sp, struct in6_addr *src, struct in6_addr *dst,
 			memcpy(&ddst, &si->sin6_addr, sizeof(ddst));
 		ifa_release(ifa, &psref);
 	}
+	curlwp_bindx(bound);
 
 	if (dst)
 		memcpy(dst, &ddst, sizeof(*dst));
