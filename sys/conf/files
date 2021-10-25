@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.1173.2.9 2020/03/08 09:42:29 martin Exp $
+#	$NetBSD: files,v 1.1173.2.10 2021/10/25 15:49:48 martin Exp $
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
 version 	20170615
@@ -272,6 +272,7 @@ defflag opt_pppoe.h		PPPOE_SERVER PPPOE_DEBUG
 #
 defflag				GATEWAY
 defparam opt_nmbclusters.h	NMBCLUSTERS
+	 			NMBCLUSTERS_MAX
 defparam			SB_MAX
 
 # file system options
