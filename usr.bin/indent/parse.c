@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.39 2021/10/25 00:54:37 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.40 2021/10/25 19:56:03 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -104,7 +104,7 @@ parse(parser_symbol psym)
     switch (psym) {
 
     case psym_decl:
-	ps.search_brace = opt.brace_same_line;
+	ps.search_stmt = opt.brace_same_line;
 	/* indicate that following brace should be on same line */
 
 	if (ps.s_sym[ps.tos] != psym_decl) {	/* only put one declaration
@@ -139,7 +139,7 @@ parse(parser_symbol psym)
 	ps.s_sym[++ps.tos] = psym;
 	ps.s_ind_level[ps.tos] = ps.ind_level = ps.ind_level_follow;
 	++ps.ind_level_follow;	/* subsequent statements should be indented 1 */
-	ps.search_brace = opt.brace_same_line;
+	ps.search_stmt = opt.brace_same_line;
 	break;
 
     case psym_lbrace:
@@ -180,7 +180,7 @@ parse(parser_symbol psym)
 	    ps.s_sym[++ps.tos] = psym_while_expr;
 	    ps.s_ind_level[ps.tos] = ps.ind_level_follow;
 	    ++ps.ind_level_follow;
-	    ps.search_brace = opt.brace_same_line;
+	    ps.search_stmt = opt.brace_same_line;
 	}
 
 	break;
@@ -194,7 +194,7 @@ parse(parser_symbol psym)
 	    ps.ind_level_follow = ps.ind_level + 1;
 	    ps.s_sym[ps.tos] = psym_if_expr_stmt_else;
 	    /* remember if with else */
-	    ps.search_brace = opt.brace_same_line || opt.else_if;
+	    ps.search_stmt = opt.brace_same_line || opt.else_if;
 	}
 	break;
 
@@ -216,7 +216,7 @@ parse(parser_symbol psym)
 	case_ind = (float)ps.ind_level_follow + opt.case_indent;
 	/* statements should be two levels deeper */
 	ps.ind_level_follow += (int)opt.case_indent + 1;
-	ps.search_brace = opt.brace_same_line;
+	ps.search_stmt = opt.brace_same_line;
 	break;
 
     case psym_semicolon:	/* this indicates a simple stmt */

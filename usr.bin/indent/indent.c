@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.c,v 1.157 2021/10/25 01:06:13 rillig Exp $	*/
+/*	$NetBSD: indent.c,v 1.158 2021/10/25 19:56:03 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)indent.c	5.17 (Berkeley) 6/7/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: indent.c,v 1.157 2021/10/25 01:06:13 rillig Exp $");
+__RCSID("$NetBSD: indent.c,v 1.158 2021/10/25 19:56:03 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/indent.c 340138 2018-11-04 19:24:49Z oshogbo $");
 #endif
@@ -157,7 +157,7 @@ diag(int level, const char *msg, ...)
 }
 
 static void
-search_brace_newline(bool *force_nl)
+search_stmt_newline(bool *force_nl)
 {
     if (sc_end == NULL) {
 	save_com = sc_buf;
@@ -180,7 +180,7 @@ search_brace_newline(bool *force_nl)
 }
 
 static void
-search_brace_comment(bool *comment_buffered)
+search_stmt_comment(bool *comment_buffered)
 {
     if (sc_end == NULL) {
 	/*
@@ -215,7 +215,7 @@ search_brace_comment(bool *comment_buffered)
 }
 
 static bool
-search_brace_lbrace(void)
+search_stmt_lbrace(void)
 {
     /*
      * Put KNF-style lbraces before the buffered up tokens and jump out of
@@ -239,7 +239,7 @@ search_brace_lbrace(void)
 }
 
 static bool
-search_brace_other(lexer_symbol lsym, bool *force_nl,
+search_stmt_other(lexer_symbol lsym, bool *force_nl,
     bool comment_buffered, bool last_else)
 {
     bool remove_newlines;
@@ -254,7 +254,7 @@ search_brace_other(lexer_symbol lsym, bool *force_nl,
 
     if (sc_end == NULL) {	/* ignore buffering if comment wasn't saved
 				 * up */
-	ps.search_brace = false;
+	ps.search_stmt = false;
 	return false;
     }
 
@@ -289,7 +289,7 @@ search_brace_other(lexer_symbol lsym, bool *force_nl,
 static void
 switch_buffer(void)
 {
-    ps.search_brace = false;	/* stop looking for start of stmt */
+    ps.search_stmt = false;
     saved_inp_s = inp.s;	/* save current input buffer */
     saved_inp_e = inp.e;
     inp.s = save_com;		/* fix so that subsequent calls to lexi will
@@ -301,7 +301,7 @@ switch_buffer(void)
 }
 
 static void
-search_brace_lookahead(lexer_symbol *lsym)
+search_stmt_lookahead(lexer_symbol *lsym)
 {
     if (*lsym == lsym_eof)
 	return;
@@ -337,37 +337,37 @@ search_brace_lookahead(lexer_symbol *lsym)
     transient_state = ps;
     *lsym = lexi(&transient_state);	/* read another token */
     if (*lsym != lsym_newline && *lsym != lsym_form_feed &&
-	*lsym != lsym_comment && !transient_state.search_brace) {
+	*lsym != lsym_comment && !transient_state.search_stmt) {
 	ps = transient_state;
     }
 }
 
 static void
-search_brace(lexer_symbol *lsym, bool *force_nl,
+search_stmt(lexer_symbol *lsym, bool *force_nl,
     bool *comment_buffered, bool *last_else)
 {
-    while (ps.search_brace) {
+    while (ps.search_stmt) {
 	switch (*lsym) {
 	case lsym_newline:
-	    search_brace_newline(force_nl);
+	    search_stmt_newline(force_nl);
 	    break;
 	case lsym_form_feed:
 	    break;
 	case lsym_comment:
-	    search_brace_comment(comment_buffered);
+	    search_stmt_comment(comment_buffered);
 	    break;
 	case lsym_lbrace:
-	    if (search_brace_lbrace())
+	    if (search_stmt_lbrace())
 		goto switch_buffer;
 	    /* FALLTHROUGH */
 	default:		/* it is the start of a normal statement */
-	    if (!search_brace_other(*lsym, force_nl,
+	    if (!search_stmt_other(*lsym, force_nl,
 		    *comment_buffered, *last_else))
 		return;
     switch_buffer:
 	    switch_buffer();
 	}
-	search_brace_lookahead(lsym);
+	search_stmt_lookahead(lsym);
     }
 
     *last_else = false;
@@ -792,7 +792,7 @@ process_rparen_or_rbracket(bool *spaced_expr, bool *force_nl, stmt_head hd)
      * This should ensure that constructs such as main(){...} and int[]{...}
      * have their braces put in the right place.
      */
-    ps.search_brace = opt.brace_same_line;
+    ps.search_stmt = opt.brace_same_line;
 }
 
 static void
@@ -1028,7 +1028,7 @@ process_rbrace(bool *spaced_expr, int *decl_ind, const int *di_stack)
 
     blank_line_before = false;
     parse(psym_rbrace);
-    ps.search_brace = opt.cuddle_else
+    ps.search_stmt = opt.cuddle_else
 	&& ps.s_sym[ps.tos] == psym_if_expr_stmt
 	&& ps.s_ind_level[ps.tos] >= ps.ind_level;
 
@@ -1357,7 +1357,7 @@ main_loop(void)
 	 * proper handling of both kinds of brace placement (-br, -bl) and
 	 * cuddling "else" (-ce).
 	 */
-	search_brace(&lsym, &force_nl, &comment_buffered, &last_else);
+	search_stmt(&lsym, &force_nl, &comment_buffered, &last_else);
 
 	if (lsym == lsym_eof) {
 	    process_end_of_file();
