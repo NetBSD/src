@@ -1,4 +1,4 @@
-/*	$NetBSD: aic79xx.c,v 1.58 2021/09/16 22:19:10 andvar Exp $	*/
+/*	$NetBSD: aic79xx.c,v 1.59 2021/10/25 07:45:01 ryo Exp $	*/
 
 /*
  * Core routines and tables shareable across OS platforms.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aic79xx.c,v 1.58 2021/09/16 22:19:10 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aic79xx.c,v 1.59 2021/10/25 07:45:01 ryo Exp $");
 
 #include <dev/ic/aic79xx_osm.h>
 #include <dev/ic/aic79xx_inline.h>
@@ -8255,9 +8255,9 @@ ahd_dumpseq(struct ahd_softc* ahd)
 static void __noinline
 ahd_loadseq(struct ahd_softc *ahd)
 {
-	struct	cs cs_table[num_critical_sections];
-	u_int	begin_set[num_critical_sections];
-	u_int	end_set[num_critical_sections];
+	struct	cs cs_table[NUM_CRITICAL_SECTIONS];
+	u_int	begin_set[NUM_CRITICAL_SECTIONS];
+	u_int	end_set[NUM_CRITICAL_SECTIONS];
 	const struct patch *cur_patch;
 	u_int	cs_count;
 	u_int	cur_cs;

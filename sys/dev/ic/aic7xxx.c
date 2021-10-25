@@ -1,4 +1,4 @@
-/*	$NetBSD: aic7xxx.c,v 1.144 2021/09/16 22:19:11 andvar Exp $	*/
+/*	$NetBSD: aic7xxx.c,v 1.145 2021/10/25 07:45:01 ryo Exp $	*/
 
 /*
  * Core routines and tables shareable across OS platforms.
@@ -39,7 +39,7 @@
  * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGES.
  *
- * $Id: aic7xxx.c,v 1.144 2021/09/16 22:19:11 andvar Exp $
+ * $Id: aic7xxx.c,v 1.145 2021/10/25 07:45:01 ryo Exp $
  *
  * //depot/aic7xxx/aic7xxx/aic7xxx.c#112 $
  *
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aic7xxx.c,v 1.144 2021/09/16 22:19:11 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aic7xxx.c,v 1.145 2021/10/25 07:45:01 ryo Exp $");
 
 #include <dev/ic/aic7xxx_osm.h>
 #include <dev/ic/aic7xxx_inline.h>
@@ -6278,9 +6278,9 @@ ahc_dumpseq(struct ahc_softc* ahc)
 static void __noinline
 ahc_loadseq(struct ahc_softc *ahc)
 {
-	struct	cs cs_table[num_critical_sections];
-	u_int	begin_set[num_critical_sections];
-	u_int	end_set[num_critical_sections];
+	struct	cs cs_table[NUM_CRITICAL_SECTIONS];
+	u_int	begin_set[NUM_CRITICAL_SECTIONS];
+	u_int	end_set[NUM_CRITICAL_SECTIONS];
 	const struct	patch *cur_patch;
 	u_int	cs_count;
 	u_int	cur_cs;
@@ -6332,7 +6332,7 @@ ahc_loadseq(struct ahc_softc *ahc)
 		 * Move through the CS table until we find a CS
 		 * that might apply to this instruction.
 		 */
-		for (; cur_cs < num_critical_sections; cur_cs++) {
+		for (; cur_cs < NUM_CRITICAL_SECTIONS; cur_cs++) {
 			if (critical_sections[cur_cs].end <= i) {
 				if (begin_set[cs_count] == TRUE
 				 && end_set[cs_count] == FALSE) {
