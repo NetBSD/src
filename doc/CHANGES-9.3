@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.3,v 1.1.2.42 2021/10/24 10:19:01 martin Exp $
+# $NetBSD: CHANGES-9.3,v 1.1.2.43 2021/10/25 15:48:43 martin Exp $
 
 A complete list of changes from the NetBSD 9.2 release to the NetBSD 9.3
 release:
@@ -904,4 +904,13 @@ usr.bin/ftp/ftp.c				1.174
 
 	ftp(1): cleanup after previous security fix.
 	[lukem, ticket #1367]
+
+share/man/man4/options.4			1.520
+sys/conf/files					1.1288
+sys/kern/uipc_mbuf.c				1.244
+
+	- Fix a bug that NMBCLUSTERS(kern.mbuf.nmbclusters) can't be changed
+	  by sysctl.
+	- Update NMBCLUSTERS and add NMBCLUSTERS_MAX in options(4).
+	[msaitoh, ticket #1368]
 
