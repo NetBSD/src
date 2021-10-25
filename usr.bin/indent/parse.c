@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.40 2021/10/25 19:56:03 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.41 2021/10/25 20:32:38 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -57,7 +57,7 @@ __FBSDID("$FreeBSD: head/usr.bin/indent/parse.c 337651 2018-08-11 19:20:06Z pste
 static void reduce(void);
 
 #ifdef debug
-const char *
+static const char *
 psym_name(parser_symbol psym)
 {
     static const char *const name[] = {
@@ -91,8 +91,7 @@ psym_name(parser_symbol psym)
 void
 parse(parser_symbol psym)
 {
-    debug_println("parse token: '%s' \"%s\"",
-	psym_name(psym), token.s);
+    debug_println("parse token: '%s'", psym_name(psym));
 
     if (psym != psym_else) {
 	while (ps.s_sym[ps.tos] == psym_if_expr_stmt) {
