@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.c,v 1.158 2021/10/25 19:56:03 rillig Exp $	*/
+/*	$NetBSD: indent.c,v 1.159 2021/10/25 21:33:24 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)indent.c	5.17 (Berkeley) 6/7/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: indent.c,v 1.158 2021/10/25 19:56:03 rillig Exp $");
+__RCSID("$NetBSD: indent.c,v 1.159 2021/10/25 21:33:24 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/indent.c 340138 2018-11-04 19:24:49Z oshogbo $");
 #endif
@@ -1554,7 +1554,9 @@ debug_vis_range(const char *prefix, const char *s, const char *e,
 {
     debug_printf("%s", prefix);
     for (const char *p = s; p < e; p++) {
-	if (isprint((unsigned char)*p) && *p != '\\' && *p != '"')
+	if (*p == '\\' || *p == '"')
+	    debug_printf("\\%c", *p);
+	else if (isprint((unsigned char)*p))
 	    debug_printf("%c", *p);
 	else if (*p == '\n')
 	    debug_printf("\\n");
