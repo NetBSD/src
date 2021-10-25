@@ -1,4 +1,4 @@
-/*	$NetBSD: aicasm_symbol.h,v 1.2 2003/04/19 19:26:11 fvdl Exp $	*/
+/*	$NetBSD: aicasm_symbol.h,v 1.3 2021/10/25 07:40:29 ryo Exp $	*/
 
 /*
  * Aic7xxx SCSI host adapter firmware asssembler symbol table definitions
@@ -112,7 +112,7 @@ struct macro_arg {
 	regex_t	arg_regex;
 	char   *replacement_text;
 };
-STAILQ_HEAD(macro_arg_list, macro_arg) args;
+STAILQ_HEAD(macro_arg_list, macro_arg);
 
 struct macro_info {
 	struct macro_arg_list args;
