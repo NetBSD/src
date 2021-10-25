@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.3,v 1.1.2.43 2021/10/25 15:48:43 martin Exp $
+# $NetBSD: CHANGES-9.3,v 1.1.2.44 2021/10/25 18:11:55 martin Exp $
 
 A complete list of changes from the NetBSD 9.2 release to the NetBSD 9.3
 release:
@@ -913,4 +913,9 @@ sys/kern/uipc_mbuf.c				1.244
 	  by sysctl.
 	- Update NMBCLUSTERS and add NMBCLUSTERS_MAX in options(4).
 	[msaitoh, ticket #1368]
+
+sys/net/if_ethersubr.c				1.302
+
+	Fix handling of VLAN 0 tag.
+	[ryo, ticket #1369]
 
