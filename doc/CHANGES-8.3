@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.3,v 1.1.2.105 2021/10/23 11:53:10 martin Exp $
+# $NetBSD: CHANGES-8.3,v 1.1.2.106 2021/10/25 15:50:37 martin Exp $
 
 A complete list of changes from the NetBSD 8.2 release to the NetBSD 8.3
 release:
@@ -2172,4 +2172,13 @@ sys/dev/pci/if_wmvar.h				1.46
 	- Add new flag named WM_F_CRC_STRIP and use it. No functional change.
 	- Whitespace fixes. Fix comments. No functional change.
 	[msaitoh, ticket #1701]
+
+share/man/man4/options.4			1.520
+sys/conf/files					1.1288
+sys/kern/uipc_mbuf.c				1.244
+
+	- Fix a bug that NMBCLUSTERS(kern.mbuf.nmbclusters) can't be changed
+	  by sysctl.
+	- Update NMBCLUSTERS and add NMBCLUSTERS_MAX in options(4).
+	[msaitoh, ticket #1703]
 
