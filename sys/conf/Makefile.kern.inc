@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.kern.inc,v 1.282 2021/09/11 20:28:05 andvar Exp $
+#	$NetBSD: Makefile.kern.inc,v 1.283 2021/10/25 07:54:44 ryo Exp $
 #
 # This file contains common `MI' targets and definitions and it is included
 # at the bottom of each `MD' ${MACHINE}/conf/Makefile.${MACHINE}.
@@ -150,8 +150,8 @@ KLINK.o=	${LD} -r ${LINKFORMAT} -Map=${.TARGET}.map -o ${.TARGET} ${.ALLSRC}
 # compile rules: rules are named ${TYPE}_${SUFFIX} where TYPE is NORMAL or
 # NOPROF and SUFFIX is the file suffix, capitalized (e.g. C for a .c file).
 NORMAL_C?=	@${_MKSHMSG} "compile  ${.CURDIR:T}/${.TARGET}" && \
-		${_MKSHECHO} ${KCOMPILE.c} ${PROF} && \
-		${KCOMPILE.c} ${PROF} && \
+		${_MKSHECHO} ${KCOMPILE.c} ${PROF.${.IMPSRC:T}:U${PROF}} && \
+		${KCOMPILE.c} ${PROF.${.IMPSRC:T}:U${PROF}} && \
 		${COMPILE_CTFCONVERT}
 NOPROF_C?=	@${_MKSHMSG} "compile  ${.CURDIR:T}/${.TARGET}" && \
 		${_MKSHECHO} ${KCOMPILE.c} && \
