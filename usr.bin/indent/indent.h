@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.h,v 1.49 2021/10/25 00:54:37 rillig Exp $	*/
+/*	$NetBSD: indent.h,v 1.50 2021/10/25 19:56:03 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-FreeBSD
@@ -326,9 +326,9 @@ extern struct parser_state {
 				 * to the enclosing statement */
     bool is_case_label;		/* 'case' and 'default' labels are indented
 				 * differently from regular labels */
-    bool search_brace;		/* whether it is necessary to buffer up all
-				 * info up to the start of a stmt after an if,
-				 * while, etc */
+    bool search_stmt;		/* whether it is necessary to buffer up all
+				 * text up to the start of a statement after
+				 * an 'if', 'while', etc. */
     bool want_blank;		/* whether the following token should be
 				 * prefixed by a blank. (Said prefixing is
 				 * ignored in some cases.) */
