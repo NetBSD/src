@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.38 2021/10/24 22:28:06 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.39 2021/10/25 00:54:37 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -48,6 +48,7 @@ __RCSID("$FreeBSD$");
 __FBSDID("$FreeBSD: head/usr.bin/indent/parse.c 337651 2018-08-11 19:20:06Z pstef $");
 #endif
 
+#include <assert.h>
 #include <err.h>
 #include <stdio.h>
 
@@ -55,40 +56,68 @@ __FBSDID("$FreeBSD: head/usr.bin/indent/parse.c 337651 2018-08-11 19:20:06Z pste
 
 static void reduce(void);
 
+#ifdef debug
+const char *
+psym_name(parser_symbol psym)
+{
+    static const char *const name[] = {
+	"semicolon",
+	"lbrace",
+	"rbrace",
+	"decl",
+	"stmt",
+	"stmt_list",
+	"for_exprs",
+	"if_expr",
+	"if_expr_stmt",
+	"if_expr_stmt_else",
+	"else",
+	"switch_expr",
+	"do",
+	"do_stmt",
+	"while_expr",
+    };
+
+    assert(array_length(name) == (int)psym_while_expr + 1);
+
+    return name[psym];
+}
+#endif
+
 /*
  * Shift the token onto the parser stack, or reduce it by combining it with
  * previous tokens.
  */
 void
-parse(token_type ttype)
+parse(parser_symbol psym)
 {
     debug_println("parse token: '%s' \"%s\"",
-	token_type_name(ttype), token.s);
+	psym_name(psym), token.s);
 
-    if (ttype != tt_ps_else) {
-	while (ps.s_ttype[ps.tos] == if_expr_stmt) {
-	    ps.s_ttype[ps.tos] = stmt;
+    if (psym != psym_else) {
+	while (ps.s_sym[ps.tos] == psym_if_expr_stmt) {
+	    ps.s_sym[ps.tos] = psym_stmt;
 	    reduce();
 	}
     }
 
-    switch (ttype) {
+    switch (psym) {
 
-    case decl:			/* scanned a declaration word */
+    case psym_decl:
 	ps.search_brace = opt.brace_same_line;
 	/* indicate that following brace should be on same line */
 
-	if (ps.s_ttype[ps.tos] != decl) {	/* only put one declaration
+	if (ps.s_sym[ps.tos] != psym_decl) {	/* only put one declaration
 						 * onto stack */
 	    break_comma = true;	/* while in declaration, newline should be
 				 * forced after comma */
-	    ps.s_ttype[++ps.tos] = decl;
+	    ps.s_sym[++ps.tos] = psym_decl;
 	    ps.s_ind_level[ps.tos] = ps.ind_level_follow;
 
 	    if (opt.ljust_decl) {
 		ps.ind_level = 0;
 		for (int i = ps.tos - 1; i > 0; --i)
-		    if (ps.s_ttype[i] == decl)
+		    if (ps.s_sym[i] == psym_decl)
 			++ps.ind_level;	/* indentation is number of
 					 * declaration levels deep we are */
 		ps.ind_level_follow = ps.ind_level;
@@ -96,8 +125,8 @@ parse(token_type ttype)
 	}
 	break;
 
-    case if_expr:		/* 'if' '(' <expr> ')' */
-	if (ps.s_ttype[ps.tos] == if_expr_stmt_else && opt.else_if) {
+    case psym_if_expr:		/* 'if' '(' <expr> ')' */
+	if (ps.s_sym[ps.tos] == psym_if_expr_stmt_else && opt.else_if) {
 	    /*
 	     * Reduce "else if" to "if". This saves a lot of stack space in
 	     * case of a long "if-else-if ... else-if" sequence.
@@ -105,18 +134,18 @@ parse(token_type ttype)
 	    ps.ind_level_follow = ps.s_ind_level[ps.tos--];
 	}
 	/* FALLTHROUGH */
-    case tt_ps_do:
-    case for_exprs:		/* 'for' (...) */
-	ps.s_ttype[++ps.tos] = ttype;
+    case psym_do:
+    case psym_for_exprs:		/* 'for' (...) */
+	ps.s_sym[++ps.tos] = psym;
 	ps.s_ind_level[ps.tos] = ps.ind_level = ps.ind_level_follow;
 	++ps.ind_level_follow;	/* subsequent statements should be indented 1 */
 	ps.search_brace = opt.brace_same_line;
 	break;
 
-    case lbrace:
+    case psym_lbrace:
 	break_comma = false;	/* don't break comma in an initializer list */
-	if (ps.s_ttype[ps.tos] == stmt || ps.s_ttype[ps.tos] == decl
-		|| ps.s_ttype[ps.tos] == stmt_list)
+	if (ps.s_sym[ps.tos] == psym_stmt || ps.s_sym[ps.tos] == psym_decl
+		|| ps.s_sym[ps.tos] == psym_stmt_list)
 	    ++ps.ind_level_follow;	/* it is a random, isolated stmt group
 					 * or a declaration */
 	else {
@@ -127,27 +156,28 @@ parse(token_type ttype)
 		/*
 		 * for a switch, brace should be two levels out from the code
 		 */
-		if (ps.s_ttype[ps.tos] == switch_expr && opt.case_indent >= 1)
+		if (ps.s_sym[ps.tos] == psym_switch_expr &&
+			opt.case_indent >= 1)
 		    --ps.ind_level;
 	    }
 	}
 
-	ps.s_ttype[++ps.tos] = lbrace;
+	ps.s_sym[++ps.tos] = psym_lbrace;
 	ps.s_ind_level[ps.tos] = ps.ind_level;
-	ps.s_ttype[++ps.tos] = stmt;
+	ps.s_sym[++ps.tos] = psym_stmt;
 	/* allow null stmt between braces */
 	ps.s_ind_level[ps.tos] = ps.ind_level_follow;
 	break;
 
-    case while_expr:		/* 'while' '(' <expr> ')' */
-	if (ps.s_ttype[ps.tos] == do_stmt) {
+    case psym_while_expr:	/* 'while' '(' <expr> ')' */
+	if (ps.s_sym[ps.tos] == psym_do_stmt) {
 	    /* it is matched with do stmt */
 	    ps.ind_level = ps.ind_level_follow = ps.s_ind_level[ps.tos];
-	    ps.s_ttype[++ps.tos] = while_expr;
+	    ps.s_sym[++ps.tos] = psym_while_expr;
 	    ps.s_ind_level[ps.tos] = ps.ind_level = ps.ind_level_follow;
 
 	} else {		/* it is a while loop */
-	    ps.s_ttype[++ps.tos] = while_expr;
+	    ps.s_sym[++ps.tos] = psym_while_expr;
 	    ps.s_ind_level[ps.tos] = ps.ind_level_follow;
 	    ++ps.ind_level_follow;
 	    ps.search_brace = opt.brace_same_line;
@@ -155,30 +185,30 @@ parse(token_type ttype)
 
 	break;
 
-    case tt_ps_else:
-	if (ps.s_ttype[ps.tos] != if_expr_stmt)
+    case psym_else:
+	if (ps.s_sym[ps.tos] != psym_if_expr_stmt)
 	    diag(1, "Unmatched 'else'");
 	else {
 	    /* The indentation for 'else' should be the same as for 'if'. */
 	    ps.ind_level = ps.s_ind_level[ps.tos];
 	    ps.ind_level_follow = ps.ind_level + 1;
-	    ps.s_ttype[ps.tos] = if_expr_stmt_else;
+	    ps.s_sym[ps.tos] = psym_if_expr_stmt_else;
 	    /* remember if with else */
 	    ps.search_brace = opt.brace_same_line || opt.else_if;
 	}
 	break;
 
-    case rbrace:
+    case psym_rbrace:
 	/* stack should have <lbrace> <stmt> or <lbrace> <stmt_list> */
-	if (ps.tos > 0 && ps.s_ttype[ps.tos - 1] == lbrace) {
+	if (ps.tos > 0 && ps.s_sym[ps.tos - 1] == psym_lbrace) {
 	    ps.ind_level = ps.ind_level_follow = ps.s_ind_level[--ps.tos];
-	    ps.s_ttype[ps.tos] = stmt;
+	    ps.s_sym[ps.tos] = psym_stmt;
 	} else
 	    diag(1, "Statement nesting error");
 	break;
 
-    case switch_expr:		/* had switch (...) */
-	ps.s_ttype[++ps.tos] = switch_expr;
+    case psym_switch_expr:	/* had switch (...) */
+	ps.s_sym[++ps.tos] = psym_switch_expr;
 	ps.s_case_ind_level[ps.tos] = case_ind;
 	/* save current case indent level */
 	ps.s_ind_level[ps.tos] = ps.ind_level_follow;
@@ -189,10 +219,10 @@ parse(token_type ttype)
 	ps.search_brace = opt.brace_same_line;
 	break;
 
-    case semicolon:		/* this indicates a simple stmt */
+    case psym_semicolon:	/* this indicates a simple stmt */
 	break_comma = false;	/* turn off flag to break after commas in a
 				 * declaration */
-	ps.s_ttype[++ps.tos] = stmt;
+	ps.s_sym[++ps.tos] = psym_stmt;
 	ps.s_ind_level[ps.tos] = ps.ind_level;
 	break;
 
@@ -209,12 +239,23 @@ parse(token_type ttype)
 #ifdef debug
     printf("parse stack:");
     for (int i = 1; i <= ps.tos; ++i)
-	printf(" ('%s' at %d)",
-	    token_type_name(ps.s_ttype[i]), ps.s_ind_level[i]);
+	printf(" ('%s' at %d)", psym_name(ps.s_sym[i]), ps.s_ind_level[i]);
     if (ps.tos == 0)
 	printf(" empty");
     printf("\n");
 #endif
+}
+
+void
+parse_hd(stmt_head hd)
+{
+    static const parser_symbol psym[] = {
+	[hd_for] = psym_for_exprs,
+	[hd_if] = psym_if_expr,
+	[hd_switch] = psym_switch_expr,
+	[hd_while] = psym_while_expr
+    };
+    parse(psym[hd]);
 }
 
 /*----------------------------------------------*\
@@ -228,24 +269,24 @@ parse(token_type ttype)
 static bool
 reduce_stmt(void)
 {
-    switch (ps.s_ttype[ps.tos - 1]) {
+    switch (ps.s_sym[ps.tos - 1]) {
 
-    case stmt:			/* stmt stmt */
-    case stmt_list:		/* stmt_list stmt */
-	ps.s_ttype[--ps.tos] = stmt_list;
+    case psym_stmt:		/* stmt stmt */
+    case psym_stmt_list:	/* stmt_list stmt */
+	ps.s_sym[--ps.tos] = psym_stmt_list;
 	return true;
 
-    case tt_ps_do:		/* 'do' <stmt> */
-	ps.s_ttype[--ps.tos] = do_stmt;
+    case psym_do:		/* 'do' <stmt> */
+	ps.s_sym[--ps.tos] = psym_do_stmt;
 	ps.ind_level_follow = ps.s_ind_level[ps.tos];
 	return true;
 
-    case if_expr:		/* 'if' '(' <expr> ')' <stmt> */
-	ps.s_ttype[--ps.tos] = if_expr_stmt;
+    case psym_if_expr:		/* 'if' '(' <expr> ')' <stmt> */
+	ps.s_sym[--ps.tos] = psym_if_expr_stmt;
 	int i = ps.tos - 1;
-	while (ps.s_ttype[i] != stmt &&
-	       ps.s_ttype[i] != stmt_list &&
-	       ps.s_ttype[i] != lbrace)
+	while (ps.s_sym[i] != psym_stmt &&
+	       ps.s_sym[i] != psym_stmt_list &&
+	       ps.s_sym[i] != psym_lbrace)
 	    --i;
 	ps.ind_level_follow = ps.s_ind_level[i];
 	/*
@@ -255,14 +296,15 @@ reduce_stmt(void)
 	 */
 	return true;
 
-    case switch_expr:		/* 'switch' '(' <expr> ')' <stmt> */
+    case psym_switch_expr:	/* 'switch' '(' <expr> ')' <stmt> */
 	case_ind = ps.s_case_ind_level[ps.tos - 1];
 	/* FALLTHROUGH */
-    case decl:			/* finish of a declaration */
-    case if_expr_stmt_else:	/* 'if' '(' <expr> ')' <stmt> 'else' <stmt> */
-    case for_exprs:		/* 'for' '(' ... ')' <stmt> */
-    case while_expr:		/* 'while' '(' <expr> ')' <stmt> */
-	ps.s_ttype[--ps.tos] = stmt;
+    case psym_decl:		/* finish of a declaration */
+    case psym_if_expr_stmt_else:	/* 'if' '(' <expr> ')' <stmt> 'else'
+					 * <stmt> */
+    case psym_for_exprs:	/* 'for' '(' ... ')' <stmt> */
+    case psym_while_expr:	/* 'while' '(' <expr> ')' <stmt> */
+	ps.s_sym[--ps.tos] = psym_stmt;
 	ps.ind_level_follow = ps.s_ind_level[ps.tos];
 	return true;
 
@@ -282,11 +324,11 @@ static void
 reduce(void)
 {
 again:
-    if (ps.s_ttype[ps.tos] == stmt) {
+    if (ps.s_sym[ps.tos] == psym_stmt) {
 	if (reduce_stmt())
 	    goto again;
-    } else if (ps.s_ttype[ps.tos] == while_expr) {
-	if (ps.s_ttype[ps.tos - 1] == do_stmt) {
+    } else if (ps.s_sym[ps.tos] == psym_while_expr) {
+	if (ps.s_sym[ps.tos - 1] == psym_do_stmt) {
 	    ps.tos -= 2;
 	    goto again;
 	}
