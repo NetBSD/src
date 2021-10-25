@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.h,v 1.48 2021/10/24 22:44:13 rillig Exp $	*/
+/*	$NetBSD: indent.h,v 1.49 2021/10/25 00:54:37 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-FreeBSD
@@ -70,49 +70,65 @@ __FBSDID("$FreeBSD: head/usr.bin/indent/indent.h 336333 2018-07-16 05:46:50Z pst
 
 #include <stdbool.h>
 
-typedef enum token_type {
-    end_of_file,
-    newline,
-    lparen_or_lbracket,
-    rparen_or_rbracket,
-    unary_op,			/* e.g. '+' or '&' */
-    binary_op,			/* e.g. '<<' or '+' or '&&' or '/=' */
-    postfix_op,			/* trailing '++' or '--' */
-    question,			/* the '?' from a '?:' expression */
-    case_label,
-    colon,
-    semicolon,
-    lbrace,
-    rbrace,
-    ident,			/* identifier, constant or string */
-    comma,
-    comment,
-    switch_expr,		/* 'switch' '(' <expr> ')' */
-    preprocessing,		/* '#' */
-    tt_lex_form_feed,
-    decl,
-    tt_lex_for,
-    tt_lex_if,
-    tt_lex_while,
-    tt_lex_do,
-    tt_lex_else,
-    if_expr,			/* 'if' '(' <expr> ')' */
-    while_expr,			/* 'while' '(' <expr> ')' */
-    for_exprs,			/* 'for' '(' ... ')' */
-    stmt,
-    stmt_list,
-    tt_ps_else,
-    tt_ps_do,
-    do_stmt,			/* 'do' <stmt> */
-    if_expr_stmt,		/* 'if' '(' <expr> ')' <stmt> */
-    if_expr_stmt_else,		/* 'if' '(' <expr> ')' <stmt> 'else' */
-    period,
-    string_prefix,		/* 'L' */
-    storage_class,
-    funcname,
-    type_def,
-    keyword_struct_union_enum
-} token_type;
+typedef enum lexer_symbol {
+    lsym_eof,
+    lsym_preprocessing,		/* '#' */
+    lsym_newline,
+    lsym_form_feed,
+    lsym_comment,
+    lsym_lparen_or_lbracket,
+    lsym_rparen_or_rbracket,
+    lsym_lbrace,
+    lsym_rbrace,
+    lsym_period,
+    lsym_unary_op,		/* e.g. '+' or '&' */
+    lsym_binary_op,		/* e.g. '<<' or '+' or '&&' or '/=' */
+    lsym_postfix_op,		/* trailing '++' or '--' */
+    lsym_question,		/* the '?' from a '?:' expression */
+    lsym_colon,
+    lsym_comma,
+    lsym_semicolon,
+    lsym_typedef,
+    lsym_storage_class,
+    lsym_type,
+    lsym_tag,			/* 'struct', 'union', 'enum' */
+    lsym_case_label,
+    lsym_string_prefix,		/* 'L' */
+    lsym_ident,			/* identifier, constant or string */
+    lsym_funcname,
+    lsym_do,
+    lsym_else,
+    lsym_for,
+    lsym_if,
+    lsym_switch,
+    lsym_while,
+} lexer_symbol;
+
+typedef enum parser_symbol {
+    psym_semicolon,		/* rather a placeholder than a semicolon */
+    psym_lbrace,
+    psym_rbrace,
+    psym_decl,
+    psym_stmt,
+    psym_stmt_list,
+    psym_for_exprs,		/* 'for' '(' ... ')' */
+    psym_if_expr,		/* 'if' '(' expr ')' */
+    psym_if_expr_stmt,		/* 'if' '(' expr ')' stmt */
+    psym_if_expr_stmt_else,	/* 'if' '(' expr ')' stmt 'else' */
+    psym_else,			/* 'else' */
+    psym_switch_expr,		/* 'switch' '(' expr ')' */
+    psym_do,			/* 'do' */
+    psym_do_stmt,		/* 'do' stmt */
+    psym_while_expr,		/* 'while' '(' expr ')' */
+} parser_symbol;
+
+typedef enum stmt_head {
+    hd_0,			/* placeholder for uninitialized */
+    hd_for,
+    hd_if,
+    hd_switch,
+    hd_while,
+} stmt_head;
 
 #define sc_size 5000		/* size of save_com buffer */
 #define label_offset 2		/* number of levels a label is placed to left
@@ -257,10 +273,10 @@ extern bool inhibit_formatting;	/* true if INDENT OFF is in effect */
 
 /* TODO: group the members by purpose, don't sort them alphabetically */
 extern struct parser_state {
-    token_type last_token;
+    lexer_symbol last_token;
 
     int tos;			/* pointer to top of stack */
-    token_type s_ttype[STACKSIZE];
+    parser_symbol s_sym[STACKSIZE];
     int s_ind_level[STACKSIZE];
     float s_case_ind_level[STACKSIZE];
 
@@ -344,7 +360,6 @@ debug_vis_range(const char *, const char *, const char *,
     const char *);
 void debug_printf(const char *, ...)__printflike(1, 2);
 void debug_println(const char *, ...)__printflike(1, 2);
-const char *token_type_name(token_type);
 #else
 #define		debug_printf(fmt, ...) do { } while (false)
 #define		debug_println(fmt, ...) do { } while (false)
@@ -352,12 +367,13 @@ const char *token_type_name(token_type);
 #endif
 void inbuf_skip(void);
 char inbuf_next(void);
-token_type lexi(struct parser_state *);
+lexer_symbol lexi(struct parser_state *);
 void diag(int, const char *, ...)__printflike(2, 3);
 void dump_line(void);
 void dump_line_ff(void);
 void inbuf_read_line(void);
-void parse(token_type);
+void parse(parser_symbol);
+void parse_hd(stmt_head);
 void process_comment(void);
 void set_option(const char *, const char *);
 void load_profiles(const char *);
