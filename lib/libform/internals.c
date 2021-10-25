@@ -1,4 +1,4 @@
-/*	$NetBSD: internals.c,v 1.41 2021/10/19 21:22:20 blymn Exp $	*/
+/*	$NetBSD: internals.c,v 1.42 2021/10/25 06:25:18 blymn Exp $	*/
 
 /*-
  * Copyright (c) 1998-1999 Brett Lymn
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: internals.c,v 1.41 2021/10/19 21:22:20 blymn Exp $");
+__RCSID("$NetBSD: internals.c,v 1.42 2021/10/25 06:25:18 blymn Exp $");
 
 #include <limits.h>
 #include <ctype.h>
@@ -1688,6 +1688,12 @@ _formi_redraw_field(FORM *form, int field)
 	}
 
 	wattrset(form->scrwin, cur->back);
+
+	cur = form->fields[form->cur_field];
+	wmove(form->scrwin, cur->form_row + cur->cursor_ypos,
+	    cur->form_col + cur->cursor_xpos);
+	wcursyncup(form->scrwin);
+
 	return;
 }
 
