@@ -1,4 +1,4 @@
-/*	$NetBSD: aicasm.c,v 1.11 2021/07/24 21:31:37 andvar Exp $	*/
+/*	$NetBSD: aicasm.c,v 1.12 2021/10/25 07:41:41 ryo Exp $	*/
 
 /*
  * Aic7xxx SCSI host adapter firmware asssembler
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: aicasm.c,v 1.11 2021/07/24 21:31:37 andvar Exp $");
+__RCSID("$NetBSD: aicasm.c,v 1.12 2021/10/25 07:41:41 ryo Exp $");
 
 #include <sys/types.h>
 #include <sys/mman.h>
@@ -455,8 +455,10 @@ output_code(void)
 	fprintf(ofile, "\n};\n\n");
 
 	fprintf(ofile,
-"static const int num_critical_sections = sizeof(critical_sections)\n"
-"				       / sizeof(*critical_sections);\n");
+"#define NUM_CRITICAL_SECTIONS	\\\n"
+"    (sizeof(critical_sections) / sizeof(*critical_sections))\n");
+	fprintf(ofile,
+"static const int num_critical_sections = NUM_CRITICAL_SECTIONS;\n");
 
 	fprintf(stderr, "%s: %d instructions used\n", appname, instrcount);
 }
