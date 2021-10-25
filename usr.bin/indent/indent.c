@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.c,v 1.156 2021/10/25 00:54:37 rillig Exp $	*/
+/*	$NetBSD: indent.c,v 1.157 2021/10/25 01:06:13 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)indent.c	5.17 (Berkeley) 6/7/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: indent.c,v 1.156 2021/10/25 00:54:37 rillig Exp $");
+__RCSID("$NetBSD: indent.c,v 1.157 2021/10/25 01:06:13 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/indent.c 340138 2018-11-04 19:24:49Z oshogbo $");
 #endif
@@ -713,7 +713,7 @@ want_blank_before_lparen(void)
 }
 
 static void
-process_lparen_or_lbracket(int decl_ind, bool tabs_to_var, bool sp_sw)
+process_lparen_or_lbracket(int decl_ind, bool tabs_to_var, bool spaced_expr)
 {
     if (++ps.p_l_follow == array_length(ps.paren_indents)) {
 	diag(0, "Reached internal limit of %zu unclosed parens",
@@ -737,7 +737,7 @@ process_lparen_or_lbracket(int decl_ind, bool tabs_to_var, bool sp_sw)
     debug_println("paren_indents[%d] is now %d",
 	ps.p_l_follow - 1, ps.paren_indents[ps.p_l_follow - 1]);
 
-    if (sp_sw && ps.p_l_follow == 1 && opt.extra_expr_indent
+    if (spaced_expr && ps.p_l_follow == 1 && opt.extra_expr_indent
 	    && ps.paren_indents[0] < 2 * opt.indent_size) {
 	ps.paren_indents[0] = (short)(2 * opt.indent_size);
 	debug_println("paren_indents[0] is now %d", ps.paren_indents[0]);
@@ -758,7 +758,7 @@ process_lparen_or_lbracket(int decl_ind, bool tabs_to_var, bool sp_sw)
 }
 
 static void
-process_rparen_or_rbracket(bool *sp_sw, bool *force_nl, stmt_head hd)
+process_rparen_or_rbracket(bool *spaced_expr, bool *force_nl, stmt_head hd)
 {
     if ((ps.cast_mask & (1 << ps.p_l_follow) & ~ps.not_cast_mask) != 0) {
 	ps.next_unary = true;
@@ -778,9 +778,9 @@ process_rparen_or_rbracket(bool *sp_sw, bool *force_nl, stmt_head hd)
 
     *code.e++ = token.s[0];
 
-    if (*sp_sw && ps.p_l_follow == 0) {	/* check for end of if (...), or some
-					 * such */
-	*sp_sw = false;
+    if (*spaced_expr && ps.p_l_follow == 0) {	/* check for end of 'if
+						 * (...)', or some such */
+	*spaced_expr = false;
 	*force_nl = true;	/* must force newline after if */
 	ps.next_unary = true;
 	ps.in_stmt = false;	/* don't use stmt continuation indentation */
@@ -869,7 +869,7 @@ process_colon(int *quest_level, bool *force_nl, bool *seen_case)
 
 static void
 process_semicolon(bool *seen_case, int *quest_level, int decl_ind,
-    bool tabs_to_var, bool *sp_sw, stmt_head hd, bool *force_nl)
+    bool tabs_to_var, bool *spaced_expr, stmt_head hd, bool *force_nl)
 {
     if (ps.decl_nest == 0)
 	ps.init_or_struct = false;
@@ -894,7 +894,7 @@ process_semicolon(bool *seen_case, int *quest_level, int decl_ind,
 					 * structure declaration, we aren't
 					 * anymore */
 
-    if ((!*sp_sw || hd != hd_for) && ps.p_l_follow > 0) {
+    if ((!*spaced_expr || hd != hd_for) && ps.p_l_follow > 0) {
 
 	/*
 	 * There were unbalanced parens in the statement. It is a bit
@@ -902,25 +902,25 @@ process_semicolon(bool *seen_case, int *quest_level, int decl_ind,
 	 */
 	diag(1, "Unbalanced parens");
 	ps.p_l_follow = 0;
-	if (*sp_sw) {		/* this is a check for an if, while, etc. with
-				 * unbalanced parens */
-	    *sp_sw = false;
+	if (*spaced_expr) {	/* 'if', 'while', etc. with unbalanced
+				 * parentheses */
+	    *spaced_expr = false;
 	    parse_hd(hd);	/* don't lose the 'if', or whatever */
 	}
     }
     *code.e++ = ';';
     ps.want_blank = true;
-    ps.in_stmt = (ps.p_l_follow > 0);	/* we are no longer in the middle of a
+    ps.in_stmt = ps.p_l_follow > 0;	/* we are no longer in the middle of a
 					 * stmt */
 
-    if (!*sp_sw) {		/* if not if for (;;) */
+    if (!*spaced_expr) {	/* if not if for (;;) */
 	parse(psym_semicolon);	/* let parser know about end of stmt */
 	*force_nl = true;	/* force newline after an end of stmt */
     }
 }
 
 static void
-process_lbrace(bool *force_nl, bool *sp_sw, stmt_head hd,
+process_lbrace(bool *force_nl, bool *spaced_expr, stmt_head hd,
     int *di_stack, int di_stack_cap, int *decl_ind)
 {
     ps.in_stmt = false;		/* don't indent the {} */
@@ -954,8 +954,8 @@ process_lbrace(bool *force_nl, bool *sp_sw, stmt_head hd,
     if (ps.p_l_follow > 0) {	/* check for preceding unbalanced parens */
 	diag(1, "Unbalanced parens");
 	ps.p_l_follow = 0;
-	if (*sp_sw) {		/* check for unclosed if, for, etc. */
-	    *sp_sw = false;
+	if (*spaced_expr) {	/* check for unclosed 'if', 'for', etc. */
+	    *spaced_expr = false;
 	    parse_hd(hd);
 	    ps.ind_level = ps.ind_level_follow;
 	}
@@ -990,7 +990,7 @@ process_lbrace(bool *force_nl, bool *sp_sw, stmt_head hd,
 }
 
 static void
-process_rbrace(bool *sp_sw, int *decl_ind, const int *di_stack)
+process_rbrace(bool *spaced_expr, int *decl_ind, const int *di_stack)
 {
     if (ps.s_sym[ps.tos] == psym_decl && !ps.block_init) {
 	/* semicolons can be omitted in declarations */
@@ -1000,7 +1000,7 @@ process_rbrace(bool *sp_sw, int *decl_ind, const int *di_stack)
     if (ps.p_l_follow != 0) {	/* check for unclosed if, for, else. */
 	diag(1, "Unbalanced parens");
 	ps.p_l_follow = 0;
-	*sp_sw = false;
+	*spaced_expr = false;
     }
 
     ps.just_saw_decl = 0;
@@ -1105,7 +1105,7 @@ process_decl(int *decl_ind, bool *tabs_to_var)
 
 static void
 process_ident(lexer_symbol lsym, int decl_ind, bool tabs_to_var,
-    bool *sp_sw, bool *force_nl, stmt_head hd)
+    bool *spaced_expr, bool *force_nl, stmt_head hd)
 {
     if (ps.in_decl) {
 	if (lsym == lsym_funcname) {
@@ -1126,8 +1126,8 @@ process_ident(lexer_symbol lsym, int decl_ind, bool tabs_to_var,
 	    ps.want_blank = false;
 	}
 
-    } else if (*sp_sw && ps.p_l_follow == 0) {
-	*sp_sw = false;
+    } else if (*spaced_expr && ps.p_l_follow == 0) {
+	*spaced_expr = false;
 	*force_nl = true;
 	ps.next_unary = true;
 	ps.in_stmt = false;
@@ -1331,10 +1331,10 @@ main_loop(void)
     int decl_ind = 0;		/* current indentation for declarations */
     int di_stack[20];		/* a stack of structure indentation levels */
     bool tabs_to_var = false;	/* true if using tabs to indent to var name */
-    bool sp_sw = false;		/* when true, we are in the expression of
+    bool spaced_expr = false;	/* whether we are in the expression of
 				 * if(...), while(...), etc. */
-    stmt_head hd = hd_0;	/* the type of statement for if (...),
-				 * for (...), etc */
+    stmt_head hd = hd_0;	/* the type of statement for 'if (...)',
+				 * 'for (...)', etc */
     int quest_level = 0;	/* when this is positive, we have seen a '?'
 				 * without the matching ':' in a '?:'
 				 * expression */
@@ -1383,11 +1383,11 @@ main_loop(void)
 	    break;
 
 	case lsym_lparen_or_lbracket:
-	    process_lparen_or_lbracket(decl_ind, tabs_to_var, sp_sw);
+	    process_lparen_or_lbracket(decl_ind, tabs_to_var, spaced_expr);
 	    break;
 
 	case lsym_rparen_or_rbracket:
-	    process_rparen_or_rbracket(&sp_sw, &force_nl, hd);
+	    process_rparen_or_rbracket(&spaced_expr, &force_nl, hd);
 	    break;
 
 	case lsym_unary_op:
@@ -1416,37 +1416,37 @@ main_loop(void)
 
 	case lsym_semicolon:
 	    process_semicolon(&seen_case, &quest_level, decl_ind, tabs_to_var,
-		&sp_sw, hd, &force_nl);
+		&spaced_expr, hd, &force_nl);
 	    break;
 
 	case lsym_lbrace:
-	    process_lbrace(&force_nl, &sp_sw, hd, di_stack,
+	    process_lbrace(&force_nl, &spaced_expr, hd, di_stack,
 		(int)array_length(di_stack), &decl_ind);
 	    break;
 
 	case lsym_rbrace:
-	    process_rbrace(&sp_sw, &decl_ind, di_stack);
+	    process_rbrace(&spaced_expr, &decl_ind, di_stack);
 	    break;
 
 	case lsym_switch:
-	    sp_sw = true;	/* the interesting stuff is done after the
+	    spaced_expr = true;	/* the interesting stuff is done after the
 				 * expressions are scanned */
 	    hd = hd_switch;	/* remember the type of header for later use
 				 * by parser */
 	    goto copy_token;
 
 	case lsym_for:
-	    sp_sw = true;
+	    spaced_expr = true;
 	    hd = hd_for;
 	    goto copy_token;
 
 	case lsym_if:
-	    sp_sw = true;
+	    spaced_expr = true;
 	    hd = hd_if;
 	    goto copy_token;
 
 	case lsym_while:
-	    sp_sw = true;
+	    spaced_expr = true;
 	    hd = hd_while;
 	    goto copy_token;
 
@@ -1473,7 +1473,8 @@ main_loop(void)
 
 	case lsym_funcname:
 	case lsym_ident:	/* an identifier, constant or string */
-	    process_ident(lsym, decl_ind, tabs_to_var, &sp_sw, &force_nl, hd);
+	    process_ident(lsym, decl_ind, tabs_to_var, &spaced_expr,
+		&force_nl, hd);
     copy_token:
 	    copy_token();
 	    if (lsym != lsym_funcname)
