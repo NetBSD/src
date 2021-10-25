@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ethersubr.c,v 1.242.6.7 2019/10/08 18:12:44 martin Exp $	*/
+/*	$NetBSD: if_ethersubr.c,v 1.242.6.8 2021/10/25 18:16:07 martin Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.242.6.7 2019/10/08 18:12:44 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.242.6.8 2021/10/25 18:16:07 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -707,7 +707,7 @@ ether_input(struct ifnet *ifp, struct mbuf *m)
 		 * type, and if IP or IPV6, let them deal with it.
 		 */
 		if (m->m_len <= sizeof(*evl)
-		    && EVL_VLANOFTAG(evl->evl_tag) == 0) {
+		    && EVL_VLANOFTAG((ntohs(evl->evl_tag)) == 0) {
 			etype = ntohs(evl->evl_proto);
 			ehlen = sizeof(*evl);
 			if ((m->m_flags & M_PROMISC) == 0
