@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_mbuf.c,v 1.232.4.1 2020/08/11 17:14:21 martin Exp $	*/
+/*	$NetBSD: uipc_mbuf.c,v 1.232.4.2 2021/10/25 15:47:50 martin Exp $	*/
 
 /*
  * Copyright (c) 1999, 2001, 2018 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.232.4.1 2020/08/11 17:14:21 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.232.4.2 2021/10/25 15:47:50 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_mbuftrace.h"
@@ -165,11 +165,7 @@ nmbclusters_limit(void)
 	max_size = MIN(max_size, NMBCLUSTERS_MAX);
 #endif
 
-#ifdef NMBCLUSTERS
-	return MIN(max_size, NMBCLUSTERS);
-#else
 	return max_size;
-#endif
 }
 
 /*
@@ -199,7 +195,7 @@ mbinit(void)
 	 * Set an arbitrary default limit on the number of mbuf clusters.
 	 */
 #ifdef NMBCLUSTERS
-	nmbclusters = nmbclusters_limit();
+	nmbclusters = MIN(NMBCLUSTERS, nmbclusters_limit());
 #else
 	nmbclusters = MAX(1024,
 	    (vsize_t)physmem * PAGE_SIZE / MCLBYTES / 16);
