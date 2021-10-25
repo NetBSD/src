@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.c,v 1.155 2021/10/24 22:44:13 rillig Exp $	*/
+/*	$NetBSD: indent.c,v 1.156 2021/10/25 00:54:37 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)indent.c	5.17 (Berkeley) 6/7/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: indent.c,v 1.155 2021/10/24 22:44:13 rillig Exp $");
+__RCSID("$NetBSD: indent.c,v 1.156 2021/10/25 00:54:37 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/indent.c 340138 2018-11-04 19:24:49Z oshogbo $");
 #endif
@@ -239,16 +239,16 @@ search_brace_lbrace(void)
 }
 
 static bool
-search_brace_other(token_type ttype, bool *force_nl,
+search_brace_other(lexer_symbol lsym, bool *force_nl,
     bool comment_buffered, bool last_else)
 {
     bool remove_newlines;
 
     remove_newlines =
 	    /* "} else" */
-	    (ttype == tt_lex_else && code.e != code.s && code.e[-1] == '}')
+	    (lsym == lsym_else && code.e != code.s && code.e[-1] == '}')
 	    /* "else if" */
-	    || (ttype == tt_lex_if && last_else && opt.else_if);
+	    || (lsym == lsym_if && last_else && opt.else_if);
     if (remove_newlines)
 	*force_nl = false;
 
@@ -301,9 +301,9 @@ switch_buffer(void)
 }
 
 static void
-search_brace_lookahead(token_type *ttype)
+search_brace_lookahead(lexer_symbol *lsym)
 {
-    if (*ttype == end_of_file)
+    if (*lsym == lsym_eof)
 	return;
 
     /*
@@ -335,39 +335,39 @@ search_brace_lookahead(token_type *ttype)
 
     struct parser_state transient_state;
     transient_state = ps;
-    *ttype = lexi(&transient_state);	/* read another token */
-    if (*ttype != newline && *ttype != tt_lex_form_feed &&
-	*ttype != comment && !transient_state.search_brace) {
+    *lsym = lexi(&transient_state);	/* read another token */
+    if (*lsym != lsym_newline && *lsym != lsym_form_feed &&
+	*lsym != lsym_comment && !transient_state.search_brace) {
 	ps = transient_state;
     }
 }
 
 static void
-search_brace(token_type *ttype, bool *force_nl,
+search_brace(lexer_symbol *lsym, bool *force_nl,
     bool *comment_buffered, bool *last_else)
 {
     while (ps.search_brace) {
-	switch (*ttype) {
-	case newline:
+	switch (*lsym) {
+	case lsym_newline:
 	    search_brace_newline(force_nl);
 	    break;
-	case tt_lex_form_feed:
+	case lsym_form_feed:
 	    break;
-	case comment:
+	case lsym_comment:
 	    search_brace_comment(comment_buffered);
 	    break;
-	case lbrace:
+	case lsym_lbrace:
 	    if (search_brace_lbrace())
 		goto switch_buffer;
 	    /* FALLTHROUGH */
 	default:		/* it is the start of a normal statement */
-	    if (!search_brace_other(*ttype, force_nl,
+	    if (!search_brace_other(*lsym, force_nl,
 		    *comment_buffered, *last_else))
 		return;
     switch_buffer:
 	    switch_buffer();
 	}
-	search_brace_lookahead(ttype);
+	search_brace_lookahead(lsym);
     }
 
     *last_else = false;
@@ -443,9 +443,9 @@ main_init_globals(void)
 {
     found_err = false;
 
-    ps.s_ttype[0] = stmt;
+    ps.s_sym[0] = psym_stmt;
     ps.last_nl = true;
-    ps.last_token = semicolon;
+    ps.last_token = lsym_semicolon;
     buf_init(&com);
     buf_init(&lab);
     buf_init(&code);
@@ -581,7 +581,7 @@ main_prepare_parsing(void)
 {
     inbuf_read_line();
 
-    parse(semicolon);
+    parse(psym_semicolon);
 
     int ind = 0;
     for (const char *p = inp.s;; p++) {
@@ -647,11 +647,11 @@ process_end_of_file(void)
 }
 
 static void
-process_comment_in_code(token_type ttype, bool *force_nl)
+process_comment_in_code(lexer_symbol lsym, bool *force_nl)
 {
     if (*force_nl &&
-	ttype != semicolon &&
-	(ttype != lbrace || !opt.brace_same_line)) {
+	lsym != lsym_semicolon &&
+	(lsym != lsym_lbrace || !opt.brace_same_line)) {
 
 	/* we should force a broken line here */
 	if (opt.verbose)
@@ -684,7 +684,7 @@ process_form_feed(void)
 static void
 process_newline(void)
 {
-    if (ps.last_token == comma && ps.p_l_follow == 0 && !ps.block_init &&
+    if (ps.last_token == lsym_comma && ps.p_l_follow == 0 && !ps.block_init &&
 	!opt.break_after_comma && break_comma &&
 	com.s == com.e)
 	goto stay_in_line;
@@ -701,9 +701,9 @@ want_blank_before_lparen(void)
 {
     if (!ps.want_blank)
 	return false;
-    if (ps.last_token == rparen_or_rbracket)
+    if (ps.last_token == lsym_rparen_or_rbracket)
 	return false;
-    if (ps.last_token != ident && ps.last_token != funcname)
+    if (ps.last_token != lsym_ident && ps.last_token != lsym_funcname)
 	return true;
     if (opt.proc_calls_space)
 	return true;
@@ -748,7 +748,7 @@ process_lparen_or_lbracket(int decl_ind, bool tabs_to_var, bool sp_sw)
 	 * this is a kluge to make sure that declarations will be aligned
 	 * right if proc decl has an explicit type on it, i.e. "int a(x) {..."
 	 */
-	parse(semicolon);	/* I said this was a kluge... */
+	parse(psym_semicolon);	/* I said this was a kluge... */
 	ps.init_or_struct = false;
     }
 
@@ -758,8 +758,7 @@ process_lparen_or_lbracket(int decl_ind, bool tabs_to_var, bool sp_sw)
 }
 
 static void
-process_rparen_or_rbracket(bool *sp_sw, bool *force_nl,
-    token_type hd_type)
+process_rparen_or_rbracket(bool *sp_sw, bool *force_nl, stmt_head hd)
 {
     if ((ps.cast_mask & (1 << ps.p_l_follow) & ~ps.not_cast_mask) != 0) {
 	ps.next_unary = true;
@@ -786,7 +785,7 @@ process_rparen_or_rbracket(bool *sp_sw, bool *force_nl,
 	ps.next_unary = true;
 	ps.in_stmt = false;	/* don't use stmt continuation indentation */
 
-	parse(hd_type);		/* let parser worry about if, or whatever */
+	parse_hd(hd);		/* let parser worry about if, or whatever */
     }
 
     /*
@@ -870,15 +869,13 @@ process_colon(int *quest_level, bool *force_nl, bool *seen_case)
 
 static void
 process_semicolon(bool *seen_case, int *quest_level, int decl_ind,
-    bool tabs_to_var, bool *sp_sw,
-    token_type hd_type,
-    bool *force_nl)
+    bool tabs_to_var, bool *sp_sw, stmt_head hd, bool *force_nl)
 {
     if (ps.decl_nest == 0)
 	ps.init_or_struct = false;
     *seen_case = false;		/* these will only need resetting in an error */
     *quest_level = 0;
-    if (ps.last_token == rparen_or_rbracket)
+    if (ps.last_token == lsym_rparen_or_rbracket)
 	ps.in_parameter_declaration = false;
     ps.cast_mask = 0;
     ps.not_cast_mask = 0;
@@ -897,7 +894,7 @@ process_semicolon(bool *seen_case, int *quest_level, int decl_ind,
 					 * structure declaration, we aren't
 					 * anymore */
 
-    if ((!*sp_sw || hd_type != for_exprs) && ps.p_l_follow > 0) {
+    if ((!*sp_sw || hd != hd_for) && ps.p_l_follow > 0) {
 
 	/*
 	 * There were unbalanced parens in the statement. It is a bit
@@ -908,7 +905,7 @@ process_semicolon(bool *seen_case, int *quest_level, int decl_ind,
 	if (*sp_sw) {		/* this is a check for an if, while, etc. with
 				 * unbalanced parens */
 	    *sp_sw = false;
-	    parse(hd_type);	/* don't lose the 'if', or whatever */
+	    parse_hd(hd);	/* don't lose the 'if', or whatever */
 	}
     }
     *code.e++ = ';';
@@ -917,13 +914,13 @@ process_semicolon(bool *seen_case, int *quest_level, int decl_ind,
 					 * stmt */
 
     if (!*sp_sw) {		/* if not if for (;;) */
-	parse(semicolon);	/* let parser know about end of stmt */
+	parse(psym_semicolon);	/* let parser know about end of stmt */
 	*force_nl = true;	/* force newline after an end of stmt */
     }
 }
 
 static void
-process_lbrace(bool *force_nl, bool *sp_sw, token_type hd_type,
+process_lbrace(bool *force_nl, bool *sp_sw, stmt_head hd,
     int *di_stack, int di_stack_cap, int *decl_ind)
 {
     ps.in_stmt = false;		/* don't indent the {} */
@@ -959,7 +956,7 @@ process_lbrace(bool *force_nl, bool *sp_sw, token_type hd_type,
 	ps.p_l_follow = 0;
 	if (*sp_sw) {		/* check for unclosed if, for, etc. */
 	    *sp_sw = false;
-	    parse(hd_type);
+	    parse_hd(hd);
 	    ps.ind_level = ps.ind_level_follow;
 	}
     }
@@ -984,7 +981,7 @@ process_lbrace(bool *force_nl, bool *sp_sw, token_type hd_type,
     }
 
     *decl_ind = 0;
-    parse(lbrace);
+    parse(psym_lbrace);
     if (ps.want_blank)
 	*code.e++ = ' ';
     ps.want_blank = false;
@@ -995,10 +992,10 @@ process_lbrace(bool *force_nl, bool *sp_sw, token_type hd_type,
 static void
 process_rbrace(bool *sp_sw, int *decl_ind, const int *di_stack)
 {
-    if (ps.s_ttype[ps.tos] == decl && !ps.block_init)	/* semicolons can be
-							 * omitted in
-							 * declarations */
-	parse(semicolon);
+    if (ps.s_sym[ps.tos] == psym_decl && !ps.block_init) {
+	/* semicolons can be omitted in declarations */
+	parse(psym_semicolon);
+    }
 
     if (ps.p_l_follow != 0) {	/* check for unclosed if, for, else. */
 	diag(1, "Unbalanced parens");
@@ -1030,9 +1027,9 @@ process_rbrace(bool *sp_sw, int *decl_ind, const int *di_stack)
     }
 
     blank_line_before = false;
-    parse(rbrace);		/* let parser know about this */
+    parse(psym_rbrace);
     ps.search_brace = opt.cuddle_else
-	&& ps.s_ttype[ps.tos] == if_expr_stmt
+	&& ps.s_sym[ps.tos] == psym_if_expr_stmt
 	&& ps.s_ind_level[ps.tos] >= ps.ind_level;
 
     if (ps.tos <= 1 && opt.blanklines_after_procs && ps.decl_nest <= 0)
@@ -1053,7 +1050,7 @@ process_keyword_do(bool *force_nl, bool *last_else)
 
     *force_nl = true;		/* following stuff must go onto new line */
     *last_else = false;
-    parse(tt_ps_do);
+    parse(psym_do);
 }
 
 static void
@@ -1070,15 +1067,15 @@ process_keyword_else(bool *force_nl, bool *last_else)
 
     *force_nl = true;		/* following stuff must go onto new line */
     *last_else = true;
-    parse(tt_ps_else);
+    parse(psym_else);
 }
 
 static void
 process_decl(int *decl_ind, bool *tabs_to_var)
 {
-    parse(decl);		/* let parser worry about indentation */
+    parse(psym_decl);		/* let the parser worry about indentation */
 
-    if (ps.last_token == rparen_or_rbracket && ps.tos <= 1) {
+    if (ps.last_token == lsym_rparen_or_rbracket && ps.tos <= 1) {
 	if (code.s != code.e) {
 	    dump_line();
 	    ps.want_blank = false;
@@ -1092,7 +1089,7 @@ process_decl(int *decl_ind, bool *tabs_to_var)
     }
 
     ps.init_or_struct = /* maybe */ true;
-    ps.in_decl = ps.decl_on_line = ps.last_token != type_def;
+    ps.in_decl = ps.decl_on_line = ps.last_token != lsym_typedef;
     if (ps.decl_nest <= 0)
 	ps.just_saw_decl = 2;
 
@@ -1107,11 +1104,11 @@ process_decl(int *decl_ind, bool *tabs_to_var)
 }
 
 static void
-process_ident(token_type ttype, int decl_ind, bool tabs_to_var,
-    bool *sp_sw, bool *force_nl, token_type hd_type)
+process_ident(lexer_symbol lsym, int decl_ind, bool tabs_to_var,
+    bool *sp_sw, bool *force_nl, stmt_head hd)
 {
     if (ps.in_decl) {
-	if (ttype == funcname) {
+	if (lsym == lsym_funcname) {
 	    ps.in_decl = false;
 	    if (opt.procnames_start_line && code.s != code.e) {
 		*code.e = '\0';
@@ -1134,7 +1131,7 @@ process_ident(token_type ttype, int decl_ind, bool tabs_to_var,
 	*force_nl = true;
 	ps.next_unary = true;
 	ps.in_stmt = false;
-	parse(hd_type);
+	parse_hd(hd);
     }
 }
 
@@ -1336,7 +1333,7 @@ main_loop(void)
     bool tabs_to_var = false;	/* true if using tabs to indent to var name */
     bool sp_sw = false;		/* when true, we are in the expression of
 				 * if(...), while(...), etc. */
-    token_type hd_type = end_of_file;	/* the type of statement for if (...),
+    stmt_head hd = hd_0;	/* the type of statement for if (...),
 				 * for (...), etc */
     int quest_level = 0;	/* when this is positive, we have seen a '?'
 				 * without the matching ':' in a '?:'
@@ -1350,7 +1347,7 @@ main_loop(void)
 				 * reach eof */
 	bool comment_buffered = false;
 
-	token_type ttype = lexi(&ps);	/* Read the next token.  The actual
+	lexer_symbol lsym = lexi(&ps);	/* Read the next token.  The actual
 					 * characters read are stored in
 					 * "token". */
 
@@ -1360,148 +1357,146 @@ main_loop(void)
 	 * proper handling of both kinds of brace placement (-br, -bl) and
 	 * cuddling "else" (-ce).
 	 */
-	search_brace(&ttype, &force_nl, &comment_buffered, &last_else);
+	search_brace(&lsym, &force_nl, &comment_buffered, &last_else);
 
-	if (ttype == end_of_file) {
+	if (lsym == lsym_eof) {
 	    process_end_of_file();
 	    /* NOTREACHED */
 	}
 
-	if (ttype == newline || ttype == tt_lex_form_feed ||
-		ttype == preprocessing)
+	if (lsym == lsym_newline || lsym == lsym_form_feed ||
+		lsym == lsym_preprocessing)
 	    force_nl = false;
-	else if (ttype != comment)
-	    process_comment_in_code(ttype, &force_nl);
+	else if (lsym != lsym_comment)
+	    process_comment_in_code(lsym, &force_nl);
 
 	buf_reserve(&code, 3);	/* space for 2 characters plus '\0' */
 
-	switch (ttype) {
+	switch (lsym) {
 
-	case tt_lex_form_feed:
+	case lsym_form_feed:
 	    process_form_feed();
 	    break;
 
-	case newline:
+	case lsym_newline:
 	    process_newline();
 	    break;
 
-	case lparen_or_lbracket:
+	case lsym_lparen_or_lbracket:
 	    process_lparen_or_lbracket(decl_ind, tabs_to_var, sp_sw);
 	    break;
 
-	case rparen_or_rbracket:
-	    process_rparen_or_rbracket(&sp_sw, &force_nl, hd_type);
+	case lsym_rparen_or_rbracket:
+	    process_rparen_or_rbracket(&sp_sw, &force_nl, hd);
 	    break;
 
-	case unary_op:
+	case lsym_unary_op:
 	    process_unary_op(decl_ind, tabs_to_var);
 	    break;
 
-	case binary_op:
+	case lsym_binary_op:
 	    process_binary_op();
 	    break;
 
-	case postfix_op:
+	case lsym_postfix_op:
 	    process_postfix_op();
 	    break;
 
-	case question:
+	case lsym_question:
 	    process_question(&quest_level);
 	    break;
 
-	case case_label:	/* got word 'case' or 'default' */
+	case lsym_case_label:	/* got word 'case' or 'default' */
 	    seen_case = true;
 	    goto copy_token;
 
-	case colon:
+	case lsym_colon:
 	    process_colon(&quest_level, &force_nl, &seen_case);
 	    break;
 
-	case semicolon:
+	case lsym_semicolon:
 	    process_semicolon(&seen_case, &quest_level, decl_ind, tabs_to_var,
-		&sp_sw, hd_type, &force_nl);
+		&sp_sw, hd, &force_nl);
 	    break;
 
-	case lbrace:
-	    process_lbrace(&force_nl, &sp_sw, hd_type, di_stack,
+	case lsym_lbrace:
+	    process_lbrace(&force_nl, &sp_sw, hd, di_stack,
 		(int)array_length(di_stack), &decl_ind);
 	    break;
 
-	case rbrace:
+	case lsym_rbrace:
 	    process_rbrace(&sp_sw, &decl_ind, di_stack);
 	    break;
 
-	case switch_expr:	/* got keyword "switch" */
-	    sp_sw = true;
-	    hd_type = switch_expr;	/* keep this for when we have seen the
-					 * expression */
-	    goto copy_token;
-
-	case tt_lex_for:
+	case lsym_switch:
 	    sp_sw = true;	/* the interesting stuff is done after the
 				 * expressions are scanned */
-	    hd_type = for_exprs;	/* remember the type of header for
-					 * later use by parser */
+	    hd = hd_switch;	/* remember the type of header for later use
+				 * by parser */
 	    goto copy_token;
 
-	case tt_lex_if:
+	case lsym_for:
 	    sp_sw = true;
-	    hd_type = if_expr;
+	    hd = hd_for;
 	    goto copy_token;
 
-	case tt_lex_while:
+	case lsym_if:
 	    sp_sw = true;
-	    hd_type = while_expr;
+	    hd = hd_if;
 	    goto copy_token;
 
-	case tt_lex_do:
+	case lsym_while:
+	    sp_sw = true;
+	    hd = hd_while;
+	    goto copy_token;
+
+	case lsym_do:
 	    process_keyword_do(&force_nl, &last_else);
 	    goto copy_token;
 
-	case tt_lex_else:
+	case lsym_else:
 	    process_keyword_else(&force_nl, &last_else);
 	    goto copy_token;
 
-	case type_def:
-	case storage_class:
+	case lsym_typedef:
+	case lsym_storage_class:
 	    blank_line_before = false;
 	    goto copy_token;
 
-	case keyword_struct_union_enum:
+	case lsym_tag:
 	    if (ps.p_l_follow > 0)
 		goto copy_token;
 	    /* FALLTHROUGH */
-	case decl:		/* a declaration type (int, etc.) */
+	case lsym_type:
 	    process_decl(&decl_ind, &tabs_to_var);
 	    goto copy_token;
 
-	case funcname:
-	case ident:		/* an identifier, constant or string */
-	    process_ident(ttype, decl_ind, tabs_to_var, &sp_sw, &force_nl,
-		hd_type);
+	case lsym_funcname:
+	case lsym_ident:	/* an identifier, constant or string */
+	    process_ident(lsym, decl_ind, tabs_to_var, &sp_sw, &force_nl, hd);
     copy_token:
 	    copy_token();
-	    if (ttype != funcname)
+	    if (lsym != lsym_funcname)
 		ps.want_blank = true;
 	    break;
 
-	case string_prefix:
+	case lsym_string_prefix:
 	    process_string_prefix();
 	    break;
 
-	case period:
+	case lsym_period:
 	    process_period();
 	    break;
 
-	case comma:
+	case lsym_comma:
 	    process_comma(decl_ind, tabs_to_var, &force_nl);
 	    break;
 
-	case preprocessing:	/* the initial '#' */
+	case lsym_preprocessing:	/* the initial '#' */
 	    process_preprocessing();
 	    break;
 
-	case comment:		/* the initial '/' '*' or '//' of a comment */
+	case lsym_comment:	/* the initial '/' '*' or '//' of a comment */
 	    process_comment();
 	    break;
 
@@ -1510,8 +1505,9 @@ main_loop(void)
 	}
 
 	*code.e = '\0';
-	if (ttype != comment && ttype != newline && ttype != preprocessing)
-	    ps.last_token = ttype;
+	if (lsym != lsym_comment && lsym != lsym_newline &&
+		lsym != lsym_preprocessing)
+	    ps.last_token = lsym;
     }
 }
 
