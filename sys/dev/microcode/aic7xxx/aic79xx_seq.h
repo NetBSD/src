@@ -1135,5 +1135,6 @@ static const struct cs {
 	{ 721, 725 }
 };
 
-static const int num_critical_sections = sizeof(critical_sections)
-				       / sizeof(*critical_sections);
+#define NUM_CRITICAL_SECTIONS	\
+    (sizeof(critical_sections) / sizeof(*critical_sections))
+static const int num_critical_sections = NUM_CRITICAL_SECTIONS;
