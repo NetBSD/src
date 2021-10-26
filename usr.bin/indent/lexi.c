@@ -1,4 +1,4 @@
-/*	$NetBSD: lexi.c,v 1.104 2021/10/26 20:17:42 rillig Exp $	*/
+/*	$NetBSD: lexi.c,v 1.105 2021/10/26 20:43:35 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)lexi.c	8.1 (Berkeley) 6/6/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: lexi.c,v 1.104 2021/10/26 20:17:42 rillig Exp $");
+__RCSID("$NetBSD: lexi.c,v 1.105 2021/10/26 20:43:35 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/lexi.c 337862 2018-08-15 18:19:45Z pstef $");
 #endif
@@ -305,8 +305,10 @@ debug_lexi(const struct parser_state *state, lexer_symbol lsym)
     debug_print_buf("code", &code);
     debug_print_buf("comment", &com);
     debug_printf("lexi returns '%s'", lsym_name(lsym));
-    if (state->keyword != kw_0)
-	debug_printf(" keyword '%s'", kw_name(state->keyword));
+    if (state->curr_keyword != kw_0)
+	debug_printf(" keyword '%s'", kw_name(state->curr_keyword));
+    if (state->prev_keyword != kw_0)
+	debug_printf(" previous keyword '%s'", kw_name(state->prev_keyword));
     debug_println("");
     debug_print_buf("token", &token);
 }
@@ -455,7 +457,6 @@ lexi_alnum(struct parser_state *state)
 
     while (is_hspace(inbuf_peek()))
 	inbuf_skip();
-    state->keyword = kw_0;
 
     if (state->last_token == lsym_tag && state->p_l_follow == 0) {
 	state->next_unary = true;
@@ -469,13 +470,13 @@ lexi_alnum(struct parser_state *state)
 	array_length(keywords), sizeof(keywords[0]), cmp_keyword_by_name);
     if (kw == NULL) {
 	if (is_typename()) {
-	    state->keyword = kw_type;
+	    state->curr_keyword = kw_type;
 	    state->next_unary = true;
 	    goto found_typename;
 	}
 
     } else {			/* we have a keyword */
-	state->keyword = kw->kind;
+	state->curr_keyword = kw->kind;
 	state->next_unary = true;
 
 	switch (kw->kind) {
@@ -493,10 +494,8 @@ lexi_alnum(struct parser_state *state)
 		state->cast_mask |= (1 << state->p_l_follow) & ~state->not_cast_mask;
 	    }
 	    if (state->last_token == lsym_period ||
-		    state->last_token == lsym_unary_op) {
-		state->keyword = kw_0;
+		    state->last_token == lsym_unary_op)
 		break;
-	    }
 	    if (kw != NULL && kw->kind == kw_struct_or_union_or_enum)
 		return lsym_tag;
 	    if (state->p_l_follow != 0)
@@ -544,7 +543,7 @@ lexi_alnum(struct parser_state *state)
 not_proc:;
 
     } else if (probably_typename(state)) {
-	state->keyword = kw_type;
+	state->curr_keyword = kw_type;
 	state->next_unary = true;
 	return lsym_type;
     }
@@ -563,6 +562,8 @@ lexi(struct parser_state *state)
     token.e = token.s;
     state->col_1 = state->last_nl;
     state->last_nl = false;
+    state->prev_keyword = state->curr_keyword;
+    state->curr_keyword = kw_0;
 
     while (is_hspace(*inp.s)) {
 	state->col_1 = false;
