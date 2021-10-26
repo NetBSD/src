@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.h,v 1.51 2021/10/26 19:36:30 rillig Exp $	*/
+/*	$NetBSD: indent.h,v 1.52 2021/10/26 20:43:35 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-FreeBSD
@@ -332,7 +332,8 @@ extern struct parser_state {
     bool want_blank;		/* whether the following token should be
 				 * prefixed by a blank. (Said prefixing is
 				 * ignored in some cases.) */
-    enum keyword_kind keyword;
+    enum keyword_kind prev_keyword;
+    enum keyword_kind curr_keyword;
     bool dumped_decl_indent;
     bool in_parameter_declaration;
     char procname[100];		/* The name of the current procedure */

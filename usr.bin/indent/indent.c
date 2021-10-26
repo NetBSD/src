@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.c,v 1.160 2021/10/26 19:36:30 rillig Exp $	*/
+/*	$NetBSD: indent.c,v 1.161 2021/10/26 20:43:35 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)indent.c	5.17 (Berkeley) 6/7/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: indent.c,v 1.160 2021/10/26 19:36:30 rillig Exp $");
+__RCSID("$NetBSD: indent.c,v 1.161 2021/10/26 20:43:35 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/indent.c 340138 2018-11-04 19:24:49Z oshogbo $");
 #endif
@@ -333,8 +333,7 @@ search_stmt_lookahead(lexer_symbol *lsym)
 	    inbuf_read_line();
     }
 
-    struct parser_state transient_state;
-    transient_state = ps;
+    struct parser_state transient_state = ps;
     *lsym = lexi(&transient_state);	/* read another token */
     if (*lsym != lsym_newline && *lsym != lsym_form_feed &&
 	*lsym != lsym_comment && !transient_state.search_stmt) {
@@ -707,9 +706,9 @@ want_blank_before_lparen(void)
 	return true;
     if (opt.proc_calls_space)
 	return true;
-    if (ps.keyword == kw_sizeof)
+    if (ps.prev_keyword == kw_sizeof)
 	return opt.blank_after_sizeof;
-    return ps.keyword != kw_0 && ps.keyword != kw_offsetof;
+    return ps.prev_keyword != kw_0 && ps.prev_keyword != kw_offsetof;
 }
 
 static void
@@ -753,7 +752,7 @@ process_lparen_or_lbracket(int decl_ind, bool tabs_to_var, bool spaced_expr)
     }
 
     /* parenthesized type following sizeof or offsetof is not a cast */
-    if (ps.keyword == kw_offsetof || ps.keyword == kw_sizeof)
+    if (ps.prev_keyword == kw_offsetof || ps.prev_keyword == kw_sizeof)
 	ps.not_cast_mask |= 1 << ps.p_l_follow;
 }
 
