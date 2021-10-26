@@ -1,4 +1,4 @@
-/*	$NetBSD: lexi.c,v 1.103 2021/10/26 19:36:30 rillig Exp $	*/
+/*	$NetBSD: lexi.c,v 1.104 2021/10/26 20:17:42 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)lexi.c	8.1 (Berkeley) 6/6/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: lexi.c,v 1.103 2021/10/26 19:36:30 rillig Exp $");
+__RCSID("$NetBSD: lexi.c,v 1.104 2021/10/26 20:17:42 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/lexi.c 337862 2018-08-15 18:19:45Z pstef $");
 #endif
@@ -295,26 +295,29 @@ debug_print_buf(const char *name, const struct buffer *buf)
 }
 
 static void
-debug_lexi(lexer_symbol lsym)
+debug_lexi(const struct parser_state *state, lexer_symbol lsym)
 {
-    debug_printf("\n");
+    debug_println("");
     debug_printf("line %d\n", line_no);
+    if (state != &ps)
+	debug_println("transient state");
     debug_print_buf("label", &lab);
     debug_print_buf("code", &code);
     debug_print_buf("comment", &com);
     debug_printf("lexi returns '%s'", lsym_name(lsym));
-    if (ps.keyword != kw_0)
-	debug_printf(" keyword '%s'", kw_name(ps.keyword));
-    debug_printf("\n");
+    if (state->keyword != kw_0)
+	debug_printf(" keyword '%s'", kw_name(state->keyword));
+    debug_println("");
     debug_print_buf("token", &token);
 }
 #endif
 
+/* ARGSUSED */
 static lexer_symbol
-lexi_end(lexer_symbol lsym)
+lexi_end(const struct parser_state *state, lexer_symbol lsym)
 {
 #ifdef debug
-    debug_lexi(lsym);
+    debug_lexi(state, lsym);
 #endif
     return lsym;
 }
@@ -568,7 +571,7 @@ lexi(struct parser_state *state)
 
     lexer_symbol alnum_lsym = lexi_alnum(state);
     if (alnum_lsym != lsym_eof)
-	return lexi_end(alnum_lsym);
+	return lexi_end(state, alnum_lsym);
 
     /* Scan a non-alphanumeric token */
 
@@ -755,7 +758,7 @@ lexi(struct parser_state *state)
     check_size_token(1);
     *token.e = '\0';
 
-    return lexi_end(lsym);
+    return lexi_end(state, lsym);
 }
 
 void
