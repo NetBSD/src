@@ -1,4 +1,4 @@
-/*	$NetBSD: memalloc.c,v 1.33 2019/02/09 03:35:55 kre Exp $	*/
+/*	$NetBSD: memalloc.c,v 1.34 2021/10/26 00:05:38 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,10 +37,12 @@
 #if 0
 static char sccsid[] = "@(#)memalloc.c	8.3 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: memalloc.c,v 1.33 2019/02/09 03:35:55 kre Exp $");
+__RCSID("$NetBSD: memalloc.c,v 1.34 2021/10/26 00:05:38 kre Exp $");
 #endif
 #endif /* not lint */
 
+#include <limits.h>
+#include <stdarg.h>
 #include <stdlib.h>
 #include <unistd.h>
 
@@ -338,3 +340,64 @@ ungrabstackstr(char *s, char *p)
 	stacknxt = s;
 	sstrnleft = stacknleft - (p - s);
 }
+
+/*
+ * Save the concat of a sequence of strings in stack space
+ *
+ * The first arg (if not NULL) is a pointer to where the final string
+ * length will be returned.
+ *
+ * Remaining args are pointers to strings - sufficient space to hold
+ * the concat of the strings is allocated on the stack, the strings
+ * are copied into that space, and a pointer to its start is retured.
+ *
+ * Use stunalloc(string) (in proper sequence) to release the string
+ */
+char *
+ststrcat(size_t *lp, ...)
+{
+	va_list ap;
+	const char *arg;
+	size_t len, tlen = 0, alen[8];
+	char *str, *nxt;
+	unsigned int n;
+
+	n = 0;
+	va_start(ap, lp);
+	arg = va_arg(ap, const char *);
+	while (arg != NULL) {
+		len = strlen(arg);
+		if (n < sizeof(alen)/sizeof(alen[0]))
+			alen[n++] = len;
+		tlen += len;
+		arg = va_arg(ap, const char *);
+	}
+	va_end(ap);
+
+	if (lp != NULL)
+		*lp = tlen;
+
+	if (tlen >= INT_MAX)
+		error("ststrcat() over length botch");
+	str = (char *)stalloc((int)tlen + 1);	/* 1 for \0 */
+
+	n = 0;
+	nxt = str;
+	va_start(ap, lp);
+	arg = va_arg(ap, const char *);
+	while (arg != NULL) {
+		if (n < sizeof(alen)/sizeof(alen[0]))
+			len = alen[n++];
+		else
+			len = strlen(arg);
+
+		scopy(arg, nxt);
+		nxt += len;
+
+		arg = va_arg(ap, const char *);
+	}
+	va_end(ap);
+
+	return str;
+}
+
