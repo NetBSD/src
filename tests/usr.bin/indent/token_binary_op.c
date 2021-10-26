@@ -1,4 +1,4 @@
-/* $NetBSD: token_binary_op.c,v 1.1 2021/10/18 22:30:34 rillig Exp $ */
+/* $NetBSD: token_binary_op.c,v 1.2 2021/10/26 21:45:16 rillig Exp $ */
 /* $FreeBSD$ */
 
 /*
@@ -217,4 +217,14 @@ peculiarities(void)
 	if (a++ ++ +++b)
 		return;
 }
+#indent end
+
+
+#indent input
+char* (*fn)(int) = NULL;
+#indent end
+
+/* FIXME: Missing space before '='. */
+#indent run -di0
+char *(*fn)(int)= NULL;
 #indent end
