@@ -1,4 +1,4 @@
-/*	$NetBSD: shell.h,v 1.30 2021/09/10 22:11:03 rillig Exp $	*/
+/*	$NetBSD: shell.h,v 1.31 2021/10/26 00:05:38 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -76,9 +76,11 @@ typedef void *pointer;
 #endif
 #define MKINIT	/* empty */
 
+#include <stdbool.h>
 #include <sys/cdefs.h>
 
 extern const char nullstr[1];		/* null string */
+extern bool privileged;
 
 #ifdef	SMALL
 #undef	DEBUG

@@ -1,4 +1,4 @@
-.\"	$NetBSD: sh.1,v 1.234 2021/09/15 18:30:57 kre Exp $
+.\"	$NetBSD: sh.1,v 1.235 2021/10/26 00:05:38 kre Exp $
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -31,7 +31,7 @@
 .\"
 .\"	@(#)sh.1	8.6 (Berkeley) 5/4/95
 .\"
-.Dd September 11, 2021
+.Dd October 25, 2021
 .Dt SH 1
 .\" everything except c o and s (keep them ordered)
 .ds flags abCEeFfhIiLmnpquVvXx
@@ -317,7 +317,7 @@ and there is no form using
 Enable the built-in emacs style
 command line editor (disables
 .Fl V
-if it has been set).
+if it had been set).
 (See the
 .Sx Command Line Editing
 section below.)
@@ -368,7 +368,7 @@ Functions defined while this option is set will have paths bound to
 commands to be executed by the function at the time of the definition.
 When off when a function is defined,
 the file system is searched for commands each time the function is invoked.
-(Not implemented.)
+(Obsolete and not implemented.)
 .It Fl I Em ignoreeof
 Ignore EOFs from input when interactive.
 (After a large number of consecutive EOFs the shell will exit anyway.)
@@ -404,18 +404,28 @@ cleared just before the next time the command line prompt
 is written.
 .It Fl p Em nopriv
 Do not attempt to reset effective UID if it does not match UID.
+The same applies to effective and real GIDs.
 This is not set by default to help avoid incorrect usage by setuid
 root programs via
 .Xr system 3
 or
 .Xr popen 3 .
+This option is effective only when set on the command line,
+but can be reset to drop privileges, once, at any time.
+If
+.Fl p
+is cleared, those privileges can never be regained,
+however much the
+.Fl p
+option is manipulated.
 .It Fl q Em quietprofile
 If the
 .Fl v
 or
 .Fl x
-options have been set, do not apply them when reading
-initialization files, these being
+options have been set,
+temporarily disable them before reading initialization files,
+these being
 .Pa /etc/profile ,
 .Pa .profile ,
 and the file specified by the
@@ -458,7 +468,7 @@ Enable the built-in
 .Xr vi 1
 command line editor (disables
 .Fl E
-if it has been set).
+if it had been set).
 (See the
 .Sx Command Line Editing
 section below.)
@@ -4438,7 +4448,7 @@ After expansion (as for
 it is written whenever more input is required to complete the
 current command.
 .It Ev PS4
-is Output, after expansion like
+is output, after expansion as described for
 .Ev PS1 ,
 as a prefix for each line when execution trace
 .Ic ( set Fl x )
@@ -4455,6 +4465,16 @@ or
 depending upon whether the current user is the superuser or not.
 This is intended for use when building a custom
 .Ev PS1 .
+If a privileged shell has its privileges removed by
+clearing the
+.Fl p
+option, an attempt will be made to be reset
+.Ev PSc
+to
+.Dq \&#
+or
+.Dq \&$ ,
+as appropriate for its new privilege level.
 .It Ev PSlit
 Defines the character which may be embedded in pairs, in
 .Ev PS1
@@ -4781,6 +4801,10 @@ It was replaced in
 .At v7
 with a version that introduced the basis of the current syntax.
 That was, however, unmaintainable so we wrote this one.
+This
+.Nx
+.Nm
+is a much modified descendant of the ash shell written by Ken Almquist.
 .Sh BUGS
 Setuid shell scripts should be avoided at all costs, as they are a
 significant security risk.

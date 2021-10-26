@@ -1,4 +1,4 @@
-/*	$NetBSD: memalloc.h,v 1.18 2018/08/22 20:08:54 kre Exp $	*/
+/*	$NetBSD: memalloc.h,v 1.19 2021/10/26 00:05:38 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -61,6 +61,7 @@ void grabstackblock(int);
 char *growstackstr(void);
 char *makestrspace(void);
 void ungrabstackstr(char *, char *);
+char *ststrcat(size_t *, ...);
 
 
 
