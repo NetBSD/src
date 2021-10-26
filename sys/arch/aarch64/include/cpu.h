@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.h,v 1.40 2021/10/10 07:15:25 skrll Exp $ */
+/* $NetBSD: cpu.h,v 1.41 2021/10/26 06:02:00 skrll Exp $ */
 
 /*-
  * Copyright (c) 2014, 2020 The NetBSD Foundation, Inc.
@@ -113,7 +113,8 @@ struct cpu_info {
 
 	int ci_kfpu_spl;
 
-	tlb_asid_t	ci_pmap_asid_cur;
+	/* ASID of current pmap */
+	tlb_asid_t ci_pmap_asid_cur;
 
 	/* event counters */
 	struct evcnt ci_vfp_use;
