@@ -1,4 +1,4 @@
-/*	$NetBSD: args.c,v 1.59 2021/10/24 19:14:33 rillig Exp $	*/
+/*	$NetBSD: args.c,v 1.60 2021/10/26 19:36:30 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)args.c	8.1 (Berkeley) 6/6/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: args.c,v 1.59 2021/10/24 19:14:33 rillig Exp $");
+__RCSID("$NetBSD: args.c,v 1.60 2021/10/26 19:36:30 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/args.c 336318 2018-07-15 21:04:21Z pstef $");
 #endif
@@ -89,7 +89,7 @@ static const struct pro {
     short i_min;
     short i_max;
     void *p_var;		/* the associated variable */
-}   pro[] = {
+} pro[] = {
     bool_options("bacc", blanklines_around_conditional_compilation),
     bool_options("bad", blanklines_after_decl),
     bool_options("badp", blanklines_after_decl_at_top),

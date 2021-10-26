@@ -1,4 +1,4 @@
-/*	$NetBSD: lexi.c,v 1.102 2021/10/26 18:36:25 rillig Exp $	*/
+/*	$NetBSD: lexi.c,v 1.103 2021/10/26 19:36:30 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)lexi.c	8.1 (Berkeley) 6/6/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: lexi.c,v 1.102 2021/10/26 18:36:25 rillig Exp $");
+__RCSID("$NetBSD: lexi.c,v 1.103 2021/10/26 19:36:30 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/lexi.c 337862 2018-08-15 18:19:45Z pstef $");
 #endif
@@ -261,7 +261,8 @@ lsym_name(lexer_symbol sym)
 }
 
 static const char *
-kw_name(enum keyword_kind kw) {
+kw_name(enum keyword_kind kw)
+{
     static const char *name[] = {
 	"0",
 	"offsetof",
@@ -437,8 +438,8 @@ lexi_alnum(struct parser_state *state)
     if (isdigit((unsigned char)*inp.s) ||
 	(inp.s[0] == '.' && isdigit((unsigned char)inp.s[1]))) {
 	lex_number();
-    } else if ((isalnum((unsigned char)*inp.s) ||
-		*inp.s == '_' || *inp.s == '$')) {
+    } else if (isalnum((unsigned char)*inp.s) ||
+	    *inp.s == '_' || *inp.s == '$') {
 	lex_word();
     } else
 	return lsym_eof;	/* just as a placeholder */
@@ -453,8 +454,7 @@ lexi_alnum(struct parser_state *state)
 	inbuf_skip();
     state->keyword = kw_0;
 
-    if (state->last_token == lsym_tag &&
-	    state->p_l_follow == 0) {
+    if (state->last_token == lsym_tag && state->p_l_follow == 0) {
 	state->next_unary = true;
 	return lsym_type;
     }
@@ -717,7 +717,7 @@ lexi(struct parser_state *state)
 	    char *tp = inp.s;
 
 	    while (isalpha((unsigned char)*tp) ||
-		   isspace((unsigned char)*tp)) {
+		    isspace((unsigned char)*tp)) {
 		if (++tp >= inp.e)
 		    inbuf_read_line();
 	    }

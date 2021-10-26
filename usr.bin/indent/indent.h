@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.h,v 1.50 2021/10/25 19:56:03 rillig Exp $	*/
+/*	$NetBSD: indent.h,v 1.51 2021/10/26 19:36:30 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-FreeBSD
@@ -235,7 +235,7 @@ extern struct options {
 				 * uses all spaces */
     bool verbose;		/* whether non-essential error messages are
 				 * printed */
-}       opt;
+} opt;
 
 enum keyword_kind {
     kw_0,
@@ -344,7 +344,7 @@ extern struct parser_state {
 	int code_lines;
 	int comment_lines;
     }      stats;
-}            ps;
+} ps;
 
 
 #define array_length(array) (sizeof (array) / sizeof (array[0]))

@@ -1,4 +1,4 @@
-/* $NetBSD: .indent.pro,v 1.2 2021/10/05 22:09:05 rillig Exp $ */
+/* $NetBSD: .indent.pro,v 1.3 2021/10/26 19:36:30 rillig Exp $ */
 
 -di0		/* Do not indent variable names in global declarations. */
 /* XXX: -eei does not work; the expressions are indented only a single level. */
@@ -9,4 +9,6 @@
 -nlp		/* Do not indent function arguments. */
 -ta		/* Identifiers ending in '_t' are considered type names. */
 -TFILE		/* Additional types, for proper formatting of '*'. */
--Ttoken_type
+-Tlexer_symbol
+-Tparser_symbol
+-Tkeyword_kind
