@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.c,v 1.159 2021/10/25 21:33:24 rillig Exp $	*/
+/*	$NetBSD: indent.c,v 1.160 2021/10/26 19:36:30 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)indent.c	5.17 (Berkeley) 6/7/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: indent.c,v 1.159 2021/10/25 21:33:24 rillig Exp $");
+__RCSID("$NetBSD: indent.c,v 1.160 2021/10/26 19:36:30 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/indent.c 340138 2018-11-04 19:24:49Z oshogbo $");
 #endif
@@ -245,10 +245,10 @@ search_stmt_other(lexer_symbol lsym, bool *force_nl,
     bool remove_newlines;
 
     remove_newlines =
-	    /* "} else" */
-	    (lsym == lsym_else && code.e != code.s && code.e[-1] == '}')
-	    /* "else if" */
-	    || (lsym == lsym_if && last_else && opt.else_if);
+	/* "} else" */
+	(lsym == lsym_else && code.e != code.s && code.e[-1] == '}')
+	/* "else if" */
+	|| (lsym == lsym_if && last_else && opt.else_if);
     if (remove_newlines)
 	*force_nl = false;
 
@@ -1333,8 +1333,8 @@ main_loop(void)
     bool tabs_to_var = false;	/* true if using tabs to indent to var name */
     bool spaced_expr = false;	/* whether we are in the expression of
 				 * if(...), while(...), etc. */
-    stmt_head hd = hd_0;	/* the type of statement for 'if (...)',
-				 * 'for (...)', etc */
+    stmt_head hd = hd_0;	/* the type of statement for 'if (...)', 'for
+				 * (...)', etc */
     int quest_level = 0;	/* when this is positive, we have seen a '?'
 				 * without the matching ':' in a '?:'
 				 * expression */

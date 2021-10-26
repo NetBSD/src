@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.41 2021/10/25 20:32:38 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.42 2021/10/26 19:36:30 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -134,7 +134,7 @@ parse(parser_symbol psym)
 	}
 	/* FALLTHROUGH */
     case psym_do:
-    case psym_for_exprs:		/* 'for' (...) */
+    case psym_for_exprs:	/* 'for' (...) */
 	ps.s_sym[++ps.tos] = psym;
 	ps.s_ind_level[ps.tos] = ps.ind_level = ps.ind_level_follow;
 	++ps.ind_level_follow;	/* subsequent statements should be indented 1 */
@@ -284,8 +284,8 @@ reduce_stmt(void)
 	ps.s_sym[--ps.tos] = psym_if_expr_stmt;
 	int i = ps.tos - 1;
 	while (ps.s_sym[i] != psym_stmt &&
-	       ps.s_sym[i] != psym_stmt_list &&
-	       ps.s_sym[i] != psym_lbrace)
+		ps.s_sym[i] != psym_stmt_list &&
+		ps.s_sym[i] != psym_lbrace)
 	    --i;
 	ps.ind_level_follow = ps.s_ind_level[i];
 	/*
