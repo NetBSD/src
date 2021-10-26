@@ -1,4 +1,4 @@
-/* $NetBSD: token_comment.c,v 1.7 2021/10/24 21:55:07 rillig Exp $ */
+/* $NetBSD: token_comment.c,v 1.8 2021/10/26 21:37:27 rillig Exp $ */
 /* $FreeBSD$ */
 
 /*
@@ -729,3 +729,15 @@ end */
 #indent end
 
 #indent run-equals-input -nfc1
+
+
+#indent input
+/* comment comment comment comment Ümläute */
+#indent end
+
+#indent run -l40
+/*
+ * comment comment comment comment
+ * Ümläute
+ */
+#indent end
