@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.87 2021/10/26 00:05:38 kre Exp $	*/
+/*	$NetBSD: main.c,v 1.88 2021/10/26 10:07:20 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993\
 #if 0
 static char sccsid[] = "@(#)main.c	8.7 (Berkeley) 7/19/95";
 #else
-__RCSID("$NetBSD: main.c,v 1.87 2021/10/26 00:05:38 kre Exp $");
+__RCSID("$NetBSD: main.c,v 1.88 2021/10/26 10:07:20 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -241,7 +241,7 @@ main(int argc, char **argv)
 			home = lookupvar("HOME");
 			if (home == NULL)
 				home = nullstr;
-			profile = ststrcat(NULL, home, "/.profile", NULL);
+			profile = ststrcat(NULL, home, "/.profile", STSTRC_END);
 			read_profile(profile);
 			stunalloc(profile);
 		}
