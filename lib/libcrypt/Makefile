@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.29 2021/10/13 14:28:32 nia Exp $
+#	$NetBSD: Makefile,v 1.30 2021/10/26 07:51:23 nia Exp $
 
 .include <bsd.own.mk>
 
@@ -24,7 +24,8 @@ SRCS+=		crypt-argon2.c
 # libargon2 sources
 .  for src in argon2.c core.c blake2b.c encoding.c ref.c
 SRCS+=		${src}
-COPTS.${src}+=	-Wno-error
+COPTS.${src}+=	-Wno-error=cast-qual
+COPTS.${src}+=	-Wno-error=type-limits
 COPTS.${src}+=	-fvisibility=hidden
 .  endfor
 .  if ${MACHINE} == "vax"
