@@ -1,4 +1,4 @@
-/*	$NetBSD: signal.h,v 1.22 2020/07/06 09:34:17 rin Exp $	*/
+/*	$NetBSD: signal.h,v 1.23 2021/10/26 16:16:35 christos Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -54,6 +54,7 @@ struct sigcontext13 {
 /*
  * struct sigcontext introduced in NetBSD 1.4
  */
+#define	__HAVE_STRUCT_SIGCONTEXT
 struct sigcontext {
 	int sc_onstack;			/* saved onstack flag */
 	int __sc_mask13;		/* saved signal mask (old style) */

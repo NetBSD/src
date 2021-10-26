@@ -1,4 +1,4 @@
-/*      $NetBSD: signal.h,v 1.17 2018/12/29 11:30:12 maxv Exp $   */
+/*      $NetBSD: signal.h,v 1.18 2021/10/26 16:16:35 christos Exp $   */
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991 Regents of the University of California.
@@ -36,6 +36,9 @@
 #ifndef _VAX_SIGNAL_H_
 #define _VAX_SIGNAL_H_
 
+#define __SIGTRAMP_SIGCONTEXT_VERSION	2
+#define __SIGTRAMP_SIGINFO_VERSION	3
+
 #include <sys/featuretest.h>
 #include <sys/siginfo.h>
 #include <machine/trap.h>
@@ -63,6 +66,7 @@ struct sigcontext13 {
 };
 #endif /* __LIBC12_SOURCE__ || _KERNEL */
 
+#define	__HAVE_STRUCT_SIGCONTEXT
 struct sigcontext {
 	int	sc_onstack;		/* sigstack state to restore */
 	int	__sc_mask13;		/* signal mask to restore (old style) */
