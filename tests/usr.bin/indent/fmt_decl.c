@@ -1,4 +1,4 @@
-/*	$NetBSD: fmt_decl.c,v 1.4 2021/10/26 23:37:40 rillig Exp $	*/
+/*	$NetBSD: fmt_decl.c,v 1.5 2021/10/26 23:58:40 rillig Exp $	*/
 /* $FreeBSD: head/usr.bin/indent/tests/declarations.0 334478 2018-06-01 09:41:15Z pstef $ */
 
 /* See FreeBSD r303570 */
@@ -374,5 +374,20 @@ main(void)
 char *(*f1)() = NULL;
 /* $ FIXME: The following declaration must be indented. */
 char *(*f2)();
+}
+#indent end
+
+#indent run
+int
+main(void)
+{
+/* $ XXX: Not really pretty, the name 'f1' should be aligned, if at all. */
+	char		(*f1)() = NULL;
+/* $ FIXME: The following declaration must be indented. */
+/* $ XXX: Not really pretty, the name 'f1' should be aligned, if at all. */
+char *(*	f1)() = NULL;
+/* $ FIXME: The following declaration must be indented. */
+/* $ XXX: Not really pretty, the name 'f2' should be aligned, if at all. */
+char *(*	f2)();
 }
 #indent end
