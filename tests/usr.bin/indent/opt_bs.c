@@ -1,4 +1,4 @@
-/* $NetBSD: opt_bs.c,v 1.4 2021/10/24 11:42:57 rillig Exp $ */
+/* $NetBSD: opt_bs.c,v 1.5 2021/10/26 20:37:26 rillig Exp $ */
 /* $FreeBSD$ */
 
 /*
@@ -97,3 +97,25 @@ int sizeof_expr = sizeof 0;
 int offset = offsetof(struct s, member);
 int offset = offsetof(struct s, member);
 #indent end
+
+
+/* Ensure that there is no blank before 'sizeof(' if there is a '\n' between. */
+#indent input
+int sizeof_newline = sizeof
+(0);
+#indent end
+
+#indent run-equals-input -di0 -bs
+#indent run-equals-input -di0 -nbs
+
+
+/* Ensure that only the first '(' after 'sizeof' gets a blank. */
+#indent input
+int sizeof_parenthesized = sizeof((0));
+#indent end
+
+#indent run -di0 -bs
+int sizeof_parenthesized = sizeof ((0));
+#indent end
+
+#indent run-equals-input -di0 -nbs
