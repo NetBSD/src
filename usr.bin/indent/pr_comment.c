@@ -1,4 +1,4 @@
-/*	$NetBSD: pr_comment.c,v 1.85 2021/10/26 21:04:03 rillig Exp $	*/
+/*	$NetBSD: pr_comment.c,v 1.86 2021/10/26 21:23:52 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)pr_comment.c	8.1 (Berkeley) 6/6/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: pr_comment.c,v 1.85 2021/10/26 21:04:03 rillig Exp $");
+__RCSID("$NetBSD: pr_comment.c,v 1.86 2021/10/26 21:23:52 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/pr_comment.c 334927 2018-06-10 16:44:18Z pstef $");
 #endif
@@ -331,28 +331,27 @@ process_comment(void)
 
 	    ps.last_nl = false;
 
+	    if (now_len <= adj_max_line_length || !may_wrap)
+		break;
 	    /* XXX: signed character comparison '>' does not work for UTF-8 */
-	    if (now_len > adj_max_line_length &&
-		    may_wrap && com.e[-1] > ' ') {
+	    if (com.e[-1] <= ' ')
+		break;
 
-		/* the comment is too long, it must be broken up */
-		if (last_blank == -1) {
-		    dump_line();
-		    com_add_delim();
-		    break;
-		}
-
-		const char *last_word_s = com.buf + last_blank + 1;
-		size_t last_word_len = (size_t)(com.e - last_word_s);
-		com.e = com.buf + last_blank;
+	    if (last_blank == -1) {	/* only a single word in this line */
 		dump_line();
 		com_add_delim();
-
-		memcpy(com.e, last_word_s, last_word_len);
-		com.e += last_word_len;
-		last_blank = -1;
+		break;
 	    }
-	    break;
+
+	    const char *last_word_s = com.buf + last_blank + 1;
+	    size_t last_word_len = (size_t)(com.e - last_word_s);
+	    com.e = com.buf + last_blank;
+	    dump_line();
+	    com_add_delim();
+
+	    memcpy(com.e, last_word_s, last_word_len);
+	    com.e += last_word_len;
+	    last_blank = -1;
 	}
     }
 }
