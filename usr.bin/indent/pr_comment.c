@@ -1,4 +1,4 @@
-/*	$NetBSD: pr_comment.c,v 1.84 2021/10/25 00:54:37 rillig Exp $	*/
+/*	$NetBSD: pr_comment.c,v 1.85 2021/10/26 21:04:03 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)pr_comment.c	8.1 (Berkeley) 6/6/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: pr_comment.c,v 1.84 2021/10/25 00:54:37 rillig Exp $");
+__RCSID("$NetBSD: pr_comment.c,v 1.85 2021/10/26 21:04:03 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/pr_comment.c 334927 2018-06-10 16:44:18Z pstef $");
 #endif
@@ -342,29 +342,15 @@ process_comment(void)
 		    break;
 		}
 
-		com_terminate();	/* mark the end of the last word */
+		const char *last_word_s = com.buf + last_blank + 1;
+		size_t last_word_len = (size_t)(com.e - last_word_s);
 		com.e = com.buf + last_blank;
 		dump_line();
-
 		com_add_delim();
 
-		const char *p = com.buf + last_blank + 1;
-		while (is_hspace(*p))
-		    p++;
+		memcpy(com.e, last_word_s, last_word_len);
+		com.e += last_word_len;
 		last_blank = -1;
-
-		/*
-		 * p still points to the last word from the previous line, in
-		 * the same buffer that it is copied to, but to the right of
-		 * the writing region [com.s, com.e). Calling dump_line only
-		 * moved com.e back to com.s, it did not clear the contents of
-		 * the buffer. This ensures that the buffer is already large
-		 * enough.
-		 */
-		while (*p != '\0') {
-		    assert(!is_hspace(*p));
-		    *com.e++ = *p++;
-		}
 	    }
 	    break;
 	}
