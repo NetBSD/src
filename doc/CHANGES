@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2845 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2846 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -447,3 +447,5 @@ Changes from NetBSD 9.0 to NetBSD 10.0:
 	dhcpcd(8): Update to dhcpcd-9.4.1. [roy 20211022]
 	tzcode: Updated to 2021e. [christos 20211022]
 	tzdata: updated to 2021e (still missing trash from 2021b) [kre 20211022] 
+	passwd.conf(5): Make 'argon2id' the default cipher for new
+		passwords. [nia 20211026]
