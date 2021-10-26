@@ -1,4 +1,4 @@
-/*	$NetBSD: signal.h,v 1.16 2021/10/06 05:33:15 skrll Exp $	*/
+/*	$NetBSD: signal.h,v 1.17 2021/10/26 16:16:34 christos Exp $	*/
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -92,6 +92,7 @@ struct sigcontext13 {
 };
 #endif /* __LIBC12_SOURCE__ || _KERNEL */
 
+#define	__HAVE_STRUCT_SIGCONTEXT
 struct sigcontext {
 	int	sc_onstack;		/* sigstack state to restore */
 	int	__sc_mask13;		/* signal mask to restore (old style) */

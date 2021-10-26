@@ -1,4 +1,4 @@
-/* $NetBSD: signal.h,v 1.17 2019/03/25 19:24:30 maxv Exp $ */
+/* $NetBSD: signal.h,v 1.18 2021/10/26 16:16:34 christos Exp $ */
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -66,6 +66,7 @@ struct sigcontext13 {
 #endif /* _KERNEL && COMPAT_13 */
 
 #if defined(_LIBC) || (defined(_KERNEL) && defined(COMPAT_16))
+#define	__HAVE_STRUCT_SIGCONTEXT
 struct sigcontext {
 	long	sc_onstack;		/* sigstack state to restore */
 	long	__sc_mask13;		/* signal mask to restore (old style) */
