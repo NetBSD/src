@@ -1,4 +1,4 @@
-/*	$NetBSD: undefined.c,v 1.67 2020/09/21 10:35:12 skrll Exp $	*/
+/*	$NetBSD: undefined.c,v 1.68 2021/10/26 06:34:02 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001 Ben Harris.
@@ -44,8 +44,6 @@
  * Created      : 06/01/95
  */
 
-#define FAST_FPE
-
 #include "opt_ddb.h"
 #include "opt_dtrace.h"
 #include "opt_kgdb.h"
@@ -55,7 +53,7 @@
 #include <sys/kgdb.h>
 #endif
 
-__KERNEL_RCSID(0, "$NetBSD: undefined.c,v 1.67 2020/09/21 10:35:12 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: undefined.c,v 1.68 2021/10/26 06:34:02 skrll Exp $");
 
 #include <sys/kmem.h>
 #include <sys/queue.h>
@@ -65,9 +63,6 @@ __KERNEL_RCSID(0, "$NetBSD: undefined.c,v 1.67 2020/09/21 10:35:12 skrll Exp $")
 #include <sys/syslog.h>
 #include <sys/vmmeter.h>
 #include <sys/cpu.h>
-#ifdef FAST_FPE
-#include <sys/acct.h>
-#endif
 #include <sys/userret.h>
 
 #include <uvm/uvm_extern.h>
