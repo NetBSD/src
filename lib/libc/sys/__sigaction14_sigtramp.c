@@ -1,4 +1,4 @@
-/*	$NetBSD: __sigaction14_sigtramp.c,v 1.2 2008/04/28 20:22:57 martin Exp $	*/
+/*	$NetBSD: __sigaction14_sigtramp.c,v 1.1 2021/10/26 16:16:36 christos Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: __sigaction14_sigtramp.c,v 1.2 2008/04/28 20:22:57 martin Exp $");
+__RCSID("$NetBSD: __sigaction14_sigtramp.c,v 1.1 2021/10/26 16:16:36 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -41,16 +41,26 @@ __RCSID("$NetBSD: __sigaction14_sigtramp.c,v 1.2 2008/04/28 20:22:57 martin Exp 
 
 #include "extern.h"
 
-__weak_alias(__sigaction14, __libc_sigaction14)
-#ifdef __LIBC12_SOURCE__
-extern const int __sigtramp_sigcontext_1[]
-    __weak_reference(__sigtramp_sigcontext_1);
+#ifndef __SIGTRAMP_SIGCONTEXT_VERSION
+#define __SIGTRAMP_SIGCONTEXT_VERSION 1
 #endif
+#ifndef __SIGTRAMP_SIGINFO_VERSION
+#define __SIGTRAMP_SIGINFO_VERSION 2
+#endif
+#define C(a,b) __CONCAT(a,b)
+#define __SIGTRAMP_SIGCONTEXT  \
+    C(__sigtramp_sigcontext_,__SIGTRAMP_SIGCONTEXT_VERSION)
+#define __SIGTRAMP_SIGINFO  \
+    C(__sigtramp_siginfo_,__SIGTRAMP_SIGINFO_VERSION)
+
+__weak_alias(__sigaction14, __libc_sigaction14)
+
+#define __LIBC12_SOURCE__
 
 int
 __libc_sigaction14(int sig, const struct sigaction *act, struct sigaction *oact)
 {
-	extern const int __sigtramp_siginfo_2[];
+	extern const int __SIGTRAMP_SIGINFO[];
 
 	/*
 	 * If no sigaction, use the "default" trampoline since it won't
@@ -59,15 +69,16 @@ __libc_sigaction14(int sig, const struct sigaction *act, struct sigaction *oact)
 	if (act == NULL)
 		return  __sigaction_sigtramp(sig, act, oact, NULL, 0);
 
-#ifdef __LIBC12_SOURCE__
+#if defined(__HAVE_STRUCT_SIGCONTEXT) &&  defined(__LIBC12_SOURCE__)
 	/*
 	 * We select the non-SA_SIGINFO trampoline if SA_SIGINFO is not
 	 * set in the sigaction.
 	 */
 	if ((act->sa_flags & SA_SIGINFO) == 0) {
+		extern const int __SIGTRAMP_SIGCONTEXT[];
 		int sav = errno;
 		int rv =  __sigaction_sigtramp(sig, act, oact,
-		    __sigtramp_sigcontext_1, 1);
+		    __SIGTRAMP_SIGCONTEXT, __SIGTRAMP_SIGCONTEXT_VERSION);
 		if (rv >= 0 || errno != EINVAL)
 			return rv;
 		errno = sav;
@@ -75,8 +86,9 @@ __libc_sigaction14(int sig, const struct sigaction *act, struct sigaction *oact)
 #endif
 
 	/*
-	 * If SA_SIGINFO was specificed or the compatibility trampolines
+	 * If SA_SIGINFO was specified or the compatibility trampolines
 	 * can't be used, use the siginfo trampoline.
 	 */
-	return __sigaction_sigtramp(sig, act, oact, __sigtramp_siginfo_2, 2);
+	return __sigaction_sigtramp(sig, act, oact,
+	    __SIGTRAMP_SIGINFO, __SIGTRAMP_SIGINFO_VERSION);
 }

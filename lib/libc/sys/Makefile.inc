@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.247 2021/10/01 17:13:44 christos Exp $
+#	$NetBSD: Makefile.inc,v 1.248 2021/10/26 16:16:36 christos Exp $
 #	@(#)Makefile.inc	8.3 (Berkeley) 10/24/94
 
 # sys sources
@@ -10,7 +10,7 @@ SRCS+=	cpuset.c
 SRCS+=	accept4.c clock_getcpuclockid.c eventfd_read.c eventfd_write.c \
 	posix_fadvise.c posix_madvise.c ppoll.c sched.c sigqueue.c \
 	sigtimedwait.c sigwait.c sigwaitinfo.c statvfs.c swapon.c semctl.c \
-	vadvise.c
+	vadvise.c __sigaction14_sigtramp.c
 
 .if ${RUMPRUN} != "yes"
 # modules with non-default implementations on at least one architecture:

@@ -1,4 +1,4 @@
-/*	$NetBSD: signal.h,v 1.30 2016/01/24 16:00:29 christos Exp $	*/
+/*	$NetBSD: signal.h,v 1.31 2021/10/26 16:16:35 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -106,6 +106,7 @@ struct sigcontext { \
 _SIGCONTEXT_DEFINE(sigcontext, int, int);
 #endif
 #ifdef _LIBC
+#define	__HAVE_STRUCT_SIGCONTEXT
 _SIGCONTEXT_DEFINE(sigcontext, __register_t, __fpregister_t);
 #endif
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: signal.h,v 1.14 2017/11/29 17:43:20 christos Exp $	*/
+/*	$NetBSD: signal.h,v 1.15 2021/10/26 16:16:35 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991 Regents of the University of California.
@@ -77,6 +77,7 @@ struct sigcontext13 {
 };
 #endif
 
+#define	__HAVE_STRUCT_SIGCONTEXT
 struct sigcontext {
 	int	sc_spc;
 	int	sc_ssr;
