@@ -1,4 +1,4 @@
-/* $NetBSD: armreg.h,v 1.58 2021/10/23 05:31:53 skrll Exp $ */
+/* $NetBSD: armreg.h,v 1.59 2021/10/26 16:58:46 ryo Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -74,8 +74,8 @@ reg_##regname##_write(uint64_t __val)				\
 	AARCH64REG_WRITE_INLINE3(regname, regdesc, )
 
 #define AARCH64REG_WRITEIMM_INLINE2(regname, regdesc)		\
-static __inline void						\
-reg_##regname##_write(uint64_t __val)				\
+static __inline void __always_inline				\
+reg_##regname##_write(const uint64_t __val)			\
 {								\
 	__asm __volatile(					\
 	    "msr " #regdesc ", %0" :: "n"(__val) : "memory"	\
