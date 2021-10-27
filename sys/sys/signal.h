@@ -1,4 +1,4 @@
-/*	$NetBSD: signal.h,v 1.72 2017/04/21 15:10:35 christos Exp $	*/
+/*	$NetBSD: signal.h,v 1.73 2021/10/27 04:10:47 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -138,7 +138,79 @@ struct	sigaction {
 #define sa_sigaction _sa_u._sa_sigaction
 #endif
 
+/*
+ * Signal return trampoline versioning:
+ *
+ * In historical BSD, the kernel provided the signal trampoline, copying
+ * it out to the process's stack.  In NetBSD 2.0, the signal trampoline
+ * was moved into libc, and versioned in order to support the historical
+ * BSD "sigcontext" style of handler in addition to the modern "siginfo"
+ * style of handler.  The trampoline and its ABI version are registered
+ * with the kernel along with the handlers.
+ *
+ * The versioning follows this general pattern:
+ *
+ * 0	Historical BSD style, trampoline provided by the kernel.  This is
+ * 	now used only by COMPAT_* modules.
+ *
+ * 1	Legacy BSD "sigcontext" trampoline.  This style is deprecated and
+ *	no longer documented.  However, on platforms that have a legacy
+ *	"sigcontext" structure, it is still possible to register a handler
+ *	that uses this trampoline.
+ *
+ * 2	Modern "siginfo" trampoline.  This style is used if a handler
+ *	explicitly requests "siginfo", or if the deprecation of "sigcontext"
+ *	style handlers pre-dates support for the platform.
+ *
+ * Some architectures have, in the past, needed to version the "sigcontext"
+ * trampoline; an override mechanism (__SIGTRAMP_SIGCONTEXT_VERSION_MAX) is
+ * provided for this purpose.  No more changes to the old "sigcontext"
+ * trampoline ABI will ever be performed, and support for it should not be
+ * included when adding support for new architectures.  Those architectures
+ * that support the "sigcontext" trampoline must define
+ * __HAVE_STRUCT_SIGCONTEXT in <machine/signal.h>.  If a 64-bit architecture
+ * needs to support "sigcontext" trampolines only for 32-bit compatibility,
+ * then __HAVE_STRUCT_SIGCONTEXT can be conditional on _KERNEL.
+ *
+ * If an architecture defines a sigcontext structure in <machine/signal.h>,
+ * it should be visible only for _KERNEL and _LIBC.
+ *
+ * In the unlikely event that an an architecture needs to version
+ * the "siginfo" trampoline, it can achieve this by overriding
+ * __SIGTRAMP_SIGINFO_VERSION_MAX.
+ */
+
 #include <machine/signal.h>	/* sigcontext; codes for SIGILL, SIGFPE */
+
+#define	__SIGTRAMP_SIGCODE_VERSION	  0
+
+#define	__SIGTRAMP_SIGCONTEXT_VERSION_MIN 1
+
+#ifndef __SIGTRAMP_SIGCONTEXT_VERSION_MAX
+#define	__SIGTRAMP_SIGCONTEXT_VERSION_MAX __SIGTRAMP_SIGCONTEXT_VERSION_MIN
+#endif
+
+#if __SIGTRAMP_SIGCONTEXT_VERSION_MAX < __SIGTRAMP_SIGCONTEXT_VERSION_MIN
+#error invalid __SIGTRAMP_SIGCONTEXT_VERSION_MAX
+#endif
+
+#define	__SIGTRAMP_SIGINFO_VERSION_MIN	(__SIGTRAMP_SIGCONTEXT_VERSION_MAX + 1)
+
+#ifndef __SIGTRAMP_SIGINFO_VERSION_MAX
+#define	__SIGTRAMP_SIGINFO_VERSION_MAX	__SIGTRAMP_SIGINFO_VERSION_MIN
+#endif
+
+#if __SIGTRAMP_SIGINFO_VERSION_MAX < __SIGTRAMP_SIGINFO_VERSION_MIN
+#error invalid __SIGTRAMP_SIGINFO_VERSION_MAX
+#endif
+
+#ifndef __SIGTRAMP_SIGCONTEXT_VERSION
+#define	__SIGTRAMP_SIGCONTEXT_VERSION	__SIGTRAMP_SIGCONTEXT_VERSION_MAX
+#endif
+
+#ifndef __SIGTRAMP_SIGINFO_VERSION
+#define	__SIGTRAMP_SIGINFO_VERSION	__SIGTRAMP_SIGINFO_VERSION_MAX
+#endif
 
 #if (defined(_XOPEN_SOURCE) && defined(_XOPEN_SOURCE_EXTENDED)) || \
     (_XOPEN_SOURCE - 0) >= 500 || defined(_NETBSD_SOURCE)
