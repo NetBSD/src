@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_signal.c,v 1.86 2021/09/23 06:56:27 ryo Exp $	*/
+/*	$NetBSD: linux_signal.c,v 1.87 2021/10/27 16:40:05 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_signal.c,v 1.86 2021/09/23 06:56:27 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_signal.c,v 1.87 2021/10/27 16:40:05 thorpej Exp $");
 
 #define COMPAT_LINUX 1
 
@@ -391,7 +391,7 @@ linux_sys_rt_sigaction(struct lwp *l, const struct linux_sys_rt_sigaction_args *
 		native_to_linux_sigaction(&olsa, &obsa);
 
 #ifdef LINUX_SA_RESTORER
-		if (ps->sa_sigdesc[sig].sd_vers != 0) {
+		if (ps->sa_sigdesc[sig].sd_vers != __SIGTRAMP_SIGCODE_VERSION) {
 			olsa.linux_sa_restorer = ps->sa_sigdesc[sig].sd_tramp;
 			olsa.linux_sa_flags |= LINUX_SA_RESTORER;
 		}
