@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.399 2021/09/26 17:34:19 thorpej Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.400 2021/10/27 04:45:42 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008, 2019 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.399 2021/09/26 17:34:19 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.400 2021/10/27 04:45:42 thorpej Exp $");
 
 #include "opt_execfmt.h"
 #include "opt_ptrace.h"
@@ -2169,14 +2169,17 @@ sendsig(const struct ksiginfo *ksi, const sigset_t *mask)
 	sa = curproc->p_sigacts;
 
 	switch (sa->sa_sigdesc[sig].sd_vers)  {
-	case 0:
-	case 1:
+	case __SIGTRAMP_SIGCODE_VERSION:
+#ifdef __HAVE_STRUCT_SIGCONTEXT
+	case __SIGTRAMP_SIGCONTEXT_VERSION_MIN ...
+	     __SIGTRAMP_SIGCONTEXT_VERSION_MAX:
 		/* Compat for 1.6 and earlier. */
 		MODULE_HOOK_CALL_VOID(sendsig_sigcontext_16_hook, (ksi, mask),
 		    break);
 		return;
-	case 2:
-	case 3:
+#endif /* __HAVE_STRUCT_SIGCONTEXT */
+	case __SIGTRAMP_SIGINFO_VERSION_MIN ...
+	     __SIGTRAMP_SIGINFO_VERSION_MAX:
 		sendsig_siginfo(ksi, mask);
 		return;
 	default:
