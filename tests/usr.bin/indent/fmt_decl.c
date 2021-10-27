@@ -1,4 +1,4 @@
-/*	$NetBSD: fmt_decl.c,v 1.5 2021/10/26 23:58:40 rillig Exp $	*/
+/*	$NetBSD: fmt_decl.c,v 1.6 2021/10/27 00:04:51 rillig Exp $	*/
 /* $FreeBSD: head/usr.bin/indent/tests/declarations.0 334478 2018-06-01 09:41:15Z pstef $ */
 
 /* See FreeBSD r303570 */
@@ -365,15 +365,18 @@ int main(void) {
 }
 #indent end
 
+/*
+ * Before NetBSD io.c 1.103 from 2021-10-27, indent wrongly placed the second
+ * and third variable declaration in column 1. This bug has been introduced
+ * to NetBSD when FreeBSD indent was imported in 2019.
+ */
 #indent run -ldi0
 int
 main(void)
 {
 	char (*f1)() = NULL;
-/* $ FIXME: The following declaration must be indented. */
-char *(*f1)() = NULL;
-/* $ FIXME: The following declaration must be indented. */
-char *(*f2)();
+	char *(*f1)() = NULL;
+	char *(*f2)();
 }
 #indent end
 
@@ -383,11 +386,9 @@ main(void)
 {
 /* $ XXX: Not really pretty, the name 'f1' should be aligned, if at all. */
 	char		(*f1)() = NULL;
-/* $ FIXME: The following declaration must be indented. */
 /* $ XXX: Not really pretty, the name 'f1' should be aligned, if at all. */
-char *(*	f1)() = NULL;
-/* $ FIXME: The following declaration must be indented. */
+	char *(*	f1)() = NULL;
 /* $ XXX: Not really pretty, the name 'f2' should be aligned, if at all. */
-char *(*	f2)();
+	char *(*	f2)();
 }
 #indent end
