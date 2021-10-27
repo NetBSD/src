@@ -1,4 +1,4 @@
-/* $NetBSD: sig_machdep.c,v 1.6 2021/09/23 15:19:03 ryo Exp $ */
+/* $NetBSD: sig_machdep.c,v 1.7 2021/10/27 04:14:59 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: sig_machdep.c,v 1.6 2021/09/23 15:19:03 ryo Exp $");
+__KERNEL_RCSID(1, "$NetBSD: sig_machdep.c,v 1.7 2021/10/27 04:14:59 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -87,7 +87,7 @@ sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
 
 	mutex_enter(p->p_lock);
 
-	if (error || sd->sd_vers != 2) {
+	if (error || sd->sd_vers != __SIGTRAMP_SIGINFO_VERSION) {
 		/*
 		 * Thread has trashed its stack.  Blow it away.
 		 */
