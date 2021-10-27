@@ -1,4 +1,4 @@
-/*	$NetBSD: signal.h,v 1.20 2021/10/27 04:10:48 thorpej Exp $	*/
+/*	$NetBSD: signal.h,v 1.21 2021/10/27 05:18:51 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991 Regents of the University of California.
@@ -42,6 +42,11 @@
 
 /* VAX versioned its sigcontext trampoline ABI (Sept 2002). */
 #define __SIGTRAMP_SIGCONTEXT_VERSION_MAX	2
+#define __SIGTRAMP_SIGCONTEXT_VERSION		2
+
+#define	__SIGTRAMP_SIGINFO_VERSION_MIN		3
+#define	__SIGTRAMP_SIGINFO_VERSION_MAX		3
+#define	__SIGTRAMP_SIGINFO_VERSION		3
 
 typedef int sig_atomic_t;
 
