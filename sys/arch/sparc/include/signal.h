@@ -1,4 +1,4 @@
-/*	$NetBSD: signal.h,v 1.24 2021/10/26 16:16:35 christos Exp $ */
+/*	$NetBSD: signal.h,v 1.25 2021/10/27 01:12:23 thorpej Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -61,7 +61,7 @@ typedef int sig_atomic_t;
  *
  * All machines must have an sc_onstack and sc_mask.
  */
-#if defined(__LIBC12_SOURCE__) || defined(_KERNEL)
+#if defined(_KERNEL)
 struct sigcontext13 {
 	int	sc_onstack;		/* sigstack state to restore */
 	int	sc_mask;		/* signal mask to restore (old style) */
@@ -77,7 +77,9 @@ struct sigcontext13 {
 	long	sc_g1;			/* %g1 to restore */
 	long	sc_o0;			/* %o0 to restore */
 };
-#endif /* __LIBC12_SOURCE__ || _KERNEL */
+#endif /* _KERNEL */
+
+#if defined(_LIBC) || defined(_KERNEL)
 #define	__HAVE_STRUCT_SIGCONTEXT
 struct sigcontext {
 	int		sc_onstack;	/* sigstack state to restore */
@@ -95,6 +97,7 @@ struct sigcontext {
 	long		sc_o0;		/* %o0 to restore */
 	sigset_t	sc_mask;	/* signal mask to restore (new style) */
 };
+#endif /* _LIBC || _KERNEL */
 
 #else /* _LOCORE */
 /* XXXXX These values don't work for _LP64 */

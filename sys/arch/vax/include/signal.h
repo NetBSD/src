@@ -1,4 +1,4 @@
-/*      $NetBSD: signal.h,v 1.18 2021/10/26 16:16:35 christos Exp $   */
+/*      $NetBSD: signal.h,v 1.19 2021/10/27 01:13:22 thorpej Exp $   */
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991 Regents of the University of California.
@@ -36,9 +36,6 @@
 #ifndef _VAX_SIGNAL_H_
 #define _VAX_SIGNAL_H_
 
-#define __SIGTRAMP_SIGCONTEXT_VERSION	2
-#define __SIGTRAMP_SIGINFO_VERSION	3
-
 #include <sys/featuretest.h>
 #include <sys/siginfo.h>
 #include <machine/trap.h>
@@ -54,7 +51,7 @@ typedef int sig_atomic_t;
  * to the handler to allow it to restore state properly if
  * a non-standard exit is performed.
  */
-#if defined(__LIBC12_SOURCE__) || defined(_KERNEL)
+#if defined(_KERNEL)
 struct sigcontext13 {
 	int	sc_onstack;		/* sigstack state to restore */
 	int	sc_mask;		/* signal mask to restore (old style) */
@@ -64,8 +61,9 @@ struct sigcontext13 {
 	int	sc_pc;			/* pc to restore */
 	int	sc_ps;			/* psl to restore */
 };
-#endif /* __LIBC12_SOURCE__ || _KERNEL */
+#endif /* _KERNEL */
 
+#if defined(_LIBC) || defined(_KERNEL)
 #define	__HAVE_STRUCT_SIGCONTEXT
 struct sigcontext {
 	int	sc_onstack;		/* sigstack state to restore */
@@ -77,6 +75,7 @@ struct sigcontext {
 	int	sc_ps;			/* psl to restore */
 	sigset_t sc_mask;		/* signal mask to restore (new style) */
 };
+#endif /* _LIBC || _KERNEL */
 
 #ifdef _KERNEL
 #define sendsig_sigcontext	sendsig_sighelper

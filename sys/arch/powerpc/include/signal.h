@@ -1,4 +1,4 @@
-/*	$NetBSD: signal.h,v 1.23 2021/10/26 16:16:35 christos Exp $	*/
+/*	$NetBSD: signal.h,v 1.24 2021/10/27 01:11:03 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -43,14 +43,15 @@ typedef int sig_atomic_t;
 #include <sys/sigtypes.h>
 #include <machine/frame.h>
 
-#if defined(__LIBC12_SOURCE__) || defined(_KERNEL)
+#if defined(_KERNEL)
 struct sigcontext13 {
 	int sc_onstack;			/* saved onstack flag */
 	int sc_mask;			/* saved signal mask (old style) */
 	struct utrapframe sc_frame;	/* saved registers */
 };
-#endif /* __LIBC12_SOURCE__ || _KERNEL */
+#endif /* _KERNEL */
 
+#if defined(_LIBC) || defined(_KERNEL)
 /*
  * struct sigcontext introduced in NetBSD 1.4
  */
@@ -61,6 +62,7 @@ struct sigcontext {
 	struct utrapframe sc_frame;	/* saved registers */
 	sigset_t sc_mask;		/* saved signal mask (new style) */
 };
+#endif /* _LIBC || _KERNEL */
 
 #endif	/* _NETBSD_SOURCE */
 #endif	/* !_LOCORE */
