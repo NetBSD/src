@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep.c,v 1.21 2021/05/23 23:24:45 mrg Exp $	*/
+/*	$NetBSD: netbsd32_machdep.c,v 1.22 2021/10/27 04:15:00 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.21 2021/05/23 23:24:45 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.22 2021/10/27 04:15:00 thorpej Exp $");
 
 #include "opt_compat_netbsd.h"
 
@@ -109,13 +109,13 @@ netbsd32_sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
 
         /* Build stack frame for signal trampoline. */
         switch (ps->sa_sigdesc[sig].sd_vers) {
-        case 0:         /* handled by sendsig_sigcontext */
-        case 1:         /* handled by sendsig_sigcontext */
+        case __SIGTRAMP_SIGCODE_VERSION:     /* handled by sendsig_sigcontext */
+        case __SIGTRAMP_SIGCONTEXT_VERSION: /* handled by sendsig_sigcontext */
         default:        /* unknown version */
                 printf("%s: bad version %d\n", __func__,
                     ps->sa_sigdesc[sig].sd_vers);
                 sigexit(l, SIGILL);
-        case 2:
+        case __SIGTRAMP_SIGINFO_VERSION:
                 break;
         }
 

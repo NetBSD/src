@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_16_machdep.c,v 1.32 2019/05/19 08:49:08 maxv Exp $	*/
+/*	$NetBSD: compat_16_machdep.c,v 1.33 2021/10/27 04:14:59 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: compat_16_machdep.c,v 1.32 2019/05/19 08:49:08 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_16_machdep.c,v 1.33 2021/10/27 04:14:59 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -163,11 +163,11 @@ sendsig_sigcontext(const ksiginfo_t *ksi, const sigset_t *mask)
 
 	/* Build stack frame for signal trampoline. */
 	switch (ps->sa_sigdesc[sig].sd_vers) {
-	case 0:		/* legacy on-stack sigtramp */
+	case __SIGTRAMP_SIGCODE_VERSION:	/* legacy on-stack sigtramp */
 		frame.sf_ra = (int)p->p_sigctx.ps_sigcode;
 		break;
 
-	case 1:
+	case __SIGTRAMP_SIGCONTEXT_VERSION:
 		frame.sf_ra = (int)ps->sa_sigdesc[sig].sd_tramp;
 		break;
 

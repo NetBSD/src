@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep.c,v 1.115 2019/12/12 02:15:42 pgoyette Exp $	*/
+/*	$NetBSD: netbsd32_machdep.c,v 1.116 2021/10/27 04:15:00 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.115 2019/12/12 02:15:42 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.116 2021/10/27 04:15:00 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -236,7 +236,7 @@ netbsd32_sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
 	default:
 		/* Unsupported trampoline version; kill the process. */
 		sigexit(l, SIGILL);
-	case 2:
+	case __SIGTRAMP_SIGINFO_VERSION:
 		/*
 		 * Arrange to continue execution at the user's handler.
 		 * It needs a new stack pointer, a return address and

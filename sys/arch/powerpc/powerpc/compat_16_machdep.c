@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_16_machdep.c,v 1.20 2020/07/06 09:34:18 rin Exp $	*/
+/*	$NetBSD: compat_16_machdep.c,v 1.21 2021/10/27 04:15:00 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: compat_16_machdep.c,v 1.20 2020/07/06 09:34:18 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_16_machdep.c,v 1.21 2021/10/27 04:15:00 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_altivec.h"
@@ -146,7 +146,7 @@ sendsig_sigcontext(const ksiginfo_t *ksi, const sigset_t *mask)
 	 */
 	switch (ps->sa_sigdesc[sig].sd_vers) {
 #if 1 /* COMPAT_16 */
-	case 0:		/* legacy on-stack sigtramp */
+	case __SIGTRAMP_SIGCODE_VERSION:	/* legacy on-stack sigtramp */
 		tf->tf_fixreg[1] = (register_t)fp;
 		tf->tf_lr = (register_t)catcher;
 		tf->tf_fixreg[3] = (register_t)sig;
@@ -156,7 +156,7 @@ sendsig_sigcontext(const ksiginfo_t *ksi, const sigset_t *mask)
 		break;
 #endif /* COMPAT_16 */
 
-	case 1:
+	case __SIGTRAMP_SIGCONTEXT_VERSION:
 		tf->tf_fixreg[1] = (register_t)fp;
 		tf->tf_lr = (register_t)catcher;
 		tf->tf_fixreg[3] = (register_t)sig;

@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep.c,v 1.19 2021/09/23 15:19:03 ryo Exp $	*/
+/*	$NetBSD: netbsd32_machdep.c,v 1.20 2021/10/27 04:14:59 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2018 Ryo Shimizu <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.19 2021/09/23 15:19:03 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.20 2021/10/27 04:14:59 thorpej Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -379,7 +379,8 @@ netbsd32_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 {
 #ifdef COMPAT_16
 #error non EABI generation binaries are not supported
-	if (curproc->p_sigacts->sa_sigdesc[ksi->ksi_signo].sd_vers < 2)
+	if (curproc->p_sigacts->sa_sigdesc[ksi->ksi_signo].sd_vers <
+	    __SIGTRAMP_SIGINFO_VERSION)
 		netbsd32_sendsig_sigcontext(ksi, mask);
 	else
 #endif
