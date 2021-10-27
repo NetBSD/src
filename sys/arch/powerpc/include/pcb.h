@@ -1,4 +1,4 @@
-/*	$NetBSD: pcb.h,v 1.22 2011/01/18 01:02:54 matt Exp $	*/
+/*	$NetBSD: pcb.h,v 1.23 2021/10/27 18:20:23 christos Exp $	*/
 
 /*-
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -34,6 +34,7 @@
 #define	_POWERPC_PCB_H_
 
 #include <powerpc/reg.h>
+#include <powerpc/frame.h>
 
 struct faultbuf {
 	register_t fb_sp;		/* R1 */
