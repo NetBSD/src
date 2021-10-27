@@ -1,4 +1,4 @@
-/*	$NetBSD: localtime.c,v 1.124 2021/10/22 14:26:04 christos Exp $	*/
+/*	$NetBSD: localtime.c,v 1.125 2021/10/27 11:27:25 christos Exp $	*/
 
 /* Convert timestamp from time_t to struct tm.  */
 
@@ -12,7 +12,7 @@
 #if 0
 static char	elsieid[] = "@(#)localtime.c	8.17";
 #else
-__RCSID("$NetBSD: localtime.c,v 1.124 2021/10/22 14:26:04 christos Exp $");
+__RCSID("$NetBSD: localtime.c,v 1.125 2021/10/27 11:27:25 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -583,26 +583,27 @@ tzloadbody(char const *name, struct state *sp, bool doextend,
 			    detzcode64(p);
 			int_fast32_t corr = detzcode(p + stored);
 			p += stored + 4;
+
 			/* Leap seconds cannot occur before the Epoch,
 			   or out of order.  */
 			if (tr <= prevtr)
 				return EINVAL;
-			if (tr <= TIME_T_MAX) {
-		    /* To avoid other botches in this code, each leap second's
-		       correction must differ from the previous one's by 1
-		       second or less, except that the first correction can be
-		       any value; these requirements are more generous than
-		       RFC 8536, to allow future RFC extensions.  */
+			/* To avoid other botches in this code, each leap second's
+			   correction must differ from the previous one's by 1
+			   second or less, except that the first correction can be
+			   any value; these requirements are more generous than
+			   RFC 8536, to allow future RFC extensions.  */
 			if (! (i == 0
 			   || (prevcorr < corr
 			       ? corr == prevcorr + 1
 			       : (corr == prevcorr
 				  || corr == prevcorr - 1))))
-					  return EINVAL;
-
-				sp->lsis[leapcnt].ls_trans =
-				    (time_t)(prevtr = tr);
-				sp->lsis[leapcnt].ls_corr = prevcorr = corr;
+			      return EINVAL;
+			prevtr = tr;
+			prevcorr = corr;
+			if (tr <= TIME_T_MAX) {
+				sp->lsis[leapcnt].ls_trans = (time_t)tr;
+				sp->lsis[leapcnt].ls_corr = corr;
 				leapcnt++;
 			}
 		}
