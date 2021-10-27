@@ -1,4 +1,4 @@
-/*	$NetBSD: getaddrinfo.c,v 1.120 2020/11/18 12:49:52 is Exp $	*/
+/*	$NetBSD: getaddrinfo.c,v 1.121 2021/10/27 19:24:38 nia Exp $	*/
 /*	$KAME: getaddrinfo.c,v 1.29 2000/08/31 17:26:57 itojun Exp $	*/
 
 /*
@@ -55,7 +55,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: getaddrinfo.c,v 1.120 2020/11/18 12:49:52 is Exp $");
+__RCSID("$NetBSD: getaddrinfo.c,v 1.121 2021/10/27 19:24:38 nia Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #ifndef RUMP_ACTION
@@ -717,9 +717,8 @@ reorder(struct addrinfo *sentinel, struct servent_data *svd)
 		return n;
 
 	/* allocate a temporary array for sort and initialization of it. */
-	if ((aio = malloc(sizeof(*aio) * n)) == NULL)
+	if ((aio = calloc(n, sizeof(*aio))) == NULL)
 		return n;	/* give up reordering */
-	memset(aio, 0, sizeof(*aio) * n);
 
 	/* retrieve address selection policy from the kernel */
 	TAILQ_INIT(&policyhead);
