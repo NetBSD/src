@@ -1,4 +1,4 @@
-/* $NetBSD: dwiic_pci.c,v 1.7 2021/10/27 14:53:12 msaitoh Exp $ */
+/* $NetBSD: dwiic_pci.c,v 1.8 2021/10/27 19:04:03 msaitoh Exp $ */
 
 /*-
  * Copyright (c) 2017 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwiic_pci.c,v 1.7 2021/10/27 14:53:12 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwiic_pci.c,v 1.8 2021/10/27 19:04:03 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -157,10 +157,20 @@ static const struct device_compatible_entry compat_data[] = {
 	{ .id = VIDDID(INTEL, GLK_I2C_5) },
 	{ .id = VIDDID(INTEL, GLK_I2C_6) },
 	{ .id = VIDDID(INTEL, GLK_I2C_7) },
+	{ .id = VIDDID(INTEL, EHL_SIO_I2C_0) },
+	{ .id = VIDDID(INTEL, EHL_SIO_I2C_1) },
+	{ .id = VIDDID(INTEL, EHL_SIO_I2C_2) },
+	{ .id = VIDDID(INTEL, EHL_SIO_I2C_3) },
+	{ .id = VIDDID(INTEL, EHL_SIO_I2C_4) },
+	{ .id = VIDDID(INTEL, EHL_SIO_I2C_5) },
+	{ .id = VIDDID(INTEL, EHL_SIO_I2C_6) },
+	{ .id = VIDDID(INTEL, EHL_SIO_I2C_7) },
 	{ .id = VIDDID(INTEL, JSL_LPSS_I2C_0) },
 	{ .id = VIDDID(INTEL, JSL_LPSS_I2C_1) },
 	{ .id = VIDDID(INTEL, JSL_LPSS_I2C_2) },
 	{ .id = VIDDID(INTEL, JSL_LPSS_I2C_3) },
+	{ .id = VIDDID(INTEL, JSL_LPSS_I2C_4) },
+	{ .id = VIDDID(INTEL, JSL_LPSS_I2C_5) },
 
 	PCI_COMPAT_EOL
 };
