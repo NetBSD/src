@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.60 2021/09/07 11:43:03 riastradh Exp $ */
+/*	$NetBSD: linux_machdep.c,v 1.61 2021/10/27 16:40:04 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2005 Emmanuel Dreyfus, all rights reserved.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.60 2021/09/07 11:43:03 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.61 2021/10/27 16:40:04 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -167,7 +167,7 @@ linux_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 	sfp = (struct linux_rt_sigframe *)sp;
 
 	memset(&sigframe, 0, sizeof(sigframe));
-	if (ps->sa_sigdesc[sig].sd_vers != 0)
+	if (ps->sa_sigdesc[sig].sd_vers != __SIGTRAMP_SIGCODE_VERSION)
 		sigframe.pretcode = 
 		    (char *)(u_long)ps->sa_sigdesc[sig].sd_tramp;
 	else
