@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.libkern,v 1.52 2021/10/25 07:54:44 ryo Exp $
+#	$NetBSD: Makefile.libkern,v 1.53 2021/10/27 03:06:59 ryo Exp $
 
 #
 # Variable definitions for libkern.
@@ -55,7 +55,7 @@ SRCS+=	cpuset.c inet_addr.c intoa.c
 SRCS+=	bswap64.c
 .endif
 SRCS+=	md4c.c md5c.c rmd160.c sha1.c sha2.c sha3.c keccak.c murmurhash.c
-SRCS+=	pmatch.c crc32.c
+SRCS+=	pmatch.c mcount.c crc32.c
 SRCS+=	strlist.c
 
 SRCS+=	ppath_kmem_alloc.c
@@ -101,10 +101,6 @@ SRCS+=	entpool.c
 
 SRCS+=	dkcksum.c
 SRCS+=	disklabel_swap.c
-
-# for profiling
-SRCS+=	mcount.c
-PROF.mcount.c=			# mcount.c itself is never a profiling target
 
 .PATH:	${NETBSDSRCDIR}/common/lib/libc/cdb
 SRCS+=	cdbr.c

@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.README,v 1.420 2021/10/25 07:54:44 ryo Exp $
+#	$NetBSD: bsd.README,v 1.421 2021/10/27 03:06:59 ryo Exp $
 #	@(#)bsd.README	8.2 (Berkeley) 4/2/94
 
 This is the README file for the make "include" files for the NetBSD
@@ -1629,10 +1629,6 @@ OBJCOPTS	Additional flags to the compiler when creating ObjC objects.
 OBJCOPTS.<fn>	Additional flags to the compiler when creating the
 		ObjC objects for <fn>.
 		For <fn>.[ly], "<fn>.c" must be used.
-
-PROF.<fn>	Alternative flag instead of "-pg" to pass to the compiler
-		when profiling <fn>. For <fn>.[ly], "<fn>.c" must be used.
-		Usually used to exclude a particular file from profiling.
 
 SYMLINKS	See <bsd.links.mk>
 
