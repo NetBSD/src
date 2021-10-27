@@ -41,6 +41,11 @@
 #include <sys/utsname.h>
 #include <sys/systeminfo.h>
 
+#ifdef __NetBSD__
+#include <sys/dkio.h>
+#include <sys/ioctl.h>
+#endif
+
 /*
  * Emulation of kernel services in userland.
  */
@@ -447,6 +452,17 @@ vn_open(char *path, int x1, int flags, int mode, vnode_t **vpp, int x2, int x3)
 	 */
 	if (strncmp(path, "/dev/", 5) == 0) {
 		char *dsk;
+#ifdef __NetBSD__
+		/*
+		 * For NetBSD, we've been passed in a block device name
+		 * but need to convert to the character device name.
+		 * XXX a bit ugly...
+		 */
+		char rawpath[MAXPATHLEN];
+
+		snprintf(rawpath, sizeof(rawpath), "/dev/r%s", path + 5);
+		path = rawpath;	/* gets strdup()'d below */
+#endif	/* __NetBSD__ */
 		fd = open64(path, O_RDONLY);
 		if (fd == -1)
 			return (errno);
@@ -454,6 +470,14 @@ vn_open(char *path, int x1, int flags, int mode, vnode_t **vpp, int x2, int x3)
 			close(fd);
 			return (errno);
 		}
+#ifdef __NetBSD__
+		if (st.st_size == 0) {
+			off_t dsize;
+
+			if (ioctl(fd, DIOCGMEDIASIZE, &dsize) == 0)
+				st.st_size = dsize;
+		}
+#endif	/* __NetBSD__ */
 		close(fd);
 		(void) sprintf(realpath, "%s", path);
 		dsk = strstr(path, "/dsk/");
@@ -587,6 +611,14 @@ fop_getattr(vnode_t *vp, vattr_t *vap)
 		close(vp->v_fd);
 		return (errno);
 	}
+#ifdef __NetBSD__
+	if (st.st_size == 0) {
+		off_t dsize;
+
+		if (ioctl(vp->v_fd, DIOCGMEDIASIZE, &dsize) == 0)
+			st.st_size = dsize;
+	}
+#endif	/* __NetBSD__ */
 
 	vap->va_size = st.st_size;
 	return (0);
