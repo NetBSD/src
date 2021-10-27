@@ -1,4 +1,4 @@
-/*	$NetBSD: __sigaction14_sigtramp.c,v 1.1 2021/10/26 16:16:36 christos Exp $	*/
+/*	$NetBSD: __sigaction14_sigtramp.c,v 1.2 2021/10/27 04:48:33 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: __sigaction14_sigtramp.c,v 1.1 2021/10/26 16:16:36 christos Exp $");
+__RCSID("$NetBSD: __sigaction14_sigtramp.c,v 1.2 2021/10/27 04:48:33 thorpej Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -41,12 +41,6 @@ __RCSID("$NetBSD: __sigaction14_sigtramp.c,v 1.1 2021/10/26 16:16:36 christos Ex
 
 #include "extern.h"
 
-#ifndef __SIGTRAMP_SIGCONTEXT_VERSION
-#define __SIGTRAMP_SIGCONTEXT_VERSION 1
-#endif
-#ifndef __SIGTRAMP_SIGINFO_VERSION
-#define __SIGTRAMP_SIGINFO_VERSION 2
-#endif
 #define C(a,b) __CONCAT(a,b)
 #define __SIGTRAMP_SIGCONTEXT  \
     C(__sigtramp_sigcontext_,__SIGTRAMP_SIGCONTEXT_VERSION)
@@ -60,7 +54,7 @@ __weak_alias(__sigaction14, __libc_sigaction14)
 int
 __libc_sigaction14(int sig, const struct sigaction *act, struct sigaction *oact)
 {
-	extern const int __SIGTRAMP_SIGINFO[];
+	extern const char __SIGTRAMP_SIGINFO[];
 
 	/*
 	 * If no sigaction, use the "default" trampoline since it won't
@@ -75,7 +69,7 @@ __libc_sigaction14(int sig, const struct sigaction *act, struct sigaction *oact)
 	 * set in the sigaction.
 	 */
 	if ((act->sa_flags & SA_SIGINFO) == 0) {
-		extern const int __SIGTRAMP_SIGCONTEXT[];
+		extern const char __SIGTRAMP_SIGCONTEXT[];
 		int sav = errno;
 		int rv =  __sigaction_sigtramp(sig, act, oact,
 		    __SIGTRAMP_SIGCONTEXT, __SIGTRAMP_SIGCONTEXT_VERSION);
