@@ -1,4 +1,4 @@
-/*	$NetBSD: signal.h,v 1.17 2021/10/26 16:16:34 christos Exp $	*/
+/*	$NetBSD: signal.h,v 1.18 2021/10/27 01:09:36 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -66,7 +66,7 @@ typedef int sig_atomic_t;
  * a non-standard exit is performed.
  */
 
-#if defined(__LIBC12_SOURCE__) || defined(_KERNEL)
+#if defined(_KERNEL)
 struct sigcontext13 {
 	int	sc_onstack;		/* sigstack state to restore */
 	int	sc_mask;		/* signal mask to restore (old style) */
@@ -90,8 +90,9 @@ struct sigcontext13 {
 	unsigned int sc_svc_lr;
 	unsigned int sc_pc;
 };
-#endif /* __LIBC12_SOURCE__ || _KERNEL */
+#endif /* _KERNEL */
 
+#if defined(_LIBC) || defined(_KERNEL)
 #define	__HAVE_STRUCT_SIGCONTEXT
 struct sigcontext {
 	int	sc_onstack;		/* sigstack state to restore */
@@ -118,6 +119,7 @@ struct sigcontext {
 
 	sigset_t sc_mask;		/* signal mask to restore (new style) */
 };
+#endif /* _LIBC || _KERNEL */
 
 #endif /* !_LOCORE */
 
