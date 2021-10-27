@@ -1,4 +1,4 @@
-/*	$NetBSD: sig_machdep.c,v 1.52 2020/07/06 09:34:18 rin Exp $	*/
+/*	$NetBSD: sig_machdep.c,v 1.53 2021/10/27 04:15:00 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.52 2020/07/06 09:34:18 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.53 2021/10/27 04:15:00 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_altivec.h"
@@ -122,7 +122,7 @@ sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
 	 * numbers are coordinated with machine-dependent code in libc.
 	 */
 	switch (sd->sd_vers) {
-	case 2:		/* siginfo sigtramp */
+	case __SIGTRAMP_SIGINFO_VERSION:	/* siginfo sigtramp */
 		tf->tf_fixreg[1]  = (register_t)sp - CALLFRAMELEN;
 		tf->tf_fixreg[3]  = (register_t)ksi->ksi_signo;
 		tf->tf_fixreg[4]  = (register_t)sip;

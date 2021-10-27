@@ -1,4 +1,4 @@
-/*	$NetBSD: sig_machdep.c,v 1.27 2019/04/15 20:45:08 skrll Exp $	*/
+/*	$NetBSD: sig_machdep.c,v 1.28 2021/10/27 04:14:59 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.27 2019/04/15 20:45:08 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.28 2021/10/27 04:14:59 thorpej Exp $");
 
 #include "opt_compat_netbsd.h"
 
@@ -137,7 +137,7 @@ sendsig_siginfo(const struct ksiginfo *ksi, const sigset_t *mask)
 		printf("sendsig_siginfo: bad version %d\n",
 		       ps->sa_sigdesc[sig].sd_vers);
 		sigexit(l, SIGILL);
-	case 2:
+	case __SIGTRAMP_SIGINFO_VERSION:
 		break;
 	}
 

@@ -1,4 +1,4 @@
-/* $NetBSD: sig_machdep.c,v 1.24 2018/12/29 11:30:12 maxv Exp $	 */
+/* $NetBSD: sig_machdep.c,v 1.25 2021/10/27 04:15:00 thorpej Exp $	 */
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.24 2018/12/29 11:30:12 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.25 2021/10/27 04:15:00 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -207,7 +207,8 @@ sendsig_sighelper(const ksiginfo_t *ksi, const sigset_t *mask)
 	    (sd->sd_sigact.sa_flags & SA_ONSTACK) != 0;
 	sp = onstack ? ((vaddr_t)ss->ss_sp + ss->ss_size) : tf->tf_sp;
 
-	if (sd->sd_vers > 3 || (setup = sig_setupstacks[sd->sd_vers]) == NULL)
+	if (sd->sd_vers > __SIGTRAMP_SIGINFO_VERSION ||
+	    (setup = sig_setupstacks[sd->sd_vers]) == NULL)
 		goto nosupport;
 
 	sp = (*setup)(ksi, mask, sd->sd_vers, l, tf, sp, onstack,

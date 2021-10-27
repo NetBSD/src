@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_16_machdep.c,v 1.22 2017/03/16 16:13:20 chs Exp $	*/
+/*	$NetBSD: compat_16_machdep.c,v 1.23 2021/10/27 04:15:00 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 	
-__KERNEL_RCSID(0, "$NetBSD: compat_16_machdep.c,v 1.22 2017/03/16 16:13:20 chs Exp $"); 
+__KERNEL_RCSID(0, "$NetBSD: compat_16_machdep.c,v 1.23 2021/10/27 04:15:00 thorpej Exp $"); 
 
 #ifdef _KERNEL_OPT
 #include "opt_cputype.h"
@@ -192,11 +192,11 @@ sendsig_sigcontext(const ksiginfo_t *ksi, const sigset_t *returnmask)
 	tf->tf_regs[_R_SP] = (intptr_t)scp;
 
 	switch (ps->sa_sigdesc[sig].sd_vers) {
-	case 0:		/* legacy on-stack sigtramp */
+	case __SIGTRAMP_SIGCODE_VERSION:	/* legacy on-stack sigtramp */
 		tf->tf_regs[_R_RA] = (intptr_t)p->p_sigctx.ps_sigcode;
 		break;
 #ifdef COMPAT_16
-	case 1:
+	case __SIGTRAMP_SIGCONTEXT_VERSION:
 		tf->tf_regs[_R_RA] = (intptr_t)ps->sa_sigdesc[sig].sd_tramp;
 		break;
 #endif
