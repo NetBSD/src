@@ -1,4 +1,4 @@
-/* $NetBSD: dwiic_pci.c,v 1.6 2021/08/07 16:19:07 thorpej Exp $ */
+/* $NetBSD: dwiic_pci.c,v 1.7 2021/10/27 14:53:12 msaitoh Exp $ */
 
 /*-
  * Copyright (c) 2017 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwiic_pci.c,v 1.6 2021/08/07 16:19:07 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwiic_pci.c,v 1.7 2021/10/27 14:53:12 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -65,6 +65,106 @@ struct pci_dwiic_softc {
 	struct acpi_devnode	*sc_acpinode;
 };
 
+#define VIDDID(a, b) PCI_ID_CODE(PCI_VENDOR_ ## a, PCI_PRODUCT_ ## a ## _ ## b)
+
+static const struct device_compatible_entry compat_data[] = {
+	{ .id = VIDDID(INTEL, CORE4G_M_S_I2C_0) },
+	{ .id = VIDDID(INTEL, CORE4G_M_S_I2C_1) },
+	{ .id = VIDDID(INTEL, 100SERIES_I2C_0) },
+	{ .id = VIDDID(INTEL, 100SERIES_I2C_1) },
+	{ .id = VIDDID(INTEL, 100SERIES_I2C_2) },
+	{ .id = VIDDID(INTEL, 100SERIES_I2C_3) },
+	{ .id = VIDDID(INTEL, 100SERIES_LP_I2C_0) },
+	{ .id = VIDDID(INTEL, 100SERIES_LP_I2C_1) },
+	{ .id = VIDDID(INTEL, 100SERIES_LP_I2C_2) },
+	{ .id = VIDDID(INTEL, 100SERIES_LP_I2C_3) },
+	{ .id = VIDDID(INTEL, 100SERIES_LP_I2C_4) },
+	{ .id = VIDDID(INTEL, 100SERIES_LP_I2C_5) },
+	{ .id = VIDDID(INTEL, 2HS_I2C_0) },
+	{ .id = VIDDID(INTEL, 2HS_I2C_1) },
+	{ .id = VIDDID(INTEL, 2HS_I2C_2) },
+	{ .id = VIDDID(INTEL, 2HS_I2C_3) },
+	{ .id = VIDDID(INTEL, 3HS_I2C_0) },
+	{ .id = VIDDID(INTEL, 3HS_I2C_1) },
+	{ .id = VIDDID(INTEL, 3HS_I2C_2) },
+	{ .id = VIDDID(INTEL, 3HS_I2C_3) },
+	{ .id = VIDDID(INTEL, 3HS_U_I2C_0) },
+	{ .id = VIDDID(INTEL, 3HS_U_I2C_1) },
+	{ .id = VIDDID(INTEL, 3HS_U_I2C_2) },
+	{ .id = VIDDID(INTEL, 3HS_U_I2C_3) },
+	{ .id = VIDDID(INTEL, 3HS_U_I2C_4) },
+	{ .id = VIDDID(INTEL, 3HS_U_I2C_5) },
+	{ .id = VIDDID(INTEL, 4HS_H_I2C_0) },
+	{ .id = VIDDID(INTEL, 4HS_H_I2C_1) },
+	{ .id = VIDDID(INTEL, 4HS_H_I2C_2) },
+	{ .id = VIDDID(INTEL, 4HS_H_I2C_3) },
+	{ .id = VIDDID(INTEL, 4HS_V_I2C_0) },
+	{ .id = VIDDID(INTEL, 4HS_V_I2C_1) },
+	{ .id = VIDDID(INTEL, 4HS_V_I2C_2) },
+	{ .id = VIDDID(INTEL, 4HS_V_I2C_3) },
+	{ .id = VIDDID(INTEL, CMTLK_I2C_0) }, /* 4HS LP */
+	{ .id = VIDDID(INTEL, CMTLK_I2C_1) },
+	{ .id = VIDDID(INTEL, CMTLK_I2C_2) },
+	{ .id = VIDDID(INTEL, CMTLK_I2C_3) },
+	{ .id = VIDDID(INTEL, CMTLK_I2C_4) },
+	{ .id = VIDDID(INTEL, CMTLK_I2C_5) },
+	{ .id = VIDDID(INTEL, 495_YU_I2C_0) },
+	{ .id = VIDDID(INTEL, 495_YU_I2C_1) },
+	{ .id = VIDDID(INTEL, 495_YU_I2C_2) },
+	{ .id = VIDDID(INTEL, 495_YU_I2C_3) },
+	{ .id = VIDDID(INTEL, 495_YU_I2C_4) },
+	{ .id = VIDDID(INTEL, 495_YU_I2C_5) },
+	{ .id = VIDDID(INTEL, 5HS_H_I2C_0) },
+	{ .id = VIDDID(INTEL, 5HS_H_I2C_1) },
+	{ .id = VIDDID(INTEL, 5HS_H_I2C_2) },
+	{ .id = VIDDID(INTEL, 5HS_H_I2C_3) },
+	{ .id = VIDDID(INTEL, 5HS_H_I2C_4) },
+	{ .id = VIDDID(INTEL, 5HS_H_I2C_5) },
+	{ .id = VIDDID(INTEL, 5HS_H_I2C_6) },
+	{ .id = VIDDID(INTEL, 5HS_LP_I2C_0) },
+	{ .id = VIDDID(INTEL, 5HS_LP_I2C_1) },
+	{ .id = VIDDID(INTEL, 5HS_LP_I2C_2) },
+	{ .id = VIDDID(INTEL, 5HS_LP_I2C_3) },
+	{ .id = VIDDID(INTEL, 5HS_LP_I2C_4) },
+	{ .id = VIDDID(INTEL, 5HS_LP_I2C_5) },
+	{ .id = VIDDID(INTEL, BAYTRAIL_SIO_I2C1) },
+	{ .id = VIDDID(INTEL, BAYTRAIL_SIO_I2C2) },
+	{ .id = VIDDID(INTEL, BAYTRAIL_SIO_I2C3) },
+	{ .id = VIDDID(INTEL, BAYTRAIL_SIO_I2C4) },
+	{ .id = VIDDID(INTEL, BAYTRAIL_SIO_I2C5) },
+	{ .id = VIDDID(INTEL, BAYTRAIL_SIO_I2C6) },
+	{ .id = VIDDID(INTEL, BAYTRAIL_SIO_I2C7) },
+	{ .id = VIDDID(INTEL, BSW_SIO_I2C_1) },
+	{ .id = VIDDID(INTEL, BSW_SIO_I2C_2) },
+	{ .id = VIDDID(INTEL, BSW_SIO_I2C_3) },
+	{ .id = VIDDID(INTEL, BSW_SIO_I2C_4) },
+	{ .id = VIDDID(INTEL, BSW_SIO_I2C_5) },
+	{ .id = VIDDID(INTEL, BSW_SIO_I2C_6) },
+	{ .id = VIDDID(INTEL, BSW_SIO_I2C_7) },
+	{ .id = VIDDID(INTEL, APL_I2C_0) },
+	{ .id = VIDDID(INTEL, APL_I2C_1) },
+	{ .id = VIDDID(INTEL, APL_I2C_2) },
+	{ .id = VIDDID(INTEL, APL_I2C_3) },
+	{ .id = VIDDID(INTEL, APL_I2C_4) },
+	{ .id = VIDDID(INTEL, APL_I2C_5) },
+	{ .id = VIDDID(INTEL, APL_I2C_6) },
+	{ .id = VIDDID(INTEL, APL_I2C_7) },
+	{ .id = VIDDID(INTEL, GLK_I2C_0) },
+	{ .id = VIDDID(INTEL, GLK_I2C_1) },
+	{ .id = VIDDID(INTEL, GLK_I2C_2) },
+	{ .id = VIDDID(INTEL, GLK_I2C_3) },
+	{ .id = VIDDID(INTEL, GLK_I2C_4) },
+	{ .id = VIDDID(INTEL, GLK_I2C_5) },
+	{ .id = VIDDID(INTEL, GLK_I2C_6) },
+	{ .id = VIDDID(INTEL, GLK_I2C_7) },
+	{ .id = VIDDID(INTEL, JSL_LPSS_I2C_0) },
+	{ .id = VIDDID(INTEL, JSL_LPSS_I2C_1) },
+	{ .id = VIDDID(INTEL, JSL_LPSS_I2C_2) },
+	{ .id = VIDDID(INTEL, JSL_LPSS_I2C_3) },
+
+	PCI_COMPAT_EOL
+};
+
 static uint32_t
 lpss_read(struct pci_dwiic_softc *sc, int offset)
 {
@@ -92,14 +192,7 @@ pci_dwiic_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 
-	if (PCI_VENDOR(pa->pa_id) != PCI_VENDOR_INTEL)
-		return 0;
-
-	if (PCI_PRODUCT(pa->pa_id) < PCI_PRODUCT_INTEL_100SERIES_LP_I2C_0 ||
-	    PCI_PRODUCT(pa->pa_id) > PCI_PRODUCT_INTEL_100SERIES_LP_I2C_3)
-		return 0;
-
-	return 1;
+	return pci_compatible_match(pa, compat_data);
 }
 
 void
