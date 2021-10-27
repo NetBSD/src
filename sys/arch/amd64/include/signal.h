@@ -1,4 +1,4 @@
-/*	$NetBSD: signal.h,v 1.12 2013/01/02 19:40:23 dsl Exp $	*/
+/*	$NetBSD: signal.h,v 1.13 2021/10/27 04:45:42 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991 Regents of the University of California.
@@ -37,6 +37,11 @@
 #ifdef __x86_64__
 
 #include <sys/featuretest.h>
+
+#ifdef _KERNEL
+/* This is needed to support COMPAT_NETBSD32. */
+#define	__HAVE_STRUCT_SIGCONTEXT
+#endif /* _KERNEL */
 
 typedef int sig_atomic_t;
 
