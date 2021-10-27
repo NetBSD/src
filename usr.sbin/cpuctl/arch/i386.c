@@ -1,4 +1,4 @@
-/*	$NetBSD: i386.c,v 1.122 2021/10/07 13:04:18 msaitoh Exp $	*/
+/*	$NetBSD: i386.c,v 1.123 2021/10/27 04:15:42 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: i386.c,v 1.122 2021/10/07 13:04:18 msaitoh Exp $");
+__RCSID("$NetBSD: i386.c,v 1.123 2021/10/27 04:15:42 mrg Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -1892,7 +1892,7 @@ identifycpu_cpuids_amd(struct cpu_info *ci)
 	}
 #endif
 
-	if (cpu_family == 0x17) {
+	if (cpu_family >= 0x17) {
 		x86_cpuid(0x8000001e, descs);
 		const u_int threads = ((descs[1] >> 8) & 0xff) + 1;
 		smt_bits = ilog2(threads);
