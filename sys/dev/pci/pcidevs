@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.1440 2021/10/13 07:06:23 msaitoh Exp $
+$NetBSD: pcidevs,v 1.1441 2021/10/27 11:18:22 msaitoh Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -5158,6 +5158,7 @@ product INTEL GLK_PMC		0x3194	Gemini Lake PMC
 product INTEL GLK_FASTSPI	0x3196	Gemini Lake Fast SPI
 product INTEL GLK_ESPI		0x3197	Gemini Lake eSPI
 product INTEL GLK_HDA		0x3198	Gemini Lake HD Audio
+product INTEL GLK_TXE_HECI_1	0x319a	Gemini Lake TXE HECI 1
 product INTEL GLK_ISH		0x31a2	Gemini Lake Integrated Sensor Hub
 product INTEL GLK_XHCI		0x31a8	Gemini Lake USB Host (xHCI)
 product INTEL GLK_XDCI		0x31aa	Gemini Lake USB Device (xDCI)
