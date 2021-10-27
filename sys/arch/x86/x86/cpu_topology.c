@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_topology.c,v 1.19 2020/02/15 07:20:41 skrll Exp $	*/
+/*	$NetBSD: cpu_topology.c,v 1.20 2021/10/27 04:15:41 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2009 Mindaugas Rasiukevicius <rmind at NetBSD org>,
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_topology.c,v 1.19 2020/02/15 07:20:41 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_topology.c,v 1.20 2021/10/27 04:15:41 mrg Exp $");
 
 #include "acpica.h"
 
@@ -185,8 +185,8 @@ x86_cpu_topology(struct cpu_info *ci)
 		}
 	}
 
-	/* Family 0x17 supports SMT */
-	if (cpu_vendor == CPUVENDOR_AMD && cpu_family == 0x17) { /* XXX */
+	/* Family 0x17 and above support SMT */
+	if (cpu_vendor == CPUVENDOR_AMD && cpu_family >= 0x17) { /* XXX */
 		x86_cpuid(0x8000001e, descs);
 		const u_int threads = ((descs[1] >> 8) & 0xff) + 1;
 
