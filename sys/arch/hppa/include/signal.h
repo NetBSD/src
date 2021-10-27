@@ -1,4 +1,4 @@
-/*	$NetBSD: signal.h,v 1.9 2021/10/26 16:16:35 christos Exp $	*/
+/*	$NetBSD: signal.h,v 1.10 2021/10/27 02:34:00 thorpej Exp $	*/
 
 /*	$OpenBSD: signal.h,v 1.1 1998/06/23 19:45:27 mickey Exp $	*/
 
@@ -40,70 +40,5 @@ typedef int sig_atomic_t;
 #if defined(_XOPEN_SOURCE) || defined(_NETBSD_SOURCE)
 #include <machine/trap.h>	/* codes for SIGILL, SIGFPE */
 #endif
-
-/*
- * Information pushed on stack when a signal is delivered.
- * This is used by the kernel to restore state following
- * execution of the signal handler.  It is also made available
- * to the handler to allow it to restore state properly if
- * a non-standard exit is performed.
- */
-#define	__HAVE_STRUCT_SIGCONTEXT
-struct sigcontext {
-	int	sc_onstack;		/* sigstack state to restore */
-	int	__sc_mask13;		/* signal mask to restore (old style) */
-	int	sc_sp;			/* sp to restore */
-	int	sc_fp;			/* fp to restore */
-	int	sc_ap;			/* ap to restore */
-	int	sc_pcsqh;		/* pc space queue (head) to restore */
-	int	sc_pcoqh;		/* pc offset queue (head) to restore */
-	int	sc_pcsqt;		/* pc space queue (tail) to restore */
-	int	sc_pcoqt;		/* pc offset queue (tail) to restore */
-	int	sc_ps;			/* psl to restore */
-	sigset_t sc_mask;		/* signal mask to restore (new style) */
-};
-
-#if defined(_KERNEL)
-#include <hppa/frame.h>
-
-/*
- * Register state saved while kernel delivers a signal.
- */
-struct sigstate {
-	int	ss_flags;		/* which of the following are valid */
-	struct trapframe ss_frame;	/* original exception frame */
-};
-
-#define	SS_FPSTATE	0x01
-#define	SS_USERREGS	0x02
-
-/*
- * Stack frame layout when delivering a signal.
- */
-struct sigframe {
-	struct sigcontext sf_sc;	/* actual context */
-	struct sigstate sf_state;	/* state of the hardware */
-	/*
-	 * Everything below here must match the calling convention.
-	 * Per that convention, sendsig must initialize very little;
-	 * only sf_psp, sf_clup, sf_sl, and sf_edp must be set.
-	 * Note that this layout matches the HPPA_FRAME_ macros
-	 * in frame.h.
-	 */
-	u_int	sf_arg3;
-	u_int	sf_arg2;
-	u_int	sf_arg1;
-	u_int	sf_arg0;
-	u_int	sf_edp;
-	u_int	sf_esr4;
-	u_int	sf_erp;
-	u_int	sf_crp;
-	u_int	sf_sl;
-	u_int	sf_clup;
-	u_int	sf_ep;
-	u_int	sf_psp;
-};
-
-#endif /* _KERNEL */
 
 #endif /* _HPPA_SIGNAL_H__ */
