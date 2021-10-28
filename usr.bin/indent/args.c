@@ -1,4 +1,4 @@
-/*	$NetBSD: args.c,v 1.61 2021/10/28 20:31:17 rillig Exp $	*/
+/*	$NetBSD: args.c,v 1.62 2021/10/28 20:49:36 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)args.c	8.1 (Berkeley) 6/6/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: args.c,v 1.61 2021/10/28 20:31:17 rillig Exp $");
+__RCSID("$NetBSD: args.c,v 1.62 2021/10/28 20:49:36 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/args.c 336318 2018-07-15 21:04:21Z pstef $");
 #endif
@@ -134,74 +134,6 @@ static const struct pro {
     bool_options("v", verbose),
 };
 
-static void
-load_profile(const char *fname, bool must_exist)
-{
-    FILE *f;
-
-    if ((f = fopen(fname, "r")) == NULL) {
-	if (must_exist)
-	    err(EXIT_FAILURE, "profile %s", fname);
-	return;
-    }
-
-    for (;;) {
-	char buf[BUFSIZ];
-	size_t n = 0;
-	int ch, comment_ch = -1;
-
-	while ((ch = getc(f)) != EOF) {
-	    if (ch == '*' && comment_ch < 0 && n > 0 && buf[n - 1] == '/') {
-		n--;
-		comment_ch = ch;
-	    } else if (comment_ch >= 0) {
-		comment_ch = ch == '/' && comment_ch == '*' ? -1 : ch;
-	    } else if (isspace((unsigned char)ch)) {
-		break;
-	    } else if (n >= array_length(buf) - 5) {
-		diag(1, "buffer overflow in %s, starting with '%.10s'",
-		    fname, buf);
-		exit(1);
-	    } else
-		buf[n++] = (char)ch;
-	}
-
-	if (n > 0) {
-	    buf[n] = '\0';
-	    if (opt.verbose)
-		printf("profile: %s\n", buf);
-	    set_option(buf, fname);
-	} else if (ch == EOF)
-	    break;
-    }
-    (void)fclose(f);
-}
-
-void
-load_profiles(const char *profile_name)
-{
-    char fname[PATH_MAX];
-
-    if (profile_name != NULL)
-	load_profile(profile_name, true);
-    else {
-	snprintf(fname, sizeof(fname), "%s/.indent.pro", getenv("HOME"));
-	load_profile(fname, false);
-    }
-    load_profile(".indent.pro", false);
-}
-
-static const char *
-skip_over(const char *s, bool may_negate, const char *prefix)
-{
-    if (may_negate && s[0] == 'n')
-	s++;
-    while (*prefix != '\0') {
-	if (*prefix++ != *s++)
-	    return NULL;
-    }
-    return s;
-}
 
 static void
 add_typedefs_from_file(const char *fname)
@@ -274,6 +206,18 @@ need_param:
     /* NOTREACHED */
 }
 
+static const char *
+skip_over(const char *s, bool may_negate, const char *prefix)
+{
+    if (may_negate && s[0] == 'n')
+	s++;
+    while (*prefix != '\0') {
+	if (*prefix++ != *s++)
+	    return NULL;
+    }
+    return s;
+}
+
 void
 set_option(const char *arg, const char *option_source)
 {
@@ -309,4 +253,61 @@ found:
 		option_source, param_start, p->p_name);
 	*(int *)p->p_var = (int)num;
     }
+}
+
+static void
+load_profile(const char *fname, bool must_exist)
+{
+    FILE *f;
+
+    if ((f = fopen(fname, "r")) == NULL) {
+	if (must_exist)
+	    err(EXIT_FAILURE, "profile %s", fname);
+	return;
+    }
+
+    for (;;) {
+	char buf[BUFSIZ];
+	size_t n = 0;
+	int ch, comment_ch = -1;
+
+	while ((ch = getc(f)) != EOF) {
+	    if (ch == '*' && comment_ch < 0 && n > 0 && buf[n - 1] == '/') {
+		n--;
+		comment_ch = ch;
+	    } else if (comment_ch >= 0) {
+		comment_ch = ch == '/' && comment_ch == '*' ? -1 : ch;
+	    } else if (isspace((unsigned char)ch)) {
+		break;
+	    } else if (n >= array_length(buf) - 5) {
+		diag(1, "buffer overflow in %s, starting with '%.10s'",
+		     fname, buf);
+		exit(1);
+	    } else
+		buf[n++] = (char)ch;
+	}
+
+	if (n > 0) {
+	    buf[n] = '\0';
+	    if (opt.verbose)
+		printf("profile: %s\n", buf);
+	    set_option(buf, fname);
+	} else if (ch == EOF)
+	    break;
+    }
+    (void)fclose(f);
+}
+
+void
+load_profiles(const char *profile_name)
+{
+    char fname[PATH_MAX];
+
+    if (profile_name != NULL)
+	load_profile(profile_name, true);
+    else {
+	snprintf(fname, sizeof(fname), "%s/.indent.pro", getenv("HOME"));
+	load_profile(fname, false);
+    }
+    load_profile(".indent.pro", false);
 }
