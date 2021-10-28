@@ -1,4 +1,4 @@
-/*	$NetBSD: signal.h,v 1.25 2021/10/27 01:12:23 thorpej Exp $ */
+/*	$NetBSD: signal.h,v 1.26 2021/10/28 23:41:06 thorpej Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -45,6 +45,8 @@
 
 #include <sys/featuretest.h>
 
+#define	__HAVE_STRUCT_SIGCONTEXT
+
 #ifndef _LOCORE
 typedef int sig_atomic_t;
 #endif
@@ -79,8 +81,6 @@ struct sigcontext13 {
 };
 #endif /* _KERNEL */
 
-#if defined(_LIBC) || defined(_KERNEL)
-#define	__HAVE_STRUCT_SIGCONTEXT
 struct sigcontext {
 	int		sc_onstack;	/* sigstack state to restore */
 	int		__sc_mask13;	/* signal mask to restore (old style) */
@@ -97,7 +97,6 @@ struct sigcontext {
 	long		sc_o0;		/* %o0 to restore */
 	sigset_t	sc_mask;	/* signal mask to restore (new style) */
 };
-#endif /* _LIBC || _KERNEL */
 
 #else /* _LOCORE */
 /* XXXXX These values don't work for _LP64 */
