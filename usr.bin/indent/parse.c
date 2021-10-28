@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.43 2021/10/28 21:51:43 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.44 2021/10/28 22:20:08 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -246,7 +246,7 @@ parse(parser_symbol psym)
 }
 
 void
-parse_hd(stmt_head hd)
+parse_stmt_head(stmt_head hd)
 {
     static const parser_symbol psym[] = {
 	[hd_for] = psym_for_exprs,
@@ -256,10 +256,6 @@ parse_hd(stmt_head hd)
     };
     parse(psym[hd]);
 }
-
-/*----------------------------------------------*\
-|   REDUCTION PHASE				 |
-\*----------------------------------------------*/
 
 /*
  * Try to combine the statement on the top of the parse stack with the symbol
@@ -290,8 +286,8 @@ reduce_stmt(void)
 	ps.ind_level_follow = ps.s_ind_level[i];
 	/*
 	 * For the time being, assume that there is no 'else' on this 'if',
-	 * and set the indentation level accordingly. If an 'else' is
-	 * scanned, it will be fixed up later.
+	 * and set the indentation level accordingly. If an 'else' is scanned,
+	 * it will be fixed up later.
 	 */
 	return true;
 
@@ -314,21 +310,16 @@ reduce_stmt(void)
 /*
  * Repeatedly try to reduce the top two symbols on the parse stack to a
  * single symbol, until no more reductions are possible.
- *
- * On each reduction, ps.i_l_follow (the indentation for the following line)
- * is set to the indentation level associated with the old TOS.
  */
 static void
 reduce(void)
 {
 again:
-    if (ps.s_sym[ps.tos] == psym_stmt) {
-	if (reduce_stmt())
-	    goto again;
-    } else if (ps.s_sym[ps.tos] == psym_while_expr) {
-	if (ps.s_sym[ps.tos - 1] == psym_do_stmt) {
-	    ps.tos -= 2;
-	    goto again;
-	}
+    if (ps.s_sym[ps.tos] == psym_stmt && reduce_stmt())
+	goto again;
+    if (ps.s_sym[ps.tos] == psym_while_expr &&
+	    ps.s_sym[ps.tos - 1] == psym_do_stmt) {
+	ps.tos -= 2;		/* XXX: why not reduce to stmt? */
+	goto again;
     }
 }

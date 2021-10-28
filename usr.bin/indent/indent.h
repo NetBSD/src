@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.h,v 1.54 2021/10/28 21:56:26 rillig Exp $	*/
+/*	$NetBSD: indent.h,v 1.55 2021/10/28 22:20:08 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-FreeBSD
@@ -374,7 +374,7 @@ void dump_line(void);
 void dump_line_ff(void);
 void inbuf_read_line(void);
 void parse(parser_symbol);
-void parse_hd(stmt_head);
+void parse_stmt_head(stmt_head);
 void process_comment(void);
 void set_option(const char *, const char *);
 void load_profiles(const char *);

@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.c,v 1.166 2021/10/28 22:06:23 rillig Exp $	*/
+/*	$NetBSD: indent.c,v 1.167 2021/10/28 22:20:08 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)indent.c	5.17 (Berkeley) 6/7/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: indent.c,v 1.166 2021/10/28 22:06:23 rillig Exp $");
+__RCSID("$NetBSD: indent.c,v 1.167 2021/10/28 22:20:08 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/indent.c 340138 2018-11-04 19:24:49Z oshogbo $");
 #endif
@@ -791,7 +791,7 @@ process_rparen_or_rbracket(bool *spaced_expr, bool *force_nl, stmt_head hd)
 	ps.next_unary = true;
 	ps.in_stmt = false;	/* don't use stmt continuation indentation */
 
-	parse_hd(hd);		/* let parser worry about if, or whatever */
+	parse_stmt_head(hd);
     }
 
     /*
@@ -908,10 +908,9 @@ process_semicolon(bool *seen_case, int *quest_level, int decl_ind,
 	 */
 	diag(1, "Unbalanced parens");
 	ps.p_l_follow = 0;
-	if (*spaced_expr) {	/* 'if', 'while', etc. with unbalanced
-				 * parentheses */
+	if (*spaced_expr) {	/* 'if', 'while', etc. */
 	    *spaced_expr = false;
-	    parse_hd(hd);	/* don't lose the 'if', or whatever */
+	    parse_stmt_head(hd);
 	}
     }
     *code.e++ = ';';
@@ -962,7 +961,7 @@ process_lbrace(bool *force_nl, bool *spaced_expr, stmt_head hd,
 	ps.p_l_follow = 0;
 	if (*spaced_expr) {	/* check for unclosed 'if', 'for', etc. */
 	    *spaced_expr = false;
-	    parse_hd(hd);
+	    parse_stmt_head(hd);
 	    ps.ind_level = ps.ind_level_follow;
 	}
     }
@@ -1137,7 +1136,7 @@ process_ident(lexer_symbol lsym, int decl_ind, bool tabs_to_var,
 	*force_nl = true;
 	ps.next_unary = true;
 	ps.in_stmt = false;
-	parse_hd(hd);
+	parse_stmt_head(hd);
     }
 }
 
