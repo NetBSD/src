@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.c,v 1.165 2021/10/28 21:56:26 rillig Exp $	*/
+/*	$NetBSD: indent.c,v 1.166 2021/10/28 22:06:23 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)indent.c	5.17 (Berkeley) 6/7/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: indent.c,v 1.165 2021/10/28 21:56:26 rillig Exp $");
+__RCSID("$NetBSD: indent.c,v 1.166 2021/10/28 22:06:23 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/indent.c 340138 2018-11-04 19:24:49Z oshogbo $");
 #endif
@@ -336,8 +336,10 @@ search_stmt_lookahead(lexer_symbol *lsym)
     struct parser_state backup_ps = ps;
     *lsym = lexi();
     if (*lsym == lsym_newline || *lsym == lsym_form_feed ||
-	*lsym == lsym_comment || ps.search_stmt)
+	*lsym == lsym_comment || ps.search_stmt) {
 	ps = backup_ps;
+	debug_println("rolled back parser state");
+    }
 }
 
 /*
