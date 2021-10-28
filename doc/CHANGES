@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2846 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2847 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -449,3 +449,4 @@ Changes from NetBSD 9.0 to NetBSD 10.0:
 	tzdata: updated to 2021e (still missing trash from 2021b) [kre 20211022] 
 	passwd.conf(5): Make 'argon2id' the default cipher for new
 		passwords. [nia 20211026]
+	acpi(4): Updated ACPICA to 20210930. [christos 20211028]
