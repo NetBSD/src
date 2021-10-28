@@ -2041,8 +2041,8 @@ static void GetPcSpBp(void *context, uptr *pc, uptr *sp, uptr *bp) {
   *pc = ucontext->uc_mcontext.gregs[REG_PC];
   *sp = ucontext->uc_mcontext.gregs[REG_O6] + STACK_BIAS;
 # elif SANITIZER_NETBSD
-  *pc = ucontext->uc_mcontext.__gregs[REG_PC];
-  *sp = ucontext->uc_mcontext.__gregs[REG_O6] + STACK_BIAS;
+  *pc = ucontext->uc_mcontext.__gregs[_REG_PC];
+  *sp = ucontext->uc_mcontext.__gregs[_REG_O6] + STACK_BIAS;
 # else
   // Historical BSDism here.
   struct sigcontext *scontext = (struct sigcontext *)context;
