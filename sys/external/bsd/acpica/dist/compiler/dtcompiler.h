@@ -458,6 +458,10 @@ DtCompileRsdp (
     DT_FIELD                **PFieldList);
 
 ACPI_STATUS
+DtCompileAest (
+    void                    **PFieldList);
+
+ACPI_STATUS
 DtCompileAsf (
     void                    **PFieldList);
 
@@ -543,6 +547,10 @@ DtCompileMsct (
 
 ACPI_STATUS
 DtCompileNfit (
+    void                    **PFieldList);
+
+ACPI_STATUS
+DtCompileNhlt (
     void                    **PFieldList);
 
 ACPI_STATUS
@@ -645,6 +653,7 @@ DtGetGenericTableInfo (
 
 /* ACPI Table templates */
 
+extern const unsigned char  TemplateAest[];
 extern const unsigned char  TemplateAsf[];
 extern const unsigned char  TemplateBoot[];
 extern const unsigned char  TemplateBdat[];
