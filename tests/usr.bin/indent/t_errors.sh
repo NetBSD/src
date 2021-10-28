@@ -1,5 +1,5 @@
 #! /bin/sh
-# $NetBSD: t_errors.sh,v 1.7 2021/10/28 21:32:49 rillig Exp $
+# $NetBSD: t_errors.sh,v 1.8 2021/10/28 21:35:57 rillig Exp $
 #
 # Copyright (c) 2021 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -152,9 +152,8 @@ option_buffer_overflow_body()
 	opt="$opt$opt$opt$opt$opt$opt$opt$opt"	# 16384
 	printf '%s\n' "-$opt" > indent.pro
 
-	# TODO: The call to 'diag' should be replaced with 'errx'.
 	expect_error \
-	    'error: Standard Input:1: buffer overflow in indent.pro, starting with '\''-123456781'\''' \
+	    'indent: buffer overflow in indent.pro, starting with '\''-123456781'\''' \
 	    -Pindent.pro
 }
 
