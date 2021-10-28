@@ -1,4 +1,4 @@
-.\"	$NetBSD: mktemp.3,v 1.31 2021/07/25 08:52:03 simonb Exp $
+.\"	$NetBSD: mktemp.3,v 1.32 2021/10/28 09:51:39 kim Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -66,24 +66,24 @@ to create a file name.
 This file name is unique and suitable for use
 by the application.
 The template may be any file name with some number of
-.So Li X
+.Sq Li X
 characters appended to it, for example
 .Pa /tmp/temp.XXXXXX .
 The trailing
-.So Li X
+.Sq Li X
 characters in the template are replaced with a unique letter and number
 combination.
 .Fn mktemp
 can return depends on the number of
-.So Li X
+.Sq Li X
 characters provided.
 Although the
 .Nx
 implementation of the functions will accept any number of trailing
-.So Li X
+.Sq Li X
 characters, for portability reasons one should use only six.
 Using six
-.So Li X
+.Sq Li X
 characters will result in
 .Fn mktemp
 testing roughly 62 ** 6 (56800235584) combinations.
