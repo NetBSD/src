@@ -1,4 +1,4 @@
-/*	$NetBSD: virtiovar.h,v 1.22 2021/10/21 05:37:43 yamaguchi Exp $	*/
+/*	$NetBSD: virtiovar.h,v 1.23 2021/10/28 01:36:43 yamaguchi Exp $	*/
 
 /*
  * Copyright (c) 2010 Minoura Makoto.
@@ -208,7 +208,7 @@ int virtio_alloc_vq(struct virtio_softc*, struct virtqueue*, int, int, int,
 		    const char*);
 int virtio_free_vq(struct virtio_softc*, struct virtqueue*);
 void virtio_reset(struct virtio_softc *);
-void virtio_reinit_start(struct virtio_softc *);
+int virtio_reinit_start(struct virtio_softc *);
 void virtio_reinit_end(struct virtio_softc *);
 void virtio_child_attach_start(struct virtio_softc *, device_t, int,
                     struct virtqueue *,
