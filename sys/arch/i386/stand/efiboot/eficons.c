@@ -1,4 +1,4 @@
-/*	$NetBSD: eficons.c,v 1.11 2020/02/22 10:30:37 jmcneill Exp $	*/
+/*	$NetBSD: eficons.c,v 1.12 2021/10/28 06:13:13 kim Exp $	*/
 
 /*-
  * Copyright (c) 2016 Kimihiro Nonaka <nonaka@netbsd.org>
@@ -355,7 +355,9 @@ awaitkey(int timeout, int tell)
 				c = getchar();
 			if (c == 0)
 				c = -1;
-			goto out;
+			if (tell && timeout)
+				printf("%s", numbuf);
+			break;
 		}
 		if (timeout--)
 			internal_waitforinputevent(10000000);
@@ -365,7 +367,6 @@ awaitkey(int timeout, int tell)
 			printf("%s", numbuf);
 	}
 
-out:
 	if (tell)
 		printf("0 seconds.     \n");
 
