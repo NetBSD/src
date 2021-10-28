@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.42 2021/10/26 19:36:30 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.43 2021/10/28 21:51:43 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -270,17 +270,17 @@ reduce_stmt(void)
 {
     switch (ps.s_sym[ps.tos - 1]) {
 
-    case psym_stmt:		/* stmt stmt */
-    case psym_stmt_list:	/* stmt_list stmt */
+    case psym_stmt:
+    case psym_stmt_list:
 	ps.s_sym[--ps.tos] = psym_stmt_list;
 	return true;
 
-    case psym_do:		/* 'do' <stmt> */
+    case psym_do:
 	ps.s_sym[--ps.tos] = psym_do_stmt;
 	ps.ind_level_follow = ps.s_ind_level[ps.tos];
 	return true;
 
-    case psym_if_expr:		/* 'if' '(' <expr> ')' <stmt> */
+    case psym_if_expr:
 	ps.s_sym[--ps.tos] = psym_if_expr_stmt;
 	int i = ps.tos - 1;
 	while (ps.s_sym[i] != psym_stmt &&
@@ -289,25 +289,24 @@ reduce_stmt(void)
 	    --i;
 	ps.ind_level_follow = ps.s_ind_level[i];
 	/*
-	 * for the time being, we will assume that there is no else on this
-	 * if, and set the indentation level accordingly. If an 'else' is
-	 * scanned, it will be fixed up later
+	 * For the time being, assume that there is no 'else' on this 'if',
+	 * and set the indentation level accordingly. If an 'else' is
+	 * scanned, it will be fixed up later.
 	 */
 	return true;
 
-    case psym_switch_expr:	/* 'switch' '(' <expr> ')' <stmt> */
+    case psym_switch_expr:
 	case_ind = ps.s_case_ind_level[ps.tos - 1];
 	/* FALLTHROUGH */
     case psym_decl:		/* finish of a declaration */
-    case psym_if_expr_stmt_else:	/* 'if' '(' <expr> ')' <stmt> 'else'
-					 * <stmt> */
-    case psym_for_exprs:	/* 'for' '(' ... ')' <stmt> */
-    case psym_while_expr:	/* 'while' '(' <expr> ')' <stmt> */
+    case psym_if_expr_stmt_else:
+    case psym_for_exprs:
+    case psym_while_expr:
 	ps.s_sym[--ps.tos] = psym_stmt;
 	ps.ind_level_follow = ps.s_ind_level[ps.tos];
 	return true;
 
-    default:			/* <anything else> <stmt> */
+    default:
 	return false;
     }
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.c,v 1.163 2021/10/28 21:32:49 rillig Exp $	*/
+/*	$NetBSD: indent.c,v 1.164 2021/10/28 21:51:43 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)indent.c	5.17 (Berkeley) 6/7/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: indent.c,v 1.163 2021/10/28 21:32:49 rillig Exp $");
+__RCSID("$NetBSD: indent.c,v 1.164 2021/10/28 21:51:43 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/indent.c 340138 2018-11-04 19:24:49Z oshogbo $");
 #endif
@@ -341,6 +341,12 @@ search_stmt_lookahead(lexer_symbol *lsym)
     }
 }
 
+/*
+ * Move newlines and comments following an 'if (expr)', 'while (expr)',
+ * 'else', etc. up to the start of the following statement to a buffer. This
+ * allows proper handling of both kinds of brace placement (-br, -bl) and
+ * "cuddling else" (-ce).
+ */
 static void
 search_stmt(lexer_symbol *lsym, bool *force_nl,
     bool *comment_buffered, bool *last_else)
@@ -1070,7 +1076,7 @@ process_keyword_else(bool *force_nl, bool *last_else)
 }
 
 static void
-process_decl(int *decl_ind, bool *tabs_to_var)
+process_type(int *decl_ind, bool *tabs_to_var)
 {
     parse(psym_decl);		/* let the parser worry about indentation */
 
@@ -1350,12 +1356,6 @@ main_loop(void)
 					 * characters read are stored in
 					 * "token". */
 
-	/*
-	 * Move newlines and comments following an if (), while (), else, etc.
-	 * up to the start of the following stmt to a buffer. This allows
-	 * proper handling of both kinds of brace placement (-br, -bl) and
-	 * cuddling "else" (-ce).
-	 */
 	search_stmt(&lsym, &force_nl, &comment_buffered, &last_else);
 
 	if (lsym == lsym_eof) {
@@ -1405,7 +1405,7 @@ main_loop(void)
 	    process_question(&quest_level);
 	    break;
 
-	case lsym_case_label:	/* got word 'case' or 'default' */
+	case lsym_case_label:
 	    seen_case = true;
 	    goto copy_token;
 
@@ -1431,7 +1431,7 @@ main_loop(void)
 	    spaced_expr = true;	/* the interesting stuff is done after the
 				 * expressions are scanned */
 	    hd = hd_switch;	/* remember the type of header for later use
-				 * by parser */
+				 * by the parser */
 	    goto copy_token;
 
 	case lsym_for:
@@ -1467,11 +1467,11 @@ main_loop(void)
 		goto copy_token;
 	    /* FALLTHROUGH */
 	case lsym_type:
-	    process_decl(&decl_ind, &tabs_to_var);
+	    process_type(&decl_ind, &tabs_to_var);
 	    goto copy_token;
 
 	case lsym_funcname:
-	case lsym_ident:	/* an identifier, constant or string */
+	case lsym_ident:
 	    process_ident(lsym, decl_ind, tabs_to_var, &spaced_expr,
 		&force_nl, hd);
     copy_token:
@@ -1492,11 +1492,11 @@ main_loop(void)
 	    process_comma(decl_ind, tabs_to_var, &force_nl);
 	    break;
 
-	case lsym_preprocessing:	/* the initial '#' */
+	case lsym_preprocessing:
 	    process_preprocessing();
 	    break;
 
-	case lsym_comment:	/* the initial '/' '*' or '//' of a comment */
+	case lsym_comment:
 	    process_comment();
 	    break;
 
