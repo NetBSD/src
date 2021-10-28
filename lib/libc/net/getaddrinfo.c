@@ -1,4 +1,4 @@
-/*	$NetBSD: getaddrinfo.c,v 1.121 2021/10/27 19:24:38 nia Exp $	*/
+/*	$NetBSD: getaddrinfo.c,v 1.122 2021/10/28 20:56:32 riastradh Exp $	*/
 /*	$KAME: getaddrinfo.c,v 1.29 2000/08/31 17:26:57 itojun Exp $	*/
 
 /*
@@ -36,7 +36,7 @@
  *   in the source code.  This is because RFC2553 is silent about which error
  *   code must be returned for which situation.
  * - IPv4 classful (shortened) form.  RFC2553 is silent about it.  XNET 5.2
- *   says to use inet_aton() to convert IPv4 numeric to binary (alows
+ *   says to use inet_aton() to convert IPv4 numeric to binary (allows
  *   classful form as a result).
  *   current code - disallow classful form for IPv4 (due to use of inet_pton).
  * - freeaddrinfo(NULL).  RFC2553 is silent about it.  XNET 5.2 says it is
@@ -55,7 +55,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: getaddrinfo.c,v 1.121 2021/10/27 19:24:38 nia Exp $");
+__RCSID("$NetBSD: getaddrinfo.c,v 1.122 2021/10/28 20:56:32 riastradh Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #ifndef RUMP_ACTION
