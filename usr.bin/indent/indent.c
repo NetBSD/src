@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.c,v 1.164 2021/10/28 21:51:43 rillig Exp $	*/
+/*	$NetBSD: indent.c,v 1.165 2021/10/28 21:56:26 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)indent.c	5.17 (Berkeley) 6/7/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: indent.c,v 1.164 2021/10/28 21:51:43 rillig Exp $");
+__RCSID("$NetBSD: indent.c,v 1.165 2021/10/28 21:56:26 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/indent.c 340138 2018-11-04 19:24:49Z oshogbo $");
 #endif
@@ -333,12 +333,11 @@ search_stmt_lookahead(lexer_symbol *lsym)
 	    inbuf_read_line();
     }
 
-    struct parser_state transient_state = ps;
-    *lsym = lexi(&transient_state);	/* read another token */
-    if (*lsym != lsym_newline && *lsym != lsym_form_feed &&
-	*lsym != lsym_comment && !transient_state.search_stmt) {
-	ps = transient_state;
-    }
+    struct parser_state backup_ps = ps;
+    *lsym = lexi();
+    if (*lsym == lsym_newline || *lsym == lsym_form_feed ||
+	*lsym == lsym_comment || ps.search_stmt)
+	ps = backup_ps;
 }
 
 /*
@@ -1352,7 +1351,7 @@ main_loop(void)
 				 * reach eof */
 	bool comment_buffered = false;
 
-	lexer_symbol lsym = lexi(&ps);	/* Read the next token.  The actual
+	lexer_symbol lsym = lexi();	/* Read the next token.  The actual
 					 * characters read are stored in
 					 * "token". */
 
