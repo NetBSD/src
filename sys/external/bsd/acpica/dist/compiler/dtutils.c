@@ -344,6 +344,7 @@ DtGetFieldType (
         break;
 
     case ACPI_DMT_UNICODE:
+    case ACPI_DMT_WPBT_UNICODE:
 
         Type = DT_FIELD_TYPE_UNICODE;
         break;
@@ -472,12 +473,18 @@ DtGetFieldLength (
     case ACPI_DMT_IVRS_DE:
     case ACPI_DMT_GTDT:
     case ACPI_DMT_MADT:
+    case ACPI_DMT_NHLT1:
+    case ACPI_DMT_NHLT1a:
     case ACPI_DMT_PCCT:
     case ACPI_DMT_PMTT:
     case ACPI_DMT_PPTT:
     case ACPI_DMT_RGRT:
     case ACPI_DMT_SDEV:
     case ACPI_DMT_SRAT:
+    case ACPI_DMT_AEST:
+    case ACPI_DMT_AEST_RES:
+    case ACPI_DMT_AEST_XFACE:
+    case ACPI_DMT_AEST_XRUPT:
     case ACPI_DMT_ASF:
     case ACPI_DMT_HESTNTYP:
     case ACPI_DMT_FADTPM:
@@ -508,6 +515,8 @@ DtGetFieldLength (
         break;
 
     case ACPI_DMT_UINT32:
+    case ACPI_DMT_AEST_CACHE:
+    case ACPI_DMT_AEST_GIC:
     case ACPI_DMT_NAME4:
     case ACPI_DMT_SIG:
     case ACPI_DMT_LPIT:
@@ -626,12 +635,13 @@ DtGetFieldLength (
         break;
 
     case ACPI_DMT_UNICODE:
+    case ACPI_DMT_WPBT_UNICODE:
 
         Value = DtGetFieldValue (Field);
 
         /* TBD: error if Value is NULL? (as below?) */
 
-        ByteLength = (strlen (Value) + 1) * sizeof(UINT16);
+        ByteLength = (strlen (Value) + 1) * sizeof (UINT16);
         break;
 
     default:
