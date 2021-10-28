@@ -1,4 +1,4 @@
-/*	$NetBSD: signal.h,v 1.11 2021/10/28 11:07:07 christos Exp $	*/
+/*	$NetBSD: signal.h,v 1.12 2021/10/28 11:25:02 christos Exp $	*/
 
 /*	$OpenBSD: signal.h,v 1.1 1998/06/23 19:45:27 mickey Exp $	*/
 
@@ -42,6 +42,7 @@ typedef int sig_atomic_t;
 #endif
 
 #if defined(_LIBC)
+#define	__HAVE_STRUCT_SIGCONTEXT
 /*
  * Information pushed on stack when a signal is delivered.
  * This is used by the kernel to restore state following
