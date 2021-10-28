@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vioif.c,v 1.70 2021/02/08 06:56:26 skrll Exp $	*/
+/*	$NetBSD: if_vioif.c,v 1.71 2021/10/28 01:36:43 yamaguchi Exp $	*/
 
 /*
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vioif.c,v 1.70 2021/02/08 06:56:26 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vioif.c,v 1.71 2021/10/28 01:36:43 yamaguchi Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -46,6 +46,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_vioif.c,v 1.70 2021/02/08 06:56:26 skrll Exp $");
 #include <sys/mbuf.h>
 #include <sys/mutex.h>
 #include <sys/sockio.h>
+#include <sys/syslog.h>
 #include <sys/cpu.h>
 #include <sys/module.h>
 #include <sys/pcq.h>
@@ -1155,7 +1156,12 @@ vioif_init(struct ifnet *ifp)
 
 	vioif_stop(ifp, 0);
 
-	virtio_reinit_start(vsc);
+	r = virtio_reinit_start(vsc);
+	if (r != 0) {
+		log(LOG_ERR, "%s: reset failed\n", ifp->if_xname);
+		return EIO;
+	}
+
 	virtio_negotiate_features(vsc, virtio_features(vsc));
 
 	for (i = 0; i < sc->sc_req_nvq_pairs; i++) {
