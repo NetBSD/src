@@ -1,4 +1,4 @@
-/*	$NetBSD: signal.h,v 1.10 2021/10/27 02:34:00 thorpej Exp $	*/
+/*	$NetBSD: signal.h,v 1.11 2021/10/28 11:07:07 christos Exp $	*/
 
 /*	$OpenBSD: signal.h,v 1.1 1998/06/23 19:45:27 mickey Exp $	*/
 
@@ -39,6 +39,29 @@ typedef int sig_atomic_t;
 
 #if defined(_XOPEN_SOURCE) || defined(_NETBSD_SOURCE)
 #include <machine/trap.h>	/* codes for SIGILL, SIGFPE */
+#endif
+
+#if defined(_LIBC)
+/*
+ * Information pushed on stack when a signal is delivered.
+ * This is used by the kernel to restore state following
+ * execution of the signal handler.  It is also made available
+ * to the handler to allow it to restore state properly if
+ * a non-standard exit is performed.
+ */
+struct	sigcontext {
+	int	sc_onstack;		/* sigstack state to restore */
+	int	__sc_mask13;		/* signal mask to restore (old style) */
+	int	sc_sp;			/* sp to restore */
+	int	sc_fp;			/* fp to restore */
+	int	sc_ap;			/* ap to restore */
+	int	sc_pcsqh;		/* pc space queue (head) to restore */
+	int	sc_pcoqh;		/* pc offset queue (head) to restore */
+	int	sc_pcsqt;		/* pc space queue (tail) to restore */
+	int	sc_pcoqt;		/* pc offset queue (tail) to restore */
+	int	sc_ps;			/* psl to restore */
+	sigset_t sc_mask;		/* signal mask to restore (new style) */
+};
 #endif
 
 #endif /* _HPPA_SIGNAL_H__ */
