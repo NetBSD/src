@@ -1,5 +1,5 @@
 #! /bin/sh
-# $NetBSD: t_errors.sh,v 1.6 2021/10/28 21:02:05 rillig Exp $
+# $NetBSD: t_errors.sh,v 1.7 2021/10/28 21:32:49 rillig Exp $
 #
 # Copyright (c) 2021 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -61,11 +61,11 @@ option_bool_trailing_garbage_body()
 	    -bacchus
 }
 
-atf_test_case 'option_int_missing_parameter'
-option_int_missing_parameter_body()
+atf_test_case 'option_int_missing_argument'
+option_int_missing_argument_body()
 {
 	expect_error \
-	    'indent: Command line: option "-ts" requires an integer parameter' \
+	    'indent: Command line: argument "x" to option "-ts" must be an integer' \
 	    -tsx
 }
 
@@ -89,7 +89,7 @@ atf_test_case 'option_tabsize_negative'
 option_tabsize_negative_body()
 {
 	expect_error \
-	    'indent: Command line: option "-ts" requires an integer parameter' \
+	    'indent: Command line: argument "-1" to option "-ts" must be between 1 and 80' \
 	    -ts-1
 }
 
@@ -97,7 +97,7 @@ atf_test_case 'option_tabsize_zero'
 option_tabsize_zero_body()
 {
 	expect_error \
-	    'indent: Command line: invalid argument "0" for option "-ts"' \
+	    'indent: Command line: argument "0" to option "-ts" must be between 1 and 80' \
 	    -ts0
 }
 
@@ -106,7 +106,7 @@ option_tabsize_large_body()
 {
 	# Integer overflow, on both ILP32 and LP64 platforms.
 	expect_error \
-	    'indent: Command line: invalid argument "81" for option "-ts"' \
+	    'indent: Command line: argument "81" to option "-ts" must be between 1 and 80' \
 	    -ts81
 }
 
@@ -115,7 +115,7 @@ option_tabsize_very_large_body()
 {
 	# Integer overflow, on both ILP32 and LP64 platforms.
 	expect_error \
-	    'indent: Command line: invalid argument "3000000000" for option "-ts"' \
+	    'indent: Command line: argument "3000000000" to option "-ts" must be between 1 and 80' \
 	    -ts3000000000
 }
 
@@ -123,7 +123,7 @@ atf_test_case 'option_indent_size_zero'
 option_indent_size_zero_body()
 {
 	expect_error \
-	    'indent: Command line: invalid argument "0" for option "-i"' \
+	    'indent: Command line: argument "0" to option "-i" must be between 1 and 80' \
 	    -i0
 }
 
@@ -131,7 +131,7 @@ atf_test_case 'option_int_trailing_garbage'
 option_int_trailing_garbage_body()
 {
 	expect_error \
-	    'indent: Command line: invalid argument "3garbage" for option "-i"' \
+	    'indent: Command line: argument "3garbage" to option "-i" must be an integer' \
 	    -i3garbage
 }
 
@@ -163,15 +163,15 @@ option_special_missing_param_body()
 {
 	# TODO: Write '-cli' instead of only 'cli'.
 	expect_error \
-	    'indent: Command line: ``cli'\'\'' requires a parameter' \
+	    'indent: Command line: ``cli'\'\'' requires an argument' \
 	    -cli
 
 	expect_error \
-	    'indent: Command line: ``T'\'\'' requires a parameter' \
+	    'indent: Command line: ``T'\'\'' requires an argument' \
 	    -T
 
 	expect_error \
-	    'indent: Command line: ``U'\'\'' requires a parameter' \
+	    'indent: Command line: ``U'\'\'' requires an argument' \
 	    -U
 }
 
@@ -252,7 +252,7 @@ argument_too_many_body()
 	echo '/* comment */' > arg1.c
 
 	expect_error \
-	    'indent: unknown parameter: arg3.c' \
+	    'indent: too many arguments: arg3.c' \
 	    arg1.c arg2.c arg3.c arg4.c
 }
 
@@ -352,7 +352,7 @@ atf_init_test_cases()
 {
 	atf_add_test_case 'option_unknown'
 	atf_add_test_case 'option_bool_trailing_garbage'
-	atf_add_test_case 'option_int_missing_parameter'
+	atf_add_test_case 'option_int_missing_argument'
 	atf_add_test_case 'option_profile_not_found'
 	atf_add_test_case 'option_buffer_overflow'
 	atf_add_test_case 'option_typedefs_not_found'

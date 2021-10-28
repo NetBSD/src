@@ -1,4 +1,4 @@
-/*	$NetBSD: args.c,v 1.63 2021/10/28 21:02:04 rillig Exp $	*/
+/*	$NetBSD: args.c,v 1.64 2021/10/28 21:32:48 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)args.c	8.1 (Berkeley) 6/6/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: args.c,v 1.63 2021/10/28 21:02:04 rillig Exp $");
+__RCSID("$NetBSD: args.c,v 1.64 2021/10/28 21:32:48 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/args.c 336318 2018-07-15 21:04:21Z pstef $");
 #endif
@@ -200,7 +200,7 @@ set_special_option(const char *arg, const char *option_source)
     return false;
 
 need_param:
-    errx(1, "%s: ``%.*s'' requires a parameter",
+    errx(1, "%s: ``%.*s'' requires an argument",
 	option_source, (int)(arg_end - arg), arg);
     /* NOTREACHED */
 }
@@ -221,37 +221,40 @@ void
 set_option(const char *arg, const char *option_source)
 {
     const struct pro *p;
-    const char *param_start;
+    const char *arg_arg;
 
     arg++;			/* skip leading '-' */
     if (set_special_option(arg, option_source))
 	return;
 
-    for (p = pro + array_length(pro); p-- != pro;) {
-	param_start = skip_over(arg, p->p_may_negate, p->p_name);
-	if (param_start != NULL)
+    for (p = pro + array_length(pro); p-- != pro;)
+	if ((arg_arg = skip_over(arg, p->p_may_negate, p->p_name)) != NULL)
 	    goto found;
-    }
     errx(1, "%s: unknown option \"-%s\"", option_source, arg);
-
 found:
+
     if (p->p_is_bool) {
-	if (param_start[0] != '\0')
+	if (arg_arg[0] != '\0')
 	    errx(1, "%s: unknown option \"-%s\"", option_source, arg);
+
 	*(bool *)p->p_var = p->p_may_negate ? arg[0] != 'n' : p->p_bool_value;
-    } else {
-	if (!isdigit((unsigned char)*param_start))
-	    errx(1, "%s: option \"-%s\" requires an integer parameter",
-		option_source, p->p_name);
-	errno = 0;
-	char *end;
-	long num = strtol(param_start, &end, 10);
-	if (!(errno == 0 && *end == '\0' &&
-		p->i_min <= num && num <= p->i_max))
-	    errx(1, "%s: invalid argument \"%s\" for option \"-%s\"",
-		option_source, param_start, p->p_name);
-	*(int *)p->p_var = (int)num;
+	return;
     }
+
+    errno = 0;
+    char *end;
+    long num = strtol(arg_arg, &end, 10);
+    if (!(errno == 0 && *end == '\0'))
+	errx(1, "%s: argument \"%s\" to option \"-%s\" must be an integer",
+	    option_source, arg_arg, p->p_name);
+
+    if (!(isdigit((unsigned char)*arg_arg) &&
+	    p->i_min <= num && num <= p->i_max))
+	errx(1,
+	    "%s: argument \"%s\" to option \"-%s\" must be between %d and %d",
+	    option_source, arg_arg, p->p_name, p->i_min, p->i_max);
+
+    *(int *)p->p_var = (int)num;
 }
 
 static void
