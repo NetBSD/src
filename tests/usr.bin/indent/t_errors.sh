@@ -1,5 +1,5 @@
 #! /bin/sh
-# $NetBSD: t_errors.sh,v 1.5 2021/10/24 17:19:49 rillig Exp $
+# $NetBSD: t_errors.sh,v 1.6 2021/10/28 21:02:05 rillig Exp $
 #
 # Copyright (c) 2021 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -133,6 +133,14 @@ option_int_trailing_garbage_body()
 	expect_error \
 	    'indent: Command line: invalid argument "3garbage" for option "-i"' \
 	    -i3garbage
+}
+
+atf_test_case 'option_cli_trailing_garbage'
+option_cli_trailing_garbage_body()
+{
+	expect_error \
+	    'indent: Command line: argument "3garbage" to option "-cli" must be numeric' \
+	    -cli3garbage
 }
 
 atf_test_case 'option_buffer_overflow'
@@ -354,6 +362,7 @@ atf_init_test_cases()
 	atf_add_test_case 'option_tabsize_large'
 	atf_add_test_case 'option_tabsize_very_large'
 	atf_add_test_case 'option_int_trailing_garbage'
+	atf_add_test_case 'option_cli_trailing_garbage'
 	atf_add_test_case 'option_indent_size_zero'
 	atf_add_test_case 'unterminated_comment'
 	atf_add_test_case 'in_place_wrong_backup'

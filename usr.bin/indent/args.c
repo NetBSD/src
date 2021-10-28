@@ -1,4 +1,4 @@
-/*	$NetBSD: args.c,v 1.62 2021/10/28 20:49:36 rillig Exp $	*/
+/*	$NetBSD: args.c,v 1.63 2021/10/28 21:02:04 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)args.c	8.1 (Berkeley) 6/6/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: args.c,v 1.62 2021/10/28 20:49:36 rillig Exp $");
+__RCSID("$NetBSD: args.c,v 1.63 2021/10/28 21:02:04 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/args.c 336318 2018-07-15 21:04:21Z pstef $");
 #endif
@@ -73,12 +73,7 @@ __FBSDID("$FreeBSD: head/usr.bin/indent/args.c 336318 2018-07-15 21:04:21Z pstef
 #define int_option(name, var, min, max) \
 	{name, false, false, false, min, max, assert_type(&(opt.var), int *)}
 
-/*
- * N.B.: an option whose name is a prefix of another option must come earlier;
- * for example, "l" must come before "lp".
- *
- * See set_special_option for special options.
- */
+/* See set_special_option for special options. */
 static const struct pro {
     const char p_name[5];	/* e.g. "bl", "cli" */
     bool p_is_bool;
@@ -170,7 +165,11 @@ set_special_option(const char *arg, const char *option_source)
 	arg_end = arg + 3;
 	if (arg_end[0] == '\0')
 	    goto need_param;
-	opt.case_indent = (float)atof(arg_end);
+	char *end;
+	opt.case_indent = (float)strtod(arg_end, &end);
+	if (*end != '\0')
+	    errx(1, "%s: argument \"%s\" to option \"-%.*s\" must be numeric",
+		 option_source, arg_end, (int)(arg_end - arg), arg);
 	return true;
     }
 
