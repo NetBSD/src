@@ -1,4 +1,4 @@
-/*	$NetBSD: lexi.c,v 1.105 2021/10/26 20:43:35 rillig Exp $	*/
+/*	$NetBSD: lexi.c,v 1.106 2021/10/28 21:56:26 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)lexi.c	8.1 (Berkeley) 6/6/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: lexi.c,v 1.105 2021/10/26 20:43:35 rillig Exp $");
+__RCSID("$NetBSD: lexi.c,v 1.106 2021/10/28 21:56:26 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/lexi.c 337862 2018-08-15 18:19:45Z pstef $");
 #endif
@@ -557,8 +557,10 @@ not_proc:;
 
 /* Reads the next token, placing it in the global variable "token". */
 lexer_symbol
-lexi(struct parser_state *state)
+lexi(void)
 {
+    struct parser_state *state = &ps;
+
     token.e = token.s;
     state->col_1 = state->last_nl;
     state->last_nl = false;
