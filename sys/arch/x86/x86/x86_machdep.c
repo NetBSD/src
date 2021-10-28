@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_machdep.c,v 1.149 2021/10/07 12:52:27 msaitoh Exp $	*/
+/*	$NetBSD: x86_machdep.c,v 1.150 2021/10/28 10:45:49 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007 YAMAMOTO Takashi,
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x86_machdep.c,v 1.149 2021/10/07 12:52:27 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x86_machdep.c,v 1.150 2021/10/28 10:45:49 riastradh Exp $");
 
 #include "opt_modular.h"
 #include "opt_physmem.h"
@@ -259,16 +259,7 @@ module_init_md(void)
 #endif
 			break;
 		case BI_MODULE_RND:
-			aprint_debug("Random seed data path=%s len=%d pa=%x\n",
-				     bi->path, bi->len, bi->base);
-			KASSERT(trunc_page(bi->base) == bi->base);
-			rnd_seed(
-#ifdef KASLR
-			    (void *)PMAP_DIRECT_MAP((uintptr_t)bi->base),
-#else
-			    (void *)((uintptr_t)bi->base + KERNBASE),
-#endif
-			     bi->len);
+			/* handled in x86_rndseed */
 			break;
 		case BI_MODULE_FS:
 			aprint_debug("File-system image path=%s len=%d pa=%x\n",
@@ -291,6 +282,37 @@ module_init_md(void)
 	}
 }
 #endif	/* MODULAR */
+
+void
+x86_rndseed(void)
+{
+	struct btinfo_modulelist *biml;
+	struct bi_modulelist_entry *bi, *bimax;
+
+	biml = lookup_bootinfo(BTINFO_MODULELIST);
+	if (biml == NULL) {
+		aprint_debug("No module info at boot\n");
+		return;
+	}
+
+	bi = (struct bi_modulelist_entry *)((uint8_t *)biml + sizeof(*biml));
+	bimax = bi + biml->num;
+	for (; bi < bimax; bi++) {
+		switch (bi->type) {
+		case BI_MODULE_RND:
+			aprint_debug("Random seed data path=%s len=%d pa=%x\n",
+				     bi->path, bi->len, bi->base);
+			KASSERT(trunc_page(bi->base) == bi->base);
+			rnd_seed(
+#ifdef KASLR
+			    (void *)PMAP_DIRECT_MAP((uintptr_t)bi->base),
+#else
+			    (void *)((uintptr_t)bi->base + KERNBASE),
+#endif
+			     bi->len);
+		}
+	}
+}
 
 void
 cpu_need_resched(struct cpu_info *ci, struct lwp *l, int flags)
