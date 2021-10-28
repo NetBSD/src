@@ -1,4 +1,4 @@
-/* $NetBSD: opt_version.c,v 1.1 2021/10/23 20:23:27 rillig Exp $ */
+/* $NetBSD: opt_version.c,v 1.2 2021/10/28 20:31:17 rillig Exp $ */
 /* $FreeBSD$ */
 
 /*
@@ -13,5 +13,5 @@ even might generate syntax errors when given to a C compiler.
 #indent end
 
 #indent run --version
-FreeBSD indent 2.0
+NetBSD indent 2.1
 #indent end
