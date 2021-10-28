@@ -1,4 +1,4 @@
-/* $NetBSD: virtio_pci.c,v 1.32 2021/10/21 05:37:43 yamaguchi Exp $ */
+/* $NetBSD: virtio_pci.c,v 1.33 2021/10/28 01:36:43 yamaguchi Exp $ */
 
 /*
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: virtio_pci.c,v 1.32 2021/10/21 05:37:43 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: virtio_pci.c,v 1.33 2021/10/28 01:36:43 yamaguchi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -36,6 +36,7 @@ __KERNEL_RCSID(0, "$NetBSD: virtio_pci.c,v 1.32 2021/10/21 05:37:43 yamaguchi Ex
 #include <sys/module.h>
 #include <sys/endian.h>
 #include <sys/interrupt.h>
+#include <sys/syslog.h>
 
 #include <sys/device.h>
 
@@ -49,6 +50,18 @@ __KERNEL_RCSID(0, "$NetBSD: virtio_pci.c,v 1.32 2021/10/21 05:37:43 yamaguchi Ex
 #define VIRTIO_PRIVATE
 #include <dev/pci/virtiovar.h> /* XXX: move to non-pci */
 
+
+#define VIRTIO_PCI_LOG(_sc, _use_log, _fmt, _args...)	\
+do {							\
+	if ((_use_log)) {				\
+		log(LOG_DEBUG, "%s: " _fmt,		\
+		    device_xname((_sc)->sc_dev),	\
+		    ##_args);				\
+	} else {					\
+		aprint_error_dev((_sc)->sc_dev,		\
+		    _fmt, ##_args);			\
+	}						\
+} while(0)
 
 static int	virtio_pci_match(device_t, cfdata_t, void *);
 static void	virtio_pci_attach(device_t, device_t, void *);
@@ -808,7 +821,6 @@ static int
 virtio_pci_setup_interrupts_10(struct virtio_softc *sc, int reinit)
 {
 	struct virtio_pci_softc * const psc = (struct virtio_pci_softc *)sc;
-	device_t self          =  sc->sc_dev;
 	bus_space_tag_t	   iot = psc->sc_iot;
 	bus_space_handle_t ioh = psc->sc_ioh;
 	int vector, ret, qid;
@@ -821,10 +833,8 @@ virtio_pci_setup_interrupts_10(struct virtio_softc *sc, int reinit)
 		VIRTIO_CONFIG1_CONFIG_MSIX_VECTOR, vector);
 	ret = bus_space_read_2(iot, ioh, VIRTIO_CONFIG1_CONFIG_MSIX_VECTOR);
 	if (ret != vector) {
-		if (reinit == 0) {
-			aprint_error_dev(self,
-			    "can't set config msix vector\n");
-		}
+		VIRTIO_PCI_LOG(sc, reinit,
+		    "can't set config msix vector\n");
 		return -1;
 	}
 
@@ -839,10 +849,8 @@ virtio_pci_setup_interrupts_10(struct virtio_softc *sc, int reinit)
 		ret = bus_space_read_2(iot, ioh,
 			VIRTIO_CONFIG1_QUEUE_MSIX_VECTOR);
 		if (ret != vector) {
-			if (reinit == 0) {
-				aprint_error_dev(self, "can't set queue %d "
-				    "msix vector\n", qid);
-			}
+			VIRTIO_PCI_LOG(sc, reinit, "can't set queue %d "
+			    "msix vector\n", qid);
 			return -1;
 		}
 	}
@@ -854,7 +862,6 @@ static int
 virtio_pci_setup_interrupts_09(struct virtio_softc *sc, int reinit)
 {
 	struct virtio_pci_softc * const psc = (struct virtio_pci_softc *)sc;
-	device_t self = sc->sc_dev;
 	int offset, vector, ret, qid;
 
 	if (!virtio_pci_msix_enabled(psc))
@@ -868,10 +875,8 @@ virtio_pci_setup_interrupts_09(struct virtio_softc *sc, int reinit)
 	aprint_debug_dev(sc->sc_dev, "expected=%d, actual=%d\n",
 	    vector, ret);
 	if (ret != vector) {
-		if (reinit == 0) {
-			aprint_error_dev(self,
-			    "can't set config msix vector\n");
-		}
+		VIRTIO_PCI_LOG(sc, reinit,
+		    "can't set config msix vector\n");
 		return -1;
 	}
 
@@ -890,10 +895,8 @@ virtio_pci_setup_interrupts_09(struct virtio_softc *sc, int reinit)
 		aprint_debug_dev(sc->sc_dev, "expected=%d, actual=%d\n",
 		    vector, ret);
 		if (ret != vector) {
-			if (reinit == 0) {
-				aprint_error_dev(self, "can't set queue %d "
-				    "msix vector\n", qid);
-			}
+			VIRTIO_PCI_LOG(sc, reinit, "can't set queue %d "
+			    "msix vector\n", qid);
 			return -1;
 		}
 	}
