@@ -1,4 +1,4 @@
-/*	$NetBSD: args.c,v 1.60 2021/10/26 19:36:30 rillig Exp $	*/
+/*	$NetBSD: args.c,v 1.61 2021/10/28 20:31:17 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)args.c	8.1 (Berkeley) 6/6/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: args.c,v 1.60 2021/10/26 19:36:30 rillig Exp $");
+__RCSID("$NetBSD: args.c,v 1.61 2021/10/28 20:31:17 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/args.c 336318 2018-07-15 21:04:21Z pstef $");
 #endif
@@ -59,8 +59,6 @@ __FBSDID("$FreeBSD: head/usr.bin/indent/args.c 336318 2018-07-15 21:04:21Z pstef
 #include <string.h>
 
 #include "indent.h"
-
-#define INDENT_VERSION	"2.0"
 
 #if __STDC_VERSION__ >= 201112L
 #define assert_type(expr, type) _Generic((expr), type : (expr))
@@ -229,7 +227,7 @@ set_special_option(const char *arg, const char *option_source)
     const char *arg_end;
 
     if (strncmp(arg, "-version", 8) == 0) {
-	printf("FreeBSD indent %s\n", INDENT_VERSION);
+	printf("NetBSD indent 2.1\n");
 	exit(0);
     }
 
