@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.h,v 1.11 2020/11/15 13:59:42 bouyer Exp $ */
+/* $NetBSD: machdep.h,v 1.12 2021/10/28 10:45:48 riastradh Exp $ */
 /*
  * Copyright (c) 2000, 2007 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -64,5 +64,7 @@ void	init_x86_msgbuf(void);
 
 void	x86_startup(void);
 void	x86_sysctl_machdep_setup(struct sysctllog **);
+
+void	x86_rndseed(void);
 
 #endif	/* _X86_MACHDEP_H_ */
