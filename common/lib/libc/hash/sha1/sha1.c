@@ -1,4 +1,4 @@
-/*	$NetBSD: sha1.c,v 1.6 2009/11/06 20:31:18 joerg Exp $	*/
+/*	$NetBSD: sha1.c,v 1.7 2021/10/28 15:09:08 christos Exp $	*/
 /*	$OpenBSD: sha1.c,v 1.9 1997/07/23 21:12:32 kstailey Exp $	*/
 
 /*
@@ -20,14 +20,14 @@
 #include <sys/cdefs.h>
 
 #if defined(_KERNEL) || defined(_STANDALONE)
-__KERNEL_RCSID(0, "$NetBSD: sha1.c,v 1.6 2009/11/06 20:31:18 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sha1.c,v 1.7 2021/10/28 15:09:08 christos Exp $");
 
 #include <lib/libkern/libkern.h>
 
 #else
 
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: sha1.c,v 1.6 2009/11/06 20:31:18 joerg Exp $");
+__RCSID("$NetBSD: sha1.c,v 1.7 2021/10/28 15:09:08 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -262,7 +262,7 @@ void SHA1Update(SHA1_CTX *context, const uint8_t *data, unsigned int len)
 /*
  * Add padding and return the message digest.
  */
-void SHA1Final(uint8_t digest[20], SHA1_CTX *context)
+void SHA1Final(uint8_t digest[SHA1_DIGEST_LENGTH], SHA1_CTX *context)
 {
     unsigned int i;
     uint8_t finalcount[8];
