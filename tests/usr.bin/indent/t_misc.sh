@@ -1,5 +1,5 @@
 #! /bin/sh
-# $NetBSD: t_misc.sh,v 1.8 2021/10/24 17:19:49 rillig Exp $
+# $NetBSD: t_misc.sh,v 1.9 2021/10/28 21:02:05 rillig Exp $
 #
 # Copyright (c) 2021 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -216,15 +216,11 @@ opt_body()
 -T/* define
 a type */custom_type
 
-/* For int options, trailing garbage would lead to an error message. */
+/* For int options, trailing garbage would be an error. */
 -i3
 
-/*
- * For float options, trailing garbage is ignored.
- *
- * See atof.
- */
--cli3.5garbage
+/*For float options, trailing garbage would be an error. */
+-cli3.5
 
 -b/*/acc	/* The comment is '/' '*' '/', making the option '-bacc'. */
 EOF
