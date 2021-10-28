@@ -1930,12 +1930,12 @@ SignalContext::WriteFlag SignalContext::GetWriteFlag() const {
   // From OpenSolaris $SRC/uts/sun4/os/trap.c (get_accesstype).
 # if SANITIZER_SOLARIS
   uptr pc = ucontext->uc_mcontext.gregs[REG_PC];
+# elif SANITIZER_NETBSD
+  uptr pc = ucontext->uc_mcontext.__gregs[_REG_PC];
 # else
   // Historical BSDism here.
   struct sigcontext *scontext = (struct sigcontext *)ucontext;
-#  if SANITIZER_NETBSD
-  uptr pc = scontext->sc_pc;
-#  elif defined(__arch64__)
+#  if defined(__arch64__)
   uptr pc = scontext->sigc_regs.tpc;
 #  else
   uptr pc = scontext->si_regs.pc;
@@ -2040,6 +2040,9 @@ static void GetPcSpBp(void *context, uptr *pc, uptr *sp, uptr *bp) {
   ucontext_t *ucontext = (ucontext_t*)context;
   *pc = ucontext->uc_mcontext.gregs[REG_PC];
   *sp = ucontext->uc_mcontext.gregs[REG_O6] + STACK_BIAS;
+# elif SANITIZER_NETBSD
+  *pc = ucontext->uc_mcontext.__gregs[REG_PC];
+  *sp = ucontext->uc_mcontext.__gregs[REG_O6] + STACK_BIAS;
 # else
   // Historical BSDism here.
   struct sigcontext *scontext = (struct sigcontext *)context;
