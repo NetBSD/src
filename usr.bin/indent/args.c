@@ -1,4 +1,4 @@
-/*	$NetBSD: args.c,v 1.65 2021/10/28 21:35:57 rillig Exp $	*/
+/*	$NetBSD: args.c,v 1.66 2021/10/28 22:20:08 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)args.c	8.1 (Berkeley) 6/6/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: args.c,v 1.65 2021/10/28 21:35:57 rillig Exp $");
+__RCSID("$NetBSD: args.c,v 1.66 2021/10/28 22:20:08 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/args.c 336318 2018-07-15 21:04:21Z pstef $");
 #endif
@@ -169,7 +169,7 @@ set_special_option(const char *arg, const char *option_source)
 	opt.case_indent = (float)strtod(arg_end, &end);
 	if (*end != '\0')
 	    errx(1, "%s: argument \"%s\" to option \"-%.*s\" must be numeric",
-		 option_source, arg_end, (int)(arg_end - arg), arg);
+		option_source, arg_end, (int)(arg_end - arg), arg);
 	return true;
     }
 
@@ -283,7 +283,7 @@ load_profile(const char *fname, bool must_exist)
 		break;
 	    } else if (n >= array_length(buf) - 5) {
 		errx(1, "buffer overflow in %s, starting with '%.10s'",
-		     fname, buf);
+		    fname, buf);
 	    } else
 		buf[n++] = (char)ch;
 	}
