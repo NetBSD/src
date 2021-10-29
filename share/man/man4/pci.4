@@ -1,4 +1,4 @@
-.\"	$NetBSD: pci.4,v 1.120 2021/08/01 21:56:27 andvar Exp $
+.\"	$NetBSD: pci.4,v 1.121 2021/10/29 10:21:28 nia Exp $
 .\"
 .\" Copyright (c) 1997 Jason R. Thorpe.  All rights reserved.
 .\" Copyright (c) 1997 Jonathan Stone
@@ -29,7 +29,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd March 17, 2021
+.Dd October 29, 2021
 .Dt PCI 4
 .Os
 .Sh NAME
@@ -175,6 +175,8 @@ Mylex DAC960 and DEC SWXCR RAID controllers.
 National Semiconductor PC87415 PCI-IDE controllers.
 .It Xr nvme 4
 Non-Volatile Memory (NVM Express) host controllers.
+.It Xr pdcsata 4
+Promise Serial-ATA disk controllers.
 .It Xr pciide 4
 IDE disk controllers.
 .It Xr rtsx 4
