@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.c,v 1.169 2021/10/29 16:59:35 rillig Exp $	*/
+/*	$NetBSD: indent.c,v 1.170 2021/10/29 17:32:22 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)indent.c	5.17 (Berkeley) 6/7/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: indent.c,v 1.169 2021/10/29 16:59:35 rillig Exp $");
+__RCSID("$NetBSD: indent.c,v 1.170 2021/10/29 17:32:22 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/indent.c 340138 2018-11-04 19:24:49Z oshogbo $");
 #endif
@@ -604,7 +604,7 @@ main_prepare_parsing(void)
 }
 
 static void
-indent_declaration(int cur_decl_ind, bool tabs_to_var)
+code_add_decl_indent(int cur_decl_ind, bool tabs_to_var)
 {
     int ind = (int)buf_len(&code);
     char *orig_code_e = code.e;
@@ -728,11 +728,11 @@ process_lparen_or_lbracket(int decl_ind, bool tabs_to_var, bool spaced_expr)
     }
 
     if (token.s[0] == '(' && ps.in_decl
-	&& !ps.block_init && !ps.dumped_decl_indent &&
+	&& !ps.block_init && !ps.decl_indent_done &&
 	ps.procname[0] == '\0' && ps.paren_level == 0) {
 	/* function pointer declarations */
-	indent_declaration(decl_ind, tabs_to_var);
-	ps.dumped_decl_indent = true;
+	code_add_decl_indent(decl_ind, tabs_to_var);
+	ps.decl_indent_done = true;
     } else if (want_blank_before_lparen())
 	*code.e++ = ' ';
     ps.want_blank = false;
@@ -804,11 +804,11 @@ process_rparen_or_rbracket(bool *spaced_expr, bool *force_nl, stmt_head hd)
 static void
 process_unary_op(int decl_ind, bool tabs_to_var)
 {
-    if (!ps.dumped_decl_indent && ps.in_decl && !ps.block_init &&
+    if (!ps.decl_indent_done && ps.in_decl && !ps.block_init &&
 	ps.procname[0] == '\0' && ps.paren_level == 0) {
 	/* pointer declarations */
-	indent_declaration(decl_ind - (int)buf_len(&token), tabs_to_var);
-	ps.dumped_decl_indent = true;
+	code_add_decl_indent(decl_ind - (int)buf_len(&token), tabs_to_var);
+	ps.decl_indent_done = true;
     } else if (ps.want_blank)
 	*code.e++ = ' ';
 
@@ -890,10 +890,10 @@ process_semicolon(bool *seen_case, int *quest_level, int decl_ind,
     ps.just_saw_decl--;
 
     if (ps.in_decl && code.s == code.e && !ps.block_init &&
-	!ps.dumped_decl_indent && ps.paren_level == 0) {
+	!ps.decl_indent_done && ps.paren_level == 0) {
 	/* indent stray semicolons in declarations */
-	indent_declaration(decl_ind - 1, tabs_to_var);
-	ps.dumped_decl_indent = true;
+	code_add_decl_indent(decl_ind - 1, tabs_to_var);
+	ps.decl_indent_done = true;
     }
 
     ps.in_decl = ps.decl_nest > 0;	/* if we were in a first level
@@ -1122,11 +1122,10 @@ process_ident(lexer_symbol lsym, int decl_ind, bool tabs_to_var,
 	    }
 	    ps.want_blank = false;
 
-	} else if (!ps.block_init && !ps.dumped_decl_indent &&
-	    ps.paren_level == 0) {	/* if we are in a declaration, we must
-					 * indent identifier */
-	    indent_declaration(decl_ind, tabs_to_var);
-	    ps.dumped_decl_indent = true;
+	} else if (!ps.block_init && !ps.decl_indent_done &&
+	    ps.paren_level == 0) {
+	    code_add_decl_indent(decl_ind, tabs_to_var);
+	    ps.decl_indent_done = true;
 	    ps.want_blank = false;
 	}
 
@@ -1170,10 +1169,10 @@ process_comma(int decl_ind, bool tabs_to_var, bool *force_nl)
 					 * does not start the line */
 
     if (ps.in_decl && ps.procname[0] == '\0' && !ps.block_init &&
-	!ps.dumped_decl_indent && ps.paren_level == 0) {
+	!ps.decl_indent_done && ps.paren_level == 0) {
 	/* indent leading commas and not the actual identifiers */
-	indent_declaration(decl_ind - 1, tabs_to_var);
-	ps.dumped_decl_indent = true;
+	code_add_decl_indent(decl_ind - 1, tabs_to_var);
+	ps.decl_indent_done = true;
     }
 
     *code.e++ = ',';

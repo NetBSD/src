@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.h,v 1.57 2021/10/29 16:59:35 rillig Exp $	*/
+/*	$NetBSD: indent.h,v 1.58 2021/10/29 17:32:22 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-FreeBSD
@@ -335,7 +335,8 @@ extern struct parser_state {
 				 * ignored in some cases.) */
     enum keyword_kind prev_keyword;
     enum keyword_kind curr_keyword;
-    bool dumped_decl_indent;
+    bool decl_indent_done;	/* whether the indentation for a declaration
+				 * has been added to the code buffer. */
     bool in_parameter_declaration;
     char procname[100];		/* The name of the current procedure */
     int just_saw_decl;
