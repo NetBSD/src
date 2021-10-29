@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.c,v 1.173 2021/10/29 19:12:48 rillig Exp $	*/
+/*	$NetBSD: indent.c,v 1.174 2021/10/29 19:22:55 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)indent.c	5.17 (Berkeley) 6/7/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: indent.c,v 1.173 2021/10/29 19:12:48 rillig Exp $");
+__RCSID("$NetBSD: indent.c,v 1.174 2021/10/29 19:22:55 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/indent.c 340138 2018-11-04 19:24:49Z oshogbo $");
 #endif
@@ -85,7 +85,11 @@ struct options opt = {
     .use_tabs = true,
 };
 
-struct parser_state ps;
+struct parser_state ps = {
+    .s_sym[0] = psym_stmt,
+    .prev_token = lsym_semicolon,
+    .prev_newline = true,
+};
 
 struct buffer lab;
 struct buffer code;
@@ -108,7 +112,7 @@ bool blank_line_after;
 bool break_comma;
 float case_ind;
 bool had_eof;
-int line_no;
+int line_no = 1;
 bool inhibit_formatting;
 
 static int ifdef_level;
@@ -454,35 +458,16 @@ buf_reset(struct buffer *buf)
 static void
 main_init_globals(void)
 {
-    found_err = false;
-
-    ps.s_sym[0] = psym_stmt;
-    ps.prev_newline = true;
-    ps.prev_token = lsym_semicolon;
-    buf_init(&com);
-    buf_init(&lab);
-    buf_init(&code);
-    buf_init(&token);
-
-    opt.else_if = true;		/* XXX: redundant? */
-
     inp.buf = xmalloc(10);
     inp.l = inp.buf + 8;
     inp.s = inp.buf;
     inp.e = inp.buf;
 
-    line_no = 1;
-    had_eof = ps.in_decl = ps.decl_on_line = break_comma = false;
+    buf_init(&token);
 
-    ps.init_or_struct = false;
-    ps.want_blank = ps.in_stmt = ps.ind_stmt = false;
-    ps.is_case_label = false;
-
-    sc_end = NULL;
-    saved_inp_s = NULL;
-    saved_inp_e = NULL;
-
-    output = NULL;
+    buf_init(&com);
+    buf_init(&lab);
+    buf_init(&code);
 
     const char *suffix = getenv("SIMPLE_BACKUP_SUFFIX");
     if (suffix != NULL)
