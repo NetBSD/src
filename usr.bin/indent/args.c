@@ -1,4 +1,4 @@
-/*	$NetBSD: args.c,v 1.66 2021/10/28 22:20:08 rillig Exp $	*/
+/*	$NetBSD: args.c,v 1.67 2021/10/29 19:52:59 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)args.c	8.1 (Berkeley) 6/6/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: args.c,v 1.66 2021/10/28 22:20:08 rillig Exp $");
+__RCSID("$NetBSD: args.c,v 1.67 2021/10/29 19:52:59 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/args.c 336318 2018-07-15 21:04:21Z pstef $");
 #endif
@@ -52,7 +52,6 @@ __FBSDID("$FreeBSD: head/usr.bin/indent/args.c 336318 2018-07-15 21:04:21Z pstef
 
 #include <ctype.h>
 #include <err.h>
-#include <errno.h>
 #include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -241,10 +240,9 @@ found:
 	return;
     }
 
-    errno = 0;
     char *end;
     long num = strtol(arg_arg, &end, 10);
-    if (!(errno == 0 && *end == '\0'))
+    if (*end != '\0')
 	errx(1, "%s: argument \"%s\" to option \"-%s\" must be an integer",
 	    option_source, arg_arg, p->p_name);
 
