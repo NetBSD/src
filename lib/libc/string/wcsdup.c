@@ -1,4 +1,4 @@
-/*	$NetBSD: wcsdup.c,v 1.3 2008/05/26 13:17:48 haad Exp $	*/
+/*	$NetBSD: wcsdup.c,v 1.4 2021/10/29 10:11:57 nia Exp $	*/
 
 /*
  * Copyright (C) 2006 Aleksey Cheusov
@@ -14,7 +14,7 @@
 #include <sys/cdefs.h>
 
 #if defined(LIBC_SCCS) && !defined(lint) 
-__RCSID("$NetBSD: wcsdup.c,v 1.3 2008/05/26 13:17:48 haad Exp $"); 
+__RCSID("$NetBSD: wcsdup.c,v 1.4 2021/10/29 10:11:57 nia Exp $"); 
 #endif /* LIBC_SCCS and not lint */ 
 
 #include "namespace.h"
@@ -33,9 +33,9 @@ wcsdup(const wchar_t *str)
 	_DIAGASSERT(str != NULL);
 
 	len = wcslen(str) + 1;
-	copy = malloc(len * sizeof (wchar_t));
 
-	if (!copy)
+	copy = NULL;
+	if (reallocarr(&copy, len, sizeof(wchar_t)) != 0)
 		return NULL;
 
 	return wmemcpy(copy, str, len);
