@@ -31,7 +31,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: aarch64_tlb.c,v 1.1 2021/10/10 07:15:25 skrll Exp $");
+__KERNEL_RCSID(1, "$NetBSD: aarch64_tlb.c,v 1.2 2021/10/29 07:55:04 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -104,7 +104,7 @@ tlb_record_asids(u_long *mapp, tlb_asid_t asid_max)
 	KASSERT(asid_max == pmap_md_tlb_asid_max());
 
 #if DIAGNOSTIC
-	memset(mapp, 0xff, (asid_max + 1) / (NBBY * sizeof(u_long)));
+	memset(mapp, 0xff, (asid_max + 1) / NBBY);
 	mapp[0] ^= __BITS(0, KERNEL_PID);
 #endif
 	return asid_max;
