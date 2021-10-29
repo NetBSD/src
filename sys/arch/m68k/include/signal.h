@@ -1,4 +1,4 @@
-/*	$NetBSD: signal.h,v 1.27 2021/10/27 01:10:06 thorpej Exp $	*/
+/*	$NetBSD: signal.h,v 1.28 2021/10/29 17:29:45 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991 Regents of the University of California.
@@ -36,6 +36,8 @@
 
 #include <sys/featuretest.h>
 
+#define	__HAVE_STRUCT_SIGCONTEXT
+
 typedef int sig_atomic_t;
 
 #if defined(_NETBSD_SOURCE)
@@ -65,7 +67,6 @@ struct sigcontext13 {
 #endif /* _KERNEL */
 
 #if defined(_LIBC) || defined(_KERNEL)
-#define	__HAVE_STRUCT_SIGCONTEXT
 struct sigcontext {
 	int	sc_onstack;		/* sigstack state to restore */
 	int	__sc_mask13;		/* signal mask to restore (old style) */
@@ -96,7 +97,7 @@ struct sigstate {
 
 u_int fpsr2siginfocode(u_int fpsr);
 
-#endif
+#endif /* _KERNEL */
 
 #if defined(__M68K_SIGNAL_PRIVATE)
 
