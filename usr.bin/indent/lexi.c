@@ -1,4 +1,4 @@
-/*	$NetBSD: lexi.c,v 1.109 2021/10/29 16:59:35 rillig Exp $	*/
+/*	$NetBSD: lexi.c,v 1.110 2021/10/29 17:50:37 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)lexi.c	8.1 (Berkeley) 6/6/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: lexi.c,v 1.109 2021/10/29 16:59:35 rillig Exp $");
+__RCSID("$NetBSD: lexi.c,v 1.110 2021/10/29 17:50:37 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/lexi.c 337862 2018-08-15 18:19:45Z pstef $");
 #endif
@@ -399,9 +399,9 @@ probably_typename(void)
 	goto maybe;
     return false;
 maybe:
-    return ps.last_token == lsym_semicolon ||
-	ps.last_token == lsym_lbrace ||
-	ps.last_token == lsym_rbrace;
+    return ps.prev_token == lsym_semicolon ||
+	ps.prev_token == lsym_lbrace ||
+	ps.prev_token == lsym_rbrace;
 }
 
 static int
@@ -456,13 +456,13 @@ lexi_alnum(void)
     while (is_hspace(inbuf_peek()))
 	inbuf_skip();
 
-    if (ps.last_token == lsym_tag && ps.p_l_follow == 0) {
+    if (ps.prev_token == lsym_tag && ps.p_l_follow == 0) {
 	ps.next_unary = true;
 	return lsym_type;
     }
 
     /* Operator after identifier is binary unless last token was 'struct'. */
-    ps.next_unary = ps.last_token == lsym_tag;
+    ps.next_unary = ps.prev_token == lsym_tag;
 
     const struct keyword *kw = bsearch(token.s, keywords,
 	array_length(keywords), sizeof(keywords[0]), cmp_keyword_by_name);
@@ -491,8 +491,8 @@ lexi_alnum(void)
 		/* inside parentheses: cast, param list, offsetof or sizeof */
 		ps.cast_mask |= (1 << ps.p_l_follow) & ~ps.not_cast_mask;
 	    }
-	    if (ps.last_token == lsym_period ||
-		    ps.last_token == lsym_unary_op)
+	    if (ps.prev_token == lsym_period ||
+		    ps.prev_token == lsym_unary_op)
 		break;
 	    if (kw != NULL && kw->kind == kw_struct_or_union_or_enum)
 		return lsym_tag;
@@ -546,7 +546,7 @@ not_proc:;
 	return lsym_type;
     }
 
-    if (ps.last_token == lsym_type)	/* if this is a declared variable,
+    if (ps.prev_token == lsym_type)	/* if this is a declared variable,
 					 * then following sign is unary */
 	ps.next_unary = true;	/* will make "int a -1" work */
 
@@ -558,13 +558,13 @@ lexer_symbol
 lexi(void)
 {
     token.e = token.s;
-    ps.col_1 = ps.last_nl;
-    ps.last_nl = false;
+    ps.prev_col_1 = ps.prev_newline;
+    ps.prev_newline = false;
     ps.prev_keyword = ps.curr_keyword;
     ps.curr_keyword = kw_0;
 
     while (is_hspace(*inp.s)) {
-	ps.col_1 = false;
+	ps.prev_col_1 = false;
 	inbuf_skip();
     }
 
@@ -585,7 +585,7 @@ lexi(void)
     switch (*token.s) {
     case '\n':
 	unary_delim = ps.next_unary;
-	ps.last_nl = true;	/* remember that we just had a newline */
+	ps.prev_newline = true;
 	/* if data has been exhausted, the newline is a dummy. */
 	lsym = had_eof ? lsym_eof : lsym_newline;
 	break;
@@ -639,8 +639,7 @@ lexi(void)
 
     case '\f':
 	unary_delim = ps.next_unary;
-	ps.last_nl = true;	/* remember this, so we can set 'ps.col_1'
-				 * right */
+	ps.prev_newline = true;
 	lsym = lsym_form_feed;
 	break;
 
@@ -661,8 +660,8 @@ lexi(void)
 
 	if (*inp.s == token.s[0]) {	/* ++, -- */
 	    *token.e++ = *inp.s++;
-	    if (ps.last_token == lsym_ident ||
-		    ps.last_token == lsym_rparen_or_rbracket) {
+	    if (ps.prev_token == lsym_ident ||
+		    ps.prev_token == lsym_rparen_or_rbracket) {
 		lsym = ps.next_unary ? lsym_unary_op : lsym_postfix_op;
 		unary_delim = false;
 	    }

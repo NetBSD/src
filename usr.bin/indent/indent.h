@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.h,v 1.59 2021/10/29 17:41:56 rillig Exp $	*/
+/*	$NetBSD: indent.h,v 1.60 2021/10/29 17:50:37 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-FreeBSD
@@ -272,13 +272,14 @@ extern bool inhibit_formatting;	/* true if INDENT OFF is in effect */
 #define	STACKSIZE 256
 
 extern struct parser_state {
-    /* TODO: rename to prev_token */
-    lexer_symbol last_token;
-    /* TODO: rename to prev_newline */
-    bool last_nl;		/* whether the last thing scanned was a
+    /*
+     * TODO: Double-check that the word 'prev' in the following variables
+     * means exactly the same thing.
+     */
+    lexer_symbol prev_token;
+    bool prev_newline;		/* whether the last thing scanned was a
 				 * newline */
-    /* TODO: rename to prev_col_1 */
-    bool col_1;			/* whether the last token started in column 1 */
+    bool prev_col_1;		/* whether the last token started in column 1 */
     enum keyword_kind prev_keyword;
     enum keyword_kind curr_keyword;
     bool next_unary;		/* whether the following operator should be

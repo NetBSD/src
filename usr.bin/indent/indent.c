@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.c,v 1.170 2021/10/29 17:32:22 rillig Exp $	*/
+/*	$NetBSD: indent.c,v 1.171 2021/10/29 17:50:37 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)indent.c	5.17 (Berkeley) 6/7/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: indent.c,v 1.170 2021/10/29 17:32:22 rillig Exp $");
+__RCSID("$NetBSD: indent.c,v 1.171 2021/10/29 17:50:37 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/indent.c 340138 2018-11-04 19:24:49Z oshogbo $");
 #endif
@@ -450,8 +450,8 @@ main_init_globals(void)
     found_err = false;
 
     ps.s_sym[0] = psym_stmt;
-    ps.last_nl = true;
-    ps.last_token = lsym_semicolon;
+    ps.prev_newline = true;
+    ps.prev_token = lsym_semicolon;
     buf_init(&com);
     buf_init(&lab);
     buf_init(&code);
@@ -690,7 +690,7 @@ process_form_feed(void)
 static void
 process_newline(void)
 {
-    if (ps.last_token == lsym_comma && ps.p_l_follow == 0 && !ps.block_init &&
+    if (ps.prev_token == lsym_comma && ps.p_l_follow == 0 && !ps.block_init &&
 	!opt.break_after_comma && break_comma &&
 	com.s == com.e)
 	goto stay_in_line;
@@ -707,9 +707,9 @@ want_blank_before_lparen(void)
 {
     if (!ps.want_blank)
 	return false;
-    if (ps.last_token == lsym_rparen_or_rbracket)
+    if (ps.prev_token == lsym_rparen_or_rbracket)
 	return false;
-    if (ps.last_token != lsym_ident && ps.last_token != lsym_funcname)
+    if (ps.prev_token != lsym_ident && ps.prev_token != lsym_funcname)
 	return true;
     if (opt.proc_calls_space)
 	return true;
@@ -881,7 +881,7 @@ process_semicolon(bool *seen_case, int *quest_level, int decl_ind,
 	ps.init_or_struct = false;
     *seen_case = false;		/* these will only need resetting in an error */
     *quest_level = 0;
-    if (ps.last_token == lsym_rparen_or_rbracket)
+    if (ps.prev_token == lsym_rparen_or_rbracket)
 	ps.in_parameter_declaration = false;
     ps.cast_mask = 0;
     ps.not_cast_mask = 0;
@@ -1079,7 +1079,7 @@ process_type(int *decl_ind, bool *tabs_to_var)
 {
     parse(psym_decl);		/* let the parser worry about indentation */
 
-    if (ps.last_token == lsym_rparen_or_rbracket && ps.tos <= 1) {
+    if (ps.prev_token == lsym_rparen_or_rbracket && ps.tos <= 1) {
 	if (code.s != code.e) {
 	    dump_line();
 	    ps.want_blank = false;
@@ -1093,7 +1093,7 @@ process_type(int *decl_ind, bool *tabs_to_var)
     }
 
     ps.init_or_struct = /* maybe */ true;
-    ps.in_decl = ps.decl_on_line = ps.last_token != lsym_typedef;
+    ps.in_decl = ps.decl_on_line = ps.prev_token != lsym_typedef;
     if (ps.decl_nest <= 0)
 	ps.just_saw_decl = 2;
 
@@ -1505,7 +1505,7 @@ main_loop(void)
 	*code.e = '\0';
 	if (lsym != lsym_comment && lsym != lsym_newline &&
 		lsym != lsym_preprocessing)
-	    ps.last_token = lsym;
+	    ps.prev_token = lsym;
     }
 }
 
