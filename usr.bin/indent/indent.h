@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.h,v 1.60 2021/10/29 17:50:37 rillig Exp $	*/
+/*	$NetBSD: indent.h,v 1.61 2021/10/29 18:18:03 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-FreeBSD
@@ -135,22 +135,28 @@ typedef enum stmt_head {
 				 * of code */
 
 
+/* A range of characters, in some cases null-terminated. */
 struct buffer {
-    char *buf;			/* buffer */
-    char *s;			/* start */
-    char *e;			/* end */
-    char *l;			/* limit */
+    char *s;			/* start of the usable text */
+    char *e;			/* end of the usable text */
+    char *buf;			/* start of the allocated memory */
+    char *l;			/* end of the allocated memory */
 };
 
 extern FILE *input;
 extern FILE *output;
 
-extern struct buffer lab;	/* label or preprocessor directive */
-extern struct buffer code;	/* code */
-extern struct buffer com;	/* comment */
-extern struct buffer token;	/* the last token scanned */
+extern struct buffer inp;	/* one line of input, ready to be split into
+				 * tokens */
 
-extern struct buffer inp;
+extern struct buffer token;	/* the current token to be processed, is
+				 * typically copied to the buffer 'code',
+				 * or in some cases to 'lab'. */
+
+extern struct buffer lab;	/* the label or preprocessor directive */
+extern struct buffer code;	/* the main part of the current line of code */
+extern struct buffer com;	/* the trailing comment of the line, or the
+				 * start or end of a multi-line comment */
 
 extern char sc_buf[sc_size];	/* input text is saved here when looking for
 				 * the brace after an if, while, etc */
