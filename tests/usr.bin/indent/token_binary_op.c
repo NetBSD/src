@@ -1,4 +1,4 @@
-/* $NetBSD: token_binary_op.c,v 1.4 2021/10/29 21:56:36 rillig Exp $ */
+/* $NetBSD: token_binary_op.c,v 1.5 2021/10/29 22:37:25 rillig Exp $ */
 /* $FreeBSD$ */
 
 /*
@@ -239,3 +239,30 @@ char *(*fn)(int, int) = NULL;
 /* XXX: The parameter '(int)' is wrongly interpreted as a type cast. */
 /* XXX: The parameter '(int, int)' is wrongly interpreted as a type cast. */
 #indent run-equals-input -di0
+
+
+/*
+ * Ensure that the result of the indentation does not depend on whether a
+ * token from the input starts in column 1 or 9.
+ *
+ * See process_binary_op, ps.prev_col_1.
+ */
+#indent input
+int col_1 //
+= //
+1;
+
+int col_9 //
+	= //
+	9;
+#indent end
+
+#indent run
+int		col_1		//
+=				//
+1;
+
+int		col_9		//
+=				//
+9;
+#indent end
