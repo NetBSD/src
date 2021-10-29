@@ -1,5 +1,5 @@
 #! /bin/sh
-# $NetBSD: t_errors.sh,v 1.8 2021/10/28 21:35:57 rillig Exp $
+# $NetBSD: t_errors.sh,v 1.9 2021/10/29 16:43:05 rillig Exp $
 #
 # Copyright (c) 2021 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -347,6 +347,48 @@ preprocessing_unrecognized_body()
 	    "$indent" code.c
 }
 
+atf_test_case 'unbalanced_parentheses_1'
+unbalanced_parentheses_1_body()
+{
+	cat <<-\EOF > code.c
+		int var =
+		(
+		;
+		)
+		;
+	EOF
+	cat <<-\EOF > stderr.exp
+		error: code.c:3: Unbalanced parens
+		warning: code.c:4: Extra )
+	EOF
+
+	atf_check -s 'exit:1' -e 'file:stderr.exp' \
+	    "$indent" code.c
+}
+
+atf_test_case 'unbalanced_parentheses_2'
+unbalanced_parentheses_2_body()
+{
+	# '({...})' is the GCC extension "Statement expression".
+	cat <<-\EOF > code.c
+		int var =
+		(
+		{
+		1
+		}
+		)
+		;
+	EOF
+	cat <<-\EOF > stderr.exp
+		error: code.c:3: Unbalanced parens
+		warning: code.c:6: Extra )
+	EOF
+
+	atf_check -s 'exit:1' -e 'file:stderr.exp' \
+	    "$indent" code.c
+}
+
+
 atf_init_test_cases()
 {
 	atf_add_test_case 'option_unknown'
@@ -375,4 +417,6 @@ atf_init_test_cases()
 	atf_add_test_case 'unexpected_closing_brace_decl'
 	atf_add_test_case 'preprocessing_overflow'
 	atf_add_test_case 'preprocessing_unrecognized'
+	atf_add_test_case 'unbalanced_parentheses_1'
+	atf_add_test_case 'unbalanced_parentheses_2'
 }
