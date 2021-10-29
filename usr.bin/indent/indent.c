@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.c,v 1.171 2021/10/29 17:50:37 rillig Exp $	*/
+/*	$NetBSD: indent.c,v 1.172 2021/10/29 18:50:52 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)indent.c	5.17 (Berkeley) 6/7/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: indent.c,v 1.171 2021/10/29 17:50:37 rillig Exp $");
+__RCSID("$NetBSD: indent.c,v 1.172 2021/10/29 18:50:52 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/indent.c 340138 2018-11-04 19:24:49Z oshogbo $");
 #endif
@@ -187,6 +187,12 @@ search_stmt_comment(bool *comment_buffered)
 	 * Copy everything from the start of the line, because
 	 * process_comment() will use that to calculate original indentation
 	 * of a boxed comment.
+	 */
+	/*
+	 * FIXME: This '4' needs an explanation. For example, in the snippet
+	 * 'if(expr)/''*comment', the 'r)' of the code is not copied. If there
+	 * is an additional line break before the ')', memcpy tries to copy
+	 * (size_t)-1 bytes.
 	 */
 	memcpy(sc_buf, inp.buf, (size_t)(inp.s - inp.buf) - 4);
 	save_com = sc_buf + (inp.s - inp.buf - 4);
