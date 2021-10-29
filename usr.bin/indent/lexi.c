@@ -1,4 +1,4 @@
-/*	$NetBSD: lexi.c,v 1.112 2021/10/29 21:22:05 rillig Exp $	*/
+/*	$NetBSD: lexi.c,v 1.113 2021/10/29 21:31:29 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)lexi.c	8.1 (Berkeley) 6/6/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: lexi.c,v 1.112 2021/10/29 21:22:05 rillig Exp $");
+__RCSID("$NetBSD: lexi.c,v 1.113 2021/10/29 21:31:29 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/lexi.c 337862 2018-08-15 18:19:45Z pstef $");
 #endif
@@ -295,17 +295,24 @@ debug_print_buf(const char *name, const struct buffer *buf)
 }
 
 #define debug_ps_bool(name) \
-	debug_println("[%c] " #name, ps.name ? 'x' : ' ')
+        if (ps.name != prev_ps.name) \
+	    debug_println("[%c] ps." #name, ps.name ? 'x' : ' ')
 #define debug_ps_int(name) \
-	if (ps.name != 0) \
-	    debug_println("%3d " #name, ps.name)
+	if (ps.name != prev_ps.name) \
+	    debug_println("%3d ps." #name, ps.name)
 #define debug_ps_keyword(name) \
 	if (ps.name != kw_0) \
-	    debug_println("    " #name " = %s", kw_name(ps.name))
+	    debug_println("    ps." #name " = %s", kw_name(ps.name))
 
 static void
 debug_lexi(lexer_symbol lsym)
 {
+    /*
+     * Watch out for 'rolled back parser state' in the debug output; the
+     * differences around these are unreliable.
+     */
+    static struct parser_state prev_ps;
+
     debug_println("");
     debug_printf("line %d\n", line_no);
     debug_print_buf("label", &lab);
@@ -351,6 +358,8 @@ debug_lexi(lexer_symbol lsym)
     debug_ps_bool(is_case_label);
 
     debug_ps_bool(search_stmt);
+
+    prev_ps = ps;
 }
 #endif
 
