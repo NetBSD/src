@@ -1,4 +1,4 @@
-/*	$NetBSD: io.c,v 1.104 2021/10/29 17:32:22 rillig Exp $	*/
+/*	$NetBSD: io.c,v 1.105 2021/10/29 18:18:03 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)io.c	8.1 (Berkeley) 6/6/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: io.c,v 1.104 2021/10/29 17:32:22 rillig Exp $");
+__RCSID("$NetBSD: io.c,v 1.105 2021/10/29 18:18:03 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/io.c 334927 2018-06-10 16:44:18Z pstef $");
 #endif
@@ -153,7 +153,7 @@ dump_line_code(int ind)
 	    /* XXX: the '+ 1' smells like an off-by-one error. */
 	    ps.paren_indents[i] = (short)-(paren_ind + target_ind + 1);
 	    debug_println(
-		"setting pi[%d] from %d to %d for column %d",
+		"setting paren_indents[%d] from %d to %d for column %d",
 		i, paren_ind, ps.paren_indents[i], target_ind + 1);
 	}
     }
@@ -186,7 +186,7 @@ dump_line_comment(int ind)
 	}
     }
 
-    /* if comment can't fit on this line, put it on next line */
+    /* if comment can't fit on this line, put it on the next line */
     if (ind > target_ind) {
 	output_char('\n');
 	ind = 0;
@@ -204,8 +204,8 @@ dump_line_comment(int ind)
 }
 
 /*
- * Write a line of formatted source to the output file. The line consists of a
- * label, the code and the comment.
+ * Write a line of formatted source to the output file. The line consists of
+ * the label, the code and the comment.
  */
 static void
 output_line(char line_terminator)
