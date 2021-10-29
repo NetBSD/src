@@ -73,18 +73,14 @@ int
 array_setsize(struct array *a, unsigned num)
 {
 	unsigned newmax;
-	void **newptr;
 
 	if (num > a->max) {
 		newmax = a->max;
 		while (num > newmax) {
 			newmax = newmax ? newmax*2 : 4;
 		}
-		newptr = realloc(a->v, newmax*sizeof(*a->v));
-		if (newptr == NULL) {
+		if (reallocarr(&a->v, newmax, sizeof(*a->v)) != 0)
 			return -1;
-		}
-		a->v = newptr;
 		a->max = newmax;
 	}
 	a->num = num;
