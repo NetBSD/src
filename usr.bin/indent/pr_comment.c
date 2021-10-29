@@ -1,4 +1,4 @@
-/*	$NetBSD: pr_comment.c,v 1.88 2021/10/29 17:50:37 rillig Exp $	*/
+/*	$NetBSD: pr_comment.c,v 1.89 2021/10/29 19:12:48 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)pr_comment.c	8.1 (Berkeley) 6/6/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: pr_comment.c,v 1.88 2021/10/29 17:50:37 rillig Exp $");
+__RCSID("$NetBSD: pr_comment.c,v 1.89 2021/10/29 19:12:48 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/pr_comment.c 334927 2018-06-10 16:44:18Z pstef $");
 #endif
@@ -58,7 +58,7 @@ __FBSDID("$FreeBSD: head/usr.bin/indent/pr_comment.c 334927 2018-06-10 16:44:18Z
 static void
 com_add_char(char ch)
 {
-    if (com.e + 1 >= com.l)
+    if (1 >= com.l - com.e)
 	buf_expand(&com, 1);
     *com.e++ = ch;
 }
@@ -69,7 +69,7 @@ com_add_delim(void)
     if (!opt.star_comment_cont)
 	return;
     size_t len = 3;
-    if (com.e + len >= com.l)
+    if (len >= (size_t)(com.l - com.e))
 	buf_expand(&com, len);
     memcpy(com.e, " * ", len);
     com.e += len;
@@ -78,7 +78,7 @@ com_add_delim(void)
 static void
 com_terminate(void)
 {
-    if (com.e + 1 >= com.l)
+    if (1 >= com.l - com.e)
 	buf_expand(&com, 1);
     *com.e = '\0';
 }
@@ -190,6 +190,9 @@ process_comment(void)
 	/*
 	 * XXX: ordered comparison between pointers from different objects
 	 * invokes undefined behavior (C99 6.5.8).
+	 *
+	 * XXX: It's easier to understand if inp.s is used instead of inp.buf,
+	 * since inp.buf is only intended to be used for allocation purposes.
 	 */
 	start = inp.s >= save_com && inp.s < save_com + sc_size ?
 	    sc_buf : inp.buf;
