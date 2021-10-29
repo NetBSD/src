@@ -1,4 +1,4 @@
-/*	$NetBSD: pr_comment.c,v 1.89 2021/10/29 19:12:48 rillig Exp $	*/
+/*	$NetBSD: pr_comment.c,v 1.90 2021/10/29 20:27:42 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)pr_comment.c	8.1 (Berkeley) 6/6/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: pr_comment.c,v 1.89 2021/10/29 19:12:48 rillig Exp $");
+__RCSID("$NetBSD: pr_comment.c,v 1.90 2021/10/29 20:27:42 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/pr_comment.c 334927 2018-06-10 16:44:18Z pstef $");
 #endif
@@ -93,7 +93,7 @@ fits_in_one_line(int max_line_length)
 	    continue;
 
 	int len = indentation_after_range(ps.com_ind + 3, inp.s, p);
-	len += is_hspace(p[-1]) ? 2 : 3;
+	len += ch_isblank(p[-1]) ? 2 : 3;
 	if (len <= max_line_length)
 	    return true;
     }
@@ -199,7 +199,7 @@ process_comment(void)
 	ps.n_comment_delta = -indentation_after_range(0, start, inp.s - 2);
     } else {
 	ps.n_comment_delta = 0;
-	while (is_hspace(*inp.s))
+	while (ch_isblank(*inp.s))
 	    inp.s++;
     }
 
@@ -234,7 +234,7 @@ process_comment(void)
 		last_blank = -1;
 		com_add_delim();
 		inp.s++;
-		while (is_hspace(*inp.s))
+		while (ch_isblank(*inp.s))
 		    inp.s++;
 	    } else {
 		inbuf_skip();
@@ -267,7 +267,7 @@ process_comment(void)
 
 	    } else {
 		ps.prev_newline = true;
-		if (!is_hspace(com.e[-1]))
+		if (!ch_isblank(com.e[-1]))
 		    com_add_char(' ');
 		last_blank = com.e - 1 - com.buf;
 	    }
@@ -283,7 +283,7 @@ process_comment(void)
 			if (*inp.s == '/')
 			    goto end_of_comment;
 		    }
-		} while (is_hspace(*inp.s));
+		} while (ch_isblank(*inp.s));
 	    } else
 		inbuf_skip();
 	    break;		/* end of case for newline */
@@ -303,7 +303,7 @@ process_comment(void)
 		    com_add_char(' ');
 		}
 
-		if (!is_hspace(com.e[-1]) && may_wrap)
+		if (!ch_isblank(com.e[-1]) && may_wrap)
 		    com_add_char(' ');
 		if (token.e[-1] != '/') {
 		    com_add_char('*');
@@ -323,7 +323,7 @@ process_comment(void)
 	    int now_len = indentation_after_range(ps.com_ind, com.s, com.e);
 	    for (;;) {
 		char ch = inbuf_next();
-		if (is_hspace(ch))
+		if (ch_isblank(ch))
 		    last_blank = com.e - com.buf;
 		com_add_char(ch);
 		now_len++;

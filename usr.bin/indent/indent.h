@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.h,v 1.61 2021/10/29 18:18:03 rillig Exp $	*/
+/*	$NetBSD: indent.h,v 1.62 2021/10/29 20:27:42 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-FreeBSD
@@ -407,7 +407,7 @@ char *xstrdup(const char *);
 void buf_expand(struct buffer *, size_t);
 
 static inline bool
-is_hspace(char ch)
+ch_isblank(char ch)
 {
     return ch == ' ' || ch == '\t';
 }

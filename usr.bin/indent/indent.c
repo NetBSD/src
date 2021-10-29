@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.c,v 1.176 2021/10/29 20:05:58 rillig Exp $	*/
+/*	$NetBSD: indent.c,v 1.177 2021/10/29 20:27:42 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)indent.c	5.17 (Berkeley) 6/7/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: indent.c,v 1.176 2021/10/29 20:05:58 rillig Exp $");
+__RCSID("$NetBSD: indent.c,v 1.177 2021/10/29 20:27:42 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/indent.c 340138 2018-11-04 19:24:49Z oshogbo $");
 #endif
@@ -266,7 +266,7 @@ search_stmt_other(lexer_symbol lsym, bool *force_nl,
 	return false;
     }
 
-    while (sc_end > save_com && isblank((unsigned char)sc_end[-1]))
+    while (sc_end > save_com && ch_isblank(sc_end[-1]))
 	sc_end--;
 
     if (opt.swallow_optional_blanklines ||
@@ -332,7 +332,7 @@ search_stmt_lookahead(lexer_symbol *lsym)
      * into the buffer so that the later lexi() call will read them.
      */
     if (sc_end != NULL) {
-	while (is_hspace(*inp.s)) {
+	while (ch_isblank(*inp.s)) {
 	    *sc_end++ = *inp.s++;
 	    if (sc_end >= &save_com[sc_size])
 		errx(1, "input too long");
@@ -1196,7 +1196,7 @@ read_preprocessing_line(void)
     state = PLAIN;
     int com_start = 0, com_end = 0;
 
-    while (is_hspace(*inp.s))
+    while (ch_isblank(*inp.s))
 	inbuf_skip();
 
     while (*inp.s != '\n' || (state == COMM && !had_eof)) {
@@ -1236,7 +1236,7 @@ read_preprocessing_line(void)
 	}
     }
 
-    while (lab.e > lab.s && is_hspace(lab.e[-1]))
+    while (lab.e > lab.s && ch_isblank(lab.e[-1]))
 	lab.e--;
     if (lab.e - lab.s == com_end && saved_inp_s == NULL) {
 	/* comment on preprocessor line */
@@ -1254,7 +1254,7 @@ read_preprocessing_line(void)
 	memmove(sc_end, lab.s + com_start, (size_t)(com_end - com_start));
 	sc_end += com_end - com_start;
 	lab.e = lab.s + com_start;
-	while (lab.e > lab.s && is_hspace(lab.e[-1]))
+	while (lab.e > lab.s && ch_isblank(lab.e[-1]))
 	    lab.e--;
 	saved_inp_s = inp.s;	/* save current input buffer */
 	saved_inp_e = inp.e;
