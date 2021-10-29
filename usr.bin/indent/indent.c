@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.c,v 1.175 2021/10/29 19:31:24 rillig Exp $	*/
+/*	$NetBSD: indent.c,v 1.176 2021/10/29 20:05:58 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)indent.c	5.17 (Berkeley) 6/7/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: indent.c,v 1.175 2021/10/29 19:31:24 rillig Exp $");
+__RCSID("$NetBSD: indent.c,v 1.176 2021/10/29 20:05:58 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/indent.c 340138 2018-11-04 19:24:49Z oshogbo $");
 #endif
@@ -53,6 +53,7 @@ __FBSDID("$FreeBSD: head/usr.bin/indent/indent.c 340138 2018-11-04 19:24:49Z osh
 #include <sys/capsicum.h>
 #include <capsicum_helpers.h>
 #endif
+#include <assert.h>
 #include <ctype.h>
 #include <err.h>
 #include <errno.h>
@@ -194,6 +195,7 @@ search_stmt_comment(bool *comment_buffered)
 	 * is an additional line break before the ')', memcpy tries to copy
 	 * (size_t)-1 bytes.
 	 */
+	assert((size_t)(inp.s - inp.buf) >= 4);
 	memcpy(sc_buf, inp.buf, (size_t)(inp.s - inp.buf) - 4);
 	save_com = sc_buf + (inp.s - inp.buf - 4);
 	save_com[0] = save_com[1] = ' ';
