@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.45 2021/10/29 22:52:50 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.46 2021/10/29 23:03:53 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -128,7 +128,7 @@ parse(parser_symbol psym)
 	    ps.ind_level_follow = ps.ind_level = decl_level();
 	break;
 
-    case psym_if_expr:		/* 'if' '(' <expr> ')' */
+    case psym_if_expr:
 	if (ps.s_sym[ps.tos] == psym_if_expr_stmt_else && opt.else_if) {
 	    /*
 	     * Reduce "else if" to "if". This saves a lot of stack space in
@@ -138,7 +138,7 @@ parse(parser_symbol psym)
 	}
 	/* FALLTHROUGH */
     case psym_do:
-    case psym_for_exprs:	/* 'for' (...) */
+    case psym_for_exprs:
 	ps.s_sym[++ps.tos] = psym;
 	ps.s_ind_level[ps.tos] = ps.ind_level = ps.ind_level_follow;
 	++ps.ind_level_follow;	/* subsequent statements should be indented 1 */
@@ -172,7 +172,7 @@ parse(parser_symbol psym)
 	ps.s_ind_level[ps.tos] = ps.ind_level_follow;
 	break;
 
-    case psym_while_expr:	/* 'while' '(' <expr> ')' */
+    case psym_while_expr:
 	if (ps.s_sym[ps.tos] == psym_do_stmt) {
 	    /* it is matched with do stmt */
 	    ps.ind_level = ps.ind_level_follow = ps.s_ind_level[ps.tos];
@@ -210,7 +210,7 @@ parse(parser_symbol psym)
 	    diag(1, "Statement nesting error");
 	break;
 
-    case psym_switch_expr:	/* had switch (...) */
+    case psym_switch_expr:
 	ps.s_sym[++ps.tos] = psym_switch_expr;
 	ps.s_case_ind_level[ps.tos] = case_ind;
 	/* save current case indent level */
@@ -222,9 +222,8 @@ parse(parser_symbol psym)
 	ps.search_stmt = opt.brace_same_line;
 	break;
 
-    case psym_semicolon:	/* this indicates a simple stmt */
-	break_comma = false;	/* turn off flag to break after commas in a
-				 * declaration */
+    case psym_semicolon:	/* a simple statement */
+	break_comma = false;	/* don't break after comma in a declaration */
 	ps.s_sym[++ps.tos] = psym_stmt;
 	ps.s_ind_level[ps.tos] = ps.ind_level;
 	break;
