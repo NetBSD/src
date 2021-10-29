@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.c,v 1.172 2021/10/29 18:50:52 rillig Exp $	*/
+/*	$NetBSD: indent.c,v 1.173 2021/10/29 19:12:48 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)indent.c	5.17 (Berkeley) 6/7/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: indent.c,v 1.172 2021/10/29 18:50:52 rillig Exp $");
+__RCSID("$NetBSD: indent.c,v 1.173 2021/10/29 19:12:48 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/indent.c 340138 2018-11-04 19:24:49Z oshogbo $");
 #endif
@@ -390,11 +390,11 @@ buf_init(struct buffer *buf)
 {
     size_t size = 200;
     buf->buf = xmalloc(size);
-    buf->buf[0] = ' ';		/* allow accessing buf->e[-1] */
-    buf->buf[1] = '\0';
-    buf->s = buf->buf + 1;
+    buf->l = buf->buf + size - 5 /* safety margin */;
+    buf->s = buf->buf + 1;	/* allow accessing buf->e[-1] */
     buf->e = buf->s;
-    buf->l = buf->buf + size - 5;	/* safety margin */
+    buf->buf[0] = ' ';
+    buf->buf[1] = '\0';
 }
 
 static size_t
@@ -404,20 +404,21 @@ buf_len(const struct buffer *buf)
 }
 
 void
-buf_expand(struct buffer *buf, size_t desired_size)
+buf_expand(struct buffer *buf, size_t add_size)
 {
-    size_t nsize = (size_t)(buf->l - buf->s) + 400 + desired_size;
+    size_t new_size = (size_t)(buf->l - buf->s) + 400 + add_size;
     size_t len = buf_len(buf);
-    buf->buf = xrealloc(buf->buf, nsize);
-    buf->e = buf->buf + len + 1;
-    buf->l = buf->buf + nsize - 5;
+    buf->buf = xrealloc(buf->buf, new_size);
+    buf->l = buf->buf + new_size - 5;
     buf->s = buf->buf + 1;
+    buf->e = buf->s + len;
+    /* At this point, the buffer may not be null-terminated anymore. */
 }
 
 static void
 buf_reserve(struct buffer *buf, size_t n)
 {
-    if (buf->e + n >= buf->l)
+    if (n >= (size_t)(buf->l - buf->e))
 	buf_expand(buf, n);
 }
 
@@ -467,7 +468,9 @@ main_init_globals(void)
 
     inp.buf = xmalloc(10);
     inp.l = inp.buf + 8;
-    inp.s = inp.e = inp.buf;
+    inp.s = inp.buf;
+    inp.e = inp.buf;
+
     line_no = 1;
     had_eof = ps.in_decl = ps.decl_on_line = break_comma = false;
 
