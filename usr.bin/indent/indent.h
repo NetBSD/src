@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.h,v 1.56 2021/10/29 16:54:51 rillig Exp $	*/
+/*	$NetBSD: indent.h,v 1.57 2021/10/29 16:59:35 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-FreeBSD
@@ -319,7 +319,7 @@ extern struct parser_state {
     bool next_unary;		/* whether the following operator should be
 				 * unary */
     int p_l_follow;		/* used to remember how to indent the
-				 * following statement */
+				 * remaining lines of the statement */
     int paren_level;		/* parenthesization level. used to indent
 				 * within statements */
     short paren_indents[20];	/* indentation of the operand/argument of each

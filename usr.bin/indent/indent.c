@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.c,v 1.168 2021/10/29 16:54:51 rillig Exp $	*/
+/*	$NetBSD: indent.c,v 1.169 2021/10/29 16:59:35 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)indent.c	5.17 (Berkeley) 6/7/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: indent.c,v 1.168 2021/10/29 16:54:51 rillig Exp $");
+__RCSID("$NetBSD: indent.c,v 1.169 2021/10/29 16:59:35 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/indent.c 340138 2018-11-04 19:24:49Z oshogbo $");
 #endif
@@ -774,10 +774,10 @@ process_rparen_or_rbracket(bool *spaced_expr, bool *force_nl, stmt_head hd)
 	ps.want_blank = true;
     ps.not_cast_mask &= (1 << ps.p_l_follow) - 1;
 
-    if (--ps.p_l_follow < 0) {
-	ps.p_l_follow = 0;
+    if (ps.p_l_follow > 0)
+	ps.p_l_follow--;
+    else
 	diag(0, "Extra '%c'", *token.s);
-    }
 
     if (code.e == code.s)	/* if the paren starts the line */
 	ps.paren_level = ps.p_l_follow;	/* then indent it */
@@ -915,8 +915,7 @@ process_semicolon(bool *seen_case, int *quest_level, int decl_ind,
     }
     *code.e++ = ';';
     ps.want_blank = true;
-    ps.in_stmt = ps.p_l_follow > 0;	/* we are no longer in the middle of a
-					 * stmt */
+    ps.in_stmt = ps.p_l_follow > 0;
 
     if (!*spaced_expr) {	/* if not if for (;;) */
 	parse(psym_semicolon);	/* let parser know about end of stmt */
@@ -1002,7 +1001,7 @@ process_rbrace(bool *spaced_expr, int *decl_ind, const int *di_stack)
 	parse(psym_semicolon);
     }
 
-    if (ps.p_l_follow != 0) {	/* check for unclosed if, for, else. */
+    if (ps.p_l_follow > 0) {	/* check for unclosed if, for, else. */
 	diag(1, "Unbalanced parentheses");
 	ps.p_l_follow = 0;
 	*spaced_expr = false;

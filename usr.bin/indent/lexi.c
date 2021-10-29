@@ -1,4 +1,4 @@
-/*	$NetBSD: lexi.c,v 1.108 2021/10/29 16:54:51 rillig Exp $	*/
+/*	$NetBSD: lexi.c,v 1.109 2021/10/29 16:59:35 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)lexi.c	8.1 (Berkeley) 6/6/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: lexi.c,v 1.108 2021/10/29 16:54:51 rillig Exp $");
+__RCSID("$NetBSD: lexi.c,v 1.109 2021/10/29 16:59:35 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/lexi.c 337862 2018-08-15 18:19:45Z pstef $");
 #endif
@@ -389,7 +389,7 @@ lex_char_or_string(void)
 static bool
 probably_typename(void)
 {
-    if (ps.p_l_follow != 0)
+    if (ps.p_l_follow > 0)
 	return false;
     if (ps.block_init || ps.in_stmt)
 	return false;
@@ -487,7 +487,7 @@ lexi_alnum(void)
 	case kw_struct_or_union_or_enum:
 	case kw_type:
     found_typename:
-	    if (ps.p_l_follow != 0) {
+	    if (ps.p_l_follow > 0) {
 		/* inside parentheses: cast, param list, offsetof or sizeof */
 		ps.cast_mask |= (1 << ps.p_l_follow) & ~ps.not_cast_mask;
 	    }
@@ -496,7 +496,7 @@ lexi_alnum(void)
 		break;
 	    if (kw != NULL && kw->kind == kw_struct_or_union_or_enum)
 		return lsym_tag;
-	    if (ps.p_l_follow != 0)
+	    if (ps.p_l_follow > 0)
 		break;
 	    return lsym_type;
 
