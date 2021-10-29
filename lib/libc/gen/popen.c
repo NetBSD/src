@@ -1,4 +1,4 @@
-/*	$NetBSD: popen.c,v 1.36 2019/01/24 18:01:38 christos Exp $	*/
+/*	$NetBSD: popen.c,v 1.37 2021/10/29 19:27:06 kre Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)popen.c	8.3 (Berkeley) 5/3/95";
 #else
-__RCSID("$NetBSD: popen.c,v 1.36 2019/01/24 18:01:38 christos Exp $");
+__RCSID("$NetBSD: popen.c,v 1.37 2021/10/29 19:27:06 kre Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -209,7 +209,7 @@ popen(const char *cmd, const char *type)
 		/* NOTREACHED */
 	case 0:				/* Child. */
 		pdes_child(pdes, type);
-		execl(_PATH_BSHELL, "sh", "-c", cmd, NULL);
+		execl(_PATH_BSHELL, "sh", "-c", "--", cmd, NULL);
 		_exit(127);
 		/* NOTREACHED */
 	}
