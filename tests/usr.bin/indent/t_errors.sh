@@ -1,5 +1,5 @@
 #! /bin/sh
-# $NetBSD: t_errors.sh,v 1.11 2021/10/29 16:54:51 rillig Exp $
+# $NetBSD: t_errors.sh,v 1.12 2021/10/29 19:39:32 rillig Exp $
 #
 # Copyright (c) 2021 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -408,6 +408,14 @@ unbalanced_parentheses_3_body()
 	    "$indent" code.c
 }
 
+atf_test_case 'search_stmt_comment_segv'
+search_stmt_comment_segv_body()
+{
+	printf '{if(expr\n)/*c*/;}\n' > code.c
+
+	atf_check -s 'signal' \
+	    "$indent" code.c -st
+}
 
 atf_init_test_cases()
 {
@@ -440,4 +448,5 @@ atf_init_test_cases()
 	atf_add_test_case 'unbalanced_parentheses_1'
 	atf_add_test_case 'unbalanced_parentheses_2'
 	atf_add_test_case 'unbalanced_parentheses_3'
+	atf_add_test_case 'search_stmt_comment_segv'
 }
