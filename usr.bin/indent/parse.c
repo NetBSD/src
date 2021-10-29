@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.44 2021/10/28 22:20:08 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.45 2021/10/29 22:52:50 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -84,6 +84,16 @@ psym_name(parser_symbol psym)
 }
 #endif
 
+static int
+decl_level(void)
+{
+    int level = 0;
+    for (int i = ps.tos - 1; i > 0; i--)
+	if (ps.s_sym[i] == psym_decl)
+	    level++;
+    return level;
+}
+
 /*
  * Shift the token onto the parser stack, or reduce it by combining it with
  * previous tokens.
@@ -106,22 +116,16 @@ parse(parser_symbol psym)
 	ps.search_stmt = opt.brace_same_line;
 	/* indicate that following brace should be on same line */
 
-	if (ps.s_sym[ps.tos] != psym_decl) {	/* only put one declaration
-						 * onto stack */
-	    break_comma = true;	/* while in declaration, newline should be
-				 * forced after comma */
-	    ps.s_sym[++ps.tos] = psym_decl;
-	    ps.s_ind_level[ps.tos] = ps.ind_level_follow;
+	if (ps.s_sym[ps.tos] == psym_decl)
+	    break;		/* only put one declaration onto stack */
 
-	    if (opt.ljust_decl) {
-		ps.ind_level = 0;
-		for (int i = ps.tos - 1; i > 0; --i)
-		    if (ps.s_sym[i] == psym_decl)
-			++ps.ind_level;	/* indentation is number of
-					 * declaration levels deep we are */
-		ps.ind_level_follow = ps.ind_level;
-	    }
-	}
+	break_comma = true;	/* while in a declaration, force a newline
+				 * after comma */
+	ps.s_sym[++ps.tos] = psym_decl;
+	ps.s_ind_level[ps.tos] = ps.ind_level_follow;
+
+	if (opt.ljust_decl)
+	    ps.ind_level_follow = ps.ind_level = decl_level();
 	break;
 
     case psym_if_expr:		/* 'if' '(' <expr> ')' */
