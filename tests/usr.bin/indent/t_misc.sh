@@ -1,5 +1,5 @@
 #! /bin/sh
-# $NetBSD: t_misc.sh,v 1.9 2021/10/28 21:02:05 rillig Exp $
+# $NetBSD: t_misc.sh,v 1.10 2021/10/29 16:54:51 rillig Exp $
 #
 # Copyright (c) 2021 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -316,7 +316,7 @@ line_no_counting_body()
 	EOF
 
 	cat <<-\EOF > code.err
-		warning: code.c:3: Extra )
+		warning: code.c:3: Extra ')'
 	EOF
 
 	atf_check -o 'ignore' -e 'file:code.err' \

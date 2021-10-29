@@ -1,4 +1,4 @@
-/*	$NetBSD: lexi.c,v 1.107 2021/10/28 22:06:23 rillig Exp $	*/
+/*	$NetBSD: lexi.c,v 1.108 2021/10/29 16:54:51 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)lexi.c	8.1 (Berkeley) 6/6/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: lexi.c,v 1.107 2021/10/28 22:06:23 rillig Exp $");
+__RCSID("$NetBSD: lexi.c,v 1.108 2021/10/29 16:54:51 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/lexi.c 337862 2018-08-15 18:19:45Z pstef $");
 #endif
@@ -488,7 +488,7 @@ lexi_alnum(void)
 	case kw_type:
     found_typename:
 	    if (ps.p_l_follow != 0) {
-		/* inside parens: cast, param list, offsetof or sizeof */
+		/* inside parentheses: cast, param list, offsetof or sizeof */
 		ps.cast_mask |= (1 << ps.p_l_follow) & ~ps.not_cast_mask;
 	    }
 	    if (ps.last_token == lsym_period ||

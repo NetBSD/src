@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.h,v 1.55 2021/10/28 22:20:08 rillig Exp $	*/
+/*	$NetBSD: indent.h,v 1.56 2021/10/29 16:54:51 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-FreeBSD
@@ -261,8 +261,8 @@ extern bool found_err;
 extern int blank_lines_to_output;
 extern bool blank_line_before;
 extern bool blank_line_after;
-extern bool break_comma;	/* when true and not in parens, break after a
-				 * comma */
+extern bool break_comma;	/* when true and not in parentheses, break
+				 * after a comma */
 extern float case_ind;		/* indentation level to be used for a "case
 				 * n:" */
 extern bool had_eof;		/* whether input is exhausted */
@@ -286,10 +286,11 @@ extern struct parser_state {
 				 * before the start of a box comment so that
 				 * forthcoming lines of the comment are
 				 * indented properly */
-    int cast_mask;		/* indicates which close parens potentially
-				 * close off casts */
-    int not_cast_mask;		/* indicates which close parens definitely
-				 * close off something else than casts */
+    int cast_mask;		/* indicates which close parentheses
+				 * potentially close off casts */
+    int not_cast_mask;		/* indicates which close parentheses
+				 * definitely close off something else than
+				 * casts */
     bool block_init;		/* whether inside a block initialization */
     int block_init_level;	/* The level of brace nesting in an
 				 * initialization */
