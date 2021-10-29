@@ -1,4 +1,4 @@
-/*	$NetBSD: lexi.c,v 1.113 2021/10/29 21:31:29 rillig Exp $	*/
+/*	$NetBSD: lexi.c,v 1.114 2021/10/29 23:48:50 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)lexi.c	8.1 (Berkeley) 6/6/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: lexi.c,v 1.113 2021/10/29 21:31:29 rillig Exp $");
+__RCSID("$NetBSD: lexi.c,v 1.114 2021/10/29 23:48:50 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/lexi.c 337862 2018-08-15 18:19:45Z pstef $");
 #endif
@@ -318,7 +318,7 @@ debug_lexi(lexer_symbol lsym)
     debug_print_buf("label", &lab);
     debug_print_buf("code", &code);
     debug_print_buf("comment", &com);
-    debug_printf("lexi returns '%s'", lsym_name(lsym));
+    debug_printf("lexi: %s", lsym_name(lsym));
     debug_vis_range(" \"", token.s, token.e, "\"\n");
 
     // prev_token
