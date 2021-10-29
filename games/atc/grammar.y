@@ -1,4 +1,4 @@
-/*	$NetBSD: grammar.y,v 1.12 2015/06/19 06:02:31 dholland Exp $	*/
+/*	$NetBSD: grammar.y,v 1.13 2021/10/29 11:44:22 nia Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -62,7 +62,7 @@
 #if 0
 static char sccsid[] = "@(#)grammar.y	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: grammar.y,v 1.12 2015/06/19 06:02:31 dholland Exp $");
+__RCSID("$NetBSD: grammar.y,v 1.13 2021/10/29 11:44:22 nia Exp $");
 #endif
 #endif /* not lint */
 
@@ -179,14 +179,8 @@ Bpoint:
 	'(' ConstOp ConstOp ')'
 		{
 		if (sp->num_beacons % REALLOC == 0) {
-			if (sp->beacon == NULL)
-				sp->beacon = malloc((sp->num_beacons
-					+ REALLOC) * sizeof (BEACON));
-			else
-				sp->beacon = realloc(sp->beacon,
-					(sp->num_beacons + REALLOC) * 
-					sizeof (BEACON));
-			if (sp->beacon == NULL)
+			if (reallocarr(&sp->beacon,
+			    sp->num_beacons + REALLOC, sizeof(BEACON)) != 0)
 				return (yyerror("No memory available."));
 		}
 		sp->beacon[sp->num_beacons].x = $2;
