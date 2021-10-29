@@ -1,4 +1,4 @@
-/* $NetBSD: token_binary_op.c,v 1.3 2021/10/26 22:00:38 rillig Exp $ */
+/* $NetBSD: token_binary_op.c,v 1.4 2021/10/29 21:56:36 rillig Exp $ */
 /* $FreeBSD$ */
 
 /*
@@ -220,18 +220,22 @@ peculiarities(void)
 #indent end
 
 
+/*
+ * Before NetBSD indent.c 1.178 from 2021-10-29, indent removed the blank
+ * before the '=', in the second and third of these function pointer
+ * declarations. This was because indent interpreted the prototype parameters
+ * 'int' and 'int, int' as type casts, which doesn't make sense at all. Fixing
+ * this properly requires large style changes since indent is based on simple
+ * heuristics all over. This didn't change in indent.c 1.178; instead, the
+ * rule for inserting a blank before a binary operator was changed to always
+ * insert a blank, except at the beginning of a line.
+ */
 #indent input
 char *(*fn)() = NULL;
 char *(*fn)(int) = NULL;
 char *(*fn)(int, int) = NULL;
 #indent end
 
-/* FIXME: The parameter '(int)' is wrongly interpreted as a type cast. */
-/* FIXME: The parameter '(int, int)' is wrongly interpreted as a type cast. */
-#indent run -di0
-char *(*fn)() = NULL;
-/* $ FIXME: Missing space before '='. */
-char *(*fn)(int)= NULL;
-/* $ FIXME: Missing space before '='. */
-char *(*fn)(int, int)= NULL;
-#indent end
+/* XXX: The parameter '(int)' is wrongly interpreted as a type cast. */
+/* XXX: The parameter '(int, int)' is wrongly interpreted as a type cast. */
+#indent run-equals-input -di0
