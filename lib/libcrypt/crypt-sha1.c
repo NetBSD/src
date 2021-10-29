@@ -1,4 +1,4 @@
-/* $NetBSD: crypt-sha1.c,v 1.9 2021/10/16 10:53:33 nia Exp $ */
+/* $NetBSD: crypt-sha1.c,v 1.10 2021/10/29 13:22:08 nia Exp $ */
 
 /*
  * Copyright (c) 2004, Juniper Networks, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: crypt-sha1.c,v 1.9 2021/10/16 10:53:33 nia Exp $");
+__RCSID("$NetBSD: crypt-sha1.c,v 1.10 2021/10/29 13:22:08 nia Exp $");
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -71,24 +71,15 @@ __RCSID("$NetBSD: crypt-sha1.c,v 1.9 2021/10/16 10:53:33 nia Exp $");
 crypt_private unsigned int
 __crypt_sha1_iterations (unsigned int hint)
 {
-    static int once = 1;
-
     /*
      * We treat CRYPT_SHA1_ITERATIONS as a hint.
      * Make it harder for someone to pre-compute hashes for a
      * dictionary attack by not using the same iteration count for
      * every entry.
      */
-
-    if (once) {
-	int pid = getpid();
-	
-	srandom(time(NULL) ^ (pid * pid));
-	once = 0;
-    }
-    if (hint == 0)
+    if (hint < 4)
 	hint = CRYPT_SHA1_ITERATIONS;
-    return hint - (random() % (hint / 4));
+    return hint - arc4random_uniform(hint / 4);
 }
 
 /*
