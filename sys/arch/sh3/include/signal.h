@@ -1,4 +1,4 @@
-/*	$NetBSD: signal.h,v 1.16 2021/10/27 01:11:34 thorpej Exp $	*/
+/*	$NetBSD: signal.h,v 1.17 2021/10/29 04:14:44 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991 Regents of the University of California.
@@ -35,6 +35,8 @@
 #define	_SH3_SIGNAL_H_
 
 #include <sys/featuretest.h>
+
+#define	__HAVE_STRUCT_SIGCONTEXT
 
 typedef int sig_atomic_t;
 
@@ -78,7 +80,6 @@ struct sigcontext13 {
 #endif /* _KERNEL */
 
 #if defined(_LIBC) || defined(_KERNEL)
-#define	__HAVE_STRUCT_SIGCONTEXT
 struct sigcontext {
 	int	sc_spc;
 	int	sc_ssr;

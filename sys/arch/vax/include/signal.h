@@ -1,4 +1,4 @@
-/*	$NetBSD: signal.h,v 1.22 2021/10/28 11:13:27 christos Exp $	*/
+/*	$NetBSD: signal.h,v 1.23 2021/10/29 04:13:39 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991 Regents of the University of California.
@@ -40,6 +40,8 @@
 #include <sys/siginfo.h>
 #include <machine/trap.h>
 
+#define	__HAVE_STRUCT_SIGCONTEXT
+
 /* VAX versioned its sigcontext trampoline ABI (Sept 2002). */
 #define __SIGTRAMP_SIGCONTEXT_VERSION_MAX	2
 #define __SIGTRAMP_SIGCONTEXT_VERSION		2
@@ -70,7 +72,6 @@ struct sigcontext13 {
 	int	sc_ps;			/* psl to restore */
 };
 
-#define	__HAVE_STRUCT_SIGCONTEXT
 struct sigcontext {
 	int	sc_onstack;		/* sigstack state to restore */
 	int	__sc_mask13;		/* signal mask to restore (old style) */
