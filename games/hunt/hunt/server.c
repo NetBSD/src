@@ -1,4 +1,4 @@
-/*	$NetBSD: server.c,v 1.8 2014/03/30 04:57:37 dholland Exp $	*/
+/*	$NetBSD: server.c,v 1.9 2021/10/29 11:40:23 nia Exp $	*/
 /*
  * Copyright (c) 1983-2003, Regents of the University of California.
  * All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: server.c,v 1.8 2014/03/30 04:57:37 dholland Exp $");
+__RCSID("$NetBSD: server.c,v 1.9 2021/10/29 11:40:23 nia Exp $");
 
 #include <sys/param.h>
 #include <sys/stat.h>
@@ -85,10 +85,9 @@ serverlist_setup(const char *explicit_host_arg, uint16_t port_arg)
 
 	numdaemons = 0;
 	maxdaemons = 20;
-	daemons = malloc(maxdaemons * sizeof(daemons[0]));
-	if (daemons == NULL) {
+	daemons = NULL;
+	if (reallocarr(&daemons, maxdaemons, sizeof(daemons[0])) != 0)
 		leavex(1, "Out of memory.");
-	}
 
 	if (explicit_host_arg) {
 		explicit_host = explicit_host_arg;
@@ -111,10 +110,8 @@ add_daemon_addr(const struct sockaddr_storage *addr, socklen_t addrlen,
 	assert(numdaemons <= maxdaemons);
 	if (numdaemons == maxdaemons) {
 		maxdaemons += 20;
-		daemons = realloc(daemons, maxdaemons * sizeof(daemons[0]));
-		if (daemons == NULL) {
+		if (reallocarr(&daemons, maxdaemons, sizeof(daemons[0])) != 0)
 			leave(1, "realloc");
-		}
 	}
 
 	/*
@@ -181,10 +178,9 @@ getbroadcastaddrs(void)
 		}
 	}
 
-	broadcastaddrs = malloc(num * sizeof(broadcastaddrs[0]));
-	if (broadcastaddrs == NULL) {
+	broadcastaddrs = NULL;
+	if (reallocarr(&broadcastaddrs, num, sizeof(broadcastaddrs[0])) != 0)
 		leavex(1, "Out of memory");
-	}
 
 	i = 0;
 	for (ip = ifp; ip; ip = ip->ifa_next) {
