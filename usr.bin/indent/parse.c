@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.46 2021/10/29 23:03:53 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.47 2021/10/29 23:48:50 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -101,7 +101,7 @@ decl_level(void)
 void
 parse(parser_symbol psym)
 {
-    debug_println("parse token: '%s'", psym_name(psym));
+    debug_println("parse token: %s", psym_name(psym));
 
     if (psym != psym_else) {
 	while (ps.s_sym[ps.tos] == psym_if_expr_stmt) {
@@ -168,7 +168,6 @@ parse(parser_symbol psym)
 	ps.s_sym[++ps.tos] = psym_lbrace;
 	ps.s_ind_level[ps.tos] = ps.ind_level;
 	ps.s_sym[++ps.tos] = psym_stmt;
-	/* allow null stmt between braces */
 	ps.s_ind_level[ps.tos] = ps.ind_level_follow;
 	break;
 
@@ -213,11 +212,8 @@ parse(parser_symbol psym)
     case psym_switch_expr:
 	ps.s_sym[++ps.tos] = psym_switch_expr;
 	ps.s_case_ind_level[ps.tos] = case_ind;
-	/* save current case indent level */
 	ps.s_ind_level[ps.tos] = ps.ind_level_follow;
-	/* cases should be one level deeper than the switch */
 	case_ind = (float)ps.ind_level_follow + opt.case_indent;
-	/* statements should be two levels deeper */
 	ps.ind_level_follow += (int)opt.case_indent + 1;
 	ps.search_stmt = opt.brace_same_line;
 	break;
@@ -241,7 +237,7 @@ parse(parser_symbol psym)
 #ifdef debug
     printf("parse stack:");
     for (int i = 1; i <= ps.tos; ++i)
-	printf(" ('%s' at %d)", psym_name(ps.s_sym[i]), ps.s_ind_level[i]);
+	printf(" %s %d", psym_name(ps.s_sym[i]), ps.s_ind_level[i]);
     if (ps.tos == 0)
 	printf(" empty");
     printf("\n");
@@ -322,7 +318,7 @@ again:
 	goto again;
     if (ps.s_sym[ps.tos] == psym_while_expr &&
 	    ps.s_sym[ps.tos - 1] == psym_do_stmt) {
-	ps.tos -= 2;		/* XXX: why not reduce to stmt? */
+	ps.tos -= 2;
 	goto again;
     }
 }
