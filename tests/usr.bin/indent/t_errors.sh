@@ -1,5 +1,5 @@
 #! /bin/sh
-# $NetBSD: t_errors.sh,v 1.10 2021/10/29 16:49:46 rillig Exp $
+# $NetBSD: t_errors.sh,v 1.11 2021/10/29 16:54:51 rillig Exp $
 #
 # Copyright (c) 2021 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -358,8 +358,8 @@ unbalanced_parentheses_1_body()
 		;
 	EOF
 	cat <<-\EOF > stderr.exp
-		error: code.c:3: Unbalanced parens
-		warning: code.c:4: Extra )
+		error: code.c:3: Unbalanced parentheses
+		warning: code.c:4: Extra ')'
 	EOF
 
 	atf_check -s 'exit:1' -e 'file:stderr.exp' \
@@ -380,8 +380,8 @@ unbalanced_parentheses_2_body()
 		;
 	EOF
 	cat <<-\EOF > stderr.exp
-		error: code.c:3: Unbalanced parens
-		warning: code.c:6: Extra )
+		error: code.c:3: Unbalanced parentheses
+		warning: code.c:6: Extra ')'
 	EOF
 
 	atf_check -s 'exit:1' -e 'file:stderr.exp' \
@@ -400,7 +400,7 @@ unbalanced_parentheses_3_body()
 		;
 	EOF
 	cat <<-\EOF > stderr.exp
-		error: code.c:4: Unbalanced parens
+		error: code.c:4: Unbalanced parentheses
 		error: code.c:4: Statement nesting error
 	EOF
 
