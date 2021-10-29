@@ -1,4 +1,4 @@
-/*	$NetBSD: lexi.c,v 1.111 2021/10/29 20:27:42 rillig Exp $	*/
+/*	$NetBSD: lexi.c,v 1.112 2021/10/29 21:22:05 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)lexi.c	8.1 (Berkeley) 6/6/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: lexi.c,v 1.111 2021/10/29 20:27:42 rillig Exp $");
+__RCSID("$NetBSD: lexi.c,v 1.112 2021/10/29 21:22:05 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/lexi.c 337862 2018-08-15 18:19:45Z pstef $");
 #endif
@@ -294,6 +294,15 @@ debug_print_buf(const char *name, const struct buffer *buf)
     }
 }
 
+#define debug_ps_bool(name) \
+	debug_println("[%c] " #name, ps.name ? 'x' : ' ')
+#define debug_ps_int(name) \
+	if (ps.name != 0) \
+	    debug_println("%3d " #name, ps.name)
+#define debug_ps_keyword(name) \
+	if (ps.name != kw_0) \
+	    debug_println("    " #name " = %s", kw_name(ps.name))
+
 static void
 debug_lexi(lexer_symbol lsym)
 {
@@ -303,12 +312,45 @@ debug_lexi(lexer_symbol lsym)
     debug_print_buf("code", &code);
     debug_print_buf("comment", &com);
     debug_printf("lexi returns '%s'", lsym_name(lsym));
-    if (ps.curr_keyword != kw_0)
-	debug_printf(" keyword '%s'", kw_name(ps.curr_keyword));
-    if (ps.prev_keyword != kw_0)
-	debug_printf(" previous keyword '%s'", kw_name(ps.prev_keyword));
-    debug_println("");
-    debug_print_buf("token", &token);
+    debug_vis_range(" \"", token.s, token.e, "\"\n");
+
+    // prev_token
+    debug_ps_bool(prev_newline);
+    debug_ps_bool(prev_col_1);
+    debug_ps_keyword(prev_keyword);
+    debug_ps_keyword(curr_keyword);
+    debug_ps_bool(next_unary);
+    // procname
+    debug_ps_bool(want_blank);
+    debug_ps_int(paren_level);
+    debug_ps_int(p_l_follow);
+    // paren_indents
+    debug_ps_int(cast_mask);
+    debug_ps_int(not_cast_mask);
+
+    debug_ps_int(comment_delta);
+    debug_ps_int(n_comment_delta);
+    debug_ps_int(com_ind);
+
+    debug_ps_bool(block_init);
+    debug_ps_int(block_init_level);
+    debug_ps_bool(init_or_struct);
+
+    debug_ps_int(ind_level);
+    debug_ps_int(ind_level_follow);
+
+    debug_ps_int(decl_nest);
+    debug_ps_bool(decl_on_line);
+    debug_ps_bool(in_decl);
+    debug_ps_int(just_saw_decl);
+    debug_ps_bool(in_parameter_declaration);
+    debug_ps_bool(decl_indent_done);
+
+    debug_ps_bool(in_stmt);
+    debug_ps_bool(ind_stmt);
+    debug_ps_bool(is_case_label);
+
+    debug_ps_bool(search_stmt);
 }
 #endif
 
