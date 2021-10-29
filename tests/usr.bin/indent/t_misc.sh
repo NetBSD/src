@@ -1,5 +1,5 @@
 #! /bin/sh
-# $NetBSD: t_misc.sh,v 1.10 2021/10/29 16:54:51 rillig Exp $
+# $NetBSD: t_misc.sh,v 1.11 2021/10/29 19:22:55 rillig Exp $
 #
 # Copyright (c) 2021 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -323,6 +323,18 @@ line_no_counting_body()
 	    "$indent" code.c -st
 }
 
+atf_test_case 'default_backup_extension'
+default_backup_extension_body()
+{
+	echo 'int var;' > code.c
+	echo 'int var;' > code.c.orig
+
+	atf_check \
+	    "$indent" code.c
+	atf_check -o 'file:code.c.orig' \
+	    cat code.c.BAK
+}
+
 atf_init_test_cases()
 {
 	atf_add_test_case 'in_place'
@@ -333,4 +345,5 @@ atf_init_test_cases()
 	atf_add_test_case 'opt_npro'
 	atf_add_test_case 'opt_U'
 	atf_add_test_case 'line_no_counting'
+	atf_add_test_case 'default_backup_extension'
 }
