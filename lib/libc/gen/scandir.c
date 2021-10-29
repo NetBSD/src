@@ -1,4 +1,4 @@
-/*	$NetBSD: scandir.c,v 1.28 2016/12/16 04:45:04 mrg Exp $	*/
+/*	$NetBSD: scandir.c,v 1.29 2021/10/29 10:40:00 nia Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)scandir.c	8.3 (Berkeley) 1/2/94";
 #else
-__RCSID("$NetBSD: scandir.c,v 1.28 2016/12/16 04:45:04 mrg Exp $");
+__RCSID("$NetBSD: scandir.c,v 1.29 2021/10/29 10:40:00 nia Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -91,7 +91,7 @@ scandir(const char *dirname, struct dirent ***namelist,
     int (*selectfn)(const struct dirent *),
     int (*dcomp)(const COMPARARG, const COMPARARG))
 {
-	struct dirent *d, *p, **names, **newnames;
+	struct dirent *d, *p, **names;
 	size_t nitems, arraysz;
 	DIR *dirp;
 
@@ -104,8 +104,8 @@ scandir(const char *dirname, struct dirent ***namelist,
 	if ((arraysz = dirsize(dirp->dd_fd, 0)) == 0)
 		goto bad;
 
-	names = malloc(arraysz * sizeof(*names));
-	if (names == NULL)
+	names = NULL;
+	if (reallocarr(&names, arraysz, sizeof(*names)) != 0)
 		goto bad;
 
 	nitems = 0;
@@ -120,10 +120,8 @@ scandir(const char *dirname, struct dirent ***namelist,
 		if (nitems >= arraysz) {
 			if ((arraysz = dirsize(dirp->dd_fd, arraysz)) == 0)
 				goto bad2;
-			newnames = realloc(names, arraysz * sizeof(*names));
-			if (newnames == NULL)
+			if (reallocarr(&names, arraysz, sizeof(*names)) != 0)
 				goto bad2;
-			names = newnames;
 		}
 
 		/*
