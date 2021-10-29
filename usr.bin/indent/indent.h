@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.h,v 1.58 2021/10/29 17:32:22 rillig Exp $	*/
+/*	$NetBSD: indent.h,v 1.59 2021/10/29 17:41:56 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-FreeBSD
@@ -271,14 +271,39 @@ extern bool inhibit_formatting;	/* true if INDENT OFF is in effect */
 
 #define	STACKSIZE 256
 
-/* TODO: group the members by purpose, don't sort them alphabetically */
 extern struct parser_state {
+    /* TODO: rename to prev_token */
     lexer_symbol last_token;
+    /* TODO: rename to prev_newline */
+    bool last_nl;		/* whether the last thing scanned was a
+				 * newline */
+    /* TODO: rename to prev_col_1 */
+    bool col_1;			/* whether the last token started in column 1 */
+    enum keyword_kind prev_keyword;
+    enum keyword_kind curr_keyword;
+    bool next_unary;		/* whether the following operator should be
+				 * unary */
 
-    int tos;			/* pointer to top of stack */
-    parser_symbol s_sym[STACKSIZE];
-    int s_ind_level[STACKSIZE];
-    float s_case_ind_level[STACKSIZE];
+    char procname[100];		/* The name of the current procedure */
+
+
+    bool want_blank;		/* whether the following token should be
+				 * prefixed by a blank. (Said prefixing is
+				 * ignored in some cases.) */
+
+    int paren_level;		/* parenthesization level. used to indent
+				 * within statements */
+    /* TODO: rename to next_line_paren_level */
+    int p_l_follow;		/* how to indent the remaining lines of the
+				 * statement */
+    short paren_indents[20];	/* indentation of the operand/argument of each
+				 * level of parentheses or brackets, relative
+				 * to the enclosing statement */
+    int cast_mask;		/* indicates which close parentheses
+				 * potentially close off casts */
+    int not_cast_mask;		/* indicates which close parentheses
+				 * definitely close off something else than
+				 * casts */
 
     int comment_delta;		/* used to set up indentation for all lines of
 				 * a boxed comment after the first one */
@@ -286,60 +311,47 @@ extern struct parser_state {
 				 * before the start of a box comment so that
 				 * forthcoming lines of the comment are
 				 * indented properly */
-    int cast_mask;		/* indicates which close parentheses
-				 * potentially close off casts */
-    int not_cast_mask;		/* indicates which close parentheses
-				 * definitely close off something else than
-				 * casts */
+    int com_ind;		/* indentation of the current comment */
+
     bool block_init;		/* whether inside a block initialization */
     int block_init_level;	/* The level of brace nesting in an
 				 * initialization */
-    bool last_nl;		/* whether the last thing scanned was a
-				 * newline */
     bool init_or_struct;	/* whether there has been a declarator (e.g.
 				 * int or char) and no left parenthesis since
 				 * the last semicolon. When true, a '{' is
 				 * starting a structure definition or an
 				 * initialization list */
-    bool col_1;			/* whether the last token started in column 1 */
-    int com_ind;		/* indentation of the current comment */
+
+    int ind_level;		/* the current indentation level */
+    int ind_level_follow;	/* the level to which ind_level should be set
+				 * after the current line is printed */
+
     int decl_nest;		/* current nesting level for structure or init */
     bool decl_on_line;		/* whether this line of code has part of a
 				 * declaration on it */
-    int ind_level_follow;	/* the level to which ind_level should be set
-				 * after the current line is printed */
     bool in_decl;		/* whether we are in a declaration stmt. The
 				 * processing of braces is then slightly
 				 * different */
+    int just_saw_decl;
+    bool in_parameter_declaration;
+    bool decl_indent_done;	/* whether the indentation for a declaration
+				 * has been added to the code buffer. */
+
     bool in_stmt;
-    int ind_level;		/* the current indentation level */
     bool ind_stmt;		/* whether the next line should have an extra
 				 * indentation level because we are in the
-				 * middle of a stmt */
-    bool next_unary;		/* whether the following operator should be
-				 * unary */
-    int p_l_follow;		/* used to remember how to indent the
-				 * remaining lines of the statement */
-    int paren_level;		/* parenthesization level. used to indent
-				 * within statements */
-    short paren_indents[20];	/* indentation of the operand/argument of each
-				 * level of parentheses or brackets, relative
-				 * to the enclosing statement */
+				 * middle of a statement */
     bool is_case_label;		/* 'case' and 'default' labels are indented
 				 * differently from regular labels */
+
     bool search_stmt;		/* whether it is necessary to buffer up all
 				 * text up to the start of a statement after
 				 * an 'if', 'while', etc. */
-    bool want_blank;		/* whether the following token should be
-				 * prefixed by a blank. (Said prefixing is
-				 * ignored in some cases.) */
-    enum keyword_kind prev_keyword;
-    enum keyword_kind curr_keyword;
-    bool decl_indent_done;	/* whether the indentation for a declaration
-				 * has been added to the code buffer. */
-    bool in_parameter_declaration;
-    char procname[100];		/* The name of the current procedure */
-    int just_saw_decl;
+
+    int tos;			/* pointer to top of stack */
+    parser_symbol s_sym[STACKSIZE];
+    int s_ind_level[STACKSIZE];
+    float s_case_ind_level[STACKSIZE];
 
     struct {
 	int comments;
@@ -350,7 +362,7 @@ extern struct parser_state {
 } ps;
 
 
-#define array_length(array) (sizeof (array) / sizeof (array[0]))
+#define array_length(array) (sizeof(array) / sizeof((array)[0]))
 
 void add_typename(const char *);
 int compute_code_indent(void);
