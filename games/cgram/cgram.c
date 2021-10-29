@@ -1,4 +1,4 @@
-/* $NetBSD: cgram.c,v 1.25 2021/05/28 03:55:45 dholland Exp $ */
+/* $NetBSD: cgram.c,v 1.26 2021/10/29 11:45:39 nia Exp $ */
 
 /*-
  * Copyright (c) 2013, 2021 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: cgram.c,v 1.25 2021/05/28 03:55:45 dholland Exp $");
+__RCSID("$NetBSD: cgram.c,v 1.26 2021/10/29 11:45:39 nia Exp $");
 #endif
 
 #include <assert.h>
@@ -154,8 +154,7 @@ static void
 stringarray_add(struct stringarray *a, struct string *s)
 {
 	size_t num = a->num++;
-	a->v = realloc(a->v, a->num * sizeof a->v[0]);
-	if (a->v == NULL)
+	if (reallocarr(&a->v, a->num, sizeof(a->v[0])) != 0)
 		errx(1, "Out of memory");
 	a->v[num] = *s;
 }
