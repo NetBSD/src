@@ -1,4 +1,4 @@
-/* $NetBSD: token_lparen.c,v 1.8 2021/10/29 16:54:51 rillig Exp $ */
+/* $NetBSD: token_lparen.c,v 1.9 2021/10/29 17:50:37 rillig Exp $ */
 /* $FreeBSD$ */
 
 /*
@@ -100,7 +100,7 @@ int array[] = {
 #indent input
 void cover_want_blank_before_lparen(void)
 {
-	/* ps.last_token can never be 'newline'. */
+	/* ps.prev_token can never be 'newline'. */
 	int newline =
 	(3);
 
@@ -146,7 +146,7 @@ void cover_want_blank_before_lparen(void)
 void
 cover_want_blank_before_lparen(void)
 {
-	/* ps.last_token can never be 'newline'. */
+	/* ps.prev_token can never be 'newline'. */
 	int newline =
 	(3);
 
