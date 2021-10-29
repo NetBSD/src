@@ -1,5 +1,5 @@
 #! /bin/sh
-# $NetBSD: t_errors.sh,v 1.9 2021/10/29 16:43:05 rillig Exp $
+# $NetBSD: t_errors.sh,v 1.10 2021/10/29 16:49:46 rillig Exp $
 #
 # Copyright (c) 2021 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -388,6 +388,26 @@ unbalanced_parentheses_2_body()
 	    "$indent" code.c
 }
 
+atf_test_case 'unbalanced_parentheses_3'
+unbalanced_parentheses_3_body()
+{
+	# '({...})' is the GCC extension "Statement expression".
+	cat <<-\EOF > code.c
+		int var =
+		(
+		1
+		}
+		;
+	EOF
+	cat <<-\EOF > stderr.exp
+		error: code.c:4: Unbalanced parens
+		error: code.c:4: Statement nesting error
+	EOF
+
+	atf_check -s 'exit:1' -e 'file:stderr.exp' \
+	    "$indent" code.c
+}
+
 
 atf_init_test_cases()
 {
@@ -419,4 +439,5 @@ atf_init_test_cases()
 	atf_add_test_case 'preprocessing_unrecognized'
 	atf_add_test_case 'unbalanced_parentheses_1'
 	atf_add_test_case 'unbalanced_parentheses_2'
+	atf_add_test_case 'unbalanced_parentheses_3'
 }
