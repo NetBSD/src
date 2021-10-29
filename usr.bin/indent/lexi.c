@@ -1,4 +1,4 @@
-/*	$NetBSD: lexi.c,v 1.110 2021/10/29 17:50:37 rillig Exp $	*/
+/*	$NetBSD: lexi.c,v 1.111 2021/10/29 20:27:42 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)lexi.c	8.1 (Berkeley) 6/6/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: lexi.c,v 1.110 2021/10/29 17:50:37 rillig Exp $");
+__RCSID("$NetBSD: lexi.c,v 1.111 2021/10/29 20:27:42 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/lexi.c 337862 2018-08-15 18:19:45Z pstef $");
 #endif
@@ -453,7 +453,7 @@ lexi_alnum(void)
 	(*inp.s == '"' || *inp.s == '\''))
 	return lsym_string_prefix;
 
-    while (is_hspace(inbuf_peek()))
+    while (ch_isblank(inbuf_peek()))
 	inbuf_skip();
 
     if (ps.prev_token == lsym_tag && ps.p_l_follow == 0) {
@@ -563,7 +563,7 @@ lexi(void)
     ps.prev_keyword = ps.curr_keyword;
     ps.curr_keyword = kw_0;
 
-    while (is_hspace(*inp.s)) {
+    while (ch_isblank(*inp.s)) {
 	ps.prev_col_1 = false;
 	inbuf_skip();
     }

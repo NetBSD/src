@@ -1,4 +1,4 @@
-/*	$NetBSD: io.c,v 1.106 2021/10/29 19:12:48 rillig Exp $	*/
+/*	$NetBSD: io.c,v 1.107 2021/10/29 20:27:42 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)io.c	8.1 (Berkeley) 6/6/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: io.c,v 1.106 2021/10/29 19:12:48 rillig Exp $");
+__RCSID("$NetBSD: io.c,v 1.107 2021/10/29 20:27:42 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/io.c 334927 2018-06-10 16:44:18Z pstef $");
 #endif
@@ -106,7 +106,7 @@ dump_line_label(void)
 {
     int ind;
 
-    while (lab.e > lab.s && is_hspace(lab.e[-1]))
+    while (lab.e > lab.s && ch_isblank(lab.e[-1]))
 	lab.e--;
     *lab.e = '\0';
 
@@ -121,7 +121,7 @@ dump_line_label(void)
 	    output_char(*s++);
 	} while (s < lab.e && 'a' <= *s && *s <= 'z');
 
-	while (s < lab.e && is_hspace(*s))
+	while (s < lab.e && ch_isblank(*s))
 	    s++;
 
 	if (s < lab.e) {
@@ -344,9 +344,9 @@ compute_label_indent(void)
 }
 
 static void
-skip_hspace(const char **pp)
+skip_blank(const char **pp)
 {
-    while (is_hspace(**pp))
+    while (ch_isblank(**pp))
 	(*pp)++;
 }
 
@@ -368,13 +368,13 @@ parse_indent_comment(void)
 
     const char *p = inp.buf;
 
-    skip_hspace(&p);
+    skip_blank(&p);
     if (!skip_string(&p, "/*"))
 	return;
-    skip_hspace(&p);
+    skip_blank(&p);
     if (!skip_string(&p, "INDENT"))
 	return;
-    skip_hspace(&p);
+    skip_blank(&p);
 
     if (*p == '*' || skip_string(&p, "ON"))
 	on = true;
@@ -383,7 +383,7 @@ parse_indent_comment(void)
     else
 	return;
 
-    skip_hspace(&p);
+    skip_blank(&p);
     if (!skip_string(&p, "*/\n"))
 	return;
 
