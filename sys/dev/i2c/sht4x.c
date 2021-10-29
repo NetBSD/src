@@ -1,4 +1,4 @@
-/*	$NetBSD: sht4x.c,v 1.1 2021/10/03 17:27:02 brad Exp $	*/
+/*	$NetBSD: sht4x.c,v 1.2 2021/10/29 23:23:33 brad Exp $	*/
 
 /*
  * Copyright (c) 2021 Brad Spencer <brad@anduin.eldar.org>
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sht4x.c,v 1.1 2021/10/03 17:27:02 brad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sht4x.c,v 1.2 2021/10/29 23:23:33 brad Exp $");
 
 /*
   Driver for the Sensirion SHT40/SHT41/SHT45
@@ -723,7 +723,7 @@ sht4x_refresh(struct sysmon_envsys * sme, envsys_data_t * edata)
 
 	  It follows then:
 
-	  T in Kelvin = (229.15 + 175 * rawvalue / 65535)
+	  T in Kelvin = (228.15 + 175 * rawvalue / 65535)
 
 	  given the relationship between Celsius and Kelvin.
 
@@ -771,7 +771,7 @@ sht4x_refresh(struct sysmon_envsys * sme, envsys_data_t * edata)
 		switch (edata->sensor) {
 		case SHT4X_TEMP_SENSOR:
 			svalptr = &rawdata[0];
-			v1 = 22915; /* this is scaled up already from 229.15 */
+			v1 = 22815; /* this is scaled up already from 228.15 */
 			v2 = 175;
 			mul1 = 10000000000;
 			mul2 = 100000000;
