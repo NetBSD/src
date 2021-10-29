@@ -1,4 +1,4 @@
-/*	$NetBSD: system.c,v 1.25 2015/01/20 18:31:25 christos Exp $	*/
+/*	$NetBSD: system.c,v 1.26 2021/10/29 19:27:06 kre Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)system.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: system.c,v 1.25 2015/01/20 18:31:25 christos Exp $");
+__RCSID("$NetBSD: system.c,v 1.26 2021/10/29 19:27:06 kre Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -56,8 +56,8 @@ system(const char *command)
 	struct sigaction intsa, quitsa, sa;
 	sigset_t nmask, omask;
 	int pstat;
-	const char *argp[] = {"sh", "-c", NULL, NULL};
-	argp[2] = command;
+	const char *argp[] = {"sh", "-c", "--", NULL, NULL};
+	argp[3] = command;
 
 	/*
 	 * ISO/IEC 9899:1999 in 7.20.4.6 describes this special case.
