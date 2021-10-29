@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2396 2021/10/10 13:03:09 jmcneill Exp $
+#	$NetBSD: mi,v 1.2397 2021/10/29 19:12:29 macallan Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -802,6 +802,7 @@
 ./usr/include/dev/rcons/rcons.h			comp-obsolete		obsolete
 ./usr/include/dev/rcons/rcons_subr.h		comp-obsolete		obsolete
 ./usr/include/dev/sbus/mbppio.h			comp-c-include
+./usr/include/dev/sbus/mgxreg.h                 comp-c-include
 ./usr/include/dev/scsipi/atapi_all.h		comp-obsolete		obsolete
 ./usr/include/dev/scsipi/atapi_cd.h		comp-obsolete		obsolete
 ./usr/include/dev/scsipi/atapi_disk.h		comp-obsolete		obsolete
