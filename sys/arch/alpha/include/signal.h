@@ -1,4 +1,4 @@
-/* $NetBSD: signal.h,v 1.18 2021/10/26 16:16:34 christos Exp $ */
+/* $NetBSD: signal.h,v 1.19 2021/10/29 01:49:26 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -31,6 +31,8 @@
 #define	_ALPHA_SIGNAL_H_
 
 #include <sys/featuretest.h>
+
+#define	__HAVE_STRUCT_SIGCONTEXT
 
 typedef long	sig_atomic_t;
 
@@ -66,7 +68,6 @@ struct sigcontext13 {
 #endif /* _KERNEL && COMPAT_13 */
 
 #if defined(_LIBC) || (defined(_KERNEL) && defined(COMPAT_16))
-#define	__HAVE_STRUCT_SIGCONTEXT
 struct sigcontext {
 	long	sc_onstack;		/* sigstack state to restore */
 	long	__sc_mask13;		/* signal mask to restore (old style) */
