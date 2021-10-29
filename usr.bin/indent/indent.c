@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.c,v 1.167 2021/10/28 22:20:08 rillig Exp $	*/
+/*	$NetBSD: indent.c,v 1.168 2021/10/29 16:54:51 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)indent.c	5.17 (Berkeley) 6/7/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: indent.c,v 1.167 2021/10/28 22:20:08 rillig Exp $");
+__RCSID("$NetBSD: indent.c,v 1.168 2021/10/29 16:54:51 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/indent.c 340138 2018-11-04 19:24:49Z oshogbo $");
 #endif
@@ -722,7 +722,7 @@ static void
 process_lparen_or_lbracket(int decl_ind, bool tabs_to_var, bool spaced_expr)
 {
     if (++ps.p_l_follow == array_length(ps.paren_indents)) {
-	diag(0, "Reached internal limit of %zu unclosed parens",
+	diag(0, "Reached internal limit of %zu unclosed parentheses",
 	    array_length(ps.paren_indents));
 	ps.p_l_follow--;
     }
@@ -776,7 +776,7 @@ process_rparen_or_rbracket(bool *spaced_expr, bool *force_nl, stmt_head hd)
 
     if (--ps.p_l_follow < 0) {
 	ps.p_l_follow = 0;
-	diag(0, "Extra %c", *token.s);
+	diag(0, "Extra '%c'", *token.s);
     }
 
     if (code.e == code.s)	/* if the paren starts the line */
@@ -903,10 +903,10 @@ process_semicolon(bool *seen_case, int *quest_level, int decl_ind,
     if ((!*spaced_expr || hd != hd_for) && ps.p_l_follow > 0) {
 
 	/*
-	 * There were unbalanced parens in the statement. It is a bit
+	 * There were unbalanced parentheses in the statement. It is a bit
 	 * complicated, because the semicolon might be in a for statement.
 	 */
-	diag(1, "Unbalanced parens");
+	diag(1, "Unbalanced parentheses");
 	ps.p_l_follow = 0;
 	if (*spaced_expr) {	/* 'if', 'while', etc. */
 	    *spaced_expr = false;
@@ -956,8 +956,8 @@ process_lbrace(bool *force_nl, bool *spaced_expr, stmt_head hd,
     if (ps.in_parameter_declaration)
 	blank_line_before = false;
 
-    if (ps.p_l_follow > 0) {	/* check for preceding unbalanced parens */
-	diag(1, "Unbalanced parens");
+    if (ps.p_l_follow > 0) {
+	diag(1, "Unbalanced parentheses");
 	ps.p_l_follow = 0;
 	if (*spaced_expr) {	/* check for unclosed 'if', 'for', etc. */
 	    *spaced_expr = false;
@@ -1003,7 +1003,7 @@ process_rbrace(bool *spaced_expr, int *decl_ind, const int *di_stack)
     }
 
     if (ps.p_l_follow != 0) {	/* check for unclosed if, for, else. */
-	diag(1, "Unbalanced parens");
+	diag(1, "Unbalanced parentheses");
 	ps.p_l_follow = 0;
 	*spaced_expr = false;
     }
