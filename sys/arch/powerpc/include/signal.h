@@ -1,4 +1,4 @@
-/*	$NetBSD: signal.h,v 1.25 2021/10/27 18:20:08 christos Exp $	*/
+/*	$NetBSD: signal.h,v 1.26 2021/10/29 21:42:02 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -37,6 +37,14 @@
 #ifndef _LOCORE
 #include <sys/featuretest.h>
 
+/*
+ * This is needed natively for 32-bit, and for 32-bit compatibility only
+ * in the 64-bit environment.
+ */
+#if !defined(__LP64__) || defined(_KERNEL)
+#define	__HAVE_STRUCT_SIGCONTEXT
+#endif
+
 typedef int sig_atomic_t;
 
 #ifndef __LP64__
@@ -56,7 +64,6 @@ struct sigcontext13 {
 /*
  * struct sigcontext introduced in NetBSD 1.4
  */
-#define	__HAVE_STRUCT_SIGCONTEXT
 struct sigcontext {
 	int sc_onstack;			/* saved onstack flag */
 	int __sc_mask13;		/* saved signal mask (old style) */
