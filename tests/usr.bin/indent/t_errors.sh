@@ -1,5 +1,5 @@
 #! /bin/sh
-# $NetBSD: t_errors.sh,v 1.12 2021/10/29 19:39:32 rillig Exp $
+# $NetBSD: t_errors.sh,v 1.13 2021/10/29 20:05:58 rillig Exp $
 #
 # Copyright (c) 2021 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -413,7 +413,7 @@ search_stmt_comment_segv_body()
 {
 	printf '{if(expr\n)/*c*/;}\n' > code.c
 
-	atf_check -s 'signal' \
+	atf_check -s 'signal' -o 'ignore' -e 'match:assert' \
 	    "$indent" code.c -st
 }
 
