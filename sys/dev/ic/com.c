@@ -1,4 +1,4 @@
-/* $NetBSD: com.c,v 1.371 2021/10/21 10:22:54 jmcneill Exp $ */
+/* $NetBSD: com.c,v 1.372 2021/10/30 11:43:17 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2004, 2008 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.371 2021/10/21 10:22:54 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.372 2021/10/30 11:43:17 jmcneill Exp $");
 
 #include "opt_com.h"
 #include "opt_ddb.h"
@@ -2147,7 +2147,9 @@ comintr(void *arg)
 	/* DesignWare APB UART BUSY interrupt */
 	if (sc->sc_type == COM_TYPE_DW_APB &&
 	    (iir & IIR_BUSY) == IIR_BUSY) {
-		if ((CSR_READ_1(regsp, COM_REG_USR) & 0x1) != 0) {
+		if (ISSET(sc->sc_hwflags, COM_HW_CONSOLE)) {
+			(void)CSR_READ_1(regsp, COM_REG_USR);
+		} else if ((CSR_READ_1(regsp, COM_REG_USR) & 0x1) != 0) {
 			CSR_WRITE_1(regsp, COM_REG_HALT, HALT_CHCFG_EN);
 			CSR_WRITE_1(regsp, COM_REG_LCR, sc->sc_lcr | LCR_DLAB);
 			CSR_WRITE_1(regsp, COM_REG_DLBL, sc->sc_dlbl);
