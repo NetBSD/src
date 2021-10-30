@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.c,v 1.183 2021/10/30 10:59:07 rillig Exp $	*/
+/*	$NetBSD: indent.c,v 1.184 2021/10/30 11:05:26 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)indent.c	5.17 (Berkeley) 6/7/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: indent.c,v 1.183 2021/10/30 10:59:07 rillig Exp $");
+__RCSID("$NetBSD: indent.c,v 1.184 2021/10/30 11:05:26 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/indent.c 340138 2018-11-04 19:24:49Z oshogbo $");
 #endif
@@ -601,26 +601,18 @@ main_prepare_parsing(void)
 }
 
 static void
-code_add_decl_indent(int cur_decl_ind, bool tabs_to_var)
+code_add_decl_indent(int decl_ind, bool tabs_to_var)
 {
-    int ind = (int)buf_len(&code);
+    int base_ind = ps.ind_level * opt.indent_size;
+    int ind = base_ind + (int)buf_len(&code);
+    int target_ind = base_ind + decl_ind;
     char *orig_code_e = code.e;
 
-    /*
-     * get the tab math right for indentations that are not multiples of
-     * tabsize
-     */
-    if (ps.ind_level * opt.indent_size != 0) {
-	ind += ps.ind_level * opt.indent_size;
-	cur_decl_ind += ps.ind_level * opt.indent_size;
-    }
-
-    if (tabs_to_var) {
-	for (int next; (next = next_tab(ind)) <= cur_decl_ind; ind = next)
+    if (tabs_to_var)
+	for (int next; (next = next_tab(ind)) <= target_ind; ind = next)
 	    buf_add_char(&code, '\t');
-    }
 
-    for (; ind < cur_decl_ind; ind++)
+    for (; ind < target_ind; ind++)
 	buf_add_char(&code, ' ');
 
     if (code.e == orig_code_e && ps.want_blank) {
