@@ -1,4 +1,4 @@
-/* $NetBSD: efiblock.c,v 1.17 2021/06/23 21:42:43 jmcneill Exp $ */
+/* $NetBSD: efiblock.c,v 1.18 2021/10/30 11:18:51 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2016 Kimihiro Nonaka <nonaka@netbsd.org>
@@ -83,6 +83,10 @@ efi_block_parse(const char *fname, struct efi_block_part **pbpart, char **pfile)
 	} else {
 		full_path = fname;
 		*pfile = strchr(fname, ':') + 1;
+	}
+
+	if (*pfile[0] == '\0') {
+		*pfile = __UNCONST("/");
 	}
 
 	if (strncasecmp(full_path, "hd", 2) != 0)
