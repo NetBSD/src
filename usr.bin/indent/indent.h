@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.h,v 1.63 2021/10/29 21:56:36 rillig Exp $	*/
+/*	$NetBSD: indent.h,v 1.64 2021/10/30 11:49:38 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-FreeBSD
@@ -131,8 +131,6 @@ typedef enum stmt_head {
 } stmt_head;
 
 #define sc_size 5000		/* size of save_com buffer */
-#define label_offset 2		/* number of levels a label is placed to left
-				 * of code */
 
 
 /* A range of characters, in some cases null-terminated. */
