@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs.c,v 1.124 2018/06/30 16:05:44 christos Exp $	*/
+/*	$NetBSD: puffs.c,v 1.125 2021/10/30 10:34:18 nia Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: puffs.c,v 1.124 2018/06/30 16:05:44 christos Exp $");
+__RCSID("$NetBSD: puffs.c,v 1.125 2021/10/30 10:34:18 nia Exp $");
 #endif /* !lint */
 
 #include <sys/param.h>
@@ -962,11 +962,13 @@ puffs_mainloop(struct puffs_usermount *pu)
 		goto out;
 
 	nevs = pu->pu_nevs + sigcatch;
-	curev = realloc(pu->pu_evs, nevs * sizeof(struct kevent));
-	if (curev == NULL)
+	if (reallocarr(&pu->pu_evs, nevs, sizeof(struct kevent)) != 0) {
+		errno = ENOMEM;
 		goto out;
-	pu->pu_evs = curev;
+	}
 	pu->pu_nevs = nevs;
+
+	curev = pu->pu_evs;
 
 	LIST_FOREACH(fio, &pu->pu_ios, fio_entries) {
 		EV_SET(curev, fio->io_fd, EVFILT_READ, EV_ADD,
