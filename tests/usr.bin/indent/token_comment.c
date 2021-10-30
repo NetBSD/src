@@ -1,4 +1,4 @@
-/* $NetBSD: token_comment.c,v 1.12 2021/10/30 13:06:43 rillig Exp $ */
+/* $NetBSD: token_comment.c,v 1.13 2021/10/30 15:26:58 rillig Exp $ */
 /* $FreeBSD$ */
 
 /*
@@ -320,6 +320,25 @@ tab1+++	tab2---	tab3+++	tab4---	tab5+++	tab6---	tab7+++fixed comment*/
 |-----------|
 tab1+++	tab2---	tab3+++	tab4---	tab5+++	tab6---	tab7+++fixed comment*/
 		;
+}
+#indent end
+
+
+/*
+ * Ensure that '{' after a search_stmt_comment is preserved.
+ */
+#indent input
+{
+	if(0)/*comment*/{
+	}
+}
+#indent end
+
+/* The comment in the output has moved to the right of the '{'. */
+#indent run
+{
+	if (0) {		/* comment */
+	}
 }
 #indent end
 
