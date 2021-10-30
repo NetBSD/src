@@ -1,4 +1,4 @@
-/* $NetBSD: pmap_machdep.c,v 1.9 2021/10/07 07:13:35 skrll Exp $ */
+/* $NetBSD: pmap_machdep.c,v 1.10 2021/10/30 07:18:46 skrll Exp $ */
 
 /*
  * Copyright (c) 2014, 2019, 2021 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 
-__RCSID("$NetBSD: pmap_machdep.c,v 1.9 2021/10/07 07:13:35 skrll Exp $");
+__RCSID("$NetBSD: pmap_machdep.c,v 1.10 2021/10/30 07:18:46 skrll Exp $");
 
 #include <sys/param.h>
 
@@ -214,7 +214,7 @@ tlb_update_addr(vaddr_t va, tlb_asid_t asid, pt_entry_t pte, bool insert_p)
 u_int
 tlb_record_asids(u_long *ptr, tlb_asid_t asid_max)
 {
-	memset(ptr, 0xff, PMAP_TLB_NUM_PIDS / (8 * sizeof(u_long)));
+	memset(ptr, 0xff, PMAP_TLB_NUM_PIDS / NBBY);
 	ptr[0] = -2UL;
 	return PMAP_TLB_NUM_PIDS - 1;
 }
