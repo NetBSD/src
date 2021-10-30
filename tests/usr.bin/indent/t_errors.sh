@@ -1,5 +1,5 @@
 #! /bin/sh
-# $NetBSD: t_errors.sh,v 1.13 2021/10/29 20:05:58 rillig Exp $
+# $NetBSD: t_errors.sh,v 1.14 2021/10/30 13:30:26 rillig Exp $
 #
 # Copyright (c) 2021 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -411,9 +411,19 @@ unbalanced_parentheses_3_body()
 atf_test_case 'search_stmt_comment_segv'
 search_stmt_comment_segv_body()
 {
+	# Before NetBSD indent.c 1.187 from 2021-10-30, indent crashed while
+	# trying to format the following artificial code.
+
 	printf '{if(expr\n)/*c*/;}\n' > code.c
 
-	atf_check -s 'signal' -o 'ignore' -e 'match:assert' \
+	cat <<\EOF > code.exp
+{
+	if (expr
+		)		/* c */
+		;
+}
+EOF
+	atf_check -o 'file:code.exp' \
 	    "$indent" code.c -st
 }
 
