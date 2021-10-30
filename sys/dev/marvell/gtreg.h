@@ -1,4 +1,4 @@
-/*	$NetBSD: gtreg.h,v 1.5 2010/06/09 02:19:51 kiyohara Exp $	*/
+/*	$NetBSD: gtreg.h,v 1.6 2021/10/30 21:08:58 andvar Exp $	*/
 
 /*
  * Copyright (c) 2002 Allegro Networks, Inc., Wasabi Systems, Inc.
@@ -375,7 +375,7 @@
  *				   Results in writing of the corresponding
  *				   Remap register.
  *				1: Write to Low Address decode register.  No
- *				   affect on the corresponding Remap register.
+ *				   effect on the corresponding Remap register.
  * 28:28 ConfSBDis		Configuration Read Sync Barrier Disable
  *				0: enabled; 1: disabled
  * 29:29 IOSBDis		I/O Read Sync Barrier Disable
@@ -666,7 +666,7 @@
  * Table 136: CPU Error Cause, Offset: 0x140
  *   Bits[7:0] are clear only. A cause bit is set upon an error condition
  *   occurrence. Write a 0 value to clear the bit.  Writing a 1 value has
- *   no affect.
+ *   no effect.
  * 00:00 AddrOut		CPU Address Out of Range
  * 01:01 AddrPErr		Bad Address Parity Detected
  * 02:02 TTErr			Transfer Type Violation.
