@@ -1,4 +1,4 @@
-/*	$NetBSD: fmt_decl.c,v 1.6 2021/10/27 00:04:51 rillig Exp $	*/
+/*	$NetBSD: fmt_decl.c,v 1.7 2021/10/30 11:41:49 rillig Exp $	*/
 /* $FreeBSD: head/usr.bin/indent/tests/declarations.0 334478 2018-06-01 09:41:15Z pstef $ */
 
 /* See FreeBSD r303570 */
@@ -235,6 +235,7 @@ old_style_definition(a, b, c)
  * the line length limit is set quite low.
  */
 #indent input
+struct s a,b;
 struct s0 a,b;
 struct s01 a,b;
 struct s012 a,b;
@@ -252,9 +253,13 @@ struct s01234567890123 a,b;
 #indent end
 
 #indent run -l20 -di0
-/* $ XXX: Why is this declaration broken? There's plenty of space left. */
+struct s a, b;
+/* $ XXX: See process_comma, varname_len for why this line is broken. */
 struct s0 a,
    b;
+/* $ XXX: The indentation of the second line is wrong. The variable names */
+/* $ XXX: 'a' and 'b' should be in the same column; the word 'struct' is */
+/* $ XXX: missing in the calculation for the indentation. */
 struct s01 a,
     b;
 struct s012 a,
