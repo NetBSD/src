@@ -1,4 +1,4 @@
-/* $NetBSD: token_comment.c,v 1.10 2021/10/30 12:24:03 rillig Exp $ */
+/* $NetBSD: token_comment.c,v 1.11 2021/10/30 12:28:42 rillig Exp $ */
 /* $FreeBSD$ */
 
 /*
@@ -217,12 +217,20 @@ int decl;			/*-fixed comment
  * preserved since the second line already starts in column 1.
  */
 #indent input
-int decl;					    /*-fixed comment
+int decl;					    /*-|fixed comment
+					| minus 12     |
+		| tabs inside		|
+	    |---|
+|-----------|
 tab1+++	tab2---	tab3+++	tab4---	tab5+++	tab6---	tab7+++fixed comment*/
 #indent end
 
 #indent run -di0
-int decl;			/*-fixed comment
+int decl;			/*-|fixed comment
+		    | minus 12     |
+| tabs inside		|
+|---|
+|-----------|
 tab1+++	tab2---	tab3+++	tab4---	tab5+++	tab6---	tab7+++fixed comment*/
 #indent end
 
