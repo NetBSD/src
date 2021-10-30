@@ -1,6 +1,6 @@
 
 # Common settings and functions for the various resize_ffs tests.
-# 
+#
 
 # called from atf_init_test_cases
 setupvars()
