@@ -1,4 +1,4 @@
-/* $NetBSD: gic_splfuncs_armv8.S,v 1.1 2021/10/30 18:44:24 jmcneill Exp $ */
+/* $NetBSD: gic_splfuncs_armv8.S,v 1.2 2021/10/30 20:23:12 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2021 Jared McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,21 @@
 #include <machine/asm.h>
 #include "assym.h"
 
-RCSID("$NetBSD: gic_splfuncs_armv8.S,v 1.1 2021/10/30 18:44:24 jmcneill Exp $")
+RCSID("$NetBSD: gic_splfuncs_armv8.S,v 1.2 2021/10/30 20:23:12 jmcneill Exp $")
+
+#ifdef __HAVE_PREEMPTION
+#define	DISABLE_PREEMPTION			\
+	ldr	w1, [x3, #L_NOPREEMPT];		\
+	add	w1, w1, #1;			\
+	str	w1, [x3, #L_NOPREEMPT]
+#define	ENABLE_PREEMPTION			\
+	ldr	w1, [x3, #L_NOPREEMPT];		\
+	sub	w1, w1, #1;			\
+	str	w1, [x3, #L_NOPREEMPT]
+#else
+#define	DISABLE_PREEMPTION
+#define	ENABLE_PREEMPTION
+#endif
 
 /*
  * int
@@ -39,9 +53,10 @@ RCSID("$NetBSD: gic_splfuncs_armv8.S,v 1.1 2021/10/30 18:44:24 jmcneill Exp $")
  */
 	.align 7        /* cacheline-aligned */
 ENTRY_NP(gic_splraise)
-	/* Save cpu_info pointer in x1 */
-	mrs	x1, tpidr_el1			/* get curlwp */
-	ldr	x1, [x1, #L_CPU]		/* get curcpu */
+	/* Save curlwp in x3, curcpu in x1 */
+	mrs	x3, tpidr_el1			/* get curlwp */
+	DISABLE_PREEMPTION
+	ldr	x1, [x3, #L_CPU]		/* get curcpu */
 
 	/* If newipl > cpl, update cpl */
 	ldr	w2, [x1, #CI_CPL]
@@ -50,6 +65,7 @@ ENTRY_NP(gic_splraise)
 	str	w0, [x1, #CI_CPL]
 
 .Lnoraise:
+	ENABLE_PREEMPTION
 	mov	w0, w2				/* return oldipl */
 	ret
 END(gic_splraise)
@@ -63,9 +79,10 @@ END(gic_splraise)
  */
 	.align 7        /* cacheline-aligned */
 ENTRY_NP(gic_splx)
-	/* Save cpu_info pointer in x1 */
-	mrs	x1, tpidr_el1			/* get curlwp */
-	ldr	x1, [x1, #L_CPU]		/* get curcpu */
+	/* Save curlwp in x3, curcpu in x1 */
+	mrs	x3, tpidr_el1			/* get curlwp */
+	DISABLE_PREEMPTION
+	ldr	x1, [x3, #L_CPU]		/* get curcpu */
 
 	/* If newipl >= cpl, just return */
 	ldr	w2, [x1, #CI_CPL]
@@ -99,6 +116,7 @@ ENTRY_NP(gic_splx)
 	cbnz	w2, _C_LABEL(dosoftints)
 
 .Ldone:
+	ENABLE_PREEMPTION
 	ret
 
 .Lrestart:
@@ -113,6 +131,7 @@ ENTRY_NP(gic_splx)
 	str	xzr, [x1, #CI_SPLX_RESTART]
 
 .Lslow:
+	ENABLE_PREEMPTION
 	/* Jump to slow path */
 	b	_C_LABEL(Xgic_splx)
 END(gic_splx)
