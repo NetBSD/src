@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.c,v 1.179 2021/10/29 23:48:50 rillig Exp $	*/
+/*	$NetBSD: indent.c,v 1.180 2021/10/30 09:42:31 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)indent.c	5.17 (Berkeley) 6/7/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: indent.c,v 1.179 2021/10/29 23:48:50 rillig Exp $");
+__RCSID("$NetBSD: indent.c,v 1.180 2021/10/30 09:42:31 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/indent.c 340138 2018-11-04 19:24:49Z oshogbo $");
 #endif
@@ -519,31 +519,38 @@ bakcopy(void)
 }
 
 static void
-main_parse_command_line(int argc, char **argv)
+main_load_profiles(int argc, char **argv)
 {
-    int i;
     const char *profile_name = NULL;
 
-    for (i = 1; i < argc; ++i)
-	if (strcmp(argv[i], "-npro") == 0)
-	    break;
-	else if (argv[i][0] == '-' && argv[i][1] == 'P' && argv[i][2] != '\0')
-	    profile_name = argv[i] + 2;	/* non-empty -P (set profile) */
-    if (i >= argc)
-	load_profiles(profile_name);
+    for (int i = 1; i < argc; ++i) {
+	const char *arg = argv[i];
 
-    for (i = 1; i < argc; ++i) {
-	if (argv[i][0] == '-') {
-	    set_option(argv[i], "Command line");
+	if (strcmp(arg, "-npro") == 0)
+	    return;
+	if (arg[0] == '-' && arg[1] == 'P' && arg[2] != '\0')
+	    profile_name = arg + 2;
+    }
+    load_profiles(profile_name);
+}
+
+static void
+main_parse_command_line(int argc, char **argv)
+{
+    for (int i = 1; i < argc; ++i) {
+	const char *arg = argv[i];
+
+	if (arg[0] == '-') {
+	    set_option(arg, "Command line");
 
 	} else if (input == NULL) {
-	    in_name = argv[i];
+	    in_name = arg;
 	    input = fopen(in_name, "r");
 	    if (input == NULL)
 		err(1, "%s", in_name);
 
 	} else if (output == NULL) {
-	    out_name = argv[i];
+	    out_name = arg;
 	    if (strcmp(in_name, out_name) == 0)
 		errx(1, "input and output files must be different");
 	    output = fopen(out_name, "w");
@@ -551,7 +558,7 @@ main_parse_command_line(int argc, char **argv)
 		err(1, "%s", out_name);
 
 	} else
-	    errx(1, "too many arguments: %s", argv[i]);
+	    errx(1, "too many arguments: %s", arg);
     }
 
     if (input == NULL)
@@ -1510,6 +1517,7 @@ int
 main(int argc, char **argv)
 {
     main_init_globals();
+    main_load_profiles(argc, argv);
     main_parse_command_line(argc, argv);
 #if HAVE_CAPSICUM
     init_capsicum();
