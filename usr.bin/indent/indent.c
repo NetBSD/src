@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.c,v 1.195 2021/10/30 22:36:07 rillig Exp $	*/
+/*	$NetBSD: indent.c,v 1.196 2021/10/30 23:27:33 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)indent.c	5.17 (Berkeley) 6/7/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: indent.c,v 1.195 2021/10/30 22:36:07 rillig Exp $");
+__RCSID("$NetBSD: indent.c,v 1.196 2021/10/30 23:27:33 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/indent.c 340138 2018-11-04 19:24:49Z oshogbo $");
 #endif
@@ -289,7 +289,7 @@ search_stmt_newline(bool *force_nl)
 }
 
 static void
-search_stmt_comment(bool *comment_buffered)
+search_stmt_comment(void)
 {
     if (sc_end == NULL) {
 	/*
@@ -316,7 +316,6 @@ search_stmt_comment(bool *comment_buffered)
 	    save_com, sc_end, "\"\n");
     }
 
-    *comment_buffered = true;
     sc_add_char('/');
     sc_add_char('*');
 
@@ -466,9 +465,10 @@ search_stmt_lookahead(lexer_symbol *lsym)
  * "cuddling else" (-ce).
  */
 static void
-search_stmt(lexer_symbol *lsym, bool *force_nl,
-    bool *comment_buffered, bool *last_else)
+search_stmt(lexer_symbol *lsym, bool *force_nl, bool *last_else)
 {
+    bool comment_buffered = false;
+
     while (ps.search_stmt) {
 	switch (*lsym) {
 	case lsym_newline:
@@ -477,15 +477,16 @@ search_stmt(lexer_symbol *lsym, bool *force_nl,
 	case lsym_form_feed:
 	    break;
 	case lsym_comment:
-	    search_stmt_comment(comment_buffered);
+	    search_stmt_comment();
+	    comment_buffered = true;
 	    break;
 	case lsym_lbrace:
 	    if (search_stmt_lbrace())
 		goto switch_buffer;
 	    /* FALLTHROUGH */
 	default:		/* it is the start of a normal statement */
-	    if (!search_stmt_other(*lsym, force_nl,
-		    *comment_buffered, *last_else))
+	    if (!search_stmt_other(*lsym, force_nl, comment_buffered,
+		    *last_else))
 		return;
     switch_buffer:
 	    switch_buffer();
@@ -1377,15 +1378,10 @@ main_loop(void)
 
     di_stack[ps.decl_nest = 0] = 0;
 
-    for (;;) {			/* this is the main loop.  it will go until we
-				 * reach eof */
-	bool comment_buffered = false;
+    for (;;) {			/* loop until we reach eof */
+	lexer_symbol lsym = lexi();
 
-	lexer_symbol lsym = lexi();	/* Read the next token.  The actual
-					 * characters read are stored in
-					 * "token". */
-
-	search_stmt(&lsym, &force_nl, &comment_buffered, &last_else);
+	search_stmt(&lsym, &force_nl, &last_else);
 
 	if (lsym == lsym_eof) {
 	    process_end_of_file();
