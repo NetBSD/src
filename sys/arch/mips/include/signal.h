@@ -1,4 +1,4 @@
-/*	$NetBSD: signal.h,v 1.32 2021/10/27 02:00:46 thorpej Exp $	*/
+/*	$NetBSD: signal.h,v 1.33 2021/10/30 14:05:40 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -78,8 +78,12 @@ struct sigcontext13 {
 };
 #endif /* _KERNEL && COMPAT_13 */
 
-#if defined(_LIBC) || (defined(_KERNEL) && (defined(COMPAT_16) || defined(COMPAT_ULTRIX)))
+#if defined(_KERNEL) || defined(__mips_o32)
 #define	__HAVE_STRUCT_SIGCONTEXT
+#endif
+
+#if defined(_NETBSD_SOURCE)
+#include <sys/sigtypes.h>
 /*
  * Only need an O32 version.
  */
@@ -98,19 +102,17 @@ struct sigcontext { \
 }
 
 /*
- * These will be identical in O32
+ * The only binaries that used sigcontext used the O32 ABI.  The kernel
+ * needs this for 32-bit compatibility, and O32 ABI user-space needs this
+ * natively.
  */
-#ifdef _KERNEL
-/*
- * We need this only compatibility.
- */
+#if defined(_KERNEL)
 _SIGCONTEXT_DEFINE(sigcontext, int, int);
-#endif
-#ifdef _LIBC
+#elif defined(__mips_o32) || defined(_LIBC)
 _SIGCONTEXT_DEFINE(sigcontext, __register_t, __fpregister_t);
 #endif
 
-#endif /* _LIBC || _KERNEL */
+#endif /* _NETBSD_SOURCE */
 
 #endif	/* !_LANGUAGE_ASSEMBLY */
 #endif	/* !_MIPS_SIGNAL_H_ */
