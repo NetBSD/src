@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.65 2021/10/30 09:42:27 skrll Exp $ */
+/* $NetBSD: cpu.c,v 1.66 2021/10/30 10:47:03 skrll Exp $ */
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: cpu.c,v 1.65 2021/10/30 09:42:27 skrll Exp $");
+__KERNEL_RCSID(1, "$NetBSD: cpu.c,v 1.66 2021/10/30 10:47:03 skrll Exp $");
 
 #include "locators.h"
 #include "opt_arm_debug.h"
@@ -702,9 +702,6 @@ cpu_hatch(struct cpu_info *ci)
 
 #ifdef FDT
 	arm_fdt_cpu_hatch(ci);
-#endif
-#ifdef MD_CPU_HATCH
-	MD_CPU_HATCH(ci);	/* for non-fdt arch? */
 #endif
 
 	/*
