@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.c,v 1.189 2021/10/30 16:18:51 rillig Exp $	*/
+/*	$NetBSD: indent.c,v 1.190 2021/10/30 17:18:25 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)indent.c	5.17 (Berkeley) 6/7/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: indent.c,v 1.189 2021/10/30 16:18:51 rillig Exp $");
+__RCSID("$NetBSD: indent.c,v 1.190 2021/10/30 17:18:25 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/indent.c 340138 2018-11-04 19:24:49Z oshogbo $");
 #endif
@@ -157,6 +157,17 @@ diag(int level, const char *msg, ...)
     va_end(ap);
 }
 
+#ifdef debug
+static void
+debug_save_com(const char *prefix)
+{
+    debug_printf("%s: save_com is ", prefix);
+    debug_vis_range("\"", save_com, sc_end, "\"\n");
+}
+#else
+#define debug_save_com(prefix) do { } while (false)
+#endif
+
 static void
 sc_check_size(size_t n)
 {
@@ -192,8 +203,10 @@ search_stmt_newline(bool *force_nl)
 	save_com = sc_buf;
 	save_com[0] = save_com[1] = ' ';
 	sc_end = &save_com[2];
+	debug_save_com("search_stmt_newline init");
     }
     sc_add_char('\n');
+    debug_save_com(__func__);
 
     line_no++;
 
@@ -228,6 +241,10 @@ search_stmt_comment(bool *comment_buffered)
 	save_com = sc_buf + (inp.s - inp.buf - 4);
 	save_com[0] = save_com[1] = ' ';
 	sc_end = &save_com[2];
+	debug_vis_range("search_stmt_comment: before save_com is \"",
+	    sc_buf, save_com, "\"\n");
+	debug_vis_range("search_stmt_comment: save_com is \"",
+	    save_com, sc_end, "\"\n");
     }
 
     *comment_buffered = true;
@@ -238,6 +255,7 @@ search_stmt_comment(bool *comment_buffered)
 	sc_add_char(inbuf_next());
 	if (sc_end[-1] == '*' && *inp.s == '/') {
 	    sc_add_char(inbuf_next());
+	    debug_save_com("search_stmt_comment end");
 	    break;
 	}
     }
@@ -251,6 +269,7 @@ search_stmt_lbrace(void)
      * this loop in order to avoid copying the token again.
      */
     if (sc_end != NULL && opt.brace_same_line) {
+	assert(save_com[0] == ' ');	/* see search_stmt_comment */
 	save_com[0] = '{';
 	/*
 	 * Originally the lbrace may have been alone on its own line, but it
@@ -262,6 +281,7 @@ search_stmt_lbrace(void)
 	    if (*inp.s == '\n')
 		break;
 	}
+	debug_save_com(__func__);
 	return true;
     }
     return false;
@@ -287,6 +307,7 @@ search_stmt_other(lexer_symbol lsym, bool *force_nl,
 	return false;
     }
 
+    debug_save_com(__func__);
     while (sc_end > save_com && ch_isblank(sc_end[-1]))
 	sc_end--;
 
@@ -310,6 +331,7 @@ search_stmt_other(lexer_symbol lsym, bool *force_nl,
 
     for (const char *t_ptr = token.s; *t_ptr != '\0'; ++t_ptr)
 	sc_add_char(*t_ptr);
+    debug_save_com("search_stmt_other end");
     return true;
 }
 
@@ -319,6 +341,7 @@ switch_buffer(void)
     ps.search_stmt = false;
     saved_inp_s = inp.s;	/* save current input buffer */
     saved_inp_e = inp.e;
+    debug_save_com(__func__);
     inp.s = save_com;		/* fix so that subsequent calls to lexi will
 				 * take tokens out of save_com */
     sc_add_char(' ');		/* add trailing blank, just in case */
@@ -353,6 +376,7 @@ search_stmt_lookahead(lexer_symbol *lsym)
     if (sc_end != NULL) {
 	while (ch_isblank(*inp.s))
 	    sc_add_char(inbuf_next());
+	debug_save_com(__func__);
     }
 
     struct parser_state backup_ps = ps;
@@ -1267,6 +1291,7 @@ read_preprocessing_line(void)
 	inp.s = save_com;	/* fix so that subsequent calls to lexi will
 				 * take tokens out of save_com */
 	sc_add_char(' ');	/* add trailing blank, just in case */
+	debug_save_com(__func__);
 	inp.e = sc_end;
 	sc_end = NULL;
 	debug_println("switched inp.s to save_com");
