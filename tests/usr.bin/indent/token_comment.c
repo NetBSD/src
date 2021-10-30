@@ -1,4 +1,4 @@
-/* $NetBSD: token_comment.c,v 1.13 2021/10/30 15:26:58 rillig Exp $ */
+/* $NetBSD: token_comment.c,v 1.14 2021/10/30 16:57:18 rillig Exp $ */
 /* $FreeBSD$ */
 
 /*
@@ -912,4 +912,39 @@ end */
  * comment comment comment comment
  * Ümläute
  */
+#indent end
+
+
+/*
+ *
+ */
+#indent input
+int f(void)
+{
+	if (0)
+		/* 12 1234 123 123456 1234 1234567 123 1234.  */;
+}
+#indent end
+
+/* The comment is too long to fit in a single line. */
+#indent run -l54
+int
+f(void)
+{
+	if (0)
+		/*
+		 * 12 1234 123 123456 1234 1234567 123
+		 * 1234.
+		  */ ;
+}
+#indent end
+
+/* The comment fits in a single line. */
+#indent run
+int
+f(void)
+{
+	if (0)
+		 /* 12 1234 123 123456 1234 1234567 123 1234.  */ ;
+}
 #indent end

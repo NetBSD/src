@@ -1,5 +1,5 @@
 #! /bin/sh
-# $NetBSD: t_errors.sh,v 1.16 2021/10/30 16:43:23 rillig Exp $
+# $NetBSD: t_errors.sh,v 1.17 2021/10/30 16:57:18 rillig Exp $
 #
 # Copyright (c) 2021 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -435,6 +435,8 @@ search_stmt_fits_in_one_line_body()
 	# The comment is placed after 'if (0) ...', where it is processed
 	# by search_stmt_comment. That function redirects the input buffer to
 	# a temporary buffer that is not guaranteed to be terminated by '\n'.
+	# Before NetBSD pr_comment.c 1.91 from 2021-10-30, this produced an
+	# assertion failure in fits_in_one_line.
 	cat <<EOF > code.c
 int f(void)
 {
@@ -443,7 +445,20 @@ int f(void)
 }
 EOF
 
-	atf_check -s 'signal' -o 'ignore' -e 'match:assert' \
+	# Indent tries hard to make the comment fit to the 34-character line
+	# length, but it is just not possible.
+	cat <<EOF > expected.out
+int
+f(void)
+{
+	if (0)
+		/*
+		 * 0123456789012345678901
+		  */ ;
+}
+EOF
+
+	atf_check -o 'file:expected.out' \
 	    "$indent" -l34 code.c -st
 }
 
