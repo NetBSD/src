@@ -1,4 +1,4 @@
-/*	$NetBSD: ifaddrlist.c,v 1.11 2019/08/18 04:12:07 kamil Exp $	*/
+/*	$NetBSD: ifaddrlist.c,v 1.12 2021/10/30 09:26:11 nia Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -40,7 +40,7 @@ static const char rcsid[] =
     "@(#) Header: ifaddrlist.c,v 1.2 97/04/22 13:31:05 leres Exp  (LBL)";
     "@(#) Id: ifaddrlist.c,v 1.9 2000/11/23 20:01:55 leres Exp  (LBL)";
 #else
-__RCSID("$NetBSD: ifaddrlist.c,v 1.11 2019/08/18 04:12:07 kamil Exp $");
+__RCSID("$NetBSD: ifaddrlist.c,v 1.12 2021/10/30 09:26:11 nia Exp $");
 #endif
 #endif
 
@@ -92,13 +92,13 @@ ifaddrlist(struct ifaddrlist **ipaddrp, char *errbuf, size_t buflen)
 {
 	struct sockaddr_in *sin;
 	struct ifaddrs *ifap = NULL, *ifa;
-	struct ifaddrlist *al = NULL, *nal;
+	struct ifaddrlist *al = NULL;
 	size_t i = 0, maxal = 10;
 
 	if (prog_getifaddrs(&ifap) != 0)
 		goto out;
 
-	if ((al = malloc(maxal * sizeof(*al))) == NULL)
+	if (reallocarr(&al, maxal, sizeof(*al)) != 0)
 		goto out;
 		
 	for (ifa = ifap; ifa; ifa = ifa->ifa_next) {
@@ -119,9 +119,8 @@ ifaddrlist(struct ifaddrlist **ipaddrp, char *errbuf, size_t buflen)
 
 		if (i == maxal) {
 			maxal <<= 1;
-			if ((nal = realloc(al, maxal * sizeof(*al))) == NULL)
+			if (reallocarr(&al, maxal, sizeof(*al)) != 0)
 				goto out;
-			al = nal;
 		}
 
 		al[i].addr = sin->sin_addr.s_addr;
@@ -129,10 +128,10 @@ ifaddrlist(struct ifaddrlist **ipaddrp, char *errbuf, size_t buflen)
 			goto out;
 		i++;
 	}
-	if ((nal = realloc(al, i * sizeof(*al))) == NULL)
+	if (reallocarr(&al, i, sizeof(*al)) != 0)
 		goto out;
 	freeifaddrs(ifap);
-	*ipaddrp = nal;
+	*ipaddrp = al;
 	return (ssize_t)i;
 out:
 	if (ifap)
