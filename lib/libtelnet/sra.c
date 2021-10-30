@@ -32,7 +32,7 @@
 #ifdef notdef
 __FBSDID("$FreeBSD: src/contrib/telnet/libtelnet/sra.c,v 1.16 2002/05/06 09:48:02 markm Exp $");
 #else
-__RCSID("$NetBSD: sra.c,v 1.11 2012/01/09 15:25:34 christos Exp $");
+__RCSID("$NetBSD: sra.c,v 1.12 2021/10/30 10:46:57 nia Exp $");
 #endif
 
 #ifdef	SRA
@@ -517,9 +517,9 @@ auth_conv(int num_msg, const struct pam_message **msg,
 {
 	int i;
 	cred_t *cred = appdata;
-	struct pam_response *reply = malloc(sizeof(*reply) * num_msg);
+	struct pam_response *reply = NULL;
 
-	if (reply == NULL)
+	if (reallocarr(&reply, num_msg, sizeof(*reply)) != 0)
 		return PAM_BUF_ERR;
 
 	for (i = 0; i < num_msg; i++) {
