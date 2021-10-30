@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.h,v 1.64 2021/10/30 11:49:38 rillig Exp $	*/
+/*	$NetBSD: indent.h,v 1.65 2021/10/30 22:15:51 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-FreeBSD
@@ -69,6 +69,7 @@ __FBSDID("$FreeBSD: head/usr.bin/indent/indent.h 336333 2018-07-16 05:46:50Z pst
 #endif
 
 #include <stdbool.h>
+#include <stdio.h>
 
 typedef enum lexer_symbol {
     lsym_eof,
