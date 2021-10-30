@@ -1,4 +1,4 @@
-/*	$NetBSD: su.c,v 1.73 2021/10/17 10:33:57 nia Exp $	*/
+/*	$NetBSD: su.c,v 1.74 2021/10/30 11:25:30 nia Exp $	*/
 
 /*
  * Copyright (c) 1988 The Regents of the University of California.
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988\
 #if 0
 static char sccsid[] = "@(#)su.c	8.3 (Berkeley) 4/2/94";*/
 #else
-__RCSID("$NetBSD: su.c,v 1.73 2021/10/17 10:33:57 nia Exp $");
+__RCSID("$NetBSD: su.c,v 1.74 2021/10/30 11:25:30 nia Exp $");
 #endif
 #endif /* not lint */
 
@@ -569,7 +569,8 @@ check_ingroup(int gid, const char *gname, const char *user, int ifempty)
 	 * each member to see if it is a group, and if so whether user is
 	 * in it.
 	 */
-	gr_mem = emalloc((n + 1) * sizeof (char *));
+	gr_mem = NULL;
+	ereallocarr(&gr_mem, n + 1, sizeof(char *));
 	for (g = gr->gr_mem, i = 0; *g; ++g) {
 		gr_mem[i] = estrdup(*g);
 		i++;
