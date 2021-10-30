@@ -1,5 +1,5 @@
 #! /bin/sh
-# $NetBSD: t_misc.sh,v 1.11 2021/10/29 19:22:55 rillig Exp $
+# $NetBSD: t_misc.sh,v 1.12 2021/10/30 09:32:46 rillig Exp $
 #
 # Copyright (c) 2021 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -335,6 +335,20 @@ default_backup_extension_body()
 	    cat code.c.BAK
 }
 
+atf_test_case 'several_profiles'
+several_profiles_body()
+{
+	# If the option '-P' occurs several times, only the last of the
+	# profiles is loaded, the others are ignored.
+
+	echo ' --invalid-option' > error.pro
+	echo '' > last.pro
+	echo '' > code.c
+
+	atf_check \
+	    "$indent" -Pnonexistent.pro -Perror.pro -Plast.pro code.c -st
+}
+
 atf_init_test_cases()
 {
 	atf_add_test_case 'in_place'
@@ -346,4 +360,5 @@ atf_init_test_cases()
 	atf_add_test_case 'opt_U'
 	atf_add_test_case 'line_no_counting'
 	atf_add_test_case 'default_backup_extension'
+	atf_add_test_case 'several_profiles'
 }
