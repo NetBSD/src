@@ -1,6 +1,5 @@
-$NetBSD: TODO,v 1.9 2020/08/03 06:29:59 ryo Exp $
+$NetBSD: TODO,v 1.10 2021/10/30 09:42:01 skrll Exp $
 
 TODO list for NetBSD/aarch64
   - kernel preemption
-  - pmap should be work even if PID_MAX >= 65536 (don't depend 16bit ASID)
   - TLB ASID in pmap should be randomized
