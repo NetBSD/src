@@ -1,4 +1,4 @@
-/*	$NetBSD: vtw.c,v 1.11 2021/03/02 01:02:12 simonb Exp $	*/
+/*	$NetBSD: vtw.c,v 1.12 2021/10/30 11:23:07 nia Exp $	*/
 
 /*
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
 #if 0
 static char sccsid[] = "from: @(#)inet.c	8.4 (Berkeley) 4/20/94";
 #else
-__RCSID("$NetBSD: vtw.c,v 1.11 2021/03/02 01:02:12 simonb Exp $");
+__RCSID("$NetBSD: vtw.c,v 1.12 2021/10/30 11:23:07 nia Exp $");
 #endif
 #endif /* not lint */
 
@@ -303,8 +303,9 @@ show_vtw_v4(void (*print)(const vtw_t *))
 		n = (klim - kbase + 1);
 
 		if (!i) {
-			if ((ubase = malloc(n * sizeof(*kbase))) == NULL)
-				err(EXIT_FAILURE, NULL);
+			ubase = NULL;
+			if (reallocarr(&ubase, n, sizeof(*kbase)) != 0)
+				err(EXIT_FAILURE, "reallocarr");
 			snarf(kbase, ubase, n * sizeof(*ubase));
 
 			mem += n * sizeof(*ubase);
@@ -333,9 +334,9 @@ show_vtw_v4(void (*print)(const vtw_t *))
 
 	mem += (lim - base + 1) * sizeof(*base);
 
-	fat_tcpv4.base = malloc((lim - base + 1) * sizeof(*base));
-	if (fat_tcpv4.base == NULL)
-		err(EXIT_FAILURE, NULL);
+	fat_tcpv4.base = NULL;
+	if (reallocarr(&fat_tcpv4.base, lim - base + 1, sizeof(*base)) != 0)
+		err(EXIT_FAILURE, "reallocarr");
 	fat_tcpv4.lim = fat_tcpv4.base + (lim - base);
 
 	snarf(base, fat_tcpv4.base, sizeof(*base) * (lim - base + 1));
@@ -347,10 +348,13 @@ show_vtw_v4(void (*print)(const vtw_t *))
 	hash = fat_tcpv4.hash;
 	port = fat_tcpv4.port;
 
-	fat_tcpv4.hash = malloc(n * sizeof(*hash));
-	fat_tcpv4.port = malloc(n * sizeof(*port));
-	if (fat_tcpv4.hash == NULL || fat_tcpv4.port == NULL)
-		err(EXIT_FAILURE, NULL);
+	fat_tcpv4.hash = NULL;
+	if (reallocarr(&fat_tcpv4.hash, n, sizeof(*hash)) != 0)
+		err(EXIT_FAILURE, "reallocarr");
+
+	fat_tcpv4.port = NULL;
+	if (reallocarr(&fat_tcpv4.port, n, sizeof(*port)) != 0)
+		err(EXIT_FAILURE, "reallocarr");
 
 	snarf(hash, fat_tcpv4.hash, n * sizeof(*hash));
 	snarf(port, fat_tcpv4.port, n * sizeof(*port));
@@ -406,8 +410,9 @@ show_vtw_v6(void (*print)(const vtw_t *))
 		n = (klim - kbase + 1);
 
 		if (!i) {
-			if ((ubase = malloc(n * sizeof(*kbase))) == NULL)
-				err(EXIT_FAILURE, NULL);
+			ubase = NULL;
+			if (reallocarr(&ubase, n, sizeof(*kbase)) != 0)
+				err(EXIT_FAILURE, "reallocarr");
 
 			snarf(kbase, ubase, n * sizeof(*ubase));
 
@@ -435,9 +440,10 @@ show_vtw_v6(void (*print)(const vtw_t *))
 
 	mem += (lim - base + 1) * sizeof(*base);
 
-	fat_tcpv6.base = malloc((lim - base + 1) * sizeof(*base));
-	if (fat_tcpv6.base == NULL)
-		err(EXIT_FAILURE, NULL);
+	fat_tcpv6.base = NULL;
+	if (reallocarr(&fat_tcpv6.base, lim - base + 1, sizeof(*base)) != 0)
+		err(EXIT_FAILURE, "reallocarr");
+
 	fat_tcpv6.lim = fat_tcpv6.base + (lim - base);
 
 	snarf(base, fat_tcpv6.base, sizeof(*base) * (lim - base + 1));
@@ -449,10 +455,13 @@ show_vtw_v6(void (*print)(const vtw_t *))
 	hash = fat_tcpv6.hash;
 	port = fat_tcpv6.port;
 
-	fat_tcpv6.hash = malloc(n * sizeof(*hash));
-	fat_tcpv6.port = malloc(n * sizeof(*port));
-	if (fat_tcpv6.hash == NULL || fat_tcpv6.port == NULL)
-		err(EXIT_FAILURE, NULL);
+	fat_tcpv6.hash = NULL;
+	if (reallocarr(&fat_tcpv6.hash, n, sizeof(*hash)) != 0)
+		err(EXIT_FAILURE, "reallocarr");
+
+	fat_tcpv6.port = NULL;
+	if (reallocarr(&fat_tcpv6.port, n, sizeof(*port)) != 0)
+		err(EXIT_FAILURE, "reallocarr");
 
 	snarf(hash, fat_tcpv6.hash, n * sizeof(*hash));
 	snarf(port, fat_tcpv6.port, n * sizeof(*port));
