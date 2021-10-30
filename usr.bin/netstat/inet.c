@@ -1,4 +1,4 @@
-/*	$NetBSD: inet.c,v 1.113 2020/08/28 07:23:48 ozaki-r Exp $	*/
+/*	$NetBSD: inet.c,v 1.114 2021/10/30 11:23:07 nia Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "from: @(#)inet.c	8.4 (Berkeley) 4/20/94";
 #else
-__RCSID("$NetBSD: inet.c,v 1.113 2020/08/28 07:23:48 ozaki-r Exp $");
+__RCSID("$NetBSD: inet.c,v 1.114 2021/10/30 11:23:07 nia Exp $");
 #endif
 #endif /* not lint */
 
@@ -293,8 +293,9 @@ getpcblist_kmem(u_long off, const char *name, size_t *len) {
 	next = TAILQ_FIRST(head);
 	prev = TAILQ_END(head);
 
-	if ((pcblist = malloc(size * sizeof(*pcblist))) == NULL)
-		err(1, "malloc");
+	pcblist = NULL;
+	if (reallocarr(&pcblist, size, sizeof(*pcblist)) != 0)
+		err(1, "reallocarr");
 
 	i = 0;
 	while (next != TAILQ_END(head)) {
@@ -325,11 +326,8 @@ getpcblist_kmem(u_long off, const char *name, size_t *len) {
 		pcblist[i].ki_pflags = inpcb.inp_flags;
 		if (i++ == size) {
 			size += 100;
-			struct kinfo_pcb *n = realloc(pcblist,
-			    size * sizeof(*pcblist));
-			if (n == NULL)
-				err(1, "realloc");
-			pcblist = n;
+			if (reallocarr(&pcblist, size, sizeof(*pcblist)) != 0)
+				err(1, "reallocarr");
 		}
 	}
 	*len = i;
