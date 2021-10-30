@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.c,v 1.190 2021/10/30 17:18:25 rillig Exp $	*/
+/*	$NetBSD: indent.c,v 1.191 2021/10/30 17:55:44 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)indent.c	5.17 (Berkeley) 6/7/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: indent.c,v 1.190 2021/10/30 17:18:25 rillig Exp $");
+__RCSID("$NetBSD: indent.c,v 1.191 2021/10/30 17:55:44 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/indent.c 340138 2018-11-04 19:24:49Z oshogbo $");
 #endif
@@ -237,8 +237,10 @@ search_stmt_comment(bool *comment_buffered)
 	 * (size_t)-1 bytes.
 	 */
 	assert((size_t)(inp.s - inp.buf) >= 4);
-	memcpy(sc_buf, inp.buf, (size_t)(inp.s - inp.buf) - 4);
-	save_com = sc_buf + (inp.s - inp.buf - 4);
+	size_t line_len = (size_t)(inp.s - inp.buf) - 4;
+	assert(line_len < array_length(sc_buf));
+	memcpy(sc_buf, inp.buf, line_len);
+	save_com = sc_buf + line_len;
 	save_com[0] = save_com[1] = ' ';
 	sc_end = &save_com[2];
 	debug_vis_range("search_stmt_comment: before save_com is \"",
