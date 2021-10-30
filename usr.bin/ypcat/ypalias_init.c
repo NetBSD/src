@@ -1,4 +1,4 @@
-/*	$NetBSD: ypalias_init.c,v 1.1 2009/06/20 19:27:26 christos Exp $	*/
+/*	$NetBSD: ypalias_init.c,v 1.2 2021/10/30 08:56:54 nia Exp $	*/
 
 /*
  * Copyright (c) 2009 The NetBSD Foundation
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ypalias_init.c,v 1.1 2009/06/20 19:27:26 christos Exp $");
+__RCSID("$NetBSD: ypalias_init.c,v 1.2 2021/10/30 08:56:54 nia Exp $");
 #endif
 
 #include <err.h>
@@ -69,9 +69,9 @@ ypalias_init(void)
 {
 	FILE *fp;
 	char *cp, *line;
-	struct ypalias *ypa, *nypa;
+	struct ypalias *ypa;
 	size_t nypalias = 50;
-	size_t i, len, lineno;
+	size_t i = 0, len, lineno;
 
 	if ((fp = fopen(_PATH_YPNICKNAMES, "r")) == NULL)
 		return &def_ypaliases[0];
@@ -80,7 +80,7 @@ ypalias_init(void)
 		goto out;
 
 	lineno = 1;
-	for (i = 0; (line = fparseln(fp, &len, &lineno, NULL,
+	for (; (line = fparseln(fp, &len, &lineno, NULL,
 	    FPARSELN_UNESCALL));) {
 		cp = line;
 		/* Ignore malformed lines */
@@ -94,18 +94,16 @@ ypalias_init(void)
 			i++;
 		if (i == nypalias) {
 			nypalias <<= 1;
-			nypa = realloc(ypa, sizeof(*ypa) * nypalias);
-			if (nypa == NULL)
+			if (reallocarr(&ypa, nypalias, sizeof(*ypa)) != 0)
 				goto out;
-			ypa = nypa;
 		}
 	}
 	ypa[i].alias = ypa[i].name = NULL;
 	i++;
 
 	(void)fclose(fp);
-	if ((nypa = realloc(ypa, sizeof(*ypa) * i)) != NULL)
-		return nypa;
+	if (reallocarr(&ypa, i, sizeof(*ypa)) == 0)
+		return ypa;
 out:
 	warn("Cannot alllocate alias space, returning default list");
 	if (ypa) {
@@ -116,5 +114,4 @@ out:
 	}
 	(void)fclose(fp);
 	return def_ypaliases;
-	return ypa;
 }
