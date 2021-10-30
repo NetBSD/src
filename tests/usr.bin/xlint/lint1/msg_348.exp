@@ -1,0 +1,4 @@
+msg_348.c(32): warning: maximum value 2 of 'enum color' does not match maximum array index 1 [348]
+msg_348.c(45): warning: maximum value 2 of 'enum color' does not match maximum array index 3 [348]
+msg_348.c(92): warning: integral constant too large [56]
+msg_348.c(94): warning: integral constant too large [56]

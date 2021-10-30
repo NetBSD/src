@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_241.c,v 1.6 2021/08/16 20:11:03 rillig Exp $	*/
+/*	$NetBSD: msg_241.c,v 1.7 2021/10/30 22:04:42 rillig Exp $	*/
 # 3 "msg_241.c"
 
 // Test for message: dubious operation on enum, op %s [241]
@@ -86,7 +86,11 @@ cover_typeok_enum(enum color c, int i)
 const char *
 color_name(enum color c)
 {
-	static const char *name[] = { "red", "green", "blue" };
+	static const char *name[] = {
+	    [RED] = "red",
+	    [GREEN] = "green",
+	    [BLUE] = "blue",
+	};
 
 	if (c == RED)
 		return *(c + name); /* unusual but allowed */
