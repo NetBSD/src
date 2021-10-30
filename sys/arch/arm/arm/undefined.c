@@ -1,4 +1,4 @@
-/*	$NetBSD: undefined.c,v 1.68 2021/10/26 06:34:02 skrll Exp $	*/
+/*	$NetBSD: undefined.c,v 1.69 2021/10/30 08:10:48 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001 Ben Harris.
@@ -53,7 +53,7 @@
 #include <sys/kgdb.h>
 #endif
 
-__KERNEL_RCSID(0, "$NetBSD: undefined.c,v 1.68 2021/10/26 06:34:02 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: undefined.c,v 1.69 2021/10/30 08:10:48 skrll Exp $");
 
 #include <sys/kmem.h>
 #include <sys/queue.h>
@@ -202,10 +202,16 @@ gdb_trapper(u_int addr, u_int insn, struct trapframe *tf, int code)
 	return 1;
 }
 
-static struct undefined_handler cp15_uh;
-static struct undefined_handler gdb_uh;
+static struct undefined_handler cp15_uh = {
+	.uh_handler = cp15_trapper,
+};
+static struct undefined_handler gdb_uh = {
+	.uh_handler = gdb_trapper,
+};
 #ifdef THUMB_CODE
-static struct undefined_handler gdb_uh_thumb;
+static struct undefined_handler gdb_uh_thumb = {
+	.uh_handler = gdb_trapper,
+};
 #endif
 
 #ifdef KDTRACE_HOOKS
@@ -249,14 +255,11 @@ undefined_init(void)
 		LIST_INIT(&undefined_handlers[loop]);
 
 	/* Install handler for CP15 emulation */
-	cp15_uh.uh_handler = cp15_trapper;
 	install_coproc_handler_static(SYSTEM_COPROC, &cp15_uh);
 
 	/* Install handler for GDB breakpoints */
-	gdb_uh.uh_handler = gdb_trapper;
 	install_coproc_handler_static(CORE_UNKNOWN_HANDLER, &gdb_uh);
 #ifdef THUMB_CODE
-	gdb_uh_thumb.uh_handler = gdb_trapper;
 	install_coproc_handler_static(THUMB_UNKNOWN_HANDLER, &gdb_uh_thumb);
 #endif
 }
