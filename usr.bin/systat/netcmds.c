@@ -1,4 +1,4 @@
-/*	$NetBSD: netcmds.c,v 1.21 2005/02/26 22:12:33 dsl Exp $	*/
+/*	$NetBSD: netcmds.c,v 1.22 2021/10/30 11:31:51 nia Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1992, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)netcmds.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: netcmds.c,v 1.21 2005/02/26 22:12:33 dsl Exp $");
+__RCSID("$NetBSD: netcmds.c,v 1.22 2021/10/30 11:31:51 nia Exp $");
 #endif /* not lint */
 
 /*
@@ -223,12 +223,10 @@ selectport(long port, int onoff)
 			p->onoff = onoff;
 			return (0);
 		}
-	p = (struct pitem *)realloc(ports, (nports+1)*sizeof (*p));
-	if (p == NULL) {
+	if (reallocarr(&ports, nports + 1, sizeof(*p)) != 0) {
 		error("malloc failed");
 		die(0);
 	}
-	ports = p;
 	p = &ports[nports++];
 	p->port = port;
 	p->onoff = onoff;
@@ -326,12 +324,10 @@ selecthost(struct sockaddr *sa, int onoff)
 		}
 	if (sa->sa_len > sizeof(struct sockaddr_storage))
 		return (-1);	/*XXX*/
-	p = (struct hitem *)realloc(hosts, (nhosts+1)*sizeof (*p));
-	if (p == NULL) {
+	if (reallocarr(&hosts, nhosts + 1, sizeof(*p)) != 0) {
 		error("malloc failed");
 		die(0);
 	}
-	hosts = p;
 	p = &hosts[nhosts++];
 	memcpy(&p->addr, sa, sa->sa_len);
 	p->onoff = onoff;
