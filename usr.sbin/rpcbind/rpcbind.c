@@ -1,4 +1,4 @@
-/*	$NetBSD: rpcbind.c,v 1.30 2021/03/07 00:23:06 christos Exp $	*/
+/*	$NetBSD: rpcbind.c,v 1.31 2021/10/30 11:04:48 nia Exp $	*/
 
 /*-
  * Copyright (c) 2009, Sun Microsystems, Inc.
@@ -362,18 +362,15 @@ init_transport(struct netconfig *nconf)
 	}
 
 	if (strcmp(nconf->nc_netid, "local") != 0) {
-		char **nhp;
 		/*
 		 * If no hosts were specified, just bind to INADDR_ANY.
 		 * Otherwise  make sure 127.0.0.1 is added to the list.
 		 */
 		nhostsbak = nhosts + 1;
-		nhp = realloc(hosts, nhostsbak * sizeof(*hosts));
-		if (nhp == NULL) {
+		if (reallocarr(&hosts, nhostsbak, sizeof(*hosts)) != 0) {
 			syslog(LOG_ERR, "Can't grow hosts array");
 			return 1;
 		}
-		hosts = nhp;
 		if (nhostsbak == 1)
 			hosts[0] = __UNCONST("*");
 		else {
@@ -903,8 +900,7 @@ parseargs(int argc, char *argv[])
 			break;
 		case 'h':
 			++nhosts;
-			hosts = realloc(hosts, nhosts * sizeof(*hosts));
-			if (hosts == NULL)
+			if (reallocarr(&hosts, nhosts, sizeof(*hosts)) != 0)
 				err(EXIT_FAILURE, "Can't allocate host array");
 			hosts[nhosts - 1] = strdup(optarg);
 			if (hosts[nhosts - 1] == NULL)
