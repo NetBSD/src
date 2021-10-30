@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.64 2021/10/17 07:26:20 skrll Exp $ */
+/* $NetBSD: cpu.c,v 1.65 2021/10/30 09:42:27 skrll Exp $ */
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: cpu.c,v 1.64 2021/10/17 07:26:20 skrll Exp $");
+__KERNEL_RCSID(1, "$NetBSD: cpu.c,v 1.65 2021/10/30 09:42:27 skrll Exp $");
 
 #include "locators.h"
 #include "opt_arm_debug.h"
@@ -148,7 +148,7 @@ cpu_attach(device_t dv, cpuid_t id)
 	ci->ci_kfpu_spl = -1;
 
 	arm_cpu_do_topology(ci);
-	cpu_identify(ci->ci_dev, ci);
+	cpu_identify(dv, ci);
 
 #ifdef MULTIPROCESSOR
 	if (unit != 0) {
