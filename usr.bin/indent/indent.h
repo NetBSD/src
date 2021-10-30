@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.h,v 1.66 2021/10/30 22:36:07 rillig Exp $	*/
+/*	$NetBSD: indent.h,v 1.67 2021/10/30 22:41:18 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-FreeBSD
@@ -277,10 +277,6 @@ extern bool inhibit_formatting;	/* true if INDENT OFF is in effect */
 #define	STACKSIZE 256
 
 extern struct parser_state {
-    /*
-     * TODO: Double-check that the word 'prev' in the following variables
-     * means exactly the same thing.
-     */
     lexer_symbol prev_token;
     enum keyword_kind prev_keyword;
     enum keyword_kind curr_keyword;
@@ -370,11 +366,6 @@ extern struct parser_state {
 
 #define array_length(array) (sizeof(array) / sizeof((array)[0]))
 
-void add_typename(const char *);
-int compute_code_indent(void);
-int compute_label_indent(void);
-int indentation_after_range(int, const char *, const char *);
-int indentation_after(int, const char *);
 #ifdef debug
 void
 debug_vis_range(const char *, const char *, const char *,
@@ -386,6 +377,13 @@ void debug_println(const char *, ...)__printflike(1, 2);
 #define		debug_println(fmt, ...) do { } while (false)
 #define		debug_vis_range(prefix, s, e, suffix) do { } while (false)
 #endif
+
+void add_typename(const char *);
+int compute_code_indent(void);
+int compute_label_indent(void);
+int indentation_after_range(int, const char *, const char *);
+int indentation_after(int, const char *);
+
 void inbuf_skip(void);
 char inbuf_next(void);
 lexer_symbol lexi(void);
