@@ -1,4 +1,4 @@
-/*	$NetBSD: undefined.c,v 1.70 2021/10/30 08:20:35 skrll Exp $	*/
+/*	$NetBSD: undefined.c,v 1.71 2021/10/30 09:23:10 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001 Ben Harris.
@@ -49,7 +49,7 @@
 #include "opt_kgdb.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: undefined.c,v 1.70 2021/10/30 08:20:35 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: undefined.c,v 1.71 2021/10/30 09:23:10 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -347,7 +347,6 @@ undefinedinstruction(trapframe_t *tf)
 		fault_instruction = read_insn(fault_pc, user);
 	}
 
-	/* Update vmmeter statistics */
 	curcpu()->ci_data.cpu_ntrap++;
 
 #ifdef THUMB_CODE
