@@ -1,4 +1,4 @@
-/* $NetBSD: ps_ind_level.c,v 1.1 2021/10/18 22:46:33 rillig Exp $ */
+/* $NetBSD: ps_ind_level.c,v 1.2 2021/10/30 10:52:43 rillig Exp $ */
 /* $FreeBSD$ */
 
 /*
@@ -58,4 +58,62 @@ label:;
 			void function(void){
 		label:		;
 			}
+#indent end
+
+
+/* Test the indentation computation in code_add_decl_indent. */
+#indent input
+int level_0;
+{
+int level_1;
+{
+int level_2;
+{
+int level_3;
+{
+int level_4;
+}
+}
+}
+}
+#indent end
+
+/*
+ * The variables are indented by 16, 21, 26, 31, 36.
+ * The variables end up in columns 17, 22, 27, 32, 37.
+ */
+#indent run -i5 -ts8 -di16 -ldi16
+int		level_0;
+{
+     int	     level_1;
+     {
+	  int		  level_2;
+	  {
+	       int	       level_3;
+	       {
+		    int		    level_4;
+	       }
+	  }
+     }
+}
+#indent end
+
+/*
+ * The variables are indented by 7, 12, 17, 22, 27.
+ * The variables end up in columns 8, 13, 18, 23, 28.
+ */
+#indent run -i5 -ts8 -di7 -ldi7
+int    level_0;
+{
+     int    level_1;
+     {
+	  int	 level_2;
+	  {
+	       int    level_3;
+	       {
+		    int	   level_4;
+	       }
+	  }
+     }
+}
 #indent end
