@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.c,v 1.191 2021/10/30 17:55:44 rillig Exp $	*/
+/*	$NetBSD: indent.c,v 1.192 2021/10/30 18:47:36 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)indent.c	5.17 (Berkeley) 6/7/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: indent.c,v 1.191 2021/10/30 17:55:44 rillig Exp $");
+__RCSID("$NetBSD: indent.c,v 1.192 2021/10/30 18:47:36 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/indent.c 340138 2018-11-04 19:24:49Z oshogbo $");
 #endif
@@ -88,12 +88,13 @@ struct options opt = {
 
 struct parser_state ps;
 
+struct buffer inp;
+
+struct buffer token;
+
 struct buffer lab;
 struct buffer code;
 struct buffer com;
-struct buffer token;
-
-struct buffer inp;
 
 char sc_buf[sc_size];
 char *save_com;
