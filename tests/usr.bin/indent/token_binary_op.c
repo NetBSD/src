@@ -1,4 +1,4 @@
-/* $NetBSD: token_binary_op.c,v 1.5 2021/10/29 22:37:25 rillig Exp $ */
+/* $NetBSD: token_binary_op.c,v 1.6 2021/10/30 22:36:07 rillig Exp $ */
 /* $FreeBSD$ */
 
 /*
@@ -245,7 +245,7 @@ char *(*fn)(int, int) = NULL;
  * Ensure that the result of the indentation does not depend on whether a
  * token from the input starts in column 1 or 9.
  *
- * See process_binary_op, ps.prev_col_1.
+ * See process_binary_op, ps.curr_col_1.
  */
 #indent input
 int col_1 //

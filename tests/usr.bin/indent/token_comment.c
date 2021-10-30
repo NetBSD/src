@@ -1,4 +1,4 @@
-/* $NetBSD: token_comment.c,v 1.14 2021/10/30 16:57:18 rillig Exp $ */
+/* $NetBSD: token_comment.c,v 1.15 2021/10/30 22:36:07 rillig Exp $ */
 /* $FreeBSD$ */
 
 /*
@@ -41,7 +41,7 @@
  * - with varying opt.comment_column (-c0, -c1, -c33, -c80)
  * - with varying opt.decl_comment_column (-cd0, -cd1, -cd20, -cd33, -cd80)
  * - with/without ps.decl_on_line
- * - with/without ps.prev_newline
+ * - with/without ps.curr_newline
  *
  * - very long comments that overflow the buffer 'com'
  * - comments that come from save_com
