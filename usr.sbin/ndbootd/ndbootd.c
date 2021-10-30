@@ -1,4 +1,4 @@
-/*	$NetBSD: ndbootd.c,v 1.12 2007/04/08 09:43:51 scw Exp $	*/
+/*	$NetBSD: ndbootd.c,v 1.13 2021/10/30 10:44:25 nia Exp $	*/
 
 /* ndbootd.c - the Sun Network Disk (nd) daemon: */
 
@@ -81,7 +81,7 @@
 #if 0
 static const char _ndbootd_c_rcsid[] = "<<Id: ndbootd.c,v 1.9 2001/06/13 21:19:11 fredette Exp >>";
 #else
-__RCSID("$NetBSD: ndbootd.c,v 1.12 2007/04/08 09:43:51 scw Exp $");
+__RCSID("$NetBSD: ndbootd.c,v 1.13 2021/10/30 10:44:25 nia Exp $");
 #endif
 
 /* includes: */
@@ -128,8 +128,8 @@ __RCSID("$NetBSD: ndbootd.c,v 1.12 2007/04/08 09:43:51 scw Exp $");
 #endif				/* !HAVE_SOCKADDR_SA_LEN */
 
 /* prototypes: */
-void *ndbootd_malloc _NDBOOTD_P((size_t));
-void *ndbootd_malloc0 _NDBOOTD_P((size_t));
+void *ndbootd_malloc _NDBOOTD_P((size_t, size_t));
+void *ndbootd_calloc _NDBOOTD_P((size_t, size_t));
 void *ndbootd_memdup _NDBOOTD_P((void *, size_t));
 
 /* globals: */
@@ -140,33 +140,34 @@ int _ndbootd_debug;
 
 /* allocators: */
 void *
-ndbootd_malloc(size_t size)
+ndbootd_malloc(size_t number, size_t size)
 {
-	void *buffer;
-	if ((buffer = malloc(size)) == NULL) {
+	void *buffer = NULL;
+	if (reallocarr(&buffer, number, size) != 0) {
 		abort();
 	}
 	return (buffer);
 }
 void *
-ndbootd_malloc0(size_t size)
+ndbootd_calloc(size_t number, size_t size)
 {
 	void *buffer;
-	buffer = ndbootd_malloc(size);
-	memset(buffer, 0, size);
+	if ((buffer = calloc(number, size)) == NULL) {
+		abort();
+	}
 	return (buffer);
 }
 void *
 ndbootd_memdup(void *buffer0, size_t size)
 {
 	void *buffer1;
-	buffer1 = ndbootd_malloc(size);
+	buffer1 = ndbootd_malloc(1, size);
 	memcpy(buffer1, buffer0, size);
 	return (buffer1);
 }
 #define ndbootd_free free
-#define ndbootd_new(t, c) ((t *) ndbootd_malloc(sizeof(t) * (c)))
-#define ndbootd_new0(t, c) ((t *) ndbootd_malloc0(sizeof(t) * (c)))
+#define ndbootd_new(t, c) ((t *) ndbootd_malloc(c, sizeof(t)))
+#define ndbootd_new0(t, c) ((t *) ndbootd_calloc(c, sizeof(t)))
 #define ndbootd_dup(t, b, c) ((t *) ndbootd_memdup(b, c))
 
 /* this calculates an IP packet header checksum: */
