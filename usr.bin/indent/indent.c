@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.c,v 1.193 2021/10/30 18:58:04 rillig Exp $	*/
+/*	$NetBSD: indent.c,v 1.194 2021/10/30 20:01:46 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)indent.c	5.17 (Berkeley) 6/7/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: indent.c,v 1.193 2021/10/30 18:58:04 rillig Exp $");
+__RCSID("$NetBSD: indent.c,v 1.194 2021/10/30 20:01:46 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/indent.c 340138 2018-11-04 19:24:49Z oshogbo $");
 #endif
@@ -408,12 +408,13 @@ static void
 switch_buffer(void)
 {
     ps.search_stmt = false;
-    saved_inp_s = inp.s;	/* save current input buffer */
-    saved_inp_e = inp.e;
-    debug_save_com(__func__);
-    inp.s = save_com;		/* fix so that subsequent calls to lexi will
-				 * take tokens out of save_com */
     sc_add_char(' ');		/* add trailing blank, just in case */
+    debug_save_com(__func__);
+
+    saved_inp_s = inp.s;
+    saved_inp_e = inp.e;
+
+    inp.s = save_com;		/* redirect lexi input to save_com */
     inp.e = sc_end;
     sc_end = NULL;
     debug_println("switched inp.s to save_com");
