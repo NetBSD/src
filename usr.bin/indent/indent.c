@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.c,v 1.188 2021/10/30 15:26:58 rillig Exp $	*/
+/*	$NetBSD: indent.c,v 1.189 2021/10/30 16:18:51 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)indent.c	5.17 (Berkeley) 6/7/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: indent.c,v 1.188 2021/10/30 15:26:58 rillig Exp $");
+__RCSID("$NetBSD: indent.c,v 1.189 2021/10/30 16:18:51 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/indent.c 340138 2018-11-04 19:24:49Z oshogbo $");
 #endif
@@ -158,6 +158,34 @@ diag(int level, const char *msg, ...)
 }
 
 static void
+sc_check_size(size_t n)
+{
+    if ((size_t)(sc_end - sc_buf) + n <= sc_size)
+	return;
+
+    diag(1, "Internal buffer overflow - "
+	"Move big comment from right after if, while, or whatever");
+    fflush(output);
+    exit(1);
+}
+
+static void
+sc_add_char(char ch)
+{
+    sc_check_size(1);
+    *sc_end++ = ch;
+}
+
+static void
+sc_add_range(const char *s, const char *e)
+{
+    size_t len = (size_t)(e - s);
+    sc_check_size(len);
+    memcpy(sc_end, s, len);
+    sc_end += len;
+}
+
+static void
 search_stmt_newline(bool *force_nl)
 {
     if (sc_end == NULL) {
@@ -165,7 +193,7 @@ search_stmt_newline(bool *force_nl)
 	save_com[0] = save_com[1] = ' ';
 	sc_end = &save_com[2];
     }
-    *sc_end++ = '\n';
+    sc_add_char('\n');
 
     line_no++;
 
@@ -203,23 +231,16 @@ search_stmt_comment(bool *comment_buffered)
     }
 
     *comment_buffered = true;
-    *sc_end++ = '/';		/* copy in start of comment */
-    *sc_end++ = '*';
+    sc_add_char('/');
+    sc_add_char('*');
 
     for (;;) {			/* loop until the end of the comment */
-	*sc_end++ = inbuf_next();
-	if (sc_end[-1] == '*' && *inp.s == '/')
-	    break;		/* we are at end of comment */
-	if (sc_end >= &save_com[sc_size]) {	/* check for temp buffer
-						 * overflow */
-	    diag(1, "Internal buffer overflow - Move big comment from right after if, while, or whatever");
-	    fflush(output);
-	    exit(1);
+	sc_add_char(inbuf_next());
+	if (sc_end[-1] == '*' && *inp.s == '/') {
+	    sc_add_char(inbuf_next());
+	    break;
 	}
     }
-
-    *sc_end++ = '/';		/* add ending slash */
-    inbuf_skip();		/* get past / in buffer */
 }
 
 static bool
@@ -272,9 +293,8 @@ search_stmt_other(lexer_symbol lsym, bool *force_nl,
     if (opt.swallow_optional_blanklines ||
 	(!comment_buffered && remove_newlines)) {
 	*force_nl = !remove_newlines;
-	while (sc_end > save_com && sc_end[-1] == '\n') {
+	while (sc_end > save_com && sc_end[-1] == '\n')
 	    sc_end--;
-	}
     }
 
     if (*force_nl) {		/* if we should insert a nl here, put it into
@@ -282,15 +302,14 @@ search_stmt_other(lexer_symbol lsym, bool *force_nl,
 	*force_nl = false;
 	--line_no;		/* this will be re-increased when the newline
 				 * is read from the buffer */
-	*sc_end++ = '\n';
-	*sc_end++ = ' ';
+	sc_add_char('\n');
+	sc_add_char(' ');
 	if (opt.verbose)	/* warn if the line was not already broken */
 	    diag(0, "Line broken");
     }
 
-    /* XXX: buffer overflow? This is essentially a strcpy. */
     for (const char *t_ptr = token.s; *t_ptr != '\0'; ++t_ptr)
-	*sc_end++ = *t_ptr;
+	sc_add_char(*t_ptr);
     return true;
 }
 
@@ -302,7 +321,7 @@ switch_buffer(void)
     saved_inp_e = inp.e;
     inp.s = save_com;		/* fix so that subsequent calls to lexi will
 				 * take tokens out of save_com */
-    *sc_end++ = ' ';		/* add trailing blank, just in case */
+    sc_add_char(' ');		/* add trailing blank, just in case */
     inp.e = sc_end;
     sc_end = NULL;
     debug_println("switched inp.s to save_com");
@@ -332,13 +351,8 @@ search_stmt_lookahead(lexer_symbol *lsym)
      * into the buffer so that the later lexi() call will read them.
      */
     if (sc_end != NULL) {
-	while (ch_isblank(*inp.s)) {
-	    *sc_end++ = *inp.s++;
-	    if (sc_end >= &save_com[sc_size])
-		errx(1, "input too long");
-	}
-	if (inp.s >= inp.e)
-	    inbuf_read_line();
+	while (ch_isblank(*inp.s))
+	    sc_add_char(inbuf_next());
     }
 
     struct parser_state backup_ps = ps;
@@ -1240,14 +1254,11 @@ read_preprocessing_line(void)
 	    save_com = sc_buf;
 	    sc_end = save_com;
 	} else {
-	    *sc_end++ = '\n';	/* add newline between comments */
-	    *sc_end++ = ' ';
+	    sc_add_char('\n');	/* add newline between comments */
+	    sc_add_char(' ');
 	    --line_no;
 	}
-	if (sc_end - save_com + com_end - com_start > sc_size)
-	    errx(1, "input too long");
-	memmove(sc_end, lab.s + com_start, (size_t)(com_end - com_start));
-	sc_end += com_end - com_start;
+	sc_add_range(lab.s + com_start, lab.s + com_end);
 	lab.e = lab.s + com_start;
 	while (lab.e > lab.s && ch_isblank(lab.e[-1]))
 	    lab.e--;
@@ -1255,7 +1266,7 @@ read_preprocessing_line(void)
 	saved_inp_e = inp.e;
 	inp.s = save_com;	/* fix so that subsequent calls to lexi will
 				 * take tokens out of save_com */
-	*sc_end++ = ' ';	/* add trailing blank, just in case */
+	sc_add_char(' ');	/* add trailing blank, just in case */
 	inp.e = sc_end;
 	sc_end = NULL;
 	debug_println("switched inp.s to save_com");
