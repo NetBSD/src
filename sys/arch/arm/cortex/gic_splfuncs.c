@@ -1,4 +1,4 @@
-/* $NetBSD: gic_splfuncs.c,v 1.4 2021/09/26 20:55:15 jmcneill Exp $ */
+/* $NetBSD: gic_splfuncs.c,v 1.5 2021/10/30 18:44:24 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2021 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gic_splfuncs.c,v 1.4 2021/09/26 20:55:15 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gic_splfuncs.c,v 1.5 2021/10/30 18:44:24 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -41,16 +41,12 @@ __KERNEL_RCSID(0, "$NetBSD: gic_splfuncs.c,v 1.4 2021/09/26 20:55:15 jmcneill Ex
 
 #include <arm/cortex/gic_splfuncs.h>
 
-static int
-gic_splraise(int newipl)
-{
-	struct cpu_info * const ci = curcpu();
-	const int oldipl = ci->ci_cpl;
-	if (__predict_true(newipl > oldipl)) {
-		ci->ci_cpl = newipl;
-	}
-	return oldipl;
-}
+/* Prototypes for functions in gic_splfuncs_<arch>.S */
+int	gic_splraise(int);
+void	gic_splx(int);
+
+/* Local functions */
+void	Xgic_splx(int);	
 
 static int
 gic_spllower(int newipl)
@@ -72,8 +68,8 @@ gic_spllower(int newipl)
 	return oldipl;
 }
 
-static void
-gic_splx(int newipl)
+void
+Xgic_splx(int newipl)
 {
 	struct cpu_info *ci = curcpu();
 	register_t psw;
@@ -82,37 +78,6 @@ gic_splx(int newipl)
 		return;
 	}
 
-	/*
-	 * Try to avoid touching any hardware registers (DAIF, PMR) as an
-	 * optimization for the common case of splraise followed by splx
-	 * with no interrupts in between.
-	 *
-	 * If an interrupt fires in this critical section, the vector
-	 * handler is responsible for returning to the address pointed
-	 * to by ci_splx_restart to restart the sequence.
-	 */
-	if (__predict_true(ci->ci_intr_depth == 0)) {
-		ci->ci_splx_savedipl = newipl;
-		__insn_barrier();
-		ci->ci_splx_restart = &&restart;
-		__insn_barrier();
-checkhwpl:
-		if (ci->ci_hwpl <= newipl) {
-			ci->ci_cpl = newipl;
-			__insn_barrier();
-			ci->ci_splx_restart = NULL;
-			goto dosoft;
-		} else {
-			ci->ci_splx_restart = NULL;
-			goto dohard;
-		}
-restart:
-		ci = curcpu();
-		newipl = ci->ci_splx_savedipl;
-		goto checkhwpl;
-	}
-
-dohard:
 	psw = DISABLE_INTERRUPT_SAVE();
 	ci->ci_intr_depth++;
 	pic_do_pending_ints(psw, newipl, NULL);
@@ -121,7 +86,6 @@ dohard:
 		ENABLE_INTERRUPT();
 	}
 
-dosoft:
 	cpu_dosoftints();
 }
 
