@@ -1,4 +1,4 @@
-/*	$NetBSD: rpcb_svc_com.c,v 1.26 2021/10/30 11:04:48 nia Exp $	*/
+/*	$NetBSD: rpcb_svc_com.c,v 1.27 2021/10/30 11:41:45 nia Exp $	*/
 /*	$FreeBSD: head/usr.sbin/rpcbind/rpcb_svc_com.c 301770 2016-06-09 22:25:00Z pfg $ */
 
 /*-
@@ -1122,6 +1122,7 @@ my_svc_run(void)
 		if (newfdcount != npollfds) {
 			if (reallocarr(&pollfds,
 			    newfdcount, sizeof(*pollfds)) != 0) {
+wait:
 				syslog(LOG_ERR, "Cannot allocate pollfds");
 				sleep(1);
 				continue;
@@ -1130,7 +1131,7 @@ my_svc_run(void)
 		}
 		p = pollfds;
 		if ((m = svc_fdset_getmax()) == NULL)
-			break;
+			goto wait;
 		for (n = 0; n <= *m; n++) {
 			if (svc_fdset_isset(n)) {
 				p->fd = n;
