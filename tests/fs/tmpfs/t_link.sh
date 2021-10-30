@@ -1,4 +1,4 @@
-# $NetBSD: t_link.sh,v 1.5 2010/11/07 17:51:18 jmmv Exp $
+# $NetBSD: t_link.sh,v 1.6 2021/10/30 09:53:47 hannken Exp $
 #
 # Copyright (c) 2005, 2006, 2007, 2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -109,9 +109,7 @@ kqueue_body() {
 	kqueue_check dir NOTE_WRITE
 
 	echo 'rm dir/a' | kqueue_monitor 2 dir dir/b
-	# XXX According to the (short) kqueue(2) documentation, the following
-	# should raise a NOTE_LINK but FFS raises a NOTE_DELETE...
-	kqueue_check dir/b NOTE_LINK
+	kqueue_check dir/b NOTE_DELETE
 	kqueue_check dir NOTE_WRITE
 	atf_check -s eq:0 -o empty -e empty rm dir/b
 	atf_check -s eq:0 -o empty -e empty rmdir dir
