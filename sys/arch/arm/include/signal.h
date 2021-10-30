@@ -1,4 +1,4 @@
-/*	$NetBSD: signal.h,v 1.19 2021/10/30 15:51:52 thorpej Exp $	*/
+/*	$NetBSD: signal.h,v 1.20 2021/10/30 19:54:58 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -49,13 +49,13 @@
 #include <sys/featuretest.h>
 #include <sys/sigtypes.h>
 
-#define	__HAVE_STRUCT_SIGCONTEXT
-
 #ifndef _LOCORE
 typedef int sig_atomic_t;
 #endif
 
 #if defined(__arm__)
+
+#define	__HAVE_STRUCT_SIGCONTEXT
 
 #if defined(_NETBSD_SOURCE)
 
