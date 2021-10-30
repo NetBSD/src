@@ -1,4 +1,4 @@
-# $NetBSD: genassym.cf,v 1.36 2021/10/30 18:49:47 jmcneill Exp $
+# $NetBSD: genassym.cf,v 1.37 2021/10/30 20:23:11 jmcneill Exp $
 #-
 # Copyright (c) 2014 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -163,6 +163,7 @@ define	L_MD_IB_USER		offsetof(struct lwp, l_md.md_ib_user)
 define	L_MD_DA_USER		offsetof(struct lwp, l_md.md_da_user)
 define	L_MD_DB_USER		offsetof(struct lwp, l_md.md_db_user)
 define	L_MD_GA_USER		offsetof(struct lwp, l_md.md_ga_user)
+define	L_NOPREEMPT		offsetof(struct lwp, l_nopreempt)
 define	LW_SYSTEM		LW_SYSTEM
 
 define	FB_X19			FB_X19
