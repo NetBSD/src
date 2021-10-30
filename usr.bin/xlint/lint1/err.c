@@ -1,4 +1,4 @@
-/*	$NetBSD: err.c,v 1.146 2021/10/09 21:56:12 rillig Exp $	*/
+/*	$NetBSD: err.c,v 1.147 2021/10/30 22:04:42 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: err.c,v 1.146 2021/10/09 21:56:12 rillig Exp $");
+__RCSID("$NetBSD: err.c,v 1.147 2021/10/30 22:04:42 rillig Exp $");
 #endif
 
 #include <sys/types.h>
@@ -402,6 +402,7 @@ const char *const msgs[] = {
 	"generic selection requires C11 or later",		      /* 345 */
 	"call to '%s' effectively discards 'const' from argument",    /* 346 */
 	"redeclaration of '%s' with type '%s', expected '%s'",	      /* 347 */
+	"maximum value %d of '%s' does not match maximum array index %d", /* 348 */
 };
 
 static struct include_level {

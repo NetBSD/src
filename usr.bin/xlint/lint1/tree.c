@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.385 2021/10/09 21:56:12 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.386 2021/10/30 22:04:42 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.385 2021/10/09 21:56:12 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.386 2021/10/30 22:04:42 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -1773,6 +1773,44 @@ check_enum_int_mismatch(op_t op, int arg, const tnode_t *ln, const tnode_t *rn)
 	}
 }
 
+static void
+check_enum_array_index(const tnode_t *ln, const tnode_t *rn)
+{
+	int max_enum_value, max_array_index;
+	const struct sym *ec;
+
+	if (ln->tn_op != ADDR)
+		return;
+	if (ln->tn_left->tn_op != NAME)
+		return;
+	if (ln->tn_left->tn_type->t_tspec != ARRAY)
+		return;
+	if (ln->tn_left->tn_type->t_incomplete_array)
+		return;
+	if (rn->tn_op != CVT)
+		return;
+	if (rn->tn_left->tn_op != LOAD)
+		return;
+	if (rn->tn_left->tn_type->t_tspec != ENUM)
+		return;
+
+	max_enum_value = INT_MIN;
+	ec = rn->tn_type->t_enum->en_first_enumerator;
+	for (; ec != NULL; ec = ec->s_next) {
+		int64_t ev = ec->s_value.v_quad;
+		lint_assert(INT_MIN <= ev && ev <= INT_MAX);
+		if (ev > max_enum_value)
+			max_enum_value = (int)ev;
+	}
+
+	max_array_index = ln->tn_left->tn_type->t_dim - 1;
+	if (max_enum_value == max_array_index)
+		return;
+
+	/* maximum value %d of '%s' does not match maximum array index %d */
+	warning(348, max_enum_value, type_name(rn->tn_type), max_array_index);
+}
+
 /*
  * Build and initialize a new node.
  */
@@ -2863,6 +2901,7 @@ build_plus_minus(op_t op, tnode_t *ln, tnode_t *rn)
 		lint_assert(is_integer(rn->tn_type->t_tspec));
 
 		check_ctype_macro_invocation(ln, rn);
+		check_enum_array_index(ln, rn);
 
 		ctn = plength(ln->tn_type);
 		if (rn->tn_type->t_tspec != ctn->tn_type->t_tspec)
