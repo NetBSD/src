@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_16_machdep.c,v 1.21 2021/10/27 04:15:00 thorpej Exp $	*/
+/*	$NetBSD: compat_16_machdep.c,v 1.22 2021/10/30 19:44:56 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: compat_16_machdep.c,v 1.21 2021/10/27 04:15:00 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_16_machdep.c,v 1.22 2021/10/30 19:44:56 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_altivec.h"
@@ -104,7 +104,12 @@ sendsig_sigcontext(const ksiginfo_t *ksi, const sigset_t *mask)
 	utf->srr1 |= pcb->pcb_flags & (PCB_FE0|PCB_FE1);
 #endif
 #if defined(ALTIVEC) || defined(PPC_HAVE_SPE)
-	utf->srr1 |= vec_used_p(l) ? PSL_VEC : 0;
+	/*
+	 * We can't round-trip the vector unit registers with a
+	 * sigcontext, so at least get them saved into the PCB.
+	 * XXX vec_save_to_mcontext() has a special hack for this.
+	 */
+	vec_save_to_mcontext(l, NULL, NULL);
 #endif
 #ifdef PPC_OEA
 	utf->vrsave = tf->tf_vrsave;
@@ -220,6 +225,15 @@ compat_16_sys___sigreturn14(struct lwp *l,
 	struct pcb * const pcb = lwp_getpcb(l);
 	pcb->pcb_flags &= ~(PCB_FE0|PCB_FE1);
 	pcb->pcb_flags |= utf->srr1 & (PCB_FE0|PCB_FE1);
+#endif
+#if defined(ALTIVEC) || defined(PPC_HAVE_SPE)
+	/*
+	 * We can't round-trip the vector unit registers with a
+	 * sigcontext, so at least force them to get reloaded from
+	 * the PCB (we saved them into the PCB in sendsig_sigcontext()).
+	 * XXX vec_restore_from_mcontext() has a special hack for this.
+	 */
+	vec_restore_from_mcontext(l, NULL);
 #endif
 #ifdef PPC_OEA
 	tf->tf_vrsave = utf->vrsave;

@@ -1,4 +1,4 @@
-/*	$NetBSD: altivec.c,v 1.33 2020/07/06 10:52:12 rin Exp $	*/
+/*	$NetBSD: altivec.c,v 1.34 2021/10/30 19:44:56 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: altivec.c,v 1.33 2020/07/06 10:52:12 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: altivec.c,v 1.34 2021/10/30 19:44:56 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -166,10 +166,13 @@ vec_restore_from_mcontext(struct lwp *l, const mcontext_t *mcp)
 	/* we don't need to save the state, just drop it */
 	pcu_discard(&vec_ops, l, true);
 
-	memcpy(pcb->pcb_vr.vreg, &mcp->__vrf.__vrs, sizeof (pcb->pcb_vr.vreg));
-	pcb->pcb_vr.vscr = mcp->__vrf.__vscr;
-	pcb->pcb_vr.vrsave = mcp->__vrf.__vrsave;
-	l->l_md.md_utf->tf_vrsave = pcb->pcb_vr.vrsave;
+	if (mcp != NULL) {	/* XXX see compat_16_sys___sigreturn14() */
+		memcpy(pcb->pcb_vr.vreg, &mcp->__vrf.__vrs,
+		    sizeof (pcb->pcb_vr.vreg));
+		pcb->pcb_vr.vscr = mcp->__vrf.__vscr;
+		pcb->pcb_vr.vrsave = mcp->__vrf.__vrsave;
+		l->l_md.md_utf->tf_vrsave = pcb->pcb_vr.vrsave;
+	}
 }
 
 bool
@@ -188,11 +191,14 @@ vec_save_to_mcontext(struct lwp *l, mcontext_t *mcp, unsigned int *flagp)
 	 */
 	pcu_save(&vec_ops, l);
 
-	mcp->__gregs[_REG_MSR] |= PSL_VEC;
-	mcp->__vrf.__vscr = pcb->pcb_vr.vscr;
-	mcp->__vrf.__vrsave = l->l_md.md_utf->tf_vrsave;
-	memcpy(mcp->__vrf.__vrs, pcb->pcb_vr.vreg, sizeof (mcp->__vrf.__vrs));
-	*flagp |= _UC_POWERPC_VEC;
+	if (mcp != NULL) {	/* XXX see sendsig_sigcontext() */
+		mcp->__gregs[_REG_MSR] |= PSL_VEC;
+		mcp->__vrf.__vscr = pcb->pcb_vr.vscr;
+		mcp->__vrf.__vrsave = l->l_md.md_utf->tf_vrsave;
+		memcpy(mcp->__vrf.__vrs, pcb->pcb_vr.vreg,
+		    sizeof (mcp->__vrf.__vrs));
+		*flagp |= _UC_POWERPC_VEC;
+	}
 	return true;
 }
 
