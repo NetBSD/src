@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.c,v 1.192 2021/10/30 18:47:36 rillig Exp $	*/
+/*	$NetBSD: indent.c,v 1.193 2021/10/30 18:58:04 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)indent.c	5.17 (Berkeley) 6/7/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: indent.c,v 1.192 2021/10/30 18:47:36 rillig Exp $");
+__RCSID("$NetBSD: indent.c,v 1.193 2021/10/30 18:58:04 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/indent.c 340138 2018-11-04 19:24:49Z oshogbo $");
 #endif
@@ -141,6 +141,72 @@ init_capsicum(void)
 	err(EXIT_FAILURE, "unable to enter capability mode");
 }
 #endif
+
+static void
+buf_init(struct buffer *buf)
+{
+    size_t size = 200;
+    buf->buf = xmalloc(size);
+    buf->l = buf->buf + size - 5 /* safety margin */;
+    buf->s = buf->buf + 1;	/* allow accessing buf->e[-1] */
+    buf->e = buf->s;
+    buf->buf[0] = ' ';
+    buf->buf[1] = '\0';
+}
+
+static size_t
+buf_len(const struct buffer *buf)
+{
+    return (size_t)(buf->e - buf->s);
+}
+
+void
+buf_expand(struct buffer *buf, size_t add_size)
+{
+    size_t new_size = (size_t)(buf->l - buf->s) + 400 + add_size;
+    size_t len = buf_len(buf);
+    buf->buf = xrealloc(buf->buf, new_size);
+    buf->l = buf->buf + new_size - 5;
+    buf->s = buf->buf + 1;
+    buf->e = buf->s + len;
+    /* At this point, the buffer may not be null-terminated anymore. */
+}
+
+static void
+buf_reserve(struct buffer *buf, size_t n)
+{
+    if (n >= (size_t)(buf->l - buf->e))
+	buf_expand(buf, n);
+}
+
+static void
+buf_add_char(struct buffer *buf, char ch)
+{
+    buf_reserve(buf, 1);
+    *buf->e++ = ch;
+}
+
+static void
+buf_add_buf(struct buffer *buf, const struct buffer *add)
+{
+    size_t len = buf_len(add);
+    buf_reserve(buf, len);
+    memcpy(buf->e, add->s, len);
+    buf->e += len;
+}
+
+static void
+buf_terminate(struct buffer *buf)
+{
+    buf_reserve(buf, 1);
+    *buf->e = '\0';
+}
+
+static void
+buf_reset(struct buffer *buf)
+{
+    buf->e = buf->s;
+}
 
 void
 diag(int level, const char *msg, ...)
@@ -427,72 +493,6 @@ search_stmt(lexer_symbol *lsym, bool *force_nl,
     }
 
     *last_else = false;
-}
-
-static void
-buf_init(struct buffer *buf)
-{
-    size_t size = 200;
-    buf->buf = xmalloc(size);
-    buf->l = buf->buf + size - 5 /* safety margin */;
-    buf->s = buf->buf + 1;	/* allow accessing buf->e[-1] */
-    buf->e = buf->s;
-    buf->buf[0] = ' ';
-    buf->buf[1] = '\0';
-}
-
-static size_t
-buf_len(const struct buffer *buf)
-{
-    return (size_t)(buf->e - buf->s);
-}
-
-void
-buf_expand(struct buffer *buf, size_t add_size)
-{
-    size_t new_size = (size_t)(buf->l - buf->s) + 400 + add_size;
-    size_t len = buf_len(buf);
-    buf->buf = xrealloc(buf->buf, new_size);
-    buf->l = buf->buf + new_size - 5;
-    buf->s = buf->buf + 1;
-    buf->e = buf->s + len;
-    /* At this point, the buffer may not be null-terminated anymore. */
-}
-
-static void
-buf_reserve(struct buffer *buf, size_t n)
-{
-    if (n >= (size_t)(buf->l - buf->e))
-	buf_expand(buf, n);
-}
-
-static void
-buf_add_char(struct buffer *buf, char ch)
-{
-    buf_reserve(buf, 1);
-    *buf->e++ = ch;
-}
-
-static void
-buf_add_buf(struct buffer *buf, const struct buffer *add)
-{
-    size_t len = buf_len(add);
-    buf_reserve(buf, len);
-    memcpy(buf->e, add->s, len);
-    buf->e += len;
-}
-
-static void
-buf_terminate(struct buffer *buf)
-{
-    buf_reserve(buf, 1);
-    *buf->e = '\0';
-}
-
-static void
-buf_reset(struct buffer *buf)
-{
-    buf->e = buf->s;
 }
 
 static void
