@@ -1,4 +1,4 @@
-/*	$NetBSD: telnet.c,v 1.43 2021/10/30 11:37:18 nia Exp $	*/
+/*	$NetBSD: telnet.c,v 1.44 2021/10/30 13:43:40 hannken Exp $	*/
 
 /*
  * Copyright (c) 1988, 1990, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)telnet.c	8.4 (Berkeley) 5/30/95";
 #else
-__RCSID("$NetBSD: telnet.c,v 1.43 2021/10/30 11:37:18 nia Exp $");
+__RCSID("$NetBSD: telnet.c,v 1.44 2021/10/30 13:43:40 hannken Exp $");
 #endif
 #endif /* not lint */
 
@@ -578,7 +578,7 @@ mklist(char *buf, char *name)
 	/*
 	 * Allocate an array to put the name pointers into
 	 */
-	argv = NULL:
+	argv = NULL;
 	if (reallocarr(&argv, n + 3, sizeof(char *)) != 0)
 		return(unknown);
 
