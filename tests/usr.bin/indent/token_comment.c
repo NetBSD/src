@@ -1,4 +1,4 @@
-/* $NetBSD: token_comment.c,v 1.11 2021/10/30 12:28:42 rillig Exp $ */
+/* $NetBSD: token_comment.c,v 1.12 2021/10/30 13:06:43 rillig Exp $ */
 /* $FreeBSD$ */
 
 /*
@@ -134,23 +134,16 @@ t(void)
  *
  * The other Christmas tree is a standalone block comment, therefore the
  * comment starts in the code column.
+ *
+ * Since the comments occur between psym_if_expr and the following statement,
+ * they are handled by search_stmt_comment.
  */
 #indent input
-int c(void)
 {
-	if (7) { /*- a Christmas tree  *
-				      ***
-				     ***** */
-		    /*- another one *
-				   ***
-				  ***** */
-		7;
-	}
-
-	if (1) /*- a Christmas tree  *
+	if (1) /*- a Christmas tree  *  search_stmt_comment
 				    ***
 				   ***** */
-		    /*- another one *
+		    /*- another one *  search_stmt_comment
 				   ***
 				  ***** */
 		1;
@@ -158,8 +151,40 @@ int c(void)
 #indent end
 
 #indent run -bbb
-int
-c(void)
+{
+	if (1)			/*- a Christmas tree  *  search_stmt_comment
+						     ***
+						    ***** */
+		/*- another one *  search_stmt_comment
+			       ***
+			      ***** */
+		1;
+}
+#indent end
+
+
+/*
+ * The first Christmas tree is to the right of the code, therefore the comment
+ * is moved to the code comment column; the follow-up lines of that comment
+ * are moved by the same distance, to preserve the internal layout.
+ *
+ * The other Christmas tree is a standalone block comment, therefore the
+ * comment starts in the code column.
+ */
+#indent input
+{
+	if (7) { /*- a Christmas tree  *
+				      ***
+				     ***** */
+		    /*- another one *
+				   ***
+				  ***** */
+		stmt();
+	}
+}
+#indent end
+
+#indent run -bbb
 {
 	if (7) {		/*- a Christmas tree  *
 					             ***
@@ -167,16 +192,8 @@ c(void)
 		/*- another one *
 			       ***
 			      ***** */
-		7;
+		stmt();
 	}
-
-	if (1)			/*- a Christmas tree  *
-						     ***
-						    ***** */
-		/*- another one *
-			       ***
-			      ***** */
-		1;
 }
 #indent end
 
@@ -196,6 +213,23 @@ int decl;			/*-fixed comment
  */
 
 
+#indent input
+{
+	if (0)/*-search_stmt_comment   |
+	   search_stmt_comment         |*/
+		;
+}
+#indent end
+
+#indent run -di0
+{
+	if (0)			/*-search_stmt_comment   |
+			     search_stmt_comment         |*/
+		;
+}
+#indent end
+
+
 /*
  * Ensure that all text of the comment is preserved when the comment is moved
  * to the right.
@@ -208,6 +242,29 @@ int decl;/*-fixed comment
 #indent run -di0
 int decl;			/*-fixed comment
 		       123456789ab fixed comment*/
+#indent end
+
+
+/*
+ * Ensure that all text of the comment is preserved when the comment is moved
+ * to the right.
+ *
+ * This comment is handled by search_stmt_comment.
+ */
+#indent input
+{
+	if(0)/*-search_stmt_comment
+123456789ab search_stmt_comment   |*/
+	    ;
+}
+#indent end
+
+#indent run -di0
+{
+	if (0)			/*-search_stmt_comment
+		   123456789ab search_stmt_comment   |*/
+		;
+}
 #indent end
 
 
@@ -232,6 +289,38 @@ int decl;			/*-|fixed comment
 |---|
 |-----------|
 tab1+++	tab2---	tab3+++	tab4---	tab5+++	tab6---	tab7+++fixed comment*/
+#indent end
+
+
+/*
+ * Ensure that all text of the comment is preserved when the comment is moved
+ * to the left. In this case, the internal layout of the comment cannot be
+ * preserved since the second line already starts in column 1.
+ *
+ * This comment is processed by search_stmt_comment.
+ */
+#indent input
+{
+	if(0)					    /*-|search_stmt_comment
+					| minus 12     |
+		| tabs inside		|
+	    |---|
+|-----------|
+tab1+++	tab2---	tab3+++	tab4---	tab5+++	tab6---	tab7+++fixed comment*/
+		;
+}
+#indent end
+
+#indent run -di0
+{
+	if (0)			/*-|search_stmt_comment
+		    | minus 12     |
+| tabs inside		|
+|---|
+|-----------|
+tab1+++	tab2---	tab3+++	tab4---	tab5+++	tab6---	tab7+++fixed comment*/
+		;
+}
 #indent end
 
 
