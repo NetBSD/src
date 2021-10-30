@@ -1,4 +1,4 @@
-/* 	$NetBSD: refuse_opt.c,v 1.18 2016/11/16 16:11:42 pho Exp $	*/
+/* 	$NetBSD: refuse_opt.c,v 1.19 2021/10/30 09:06:34 nia Exp $	*/
 
 /*-
  * Copyright (c) 2007 Juan Romero Pardines.
@@ -58,13 +58,11 @@ fuse_opt_add_arg(struct fuse_args *args, const char *arg)
 		args->allocated = ap->allocated;
 		(void) free(ap);
 	} else if (args->allocated == args->argc) {
-		void *a;
 		int na = args->allocated + 10;
 
-		if ((a = realloc(args->argv, na * sizeof(*args->argv))) == NULL)
+		if (reallocarr(&args->argv, na, sizeof(*args->argv)) != 0)
 			return -1;
 
-		args->argv = a;
 		args->allocated = na;
 	}
 	DPRINTF(("%s: arguments passed: [arg:%s]\n", __func__, arg));
@@ -119,22 +117,18 @@ fuse_opt_insert_arg(struct fuse_args *args, int pos, const char *arg)
 {
 	int	i;
 	int	na;
-	void   *a;
 
 	DPRINTF(("%s: arguments passed: [pos=%d] [arg=%s]\n",
 	    __func__, pos, arg));
 	if (args->argv == NULL) {
 		na = 10;
-		a = malloc(na * sizeof(*args->argv));
 	} else {
 		na = args->allocated + 10;
-		a = realloc(args->argv, na * sizeof(*args->argv));
 	}
-	if (a == NULL) {
+	if (reallocarr(&args->argv, na, sizeof(*args->argv)) != 0) {
 		warn("fuse_opt_insert_arg");
 		return -1;
 	}
-	args->argv = a;
 	args->allocated = na;
 
 	for (i = args->argc++; i > pos; --i) {
