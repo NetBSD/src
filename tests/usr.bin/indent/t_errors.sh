@@ -1,5 +1,5 @@
 #! /bin/sh
-# $NetBSD: t_errors.sh,v 1.15 2021/10/30 15:26:58 rillig Exp $
+# $NetBSD: t_errors.sh,v 1.16 2021/10/30 16:43:23 rillig Exp $
 #
 # Copyright (c) 2021 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -429,6 +429,25 @@ EOF
 	    "$indent" code.c -st
 }
 
+atf_test_case 'search_stmt_fits_in_one_line'
+search_stmt_fits_in_one_line_body()
+{
+	# The comment is placed after 'if (0) ...', where it is processed
+	# by search_stmt_comment. That function redirects the input buffer to
+	# a temporary buffer that is not guaranteed to be terminated by '\n'.
+	cat <<EOF > code.c
+int f(void)
+{
+	if (0)
+		/* 0123456789012345678901 */;
+}
+EOF
+
+	atf_check -s 'signal' -o 'ignore' -e 'match:assert' \
+	    "$indent" -l34 code.c -st
+}
+
+
 atf_init_test_cases()
 {
 	atf_add_test_case 'option_unknown'
@@ -461,4 +480,5 @@ atf_init_test_cases()
 	atf_add_test_case 'unbalanced_parentheses_2'
 	atf_add_test_case 'unbalanced_parentheses_3'
 	atf_add_test_case 'search_stmt_comment_segv'
+	atf_add_test_case 'search_stmt_fits_in_one_line'
 }
