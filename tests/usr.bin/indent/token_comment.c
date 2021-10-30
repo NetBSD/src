@@ -1,4 +1,4 @@
-/* $NetBSD: token_comment.c,v 1.9 2021/10/29 17:50:37 rillig Exp $ */
+/* $NetBSD: token_comment.c,v 1.10 2021/10/30 12:24:03 rillig Exp $ */
 /* $FreeBSD$ */
 
 /*
@@ -126,25 +126,34 @@ t(void)
 }
 #indent end
 
+
+/*
+ * The first Christmas tree is to the right of the code, therefore the comment
+ * is moved to the code comment column; the follow-up lines of that comment
+ * are moved by the same distance, to preserve the internal layout.
+ *
+ * The other Christmas tree is a standalone block comment, therefore the
+ * comment starts in the code column.
+ */
 #indent input
 int c(void)
 {
-	if (1) { /*- a christmas tree  *
+	if (7) { /*- a Christmas tree  *
 				      ***
 				     ***** */
 		    /*- another one *
 				   ***
 				  ***** */
-	    7;
+		7;
 	}
 
-	if (1) /*- a christmas tree  *
+	if (1) /*- a Christmas tree  *
 				    ***
 				   ***** */
 		    /*- another one *
 				   ***
 				  ***** */
-	    1;
+		1;
 }
 #indent end
 
@@ -152,7 +161,7 @@ int c(void)
 int
 c(void)
 {
-	if (1) {		/*- a christmas tree  *
+	if (7) {		/*- a Christmas tree  *
 					             ***
 					            ***** */
 		/*- another one *
@@ -161,7 +170,7 @@ c(void)
 		7;
 	}
 
-	if (1)			/*- a christmas tree  *
+	if (1)			/*- a Christmas tree  *
 						     ***
 						    ***** */
 		/*- another one *
@@ -170,6 +179,53 @@ c(void)
 		1;
 }
 #indent end
+
+
+#indent input
+int decl;/*-fixed comment
+	    fixed comment*/
+#indent end
+
+#indent run -di0
+int decl;			/*-fixed comment
+			           fixed comment*/
+#indent end
+/*
+ * XXX: The second line of the above comment contains 11 spaces in a row,
+ * instead of using as many tabs as possible.
+ */
+
+
+/*
+ * Ensure that all text of the comment is preserved when the comment is moved
+ * to the right.
+ */
+#indent input
+int decl;/*-fixed comment
+123456789ab fixed comment*/
+#indent end
+
+#indent run -di0
+int decl;			/*-fixed comment
+		       123456789ab fixed comment*/
+#indent end
+
+
+/*
+ * Ensure that all text of the comment is preserved when the comment is moved
+ * to the left. In this case, the internal layout of the comment cannot be
+ * preserved since the second line already starts in column 1.
+ */
+#indent input
+int decl;					    /*-fixed comment
+tab1+++	tab2---	tab3+++	tab4---	tab5+++	tab6---	tab7+++fixed comment*/
+#indent end
+
+#indent run -di0
+int decl;			/*-fixed comment
+tab1+++	tab2---	tab3+++	tab4---	tab5+++	tab6---	tab7+++fixed comment*/
+#indent end
+
 
 /*
  * The following comments test line breaking when the comment ends with a
