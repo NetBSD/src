@@ -1,4 +1,4 @@
-/*	$NetBSD: fmt_decl.c,v 1.9 2021/10/31 17:22:48 rillig Exp $	*/
+/*	$NetBSD: fmt_decl.c,v 1.10 2021/10/31 19:08:39 rillig Exp $	*/
 /* $FreeBSD: head/usr.bin/indent/tests/declarations.0 334478 2018-06-01 09:41:15Z pstef $ */
 
 /* See FreeBSD r303570 */
@@ -429,5 +429,25 @@ main(void)
 	char *(*	f1)() = NULL;
 /* $ XXX: Not really pretty, the name 'f2' should be aligned, if at all. */
 	char *(*	f2)();
+}
+#indent end
+
+
+/*
+ * In some ancient time long before ISO C90, variable declarations with
+ * initializer could be written without '='. The C Programming Language from
+ * 1978 doesn't mention this form anymore.
+ */
+#indent input
+int a - 1;
+{
+int a - 1;
+}
+#indent end
+
+#indent run -di0
+int a -1;
+{
+	int a -1;
 }
 #indent end
