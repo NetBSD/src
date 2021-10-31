@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.h,v 1.72 2021/10/31 19:57:44 rillig Exp $	*/
+/*	$NetBSD: indent.h,v 1.73 2021/10/31 20:40:42 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-FreeBSD
@@ -244,13 +244,6 @@ extern struct options {
 				 * printed */
 } opt;
 
-enum keyword_kind {
-    kw_0,
-    kw_tag,			/* 'struct', 'union', 'enum' */
-    kw_type
-};
-
-
 extern bool found_err;
 extern int blank_lines_to_output;
 extern bool blank_line_before;
@@ -267,8 +260,8 @@ extern bool inhibit_formatting;	/* true if INDENT OFF is in effect */
 
 extern struct parser_state {
     lexer_symbol prev_token;
-    enum keyword_kind prev_keyword;
-    enum keyword_kind curr_keyword;
+    bool prev_is_type;
+    bool curr_is_type;
     bool curr_newline;
     bool curr_col_1;		/* whether the current token started in column
 				 * 1 of the unformatted input */
