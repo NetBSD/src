@@ -1,4 +1,4 @@
-/*	$NetBSD: lexi.c,v 1.123 2021/10/31 19:13:41 rillig Exp $	*/
+/*	$NetBSD: lexi.c,v 1.124 2021/10/31 19:20:52 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)lexi.c	8.1 (Berkeley) 6/6/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: lexi.c,v 1.123 2021/10/31 19:13:41 rillig Exp $");
+__RCSID("$NetBSD: lexi.c,v 1.124 2021/10/31 19:20:52 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/lexi.c 337862 2018-08-15 18:19:45Z pstef $");
 #endif
@@ -232,7 +232,7 @@ lsym_name(lexer_symbol sym)
 	"semicolon",
 	"typedef",
 	"storage_class",
-	"type",
+	"type_at_paren_level_0",
 	"tag",
 	"case_label",
 	"string_prefix",
@@ -506,7 +506,7 @@ lexi_alnum(void)
 
     if (ps.prev_token == lsym_tag && ps.p_l_follow == 0) {
 	ps.next_unary = true;
-	return lsym_type;
+	return lsym_type_at_paren_level_0;
     }
 
     /* Operator after identifier is binary unless last token was 'struct'. */
@@ -553,7 +553,7 @@ found_typename:
 	    if (kw != NULL && kw->kind == kw_tag)
 		return lsym_tag;
 	    if (ps.p_l_follow == 0)
-		return lsym_type;
+		return lsym_type_at_paren_level_0;
 	}
     }
 
@@ -573,7 +573,7 @@ no_function_definition:;
     } else if (probably_typename()) {
 	ps.curr_keyword = kw_type;
 	ps.next_unary = true;
-	return lsym_type;
+	return lsym_type_at_paren_level_0;
     }
 
     return lsym_ident;		/* the ident is not in the list */

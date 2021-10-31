@@ -1,4 +1,4 @@
-/*	$NetBSD: fmt_decl.c,v 1.11 2021/10/31 19:13:41 rillig Exp $	*/
+/*	$NetBSD: fmt_decl.c,v 1.12 2021/10/31 19:20:53 rillig Exp $	*/
 /* $FreeBSD: head/usr.bin/indent/tests/declarations.0 334478 2018-06-01 09:41:15Z pstef $ */
 
 /* See FreeBSD r303570 */
@@ -62,7 +62,7 @@ typedef struct Complex {
  * As of 2021-10-31, indent parses the following function definition as these
  * tokens:
  *
- * line 1: type type "void"
+ * line 1: type_at_paren_level_0 type "void"
  * line 1: newline "\n"
  * line 2: funcname "t1"
  * line 2: newline "\n"		repeated, see search_stmt
