@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.c,v 1.196 2021/10/30 23:27:33 rillig Exp $	*/
+/*	$NetBSD: indent.c,v 1.197 2021/10/31 10:00:37 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)indent.c	5.17 (Berkeley) 6/7/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: indent.c,v 1.196 2021/10/30 23:27:33 rillig Exp $");
+__RCSID("$NetBSD: indent.c,v 1.197 2021/10/31 10:00:37 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/indent.c 340138 2018-11-04 19:24:49Z oshogbo $");
 #endif
@@ -741,6 +741,8 @@ want_blank_before_lparen(void)
 	return false;
     if (ps.prev_token == lsym_rparen_or_rbracket)
 	return false;
+    if (ps.prev_token == lsym_sizeof)
+	return opt.proc_calls_space || opt.blank_after_sizeof;
     if (ps.prev_token != lsym_ident && ps.prev_token != lsym_funcname)
 	return true;
     if (opt.proc_calls_space)
@@ -1495,8 +1497,9 @@ main_loop(void)
 	    process_type(&decl_ind, &tabs_to_var);
 	    goto copy_token;
 
-	case lsym_funcname:
+	case lsym_sizeof:
 	case lsym_ident:
+	case lsym_funcname:
 	    process_ident(lsym, decl_ind, tabs_to_var, &spaced_expr,
 		&force_nl, hd);
     copy_token:
