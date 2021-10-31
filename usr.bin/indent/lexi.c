@@ -1,4 +1,4 @@
-/*	$NetBSD: lexi.c,v 1.119 2021/10/31 09:52:37 rillig Exp $	*/
+/*	$NetBSD: lexi.c,v 1.120 2021/10/31 10:00:37 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)lexi.c	8.1 (Berkeley) 6/6/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: lexi.c,v 1.119 2021/10/31 09:52:37 rillig Exp $");
+__RCSID("$NetBSD: lexi.c,v 1.120 2021/10/31 10:00:37 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/lexi.c 337862 2018-08-15 18:19:45Z pstef $");
 #endif
@@ -236,6 +236,7 @@ lsym_name(lexer_symbol sym)
 	"tag",
 	"case_label",
 	"string_prefix",
+	"sizeof",
 	"ident",
 	"funcname",
 	"do",
@@ -534,6 +535,7 @@ lexi_alnum(void)
 	case kw_do:		return lsym_do;
 	case kw_storage_class:	return lsym_storage_class;
 	case kw_typedef:	return lsym_typedef;
+	case kw_sizeof:		return lsym_sizeof;
 	default:		return lsym_ident;
 	}
 	/* INDENT ON */
