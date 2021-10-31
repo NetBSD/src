@@ -1,4 +1,4 @@
-/*	$NetBSD: lexi.c,v 1.117 2021/10/30 22:36:07 rillig Exp $	*/
+/*	$NetBSD: lexi.c,v 1.118 2021/10/31 09:41:48 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)lexi.c	8.1 (Berkeley) 6/6/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: lexi.c,v 1.117 2021/10/30 22:36:07 rillig Exp $");
+__RCSID("$NetBSD: lexi.c,v 1.118 2021/10/31 09:41:48 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/lexi.c 337862 2018-08-15 18:19:45Z pstef $");
 #endif
@@ -522,53 +522,33 @@ lexi_alnum(void)
 	ps.curr_keyword = kw->kind;
 	ps.next_unary = true;
 
+	/* INDENT OFF */
 	switch (kw->kind) {
-	case kw_switch:
-	    return lsym_switch;
-
-	case kw_case_or_default:
-	    return lsym_case_label;
-
 	case kw_struct_or_union_or_enum:
-	case kw_type:
-    found_typename:
-	    if (ps.p_l_follow > 0) {
-		/* inside parentheses: cast, param list, offsetof or sizeof */
-		ps.cast_mask |= (1 << ps.p_l_follow) & ~ps.not_cast_mask;
-	    }
-	    if (ps.prev_token == lsym_period ||
-		    ps.prev_token == lsym_unary_op)
-		break;
+	case kw_type:		goto found_typename;
+	case kw_case_or_default: return lsym_case_label;
+	case kw_for:		return lsym_for;
+	case kw_if:		return lsym_if;
+	case kw_else:		return lsym_else;
+	case kw_switch:		return lsym_switch;
+	case kw_while:		return lsym_while;
+	case kw_do:		return lsym_do;
+	case kw_storage_class:	return lsym_storage_class;
+	case kw_typedef:	return lsym_typedef;
+	default:		return lsym_ident;
+	}
+	/* INDENT ON */
+
+found_typename:
+	if (ps.p_l_follow > 0) {
+	    /* inside parentheses: cast, param list, offsetof or sizeof */
+	    ps.cast_mask |= (1 << ps.p_l_follow) & ~ps.not_cast_mask;
+	}
+	if (ps.prev_token != lsym_period && ps.prev_token != lsym_unary_op) {
 	    if (kw != NULL && kw->kind == kw_struct_or_union_or_enum)
 		return lsym_tag;
-	    if (ps.p_l_follow > 0)
-		break;
-	    return lsym_type;
-
-	case kw_for:
-	    return lsym_for;
-
-	case kw_if:
-	    return lsym_if;
-
-	case kw_while:
-	    return lsym_while;
-
-	case kw_do:
-	    return lsym_do;
-
-	case kw_else:
-	    return lsym_else;
-
-	case kw_storage_class:
-	    return lsym_storage_class;
-
-	case kw_typedef:
-	    return lsym_typedef;
-
-	default:		/* all others are treated like any other
-				 * identifier */
-	    return lsym_ident;
+	    if (ps.p_l_follow == 0)
+		return lsym_type;
 	}
     }
 
@@ -577,13 +557,13 @@ lexi_alnum(void)
 
 	for (const char *p = inp.s; p < inp.e;)
 	    if (*p++ == ')' && (*p == ';' || *p == ','))
-		goto not_proc;
+		goto no_function_definition;
 
 	strncpy(ps.procname, token.s, sizeof ps.procname - 1);
 	if (ps.in_decl)
 	    ps.in_parameter_declaration = true;
 	return lsym_funcname;
-not_proc:;
+no_function_definition:;
 
     } else if (probably_typename()) {
 	ps.curr_keyword = kw_type;
