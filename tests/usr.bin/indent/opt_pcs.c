@@ -1,4 +1,4 @@
-/* $NetBSD: opt_pcs.c,v 1.5 2021/10/24 11:42:57 rillig Exp $ */
+/* $NetBSD: opt_pcs.c,v 1.6 2021/10/31 21:06:56 rillig Exp $ */
 /* $FreeBSD$ */
 
 /*
@@ -40,6 +40,16 @@ example(void)
 	function_call(1, 2, 3);
 }
 #indent end
+
+
+#indent input
+int var = (function)(arg);
+#indent end
+
+/* TODO: add space between the parentheses. */
+#indent run-equals-input -di0 -pcs
+#indent run-equals-input -di0 -npcs
+
 
 /*
  * The option '-pcs' also applies to 'sizeof' and 'offsetof', even though
