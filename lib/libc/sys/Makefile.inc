@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.248 2021/10/26 16:16:36 christos Exp $
+#	$NetBSD: Makefile.inc,v 1.249 2021/10/31 22:24:36 thorpej Exp $
 #	@(#)Makefile.inc	8.3 (Berkeley) 10/24/94
 
 # sys sources
@@ -10,7 +10,7 @@ SRCS+=	cpuset.c
 SRCS+=	accept4.c clock_getcpuclockid.c eventfd_read.c eventfd_write.c \
 	posix_fadvise.c posix_madvise.c ppoll.c sched.c sigqueue.c \
 	sigtimedwait.c sigwait.c sigwaitinfo.c statvfs.c swapon.c semctl.c \
-	vadvise.c __sigaction14_sigtramp.c
+	vadvise.c
 
 .if ${RUMPRUN} != "yes"
 # modules with non-default implementations on at least one architecture:
@@ -90,6 +90,8 @@ ASM_GLUE+= tmp___${glue:.c=}50.S
 .endfor
 
 # modules with default implementations on all architectures:
+SRCS+=	__sigaction14_sigtramp.c
+
 ASM=\
     __acl_get_link.S __acl_set_link.S __acl_delete_link.S \
     __acl_aclcheck_link.S __acl_get_file.S __acl_set_file.S __acl_get_fd.S \

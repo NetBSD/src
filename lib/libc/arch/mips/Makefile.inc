@@ -1,8 +1,8 @@
-#	$NetBSD: Makefile.inc,v 1.15 2021/04/25 23:45:58 christos Exp $
+#	$NetBSD: Makefile.inc,v 1.16 2021/10/31 22:24:35 thorpej Exp $
 
 .include <bsd.own.mk>
 
-SRCS+=	__sigaction14_sigtramp.c __sigtramp2.S
+SRCS+=	__sigtramp2.S
 
 CPPFLAGS+= -I.
 CPPFLAGS.assym.h+=-D__LIBC12_SOURCE__ -D_KERNTYPES
