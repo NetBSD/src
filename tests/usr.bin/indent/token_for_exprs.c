@@ -1,4 +1,4 @@
-/* $NetBSD: token_for_exprs.c,v 1.1 2021/10/18 22:30:34 rillig Exp $ */
+/* $NetBSD: token_for_exprs.c,v 1.2 2021/10/31 23:33:12 rillig Exp $ */
 /* $FreeBSD$ */
 
 /*
@@ -51,6 +51,19 @@ function(void)
 /* $ No space after 'foreach' since it looks like a function name. */
 	foreach(list, it) {
 		println(it->data);
+	}
+}
+#indent end
+
+#indent run-equals-input
+
+
+/*
+ * Another variant of a 'for' loop, seen in sys/arch/arm/apple/apple_intc.c.
+ */
+#indent input
+{
+	for (CPU_INFO_FOREACH(cii, ci)) {
 	}
 }
 #indent end
