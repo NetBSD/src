@@ -1,4 +1,4 @@
-/*	$NetBSD: lexi.c,v 1.118 2021/10/31 09:41:48 rillig Exp $	*/
+/*	$NetBSD: lexi.c,v 1.119 2021/10/31 09:52:37 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)lexi.c	8.1 (Berkeley) 6/6/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: lexi.c,v 1.118 2021/10/31 09:41:48 rillig Exp $");
+__RCSID("$NetBSD: lexi.c,v 1.119 2021/10/31 09:52:37 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/lexi.c 337862 2018-08-15 18:19:45Z pstef $");
 #endif
@@ -64,38 +64,38 @@ static const struct keyword {
     {"_Imaginary", kw_type},
     {"auto", kw_storage_class},
     {"bool", kw_type},
-    {"break", kw_jump},
+    {"break", kw_other},
     {"case", kw_case_or_default},
     {"char", kw_type},
     {"complex", kw_type},
     {"const", kw_type},
-    {"continue", kw_jump},
+    {"continue", kw_other},
     {"default", kw_case_or_default},
     {"do", kw_do},
     {"double", kw_type},
     {"else", kw_else},
-    {"enum", kw_struct_or_union_or_enum},
+    {"enum", kw_tag},
     {"extern", kw_storage_class},
     {"float", kw_type},
     {"for", kw_for},
-    {"goto", kw_jump},
+    {"goto", kw_other},
     {"if", kw_if},
     {"imaginary", kw_type},
-    {"inline", kw_inline_or_restrict},
+    {"inline", kw_other},
     {"int", kw_type},
     {"long", kw_type},
     {"offsetof", kw_offsetof},
     {"register", kw_storage_class},
-    {"restrict", kw_inline_or_restrict},
-    {"return", kw_jump},
+    {"restrict", kw_other},
+    {"return", kw_other},
     {"short", kw_type},
     {"signed", kw_type},
     {"sizeof", kw_sizeof},
     {"static", kw_storage_class},
-    {"struct", kw_struct_or_union_or_enum},
+    {"struct", kw_tag},
     {"switch", kw_switch},
     {"typedef", kw_typedef},
-    {"union", kw_struct_or_union_or_enum},
+    {"union", kw_tag},
     {"unsigned", kw_type},
     {"void", kw_type},
     {"volatile", kw_type},
@@ -256,7 +256,7 @@ kw_name(enum keyword_kind kw)
 	"0",
 	"offsetof",
 	"sizeof",
-	"struct_or_union_or_enum",
+	"tag",
 	"type",
 	"for",
 	"if",
@@ -265,10 +265,9 @@ kw_name(enum keyword_kind kw)
 	"else",
 	"switch",
 	"case_or_default",
-	"jump",
 	"storage_class",
 	"typedef",
-	"inline_or_restrict",
+	"other",
     };
 
     return name[kw];
@@ -524,7 +523,7 @@ lexi_alnum(void)
 
 	/* INDENT OFF */
 	switch (kw->kind) {
-	case kw_struct_or_union_or_enum:
+	case kw_tag:
 	case kw_type:		goto found_typename;
 	case kw_case_or_default: return lsym_case_label;
 	case kw_for:		return lsym_for;
@@ -545,7 +544,7 @@ found_typename:
 	    ps.cast_mask |= (1 << ps.p_l_follow) & ~ps.not_cast_mask;
 	}
 	if (ps.prev_token != lsym_period && ps.prev_token != lsym_unary_op) {
-	    if (kw != NULL && kw->kind == kw_struct_or_union_or_enum)
+	    if (kw != NULL && kw->kind == kw_tag)
 		return lsym_tag;
 	    if (ps.p_l_follow == 0)
 		return lsym_type;
