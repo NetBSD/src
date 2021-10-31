@@ -1,4 +1,4 @@
-.\"	$NetBSD: sh.1,v 1.235 2021/10/26 00:05:38 kre Exp $
+.\"	$NetBSD: sh.1,v 1.236 2021/10/31 02:12:08 kre Exp $
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -31,7 +31,7 @@
 .\"
 .\"	@(#)sh.1	8.6 (Berkeley) 5/4/95
 .\"
-.Dd October 25, 2021
+.Dd October 31, 2021
 .Dt SH 1
 .\" everything except c o and s (keep them ordered)
 .ds flags abCEeFfhIiLmnpquVvXx
@@ -83,10 +83,7 @@
 .Sh DESCRIPTION
 .Nm
 is the standard command interpreter for the system.
-The current version of
-.Nm
-is in the process of being changed to conform more closely to the
-POSIX 1003.2 and 1003.2a specifications for the shell.
+It is a re-implementation and extension of the Bourne shell.
 This version has many
 features which make it appear similar in some respects to the Korn shell,
 but it is not a Korn shell clone (see
@@ -2445,7 +2442,7 @@ of utilities, the name for built-ins or the expansion of aliases.
 .El
 .\"
 .Pp
-.It Ic cd Oo Fl P Oc Op Ar directory Op Ar replace
+.It Ic cd Oo Fl Pe Oc Op Ar directory Op Ar replace
 Switch to the specified directory (default
 .Ev $HOME ) .
 If
@@ -2480,14 +2477,44 @@ is the same as that of
 .Pp
 The
 .Fl P
-option instructs the shell to update
+option
+(which is the unalterable default in this
+.Nm )
+instructs the shell to
+change to the directory specified (or determined)
+and if successful
+update
 .Ev PWD
-with the specified physical directory path and change to that directory.
-This is the default.
+with the new physical directory path.
+That is the path name, not traversing any symbolic links,
+of the altered working directory of the shell.
 .Pp
-When the directory changes, the variable
+The
+.Fl e
+option alters the interpretation of the exit status.
+.Ic cd
+will exit with status 0 if successful.
+If the directory was successfully changed, but
+.Ev PWD
+was unable to be updated,
+.Ic cd
+will exit with status 1 if the
+.Fl e
+option was given, and status 0 otherwise.
+Upon any other error,
+including usage errors,
+and failing to successfully change directory,
+.Ic cd
+will exit with status 2.
+.Pp
+When the directory changes,
+and
+.Ev PWD
+is updated, the variable
 .Ev OLDPWD
-is set to the working directory before the change.
+is set to the working directory
+.Po \&\$ Ns Ev PWD Ns Pc
+as it was before the change.
 .Pp
 Some shells also support a
 .Fl L
@@ -2497,21 +2524,32 @@ with the logical path and to change the current directory
 accordingly.
 This is not supported.
 .Pp
-In an interactive shell, the
+In an interactive shell, or if the
+.Cm posix
+option is set, the
 .Ic cd
 command will print out the name of the
-directory that it actually switched to if this is different from the name
+directory that it actually switched to
+.Po that is, the pathname passed to the successful
+.Xr chdir 2
+.No system call Pc
+if this is different from the name
 that the user gave,
-or always if the
+or if the
 .Cm cdprint
 option is set.
-The destination may be different either because the
+The destination may be different because
+a non-empty element of the
 .Ev CDPATH
-mechanism was used
-.\" or because a symbolic link was crossed.
-or if the
+mechanism was used,
+.\" or because a symbolic link was crossed.   XXX Definitively not.
+or because the
 .Ar replace
-argument was used.
+argument was used,
+or because the
+.Ar directory
+parameter was specified as
+.Dq \&\- .
 .\"
 .Pp
 .It Ic eval Ar string ...
