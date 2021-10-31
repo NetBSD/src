@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.21 2019/10/13 07:28:19 mrg Exp $
+#	$NetBSD: Makefile,v 1.22 2021/10/31 17:50:35 christos Exp $
 
 LIBISPRIVATE=	yes
 
@@ -10,7 +10,7 @@ CLEANFILES= version.c
 .include <bsd.own.mk>
 
 .if ${MACHINE_CPU} == "mips"
-CFLAGS+= -DNOAOUT
+CPPFLAGS+= -DNOAOUT
 .endif
 
 version.c: VERSION
