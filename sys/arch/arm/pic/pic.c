@@ -1,4 +1,4 @@
-/*	$NetBSD: pic.c,v 1.73 2021/10/31 16:23:48 skrll Exp $	*/
+/*	$NetBSD: pic.c,v 1.74 2021/10/31 16:24:47 skrll Exp $	*/
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -33,7 +33,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pic.c,v 1.73 2021/10/31 16:23:48 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pic.c,v 1.74 2021/10/31 16:24:47 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -612,6 +612,8 @@ pic_add(struct pic_softc *pic, int irqbase)
 	int slot, maybe_slot = -1;
 	size_t sourcebase;
 	static ONCE_DECL(pic_once);
+
+	ASSERT_SLEEPABLE();
 
 	RUN_ONCE(&pic_once, pic_init);
 
