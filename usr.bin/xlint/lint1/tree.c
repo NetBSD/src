@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.387 2021/10/31 16:42:16 christos Exp $	*/
+/*	$NetBSD: tree.c,v 1.388 2021/10/31 23:15:44 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.387 2021/10/31 16:42:16 christos Exp $");
+__RCSID("$NetBSD: tree.c,v 1.388 2021/10/31 23:15:44 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -1793,12 +1793,9 @@ check_enum_array_index(const tnode_t *ln, const tnode_t *rn)
 		return;
 	if (rn->tn_left->tn_type->t_tspec != ENUM)
 		return;
-	// XXX: why?
-	if (rn->tn_type->t_enum == NULL)
-		return;
 
 	max_enum_value = INT_MIN;
-	ec = rn->tn_type->t_enum->en_first_enumerator;
+	ec = rn->tn_left->tn_type->t_enum->en_first_enumerator;
 	for (; ec != NULL; ec = ec->s_next) {
 		int64_t ev = ec->s_value.v_quad;
 		lint_assert(INT_MIN <= ev && ev <= INT_MAX);
@@ -1811,7 +1808,8 @@ check_enum_array_index(const tnode_t *ln, const tnode_t *rn)
 		return;
 
 	/* maximum value %d of '%s' does not match maximum array index %d */
-	warning(348, max_enum_value, type_name(rn->tn_type), max_array_index);
+	warning(348, max_enum_value, type_name(rn->tn_left->tn_type),
+	    max_array_index);
 }
 
 /*
