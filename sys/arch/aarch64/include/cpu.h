@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.h,v 1.41 2021/10/26 06:02:00 skrll Exp $ */
+/* $NetBSD: cpu.h,v 1.42 2021/10/31 08:21:24 skrll Exp $ */
 
 /*-
  * Copyright (c) 2014, 2020 The NetBSD Foundation, Inc.
@@ -134,8 +134,10 @@ struct cpu_info {
 	/* ACPI */
 	uint32_t ci_acpiid;	/* ACPI Processor Unique ID */
 
+	/* sysctl(9) exposed system registers */
 	struct aarch64_sysctl_cpu_id ci_id;
 
+	/* cache information and function pointers */
 	struct aarch64_cache_info *ci_cacheinfo;
 	struct aarch64_cpufuncs ci_cpufuncs;
 
