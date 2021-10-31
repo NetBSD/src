@@ -1,4 +1,4 @@
-/* $NetBSD: db_machdep.c,v 1.41 2021/10/17 22:44:34 ryo Exp $ */
+/* $NetBSD: db_machdep.c,v 1.42 2021/10/31 16:23:47 skrll Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_machdep.c,v 1.41 2021/10/17 22:44:34 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_machdep.c,v 1.42 2021/10/31 16:23:47 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd32.h"
@@ -819,7 +819,7 @@ db_md_breakwatchpoints_reload(void)
 }
 
 void
-db_machdep_init(void)
+db_machdep_cpu_init(void)
 {
 	uint64_t dfr, mdscr;
 	int i, cpu_max_breakpoint, cpu_max_watchpoint;
@@ -842,15 +842,26 @@ db_machdep_init(void)
 	mdscr |= MDSCR_MDE | MDSCR_KDE;
 	reg_mdscr_el1_write(mdscr);
 	reg_oslar_el1_write(0);
+}
 
-	/* num of {watch,break}point may be different depending on the core */
-	membar_consumer();
+void
+db_machdep_init(struct cpu_info * const ci)
+{
+	struct aarch64_sysctl_cpu_id * const id = &ci->ci_id;
+	const uint64_t dfr = id->ac_aa64dfr0;
+	const u_int cpu_max_breakpoint = __SHIFTOUT(dfr, ID_AA64DFR0_EL1_BRPS);
+	const u_int cpu_max_watchpoint = __SHIFTOUT(dfr, ID_AA64DFR0_EL1_WRPS);
+
+	/*
+	 * num of {watch,break}point may be different depending on the
+	 * core.
+	 */
 	if (max_breakpoint > cpu_max_breakpoint)
 		max_breakpoint = cpu_max_breakpoint;
 	if (max_watchpoint > cpu_max_watchpoint)
 		max_watchpoint = cpu_max_watchpoint;
-	membar_producer();
 }
+
 
 static void
 show_breakpoints(void)

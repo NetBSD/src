@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.66 2021/10/30 10:47:03 skrll Exp $ */
+/* $NetBSD: cpu.c,v 1.67 2021/10/31 16:23:47 skrll Exp $ */
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: cpu.c,v 1.66 2021/10/30 10:47:03 skrll Exp $");
+__KERNEL_RCSID(1, "$NetBSD: cpu.c,v 1.67 2021/10/31 16:23:47 skrll Exp $");
 
 #include "locators.h"
 #include "opt_arm_debug.h"
@@ -72,12 +72,13 @@ __KERNEL_RCSID(1, "$NetBSD: cpu.c,v 1.66 2021/10/30 10:47:03 skrll Exp $");
 #endif
 
 void cpu_attach(device_t, cpuid_t);
+void cpu_setup_id(struct cpu_info *);
+
 static void identify_aarch64_model(uint32_t, char *, size_t);
 static void cpu_identify(device_t self, struct cpu_info *);
 static void cpu_identify1(device_t self, struct cpu_info *);
 static void cpu_identify2(device_t self, struct cpu_info *);
 static void cpu_init_counter(struct cpu_info *);
-static void cpu_setup_id(struct cpu_info *);
 static void cpu_setup_sysctl(device_t, struct cpu_info *);
 static void cpu_setup_rng(device_t, struct cpu_info *);
 static void cpu_setup_aes(device_t, struct cpu_info *);
@@ -109,7 +110,6 @@ cpu_attach(device_t dv, cpuid_t id)
 	if (unit == 0) {
 		ci = curcpu();
 		ci->ci_cpuid = id;
-		cpu_setup_id(ci);
 	} else {
 #ifdef MULTIPROCESSOR
 		if ((boothowto & RB_MD1) != 0) {
@@ -150,26 +150,31 @@ cpu_attach(device_t dv, cpuid_t id)
 	arm_cpu_do_topology(ci);
 	cpu_identify(dv, ci);
 
+	cpu_setup_sysctl(dv, ci);
+
 #ifdef MULTIPROCESSOR
 	if (unit != 0) {
 		mi_cpu_attach(ci);
 		pmap_tlb_info_attach(&pmap_tlb0_info, ci);
-		return;
+		aarch64_parsecacheinfo(ci);
 	}
 #endif /* MULTIPROCESSOR */
 
-	set_cpufuncs();
 	fpu_attach(ci);
 
 	cpu_identify1(dv, ci);
-
-	/* aarch64_getcacheinfo(0) was called by locore.S */
-	aarch64_printcacheinfo(dv);
+	aarch64_printcacheinfo(dv, ci);
 	cpu_identify2(dv, ci);
+
+	if (unit != 0) {
+	    return;
+	}
+
+	db_machdep_init(ci);
 
 	cpu_init_counter(ci);
 
-	cpu_setup_sysctl(dv, ci);
+	/* These currently only check the BP. */
 	cpu_setup_rng(dv, ci);
 	cpu_setup_aes(dv, ci);
 	cpu_setup_chacha(dv, ci);
@@ -251,10 +256,9 @@ cpu_identify(device_t self, struct cpu_info *ci)
 static void
 cpu_identify1(device_t self, struct cpu_info *ci)
 {
-	uint64_t ctr, clidr, sctlr;	/* for cache */
+	struct aarch64_sysctl_cpu_id *id = &ci->ci_id;
+	uint64_t sctlr = ci->ci_sctlr_el1;
 
-	/* SCTLR - System Control Register */
-	sctlr = reg_sctlr_el1_read();
 	if (sctlr & SCTLR_I)
 		aprint_verbose_dev(self, "IC enabled");
 	else
@@ -288,8 +292,8 @@ cpu_identify1(device_t self, struct cpu_info *ci)
 	/*
 	 * CTR - Cache Type Register
 	 */
-	ctr = reg_ctr_el0_read();
-	clidr = reg_clidr_el1_read();
+	const uint64_t ctr = id->ac_ctr;
+	const uint64_t clidr = id->ac_clidr;
 	aprint_verbose_dev(self, "Cache Writeback Granule %" PRIu64 "B,"
 	    " Exclusives Reservation Granule %" PRIu64 "B\n",
 	    __SHIFTOUT(ctr, CTR_EL0_CWG_LINE) * 4,
@@ -313,22 +317,14 @@ cpu_identify1(device_t self, struct cpu_info *ci)
 static void
 cpu_identify2(device_t self, struct cpu_info *ci)
 {
-	struct aarch64_sysctl_cpu_id *id = &ci->ci_id;
-	uint64_t dfr0;
-
-	if (!CPU_IS_PRIMARY(ci)) {
-		cpu_setup_id(ci);
-		cpu_setup_sysctl(self, ci);
-	}
-
-	dfr0 = reg_id_aa64dfr0_el1_read();
+	struct aarch64_sysctl_cpu_id * const id = &ci->ci_id;
 
 	aprint_debug_dev(self, "midr=0x%" PRIx32 " mpidr=0x%" PRIx32 "\n",
-	    (uint32_t)ci->ci_id.ac_midr, (uint32_t)ci->ci_id.ac_mpidr);
+	    (uint32_t)id->ac_midr, (uint32_t)id->ac_mpidr);
 	aprint_verbose_dev(self, "revID=0x%" PRIx64, id->ac_revidr);
 
 	/* ID_AA64DFR0_EL1 */
-	switch (__SHIFTOUT(dfr0, ID_AA64DFR0_EL1_PMUVER)) {
+	switch (__SHIFTOUT(id->ac_aa64dfr0, ID_AA64DFR0_EL1_PMUVER)) {
 	case ID_AA64DFR0_EL1_PMUVER_V3:
 		aprint_verbose(", PMCv3");
 		break;
@@ -501,12 +497,15 @@ cpu_init_counter(struct cpu_info *ci)
 }
 
 /*
- * Fill in this CPUs id data.  Must be called from hatched cpus.
+ * Fill in this CPUs id data.  Must be called on all cpus.
  */
-static void
+void __noasan
 cpu_setup_id(struct cpu_info *ci)
 {
 	struct aarch64_sysctl_cpu_id *id = &ci->ci_id;
+
+	/* SCTLR - System Control Register */
+	ci->ci_sctlr_el1 = reg_sctlr_el1_read();
 
 	memset(id, 0, sizeof *id);
 
@@ -611,10 +610,6 @@ cpu_setup_rng(device_t dv, struct cpu_info *ci)
 {
 	struct aarch64_sysctl_cpu_id *id = &ci->ci_id;
 
-	/* Probably shared between cores.  */
-	if (!CPU_IS_PRIMARY(ci))
-		return;
-
 	/* Verify that it is supported.  */
 	switch (__SHIFTOUT(id->ac_aa64isar0, ID_AA64ISAR0_EL1_RNDR)) {
 	case ID_AA64ISAR0_EL1_RNDR_RNDRRS:
@@ -676,25 +671,47 @@ cpu_setup_chacha(device_t dv, struct cpu_info *ci)
 }
 
 #ifdef MULTIPROCESSOR
+/*
+ * Initialise a secondary processor.
+ *
+ * printf isn't available as kmutex(9) relies on curcpu which isn't setup yet.
+ *
+ */
+void __noasan
+cpu_init_secondary_processor(int cpuindex)
+{
+	struct cpu_info * ci = &cpu_info_store[cpuindex];
+	struct aarch64_sysctl_cpu_id *id = &ci->ci_id;
+
+	aarch64_setcpufuncs(ci);
+
+	/* Sets ci->ci_{sctlr,midr,mpidr}, etc */
+	cpu_setup_id(ci);
+
+	arm_cpu_topology_set(ci, id->ac_mpidr);
+	aarch64_getcacheinfo(ci);
+
+	cpu_set_hatched(cpuindex);
+
+	/*
+	 * return to assembly to wait for cpu_boot_secondary_processors
+	 */
+}
+
+
+/*
+ * When we are called, the MMU and caches are on and we are running on the stack
+ * of the idlelwp for this cpu.
+ */
 void
 cpu_hatch(struct cpu_info *ci)
 {
 	KASSERT(curcpu() == ci);
 	KASSERT((reg_tcr_el1_read() & TCR_EPD0) != 0);
 
-	mutex_enter(&cpu_hatch_lock);
-
-	set_cpufuncs();
-	fpu_attach(ci);
-
-	cpu_identify1(ci->ci_dev, ci);
-	aarch64_getcacheinfo(device_unit(ci->ci_dev));
-	aarch64_printcacheinfo(ci->ci_dev);
-	cpu_identify2(ci->ci_dev, ci);
 #ifdef DDB
-	db_machdep_init();
+	db_machdep_cpu_init();
 #endif
-	mutex_exit(&cpu_hatch_lock);
 
 	cpu_init_counter(ci);
 

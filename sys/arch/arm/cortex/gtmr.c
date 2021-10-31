@@ -1,4 +1,4 @@
-/*	$NetBSD: gtmr.c,v 1.45 2021/09/09 21:39:02 jmcneill Exp $	*/
+/*	$NetBSD: gtmr.c,v 1.46 2021/10/31 16:23:47 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gtmr.c,v 1.45 2021/09/09 21:39:02 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gtmr.c,v 1.46 2021/10/31 16:23:47 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -247,6 +247,7 @@ gtmr_init_cpu_clock(struct cpu_info *ci)
 
 	KASSERT(ci == curcpu());
 
+	/* XXX hmm... called from cpu_hatch which hasn't lowered ipl yet */
 	int s = splsched();
 
 	/*

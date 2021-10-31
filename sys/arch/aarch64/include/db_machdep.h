@@ -1,4 +1,4 @@
-/* $NetBSD: db_machdep.h,v 1.14 2021/04/30 20:07:23 skrll Exp $ */
+/* $NetBSD: db_machdep.h,v 1.15 2021/10/31 16:23:47 skrll Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -227,7 +227,8 @@ void dump_trapframe(struct trapframe *, void (*)(const char *, ...) __printflike
 
 void dump_switchframe(struct trapframe *, void (*)(const char *, ...) __printflike(1, 2));
 const char *strdisasm(vaddr_t, uint64_t);
-void db_machdep_init(void);
+void db_machdep_cpu_init(void);
+void db_machdep_init(struct cpu_info * const);
 
 /* hardware breakpoint/watchpoint functions */
 void aarch64_breakpoint_set(int, vaddr_t);

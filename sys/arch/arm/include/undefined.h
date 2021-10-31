@@ -1,4 +1,4 @@
-/*	$NetBSD: undefined.h,v 1.14 2021/08/27 09:11:52 skrll Exp $	*/
+/*	$NetBSD: undefined.h,v 1.15 2021/10/31 16:23:47 skrll Exp $	*/
 
 /*
  * Copyright (c) 1995-1996 Mark Brinicombe.
@@ -78,11 +78,12 @@ enum arm_coprocs {
 /* Prototypes for undefined.c */
 
 void *install_coproc_handler(int, undef_handler_t);
+void replace_coproc_handler(int, undef_handler_t);
 void remove_coproc_handler(void *);
 void undefined_init(void);
 
 /*
- * XXX Stuff below here is for use before malloc() is available.  Most code
+ * Stuff below here is for use before kmem(9) is available.  Most code
  * shouldn't use it.
  */
 
@@ -93,7 +94,7 @@ struct undefined_handler {
 
 /*
  * Handlers installed using install_coproc_handler_static shouldn't be
- * removed.
+ * removed.  We special case the 'test vfp existance' handler.
  */
 void install_coproc_handler_static(int, struct undefined_handler *);
 

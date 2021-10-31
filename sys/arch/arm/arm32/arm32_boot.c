@@ -1,4 +1,4 @@
-/*	$NetBSD: arm32_boot.c,v 1.43 2021/06/03 07:06:22 skrll Exp $	*/
+/*	$NetBSD: arm32_boot.c,v 1.44 2021/10/31 16:23:47 skrll Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003, 2005  Genetec Corporation.  All rights reserved.
@@ -122,7 +122,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: arm32_boot.c,v 1.43 2021/06/03 07:06:22 skrll Exp $");
+__KERNEL_RCSID(1, "$NetBSD: arm32_boot.c,v 1.44 2021/10/31 16:23:47 skrll Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_cputypes.h"
@@ -237,6 +237,12 @@ initarm_common(vaddr_t kvm_base, vsize_t kvm_size,
 	/* Initialise the undefined instruction handlers */
 	VPRINTF("undefined ");
 	undefined_init();
+
+#ifdef FPU_VFP
+	/* vfp_detect uses an undefined handler */
+	VPRINTF("vfp ");
+	vfp_detect(curcpu());
+#endif
 
 	/* Load memory into UVM. */
 	VPRINTF("page ");
@@ -362,11 +368,7 @@ cpu_hatch(struct cpu_info *ci, u_int cpuindex, void (*md_cpu_init)(struct cpu_in
 	splhigh();
 
 	VPRINTF("%s(%s): ", __func__, cpu_name(ci));
-	/* mpidr/midr filled in by armv7_mpcontinuation */
-	ci->ci_ctrl = armreg_sctlr_read();
-	ci->ci_arm_cpuid = cpu_idnum();
-	ci->ci_arm_cputype = ci->ci_arm_cpuid & CPU_ID_CPU_MASK;
-	ci->ci_arm_cpurev = ci->ci_arm_cpuid & CPU_ID_REVISION_MASK;
+	/* mpidr/midr filled in by cpu_init_secondary_processor */
 
 	/*
 	 * Make sure we have the right vector page.
@@ -409,16 +411,6 @@ cpu_hatch(struct cpu_info *ci, u_int cpuindex, void (*md_cpu_init)(struct cpu_in
 	}
 #endif
 
-	mutex_enter(&cpu_hatch_lock);
-
-	aprint_naive("%s", device_xname(ci->ci_dev));
-	aprint_normal("%s", device_xname(ci->ci_dev));
-	identify_arm_cpu(ci->ci_dev, ci);
-	VPRINTF(" vfp");
-	vfp_attach(ci);
-
-	mutex_exit(&cpu_hatch_lock);
-
 	VPRINTF(" md(%p)", md_cpu_init);
 	if (md_cpu_init != NULL)
 		(*md_cpu_init)(ci);
@@ -430,7 +422,6 @@ cpu_hatch(struct cpu_info *ci, u_int cpuindex, void (*md_cpu_init)(struct cpu_in
 	intr_cpu_init(ci);
 
 	VPRINTF(" done!\n");
-
 	cpu_clr_mbox(cpuindex);
 }
 #endif /* MULTIPROCESSOR */

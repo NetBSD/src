@@ -1,4 +1,4 @@
-/* $NetBSD: aarch64_machdep.c,v 1.62 2021/10/08 21:41:29 ryo Exp $ */
+/* $NetBSD: aarch64_machdep.c,v 1.63 2021/10/31 16:23:47 skrll Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: aarch64_machdep.c,v 1.62 2021/10/08 21:41:29 ryo Exp $");
+__KERNEL_RCSID(1, "$NetBSD: aarch64_machdep.c,v 1.63 2021/10/31 16:23:47 skrll Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_cpuoptions.h"
@@ -359,7 +359,7 @@ initarm_common(vaddr_t kvm_base, vsize_t kvm_size,
 	    VM_MAX_KERNEL_ADDRESS);
 
 #ifdef DDB
-	db_machdep_init();
+	db_machdep_cpu_init();
 #endif
 
 	uvm_md_init();

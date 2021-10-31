@@ -1,4 +1,4 @@
-/* $NetBSD: gicv3_its.h,v 1.7 2021/01/16 21:05:15 jmcneill Exp $ */
+/* $NetBSD: gicv3_its.h,v 1.8 2021/10/31 16:23:47 skrll Exp $ */
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -61,6 +61,7 @@ struct gicv3_its {
 	struct pic_softc	*its_pic;
 	struct pci_attach_args	**its_pa;
 	struct cpu_info		**its_targets;
+	uint32_t		*its_devid;
 
 	LIST_HEAD(, gicv3_its_device) its_devices;
 
@@ -68,6 +69,8 @@ struct gicv3_its {
 	struct gicv3_dma	its_tab[8];		/* ITS tables */
 
 	struct arm_pci_msi	its_msi;
+
+	kmutex_t		*its_lock;
 };
 
 int	gicv3_its_init(struct gicv3_softc *, bus_space_handle_t, uint64_t, uint32_t);

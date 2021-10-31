@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.c,v 1.31 2021/10/31 07:56:55 skrll Exp $	*/
+/*	$NetBSD: cpufunc.c,v 1.32 2021/10/31 16:23:47 skrll Exp $	*/
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -30,7 +30,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpufunc.c,v 1.31 2021/10/31 07:56:55 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpufunc.c,v 1.32 2021/10/31 16:23:47 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -53,13 +53,7 @@ u_int aarch64_cache_prefer_mask;
 int aarch64_pan_enabled __read_mostly;
 int aarch64_pac_enabled __read_mostly;
 
-/* cache info per cluster. the same cluster has the same cache configuration? */
-#define MAXCPUPACKAGES	MAXCPUS		/* maximum of ci->ci_package_id */
-static struct aarch64_cache_info *aarch64_cacheinfo[MAXCPUPACKAGES];
-static struct aarch64_cache_info aarch64_cacheinfo0[MAX_CACHE_LEVEL];
-
-
-static void
+static void __noasan
 extract_cacheunit(int level, bool insn, int cachetype,
     struct aarch64_cache_info *cacheinfo)
 {
@@ -101,35 +95,14 @@ extract_cacheunit(int level, bool insn, int cachetype,
 	cunit->cache_size = cunit->cache_way_size * cunit->cache_ways;
 }
 
-void
-aarch64_getcacheinfo(int unit)
+
+/* Must be called on each processor */
+void __noasan
+aarch64_getcacheinfo(struct cpu_info *ci)
 {
-	struct cpu_info * const ci = curcpu();
+	struct aarch64_cache_info * const cinfo = ci->ci_cacheinfo;
 	uint32_t clidr, ctr;
-	u_int vindexsize;
 	int level, cachetype;
-	struct aarch64_cache_info *cinfo = NULL;
-
-	if (cputype == 0)
-		cputype = aarch64_cpuid();
-
-	/* already extract about this cluster? */
-	KASSERT(ci->ci_package_id < MAXCPUPACKAGES);
-	cinfo = aarch64_cacheinfo[ci->ci_package_id];
-	if (cinfo != NULL) {
-		ci->ci_cacheinfo = cinfo;
-		return;
-	}
-
-	/* Need static buffer for the boot CPU */
-	if (unit == 0)
-		cinfo = aarch64_cacheinfo0;
-	else
-		cinfo = kmem_zalloc(sizeof(struct aarch64_cache_info)
-		    * MAX_CACHE_LEVEL, KM_SLEEP);
-	aarch64_cacheinfo[ci->ci_package_id] = cinfo;
-	ci->ci_cacheinfo = cinfo;
-
 
 	/*
 	 * CTR - Cache Type Register
@@ -149,19 +122,6 @@ aarch64_getcacheinfo(int unit)
 		cachetype = CACHE_TYPE_PIPT;
 		break;
 	}
-
-	/* remember maximum alignment */
-	if (arm_dcache_maxline < __SHIFTOUT(ctr, CTR_EL0_DMIN_LINE)) {
-		arm_dcache_maxline = __SHIFTOUT(ctr, CTR_EL0_DMIN_LINE);
-		arm_dcache_align = sizeof(int) << arm_dcache_maxline;
-		arm_dcache_align_mask = arm_dcache_align - 1;
-	}
-
-#ifdef MULTIPROCESSOR
-	if (coherency_unit < arm_dcache_align)
-		panic("coherency_unit %ld < %d; increase COHERENCY_UNIT",
-		    coherency_unit, arm_dcache_align);
-#endif
 
 	/*
 	 * CLIDR -  Cache Level ID Register
@@ -213,6 +173,29 @@ aarch64_getcacheinfo(int unit)
 		 */
 		cachetype = CACHE_TYPE_PIPT;
 	}
+}
+
+
+void
+aarch64_parsecacheinfo(struct cpu_info *ci)
+{
+	struct aarch64_cache_info * const cinfo = ci->ci_cacheinfo;
+	struct aarch64_sysctl_cpu_id *id = &ci->ci_id;
+	const uint32_t ctr = id->ac_ctr;
+	u_int vindexsize;
+
+	/* remember maximum alignment */
+	if (arm_dcache_maxline < __SHIFTOUT(ctr, CTR_EL0_DMIN_LINE)) {
+		arm_dcache_maxline = __SHIFTOUT(ctr, CTR_EL0_DMIN_LINE);
+		arm_dcache_align = sizeof(int) << arm_dcache_maxline;
+		arm_dcache_align_mask = arm_dcache_align - 1;
+	}
+
+#ifdef MULTIPROCESSOR
+	if (coherency_unit < arm_dcache_align)
+		panic("coherency_unit %ld < %d; increase COHERENCY_UNIT",
+		    coherency_unit, arm_dcache_align);
+#endif
 
 	/* calculate L1 icache virtual index size */
 	if ((cinfo[0].icache.cache_type == CACHE_TYPE_VIVT ||
@@ -232,6 +215,7 @@ aarch64_getcacheinfo(int unit)
 	if (vindexsize > aarch64_cache_vindexsize) {
 		aarch64_cache_vindexsize = vindexsize;
 		aarch64_cache_prefer_mask = vindexsize - 1;
+
 		if (uvm.page_init_done)
 			uvm_page_recolor(vindexsize / PAGE_SIZE);
 	}
@@ -311,9 +295,8 @@ prt_cache(device_t self, struct aarch64_cache_info *cinfo, int level)
 }
 
 void
-aarch64_printcacheinfo(device_t dev)
+aarch64_printcacheinfo(device_t dev, struct cpu_info *ci)
 {
-	struct cpu_info * const ci = curcpu();
 	struct aarch64_cache_info * const cinfo = ci->ci_cacheinfo;
 	int level;
 
@@ -432,7 +415,15 @@ aarch64_dcache_wb_all(void)
 int
 set_cpufuncs(void)
 {
-	struct cpu_info * const ci = curcpu();
+	// This is only called from the BP
+
+	return aarch64_setcpufuncs(&cpu_info_store[0]);
+}
+
+
+int
+aarch64_setcpufuncs(struct cpu_info *ci)
+{
 	const uint64_t ctr = reg_ctr_el0_read();
 	const uint64_t clidr = reg_clidr_el1_read();
 
