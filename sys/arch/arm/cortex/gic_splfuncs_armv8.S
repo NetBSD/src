@@ -1,4 +1,4 @@
-/* $NetBSD: gic_splfuncs_armv8.S,v 1.2 2021/10/30 20:23:12 jmcneill Exp $ */
+/* $NetBSD: gic_splfuncs_armv8.S,v 1.3 2021/10/31 15:32:14 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2021 Jared McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include <machine/asm.h>
 #include "assym.h"
 
-RCSID("$NetBSD: gic_splfuncs_armv8.S,v 1.2 2021/10/30 20:23:12 jmcneill Exp $")
+RCSID("$NetBSD: gic_splfuncs_armv8.S,v 1.3 2021/10/31 15:32:14 jmcneill Exp $")
 
 #ifdef __HAVE_PREEMPTION
 #define	DISABLE_PREEMPTION			\
@@ -84,12 +84,12 @@ ENTRY_NP(gic_splx)
 	DISABLE_PREEMPTION
 	ldr	x1, [x3, #L_CPU]		/* get curcpu */
 
+.Lagain:
 	/* If newipl >= cpl, just return */
 	ldr	w2, [x1, #CI_CPL]
 	cmp	w0, w2
 	b.hs	.Ldone
 
-.Lagain:
 	/* Slow path if ci_intr_depth != 0 */
 	ldr	w2, [x1, #CI_INTR_DEPTH]
 	cbnz	w2, .Lslow
@@ -120,9 +120,9 @@ ENTRY_NP(gic_splx)
 	ret
 
 .Lrestart:
-	/* Reload w0 and x1 */
-	mrs	x1, tpidr_el1			/* get curlwp */
-	ldr	x1, [x1, #L_CPU]		/* get curcpu */
+	/* Reload registers */
+	mrs	x3, tpidr_el1			/* get curlwp */
+	ldr	x1, [x3, #L_CPU]		/* get curcpu */
 	ldr	w0, [x1, #CI_SPLX_SAVEDIPL]	/* get newipl */
 	b	.Lagain
 	
