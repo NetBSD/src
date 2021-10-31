@@ -1,4 +1,4 @@
-/* $NetBSD: db_machdep.h,v 1.15 2021/10/31 16:23:47 skrll Exp $ */
+/* $NetBSD: db_machdep.h,v 1.16 2021/10/31 22:06:32 skrll Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -221,12 +221,6 @@ db_addr_t db_branch_taken(db_expr_t, db_addr_t, db_regs_t *);
 void db_pteinfo(vaddr_t, void (*)(const char *, ...) __printflike(1, 2));
 void db_pte_print(pt_entry_t, int, void (*)(const char *, ...) __printflike(1, 2));
 void db_ttbrdump(bool, vaddr_t, void (*pr)(const char *, ...) __printflike(1, 2));
-#endif
-
-void dump_trapframe(struct trapframe *, void (*)(const char *, ...) __printflike(1, 2));
-
-void dump_switchframe(struct trapframe *, void (*)(const char *, ...) __printflike(1, 2));
-const char *strdisasm(vaddr_t, uint64_t);
 void db_machdep_cpu_init(void);
 void db_machdep_init(struct cpu_info * const);
 
@@ -237,6 +231,12 @@ void aarch64_watchpoint_set(int, vaddr_t, u_int, u_int);
 #define WATCHPOINT_ACCESS_STORE		0x02
 #define WATCHPOINT_ACCESS_LOADSTORE	0x03
 #define WATCHPOINT_ACCESS_MASK		0x03
+#endif
+
+void dump_trapframe(struct trapframe *, void (*)(const char *, ...) __printflike(1, 2));
+
+void dump_switchframe(struct trapframe *, void (*)(const char *, ...) __printflike(1, 2));
+const char *strdisasm(vaddr_t, uint64_t);
 
 #define DB_ELF_SYMBOLS
 
