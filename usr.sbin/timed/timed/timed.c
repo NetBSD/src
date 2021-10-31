@@ -1,4 +1,4 @@
-/*	$NetBSD: timed.c,v 1.26 2018/02/04 09:01:13 mrg Exp $	*/
+/*	$NetBSD: timed.c,v 1.27 2021/10/31 10:47:18 nia Exp $	*/
 
 /*-
  * Copyright (c) 1985, 1993 The Regents of the University of California.
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1985, 1993\
 #if 0
 static char sccsid[] = "@(#)timed.c	8.2 (Berkeley) 3/26/95";
 #else
-__RCSID("$NetBSD: timed.c,v 1.26 2018/02/04 09:01:13 mrg Exp $");
+__RCSID("$NetBSD: timed.c,v 1.27 2021/10/31 10:47:18 nia Exp $");
 #endif
 #endif /* not lint */
 
@@ -239,11 +239,8 @@ main(int argc, char *argv[])
 			err(EXIT_FAILURE, "bind");
 	}
 
-	/* choose a unique seed for random number generation */
-	(void)gettimeofday(&ntime, 0);
-	srandom((unsigned long)(ntime.tv_sec + ntime.tv_usec));
-
-	sequence = (u_short)random();     /* initial seq number */
+	/* initial seq number */
+	sequence = (u_short)arc4random_uniform(UINT16_MAX);
 
 	/* rounds kernel variable time to multiple of 5 ms. */
 	ntime.tv_sec = 0;
@@ -334,11 +331,10 @@ main(int argc, char *argv[])
 
 
 	/* microseconds to delay before responding to a broadcast */
-	delay1 = casual(1L, 100*1000L);
+	delay1 = 1L + arc4random_uniform((100 * 1000L) - 1L);
 
 	/* election timer delay in secs. */
-	delay2 = casual((long)MINTOUT, (long)MAXTOUT);
-
+	delay2 = MINTOUT + arc4random_uniform(MAXTOUT - MINTOUT);
 
 	if (!debug) {
 		daemon(debug, 0);
@@ -652,18 +648,6 @@ pickslavenet(struct netinfo *ntp)
 		}
 	}
 	makeslave(ntp);
-}
-
-/*
- * returns a random number in the range [inf, sup]
- */
-long
-casual(long inf, long sup)
-{
-	double value;
-
-	value = ((double)(random() & 0x7fffffff)) / (0x7fffffff*1.0);
-	return(inf + (sup - inf)*value);
 }
 
 char *
