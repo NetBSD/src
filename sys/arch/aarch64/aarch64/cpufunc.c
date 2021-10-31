@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.c,v 1.30 2021/10/23 06:48:31 skrll Exp $	*/
+/*	$NetBSD: cpufunc.c,v 1.31 2021/10/31 07:56:55 skrll Exp $	*/
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -30,7 +30,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpufunc.c,v 1.30 2021/10/23 06:48:31 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpufunc.c,v 1.31 2021/10/31 07:56:55 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -313,10 +313,9 @@ prt_cache(device_t self, struct aarch64_cache_info *cinfo, int level)
 void
 aarch64_printcacheinfo(device_t dev)
 {
-	struct aarch64_cache_info *cinfo;
+	struct cpu_info * const ci = curcpu();
+	struct aarch64_cache_info * const cinfo = ci->ci_cacheinfo;
 	int level;
-
-	cinfo = curcpu()->ci_cacheinfo;
 
 	for (level = 0; level < MAX_CACHE_LEVEL; level++)
 		if (prt_cache(dev, cinfo, level) < 0)
@@ -382,10 +381,9 @@ ln_dcache_inv_all(int level, struct aarch64_cache_unit *cunit)
 void
 aarch64_dcache_wbinv_all(void)
 {
-	struct aarch64_cache_info *cinfo;
+	struct cpu_info * const ci = curcpu();
+	struct aarch64_cache_info * const cinfo = ci->ci_cacheinfo;
 	int level;
-
-	cinfo = curcpu()->ci_cacheinfo;
 
 	for (level = 0; level < MAX_CACHE_LEVEL; level++) {
 		if (cinfo[level].cacheable == CACHE_CACHEABLE_NONE)
@@ -400,10 +398,9 @@ aarch64_dcache_wbinv_all(void)
 void
 aarch64_dcache_inv_all(void)
 {
-	struct aarch64_cache_info *cinfo;
+	struct cpu_info * const ci = curcpu();
+	struct aarch64_cache_info * const cinfo = ci->ci_cacheinfo;
 	int level;
-
-	cinfo = curcpu()->ci_cacheinfo;
 
 	for (level = 0; level < MAX_CACHE_LEVEL; level++) {
 		if (cinfo[level].cacheable == CACHE_CACHEABLE_NONE)
@@ -418,10 +415,9 @@ aarch64_dcache_inv_all(void)
 void
 aarch64_dcache_wb_all(void)
 {
-	struct aarch64_cache_info *cinfo;
+	struct cpu_info * const ci = curcpu();
+	struct aarch64_cache_info * const cinfo = ci->ci_cacheinfo;
 	int level;
-
-	cinfo = curcpu()->ci_cacheinfo;
 
 	for (level = 0; level < MAX_CACHE_LEVEL; level++) {
 		if (cinfo[level].cacheable == CACHE_CACHEABLE_NONE)
