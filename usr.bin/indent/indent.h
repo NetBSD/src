@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.h,v 1.71 2021/10/31 19:20:52 rillig Exp $	*/
+/*	$NetBSD: indent.h,v 1.72 2021/10/31 19:57:44 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-FreeBSD
@@ -246,20 +246,8 @@ extern struct options {
 
 enum keyword_kind {
     kw_0,
-    kw_offsetof,
-    kw_sizeof,
     kw_tag,			/* 'struct', 'union', 'enum' */
-    kw_type,
-    kw_for,
-    kw_if,
-    kw_while,
-    kw_do,
-    kw_else,
-    kw_switch,
-    kw_case_or_default,
-    kw_storage_class,
-    kw_typedef,
-    kw_other
+    kw_type
 };
 
 
