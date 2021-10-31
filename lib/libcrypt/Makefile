@@ -1,4 +1,6 @@
-#	$NetBSD: Makefile,v 1.31 2021/10/26 20:37:18 nia Exp $
+#	$NetBSD: Makefile,v 1.32 2021/10/31 09:16:08 nia Exp $
+
+USE_FORT?=	yes	# cryptographic software
 
 .include <bsd.own.mk>
 
