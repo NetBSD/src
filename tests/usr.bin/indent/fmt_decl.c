@@ -1,4 +1,4 @@
-/*	$NetBSD: fmt_decl.c,v 1.10 2021/10/31 19:08:39 rillig Exp $	*/
+/*	$NetBSD: fmt_decl.c,v 1.11 2021/10/31 19:13:41 rillig Exp $	*/
 /* $FreeBSD: head/usr.bin/indent/tests/declarations.0 334478 2018-06-01 09:41:15Z pstef $ */
 
 /* See FreeBSD r303570 */
@@ -446,8 +446,8 @@ int a - 1;
 #indent end
 
 #indent run -di0
-int a -1;
+int a - 1;
 {
-	int a -1;
+	int a - 1;
 }
 #indent end

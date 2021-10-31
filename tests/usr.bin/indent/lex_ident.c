@@ -1,4 +1,4 @@
-/* $NetBSD: lex_ident.c,v 1.1 2021/10/22 19:27:53 rillig Exp $ */
+/* $NetBSD: lex_ident.c,v 1.2 2021/10/31 19:13:41 rillig Exp $ */
 /* $FreeBSD$ */
 
 /*
@@ -62,5 +62,5 @@ int identifier\n;
 #indent end
 
 #indent run
-int		identifier \n;
+int		identifier \ n;
 #indent end

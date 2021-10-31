@@ -1,4 +1,4 @@
-/*	$NetBSD: lexi.c,v 1.122 2021/10/31 17:22:47 rillig Exp $	*/
+/*	$NetBSD: lexi.c,v 1.123 2021/10/31 19:13:41 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)lexi.c	8.1 (Berkeley) 6/6/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: lexi.c,v 1.122 2021/10/31 17:22:47 rillig Exp $");
+__RCSID("$NetBSD: lexi.c,v 1.123 2021/10/31 19:13:41 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/lexi.c 337862 2018-08-15 18:19:45Z pstef $");
 #endif
@@ -575,10 +575,6 @@ no_function_definition:;
 	ps.next_unary = true;
 	return lsym_type;
     }
-
-    if (ps.prev_token == lsym_type)	/* if this is a declared variable,
-					 * then following sign is unary */
-	ps.next_unary = true;	/* will make "int a -1" work */
 
     return lsym_ident;		/* the ident is not in the list */
 }
