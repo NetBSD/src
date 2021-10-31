@@ -1,4 +1,4 @@
-/*	$NetBSD: lexi.c,v 1.125 2021/10/31 19:57:44 rillig Exp $	*/
+/*	$NetBSD: lexi.c,v 1.126 2021/10/31 20:40:42 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)lexi.c	8.1 (Berkeley) 6/6/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: lexi.c,v 1.125 2021/10/31 19:57:44 rillig Exp $");
+__RCSID("$NetBSD: lexi.c,v 1.126 2021/10/31 20:40:42 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/lexi.c 337862 2018-08-15 18:19:45Z pstef $");
 #endif
@@ -59,49 +59,49 @@ __FBSDID("$FreeBSD: head/usr.bin/indent/lexi.c 337862 2018-08-15 18:19:45Z pstef
 static const struct keyword {
     const char *name;
     lexer_symbol lsym;
-    enum keyword_kind kind;
+    bool is_type;
 } keywords[] = {
-    {"_Bool", lsym_eof, kw_type},
-    {"_Complex", lsym_eof, kw_type},
-    {"_Imaginary", lsym_eof, kw_type},
-    {"auto", lsym_storage_class, kw_0},
-    {"bool", lsym_eof, kw_type},
-    {"break", lsym_ident, kw_0},
-    {"case", lsym_case_label, kw_0},
-    {"char", lsym_eof, kw_type},
-    {"complex", lsym_eof, kw_type},
-    {"const", lsym_eof, kw_type},
-    {"continue", lsym_ident, kw_0},
-    {"default", lsym_case_label, kw_0},
-    {"do", lsym_do, kw_0},
-    {"double", lsym_eof, kw_type},
-    {"else", lsym_else, kw_0},
-    {"enum", lsym_eof, kw_tag},
-    {"extern", lsym_storage_class, kw_0},
-    {"float", lsym_eof, kw_type},
-    {"for", lsym_for, kw_0},
-    {"goto", lsym_ident, kw_0},
-    {"if", lsym_if, kw_0},
-    {"imaginary", lsym_eof, kw_type},
-    {"inline", lsym_ident, kw_0},
-    {"int", lsym_eof, kw_type},
-    {"long", lsym_eof, kw_type},
-    {"offsetof", lsym_offsetof, kw_0},
-    {"register", lsym_storage_class, kw_0},
-    {"restrict", lsym_ident, kw_0},
-    {"return", lsym_ident, kw_0},
-    {"short", lsym_eof, kw_type},
-    {"signed", lsym_eof, kw_type},
-    {"sizeof", lsym_sizeof, kw_0},
-    {"static", lsym_storage_class, kw_0},
-    {"struct", lsym_eof, kw_tag},
-    {"switch", lsym_switch, kw_0},
-    {"typedef", lsym_typedef, kw_0},
-    {"union", lsym_eof, kw_tag},
-    {"unsigned", lsym_eof, kw_type},
-    {"void", lsym_eof, kw_type},
-    {"volatile", lsym_eof, kw_type},
-    {"while", lsym_while, kw_0}
+    {"_Bool", lsym_eof, true},
+    {"_Complex", lsym_eof, true},
+    {"_Imaginary", lsym_eof, true},
+    {"auto", lsym_storage_class, false},
+    {"bool", lsym_eof, true},
+    {"break", lsym_ident, false},
+    {"case", lsym_case_label, false},
+    {"char", lsym_eof, true},
+    {"complex", lsym_eof, true},
+    {"const", lsym_eof, true},
+    {"continue", lsym_ident, false},
+    {"default", lsym_case_label, false},
+    {"do", lsym_do, false},
+    {"double", lsym_eof, true},
+    {"else", lsym_else, false},
+    {"enum", lsym_tag, false},
+    {"extern", lsym_storage_class, false},
+    {"float", lsym_eof, true},
+    {"for", lsym_for, false},
+    {"goto", lsym_ident, false},
+    {"if", lsym_if, false},
+    {"imaginary", lsym_eof, true},
+    {"inline", lsym_ident, false},
+    {"int", lsym_eof, true},
+    {"long", lsym_eof, true},
+    {"offsetof", lsym_offsetof, false},
+    {"register", lsym_storage_class, false},
+    {"restrict", lsym_ident, false},
+    {"return", lsym_ident, false},
+    {"short", lsym_eof, true},
+    {"signed", lsym_eof, true},
+    {"sizeof", lsym_sizeof, false},
+    {"static", lsym_storage_class, false},
+    {"struct", lsym_tag, false},
+    {"switch", lsym_switch, false},
+    {"typedef", lsym_typedef, false},
+    {"union", lsym_tag, false},
+    {"unsigned", lsym_eof, true},
+    {"void", lsym_eof, true},
+    {"volatile", lsym_eof, true},
+    {"while", lsym_while, false}
 };
 
 static struct {
@@ -253,18 +253,6 @@ lsym_name(lexer_symbol sym)
     return name[sym];
 }
 
-static const char *
-kw_name(enum keyword_kind kw)
-{
-    static const char *const name[] = {
-	"0",
-	"tag",
-	"type",
-    };
-
-    return name[kw];
-}
-
 static void
 debug_print_buf(const char *name, const struct buffer *buf)
 {
@@ -294,9 +282,8 @@ debug_lexi(lexer_symbol lsym)
     static struct parser_state prev_ps;
 
     debug_println("");
-    debug_printf("line %d: %s", line_no, lsym_name(lsym));
-    if (ps.curr_keyword != kw_0)
-	debug_printf(" %s", kw_name(ps.curr_keyword));
+    debug_printf("line %d: %s%s", line_no, lsym_name(lsym),
+	ps.curr_is_type ? " type" : "");
     debug_vis_range(" \"", token.s, token.e, "\"\n");
 
     debug_print_buf("label", &lab);
@@ -304,7 +291,7 @@ debug_lexi(lexer_symbol lsym)
     debug_print_buf("comment", &com);
 
     debug_println("    ps.prev_token = %s", lsym_name(ps.prev_token));
-    debug_ps_keyword(prev_keyword);
+    debug_ps_bool(prev_is_type);
     debug_ps_bool(curr_newline);
     debug_ps_bool(curr_col_1);
     debug_ps_bool(next_unary);
@@ -506,20 +493,18 @@ lexi_alnum(void)
 	array_length(keywords), sizeof(keywords[0]), cmp_keyword_by_name);
     if (kw == NULL) {
 	if (is_typename()) {
-	    ps.curr_keyword = kw_type;
+	    ps.curr_is_type = true;
 	    ps.next_unary = true;
 	    goto found_typename;
 	}
 
     } else {			/* we have a keyword */
-	ps.curr_keyword = kw->kind;
+	ps.curr_is_type = kw->is_type;
 	ps.next_unary = true;
 
-	assert((kw->lsym == lsym_eof) != (kw->kind == kw_0));
-	if (kw->lsym != lsym_eof)
+	assert((kw->lsym == lsym_eof) == kw->is_type);
+	if (kw->lsym != lsym_eof && kw->lsym != lsym_tag)
 	    return kw->lsym;
-	if (kw->kind != kw_tag && kw->kind != kw_type)
-	    return lsym_ident;
 
 found_typename:
 	if (ps.p_l_follow > 0) {
@@ -527,7 +512,7 @@ found_typename:
 	    ps.cast_mask |= (1 << ps.p_l_follow) & ~ps.not_cast_mask;
 	}
 	if (ps.prev_token != lsym_period && ps.prev_token != lsym_unary_op) {
-	    if (kw != NULL && kw->kind == kw_tag)
+	    if (kw != NULL && kw->lsym == lsym_tag)
 		return lsym_tag;
 	    if (ps.p_l_follow == 0)
 		return lsym_type_at_paren_level_0;
@@ -548,7 +533,7 @@ found_typename:
 no_function_definition:;
 
     } else if (probably_typename()) {
-	ps.curr_keyword = kw_type;
+	ps.curr_is_type = true;
 	ps.next_unary = true;
 	return lsym_type_at_paren_level_0;
     }
@@ -563,8 +548,8 @@ lexi(void)
     token.e = token.s;
     ps.curr_col_1 = ps.curr_newline;
     ps.curr_newline = false;
-    ps.prev_keyword = ps.curr_keyword;
-    ps.curr_keyword = kw_0;
+    ps.prev_is_type = ps.curr_is_type;
+    ps.curr_is_type = false;
 
     while (ch_isblank(*inp.s)) {
 	ps.curr_col_1 = false;
