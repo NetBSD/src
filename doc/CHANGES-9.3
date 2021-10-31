@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.3,v 1.1.2.44 2021/10/25 18:11:55 martin Exp $
+# $NetBSD: CHANGES-9.3,v 1.1.2.45 2021/10/31 14:47:59 martin Exp $
 
 A complete list of changes from the NetBSD 9.2 release to the NetBSD 9.3
 release:
@@ -918,4 +918,11 @@ sys/net/if_ethersubr.c				1.302
 
 	Fix handling of VLAN 0 tag.
 	[ryo, ticket #1369]
+
+lib/libcrypt/crypt-sha1.c			1.10
+
+	libcrypt: Fix a floating point exception when a low number of HMAC-SHA1
+	iterations are specified.
+	[nia, ticket #1370]
+
 
