@@ -1,4 +1,4 @@
-# $NetBSD: t_intr.sh,v 1.5 2021/09/09 21:47:47 rillig Exp $
+# $NetBSD: t_intr.sh,v 1.6 2021/10/31 11:36:26 gson Exp $
 #
 # Copyright (c) 2021 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -36,6 +36,12 @@ SSIZE=256000
 TMOUT=20
 
 h_test() {
+	local avail=$( df -m . | awk '{if (int($4) > 0) print $4}' )
+	local need=$(( 2 * $MAX * 8 / 1000000 ))
+	if [ $avail -lt $need ]; then
+		atf_skip "not enough free space in working directory"
+	fi
+
 	"${DIR}/h_makenumbers" "$1" > numbers.in
 	"${DIR}/h_intr" \
 	    -p "$2" -a ${SSIZE} -b ${BSIZE} -t ${TMOUT} \
