@@ -1,8 +1,11 @@
-#	$NetBSD: Makefile.inc,v 1.11 2014/05/30 02:16:10 joerg Exp $
-
-.include <bsd.own.mk>
+#	$NetBSD: Makefile.inc,v 1.12 2021/10/31 18:06:42 christos Exp $
 
 USE_FORT?=yes	# network server
+.include <bsd.own.mk>
+
+.if ${MACHINE_CPU} == "mips"
+CPPFLAGS+= -DNOAOUT
+.endif
 
 LIBCOMMON != cd ${.CURDIR}/../common && ${PRINTOBJDIR}
 CPPFLAGS+=-I${.CURDIR}/../common
