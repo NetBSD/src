@@ -1,4 +1,4 @@
-/* $NetBSD: gicv3_its.c,v 1.33 2021/10/31 16:23:47 skrll Exp $ */
+/* $NetBSD: gicv3_its.c,v 1.34 2021/10/31 17:24:11 skrll Exp $ */
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #define _INTR_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gicv3_its.c,v 1.33 2021/10/31 16:23:47 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gicv3_its.c,v 1.34 2021/10/31 17:24:11 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>
@@ -589,7 +589,6 @@ gicv3_its_msi_intr_establish(struct arm_pci_msi *msi,
     pci_intr_handle_t ih, int ipl, int (*func)(void *), void *arg, const char *xname)
 {
 	struct gicv3_its * const its = msi->msi_priv;
-	const struct pci_attach_args *pa;
 	void *intrh;
 
 	const int lpi = __SHIFTOUT(ih, ARM_PCI_INTR_IRQ);
@@ -601,8 +600,7 @@ gicv3_its_msi_intr_establish(struct arm_pci_msi *msi,
 		return NULL;
 
 	/* Invalidate LPI configuration tables */
-	pa = its->its_pa[lpi - its->its_pic->pic_irqbase];
-	KASSERT(pa != NULL);
+	KASSERT(its->its_pa[lpi - its->its_pic->pic_irqbase] != NULL);
 	const uint32_t devid = its->its_devid[lpi - its->its_pic->pic_irqbase];
 	gits_command_inv(its, devid, lpi - its->its_pic->pic_irqbase);
 
@@ -771,7 +769,6 @@ gicv3_its_cpu_init(void *priv, struct cpu_info *ci)
 {
 	struct gicv3_its * const its = priv;
 	struct gicv3_softc * const sc = its->its_gic;
-	const struct pci_attach_args *pa;
 	uint64_t rdbase;
 	size_t irq;
 
@@ -798,8 +795,7 @@ gicv3_its_cpu_init(void *priv, struct cpu_info *ci)
 	for (irq = 0; irq < its->its_pic->pic_maxsources; irq++) {
 		if (its->its_targets[irq] != ci)
 			continue;
-		pa = its->its_pa[irq];
-		KASSERT(pa != NULL);
+		KASSERT(its->its_pa[irq] != NULL);
 
 		const uint32_t devid = its->its_devid[irq];
 		gits_command_movi(its, devid, irq, cpu_index(ci));
