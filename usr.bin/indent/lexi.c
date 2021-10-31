@@ -1,4 +1,4 @@
-/*	$NetBSD: lexi.c,v 1.126 2021/10/31 20:40:42 rillig Exp $	*/
+/*	$NetBSD: lexi.c,v 1.127 2021/10/31 20:59:26 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)lexi.c	8.1 (Berkeley) 6/6/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: lexi.c,v 1.126 2021/10/31 20:40:42 rillig Exp $");
+__RCSID("$NetBSD: lexi.c,v 1.127 2021/10/31 20:59:26 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/lexi.c 337862 2018-08-15 18:19:45Z pstef $");
 #endif
@@ -51,57 +51,61 @@ __FBSDID("$FreeBSD: head/usr.bin/indent/lexi.c 337862 2018-08-15 18:19:45Z pstef
 #include <ctype.h>
 #include <stdlib.h>
 #include <string.h>
-#include <assert.h>
 
 #include "indent.h"
+
+/*
+ * While inside lexi_alnum, this constant just marks a type, independently of
+ * the parentheses level.
+ */
+#define lsym_type lsym_type_at_paren_level_0
 
 /* must be sorted alphabetically, is used in binary search */
 static const struct keyword {
     const char *name;
     lexer_symbol lsym;
-    bool is_type;
 } keywords[] = {
-    {"_Bool", lsym_eof, true},
-    {"_Complex", lsym_eof, true},
-    {"_Imaginary", lsym_eof, true},
-    {"auto", lsym_storage_class, false},
-    {"bool", lsym_eof, true},
-    {"break", lsym_ident, false},
-    {"case", lsym_case_label, false},
-    {"char", lsym_eof, true},
-    {"complex", lsym_eof, true},
-    {"const", lsym_eof, true},
-    {"continue", lsym_ident, false},
-    {"default", lsym_case_label, false},
-    {"do", lsym_do, false},
-    {"double", lsym_eof, true},
-    {"else", lsym_else, false},
-    {"enum", lsym_tag, false},
-    {"extern", lsym_storage_class, false},
-    {"float", lsym_eof, true},
-    {"for", lsym_for, false},
-    {"goto", lsym_ident, false},
-    {"if", lsym_if, false},
-    {"imaginary", lsym_eof, true},
-    {"inline", lsym_ident, false},
-    {"int", lsym_eof, true},
-    {"long", lsym_eof, true},
-    {"offsetof", lsym_offsetof, false},
-    {"register", lsym_storage_class, false},
-    {"restrict", lsym_ident, false},
-    {"return", lsym_ident, false},
-    {"short", lsym_eof, true},
-    {"signed", lsym_eof, true},
-    {"sizeof", lsym_sizeof, false},
-    {"static", lsym_storage_class, false},
-    {"struct", lsym_tag, false},
-    {"switch", lsym_switch, false},
-    {"typedef", lsym_typedef, false},
-    {"union", lsym_tag, false},
-    {"unsigned", lsym_eof, true},
-    {"void", lsym_eof, true},
-    {"volatile", lsym_eof, true},
-    {"while", lsym_while, false}
+    {"_Bool", lsym_type},
+    {"_Complex", lsym_type},
+    {"_Imaginary", lsym_type},
+    {"auto", lsym_storage_class},
+    {"bool", lsym_type},
+    {"break", lsym_ident},
+    {"case", lsym_case_label},
+    {"char", lsym_type},
+    {"complex", lsym_type},
+    {"const", lsym_type},
+    {"continue", lsym_ident},
+    {"default", lsym_case_label},
+    {"do", lsym_do},
+    {"double", lsym_type},
+    {"else", lsym_else},
+    {"enum", lsym_tag},
+    {"extern", lsym_storage_class},
+    {"float", lsym_type},
+    {"for", lsym_for},
+    {"goto", lsym_ident},
+    {"if", lsym_if},
+    {"imaginary", lsym_type},
+    {"inline", lsym_ident},
+    {"int", lsym_type},
+    {"long", lsym_type},
+    {"offsetof", lsym_offsetof},
+    {"register", lsym_storage_class},
+    {"restrict", lsym_ident},
+    {"return", lsym_ident},
+    {"short", lsym_type},
+    {"signed", lsym_type},
+    {"sizeof", lsym_sizeof},
+    {"static", lsym_storage_class},
+    {"struct", lsym_tag},
+    {"switch", lsym_switch},
+    {"typedef", lsym_typedef},
+    {"union", lsym_tag},
+    {"unsigned", lsym_type},
+    {"void", lsym_type},
+    {"volatile", lsym_type},
+    {"while", lsym_while}
 };
 
 static struct {
@@ -499,11 +503,9 @@ lexi_alnum(void)
 	}
 
     } else {			/* we have a keyword */
-	ps.curr_is_type = kw->is_type;
+	ps.curr_is_type = kw->lsym == lsym_type;
 	ps.next_unary = true;
-
-	assert((kw->lsym == lsym_eof) == kw->is_type);
-	if (kw->lsym != lsym_eof && kw->lsym != lsym_tag)
+	if (kw->lsym != lsym_tag && kw->lsym != lsym_type)
 	    return kw->lsym;
 
 found_typename:
