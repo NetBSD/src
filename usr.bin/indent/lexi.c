@@ -1,4 +1,4 @@
-/*	$NetBSD: lexi.c,v 1.121 2021/10/31 10:09:43 rillig Exp $	*/
+/*	$NetBSD: lexi.c,v 1.122 2021/10/31 17:22:47 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)lexi.c	8.1 (Berkeley) 6/6/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: lexi.c,v 1.121 2021/10/31 10:09:43 rillig Exp $");
+__RCSID("$NetBSD: lexi.c,v 1.122 2021/10/31 17:22:47 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/lexi.c 337862 2018-08-15 18:19:45Z pstef $");
 #endif
@@ -305,14 +305,16 @@ debug_lexi(lexer_symbol lsym)
 
     debug_println("");
     debug_printf("line %d: %s", line_no, lsym_name(lsym));
+    if (ps.curr_keyword != kw_0)
+	debug_printf(" %s", kw_name(ps.curr_keyword));
     debug_vis_range(" \"", token.s, token.e, "\"\n");
+
     debug_print_buf("label", &lab);
     debug_print_buf("code", &code);
     debug_print_buf("comment", &com);
 
-    // prev_token
+    debug_println("    ps.prev_token = %s", lsym_name(ps.prev_token));
     debug_ps_keyword(prev_keyword);
-    debug_ps_keyword(curr_keyword);
     debug_ps_bool(curr_newline);
     debug_ps_bool(curr_col_1);
     debug_ps_bool(next_unary);
