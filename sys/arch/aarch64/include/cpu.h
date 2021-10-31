@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.h,v 1.42 2021/10/31 08:21:24 skrll Exp $ */
+/* $NetBSD: cpu.h,v 1.43 2021/10/31 16:23:47 skrll Exp $ */
 
 /*-
  * Copyright (c) 2014, 2020 The NetBSD Foundation, Inc.
@@ -72,6 +72,32 @@ struct aarch64_cpufuncs {
 	void (*cf_icache_sync_range)(vaddr_t, vsize_t);
 };
 
+#define MAX_CACHE_LEVEL	8		/* ARMv8 has maximum 8 level cache */
+
+struct aarch64_cache_unit {
+	u_int cache_type;
+#define CACHE_TYPE_VPIPT	0	/* VMID-aware PIPT */
+#define CACHE_TYPE_VIVT		1	/* ASID-tagged VIVT */
+#define CACHE_TYPE_VIPT		2
+#define CACHE_TYPE_PIPT		3
+	u_int cache_line_size;
+	u_int cache_ways;
+	u_int cache_sets;
+	u_int cache_way_size;
+	u_int cache_size;
+};
+
+struct aarch64_cache_info {
+	u_int cacheable;
+#define CACHE_CACHEABLE_NONE	0
+#define CACHE_CACHEABLE_ICACHE	1	/* instruction cache only */
+#define CACHE_CACHEABLE_DCACHE	2	/* data cache only */
+#define CACHE_CACHEABLE_IDCACHE	3	/* instruction and data caches */
+#define CACHE_CACHEABLE_UNIFIED	4	/* unified cache */
+	struct aarch64_cache_unit icache;
+	struct aarch64_cache_unit dcache;
+};
+
 struct cpu_info {
 	struct cpu_data ci_data;
 	device_t ci_dev;
@@ -133,6 +159,10 @@ struct cpu_info {
 
 	/* ACPI */
 	uint32_t ci_acpiid;	/* ACPI Processor Unique ID */
+
+	/* cached system registers */
+	uint64_t ci_sctlr_el1;
+	uint64_t ci_sctlr_el2;
 
 	/* sysctl(9) exposed system registers */
 	struct aarch64_sysctl_cpu_id ci_id;

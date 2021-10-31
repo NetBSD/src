@@ -1,4 +1,4 @@
-/* $NetBSD: apple_intc.c,v 1.3 2021/10/16 06:37:43 ryo Exp $ */
+/* $NetBSD: apple_intc.c,v 1.4 2021/10/31 16:23:47 skrll Exp $ */
 
 /*-
  * Copyright (c) 2021 Jared McNeill <jmcneill@invisible.ca>
@@ -32,7 +32,7 @@
 #define	_INTR_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: apple_intc.c,v 1.3 2021/10/16 06:37:43 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: apple_intc.c,v 1.4 2021/10/31 16:23:47 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -229,7 +229,6 @@ apple_intc_fdt_establish(device_t dev, u_int *specifier, int ipl, int flags,
     int (*func)(void *), void *arg, const char *xname)
 {
 	struct apple_intc_softc * const sc = device_private(dev);
-	struct apple_intc_percpu * const pc = &sc->sc_pc[cpu_index(curcpu())];
 
 	/* 1st cell is the interrupt type (0=IRQ, 1=FIQ) */
 	const u_int type = be32toh(specifier[0]);
@@ -238,10 +237,27 @@ apple_intc_fdt_establish(device_t dev, u_int *specifier, int ipl, int flags,
 	/* 3rd cell is the interrupt flags */
 
 	const u_int mpsafe = (flags & FDT_INTR_MPSAFE) ? IST_MPSAFE : 0;
-	const int irq = type == 0 ?
-	    intno : pc->pc_pic.pic_irqbase + LOCALPIC_SOURCE_TIMER;
-	return intr_establish_xname(irq, ipl, IST_LEVEL | mpsafe, func, arg,
-	    xname);
+
+	if (type == 0)
+		return intr_establish_xname(intno, ipl, IST_LEVEL | mpsafe,
+		    func, arg, xname);
+
+	/* interate over CPUs for LOCALPIC_SOURCE_TIMER */
+	CPU_INFO_ITERATOR cii;
+	struct cpu_info *ci;
+	void *ih = NULL;
+	for (CPU_INFO_FOREACH(cii, ci)) {
+		const cpuid_t cpuno = cpu_index(ci);
+		struct apple_intc_percpu * const pc = &sc->sc_pc[cpuno];
+		struct pic_softc * const pic = &pc->pc_pic;
+		const int irq = pic->pic_irqbase + LOCALPIC_SOURCE_TIMER;
+
+		void *ihn = intr_establish_xname(irq, ipl, IST_LEVEL | mpsafe,
+		    func, arg, xname);
+		if (cpuno == 0)
+			ih = ihn;
+	}
+	return ih;
 }
 
 static void
@@ -421,36 +437,6 @@ apple_intc_ipi_handler(void *priv)
 }
 #endif /* MULTIPROCESSOR */
 
-static void
-apple_intc_percpu_init(void *priv, struct cpu_info *ci)
-{
-	struct apple_intc_softc * const sc = priv;
-	const u_int cpuno = cpu_index(ci);
-	struct apple_intc_percpu * const pc = &sc->sc_pc[cpuno];
-	struct pic_softc * const pic = &pc->pc_pic;
-
-#ifdef MULTIPROCESSOR
-	pic->pic_cpus = ci->ci_kcpuset;
-#endif
-
-	pic_add(pic, PIC_IRQBASE_ALLOC);
-
-#ifdef MULTIPROCESSOR
-	if (cpuno != 0) {
-		struct intrsource * const is =
-		    sc->sc_pc[0].pc_pic.pic_sources[LOCALPIC_SOURCE_TIMER];
-		KASSERT(is != NULL);
-
-		intr_establish_xname(pic->pic_irqbase + LOCALPIC_SOURCE_TIMER,
-		    is->is_ipl, is->is_type | (is->is_mpsafe ? IST_MPSAFE : 0),
-		    is->is_func, is->is_arg, is->is_xname);
-	}
-
-	intr_establish_xname(pic->pic_irqbase + LOCALPIC_SOURCE_IPI, IPL_HIGH,
-	    IST_LEVEL | IST_MPSAFE, apple_intc_ipi_handler, pc, "ipi");
-#endif
-}
-
 static int
 apple_intc_match(device_t parent, cfdata_t cf, void *aux)
 {
@@ -467,7 +453,6 @@ apple_intc_attach(device_t parent, device_t self, void *aux)
 	const int phandle = faa->faa_phandle;
 	bus_addr_t addr;
 	bus_size_t size;
-	u_int cpuno;
 	int error;
 
 	if (fdtbus_get_reg(phandle, 0, &addr, &size) != 0) {
@@ -509,18 +494,30 @@ apple_intc_attach(device_t parent, device_t self, void *aux)
 	KASSERT(ncpu != 0);
 	sc->sc_cpuid = kmem_zalloc(sizeof(*sc->sc_cpuid) * ncpu, KM_SLEEP);
 	sc->sc_pc = kmem_zalloc(sizeof(*sc->sc_pc) * ncpu, KM_SLEEP);
-	for (cpuno = 0; cpuno < ncpu; cpuno++) {
-		sc->sc_pc[cpuno].pc_sc = sc;
-		sc->sc_pc[cpuno].pc_cpuid = cpuno;
-		sc->sc_pc[cpuno].pc_pic.pic_ops = &apple_intc_localpicops;
-		sc->sc_pc[cpuno].pc_pic.pic_maxsources = 2;
-		snprintf(sc->sc_pc[cpuno].pc_pic.pic_name,
-		    sizeof(sc->sc_pc[cpuno].pc_pic.pic_name), "AIC/%u", cpuno);
+
+	CPU_INFO_ITERATOR cii;
+	struct cpu_info *ci;
+	for (CPU_INFO_FOREACH(cii, ci)) {
+		const cpuid_t cpuno = cpu_index(ci);
+		struct apple_intc_percpu * const pc = &sc->sc_pc[cpuno];
+		struct pic_softc * const pic = &pc->pc_pic;
+
+		pc->pc_sc = sc;
+		pc->pc_cpuid = cpuno;
+
+		pic->pic_cpus = ci->ci_kcpuset;
+		pic->pic_ops = &apple_intc_localpicops;
+		pic->pic_maxsources = 2;
+		snprintf(pic->pic_name, sizeof(pic->pic_name), "AIC/%lu", cpuno);
+
+		pic_add(pic, PIC_IRQBASE_ALLOC);
+
+		intr_establish_xname(pic->pic_irqbase + LOCALPIC_SOURCE_IPI,
+		    IPL_HIGH, IST_LEVEL | IST_MPSAFE, apple_intc_ipi_handler,
+		    pc, "ipi");
 	}
 
 	apple_intc_cpu_init(&sc->sc_pic, curcpu());
-	apple_intc_percpu_init(sc, curcpu());
-	arm_fdt_cpu_hatch_register(sc, apple_intc_percpu_init);
 }
 
 CFATTACH_DECL_NEW(apple_intc, sizeof(struct apple_intc_softc),
