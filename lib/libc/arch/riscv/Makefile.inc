@@ -1,6 +1,6 @@
-#	$NetBSD: Makefile.inc,v 1.1 2014/09/19 17:36:25 matt Exp $
+#	$NetBSD: Makefile.inc,v 1.2 2021/10/31 22:24:35 thorpej Exp $
 
-SRCS+=		__sigaction14_sigtramp.c __sigtramp2.S
+SRCS+=		__sigtramp2.S
 
 CPPFLAGS+=	-I.
 

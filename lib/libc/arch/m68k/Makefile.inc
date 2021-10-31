@@ -1,6 +1,6 @@
-#	$NetBSD: Makefile.inc,v 1.17 2014/03/04 06:30:40 matt Exp $
+#	$NetBSD: Makefile.inc,v 1.18 2021/10/31 22:24:35 thorpej Exp $
 
-SRCS+=	__sigaction14_sigtramp.c __sigtramp2.S __m68k_read_tp.S __mmap.S
+SRCS+=	__sigtramp2.S __m68k_read_tp.S __mmap.S
 
 ASM+=	_lwp_getprivate.S mremap.S
 
