@@ -1,4 +1,4 @@
-/* $NetBSD: opt_pcs.c,v 1.7 2021/10/31 21:31:55 rillig Exp $ */
+/* $NetBSD: opt_pcs.c,v 1.8 2021/10/31 21:43:43 rillig Exp $ */
 /* $FreeBSD$ */
 
 /*
@@ -47,14 +47,15 @@ void ( * signal ( void ( * handler ) ( int ) ) ) ( int ) ;
 int var = (function)(arg);
 #indent end
 
-/* TODO: add a blank between ')' and '('. */
 #indent run -npsl -di0 -pcs
+void (*signal(void (*handler) (int))) (int);
+int var = (function) (arg);
+#indent end
+
+#indent run -npsl -di0 -npcs
 void (*signal(void (*handler)(int)))(int);
 int var = (function)(arg);
 #indent end
-
-#indent run-equals-prev-output -npsl -di0 -npcs
-
 
 /*
  * The option '-pcs' also applies to 'sizeof' and 'offsetof', even though
