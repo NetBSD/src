@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_348.c,v 1.1 2021/10/30 22:04:42 rillig Exp $	*/
+/*	$NetBSD: msg_348.c,v 1.2 2021/10/31 23:15:44 rillig Exp $	*/
 # 3 "msg_348.c"
 
 // Test for message 348: maximum value %d of '%s' does not match maximum array index %d [348]
@@ -69,6 +69,17 @@ color_name_cast_from_int(int c)
 	};
 	/* No warning since the array index before conversion is not a name. */
 	return name[(enum color)(c + 1)];
+}
+
+const char *
+color_name_explicit_cast_to_int(enum color color)
+{
+	static const char *name[] = {
+	    "red",
+	    "green",
+	};
+	/* expect+1: warning: maximum value 2 of 'enum color' does not match maximum array index 1 [348] */
+	return name[(int)color];
 }
 
 const char *
