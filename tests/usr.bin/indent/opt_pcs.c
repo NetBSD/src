@@ -1,4 +1,4 @@
-/* $NetBSD: opt_pcs.c,v 1.6 2021/10/31 21:06:56 rillig Exp $ */
+/* $NetBSD: opt_pcs.c,v 1.7 2021/10/31 21:31:55 rillig Exp $ */
 /* $FreeBSD$ */
 
 /*
@@ -43,12 +43,17 @@ example(void)
 
 
 #indent input
+void ( * signal ( void ( * handler ) ( int ) ) ) ( int ) ;
 int var = (function)(arg);
 #indent end
 
-/* TODO: add space between the parentheses. */
-#indent run-equals-input -di0 -pcs
-#indent run-equals-input -di0 -npcs
+/* TODO: add a blank between ')' and '('. */
+#indent run -npsl -di0 -pcs
+void (*signal(void (*handler)(int)))(int);
+int var = (function)(arg);
+#indent end
+
+#indent run-equals-prev-output -npsl -di0 -npcs
 
 
 /*
