@@ -1,4 +1,4 @@
-/*	$NetBSD: lexi.c,v 1.124 2021/10/31 19:20:52 rillig Exp $	*/
+/*	$NetBSD: lexi.c,v 1.125 2021/10/31 19:57:44 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)lexi.c	8.1 (Berkeley) 6/6/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: lexi.c,v 1.124 2021/10/31 19:20:52 rillig Exp $");
+__RCSID("$NetBSD: lexi.c,v 1.125 2021/10/31 19:57:44 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/lexi.c 337862 2018-08-15 18:19:45Z pstef $");
 #endif
@@ -51,55 +51,57 @@ __FBSDID("$FreeBSD: head/usr.bin/indent/lexi.c 337862 2018-08-15 18:19:45Z pstef
 #include <ctype.h>
 #include <stdlib.h>
 #include <string.h>
+#include <assert.h>
 
 #include "indent.h"
 
 /* must be sorted alphabetically, is used in binary search */
 static const struct keyword {
     const char *name;
+    lexer_symbol lsym;
     enum keyword_kind kind;
 } keywords[] = {
-    {"_Bool", kw_type},
-    {"_Complex", kw_type},
-    {"_Imaginary", kw_type},
-    {"auto", kw_storage_class},
-    {"bool", kw_type},
-    {"break", kw_other},
-    {"case", kw_case_or_default},
-    {"char", kw_type},
-    {"complex", kw_type},
-    {"const", kw_type},
-    {"continue", kw_other},
-    {"default", kw_case_or_default},
-    {"do", kw_do},
-    {"double", kw_type},
-    {"else", kw_else},
-    {"enum", kw_tag},
-    {"extern", kw_storage_class},
-    {"float", kw_type},
-    {"for", kw_for},
-    {"goto", kw_other},
-    {"if", kw_if},
-    {"imaginary", kw_type},
-    {"inline", kw_other},
-    {"int", kw_type},
-    {"long", kw_type},
-    {"offsetof", kw_offsetof},
-    {"register", kw_storage_class},
-    {"restrict", kw_other},
-    {"return", kw_other},
-    {"short", kw_type},
-    {"signed", kw_type},
-    {"sizeof", kw_sizeof},
-    {"static", kw_storage_class},
-    {"struct", kw_tag},
-    {"switch", kw_switch},
-    {"typedef", kw_typedef},
-    {"union", kw_tag},
-    {"unsigned", kw_type},
-    {"void", kw_type},
-    {"volatile", kw_type},
-    {"while", kw_while}
+    {"_Bool", lsym_eof, kw_type},
+    {"_Complex", lsym_eof, kw_type},
+    {"_Imaginary", lsym_eof, kw_type},
+    {"auto", lsym_storage_class, kw_0},
+    {"bool", lsym_eof, kw_type},
+    {"break", lsym_ident, kw_0},
+    {"case", lsym_case_label, kw_0},
+    {"char", lsym_eof, kw_type},
+    {"complex", lsym_eof, kw_type},
+    {"const", lsym_eof, kw_type},
+    {"continue", lsym_ident, kw_0},
+    {"default", lsym_case_label, kw_0},
+    {"do", lsym_do, kw_0},
+    {"double", lsym_eof, kw_type},
+    {"else", lsym_else, kw_0},
+    {"enum", lsym_eof, kw_tag},
+    {"extern", lsym_storage_class, kw_0},
+    {"float", lsym_eof, kw_type},
+    {"for", lsym_for, kw_0},
+    {"goto", lsym_ident, kw_0},
+    {"if", lsym_if, kw_0},
+    {"imaginary", lsym_eof, kw_type},
+    {"inline", lsym_ident, kw_0},
+    {"int", lsym_eof, kw_type},
+    {"long", lsym_eof, kw_type},
+    {"offsetof", lsym_offsetof, kw_0},
+    {"register", lsym_storage_class, kw_0},
+    {"restrict", lsym_ident, kw_0},
+    {"return", lsym_ident, kw_0},
+    {"short", lsym_eof, kw_type},
+    {"signed", lsym_eof, kw_type},
+    {"sizeof", lsym_sizeof, kw_0},
+    {"static", lsym_storage_class, kw_0},
+    {"struct", lsym_eof, kw_tag},
+    {"switch", lsym_switch, kw_0},
+    {"typedef", lsym_typedef, kw_0},
+    {"union", lsym_eof, kw_tag},
+    {"unsigned", lsym_eof, kw_type},
+    {"void", lsym_eof, kw_type},
+    {"volatile", lsym_eof, kw_type},
+    {"while", lsym_while, kw_0}
 };
 
 static struct {
@@ -256,20 +258,8 @@ kw_name(enum keyword_kind kw)
 {
     static const char *const name[] = {
 	"0",
-	"offsetof",
-	"sizeof",
 	"tag",
 	"type",
-	"for",
-	"if",
-	"while",
-	"do",
-	"else",
-	"switch",
-	"case_or_default",
-	"storage_class",
-	"typedef",
-	"other",
     };
 
     return name[kw];
@@ -525,24 +515,11 @@ lexi_alnum(void)
 	ps.curr_keyword = kw->kind;
 	ps.next_unary = true;
 
-	/* INDENT OFF */
-	switch (kw->kind) {
-	case kw_tag:
-	case kw_type:		goto found_typename;
-	case kw_case_or_default: return lsym_case_label;
-	case kw_for:		return lsym_for;
-	case kw_if:		return lsym_if;
-	case kw_else:		return lsym_else;
-	case kw_switch:		return lsym_switch;
-	case kw_while:		return lsym_while;
-	case kw_do:		return lsym_do;
-	case kw_storage_class:	return lsym_storage_class;
-	case kw_typedef:	return lsym_typedef;
-	case kw_offsetof:	return lsym_offsetof;
-	case kw_sizeof:		return lsym_sizeof;
-	default:		return lsym_ident;
-	}
-	/* INDENT ON */
+	assert((kw->lsym == lsym_eof) != (kw->kind == kw_0));
+	if (kw->lsym != lsym_eof)
+	    return kw->lsym;
+	if (kw->kind != kw_tag && kw->kind != kw_type)
+	    return lsym_ident;
 
 found_typename:
 	if (ps.p_l_follow > 0) {
