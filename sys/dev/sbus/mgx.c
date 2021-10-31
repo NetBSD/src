@@ -1,4 +1,4 @@
-/*	$NetBSD: mgx.c,v 1.18 2021/10/30 05:37:39 macallan Exp $ */
+/*	$NetBSD: mgx.c,v 1.19 2021/10/31 05:31:12 macallan Exp $ */
 
 /*-
  * Copyright (c) 2014 Michael Lorenz
@@ -29,7 +29,7 @@
 /* a console driver for the SSB 4096V-MGX graphics card */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mgx.c,v 1.18 2021/10/30 05:37:39 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mgx.c,v 1.19 2021/10/31 05:31:12 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -684,8 +684,6 @@ mgx_putchar_aa(void *cookie, int row, int col, u_int c, long attr)
 	uint32_t fg, bg;
 	int x, y, wi, he, rv;
 
-if (sc->sc_mode != WSDISPLAYIO_MODE_EMUL) return;
-
 	wi = font->fontwidth;
 	he = font->fontheight;
 
@@ -732,8 +730,6 @@ mgx_putchar_mono(void *cookie, int row, int col, u_int c, long attr)
 	uint8_t *s, *d;
 	uint32_t fg, bg, scratch = ((sc->sc_stride * sc->sc_height) + 7) & ~7;
 	int x, y, wi, he, len, i;
-
-if (sc->sc_mode != WSDISPLAYIO_MODE_EMUL) return;
 
 	wi = font->fontwidth;
 	he = font->fontheight;
