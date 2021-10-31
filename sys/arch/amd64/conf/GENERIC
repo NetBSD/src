@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.592 2021/10/16 13:09:40 jmcneill Exp $
+# $NetBSD: GENERIC,v 1.593 2021/10/31 00:31:48 simonb Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/amd64/conf/std.amd64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.592 $"
+#ident		"GENERIC-$Revision: 1.593 $"
 
 maxusers	64		# estimated number of users
 
@@ -138,7 +138,7 @@ options 	KDTRACE_HOOKS	# kernel DTrace hooks
 # Use KASAN_PANIC if you want panics instead of warnings.
 #makeoptions 	KASAN=1		# mandatory
 #options 	KASAN		# mandatory
-#no options	SVS		# mandatory
+#no options 	SVS		# mandatory
 #options 	POOL_QUARANTINE	# optional
 #options 	KASAN_PANIC	# optional
 
@@ -152,7 +152,7 @@ options 	KDTRACE_HOOKS	# kernel DTrace hooks
 # memory in pool caches. Note that KMSAN requires at least 4GB of RAM.
 #makeoptions 	KMSAN=1		# mandatory
 #options 	KMSAN		# mandatory
-#no options	SVS		# mandatory
+#no options 	SVS		# mandatory
 #no options 	MODULAR		# mandatory
 #no options 	MODULAR_DEFAULT_AUTOLOAD	# mandatory
 #options 	POOL_NOCACHE	# optional
@@ -201,7 +201,7 @@ options 	WAPBL		# File system journaling support
 # Note that UFS_DIRHASH is suspected of causing kernel memory corruption.
 # It is not recommended for general use.
 #options 	UFS_DIRHASH	# UFS Large Directory Hashing - Experimental
-options		UFS_ACL		# UFS Access Control Lists
+options 	UFS_ACL		# UFS Access Control Lists
 #options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
 options 	UFS_EXTATTR	# Extended attribute support for UFS1
 # ext2fs
@@ -1153,7 +1153,7 @@ options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
 pseudo-device	fss			# file system snapshot device
 
 pseudo-device	md			# memory disk device (ramdisk)
-options		MEMORY_DISK_HOOKS	# enable md specific hooks
+options 	MEMORY_DISK_HOOKS	# enable md specific hooks
 options 	MEMORY_DISK_DYNAMIC	# enable dynamic resizing
 
 pseudo-device	vnd			# disk-like interface to files
