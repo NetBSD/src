@@ -1,4 +1,4 @@
-$NetBSD: ports,v 1.8 2018/07/20 01:52:07 maya Exp $
+$NetBSD: ports,v 1.9 2021/10/31 08:11:13 nia Exp $
 
 NetBSD Ports Roadmap
 ====================
@@ -29,7 +29,7 @@ Explanations
 
  0. DRMKMS update
 
-The DRM drivers get old with time. The current drivers are from Linux 3.15,
+The DRM drivers get old with time. The current drivers are from Linux 4.4,
 having a newer version would be nice.
 
 - As of July 2018, maya is working on this.
