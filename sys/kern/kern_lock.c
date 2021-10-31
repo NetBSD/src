@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lock.c,v 1.172 2020/12/22 01:57:29 ad Exp $	*/
+/*	$NetBSD: kern_lock.c,v 1.173 2021/10/31 16:26:26 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007, 2008, 2009, 2020 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lock.c,v 1.172 2020/12/22 01:57:29 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lock.c,v 1.173 2021/10/31 16:26:26 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_lockdebug.h"
@@ -89,8 +89,7 @@ assert_sleepable(void)
 	} while (pctr != lwp_pctr());
 
 	reason = NULL;
-	if (idle && !cold &&
-	    kcpuset_isset(kcpuset_running, cpu_index(curcpu()))) {
+	if (idle && !cold) {
 		reason = "idle";
 	}
 	if (cpu_intr_p()) {
