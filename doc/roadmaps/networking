@@ -1,4 +1,4 @@
-$NetBSD: networking,v 1.14 2018/07/20 01:43:31 maya Exp $
+$NetBSD: networking,v 1.15 2021/10/31 08:19:29 nia Exp $
 
 NetBSD Networking Roadmap
 =========================
@@ -39,8 +39,11 @@ Status: committed, done
 
 Resync FreeBSD stack to get support for n, ac, VAP
 
-Responsible: phil
-Status: started porting FreeBSD code
+Responsible: martin, phil
+Status: see various wiki pages
+https://wiki.netbsd.org/Wifi_renewal_on_hg/
+https://wiki.netbsd.org/Converting_drivers_to_the_new_wifi_stack/
+https://wiki.netbsd.org/Driver_state_matrix/
 Comment[christos]: This will add VAP support too, and needs changes to all
 the specific drivers.
 
@@ -77,6 +80,8 @@ Add support for multicast DNS (name.local)
 Responsible: tsarna
 Status: not started
 Comment[christos]: XXX: Fill in the project description and justification.
+Comment[nia]: isn't this completed? we have mdnsd(8) and multicast support
+in nsswitch.conf(5)
 
 
 6. tcp support in libsa
