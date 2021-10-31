@@ -1,9 +1,9 @@
-# $NetBSD: Makefile.inc,v 1.28 2015/08/20 16:13:40 pooka Exp $
+# $NetBSD: Makefile.inc,v 1.29 2021/10/31 22:24:34 thorpej Exp $
 
 .include <bsd.own.mk>
 
 .if ${RUMPRUN} != "yes"
-SRCS+=	__aeabi_read_tp.S __sigaction14_sigtramp.c __sigtramp2.S
+SRCS+=	__aeabi_read_tp.S __sigtramp2.S
 .endif
 
 .if empty(LIBC_MACHINE_ARCH:Mearmv7*)

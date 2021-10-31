@@ -1,7 +1,7 @@
-#	$NetBSD: Makefile.inc,v 1.20 2008/10/26 07:43:07 mrg Exp $
+#	$NetBSD: Makefile.inc,v 1.21 2021/10/31 22:24:34 thorpej Exp $
 
 SRCS+=	__longjmp14.c
-SRCS+=	__sigaction14_sigtramp.c __sigtramp2.S
+SRCS+=	__sigtramp2.S
 
 # `source' files built from m4 source
 SRCS+=	__divqu.S __divq.S __divlu.S __divl.S
