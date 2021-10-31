@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.c,v 1.199 2021/10/31 19:20:52 rillig Exp $	*/
+/*	$NetBSD: indent.c,v 1.200 2021/10/31 19:57:44 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)indent.c	5.17 (Berkeley) 6/7/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: indent.c,v 1.199 2021/10/31 19:20:52 rillig Exp $");
+__RCSID("$NetBSD: indent.c,v 1.200 2021/10/31 19:57:44 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/indent.c 340138 2018-11-04 19:24:49Z oshogbo $");
 #endif
@@ -793,7 +793,7 @@ process_lparen_or_lbracket(int decl_ind, bool tabs_to_var, bool spaced_expr)
     }
 
     /* parenthesized type following sizeof or offsetof is not a cast */
-    if (ps.prev_keyword == kw_offsetof || ps.prev_keyword == kw_sizeof)
+    if (ps.prev_token == lsym_offsetof || ps.prev_token == lsym_sizeof)
 	ps.not_cast_mask |= 1 << ps.p_l_follow;
 }
 
