@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.h,v 1.73 2021/10/31 20:40:42 rillig Exp $	*/
+/*	$NetBSD: indent.h,v 1.74 2021/10/31 22:38:12 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-FreeBSD
@@ -76,14 +76,14 @@ typedef enum lexer_symbol {
     lsym_preprocessing,		/* '#' */
     lsym_newline,
     lsym_form_feed,
-    lsym_comment,		/* the initial '/' '*' or '//' of a comment */
+    lsym_comment,		/* the initial '/ *' or '//' of a comment */
     lsym_lparen_or_lbracket,
     lsym_rparen_or_rbracket,
     lsym_lbrace,
     lsym_rbrace,
     lsym_period,
-    lsym_unary_op,		/* e.g. '+' or '&' */
-    lsym_binary_op,		/* e.g. '<<' or '+' or '&&' or '/=' */
+    lsym_unary_op,		/* e.g. '*', '&', '-' or leading '++' */
+    lsym_binary_op,		/* e.g. '*', '&', '<<', '&&' or '/=' */
     lsym_postfix_op,		/* trailing '++' or '--' */
     lsym_question,		/* the '?' from a '?:' expression */
     lsym_colon,
@@ -360,7 +360,7 @@ void debug_println(const char *, ...)__printflike(1, 2);
 #define		debug_vis_range(prefix, s, e, suffix) do { } while (false)
 #endif
 
-void add_typename(const char *);
+void register_typename(const char *);
 int compute_code_indent(void);
 int compute_label_indent(void);
 int indentation_after_range(int, const char *, const char *);

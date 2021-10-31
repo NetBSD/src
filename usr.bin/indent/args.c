@@ -1,4 +1,4 @@
-/*	$NetBSD: args.c,v 1.67 2021/10/29 19:52:59 rillig Exp $	*/
+/*	$NetBSD: args.c,v 1.68 2021/10/31 22:38:12 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)args.c	8.1 (Berkeley) 6/6/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: args.c,v 1.67 2021/10/29 19:52:59 rillig Exp $");
+__RCSID("$NetBSD: args.c,v 1.68 2021/10/31 22:38:12 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/args.c 336318 2018-07-15 21:04:21Z pstef $");
 #endif
@@ -142,7 +142,7 @@ add_typedefs_from_file(const char *fname)
     while ((fgets(line, BUFSIZ, file)) != NULL) {
 	/* Remove trailing whitespace */
 	line[strcspn(line, " \t\n\r")] = '\0';
-	add_typename(line);
+	register_typename(line);
     }
     (void)fclose(file);
 }
@@ -184,7 +184,7 @@ set_special_option(const char *arg, const char *option_source)
 	arg_end = arg + 1;
 	if (arg_end[0] == '\0')
 	    goto need_param;
-	add_typename(arg_end);
+	register_typename(arg_end);
 	return true;
     }
 

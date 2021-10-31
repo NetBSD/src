@@ -1,4 +1,4 @@
-/*	$NetBSD: lexi.c,v 1.127 2021/10/31 20:59:26 rillig Exp $	*/
+/*	$NetBSD: lexi.c,v 1.128 2021/10/31 22:38:12 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)lexi.c	8.1 (Berkeley) 6/6/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: lexi.c,v 1.127 2021/10/31 20:59:26 rillig Exp $");
+__RCSID("$NetBSD: lexi.c,v 1.128 2021/10/31 22:38:12 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/lexi.c 337862 2018-08-15 18:19:45Z pstef $");
 #endif
@@ -272,9 +272,6 @@ debug_print_buf(const char *name, const struct buffer *buf)
 #define debug_ps_int(name) \
 	if (ps.name != prev_ps.name) \
 	    debug_println("%3d ps." #name, ps.name)
-#define debug_ps_keyword(name) \
-	if (ps.name != kw_0) \
-	    debug_println("    ps." #name " = %s", kw_name(ps.name))
 
 static void
 debug_lexi(lexer_symbol lsym)
@@ -750,7 +747,7 @@ lexi(void)
 }
 
 void
-add_typename(const char *name)
+register_typename(const char *name)
 {
     if (typenames.len >= typenames.cap) {
 	typenames.cap = 16 + 2 * typenames.cap;
