@@ -1,25 +1,21 @@
-#	$NetBSD: Makefile,v 1.22 2021/10/31 17:50:35 christos Exp $
+#	$NetBSD: Makefile,v 1.23 2021/10/31 18:06:42 christos Exp $
 
 LIBISPRIVATE=	yes
+
+.include <bsd.init.mk>
 
 LIB=	common
 SRCS=	cmp.c device.c dl.c file.c get.c log.c loop-bsd.c mopdef.c nma.c pf.c \
 	print.c put.c rc.c version.c
 CLEANFILES= version.c
 
-.include <bsd.own.mk>
-
-.if ${MACHINE_CPU} == "mips"
-CPPFLAGS+= -DNOAOUT
-.endif
-
 version.c: VERSION
 	${_MKTARGET_CREATE}
 	rm -f version.c; \
 	${TOOL_SED} 's/.*/char version[] = "&";/' ${.ALLSRC} > version.c
 
-.include <bsd.lib.mk>
 
 COPTS.print.c+=	-Wno-pointer-sign
-
 COPTS.pf.c+=	${GCC_NO_STRINGOP_TRUNCATION}
+
+.include <bsd.lib.mk>
