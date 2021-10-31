@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.c,v 1.201 2021/10/31 20:40:42 rillig Exp $	*/
+/*	$NetBSD: indent.c,v 1.202 2021/10/31 21:43:43 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)indent.c	5.17 (Berkeley) 6/7/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: indent.c,v 1.201 2021/10/31 20:40:42 rillig Exp $");
+__RCSID("$NetBSD: indent.c,v 1.202 2021/10/31 21:43:43 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/indent.c 340138 2018-11-04 19:24:49Z oshogbo $");
 #endif
@@ -739,17 +739,17 @@ want_blank_before_lparen(void)
 {
     if (!ps.want_blank)
 	return false;
+    if (opt.proc_calls_space)
+	return true;
     if (ps.prev_token == lsym_rparen_or_rbracket)
 	return false;
     if (ps.prev_token == lsym_offsetof)
-	return opt.proc_calls_space;
+	return false;
     if (ps.prev_token == lsym_sizeof)
-	return opt.proc_calls_space || opt.blank_after_sizeof;
-    if (ps.prev_token != lsym_ident && ps.prev_token != lsym_funcname)
-	return true;
-    if (opt.proc_calls_space)
-	return true;
-    return ps.prev_is_type;
+	return opt.blank_after_sizeof;
+    if (ps.prev_token == lsym_ident || ps.prev_token == lsym_funcname)
+	return ps.prev_is_type;
+    return true;
 }
 
 static void
