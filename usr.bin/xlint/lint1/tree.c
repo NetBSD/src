@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.386 2021/10/30 22:04:42 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.387 2021/10/31 16:42:16 christos Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.386 2021/10/30 22:04:42 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.387 2021/10/31 16:42:16 christos Exp $");
 #endif
 
 #include <float.h>
@@ -1792,6 +1792,9 @@ check_enum_array_index(const tnode_t *ln, const tnode_t *rn)
 	if (rn->tn_left->tn_op != LOAD)
 		return;
 	if (rn->tn_left->tn_type->t_tspec != ENUM)
+		return;
+	// XXX: why?
+	if (rn->tn_type->t_enum == NULL)
 		return;
 
 	max_enum_value = INT_MIN;
