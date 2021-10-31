@@ -1,4 +1,4 @@
-/*      $NetBSD: vfp_init.c,v 1.75 2021/10/17 08:47:21 skrll Exp $ */
+/*      $NetBSD: vfp_init.c,v 1.76 2021/10/31 16:23:48 skrll Exp $ */
 
 /*
  * Copyright (c) 2008 ARM Ltd
@@ -32,7 +32,7 @@
 #include "opt_cputypes.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfp_init.c,v 1.75 2021/10/17 08:47:21 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfp_init.c,v 1.76 2021/10/31 16:23:48 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -169,24 +169,6 @@ uint32_t vfp_fpscr_changable = VFP_FPSCR_CSUM;
 /* default to run fast */
 uint32_t vfp_fpscr_default = (VFP_FPSCR_DN | VFP_FPSCR_FZ | VFP_FPSCR_RN);
 
-/*
- * Used to test for a VFP. The following function is installed as a coproc10
- * handler on the undefined instruction vector and then we issue a VFP
- * instruction. If undefined_test is non zero then the VFP did not handle
- * the instruction so must be absent, or disabled.
- */
-
-static int undefined_test;
-
-static int
-vfp_test(u_int address, u_int insn, trapframe_t *frame, int fault_code)
-{
-
-	frame->tf_pc += INSN_SIZE;
-	++undefined_test;
-	return 0;
-}
-
 #else
 /* determine what bits can be changed */
 uint32_t vfp_fpscr_changable = VFP_FPSCR_CSUM|VFP_FPSCR_ESUM|VFP_FPSCR_RMODE;
@@ -238,6 +220,12 @@ vfp_fpscr_handler(u_int address, u_int insn, trapframe_t *frame, int fault_code)
 }
 
 #ifndef FPU_VFP
+void
+vfp_detect(struct cpu_info *ci)
+{
+	ci->ci_vfp_id = 0;
+	return;
+}
 /*
  * If we don't want VFP support, we still need to handle emulating VFP FPSCR
  * instructions.
@@ -246,7 +234,7 @@ void
 vfp_attach(struct cpu_info *ci)
 {
 	if (CPU_IS_PRIMARY(ci)) {
-		install_coproc_handler(VFP_COPROC, vfp_fpscr_handler);
+		replace_coproc_handler(VFP_COPROC, vfp_fpscr_handler);
 	}
 	evcnt_attach_dynamic(&ci->ci_vfp_evs[0], EVCNT_TYPE_TRAP, NULL,
 	    ci->ci_cpuname, "vfp fpscr traps");
@@ -254,9 +242,8 @@ vfp_attach(struct cpu_info *ci)
 
 #else
 void
-vfp_attach(struct cpu_info *ci)
+vfp_detect(struct cpu_info *ci)
 {
-	const char *model = NULL;
 
 	if (CPU_ID_ARM11_P(ci->ci_arm_cpuid)
 	    || CPU_ID_MV88SV58XX_P(ci->ci_arm_cpuid)
@@ -265,14 +252,7 @@ vfp_attach(struct cpu_info *ci)
 		const uint32_t nsacr = armreg_nsacr_read();
 		const uint32_t nsacr_vfp = __BITS(VFP_COPROC,VFP_COPROC2);
 		if ((nsacr & nsacr_vfp) != nsacr_vfp) {
-			aprint_normal_dev(ci->ci_dev,
-			    "VFP access denied (NSACR=%#x)\n", nsacr);
-			if (CPU_IS_PRIMARY(ci))
-				install_coproc_handler(VFP_COPROC, vfp_fpscr_handler);
-			ci->ci_vfp_id = 0;
-			evcnt_attach_dynamic(&ci->ci_vfp_evs[0],
-			    EVCNT_TYPE_TRAP, NULL, ci->ci_cpuname,
-			    "vfp fpscr traps");
+			ci->ci_fp_id = 0;
 			return;
 		}
 #endif
@@ -296,36 +276,32 @@ vfp_attach(struct cpu_info *ci)
 		bool vfp_p = __SHIFTOUT(cpacr, cpacr_vfp2) == CPACR_ALL
 		    && __SHIFTOUT(cpacr, cpacr_vfp) == CPACR_ALL;
 		if (!vfp_p) {
-			aprint_normal_dev(ci->ci_dev,
-			    "VFP access denied (CPACR=%#x)\n", cpacr);
-			if (CPU_IS_PRIMARY(ci))
-				install_coproc_handler(VFP_COPROC, vfp_fpscr_handler);
 			ci->ci_vfp_id = 0;
-			evcnt_attach_dynamic(&ci->ci_vfp_evs[0],
-			    EVCNT_TYPE_TRAP, NULL, ci->ci_cpuname,
-			    "vfp fpscr traps");
 			return;
 		}
 	}
 
-	void *uh = install_coproc_handler(VFP_COPROC, vfp_test);
-
-	undefined_test = 0;
+	/* borrow the ci_vfd_id field for VFP detection */
+	ci->ci_vfp_id = -1;
 
 	const uint32_t fpsid = armreg_fpsid_read();
-
-	remove_coproc_handler(uh);
-
-	if (undefined_test != 0) {
-		aprint_normal_dev(ci->ci_dev, "No VFP detected\n");
-		if (CPU_IS_PRIMARY(ci))
-			install_coproc_handler(VFP_COPROC, vfp_fpscr_handler);
-		ci->ci_vfp_id = 0;
+	if (ci->ci_vfp_id == 0) {
 		return;
 	}
 
 	ci->ci_vfp_id = fpsid;
-	switch (fpsid & ~ VFP_FPSID_REV_MSK) {
+
+	ci->ci_mvfr[0] = armreg_mvfr0_read();
+	ci->ci_mvfr[1] = armreg_mvfr1_read();
+
+}
+
+void
+vfp_attach(struct cpu_info *ci)
+{
+	const char *model = NULL;
+
+	switch (ci->ci_vfp_id & ~ VFP_FPSID_REV_MSK) {
 	case FPU_VFP10_ARM10E:
 		model = "VFP10 R1";
 		break;
@@ -354,9 +330,9 @@ vfp_attach(struct cpu_info *ci)
 		break;
 	default:
 		aprint_normal_dev(ci->ci_dev, "unrecognized VFP version %#x\n",
-		    fpsid);
+		    ci->ci_vfp_id);
 		if (CPU_IS_PRIMARY(ci))
-			install_coproc_handler(VFP_COPROC, vfp_fpscr_handler);
+			replace_coproc_handler(VFP_COPROC, vfp_fpscr_handler);
 		vfp_fpscr_changable = VFP_FPSCR_CSUM|VFP_FPSCR_ESUM
 		    |VFP_FPSCR_RMODE;
 		vfp_fpscr_default = 0;
@@ -364,48 +340,43 @@ vfp_attach(struct cpu_info *ci)
 	}
 
 	cpu_fpu_present = 1;
-	cpu_media_and_vfp_features[0] = armreg_mvfr0_read();
-	cpu_media_and_vfp_features[1] = armreg_mvfr1_read();
-	if (fpsid != 0) {
-		uint32_t f0 = armreg_mvfr0_read();
-		uint32_t f1 = armreg_mvfr1_read();
-		aprint_normal("vfp%d at %s: %s%s%s%s%s\n",
-		    device_unit(ci->ci_dev),
-		    device_xname(ci->ci_dev),
-		    model,
-		    ((f0 & ARM_MVFR0_ROUNDING_MASK) ? ", rounding" : ""),
-		    ((f0 & ARM_MVFR0_EXCEPT_MASK) ? ", exceptions" : ""),
-		    ((f1 & ARM_MVFR1_D_NAN_MASK) ? ", NaN propagation" : ""),
-		    ((f1 & ARM_MVFR1_FTZ_MASK) ? ", denormals" : ""));
-		aprint_debug("vfp%d: mvfr: [0]=%#x [1]=%#x\n",
-		    device_unit(ci->ci_dev), f0, f1);
-		if (CPU_IS_PRIMARY(ci)) {
-			if (f0 & ARM_MVFR0_ROUNDING_MASK) {
-				vfp_fpscr_changable |= VFP_FPSCR_RMODE;
-			}
-			if (f1 & ARM_MVFR0_EXCEPT_MASK) {
-				vfp_fpscr_changable |= VFP_FPSCR_ESUM;
-			}
-			// If hardware supports propagation of NaNs, select it.
-			if (f1 & ARM_MVFR1_D_NAN_MASK) {
-				vfp_fpscr_default &= ~VFP_FPSCR_DN;
-				vfp_fpscr_changable |= VFP_FPSCR_DN;
-			}
-			// If hardware supports denormalized numbers, use it.
-			if (cpu_media_and_vfp_features[1] & ARM_MVFR1_FTZ_MASK) {
-				vfp_fpscr_default &= ~VFP_FPSCR_FZ;
-				vfp_fpscr_changable |= VFP_FPSCR_FZ;
-			}
-		}
-	}
-	evcnt_attach_dynamic(&ci->ci_vfp_evs[0], EVCNT_TYPE_MISC, NULL,
-	    ci->ci_cpuname, "vfp coproc use");
-	evcnt_attach_dynamic(&ci->ci_vfp_evs[1], EVCNT_TYPE_MISC, NULL,
-	    ci->ci_cpuname, "vfp coproc re-use");
-	evcnt_attach_dynamic(&ci->ci_vfp_evs[2], EVCNT_TYPE_TRAP, NULL,
-	    ci->ci_cpuname, "vfp coproc fault");
+
+	const uint32_t f0 = ci->ci_mvfr[0];
+	const uint32_t f1 = ci->ci_mvfr[1];
+	aprint_normal("vfp%d at %s: %s%s%s%s%s\n",
+	    device_unit(ci->ci_dev),
+	    device_xname(ci->ci_dev),
+	    model,
+	    ((f0 & ARM_MVFR0_ROUNDING_MASK) ? ", rounding" : ""),
+	    ((f0 & ARM_MVFR0_EXCEPT_MASK) ? ", exceptions" : ""),
+	    ((f1 & ARM_MVFR1_D_NAN_MASK) ? ", NaN propagation" : ""),
+	    ((f1 & ARM_MVFR1_FTZ_MASK) ? ", denormals" : ""));
+
+	aprint_debug("vfp%d: mvfr: [0]=%#x [1]=%#x\n",
+	    device_unit(ci->ci_dev), f0, f1);
+
 	if (CPU_IS_PRIMARY(ci)) {
-		install_coproc_handler(VFP_COPROC, vfp_handler);
+		cpu_media_and_vfp_features[0] = f0;
+		cpu_media_and_vfp_features[1] = f1;
+
+		if (f0 & ARM_MVFR0_ROUNDING_MASK) {
+			vfp_fpscr_changable |= VFP_FPSCR_RMODE;
+		}
+		if (f1 & ARM_MVFR0_EXCEPT_MASK) {
+			vfp_fpscr_changable |= VFP_FPSCR_ESUM;
+		}
+		// If hardware supports propagation of NaNs, select it.
+		if (f1 & ARM_MVFR1_D_NAN_MASK) {
+			vfp_fpscr_default &= ~VFP_FPSCR_DN;
+			vfp_fpscr_changable |= VFP_FPSCR_DN;
+		}
+		// If hardware supports denormalized numbers, use it.
+		if (f1 & ARM_MVFR1_FTZ_MASK) {
+			vfp_fpscr_default &= ~VFP_FPSCR_FZ;
+			vfp_fpscr_changable |= VFP_FPSCR_FZ;
+		}
+
+		replace_coproc_handler(VFP_COPROC, vfp_handler);
 		install_coproc_handler(VFP_COPROC2, vfp_handler);
 #ifdef CPU_CORTEX
 		if (cpu_neon_present) {
@@ -416,6 +387,13 @@ vfp_attach(struct cpu_info *ci)
 		}
 #endif
 	}
+
+	evcnt_attach_dynamic(&ci->ci_vfp_evs[0], EVCNT_TYPE_MISC, NULL,
+	    ci->ci_cpuname, "vfp coproc use");
+	evcnt_attach_dynamic(&ci->ci_vfp_evs[1], EVCNT_TYPE_MISC, NULL,
+	    ci->ci_cpuname, "vfp coproc re-use");
+	evcnt_attach_dynamic(&ci->ci_vfp_evs[2], EVCNT_TYPE_TRAP, NULL,
+	    ci->ci_cpuname, "vfp coproc fault");
 }
 
 /* The real handler for VFP bounces.  */

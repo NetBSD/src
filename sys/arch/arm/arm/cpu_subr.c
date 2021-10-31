@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_subr.c,v 1.3 2020/12/03 07:45:52 skrll Exp $	*/
+/*	$NetBSD: cpu_subr.c,v 1.4 2021/10/31 16:23:47 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.3 2020/12/03 07:45:52 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.4 2021/10/31 16:23:47 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -70,8 +70,6 @@ volatile u_long arm_cpu_hatched[howmany(MAXCPUS, CPUINDEX_DIVISOR)] __cacheline_
 volatile u_long arm_cpu_mbox[howmany(MAXCPUS, CPUINDEX_DIVISOR)] __cacheline_aligned = { 0 };
 u_int arm_cpu_max = 1;
 
-kmutex_t cpu_hatch_lock;
-
 void
 cpu_boot_secondary_processors(void)
 {
@@ -79,8 +77,6 @@ cpu_boot_secondary_processors(void)
 
 	if ((boothowto & RB_MD1) != 0)
 		return;
-
-	mutex_init(&cpu_hatch_lock, MUTEX_DEFAULT, IPL_NONE);
 
 	VPRINTF("%s: starting secondary processors\n", __func__);
 
@@ -127,6 +123,8 @@ cpu_set_hatched(int cpuindex)
 	const u_long bit = __BIT(cpuindex % CPUINDEX_DIVISOR);
 
 	atomic_or_ulong(&arm_cpu_hatched[off], bit);
+	dsb(ishst);
+	sev();
 }
 
 void
@@ -138,7 +136,6 @@ cpu_clr_mbox(int cpuindex)
 
 	/* Notify cpu_boot_secondary_processors that we're done */
 	atomic_and_ulong(&arm_cpu_mbox[off], ~bit);
-	membar_producer();
 	dsb(ishst);
 	sev();
 }

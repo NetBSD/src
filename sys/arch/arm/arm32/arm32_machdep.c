@@ -1,4 +1,4 @@
-/*	$NetBSD: arm32_machdep.c,v 1.140 2021/10/21 07:03:26 skrll Exp $	*/
+/*	$NetBSD: arm32_machdep.c,v 1.141 2021/10/31 16:23:47 skrll Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arm32_machdep.c,v 1.140 2021/10/21 07:03:26 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arm32_machdep.c,v 1.141 2021/10/31 16:23:47 skrll Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_arm_start.h"
@@ -783,12 +783,22 @@ cpu_init_secondary_processor(int cpuindex)
 	VPRINTS(" ci = ");
 	VPRINTX((int)ci);
 
+	ci->ci_ctrl = armreg_sctlr_read();
+	ci->ci_arm_cpuid = cpu_idnum();
+	ci->ci_arm_cputype = ci->ci_arm_cpuid & CPU_ID_CPU_MASK;
+	ci->ci_arm_cpurev = ci->ci_arm_cpuid & CPU_ID_REVISION_MASK;
+
 	ci->ci_midr = armreg_midr_read();
+	ci->ci_actlr = armreg_auxctl_read();
+	ci->ci_revidr = armreg_revidr_read();
 	ci->ci_mpidr = armreg_mpidr_read();
 
 	arm_cpu_topology_set(ci, ci->ci_mpidr);
 
-	VPRINTS(" hatched|=");
+	VPRINTS(" vfp");
+	vfp_detect(ci);
+
+	VPRINTS(" hatched |=");
 	VPRINTX(__BIT(cpuindex));
 	VPRINTS("\n\r");
 

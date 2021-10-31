@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.119 2021/08/14 17:51:18 ryo Exp $	*/
+/*	$NetBSD: cpu.h,v 1.120 2021/10/31 16:23:47 skrll Exp $	*/
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -56,8 +56,8 @@ typedef unsigned long mpidr_t;
 #ifdef MULTIPROCESSOR
 extern u_int arm_cpu_max;
 extern mpidr_t cpu_mpidr[];
-extern kmutex_t cpu_hatch_lock;
 
+void cpu_init_secondary_processor(int);
 void cpu_boot_secondary_processors(void);
 void cpu_mpstart(void);
 bool cpu_hatched_p(u_int);
@@ -155,6 +155,8 @@ static inline void cpu_dosoftints(void);
 #include <sys/cpu_data.h>
 #include <sys/device_if.h>
 #include <sys/evcnt.h>
+
+#include <arm/cpufunc.h>
 #include <machine/param.h>
 
 struct cpu_info {
@@ -219,10 +221,14 @@ struct cpu_info {
 	struct evcnt	ci_vfp_evs[3];
 
 	uint32_t	ci_midr;
+	uint32_t	ci_actlr;
+	uint32_t	ci_revidr;
 	uint32_t	ci_mpidr;
+	uint32_t	ci_mvfr[2];
+
 	uint32_t	ci_capacity_dmips_mhz;
 
-	struct arm_cache_info *
+	struct arm_cache_info
 			ci_cacheinfo;
 
 #if defined(GPROF) && defined(MULTIPROCESSOR)
@@ -295,10 +301,6 @@ extern struct cpu_info *cpu_info[];
 #define CPU_IS_PRIMARY(ci)	true
 #define CPU_INFO_FOREACH(cii, ci)			\
 	cii = 0, __USE(cii), ci = curcpu(); ci != NULL; ci = NULL
-#endif
-
-#if defined(MULTIPROCESSOR)
-void cpu_init_secondary_processor(int);
 #endif
 
 #define	LWP0_CPU_INFO	(&cpu_info_store[0])

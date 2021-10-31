@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.h,v 1.36 2021/02/01 19:31:34 skrll Exp $	*/
+/*	$NetBSD: locore.h,v 1.37 2021/10/31 16:23:47 skrll Exp $	*/
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -264,6 +264,7 @@ int	badaddr_read(void *, size_t, void *);
 void	swi_handler(trapframe_t *);
 
 /* vfp_init.c */
+void	vfp_detect(struct cpu_info *);
 void	vfp_attach(struct cpu_info *);
 void	vfp_discardcontext(lwp_t *, bool);
 void	vfp_savecontext(lwp_t *);

@@ -1,4 +1,4 @@
-/*	$NetBSD: pic.c,v 1.72 2021/09/26 13:38:49 jmcneill Exp $	*/
+/*	$NetBSD: pic.c,v 1.73 2021/10/31 16:23:48 skrll Exp $	*/
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -33,7 +33,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pic.c,v 1.72 2021/09/26 13:38:49 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pic.c,v 1.73 2021/10/31 16:23:48 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -790,7 +790,7 @@ pic_establish_intr(struct pic_softc *pic, int irq, int ipl, int type,
 	(*pic->pic_ops->pic_establish_irq)(pic, is);
 
 unblock:
-	if (cold || !is->is_mpsafe) {
+	if (!mp_online || !is->is_mpsafe) {
 		(*pic->pic_ops->pic_unblock_irqs)(pic, is->is_irq & ~0x1f,
 		    __BIT(is->is_irq & 0x1f));
 	} else {
