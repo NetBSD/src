@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.388 2021/10/31 23:15:44 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.389 2021/11/01 11:46:50 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.388 2021/10/31 23:15:44 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.389 2021/11/01 11:46:50 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -1776,8 +1776,9 @@ check_enum_int_mismatch(op_t op, int arg, const tnode_t *ln, const tnode_t *rn)
 static void
 check_enum_array_index(const tnode_t *ln, const tnode_t *rn)
 {
-	int max_enum_value, max_array_index;
-	const struct sym *ec;
+	int max_array_index;
+	int64_t max_enum_value;
+	const struct sym *ec, *max_ec;
 
 	if (ln->tn_op != ADDR)
 		return;
@@ -1794,22 +1795,34 @@ check_enum_array_index(const tnode_t *ln, const tnode_t *rn)
 	if (rn->tn_left->tn_type->t_tspec != ENUM)
 		return;
 
-	max_enum_value = INT_MIN;
 	ec = rn->tn_left->tn_type->t_enum->en_first_enumerator;
-	for (; ec != NULL; ec = ec->s_next) {
-		int64_t ev = ec->s_value.v_quad;
-		lint_assert(INT_MIN <= ev && ev <= INT_MAX);
-		if (ev > max_enum_value)
-			max_enum_value = (int)ev;
-	}
+	max_ec = ec;
+	lint_assert(ec != NULL);
+	for (ec = ec->s_next; ec != NULL; ec = ec->s_next)
+		if (ec->s_value.v_quad > max_ec->s_value.v_quad)
+			max_ec = ec;
+
+	max_enum_value = max_ec->s_value.v_quad;
+	lint_assert(INT_MIN <= max_enum_value && max_enum_value <= INT_MAX);
 
 	max_array_index = ln->tn_left->tn_type->t_dim - 1;
 	if (max_enum_value == max_array_index)
 		return;
 
+	/*
+	 * If the largest enum constant is named '*_NUM_*', it is typically
+	 * not part of the allowed enum values but a marker for the number
+	 * of actual enum values.
+	 */
+	if (max_enum_value == max_array_index + 1 &&
+	    (strstr(max_ec->s_name, "NUM") != NULL ||
+	     strstr(max_ec->s_name, "num") != NULL))
+		return;
+
 	/* maximum value %d of '%s' does not match maximum array index %d */
-	warning(348, max_enum_value, type_name(rn->tn_left->tn_type),
+	warning(348, (int)max_enum_value, type_name(rn->tn_left->tn_type),
 	    max_array_index);
+	print_previous_declaration(-1, max_ec);
 }
 
 /*
