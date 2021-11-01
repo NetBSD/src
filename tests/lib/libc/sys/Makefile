@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.69 2021/09/19 15:51:28 thorpej Exp $
+# $NetBSD: Makefile,v 1.70 2021/11/01 14:33:41 hannken Exp $
 
 MKMAN=	no
 
@@ -116,6 +116,8 @@ LDADD.t_posix_fadvise+= ${LIBRUMPBASE}
 
 CPPFLAGS.t_futex_ops.c		+= -I${.CURDIR}/../../../../lib
 CPPFLAGS.t_futex_robust.c	+= -I${.CURDIR}/../../../../lib
+
+CPPFLAGS.t_timerfd.c		+= -I${.CURDIR}/../gen
 
 CPPFLAGS.t_lwp_create.c		+= -D_KERNTYPES
 CPPFLAGS.t_ptrace_sigchld.c	+= -D__TEST_FENV

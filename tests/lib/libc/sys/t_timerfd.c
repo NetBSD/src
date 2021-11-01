@@ -1,4 +1,4 @@
-/* $NetBSD: t_timerfd.c,v 1.2 2021/09/19 15:51:28 thorpej Exp $ */
+/* $NetBSD: t_timerfd.c,v 1.3 2021/11/01 14:33:41 hannken Exp $ */
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2020\
  The NetBSD Foundation, inc. All rights reserved.");
-__RCSID("$NetBSD: t_timerfd.c,v 1.2 2021/09/19 15:51:28 thorpej Exp $");
+__RCSID("$NetBSD: t_timerfd.c,v 1.3 2021/11/01 14:33:41 hannken Exp $");
 
 #include <sys/types.h>
 #include <sys/event.h>
@@ -46,6 +46,8 @@ __RCSID("$NetBSD: t_timerfd.c,v 1.2 2021/09/19 15:51:28 thorpej Exp $");
 #include <unistd.h>
 
 #include <atf-c.h>
+
+#include "isqemu.h"
 
 struct helper_context {
 	int	fd;
@@ -68,6 +70,26 @@ wait_barrier(struct helper_context * const ctx)
 	int rv = pthread_barrier_wait(&ctx->barrier);
 
 	return rv == 0 || rv == PTHREAD_BARRIER_SERIAL_THREAD;
+}
+
+static bool
+check_value_against_bounds(uint64_t value, uint64_t lower, uint64_t upper)
+{
+
+	/*
+	 * If running under QEMU make sure the upper bound is large
+	 * enough for the effect of kern/43997
+	 */
+	if (isQEMU()) {
+		upper *= 4;
+	}
+
+	if (value < lower || value > upper) {
+		printf("val %" PRIu64 " not in [ %" PRIu64 ", %" PRIu64 " ]\n",
+		    value, lower, upper);
+	}
+
+	return value >= lower && value <= upper;
 }
 
 /*****************************************************************************/
@@ -169,10 +191,10 @@ ATF_TC_BODY(timerfd_block, tc)
 	ATF_REQUIRE(timerfd_settime(fd, 0, &its, NULL) == 0);
 	ATF_REQUIRE(timerfd_read(fd, &val) == 0);
 	ATF_REQUIRE(clock_gettime(CLOCK_MONOTONIC, &now) == 0);
-	ATF_REQUIRE(val == 1);
+	ATF_REQUIRE(check_value_against_bounds(val, 1, 1));
 
 	timespecsub(&now, &then, &delta);
-	ATF_REQUIRE(delta.tv_sec == 1);
+	ATF_REQUIRE(check_value_against_bounds(delta.tv_sec, 1, 1));
 
 	(void) close(fd);
 }
@@ -203,10 +225,11 @@ ATF_TC_BODY(timerfd_repeating, tc)
 	ATF_REQUIRE(sleep(1) == 0);
 	ATF_REQUIRE(clock_gettime(CLOCK_MONOTONIC, &now) == 0);
 	ATF_REQUIRE(timerfd_read(fd, &val) == 0);
-	ATF_REQUIRE(val >= 3 && val <= 5);	/* allow some slop */
+	/* allow some slop */
+	ATF_REQUIRE(check_value_against_bounds(val, 3, 5));
 
 	timespecsub(&now, &then, &delta);
-	ATF_REQUIRE(delta.tv_sec == 1);
+	ATF_REQUIRE(check_value_against_bounds(delta.tv_sec, 1, 1));
 
 	(void) close(fd);
 }
@@ -237,10 +260,10 @@ ATF_TC_BODY(timerfd_abstime, tc)
 	ATF_REQUIRE(timerfd_settime(fd, TFD_TIMER_ABSTIME, &its, NULL) == 0);
 	ATF_REQUIRE(timerfd_read(fd, &val) == 0);
 	ATF_REQUIRE(clock_gettime(CLOCK_MONOTONIC, &now) == 0);
-	ATF_REQUIRE(val == 1);
+	ATF_REQUIRE(check_value_against_bounds(val, 1, 1));
 
 	timespecsub(&now, &then, &delta);
-	ATF_REQUIRE(delta.tv_sec == 1);
+	ATF_REQUIRE(check_value_against_bounds(delta.tv_sec, 1, 1));
 
 	(void) close(fd);
 }
