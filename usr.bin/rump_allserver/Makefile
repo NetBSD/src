@@ -1,8 +1,10 @@
-#	$NetBSD: Makefile,v 1.14 2021/07/07 11:51:45 martin Exp $
+#	$NetBSD: Makefile,v 1.15 2021/11/01 21:37:33 nia Exp $
 #
 
 PROG=	rump_allserver
 MLINKS+=rump_allserver.1 rump_server.1
+
+NOFULLRELRO=	yes
 
 RUMPTOP=${.CURDIR}/../../sys/rump
 

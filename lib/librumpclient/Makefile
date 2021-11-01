@@ -1,5 +1,7 @@
-#	$NetBSD: Makefile,v 1.15 2019/10/13 07:28:11 mrg Exp $
+#	$NetBSD: Makefile,v 1.16 2021/11/01 21:37:32 nia Exp $
 #
+
+NOFULLRELRO=	yes
 
 .PATH:	${.CURDIR}/../../sys/rump/librump/rumpkern
 

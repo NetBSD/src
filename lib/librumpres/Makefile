@@ -1,7 +1,8 @@
-# $NetBSD: Makefile,v 1.2 2019/10/13 07:28:11 mrg Exp $
+# $NetBSD: Makefile,v 1.3 2021/11/01 21:37:33 nia Exp $
 
 USE_FORT?=	yes
 USE_SHLIBDIR=   yes
+NOFULLRELRO=	yes
 
 .include <bsd.own.mk>
 

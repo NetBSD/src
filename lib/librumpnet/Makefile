@@ -1,5 +1,7 @@
-#	$NetBSD: Makefile,v 1.2 2009/02/12 13:20:17 lukem Exp $
+#	$NetBSD: Makefile,v 1.3 2021/11/01 21:37:33 nia Exp $
 #
+
+NOFULLRELRO=	yes
 
 RUMPTOP=	${.CURDIR}/../../sys/rump
 
