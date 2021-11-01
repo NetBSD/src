@@ -1,4 +1,4 @@
-/* $NetBSD: systrace_args.c,v 1.48 2021/09/19 15:52:04 thorpej Exp $ */
+/* $NetBSD: systrace_args.c,v 1.49 2021/11/01 05:26:27 thorpej Exp $ */
 
 /*
  * System call argument to DTrace register array conversion.
@@ -2094,8 +2094,8 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 	/* sys___sigaltstack14 */
 	case 281: {
 		const struct sys___sigaltstack14_args *p = params;
-		uarg[0] = (intptr_t) SCARG(p, nss); /* const struct sigaltstack * */
-		uarg[1] = (intptr_t) SCARG(p, oss); /* struct sigaltstack * */
+		uarg[0] = (intptr_t) SCARG(p, nss); /* const stack_t * */
+		uarg[1] = (intptr_t) SCARG(p, oss); /* stack_t * */
 		*n_args = 2;
 		break;
 	}
@@ -7345,10 +7345,10 @@ systrace_entry_setargdesc(int sysnum, int ndx, char *desc, size_t descsz)
 	case 281:
 		switch(ndx) {
 		case 0:
-			p = "const struct sigaltstack *";
+			p = "const stack_t *";
 			break;
 		case 1:
-			p = "struct sigaltstack *";
+			p = "stack_t *";
 			break;
 		default:
 			break;
