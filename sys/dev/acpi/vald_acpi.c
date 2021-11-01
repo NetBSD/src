@@ -1,4 +1,4 @@
-/*	$NetBSD: vald_acpi.c,v 1.6 2021/01/29 15:49:55 thorpej Exp $ */
+/*	$NetBSD: vald_acpi.c,v 1.7 2021/11/01 21:28:03 andvar Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vald_acpi.c,v 1.6 2021/01/29 15:49:55 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vald_acpi.c,v 1.7 2021/11/01 21:28:03 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -546,7 +546,7 @@ vald_acpi_libright_set(struct vald_acpi_softc *sc, int UpDown)
 
 	/* Check index value. */
 	if (sc->lcd_index < 2)
-		sc->lcd_index = 2; /* index Minium Value */
+		sc->lcd_index = 2; /* index Minimum Value */
 	if (sc->lcd_index >= sc->lcd_num)
 		sc->lcd_index = sc->lcd_num - 1;
 

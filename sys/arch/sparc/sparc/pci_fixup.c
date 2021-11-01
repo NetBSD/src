@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_fixup.c,v 1.4 2021/01/24 07:36:54 mrg Exp $	*/
+/*	$NetBSD: pci_fixup.c,v 1.5 2021/11/01 21:28:02 andvar Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -101,7 +101,7 @@ mspcic_pci_scan(int root)
 	/*
 	 * Scan our known PCI devices and collect:
 	 *   maximum bus number
-	 *   maxium used address in each I/O and memory range
+	 *   maximum used address in each I/O and memory range
 	 */
 	while(node) {
 		uint32_t busrange[2];

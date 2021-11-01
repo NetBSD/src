@@ -1,4 +1,4 @@
-/*	$NetBSD: dst_api.c,v 1.5 2021/10/04 21:02:40 andvar Exp $	*/
+/*	$NetBSD: dst_api.c,v 1.6 2021/11/01 21:28:02 andvar Exp $	*/
 
 /*
  * Portions Copyright (c) 1995-1998 by Trusted Information Systems, Inc.
@@ -40,7 +40,7 @@
 #if 0
 static const char rcsid[] = "Header: /proj/cvs/prod/libbind/dst/dst_api.c,v 1.17 2007/09/24 17:18:25 each Exp ";
 #else
-__RCSID("$NetBSD: dst_api.c,v 1.5 2021/10/04 21:02:40 andvar Exp $");
+__RCSID("$NetBSD: dst_api.c,v 1.6 2021/11/01 21:28:02 andvar Exp $");
 #endif
 
 
@@ -1030,7 +1030,7 @@ dst_free_key(DST_KEY *f_key)
 }
 
 /*%
- *	Return the maximim size of signature from the key specified in bytes
+ *	Return the maximum size of signature from the key specified in bytes
  *
  * Parameters
  *\li      key 

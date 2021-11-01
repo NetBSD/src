@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_cache.c,v 1.151 2021/09/21 14:56:08 christos Exp $	*/
+/*	$NetBSD: vfs_cache.c,v 1.152 2021/11/01 21:28:03 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2019, 2020 The NetBSD Foundation, Inc.
@@ -172,7 +172,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_cache.c,v 1.151 2021/09/21 14:56:08 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_cache.c,v 1.152 2021/11/01 21:28:03 andvar Exp $");
 
 #define __NAMECACHE_PRIVATE
 #ifdef _KERNEL_OPT
@@ -1372,7 +1372,7 @@ cache_reclaim(void)
 	int toscan;
 
 	/*
-	 * Scan up to a preset maxium number of entries, but no more than
+	 * Scan up to a preset maximum number of entries, but no more than
 	 * 0.8% of the total at once (to allow for very small systems).
 	 *
 	 * On bigger systems, do a larger chunk of work to reduce the number

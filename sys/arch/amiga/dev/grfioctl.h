@@ -1,4 +1,4 @@
-/*	$NetBSD: grfioctl.h,v 1.21 2015/09/07 03:49:45 dholland Exp $	*/
+/*	$NetBSD: grfioctl.h,v 1.22 2021/11/01 21:28:02 andvar Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -141,7 +141,7 @@ struct grfvideo_mode {
  * colormap related information. Every grf has an associated
  * colormap. Depending on the capabilities of the hardware, more
  * or less of the information provided may be used.
- * Maxium value of "index" can be deduced from grfinfo->gd_colors.
+ * Maximum value of "index" can be deduced from grfinfo->gd_colors.
  */
 struct grf_colormap {
 	unsigned int	index;		/* start at red[index],green[index],blue[index] */
