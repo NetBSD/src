@@ -1,7 +1,9 @@
-#	$NetBSD: Makefile.xf86-driver,v 1.28 2021/05/31 21:45:41 joerg Exp $
+#	$NetBSD: Makefile.xf86-driver,v 1.29 2021/11/01 10:05:18 nia Exp $
 
 LIBISMODULE=	yes
 SHLIB_MAJOR=	${PACKAGE_MAJOR}
+
+NOFULLRELRO=	yes
 
 .include <bsd.own.mk>
 .include <bsd.x11.mk>
