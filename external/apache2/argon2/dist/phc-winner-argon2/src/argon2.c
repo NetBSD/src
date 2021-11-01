@@ -283,7 +283,7 @@ int argon2_verify(const char *encoded, const void *pwd, const size_t pwdlen,
         goto fail;
     }
 
-    ctx.pwd = (uint8_t *)pwd;
+    ctx.pwd = __UNCONST(pwd);
     ctx.pwdlen = (uint32_t)pwdlen;
 
     ret = decode_string(&ctx, encoded, type);
@@ -346,7 +346,7 @@ int argon2_verify_ctx(argon2_context *context, const char *hash,
         return ret;
     }
 
-    if (argon2_compare((uint8_t *)hash, context->out, context->outlen)) {
+    if (argon2_compare((const uint8_t *)hash, context->out, context->outlen)) {
         return ARGON2_VERIFY_MISMATCH;
     }
 
