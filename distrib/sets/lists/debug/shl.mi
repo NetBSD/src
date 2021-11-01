@@ -1,10 +1,10 @@
-# $NetBSD: shl.mi,v 1.286 2021/10/16 07:01:03 skrll Exp $
+# $NetBSD: shl.mi,v 1.287 2021/11/01 05:53:45 thorpej Exp $
 ./usr/lib/libbfd_g.a						comp-c-debuglib	debuglib,compatfile,binutils
 ./usr/libdata/debug/lib						base-sys-usr	debug,dynamicroot,compatdir
 ./usr/libdata/debug/lib/libavl.so.0.0.debug			comp-zfs-debug	debug,dynamicroot,zfs
 ./usr/libdata/debug/lib/libblacklist.so.0.0.debug		comp-obsolete	obsolete,compatfile
 ./usr/libdata/debug/lib/libblocklist.so.0.0.debug		comp-sys-debug	debug,dynamicroot
-./usr/libdata/debug/lib/libc.so.12.219.debug			comp-sys-debug	debug,dynamicroot
+./usr/libdata/debug/lib/libc.so.12.220.debug			comp-sys-debug	debug,dynamicroot
 ./usr/libdata/debug/lib/libcrypt.so.1.0.debug			comp-sys-debug	debug,dynamicroot
 ./usr/libdata/debug/lib/libcrypto.so.12.0.debug			comp-sys-debug	debug,dynamicroot,openssl=10
 ./usr/libdata/debug/lib/libcrypto.so.14.0.debug			comp-sys-debug	debug,dynamicroot,openssl=11
@@ -84,7 +84,7 @@
 ./usr/libdata/debug/usr/lib/libbsdmalloc.so.0.0.debug		comp-sys-debug	debug,compatfile
 ./usr/libdata/debug/usr/lib/libbz2.so.1.1.debug			comp-sys-debug	debug,compatfile
 ./usr/libdata/debug/usr/lib/libc++.so.1.0.debug			comp-sys-debug	debug,compatfile,libcxx
-./usr/libdata/debug/usr/lib/libc.so.12.219.debug		comp-sys-debug	debug,compatfile
+./usr/libdata/debug/usr/lib/libc.so.12.220.debug		comp-sys-debug	debug,compatfile
 ./usr/libdata/debug/usr/lib/libcbor.so.0.5.debug		comp-sys-debug	debug,compatfile
 ./usr/libdata/debug/usr/lib/libcom_err.so.8.0.debug		comp-krb5-debug	debug,compatfile,kerberos
 ./usr/libdata/debug/usr/lib/libcrypt.so.1.0.debug		comp-sys-debug	debug,compatfile
