@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_signal.c,v 1.87 2021/10/27 16:40:05 thorpej Exp $	*/
+/*	$NetBSD: linux_signal.c,v 1.88 2021/11/01 05:07:16 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_signal.c,v 1.87 2021/10/27 16:40:05 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_signal.c,v 1.88 2021/11/01 05:07:16 thorpej Exp $");
 
 #define COMPAT_LINUX 1
 
@@ -678,11 +678,11 @@ linux_sys_kill(struct lwp *l, const struct linux_sys_kill_args *uap, register_t 
 }
 
 #ifdef LINUX_SS_ONSTACK
-static void linux_to_native_sigaltstack(struct sigaltstack *,
+static void linux_to_native_sigaltstack(stack_t *,
     const struct linux_sigaltstack *);
 
 static void
-linux_to_native_sigaltstack(struct sigaltstack *bss, const struct linux_sigaltstack *lss)
+linux_to_native_sigaltstack(stack_t *bss, const struct linux_sigaltstack *lss)
 {
 	bss->ss_sp = lss->ss_sp;
 	bss->ss_size = lss->ss_size;
@@ -695,7 +695,7 @@ linux_to_native_sigaltstack(struct sigaltstack *bss, const struct linux_sigaltst
 }
 
 void
-native_to_linux_sigaltstack(struct linux_sigaltstack *lss, const struct sigaltstack *bss)
+native_to_linux_sigaltstack(struct linux_sigaltstack *lss, const stack_t *bss)
 {
 	memset(lss, 0, sizeof(*lss));
 	lss->ss_sp = bss->ss_sp;
@@ -716,7 +716,7 @@ linux_sys_sigaltstack(struct lwp *l, const struct linux_sys_sigaltstack_args *ua
 		syscallarg(struct linux_sigaltstack *) oss;
 	} */
 	struct linux_sigaltstack ss;
-	struct sigaltstack nss;
+	stack_t nss;
 	struct proc *p = l->l_proc;
 	int error = 0;
 

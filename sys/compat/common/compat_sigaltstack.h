@@ -1,4 +1,4 @@
-/*      $NetBSD: compat_sigaltstack.h,v 1.3 2011/06/05 09:37:10 dsl Exp $        */
+/*      $NetBSD: compat_sigaltstack.h,v 1.4 2021/11/01 05:07:16 thorpej Exp $        */
 
 /* Wrapper for calling sigaltstack1() from compat (or other) code */
 
@@ -17,7 +17,7 @@
 
 #define compat_sigaltstack(uap, compat_ss, ss_onstack, ss_disable) do { \
 	struct compat_ss css; \
-	struct sigaltstack nss, oss; \
+	stack_t nss, oss; \
 	int error; \
 \
 	if (SCARG_COMPAT_PTR(uap, nss)) { \

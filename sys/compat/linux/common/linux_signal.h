@@ -1,4 +1,4 @@
-/* 	$NetBSD: linux_signal.h,v 1.33 2021/09/23 06:56:27 ryo Exp $	*/
+/* 	$NetBSD: linux_signal.h,v 1.34 2021/11/01 05:07:16 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -102,8 +102,7 @@ void linux_to_native_sigaction(struct sigaction *,
 void native_to_linux_sigaction(struct linux_sigaction *,
     const struct sigaction *);
 
-void native_to_linux_sigaltstack(struct linux_sigaltstack *,
-    const struct sigaltstack *);
+void native_to_linux_sigaltstack(struct linux_sigaltstack *, const stack_t *);
 
 int native_to_linux_si_code(int);
 int native_to_linux_si_status(int, int);

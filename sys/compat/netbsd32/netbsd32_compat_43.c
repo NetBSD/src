@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_compat_43.c,v 1.62 2021/09/07 11:43:05 riastradh Exp $	*/
+/*	$NetBSD: netbsd32_compat_43.c,v 1.63 2021/11/01 05:07:16 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_43.c,v 1.62 2021/09/07 11:43:05 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_43.c,v 1.63 2021/11/01 05:07:16 thorpej Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_43.h"
@@ -688,7 +688,7 @@ compat_43_netbsd32_osigstack(struct lwp *l, const struct compat_43_netbsd32_osig
 		syscallarg(netbsd32_sigstackp_t) oss;
 	} */
 	struct netbsd32_sigstack ss32;
-	struct sigaltstack nsa, osa;
+	stack_t nsa, osa;
 	int error;
 
 	if (SCARG_P32(uap, nss)) {

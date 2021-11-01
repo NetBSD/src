@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.308 2021/09/19 15:51:27 thorpej Exp $
+	$NetBSD: syscalls.master,v 1.309 2021/11/01 05:07:17 thorpej Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
 
@@ -591,9 +591,8 @@
 		{ int|sys|13|fstat(int fd, struct stat13 *sb); }
 280	COMPAT_30 MODULAR compat_30	\
 		{ int|sys|13|lstat(const char *path, struct stat13 *ub); }
-281	STD		{ int|sys|14|sigaltstack( \
-			    const struct sigaltstack *nss, \
-			    struct sigaltstack *oss); }
+281	STD		{ int|sys|14|sigaltstack(const stack_t *nss, \
+			    stack_t *oss); }
 282	STD		{ int|sys|14|vfork(void); }
 283	STD	RUMP	{ int|sys||__posix_chown(const char *path, uid_t uid, \
 			    gid_t gid); }

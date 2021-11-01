@@ -1,4 +1,4 @@
-/*	$NetBSD: sh3_machdep.c,v 1.110 2020/06/11 19:20:45 ad Exp $	*/
+/*	$NetBSD: sh3_machdep.c,v 1.111 2021/11/01 05:07:16 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2002 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sh3_machdep.c,v 1.110 2020/06/11 19:20:45 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sh3_machdep.c,v 1.111 2021/11/01 05:07:16 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -334,7 +334,7 @@ void *
 getframe(const struct lwp *l, int sig, int *onstack)
 {
 	const struct proc *p = l->l_proc;
-	const struct sigaltstack *sigstk= &l->l_sigstk;
+	const stack_t *sigstk = &l->l_sigstk;
 
 	/* Do we need to jump onto the signal stack? */
 	*onstack = (sigstk->ss_flags & (SS_DISABLE | SS_ONSTACK)) == 0
