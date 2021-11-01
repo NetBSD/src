@@ -1,5 +1,7 @@
-#	$NetBSD: Makefile,v 1.22 2019/09/16 00:00:56 kamil Exp $
+#	$NetBSD: Makefile,v 1.23 2021/11/01 21:37:33 nia Exp $
 #
+
+NOFULLRELRO=	yes
 
 LIB=		rumphijack
 NOSTATICLIB=	dlfun
