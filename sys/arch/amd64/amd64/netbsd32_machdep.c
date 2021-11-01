@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep.c,v 1.138 2021/10/27 04:14:59 thorpej Exp $	*/
+/*	$NetBSD: netbsd32_machdep.c,v 1.139 2021/11/01 05:07:15 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.138 2021/10/27 04:14:59 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.139 2021/11/01 05:07:15 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -218,7 +218,7 @@ netbsd32_sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
 	const struct sigaction *sa = &SIGACTION(p, sig);
 	sig_t catcher = sa->sa_handler;
 	struct trapframe *tf = l->l_md.md_regs;
-	struct sigaltstack * const ss = &l->l_sigstk;
+	stack_t * const ss = &l->l_sigstk;
 
 	/* Do we need to jump onto the signal stack? */
 	onstack =

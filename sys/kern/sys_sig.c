@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_sig.c,v 1.53 2021/10/27 04:45:42 thorpej Exp $	*/
+/*	$NetBSD: sys_sig.c,v 1.54 2021/11/01 05:07:17 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_sig.c,v 1.53 2021/10/27 04:45:42 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_sig.c,v 1.54 2021/11/01 05:07:17 thorpej Exp $");
 
 #include "opt_dtrace.h"
 
@@ -200,8 +200,8 @@ sys___sigaltstack14(struct lwp *l, const struct sys___sigaltstack14_args *uap,
 		syscallarg(const struct sigaltstack *)	nss;
 		syscallarg(struct sigaltstack *)	oss;
 	} */
-	struct sigaltstack	nss, oss;
-	int			error;
+	stack_t	nss, oss;
+	int	error;
 
 	if (SCARG(uap, nss)) {
 		error = copyin(SCARG(uap, nss), &nss, sizeof(nss));
@@ -691,8 +691,7 @@ sigsuspend1(struct lwp *l, const sigset_t *ss)
 }
 
 int
-sigaltstack1(struct lwp *l, const struct sigaltstack *nss,
-    struct sigaltstack *oss)
+sigaltstack1(struct lwp *l, const stack_t *nss, stack_t *oss)
 {
 	struct proc *p = l->l_proc;
 	int error = 0;

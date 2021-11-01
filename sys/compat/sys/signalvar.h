@@ -1,4 +1,4 @@
-/*	$NetBSD: signalvar.h,v 1.2 2005/12/11 12:20:29 christos Exp $	*/
+/*	$NetBSD: signalvar.h,v 1.3 2021/11/01 05:07:17 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -45,8 +45,8 @@ void	native_sigaction13_to_sigaction(const struct sigaction13 *,
 void	native_sigaction_to_sigaction13(const struct sigaction *,
 	    struct sigaction13 *);
 void	native_sigaltstack13_to_sigaltstack(const struct sigaltstack13 *,
-	    struct sigaltstack *);
-void	native_sigaltstack_to_sigaltstack13(const struct sigaltstack *,
+	    stack_t *);
+void	native_sigaltstack_to_sigaltstack13(const stack_t *,
 	    struct sigaltstack13 *);
 #endif	/* _KERNEL */
 
