@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_348.c,v 1.3 2021/11/01 11:46:50 rillig Exp $	*/
+/*	$NetBSD: msg_348.c,v 1.4 2021/11/01 18:11:26 rillig Exp $	*/
 # 3 "msg_348.c"
 
 // Test for message 348: maximum value %d of '%s' does not match maximum array index %d [348]
@@ -8,7 +8,6 @@
 enum color {
 	red,
 	green,
-	/* expect+3: previous declaration of blue [260] */
 	/* expect+2: previous declaration of blue [260] */
 	/* expect+1: previous declaration of blue [260] */
 	blue
@@ -83,7 +82,7 @@ color_name_explicit_cast_to_int(enum color color)
 	    "red",
 	    "green",
 	};
-	/* expect+1: warning: maximum value 2 of 'enum color' does not match maximum array index 1 [348] */
+	/* No warning due to the explicit cast. */
 	return name[(int)color];
 }
 
