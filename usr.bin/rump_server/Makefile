@@ -1,5 +1,7 @@
-#	$NetBSD: Makefile,v 1.16 2021/08/22 22:24:12 rillig Exp $
+#	$NetBSD: Makefile,v 1.17 2021/11/01 21:37:33 nia Exp $
 #
+
+NOFULLRELRO=	yes
 
 .PATH: ${.CURDIR}/../rump_allserver
 
