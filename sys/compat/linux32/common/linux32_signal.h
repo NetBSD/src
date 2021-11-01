@@ -1,4 +1,4 @@
-/* $NetBSD: linux32_signal.h,v 1.3 2011/11/18 04:08:56 christos Exp $ */
+/* $NetBSD: linux32_signal.h,v 1.4 2021/11/01 05:07:16 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2006 Emmanuel Dreyfus, all rights reserved.
@@ -47,7 +47,7 @@ void linux32_to_native_sigaction(struct sigaction *,
 void native_to_linux32_sigaction(struct linux32_sigaction *, 
 	const struct sigaction *);
 void native_to_linux32_sigaltstack(struct linux32_sigaltstack *,
-    const struct sigaltstack *);
+    const stack_t *);
 void native_to_linux32_old_sigset(linux32_old_sigset_t *, const sigset_t *);
 void linux32_old_extra_to_native_sigset(sigset_t *,
     const linux32_old_sigset_t *, const unsigned long *);

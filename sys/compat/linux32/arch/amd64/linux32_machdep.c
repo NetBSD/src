@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_machdep.c,v 1.46 2021/09/07 11:43:04 riastradh Exp $ */
+/*	$NetBSD: linux32_machdep.c,v 1.47 2021/11/01 05:07:16 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2006 Emmanuel Dreyfus, all rights reserved.
@@ -31,7 +31,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux32_machdep.c,v 1.46 2021/09/07 11:43:04 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_machdep.c,v 1.47 2021/11/01 05:07:16 thorpej Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_user_ldt.h"
@@ -79,7 +79,7 @@ extern char linux32_rt_sigcode[];
 extern char linux32_esigcode[];
 
 static void linux32_save_ucontext(struct lwp *, struct trapframe *,
-    const sigset_t *, struct sigaltstack *, struct linux32_ucontext *);
+    const sigset_t *, stack_t *, struct linux32_ucontext *);
 static void linux32_save_sigcontext(struct lwp *, struct trapframe *,
     const sigset_t *, struct linux32_sigcontext *);
 static void linux32_rt_sendsig(const ksiginfo_t *, const sigset_t *);
@@ -107,7 +107,7 @@ linux32_old_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 	int onstack, error;
 	int sig = ksi->ksi_signo;
 	sig_t catcher = SIGACTION(p, sig).sa_handler;
-	struct sigaltstack *sas = &l->l_sigstk;
+	stack_t *sas = &l->l_sigstk;
 
 	tf = l->l_md.md_regs;
 	/* Do we need to jump onto the signal stack? */
@@ -178,7 +178,7 @@ linux32_rt_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 	linux32_siginfo_t *lsi;
 	int sig = ksi->ksi_signo;
 	sig_t catcher = SIGACTION(p, sig).sa_handler;
-	struct sigaltstack *sas = &l->l_sigstk;
+	stack_t *sas = &l->l_sigstk;
 
 	tf = l->l_md.md_regs;
 	/* Do we need to jump onto the signal stack? */
@@ -325,7 +325,7 @@ linux32_setregs(struct lwp *l, struct exec_package *pack, u_long stack)
 
 static void
 linux32_save_ucontext(struct lwp *l, struct trapframe *tf,
-    const sigset_t *mask, struct sigaltstack *sas, struct linux32_ucontext *uc)
+    const sigset_t *mask, stack_t *sas, struct linux32_ucontext *uc)
 {
 
 	uc->uc_flags = 0;
@@ -410,7 +410,7 @@ linux32_restore_sigcontext(struct lwp *l, struct linux32_sigcontext *scp,
 {	
 	struct trapframe *tf;
 	struct proc *p = l->l_proc;
-	struct sigaltstack *sas = &l->l_sigstk;
+	stack_t *sas = &l->l_sigstk;
 	struct pcb *pcb;
 	sigset_t mask;
 	ssize_t ss_gap;

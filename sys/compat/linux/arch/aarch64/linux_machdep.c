@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.2 2021/10/09 07:01:34 ryo Exp $	*/
+/*	$NetBSD: linux_machdep.c,v 1.3 2021/11/01 05:07:16 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2021 Ryo Shimizu <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.2 2021/10/09 07:01:34 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.3 2021/11/01 05:07:16 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -133,7 +133,7 @@ linux_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 	struct lwp * const l = curlwp;
 	struct proc * const p = l->l_proc;
 	struct trapframe * const tf = lwp_trapframe(l);
-	struct sigaltstack * const ss = &l->l_sigstk;
+	stack_t * const ss = &l->l_sigstk;
 	const int sig = ksi->ksi_signo;
 	const sig_t handler = SIGACTION(p, sig).sa_handler;
 	struct linux_rt_sigframe *u_sigframe, *tmp_sigframe;

@@ -1,4 +1,4 @@
-/*	$NetBSD: signalvar.h,v 1.103 2020/11/01 18:51:03 pgoyette Exp $	*/
+/*	$NetBSD: signalvar.h,v 1.104 2021/11/01 05:07:17 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -165,8 +165,7 @@ void	sigpending1(struct lwp *, sigset_t *);
 void	sigsuspendsetup(struct lwp *, const sigset_t *);
 void	sigsuspendteardown(struct lwp *);
 int	sigsuspend1(struct lwp *, const sigset_t *);
-int	sigaltstack1(struct lwp *, const struct sigaltstack *,
-	    struct sigaltstack *);
+int	sigaltstack1(struct lwp *, const stack_t *, stack_t *);
 int	sigismasked(struct lwp *, int);
 
 int	sigget(sigpend_t *, ksiginfo_t *, int, const sigset_t *);
