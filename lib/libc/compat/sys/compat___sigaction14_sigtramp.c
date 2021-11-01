@@ -1,4 +1,4 @@
-/*	$NetBSD: __sigaction14_sigtramp.c,v 1.2 2021/10/27 04:48:33 thorpej Exp $	*/
+/*	$NetBSD: compat___sigaction14_sigtramp.c,v 1.1 2021/11/01 05:53:45 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: __sigaction14_sigtramp.c,v 1.2 2021/10/27 04:48:33 thorpej Exp $");
+__RCSID("$NetBSD: compat___sigaction14_sigtramp.c,v 1.1 2021/11/01 05:53:45 thorpej Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -50,6 +50,12 @@ __RCSID("$NetBSD: __sigaction14_sigtramp.c,v 1.2 2021/10/27 04:48:33 thorpej Exp
 __weak_alias(__sigaction14, __libc_sigaction14)
 
 #define __LIBC12_SOURCE__
+
+/*
+ * The symbol must remain, but we don't want this exposed in a header
+ * anywhere, so the prototype goes here.
+ */
+int	__libc_sigaction14(int, const struct sigaction *, struct sigaction *);
 
 int
 __libc_sigaction14(int sig, const struct sigaction *act, struct sigaction *oact)
