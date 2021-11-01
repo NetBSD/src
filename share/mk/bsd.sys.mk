@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.sys.mk,v 1.307 2021/09/11 21:30:46 andvar Exp $
+#	$NetBSD: bsd.sys.mk,v 1.308 2021/11/01 10:05:19 nia Exp $
 #
 # Build definitions used for NetBSD source tree builds.
 
@@ -140,7 +140,8 @@ CFLAGS+=	-Wno-maybe-uninitialized
 .if ${MKRELRO:Uno} != "no"
 LDFLAGS+=	-Wl,-z,relro
 .endif
-.if ${MKRELRO:Uno} == "full"
+
+.if ${MKRELRO:Uno} == "full" && ${NOFULLRELRO:Uno} == "no"
 LDFLAGS+=	-Wl,-z,now
 .endif
 
