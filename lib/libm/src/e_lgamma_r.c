@@ -12,7 +12,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBM_SCCS) && !defined(lint)
-__RCSID("$NetBSD: e_lgamma_r.c,v 1.10 2002/05/26 22:01:51 wiz Exp $");
+__RCSID("$NetBSD: e_lgamma_r.c,v 1.11 2021/11/01 21:28:01 andvar Exp $");
 #endif
 
 /* __ieee754_lgamma_r(x, signgamp)
@@ -29,7 +29,7 @@ __RCSID("$NetBSD: e_lgamma_r.c,v 1.10 2002/05/26 22:01:51 wiz Exp $");
  *			    = log(6.3*5.3) + lgamma(5.3)
  *			    = log(6.3*5.3*4.3*3.3*2.3) + lgamma(2.3)
  *   2. Polynomial approximation of lgamma around its
- *	minimun ymin=1.461632144968362245 to maintain monotonicity.
+ *	minimum ymin=1.461632144968362245 to maintain monotonicity.
  *	On [ymin-0.23, ymin+0.27] (i.e., [1.23164,1.73163]), use
  *		Let z = x-ymin;
  *		lgamma(x) = -1.214862905358496078218 + z^2*poly(z)

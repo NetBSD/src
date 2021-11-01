@@ -34,7 +34,7 @@
  * from: Utah $Hdr: iteioctl.h 1.1 90/07/09$
  *
  *	@(#)iteioctl.h	7.2 (Berkeley) 11/4/90
- *	$NetBSD: iteioctl.h,v 1.9 2015/09/07 03:49:46 dholland Exp $
+ *	$NetBSD: iteioctl.h,v 1.10 2021/11/01 21:28:02 andvar Exp $
  */
 
 #ifndef _X68K_ITEIOCTL_H_
@@ -55,7 +55,7 @@ struct iterepeat {
 	int start;		/* number of 100/s before repeat start */
 	int next;		/* number of 100/s before next repeat */
 };
-#define ITEMINREPEAT	5	/* mininum number of 100/s for key repeat */
+#define ITEMINREPEAT	5	/* minimum number of 100/s for key repeat */
 
 #define ITEIOCSKMAP	_IOW('Z',0x70, struct kbdmap)
 #define ITEIOCGKMAP	_IOR('Z',0x71, struct kbdmap)

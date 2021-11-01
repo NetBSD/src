@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe_type.h,v 1.49 2021/05/19 08:19:20 msaitoh Exp $ */
+/* $NetBSD: ixgbe_type.h,v 1.50 2021/11/01 21:28:03 andvar Exp $ */
 
 /******************************************************************************
   SPDX-License-Identifier: BSD-3-Clause
@@ -358,7 +358,7 @@ struct ixgbe_nvm_version {
 #define IXGBE_MIN_INT_RATE	956
 /* On 82599 and newer, minimum RSC_DELAY is 4us. ITR interval must be larger
  * than RSC_DELAY if RSC is used. ITR_INTERVAL is in 2(.048) us units on 10G
- * and 1G. The minimun EITR is 6us.
+ * and 1G. The minimum EITR is 6us.
  */
 #define IXGBE_MIN_RSC_EITR_10G1G 0x00000018
 #define IXGBE_MAX_EITR		0x00000FF8
@@ -1504,7 +1504,7 @@ struct ixgbe_dmac_config {
 #define IXGBE_CTRL_RST_MASK	(IXGBE_CTRL_LNK_RST | IXGBE_CTRL_RST)
 
 /* FACTPS */
-#define IXGBE_FACTPS_MNGCG	0x20000000 /* Manageblility Clock Gated */
+#define IXGBE_FACTPS_MNGCG	0x20000000 /* Managebility Clock Gated */
 #define IXGBE_FACTPS_LFS	0x40000000 /* LAN Function Select */
 
 /* MHADD Bit Masks */
@@ -2360,7 +2360,7 @@ enum {
 /* EEPROM Addressing bits based on type (0-small, 1-large) */
 #define IXGBE_EEC_ADDR_SIZE	0x00000400
 #define IXGBE_EEC_SIZE		0x00007800 /* EEPROM Size */
-#define IXGBE_EERD_MAX_ADDR	0x00003FFF /* EERD alows 14 bits for addr. */
+#define IXGBE_EERD_MAX_ADDR	0x00003FFF /* EERD allows 14 bits for addr. */
 
 #define IXGBE_EEC_SIZE_SHIFT		11
 #define IXGBE_EEPROM_WORD_SIZE_SHIFT	6

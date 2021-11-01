@@ -1,4 +1,4 @@
-/* $NetBSD: nvram.h,v 1.9 2015/09/07 03:49:45 dholland Exp $ */
+/* $NetBSD: nvram.h,v 1.10 2021/11/01 21:28:02 andvar Exp $ */
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
 #include <dev/ic/mk48txxvar.h>
 #endif
 
-#define MAX_PREP_NVRAM 0x8000	/* maxmum size of the nvram */
+#define MAX_PREP_NVRAM 0x8000	/* maximum size of the nvram */
 
 #define NVSIZE 4096		/* standard nvram size */
 #define OSAREASIZE 512		/* size of OSArea space */
