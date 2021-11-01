@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuregs.h,v 1.112 2021/08/09 21:13:05 andvar Exp $	*/
+/*	$NetBSD: cpuregs.h,v 1.113 2021/11/01 21:28:02 andvar Exp $	*/
 
 /*
  * Copyright (c) 2009 Miodrag Vallat.
@@ -695,7 +695,7 @@
 				(MIPS_BREAK_SOVER_VAL << MIPS_BREAK_VAL_SHIFT))
 
 /*
- * Mininum and maximum cache sizes.
+ * Minimum and maximum cache sizes.
  */
 #define	MIPS_MIN_CACHE_SIZE	(16 * 1024)
 #define	MIPS_MAX_CACHE_SIZE	(256 * 1024)
@@ -712,7 +712,7 @@
  */
 #define	MIPS_FCSR_RM		__BITS(1,0)
 #define	  MIPS_FCSR_RM_RN	  0	/* round to nearest */
-#define	  MIPS_FCSR_RM_RZ	  1	/* round toward zerO */
+#define	  MIPS_FCSR_RM_RZ	  1	/* round towards zero */
 #define	  MIPS_FCSR_RM_RP	  2	/* round towards +infinity */
 #define	  MIPS_FCSR_RM_RM	  3	/* round towards -infinity */
 #define	MIPS_FCSR_FLAGS		__BITS(6,2)
@@ -1034,7 +1034,7 @@
 #define	MIPS_BCM3302	0x90	/* MIPS 4KEc_R2-like?		ISA 32  Rel 2 */
 
 /*
- * Alchemy (company ID 3) use the processor ID field to donote the CPU core
+ * Alchemy (company ID 3) use the processor ID field to denote the CPU core
  * revision and the company options field do donate the SOC chip type.
  */
 /* CPU processor revision IDs */
