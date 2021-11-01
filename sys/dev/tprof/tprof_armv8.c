@@ -1,4 +1,4 @@
-/* $NetBSD: tprof_armv8.c,v 1.7 2021/09/26 13:37:36 jmcneill Exp $ */
+/* $NetBSD: tprof_armv8.c,v 1.8 2021/11/01 17:03:53 skrll Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tprof_armv8.c,v 1.7 2021/09/26 13:37:36 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tprof_armv8.c,v 1.8 2021/11/01 17:03:53 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -205,7 +205,7 @@ armv8_pmu_intr(void *priv)
 
 static void
 armv8_pmu_init_cpu(void *arg1, void *arg2)
-{	
+{
 	/* Disable EL0 access to performance monitors */
 	reg_pmuserenr_el0_write(0);
 

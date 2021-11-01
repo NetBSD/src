@@ -1,4 +1,4 @@
-/*	$NetBSD: tprof.c,v 1.15 2020/11/27 20:10:25 riastradh Exp $	*/
+/*	$NetBSD: tprof.c,v 1.16 2021/11/01 17:03:53 skrll Exp $	*/
 
 /*-
  * Copyright (c)2008,2009,2010 YAMAMOTO Takashi,
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tprof.c,v 1.15 2020/11/27 20:10:25 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tprof.c,v 1.16 2021/11/01 17:03:53 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -455,7 +455,7 @@ tprof_sample(void *unused, const tprof_frame_info_t *tfi)
 }
 
 /*
- * tprof_backend_register: 
+ * tprof_backend_register:
  */
 
 int
@@ -496,7 +496,7 @@ tprof_backend_register(const char *name, const tprof_backend_ops_t *ops,
 }
 
 /*
- * tprof_backend_unregister: 
+ * tprof_backend_unregister:
  */
 
 int
