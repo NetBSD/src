@@ -410,35 +410,6 @@ u_int	GetCPSR(void);
 
 void cpu_reset		(void) __dead;
 
-/*
- * Cache info variables.
- */
-#define	CACHE_TYPE_VIVT		0
-#define	CACHE_TYPE_xxPT		1
-#define	CACHE_TYPE_VIPT		1
-#define	CACHE_TYPE_PIxx		2
-#define	CACHE_TYPE_PIPT		3
-
-/* PRIMARY CACHE VARIABLES */
-struct arm_cache_info {
-	u_int icache_size;
-	u_int icache_line_size;
-	u_int icache_ways;
-	u_int icache_way_size;
-	u_int icache_sets;
-
-	u_int dcache_size;
-	u_int dcache_line_size;
-	u_int dcache_ways;
-	u_int dcache_way_size;
-	u_int dcache_sets;
-
-	uint8_t cache_type;
-	bool cache_unified;
-	uint8_t icache_type;
-	uint8_t dcache_type;
-};
-
 #if (ARM_MMU_V6 + ARM_MMU_V7) != 0
 extern u_int arm_cache_prefer_mask;
 #endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.120 2021/10/31 16:23:47 skrll Exp $	*/
+/*	$NetBSD: cpu.h,v 1.121 2021/11/01 14:45:24 skrll Exp $	*/
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -156,8 +156,36 @@ static inline void cpu_dosoftints(void);
 #include <sys/device_if.h>
 #include <sys/evcnt.h>
 
-#include <arm/cpufunc.h>
 #include <machine/param.h>
+
+/*
+ * Cache info variables.
+ */
+#define	CACHE_TYPE_VIVT		0
+#define	CACHE_TYPE_xxPT		1
+#define	CACHE_TYPE_VIPT		1
+#define	CACHE_TYPE_PIxx		2
+#define	CACHE_TYPE_PIPT		3
+
+/* PRIMARY CACHE VARIABLES */
+struct arm_cache_info {
+	u_int icache_size;
+	u_int icache_line_size;
+	u_int icache_ways;
+	u_int icache_way_size;
+	u_int icache_sets;
+
+	u_int dcache_size;
+	u_int dcache_line_size;
+	u_int dcache_ways;
+	u_int dcache_way_size;
+	u_int dcache_sets;
+
+	uint8_t cache_type;
+	bool cache_unified;
+	uint8_t icache_type;
+	uint8_t dcache_type;
+};
 
 struct cpu_info {
 	struct cpu_data	ci_data;	/* MI per-cpu data */
