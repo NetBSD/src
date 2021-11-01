@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.32 2021/10/31 09:16:08 nia Exp $
+#	$NetBSD: Makefile,v 1.33 2021/11/01 03:09:58 agc Exp $
 
 USE_FORT?=	yes	# cryptographic software
 
@@ -28,8 +28,6 @@ SRCS+=		crypt-argon2.c
 SRCS+=		${src}
 COPTS.${src}+=	-fvisibility=hidden
 .  endfor
-COPTS.argon2.c+=	-Wno-error=cast-qual
-COPTS.core.c+=		-Wno-error=type-limits
 .  if ${MACHINE} == "vax"
 COPTS.blake2b.c+=	-O0
 .  endif
