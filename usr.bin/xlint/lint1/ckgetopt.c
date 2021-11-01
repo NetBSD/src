@@ -1,4 +1,4 @@
-/* $NetBSD: ckgetopt.c,v 1.13 2021/11/01 19:10:07 rillig Exp $ */
+/* $NetBSD: ckgetopt.c,v 1.14 2021/11/01 19:48:51 rillig Exp $ */
 
 /*-
  * Copyright (c) 2021 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: ckgetopt.c,v 1.13 2021/11/01 19:10:07 rillig Exp $");
+__RCSID("$NetBSD: ckgetopt.c,v 1.14 2021/11/01 19:48:51 rillig Exp $");
 #endif
 
 #include <stdbool.h>
@@ -133,9 +133,11 @@ check_unlisted_option(char opt)
 static void
 check_unhandled_option(void)
 {
+	const char *opt;
+
 	lint_assert(ck.options != NULL);
 
-	for (const char *opt = ck.options; *opt != '\0'; opt++) {
+	for (opt = ck.options; *opt != '\0'; opt++) {
 		if (*opt == ' ' || *opt == ':')
 			continue;
 

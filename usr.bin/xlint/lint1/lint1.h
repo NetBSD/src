@@ -1,4 +1,4 @@
-/* $NetBSD: lint1.h,v 1.129 2021/09/14 19:44:40 rillig Exp $ */
+/* $NetBSD: lint1.h,v 1.130 2021/11/01 19:48:51 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -497,7 +497,7 @@ extern err_set	msgset;
 #  include "err-msgs.h"
 
 /* ARGSUSED */
-static inline void __attribute__((format(printf, 1, 2)))
+INLINE_FUNC void __attribute__((format(printf, 1, 2)))
 check_printf(const char *fmt, ...)
 {
 }
@@ -528,7 +528,7 @@ check_printf(const char *fmt, ...)
 #  define c11ism(msgid, args...) wrap_check_printf(c11ism, msgid, ##args)
 #endif
 
-static inline bool
+INLINE_FUNC bool
 is_nonzero_val(const val_t *val)
 {
 	return is_floating(val->v_tspec)
@@ -536,7 +536,7 @@ is_nonzero_val(const val_t *val)
 	    : val->v_quad != 0;
 }
 
-static inline bool
+INLINE_FUNC bool
 constant_is_nonzero(const tnode_t *tn)
 {
 	lint_assert(tn->tn_op == CON);
@@ -544,25 +544,25 @@ constant_is_nonzero(const tnode_t *tn)
 	return is_nonzero_val(tn->tn_val);
 }
 
-static inline bool
+INLINE_FUNC bool
 is_zero(const tnode_t *tn)
 {
 	return tn != NULL && tn->tn_op == CON && !is_nonzero_val(tn->tn_val);
 }
 
-static inline bool
+INLINE_FUNC bool
 is_nonzero(const tnode_t *tn)
 {
 	return tn != NULL && tn->tn_op == CON && is_nonzero_val(tn->tn_val);
 }
 
-static inline bool
+INLINE_FUNC bool
 is_binary(const tnode_t *tn)
 {
 	return modtab[tn->tn_op].m_binary;
 }
 
-static inline uint64_t
+INLINE_FUNC uint64_t
 bit(unsigned i)
 {
 	/*
@@ -576,13 +576,13 @@ bit(unsigned i)
 	return (uint64_t)1 << i;
 }
 
-static inline bool
+INLINE_FUNC bool
 msb(int64_t q, tspec_t t)
 {
 	return (q & bit((unsigned int)size_in_bits(t) - 1)) != 0;
 }
 
-static inline uint64_t
+INLINE_FUNC uint64_t
 value_bits(unsigned bitsize)
 {
 	lint_assert(bitsize > 0);
@@ -600,7 +600,7 @@ value_bits(unsigned bitsize)
 }
 
 /* C99 6.7.8p7 */
-static inline bool
+INLINE_FUNC bool
 is_struct_or_union(tspec_t t)
 {
 	return t == STRUCT || t == UNION;

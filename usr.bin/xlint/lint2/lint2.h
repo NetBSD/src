@@ -1,4 +1,4 @@
-/* $NetBSD: lint2.h,v 1.19 2021/08/29 10:13:02 rillig Exp $ */
+/* $NetBSD: lint2.h,v 1.20 2021/11/01 19:48:51 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -186,7 +186,7 @@ typedef	struct hte {
 #include "externs2.h"
 
 /* maps type indices into pointers to type structs */
-static inline type_t *
+INLINE_FUNC type_t *
 TP(unsigned short type_id) {
 	/* force sequence point for newly parsed type_id */
 	return tlst[type_id];
