@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.h,v 1.43 2021/10/31 16:23:47 skrll Exp $ */
+/* $NetBSD: cpu.h,v 1.44 2021/11/01 08:53:40 skrll Exp $ */
 
 /*-
  * Copyright (c) 2014, 2020 The NetBSD Foundation, Inc.
@@ -168,7 +168,7 @@ struct cpu_info {
 	struct aarch64_sysctl_cpu_id ci_id;
 
 	/* cache information and function pointers */
-	struct aarch64_cache_info *ci_cacheinfo;
+	struct aarch64_cache_info ci_cacheinfo[MAX_CACHE_LEVEL];
 	struct aarch64_cpufuncs ci_cpufuncs;
 
 #if defined(GPROF) && defined(MULTIPROCESSOR)
