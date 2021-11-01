@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.Xserver,v 1.2 2019/03/08 10:00:06 mrg Exp $
+#	$NetBSD: Makefile.Xserver,v 1.3 2021/11/01 10:05:19 nia Exp $
 
 .for _SL in \
 	mi \
@@ -72,6 +72,9 @@ DPADD.${_SL}=	${LIBDIR.${_SL}}/lib${_SL:T}.a
 
 LDADD.XORG_CORE=	${LDADD.dix} ${LDADD.config}
 DPADD.XORG_CORE=	${DPADD.dix} ${DPADD.config}
+
+# X servers cannot load certain modules when built with BIND_NOW
+NOFULLRELRO=	yes
 
 # X servers need all symbols exported
 LDFLAGS+=	-Wl,--export-dynamic

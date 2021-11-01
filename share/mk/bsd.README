@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.README,v 1.421 2021/10/27 03:06:59 ryo Exp $
+#	$NetBSD: bsd.README,v 1.422 2021/11/01 10:05:19 nia Exp $
 #	@(#)bsd.README	8.2 (Berkeley) 4/2/94
 
 This is the README file for the make "include" files for the NetBSD
@@ -437,6 +437,9 @@ MKRADEONFIRMWARE If "yes", install the /libdata/firmware/radeon directory,
 MKRELRO		If "partial", set the non-PLT GOT to read-only. If "full"
 		also force immediate symbol binding.
 		Default: no
+
+NOFULLRELRO	Don't compile with immediate symbol binding during build.
+		It is set internally for standalone programs.
 
 MKREPRO         If "yes", create reproducible builds. This enables
 		different switches to make two builds from the same source tree

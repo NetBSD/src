@@ -1,4 +1,6 @@
-#	$NetBSD: Makefile.servermod,v 1.4 2021/05/03 08:44:05 nakayama Exp $
+#	$NetBSD: Makefile.servermod,v 1.5 2021/11/01 10:05:19 nia Exp $
+
+NOFULLRELRO=	yes
 
 .include <bsd.own.mk>	# For /etc/mk.conf processing
 
