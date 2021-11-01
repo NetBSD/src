@@ -1,4 +1,4 @@
-/* $NetBSD: ckgetopt.c,v 1.12 2021/10/09 14:22:42 rillig Exp $ */
+/* $NetBSD: ckgetopt.c,v 1.13 2021/11/01 19:10:07 rillig Exp $ */
 
 /*-
  * Copyright (c) 2021 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: ckgetopt.c,v 1.12 2021/10/09 14:22:42 rillig Exp $");
+__RCSID("$NetBSD: ckgetopt.c,v 1.13 2021/11/01 19:10:07 rillig Exp $");
 #endif
 
 #include <stdbool.h>
@@ -85,11 +85,13 @@ static struct {
 static bool
 is_getopt_condition(const tnode_t *tn, char **out_options)
 {
+	const tnode_t *call, *last_arg;
+
 	NEED(tn != NULL);
 	NEED(tn->tn_op == NE);
 	NEED(tn->tn_left->tn_op == ASSIGN);
 
-	const tnode_t *call = tn->tn_left->tn_right;
+	call = tn->tn_left->tn_right;
 	NEED(call->tn_op == CALL);
 	NEED(call->tn_left->tn_op == ADDR);
 	NEED(call->tn_left->tn_left->tn_op == NAME);
@@ -97,7 +99,7 @@ is_getopt_condition(const tnode_t *tn, char **out_options)
 
 	NEED(call->tn_right->tn_op == PUSH);
 
-	const tnode_t *last_arg = call->tn_right->tn_left;
+	last_arg = call->tn_right->tn_left;
 	NEED(last_arg->tn_op == CVT);
 	NEED(last_arg->tn_left->tn_op == ADDR);
 	NEED(last_arg->tn_left->tn_left->tn_op == STRING);
@@ -111,12 +113,14 @@ is_getopt_condition(const tnode_t *tn, char **out_options)
 static void
 check_unlisted_option(char opt)
 {
+	char *optptr;
+
 	lint_assert(ck.options != NULL);
 
 	if (opt == ':' && ck.options[0] != ':')
 		goto warn;
 
-	char *optptr = strchr(ck.options, opt);
+	optptr = strchr(ck.options, opt);
 	if (optptr != NULL)
 		*optptr = ' ';
 	else if (opt != '?') {

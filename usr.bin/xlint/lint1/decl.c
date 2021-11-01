@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.241 2021/09/17 21:15:19 christos Exp $ */
+/* $NetBSD: decl.c,v 1.242 2021/11/01 19:10:07 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: decl.c,v 1.241 2021/09/17 21:15:19 christos Exp $");
+__RCSID("$NetBSD: decl.c,v 1.242 2021/11/01 19:10:07 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -541,12 +541,14 @@ setpackedsize(type_t *tp)
 		sp->sou_size_in_bits = 0;
 		for (mem = sp->sou_first_member;
 		     mem != NULL; mem = mem->s_next) {
+			unsigned int x;
+
 			if (mem->s_type->t_bitfield) {
 				sp->sou_size_in_bits += bitfieldsize(&mem);
 				if (mem == NULL)
 					break;
 			}
-			unsigned int x = type_size_in_bits(mem->s_type);
+			x = type_size_in_bits(mem->s_type);
 			if (tp->t_tspec == STRUCT)
 				sp->sou_size_in_bits += x;
 			else if (x > sp->sou_size_in_bits)
@@ -1098,9 +1100,11 @@ check_bit_field_type(sym_t *dsym,  type_t **const inout_tp, tspec_t *inout_t)
 		 * above are okay only if BITFIELDTYPE is in effect.
 		 */
 		if (!(bitfieldtype_ok || gflag) || !is_integer(t)) {
+			unsigned int sz;
+
 			/* illegal bit-field type '%s' */
 			warning(35, type_name(tp));
-			unsigned int sz = tp->t_flen;
+			sz = tp->t_flen;
 			dsym->s_type = tp = dup_type(gettyp(t = INT));
 			if ((tp->t_flen = sz) > size_in_bits(t))
 				tp->t_flen = size_in_bits(t);
@@ -1113,11 +1117,13 @@ check_bit_field_type(sym_t *dsym,  type_t **const inout_tp, tspec_t *inout_t)
 static void
 declare_bit_field(sym_t *dsym, tspec_t *inout_t, type_t **const inout_tp)
 {
+	type_t *tp;
+	tspec_t t;
 
 	check_bit_field_type(dsym, inout_tp, inout_t);
 
-	type_t *const tp = *inout_tp;
-	tspec_t const t = *inout_t;
+	tp = *inout_tp;
+	t = *inout_t;
 	if (tp->t_flen > size_in_bits(t)) {
 		/* illegal bit-field size: %d */
 		error(36, tp->t_flen);
