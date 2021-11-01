@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_futex.c,v 1.12.4.5 2021/08/07 01:22:33 thorpej Exp $	*/
+/*	$NetBSD: sys_futex.c,v 1.12.4.6 2021/11/01 08:40:16 chs Exp $	*/
 
 /*-
  * Copyright (c) 2018, 2019, 2020 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_futex.c,v 1.12.4.5 2021/08/07 01:22:33 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_futex.c,v 1.12.4.6 2021/11/01 08:40:16 chs Exp $");
 
 /*
  * Futexes
@@ -299,7 +299,7 @@ compare_futex_key(void *cookie, const void *n, const void *k)
 	if (fka->fk_private.va < fkb->fk_private.va)
 		return -1;
 	if (fka->fk_private.va > fkb->fk_private.va)
-		return -1;
+		return +1;
 	return 0;
 }
 
