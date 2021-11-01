@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.249 2021/10/31 22:24:36 thorpej Exp $
+#	$NetBSD: Makefile.inc,v 1.250 2021/11/01 05:53:45 thorpej Exp $
 #	@(#)Makefile.inc	8.3 (Berkeley) 10/24/94
 
 # sys sources
@@ -21,7 +21,7 @@ SRCS+=	__clone.S __vfork14.S brk.S fork.S pipe.S \
 
 _LSRC+=	Lint___clone.c Lint___vfork14.c Lint_brk.c Lint_clone.c \
 	Lint_getcontext.c Lint_pipe.c Lint_ptrace.c \
-	Lint_sbrk.c Lint___sigaction14.c Lint_syscall.c Lint___syscall.c \
+	Lint_sbrk.c Lint___sigaction_siginfo.c Lint_syscall.c Lint___syscall.c \
 	LintSysNormal.c LintSysNoerr.c LintSysPseudoNoerr.c
 
 .if ${MKLINT} != "no"
@@ -90,7 +90,7 @@ ASM_GLUE+= tmp___${glue:.c=}50.S
 .endfor
 
 # modules with default implementations on all architectures:
-SRCS+=	__sigaction14_sigtramp.c
+SRCS+=	__sigaction_siginfo.c
 
 ASM=\
     __acl_get_link.S __acl_set_link.S __acl_delete_link.S \

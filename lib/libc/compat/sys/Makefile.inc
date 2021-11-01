@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.10 2019/09/22 22:59:38 christos Exp $
+#	$NetBSD: Makefile.inc,v 1.11 2021/11/01 05:53:45 thorpej Exp $
 
 .PATH: ${COMPATDIR}/sys
 SRCS+= compat_getdents.c compat_getdirentries.c compat_msync.c \
@@ -13,7 +13,8 @@ SRCS+= compat_getdents.c compat_getdirentries.c compat_msync.c \
     compat_mqueue.c compat__lwp_park.c compat_lfs_segwait.c compat_kevent.c \
     compat___ntp_gettime30.c compat___semctl13.c compat___shmctl13.c \
     compat___msgctl13.c compat___lwp_park50.c \
-    compat___fhstatvfs140.c compat___fhstatvfs40.c
+    compat___fhstatvfs140.c compat___fhstatvfs40.c \
+    compat___sigaction14_sigtramp.c
 
 MAN+=	getdirentries.3
 
