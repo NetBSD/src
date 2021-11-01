@@ -1,4 +1,4 @@
-/* $NetBSD: lex.c,v 1.84 2021/09/18 10:46:17 jmcneill Exp $ */
+/* $NetBSD: lex.c,v 1.85 2021/11/01 19:10:07 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: lex.c,v 1.84 2021/09/18 10:46:17 jmcneill Exp $");
+__RCSID("$NetBSD: lex.c,v 1.85 2021/11/01 19:10:07 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -997,13 +997,15 @@ parse_line_directive_flags(const char *p,
 	*is_system = false;
 
 	while (*p != '\0') {
+		const char *word_start, *word_end;
+
 		while (ch_isspace(*p))
 			p++;
 
-		const char *word_start = p;
+		word_start = p;
 		while (*p != '\0' && !ch_isspace(*p))
 			p++;
-		const char *word_end = p;
+		word_end = p;
 
 		if (word_end - word_start == 1 && word_start[0] == '1')
 			*is_begin = true;
