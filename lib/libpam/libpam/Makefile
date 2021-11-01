@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.29 2021/11/01 12:26:18 christos Exp $
+# $NetBSD: Makefile,v 1.30 2021/11/01 15:56:53 christos Exp $
 #-
 # Copyright (c) 1998 Juniper Networks, Inc.
 # All rights reserved.
@@ -54,9 +54,6 @@ NOPROFILE=
 
 WARNS=		6
 LINTFLAGS+=	-w
-# XXX: lint bug: The enum contains an additional constant
-# for the number of values
-LINTFLAGS+= -X 348
 
 CPPFLAGS+= -DLIB_MAJ=${SHLIB_MAJOR} -DHAVE_CONFIG_H -I${.CURDIR}
 #CPPFLAGS+= -DOPENPAM_DEBUG
