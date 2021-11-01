@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.392 2021/11/01 19:10:07 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.393 2021/11/01 19:48:51 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.392 2021/11/01 19:10:07 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.393 2021/11/01 19:48:51 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -3465,7 +3465,7 @@ build_offsetof(const type_t *tp, const sym_t *sym)
 		/* unacceptable operand of '%s' */
 		error(111, "offsetof");
 
-	// XXX: wrong size, no checking for sym fixme
+	/* XXX: wrong size, no checking for sym fixme */
 	offset_in_bytes = type_size_in_bits(tp) / CHAR_SIZE;
 	tn = build_integer_constant(SIZEOF_TSPEC, offset_in_bytes);
 	tn->tn_system_dependent = true;
@@ -3935,7 +3935,7 @@ expr(tnode_t *tn, bool vctx, bool tctx, bool dofreeblk, bool is_do_while)
 }
 
 static bool
-has_side_effect(const tnode_t *tn) // NOLINT(misc-no-recursion)
+has_side_effect(const tnode_t *tn) /* NOLINT(misc-no-recursion) */
 {
 	op_t op = tn->tn_op;
 
