@@ -1,11 +1,16 @@
-/*	$NetBSD: msg_348.c,v 1.2 2021/10/31 23:15:44 rillig Exp $	*/
+/*	$NetBSD: msg_348.c,v 1.3 2021/11/01 11:46:50 rillig Exp $	*/
 # 3 "msg_348.c"
 
 // Test for message 348: maximum value %d of '%s' does not match maximum array index %d [348]
 
+/* lint1-extra-flags: -r */
+
 enum color {
 	red,
 	green,
+	/* expect+3: previous declaration of blue [260] */
+	/* expect+2: previous declaration of blue [260] */
+	/* expect+1: previous declaration of blue [260] */
 	blue
 };
 
@@ -114,4 +119,47 @@ large_name(enum large large)
 	};
 	/* No warning since at least 1 enum constant is outside of INT. */
 	return name[large];
+}
+
+enum color_with_count {
+	cc_red,
+	cc_green,
+	cc_blue,
+	cc_num_values
+};
+
+const char *
+color_with_count_name(enum color_with_count color)
+{
+	static const char *const name[] = { "red", "green", "blue" };
+	/* No warning since the maximum enum constant is a count. */
+	return name[color];
+}
+
+/*
+ * If the last enum constant contains "num" in its name, it is not
+ * necessarily the count of the other enum values, it may also be a
+ * legitimate application value, therefore don't warn in this case.
+ */
+const char *
+color_with_num(enum color_with_count color)
+{
+	static const char *const name[] = { "r", "g", "b", "num" };
+	/* No warning since the maximum values already match. */
+	return name[color];
+}
+
+enum color_with_uc_count {
+	CC_RED,
+	CC_GREEN,
+	CC_BLUE,
+	CC_NUM_VALUES
+};
+
+const char *
+color_with_uc_count_name(enum color_with_uc_count color)
+{
+	static const char *const name[] = { "red", "green", "blue" };
+	/* No warning since the maximum enum constant is a count. */
+	return name[color];
 }
