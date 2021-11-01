@@ -1,4 +1,4 @@
-/*	$NetBSD: lexi.c,v 1.128 2021/10/31 22:38:12 rillig Exp $	*/
+/*	$NetBSD: lexi.c,v 1.129 2021/11/01 23:44:08 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)lexi.c	8.1 (Berkeley) 6/6/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: lexi.c,v 1.128 2021/10/31 22:38:12 rillig Exp $");
+__RCSID("$NetBSD: lexi.c,v 1.129 2021/11/01 23:44:08 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/lexi.c 337862 2018-08-15 18:19:45Z pstef $");
 #endif
@@ -93,7 +93,7 @@ static const struct keyword {
     {"offsetof", lsym_offsetof},
     {"register", lsym_storage_class},
     {"restrict", lsym_ident},
-    {"return", lsym_ident},
+    {"return", lsym_return},
     {"short", lsym_type},
     {"signed", lsym_type},
     {"sizeof", lsym_sizeof},
@@ -252,6 +252,7 @@ lsym_name(lexer_symbol sym)
 	"if",
 	"switch",
 	"while",
+	"return",
     };
 
     return name[sym];

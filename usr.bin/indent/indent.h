@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.h,v 1.74 2021/10/31 22:38:12 rillig Exp $	*/
+/*	$NetBSD: indent.h,v 1.75 2021/11/01 23:44:08 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-FreeBSD
@@ -105,6 +105,7 @@ typedef enum lexer_symbol {
     lsym_if,
     lsym_switch,
     lsym_while,
+    lsym_return
 } lexer_symbol;
 
 typedef enum parser_symbol {

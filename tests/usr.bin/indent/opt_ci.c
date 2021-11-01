@@ -1,4 +1,4 @@
-/* $NetBSD: opt_ci.c,v 1.2 2021/11/01 22:48:56 rillig Exp $ */
+/* $NetBSD: opt_ci.c,v 1.3 2021/11/01 23:44:08 rillig Exp $ */
 /* $FreeBSD$ */
 
 /*
@@ -136,11 +136,11 @@ sum(int a, int b)
 int
 sum(int a, int b)
 {
-	return(a +
-	       b);
-	return(first +
-	       second + (
-			 third));
+	return (a +
+		b);
+	return (first +
+		second + (
+			  third));
 }
 #indent end
 #indent run-equals-prev-output -ci2
@@ -151,9 +151,9 @@ sum(int a, int b)
 int
 sum(int a, int b)
 {
-	return(a +
+	return (a +
 	  b);
-	return(first +
+	return (first +
 	  second + (
 	    third));
 }
@@ -169,9 +169,9 @@ sum(int a, int b)
 int
 sum(int a, int b)
 {
-	return(a +
+	return (a +
 	    b);
-	return(first +
+	return (first +
 	    second + (
 	    third));
 }
@@ -181,9 +181,9 @@ sum(int a, int b)
 int
 sum(int a, int b)
 {
-	return(a +
+	return (a +
 		b);
-	return(first +
+	return (first +
 		second + (
 			third));
 }
