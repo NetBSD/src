@@ -1,4 +1,4 @@
-/*	$NetBSD: targparam.h,v 1.2 2021/06/27 08:43:48 rillig Exp $	*/
+/*	$NetBSD: targparam.h,v 1.3 2021/11/02 10:38:26 skrll Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -35,7 +35,7 @@
  * Machine-dependent target parameters for lint1.
  */
 #include "schar.h"
-// This is for __mips_n64
+/* This is for __mips_n64 */
 #include "lp64.h"
 
 /*
