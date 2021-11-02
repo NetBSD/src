@@ -1,4 +1,4 @@
-/*	$NetBSD: spr.h,v 1.53 2020/07/06 10:31:23 rin Exp $	*/
+/*	$NetBSD: spr.h,v 1.54 2021/11/02 11:21:24 ryo Exp $	*/
 
 /*
  * Copyright (c) 2001, The NetBSD Foundation, Inc.
@@ -72,8 +72,8 @@ mfspr64(int reg)
 } )
 #endif /* PPC_OEA64_BRIDGE || _ARCH_PPC64 */
 
-static __inline uint64_t
-mfspr32(int reg)
+static __inline __always_inline uint64_t
+mfspr32(const int reg)
 {
 	register_t val;
 
@@ -81,8 +81,8 @@ mfspr32(int reg)
 	return val;
 }
 
-static __inline void
-mtspr32(int reg, uint32_t val)
+static __inline __always_inline void
+mtspr32(const int reg, uint32_t val)
 {
 
 	__asm volatile("mtspr %0,%1" : : "K"(reg), "r"(val));
