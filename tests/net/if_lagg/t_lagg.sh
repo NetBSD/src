@@ -1,4 +1,4 @@
-#	$NetBSD: t_lagg.sh,v 1.4 2021/11/02 01:42:26 yamaguchi Exp $
+#	$NetBSD: t_lagg.sh,v 1.5 2021/11/02 01:57:16 yamaguchi Exp $
 #
 # Copyright (c) 2021 Internet Initiative Japan Inc.
 # All rights reserved.
@@ -640,6 +640,7 @@ lagg_lacp_vlan()
 	local atf_ifconfig="atf_check -s exit:0 rump.ifconfig"
 
 	local af=$1
+	local l2proto=$2
 	local atf_ping="atf_check -s exit:0 -o ignore rump.ping -c 1"
 	local rumplib="vlan"
 	local pfx=24
@@ -664,6 +665,19 @@ lagg_lacp_vlan()
 		;;
 	esac
 
+	case $l2proto in
+	"ether")
+		iface0=shmif0
+		iface1=shmif1
+		iface2=shmif2
+		;;
+	"l2tp")
+		rumplib="$rumplib l2tp"
+		iface0=l2tp0
+		iface1=l2tp1
+		iface2=l2tp2
+	esac
+
 	rump_server_start $SOCK_HOST0 lagg $rumplib
 	rump_server_start $SOCK_HOST1 lagg $rumplib
 
@@ -675,16 +689,20 @@ lagg_lacp_vlan()
 	rump_server_add_iface $SOCK_HOST1 shmif1 $BUS1
 	rump_server_add_iface $SOCK_HOST1 shmif2 $BUS2
 
+	if [ x"$l2proto" = x"l2tp" ]; then
+		setup_l2tp_ipv4tunnel
+	fi
+
 	export RUMP_SERVER=$SOCK_HOST0
 	$atf_ifconfig lagg0 create
-	$atf_ifconfig lagg0 laggproto lacp laggport shmif0
-	$atf_ifconfig shmif0 up
+	$atf_ifconfig lagg0 laggproto lacp laggport $iface0
+	$atf_ifconfig $iface0 up
 	$atf_ifconfig lagg0 up
 
 	export RUMP_SERVER=$SOCK_HOST1
 	$atf_ifconfig lagg0 create
-	$atf_ifconfig lagg0 laggproto lacp laggport shmif0
-	$atf_ifconfig shmif0 up
+	$atf_ifconfig lagg0 laggproto lacp laggport $iface0
+	$atf_ifconfig $iface0 up
 	$atf_ifconfig lagg0 up
 
 	export RUMP_SERVER=$SOCK_HOST0
@@ -720,18 +738,18 @@ lagg_lacp_vlan()
 	$atf_ping $host1addr0
 	$atf_ping $host1addr1
 
-	$atf_ifconfig lagg0 laggport shmif1
-	$atf_ifconfig shmif1 up
+	$atf_ifconfig lagg0 laggport $iface1
+	$atf_ifconfig $iface1 up
 
 	export RUMP_SERVER=$SOCK_HOST1
-	$atf_ifconfig lagg0 laggport shmif1
-	$atf_ifconfig shmif1 up
+	$atf_ifconfig lagg0 laggport $iface1
+	$atf_ifconfig $iface1 up
 
 	export RUMP_SERVER=$SOCK_HOST0
-	wait_for_distributing lagg0 shmif1
+	wait_for_distributing lagg0 $iface1
 
 	export RUMP_SERVER=$SOCK_HOST1
-	wait_for_distributing lagg0 shmif1
+	wait_for_distributing lagg0 $iface1
 
 	$atf_ping $host0addr0
 	$atf_ping $host0addr1
@@ -748,7 +766,7 @@ lagg_lacp_vlan_ipv4_head()
 lagg_lacp_vlan_ipv4_body()
 {
 
-	lagg_lacp_vlan "inet"
+	lagg_lacp_vlan "inet" "ether"
 }
 
 lagg_lacp_vlan_ipv4_cleanup()
@@ -768,11 +786,53 @@ lagg_lacp_vlan_ipv6_head()
 lagg_lacp_vlan_ipv6_body()
 {
 
-	lagg_lacp_vlan "inet6"
+	lagg_lacp_vlan "inet6" "ether"
 }
 
 lagg_lacp_vlan_ipv6_cleanup()
 {
+	$DEBUG && dump
+	cleanup
+}
+
+atf_test_case lagg_lacp_vlanl2tp_ipv4 cleanup
+lagg_lacp_vlanl2tp_ipv4_head()
+{
+
+	atf_set "descr" "tests for IPv4 VLAN frames over LACP L2TP LAG"
+	atf_set "require.progs" "rump_server"
+}
+
+lagg_lacp_vlanl2tp_ipv4_body()
+{
+
+	lagg_lacp_vlan "inet" "l2tp"
+}
+
+lagg_lacp_vlanl2tp_ipv4_cleanup()
+{
+
+	$DEBUG && dump
+	cleanup
+}
+
+atf_test_case lagg_lacp_vlanl2tp_ipv6 cleanup
+lagg_lacp_vlanl2tp_ipv6_head()
+{
+
+	atf_set "descr" "tests for IPv6 VLAN frames over LACP L2TP LAG"
+	atf_set "require.progs" "rump_server"
+}
+
+lagg_lacp_vlanl2tp_ipv6_body()
+{
+
+	lagg_lacp_vlan "inet6" "l2tp"
+}
+
+lagg_lacp_vlanl2tp_ipv6_cleanup()
+{
+
 	$DEBUG && dump
 	cleanup
 }
@@ -1288,6 +1348,8 @@ atf_init_test_cases()
 	atf_add_test_case lagg_lacp_l2tp_ipv6
 	atf_add_test_case lagg_lacp_vlan_ipv4
 	atf_add_test_case lagg_lacp_vlan_ipv6
+	atf_add_test_case lagg_lacp_vlanl2tp_ipv4
+	atf_add_test_case lagg_lacp_vlanl2tp_ipv6
 	atf_add_test_case lagg_lacp_portpri
 	atf_add_test_case lagg_failover_ipv4
 	atf_add_test_case lagg_failover_ipv6
