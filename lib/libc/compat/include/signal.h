@@ -1,4 +1,4 @@
-/*	$NetBSD: signal.h,v 1.2 2009/01/11 02:46:25 christos Exp $	*/
+/*	$NetBSD: signal.h,v 1.3 2021/11/02 06:54:10 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -39,7 +39,7 @@
 __BEGIN_DECLS
 int	sigaction(int, const struct sigaction13 * __restrict,
     struct sigaction13 * __restrict);
-int	__sigaction14(int, const struct sigaction * __restrict,
+int	__sigaction_siginfo(int, const struct sigaction * __restrict,
     struct sigaction * __restrict);
 int	sigaddset(sigset13_t *, int);
 int	__sigaddset14(sigset_t *, int);

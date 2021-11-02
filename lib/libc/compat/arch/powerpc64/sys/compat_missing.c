@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_missing.c,v 1.1 2020/09/20 20:14:50 christos Exp $	*/
+/*	$NetBSD: compat_missing.c,v 1.2 2021/11/02 06:54:10 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: compat_missing.c,v 1.1 2020/09/20 20:14:50 christos Exp $");
+__RCSID("$NetBSD: compat_missing.c,v 1.2 2021/11/02 06:54:10 thorpej Exp $");
 
 /*
  * define symbols that autoconf is supposed to find
@@ -50,14 +50,14 @@ __warn_references(sigsuspend,
 
 int sigaction(int, const struct sigaction * restrict,
     struct sigaction * restrict);
-int __sigaction14(int, const struct sigaction * restrict,
+int __sigaction_siginfo(int, const struct sigaction * restrict,
     struct sigaction * restrict);
 
 int
 sigaction(int sig, const struct sigaction * restrict act,
     struct sigaction * restrict oact)
 {
-	return __sigaction14(sig, act, oact);
+	return __sigaction_siginfo(sig, act, oact);
 }
 
 int sigpending(sigset_t *);
