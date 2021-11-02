@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: script,v 1.6 2018/07/13 21:45:37 maya Exp $
+# $NetBSD: script,v 1.7 2021/11/02 21:55:38 abs Exp $
 #
 
 #
@@ -22,7 +22,7 @@ PATH=/usr/pkg/bin:/sbin:$PATH
 export PATH
 
 # Where some sound files are stored:
-S=/usr/X11R6/share/kde/sounds
+S=/usr/pkg/share/kde/sounds
 
 # What my network card's recognized as:
 if=ne0
