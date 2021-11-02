@@ -1,4 +1,4 @@
-/*	$NetBSD: psl.h,v 1.61 2019/11/13 10:06:38 nakayama Exp $ */
+/*	$NetBSD: psl.h,v 1.62 2021/11/02 11:26:04 ryo Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -454,7 +454,7 @@ static __inline int name##X(const char* file, int line) \
 #else
 #define SPLPRINT(x)	
 #define	SPL(name, newpil) \
-static __inline int name(void) \
+static __inline __always_inline int name(void) \
 { \
 	int oldpil; \
 	__asm volatile("rdpr %%pil,%0" : "=r" (oldpil)); \
@@ -463,7 +463,7 @@ static __inline int name(void) \
 }
 /* A non-priority-decreasing version of SPL */
 #define	SPLHOLD(name, newpil) \
-static __inline int name(void) \
+static __inline __always_inline int name(void) \
 { \
 	int oldpil; \
 	__asm volatile("rdpr %%pil,%0" : "=r" (oldpil)); \
@@ -547,7 +547,7 @@ SPLHOLD(splhigh, PIL_HIGH)
 
 static __inline void splxX(int newpil, const char *file, int line)
 #else
-static __inline void splx(int newpil)
+static __inline __always_inline void splx(int newpil)
 #endif
 {
 #ifdef SPLDEBUG

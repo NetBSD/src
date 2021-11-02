@@ -1,4 +1,4 @@
-/* 	$NetBSD: intr.h,v 1.29 2009/05/13 03:38:08 mhitch Exp $	*/
+/* 	$NetBSD: intr.h,v 1.30 2021/11/02 11:26:05 ryo Exp $	*/
 
 /*
  * Copyright (c) 1998 Matt Thomas.
@@ -69,19 +69,19 @@
 #ifdef _KERNEL
 typedef int ipl_t;
 
-static inline void
+static inline __always_inline void
 _splset(ipl_t ipl)
 {
 	mtpr(ipl, PR_IPL);
 }
 
-static inline ipl_t
+static inline __always_inline ipl_t
 _splget(void)
 {
 	return mfpr(PR_IPL);
 }
 
-static inline ipl_t
+static inline __always_inline ipl_t
 splx(ipl_t new_ipl)
 {
 	ipl_t old_ipl = _splget();
@@ -93,13 +93,13 @@ typedef struct {
 	uint8_t _ipl;
 } ipl_cookie_t;
 
-static inline ipl_cookie_t
+static inline __always_inline ipl_cookie_t
 makeiplcookie(ipl_t ipl)
 {
 	return (ipl_cookie_t){._ipl = (uint8_t)ipl};
 }
 
-static inline int
+static inline __always_inline int
 splraiseipl(ipl_cookie_t icookie)
 {
 	ipl_t newipl = icookie._ipl;

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.119 2021/08/14 17:51:19 ryo Exp $	*/
+/*	$NetBSD: cpu.h,v 1.120 2021/11/02 11:26:04 ryo Exp $	*/
 
 /*
  * Copyright (C) 1999 Wolfgang Solfrank.
@@ -230,7 +230,7 @@ extern struct cpuset_info cpuset_info;
 extern struct cpu_info cpu_info[];
 
 static __inline struct cpu_info * curcpu(void) __pure;
-static __inline struct cpu_info *
+static __inline __always_inline struct cpu_info *
 curcpu(void)
 {
 	struct cpu_info *ci;

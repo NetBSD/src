@@ -1,4 +1,4 @@
-/*	$NetBSD: profile.h,v 1.37 2017/06/08 18:25:14 christos Exp $	*/
+/*	$NetBSD: profile.h,v 1.38 2021/11/02 11:26:04 ryo Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -84,13 +84,13 @@ mcount(void)								\
 }
 
 #ifdef _KERNEL
-static inline void
+static inline __always_inline void
 mcount_disable_intr(void)
 {
 	__asm volatile("cli");
 }
 
-static inline u_long
+static inline __always_inline u_long
 mcount_read_psl(void)
 {
 	u_long	ef;
@@ -99,7 +99,7 @@ mcount_read_psl(void)
 	return (ef);
 }
 
-static inline void
+static inline __always_inline void
 mcount_write_psl(u_long ef)
 {
 	__asm volatile("pushl %0; popfl" : : "r" (ef));
