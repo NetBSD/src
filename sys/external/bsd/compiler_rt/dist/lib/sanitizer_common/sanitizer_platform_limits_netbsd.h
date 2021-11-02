@@ -2384,7 +2384,8 @@ struct __sanitizer_cdbw {
   COMPILER_CHECK(offsetof(struct __sanitizer_##CLASS, MEMBER) ==         \
                  offsetof(struct CLASS, MEMBER))
 
-#define SIGACTION_SYMNAME __sigaction14
+// XXX: Do we need to handle the old __sigaction14 name here too?
+#define SIGACTION_SYMNAME __sigaction_siginfo
 
 #endif  // SANITIZER_NETBSD
 
