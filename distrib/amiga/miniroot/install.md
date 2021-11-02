@@ -1,4 +1,4 @@
-#	$NetBSD: install.md,v 1.33 2021/06/26 00:28:19 tsutsui Exp $
+#	$NetBSD: install.md,v 1.34 2021/11/02 22:02:42 abs Exp $
 #
 #
 # Copyright (c) 1996,2006 The NetBSD Foundation, Inc.
@@ -400,7 +400,7 @@ md_mv_aout_libs()
 	md_mv_usr_lib $root || return 1
 
 	# If X11 is installed, move the those libraries as well
-	xlibdir="/usr/X11R6/lib"
+	xlibdir="/usr/X11R7/lib"
 	if [ -d $root/$xlibdir/. ]; then
 		mkdir -p $root/emul/aout/$xlibdir || return 1
 		md_mv_x_lib $root $xlibdir || return 1

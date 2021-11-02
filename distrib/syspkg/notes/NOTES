@@ -42,7 +42,7 @@ to this, I will put together a more concrete proposal soon.
 
 2. Package Registration
 
-    Currently, packages are installed in /usr/pkg and /usr/X11R6,
+    Currently, packages are installed in /usr/pkg and /usr/X11R7,
     and all package registration is done by creating directories
     in /var/db/pkg.
 
@@ -108,4 +108,4 @@ to this, I will put together a more concrete proposal soon.
     would also be easy for an admin to tell if a system had been
     upgraded by looking at pkg_info output.
 
-$Id: NOTES,v 1.1.1.1 2002/01/07 22:46:16 jwise Exp $
+$Id: NOTES,v 1.2 2021/11/02 22:02:42 abs Exp $
