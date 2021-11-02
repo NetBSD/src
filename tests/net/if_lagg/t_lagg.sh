@@ -1,4 +1,4 @@
-#	$NetBSD: t_lagg.sh,v 1.3 2021/10/19 07:57:15 yamaguchi Exp $
+#	$NetBSD: t_lagg.sh,v 1.4 2021/11/02 01:42:26 yamaguchi Exp $
 #
 # Copyright (c) 2021 Internet Initiative Japan Inc.
 # All rights reserved.
@@ -655,7 +655,7 @@ lagg_lacp_vlan()
 		;;
 	"inet6")
 		atf_ping="atf_check -s exit:0 -o ignore rump.ping6 -c 1"
-		rumplib="netinet6"
+		rumplib="$rumplib netinet6"
 		pfx=64
 		host0addr0=$IP6ADDR0
 		host1addr0=$IP6ADDR1
@@ -768,7 +768,7 @@ lagg_lacp_vlan_ipv6_head()
 lagg_lacp_vlan_ipv6_body()
 {
 
-	lagg_lacp_vlan "inet"
+	lagg_lacp_vlan "inet6"
 }
 
 lagg_lacp_vlan_ipv6_cleanup()
