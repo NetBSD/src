@@ -1,4 +1,4 @@
-/*	$NetBSD: profile.h,v 1.9 2013/09/12 15:36:17 joerg Exp $	*/
+/*	$NetBSD: profile.h,v 1.10 2021/11/02 11:22:03 ryo Exp $	*/
 
 /*-
  * Copyright (c) 2000 Tsubai Masanari.  All rights reserved.
@@ -132,6 +132,7 @@ __asm("	.globl	_mcount			\n" \
 #define MCOUNT_ENTER	do s = wrtee(0); while (/*CONSTCOND*/ 0)
 #define MCOUNT_EXIT	wrtee(s)
 #else
+#include <powerpc/psl.h>
 #define MCOUNT_ENTER						\
 	__asm volatile("mfmsr %0" : "=r"(s));			\
 	if ((s & (PSL_IR | PSL_DR)) != (PSL_IR | PSL_DR))	\
