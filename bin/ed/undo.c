@@ -1,4 +1,4 @@
-/*	$NetBSD: undo.c,v 1.7 2019/01/04 19:13:58 maya Exp $	*/
+/*	$NetBSD: undo.c,v 1.8 2021/11/02 08:04:20 nia Exp $	*/
 
 /* undo.c: This file contains the undo routines for the ed line editor */
 /*-
@@ -32,7 +32,7 @@
 #if 0
 static char *rcsid = "@(#)undo.c,v 1.1 1994/02/01 00:34:44 alm Exp";
 #else
-__RCSID("$NetBSD: undo.c,v 1.7 2019/01/04 19:13:58 maya Exp $");
+__RCSID("$NetBSD: undo.c,v 1.8 2021/11/02 08:04:20 nia Exp $");
 #endif
 #endif /* not lint */
 
@@ -48,19 +48,17 @@ long u_p = 0;					/* undo stack pointer */
 undo_t *
 push_undo_stack(int type, long from, long to)
 {
-	undo_t *t;
+	int err;
 
-	t = ustack;
 	if (u_p < usize ||
-	    (t = (undo_t *) realloc(ustack, (usize += USIZE) * sizeof(undo_t))) != NULL) {
-		ustack = t;
+	    (err = reallocarr(&ustack, usize += USIZE, sizeof(undo_t))) == 0) {
 		ustack[u_p].type = type;
 		ustack[u_p].t = get_addressed_line_node(to);
 		ustack[u_p].h = get_addressed_line_node(from);
 		return ustack + u_p++;
 	}
 	/* out of memory - release undo stack */
-	fprintf(stderr, "%s\n", strerror(errno));
+	fprintf(stderr, "%s\n", strerror(err));
 	seterrmsg("out of memory");
 	clear_undo_stack();
 	free(ustack);
