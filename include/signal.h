@@ -1,4 +1,4 @@
-/*	$NetBSD: signal.h,v 1.58 2021/11/01 05:53:45 thorpej Exp $	*/
+/*	$NetBSD: signal.h,v 1.59 2021/11/02 20:12:25 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -164,7 +164,8 @@ sigfillset(sigset_t *set)
  * X/Open CAE Specification Issue 4 Version 2
  */      
 #if (defined(_XOPEN_SOURCE) && defined(_XOPEN_SOURCE_EXTENDED)) || \
-    (_XOPEN_SOURCE - 0) >= 500 || defined(_NETBSD_SOURCE)
+    (_XOPEN_SOURCE - 0) >= 500 || (_POSIX_C_SOURCE - 0) >= 200809L || \
+    defined(_NETBSD_SOURCE)
 int	killpg(pid_t, int);
 int	siginterrupt(int, int);
 int	sigstack(const struct sigstack *, struct sigstack *);
@@ -177,7 +178,9 @@ int	sigignore(int);
 int	sigpause(int);
 int	sigrelse(int);
 void	(*sigset (int, void (*)(int)))(int);
-#endif /* _XOPEN_SOURCE_EXTENDED || _XOPEN_SOURCE >= 500 || _NETBSD_SOURCE */
+#endif /* _XOPEN_SOURCE_EXTENDED || _XOPEN_SOURCE >= 500
+	* || _POSIX_C_SOURCE >= 200809L || _NETBSD_SOURCE
+	*/
 
 
 /*
