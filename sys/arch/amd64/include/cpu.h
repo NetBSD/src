@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.69 2021/04/17 20:12:55 rillig Exp $	*/
+/*	$NetBSD: cpu.h,v 1.70 2021/11/02 11:26:03 ryo Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -48,7 +48,7 @@
 static struct cpu_info *x86_curcpu(void);
 static lwp_t *x86_curlwp(void);
 
-__inline static struct cpu_info * __unused __nomsan
+__inline __always_inline static struct cpu_info * __unused __nomsan
 x86_curcpu(void)
 {
 	struct cpu_info *ci;

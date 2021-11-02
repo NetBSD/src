@@ -1,4 +1,4 @@
-/* $NetBSD: alpha_cpu.h,v 1.54 2021/05/27 22:05:24 thorpej Exp $ */
+/* $NetBSD: alpha_cpu.h,v 1.55 2021/11/02 11:26:03 ryo Exp $ */
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.
@@ -453,7 +453,7 @@ alpha_pal_rdusp(void)
 	return (v0);
 }
 
-static __inline unsigned long
+static __inline __always_inline unsigned long
 alpha_pal_rdval(void)
 {
 	register unsigned long v0 __asm("$0");

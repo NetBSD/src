@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.h,v 1.44 2021/11/01 08:53:40 skrll Exp $ */
+/* $NetBSD: cpu.h,v 1.45 2021/11/02 11:26:03 ryo Exp $ */
 
 /*-
  * Copyright (c) 2014, 2020 The NetBSD Foundation, Inc.
@@ -177,7 +177,7 @@ struct cpu_info {
 } __aligned(COHERENCY_UNIT);
 
 #ifdef _KERNEL
-static inline struct lwp * __attribute__ ((const))
+static inline __always_inline struct lwp * __attribute__ ((const))
 aarch64_curlwp(void)
 {
 	struct lwp *l;

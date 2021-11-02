@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.11 2021/08/14 17:51:19 ryo Exp $	*/
+/*	$NetBSD: cpu.h,v 1.12 2021/11/02 11:26:04 ryo Exp $	*/
 
 /*	$OpenBSD: cpu.h,v 1.55 2008/07/23 17:39:35 kettenis Exp $	*/
 
@@ -342,7 +342,7 @@ extern int hppa_ncpu;
 void	cpu_boot_secondary_processors(void);
 
 #if !defined(_MODULE)
-static __inline struct cpu_info *
+static __inline __always_inline struct cpu_info *
 _hppa_curcpu(void)
 {
 	struct cpu_info *ci;

@@ -1,4 +1,4 @@
-/*      $NetBSD: mtpr.h,v 1.23 2017/05/22 17:12:11 ragge Exp $     */
+/*      $NetBSD: mtpr.h,v 1.24 2021/11/02 11:26:05 ryo Exp $     */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -161,7 +161,7 @@
 
 #ifndef	_LOCORE
 
-static inline void
+static inline __always_inline void
 mtpr(register_t val, int reg)
 {
 	__asm volatile (
@@ -171,7 +171,7 @@ mtpr(register_t val, int reg)
 	    : "memory");
 }
 
-static inline register_t
+static inline __always_inline register_t
 mfpr(int reg)
 {
 	register_t __val;
