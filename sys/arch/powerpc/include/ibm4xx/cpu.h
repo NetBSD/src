@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.26 2021/05/31 14:38:56 simonb Exp $	*/
+/*	$NetBSD: cpu.h,v 1.27 2021/11/02 11:21:24 ryo Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -90,14 +90,14 @@ extern void intr_init(void);
  * macros because register address is encoded as immediate
  * operand.
  */
-static __inline void
-mtdcr(int reg, uint32_t val)
+static __inline __always_inline void
+mtdcr(const int reg, uint32_t val)
 {
 	__asm volatile("mtdcr %0,%1" : : "K"(reg), "r"(val));
 }
 
-static __inline uint32_t
-mfdcr(int reg)
+static __inline __always_inline uint32_t
+mfdcr(const int reg)
 {
 	uint32_t val;	
 	
