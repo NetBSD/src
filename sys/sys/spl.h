@@ -1,4 +1,4 @@
-/*	$NetBSD: spl.h,v 1.9 2009/03/07 21:59:25 ad Exp $	*/
+/*	$NetBSD: spl.h,v 1.10 2021/11/02 11:26:05 ryo Exp $	*/
 
 /*-
  * Copyright (c)2005 YAMAMOTO Takashi,
@@ -39,7 +39,7 @@
 #endif /* !defined(_KERNEL) && !defined(_KMEMUSER) */
 
 #define	_SPL_DECL(x, X)	\
-	static __inline int \
+	static __inline __always_inline int \
 	spl##x(void) \
 	{ return splraiseipl(makeiplcookie(IPL_##X)); }
 

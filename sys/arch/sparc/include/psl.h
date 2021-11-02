@@ -1,4 +1,4 @@
-/*	$NetBSD: psl.h,v 1.49 2016/05/18 08:16:04 nakayama Exp $ */
+/*	$NetBSD: psl.h,v 1.50 2021/11/02 11:26:04 ryo Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -301,7 +301,7 @@ typedef struct {
 	ipl_t _ipl;
 } ipl_cookie_t;
 
-static inline ipl_cookie_t
+static inline __always_inline ipl_cookie_t
 makeiplcookie(ipl_t ipl)
 {
 
@@ -309,7 +309,7 @@ makeiplcookie(ipl_t ipl)
 }
 
 /* Raise IPL and return previous value */
-static __inline int
+static __inline __always_inline int
 splraiseipl(ipl_cookie_t icookie)
 {
 	int newipl = icookie._ipl;

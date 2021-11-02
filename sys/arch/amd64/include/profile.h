@@ -1,4 +1,4 @@
-/*	$NetBSD: profile.h,v 1.20 2021/04/17 20:12:55 rillig Exp $	*/
+/*	$NetBSD: profile.h,v 1.21 2021/11/02 11:26:03 ryo Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -80,7 +80,7 @@ __asm(" .globl __mcount		\n"			\
 
 #ifdef _KERNEL
 #ifdef XENPV
-static inline void
+static inline __always_inline void
 mcount_disable_intr(void)
 {
 	/* should be __cli() but this calls x86_lfence() which calls mcount */
@@ -88,13 +88,13 @@ mcount_disable_intr(void)
 	__asm volatile("lfence" ::: "memory"); /* x86_lfence() */
 }
 
-static inline u_long
+static inline __always_inline u_long
 mcount_read_psl(void)
 {
 	return (curcpu()->ci_vcpu->evtchn_upcall_mask);
 }
 
-static inline void
+static inline __always_inline void
 mcount_write_psl(u_long psl)
 {
 	curcpu()->ci_vcpu->evtchn_upcall_mask = psl;
@@ -104,13 +104,13 @@ mcount_write_psl(u_long psl)
 }
 
 #else /* XENPV */
-static inline void
+static inline __always_inline void
 mcount_disable_intr(void)
 {
 	__asm volatile("cli");
 }
 
-static inline u_long
+static inline __always_inline u_long
 mcount_read_psl(void)
 {
 	u_long	ef;
@@ -119,7 +119,7 @@ mcount_read_psl(void)
 	return (ef);
 }
 
-static inline void
+static inline __always_inline void
 mcount_write_psl(u_long ef)
 {
 	__asm volatile("pushq %0; popfq" : : "r" (ef));
