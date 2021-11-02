@@ -1,4 +1,4 @@
-/*	$NetBSD: fts.c,v 1.49 2016/05/31 07:49:09 pgoyette Exp $	*/
+/*	$NetBSD: fts.c,v 1.50 2021/11/02 08:39:20 nia Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)fts.c	8.6 (Berkeley) 8/14/94";
 #else
-__RCSID("$NetBSD: fts.c,v 1.49 2016/05/31 07:49:09 pgoyette Exp $");
+__RCSID("$NetBSD: fts.c,v 1.50 2021/11/02 08:39:20 nia Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -1015,12 +1015,9 @@ fts_sort(FTS *sp, FTSENT *head, size_t nitems)
 	 * 40 so don't realloc one entry at a time.
 	 */
 	if (nitems > sp->fts_nitems) {
-		FTSENT **new;
-
-		new = realloc(sp->fts_array, sizeof(FTSENT *) * (nitems + 40));
-		if (new == 0)
+		if (reallocarr(&sp->fts_array,
+		    nitems + 40, sizeof(FTSENT *)) != 0)
 			return (head);
-		sp->fts_array = new;
 		sp->fts_nitems = fts_nitems_truncate(nitems + 40);
 	}
 	for (ap = sp->fts_array, p = head; p; p = p->fts_link)
