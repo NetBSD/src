@@ -1,4 +1,4 @@
-/*	$NetBSD: sigtypes.h,v 1.11 2017/01/12 18:29:14 christos Exp $	*/
+/*	$NetBSD: sigtypes.h,v 1.12 2021/11/02 20:12:26 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -104,7 +104,8 @@ typedef struct {
 	} while (/* CONSTCOND */ 0)
 
 #if (defined(_XOPEN_SOURCE) && defined(_XOPEN_SOURCE_EXTENDED)) || \
-    (_XOPEN_SOURCE - 0) >= 500 || defined(_NETBSD_SOURCE)
+    (_XOPEN_SOURCE - 0) >= 500 || (_POSIX_C_SOURCE - 0) >= 200809L || \
+    defined(_NETBSD_SOURCE)
 typedef struct
 #if defined(_NETBSD_SOURCE)
                sigaltstack
@@ -115,7 +116,9 @@ typedef struct
 	int	ss_flags;		/* SS_DISABLE and/or SS_ONSTACK */
 } stack_t;
 
-#endif /* _XOPEN_SOURCE_EXTENDED || XOPEN_SOURCE >= 500 || _NETBSD_SOURCE */
+#endif /* _XOPEN_SOURCE_EXTENDED || _XOPEN_SOURCE >= 500
+	* || _POSIX_C_SOURCE >= 200809L || _NETBSD_SOURCE
+	*/
 
 #endif	/* _POSIX_C_SOURCE || _XOPEN_SOURCE || ... */
 

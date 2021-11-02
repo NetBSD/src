@@ -1,4 +1,4 @@
-/*	$NetBSD: signal.h,v 1.74 2021/10/27 05:18:51 thorpej Exp $	*/
+/*	$NetBSD: signal.h,v 1.75 2021/11/02 20:12:26 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -251,7 +251,8 @@ typedef	void (*sig_t)(int);	/* type of signal function */
 #endif
 
 #if (defined(_XOPEN_SOURCE) && defined(_XOPEN_SOURCE_EXTENDED)) || \
-    (_XOPEN_SOURCE - 0) >= 500 || defined(_NETBSD_SOURCE)
+    (_XOPEN_SOURCE - 0) >= 500 || (_POSIX_C_SOURCE - 0) >= 200809L || \
+    defined(_NETBSD_SOURCE)
 /*
  * Flags used with stack_t/struct sigaltstack.
  */
@@ -262,10 +263,13 @@ typedef	void (*sig_t)(int);	/* type of signal function */
 #endif
 #define	MINSIGSTKSZ	8192			/* minimum allowable stack */
 #define	SIGSTKSZ	(MINSIGSTKSZ + 32768)	/* recommended stack size */
-#endif /* _XOPEN_SOURCE_EXTENDED || _XOPEN_SOURCE >= 500 || _NETBSD_SOURCE */
+#endif /* _XOPEN_SOURCE_EXTENDED || _XOPEN_SOURCE >= 500
+	* || _POSIX_C_SOURCE >= 200809L || _NETBSD_SOURCE
+	*/
 
 #if (defined(_XOPEN_SOURCE) && defined(_XOPEN_SOURCE_EXTENDED)) || \
-    (_XOPEN_SOURCE - 0) >= 500 || defined(_NETBSD_SOURCE)
+    (_XOPEN_SOURCE - 0) >= 500 || (_POSIX_C_SOURCE - 0) >= 200809L || \
+    defined(_NETBSD_SOURCE)
 /*
  * Structure used in sigstack call.
  */
@@ -273,7 +277,9 @@ struct	sigstack {
 	void	*ss_sp;			/* signal stack pointer */
 	int	ss_onstack;		/* current status */
 };
-#endif /* _XOPEN_SOURCE_EXTENDED || _XOPEN_SOURCE >= 500 || _NETBSD_SOURCE */
+#endif /* _XOPEN_SOURCE_EXTENDED || _XOPEN_SOURCE >= 500
+	* || _POSIX_C_SOURCE >= 200809L || _NETBSD_SOURCE
+	*/
 
 #if defined(_NETBSD_SOURCE) && !defined(_KERNEL)
 /*
