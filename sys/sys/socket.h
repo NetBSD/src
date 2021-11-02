@@ -1,4 +1,4 @@
-/*	$NetBSD: socket.h,v 1.130 2021/10/12 17:06:26 christos Exp $	*/
+/*	$NetBSD: socket.h,v 1.131 2021/11/02 20:35:51 christos Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -287,17 +287,14 @@ struct sockaddr_big {
 
 #endif /* _KERNEL */
 
-#if 1
 /*
  * RFC 2553: protocol-independent placeholder for socket addresses
  */
 #define _SS_MAXSIZE	128
 #define _SS_ALIGNSIZE	(sizeof(__int64_t))
 #define _SS_PAD1SIZE	(_SS_ALIGNSIZE - 2)
-#define _SS_PAD2SIZE	(_SS_MAXSIZE - 2 - \
-				_SS_PAD1SIZE - _SS_ALIGNSIZE)
+#define _SS_PAD2SIZE	(_SS_MAXSIZE - 2 - _SS_PAD1SIZE - _SS_ALIGNSIZE)
 
-#if (_XOPEN_SOURCE - 0) >= 500 || defined(_NETBSD_SOURCE)
 struct sockaddr_storage {
 	__uint8_t	ss_len;		/* address length */
 	sa_family_t	ss_family;	/* address family */
@@ -305,10 +302,11 @@ struct sockaddr_storage {
 	__int64_t     __ss_align;/* force desired structure storage alignment */
 	char		__ss_pad2[_SS_PAD2SIZE];
 };
+
+#if defined(_NETBSD_SOURCE)
 #define	sstosa(__ss)	((struct sockaddr *)(__ss))
 #define	sstocsa(__ss)	((const struct sockaddr *)(__ss))
-#endif /* _XOPEN_SOURCE >= 500 || _NETBSD_SOURCE */
-#endif /* 1 */
+#endif /* _NETBSD_SOURCE */
 
 /*
  * Protocol families, same as address families for now.
