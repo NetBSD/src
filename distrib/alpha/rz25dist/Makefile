@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.31 2014/08/05 15:40:58 apb Exp $
+# $NetBSD: Makefile,v 1.32 2021/11/02 22:02:42 abs Exp $
 
 .include "../../../Makefile.inc"
 
@@ -82,7 +82,7 @@ diskimage.gz: mount-fs build-fs unmount-fs
 bin.tar.gz: mount-fs build-fs
 	/bin/rm -f $@
 	(cd ${DESTDIR} ; find . | grep -v '^./etc' | \
-	    grep -v '^./usr/X11R6' | grep -v '^./netbsd' | \
+	    grep -v '^./usr/X11R7' | grep -v '^./netbsd' | \
 	    grep -v '^./boot' | pax -w -d | ${TOOL_GZIP_N} -9) > $@
 
 etc.tar.gz: mount-fs build-fs
@@ -91,7 +91,7 @@ etc.tar.gz: mount-fs build-fs
 
 x11.tar.gz: mount-fs build-fs
 	/bin/rm -f $@
-	(cd ${DESTDIR} ; find ./usr/X11R6 | pax -w -d | ${TOOL_GZIP_N} -9) > $@
+	(cd ${DESTDIR} ; find ./usr/X11R7 | pax -w -d | ${TOOL_GZIP_N} -9) > $@
 
 .endif
 
