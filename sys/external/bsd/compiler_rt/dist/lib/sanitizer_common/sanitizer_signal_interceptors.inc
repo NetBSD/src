@@ -19,7 +19,8 @@
 using namespace __sanitizer;
 
 #if SANITIZER_NETBSD
-#define sigaction_symname __sigaction14
+// XXX: Do we need to handle the old __sigaction14 name here too?
+#define sigaction_symname __sigaction_siginfo
 #else
 #define sigaction_symname sigaction
 #endif
