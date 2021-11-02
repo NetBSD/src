@@ -34,10 +34,10 @@ A. Working Plan
 	misc	-- items not falling into other categories
 	secr	-- items not exportable under US law
 	text	-- text processing tools
-	xbase	-- general X11R6 binaries
-	xcomp	-- X11R6 development items
-	xfont	-- X11R6 fonts
-	xserver -- X11R6 servers for various video hardware
+	xbase	-- general X11R7 binaries
+	xcomp	-- X11R7 development items
+	xfont	-- X11R7 fonts
+	xserver -- X11R7 servers for various video hardware
 
   Users who wish to install part of a set need to either install
   the full set and then determine which files they need to remove,
@@ -129,7 +129,7 @@ A. Working Plan
   /usr/share from the network, and have all other filesystems local,
   or to share the entirety of /usr from the network, and maintain
   local root and /var hierarchies, possibly as a single filesystem.
-  Other commonly shared hierarchies include /usr/X11R6 and /usr/pkg.
+  Other commonly shared hierarchies include /usr/X11R7 and /usr/pkg.
 
   Two steps are necessary to support this type of sharing: the system
   must be able to check separate repositories for packages installed
@@ -142,9 +142,9 @@ A. Working Plan
   Friday, September 18, 1998.  These patches, which have not yet been
   committed cause third-party software packages installed in /usr/pkg
   to be registered in /usr/pkg/etc/pkg, and packages installed in
-  /usr/X11R6 to be registered in /usr/X11R6/etc/pkg.  This could be
+  /usr/X11R7 to be registered in /usr/X11R7/etc/pkg.  This could be
   extended easily to allow sharing of system package installations by
-  having the new system X11R6 packages also use /usr/X11R6/etc/pkg
+  having the new system X11R7 packages also use /usr/X11R7/etc/pkg
   for package registration, to have system packages installed in /usr
   use /usr/etc/pkg for package registration, and to have system
   packages installed in / and /var use /etc/pkg for package
@@ -157,7 +157,7 @@ A. Working Plan
   most easily addressed by careful consideration of package contents.
   A look through the contents of the current install sets suggests
   that relatively few packages will in fact need to install in more
-  than one of /, /usr, /usr/share and /usr/X11R6.  Were such packages
+  than one of /, /usr, /usr/share and /usr/X11R7.  Were such packages
   split into separate components, based on filesystem boundaries,
   users would easily be able to install only the parts which are local
   in their particular configuration.
@@ -295,4 +295,4 @@ A. Working Plan
   can continue unhindered while the new system is being implemented.
 
 ------------------------------------------------------------------------
-$Id: PROPOSAL,v 1.2 2004/01/17 05:30:01 lukem Exp $
+$Id: PROPOSAL,v 1.3 2021/11/02 22:02:42 abs Exp $
