@@ -1,4 +1,4 @@
-/* $NetBSD: virtio_mainbus.c,v 1.3 2021/08/07 16:18:51 thorpej Exp $ */
+/* $NetBSD: virtio_mainbus.c,v 1.4 2021/11/03 07:53:56 skrll Exp $ */
 
 /*
  * Copyright (c) 2021 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: virtio_mainbus.c,v 1.3 2021/08/07 16:18:51 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: virtio_mainbus.c,v 1.4 2021/11/03 07:53:56 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -48,7 +48,7 @@ static void	virtio_mainbus_attach(device_t, device_t, void *);
 static int	virtio_mainbus_rescan(device_t, const char *, const int *);
 static int	virtio_mainbus_detach(device_t, int);
 
-static int	virtio_mainbus_setup_interrupts(struct virtio_mmio_softc *);
+static int	virtio_mainbus_alloc_interrupts(struct virtio_mmio_softc *);
 static void	virtio_mainbus_free_interrupts(struct virtio_mmio_softc *);
 
 struct virtio_mainbus_softc {
@@ -100,7 +100,7 @@ virtio_mainbus_attach(device_t parent, device_t self, void *aux)
 	msc->sc_iot = ma->ma_iot;
 	msc->sc_ioh = ioh;
 	msc->sc_iosize = VIRTIO_STRIDE;
-	msc->sc_setup_interrupts = virtio_mainbus_setup_interrupts;
+	msc->sc_alloc_interrupts = virtio_mainbus_alloc_interrupts;
 	msc->sc_free_interrupts  = virtio_mainbus_free_interrupts;
 
 	vsc->sc_dev = self;
@@ -146,7 +146,7 @@ virtio_mainbus_detach(device_t self, int flags)
 
 
 static int
-virtio_mainbus_setup_interrupts(struct virtio_mmio_softc *msc)
+virtio_mainbus_alloc_interrupts(struct virtio_mmio_softc *msc)
 {
 	struct virtio_mainbus_softc *sc = (struct virtio_mainbus_softc *) msc;
 	struct virtio_softc * const vsc = &msc->sc_sc;
