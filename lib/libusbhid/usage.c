@@ -1,4 +1,4 @@
-/*	$NetBSD: usage.c,v 1.11 2020/04/04 21:23:04 fox Exp $	*/
+/*	$NetBSD: usage.c,v 1.12 2021/11/03 16:18:09 nia Exp $	*/
 
 /*
  * Copyright (c) 1999 Lennart Augustsson <augustss@NetBSD.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: usage.c,v 1.11 2020/04/04 21:23:04 fox Exp $");
+__RCSID("$NetBSD: usage.c,v 1.12 2021/11/03 16:18:09 nia Exp $");
 
 #include <assert.h>
 #include <ctype.h>
@@ -112,11 +112,9 @@ hid_init(const char *hidname)
 				     hidname, lineno);
 			if (curpage->pagesize >= curpage->pagesizemax) {
 				curpage->pagesizemax += 10;
-				curpage->page_contents =
-					realloc(curpage->page_contents,
-						curpage->pagesizemax *
-						sizeof (struct usage_in_page));
-				if (!curpage->page_contents)
+				if (reallocarr(&curpage->page_contents,
+						curpage->pagesizemax,
+						sizeof (struct usage_in_page)) != 0)
 					err(1, "realloc");
 			}
 			curpage->page_contents[curpage->pagesize].name = n;
@@ -124,17 +122,13 @@ hid_init(const char *hidname)
 			curpage->pagesize++;
 		} else {
 			if (npages >= npagesmax) {
-				if (pages == 0) {
+				if (pages == NULL) {
 					npagesmax = 5;
-					pages = malloc(npagesmax *
-						  sizeof (struct usage_page));
 				} else {
 					npagesmax += 5;
-					pages = realloc(pages,
-						   npagesmax *
-						   sizeof (struct usage_page));
 				}
-				if (!pages)
+				if (reallocarr(&pages, npagesmax,
+				       sizeof (struct usage_page)) != 0)
 					err(1, "alloc");
 			}
 			curpage = &pages[npages++];
@@ -142,10 +136,10 @@ hid_init(const char *hidname)
 			curpage->usage = no;
 			curpage->pagesize = 0;
 			curpage->pagesizemax = 10;
-			curpage->page_contents =
-				malloc(curpage->pagesizemax *
-				       sizeof (struct usage_in_page));
-			if (!curpage->page_contents)
+			curpage->page_contents = NULL;
+			if (reallocarr(&curpage->page_contents,
+				       curpage->pagesizemax,
+				       sizeof (struct usage_in_page)) != 0)
 				err(1, "malloc");
 		}
 	}
