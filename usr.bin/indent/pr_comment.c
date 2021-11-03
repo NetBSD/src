@@ -1,4 +1,4 @@
-/*	$NetBSD: pr_comment.c,v 1.93 2021/10/30 22:36:07 rillig Exp $	*/
+/*	$NetBSD: pr_comment.c,v 1.94 2021/11/03 21:47:35 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)pr_comment.c	8.1 (Berkeley) 6/6/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: pr_comment.c,v 1.93 2021/10/30 22:36:07 rillig Exp $");
+__RCSID("$NetBSD: pr_comment.c,v 1.94 2021/11/03 21:47:35 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/pr_comment.c 334927 2018-06-10 16:44:18Z pstef $");
 #endif
@@ -92,7 +92,7 @@ fits_in_one_line(int max_line_length)
 	if (!(p[0] == '*' && p[1] == '/'))
 	    continue;
 
-	int len = indentation_after_range(ps.com_ind + 3, inp.s, p);
+	int len = ind_add(ps.com_ind + 3, inp.s, p);
 	len += ch_isblank(p[-1]) ? 2 : 3;
 	return len <= max_line_length;
     }
@@ -158,9 +158,9 @@ process_comment(void)
 
 	    int target_ind;
 	    if (code.s != code.e)
-		target_ind = indentation_after(compute_code_indent(), code.s);
+		target_ind = ind_add(compute_code_indent(), code.s, code.e);
 	    else if (lab.s != lab.e)
-		target_ind = indentation_after(compute_label_indent(), lab.s);
+		target_ind = ind_add(compute_label_indent(), lab.s, lab.e);
 	    else
 		target_ind = 0;
 
@@ -192,7 +192,7 @@ process_comment(void)
 	 */
 	start = inp.s >= sc_buf && inp.s < sc_buf + sc_size ?
 	    sc_buf : inp.buf;
-	ps.n_comment_delta = -indentation_after_range(0, start, inp.s - 2);
+	ps.n_comment_delta = -ind_add(0, start, inp.s - 2);
     } else {
 	ps.n_comment_delta = 0;
 	while (ch_isblank(*inp.s))
@@ -316,7 +316,7 @@ process_comment(void)
 
 	default:		/* we have a random char */
 	    ;
-	    int now_len = indentation_after_range(ps.com_ind, com.s, com.e);
+	    int now_len = ind_add(ps.com_ind, com.s, com.e);
 	    for (;;) {
 		char ch = inbuf_next();
 		if (ch_isblank(ch))
