@@ -1,4 +1,4 @@
-/*	$NetBSD: interact.c,v 1.39 2016/01/31 18:57:29 christos Exp $	*/
+/*	$NetBSD: interact.c,v 1.40 2021/11/03 14:25:39 nia Exp $	*/
 
 /*
  * Copyright (c) 1997 Christos Zoulas.  All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: interact.c,v 1.39 2016/01/31 18:57:29 christos Exp $");
+__RCSID("$NetBSD: interact.c,v 1.40 2021/11/03 14:25:39 nia Exp $");
 #endif /* lint */
 
 #include <sys/param.h>
@@ -674,10 +674,10 @@ dumpnames(const char *prompt, const char * const *olist, size_t numentries)
 	size_t	i, entry, lines;
 	int	columns, width;
 	const char *p;
-	const char **list;
+	const char **list = NULL;
 
-	if ((list = (const char **)malloc(sizeof(char *) * numentries)) == NULL)
-		err(1, "malloc");
+	if (reallocarr(&list, numentries, sizeof(char *)) != 0)
+		err(1, "reallocarr");
 	width = 0;
 	printf("%s:\n", prompt);
 	for (i = 0; i < numentries; i++) {
