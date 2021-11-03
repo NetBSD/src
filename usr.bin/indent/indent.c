@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.c,v 1.204 2021/11/01 23:44:08 rillig Exp $	*/
+/*	$NetBSD: indent.c,v 1.205 2021/11/03 21:47:35 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)indent.c	5.17 (Berkeley) 6/7/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: indent.c,v 1.204 2021/11/01 23:44:08 rillig Exp $");
+__RCSID("$NetBSD: indent.c,v 1.205 2021/11/03 21:47:35 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/indent.c 340138 2018-11-04 19:24:49Z oshogbo $");
 #endif
@@ -772,8 +772,7 @@ process_lparen_or_lbracket(int decl_ind, bool tabs_to_var, bool spaced_expr)
     ps.want_blank = false;
     *code.e++ = token.s[0];
 
-    ps.paren_indents[ps.p_l_follow - 1] =
-	(short)indentation_after_range(0, code.s, code.e);
+    ps.paren_indents[ps.p_l_follow - 1] = (short)ind_add(0, code.s, code.e);
     debug_println("paren_indents[%d] is now %d",
 	ps.p_l_follow - 1, ps.paren_indents[ps.p_l_follow - 1]);
 
@@ -1217,7 +1216,7 @@ process_comma(int decl_ind, bool tabs_to_var, bool *force_nl)
 	int varname_len = 8;	/* rough estimate for the length of a typical
 				 * variable name */
 	if (break_comma && (opt.break_after_comma ||
-		indentation_after_range(compute_code_indent(), code.s, code.e)
+		ind_add(compute_code_indent(), code.s, code.e)
 		>= opt.max_line_length - varname_len))
 	    *force_nl = true;
     }

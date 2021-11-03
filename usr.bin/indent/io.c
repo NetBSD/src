@@ -1,4 +1,4 @@
-/*	$NetBSD: io.c,v 1.108 2021/10/30 11:49:38 rillig Exp $	*/
+/*	$NetBSD: io.c,v 1.109 2021/11/03 21:47:35 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)io.c	8.1 (Berkeley) 6/6/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: io.c,v 1.108 2021/10/30 11:49:38 rillig Exp $");
+__RCSID("$NetBSD: io.c,v 1.109 2021/11/03 21:47:35 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/io.c 334927 2018-06-10 16:44:18Z pstef $");
 #endif
@@ -136,7 +136,7 @@ dump_line_label(void)
 	}
     } else
 	output_range(lab.s, lab.e);
-    ind = indentation_after(ind, lab.s);
+    ind = ind_add(ind, lab.s, lab.e);
 
     ps.is_case_label = false;
     return ind;
@@ -160,7 +160,7 @@ dump_line_code(int ind)
 
     ind = output_indent(ind, target_ind);
     output_range(code.s, code.e);
-    return indentation_after(ind, code.s);
+    return ind_add(ind, code.s, code.e);
 }
 
 static void
@@ -315,11 +315,11 @@ compute_code_indent(void)
 	    target_ind = paren_indent - 1;
 
 	} else {
-	    int w;
-	    int t = paren_indent;
+	    int w;			/* TODO: remove '+ 1' and '- 1' */
+	    int t = paren_indent;	/* TODO: remove '+ 1' and '- 1' */
 
-	    if ((w = 1 + indentation_after(t - 1, code.s) - opt.max_line_length) > 0
-		&& 1 + indentation_after(target_ind, code.s) <= opt.max_line_length) {
+	    if ((w = 1 + ind_add(t - 1, code.s, code.e) - opt.max_line_length) > 0
+		&& 1 + ind_add(target_ind, code.s, code.e) <= opt.max_line_length) {
 		t -= w + 1;
 		if (t > target_ind + 1)
 		    target_ind = t - 1;
@@ -460,9 +460,9 @@ inbuf_read_line(void)
 }
 
 int
-indentation_after_range(int ind, const char *start, const char *end)
+ind_add(int ind, const char *start, const char *end)
 {
-    for (const char *p = start; *p != '\0' && p != end; ++p) {
+    for (const char *p = start; p != end; ++p) {
 	if (*p == '\n' || *p == '\f')
 	    ind = 0;
 	else if (*p == '\t')
@@ -473,10 +473,4 @@ indentation_after_range(int ind, const char *start, const char *end)
 	    ++ind;
     }
     return ind;
-}
-
-int
-indentation_after(int ind, const char *s)
-{
-    return indentation_after_range(ind, s, NULL);
 }
