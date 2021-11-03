@@ -1,4 +1,4 @@
-/* $NetBSD: efiacpi.c,v 1.11 2021/10/06 10:13:19 jmcneill Exp $ */
+/* $NetBSD: efiacpi.c,v 1.12 2021/11/03 22:02:36 skrll Exp $ */
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -49,9 +49,10 @@ static EFI_GUID Acpi20TableGuid = ACPI_20_TABLE_GUID;
 static EFI_GUID Smbios3TableGuid = SMBIOS3_TABLE_GUID;
 static EFI_GUID SmbiosTableGuid = SMBIOS_TABLE_GUID;
 
-static int acpi_enable = 1;
 static void *acpi_root = NULL;
 static void *smbios_table = NULL;
+
+static int acpi_enabled = 1;
 
 int
 efi_acpi_probe(void)
@@ -76,19 +77,13 @@ efi_acpi_probe(void)
 int
 efi_acpi_available(void)
 {
-	return acpi_root != NULL;
+	return acpi_root != NULL && acpi_enabled;
 }
 
 int
 efi_acpi_enabled(void)
 {
-	return acpi_enable;
-}
-
-void
-efi_acpi_enable(int enable)
-{
-	acpi_enable = enable;
+	return acpi_enabled;
 }
 
 void *
@@ -104,6 +99,15 @@ efi_acpi_smbios(void)
 }
 
 static char model_buf[128];
+
+void
+efi_acpi_enable(int val)
+{
+	if (acpi_root == NULL) {
+		printf("No ACPI node\n");
+	} else
+		acpi_enabled = val;
+}
 
 const char *
 efi_acpi_get_model(void)

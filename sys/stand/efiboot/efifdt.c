@@ -1,4 +1,4 @@
-/* $NetBSD: efifdt.c,v 1.31 2021/10/06 10:15:20 jmcneill Exp $ */
+/* $NetBSD: efifdt.c,v 1.32 2021/11/03 22:02:36 skrll Exp $ */
 
 /*-
  * Copyright (c) 2019 Jason R. Thorpe
@@ -391,7 +391,7 @@ efi_fdt_gop(void)
 		/*
 		 * In ACPI mode, use GOP as console.
 		 */
-		if (efi_acpi_available() && efi_acpi_enabled()) {
+		if (efi_acpi_available()) {
 			snprintf(buf, sizeof(buf), "/chosen/framebuffer@%" PRIx64, mode->FrameBufferBase);
 			fdt_setprop_string(fdt_data, chosen, "stdout-path", buf);
 		}
@@ -587,17 +587,18 @@ arch_prepare_boot(const char *fname, const char *args, u_long *marks)
 
 #ifdef EFIBOOT_ACPI
 	/* ACPI support only works for little endian kernels */
-	efi_acpi_enable(netbsd_elf_data == ELFDATA2LSB);
-
-	if (efi_acpi_available() && efi_acpi_enabled()) {
+	if (efi_acpi_available() && netbsd_elf_data == ELFDATA2LSB) {
 		int error = efi_fdt_create_acpifdt();
 		if (error != 0) {
 			return error;
 		}
 	} else
 #endif
-	if (dtb_addr && efi_fdt_set_data((void *)(uintptr_t)dtb_addr) != 0) {
-		printf("boot: invalid DTB data\n");
+	if (!dtb_addr || efi_fdt_set_data((void *)(uintptr_t)dtb_addr) != 0) {
+		if (!dtb_addr)
+			printf("boot: no DTB provided\n");
+		else
+			printf("boot: invalid DTB data\n");
 		return EINVAL;
 	}
 
