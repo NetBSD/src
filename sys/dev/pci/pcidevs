@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.1442 2021/10/27 18:25:31 msaitoh Exp $
+$NetBSD: pcidevs,v 1.1443 2021/11/03 15:09:42 msaitoh Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -5645,13 +5645,13 @@ product INTEL EHL_GPU_32_SUPER	0x4551	Elkhart Lake GPU (32EU Super)
 product INTEL EHL_GPU_32	0x4551	Elkhart Lake GPU (32EU)
 product INTEL EHL_DPTF		0x4503	Elkhart Lake DPTF
 product INTEL EHL_GNA		0x4511	Elkhart Lake GNA
-product INTEL EHL_TRACE_1	0x4529	Elkhart Lake Trace Hub (Compute Die)
+product INTEL EHL_TRACE_2	0x4529	Elkhart Lake Trace Hub (Compute Die)
 product INTEL EHL_ESPI		0x4b00	Elkhart Lake eSPI
 product INTEL EHL_P2SB		0x4b20	Elkhart Lake P2SB
 product INTEL EHL_PMC		0x4b21	Elkhart Lake PMC
 product INTEL EHL_SMB		0x4b23	Elkhart Lake SMBus
 product INTEL EHL_SPI_FLASH	0x4b24	Elkhart Lake SPI (FLASH & TPM)
-product INTEL EHL_TRACE		0x4b26	Elkhart Lake Trace Hub (PCH)
+product INTEL EHL_TRACE_1	0x4b26	Elkhart Lake Trace Hub (PCH)
 product INTEL EHL_SIO_UART_0	0x4b28	Elkhart Lake SIO UART 0
 product INTEL EHL_SIO_UART_1	0x4b29	Elkhart Lake SIO UART 1
 product INTEL EHL_SIO_SPI_0	0x4b2a	Elkhart Lake SIO SPI 0
@@ -5741,7 +5741,7 @@ product INTEL JSL_P2SB		0x4da0	Jasper Lake P2SB
 product INTEL JSL_PMC		0x4da1	Jasper Lake PMC
 product INTEL JSL_SMB		0x4da3	Jasper Lake SMBus
 product INTEL JSL_SPI_FLASH	0x4da4	Jasper Lake SPI (FLASH)
-product INTEL JSL_TRACE		0x4da6	Jasper Lake Intel Trace Hub
+product INTEL JSL_TRACE_1	0x4da6	Jasper Lake Intel Trace Hub (PCH)
 product INTEL JSL_UART_0	0x4da8	Jasper Lake UART 0
 product INTEL JSL_UART_1	0x4da9	Jasper Lake UART 1
 product INTEL JSL_SPI_0		0x4daa	Jasper Lake SPI 0
@@ -5781,7 +5781,13 @@ product INTEL JSL_CNVI_3	0x4df3	Jasper Lake CNVi WiFi (SKU 3)
 product INTEL JSL_SCS		0x4df8	Jasper Lake SD Card
 product INTEL JSL_SPI_2		0x4dfb	Jasper Lake SPI 2
 product INTEL JSL_DPTF		0x4e03	Jasper Lake DPTF
-product INTEL JSL_HB		0x4e22	Jasper Lake Processor Transaction Route
+product INTEL JSL_TROUTER_4_1	0x4e12	Jasper Lake Processor Transaction Router (SKU 4)
+product INTEL JSL_TROUTER_2_1	0x4e14	Jasper Lake Processor Transaction Router (SKU 2)
+product INTEL JSL_TROUTER_2_2	0x4e22	Jasper Lake Processor Transaction Router (SKU 2)
+product INTEL JSL_TROUTER_4_2	0x4e24	Jasper Lake Processor Transaction Router (SKU 4)
+product INTEL JSL_TROUTER_4_3	0x4e26	Jasper Lake Processor Transaction Router (SKU 4)
+product INTEL JSL_TROUTER_4_4	0x4e28	Jasper Lake Processor Transaction Router (SKU 4)
+product INTEL JSL_TRACE_2	0x4da6	Jasper Lake Intel Trace Hub (Compute Die)
 product INTEL JSL_GPU_EU_16	0x4e55	Jasper Lake GPU 16 EU
 product INTEL JSL_GPU_EU_24	0x4e61	Jasper Lake GPU 24 EU
 product INTEL JSL_GPU_EU_32	0x4e71	Jasper Lake GPU 32 EU
