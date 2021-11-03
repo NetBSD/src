@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.h,v 1.75 2021/11/01 23:44:08 rillig Exp $	*/
+/*	$NetBSD: indent.h,v 1.76 2021/11/03 21:47:35 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-FreeBSD
@@ -364,8 +364,7 @@ void debug_println(const char *, ...)__printflike(1, 2);
 void register_typename(const char *);
 int compute_code_indent(void);
 int compute_label_indent(void);
-int indentation_after_range(int, const char *, const char *);
-int indentation_after(int, const char *);
+int ind_add(int, const char *, const char *);
 
 void inbuf_skip(void);
 char inbuf_next(void);
