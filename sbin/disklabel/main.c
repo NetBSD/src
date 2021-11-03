@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.56 2021/05/29 17:41:51 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.57 2021/11/03 14:25:39 nia Exp $	*/
 
 /*
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993\
 static char sccsid[] = "@(#)disklabel.c	8.4 (Berkeley) 5/4/95";
 /* from static char sccsid[] = "@(#)disklabel.c	1.2 (Symmetric) 11/28/85"; */
 #else
-__RCSID("$NetBSD: main.c,v 1.56 2021/05/29 17:41:51 christos Exp $");
+__RCSID("$NetBSD: main.c,v 1.57 2021/11/03 14:25:39 nia Exp $");
 #endif
 #endif	/* not lint */
 
@@ -2207,11 +2207,10 @@ list_fs_types(void)
 
 	ret = 1;
 	if (nelems > 0) {
-		const char **list;
+		const char **list = NULL;
 		size_t i;
 
-		list = (const char **)malloc(sizeof(char *) * nelems);
-		if (list == NULL) {
+		if (reallocarr(&list, nelems, sizeof(char *)) != 0) {
 			warnx("sorry, could not allocate memory for list");
 			ret = 0;
 		} else {
