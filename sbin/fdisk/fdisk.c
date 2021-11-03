@@ -1,4 +1,4 @@
-/*	$NetBSD: fdisk.c,v 1.159 2020/05/24 21:02:12 wiz Exp $ */
+/*	$NetBSD: fdisk.c,v 1.160 2021/11/03 14:30:04 nia Exp $ */
 
 /*
  * Mach Operating System
@@ -39,7 +39,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: fdisk.c,v 1.159 2020/05/24 21:02:12 wiz Exp $");
+__RCSID("$NetBSD: fdisk.c,v 1.160 2021/11/03 14:30:04 nia Exp $");
 #endif /* not lint */
 
 #define MBRPTYPENAMES
@@ -1148,7 +1148,6 @@ get_extended_ptn(void)
 	struct mbr_partition *mp;
 	struct mbr_sector *boot;
 	daddr_t offset;
-	struct mbr_sector *nptn;
 
 	/* find first (there should only be one) extended partition */
 	for (mp = mboot.mbr_parts; !MBR_IS_EXTENDED(mp->mbrp_type); mp++)
@@ -1163,10 +1162,9 @@ get_extended_ptn(void)
 	ext.limit = ext.base + le32toh(mp->mbrp_size);
 	ext.ptn_id = mp - mboot.mbr_parts;
 	for (offset = 0;; offset = le32toh(boot->mbr_parts[1].mbrp_start)) {
-		nptn = realloc(ext.ptn, (ext.num_ptn + 1) * sizeof *ext.ptn);
-		if (nptn == NULL)
+		if (reallocarr(&ext.ptn,
+		    ext.num_ptn + 1, sizeof(*ext.ptn)) != 0)
 			err(1, "Malloc failed");
-		ext.ptn = nptn;
 		boot = ext.ptn + ext.num_ptn;
 		if (read_s0(offset + ext.base, boot) == -1)
 			break;
@@ -1810,12 +1808,9 @@ add_ext_ptn(daddr_t start, daddr_t size)
 {
 	int part;
 	struct mbr_partition *partp;
-	struct mbr_sector *nptn;
 
-	nptn = realloc(ext.ptn, (ext.num_ptn + 1) * sizeof *ext.ptn);
-	if (!nptn)
-		err(1, "realloc");
-	ext.ptn = nptn;
+	if (reallocarr(&ext.ptn, ext.num_ptn + 1, sizeof(*ext.ptn)) != 0)
+		err(1, "reallocarr");
 	for (part = 0; part < ext.num_ptn; part++)
 		if (ext_offset(part) > start)
 			break;
