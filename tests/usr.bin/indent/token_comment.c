@@ -1,4 +1,4 @@
-/* $NetBSD: token_comment.c,v 1.15 2021/10/30 22:36:07 rillig Exp $ */
+/* $NetBSD: token_comment.c,v 1.16 2021/11/04 18:31:22 rillig Exp $ */
 /* $FreeBSD$ */
 
 /*
@@ -947,4 +947,21 @@ f(void)
 	if (0)
 		 /* 12 1234 123 123456 1234 1234567 123 1234.  */ ;
 }
+#indent end
+
+
+/*
+ * Test for an edge cases in comment handling, having a block comment inside
+ * a line comment.
+ */
+#indent input
+/* block comment */
+// line comment /* still a line comment */ still a line comment
+#indent end
+
+/* FIXME: The line comment must not be indented. */
+/* FIXME: The '*' '/' in the line comment must not be removed. */
+#indent run
+/* block comment */
+ // line comment /* still a line comment  still a line comment
 #indent end
