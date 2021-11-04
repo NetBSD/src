@@ -1,4 +1,4 @@
-/*	$NetBSD: io.c,v 1.111 2021/11/04 17:07:02 rillig Exp $	*/
+/*	$NetBSD: io.c,v 1.112 2021/11/04 17:08:50 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)io.c	8.1 (Berkeley) 6/6/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: io.c,v 1.111 2021/11/04 17:07:02 rillig Exp $");
+__RCSID("$NetBSD: io.c,v 1.112 2021/11/04 17:08:50 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/io.c 334927 2018-06-10 16:44:18Z pstef $");
 #endif
@@ -275,7 +275,7 @@ output_line(char line_terminator)
 
     if (ps.paren_level > 0) {
 	/* TODO: explain what negative indentation means */
-	paren_indent = -ps.paren_indents[ps.paren_level - 1];
+	paren_indent = -1 - ps.paren_indents[ps.paren_level - 1];
 	debug_println("paren_indent is now %d", paren_indent);
     }
 
@@ -306,16 +306,10 @@ compute_code_indent(void)
     }
 
     if (opt.lineup_to_parens) {
-	if (opt.lineup_to_parens_always) {
-	    /*
-	     * XXX: where does this '- 1' come from?  It looks strange but is
-	     * nevertheless needed for proper indentation, as demonstrated in
-	     * the test opt-lpl.0.
-	     */
-	    return paren_indent - 1;
-	}
+	if (opt.lineup_to_parens_always)
+	    return paren_indent;
 
-	int ti = paren_indent - 1;
+	int ti = paren_indent;
 	int overflow = ind_add(ti, code.s, code.e) - opt.max_line_length;
 	if (overflow < 0)
 	    return ti;
