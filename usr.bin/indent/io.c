@@ -1,4 +1,4 @@
-/*	$NetBSD: io.c,v 1.110 2021/11/04 00:13:57 rillig Exp $	*/
+/*	$NetBSD: io.c,v 1.111 2021/11/04 17:07:02 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)io.c	8.1 (Berkeley) 6/6/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: io.c,v 1.110 2021/11/04 00:13:57 rillig Exp $");
+__RCSID("$NetBSD: io.c,v 1.111 2021/11/04 17:07:02 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/io.c 334927 2018-06-10 16:44:18Z pstef $");
 #endif
@@ -315,19 +315,19 @@ compute_code_indent(void)
 	    return paren_indent - 1;
 	}
 
-	int w;
-	int t = paren_indent;
+	int ti = paren_indent - 1;
+	int overflow = ind_add(ti, code.s, code.e) - opt.max_line_length;
+	if (overflow < 0)
+	    return ti;
 
-	/* TODO: remove '+ 1' and '- 1' */
-	if ((w = 1 + ind_add(t - 1, code.s, code.e) - opt.max_line_length) > 0
-	    && 1 + ind_add(base_ind, code.s, code.e) <= opt.max_line_length) {
-	    t -= w + 1;
-	    if (t > base_ind + 1)
-		return t - 1;
+	if (ind_add(base_ind, code.s, code.e) < opt.max_line_length) {
+	    ti -= overflow + 2;
+	    if (ti > base_ind)
+		return ti;
 	    return base_ind;
 	}
 
-	return t - 1;
+	return ti;
     }
 
     if (2 * opt.continuation_indent == opt.indent_size)
