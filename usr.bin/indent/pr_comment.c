@@ -1,4 +1,4 @@
-/*	$NetBSD: pr_comment.c,v 1.94 2021/11/03 21:47:35 rillig Exp $	*/
+/*	$NetBSD: pr_comment.c,v 1.95 2021/11/04 17:37:03 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)pr_comment.c	8.1 (Berkeley) 6/6/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: pr_comment.c,v 1.94 2021/11/03 21:47:35 rillig Exp $");
+__RCSID("$NetBSD: pr_comment.c,v 1.95 2021/11/04 17:37:03 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/pr_comment.c 334927 2018-06-10 16:44:18Z pstef $");
 #endif
@@ -99,41 +99,17 @@ fits_in_one_line(int max_line_length)
     return false;
 }
 
-/*
- * Scan, reformat and output a single comment, which is either a block comment
- * starting with '/' '*' or an end-of-line comment starting with '//'.
- *
- * Try to keep comments from going over the maximum line length.  If a line is
- * too long, move everything starting from the last blank to the next comment
- * line.  Blanks and tabs from the beginning of the input line are removed.
- *
- * ALGORITHM:
- *	1) Decide where the comment should be aligned, and if lines should
- *	   be broken.
- *	2) If lines should not be broken and filled, just copy up to end of
- *	   comment.
- *	3) If lines should be filled, then scan through the input buffer,
- *	   copying characters to com_buf.  Remember where the last blank,
- *	   tab, or newline was.  When line is filled, print up to last blank
- *	   and continue copying.
- */
-void
-process_comment(void)
+static void
+analyze_comment(int *p_adj_max_line_length, bool *p_break_delim,
+    bool *p_may_wrap)
 {
     int adj_max_line_length;	/* Adjusted max_line_length for comments that
 				 * spill over the right margin */
-    ssize_t last_blank;		/* index of the last blank in com.buf */
     bool break_delim = opt.comment_delimiter_on_blankline;
-    int l_just_saw_decl = ps.just_saw_decl;
     int com_ind;
 
     adj_max_line_length = opt.max_line_length;
-    ps.just_saw_decl = 0;
-    last_blank = -1;		/* no blanks found so far */
     bool may_wrap = true;
-    ps.stats.comments++;
-
-    /* Figure where to align and how to treat the comment */
 
     if (ps.curr_col_1 && !opt.format_col1_comments) {
 	may_wrap = false;
@@ -220,7 +196,15 @@ process_comment(void)
 	com_add_delim();
     }
 
-    /* Now copy the comment. */
+    *p_adj_max_line_length = adj_max_line_length;
+    *p_break_delim = break_delim;
+    *p_may_wrap = may_wrap;
+}
+
+static void
+copy_comment(int adj_max_line_length, bool break_delim, bool may_wrap)
+{
+    ssize_t last_blank = -1;	/* index of the last blank in com.buf */
 
     for (;;) {
 	switch (*inp.s) {
@@ -306,8 +290,6 @@ process_comment(void)
 		    com_add_char('/');
 		}
 		com_terminate();
-
-		ps.just_saw_decl = l_just_saw_decl;
 		return;
 
 	    } else		/* handle isolated '*' */
@@ -353,4 +335,40 @@ process_comment(void)
 	    last_blank = -1;
 	}
     }
+}
+
+/*
+ * Scan, reformat and output a single comment, which is either a block comment
+ * starting with '/' '*' or an end-of-line comment starting with '//'.
+ *
+ * Try to keep comments from going over the maximum line length.  If a line is
+ * too long, move everything starting from the last blank to the next comment
+ * line.  Blanks and tabs from the beginning of the input line are removed.
+ *
+ * ALGORITHM:
+ *	1) Decide where the comment should be aligned, and if lines should
+ *	   be broken.
+ *	2) If lines should not be broken and filled, just copy up to end of
+ *	   comment.
+ *	3) If lines should be filled, then scan through the input buffer,
+ *	   copying characters to com_buf.  Remember where the last blank,
+ *	   tab, or newline was.  When line is filled, print up to last blank
+ *	   and continue copying.
+ */
+void
+process_comment(void)
+{
+    int adj_max_line_length;	/* Adjusted max_line_length for comments that
+				 * spill over the right margin */
+    bool break_delim = opt.comment_delimiter_on_blankline;
+
+    adj_max_line_length = opt.max_line_length;
+    ps.just_saw_decl = 0;
+    bool may_wrap = true;
+    ps.stats.comments++;
+
+    int l_just_saw_decl = ps.just_saw_decl;
+    analyze_comment(&adj_max_line_length, &break_delim, &may_wrap);
+    copy_comment(adj_max_line_length, break_delim, may_wrap);
+    ps.just_saw_decl = l_just_saw_decl;
 }
