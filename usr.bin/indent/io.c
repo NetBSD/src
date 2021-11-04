@@ -1,4 +1,4 @@
-/*	$NetBSD: io.c,v 1.109 2021/11/03 21:47:35 rillig Exp $	*/
+/*	$NetBSD: io.c,v 1.110 2021/11/04 00:13:57 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)io.c	8.1 (Berkeley) 6/6/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: io.c,v 1.109 2021/11/03 21:47:35 rillig Exp $");
+__RCSID("$NetBSD: io.c,v 1.110 2021/11/04 00:13:57 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/io.c 334927 2018-06-10 16:44:18Z pstef $");
 #endif
@@ -297,40 +297,43 @@ dump_line_ff(void)
 int
 compute_code_indent(void)
 {
-    int target_ind = opt.indent_size * ps.ind_level;
+    int base_ind = ps.ind_level * opt.indent_size;
 
-    if (ps.paren_level != 0) {
-	if (!opt.lineup_to_parens) {
-	    if (2 * opt.continuation_indent == opt.indent_size)
-		target_ind += opt.continuation_indent;
-	    else
-		target_ind += opt.continuation_indent * ps.paren_level;
+    if (ps.paren_level == 0) {
+	if (ps.ind_stmt)
+	    return base_ind + opt.continuation_indent;
+	return base_ind;
+    }
 
-	} else if (opt.lineup_to_parens_always) {
+    if (opt.lineup_to_parens) {
+	if (opt.lineup_to_parens_always) {
 	    /*
 	     * XXX: where does this '- 1' come from?  It looks strange but is
 	     * nevertheless needed for proper indentation, as demonstrated in
 	     * the test opt-lpl.0.
 	     */
-	    target_ind = paren_indent - 1;
-
-	} else {
-	    int w;			/* TODO: remove '+ 1' and '- 1' */
-	    int t = paren_indent;	/* TODO: remove '+ 1' and '- 1' */
-
-	    if ((w = 1 + ind_add(t - 1, code.s, code.e) - opt.max_line_length) > 0
-		&& 1 + ind_add(target_ind, code.s, code.e) <= opt.max_line_length) {
-		t -= w + 1;
-		if (t > target_ind + 1)
-		    target_ind = t - 1;
-	    } else
-		target_ind = t - 1;
+	    return paren_indent - 1;
 	}
 
-    } else if (ps.ind_stmt)
-	target_ind += opt.continuation_indent;
+	int w;
+	int t = paren_indent;
 
-    return target_ind;
+	/* TODO: remove '+ 1' and '- 1' */
+	if ((w = 1 + ind_add(t - 1, code.s, code.e) - opt.max_line_length) > 0
+	    && 1 + ind_add(base_ind, code.s, code.e) <= opt.max_line_length) {
+	    t -= w + 1;
+	    if (t > base_ind + 1)
+		return t - 1;
+	    return base_ind;
+	}
+
+	return t - 1;
+    }
+
+    if (2 * opt.continuation_indent == opt.indent_size)
+	return base_ind + opt.continuation_indent;
+    else
+	return base_ind + opt.continuation_indent * ps.paren_level;
 }
 
 int
