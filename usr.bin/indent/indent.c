@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.c,v 1.205 2021/11/03 21:47:35 rillig Exp $	*/
+/*	$NetBSD: indent.c,v 1.206 2021/11/04 17:12:12 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)indent.c	5.17 (Berkeley) 6/7/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: indent.c,v 1.205 2021/11/03 21:47:35 rillig Exp $");
+__RCSID("$NetBSD: indent.c,v 1.206 2021/11/04 17:12:12 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/indent.c 340138 2018-11-04 19:24:49Z oshogbo $");
 #endif
@@ -834,6 +834,16 @@ process_rparen_or_rbracket(bool *spaced_expr, bool *force_nl, stmt_head hd)
     ps.search_stmt = opt.brace_same_line;
 }
 
+static bool
+want_blank_before_unary_op(void)
+{
+    if (ps.want_blank)
+	return true;
+    if (token.s[0] == '+' || token.s[0] == '-')
+	return code.e[-1] == token.s[0];
+    return false;
+}
+
 static void
 process_unary_op(int decl_ind, bool tabs_to_var)
 {
@@ -842,7 +852,7 @@ process_unary_op(int decl_ind, bool tabs_to_var)
 	/* pointer declarations */
 	code_add_decl_indent(decl_ind - (int)buf_len(&token), tabs_to_var);
 	ps.decl_indent_done = true;
-    } else if (ps.want_blank)
+    } else if (want_blank_before_unary_op())
 	*code.e++ = ' ';
 
     buf_add_buf(&code, &token);

@@ -1,4 +1,4 @@
-/* $NetBSD: token_binary_op.c,v 1.6 2021/10/30 22:36:07 rillig Exp $ */
+/* $NetBSD: token_binary_op.c,v 1.7 2021/11/04 17:12:12 rillig Exp $ */
 /* $FreeBSD$ */
 
 /*
@@ -214,7 +214,7 @@ peculiarities(void)
 	 *
 	 * See lexi.c, lexi, "case '+':".
 	 */
-	if (a++ ++ +++b)
+	if (a++ ++ ++ +b)
 		return;
 }
 #indent end
