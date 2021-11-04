@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.41 2021/11/03 22:02:36 skrll Exp $	*/
+/*	$NetBSD: boot.c,v 1.42 2021/11/04 07:28:34 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2016 Kimihiro Nonaka <nonaka@netbsd.org>
@@ -93,7 +93,9 @@ static char rndseed_path[255];
 int	set_bootfile(const char *);
 int	set_bootargs(const char *);
 
+#ifdef EFIBOOT_ACPI
 void	command_acpi(char *);
+#endif
 void	command_boot(char *);
 void	command_dev(char *);
 void	command_initrd(char *);
@@ -116,7 +118,9 @@ void	command_version(char *);
 void	command_quit(char *);
 
 const struct boot_command commands[] = {
+#ifdef EFIBOOT_ACPI
 	{ "acpi",	command_acpi,		"acpi [{on|off}]" },
+#endif
 	{ "boot",	command_boot,		"boot [dev:][filename] [args]\n     (ex. \"hd0a:\\netbsd.old -s\"" },
 	{ "dev",	command_dev,		"dev" },
 #ifdef EFIBOOT_FDT
@@ -174,6 +178,7 @@ command_help(char *arg)
 	}
 }
 
+#ifdef EFIBOOT_ACPI
 void
 command_acpi(char *arg)
 {
@@ -191,6 +196,8 @@ command_acpi(char *arg)
 		    efi_acpi_enabled() ? "en" : "dis");
 	}
 }
+#endif
+
 void
 command_boot(char *arg)
 {
