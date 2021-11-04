@@ -1,4 +1,4 @@
-/*	$NetBSD: at91emac.c,v 1.32 2020/02/19 02:51:54 thorpej Exp $	*/
+/*	$NetBSD: at91emac.c,v 1.33 2021/11/04 06:57:51 skrll Exp $	*/
 
 /*
  * Copyright (c) 2007 Embedtronics Oy
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: at91emac.c,v 1.32 2020/02/19 02:51:54 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: at91emac.c,v 1.33 2021/11/04 06:57:51 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -774,7 +774,7 @@ emac_setaddr(struct ifnet *ifp)
 	/* disable receiver temporarily */
 	EMAC_WRITE(ETH_CTL, ctl & ~ETH_CTL_RE);
 
-	cfg &= ~(ETH_CFG_MTI | ETH_CFG_UNI | ETH_CFG_CAF | ETH_CFG_UNI);
+	cfg &= ~(ETH_CFG_MTI | ETH_CFG_UNI | ETH_CFG_CAF);
 
 	if (ifp->if_flags & IFF_PROMISC) {
 		cfg |=	ETH_CFG_CAF;
