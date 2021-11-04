@@ -1,4 +1,4 @@
-/* $NetBSD: gic_fdt.c,v 1.23 2021/08/07 16:18:43 thorpej Exp $ */
+/* $NetBSD: gic_fdt.c,v 1.24 2021/11/04 21:31:30 jakllsch Exp $ */
 
 /*-
  * Copyright (c) 2015-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "pci.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gic_fdt.c,v 1.23 2021/08/07 16:18:43 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gic_fdt.c,v 1.24 2021/11/04 21:31:30 jakllsch Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -117,10 +117,12 @@ static const struct device_compatible_entry compat_data[] = {
 	DEVICE_COMPAT_EOL
 };
 
+#if NPCI > 0 && defined(__HAVE_PCI_MSI_MSIX)
 static const struct device_compatible_entry v2m_compat_data[] = {
 	{ .compat = "arm,gic-v2m-frame" },
 	DEVICE_COMPAT_EOL
 };
+#endif
 
 static int
 gic_fdt_match(device_t parent, cfdata_t cf, void *aux)
