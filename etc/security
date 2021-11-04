@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: security,v 1.128 2021/01/10 23:24:25 riastradh Exp $
+#	$NetBSD: security,v 1.129 2021/11/04 12:40:00 nia Exp $
 #	from: @(#)security	8.1 (Berkeley) 6/9/93
 #
 
@@ -274,6 +274,7 @@ if checkyesno check_passwd; then
 		    	$2 !~ /^\$1/ &&
 		    	$2 !~ /^\$2/ &&
 			$2 !~ /^\$sha1/ &&
+			$2 !~ /^\$argon2(i|d|id)/ &&
 		    	$2 != "" &&
 			(permit_star || $2 != "*") &&
 		    	$2 !~ /^\*[A-z-]+$/ &&
