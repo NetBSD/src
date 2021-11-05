@@ -1,4 +1,4 @@
-/*	$NetBSD: lexi.c,v 1.130 2021/11/05 19:33:28 rillig Exp $	*/
+/*	$NetBSD: lexi.c,v 1.131 2021/11/05 21:08:04 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)lexi.c	8.1 (Berkeley) 6/6/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: lexi.c,v 1.130 2021/11/05 19:33:28 rillig Exp $");
+__RCSID("$NetBSD: lexi.c,v 1.131 2021/11/05 21:08:04 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/lexi.c 337862 2018-08-15 18:19:45Z pstef $");
 #endif
@@ -297,11 +297,17 @@ debug_lexi(lexer_symbol lsym)
     debug_ps_bool(next_col_1);
     debug_ps_bool(curr_col_1);
     debug_ps_bool(next_unary);
-    // procname
+    if (strcmp(ps.procname, prev_ps.procname) != 0)
+	debug_println("    ps.procname = '%s'", ps.procname);
     debug_ps_bool(want_blank);
     debug_ps_int(paren_level);
     debug_ps_int(p_l_follow);
-    // paren_indents
+    if (ps.paren_level != prev_ps.paren_level) {
+	debug_printf("    ps.paren_indents:");
+	for (int i = 0; i < ps.paren_level; i++)
+	    debug_printf(" %d", ps.paren_indents[i]);
+	debug_println("");
+    }
     debug_ps_int(cast_mask);
     debug_ps_int(not_cast_mask);
 
