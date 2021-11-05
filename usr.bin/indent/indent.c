@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.c,v 1.207 2021/11/04 20:31:04 rillig Exp $	*/
+/*	$NetBSD: indent.c,v 1.208 2021/11/05 19:33:28 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)indent.c	5.17 (Berkeley) 6/7/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: indent.c,v 1.207 2021/11/04 20:31:04 rillig Exp $");
+__RCSID("$NetBSD: indent.c,v 1.208 2021/11/05 19:33:28 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/indent.c 340138 2018-11-04 19:24:49Z oshogbo $");
 #endif
@@ -513,7 +513,7 @@ main_init_globals(void)
 
     ps.s_sym[0] = psym_stmt_list;
     ps.prev_token = lsym_semicolon;
-    ps.curr_newline = true;
+    ps.next_col_1 = true;
 
     const char *suffix = getenv("SIMPLE_BACKUP_SUFFIX");
     if (suffix != NULL)

@@ -1,4 +1,4 @@
-/*	$NetBSD: pr_comment.c,v 1.96 2021/11/04 18:38:37 rillig Exp $	*/
+/*	$NetBSD: pr_comment.c,v 1.97 2021/11/05 19:33:28 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)pr_comment.c	8.1 (Berkeley) 6/6/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: pr_comment.c,v 1.96 2021/11/04 18:38:37 rillig Exp $");
+__RCSID("$NetBSD: pr_comment.c,v 1.97 2021/11/05 19:33:28 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/pr_comment.c 334927 2018-06-10 16:44:18Z pstef $");
 #endif
@@ -233,7 +233,7 @@ copy_comment(int adj_max_line_length, bool break_delim, bool may_wrap)
 	    }
 
 	    last_blank = -1;
-	    if (!may_wrap || ps.curr_newline) {	/* if this is a boxed comment,
+	    if (!may_wrap || ps.next_col_1) {	/* if this is a boxed comment,
 						 * we handle the newline */
 		if (com.s == com.e)
 		    com_add_char(' ');
@@ -246,7 +246,7 @@ copy_comment(int adj_max_line_length, bool break_delim, bool may_wrap)
 		    com_add_delim();
 
 	    } else {
-		ps.curr_newline = true;
+		ps.next_col_1 = true;
 		if (!ch_isblank(com.e[-1]))
 		    com_add_char(' ');
 		last_blank = com.e - 1 - com.buf;
@@ -311,7 +311,7 @@ copy_comment(int adj_max_line_length, bool break_delim, bool may_wrap)
 		    break;
 	    }
 
-	    ps.curr_newline = false;
+	    ps.next_col_1 = false;
 
 	    if (now_len <= adj_max_line_length || !may_wrap)
 		break;
