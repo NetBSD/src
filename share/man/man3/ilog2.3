@@ -1,4 +1,4 @@
-.\" $NetBSD: ilog2.3,v 1.5 2011/05/10 06:39:45 jruoho Exp $ $
+.\" $NetBSD: ilog2.3,v 1.6 2021/11/05 22:39:35 riastradh Exp $ $
 .\"
 .\" Copyright (c) 2010 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,34 +27,53 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd May 10, 2011
+.Dd November 5, 2021
 .Dt ILOG2 3
 .Os
 .Sh NAME
 .Nm ilog2
-.Nd integer logarithm
+.Nd integer base-2 logarithm
 .Sh SYNOPSIS
 .In sys/bitops.h
-.Ft size
+.Ft int
 .Fn ilog2 "size x"
 .Sh DESCRIPTION
-The
+For positive
+.Fa x ,
+the
 .Fn ilog2
-macro returns an integer (binary) logarithm of
-.Fa x .
-It is the logarithm for base 2; the binary logarithm of
-.Fa x
-is the power to which the number 2 must be raised to obtain the value
+macro returns the integer part of the base-2 logarithm of
+.Fa x ;
+that is,
+.Fo floor
+.Fn log_2 x
+.Fc .
+If
+.Fa n Li = Fn ilog2 x ,
+then
+.Fa n
+is the largest integer such that
+.No 2** Ns Fa n Li <= Fa x ;
+in other words,
+.Fn ilog2
+returns the largest integer to which 2 can be raised to obtain a value
+at most
 .Fa x .
 .Pp
-The type of the input parameter should be either
-.Vt uint32_t
-or
-.Vt uint64_t .
+The type of the input parameter must be unsigned.
+.Pp
+If
+.Fa x
+is a constant expression, then so is
+.Fn ilog2 x .
 .Sh ERRORS
-A value \-1 is returned on error.
+.Fn ilog2
+returns \-1 when
+.Fa x
+is zero.
 .Sh SEE ALSO
 .Xr bitops 3 ,
+.Xr ffs 3 ,
 .Xr ilogb 3 ,
 .Xr log2 3 ,
 .Xr imax 9 ,
