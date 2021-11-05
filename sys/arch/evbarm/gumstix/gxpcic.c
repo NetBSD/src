@@ -1,4 +1,4 @@
-/*	$NetBSD: gxpcic.c,v 1.13 2013/02/02 20:06:48 christos Exp $ */
+/*	$NetBSD: gxpcic.c,v 1.14 2021/11/05 07:39:22 skrll Exp $ */
 /*
  * Copyright (C) 2005, 2006 WIDE Project and SOUM Corporation.
  * All rights reserved.
@@ -158,20 +158,22 @@ gxpcic_attach(device_t parent, device_t self, void *aux)
 {
 	struct pxapcic_softc *sc = device_private(self);
 	struct pxaip_attach_args *pxa = aux;
-	int nslot, i;
+	int nslot, i, j;
 
 	sc->sc_dev = self;
 	sc->sc_iot = pxa->pxa_iot;
 
 	nslot = gxpcic_count_slot(sc);
 
-	for (i = 0; i < nslot; i++) {
-		if (!gxpcic_slot_irqs[i].valid) 
+	for (i = 0, j = 0; i < nslot; i++) {
+		if (!gxpcic_slot_irqs[i].valid) {
+			j++;
 			continue;
-		sc->sc_irqpin[i] = gxpcic_slot_irqs[i].prdy;
-		sc->sc_irqcfpin[i] = gxpcic_slot_irqs[i].cd;
+		}
+		sc->sc_irqpin[i - j] = gxpcic_slot_irqs[i].prdy;
+		sc->sc_irqcfpin[i - j] = gxpcic_slot_irqs[i].cd;
 	}
-	sc->sc_nslots = nslot;
+	sc->sc_nslots = i - j;
 
 	pxapcic_attach_common(sc, &gxpcic_socket_setup);
 }
@@ -205,13 +207,12 @@ gxpcic_read(struct pxapcic_socket *so, int which)
 
 	switch (which) {
 	case PXAPCIC_CARD_STATUS:
-		reg = pxa2x0_gpio_get_function(gxpcic_slot_irqs[so->socket].cd);
+		reg = pxa2x0_gpio_get_function(so->sc->sc_irqcfpin[so->socket]);
 		return (HAVE_CARD(reg) ?
 		    PXAPCIC_CARD_VALID : PXAPCIC_CARD_INVALID);
 
 	case PXAPCIC_CARD_READY:
-		reg = pxa2x0_gpio_get_function(
-		    gxpcic_slot_irqs[so->socket].prdy);
+		reg = pxa2x0_gpio_get_function(so->sc->sc_irqpin[so->socket]);
 		return (reg & GPIO_SET ? 1 : 0);
 
 	default:
