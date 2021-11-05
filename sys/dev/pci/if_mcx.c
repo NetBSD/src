@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mcx.c,v 1.22 2021/09/26 20:14:07 jmcneill Exp $ */
+/*	$NetBSD: if_mcx.c,v 1.23 2021/11/05 23:39:47 andvar Exp $ */
 /*	$OpenBSD: if_mcx.c,v 1.101 2021/06/02 19:16:11 patrick Exp $ */
 
 /*
@@ -23,7 +23,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mcx.c,v 1.22 2021/09/26 20:14:07 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mcx.c,v 1.23 2021/11/05 23:39:47 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -43,6 +43,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_mcx.c,v 1.22 2021/09/26 20:14:07 jmcneill Exp $")
 #include <sys/interrupt.h>
 #include <sys/pcq.h>
 #include <sys/cpu.h>
+#include <sys/bitops.h>
 
 #include <machine/intr.h>
 
@@ -2956,6 +2957,8 @@ mcx_attach(device_t parent, device_t self, void *aux)
 
 	sc->sc_nqueues = uimin(MCX_MAX_QUEUES, msix);
 	sc->sc_nqueues = uimin(sc->sc_nqueues, ncpu);
+	/* Round down to a power of two.  */
+	sc->sc_nqueues = 1U << ilog2(sc->sc_nqueues);
 	sc->sc_queues = kmem_zalloc(sc->sc_nqueues * sizeof(*sc->sc_queues),
 	    KM_SLEEP);
 
