@@ -1,4 +1,4 @@
-/*	$NetBSD: io.c,v 1.114 2021/11/04 19:23:57 rillig Exp $	*/
+/*	$NetBSD: io.c,v 1.115 2021/11/05 21:39:12 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)io.c	8.1 (Berkeley) 6/6/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: io.c,v 1.114 2021/11/04 19:23:57 rillig Exp $");
+__RCSID("$NetBSD: io.c,v 1.115 2021/11/05 21:39:12 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/io.c 334927 2018-06-10 16:44:18Z pstef $");
 #endif
@@ -150,8 +150,7 @@ dump_line_code(int ind)
     for (int i = 0; i < ps.p_l_follow; i++) {
 	if (ps.paren_indents[i] >= 0) {
 	    int paren_ind = ps.paren_indents[i];
-	    /* XXX: the '+ 1' smells like an off-by-one error. */
-	    ps.paren_indents[i] = (short)-(paren_ind + target_ind + 1);
+	    ps.paren_indents[i] = (short)(-1 - (paren_ind + target_ind));
 	    debug_println(
 		"setting paren_indents[%d] from %d to %d for column %d",
 		i, paren_ind, ps.paren_indents[i], target_ind + 1);
