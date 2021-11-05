@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.716 2021/11/04 12:25:05 msaitoh Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.717 2021/11/05 01:49:14 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.716 2021/11/04 12:25:05 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.717 2021/11/05 01:49:14 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -10502,9 +10502,9 @@ wm_gmii_setup_phytype(struct wm_softc *sc, uint32_t phy_oui,
 	} else {
 		/* It's not the first call. Use PHY OUI and model */
 		switch (phy_oui) {
-		case MII_OUI_ATTANSIC: /* XXX ??? */
+		case MII_OUI_ATTANSIC: /* atphy(4) */
 			switch (phy_model) {
-			case 0x0004: /* XXX */
+			case MII_MODEL_ATTANSIC_AR8021:
 				new_phytype = WMPHY_82578;
 				break;
 			default:
