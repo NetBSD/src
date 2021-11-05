@@ -1,4 +1,4 @@
-/*	$NetBSD: lexi.c,v 1.129 2021/11/01 23:44:08 rillig Exp $	*/
+/*	$NetBSD: lexi.c,v 1.130 2021/11/05 19:33:28 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)lexi.c	8.1 (Berkeley) 6/6/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: lexi.c,v 1.129 2021/11/01 23:44:08 rillig Exp $");
+__RCSID("$NetBSD: lexi.c,v 1.130 2021/11/05 19:33:28 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/lexi.c 337862 2018-08-15 18:19:45Z pstef $");
 #endif
@@ -294,7 +294,7 @@ debug_lexi(lexer_symbol lsym)
 
     debug_println("    ps.prev_token = %s", lsym_name(ps.prev_token));
     debug_ps_bool(prev_is_type);
-    debug_ps_bool(curr_newline);
+    debug_ps_bool(next_col_1);
     debug_ps_bool(curr_col_1);
     debug_ps_bool(next_unary);
     // procname
@@ -546,8 +546,8 @@ lexer_symbol
 lexi(void)
 {
     token.e = token.s;
-    ps.curr_col_1 = ps.curr_newline;
-    ps.curr_newline = false;
+    ps.curr_col_1 = ps.next_col_1;
+    ps.next_col_1 = false;
     ps.prev_is_type = ps.curr_is_type;
     ps.curr_is_type = false;
 
@@ -573,7 +573,7 @@ lexi(void)
     switch (*token.s) {
     case '\n':
 	unary_delim = ps.next_unary;
-	ps.curr_newline = true;
+	ps.next_col_1 = true;
 	/* if data has been exhausted, the newline is a dummy. */
 	lsym = had_eof ? lsym_eof : lsym_newline;
 	break;
@@ -627,7 +627,7 @@ lexi(void)
 
     case '\f':
 	unary_delim = ps.next_unary;
-	ps.curr_newline = true;
+	ps.next_col_1 = true;
 	lsym = lsym_form_feed;
 	break;
 

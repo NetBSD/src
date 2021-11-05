@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.h,v 1.76 2021/11/03 21:47:35 rillig Exp $	*/
+/*	$NetBSD: indent.h,v 1.77 2021/11/05 19:33:28 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-FreeBSD
@@ -263,9 +263,9 @@ extern struct parser_state {
     lexer_symbol prev_token;
     bool prev_is_type;
     bool curr_is_type;
-    bool curr_newline;
     bool curr_col_1;		/* whether the current token started in column
 				 * 1 of the unformatted input */
+    bool next_col_1;
     bool next_unary;		/* whether the following operator should be
 				 * unary */
 
