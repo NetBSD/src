@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.c,v 1.208 2021/11/05 19:33:28 rillig Exp $	*/
+/*	$NetBSD: indent.c,v 1.209 2021/11/05 19:42:48 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)indent.c	5.17 (Berkeley) 6/7/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: indent.c,v 1.208 2021/11/05 19:33:28 rillig Exp $");
+__RCSID("$NetBSD: indent.c,v 1.209 2021/11/05 19:42:48 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/indent.c 340138 2018-11-04 19:24:49Z oshogbo $");
 #endif
@@ -1084,7 +1084,7 @@ process_rbrace(bool *spaced_expr, int *decl_ind, const int *di_stack)
 }
 
 static void
-process_keyword_do(bool *force_nl, bool *last_else)
+process_do(bool *force_nl, bool *last_else)
 {
     ps.in_stmt = false;
 
@@ -1101,7 +1101,7 @@ process_keyword_do(bool *force_nl, bool *last_else)
 }
 
 static void
-process_keyword_else(bool *force_nl, bool *last_else)
+process_else(bool *force_nl, bool *last_else)
 {
     ps.in_stmt = false;
 
@@ -1491,11 +1491,11 @@ main_loop(void)
 	    goto copy_token;
 
 	case lsym_do:
-	    process_keyword_do(&force_nl, &last_else);
+	    process_do(&force_nl, &last_else);
 	    goto copy_token;
 
 	case lsym_else:
-	    process_keyword_else(&force_nl, &last_else);
+	    process_else(&force_nl, &last_else);
 	    goto copy_token;
 
 	case lsym_typedef:
