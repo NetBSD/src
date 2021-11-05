@@ -1,4 +1,4 @@
-/*	$NetBSD: args.c,v 1.68 2021/10/31 22:38:12 rillig Exp $	*/
+/*	$NetBSD: args.c,v 1.69 2021/11/05 21:52:17 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)args.c	8.1 (Berkeley) 6/6/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: args.c,v 1.68 2021/10/31 22:38:12 rillig Exp $");
+__RCSID("$NetBSD: args.c,v 1.69 2021/11/05 21:52:17 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/args.c 336318 2018-07-15 21:04:21Z pstef $");
 #endif
@@ -66,9 +66,9 @@ __FBSDID("$FreeBSD: head/usr.bin/indent/args.c 336318 2018-07-15 21:04:21Z pstef
 #endif
 
 #define bool_option(name, value, var) \
-	{name, true, value, false, 0, 0, assert_type(&(opt.var), bool *)}
+	{name, true, false, value, 0, 0, assert_type(&(opt.var), bool *)}
 #define bool_options(name, var) \
-	{name, true, false, true, 0, 0, assert_type(&(opt.var), bool *)}
+	{name, true, true, false, 0, 0, assert_type(&(opt.var), bool *)}
 #define int_option(name, var, min, max) \
 	{name, false, false, false, min, max, assert_type(&(opt.var), int *)}
 
@@ -76,8 +76,8 @@ __FBSDID("$FreeBSD: head/usr.bin/indent/args.c 336318 2018-07-15 21:04:21Z pstef
 static const struct pro {
     const char p_name[5];	/* e.g. "bl", "cli" */
     bool p_is_bool;
-    bool p_bool_value;
     bool p_may_negate;
+    bool p_bool_value;		/* only relevant if !p_may_negate */
     short i_min;
     short i_max;
     void *p_var;		/* the associated variable */
@@ -272,10 +272,10 @@ load_profile(const char *fname, bool must_exist)
 	int ch, comment_ch = -1;
 
 	while ((ch = getc(f)) != EOF) {
-	    if (ch == '*' && comment_ch < 0 && n > 0 && buf[n - 1] == '/') {
+	    if (ch == '*' && comment_ch == -1 && n > 0 && buf[n - 1] == '/') {
 		n--;
-		comment_ch = ch;
-	    } else if (comment_ch >= 0) {
+		comment_ch = '*';
+	    } else if (comment_ch != -1) {
 		comment_ch = ch == '/' && comment_ch == '*' ? -1 : ch;
 	    } else if (isspace((unsigned char)ch)) {
 		break;
