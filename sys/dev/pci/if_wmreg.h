@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wmreg.h,v 1.120 2020/09/16 15:04:02 msaitoh Exp $	*/
+/*	$NetBSD: if_wmreg.h,v 1.121 2021/11/05 06:15:42 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -974,8 +974,8 @@ struct livengood_tcpip_ctxdesc {
 #define	WMREG_PHPM	0x0e14	/* PHY Power Management */
 #define	PHPM_SPD_EN		__BIT(0)	/* Smart Power Down */
 #define	PHPM_D0A_LPLU		__BIT(1)	/* D0 Low Power Link Up */
-#define	PHPM_NOND0A_LPLU	__BIT(2)	/* D0 Low Power Link Up */
-#define	PHPM_NOND0A_GBE_DIS	__BIT(3)	/* D0 Low Power Link Up */
+#define	PHPM_NOND0A_LPLU	__BIT(2)	/* Non-D0a LPLU */
+#define	PHPM_NOND0A_GBE_DIS	__BIT(3)	/* Disable 1G in non-D0a */
 #define	PHPM_GO_LINK_D		__BIT(5)	/* Go Link Disconnect */
 
 #define WMREG_EEER	0x0e30	/* Energy Efficiency Ethernet "EEE" */
