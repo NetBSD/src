@@ -1,4 +1,4 @@
-/*	$NetBSD: lexi.c,v 1.131 2021/11/05 21:08:04 rillig Exp $	*/
+/*	$NetBSD: lexi.c,v 1.132 2021/11/05 22:06:43 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)lexi.c	8.1 (Berkeley) 6/6/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: lexi.c,v 1.131 2021/11/05 21:08:04 rillig Exp $");
+__RCSID("$NetBSD: lexi.c,v 1.132 2021/11/05 22:06:43 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/lexi.c 337862 2018-08-15 18:19:45Z pstef $");
 #endif
@@ -394,7 +394,7 @@ lex_word(void)
 static void
 lex_char_or_string(void)
 {
-    for (char delim = *token.s;;) {
+    for (char delim = token.e[-1];;) {
 	if (*inp.s == '\n') {
 	    diag(1, "Unterminated literal");
 	    return;
@@ -576,7 +576,7 @@ lexi(void)
     bool unary_delim = false;	/* whether the current token forces a
 				 * following operator to be unary */
 
-    switch (*token.s) {
+    switch (token.e[-1]) {
     case '\n':
 	unary_delim = ps.next_unary;
 	ps.next_col_1 = true;
@@ -652,7 +652,7 @@ lexi(void)
 	lsym = ps.next_unary ? lsym_unary_op : lsym_binary_op;
 	unary_delim = true;
 
-	if (*inp.s == token.s[0]) {	/* ++, -- */
+	if (*inp.s == token.e[-1]) {	/* ++, -- */
 	    *token.e++ = *inp.s++;
 	    if (ps.prev_token == lsym_ident ||
 		    ps.prev_token == lsym_rparen_or_rbracket) {
@@ -724,25 +724,22 @@ lexi(void)
 	break;
 
     default:
-	if (token.s[0] == '/' && (*inp.s == '*' || *inp.s == '/')) {
-	    /* it is start of comment */
+	if (token.e[-1] == '/' && (*inp.s == '*' || *inp.s == '/')) {
 	    *token.e++ = inbuf_next();
-
 	    lsym = lsym_comment;
 	    unary_delim = ps.next_unary;
 	    break;
 	}
 
-	while (token.e[-1] == *inp.s || *inp.s == '=') {
-	    /* handle '||', '&&', etc., and also things as in 'int *****i' */
+	/* handle '||', '&&', etc., and also things as in 'int *****i' */
+	while (token.e[-1] == *inp.s || *inp.s == '=')
 	    token_add_char(inbuf_next());
-	}
 
 	lsym = ps.next_unary ? lsym_unary_op : lsym_binary_op;
 	unary_delim = true;
     }
 
-    if (inp.s >= inp.e)		/* check for input buffer empty */
+    if (inp.s >= inp.e)
 	inbuf_read_line();
 
     ps.next_unary = unary_delim;
