@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iavf.c,v 1.14 2021/06/16 00:21:18 riastradh Exp $	*/
+/*	$NetBSD: if_iavf.c,v 1.15 2021/11/06 22:11:39 andvar Exp $	*/
 
 /*
  * Copyright (c) 2013-2015, Intel Corporation
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iavf.c,v 1.14 2021/06/16 00:21:18 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iavf.c,v 1.15 2021/11/06 22:11:39 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -5313,7 +5313,7 @@ iavf_parse_modprop(prop_dictionary_t dict)
 		val = prop_number_signed_value((prop_number_t)obj);
 		n = 1U << (fls32(val) - 1);
 		if (val != (int64_t) n) {
-			printf("iavf: TX desc invlaid size"
+			printf("iavf: TX desc invalid size"
 			    "(%" PRId64 " != %" PRIu32 ")\n", val, n);
 		} else if (val > (8192 - 32)) {
 			printf("iavf: Tx desc too big (%" PRId64 " > %d)",
@@ -5330,7 +5330,7 @@ iavf_parse_modprop(prop_dictionary_t dict)
 		val = prop_number_signed_value((prop_number_t)obj);
 		n = 1U << (fls32(val) - 1);
 		if (val != (int64_t) n) {
-			printf("iavf: RX desc invlaid size"
+			printf("iavf: RX desc invalid size"
 			    "(%" PRId64 " != %" PRIu32 ")\n", val, n);
 		} else if (val > (8192 - 32)) {
 			printf("iavf: Rx desc too big (%" PRId64 " > %d)",
