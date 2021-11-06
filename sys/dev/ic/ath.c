@@ -1,4 +1,4 @@
-/*	$NetBSD: ath.c,v 1.137 2021/09/21 14:41:28 christos Exp $	*/
+/*	$NetBSD: ath.c,v 1.138 2021/11/06 06:44:41 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -41,7 +41,7 @@
 __FBSDID("$FreeBSD: src/sys/dev/ath/if_ath.c,v 1.104 2005/09/16 10:09:23 ru Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ath.c,v 1.137 2021/09/21 14:41:28 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ath.c,v 1.138 2021/11/06 06:44:41 msaitoh Exp $");
 #endif
 
 /*
@@ -3150,7 +3150,7 @@ ath_rx_proc(void *arg, int npending)
 				sc->sc_stats.ast_rx_badmic++;
 				/*
 				 * Do minimal work required to hand off
-				 * the 802.11 header for notifcation.
+				 * the 802.11 header for notification.
 				 */
 				/* XXX frag's and qos frames */
 				len = ds->ds_rxstat.rs_datalen;
