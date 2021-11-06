@@ -1,4 +1,4 @@
-/*	$NetBSD: usbcdc.h,v 1.11 2008/04/28 20:24:00 martin Exp $	*/
+/*	$NetBSD: usbcdc.h,v 1.12 2021/11/06 06:44:41 msaitoh Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbcdc.h,v 1.7 1999/11/17 22:33:48 n_hibma Exp $	*/
 
 /*
@@ -158,7 +158,7 @@ typedef struct {
 #define UCDC_NOTIFICATION_LENGTH 8
 
 /*
- * Bits set in the SERIAL STATE notifcation (first byte of data)
+ * Bits set in the SERIAL STATE notification (first byte of data)
  */
 
 #define UCDC_N_SERIAL_OVERRUN		0x40
