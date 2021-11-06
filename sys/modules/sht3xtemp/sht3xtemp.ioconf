@@ -1,0 +1,8 @@
+ioconf sht3xtemp
+
+include "conf/files"
+
+pseudo-root iic*
+
+sht3xtemp* at iic? addr 0x44
+sht3xtemp* at iic? addr 0x45
