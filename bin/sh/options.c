@@ -1,4 +1,4 @@
-/*	$NetBSD: options.c,v 1.53 2018/07/13 22:43:44 kre Exp $	*/
+/*	$NetBSD: options.c,v 1.53.2.1 2021/11/06 13:35:43 martin Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)options.c	8.2 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: options.c,v 1.53 2018/07/13 22:43:44 kre Exp $");
+__RCSID("$NetBSD: options.c,v 1.53.2.1 2021/11/06 13:35:43 martin Exp $");
 #endif
 #endif /* not lint */
 
@@ -171,6 +171,13 @@ optschanged(void)
 	histedit();
 #endif
 	setjobctl(mflag);
+
+	if (privileged && !pflag) {
+		setuid(getuid());
+		setgid(getgid());
+		privileged = 0;
+		setvarsafe("PSc", (getuid() == 0 ? "#" : "$"), 0);
+	}
 }
 
 /*
