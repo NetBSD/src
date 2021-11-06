@@ -1,4 +1,4 @@
-/*	$NetBSD: partman.c,v 1.53 2021/09/14 21:45:20 rillig Exp $ */
+/*	$NetBSD: partman.c,v 1.54 2021/11/06 06:40:33 msaitoh Exp $ */
 
 /*
  * Copyright 2012 Eugene Lozovoy
@@ -2725,7 +2725,7 @@ pm_savebootsector(void)
 				if (run_program(RUN_DISPLAY | RUN_PROGRESS,
 					"raidctl -v -A root %s", pm_i->diskdev) != 0) {
 					if (logfp)
-						fprintf(logfp, "Error writting RAID bootsector to %s\n",
+						fprintf(logfp, "Error writing RAID bootsector to %s\n",
 							pm_i->diskdev);
 					continue;
 				}
@@ -2735,7 +2735,7 @@ pm_savebootsector(void)
 					"gpt biosboot -i %d %s",
 					pm_i->rootpart + 1, pm_i->diskdev) != 0) {
 			 		if (logfp)
-						fprintf(logfp, "Error writting GPT bootsector to %s\n",
+						fprintf(logfp, "Error writing GPT bootsector to %s\n",
 							pm_i->diskdev);
 					continue;
 				}
@@ -2747,7 +2747,7 @@ pm_savebootsector(void)
 #endif
 				    md_post_newfs() != 0) {
 		 			if (logfp)
-						fprintf(logfp, "Error writting bootsector to %s\n",
+						fprintf(logfp, "Error writing bootsector to %s\n",
 							pm_i->diskdev);
 					continue;
 				}
