@@ -1,4 +1,4 @@
-/* $NetBSD: efifdt.c,v 1.32 2021/11/03 22:02:36 skrll Exp $ */
+/* $NetBSD: efifdt.c,v 1.33 2021/11/06 19:44:22 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2019 Jason R. Thorpe
@@ -594,11 +594,7 @@ arch_prepare_boot(const char *fname, const char *args, u_long *marks)
 		}
 	} else
 #endif
-	if (!dtb_addr || efi_fdt_set_data((void *)(uintptr_t)dtb_addr) != 0) {
-		if (!dtb_addr)
-			printf("boot: no DTB provided\n");
-		else
-			printf("boot: invalid DTB data\n");
+	if (dtb_addr && efi_fdt_set_data((void *)(uintptr_t)dtb_addr) != 0) {
 		return EINVAL;
 	}
 
