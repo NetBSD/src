@@ -1,4 +1,4 @@
-/*	$NetBSD: qat.c,v 1.6 2020/06/14 23:23:12 riastradh Exp $	*/
+/*	$NetBSD: qat.c,v 1.7 2021/11/06 06:52:48 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2019 Internet Initiative Japan, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: qat.c,v 1.6 2020/06/14 23:23:12 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: qat.c,v 1.7 2021/11/06 06:52:48 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1051,7 +1051,7 @@ qat_etr_setup_ring(struct qat_softc *sc, int bank, uint32_t ring,
 	qr->qr_ring_size = qat_etr_verify_ring_size(msg_size, num_msgs);
 
 	/*
-	 * To make sure that ring is alligned to ring size allocate
+	 * To make sure that ring is aligned to ring size allocate
 	 * at least 4k and then tell the user it is smaller.
 	 */
 	ring_size_bytes = QAT_SIZE_TO_RING_SIZE_IN_BYTES(qr->qr_ring_size);

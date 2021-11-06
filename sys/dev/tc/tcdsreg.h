@@ -1,4 +1,4 @@
-/* $NetBSD: tcdsreg.h,v 1.7 2005/12/11 12:24:00 christos Exp $ */
+/* $NetBSD: tcdsreg.h,v 1.8 2021/11/06 06:52:48 msaitoh Exp $ */
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -197,14 +197,14 @@ void tcds_scsi_reset(int);
 
 #define KN15AA_REG_SCSI_IMER	(KN15AA_SYS_SCSI + 0x80008)
 
-/* these are the bits that were unalligned at the beginning of the DMA */
+/* these are the bits that were unaligned at the beginning of the DMA */
 #define KN15AA_REG_SCSI_DUDB0	(KN15AA_SYS_SCSI + 0x82010)
 #define KN15AA_REG_SCSI_DUDB1	(KN15AA_SYS_SCSI + 0x82210)
 #	define SCSI_DUDB_MASK01	0x00000001 /* Mask bit for byte[01] */
 #	define SCSI_DUDB_MASK10	0x00000002 /* Mask bit for byte[10] */
 #	define SCSI_DUDB_MASK11	0x00000004 /* Mask bit for byte[11] */
 
-/* these are the bits that were unalligned at the end of the DMA */
+/* these are the bits that were unaligned at the end of the DMA */
 #define KN15AA_REG_SCSI_DUDE0	(KN15AA_SYS_SCSI + 0x82018)
 #define KN15AA_REG_SCSI_DUDE1	(KN15AA_SYS_SCSI + 0x82218)
 #	define SCSI_DUDE_MASK00	0x1000000 /* Mask bit for byte[00] */

@@ -1,4 +1,4 @@
-/* $NetBSD: mfi.c,v 1.65 2021/08/07 16:19:12 thorpej Exp $ */
+/* $NetBSD: mfi.c,v 1.66 2021/11/06 06:52:48 msaitoh Exp $ */
 /* $OpenBSD: mfi.c,v 1.66 2006/11/28 23:59:45 dlg Exp $ */
 
 /*
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mfi.c,v 1.65 2021/08/07 16:19:12 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mfi.c,v 1.66 2021/11/06 06:52:48 msaitoh Exp $");
 
 #include "bio.h"
 
@@ -1065,7 +1065,7 @@ mfi_attach(struct mfi_softc *sc, enum mfi_iop iop)
 	if (sc->sc_ioptype == MFI_IOP_TBOLT) {
 		uint32_t tb_mem_size;
 		/* for Alignment */
-		tb_mem_size = MEGASAS_THUNDERBOLT_MSG_ALLIGNMENT;
+		tb_mem_size = MEGASAS_THUNDERBOLT_MSG_ALIGNMENT;
 
 		tb_mem_size +=
 		    MEGASAS_THUNDERBOLT_NEW_MSG_SIZE * (sc->sc_max_cmds + 1);
