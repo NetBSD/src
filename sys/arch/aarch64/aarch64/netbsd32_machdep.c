@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep.c,v 1.21 2021/11/01 05:07:15 thorpej Exp $	*/
+/*	$NetBSD: netbsd32_machdep.c,v 1.22 2021/11/06 20:42:56 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2018 Ryo Shimizu <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.21 2021/11/01 05:07:15 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.22 2021/11/06 20:42:56 thorpej Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -300,7 +300,7 @@ cpu_coredump32(struct lwp *l, struct coredump_iostate *iocookie,
 	return error;
 }
 
-static void
+void
 netbsd32_sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
 {
 	struct lwp * const l = curlwp;
@@ -372,19 +372,6 @@ netbsd32_sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
 	/* Remember if we're now on the signal stack */
 	if (onstack_p)
 		ss->ss_flags |= SS_ONSTACK;
-}
-
-void
-netbsd32_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
-{
-#ifdef COMPAT_16
-#error non EABI generation binaries are not supported
-	if (curproc->p_sigacts->sa_sigdesc[ksi->ksi_signo].sd_vers <
-	    __SIGTRAMP_SIGINFO_VERSION)
-		netbsd32_sendsig_sigcontext(ksi, mask);
-	else
-#endif
-		netbsd32_sendsig_siginfo(ksi, mask);
 }
 
 void

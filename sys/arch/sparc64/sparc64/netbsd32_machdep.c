@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep.c,v 1.116 2021/10/27 04:15:00 thorpej Exp $	*/
+/*	$NetBSD: netbsd32_machdep.c,v 1.117 2021/11/06 20:42:56 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.116 2021/10/27 04:15:00 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.117 2021/11/06 20:42:56 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -88,8 +88,6 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.116 2021/10/27 04:15:00 thorp
 /* Provide a the name of the architecture we're emulating */
 const char	machine32[] = "sparc";	
 const char	machine_arch32[] = "sparc";	
-
-int netbsd32_sendsig_siginfo(const ksiginfo_t *, const sigset_t *);
 
 #if NFIRM_EVENTS > 0
 static int ev_out32(struct firm_event *, int, struct uio *);
@@ -158,7 +156,7 @@ struct sparc32_sigframe_siginfo {
 	ucontext32_t sf_uc;
 };
 
-int
+void
 netbsd32_sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
 {
 	struct lwp *l = curlwp;
@@ -256,18 +254,6 @@ netbsd32_sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
 	/* Remember that we're now on the signal stack. */
 	if (onstack)
 		l->l_sigstk.ss_flags |= SS_ONSTACK;
-
-	return 0;
-}
-
-struct netbsd32_sendsig_hook_t netbsd32_sendsig_hook;
-        
-void
-netbsd32_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
-{
-
-	MODULE_HOOK_CALL_VOID(netbsd32_sendsig_hook, (ksi, mask),
-	    netbsd32_sendsig_siginfo(ksi, mask));
 }
 
 #undef DEBUG
