@@ -1,4 +1,4 @@
-/*	$NetBSD: cache_tx39.c,v 1.8 2016/07/11 16:15:36 matt Exp $	*/
+/*	$NetBSD: cache_tx39.c,v 1.9 2021/11/06 06:49:02 msaitoh Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cache_tx39.c,v 1.8 2016/07/11 16:15:36 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cache_tx39.c,v 1.9 2021/11/06 06:49:02 msaitoh Exp $");
 
 #include <sys/param.h>
 
@@ -50,7 +50,7 @@ __KERNEL_RCSID(0, "$NetBSD: cache_tx39.c,v 1.8 2016/07/11 16:15:36 matt Exp $");
  *	- I-cache direct-mapped (TX3900) or 2-way set-associative (TX3920)
  *	- D-cache 2-way set-associative
  *	- Write-through (TX3900, TX3920) or write-back (TX3920)
- *	- Physically indexed, phyiscally tagged
+ *	- Physically indexed, physically tagged
  *
  * XXX THIS IS NOT YET COMPLETE.
  */
