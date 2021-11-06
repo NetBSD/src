@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_signal.c,v 1.52 2021/09/07 11:43:05 riastradh Exp $	*/
+/*	$NetBSD: netbsd32_signal.c,v 1.53 2021/11/06 20:42:56 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_signal.c,v 1.52 2021/09/07 11:43:05 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_signal.c,v 1.53 2021/11/06 20:42:56 thorpej Exp $");
 
 #if defined(_KERNEL_OPT) 
 #include "opt_ktrace.h"
@@ -43,11 +43,14 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_signal.c,v 1.52 2021/09/07 11:43:05 riastra
 #include <sys/proc.h>
 #include <sys/wait.h>
 #include <sys/dirent.h>
+#include <sys/module.h>
+#include <sys/exec.h>
 
 #include <uvm/uvm_extern.h>
 
 #include <compat/netbsd32/netbsd32.h>
 #include <compat/netbsd32/netbsd32_conv.h>
+#include <compat/netbsd32/netbsd32_exec.h>
 #include <compat/netbsd32/netbsd32_syscallargs.h>
 
 #include <compat/sys/signal.h>
@@ -160,7 +163,7 @@ netbsd32___sigaction_sigtramp(struct lwp *l, const struct netbsd32___sigaction_s
 	} */
 	struct netbsd32_sigaction sa32;
 	struct sigaction nsa, osa;
-	int error;
+	int error, vers;
 
 	if (SCARG_P32(uap, nsa)) {
 		error = copyin(SCARG_P32(uap, nsa), &sa32, sizeof(sa32));
@@ -170,10 +173,53 @@ netbsd32___sigaction_sigtramp(struct lwp *l, const struct netbsd32___sigaction_s
 		nsa.sa_mask = sa32.netbsd32_sa_mask;
 		nsa.sa_flags = sa32.netbsd32_sa_flags;
 	}
+	vers = SCARG(uap, vers);
+#ifndef __HAVE_MD_NETBSD32_SENDSIG	/* XXX paying for yesterday's sins */
+	if (vers < __SIGTRAMP_SIGINFO_VERSION_MIN) {
+		/*
+		 * sigaction1() doesn't enforce sigcontext-ness for
+		 * __SIGTRAMP_SIGCODE_VERSION because it might be
+		 * a foreign emulation.  However, we know these are
+		 * native NetBSD 32-bit binaries, so we do.
+		 */
+#ifdef __HAVE_STRUCT_SIGCONTEXT
+		struct proc *p = l->l_proc;
+		bool sigcontext_valid = false;
+
+		/*
+		 * We need to ensure the compat_netbsd32_16 module
+		 * is loaded, because sigaction1() gives a free pass
+		 * to processes marked PK_32 (it can't be sure which
+		 * 32-bit compat module is needed).
+		 */
+		if ((p->p_lflag & PL_SIGCOMPAT) == 0) {
+			kernconfig_lock();
+			(void)module_autoload("compat_netbsd32_16",
+			    MODULE_CLASS_ANY);
+			if (netbsd32_sendsig_sigcontext_16_hook.hooked) {
+				sigcontext_valid = true;
+			}
+			mutex_enter(&proc_lock);
+			/*
+			 * Prevent unload of compat module while
+			 * this process remains.
+			 */
+			p->p_lflag |= PL_SIGCOMPAT;
+			mutex_exit(&proc_lock);
+			kernconfig_unlock();
+		}
+		if (!sigcontext_valid) {
+			return EINVAL;
+		}
+#else /* ! __HAVE_STRUCT_SIGCONTEXT */
+		return EINVAL;
+#endif /* __HAVE_STRUCT_SIGCONTEXT */
+	}
+#endif /* __HAVE_MD_NETBSD32_SENDSIG */
 	error = sigaction1(l, SCARG(uap, signum),
 	    SCARG_P32(uap, nsa) ? &nsa : 0,
 	    SCARG_P32(uap, osa) ? &osa : 0,
-	    SCARG_P32(uap, tramp), SCARG(uap, vers));
+	    SCARG_P32(uap, tramp), vers);
 	if (error)
 		return error;
 	if (SCARG_P32(uap, osa)) {
@@ -187,6 +233,43 @@ netbsd32___sigaction_sigtramp(struct lwp *l, const struct netbsd32___sigaction_s
 	}
 	return 0;
 }
+
+#ifndef __HAVE_MD_NETBSD32_SENDSIG	/* XXX paying for yesterday's sins */
+#ifdef __HAVE_STRUCT_SIGCONTEXT
+struct netbsd32_sendsig_sigcontext_16_hook_t netbsd32_sendsig_sigcontext_16_hook;
+#endif
+
+void
+netbsd32_sendsig(const struct ksiginfo *ksi, const sigset_t *mask)
+{
+	struct sigacts *sa;
+	int sig;
+
+	sig = ksi->ksi_signo;
+	sa = curproc->p_sigacts;
+
+	switch (sa->sa_sigdesc[sig].sd_vers) {
+#ifdef __HAVE_STRUCT_SIGCONTEXT
+	case __SIGTRAMP_SIGCODE_VERSION:
+	case __SIGTRAMP_SIGCONTEXT_VERSION_MIN ...
+	     __SIGTRAMP_SIGCONTEXT_VERSION_MAX:
+		/* Compat for 1.6 and earlier. */
+		MODULE_HOOK_CALL_VOID(netbsd32_sendsig_sigcontext_16_hook,
+		    (ksi, mask), break);
+		return;
+#endif /* __HAVE_STRUCT_SIGCONTEXT */
+	case __SIGTRAMP_SIGINFO_VERSION_MIN ...
+	     __SIGTRAMP_SIGINFO_VERSION_MAX:
+		netbsd32_sendsig_siginfo(ksi, mask);
+		return;
+	default:
+		break;
+	}
+
+	printf("%s: bad version %d\n", __func__, sa->sa_sigdesc[sig].sd_vers);
+	sigexit(curlwp, SIGILL);
+}
+#endif /* __HAVE_MD_NETBSD32_SENDSIG */
 
 void
 netbsd32_ksi32_to_ksi(struct _ksiginfo *si, const struct __ksiginfo32 *si32)

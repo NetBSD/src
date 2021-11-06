@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep.c,v 1.22 2021/10/27 04:15:00 thorpej Exp $	*/
+/*	$NetBSD: netbsd32_machdep.c,v 1.23 2021/11/06 20:42:56 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.22 2021/10/27 04:15:00 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.23 2021/11/06 20:42:56 thorpej Exp $");
 
 #include "opt_compat_netbsd.h"
 
@@ -78,8 +78,6 @@ netbsd32_cpu_upcall
 netbsd32_vm_default_addr
 #endif
 
-int netbsd32_sendsig_siginfo(const ksiginfo_t *, const sigset_t *);
-
 struct sigframe_siginfo32 {
 	siginfo32_t sf_si;
 	ucontext32_t sf_uc;
@@ -88,7 +86,7 @@ struct sigframe_siginfo32 {
 /*
  * Send a signal to process.
  */
-int
+void
 netbsd32_sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
 {
 	struct lwp * const l = curlwp;
@@ -160,8 +158,6 @@ netbsd32_sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
 	/* Remember that we're now on the signal stack. */
 	if (onstack)
 		l->l_sigstk.ss_flags |= SS_ONSTACK;
-
-	return 0;
 }
 
 int
@@ -308,16 +304,6 @@ cpu_coredump32(struct lwp *l, struct coredump_iostate *iocookie,
 	    &cpustate, chdr->c_cpusize), ENOSYS, error);
 
 	return error;
-}
-
-struct netbsd32_sendsig_hook_t netbsd32_sendsig_hook;
- 
-void
-netbsd32_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
-{
-
-	MODULE_HOOK_CALL_VOID(netbsd32_sendsig_hook, (ksi, mask),  
-	    netbsd32_sendsig_siginfo(ksi, mask));
 }
 
 static const char *

@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep.c,v 1.139 2021/11/01 05:07:15 thorpej Exp $	*/
+/*	$NetBSD: netbsd32_machdep.c,v 1.140 2021/11/06 20:42:56 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.139 2021/11/01 05:07:15 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.140 2021/11/06 20:42:56 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -109,7 +109,6 @@ static int x86_64_set_mtrr32(struct lwp *, void *, register_t *);
 int check_sigcontext32(struct lwp *, const struct netbsd32_sigcontext *);
 void netbsd32_buildcontext(struct lwp *, struct trapframe *, void *,
     sig_t, int);
-int netbsd32_sendsig_siginfo(const ksiginfo_t *, const sigset_t *);
 
 #ifdef EXEC_AOUT
 /*
@@ -206,7 +205,7 @@ netbsd32_buildcontext(struct lwp *l, struct trapframe *tf, void *fp,
 	}
 }
 
-int
+void
 netbsd32_sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
 {
 	struct lwp *l = curlwp;
@@ -274,18 +273,6 @@ netbsd32_sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
 	}
 
 	netbsd32_buildcontext(l, tf, fp, catcher, onstack);
-
-	return 0;
-}
-
-struct netbsd32_sendsig_hook_t netbsd32_sendsig_hook;
-
-void
-netbsd32_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
-{
-
-	MODULE_HOOK_CALL_VOID(netbsd32_sendsig_hook, (ksi, mask),
-	    netbsd32_sendsig_siginfo(ksi, mask));
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep_16.c,v 1.5 2021/10/27 04:15:00 thorpej Exp $	*/
+/*	$NetBSD: netbsd32_machdep_16.c,v 1.6 2021/11/06 20:42:56 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep_16.c,v 1.5 2021/10/27 04:15:00 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep_16.c,v 1.6 2021/11/06 20:42:56 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -83,10 +83,6 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep_16.c,v 1.5 2021/10/27 04:15:00 thor
 #include <machine/netbsd32_machdep.h>
 #include <machine/userret.h>
 
-void netbsd32_sendsig_siginfo(const ksiginfo_t *, const sigset_t *);
-
-void netbsd32_sendsig_16(const ksiginfo_t *, const sigset_t *);
-
 /*
  * NB: since this is a 32-bit address world, sf_scp and sf_sc
  *	can't be a pointer since those are 64-bits wide.
@@ -98,8 +94,6 @@ struct sparc32_sigframe {
 	int	sf_addr;		/* SunOS compat, always 0 for now */
 	struct	netbsd32_sigcontext sf_sc;	/* actual sigcontext */
 };
-
-extern struct netbsd32_sendsig_hook_t netbsd32_sendsig_hook;
 
 #undef DEBUG
 #ifdef DEBUG
@@ -245,16 +239,6 @@ struct sparc32_sigframe_siginfo {
 	ucontext32_t sf_uc;
 };
 
-void
-netbsd32_sendsig_16(const ksiginfo_t *ksi, const sigset_t *mask)
-{
-	if (curproc->p_sigacts->sa_sigdesc[ksi->ksi_signo].sd_vers <
-	    __SIGTRAMP_SIGINFO_VERSION)
-		netbsd32_sendsig_sigcontext(ksi, mask);
-	else
-		netbsd32_sendsig_siginfo(ksi, mask);
-}
-
 #undef DEBUG
 
 /*
@@ -353,12 +337,13 @@ void
 netbsd32_machdep_md_16_init(void)
 {
 
-	MODULE_HOOK_SET(netbsd32_sendsig_hook, netbsd32_sendsig_16);
+	MODULE_HOOK_SET(netbsd32_sendsig_sigcontext_16_hook,
+	    netbsd32_sendsig_sigcontext);
 }
  
 void    
 netbsd32_machdep_md_16_fini(void)  
 {
         
-	MODULE_HOOK_UNSET(netbsd32_sendsig_hook);
+	MODULE_HOOK_UNSET(netbsd32_sendsig_sigcontext_16_hook);
 }
