@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_subr.c,v 1.268 2021/11/06 06:41:02 skrll Exp $	*/
+/*	$NetBSD: usb_subr.c,v 1.269 2021/11/06 06:44:42 skrll Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_subr.c,v 1.18 1999/11/17 22:33:47 n_hibma Exp $	*/
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb_subr.c,v 1.268 2021/11/06 06:41:02 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb_subr.c,v 1.269 2021/11/06 06:44:42 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -362,7 +362,7 @@ usbd_find_idesc(usb_config_descriptor_t *cd, int ifaceidx, int altidx)
 
 usb_endpoint_descriptor_t *
 usbd_find_edesc(usb_config_descriptor_t *cd, int ifaceidx, int altidx,
-		int endptidx)
+    int endptidx)
 {
 	char *p = (char *)cd;
 	char *end = p + UGETW(cd->wTotalLength);
@@ -1093,7 +1093,7 @@ usbd_properties(device_t dv, struct usbd_device *dev)
 
 static usbd_status
 usbd_attachwholedevice(device_t parent, struct usbd_device *dev, int port,
-	int usegeneric)
+    int usegeneric)
 {
 	struct usb_attach_arg uaa;
 	usb_device_descriptor_t *dd = &dev->ud_ddesc;
@@ -1141,7 +1141,7 @@ usbd_attachwholedevice(device_t parent, struct usbd_device *dev, int port,
 
 static usbd_status
 usbd_attachinterfaces(device_t parent, struct usbd_device *dev,
-		      int port, const int *locators)
+    int port, const int *locators)
 {
 	USBHIST_FUNC(); USBHIST_CALLED(usbdebug);
 	struct usbif_attach_arg uiaa;
@@ -1235,7 +1235,7 @@ usbd_attachinterfaces(device_t parent, struct usbd_device *dev,
 
 usbd_status
 usbd_probe_and_attach(device_t parent, struct usbd_device *dev,
-                      int port, int addr)
+    int port, int addr)
 {
 	USBHIST_FUNC();
 	USBHIST_CALLARGS(usbdebug, "trying device specific drivers", 0, 0, 0, 0);
@@ -1305,7 +1305,7 @@ usbd_probe_and_attach(device_t parent, struct usbd_device *dev,
  */
 usbd_status
 usbd_reattach_device(device_t parent, struct usbd_device *dev,
-                     int port, const int *locators)
+    int port, const int *locators)
 {
 	int i, loc;
 
