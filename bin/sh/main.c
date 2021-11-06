@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.82.2.1 2020/02/10 18:54:14 martin Exp $	*/
+/*	$NetBSD: main.c,v 1.82.2.2 2021/11/06 13:35:43 martin Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993\
 #if 0
 static char sccsid[] = "@(#)main.c	8.7 (Berkeley) 7/19/95";
 #else
-__RCSID("$NetBSD: main.c,v 1.82.2.1 2020/02/10 18:54:14 martin Exp $");
+__RCSID("$NetBSD: main.c,v 1.82.2.2 2021/11/06 13:35:43 martin Exp $");
 #endif
 #endif /* not lint */
 
@@ -51,6 +51,7 @@ __RCSID("$NetBSD: main.c,v 1.82.2.1 2020/02/10 18:54:14 martin Exp $");
 #include <signal.h>
 #include <sys/stat.h>
 #include <unistd.h>
+#include <stdbool.h>
 #include <stdlib.h>
 #include <locale.h>
 #include <fcntl.h>
@@ -85,6 +86,7 @@ int rootpid;
 int rootshell;
 struct jmploc main_handler;
 int max_user_fd;
+bool privileged;
 #if PROFILE
 short profile_buf[16384];
 extern int etext();
@@ -109,6 +111,7 @@ main(int argc, char **argv)
 	uid_t uid;
 	gid_t gid;
 	sigset_t mask;
+	bool waspriv;
 
 	/*
 	 * If we happen to be invoked with SIGCHLD ignored, we cannot
@@ -127,6 +130,8 @@ main(int argc, char **argv)
 
 	uid = getuid();
 	gid = getgid();
+
+	waspriv = privileged = (uid != geteuid()) || (gid != getegid());
 
 	max_user_fd = fcntl(0, F_MAXFD);
 	if (max_user_fd < 2)
@@ -192,6 +197,8 @@ main(int argc, char **argv)
 	debug = 1;	/* this may be reset by procargs() later */
 #endif
 	opentrace();
+	if (privileged)
+		trputs("Privileged ");
 	trputs("Shell args:  ");  trargs(argv);
 #if DEBUG >= 3
 	set_debug(((DEBUG)==3 ? "_@" : "++"), 1);
@@ -204,6 +211,7 @@ main(int argc, char **argv)
 	setstackmark(&smark);
 	procargs(argc, argv);
 
+#if 0	/* This now happens (indirectly) in the procargs() just above */
 	/*
 	 * Limit bogus system(3) or popen(3) calls in setuid binaries,
 	 * by requiring the -p flag
@@ -214,18 +222,35 @@ main(int argc, char **argv)
 		/* PS1 might need to be changed accordingly. */
 		choose_ps1();
 	}
+#else	/* except for this one little bit */
+	if (waspriv && !privileged)
+		choose_ps1();
+#endif
 
 	if (argv[0] && argv[0][0] == '-') {
 		state = 1;
 		read_profile("/etc/profile");
  state1:
 		state = 2;
-		read_profile(".profile");
+		if (!privileged) {
+			char *profile;
+			const char *home;
+
+			home = lookupvar("HOME");
+			if (home == NULL)
+				home = nullstr;
+			profile = ststrcat(NULL, home, "/.profile", STSTRC_END);
+			read_profile(profile);
+			stunalloc(profile);
+		}
+#if 0	/* FreeBSD does (effectively) ...*/
+		else
+			read_profile("/etc/suid_profile");
+#endif
 	}
  state2:
 	state = 3;
-	if ((iflag || !posix) &&
-	    getuid() == geteuid() && getgid() == getegid()) {
+	if ((iflag || !posix) && !privileged) {
 		struct stackmark env_smark;
 
 		setstackmark(&env_smark);
@@ -253,6 +278,8 @@ main(int argc, char **argv)
 		for (i = 0; i < SIGSSIZE; i++)
 		    setsignal(sigs[i], 0);
 	}
+
+	rststackmark(&smark);	/* this one is never popped */
 
 	if (minusc)
 		evalstring(minusc, sflag ? 0 : EV_EXIT);
