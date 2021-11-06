@@ -1,4 +1,4 @@
-#	$NetBSD: files.i2c,v 1.118 2021/10/14 13:54:46 brad Exp $
+#	$NetBSD: files.i2c,v 1.119 2021/11/06 13:34:40 brad Exp $
 
 obsolete defflag	opt_i2cbus.h		I2C_SCAN
 define	i2cbus { }
@@ -394,6 +394,11 @@ file	dev/i2c/es8316ac.c			es8316ac
 device	cwfg: sysmon_envsys
 attach	cwfg at iic
 file	dev/i2c/cwfg.c				cwfg
+
+# Sensirion SHT30/SHT31/SHT35 Temperature and Humidity sensor
+device sht3xtemp
+attach sht3xtemp at iic
+file dev/i2c/sht3x.c				sht3xtemp
 
 # Sensirion SHT40/SHT41/SHT45 Temperature and Humidity sensor
 device sht4xtemp

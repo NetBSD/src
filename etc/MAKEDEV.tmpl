@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: MAKEDEV.tmpl,v 1.226 2021/10/12 17:19:20 christos Exp $
+#	$NetBSD: MAKEDEV.tmpl,v 1.227 2021/11/06 13:34:40 brad Exp $
 #
 # Copyright (c) 2003,2007,2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -270,6 +270,7 @@
 #	scsibus* SCSI busses
 #	se*	SCSI Ethernet
 #	ses*	SES/SAF-TE SCSI Devices
+#	sht3xtemp*	Sensirion SHT3X temperature and humidity device driver
 #	speaker	PC speaker		(XXX - installed)
 #	spi*	SPI bus device
 #	sram	battery backuped memory (x68k)
@@ -845,6 +846,7 @@ all)
 	makedev fw0 fw1 fw2 fw3
 	makedev ipmi0
 	makedev qemufwcfg
+	makedev sht3xtemp0
 	makedev local # do this last
 	;;
 
@@ -912,6 +914,10 @@ altmem)
 ramdisk)
 	makedev floppy md0
 	;;
+
+sht3xtemp)
+    	makedev sht3xtemp0
+    	;;
 
 usbs)
 	makedev usb usb0 usb1 usb2 usb3 usb4 usb5 usb6 usb7
@@ -2248,6 +2254,11 @@ smbios)
 
 efi)
 	mkdev efi c %efi_chr% 0 660
+	;;
+
+sht3xtemp[0-9]*)
+	unit=${i#sht3xtemp}
+	mkdev sht3xtemp$unit c %sht3xtemp_chr% $unit 664
 	;;
 
 midevend)
