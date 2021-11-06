@@ -1,4 +1,4 @@
-.\"	$NetBSD: pslist.9,v 1.18 2017/07/03 21:28:48 wiz Exp $
+.\"	$NetBSD: pslist.9,v 1.19 2021/11/06 23:29:03 riastradh Exp $
 .\"
 .\" Copyright (c) 2016 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -400,8 +400,9 @@ the memory allocated for it:
 
 	mutex_enter(&frobnitzem.lock);
 	PSLIST_WRITER_REMOVE(f, f_entry);
-	pserialize_perform(&frobnitzem.psz);
 	mutex_exit(&frobnitzem.lock);
+
+	pserialize_perform(&frobnitzem.psz);
 
 	PSLIST_ENTRY_DESTROY(f, f_entry);
 	pool_put(&frobnitzem.pool, f);
