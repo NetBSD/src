@@ -1,4 +1,4 @@
-/*	$NetBSD: shf.c,v 1.14 2021/09/16 19:44:01 christos Exp $	*/
+/*	$NetBSD: shf.c,v 1.15 2021/11/06 06:40:33 msaitoh Exp $	*/
 
 /*
  *  Shell file I/O routines
@@ -6,7 +6,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: shf.c,v 1.14 2021/09/16 19:44:01 christos Exp $");
+__RCSID("$NetBSD: shf.c,v 1.15 2021/11/06 06:40:33 msaitoh Exp $");
 #endif
 
 #include <sys/stat.h>
@@ -709,7 +709,7 @@ shf_write(buf, nbytes, shf)
 	if (nbytes < 0)
 		internal_errorf(1, "shf_write: nbytes %d", nbytes);
 
-	/* Don't buffer if buffer is empty and we're writting a large amount. */
+	/* Don't buffer if buffer is empty and we're writing a large amount. */
 	if ((ncopy = shf->wnleft)
 	    && (shf->wp != shf->buf || nbytes < shf->wnleft))
 	{
