@@ -1,4 +1,4 @@
-.\" $NetBSD: sht3xtemp.4,v 1.1 2021/11/06 13:34:39 brad Exp $
+.\" $NetBSD: sht3xtemp.4,v 1.2 2021/11/06 19:36:12 wiz Exp $
 .\"
 .\" Copyright (c) 2021 Brad Spencer <brad@anduin.eldar.org>
 .\"
@@ -48,17 +48,18 @@ variables are provided:
 .It Li hw.sht3xtemp0.modes
 Lists the modes supported by the driver and chip.
 .It Li hw.sht3xtemp0.mode
-Set the operation mode of the chip.  The SHT3X chip can run in a
-single-shot measurement mode or a periodic update mode.
+Set the operation mode of the chip.
+The SHT3X chip can run in a single-shot measurement mode or a
+periodic update mode.
 Use one of the strings listed in
 .Li hw.sht3xtemp.modes .
 .It Li hw.sht3xtemp0.rates
 List the periodic update rates supported by the driver and chip.
 .It Li hw.sht3xtemp0.rate
 Set the periodic update rate when the mode of operation is set to
-periodic.  The unit for this is measurements per second, or ART
-which is a mode that operates at an update rate of 4Hz higher
-response time.
+periodic.
+The unit for this is measurements per second, or ART which is a
+mode that operates at an update rate of 4Hz higher response time.
 Use one of the strings listed in
 .Li hw.sht3xtemp.rates .
 .Pp
@@ -72,8 +73,9 @@ followed by the raw humidity plus an 8-bit CRC.
 .It Li hw.sht3xtemp0.repeatabilities
 List the valid values for the repeatability used for a measurement.
 .It Li hw.sht3xtemp0.repeatability
-Set the repeatability for the measurement.  The higher the repeatability
-the longer the measurement will take and the more power used.
+Set the repeatability for the measurement.
+The higher the repeatability the longer the measurement will take
+and the more power used.
 Use one of the strings listed in
 .Li hw.sht3xtemp.repeatabilities .
 .It Li hw.sht3xtemp0.ignorecrc
@@ -97,7 +99,7 @@ The default is 10 which should be more than enough for most purposes.
 .Sh FILES
 .Bl -tag -width "/dev/sht3xtempu" -compact
 .It /dev/sht3xtemp Ns Ar u
-SHT3X device unit 
+SHT3X device unit
 .Ar u
 file.
 .El
