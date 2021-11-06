@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_subr.c,v 1.267 2021/09/07 10:44:18 riastradh Exp $	*/
+/*	$NetBSD: usb_subr.c,v 1.268 2021/11/06 06:41:02 skrll Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_subr.c,v 1.18 1999/11/17 22:33:47 n_hibma Exp $	*/
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb_subr.c,v 1.267 2021/09/07 10:44:18 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb_subr.c,v 1.268 2021/11/06 06:41:02 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -1120,8 +1120,9 @@ usbd_attachwholedevice(device_t parent, struct usbd_device *dev, int port,
 	dlocs[USBDEVIFCF_CONFIGURATION] = -1;
 	dlocs[USBDEVIFCF_INTERFACE] = -1;
 
-	KERNEL_LOCK(1, curlwp);
 	config_pending_incr(parent);
+
+	KERNEL_LOCK(1, curlwp);
 	dv = config_found(parent, &uaa, usbd_print,
 			  CFARGS(.submatch = config_stdsubmatch,
 				 .iattr = "usbdevif",
