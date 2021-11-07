@@ -1,4 +1,4 @@
-/*	$NetBSD: ti_omaptimer.c,v 1.10 2021/09/09 12:14:37 jakllsch Exp $	*/
+/*	$NetBSD: ti_omaptimer.c,v 1.11 2021/11/07 17:12:45 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 2017 Jonathan A. Kollasch
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ti_omaptimer.c,v 1.10 2021/09/09 12:14:37 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ti_omaptimer.c,v 1.11 2021/11/07 17:12:45 jmcneill Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -176,7 +176,6 @@ omaptimer_attach(device_t parent, device_t self, void *aux)
 	struct fdt_attach_args * const faa = aux;
 	const int phandle = faa->faa_phandle;
 	struct timecounter *tc = &sc->sc_tc;
-	const char *modname;
 	struct clk *hwmod;
 	bus_addr_t addr;
 	bus_size_t size;
@@ -203,28 +202,24 @@ omaptimer_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-	modname = fdtbus_get_string(phandle, "ti,hwmods");
-	if (modname == NULL)
-		modname = fdtbus_get_string(OF_parent(phandle), "ti,hwmods");
-
 	aprint_naive("\n");
-	aprint_normal(": Timer (%s)\n", modname);
+	aprint_normal(": Timer\n");
 
 	rate = clk_get_rate(hwmod);
 
-	if (strcmp(modname, "timer2") == 0) {
+	if (device_unit(self) == 1) {
 		omaptimer_enable(sc, 0);
 
 		/* Install timecounter */
 		tc->tc_get_timecount = omaptimer_get_timecount;
 		tc->tc_counter_mask = ~0u;
 		tc->tc_frequency = rate;
-		tc->tc_name = modname;
+		tc->tc_name = device_xname(self);
 		tc->tc_quality = 200;
 		tc->tc_priv = sc;
 		tc_init(tc);
 
-	} else if (strcmp(modname, "timer3") == 0) {
+	} else if (device_unit(self) == 2) {
 		const uint32_t value = (0xffffffff - ((rate / hz) - 1));
 		omaptimer_enable(sc, value);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ti_sdhc.c,v 1.10 2021/01/27 03:10:20 thorpej Exp $	*/
+/*	$NetBSD: ti_sdhc.c,v 1.11 2021/11/07 17:12:45 jmcneill Exp $	*/
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ti_sdhc.c,v 1.10 2021/01/27 03:10:20 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ti_sdhc.c,v 1.11 2021/11/07 17:12:45 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -85,6 +85,10 @@ static const struct ti_sdhc_config omap4_hsmmc_config = {
 	.regoff = 0x100
 };
 
+static const struct ti_sdhc_config am335_sdhci_config = {
+	.regoff = 0x100
+};
+
 static const struct device_compatible_entry compat_data[] = {
 	{ .compat = "ti,omap2-hsmmc",
 	  .data = &omap2_hsmmc_config },
@@ -94,6 +98,8 @@ static const struct device_compatible_entry compat_data[] = {
 	  .data = &omap3_pre_es3_hsmmc_config },
 	{ .compat = "ti,omap4-hsmmc",
 	  .data = &omap4_hsmmc_config },
+	{ .compat = "ti,am335-sdhci",
+	  .data = &am335_sdhci_config },
 
 	DEVICE_COMPAT_EOL
 };
