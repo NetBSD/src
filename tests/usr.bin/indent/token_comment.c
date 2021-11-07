@@ -1,4 +1,4 @@
-/* $NetBSD: token_comment.c,v 1.20 2021/11/07 10:13:26 rillig Exp $ */
+/* $NetBSD: token_comment.c,v 1.21 2021/11/07 11:30:45 rillig Exp $ */
 /* $FreeBSD$ */
 
 /*
@@ -986,3 +986,38 @@ f(void)
 #indent end
 
 #indent run-equals-input
+
+
+/*
+ * Test two completely empty lines in a wrap comment. The second empty line
+ * covers the condition ps.next_col_1 in copy_comment_wrap.
+ */
+#indent input
+/* line 1
+
+
+line 4 */
+#indent end
+
+#indent run
+/*
+ * line 1
+ *
+ *
+ * line 4
+ */
+#indent end
+
+#indent run-equals-input -nfc1
+#indent run-equals-input -nfc1 -nsc
+
+#indent run -nsc
+/*
+line 1
+
+
+line 4
+ */
+#indent end
+
+#indent run-equals-input -nsc -ncdb
