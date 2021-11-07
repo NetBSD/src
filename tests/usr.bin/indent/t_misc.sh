@@ -1,5 +1,5 @@
 #! /bin/sh
-# $NetBSD: t_misc.sh,v 1.12 2021/10/30 09:32:46 rillig Exp $
+# $NetBSD: t_misc.sh,v 1.13 2021/11/07 15:01:50 rillig Exp $
 #
 # Copyright (c) 2021 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -190,6 +190,21 @@ option_P_in_profile_file_body()
 	    "$indent" < code.c
 }
 
+atf_test_case 'option_without_hyphen'
+option_without_hyphen_body()
+{
+	# TODO: Options in profile files should be required to start with
+	#  '-', just like in the command line arguments.
+
+	printf ' -i3 xi5 +di0\n' > .indent.pro
+
+	printf '%s\n' 'int var[] = {' '1,' '}' > code.c
+	printf '%s\n' 'int var[] = {' '     1,' '}' > code.exp
+
+	atf_check -o 'file:code.exp' \
+	    "$indent" < code.c
+}
+
 atf_test_case 'opt'
 opt_body()
 {
@@ -355,6 +370,7 @@ atf_init_test_cases()
 	atf_add_test_case 'verbose_profile'
 	atf_add_test_case 'nested_struct_declarations'
 	atf_add_test_case 'option_P_in_profile_file'
+	atf_add_test_case 'option_without_hyphen'
 	atf_add_test_case 'opt'
 	atf_add_test_case 'opt_npro'
 	atf_add_test_case 'opt_U'
