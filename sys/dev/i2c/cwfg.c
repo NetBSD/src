@@ -1,4 +1,4 @@
-/* $NetBSD: cwfg.c,v 1.4 2021/01/27 02:29:48 thorpej Exp $ */
+/* $NetBSD: cwfg.c,v 1.5 2021/11/07 17:14:38 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2020 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cwfg.c,v 1.4 2021/01/27 02:29:48 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cwfg.c,v 1.5 2021/11/07 17:14:38 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -102,7 +102,8 @@ struct cwfg_softc {
 #define	CWFG_ALERT_LEVEL_DEFAULT	0
 
 static const struct device_compatible_entry compat_data[] = {
-	{ .compat = "cellwise,cw201x" },
+	{ .compat = "cellwise,cw2015" },
+	{ .compat = "cellwise,cw201x" },	/* DTCOMPAT */
 	DEVICE_COMPAT_EOL
 };
 
@@ -357,10 +358,16 @@ static int
 cwfg_parse_resources(struct cwfg_softc *sc)
 {
 	const u_int *batinfo;
+	u_int val;
 	int len = 0, n;
 
 	batinfo = fdtbus_get_prop(sc->sc_phandle,
-	    "cellwise,bat-config-info", &len);
+	    "cellwise,battery-profile", &len);
+	if (batinfo == NULL) {
+		/* DTCOMPAT */
+		batinfo = fdtbus_get_prop(sc->sc_phandle,
+		    "cellwise,bat-config-info", &len);
+	}
 	switch (len) {
 	case BATINFO_SIZE:
 		memcpy(sc->sc_batinfo, batinfo, BATINFO_SIZE);
@@ -376,12 +383,25 @@ cwfg_parse_resources(struct cwfg_softc *sc)
 	}
 
 	if (of_getprop_uint32(sc->sc_phandle,
-	    "cellwise,monitor-interval", &sc->sc_monitor_interval) != 0) {
+	    "cellwise,monitor-interval-ms", &val) == 0) {
+		sc->sc_monitor_interval = howmany(val, 1000);
+	} else if (of_getprop_uint32(sc->sc_phandle,
+	    "cellwise,monitor-interval", &val) == 0) {
+		/* DTCOMPAT */
+		sc->sc_monitor_interval = val;
+	} else {
 		sc->sc_monitor_interval = CWFG_MONITOR_INTERVAL_DEFAULT;
 	}
 
-	if (of_getprop_uint32(sc->sc_phandle,
-	    "cellwise,design-capacity", &sc->sc_design_capacity) != 0) {
+	const int bphandle = fdtbus_get_phandle(sc->sc_phandle, "monitored-battery");
+	if (bphandle != -1 && of_getprop_uint32(bphandle,
+	    "charge-full-design-microamp-hours", &val) == 0) {
+		sc->sc_design_capacity = howmany(val, 1000);
+	} else if (of_getprop_uint32(sc->sc_phandle,
+	    "cellwise,design-capacity", &val) == 0) {
+		/* DTCOMPAT */
+		sc->sc_design_capacity = val;
+	} else {
 		sc->sc_design_capacity = CWFG_DESIGN_CAPACITY_DEFAULT;
 	}
 
