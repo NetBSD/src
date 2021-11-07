@@ -1,4 +1,4 @@
-/* $NetBSD: fdtbus.c,v 1.43 2021/09/06 14:03:18 jmcneill Exp $ */
+/* $NetBSD: fdtbus.c,v 1.44 2021/11/07 17:12:15 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdtbus.c,v 1.43 2021/09/06 14:03:18 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdtbus.c,v 1.44 2021/11/07 17:12:15 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -89,6 +89,7 @@ static void	fdt_post_attach(struct fdt_node *);
 
 static const struct device_compatible_entry compat_data[] = {
 	{ .compat = "simple-bus" },
+	{ .compat = "simple-pm-bus" },
 	DEVICE_COMPAT_EOL
 };
 
