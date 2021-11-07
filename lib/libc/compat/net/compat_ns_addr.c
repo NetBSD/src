@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_ns_addr.c,v 1.3 2012/10/15 22:22:01 msaitoh Exp $	*/
+/*	$NetBSD: compat_ns_addr.c,v 1.4 2021/11/07 20:31:09 andvar Exp $	*/
 
 /*
  * Copyright (c) 1986, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)ns_addr.c	8.1 (Berkeley) 6/7/93";
 #else
-__RCSID("$NetBSD: compat_ns_addr.c,v 1.3 2012/10/15 22:22:01 msaitoh Exp $");
+__RCSID("$NetBSD: compat_ns_addr.c,v 1.4 2021/11/07 20:31:09 andvar Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -65,10 +65,10 @@ ns_addr(const char *name)
 	(void)strlcpy(buf, name, sizeof(buf));
 
 	/*
-	 * First, figure out what he intends as a field separtor.
-	 * Despite the way this routine is written, the prefered
+	 * First, figure out what he intends as a field separator.
+	 * Despite the way this routine is written, the preferred
 	 * form  2-272.AA001234H.01777, i.e. XDE standard.
-	 * Great efforts are made to insure backward compatibility.
+	 * Great efforts are made to ensure backward compatibility.
 	 */
 	if ((hostname = strchr(buf, '#')) != NULL)
 		separator = '#';
@@ -138,7 +138,7 @@ Field(char *buf, uint8_t *out, int len)
 	}
 	/*
 	 * This is REALLY stretching it but there was a
-	 * comma notation separting shorts -- definitely non standard
+	 * comma notation separating shorts -- definitely non standard
 	 */
 	if (1 < (i = sscanf(buf,"%x,%x,%x",
 			&hb[0], &hb[1], &hb[2]))) {
