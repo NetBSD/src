@@ -1,4 +1,4 @@
-/*	$NetBSD: pr_comment.c,v 1.103 2021/11/07 10:13:26 rillig Exp $	*/
+/*	$NetBSD: pr_comment.c,v 1.104 2021/11/07 10:17:39 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)pr_comment.c	8.1 (Berkeley) 6/6/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: pr_comment.c,v 1.103 2021/11/07 10:13:26 rillig Exp $");
+__RCSID("$NetBSD: pr_comment.c,v 1.104 2021/11/07 10:17:39 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/pr_comment.c 334927 2018-06-10 16:44:18Z pstef $");
 #endif
@@ -333,13 +333,7 @@ static void
 copy_comment_nowrap(void)
 {
     for (;;) {
-	switch (*inp.s) {
-	case '\f':
-	    inp_skip();
-	    com_add_char('\f');
-	    break;
-
-	case '\n':
+	if (*inp.s == '\n') {
 	    if (token.e[-1] == '/')
 		goto end_of_line_comment;
 
@@ -354,9 +348,10 @@ copy_comment_nowrap(void)
 	    dump_line();
 	    ++line_no;
 	    inp_skip();
-	    break;		/* end of case for newline */
+	    continue;
+	}
 
-	case '*':
+	if (*inp.s == '*') {
 	    inp_skip();
 	    if (*inp.s == '/' && token.e[-1] == '*') {
 		inp_skip();
@@ -372,12 +367,8 @@ copy_comment_nowrap(void)
 
 	    } else		/* handle isolated '*' */
 		com_add_char('*');
-	    break;
-
-	default:
+	} else
 	    com_add_char(inp_next());
-	    break;
-	}
     }
 }
 
