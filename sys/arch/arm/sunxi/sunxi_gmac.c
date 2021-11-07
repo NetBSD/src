@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_gmac.c,v 1.9 2021/01/27 03:10:20 thorpej Exp $ */
+/* $NetBSD: sunxi_gmac.c,v 1.10 2021/11/07 19:21:33 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: sunxi_gmac.c,v 1.9 2021/01/27 03:10:20 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_gmac.c,v 1.10 2021/11/07 19:21:33 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -177,7 +177,7 @@ sunxi_gmac_attach(device_t parent, device_t self, void *aux)
 			aprint_error(": failed to set TX clock rate (MII)\n");
 			return;
 		}
-	} else if (strcmp(phy_mode, "rgmii") == 0) {
+	} else if (strncmp(phy_mode, "rgmii", 5) == 0) {
 		if (clk_set_rate(clk_gmac_tx, GMAC_TX_RATE_RGMII) != 0) {
 			aprint_error(": failed to set TX clock rate (RGMII)\n");
 			return;
