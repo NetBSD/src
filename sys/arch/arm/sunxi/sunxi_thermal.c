@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_thermal.c,v 1.13 2021/01/27 03:10:20 thorpej Exp $ */
+/* $NetBSD: sunxi_thermal.c,v 1.14 2021/11/07 17:11:58 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2016-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_thermal.c,v 1.13 2021/01/27 03:10:20 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_thermal.c,v 1.14 2021/11/07 17:11:58 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -306,6 +306,14 @@ static const struct sunxi_thermal_config h5_config = {
 };
 
 static struct device_compatible_entry compat_data[] = {
+	{ .compat = "allwinner,sun8i-a83t-ths",	.data = &a83t_config },
+	{ .compat = "allwinner,sun8i-h3-ths",	.data = &h3_config },
+	{ .compat = "allwinner,sun50i-a64-ths",	.data = &a64_config },
+	{ .compat = "allwinner,sun50i-h5-ths",	.data = &h5_config },
+
+	/*
+	 * DTCOMPAT: Old compat strings. Do not add to this list.
+	 */
 	{ .compat = "allwinner,sun8i-a83t-ts",	.data = &a83t_config },
 	{ .compat = "allwinner,sun8i-h3-ts",	.data = &h3_config },
 	{ .compat = "allwinner,sun50i-a64-ts",	.data = &a64_config },

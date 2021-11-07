@@ -1,4 +1,4 @@
-/* $NetBSD: meson_sdhc.c,v 1.5 2021/08/07 16:18:43 thorpej Exp $ */
+/* $NetBSD: meson_sdhc.c,v 1.6 2021/11/07 17:11:58 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015-2019 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: meson_sdhc.c,v 1.5 2021/08/07 16:18:43 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: meson_sdhc.c,v 1.6 2021/11/07 17:11:58 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -151,7 +151,8 @@ meson_sdhc_set_clear(struct meson_sdhc_softc *sc, bus_addr_t reg, uint32_t set, 
 }
 
 static const struct device_compatible_entry compat_data[] = {
-	{ .compat = "amlogic,meson8b-sdhc" },
+	{ .compat = "amlogic,meson8-sdhc" },
+	{ .compat = "amlogic,meson8b-sdhc" },	/* DTCOMPAT */
 	DEVICE_COMPAT_EOL
 };
 
@@ -191,14 +192,20 @@ meson_sdhc_attach(device_t parent, device_t self, void *aux)
 	}
 
 	clk_core = fdtbus_clock_get(phandle, "core");
+	if (clk_core == NULL) {
+		clk_core = fdtbus_clock_get(phandle, "pclk");
+	}
 	if (clk_core == NULL || clk_enable(clk_core) != 0) {
-		aprint_error(": failed to enable core clock\n");
+		aprint_error(": failed to enable core/pclk clock\n");
 		return;
 	}
 
 	clk_clkin = fdtbus_clock_get(phandle, "clkin");
+	if (clk_clkin == NULL) {
+		clk_clkin = fdtbus_clock_get(phandle, "clkin2");
+	}
 	if (clk_clkin == NULL || clk_enable(clk_clkin) != 0) {
-		aprint_error(": failed to get clkin clock\n");
+		aprint_error(": failed to get clkin/clkin2 clock\n");
 		return;
 	}
 
