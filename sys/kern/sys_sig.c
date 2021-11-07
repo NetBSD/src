@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_sig.c,v 1.54 2021/11/01 05:07:17 thorpej Exp $	*/
+/*	$NetBSD: sys_sig.c,v 1.55 2021/11/07 01:51:56 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_sig.c,v 1.54 2021/11/01 05:07:17 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_sig.c,v 1.55 2021/11/07 01:51:56 thorpej Exp $");
 
 #include "opt_dtrace.h"
 
@@ -419,6 +419,10 @@ sigaction1(struct lwp *l, int signum, const struct sigaction *nsa,
 			}
 #ifdef __HAVE_STRUCT_SIGCONTEXT
 			else if (p->p_flag & PK_32) {
+				/*
+				 * The 32-bit compat module will have
+				 * pre-validated this for us.
+				 */
 				v0v1valid = true;
 			} else if ((p->p_lflag & PL_SIGCOMPAT) == 0) {
 				kernconfig_lock();
