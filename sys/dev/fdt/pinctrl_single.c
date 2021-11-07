@@ -1,4 +1,4 @@
-/* $NetBSD: pinctrl_single.c,v 1.5 2021/01/27 03:10:21 thorpej Exp $ */
+/* $NetBSD: pinctrl_single.c,v 1.6 2021/11/07 17:12:25 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2019 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pinctrl_single.c,v 1.5 2021/01/27 03:10:21 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pinctrl_single.c,v 1.6 2021/11/07 17:12:25 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -110,7 +110,7 @@ pinctrl_single_pins_set_config(device_t dev, const void *data, size_t len)
 	const u_int *pins;
 	int pinslen;
 
-	if (len != 4)
+	if (len != 4 && len != 8)
 		return -1;
 
 	const int phandle = fdtbus_get_phandle_from_native(be32dec(data));
@@ -119,13 +119,14 @@ pinctrl_single_pins_set_config(device_t dev, const void *data, size_t len)
 	if (pins == NULL)
 		return -1;
 
-	while (pinslen >= 8) {
+	while (pinslen >= 4 + len) {
 		const int off = be32toh(pins[0]);
 		const int val = be32toh(pins[1]);
+		const int mux = len == 4 ? 0 : be32toh(pins[2]);
 
-		pinctrl_single_pins_write(sc, off, val);
-		pins += 2;
-		pinslen -= 8;
+		pinctrl_single_pins_write(sc, off, val | mux);
+		pins += 1 + (len / 4);
+		pinslen -= (4 + len);
 	}
 
 	return 0;
