@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.h,v 1.83 2021/11/07 13:43:11 rillig Exp $	*/
+/*	$NetBSD: indent.h,v 1.84 2021/11/07 14:00:35 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-FreeBSD
@@ -263,7 +263,8 @@ extern bool inhibit_formatting;	/* true if INDENT OFF is in effect */
 #define	STACKSIZE 256
 
 extern struct parser_state {
-    lexer_symbol prev_token;
+    lexer_symbol prev_token;	/* the previous token, but never comment,
+				 * newline or preprocessing line */
     bool curr_col_1;		/* whether the current token started in column
 				 * 1 of the unformatted input */
     bool next_col_1;

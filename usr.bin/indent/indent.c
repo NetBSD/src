@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.c,v 1.213 2021/11/07 13:30:15 rillig Exp $	*/
+/*	$NetBSD: indent.c,v 1.214 2021/11/07 14:00:35 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)indent.c	5.17 (Berkeley) 6/7/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: indent.c,v 1.213 2021/11/07 13:30:15 rillig Exp $");
+__RCSID("$NetBSD: indent.c,v 1.214 2021/11/07 14:00:35 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/indent.c 340138 2018-11-04 19:24:49Z oshogbo $");
 #endif
@@ -484,7 +484,7 @@ search_stmt(lexer_symbol *lsym, bool *force_nl, bool *last_else)
 	    if (search_stmt_lbrace())
 		goto switch_buffer;
 	    /* FALLTHROUGH */
-	default:		/* it is the start of a normal statement */
+	default:
 	    if (!search_stmt_other(*lsym, force_nl, comment_buffered,
 		    *last_else))
 		return;
@@ -1105,7 +1105,7 @@ process_else(bool *force_nl, bool *last_else)
 {
     ps.in_stmt = false;
 
-    if (code.e > code.s && (!opt.cuddle_else || code.e[-1] != '}')) {
+    if (code.e > code.s && !(opt.cuddle_else && code.e[-1] == '}')) {
 	if (opt.verbose)
 	    diag(0, "Line broken");
 	dump_line();		/* make sure this starts a line */
