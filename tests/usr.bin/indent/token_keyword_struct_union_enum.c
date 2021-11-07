@@ -1,4 +1,4 @@
-/* $NetBSD: token_keyword_struct_union_enum.c,v 1.2 2021/10/22 19:46:41 rillig Exp $ */
+/* $NetBSD: token_keyword_struct_union_enum.c,v 1.3 2021/11/07 15:44:28 rillig Exp $ */
 /* $FreeBSD$ */
 
 /*
@@ -67,4 +67,14 @@ u(struct x a)
 	int		b;
 	struct y	c = (struct y *)&a;
 }
+#indent end
+
+
+/* Comment between 'struct' and the tag name; doesn't occur in practice. */
+#indent input
+struct   /* comment */   tag var;
+#indent end
+
+#indent run -di0
+struct /* comment */ tag var;
 #indent end

@@ -1,4 +1,4 @@
-/* $NetBSD: opt_v.c,v 1.3 2021/10/22 19:27:53 rillig Exp $ */
+/* $NetBSD: opt_v.c,v 1.4 2021/11/07 15:44:28 rillig Exp $ */
 /* $FreeBSD$ */
 
 /*
@@ -89,4 +89,34 @@ There were 5 output lines and 1 comments
 /*
  * XXX: It's rather strange that -v writes to stdout, even in filter mode.
  * This output belongs on stderr instead.
+ */
+
+
+/*
+ * Test line counting in preprocessor directives.
+ */
+#indent input
+#if 0
+int line = 1;
+int line = 2;
+int line = 3;
+#else
+int line = 5;
+#endif
+#indent end
+
+#indent run -v -di0
+#if 0
+int line = 1;
+int line = 2;
+int line = 3;
+#else
+int line = 5;
+#endif
+There were 3 output lines and 0 comments
+(Lines with comments)/(Lines with code):  0.000
+#indent end
+/*
+ * FIXME: The lines within the conditional compilation directives must be
+ * counted as well. TODO: Move stats out of parser_state.
  */
