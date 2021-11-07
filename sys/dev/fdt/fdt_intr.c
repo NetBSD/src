@@ -1,4 +1,4 @@
-/* $NetBSD: fdt_intr.c,v 1.29 2021/01/15 22:59:49 jmcneill Exp $ */
+/* $NetBSD: fdt_intr.c,v 1.30 2021/11/07 17:13:53 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015-2018 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdt_intr.c,v 1.29 2021/01/15 22:59:49 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdt_intr.c,v 1.30 2021/11/07 17:13:53 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -175,6 +175,12 @@ fdtbus_put_interrupt_cookie(struct fdtbus_interrupt_cookie *c)
 		cv_signal(&fdtbus_interrupt_cookie_wait);
 	}
 	mutex_exit(&fdtbus_interrupt_cookie_mutex);
+}
+
+int
+fdtbus_intr_parent(int phandle)
+{
+	return fdtbus_get_interrupt_parent(phandle);
 }
 
 void *

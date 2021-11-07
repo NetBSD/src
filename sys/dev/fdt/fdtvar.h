@@ -1,4 +1,4 @@
-/* $NetBSD: fdtvar.h,v 1.72 2021/09/06 14:03:18 jmcneill Exp $ */
+/* $NetBSD: fdtvar.h,v 1.73 2021/11/07 17:13:53 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -336,6 +336,7 @@ void		fdtbus_intr_unmask(int, void *);
 void		fdtbus_intr_disestablish(int, void *);
 bool		fdtbus_intr_str(int, u_int, char *, size_t);
 bool		fdtbus_intr_str_raw(int, const u_int *, char *, size_t);
+int		fdtbus_intr_parent(int);
 int		fdtbus_gpio_count(int, const char *);
 struct fdtbus_gpio_pin *fdtbus_gpio_acquire(int, const char *, int);
 struct fdtbus_gpio_pin *fdtbus_gpio_acquire_index(int, const char *, int, int);
