@@ -1,4 +1,4 @@
-/*	$NetBSD: lexi.c,v 1.135 2021/11/07 07:44:59 rillig Exp $	*/
+/*	$NetBSD: lexi.c,v 1.136 2021/11/07 14:04:34 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)lexi.c	8.1 (Berkeley) 6/6/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: lexi.c,v 1.135 2021/11/07 07:44:59 rillig Exp $");
+__RCSID("$NetBSD: lexi.c,v 1.136 2021/11/07 14:04:34 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/lexi.c 337862 2018-08-15 18:19:45Z pstef $");
 #endif
@@ -415,8 +415,6 @@ lex_char_or_string(void)
 static bool
 probably_typename(void)
 {
-    if (ps.p_l_follow > 0)
-	return false;
     if (ps.block_init || ps.in_stmt)
 	return false;
     if (inp.s[0] == '*' && inp.s[1] != '=')
@@ -538,7 +536,7 @@ found_typename:
 	return lsym_funcname;
 no_function_definition:;
 
-    } else if (probably_typename()) {
+    } else if (ps.p_l_follow == 0 && probably_typename()) {
 	ps.next_unary = true;
 	return lsym_type_outside_parentheses;
     }
