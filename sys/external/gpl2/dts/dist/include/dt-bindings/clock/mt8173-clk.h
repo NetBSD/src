@@ -1,4 +1,4 @@
-/*	$NetBSD: mt8173-clk.h,v 1.1.1.4 2020/01/03 14:33:05 skrll Exp $	*/
+/*	$NetBSD: mt8173-clk.h,v 1.1.1.5 2021/11/07 16:49:59 jmcneill Exp $	*/
 
 /* SPDX-License-Identifier: GPL-2.0-only */
 /*
@@ -188,7 +188,6 @@
 #define CLK_INFRA_PMICWRAP		11
 #define CLK_INFRA_CLK_13M		12
 #define CLK_INFRA_CA53SEL               13
-#define CLK_INFRA_CA57SEL               14 /* Deprecated. Don't use it. */
 #define CLK_INFRA_CA72SEL               14
 #define CLK_INFRA_NR_CLK                15
 

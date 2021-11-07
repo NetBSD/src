@@ -1,4 +1,4 @@
-/*	$NetBSD: realtek,rtd1295.h,v 1.1.1.1 2020/01/03 14:33:06 skrll Exp $	*/
+/*	$NetBSD: realtek,rtd1295.h,v 1.1.1.2 2021/11/07 16:49:57 jmcneill Exp $	*/
 
 /* SPDX-License-Identifier: (GPL-2.0-or-later OR BSD-2-Clause) */
 /*
@@ -76,6 +76,9 @@
 #define RTD1295_RSTN_MISC_SC		29
 #define RTD1295_RSTN_CBUS_TX		30
 #define RTD1295_RSTN_SDS_PHY		31
+
+/* soft reset 3 */
+#define RTD1295_RSTN_SB2		0
 
 /* soft reset 4 */
 #define RTD1295_RSTN_DCPHY_CRT		0

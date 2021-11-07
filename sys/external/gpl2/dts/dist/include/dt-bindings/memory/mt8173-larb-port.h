@@ -1,14 +1,14 @@
-/*	$NetBSD: mt8173-larb-port.h,v 1.1.1.3 2020/01/03 14:33:06 skrll Exp $	*/
+/*	$NetBSD: mt8173-larb-port.h,v 1.1.1.4 2021/11/07 16:49:56 jmcneill Exp $	*/
 
 /* SPDX-License-Identifier: GPL-2.0-only */
 /*
  * Copyright (c) 2015-2016 MediaTek Inc.
  * Author: Yong Wu <yong.wu@mediatek.com>
  */
-#ifndef __DTS_IOMMU_PORT_MT8173_H
-#define __DTS_IOMMU_PORT_MT8173_H
+#ifndef _DT_BINDINGS_MEMORY_MT8173_LARB_PORT_H_
+#define _DT_BINDINGS_MEMORY_MT8173_LARB_PORT_H_
 
-#define MTK_M4U_ID(larb, port)		(((larb) << 5) | (port))
+#include <dt-bindings/memory/mtk-memory-port.h>
 
 #define M4U_LARB0_ID			0
 #define M4U_LARB1_ID			1

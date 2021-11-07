@@ -1,4 +1,4 @@
-/*	$NetBSD: qcom,gcc-ipq8074.h,v 1.1.1.3 2020/01/03 14:33:05 skrll Exp $	*/
+/*	$NetBSD: qcom,gcc-ipq8074.h,v 1.1.1.4 2021/11/07 16:49:59 jmcneill Exp $	*/
 
 /* SPDX-License-Identifier: GPL-2.0-only */
 /*
@@ -232,6 +232,9 @@
 #define GCC_GP1_CLK				221
 #define GCC_GP2_CLK				222
 #define GCC_GP3_CLK				223
+#define GCC_PCIE0_AXI_S_BRIDGE_CLK		224
+#define GCC_PCIE0_RCHNG_CLK_SRC			225
+#define GCC_PCIE0_RCHNG_CLK			226
 
 #define GCC_BLSP1_BCR				0
 #define GCC_BLSP1_QUP1_BCR			1
@@ -364,5 +367,6 @@
 #define GCC_PCIE1_AXI_SLAVE_ARES		128
 #define GCC_PCIE1_AHB_ARES			129
 #define GCC_PCIE1_AXI_MASTER_STICKY_ARES	130
+#define GCC_PCIE0_AXI_SLAVE_STICKY_ARES		131
 
 #endif

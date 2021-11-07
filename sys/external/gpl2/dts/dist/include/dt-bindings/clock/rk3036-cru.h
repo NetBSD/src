@@ -1,4 +1,4 @@
-/*	$NetBSD: rk3036-cru.h,v 1.1.1.2 2020/01/03 14:33:04 skrll Exp $	*/
+/*	$NetBSD: rk3036-cru.h,v 1.1.1.3 2021/11/07 16:49:57 jmcneill Exp $	*/
 
 /* SPDX-License-Identifier: GPL-2.0-or-later */
 /*
@@ -83,6 +83,7 @@
 #define HCLK_OTG0		449
 #define HCLK_OTG1		450
 #define HCLK_NANDC		453
+#define HCLK_SFC		454
 #define HCLK_SDMMC		456
 #define HCLK_SDIO		457
 #define HCLK_EMMC		459
