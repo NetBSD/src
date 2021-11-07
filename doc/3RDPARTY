@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.1825 2021/10/28 14:54:32 christos Exp $
+#	$NetBSD: 3RDPARTY,v 1.1826 2021/11/07 17:16:19 jmcneill Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -1712,10 +1712,10 @@ Notes:
 external/gpl2/dtc/dtc2netbsd should be used to create directories to import
 
 Package:	dts
-Version:	5.1.4
-Current Vers:	5.1.4
+Version:	5.15
+Current Vers:	5.15
 Maintainer:	https://www.kernel.org/
-Archive Site:	https://cdn.kernel.org/pub/linux/kernel/v4.x/
+Archive Site:	https://cdn.kernel.org/pub/linux/kernel/v5.x/
 Home Page:	https://www.kernel.org/
 Mailing List:	mailto:devicetree@vger.kernel.org
 Responsible:	jmcneill
