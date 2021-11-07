@@ -1,4 +1,4 @@
-/* $NetBSD: h_spawnattr.c,v 1.3 2021/11/07 15:46:20 christos Exp $ */
+/*	$NetBSD: fa_spawn_utils.c,v 1.1 2021/11/07 15:46:20 christos Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,63 +30,33 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: h_spawnattr.c,v 1.3 2021/11/07 15:46:20 christos Exp $");
+__RCSID("$NetBSD: fa_spawn_utils.c,v 1.1 2021/11/07 15:46:20 christos Exp $");
 
-#include <errno.h>
+#include <atf-c.h>
 #include <stdio.h>
-#include <stdlib.h>
-#include <signal.h>
-#include <unistd.h>
+#include <errno.h>
+#include <string.h>
+#include <sys/stat.h>
 
-/*
- * Helper to test the hardcoded assumptions from t_spawnattr.c
- * Exit with appropriate exit status and print diagnostics to
- * stderr explaining what is wrong.
- */
-int
-main(int argc, char **argv)
+#include "fa_spawn_utils.h"
+
+off_t
+filesize(const char * restrict fname)
 {
-	int parent_pipe, res = EXIT_SUCCESS;
-	sigset_t sig;
-	struct sigaction act;
-	ssize_t rd;
-	char tmp;
+	struct stat st;
+	int err;
 
-	sigemptyset(&sig);
-	if (sigprocmask(0, NULL, &sig) < 0) {
-		fprintf(stderr, "%s: sigprocmask error\n", getprogname());
-		res = EXIT_FAILURE;
-	}
-	if (!sigismember(&sig, SIGUSR1)) {
-		fprintf(stderr, "%s: SIGUSR not in procmask\n", getprogname());
-		res = EXIT_FAILURE;
-	}
-	if (sigaction(SIGUSR1, NULL, &act) < 0) {
-		fprintf(stderr, "%s: sigaction error\n", getprogname());
-		res = EXIT_FAILURE;
-	}
-	if (act.sa_sigaction != (void *)SIG_DFL) {
-		fprintf(stderr, "%s: SIGUSR1 action != SIG_DFL\n",
-		    getprogname());
-		res = EXIT_FAILURE;
-	}
+	err = stat(fname, &st);
+	ATF_REQUIRE_MSG(err == 0, "Can't stat %s (%s)", fname, strerror(errno));
+	return st.st_size;
+}
 
-	if (argc >= 2) {
-		parent_pipe = atoi(argv[1]);
-		if (parent_pipe > 2) {
-			printf("%s: waiting for command from parent on pipe "
-			    "%d\n", getprogname(), parent_pipe);
-			rd = read(parent_pipe, &tmp, 1);
-			if (rd == 1) {
-				printf("%s: got command %c from parent\n",
-				    getprogname(), tmp);
-			} else if (rd == -1) {
-				printf("%s: %d is no pipe, errno %d\n",
-				    getprogname(), parent_pipe, errno);
-				res = EXIT_FAILURE;
-			}
-		}
-	}
+void
+empty_outfile(const char * restrict fname)
+{
+	FILE *f;
 
-	return res;
+	f = fopen(fname, "w");
+	ATF_REQUIRE_MSG(f != NULL, "Can't open %s (%s)", fname, strerror(errno));
+	fclose(f);
 }
