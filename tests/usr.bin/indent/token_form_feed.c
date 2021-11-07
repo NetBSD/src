@@ -1,4 +1,4 @@
-/* $NetBSD: token_form_feed.c,v 1.1 2021/10/18 22:30:34 rillig Exp $ */
+/* $NetBSD: token_form_feed.c,v 1.2 2021/11/07 18:38:34 rillig Exp $ */
 /* $FreeBSD$ */
 
 /*
@@ -7,8 +7,15 @@
 
 #indent input
 void function_1(void);
-
+
 void function_2(void);
 #indent end
 
-#indent run-equals-input -di0
+#indent run -di0
+void function_1(void);
+
+/* $ XXX: The form feed is not preserved. */
+/* $ XXX: Why 2 empty lines? */
+
+void function_2(void);
+#indent end
