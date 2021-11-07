@@ -1,9 +1,9 @@
-/*	$NetBSD: hisi.h,v 1.1.1.2 2017/07/27 18:10:50 jmcneill Exp $	*/
+/*	$NetBSD: hisi.h,v 1.1.1.3 2021/11/07 16:49:56 jmcneill Exp $	*/
 
 /*
  * This header provides constants for hisilicon pinctrl bindings.
  *
- * Copyright (c) 2015 Hisilicon Limited.
+ * Copyright (c) 2015 HiSilicon Limited.
  * Copyright (c) 2015 Linaro Limited.
  *
  * This program is free software; you can redistribute it and/or modify

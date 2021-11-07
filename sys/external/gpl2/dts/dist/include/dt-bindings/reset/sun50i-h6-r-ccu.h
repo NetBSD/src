@@ -1,4 +1,4 @@
-/*	$NetBSD: sun50i-h6-r-ccu.h,v 1.1.1.1 2018/06/27 16:27:08 jmcneill Exp $	*/
+/*	$NetBSD: sun50i-h6-r-ccu.h,v 1.1.1.2 2021/11/07 16:49:57 jmcneill Exp $	*/
 
 /* SPDX-License-Identifier: (GPL-2.0+ or MIT) */
 /*
@@ -15,5 +15,6 @@
 #define RST_R_APB2_I2C		4
 #define RST_R_APB1_IR		5
 #define RST_R_APB1_W1		6
+#define RST_R_APB2_RSB		7
 
 #endif /* _DT_BINDINGS_RST_SUN50I_H6_R_CCU_H_ */

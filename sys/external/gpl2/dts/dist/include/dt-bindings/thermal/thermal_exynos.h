@@ -1,8 +1,8 @@
-/*	$NetBSD: thermal_exynos.h,v 1.1.1.2 2019/01/22 14:57:01 jmcneill Exp $	*/
+/*	$NetBSD: thermal_exynos.h,v 1.1.1.3 2021/11/07 16:49:57 jmcneill Exp $	*/
 
 /* SPDX-License-Identifier: GPL-2.0+ */
 /*
- * thermal_exynos.h - Samsung EXYNOS TMU device tree definitions
+ * thermal_exynos.h - Samsung Exynos TMU device tree definitions
  *
  *  Copyright (C) 2014 Samsung Electronics
  *  Lukasz Majewski <l.majewski@samsung.com>

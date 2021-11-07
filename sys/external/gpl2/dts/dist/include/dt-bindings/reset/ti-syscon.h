@@ -1,10 +1,10 @@
-/*	$NetBSD: ti-syscon.h,v 1.1.1.2 2020/01/03 14:33:06 skrll Exp $	*/
+/*	$NetBSD: ti-syscon.h,v 1.1.1.3 2021/11/07 16:49:57 jmcneill Exp $	*/
 
 /* SPDX-License-Identifier: GPL-2.0-or-later */
 /*
  * TI Syscon Reset definitions
  *
- * Copyright (C) 2015-2016 Texas Instruments Incorporated - http://www.ti.com/
+ * Copyright (C) 2015-2016 Texas Instruments Incorporated - https://www.ti.com/
  */
 
 #ifndef __DT_BINDINGS_RESET_TI_SYSCON_H__

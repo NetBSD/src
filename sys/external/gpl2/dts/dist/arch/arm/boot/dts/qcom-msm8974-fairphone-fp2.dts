@@ -256,7 +256,26 @@
 
 &soc {
 	serial@f991e000 {
-		status = "ok";
+		status = "okay";
+	};
+
+	remoteproc@fb21b000 {
+		status = "okay";
+
+		vddmx-supply = <&pm8841_s1>;
+		vddcx-supply = <&pm8841_s2>;
+
+		pinctrl-names = "default";
+		pinctrl-0 = <&wcnss_pin_a>;
+
+		smd-edge {
+			qcom,remote-pid = <4>;
+			label = "pronto";
+
+			wcnss {
+				status = "okay";
+			};
+		};
 	};
 
 	pinctrl@fd510000 {
@@ -287,10 +306,36 @@
 				bias-pull-up;
 			};
 		};
+
+		wcnss_pin_a: wcnss-pin-active {
+			wlan {
+				pins =  "gpio36", "gpio37", "gpio38", "gpio39", "gpio40";
+				function = "wlan";
+
+				drive-strength = <6>;
+				bias-pull-down;
+			};
+
+			bt {
+				pins = "gpio35", "gpio43", "gpio44";
+				function = "bt";
+
+				drive-strength = <2>;
+				bias-pull-down;
+			};
+
+			fm {
+				pins = "gpio41", "gpio42";
+				function = "fm";
+
+				drive-strength = <2>;
+				bias-pull-down;
+			};
+		};
 	};
 
 	sdhci@f9824900 {
-		status = "ok";
+		status = "okay";
 
 		vmmc-supply = <&pm8941_l20>;
 		vqmmc-supply = <&pm8941_s3>;
@@ -303,7 +348,7 @@
 	};
 
 	sdhci@f98a4900 {
-		status = "ok";
+		status = "okay";
 
 		vmmc-supply = <&pm8941_l21>;
 		vqmmc-supply = <&pm8941_l13>;
@@ -315,7 +360,7 @@
 	};
 
 	usb@f9a55000 {
-		status = "ok";
+		status = "okay";
 
 		phys = <&usb_hs1_phy>;
 		phy-select = <&tcsr 0xb000 0>;
@@ -328,7 +373,7 @@
 
 		ulpi {
 			phy@a {
-				status = "ok";
+				status = "okay";
 
 				v1p8-supply = <&pm8941_l6>;
 				v3p3-supply = <&pm8941_l24>;

@@ -1,4 +1,4 @@
-/*	$NetBSD: tvp5150.h,v 1.1.1.2 2020/01/03 14:33:03 skrll Exp $	*/
+/*	$NetBSD: tvp5150.h,v 1.1.1.3 2021/11/07 16:50:00 jmcneill Exp $	*/
 
 /* SPDX-License-Identifier: GPL-2.0-or-later */
 /*
@@ -15,8 +15,6 @@
 #define TVP5150_COMPOSITE0 0
 #define TVP5150_COMPOSITE1 1
 #define TVP5150_SVIDEO     2
-
-#define TVP5150_INPUT_NUM  3
 
 /* TVP5150 HW outputs */
 #define TVP5150_NORMAL       0

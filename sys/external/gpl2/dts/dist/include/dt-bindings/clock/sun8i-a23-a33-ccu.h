@@ -1,4 +1,4 @@
-/*	$NetBSD: sun8i-a23-a33-ccu.h,v 1.1.1.1 2017/06/15 20:14:23 jmcneill Exp $	*/
+/*	$NetBSD: sun8i-a23-a33-ccu.h,v 1.1.1.2 2021/11/07 16:50:00 jmcneill Exp $	*/
 
 /*
  * Copyright (C) 2016 Maxime Ripard <maxime.ripard@free-electrons.com>
@@ -44,6 +44,8 @@
 
 #ifndef _DT_BINDINGS_CLK_SUN8I_A23_A33_H_
 #define _DT_BINDINGS_CLK_SUN8I_A23_A33_H_
+
+#define CLK_PLL_MIPI		13
 
 #define CLK_CPUX		18
 

@@ -62,7 +62,7 @@
 		};
 	};
 
-	mdio0: ethernet-phy {
+	mdio0: mdio {
 		compatible = "virtual,mdio-gpio";
 		gpios = <&gpio0 22 GPIO_ACTIVE_HIGH>, /* MDC */
 			<&gpio0 21 GPIO_ACTIVE_HIGH>; /* MDIO */
@@ -170,11 +170,11 @@
 			};
 		};
 
-		ata@63000000 {
+		ide@63000000 {
 			status = "okay";
 		};
 
-		ata@63400000 {
+		ide@63400000 {
 			status = "okay";
 		};
 

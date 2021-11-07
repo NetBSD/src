@@ -1,4 +1,4 @@
-/*	$NetBSD: qcom,q6asm.h,v 1.1.1.1 2018/06/27 16:27:08 jmcneill Exp $	*/
+/*	$NetBSD: qcom,q6asm.h,v 1.1.1.2 2021/11/07 16:49:57 jmcneill Exp $	*/
 
 /* SPDX-License-Identifier: GPL-2.0 */
 #ifndef __DT_BINDINGS_Q6_ASM_H__
@@ -20,5 +20,9 @@
 #define	MSM_FRONTEND_DAI_MULTIMEDIA14	13
 #define	MSM_FRONTEND_DAI_MULTIMEDIA15	14
 #define	MSM_FRONTEND_DAI_MULTIMEDIA16	15
+
+#define Q6ASM_DAI_TX_RX	0
+#define Q6ASM_DAI_TX	1
+#define Q6ASM_DAI_RX	2
 
 #endif /* __DT_BINDINGS_Q6_ASM_H__ */

@@ -9,6 +9,12 @@
 / {
 	model = "Firefly ROC-RK3308-CC board";
 	compatible = "firefly,roc-rk3308-cc", "rockchip,rk3308";
+
+	aliases {
+		mmc0 = &sdmmc;
+		mmc1 = &emmc;
+	};
+
 	chosen {
 		stdout-path = "serial2:1500000n8";
 	};
@@ -28,14 +34,14 @@
 	leds {
 		compatible = "gpio-leds";
 
-		power {
+		power_led: led-0 {
 			label = "firefly:red:power";
 			linux,default-trigger = "ir-power-click";
 			default-state = "on";
 			gpios = <&gpio0 RK_PA6 GPIO_ACTIVE_HIGH>;
 		};
 
-		user {
+		user_led: led-1 {
 			label = "firefly:blue:user";
 			linux,default-trigger = "ir-user-click";
 			default-state = "off";
@@ -78,8 +84,8 @@
 		regulator-min-microvolt = <1800000>;
 		regulator-max-microvolt = <3300000>;
 		gpios = <&gpio0 RK_PA7 GPIO_ACTIVE_HIGH>;
-		states = <1800000 0x0
-			  3300000 0x1>;
+		states = <1800000 0x0>,
+			 <3300000 0x1>;
 		vin-supply = <&vcc5v0_sys>;
 	};
 
@@ -123,9 +129,7 @@
 };
 
 &emmc {
-	bus-width = <8>;
 	cap-mmc-highspeed;
-	disable-wp;
 	mmc-hs200-1_8v;
 	non-removable;
 	status = "okay";
@@ -171,7 +175,6 @@
 };
 
 &sdmmc {
-	bus-width = <4>;
 	cap-mmc-highspeed;
 	cap-sd-highspeed;
 	card-detect-delay = <300>;

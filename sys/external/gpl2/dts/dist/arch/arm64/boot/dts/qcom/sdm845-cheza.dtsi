@@ -165,7 +165,6 @@
 /delete-node/ &venus_mem;
 /delete-node/ &cdsp_mem;
 /delete-node/ &cdsp_pas;
-/delete-node/ &zap_shader;
 /delete-node/ &gpu_mem;
 
 /* Increase the size from 120 MB to 128 MB */
@@ -549,6 +548,8 @@ edp_brij_i2c: &i2c3 {
 		clocks = <&rpmhcc RPMH_LN_BB_CLK2>;
 		clock-names = "refclk";
 
+		no-hpd;
+
 		ports {
 			#address-cells = <1>;
 			#size-cells = <0>;
@@ -615,6 +616,11 @@ ap_ts_i2c: &i2c14 {
 	};
 };
 
+&ipa {
+	status = "okay";
+	modem-init;
+};
+
 &lpasscc {
 	status = "okay";
 };
@@ -627,12 +633,32 @@ ap_ts_i2c: &i2c14 {
 	status = "okay";
 };
 
+/*
+ * Cheza fw does not properly program the GPU aperture to allow the
+ * GPU to update the SMMU pagetables for context switches.  Work
+ * around this by dropping the "qcom,adreno-smmu" compat string.
+ */
+&adreno_smmu {
+	compatible = "qcom,sdm845-smmu-v2", "qcom,smmu-v2";
+};
+
+&mss_pil {
+	iommus = <&apps_smmu 0x781 0x0>,
+		 <&apps_smmu 0x724 0x3>;
+};
+
+&pm8998_pwrkey {
+	status = "disabled";
+};
+
 &qupv3_id_0 {
 	status = "okay";
+	iommus = <&apps_smmu 0x0 0x3>;
 };
 
 &qupv3_id_1 {
 	status = "okay";
+	iommus = <&apps_smmu 0x6c0 0x3>;
 };
 
 &sdhc_2 {
@@ -649,6 +675,20 @@ ap_ts_i2c: &i2c14 {
 
 &spi0 {
 	status = "okay";
+};
+
+&spi5 {
+	status = "okay";
+
+	tpm@0 {
+		compatible = "google,cr50";
+		reg = <0>;
+		pinctrl-names = "default";
+		pinctrl-0 = <&h1_ap_int_odl>;
+		spi-max-frequency = <800000>;
+		interrupt-parent = <&tlmm>;
+		interrupts = <129 IRQ_TYPE_EDGE_RISING>;
+	};
 };
 
 &spi10 {
@@ -673,10 +713,6 @@ ap_ts_i2c: &i2c14 {
 			google,remote-bus = <0>;
 			#address-cells = <1>;
 			#size-cells = <0>;
-		};
-
-		pdupdate {
-			compatible = "google,cros-ec-pd-update";
 		};
 	};
 };
@@ -1277,5 +1313,11 @@ ap_ts_i2c: &i2c14 {
 			drive-strength = <2>;
 			output-high;
 		};
+	};
+};
+
+&venus {
+	video-firmware {
+		iommus = <&apps_smmu 0x10b2 0x0>;
 	};
 };

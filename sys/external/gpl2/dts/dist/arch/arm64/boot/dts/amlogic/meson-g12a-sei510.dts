@@ -181,7 +181,7 @@
 
 	sound {
 		compatible = "amlogic,axg-sound-card";
-		model = "G12A-SEI510";
+		model = "SEI510";
 		audio-aux-devs = <&tdmout_a>, <&tdmout_b>,
 				 <&tdmin_a>, <&tdmin_b>;
 		audio-routing = "TDMOUT_A IN 0", "FRDDR_A OUT 0",
@@ -269,7 +269,7 @@
 			dai-tdm-slot-tx-mask-3 = <1 1>;
 			mclk-fs = <256>;
 
-			codec@0 {
+			codec {
 				sound-dai = <&tohdmitx TOHDMITX_I2S_IN_B>;
 			};
 		};
@@ -472,7 +472,7 @@
 /* eMMC */
 &sd_emmc_c {
 	status = "okay";
-	pinctrl-0 = <&emmc_pins>, <&emmc_ds_pins>;
+	pinctrl-0 = <&emmc_ctrl_pins>, <&emmc_data_8b_pins>, <&emmc_ds_pins>;
 	pinctrl-1 = <&emmc_clk_gate_pins>;
 	pinctrl-names = "default", "clk-gate";
 

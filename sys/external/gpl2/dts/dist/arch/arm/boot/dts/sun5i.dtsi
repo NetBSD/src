@@ -117,7 +117,7 @@
 		default-pool {
 			compatible = "shared-dma-pool";
 			size = <0x6000000>;
-			alloc-ranges = <0x4a000000 0x6000000>;
+			alloc-ranges = <0x40000000 0x10000000>;
 			reusable;
 			linux,cma-default;
 		};
@@ -185,7 +185,9 @@
 		mbus: dram-controller@1c01000 {
 			compatible = "allwinner,sun5i-a13-mbus";
 			reg = <0x01c01000 0x1000>;
-			clocks = <&ccu 99>;
+			clocks = <&ccu CLK_MBUS>;
+			#address-cells = <1>;
+			#size-cells = <1>;
 			dma-ranges = <0x00000000 0x40000000 0x20000000>;
 			#interconnect-cells = <1>;
 		};
@@ -275,6 +277,7 @@
 			compatible = "allwinner,sun5i-a13-tcon";
 			reg = <0x01c0c000 0x1000>;
 			interrupts = <44>;
+			dmas = <&dma SUN4I_DMA_DEDICATED 14>;
 			resets = <&ccu RST_LCD>;
 			reset-names = "lcd";
 			clocks = <&ccu CLK_AHB_LCD>,
@@ -723,6 +726,18 @@
 			#size-cells = <0>;
 		};
 
+		mali: gpu@1c40000 {
+			compatible = "allwinner,sun4i-a10-mali", "arm,mali-400";
+			reg = <0x01c40000 0x10000>;
+			interrupts = <69>, <70>, <71>, <72>,  <73>;
+			interrupt-names = "gp", "gpmmu", "pp0", "ppmmu0", "pmu";
+			clocks = <&ccu CLK_AHB_GPU>, <&ccu CLK_GPU>;
+			clock-names = "bus", "core";
+			resets = <&ccu RST_GPU>;
+			assigned-clocks = <&ccu CLK_GPU>;
+			assigned-clock-rates = <320000000>;
+		};
+
 		timer@1c60000 {
 			compatible = "allwinner,sun5i-a13-hstimer";
 			reg = <0x01c60000 0x1000>;
@@ -769,9 +784,6 @@
 			interconnects = <&mbus 18>;
 			interconnect-names = "dma-mem";
 			status = "disabled";
-
-			assigned-clocks = <&ccu CLK_DE_BE>;
-			assigned-clock-rates = <300000000>;
 
 			ports {
 				#address-cells = <1>;

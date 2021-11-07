@@ -48,7 +48,8 @@
 		};
 	};
 
-	memory {
+	memory@80000000 {
+		device_type = "memory";
 		reg = <0x80000000 0x20000000>;
 	};
 
@@ -116,6 +117,8 @@
 	ricoh619: pmic@32 {
 		compatible = "ricoh,rc5t619";
 		reg = <0x32>;
+		interrupt-parent = <&gpio5>;
+		interrupts = <11 IRQ_TYPE_EDGE_FALLING>;
 		system-power-controller;
 
 		regulators {
@@ -275,6 +278,12 @@
 };
 
 &uart1 {
+	/* J4, through-hole */
+	status = "okay";
+};
+
+&uart4 {
+	/* TP198, next to J4, SMD pads */
 	status = "okay";
 };
 

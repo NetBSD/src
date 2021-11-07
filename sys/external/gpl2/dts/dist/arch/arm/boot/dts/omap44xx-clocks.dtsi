@@ -770,14 +770,6 @@
 		ti,max-div = <2>;
 	};
 
-	sha2md5_fck: sha2md5_fck@15c8 {
-		#clock-cells = <0>;
-		compatible = "ti,gate-clock";
-		clocks = <&l3_div_ck>;
-		ti,bit-shift = <1>;
-		reg = <0x15c8>;
-	};
-
 	usb_phy_cm_clk32k: usb_phy_cm_clk32k@640 {
 		#clock-cells = <0>;
 		compatible = "ti,gate-clock";
@@ -1279,13 +1271,18 @@
 		#size-cells = <1>;
 		ranges = <0 0x1400 0x200>;
 
-		l4_per_clkctrl: clk@20 {
-			compatible = "ti,clkctrl";
+		l4_per_clkctrl: clock@20 {
+			compatible = "ti,clkctrl-l4-per", "ti,clkctrl";
 			reg = <0x20 0x144>;
 			#clock-cells = <2>;
 		};
-	};
 
+		l4_secure_clkctrl: clock@1a0 {
+			compatible = "ti,clkctrl-l4-secure", "ti,clkctrl";
+			reg = <0x1a0 0x3c>;
+			#clock-cells = <2>;
+		};
+	};
 };
 
 &prm {

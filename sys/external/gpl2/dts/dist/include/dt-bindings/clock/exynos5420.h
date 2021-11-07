@@ -1,4 +1,4 @@
-/*	$NetBSD: exynos5420.h,v 1.1.1.4 2020/01/03 14:33:04 skrll Exp $	*/
+/*	$NetBSD: exynos5420.h,v 1.1.1.5 2021/11/07 16:49:57 jmcneill Exp $	*/
 
 /* SPDX-License-Identifier: GPL-2.0 */
 /*
@@ -232,6 +232,12 @@
 #define CLK_MOUT_USER_MAU_EPLL	659
 #define CLK_MOUT_SCLK_SPLL	660
 #define CLK_MOUT_MX_MSPLL_CCORE_PHY	661
+#define CLK_MOUT_SW_ACLK_G3D	662
+#define CLK_MOUT_APLL		663
+#define CLK_MOUT_MSPLL_CPU	664
+#define CLK_MOUT_KPLL		665
+#define CLK_MOUT_MSPLL_KFC	666
+
 
 /* divider clocks */
 #define CLK_DOUT_PIXEL		768

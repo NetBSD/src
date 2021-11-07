@@ -1,4 +1,4 @@
-/*	$NetBSD: qcom,gcc-sdm660.h,v 1.1.1.1 2019/01/22 14:57:02 jmcneill Exp $	*/
+/*	$NetBSD: qcom,gcc-sdm660.h,v 1.1.1.2 2021/11/07 16:49:59 jmcneill Exp $	*/
 
 /* SPDX-License-Identifier: GPL-2.0 */
 /*
@@ -154,5 +154,6 @@
 #define GCC_USB_20_BCR                  6
 #define GCC_USB_30_BCR			7
 #define GCC_USB_PHY_CFG_AHB2PHY_BCR	8
+#define GCC_MSS_RESTART			9
 
 #endif

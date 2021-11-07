@@ -1,4 +1,4 @@
-/*	$NetBSD: imx7d-pinfunc.h,v 1.1.1.4 2020/01/03 14:33:09 skrll Exp $	*/
+/*	$NetBSD: imx7d-pinfunc.h,v 1.1.1.5 2021/11/07 16:50:06 jmcneill Exp $	*/
 
 /* SPDX-License-Identifier: GPL-2.0-only */
 /*
@@ -594,7 +594,7 @@
 #define MX7D_PAD_UART2_RX_DATA__ECSPI1_SS3                        0x0130 0x03A0 0x0000 0x3 0x0
 #define MX7D_PAD_UART2_RX_DATA__ENET2_1588_EVENT1_IN              0x0130 0x03A0 0x0000 0x4 0x0
 #define MX7D_PAD_UART2_RX_DATA__GPIO4_IO2                         0x0130 0x03A0 0x0000 0x5 0x0
-#define MX7D_PAD_UART2_RX_DATA__ENET2_MDIO                        0x0130 0x03A0 0x0000 0x6 0x0
+#define MX7D_PAD_UART2_RX_DATA__ENET2_MDIO                        0x0130 0x03A0 0x0574 0x6 0x1
 #define MX7D_PAD_UART2_TX_DATA__UART2_DCE_TX                      0x0134 0x03A4 0x0000 0x0 0x0
 #define MX7D_PAD_UART2_TX_DATA__UART2_DTE_RX                      0x0134 0x03A4 0x06FC 0x0 0x3
 #define MX7D_PAD_UART2_TX_DATA__I2C2_SDA                          0x0134 0x03A4 0x05E0 0x1 0x0

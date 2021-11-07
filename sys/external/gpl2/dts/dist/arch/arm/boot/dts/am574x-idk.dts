@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0
 /*
- * Copyright (C) 2017 Texas Instruments Incorporated - http://www.ti.com/
+ * Copyright (C) 2017 Texas Instruments Incorporated - https://www.ti.com/
  */
 
 
@@ -36,7 +36,14 @@
 	pinctrl-2 = <&mmc2_pins_default>;
 };
 
-&mac {
+&emif1 {
 	status = "okay";
-	dual_emac;
+};
+
+&pruss1_mdio {
+	status = "disabled";
+};
+
+&pruss2_mdio {
+	status = "disabled";
 };

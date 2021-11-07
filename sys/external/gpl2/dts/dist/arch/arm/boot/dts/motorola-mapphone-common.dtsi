@@ -113,40 +113,17 @@
 		enable-active-high;
 	};
 
-	gpio_keys {
-		compatible = "gpio-keys";
-
-		volume_down {
-			label = "Volume Down";
-			gpios = <&gpio5 26 GPIO_ACTIVE_LOW>; /* gpio154 */
-			linux,code = <KEY_VOLUMEDOWN>;
-			linux,can-disable;
-			/* Value above 7.95ms for no GPIO hardware debounce */
-			debounce-interval = <10>;
-		};
-
-		slider {
-			label = "Keypad Slide";
-			gpios = <&gpio4 26 GPIO_ACTIVE_HIGH>; /* gpio122 */
-			linux,input-type = <EV_SW>;
-			linux,code = <SW_KEYPAD_SLIDE>;
-			linux,can-disable;
-			/* Value above 7.95ms for no GPIO hardware debounce */
-			debounce-interval = <10>;
-		};
-	};
-
 	soundcard {
 		compatible = "audio-graph-card";
-		label = "Droid 4 Audio";
+		label = "Mapphone Audio";
 
-		simple-graph-card,widgets =
+		widgets =
 			"Speaker", "Earpiece",
 			"Speaker", "Loudspeaker",
 			"Headphone", "Headphone Jack",
 			"Microphone", "Internal Mic";
 
-		simple-graph-card,routing =
+		routing =
 			"Earpiece", "EP",
 			"Loudspeaker", "SPKR",
 			"Headphone Jack", "HSL",
@@ -182,6 +159,37 @@
 		pwm-names = "enable", "direction";
 		direction-duty-cycle-ns = <10000000>;
 	};
+
+	backlight: backlight {
+		compatible = "led-backlight";
+
+		leds = <&backlight_led>;
+		brightness-levels = <31 63 95 127 159 191 223 255>;
+		default-brightness-level = <6>;
+	};
+};
+
+&cpu_thermal {
+	polling-delay = <10000>; /* milliseconds */
+};
+
+&cpu_alert0 {
+        temperature = <80000>; /* millicelsius */
+};
+
+&cpu0 {
+        /*
+	 * Note that the 1.2GiHz mode is enabled for all SoC variants for
+	 * the Motorola Android Linux v3.0.8 based kernel.
+	 */
+        operating-points = <
+	        /* kHz    uV */
+	        300000  1025000
+	        600000  1200000
+	        800000  1313000
+	        1008000 1375000
+		1200000 1375000
+        >;
 };
 
 &dss {
@@ -199,14 +207,18 @@
 		};
 	};
 
-	lcd0: display {
-		compatible = "panel-dsi-cm";
+	lcd0: panel@0 {
+		compatible = "motorola,droid4-panel", "panel-dsi-cm";
+		reg = <0>;
 		label = "lcd0";
 		vddi-supply = <&lcd_regulator>;
 		reset-gpios = <&gpio4 5 GPIO_ACTIVE_HIGH>;	/* gpio101 */
 
+		backlight = <&backlight>;
+
 		width-mm = <50>;
 		height-mm = <89>;
+		rotation = <90>;
 
 		panel-timing {
 			clock-frequency = <0>;		/* Calculated by dsi */
@@ -249,6 +261,13 @@
 	};
 };
 
+/* Battery NVRAM on 1-wire handled by w1_ds250x driver */
+&hdqw1w {
+	pinctrl-0 = <&hdq_pins>;
+	pinctrl-names = "default";
+	ti,mode = "1w";
+};
+
 &i2c1 {
 	tmp105@48 {
 		compatible = "ti,tmp105";
@@ -261,80 +280,6 @@
 		interrupt-names = "irq", "wakeup";
 		wakeup-source;
 	};
-};
-
-&keypad {
-	keypad,num-rows = <8>;
-	keypad,num-columns = <8>;
-	linux,keymap = <
-
-	/* Row 1 */
-	MATRIX_KEY(0, 2, KEY_1)
-	MATRIX_KEY(0, 6, KEY_2)
-	MATRIX_KEY(2, 3, KEY_3)
-	MATRIX_KEY(0, 7, KEY_4)
-	MATRIX_KEY(0, 4, KEY_5)
-	MATRIX_KEY(5, 5, KEY_6)
-	MATRIX_KEY(0, 1, KEY_7)
-	MATRIX_KEY(0, 5, KEY_8)
-	MATRIX_KEY(0, 0, KEY_9)
-	MATRIX_KEY(1, 6, KEY_0)
-
-	/* Row 2 */
-	MATRIX_KEY(3, 4, KEY_APOSTROPHE)
-	MATRIX_KEY(7, 6, KEY_Q)
-	MATRIX_KEY(7, 7, KEY_W)
-	MATRIX_KEY(7, 2, KEY_E)
-	MATRIX_KEY(1, 0, KEY_R)
-	MATRIX_KEY(4, 4, KEY_T)
-	MATRIX_KEY(1, 2, KEY_Y)
-	MATRIX_KEY(6, 7, KEY_U)
-	MATRIX_KEY(2, 2, KEY_I)
-	MATRIX_KEY(5, 6, KEY_O)
-	MATRIX_KEY(3, 7, KEY_P)
-	MATRIX_KEY(6, 5, KEY_BACKSPACE)
-
-	/* Row 3 */
-	MATRIX_KEY(5, 4, KEY_TAB)
-	MATRIX_KEY(5, 7, KEY_A)
-	MATRIX_KEY(2, 7, KEY_S)
-	MATRIX_KEY(7, 0, KEY_D)
-	MATRIX_KEY(2, 6, KEY_F)
-	MATRIX_KEY(6, 2, KEY_G)
-	MATRIX_KEY(6, 6, KEY_H)
-	MATRIX_KEY(1, 4, KEY_J)
-	MATRIX_KEY(3, 1, KEY_K)
-	MATRIX_KEY(2, 1, KEY_L)
-	MATRIX_KEY(4, 6, KEY_ENTER)
-
-	/* Row 4 */
-	MATRIX_KEY(3, 6, KEY_LEFTSHIFT)		/* KEY_CAPSLOCK */
-	MATRIX_KEY(6, 1, KEY_Z)
-	MATRIX_KEY(7, 4, KEY_X)
-	MATRIX_KEY(5, 1, KEY_C)
-	MATRIX_KEY(1, 7, KEY_V)
-	MATRIX_KEY(2, 4, KEY_B)
-	MATRIX_KEY(4, 1, KEY_N)
-	MATRIX_KEY(1, 1, KEY_M)
-	MATRIX_KEY(3, 5, KEY_COMMA)
-	MATRIX_KEY(5, 2, KEY_DOT)
-	MATRIX_KEY(6, 3, KEY_UP)
-	MATRIX_KEY(7, 3, KEY_OK)
-
-	/* Row 5 */
-	MATRIX_KEY(2, 5, KEY_LEFTCTRL)		/* KEY_LEFTSHIFT */
-	MATRIX_KEY(4, 5, KEY_LEFTALT)		/* SYM */
-	MATRIX_KEY(6, 0, KEY_MINUS)
-	MATRIX_KEY(4, 7, KEY_EQUAL)
-	MATRIX_KEY(1, 5, KEY_SPACE)
-	MATRIX_KEY(3, 2, KEY_SLASH)
-	MATRIX_KEY(4, 3, KEY_LEFT)
-	MATRIX_KEY(5, 3, KEY_DOWN)
-	MATRIX_KEY(3, 3, KEY_RIGHT)
-
-	/* Side buttons, KEY_VOLUMEDOWN and KEY_PWER are on CPCAP? */
-	MATRIX_KEY(5, 0, KEY_VOLUMEUP)
-	>;
 };
 
 &mmc1 {
@@ -350,6 +295,8 @@
 };
 
 &mmc3 {
+	pinctrl-names = "default";
+	pinctrl-0 = <&mmc3_pins>;
 	vmmc-supply = <&wl12xx_vmmc>;
 	/* uart2_tx.sdmmc3_dat1 pad as wakeirq */
 	interrupts-extended = <&wakeupgen GIC_SPI 94 IRQ_TYPE_LEVEL_HIGH
@@ -374,35 +321,6 @@
 	};
 };
 
-&i2c1 {
-	led-controller@38 {
-		compatible = "ti,lm3532";
-		#address-cells = <1>;
-		#size-cells = <0>;
-		reg = <0x38>;
-
-		enable-gpios = <&gpio6 12 GPIO_ACTIVE_HIGH>;
-
-		ramp-up-us = <1024>;
-		ramp-down-us = <8193>;
-
-		led@0 {
-			reg = <0>;
-			led-sources = <2>;
-			ti,led-mode = <0>;
-			label = ":backlight";
-			linux,default-trigger = "backlight";
-		};
-
-		led@1 {
-			reg = <1>;
-			led-sources = <1>;
-			ti,led-mode = <0>;
-			label = ":kbd_backlight";
-		};
-	};
-};
-
 &i2c2 {
 	touchscreen@4a {
 		compatible = "atmel,maxtouch";
@@ -410,10 +328,10 @@
 		pinctrl-names = "default";
 		pinctrl-0 = <&touchscreen_pins>;
 
-		reset-gpios = <&gpio6 13 GPIO_ACTIVE_HIGH>; /* gpio173 */
+		reset-gpios = <&gpio6 13 GPIO_ACTIVE_LOW>; /* gpio173 */
 
 		/* gpio_183 with sys_nirq2 pad as wakeup */
-		interrupts-extended = <&gpio6 23 IRQ_TYPE_EDGE_FALLING>,
+		interrupts-extended = <&gpio6 23 IRQ_TYPE_LEVEL_LOW>,
 				      <&omap4_pmx_core 0x160>;
 		interrupt-names = "irq", "wakeup";
 		wakeup-source;
@@ -440,12 +358,50 @@
 		>;
 	};
 
+	hdq_pins: pinmux_hdq_pins {
+		pinctrl-single,pins = <
+		/* 0x4a100120 hdq_sio.hdq_sio aa27 */
+		OMAP4_IOPAD(0x120, PIN_INPUT | MUX_MODE0)
+		>;
+	};
+
 	/* hdmi_cec.hdmi_cec, hdmi_scl.hdmi_scl, hdmi_sda.hdmi_sda */
 	dss_hdmi_pins: pinmux_dss_hdmi_pins {
 		pinctrl-single,pins = <
 		OMAP4_IOPAD(0x09a, PIN_INPUT | MUX_MODE0)
 		OMAP4_IOPAD(0x09c, PIN_INPUT | MUX_MODE0)
 		OMAP4_IOPAD(0x09e, PIN_INPUT | MUX_MODE0)
+		>;
+	};
+
+	/*
+	 * Android uses PIN_OFF_INPUT_PULLDOWN | PIN_INPUT_PULLUP | MUX_MODE3
+	 * for gpio_100, but the internal pull makes wlan flakey on some
+	 * devices. Off mode value should be tested if we have off mode working
+	 * later on.
+	 */
+	mmc3_pins: pinmux_mmc3_pins {
+		pinctrl-single,pins = <
+		/* 0x4a10008e gpmc_wait2.gpio_100 d23 */
+		OMAP4_IOPAD(0x08e, PIN_INPUT | MUX_MODE3)
+
+		/* 0x4a100102 abe_mcbsp1_dx.sdmmc3_dat2 ab25 */
+		OMAP4_IOPAD(0x102, PIN_INPUT_PULLUP | MUX_MODE1)
+
+		/* 0x4a100104 abe_mcbsp1_fsx.sdmmc3_dat3 ac27 */
+		OMAP4_IOPAD(0x104, PIN_INPUT_PULLUP | MUX_MODE1)
+
+		/* 0x4a100118 uart2_cts.sdmmc3_clk ab26 */
+		OMAP4_IOPAD(0x118, PIN_INPUT | MUX_MODE1)
+
+		/* 0x4a10011a uart2_rts.sdmmc3_cmd ab27 */
+		OMAP4_IOPAD(0x11a, PIN_INPUT_PULLUP | MUX_MODE1)
+
+		/* 0x4a10011c uart2_rx.sdmmc3_dat0 aa25 */
+		OMAP4_IOPAD(0x11c, PIN_INPUT_PULLUP | MUX_MODE1)
+
+		/* 0x4a10011e uart2_tx.sdmmc3_dat1 aa26 */
+		OMAP4_IOPAD(0x11e, PIN_INPUT_PULLUP | MUX_MODE1)
 		>;
 	};
 
@@ -650,6 +606,11 @@
 	};
 };
 
+/* RNG is used by secure mode and not accessible */
+&rng_target {
+	status = "disabled";
+};
+
 /* Configure pwm clock source for timers 8 & 9 */
 &timer8 {
 	assigned-clocks = <&abe_clkctrl OMAP4_TIMER8_CLKCTRL 24>;
@@ -662,14 +623,18 @@
 };
 
 /*
- * As uart1 is wired to mdm6600 with rts and cts, we can use the cts pin for
- * uart1 wakeirq.
+ * The uart1 port is wired to mdm6600 with rts and cts. The modem uses gpio_149
+ * for wake-up events for both the USB PHY and the UART. We can use gpio_149
+ * pad as the shared wakeirq for the UART rather than the RX or CTS pad as we
+ * have gpio_149 trigger before the UART transfer starts.
  */
 &uart1 {
 	pinctrl-names = "default";
 	pinctrl-0 = <&uart1_pins>;
 	interrupts-extended = <&wakeupgen GIC_SPI 72 IRQ_TYPE_LEVEL_HIGH
-			       &omap4_pmx_core 0xfc>;
+			       &omap4_pmx_core 0x110>;
+	uart-has-rtscts;
+	current-speed = <115200>;
 };
 
 &uart3 {
@@ -728,20 +693,6 @@
 				  "0", "1", "0",
 				  "0", "0", "-1";
 
-	};
-
-	lis3dh: accelerometer@18 {
-		compatible = "st,lis3dh-accel";
-		reg = <0x18>;
-
-		vdd-supply = <&vhvio>;
-
-		interrupt-parent = <&gpio2>;
-		interrupts = <2 IRQ_TYPE_EDGE_BOTH>; /* gpio34 */
-
-		rotation-matrix = "0", "-1", "0",
-				  "1", "0", "0",
-				  "0", "0", "1";
 	};
 };
 

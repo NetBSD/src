@@ -1,4 +1,4 @@
-/*	$NetBSD: amlogic,meson-gxbb-reset.h,v 1.1.1.2 2020/01/03 14:33:06 skrll Exp $	*/
+/*	$NetBSD: amlogic,meson-gxbb-reset.h,v 1.1.1.3 2021/11/07 16:49:57 jmcneill Exp $	*/
 
 /* SPDX-License-Identifier: GPL-2.0 OR BSD-3-Clause */
 /*
@@ -71,7 +71,7 @@
 #define RESET_SYS_CPU_L2		58
 #define RESET_SYS_CPU_P			59
 #define RESET_SYS_CPU_MBIST		60
-/*					61	*/
+#define RESET_ACODEC			61
 /*					62	*/
 /*					63	*/
 /*	RESET2					*/

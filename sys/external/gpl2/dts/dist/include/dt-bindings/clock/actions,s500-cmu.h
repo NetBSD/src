@@ -1,4 +1,4 @@
-/*	$NetBSD: actions,s500-cmu.h,v 1.1.1.1 2019/05/25 11:29:13 jmcneill Exp $	*/
+/*	$NetBSD: actions,s500-cmu.h,v 1.1.1.2 2021/11/07 16:49:59 jmcneill Exp $	*/
 
 /* SPDX-License-Identifier: GPL-2.0+ */
 /*
@@ -74,7 +74,14 @@
 #define CLK_NAND		52
 #define CLK_ECC			53
 #define CLK_RMII_REF		54
+#define CLK_GPIO		55
 
-#define CLK_NR_CLKS	       (CLK_RMII_REF + 1)
+/* additional clocks */
+#define CLK_APB			56
+#define CLK_DMAC		57
+#define CLK_NIC			58
+#define CLK_ETHERNET		59
+
+#define CLK_NR_CLKS		(CLK_ETHERNET + 1)
 
 #endif /* __DT_BINDINGS_CLOCK_S500_CMU_H */

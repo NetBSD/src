@@ -1,4 +1,4 @@
-/*	$NetBSD: amlogic,meson8b-reset.h,v 1.1.1.2 2020/01/03 14:33:06 skrll Exp $	*/
+/*	$NetBSD: amlogic,meson8b-reset.h,v 1.1.1.3 2021/11/07 16:49:57 jmcneill Exp $	*/
 
 /* SPDX-License-Identifier: GPL-2.0 OR BSD-3-Clause */
 /*
@@ -48,9 +48,9 @@
 #define RESET_VD_RMEM			64
 #define RESET_AUDIN			65
 #define RESET_DBLK			66
-#define RESET_PIC_DC			66
-#define RESET_PSC			66
-#define RESET_NAND			66
+#define RESET_PIC_DC			67
+#define RESET_PSC			68
+#define RESET_NAND			69
 #define RESET_GE2D			70
 #define RESET_PARSER_REG		71
 #define RESET_PARSER_FETCH		72

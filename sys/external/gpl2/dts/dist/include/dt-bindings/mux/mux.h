@@ -1,11 +1,11 @@
-/*	$NetBSD: mux.h,v 1.1.1.2 2017/11/30 19:40:51 jmcneill Exp $	*/
+/*	$NetBSD: mux.h,v 1.1.1.3 2021/11/07 16:49:56 jmcneill Exp $	*/
 
 /* SPDX-License-Identifier: GPL-2.0 */
 /*
  * This header provides constants for most Multiplexer bindings.
  *
  * Most Multiplexer bindings specify an idle state. In most cases, the
- * the multiplexer can be left as is when idle, and in some cases it can
+ * multiplexer can be left as is when idle, and in some cases it can
  * disconnect the input/output and leave the multiplexer in a high
  * impedance state.
  */

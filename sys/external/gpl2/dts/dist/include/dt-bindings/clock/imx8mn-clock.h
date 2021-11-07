@@ -1,4 +1,4 @@
-/*	$NetBSD: imx8mn-clock.h,v 1.1.1.1 2020/01/03 14:33:05 skrll Exp $	*/
+/*	$NetBSD: imx8mn-clock.h,v 1.1.1.2 2021/11/07 16:49:59 jmcneill Exp $	*/
 
 /* SPDX-License-Identifier: GPL-2.0 */
 /*
@@ -124,8 +124,8 @@
 #define IMX8MN_CLK_I2C1				105
 #define IMX8MN_CLK_I2C2				106
 #define IMX8MN_CLK_I2C3				107
-#define IMX8MN_CLK_I2C4				118
-#define IMX8MN_CLK_UART1			119
+#define IMX8MN_CLK_I2C4				108
+#define IMX8MN_CLK_UART1			109
 #define IMX8MN_CLK_UART2			110
 #define IMX8MN_CLK_UART3			111
 #define IMX8MN_CLK_UART4			112
@@ -230,6 +230,21 @@
 #define IMX8MN_SYS_PLL2_333M_CG			209
 #define IMX8MN_SYS_PLL2_500M_CG			210
 
-#define IMX8MN_CLK_END				211
+#define IMX8MN_CLK_SNVS_ROOT			211
+#define IMX8MN_CLK_GPU_CORE			212
+#define IMX8MN_CLK_GPU_SHADER			213
+
+#define IMX8MN_CLK_A53_CORE			214
+
+#define IMX8MN_CLK_CLKOUT1_SEL			215
+#define IMX8MN_CLK_CLKOUT1_DIV			216
+#define IMX8MN_CLK_CLKOUT1			217
+#define IMX8MN_CLK_CLKOUT2_SEL			218
+#define IMX8MN_CLK_CLKOUT2_DIV			219
+#define IMX8MN_CLK_CLKOUT2			220
+
+#define IMX8MN_CLK_M7_CORE			221
+
+#define IMX8MN_CLK_END				222
 
 #endif

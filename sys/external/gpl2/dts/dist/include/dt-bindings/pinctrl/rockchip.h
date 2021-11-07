@@ -1,4 +1,4 @@
-/*	$NetBSD: rockchip.h,v 1.1.1.2 2020/01/03 14:33:03 skrll Exp $	*/
+/*	$NetBSD: rockchip.h,v 1.1.1.3 2021/11/07 16:49:56 jmcneill Exp $	*/
 
 /* SPDX-License-Identifier: GPL-2.0-or-later */
 /*
@@ -10,13 +10,6 @@
 
 #ifndef __DT_BINDINGS_ROCKCHIP_PINCTRL_H__
 #define __DT_BINDINGS_ROCKCHIP_PINCTRL_H__
-
-#define RK_GPIO0	0
-#define RK_GPIO1	1
-#define RK_GPIO2	2
-#define RK_GPIO3	3
-#define RK_GPIO4	4
-#define RK_GPIO6	6
 
 #define RK_PA0		0
 #define RK_PA1		1
@@ -52,9 +45,5 @@
 #define RK_PD7		31
 
 #define RK_FUNC_GPIO	0
-#define RK_FUNC_1	1 /* deprecated */
-#define RK_FUNC_2	2 /* deprecated */
-#define RK_FUNC_3	3 /* deprecated */
-#define RK_FUNC_4	4 /* deprecated */
 
 #endif

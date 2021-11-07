@@ -1,4 +1,4 @@
-/*	$NetBSD: qcom,sdm845-pdc.h,v 1.1.1.1 2019/01/22 14:57:01 jmcneill Exp $	*/
+/*	$NetBSD: qcom,sdm845-pdc.h,v 1.1.1.2 2021/11/07 16:49:57 jmcneill Exp $	*/
 
 /* SPDX-License-Identifier: GPL-2.0 */
 /*
@@ -18,5 +18,7 @@
 #define PDC_DISPLAY_SYNC_RESET	7
 #define PDC_COMPUTE_SYNC_RESET	8
 #define PDC_MODEM_SYNC_RESET	9
+#define PDC_WLAN_RF_SYNC_RESET	10
+#define PDC_WPSS_SYNC_RESET	11
 
 #endif
