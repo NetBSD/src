@@ -1,7 +1,7 @@
-/* $NetBSD: meson8b-odroidc1.dts,v 1.5 2020/03/05 14:24:46 tnn Exp $ */
+/* $NetBSD: meson8b-odroidc1.dts,v 1.6 2021/11/07 17:11:43 jmcneill Exp $ */
 
 /*-
- * Copyright (c) 2019 Jared McNeill <jmcneill@invisible.ca>
+ * Copyright (c) 2019,2021 Jared McNeill <jmcneill@invisible.ca>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -34,11 +34,6 @@
 };
 
 &sdhc {
-	status = "okay";
-
-	pinctrl-0 = <&sdxc_c_pins>;
-	pinctrl-names = "default";
-
 	/* eMMC card */
 	emmc_card_slot: slot@2 {
 		compatible = "mmc-slot";
@@ -51,14 +46,4 @@
 		cap-sd-highspeed;
 		disable-wp;
 	};
-};
-
-&ethmac {
-	/delete-property/ snps,reset-gpio;
-	/delete-property/ snps,reset-active-low;
-	/delete-property/ snps,reset-delays-us;
-};
-
-&cpu0 {
-	/delete-property/ cpu-supply;
 };
