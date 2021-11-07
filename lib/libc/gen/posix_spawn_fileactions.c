@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: posix_spawn_fileactions.c,v 1.4 2014/02/02 14:54:39 martin Exp $");
+__RCSID("$NetBSD: posix_spawn_fileactions.c,v 1.5 2021/11/07 14:34:30 christos Exp $");
 
 #include "namespace.h"
 
@@ -166,6 +166,50 @@ posix_spawn_file_actions_addclose(posix_spawn_file_actions_t *fa,
 		return error;
 
 	fa->fae[i].fae_action = FAE_CLOSE;
+	fa->fae[i].fae_fildes = fildes;
+	fa->len++;
+
+	return 0;
+}
+
+int
+posix_spawn_file_actions_addchdir(posix_spawn_file_actions_t * __restrict fa,
+		const char * __restrict path)
+{
+	char *dirpath;
+	unsigned int i;
+	int error;
+
+	error = posix_spawn_file_actions_getentry(fa, &i);
+	if (error)
+		return error;
+
+	dirpath = strdup(path);
+	if (dirpath == NULL)
+		return ENOMEM;
+
+	fa->fae[i].fae_action = FAE_CHDIR;
+	fa->fae[i].fae_chdir_path = dirpath;
+	fa->fae[i].fae_fildes = -1;
+	fa->len++;
+
+	return 0;
+}
+
+int
+posix_spawn_file_actions_addfchdir(posix_spawn_file_actions_t *fa, int fildes)
+{
+	unsigned int i;
+	int error;
+
+	if (fildes < 0)
+		return EBADF;
+
+	error = posix_spawn_file_actions_getentry(fa, &i);
+	if (error)
+		return error;
+
+	fa->fae[i].fae_action = FAE_FCHDIR;
 	fa->fae[i].fae_fildes = fildes;
 	fa->len++;
 
