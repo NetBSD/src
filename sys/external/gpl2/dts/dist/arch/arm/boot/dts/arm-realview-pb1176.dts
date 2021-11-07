@@ -166,7 +166,7 @@
 		reg = <0x3b000000 0x20000>;
 		interrupt-parent = <&intc_fpga1176>;
 		interrupts = <0 11 IRQ_TYPE_LEVEL_HIGH>;
-		port1-otg;
+		dr_mode = "peripheral";
 	};
 
 	bridge {
@@ -323,7 +323,7 @@
 			      <0x10120000 0x100>;
 		};
 
-		L2: l2-cache {
+		L2: cache-controller {
 			compatible = "arm,l220-cache";
 			reg = <0x10110000 0x1000>;
 			interrupt-parent = <&intc_dc1176>;

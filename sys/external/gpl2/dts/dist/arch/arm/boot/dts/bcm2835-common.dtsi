@@ -70,6 +70,12 @@
 			system-power-controller;
 		};
 
+		rng@7e104000 {
+			compatible = "brcm,bcm2835-rng";
+			reg = <0x7e104000 0x10>;
+			interrupts = <2 29>;
+		};
+
 		pixelvalve@7e206000 {
 			compatible = "brcm,bcm2835-pixelvalve0";
 			reg = <0x7e206000 0x100>;
@@ -100,6 +106,14 @@
 			status = "okay";
 		};
 
+		vec: vec@7e806000 {
+			compatible = "brcm,bcm2835-vec";
+			reg = <0x7e806000 0x1000>;
+			clocks = <&clocks BCM2835_CLOCK_VEC>;
+			interrupts = <2 27>;
+			status = "disabled";
+		};
+
 		pixelvalve@7e807000 {
 			compatible = "brcm,bcm2835-pixelvalve2";
 			reg = <0x7e807000 0x100>;
@@ -124,7 +138,6 @@
 			compatible = "brcm,bcm2835-v3d";
 			reg = <0x7ec00000 0x1000>;
 			interrupts = <1 10>;
-			power-domains = <&pm BCM2835_POWER_DOMAIN_GRAFX_V3D>;
 		};
 
 		vc4: gpu {

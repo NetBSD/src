@@ -1,9 +1,10 @@
 // SPDX-License-Identifier: GPL-2.0
 /*
- * Copyright (C) 2019 Texas Instruments Incorporated - http://www.ti.com/
+ * Copyright (C) 2019 Texas Instruments Incorporated - https://www.ti.com/
  */
 
 #include "dra72x.dtsi"
+#include "am57-pruss.dtsi"
 
 / {
 	compatible = "ti,am5718", "ti,dra7";
@@ -16,14 +17,10 @@
  * VCP1, VCP2
  * MLB
  * ISS
- * USB3, USB4
+ * USB3
  */
 
 &usb3_tm {
-	status = "disabled";
-};
-
-&usb4_tm {
 	status = "disabled";
 };
 

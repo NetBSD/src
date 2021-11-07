@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright (C) 2012 Texas Instruments Incorporated - http://www.ti.com/
+ * Copyright (C) 2012 Texas Instruments Incorporated - https://www.ti.com/
  */
 
 /*
@@ -183,36 +183,16 @@
 	};
 
 	panel {
-		compatible = "ti,tilcdc,panel";
+		compatible = "newhaven,nhd-4.3-480272ef-atxl";
+
 		pinctrl-names = "default", "sleep";
 		pinctrl-0 = <&lcd_pins_default>;
 		pinctrl-1 = <&lcd_pins_sleep>;
 		backlight = <&lcd_bl>;
-		status = "okay";
-		panel-info {
-			ac-bias		= <255>;
-			ac-bias-intrpt	= <0>;
-			dma-burst-sz	= <16>;
-			bpp		= <32>;
-			fdd		= <0x80>;
-			sync-edge	= <0>;
-			sync-ctrl	= <1>;
-			raster-order	= <0>;
-			fifo-th		= <0>;
-		};
-		display-timings {
-			480x272 {
-				hactive		= <480>;
-				vactive		= <272>;
-				hback-porch	= <43>;
-				hfront-porch	= <8>;
-				hsync-len	= <4>;
-				vback-porch	= <12>;
-				vfront-porch	= <4>;
-				vsync-len	= <10>;
-				clock-frequency = <9000000>;
-				hsync-active	= <0>;
-				vsync-active	= <0>;
+
+		port {
+			panel_0: endpoint@0 {
+				remote-endpoint = <&lcdc_0>;
 			};
 		};
 	};
@@ -530,7 +510,7 @@
 &epwmss2 {
 	status = "okay";
 
-	ecap2: ecap@100 {
+	ecap2: pwm@100 {
 		status = "okay";
 		pinctrl-names = "default";
 		pinctrl-0 = <&ecap2_pins>;
@@ -616,19 +596,17 @@
 	};
 };
 
-&mac {
+&mac_sw {
 	pinctrl-names = "default", "sleep";
 	pinctrl-0 = <&cpsw_default>;
 	pinctrl-1 = <&cpsw_sleep>;
-	dual_emac = <1>;
 	status = "okay";
 };
 
-&davinci_mdio {
+&davinci_mdio_sw {
 	pinctrl-names = "default", "sleep";
 	pinctrl-0 = <&davinci_mdio_default>;
 	pinctrl-1 = <&davinci_mdio_sleep>;
-	status = "okay";
 
 	ethphy0: ethernet-phy@0 {
 		reg = <0>;
@@ -639,16 +617,16 @@
 	};
 };
 
-&cpsw_emac0 {
+&cpsw_port1 {
 	phy-handle = <&ethphy0>;
 	phy-mode = "rgmii-id";
-	dual_emac_res_vlan = <1>;
+	ti,dual-emac-pvid = <1>;
 };
 
-&cpsw_emac1 {
+&cpsw_port2 {
 	phy-handle = <&ethphy1>;
 	phy-mode = "rgmii-id";
-	dual_emac_res_vlan = <2>;
+	ti,dual-emac-pvid = <2>;
 };
 
 &mmc1 {
@@ -668,14 +646,14 @@
 	status = "okay";
 };
 
-&gpio0 {
+&gpio0_target {
 	ti,no-reset-on-init;
 };
 
 &mmc2 {
 	status = "okay";
 	vmmc-supply = <&wl12xx_vmmc>;
-	ti,non-removable;
+	non-removable;
 	bus-width = <4>;
 	cap-power-off-card;
 	keep-power-in-suspend;
@@ -725,9 +703,19 @@
 	status = "okay";
 
 	blue-and-red-wiring = "crossed";
+
+	port {
+		lcdc_0: endpoint@0 {
+			remote-endpoint = <&panel_0>;
+		};
+	};
 };
 
 &rtc {
 	clocks = <&clk_32768_ck>, <&clk_24mhz_clkctrl AM3_CLK_24MHZ_CLKDIV32K_CLKCTRL 0>;
 	clock-names = "ext-clk", "int-clk";
+};
+
+&pruss_tm {
+	status = "okay";
 };

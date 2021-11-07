@@ -1,7 +1,7 @@
 /*
  * Device Tree Source for OMAP34xx/OMAP35xx SoC
  *
- * Copyright (C) 2013 Texas Instruments Incorporated - http://www.ti.com/
+ * Copyright (C) 2013 Texas Instruments Incorporated - https://www.ti.com/
  *
  * This file is licensed under the terms of the GNU General Public License
  * version 2.  This program is licensed "as is" without any warranty of any
@@ -20,10 +20,10 @@
 			operating-points-v2 = <&cpu0_opp_table>;
 
 			clock-latency = <300000>; /* From legacy driver */
+			#cooling-cells = <2>;
 		};
 	};
 
-	/* see Documentation/devicetree/bindings/opp/opp.txt */
 	cpu0_opp_table: opp-table {
 		compatible = "operating-points-v2-ti-cpu";
 		syscon = <&scm_conf>;
@@ -182,7 +182,7 @@
 };
 
 &ssi {
-	status = "ok";
+	status = "okay";
 
 	clocks = <&ssi_ssr_fck>,
 		 <&ssi_sst_fck>,
