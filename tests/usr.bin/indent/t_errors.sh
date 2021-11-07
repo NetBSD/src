@@ -1,5 +1,5 @@
 #! /bin/sh
-# $NetBSD: t_errors.sh,v 1.18 2021/11/07 10:42:58 rillig Exp $
+# $NetBSD: t_errors.sh,v 1.19 2021/11/07 15:54:00 rillig Exp $
 #
 # Copyright (c) 2021 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -141,6 +141,33 @@ option_cli_trailing_garbage_body()
 	expect_error \
 	    'indent: Command line: argument "3garbage" to option "-cli" must be numeric' \
 	    -cli3garbage
+}
+
+atf_test_case 'option_npro_trailing_garbage'
+option_npro_trailing_garbage_body()
+{
+	# TODO: reject -npro-garbage, only allow -npro without trailing garbage.
+
+	atf_check \
+	    "$indent" -npro-garbage
+}
+
+atf_test_case 'option_st_trailing_garbage'
+option_st_trailing_garbage_body()
+{
+	# TODO: reject -stdio, only allow -st without trailing garbage.
+
+	atf_check \
+	    "$indent" -stdio
+}
+
+atf_test_case 'option_version_trailing_garbage'
+option_version_trailing_garbage_body()
+{
+	# TODO: reject --version-dump, only allow --version without trailing garbage.
+
+	atf_check -o 'inline:NetBSD indent 2.1'"$nl" \
+	    "$indent" --version-dump
 }
 
 atf_test_case 'option_buffer_overflow'
@@ -489,6 +516,9 @@ atf_init_test_cases()
 	atf_add_test_case 'option_tabsize_very_large'
 	atf_add_test_case 'option_int_trailing_garbage'
 	atf_add_test_case 'option_cli_trailing_garbage'
+	atf_add_test_case 'option_npro_trailing_garbage'
+	atf_add_test_case 'option_st_trailing_garbage'
+	atf_add_test_case 'option_version_trailing_garbage'
 	atf_add_test_case 'option_indent_size_zero'
 	atf_add_test_case 'unterminated_comment_wrap'
 	atf_add_test_case 'unterminated_comment_nowrap'
