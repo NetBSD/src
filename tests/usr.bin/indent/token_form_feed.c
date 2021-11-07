@@ -1,4 +1,4 @@
-/* $NetBSD: token_form_feed.c,v 1.2 2021/11/07 18:38:34 rillig Exp $ */
+/* $NetBSD: token_form_feed.c,v 1.3 2021/11/07 18:49:02 rillig Exp $ */
 /* $FreeBSD$ */
 
 /*
@@ -18,4 +18,29 @@ void function_1(void);
 /* $ XXX: Why 2 empty lines? */
 
 void function_2(void);
+#indent end
+
+
+/*
+ * Test form feed after 'if (expr)', which is handled in search_stmt.
+ */
+#indent input
+void function(void)
+{
+	if (expr)
+	 /* <-- form feed */
+	{
+	}
+}
+#indent end
+
+#indent run
+void
+function(void)
+{
+	if (expr) {
+		/* $ XXX: The form feed has disappeared. */
+		/* <-- form feed */
+	}
+}
 #indent end
