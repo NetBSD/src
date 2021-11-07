@@ -203,3 +203,9 @@ along with GCC; see the file COPYING3.  If not see
   do {									\
     netbsd_patch_builtins ();						\
   } while(0)
+
+#if defined(HAVE_LD_STATIC_DYNAMIC)
+#undef LIBTSAN_EARLY_SPEC
+#define LIBTSAN_EARLY_SPEC "%{static-libtsan:" LD_STATIC_OPTION "}"	\
+  " -ltsan %{static-libtsan:" LD_DYNAMIC_OPTION "} -lpthread"
+#endif
