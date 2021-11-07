@@ -1,4 +1,4 @@
-/* $NetBSD: token_ident.c,v 1.1 2021/10/18 18:10:20 rillig Exp $ */
+/* $NetBSD: token_ident.c,v 1.2 2021/11/07 19:25:26 rillig Exp $ */
 /* $FreeBSD$ */
 
 /*
@@ -61,4 +61,19 @@ t(void)
 	DO_NOTHING;
 	x._y = 5;
 }
+#indent end
+
+
+/*
+ * Test identifiers containing '$', which some compilers support as an
+ * extension to the C standard.
+ */
+#indent input
+int $		= jQuery;			// just kidding
+const char SYS$LOGIN[]="$HOME";
+#indent end
+
+#indent run
+int		$ = jQuery;	// just kidding
+const char	SYS$LOGIN[] = "$HOME";
 #indent end
