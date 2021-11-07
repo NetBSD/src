@@ -1,4 +1,4 @@
-/*	$NetBSD: fmt_decl.c,v 1.12 2021/10/31 19:20:53 rillig Exp $	*/
+/*	$NetBSD: fmt_decl.c,v 1.13 2021/11/07 07:45:00 rillig Exp $	*/
 /* $FreeBSD: head/usr.bin/indent/tests/declarations.0 334478 2018-06-01 09:41:15Z pstef $ */
 
 /* See FreeBSD r303570 */
@@ -59,30 +59,30 @@ typedef struct Complex {
 
 
 /*
- * As of 2021-10-31, indent parses the following function definition as these
+ * As of 2021-11-07, indent parses the following function definition as these
  * tokens:
  *
- * line 1: type_at_paren_level_0 type "void"
+ * line 1: type_outside_parentheses "void"
  * line 1: newline "\n"
  * line 2: funcname "t1"
  * line 2: newline "\n"		repeated, see search_stmt
  * line 3: funcname "t1"	XXX: wrong line_no
  * line 3: lparen_or_lbracket "("
- * line 3: ident type "char"
+ * line 3: type_in_parentheses "char"
  * line 3: unary_op "*"
- * line 3: ident "a"
+ * line 3: word "a"
  * line 3: comma ","
- * line 3: ident type "int"
- * line 3: ident "b"
+ * line 3: type_in_parentheses "int"
+ * line 3: word "b"
  * line 3: comma ","
  * line 3: newline "\n"
- * line 4: ident type "void"
+ * line 4: type_in_parentheses "void"
  * line 4: lparen_or_lbracket "("
  * line 4: unary_op "*"
- * line 4: ident "fn"
+ * line 4: word "fn"
  * line 4: rparen_or_rbracket ")"
  * line 4: lparen_or_lbracket "("
- * line 4: ident type "void"
+ * line 4: type_in_parentheses "void"
  * line 4: rparen_or_rbracket ")"
  * line 4: rparen_or_rbracket ")"
  * line 4: newline "\n"
