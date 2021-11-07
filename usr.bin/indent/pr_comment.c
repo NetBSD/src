@@ -1,4 +1,4 @@
-/*	$NetBSD: pr_comment.c,v 1.105 2021/11/07 10:26:43 rillig Exp $	*/
+/*	$NetBSD: pr_comment.c,v 1.106 2021/11/07 10:31:12 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)pr_comment.c	8.1 (Berkeley) 6/6/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: pr_comment.c,v 1.105 2021/11/07 10:26:43 rillig Exp $");
+__RCSID("$NetBSD: pr_comment.c,v 1.106 2021/11/07 10:31:12 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/pr_comment.c 334927 2018-06-10 16:44:18Z pstef $");
 #endif
@@ -351,17 +351,11 @@ copy_comment_nowrap(void)
 	    continue;
 	}
 
-	if (*inp.s == '*') {
-	    inp_skip();
-	    if (*inp.s == '/' && token.e[-1] == '*') {
-		inp_skip();
-		com_add_char('*');
-		com_add_char('/');
-		goto finish;
-	    } else		/* handle isolated '*' */
-		com_add_char('*');
-	} else
+	com_add_char(inp_next());
+	if (com.e[-1] == '*' && *inp.s == '/' && token.e[-1] == '*') {
 	    com_add_char(inp_next());
+	    goto finish;
+	}
     }
 
 finish:
