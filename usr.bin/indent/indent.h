@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.h,v 1.84 2021/11/07 14:00:35 rillig Exp $	*/
+/*	$NetBSD: indent.h,v 1.85 2021/11/07 15:18:25 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-FreeBSD
@@ -315,7 +315,8 @@ extern struct parser_state {
     int ind_level_follow;	/* the level to which ind_level should be set
 				 * after the current line is printed */
 
-    int decl_nest;		/* current nesting level for structure or init */
+    int decl_level;		/* current nesting level for a structure
+				 * declaration or an initializer */
     bool decl_on_line;		/* whether this line of code has part of a
 				 * declaration on it */
     bool in_decl;		/* whether we are in a declaration stmt. The

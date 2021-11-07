@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.c,v 1.214 2021/11/07 14:00:35 rillig Exp $	*/
+/*	$NetBSD: indent.c,v 1.215 2021/11/07 15:18:25 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)indent.c	5.17 (Berkeley) 6/7/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: indent.c,v 1.214 2021/11/07 14:00:35 rillig Exp $");
+__RCSID("$NetBSD: indent.c,v 1.215 2021/11/07 15:18:25 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/indent.c 340138 2018-11-04 19:24:49Z oshogbo $");
 #endif
@@ -920,7 +920,7 @@ static void
 process_semicolon(bool *seen_case, int *quest_level, int decl_ind,
     bool tabs_to_var, bool *spaced_expr, stmt_head hd, bool *force_nl)
 {
-    if (ps.decl_nest == 0)
+    if (ps.decl_level == 0)
 	ps.init_or_struct = false;
     *seen_case = false;		/* these will only need resetting in an error */
     *quest_level = 0;
@@ -939,7 +939,7 @@ process_semicolon(bool *seen_case, int *quest_level, int decl_ind,
 	ps.decl_indent_done = true;
     }
 
-    ps.in_decl = ps.decl_nest > 0;	/* if we were in a first level
+    ps.in_decl = ps.decl_level > 0;	/* if we were in a first level
 					 * structure declaration, we aren't
 					 * anymore */
 
@@ -1011,11 +1011,11 @@ process_lbrace(bool *force_nl, bool *spaced_expr, stmt_head hd,
     if (code.s == code.e)
 	ps.ind_stmt = false;	/* don't indent the '{' itself */
     if (ps.in_decl && ps.init_or_struct) {
-	di_stack[ps.decl_nest] = *decl_ind;
-	if (++ps.decl_nest == di_stack_cap) {
+	di_stack[ps.decl_level] = *decl_ind;
+	if (++ps.decl_level == di_stack_cap) {
 	    diag(0, "Reached internal limit of %d struct levels",
 		di_stack_cap);
-	    ps.decl_nest--;
+	    ps.decl_level--;
 	}
     } else {
 	ps.decl_on_line = false;	/* we can't be in the middle of a
@@ -1063,9 +1063,9 @@ process_rbrace(bool *spaced_expr, int *decl_ind, const int *di_stack)
     ps.want_blank = true;
     ps.in_stmt = ps.ind_stmt = false;
 
-    if (ps.decl_nest > 0) { /* we are in multi-level structure declaration */
-	*decl_ind = di_stack[--ps.decl_nest];
-	if (ps.decl_nest == 0 && !ps.in_parameter_declaration) {
+    if (ps.decl_level > 0) { /* we are in multi-level structure declaration */
+	*decl_ind = di_stack[--ps.decl_level];
+	if (ps.decl_level == 0 && !ps.in_parameter_declaration) {
 	    ps.just_saw_decl = 2;
 	    *decl_ind = ps.ind_level == 0
 		? opt.decl_indent : opt.local_decl_indent;
@@ -1079,7 +1079,7 @@ process_rbrace(bool *spaced_expr, int *decl_ind, const int *di_stack)
 	&& ps.s_sym[ps.tos] == psym_if_expr_stmt
 	&& ps.s_ind_level[ps.tos] >= ps.ind_level;
 
-    if (ps.tos <= 1 && opt.blanklines_after_procs && ps.decl_nest <= 0)
+    if (ps.tos <= 1 && opt.blanklines_after_procs && ps.decl_level <= 0)
 	blank_line_after = true;
 }
 
@@ -1130,20 +1130,20 @@ process_type(int *decl_ind, bool *tabs_to_var)
     }
 
     if (ps.in_parameter_declaration && opt.indent_parameters &&
-	ps.decl_nest == 0) {
+	    ps.decl_level == 0) {
 	ps.ind_level = ps.ind_level_follow = 1;
 	ps.ind_stmt = false;
     }
 
     ps.init_or_struct = /* maybe */ true;
     ps.in_decl = ps.decl_on_line = ps.prev_token != lsym_typedef;
-    if (ps.decl_nest <= 0)
+    if (ps.decl_level <= 0)
 	ps.just_saw_decl = 2;
 
     blank_line_before = false;
 
     int len = (int)buf_len(&token) + 1;
-    int ind = ps.ind_level == 0 || ps.decl_nest > 0
+    int ind = ps.ind_level == 0 || ps.decl_level > 0
 	? opt.decl_indent	/* global variable or local member */
 	: opt.local_decl_indent;	/* local variable */
     *decl_ind = ind > 0 ? ind : len;
@@ -1387,7 +1387,7 @@ main_loop(void)
     bool seen_case = false;	/* set to true when we see a 'case', so we
 				 * know what to do with the following colon */
 
-    di_stack[ps.decl_nest = 0] = 0;
+    di_stack[ps.decl_level = 0] = 0;
 
     for (;;) {			/* loop until we reach eof */
 	lexer_symbol lsym = lexi();
