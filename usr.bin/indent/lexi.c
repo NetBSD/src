@@ -1,4 +1,4 @@
-/*	$NetBSD: lexi.c,v 1.133 2021/11/07 07:06:00 rillig Exp $	*/
+/*	$NetBSD: lexi.c,v 1.134 2021/11/07 07:35:06 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)lexi.c	8.1 (Berkeley) 6/6/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: lexi.c,v 1.133 2021/11/07 07:06:00 rillig Exp $");
+__RCSID("$NetBSD: lexi.c,v 1.134 2021/11/07 07:35:06 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/lexi.c 337862 2018-08-15 18:19:45Z pstef $");
 #endif
@@ -70,12 +70,12 @@ static const struct keyword {
     {"_Imaginary", lsym_type},
     {"auto", lsym_storage_class},
     {"bool", lsym_type},
-    {"break", lsym_ident},
+    {"break", lsym_word},
     {"case", lsym_case_label},
     {"char", lsym_type},
     {"complex", lsym_type},
     {"const", lsym_type},
-    {"continue", lsym_ident},
+    {"continue", lsym_word},
     {"default", lsym_case_label},
     {"do", lsym_do},
     {"double", lsym_type},
@@ -84,15 +84,15 @@ static const struct keyword {
     {"extern", lsym_storage_class},
     {"float", lsym_type},
     {"for", lsym_for},
-    {"goto", lsym_ident},
+    {"goto", lsym_word},
     {"if", lsym_if},
     {"imaginary", lsym_type},
-    {"inline", lsym_ident},
+    {"inline", lsym_word},
     {"int", lsym_type},
     {"long", lsym_type},
     {"offsetof", lsym_offsetof},
     {"register", lsym_storage_class},
-    {"restrict", lsym_ident},
+    {"restrict", lsym_word},
     {"return", lsym_return},
     {"short", lsym_type},
     {"signed", lsym_type},
@@ -239,12 +239,13 @@ lsym_name(lexer_symbol sym)
 	"typedef",
 	"storage_class",
 	"type_at_paren_level_0",
+	"type_in_parentheses",
 	"tag",
 	"case_label",
 	"string_prefix",
 	"sizeof",
 	"offsetof",
-	"ident",
+	"word",
 	"funcname",
 	"do",
 	"else",
@@ -284,8 +285,7 @@ debug_lexi(lexer_symbol lsym)
     static struct parser_state prev_ps;
 
     debug_println("");
-    debug_printf("line %d: %s%s", line_no, lsym_name(lsym),
-	ps.curr_is_type ? " type" : "");
+    debug_printf("line %d: %s", line_no, lsym_name(lsym));
     debug_vis_range(" \"", token.s, token.e, "\"\n");
 
     debug_print_buf("label", &lab);
@@ -293,7 +293,6 @@ debug_lexi(lexer_symbol lsym)
     debug_print_buf("comment", &com);
 
     debug_println("    ps.prev_token = %s", lsym_name(ps.prev_token));
-    debug_ps_bool(prev_is_type);
     debug_ps_bool(next_col_1);
     debug_ps_bool(curr_col_1);
     debug_ps_bool(next_unary);
@@ -499,15 +498,16 @@ lexi_alnum(void)
 
     const struct keyword *kw = bsearch(token.s, keywords,
 	array_length(keywords), sizeof(keywords[0]), cmp_keyword_by_name);
+    bool is_type = false;
     if (kw == NULL) {
 	if (is_typename()) {
-	    ps.curr_is_type = true;
+	    is_type = true;
 	    ps.next_unary = true;
 	    goto found_typename;
 	}
 
     } else {			/* we have a keyword */
-	ps.curr_is_type = kw->lsym == lsym_type;
+	is_type = kw->lsym == lsym_type;
 	ps.next_unary = true;
 	if (kw->lsym != lsym_tag && kw->lsym != lsym_type)
 	    return kw->lsym;
@@ -539,12 +539,11 @@ found_typename:
 no_function_definition:;
 
     } else if (probably_typename()) {
-	ps.curr_is_type = true;
 	ps.next_unary = true;
 	return lsym_type_at_paren_level_0;
     }
 
-    return lsym_ident;		/* the ident is not in the list */
+    return is_type ? lsym_type_in_parentheses : lsym_word;
 }
 
 /* Reads the next token, placing it in the global variable "token". */
@@ -554,8 +553,6 @@ lexi(void)
     token.e = token.s;
     ps.curr_col_1 = ps.next_col_1;
     ps.next_col_1 = false;
-    ps.prev_is_type = ps.curr_is_type;
-    ps.curr_is_type = false;
 
     while (ch_isblank(*inp.s)) {
 	ps.curr_col_1 = false;
@@ -587,7 +584,7 @@ lexi(void)
     case '\'':
     case '"':
 	lex_char_or_string();
-	lsym = lsym_ident;
+	lsym = lsym_word;
 	break;
 
     case '(':
@@ -654,7 +651,7 @@ lexi(void)
 
 	if (*inp.s == token.e[-1]) {	/* ++, -- */
 	    *token.e++ = *inp.s++;
-	    if (ps.prev_token == lsym_ident ||
+	    if (ps.prev_token == lsym_word ||
 		    ps.prev_token == lsym_rparen_or_rbracket) {
 		lsym = ps.next_unary ? lsym_unary_op : lsym_postfix_op;
 		unary_delim = false;

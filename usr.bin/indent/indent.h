@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.h,v 1.79 2021/11/07 07:06:00 rillig Exp $	*/
+/*	$NetBSD: indent.h,v 1.80 2021/11/07 07:35:06 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-FreeBSD
@@ -92,12 +92,13 @@ typedef enum lexer_symbol {
     lsym_typedef,
     lsym_storage_class,
     lsym_type_at_paren_level_0,
+    lsym_type_in_parentheses,
     lsym_tag,			/* 'struct', 'union' or 'enum' */
     lsym_case_label,		/* 'case' or 'default' */
     lsym_string_prefix,		/* 'L' */
     lsym_sizeof,
     lsym_offsetof,
-    lsym_ident,			/* identifier, constant or string */
+    lsym_word,			/* identifier, constant or string */
     lsym_funcname,
     lsym_do,
     lsym_else,
@@ -261,8 +262,6 @@ extern bool inhibit_formatting;	/* true if INDENT OFF is in effect */
 
 extern struct parser_state {
     lexer_symbol prev_token;
-    bool prev_is_type;
-    bool curr_is_type;
     bool curr_col_1;		/* whether the current token started in column
 				 * 1 of the unformatted input */
     bool next_col_1;
