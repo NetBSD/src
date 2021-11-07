@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_nmi.c,v 1.11 2021/01/27 03:10:20 thorpej Exp $ */
+/* $NetBSD: sunxi_nmi.c,v 1.12 2021/11/07 17:13:38 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #define	_INTR_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_nmi.c,v 1.11 2021/01/27 03:10:20 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_nmi.c,v 1.12 2021/11/07 17:13:38 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -105,6 +105,9 @@ struct sunxi_nmi_softc {
 	bus_space_handle_t sc_bsh;
 	int sc_phandle;
 
+	u_int sc_intr_nmi;
+	u_int sc_intr_cells;
+
 	kmutex_t sc_intr_lock;
 
 	const struct sunxi_nmi_config *sc_config;
@@ -177,22 +180,54 @@ sunxi_nmi_fdt_establish(device_t dev, u_int *specifier, int ipl, int flags,
     int (*func)(void *), void *arg, const char *xname)
 {
 	struct sunxi_nmi_softc * const sc = device_private(dev);
-	u_int irq_type;
+	u_int irq_type, irq, pol;
 	int ist;
 
-	/* 1st cell is the interrupt number */
-	const u_int irq = be32toh(specifier[0]);
-	/* 2nd cell is polarity */
-	const u_int pol = be32toh(specifier[1]);
+	if (sc->sc_intr_cells == 2) {
+		/* 1st cell is the interrupt number */
+		irq = be32toh(specifier[0]);
+		/* 2nd cell is polarity */
+		pol = be32toh(specifier[1]);
+	} else {
+		/* 1st cell is the GIC interrupt type and must be GIC_SPI */
+		if (be32toh(specifier[0]) != 0) {
+#ifdef DIAGNOSTIC
+			device_printf(dev, "GIC intr type %u is invalid\n",
+			    be32toh(specifier[0]));
+#endif
+			return NULL;
+		}
+		/* 2nd cell is the interrupt number */
+		irq = be32toh(specifier[1]);
+		/* 3rd cell is polarity */
+		pol = be32toh(specifier[2]);
+	}
 
-	if (irq != 0) {
+	if (sc->sc_intr_cells == 3 && irq != sc->sc_intr_nmi) {
+		/*
+		 * Driver is requesting a wakeup irq, which we don't
+		 * support today. Just pass it through to the parent
+		 * interrupt controller.
+		 */
+		const int ihandle = fdtbus_intr_parent(sc->sc_phandle);
+		if (ihandle == -1) {
+#ifdef DIAGNOSTIC
+			device_printf(dev, "couldn't find interrupt parent\n");
+#endif
+			return NULL;
+		}
+		return fdtbus_intr_establish_raw(ihandle, specifier, ipl,
+		    flags, func, arg, xname);
+	}
+
+	if (sc->sc_intr_cells == 2 && irq != 0) {
 #ifdef DIAGNOSTIC
 		device_printf(dev, "IRQ %u is invalid\n", irq);
 #endif
 		return NULL;
 	}
 
-	switch (pol & 0x7) {
+	switch (pol & 0xf) {
 	case 1:	/* IRQ_TYPE_EDGE_RISING */
 		irq_type = NMI_CTRL_IRQ_HIGH_EDGE;
 		ist = IST_EDGE;
@@ -201,11 +236,11 @@ sunxi_nmi_fdt_establish(device_t dev, u_int *specifier, int ipl, int flags,
 		irq_type = NMI_CTRL_IRQ_LOW_EDGE;
 		ist = IST_EDGE;
 		break;
-	case 3:	/* IRQ_TYPE_LEVEL_HIGH */
+	case 4:	/* IRQ_TYPE_LEVEL_HIGH */
 		irq_type = NMI_CTRL_IRQ_HIGH_LEVEL;
 		ist = IST_LEVEL;
 		break;
-	case 4:	/* IRQ_TYPE_LEVEL_LOW */
+	case 8:	/* IRQ_TYPE_LEVEL_LOW */
 		irq_type = NMI_CTRL_IRQ_LOW_LEVEL;
 		ist = IST_LEVEL;
 		break;
@@ -296,6 +331,18 @@ sunxi_nmi_fdt_intrstr(device_t dev, u_int *specifier, char *buf, size_t buflen)
 {
 	struct sunxi_nmi_softc * const sc = device_private(dev);
 
+	if (sc->sc_intr_cells == 3) {
+		const u_int irq = be32toh(specifier[1]);
+		if (irq != sc->sc_intr_nmi) {
+			const int ihandle = fdtbus_intr_parent(sc->sc_phandle);
+			if (ihandle == -1) {
+				return false;
+			}
+			return fdtbus_intr_str_raw(ihandle, specifier, buf,
+			    buflen);
+		}
+	}
+
 	snprintf(buf, buflen, "%s", sc->sc_config->name);
 
 	return true;
@@ -323,9 +370,10 @@ sunxi_nmi_attach(device_t parent, device_t self, void *aux)
 	struct sunxi_nmi_softc * const sc = device_private(self);
 	struct fdt_attach_args * const faa = aux;
 	const int phandle = faa->faa_phandle;
+	const u_int *interrupts;
 	bus_addr_t addr;
 	bus_size_t size;
-	int error;
+	int error, len;
 
 	if (fdtbus_get_reg(phandle, 0, &addr, &size) != 0) {
 		aprint_error(": couldn't get registers\n");
@@ -341,8 +389,18 @@ sunxi_nmi_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
+	of_getprop_uint32(phandle, "#interrupt-cells", &sc->sc_intr_cells);
+	interrupts = fdtbus_get_prop(phandle, "interrupts", &len);
+	if (interrupts == NULL || len != 12 ||
+	    be32toh(interrupts[0]) != 0 /* GIC_SPI */ ||
+	    be32toh(interrupts[2]) != 4 /* IRQ_TYPE_LEVEL_HIGH */) {
+		aprint_error(": couldn't find GIC SPI for NMI\n");
+		return;
+	}
+	sc->sc_intr_nmi = be32toh(interrupts[1]);
+
 	aprint_naive("\n");
-	aprint_normal(": %s\n", sc->sc_config->name);
+	aprint_normal(": %s, NMI IRQ %u\n", sc->sc_config->name, sc->sc_intr_nmi);
 
 	mutex_init(&sc->sc_intr_lock, MUTEX_SPIN, IPL_HIGH);
 
