@@ -1,7 +1,7 @@
-/* $NetBSD: rk3399-rockpro64.dts,v 1.13 2021/10/02 20:41:47 mrg Exp $ */
+/* $NetBSD: rk3399-rockpro64.dts,v 1.14 2021/11/07 17:11:43 jmcneill Exp $ */
 
 /*-
- * Copyright (c) 2019 Jared McNeill <jmcneill@invisible.ca>
+ * Copyright (c) 2019,2021 Jared McNeill <jmcneill@invisible.ca>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -30,24 +30,6 @@
 #include "rk3399-crypto.dtsi"
 
 / {
-	pwm-fan {
-		compatible = "pwm-fan";
-		status = "okay";
-		pwms = <&pwm1 0 40000 0>;
-		cooling-levels = <0 150 195 240>;
-	};
-
-	vcc3v3_pcie: vcc3v3-pcie-regulator {
-		compatible = "regulator-fixed";
-		regulator-min-microvolt = <3300000>;
-		regulator-max-microvolt = <3300000>;
-		enable-active-high;
-		gpio = <&gpio1 RK_PD0 GPIO_ACTIVE_HIGH>;
-		pinctrl-names = "default";
-		pinctrl-0 = <&pcie_pwr_en>;
-		regulator-name = "vcc3v3_pcie";
-	};
-
 	backlight: lcd-backlight {
 		compatible = "pwm-backlight";
 		pwms = <&pwm0 0 25000 0>;
@@ -156,47 +138,8 @@
 			rockchip,pins = <1 RK_PA0 RK_FUNC_GPIO &pcfg_pull_none>;
 		};
 	};
-
-	pcie {
-		pcie_pwr_en: pcie-pwr-en {
-			rockchip,pins =
-				<1 RK_PD0 RK_FUNC_GPIO &pcfg_pull_none>;
-		};
-
-		pcie_clkreqn: pci-clkreqn {
-			rockchip,pins =
-				<2 RK_PD2 RK_FUNC_2 &pcfg_pull_none>;
-		};
-	};
-};
-
-&pwm1 {
-	status = "okay";
-};
-
-&pcie_phy {
-	status = "okay";
 };
 
 &pcie0 {
-	ep-gpios = <&gpio2 RK_PD4 GPIO_ACTIVE_HIGH>;
-	num-lanes = <4>;
-	pinctrl-names = "default";
-	pinctrl-0 = <&pcie_clkreqn>;
-	vpcie3v3-supply = <&vcc3v3_pcie>;
 	bus-scan-delay-ms = <1000>;
-	status = "okay";
-};
-
-&spi1 {
-	status = "okay";
-	spiflash {
-		compatible = "jedec,spi-nor";
-		reg = <0>;
-		status = "okay";
-	};
-};
-
-&hdmi_sound {
-	status = "okay";
 };

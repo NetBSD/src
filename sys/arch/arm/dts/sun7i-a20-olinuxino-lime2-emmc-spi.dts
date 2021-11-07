@@ -1,3 +1,5 @@
+/* $NetBSD: sun7i-a20-olinuxino-lime2-emmc-spi.dts,v 1.2 2021/11/07 17:11:43 jmcneill Exp $ */
+
 #include "sun7i-a20-olinuxino-lime2-emmc.dts"
 
 &pio {
@@ -6,7 +8,7 @@
 		function = "spi0";
 	};
 
-											spi0_cs0_pc_pin: spi0-cs0-pc-pin {
+	spi0_cs0_pc_pin: spi0-cs0-pc-pin {
 		pins = "PC23";
 		function = "spi0";
 	};

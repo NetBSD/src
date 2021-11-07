@@ -1,7 +1,7 @@
-/* $NetBSD: sun50i-a64.dtsi,v 1.14 2019/12/09 04:40:50 riastradh Exp $ */
+/* $NetBSD: sun50i-a64.dtsi,v 1.15 2021/11/07 17:11:43 jmcneill Exp $ */
 
 /*-
- * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
+ * Copyright (c) 2017,2021 Jared McNeill <jmcneill@invisible.ca>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -27,62 +27,6 @@
  */
 
 / {
-	chosen {
-		#address-cells = <1>;
-		#size-cells = <1>;
-		ranges;
-
-		framebuffer@0 {
-			compatible = "allwinner,simple-framebuffer",
-				     "simple-framebuffer";
-			allwinner,pipeline = "mixer1-lcd1-hdmi";
-			status = "disabled";
-		};
-	};
-
-	soc {
-		rtp: rtp@1c25000 {
-			compatible = "allwinner,sun50i-a64-ts";
-			reg = <0x01c25000 0x400>;
-			interrupts = <GIC_SPI 31 IRQ_TYPE_LEVEL_HIGH>;
-			clocks = <&ccu CLK_BUS_THS>, <&ccu CLK_THS>;
-			clock-names = "ahb", "ths";
-			resets = <&ccu RST_BUS_THS>;
-			#thermal-sensor-cells = <0>;
-		};
-
-		crypto: crypto@1c15000 {
-			compatible = "allwinner,sun50i-a64-crypto";
-			reg = <0x01c15000 0x1000>;
-			interrupts = <GIC_SPI 94 IRQ_TYPE_LEVEL_HIGH>;
-			clocks = <&ccu CLK_BUS_CE>, <&ccu CLK_CE>;
-			clock-names = "bus", "mod";
-			resets = <&ccu RST_BUS_CE>;
-		};
-	};
-
-	/* PMU interrupt numbers are wrong in mainline dts */
-	pmu {
-		interrupts = <GIC_SPI 116 IRQ_TYPE_LEVEL_HIGH>,
-			     <GIC_SPI 117 IRQ_TYPE_LEVEL_HIGH>,
-			     <GIC_SPI 118 IRQ_TYPE_LEVEL_HIGH>,
-			     <GIC_SPI 119 IRQ_TYPE_LEVEL_HIGH>;
-	};
-
-	i2s2: i2s@1c22800 {
-		#sound-dai-cells = <0>;
-		compatible = "allwinner,sun50i-a64-i2s",
-			     "allwinner,sun8i-h3-i2s";
-		reg = <0x01c22800 0x400>;
-		interrupts = <GIC_SPI 15 IRQ_TYPE_LEVEL_HIGH>;
-		clocks = <&ccu CLK_BUS_I2S2>, <&ccu CLK_I2S2>;
-		clock-names = "apb", "mod";
-		resets = <&ccu RST_BUS_I2S2>;
-		dma-names = "tx";
-		dmas = <&dma 27>;
-		status = "disabled";
-	};
-
 	sound_hdmi: sound-hdmi {
 		compatible = "simple-audio-card";
 		simple-audio-card,name = "hdmi-audio";
@@ -98,8 +42,4 @@
 			sound-dai = <&hdmi>;
 		};
 	};
-};
-
-&cpu0 {
-	clocks = <&ccu 1>; /* 1=CLK_PLL_CPUX */
 };
