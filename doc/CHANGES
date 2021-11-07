@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2848 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2849 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -452,3 +452,4 @@ Changes from NetBSD 9.0 to NetBSD 10.0:
 	acpi(4): Updated ACPICA to 20210930. [christos 20211028]
 	sht3xtemp(4): Driver for the Sensirion SHT30/SHT31/SHT35 temperature
 		and humidity sensor [brad 20211106]
+	dts: Import dts files from Linux 5.15. [jmcneill 20211107]
