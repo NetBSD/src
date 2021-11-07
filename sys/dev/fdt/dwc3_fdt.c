@@ -1,4 +1,4 @@
-/* $NetBSD: dwc3_fdt.c,v 1.18 2021/09/14 22:00:11 jmcneill Exp $ */
+/* $NetBSD: dwc3_fdt.c,v 1.19 2021/11/07 17:14:20 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwc3_fdt.c,v 1.18 2021/09/14 22:00:11 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwc3_fdt.c,v 1.19 2021/11/07 17:14:20 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -244,7 +244,10 @@ dwc3_fdt_attach(device_t parent, device_t self, void *aux)
 
 	/* Find dwc3 sub-node */
 	if (of_compatible_lookup(phandle, compat_data_dwc3) == NULL) {
-		dwc3_phandle = of_find_firstchild_byname(phandle, "dwc3");
+		dwc3_phandle = of_find_bycompat(phandle, "snps,dwc3");
+		if (dwc3_phandle <= 0) {
+			dwc3_phandle = of_find_firstchild_byname(phandle, "dwc3");
+		}
 	} else {
 		dwc3_phandle = phandle;
 	}
