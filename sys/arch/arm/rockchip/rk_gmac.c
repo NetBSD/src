@@ -1,4 +1,4 @@
-/* $NetBSD: rk_gmac.c,v 1.19 2021/01/27 03:10:19 thorpej Exp $ */
+/* $NetBSD: rk_gmac.c,v 1.20 2021/11/07 19:21:33 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: rk_gmac.c,v 1.19 2021/01/27 03:10:19 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rk_gmac.c,v 1.20 2021/11/07 19:21:33 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -416,7 +416,7 @@ rk_gmac_attach(device_t parent, device_t self, void *aux)
 
 	switch (rk_sc->sc_type) {
 	case GMAC_RK3328:
-		if (strcmp(phy_mode, "rgmii") == 0) {
+		if (strncmp(phy_mode, "rgmii", 5) == 0) {
 			rk3328_gmac_set_mode_rgmii(sc, tx_delay, rx_delay,
 			    set_delay);
 
@@ -427,7 +427,7 @@ rk_gmac_attach(device_t parent, device_t self, void *aux)
 		}
 		break;
 	case GMAC_RK3399:
-		if (strcmp(phy_mode, "rgmii") == 0) {
+		if (strncmp(phy_mode, "rgmii", 5) == 0) {
 			rk3399_gmac_set_mode_rgmii(sc, tx_delay, rx_delay,
 			    set_delay);
 
