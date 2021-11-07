@@ -1,4 +1,4 @@
-/* $NetBSD: token_comment.c,v 1.19 2021/11/07 07:45:00 rillig Exp $ */
+/* $NetBSD: token_comment.c,v 1.20 2021/11/07 10:13:26 rillig Exp $ */
 /* $FreeBSD$ */
 
 /*
@@ -959,6 +959,30 @@ f(void)
 #indent input
 /* block comment */
 // line comment /* still a line comment */ still a line comment
+#indent end
+
+#indent run-equals-input
+
+
+/*
+ * Tests for comments that are not wrapped.
+ */
+#indent input
+/*-	tab space	tab space */
+/*-	very-long-word-that-cannot-be-broken very-long-word-that-cannot-be-broken */
+/*-	very-long-word-that-cannot-be-broken very-long-word-that-cannot-be-broken */
+#indent end
+
+#indent run-equals-input -l5
+#indent run-equals-input -l32
+
+
+/*
+ * Test for form feeds in nowrap comments.
+ */
+#indent input
+/*-*/
+/*-<>*/
 #indent end
 
 #indent run-equals-input
