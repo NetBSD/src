@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cpsw.c,v 1.14 2021/01/27 03:10:20 thorpej Exp $	*/
+/*	$NetBSD: if_cpsw.c,v 1.15 2021/11/07 17:12:55 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 2013 Jonathan A. Kollasch
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: if_cpsw.c,v 1.14 2021/01/27 03:10:20 thorpej Exp $");
+__KERNEL_RCSID(1, "$NetBSD: if_cpsw.c,v 1.15 2021/11/07 17:12:55 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -310,6 +310,7 @@ cpsw_rxdesc_paddr(struct cpsw_softc * const sc, u_int x)
 }
 
 static const struct device_compatible_entry compat_data[] = {
+	{ .compat = "ti,am335x-cpsw-switch" },
 	{ .compat = "ti,am335x-cpsw" },
 	{ .compat = "ti,cpsw" },
 	DEVICE_COMPAT_EOL
@@ -417,7 +418,13 @@ cpsw_attach(device_t parent, device_t self, void *aux)
 
 	macaddr = NULL;
 	slave = of_find_firstchild_byname(phandle, "slave");
-	if (slave > 0) {
+	if (slave == -1) {
+		slave = of_find_firstchild_byname(phandle, "ethernet-ports");
+		if (slave != -1) {
+			slave = of_find_firstchild_byname(slave, "port");
+		}
+	}
+	if (slave != -1) {
 		macaddr = fdtbus_get_prop(slave, "mac-address", &len);
 		if (len != ETHER_ADDR_LEN)
 			macaddr = NULL;
