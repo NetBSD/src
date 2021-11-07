@@ -1,4 +1,4 @@
-/*	$NetBSD: sun50i-h6-r-ccu.h,v 1.1.1.1 2018/06/27 16:27:08 jmcneill Exp $	*/
+/*	$NetBSD: sun50i-h6-r-ccu.h,v 1.1.1.2 2021/11/07 16:49:57 jmcneill Exp $	*/
 
 /* SPDX-License-Identifier: GPL-2.0 */
 /*
@@ -22,5 +22,7 @@
 
 #define CLK_IR			11
 #define CLK_W1			12
+
+#define CLK_R_APB2_RSB		13
 
 #endif /* _DT_BINDINGS_CLK_SUN50I_H6_R_CCU_H_ */

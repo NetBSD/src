@@ -1,4 +1,4 @@
-/*	$NetBSD: tegra186-gpio.h,v 1.1.1.4 2020/01/03 14:33:02 skrll Exp $	*/
+/*	$NetBSD: tegra186-gpio.h,v 1.1.1.5 2021/11/07 16:49:57 jmcneill Exp $	*/
 
 /* SPDX-License-Identifier: GPL-2.0 */
 /*
@@ -10,8 +10,8 @@
  * The second cell contains standard flag values specified in gpio.h.
  */
 
-#ifndef _DT_BINDINGS_GPIO_TEGRA_GPIO_H
-#define _DT_BINDINGS_GPIO_TEGRA_GPIO_H
+#ifndef _DT_BINDINGS_GPIO_TEGRA186_GPIO_H
+#define _DT_BINDINGS_GPIO_TEGRA186_GPIO_H
 
 #include <dt-bindings/gpio/gpio.h>
 

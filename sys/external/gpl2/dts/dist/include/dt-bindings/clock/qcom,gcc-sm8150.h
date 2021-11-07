@@ -1,4 +1,4 @@
-/*	$NetBSD: qcom,gcc-sm8150.h,v 1.1.1.1 2020/01/03 14:33:05 skrll Exp $	*/
+/*	$NetBSD: qcom,gcc-sm8150.h,v 1.1.1.2 2021/11/07 16:49:57 jmcneill Exp $	*/
 
 /* SPDX-License-Identifier: GPL-2.0 */
 /*
@@ -241,5 +241,9 @@
 #define GCC_USB30_PRIM_BCR					26
 #define GCC_USB30_SEC_BCR					27
 #define GCC_USB_PHY_CFG_AHB2PHY_BCR				28
+
+/* GCC GDSCRs */
+#define USB30_PRIM_GDSC                     4
+#define USB30_SEC_GDSC						5
 
 #endif

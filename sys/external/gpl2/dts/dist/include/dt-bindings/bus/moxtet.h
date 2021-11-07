@@ -1,10 +1,10 @@
-/*	$NetBSD: moxtet.h,v 1.1.1.1 2020/01/03 14:33:03 skrll Exp $	*/
+/*	$NetBSD: moxtet.h,v 1.1.1.2 2021/11/07 16:49:57 jmcneill Exp $	*/
 
 /* SPDX-License-Identifier: GPL-2.0 */
 /*
  * Constant for device tree bindings for Turris Mox module configuration bus
  *
- * Copyright (C) 2019 Marek Behun <marek.behun@nic.cz>
+ * Copyright (C) 2019 Marek Behún <kabel@kernel.org>
  */
 
 #ifndef _DT_BINDINGS_BUS_MOXTET_H

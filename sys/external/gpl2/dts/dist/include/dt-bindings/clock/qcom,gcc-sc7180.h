@@ -1,8 +1,8 @@
-/*	$NetBSD: qcom,gcc-sc7180.h,v 1.1.1.1 2020/01/03 14:33:05 skrll Exp $	*/
+/*	$NetBSD: qcom,gcc-sc7180.h,v 1.1.1.2 2021/11/07 16:49:59 jmcneill Exp $	*/
 
 /* SPDX-License-Identifier: GPL-2.0-only */
 /*
- * Copyright (c) 2019, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2019-2020, The Linux Foundation. All rights reserved.
  */
 
 #ifndef _DT_BINDINGS_CLK_QCOM_GCC_SC7180_H
@@ -134,6 +134,13 @@
 #define GCC_VIDEO_GPLL0_DIV_CLK_SRC				122
 #define GCC_VIDEO_THROTTLE_AXI_CLK				123
 #define GCC_VIDEO_XO_CLK					124
+#define GCC_MSS_CFG_AHB_CLK					125
+#define GCC_MSS_MFAB_AXIS_CLK					126
+#define GCC_MSS_NAV_AXI_CLK					127
+#define GCC_MSS_Q6_MEMNOC_AXI_CLK				128
+#define GCC_MSS_SNOC_AXI_CLK					129
+#define GCC_SEC_CTRL_CLK_SRC					130
+#define GCC_LPASS_CFG_NOC_SWAY_CLK				131
 
 /* GCC resets */
 #define GCC_QUSB2PHY_PRIM_BCR					0

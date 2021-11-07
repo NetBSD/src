@@ -260,20 +260,19 @@
 };
 
 /* Ethernet */
-&cpsw_emac0 {
-	status = "okay";
+&cpsw_port1 {
 	phy-handle = <&ethphy0>;
 	phy-mode = "rgmii";
+	ti,dual-emac-pvid = <1>;
 };
 
-&cpsw_emac1 {
-	status = "okay";
+&cpsw_port2 {
 	phy-handle = <&ethphy1>;
 	phy-mode = "rgmii";
+	ti,dual-emac-pvid = <2>;
 };
 
-&davinci_mdio {
-	status = "okay";
+&davinci_mdio_sw {
 	pinctrl-names = "default";
 	pinctrl-0 = <&mdio_pins>;
 
@@ -286,12 +285,11 @@
 	};
 };
 
-&mac {
+&mac_sw {
 	status = "okay";
 	pinctrl-names = "default";
 	pinctrl-0 = <&ethernet_pins>;
 };
-
 
 &am33xx_pinmux {
 	ethernet_pins: pinmux_ethernet {
@@ -341,7 +339,7 @@
 	pinctrl-0 = <&emmc_pins>;
 	vmmc-supply = <&ldo3_reg>;
 	bus-width = <8>;
-	ti,non-removable;
+	non-removable;
 };
 
 &mmc3 {
@@ -351,7 +349,7 @@
 	pinctrl-0 = <&wireless_pins>;
 	vmmmc-supply = <&v3v3c_reg>;
 	bus-width = <4>;
-	ti,non-removable;
+	non-removable;
 	dmas = <&edma_xbar 12 0 1
 		&edma_xbar 13 0 2>;
 	dma-names = "tx", "rx";

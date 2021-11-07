@@ -1,4 +1,4 @@
-/*	$NetBSD: gxbb-clkc.h,v 1.1.1.7 2019/05/25 11:29:13 jmcneill Exp $	*/
+/*	$NetBSD: gxbb-clkc.h,v 1.1.1.8 2021/11/07 16:49:57 jmcneill Exp $	*/
 
 /* SPDX-License-Identifier: GPL-2.0 */
 /*
@@ -148,5 +148,6 @@
 #define CLKID_CTS_VDAC		201
 #define CLKID_HDMI_TX		202
 #define CLKID_HDMI		205
+#define CLKID_ACODEC		206
 
 #endif /* __GXBB_CLKC_H */

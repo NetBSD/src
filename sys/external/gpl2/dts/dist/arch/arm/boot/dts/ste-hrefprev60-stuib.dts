@@ -4,8 +4,7 @@
  */
 
 /dts-v1/;
-#include <dt-bindings/gpio/gpio.h>
-#include <dt-bindings/interrupt-controller/irq.h>
+#include "ste-db8500.dtsi"
 #include "ste-hrefprev60.dtsi"
 #include "ste-href-stuib.dtsi"
 
@@ -13,11 +12,23 @@
 	model = "ST-Ericsson HREF (pre-v60) and ST UIB";
 	compatible = "st-ericsson,mop500", "st-ericsson,u8500";
 
-	/* This stablilizes the serial port enumeration */
-	aliases {
-		serial0 = &ux500_serial0;
-		serial1 = &ux500_serial1;
-		serial2 = &ux500_serial2;
+	/* ST6G3244ME level translator for 1.8/2.9 V */
+	vmmci: regulator-gpio {
+		compatible = "regulator-gpio";
+
+		regulator-min-microvolt = <1800000>;
+		regulator-max-microvolt = <2900000>;
+		regulator-name = "mmci-reg";
+		regulator-type = "voltage";
+
+		startup-delay-us = <100>;
+
+		states = <1800000 0x1
+			  2900000 0x0>;
+
+		gpios = <&tc3589x_gpio 18 GPIO_ACTIVE_HIGH>;
+		enable-gpio = <&tc3589x_gpio 17 GPIO_ACTIVE_HIGH>;
+		enable-active-high;
 	};
 
 	soc {

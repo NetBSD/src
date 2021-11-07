@@ -97,17 +97,24 @@
 		compatible = "fsl,imx6q-sabresd-wm8962",
 			   "fsl,imx-audio-wm8962";
 		model = "wm8962-audio";
+		pinctrl-names = "default";
+		pinctrl-0 = <&pinctrl_hp>;
 		ssi-controller = <&ssi2>;
 		audio-codec = <&codec>;
+		audio-asrc = <&asrc>;
 		audio-routing =
 			"Headphone Jack", "HPOUTL",
 			"Headphone Jack", "HPOUTR",
 			"Ext Spk", "SPKOUTL",
 			"Ext Spk", "SPKOUTR",
 			"AMIC", "MICBIAS",
-			"IN3R", "AMIC";
+			"IN3R", "AMIC",
+			"DMIC", "MICBIAS",
+			"DMICDAT", "DMIC";
 		mux-int-port = <2>;
 		mux-ext-port = <3>;
+		hp-det-gpio = <&gpio7 8 GPIO_ACTIVE_LOW>;
+		mic-det-gpio = <&gpio1 9 GPIO_ACTIVE_LOW>;
 	};
 
 	backlight_lvds: backlight-lvds {
@@ -185,7 +192,7 @@
 };
 
 &ecspi1 {
-	cs-gpios = <&gpio4 9 0>;
+	cs-gpios = <&gpio4 9 GPIO_ACTIVE_LOW>;
 	pinctrl-names = "default";
 	pinctrl-0 = <&pinctrl_ecspi1>;
 	status = "okay";
@@ -203,8 +210,21 @@
 	pinctrl-names = "default";
 	pinctrl-0 = <&pinctrl_enet>;
 	phy-mode = "rgmii-id";
-	phy-reset-gpios = <&gpio1 25 GPIO_ACTIVE_LOW>;
+	phy-handle = <&phy>;
+	fsl,magic-packet;
 	status = "okay";
+
+	mdio {
+		#address-cells = <1>;
+		#size-cells = <0>;
+
+		phy: ethernet-phy@1 {
+			reg = <1>;
+			qca,clk-out-frequency = <125000000>;
+			reset-gpios = <&gpio1 25 GPIO_ACTIVE_LOW>;
+			reset-assert-us = <10000>;
+		};
+	};
 };
 
 &hdmi {
@@ -528,6 +548,13 @@
 			>;
 		};
 
+		pinctrl_hp: hpgrp {
+			fsl,pins = <
+				MX6QDL_PAD_SD3_RST__GPIO7_IO08          0x1b0b0
+				MX6QDL_PAD_GPIO_9__GPIO1_IO09           0x1b0b0
+			>;
+		};
+
 		pinctrl_i2c1: i2c1grp {
 			fsl,pins = <
 				MX6QDL_PAD_CSI0_DAT8__I2C1_SDA		0x4001b8b1
@@ -728,6 +755,7 @@
 };
 
 &pwm1 {
+	#pwm-cells = <2>;
 	pinctrl-names = "default";
 	pinctrl-0 = <&pinctrl_pwm1>;
 	status = "okay";
@@ -747,10 +775,6 @@
 
 &reg_vdd1p1 {
 	vin-supply = <&vgen5_reg>;
-};
-
-&reg_vdd3p0 {
-	vin-supply = <&sw2_reg>;
 };
 
 &reg_vdd2p5 {
