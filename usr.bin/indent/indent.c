@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.c,v 1.217 2021/11/07 18:49:02 rillig Exp $	*/
+/*	$NetBSD: indent.c,v 1.218 2021/11/07 19:18:56 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)indent.c	5.17 (Berkeley) 6/7/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: indent.c,v 1.217 2021/11/07 18:49:02 rillig Exp $");
+__RCSID("$NetBSD: indent.c,v 1.218 2021/11/07 19:18:56 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/indent.c 340138 2018-11-04 19:24:49Z oshogbo $");
 #endif
@@ -316,16 +316,15 @@ search_stmt_comment(void)
 	    save_com, sc_end, "\"\n");
     }
 
-    sc_add_char('/');
-    sc_add_char('*');
-
-    for (;;) {			/* loop until the end of the comment */
-	sc_add_char(inp_next());
-	if (sc_end[-1] == '*' && *inp.s == '/') {
+    sc_add_range(token.s, token.e);
+    if (token.e[-1] == '/') {
+	while (inp.s[0] != '\n')
 	    sc_add_char(inp_next());
-	    debug_save_com("search_stmt_comment end");
-	    break;
-	}
+	debug_save_com("search_stmt_comment end C99");
+    } else {
+	while (!(sc_end[-2] == '*' && sc_end[-1] == '/'))
+	    sc_add_char(inp_next());
+	debug_save_com("search_stmt_comment end block");
     }
 }
 
