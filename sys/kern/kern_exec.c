@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.510 2021/10/10 18:07:51 thorpej Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.511 2021/11/07 13:47:49 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2019, 2020 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.510 2021/10/10 18:07:51 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.511 2021/11/07 13:47:49 christos Exp $");
 
 #include "opt_exec.h"
 #include "opt_execfmt.h"
@@ -103,6 +103,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.510 2021/10/10 18:07:51 thorpej Exp 
 #include <sys/module.h>
 #include <sys/syscallvar.h>
 #include <sys/syscallargs.h>
+#include <sys/vfs_syscalls.h>
 #if NVERIEXEC > 0
 #include <sys/verified_exec.h>
 #endif /* NVERIEXEC > 0 */
@@ -2132,6 +2133,13 @@ handle_posix_spawn_file_actions(struct posix_spawn_file_actions *actions)
 			}
 			error = fd_close(fae->fae_fildes);
 			break;
+		case FAE_CHDIR:
+			error = do_sys_chdir(l, fae->fae_chdir_path,
+			    UIO_SYSSPACE, &retval);
+			break;
+		case FAE_FCHDIR:
+			error = do_sys_fchdir(l, fae->fae_fildes, &retval);
+			break;
 		}
 		if (error)
 			return error;
@@ -2361,15 +2369,27 @@ spawn_return(void *arg)
 	exit1(l, 127, 0);
 }
 
+static __inline char **
+posix_spawn_fae_path(struct posix_spawn_file_actions_entry *fae)
+{
+	switch (fae->fae_action) {
+	case FAE_OPEN:
+		return &fae->fae_path;
+	case FAE_CHDIR:
+		return &fae->fae_chdir_path;
+	default:
+		return NULL;
+	}
+}
+    
 void
 posix_spawn_fa_free(struct posix_spawn_file_actions *fa, size_t len)
 {
 
 	for (size_t i = 0; i < len; i++) {
-		struct posix_spawn_file_actions_entry *fae = &fa->fae[i];
-		if (fae->fae_action != FAE_OPEN)
-			continue;
-		kmem_strfree(fae->fae_path);
+		char **pathp = posix_spawn_fae_path(&fa->fae[i]);
+		if (pathp)
+			kmem_strfree(*pathp);
 	}
 	if (fa->len > 0)
 		kmem_free(fa->fae, sizeof(*fa->fae) * fa->len);
@@ -2408,14 +2428,14 @@ posix_spawn_fa_alloc(struct posix_spawn_file_actions **fap,
 
 	pbuf = PNBUF_GET();
 	for (; i < fa->len; i++) {
-		fae = &fa->fae[i];
-		if (fae->fae_action != FAE_OPEN)
+		char **pathp = posix_spawn_fae_path(&fa->fae[i]);
+		if (pathp == NULL)
 			continue;
-		error = copyinstr(fae->fae_path, pbuf, MAXPATHLEN, &fal);
+		error = copyinstr(*pathp, pbuf, MAXPATHLEN, &fal);
 		if (error)
 			goto out;
-		fae->fae_path = kmem_alloc(fal, KM_SLEEP);
-		memcpy(fae->fae_path, pbuf, fal);
+		*pathp = kmem_alloc(fal, KM_SLEEP);
+		memcpy(*pathp, pbuf, fal);
 	}
 	PNBUF_PUT(pbuf);
 
