@@ -1,4 +1,4 @@
-/*	$NetBSD: pr_comment.c,v 1.102 2021/11/07 08:41:13 rillig Exp $	*/
+/*	$NetBSD: pr_comment.c,v 1.103 2021/11/07 10:13:26 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)pr_comment.c	8.1 (Berkeley) 6/6/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: pr_comment.c,v 1.102 2021/11/07 08:41:13 rillig Exp $");
+__RCSID("$NetBSD: pr_comment.c,v 1.103 2021/11/07 10:13:26 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/pr_comment.c 334927 2018-06-10 16:44:18Z pstef $");
 #endif
@@ -330,10 +330,8 @@ copy_comment_wrap(int adj_max_line_length, bool break_delim)
 }
 
 static void
-copy_comment_nowrap(int adj_max_line_length)
+copy_comment_nowrap(void)
 {
-    ssize_t last_blank = -1;	/* index of the last blank in com.buf */
-
     for (;;) {
 	switch (*inp.s) {
 	case '\f':
@@ -351,7 +349,6 @@ copy_comment_nowrap(int adj_max_line_length)
 		return;
 	    }
 
-	    last_blank = -1;
 	    if (com.s == com.e)
 		com_add_char(' ');	/* force output of an empty line */
 	    dump_line();
@@ -370,28 +367,15 @@ copy_comment_nowrap(int adj_max_line_length)
 		    com_add_char('/');
 		}
 		com_terminate();
+		ps.next_col_1 = false;
 		return;
 
 	    } else		/* handle isolated '*' */
 		com_add_char('*');
 	    break;
 
-	default:		/* we have a random char */
-	    ;
-	    int now_len = ind_add(ps.com_ind, com.s, com.e);
-	    for (;;) {
-		char ch = inp_next();
-		if (ch_isblank(ch))
-		    last_blank = com.e - com.buf;
-		com_add_char(ch);
-		now_len++;
-		if (memchr("*\n\r\b\t", *inp.s, 6) != NULL)
-		    break;
-		if (now_len >= adj_max_line_length && last_blank != -1)
-		    break;
-	    }
-
-	    ps.next_col_1 = false;
+	default:
+	    com_add_char(inp_next());
 	    break;
 	}
     }
@@ -432,6 +416,6 @@ process_comment(void)
     if (may_wrap)
 	copy_comment_wrap(adj_max_line_length, break_delim);
     else
-	copy_comment_nowrap(adj_max_line_length);
+	copy_comment_nowrap();
     ps.just_saw_decl = l_just_saw_decl;
 }
