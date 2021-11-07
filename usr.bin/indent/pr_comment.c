@@ -1,4 +1,4 @@
-/*	$NetBSD: pr_comment.c,v 1.109 2021/11/07 10:49:31 rillig Exp $	*/
+/*	$NetBSD: pr_comment.c,v 1.110 2021/11/07 10:56:06 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)pr_comment.c	8.1 (Berkeley) 6/6/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: pr_comment.c,v 1.109 2021/11/07 10:49:31 rillig Exp $");
+__RCSID("$NetBSD: pr_comment.c,v 1.110 2021/11/07 10:56:06 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/pr_comment.c 334927 2018-06-10 16:44:18Z pstef $");
 #endif
@@ -201,6 +201,12 @@ analyze_comment(bool *p_may_wrap, bool *p_break_delim,
     *p_may_wrap = may_wrap;
 }
 
+/*
+ * Copy characters from 'inp' to 'com'. Try to keep comments from going over
+ * the maximum line length. To do that, remember where the last blank, tab, or
+ * newline was. When a line is filled, print up to the last blank and continue
+ * copying.
+ */
 static void
 copy_comment_wrap(int adj_max_line_length, bool break_delim)
 {
@@ -363,20 +369,6 @@ finish:
 /*
  * Scan, reformat and output a single comment, which is either a block comment
  * starting with '/' '*' or an end-of-line comment starting with '//'.
- *
- * Try to keep comments from going over the maximum line length.  If a line is
- * too long, move everything starting from the last blank to the next comment
- * line.  Blanks and tabs from the beginning of the input line are removed.
- *
- * ALGORITHM:
- *	1) Decide where the comment should be aligned, and if lines should
- *	   be broken.
- *	2) If lines should not be broken and filled, just copy up to end of
- *	   comment.
- *	3) If lines should be filled, then scan through the input buffer,
- *	   copying characters to com_buf.  Remember where the last blank,
- *	   tab, or newline was.  When line is filled, print up to last blank
- *	   and continue copying.
  */
 void
 process_comment(void)
