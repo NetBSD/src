@@ -1,4 +1,4 @@
-/* $NetBSD: token_ident.c,v 1.2 2021/11/07 19:25:26 rillig Exp $ */
+/* $NetBSD: token_ident.c,v 1.3 2021/11/07 20:16:50 rillig Exp $ */
 /* $FreeBSD$ */
 
 /*
@@ -77,3 +77,18 @@ const char SYS$LOGIN[]="$HOME";
 int		$ = jQuery;	// just kidding
 const char	SYS$LOGIN[] = "$HOME";
 #indent end
+
+
+/*
+ * Text the tokenizer for number constants.
+ *
+ * When the tokenizer reads a character that makes a token invalid (such as
+ * '0x') but may later be extended to form a valid token (such as '0x123'),
+ * indent does not care about this invalid prefix and returns it nevertheless.
+ */
+#indent input
+int unfinished_hex_prefix = 0x;
+double unfinished_hex_float = 0x123p;
+#indent end
+
+#indent run-equals-input -di0
