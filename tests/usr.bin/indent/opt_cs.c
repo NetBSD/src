@@ -1,4 +1,4 @@
-/* $NetBSD: opt_cs.c,v 1.3 2021/10/16 21:32:10 rillig Exp $ */
+/* $NetBSD: opt_cs.c,v 1.4 2021/11/07 15:44:28 rillig Exp $ */
 /* $FreeBSD$ */
 
 /*
@@ -25,4 +25,26 @@ int		i3 = (int) 3.0;
 int		i0 = (int)3.0;
 int		i1 = (int)3.0;
 int		i3 = (int)3.0;
+#indent end
+
+
+#indent input
+struct s	s3 = (struct s)   s;
+struct s       *ptr = (struct s *)   s;
+union u		u3 = (union u)   u;
+enum e		e3 = (enum e)   e;
+#indent end
+
+#indent run -cs
+struct s	s3 = (struct s) s;
+struct s       *ptr = (struct s *) s;
+union u		u3 = (union u) u;
+enum e		e3 = (enum e) e;
+#indent end
+
+#indent run -ncs
+struct s	s3 = (struct s)s;
+struct s       *ptr = (struct s *)s;
+union u		u3 = (union u)u;
+enum e		e3 = (enum e)e;
 #indent end
