@@ -1,4 +1,4 @@
-/*	$NetBSD: pr_comment.c,v 1.98 2021/11/07 07:06:00 rillig Exp $	*/
+/*	$NetBSD: pr_comment.c,v 1.99 2021/11/07 08:24:50 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)pr_comment.c	8.1 (Berkeley) 6/6/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: pr_comment.c,v 1.98 2021/11/07 07:06:00 rillig Exp $");
+__RCSID("$NetBSD: pr_comment.c,v 1.99 2021/11/07 08:24:50 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/pr_comment.c 334927 2018-06-10 16:44:18Z pstef $");
 #endif
@@ -202,8 +202,146 @@ analyze_comment(int *p_adj_max_line_length, bool *p_break_delim,
 }
 
 static void
-copy_comment(int adj_max_line_length, bool break_delim, bool may_wrap)
+copy_comment_wrap(int adj_max_line_length, bool break_delim)
 {
+    bool may_wrap = true;
+    ssize_t last_blank = -1;	/* index of the last blank in com.buf */
+
+    for (;;) {
+	switch (*inp.s) {
+	case '\f':
+	    if (may_wrap) {	/* in a text comment, break the line here */
+		dump_line_ff();
+		last_blank = -1;
+		com_add_delim();
+		inp.s++;
+		while (ch_isblank(*inp.s))
+		    inp.s++;
+	    } else {
+		inp_skip();
+		com_add_char('\f');
+	    }
+	    break;
+
+	case '\n':
+	    if (token.e[-1] == '/')
+		goto end_of_line_comment;
+
+	    if (had_eof) {
+		diag(1, "Unterminated comment");
+		dump_line();
+		return;
+	    }
+
+	    last_blank = -1;
+	    if (!may_wrap || ps.next_col_1) {	/* if this is a boxed comment,
+						 * we handle the newline */
+		if (com.s == com.e)
+		    com_add_char(' ');
+		if (may_wrap && com.e - com.s > 3) {
+		    dump_line();
+		    com_add_delim();
+		}
+		dump_line();
+		if (may_wrap)
+		    com_add_delim();
+
+	    } else {
+		ps.next_col_1 = true;
+		if (!ch_isblank(com.e[-1]))
+		    com_add_char(' ');
+		last_blank = com.e - 1 - com.buf;
+	    }
+	    ++line_no;
+	    if (may_wrap) {
+		bool skip_asterisk = true;
+		do {		/* flush any blanks and/or tabs at start of
+				 * next line */
+		    inp_skip();
+		    if (*inp.s == '*' && skip_asterisk) {
+			skip_asterisk = false;
+			inp_skip();
+			if (*inp.s == '/')
+			    goto end_of_comment;
+		    }
+		} while (ch_isblank(*inp.s));
+	    } else
+		inp_skip();
+	    break;		/* end of case for newline */
+
+	case '*':
+	    inp_skip();
+	    if (*inp.s == '/' && token.e[-1] == '*') {
+	end_of_comment:
+		inp_skip();
+
+	end_of_line_comment:
+		if (break_delim) {
+		    if (com.e > com.s + 3)
+			dump_line();
+		    else
+			com.s = com.e;	/* XXX: why not e = s? */
+		    com_add_char(' ');
+		}
+
+		if (!ch_isblank(com.e[-1]) && may_wrap)
+		    com_add_char(' ');
+		if (token.e[-1] == '*') {
+		    com_add_char('*');
+		    com_add_char('/');
+		}
+		com_terminate();
+		return;
+
+	    } else		/* handle isolated '*' */
+		com_add_char('*');
+	    break;
+
+	default:		/* we have a random char */
+	    ;
+	    int now_len = ind_add(ps.com_ind, com.s, com.e);
+	    for (;;) {
+		char ch = inp_next();
+		if (ch_isblank(ch))
+		    last_blank = com.e - com.buf;
+		com_add_char(ch);
+		now_len++;
+		if (memchr("*\n\r\b\t", *inp.s, 6) != NULL)
+		    break;
+		if (now_len >= adj_max_line_length && last_blank != -1)
+		    break;
+	    }
+
+	    ps.next_col_1 = false;
+
+	    if (now_len <= adj_max_line_length || !may_wrap)
+		break;
+	    if (isspace((unsigned char)com.e[-1]))
+		break;
+
+	    if (last_blank == -1) {	/* only a single word in this line */
+		dump_line();
+		com_add_delim();
+		break;
+	    }
+
+	    const char *last_word_s = com.buf + last_blank + 1;
+	    size_t last_word_len = (size_t)(com.e - last_word_s);
+	    com.e = com.buf + last_blank;
+	    dump_line();
+	    com_add_delim();
+
+	    memcpy(com.e, last_word_s, last_word_len);
+	    com.e += last_word_len;
+	    last_blank = -1;
+	}
+    }
+}
+
+static void
+copy_comment_nowrap(int adj_max_line_length, bool break_delim)
+{
+    bool may_wrap = false;
     ssize_t last_blank = -1;	/* index of the last blank in com.buf */
 
     for (;;) {
@@ -369,6 +507,9 @@ process_comment(void)
 
     int l_just_saw_decl = ps.just_saw_decl;
     analyze_comment(&adj_max_line_length, &break_delim, &may_wrap);
-    copy_comment(adj_max_line_length, break_delim, may_wrap);
+    if (may_wrap)
+    	copy_comment_wrap(adj_max_line_length, break_delim);
+    else
+	copy_comment_nowrap(adj_max_line_length, break_delim);
     ps.just_saw_decl = l_just_saw_decl;
 }
