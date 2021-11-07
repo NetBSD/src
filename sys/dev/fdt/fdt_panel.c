@@ -1,4 +1,4 @@
-/* $NetBSD: fdt_panel.c,v 1.3 2021/01/27 03:10:21 thorpej Exp $ */
+/* $NetBSD: fdt_panel.c,v 1.4 2021/11/07 17:11:58 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2019 Jonathan A. Kollasch <jakllsch@kollasch.net>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdt_panel.c,v 1.3 2021/01/27 03:10:21 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdt_panel.c,v 1.4 2021/11/07 17:11:58 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -46,6 +46,7 @@ __KERNEL_RCSID(0, "$NetBSD: fdt_panel.c,v 1.3 2021/01/27 03:10:21 thorpej Exp $"
 
 static const struct device_compatible_entry compat_data[] = {
 	{ .compat = "simple-panel" },
+	{ .compat = "boe,nv140fhmn49" },
 	DEVICE_COMPAT_EOL
 };
 
