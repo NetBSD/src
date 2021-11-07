@@ -1,4 +1,4 @@
-/*	$NetBSD: dst_internal.h,v 1.2 2012/11/16 02:11:05 joerg Exp $	*/
+/*	$NetBSD: dst_internal.h,v 1.3 2021/11/07 20:31:09 andvar Exp $	*/
 
 #ifndef DST_INTERNAL_H
 #define DST_INTERNAL_H
@@ -50,7 +50,7 @@ typedef struct dst_key {
 #include <isc/dst.h>
 /* 
  * define what crypto systems are supported for RSA, 
- * BSAFE is prefered over RSAREF; only one can be set at any time
+ * BSAFE is preferred over RSAREF; only one can be set at any time
  */
 #if defined(BSAFE) && defined(RSAREF)
 # error "Cannot have both BSAFE and RSAREF defined"

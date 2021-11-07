@@ -1,4 +1,4 @@
-# $NetBSD: t_sed.sh,v 1.8 2021/02/23 21:09:14 christos Exp $
+# $NetBSD: t_sed.sh,v 1.9 2021/11/07 20:31:09 andvar Exp $
 #
 # Copyright (c) 2012 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -133,7 +133,7 @@ preserve_leading_ws_ia_body() {
 atf_test_case escapes_in_subst
 escapes_in_subst_head() {
 	atf_set "descr" "Test that sed(1) expands \x \d \o escapes " \
-		"in substition strings"
+		"in substitution strings"
 }
 
 escapes_in_subst_body() {

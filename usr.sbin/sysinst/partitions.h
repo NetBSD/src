@@ -1,4 +1,4 @@
-/*	$NetBSD: partitions.h,v 1.24 2021/09/11 21:30:46 andvar Exp $	*/
+/*	$NetBSD: partitions.h,v 1.25 2021/11/07 20:31:09 andvar Exp $	*/
 
 /*
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -240,11 +240,11 @@ struct disk_partitioning_scheme {
 	size_t (*get_part_types_count)(void);
 	const struct part_type_desc * (*get_part_type)(size_t ndx);
 	/*
-	 * Get the prefered native representation for a generic partition type
+	 * Get the preferred native representation for a generic partition type
 	 */
 	const struct part_type_desc * (*get_generic_part_type)(enum part_type);
 	/*
-	 * Get the prefered native partition type for a specific file system
+	 * Get the preferred native partition type for a specific file system
 	 * type (FS_*) and subtype (fs specific value)
 	 */
 	const struct part_type_desc * (*get_fs_part_type)(
