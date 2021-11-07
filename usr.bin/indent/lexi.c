@@ -1,4 +1,4 @@
-/*	$NetBSD: lexi.c,v 1.134 2021/11/07 07:35:06 rillig Exp $	*/
+/*	$NetBSD: lexi.c,v 1.135 2021/11/07 07:44:59 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)lexi.c	8.1 (Berkeley) 6/6/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: lexi.c,v 1.134 2021/11/07 07:35:06 rillig Exp $");
+__RCSID("$NetBSD: lexi.c,v 1.135 2021/11/07 07:44:59 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/lexi.c 337862 2018-08-15 18:19:45Z pstef $");
 #endif
@@ -58,7 +58,7 @@ __FBSDID("$FreeBSD: head/usr.bin/indent/lexi.c 337862 2018-08-15 18:19:45Z pstef
  * While inside lexi_alnum, this constant just marks a type, independently of
  * the parentheses level.
  */
-#define lsym_type lsym_type_at_paren_level_0
+#define lsym_type lsym_type_outside_parentheses
 
 /* must be sorted alphabetically, is used in binary search */
 static const struct keyword {
@@ -238,7 +238,7 @@ lsym_name(lexer_symbol sym)
 	"semicolon",
 	"typedef",
 	"storage_class",
-	"type_at_paren_level_0",
+	"type_outside_parentheses",
 	"type_in_parentheses",
 	"tag",
 	"case_label",
@@ -490,7 +490,7 @@ lexi_alnum(void)
 
     if (ps.prev_token == lsym_tag && ps.p_l_follow == 0) {
 	ps.next_unary = true;
-	return lsym_type_at_paren_level_0;
+	return lsym_type_outside_parentheses;
     }
 
     /* Operator after identifier is binary unless last token was 'struct'. */
@@ -521,7 +521,7 @@ found_typename:
 	    if (kw != NULL && kw->lsym == lsym_tag)
 		return lsym_tag;
 	    if (ps.p_l_follow == 0)
-		return lsym_type_at_paren_level_0;
+		return lsym_type_outside_parentheses;
 	}
     }
 
@@ -540,7 +540,7 @@ no_function_definition:;
 
     } else if (probably_typename()) {
 	ps.next_unary = true;
-	return lsym_type_at_paren_level_0;
+	return lsym_type_outside_parentheses;
     }
 
     return is_type ? lsym_type_in_parentheses : lsym_word;
