@@ -1,4 +1,4 @@
-/*	$NetBSD: lexi.c,v 1.137 2021/11/07 15:18:25 rillig Exp $	*/
+/*	$NetBSD: lexi.c,v 1.138 2021/11/07 18:26:17 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)lexi.c	8.1 (Berkeley) 6/6/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: lexi.c,v 1.137 2021/11/07 15:18:25 rillig Exp $");
+__RCSID("$NetBSD: lexi.c,v 1.138 2021/11/07 18:26:17 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/lexi.c 337862 2018-08-15 18:19:45Z pstef $");
 #endif
@@ -362,7 +362,7 @@ lex_number(void)
 	     * lex_number_state[0][s - 'A'] now indicates the type:
 	     * f = floating, i = integer, u = unknown
 	     */
-	    break;
+	    return;
 	}
 
 	s = lex_number_state[row][s - 'A'];
@@ -464,7 +464,7 @@ cmp_keyword_by_name(const void *key, const void *elem)
     return strcmp(key, ((const struct keyword *)elem)->name);
 }
 
-/* Read an alphanumeric token into 'token', or return end_of_file. */
+/* Read an alphanumeric token into 'token', or return lsym_eof. */
 static lexer_symbol
 lexi_alnum(void)
 {

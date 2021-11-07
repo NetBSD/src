@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.47 2021/10/29 23:48:50 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.48 2021/11/07 18:26:17 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -160,7 +160,7 @@ parse(parser_symbol psym)
 		 * for a switch, brace should be two levels out from the code
 		 */
 		if (ps.s_sym[ps.tos] == psym_switch_expr &&
-			opt.case_indent >= 1)
+			opt.case_indent >= 1.0F)
 		    --ps.ind_level;
 	    }
 	}
@@ -191,11 +191,10 @@ parse(parser_symbol psym)
 	if (ps.s_sym[ps.tos] != psym_if_expr_stmt)
 	    diag(1, "Unmatched 'else'");
 	else {
-	    /* The indentation for 'else' should be the same as for 'if'. */
 	    ps.ind_level = ps.s_ind_level[ps.tos];
 	    ps.ind_level_follow = ps.ind_level + 1;
 	    ps.s_sym[ps.tos] = psym_if_expr_stmt_else;
-	    /* remember if with else */
+
 	    ps.search_stmt = opt.brace_same_line || opt.else_if;
 	}
 	break;

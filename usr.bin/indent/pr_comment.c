@@ -1,4 +1,4 @@
-/*	$NetBSD: pr_comment.c,v 1.115 2021/11/07 13:38:32 rillig Exp $	*/
+/*	$NetBSD: pr_comment.c,v 1.116 2021/11/07 18:26:17 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)pr_comment.c	8.1 (Berkeley) 6/6/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: pr_comment.c,v 1.115 2021/11/07 13:38:32 rillig Exp $");
+__RCSID("$NetBSD: pr_comment.c,v 1.116 2021/11/07 18:26:17 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/pr_comment.c 334927 2018-06-10 16:44:18Z pstef $");
 #endif
@@ -124,8 +124,8 @@ analyze_comment(bool *p_may_wrap, bool *p_break_delim,
 	}
 
 	if (lab.s == lab.e && code.s == code.e) {
-	    com_ind = (ps.ind_level - opt.unindent_displace) * opt.indent_size;
 	    adj_max_line_length = opt.block_comment_max_line_length;
+	    com_ind = (ps.ind_level - opt.unindent_displace) * opt.indent_size;
 	    if (com_ind <= 0)
 		com_ind = opt.format_col1_comments ? 0 : 1;
 
@@ -150,20 +150,16 @@ analyze_comment(bool *p_may_wrap, bool *p_break_delim,
     if (!may_wrap) {
 	/*
 	 * Find out how much indentation there was originally, because that
-	 * much will have to be ignored by dump_line(). This is a box comment,
-	 * so nothing changes -- not even indentation.
+	 * much will have to be ignored by dump_line().
 	 *
 	 * The comment we're about to read usually comes from inp.buf, unless
 	 * it has been copied into save_com.
-	 */
-	const char *start;
-
-	/*
+	 *
 	 * XXX: ordered comparison between pointers from different objects
 	 * invokes undefined behavior (C99 6.5.8).
 	 */
-	start = inp.s >= sc_buf && inp.s < sc_buf + sc_size ?
-	    sc_buf : inp.buf;
+	const char *start = inp.s >= sc_buf && inp.s < sc_buf + sc_size
+	    ? sc_buf : inp.buf;
 	ps.n_comment_delta = -ind_add(0, start, inp.s - 2);
     } else {
 	ps.n_comment_delta = 0;
@@ -174,6 +170,8 @@ analyze_comment(bool *p_may_wrap, bool *p_break_delim,
     ps.comment_delta = 0;
     com_add_char('/');
     com_add_char(token.e[-1]);	/* either '*' or '/' */
+
+    /* TODO: Maybe preserve a single '\t' as well. */
     if (*inp.s != ' ' && may_wrap)
 	com_add_char(' ');
 
@@ -227,7 +225,7 @@ copy_comment_wrap(int adj_max_line_length, bool break_delim)
 	    last_blank = -1;
 	    if (ps.next_col_1) {
 		if (com.s == com.e)
-		    com_add_char(' ');
+		    com_add_char(' ');	/* force empty line of output */
 		if (com.e - com.s > 3) {
 		    dump_line();
 		    com_add_delim();
@@ -264,7 +262,7 @@ copy_comment_wrap(int adj_max_line_length, bool break_delim)
 		inp_skip();
 
 		if (break_delim) {
-		    if (com.e > com.s + 3)
+		    if (com.e - com.s > 3)
 			dump_line();
 		    else
 			com.e = com.s;
