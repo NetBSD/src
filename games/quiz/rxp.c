@@ -1,4 +1,4 @@
-/*	$NetBSD: rxp.c,v 1.13 2009/08/27 00:31:12 dholland Exp $	*/
+/*	$NetBSD: rxp.c,v 1.14 2021/11/07 20:31:09 andvar Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)rxp.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: rxp.c,v 1.13 2009/08/27 00:31:12 dholland Exp $");
+__RCSID("$NetBSD: rxp.c,v 1.14 2021/11/07 20:31:09 andvar Exp $");
 #endif
 #endif /* not lint */
 
@@ -50,7 +50,7 @@ __RCSID("$NetBSD: rxp.c,v 1.13 2009/08/27 00:31:12 dholland Exp $");
  *	TRUE	success
  *	FALSE	parse failure; error message will be in char rxperr[]
  * metas are:
- *	{...}	optional pattern, equialent to [...|]
+ *	{...}	optional pattern, equivalent to [...|]
  *	|	alternate pattern
  *	[...]	pattern delimiters
  *

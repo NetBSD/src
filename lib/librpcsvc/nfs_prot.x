@@ -32,7 +32,7 @@
 %#ifndef __lint__
 %/*static char sccsid[] = "from: @(#)nfs_prot.x 1.2 87/10/12 Copyr 1987 Sun Micro";*/
 %/*static char sccsid[] = "from: @(#)nfs_prot.x	2.1 88/08/01 4.0 RPCSRC";*/
-%__RCSID("$NetBSD: nfs_prot.x,v 1.7 2004/07/01 22:52:34 kleink Exp $");
+%__RCSID("$NetBSD: nfs_prot.x,v 1.8 2021/11/07 20:31:09 andvar Exp $");
 %#endif /* not __lint__ */
 #endif
 
@@ -121,7 +121,7 @@ struct fattr {
 	unsigned uid;		/* owner user id */
 	unsigned gid;		/* owner group id */
 	unsigned size;		/* file size in bytes */
-	unsigned blocksize;	/* prefered block size */
+	unsigned blocksize;	/* preferred block size */
 	unsigned rdev;		/* special device # */
 	unsigned blocks;	/* Kb of disk used by file */
 	unsigned fsid;		/* device # */
@@ -396,7 +396,7 @@ struct fattr3 {
 	uid3	uid;		/* owner user id */
 	gid3	gid;		/* owner group id */
 	size3	size;		/* file size in bytes */
-	size3	used;		/* prefered block size */
+	size3	used;		/* preferred block size */
 	specdata3 rdev;		/* special device # */
 	u_int64_t fsid;		/* device # */
 	fileid3	fileid;		/* inode # */
