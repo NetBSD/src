@@ -1,4 +1,4 @@
-/*	$NetBSD: args.c,v 1.69 2021/11/05 21:52:17 rillig Exp $	*/
+/*	$NetBSD: args.c,v 1.70 2021/11/07 18:09:56 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)args.c	8.1 (Berkeley) 6/6/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: args.c,v 1.69 2021/11/05 21:52:17 rillig Exp $");
+__RCSID("$NetBSD: args.c,v 1.70 2021/11/07 18:09:56 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/args.c 336318 2018-07-15 21:04:21Z pstef $");
 #endif
@@ -152,12 +152,12 @@ set_special_option(const char *arg, const char *option_source)
 {
     const char *arg_end;
 
-    if (strncmp(arg, "-version", 8) == 0) {
+    if (strcmp(arg, "-version") == 0) {
 	printf("NetBSD indent 2.1\n");
 	exit(0);
     }
 
-    if (arg[0] == 'P' || strncmp(arg, "npro", 4) == 0)
+    if (arg[0] == 'P' || strcmp(arg, "npro") == 0)
 	return true;
 
     if (strncmp(arg, "cli", 3) == 0) {
@@ -172,7 +172,7 @@ set_special_option(const char *arg, const char *option_source)
 	return true;
     }
 
-    if (strncmp(arg, "st", 2) == 0) {
+    if (strcmp(arg, "st") == 0) {
 	if (input == NULL)
 	    input = stdin;
 	if (output == NULL)
