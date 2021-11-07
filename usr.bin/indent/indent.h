@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.h,v 1.80 2021/11/07 07:35:06 rillig Exp $	*/
+/*	$NetBSD: indent.h,v 1.81 2021/11/07 07:44:59 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-FreeBSD
@@ -91,7 +91,7 @@ typedef enum lexer_symbol {
     lsym_semicolon,
     lsym_typedef,
     lsym_storage_class,
-    lsym_type_at_paren_level_0,
+    lsym_type_outside_parentheses,
     lsym_type_in_parentheses,
     lsym_tag,			/* 'struct', 'union' or 'enum' */
     lsym_case_label,		/* 'case' or 'default' */
