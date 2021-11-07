@@ -1,5 +1,5 @@
 #! /bin/sh
-# $NetBSD: t_misc.sh,v 1.13 2021/11/07 15:01:50 rillig Exp $
+# $NetBSD: t_misc.sh,v 1.14 2021/11/07 19:04:46 rillig Exp $
 #
 # Copyright (c) 2021 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -364,6 +364,23 @@ several_profiles_body()
 	    "$indent" -Pnonexistent.pro -Perror.pro -Plast.pro code.c -st
 }
 
+atf_test_case 'if_expr_c99_comment'
+if_expr_c99_comment_body()
+{
+	cat <<-\EOF >> code.c
+		void function(void) {
+			if (expr) // C99 comment
+				stmt();
+		}
+	EOF
+	cat <<-\EOF >> code.err
+		error: code.c:2: Internal buffer overflow - Move big comment from right after if, while, or whatever
+	EOF
+
+	atf_check -s 'exit:1' -o 'ignore' -e 'file:code.err' \
+	    "$indent" code.c -st
+}
+
 atf_init_test_cases()
 {
 	atf_add_test_case 'in_place'
@@ -377,4 +394,5 @@ atf_init_test_cases()
 	atf_add_test_case 'line_no_counting'
 	atf_add_test_case 'default_backup_extension'
 	atf_add_test_case 'several_profiles'
+	atf_add_test_case 'if_expr_c99_comment'
 }
