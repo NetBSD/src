@@ -1,4 +1,4 @@
-/*	$NetBSD: pr_comment.c,v 1.99 2021/11/07 08:24:50 rillig Exp $	*/
+/*	$NetBSD: pr_comment.c,v 1.100 2021/11/07 08:31:46 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)pr_comment.c	8.1 (Berkeley) 6/6/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: pr_comment.c,v 1.99 2021/11/07 08:24:50 rillig Exp $");
+__RCSID("$NetBSD: pr_comment.c,v 1.100 2021/11/07 08:31:46 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/pr_comment.c 334927 2018-06-10 16:44:18Z pstef $");
 #endif
@@ -341,23 +341,13 @@ copy_comment_wrap(int adj_max_line_length, bool break_delim)
 static void
 copy_comment_nowrap(int adj_max_line_length, bool break_delim)
 {
-    bool may_wrap = false;
     ssize_t last_blank = -1;	/* index of the last blank in com.buf */
 
     for (;;) {
 	switch (*inp.s) {
 	case '\f':
-	    if (may_wrap) {	/* in a text comment, break the line here */
-		dump_line_ff();
-		last_blank = -1;
-		com_add_delim();
-		inp.s++;
-		while (ch_isblank(*inp.s))
-		    inp.s++;
-	    } else {
-		inp_skip();
-		com_add_char('\f');
-	    }
+	    inp_skip();
+	    com_add_char('\f');
 	    break;
 
 	case '\n':
@@ -371,45 +361,16 @@ copy_comment_nowrap(int adj_max_line_length, bool break_delim)
 	    }
 
 	    last_blank = -1;
-	    if (!may_wrap || ps.next_col_1) {	/* if this is a boxed comment,
-						 * we handle the newline */
-		if (com.s == com.e)
-		    com_add_char(' ');
-		if (may_wrap && com.e - com.s > 3) {
-		    dump_line();
-		    com_add_delim();
-		}
-		dump_line();
-		if (may_wrap)
-		    com_add_delim();
-
-	    } else {
-		ps.next_col_1 = true;
-		if (!ch_isblank(com.e[-1]))
-		    com_add_char(' ');
-		last_blank = com.e - 1 - com.buf;
-	    }
+	    if (com.s == com.e)
+		com_add_char(' ');	/* force output of an empty line */
+	    dump_line();
 	    ++line_no;
-	    if (may_wrap) {
-		bool skip_asterisk = true;
-		do {		/* flush any blanks and/or tabs at start of
-				 * next line */
-		    inp_skip();
-		    if (*inp.s == '*' && skip_asterisk) {
-			skip_asterisk = false;
-			inp_skip();
-			if (*inp.s == '/')
-			    goto end_of_comment;
-		    }
-		} while (ch_isblank(*inp.s));
-	    } else
-		inp_skip();
+	    inp_skip();
 	    break;		/* end of case for newline */
 
 	case '*':
 	    inp_skip();
 	    if (*inp.s == '/' && token.e[-1] == '*') {
-	end_of_comment:
 		inp_skip();
 
 	end_of_line_comment:
@@ -421,8 +382,6 @@ copy_comment_nowrap(int adj_max_line_length, bool break_delim)
 		    com_add_char(' ');
 		}
 
-		if (!ch_isblank(com.e[-1]) && may_wrap)
-		    com_add_char(' ');
 		if (token.e[-1] == '*') {
 		    com_add_char('*');
 		    com_add_char('/');
@@ -450,27 +409,7 @@ copy_comment_nowrap(int adj_max_line_length, bool break_delim)
 	    }
 
 	    ps.next_col_1 = false;
-
-	    if (now_len <= adj_max_line_length || !may_wrap)
-		break;
-	    if (isspace((unsigned char)com.e[-1]))
-		break;
-
-	    if (last_blank == -1) {	/* only a single word in this line */
-		dump_line();
-		com_add_delim();
-		break;
-	    }
-
-	    const char *last_word_s = com.buf + last_blank + 1;
-	    size_t last_word_len = (size_t)(com.e - last_word_s);
-	    com.e = com.buf + last_blank;
-	    dump_line();
-	    com_add_delim();
-
-	    memcpy(com.e, last_word_s, last_word_len);
-	    com.e += last_word_len;
-	    last_blank = -1;
+	    break;
 	}
     }
 }
@@ -508,7 +447,7 @@ process_comment(void)
     int l_just_saw_decl = ps.just_saw_decl;
     analyze_comment(&adj_max_line_length, &break_delim, &may_wrap);
     if (may_wrap)
-    	copy_comment_wrap(adj_max_line_length, break_delim);
+	copy_comment_wrap(adj_max_line_length, break_delim);
     else
 	copy_comment_nowrap(adj_max_line_length, break_delim);
     ps.just_saw_decl = l_just_saw_decl;
