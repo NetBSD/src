@@ -1,4 +1,4 @@
-/* $NetBSD: opt_bl_br.c,v 1.1 2021/10/22 20:54:36 rillig Exp $ */
+/* $NetBSD: opt_bl_br.c,v 1.2 2021/11/07 19:18:56 rillig Exp $ */
 /* $FreeBSD$ */
 
 #indent input
@@ -63,5 +63,61 @@ example(int n)
 	else {
 		print("negative");
 	}
+}
+#indent end
+
+
+/*
+ * Test C99 comments after 'if (expr)', which is handled by search_stmt.
+ */
+#indent input
+void function(void)
+{
+	if (expr) // C99 comment
+		stmt();
+
+	if (expr) // C99 comment
+	{
+		stmt();
+	}
+}
+#indent end
+
+#indent run
+void
+function(void)
+{
+	if (expr)		// C99 comment
+		stmt();
+
+	if (expr) {		// C99 comment
+		stmt();
+	}
+}
+#indent end
+
+
+/*
+ * Test multiple mixed comments after 'if (expr)'.
+ */
+#indent input
+void
+function(void)
+{
+	if (expr)	// C99 comment 1
+			// C99 comment 2
+			// C99 comment 3
+		stmt();
+}
+#indent end
+
+#indent run
+void
+function(void)
+{
+	if (expr)		// C99 comment 1
+		// C99 comment 2
+		// C99 comment 3
+		stmt();
 }
 #indent end
