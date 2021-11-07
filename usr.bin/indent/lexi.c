@@ -1,4 +1,4 @@
-/*	$NetBSD: lexi.c,v 1.132 2021/11/05 22:06:43 rillig Exp $	*/
+/*	$NetBSD: lexi.c,v 1.133 2021/11/07 07:06:00 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)lexi.c	8.1 (Berkeley) 6/6/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: lexi.c,v 1.132 2021/11/05 22:06:43 rillig Exp $");
+__RCSID("$NetBSD: lexi.c,v 1.133 2021/11/07 07:06:00 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/lexi.c 337862 2018-08-15 18:19:45Z pstef $");
 #endif
@@ -179,24 +179,24 @@ static const unsigned char lex_number_row[] = {
 };
 
 static char
-inbuf_peek(void)
+inp_peek(void)
 {
     return *inp.s;
 }
 
 void
-inbuf_skip(void)
+inp_skip(void)
 {
     inp.s++;
     if (inp.s >= inp.e)
-	inbuf_read_line();
+	inp_read_line();
 }
 
 char
-inbuf_next(void)
+inp_next(void)
 {
-    char ch = inbuf_peek();
-    inbuf_skip();
+    char ch = inp_peek();
+    inp_skip();
     return ch;
 }
 
@@ -367,7 +367,7 @@ lex_number(void)
 	}
 
 	s = lex_number_state[row][s - 'A'];
-	token_add_char(inbuf_next());
+	token_add_char(inp_next());
     }
 }
 
@@ -382,12 +382,12 @@ lex_word(void)
 	    if (inp.s[1] == '\n') {
 		inp.s += 2;
 		if (inp.s >= inp.e)
-		    inbuf_read_line();
+		    inp_read_line();
 	    } else
 		break;
 	}
 
-	token_add_char(inbuf_next());
+	token_add_char(inp_next());
     }
 }
 
@@ -400,14 +400,14 @@ lex_char_or_string(void)
 	    return;
 	}
 
-	token_add_char(inbuf_next());
+	token_add_char(inp_next());
 	if (token.e[-1] == delim)
 	    return;
 
 	if (token.e[-1] == '\\') {
 	    if (*inp.s == '\n')
 		++line_no;
-	    token_add_char(inbuf_next());
+	    token_add_char(inp_next());
 	}
     }
 }
@@ -486,8 +486,8 @@ lexi_alnum(void)
 	(*inp.s == '"' || *inp.s == '\''))
 	return lsym_string_prefix;
 
-    while (ch_isblank(inbuf_peek()))
-	inbuf_skip();
+    while (ch_isblank(inp_peek()))
+	inp_skip();
 
     if (ps.prev_token == lsym_tag && ps.p_l_follow == 0) {
 	ps.next_unary = true;
@@ -559,7 +559,7 @@ lexi(void)
 
     while (ch_isblank(*inp.s)) {
 	ps.curr_col_1 = false;
-	inbuf_skip();
+	inp_skip();
     }
 
     lexer_symbol alnum_lsym = lexi_alnum();
@@ -569,7 +569,7 @@ lexi(void)
     /* Scan a non-alphanumeric token */
 
     check_size_token(3);	/* for things like "<<=" */
-    *token.e++ = inbuf_next();
+    *token.e++ = inp_next();
     *token.e = '\0';
 
     lexer_symbol lsym;
@@ -686,7 +686,7 @@ lexi(void)
     case '<':
     case '!':			/* ops like <, <<, <=, !=, etc */
 	if (*inp.s == '>' || *inp.s == '<' || *inp.s == '=')
-	    *token.e++ = inbuf_next();
+	    *token.e++ = inp_next();
 	if (*inp.s == '=')
 	    *token.e++ = *inp.s++;
 	lsym = ps.next_unary ? lsym_unary_op : lsym_binary_op;
@@ -705,7 +705,7 @@ lexi(void)
 	while (*inp.s == '*' || isspace((unsigned char)*inp.s)) {
 	    if (*inp.s == '*')
 		token_add_char('*');
-	    inbuf_skip();
+	    inp_skip();
 	}
 
 	if (ps.in_decl) {
@@ -714,7 +714,7 @@ lexi(void)
 	    while (isalpha((unsigned char)*tp) ||
 		    isspace((unsigned char)*tp)) {
 		if (++tp >= inp.e)
-		    inbuf_read_line();
+		    inp_read_line();
 	    }
 	    if (*tp == '(')
 		ps.procname[0] = ' ';
@@ -725,7 +725,7 @@ lexi(void)
 
     default:
 	if (token.e[-1] == '/' && (*inp.s == '*' || *inp.s == '/')) {
-	    *token.e++ = inbuf_next();
+	    *token.e++ = inp_next();
 	    lsym = lsym_comment;
 	    unary_delim = ps.next_unary;
 	    break;
@@ -733,14 +733,14 @@ lexi(void)
 
 	/* handle '||', '&&', etc., and also things as in 'int *****i' */
 	while (token.e[-1] == *inp.s || *inp.s == '=')
-	    token_add_char(inbuf_next());
+	    token_add_char(inp_next());
 
 	lsym = ps.next_unary ? lsym_unary_op : lsym_binary_op;
 	unary_delim = true;
     }
 
     if (inp.s >= inp.e)
-	inbuf_read_line();
+	inp_read_line();
 
     ps.next_unary = unary_delim;
 
