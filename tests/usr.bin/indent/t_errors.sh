@@ -1,5 +1,5 @@
 #! /bin/sh
-# $NetBSD: t_errors.sh,v 1.19 2021/11/07 15:54:00 rillig Exp $
+# $NetBSD: t_errors.sh,v 1.20 2021/11/07 18:09:56 rillig Exp $
 #
 # Copyright (c) 2021 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -146,27 +146,24 @@ option_cli_trailing_garbage_body()
 atf_test_case 'option_npro_trailing_garbage'
 option_npro_trailing_garbage_body()
 {
-	# TODO: reject -npro-garbage, only allow -npro without trailing garbage.
-
-	atf_check \
+	atf_check -s 'exit:1' \
+	    -e 'inline:indent: Command line: unknown option "-npro-garbage"'"$nl" \
 	    "$indent" -npro-garbage
 }
 
 atf_test_case 'option_st_trailing_garbage'
 option_st_trailing_garbage_body()
 {
-	# TODO: reject -stdio, only allow -st without trailing garbage.
-
-	atf_check \
+	atf_check -s 'exit:1' \
+	    -e 'inline:indent: Command line: unknown option "-stdio"'"$nl" \
 	    "$indent" -stdio
 }
 
 atf_test_case 'option_version_trailing_garbage'
 option_version_trailing_garbage_body()
 {
-	# TODO: reject --version-dump, only allow --version without trailing garbage.
-
-	atf_check -o 'inline:NetBSD indent 2.1'"$nl" \
+	atf_check -s 'exit:1' \
+	    -e 'inline:indent: Command line: unknown option "--version-dump"'"$nl" \
 	    "$indent" --version-dump
 }
 
