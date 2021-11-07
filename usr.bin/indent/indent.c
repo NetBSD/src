@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.c,v 1.212 2021/11/07 07:44:59 rillig Exp $	*/
+/*	$NetBSD: indent.c,v 1.213 2021/11/07 13:30:15 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)indent.c	5.17 (Berkeley) 6/7/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: indent.c,v 1.212 2021/11/07 07:44:59 rillig Exp $");
+__RCSID("$NetBSD: indent.c,v 1.213 2021/11/07 13:30:15 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/indent.c 340138 2018-11-04 19:24:49Z oshogbo $");
 #endif
@@ -840,7 +840,7 @@ want_blank_before_unary_op(void)
     if (ps.want_blank)
 	return true;
     if (token.s[0] == '+' || token.s[0] == '-')
-	return code.e[-1] == token.s[0];
+	return code.e > code.s && code.e[-1] == token.s[0];
     return false;
 }
 
@@ -1105,7 +1105,7 @@ process_else(bool *force_nl, bool *last_else)
 {
     ps.in_stmt = false;
 
-    if (code.e != code.s && (!opt.cuddle_else || code.e[-1] != '}')) {
+    if (code.e > code.s && (!opt.cuddle_else || code.e[-1] != '}')) {
 	if (opt.verbose)
 	    diag(0, "Line broken");
 	dump_line();		/* make sure this starts a line */
@@ -1199,7 +1199,7 @@ process_string_prefix(void)
 static void
 process_period(void)
 {
-    if (code.e[-1] == ',')
+    if (code.e > code.s && code.e[-1] == ',')
 	*code.e++ = ' ';
     *code.e++ = '.';
     ps.want_blank = false;

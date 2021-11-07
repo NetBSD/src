@@ -1,4 +1,4 @@
-/* $NetBSD: opt_cdb.c,v 1.4 2021/10/18 07:11:31 rillig Exp $ */
+/* $NetBSD: opt_cdb.c,v 1.5 2021/11/07 13:30:15 rillig Exp $ */
 /* $FreeBSD$ */
 
 /*
@@ -130,4 +130,40 @@ example(void)
 	/* A multi-line comment. */
 	int		lc;
 }
+#indent end
+
+
+#indent input
+/*
+
+ */
+#indent end
+
+#indent run -cdb
+/*
+ *
+ */
+#indent end
+
+#indent run -ncdb
+/*
+ * */
+#indent end
+
+
+#indent input
+/*
+
+*/
+#indent end
+
+#indent run -cdb
+/*
+ *
+ */
+#indent end
+
+#indent run -ncdb
+/*
+ * */
 #indent end
