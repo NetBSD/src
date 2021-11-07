@@ -1,4 +1,4 @@
-/* $NetBSD: pwm_backlight.c,v 1.9 2021/01/27 03:10:21 thorpej Exp $ */
+/* $NetBSD: pwm_backlight.c,v 1.10 2021/11/07 17:14:09 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pwm_backlight.c,v 1.9 2021/01/27 03:10:21 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pwm_backlight.c,v 1.10 2021/11/07 17:14:09 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -86,7 +86,7 @@ pwm_backlight_attach(device_t parent, device_t self, void *aux)
 	struct fdt_attach_args * const faa = aux;
 	const int phandle = faa->faa_phandle;
 	const u_int *levels;
-	u_int default_level;
+	u_int default_level = 0;
 	u_int n;
 	int len;
 
@@ -107,14 +107,18 @@ pwm_backlight_attach(device_t parent, device_t self, void *aux)
 	}
 
 	levels = fdtbus_get_prop(phandle, "brightness-levels", &len);
-	if (len < 4) {
-		aprint_error(": couldn't get 'brightness-levels' property\n");
-		return;
+	if (levels != NULL) {
+		sc->sc_nlevels = len / 4;
+		sc->sc_levels = kmem_alloc(len, KM_SLEEP);
+		for (n = 0; n < sc->sc_nlevels; n++)
+			sc->sc_levels[n] = be32toh(levels[n]);
+	} else {
+		sc->sc_nlevels = 256;
+		sc->sc_levels = kmem_alloc(sc->sc_nlevels * 4, KM_SLEEP);
+		for (n = 0; n < sc->sc_nlevels; n++)
+			sc->sc_levels[n] = n;
+		default_level = 200;
 	}
-	sc->sc_levels = kmem_alloc(len, KM_SLEEP);
-	sc->sc_nlevels = len / 4;
-	for (n = 0; n < sc->sc_nlevels; n++)
-		sc->sc_levels[n] = be32toh(levels[n]);
 
 	aprint_naive("\n");
 	aprint_normal(": PWM Backlight");
@@ -127,7 +131,8 @@ pwm_backlight_attach(device_t parent, device_t self, void *aux)
 
 	sc->sc_lid_state = true;
 
-	if (of_getprop_uint32(phandle, "default-brightness-level", &default_level) == 0) {
+	of_getprop_uint32(phandle, "default-brightness-level", &default_level);
+	if (default_level != 0) {
 		/* set the default level now */
 		pwm_backlight_set(sc, default_level, true);
 	}
