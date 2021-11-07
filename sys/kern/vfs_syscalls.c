@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.553 2021/09/26 21:29:38 thorpej Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.554 2021/11/07 13:47:50 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009, 2019, 2020 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.553 2021/09/26 21:29:38 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.554 2021/11/07 13:47:50 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_fileassoc.h"
@@ -1459,24 +1459,19 @@ sys___getvfsstat90(struct lwp *l, const struct sys___getvfsstat90_args *uap,
 /*
  * Change current working directory to a given file descriptor.
  */
-/* ARGSUSED */
 int
-sys_fchdir(struct lwp *l, const struct sys_fchdir_args *uap, register_t *retval)
+do_sys_fchdir(struct lwp *l, int fd, register_t *retval)
 {
-	/* {
-		syscallarg(int) fd;
-	} */
 	struct proc *p = l->l_proc;
 	struct cwdinfo *cwdi;
 	struct vnode *vp, *tdp;
 	struct mount *mp;
 	file_t *fp;
-	int error, fd;
+	int error;
 
 	/* fd_getvnode() will use the descriptor for us */
-	fd = SCARG(uap, fd);
 	if ((error = fd_getvnode(fd, &fp)) != 0)
-		return (error);
+		return error;
 	vp = fp->f_vnode;
 
 	vref(vp);
@@ -1517,9 +1512,22 @@ sys_fchdir(struct lwp *l, const struct sys_fchdir_args *uap, register_t *retval)
 	}
 	rw_exit(&cwdi->cwdi_lock);
 
- out:
+out:
 	fd_putfile(fd);
-	return (error);
+	return error;
+}
+
+/*
+ * Change current working directory to a given file descriptor.
+ */
+/* ARGSUSED */
+int
+sys_fchdir(struct lwp *l, const struct sys_fchdir_args *uap, register_t *retval)
+{
+	/* {
+		syscallarg(int) fd;
+	} */
+	return do_sys_fchdir(l, SCARG(uap, fd), retval);
 }
 
 /*
@@ -1559,6 +1567,28 @@ sys_fchroot(struct lwp *l, const struct sys_fchroot_args *uap, register_t *retva
 /*
  * Change current working directory (``.'').
  */
+int
+do_sys_chdir(struct lwp *l, const char *path, enum uio_seg seg,
+    register_t *retval)
+{
+	struct proc *p = l->l_proc;
+	struct cwdinfo * cwdi;
+	int error;
+	struct vnode *vp;
+
+	if ((error = chdir_lookup(path, seg, &vp, l)) != 0)
+		return error;
+	cwdi = p->p_cwdi;
+	rw_enter(&cwdi->cwdi_lock, RW_WRITER);
+	vrele(cwdi->cwdi_cdir);
+	cwdi->cwdi_cdir = vp;
+	rw_exit(&cwdi->cwdi_lock);
+	return 0;
+}
+
+/*
+ * Change current working directory (``.'').
+ */
 /* ARGSUSED */
 int
 sys_chdir(struct lwp *l, const struct sys_chdir_args *uap, register_t *retval)
@@ -1566,20 +1596,7 @@ sys_chdir(struct lwp *l, const struct sys_chdir_args *uap, register_t *retval)
 	/* {
 		syscallarg(const char *) path;
 	} */
-	struct proc *p = l->l_proc;
-	struct cwdinfo *cwdi;
-	int error;
-	struct vnode *vp;
-
-	if ((error = chdir_lookup(SCARG(uap, path), UIO_USERSPACE,
-				  &vp, l)) != 0)
-		return (error);
-	cwdi = p->p_cwdi;
-	rw_enter(&cwdi->cwdi_lock, RW_WRITER);
-	vrele(cwdi->cwdi_cdir);
-	cwdi->cwdi_cdir = vp;
-	rw_exit(&cwdi->cwdi_lock);
-	return (0);
+	return do_sys_chdir(l, SCARG(uap, path), UIO_USERSPACE, retval);
 }
 
 /*
