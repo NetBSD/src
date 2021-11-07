@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.h,v 1.82 2021/11/07 08:24:50 rillig Exp $	*/
+/*	$NetBSD: indent.h,v 1.83 2021/11/07 13:43:11 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-FreeBSD
@@ -159,7 +159,9 @@ extern struct buffer token;	/* the current token to be processed, is
 extern struct buffer lab;	/* the label or preprocessor directive */
 extern struct buffer code;	/* the main part of the current line of code */
 extern struct buffer com;	/* the trailing comment of the line, or the
-				 * start or end of a multi-line comment */
+				 * start or end of a multi-line comment, or
+				 * while in process_comment, a single line of
+				 * a multi-line comment */
 
 extern char sc_buf[sc_size];	/* input text is saved here when looking for
 				 * the brace after an if, while, etc */
