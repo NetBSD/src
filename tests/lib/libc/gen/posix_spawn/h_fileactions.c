@@ -1,4 +1,4 @@
-/* $NetBSD: h_fileactions.c,v 1.1 2012/02/13 21:03:08 martin Exp $ */
+/* $NetBSD: h_fileactions.c,v 1.2 2021/11/07 15:46:20 christos Exp $ */
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -29,6 +29,8 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: h_fileactions.c,v 1.2 2021/11/07 15:46:20 christos Exp $");
 
 #include <stdio.h>
 #include <stdlib.h>

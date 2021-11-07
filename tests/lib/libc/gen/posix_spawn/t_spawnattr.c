@@ -1,4 +1,4 @@
-/* $NetBSD: t_spawnattr.c,v 1.4 2021/05/02 11:18:11 martin Exp $ */
+/* $NetBSD: t_spawnattr.c,v 1.5 2021/11/07 15:46:20 christos Exp $ */
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -29,7 +29,10 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: t_spawnattr.c,v 1.5 2021/11/07 15:46:20 christos Exp $");
 
+#include <sys/param.h>
 #include <atf-c.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -41,9 +44,6 @@
 #include <spawn.h>
 #include <unistd.h>
 #include <sys/wait.h>
-
-#define MAX(a, b)	(a) > (b) ? (a) : (b)
-#define MIN(a, b)	(a) > (b) ? (b) : (a)
 
 static int
 get_different_scheduler(void)

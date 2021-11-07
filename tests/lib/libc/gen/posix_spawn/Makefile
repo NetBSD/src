@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.2 2012/02/14 00:13:54 martin Exp $
+# $NetBSD: Makefile,v 1.3 2021/11/07 15:46:20 christos Exp $
 
 NOMAN=		# defined
 WARNS=4
@@ -10,6 +10,9 @@ TESTSDIR=	${TESTSBASE}/lib/libc/gen/posix_spawn
 TESTS_C=	t_spawn
 TESTS_C+=	t_fileactions
 TESTS_C+=	t_spawnattr
+
+SRCS.t_spawn += t_spawn fa_spawn_utils
+SRCS.t_fileactions += t_fileactions fa_spawn_utils
 
 BINDIR=		${TESTSDIR}
 SCRIPTSDIR=	${TESTSDIR}
