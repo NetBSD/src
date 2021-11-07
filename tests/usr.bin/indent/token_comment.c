@@ -1,4 +1,4 @@
-/* $NetBSD: token_comment.c,v 1.21 2021/11/07 11:30:45 rillig Exp $ */
+/* $NetBSD: token_comment.c,v 1.22 2021/11/07 12:26:22 rillig Exp $ */
 /* $FreeBSD$ */
 
 /*
@@ -1021,3 +1021,28 @@ line 4
 #indent end
 
 #indent run-equals-input -nsc -ncdb
+
+
+/*
+ * Cover the code for expanding the comment buffer. As of 2021-11-07, the
+ * default buffer size is 200. To actually fill the comment buffer, there must
+ * be a single line of a comment that is longer than 200 bytes.
+ */
+#indent input
+/*-_____10________20________30________40________50________60________70________80________90_______100_______110_______120_______130_______140_______150_______160_______170_______180_______190_______200 */
+#indent end
+
+#indent run-equals-input
+
+/*
+ * Cover the code for expanding the comment buffer in com_terminate. As of
+ * 2021-11-07, the default buffer size is 200, with a safety margin of 1 at
+ * the beginning and another safety margin of 5 at the end. To force the
+ * comment buffer to expanded in com_terminate, the comment must be exactly
+ * 193 bytes long.
+ */
+#indent input
+/*-_____10________20________30________40________50________60________70________80________90_______100_______110_______120_______130_______140_______150_______160_______170_______180_______190 */
+#indent end
+
+#indent run-equals-input
