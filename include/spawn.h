@@ -1,4 +1,4 @@
-/*	$NetBSD: spawn.h,v 1.4 2012/02/22 17:51:01 martin Exp $	*/
+/*	$NetBSD: spawn.h,v 1.5 2021/11/07 14:34:30 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008 Ed Schouten <ed@FreeBSD.org>
@@ -55,6 +55,10 @@ int posix_spawn_file_actions_addopen(posix_spawn_file_actions_t * __restrict,
     int, const char * __restrict, int, mode_t);
 int posix_spawn_file_actions_adddup2(posix_spawn_file_actions_t *, int, int);
 int posix_spawn_file_actions_addclose(posix_spawn_file_actions_t *, int);
+
+int posix_spawn_file_actions_addchdir(posix_spawn_file_actions_t * __restrict,
+        const char * __restrict);
+int posix_spawn_file_actions_addfchdir(posix_spawn_file_actions_t *, int);
 
 /*
  * Spawn attributes
