@@ -1,4 +1,4 @@
-/* $NetBSD: opt_eei.c,v 1.4 2021/10/18 07:11:31 rillig Exp $ */
+/* $NetBSD: opt_eei.c,v 1.5 2021/11/07 08:03:15 rillig Exp $ */
 /* $FreeBSD$ */
 
 /*
@@ -77,5 +77,80 @@ less(int a, int b)
 	    <
 	    b)
 	return true;
+}
+#indent end
+
+/*
+ * With an indentation size of 4, the width of the code 'if (' is exactly one
+ * indentation level. With the option '-nlp', the option '-eei' has no effect.
+ *
+ * XXX: This is unexpected since this creates the exact ambiguity that the
+ * option '-eei' is supposed to prevent.
+ */
+#indent run -eei -i4 -nlp
+bool
+less(int a, int b)
+{
+    if (a <
+	b)
+	return true;
+    if (a
+	<
+	b)
+	return true;
+}
+#indent end
+
+
+/*
+ * The option '-eei' applies no matter whether the continued expression starts
+ * with a word or an operator like '&&'. The latter cannot start a statement,
+ * so there would be no ambiguity.
+ */
+#indent input
+{
+	if (a
+&& b)
+	    stmt();
+}
+#indent end
+
+/*
+ * XXX: The extra indentation is unnecessary since there is no possible
+ * confusion: the standard indentation is 8, the indentation of the continued
+ * condition could have stayed at 4.
+ */
+#indent run -eei
+{
+	if (a
+			&& b)
+		stmt();
+}
+#indent end
+
+/*
+ * The extra indentation is necessary here since otherwise the '&&' and the
+ * 'stmt()' would start at the same indentation.
+ */
+#indent run -eei -i4
+{
+    if (a
+	    && b)
+	stmt();
+}
+#indent end
+
+/*
+ * With an indentation size of 4, the width of the code 'if (' is exactly one
+ * indentation level. With the option '-nlp', the option '-eei' has no effect.
+ *
+ * XXX: This is unexpected since this creates the exact ambiguity that the
+ * option '-eei' is supposed to prevent.
+ */
+#indent run -eei -i4 -nlp
+{
+    if (a
+	&& b)
+	stmt();
 }
 #indent end
