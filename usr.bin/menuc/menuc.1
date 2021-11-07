@@ -1,4 +1,4 @@
-.\"	$NetBSD: menuc.1,v 1.38 2019/06/23 11:22:48 martin Exp $
+.\"	$NetBSD: menuc.1,v 1.39 2021/11/07 09:48:08 andvar Exp $
 .\"
 .\" Copyright 1997 Piermont Information Systems Inc.
 .\" All rights reserved.
@@ -544,7 +544,7 @@ If it's null, string
 .Dq Exit
 is used.
 .Sh MENU ITEM ACTIONS
-When creating dynamic menus, the programer supplies function pointers
+When creating dynamic menus, the programmer supplies function pointers
 for the menu items
 .Dv opt_action
 member.
@@ -555,7 +555,7 @@ process sub menu (if set) and continue with the current (or new) menu
 as usual.
 .It 1
 exit the current menu.
-This is equivalen to specifying
+This is equivalent to specifying
 .Dq exit
 in a non-dynamic menu specification.
 .It -1
@@ -571,13 +571,13 @@ to jump to an arbitrary menu item (in the modified menu).
 With the
 .Ic enable expansion
 declaration in effect, static menus may be customized before being displayed.
-This allows parameter substition or special formatting of the menu item
+This allows parameter substitution or special formatting of the menu item
 strings without having to resort to a full dynamic menu.
 Expanded strings are stored in the
 .Fa opt_exp_name
 member of struct
 .Vt menu_ent .
-This string is prefered over the non-expanded string
+This string is preferred over the non-expanded string
 .Fa opt_name
 when displaying the menu.
 The expand action code is responsible for filling this pointers.
@@ -586,7 +586,7 @@ When leaving the menu, all
 pointers that are populated will be automatically freed by calling
 .Xr free 3 .
 .Pp
-A very simple (and nonsensial) example for an expand option would
+A very simple (and nonsensical) example for an expand option would
 be:
 .Bd -literal -offset indent
 expand action {
