@@ -1,4 +1,4 @@
-/*	$NetBSD: pr_comment.c,v 1.101 2021/11/07 08:38:27 rillig Exp $	*/
+/*	$NetBSD: pr_comment.c,v 1.102 2021/11/07 08:41:13 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)pr_comment.c	8.1 (Berkeley) 6/6/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: pr_comment.c,v 1.101 2021/11/07 08:38:27 rillig Exp $");
+__RCSID("$NetBSD: pr_comment.c,v 1.102 2021/11/07 08:41:13 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/pr_comment.c 334927 2018-06-10 16:44:18Z pstef $");
 #endif
@@ -330,7 +330,7 @@ copy_comment_wrap(int adj_max_line_length, bool break_delim)
 }
 
 static void
-copy_comment_nowrap(int adj_max_line_length, bool break_delim)
+copy_comment_nowrap(int adj_max_line_length)
 {
     ssize_t last_blank = -1;	/* index of the last blank in com.buf */
 
@@ -365,14 +365,6 @@ copy_comment_nowrap(int adj_max_line_length, bool break_delim)
 		inp_skip();
 
 	end_of_line_comment:
-		if (break_delim) {
-		    if (com.e > com.s + 3)
-			dump_line();
-		    else
-			com.s = com.e;	/* XXX: why not e = s? */
-		    com_add_char(' ');
-		}
-
 		if (token.e[-1] == '*') {
 		    com_add_char('*');
 		    com_add_char('/');
@@ -440,6 +432,6 @@ process_comment(void)
     if (may_wrap)
 	copy_comment_wrap(adj_max_line_length, break_delim);
     else
-	copy_comment_nowrap(adj_max_line_length, break_delim);
+	copy_comment_nowrap(adj_max_line_length);
     ps.just_saw_decl = l_just_saw_decl;
 }
