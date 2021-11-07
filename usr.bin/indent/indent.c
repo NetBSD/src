@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.c,v 1.209 2021/11/05 19:42:48 rillig Exp $	*/
+/*	$NetBSD: indent.c,v 1.210 2021/11/07 07:06:00 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)indent.c	5.17 (Berkeley) 6/7/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: indent.c,v 1.209 2021/11/05 19:42:48 rillig Exp $");
+__RCSID("$NetBSD: indent.c,v 1.210 2021/11/07 07:06:00 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/indent.c 340138 2018-11-04 19:24:49Z oshogbo $");
 #endif
@@ -320,9 +320,9 @@ search_stmt_comment(void)
     sc_add_char('*');
 
     for (;;) {			/* loop until the end of the comment */
-	sc_add_char(inbuf_next());
+	sc_add_char(inp_next());
 	if (sc_end[-1] == '*' && *inp.s == '/') {
-	    sc_add_char(inbuf_next());
+	    sc_add_char(inp_next());
 	    debug_save_com("search_stmt_comment end");
 	    break;
 	}
@@ -345,7 +345,7 @@ search_stmt_lbrace(void)
 	 * resulting from the "{" before, it must be scanned now and ignored.
 	 */
 	while (isspace((unsigned char)*inp.s)) {
-	    inbuf_skip();
+	    inp_skip();
 	    if (*inp.s == '\n')
 		break;
 	}
@@ -444,7 +444,7 @@ search_stmt_lookahead(lexer_symbol *lsym)
      */
     if (sc_end != NULL) {
 	while (ch_isblank(*inp.s))
-	    sc_add_char(inbuf_next());
+	    sc_add_char(inp_next());
 	debug_save_com(__func__);
     }
 
@@ -627,7 +627,7 @@ main_parse_command_line(int argc, char **argv)
 static void
 main_prepare_parsing(void)
 {
-    inbuf_read_line();
+    inp_read_line();
 
     int ind = 0;
     for (const char *p = inp.s;; p++) {
@@ -1246,15 +1246,15 @@ read_preprocessing_line(void)
     int com_start = 0, com_end = 0;
 
     while (ch_isblank(*inp.s))
-	inbuf_skip();
+	inp_skip();
 
     while (*inp.s != '\n' || (state == COMM && !had_eof)) {
 	buf_reserve(&lab, 2);
-	*lab.e++ = inbuf_next();
+	*lab.e++ = inp_next();
 	switch (lab.e[-1]) {
 	case '\\':
 	    if (state != COMM)
-		*lab.e++ = inbuf_next();
+		*lab.e++ = inp_next();
 	    break;
 	case '/':
 	    if (*inp.s == '*' && state == PLAIN) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: pr_comment.c,v 1.97 2021/11/05 19:33:28 rillig Exp $	*/
+/*	$NetBSD: pr_comment.c,v 1.98 2021/11/07 07:06:00 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)pr_comment.c	8.1 (Berkeley) 6/6/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: pr_comment.c,v 1.97 2021/11/05 19:33:28 rillig Exp $");
+__RCSID("$NetBSD: pr_comment.c,v 1.98 2021/11/07 07:06:00 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/pr_comment.c 334927 2018-06-10 16:44:18Z pstef $");
 #endif
@@ -217,7 +217,7 @@ copy_comment(int adj_max_line_length, bool break_delim, bool may_wrap)
 		while (ch_isblank(*inp.s))
 		    inp.s++;
 	    } else {
-		inbuf_skip();
+		inp_skip();
 		com_add_char('\f');
 	    }
 	    break;
@@ -256,23 +256,23 @@ copy_comment(int adj_max_line_length, bool break_delim, bool may_wrap)
 		bool skip_asterisk = true;
 		do {		/* flush any blanks and/or tabs at start of
 				 * next line */
-		    inbuf_skip();
+		    inp_skip();
 		    if (*inp.s == '*' && skip_asterisk) {
 			skip_asterisk = false;
-			inbuf_skip();
+			inp_skip();
 			if (*inp.s == '/')
 			    goto end_of_comment;
 		    }
 		} while (ch_isblank(*inp.s));
 	    } else
-		inbuf_skip();
+		inp_skip();
 	    break;		/* end of case for newline */
 
 	case '*':
-	    inbuf_skip();
+	    inp_skip();
 	    if (*inp.s == '/' && token.e[-1] == '*') {
 	end_of_comment:
-		inbuf_skip();
+		inp_skip();
 
 	end_of_line_comment:
 		if (break_delim) {
@@ -300,7 +300,7 @@ copy_comment(int adj_max_line_length, bool break_delim, bool may_wrap)
 	    ;
 	    int now_len = ind_add(ps.com_ind, com.s, com.e);
 	    for (;;) {
-		char ch = inbuf_next();
+		char ch = inp_next();
 		if (ch_isblank(ch))
 		    last_blank = com.e - com.buf;
 		com_add_char(ch);
