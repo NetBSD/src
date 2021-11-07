@@ -1,4 +1,4 @@
-/* $NetBSD: meson_dwmac.c,v 1.11 2021/01/27 03:10:18 thorpej Exp $ */
+/* $NetBSD: meson_dwmac.c,v 1.12 2021/11/07 19:21:32 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: meson_dwmac.c,v 1.11 2021/01/27 03:10:18 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: meson_dwmac.c,v 1.12 2021/11/07 19:21:32 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -207,7 +207,7 @@ meson_dwmac_attach(device_t parent, device_t self, void *aux)
 		phandle_phy = phandle;
 	}
 
-	if (strcmp(phy_mode, "rgmii") == 0) {
+	if (strncmp(phy_mode, "rgmii", 5) == 0) {
 		meson_dwmac_set_mode_rgmii(phandle, sc->sc_bst, prgeth_bsh, clk_in[0]);
 	} else if (strcmp(phy_mode, "rmii") == 0) {
 		meson_dwmac_set_mode_rmii(phandle, sc->sc_bst, prgeth_bsh);
