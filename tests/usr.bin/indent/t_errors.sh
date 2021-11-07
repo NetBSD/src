@@ -1,5 +1,5 @@
 #! /bin/sh
-# $NetBSD: t_errors.sh,v 1.17 2021/10/30 16:57:18 rillig Exp $
+# $NetBSD: t_errors.sh,v 1.18 2021/11/07 10:42:58 rillig Exp $
 #
 # Copyright (c) 2021 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -174,13 +174,24 @@ option_special_missing_param_body()
 	    -U
 }
 
-atf_test_case 'unterminated_comment'
-unterminated_comment_body()
+atf_test_case 'unterminated_comment_wrap'
+unterminated_comment_wrap_body()
 {
 	echo '/*' > comment.c
 
 	atf_check -s 'exit:1' \
 	    -o 'inline:/*'"$nl"' *'"$nl" \
+	    -e 'inline:error: Standard Input:2: Unterminated comment'"$nl" \
+	    "$indent" -st < comment.c
+}
+
+atf_test_case 'unterminated_comment_nowrap'
+unterminated_comment_nowrap_body()
+{
+	echo '/*-' > comment.c
+
+	atf_check -s 'exit:1' \
+	    -o 'inline:/*-'"$nl$nl" \
 	    -e 'inline:error: Standard Input:2: Unterminated comment'"$nl" \
 	    "$indent" -st < comment.c
 }
@@ -479,7 +490,8 @@ atf_init_test_cases()
 	atf_add_test_case 'option_int_trailing_garbage'
 	atf_add_test_case 'option_cli_trailing_garbage'
 	atf_add_test_case 'option_indent_size_zero'
-	atf_add_test_case 'unterminated_comment'
+	atf_add_test_case 'unterminated_comment_wrap'
+	atf_add_test_case 'unterminated_comment_nowrap'
 	atf_add_test_case 'in_place_wrong_backup'
 	atf_add_test_case 'argument_input_enoent'
 	atf_add_test_case 'argument_output_equals_input_name'
