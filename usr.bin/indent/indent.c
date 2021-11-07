@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.c,v 1.215 2021/11/07 15:18:25 rillig Exp $	*/
+/*	$NetBSD: indent.c,v 1.216 2021/11/07 18:26:17 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)indent.c	5.17 (Berkeley) 6/7/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: indent.c,v 1.215 2021/11/07 15:18:25 rillig Exp $");
+__RCSID("$NetBSD: indent.c,v 1.216 2021/11/07 18:26:17 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/indent.c 340138 2018-11-04 19:24:49Z oshogbo $");
 #endif
@@ -294,8 +294,8 @@ search_stmt_comment(void)
     if (sc_end == NULL) {
 	/*
 	 * Copy everything from the start of the line, because
-	 * process_comment() will use that to calculate original indentation
-	 * of a boxed comment.
+	 * process_comment() will use that to calculate the original
+	 * indentation of a boxed comment.
 	 */
 	/*
 	 * FIXME: This '4' needs an explanation. For example, in the snippet
@@ -665,7 +665,7 @@ code_add_decl_indent(int decl_ind, bool tabs_to_var)
 }
 
 static void __attribute__((__noreturn__))
-process_end_of_file(void)
+process_eof(void)
 {
     if (lab.s != lab.e || code.s != code.e || com.s != com.e)
 	dump_line();
@@ -940,8 +940,8 @@ process_semicolon(bool *seen_case, int *quest_level, int decl_ind,
     }
 
     ps.in_decl = ps.decl_level > 0;	/* if we were in a first level
-					 * structure declaration, we aren't
-					 * anymore */
+					 * structure declaration before, we
+					 * aren't anymore */
 
     if ((!*spaced_expr || hd != hd_for) && ps.p_l_follow > 0) {
 
@@ -1395,7 +1395,7 @@ main_loop(void)
 	search_stmt(&lsym, &force_nl, &last_else);
 
 	if (lsym == lsym_eof) {
-	    process_end_of_file();
+	    process_eof();
 	    /* NOTREACHED */
 	}
 

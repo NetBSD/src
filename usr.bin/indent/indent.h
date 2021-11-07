@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.h,v 1.85 2021/11/07 15:18:25 rillig Exp $	*/
+/*	$NetBSD: indent.h,v 1.86 2021/11/07 18:26:17 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-FreeBSD
@@ -150,7 +150,8 @@ extern FILE *input;
 extern FILE *output;
 
 extern struct buffer inp;	/* one line of input, ready to be split into
-				 * tokens */
+				 * tokens; occasionally this buffer switches
+				 * to sc_buf */
 
 extern struct buffer token;	/* the current token to be processed, is
 				 * typically copied to the buffer 'code',
@@ -271,7 +272,9 @@ extern struct parser_state {
     bool next_unary;		/* whether the following operator should be
 				 * unary */
 
-    char procname[100];		/* The name of the current procedure */
+    char procname[100];		/* The name of the current procedure; TODO:
+				 * document the difference between procname[0]
+				 * being '\0', ' ' and a real character */
 
 
     bool want_blank;		/* whether the following token should be
@@ -279,10 +282,11 @@ extern struct parser_state {
 				 * ignored in some cases.) */
 
     int paren_level;		/* parenthesization level. used to indent
-				 * within statements */
+				 * within statements, initializers and
+				 * declarations */
     /* TODO: rename to next_line_paren_level */
     int p_l_follow;		/* how to indent the remaining lines of the
-				 * statement */
+				 * statement or initializer or declaration */
     short paren_indents[20];	/* indentation of the operand/argument of each
 				 * level of parentheses or brackets, relative
 				 * to the enclosing statement; if negative,
@@ -327,7 +331,9 @@ extern struct parser_state {
     bool decl_indent_done;	/* whether the indentation for a declaration
 				 * has been added to the code buffer. */
 
-    bool in_stmt;
+    bool in_stmt;		/* TODO: rename to something appropriate; this
+				 * is set to true in struct declarations as
+				 * well, so 'stmt' isn't accurate */
     bool ind_stmt;		/* whether the next line should have an extra
 				 * indentation level because we are in the
 				 * middle of a statement */
@@ -336,7 +342,9 @@ extern struct parser_state {
 
     bool search_stmt;		/* whether it is necessary to buffer up all
 				 * text up to the start of a statement after
-				 * an 'if', 'while', etc. */
+				 * an 'if (expr)', 'while (expr)', etc., to
+				 * move the comments after the opening brace
+				 * of the following statement */
 
     int tos;			/* pointer to top of stack */
     parser_symbol s_sym[STACKSIZE];
