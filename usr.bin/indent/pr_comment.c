@@ -1,4 +1,4 @@
-/*	$NetBSD: pr_comment.c,v 1.108 2021/11/07 10:42:58 rillig Exp $	*/
+/*	$NetBSD: pr_comment.c,v 1.109 2021/11/07 10:49:31 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)pr_comment.c	8.1 (Berkeley) 6/6/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: pr_comment.c,v 1.108 2021/11/07 10:42:58 rillig Exp $");
+__RCSID("$NetBSD: pr_comment.c,v 1.109 2021/11/07 10:49:31 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/pr_comment.c 334927 2018-06-10 16:44:18Z pstef $");
 #endif
@@ -100,8 +100,8 @@ fits_in_one_line(int max_line_length)
 }
 
 static void
-analyze_comment(int *p_adj_max_line_length, bool *p_break_delim,
-    bool *p_may_wrap)
+analyze_comment(bool *p_may_wrap, bool *p_break_delim,
+    int *p_adj_max_line_length)
 {
     int adj_max_line_length;	/* Adjusted max_line_length for comments that
 				 * spill over the right margin */
@@ -381,20 +381,17 @@ finish:
 void
 process_comment(void)
 {
-    int adj_max_line_length;	/* Adjusted max_line_length for comments that
-				 * spill over the right margin */
-    bool break_delim = opt.comment_delimiter_on_blankline;
+    int adj_max_line_length;
+    bool may_wrap, break_delim;
 
-    adj_max_line_length = opt.max_line_length;
     ps.just_saw_decl = 0;
-    bool may_wrap = true;
     ps.stats.comments++;
 
-    int l_just_saw_decl = ps.just_saw_decl;
-    analyze_comment(&adj_max_line_length, &break_delim, &may_wrap);
+    int saved_just_saw_decl = ps.just_saw_decl;
+    analyze_comment(&may_wrap, &break_delim, &adj_max_line_length);
     if (may_wrap)
 	copy_comment_wrap(adj_max_line_length, break_delim);
     else
 	copy_comment_nowrap();
-    ps.just_saw_decl = l_just_saw_decl;
+    ps.just_saw_decl = saved_just_saw_decl;
 }
