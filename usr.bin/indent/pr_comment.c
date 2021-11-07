@@ -1,4 +1,4 @@
-/*	$NetBSD: pr_comment.c,v 1.104 2021/11/07 10:17:39 rillig Exp $	*/
+/*	$NetBSD: pr_comment.c,v 1.105 2021/11/07 10:26:43 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)pr_comment.c	8.1 (Berkeley) 6/6/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: pr_comment.c,v 1.104 2021/11/07 10:17:39 rillig Exp $");
+__RCSID("$NetBSD: pr_comment.c,v 1.105 2021/11/07 10:26:43 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/pr_comment.c 334927 2018-06-10 16:44:18Z pstef $");
 #endif
@@ -335,7 +335,7 @@ copy_comment_nowrap(void)
     for (;;) {
 	if (*inp.s == '\n') {
 	    if (token.e[-1] == '/')
-		goto end_of_line_comment;
+		goto finish;
 
 	    if (had_eof) {
 		diag(1, "Unterminated comment");
@@ -355,21 +355,18 @@ copy_comment_nowrap(void)
 	    inp_skip();
 	    if (*inp.s == '/' && token.e[-1] == '*') {
 		inp_skip();
-
-	end_of_line_comment:
-		if (token.e[-1] == '*') {
-		    com_add_char('*');
-		    com_add_char('/');
-		}
-		com_terminate();
-		ps.next_col_1 = false;
-		return;
-
+		com_add_char('*');
+		com_add_char('/');
+		goto finish;
 	    } else		/* handle isolated '*' */
 		com_add_char('*');
 	} else
 	    com_add_char(inp_next());
     }
+
+finish:
+    com_terminate();
+    ps.next_col_1 = false;
 }
 
 /*
