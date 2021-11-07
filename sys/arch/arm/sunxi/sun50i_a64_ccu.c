@@ -1,4 +1,4 @@
-/* $NetBSD: sun50i_a64_ccu.c,v 1.23 2021/01/27 03:10:20 thorpej Exp $ */
+/* $NetBSD: sun50i_a64_ccu.c,v 1.24 2021/11/07 17:13:26 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: sun50i_a64_ccu.c,v 1.23 2021/01/27 03:10:20 thorpej Exp $");
+__KERNEL_RCSID(1, "$NetBSD: sun50i_a64_ccu.c,v 1.24 2021/11/07 17:13:26 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -48,6 +48,7 @@ __KERNEL_RCSID(1, "$NetBSD: sun50i_a64_ccu.c,v 1.23 2021/01/27 03:10:20 thorpej 
 #define	PLL_VIDEO1_CTRL_REG	0x030
 #define	PLL_GPU_CTRL_REG	0x038
 #define	PLL_DE_CTRL_REG		0x048
+#define	CPUX_AXI_CFG_REG	0x050
 #define	AHB1_APB1_CFG_REG	0x054
 #define	APB2_CFG_REG		0x058
 #define	AHB2_CFG_REG		0x05c
@@ -153,6 +154,7 @@ static struct sunxi_ccu_reset sun50i_a64_ccu_resets[] = {
 	SUNXI_CCU_RESET(A64_RST_BUS_UART3, BUS_SOFT_RST_REG4, 19),
 };
 
+static const char *cpux_parents[] = { "losc", "hosc", "pll_cpux", "pll_cpux" };
 static const char *ahb1_parents[] = { "losc", "hosc", "axi", "pll_periph0" };
 static const char *ahb2_parents[] = { "ahb1", "pll_periph0" };
 static const char *apb1_parents[] = { "ahb1" };
@@ -346,6 +348,11 @@ static struct sunxi_ccu_clk sun50i_a64_ccu_clks[] = {
 	    4,				/* prediv_val */
 	    __BIT(31),			/* enable */
 	    SUNXI_CCU_FRACTIONAL_PLUSONE | SUNXI_CCU_FRACTIONAL_SET_ENABLE),
+
+	SUNXI_CCU_MUX(A64_CLK_CPUX, "cpux", cpux_parents,
+	    CPUX_AXI_CFG_REG,	/* reg */
+	    __BITS(17,16),	/* sel */
+	    0),
 
 	SUNXI_CCU_PREDIV(A64_CLK_AHB1, "ahb1", ahb1_parents,
 	    AHB1_APB1_CFG_REG,	/* reg */
