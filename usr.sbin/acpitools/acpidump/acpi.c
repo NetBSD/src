@@ -1,4 +1,4 @@
-/* $NetBSD: acpi.c,v 1.52 2021/09/19 10:34:10 andvar Exp $ */
+/* $NetBSD: acpi.c,v 1.53 2021/11/08 10:19:42 skrll Exp $ */
 
 /*-
  * Copyright (c) 1998 Doug Rabson
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: acpi.c,v 1.52 2021/09/19 10:34:10 andvar Exp $");
+__RCSID("$NetBSD: acpi.c,v 1.53 2021/11/08 10:19:42 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/endian.h>
@@ -979,7 +979,12 @@ static void
 acpi_print_gicc_flags(uint32_t flags)
 {
 
-	printf("\tFlags={Performance intr=");
+	printf("\tFlags={");
+	if (flags & ACPI_MADT_ENABLED)
+		printf("enabled");
+	else
+		printf("disabled");
+	printf(", Performance intr=");
 	if (flags & ACPI_MADT_PERFORMANCE_IRQ_MODE)
 		printf("edge");
 	else
