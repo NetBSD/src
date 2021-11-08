@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.acorn32,v 1.24 2018/09/22 12:24:01 rin Exp $
+#	$NetBSD: Makefile.acorn32,v 1.25 2021/11/08 23:35:43 rin Exp $
 
 # Makefile for NetBSD
 #
@@ -35,6 +35,11 @@ GENASSYM_EXTRAS+=	${ACORN32}/acorn32/genassym.cf
 CPPFLAGS+=	-Darm32
 CWARNFLAGS+=	-Wcomment
 AFLAGS+=	-x assembler-with-cpp
+
+OPT_DDB=	%DDB%
+.if !empty(OPT_DDB) && ${HAVE_GCC:U0} > 0
+CFLAGS+=	-mapcs-frame
+.endif
 
 ##
 ## (3) libkern and compat

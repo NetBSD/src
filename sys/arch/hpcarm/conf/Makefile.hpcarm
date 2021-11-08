@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.hpcarm,v 1.19 2018/09/22 12:24:02 rin Exp $
+#	$NetBSD: Makefile.hpcarm,v 1.20 2021/11/08 23:35:43 rin Exp $
 
 # Makefile for NetBSD
 #
@@ -35,6 +35,11 @@ GENASSYM_EXTRAS+=	${HPCARM}/hpcarm/genassym.cf
 CPPFLAGS+=	-Dhpcarm -Darm32
 CWARNFLAGS+=	-Wcomment
 AFLAGS+=	-x assembler-with-cpp
+
+OPT_DDB=	%DDB%
+.if !empty(OPT_DDB) && ${HAVE_GCC:U0} > 0
+CFLAGS+=	-mapcs-frame
+.endif
 
 ##
 ## (3) libkern and compat
