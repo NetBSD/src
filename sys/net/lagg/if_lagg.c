@@ -1,4 +1,4 @@
-/*	$NetBSD: if_lagg.c,v 1.18 2021/11/08 06:17:05 yamaguchi Exp $	*/
+/*	$NetBSD: if_lagg.c,v 1.19 2021/11/08 06:22:16 yamaguchi Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006 Reyk Floeter <reyk@openbsd.org>
@@ -20,7 +20,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_lagg.c,v 1.18 2021/11/08 06:17:05 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_lagg.c,v 1.19 2021/11/08 06:22:16 yamaguchi Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -31,6 +31,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_lagg.c,v 1.18 2021/11/08 06:17:05 yamaguchi Exp $
 #include <sys/types.h>
 
 #include <sys/cprng.h>
+#include <sys/cpu.h>
 #include <sys/device.h>
 #include <sys/evcnt.h>
 #include <sys/hash.h>
@@ -133,6 +134,7 @@ static const struct lagg_proto lagg_protos[] = {
 	},
 };
 
+static int	lagg_chg_sadl(struct ifnet *, uint8_t *, size_t);
 static struct mbuf *
 		lagg_input_ethernet(struct ifnet *, struct mbuf *);
 static int	lagg_clone_create(struct if_clone *, int);
@@ -2086,8 +2088,8 @@ lagg_port_setsadl(struct lagg_port *lp, uint8_t *lladdr,
 			break;
 		}
 
-		if_set_sadl(ifp_port, lladdr,
-		    ETHER_ADDR_LEN, false);
+		lagg_chg_sadl(ifp_port,
+		    lladdr, ETHER_ADDR_LEN);
 
 		if (!ISSET(ifp_port->if_flags, IFF_RUNNING)) {
 			break;
@@ -2123,11 +2125,11 @@ lagg_port_unsetsadl(struct lagg_port *lp)
 
 	switch (lp->lp_iftype) {
 	case IFT_ETHER:
-		/* reset if_type before if_set_sadl */
+		/* reset if_type before changing ifp->if_sadl */
 		ifp_port->if_type = lp->lp_iftype;
 
-		if_set_sadl(ifp_port, lp->lp_lladdr,
-		    ETHER_ADDR_LEN, false);
+		lagg_chg_sadl(ifp_port,
+		    lp->lp_lladdr, ETHER_ADDR_LEN);
 
 		if (!ISSET(ifp_port->if_flags, IFF_RUNNING)) {
 			break;
@@ -2237,7 +2239,7 @@ lagg_sadl_update(struct lagg_softc *sc, uint8_t *lladdr_prev)
 	if (lagg_lladdr_equal(lladdr_prev, lladdr) == false)
 		return;
 
-	if_set_sadl(ifp, sc->sc_lladdr, ETHER_ADDR_LEN, false);
+	lagg_chg_sadl(ifp, sc->sc_lladdr, ETHER_ADDR_LEN);
 
 	LAGG_PORTS_FOREACH(sc, lp) {
 		IFNET_LOCK(lp->lp_ifp);
@@ -2897,6 +2899,120 @@ lagg_workq_wait(struct workqueue *wq, struct lagg_work *lw)
 
 	atomic_swap_uint(&lw->lw_state, LAGG_WORK_STOPPING);
 	workqueue_wait(wq, &lw->lw_cookie);
+}
+
+static int
+lagg_chg_sadl(struct ifnet *ifp, uint8_t *lla, size_t lla_len)
+{
+	struct psref psref_cur, psref_next;
+	struct ifaddr *ifa_cur, *ifa_next, *ifa_lla;
+	const struct sockaddr_dl *sdl, *nsdl;
+	int s, error;
+
+	KASSERT(!cpu_intr_p() && !cpu_softintr_p());
+	KASSERT(IFNET_LOCKED(ifp));
+	KASSERT(ifp->if_addrlen == lla_len);
+
+	error = 0;
+	ifa_lla = NULL;
+
+	while (1) {
+		s = pserialize_read_enter();
+		IFADDR_READER_FOREACH(ifa_cur, ifp) {
+			sdl = satocsdl(ifa_cur->ifa_addr);
+			if (sdl->sdl_family != AF_LINK)
+				continue;
+
+			if (sdl->sdl_type != ifp->if_type) {
+				ifa_acquire(ifa_cur, &psref_cur);
+				break;
+			}
+		}
+		pserialize_read_exit(s);
+
+		if (ifa_cur == NULL)
+			break;
+
+		ifa_next = if_dl_create(ifp, &nsdl);
+		if (ifa_next == NULL) {
+			error = ENOMEM;
+			ifa_release(ifa_cur, &psref_cur);
+			goto done;
+		}
+		ifa_acquire(ifa_next, &psref_next);
+		(void)sockaddr_dl_setaddr(__UNCONST(nsdl), nsdl->sdl_len,
+		    CLLADDR(sdl), ifp->if_addrlen);
+		ifa_insert(ifp, ifa_next);
+
+		if (ifa_lla == NULL &&
+		    memcmp(CLLADDR(sdl), lla, lla_len) == 0) {
+			ifa_lla = ifa_next;
+			ifaref(ifa_lla);
+		}
+
+		if (ifa_cur == ifp->if_dl)
+			if_activate_sadl(ifp, ifa_next, nsdl);
+
+		if (ifa_cur == ifp->if_hwdl) {
+			ifp->if_hwdl = ifa_next;
+			ifaref(ifa_next);
+			ifafree(ifa_cur);
+		}
+
+		ifaref(ifa_cur);
+		ifa_release(ifa_cur, &psref_cur);
+		ifa_remove(ifp, ifa_cur);
+		KASSERTMSG(ifa_cur->ifa_refcnt == 1,
+		    "ifa_refcnt=%d", ifa_cur->ifa_refcnt);
+		ifafree(ifa_cur);
+		ifa_release(ifa_next, &psref_next);
+	}
+
+	if (ifa_lla != NULL) {
+		ifa_next = ifa_lla;
+
+		ifa_acquire(ifa_next, &psref_next);
+		ifafree(ifa_lla);
+
+		nsdl = satocsdl(ifa_next->ifa_addr);
+	} else {
+		ifa_next = if_dl_create(ifp, &nsdl);
+		if (ifa_next == NULL) {
+			error = ENOMEM;
+			goto done;
+		}
+		ifa_acquire(ifa_next, &psref_next);
+		(void)sockaddr_dl_setaddr(__UNCONST(nsdl),
+		    nsdl->sdl_len, lla, ifp->if_addrlen);
+		ifa_insert(ifp, ifa_next);
+	}
+
+	if (ifa_next != ifp->if_dl) {
+		ifa_cur = ifp->if_dl;
+		if (ifa_cur != NULL)
+			ifa_acquire(ifa_cur, &psref_cur);
+
+		if_activate_sadl(ifp, ifa_next, nsdl);
+
+		if (ifa_cur != NULL) {
+			if (ifa_cur != ifp->if_hwdl) {
+				ifaref(ifa_cur);
+				ifa_release(ifa_cur, &psref_cur);
+				ifa_remove(ifp, ifa_cur);
+				KASSERTMSG(ifa_cur->ifa_refcnt == 1,
+				    "ifa_refcnt=%d",
+				    ifa_cur->ifa_refcnt);
+				ifafree(ifa_cur);
+			} else {
+				ifa_release(ifa_cur, &psref_cur);
+			}
+		}
+	}
+
+	ifa_release(ifa_next, &psref_next);
+
+done:
+	return error;
 }
 
 /*
