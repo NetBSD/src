@@ -1,4 +1,4 @@
-/*	$NetBSD: if_lagg.c,v 1.17 2021/10/22 06:20:47 yamaguchi Exp $	*/
+/*	$NetBSD: if_lagg.c,v 1.18 2021/11/08 06:17:05 yamaguchi Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006 Reyk Floeter <reyk@openbsd.org>
@@ -20,7 +20,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_lagg.c,v 1.17 2021/10/22 06:20:47 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_lagg.c,v 1.18 2021/11/08 06:17:05 yamaguchi Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -2221,6 +2221,7 @@ static void
 lagg_sadl_update(struct lagg_softc *sc, uint8_t *lladdr_prev)
 {
 	struct ifnet *ifp;
+	struct lagg_port *lp;
 	const uint8_t *lladdr;
 
 	ifp = &sc->sc_if;
@@ -2237,6 +2238,12 @@ lagg_sadl_update(struct lagg_softc *sc, uint8_t *lladdr_prev)
 		return;
 
 	if_set_sadl(ifp, sc->sc_lladdr, ETHER_ADDR_LEN, false);
+
+	LAGG_PORTS_FOREACH(sc, lp) {
+		IFNET_LOCK(lp->lp_ifp);
+		lagg_port_setsadl(lp, sc->sc_lladdr, false);
+		IFNET_UNLOCK(lp->lp_ifp);
+	}
 
 	LAGG_UNLOCK(sc);
 	lagg_in6_ifdetach(ifp);
