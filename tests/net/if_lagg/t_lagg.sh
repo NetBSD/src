@@ -1,4 +1,4 @@
-#	$NetBSD: t_lagg.sh,v 1.5 2021/11/02 01:57:16 yamaguchi Exp $
+#	$NetBSD: t_lagg.sh,v 1.6 2021/11/08 06:24:11 yamaguchi Exp $
 #
 # Copyright (c) 2021 Internet Initiative Japan Inc.
 # All rights reserved.
@@ -228,6 +228,7 @@ lagg_macaddr_head()
 lagg_macaddr_body()
 {
 	local atf_ifconfig="atf_check -s exit:0 rump.ifconfig"
+	local lnkaddr0="02:00:00:00:00:01" # 02: I/G = 0, G/L = 1
 
 	rump_server_start $SOCK_HOST0 lagg
 
@@ -242,26 +243,68 @@ lagg_macaddr_body()
 
 	$atf_ifconfig lagg0 laggproto lacp
 
+	#
+	# Copy MAC address from shmif0 that is
+	# the first port to lagg.
+	# (laggport: (none) => shmif0)
+	#
 	$atf_ifconfig lagg0 laggport shmif0
 	atf_check -s exit:0 -o match:$maddr0 rump.ifconfig lagg0
+	atf_check -s exit:0 -o match:$maddr0 rump.ifconfig shmif0
 
+	#
+	# Copy MAC address assigned to lagg0 to shmif1
+	# (laggport: shmif0 => shmif0, shmif1)
+	#
 	$atf_ifconfig lagg0 laggport shmif1
 	atf_check -s exit:0 -o match:$maddr0 rump.ifconfig lagg0
 	atf_check -s exit:0 -o match:$maddr0 rump.ifconfig shmif1
 
+	#
+	# Change MAC address on the detaching
+	# the first port (shmif0) from lagg0
+	# (laggport: shmif0, shmif1 => shmif1)
+	#
 	$atf_ifconfig lagg0 -laggport shmif0
 	atf_check -s exit:0 -o match:$maddr1 rump.ifconfig lagg0
 	atf_check -s exit:0 -o match:$maddr0 rump.ifconfig shmif0
+	atf_check -s exit:0 -o match:$maddr1 rump.ifconfig shmif1
 
+	#
+	# Copy lagg0's MAC address to shmif0 even if
+	# lagg0 had used shmif0's MAC address
+	# (laggport: shmif1 => shmif1, shmif0)
+	#
 	$atf_ifconfig lagg0 laggport shmif0
 	atf_check -s exit:0 -o match:$maddr1 rump.ifconfig lagg0
 	atf_check -s exit:0 -o match:$maddr1 rump.ifconfig shmif0
 
+	#
+	# should not change MAC address of lagg0 on detaching
+	# shmif0 that copied mac address from lagg0
+	# (laggport: shmif1, shmif0 => shmif1)
+	#
 	$atf_ifconfig lagg0 -laggport shmif0
+	atf_check -s exit:0 -o match:$maddr1 rump.ifconfig lagg0
 	atf_check -s exit:0 -o match:$maddr0 rump.ifconfig shmif0
 
+	#
+	# Use the generated MAC address
+	# when all port detached from lagg0
+	# (laggport: shmif1 => (none))
 	$atf_ifconfig lagg0 -laggport shmif1
 	atf_check -s exit:0 -o match:$maddr rump.ifconfig lagg0
+
+	#
+	# Copy the active MAC address from shmif0 to lagg0
+	# when shmif0 has two MAC addresses
+	#
+	$atf_ifconfig shmif0 link $lnkaddr0
+	$atf_ifconfig lagg0 laggport shmif0
+	atf_check -s exit:0 -o match:$maddr0 rump.ifconfig lagg0
+	atf_check -s exit:0 -o not-match:$lnkaddr0 rump.ifconfig lagg0
+	atf_check -s exit:0 -o match:$maddr0 rump.ifconfig shmif0
+	atf_check -s exit:0 -o match:$lnkaddr0 rump.ifconfig shmif0
 }
 
 lagg_macaddr_cleanup()
