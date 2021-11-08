@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ethersubr.c,v 1.302 2021/10/25 17:05:43 ryo Exp $	*/
+/*	$NetBSD: if_ethersubr.c,v 1.303 2021/11/08 16:50:05 christos Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.302 2021/10/25 17:05:43 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.303 2021/11/08 16:50:05 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -668,8 +668,10 @@ ether_input(struct ifnet *ifp, struct mbuf *m)
 #endif
 
 	if (__predict_false(m->m_len < sizeof(*eh))) {
-		if ((m = m_pullup(m, sizeof(*eh))) == NULL)
-			goto dropped;
+		if ((m = m_pullup(m, sizeof(*eh))) == NULL) {
+			if_statinc(ifp, if_ierrors);
+			return;
+		}
 	}
 
 	eh = mtod(m, struct ether_header *);
@@ -870,7 +872,7 @@ ether_input(struct ifnet *ifp, struct mbuf *m)
 		default:
 			if (subtype == 0 || subtype > 10) {
 				/* illegal value */
-				goto drop;
+				goto error;
 			}
 			/* unknown subtype */
 			break;
@@ -895,7 +897,7 @@ ether_input(struct ifnet *ifp, struct mbuf *m)
 		ether_input_llc(ifp, m, eh);
 		return;
 #else
-		goto drop;
+		goto error;
 #endif
 	}
 
@@ -966,7 +968,7 @@ ether_input(struct ifnet *ifp, struct mbuf *m)
 
 	if (__predict_false(!inq)) {
 		/* Should not happen. */
-		goto drop;
+		goto error;
 	}
 
 	IFQ_ENQUEUE_ISR(inq, m, isr);
@@ -974,8 +976,12 @@ ether_input(struct ifnet *ifp, struct mbuf *m)
 
 drop:
 	m_freem(m);
-dropped:
+	if_statinc(ifp, if_iqdrops); /* XXX should have a dedicated counter? */
+	return;
+error:
+	m_freem(m);
 	if_statinc(ifp, if_ierrors); /* XXX should have a dedicated counter? */
+	return;
 }
 
 /*
