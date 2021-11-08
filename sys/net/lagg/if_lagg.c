@@ -1,4 +1,4 @@
-/*	$NetBSD: if_lagg.c,v 1.19 2021/11/08 06:22:16 yamaguchi Exp $	*/
+/*	$NetBSD: if_lagg.c,v 1.20 2021/11/08 06:29:16 yamaguchi Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006 Reyk Floeter <reyk@openbsd.org>
@@ -20,7 +20,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_lagg.c,v 1.19 2021/11/08 06:22:16 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_lagg.c,v 1.20 2021/11/08 06:29:16 yamaguchi Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -2645,15 +2645,9 @@ lagg_unconfig_promisc(struct lagg_softc *sc, struct lagg_port *lp)
 static int
 lagg_port_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 {
-	struct ifreq *ifr = (struct ifreq *)data;
 	struct lagg_softc *sc;
-	struct lagg_variant *var;
 	struct lagg_port *lp;
-	struct lagg_req laggreq;
-	struct laggreqport *rp;
-	struct psref psref;
 	int error = 0;
-	int bound;
 	u_int ifflags;
 
 	if ((lp = ifp->if_lagg) == NULL ||
@@ -2662,33 +2656,6 @@ lagg_port_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 	}
 
 	switch (cmd) {
-	case SIOCGLAGGPORT:
-		error = copyin(ifr->ifr_data, &laggreq, sizeof(laggreq));
-		if (error != 0)
-			break;
-
-		if (laggreq.lrq_nports != 1) {
-			error = EINVAL;
-			break;
-		}
-
-		rp = &laggreq.lrq_reqports[0];
-
-		if (rp->rp_portname[0] == '\0' ||
-		    ifunit(rp->rp_portname) != ifp) {
-			error = EINVAL;
-			break;
-		}
-
-		bound = curlwp_bind();
-		var = lagg_variant_getref(sc, &psref);
-
-		rp->rp_prio = lp->lp_prio;
-		rp->rp_flags = lp->lp_flags;
-		lagg_proto_portstat(var, lp, rp);
-		lagg_variant_putref(var, &psref);
-		curlwp_bindx(bound);
-		break;
 	case SIOCSIFCAP:
 	case SIOCSIFMTU:
 	case SIOCSETHERCAP:
