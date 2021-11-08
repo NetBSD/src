@@ -1,4 +1,4 @@
-/*	$NetBSD: sa11x0_irq.S,v 1.20 2020/11/21 19:59:10 skrll Exp $	*/
+/*	$NetBSD: sa11x0_irq.S,v 1.21 2021/11/08 23:57:23 rin Exp $	*/
 
 /*
  * Copyright (c) 1998 Mark Brinicombe.
@@ -78,8 +78,7 @@ AST_ALIGNMENT_FAULT_LOCALS
  *  r7	- pspr mode
  *  r8  - Current IRQ requests.
  *  r9  - Used to count through possible IRQ bits.
- *  r10 - Base address of SAIP
- *  r11 - Pointer to handler pointer list
+ *  r10 - Pointer to handler pointer list
  */
 
 ASENTRY_NP(irq_entry)
@@ -90,13 +89,14 @@ ASENTRY_NP(irq_entry)
 
 	/* Load r8 with the SAIPIC interrupt requests */
 
-	ldr	r10, _C_LABEL(saipic_base)
-	ldr	r8, [r10, #(SAIPIC_IP)]	/* Load IRQ pending register */
+	ldr	r8, _C_LABEL(saipic_base)
+	ldr	r8, [r8, #(SAIPIC_IP)]	/* Load IRQ pending register */
 
 #ifdef INTR_DEBUG
-	ldr	r2, [r10, #(SAIPIC_MR)]
 	adr	r0, Ldbg_str
 	mov	r1, r8
+	ldr	r2, _C_LABEL(saipic_base)
+	ldr	r2, [r2, #(SAIPIC_MR)]
 	bl	_C_LABEL(printf)
 #endif
 	/*
@@ -124,17 +124,17 @@ ASENTRY_NP(irq_entry)
 	 */
 
 	mov	r9, #(NIPL - 1)
-	ldr	r11, Lspl_masks
+	ldr	r10, Lspl_masks
 
 Lfind_highest_ipl:
-	ldr	r2, [r11, r9, lsl #2]
+	ldr	r2, [r10, r9, lsl #2]
 	tst	r8, r2
 	subeq	r9, r9, #1
 	beq	Lfind_highest_ipl
 
 	/* r9 = SPL level of highest priority interrupt */
 	add	r9, r9, #1
-	ldr	r2, [r11, r9, lsl #2]
+	ldr	r2, [r10, r9, lsl #2]
 
 	ldr	r1, [r4, #CI_CPL]
 	str	r9, [r4, #CI_CPL]
@@ -155,7 +155,7 @@ Lfind_highest_ipl:
 	bic	r0, r0, #I32_bit
 	msr	cpsr_all, r0
 
-	ldr	r11, Lirqhandlers
+	ldr	r10, Lirqhandlers
         mov	r9, #0x00000001
 
 irqloop:
@@ -163,7 +163,7 @@ irqloop:
 	tst	r8, r9			/* Is a bit set ? */
 	beq	nextirq			/* No ? try next bit */
 
-	ldr	r6, [r11]		/* Get address of first handler structure */
+	ldr	r6, [r10]		/* Get address of first handler structure */
 
 	teq	r6, #0x00000000		/* Do we have a handler */
 	moveq	r0, r8			/* IRQ requests as arg 0 */
@@ -219,7 +219,7 @@ irqchainloop:
 
 irqdone:
 nextirq:
-	add	r11, r11, #0x00000004	/* update pointer to handlers */
+	add	r10, r10, #0x00000004	/* update pointer to handlers */
 	mov	r9, r9, lsl #1		/* move on to next bit */
 	teq	r9, #(1 << 31)		/* done the last bit ? */
 	bne	irqloop			/* no - loop back. */
@@ -238,7 +238,8 @@ nextirq:
 #ifdef INTR_DEBUG
 	adr	r0, Ldbg_str
 	mov	r1, #3
-	ldr	r2, [r10, #(SAIPIC_MR)]
+	ldr	r2, _C_LABEL(saipic_base)
+	ldr	r2, [r2, #(SAIPIC_MR)]
 	bl	_C_LABEL(printf)
 #endif
 
