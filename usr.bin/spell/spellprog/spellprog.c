@@ -1,4 +1,4 @@
-/*	$NetBSD: spellprog.c,v 1.9 2013/11/18 19:55:59 joerg Exp $	*/
+/*	$NetBSD: spellprog.c,v 1.10 2021/11/09 09:41:05 nia Exp $	*/
 
 /* derived from OpenBSD: spellprog.c,v 1.4 2003/06/03 02:56:16 millert Exp */
 
@@ -864,10 +864,8 @@ static void
 getderiv(size_t lev)
 {
 	if (deriv.maxlev < lev) {
-		void *p = realloc(deriv.buf, sizeof(*deriv.buf) * lev);
-		if (p == NULL)
+		if (reallocarr(&deriv.buf, lev, sizeof(*deriv.buf)) != 0)
 			err(1, "Cannot grow array");
-		deriv.buf = p;
 		deriv.maxlev = lev;
 	}
 }
