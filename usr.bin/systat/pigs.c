@@ -1,4 +1,4 @@
-/*	$NetBSD: pigs.c,v 1.33 2012/11/23 03:46:35 christos Exp $	*/
+/*	$NetBSD: pigs.c,v 1.34 2021/11/09 09:18:02 nia Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1992, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)pigs.c	8.2 (Berkeley) 9/23/93";
 #endif
-__RCSID("$NetBSD: pigs.c,v 1.33 2012/11/23 03:46:35 christos Exp $");
+__RCSID("$NetBSD: pigs.c,v 1.34 2021/11/09 09:18:02 nia Exp $");
 #endif /* not lint */
 
 /*
@@ -179,14 +179,11 @@ fetchpigs(void)
 	if ((kpp = kvm_getproc2(kd, KERN_PROC_ALL, 0, sizeof(*kpp),
 				&nproc)) == NULL) {
 		error("%s", kvm_geterr(kd));
-		if (pt)
-			free(pt);
+		free(pt);
 		return;
 	}
 	if (nproc > lastnproc) {
-		free(pt);
-		if ((pt =
-		    malloc((nproc + 1) * sizeof(struct p_times))) == NULL) {
+		if (reallocarr(&pt, nproc + 1, sizeof(struct p_times)) != 0) {
 			error("Out of memory");
 			die(0);
 		}

@@ -1,4 +1,4 @@
-/*	$NetBSD: swap.c,v 1.20 2008/05/30 02:29:37 mrg Exp $	*/
+/*	$NetBSD: swap.c,v 1.21 2021/11/09 09:18:02 nia Exp $	*/
 
 /*
  * Copyright (c) 1997 Matthew R. Green.
@@ -60,7 +60,7 @@
 #if 0
 static char sccsid[] = "@(#)swap.c	8.3 (Berkeley) 4/29/95";
 #endif
-__RCSID("$NetBSD: swap.c,v 1.20 2008/05/30 02:29:37 mrg Exp $");
+__RCSID("$NetBSD: swap.c,v 1.21 2021/11/09 09:18:02 nia Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -121,10 +121,8 @@ fetchswap(void)
 		return;
 	update_label = (nswap != rnswap);
 
-	if (swap_devices)
-		(void)free(swap_devices);
-	if ((swap_devices = malloc(nswap * sizeof(*swap_devices))) == NULL) {
-		error("malloc failed");
+	if (reallocarr(&swap_devices, nswap, sizeof(*swap_devices)) != 0) {
+		error("realloc failed");
 		die(0);
 	}
 
