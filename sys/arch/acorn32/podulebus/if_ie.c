@@ -1,4 +1,4 @@
-/* $NetBSD: if_ie.c,v 1.50 2021/09/19 10:34:07 andvar Exp $ */
+/* $NetBSD: if_ie.c,v 1.51 2021/11/10 16:44:42 msaitoh Exp $ */
 
 /*
  * Copyright (c) 1995 Melvin Tang-Richardson.
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ie.c,v 1.50 2021/09/19 10:34:07 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ie.c,v 1.51 2021/11/10 16:44:42 msaitoh Exp $");
 
 #define IGNORE_ETHER1_IDROM_CHECKSUM
 
@@ -115,7 +115,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_ie.c,v 1.50 2021/09/19 10:34:07 andvar Exp $");
 
 #define	xoffsetof(type, member)	(offsetof(type, member) << 1)
 
-/* Some data structres local to this file */
+/* Some data structures local to this file */
 
 struct ie_softc {
 	device_t	sc_dev;
