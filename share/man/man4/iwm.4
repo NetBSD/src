@@ -1,4 +1,4 @@
-.\" $NetBSD: iwm.4,v 1.5 2021/11/10 07:57:29 nia Exp $
+.\" $NetBSD: iwm.4,v 1.6 2021/11/10 07:58:44 nia Exp $
 .\"
 .\" Copyright (c) 2015 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -62,8 +62,8 @@ driver was written by
 .Sh CAVEATS
 The
 .Nm
-driver does not support any of the 802.11n capabilities offered by the
+driver only supports the 802.11a/b/g capabilities offered by the
 adapters.
 Additional work is required in
 .Xr ieee80211 9
-before those features can be supported.
+before 802.11n/802.11ac modes can be supported.
