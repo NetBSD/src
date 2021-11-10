@@ -1,4 +1,4 @@
-/* $NetBSD: pxa2x0reg.h,v 1.23 2011/06/23 11:26:22 kiyohara Exp $ */
+/* $NetBSD: pxa2x0reg.h,v 1.24 2021/11/10 16:22:44 msaitoh Exp $ */
 
 /*
  * Copyright (c) 2002  Genetec Corporation.  All rights reserved.
@@ -485,9 +485,9 @@ struct pxa2x0_dma_desc {
 #define  MDREFR_K1FREE	(1<<24)	/* SDCLK1 free run */
 #define  MDREFR_K2FREE	(1<<25)	/* SDCLK2 free run */
 
-#define MEMCTL_MSC0	0x08	/* Asychronous Statis memory Control CS[01] */
-#define MEMCTL_MSC1	0x0c	/* Asychronous Statis memory Control CS[23] */
-#define MEMCTL_MSC2	0x10	/* Asychronous Statis memory Control CS[45] */
+#define MEMCTL_MSC0	0x08	/* Asynchronous Statis memory Control CS[01] */
+#define MEMCTL_MSC1	0x0c	/* Asynchronous Statis memory Control CS[23] */
+#define MEMCTL_MSC2	0x10	/* Asynchronous Statis memory Control CS[45] */
 #define  MSC_RBUFF_SHIFT 15	/* return data buffer */
 #define  MSC_RBUFF	(1<<MSC_RBUFF_SHIFT)
 #define  MSC_RRR_SHIFT   12  	/* recovery time */
