@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: builtins.def,v 1.26 2019/02/14 11:15:24 kre Exp $
+#	$NetBSD: builtins.def,v 1.27 2021/11/10 18:25:52 kre Exp $
 #
 # Copyright (c) 1991, 1993
 #	The Regents of the University of California.  All rights reserved.
@@ -50,7 +50,7 @@ bgcmd -j	-u bg
 breakcmd	-s break -s continue
 cdcmd		-u cd chdir
 dotcmd		-s .
-echocmd		echo
+echocmd		-u echo
 evalcmd		-s eval
 execcmd		-s exec
 exitcmd		-s exit
@@ -62,12 +62,12 @@ inputrc		inputrc
 fgcmd -j	-u fg
 fgcmd_percent -j	-u %
 getoptscmd	-u getopts
-hashcmd		hash
+hashcmd		-u hash
 jobidcmd	jobid
 jobscmd		-u jobs
 localcmd	local
 #ifndef TINY
-printfcmd	printf
+printfcmd	-u printf
 #endif
 pwdcmd		-u pwd
 readcmd		-u read
@@ -82,20 +82,19 @@ specialvarcmd	specialvar
 timescmd	-s times
 trapcmd		-s trap
 truecmd		-s : -u true
-typecmd		type
+typecmd		-u type
 umaskcmd	-u umask
 unaliascmd	-u unalias
 unsetcmd	-s unset
 waitcmd		-u wait
 aliascmd	-u alias
-ulimitcmd	ulimit
-testcmd		test [
+ulimitcmd	-u ulimit
+testcmd		-u test -u [
 killcmd		-u kill		# mandated by posix for 'kill %job'
 wordexpcmd	wordexp
 #newgrp		-u newgrp	# optional command in posix
+#exprcmd	-u expr		# not currently built in, but could be
 
 #ifdef	DEBUG
 debugcmd	debug
 #endif
-
-#exprcmd	expr
