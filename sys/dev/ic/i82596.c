@@ -1,4 +1,4 @@
-/* $NetBSD: i82596.c,v 1.44 2020/02/04 05:25:39 thorpej Exp $ */
+/* $NetBSD: i82596.c,v 1.45 2021/11/10 17:19:30 msaitoh Exp $ */
 
 /*
  * Copyright (c) 2003 Jochen Kunz.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i82596.c,v 1.44 2020/02/04 05:25:39 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i82596.c,v 1.45 2021/11/10 17:19:30 msaitoh Exp $");
 
 /* autoconfig and device stuff */
 #include <sys/param.h>
@@ -120,7 +120,7 @@ static void iee_cb_setup(struct iee_softc *, uint32_t);
  * the chip.
  * 
  * IEE_NEED_SWAP in sc->sc_flags has to be cleared on little endian hardware
- * and set on big endian hardware, when endianess conversion is not done
+ * and set on big endian hardware, when endianness conversion is not done
  * by the bus attachment but done by i82596 chip itself.
  * Usually you need to set IEE_NEED_SWAP on big endian machines
  * where the hardware (the LE/~BE pin) is configured as BE mode.

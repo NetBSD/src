@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci_arbus.c,v 1.5 2021/08/07 16:18:59 thorpej Exp $	*/
+/*	$NetBSD: ohci_arbus.c,v 1.6 2021/11/10 17:19:29 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002, 2003 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #include "locators.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci_arbus.c,v 1.5 2021/08/07 16:18:59 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci_arbus.c,v 1.6 2021/11/10 17:19:29 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -107,7 +107,7 @@ ohci_arbus_attach(device_t parent, device_t self, void *aux)
 	if (ih == NULL)
 		panic("%s: couldn't establish interrupt", device_xname(self));
 
-	/* we don't handle endianess in bus space */
+	/* we don't handle endianness in bus space */
 	sc->sc_endian = OHCI_LITTLE_ENDIAN;
 
 	int err = ohci_init(sc);

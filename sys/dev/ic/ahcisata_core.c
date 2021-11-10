@@ -1,4 +1,4 @@
-/*	$NetBSD: ahcisata_core.c,v 1.103 2021/10/11 12:48:10 jmcneill Exp $	*/
+/*	$NetBSD: ahcisata_core.c,v 1.104 2021/11/10 17:19:30 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahcisata_core.c,v 1.103 2021/10/11 12:48:10 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahcisata_core.c,v 1.104 2021/11/10 17:19:30 msaitoh Exp $");
 
 #include <sys/types.h>
 #include <sys/malloc.h>
@@ -1363,7 +1363,7 @@ ahci_cmd_done(struct ata_channel *chp, struct ata_xfer *xfer)
 	AHCI_CMDH_SYNC(sc, achp, xfer->c_slot,
 	    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
 
-	/* ata(4) expects IDENTIFY data to be in host endianess */
+	/* ata(4) expects IDENTIFY data to be in host endianness */
 	if (ata_c->r_command == WDCC_IDENTIFY ||
 	    ata_c->r_command == ATAPI_IDENTIFY_DEVICE) {
 		idwordbuf = xfer->c_databuf;

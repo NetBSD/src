@@ -1,4 +1,4 @@
-/*	$NetBSD: crimereg.h,v 1.10 2005/12/11 12:18:52 christos Exp $	*/
+/*	$NetBSD: crimereg.h,v 1.11 2021/11/10 17:19:29 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -55,7 +55,7 @@
 #define CRIME_CONTROL_HARD_RESET	 0x0800
 #define CRIME_CONTROL_SOFT_RESET	 0x0400
 #define CRIME_CONTROL_DOG_ENABLE	 0x0200
-#define CRIME_CONTROL_ENDIANESS		 0x0100 /* assert for BE */
+#define CRIME_CONTROL_ENDIANNESS	 0x0100 /* assert for BE */
 #define CRIME_CONTROL_CQUEUE_HWM	 0x000f
 #define CRIME_CONTROL_CQUEUE_SHFT	 0
 #define CRIME_CONTROL_WBUF_HWM		 0x00f0

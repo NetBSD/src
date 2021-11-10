@@ -1,4 +1,4 @@
-/*	$NetBSD: gtreg.h,v 1.6 2021/10/30 21:08:58 andvar Exp $	*/
+/*	$NetBSD: gtreg.h,v 1.7 2021/11/10 17:19:30 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2002 Allegro Networks, Inc., Wasabi Systems, Inc.
@@ -332,7 +332,7 @@
  * 11:11 AACKDelay		Address Acknowledge Delay
  *				0: AACK* is asserted one cycle after TS*.
  *				1: AACK* is asserted two cycles after TS*.
- * 12:12 Endianess		Must be 0
+ * 12:12 Endianness		Must be 0
  *				NOTE: The GT64260 does not support the PowerPC
  *				      Little Endian convention
  * 13:13 Pipeline		Pipeline Enable
@@ -390,7 +390,7 @@
 #define	GT_CPUCfg_NoMatchCntEn		GT__BIT( 9)
 #define	GT_CPUCfg_NoMatchCntExt		GT__BIT(10)
 #define	GT_CPUCfg_AACKDelay		GT__BIT(11)
-#define	GT_CPUCfg_Endianess		GT__BIT(12)
+#define	GT_CPUCfg_Endianness		GT__BIT(12)
 #define	GT_CPUCfg_Pipeline		GT__BIT(13)
 #define	GT_CPUCfg_TADelay		GT__BIT(15)
 #define	GT_CPUCfg_RdOOO			GT__BIT(16)

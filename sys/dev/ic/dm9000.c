@@ -1,4 +1,4 @@
-/*	$NetBSD: dm9000.c,v 1.30 2021/09/11 20:28:06 andvar Exp $	*/
+/*	$NetBSD: dm9000.c,v 1.31 2021/11/10 17:19:30 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2009 Paul Fleischer
@@ -918,7 +918,7 @@ pkt_write_2(struct dme_softc *sc, struct mbuf *bufChain)
 					length++;
 				}
 
-				/* Does shift direction depend on endianess? */
+				/* Does shift direction depend on endianness? */
 				left_over_buf = left_over_buf | (b << 8);
 
 				bus_space_write_2(sc->sc_iot, sc->sc_ioh,
@@ -956,7 +956,7 @@ pkt_write_2(struct dme_softc *sc, struct mbuf *bufChain)
 						 to_write % 2));
 					left_over_count = 1;
 					/* XXX: Does this depend on
-					 * the endianess?
+					 * the endianness?
 					 */
 					left_over_buf = *write_ptr;
 

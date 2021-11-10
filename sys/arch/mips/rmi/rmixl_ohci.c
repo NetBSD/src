@@ -1,4 +1,4 @@
-/*	$NetBSD: rmixl_ohci.c,v 1.7 2021/08/07 16:18:59 thorpej Exp $	*/
+/*	$NetBSD: rmixl_ohci.c,v 1.8 2021/11/10 17:19:29 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002, 2003 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #include "locators.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rmixl_ohci.c,v 1.7 2021/08/07 16:18:59 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rmixl_ohci.c,v 1.8 2021/11/10 17:19:29 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -115,7 +115,7 @@ rmixl_ohci_attach(device_t parent, device_t self, void *aux)
 				device_xname(self));
 	}
 
-	/* we handle endianess in bus space */
+	/* we handle endianness in bus space */
 	sc->sc_endian = OHCI_HOST_ENDIAN;
 
 	int err = ohci_init(sc);

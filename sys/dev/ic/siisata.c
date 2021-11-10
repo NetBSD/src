@@ -1,4 +1,4 @@
-/* $NetBSD: siisata.c,v 1.49 2021/10/05 08:01:05 rin Exp $ */
+/* $NetBSD: siisata.c,v 1.50 2021/11/10 17:19:30 msaitoh Exp $ */
 
 /* from ahcisata_core.c */
 
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: siisata.c,v 1.49 2021/10/05 08:01:05 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: siisata.c,v 1.50 2021/11/10 17:19:30 msaitoh Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -1142,7 +1142,7 @@ siisata_cmd_done(struct ata_channel *chp, struct ata_xfer *xfer, int tfd)
 		satafis_rdh_cmd_readreg(ata_c, (uint8_t *)fis);
 	}
 
-	/* correct the endianess of IDENTIFY data */
+	/* correct the endianness of IDENTIFY data */
 	if (ata_c->r_command == WDCC_IDENTIFY ||
 	    ata_c->r_command == ATAPI_IDENTIFY_DEVICE) {
 		idwordbuf = xfer->c_databuf;

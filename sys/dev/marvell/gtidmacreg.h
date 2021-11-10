@@ -1,4 +1,4 @@
-/*	$NetBSD: gtidmacreg.h,v 1.4 2017/01/07 14:32:32 kiyohara Exp $	*/
+/*	$NetBSD: gtidmacreg.h,v 1.5 2021/11/10 17:19:30 msaitoh Exp $	*/
 /*
  * Copyright (c) 2008, 2009 KIYOHARA Takashi
  * All rights reserved.
@@ -149,7 +149,7 @@
 #define MVXORE_XEXCR_DBL_32B		(2 << 8)
 #define MVXORE_XEXCR_DBL_64B		(3 << 8)
 #define MVXORE_XEXCR_DBL_128B		(4 << 8)
-#define MVXORE_XEXCR_DRDRESSWP		(1 << 12)	/* Endianess Swap */
+#define MVXORE_XEXCR_DRDRESSWP		(1 << 12)	/* Endianness Swap */
 #define MVXORE_XEXCR_DWRREQSWP		(1 << 13)	/*  ReadReq/WriteRes */
 #define MVXORE_XEXCR_DESSWP		(1 << 14)	/*  Desc read/write */
 #define MVXORE_XEXCR_REGACCPROTECT	(1 << 15)	/* Reg Access protect */
