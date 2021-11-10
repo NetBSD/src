@@ -1,4 +1,4 @@
-/* $NetBSD: mips_mcclock.c,v 1.19 2011/02/20 07:45:48 matt Exp $ */
+/* $NetBSD: mips_mcclock.c,v 1.20 2021/11/10 15:39:03 msaitoh Exp $ */
 
 /*
  * Copyright (c) 1997 Jonathan Stone (hereinafter referred to as the author)
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mips_mcclock.c,v 1.19 2011/02/20 07:45:48 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_mcclock.c,v 1.20 2021/11/10 15:39:03 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -68,7 +68,7 @@ mc_cpuspeed(vaddr_t mcclock_addr, int cpuintmask)
 
 
 /*
- * Estimate CPU cycle speed by counting cycles (acutally executions of a
+ * Estimate CPU cycle speed by counting cycles (actually executions of a
  * one-line loop) between two adjacent ticks of an mc146818 clock.
  * Return loop iteration count so hand-calibrated  MD  code can
  * estimate clock speed from cycles.
