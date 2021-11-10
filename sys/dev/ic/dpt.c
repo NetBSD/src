@@ -1,4 +1,4 @@
-/*	$NetBSD: dpt.c,v 1.77 2021/08/07 16:19:12 thorpej Exp $	*/
+/*	$NetBSD: dpt.c,v 1.78 2021/11/10 15:21:43 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dpt.c,v 1.77 2021/08/07 16:19:12 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dpt.c,v 1.78 2021/11/10 15:21:43 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -540,7 +540,7 @@ dpt_readcfg(struct dpt_softc *sc)
 	/*
 	 * Issue the read-config command and wait for the data to appear.
 	 *
-	 * Apparently certian firmware revisions won't DMA later on if we
+	 * Apparently certain firmware revisions won't DMA later on if we
 	 * request the config data using PIO, but it makes it a lot easier
 	 * as no DMA setup is required.
 	 */
