@@ -1,4 +1,4 @@
-/*	$NetBSD: exec.h,v 1.159 2020/01/23 10:05:44 ad Exp $	*/
+/*	$NetBSD: exec.h,v 1.160 2021/11/10 16:19:48 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -248,7 +248,7 @@ struct exec_vmcmd {
 };
 
 /*
- * funtions used either by execve() or the various CPU-dependent execve()
+ * functions used either by execve() or the various CPU-dependent execve()
  * hooks.
  */
 vaddr_t	exec_vm_minaddr		(vaddr_t);
