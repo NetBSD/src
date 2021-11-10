@@ -1,4 +1,4 @@
-.\"	$NetBSD: methodology.ms,v 1.3 2003/08/07 10:30:41 agc Exp $
+.\"	$NetBSD: methodology.ms,v 1.4 2021/11/10 15:41:41 msaitoh Exp $
 .\"
 .\" Copyright (c) 1983 The Regents of the University of California.
 .\" All rights reserved.
@@ -97,7 +97,7 @@ The apparently straight-forward activity of reading or writing a logical file
 on disk can produce a complex mixture of disk traffic.
 File I/O is supported by a file management system that
 buffers disk traffic through an internal cache,
-which allows writes to ba handled asynchronously.
+which allows writes to be handled asynchronously.
 Reads must be done synchronously,
 however this restriction is moderated by the use of read-ahead.
 Small changes in the performance of the disk controller
