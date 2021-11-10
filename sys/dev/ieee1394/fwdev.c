@@ -1,4 +1,4 @@
-/*	$NetBSD: fwdev.c,v 1.32 2017/06/25 12:39:27 maxv Exp $	*/
+/*	$NetBSD: fwdev.c,v 1.33 2021/11/10 16:08:17 msaitoh Exp $	*/
 /*-
  * Copyright (c) 2003 Hidetoshi Shimokawa
  * Copyright (c) 1998-2002 Katsushi Kobayashi and Hidetoshi Shimokawa
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fwdev.c,v 1.32 2017/06/25 12:39:27 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fwdev.c,v 1.33 2021/11/10 16:08:17 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -264,7 +264,7 @@ readloop:
 		}
 	}
 	if (ir->stproc == NULL) {
-		/* no data avaliable */
+		/* no data available */
 		if (slept == 0) {
 			slept = 1;
 			ir->flag |= FWXFERQ_WAKEUP;
