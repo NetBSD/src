@@ -1,4 +1,4 @@
-/*	$NetBSD: kgdb_stub.c,v 1.18 2009/11/27 03:23:15 rmind Exp $	*/
+/*	$NetBSD: kgdb_stub.c,v 1.19 2021/11/10 16:40:55 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -45,13 +45,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kgdb_stub.c,v 1.18 2009/11/27 03:23:15 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kgdb_stub.c,v 1.19 2021/11/10 16:40:55 msaitoh Exp $");
 
 #include "opt_kgdb.h"
 
 #ifdef KGDB
 #ifndef lint
-static char rcsid[] = "$NetBSD: kgdb_stub.c,v 1.18 2009/11/27 03:23:15 rmind Exp $";
+static char rcsid[] = "$NetBSD: kgdb_stub.c,v 1.19 2021/11/10 16:40:55 msaitoh Exp $";
 #endif
 
 #include <sys/param.h>
@@ -314,7 +314,7 @@ static u_char inbuffer[SL_RPCSIZE+1];
 static u_char outbuffer[SL_RPCSIZE];
 
 /*
- * This function does all command procesing for interfacing to
+ * This function does all command processing for interfacing to
  * a remote gdb.
  */
 int
