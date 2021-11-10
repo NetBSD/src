@@ -1,4 +1,4 @@
-/*	$NetBSD: gtethreg.h,v 1.5 2010/04/28 13:51:56 kiyohara Exp $	*/
+/*	$NetBSD: gtethreg.h,v 1.6 2021/11/10 17:19:30 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2002 Allegro Networks, Inc., Wasabi Systems, Inc.
@@ -54,7 +54,7 @@
  * Descriptors used for both receive & transmit data.  Note that the descriptor
  * must start on a 4LW boundary.  Since the GT accesses the descriptor as
  * two 64-bit quantities, we must present them 32bit quantities in the right
- * order based on endianess.
+ * order based on endianness.
  */
 
 struct gt_eth_desc {

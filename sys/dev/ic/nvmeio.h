@@ -1,4 +1,4 @@
-/*	$NetBSD: nvmeio.h,v 1.3 2018/04/19 21:50:08 christos Exp $	*/
+/*	$NetBSD: nvmeio.h,v 1.4 2021/11/10 17:19:30 msaitoh Exp $	*/
 
 /*-
  * Copyright (C) 2012-2013 Intel Corporation
@@ -95,7 +95,7 @@ struct nvme_pt_command {
 	uint32_t		timeout;
 };
 
-/* Endianess conversion functions for NVMe structs */
+/* Endianness conversion functions for NVMe structs */
 static __inline void
 nvme_le128toh(uint64_t v[2])
 {

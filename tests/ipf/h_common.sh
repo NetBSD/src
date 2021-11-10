@@ -1,4 +1,4 @@
-# $NetBSD: h_common.sh,v 1.8 2013/05/16 07:20:29 martin Exp $
+# $NetBSD: h_common.sh,v 1.9 2021/11/10 17:19:30 msaitoh Exp $
 #
 # Copyright (c) 2008, 2010 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -79,7 +79,7 @@ failing_test_case()
 failing_test_case_be()
 {
 	# this test fails on some architectures - not fully analyzed, assume
-	# an endianess bug
+	# an endianness bug
 	local name="${1}"; shift
 	local check_function="${1}"; shift
 	local reason="${1}"; shift
