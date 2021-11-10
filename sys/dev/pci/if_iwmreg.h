@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwmreg.h,v 1.9 2021/08/17 22:00:31 andvar Exp $	*/
+/*	$NetBSD: if_iwmreg.h,v 1.10 2021/11/10 15:36:43 msaitoh Exp $	*/
 /*	OpenBSD: if_iwmreg.h,v 1.19 2016/09/20 11:46:09 stsp Exp 	*/
 
 /*-
@@ -2590,7 +2590,7 @@ enum {
  * notification the status is always success. There is no start/end fragment
  * notification for monolithic events.
  *
- * @IWM_TE_V2_DEFAULT_POLICY: independent, social, present, unoticable
+ * @IWM_TE_V2_DEFAULT_POLICY: independent, social, present, unnoticeable
  * @IWM_TE_V2_NOTIF_HOST_EVENT_START: request/receive notification on event start
  * @IWM_TE_V2_NOTIF_HOST_EVENT_END:request/receive notification on event end
  * @IWM_TE_V2_NOTIF_INTERNAL_EVENT_START: internal FW use
