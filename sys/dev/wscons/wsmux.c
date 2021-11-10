@@ -1,4 +1,4 @@
-/*	$NetBSD: wsmux.c,v 1.64 2019/11/10 21:16:38 chs Exp $	*/
+/*	$NetBSD: wsmux.c,v 1.65 2021/11/10 16:57:39 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1998, 2005 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsmux.c,v 1.64 2019/11/10 21:16:38 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsmux.c,v 1.65 2021/11/10 16:57:39 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -650,7 +650,7 @@ wsmux_create(const char *name, int unit)
 {
 	struct wsmux_softc *sc;
 
-	/* XXX This is wrong -- should use autoconfiguraiton framework */
+	/* XXX This is wrong -- should use autoconfiguration framework */
 
 	DPRINTF(("wsmux_create: allocating\n"));
 	sc = malloc(sizeof *sc, M_DEVBUF, M_WAITOK|M_ZERO);
