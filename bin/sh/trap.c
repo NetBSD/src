@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.55 2020/08/20 23:09:56 kre Exp $	*/
+/*	$NetBSD: trap.c,v 1.56 2021/11/10 15:26:34 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)trap.c	8.5 (Berkeley) 6/5/95";
 #else
-__RCSID("$NetBSD: trap.c,v 1.55 2020/08/20 23:09:56 kre Exp $");
+__RCSID("$NetBSD: trap.c,v 1.56 2021/11/10 15:26:34 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -908,8 +908,14 @@ exitshell_savedstatus(void)
 		sigaddset(&sigs, s);
 		sigprocmask(SIG_UNBLOCK, &sigs, NULL);
 
+		VTRACE(DBG_ERRS|DBG_PROCS|DBG_CMDS|DBG_TRAP,
+		    ("exitshell_savedstatus(): pid %d Death by signal %d\n",
+			getpid(), s));
 		kill(getpid(), s);
 	}
+	VTRACE(DBG_ERRS|DBG_PROCS|DBG_CMDS|DBG_TRAP,
+	    ("exitshell_savedstatus(): pid %d exiting(%d)\n",
+		getpid(), exiting_status));
 	_exit(exiting_status);
 	/* NOTREACHED */
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: expand.c,v 1.139 2021/09/10 22:11:03 rillig Exp $	*/
+/*	$NetBSD: expand.c,v 1.140 2021/11/10 15:26:34 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)expand.c	8.5 (Berkeley) 5/15/95";
 #else
-__RCSID("$NetBSD: expand.c,v 1.139 2021/09/10 22:11:03 rillig Exp $");
+__RCSID("$NetBSD: expand.c,v 1.140 2021/11/10 15:26:34 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -148,6 +148,7 @@ expandhere(union node *arg, int fd)
 {
 	int len;
 
+	VTRACE(DBG_EXPAND|DBG_REDIR, ("expandhere() fd=%d\n", fd));
 	herefd = fd;
 	expandarg(arg, NULL, 0);
 	len = rmescapes(stackblock());
@@ -193,8 +194,9 @@ expandarg(union node *arg, struct arglist *arglist, int flag)
 	argstr(arg->narg.text, flag);
 	if (arglist == NULL) {
 		STACKSTRNUL(expdest);
-		CTRACE(DBG_EXPAND, ("expandarg: no arglist, done (%d) \"%s\"\n",
-		    expdest - stackblock(), stackblock()));
+		CTRACE(DBG_EXPAND,
+		    ("expandarg: no arglist, done[%d] (len %d) \"%s\"\n",
+		    back_exitstatus, expdest - stackblock(), stackblock()));
 		return;			/* here document expanded */
 	}
 	STPUTC('\0', expdest);
@@ -698,7 +700,8 @@ expbackq(union node *cmd, int quoted, int flag)
 		back_exitstatus = waitforjob(in.jp);
 	if (quoted == 0)
 		recordregion(startloc, dest - stackblock(), 0);
-	CTRACE(DBG_EXPAND, ("evalbackq: size=%d: \"%.*s\"\n",
+	CTRACE(DBG_EXPAND, ("evalbackq: [%d] size=%d: \"%.*s\"\n",
+		back_exitstatus,
 		(int)((dest - stackblock()) - startloc),
 		(int)((dest - stackblock()) - startloc),
 		stackblock() + startloc));
