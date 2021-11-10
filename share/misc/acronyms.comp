@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.324 2021/06/18 21:58:20 riastradh Exp $
+$NetBSD: acronyms.comp,v 1.325 2021/11/10 07:08:47 plunky Exp $
 3WHS	three-way handshake
 8VSB	8-state vestigial side band modulation
 AA	anti-aliasing
@@ -1101,6 +1101,7 @@ ODE	offline device environment
 ODI	open data-link interface
 ODM	object data manager
 ODCM	on-demand clock modulation
+ODMR	on-demand mail relay
 ODT	on-die termination
 OEM	original equipment manufacturer
 OFB	output feedback
