@@ -1,5 +1,5 @@
 #
-# $NetBSD: fpsp.s,v 1.5 2005/12/11 12:17:52 christos Exp $
+# $NetBSD: fpsp.s,v 1.6 2021/11/10 16:47:41 msaitoh Exp $
 #
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -21752,7 +21752,7 @@ denorm_set_stky:
 	rts
 
 #									#
-# dnrm_lp(): normalize exponent/mantissa to specified threshhold	#
+# dnrm_lp(): normalize exponent/mantissa to specified threshold		#
 #									#
 # INPUT:								#
 #	%a0	   : points to the operand to be denormalized		#
