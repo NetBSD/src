@@ -1,4 +1,4 @@
-/*	$NetBSD: boot32.c,v 1.47 2019/12/27 09:22:19 msaitoh Exp $	*/
+/*	$NetBSD: boot32.c,v 1.48 2021/11/10 15:33:26 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 2002 Reinoud Zandijk
@@ -312,7 +312,7 @@ get_memory_configuration(void)
 			/* passed a boundary ... note this block	   */
 			/*
 			 * splitting in different vars is for
-			 * compatability reasons
+			 * compatibility reasons
 			 */
 			switch (current_page_type) {
 			case -1:
