@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.211 2021/08/13 20:26:07 andvar Exp $	*/
+/*	$NetBSD: locore.S,v 1.212 2021/11/10 15:59:07 msaitoh Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -1059,7 +1059,7 @@ ENTRY(start_xen32)
 	movl	%ebx,(%ebp)
 	movl	$KERNBASE_HI,4(%ebp)
 
-	/* annouce ourself */
+	/* announce ourself */
 	movl	$VM_GUEST_XENPVH, RELOC(vm_guest)
 	jmp .Lbiosbasemem_finished
 END(start_xen32)

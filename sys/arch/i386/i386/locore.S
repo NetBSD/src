@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.186 2021/08/13 20:26:07 andvar Exp $	*/
+/*	$NetBSD: locore.S,v 1.187 2021/11/10 15:59:08 msaitoh Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -128,7 +128,7 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: locore.S,v 1.186 2021/08/13 20:26:07 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locore.S,v 1.187 2021/11/10 15:59:08 msaitoh Exp $");
 
 #include "opt_copy_symtab.h"
 #include "opt_ddb.h"
@@ -1212,7 +1212,7 @@ ENTRY(start_xenpvh)
 	addl	$KERNBASE,%ebx
 	movl	$RELOC(eblob),%ebp
 	movl	%ebx,(%ebp)
-	/* annouce ourself */
+	/* announce ourself */
 	movl	$VM_GUEST_XENPVH, RELOC(vm_guest)
 	jmp	.Lstart_common
 END(start_xenpvh)
