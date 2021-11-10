@@ -1,4 +1,4 @@
-/*	$NetBSD: if_snvar.h,v 1.14 2018/10/14 00:10:11 tsutsui Exp $	*/
+/*	$NetBSD: if_snvar.h,v 1.15 2021/11/10 17:19:29 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1991   Algorithmics Ltd (http://www.algor.co.uk)
@@ -130,7 +130,7 @@ struct sn_softc {
 
 /*
  * Accessing SONIC data structures and registers as 32 bit values
- * makes code endianess independent.  The SONIC is however always in
+ * makes code endianness independent.  The SONIC is however always in
  * bigendian mode so it is necessary to ensure that data structures shared
  * between the CPU and the SONIC are always in bigendian order.
  */

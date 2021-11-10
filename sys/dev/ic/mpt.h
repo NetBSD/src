@@ -1,4 +1,4 @@
-/*	$NetBSD: mpt.h,v 1.8 2014/09/27 16:14:16 jmcneill Exp $	*/
+/*	$NetBSD: mpt.h,v 1.9 2021/11/10 17:19:30 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2000, 2001 by Greg Ansley
@@ -187,7 +187,7 @@ void mpt_print_scsi_io_request(MSG_SCSI_IO_REQUEST *);
 void mpt_print_config_request(void *);
 void mpt_print_request(void *);
 
-/********************************** Endianess *********************************/
+/******************************** Endianness *********************************/
 #define	MPT_2_HOST64(ptr, tag)	ptr->tag = le64toh(ptr->tag)
 #define	MPT_2_HOST32(ptr, tag)	ptr->tag = le32toh(ptr->tag)
 #define	MPT_2_HOST16(ptr, tag)	ptr->tag = le16toh(ptr->tag)

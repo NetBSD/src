@@ -1,4 +1,4 @@
-/*	$NetBSD: if_malo_pcmcia.c,v 1.26 2021/06/16 00:21:19 riastradh Exp $	*/
+/*	$NetBSD: if_malo_pcmcia.c,v 1.27 2021/11/10 17:19:30 msaitoh Exp $	*/
 /*      $OpenBSD: if_malo.c,v 1.65 2009/03/29 21:53:53 sthen Exp $ */
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_malo_pcmcia.c,v 1.26 2021/06/16 00:21:19 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_malo_pcmcia.c,v 1.27 2021/11/10 17:19:30 msaitoh Exp $");
 
 #ifdef _MODULE
 #include <sys/module.h>
@@ -2001,10 +2001,10 @@ cmalo_cmd_response(struct malo_softc *sc)
 	cmalo_hexdump(sc->sc_cmd, psize);
 
 	/*
-	 * We convert the header values into the machines correct endianess,
+	 * We convert the header values into the machines correct endianness,
 	 * so we don't have to le16toh() all over the code.  The body is
 	 * kept in the cards order, little endian.  We need to take care
-	 * about the body endianess in the corresponding response routines.
+	 * about the body endianness in the corresponding response routines.
 	 */
 	hdr->cmd = le16toh(hdr->cmd);
 	hdr->size = le16toh(hdr->size);

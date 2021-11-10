@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ie_mvme.c,v 1.20 2014/03/25 15:52:33 christos Exp $	*/
+/*	$NetBSD: if_ie_mvme.c,v 1.21 2021/11/10 17:19:30 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ie_mvme.c,v 1.20 2014/03/25 15:52:33 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ie_mvme.c,v 1.21 2021/11/10 17:19:30 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -109,7 +109,7 @@ ie_reset(struct ie_softc *sc, int why)
 		/*
 		 * Set the BUSY and BUS_USE bytes here, since the MI code
 		 * incorrectly assumes it can use byte addressing to set it.
-		 * (due to wrong-endianess of the chip)
+		 * (due to wrong-endianness of the chip)
 		 */
 		ie_write_16(sc, IE_ISCP_BUSY(sc->iscp), 1);
 		ie_write_16(sc, IE_SCP_BUS_USE(sc->scp), IE_BUS_USE);

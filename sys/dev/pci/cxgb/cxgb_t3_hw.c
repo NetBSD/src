@@ -28,7 +28,7 @@ POSSIBILITY OF SUCH DAMAGE.
 ***************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cxgb_t3_hw.c,v 1.5 2021/08/02 12:56:24 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cxgb_t3_hw.c,v 1.6 2021/11/10 17:19:30 msaitoh Exp $");
 
 
 #ifdef CONFIG_DEFINED
@@ -785,7 +785,7 @@ static int flash_wait_op(adapter_t *adapter, int attempts, int delay)
  *  Read the specified number of 32-bit words from the serial flash.
  *  If @byte_oriented is set the read data is stored as a byte array
  *  (i.e., big-endian), otherwise as 32-bit words in the platform's
- *  natural endianess.
+ *  natural endianness.
  */
 int t3_read_flash(adapter_t *adapter, unsigned int addr, unsigned int nwords,
           u32 *data, int byte_oriented)
