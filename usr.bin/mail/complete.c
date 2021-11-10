@@ -1,4 +1,4 @@
-/*	$NetBSD: complete.c,v 1.23 2019/12/16 22:55:45 christos Exp $	*/
+/*	$NetBSD: complete.c,v 1.24 2021/11/10 16:42:47 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1997-2000,2005,2006 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: complete.c,v 1.23 2019/12/16 22:55:45 christos Exp $");
+__RCSID("$NetBSD: complete.c,v 1.24 2021/11/10 16:42:47 msaitoh Exp $");
 #endif /* not lint */
 
 /*
@@ -1078,7 +1078,7 @@ mime_enc_complete(EditLine *el, int ch)
  * Our public interface to el_gets():
  *
  * init_editline()
- *    Initializes of all editline and completion data strutures.
+ *    Initializes of all editline and completion data structures.
  *
  * my_gets()
  *    Displays prompt, calls el_gets() and deals with history.
