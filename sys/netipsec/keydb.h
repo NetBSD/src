@@ -1,4 +1,4 @@
-/*	$NetBSD: keydb.h,v 1.23 2018/04/19 08:27:38 maxv Exp $	*/
+/*	$NetBSD: keydb.h,v 1.24 2021/11/10 16:55:20 msaitoh Exp $	*/
 /*	$FreeBSD: keydb.h,v 1.1.4.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$KAME: keydb.h,v 1.14 2000/08/02 17:58:26 sakane Exp $	*/
 
@@ -55,7 +55,7 @@ union sockaddr_union {
 };
 #endif /* _SOCKADDR_UNION_DEFINED */
 
-/* Security Assocciation Index */
+/* Security Association Index */
 /* NOTE: Ensure to be same address family */
 struct secasindex {
 	union sockaddr_union src;	/* source address for SA */
