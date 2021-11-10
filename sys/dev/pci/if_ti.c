@@ -1,4 +1,4 @@
-/* $NetBSD: if_ti.c,v 1.121 2021/06/05 14:28:28 thorpej Exp $ */
+/* $NetBSD: if_ti.c,v 1.122 2021/11/10 16:17:34 msaitoh Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -55,7 +55,7 @@
  *
  * The Tigon 2 contains 2 R4000 CPUs and requires a newer firmware
  * revision, which supports new features such as extended commands,
- * extended jumbo receive ring desciptors and a mini receive ring.
+ * extended jumbo receive ring descriptors and a mini receive ring.
  *
  * Alteon Networks is to be commended for releasing such a vast amount
  * of development material for the Tigon NIC without requiring an NDA
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ti.c,v 1.121 2021/06/05 14:28:28 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ti.c,v 1.122 2021/11/10 16:17:34 msaitoh Exp $");
 
 #include "opt_inet.h"
 
