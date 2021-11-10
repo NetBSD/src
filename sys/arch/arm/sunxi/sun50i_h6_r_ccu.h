@@ -1,4 +1,4 @@
-/* $NetBSD: sun50i_h6_r_ccu.h,v 1.1 2018/05/02 11:02:21 jmcneill Exp $ */
+/* $NetBSD: sun50i_h6_r_ccu.h,v 1.2 2021/11/10 17:38:11 jakllsch Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -36,6 +36,7 @@
 #define	H6_R_RST_APB2_I2C	4
 #define	H6_R_RST_APB1_IR	5
 #define	H6_R_RST_APB1_W1	6
+#define	H6_R_RST_APB2_RSB	7
 
 #define	H6_R_CLK_AR100		0
 #define	H6_R_CLK_AHB		1
@@ -50,5 +51,6 @@
 #define	H6_R_CLK_APB1_W1	10
 #define	H6_R_CLK_IR		11
 #define	H6_R_CLK_W1		12
+#define	H6_R_CLK_APB2_RSB	13
 
 #endif /* !_SUN50I_H6_R_CCU_H */
