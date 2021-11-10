@@ -1,4 +1,4 @@
-/* $NetBSD: interrupt.c,v 1.99 2021/07/16 19:02:22 thorpej Exp $ */
+/* $NetBSD: interrupt.c,v 1.100 2021/11/10 16:53:28 msaitoh Exp $ */
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.99 2021/07/16 19:02:22 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.100 2021/11/10 16:53:28 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -216,7 +216,7 @@ interrupt(unsigned long a0, unsigned long a1, unsigned long a2,
 		 * for the clock interrupt, we add 0x10.  Why?  Because
 		 * while we only call out a single device interrupt
 		 * level, technically the architecture specification
-		 * suports two, meaning we could have intrdepth > 1
+		 * supports two, meaning we could have intrdepth > 1
 		 * just for device interrupts.
 		 *
 		 * Adding 0x10 here means that cpu_intr_p() can check
