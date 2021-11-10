@@ -1,4 +1,4 @@
-/*	$NetBSD: output.h,v 1.27 2017/11/21 03:42:39 kre Exp $	*/
+/*	$NetBSD: output.h,v 1.28 2021/11/10 15:58:38 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -104,6 +104,9 @@ void xtrace_pop(void);
 #define out1c(c)	outc(c, out1)
 #define out2c(c)	outc(c, out2)
 #define outxc(c)	outc(c, outx)
+
+#define clr_err(file)	((file)->flags &= ~OUTPUT_ERR)
+#define io_err(file)	((file)->flags & OUTPUT_ERR)
 
 #define OUTPUT_INCL
 #endif
