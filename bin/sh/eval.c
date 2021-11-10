@@ -1,4 +1,4 @@
-/*	$NetBSD: eval.c,v 1.182 2021/04/04 13:24:07 kre Exp $	*/
+/*	$NetBSD: eval.c,v 1.183 2021/11/10 15:26:34 kre Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)eval.c	8.9 (Berkeley) 6/8/95";
 #else
-__RCSID("$NetBSD: eval.c,v 1.182 2021/04/04 13:24:07 kre Exp $");
+__RCSID("$NetBSD: eval.c,v 1.183 2021/11/10 15:26:34 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -1131,6 +1131,12 @@ evalcommand(union node *cmd, int flgs, struct backcmd *backcmd)
 				 */
 				SHELL_FORKED();
 				if (setjmp(jmploc.loc)) {
+					VTRACE(DBG_EVAL|DBG_ERRS|
+					  DBG_PROCS|DBG_CMDS|DBG_TRAP,
+					  ("vfork child exit exception:%d "
+					   "exitstatus:%d exerrno:%d\n",
+					   exception, exitstatus, exerrno));
+
 					if (exception == EXSHELLPROC) {
 						/*
 						 * We can't progress with the
