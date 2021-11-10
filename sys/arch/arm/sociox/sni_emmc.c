@@ -1,4 +1,4 @@
-/*	$NetBSD: sni_emmc.c,v 1.8 2021/01/27 03:10:19 thorpej Exp $	*/
+/*	$NetBSD: sni_emmc.c,v 1.9 2021/11/10 17:23:46 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sni_emmc.c,v 1.8 2021/01/27 03:10:19 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sni_emmc.c,v 1.9 2021/11/10 17:23:46 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -228,7 +228,7 @@ sniemmc_attach_i(device_t self)
 #endif
 	error = 0;
 	if (error) {
-		aprint_error_dev(self, "couldn't intialize host, error=%d\n",				error);
+		aprint_error_dev(self, "couldn't initialize host, error=%d\n",				error);
 		goto fail;
 	}
 	return;
