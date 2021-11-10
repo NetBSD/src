@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.sysio,v 1.14 2021/08/09 20:49:09 andvar Exp $
+#	$NetBSD: Makefile.sysio,v 1.15 2021/11/10 15:33:26 msaitoh Exp $
 
 # Sources for syscall and ioctl compatibility across the versions.
 
@@ -58,11 +58,11 @@ SRCS+=	ocryptodev.c  compat_crypto_50.c
 SRCS+=	rf_compat50.c
 SRCS+=	rf_compat80.c
 
-# Puffs compatability code for NetBSD 5.0
+# Puffs compatibility code for NetBSD 5.0
 .PATH:	${S}/fs/puffs
 SRCS+=	puffs_compat.c
 
-# wsevent compatability code for NetBSD 5.0
+# wsevent compatibility code for NetBSD 5.0
 .PATH:	${S}/dev/wscons
 SRCS+=	wsevent_50.c
 
