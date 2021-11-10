@@ -1,4 +1,4 @@
-/*	$NetBSD: error.c,v 1.43 2019/02/04 11:16:41 kre Exp $	*/
+/*	$NetBSD: error.c,v 1.44 2021/11/10 15:26:34 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)error.c	8.2 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: error.c,v 1.43 2019/02/04 11:16:41 kre Exp $");
+__RCSID("$NetBSD: error.c,v 1.44 2021/11/10 15:26:34 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -221,6 +221,7 @@ exerror(int cond, const char *msg, ...)
 void
 sh_exit(int rval)
 {
+	VTRACE(DBG_ERRS|DBG_PROCS|DBG_CMDS, ("sh_exit(%d)\n", rval));
 	exerrno = rval & 255;
 	exraise(EXEXEC);
 }
