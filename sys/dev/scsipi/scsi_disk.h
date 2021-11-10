@@ -1,4 +1,4 @@
-/*	$NetBSD: scsi_disk.h,v 1.33 2019/12/27 09:41:51 msaitoh Exp $	*/
+/*	$NetBSD: scsi_disk.h,v 1.34 2021/11/10 16:17:34 msaitoh Exp $	*/
 
 /*
  * SCSI-specific interface description
@@ -111,7 +111,7 @@ struct scsi_initialization_pattern_descriptor {
 };
 
 /*
- * Defect desciptors.  These are used as the defect lists in the FORMAT UNIT
+ * Defect descriptors.  These are used as the defect lists in the FORMAT UNIT
  * and READ DEFECT DATA commands, and as the translate page of the
  * SEND DIAGNOSTIC and RECEIVE DIAGNOSTIC RESULTS commands.
  */

@@ -1,4 +1,4 @@
-/* $NetBSD: rtw.c,v 1.136 2021/06/16 00:21:18 riastradh Exp $ */
+/* $NetBSD: rtw.c,v 1.137 2021/11/10 16:17:34 msaitoh Exp $ */
 /*-
  * Copyright (c) 2004, 2005, 2006, 2007 David Young.  All rights
  * reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtw.c,v 1.136 2021/06/16 00:21:18 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtw.c,v 1.137 2021/11/10 16:17:34 msaitoh Exp $");
 
 
 #include <sys/param.h>
@@ -1172,7 +1172,7 @@ rtw_txdesc_blk_init_all(struct rtw_txdesc_blk *tdb)
 	 * descriptor in a single beacon interval, since that will
 	 * enable multiple-BSS support.  Since the NIC does not
 	 * clear the OWN bit, there is no natural place for it to
-	 * stop processing BEACON desciptors.  Maybe it will *not*
+	 * stop processing BEACON descriptors.  Maybe it will *not*
 	 * stop processing them!  I do not want to chance the NIC
 	 * looping around and around a saturated beacon ring, so
 	 * I will leave one descriptor unOWNed at all times.
