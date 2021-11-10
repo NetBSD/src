@@ -1,4 +1,4 @@
-.\" $NetBSD: iwm.4,v 1.4 2016/05/02 01:05:34 dholland Exp $
+.\" $NetBSD: iwm.4,v 1.5 2021/11/10 07:57:29 nia Exp $
 .\"
 .\" Copyright (c) 2015 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,20 +27,20 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd May 1, 2016
+.Dd November 10, 2021
 .Dt IWM 4
 .Os
 .Sh NAME
 .Nm iwm
-.Nd Intel Wireless and Centrino Wireless IEEE 802.11 wireless network driver
+.Nd Intel Wireless AC and Centrino Wireless IEEE 802.11 wireless network driver
 .Sh SYNOPSIS
 .Cd "iwm* at pci? dev ? function ?"
 .Sh DESCRIPTION
 The
 .Nm
 driver provides support for
-.Tn Intel
-Wireless 7260, 7265, and 3160 PCIe Mini Card Dual Band network adapters.
+Intel Wireless 3160, 3165, 3168, 4165, 7260, 7265, 8260, and 8265
+PCIe Mini Card Dual Band network adapters.
 .Pp
 By default, the
 .Nm
@@ -59,3 +59,11 @@ The
 .Nm
 driver was written by
 .An Antti Kantee Aq Mt pooka@NetBSD.org .
+.Sh CAVEATS
+The
+.Nm
+driver does not support any of the 802.11n capabilities offered by the
+adapters.
+Additional work is required in
+.Xr ieee80211 9
+before those features can be supported.
