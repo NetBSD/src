@@ -1,4 +1,4 @@
-/*	$NetBSD: if_dge.c,v 1.60 2021/08/09 21:08:06 andvar Exp $ */
+/*	$NetBSD: if_dge.c,v 1.61 2021/11/10 16:47:41 msaitoh Exp $ */
 
 /*
  * Copyright (c) 2004, SUNET, Swedish University Computer Network.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_dge.c,v 1.60 2021/08/09 21:08:06 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_dge.c,v 1.61 2021/11/10 16:47:41 msaitoh Exp $");
 
 
 
@@ -177,7 +177,7 @@ int	dge_debug = 0;
 #define DGE_RXSPACE		10
 #define DGE_PREVRX(x)		(((x) - DGE_RXSPACE) & DGE_NRXDESC_MASK)
 /*
- * Receive descriptor fetch threshholds. These are values recommended
+ * Receive descriptor fetch thresholds. These are values recommended
  * by Intel, do not touch them unless you know what you are doing.
  */
 #define RXDCTL_PTHRESH_VAL	128
