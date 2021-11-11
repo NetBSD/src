@@ -1,4 +1,4 @@
-.\" $NetBSD: si70xxtemp.4,v 1.5 2021/11/11 14:16:04 brad Exp $
+.\" $NetBSD: si70xxtemp.4,v 1.6 2021/11/11 14:24:24 wiz Exp $
 .\"
 .\" Copyright (c) 2017 Brad Spencer <brad@anduin.eldar.org>
 .\"
@@ -58,8 +58,9 @@ Turn the heater on and off.
 From 1 to 6, the amount of energy put into the heater.
 The higher the number, the more power used.
 .Pp
-Some HTU21D chips do not support a heater register.  These chips are
-detected and the heater features of the driver will be disabled.
+Some HTU21D chips do not support a heater register.
+These chips are detected and the heater features of the driver will
+be disabled.
 .It hw.si70xxtemp0.debug
 If the driver is compiled with
 .Dv SI70XX_DEBUG ,
