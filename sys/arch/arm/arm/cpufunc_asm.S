@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc_asm.S,v 1.16 2013/08/18 06:28:18 matt Exp $	*/
+/*	$NetBSD: cpufunc_asm.S,v 1.17 2021/11/11 07:26:41 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997,1998 Mark Brinicombe.
@@ -34,13 +34,13 @@
  *
  * RiscBSD kernel project
  *
- * cpufunc.S 
+ * cpufunc.S
  *
  * Assembly functions for CPU / MMU / TLB specific operations
  *
  * Created      : 30/01/97
  */
- 
+
 #include <arm/armreg.h>
 #include <machine/asm.h>
 
@@ -91,13 +91,13 @@ END(cpufunc_faultaddress)
  * Generic functions to write the internal coprocessor registers
  *
  *
- * Currently these registers are 
+ * Currently these registers are
  *  c1 - CPU Control
  *  c3 - Domain Access Control
  *
  * All other registers are CPU architecture specific
  */
- 
+
 #if 0 /* See below. */
 ENTRY(cpufunc_control)
 	mcr	p15, 0, r0, c1, c0, 0
@@ -113,12 +113,12 @@ END(cpufunc_domains)
  * Generic functions to read/modify/write the internal coprocessor registers
  *
  *
- * Currently these registers are 
+ * Currently these registers are
  *  c1 - CPU Control
  *
  * All other registers are CPU architecture specific
  */
- 
+
 ENTRY(cpufunc_control)
 	mrc	p15, 0, r3, c1, c0, 0	/* Read the control register */
 	bics	r2, r3, r0		/* Clear bits */
