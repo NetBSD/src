@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_execve.c,v 1.43 2021/04/13 05:28:16 mrg Exp $	*/
+/*	$NetBSD: netbsd32_execve.c,v 1.44 2021/11/11 17:32:46 martin Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_execve.c,v 1.43 2021/04/13 05:28:16 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_execve.c,v 1.44 2021/11/11 17:32:46 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -90,6 +90,26 @@ netbsd32_fexecve(struct lwp *l, const struct netbsd32_fexecve_args *uap,
 	    SCARG_P32(uap, envp), netbsd32_execve_fetch_element);
 }
 
+static __inline bool
+netbsd32_posix_spawn_fae_path(
+    struct posix_spawn_file_actions_entry *fae,
+    struct netbsd32_posix_spawn_file_actions_entry *fae32,
+    char ***pathp, char **pathp32)
+{
+	switch (fae->fae_action) {
+	case FAE_OPEN:
+		*pathp = &fae->fae_path;
+		*pathp32 = NETBSD32PTR64(fae32->fae_data.open.path);
+		return true;
+	case FAE_CHDIR:
+		*pathp = &fae->fae_chdir_path;
+		*pathp32 = NETBSD32PTR64(fae32->fae_data.chdir.path);
+		return true;
+	default:
+		return false;
+	}
+}
+
 static int
 netbsd32_posix_spawn_fa_alloc(struct posix_spawn_file_actions **fap,
     const struct netbsd32_posix_spawn_file_actions *ufa, rlim_t lim)
@@ -98,7 +118,7 @@ netbsd32_posix_spawn_fa_alloc(struct posix_spawn_file_actions **fap,
 	struct netbsd32_posix_spawn_file_actions fa32;
 	struct netbsd32_posix_spawn_file_actions_entry *fae32 = NULL, *f32 = NULL;
 	struct posix_spawn_file_actions_entry *fae;
-	char *pbuf = NULL;
+	char *pbuf = NULL, **pathp = NULL, *pathp32 = NULL;
 	int error;
 	size_t fal, fal32, slen, i = 0;
 
@@ -135,26 +155,24 @@ netbsd32_posix_spawn_fa_alloc(struct posix_spawn_file_actions **fap,
 		if (fae->fae_action == FAE_DUP2)
 			fae->fae_data.dup2.newfildes =
 			    f32->fae_data.dup2.newfildes;
-		if (fae->fae_action != FAE_OPEN)
+		if (!netbsd32_posix_spawn_fae_path(fae, f32, &pathp, &pathp32)
+		    || pathp == NULL || pathp32 == NULL)
 			continue;
-		error = copyinstr(NETBSD32PTR64(f32->fae_path), pbuf,
-		    MAXPATHLEN, &slen);
+		error = copyinstr(pathp32, pbuf, MAXPATHLEN, &slen);
 		if (error)
 			goto out;
-		fae->fae_path = kmem_alloc(slen, KM_SLEEP);
-		memcpy(fae->fae_path, pbuf, slen);
+		*pathp = kmem_alloc(slen, KM_SLEEP);
+		memcpy(*pathp, pbuf, slen);
 		fae->fae_oflag = f32->fae_oflag;
 		fae->fae_mode = f32->fae_mode;
 	}
 	PNBUF_PUT(pbuf);
-	if (fae32)
-		kmem_free(fae32, fal32);
+	kmem_free(fae32, fal32);
 	*fap = fa;
 	return 0;
 
 out:
-	if (fae32)
-		kmem_free(fae32, fal32);
+	kmem_free(fae32, fal32);
 	if (pbuf)
 		PNBUF_PUT(pbuf);
 	posix_spawn_fa_free(fa, i);
