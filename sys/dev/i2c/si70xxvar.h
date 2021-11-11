@@ -1,4 +1,4 @@
-/*	$NetBSD: si70xxvar.h,v 1.2 2017/12/29 02:20:47 christos Exp $	*/
+/*	$NetBSD: si70xxvar.h,v 1.3 2021/11/11 14:16:04 brad Exp $	*/
 
 /*
  * Copyright (c) 2017 Brad Spencer <brad@anduin.eldar.org>
@@ -45,6 +45,8 @@ struct si70xx_sc {
 	uint32_t 	sc_clockstretch;
 #endif
 	int 		sc_readattempts;
+	bool		sc_noheater;
+	bool		sc_nofw;
 };
 
 struct si70xx_sensor {

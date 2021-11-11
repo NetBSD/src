@@ -1,4 +1,4 @@
-/*	$NetBSD: si70xx.c,v 1.8 2021/08/21 11:55:25 andvar Exp $	*/
+/*	$NetBSD: si70xx.c,v 1.9 2021/11/11 14:16:04 brad Exp $	*/
 
 /*
  * Copyright (c) 2017 Brad Spencer <brad@anduin.eldar.org>
@@ -17,10 +17,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: si70xx.c,v 1.8 2021/08/21 11:55:25 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: si70xx.c,v 1.9 2021/11/11 14:16:04 brad Exp $");
 
 /*
-  Driver for the Silicon Labs SI7013/SI7020/SI7021
+  Driver for the Silicon Labs SI7013/SI7020/SI7021, HTU21D and SHT21
 */
 
 #include <sys/param.h>
@@ -442,7 +442,10 @@ static int
 si70xx_update_status(struct si70xx_sc *sc)
 {
 	int error1 = si70xx_update_user(sc);
-	int error2 = si70xx_update_heater(sc);
+	int error2 = 0;
+	if (! sc->sc_noheater) {
+		error2 = si70xx_update_heater(sc);
+	}
 	return error1 ? error1 : error2;
 }
 
@@ -547,17 +550,22 @@ si70xx_sysctl_init(struct si70xx_sc *sc)
 	    CTL_HW, sysctlroot_num, CTL_CREATE, CTL_EOL)) != 0)
 		return error;
 
-	if ((error = sysctl_createv(&sc->sc_si70xxlog, 0, NULL, &cnode,
-	    CTLFLAG_READWRITE, CTLTYPE_BOOL, "heateron",
-	    SYSCTL_DESCR("Heater on"), si70xx_verify_sysctl_heateron, 0,
-	    (void *)sc, 0, CTL_HW, sysctlroot_num, CTL_CREATE, CTL_EOL)) != 0)
-		return error;
+	if (! sc->sc_noheater) {
+		if ((error = sysctl_createv(&sc->sc_si70xxlog, 0, NULL, &cnode,
+		    CTLFLAG_READWRITE, CTLTYPE_BOOL, "heateron",
+		    SYSCTL_DESCR("Heater on"), si70xx_verify_sysctl_heateron, 0,
+		    (void *)sc, 0, CTL_HW, sysctlroot_num, CTL_CREATE, CTL_EOL)) != 0)
+			return error;
 
-	return sysctl_createv(&sc->sc_si70xxlog, 0, NULL, &cnode,
-	    CTLFLAG_READWRITE, CTLTYPE_INT, "heaterstrength",
-	    SYSCTL_DESCR("Heater strength 1 to 6"),
-	    si70xx_verify_sysctl_heatervalue, 0, (void *)sc, 0, CTL_HW,
-	    sysctlroot_num, CTL_CREATE, CTL_EOL);
+		if ((error = sysctl_createv(&sc->sc_si70xxlog, 0, NULL, &cnode,
+		    CTLFLAG_READWRITE, CTLTYPE_INT, "heaterstrength",
+		    SYSCTL_DESCR("Heater strength 1 to 6"),
+		    si70xx_verify_sysctl_heatervalue, 0, (void *)sc, 0, CTL_HW,
+		    sysctlroot_num, CTL_CREATE, CTL_EOL)) != 0)
+			return error;
+	}
+
+	return 0;
 }
 
 static int
@@ -602,7 +610,7 @@ si70xx_attach(device_t parent, device_t self, void *aux)
 	uint8_t testcrcpt2[4];
 	uint8_t crc1 = 0, crc2 = 0;
 	uint8_t readcrc1 = 0, readcrc2 = 0;
-	uint8_t fwversion, model;
+	uint8_t fwversion = 0, model, heaterregister;
 
 	ia = aux;
 	sc = device_private(self);
@@ -617,6 +625,8 @@ si70xx_attach(device_t parent, device_t self, void *aux)
 	sc->sc_readattempts = 25;
 	sc->sc_ignorecrc = false;
 	sc->sc_sme = NULL;
+	sc->sc_noheater = false;
+	sc->sc_nofw = false;
 
 	aprint_normal("\n");
 
@@ -628,10 +638,6 @@ si70xx_attach(device_t parent, device_t self, void *aux)
 		    "Unable to create sysmon structure\n");
 		sc->sc_sme = NULL;
 		return;
-	}
-	if ((error = si70xx_sysctl_init(sc)) != 0) {
-		aprint_error_dev(self, "Can't setup sysctl tree (%d)\n", error);
-		goto out;
 	}
 
 	error = iic_acquire_bus(sc->sc_tag, 0);
@@ -689,14 +695,31 @@ si70xx_attach(device_t parent, device_t self, void *aux)
 	if (error) {
 		aprint_error_dev(self, "Failed to read firmware version: %d\n",
 		    error);
-		ecount++;
+		sc->sc_nofw = true;
 	}
-	fwversion = buf[0];
-	DPRINTF(sc, 2, ("%s: read fw values: %#x\n", device_xname(sc->sc_dev),
-	    fwversion));
+	if (! sc->sc_nofw) {
+		fwversion = buf[0];
+		DPRINTF(sc, 2, ("%s: read fw values: %#x\n", device_xname(sc->sc_dev),
+		    fwversion));
+	}
+
+	error = si70xx_cmd1(sc, SI70XX_READ_HEATER_REG, &heaterregister, 1);
+
+	if (error) {
+		aprint_error_dev(self, "Failed to read heater register: %d\n",
+		    error);
+		sc->sc_noheater = true;
+	}
 
 	error = si70xx_update_status(sc);
+
 	iic_release_bus(sc->sc_tag, 0);
+
+	if ((error = si70xx_sysctl_init(sc)) != 0) {
+		aprint_error_dev(self, "Can't setup sysctl tree (%d)\n", error);
+		goto out;
+	}
+
 	if (error != 0) {
 		aprint_error_dev(self, "Failed to update status: %x\n", error);
 		aprint_error_dev(self, "Unable to setup device\n");
@@ -754,7 +777,7 @@ si70xx_attach(device_t parent, device_t self, void *aux)
 		snprintf(modelstr, sizeof(modelstr), "SI70%d", model);
 		break;
 	default:
-		snprintf(modelstr, sizeof(modelstr), "Unknown SI70%d", model);
+		snprintf(modelstr, sizeof(modelstr), "Unknown model %d (maybe an HTU21D)", model);
 		break;
 	}
 

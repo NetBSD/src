@@ -1,4 +1,4 @@
-.\" $NetBSD: si70xxtemp.4,v 1.4 2018/02/08 09:03:23 dholland Exp $
+.\" $NetBSD: si70xxtemp.4,v 1.5 2021/11/11 14:16:04 brad Exp $
 .\"
 .\" Copyright (c) 2017 Brad Spencer <brad@anduin.eldar.org>
 .\"
@@ -19,7 +19,7 @@
 .Os
 .Sh NAME
 .Nm si70xxtemp
-.Nd Driver for Silicon Labs SI7013/SI7020/SI7021 and HTU21D sensor chip via I2C bus
+.Nd Driver for Silicon Labs SI7013/SI7020/SI7021, HTU21D and SHT21 sensor chip via I2C bus
 .Sh SYNOPSIS
 .Cd "si70xxtemp* at iic? addr 0x40"
 .Sh DESCRIPTION
@@ -57,6 +57,9 @@ Turn the heater on and off.
 .It hw.si70xxtemp0.heaterstrength
 From 1 to 6, the amount of energy put into the heater.
 The higher the number, the more power used.
+.Pp
+Some HTU21D chips do not support a heater register.  These chips are
+detected and the heater features of the driver will be disabled.
 .It hw.si70xxtemp0.debug
 If the driver is compiled with
 .Dv SI70XX_DEBUG ,
