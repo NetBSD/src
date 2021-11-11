@@ -1,4 +1,4 @@
-/*	$NetBSD: mgx.c,v 1.19 2021/10/31 05:31:12 macallan Exp $ */
+/*	$NetBSD: mgx.c,v 1.20 2021/11/11 19:37:30 macallan Exp $ */
 
 /*-
  * Copyright (c) 2014 Michael Lorenz
@@ -29,7 +29,7 @@
 /* a console driver for the SSB 4096V-MGX graphics card */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mgx.c,v 1.19 2021/10/31 05:31:12 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mgx.c,v 1.20 2021/11/11 19:37:30 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1112,11 +1112,19 @@ mgx_mmap(void *v, void *vs, off_t offset, int prot)
 {
 	struct vcons_data *vd = v;
 	struct mgx_softc *sc = vd->cookie;
+	uint32_t flags = BUS_SPACE_MAP_LINEAR;
+
+#ifdef BUS_SPACE_MAP_LITTLE
+	if (offset & MGX_FLIPOFFSET) {
+		offset &= ~MGX_FLIPOFFSET;
+		flags |= BUS_SPACE_MAP_LITTLE;
+	}
+#endif
 
 	/* regular fb mapping at 0 */
 	if ((offset >= 0) && (offset < sc->sc_fbsize)) {
 		return bus_space_mmap(sc->sc_tag, sc->sc_paddr,
-		    offset, prot, BUS_SPACE_MAP_LINEAR);
+		    offset, prot, flags);
 	}
 
 	/*
@@ -1262,11 +1270,19 @@ paddr_t
 mgxmmap(dev_t dev, off_t offset, int prot)
 {
 	struct mgx_softc *sc = device_lookup_private(&mgx_cd, minor(dev));
+	uint32_t flags = BUS_SPACE_MAP_LINEAR;
+
+#ifdef BUS_SPACE_MAP_LITTLE
+	if (offset & MGX_FLIPOFFSET) {
+		offset &= ~MGX_FLIPOFFSET;
+		flags |= BUS_SPACE_MAP_LITTLE;
+	}
+#endif
 
 	/* regular fb mapping at 0 */
 	if ((offset >= 0) && (offset < sc->sc_fbsize)) {
 		return bus_space_mmap(sc->sc_tag, sc->sc_paddr,
-		    offset, prot, BUS_SPACE_MAP_LINEAR);
+		    offset, prot, flags);
 	}
 
 	/*
