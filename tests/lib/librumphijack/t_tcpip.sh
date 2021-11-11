@@ -1,4 +1,4 @@
-#       $NetBSD: t_tcpip.sh,v 1.20 2021/09/10 21:21:35 christos Exp $
+#       $NetBSD: t_tcpip.sh,v 1.21 2021/11/11 07:38:21 gson Exp $
 #
 # Copyright (c) 2011 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -254,6 +254,7 @@ nfs_autoload_head()
 nfs_autoload_body()
 {
 	[ `uname -m` = "i386" ] || atf_skip "test currently valid only on i386"
+	atf_expect_fail "PR lib/54184"
 	test_nfs -lrumpvfs -lrumpdev -lrumpnet -lrumpnet_net		\
 	    -lrumpnet_netinet -lrumpnet_local -lrumpnet_shmif		\
 	    -lrumpdev_disk -d key=/dk,hostpath=ffs.img,size=host
