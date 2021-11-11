@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32.h,v 1.138 2021/11/06 20:42:56 thorpej Exp $	*/
+/*	$NetBSD: netbsd32.h,v 1.139 2021/11/11 17:32:46 martin Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001, 2008, 2015 Matthew R. Green
@@ -1152,7 +1152,8 @@ struct netbsd32_null_args {
 };
 
 struct netbsd32_posix_spawn_file_actions_entry {
-	enum { FAE32_OPEN, FAE32_DUP2, FAE32_CLOSE } fae_action;
+	enum { FAE32_OPEN, FAE32_DUP2, FAE32_CLOSE,
+	    FAE32_CHDIR, FAE32_FCHDIR } fae_action;
 
 	int fae_fildes;
 	union {
@@ -1164,6 +1165,9 @@ struct netbsd32_posix_spawn_file_actions_entry {
 		struct {
 			int newfildes;
 		} dup2;
+		struct {
+			netbsd32_charp path;
+		} chdir;
 	} fae_data;
 };
 
