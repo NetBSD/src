@@ -1,4 +1,4 @@
-/*	$NetBSD: if_aq.c,v 1.29 2021/10/11 15:08:17 msaitoh Exp $	*/
+/*	$NetBSD: if_aq.c,v 1.30 2021/11/11 06:56:56 ryo Exp $	*/
 
 /**
  * aQuantia Corporation Network Driver
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_aq.c,v 1.29 2021/10/11 15:08:17 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_aq.c,v 1.30 2021/11/11 06:56:56 ryo Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_if_aq.h"
@@ -2068,21 +2068,21 @@ aq_hw_init_ucp(struct aq_softc *sc)
 	int timo;
 
 	if (FW_VERSION_MAJOR(sc) == 1) {
-		if (AQ_READ_REG(sc, FW1X_MPI_INIT2_REG) == 0) {
-			uint32_t data;
-			cprng_fast(&data, sizeof(data));
-			data &= 0xfefefefe;
-			data |= 0x02020202;
-			AQ_WRITE_REG(sc, FW1X_MPI_INIT2_REG, data);
-		}
+		if (AQ_READ_REG(sc, FW1X_MPI_INIT2_REG) == 0)
+			AQ_WRITE_REG(sc, FW1X_MPI_INIT2_REG, 0xfefefefe);
 		AQ_WRITE_REG(sc, FW1X_MPI_INIT1_REG, 0);
 	}
 
-	for (timo = 100; timo > 0; timo--) {
+	/* Wait a maximum of 10sec. It usually takes about 5sec. */
+	for (timo = 10000; timo > 0; timo--) {
 		sc->sc_mbox_addr = AQ_READ_REG(sc, FW_MPI_MBOX_ADDR_REG);
 		if (sc->sc_mbox_addr != 0)
 			break;
 		delay(1000);
+	}
+	if (sc->sc_mbox_addr == 0) {
+		aprint_error_dev(sc->sc_dev, "cannot get mbox addr\n");
+		return ETIMEDOUT;
 	}
 
 #define AQ_FW_MIN_VERSION	0x01050006
