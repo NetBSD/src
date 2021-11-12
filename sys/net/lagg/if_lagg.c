@@ -1,4 +1,4 @@
-/*	$NetBSD: if_lagg.c,v 1.24 2021/11/12 05:48:58 yamaguchi Exp $	*/
+/*	$NetBSD: if_lagg.c,v 1.25 2021/11/12 05:56:54 yamaguchi Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006 Reyk Floeter <reyk@openbsd.org>
@@ -20,7 +20,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_lagg.c,v 1.24 2021/11/12 05:48:58 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_lagg.c,v 1.25 2021/11/12 05:56:54 yamaguchi Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -2472,12 +2472,12 @@ lagg_port_setup(struct lagg_softc *sc,
 	if (error != 0)
 		goto teardown_lladdr;
 
-	lagg_port_syncmulti(sc, lp);
-	lagg_port_syncvlan(sc, lp);
-
 	atomic_store_release(&ifp_port->if_lagg, (void *)lp);
 	SIMPLEQ_INSERT_TAIL(&sc->sc_ports, lp, lp_entry);
 	sc->sc_nports++;
+
+	lagg_port_syncmulti(sc, lp);
+	lagg_port_syncvlan(sc, lp);
 
 	if (stopped) {
 		error = ifp_port->if_init(ifp_port);
