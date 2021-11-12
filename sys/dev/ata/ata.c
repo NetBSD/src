@@ -1,4 +1,4 @@
-/*	$NetBSD: ata.c,v 1.164 2021/10/05 08:01:05 rin Exp $	*/
+/*	$NetBSD: ata.c,v 1.165 2021/11/12 06:53:49 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.164 2021/10/05 08:01:05 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.165 2021/11/12 06:53:49 skrll Exp $");
 
 #include "opt_ata.h"
 
@@ -94,7 +94,7 @@ static struct pool ata_xfer_pool;
 /*
  * A queue of atabus instances, used to ensure the same bus probe order
  * for a given hardware configuration at each boot.  Kthread probing
- * devices on a atabus.  Only one probing at once. 
+ * devices on a atabus.  Only one probing at once.
  */
 static TAILQ_HEAD(, atabus_initq)	atabus_initq_head;
 static kmutex_t				atabus_qlock;
@@ -1330,7 +1330,7 @@ ata_free_xfer(struct ata_channel *chp, struct ata_xfer *xfer)
 
 	if (__predict_false(chp->ch_atac->atac_free_hw))
 		chp->ch_atac->atac_free_hw(chp);
- 
+
 	ata_channel_unlock(chp);
 
 	if (__predict_true(!ISSET(xfer->c_flags, C_PRIVATE_ALLOC)))
@@ -1420,7 +1420,7 @@ ata_timo_xfer_check(struct ata_xfer *xfer)
 
 	    		device_printf(drvp->drv_softc,
 			    "xfer %"PRIxPTR" freed while invoking timeout\n",
-			    (intptr_t)xfer & PAGE_MASK); 
+			    (intptr_t)xfer & PAGE_MASK);
 
 			ata_free_xfer(chp, xfer);
 			return true;
@@ -1431,7 +1431,7 @@ ata_timo_xfer_check(struct ata_xfer *xfer)
 
 	    	device_printf(drvp->drv_softc,
 		    "xfer %"PRIxPTR" deactivated while invoking timeout\n",
-		    (intptr_t)xfer & PAGE_MASK); 
+		    (intptr_t)xfer & PAGE_MASK);
 		return true;
 	}
 
@@ -1503,7 +1503,7 @@ ata_kill_pending(struct ata_drive_datas *drvp)
 				break;
 			}
 		}
-		
+
 		if (!drv_active) {
 			/* all finished */
 			break;
@@ -1614,7 +1614,7 @@ ata_thread_run(struct ata_channel *chp, int flags, int type, int arg)
 	/* Block execution of other commands during reset */
 	ata_channel_freeze_locked(chp);
 
-	/* 
+	/*
 	 * If reset has been scheduled to a thread, then clear
 	 * the flag now so that the thread won't try to execute it if
 	 * we happen to sleep, and thaw one more time after the reset.
@@ -1761,7 +1761,7 @@ ata_print_modes(struct ata_channel *chp)
 			    ? " w/PRIO" : "");
 		} else if (drvp->drive_flags & ATA_DRIVE_WFUA)
 			aprint_verbose(", WRITE DMA FUA EXT");
-			
+
 #endif	/* NATA_DMA || NATA_PIOBM */
 		aprint_verbose("\n");
 	}
@@ -2278,7 +2278,7 @@ atabus_rescan(device_t self, const char *ifattr, const int *locators)
 
 	/*
 	 * we can rescan a port multiplier atabus, even if some devices are
-	 * still attached 
+	 * still attached
 	 */
 	if (chp->ch_satapmp_nports == 0) {
 		if (chp->atapibus != NULL) {
