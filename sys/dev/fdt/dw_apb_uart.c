@@ -1,4 +1,4 @@
-/* $NetBSD: dw_apb_uart.c,v 1.10 2021/01/27 03:10:21 thorpej Exp $ */
+/* $NetBSD: dw_apb_uart.c,v 1.11 2021/11/12 21:57:44 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: dw_apb_uart.c,v 1.10 2021/01/27 03:10:21 thorpej Exp $");
+__KERNEL_RCSID(1, "$NetBSD: dw_apb_uart.c,v 1.11 2021/11/12 21:57:44 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -76,27 +76,32 @@ dw_apb_uart_attach(device_t parent, device_t self, void *aux)
 	struct dw_apb_uart_softc * const ssc = device_private(self);
 	struct com_softc * const sc = &ssc->ssc_sc;
 	struct fdt_attach_args * const faa = aux;
+	const int phandle = faa->faa_phandle;
 	bus_space_tag_t bst = faa->faa_bst;
 	bus_space_handle_t bsh;
 	char intrstr[128];
 	bus_addr_t addr;
 	bus_size_t size;
-	u_int reg_shift;
+	u_int reg_shift, reg_iowidth;
 	int error;
 
-	if (fdtbus_get_reg(faa->faa_phandle, 0, &addr, &size) != 0) {
+	if (fdtbus_get_reg(phandle, 0, &addr, &size) != 0) {
 		aprint_error(": couldn't get registers\n");
 		return;
 	}
 
-	if (of_getprop_uint32(faa->faa_phandle, "reg-shift", &reg_shift)) {
+	if (of_getprop_uint32(phandle, "reg-shift", &reg_shift)) {
 		/* missing or bad reg-shift property, assume 2 */
 		reg_shift = 2;
+	}
+	if (of_getprop_uint32(phandle, "reg-io-width", &reg_iowidth)) {
+		/* missing or bad reg-io-width propery, assume 1 */
+		reg_iowidth = 1;
 	}
 
 	sc->sc_dev = self;
 
-	ssc->ssc_clk = fdtbus_clock_get_index(faa->faa_phandle, 0);
+	ssc->ssc_clk = fdtbus_clock_get_index(phandle, 0);
 	if (ssc->ssc_clk == NULL) {
 		aprint_error(": couldn't get clock\n");
 		return;
@@ -106,13 +111,13 @@ dw_apb_uart_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-	ssc->ssc_pclk = fdtbus_clock_get(faa->faa_phandle, "apb_pclk");
+	ssc->ssc_pclk = fdtbus_clock_get(phandle, "apb_pclk");
 	if (ssc->ssc_pclk != NULL && clk_enable(ssc->ssc_pclk) != 0) {
 		aprint_error(": couldn't enable peripheral clock\n");
 		return;
 	}
 
-	ssc->ssc_rst = fdtbus_reset_get_index(faa->faa_phandle, 0);
+	ssc->ssc_rst = fdtbus_reset_get_index(phandle, 0);
 	if (ssc->ssc_rst && fdtbus_reset_deassert(ssc->ssc_rst) != 0) {
 		aprint_error(": couldn't de-assert reset\n");
 		return;
@@ -127,16 +132,16 @@ dw_apb_uart_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-	com_init_regs_stride(&sc->sc_regs, bst, bsh, addr, reg_shift);
+	com_init_regs_stride_width(&sc->sc_regs, bst, bsh, addr, reg_shift, reg_iowidth);
 
 	com_attach_subr(sc);
 
-	if (!fdtbus_intr_str(faa->faa_phandle, 0, intrstr, sizeof(intrstr))) {
+	if (!fdtbus_intr_str(phandle, 0, intrstr, sizeof(intrstr))) {
 		aprint_error_dev(self, "failed to decode interrupt\n");
 		return;
 	}
 
-	ssc->ssc_ih = fdtbus_intr_establish_xname(faa->faa_phandle, 0,
+	ssc->ssc_ih = fdtbus_intr_establish_xname(phandle, 0,
 	    IPL_SERIAL, FDT_INTR_MPSAFE, comintr, sc, device_xname(self));
 	if (ssc->ssc_ih == NULL) {
 		aprint_error_dev(self, "failed to establish interrupt on %s\n",
@@ -164,7 +169,7 @@ dw_apb_uart_console_consinit(struct fdt_attach_args *faa, u_int uart_freq)
 	struct com_regs regs;
 	bus_addr_t addr;
 	tcflag_t flags;
-	u_int reg_shift;
+	u_int reg_shift, reg_iowidth;
 	int speed;
 
 	fdtbus_get_reg(phandle, 0, &addr, NULL);
@@ -177,9 +182,13 @@ dw_apb_uart_console_consinit(struct fdt_attach_args *faa, u_int uart_freq)
 		/* missing or bad reg-shift property, assume 2 */
 		reg_shift = 2;
 	}
+	if (of_getprop_uint32(phandle, "reg-io-width", &reg_iowidth)) {
+		/* missing or bad reg-io-width propery, assume 1 */
+		reg_iowidth = 1;
+	}
 
 	memset(&dummy_bsh, 0, sizeof(dummy_bsh));
-	com_init_regs_stride(&regs, bst, dummy_bsh, addr, reg_shift);
+	com_init_regs_stride_width(&regs, bst, dummy_bsh, addr, reg_shift, reg_iowidth);
 
 	if (comcnattach1(&regs, speed, uart_freq, COM_TYPE_DW_APB, flags))
 		panic("Cannot initialize dw-apb-uart console");
