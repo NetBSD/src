@@ -1,4 +1,4 @@
-/* $NetBSD: rk3399_cru.c,v 1.22 2021/05/20 01:07:24 msaitoh Exp $ */
+/* $NetBSD: rk3399_cru.c,v 1.23 2021/11/12 22:02:08 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: rk3399_cru.c,v 1.22 2021/05/20 01:07:24 msaitoh Exp $");
+__KERNEL_RCSID(1, "$NetBSD: rk3399_cru.c,v 1.23 2021/11/12 22:02:08 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -1126,6 +1126,7 @@ rk3399_cru_attach(device_t parent, device_t self, void *aux)
 	sc->sc_clks = rk3399_cru_clks;
 	sc->sc_nclks = __arraycount(rk3399_cru_clks);
 
+	sc->sc_grf_soc_status = 0x0480;
 	sc->sc_softrst_base = SOFTRST_CON(0);
 
 	if (rk_cru_attach(sc) != 0)
