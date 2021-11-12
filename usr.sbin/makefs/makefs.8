@@ -1,4 +1,4 @@
-.\"	$NetBSD: makefs.8,v 1.67 2021/04/03 14:10:56 simonb Exp $
+.\"	$NetBSD: makefs.8,v 1.68 2021/11/12 07:41:55 reinoud Exp $
 .\"
 .\" Copyright (c) 2001-2003 Wasabi Systems, Inc.
 .\" All rights reserved.
@@ -197,8 +197,11 @@ When merging multiple directories replace duplicate files with the last found.
 .It Fl S Ar sector-size
 Set the file system sector size to
 .Ar sector-size .
-.\" XXX: next line also true for cd9660?
-Defaults to 512.
+Defaults to 512 for most file systems, but is 2048 for
+.Sy cd9660
+and
+.Sy udf
+for CD/DVD/BD optical media types.
 .It Fl s Ar image-size
 Set the size of the file system image to
 .Ar image-size .
