@@ -1,4 +1,4 @@
-#	$NetBSD: files.pci,v 1.438 2021/08/25 09:06:02 msaitoh Exp $
+#	$NetBSD: files.pci,v 1.439 2021/11/12 06:51:04 skrll Exp $
 #
 # Config file and device description for machine-independent PCI code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -152,7 +152,7 @@ file	dev/pci/isp_pci.c		isp_pci
 attach	mfi at pci with mfi_pci
 file	dev/pci/mfi_pci.c		mfi_pci
 
-# LSI MegaRAID SAS Fusion RAID controllers 
+# LSI MegaRAID SAS Fusion RAID controllers
 device	mfii: scsi
 attach	mfii at pci
 file	dev/pci/mfii.c			mfii
@@ -926,7 +926,7 @@ file	dev/pci/njs_pci.c		njs_pci
 
 # S2io Xframe 10 Gigabit ethernet (Xframe driver)
 device  xge: ether, ifnet, arp
-attach  xge  at pci 
+attach  xge  at pci
 file    dev/pci/if_xge.c		xge
 
 # Via Velocity 612x 10/100/1000 Ethernet
@@ -1046,7 +1046,7 @@ attach	pm2fb at pci
 file	dev/pci/pm2fb.c		pm2fb
 defflag	opt_pm2fb.h	PM2FB_DEBUG
 
-# Permedia 3 / Oxygen VX1 / Proformance 3  
+# Permedia 3 / Oxygen VX1 / Proformance 3
 device  pm3fb: wsemuldisplaydev, rasops8, vcons, videomode, i2cexec, i2c_bitbang, ddc_read_edid, edid
 attach  pm3fb at pci
 file	dev/pci/pm3fb.c		pm3fb
@@ -1115,7 +1115,7 @@ file	dev/pci/igma.c		igma
 defflag	opt_tdvfb.h		TDVFB_CONSOLE
 device	tdvfb: wsemuldisplaydev, rasops16, rasops32, vcons, videomode
 attach	tdvfb at pci
-file	dev/pci/tdvfb.c		tdvfb	
+file	dev/pci/tdvfb.c		tdvfb
 
 # nvidia geforce framebuffer console driver
 device	gffb: wsemuldisplaydev, rasops8, vcons, glyphcache
