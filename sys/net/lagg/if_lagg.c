@@ -1,4 +1,4 @@
-/*	$NetBSD: if_lagg.c,v 1.23 2021/11/12 05:40:44 yamaguchi Exp $	*/
+/*	$NetBSD: if_lagg.c,v 1.24 2021/11/12 05:48:58 yamaguchi Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006 Reyk Floeter <reyk@openbsd.org>
@@ -20,7 +20,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_lagg.c,v 1.23 2021/11/12 05:40:44 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_lagg.c,v 1.24 2021/11/12 05:48:58 yamaguchi Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1198,6 +1198,101 @@ lagg_media_status(struct ifnet *ifp, struct ifmediareq *imr)
 }
 
 static int
+lagg_register_vid(struct ethercom *ec, uint16_t vid)
+{
+	struct ifnet *ifp;
+	struct vlanid_list *vidmem;
+	bool vlanmtu_enabled;
+	int error;
+
+	ifp = (struct ifnet *)ec;
+	vlanmtu_enabled = false;
+
+	/* Add a vid to the list */
+	vidmem = kmem_alloc(sizeof(*vidmem), KM_SLEEP);
+	vidmem->vid = vid;
+	ec->ec_nvlans++;
+	ETHER_LOCK(ec);
+	SIMPLEQ_INSERT_TAIL(&ec->ec_vids, vidmem, vid_list);
+	ETHER_UNLOCK(ec);
+
+	if (ec->ec_nvlans == 1) {
+		IFNET_LOCK(ifp);
+		error = ether_enable_vlan_mtu(ifp);
+		IFNET_UNLOCK(ifp);
+
+		if (error == -1) {
+			error = 0;
+		} else if (error != 0) {
+			goto fail;
+		}
+
+		vlanmtu_enabled = true;
+	}
+
+	if (ec->ec_vlan_cb != NULL) {
+		error = (*ec->ec_vlan_cb)(ec, vid, true);
+		if (error != 0) {
+			goto fail;
+		}
+	}
+
+	return 0;
+
+fail:
+	ETHER_LOCK(ec);
+	ec->ec_nvlans--;
+	SIMPLEQ_REMOVE(&ec->ec_vids, vidmem, vlanid_list, vid_list);
+	ETHER_UNLOCK(ec);
+
+	if (vlanmtu_enabled) {
+		IFNET_LOCK(ifp);
+		(void)ether_disable_vlan_mtu(ifp);
+		IFNET_UNLOCK(ifp);
+	}
+
+	kmem_free(vidmem, sizeof(*vidmem));
+
+	return error;
+}
+
+static int
+lagg_unregister_vid(struct ethercom *ec, uint16_t vid)
+{
+	struct ifnet *ifp;
+	struct vlanid_list *vlanidp;
+
+	ETHER_LOCK(ec);
+	SIMPLEQ_FOREACH(vlanidp, &ec->ec_vids, vid_list) {
+		if (vlanidp->vid == vid) {
+			SIMPLEQ_REMOVE(&ec->ec_vids, vlanidp,
+			    vlanid_list, vid_list);
+			ec->ec_nvlans--;
+			break;
+		}
+	}
+	ETHER_UNLOCK(ec);
+
+	if (vlanidp == NULL)
+		return ENOENT;
+
+	if (ec->ec_vlan_cb != NULL) {
+		(void)(*ec->ec_vlan_cb)(ec, vlanidp->vid, false);
+	}
+
+	if (ec->ec_nvlans == 0) {
+		ifp = (struct ifnet *)ec;
+		IFNET_LOCK(ifp);
+		(void)ether_disable_vlan_mtu(ifp);
+		IFNET_UNLOCK(ifp);
+	}
+
+	kmem_free(vlanidp, sizeof(*vlanidp));
+
+	return 0;
+}
+
+static int
 lagg_port_vlan_cb(struct lagg_port *lp,
     struct lagg_vlantag *lvt, bool set)
 {
@@ -1213,51 +1308,11 @@ lagg_port_vlan_cb(struct lagg_port *lp,
 	ec_port = (struct ethercom *)ifp_port;
 
 	if (set) {
-		ec_port->ec_nvlans++;
-		if (ec_port->ec_nvlans == 1) {
-			IFNET_LOCK(ifp_port);
-			error = ether_enable_vlan_mtu(ifp_port);
-			IFNET_UNLOCK(ifp_port);
-
-			if (error == -1) {
-				error = 0;
-			} else if (error != 0) {
-				ec_port->ec_nvlans--;
-				goto done;
-			}
-
-			if (ec_port->ec_vlan_cb != NULL) {
-				error = ec_port->ec_vlan_cb(ec_port,
-				    lvt->lvt_vtag, set);
-				if (error != 0) {
-					ec_port->ec_nvlans--;
-					IFNET_LOCK(ifp_port);
-					ether_disable_vlan_mtu(ifp_port);
-					IFNET_UNLOCK(ifp_port);
-					goto done;
-				}
-			}
-		}
+		error = lagg_register_vid(ec_port, lvt->lvt_vtag);
 	} else {
-		if (ec_port->ec_nvlans == 0) {
-			error = ENOENT;
-			goto done;
-		}
-
-		if (ec_port->ec_vlan_cb != NULL) {
-			(void)ec_port->ec_vlan_cb(ec_port,
-			    lvt->lvt_vtag, set);
-		}
-
-		ec_port->ec_nvlans--;
-		if (ec_port->ec_nvlans == 0) {
-			IFNET_LOCK(ifp_port);
-			(void)ether_disable_vlan_mtu(ifp_port);
-			IFNET_UNLOCK(ifp_port);
-		}
+		error = lagg_unregister_vid(ec_port, lvt->lvt_vtag);
 	}
 
-done:
 	return error;
 }
 
