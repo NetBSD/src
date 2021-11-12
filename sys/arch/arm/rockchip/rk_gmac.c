@@ -1,4 +1,4 @@
-/* $NetBSD: rk_gmac.c,v 1.20 2021/11/07 19:21:33 jmcneill Exp $ */
+/* $NetBSD: rk_gmac.c,v 1.21 2021/11/12 22:02:08 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: rk_gmac.c,v 1.20 2021/11/07 19:21:33 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rk_gmac.c,v 1.21 2021/11/12 22:02:08 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -54,11 +54,13 @@ __KERNEL_RCSID(0, "$NetBSD: rk_gmac.c,v 1.20 2021/11/07 19:21:33 jmcneill Exp $"
 #define	RK_GMAC_RXDLY_DEFAULT	0x10
 
 enum rk_gmac_type {
-	GMAC_RK3328 = 1,
+	GMAC_RK3288 = 1,
+	GMAC_RK3328,
 	GMAC_RK3399
 };
 
 static const struct device_compatible_entry compat_data[] = {
+	{ .compat = "rockchip,rk3288-gmac",	.value = GMAC_RK3288 },
 	{ .compat = "rockchip,rk3328-gmac",	.value = GMAC_RK3328 },
 	{ .compat = "rockchip,rk3399-gmac",	.value = GMAC_RK3399 },
 	DEVICE_COMPAT_EOL
@@ -69,6 +71,98 @@ struct rk_gmac_softc {
 	struct syscon		*sc_syscon;
 	enum rk_gmac_type	sc_type;
 };
+
+/*
+ * RK3288 specific
+ */
+
+#define	RK3288_GRF_SOC_CON1	0x0248
+#define	 RK3288_GRF_SOC_CON1_RMII_MODE		__BIT(14)
+#define	 RK3288_GRF_SOC_CON1_GMAC_CLK_SEL	__BITS(13,12)
+#define	  RK3288_GRF_SOC_CON1_GMAC_CLK_SEL_125M		0
+#define	  RK3288_GRF_SOC_CON1_GMAC_CLK_SEL_2_5M		2
+#define	  RK3288_GRF_SOC_CON1_GMAC_CLK_SEL_25M		3
+#define	 RK3288_GRF_SOC_CON1_RMII_CLK_SEL	__BIT(11)
+#define	  RK3288_GRF_SOC_CON1_RMII_CLK_SEL_25M		1
+#define	  RK3288_GRF_SOC_CON1_RMII_CLK_SEL_2_5M		0
+#define	 RK3288_GRF_SOC_CON1_GMAC_SPEED		__BIT(10)
+#define	  RK3288_GRF_SOC_CON1_GMAC_SPEED_10M		0
+#define	  RK3288_GRF_SOC_CON1_GMAC_SPEED_100M		1
+#define	 RK3288_GRF_SOC_CON1_GMAC_FLOWCTRL	__BIT(9)
+#define	 RK3288_GRF_SOC_CON1_GMAC_PHY_INTF_SEL	__BITS(8,6)
+#define	  RK3288_GRF_SOC_CON1_GMAC_PHY_INTF_SEL_RGMII	1
+#define	  RK3288_GRF_SOC_CON1_GMAC_PHY_INTF_SEL_RMII	4
+
+#define	RK3288_GRF_SOC_CON3	0x0250
+#define	 RK3288_GRF_SOC_CON3_RXCLK_DLY_ENA_GMAC	__BIT(15)
+#define	 RK3288_GRF_SOC_CON3_TXCLK_DLY_ENA_GMAC	__BIT(14)
+#define	 RK3288_GRF_SOC_CON3_CLK_RX_DL_CFG_GMAC	__BITS(13,7)
+#define	 RK3288_GRF_SOC_CON3_CLK_TX_DL_CFG_GMAC	__BITS(6,0)
+
+static void
+rk3288_gmac_set_mode_rgmii(struct dwc_gmac_softc *sc, u_int tx_delay, u_int rx_delay, bool set_delay)
+{
+	struct rk_gmac_softc * const rk_sc = (struct rk_gmac_softc *)sc;
+	uint32_t write_mask, write_val;
+
+	syscon_lock(rk_sc->sc_syscon);
+
+	write_mask = (RK3288_GRF_SOC_CON1_RMII_MODE |
+		      RK3288_GRF_SOC_CON1_GMAC_PHY_INTF_SEL) << 16;
+	write_val = __SHIFTIN(RK3288_GRF_SOC_CON1_GMAC_PHY_INTF_SEL_RGMII,
+			      RK3288_GRF_SOC_CON1_GMAC_PHY_INTF_SEL);
+	syscon_write_4(rk_sc->sc_syscon, RK3288_GRF_SOC_CON1,
+	    write_mask | write_val);
+
+	if (set_delay) {
+		write_mask = (RK3288_GRF_SOC_CON3_RXCLK_DLY_ENA_GMAC |
+			      RK3288_GRF_SOC_CON3_TXCLK_DLY_ENA_GMAC |
+			      RK3288_GRF_SOC_CON3_CLK_RX_DL_CFG_GMAC |
+			      RK3288_GRF_SOC_CON3_CLK_TX_DL_CFG_GMAC) << 16;
+		write_val = 0;
+		if (tx_delay) {
+			write_mask |= RK3288_GRF_SOC_CON3_TXCLK_DLY_ENA_GMAC |
+				      __SHIFTIN(tx_delay,
+						RK3288_GRF_SOC_CON3_CLK_TX_DL_CFG_GMAC);
+		}
+		if (rx_delay) {
+			write_mask |= RK3288_GRF_SOC_CON3_RXCLK_DLY_ENA_GMAC |
+				      __SHIFTIN(rx_delay,
+						RK3288_GRF_SOC_CON3_CLK_RX_DL_CFG_GMAC);
+		}
+		syscon_write_4(rk_sc->sc_syscon, RK3288_GRF_SOC_CON3,
+		    write_mask | write_val);
+	}
+
+	syscon_unlock(rk_sc->sc_syscon);
+}
+
+static void
+rk3288_gmac_set_speed_rgmii(struct dwc_gmac_softc *sc, int speed)
+{
+	struct rk_gmac_softc * const rk_sc = (struct rk_gmac_softc *)sc;
+	uint32_t write_mask, write_val;
+
+	syscon_lock(rk_sc->sc_syscon);
+
+	write_mask = (RK3288_GRF_SOC_CON1_GMAC_CLK_SEL) << 16;
+	switch (speed) {
+	case IFM_10_T:
+		write_val = RK3288_GRF_SOC_CON1_GMAC_CLK_SEL_2_5M;
+		break;
+	case IFM_100_TX:
+		write_val = RK3288_GRF_SOC_CON1_GMAC_CLK_SEL_25M;
+		break;
+	case IFM_1000_T:
+	default:
+		write_val = RK3288_GRF_SOC_CON1_GMAC_CLK_SEL_125M;
+		break;
+	}
+	syscon_write_4(rk_sc->sc_syscon, RK3288_GRF_SOC_CON1,
+	    write_mask | write_val);
+
+	syscon_unlock(rk_sc->sc_syscon);
+}
 
 /*
  * RK3328 specific
@@ -415,6 +509,17 @@ rk_gmac_attach(device_t parent, device_t self, void *aux)
 	}
 
 	switch (rk_sc->sc_type) {
+	case GMAC_RK3288:
+		if (strncmp(phy_mode, "rgmii", 5) == 0) {
+			rk3288_gmac_set_mode_rgmii(sc, tx_delay, rx_delay,
+			    set_delay);
+
+			sc->sc_set_speed = rk3288_gmac_set_speed_rgmii;
+		} else {
+			aprint_error(": unsupported phy-mode '%s'\n", phy_mode);
+			return;
+		}
+		break;
 	case GMAC_RK3328:
 		if (strncmp(phy_mode, "rgmii", 5) == 0) {
 			rk3328_gmac_set_mode_rgmii(sc, tx_delay, rx_delay,

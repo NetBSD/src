@@ -1,10 +1,12 @@
-#	$NetBSD: files.rockchip,v 1.24 2020/05/17 19:57:25 riastradh Exp $
+#	$NetBSD: files.rockchip,v 1.25 2021/11/12 22:02:08 jmcneill Exp $
 #
 # Configuration info for Rockchip family SoCs
 #
 #
 
 file	arch/arm/rockchip/rk_platform.c		soc_rockchip
+
+file	arch/arm/rockchip/rk3066_smp.c		soc_rk3288
 
 # Clock and reset unit (CRU)
 device	rkcru: rk_cru
@@ -14,6 +16,14 @@ file	arch/arm/rockchip/rk_cru_composite.c	rk_cru
 file	arch/arm/rockchip/rk_cru_gate.c		rk_cru
 file	arch/arm/rockchip/rk_cru_mux.c		rk_cru
 file	arch/arm/rockchip/rk_cru_pll.c		rk_cru
+
+ifdef arm
+
+# RK3288 clock and reset unit
+attach	rkcru at fdt with rk3288_cru
+file	arch/arm/rockchip/rk3288_cru.c		rk3288_cru & soc_rk3288
+
+else
 
 # RK3328 clock and reset unit
 attach	rkcru at fdt with rk3328_cru
@@ -25,12 +35,24 @@ file	arch/arm/rockchip/rk3399_cru.c		rk3399_cru & soc_rk3399
 attach	rkcru at fdt with rk3399_pmucru
 file	arch/arm/rockchip/rk3399_pmucru.c	rk3399_pmucru & soc_rk3399
 
+endif
+
 # IOMUX control
 device	rkiomux { }
+
+ifdef arm
+
+attach	rkiomux at fdt with rk3288_iomux
+file	arch/arm/rockchip/rk3288_iomux.c	rk3288_iomux & soc_rk3288
+
+else
+
 attach	rkiomux at fdt with rk3328_iomux
 file	arch/arm/rockchip/rk3328_iomux.c	rk3328_iomux & soc_rk3328
 attach	rkiomux at fdt with rk3399_iomux
 file	arch/arm/rockchip/rk3399_iomux.c	rk3399_iomux & soc_rk3399
+
+endif
 
 # GPIO
 device	rkgpio: gpiobus
@@ -53,6 +75,12 @@ attach	rkusb at fdt with rk_usb
 device	rkusbphy
 attach	rkusbphy at rkusb with rk_usbphy
 file	arch/arm/rockchip/rk_usb.c		rk_usb | rk_usbphy
+
+device	rk3288usb { }
+attach	rk3288usb at fdt with rk3288_usb
+device	rk3288usbphy
+attach	rk3288usbphy at rk3288usb with rk3288_usbphy
+file	arch/arm/rockchip/rk3288_usb.c		rk3288_usb | rk3288_usbphy
 
 # GMAC
 attach	awge at fdt with rk_gmac
@@ -119,5 +147,6 @@ file	arch/arm/rockchip/rk_v1crypto.c		rk_v1crypto
 
 # SOC parameters
 defflag	opt_soc.h			SOC_ROCKCHIP
+defflag	opt_soc.h			SOC_RK3288: SOC_ROCKCHIP
 defflag	opt_soc.h			SOC_RK3328: SOC_ROCKCHIP
 defflag	opt_soc.h			SOC_RK3399: SOC_ROCKCHIP

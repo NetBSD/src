@@ -1,4 +1,4 @@
-/* $NetBSD: rk_cru_pll.c,v 1.4 2018/08/12 16:48:05 jmcneill Exp $ */
+/* $NetBSD: rk_cru_pll.c,v 1.5 2021/11/12 22:02:08 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rk_cru_pll.c,v 1.4 2018/08/12 16:48:05 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rk_cru_pll.c,v 1.5 2021/11/12 22:02:08 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -57,9 +57,20 @@ __KERNEL_RCSID(0, "$NetBSD: rk_cru_pll.c,v 1.4 2018/08/12 16:48:05 jmcneill Exp 
 #define	 PLL_DACPD		__BIT(24)
 #define	 PLL_FRACDIV		__BITS(23,0)
 
+#define	PLL_CON3		0x0c
+
 #define	PLL_WRITE_MASK		0xffff0000	/* for CON0 and CON1 */
 
-#define	GRF_SOC_STATUS0		0x0480
+/* RK3288 CON0 */
+#define	RK3288_CLKR		__BITS(13,8)
+#define	RK3288_CLKOD		__BITS(3,0)
+/* RK3288 CON1 */
+#define	RK3288_LOCK		__BIT(31)
+#define	RK3288_CLKF		__BITS(12,0)
+/* RK3288 CON2 */
+#define	RK3288_BWADJ		__BITS(11,0)
+/* RK3288 CON3 */
+#define	RK3288_BYPASS		__BIT(0)
 
 u_int
 rk_cru_pll_get_rate(struct rk_cru_softc *sc,
@@ -83,24 +94,39 @@ rk_cru_pll_get_rate(struct rk_cru_softc *sc,
 	const uint32_t con0 = CRU_READ(sc, pll->con_base + PLL_CON0);
 	const uint32_t con1 = CRU_READ(sc, pll->con_base + PLL_CON1);
 	const uint32_t con2 = CRU_READ(sc, pll->con_base + PLL_CON2);
+	const uint32_t con3 = CRU_READ(sc, pll->con_base + PLL_CON3);
 
-	const u_int postdiv1 = __SHIFTOUT(con0, PLL_POSTDIV1);
-	const u_int fbdiv = __SHIFTOUT(con0, PLL_FBDIV);
-	const u_int dsmpd = __SHIFTOUT(con1, PLL_DSMPD);
-	const u_int refdiv = __SHIFTOUT(con1, PLL_REFDIV);
-	const u_int postdiv2 = __SHIFTOUT(con1, PLL_POSTDIV2);
-	const u_int fracdiv = __SHIFTOUT(con2, PLL_FRACDIV);
+	if ((pll->flags & RK_PLL_RK3288) != 0) {
+		if ((con3 & RK3288_BYPASS) != 0) {
+			return fref;
+		}
 
-	if (dsmpd == 1) {
-		/* integer mode */
-		foutvco = fref / refdiv * fbdiv;
+		const u_int nr = __SHIFTOUT(con0, RK3288_CLKR) + 1;
+		const u_int no = __SHIFTOUT(con0, RK3288_CLKOD) + 1;
+		const u_int nf = __SHIFTOUT(con1, RK3288_CLKF) + 1;
+
+		const uint64_t tmp = (uint64_t)fref * nf / nr / no;
+
+		return (u_int)tmp;
 	} else {
-		/* fractional mode */
-		foutvco = fref / refdiv * fbdiv + ((fref * fracdiv) >> 24);
-	}
-	foutpostdiv = foutvco / postdiv1 / postdiv2;
+		const u_int postdiv1 = __SHIFTOUT(con0, PLL_POSTDIV1);
+		const u_int fbdiv = __SHIFTOUT(con0, PLL_FBDIV);
+		const u_int dsmpd = __SHIFTOUT(con1, PLL_DSMPD);
+		const u_int refdiv = __SHIFTOUT(con1, PLL_REFDIV);
+		const u_int postdiv2 = __SHIFTOUT(con1, PLL_POSTDIV2);
+		const u_int fracdiv = __SHIFTOUT(con2, PLL_FRACDIV);
 
-	return foutpostdiv;
+		if (dsmpd == 1) {
+			/* integer mode */
+			foutvco = fref / refdiv * fbdiv;
+		} else {
+			/* fractional mode */
+			foutvco = fref / refdiv * fbdiv + ((fref * fracdiv) >> 24);
+		}
+		foutpostdiv = foutvco / postdiv1 / postdiv2;
+
+		return foutpostdiv;
+	}
 }
 
 int
@@ -125,6 +151,8 @@ rk_cru_pll_set_rate(struct rk_cru_softc *sc,
 	if (pll_rate == NULL)
 		return EINVAL;
 
+	KASSERT((pll->flags & RK_PLL_RK3288) == 0);	/* XXX TODO */
+
 	CRU_WRITE(sc, pll->con_base + PLL_CON0,
 	    __SHIFTIN(pll_rate->postdiv1, PLL_POSTDIV1) |
 	    __SHIFTIN(pll_rate->fbdiv, PLL_FBDIV) |
@@ -148,7 +176,7 @@ rk_cru_pll_set_rate(struct rk_cru_softc *sc,
 
 	syscon_lock(sc->sc_grf);
 	for (retry = 1000; retry > 0; retry--) {
-		if (syscon_read_4(sc->sc_grf, GRF_SOC_STATUS0) & pll->lock_mask)
+		if (syscon_read_4(sc->sc_grf, sc->sc_grf_soc_status) & pll->lock_mask)
 			break;
 		delay(1);
 	}

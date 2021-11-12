@@ -1,4 +1,4 @@
-/* $NetBSD: rk_i2c.c,v 1.10 2021/01/27 03:10:19 thorpej Exp $ */
+/* $NetBSD: rk_i2c.c,v 1.11 2021/11/12 22:02:08 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: rk_i2c.c,v 1.10 2021/01/27 03:10:19 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rk_i2c.c,v 1.11 2021/11/12 22:02:08 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -100,8 +100,14 @@ __KERNEL_RCSID(0, "$NetBSD: rk_i2c.c,v 1.10 2021/01/27 03:10:19 thorpej Exp $");
 #define	RKI2C_TXDATA(n)		(0x100 + (n) * 4)
 #define	RKI2C_RXDATA(n)		(0x200 + (n) * 4)
 
+/* Compat data flags */
+#define	RKI2C_HAS_PCLK		__BIT(0)
+
 static const struct device_compatible_entry compat_data[] = {
-	{ .compat = "rockchip,rk3399-i2c" },
+#if notyet
+	{ .compat = "rockchip,rk3288-i2c",	.value = 0 },
+#endif
+	{ .compat = "rockchip,rk3399-i2c",	.value = RKI2C_HAS_PCLK },
 	DEVICE_COMPAT_EOL
 };
 
@@ -377,11 +383,14 @@ rk_i2c_attach(device_t parent, device_t self, void *aux)
 	const int phandle = faa->faa_phandle;
 	bus_addr_t addr;
 	bus_size_t size;
+	u_int flags;
 
 	if (fdtbus_get_reg(phandle, 0, &addr, &size) != 0) {
 		aprint_error(": couldn't get registers\n");
 		return;
 	}
+
+	flags = of_compatible_lookup(phandle, compat_data)->value;
 
 	sc->sc_sclk = fdtbus_clock_get(phandle, "i2c");
 	if (sc->sc_sclk == NULL || clk_enable(sc->sc_sclk) != 0) {
@@ -389,10 +398,12 @@ rk_i2c_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-	sc->sc_pclk = fdtbus_clock_get(phandle, "pclk");
-	if (sc->sc_pclk == NULL || clk_enable(sc->sc_pclk) != 0) {
-		aprint_error(": couldn't enable pclk\n");
-		return;
+	if (ISSET(flags, RKI2C_HAS_PCLK)) {
+		sc->sc_pclk = fdtbus_clock_get(phandle, "pclk");
+		if (sc->sc_pclk == NULL || clk_enable(sc->sc_pclk) != 0) {
+			aprint_error(": couldn't enable pclk\n");
+			return;
+		}
 	}
 
 	if (of_getprop_uint32(phandle, "clock-frequency", &sc->sc_clkfreq))

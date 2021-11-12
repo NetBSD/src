@@ -1,4 +1,4 @@
-/* $NetBSD: rk_cru.h,v 1.7 2019/11/16 13:23:13 jmcneill Exp $ */
+/* $NetBSD: rk_cru.h,v 1.8 2021/11/12 22:02:08 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -80,6 +80,8 @@ struct rk_cru_pll {
 	u_int		nrates;
 	const char	**parents;
 	u_int		nparents;
+	u_int		flags;
+#define	RK_PLL_RK3288	0x01
 };
 
 u_int	rk_cru_pll_get_rate(struct rk_cru_softc *, struct rk_cru_clk *);
@@ -100,6 +102,27 @@ const char *rk_cru_pll_get_parent(struct rk_cru_softc *, struct rk_cru_clk *);
 		.u.pll.lock_mask = (_lock_mask),		\
 		.u.pll.rates = (_rates),			\
 		.u.pll.nrates = __arraycount(_rates),		\
+		.u.pll.flags = 0,				\
+		.get_rate = rk_cru_pll_get_rate,		\
+		.set_rate = rk_cru_pll_set_rate,		\
+		.get_parent = rk_cru_pll_get_parent,		\
+	}
+
+#define	RK3288_PLL(_id, _name, _parents, _con_base, _mode_reg, _mode_mask, _lock_mask, _rates) \
+	{							\
+		.id = (_id),					\
+		.type = RK_CRU_PLL,				\
+		.base.name = (_name),				\
+		.base.flags = 0,				\
+		.u.pll.parents = (_parents),			\
+		.u.pll.nparents = __arraycount(_parents),	\
+		.u.pll.con_base = (_con_base),			\
+		.u.pll.mode_reg = (_mode_reg),			\
+		.u.pll.mode_mask = (_mode_mask),		\
+		.u.pll.lock_mask = (_lock_mask),		\
+		.u.pll.rates = (_rates),			\
+		.u.pll.nrates = __arraycount(_rates),		\
+		.u.pll.flags = RK_PLL_RK3288,			\
 		.get_rate = rk_cru_pll_get_rate,		\
 		.set_rate = rk_cru_pll_set_rate,		\
 		.get_parent = rk_cru_pll_get_parent,		\
@@ -207,6 +230,7 @@ struct rk_cru_composite {
 #define	RK_COMPOSITE_ROUND_DOWN		0x01
 #define	RK_COMPOSITE_SET_RATE_PARENT	0x02
 #define	RK_COMPOSITE_FRACDIV		0x04
+#define	RK_COMPOSITE_POW2		0x08
 };
 
 int	rk_cru_composite_enable(struct rk_cru_softc *, struct rk_cru_clk *, int);
@@ -367,6 +391,7 @@ struct rk_cru_softc {
 	struct rk_cru_clk	*sc_clks;
 	u_int			sc_nclks;
 
+	bus_size_t		sc_grf_soc_status;	/* for PLL lock */
 	bus_size_t		sc_softrst_base;
 };
 
