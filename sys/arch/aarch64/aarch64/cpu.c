@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.67 2021/10/31 16:23:47 skrll Exp $ */
+/* $NetBSD: cpu.c,v 1.68 2021/11/12 06:44:46 skrll Exp $ */
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: cpu.c,v 1.67 2021/10/31 16:23:47 skrll Exp $");
+__KERNEL_RCSID(1, "$NetBSD: cpu.c,v 1.68 2021/11/12 06:44:46 skrll Exp $");
 
 #include "locators.h"
 #include "opt_arm_debug.h"
@@ -147,7 +147,7 @@ cpu_attach(device_t dv, cpuid_t id)
 
 	ci->ci_kfpu_spl = -1;
 
-	arm_cpu_do_topology(ci);
+	arm_cpu_do_topology(ci);	// XXXNH move this after mi_cpu_attach
 	cpu_identify(dv, ci);
 
 	cpu_setup_sysctl(dv, ci);
@@ -243,14 +243,22 @@ cpu_identify(device_t self, struct cpu_info *ci)
 	const char *m;
 
 	identify_aarch64_model(ci->ci_id.ac_midr, model, sizeof(model));
+
+	aprint_naive("\n");
+	aprint_normal(": %s, id 0x%lx\n", model, ci->ci_cpuid);
+	aprint_normal_dev(ci->ci_dev, "package %u, core %u, smt %u\n",
+	    ci->ci_package_id, ci->ci_core_id, ci->ci_smt_id);
+
 	if (ci->ci_index == 0) {
 		m = cpu_getmodel();
 		if (m == NULL || *m == 0)
 			cpu_setmodel("%s", model);
-	}
 
-	aprint_naive("\n");
-	aprint_normal(": %s, id 0x%lx\n", model, ci->ci_cpuid);
+		if (CPU_ID_ERRATA_CAVIUM_THUNDERX_1_1_P(ci->ci_id.ac_midr))
+			aprint_normal("WARNING: ThunderX Pass 1.1 detected.\n"
+			    "This has known hardware bugs that may cause the "
+			    "incorrect operation of atomic operations.\n");
+	}
 }
 
 static void
