@@ -1,4 +1,4 @@
-/* $NetBSD: gtmr_fdt.c,v 1.11 2021/08/07 16:18:43 thorpej Exp $ */
+/* $NetBSD: gtmr_fdt.c,v 1.12 2021/11/12 21:59:05 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gtmr_fdt.c,v 1.11 2021/08/07 16:18:43 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gtmr_fdt.c,v 1.12 2021/11/12 21:59:05 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -43,6 +43,10 @@ __KERNEL_RCSID(0, "$NetBSD: gtmr_fdt.c,v 1.11 2021/08/07 16:18:43 thorpej Exp $"
 
 #include <dev/fdt/fdtvar.h>
 #include <arm/fdt/arm_fdtvar.h>
+
+#if defined(__arm__)
+#include <arm/armreg.h>
+#endif
 
 static int	gtmr_fdt_match(device_t, cfdata_t, void *);
 static void	gtmr_fdt_attach(device_t, device_t, void *);
@@ -94,6 +98,23 @@ gtmr_fdt_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 	aprint_normal_dev(self, "interrupting on %s\n", intrstr);
+
+#if defined(__arm__)
+	/*
+	 * If arm,cpu-registers-not-fw-configured is present, we need
+	 * to initialize cntfrq from the clock-frequency property. Only
+	 * applicable on Armv7.
+	 */
+	if (of_hasprop(phandle, "arm,cpu-registers-not-fw-configured")) {
+		uint32_t freq;
+
+		if (of_getprop_uint32(phandle, "clock-frequency", &freq) == 0) {
+			armreg_cnt_frq_write(freq);
+			prop_dictionary_set_bool(device_properties(self),
+			    "arm,cpu-registers-not-fw-configured", true);
+		}
+	}
+#endif
 
 	config_found(self, &mpcaa, NULL, CFARGS_NONE);
 
