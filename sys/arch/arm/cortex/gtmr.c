@@ -1,4 +1,4 @@
-/*	$NetBSD: gtmr.c,v 1.46 2021/10/31 16:23:47 skrll Exp $	*/
+/*	$NetBSD: gtmr.c,v 1.47 2021/11/12 21:59:04 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gtmr.c,v 1.46 2021/10/31 16:23:47 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gtmr.c,v 1.47 2021/11/12 21:59:04 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -126,6 +126,13 @@ gtmr_attach(device_t parent, device_t self, void *aux)
 	aprint_naive("\n");
 	aprint_normal(": Generic Timer (%s, %s)\n", freqbuf,
 	    sc->sc_physical ? "physical" : "virtual");
+
+#if defined(__arm__)
+	if (prop_dictionary_get_bool(dict, "arm,cpu-registers-not-fw-configured", &flag) && flag) {
+		sc->sc_flags |= GTMR_FLAG_CPU_REGISTERS_NOT_FW_CONFIGURED;
+		aprint_debug_dev(self, "CPU registers not initialized by firmware\n");
+	}
+#endif
 
 	if (prop_dictionary_get_bool(dict, "sun50i-a64-unstable-timer", &flag) && flag) {
 		sc->sc_flags |= GTMR_FLAG_SUN50I_A64_UNSTABLE_TIMER;
@@ -249,6 +256,10 @@ gtmr_init_cpu_clock(struct cpu_info *ci)
 
 	/* XXX hmm... called from cpu_hatch which hasn't lowered ipl yet */
 	int s = splsched();
+
+	if ((sc->sc_flags & GTMR_FLAG_CPU_REGISTERS_NOT_FW_CONFIGURED) != 0) {
+		armreg_cnt_frq_write(sc->sc_freq);
+	}
 
 	/*
 	 * Allow the virtual and physical counters to be accessed from
