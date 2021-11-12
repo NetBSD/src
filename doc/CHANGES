@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2849 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2850 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -453,3 +453,4 @@ Changes from NetBSD 9.0 to NetBSD 10.0:
 	sht3xtemp(4): Driver for the Sensirion SHT30/SHT31/SHT35 temperature
 		and humidity sensor [brad 20211106]
 	dts: Import dts files from Linux 5.15. [jmcneill 20211107]
+	evbarm: Add support for Rockchip RK3288 SoCs. [jmcneill 20211112]
