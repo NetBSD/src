@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe.c,v 1.293 2021/09/30 04:06:50 yamaguchi Exp $ */
+/* $NetBSD: ixgbe.c,v 1.294 2021/11/12 06:56:50 skrll Exp $ */
 
 /******************************************************************************
 
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixgbe.c,v 1.293 2021/09/30 04:06:50 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixgbe.c,v 1.294 2021/11/12 06:56:50 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -2516,7 +2516,7 @@ ixgbe_setup_vlan_hw_support(struct adapter *adapter)
 	struct vlanid_list *vlanidp;
 
 	/*
-	 *  This function is called from both if_init and ifflags_cb()
+	 * This function is called from both if_init and ifflags_cb()
 	 * on NetBSD.
 	 */
 
