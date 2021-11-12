@@ -1,4 +1,4 @@
-/* $NetBSD: rk3288_iomux.c,v 1.1 2021/11/12 22:02:08 jmcneill Exp $ */
+/* $NetBSD: rk3288_iomux.c,v 1.2 2021/11/12 22:53:20 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rk3288_iomux.c,v 1.1 2021/11/12 22:02:08 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rk3288_iomux.c,v 1.2 2021/11/12 22:53:20 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -84,6 +84,8 @@ struct rk3288_iomux_reg {
 	syscon_read_4((reg)->syscon, (off))
 #define	WR4(reg, off, val)	\
 	syscon_write_4((reg)->syscon, (off), (val))
+#define	ISPMU(sc, reg)		\
+	((reg)->syscon == (sc)->sc_pmu)
 
 static int	rk3288_iomux_match(device_t, cfdata_t, void *);
 static void	rk3288_iomux_attach(device_t, device_t, void *);
@@ -178,17 +180,13 @@ rk3288_iomux_set_bias(struct rk3288_iomux_softc *sc, struct rk3288_iomux_reg *re
 		return;
 	}
 
-	val = GPIO_P_CTL_MASK << (reg->pull_bit + 16);
+	if (ISPMU(sc, reg)) {
+		val = RD4(reg, reg->pull_reg);
+		val &= ~(GPIO_P_CTL_MASK << reg->pull_bit);
+	} else {
+		val = GPIO_P_CTL_MASK << (reg->pull_bit + 16);
+	}
 	val |= p << reg->pull_bit;
-
-#ifdef RK3288_IOMUX_DEBUG
-	const uint32_t oval = RD4(reg, reg->pull_reg);
-	printf("%s: wr %#x -> %#x (%#x)\n", __func__,
-	    oval & (GPIO_P_CTL_MASK << reg->pull_bit),
-	    val & 0xffff,
-	    GPIO_P_CTL_MASK << reg->pull_bit);
-#endif
-
 	WR4(reg, reg->pull_reg, val);
 }
 
@@ -216,8 +214,13 @@ rk3288_iomux_set_drive_strength(struct rk3288_iomux_softc *sc,
 		return;
 	}
 
-	val = GPIO_E_CTL_MASK << (reg->drv_bit + 16);
-	val |= e << reg->drv_bit;
+	if (ISPMU(sc, reg)) {
+		val = RD4(reg, reg->drv_reg);
+		val &= ~(GPIO_E_CTL_MASK << reg->drv_bit);
+	} else {
+		val = GPIO_E_CTL_MASK << (reg->drv_bit + 16);
+	}
+	val = e << reg->drv_bit;
 	WR4(reg, reg->drv_reg, val);
 }
 
@@ -229,9 +232,14 @@ rk3288_iomux_set_mux(struct rk3288_iomux_softc *sc,
 
 	KASSERT(reg->mux_reg != -1);
 
-	val = ((reg->flags & IOMUX_4BIT) ? 0xf : 0x3) << (reg->mux_bit + 16);
+	const uint32_t mask = (reg->flags & IOMUX_4BIT) ? 0xf : 0x3;
+	if (ISPMU(sc, reg)) {
+		val = RD4(reg, reg->mux_reg);
+		val &= ~(mask << reg->mux_bit);
+	} else {
+		val = mask << (reg->mux_bit + 16);
+	}
 	val |= mux << reg->mux_bit;
-
 	WR4(reg, reg->mux_reg, val);
 }
 
@@ -253,14 +261,6 @@ rk3288_iomux_config(struct rk3288_iomux_softc *sc, struct rk3288_iomux_reg *reg,
 	    reg->flags);
 	printf("     bias %d drv %d mux %u\n", bias, drv, mux);
 #endif
-
-	/* XXX
-	 * ASUS Tinkerboard goes nuts if we update any PMU bias fields.
-	 * Skip them until we figure out why.
-	 */
-	if (reg->syscon == sc->sc_pmu) {
-		bias = -1;
-	}
 
 	LOCK(reg);
 
