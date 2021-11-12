@@ -1,4 +1,4 @@
-/*	$NetBSD: ahcisata_pci.c,v 1.59 2021/11/08 11:01:51 rin Exp $	*/
+/*	$NetBSD: ahcisata_pci.c,v 1.60 2021/11/12 07:06:06 skrll Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahcisata_pci.c,v 1.59 2021/11/08 11:01:51 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahcisata_pci.c,v 1.60 2021/11/12 07:06:06 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ahcisata_pci.h"
@@ -366,7 +366,7 @@ ahci_pci_intr_establish(struct ahci_softc *sc, int port)
 	    sizeof(intrbuf));
 	psc->sc_ih[vec] = pci_intr_establish_xname(psc->sc_pc,
 	    psc->sc_pihp[vec], IPL_BIO, intr_handler, intr_arg, intr_xname);
-	if (psc->sc_ih == NULL) {
+	if (psc->sc_ih[vec] == NULL) {
 		aprint_error_dev(self, "couldn't establish interrupt");
 		if (intrstr != NULL)
 			aprint_error(" at %s", intrstr);
