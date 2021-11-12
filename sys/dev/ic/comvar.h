@@ -1,4 +1,4 @@
-/*	$NetBSD: comvar.h,v 1.95 2021/10/12 00:21:34 thorpej Exp $	*/
+/*	$NetBSD: comvar.h,v 1.96 2021/11/12 21:57:13 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -103,12 +103,20 @@ struct com_regs {
 	bus_addr_t		cr_iobase;
 	bus_size_t		cr_nports;
 	bus_size_t		cr_map[COM_REGMAP_NENTRIES];
+	uint8_t			(*cr_read)(struct com_regs *, u_int);
+	void			(*cr_write)(struct com_regs *, u_int, uint8_t);
+	void			(*cr_write_multi)(struct com_regs *, u_int,
+						  const uint8_t *,
+						  bus_size_t);
+	
 };
 
 void	com_init_regs(struct com_regs *, bus_space_tag_t, bus_space_handle_t,
 		      bus_addr_t);
 void	com_init_regs_stride(struct com_regs *, bus_space_tag_t,
 			     bus_space_handle_t, bus_addr_t, u_int);
+void	com_init_regs_stride_width(struct com_regs *, bus_space_tag_t,
+				   bus_space_handle_t, bus_addr_t, u_int, u_int);
 
 struct comcons_info {
 	struct com_regs regs;
