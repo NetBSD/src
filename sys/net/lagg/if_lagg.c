@@ -1,4 +1,4 @@
-/*	$NetBSD: if_lagg.c,v 1.21 2021/11/11 01:10:09 yamaguchi Exp $	*/
+/*	$NetBSD: if_lagg.c,v 1.22 2021/11/12 05:34:45 yamaguchi Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006 Reyk Floeter <reyk@openbsd.org>
@@ -20,7 +20,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_lagg.c,v 1.21 2021/11/11 01:10:09 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_lagg.c,v 1.22 2021/11/12 05:34:45 yamaguchi Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -198,6 +198,8 @@ static void	lagg_port_syncvlan(struct lagg_softc *, struct lagg_port *);
 static void	lagg_port_purgevlan(struct lagg_softc *, struct lagg_port *);
 static void	lagg_lladdr_update(struct lagg_softc *);
 static void	lagg_capabilities_update(struct lagg_softc *);
+static void	lagg_sync_ifcaps(struct lagg_softc *);
+static void	lagg_sync_ethcaps(struct lagg_softc *);
 
 static struct if_clone	 lagg_cloner =
     IF_CLONE_INITIALIZER("lagg", lagg_clone_create, lagg_clone_destroy);
@@ -779,6 +781,16 @@ lagg_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 		} else {
 			error = EPROTONOSUPPORT;
 		}
+		break;
+	case SIOCSIFCAP:
+		error = ether_ioctl(ifp, cmd, data);
+		if (error == 0)
+			lagg_sync_ifcaps(sc);
+		break;
+	case SIOCSETHERCAP:
+		error = ether_ioctl(ifp, cmd, data);
+		if (error == 0)
+			lagg_sync_ethcaps(sc);
 		break;
 	default:
 		error = ether_ioctl(ifp, cmd, data);
@@ -1837,6 +1849,29 @@ lagg_setifcaps(struct lagg_port *lp, uint64_t cap)
 	return error;
 }
 
+static void
+lagg_sync_ifcaps(struct lagg_softc *sc)
+{
+	struct lagg_port *lp;
+	struct ifnet *ifp;
+	int error = 0;
+
+	ifp = (struct ifnet *)&sc->sc_if;
+
+	LAGG_LOCK(sc);
+	LAGG_PORTS_FOREACH(sc, lp) {
+		error = lagg_setifcaps(lp, ifp->if_capenable);
+
+		if (error != 0) {
+			lagg_log(sc, LOG_WARNING,
+			    "failed to update capabilities "
+			    "of %s, error=%d",
+			    lp->lp_ifp->if_xname, error);
+		}
+	}
+	LAGG_UNLOCK(sc);
+}
+
 static int
 lagg_setethcaps(struct lagg_port *lp, int cap)
 {
@@ -1858,6 +1893,32 @@ lagg_setethcaps(struct lagg_port *lp, int cap)
 	IFNET_UNLOCK(lp->lp_ifp);
 
 	return error;
+}
+
+static void
+lagg_sync_ethcaps(struct lagg_softc *sc)
+{
+	struct ethercom *ec;
+	struct lagg_port *lp;
+	int error;
+
+	ec = (struct ethercom *)&sc->sc_if;
+
+	LAGG_LOCK(sc);
+	LAGG_PORTS_FOREACH(sc, lp) {
+		if (lp->lp_iftype != IFT_ETHER)
+			continue;
+
+		error = lagg_setethcaps(lp, ec->ec_capenable);
+		if (error != 0) {
+			lagg_log(sc, LOG_WARNING,
+			    "failed to update ether "
+			    "capabilities"" of %s, error=%d",
+			    lp->lp_ifp->if_xname, error);
+		}
+
+	}
+	LAGG_UNLOCK(sc);
 }
 
 static void
