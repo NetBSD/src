@@ -1,4 +1,4 @@
-/*	$NetBSD: if_lagg.c,v 1.22 2021/11/12 05:34:45 yamaguchi Exp $	*/
+/*	$NetBSD: if_lagg.c,v 1.23 2021/11/12 05:40:44 yamaguchi Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006 Reyk Floeter <reyk@openbsd.org>
@@ -20,7 +20,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_lagg.c,v 1.22 2021/11/12 05:34:45 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_lagg.c,v 1.23 2021/11/12 05:40:44 yamaguchi Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1205,7 +1205,7 @@ lagg_port_vlan_cb(struct lagg_port *lp,
 	struct ethercom *ec_port;
 	int error;
 
-	if (lp->lp_ifp->if_type != IFT_ETHER)
+	if (lp->lp_iftype != IFT_ETHER)
 		return 0;
 
 	error = 0;
