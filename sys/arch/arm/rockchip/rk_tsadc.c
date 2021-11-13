@@ -1,4 +1,4 @@
-/*	$NetBSD: rk_tsadc.c,v 1.14 2021/09/11 20:28:03 andvar Exp $	*/
+/*	$NetBSD: rk_tsadc.c,v 1.15 2021/11/13 11:46:32 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 2019 Matthew R. Green
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: rk_tsadc.c,v 1.14 2021/09/11 20:28:03 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rk_tsadc.c,v 1.15 2021/11/13 11:46:32 jmcneill Exp $");
 
 /*
  * Driver for the TSADC temperature sensor monitor in RK3328 and RK3399.
@@ -93,9 +93,10 @@ __KERNEL_RCSID(0, "$NetBSD: rk_tsadc.c,v 1.14 2021/09/11 20:28:03 andvar Exp $")
 #define  TSADC_INT_EN_HT_INTEN_SRC1             __BIT(1)
 #define  TSADC_INT_EN_HT_INTEN_SRC0             __BIT(0)
 #define TSADC_INT_PD                            0x0c
-#define  TSADC_INT_PD_EOC_INT_PD                __BIT(16)
+#define  TSADC_INT_PD_EOC_INT_PD_V3             __BIT(16)
 #define  TSADC_INT_PD_LT_IRQ_SRC1               __BIT(13)
 #define  TSADC_INT_PD_LT_IRQ_SRC0               __BIT(12)
+#define  TSADC_INT_PD_EOC_INT_PD_V2             __BIT(8)
 #define  TSADC_INT_PD_TSHUT_O_SRC1              __BIT(5)
 #define  TSADC_INT_PD_TSHUT_O_SRC0              __BIT(4)
 #define  TSADC_INT_PD_HT_IRQ_SRC1               __BIT(1)
@@ -125,6 +126,8 @@ __KERNEL_RCSID(0, "$NetBSD: rk_tsadc.c,v 1.14 2021/09/11 20:28:03 andvar Exp $")
 #define TSADC_COMP1_LOW_INT                     0x84
 #define  TSADC_COMP1_LOW_INT_COMP_SRC1          __BITS(11,0)
 
+#define	RK3288_TSADC_AUTO_PERIOD_TIME		250 /* 250ms */
+#define	RK3288_TSADC_AUTO_PERIOD_HT_TIME	50  /* 50ms */
 #define RK3328_TSADC_AUTO_PERIOD_TIME           250 /* 250ms */
 #define RK3399_TSADC_AUTO_PERIOD_TIME           1875 /* 2.5ms */
 #define TSADC_HT_DEBOUNCE_COUNT                 4
@@ -165,13 +168,16 @@ typedef struct rk_data_array {
 
 struct rk_tsadc_softc;
 typedef struct rk_data {
+	const char		*rd_name;
 	const rk_data_array	*rd_array;
 	size_t			 rd_size;
 	void			(*rd_init)(struct rk_tsadc_softc *, int, int);
 	bool			 rd_decr;  /* lower values -> higher temp */
 	unsigned		 rd_min, rd_max;
 	unsigned		 rd_auto_period;
+	unsigned		 rd_auto_period_ht;
 	unsigned		 rd_num_sensors;
+	unsigned		 rd_version;
 } rk_data;
 
 /* Per-sensor data */
@@ -216,7 +222,7 @@ static int rk_tsadc_init_clocks(struct rk_tsadc_softc *);
 static void rk_tsadc_init_counts(struct rk_tsadc_softc *);
 static void rk_tsadc_tshut_set(struct rk_tsadc_softc *s);
 static void rk_tsadc_init_tshut(struct rk_tsadc_softc *, int, int);
-static void rk_tsadc_init_rk3328(struct rk_tsadc_softc *, int, int);
+static void rk_tsadc_init_common(struct rk_tsadc_softc *, int, int);
 static void rk_tsadc_init_rk3399(struct rk_tsadc_softc *, int, int);
 static void rk_tsadc_init_enable(struct rk_tsadc_softc *);
 static void rk_tsadc_init(struct rk_tsadc_softc *, int, int);
@@ -260,6 +266,50 @@ static const struct rk_tsadc_sensor rk_tsadc_sensors[] = {
 	  .s_warn = 75000000,
 	  .s_tshut = 95000000,
 	},
+};
+
+/*
+ * Table from RK3288 manual.
+ */
+static const rk_data_array rk3288_data_array[] = {
+#define ENTRY(d,C)	{ .data = (d), .temp = (C) * 1000 * 1000, }
+	ENTRY(TSADC_DATA_MAX, -40),
+	ENTRY(3800, -40),
+	ENTRY(3792, -35),
+	ENTRY(3783, -30),
+	ENTRY(3774, -25),
+	ENTRY(3765, -20),
+	ENTRY(3756, -15),
+	ENTRY(3747, -10),
+	ENTRY(3737, -5),
+	ENTRY(3728, 0),
+	ENTRY(3718, 5),
+	ENTRY(3708, 10),
+	ENTRY(3698, 15),
+	ENTRY(3688, 20),
+	ENTRY(3678, 25),
+	ENTRY(3667, 30),
+	ENTRY(3656, 35),
+	ENTRY(3645, 40),
+	ENTRY(3634, 45),
+	ENTRY(3623, 50),
+	ENTRY(3611, 55),
+	ENTRY(3600, 60),
+	ENTRY(3588, 65),
+	ENTRY(3575, 70),
+	ENTRY(3563, 75),
+	ENTRY(3550, 80),
+	ENTRY(3537, 85),
+	ENTRY(3524, 90),
+	ENTRY(3510, 95),
+	ENTRY(3496, 100),
+	ENTRY(3482, 105),
+	ENTRY(3467, 110),
+	ENTRY(3452, 115),
+	ENTRY(3437, 120),
+	ENTRY(3421, 125),
+	ENTRY(0, 15),
+#undef ENTRY
 };
 
 /*
@@ -352,18 +402,36 @@ static const rk_data_array rk3399_data_array[] = {
 #undef ENTRY
 };
 
+static const rk_data rk3288_data_table = {
+	.rd_name = "RK3288",
+	.rd_array = rk3288_data_array,
+	.rd_size = __arraycount(rk3288_data_array),
+	.rd_init = rk_tsadc_init_common,
+	.rd_decr = true,
+	.rd_max = 3800,
+	.rd_min = 3421,
+	.rd_auto_period = RK3288_TSADC_AUTO_PERIOD_TIME,
+	.rd_auto_period_ht = RK3288_TSADC_AUTO_PERIOD_HT_TIME,
+	.rd_num_sensors = 2,
+	.rd_version = 2,
+};
+
 static const rk_data rk3328_data_table = {
+	.rd_name = "RK3328",
 	.rd_array = rk3328_data_array,
 	.rd_size = __arraycount(rk3328_data_array),
-	.rd_init = rk_tsadc_init_rk3328,
+	.rd_init = rk_tsadc_init_common,
 	.rd_decr = false,
 	.rd_max = RK3328_DATA_OFFSET - 3420,
 	.rd_min = RK3328_DATA_OFFSET - 3801,
 	.rd_auto_period = RK3328_TSADC_AUTO_PERIOD_TIME,
+	.rd_auto_period_ht = RK3328_TSADC_AUTO_PERIOD_TIME,
 	.rd_num_sensors = 1,
+	.rd_version = 3,
 };
 
 static const rk_data rk3399_data_table = {
+	.rd_name = "RK3399",
 	.rd_array = rk3399_data_array,
 	.rd_size = __arraycount(rk3399_data_array),
 	.rd_init = rk_tsadc_init_rk3399,
@@ -371,10 +439,13 @@ static const rk_data rk3399_data_table = {
 	.rd_max = 686,
 	.rd_min = 401,
 	.rd_auto_period = RK3399_TSADC_AUTO_PERIOD_TIME,
+	.rd_auto_period_ht = RK3399_TSADC_AUTO_PERIOD_TIME,
 	.rd_num_sensors = 2,
+	.rd_version = 3,
 };
 
 static const struct device_compatible_entry compat_data[] = {
+	{ .compat = "rockchip,rk3288-tsadc",	.data = &rk3288_data_table },
 	{ .compat = "rockchip,rk3328-tsadc",	.data = &rk3328_data_table },
 	{ .compat = "rockchip,rk3399-tsadc",	.data = &rk3399_data_table },
 	DEVICE_COMPAT_EOL
@@ -412,9 +483,6 @@ rk_tsadc_attach(device_t parent, device_t self, void *aux)
 	sc->sc_phandle = phandle;
 	sc->sc_bst = faa->faa_bst;
 
-	aprint_naive("\n");
-	aprint_normal(": RK3328/3399 Temperature Sensor ADC\n");
-
 	sc->sc_sme = sysmon_envsys_create();
 
 	sc->sc_sme->sme_name = device_xname(self);
@@ -426,6 +494,9 @@ rk_tsadc_attach(device_t parent, device_t self, void *aux)
 	pmf_device_register(self, NULL, NULL);
 
 	sc->sc_rd = of_compatible_lookup(faa->faa_phandle, compat_data)->data;
+
+	aprint_naive("\n");
+	aprint_normal(": %s Temperature Sensor ADC\n", sc->sc_rd->rd_name);
 
 	/* Default to tshut via gpio and tshut low is active */
 	if (of_getprop_uint32(phandle, "rockchip,hw-tshut-mode",
@@ -589,7 +660,7 @@ rk_tsadc_init_counts(struct rk_tsadc_softc *sc)
 {
 
 	TSADC_WRITE(sc, TSADC_AUTO_PERIOD, sc->sc_rd->rd_auto_period);
-	TSADC_WRITE(sc, TSADC_AUTO_PERIOD_HT, sc->sc_rd->rd_auto_period);
+	TSADC_WRITE(sc, TSADC_AUTO_PERIOD_HT, sc->sc_rd->rd_auto_period_ht);
 	TSADC_WRITE(sc, TSADC_HIGH_INT_DEBOUNCE, TSADC_HT_DEBOUNCE_COUNT);
 	TSADC_WRITE(sc, TSADC_HIGH_TSHUT_DEBOUNCE, TSADC_HT_DEBOUNCE_COUNT);
 }
@@ -670,7 +741,7 @@ rk_tsadc_init_tshut(struct rk_tsadc_softc *sc, int mode, int polarity)
 }
 
 static void
-rk_tsadc_init_rk3328(struct rk_tsadc_softc *sc, int mode, int polarity)
+rk_tsadc_init_common(struct rk_tsadc_softc *sc, int mode, int polarity)
 {
 
 	rk_tsadc_init_tshut(sc, mode, polarity);
@@ -695,8 +766,7 @@ rk_tsadc_init_rk3399(struct rk_tsadc_softc *sc, int mode, int polarity)
 	DELAY(100);
 	syscon_unlock(sc->sc_syscon);
 
-	rk_tsadc_init_counts(sc);
-	rk_tsadc_init_tshut(sc, mode, polarity);
+	rk_tsadc_init_common(sc, mode, polarity);
 }
 
 static void
@@ -713,7 +783,10 @@ rk_tsadc_init_enable(struct rk_tsadc_softc *sc)
 	sysmon_envsys_register(sc->sc_sme);
 
 	val = TSADC_READ(sc, TSADC_AUTO_CON);
-	val |= TSADC_AUTO_CON_AUTO_EN | TSADC_AUTO_CON_Q_SEL;
+	val |= TSADC_AUTO_CON_AUTO_EN;
+	if (sc->sc_rd->rd_version >= 3) {
+		val |= TSADC_AUTO_CON_Q_SEL;
+	}
 	TSADC_WRITE(sc, TSADC_AUTO_CON, val);
 }
 
@@ -802,7 +875,13 @@ rk_tsadc_intr(void *arg)
 
 	/* ack interrupt */
 	val = TSADC_READ(sc, TSADC_INT_PD);
-	TSADC_WRITE(sc, TSADC_INT_PD, val & ~TSADC_INT_PD_EOC_INT_PD);
+	if (sc->sc_rd->rd_version >= 3) {
+		TSADC_WRITE(sc, TSADC_INT_PD,
+		    val & ~TSADC_INT_PD_EOC_INT_PD_V3);
+	} else {
+		TSADC_WRITE(sc, TSADC_INT_PD,
+		    val & ~TSADC_INT_PD_EOC_INT_PD_V2);
+	}
 
 	return 1;
 }
