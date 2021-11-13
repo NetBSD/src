@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC,v 1.102 2021/11/13 00:34:24 jmcneill Exp $
+#	$NetBSD: GENERIC,v 1.103 2021/11/13 01:29:21 jmcneill Exp $
 #
 #	GENERIC ARM (aarch32) kernel
 #
@@ -275,6 +275,7 @@ tegrapinmux* 	at fdt?			# NVIDIA Tegra MPIO
 # PWM controller
 expwm* 		at fdt? pass 4		# PWM
 imxpwm* 	at fdt?			# i.MX PWM
+rkpwm*		at fdt? pass 3		# Rockchip PWM
 sunxipwm* 	at fdt? pass 3		# Allwinner PWM
 
 # Backlight
@@ -395,6 +396,7 @@ sunxican* 	at fdt?			# A10/A20 CAN controller
 
 # SPI
 imxspi* 	at fdt?			# i.MX SPI
+rkspi*		at fdt?			# Rockchip SPI
 sun4ispi* 	at fdt?
 sun6ispi* 	at fdt?
 spi* 		at spibus?
