@@ -1,4 +1,4 @@
-/*	$NetBSD: uvideoreg.h,v 1.4 2011/12/23 00:51:49 jakllsch Exp $	*/
+/*	$NetBSD: uvideoreg.h,v 1.5 2021/11/13 21:13:41 andvar Exp $	*/
 
 /*
  * Copyright (c) 2008 Patrick Mahoney
@@ -644,7 +644,7 @@ typedef struct {
 	uByte		bmFramingInfo;
 #define UVIDEO_FRAMING_INFO_FID	(1<<0)
 #define UVIDEO_FRAMING_INFO_EOF	(1<<1)
-	uByte		bPreferedVersion;
+	uByte		bPreferredVersion;
 	uByte		bMinVersion;
 	uByte		bMaxVersion;
 } UPACKED uvideo_probe_and_commit_data_t;
