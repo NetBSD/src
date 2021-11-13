@@ -1,4 +1,4 @@
-/*	$NetBSD: arm32_machdep.c,v 1.141 2021/10/31 16:23:47 skrll Exp $	*/
+/*	$NetBSD: arm32_machdep.c,v 1.142 2021/11/13 00:13:17 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arm32_machdep.c,v 1.141 2021/10/31 16:23:47 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arm32_machdep.c,v 1.142 2021/11/13 00:13:17 jmcneill Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_arm_start.h"
@@ -558,6 +558,9 @@ parse_mi_bootargs(char *args)
 {
 	int integer;
 
+	if (get_bootconf_option(args, "-1", BOOTOPT_TYPE_BOOLEAN, &integer))
+		if (integer)
+			boothowto |= RB_MD1;
 	if (get_bootconf_option(args, "single", BOOTOPT_TYPE_BOOLEAN, &integer)
 	    || get_bootconf_option(args, "-s", BOOTOPT_TYPE_BOOLEAN, &integer))
 		if (integer)
