@@ -1,4 +1,4 @@
-/* $NetBSD: rk3288_cru.c,v 1.1 2021/11/12 22:02:08 jmcneill Exp $ */
+/* $NetBSD: rk3288_cru.c,v 1.2 2021/11/13 00:34:07 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2021 Jared McNeill <jmcneill@invisible.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: rk3288_cru.c,v 1.1 2021/11/12 22:02:08 jmcneill Exp $");
+__KERNEL_RCSID(1, "$NetBSD: rk3288_cru.c,v 1.2 2021/11/13 00:34:07 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -102,6 +102,12 @@ static struct rk_cru_clk rk3288_cru_clks[] = {
 			    __BIT(15),		/* mux_mask */
 			    __BITS(7,3),	/* div_mask */
 			    0),
+	RK_COMPOSITE_NOMUX(RK3288_ACLK_CPU, "aclk_cpu", "aclk_cpu_pre",
+			   CLKSEL_CON(1),	/* div_reg */
+			   __BITS(9,8),		/* div_mask */
+			   CLKGATE_CON(0),	/* gate_reg */
+			   __BIT(4),		/* gate_mask */
+			   0),
         RK_COMPOSITE_NOMUX(RK3288_PCLK_CPU, "pclk_cpu", "aclk_cpu_pre",
 			   CLKSEL_CON(1),	/* div_reg */
 			   __BITS(14,12),	/* div_mask */
@@ -226,6 +232,14 @@ static struct rk_cru_clk rk3288_cru_clks[] = {
 		     __BIT(5),			/* gate_mask */
 		     0),
 
+	/* Crypto */
+	RK_COMPOSITE_NOMUX(RK3288_SCLK_CRYPTO, "crypto", "aclk_cpu_pre",
+			   CLKSEL_CON(26),	/* div_reg */
+			   __BITS(7,6),		/* div_mask */
+			   CLKGATE_CON(5),	/* gate_reg */
+			   __BIT(4),		/* gate_mask */
+			   0),
+
 	RK_DIV(0, "aclk_cpu_pre", "aclk_cpu_src", CLKSEL_CON(1), __BITS(3,0), 0),
 	RK_DIV(0, "clk_24m", "xin24m", CLKSEL_CON(2), __BITS(12,8), 0),
 	RK_DIV(0, "pclk_pd_alive", "gpll", CLKSEL_CON(33), __BITS(12,8), 0),
@@ -238,6 +252,7 @@ static struct rk_cru_clk rk3288_cru_clks[] = {
 	RK_MUX(0, "uart_src", mux_2plls_parents, CLKSEL_CON(15), __BIT(15)),
 	RK_MUX(RK3288_SCLK_MAC, "mac_clk", mac_parents, CLKSEL_CON(21), __BIT(4)),
 
+	RK_GATE(RK3288_ACLK_CPU, "aclk_cpu", "aclk_cpu_pre", CLKGATE_CON(0), 3),
 	RK_GATE(0, "gpll_aclk_cpu", "gpll", CLKGATE_CON(0), 10),
 	RK_GATE(0, "cpll_aclk_cpu", "cpll", CLKGATE_CON(0), 11),
 	RK_GATE(RK3288_ACLK_PERI, "aclk_peri", "aclk_peri_src", CLKGATE_CON(2), 1),
@@ -260,6 +275,9 @@ static struct rk_cru_clk rk3288_cru_clks[] = {
 	RK_GATE(RK3288_HCLK_EMMC, "hclk_emmc", "hclk_peri", CLKGATE_CON(8), 6),
 	RK_GATE(RK3288_PCLK_I2C0, "pclk_i2c0", "pclk_cpu", CLKGATE_CON(10), 2),
 	RK_GATE(RK3288_PCLK_I2C2, "pclk_i2c2", "pclk_cpu", CLKGATE_CON(10), 3),
+	RK_GATE(RK3288_ACLK_DMAC1, "aclk_dmac1", "aclk_cpu", CLKGATE_CON(10), 12),
+	RK_GATE(RK3288_ACLK_CRYPTO, "aclk_crypto", "aclk_cpu", CLKGATE_CON(11), 6),
+	RK_GATE(RK3288_HCLK_CRYPTO, "hclk_crypto", "hclk_cpu", CLKGATE_CON(11), 7),
 	RK_GATE(RK3288_PCLK_UART2, "pclk_uart2", "pclk_cpu", CLKGATE_CON(11), 9),
 	RK_GATE(RK3288_SCLK_OTGPHY0, "sclk_otgphy0", "xin24m", CLKGATE_CON(13), 4),
 	RK_GATE(RK3288_SCLK_OTGPHY1, "sclk_otgphy1", "xin24m", CLKGATE_CON(13), 5),
@@ -273,6 +291,7 @@ static struct rk_cru_clk rk3288_cru_clks[] = {
 	RK_GATE(RK3288_PCLK_GPIO7, "pclk_gpio7", "pclk_pd_alive", CLKGATE_CON(14), 7),
 	RK_GATE(RK3288_PCLK_GPIO8, "pclk_gpio8", "pclk_pd_alive", CLKGATE_CON(14), 8),
 	RK_GATE(RK3288_PCLK_GPIO0, "pclk_gpio0", "pclk_pd_pmu", CLKGATE_CON(17), 4),
+	RK_SECURE_GATE(RK3288_PCLK_WDT, "pclk_wdt", "pclk_pd_alive"),
 };
 
 static int
