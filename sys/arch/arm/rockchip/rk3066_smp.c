@@ -1,4 +1,4 @@
-/* $NetBSD: rk3066_smp.c,v 1.1 2021/11/12 22:02:08 jmcneill Exp $ */
+/* $NetBSD: rk3066_smp.c,v 1.2 2021/11/13 15:17:22 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2021 Jared McNeill <jmcneill@invisible.ca>
@@ -30,7 +30,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rk3066_smp.c,v 1.1 2021/11/12 22:02:08 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rk3066_smp.c,v 1.2 2021/11/13 15:17:22 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -141,26 +141,15 @@ rk3066_smp_enable(int cpus_phandle, u_int cpuno)
 static int
 cpu_enable_rk3066(int phandle)
 {
-	static uint32_t enabled;
 	uint64_t mpidr;
-	int error = 0;
 
 	fdtbus_get_reg64(phandle, 0, &mpidr, NULL);
 
 	const u_int cpuno = __SHIFTOUT(mpidr, MPIDR_AFF0);
-	const bool is_enabled = enabled & __BIT(cpuno);
 
-	if (!is_enabled) {
-		error = rk3066_smp_enable(OF_parent(phandle), cpuno);
-		if (error == 0) {
-			enabled |= __BIT(cpuno);
-		}
-	} else {
-		printf("WARNING: CPU enable called more than once for CPU %u\n",
-		    cpuno);
-	}
+	cpu_dcache_wbinv_all();
 
-	return error;
+	return rk3066_smp_enable(OF_parent(phandle), cpuno);
 }
 
 ARM_CPU_METHOD(rk3066, "rockchip,rk3066-smp", cpu_enable_rk3066);
