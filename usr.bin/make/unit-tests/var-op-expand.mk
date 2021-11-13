@@ -1,4 +1,4 @@
-# $NetBSD: var-op-expand.mk,v 1.11 2021/01/01 23:07:48 sjg Exp $
+# $NetBSD: var-op-expand.mk,v 1.12 2021/11/13 18:37:42 rillig Exp $
 #
 # Tests for the := variable assignment operator, which expands its
 # right-hand side.
@@ -173,6 +173,73 @@ VAR_SUBST_${UNDEF}:=	assigned by ':='
 .if ${VAR_SUBST_} != "assigned by ':='"
 .  error
 .endif
+
+
+# The following test case demonstrates that the variable 'LATER' is preserved
+# in the ':=' assignment since the variable 'LATER' is not yet defined.
+# After the assignment to 'LATER', evaluating the variable 'INDIRECT'
+# evaluates 'LATER' as well.
+#
+.undef LATER
+INDIRECT:=	${LATER:S,value,replaced,}
+.if ${INDIRECT} != ""
+.  error
+.endif
+LATER=	late-value
+.if ${INDIRECT} != "late-replaced"
+.  error
+.endif
+
+
+# Same as the test case above, except for the additional modifier ':tl' when
+# evaluating the variable 'INDIRECT'.  Nothing surprising here.
+.undef LATER
+.undef later
+INDIRECT:=	${LATER:S,value,replaced,}
+.if ${INDIRECT:tl} != ""
+.  error
+.endif
+LATER=	uppercase-value
+later=	lowercase-value
+.if ${INDIRECT:tl} != "uppercase-replaced"
+.  error
+.endif
+
+
+# Similar to the two test cases above, the situation gets a bit more involved
+# here, due to the double indirection.  The variable 'indirect' is supposed to
+# be the lowercase version of the variable 'INDIRECT'.
+#
+# The assignment operator ':=' for the variable 'INDIRECT' could be a '=' as
+# well, it wouldn't make a difference in this case.  The crucial detail is the
+# assignment operator ':=' for the variable 'indirect', though.  During this
+# assignment, the variable modifier ':S,value,replaced,' is converted to
+# lowercase, which turns 'S' into 's', thus producing an unknown modifier.
+# In this case, make issues a warning, but in cases where the modifier
+# includes a '=', the modifier would be interpreted as a SysV-style
+# substitution like '.c=.o', and make would not issue a warning, leading to
+# silent unexpected behavior.
+#
+# As of 2021-11-13, the actual behavior is unexpected though since
+.undef LATER
+.undef later
+INDIRECT:=	${LATER:S,value,replaced,}
+indirect:=	${INDIRECT:tl}
+# expect+1: Unknown modifier "s,value,replaced,"
+.if ${indirect} != ""
+.  error
+.else
+.  warning	XXX Neither branch should be taken.
+.endif
+LATER=	uppercase-value
+later=	lowercase-value
+# expect+1: Unknown modifier "s,value,replaced,"
+.if ${indirect} != "uppercase-replaced"
+.  warning	XXX Neither branch should be taken.
+.else
+.  error
+.endif
+
 
 all:
 	@:;
