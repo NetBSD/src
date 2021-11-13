@@ -26,7 +26,7 @@ bool GetRealFunctionAddress(const char *func_name, uptr *func_addr,
     uptr real, uptr wrapper) {
 #if SANITIZER_NETBSD
   // XXX: Find a better way to handle renames
-  if (internal_strcmp(func_name, "sigaction") == 0) func_name = "__sigaction14";
+  if (internal_strcmp(func_name, "sigaction") == 0) func_name = "__sigaction_siginfo";
 #endif
   *func_addr = (uptr)dlsym(RTLD_NEXT, func_name);
   if (!*func_addr) {
