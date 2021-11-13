@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.c,v 1.181 2021/07/02 07:15:35 skrll Exp $	*/
+/*	$NetBSD: cpufunc.c,v 1.182 2021/11/13 01:48:12 jmcneill Exp $	*/
 
 /*
  * arm7tdmi support code Copyright (c) 2001 John Fremlin
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpufunc.c,v 1.181 2021/07/02 07:15:35 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpufunc.c,v 1.182 2021/11/13 01:48:12 jmcneill Exp $");
 
 #include "opt_arm_start.h"
 #include "opt_compat_netbsd.h"
@@ -3005,12 +3005,9 @@ armv7_setup(char *args)
 		    CORTEXA15_ACTLR_SMP |
 		    CORTEXA15_ACTLR_SDEH |
 		    0;
-#if 0
 	} else if (CPU_ID_CORTEX_A12_P(lcputype) ||
-	    CPU_ID_CORTEX_A17_P(lcputype)) {
-		actlr_set =
-		    CORTEXA17_ACTLR_SMP;
-#endif
+		   CPU_ID_CORTEX_A17_P(lcputype)) {
+		actlr_set = CORTEXA17_ACTLR_SMP;
 	} else if (CPU_ID_CORTEX_A53_P(lcputype)) {
 	} else if (CPU_ID_CORTEX_A57_P(lcputype)) {
 	} else if (CPU_ID_CORTEX_A72_P(lcputype)) {
