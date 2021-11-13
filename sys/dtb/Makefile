@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2020/05/23 02:11:24 rin Exp $
+#	$NetBSD: Makefile,v 1.5 2021/11/13 10:13:42 skrll Exp $
 
 TARGETS+=	dtblist
 
@@ -12,6 +12,10 @@ SUBDIR+=	arm
 SUBDIR+=	arm64
 .endif
 
+.if !empty(MACHINE_ARCH:Mriscv*)
+SUBDIR+=	riscv
+.endif
+
 .include <bsd.subdir.mk>
 
 # Regenerate MD set lists in distrib/sets/lists/dtb. Run this whenever
@@ -20,6 +24,7 @@ SUBDIR+=	arm64
 TARGET_ARCH_LIST=	earmv6 earmv6hf earmv6eb earmv6hfeb
 TARGET_ARCH_LIST+=	earmv7 earmv7hf earmv7hf earmv7hfeb
 TARGET_ARCH_LIST+=	aarch64 aarch64eb
+TARGET_ARCH_LIST+=	riscv32 riscv64
 
 update-sets:
 .for _arch in ${TARGET_ARCH_LIST}
