@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC,v 1.101 2021/11/12 22:02:08 jmcneill Exp $
+#	$NetBSD: GENERIC,v 1.102 2021/11/13 00:34:24 jmcneill Exp $
 #
 #	GENERIC ARM (aarch32) kernel
 #
@@ -408,6 +408,7 @@ m25p* 		at spi? slave ?
 bcmrng* 	at fdt?			# Broadcom BCM283x RNG
 mesonrng* 	at fdt?			# Amlogic Meson RNG
 tirng* 		at fdt?			# TI RNG
+rkv1crypto*	at fdt?			# Rockchip Crypto v1
 sun8icrypto* 	at fdt?			# Allwinner Crypto Engine
 
 # Security ID EFUSE
