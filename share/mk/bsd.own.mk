@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.1267 2021/11/13 09:41:15 skrll Exp $
+#	$NetBSD: bsd.own.mk,v 1.1268 2021/11/13 10:13:42 skrll Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -1263,6 +1263,8 @@ MKDTB.earmv7=			yes
 MKDTB.earmv7hf=			yes
 MKDTB.earmv7eb=			yes
 MKDTB.earmv7hfeb=		yes
+MKDTB.riscv32=			yes
+MKDTB.riscv64=			yes
 
 HAVE_MESA_VER?=	19
 .if ${HAVE_MESA_VER} == 19
