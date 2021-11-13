@@ -1,4 +1,4 @@
-# $NetBSD: var-op-expand.mk,v 1.12 2021/11/13 18:37:42 rillig Exp $
+# $NetBSD: var-op-expand.mk,v 1.13 2021/11/13 19:02:07 rillig Exp $
 #
 # Tests for the := variable assignment operator, which expands its
 # right-hand side.
@@ -223,10 +223,10 @@ later=	lowercase-value
 # As of 2021-11-13, the actual behavior is unexpected though since
 .undef LATER
 .undef later
-INDIRECT:=	${LATER:S,value,replaced,}
+INDIRECT:=	${LATER:S,value,replaced,} OK ${LATER:value=sysv}
 indirect:=	${INDIRECT:tl}
 # expect+1: Unknown modifier "s,value,replaced,"
-.if ${indirect} != ""
+.if ${indirect} != " ok "
 .  error
 .else
 .  warning	XXX Neither branch should be taken.
@@ -234,7 +234,7 @@ indirect:=	${INDIRECT:tl}
 LATER=	uppercase-value
 later=	lowercase-value
 # expect+1: Unknown modifier "s,value,replaced,"
-.if ${indirect} != "uppercase-replaced"
+.if ${indirect} != "uppercase-replaced ok uppercase-sysv"
 .  warning	XXX Neither branch should be taken.
 .else
 .  error
