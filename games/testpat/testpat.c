@@ -1,4 +1,4 @@
-/* $NetBSD: testpat.c,v 1.5 2021/05/02 12:50:46 rillig Exp $ */
+/* $NetBSD: testpat.c,v 1.6 2021/11/13 20:59:13 nat Exp $ */
 
 /*-
  * Copyright (c) 2016 Nathanial Sloss <nathanialsloss@yahoo.com.au>
@@ -26,7 +26,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: testpat.c,v 1.5 2021/05/02 12:50:46 rillig Exp $");
+__RCSID("$NetBSD: testpat.c,v 1.6 2021/11/13 20:59:13 nat Exp $");
 
 #include <sys/types.h>
 #include <sys/time.h>
@@ -210,6 +210,8 @@ int main(int argc, char *argv[]) {
 	for (i = roundf(1 * grid_unit); i < roundf(2 * grid_unit); i++) {
 		if (colourOK)
     			attrset(COLOR_PAIR(COLOR_BLACK));
+		else
+			attrset(A_NORMAL);
 
 		for (col = roundf((4 * grid_unit * 2) +
 		    circle_pos[y_limit / 2][0]); col <= roundf((9 * grid_unit
@@ -219,6 +221,9 @@ int main(int argc, char *argv[]) {
 
 	i = roundf(1.4 * grid_unit);
 
+	if (!colourOK)
+		attrset(A_NORMAL);
+
 	col = y_limit - (strlen(title) / 2) + circle_pos[y_limit / 2][0];
 		mvprintw(i, col, "%s", title);
 
@@ -226,6 +231,8 @@ int main(int argc, char *argv[]) {
 	for (line = roundf(2 * grid_unit); line < 4 * grid_unit; line++) {
 		if (colourOK)
     			attrset(COLOR_PAIR(COLOR_BLACK));
+		else
+			attrset(A_NORMAL);
 
 		for (col = 0; col <= roundf((3.5 * grid_unit * 2)); col++) {
 				xpos = col + circle_pos[y_limit / 2][0];
@@ -251,6 +258,8 @@ int main(int argc, char *argv[]) {
 		for (xpos = 0; xpos <= x_limit; xpos += 2 * gap) {
 			if (colourOK)
     				attrset(COLOR_PAIR(COLOR_BLACK));
+			else
+				attrset(A_NORMAL);
 
 			for (col = xpos; col < xpos + gap; col++) {
 				if (col >= circle_pos[i][0] &&
@@ -260,6 +269,8 @@ int main(int argc, char *argv[]) {
 
 			if (colourOK)
     				attrset(COLOR_PAIR(COLOR_WHITE));
+			else
+				attrset(A_REVERSE);
 
 			for (col = xpos + gap ; col < xpos + (2 * gap);
 			    col++) {
@@ -275,6 +286,10 @@ int main(int argc, char *argv[]) {
 		colour = colour_list[i];
 		if (colourOK)
 	    		attrset(COLOR_PAIR(colour));
+		else if (i & 1)
+			attrset(A_NORMAL);
+		else
+			attrset(A_REVERSE);
 
 		if (i == 0)
 			spacing_start = 0;
@@ -301,6 +316,8 @@ int main(int argc, char *argv[]) {
 	for (line = y_limit / 2; line < (9.5 * grid_unit); line++) {
 		if (colourOK)
     			attrset(COLOR_PAIR(COLOR_BLACK));
+		else
+			attrset(A_NORMAL);
 
 		for (col = circle_pos[line][0]; col <= circle_pos[line][1];
 		    col++)
@@ -336,6 +353,8 @@ int main(int argc, char *argv[]) {
 	    line++) {
 		if (colourOK)
     			attrset(COLOR_PAIR(COLOR_BLACK));
+		else
+			attrset(A_NORMAL);
 
 		for (col = roundf((0 * grid_unit * 2)); col <
 		    roundf((4 * grid_unit * 2)); col++) {
@@ -355,6 +374,8 @@ int main(int argc, char *argv[]) {
 
 		if (colourOK)
     			attrset(COLOR_PAIR(COLOR_WHITE));
+		else
+			attrset(A_REVERSE);
 
 		for (col = roundf((6.5 * grid_unit * 2)); col <
 		    roundf((9 * grid_unit * 2)); col++) {
@@ -378,6 +399,8 @@ int main(int argc, char *argv[]) {
 	    line++) {
 		if (colourOK)
     			attrset(COLOR_PAIR(COLOR_BLACK));
+		else
+			attrset(A_NORMAL);
 
 		for (col = roundf(3.5 * grid_unit * 2); col <= roundf(9.5 *
 		    grid_unit * 2); col++) {
@@ -389,6 +412,8 @@ int main(int argc, char *argv[]) {
 
 		if (colourOK)
     			attrset(COLOR_PAIR(COLOR_WHITE));
+		else
+			attrset(A_REVERSE);
 
 		for (col = roundf(0 * grid_unit * 2); col <= roundf(3.5 *
 		    grid_unit * 2); col++) {
@@ -411,6 +436,9 @@ int main(int argc, char *argv[]) {
 	for (line = 12 * grid_unit; line < y_limit; line++) {
 		if (colourOK)
     			attrset(COLOR_PAIR(COLOR_YELLOW));
+		else
+    			attrset(A_REVERSE);
+
 
 		for (col = circle_pos[line][0]; col <= circle_pos[line][1];
 		    col++)
@@ -418,6 +446,8 @@ int main(int argc, char *argv[]) {
 
 		if (colourOK)
     			attrset(COLOR_PAIR(COLOR_RED));
+		else
+    			attrset(A_NORMAL);
 
 		for (col = roundf((6 * grid_unit * 2)); col <
 		    roundf((7 * grid_unit * 2)); col++) {
@@ -430,10 +460,14 @@ int main(int argc, char *argv[]) {
 
 	if (colourOK)
     		attrset(COLOR_PAIR(COLOR_BLACK));
+	else
+    		attrset(A_NORMAL);
 
 	for (line = 6 * grid_unit; line <= (7 * grid_unit) + 1; line++) {
 		if (colourOK)
     			attrset(COLOR_PAIR(COLOR_BLACK));
+		else
+    			attrset(A_NORMAL);
 
 		col = x_limit / 2;
 		if (line != a_axis) {
