@@ -1,4 +1,4 @@
-/* $NetBSD: rk3288_cru.c,v 1.4 2021/11/13 01:29:08 jmcneill Exp $ */
+/* $NetBSD: rk3288_cru.c,v 1.5 2021/11/13 11:46:32 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2021 Jared McNeill <jmcneill@invisible.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: rk3288_cru.c,v 1.4 2021/11/13 01:29:08 jmcneill Exp $");
+__KERNEL_RCSID(1, "$NetBSD: rk3288_cru.c,v 1.5 2021/11/13 11:46:32 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -263,6 +263,14 @@ static struct rk_cru_clk rk3288_cru_clks[] = {
 		     __BIT(11),			/* gate_mask */
 		     0),
 
+	/* TSADC */
+	RK_COMPOSITE_NOMUX(RK3288_SCLK_TSADC, "sclk_tsadc", "xin32k",
+			   CLKSEL_CON(2),	/* div_reg */
+			   __BITS(5,0),		/* div_mask */
+			   CLKGATE_CON(2),	/* gate_reg */
+			   __BIT(7),		/* gate_mask */
+			   0),
+
 	RK_DIV(0, "aclk_cpu_pre", "aclk_cpu_src", CLKSEL_CON(1), __BITS(2,0), 0),
 	RK_DIV(0, "clk_24m", "xin24m", CLKSEL_CON(2), __BITS(12,8), 0),
 	RK_DIV(0, "pclk_pd_alive", "gpll", CLKSEL_CON(33), __BITS(12,8), 0),
@@ -290,6 +298,7 @@ static struct rk_cru_clk rk3288_cru_clks[] = {
 	RK_GATE(RK3288_PCLK_I2C3, "pclk_i2c3", "pclk_peri", CLKGATE_CON(6), 14),
 	RK_GATE(RK3288_PCLK_I2C4, "pclk_i2c4", "pclk_peri", CLKGATE_CON(6), 15),
 	RK_GATE(RK3288_PCLK_I2C5, "pclk_i2c5", "pclk_peri", CLKGATE_CON(7), 0),
+	RK_GATE(RK3288_PCLK_TSADC, "pclk_tsadc", "pclk_peri", CLKGATE_CON(7), 2),
 	RK_GATE(RK3288_HCLK_USBHOST0, "hclk_host0", "hclk_peri", CLKGATE_CON(7), 6),
 	RK_GATE(RK3288_HCLK_USBHOST1, "hclk_host1", "hclk_peri", CLKGATE_CON(7), 7),
 	RK_GATE(RK3288_HCLK_HSIC, "hclk_hsic", "hclk_peri", CLKGATE_CON(7), 8),
