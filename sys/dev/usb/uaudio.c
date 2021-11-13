@@ -1,4 +1,4 @@
-/*	$NetBSD: uaudio.c,v 1.172 2021/06/19 05:50:48 mlelstv Exp $	*/
+/*	$NetBSD: uaudio.c,v 1.173 2021/11/13 10:34:00 mlelstv Exp $	*/
 
 /*
  * Copyright (c) 1999, 2012 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uaudio.c,v 1.172 2021/06/19 05:50:48 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uaudio.c,v 1.173 2021/11/13 10:34:00 mlelstv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -2612,6 +2612,8 @@ uaudio_trigger_input(void *addr, void *start, void *end, int blksize,
 	if (sc->sc_dying)
 		return EIO;
 
+	mutex_exit(&sc->sc_intr_lock);
+
 	DPRINTFN(3, "sc=%p start=%p end=%p "
 		    "blksize=%d\n", sc, start, end, blksize);
 	ch = &sc->sc_recchan;
@@ -2622,12 +2624,16 @@ uaudio_trigger_input(void *addr, void *start, void *end, int blksize,
 
 	err = uaudio_chan_open(sc, ch);
 	if (err) {
+		mutex_enter(&sc->sc_intr_lock);
+		device_printf(sc->sc_dev,"%s open channel err=%s\n",__func__, usbd_errstr(err));
 		return EIO;
 	}
 
 	err = uaudio_chan_alloc_buffers(sc, ch);
 	if (err) {
 		uaudio_chan_close(sc, ch);
+		device_printf(sc->sc_dev,"%s alloc buffers err=%s\n",__func__, usbd_errstr(err));
+		mutex_enter(&sc->sc_intr_lock);
 		return EIO;
 	}
 
@@ -2642,6 +2648,8 @@ uaudio_trigger_input(void *addr, void *start, void *end, int blksize,
 	for (i = 0; i < UAUDIO_NCHANBUFS / 2; i++) {
 		uaudio_chan_rtransfer(ch);
 	}
+
+	mutex_enter(&sc->sc_intr_lock);
 
 	return 0;
 }
@@ -2660,6 +2668,8 @@ uaudio_trigger_output(void *addr, void *start, void *end, int blksize,
 	if (sc->sc_dying)
 		return EIO;
 
+	mutex_exit(&sc->sc_intr_lock);
+
 	DPRINTFN(3, "sc=%p start=%p end=%p "
 		    "blksize=%d\n", sc, start, end, blksize);
 	ch = &sc->sc_playchan;
@@ -2670,12 +2680,16 @@ uaudio_trigger_output(void *addr, void *start, void *end, int blksize,
 
 	err = uaudio_chan_open(sc, ch);
 	if (err) {
+		mutex_enter(&sc->sc_intr_lock);
+		device_printf(sc->sc_dev,"%s open channel err=%s\n",__func__, usbd_errstr(err));
 		return EIO;
 	}
 
 	err = uaudio_chan_alloc_buffers(sc, ch);
 	if (err) {
 		uaudio_chan_close(sc, ch);
+		device_printf(sc->sc_dev,"%s alloc buffers err=%s\n",__func__, usbd_errstr(err));
+		mutex_enter(&sc->sc_intr_lock);
 		return EIO;
 	}
 
@@ -2684,6 +2698,8 @@ uaudio_trigger_output(void *addr, void *start, void *end, int blksize,
 
 	for (i = 0; i < UAUDIO_NCHANBUFS; i++)
 		uaudio_chan_ptransfer(ch);
+
+	mutex_enter(&sc->sc_intr_lock);
 
 	return 0;
 }
@@ -2866,7 +2882,9 @@ uaudio_chan_ptransfer(struct chan *ch)
 	usbd_setup_isoc_xfer(cb->xfer, cb, cb->sizes, UAUDIO_NFRAMES, 0,
 	    uaudio_chan_pintr);
 
-	(void)usbd_transfer(cb->xfer);
+	usbd_status err = usbd_transfer(cb->xfer);
+	if (err != USBD_IN_PROGRESS && err != USBD_NORMAL_COMPLETION)
+		device_printf(ch->sc->sc_dev, "ptransfer error %d\n", err);
 }
 
 Static void
@@ -2882,6 +2900,10 @@ uaudio_chan_pintr(struct usbd_xfer *xfer, void *priv,
 	/* Return if we are aborting. */
 	if (status == USBD_CANCELLED)
 		return;
+
+	if (status != USBD_NORMAL_COMPLETION)
+		device_printf(ch->sc->sc_dev, "pintr error: %s\n",
+		              usbd_errstr(status));
 
 	usbd_get_xfer_status(xfer, NULL, NULL, &count, NULL);
 	DPRINTFN(5, "count=%d, transferred=%d\n",
@@ -2948,7 +2970,9 @@ uaudio_chan_rtransfer(struct chan *ch)
 	usbd_setup_isoc_xfer(cb->xfer, cb, cb->sizes, UAUDIO_NFRAMES, 0,
 	    uaudio_chan_rintr);
 
-	(void)usbd_transfer(cb->xfer);
+	usbd_status err = usbd_transfer(cb->xfer);
+	if (err != USBD_IN_PROGRESS && err != USBD_NORMAL_COMPLETION)
+		device_printf(ch->sc->sc_dev, "rtransfer error %d\n", err);
 }
 
 Static void
@@ -2965,6 +2989,10 @@ uaudio_chan_rintr(struct usbd_xfer *xfer, void *priv,
 	/* Return if we are aborting. */
 	if (status == USBD_CANCELLED)
 		return;
+
+	if (status != USBD_NORMAL_COMPLETION && status != USBD_SHORT_XFER)
+		device_printf(ch->sc->sc_dev, "rintr error: %s\n",
+		              usbd_errstr(status));
 
 	usbd_get_xfer_status(xfer, NULL, NULL, &count, NULL);
 	DPRINTFN(5, "count=%d, transferred=%d\n", count, ch->transferred);
