@@ -1,4 +1,4 @@
-/*	$NetBSD: gtmr.c,v 1.47 2021/11/12 21:59:04 jmcneill Exp $	*/
+/*	$NetBSD: gtmr.c,v 1.48 2021/11/13 18:30:27 jakllsch Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gtmr.c,v 1.47 2021/11/12 21:59:04 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gtmr.c,v 1.48 2021/11/13 18:30:27 jakllsch Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -257,9 +257,11 @@ gtmr_init_cpu_clock(struct cpu_info *ci)
 	/* XXX hmm... called from cpu_hatch which hasn't lowered ipl yet */
 	int s = splsched();
 
+#if defined(__arm__)
 	if ((sc->sc_flags & GTMR_FLAG_CPU_REGISTERS_NOT_FW_CONFIGURED) != 0) {
 		armreg_cnt_frq_write(sc->sc_freq);
 	}
+#endif
 
 	/*
 	 * Allow the virtual and physical counters to be accessed from
