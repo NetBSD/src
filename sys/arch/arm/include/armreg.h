@@ -1,4 +1,4 @@
-/*	$NetBSD: armreg.h,v 1.132 2021/10/10 08:36:49 skrll Exp $	*/
+/*	$NetBSD: armreg.h,v 1.133 2021/11/13 01:48:12 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Ben Harris
@@ -311,6 +311,12 @@
 #define	CORTEXA15_ACTLR_SMP	__BIT(6)  /* SMP */
 #define	CORTEXA15_ACTLR_IOBEU	__BIT(15) /* In order issue in Branch Exec Unit */
 #define	CORTEXA15_ACTLR_SDEH	__BIT(31) /* snoop-delayed exclusive handling */
+
+/* Cortex-A17 Auxiliary Control Register (CP15 register 1, opcode 1) */
+#define	CORTEXA17_ACTLR_SMP	__BIT(6)  /* SMP */
+#define	CORTEXA17_ACTLR_ASSE	__BIT(3)  /* ACE STREX Signaling Enable */
+#define	CORTEXA17_ACTLR_L2PF	__BIT(2)  /* Enable L2 prefetch */
+#define	CORTEXA17_ACTLR_L1PF	__BIT(1)  /* Enable L1 prefetch */
 
 /* Marvell Feroceon Extra Features Register (CP15 register 1, opcode2 0) */
 #define FC_DCACHE_REPL_LOCK	0x80000000 /* Replace DCache Lock */
