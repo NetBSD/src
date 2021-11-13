@@ -1,4 +1,4 @@
-/*	$NetBSD: cputypes.h,v 1.15 2021/11/12 06:44:46 skrll Exp $	*/
+/*	$NetBSD: cputypes.h,v 1.16 2021/11/13 01:09:51 simonb Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Ben Harris
@@ -209,7 +209,7 @@
 #define CPU_ID_THUNDERX2RX	0x43000af0
 
 /*
- * Chip-specific errata. This defines are intended to be
+ * Chip-specific errata. These defines are intended to be
  * booleans used within if statements. When an appropriate
  * kernel option is disabled, these defines must be defined
  * as 0 to allow the compiler to remove a dead code thus
