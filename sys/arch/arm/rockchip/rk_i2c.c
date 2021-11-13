@@ -1,4 +1,4 @@
-/* $NetBSD: rk_i2c.c,v 1.11 2021/11/12 22:02:08 jmcneill Exp $ */
+/* $NetBSD: rk_i2c.c,v 1.12 2021/11/13 01:08:15 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: rk_i2c.c,v 1.11 2021/11/12 22:02:08 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rk_i2c.c,v 1.12 2021/11/13 01:08:15 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -104,9 +104,7 @@ __KERNEL_RCSID(0, "$NetBSD: rk_i2c.c,v 1.11 2021/11/12 22:02:08 jmcneill Exp $")
 #define	RKI2C_HAS_PCLK		__BIT(0)
 
 static const struct device_compatible_entry compat_data[] = {
-#if notyet
 	{ .compat = "rockchip,rk3288-i2c",	.value = 0 },
-#endif
 	{ .compat = "rockchip,rk3399-i2c",	.value = RKI2C_HAS_PCLK },
 	DEVICE_COMPAT_EOL
 };
