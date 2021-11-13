@@ -2410,7 +2410,7 @@ struct __sanitizer_cdbw {
   COMPILER_CHECK(offsetof(struct __sanitizer_##CLASS, MEMBER) ==         \
                  offsetof(struct CLASS, MEMBER))
 
-#define SIGACTION_SYMNAME __sigaction14
+#define SIGACTION_SYMNAME __sigaction_siginfo
 
 // Compat with 9.0
 extern unsigned struct_statvfs90_sz;
