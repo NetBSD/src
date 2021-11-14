@@ -1,4 +1,4 @@
-/* $NetBSD: ppbus_1284.c,v 1.13 2014/07/13 17:12:23 dholland Exp $ */
+/* $NetBSD: ppbus_1284.c,v 1.14 2021/11/14 20:51:57 andvar Exp $ */
 
 /*-
  * Copyright (c) 1997 Nicolas Souchu
@@ -32,7 +32,7 @@
 /* General purpose routines for the IEEE1284-1994 Standard */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ppbus_1284.c,v 1.13 2014/07/13 17:12:23 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ppbus_1284.c,v 1.14 2021/11/14 20:51:57 andvar Exp $");
 
 #include "opt_ppbus_1284.h"
 
@@ -64,7 +64,7 @@ do_peripheral_wait(struct ppbus_softc * bus, char mask, char status)
 }
 
 
-/* Unconditionaly reset the error field */
+/* Unconditionally reset the error field */
 static int
 ppbus_1284_reset_error(struct ppbus_softc * bus, int state)
 {
@@ -569,7 +569,7 @@ ppbus_1284_negotiate(device_t dev, int mode, int options)
 		goto error;
 	}
 
-	/* Event 7 - quering result consider nACK not to misunderstand
+	/* Event 7 - querying result consider nACK not to misunderstand
 	 * a remote computer terminate sequence */
 	if (options & PPBUS_EXTENSIBILITY_LINK) {
 		/* XXX not fully supported yet */
