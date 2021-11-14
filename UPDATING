@@ -1,4 +1,4 @@
-$NetBSD: UPDATING,v 1.322 2021/10/14 15:40:00 martin Exp $
+$NetBSD: UPDATING,v 1.323 2021/11/14 11:16:28 nia Exp $
 
 This file (UPDATING) is intended to be a brief reference to recent
 changes that might cause problems in the build process, and a guide for
@@ -19,8 +19,12 @@ See also: BUILDING, build.sh, Makefile.
 Recent changes:
 ^^^^^^^^^^^^^^^
 
+20211112:
+	Device tree sources were updated for evbarm.  Some device nodes
+	(in particular, ld(4) devices on the ROCKPro64) will be renumbered.
+
 20211014:
-	MKRELRO default for aarch64 has changed, a clean build is required.
+	MKPIE default for aarch64 has changed, a clean build is required.
 
 20210917:
 	Changed MNT_ACLS to default to POSIX1e ACLs instead of NFSv4
