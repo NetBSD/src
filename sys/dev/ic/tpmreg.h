@@ -1,4 +1,4 @@
-/*	$NetBSD: tpmreg.h,v 1.9 2021/05/29 08:45:29 riastradh Exp $	*/
+/*	$NetBSD: tpmreg.h,v 1.10 2021/11/14 21:18:30 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -110,9 +110,10 @@ struct tpm_header {
 #define	TPM_REV				0x0f04	/* 8bit register */
 
 /*
- * Five localities, 4K per locality.
+ * Five localities, 4K per locality.  But we only use the registers for
+ * the first locality, so this is 0x1000 rather than 0x5000.
  */
-#define	TPM_SPACE_SIZE	0x5000
+#define	TPM_SPACE_SIZE	0x1000
 
 #define	TPM_TAG_RQU_COMMAND		0x00c1
 #define	TPM_TAG_RSP_COMMAND		0x00c4
