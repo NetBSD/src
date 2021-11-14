@@ -1,4 +1,4 @@
-/*	$NetBSD: rpst.c,v 1.11 2011/04/26 20:53:34 yamt Exp $	*/
+/*	$NetBSD: rpst.c,v 1.12 2021/11/14 20:51:57 andvar Exp $	*/
 
 /*-
  * Copyright (c)2009 YAMAMOTO Takashi,
@@ -43,14 +43,14 @@
 #include <sys/cdefs.h>
 
 #if defined(_KERNEL) || defined(_STANDALONE)
-__KERNEL_RCSID(0, "$NetBSD: rpst.c,v 1.11 2011/04/26 20:53:34 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rpst.c,v 1.12 2021/11/14 20:51:57 andvar Exp $");
 #include <sys/param.h>
 #include <lib/libkern/libkern.h>
 #if defined(_STANDALONE)
 #include <lib/libsa/stand.h>
 #endif /* defined(_STANDALONE) */
 #else /* defined(_KERNEL) || defined(_STANDALONE) */
-__RCSID("$NetBSD: rpst.c,v 1.11 2011/04/26 20:53:34 yamt Exp $");
+__RCSID("$NetBSD: rpst.c,v 1.12 2021/11/14 20:51:57 andvar Exp $");
 #include <assert.h>
 #include <stdbool.h>
 #include <string.h>
@@ -569,7 +569,7 @@ query(uint64_t max_y, uint64_t min_x, uint64_t max_x)
 	struct timeval end;
 	unsigned int done;
 
-	printf("quering max_y=%" PRIu64 " min_x=%" PRIu64 " max_x=%" PRIu64
+	printf("querying max_y=%" PRIu64 " min_x=%" PRIu64 " max_x=%" PRIu64
 	    "\n",
 	    max_y, min_x, max_x);
 	done = 0;

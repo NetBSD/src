@@ -1,4 +1,4 @@
-/* $NetBSD: dwiic.c,v 1.7 2019/12/23 15:28:08 thorpej Exp $ */
+/* $NetBSD: dwiic.c,v 1.8 2021/11/14 20:51:57 andvar Exp $ */
 
 /* $OpenBSD: dwiic.c,v 1.4 2018/05/23 22:08:00 kettenis Exp $ */
 
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwiic.c,v 1.7 2019/12/23 15:28:08 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwiic.c,v 1.8 2021/11/14 20:51:57 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -445,7 +445,7 @@ dwiic_i2c_exec(void *cookie, i2c_op_t op, i2c_addr_t addr, const void *cmdbuf,
 		if (x == 0 && cmdlen > 0 && I2C_OP_READ_P(op))
 			cmd |= DW_IC_DATA_CMD_RESTART;
 		/*
-		 * Generate STOP conditon on the last byte of the
+		 * Generate STOP condition on the last byte of the
 		 * transfer.
 		 */
 		if (x == (len - 1) && I2C_OP_STOP_P(op))
