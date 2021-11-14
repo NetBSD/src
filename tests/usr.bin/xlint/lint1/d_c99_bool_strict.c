@@ -1,4 +1,4 @@
-/*	$NetBSD: d_c99_bool_strict.c,v 1.30 2021/07/04 07:09:39 rillig Exp $	*/
+/*	$NetBSD: d_c99_bool_strict.c,v 1.31 2021/11/14 11:23:52 rillig Exp $	*/
 # 3 "d_c99_bool_strict.c"
 
 /*
@@ -775,4 +775,64 @@ initialization(void)
 	    { 0 },		/* expect: 107 */
 	    { 1 },		/* expect: 107 */
 	};
+}
+
+# 1 "stdio.h" 1 3 4
+typedef struct stdio_file {
+	int fd;
+} FILE;
+int ferror(FILE *);
+FILE stdio_files[3];
+FILE *stdio_stdout;
+# 788 "d_c99_bool_strict.c" 2
+# 1 "string.h" 1 3 4
+int strcmp(const char *, const char *);
+# 791 "d_c99_bool_strict.c" 2
+
+void
+controlling_expression(FILE *f, const char *a, const char *b)
+{
+	/* expect+1: error: controlling expression must be bool, not 'int' [333] */
+	if (ferror(f))
+		return;
+	/* expect+1: error: controlling expression must be bool, not 'int' [333] */
+	if (strcmp(a, b))
+		return;
+	/* expect+1: error: operand of '!' must be bool, not 'int' [330] */
+	if (!ferror(f))
+		return;
+	/* expect+1: error: operand of '!' must be bool, not 'int' [330] */
+	if (!strcmp(a, b))
+		return;
+
+	/*
+	 * No warning below since the expression 'stdio_stdin' comes from a
+	 * system header (typically via a macro), and this property is passed
+	 * up to the expression 'ferror(stdio_stdin)'.
+	 *
+	 * That is wrong though since the above rule would allow a plain
+	 * 'strcmp' without a following '== 0', as long as one of its
+	 * arguments comes from a system header.
+	 *
+	 * Seen in bin/echo/echo.c, function main, call to ferror.
+	 */
+	/* TODO: Warn about type mismatch [333]. */
+	if (ferror(
+# 822 "d_c99_bool_strict.c" 3 4
+	    &stdio_files[1]
+# 824 "d_c99_bool_strict.c"
+	    ))
+		return;
+
+	/*
+	 * TODO: Why is there a difference between array access and a plain
+	 * variable? Either both should get a warning or none of them.
+	 */
+	/* expect+5: error: controlling expression must be bool, not 'int' [333] */
+	if (ferror(
+# 834 "d_c99_bool_strict.c" 3 4
+	    stdio_stdout
+# 836 "d_c99_bool_strict.c"
+	    ))
+		return;
 }
