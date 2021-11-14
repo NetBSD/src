@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.82 2021/10/31 16:23:47 skrll Exp $	*/
+/*	$NetBSD: locore.S,v 1.83 2021/11/14 16:56:32 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -38,7 +38,7 @@
 #include <aarch64/hypervisor.h>
 #include "assym.h"
 
-RCSID("$NetBSD: locore.S,v 1.82 2021/10/31 16:23:47 skrll Exp $")
+RCSID("$NetBSD: locore.S,v 1.83 2021/11/14 16:56:32 riastradh Exp $")
 
 #ifdef AARCH64_DEVICE_MEM_STRONGLY_ORDERED
 #define	MAIR_DEVICE_MEM		MAIR_DEVICE_nGnRnE
@@ -520,8 +520,7 @@ mp_vstart:
 
 	/* wait for the mailbox start bit to become true */
 1:
-	dmb	sy
-	ldr	x20, [x28]
+	ldar	x20, [x28]	/* matches cpu_boot_secondary_processors */
 	tst	x20, x29
 	bne	9f
 	wfe

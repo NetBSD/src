@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_subr.c,v 1.4 2021/10/31 16:23:47 skrll Exp $	*/
+/*	$NetBSD: cpu_subr.c,v 1.5 2021/11/14 16:56:32 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.4 2021/10/31 16:23:47 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.5 2021/11/14 16:56:32 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -81,6 +81,7 @@ cpu_boot_secondary_processors(void)
 	VPRINTF("%s: starting secondary processors\n", __func__);
 
 	/* send mbox to have secondary processors do cpu_hatch() */
+	dmb(ish);	/* store-release matches locore.S/armv6_start.S */
 	for (size_t n = 0; n < __arraycount(arm_cpu_mbox); n++)
 		atomic_or_ulong(&arm_cpu_mbox[n], arm_cpu_hatched[n]);
 
@@ -95,7 +96,8 @@ cpu_boot_secondary_processors(void)
 		const size_t off = cpuno / CPUINDEX_DIVISOR;
 		const u_long bit = __BIT(cpuno % CPUINDEX_DIVISOR);
 
-		while (membar_consumer(), arm_cpu_mbox[off] & bit) {
+		/* load-acquire matches cpu_clr_mbox */
+		while (atomic_load_acquire(&arm_cpu_mbox[off]) & bit) {
 			__asm __volatile ("wfe");
 		}
 		/* Add processor to kcpuset */
@@ -111,8 +113,8 @@ cpu_hatched_p(u_int cpuindex)
 	const u_int off = cpuindex / CPUINDEX_DIVISOR;
 	const u_int bit = cpuindex % CPUINDEX_DIVISOR;
 
-	membar_consumer();
-	return (arm_cpu_hatched[off] & __BIT(bit)) != 0;
+	/* load-acquire matches cpu_set_hatched */
+	return (atomic_load_acquire(&arm_cpu_hatched[off]) & __BIT(bit)) != 0;
 }
 
 void
@@ -122,6 +124,7 @@ cpu_set_hatched(int cpuindex)
 	const size_t off = cpuindex / CPUINDEX_DIVISOR;
 	const u_long bit = __BIT(cpuindex % CPUINDEX_DIVISOR);
 
+	dmb(ish);		/* store-release matches cpu_hatched_p */
 	atomic_or_ulong(&arm_cpu_hatched[off], bit);
 	dsb(ishst);
 	sev();
@@ -135,6 +138,7 @@ cpu_clr_mbox(int cpuindex)
 	const u_long bit = __BIT(cpuindex % CPUINDEX_DIVISOR);
 
 	/* Notify cpu_boot_secondary_processors that we're done */
+	dmb(ish);		/* store-release */
 	atomic_and_ulong(&arm_cpu_mbox[off], ~bit);
 	dsb(ishst);
 	sev();
