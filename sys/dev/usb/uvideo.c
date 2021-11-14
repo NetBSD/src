@@ -1,4 +1,4 @@
-/*	$NetBSD: uvideo.c,v 1.62 2021/11/13 21:13:41 andvar Exp $	*/
+/*	$NetBSD: uvideo.c,v 1.63 2021/11/14 08:32:07 andvar Exp $	*/
 
 /*
  * Copyright (c) 2008 Patrick Mahoney
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvideo.c,v 1.62 2021/11/13 21:13:41 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvideo.c,v 1.63 2021/11/14 08:32:07 andvar Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -2049,11 +2049,11 @@ uvideo_set_format(void *addr, struct video_format *format)
 		      UGETDW(probe.dwMaxPayloadTransferSize)));
 	if (vs->vs_probelen == 34) {
 		DPRINTFN(15, (" dwClockFrequency=%u bmFramingInfo=0x%02x "
-			      "bPreferredVersion=%d bMinVersion=%d "
+			      "bPreferedVersion=%d bMinVersion=%d "
 			      "bMaxVersion=%d",
 			      UGETDW(probe.dwClockFrequency),
 			      probe.bmFramingInfo,
-			      probe.bPreferredVersion,
+			      probe.bPreferedVersion,
 			      probe.bMinVersion,
 			      probe.bMaxVersion));
 	}
