@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep.c,v 1.22 2021/11/06 20:42:56 thorpej Exp $	*/
+/*	$NetBSD: netbsd32_machdep.c,v 1.23 2021/11/14 15:12:01 skrll Exp $	*/
 
 /*
  * Copyright (c) 2018 Ryo Shimizu <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.22 2021/11/06 20:42:56 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.23 2021/11/14 15:12:01 skrll Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -632,16 +632,16 @@ netbsd32_vm_default_addr(struct proc *p, vaddr_t base, vsize_t sz,
 		return VM_DEFAULT_ADDRESS32_BOTTOMUP(base, sz);
 }
 
-void  
+void
 netbsd32_machdep_md_init(void)
-{ 
- 
+{
+
 	/* nothing to do */
 }
- 
+
 void
 netbsd32_machdep_md_fini(void)
 {
- 
+
 	/* nothing to do */
 }
