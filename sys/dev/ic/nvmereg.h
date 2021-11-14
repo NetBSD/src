@@ -1,4 +1,4 @@
-/*	$NetBSD: nvmereg.h,v 1.15 2020/09/27 16:44:24 jdolecek Exp $	*/
+/*	$NetBSD: nvmereg.h,v 1.16 2021/11/14 07:27:25 skrll Exp $	*/
 /*	$OpenBSD: nvmereg.h,v 1.10 2016/04/14 11:18:32 dlg Exp $ */
 
 /*
@@ -77,16 +77,16 @@
 #define  NVME_CSTS_SHST_NONE	(0x0 << 2) /* normal operation */
 #define  NVME_CSTS_SHST_WAIT	(0x1 << 2) /* shutdown processing occurring */
 #define  NVME_CSTS_SHST_DONE	(0x2 << 2) /* shutdown processing complete */
-#define  NVME_CSTS_CFS		(1 << 1)
-#define  NVME_CSTS_RDY		(1 << 0)
+#define  NVME_CSTS_CFS		__BIT(1)
+#define  NVME_CSTS_RDY		__BIT(0)
 #define NVME_NSSR	0x0020	/* NVM Subsystem Reset (Optional) */
 #define NVME_AQA	0x0024	/* Admin Queue Attributes */
 				/* Admin Completion Queue Size */
 #define  NVME_AQA_ACQS(_v)	(((_v) - 1) << 16)
-#define  NVME_AQA_ACQS_R(_v)	((_v >> 16) & ((1 << 12) - 1))
+#define  NVME_AQA_ACQS_R(_v)	((_v >> 16) & (__BIT(12) - 1))
 				/* Admin Submission Queue Size */
 #define  NVME_AQA_ASQS(_v)	(((_v) - 1) << 0)
-#define  NVME_AQA_ASQS_R(_v)	(_v & ((1 << 12) - 1))
+#define  NVME_AQA_ASQS_R(_v)	(_v & (__BIT(12) - 1))
 #define NVME_ASQ	0x0028	/* Admin Submission Queue Base Address */
 #define NVME_ACQ	0x0030	/* Admin Completion Queue Base Address */
 
@@ -166,8 +166,8 @@ struct nvme_sqe_q {
 #define NVM_SQE_SQ_QPRIO_HI	(0x1 << 1)
 #define NVM_SQE_SQ_QPRIO_MED	(0x2 << 1)
 #define NVM_SQE_SQ_QPRIO_LOW	(0x3 << 1)
-#define NVM_SQE_CQ_IEN		(1 << 1)
-#define NVM_SQE_Q_PC		(1 << 0)
+#define NVM_SQE_CQ_IEN		__BIT(1)
+#define NVM_SQE_Q_PC		__BIT(0)
 	uint8_t		_reserved3;
 	uint16_t	cqid; /* XXX interrupt vector for cq */
 
