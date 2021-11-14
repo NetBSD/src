@@ -1,4 +1,4 @@
-/*	$NetBSD: armv6_start.S,v 1.36 2021/09/12 07:14:50 skrll Exp $	*/
+/*	$NetBSD: armv6_start.S,v 1.37 2021/11/14 16:56:32 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2012, 2017, 2018 The NetBSD Foundation, Inc.
@@ -924,8 +924,8 @@ armv7_mpcontinuation:
 	lsl	r5, R_INDEX			// ... for our cpu
 
 	/* wait for the mailbox start bit to become true */
-1:	dmb					// data memory barrier
-	ldr	r2, [r6]			// load mbox
+1:	ldr	r2, [r6]			// load mbox
+	dmb					//    make it a load-acquire
 	tst	r2, r5				// is our bit set?
 	wfeeq					//    no, back to waiting
 	beq	1b				//    no, and try again
