@@ -1,4 +1,5 @@
-/*	$NetBSD: sht3x.c,v 1.3 2021/11/13 13:36:42 christos Exp $	*/
+
+/*	$NetBSD: sht3x.c,v 1.4 2021/11/14 18:36:13 brad Exp $	*/
 
 /*
  * Copyright (c) 2021 Brad Spencer <brad@anduin.eldar.org>
@@ -17,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sht3x.c,v 1.3 2021/11/13 13:36:42 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sht3x.c,v 1.4 2021/11/14 18:36:13 brad Exp $");
 
 /*
   Driver for the Sensirion SHT30/SHT31/SHT35
@@ -487,7 +488,7 @@ sht3x_init_periodic_measurement(void *aux, int *sdelay)
 	if (error) {
 		DPRINTF(sc, 2, ("%s: Could not acquire iic bus for initing: "
 		    " %d\n", device_xname(sc->sc_dev), error));
-		goto out;
+		goto outm;
 	}
 
 	error = sht3x_take_break(sc, true);
@@ -510,6 +511,7 @@ sht3x_init_periodic_measurement(void *aux, int *sdelay)
 
 out:
 	iic_release_bus(sc->sc_tag, 0);
+outm:
 	mutex_exit(&sc->sc_mutex);
 	return error;
 }
@@ -605,7 +607,9 @@ err:
 	    "%x%x - %x -- %d\n", device_xname(sc->sc_dev), rawbuf[0], rawbuf[1],
 	    rawbuf[2], rawbuf[3], rawbuf[4], rawbuf[5], error));
 	iic_release_bus(sc->sc_tag, 0);
-	memcpy(sc->sc_pbuffer, "dedbef", sizeof(sc->sc_pbuffer));
+	if (error != 0) {
+		memcpy(sc->sc_pbuffer, "dedbef", sizeof(sc->sc_pbuffer));
+	}
 	mutex_exit(&sc->sc_mutex);
 }
 
@@ -1427,14 +1431,11 @@ sht3x_refresh_oneshot(struct sysmon_envsys *sme, envsys_data_t *edata)
 
 	measurement_command_ss = sht3x_compute_measure_command_ss(
 	    sc->sc_repeatability);
-	DPRINTF(sc, 2, ("%s: Measurement command: %04x\n",
-	    device_xname(sc->sc_dev), measurement_command_ss));
 	error = sht3x_cmdr(sc, measurement_command_ss, rawdata, sizeof(rawdata));
+	DPRINTF(sc, 2, ("%s: Status for single-shot measurement cmd %04x "
+	    "Error %d\n", device_xname(sc->sc_dev), measurement_command_ss, error));
 	if (error == 0) {
-		DPRINTF(sc, 2, ("%s: Failed to get new status in refresh for "
-		    "single-shot %d\n", device_xname(sc->sc_dev), error));
-		if ((error = sht3x_parse_data(sc, edata, rawdata)) == 0)
-			return 0;
+		error = sht3x_parse_data(sc, edata, rawdata);
 	}
 
 	uint16_t sbuf;
@@ -1455,7 +1456,8 @@ sht3x_refresh_oneshot(struct sysmon_envsys *sme, envsys_data_t *edata)
 	}
 
 	iic_release_bus(sc->sc_tag, 0);
-	return 0;
+
+	return error;
 }
 
 static void
@@ -1875,7 +1877,7 @@ sht3x_set_limits(struct sysmon_envsys *sme, envsys_data_t *edata,
 		rawlimitslow = (rawlimitslow & 0x1FF) | limitlow;
 		DPRINTF(sc, 2, ("%s: RH new raw limits high/low "
 		    "%04x %04x from %x %x\n",
-		    device_xname(sc->sc_dev), rawlimitshigh, rawlimitslow, 
+		    device_xname(sc->sc_dev), rawlimitshigh, rawlimitslow,
 		    limithigh, limitlow));
 		sht3x_set_alert_limits(sc, rawlimitshigh, rawlimitslow, true);
 		break;
@@ -2036,6 +2038,10 @@ sht3x_detach(device_t self, int flags)
 		mutex_exit(&sc->sc_read_mutex);
 		DPRINTF(sc, 2, ("%s: Will wait for anything to exit\n",
 		    device_xname(sc->sc_dev)));
+		/* In the worst case this will time out after 5 seconds.
+		 * It really should not take that long for the drain / whatever
+		 * to happen
+		 */
 		cv_timedwait_sig(&sc->sc_cond_dying,
 		    &sc->sc_dying_mutex, mstohz(5000));
 		mutex_exit(&sc->sc_dying_mutex);
