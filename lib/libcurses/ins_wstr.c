@@ -1,4 +1,4 @@
-/*   $NetBSD: ins_wstr.c,v 1.17 2021/09/06 07:45:48 rin Exp $ */
+/*   $NetBSD: ins_wstr.c,v 1.18 2021/11/15 06:27:06 blymn Exp $ */
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation Inc.
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ins_wstr.c,v 1.17 2021/09/06 07:45:48 rin Exp $");
+__RCSID("$NetBSD: ins_wstr.c,v 1.18 2021/11/15 06:27:06 blymn Exp $");
 #endif						  /* not lint */
 
 #include <string.h>
@@ -133,8 +133,9 @@ wins_nwstr(WINDOW *win, const wchar_t *wstr, int n)
 	__LDATA	 *start, *temp1, *temp2;
 	__LINE	  *lnp;
 	const wchar_t *scp;
-	int width, len, sx, x, y, cw, pcw, newx;
-	nschar_t *np;
+	cchar_t cc;
+	wchar_t *lstr, *slstr;
+	int i, width, len, lx, sx, x, y, tx, ty, cw, pcw, newx, tn, w;
 	wchar_t ws[] = L"		";
 
 	/* check for leading non-spacing character */
@@ -146,171 +147,259 @@ wins_nwstr(WINDOW *win, const wchar_t *wstr, int n)
 	if (!cw)
 		return ERR;
 
+	lstr = malloc(sizeof(wchar_t) * win->maxx);
+	if (lstr == NULL)
+		return ERR;
+
 	scp = wstr + 1;
 	width = cw;
 	len = 1;
 	n--;
-	while (*scp) {
-		int w;
-		if (!n)
-			break;
-		w = wcwidth(*scp);
-		if (w < 0)
-			w = 1;
-		n--, len++, width += w;
-		scp++;
-	}
-	__CTRACE(__CTRACE_INPUT, "wins_nwstr: width=%d,len=%d\n", width, len);
-
-	if (cw > win->maxx - win->curx + 1)
-		return ERR;
-	start = &win->alines[win->cury]->line[win->curx];
-	sx = win->curx;
-	lnp = win->alines[win->cury];
-	pcw = WCOL(*start);
-	if (pcw < 0) {
-		sx += pcw;
-		start += pcw;
-	}
-	__CTRACE(__CTRACE_INPUT, "wins_nwstr: start@(%d)\n", sx);
-	pcw = WCOL(*start);
-	lnp->flags |= __ISDIRTY;
-	newx = sx + win->ch_off;
-	if (newx < *lnp->firstchp)
-		*lnp->firstchp = newx;
-#ifdef DEBUG
-	{
-		__CTRACE(__CTRACE_INPUT, "========before=======\n");
-		for (x = 0; x < win->maxx; x++)
-			__CTRACE(__CTRACE_INPUT,
-			    "wins_nwstr: (%d,%d)=(%x,%x,%p)\n",
-			    win->cury, x,
-			    win->alines[win->cury]->line[x].ch,
-			    win->alines[win->cury]->line[x].attr,
-			    win->alines[win->cury]->line[x].nsp);
-	}
-#endif /* DEBUG */
-
-	/* shift all complete characters */
-	if (sx + width + pcw <= win->maxx) {
-		__CTRACE(__CTRACE_INPUT, "wins_nwstr: shift all characters\n");
-		temp1 = &win->alines[win->cury]->line[win->maxx - 1];
-		temp2 = temp1 - width;
-		pcw = WCOL(*(temp2 + 1));
-		if (pcw < 0) {
-			__CTRACE(__CTRACE_INPUT,
-			    "wins_nwstr: clear from %d to EOL(%d)\n",
-			    win->maxx + pcw, win->maxx - 1);
-			temp2 += pcw;
-			while (temp1 > temp2 + width) {
-				temp1->ch = (wchar_t)btowc((int) win->bch);
-				if (_cursesi_copy_nsp(win->bnsp, temp1) == ERR)
-					return ERR;
-				temp1->attr = win->battr;
-				SET_WCOL(*temp1, 1);
-				__CTRACE(__CTRACE_INPUT,
-				    "wins_nwstr: empty cell(%p)\n", temp1);
-				temp1--;
-			}
-		}
-		while (temp2 >= start) {
-			(void)memcpy(temp1, temp2, sizeof(__LDATA));
-			temp1--, temp2--;
-		}
-#ifdef DEBUG
-		{
-			__CTRACE(__CTRACE_INPUT, "=====after shift====\n");
-			for (x = 0; x < win->maxx; x++)
-				__CTRACE(__CTRACE_INPUT,
-				    "wins_nwstr: (%d,%d)=(%x,%x,%p)\n",
-				    win->cury, x,
-				    win->alines[win->cury]->line[x].ch,
-				    win->alines[win->cury]->line[x].attr,
-				    win->alines[win->cury]->line[x].nsp);
-		}
-#endif /* DEBUG */
-	}
-
-	/* update string columns */
-	x = win->curx;
 	y = win->cury;
-	for (scp = wstr, temp1 = start; len; len--, scp++) {
+	x = win->curx;
+	tn = n;
+
+	/*
+	 * Firstly, make sure the string will fit...
+	 */
+	while (*scp) {
+		if (!tn)
+			break;
 		switch (*scp) {
 			case L'\b':
 				if (--x < 0)
 					x = 0;
-				win->curx = x;
+				cw = wcwidth(*(scp - 1));
+				if (cw < 0)
+					cw = 1;
+				width -= cw;
+				scp++;
 				continue;;
+
 			case L'\r':
-				win->curx = 0;
+				width = 0;
+				x = 0;
+				scp++;
 				continue;
+
 			case L'\n':
-				wclrtoeol(win);
 				if (y == win->scr_b) {
-					if (!(win->flags & __SCROLLOK))
+					if (!(win->flags & __SCROLLOK)) {
+						free(lstr);
 						return ERR;
-					scroll(win);
+					}
 				}
+				y++;
+				scp++;
 				continue;
+
 			case L'\t':
-				if (wins_nwstr(win, ws,
-				    min(win->maxx - x, TABSIZE - (x % TABSIZE)))
-				    == ERR)
-					return ERR;
+				w = min(win->maxx - x, TABSIZE - (x % TABSIZE));
+				width += w * wcwidth(ws[0]);
+				x += w * wcwidth(ws[0]);
+				scp++;
 				continue;
 		}
-		cw = wcwidth(*scp);
-		if (cw < 0)
-			cw = 1;
-		if (cw) {
-			/* 1st column */
-			temp1->ch = (wchar_t)*scp;
-			temp1->attr = win->wattr;
-			SET_WCOL(*temp1, cw);
-			temp1->nsp = NULL;
-			__CTRACE(__CTRACE_INPUT,
-			    "wins_nwstr: add spacing char(%x)\n", temp1->ch);
-			temp2 = temp1++;
-			if (cw > 1) {
-				x = -1;
-				while (temp1 < temp2 + cw) {
-					/* the rest columns */
-					temp1->ch = (wchar_t)*scp;
-					temp1->attr = win->wattr;
-					temp1->nsp = NULL;
-					SET_WCOL(*temp1, x);
-					temp1++, x--;
-				}
-				temp1--;
+		w = wcwidth(*scp);
+		if (w < 0)
+			w = 1;
+		tn--, width += w;
+		scp++;
+	}
+	__CTRACE(__CTRACE_INPUT, "wins_nwstr: width=%d,len=%d\n", width, len);
+
+	if (width > win->maxx - win->curx + 1) {
+		free(lstr);
+		return ERR;
+	}
+
+	scp = wstr;
+	x = win->curx;
+	y = win->cury;
+	len = 0;
+	width = 0;
+	slstr = lstr;
+
+	while (*scp && n) {
+		lstr = slstr;
+		lx = x;
+		while (*scp) {
+			if (!n)
+				break;
+			switch (*scp) {
+				case L'\b':
+					if (--x < 0)
+						x = 0;
+					if (--len < 0)
+						len = 0;
+					cw = wcwidth(*(scp - 1));
+					if (cw < 0)
+						cw = 1;
+					width -= cw;
+					scp++;
+					if (lstr != slstr)
+						lstr--;
+					continue;;
+
+				case L'\r':
+					width = 0;
+					len = 0;
+					x = 0;
+					scp++;
+					lstr = slstr;
+					continue;
+
+				case L'\n':
+					goto loopdone;
+					break;
+
+				case L'\t':
+					w = min(win->maxx - x,
+					    TABSIZE - (x % TABSIZE));
+					width += w * wcwidth(ws[0]);
+					x += w * wcwidth(ws[0]);
+					len += w;
+					scp++;
+					for (i = 0; i < w; i++ ) {
+						*lstr = *ws;
+						lstr++;
+					}
+					continue;
 			}
-		} else {
-			/* non-spacing character */
-			np = malloc(sizeof(nschar_t));
-			if (!np)
-				return ERR;
-			np->ch = *scp;
-			np->next = temp1->nsp;
-			temp1->nsp = np;
-			__CTRACE(__CTRACE_INPUT,
-			    "wins_nstr: add non-spacing char(%x)\n", np->ch);
+			w = wcwidth(*scp);
+			if (w < 0)
+				w = 1;
+			*lstr = *scp;
+			n--, len++, width += w;
+			scp++, lstr++;
 		}
-	}
+
+loopdone:
+		start = &win->alines[y]->line[x];
+		sx = x;
+		lnp = win->alines[y];
+		pcw = WCOL(*start);
+		if (pcw < 0) {
+			sx += pcw;
+			start += pcw;
+		}
+		__CTRACE(__CTRACE_INPUT, "wins_nwstr: start@(%d)\n", sx);
+		pcw = WCOL(*start);
+		lnp->flags |= __ISDIRTY;
+		newx = sx + win->ch_off;
+		if (newx < *lnp->firstchp)
+			*lnp->firstchp = newx;
 #ifdef DEBUG
-	{
-		__CTRACE(__CTRACE_INPUT, "========after=======\n");
-		for (x = 0; x < win->maxx; x++)
+		{
+			__CTRACE(__CTRACE_INPUT, "========before=======\n");
+			for (i = 0; i < win->maxx; i++)
 			__CTRACE(__CTRACE_INPUT,
-			    "wins_nwstr: (%d,%d)=(%x,%x,%p)\n",
-			    win->cury, x,
-			    win->alines[win->cury]->line[x].ch,
-			    win->alines[win->cury]->line[x].attr,
-			    win->alines[win->cury]->line[x].nsp);
-	}
+				    "wins_nwstr: (%d,%d)=(%x,%x,%p)\n",
+				    y, i, win->alines[y]->line[i].ch,
+				    win->alines[y]->line[i].attr,
+				    win->alines[y]->line[i].nsp);
+		}
 #endif /* DEBUG */
-	newx = win->maxx - 1 + win->ch_off;
-	if (newx > *lnp->lastchp)
-		*lnp->lastchp = newx;
-	__touchline(win, (int) win->cury, sx, (int) win->maxx - 1);
+
+		/* shift all complete characters */
+		if (sx + width + pcw <= win->maxx) {
+			__CTRACE(__CTRACE_INPUT, "wins_nwstr: shift all characters by %d\n", width);
+			temp1 = &win->alines[y]->line[win->maxx - 1];
+			temp2 = temp1 - width;
+			pcw = WCOL(*(temp2 + 1));
+			if (pcw < 0) {
+				__CTRACE(__CTRACE_INPUT,
+				    "wins_nwstr: clear from %d to EOL(%d)\n",
+				    win->maxx + pcw, win->maxx - 1);
+				temp2 += pcw;
+				while (temp1 > temp2 + width) {
+					temp1->ch = (wchar_t)btowc((int) win->bch);
+					if (_cursesi_copy_nsp(win->bnsp, temp1) == ERR) {
+						free(lstr);
+						return ERR;
+					}
+					temp1->attr = win->battr;
+					SET_WCOL(*temp1, 1);
+					__CTRACE(__CTRACE_INPUT,
+					    "wins_nwstr: empty cell(%p)\n", temp1);
+					temp1--;
+				}
+			}
+			while (temp2 >= start) {
+				(void)memcpy(temp1, temp2, sizeof(__LDATA));
+				temp1--, temp2--;
+			}
+#ifdef DEBUG
+			{
+				__CTRACE(__CTRACE_INPUT, "=====after shift====\n");
+				for (i = 0; i < win->maxx; i++)
+					__CTRACE(__CTRACE_INPUT,
+					    "wins_nwstr: (%d,%d)=(%x,%x,%p)\n",
+					    y, i,
+					    win->alines[y]->line[i].ch,
+					    win->alines[y]->line[i].attr,
+					    win->alines[y]->line[i].nsp);
+				__CTRACE(__CTRACE_INPUT, "=====lstr====\n");
+				for (i = 0; i < len; i++)
+					__CTRACE(__CTRACE_INPUT,
+					    "wins_nwstr: lstr[%d]= %x,\n",
+					    i, (unsigned) slstr[i]);
+			}
+#endif /* DEBUG */
+		}
+
+		/* update string columns */
+		x = lx;
+		for (lstr = slstr, temp1 = start; len; len--, lstr++) {
+			lnp = win->alines[y];
+			cc.vals[0] = *lstr;
+			cc.elements = 1;
+			cc.attributes = win->wattr;
+			_cursesi_addwchar(win, &lnp, &y, &x, &cc, 0);
+		}
+
+#ifdef DEBUG
+		{
+			__CTRACE(__CTRACE_INPUT, "lx = %d, x = %x\n", lx, x);
+			__CTRACE(__CTRACE_INPUT, "========after=======\n");
+			for (i = 0; i < win->maxx; i++)
+				__CTRACE(__CTRACE_INPUT,
+				    "wins_nwstr: (%d,%d)=(%x,%x,%p)\n",
+				    y, i,
+				    win->alines[y]->line[i].ch,
+				    win->alines[y]->line[i].attr,
+				    win->alines[y]->line[i].nsp);
+		}
+#endif /* DEBUG */
+
+		__touchline(win, (int) y, lx, (int) win->maxx - 1);
+
+		/*
+		 * Handle the newline here - we don't need to check
+		 * if we are allowed to scroll because this was checked
+		 * already.
+		 */
+		if (*scp == '\n') {
+			tx = win->curx;
+			ty = win->cury;
+			win->curx = x;
+			win->cury = y;
+			wclrtoeol(win);
+			win->curx = tx;
+			win->cury = ty;
+			if (y == win->scr_b)
+				scroll(win);
+			else
+				y++;
+			scp++;
+			
+		}
+
+		newx = win->maxx - 1 + win->ch_off;
+		if (newx > *lnp->lastchp)
+			*lnp->lastchp = newx;
+	}
+	free(lstr);
 	__sync(win);
 	return OK;
 }
