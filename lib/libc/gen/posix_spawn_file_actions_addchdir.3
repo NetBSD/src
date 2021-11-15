@@ -1,4 +1,4 @@
-.\" $NetBSD: posix_spawn_file_actions_addchdir.3,v 1.1 2021/11/15 14:01:51 christos Exp $
+.\" $NetBSD: posix_spawn_file_actions_addchdir.3,v 1.2 2021/11/15 14:07:30 wiz Exp $
 .\"
 .\" Redistribution and use in source and binary forms, with or without
 .\" modification, are permitted provided that the following conditions
@@ -37,7 +37,7 @@
 .Sh NAME
 .Nm posix_spawn_file_actions_addchdir ,
 .Nm posix_spawn_file_actions_addfchdir
-.Nd "add chdir or fchdir action to spawn file actions object"
+.Nd add chdir or fchdir action to spawn file actions object
 .Sh LIBRARY
 .Lb libc
 .Sh SYNOPSIS
@@ -49,9 +49,9 @@
 .Sh DESCRIPTION
 The
 .Fn posix_spawn_file_actions_addchdir
-function shall add a chdir action to the object referenced by
+function adds a chdir action to the object referenced by
 .Fa file_actions
-that shall cause the working directory to be set to
+that causes the working directory to be set to
 .Fa path
 (as if
 .Bd -literal -offset indent
@@ -62,19 +62,19 @@ had been called) when a new process is spawned usign this file actions
 object.
 A relative
 .Fa path
-shall be interpreted in relation to the working directory determined by any
+is interpreted in relation to the working directory determined by any
 prior actions.
 The string pointed to by
 .Fa path
-shall be copied by the
+is copied by the
 .Fn posix_spawn_file_actions_addchdir
 function.
 .Pp
 The
 .Fn posix_spawn_file_actions_addfchdir
-function shall add a fchdir action to the object reference by
+function adds a fchdir action to the object reference by
 .Fa file_actions
-that shall cause the working directory to be set to
+that causes the working directory to be set to
 .Fa fildes
 (as if
 .Bd -literal -offset indent
@@ -95,17 +95,17 @@ that specifies a relative path will be affected by the execution of a
 chdir or fchdir action that was created by a previous call to
 .Fn posix_spawn_file_actions_addchdir
 or
-.Fn posix_spawn_file_actions_addfchdir
-\&. Likewise, a relaive path passed to
+.Fn posix_spawn_file_actions_addfchdir .
+Likewise, a relative path passed to
 .Fn posix_spawn
 will be affected by the last chdir or fchdir action in the file action list.
 .Sh RETURN VALUES
 Upon successful completion, these function return zero;
-otherwise, an error number shall be returned to indicate the error.
+otherwise, an error number is returned to indicate the error.
 .Sh ERRORS
 The
 .Fn posix_spawn_file_actions_addfchdir
-function shall fail if:
+function fails if:
 .Bl -tag -width Er
 .It Bq Er EBADF
 The value specified by
@@ -113,25 +113,21 @@ The value specified by
 is negative.
 .El
 .Pp
-These functions shall fail if:
-.Bl -tag -width Er
-.It Bq Er ENOMEM
-Insufficient memory exists to add the spawn file actions object.
-.El
-.Pp
-These functions may fail if:
+Both functions may fail with:
 .Bl -tag -width Er
 .It Bq Er EINVAL
 The value specified by
 .Fa file_actions
 is invalid.
+.It Bq Er ENOMEM
+Insufficient memory exists to add the spawn file actions object.
 .El
 .Pp
 It shall not be considered an error for the
 .Fa path
 or
 .Fa fildes
-argument passed to these functions to specify a pathanme or file descriptor
+argument passed to these functions to specify a pathname or file descriptor
 for which the specified operation could not be performed at the time of the call.
 Any such error will be detected when the associated file actions object is
 later used during a
