@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: testlang_conf.l,v 1.25 2021/02/25 00:50:10 rillig Exp $ 	*/
+/*	$NetBSD: testlang_conf.l,v 1.26 2021/11/15 21:45:46 blymn Exp $ 	*/
 
 /*-
  * Copyright 2009 Brett Lymn <blymn@NetBSD.org>
@@ -92,6 +92,12 @@ dequote(const char *s, size_t *len)
 			}
 
 			switch (*p) {
+			case 'b':
+				/* backspace */
+				*q++ = '\b';
+				p++;
+				break;
+
 			case 'e':
 				/* escape */
 				*q++ = '\e';
