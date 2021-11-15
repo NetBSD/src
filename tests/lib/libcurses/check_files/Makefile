@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.7 2021/06/06 04:57:58 blymn Exp $
+# $NetBSD: Makefile,v 1.8 2021/11/15 06:31:21 blymn Exp $
 
 NOMAN=		# defined
 
@@ -188,7 +188,11 @@ FILES+=		mvwaddwstr2.chk
 FILES+=		mvwaddwstr3.chk
 FILES+=		mvwchgat1.chk
 FILES+=		mvwchgat2.chk
+FILES+=		mvwins_nwstr1.chk
+FILES+=		mvwins_nwstr2.chk
 FILES+=		mvwins_wch.chk
+FILES+=		mvwins_wstr1.chk
+FILES+=		mvwins_wstr2.chk
 FILES+=		notimeout.chk
 FILES+=		overlay1.chk
 FILES+=		overlay2.chk
@@ -256,6 +260,8 @@ FILES+=		window_hierarchy.chk
 FILES+=		wins_wch1.chk
 FILES+=		wins_wch2.chk
 FILES+=		wins_wch3.chk
+FILES+=		wins_nwstr1.chk
+FILES+=		wins_nwstr2.chk
 FILES+=		wins_wstr1.chk
 FILES+=		wins_wstr2.chk
 FILES+=		winsch1.chk

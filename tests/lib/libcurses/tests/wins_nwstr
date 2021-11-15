@@ -4,7 +4,7 @@ call OK wmove $win1 2 1
 call OK wins_nwstr $win1 $WSTR 3
 call OK wrefresh $win1
 call2 2 1 getyx $win1
-compare wins_wstr1.chk
+compare wins_nwstr1.chk
 
 call OK mvwaddstr $win1 4 4 "BB"
 call OK wrefresh $win1
@@ -15,4 +15,4 @@ call OK wmove $win1 4 1
 call OK wins_nwstr $win1 $NSTR -1
 call OK wrefresh $win1
 call2 4 1 getyx $win1
-compare wins_wstr2.chk
+compare wins_nwstr2.chk
