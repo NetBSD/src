@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ether.h,v 1.87 2021/09/30 03:54:04 yamaguchi Exp $	*/
+/*	$NetBSD: if_ether.h,v 1.88 2021/11/15 07:07:05 yamaguchi Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -401,6 +401,8 @@ uint32_t ether_crc32_be(const uint8_t *, size_t);
 int	ether_aton_r(u_char *, size_t, const char *);
 int	ether_enable_vlan_mtu(struct ifnet *);
 int	ether_disable_vlan_mtu(struct ifnet *);
+int	ether_add_vlantag(struct ifnet *, uint16_t, bool *);
+int	ether_del_vlantag(struct ifnet *, uint16_t);
 #else
 /*
  * Prototype ethers(3) functions.

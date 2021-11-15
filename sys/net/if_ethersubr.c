@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ethersubr.c,v 1.303 2021/11/08 16:50:05 christos Exp $	*/
+/*	$NetBSD: if_ethersubr.c,v 1.304 2021/11/15 07:07:05 yamaguchi Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.303 2021/11/08 16:50:05 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.304 2021/11/15 07:07:05 yamaguchi Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1657,6 +1657,104 @@ ether_disable_vlan_mtu(struct ifnet *ifp)
 
 	ec->ec_capenable |= ETHERCAP_VLAN_MTU;
 	return error;
+}
+
+/*
+ * Add and delete VLAN TAG
+ */
+int
+ether_add_vlantag(struct ifnet *ifp, uint16_t vtag, bool *vlanmtu_status)
+{
+	struct ethercom *ec = (void *)ifp;
+	struct vlanid_list *vidp;
+	bool vlanmtu_enabled;
+	uint16_t vid = EVL_VLANOFTAG(vtag);
+	int error;
+
+	vlanmtu_enabled = false;
+
+	/* Add a vid to the list */
+	vidp = kmem_alloc(sizeof(*vidp), KM_SLEEP);
+	vidp->vid = vid;
+
+	ETHER_LOCK(ec);
+	ec->ec_nvlans++;
+	SIMPLEQ_INSERT_TAIL(&ec->ec_vids, vidp, vid_list);
+	ETHER_UNLOCK(ec);
+
+	if (ec->ec_nvlans == 1) {
+		IFNET_LOCK(ifp);
+		error = ether_enable_vlan_mtu(ifp);
+		IFNET_UNLOCK(ifp);
+
+		if (error == 0) {
+			vlanmtu_enabled = true;
+		} else if (error != -1) {
+			goto fail;
+		}
+	}
+
+	if (ec->ec_vlan_cb != NULL) {
+		error = (*ec->ec_vlan_cb)(ec, vid, true);
+		if (error != 0)
+			goto fail;
+	}
+
+	if (vlanmtu_status != NULL)
+		*vlanmtu_status = vlanmtu_enabled;
+
+	return 0;
+fail:
+	ETHER_LOCK(ec);
+	ec->ec_nvlans--;
+	SIMPLEQ_REMOVE(&ec->ec_vids, vidp, vlanid_list, vid_list);
+	ETHER_UNLOCK(ec);
+
+	if (vlanmtu_enabled) {
+		IFNET_LOCK(ifp);
+		(void)ether_disable_vlan_mtu(ifp);
+		IFNET_UNLOCK(ifp);
+	}
+
+	kmem_free(vidp, sizeof(*vidp));
+
+	return error;
+}
+
+int
+ether_del_vlantag(struct ifnet *ifp, uint16_t vtag)
+{
+	struct ethercom *ec = (void *)ifp;
+	struct vlanid_list *vidp;
+	uint16_t vid = EVL_VLANOFTAG(vtag);
+
+	ETHER_LOCK(ec);
+	SIMPLEQ_FOREACH(vidp, &ec->ec_vids, vid_list) {
+		if (vidp->vid == vid) {
+			SIMPLEQ_REMOVE(&ec->ec_vids, vidp,
+			    vlanid_list, vid_list);
+			ec->ec_nvlans--;
+			break;
+		}
+	}
+	ETHER_UNLOCK(ec);
+
+	if (vidp == NULL)
+		return ENOENT;
+
+	if (ec->ec_vlan_cb != NULL) {
+		(void)(*ec->ec_vlan_cb)(ec, vidp->vid, false);
+	}
+
+	if (ec->ec_nvlans == 0) {
+		IFNET_LOCK(ifp);
+		(void)ether_disable_vlan_mtu(ifp);
+		IFNET_UNLOCK(ifp);
+	}
+
+	kmem_free(vidp, sizeof(*vidp));
+
+	return 0;
 }
 
 static int
