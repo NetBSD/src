@@ -830,10 +830,10 @@ int internal_fork() {
 
 #if SANITIZER_NETBSD
 #include <signal.h>
-extern "C" int __sigaction__siginfo(int, const struct sigaction *, struct sigaction *);
+extern "C" int __sigaction_siginfo(int, const struct sigaction *, struct sigaction *);
 int internal_sigaction_norestorer(int signum, const void *act, void *oldact) {
 
-    return __sigaction__siginfo(signum,
+    return __sigaction_siginfo(signum,
 	reinterpret_cast<const struct sigaction *>(act),
 	reinterpret_cast<struct sigaction *>(oldact));
 }
