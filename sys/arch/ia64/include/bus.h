@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.4 2019/12/15 16:48:26 tsutsui Exp $	*/
+/*	$NetBSD: bus.h,v 1.5 2021/11/15 07:26:23 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2001 The NetBSD Foundation, Inc.
@@ -428,7 +428,7 @@ do {									\
 	} else {							\
 		int __i;						\
 		volatile uint8_t *__p = (uint8_t *)((h) + (o));		\
-		uint8_t *__src = (ptr);					\
+		const uint8_t *__src = (ptr);				\
 		for (__i = 0; __i < (cnt); __i++)			\
 			*__p = *__src++;				\
 	}								\
@@ -443,7 +443,7 @@ do {									\
 	} else {							\
 		int __i;						\
 		volatile uint16_t *__p = (uint16_t *)((h) + (o));	\
-		uint16_t *__src = (ptr);				\
+		const uint16_t *__src = (ptr);				\
 		for (__i = 0; __i < (cnt); __i++)			\
 			*__p = *__src++;				\
 	}								\
@@ -458,7 +458,7 @@ do {									\
 	} else {							\
 		int __i;						\
 		volatile uint32_t *__p = (uint32_t *)((h) + (o));	\
-		uint32_t *__src = (ptr);				\
+		const uint32_t *__src = (ptr);				\
 		for (__i = 0; __i < (cnt); __i++)			\
 			*__p = *__src++;				\
 	}								\
@@ -473,7 +473,7 @@ do {									\
 	} else {							\
 		int __i;						\
 		volatile uint64_t *__p = (uint64_t *)((h) + (o));	\
-		uint64_t *__src = (ptr);				\
+		const uint64_t *__src = (ptr);				\
 		for (__i = 0; __i < (cnt); __i++)			\
 			*__p = *__src++;				\
 	}								\
@@ -499,7 +499,7 @@ do {									\
 	if ((t) == IA64_BUS_SPACE_IO) {					\
 		int __i;						\
 		volatile bus_addr_t __port = (h) + (o);			\
-		uint8_t *__src = (ptr);					\
+		const uint8_t *__src = (ptr);				\
 		for (__i = 0; __i < (cnt); __i++) {			\
 			outb(__port, *__src);				\
 			__port++;					\
@@ -508,7 +508,7 @@ do {									\
 	} else {							\
 		int __i;						\
 		volatile uint8_t *__p = (uint8_t *)((h) + (o));		\
-		uint8_t *__src = (ptr);					\
+		const uint8_t *__src = (ptr);				\
 		for (__i = 0; __i < (cnt); __i++)			\
 			*__p++ = *__src++;				\
 	}								\
@@ -521,7 +521,7 @@ do {									\
 	if ((t) == IA64_BUS_SPACE_IO) {					\
 		int __i;						\
 		volatile bus_addr_t __port = (h) + (o);			\
-		uint16_t *__src = (ptr);				\
+		const uint16_t *__src = (ptr);				\
 		for (__i = 0; __i < (cnt); __i++) {			\
 			outw(__port, *__src);				\
 			__port += 2;					\
@@ -530,7 +530,7 @@ do {									\
 	} else {							\
 		int __i;						\
 		volatile uint16_t *__p = (uint16_t *)((h) + (o));	\
-		uint16_t *__src = (ptr);				\
+		const uint16_t *__src = (ptr);				\
 		for (__i = 0; __i < (cnt); __i++)			\
 			*__p++ = *__src++;				\
 	}								\
@@ -543,7 +543,7 @@ do {									\
 	if ((t) == IA64_BUS_SPACE_IO) {					\
 		int __i;						\
 		volatile bus_addr_t __port = (h) + (o);			\
-		uint32_t *__src = (ptr);				\
+		const uint32_t *__src = (ptr);				\
 		for (__i = 0; __i < (cnt); __i++) {			\
 			outl(__port, *__src);				\
 			__port += 4;					\
@@ -552,7 +552,7 @@ do {									\
 	} else {							\
 		int __i;						\
 		volatile uint32_t *__p = (uint32_t *)(h) + (o);		\
-		uint32_t *__src = (ptr);				\
+		const uint32_t *__src = (ptr);				\
 		for (__i = 0; __i < (cnt); __i++)			\
 			*__p++ = *__src++;				\
 	}								\
@@ -567,7 +567,7 @@ do {									\
 	} else {							\
 		int __i;						\
 		volatile uint64_t *__p = (uint64_t *)((h) + (o));	\
-		uint64_t *__src = (ptr);				\
+		const uint64_t *__src = (ptr);				\
 		for (__i = 0; __i < (cnt); __i++)			\
 			*__p++ = *__src++;				\
 	}								\
