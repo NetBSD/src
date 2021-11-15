@@ -1,4 +1,4 @@
-.\" $NetBSD: posix_spawn_file_actions_addchdir.3,v 1.2 2021/11/15 14:07:30 wiz Exp $
+.\" $NetBSD: posix_spawn_file_actions_addchdir.3,v 1.3 2021/11/15 16:00:25 kre Exp $
 .\"
 .\" Redistribution and use in source and binary forms, with or without
 .\" modification, are permitted provided that the following conditions
@@ -58,11 +58,11 @@ that causes the working directory to be set to
 chdir(path)
 .Ed
 .Pp
-had been called) when a new process is spawned usign this file actions
+had been called) for a new process spawned using this file actions
 object.
 A relative
 .Fa path
-is interpreted in relation to the working directory determined by any
+is interpreted relative to the working directory determined by any
 prior actions.
 The string pointed to by
 .Fa path
@@ -72,16 +72,16 @@ function.
 .Pp
 The
 .Fn posix_spawn_file_actions_addfchdir
-function adds a fchdir action to the object reference by
+function adds a fchdir action to the object referenced by
 .Fa file_actions
-that causes the working directory to be set to
+that causes the working directory to be set to the directory referenced by
 .Fa fildes
 (as if
 .Bd -literal -offset indent
 fchdir(fildes)
 .Ed
 .Pp
-had been called) when a new process is spawned using this file actions object.
+had been called) for a new process spawned using this file actions object.
 .\" The last paragraph of APPLICATION USAGE
 .Pp
 File actions are performed in the new process created by
@@ -89,7 +89,9 @@ File actions are performed in the new process created by
 or
 .Fn posix_spawnp
 in the same order that they were added to the file actions object.
-Thus the execution of an "open" action that was created by a call to
+Thus the execution of an
+.Dq open
+action that was created by a call to
 .Fn posix_spawn_file_actions_addopen
 that specifies a relative path will be affected by the execution of a
 chdir or fchdir action that was created by a previous call to
@@ -123,7 +125,7 @@ is invalid.
 Insufficient memory exists to add the spawn file actions object.
 .El
 .Pp
-It shall not be considered an error for the
+It is not an error for the
 .Fa path
 or
 .Fa fildes
