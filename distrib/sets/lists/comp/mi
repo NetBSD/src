@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2397 2021/10/29 19:12:29 macallan Exp $
+#	$NetBSD: mi,v 1.2398 2021/11/15 14:01:50 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -9287,6 +9287,8 @@
 ./usr/share/man/cat3/posix_spawn_file_actions_addclose.0	comp-c-catman		.cat
 ./usr/share/man/cat3/posix_spawn_file_actions_adddup2.0 comp-c-catman		.cat
 ./usr/share/man/cat3/posix_spawn_file_actions_addopen.0 comp-c-catman		.cat
+./usr/share/man/cat3/posix_spawn_file_actions_addfchdir.0 comp-c-catman		.cat
+./usr/share/man/cat3/posix_spawn_file_actions_addchdir.0 comp-c-catman		.cat
 ./usr/share/man/cat3/posix_spawn_file_actions_destroy.0 comp-c-catman		.cat
 ./usr/share/man/cat3/posix_spawn_file_actions_init.0	comp-c-catman		.cat
 ./usr/share/man/cat3/posix_spawnattr_destroy.0	comp-c-catman		.cat
@@ -17565,6 +17567,8 @@
 ./usr/share/man/html3/posix_spawn_file_actions_addclose.html	comp-c-htmlman		html
 ./usr/share/man/html3/posix_spawn_file_actions_adddup2.html	comp-c-htmlman		html
 ./usr/share/man/html3/posix_spawn_file_actions_addopen.html	comp-c-htmlman		html
+./usr/share/man/html3/posix_spawn_file_actions_addfchdir.html	comp-c-htmlman		html
+./usr/share/man/html3/posix_spawn_file_actions_addchdir.html	comp-c-htmlman		html
 ./usr/share/man/html3/posix_spawn_file_actions_destroy.html	comp-c-htmlman		html
 ./usr/share/man/html3/posix_spawn_file_actions_init.html	comp-c-htmlman		html
 ./usr/share/man/html3/posix_spawnattr_destroy.html	comp-c-htmlman		html
@@ -25833,6 +25837,8 @@
 ./usr/share/man/man3/posix_spawn_file_actions_addclose.3	comp-c-man		.man
 ./usr/share/man/man3/posix_spawn_file_actions_adddup2.3 comp-c-man		.man
 ./usr/share/man/man3/posix_spawn_file_actions_addopen.3 comp-c-man		.man
+./usr/share/man/man3/posix_spawn_file_actions_addfchdir.3 comp-c-man		.man
+./usr/share/man/man3/posix_spawn_file_actions_addchdir.3 comp-c-man		.man
 ./usr/share/man/man3/posix_spawn_file_actions_destroy.3 comp-c-man		.man
 ./usr/share/man/man3/posix_spawn_file_actions_init.3	comp-c-man		.man
 ./usr/share/man/man3/posix_spawnattr_destroy.3	comp-c-man		.man
