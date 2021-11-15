@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vlan.c,v 1.164 2021/10/05 04:09:49 yamaguchi Exp $	*/
+/*	$NetBSD: if_vlan.c,v 1.165 2021/11/15 07:07:05 yamaguchi Exp $	*/
 
 /*
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vlan.c,v 1.164 2021/10/05 04:09:49 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vlan.c,v 1.165 2021/11/15 07:07:05 yamaguchi Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -434,57 +434,29 @@ vlan_config(struct ifvlan *ifv, struct ifnet *p, uint16_t tag)
 	case IFT_ETHER:
 	    {
 		struct ethercom *ec = (void *)p;
-		struct vlanid_list *vidmem;
+		bool vlanmtu_enabled;
 
 		nmib->ifvm_msw = &vlan_ether_multisw;
 		nmib->ifvm_encaplen = ETHER_VLAN_ENCAP_LEN;
 		nmib->ifvm_mintu = ETHERMIN;
 
-		if (ec->ec_nvlans++ == 0) {
-			IFNET_LOCK(p);
-			error = ether_enable_vlan_mtu(p);
-			IFNET_UNLOCK(p);
-			if (error >= 0) {
-				if (error) {
-					ec->ec_nvlans--;
-					goto done;
-				}
-				nmib->ifvm_mtufudge = 0;
-			} else {
-				/*
-				 * Fudge the MTU by the encapsulation size. This
-				 * makes us incompatible with strictly compliant
-				 * 802.1Q implementations, but allows us to use
-				 * the feature with other NetBSD
-				 * implementations, which might still be useful.
-				 */
-				nmib->ifvm_mtufudge = nmib->ifvm_encaplen;
-			}
-			error = 0;
-		}
-		/* Add a vid to the list */
-		vidmem = kmem_alloc(sizeof(struct vlanid_list), KM_SLEEP);
-		vidmem->vid = vid;
-		ETHER_LOCK(ec);
-		SIMPLEQ_INSERT_TAIL(&ec->ec_vids, vidmem, vid_list);
-		ETHER_UNLOCK(ec);
+		error = ether_add_vlantag(p, tag, &vlanmtu_enabled);
+		if (error != 0)
+			goto done;
 
-		if (ec->ec_vlan_cb != NULL) {
+		if (vlanmtu_enabled) {
+			nmib->ifvm_mtufudge = 0;
+		} else {
 			/*
-			 * Call ec_vlan_cb(). It will setup VLAN HW filter or
-			 * HW tagging function.
+			 * Fudge the MTU by the encapsulation size. This
+			 * makes us incompatible with strictly compliant
+			 * 802.1Q implementations, but allows us to use
+			 * the feature with other NetBSD
+			 * implementations, which might still be useful.
 			 */
-			error = (*ec->ec_vlan_cb)(ec, vid, true);
-			if (error) {
-				ec->ec_nvlans--;
-				if (ec->ec_nvlans == 0) {
-					IFNET_LOCK(p);
-					(void)ether_disable_vlan_mtu(p);
-					IFNET_UNLOCK(p);
-				}
-				goto done;
-			}
+			nmib->ifvm_mtufudge = nmib->ifvm_encaplen;
 		}
+
 		/*
 		 * If the parent interface can do hardware-assisted
 		 * VLAN encapsulation, then propagate its hardware-
@@ -624,34 +596,7 @@ vlan_unconfig_locked(struct ifvlan *ifv, struct ifvlan_linkmib *nmib)
 	switch (p->if_type) {
 	case IFT_ETHER:
 	    {
-		struct ethercom *ec = (void *)p;
-		struct vlanid_list *vlanidp;
-		uint16_t vid = EVL_VLANOFTAG(nmib->ifvm_tag);
-
-		ETHER_LOCK(ec);
-		SIMPLEQ_FOREACH(vlanidp, &ec->ec_vids, vid_list) {
-			if (vlanidp->vid == vid) {
-				SIMPLEQ_REMOVE(&ec->ec_vids, vlanidp,
-				    vlanid_list, vid_list);
-				break;
-			}
-		}
-		ETHER_UNLOCK(ec);
-		if (vlanidp != NULL)
-			kmem_free(vlanidp, sizeof(*vlanidp));
-
-		if (ec->ec_vlan_cb != NULL) {
-			/*
-			 * Call ec_vlan_cb(). It will setup VLAN HW filter or
-			 * HW tagging function.
-			 */
-			(void)(*ec->ec_vlan_cb)(ec, vid, false);
-		}
-		if (--ec->ec_nvlans == 0) {
-			IFNET_LOCK(p);
-			(void)ether_disable_vlan_mtu(p);
-			IFNET_UNLOCK(p);
-		}
+		(void)ether_del_vlantag(p, nmib->ifvm_tag);
 
 		/* XXX ether_ifdetach must not be called with IFNET_LOCK */
 		ifv->ifv_stopping = true;
