@@ -1,6 +1,8 @@
-#	$NetBSD: Makefile.serverlib,v 1.14 2021/11/01 10:05:19 nia Exp $
+#	$NetBSD: Makefile.serverlib,v 1.15 2021/11/16 09:25:52 nia Exp $
 
 NOFULLRELRO=	yes
+
+USE_FORT?=	yes # network server *and* setuid
 
 .include <bsd.own.mk>		# for NETBSDSRCDIR and mk.conf processing
 
