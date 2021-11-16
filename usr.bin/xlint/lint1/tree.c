@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.393 2021/11/01 19:48:51 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.394 2021/11/16 06:55:03 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.393 2021/11/01 19:48:51 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.394 2021/11/16 06:55:03 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -1844,6 +1844,9 @@ new_tnode(op_t op, type_t *type, tnode_t *ln, tnode_t *rn)
 
 	ntn->tn_op = op;
 	ntn->tn_type = type;
+	/* FIXME: For function call expressions (CALL/ICALL), ignore rn. */
+	/* FIXME: For bit shift expressions, ignore rn. */
+	/* TODO: Check all other operators for the exact combination rules. */
 	ntn->tn_relaxed = ln->tn_relaxed || (rn != NULL && rn->tn_relaxed);
 	ntn->tn_left = ln;
 	ntn->tn_right = rn;
