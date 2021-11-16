@@ -16,3 +16,35 @@ call OK wins_wstr $win1 $NSTR
 call OK wrefresh $win1
 call2 4 1 getyx $win1
 compare wins_wstr2.chk
+
+#
+# test the special character handling.
+#
+# handling of a carriage return
+wchar RSTR ["B", "\r", "C" ]
+call OK wmove $win1 5 1
+call OK wins_wstr $win1 $RSTR
+call OK wrefresh $win1
+call2 5 1 getyx $win1
+compare wins_wstr3.chk
+
+# handling of a newline
+wchar JSTR [ "D", "\n", "E" ]
+call OK wmove $win1 5 1
+# this should fail since scrollok is false
+call OK scrollok $win1 $FALSE
+call ERR wins_wstr $win1 $JSTR
+
+# try again after enabling scroll
+call OK scrollok $win1 $TRUE
+call OK wins_wstr $win1 $JSTR
+call OK wrefresh $win1
+call2 5 1 getyx $win1
+compare wins_wstr4.chk
+
+# handling of a backspace
+wchar BSTR [ "F"*3, "\b", "G"*2 ]
+call OK wins_wstr $win1 $BSTR
+call OK wrefresh $win1
+call2 5 1 getyx $win1
+compare wins_wstr5.chk

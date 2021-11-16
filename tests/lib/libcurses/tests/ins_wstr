@@ -20,9 +20,25 @@ call OK refresh
 call2 10 10 getyx STDSCR
 compare ins_wstr2.chk
 
-# lib/55433: Bug in special character handling of ins_wstr() of libcurses
-# test special character processing [FAILING]
-# wchar NSTR ["A"*3, "\r", "B"*2]
-# call OK move 20 0
-# call OK ins_wstr $NSTR
-# call OK refresh
+# This should result in just BB
+wchar NSTR ["A"*3, "\r", "B"*2]
+call OK move 20 0
+call OK ins_wstr $NSTR
+call OK refresh
+compare ins_wstr3.chk
+
+# Check handling of tabs
+# first try inserting too many, it should fail
+wchar TSTR [ "\t"*20 ]
+call ERR ins_wstr $TSTR
+call OK refresh
+call2 20 0 getyx STDSCR
+compare ins_wstr4.chk
+
+# Now insert a few tabs...
+wchar USTR [ "F", "\t"*3, "F" ]
+call OK ins_wstr $USTR
+call OK refresh
+call2 20 0 getyx STDSCR
+compare ins_wstr5.chk
+

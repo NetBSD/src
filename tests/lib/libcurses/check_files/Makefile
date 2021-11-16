@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.8 2021/11/15 06:31:21 blymn Exp $
+# $NetBSD: Makefile,v 1.9 2021/11/16 21:02:06 blymn Exp $
 
 NOMAN=		# defined
 
@@ -122,6 +122,9 @@ FILES+=		ins_wch2.chk
 FILES+=		ins_wch3.chk
 FILES+=		ins_wstr1.chk
 FILES+=		ins_wstr2.chk
+FILES+=		ins_wstr3.chk
+FILES+=		ins_wstr4.chk
+FILES+=		ins_wstr5.chk
 FILES+=		insch.chk
 FILES+=		insch1.chk
 FILES+=		insch2.chk
@@ -264,6 +267,9 @@ FILES+=		wins_nwstr1.chk
 FILES+=		wins_nwstr2.chk
 FILES+=		wins_wstr1.chk
 FILES+=		wins_wstr2.chk
+FILES+=		wins_wstr3.chk
+FILES+=		wins_wstr4.chk
+FILES+=		wins_wstr5.chk
 FILES+=		winsch1.chk
 FILES+=		winsch2.chk
 FILES+=		wprintw_refresh.chk
