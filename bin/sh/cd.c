@@ -1,4 +1,4 @@
-/*	$NetBSD: cd.c,v 1.51 2021/10/31 02:12:01 kre Exp $	*/
+/*	$NetBSD: cd.c,v 1.52 2021/11/16 16:57:15 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)cd.c	8.2 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: cd.c,v 1.51 2021/10/31 02:12:01 kre Exp $");
+__RCSID("$NetBSD: cd.c,v 1.52 2021/11/16 16:57:15 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -364,8 +364,15 @@ pwdcmd(int argc, char **argv)
 		if (curdir == NULL)
 			error("Unable to find current directory");
 	}
+
+	flushout(out1);		/* make sure buffer is empty */
+	clr_err(out1);		/* and forget any earlier errors */
 	out1str(curdir);
 	out1c('\n');
+	flushout(out1);
+	if (io_err(out1))
+		error("stdout: %s", strerror(errno));
+
 	return 0;
 }
 
