@@ -1,4 +1,4 @@
-/*	$NetBSD: if_lagg_lacp.c,v 1.7 2021/11/16 04:01:11 yamaguchi Exp $	*/
+/*	$NetBSD: if_lagg_lacp.c,v 1.8 2021/11/16 04:48:43 yamaguchi Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-NetBSD
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_lagg_lacp.c,v 1.7 2021/11/16 04:01:11 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_lagg_lacp.c,v 1.8 2021/11/16 04:48:43 yamaguchi Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_lagg.h"
@@ -2120,6 +2120,12 @@ lacp_set_mux(struct lacp_softc *lsc, struct lacp_port *lacpp,
 		lacpp->lp_pending++;
 		break;
 	case LACP_MUX_STANDBY:
+#ifdef LACP_STANDBY_SYNCED
+		lacp_port_attached(lsc, lacpp);
+		lacp_disable_collecting(lacpp);
+		lacp_sm_assert_ntt(lacpp);
+#endif
+		break;
 	case LACP_MUX_ATTACHED:
 		lacp_port_attached(lsc, lacpp);
 		lacp_disable_collecting(lacpp);
