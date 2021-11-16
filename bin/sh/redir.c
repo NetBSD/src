@@ -1,4 +1,4 @@
-/*	$NetBSD: redir.c,v 1.70 2021/11/10 15:26:34 kre Exp $	*/
+/*	$NetBSD: redir.c,v 1.71 2021/11/16 11:27:50 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)redir.c	8.2 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: redir.c,v 1.70 2021/11/10 15:26:34 kre Exp $");
+__RCSID("$NetBSD: redir.c,v 1.71 2021/11/16 11:27:50 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -1033,10 +1033,8 @@ fdflagscmd(int argc, char *argv[])
 
 		for (i = 0; i <= max_user_fd; i++)
 			printone(i, 0, verbose, 1);
-		return 0;
-	}
 
-	while ((num = *argv++) != NULL) {
+	} else while ((num = *argv++) != NULL) {
 		int fd = number(num);
 
 		while (num[0] == '0' && num[1] != '\0')		/* skip 0's */
@@ -1049,6 +1047,11 @@ fdflagscmd(int argc, char *argv[])
 			setone(fd, pos, neg, verbose);
 		else
 			printone(fd, 1, verbose, argc > 1);
+	}
+	flushout(out1);
+	if (io_err(out1)) {
+		out2str("fdflags: I/O error\n");
+		return 1;
 	}
 	return 0;
 }

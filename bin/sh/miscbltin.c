@@ -1,4 +1,4 @@
-/*	$NetBSD: miscbltin.c,v 1.45 2021/09/15 18:30:57 kre Exp $	*/
+/*	$NetBSD: miscbltin.c,v 1.46 2021/11/16 11:27:50 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)miscbltin.c	8.4 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: miscbltin.c,v 1.45 2021/09/15 18:30:57 kre Exp $");
+__RCSID("$NetBSD: miscbltin.c,v 1.46 2021/11/16 11:27:50 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -288,6 +288,11 @@ umaskcmd(int argc, char **argv)
 			umask(~mask & 0777);
 		}
 	}
+	flushout(out1);
+	if (io_err(out1)) {
+		out2str("umask: I/O error\n");
+		return 1;
+	}
 	return 0;
 }
 
@@ -445,7 +450,7 @@ ulimitcmd(int argc, char **argv)
 				out1fmt("%c", which ? '\t' : '\n');
 			}
 		}
-		return 0;
+		goto done;
 	}
 
 	if (getrlimit(l->cmd, &limit) == -1)
@@ -476,6 +481,12 @@ ulimitcmd(int argc, char **argv)
 			out1fmt("%ld\n", (long) val);
 #endif
 		}
+	}
+  done:;
+	flushout(out1);
+	if (io_err(out1)) {
+		out2str("ulimit: I/O error (stdout)\n");
+		return 1;
 	}
 	return 0;
 }

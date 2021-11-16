@@ -1,4 +1,4 @@
-/*	$NetBSD: eval.c,v 1.184 2021/11/16 11:25:44 kre Exp $	*/
+/*	$NetBSD: eval.c,v 1.185 2021/11/16 11:27:50 kre Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)eval.c	8.9 (Berkeley) 6/8/95";
 #else
-__RCSID("$NetBSD: eval.c,v 1.184 2021/11/16 11:25:44 kre Exp $");
+__RCSID("$NetBSD: eval.c,v 1.185 2021/11/16 11:27:50 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -1346,6 +1346,7 @@ evalcommand(union node *cmd, int flgs, struct backcmd *backcmd)
 			optreset = 1;
 			optind = 1;
 			builtin_flags = flags;
+			clr_err(out1);	/* discard previous I/O errors */
 			exitstatus = cmdentry.u.bltin(argc, argv);
 		} else {
 			e = exception;
