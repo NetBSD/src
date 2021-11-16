@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuregs.h,v 1.114 2021/11/16 06:04:00 simonb Exp $	*/
+/*	$NetBSD: cpuregs.h,v 1.115 2021/11/16 06:04:52 simonb Exp $	*/
 
 /*
  * Copyright (c) 2009 Miodrag Vallat.
@@ -876,13 +876,13 @@
 /*
  * RDHWR register numbers
  */
-#define	MIPS_HWR_CPUNUM			_(0)
-#define	MIPS_HWR_SYNCI_STEP		_(1)
-#define	MIPS_HWR_CC			_(2)
-#define	MIPS_HWR_CCRES			_(3)
+#define	MIPS_HWR_CPUNUM			_(0)	/* Which CPU are we on? */
+#define	MIPS_HWR_SYNCI_STEP		_(1)	/* Address step size for SYNCI */
+#define	MIPS_HWR_CC			_(2)	/* Hi-res cycle counter */
+#define	MIPS_HWR_CCRES			_(3)	/* Cycle counter resolution */
 #define	MIPS_HWR_UL			_(29)	/* Userlocal */
-#define	MIPS_HWR_IMPL30			_(30)
-#define	MIPS_HWR_IMPL31			_(31)
+#define	MIPS_HWR_IMPL30			_(30)	/* Implementation dependent use */
+#define	MIPS_HWR_IMPL31			_(31)	/* Implementation dependent use */
 
 /*
  * Bits defined for HWREna (CP0 register 7, select 0).
