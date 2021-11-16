@@ -1,4 +1,4 @@
-/*	$NetBSD: d_c99_bool_strict.c,v 1.31 2021/11/14 11:23:52 rillig Exp $	*/
+/*	$NetBSD: d_c99_bool_strict.c,v 1.32 2021/11/16 06:55:03 rillig Exp $	*/
 # 3 "d_c99_bool_strict.c"
 
 /*
@@ -777,6 +777,15 @@ initialization(void)
 	};
 }
 
+/*
+ * For expressions that originate from a system header, the strict type rules
+ * are relaxed a bit, to allow for expressions like 'flags & FLAG', even
+ * though they are not strictly boolean.
+ *
+ * This shouldn't apply to function call expressions though since one of the
+ * goals of strict bool mode is to normalize all expressions like 'strcmp' to
+ * be 'strcmp(a, b) == 0' instead of '!strcmp(a, b)'.
+ */
 # 1 "stdio.h" 1 3 4
 typedef struct stdio_file {
 	int fd;
@@ -784,10 +793,10 @@ typedef struct stdio_file {
 int ferror(FILE *);
 FILE stdio_files[3];
 FILE *stdio_stdout;
-# 788 "d_c99_bool_strict.c" 2
+# 797 "d_c99_bool_strict.c" 2
 # 1 "string.h" 1 3 4
 int strcmp(const char *, const char *);
-# 791 "d_c99_bool_strict.c" 2
+# 800 "d_c99_bool_strict.c" 2
 
 void
 controlling_expression(FILE *f, const char *a, const char *b)
@@ -816,23 +825,58 @@ controlling_expression(FILE *f, const char *a, const char *b)
 	 *
 	 * Seen in bin/echo/echo.c, function main, call to ferror.
 	 */
+	/*
+	 * TODO: In a function call expression, tn->tn_relaxed should only be
+	 * derived from the function itself, not from its arguments.
+	 */
 	/* TODO: Warn about type mismatch [333]. */
 	if (ferror(
-# 822 "d_c99_bool_strict.c" 3 4
+# 835 "d_c99_bool_strict.c" 3 4
 	    &stdio_files[1]
-# 824 "d_c99_bool_strict.c"
+# 837 "d_c99_bool_strict.c"
 	    ))
 		return;
 
 	/*
-	 * TODO: Why is there a difference between array access and a plain
-	 * variable? Either both should get a warning or none of them.
+	 * FIXME: At the end of parsing the name 'stdio_stdout', the parser
+	 * has already looked ahead to the next token, to see whether it is
+	 * a '(' of a function call.  At that point, the parser is no longer
+	 * in a system header, therefore 'stdio_stdout' is not tn_relaxed,
+	 * and this information is pushed down to the whole function call
+	 * expression.
 	 */
 	/* expect+5: error: controlling expression must be bool, not 'int' [333] */
 	if (ferror(
-# 834 "d_c99_bool_strict.c" 3 4
+# 851 "d_c99_bool_strict.c" 3 4
 	    stdio_stdout
-# 836 "d_c99_bool_strict.c"
+# 853 "d_c99_bool_strict.c"
+	    ))
+		return;
+
+	/*
+	 * In this variant, there is a token ')' after the name
+	 * 'stdio_stdout', which has the effect that at the end of parsing
+	 * the name, the parser is still in the system header, thus setting
+	 * tn_relaxed to true.
+	 */
+	if (ferror(
+# 864 "d_c99_bool_strict.c" 3 4
+	    (stdio_stdout)
+# 866 "d_c99_bool_strict.c"
+	    ))
+		return;
+
+	/*
+	 * A comment following 'stdio_stdout' does not prevent the search for
+	 * '('.  At the point where build_name calls expr_zalloc_tnode, the
+	 * parser is already in the main file again, thus treating
+	 * stdio_stdout as not coming from a system header.
+	 */
+	/* expect+5: error: controlling expression must be bool, not 'int' [333] */
+	if (ferror(
+# 878 "d_c99_bool_strict.c" 3 4
+	    stdio_stdout /* comment */
+# 880 "d_c99_bool_strict.c"
 	    ))
 		return;
 }
