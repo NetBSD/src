@@ -1,4 +1,4 @@
-/*	$NetBSD: d_c99_bool_strict.c,v 1.32 2021/11/16 06:55:03 rillig Exp $	*/
+/*	$NetBSD: d_c99_bool_strict.c,v 1.33 2021/11/16 18:27:04 rillig Exp $	*/
 # 3 "d_c99_bool_strict.c"
 
 /*
@@ -838,14 +838,14 @@ controlling_expression(FILE *f, const char *a, const char *b)
 		return;
 
 	/*
-	 * FIXME: At the end of parsing the name 'stdio_stdout', the parser
-	 * has already looked ahead to the next token, to see whether it is
-	 * a '(' of a function call.  At that point, the parser is no longer
-	 * in a system header, therefore 'stdio_stdout' is not tn_relaxed,
-	 * and this information is pushed down to the whole function call
-	 * expression.
+	 * Before cgram.y 1.369 from 2021-11-16, at the end of parsing the
+	 * name 'stdio_stdout', the parser already looked ahead to the next
+	 * token, to see whether it was the '(' of a function call.  At that
+	 * point, the parser was no longer in a system header, therefore
+	 * 'stdio_stdout' was not tn_relaxed, and this information was pushed
+	 * down to the whole function call expression (which was another bug
+	 * at that time).
 	 */
-	/* expect+5: error: controlling expression must be bool, not 'int' [333] */
 	if (ferror(
 # 851 "d_c99_bool_strict.c" 3 4
 	    stdio_stdout
@@ -867,12 +867,12 @@ controlling_expression(FILE *f, const char *a, const char *b)
 		return;
 
 	/*
-	 * A comment following 'stdio_stdout' does not prevent the search for
-	 * '('.  At the point where build_name calls expr_zalloc_tnode, the
-	 * parser is already in the main file again, thus treating
-	 * stdio_stdout as not coming from a system header.
+	 * Before cgram.y 1.369 from 2021-11-16, the comment following
+	 * 'stdio_stdout' did not prevent the search for '('.  At the point
+	 * where build_name calls expr_zalloc_tnode, the parser was already
+	 * in the main file again, thus treating 'stdio_stdout' as not coming
+	 * from a system header.
 	 */
-	/* expect+5: error: controlling expression must be bool, not 'int' [333] */
 	if (ferror(
 # 878 "d_c99_bool_strict.c" 3 4
 	    stdio_stdout /* comment */
