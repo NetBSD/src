@@ -1,4 +1,4 @@
-/* $NetBSD: read.c,v 1.67 2021/09/05 19:58:53 rillig Exp $ */
+/* $NetBSD: read.c,v 1.68 2021/11/16 22:03:12 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: read.c,v 1.67 2021/09/05 19:58:53 rillig Exp $");
+__RCSID("$NetBSD: read.c,v 1.68 2021/11/16 22:03:12 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -223,7 +223,7 @@ readfile(const char *name)
 	if (thtab == NULL)
 		thtab = xcalloc(THSHSIZ2, sizeof(*thtab));
 
-	_inithash(&renametab);
+	renametab = htab_new();
 
 	srcfile = getfnidx(name);
 

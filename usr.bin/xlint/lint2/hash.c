@@ -1,4 +1,4 @@
-/*	$NetBSD: hash.c,v 1.22 2021/08/28 21:52:14 rillig Exp $	*/
+/*	$NetBSD: hash.c,v 1.23 2021/11/16 22:03:12 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: hash.c,v 1.22 2021/08/28 21:52:14 rillig Exp $");
+__RCSID("$NetBSD: hash.c,v 1.23 2021/11/16 22:03:12 rillig Exp $");
 #endif
 
 /*
@@ -57,14 +57,10 @@ static	hte_t	**htab;
 /*
  * Initialize hash table.
  */
-void
-_inithash(hte_t ***tablep)
+hte_t **
+htab_new(void)
 {
-
-	if (tablep == NULL)
-		tablep = &htab;
-
-	*tablep = xcalloc(HSHSIZ2, sizeof(**tablep));
+	return xcalloc(HSHSIZ2, sizeof(*htab_new()));
 }
 
 /*
@@ -149,6 +145,12 @@ hte_by_name(const void *va, const void *vb)
 	const hte_t *b = *((const hte_t *const *)vb);
 
 	return strcmp(a->h_name, b->h_name);
+}
+
+void
+symtab_init(void)
+{
+	htab = htab_new();
 }
 
 /*
