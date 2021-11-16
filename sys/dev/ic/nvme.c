@@ -1,4 +1,4 @@
-/*	$NetBSD: nvme.c,v 1.58 2021/08/07 16:19:12 thorpej Exp $	*/
+/*	$NetBSD: nvme.c,v 1.59 2021/11/16 06:58:33 skrll Exp $	*/
 /*	$OpenBSD: nvme.c,v 1.49 2016/04/18 05:59:50 dlg Exp $ */
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nvme.c,v 1.58 2021/08/07 16:19:12 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nvme.c,v 1.59 2021/11/16 06:58:33 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1028,7 +1028,7 @@ nvme_getcache_done(struct nvme_queue *q, struct nvme_ccb *ccb,
 		/*
 		 * DPO not supported, Dataset Management (DSM) field doesn't
 		 * specify the same semantics. FUA is always supported.
-		 */ 
+		 */
 		result = DKCACHE_FUA;
 
 		if (cdw0 & NVM_VOLATILE_WRITE_CACHE_WCE)
@@ -1822,7 +1822,7 @@ nvme_ccbs_free(struct nvme_queue *q)
 	mutex_enter(&q->q_ccb_mtx);
 	while ((ccb = SIMPLEQ_FIRST(&q->q_ccb_list)) != NULL) {
 		SIMPLEQ_REMOVE_HEAD(&q->q_ccb_list, ccb_entry);
-		/* 
+		/*
 		 * bus_dmamap_destroy() may call vm_map_lock() and rw_enter()
 		 * internally. don't hold spin mutex
 		 */
