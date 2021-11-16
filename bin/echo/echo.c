@@ -1,4 +1,4 @@
-/* $NetBSD: echo.c,v 1.22 2021/11/10 17:35:45 kre Exp $	*/
+/* $NetBSD: echo.c,v 1.23 2021/11/16 21:38:29 rillig Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)echo.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: echo.c,v 1.22 2021/11/10 17:35:45 kre Exp $");
+__RCSID("$NetBSD: echo.c,v 1.23 2021/11/16 21:38:29 rillig Exp $");
 #endif
 
 #include <err.h>
@@ -68,8 +68,8 @@ main(int argc, char *argv[])
 	}
 	if (!nflag)
 		(void)putchar('\n');
-	fflush(stdout);
-	if (ferror(stdout))
+	(void)fflush(stdout);
+	if (ferror(stdout) != 0)
 		err(1, "write error");
 	return 0;
 }
