@@ -1,4 +1,4 @@
-/* $NetBSD: read.c,v 1.68 2021/11/16 22:03:12 rillig Exp $ */
+/* $NetBSD: read.c,v 1.69 2021/11/16 22:12:44 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: read.c,v 1.68 2021/11/16 22:03:12 rillig Exp $");
+__RCSID("$NetBSD: read.c,v 1.69 2021/11/16 22:12:44 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -102,7 +102,7 @@ static	unsigned short inptype(const char *, const char **);
 static	size_t	gettlen(const char *, const char **);
 static	unsigned short findtype(const char *, size_t, int);
 static	unsigned short storetyp(type_t *, const char *, size_t, int);
-static	int	thash(const char *, size_t);
+static	unsigned int thash(const char *, size_t);
 static	char	*inpqstrg(const char *, const char **);
 static	const	char *inpname(const char *, const char **);
 static	int	getfnidx(const char *);
@@ -980,7 +980,7 @@ storetyp(type_t *tp, const char *cp, size_t len, int h)
 /*
  * Hash function for types
  */
-static int
+static unsigned int
 thash(const char *s, size_t len)
 {
 	unsigned int v;
@@ -1203,7 +1203,7 @@ mkstatic(hte_t *hte)
 	for (symp = &hte->h_syms; (sym = *symp) != NULL; ) {
 		if (sym->s_pos.p_src == sym1->s_pos.p_src) {
 			sym->s_static = true;
-			(*symp) = sym->s_next;
+			*symp = sym->s_next;
 			if (hte->h_lsym == &sym->s_next)
 				hte->h_lsym = symp;
 			sym->s_next = NULL;
@@ -1215,7 +1215,7 @@ mkstatic(hte_t *hte)
 	}
 	for (callp = &hte->h_calls; (call = *callp) != NULL; ) {
 		if (call->f_pos.p_src == sym1->s_pos.p_src) {
-			(*callp) = call->f_next;
+			*callp = call->f_next;
 			if (hte->h_lcall == &call->f_next)
 				hte->h_lcall = callp;
 			call->f_next = NULL;
@@ -1227,7 +1227,7 @@ mkstatic(hte_t *hte)
 	}
 	for (usymp = &hte->h_usyms; (usym = *usymp) != NULL; ) {
 		if (usym->u_pos.p_src == sym1->s_pos.p_src) {
-			(*usymp) = usym->u_next;
+			*usymp = usym->u_next;
 			if (hte->h_lusym == &usym->u_next)
 				hte->h_lusym = usymp;
 			usym->u_next = NULL;
