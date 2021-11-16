@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_subr.c,v 1.58 2020/08/17 15:22:51 skrll Exp $	*/
+/*	$NetBSD: cpu_subr.c,v 1.59 2021/11/16 06:11:52 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2010, 2019 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.58 2020/08/17 15:22:51 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.59 2021/11/16 06:11:52 simonb Exp $");
 
 #include "opt_cputype.h"
 #include "opt_ddb.h"
@@ -217,7 +217,7 @@ cpu_hwrena_setup(void)
 
 	if (CPUISMIPSNNR2) {
 		mipsNN_cp0_hwrena_write(
-		    (MIPS_HAS_USERLOCAL ? MIPS_HWRENA_UL : 0)
+		    (MIPS_HAS_USERLOCAL ? MIPS_HWRENA_ULR : 0)
 		    | MIPS_HWRENA_CCRES
 		    | MIPS_HWRENA_CC
 		    | MIPS_HWRENA_SYNCI_STEP
