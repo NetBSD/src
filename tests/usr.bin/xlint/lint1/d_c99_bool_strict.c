@@ -1,4 +1,4 @@
-/*	$NetBSD: d_c99_bool_strict.c,v 1.33 2021/11/16 18:27:04 rillig Exp $	*/
+/*	$NetBSD: d_c99_bool_strict.c,v 1.34 2021/11/16 21:01:06 rillig Exp $	*/
 # 3 "d_c99_bool_strict.c"
 
 /*
@@ -783,8 +783,8 @@ initialization(void)
  * though they are not strictly boolean.
  *
  * This shouldn't apply to function call expressions though since one of the
- * goals of strict bool mode is to normalize all expressions like 'strcmp' to
- * be 'strcmp(a, b) == 0' instead of '!strcmp(a, b)'.
+ * goals of strict bool mode is to normalize all expressions calling 'strcmp'
+ * to be of the form 'strcmp(a, b) == 0' instead of '!strcmp(a, b)'.
  */
 # 1 "stdio.h" 1 3 4
 typedef struct stdio_file {
@@ -815,68 +815,83 @@ controlling_expression(FILE *f, const char *a, const char *b)
 		return;
 
 	/*
-	 * No warning below since the expression 'stdio_stdin' comes from a
-	 * system header (typically via a macro), and this property is passed
-	 * up to the expression 'ferror(stdio_stdin)'.
+	 * Before tree.c 1.395 from 2021-11-16, the expression below didn't
+	 * produce a warning since the expression 'stdio_stdin' didn't come
+	 * from a system header (typically via a macro), and this property
+	 * was passed up to the expression 'ferror(stdio_stdin)'.
 	 *
-	 * That is wrong though since the above rule would allow a plain
-	 * 'strcmp' without a following '== 0', as long as one of its
-	 * arguments comes from a system header.
+	 * That was wrong though since the type of a function call expression
+	 * only depends on the function itself but not its arguments types.
+	 * The old rule had allowed a raw condition 'strcmp(a, b)' without
+	 * the comparison '!= 0', as long as one of its arguments came from a
+	 * system header.
 	 *
 	 * Seen in bin/echo/echo.c, function main, call to ferror.
 	 */
-	/*
-	 * TODO: In a function call expression, tn->tn_relaxed should only be
-	 * derived from the function itself, not from its arguments.
-	 */
-	/* TODO: Warn about type mismatch [333]. */
+	/* expect+5: error: controlling expression must be bool, not 'int' [333] */
 	if (ferror(
-# 835 "d_c99_bool_strict.c" 3 4
+# 834 "d_c99_bool_strict.c" 3 4
 	    &stdio_files[1]
-# 837 "d_c99_bool_strict.c"
+# 836 "d_c99_bool_strict.c"
 	    ))
 		return;
 
 	/*
 	 * Before cgram.y 1.369 from 2021-11-16, at the end of parsing the
 	 * name 'stdio_stdout', the parser already looked ahead to the next
-	 * token, to see whether it was the '(' of a function call.  At that
-	 * point, the parser was no longer in a system header, therefore
-	 * 'stdio_stdout' was not tn_relaxed, and this information was pushed
-	 * down to the whole function call expression (which was another bug
-	 * at that time).
+	 * token, to see whether it was the '(' of a function call.
+	 *
+	 * At that point, the parser was no longer in a system header,
+	 * therefore 'stdio_stdout' had tn_sys == false, and this information
+	 * was pushed down to the whole function call expression (which was
+	 * another bug that got fixed in tree.c 1.395 from 2021-11-16).
 	 */
+	/* expect+5: error: controlling expression must be bool, not 'int' [333] */
 	if (ferror(
-# 851 "d_c99_bool_strict.c" 3 4
+# 852 "d_c99_bool_strict.c" 3 4
 	    stdio_stdout
-# 853 "d_c99_bool_strict.c"
+# 854 "d_c99_bool_strict.c"
 	    ))
 		return;
 
 	/*
-	 * In this variant, there is a token ')' after the name
-	 * 'stdio_stdout', which has the effect that at the end of parsing
-	 * the name, the parser is still in the system header, thus setting
-	 * tn_relaxed to true.
+	 * In this variant of the pattern, there is a token ')' after the
+	 * name 'stdio_stdout', which even before tree.c 1.395 from
+	 * 2021-11-16 had the effect that at the end of parsing the name, the
+	 * parser was still in the system header, thus setting tn_sys (or
+	 * rather tn_relaxed at that time) to true.
 	 */
+	/* expect+5: error: controlling expression must be bool, not 'int' [333] */
 	if (ferror(
-# 864 "d_c99_bool_strict.c" 3 4
+# 867 "d_c99_bool_strict.c" 3 4
 	    (stdio_stdout)
-# 866 "d_c99_bool_strict.c"
+# 869 "d_c99_bool_strict.c"
 	    ))
 		return;
 
 	/*
 	 * Before cgram.y 1.369 from 2021-11-16, the comment following
 	 * 'stdio_stdout' did not prevent the search for '('.  At the point
-	 * where build_name calls expr_zalloc_tnode, the parser was already
+	 * where build_name called expr_zalloc_tnode, the parser was already
 	 * in the main file again, thus treating 'stdio_stdout' as not coming
 	 * from a system header.
+	 *
+	 * This has been fixed in tree.c 1.395 from 2021-11-16.  Before that,
+	 * an expression had come from a system header if its operands came
+	 * from a system header, but that was only close to the truth.  In a
+	 * case where both operands come from a system header but the
+	 * operator comes from the main translation unit, the main
+	 * translation unit still has control over the whole expression.  So
+	 * the correct approach is to focus on the operator, not the
+	 * operands.  There are a few corner cases where the operator is
+	 * invisible (for implicit conversions) or synthetic (for translating
+	 * 'arr[index]' to '*(arr + index)', but these are handled as well.
 	 */
+	/* expect+5: error: controlling expression must be bool, not 'int' [333] */
 	if (ferror(
-# 878 "d_c99_bool_strict.c" 3 4
+# 893 "d_c99_bool_strict.c" 3 4
 	    stdio_stdout /* comment */
-# 880 "d_c99_bool_strict.c"
+# 895 "d_c99_bool_strict.c"
 	    ))
 		return;
 }

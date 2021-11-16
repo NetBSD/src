@@ -1,4 +1,4 @@
-/* $NetBSD: lint1.h,v 1.130 2021/11/01 19:48:51 rillig Exp $ */
+/* $NetBSD: lint1.h,v 1.131 2021/11/16 21:01:05 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -307,9 +307,10 @@ typedef	struct tnode {
 	bool	tn_lvalue : 1;	/* node is lvalue */
 	bool	tn_cast : 1;	/* if tn_op == CVT, it's an explicit cast */
 	bool	tn_parenthesized : 1;
-	bool	tn_relaxed : 1;	/* in strict bool mode, allow mixture between
-				 * bool and scalar, for backwards
-				 * compatibility
+	bool	tn_sys : 1;	/* in strict bool mode, allow mixture between
+				 * bool and scalar, for code from system
+				 * headers that may be a mixture between
+				 * scalar types and bool
 				 */
 	bool	tn_system_dependent : 1; /* depends on sizeof or offsetof */
 	union {
