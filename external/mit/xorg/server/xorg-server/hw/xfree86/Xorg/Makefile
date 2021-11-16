@@ -1,4 +1,6 @@
-#	$NetBSD: Makefile,v 1.20 2021/08/19 11:03:04 mrg Exp $
+#	$NetBSD: Makefile,v 1.21 2021/11/16 09:25:52 nia Exp $
+
+USE_FORT?=	yes # network server *and* setuid
 
 .include <bsd.own.mk>
 
