@@ -1,4 +1,4 @@
-/*	$NetBSD: exec.c,v 1.56 2021/10/10 08:19:02 rillig Exp $	*/
+/*	$NetBSD: exec.c,v 1.57 2021/11/16 11:28:29 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)exec.c	8.4 (Berkeley) 6/8/95";
 #else
-__RCSID("$NetBSD: exec.c,v 1.56 2021/10/10 08:19:02 rillig Exp $");
+__RCSID("$NetBSD: exec.c,v 1.57 2021/11/16 11:28:29 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -360,17 +360,24 @@ hashcmd(int argc, char **argv)
 	struct cmdentry entry;
 	char *name;
 	int allopt=0, bopt=0, fopt=0, ropt=0, sopt=0, uopt=0, verbose=0;
+	int errs=1, emsg=DO_ERR;
+	int status = 0;
 
-	while ((c = nextopt("bcfrsuv")) != '\0')
+	while ((c = nextopt("bcefqrsuv")) != '\0')
 		switch (c) {
 		case 'b':	bopt = 1;	break;
 		case 'c':	uopt = 1;	break;	/* c == u */
+		case 'e':	errs = 0;	break;
 		case 'f':	fopt = 1;	break;
+		case 'q':	emsg = 0;	break;
 		case 'r':	ropt = 1;	break;
 		case 's':	sopt = 1;	break;
 		case 'u':	uopt = 1;	break;
 		case 'v':	verbose = 1;	break;
 		}
+
+	if (!errs)
+		emsg ^= DO_ERR;
 
 	if (ropt)
 		clearcmdentry(0);
@@ -406,6 +413,11 @@ hashcmd(int argc, char **argv)
 					printentry(cmdp, verbose);
 			}
 		}
+		flushout(out1);
+		if (io_err(out1)) {
+			out2str("hash: I/O error writing to standard output\n");
+			return 1;
+		}
 		return 0;
 	}
 
@@ -433,7 +445,9 @@ hashcmd(int argc, char **argv)
 				break;
 			}
 		}
-		find_command(name, &entry, DO_ERR, pathval());
+		find_command(name, &entry, emsg, pathval());
+		if (errs && entry.cmdtype == CMDUNKNOWN)
+			status = 1;
 		if (verbose) {
 			if (entry.cmdtype != CMDUNKNOWN) {	/* if no error msg */
 				cmdp = cmdlookup(name, 0);
@@ -443,7 +457,7 @@ hashcmd(int argc, char **argv)
 			flushall();
 		}
 	}
-	return 0;
+	return status;
 }
 
 STATIC void
