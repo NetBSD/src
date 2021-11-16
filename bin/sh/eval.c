@@ -1,4 +1,4 @@
-/*	$NetBSD: eval.c,v 1.183 2021/11/10 15:26:34 kre Exp $	*/
+/*	$NetBSD: eval.c,v 1.184 2021/11/16 11:25:44 kre Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)eval.c	8.9 (Berkeley) 6/8/95";
 #else
-__RCSID("$NetBSD: eval.c,v 1.183 2021/11/10 15:26:34 kre Exp $");
+__RCSID("$NetBSD: eval.c,v 1.184 2021/11/16 11:25:44 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -469,6 +469,7 @@ evalfor(union node *n, int flags)
 
 	loopnest++;
 	for (sp = arglist.list ; sp ; sp = sp->next) {
+		line_number = n->nfor.lineno;
 		if (xflag) {
 			outxstr(expandstr(ps4val(), line_number));
 			outxstr("for ");
