@@ -1,4 +1,4 @@
-/* $NetBSD: lex.c,v 1.86 2021/11/16 17:41:23 rillig Exp $ */
+/* $NetBSD: lex.c,v 1.87 2021/11/16 18:33:14 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: lex.c,v 1.86 2021/11/16 17:41:23 rillig Exp $");
+__RCSID("$NetBSD: lex.c,v 1.87 2021/11/16 18:33:14 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -669,9 +669,9 @@ convert_integer(int64_t q, tspec_t t, unsigned int len)
 }
 
 /*
- * Convert a string representing a floating point value into its integral
- * representation. Type and value are returned in yylval. fcon()
- * (and yylex()) returns T_CON.
+ * Convert a string representing a floating point value into its numerical
+ * representation. Type and value are returned in yylval.
+ *
  * XXX Currently it is not possible to convert constants of type
  * long double which are greater than DBL_MAX.
  */
@@ -725,7 +725,8 @@ lex_floating_constant(const char *yytext, size_t yyleng)
 			errno = 0;
 			break;
 		default:
-			INTERNAL_ERROR("fcon(%s->%s)", cp, eptr);
+			INTERNAL_ERROR("lex_floating_constant(%s->%s)",
+			    cp, eptr);
 		}
 	}
 	if (errno != 0)
