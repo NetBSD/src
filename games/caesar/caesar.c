@@ -1,4 +1,4 @@
-/*	$NetBSD: caesar.c,v 1.23 2021/05/01 20:21:25 rillig Exp $	*/
+/*	$NetBSD: caesar.c,v 1.24 2021/11/16 20:42:47 rillig Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -48,7 +48,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\
 #if 0
 static char sccsid[] = "@(#)caesar.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: caesar.c,v 1.23 2021/05/01 20:21:25 rillig Exp $");
+__RCSID("$NetBSD: caesar.c,v 1.24 2021/11/16 20:42:47 rillig Exp $");
 #endif
 #endif /* not lint */
 
@@ -203,14 +203,14 @@ main(int argc, char **argv)
 		/* NOTREACHED */
 	}
 
-	if (ferror(stdin)) {
-		errx(EXIT_FAILURE, "<stdin>");
+	if (ferror(stdin) != 0) {
+		errx(EXIT_FAILURE, "<stdin>: read error");
 		/* NOTREACHED */
 	}
 
 	(void)fflush(stdout);
-	if (ferror(stdout)) {
-		errx(EXIT_FAILURE, "<stdout>");
+	if (ferror(stdout) != 0) {
+		errx(EXIT_FAILURE, "<stdout>: write error");
 		/* NOTREACHED */
 	}
 
