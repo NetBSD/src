@@ -1,4 +1,4 @@
-/*   $NetBSD: ins_wstr.c,v 1.18 2021/11/15 06:27:06 blymn Exp $ */
+/*   $NetBSD: ins_wstr.c,v 1.19 2021/11/16 21:00:50 blymn Exp $ */
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation Inc.
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ins_wstr.c,v 1.18 2021/11/15 06:27:06 blymn Exp $");
+__RCSID("$NetBSD: ins_wstr.c,v 1.19 2021/11/16 21:00:50 blymn Exp $");
 #endif						  /* not lint */
 
 #include <string.h>
@@ -194,9 +194,12 @@ wins_nwstr(WINDOW *win, const wchar_t *wstr, int n)
 				continue;
 
 			case L'\t':
-				w = min(win->maxx - x, TABSIZE - (x % TABSIZE));
-				width += w * wcwidth(ws[0]);
-				x += w * wcwidth(ws[0]);
+				cw = wcwidth(ws[0]);
+				if (cw < 0)
+					cw = 1;
+				w = cw * (TABSIZE - (x % TABSIZE));
+				width += w;
+				x += w;
 				scp++;
 				continue;
 		}
@@ -254,16 +257,16 @@ wins_nwstr(WINDOW *win, const wchar_t *wstr, int n)
 					break;
 
 				case L'\t':
-					w = min(win->maxx - x,
-					    TABSIZE - (x % TABSIZE));
-					width += w * wcwidth(ws[0]);
-					x += w * wcwidth(ws[0]);
+					cw = wcwidth(ws[0]);
+					if (cw < 0)
+						cw = 1;
+					w = cw * (TABSIZE - (x % TABSIZE));
+					width += w;
+					x += w;
 					len += w;
 					scp++;
-					for (i = 0; i < w; i++ ) {
-						*lstr = *ws;
-						lstr++;
-					}
+					*lstr = *ws;
+					lstr++;
 					continue;
 			}
 			w = wcwidth(*scp);
