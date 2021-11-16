@@ -1,4 +1,4 @@
-# $NetBSD: t_redir.sh,v 1.11 2021/05/19 22:43:18 kre Exp $
+# $NetBSD: t_redir.sh,v 1.12 2021/11/16 11:12:14 kre Exp $
 #
 # Copyright (c) 2016 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -561,9 +561,11 @@ named_fd_redirections_body()
 		atf_require_prog cat
 
 		echo GOOD | atf_check -s exit:0 -o inline:'GOOD\n' -e empty \
-			${TEST_SH} -c 'read var </dev/stdin; echo $var'
+			${TEST_SH} -c 'read var </dev/stdin; echo $var' ||
+				atf_fail "/dev/stdin test 1"
 		echo GOOD | atf_check -s exit:0 -o inline:'GOOD\n' -e empty \
-			${TEST_SH} -c 'cat </dev/stdin'
+			${TEST_SH} -c 'cat </dev/stdin' ||
+				atf_fail "/dev/stdin test 2"
 	fi
 
 	if test -c /dev/stderr
@@ -919,13 +921,16 @@ validate_fn_redirects_body()
 	echo ". ./f-def || echo >&2 FAIL
 		f
 		printf '%s\n' stdin1
-	"| atf_check -s exit:0 -o inline:'In-Func\nstdin1\n' -e empty ${TEST_SH}
+	" | atf_check -s exit:0 -o inline:'In-Func\nstdin1\n' -e empty \
+	      ${TEST_SH} ||
+		atf_fail "stdin1 test failure"
 
 	echo '
 		. ./f-def || echo >&2 FAIL
 		f >&-
 		printf "%s\n" stdin2
-	' | atf_check -s exit:0 -o inline:'stdin2\n' -e empty ${TEST_SH}
+	' | atf_check -s exit:0 -o inline:'stdin2\n' -e empty ${TEST_SH} ||
+		atf_fail "stdin2 test failure"
 
 	cat <<- 'DONE' > fgh.def
 		f() {
@@ -983,7 +988,8 @@ validate_fn_redirects_body()
 		echo X $( f >&- & sleep 1; g >&- & sleep 1 ; h ) Y
 		sleep 3
 		exec 4>&1 || echo FD_FAIL
-	' | atf_check -s exit:0 -o inline:'fghX Y\nGF' -e empty ${TEST_SH}
+	' | atf_check -s exit:0 -o inline:'fghX Y\nGF' -e empty ${TEST_SH} ||
+		atf_fail "48875 stdin variant failure"
 }
 
 atf_init_test_cases() {

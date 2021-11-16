@@ -1,4 +1,4 @@
-# $NetBSD: t_syntax.sh,v 1.10 2018/11/14 02:37:51 kre Exp $
+# $NetBSD: t_syntax.sh,v 1.11 2021/11/16 11:12:14 kre Exp $
 #
 # Copyright (c) 2017 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -134,35 +134,39 @@ c_line_wrapping_body() {
 	atf_require_prog ls
 	atf_require_prog printf
 
-	cat <<- 'DONE' | atf_check -s exit:0 -o ignore -e empty ${TEST_SH} -e
+	cat <<- 'DONE' | atf_check -s exit:0 -o ignore -e empty ${TEST_SH} -e ||
 		l\
 		s
 	DONE
+		atf_fail "#1: ls wrapped fails"
 
-	cat <<- 'DONE' | atf_check -s exit:7 -o empty -e empty ${TEST_SH}
+	cat <<- 'DONE' | atf_check -s exit:7 -o empty -e empty ${TEST_SH} ||
 		e\
 		x\
 		it \
 		7
 	DONE
+		atf_fail "#2: exit7 wrapped fails"
 
 	# Have to do this twice as cannot say "any exit code but 0 or 7" ...
 	cat <<- 'DONE' | atf_check -s not-exit:0 -o empty -e not-empty \
-	    ${TEST_SH}
+	    ${TEST_SH} ||
 		e\
 		x\
 		it\
 		7
 	DONE
+		atf_fail "#3a: !exit(0||7) badly wrapped fails (0)"
 	cat <<- 'DONE' | atf_check -s not-exit:7 -o empty -e not-empty \
-	    ${TEST_SH}
+	    ${TEST_SH} ||
 		e\
 		x\
 		it\
 		7
 	DONE
+		atf_fail "#3b: !exit(0||7) badly wrapped fails (7)"
 
-	cat <<- 'DONE' | atf_check -s exit:0 -o empty -e empty  ${TEST_SH}
+	cat <<- 'DONE' | atf_check -s exit:0 -o empty -e empty  ${TEST_SH} ||
 		wh\
 		il\
 		e \
@@ -173,9 +177,10 @@ c_line_wrapping_body() {
 		;
 		done
 	DONE
+		atf_fail "#4: wrapped while fails"
 
 	cat <<- 'DONE' | atf_check -s exit:0 -o inline:'hellohellohellohello' \
-	    -e empty ${TEST_SH}
+	    -e empty ${TEST_SH} ||
 		V\
 		AR=hel\
 		lo
@@ -214,8 +219,9 @@ c_line_wrapping_body() {
 		 \
 		FAIL}
 	DONE
+		atf_fail "#5: wrapped var expansions fails"
 
-	cat <<- 'DONE' | atf_check -s exit:0 -o inline:'2\n' ${TEST_SH}
+	cat <<- 'DONE' | atf_check -s exit:0 -o inline:'2\n' ${TEST_SH} ||
 		l\
 		s=7 bi\
 		n\
@@ -225,6 +231,7 @@ c_line_wrapping_body() {
 		( ls /bin )\
 		)
 	DONE
+		atf_fail "#6: wrapped command substitution fails"
 
 	# Inspired by src/etc/MAKEDEV.tmpl failure with (broken)
 	# sh LINENO code...  avoid it happening again...
@@ -248,7 +255,7 @@ c_line_wrapping_body() {
 			done
 		)
 
-		cat <<- 'DONE' | atf_check -s exit:0 -o inline:"${R}" ${TEST_SH}
+		cat <<- 'DONE' |
 			case $(( $($a && echo 1 || echo 0) + \
 				 $($b && echo 1 || echo 0) + \
 				 $($c && echo 1 || echo 0) + \
@@ -258,12 +265,14 @@ c_line_wrapping_body() {
 			(*)	printf BAD ;;
 			esac
 		DONE
+			atf_check -s exit:0 -o inline:"${R}" ${TEST_SH} ||
+			atf_fail "#7 (${VARS}): wrapped arith fails"
 	done
 
 	# inspired by pkgsrc/pkgtools/cwrappers :: libnbcompat/configure
 	# failure with (broken) sh LINENO code .. avoid recurrence
 	# This test would have failed.
-	cat <<- 'DONE' | atf_check -s exit:0 -o inline:'/tmp\n' ${TEST_SH}
+	cat <<- 'DONE' | atf_check -s exit:0 -o inline:'/tmp\n' ${TEST_SH} ||
 		dn=/tmp/foo
 
 		D=`dirname -- "${dn}" ||
@@ -292,6 +301,8 @@ c_line_wrapping_body() {
 
 		echo "${D}"
 	DONE
+		atf_fail "#8:  cwrappers/LINENO bug test failed"
+
 	return 0
 }
 
