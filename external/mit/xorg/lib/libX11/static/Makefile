@@ -1,6 +1,8 @@
-#	$NetBSD: Makefile,v 1.4 2021/07/13 05:53:13 mrg Exp $
+#	$NetBSD: Makefile,v 1.5 2021/11/16 09:25:51 nia Exp $
 
 NOPIC=	1
+
+USE_FORT?=	yes # data-driven bugs?
 
 .include <bsd.own.mk>
 
