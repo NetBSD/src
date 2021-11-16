@@ -1,4 +1,4 @@
-/*   $NetBSD: ins_wstr.c,v 1.19 2021/11/16 21:00:50 blymn Exp $ */
+/*   $NetBSD: ins_wstr.c,v 1.20 2021/11/16 23:23:02 kre Exp $ */
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation Inc.
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ins_wstr.c,v 1.19 2021/11/16 21:00:50 blymn Exp $");
+__RCSID("$NetBSD: ins_wstr.c,v 1.20 2021/11/16 23:23:02 kre Exp $");
 #endif						  /* not lint */
 
 #include <string.h>
@@ -135,7 +135,7 @@ wins_nwstr(WINDOW *win, const wchar_t *wstr, int n)
 	const wchar_t *scp;
 	cchar_t cc;
 	wchar_t *lstr, *slstr;
-	int i, width, len, lx, sx, x, y, tx, ty, cw, pcw, newx, tn, w;
+	int width, len, lx, sx, x, y, tx, ty, cw, pcw, newx, tn, w;
 	wchar_t ws[] = L"		";
 
 	/* check for leading non-spacing character */
@@ -294,6 +294,8 @@ loopdone:
 			*lnp->firstchp = newx;
 #ifdef DEBUG
 		{
+			int i;
+
 			__CTRACE(__CTRACE_INPUT, "========before=======\n");
 			for (i = 0; i < win->maxx; i++)
 			__CTRACE(__CTRACE_INPUT,
@@ -334,6 +336,8 @@ loopdone:
 			}
 #ifdef DEBUG
 			{
+				int i;
+
 				__CTRACE(__CTRACE_INPUT, "=====after shift====\n");
 				for (i = 0; i < win->maxx; i++)
 					__CTRACE(__CTRACE_INPUT,
@@ -363,6 +367,8 @@ loopdone:
 
 #ifdef DEBUG
 		{
+			int i;
+
 			__CTRACE(__CTRACE_INPUT, "lx = %d, x = %x\n", lx, x);
 			__CTRACE(__CTRACE_INPUT, "========after=======\n");
 			for (i = 0; i < win->maxx; i++)
