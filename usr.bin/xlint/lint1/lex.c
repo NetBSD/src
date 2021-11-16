@@ -1,4 +1,4 @@
-/* $NetBSD: lex.c,v 1.85 2021/11/01 19:10:07 rillig Exp $ */
+/* $NetBSD: lex.c,v 1.86 2021/11/16 17:41:23 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: lex.c,v 1.85 2021/11/01 19:10:07 rillig Exp $");
+__RCSID("$NetBSD: lex.c,v 1.86 2021/11/16 17:41:23 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -64,8 +64,7 @@ pos_t	curr_pos = { "", 1, 0 };
  */
 pos_t	csrc_pos = { "", 1, 0 };
 
-/* Are we parsing a gcc attribute? */
-bool attron;
+bool in_gcc_attribute;		/* Are we parsing a gcc attribute? */
 
 bool in_system_header = false;
 
@@ -473,9 +472,9 @@ search(sbuf_t *sb)
 
 		if (kw != NULL && !kw->kw_attr)
 			return sym;
-		if (kw != NULL && attron)
+		if (kw != NULL && in_gcc_attribute)
 			return sym;
-		if (kw == NULL && !attron && sym->s_kind == symtyp)
+		if (kw == NULL && !in_gcc_attribute && sym->s_kind == symtyp)
 			return sym;
 	}
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: externs1.h,v 1.138 2021/08/31 17:51:30 rillig Exp $	*/
+/*	$NetBSD: externs1.h,v 1.139 2021/11/16 17:41:23 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -70,7 +70,7 @@ extern	int	yyparse(void);
 /*
  * scan.l
  */
-extern  bool	attron;
+extern  bool	in_gcc_attribute;
 extern	pos_t	curr_pos;
 extern	pos_t	csrc_pos;
 extern	bool	in_system_header;
