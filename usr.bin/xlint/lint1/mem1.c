@@ -1,4 +1,4 @@
-/*	$NetBSD: mem1.c,v 1.53 2021/11/16 06:55:03 rillig Exp $	*/
+/*	$NetBSD: mem1.c,v 1.54 2021/11/16 18:37:24 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: mem1.c,v 1.53 2021/11/16 06:55:03 rillig Exp $");
+__RCSID("$NetBSD: mem1.c,v 1.54 2021/11/16 18:37:24 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -363,11 +363,6 @@ expr_zalloc_tnode(void)
 	 * files named *.c that are different from the main translation unit
 	 * typically contain generated code that cannot be influenced, such
 	 * as a flex lexer or a yacc parser.
-	 */
-	/*
-	 * FIXME: At this point, it is too late to check in_system_header.
-	 * That must already be done at the beginning of the token.
-	 * See the test d_c99_bool_strict.c, 'stdio_stdout'.
 	 */
 	tn->tn_relaxed = in_system_header ||
 			 (curr_pos.p_file != csrc_pos.p_file &&
