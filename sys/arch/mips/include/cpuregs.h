@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuregs.h,v 1.113 2021/11/01 21:28:02 andvar Exp $	*/
+/*	$NetBSD: cpuregs.h,v 1.114 2021/11/16 06:04:00 simonb Exp $	*/
 
 /*
  * Copyright (c) 2009 Miodrag Vallat.
@@ -883,7 +883,6 @@
 #define	MIPS_HWR_UL			_(29)	/* Userlocal */
 #define	MIPS_HWR_IMPL30			_(30)
 #define	MIPS_HWR_IMPL31			_(31)
-#define	MIPS_HWR_CPUNUM			_(0)
 
 /*
  * Bits defined for HWREna (CP0 register 7, select 0).
