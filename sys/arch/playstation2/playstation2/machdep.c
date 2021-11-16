@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.33 2017/11/06 03:47:47 christos Exp $	*/
+/*	$NetBSD: machdep.c,v 1.34 2021/11/16 05:16:47 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.33 2017/11/06 03:47:47 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.34 2021/11/16 05:16:47 msaitoh Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kloader.h"
@@ -68,7 +68,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.33 2017/11/06 03:47:47 christos Exp $"
 
 struct cpu_info cpu_info_store;
 
-struct vm_map *mb_map;
 struct vm_map *phys_map;
 phys_ram_seg_t mem_clusters[VM_PHYSSEG_MAX];
 int mem_cluster_cnt;
