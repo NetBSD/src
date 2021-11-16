@@ -171,3 +171,7 @@ d_c99_bool_strict.c(805): error: controlling expression must be bool, not 'int' 
 d_c99_bool_strict.c(808): error: controlling expression must be bool, not 'int' [333]
 d_c99_bool_strict.c(811): error: operand of '!' must be bool, not 'int' [330]
 d_c99_bool_strict.c(814): error: operand of '!' must be bool, not 'int' [330]
+d_c99_bool_strict.c(836): error: controlling expression must be bool, not 'int' [333]
+d_c99_bool_strict.c(854): error: controlling expression must be bool, not 'int' [333]
+d_c99_bool_strict.c(869): error: controlling expression must be bool, not 'int' [333]
+d_c99_bool_strict.c(895): error: controlling expression must be bool, not 'int' [333]

@@ -1,4 +1,4 @@
-/*	$NetBSD: externs1.h,v 1.139 2021/11/16 17:41:23 rillig Exp $	*/
+/*	$NetBSD: externs1.h,v 1.140 2021/11/16 21:01:05 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -241,9 +241,9 @@ extern	sym_t	*struct_or_union_member(tnode_t *, op_t, sym_t *);
 extern	tnode_t	*build_generic_selection(const tnode_t *,
 		    struct generic_association *);
 
-extern	tnode_t	*build_binary(tnode_t *, op_t, tnode_t *);
-extern	tnode_t	*build_unary(op_t, tnode_t *);
-extern	tnode_t	*build_member_access(tnode_t *, op_t, sbuf_t *);
+extern	tnode_t	*build_binary(tnode_t *, op_t, bool, tnode_t *);
+extern	tnode_t	*build_unary(op_t, bool, tnode_t *);
+extern	tnode_t	*build_member_access(tnode_t *, op_t, bool, sbuf_t *);
 extern	tnode_t	*cconv(tnode_t *);
 extern	bool	is_typeok_bool_operand(const tnode_t *);
 extern	bool	typeok(op_t, int, const tnode_t *, const tnode_t *);
@@ -255,7 +255,7 @@ extern	tnode_t	*build_offsetof(const type_t *, const sym_t *);
 extern	tnode_t	*build_alignof(const type_t *);
 extern	tnode_t	*cast(tnode_t *, type_t *);
 extern	tnode_t	*build_function_argument(tnode_t *, tnode_t *);
-extern	tnode_t	*build_function_call(tnode_t *, tnode_t *);
+extern	tnode_t	*build_function_call(tnode_t *, bool, tnode_t *);
 extern	val_t	*constant(tnode_t *, bool);
 extern	void	expr(tnode_t *, bool, bool, bool, bool);
 extern	void	check_expr_misc(const tnode_t *, bool, bool, bool,
@@ -308,7 +308,7 @@ extern	void	for2(void);
 extern	void	do_goto(sym_t *);
 extern	void	do_continue(void);
 extern	void	do_break(void);
-extern	void	do_return(tnode_t *);
+extern	void	do_return(bool, tnode_t *);
 extern	void	global_clean_up_decl(bool);
 extern	void	argsused(int);
 extern	void	constcond(int);

@@ -1,4 +1,4 @@
-/* $NetBSD: debug.c,v 1.4 2021/11/16 06:55:03 rillig Exp $ */
+/* $NetBSD: debug.c,v 1.5 2021/11/16 21:01:05 rillig Exp $ */
 
 /*-
  * Copyright (c) 2021 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: debug.c,v 1.4 2021/11/16 06:55:03 rillig Exp $");
+__RCSID("$NetBSD: debug.c,v 1.5 2021/11/16 21:01:05 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -121,7 +121,7 @@ debug_node(const tnode_t *tn)
 	    op == CVT && !tn->tn_cast ? "convert" : modtab[op].m_name,
 	    type_name(tn->tn_type), tn->tn_lvalue ? ", lvalue" : "",
 	    tn->tn_parenthesized ? ", parenthesized" : "",
-	    tn->tn_relaxed ? ", relaxed" : "");
+	    tn->tn_sys ? ", sys" : "");
 
 	if (op == NAME)
 		debug_printf(" %s %s\n", tn->tn_sym->s_name,

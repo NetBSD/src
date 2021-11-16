@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.369 2021/11/16 18:27:04 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.370 2021/11/16 21:01:05 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: cgram.y,v 1.369 2021/11/16 18:27:04 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.370 2021/11/16 21:01:05 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -144,6 +144,7 @@ anonymize(sym_t *s)
 	bool	y_seen_statement;
 	struct generic_association *y_generic;
 	struct array_size y_array_size;
+	bool	y_in_system_header;
 };
 
 %token			T_LBRACE T_RBRACE T_LBRACK T_RBRACK T_LPAREN T_RPAREN
@@ -355,6 +356,7 @@ anonymize(sym_t *s)
 %type	<y_seen_statement> block_item
 %type	<y_tnode>	do_while_expr
 %type	<y_sym>		func_declarator
+%type	<y_in_system_header> sys
 
 %{
 #if defined(YYDEBUG) && defined(YYBISON)
@@ -484,20 +486,20 @@ generic_association:
 /* K&R 7.1, C90 ???, C99 6.5.2, C11 6.5.2 */
 postfix_expression:
 	  primary_expression
-	| postfix_expression T_LBRACK expression T_RBRACK {
-		$$ = build_unary(INDIR, build_binary($1, PLUS, $3));
+	| postfix_expression T_LBRACK sys expression T_RBRACK {
+		$$ = build_unary(INDIR, $3, build_binary($1, PLUS, $3, $4));
 	  }
-	| postfix_expression T_LPAREN T_RPAREN {
-		$$ = build_function_call($1, NULL);
+	| postfix_expression T_LPAREN sys T_RPAREN {
+		$$ = build_function_call($1, $3, NULL);
 	  }
-	| postfix_expression T_LPAREN argument_expression_list T_RPAREN {
-		$$ = build_function_call($1, $3);
+	| postfix_expression T_LPAREN sys argument_expression_list T_RPAREN {
+		$$ = build_function_call($1, $3, $4);
 	  }
-	| postfix_expression point_or_arrow T_NAME {
-		$$ = build_member_access($1, $2, $3);
+	| postfix_expression point_or_arrow sys T_NAME {
+		$$ = build_member_access($1, $2, $3, $4);
 	  }
-	| postfix_expression T_INCDEC {
-		$$ = build_unary($2 == INC ? INCAFT : DECAFT, $1);
+	| postfix_expression T_INCDEC sys {
+		$$ = build_unary($2 == INC ? INCAFT : DECAFT, $3, $1);
 	  }
 	| T_LPAREN type_name T_RPAREN {	/* C99 6.5.2.5 "Compound literals" */
 		sym_t *tmp = mktempsym($2);
@@ -589,33 +591,33 @@ argument_expression_list:
 /* K&R 7.2, C90 ???, C99 6.5.3, C11 6.5.3 */
 unary_expression:
 	  postfix_expression
-	| T_INCDEC unary_expression {
-		$$ = build_unary($1 == INC ? INCBEF : DECBEF, $2);
+	| T_INCDEC sys unary_expression {
+		$$ = build_unary($1 == INC ? INCBEF : DECBEF, $2, $3);
 	  }
-	| T_AMPER cast_expression {
-		$$ = build_unary(ADDR, $2);
+	| T_AMPER sys cast_expression {
+		$$ = build_unary(ADDR, $2, $3);
 	  }
-	| T_ASTERISK cast_expression {
-		$$ = build_unary(INDIR, $2);
+	| T_ASTERISK sys cast_expression {
+		$$ = build_unary(INDIR, $2, $3);
 	  }
-	| T_ADDITIVE cast_expression {
+	| T_ADDITIVE sys cast_expression {
 		if (tflag && $1 == PLUS) {
 			/* unary + is illegal in traditional C */
 			warning(100);
 		}
-		$$ = build_unary($1 == PLUS ? UPLUS : UMINUS, $2);
+		$$ = build_unary($1 == PLUS ? UPLUS : UMINUS, $2, $3);
 	  }
-	| T_COMPLEMENT cast_expression {
-		$$ = build_unary(COMPL, $2);
+	| T_COMPLEMENT sys cast_expression {
+		$$ = build_unary(COMPL, $2, $3);
 	  }
-	| T_LOGNOT cast_expression {
-		$$ = build_unary(NOT, $2);
+	| T_LOGNOT sys cast_expression {
+		$$ = build_unary(NOT, $2, $3);
 	  }
-	| T_REAL cast_expression {	/* GCC c_parser_unary_expression */
-		$$ = build_unary(REAL, $2);
+	| T_REAL sys cast_expression {	/* GCC c_parser_unary_expression */
+		$$ = build_unary(REAL, $2, $3);
 	  }
-	| T_IMAG cast_expression {	/* GCC c_parser_unary_expression */
-		$$ = build_unary(IMAG, $2);
+	| T_IMAG sys cast_expression {	/* GCC c_parser_unary_expression */
+		$$ = build_unary(IMAG, $2, $3);
 	  }
 	| T_EXTENSION cast_expression {	/* GCC c_parser_unary_expression */
 		$$ = $2;
@@ -666,61 +668,62 @@ expression_opt:
 /* K&R ???, C90 ???, C99 6.5.5 to 6.5.15, C11 6.5.5 to 6.5.15 */
 conditional_expression:
 	  cast_expression
-	| conditional_expression T_ASTERISK conditional_expression {
-		$$ = build_binary($1, MULT, $3);
+	| conditional_expression T_ASTERISK sys conditional_expression {
+		$$ = build_binary($1, MULT, $3, $4);
 	  }
-	| conditional_expression T_MULTIPLICATIVE conditional_expression {
-		$$ = build_binary($1, $2, $3);
+	| conditional_expression T_MULTIPLICATIVE sys conditional_expression {
+		$$ = build_binary($1, $2, $3, $4);
 	  }
-	| conditional_expression T_ADDITIVE conditional_expression {
-		$$ = build_binary($1, $2, $3);
+	| conditional_expression T_ADDITIVE sys conditional_expression {
+		$$ = build_binary($1, $2, $3, $4);
 	  }
-	| conditional_expression T_SHIFT conditional_expression {
-		$$ = build_binary($1, $2, $3);
+	| conditional_expression T_SHIFT sys conditional_expression {
+		$$ = build_binary($1, $2, $3, $4);
 	  }
-	| conditional_expression T_RELATIONAL conditional_expression {
-		$$ = build_binary($1, $2, $3);
+	| conditional_expression T_RELATIONAL sys conditional_expression {
+		$$ = build_binary($1, $2, $3, $4);
 	  }
-	| conditional_expression T_EQUALITY conditional_expression {
-		$$ = build_binary($1, $2, $3);
+	| conditional_expression T_EQUALITY sys conditional_expression {
+		$$ = build_binary($1, $2, $3, $4);
 	  }
-	| conditional_expression T_AMPER conditional_expression {
-		$$ = build_binary($1, BITAND, $3);
+	| conditional_expression T_AMPER sys conditional_expression {
+		$$ = build_binary($1, BITAND, $3, $4);
 	  }
-	| conditional_expression T_BITXOR conditional_expression {
-		$$ = build_binary($1, BITXOR, $3);
+	| conditional_expression T_BITXOR sys conditional_expression {
+		$$ = build_binary($1, BITXOR, $3, $4);
 	  }
-	| conditional_expression T_BITOR conditional_expression {
-		$$ = build_binary($1, BITOR, $3);
+	| conditional_expression T_BITOR sys conditional_expression {
+		$$ = build_binary($1, BITOR, $3, $4);
 	  }
-	| conditional_expression T_LOGAND conditional_expression {
-		$$ = build_binary($1, LOGAND, $3);
+	| conditional_expression T_LOGAND sys conditional_expression {
+		$$ = build_binary($1, LOGAND, $3, $4);
 	  }
-	| conditional_expression T_LOGOR conditional_expression {
-		$$ = build_binary($1, LOGOR, $3);
+	| conditional_expression T_LOGOR sys conditional_expression {
+		$$ = build_binary($1, LOGOR, $3, $4);
 	  }
-	| conditional_expression T_QUEST expression
-	    T_COLON conditional_expression {
-		$$ = build_binary($1, QUEST, build_binary($3, COLON, $5));
+	| conditional_expression T_QUEST sys
+	    expression T_COLON sys conditional_expression {
+		$$ = build_binary($1, QUEST, $3,
+		    build_binary($4, COLON, $6, $7));
 	  }
 	;
 
 /* K&R ???, C90 ???, C99 6.5.16, C11 6.5.16 */
 assignment_expression:
 	  conditional_expression
-	| unary_expression T_ASSIGN assignment_expression {
-		$$ = build_binary($1, ASSIGN, $3);
+	| unary_expression T_ASSIGN sys assignment_expression {
+		$$ = build_binary($1, ASSIGN, $3, $4);
 	  }
-	| unary_expression T_OPASSIGN assignment_expression {
-		$$ = build_binary($1, $2, $3);
+	| unary_expression T_OPASSIGN sys assignment_expression {
+		$$ = build_binary($1, $2, $3, $4);
 	  }
 	;
 
 /* K&R ???, C90 ???, C99 6.5.17, C11 6.5.17 */
 expression:
 	  assignment_expression
-	| expression T_COMMA assignment_expression {
-		$$ = build_binary($1, COMMA, $3);
+	| expression T_COMMA sys assignment_expression {
+		$$ = build_binary($1, COMMA, $3, $4);
 	  }
 	;
 
@@ -1855,11 +1858,11 @@ jump_statement:			/* C99 6.8.6 */
 	| T_BREAK T_SEMI {
 		do_break();
 	  }
-	| T_RETURN T_SEMI {
-		do_return(NULL);
+	| T_RETURN sys T_SEMI {
+		do_return($2, NULL);
 	  }
-	| T_RETURN expression T_SEMI {
-		do_return($2);
+	| T_RETURN sys expression T_SEMI {
+		do_return($2, $3);
 	  }
 	;
 
@@ -2125,6 +2128,12 @@ gcc_attribute_format:
 	| T_AT_FORMAT_STRFMON
 	| T_AT_FORMAT_STRFTIME
 	| T_AT_FORMAT_SYSLOG
+	;
+
+sys:
+	  /* empty */ {
+		$$ = in_system_header;
+	  }
 	;
 
 %%

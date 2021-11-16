@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.394 2021/11/16 06:55:03 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.395 2021/11/16 21:01:05 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.394 2021/11/16 06:55:03 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.395 2021/11/16 21:01:05 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -61,7 +61,7 @@ static	void	check_enum_type_mismatch(op_t, int,
 				         const tnode_t *, const tnode_t *);
 static	void	check_enum_int_mismatch(op_t, int,
 					const tnode_t *, const tnode_t *);
-static	tnode_t	*new_tnode(op_t, type_t *, tnode_t *, tnode_t *);
+static	tnode_t	*new_tnode(op_t, bool, type_t *, tnode_t *, tnode_t *);
 static	void	balance(op_t, tnode_t **, tnode_t **);
 static	void	warn_incompatible_types(op_t, const type_t *, tspec_t,
 					const type_t *, tspec_t);
@@ -75,14 +75,14 @@ static	void	check_integer_conversion(op_t, int, tspec_t, tspec_t, type_t *,
 static	void	check_pointer_integer_conversion(op_t, tspec_t, type_t *,
 						 tnode_t *);
 static	void	check_pointer_conversion(tnode_t *, type_t *);
-static	tnode_t	*build_struct_access(op_t, tnode_t *, tnode_t *);
-static	tnode_t	*build_prepost_incdec(op_t, tnode_t *);
-static	tnode_t	*build_real_imag(op_t, tnode_t *);
-static	tnode_t	*build_address(tnode_t *, bool);
-static	tnode_t	*build_plus_minus(op_t, tnode_t *, tnode_t *);
-static	tnode_t	*build_bit_shift(op_t, tnode_t *, tnode_t *);
-static	tnode_t	*build_colon(tnode_t *, tnode_t *);
-static	tnode_t	*build_assignment(op_t, tnode_t *, tnode_t *);
+static	tnode_t	*build_struct_access(op_t, bool, tnode_t *, tnode_t *);
+static	tnode_t	*build_prepost_incdec(op_t, bool, tnode_t *);
+static	tnode_t	*build_real_imag(op_t, bool, tnode_t *);
+static	tnode_t	*build_address(bool, tnode_t *, bool);
+static	tnode_t	*build_plus_minus(op_t, bool, tnode_t *, tnode_t *);
+static	tnode_t	*build_bit_shift(op_t, bool, tnode_t *, tnode_t *);
+static	tnode_t	*build_colon(bool, tnode_t *, tnode_t *);
+static	tnode_t	*build_assignment(op_t, bool, tnode_t *, tnode_t *);
 static	tnode_t	*plength(type_t *);
 static	tnode_t	*fold(tnode_t *);
 static	tnode_t	*fold_test(tnode_t *);
@@ -509,15 +509,13 @@ build_generic_selection(const tnode_t *expr,
 }
 
 /*
- * Create a tree node. Called for most operands except function calls,
- * sizeof and casts.
+ * Create a tree node for a binary operator and its two operands. Also called
+ * for unary operators; in that case rn is NULL.
  *
- * op	operator
- * ln	left operand
- * rn	if not NULL, right operand
+ * Function calls, sizeof and casts are handled elsewhere.
  */
 tnode_t *
-build_binary(tnode_t *ln, op_t op, tnode_t *rn)
+build_binary(tnode_t *ln, op_t op, bool sys, tnode_t *rn)
 {
 	const mod_t *mp;
 	tnode_t	*ntn;
@@ -599,30 +597,30 @@ build_binary(tnode_t *ln, op_t op, tnode_t *rn)
 	switch (op) {
 	case POINT:
 	case ARROW:
-		ntn = build_struct_access(op, ln, rn);
+		ntn = build_struct_access(op, sys, ln, rn);
 		break;
 	case INCAFT:
 	case DECAFT:
 	case INCBEF:
 	case DECBEF:
-		ntn = build_prepost_incdec(op, ln);
+		ntn = build_prepost_incdec(op, sys, ln);
 		break;
 	case ADDR:
-		ntn = build_address(ln, false);
+		ntn = build_address(sys, ln, false);
 		break;
 	case INDIR:
-		ntn = new_tnode(INDIR, ln->tn_type->t_subt, ln, NULL);
+		ntn = new_tnode(INDIR, sys, ln->tn_type->t_subt, ln, NULL);
 		break;
 	case PLUS:
 	case MINUS:
-		ntn = build_plus_minus(op, ln, rn);
+		ntn = build_plus_minus(op, sys, ln, rn);
 		break;
 	case SHL:
 	case SHR:
-		ntn = build_bit_shift(op, ln, rn);
+		ntn = build_bit_shift(op, sys, ln, rn);
 		break;
 	case COLON:
-		ntn = build_colon(ln, rn);
+		ntn = build_colon(sys, ln, rn);
 		break;
 	case ASSIGN:
 	case MULASS:
@@ -637,21 +635,21 @@ build_binary(tnode_t *ln, op_t op, tnode_t *rn)
 	case ORASS:
 	case RETURN:
 	case INIT:
-		ntn = build_assignment(op, ln, rn);
+		ntn = build_assignment(op, sys, ln, rn);
 		break;
 	case COMMA:
 	case QUEST:
-		ntn = new_tnode(op, rn->tn_type, ln, rn);
+		ntn = new_tnode(op, sys, rn->tn_type, ln, rn);
 		break;
 	case REAL:
 	case IMAG:
-		ntn = build_real_imag(op, ln);
+		ntn = build_real_imag(op, sys, ln);
 		break;
 	default:
 		rettp = mp->m_returns_bool
 		    ? gettyp(Tflag ? BOOL : INT) : ln->tn_type;
 		lint_assert(mp->m_binary || rn == NULL);
-		ntn = new_tnode(op, rettp, ln, rn);
+		ntn = new_tnode(op, sys, rettp, ln, rn);
 		break;
 	}
 
@@ -697,13 +695,13 @@ build_binary(tnode_t *ln, op_t op, tnode_t *rn)
 }
 
 tnode_t *
-build_unary(op_t op, tnode_t *tn)
+build_unary(op_t op, bool sys, tnode_t *tn)
 {
-	return build_binary(tn, op, NULL);
+	return build_binary(tn, op, sys, NULL);
 }
 
 tnode_t *
-build_member_access(tnode_t *ln, op_t op, sbuf_t *member)
+build_member_access(tnode_t *ln, op_t op, bool sys, sbuf_t *member)
 {
 	sym_t	*msym;
 
@@ -715,7 +713,7 @@ build_member_access(tnode_t *ln, op_t op, sbuf_t *member)
 		ln = cconv(ln);
 	}
 	msym = struct_or_union_member(ln, op, getsym(member));
-	return build_binary(ln, op, build_name(msym, 0));
+	return build_binary(ln, op, sys, build_name(msym, 0));
 }
 
 /*
@@ -744,7 +742,7 @@ cconv(tnode_t *tn)
 			/* %soperand of '%s' must be lvalue */
 			gnuism(114, "", op_name(ADDR));
 		}
-		tn = new_tnode(ADDR,
+		tn = new_tnode(ADDR, tn->tn_sys,
 		    expr_derive_type(tn->tn_type->t_subt, PTR), tn, NULL);
 	}
 
@@ -754,14 +752,14 @@ cconv(tnode_t *tn)
 	 * of type T)
 	 */
 	if (tn->tn_type->t_tspec == FUNC)
-		tn = build_address(tn, true);
+		tn = build_address(tn->tn_sys, tn, true);
 
 	/* lvalue to rvalue */
 	if (tn->tn_lvalue) {
 		tp = expr_dup_type(tn->tn_type);
 		/* C99 6.3.2.1p2 sentence 2 says to remove the qualifiers. */
 		tp->t_const = tp->t_volatile = false;
-		tn = new_tnode(LOAD, tp, tn, NULL);
+		tn = new_tnode(LOAD, tn->tn_sys, tp, tn, NULL);
 	}
 
 	return tn;
@@ -1831,7 +1829,7 @@ check_enum_array_index(const tnode_t *ln, const tnode_t *rn)
  * Build and initialize a new node.
  */
 static tnode_t *
-new_tnode(op_t op, type_t *type, tnode_t *ln, tnode_t *rn)
+new_tnode(op_t op, bool sys, type_t *type, tnode_t *ln, tnode_t *rn)
 {
 	tnode_t	*ntn;
 	tspec_t	t;
@@ -1844,10 +1842,7 @@ new_tnode(op_t op, type_t *type, tnode_t *ln, tnode_t *rn)
 
 	ntn->tn_op = op;
 	ntn->tn_type = type;
-	/* FIXME: For function call expressions (CALL/ICALL), ignore rn. */
-	/* FIXME: For bit shift expressions, ignore rn. */
-	/* TODO: Check all other operators for the exact combination rules. */
-	ntn->tn_relaxed = ln->tn_relaxed || (rn != NULL && rn->tn_relaxed);
+	ntn->tn_sys = sys;
 	ntn->tn_left = ln;
 	ntn->tn_right = rn;
 
@@ -2093,7 +2088,7 @@ convert(op_t op, int arg, type_t *tp, tnode_t *tn)
 	ntn->tn_op = CVT;
 	ntn->tn_type = tp;
 	ntn->tn_cast = op == CVT;
-	ntn->tn_relaxed |= tn->tn_relaxed;
+	ntn->tn_sys |= tn->tn_sys;
 	ntn->tn_right = NULL;
 	if (tn->tn_op != CON || nt == VOID) {
 		ntn->tn_left = tn;
@@ -2770,7 +2765,7 @@ has_constant_member(const type_t *tp)
  * Create a new node for one of the operators POINT and ARROW.
  */
 static tnode_t *
-build_struct_access(op_t op, tnode_t *ln, tnode_t *rn)
+build_struct_access(op_t op, bool sys, tnode_t *ln, tnode_t *rn)
 {
 	tnode_t	*ntn, *ctn;
 	bool	nolval;
@@ -2786,7 +2781,7 @@ build_struct_access(op_t op, tnode_t *ln, tnode_t *rn)
 	nolval = op == POINT && !ln->tn_lvalue;
 
 	if (op == POINT) {
-		ln = build_address(ln, true);
+		ln = build_address(sys, ln, true);
 	} else if (ln->tn_type->t_tspec != PTR) {
 		lint_assert(tflag);
 		lint_assert(is_integer(ln->tn_type->t_tspec));
@@ -2796,14 +2791,15 @@ build_struct_access(op_t op, tnode_t *ln, tnode_t *rn)
 	ctn = build_integer_constant(PTRDIFF_TSPEC,
 	    rn->tn_sym->s_value.v_quad / CHAR_SIZE);
 
-	ntn = new_tnode(PLUS, expr_derive_type(rn->tn_type, PTR), ln, ctn);
+	ntn = new_tnode(PLUS, sys, expr_derive_type(rn->tn_type, PTR),
+	    ln, ctn);
 	if (ln->tn_op == CON)
 		ntn = fold(ntn);
 
 	if (rn->tn_type->t_bitfield) {
-		ntn = new_tnode(FSEL, ntn->tn_type->t_subt, ntn, NULL);
+		ntn = new_tnode(FSEL, sys, ntn->tn_type->t_subt, ntn, NULL);
 	} else {
-		ntn = new_tnode(INDIR, ntn->tn_type->t_subt, ntn, NULL);
+		ntn = new_tnode(INDIR, sys, ntn->tn_type->t_subt, ntn, NULL);
 	}
 
 	if (nolval)
@@ -2816,7 +2812,7 @@ build_struct_access(op_t op, tnode_t *ln, tnode_t *rn)
  * Create a node for INCAFT, INCBEF, DECAFT and DECBEF.
  */
 static tnode_t *
-build_prepost_incdec(op_t op, tnode_t *ln)
+build_prepost_incdec(op_t op, bool sys, tnode_t *ln)
 {
 	tnode_t	*cn, *ntn;
 
@@ -2827,7 +2823,7 @@ build_prepost_incdec(op_t op, tnode_t *ln)
 	} else {
 		cn = build_integer_constant(INT, (int64_t)1);
 	}
-	ntn = new_tnode(op, ln->tn_type, ln, cn);
+	ntn = new_tnode(op, sys, ln->tn_type, ln, cn);
 
 	return ntn;
 }
@@ -2836,7 +2832,7 @@ build_prepost_incdec(op_t op, tnode_t *ln)
  * Create a node for REAL, IMAG
  */
 static tnode_t *
-build_real_imag(op_t op, tnode_t *ln)
+build_real_imag(op_t op, bool sys, tnode_t *ln)
 {
 	tnode_t	*cn, *ntn;
 
@@ -2870,7 +2866,7 @@ build_real_imag(op_t op, tnode_t *ln)
 		    type_name(ln->tn_type));
 		return NULL;
 	}
-	ntn = new_tnode(op, cn->tn_type, ln, cn);
+	ntn = new_tnode(op, sys, cn->tn_type, ln, cn);
 	ntn->tn_lvalue = true;
 
 	return ntn;
@@ -2880,7 +2876,7 @@ build_real_imag(op_t op, tnode_t *ln)
  * Create a tree node for the unary & operator
  */
 static tnode_t *
-build_address(tnode_t *tn, bool noign)
+build_address(bool sys, tnode_t *tn, bool noign)
 {
 	tspec_t	t;
 
@@ -2898,14 +2894,15 @@ build_address(tnode_t *tn, bool noign)
 		return tn->tn_left;
 	}
 
-	return new_tnode(ADDR, expr_derive_type(tn->tn_type, PTR), tn, NULL);
+	return new_tnode(ADDR, sys, expr_derive_type(tn->tn_type, PTR),
+	    tn, NULL);
 }
 
 /*
  * Create a node for operators PLUS and MINUS.
  */
 static tnode_t *
-build_plus_minus(op_t op, tnode_t *ln, tnode_t *rn)
+build_plus_minus(op_t op, bool sys, tnode_t *ln, tnode_t *rn)
 {
 	tnode_t	*ntn, *ctn;
 	type_t	*tp;
@@ -2926,26 +2923,26 @@ build_plus_minus(op_t op, tnode_t *ln, tnode_t *rn)
 		ctn = plength(ln->tn_type);
 		if (rn->tn_type->t_tspec != ctn->tn_type->t_tspec)
 			rn = convert(NOOP, 0, ctn->tn_type, rn);
-		rn = new_tnode(MULT, rn->tn_type, rn, ctn);
+		rn = new_tnode(MULT, sys, rn->tn_type, rn, ctn);
 		if (rn->tn_left->tn_op == CON)
 			rn = fold(rn);
-		ntn = new_tnode(op, ln->tn_type, ln, rn);
+		ntn = new_tnode(op, sys, ln->tn_type, ln, rn);
 
 	} else if (rn->tn_type->t_tspec == PTR) {
 
 		lint_assert(ln->tn_type->t_tspec == PTR);
 		lint_assert(op == MINUS);
 		tp = gettyp(PTRDIFF_TSPEC);
-		ntn = new_tnode(op, tp, ln, rn);
+		ntn = new_tnode(op, sys, tp, ln, rn);
 		if (ln->tn_op == CON && rn->tn_op == CON)
 			ntn = fold(ntn);
 		ctn = plength(ln->tn_type);
 		balance(NOOP, &ntn, &ctn);
-		ntn = new_tnode(DIV, tp, ntn, ctn);
+		ntn = new_tnode(DIV, sys, tp, ntn, ctn);
 
 	} else {
 
-		ntn = new_tnode(op, ln->tn_type, ln, rn);
+		ntn = new_tnode(op, sys, ln->tn_type, ln, rn);
 
 	}
 	return ntn;
@@ -2955,14 +2952,14 @@ build_plus_minus(op_t op, tnode_t *ln, tnode_t *rn)
  * Create a node for operators SHL and SHR.
  */
 static tnode_t *
-build_bit_shift(op_t op, tnode_t *ln, tnode_t *rn)
+build_bit_shift(op_t op, bool sys, tnode_t *ln, tnode_t *rn)
 {
 	tspec_t	t;
 	tnode_t	*ntn;
 
 	if ((t = rn->tn_type->t_tspec) != INT && t != UINT)
 		rn = convert(CVT, 0, gettyp(INT), rn);
-	ntn = new_tnode(op, ln->tn_type, ln, rn);
+	ntn = new_tnode(op, sys, ln->tn_type, ln, rn);
 	return ntn;
 }
 
@@ -2970,7 +2967,7 @@ build_bit_shift(op_t op, tnode_t *ln, tnode_t *rn)
  * Create a node for COLON.
  */
 static tnode_t *
-build_colon(tnode_t *ln, tnode_t *rn)
+build_colon(bool sys, tnode_t *ln, tnode_t *rn)
 {
 	tspec_t	lt, rt, pdt;
 	type_t	*tp;
@@ -3026,7 +3023,7 @@ build_colon(tnode_t *ln, tnode_t *rn)
 		tp = merge_qualifiers(ln->tn_type, rn->tn_type);
 	}
 
-	ntn = new_tnode(COLON, tp, ln, rn);
+	ntn = new_tnode(COLON, sys, tp, ln, rn);
 
 	return ntn;
 }
@@ -3035,7 +3032,7 @@ build_colon(tnode_t *ln, tnode_t *rn)
  * Create a node for an assignment operator (both = and op= ).
  */
 static tnode_t *
-build_assignment(op_t op, tnode_t *ln, tnode_t *rn)
+build_assignment(op_t op, bool sys, tnode_t *ln, tnode_t *rn)
 {
 	tspec_t	lt, rt;
 	tnode_t	*ntn, *ctn;
@@ -3051,7 +3048,7 @@ build_assignment(op_t op, tnode_t *ln, tnode_t *rn)
 		ctn = plength(ln->tn_type);
 		if (rn->tn_type->t_tspec != ctn->tn_type->t_tspec)
 			rn = convert(NOOP, 0, ctn->tn_type, rn);
-		rn = new_tnode(MULT, rn->tn_type, rn, ctn);
+		rn = new_tnode(MULT, sys, rn->tn_type, rn, ctn);
 		if (rn->tn_left->tn_op == CON)
 			rn = fold(rn);
 	}
@@ -3088,7 +3085,7 @@ build_assignment(op_t op, tnode_t *ln, tnode_t *rn)
 		}
 	}
 
-	ntn = new_tnode(op, ln->tn_type, ln, rn);
+	ntn = new_tnode(op, sys, ln->tn_type, ln, rn);
 
 	return ntn;
 }
@@ -3682,7 +3679,7 @@ build_function_argument(tnode_t *args, tnode_t *arg)
 	if (arg == NULL)
 		arg = build_integer_constant(INT, 0);
 
-	ntn = new_tnode(PUSH, arg->tn_type, arg, args);
+	ntn = new_tnode(PUSH, arg->tn_sys, arg->tn_type, arg, args);
 
 	return ntn;
 }
@@ -3692,7 +3689,7 @@ build_function_argument(tnode_t *args, tnode_t *arg)
  * function arguments and insert conversions, if necessary.
  */
 tnode_t *
-build_function_call(tnode_t *func, tnode_t *args)
+build_function_call(tnode_t *func, bool sys, tnode_t *args)
 {
 	tnode_t	*ntn;
 	op_t	fcop;
@@ -3723,7 +3720,7 @@ build_function_call(tnode_t *func, tnode_t *args)
 
 	args = check_function_arguments(func->tn_type->t_subt, args);
 
-	ntn = new_tnode(fcop, func->tn_type->t_subt->t_subt, func, args);
+	ntn = new_tnode(fcop, sys, func->tn_type->t_subt->t_subt, func, args);
 
 	return ntn;
 }
