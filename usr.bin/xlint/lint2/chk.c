@@ -1,4 +1,4 @@
-/* $NetBSD: chk.c,v 1.45 2021/08/29 10:13:02 rillig Exp $ */
+/* $NetBSD: chk.c,v 1.46 2021/11/16 22:12:44 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: chk.c,v 1.45 2021/08/29 10:13:02 rillig Exp $");
+__RCSID("$NetBSD: chk.c,v 1.46 2021/11/16 22:12:44 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -607,7 +607,7 @@ static void
 printflike(const hte_t *hte, fcall_t *call, int n, const char *fmt, type_t **ap)
 {
 	const	char *fp;
-	int	fc;
+	char	fc;
 	bool	fwidth, prec, left, sign, space, alt, zero;
 	tspec_t	sz, t1, t2 = NOTSPEC;
 	type_t	*tp;
@@ -832,7 +832,7 @@ static void
 scanflike(const hte_t *hte, fcall_t *call, int n, const char *fmt, type_t **ap)
 {
 	const	char *fp;
-	int	fc;
+	char	fc;
 	bool	noasgn, fwidth;
 	tspec_t	sz, t1 = NOTSPEC, t2 = NOTSPEC;
 	type_t	*tp = NULL;

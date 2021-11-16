@@ -1,4 +1,4 @@
-/* $NetBSD: emit2.c,v 1.26 2021/09/04 18:58:57 rillig Exp $ */
+/* $NetBSD: emit2.c,v 1.27 2021/11/16 22:12:44 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: emit2.c,v 1.26 2021/09/04 18:58:57 rillig Exp $");
+__RCSID("$NetBSD: emit2.c,v 1.27 2021/11/16 22:12:44 rillig Exp $");
 #endif
 
 #include "lint2.h"
@@ -213,7 +213,7 @@ outlib(const char *name)
 	outstrg(name);
 
 	/*
-	 * print the names of all files references by unnamed
+	 * print the names of all files referenced by unnamed
 	 * struct/union/enum declarations.
 	 */
 	outfiles();
