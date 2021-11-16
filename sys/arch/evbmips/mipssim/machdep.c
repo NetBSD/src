@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.2 2021/02/15 22:39:46 reinoud Exp $ */
+/* $NetBSD: machdep.c,v 1.3 2021/11/16 06:44:40 simonb Exp $ */
 
 /*-
  * Copyright (c) 2001,2021 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.2 2021/02/15 22:39:46 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.3 2021/11/16 06:44:40 simonb Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -73,6 +73,16 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.2 2021/02/15 22:39:46 reinoud Exp $");
 #define	COMCNRATE	115200		/* not important, emulated device */
 #define	COM_FREQ	1843200		/* not important, emulated device */
 
+/*
+ * QEMU/mipssim sets the CPU frequency to 6 MHz for 64-bit guests and
+ * 12 MHz for 32-bit guests.
+ */
+#ifdef _LP64
+#define	CPU_FREQ	6	/* MHz */
+#else
+#define	CPU_FREQ	12	/* MHz */
+#endif
+
 /* XXX move phys map decl to a general mips location */
 /* Maps for VM objects. */
 struct vm_map *phys_map = NULL;
@@ -113,11 +123,7 @@ cal_timer(void)
 {
 	uint32_t cntfreq;
 
-	/*
-	 * Qemu seems to default to 200 MHz; wall clock looks the right speed
-	 * but we don't have an RTC to check.
-	 */
-	cntfreq = curcpu()->ci_cpu_freq = 200 * 1000 * 1000;
+	cntfreq = curcpu()->ci_cpu_freq = CPU_FREQ * 1000 * 1000;
 
 	if (mips_options.mips_cpu_flags & CPU_MIPS_DOUBLE_COUNT)
 		cntfreq /= 2;
@@ -147,12 +153,13 @@ mach_init(u_long arg0, u_long arg1, u_long arg2, u_long arg3)
 	/* enough of a console for printf() to work */
 	cn_tab = &early_console;
 
-	cal_timer();
-
 	/* set CPU model info for sysctl_hw */
 	cpu_setmodel("MIPSSIM");
 
 	mips_vector_init(NULL, false);
+
+	/* must be after CPU is identified in mips_vector_init() */
+	cal_timer();
 
 	uvm_md_init();
 
