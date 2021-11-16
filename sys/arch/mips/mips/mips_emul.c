@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_emul.c,v 1.30 2021/05/29 12:35:27 simonb Exp $ */
+/*	$NetBSD: mips_emul.c,v 1.31 2021/11/16 06:15:48 simonb Exp $ */
 
 /*
  * Copyright (c) 1999 Shuichiro URATA.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mips_emul.c,v 1.30 2021/05/29 12:35:27 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_emul.c,v 1.31 2021/11/16 06:15:48 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -461,7 +461,7 @@ mips_emul_special3(uint32_t inst, struct trapframe *tf, uint32_t cause)
 	}
 	case OP_RDHWR:
 		switch (instfmt.RType.rd) {
-		case 29:
+		case MIPS_HWR_ULR:
 			tf->tf_regs[instfmt.RType.rt] =
 			    (mips_reg_t)(intptr_t)curlwp->l_private;
 			goto done;
