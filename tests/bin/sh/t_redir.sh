@@ -1,4 +1,4 @@
-# $NetBSD: t_redir.sh,v 1.12 2021/11/16 11:12:14 kre Exp $
+# $NetBSD: t_redir.sh,v 1.13 2021/11/16 11:15:26 kre Exp $
 #
 # Copyright (c) 2016 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -927,7 +927,7 @@ validate_fn_redirects_body()
 
 	echo '
 		. ./f-def || echo >&2 FAIL
-		f >&-
+		f >&- 2>/dev/null
 		printf "%s\n" stdin2
 	' | atf_check -s exit:0 -o inline:'stdin2\n' -e empty ${TEST_SH} ||
 		atf_fail "stdin2 test failure"
