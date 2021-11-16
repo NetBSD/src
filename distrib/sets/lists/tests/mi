@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1163 2021/11/15 06:34:05 blymn Exp $
+# $NetBSD: mi,v 1.1164 2021/11/16 21:05:33 blymn Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -3386,6 +3386,9 @@
 ./usr/tests/lib/libcurses/check_files/ins_wch3.chk		tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libcurses/check_files/ins_wstr1.chk		tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libcurses/check_files/ins_wstr2.chk		tests-lib-tests		compattestfile,atf
+./usr/tests/lib/libcurses/check_files/ins_wstr3.chk		tests-lib-tests		compattestfile,atf
+./usr/tests/lib/libcurses/check_files/ins_wstr4.chk		tests-lib-tests		compattestfile,atf
+./usr/tests/lib/libcurses/check_files/ins_wstr5.chk		tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libcurses/check_files/insch.chk			tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libcurses/check_files/insch1.chk		tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libcurses/check_files/insch2.chk		tests-lib-tests		compattestfile,atf
@@ -3457,6 +3460,9 @@
 ./usr/tests/lib/libcurses/check_files/mvwins_wch.chk		tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libcurses/check_files/mvwins_wstr1.chk		tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libcurses/check_files/mvwins_wstr2.chk		tests-lib-tests		compattestfile,atf
+./usr/tests/lib/libcurses/check_files/mvwins_wstr3.chk		tests-lib-tests		compattestfile,atf
+./usr/tests/lib/libcurses/check_files/mvwins_wstr4.chk		tests-lib-tests		compattestfile,atf
+./usr/tests/lib/libcurses/check_files/mvwins_wstr5.chk		tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libcurses/check_files/notimeout.chk		tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libcurses/check_files/overlay1.chk		tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libcurses/check_files/overlay2.chk		tests-lib-tests		compattestfile,atf
