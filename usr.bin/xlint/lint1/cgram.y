@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.367 2021/09/26 01:28:43 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.368 2021/11/16 17:41:23 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: cgram.y,v 1.367 2021/09/26 01:28:43 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.368 2021/11/16 17:41:23 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -2032,9 +2032,9 @@ gcc_attribute_list:
 
 gcc_attribute:
 	  T_ATTRIBUTE T_LPAREN T_LPAREN {
-	    attron = true;
+	    in_gcc_attribute = true;
 	  } gcc_attribute_spec_list {
-	    attron = false;
+	    in_gcc_attribute = false;
 	  } T_RPAREN T_RPAREN
 	;
 

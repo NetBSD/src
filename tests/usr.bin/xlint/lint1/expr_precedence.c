@@ -1,4 +1,4 @@
-/*	$NetBSD: expr_precedence.c,v 1.7 2021/07/26 18:10:14 rillig Exp $	*/
+/*	$NetBSD: expr_precedence.c,v 1.8 2021/11/16 17:41:23 rillig Exp $	*/
 # 3 "expr_precedence.c"
 
 /*
@@ -28,7 +28,7 @@ void __attribute__((format(printf,
      * __attribute__ are constant expressions, looking up global variables
      * would not make sense.  Therefore, 'var' is undefined.
      *
-     * See lex.c, function 'search', keyword 'attron'.
+     * See lex.c, function 'search', keyword 'in_gcc_attribute'.
      */
     /* expect+2: error: 'var' undefined [99] */
     /* expect+1: syntax error '=' [249] */
