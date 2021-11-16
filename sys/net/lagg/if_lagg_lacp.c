@@ -1,4 +1,4 @@
-/*	$NetBSD: if_lagg_lacp.c,v 1.6 2021/10/19 07:52:33 yamaguchi Exp $	*/
+/*	$NetBSD: if_lagg_lacp.c,v 1.7 2021/11/16 04:01:11 yamaguchi Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-NetBSD
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_lagg_lacp.c,v 1.6 2021/10/19 07:52:33 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_lagg_lacp.c,v 1.7 2021/11/16 04:01:11 yamaguchi Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_lagg.h"
@@ -79,6 +79,7 @@ enum lacp_selected {
 enum lacp_mux_state {
 	LACP_MUX_DETACHED,
 	LACP_MUX_WAITING,
+	LACP_MUX_STANDBY,
 	LACP_MUX_ATTACHED,
 	LACP_MUX_COLLECTING,
 	LACP_MUX_DISTRIBUTING,
@@ -2118,6 +2119,7 @@ lacp_set_mux(struct lacp_softc *lsc, struct lacp_port *lacpp,
 		    LACP_AGGREGATE_WAIT_TIME);
 		lacpp->lp_pending++;
 		break;
+	case LACP_MUX_STANDBY:
 	case LACP_MUX_ATTACHED:
 		lacp_port_attached(lsc, lacpp);
 		lacp_disable_collecting(lacpp);
@@ -2173,10 +2175,22 @@ lacp_sm_mux(struct lacp_softc *lsc, struct lacp_port *lacpp)
 			    "lp_pending=%d, timer=%d", lacpp->lp_pending,
 			    !LACP_TIMER_ISARMED(lacpp, LACP_TIMER_WAIT_WHILE));
 
-			if (selected == LACP_SELECTED &&
-			    lacpp->lp_pending == 0) {
+			if (selected == LACP_UNSELECTED) {
+				next_state = LACP_MUX_DETACHED;
+			} else if (lacpp->lp_pending == 0) {
+				if (selected == LACP_SELECTED) {
+					next_state = LACP_MUX_ATTACHED;
+				} else if (selected == LACP_STANDBY) {
+					next_state = LACP_MUX_STANDBY;
+				} else {
+					next_state = LACP_MUX_DETACHED;
+				}
+			}
+			break;
+		case LACP_MUX_STANDBY:
+			if (selected == LACP_SELECTED) {
 				next_state = LACP_MUX_ATTACHED;
-			} else if (selected == LACP_UNSELECTED) {
+			} else if (selected != LACP_STANDBY) {
 				next_state = LACP_MUX_DETACHED;
 			}
 			break;
