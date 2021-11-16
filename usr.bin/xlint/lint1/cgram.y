@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.368 2021/11/16 17:41:23 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.369 2021/11/16 18:27:04 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: cgram.y,v 1.368 2021/11/16 17:41:23 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.369 2021/11/16 18:27:04 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -420,10 +420,14 @@ string2:
 /* K&R 7.1, C90 ???, C99 6.5.1, C11 6.5.1 */
 primary_expression:
 	  T_NAME {
-		/* XXX really necessary? */
+	  	bool sys_name, sys_next;
+		sys_name = in_system_header;
 		if (yychar < 0)
 			yychar = yylex();
+		sys_next = in_system_header;
+		in_system_header = sys_name;
 		$$ = build_name(getsym($1), yychar);
+		in_system_header = sys_next;
 	  }
 	| T_CON {
 		$$ = build_constant(gettyp($1->v_tspec), $1);
