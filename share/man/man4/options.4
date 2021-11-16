@@ -1,4 +1,4 @@
-.\"	$NetBSD: options.4,v 1.520 2021/10/06 05:25:53 msaitoh Exp $
+.\"	$NetBSD: options.4,v 1.521 2021/11/16 05:16:47 msaitoh Exp $
 .\"
 .\" Copyright (c) 1996
 .\" 	Perry E. Metzger.  All rights reserved.
@@ -30,7 +30,7 @@
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
 .\"
-.Dd March 14, 2021
+.Dd November 16, 2021
 .Dt OPTIONS 4
 .Os
 .Sh NAME
@@ -2073,9 +2073,6 @@ for the default.
 .It Cd options NMBCLUSTERS=value
 The number of mbuf clusters the kernel supports.
 Mbuf clusters are MCLBYTES in size (usually 2k).
-This is used to compute the size of the kernel VM map
-.Em mb_map ,
-which maps mbuf clusters.
 The default value is calculated from the amount of physical memory.
 Architectures without direct mapping also limit it based on the kmem_map size,
 which is used as backing store.
