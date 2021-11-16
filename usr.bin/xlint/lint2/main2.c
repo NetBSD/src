@@ -1,4 +1,4 @@
-/*	$NetBSD: main2.c,v 1.22 2021/09/05 18:17:15 rillig Exp $	*/
+/*	$NetBSD: main2.c,v 1.23 2021/11/16 22:03:12 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: main2.c,v 1.22 2021/09/05 18:17:15 rillig Exp $");
+__RCSID("$NetBSD: main2.c,v 1.23 2021/11/16 22:03:12 rillig Exp $");
 #endif
 
 #include <stdio.h>
@@ -155,8 +155,7 @@ main(int argc, char *argv[])
 
 	initmem();
 
-	/* initialize hash table */
-	inithash();
+	symtab_init();
 
 	for (i = 0; i < argc; i++)
 		readfile(argv[i]);

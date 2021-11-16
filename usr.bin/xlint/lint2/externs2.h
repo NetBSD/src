@@ -1,4 +1,4 @@
-/* $NetBSD: externs2.h,v 1.15 2021/09/05 18:17:15 rillig Exp $ */
+/* $NetBSD: externs2.h,v 1.16 2021/11/16 22:03:12 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -48,13 +48,13 @@ extern	bool	Fflag;
 /*
  * hash.c
  */
-extern	void	_inithash(hte_t ***);
+extern	hte_t**	htab_new(void);
 extern	hte_t	*_hsearch(hte_t **, const char *, bool);
+extern	void	symtab_init(void);
 extern	void	symtab_forall(void (*)(hte_t *));
-extern	void	_destroyhash(hte_t **);
 extern	void	symtab_forall_sorted(void (*)(hte_t *));
+extern	void	_destroyhash(hte_t **);
 
-#define	inithash()	_inithash(NULL);
 #define	hsearch(a, b)	_hsearch(NULL, (a), (b))
 
 /*
