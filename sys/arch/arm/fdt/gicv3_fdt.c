@@ -1,4 +1,4 @@
-/* $NetBSD: gicv3_fdt.c,v 1.15 2021/01/27 03:10:19 thorpej Exp $ */
+/* $NetBSD: gicv3_fdt.c,v 1.16 2021/11/17 21:46:12 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015-2018 Jared McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,7 @@
 #define	_INTR_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gicv3_fdt.c,v 1.15 2021/01/27 03:10:19 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gicv3_fdt.c,v 1.16 2021/11/17 21:46:12 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -273,13 +273,17 @@ gicv3_fdt_attach_mbi(struct gicv3_fdt_softc *sc)
 	bus_addr_t addr;
 	int len, frame_count;
 
-	if (of_hasprop(sc->sc_phandle, "mbi-alias")) {
-		aprint_error_dev(sc->sc_gic.sc_dev, "'mbi-alias' property not supported\n");
+	/*
+	 * If a GICD alias frame containing only the SET/CLRSPI registers
+	 * exists, the base address will be reported by the 'mbi-alias'
+	 * property. If this doesn't exist, use the GICD register frame
+	 * instead.
+	 */
+	if (of_getprop_uint64(sc->sc_phandle, "mbi-alias", &addr) != 0 &&
+	    fdtbus_get_reg(sc->sc_phandle, 0, &addr, NULL) != 0) {
+		aprint_error_dev(sc->sc_gic.sc_dev, "couldn't find MBI register frame\n");
 		return;
 	}
-
-	if (fdtbus_get_reg(sc->sc_phandle, 0, &addr, NULL) != 0)
-		return;
 
 	ranges = fdtbus_get_prop(sc->sc_phandle, "mbi-ranges", &len);
 	if (ranges == NULL) {
