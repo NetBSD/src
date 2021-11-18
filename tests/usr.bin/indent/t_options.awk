@@ -1,4 +1,4 @@
-# $NetBSD: t_options.awk,v 1.2 2021/10/23 20:35:18 rillig Exp $
+# $NetBSD: t_options.awk,v 1.3 2021/11/18 17:11:13 rillig Exp $
 #
 # Copyright (c) 2021 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -46,9 +46,26 @@
 #		the previous run.
 #
 # All text outside these directives is not passed to indent.
+#
+# The actual output from running indent is written to stdout, the expected
+# test output is written to 'expected.out'.
 
-# Read the test specification from stdin, output the actual test output on
-# stdout, write the expected test output to 'expected.out'.
+BEGIN {
+	warned = 0
+	died = 0
+
+	section = ""		# "", "input" or "run"
+	section_excl_comm = ""	# without dollar comments
+	section_incl_comm = ""	# with dollar comments
+
+	input_excl_comm = ""	# stdin for indent
+	input_incl_comm = ""	# used for duplicate checks
+	unused_input_lineno = 0
+
+	output_excl_comm = ""	# expected output
+	output_incl_comm = ""	# used for duplicate checks
+	output_lineno = 0
+}
 
 function die(lineno, msg)
 {
@@ -70,32 +87,6 @@ function quote(s)
 	return "'" s "'"
 }
 
-BEGIN {
-	warned = 0
-	died = 0
-
-	section = ""		# "", "input" or "run"
-	section_excl_comm = ""	# without dollar comments
-	section_incl_comm = ""	# with dollar comments
-
-	input_excl_comm = ""	# stdin for indent
-	input_incl_comm = ""	# used for duplicate checks
-	unused_input_lineno = 0
-
-	output_excl_comm = ""	# expected output
-	output_incl_comm = ""	# used for duplicate checks
-	output_lineno = 0
-}
-
-# Hide comments starting with dollar from indent; they are used for marking
-# bugs and adding other remarks directly in the input or output sections.
-/^[[:space:]]*\/[*][[:space:]]*[$].*[*]\/$/ ||
-    /^[[:space:]]*\/\/[[:space:]]*[$]/ {
-	if (section != "")
-		section_incl_comm = section_incl_comm $0 "\n"
-	next
-}
-
 function check_unused_input()
 {
 	if (unused_input_lineno != 0)
@@ -111,6 +102,15 @@ function run_indent(inp,   i, cmd)
 		cmd = cmd " " $i
 	printf("%s", inp) | cmd
 	close(cmd)
+}
+
+# Hide comments starting with dollar from indent; they are used for marking
+# bugs and adding other remarks directly in the input or output sections.
+/^[[:space:]]*\/[*][[:space:]]*[$].*[*]\/$/ ||
+/^[[:space:]]*\/\/[[:space:]]*[$]/ {
+	if (section != "")
+		section_incl_comm = section_incl_comm $0 "\n"
+	next
 }
 
 /^#/ && $1 == "#indent" {
