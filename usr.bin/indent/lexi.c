@@ -1,4 +1,4 @@
-/*	$NetBSD: lexi.c,v 1.138 2021/11/07 18:26:17 rillig Exp $	*/
+/*	$NetBSD: lexi.c,v 1.139 2021/11/18 23:26:58 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)lexi.c	8.1 (Berkeley) 6/6/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: lexi.c,v 1.138 2021/11/07 18:26:17 rillig Exp $");
+__RCSID("$NetBSD: lexi.c,v 1.139 2021/11/18 23:26:58 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/lexi.c 337862 2018-08-15 18:19:45Z pstef $");
 #endif
@@ -708,8 +708,12 @@ lexi(void)
 
 	    while (isalpha((unsigned char)*tp) ||
 		    isspace((unsigned char)*tp)) {
-		if (++tp >= inp.e)
+		if (++tp >= inp.e) {
+		    const char *s_before = inp.s;
 		    inp_read_line();
+		    if (inp.s != s_before)
+			abort();
+		}
 	    }
 	    if (*tp == '(')
 		ps.procname[0] = ' ';
