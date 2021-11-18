@@ -1,4 +1,4 @@
-/*	$NetBSD: fmt_decl.c,v 1.14 2021/11/18 22:27:01 rillig Exp $	*/
+/*	$NetBSD: fmt_decl.c,v 1.15 2021/11/18 23:06:51 rillig Exp $	*/
 /* $FreeBSD: head/usr.bin/indent/tests/declarations.0 334478 2018-06-01 09:41:15Z pstef $ */
 
 /* See FreeBSD r303570 */
@@ -479,5 +479,41 @@ f2(void)
 int *
 yy(void)
 {
+}
+#indent end
+
+
+/*
+ * Since 2019-04-04, the space between the '){' is missing.
+ */
+#indent input
+int *
+function_name_____20________30________40________50
+(void)
+{}
+#indent end
+
+/* FIXME: The space between '){' is missing. */
+#indent run
+int	       *function_name_____20________30________40________50
+		(void){
+}
+#indent end
+
+
+/*
+ * Since 2019-04-04, some function names are preserved and others are
+ * silently discarded.
+ */
+#indent input
+int *
+aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+(void)
+{}
+#indent end
+
+/* FIXME: The function name is missing. */
+#indent run
+int	       *(void){
 }
 #indent end
