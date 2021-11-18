@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1165 2021/11/17 04:33:26 kre Exp $
+# $NetBSD: mi,v 1.1166 2021/11/18 15:03:19 thorpej Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -3776,6 +3776,7 @@
 ./usr/tests/lib/libexecinfo/Atffile			tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libexecinfo/Kyuafile			tests-lib-tests		compattestfile,atf,kyua
 ./usr/tests/lib/libexecinfo/t_backtrace			tests-lib-tests		compattestfile,atf
+./usr/tests/lib/libexecinfo/t_sig_backtrace		tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libi386					tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libi386/Atffile				tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libi386/Kyuafile			tests-lib-tests		compattestfile,atf,kyua
