@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1167 2021/11/18 18:14:47 rillig Exp $
+# $NetBSD: mi,v 1.1168 2021/11/18 21:19:18 rillig Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -4797,6 +4797,41 @@
 ./usr/tests/usr.bin/indent/lineno.0.stdout				tests-obsolete		obsolete,atf
 ./usr/tests/usr.bin/indent/list_head.0					tests-obsolete		obsolete,atf
 ./usr/tests/usr.bin/indent/list_head.0.stdout				tests-obsolete		obsolete,atf
+./usr/tests/usr.bin/indent/lsym_binary_op.c				tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/indent/lsym_case_label.c				tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/indent/lsym_colon.c					tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/indent/lsym_comma.c					tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/indent/lsym_comment.c				tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/indent/lsym_do.c					tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/indent/lsym_else.c					tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/indent/lsym_eof.c					tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/indent/lsym_for.c					tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/indent/lsym_form_feed.c				tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/indent/lsym_funcname.c				tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/indent/lsym_if.c					tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/indent/lsym_lbrace.c				tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/indent/lsym_lparen_or_lbracket.c			tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/indent/lsym_newline.c				tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/indent/lsym_offsetof.c				tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/indent/lsym_period.c				tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/indent/lsym_postfix_op.c				tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/indent/lsym_preprocessing.c				tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/indent/lsym_question.c				tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/indent/lsym_rbrace.c				tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/indent/lsym_return.c				tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/indent/lsym_rparen_or_rbracket.c			tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/indent/lsym_semicolon.c				tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/indent/lsym_sizeof.c				tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/indent/lsym_storage_class.c				tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/indent/lsym_string_prefix.c				tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/indent/lsym_switch.c				tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/indent/lsym_tag.c					tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/indent/lsym_type_in_parentheses.c			tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/indent/lsym_type_outside_parentheses.c		tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/indent/lsym_typedef.c				tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/indent/lsym_unary_op.c				tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/indent/lsym_while.c					tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/indent/lsym_word.c					tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/indent/ncs.0					tests-obsolete		obsolete,atf
 ./usr/tests/usr.bin/indent/ncs.0.pro					tests-obsolete		obsolete,atf
 ./usr/tests/usr.bin/indent/ncs.0.stdout					tests-obsolete		obsolete,atf
@@ -5068,6 +5103,21 @@
 ./usr/tests/usr.bin/indent/ps_ind_level.0.pro				tests-obsolete		obsolete,atf
 ./usr/tests/usr.bin/indent/ps_ind_level.0.stdout			tests-obsolete		obsolete,atf
 ./usr/tests/usr.bin/indent/ps_ind_level.c				tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/indent/psym_decl.c					tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/indent/psym_do.c					tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/indent/psym_do_stmt.c				tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/indent/psym_else.c					tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/indent/psym_for_exprs.c				tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/indent/psym_if_expr.c				tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/indent/psym_if_expr_stmt.c				tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/indent/psym_if_expr_stmt_else.c			tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/indent/psym_lbrace.c				tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/indent/psym_rbrace.c				tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/indent/psym_semicolon.c				tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/indent/psym_stmt.c					tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/indent/psym_stmt_list.c				tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/indent/psym_switch_expr.c				tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/indent/psym_while_expr.c				tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/indent/struct.0					tests-obsolete		obsolete,atf
 ./usr/tests/usr.bin/indent/struct.0.stdout				tests-obsolete		obsolete,atf
 ./usr/tests/usr.bin/indent/surplusbad.0					tests-obsolete		obsolete,atf
