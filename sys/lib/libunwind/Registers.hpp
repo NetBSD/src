@@ -936,20 +936,29 @@ enum {
   DWARF_MIPS_R31 = 31,
   DWARF_MIPS_F0 = 32,
   DWARF_MIPS_F31 = 63,
+  // DWARF Pseudo-registers used by GCC on MIPS for MD{HI,LO} and
+  // signal handler return address.
+  DWARF_MIPS_MDHI = 64,
+  DWARF_MIPS_MDLO = 65,
+  DWARF_MIPS_SIGRETURN = 66,
 
   REGNO_MIPS_PC = 0,
   REGNO_MIPS_R1 = 0,
   REGNO_MIPS_R29 = 29,
   REGNO_MIPS_R31 = 31,
   REGNO_MIPS_F0 = 33,
-  REGNO_MIPS_F31 = 64
+  REGNO_MIPS_F31 = 64,
+  // these live in other_reg[]
+  REGNO_MIPS_MDHI = 65,
+  REGNO_MIPS_MDLO = 66,
+  REGNO_MIPS_SIGRETURN = 67
 };
 
 class Registers_MIPS {
 public:
   enum {
-    LAST_REGISTER = REGNO_MIPS_F31,
-    LAST_RESTORE_REG = REGNO_MIPS_F31,
+    LAST_REGISTER = REGNO_MIPS_SIGRETURN,
+    LAST_RESTORE_REG = REGNO_MIPS_SIGRETURN,
     RETURN_OFFSET = 0,
     RETURN_MASK = 0,
   };
@@ -961,21 +970,29 @@ public:
       return REGNO_MIPS_R1 + (num - DWARF_MIPS_R1);
     if (num >= DWARF_MIPS_F0 && num <= DWARF_MIPS_F31)
       return REGNO_MIPS_F0 + (num - DWARF_MIPS_F0);
+    if (num >= DWARF_MIPS_MDHI && num <= DWARF_MIPS_SIGRETURN)
+      return REGNO_MIPS_MDHI + (num - DWARF_MIPS_MDHI);
     return LAST_REGISTER + 1;
   }
 
   bool validRegister(int num) const {
-    return num >= REGNO_MIPS_PC && num <= REGNO_MIPS_R31;
+    return (num >= REGNO_MIPS_PC && num <= REGNO_MIPS_R31) ||
+      (num >= REGNO_MIPS_MDHI && num <= REGNO_MIPS_SIGRETURN);
   }
 
   uint64_t getRegister(int num) const {
     assert(validRegister(num));
+    if (num >= REGNO_MIPS_MDHI && num <= REGNO_MIPS_SIGRETURN)
+      return other_reg[num - REGNO_MIPS_MDHI];
     return reg[num];
   }
 
   void setRegister(int num, uint64_t value) {
     assert(validRegister(num));
-    reg[num] = value;
+    if (num >= REGNO_MIPS_MDHI && num <= REGNO_MIPS_SIGRETURN)
+      other_reg[num - REGNO_MIPS_MDHI] = value;
+    else
+      reg[num] = value;
   }
 
   uint64_t getIP() const { return reg[REGNO_MIPS_PC]; }
@@ -987,7 +1004,7 @@ public:
   void setSP(uint64_t value) { reg[REGNO_MIPS_R29] = value; }
 
   bool validFloatVectorRegister(int num) const {
-    return num >= DWARF_MIPS_F0 && num <= DWARF_MIPS_F31;
+    return num >= REGNO_MIPS_F0 && num <= REGNO_MIPS_F31;
   }
 
   void copyFloatVectorRegister(int num, uint64_t addr_) {
@@ -1001,6 +1018,7 @@ public:
 private:
   uint32_t reg[REGNO_MIPS_R31 + 1];
   uint64_t fpreg[32];
+  uint32_t other_reg[3];
 };
 
 enum {
