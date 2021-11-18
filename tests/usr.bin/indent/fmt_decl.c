@@ -1,4 +1,4 @@
-/*	$NetBSD: fmt_decl.c,v 1.13 2021/11/07 07:45:00 rillig Exp $	*/
+/*	$NetBSD: fmt_decl.c,v 1.14 2021/11/18 22:27:01 rillig Exp $	*/
 /* $FreeBSD: head/usr.bin/indent/tests/declarations.0 334478 2018-06-01 09:41:15Z pstef $ */
 
 /* See FreeBSD r303570 */
@@ -449,5 +449,35 @@ int a - 1;
 int a - 1;
 {
 	int a - 1;
+}
+#indent end
+
+
+/*
+ * Since 2019-04-04, the indentation of the '*' depends on the function name,
+ * which does not make sense.
+ */
+#indent input
+int *
+f2(void)
+{
+}
+
+int *
+yy(void)
+{
+}
+#indent end
+
+/* FIXME: Both function definitions must be formatted in the same way. */
+#indent run
+int	       *
+f2(void)
+{
+}
+
+int *
+yy(void)
+{
 }
 #indent end
