@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.367 2021/10/23 18:46:26 thorpej Exp $
+# $NetBSD: mi,v 1.368 2021/11/18 15:03:19 thorpej Exp $
 ./etc/mtree/set.debug                           comp-sys-root
 ./usr/lib					comp-sys-usr		compatdir
 ./usr/lib/i18n/libBIG5_g.a			comp-c-debuglib		debuglib,compatfile
@@ -2265,6 +2265,7 @@
 ./usr/libdata/debug/usr/tests/lib/libdes/t_des.debug			tests-lib-debug		debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/lib/libevent/h_event.debug		tests-lib-debug		debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/lib/libexecinfo/t_backtrace.debug		tests-lib-debug		debug,atf,compattestfile
+./usr/libdata/debug/usr/tests/lib/libexecinfo/t_sig_backtrace.debug	tests-lib-debug		debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/lib/liblutok/c_gate_test.debug		tests-lutok-debug	debug,atf,kyua,compattestfile
 ./usr/libdata/debug/usr/tests/lib/liblutok/debug_test.debug		tests-lutok-debug	debug,atf,kyua,compattestfile
 ./usr/libdata/debug/usr/tests/lib/liblutok/exceptions_test.debug	tests-lutok-debug	debug,atf,kyua,compattestfile
