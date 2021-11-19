@@ -1,4 +1,4 @@
-/*	$NetBSD: io.c,v 1.126 2021/11/19 20:01:37 rillig Exp $	*/
+/*	$NetBSD: io.c,v 1.127 2021/11/19 20:04:02 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,14 +43,13 @@ static char sccsid[] = "@(#)io.c	8.1 (Berkeley) 6/6/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: io.c,v 1.126 2021/11/19 20:01:37 rillig Exp $");
+__RCSID("$NetBSD: io.c,v 1.127 2021/11/19 20:04:02 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/io.c 334927 2018-06-10 16:44:18Z pstef $");
 #endif
 
 #include <assert.h>
 #include <ctype.h>
-#include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
