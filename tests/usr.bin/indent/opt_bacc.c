@@ -1,4 +1,4 @@
-/* $NetBSD: opt_bacc.c,v 1.4 2021/10/20 05:14:21 rillig Exp $ */
+/* $NetBSD: opt_bacc.c,v 1.5 2021/11/19 19:37:13 rillig Exp $ */
 /* $FreeBSD$ */
 
 /*
@@ -86,8 +86,7 @@ os_name(void)
 #indent end
 
 #indent run -bacc
-/* $ XXX: The '*' should not be set apart from the rest of the return type. */
-const char     *
+const char *
 os_name(void)
 {
 /* $ FIXME: expecting a blank line here. */
@@ -104,14 +103,4 @@ os_name(void)
 }
 #indent end
 
-#indent run -nbacc
-const char     *
-os_name(void)
-{
-#if defined(__NetBSD__) || defined(__FreeBSD__)
-	return "BSD";
-#else
-	return "unknown";
-#endif
-}
-#indent end
+#indent run-equals-input -nbacc

@@ -1,4 +1,4 @@
-/*	$NetBSD: lexi.c,v 1.145 2021/11/19 19:15:55 rillig Exp $	*/
+/*	$NetBSD: lexi.c,v 1.146 2021/11/19 19:37:13 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)lexi.c	8.1 (Berkeley) 6/6/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: lexi.c,v 1.145 2021/11/19 19:15:55 rillig Exp $");
+__RCSID("$NetBSD: lexi.c,v 1.146 2021/11/19 19:37:13 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/lexi.c 337862 2018-08-15 18:19:45Z pstef $");
 #endif
@@ -347,6 +347,12 @@ lex_number(void)
 	s = lex_number_state[row][s - 'A'];
 	token_add_char(inp_next());
     }
+}
+
+static bool
+is_identifier_start(char ch)
+{
+    return isalpha((unsigned char)ch) || ch == '_' || ch == '$';
 }
 
 static bool
@@ -687,10 +693,16 @@ lexi(void)
 	if (ps.in_decl) {
 	    const char *tp = inp_p(), *e = inp_line_end();
 
-	    /* XXX: is_identifier_start */
-	    while (tp < e && (isalpha((unsigned char)*tp) ||
-		    isspace((unsigned char)*tp)))
-		tp++;
+	    while (tp < e) {
+		if (isspace((unsigned char)*tp))
+		    tp++;
+		else if (is_identifier_start(*tp)) {
+		    tp++;
+		    while (tp < e && is_identifier_part(*tp))
+			tp++;
+		} else
+		    break;
+	    }
 
 	    if (tp < e && *tp == '(')
 		ps.procname[0] = ' ';	/* XXX: why not '\0'? */

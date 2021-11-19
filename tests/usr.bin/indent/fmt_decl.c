@@ -1,4 +1,4 @@
-/*	$NetBSD: fmt_decl.c,v 1.17 2021/11/19 18:55:10 rillig Exp $	*/
+/*	$NetBSD: fmt_decl.c,v 1.18 2021/11/19 19:37:13 rillig Exp $	*/
 /* $FreeBSD: head/usr.bin/indent/tests/declarations.0 334478 2018-06-01 09:41:15Z pstef $ */
 
 /* See FreeBSD r303570 */
@@ -157,22 +157,6 @@ MAXALIGN(offsetof(int, test)) + MAXIMUM_ALIGNOF;
 #indent end
 
 #indent run-equals-input
-
-
-#indent input
-int *int_create(void)
-{
-
-}
-#indent end
-
-#indent run
-int	       *
-int_create(void)
-{
-
-}
-#indent end
 
 
 #indent input
@@ -437,6 +421,9 @@ main(void)
  * In some ancient time long before ISO C90, variable declarations with
  * initializer could be written without '='. The C Programming Language from
  * 1978 doesn't mention this form anymore.
+ *
+ * Before NetBSD lexi.c 1.123 from 2021-10-31, indent treated the '-' as a
+ * unary operator.
  */
 #indent input
 int a - 1;
@@ -454,8 +441,11 @@ int a - 1;
 
 
 /*
- * Since 2019-04-04, the indentation of the '*' depends on the function name,
- * which does not make sense.
+ * Between 2019-04-04 and before lexi.c 1.146 from 2021-11-09, the indentation
+ * of the '*' depended on the function name, which did not make sense.  For
+ * function names that matched [A-Za-z]+, the '*' was placed correctly, for
+ * all other function names (containing [$0-9_]) the '*' was right-aligned on
+ * declaration indentation, which defaults to 16.
  */
 #indent input
 int *
@@ -467,20 +457,14 @@ int *
 yy(void)
 {
 }
-#indent end
-
-/* FIXME: Both function definitions must be formatted in the same way. */
-#indent run
-int	       *
-f2(void)
-{
-}
 
 int *
-yy(void)
+int_create(void)
 {
 }
 #indent end
+
+#indent run-equals-input
 
 
 /*
