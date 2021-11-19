@@ -1,4 +1,4 @@
-/*	$NetBSD: args.c,v 1.70 2021/11/07 18:09:56 rillig Exp $	*/
+/*	$NetBSD: args.c,v 1.71 2021/11/19 20:23:17 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,14 +43,13 @@ static char sccsid[] = "@(#)args.c	8.1 (Berkeley) 6/6/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: args.c,v 1.70 2021/11/07 18:09:56 rillig Exp $");
+__RCSID("$NetBSD: args.c,v 1.71 2021/11/19 20:23:17 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/args.c 336318 2018-07-15 21:04:21Z pstef $");
 #endif
 
 /* Read options from profile files and from the command line. */
 
-#include <ctype.h>
 #include <err.h>
 #include <limits.h>
 #include <stdio.h>
@@ -246,8 +245,7 @@ found:
 	errx(1, "%s: argument \"%s\" to option \"-%s\" must be an integer",
 	    option_source, arg_arg, p->p_name);
 
-    if (!(isdigit((unsigned char)*arg_arg) &&
-	    p->i_min <= num && num <= p->i_max))
+    if (!(ch_isdigit(*arg_arg) && p->i_min <= num && num <= p->i_max))
 	errx(1,
 	    "%s: argument \"%s\" to option \"-%s\" must be between %d and %d",
 	    option_source, arg_arg, p->p_name, p->i_min, p->i_max);
@@ -277,7 +275,7 @@ load_profile(const char *fname, bool must_exist)
 		comment_ch = '*';
 	    } else if (comment_ch != -1) {
 		comment_ch = ch == '/' && comment_ch == '*' ? -1 : ch;
-	    } else if (isspace((unsigned char)ch)) {
+	    } else if (ch_isspace((char)ch)) {
 		break;
 	    } else if (n >= array_length(buf) - 5) {
 		errx(1, "buffer overflow in %s, starting with '%.10s'",

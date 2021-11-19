@@ -1,4 +1,4 @@
-/*	$NetBSD: lexi.c,v 1.147 2021/11/19 19:55:15 rillig Exp $	*/
+/*	$NetBSD: lexi.c,v 1.148 2021/11/19 20:23:17 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,13 +43,11 @@ static char sccsid[] = "@(#)lexi.c	8.1 (Berkeley) 6/6/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: lexi.c,v 1.147 2021/11/19 19:55:15 rillig Exp $");
+__RCSID("$NetBSD: lexi.c,v 1.148 2021/11/19 20:23:17 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/lexi.c 337862 2018-08-15 18:19:45Z pstef $");
 #endif
 
-#include <assert.h>
-#include <ctype.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -351,13 +349,13 @@ lex_number(void)
 static bool
 is_identifier_start(char ch)
 {
-    return isalpha((unsigned char)ch) || ch == '_' || ch == '$';
+    return ch_isalpha(ch) || ch == '_' || ch == '$';
 }
 
 static bool
 is_identifier_part(char ch)
 {
-    return isalnum((unsigned char)ch) || ch == '_' || ch == '$';
+    return ch_isalnum(ch) || ch == '_' || ch == '$';
 }
 
 static void
@@ -406,7 +404,7 @@ probably_typename(void)
     if (inp_peek() == '*' && inp_lookahead(1) != '=')
 	goto maybe;
     /* XXX: is_identifier_start */
-    if (isalpha((unsigned char)inp_peek()))
+    if (ch_isalpha(inp_peek()))
 	goto maybe;
     return false;
 maybe:
@@ -455,8 +453,8 @@ cmp_keyword_by_name(const void *key, const void *elem)
 static lexer_symbol
 lexi_alnum(void)
 {
-    if (isdigit((unsigned char)inp_peek()) ||
-	    (inp_peek() == '.' && isdigit((unsigned char)inp_lookahead(1)))) {
+    if (ch_isdigit(inp_peek()) ||
+	    (inp_peek() == '.' && ch_isdigit(inp_lookahead(1)))) {
 	lex_number();
     } else if (is_identifier_part(inp_peek())) {
 	lex_word();
@@ -683,7 +681,7 @@ lexi(void)
 	    break;
 	}
 
-	while (inp_peek() == '*' || isspace((unsigned char)inp_peek())) {
+	while (inp_peek() == '*' || ch_isspace(inp_peek())) {
 	    if (inp_peek() == '*')
 		token_add_char('*');
 	    inp_skip();
@@ -693,7 +691,7 @@ lexi(void)
 	    const char *tp = inp_p(), *e = inp_line_end();
 
 	    while (tp < e) {
-		if (isspace((unsigned char)*tp))
+		if (ch_isspace(*tp))
 		    tp++;
 		else if (is_identifier_start(*tp)) {
 		    tp++;
