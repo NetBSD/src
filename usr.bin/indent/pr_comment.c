@@ -1,4 +1,4 @@
-/*	$NetBSD: pr_comment.c,v 1.117 2021/11/19 15:28:32 rillig Exp $	*/
+/*	$NetBSD: pr_comment.c,v 1.118 2021/11/19 15:32:13 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)pr_comment.c	8.1 (Berkeley) 6/6/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: pr_comment.c,v 1.117 2021/11/19 15:28:32 rillig Exp $");
+__RCSID("$NetBSD: pr_comment.c,v 1.118 2021/11/19 15:32:13 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/pr_comment.c 334927 2018-06-10 16:44:18Z pstef $");
 #endif
@@ -159,9 +159,10 @@ analyze_comment(bool *p_may_wrap, bool *p_break_delim,
 	 * XXX: ordered comparison between pointers from different objects
 	 * invokes undefined behavior (C99 6.5.8).
 	 */
-	const char *start = inbuf.inp.s >= inbuf.sc_buf &&
-		inbuf.inp.s < inbuf.sc_buf + sc_size
-	    ? inbuf.sc_buf : inbuf.inp.buf;
+	const char *start = inbuf.inp.s >= inbuf.save_com_buf &&
+		inbuf.inp.s <
+		    inbuf.save_com_buf + array_length(inbuf.save_com_buf)
+	    ? inbuf.save_com_buf : inbuf.inp.buf;
 	ps.n_comment_delta = -ind_add(0, start, inbuf.inp.s - 2);
     } else {
 	ps.n_comment_delta = 0;
