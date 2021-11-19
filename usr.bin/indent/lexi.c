@@ -1,4 +1,4 @@
-/*	$NetBSD: lexi.c,v 1.146 2021/11/19 19:37:13 rillig Exp $	*/
+/*	$NetBSD: lexi.c,v 1.147 2021/11/19 19:55:15 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)lexi.c	8.1 (Berkeley) 6/6/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: lexi.c,v 1.146 2021/11/19 19:37:13 rillig Exp $");
+__RCSID("$NetBSD: lexi.c,v 1.147 2021/11/19 19:55:15 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/lexi.c 337862 2018-08-15 18:19:45Z pstef $");
 #endif
@@ -275,8 +275,7 @@ debug_lexi(lexer_symbol lsym)
     debug_ps_bool(next_col_1);
     debug_ps_bool(curr_col_1);
     debug_ps_bool(next_unary);
-    if (strcmp(ps.procname, prev_ps.procname) != 0)
-	debug_println("    ps.procname = \"%s\"", ps.procname);
+    debug_ps_bool(is_function_definition);
     debug_ps_bool(want_blank);
     debug_ps_int(paren_level);
     debug_ps_int(p_l_follow);
@@ -517,7 +516,7 @@ found_typename:
 	    if (*p++ == ')' && (*p == ';' || *p == ','))
 		goto no_function_definition;
 
-	strncpy(ps.procname, token.s, sizeof ps.procname - 1);
+	ps.is_function_definition = true;
 	if (ps.in_decl)
 	    ps.in_parameter_declaration = true;
 	return lsym_funcname;
@@ -705,7 +704,7 @@ lexi(void)
 	    }
 
 	    if (tp < e && *tp == '(')
-		ps.procname[0] = ' ';	/* XXX: why not '\0'? */
+		ps.is_function_definition = true;
 	}
 
 	lsym = lsym_unary_op;

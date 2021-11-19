@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.c,v 1.225 2021/11/19 18:14:18 rillig Exp $	*/
+/*	$NetBSD: indent.c,v 1.226 2021/11/19 19:55:15 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)indent.c	5.17 (Berkeley) 6/7/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: indent.c,v 1.225 2021/11/19 18:14:18 rillig Exp $");
+__RCSID("$NetBSD: indent.c,v 1.226 2021/11/19 19:55:15 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/indent.c 340138 2018-11-04 19:24:49Z oshogbo $");
 #endif
@@ -671,7 +671,7 @@ process_lparen_or_lbracket(int decl_ind, bool tabs_to_var, bool spaced_expr)
 
     if (token.s[0] == '(' && ps.in_decl
 	&& !ps.block_init && !ps.decl_indent_done &&
-	ps.procname[0] == '\0' && ps.paren_level == 0) {
+	!ps.is_function_definition && ps.paren_level == 0) {
 	/* function pointer declarations */
 	code_add_decl_indent(decl_ind, tabs_to_var);
 	ps.decl_indent_done = true;
@@ -756,7 +756,7 @@ static void
 process_unary_op(int decl_ind, bool tabs_to_var)
 {
     if (!ps.decl_indent_done && ps.in_decl && !ps.block_init &&
-	ps.procname[0] == '\0' && ps.paren_level == 0) {
+	!ps.is_function_definition && ps.paren_level == 0) {
 	/* pointer declarations */
 	code_add_decl_indent(decl_ind - (int)buf_len(&token), tabs_to_var);
 	ps.decl_indent_done = true;
@@ -1119,7 +1119,7 @@ process_comma(int decl_ind, bool tabs_to_var, bool *force_nl)
     ps.want_blank = code.s != code.e;	/* only put blank after comma if comma
 					 * does not start the line */
 
-    if (ps.in_decl && ps.procname[0] == '\0' && !ps.block_init &&
+    if (ps.in_decl && !ps.is_function_definition && !ps.block_init &&
 	!ps.decl_indent_done && ps.paren_level == 0) {
 	/* indent leading commas and not the actual identifiers */
 	code_add_decl_indent(decl_ind - 1, tabs_to_var);
