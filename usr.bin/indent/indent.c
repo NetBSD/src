@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.c,v 1.222 2021/11/19 17:11:46 rillig Exp $	*/
+/*	$NetBSD: indent.c,v 1.223 2021/11/19 17:42:45 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)indent.c	5.17 (Berkeley) 6/7/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: indent.c,v 1.222 2021/11/19 17:11:46 rillig Exp $");
+__RCSID("$NetBSD: indent.c,v 1.223 2021/11/19 17:42:45 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/indent.c 340138 2018-11-04 19:24:49Z oshogbo $");
 #endif
@@ -87,8 +87,6 @@ struct options opt = {
 };
 
 struct parser_state ps;
-
-struct input_buffer inbuf;
 
 struct buffer token;
 
@@ -217,53 +215,6 @@ diag(int level, const char *msg, ...)
     va_end(ap);
 }
 
-#ifdef debug
-static void
-debug_inbuf(const char *prefix)
-{
-    debug_printf("%s:", prefix);
-    debug_vis_range(" inp \"", inbuf.inp.s, inbuf.inp.e, "\"");
-    if (inbuf.save_com_s != NULL)
-	debug_vis_range(" save_com \"",
-	    inbuf.save_com_s, inbuf.save_com_e, "\"");
-    if (inbuf.saved_inp_s != NULL)
-	debug_vis_range(" saved_inp \"",
-	    inbuf.saved_inp_s, inbuf.saved_inp_e, "\"");
-    debug_printf("\n");
-}
-#else
-#define debug_inbuf(prefix) do { } while (false)
-#endif
-
-static void
-save_com_check_size(size_t n)
-{
-    if ((size_t)(inbuf.save_com_e - inbuf.save_com_buf) + n <=
-	    array_length(inbuf.save_com_buf))
-	return;
-
-    diag(1, "Internal buffer overflow - "
-	"Move big comment from right after if, while, or whatever");
-    fflush(output);
-    exit(1);
-}
-
-static void
-save_com_add_char(char ch)
-{
-    save_com_check_size(1);
-    *inbuf.save_com_e++ = ch;
-}
-
-static void
-save_com_add_range(const char *s, const char *e)
-{
-    size_t len = (size_t)(e - s);
-    save_com_check_size(len);
-    memcpy(inbuf.save_com_e, s, len);
-    inbuf.save_com_e += len;
-}
-
 static void
 search_stmt_newline(bool *force_nl)
 {
@@ -271,10 +222,10 @@ search_stmt_newline(bool *force_nl)
 	inbuf.save_com_s = inbuf.save_com_buf;
 	inbuf.save_com_s[0] = inbuf.save_com_s[1] = ' ';
 	inbuf.save_com_e = &inbuf.save_com_s[2];
-	debug_inbuf("search_stmt_newline init");
+	debug_inp("search_stmt_newline init");
     }
-    save_com_add_char('\n');
-    debug_inbuf(__func__);
+    inp_comment_add_char('\n');
+    debug_inp(__func__);
 
     line_no++;
 
@@ -317,15 +268,15 @@ search_stmt_comment(void)
 	    inbuf.save_com_s, inbuf.save_com_e, "\"\n");
     }
 
-    save_com_add_range(token.s, token.e);
+    inp_comment_add_range(token.s, token.e);
     if (token.e[-1] == '/') {
 	while (inbuf.inp.s[0] != '\n')
-	    save_com_add_char(inp_next());
-	debug_inbuf("search_stmt_comment end C99");
+	    inp_comment_add_char(inp_next());
+	debug_inp("search_stmt_comment end C99");
     } else {
 	while (!(inbuf.save_com_e[-2] == '*' && inbuf.save_com_e[-1] == '/'))
-	    save_com_add_char(inp_next());
-	debug_inbuf("search_stmt_comment end block");
+	    inp_comment_add_char(inp_next());
+	debug_inp("search_stmt_comment end block");
     }
 }
 
@@ -349,7 +300,7 @@ search_stmt_lbrace(void)
 	    if (inp_peek() == '\n')
 		break;
 	}
-	debug_inbuf(__func__);
+	debug_inp(__func__);
 	return true;
     }
     return false;
@@ -375,7 +326,7 @@ search_stmt_other(lexer_symbol lsym, bool *force_nl,
 	return false;
     }
 
-    debug_inbuf(__func__);
+    debug_inp(__func__);
     while (inbuf.save_com_e > inbuf.save_com_s && ch_isblank(inbuf.save_com_e[-1]))
 	inbuf.save_com_e--;
 
@@ -391,15 +342,15 @@ search_stmt_other(lexer_symbol lsym, bool *force_nl,
 	*force_nl = false;
 	--line_no;		/* this will be re-increased when the newline
 				 * is read from the buffer */
-	save_com_add_char('\n');
-	save_com_add_char(' ');
+	inp_comment_add_char('\n');
+	inp_comment_add_char(' ');
 	if (opt.verbose)	/* warn if the line was not already broken */
 	    diag(0, "Line broken");
     }
 
     for (const char *t_ptr = token.s; *t_ptr != '\0'; ++t_ptr)
-	save_com_add_char(*t_ptr);
-    debug_inbuf("search_stmt_other end");
+	inp_comment_add_char(*t_ptr);
+    debug_inp("search_stmt_other end");
     return true;
 }
 
@@ -407,16 +358,8 @@ static void
 switch_buffer(void)
 {
     ps.search_stmt = false;
-    save_com_add_char(' ');		/* add trailing blank, just in case */
-    debug_inbuf(__func__);
-
-    inbuf.saved_inp_s = inbuf.inp.s;
-    inbuf.saved_inp_e = inbuf.inp.e;
-
-    inbuf.inp.s = inbuf.save_com_s;	/* redirect lexi input to save_com_s */
-    inbuf.inp.e = inbuf.save_com_e;
-    inbuf.save_com_e = NULL;
-    debug_println("switched inp.s to save_com_s");
+    inp_comment_add_char(' ');		/* add trailing blank, just in case */
+    inp_from_comment();
 }
 
 static void
@@ -444,8 +387,8 @@ search_stmt_lookahead(lexer_symbol *lsym)
      */
     if (inbuf.save_com_e != NULL) {
 	while (ch_isblank(inp_peek()))
-	    save_com_add_char(inp_next());
-	debug_inbuf(__func__);
+	    inp_comment_add_char(inp_next());
+	debug_inp(__func__);
     }
 
     struct parser_state backup_ps = ps;
@@ -1295,11 +1238,11 @@ read_preprocessing_line(void)
 	    inbuf.save_com_s = inbuf.save_com_buf;
 	    inbuf.save_com_e = inbuf.save_com_s;
 	} else {
-	    save_com_add_char('\n');	/* add newline between comments */
-	    save_com_add_char(' ');
+	    inp_comment_add_char('\n');	/* add newline between comments */
+	    inp_comment_add_char(' ');
 	    --line_no;
 	}
-	save_com_add_range(lab.s + com_start, lab.s + com_end);
+	inp_comment_add_range(lab.s + com_start, lab.s + com_end);
 	lab.e = lab.s + com_start;
 	while (lab.e > lab.s && ch_isblank(lab.e[-1]))
 	    lab.e--;
@@ -1307,8 +1250,8 @@ read_preprocessing_line(void)
 	inbuf.saved_inp_e = inbuf.inp.e;
 	inbuf.inp.s = inbuf.save_com_s;	/* fix so that subsequent calls to lexi will
 				 * take tokens out of save_com */
-	save_com_add_char(' ');	/* add trailing blank, just in case */
-	debug_inbuf(__func__);
+	inp_comment_add_char(' ');	/* add trailing blank, just in case */
+	debug_inp(__func__);
 	inbuf.inp.e = inbuf.save_com_e;
 	inbuf.save_com_e = NULL;
 	debug_println("switched inbuf to save_com");
