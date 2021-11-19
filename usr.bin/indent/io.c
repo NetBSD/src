@@ -1,4 +1,4 @@
-/*	$NetBSD: io.c,v 1.125 2021/11/19 19:55:15 rillig Exp $	*/
+/*	$NetBSD: io.c,v 1.126 2021/11/19 20:01:37 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)io.c	8.1 (Berkeley) 6/6/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: io.c,v 1.125 2021/11/19 19:55:15 rillig Exp $");
+__RCSID("$NetBSD: io.c,v 1.126 2021/11/19 20:01:37 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/io.c 334927 2018-06-10 16:44:18Z pstef $");
 #endif
@@ -153,10 +153,7 @@ debug_inp(const char *prefix)
 			inbuf.saved_inp_s, inbuf.saved_inp_e, "\"");
     debug_printf("\n");
 }
-#else
-#define debug_inp(prefix) do { } while (false)
 #endif
-
 
 static void
 inp_comment_check_size(size_t n)
@@ -200,10 +197,14 @@ inp_comment_init_comment(void)
      * input.inp.s), as that data can easily get lost.
      */
     /*
-     * FIXME: This '4' needs an explanation. For example, in the snippet
+     * FIXME: The '4' below is completely wrong. For example, in the snippet
      * 'if(expr)/''*comment', the 'r)' of the code is not copied. If there
      * is an additional line break before the ')', memcpy tries to copy
      * (size_t)-1 bytes.
+     *
+     * The original author of this magic number doesn't remember its purpose
+     * anymore, so there is no point in keeping it. The existing tests must
+     * still pass though.
      */
     assert((size_t)(inbuf.inp.s - inbuf.inp.buf) >= 4);
     size_t line_len = (size_t)(inbuf.inp.s - inbuf.inp.buf) - 4;
@@ -214,9 +215,9 @@ inp_comment_init_comment(void)
     inbuf.save_com_s[1] = ' ';	/* see search_stmt_lbrace */
     inbuf.save_com_e = &inbuf.save_com_s[2];
     debug_vis_range("search_stmt_comment: before save_com is \"",
-		    inbuf.save_com_buf, inbuf.save_com_s, "\"\n");
+	inbuf.save_com_buf, inbuf.save_com_s, "\"\n");
     debug_vis_range("search_stmt_comment: save_com is \"",
-		    inbuf.save_com_s, inbuf.save_com_e, "\"\n");
+	inbuf.save_com_s, inbuf.save_com_e, "\"\n");
 }
 
 void
