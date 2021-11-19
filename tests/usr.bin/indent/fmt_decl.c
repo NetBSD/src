@@ -1,4 +1,4 @@
-/*	$NetBSD: fmt_decl.c,v 1.16 2021/11/19 18:52:33 rillig Exp $	*/
+/*	$NetBSD: fmt_decl.c,v 1.17 2021/11/19 18:55:10 rillig Exp $	*/
 /* $FreeBSD: head/usr.bin/indent/tests/declarations.0 334478 2018-06-01 09:41:15Z pstef $ */
 
 /* See FreeBSD r303570 */
@@ -502,8 +502,8 @@ int	       *function_name_____20________30________40________50
 
 
 /*
- * Since 2019-04-04, some function names are preserved and others are
- * silently discarded.
+ * Since 2019-04-04 and before lexi.c 1.144 from 2021-11-19, some function
+ * names were preserved while others were silently discarded.
  */
 #indent input
 int *
