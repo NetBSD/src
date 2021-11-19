@@ -1,4 +1,4 @@
-/* 	$NetBSD: wsfont.c,v 1.71 2020/11/23 12:15:39 rin Exp $	*/
+/* 	$NetBSD: wsfont.c,v 1.72 2021/11/19 23:50:39 rin Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsfont.c,v 1.71 2020/11/23 12:15:39 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsfont.c,v 1.72 2021/11/19 23:50:39 rin Exp $");
 
 #include "opt_wsfont.h"
 
@@ -562,6 +562,9 @@ wsfont_rotate(int cookie, int rotate)
 	s = splhigh();
 	origfont = wsfont_find0(cookie, 0xffffffff);
 	splx(s);
+
+	if (origfont == NULL)
+		return (-1);
 
 	switch (rotate) {
 	case WSFONT_ROTATE_CW:
