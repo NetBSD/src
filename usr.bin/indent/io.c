@@ -1,4 +1,4 @@
-/*	$NetBSD: io.c,v 1.116 2021/11/07 07:06:00 rillig Exp $	*/
+/*	$NetBSD: io.c,v 1.117 2021/11/19 15:28:32 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)io.c	8.1 (Berkeley) 6/6/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: io.c,v 1.116 2021/11/07 07:06:00 rillig Exp $");
+__RCSID("$NetBSD: io.c,v 1.117 2021/11/19 15:28:32 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/io.c 334927 2018-06-10 16:44:18Z pstef $");
 #endif
@@ -367,7 +367,7 @@ parse_indent_comment(void)
 {
     bool on;
 
-    const char *p = inp.buf;
+    const char *p = inbuf.inp.buf;
 
     skip_blank(&p);
     if (!skip_string(&p, "/*"))
@@ -412,23 +412,23 @@ inp_read_line(void)
     int ch;
     FILE *f = input;
 
-    if (saved_inp_s != NULL) {	/* there is a partly filled input buffer left */
-	inp.s = saved_inp_s;	/* do not read anything, just switch buffers */
-	inp.e = saved_inp_e;
-	saved_inp_s = saved_inp_e = NULL;
+    if (inbuf.saved_inp_s != NULL) {	/* there is a partly filled input buffer left */
+	inbuf.inp.s = inbuf.saved_inp_s;	/* do not read anything, just switch buffers */
+	inbuf.inp.e = inbuf.saved_inp_e;
+	inbuf.saved_inp_s = inbuf.saved_inp_e = NULL;
 	debug_println("switched inp.s back to saved_inp_s");
-	if (inp.s < inp.e)
+	if (inbuf.inp.s < inbuf.inp.e)
 	    return;		/* only return if there is really something in
 				 * this buffer */
     }
 
-    for (p = inp.buf;;) {
-	if (p >= inp.l) {
-	    size_t size = (size_t)(inp.l - inp.buf) * 2 + 10;
-	    size_t offset = (size_t)(p - inp.buf);
-	    inp.buf = xrealloc(inp.buf, size);
-	    p = inp.buf + offset;
-	    inp.l = inp.buf + size - 2;
+    for (p = inbuf.inp.buf;;) {
+	if (p >= inbuf.inp.l) {
+	    size_t size = (size_t)(inbuf.inp.l - inbuf.inp.buf) * 2 + 10;
+	    size_t offset = (size_t)(p - inbuf.inp.buf);
+	    inbuf.inp.buf = xrealloc(inbuf.inp.buf, size);
+	    p = inbuf.inp.buf + offset;
+	    inbuf.inp.l = inbuf.inp.buf + size - 2;
 	}
 
 	if ((ch = getc(f)) == EOF) {
@@ -446,14 +446,14 @@ inp_read_line(void)
 	    break;
     }
 
-    inp.s = inp.buf;
-    inp.e = p;
+    inbuf.inp.s = inbuf.inp.buf;
+    inbuf.inp.e = p;
 
-    if (p - inp.s >= 3 && p[-3] == '*' && p[-2] == '/')
+    if (p - inbuf.inp.s >= 3 && p[-3] == '*' && p[-2] == '/')
 	parse_indent_comment();
 
     if (inhibit_formatting)
-	output_range(inp.s, inp.e);
+	output_range(inbuf.inp.s, inbuf.inp.e);
 }
 
 int
