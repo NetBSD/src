@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.c,v 1.224 2021/11/19 17:59:16 rillig Exp $	*/
+/*	$NetBSD: indent.c,v 1.225 2021/11/19 18:14:18 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)indent.c	5.17 (Berkeley) 6/7/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: indent.c,v 1.224 2021/11/19 17:59:16 rillig Exp $");
+__RCSID("$NetBSD: indent.c,v 1.225 2021/11/19 18:14:18 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/indent.c 340138 2018-11-04 19:24:49Z oshogbo $");
 #endif
@@ -258,9 +258,8 @@ search_stmt_lbrace(void)
      * Put KNF-style lbraces before the buffered up tokens and jump out of
      * this loop in order to avoid copying the token again.
      */
-    if (inbuf.save_com_e != NULL && opt.brace_same_line) {
-	assert(inbuf.save_com_s[0] == ' ');	/* inp_comment_init_newline */
-	inbuf.save_com_s[0] = '{';
+    if (inp_comment_seen() && opt.brace_same_line) {
+	inp_comment_insert_lbrace();
 	/*
 	 * Originally the lbrace may have been alone on its own line, but it
 	 * will be moved into "the else's line", so if there was a newline
@@ -291,21 +290,18 @@ search_stmt_other(lexer_symbol lsym, bool *force_nl,
     if (remove_newlines)
 	*force_nl = false;
 
-    if (inbuf.save_com_e == NULL) {	/* ignore buffering if comment wasn't saved
-				 * up */
+    if (!inp_comment_seen()) {
 	ps.search_stmt = false;
 	return false;
     }
 
     debug_inp(__func__);
-    while (inbuf.save_com_e > inbuf.save_com_s && ch_isblank(inbuf.save_com_e[-1]))
-	inbuf.save_com_e--;
+    inp_comment_rtrim();
 
     if (opt.swallow_optional_blanklines ||
 	(!comment_buffered && remove_newlines)) {
 	*force_nl = !remove_newlines;
-	while (inbuf.save_com_e > inbuf.save_com_s && inbuf.save_com_e[-1] == '\n')
-	    inbuf.save_com_e--;
+	inp_comment_rtrim_newline();
     }
 
     if (*force_nl) {		/* if we should insert a nl here, put it into
@@ -356,7 +352,7 @@ search_stmt_lookahead(lexer_symbol *lsym)
      * Work around the latter problem by copying all whitespace characters
      * into the buffer so that the later lexi() call will read them.
      */
-    if (inbuf.save_com_e != NULL) {
+    if (inp_comment_seen()) {
 	while (ch_isblank(inp_peek()))
 	    inp_comment_add_char(inp_next());
 	debug_inp(__func__);
@@ -415,10 +411,7 @@ search_stmt(lexer_symbol *lsym, bool *force_nl, bool *last_else)
 static void
 main_init_globals(void)
 {
-    inbuf.inp.buf = xmalloc(10);
-    inbuf.inp.l = inbuf.inp.buf + 8;
-    inbuf.inp.s = inbuf.inp.buf;
-    inbuf.inp.e = inbuf.inp.buf;
+    inp_init();
 
     buf_init(&token);
 
@@ -545,7 +538,7 @@ main_prepare_parsing(void)
     inp_read_line();
 
     int ind = 0;
-    for (const char *p = inbuf.inp.s;; p++) {
+    for (const char *p = inp_p();; p++) {
 	if (*p == ' ')
 	    ind++;
 	else if (*p == '\t')
@@ -1202,30 +1195,15 @@ read_preprocessing_line(void)
 
     while (lab.e > lab.s && ch_isblank(lab.e[-1]))
 	lab.e--;
-    if (lab.e - lab.s == com_end && inbuf.saved_inp_s == NULL) {
+    if (lab.e - lab.s == com_end && !inp_comment_seen()) {
 	/* comment on preprocessor line */
-	if (inbuf.save_com_e == NULL) {	/* if this is the first comment, we must set
-				 * up the buffer */
-	    inbuf.save_com_s = inbuf.save_com_buf;
-	    inbuf.save_com_e = inbuf.save_com_s;
-	} else {
-	    inp_comment_add_char('\n');	/* add newline between comments */
-	    inp_comment_add_char(' ');
-	    --line_no;
-	}
+	inp_comment_init_preproc();
 	inp_comment_add_range(lab.s + com_start, lab.s + com_end);
 	lab.e = lab.s + com_start;
 	while (lab.e > lab.s && ch_isblank(lab.e[-1]))
 	    lab.e--;
-	inbuf.saved_inp_s = inbuf.inp.s;	/* save current input buffer */
-	inbuf.saved_inp_e = inbuf.inp.e;
-	inbuf.inp.s = inbuf.save_com_s;	/* fix so that subsequent calls to lexi will
-				 * take tokens out of save_com */
 	inp_comment_add_char(' ');	/* add trailing blank, just in case */
-	debug_inp(__func__);
-	inbuf.inp.e = inbuf.save_com_e;
-	inbuf.save_com_e = NULL;
-	debug_println("switched inbuf to save_com");
+	inp_from_comment();
     }
     buf_terminate(&lab);
 }
