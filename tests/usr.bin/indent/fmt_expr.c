@@ -1,14 +1,16 @@
-/* $NetBSD: fmt_expr.c,v 1.1 2021/10/23 20:17:08 rillig Exp $ */
+/* $NetBSD: fmt_expr.c,v 1.2 2021/11/19 22:24:29 rillig Exp $ */
 /* $FreeBSD$ */
 
 /*
  * Tests for all kinds of expressions that are not directly related to unary
  * or binary operators.
  *
- * See also: token_binary_op, token_unary_op.
+ * See also:
+ *	lsym_binary_op.c
+ *	lsym_unary_op.c
  */
 
-/* See FreeBSD r303718. */
+/* See lsym_offsetof.c. */
 #indent input
 void t(void) {
     int n = malloc(offsetof(struct s, f) + 1);

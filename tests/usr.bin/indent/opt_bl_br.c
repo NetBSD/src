@@ -1,14 +1,10 @@
-/* $NetBSD: opt_bl_br.c,v 1.2 2021/11/07 19:18:56 rillig Exp $ */
+/* $NetBSD: opt_bl_br.c,v 1.3 2021/11/19 22:24:29 rillig Exp $ */
 /* $FreeBSD$ */
 
 #indent input
 void
 example(int n)
 {
-	/*
-	 * XXX: The '} else' looks strange in this style since the 'else' is
-	 * not at the left margin of the code.
-	 */
 	if (n > 99) { print("large"); }
 	else if (n > 9) { print("double-digit"); }
 	else if (n > 0) print("positive");
@@ -16,14 +12,14 @@ example(int n)
 }
 #indent end
 
+/*
+ * XXX: The '} else' looks strange in this style since the 'else' is
+ * not at the left margin of the code.
+ */
 #indent run -bl
 void
 example(int n)
 {
-	/*
-	 * XXX: The '} else' looks strange in this style since the 'else' is
-	 * not at the left margin of the code.
-	 */
 	if (n > 99)
 	{
 		print("large");
@@ -36,17 +32,6 @@ example(int n)
 	{
 		print("negative");
 	}
-}
-#indent end
-
-#indent input
-void
-example(int n)
-{
-	if (n > 99) { print("large"); }
-	else if (n > 9) { print("double-digit"); }
-	else if (n > 0) print("positive");
-	else { print("negative"); }
 }
 #indent end
 
@@ -68,7 +53,7 @@ example(int n)
 
 
 /*
- * Test C99 comments after 'if (expr)', which is handled by search_stmt.
+ * Test C99 comments after 'if (expr)', which are handled by search_stmt.
  */
 #indent input
 void function(void)
@@ -119,5 +104,37 @@ function(void)
 		// C99 comment 2
 		// C99 comment 3
 		stmt();
+}
+#indent end
+
+
+/*
+ *
+ */
+#indent input
+void
+function(void)
+{
+	if (cond)
+	{
+		stmt();
+	}
+	else
+	if (cond)
+	{
+		stmt();
+	}
+}
+#indent end
+
+#indent run -br
+void
+function(void)
+{
+	if (cond) {
+		stmt();
+	} else if (cond) {
+		stmt();
+	}
 }
 #indent end

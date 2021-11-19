@@ -1,14 +1,42 @@
-/*	$NetBSD: fmt_decl.c,v 1.18 2021/11/19 19:37:13 rillig Exp $	*/
+/*	$NetBSD: fmt_decl.c,v 1.19 2021/11/19 22:24:29 rillig Exp $	*/
 /* $FreeBSD: head/usr.bin/indent/tests/declarations.0 334478 2018-06-01 09:41:15Z pstef $ */
+
+/*
+ * Tests for declarations of global variables, external functions, and local
+ * variables.
+ *
+ * See also:
+ *	opt_di.c
+ */
 
 /* See FreeBSD r303570 */
 
+/*
+ * A type definition usually declares a single type, so there is no need to
+ * align the newly declared type name with the other variables.
+ */
 #indent input
-typedef void	(*voidptr) (int *);
+typedef   void   (   *   voidptr   )   (   int   *   )   ;
 #indent end
 
 #indent run
 typedef void (*voidptr)(int *);
+#indent end
+
+
+/*
+ * In variable declarations, the names of the first declarators are indented
+ * by the amount given in '-di', which defaults to 16.
+ */
+#indent input
+extern   void   (   *   function_pointer   )   (   int   *   )   ;
+extern   void   *   pointer;
+#indent end
+
+#indent run
+/* $ XXX: Why is the token 'function_pointer' not aligned with 'pointer'? */
+extern void	(*function_pointer)(int *);
+extern void    *pointer;
 #indent end
 
 
@@ -108,6 +136,7 @@ t1(char *a, int b,
 #indent end
 
 
+/* See opt_bc.c. */
 #indent input
 void t2 (char *x, int y)
 {
@@ -214,13 +243,13 @@ print_error(const char *fmt, ...)
 /* See FreeBSD r309380 */
 #indent input
 static LIST_HEAD(, alq) ald_active;
-static int ald_shutingdown = 0;
+static int ald_shutting_down = 0;
 struct thread *ald_thread;
 #indent end
 
 #indent run
 static LIST_HEAD(, alq) ald_active;
-static int	ald_shutingdown = 0;
+static int	ald_shutting_down = 0;
 struct thread  *ald_thread;
 #indent end
 

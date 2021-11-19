@@ -1,4 +1,4 @@
-/* $NetBSD: opt_bap_sob.c,v 1.1 2021/10/23 20:30:23 rillig Exp $ */
+/* $NetBSD: opt_bap_sob.c,v 1.2 2021/11/19 22:24:29 rillig Exp $ */
 /* $FreeBSD$ */
 
 /*
@@ -13,10 +13,17 @@ function1(void)
 {
 }
 
-///// separator /////
+///// C99 separator /////
 
 void
 function2(void)
+{
+}
+
+/* C block separator */
+
+void
+function3(void)
 {
 }
 #indent end
@@ -27,10 +34,29 @@ function1(void)
 {
 }
 /* $ FIXME: Keep the empty line between the '}' and the '//'. */
-///// separator /////
+///// C99 separator /////
 
 void
 function2(void)
 {
 }
+/* $ FIXME: Keep the empty line. */
+/* C block separator */
+
+void
+function3(void)
+{
+}
 #indent end
+
+/*
+ * XXX: Strangely, the option '-nbap' keeps the empty lines after the
+ * function bodies.  That's exactly the opposite of the behavior that's
+ * described in the manual.
+ */
+#indent run-equals-input -nbap -sob
+
+/*
+ * Without '-sob', the option '-bap' works as intended.
+ */
+#indent run-equals-input -bap

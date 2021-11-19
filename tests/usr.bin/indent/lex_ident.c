@@ -1,8 +1,9 @@
-/* $NetBSD: lex_ident.c,v 1.2 2021/10/31 19:13:41 rillig Exp $ */
+/* $NetBSD: lex_ident.c,v 1.3 2021/11/19 22:24:29 rillig Exp $ */
 /* $FreeBSD$ */
 
 /*
- * Test lexing of tokens, such as keywords, identifiers, operators.
+ * Test lexing of word-like tokens, such as keywords, identifiers, numeric
+ * constants, character constants, string literals.
  */
 
 /*
