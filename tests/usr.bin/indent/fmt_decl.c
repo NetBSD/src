@@ -1,4 +1,4 @@
-/*	$NetBSD: fmt_decl.c,v 1.15 2021/11/18 23:06:51 rillig Exp $	*/
+/*	$NetBSD: fmt_decl.c,v 1.16 2021/11/19 18:52:33 rillig Exp $	*/
 /* $FreeBSD: head/usr.bin/indent/tests/declarations.0 334478 2018-06-01 09:41:15Z pstef $ */
 
 /* See FreeBSD r303570 */
@@ -512,8 +512,8 @@ aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
 {}
 #indent end
 
-/* FIXME: The function name is missing. */
 #indent run
-int	       *(void){
+int	       *aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+		(void){
 }
 #indent end

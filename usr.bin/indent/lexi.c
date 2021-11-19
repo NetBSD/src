@@ -1,4 +1,4 @@
-/*	$NetBSD: lexi.c,v 1.143 2021/11/19 17:30:10 rillig Exp $	*/
+/*	$NetBSD: lexi.c,v 1.144 2021/11/19 18:52:32 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)lexi.c	8.1 (Berkeley) 6/6/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: lexi.c,v 1.143 2021/11/19 17:30:10 rillig Exp $");
+__RCSID("$NetBSD: lexi.c,v 1.144 2021/11/19 18:52:32 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/lexi.c 337862 2018-08-15 18:19:45Z pstef $");
 #endif
@@ -682,19 +682,14 @@ lexi(void)
 	}
 
 	if (ps.in_decl) {
-	    const char *tp = inp_p();
+	    const char *tp = inp_p(), *e = inp_line_end();
 
-	    while (isalpha((unsigned char)*tp) ||
-		    isspace((unsigned char)*tp)) {
-		if (++tp >= inp_line_end()) {
-		    const char *p_before = inp_p();
-		    inp_read_line();
-		    if (inp_p() != p_before)
-			abort();
-		}
-	    }
-	    if (*tp == '(')
-		ps.procname[0] = ' ';
+	    while (tp < e && (isalpha((unsigned char)*tp) ||
+		    isspace((unsigned char)*tp)))
+		tp++;
+
+	    if (tp < e && *tp == '(')
+		ps.procname[0] = ' ';	/* XXX: why not '\0'? */
 	}
 
 	lsym = lsym_unary_op;
