@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.c,v 1.221 2021/11/19 15:34:25 rillig Exp $	*/
+/*	$NetBSD: indent.c,v 1.222 2021/11/19 17:11:46 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)indent.c	5.17 (Berkeley) 6/7/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: indent.c,v 1.221 2021/11/19 15:34:25 rillig Exp $");
+__RCSID("$NetBSD: indent.c,v 1.222 2021/11/19 17:11:46 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/indent.c 340138 2018-11-04 19:24:49Z oshogbo $");
 #endif
@@ -344,9 +344,9 @@ search_stmt_lbrace(void)
 	 * will be moved into "the else's line", so if there was a newline
 	 * resulting from the "{" before, it must be scanned now and ignored.
 	 */
-	while (isspace((unsigned char)*inbuf.inp.s)) {
+	while (isspace((unsigned char)inp_peek())) {
 	    inp_skip();
-	    if (*inbuf.inp.s == '\n')
+	    if (inp_peek() == '\n')
 		break;
 	}
 	debug_inbuf(__func__);
@@ -443,7 +443,7 @@ search_stmt_lookahead(lexer_symbol *lsym)
      * into the buffer so that the later lexi() call will read them.
      */
     if (inbuf.save_com_e != NULL) {
-	while (ch_isblank(*inbuf.inp.s))
+	while (ch_isblank(inp_peek()))
 	    save_com_add_char(inp_next());
 	debug_inbuf(__func__);
     }
@@ -1246,10 +1246,10 @@ read_preprocessing_line(void)
     state = PLAIN;
     int com_start = 0, com_end = 0;
 
-    while (ch_isblank(*inbuf.inp.s))
+    while (ch_isblank(inp_peek()))
 	inp_skip();
 
-    while (*inbuf.inp.s != '\n' || (state == COMM && !had_eof)) {
+    while (inp_peek() != '\n' || (state == COMM && !had_eof)) {
 	buf_reserve(&lab, 2);
 	*lab.e++ = inp_next();
 	switch (lab.e[-1]) {
@@ -1258,9 +1258,9 @@ read_preprocessing_line(void)
 		*lab.e++ = inp_next();
 	    break;
 	case '/':
-	    if (*inbuf.inp.s == '*' && state == PLAIN) {
+	    if (inp_peek() == '*' && state == PLAIN) {
 		state = COMM;
-		*lab.e++ = *inbuf.inp.s++;
+		*lab.e++ = inp_next();
 		com_start = (int)buf_len(&lab) - 2;
 	    }
 	    break;
@@ -1277,9 +1277,9 @@ read_preprocessing_line(void)
 		state = CHR;
 	    break;
 	case '*':
-	    if (*inbuf.inp.s == '/' && state == COMM) {
+	    if (inp_peek() == '/' && state == COMM) {
 		state = PLAIN;
-		*lab.e++ = *inbuf.inp.s++;
+		*lab.e++ = inp_next();
 		com_end = (int)buf_len(&lab);
 	    }
 	    break;

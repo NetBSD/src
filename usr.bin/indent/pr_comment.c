@@ -1,4 +1,4 @@
-/*	$NetBSD: pr_comment.c,v 1.118 2021/11/19 15:32:13 rillig Exp $	*/
+/*	$NetBSD: pr_comment.c,v 1.119 2021/11/19 17:11:46 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)pr_comment.c	8.1 (Berkeley) 6/6/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: pr_comment.c,v 1.118 2021/11/19 15:32:13 rillig Exp $");
+__RCSID("$NetBSD: pr_comment.c,v 1.119 2021/11/19 17:11:46 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/pr_comment.c 334927 2018-06-10 16:44:18Z pstef $");
 #endif
@@ -117,9 +117,9 @@ analyze_comment(bool *p_may_wrap, bool *p_break_delim,
 	com_ind = 0;
 
     } else {
-	if (*inbuf.inp.s == '-' || *inbuf.inp.s == '*' ||
+	if (inp_peek() == '-' || inp_peek() == '*' ||
 		token.e[-1] == '/' ||
-		(*inbuf.inp.s == '\n' && !opt.format_block_comments)) {
+		(inp_peek() == '\n' && !opt.format_block_comments)) {
 	    may_wrap = false;
 	    break_delim = false;
 	}
@@ -166,7 +166,7 @@ analyze_comment(bool *p_may_wrap, bool *p_break_delim,
 	ps.n_comment_delta = -ind_add(0, start, inbuf.inp.s - 2);
     } else {
 	ps.n_comment_delta = 0;
-	while (ch_isblank(*inbuf.inp.s))
+	while (ch_isblank(inp_peek()))
 	    inbuf.inp.s++;
     }
 
@@ -175,7 +175,7 @@ analyze_comment(bool *p_may_wrap, bool *p_break_delim,
     com_add_char(token.e[-1]);	/* either '*' or '/' */
 
     /* TODO: Maybe preserve a single '\t' as well. */
-    if (*inbuf.inp.s != ' ' && may_wrap)
+    if (inp_peek() != ' ' && may_wrap)
 	com_add_char(' ');
 
     if (break_delim && fits_in_one_line(adj_max_line_length))
@@ -208,13 +208,13 @@ copy_comment_wrap(int adj_max_line_length, bool break_delim)
     ssize_t last_blank = -1;	/* index of the last blank in com.buf */
 
     for (;;) {
-	switch (*inbuf.inp.s) {
+	switch (inp_peek()) {
 	case '\f':
 	    dump_line_ff();
 	    last_blank = -1;
 	    com_add_delim();
 	    inbuf.inp.s++;
-	    while (ch_isblank(*inbuf.inp.s))
+	    while (ch_isblank(inp_peek()))
 		inbuf.inp.s++;
 	    break;
 
@@ -248,19 +248,19 @@ copy_comment_wrap(int adj_max_line_length, bool break_delim)
 	    do {		/* flush any blanks and/or tabs at start of
 				 * next line */
 		inp_skip();
-		if (*inbuf.inp.s == '*' && skip_asterisk) {
+		if (inp_peek() == '*' && skip_asterisk) {
 		    skip_asterisk = false;
 		    inp_skip();
-		    if (*inbuf.inp.s == '/')
+		    if (inp_peek() == '/')
 			goto end_of_comment;
 		}
-	    } while (ch_isblank(*inbuf.inp.s));
+	    } while (ch_isblank(inp_peek()));
 
 	    break;		/* end of case for newline */
 
 	case '*':
 	    inp_skip();
-	    if (*inbuf.inp.s == '/') {
+	    if (inp_peek() == '/') {
 	end_of_comment:
 		inp_skip();
 
@@ -292,7 +292,7 @@ copy_comment_wrap(int adj_max_line_length, bool break_delim)
 		    last_blank = com.e - com.buf;
 		com_add_char(ch);
 		now_len++;
-		if (memchr("*\n\r\b\t", *inbuf.inp.s, 6) != NULL)
+		if (memchr("*\n\r\b\t", inp_peek(), 6) != NULL)
 		    break;
 		if (now_len >= adj_max_line_length && last_blank != -1)
 		    break;
@@ -328,7 +328,7 @@ static void
 copy_comment_nowrap(void)
 {
     for (;;) {
-	if (*inbuf.inp.s == '\n') {
+	if (inp_peek() == '\n') {
 	    if (token.e[-1] == '/')
 		goto finish;
 
