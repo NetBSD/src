@@ -1,4 +1,4 @@
-/*	$NetBSD: ahcisata_core.c,v 1.104 2021/11/10 17:19:30 msaitoh Exp $	*/
+/*	$NetBSD: ahcisata_core.c,v 1.105 2021/11/19 23:46:55 rin Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahcisata_core.c,v 1.104 2021/11/10 17:19:30 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahcisata_core.c,v 1.105 2021/11/19 23:46:55 rin Exp $");
 
 #include <sys/types.h>
 #include <sys/malloc.h>
@@ -114,6 +114,21 @@ static const struct scsipi_bustype ahci_atapi_bustype = {
 #define ATA_DELAY 10000 /* 10s for a drive I/O */
 #define ATA_RESET_DELAY 31000 /* 31s for a drive reset */
 #define AHCI_RST_WAIT (ATA_RESET_DELAY / 10)
+
+#ifndef AHCISATA_EXTRA_DELAY_MS
+#define	AHCISATA_EXTRA_DELAY_MS	500	/* XXX need to adjust */
+#endif
+
+#ifdef AHCISATA_EXTRA_DELAY
+#define	AHCISATA_DO_EXTRA_DELAY(sc, chp, msg, flags)			\
+    ata_delay(chp, AHCISATA_EXTRA_DELAY_MS, msg, flags)
+#else
+#define	AHCISATA_DO_EXTRA_DELAY(sc, chp, msg, flags)			\
+    do {								\
+	if ((sc)->sc_ahci_quirks & AHCI_QUIRK_EXTRA_DELAY)		\
+		ata_delay(chp, AHCISATA_EXTRA_DELAY_MS, msg, flags);	\
+    } while (0)
+#endif
 
 const struct ata_bustype ahci_ata_bustype = {
 	.bustype_type = SCSIPI_BUSTYPE_ATA,
@@ -970,9 +985,7 @@ again:
 	    AHCI_READ(sc, AHCI_P_CMD(chp->ch_channel))), DEBUG_PROBE);
 end:
 	ahci_channel_stop(sc, chp, flags);
-#ifdef AHCISATA_EXTRA_DELAY
-	ata_delay(chp, 500, "ahcirst", flags);
-#endif
+	AHCISATA_DO_EXTRA_DELAY(sc, chp, "ahcirst", flags);
 	/* clear port interrupt register */
 	AHCI_WRITE(sc, AHCI_P_IS(chp->ch_channel), 0xffffffff);
 	ahci_channel_start(sc, chp, flags,
@@ -996,9 +1009,7 @@ ahci_reset_channel(struct ata_channel *chp, int flags)
 		/* XXX and then ? */
 	}
 	ata_kill_active(chp, KILL_RESET, flags);
-#ifdef AHCISATA_EXTRA_DELAY
-	ata_delay(chp, 500, "ahcirst", flags);
-#endif
+	AHCISATA_DO_EXTRA_DELAY(sc, chp, "ahcirst", flags);
 	/* clear port interrupt register */
 	AHCI_WRITE(sc, AHCI_P_IS(chp->ch_channel), 0xffffffff);
 	/* clear SErrors and start operations */
@@ -1068,9 +1079,7 @@ ahci_probe_drive(struct ata_channel *chp)
 	switch (sata_reset_interface(chp, sc->sc_ahcit, achp->ahcic_scontrol,
 	    achp->ahcic_sstatus, AT_WAIT)) {
 	case SStatus_DET_DEV:
-#ifdef AHCISATA_EXTRA_DELAY
-		ata_delay(chp, 500, "ahcidv", AT_WAIT);
-#endif
+		AHCISATA_DO_EXTRA_DELAY(sc, chp, "ahcidv", AT_WAIT);
 
 		/* Initial value, used in case the soft reset fails */
 		sig = AHCI_READ(sc, AHCI_P_SIG(chp->ch_channel));
@@ -1109,10 +1118,11 @@ ahci_probe_drive(struct ata_channel *chp)
 		    AHCI_P_IX_IFS |
 		    AHCI_P_IX_OFS | AHCI_P_IX_DPS | AHCI_P_IX_UFS |
 		    AHCI_P_IX_PSS | AHCI_P_IX_DHRS | AHCI_P_IX_SDBS);
-#ifdef AHCISATA_EXTRA_DELAY
-		/* wait 500ms before actually starting operations */
-		ata_delay(chp, 500, "ahciprb", AT_WAIT);
-#endif
+		/*
+		 * optionally, wait AHCISATA_EXTRA_DELAY_MS msec before
+		 * actually starting operations
+		 */
+		AHCISATA_DO_EXTRA_DELAY(sc, chp, "ahciprb", AT_WAIT);
 		break;
 
 	default:

@@ -1,4 +1,4 @@
-/*	$NetBSD: ahcisata_pci.c,v 1.60 2021/11/12 07:06:06 skrll Exp $	*/
+/*	$NetBSD: ahcisata_pci.c,v 1.61 2021/11/19 23:46:55 rin Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahcisata_pci.c,v 1.60 2021/11/12 07:06:06 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahcisata_pci.c,v 1.61 2021/11/19 23:46:55 rin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ahcisata_pci.h"
@@ -204,6 +204,25 @@ static const struct ahci_pci_quirk ahci_pci_quirks[] = {
 	    AHCI_QUIRK_BADPMP },
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801JI_SATA_AHCI,
 	    AHCI_QUIRK_BADPMP },
+	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_C600_AHCI,
+	    AHCI_QUIRK_EXTRA_DELAY },
+#if 0
+	/*
+	 * XXX Non-reproducible failures reported. May need extra-delay quirk.
+	 */
+	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_BAYTRAIL_SATA_AHCI_0,
+	    AHCI_QUIRK_EXTRA_DELAY },
+	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_BAYTRAIL_SATA_AHCI_1,
+	    AHCI_QUIRK_EXTRA_DELAY },
+	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801I_SATA_4,
+	    AHCI_QUIRK_EXTRA_DELAY },
+	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801I_SATA_5,
+	    AHCI_QUIRK_EXTRA_DELAY },
+	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801I_SATA_6,
+	    AHCI_QUIRK_EXTRA_DELAY },
+	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801I_SATA_7,
+	    AHCI_QUIRK_EXTRA_DELAY },
+#endif
 };
 
 struct ahci_pci_softc {
