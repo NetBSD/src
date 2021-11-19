@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.c,v 1.218 2021/11/07 19:18:56 rillig Exp $	*/
+/*	$NetBSD: indent.c,v 1.219 2021/11/19 15:28:32 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)indent.c	5.17 (Berkeley) 6/7/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: indent.c,v 1.218 2021/11/07 19:18:56 rillig Exp $");
+__RCSID("$NetBSD: indent.c,v 1.219 2021/11/19 15:28:32 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/indent.c 340138 2018-11-04 19:24:49Z oshogbo $");
 #endif
@@ -88,20 +88,13 @@ struct options opt = {
 
 struct parser_state ps;
 
-struct buffer inp;
+struct input_buffer inbuf;
 
 struct buffer token;
 
 struct buffer lab;
 struct buffer code;
 struct buffer com;
-
-char sc_buf[sc_size];
-char *save_com;
-static char *sc_end;		/* pointer into save_com buffer */
-
-char *saved_inp_s;
-char *saved_inp_e;
 
 bool found_err;
 int blank_lines_to_output;
@@ -229,7 +222,7 @@ static void
 debug_save_com(const char *prefix)
 {
     debug_printf("%s: save_com is ", prefix);
-    debug_vis_range("\"", save_com, sc_end, "\"\n");
+    debug_vis_range("\"", inbuf.save_com, inbuf.sc_end, "\"\n");
 }
 #else
 #define debug_save_com(prefix) do { } while (false)
@@ -238,7 +231,7 @@ debug_save_com(const char *prefix)
 static void
 sc_check_size(size_t n)
 {
-    if ((size_t)(sc_end - sc_buf) + n <= sc_size)
+    if ((size_t)(inbuf.sc_end - inbuf.sc_buf) + n <= sc_size)
 	return;
 
     diag(1, "Internal buffer overflow - "
@@ -251,7 +244,7 @@ static void
 sc_add_char(char ch)
 {
     sc_check_size(1);
-    *sc_end++ = ch;
+    *inbuf.sc_end++ = ch;
 }
 
 static void
@@ -259,17 +252,17 @@ sc_add_range(const char *s, const char *e)
 {
     size_t len = (size_t)(e - s);
     sc_check_size(len);
-    memcpy(sc_end, s, len);
-    sc_end += len;
+    memcpy(inbuf.sc_end, s, len);
+    inbuf.sc_end += len;
 }
 
 static void
 search_stmt_newline(bool *force_nl)
 {
-    if (sc_end == NULL) {
-	save_com = sc_buf;
-	save_com[0] = save_com[1] = ' ';
-	sc_end = &save_com[2];
+    if (inbuf.sc_end == NULL) {
+	inbuf.save_com = inbuf.sc_buf;
+	inbuf.save_com[0] = inbuf.save_com[1] = ' ';
+	inbuf.sc_end = &inbuf.save_com[2];
 	debug_save_com("search_stmt_newline init");
     }
     sc_add_char('\n');
@@ -291,7 +284,7 @@ search_stmt_newline(bool *force_nl)
 static void
 search_stmt_comment(void)
 {
-    if (sc_end == NULL) {
+    if (inbuf.sc_end == NULL) {
 	/*
 	 * Copy everything from the start of the line, because
 	 * process_comment() will use that to calculate the original
@@ -303,26 +296,26 @@ search_stmt_comment(void)
 	 * is an additional line break before the ')', memcpy tries to copy
 	 * (size_t)-1 bytes.
 	 */
-	assert((size_t)(inp.s - inp.buf) >= 4);
-	size_t line_len = (size_t)(inp.s - inp.buf) - 4;
-	assert(line_len < array_length(sc_buf));
-	memcpy(sc_buf, inp.buf, line_len);
-	save_com = sc_buf + line_len;
-	save_com[0] = save_com[1] = ' ';
-	sc_end = &save_com[2];
+	assert((size_t)(inbuf.inp.s - inbuf.inp.buf) >= 4);
+	size_t line_len = (size_t)(inbuf.inp.s - inbuf.inp.buf) - 4;
+	assert(line_len < array_length(inbuf.sc_buf));
+	memcpy(inbuf.sc_buf, inbuf.inp.buf, line_len);
+	inbuf.save_com = inbuf.sc_buf + line_len;
+	inbuf.save_com[0] = inbuf.save_com[1] = ' ';
+	inbuf.sc_end = &inbuf.save_com[2];
 	debug_vis_range("search_stmt_comment: before save_com is \"",
-	    sc_buf, save_com, "\"\n");
+	    inbuf.sc_buf, inbuf.save_com, "\"\n");
 	debug_vis_range("search_stmt_comment: save_com is \"",
-	    save_com, sc_end, "\"\n");
+	    inbuf.save_com, inbuf.sc_end, "\"\n");
     }
 
     sc_add_range(token.s, token.e);
     if (token.e[-1] == '/') {
-	while (inp.s[0] != '\n')
+	while (inbuf.inp.s[0] != '\n')
 	    sc_add_char(inp_next());
 	debug_save_com("search_stmt_comment end C99");
     } else {
-	while (!(sc_end[-2] == '*' && sc_end[-1] == '/'))
+	while (!(inbuf.sc_end[-2] == '*' && inbuf.sc_end[-1] == '/'))
 	    sc_add_char(inp_next());
 	debug_save_com("search_stmt_comment end block");
     }
@@ -335,17 +328,17 @@ search_stmt_lbrace(void)
      * Put KNF-style lbraces before the buffered up tokens and jump out of
      * this loop in order to avoid copying the token again.
      */
-    if (sc_end != NULL && opt.brace_same_line) {
-	assert(save_com[0] == ' ');	/* see search_stmt_comment */
-	save_com[0] = '{';
+    if (inbuf.sc_end != NULL && opt.brace_same_line) {
+	assert(inbuf.save_com[0] == ' ');	/* see search_stmt_comment */
+	inbuf.save_com[0] = '{';
 	/*
 	 * Originally the lbrace may have been alone on its own line, but it
 	 * will be moved into "the else's line", so if there was a newline
 	 * resulting from the "{" before, it must be scanned now and ignored.
 	 */
-	while (isspace((unsigned char)*inp.s)) {
+	while (isspace((unsigned char)*inbuf.inp.s)) {
 	    inp_skip();
-	    if (*inp.s == '\n')
+	    if (*inbuf.inp.s == '\n')
 		break;
 	}
 	debug_save_com(__func__);
@@ -368,21 +361,21 @@ search_stmt_other(lexer_symbol lsym, bool *force_nl,
     if (remove_newlines)
 	*force_nl = false;
 
-    if (sc_end == NULL) {	/* ignore buffering if comment wasn't saved
+    if (inbuf.sc_end == NULL) {	/* ignore buffering if comment wasn't saved
 				 * up */
 	ps.search_stmt = false;
 	return false;
     }
 
     debug_save_com(__func__);
-    while (sc_end > save_com && ch_isblank(sc_end[-1]))
-	sc_end--;
+    while (inbuf.sc_end > inbuf.save_com && ch_isblank(inbuf.sc_end[-1]))
+	inbuf.sc_end--;
 
     if (opt.swallow_optional_blanklines ||
 	(!comment_buffered && remove_newlines)) {
 	*force_nl = !remove_newlines;
-	while (sc_end > save_com && sc_end[-1] == '\n')
-	    sc_end--;
+	while (inbuf.sc_end > inbuf.save_com && inbuf.sc_end[-1] == '\n')
+	    inbuf.sc_end--;
     }
 
     if (*force_nl) {		/* if we should insert a nl here, put it into
@@ -409,12 +402,12 @@ switch_buffer(void)
     sc_add_char(' ');		/* add trailing blank, just in case */
     debug_save_com(__func__);
 
-    saved_inp_s = inp.s;
-    saved_inp_e = inp.e;
+    inbuf.saved_inp_s = inbuf.inp.s;
+    inbuf.saved_inp_e = inbuf.inp.e;
 
-    inp.s = save_com;		/* redirect lexi input to save_com */
-    inp.e = sc_end;
-    sc_end = NULL;
+    inbuf.inp.s = inbuf.save_com;		/* redirect lexi input to save_com */
+    inbuf.inp.e = inbuf.sc_end;
+    inbuf.sc_end = NULL;
     debug_println("switched inp.s to save_com");
 }
 
@@ -441,8 +434,8 @@ search_stmt_lookahead(lexer_symbol *lsym)
      * Work around the latter problem by copying all whitespace characters
      * into the buffer so that the later lexi() call will read them.
      */
-    if (sc_end != NULL) {
-	while (ch_isblank(*inp.s))
+    if (inbuf.sc_end != NULL) {
+	while (ch_isblank(*inbuf.inp.s))
 	    sc_add_char(inp_next());
 	debug_save_com(__func__);
     }
@@ -500,10 +493,10 @@ search_stmt(lexer_symbol *lsym, bool *force_nl, bool *last_else)
 static void
 main_init_globals(void)
 {
-    inp.buf = xmalloc(10);
-    inp.l = inp.buf + 8;
-    inp.s = inp.buf;
-    inp.e = inp.buf;
+    inbuf.inp.buf = xmalloc(10);
+    inbuf.inp.l = inbuf.inp.buf + 8;
+    inbuf.inp.s = inbuf.inp.buf;
+    inbuf.inp.e = inbuf.inp.buf;
 
     buf_init(&token);
 
@@ -630,7 +623,7 @@ main_prepare_parsing(void)
     inp_read_line();
 
     int ind = 0;
-    for (const char *p = inp.s;; p++) {
+    for (const char *p = inbuf.inp.s;; p++) {
 	if (*p == ' ')
 	    ind++;
 	else if (*p == '\t')
@@ -1245,10 +1238,10 @@ read_preprocessing_line(void)
     state = PLAIN;
     int com_start = 0, com_end = 0;
 
-    while (ch_isblank(*inp.s))
+    while (ch_isblank(*inbuf.inp.s))
 	inp_skip();
 
-    while (*inp.s != '\n' || (state == COMM && !had_eof)) {
+    while (*inbuf.inp.s != '\n' || (state == COMM && !had_eof)) {
 	buf_reserve(&lab, 2);
 	*lab.e++ = inp_next();
 	switch (lab.e[-1]) {
@@ -1257,9 +1250,9 @@ read_preprocessing_line(void)
 		*lab.e++ = inp_next();
 	    break;
 	case '/':
-	    if (*inp.s == '*' && state == PLAIN) {
+	    if (*inbuf.inp.s == '*' && state == PLAIN) {
 		state = COMM;
-		*lab.e++ = *inp.s++;
+		*lab.e++ = *inbuf.inp.s++;
 		com_start = (int)buf_len(&lab) - 2;
 	    }
 	    break;
@@ -1276,9 +1269,9 @@ read_preprocessing_line(void)
 		state = CHR;
 	    break;
 	case '*':
-	    if (*inp.s == '/' && state == COMM) {
+	    if (*inbuf.inp.s == '/' && state == COMM) {
 		state = PLAIN;
-		*lab.e++ = *inp.s++;
+		*lab.e++ = *inbuf.inp.s++;
 		com_end = (int)buf_len(&lab);
 	    }
 	    break;
@@ -1287,12 +1280,12 @@ read_preprocessing_line(void)
 
     while (lab.e > lab.s && ch_isblank(lab.e[-1]))
 	lab.e--;
-    if (lab.e - lab.s == com_end && saved_inp_s == NULL) {
+    if (lab.e - lab.s == com_end && inbuf.saved_inp_s == NULL) {
 	/* comment on preprocessor line */
-	if (sc_end == NULL) {	/* if this is the first comment, we must set
+	if (inbuf.sc_end == NULL) {	/* if this is the first comment, we must set
 				 * up the buffer */
-	    save_com = sc_buf;
-	    sc_end = save_com;
+	    inbuf.save_com = inbuf.sc_buf;
+	    inbuf.sc_end = inbuf.save_com;
 	} else {
 	    sc_add_char('\n');	/* add newline between comments */
 	    sc_add_char(' ');
@@ -1302,14 +1295,14 @@ read_preprocessing_line(void)
 	lab.e = lab.s + com_start;
 	while (lab.e > lab.s && ch_isblank(lab.e[-1]))
 	    lab.e--;
-	saved_inp_s = inp.s;	/* save current input buffer */
-	saved_inp_e = inp.e;
-	inp.s = save_com;	/* fix so that subsequent calls to lexi will
+	inbuf.saved_inp_s = inbuf.inp.s;	/* save current input buffer */
+	inbuf.saved_inp_e = inbuf.inp.e;
+	inbuf.inp.s = inbuf.save_com;	/* fix so that subsequent calls to lexi will
 				 * take tokens out of save_com */
 	sc_add_char(' ');	/* add trailing blank, just in case */
 	debug_save_com(__func__);
-	inp.e = sc_end;
-	sc_end = NULL;
+	inbuf.inp.e = inbuf.sc_end;
+	inbuf.sc_end = NULL;
 	debug_println("switched inp.s to save_com");
     }
     buf_terminate(&lab);

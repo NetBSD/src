@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.h,v 1.86 2021/11/07 18:26:17 rillig Exp $	*/
+/*	$NetBSD: indent.h,v 1.87 2021/11/19 15:28:32 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-FreeBSD
@@ -146,12 +146,22 @@ struct buffer {
     char *l;			/* end of the allocated memory */
 };
 
-extern FILE *input;
-extern FILE *output;
-
-extern struct buffer inp;	/* one line of input, ready to be split into
+extern struct input_buffer {
+    struct buffer inp;		/* one line of input, ready to be split into
 				 * tokens; occasionally this buffer switches
 				 * to sc_buf */
+    char sc_buf[sc_size];	/* input text is saved here when looking for
+				 * the brace after an if, while, etc */
+    char *save_com;		/* start of the comment stored in sc_buf */
+    char *sc_end;		/* pointer into save_com buffer */
+
+    char *saved_inp_s;		/* saved value of inp.s when taking input from
+				 * save_com */
+    char *saved_inp_e;		/* similarly saved value of inp.e */
+} inbuf;
+
+extern FILE *input;
+extern FILE *output;
 
 extern struct buffer token;	/* the current token to be processed, is
 				 * typically copied to the buffer 'code',
@@ -163,15 +173,6 @@ extern struct buffer com;	/* the trailing comment of the line, or the
 				 * start or end of a multi-line comment, or
 				 * while in process_comment, a single line of
 				 * a multi-line comment */
-
-extern char sc_buf[sc_size];	/* input text is saved here when looking for
-				 * the brace after an if, while, etc */
-extern char *save_com;		/* start of the comment stored in sc_buf */
-
-extern char *saved_inp_s;	/* saved value of inp.s when taking input from
-				 * save_com */
-extern char *saved_inp_e;	/* similarly saved value of inp.e */
-
 
 extern struct options {
     bool blanklines_around_conditional_compilation;
