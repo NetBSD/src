@@ -1,4 +1,4 @@
-/* $NetBSD: lex_char.c,v 1.1 2021/10/22 20:54:36 rillig Exp $ */
+/* $NetBSD: lex_char.c,v 1.2 2021/11/19 22:24:29 rillig Exp $ */
 /* $FreeBSD$ */
 
 /*
@@ -21,6 +21,10 @@ int escape_v = '\v';
 int escape_single_quote = '\'';
 int escape_double_quote = '\"';
 int escape_backslash = '\\';
+int line_break_before = '\
+x';
+int line_break_after = 'x\
+';
 #indent end
 
 #indent run-equals-input -di0

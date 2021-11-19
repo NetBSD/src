@@ -1,19 +1,51 @@
-/*	$NetBSD: fmt_else_comment.c,v 1.1 2021/10/22 19:27:53 rillig Exp $	*/
+/*	$NetBSD: fmt_else_comment.c,v 1.2 2021/11/19 22:24:29 rillig Exp $	*/
 /* $FreeBSD: head/usr.bin/indent/tests/elsecomment.0.pro 314613 2017-03-03 20:15:22Z ngie $ */
 
-/* See r303484 and r309342 */
+/*
+ * Tests for comments after 'if (expr)' and 'else'. If the option '-br' is
+ * given (or rather, if '-bl' is not given), indent looks ahead to the
+ * following significant token to see whether it is a '{', it then moves the
+ * comments after the '{'.
+ *
+ * See also:
+ *	FreeBSD r303484
+ *	FreeBSD r309342
+ */
 
+/*
+ * The two 'if' statements below exercise two different code paths, even
+ * though they look very similar.
+ */
 #indent input
 void t(void) {
-	/* The two if statements below excercise two different code paths. */
-
 	if (1) /* a */ int a; else /* b */ int b;
 
 	if (1) /* a */
 		int a;
 	else /* b */
 		int b;
+}
+#indent end
 
+#indent run
+void
+t(void)
+{
+	if (1)			/* a */
+		int		a;
+	else			/* b */
+		int		b;
+
+	if (1)			/* a */
+		int		a;
+	else			/* b */
+		int		b;
+}
+#indent end
+
+
+#indent input
+void t(void) {
 	if (1) {
 
 	}
@@ -50,18 +82,6 @@ void t(void) {
 void
 t(void)
 {
-	/* The two if statements below excercise two different code paths. */
-
-	if (1)			/* a */
-		int		a;
-	else			/* b */
-		int		b;
-
-	if (1)			/* a */
-		int		a;
-	else			/* b */
-		int		b;
-
 	if (1)
 	{
 

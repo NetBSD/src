@@ -1,4 +1,4 @@
-/* $NetBSD: opt_P.c,v 1.1 2021/10/22 20:54:36 rillig Exp $ */
+/* $NetBSD: opt_P.c,v 1.2 2021/11/19 22:24:29 rillig Exp $ */
 /* $FreeBSD$ */
 
 /*
@@ -6,8 +6,10 @@
  * instead of '$HOME/.indent.pro'.
  *
  * The format of the tests in t_options.sh does not allow the tests to create
- * arbitrary files, therefore this test is rather restricted. See t_misc.sh
- * for more related tests with individual setup.
+ * arbitrary files, therefore this test is rather restricted.
+ *
+ * See also:
+ *	t_misc			for test with custom setup
  */
 
 #indent input

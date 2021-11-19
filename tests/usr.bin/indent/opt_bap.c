@@ -1,12 +1,16 @@
-/* $NetBSD: opt_bap.c,v 1.3 2021/10/18 07:11:31 rillig Exp $ */
+/* $NetBSD: opt_bap.c,v 1.4 2021/11/19 22:24:29 rillig Exp $ */
 /* $FreeBSD$ */
 
 /*
- * Tests for the options '-bap' and '-nbap'.
+ * Tests for the options '-bap' and '-nbap' ("blank line after procedure
+ * body").
  *
  * The option '-bap' forces a blank line after every function body.
  *
  * The option '-nbap' keeps everything as is.
+ *
+ * FIXME: These options don't have any effect since at least 2000.
+ * TODO: Investigate how nobody could have noticed this for 20 years.
  */
 
 #indent input

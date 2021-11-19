@@ -1,9 +1,10 @@
-/* $NetBSD: indent_off_on.c,v 1.3 2021/10/19 21:21:07 rillig Exp $ */
+/* $NetBSD: indent_off_on.c,v 1.4 2021/11/19 22:24:29 rillig Exp $ */
 /* $FreeBSD$ */
 
 /*
  * Tests for the comments 'INDENT OFF' and 'INDENT ON', which temporarily
- * disable formatting.
+ * disable formatting, copying the input directly to the output.  Internally,
+ * indent still keeps track of the number of braces and other indentation.
  */
 
 #indent input
@@ -116,16 +117,16 @@ int decl;
  * between the two words.
  */
 #indent input
-int decl;
+int   decl   ;
 /*		INDENT		OFF		*/
 int   decl   ;
 /*		INDENT		ON		*/
-int decl;
+int   decl   ;
 #indent end
 
 /*
  * XXX: It is asymmetric that 'INDENT OFF' is indented, while 'INDENT ON'
- * is aligned.
+ * is pushed to the start of the line.
  */
 #indent run -di0
 int decl;
@@ -212,4 +213,51 @@ indent_still_on(void);		/* due to the colon in the middle */
 /* INDENT OFF *//* extra comment */
 void
 indent_still_on(void);		/* due to the extra comment to the right */
+#indent end
+
+
+/*
+ * Try to confuse indent by having a string literal that has an embedded
+ * INDENT comment.  Indent doesn't get confused though because it requires the
+ * INDENT comment to go from the very beginning of the line to the very end of
+ * the line.
+ */
+#indent input
+const char *str = "\
+/* INDENT OFF */\
+"   ,   ch;
+#indent end
+
+#indent run
+const char     *str = "\
+/* INDENT OFF */\
+", ch;
+#indent end
+
+
+/*
+ * The keywords in the INDENT comments must all be uppercase.
+ */
+#indent input
+int   on   ;
+/* indent off */
+int   still_on   ;
+/* INDENT off */
+int   still_on   ;
+/* indent OFF */
+int   still_on   ;
+/* INDENT OFF */
+int   finally_off   ;
+#indent end
+
+#indent run -di0
+int on;
+/* indent off */
+int still_on;
+/* INDENT off */
+int still_on;
+/* indent OFF */
+int still_on;
+/* INDENT OFF */
+int   finally_off   ;
 #indent end

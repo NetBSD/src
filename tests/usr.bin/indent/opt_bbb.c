@@ -1,4 +1,4 @@
-/* $NetBSD: opt_bbb.c,v 1.3 2021/10/16 21:32:10 rillig Exp $ */
+/* $NetBSD: opt_bbb.c,v 1.4 2021/11/19 22:24:29 rillig Exp $ */
 /* $FreeBSD$ */
 
 /*
@@ -21,11 +21,11 @@
 /*
  * Documentation of global_variable.
  */
-int global_variable;
+int		global_variable;
 /*
  * Documentation of function_declaration.
  */
-void function_declaration(void);
+void		function_declaration(void);
 /*
  * Documentation of function_definition.
  */
@@ -65,28 +65,4 @@ function_definition(void)
 }
 #indent end
 
-#indent run -nbbb
-/*
- * This is a block comment.
- */
-/* This is not a block comment since it is single-line. */
-/*
- * This is a second block comment.
- */
-/* This is not a block comment. */
-/*
- * Documentation of global_variable.
- */
-int		global_variable;
-/*
- * Documentation of function_declaration.
- */
-void		function_declaration(void);
-/*
- * Documentation of function_definition.
- */
-void
-function_definition(void)
-{
-}
-#indent end
+#indent run-equals-input -nbbb

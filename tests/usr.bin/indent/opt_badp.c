@@ -1,4 +1,4 @@
-/* $NetBSD: opt_badp.c,v 1.4 2021/10/18 07:11:31 rillig Exp $ */
+/* $NetBSD: opt_badp.c,v 1.5 2021/11/19 22:24:29 rillig Exp $ */
 /* $FreeBSD$ */
 
 /*
@@ -9,71 +9,105 @@
  */
 
 #indent input
-static void
-no_declarations(void)
+void
+empty_body(void)
 {
-	action();
 }
+#indent end
 
-static void
-declarations_without_blank_line(void)
+#indent run-equals-input -badp
+#indent run-equals-input -nbadp
+
+
+#indent input
+void
+empty_line(void)
 {
-	int local_variable;
-	action();
+
 }
+#indent end
 
-static void
-declaration_with_blank_line(void)
+#indent run-equals-input -badp
+#indent run-equals-input -nbadp
+
+
+#indent input
+void
+only_declaration(void)
 {
-	int local_variable;
-
-	action();
+	int		decl;
 }
+#indent end
 
-static void
-declaration_with_several_blank_lines(void)
+#indent run-equals-input -badp
+#indent run-equals-input -nbadp
+
+
+#indent input
+void
+only_statement(void)
 {
-	int local_variable;
-
-
-
-	action();
+	stmt();
 }
 #indent end
 
 #indent run -badp
-static void
-no_declarations(void)
+void
+only_statement(void)
 {
 
-	action();
+	stmt();
 }
+#indent end
+#indent run-equals-input -nbadp
 
-static void
-declarations_without_blank_line(void)
+
+#indent input
+void
+declaration_and_statement(void)
 {
-	int		local_variable;
-	/* $ FIXME: need empty line here */
-	action();
-}
-
-static void
-declaration_with_blank_line(void)
-{
-	int		local_variable;
-
-	action();
-}
-
-static void
-declaration_with_several_blank_lines(void)
-{
-	int		local_variable;
-
-
-
-	action();
+	int		decl;
+	stmt();
 }
 #indent end
 
-#indent run-equals-input -nbadp -ldi0
+#indent run -badp
+void
+declaration_and_statement(void)
+{
+	int		decl;
+	/* $ FIXME: missing empty line */
+	stmt();
+}
+#indent end
+#indent run-equals-input -nbadp
+
+
+#indent input
+static void
+declaration_blank_statement(void)
+{
+	int		decl;
+
+	stmt();
+}
+#indent end
+
+#indent run-equals-input -badp
+#indent run-equals-input -nbadp
+
+
+#indent input
+static void
+declaration_blank_blank_statement(void)
+{
+	int		decl;
+
+
+
+	stmt();
+}
+#indent end
+
+#indent run-equals-input -badp
+#indent run-equals-input -nbadp

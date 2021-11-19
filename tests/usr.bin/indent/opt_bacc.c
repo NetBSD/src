@@ -1,8 +1,9 @@
-/* $NetBSD: opt_bacc.c,v 1.5 2021/11/19 19:37:13 rillig Exp $ */
+/* $NetBSD: opt_bacc.c,v 1.6 2021/11/19 22:24:29 rillig Exp $ */
 /* $FreeBSD$ */
 
 /*
- * Test the options '-bacc' and '-nbacc'.
+ * Tests for the options '-bacc' and '-nbacc' ("blank line around conditional
+ * compilation").
  *
  * The option '-bacc' forces a blank line around every conditional compilation
  * block.  For example, in front of every #ifdef and after every #endif.
@@ -22,8 +23,8 @@ int		c;
 #indent end
 
 /*
- * XXX: As of 2021-10-05, the option -bacc has no effect on declarations since
- * process_decl resets blank_line_before unconditionally.
+ * XXX: As of 2021-11-19, the option -bacc has no effect on declarations since
+ * process_type resets blank_line_before unconditionally.
  */
 #indent run -bacc
 int		a;
@@ -70,6 +71,7 @@ int		space_c;
 /* The option '-nbacc' does not remove anything. */
 #indent run-equals-input -nbacc
 
+
 /*
  * Preprocessing directives can also occur in function bodies.
  */
@@ -104,3 +106,44 @@ os_name(void)
 #indent end
 
 #indent run-equals-input -nbacc
+
+
+/*
+ * Test nested preprocessor directives.
+ */
+#indent input
+#if outer
+#if inner
+int decl;
+#endif
+#endif
+#indent end
+
+#indent run -di0 -bacc
+#if outer
+
+#if inner
+int decl;
+#endif
+
+#endif
+#indent end
+
+#indent run-equals-input -di0 -nbacc
+
+
+/*
+ * Test nested preprocessor directives that are interleaved with declarations.
+ */
+#indent input
+#ifdef outer
+int outer_above;
+#ifdef inner
+int inner;
+#endif
+int outer_below;
+#endif
+#indent end
+
+#indent run-equals-input -di0 -bacc
+#indent run-equals-input -di0 -nbacc
