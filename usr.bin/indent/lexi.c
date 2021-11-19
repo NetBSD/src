@@ -1,4 +1,4 @@
-/*	$NetBSD: lexi.c,v 1.140 2021/11/19 15:28:32 rillig Exp $	*/
+/*	$NetBSD: lexi.c,v 1.141 2021/11/19 17:11:46 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)lexi.c	8.1 (Berkeley) 6/6/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: lexi.c,v 1.140 2021/11/19 15:28:32 rillig Exp $");
+__RCSID("$NetBSD: lexi.c,v 1.141 2021/11/19 17:11:46 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/lexi.c 337862 2018-08-15 18:19:45Z pstef $");
 #endif
@@ -178,7 +178,7 @@ static const unsigned char lex_number_row[] = {
     ['.'] = 15,
 };
 
-static char
+char
 inp_peek(void)
 {
     return *inbuf.inp.s;
@@ -352,7 +352,7 @@ static void
 lex_number(void)
 {
     for (unsigned char s = 'A'; s != 'f' && s != 'i' && s != 'u';) {
-	unsigned char ch = (unsigned char)*inbuf.inp.s;
+	unsigned char ch = (unsigned char)inp_peek();
 	if (ch >= array_length(lex_number_row) || lex_number_row[ch] == 0)
 	    break;
 
@@ -373,11 +373,11 @@ lex_number(void)
 static void
 lex_word(void)
 {
-    while (isalnum((unsigned char)*inbuf.inp.s) ||
-	    *inbuf.inp.s == '\\' ||
-	    *inbuf.inp.s == '_' || *inbuf.inp.s == '$') {
+    while (isalnum((unsigned char)inp_peek()) ||
+	    inp_peek() == '\\' ||
+	    inp_peek() == '_' || inp_peek() == '$') {
 
-	if (*inbuf.inp.s == '\\') {
+	if (inp_peek() == '\\') {
 	    if (inbuf.inp.s[1] == '\n') {
 		inbuf.inp.s += 2;
 		if (inbuf.inp.s >= inbuf.inp.e)
@@ -394,7 +394,7 @@ static void
 lex_char_or_string(void)
 {
     for (char delim = token.e[-1];;) {
-	if (*inbuf.inp.s == '\n') {
+	if (inp_peek() == '\n') {
 	    diag(1, "Unterminated literal");
 	    return;
 	}
@@ -404,7 +404,7 @@ lex_char_or_string(void)
 	    return;
 
 	if (token.e[-1] == '\\') {
-	    if (*inbuf.inp.s == '\n')
+	    if (inp_peek() == '\n')
 		++line_no;
 	    token_add_char(inp_next());
 	}
@@ -419,7 +419,7 @@ probably_typename(void)
 	return false;
     if (inbuf.inp.s[0] == '*' && inbuf.inp.s[1] != '=')
 	goto maybe;
-    if (isalpha((unsigned char)*inbuf.inp.s))
+    if (isalpha((unsigned char)inp_peek()))
 	goto maybe;
     return false;
 maybe:
@@ -468,11 +468,11 @@ cmp_keyword_by_name(const void *key, const void *elem)
 static lexer_symbol
 lexi_alnum(void)
 {
-    if (isdigit((unsigned char)*inbuf.inp.s) ||
+    if (isdigit((unsigned char)inp_peek()) ||
 	    (inbuf.inp.s[0] == '.' && isdigit((unsigned char)inbuf.inp.s[1]))) {
 	lex_number();
-    } else if (isalnum((unsigned char)*inbuf.inp.s) ||
-	    *inbuf.inp.s == '_' || *inbuf.inp.s == '$') {
+    } else if (isalnum((unsigned char)inp_peek()) ||
+	    inp_peek() == '_' || inp_peek() == '$') {
 	lex_word();
     } else
 	return lsym_eof;	/* just as a placeholder */
@@ -480,7 +480,7 @@ lexi_alnum(void)
     *token.e = '\0';
 
     if (token.s[0] == 'L' && token.s[1] == '\0' &&
-	    (*inbuf.inp.s == '"' || *inbuf.inp.s == '\''))
+	    (inp_peek() == '"' || inp_peek() == '\''))
 	return lsym_string_prefix;
 
     while (ch_isblank(inp_peek()))
@@ -523,7 +523,7 @@ found_typename:
 	}
     }
 
-    if (*inbuf.inp.s == '(' && ps.tos <= 1 && ps.ind_level == 0 &&
+    if (inp_peek() == '(' && ps.tos <= 1 && ps.ind_level == 0 &&
 	!ps.in_parameter_declaration && !ps.block_init) {
 
 	for (const char *p = inbuf.inp.s; p < inbuf.inp.e;)
@@ -552,7 +552,7 @@ lexi(void)
     ps.curr_col_1 = ps.next_col_1;
     ps.next_col_1 = false;
 
-    while (ch_isblank(*inbuf.inp.s)) {
+    while (ch_isblank(inp_peek())) {
 	ps.curr_col_1 = false;
 	inp_skip();
     }
@@ -647,19 +647,19 @@ lexi(void)
 	lsym = ps.next_unary ? lsym_unary_op : lsym_binary_op;
 	unary_delim = true;
 
-	if (*inbuf.inp.s == token.e[-1]) {	/* ++, -- */
-	    *token.e++ = *inbuf.inp.s++;
+	if (inp_peek() == token.e[-1]) {	/* ++, -- */
+	    *token.e++ = inp_next();
 	    if (ps.prev_token == lsym_word ||
 		    ps.prev_token == lsym_rparen_or_rbracket) {
 		lsym = ps.next_unary ? lsym_unary_op : lsym_postfix_op;
 		unary_delim = false;
 	    }
 
-	} else if (*inbuf.inp.s == '=') {	/* += */
-	    *token.e++ = *inbuf.inp.s++;
+	} else if (inp_peek() == '=') {	/* += */
+	    *token.e++ = inp_next();
 
-	} else if (*inbuf.inp.s == '>') {	/* -> */
-	    *token.e++ = *inbuf.inp.s++;
+	} else if (inp_peek() == '>') {	/* -> */
+	    *token.e++ = inp_next();
 	    unary_delim = false;
 	    lsym = lsym_unary_op;
 	    ps.want_blank = false;
@@ -669,8 +669,8 @@ lexi(void)
     case '=':
 	if (ps.init_or_struct)
 	    ps.block_init = true;
-	if (*inbuf.inp.s == '=') {	/* == */
-	    *token.e++ = *inbuf.inp.s++;
+	if (inp_peek() == '=') {	/* == */
+	    *token.e++ = inp_next();
 	    *token.e = '\0';
 	}
 	lsym = lsym_binary_op;
@@ -680,10 +680,10 @@ lexi(void)
     case '>':
     case '<':
     case '!':			/* ops like <, <<, <=, !=, etc */
-	if (*inbuf.inp.s == '>' || *inbuf.inp.s == '<' || *inbuf.inp.s == '=')
+	if (inp_peek() == '>' || inp_peek() == '<' || inp_peek() == '=')
 	    *token.e++ = inp_next();
-	if (*inbuf.inp.s == '=')
-	    *token.e++ = *inbuf.inp.s++;
+	if (inp_peek() == '=')
+	    *token.e++ = inp_next();
 	lsym = ps.next_unary ? lsym_unary_op : lsym_binary_op;
 	unary_delim = true;
 	break;
@@ -691,14 +691,14 @@ lexi(void)
     case '*':
 	unary_delim = true;
 	if (!ps.next_unary) {
-	    if (*inbuf.inp.s == '=')
-		*token.e++ = *inbuf.inp.s++;
+	    if (inp_peek() == '=')
+		*token.e++ = inp_next();
 	    lsym = lsym_binary_op;
 	    break;
 	}
 
-	while (*inbuf.inp.s == '*' || isspace((unsigned char)*inbuf.inp.s)) {
-	    if (*inbuf.inp.s == '*')
+	while (inp_peek() == '*' || isspace((unsigned char)inp_peek())) {
+	    if (inp_peek() == '*')
 		token_add_char('*');
 	    inp_skip();
 	}
@@ -723,7 +723,7 @@ lexi(void)
 	break;
 
     default:
-	if (token.e[-1] == '/' && (*inbuf.inp.s == '*' || *inbuf.inp.s == '/')) {
+	if (token.e[-1] == '/' && (inp_peek() == '*' || inp_peek() == '/')) {
 	    *token.e++ = inp_next();
 	    lsym = lsym_comment;
 	    unary_delim = ps.next_unary;
@@ -731,7 +731,7 @@ lexi(void)
 	}
 
 	/* handle '||', '&&', etc., and also things as in 'int *****i' */
-	while (token.e[-1] == *inbuf.inp.s || *inbuf.inp.s == '=')
+	while (token.e[-1] == inp_peek() || inp_peek() == '=')
 	    token_add_char(inp_next());
 
 	lsym = ps.next_unary ? lsym_unary_op : lsym_binary_op;
