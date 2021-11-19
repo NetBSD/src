@@ -1,4 +1,4 @@
-/*	$NetBSD: io.c,v 1.121 2021/11/19 17:59:16 rillig Exp $	*/
+/*	$NetBSD: io.c,v 1.122 2021/11/19 18:14:18 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)io.c	8.1 (Berkeley) 6/6/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: io.c,v 1.121 2021/11/19 17:59:16 rillig Exp $");
+__RCSID("$NetBSD: io.c,v 1.122 2021/11/19 18:14:18 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/io.c 334927 2018-06-10 16:44:18Z pstef $");
 #endif
@@ -62,6 +62,15 @@ struct input_buffer inbuf;
 static int paren_indent;
 static bool suppress_blanklines;
 
+
+void
+inp_init(void)
+{
+    inbuf.inp.buf = xmalloc(10);
+    inbuf.inp.l = inbuf.inp.buf + 8;
+    inbuf.inp.s = inbuf.inp.buf;
+    inbuf.inp.e = inbuf.inp.buf;
+}
 
 const char *
 inp_p(void)
@@ -184,6 +193,20 @@ inp_comment_init_comment(void)
 }
 
 void
+inp_comment_init_preproc(void)
+{
+    if (inbuf.save_com_e == NULL) {	/* if this is the first comment, we
+					 * must set up the buffer */
+	inbuf.save_com_s = inbuf.save_com_buf;
+	inbuf.save_com_e = inbuf.save_com_s;
+    } else {
+	inp_comment_add_char('\n');	/* add newline between comments */
+	inp_comment_add_char(' ');
+	--line_no;
+    }
+}
+
+void
 inp_comment_add_char(char ch)
 {
     inp_comment_check_size(1);
@@ -205,6 +228,27 @@ inp_comment_complete_block(void)
     return inbuf.save_com_e[-2] == '*' && inbuf.save_com_e[-1] == '/';
 }
 
+bool
+inp_comment_seen(void)
+{
+    /* TODO: assert((inbuf.save_com_s != NULL) == (inbuf.save_com_e != NULL)); */
+    return inbuf.save_com_e != NULL;
+}
+
+void
+inp_comment_rtrim(void)
+{
+    while (inbuf.save_com_e > inbuf.save_com_s && ch_isblank(inbuf.save_com_e[-1]))
+	inbuf.save_com_e--;
+}
+
+void
+inp_comment_rtrim_newline(void)
+{
+    while (inbuf.save_com_e > inbuf.save_com_s && inbuf.save_com_e[-1] == '\n')
+	inbuf.save_com_e--;
+}
+
 void
 inp_from_comment(void)
 {
@@ -218,6 +262,12 @@ inp_from_comment(void)
     debug_inp(__func__);
 }
 
+void
+inp_comment_insert_lbrace(void)
+{
+    assert(inbuf.save_com_s[0] == ' ');	/* see inp_comment_init_newline */
+    inbuf.save_com_s[0] = '{';
+}
 
 static void
 output_char(char ch)
