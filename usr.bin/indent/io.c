@@ -1,4 +1,4 @@
-/*	$NetBSD: io.c,v 1.120 2021/11/19 17:42:45 rillig Exp $	*/
+/*	$NetBSD: io.c,v 1.121 2021/11/19 17:59:16 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,11 +43,12 @@ static char sccsid[] = "@(#)io.c	8.1 (Berkeley) 6/6/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: io.c,v 1.120 2021/11/19 17:42:45 rillig Exp $");
+__RCSID("$NetBSD: io.c,v 1.121 2021/11/19 17:59:16 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/io.c 334927 2018-06-10 16:44:18Z pstef $");
 #endif
 
+#include <assert.h>
 #include <ctype.h>
 #include <stdarg.h>
 #include <stdio.h>
@@ -135,6 +136,54 @@ inp_comment_check_size(size_t n)
 }
 
 void
+inp_comment_init_newline(void)
+{
+    if (inbuf.save_com_e != NULL)
+	return;
+
+    inbuf.save_com_s = inbuf.save_com_buf;
+    inbuf.save_com_s[0] = ' ';	/* see search_stmt_lbrace */
+    inbuf.save_com_s[1] = ' ';	/* see search_stmt_lbrace */
+    inbuf.save_com_e = &inbuf.save_com_s[2];
+    debug_inp(__func__);
+}
+
+void
+inp_comment_init_comment(void)
+{
+    if (inbuf.save_com_e != NULL)
+	return;
+
+    /*
+     * Copy everything from the start of the line, because
+     * process_comment() will use that to calculate the original
+     * indentation of a boxed comment.
+     */
+    /*
+     * TODO: Don't store anything in the memory range [input.inp.buf,
+     * input.inp.s), as that data can easily get lost.
+     */
+    /*
+     * FIXME: This '4' needs an explanation. For example, in the snippet
+     * 'if(expr)/''*comment', the 'r)' of the code is not copied. If there
+     * is an additional line break before the ')', memcpy tries to copy
+     * (size_t)-1 bytes.
+     */
+    assert((size_t)(inbuf.inp.s - inbuf.inp.buf) >= 4);
+    size_t line_len = (size_t)(inbuf.inp.s - inbuf.inp.buf) - 4;
+    assert(line_len < array_length(inbuf.save_com_buf));
+    memcpy(inbuf.save_com_buf, inbuf.inp.buf, line_len);
+    inbuf.save_com_s = inbuf.save_com_buf + line_len;
+    inbuf.save_com_s[0] = ' ';	/* see search_stmt_lbrace */
+    inbuf.save_com_s[1] = ' ';	/* see search_stmt_lbrace */
+    inbuf.save_com_e = &inbuf.save_com_s[2];
+    debug_vis_range("search_stmt_comment: before save_com is \"",
+		    inbuf.save_com_buf, inbuf.save_com_s, "\"\n");
+    debug_vis_range("search_stmt_comment: save_com is \"",
+		    inbuf.save_com_s, inbuf.save_com_e, "\"\n");
+}
+
+void
 inp_comment_add_char(char ch)
 {
     inp_comment_check_size(1);
@@ -150,6 +199,12 @@ inp_comment_add_range(const char *s, const char *e)
     inbuf.save_com_e += len;
 }
 
+bool
+inp_comment_complete_block(void)
+{
+    return inbuf.save_com_e[-2] == '*' && inbuf.save_com_e[-1] == '/';
+}
+
 void
 inp_from_comment(void)
 {
@@ -162,6 +217,7 @@ inp_from_comment(void)
     inbuf.save_com_e = NULL;
     debug_inp(__func__);
 }
+
 
 static void
 output_char(char ch)
