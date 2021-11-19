@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.h,v 1.95 2021/11/19 18:23:59 rillig Exp $	*/
+/*	$NetBSD: indent.h,v 1.96 2021/11/19 18:25:50 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-FreeBSD
@@ -142,20 +142,6 @@ struct buffer {
     char *buf;			/* start of the allocated memory */
     char *l;			/* end of the allocated memory */
 };
-
-extern struct input_buffer {
-    struct buffer inp;		/* one line of input, ready to be split into
-				 * tokens; occasionally this buffer switches
-				 * to save_com_buf */
-    char save_com_buf[5000];	/* input text is saved here when looking for
-				 * the brace after an if, while, etc */
-    char *save_com_s;		/* start of the comment in save_com_buf */
-    char *save_com_e;		/* end of the comment in save_com_buf */
-
-    char *saved_inp_s;		/* saved value of inp.s when taking input from
-				 * save_com */
-    char *saved_inp_e;		/* similarly saved value of inp.e */
-} inbuf;
 
 extern FILE *input;
 extern FILE *output;
