@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.c,v 1.223 2021/11/19 17:42:45 rillig Exp $	*/
+/*	$NetBSD: indent.c,v 1.224 2021/11/19 17:59:16 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)indent.c	5.17 (Berkeley) 6/7/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: indent.c,v 1.223 2021/11/19 17:42:45 rillig Exp $");
+__RCSID("$NetBSD: indent.c,v 1.224 2021/11/19 17:59:16 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/indent.c 340138 2018-11-04 19:24:49Z oshogbo $");
 #endif
@@ -218,12 +218,7 @@ diag(int level, const char *msg, ...)
 static void
 search_stmt_newline(bool *force_nl)
 {
-    if (inbuf.save_com_e == NULL) {
-	inbuf.save_com_s = inbuf.save_com_buf;
-	inbuf.save_com_s[0] = inbuf.save_com_s[1] = ' ';
-	inbuf.save_com_e = &inbuf.save_com_s[2];
-	debug_inp("search_stmt_newline init");
-    }
+    inp_comment_init_newline();
     inp_comment_add_char('\n');
     debug_inp(__func__);
 
@@ -243,38 +238,14 @@ search_stmt_newline(bool *force_nl)
 static void
 search_stmt_comment(void)
 {
-    if (inbuf.save_com_e == NULL) {
-	/*
-	 * Copy everything from the start of the line, because
-	 * process_comment() will use that to calculate the original
-	 * indentation of a boxed comment.
-	 */
-	/*
-	 * FIXME: This '4' needs an explanation. For example, in the snippet
-	 * 'if(expr)/''*comment', the 'r)' of the code is not copied. If there
-	 * is an additional line break before the ')', memcpy tries to copy
-	 * (size_t)-1 bytes.
-	 */
-	assert((size_t)(inbuf.inp.s - inbuf.inp.buf) >= 4);
-	size_t line_len = (size_t)(inbuf.inp.s - inbuf.inp.buf) - 4;
-	assert(line_len < array_length(inbuf.save_com_buf));
-	memcpy(inbuf.save_com_buf, inbuf.inp.buf, line_len);
-	inbuf.save_com_s = inbuf.save_com_buf + line_len;
-	inbuf.save_com_s[0] = inbuf.save_com_s[1] = ' ';
-	inbuf.save_com_e = &inbuf.save_com_s[2];
-	debug_vis_range("search_stmt_comment: before save_com is \"",
-	    inbuf.save_com_buf, inbuf.save_com_s, "\"\n");
-	debug_vis_range("search_stmt_comment: save_com is \"",
-	    inbuf.save_com_s, inbuf.save_com_e, "\"\n");
-    }
-
+    inp_comment_init_comment();
     inp_comment_add_range(token.s, token.e);
     if (token.e[-1] == '/') {
-	while (inbuf.inp.s[0] != '\n')
+	while (inp_peek() != '\n')
 	    inp_comment_add_char(inp_next());
 	debug_inp("search_stmt_comment end C99");
     } else {
-	while (!(inbuf.save_com_e[-2] == '*' && inbuf.save_com_e[-1] == '/'))
+	while (!inp_comment_complete_block())
 	    inp_comment_add_char(inp_next());
 	debug_inp("search_stmt_comment end block");
     }
@@ -288,7 +259,7 @@ search_stmt_lbrace(void)
      * this loop in order to avoid copying the token again.
      */
     if (inbuf.save_com_e != NULL && opt.brace_same_line) {
-	assert(inbuf.save_com_s[0] == ' ');	/* see search_stmt_comment */
+	assert(inbuf.save_com_s[0] == ' ');	/* inp_comment_init_newline */
 	inbuf.save_com_s[0] = '{';
 	/*
 	 * Originally the lbrace may have been alone on its own line, but it
