@@ -1,4 +1,4 @@
-/*	$NetBSD: pr_comment.c,v 1.119 2021/11/19 17:11:46 rillig Exp $	*/
+/*	$NetBSD: pr_comment.c,v 1.120 2021/11/19 18:23:59 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)pr_comment.c	8.1 (Berkeley) 6/6/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: pr_comment.c,v 1.119 2021/11/19 17:11:46 rillig Exp $");
+__RCSID("$NetBSD: pr_comment.c,v 1.120 2021/11/19 18:23:59 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/pr_comment.c 334927 2018-06-10 16:44:18Z pstef $");
 #endif
@@ -86,13 +86,13 @@ com_terminate(void)
 static bool
 fits_in_one_line(int max_line_length)
 {
-    for (const char *p = inbuf.inp.s; *p != '\n'; p++) {
+    for (const char *p = inp_p(); *p != '\n'; p++) {
 	assert(*p != '\0');
-	assert(inbuf.inp.e - p >= 2);
+	assert(inp_line_end() - p >= 2);
 	if (!(p[0] == '*' && p[1] == '/'))
 	    continue;
 
-	int len = ind_add(ps.com_ind + 3, inbuf.inp.s, p);
+	int len = ind_add(ps.com_ind + 3, inp_p(), p);
 	len += ch_isblank(p[-1]) ? 2 : 3;
 	return len <= max_line_length;
     }
@@ -152,22 +152,13 @@ analyze_comment(bool *p_may_wrap, bool *p_break_delim,
 	/*
 	 * Find out how much indentation there was originally, because that
 	 * much will have to be ignored by dump_line().
-	 *
-	 * The comment we're about to read usually comes from inp.buf, unless
-	 * it has been copied into save_com.
-	 *
-	 * XXX: ordered comparison between pointers from different objects
-	 * invokes undefined behavior (C99 6.5.8).
 	 */
-	const char *start = inbuf.inp.s >= inbuf.save_com_buf &&
-		inbuf.inp.s <
-		    inbuf.save_com_buf + array_length(inbuf.save_com_buf)
-	    ? inbuf.save_com_buf : inbuf.inp.buf;
-	ps.n_comment_delta = -ind_add(0, start, inbuf.inp.s - 2);
+	const char *start = inp_line_start();
+	ps.n_comment_delta = -ind_add(0, start, inp_p() - 2);
     } else {
 	ps.n_comment_delta = 0;
 	while (ch_isblank(inp_peek()))
-	    inbuf.inp.s++;
+	    inp_skip();
     }
 
     ps.comment_delta = 0;
@@ -213,9 +204,9 @@ copy_comment_wrap(int adj_max_line_length, bool break_delim)
 	    dump_line_ff();
 	    last_blank = -1;
 	    com_add_delim();
-	    inbuf.inp.s++;
+	    inp_skip();
 	    while (ch_isblank(inp_peek()))
-		inbuf.inp.s++;
+		inp_skip();
 	    break;
 
 	case '\n':

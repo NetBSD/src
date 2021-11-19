@@ -1,4 +1,4 @@
-/*	$NetBSD: io.c,v 1.122 2021/11/19 18:14:18 rillig Exp $	*/
+/*	$NetBSD: io.c,v 1.123 2021/11/19 18:23:59 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)io.c	8.1 (Berkeley) 6/6/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: io.c,v 1.122 2021/11/19 18:14:18 rillig Exp $");
+__RCSID("$NetBSD: io.c,v 1.123 2021/11/19 18:23:59 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/io.c 334927 2018-06-10 16:44:18Z pstef $");
 #endif
@@ -76,6 +76,21 @@ const char *
 inp_p(void)
 {
     return inbuf.inp.s;
+}
+
+const char *
+inp_line_start(void)
+{
+    /*
+     * The comment we're about to read usually comes from inp.buf, unless
+     * it has been copied into save_com.
+     *
+     * XXX: ordered comparison between pointers from different objects
+     * invokes undefined behavior (C99 6.5.8).
+     */
+    return inbuf.inp.s >= inbuf.save_com_buf &&
+	inbuf.inp.s < inbuf.save_com_buf + array_length(inbuf.save_com_buf)
+	? inbuf.save_com_buf : inbuf.inp.buf;
 }
 
 const char *
