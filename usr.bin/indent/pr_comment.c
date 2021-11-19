@@ -1,4 +1,4 @@
-/*	$NetBSD: pr_comment.c,v 1.120 2021/11/19 18:23:59 rillig Exp $	*/
+/*	$NetBSD: pr_comment.c,v 1.121 2021/11/19 20:23:17 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,13 +43,12 @@ static char sccsid[] = "@(#)pr_comment.c	8.1 (Berkeley) 6/6/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: pr_comment.c,v 1.120 2021/11/19 18:23:59 rillig Exp $");
+__RCSID("$NetBSD: pr_comment.c,v 1.121 2021/11/19 20:23:17 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/pr_comment.c 334927 2018-06-10 16:44:18Z pstef $");
 #endif
 
 #include <assert.h>
-#include <ctype.h>
 #include <stdio.h>
 #include <string.h>
 
@@ -293,7 +292,7 @@ copy_comment_wrap(int adj_max_line_length, bool break_delim)
 
 	    if (now_len <= adj_max_line_length)
 		break;
-	    if (isspace((unsigned char)com.e[-1]))
+	    if (ch_isspace(com.e[-1]))
 		break;
 
 	    if (last_blank == -1) {	/* only a single word in this line */

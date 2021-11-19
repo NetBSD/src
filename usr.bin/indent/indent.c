@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.c,v 1.227 2021/11/19 20:04:02 rillig Exp $	*/
+/*	$NetBSD: indent.c,v 1.228 2021/11/19 20:23:17 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)indent.c	5.17 (Berkeley) 6/7/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: indent.c,v 1.227 2021/11/19 20:04:02 rillig Exp $");
+__RCSID("$NetBSD: indent.c,v 1.228 2021/11/19 20:23:17 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/indent.c 340138 2018-11-04 19:24:49Z oshogbo $");
 #endif
@@ -54,7 +54,6 @@ __FBSDID("$FreeBSD: head/usr.bin/indent/indent.c 340138 2018-11-04 19:24:49Z osh
 #include <capsicum_helpers.h>
 #endif
 #include <assert.h>
-#include <ctype.h>
 #include <err.h>
 #include <errno.h>
 #include <fcntl.h>
@@ -266,7 +265,7 @@ search_stmt_lbrace(void)
 	 * will be moved into "the else's line", so if there was a newline
 	 * resulting from the "{" before, it must be scanned now and ignored.
 	 */
-	while (isspace((unsigned char)inp_peek())) {
+	while (ch_isspace(inp_peek())) {
 	    inp_skip();
 	    if (inp_peek() == '\n')
 		break;
