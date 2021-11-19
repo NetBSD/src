@@ -1,4 +1,4 @@
-/*	$NetBSD: lexi.c,v 1.141 2021/11/19 17:11:46 rillig Exp $	*/
+/*	$NetBSD: lexi.c,v 1.142 2021/11/19 17:20:57 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,11 +43,12 @@ static char sccsid[] = "@(#)lexi.c	8.1 (Berkeley) 6/6/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: lexi.c,v 1.141 2021/11/19 17:11:46 rillig Exp $");
+__RCSID("$NetBSD: lexi.c,v 1.142 2021/11/19 17:20:57 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/lexi.c 337862 2018-08-15 18:19:45Z pstef $");
 #endif
 
+#include <assert.h>
 #include <ctype.h>
 #include <stdlib.h>
 #include <string.h>
@@ -177,28 +178,6 @@ static const unsigned char lex_number_row[] = {
     ['+'] = 14, ['-'] = 14,
     ['.'] = 15,
 };
-
-char
-inp_peek(void)
-{
-    return *inbuf.inp.s;
-}
-
-void
-inp_skip(void)
-{
-    inbuf.inp.s++;
-    if (inbuf.inp.s >= inbuf.inp.e)
-	inp_read_line();
-}
-
-char
-inp_next(void)
-{
-    char ch = inp_peek();
-    inp_skip();
-    return ch;
-}
 
 static void
 check_size_token(size_t desired_size)
@@ -378,10 +357,9 @@ lex_word(void)
 	    inp_peek() == '_' || inp_peek() == '$') {
 
 	if (inp_peek() == '\\') {
-	    if (inbuf.inp.s[1] == '\n') {
-		inbuf.inp.s += 2;
-		if (inbuf.inp.s >= inbuf.inp.e)
-		    inp_read_line();
+	    if (inp_lookahead(1) == '\n') {
+		inp_skip();
+		inp_skip();
 	    } else
 		break;
 	}
@@ -417,7 +395,7 @@ probably_typename(void)
 {
     if (ps.block_init || ps.in_stmt)
 	return false;
-    if (inbuf.inp.s[0] == '*' && inbuf.inp.s[1] != '=')
+    if (inp_peek() == '*' && inp_lookahead(1) != '=')
 	goto maybe;
     if (isalpha((unsigned char)inp_peek()))
 	goto maybe;
@@ -469,7 +447,7 @@ static lexer_symbol
 lexi_alnum(void)
 {
     if (isdigit((unsigned char)inp_peek()) ||
-	    (inbuf.inp.s[0] == '.' && isdigit((unsigned char)inbuf.inp.s[1]))) {
+	    (inp_peek() == '.' && isdigit((unsigned char)inp_lookahead(1)))) {
 	lex_number();
     } else if (isalnum((unsigned char)inp_peek()) ||
 	    inp_peek() == '_' || inp_peek() == '$') {
@@ -738,8 +716,7 @@ lexi(void)
 	unary_delim = true;
     }
 
-    if (inbuf.inp.s >= inbuf.inp.e)
-	inp_read_line();
+    assert(inbuf.inp.s < inbuf.inp.e);
 
     ps.next_unary = unary_delim;
 
