@@ -1,4 +1,4 @@
-/*	$NetBSD: io.c,v 1.119 2021/11/19 17:30:10 rillig Exp $	*/
+/*	$NetBSD: io.c,v 1.120 2021/11/19 17:42:45 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)io.c	8.1 (Berkeley) 6/6/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: io.c,v 1.119 2021/11/19 17:30:10 rillig Exp $");
+__RCSID("$NetBSD: io.c,v 1.120 2021/11/19 17:42:45 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/io.c 334927 2018-06-10 16:44:18Z pstef $");
 #endif
@@ -51,9 +51,12 @@ __FBSDID("$FreeBSD: head/usr.bin/indent/io.c 334927 2018-06-10 16:44:18Z pstef $
 #include <ctype.h>
 #include <stdarg.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 #include "indent.h"
+
+struct input_buffer inbuf;
 
 static int paren_indent;
 static bool suppress_blanklines;
@@ -99,6 +102,66 @@ inp_next(void)
     return ch;
 }
 
+#ifdef debug
+void
+debug_inp(const char *prefix)
+{
+    debug_printf("%s:", prefix);
+    debug_vis_range(" inp \"", inbuf.inp.s, inbuf.inp.e, "\"");
+    if (inbuf.save_com_s != NULL)
+	debug_vis_range(" save_com \"",
+			inbuf.save_com_s, inbuf.save_com_e, "\"");
+    if (inbuf.saved_inp_s != NULL)
+	debug_vis_range(" saved_inp \"",
+			inbuf.saved_inp_s, inbuf.saved_inp_e, "\"");
+    debug_printf("\n");
+}
+#else
+#define debug_inp(prefix) do { } while (false)
+#endif
+
+
+static void
+inp_comment_check_size(size_t n)
+{
+    if ((size_t)(inbuf.save_com_e - inbuf.save_com_buf) + n <=
+	array_length(inbuf.save_com_buf))
+	return;
+
+    diag(1, "Internal buffer overflow - "
+	    "Move big comment from right after if, while, or whatever");
+    fflush(output);
+    exit(1);
+}
+
+void
+inp_comment_add_char(char ch)
+{
+    inp_comment_check_size(1);
+    *inbuf.save_com_e++ = ch;
+}
+
+void
+inp_comment_add_range(const char *s, const char *e)
+{
+    size_t len = (size_t)(e - s);
+    inp_comment_check_size(len);
+    memcpy(inbuf.save_com_e, s, len);
+    inbuf.save_com_e += len;
+}
+
+void
+inp_from_comment(void)
+{
+    inbuf.saved_inp_s = inbuf.inp.s;
+    inbuf.saved_inp_e = inbuf.inp.e;
+
+    inbuf.inp.s = inbuf.save_com_s;	/* redirect lexi input to save_com_s */
+    inbuf.inp.e = inbuf.save_com_e;
+    /* XXX: what about save_com_s? */
+    inbuf.save_com_e = NULL;
+    debug_inp(__func__);
+}
 
 static void
 output_char(char ch)
