@@ -1,4 +1,4 @@
-/*	$NetBSD: io.c,v 1.128 2021/11/19 20:13:05 rillig Exp $	*/
+/*	$NetBSD: io.c,v 1.129 2021/11/19 20:23:17 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,13 +43,12 @@ static char sccsid[] = "@(#)io.c	8.1 (Berkeley) 6/6/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: io.c,v 1.128 2021/11/19 20:13:05 rillig Exp $");
+__RCSID("$NetBSD: io.c,v 1.129 2021/11/19 20:23:17 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/io.c 334927 2018-06-10 16:44:18Z pstef $");
 #endif
 
 #include <assert.h>
-#include <ctype.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -429,7 +428,7 @@ dump_line_comment(int ind)
 	ps.stats.lines++;
     }
 
-    while (com.e > p && isspace((unsigned char)com.e[-1]))
+    while (com.e > p && ch_isspace(com.e[-1]))
 	com.e--;
 
     (void)output_indent(ind, target_ind);

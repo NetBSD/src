@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.h,v 1.97 2021/11/19 19:55:15 rillig Exp $	*/
+/*	$NetBSD: indent.h,v 1.98 2021/11/19 20:23:17 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-FreeBSD
@@ -68,6 +68,7 @@
 __FBSDID("$FreeBSD: head/usr.bin/indent/indent.h 336333 2018-07-16 05:46:50Z pstef $");
 #endif
 
+#include <ctype.h>
 #include <stdbool.h>
 #include <stdio.h>
 
@@ -407,9 +408,33 @@ char *xstrdup(const char *);
 void buf_expand(struct buffer *, size_t);
 
 static inline bool
+ch_isalnum(char ch)
+{
+    return isalnum((unsigned char)ch) != 0;
+}
+
+static inline bool
+ch_isalpha(char ch)
+{
+    return isalpha((unsigned char)ch) != 0;
+}
+
+static inline bool
 ch_isblank(char ch)
 {
     return ch == ' ' || ch == '\t';
+}
+
+static inline bool
+ch_isdigit(char ch)
+{
+    return '0' <= ch && ch <= '9';
+}
+
+static inline bool
+ch_isspace(char ch)
+{
+    return isspace((unsigned char)ch) != 0;
 }
 
 static inline int
