@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.h,v 1.87 2021/11/19 15:28:32 rillig Exp $	*/
+/*	$NetBSD: indent.h,v 1.88 2021/11/19 15:32:13 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-FreeBSD
@@ -135,9 +135,6 @@ typedef enum stmt_head {
     hd_while,
 } stmt_head;
 
-#define sc_size 5000		/* size of save_com buffer */
-
-
 /* A range of characters, in some cases null-terminated. */
 struct buffer {
     char *s;			/* start of the usable text */
@@ -149,11 +146,11 @@ struct buffer {
 extern struct input_buffer {
     struct buffer inp;		/* one line of input, ready to be split into
 				 * tokens; occasionally this buffer switches
-				 * to sc_buf */
-    char sc_buf[sc_size];	/* input text is saved here when looking for
+				 * to save_com_buf */
+    char save_com_buf[5000];	/* input text is saved here when looking for
 				 * the brace after an if, while, etc */
-    char *save_com;		/* start of the comment stored in sc_buf */
-    char *sc_end;		/* pointer into save_com buffer */
+    char *save_com_s;		/* start of the comment in save_com_buf */
+    char *save_com_e;		/* end of the comment in save_com_buf */
 
     char *saved_inp_s;		/* saved value of inp.s when taking input from
 				 * save_com */
