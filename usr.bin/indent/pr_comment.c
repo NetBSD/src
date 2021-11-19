@@ -1,4 +1,4 @@
-/*	$NetBSD: pr_comment.c,v 1.116 2021/11/07 18:26:17 rillig Exp $	*/
+/*	$NetBSD: pr_comment.c,v 1.117 2021/11/19 15:28:32 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)pr_comment.c	8.1 (Berkeley) 6/6/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: pr_comment.c,v 1.116 2021/11/07 18:26:17 rillig Exp $");
+__RCSID("$NetBSD: pr_comment.c,v 1.117 2021/11/19 15:28:32 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/pr_comment.c 334927 2018-06-10 16:44:18Z pstef $");
 #endif
@@ -86,13 +86,13 @@ com_terminate(void)
 static bool
 fits_in_one_line(int max_line_length)
 {
-    for (const char *p = inp.s; *p != '\n'; p++) {
+    for (const char *p = inbuf.inp.s; *p != '\n'; p++) {
 	assert(*p != '\0');
-	assert(inp.e - p >= 2);
+	assert(inbuf.inp.e - p >= 2);
 	if (!(p[0] == '*' && p[1] == '/'))
 	    continue;
 
-	int len = ind_add(ps.com_ind + 3, inp.s, p);
+	int len = ind_add(ps.com_ind + 3, inbuf.inp.s, p);
 	len += ch_isblank(p[-1]) ? 2 : 3;
 	return len <= max_line_length;
     }
@@ -117,8 +117,9 @@ analyze_comment(bool *p_may_wrap, bool *p_break_delim,
 	com_ind = 0;
 
     } else {
-	if (*inp.s == '-' || *inp.s == '*' || token.e[-1] == '/' ||
-	    (*inp.s == '\n' && !opt.format_block_comments)) {
+	if (*inbuf.inp.s == '-' || *inbuf.inp.s == '*' ||
+		token.e[-1] == '/' ||
+		(*inbuf.inp.s == '\n' && !opt.format_block_comments)) {
 	    may_wrap = false;
 	    break_delim = false;
 	}
@@ -158,13 +159,14 @@ analyze_comment(bool *p_may_wrap, bool *p_break_delim,
 	 * XXX: ordered comparison between pointers from different objects
 	 * invokes undefined behavior (C99 6.5.8).
 	 */
-	const char *start = inp.s >= sc_buf && inp.s < sc_buf + sc_size
-	    ? sc_buf : inp.buf;
-	ps.n_comment_delta = -ind_add(0, start, inp.s - 2);
+	const char *start = inbuf.inp.s >= inbuf.sc_buf &&
+		inbuf.inp.s < inbuf.sc_buf + sc_size
+	    ? inbuf.sc_buf : inbuf.inp.buf;
+	ps.n_comment_delta = -ind_add(0, start, inbuf.inp.s - 2);
     } else {
 	ps.n_comment_delta = 0;
-	while (ch_isblank(*inp.s))
-	    inp.s++;
+	while (ch_isblank(*inbuf.inp.s))
+	    inbuf.inp.s++;
     }
 
     ps.comment_delta = 0;
@@ -172,7 +174,7 @@ analyze_comment(bool *p_may_wrap, bool *p_break_delim,
     com_add_char(token.e[-1]);	/* either '*' or '/' */
 
     /* TODO: Maybe preserve a single '\t' as well. */
-    if (*inp.s != ' ' && may_wrap)
+    if (*inbuf.inp.s != ' ' && may_wrap)
 	com_add_char(' ');
 
     if (break_delim && fits_in_one_line(adj_max_line_length))
@@ -205,14 +207,14 @@ copy_comment_wrap(int adj_max_line_length, bool break_delim)
     ssize_t last_blank = -1;	/* index of the last blank in com.buf */
 
     for (;;) {
-	switch (*inp.s) {
+	switch (*inbuf.inp.s) {
 	case '\f':
 	    dump_line_ff();
 	    last_blank = -1;
 	    com_add_delim();
-	    inp.s++;
-	    while (ch_isblank(*inp.s))
-		inp.s++;
+	    inbuf.inp.s++;
+	    while (ch_isblank(*inbuf.inp.s))
+		inbuf.inp.s++;
 	    break;
 
 	case '\n':
@@ -245,19 +247,19 @@ copy_comment_wrap(int adj_max_line_length, bool break_delim)
 	    do {		/* flush any blanks and/or tabs at start of
 				 * next line */
 		inp_skip();
-		if (*inp.s == '*' && skip_asterisk) {
+		if (*inbuf.inp.s == '*' && skip_asterisk) {
 		    skip_asterisk = false;
 		    inp_skip();
-		    if (*inp.s == '/')
+		    if (*inbuf.inp.s == '/')
 			goto end_of_comment;
 		}
-	    } while (ch_isblank(*inp.s));
+	    } while (ch_isblank(*inbuf.inp.s));
 
 	    break;		/* end of case for newline */
 
 	case '*':
 	    inp_skip();
-	    if (*inp.s == '/') {
+	    if (*inbuf.inp.s == '/') {
 	end_of_comment:
 		inp_skip();
 
@@ -289,7 +291,7 @@ copy_comment_wrap(int adj_max_line_length, bool break_delim)
 		    last_blank = com.e - com.buf;
 		com_add_char(ch);
 		now_len++;
-		if (memchr("*\n\r\b\t", *inp.s, 6) != NULL)
+		if (memchr("*\n\r\b\t", *inbuf.inp.s, 6) != NULL)
 		    break;
 		if (now_len >= adj_max_line_length && last_blank != -1)
 		    break;
@@ -325,7 +327,7 @@ static void
 copy_comment_nowrap(void)
 {
     for (;;) {
-	if (*inp.s == '\n') {
+	if (*inbuf.inp.s == '\n') {
 	    if (token.e[-1] == '/')
 		goto finish;
 
