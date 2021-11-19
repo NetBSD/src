@@ -1,4 +1,4 @@
-/*	$NetBSD: lexi.c,v 1.144 2021/11/19 18:52:32 rillig Exp $	*/
+/*	$NetBSD: lexi.c,v 1.145 2021/11/19 19:15:55 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)lexi.c	8.1 (Berkeley) 6/6/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: lexi.c,v 1.144 2021/11/19 18:52:32 rillig Exp $");
+__RCSID("$NetBSD: lexi.c,v 1.145 2021/11/19 19:15:55 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/lexi.c 337862 2018-08-15 18:19:45Z pstef $");
 #endif
@@ -276,7 +276,7 @@ debug_lexi(lexer_symbol lsym)
     debug_ps_bool(curr_col_1);
     debug_ps_bool(next_unary);
     if (strcmp(ps.procname, prev_ps.procname) != 0)
-	debug_println("    ps.procname = '%s'", ps.procname);
+	debug_println("    ps.procname = \"%s\"", ps.procname);
     debug_ps_bool(want_blank);
     debug_ps_int(paren_level);
     debug_ps_int(p_l_follow);
@@ -349,13 +349,16 @@ lex_number(void)
     }
 }
 
+static bool
+is_identifier_part(char ch)
+{
+    return isalnum((unsigned char)ch) || ch == '_' || ch == '$';
+}
+
 static void
 lex_word(void)
 {
-    while (isalnum((unsigned char)inp_peek()) ||
-	    inp_peek() == '\\' ||
-	    inp_peek() == '_' || inp_peek() == '$') {
-
+    while (is_identifier_part(inp_peek()) || inp_peek() == '\\' ) {
 	if (inp_peek() == '\\') {
 	    if (inp_lookahead(1) == '\n') {
 		inp_skip();
@@ -397,6 +400,7 @@ probably_typename(void)
 	return false;
     if (inp_peek() == '*' && inp_lookahead(1) != '=')
 	goto maybe;
+    /* XXX: is_identifier_start */
     if (isalpha((unsigned char)inp_peek()))
 	goto maybe;
     return false;
@@ -449,8 +453,7 @@ lexi_alnum(void)
     if (isdigit((unsigned char)inp_peek()) ||
 	    (inp_peek() == '.' && isdigit((unsigned char)inp_lookahead(1)))) {
 	lex_number();
-    } else if (isalnum((unsigned char)inp_peek()) ||
-	    inp_peek() == '_' || inp_peek() == '$') {
+    } else if (is_identifier_part(inp_peek())) {
 	lex_word();
     } else
 	return lsym_eof;	/* just as a placeholder */
@@ -684,6 +687,7 @@ lexi(void)
 	if (ps.in_decl) {
 	    const char *tp = inp_p(), *e = inp_line_end();
 
+	    /* XXX: is_identifier_start */
 	    while (tp < e && (isalpha((unsigned char)*tp) ||
 		    isspace((unsigned char)*tp)))
 		tp++;
