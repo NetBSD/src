@@ -1,4 +1,4 @@
-/*	$NetBSD: io.c,v 1.127 2021/11/19 20:04:02 rillig Exp $	*/
+/*	$NetBSD: io.c,v 1.128 2021/11/19 20:13:05 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)io.c	8.1 (Berkeley) 6/6/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: io.c,v 1.127 2021/11/19 20:04:02 rillig Exp $");
+__RCSID("$NetBSD: io.c,v 1.128 2021/11/19 20:13:05 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/io.c 334927 2018-06-10 16:44:18Z pstef $");
 #endif
@@ -56,7 +56,7 @@ __FBSDID("$FreeBSD: head/usr.bin/indent/io.c 334927 2018-06-10 16:44:18Z pstef $
 
 #include "indent.h"
 
-static struct input_buffer {
+static struct {
     struct buffer inp;		/* one line of input, ready to be split into
 				 * tokens; occasionally this buffer switches
 				 * to save_com_buf */
@@ -67,7 +67,7 @@ static struct input_buffer {
 
     char *saved_inp_s;		/* saved value of inp.s when taking input from
 				 * save_com */
-    char *saved_inp_e;		/* similarly saved value of inp.e */
+    char *saved_inp_e;		/* saved value of inp.e */
 } inbuf;
 
 static int paren_indent;
@@ -258,7 +258,6 @@ inp_comment_complete_block(void)
 bool
 inp_comment_seen(void)
 {
-    /* TODO: assert((inbuf.save_com_s != NULL) == (inbuf.save_com_e != NULL)); */
     return inbuf.save_com_e != NULL;
 }
 
@@ -284,7 +283,7 @@ inp_from_comment(void)
 
     inbuf.inp.s = inbuf.save_com_s;	/* redirect lexi input to save_com_s */
     inbuf.inp.e = inbuf.save_com_e;
-    /* XXX: what about save_com_s? */
+    inbuf.save_com_s = NULL;
     inbuf.save_com_e = NULL;
     debug_inp(__func__);
 }
