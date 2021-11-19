@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.h,v 1.96 2021/11/19 18:25:50 rillig Exp $	*/
+/*	$NetBSD: indent.h,v 1.97 2021/11/19 19:55:15 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-FreeBSD
@@ -256,10 +256,7 @@ extern struct parser_state {
     bool next_unary;		/* whether the following operator should be
 				 * unary */
 
-    char procname[100];		/* The name of the current procedure; TODO:
-				 * document the difference between procname[0]
-				 * being '\0', ' ' and a real character */
-
+    bool is_function_definition;
 
     bool want_blank;		/* whether the following token should be
 				 * prefixed by a blank. (Said prefixing is
