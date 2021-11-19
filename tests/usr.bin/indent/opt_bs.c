@@ -1,13 +1,13 @@
-/* $NetBSD: opt_bs.c,v 1.5 2021/10/26 20:37:26 rillig Exp $ */
+/* $NetBSD: opt_bs.c,v 1.6 2021/11/19 22:24:29 rillig Exp $ */
 /* $FreeBSD$ */
 
 /*
- * Tests for the options '-bs' and '-nbs'.
+ * Tests for the options '-bs' and '-nbs' ("blank after sizeof").
  *
  * The option '-bs' forces a space after the keyword 'sizeof'.
  *
- * The option '-nbs' removes all whitespace after the keyword 'sizeof', unless
- * the next token is a word as well.
+ * The option '-nbs' removes horizontal whitespace after the keyword 'sizeof',
+ * unless the next token is a word as well.
  */
 
 #indent input

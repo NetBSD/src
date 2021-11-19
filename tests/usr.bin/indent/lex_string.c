@@ -1,4 +1,4 @@
-/* $NetBSD: lex_string.c,v 1.1 2021/10/22 20:54:36 rillig Exp $ */
+/* $NetBSD: lex_string.c,v 1.2 2021/11/19 22:24:29 rillig Exp $ */
 /* $FreeBSD$ */
 
 /*
@@ -28,7 +28,10 @@ char escape_newline[] = "\
 
 #indent run-equals-input -di0
 
-/* Concatenated string literals are separated with a single space. */
+
+/*
+ * Concatenated string literals are separated with a single space.
+ */
 #indent input
 char concat[] = "line 1\n"
 "line2"		"has"   "several""words\n";

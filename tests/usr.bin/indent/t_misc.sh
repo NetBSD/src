@@ -1,5 +1,5 @@
 #! /bin/sh
-# $NetBSD: t_misc.sh,v 1.15 2021/11/07 19:18:56 rillig Exp $
+# $NetBSD: t_misc.sh,v 1.16 2021/11/19 22:24:29 rillig Exp $
 #
 # Copyright (c) 2021 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -364,6 +364,25 @@ several_profiles_body()
 	    "$indent" -Pnonexistent.pro -Perror.pro -Plast.pro code.c -st
 }
 
+
+atf_test_case 'command_line_vs_profile'
+command_line_vs_profile_body()
+{
+	# Options from the command line override those from a profile file,
+	# no matter if they appear earlier or later than the '-P' in the
+	# command line.
+
+	echo ' -di24' > custom.pro
+	printf 'int\t\tdecl;\n' > code.c
+
+	atf_check -o 'inline:int decl;\n' \
+	    "$indent" -di0 -Pcustom.pro code.c -st
+	atf_check -o 'inline:int decl;\n' \
+	    "$indent" -Pcustom.pro -di0 code.c -st
+	atf_check -o 'inline:int decl;\n' \
+	    "$indent" -Pcustom.pro code.c -st -di0
+}
+
 atf_init_test_cases()
 {
 	atf_add_test_case 'in_place'
@@ -377,4 +396,5 @@ atf_init_test_cases()
 	atf_add_test_case 'line_no_counting'
 	atf_add_test_case 'default_backup_extension'
 	atf_add_test_case 'several_profiles'
+	atf_add_test_case 'command_line_vs_profile'
 }
