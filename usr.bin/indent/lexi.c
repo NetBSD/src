@@ -1,4 +1,4 @@
-/*	$NetBSD: lexi.c,v 1.142 2021/11/19 17:20:57 rillig Exp $	*/
+/*	$NetBSD: lexi.c,v 1.143 2021/11/19 17:30:10 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)lexi.c	8.1 (Berkeley) 6/6/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: lexi.c,v 1.142 2021/11/19 17:20:57 rillig Exp $");
+__RCSID("$NetBSD: lexi.c,v 1.143 2021/11/19 17:30:10 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/lexi.c 337862 2018-08-15 18:19:45Z pstef $");
 #endif
@@ -504,7 +504,7 @@ found_typename:
     if (inp_peek() == '(' && ps.tos <= 1 && ps.ind_level == 0 &&
 	!ps.in_parameter_declaration && !ps.block_init) {
 
-	for (const char *p = inbuf.inp.s; p < inbuf.inp.e;)
+	for (const char *p = inp_p(), *e = inp_line_end(); p < e;)
 	    if (*p++ == ')' && (*p == ';' || *p == ','))
 		goto no_function_definition;
 
@@ -682,14 +682,14 @@ lexi(void)
 	}
 
 	if (ps.in_decl) {
-	    char *tp = inbuf.inp.s;
+	    const char *tp = inp_p();
 
 	    while (isalpha((unsigned char)*tp) ||
 		    isspace((unsigned char)*tp)) {
-		if (++tp >= inbuf.inp.e) {
-		    const char *s_before = inbuf.inp.s;
+		if (++tp >= inp_line_end()) {
+		    const char *p_before = inp_p();
 		    inp_read_line();
-		    if (inbuf.inp.s != s_before)
+		    if (inp_p() != p_before)
 			abort();
 		}
 	    }
@@ -715,8 +715,6 @@ lexi(void)
 	lsym = ps.next_unary ? lsym_unary_op : lsym_binary_op;
 	unary_delim = true;
     }
-
-    assert(inbuf.inp.s < inbuf.inp.e);
 
     ps.next_unary = unary_delim;
 
