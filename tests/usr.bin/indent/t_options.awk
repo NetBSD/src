@@ -1,4 +1,4 @@
-# $NetBSD: t_options.awk,v 1.5 2021/11/20 11:13:18 rillig Exp $
+# $NetBSD: t_options.awk,v 1.6 2021/11/20 13:07:57 rillig Exp $
 #
 # Copyright (c) 2021 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -116,8 +116,9 @@ section == "" {
 	else {
 		if (curr_empty_lines > 0) {
 			if (prev_empty_lines > 1)
-				warn(NR - curr_empty_lines,
-				    "excess empty lines a few lines above")
+				warn(NR - curr_empty_lines - 1,
+				    prev_empty_lines " empty lines a few " \
+				    "lines above, should be only 1")
 			prev_empty_lines = curr_empty_lines
 		}
 		curr_empty_lines = 0
