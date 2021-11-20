@@ -1,4 +1,4 @@
-/* $NetBSD: token_binary_op.c,v 1.8 2021/11/20 11:13:18 rillig Exp $ */
+/* $NetBSD: token_binary_op.c,v 1.9 2021/11/20 16:54:17 rillig Exp $ */
 /* $FreeBSD$ */
 
 /*
@@ -8,6 +8,8 @@
  * other contexts.  An example for such an operator is '*', which can be a
  * multiplication, or pointer dereference, or pointer type declaration.
  */
+
+/* TODO: split into separate tests */
 
 /* See C99 6.4.6 */
 #indent input
@@ -138,83 +140,64 @@ number = array <:subscript:>;
 	number = (int)<%initializer % >;
 }
 #indent end
+/* TODO: move digraphs into separate test */
+/* TODO: test trigraphs, which are as unusual as digraphs */
+/* TODO: test digraphs and trigraphs in string literals, just for fun */
 
 
+/*
+ * When indent tokenizes some of the operators, it allows for
+ * arbitrary repetitions of the operator character, followed by an
+ * arbitrary amount of '='.  This is used for operators like '&&' or
+ * '|||==='.
+ *
+ * Before 2021-03-07 22:11:01, the comment '//' was treated as an
+ * operator as well, and so was the comment '/////', leading to
+ * unexpected results.
+ *
+ * See lexi.c, lexi, "default:".
+ */
 #indent input
 void
-peculiarities(void)
+long_run_of_operators(void)
 {
-	/*
-	 * When indent tokenizes some of the operators, it allows for
-	 * arbitrary repetitions of the operator character, followed by an
-	 * arbitrary amount of '='.  This is used for operators like '&&' or
-	 * '|||==='.
-	 *
-	 * Before 2021-03-07 22:11:01, the comment '//' was treated as an
-	 * operator as well, and so was the comment '/////', leading to
-	 * unexpected results; see comment-line-end.0 for more details.
-	 *
-	 * See lexi.c, lexi, "default:".
-	 */
 	if (a &&&&&&& b)
 		return;
 	if (a |||=== b)
 		return;
+}
+#indent end
 
-	/*-
-	 * For '+' and '-', this does not work since the lexer has to
-	 * distinguish between '++' and '+' early.  The following sequence is
-	 * thus tokenized as:
-	 *
-	 *	ident		'a'
-	 *	postfix		'++'
-	 *	binary_op	'++'
-	 *	unary_op	'++'
-	 *	unary_op	'+'
-	 *	ident		'b'
-	 *
-	 * See lexi.c, lexi, "case '+':".
-	 */
+#indent run-equals-input
+
+
+/*
+ * For '+' and '-', this does not work since the lexer has to
+ * distinguish between '++' and '+' early.  The following sequence is
+ * thus tokenized as:
+ *
+ *	word		"a"
+ *	postfix_op	"++"
+ *	binary_op	"++"
+ *	unary_op	"++"
+ *	unary_op	"+"
+ *	word		"b"
+ *
+ * See lexi.c, lexi, "case '+':".
+ */
+#indent input
+void
+joined_unary_and_binary_operators(void)
+{
 	if (a +++++++ b)
 		return;
 }
 #indent end
 
-#indent run -ldi0
+#indent run
 void
-peculiarities(void)
+joined_unary_and_binary_operators(void)
 {
-	/*
-	 * When indent tokenizes some of the operators, it allows for
-	 * arbitrary repetitions of the operator character, followed by an
-	 * arbitrary amount of '='.  This is used for operators like '&&' or
-	 * '|||==='.
-	 *
-	 * Before 2021-03-07 22:11:01, the comment '//' was treated as an
-	 * operator as well, and so was the comment '/////', leading to
-	 * unexpected results; see comment-line-end.0 for more details.
-	 *
-	 * See lexi.c, lexi, "default:".
-	 */
-	if (a &&&&&&& b)
-		return;
-	if (a |||=== b)
-		return;
-
-	/*-
-	 * For '+' and '-', this does not work since the lexer has to
-	 * distinguish between '++' and '+' early.  The following sequence is
-	 * thus tokenized as:
-	 *
-	 *	ident		'a'
-	 *	postfix		'++'
-	 *	binary_op	'++'
-	 *	unary_op	'++'
-	 *	unary_op	'+'
-	 *	ident		'b'
-	 *
-	 * See lexi.c, lexi, "case '+':".
-	 */
 	if (a++ ++ ++ +b)
 		return;
 }

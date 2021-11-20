@@ -1,9 +1,9 @@
-/* $NetBSD: opt_di.c,v 1.5 2021/11/20 11:13:18 rillig Exp $ */
+/* $NetBSD: opt_di.c,v 1.6 2021/11/20 16:54:17 rillig Exp $ */
 /* $FreeBSD$ */
 
 /*
- * Test the option '-di', which specifies the indentation of the variable
- * declarator.
+ * Test the option '-di', which specifies the indentation of the first
+ * variable name in a declaration.
  */
 
 #indent input

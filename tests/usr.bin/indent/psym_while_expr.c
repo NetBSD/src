@@ -1,4 +1,4 @@
-/* $NetBSD: psym_while_expr.c,v 1.1 2021/11/18 21:19:19 rillig Exp $ */
+/* $NetBSD: psym_while_expr.c,v 1.2 2021/11/20 16:54:17 rillig Exp $ */
 /* $FreeBSD$ */
 
 /*
@@ -12,3 +12,38 @@
 #indent end
 
 #indent run-equals-input
+
+
+#indent input
+void
+function(void)
+{
+	while(cond){}
+
+	do{}while(cond);
+
+	if(cmd)while(cond);
+
+	{}while(cond);
+}
+#indent end
+
+#indent run
+void
+function(void)
+{
+	while (cond) {
+	}
+
+	do {
+	} while (cond);
+
+	if (cmd)
+	/* $ XXX: Where does the code say that ';' stays on the same line? */
+		while (cond);
+
+	{
+	/* $ FIXME: the '}' must be on a line of its own. */
+	} while (cond);
+}
+#indent end

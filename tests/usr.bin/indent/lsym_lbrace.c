@@ -1,4 +1,4 @@
-/* $NetBSD: lsym_lbrace.c,v 1.1 2021/11/18 21:19:19 rillig Exp $ */
+/* $NetBSD: lsym_lbrace.c,v 1.2 2021/11/20 16:54:17 rillig Exp $ */
 /* $FreeBSD$ */
 
 /*
@@ -11,6 +11,8 @@
  *
  * In an expression, '(type){' starts a compound expression that is typically
  * used in an assignment to a struct or array.
+ *
+ * TODO: try to split this token into lsym_lbrace_block and lsym_lbrace_init.
  */
 
 #indent input

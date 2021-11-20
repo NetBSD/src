@@ -1,4 +1,4 @@
-/* $NetBSD: lsym_postfix_op.c,v 1.1 2021/11/18 21:19:19 rillig Exp $ */
+/* $NetBSD: lsym_postfix_op.c,v 1.2 2021/11/20 16:54:17 rillig Exp $ */
 /* $FreeBSD$ */
 
 /*
@@ -10,7 +10,23 @@
  */
 
 #indent input
-// TODO: add input
+int decl = lvalue ++;
+int decl = lvalue --;
 #indent end
 
-#indent run-equals-input
+#indent run -di0
+int decl = lvalue++;
+int decl = lvalue--;
+#indent end
+
+
+/*
+ * There is no operator '**', so try that just for fun.
+ */
+#indent input
+int decl = lvalue **;
+#indent end
+
+#indent run -di0
+int decl = lvalue * *;
+#indent end

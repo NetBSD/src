@@ -1,4 +1,4 @@
-/* $NetBSD: opt_lpl.c,v 1.4 2021/10/18 07:11:31 rillig Exp $ */
+/* $NetBSD: opt_lpl.c,v 1.5 2021/11/20 16:54:17 rillig Exp $ */
 /* $FreeBSD$ */
 
 /*
@@ -8,8 +8,8 @@
  * lines, even if it would extend past the right margin.
  *
  * The option '-nlpl' moves continuation lines that would stick over the right
- * margin to the left, to keep it within the margin, if that does not require
- * placing it to the left of the prevailing indentation level.
+ * margin to the left, to keep them within the margin, as long as that does
+ * not require placing them to the left of the prevailing indentation level.
  *
  * These switches have no effect if '-nlp' is selected.
  */

@@ -1,4 +1,4 @@
-/* $NetBSD: opt_fc1.c,v 1.4 2021/10/18 07:11:31 rillig Exp $ */
+/* $NetBSD: opt_fc1.c,v 1.5 2021/11/20 16:54:17 rillig Exp $ */
 /* $FreeBSD$ */
 
 /*
@@ -6,7 +6,8 @@
  *
  * The option '-fc1' formats comments in column 1.
  *
- * The option '-nfc1' prevents comments in column 1 as is.
+ * The option '-nfc1' preserves the original formatting of comments that start
+ * in column 1.
  */
 
 #indent input
@@ -39,7 +40,7 @@
  /* space */
 
 /* $ Indented by a single tab, single tabs around the text. */
-	/*	tab	*/
+	/*	indented tab	*/
 
 /* $ The space between these comments gets removed. */
 /* block1 */ /* block2 */
@@ -56,7 +57,7 @@
 /* space */
 
 /* $ The indentation got removed, only the leading tab got replaced by a space. */
-/* tab	*/
+/* indented tab	*/
 
 /* $ The space between these comments got removed. */
 /* block1 *//* block2 */
@@ -76,7 +77,7 @@
  /* space */
 
 /* $ The indentation was changed from a single tab to a single space. */
- /* tab	*/
+ /* indented tab	*/
 
 /* $ The space between these two comments got removed. */
 /* $ XXX: The option '-nfc1' says that comments in column 1 do not get */
@@ -111,7 +112,7 @@
  *
  * followed by another multi-line comment that starts in column 4.
  */
-/* $ XXX: The two comments have been merged into a single comment. */
+/* $ FIXME: The two comments have been merged into a single comment. */
 #indent end
 
 #indent run -nfc1
@@ -121,7 +122,7 @@
   *
   * followed by another multi-line comment that starts in column 4.
   */
-/* $ XXX: The two comments have been merged into a single comment. */
+/* $ FIXME: The two comments have been merged into a single comment. */
 #indent end
 
 

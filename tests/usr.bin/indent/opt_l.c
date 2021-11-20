@@ -1,5 +1,12 @@
-/* $NetBSD: opt_l.c,v 1.1 2021/10/22 20:54:36 rillig Exp $ */
+/* $NetBSD: opt_l.c,v 1.2 2021/11/20 16:54:17 rillig Exp $ */
 /* $FreeBSD$ */
+
+/*
+ * Tests for the option '-l', which specifies the maximum length of a line.
+ *
+ * As of 2021-11-20, indent assumes that each byte occupies a single column,
+ * it does not properly handle Unicode.
+ */
 
 #indent input
 /*
@@ -23,11 +30,18 @@
 #indent end
 #indent run-equals-prev-output -lc38
 
+#indent run-equals-input -l78
+#indent run-equals-input -lc78
+
 
 #indent input
 int decl; /* comment comment comment comment */
 #indent end
 
+/*
+ * The option '-lc' only applies to block comments, not to comments to the
+ * right of code or declarations.
+ */
 #indent run -di8 -c17 -lc32
 int	decl;	/* comment comment comment comment */
 #indent end

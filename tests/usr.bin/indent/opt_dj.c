@@ -1,10 +1,10 @@
-/* $NetBSD: opt_dj.c,v 1.4 2021/11/20 11:13:18 rillig Exp $ */
+/* $NetBSD: opt_dj.c,v 1.5 2021/11/20 16:54:17 rillig Exp $ */
 /* $FreeBSD$ */
 
 /*
  * Tests for the options '-dj' and '-ndj'.
  *
- * The option '-dj' left-justifies declarations.
+ * The option '-dj' left-justifies declarations of local variables.
  *
  * The option '-ndj' indents declarations the same as code.
  */
@@ -53,5 +53,27 @@ example(void)
 {
 	int		decl;
 	code();
+}
+#indent end
+
+
+/*
+ * The option '-dj' does not influence traditional function definitions.
+ */
+#indent input
+double
+dbl_plus3(a, b, c)
+double a, b, c;
+{
+	return a + b + c;
+}
+#indent end
+
+#indent run -dj
+double
+dbl_plus3(a, b, c)
+	double		a, b, c;
+{
+	return a + b + c;
 }
 #indent end

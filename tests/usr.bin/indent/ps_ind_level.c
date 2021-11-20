@@ -1,4 +1,4 @@
-/* $NetBSD: ps_ind_level.c,v 1.2 2021/10/30 10:52:43 rillig Exp $ */
+/* $NetBSD: ps_ind_level.c,v 1.3 2021/11/20 16:54:17 rillig Exp $ */
 /* $FreeBSD$ */
 
 /*
@@ -16,14 +16,14 @@
  * to 4 levels of indentation, amounting to 20 spaces.
  */
 #indent input
-			int declaration_in_column_25;
+			int indented_by_24;
 
 void function_in_column_1(void){}
 #indent end
 
 /* 5 spaces indentation, 8 spaces per tabulator */
 #indent run -i5 -ts8
-		    int		    declaration_in_column_25;
+		    int		    indented_by_24;
 
 		    void	    function_in_column_1(void){
 		    }

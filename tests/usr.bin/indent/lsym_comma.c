@@ -1,4 +1,4 @@
-/* $NetBSD: lsym_comma.c,v 1.1 2021/11/18 21:19:19 rillig Exp $ */
+/* $NetBSD: lsym_comma.c,v 1.2 2021/11/20 16:54:17 rillig Exp $ */
 /* $FreeBSD$ */
 
 /*
@@ -6,6 +6,8 @@
  *
  * In an expression, the binary operator ',' evaluates its left operand before
  * its right operand, inserting a sequence point.
+ *
+ * In a declaration, a ',' separates the declarators.
  *
  * In a parameter list of a function type, a ',' separates the parameter
  * declarations.

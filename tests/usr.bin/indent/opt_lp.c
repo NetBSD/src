@@ -1,4 +1,4 @@
-/* $NetBSD: opt_lp.c,v 1.3 2021/10/16 21:32:10 rillig Exp $ */
+/* $NetBSD: opt_lp.c,v 1.4 2021/11/20 16:54:17 rillig Exp $ */
 /* $FreeBSD$ */
 
 /*
@@ -24,6 +24,10 @@ example(void)
 	    p3),
 	    third_procedure(p4,
 	        p5));
+
+	p1 = first_procedure(
+	 second_procedure(p2, p3),
+	 third_procedure(p4, p5));
 }
 #indent end
 
@@ -38,6 +42,10 @@ example(void)
 					      p3),
 			     third_procedure(p4,
 					     p5));
+
+	p1 = first_procedure(
+			     second_procedure(p2, p3),
+			     third_procedure(p4, p5));
 }
 #indent end
 
@@ -52,5 +60,31 @@ example(void)
 			p3),
 		third_procedure(p4,
 			p5));
+
+	p1 = first_procedure(
+		second_procedure(p2, p3),
+		third_procedure(p4, p5));
+}
+#indent end
+
+/*
+ * XXX: Combining the options '-nlp' and '-ci4' is counterproductive as the
+ * indentation does not make the nesting level of the function calls visible.
+ */
+#indent run -nlp -ci4
+void
+example(void)
+{
+	p1 = first_procedure(second_procedure(p2, p3),
+	    third_procedure(p4, p5));
+
+	p1 = first_procedure(second_procedure(p2,
+	    p3),
+	    third_procedure(p4,
+	    p5));
+
+	p1 = first_procedure(
+	    second_procedure(p2, p3),
+	    third_procedure(p4, p5));
 }
 #indent end

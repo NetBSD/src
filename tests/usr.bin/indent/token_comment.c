@@ -1,4 +1,4 @@
-/* $NetBSD: token_comment.c,v 1.23 2021/11/20 11:13:18 rillig Exp $ */
+/* $NetBSD: token_comment.c,v 1.24 2021/11/20 16:54:17 rillig Exp $ */
 /* $FreeBSD$ */
 
 /*
@@ -349,26 +349,26 @@ tab1+++	tab2---	tab3+++	tab4---	tab5+++	tab6---	tab7+++fixed comment*/
  * space.
  */
 #indent input
-/* 456789 123456789 123456789 123456789 123456789 123456789 123456789 12345 */
-/* 456789 123456789 123456789 123456789 123456789 123456789 123456789 123456 */
-/* 456789 123456789 123456789 123456789 123456789 123456789 123456789 1234567 */
-/* 456789 123456789 123456789 123456789 123456789 123456789 123456789 12345678 */
-/* 456789 123456789 123456789 123456789 123456789 123456789 123456789 123456789 */
+/* 456789 123456789 123456789 12345 */
+/* 456789 123456789 123456789 123456 */
+/* 456789 123456789 123456789 1234567 */
+/* 456789 123456789 123456789 12345678 */
+/* 456789 123456789 123456789 123456789 */
 #indent end
 
-#indent run
-/* 456789 123456789 123456789 123456789 123456789 123456789 123456789 12345 */
+#indent run -l38
+/* 456789 123456789 123456789 12345 */
 /*
- * 456789 123456789 123456789 123456789 123456789 123456789 123456789 123456
+ * 456789 123456789 123456789 123456
  */
 /*
- * 456789 123456789 123456789 123456789 123456789 123456789 123456789 1234567
+ * 456789 123456789 123456789 1234567
  */
 /*
- * 456789 123456789 123456789 123456789 123456789 123456789 123456789 12345678
+ * 456789 123456789 123456789 12345678
  */
 /*
- * 456789 123456789 123456789 123456789 123456789 123456789 123456789
+ * 456789 123456789 123456789
  * 123456789
  */
 #indent end
@@ -380,32 +380,32 @@ tab1+++	tab2---	tab3+++	tab4---	tab5+++	tab6---	tab7+++fixed comment*/
  * this space has to be taken into account when computing the line length.
  */
 #indent input
-/* x							. line length 75*/
-/* x							.. line length 76*/
-/* x							... line length 77*/
-/* x							.... line length 78*/
-/* x							..... line length 79*/
-/* x							...... line length 80*/
-/* x							....... line length 81*/
-/* x							........ line length 82*/
+/* x		. line length 35*/
+/* x		.. line length 36*/
+/* x		... line length 37*/
+/* x		.... line length 38*/
+/* x		..... line length 39*/
+/* x		...... line length 40*/
+/* x		....... line length 41*/
+/* x		........ line length 42*/
 #indent end
 
-#indent run
-/* x							. line length 75 */
-/* x							.. line length 76 */
-/* x							... line length 77 */
-/* x							.... line length 78 */
+#indent run -l38
+/* x		. line length 35 */
+/* x		.. line length 36 */
+/* x		... line length 37 */
+/* x		.... line length 38 */
 /*
- * x							..... line length 79
+ * x		..... line length 39
  */
 /*
- * x							...... line length 80
+ * x		...... line length 40
  */
 /*
- * x							....... line length 81
+ * x		....... line length 41
  */
 /*
- * x							........ line length 82
+ * x		........ line length 42
  */
 #indent end
 
@@ -420,7 +420,8 @@ tab1+++	tab2---	tab3+++	tab4---	tab5+++	tab6---	tab7+++fixed comment*/
 // This is a C99 line comment.
 
 /*
- * This is a box comment since its first line (above this line) is empty.
+ * This is a box comment since its first line (the one above this line) is
+ * empty.
  *
  *
  *
@@ -446,7 +447,8 @@ tab1+++	tab2---	tab3+++	tab4---	tab5+++	tab6---	tab7+++fixed comment*/
 // This is a C99 line comment.
 
 /*
- * This is a box comment since its first line (above this line) is empty.
+ * This is a box comment since its first line (the one above this line) is
+ * empty.
  *
  *
  *
@@ -491,7 +493,6 @@ function(void)
 	/*-
 	 * This is a box comment
 	 * that is not re-wrapped.
-	 * It is often used for copyright declarations.
 	 */
 }
 #indent end
@@ -516,7 +517,6 @@ function(void)
 	/*-
 	 * This is a box comment
 	 * that is not re-wrapped.
-	 * It is often used for copyright declarations.
 	 */
 }
 #indent end
@@ -743,11 +743,11 @@ loop(void)
  * extended such that each comment line may contain 22 characters.
  */
 #indent input
-int global_variable_with_really_long_name_that_reaches_up_to_column_xx;	/* 1234567890123456789 1 1234567890123456789 12 1234567890123456789 123 1234567890123456789 1234 1234567890123456789 12345 1234567890123456789 123456 */
+int		global_variable_with_really_long_name_that_reaches_up_to_column_83;	/* 1234567890123456789 1 1234567890123456789 12 1234567890123456789 123 1234567890123456789 1234 1234567890123456789 12345 1234567890123456789 123456 */
 #indent end
 
 #indent run
-int		global_variable_with_really_long_name_that_reaches_up_to_column_xx;	/* 1234567890123456789 1
+int		global_variable_with_really_long_name_that_reaches_up_to_column_83;	/* 1234567890123456789 1
 											 * 1234567890123456789 12
 											 * 1234567890123456789
 											 * 123
@@ -765,15 +765,15 @@ int		global_variable_with_really_long_name_that_reaches_up_to_column_xx;	/* 1234
  *
  * Even though this type of comments had been added in C99, indent didn't
  * support these comments until 2021 and instead messed up the code in
- * unpredictable ways. It treated any sequence of '/' as a binary operator,
- * no matter whether it was '/' or '//' or '/////'.
+ * seemingly unpredictable ways. It treated any sequence of '/' as a binary
+ * operator, no matter whether it was '/' or '//' or '/////'.
  */
 #indent input
 int dummy // comment
     = // eq
-    1 // one
+    1		// one
     + // plus
-    2; // two
+    2;// two
 
 /////separator/////
 
@@ -820,7 +820,7 @@ main(void)
 #indent input
 void c99_comment(void)
 {
-foo(); // C++ comment
+foo(); // C99 comment
 bar();
 }
 #indent end
@@ -829,7 +829,7 @@ bar();
 void
 c99_comment(void)
 {
-	foo();			// C++ comment
+	foo();			// C99 comment
 	bar();
 }
 #indent end
@@ -839,21 +839,13 @@ c99_comment(void)
 void
 comment_at_end_of_function(void)
 {
-    if (cond)
-	statement();
-    // comment
-}
-#indent end
-
-#indent run
-void
-comment_at_end_of_function(void)
-{
 	if (cond)
 		statement();
 	// comment
 }
 #indent end
+
+#indent run-equals-input
 
 
 #indent input

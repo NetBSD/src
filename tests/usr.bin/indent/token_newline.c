@@ -1,4 +1,4 @@
-/* $NetBSD: token_newline.c,v 1.1 2021/10/18 22:30:34 rillig Exp $ */
+/* $NetBSD: token_newline.c,v 1.2 2021/11/20 16:54:17 rillig Exp $ */
 /* $FreeBSD$ */
 
 /*-
@@ -10,7 +10,7 @@
  * characters are merged and continue the logical line (C11 5.1.1.2p1i2).
  *
  * In other contexts, a newline is an ordinary space character from a
- * compiler's point of view. Indent preserves line breaks though.
+ * compiler's point of view. Indent preserves most line breaks though.
  */
 
 #indent input

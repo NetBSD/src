@@ -1,4 +1,4 @@
-/* $NetBSD: opt_v.c,v 1.5 2021/11/20 11:13:18 rillig Exp $ */
+/* $NetBSD: opt_v.c,v 1.6 2021/11/20 16:54:17 rillig Exp $ */
 /* $FreeBSD$ */
 
 /*
@@ -14,7 +14,7 @@
 
 #indent input
 /*
- * A long comment.
+ * A block comment.
  */
 void
 example(void)
@@ -22,16 +22,16 @@ example(void)
 	printf("A very long message template with %d arguments: %s, %s, %s", 3, "first", "second", "third");
 }
 
-/* $ This comment is neither counted nor formatted. */
+/* $ The below comment is neither counted nor formatted. */
 #define macro1 /* prefix */ suffix
 
-/* $ This comment is formatted and counted. */
+/* $ The below comment is formatted and counted. */
 #define macro2 prefix /* suffix */
 #indent end
 
 #indent run -v
 /*
- * A long comment.
+ * A block comment.
  */
 void
 example(void)
