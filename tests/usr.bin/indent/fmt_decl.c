@@ -1,4 +1,4 @@
-/*	$NetBSD: fmt_decl.c,v 1.19 2021/11/19 22:24:29 rillig Exp $	*/
+/*	$NetBSD: fmt_decl.c,v 1.20 2021/11/20 09:59:53 rillig Exp $	*/
 /* $FreeBSD: head/usr.bin/indent/tests/declarations.0 334478 2018-06-01 09:41:15Z pstef $ */
 
 /*
@@ -470,11 +470,11 @@ int a - 1;
 
 
 /*
- * Between 2019-04-04 and before lexi.c 1.146 from 2021-11-09, the indentation
+ * Between 2019-04-04 and before lexi.c 1.146 from 2021-11-19, the indentation
  * of the '*' depended on the function name, which did not make sense.  For
  * function names that matched [A-Za-z]+, the '*' was placed correctly, for
  * all other function names (containing [$0-9_]) the '*' was right-aligned on
- * declaration indentation, which defaults to 16.
+ * the declaration indentation, which defaults to 16.
  */
 #indent input
 int *

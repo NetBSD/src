@@ -1,5 +1,5 @@
 #! /bin/sh
-# $NetBSD: t_misc.sh,v 1.16 2021/11/19 22:24:29 rillig Exp $
+# $NetBSD: t_misc.sh,v 1.17 2021/11/20 09:59:53 rillig Exp $
 #
 # Copyright (c) 2021 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -234,7 +234,7 @@ a type */custom_type
 /* For int options, trailing garbage would be an error. */
 -i3
 
-/*For float options, trailing garbage would be an error. */
+/* For float options, trailing garbage would be an error. */
 -cli3.5
 
 -b/*/acc	/* The comment is '/' '*' '/', making the option '-bacc'. */

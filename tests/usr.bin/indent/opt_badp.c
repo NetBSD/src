@@ -1,4 +1,4 @@
-/* $NetBSD: opt_badp.c,v 1.5 2021/11/19 22:24:29 rillig Exp $ */
+/* $NetBSD: opt_badp.c,v 1.6 2021/11/20 09:59:53 rillig Exp $ */
 /* $FreeBSD$ */
 
 /*
@@ -10,7 +10,7 @@
 
 #indent input
 void
-empty_body(void)
+empty(void)
 {
 }
 #indent end
@@ -21,7 +21,7 @@ empty_body(void)
 
 #indent input
 void
-empty_line(void)
+blank(void)
 {
 
 }
@@ -33,7 +33,7 @@ empty_line(void)
 
 #indent input
 void
-only_declaration(void)
+declaration(void)
 {
 	int		decl;
 }
@@ -45,7 +45,7 @@ only_declaration(void)
 
 #indent input
 void
-only_statement(void)
+statement(void)
 {
 	stmt();
 }
@@ -53,7 +53,7 @@ only_statement(void)
 
 #indent run -badp
 void
-only_statement(void)
+statement(void)
 {
 
 	stmt();
@@ -64,7 +64,7 @@ only_statement(void)
 
 #indent input
 void
-declaration_and_statement(void)
+declaration_statement(void)
 {
 	int		decl;
 	stmt();
@@ -73,7 +73,7 @@ declaration_and_statement(void)
 
 #indent run -badp
 void
-declaration_and_statement(void)
+declaration_statement(void)
 {
 	int		decl;
 	/* $ FIXME: missing empty line */

@@ -1,4 +1,4 @@
-/* $NetBSD: opt_P.c,v 1.2 2021/11/19 22:24:29 rillig Exp $ */
+/* $NetBSD: opt_P.c,v 1.3 2021/11/20 09:59:53 rillig Exp $ */
 /* $FreeBSD$ */
 
 /*
@@ -9,7 +9,7 @@
  * arbitrary files, therefore this test is rather restricted.
  *
  * See also:
- *	t_misc			for test with custom setup
+ *	t_misc			for tests with individual setup
  */
 
 #indent input
