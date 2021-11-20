@@ -1,4 +1,4 @@
-/*	$NetBSD: ihphy.c,v 1.10.8.2 2020/01/24 18:40:45 martin Exp $	*/
+/*	$NetBSD: ihphy.c,v 1.10.8.3 2021/11/20 15:11:32 martin Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ihphy.c,v 1.10.8.2 2020/01/24 18:40:45 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ihphy.c,v 1.10.8.3 2021/11/20 15:11:32 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -216,7 +216,6 @@ ihphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 
 	case MII_DOWN:
 		mii_phy_down(sc);
-		PHY_WRITE(sc, MII_BMCR, BMCR_PDOWN);
 		return 0;
 	}
 

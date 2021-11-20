@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.508.4.43 2021/10/23 11:49:22 martin Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.508.4.44 2021/11/20 15:11:31 martin Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.508.4.43 2021/10/23 11:49:22 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.508.4.44 2021/11/20 15:11:31 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -1042,6 +1042,8 @@ static bool	wm_phy_need_linkdown_discard(struct wm_softc *);
 static void	wm_set_linkdown_discard(struct wm_softc *);
 static void	wm_clear_linkdown_discard(struct wm_softc *);
 
+static int	wm_sysctl_tdh_handler(SYSCTLFN_PROTO);
+static int	wm_sysctl_tdt_handler(SYSCTLFN_PROTO);
 #ifdef WM_DEBUG
 static int	wm_sysctl_debug(SYSCTLFN_PROTO);
 #endif
@@ -3114,8 +3116,12 @@ alloc_retry:
 
 	sc->sc_txrx_use_workqueue = false;
 
-	if (wm_phy_need_linkdown_discard(sc))
+	if (wm_phy_need_linkdown_discard(sc)) {
+		DPRINTF(sc, WM_DEBUG_LINK,
+		    ("%s: %s: Set linkdown discard flag\n",
+			device_xname(sc->sc_dev), __func__));
 		wm_set_linkdown_discard(sc);
+	}
 
 	wm_init_sysctls(sc);
 
@@ -3566,10 +3572,12 @@ wm_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 		splx(s);
 #endif
 		if (error == 0 && wm_phy_need_linkdown_discard(sc)) {
-			if (IFM_SUBTYPE(ifr->ifr_media) == IFM_NONE)
+			if (IFM_SUBTYPE(ifr->ifr_media) == IFM_NONE) {
+				DPRINTF(sc, WM_DEBUG_LINK,
+				    ("%s: %s: Set linkdown discard flag\n",
+					device_xname(sc->sc_dev), __func__));
 				wm_set_linkdown_discard(sc);
-			else
-				wm_clear_linkdown_discard(sc);
+			}
 		}
 		break;
 	case SIOCINITIFADDR:
@@ -3585,14 +3593,14 @@ wm_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 			break;
 		}
 		WM_CORE_UNLOCK(sc);
-		if (((ifp->if_flags & IFF_UP) == 0) && wm_phy_need_linkdown_discard(sc))
-			wm_clear_linkdown_discard(sc);
 		/*FALLTHROUGH*/
 	default:
 		if (cmd == SIOCSIFFLAGS && wm_phy_need_linkdown_discard(sc)) {
-			if (((ifp->if_flags & IFF_UP) == 0) && ((ifr->ifr_flags & IFF_UP) != 0)) {
-				wm_clear_linkdown_discard(sc);
-			} else if (((ifp->if_flags & IFF_UP) != 0) && ((ifr->ifr_flags & IFF_UP) == 0)) {
+			if (((ifp->if_flags & IFF_UP) != 0) &&
+			    ((ifr->ifr_flags & IFF_UP) == 0)) {
+				DPRINTF(sc, WM_DEBUG_LINK,
+				    ("%s: %s: Set linkdown discard flag\n",
+					device_xname(sc->sc_dev), __func__));
 				wm_set_linkdown_discard(sc);
 			}
 		}
@@ -5903,6 +5911,7 @@ wm_init_sysctls(struct wm_softc *sc)
 		    sc->sc_queue[i].sysctlname, SYSCTL_DESCR("Queue Name"),
 		    NULL, 0, NULL, 0, CTL_CREATE, CTL_EOL) != 0)
 			break;
+
 		if (sysctl_createv(log, 0, &qnode, &cnode,
 		    CTLFLAG_READONLY, CTLTYPE_INT,
 		    "txq_free", SYSCTL_DESCR("TX queue free"),
@@ -5911,8 +5920,56 @@ wm_init_sysctls(struct wm_softc *sc)
 			break;
 		if (sysctl_createv(log, 0, &qnode, &cnode,
 		    CTLFLAG_READONLY, CTLTYPE_INT,
+		    "txd_head", SYSCTL_DESCR("TX descriptor head"),
+		    wm_sysctl_tdh_handler, 0, (void *)txq,
+		    0, CTL_CREATE, CTL_EOL) != 0)
+			break;
+		if (sysctl_createv(log, 0, &qnode, &cnode,
+		    CTLFLAG_READONLY, CTLTYPE_INT,
+		    "txd_tail", SYSCTL_DESCR("TX descriptor tail"),
+		    wm_sysctl_tdt_handler, 0, (void *)txq,
+		    0, CTL_CREATE, CTL_EOL) != 0)
+			break;
+		if (sysctl_createv(log, 0, &qnode, &cnode,
+		    CTLFLAG_READONLY, CTLTYPE_INT,
 		    "txq_next", SYSCTL_DESCR("TX queue next"),
 		    NULL, 0, &txq->txq_next,
+		    0, CTL_CREATE, CTL_EOL) != 0)
+			break;
+		if (sysctl_createv(log, 0, &qnode, &cnode,
+		    CTLFLAG_READONLY, CTLTYPE_INT,
+		    "txq_sfree", SYSCTL_DESCR("TX queue sfree"),
+		    NULL, 0, &txq->txq_sfree,
+		    0, CTL_CREATE, CTL_EOL) != 0)
+			break;
+		if (sysctl_createv(log, 0, &qnode, &cnode,
+		    CTLFLAG_READONLY, CTLTYPE_INT,
+		    "txq_snext", SYSCTL_DESCR("TX queue snext"),
+		    NULL, 0, &txq->txq_snext,
+		    0, CTL_CREATE, CTL_EOL) != 0)
+			break;
+		if (sysctl_createv(log, 0, &qnode, &cnode,
+		    CTLFLAG_READONLY, CTLTYPE_INT,
+		    "txq_sdirty", SYSCTL_DESCR("TX queue sdirty"),
+		    NULL, 0, &txq->txq_sdirty,
+		    0, CTL_CREATE, CTL_EOL) != 0)
+			break;
+		if (sysctl_createv(log, 0, &qnode, &cnode,
+		    CTLFLAG_READONLY, CTLTYPE_INT,
+		    "txq_flags", SYSCTL_DESCR("TX queue flags"),
+		    NULL, 0, &txq->txq_flags,
+		    0, CTL_CREATE, CTL_EOL) != 0)
+			break;
+		if (sysctl_createv(log, 0, &qnode, &cnode,
+		    CTLFLAG_READONLY, CTLTYPE_BOOL,
+		    "txq_stopping", SYSCTL_DESCR("TX queue stopping"),
+		    NULL, 0, &txq->txq_stopping,
+		    0, CTL_CREATE, CTL_EOL) != 0)
+			break;
+		if (sysctl_createv(log, 0, &qnode, &cnode,
+		    CTLFLAG_READONLY, CTLTYPE_BOOL,
+		    "txq_sending", SYSCTL_DESCR("TX queue sending"),
+		    NULL, 0, &txq->txq_sending,
 		    0, CTL_CREATE, CTL_EOL) != 0)
 			break;
 
@@ -7335,7 +7392,9 @@ wm_init_tx_queue(struct wm_softc *sc, struct wm_queue *wmq,
 	wm_init_tx_regs(sc, wmq, txq);
 	wm_init_tx_buffer(sc, txq);
 
-	txq->txq_flags = 0; /* Clear WM_TXQ_NO_SPACE */
+	/* Clear other than WM_TXQ_LINKDOWN_DISCARD */
+	txq->txq_flags &= WM_TXQ_LINKDOWN_DISCARD;
+
 	txq->txq_sending = false;
 }
 
@@ -9357,13 +9416,21 @@ wm_linkintr_gmii(struct wm_softc *sc, uint32_t icr)
 		DPRINTF(sc, WM_DEBUG_LINK, ("%s: LINK: LSC -> up %s\n",
 			device_xname(sc->sc_dev),
 			(status & STATUS_FD) ? "FDX" : "HDX"));
-		if (wm_phy_need_linkdown_discard(sc))
+		if (wm_phy_need_linkdown_discard(sc)) {
+			DPRINTF(sc, WM_DEBUG_LINK,
+			    ("%s: linkintr: Clear linkdown discard flag\n",
+				device_xname(dev)));
 			wm_clear_linkdown_discard(sc);
+		}
 	} else {
-		if (wm_phy_need_linkdown_discard(sc))
-			wm_set_linkdown_discard(sc);
 		DPRINTF(sc, WM_DEBUG_LINK, ("%s: LINK: LSC -> down\n",
 			device_xname(sc->sc_dev)));
+		if (wm_phy_need_linkdown_discard(sc)) {
+			DPRINTF(sc, WM_DEBUG_LINK,
+			    ("%s: linkintr: Set linkdown discard flag\n",
+				device_xname(dev)));
+			wm_set_linkdown_discard(sc);
+		}
 	}
 	if ((sc->sc_type == WM_T_ICH8) && (link == false))
 		wm_gig_downshift_workaround_ich8lan(sc);
@@ -10268,9 +10335,9 @@ wm_gmii_setup_phytype(struct wm_softc *sc, uint32_t phy_oui,
 	} else {
 		/* It's not the first call. Use PHY OUI and model */
 		switch (phy_oui) {
-		case MII_OUI_ATTANSIC: /* XXX ??? */
+		case MII_OUI_ATTANSIC: /* atphy(4) */
 			switch (phy_model) {
-			case 0x0004: /* XXX */
+			case MII_MODEL_ATTANSIC_AR8021:
 				new_phytype = WMPHY_82578;
 				break;
 			default:
@@ -16372,7 +16439,35 @@ wm_legacy_irq_quirk_spt(struct wm_softc *sc)
 	CSR_WRITE(sc, WMREG_FEXTNVM9, reg);
 }
 
-/* Sysctl function */
+/* Sysctl functions */
+static int
+wm_sysctl_tdh_handler(SYSCTLFN_ARGS)
+{
+	struct sysctlnode node = *rnode;
+	struct wm_txqueue *txq = (struct wm_txqueue *)node.sysctl_data;
+	struct wm_queue *wmq = container_of(txq, struct wm_queue, wmq_txq);
+	struct wm_softc *sc = txq->txq_sc; 
+	uint32_t reg;
+
+	reg = CSR_READ(sc, WMREG_TDH(wmq->wmq_id));
+	node.sysctl_data = &reg;
+	return sysctl_lookup(SYSCTLFN_CALL(&node));
+}
+
+static int
+wm_sysctl_tdt_handler(SYSCTLFN_ARGS)
+{
+	struct sysctlnode node = *rnode;
+	struct wm_txqueue *txq = (struct wm_txqueue *)node.sysctl_data;
+	struct wm_queue *wmq = container_of(txq, struct wm_queue, wmq_txq);
+	struct wm_softc *sc = txq->txq_sc; 
+	uint32_t reg;
+
+	reg = CSR_READ(sc, WMREG_TDT(wmq->wmq_id));
+	node.sysctl_data = &reg;
+	return sysctl_lookup(SYSCTLFN_CALL(&node));
+}
+
 #ifdef WM_DEBUG
 static int
 wm_sysctl_debug(SYSCTLFN_ARGS)
@@ -16390,6 +16485,8 @@ wm_sysctl_debug(SYSCTLFN_ARGS)
 		return error;
 
 	sc->sc_debug = dflags;
+	device_printf(sc->sc_dev, "TARC0: %08x\n", CSR_READ(sc, WMREG_TARC0));
+	device_printf(sc->sc_dev, "TDT0: %08x\n", CSR_READ(sc, WMREG_TDT(0)));
 
 	return 0;
 }
