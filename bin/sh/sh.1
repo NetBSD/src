@@ -1,4 +1,4 @@
-.\"	$NetBSD: sh.1,v 1.238 2021/11/16 23:39:34 rillig Exp $
+.\"	$NetBSD: sh.1,v 1.239 2021/11/20 01:52:51 kre Exp $
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -31,7 +31,7 @@
 .\"
 .\"	@(#)sh.1	8.6 (Berkeley) 5/4/95
 .\"
-.Dd October 31, 2021
+.Dd November 20, 2021
 .Dt SH 1
 .\" everything except c o and s (keep them ordered)
 .ds flags abCEeFfhIiLmnpquVvXx
@@ -266,12 +266,24 @@ or
 only, either on the command line, or with the
 .Ic set
 built-in command.
+Those are listed in the table below after the options
+with a one letter, flag, equivalent.
+.Pp
 Other options described are for the command line only.
 Specifying a dash
 .Dq Cm \-
 turns the option on, while using a plus
 .Dq Cm +
 disables the option.
+This may seem counter-intuitive, but is in line with the
+common practice where
+.Ic cmd Fl x
+runs
+.Ic cmd
+with the
+.Sq x
+option set.
+.Pp
 The following options can be set from the command line and,
 unless otherwise stated, with the
 .Ic set
@@ -371,6 +383,16 @@ Ignore EOFs from input when interactive.
 (After a large number of consecutive EOFs the shell will exit anyway.)
 .It Fl i Em interactive
 Force the shell to behave interactively.
+If not set on the command line,
+this option is set automatically at shell startup if
+the shell is reading from standard input (no
+.Fl c ,
+or
+.Ar command_file
+given at invocation of
+.Nm ) ,
+and standard input and standard error refer to
+terminmal type devices.
 .It Fl L Em local_lineno
 When set, before a function is defined,
 causes the variable
@@ -389,7 +411,7 @@ For more details see the section
 .Sx LINENO
 below.
 .It Fl m Em monitor
-Turn on job control (set automatically when interactive).
+Turn on job control (set automatically at shell startup when interactive).
 .It Fl n Em noexec
 Read and parse commands, but do not execute them.
 This is useful for checking the syntax of shell scripts.
@@ -442,7 +464,7 @@ This option has no effect when set or reset after the shell has
 already started reading from the command_file, or from standard input.
 Note that the
 .Fl s
-flag being set does not cause the shell to be interactive.
+flag being set does not, of itself, cause the shell to be interactive.
 .It Fl u Em nounset
 Write a message to standard error when attempting to obtain a
 value from a variable that is not set,
@@ -471,7 +493,7 @@ if it had been set).
 section below.)
 .It Fl v Em verbose
 The shell writes its input to standard error as it is read.
-Useful for debugging.
+Perhaps ocassionally useful for some debugging.
 .It Fl X Em xlock
 Cause output from the
 .Ic xtrace
@@ -503,12 +525,30 @@ is set,
 means that which existed immediately before any redirections to
 be applied to the command are performed.
 Useful for debugging.
+.El
+.Pp
+The following options have no one letter variant,
+and are used only in conjunction with
+.Fl o
+or
+.Cm +o ,
+either on the command line, or via the
+.Ic set
+built-in command.
+.Bl -tag -width ".Fl L Em local_lineno" -offset indent
 .It "\ \ " Em cdprint
 Make an interactive shell always print the new directory name when
 changed by the
 .Ic cd
 command.
-In a non-interactive shell this option has no effect.
+In a non-interactive shell this option has no effect
+unless the
+.Em posix
+option is set.
+However,
+.Em cdprint
+is an extension to POSIX, so these two options should
+rarely be set at the same time.
 .It "\ \ " Em nolog
 Prevent the entry of function definitions into the command history (see
 .Ic fc
@@ -3579,12 +3619,17 @@ command instead, if you want to return from a script or exit
 your shell.
 .\"
 .Pp
-.It Ic set Oo { Fl options | Cm +options | Cm \-- } Oc Ar arg ...
+.It set
+.It set { Fl o | Cm +o }
+.It Ic set Oo { Fl options | Cm +options } ... Oc Oo Cm \-\|\- Oc Oo Ar arg ... Oc
+.Pp
 The
 .Ic set
 command performs four different functions.
 .Pp
-With no arguments, it lists the values of all shell variables.
+With no arguments,
+.Ic set
+lists the names and values of all set shell variables.
 .Pp
 With a single option of either
 .Dq Fl o
@@ -3604,7 +3649,11 @@ If options are given, it sets the specified option
 flags, or clears them as described in the
 .Sx Argument List Processing
 section.
-In addition to the options listed there,
+Note that not all options available on the command
+line are available to the
+.Ic set
+built-in command.
+However, in addition to the options listed there,
 when the
 .Dq "option name"
 given to
@@ -3627,8 +3676,8 @@ The fourth use of the
 command is to set the values of the shell's
 positional parameters to the specified arguments.
 To change the positional
-parameters without changing any options, use
-.Dq -\|-
+parameters with no possibility of changing any options, use
+.Dq \-\|\-
 as the first argument to
 .Ic set .
 If no following arguments are present, the
@@ -3643,6 +3692,8 @@ Otherwise the following arguments become
 and
 .Li \&$#
 is set to the number of arguments present.
+The third and fourth forms may be combined, to set options,
+and the argument list, in one operation.
 .\"
 .Pp
 .It Ic setvar Ar variable Ar value
