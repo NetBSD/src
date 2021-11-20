@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe.h,v 1.24.6.22 2021/09/15 16:38:01 martin Exp $ */
+/* $NetBSD: ixgbe.h,v 1.24.6.23 2021/11/20 15:21:31 martin Exp $ */
 
 /******************************************************************************
   SPDX-License-Identifier: BSD-3-Clause
@@ -185,6 +185,23 @@
  */
 #define IXGBE_RX_COPY_LEN_MAX     (MHLEN - ETHER_ALIGN)
 
+/*
+ * Default TX WTHRESH value.
+ * Currently, we don't use the Tx Head Pointer Write Back function.
+ */
+#define IXGBE_TX_WTHRESH	5
+
+/*
+ * The max number of descriptors that one packet can use is 40 - WTHRESH - 2.
+ * Though 82598 does not have this limit, we don't want long TX chain.
+ * 33 should be large enough even for 64K TSO
+ * (32 * 2K mbuf cluster and 1 x mbuf header).
+ *
+ * Reference: 82599-X550 datasheet 7.2.1.1 "Transmit Storage in System Memory".
+ */
+#define IXGBE_82599_SCATTER_MAX	(40 - IXGBE_TX_WTHRESH - 2)
+#define IXGBE_SCATTER_DEFAULT	33
+
 /* Keep older OS drivers building... */
 #if !defined(SYSCTL_ADD_UQUAD)
 #define SYSCTL_ADD_UQUAD SYSCTL_ADD_QUAD
@@ -206,8 +223,6 @@
 #define HW_DEBUGOUT2(S, A, B)       if (DEBUG_HW) printf(S "\n", A, B)
 
 #define MAX_NUM_MULTICAST_ADDRESSES     128
-#define IXGBE_82598_SCATTER             100
-#define IXGBE_82599_SCATTER             32
 #define MSIX_82598_BAR                  3
 #define MSIX_82599_BAR                  4
 #define IXGBE_TSO_SIZE                  262140

@@ -1,4 +1,4 @@
-/* $NetBSD: ixv.c,v 1.56.2.32 2021/09/15 16:38:01 martin Exp $ */
+/* $NetBSD: ixv.c,v 1.56.2.33 2021/11/20 15:21:31 martin Exp $ */
 
 /******************************************************************************
 
@@ -35,7 +35,7 @@
 /*$FreeBSD: head/sys/dev/ixgbe/if_ixv.c 331224 2018-03-19 20:55:05Z erj $*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixv.c,v 1.56.2.32 2021/09/15 16:38:01 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixv.c,v 1.56.2.33 2021/11/20 15:21:31 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -424,7 +424,8 @@ ixv_attach(device_t parent, device_t dev, void *aux)
 	ixgbe_init_mbx_params_vf(hw);
 
 	/* Set the right number of segments */
-	adapter->num_segs = IXGBE_82599_SCATTER;
+	KASSERT(IXGBE_82599_SCATTER_MAX >= IXGBE_SCATTER_DEFAULT);
+	adapter->num_segs = IXGBE_SCATTER_DEFAULT;
 
 	/* Reset mbox api to 1.0 */
 	error = hw->mac.ops.reset_hw(hw);
@@ -1350,7 +1351,6 @@ ixv_local_timer_locked(void *arg)
 	return;
 
 watchdog:
-
 	device_printf(adapter->dev, "Watchdog timeout -- resetting\n");
 	adapter->ifp->if_flags &= ~IFF_RUNNING;
 	adapter->watchdog_events.ev_count++;
@@ -1673,7 +1673,7 @@ ixv_initialize_transmit_units(struct adapter *adapter)
 
 		/* Set WTHRESH to 8, burst writeback */
 		txdctl = IXGBE_READ_REG(hw, IXGBE_VFTXDCTL(j));
-		txdctl |= (8 << 16);
+		txdctl |= IXGBE_TX_WTHRESH << IXGBE_TXDCTL_WTHRESH_SHIFT;
 		IXGBE_WRITE_REG(hw, IXGBE_VFTXDCTL(j), txdctl);
 
 		/* Set the HW Tx Head and Tail indices */
