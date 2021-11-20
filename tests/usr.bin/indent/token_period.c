@@ -1,14 +1,5 @@
-/* $NetBSD: token_period.c,v 1.1 2021/10/18 22:30:34 rillig Exp $ */
+/* $NetBSD: token_period.c,v 1.2 2021/11/20 16:54:17 rillig Exp $ */
 /* $FreeBSD$ */
-
-/*
- * Tests for the token '.'.
- *
- * The '.' in numbers such as 3.14159265358979 is not a token '.'.
- *
- * The token '.' is used to access a member of a struct or union.
- */
-
 
 /*
  * The ellipsis for the function parameter is a sequence of three '.' tokens.

@@ -1,12 +1,12 @@
-/* $NetBSD: opt_ut.c,v 1.2 2021/10/16 21:32:10 rillig Exp $ */
+/* $NetBSD: opt_ut.c,v 1.3 2021/11/20 16:54:17 rillig Exp $ */
 /* $FreeBSD$ */
 
 /*
  * Tests for the options '-ut' and '-nut'.
  *
- * The option '-ut' uses tabs for indentation.
+ * The option '-ut' uses tabs for indentation and alignment.
  *
- * The option '-nut' uses only spaces for indentation.
+ * The option '-nut' uses only spaces for indentation and alignment.
  */
 
 #indent input

@@ -1,13 +1,26 @@
-/* $NetBSD: opt_ldi.c,v 1.2 2021/10/24 20:43:28 rillig Exp $ */
+/* $NetBSD: opt_ldi.c,v 1.3 2021/11/20 16:54:17 rillig Exp $ */
 /* $FreeBSD$ */
 
 /*
  * Tests for the option '-ldi', which specifies where the variable names of
  * locally declared variables are placed.
+ *
+ * See also:
+ *	opt_di.c
  */
 
 #indent input
 int global;
+
+void
+function(void)
+{
+	int local;
+}
+#indent end
+
+#indent run -ldi0
+int		global;
 
 void
 function(void)
@@ -57,7 +70,7 @@ function(void)
 #indent end
 
 /*
- * Struct members use -di for indentation, no matter whether they are
+ * Struct members use '-di' for indentation, no matter whether they are
  * declared globally or locally.
  */
 #indent run -ldi0

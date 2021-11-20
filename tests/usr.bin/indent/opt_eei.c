@@ -1,4 +1,4 @@
-/* $NetBSD: opt_eei.c,v 1.5 2021/11/07 08:03:15 rillig Exp $ */
+/* $NetBSD: opt_eei.c,v 1.6 2021/11/20 16:54:17 rillig Exp $ */
 /* $FreeBSD$ */
 
 /*
@@ -43,8 +43,9 @@ less(int a, int b)
 #indent run-equals-input -neei
 
 /*
- * When the indentation level is the same as the continuation indentation, the
- * indentation does not show the structure of the code.
+ * When a single indentation level is the same as the continuation
+ * indentation, the code does not clearly show whether the 'b' belongs to the
+ * condition or the body statement.
  */
 #indent run -neei -i4
 bool
