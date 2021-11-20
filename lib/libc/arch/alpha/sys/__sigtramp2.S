@@ -1,4 +1,4 @@
-/*	$NetBSD: __sigtramp2.S,v 1.7 2021/11/03 04:52:51 thorpej Exp $	*/
+/*	$NetBSD: __sigtramp2.S,v 1.8 2021/11/20 19:26:20 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -38,10 +38,20 @@
  *
  *		ucontext structure	[128] == sp + sizeof(siginfo_t)]
  *	sp->	siginfo structure	[0]
+ *
+ * The DWARF register numbers for the general purpose registers are the
+ * same as the architected register numbers.  For Alpha, there is a DWARF
+ * pseudo-register for signal handler return addresses.
  */
 
-#define	CFI_OFFSET_REG(n, r)	.cfi_offset n, r*8
-#define	CFI_OFFSET(r)		CFI_OFFSET_REG(r, r)
+#if defined(__LIBGCC_DWARF_ALT_FRAME_RETURN_COLUMN__)
+#define	DWARF_SIGRETURN_REG		__LIBGCC_DWARF_ALT_FRAME_RETURN_COLUMN__
+#else
+#define	DWARF_SIGRETURN_REG		64
+#endif
+
+#define	CFI_OFFSET_DWARF_REG(d, r)	.cfi_offset d, r*8
+#define	CFI_OFFSET(r)			CFI_OFFSET_DWARF_REG(r, r)
 
 	.cfi_startproc simple
 	.cfi_signal_frame
@@ -72,11 +82,13 @@
 	CFI_OFFSET(_REG_T9)
 	CFI_OFFSET(_REG_T10)
 	CFI_OFFSET(_REG_T11)
-	CFI_OFFSET_REG(_REG_RA, _REG_PC)
+	CFI_OFFSET(_REG_RA)
 	CFI_OFFSET(_REG_T12)	/* a.k.a. _REG_PV */
 	CFI_OFFSET(_REG_AT)
 	CFI_OFFSET(_REG_GP)
 	CFI_OFFSET(_REG_SP)
+	.cfi_return_column DWARF_SIGRETURN_REG
+	CFI_OFFSET_DWARF_REG(DWARF_SIGRETURN_REG, _REG_PC)
 
 /*
  * The unwind entry includes one instruction slot prior to the trampoline
