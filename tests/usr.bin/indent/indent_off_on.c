@@ -1,4 +1,4 @@
-/* $NetBSD: indent_off_on.c,v 1.4 2021/11/19 22:24:29 rillig Exp $ */
+/* $NetBSD: indent_off_on.c,v 1.5 2021/11/20 11:13:18 rillig Exp $ */
 /* $FreeBSD$ */
 
 /*
@@ -90,6 +90,7 @@
 {
 }
 #indent end
+
 
 /*
  * The INDENT comments can be written without space between the words, but

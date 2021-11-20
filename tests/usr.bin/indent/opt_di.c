@@ -1,4 +1,4 @@
-/* $NetBSD: opt_di.c,v 1.4 2021/10/24 20:43:28 rillig Exp $ */
+/* $NetBSD: opt_di.c,v 1.5 2021/11/20 11:13:18 rillig Exp $ */
 /* $FreeBSD$ */
 
 /*
@@ -85,7 +85,6 @@ int		decl;
  * Ensure that all whitespace is normalized to be indented by 8 columns,
  * which in the default configuration amounts to a single tab.
  */
-
 #indent input
 int space;
 int	tab;

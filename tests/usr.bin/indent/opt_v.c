@@ -1,4 +1,4 @@
-/* $NetBSD: opt_v.c,v 1.4 2021/11/07 15:44:28 rillig Exp $ */
+/* $NetBSD: opt_v.c,v 1.5 2021/11/20 11:13:18 rillig Exp $ */
 /* $FreeBSD$ */
 
 /*
@@ -45,6 +45,7 @@ example(void)
 There were 10 output lines and 2 comments
 (Lines with comments)/(Lines with code):  0.571
 #indent end
+
 
 #indent input
 void
