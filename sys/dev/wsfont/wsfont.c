@@ -1,4 +1,4 @@
-/* 	$NetBSD: wsfont.c,v 1.75 2021/11/20 00:08:23 rin Exp $	*/
+/* 	$NetBSD: wsfont.c,v 1.76 2021/11/20 08:16:30 rin Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsfont.c,v 1.75 2021/11/20 00:08:23 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsfont.c,v 1.76 2021/11/20 08:16:30 rin Exp $");
 
 #include "opt_wsfont.h"
 
@@ -281,11 +281,14 @@ static struct font builtin_fonts[] = {
 #ifdef FONT_DEJAVU_SANS_MONO12x22
 	{ { NULL, NULL }, &DejaVu_Sans_Mono_12x22, 0, 0, WSFONT_STATIC | WSFONT_BUILTIN },
 #endif
-#ifdef FONT_DROID_SANS_MONO12x22
-	{ { NULL, NULL }, &Droid_Sans_Mono_12x22, 0, 0, WSFONT_STATIC | WSFONT_BUILTIN },
-#endif
 #ifdef FONT_DROID_SANS_MONO9x18
 	{ { NULL, NULL }, &Droid_Sans_Mono_9x18, 0, 0, WSFONT_STATIC | WSFONT_BUILTIN },
+#endif
+#ifdef FONT_DROID_SANS_MONO10x20
+	{ { NULL, NULL }, &Droid_Sans_Mono_10x20, 0, 0, WSFONT_STATIC | WSFONT_BUILTIN },
+#endif
+#ifdef FONT_DROID_SANS_MONO12x22
+	{ { NULL, NULL }, &Droid_Sans_Mono_12x22, 0, 0, WSFONT_STATIC | WSFONT_BUILTIN },
 #endif
 #ifdef FONT_DROID_SANS_MONO19x36
 	{ { NULL, NULL }, &Droid_Sans_Mono_19x36, 0, 0, WSFONT_STATIC | WSFONT_BUILTIN },
