@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.3,v 1.1.2.108 2021/10/31 14:49:33 martin Exp $
+# $NetBSD: CHANGES-8.3,v 1.1.2.109 2021/11/20 15:22:35 martin Exp $
 
 A complete list of changes from the NetBSD 8.2 release to the NetBSD 8.3
 release:
@@ -2192,4 +2192,26 @@ lib/libcrypt/crypt-sha1.c			1.10
 	libcrypt: Fix a floating point exception when a low number of HMAC-SHA1
 	iterations are specified.
 	[nia, ticket #1705]
+
+sys/dev/pci/if_wm.c				1.716-1.718 via patch
+sys/dev/pci/if_wmreg.h				1.121
+sys/dev/mii/ihphy.c				1.20
+
+	- Fix a bug that device timeout still happens when the link is down
+	  on ICH/PCH. Fixes PR kern/56478.
+	- Add some sysctl info for debugging.
+	- ihphy(4): Don't power down the PHY when the interface goes down.
+	- Use macro. Fix comment.
+	[msaitoh, ticket #1707]
+
+sys/dev/pci/ixgbe/ixgbe.h			1.81-1.83
+sys/dev/pci/ixgbe/ixgbe.c			1.291-1.292 via patch
+sys/dev/pci/ixgbe/ixgbe_type.h			1.50
+sys/dev/pci/ixgbe/ixv.c				1.167-1.168 via patch
+sys/dev/pci/ixgbe/ix_txrx.c			1.94
+
+	- Fix a bug that a near 64KB TSO segment can't send.
+	- Reduce bus_dmamap_sync() cost.
+	- Use macro. Fix typos in comment.
+	[msaitoh, ticket #1708]
 
