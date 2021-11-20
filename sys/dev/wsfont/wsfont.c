@@ -1,4 +1,4 @@
-/* 	$NetBSD: wsfont.c,v 1.73 2021/11/19 23:55:16 rin Exp $	*/
+/* 	$NetBSD: wsfont.c,v 1.74 2021/11/20 00:00:19 rin Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsfont.c,v 1.73 2021/11/19 23:55:16 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsfont.c,v 1.74 2021/11/20 00:00:19 rin Exp $");
 
 #include "opt_wsfont.h"
 
@@ -130,14 +130,14 @@ __KERNEL_RCSID(0, "$NetBSD: wsfont.c,v 1.73 2021/11/19 23:55:16 rin Exp $");
 #include <dev/wsfont/DejaVu_Sans_Mono_12x22.h>
 #endif
 
-#ifdef FONT_DROID_SANS_MONO12x22
-#define HAVE_FONT 1
-#include <dev/wsfont/Droid_Sans_Mono_12x22.h>
-#endif
-
 #ifdef FONT_DROID_SANS_MONO9x18
 #define HAVE_FONT 1
 #include <dev/wsfont/Droid_Sans_Mono_9x18.h>
+#endif
+
+#ifdef FONT_DROID_SANS_MONO12x22
+#define HAVE_FONT 1
+#include <dev/wsfont/Droid_Sans_Mono_12x22.h>
 #endif
 
 #ifdef FONT_DROID_SANS_MONO19x36

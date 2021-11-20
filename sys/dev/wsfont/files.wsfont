@@ -1,4 +1,4 @@
-# 	$NetBSD: files.wsfont,v 1.28 2020/11/21 23:00:02 rin Exp $
+# 	$NetBSD: files.wsfont,v 1.29 2021/11/20 00:00:19 rin Exp $
 
 defpseudo wsfont
 
@@ -25,8 +25,8 @@ defflag	opt_wsfont.h		FONT_BOLD8x16
 				FONT_SONY12x24
 				FONT_OMRON12x20
 				FONT_DEJAVU_SANS_MONO12x22
-				FONT_DROID_SANS_MONO12x22
 				FONT_DROID_SANS_MONO9x18
+				FONT_DROID_SANS_MONO12x22
 				FONT_DROID_SANS_MONO19x36
 				FONT_GO_MONO12x23
 				FONT_SPLEEN5x8
