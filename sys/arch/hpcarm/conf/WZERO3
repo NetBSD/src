@@ -1,4 +1,4 @@
-#	$NetBSD: WZERO3,v 1.53 2020/04/18 11:00:41 skrll Exp $
+#	$NetBSD: WZERO3,v 1.54 2021/11/20 00:23:51 rin Exp $
 #
 #	WZERO3 -- Sharp Windows Mobile 5 based PDA
 #
@@ -8,7 +8,7 @@ include	"arch/hpcarm/conf/files.wzero3"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.53 $"
+#ident 		"GENERIC-$Revision: 1.54 $"
 
 # estimated number of users
 maxusers	32
@@ -121,6 +121,9 @@ options 	WS_KERNEL_FG=WSCOL_GREEN
 #options 	WS_KERNEL_MONOATTR=""
 
 options 	FONT_VT220L8x16
+
+# 80x24 terminal on WVGA models
+#options 	FONT_DROID_SANS_MONO10x20
 
 # Alternate buffer queue strategies for better responsiveness under high
 # disk I/O load.
