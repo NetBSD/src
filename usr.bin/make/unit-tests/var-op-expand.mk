@@ -1,4 +1,4 @@
-# $NetBSD: var-op-expand.mk,v 1.13 2021/11/13 19:02:07 rillig Exp $
+# $NetBSD: var-op-expand.mk,v 1.14 2021/11/20 17:47:33 rillig Exp $
 #
 # Tests for the := variable assignment operator, which expands its
 # right-hand side.
@@ -212,7 +212,7 @@ later=	lowercase-value
 #
 # The assignment operator ':=' for the variable 'INDIRECT' could be a '=' as
 # well, it wouldn't make a difference in this case.  The crucial detail is the
-# assignment operator ':=' for the variable 'indirect', though.  During this
+# assignment operator ':=' for the variable 'indirect'.  During this
 # assignment, the variable modifier ':S,value,replaced,' is converted to
 # lowercase, which turns 'S' into 's', thus producing an unknown modifier.
 # In this case, make issues a warning, but in cases where the modifier
@@ -220,7 +220,37 @@ later=	lowercase-value
 # substitution like '.c=.o', and make would not issue a warning, leading to
 # silent unexpected behavior.
 #
-# As of 2021-11-13, the actual behavior is unexpected though since
+# As of 2021-11-20, the actual behavior is unexpected.  Fixing it is not
+# trivial.  When the assignment to 'indirect' takes place, the expressions
+# from the nested expression could be preserved, like this:
+#
+#	Start with:
+#
+#		indirect:=	${INDIRECT:tl}
+#
+#	Since INDIRECT is defined, expand it, remembering that the modifier
+#	':tl' must still be applied to the final result.
+#
+#		indirect:=	${LATER:S,value,replaced,} \
+#				OK \
+#				${LATER:value=sysv}
+#
+#	The variable 'LATER' is not defined.  An idea may be to append the
+#	remaining modifier ':tl' to each expression that is starting with an
+#	undefined variable, resulting in:
+#
+#		indirect:=	${LATER:S,value,replaced,:tl} \
+#				OK \
+#				${LATER:value=sysv:tl}
+#
+#	This would work for the first expression.  The second expression ends
+#	with the SysV modifier ':from=to', and when this modifier is parsed,
+#	it consumes all characters until the end of the expression, which in
+#	this case would replace the suffix 'value' with the literal 'sysv:tl',
+#	ignoring that the ':tl' was intended to be an additional modifier.
+#
+# Due to all of this, this surprising behavior is not easy to fix.
+#
 .undef LATER
 .undef later
 INDIRECT:=	${LATER:S,value,replaced,} OK ${LATER:value=sysv}
