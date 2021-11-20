@@ -1,4 +1,4 @@
-/* $NetBSD: lsym_word.c,v 1.1 2021/11/18 21:19:19 rillig Exp $ */
+/* $NetBSD: lsym_word.c,v 1.2 2021/11/20 09:27:18 rillig Exp $ */
 /* $FreeBSD$ */
 
 /*
@@ -18,3 +18,18 @@
 #indent end
 
 #indent run-equals-input
+
+
+/*
+ * Since 2019-04-04 and before NetBSD lexi.c 1.149 from 2021-11-20, the first
+ * character after a backslash continuation was always considered part of a
+ * word, no matter whether it was a word character or not.
+ */
+#indent input
+int var\
++name = 4;
+#indent end
+
+#indent run
+int		var+name = 4;
+#indent end
