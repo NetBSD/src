@@ -1,4 +1,4 @@
-/* $NetBSD: psym_switch_expr.c,v 1.1 2021/11/18 21:19:19 rillig Exp $ */
+/* $NetBSD: psym_switch_expr.c,v 1.2 2021/11/20 16:54:17 rillig Exp $ */
 /* $FreeBSD$ */
 
 /*
@@ -12,3 +12,35 @@
 #indent end
 
 #indent run-equals-input
+
+
+/*
+ * In all practical cases, a 'switch (expr)' is followed by a block, but the
+ * C syntax allows an arbitrary statement.  Unless such a statement has a
+ * label, it is unreachable.
+ */
+#indent input
+void
+function(void)
+{
+	switch (expr)
+	if (cond) {
+	case 1: return;
+	case 2: break;
+	}
+}
+#indent end
+
+#indent run
+void
+function(void)
+{
+	switch (expr)
+		if (cond) {
+	case 1:
+			return;
+	case 2:
+			break;
+		}
+}
+#indent end

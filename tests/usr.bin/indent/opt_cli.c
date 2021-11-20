@@ -1,5 +1,14 @@
-/* $NetBSD: opt_cli.c,v 1.1 2021/10/22 20:54:36 rillig Exp $ */
+/* $NetBSD: opt_cli.c,v 1.2 2021/11/20 16:54:17 rillig Exp $ */
 /* $FreeBSD$ */
+
+/*
+ * Tests for the option '-cli' ("case label indentation"), which sets the
+ * amount of indentation of a 'case' relative to the surrounding 'switch',
+ * measured in indentation levels.
+ *
+ * See also:
+ *	lsym_case_label.c
+ */
 
 #indent input
 void

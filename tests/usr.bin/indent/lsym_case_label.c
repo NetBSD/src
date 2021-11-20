@@ -1,4 +1,4 @@
-/* $NetBSD: lsym_case_label.c,v 1.1 2021/11/18 21:19:19 rillig Exp $ */
+/* $NetBSD: lsym_case_label.c,v 1.2 2021/11/20 16:54:17 rillig Exp $ */
 /* $FreeBSD$ */
 
 /*
@@ -9,6 +9,7 @@
  * Since C11, the keyword 'default' is used in _Generic selections as well.
  *
  * See also:
+ *	opt_cli.c
  *	psym_switch_expr.c
  *	C11 6.5.1.1		"Generic selection"
  */

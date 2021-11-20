@@ -1,4 +1,4 @@
-/* $NetBSD: token_while_expr.c,v 1.1 2021/10/18 22:30:34 rillig Exp $ */
+/* $NetBSD: token_while_expr.c,v 1.2 2021/11/20 16:54:17 rillig Exp $ */
 /* $FreeBSD$ */
 
 /*
@@ -24,7 +24,7 @@ main(int argc, char **argv)
 			break;
 		default:
 			usage();
-/* $ XXX: The 'return' should be in a separate line. */
+/* $ FIXME: The 'return' must be in a separate line. */
 		} return 0;
 }
 #indent end

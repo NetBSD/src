@@ -1,8 +1,9 @@
-/* $NetBSD: opt_psl.c,v 1.5 2021/11/20 11:13:18 rillig Exp $ */
+/* $NetBSD: opt_psl.c,v 1.6 2021/11/20 16:54:17 rillig Exp $ */
 /* $FreeBSD$ */
 
 /*
- * Tests for the options '-psl' and '-npsl'.
+ * Tests for the options '-psl' and '-npsl' ("procedure definition in separate
+ * line").
  *
  * The option '-psl' starts a new line for the function name in a function
  * definition.
@@ -26,6 +27,11 @@ void		function_declaration(void);
 /*
  * Multi-line function declarations are affected by these options since indent
  * wrongly assumes they were function definitions, not declarations.
+ *
+ * Before 1990, when C90 added function prototypes, this case was rare since
+ * function definitions consisted only of the return type (defaulting to
+ * 'int'), the function name and the list of parameter names, without
+ * parameter types or type qualifiers like 'const'.
  */
 #indent input
 void function_declaration(

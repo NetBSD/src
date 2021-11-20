@@ -1,4 +1,4 @@
-/* $NetBSD: opt_ci.c,v 1.4 2021/11/20 11:13:18 rillig Exp $ */
+/* $NetBSD: opt_ci.c,v 1.5 2021/11/20 16:54:17 rillig Exp $ */
 /* $FreeBSD$ */
 
 /*
@@ -187,5 +187,45 @@ sum(int a, int b)
 	return (first +
 		second + (
 			third));
+}
+#indent end
+
+
+/*
+ * In the default configuration, the indentation level from '-i' is the same
+ * as the continuation indentation from '-ci'.  The difference between these
+ * becomes visible for structural macros like 'forever' or 'foreach'.
+ */
+#indent input
+#define forever for (;;)
+void
+function(void)
+{
+	forever
+		stmt();
+
+	forever {
+		stmt();
+	}
+}
+#indent end
+
+#indent run-equals-input
+
+/*
+ * The difference between the block indentation and the continuation
+ * indentation only becomes visible when these two differ.
+ */
+#indent run -i8 -ci4
+#define forever for (;;)
+void
+function(void)
+{
+	forever
+	    stmt();
+
+	forever {
+		stmt();
+	}
 }
 #indent end
