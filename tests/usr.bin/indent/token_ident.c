@@ -1,4 +1,4 @@
-/* $NetBSD: token_ident.c,v 1.3 2021/11/07 20:16:50 rillig Exp $ */
+/* $NetBSD: token_ident.c,v 1.4 2021/11/20 09:59:53 rillig Exp $ */
 /* $FreeBSD$ */
 
 /*
@@ -80,7 +80,7 @@ const char	SYS$LOGIN[] = "$HOME";
 
 
 /*
- * Text the tokenizer for number constants.
+ * Test the tokenizer for number constants.
  *
  * When the tokenizer reads a character that makes a token invalid (such as
  * '0x') but may later be extended to form a valid token (such as '0x123'),

@@ -1,4 +1,4 @@
-/* $NetBSD: opt_bl_br.c,v 1.3 2021/11/19 22:24:29 rillig Exp $ */
+/* $NetBSD: opt_bl_br.c,v 1.4 2021/11/20 09:59:53 rillig Exp $ */
 /* $FreeBSD$ */
 
 #indent input
@@ -13,8 +13,8 @@ example(int n)
 #indent end
 
 /*
- * XXX: The '} else' looks strange in this style since the 'else' is
- * not at the left margin of the code.
+ * XXX: The '} else' looks strange in this style since the '}' is not on a
+ * line of its own.
  */
 #indent run -bl
 void
@@ -109,7 +109,8 @@ function(void)
 
 
 /*
- *
+ * The combination of the options '-br' and '-ei' (both active by default)
+ * remove extra newlines between the tokens '}', 'else' and 'if'.
  */
 #indent input
 void
