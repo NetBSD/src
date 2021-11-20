@@ -1,4 +1,4 @@
-/* $NetBSD: token_binary_op.c,v 1.7 2021/11/04 17:12:12 rillig Exp $ */
+/* $NetBSD: token_binary_op.c,v 1.8 2021/11/20 11:13:18 rillig Exp $ */
 /* $FreeBSD$ */
 
 /*
@@ -138,6 +138,7 @@ number = array <:subscript:>;
 	number = (int)<%initializer % >;
 }
 #indent end
+
 
 #indent input
 void

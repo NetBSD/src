@@ -1,4 +1,4 @@
-/* $NetBSD: opt_pcs.c,v 1.8 2021/10/31 21:43:43 rillig Exp $ */
+/* $NetBSD: opt_pcs.c,v 1.9 2021/11/20 11:13:18 rillig Exp $ */
 /* $FreeBSD$ */
 
 /*
@@ -56,6 +56,7 @@ int var = (function) (arg);
 void (*signal(void (*handler)(int)))(int);
 int var = (function)(arg);
 #indent end
+
 
 /*
  * The option '-pcs' also applies to 'sizeof' and 'offsetof', even though

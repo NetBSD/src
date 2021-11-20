@@ -1,4 +1,4 @@
-/* $NetBSD: opt_ci.c,v 1.3 2021/11/01 23:44:08 rillig Exp $ */
+/* $NetBSD: opt_ci.c,v 1.4 2021/11/20 11:13:18 rillig Exp $ */
 /* $FreeBSD$ */
 
 /*
@@ -57,6 +57,7 @@ int		top_level = (1 +
     2 + (
     3));
 #indent end
+
 
 /*
  * Declarations in functions without parentheses.
