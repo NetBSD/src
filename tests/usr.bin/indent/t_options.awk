@@ -1,4 +1,4 @@
-# $NetBSD: t_options.awk,v 1.3 2021/11/18 17:11:13 rillig Exp $
+# $NetBSD: t_options.awk,v 1.4 2021/11/20 10:24:30 rillig Exp $
 #
 # Copyright (c) 2021 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -49,6 +49,8 @@
 #
 # The actual output from running indent is written to stdout, the expected
 # test output is written to 'expected.out'.
+
+# TODO: Require 2 empty lines before '#indent input', 1 empty line otherwise.
 
 BEGIN {
 	warned = 0

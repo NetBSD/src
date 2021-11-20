@@ -1,11 +1,11 @@
-/* $NetBSD: opt_cdb.c,v 1.5 2021/11/07 13:30:15 rillig Exp $ */
+/* $NetBSD: opt_cdb.c,v 1.6 2021/11/20 10:24:30 rillig Exp $ */
 /* $FreeBSD$ */
 
 /*
  * Tests for the options '-cdb' and '-ncdb'.
  *
  * The option '-cdb' forces the comment delimiter '/' '*' and '*' '/' to be on
- * a separate line. This only affects block comments, not comments to the
+ * a separate line. This only affects block comments, but not comments to the
  * right of the code.
  *
  * The option '-ncdb' compresses multi-line comments to single-line comments,
@@ -13,37 +13,47 @@
  */
 
 #indent input
-/* A single-line comment. */
+/* A single line without delimiters. */
 
-/* A
- * multi-line
- * comment. */
+/* Multiple
+ * lines
+ * without delimiters. */
 
 /*
- * A
- * multi-line
- * comment.
+ * A single line with delimiters.
+ */
+
+/*
+ * Multiple
+ * lines
+ * with delimiters.
  */
 #indent end
 
 #indent run -cdb
-/* A single-line comment. */
+/* A single line without delimiters. */
 
 /*
- * A multi-line comment.
+ * Multiple lines without delimiters.
  */
 
 /*
- * A multi-line comment.
+ * A single line with delimiters.
+ */
+
+/*
+ * Multiple lines with delimiters.
  */
 #indent end
 
 #indent run -ncdb
-/* A single-line comment. */
+/* A single line without delimiters. */
 
-/* A multi-line comment. */
+/* Multiple lines without delimiters. */
 
-/* A multi-line comment. */
+/* A single line with delimiters. */
+
+/* Multiple lines with delimiters. */
 #indent end
 
 
@@ -51,28 +61,35 @@
  * Code comments on global declarations.
  */
 #indent input
-int		ga;		/* A single-line comment. */
+int global_single_without;	/* A single line without delimiters. */
 
-int		gb;		/* A
-				 * multi-line
-				 * comment. */
+int global_multi_without;	/*
+				 * Multiple lines without delimiters.
+				 */
 
-int		gc;		/*
-				 * A
-				 * multi-line
-				 * comment.
+int global_single_with;		/*
+				 * A single line with delimiters.
+				 */
+
+int global_single_with;		/*
+				 * Multiple
+				 * lines
+				 * with delimiters.
 				 */
 #indent end
 
-#indent run -cdb
-int		ga;		/* A single-line comment. */
+#indent run -di0 -cdb
+int global_single_without;	/* A single line without delimiters. */
 
-int		gb;		/* A multi-line comment. */
+int global_multi_without;	/* Multiple lines without delimiters. */
 
-int		gc;		/* A multi-line comment. */
+int global_single_with;		/* A single line with delimiters. */
+
+int global_single_with;		/* Multiple lines with delimiters. */
 #indent end
 
-#indent run-equals-prev-output -ncdb
+#indent run-equals-prev-output -di0 -ncdb
+
 
 /*
  * Block comments that are inside a function.
@@ -81,54 +98,67 @@ int		gc;		/* A multi-line comment. */
 void
 example(void)
 {
-	/* A single-line comment. */
-	int la;
+	/* A single line without delimiters. */
+	int local_single_without;
 
-	/* A
-	 * multi-line
-	 * comment. */
-	int lb;
+	/* Multiple
+	 * lines
+	 * without delimiters. */
+	int local_multi_without;
 
 	/*
-	 * A
-	 * multi-line
-	 * comment.
+	 * A single line with delimiters.
 	 */
-	int lc;
+	int local_single_with;
+
+	/*
+	 * Multiple
+	 * lines
+	 * with delimiters.
+	 */
+	int local_multi_with;
 }
 #indent end
 
-#indent run -cdb
+#indent run -di0 -cdb
 void
 example(void)
 {
-	/* A single-line comment. */
-	int		la;
+	/* A single line without delimiters. */
+	int local_single_without;
 
 	/*
-	 * A multi-line comment.
+	 * Multiple lines without delimiters.
 	 */
-	int		lb;
+	int local_multi_without;
 
 	/*
-	 * A multi-line comment.
+	 * A single line with delimiters.
 	 */
-	int		lc;
+	int local_single_with;
+
+	/*
+	 * Multiple lines with delimiters.
+	 */
+	int local_multi_with;
 }
 #indent end
 
-#indent run -ncdb
+#indent run -di0 -ncdb
 void
 example(void)
 {
-	/* A single-line comment. */
-	int		la;
+	/* A single line without delimiters. */
+	int local_single_without;
 
-	/* A multi-line comment. */
-	int		lb;
+	/* Multiple lines without delimiters. */
+	int local_multi_without;
 
-	/* A multi-line comment. */
-	int		lc;
+	/* A single line with delimiters. */
+	int local_single_with;
+
+	/* Multiple lines with delimiters. */
+	int local_multi_with;
 }
 #indent end
 
@@ -145,6 +175,7 @@ example(void)
  */
 #indent end
 
+/* FIXME: Looks bad. */
 #indent run -ncdb
 /*
  * */
@@ -163,6 +194,7 @@ example(void)
  */
 #indent end
 
+/* FIXME: Looks bad. */
 #indent run -ncdb
 /*
  * */
