@@ -1,4 +1,4 @@
-/*	$NetBSD: lexi.c,v 1.148 2021/11/19 20:23:17 rillig Exp $	*/
+/*	$NetBSD: lexi.c,v 1.149 2021/11/20 09:43:03 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)lexi.c	8.1 (Berkeley) 6/6/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: lexi.c,v 1.148 2021/11/19 20:23:17 rillig Exp $");
+__RCSID("$NetBSD: lexi.c,v 1.149 2021/11/20 09:43:03 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/lexi.c 337862 2018-08-15 18:19:45Z pstef $");
 #endif
@@ -361,16 +361,14 @@ is_identifier_part(char ch)
 static void
 lex_word(void)
 {
-    while (is_identifier_part(inp_peek()) || inp_peek() == '\\' ) {
-	if (inp_peek() == '\\') {
-	    if (inp_lookahead(1) == '\n') {
-		inp_skip();
-		inp_skip();
-	    } else
-		break;
-	}
-
-	token_add_char(inp_next());
+    for (;;) {
+	if (is_identifier_part(inp_peek()))
+	    token_add_char(inp_next());
+	else if (inp_peek() == '\\' && inp_lookahead(1) == '\n') {
+	    inp_skip();
+	    inp_skip();
+	} else
+	    return;
     }
 }
 

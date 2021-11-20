@@ -1,4 +1,4 @@
-/* $NetBSD: lsym_word.c,v 1.2 2021/11/20 09:27:18 rillig Exp $ */
+/* $NetBSD: lsym_word.c,v 1.3 2021/11/20 09:43:03 rillig Exp $ */
 /* $FreeBSD$ */
 
 /*
@@ -31,5 +31,5 @@ int var\
 #indent end
 
 #indent run
-int		var+name = 4;
+int		var + name = 4;
 #indent end
