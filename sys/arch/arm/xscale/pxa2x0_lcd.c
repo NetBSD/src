@@ -1,4 +1,4 @@
-/* $NetBSD: pxa2x0_lcd.c,v 1.38 2020/11/20 18:49:45 thorpej Exp $ */
+/* $NetBSD: pxa2x0_lcd.c,v 1.39 2021/11/20 00:15:04 rin Exp $ */
 
 /*
  * Copyright (c) 2002  Genetec Corporation.  All rights reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pxa2x0_lcd.c,v 1.38 2020/11/20 18:49:45 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pxa2x0_lcd.c,v 1.39 2021/11/20 00:15:04 rin Exp $");
 
 #include "opt_pxa2x0_lcd.h"
 
@@ -644,7 +644,7 @@ pxa2x0_lcd_setup_rasops(struct pxa2x0_lcd_softc *sc, struct rasops_info *rinfo,
     const struct lcd_panel_geometry *geom)
 {
 
-	rinfo->ri_flg = descr->flags;
+	rinfo->ri_flg = descr->flags | RI_ENABLE_ALPHA;
 	rinfo->ri_depth = descr->depth;
 	rinfo->ri_width = geom->panel_width;
 	rinfo->ri_height = geom->panel_height;
@@ -748,7 +748,7 @@ pxa2x0_lcd_setup_wsscreen(struct pxa2x0_wsscreen_descr *descr,
 	}
 
 	/* let rasops_init calculate # of cols and rows in character */
-	rinfo.ri_flg = 0;
+	rinfo.ri_flg = RI_ENABLE_ALPHA;
 	rinfo.ri_depth = descr->depth;
 	rinfo.ri_bits = NULL;
 	rinfo.ri_width = width;
@@ -806,7 +806,7 @@ pxa2x0_lcd_alloc_screen(void *v, const struct wsscreen_descr *_type,
 	/*
 	 * initialize raster operation for this screen.
 	 */
-	scr->rinfo.ri_flg = 0;
+	scr->rinfo.ri_flg = RI_ENABLE_ALPHA;
 	scr->rinfo.ri_depth = type->depth;
 	scr->rinfo.ri_bits = scr->buf_va;
 	scr->rinfo.ri_width = sc->geometry->panel_width;
