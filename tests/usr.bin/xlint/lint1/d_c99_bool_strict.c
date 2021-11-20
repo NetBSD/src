@@ -1,4 +1,4 @@
-/*	$NetBSD: d_c99_bool_strict.c,v 1.34 2021/11/16 21:01:06 rillig Exp $	*/
+/*	$NetBSD: d_c99_bool_strict.c,v 1.35 2021/11/20 17:27:46 rillig Exp $	*/
 # 3 "d_c99_bool_strict.c"
 
 /*
@@ -816,9 +816,9 @@ controlling_expression(FILE *f, const char *a, const char *b)
 
 	/*
 	 * Before tree.c 1.395 from 2021-11-16, the expression below didn't
-	 * produce a warning since the expression 'stdio_stdin' didn't come
-	 * from a system header (typically via a macro), and this property
-	 * was passed up to the expression 'ferror(stdio_stdin)'.
+	 * produce a warning since the expression 'stdio_files' came from a
+	 * system header (via a macro), and this property was passed up to
+	 * the expression 'ferror(stdio_files[1])'.
 	 *
 	 * That was wrong though since the type of a function call expression
 	 * only depends on the function itself but not its arguments types.
