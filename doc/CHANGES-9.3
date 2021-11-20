@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.3,v 1.1.2.46 2021/11/06 13:43:17 martin Exp $
+# $NetBSD: CHANGES-9.3,v 1.1.2.47 2021/11/20 15:18:41 martin Exp $
 
 A complete list of changes from the NetBSD 9.2 release to the NetBSD 9.3
 release:
@@ -941,4 +941,26 @@ bin/sh/sh.1					1.236 (patch)
 
 	sh(1): PR 45390: fix cd/$PWD follies.
 	[kre, ticket #1372]
+
+sys/dev/pci/if_wm.c				1.716-1.718 via patch
+sys/dev/pci/if_wmreg.h				1.121
+sys/dev/mii/ihphy.c				1.20
+
+	- Fix a bug that device timeout still happens when the link is down
+	  on ICH/PCH. Fixes PR kern/56478.
+	- Add some sysctl info for debugging.
+	- ihphy(4): Don't power down the PHY when the interface goes down.
+	- Use macro. Fix comment.
+	[msaitoh, ticket #1373]
+
+sys/dev/pci/ixgbe/ixgbe.h			1.81-1.83
+sys/dev/pci/ixgbe/ixgbe.c			1.291-1.292 via patch
+sys/dev/pci/ixgbe/ixgbe_type.h			1.50
+sys/dev/pci/ixgbe/ixv.c				1.167-1.168 via patch
+sys/dev/pci/ixgbe/ix_txrx.c			1.94
+
+	- Fix a bug that a near 64KB TSO segment can't send.
+	- Reduce bus_dmamap_sync() cost.
+	- Use macro. Fix typos in comment.
+	[msaitoh, ticket #1374]
 
