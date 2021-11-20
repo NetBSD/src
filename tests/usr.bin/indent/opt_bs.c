@@ -1,4 +1,4 @@
-/* $NetBSD: opt_bs.c,v 1.6 2021/11/19 22:24:29 rillig Exp $ */
+/* $NetBSD: opt_bs.c,v 1.7 2021/11/20 11:13:18 rillig Exp $ */
 /* $FreeBSD$ */
 
 /*
@@ -60,6 +60,7 @@ example(int i)
 	print(sizeof(int));
 }
 #indent end
+
 
 /*
  * The option '-bs' only affects 'sizeof', not 'offsetof', even though these

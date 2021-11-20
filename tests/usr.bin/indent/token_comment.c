@@ -1,4 +1,4 @@
-/* $NetBSD: token_comment.c,v 1.22 2021/11/07 12:26:22 rillig Exp $ */
+/* $NetBSD: token_comment.c,v 1.23 2021/11/20 11:13:18 rillig Exp $ */
 /* $FreeBSD$ */
 
 /*
@@ -62,6 +62,7 @@ typedef enum x {
 #indent end
 
 #indent run-equals-input -bbb
+
 
 #indent input
 /* See FreeBSD r303597, r303598, r309219, and r309343 */
@@ -372,6 +373,7 @@ tab1+++	tab2---	tab3+++	tab4---	tab5+++	tab6---	tab7+++fixed comment*/
  */
 #indent end
 
+
 /*
  * The following comments test line breaking when the comment does not end
  * with a space. Since indent adds a trailing space to a single-line comment,
@@ -406,6 +408,7 @@ tab1+++	tab2---	tab3+++	tab4---	tab5+++	tab6---	tab7+++fixed comment*/
  * x							........ line length 82
  */
 #indent end
+
 
 /*
  * The different types of comments that indent distinguishes, starting in
@@ -462,6 +465,7 @@ tab1+++	tab2---	tab3+++	tab4---	tab5+++	tab6---	tab7+++fixed comment*/
  */
 #indent end
 
+
 /*
  * The different types of comments that indent distinguishes, starting in
  * column 9, so they are independent of the option '-fc1'.
@@ -516,6 +520,7 @@ function(void)
 	 */
 }
 #indent end
+
 
 /*
  * Comments to the right of declarations.
@@ -584,6 +589,7 @@ function(void)
 	}
 }
 #indent end
+
 
 /*
  * Comments to the right of code.
@@ -706,6 +712,7 @@ There may also be
  */
 #indent end
 
+
 #indent input
 void loop(void)
 {
@@ -729,6 +736,7 @@ loop(void)
 }
 #indent end
 
+
 /*
  * The following comment starts really far to the right. To avoid that each
  * line only contains a single word, the maximum allowed line width is
@@ -751,6 +759,7 @@ int		global_variable_with_really_long_name_that_reaches_up_to_column_xx;	/* 1234
 											 * 123456 */
 #indent end
 
+
 /*
  * Demonstrates handling of line-end '//' comments.
  *
@@ -759,7 +768,6 @@ int		global_variable_with_really_long_name_that_reaches_up_to_column_xx;	/* 1234
  * unpredictable ways. It treated any sequence of '/' as a binary operator,
  * no matter whether it was '/' or '//' or '/////'.
  */
-
 #indent input
 int dummy // comment
     = // eq
@@ -803,6 +811,7 @@ main(void)
 }
 #indent end
 
+
 /*
  * Between March 2021 and October 2021, indent supported C99 comments only
  * very basically. It messed up the following code, repeating the identifier
@@ -825,6 +834,7 @@ c99_comment(void)
 }
 #indent end
 
+
 #indent input
 void
 comment_at_end_of_function(void)
@@ -845,6 +855,7 @@ comment_at_end_of_function(void)
 }
 #indent end
 
+
 #indent input
 int		decl;
 // end-of-line comment at the end of the file
@@ -860,6 +871,7 @@ int		decl;
 /*-AE*/
 #indent end
 #indent run-equals-input
+
 
 /*
  * At the beginning of a block comment or after a '*', '\f' is special. This
@@ -886,6 +898,7 @@ int		decl;
 #indent end
 
 #indent run-equals-input -nfc1
+
 
 /*
  * A completely empty line in a box comment must be copied unmodified to the
@@ -915,9 +928,6 @@ end */
 #indent end
 
 
-/*
- *
- */
 #indent input
 int f(void)
 {
@@ -1033,6 +1043,7 @@ line 4
 #indent end
 
 #indent run-equals-input
+
 
 /*
  * Cover the code for expanding the comment buffer in com_terminate. As of

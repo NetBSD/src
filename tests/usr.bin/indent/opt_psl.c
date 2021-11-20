@@ -1,4 +1,4 @@
-/* $NetBSD: opt_psl.c,v 1.4 2021/10/18 07:11:31 rillig Exp $ */
+/* $NetBSD: opt_psl.c,v 1.5 2021/11/20 11:13:18 rillig Exp $ */
 /* $FreeBSD$ */
 
 /*
@@ -21,6 +21,7 @@ void		function_declaration(void);
 #indent end
 
 #indent run-equals-prev-output -npsl
+
 
 /*
  * Multi-line function declarations are affected by these options since indent
@@ -45,6 +46,7 @@ function_declaration(
 void function_declaration(
 			  void);
 #indent end
+
 
 /*
  * In a function definition, in contrast to a declaration, the function name

@@ -1,4 +1,4 @@
-/* $NetBSD: opt_dj.c,v 1.3 2021/10/18 07:11:31 rillig Exp $ */
+/* $NetBSD: opt_dj.c,v 1.4 2021/11/20 11:13:18 rillig Exp $ */
 /* $FreeBSD$ */
 
 /*
@@ -29,6 +29,7 @@ const void ********vpppppppp;
 #indent end
 
 #indent run-equals-prev-output -ndj
+
 
 #indent input
 void example(void) {

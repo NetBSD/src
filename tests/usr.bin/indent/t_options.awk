@@ -1,4 +1,4 @@
-# $NetBSD: t_options.awk,v 1.4 2021/11/20 10:24:30 rillig Exp $
+# $NetBSD: t_options.awk,v 1.5 2021/11/20 11:13:18 rillig Exp $
 #
 # Copyright (c) 2021 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -56,6 +56,10 @@ BEGIN {
 	warned = 0
 	died = 0
 
+	prev_empty_lines = 0	# the finished "block" of empty lines
+	curr_empty_lines = 0	# the ongoing "block" of empty lines
+	seen_input_section = 0	# the first input section is not checked
+
 	section = ""		# "", "input" or "run"
 	section_excl_comm = ""	# without dollar comments
 	section_incl_comm = ""	# with dollar comments
@@ -106,6 +110,20 @@ function run_indent(inp,   i, cmd)
 	close(cmd)
 }
 
+section == "" {
+	if (NF == 0)
+		curr_empty_lines++
+	else {
+		if (curr_empty_lines > 0) {
+			if (prev_empty_lines > 1)
+				warn(NR - curr_empty_lines,
+				    "excess empty lines a few lines above")
+			prev_empty_lines = curr_empty_lines
+		}
+		curr_empty_lines = 0
+	}
+}
+
 # Hide comments starting with dollar from indent; they are used for marking
 # bugs and adding other remarks directly in the input or output sections.
 /^[[:space:]]*\/[*][[:space:]]*[$].*[*]\/$/ ||
@@ -120,15 +138,22 @@ function run_indent(inp,   i, cmd)
 	print $0 > "expected.out"
 
 	if ($2 == "input") {
+		if (prev_empty_lines != 2 && seen_input_section)
+			warn(NR, "input section needs 2 empty lines above, " \
+			    "not " prev_empty_lines)
 		check_unused_input()
 		section = "input"
 		section_excl_comm = ""
 		section_incl_comm = ""
 		unused_input_lineno = NR
+		seen_input_section = 1
 
 	} else if ($2 == "run") {
 		if (section != "")
 			warn(NR, "unfinished section " quote(section))
+		if (prev_empty_lines != 1)
+			warn(NR, "run section needs 1 empty line above, " \
+			    "not " prev_empty_lines)
 		section = "run"
 		output_lineno = NR
 		section_excl_comm = ""
@@ -173,6 +198,8 @@ function run_indent(inp,   i, cmd)
 		die(NR, "invalid line " quote($0))
 	}
 
+	prev_empty_lines = 0
+	curr_empty_lines = 0
 	next
 }
 

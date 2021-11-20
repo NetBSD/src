@@ -1,4 +1,4 @@
-/*	$NetBSD: label.c,v 1.1 2021/10/18 20:18:00 rillig Exp $	*/
+/*	$NetBSD: label.c,v 1.2 2021/11/20 11:13:18 rillig Exp $	*/
 /* $FreeBSD: head/usr.bin/indent/tests/label.0 313544 2017-02-10 09:31:39Z pstef $ */
 
 /* See FreeBSD r303489 */
@@ -32,6 +32,7 @@ U:	;
 }
 #indent end
 
+
 #indent input
 void
 label_width(void)
@@ -61,6 +62,7 @@ L_____7:;
 L______8:;
 }
 #indent end
+
 
 /*
  * The indentation of statement labels is fixed to -2, it is not configurable.

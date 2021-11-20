@@ -1,4 +1,4 @@
-/*	$NetBSD: fmt_decl.c,v 1.20 2021/11/20 09:59:53 rillig Exp $	*/
+/*	$NetBSD: fmt_decl.c,v 1.21 2021/11/20 11:13:18 rillig Exp $	*/
 /* $FreeBSD: head/usr.bin/indent/tests/declarations.0 334478 2018-06-01 09:41:15Z pstef $ */
 
 /*
@@ -368,6 +368,7 @@ x(void)
 	return NULL;
 }
 #indent end
+
 
 #indent input
 int *

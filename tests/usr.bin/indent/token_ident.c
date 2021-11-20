@@ -1,4 +1,4 @@
-/* $NetBSD: token_ident.c,v 1.4 2021/11/20 09:59:53 rillig Exp $ */
+/* $NetBSD: token_ident.c,v 1.5 2021/11/20 11:13:18 rillig Exp $ */
 /* $FreeBSD$ */
 
 /*
@@ -39,6 +39,7 @@ t(void)
 		return;
 }
 #indent end
+
 
 /* Floating point numbers. */
 #indent input
