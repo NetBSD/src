@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe.c,v 1.88.2.44 2021/09/15 16:38:00 martin Exp $ */
+/* $NetBSD: ixgbe.c,v 1.88.2.45 2021/11/20 15:21:31 martin Exp $ */
 
 /******************************************************************************
 
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixgbe.c,v 1.88.2.44 2021/09/15 16:38:00 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixgbe.c,v 1.88.2.45 2021/11/20 15:21:31 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -807,7 +807,7 @@ ixgbe_attach(device_t parent, device_t dev, void *aux)
 	aprint_normal(": %s, Version - %s\n",
 	    ixgbe_strings[ent->index], ixgbe_driver_version);
 
-	/* Core Lock Init*/
+	/* Core Lock Init */
 	IXGBE_CORE_LOCK_INIT(adapter, device_xname(dev));
 
 	/* Set up the timer callout */
@@ -881,11 +881,12 @@ ixgbe_attach(device_t parent, device_t dev, void *aux)
 	hw->allow_unsupported_sfp = allow_unsupported_sfp;
 
 	/* Pick up the 82599 settings */
-	if (hw->mac.type != ixgbe_mac_82598EB) {
+	if (hw->mac.type != ixgbe_mac_82598EB)
 		hw->phy.smart_speed = ixgbe_smart_speed;
-		adapter->num_segs = IXGBE_82599_SCATTER;
-	} else
-		adapter->num_segs = IXGBE_82598_SCATTER;
+
+	/* Set the right number of segments */
+	KASSERT(IXGBE_82599_SCATTER_MAX >= IXGBE_SCATTER_DEFAULT);
+	adapter->num_segs = IXGBE_SCATTER_DEFAULT;
 
 	/* Ensure SW/FW semaphore is free */
 	ixgbe_init_swfw_semaphore(hw);
@@ -3998,7 +3999,7 @@ ixgbe_init_locked(struct adapter *adapter)
 		txdctl = IXGBE_READ_REG(hw, IXGBE_TXDCTL(txr->me));
 		txdctl |= IXGBE_TXDCTL_ENABLE;
 		/* Set WTHRESH to 8, burst writeback */
-		txdctl |= (8 << 16);
+		txdctl |= IXGBE_TX_WTHRESH << IXGBE_TXDCTL_WTHRESH_SHIFT;
 		/*
 		 * When the internal queue falls below PTHRESH (32),
 		 * start prefetching as long as there are at least
