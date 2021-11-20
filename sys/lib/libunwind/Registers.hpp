@@ -796,6 +796,7 @@ enum {
   DWARF_ALPHA_R30 = 30,
   DWARF_ALPHA_F0 = 32,
   DWARF_ALPHA_F30 = 62,
+  DWARF_ALPHA_SIGRETURN = 64,
 
   REGNO_ALPHA_R0 = 0,
   REGNO_ALPHA_R26 = 26,
@@ -803,13 +804,14 @@ enum {
   REGNO_ALPHA_PC = 31,
   REGNO_ALPHA_F0 = 32,
   REGNO_ALPHA_F30 = 62,
+  REGNO_ALPHA_SIGRETURN = 64,
 };
 
 class Registers_Alpha {
 public:
   enum {
-    LAST_REGISTER = REGNO_ALPHA_F30,
-    LAST_RESTORE_REG = REGNO_ALPHA_F30,
+    LAST_REGISTER = REGNO_ALPHA_SIGRETURN,
+    LAST_RESTORE_REG = REGNO_ALPHA_SIGRETURN,
     RETURN_OFFSET = 0,
     RETURN_MASK = 0,
   };
@@ -820,17 +822,24 @@ public:
   static int dwarf2regno(int num) { return num; }
 
   bool validRegister(int num) const {
-    return num >= 0 && num <= REGNO_ALPHA_PC;
+    return (num >= 0 && num <= REGNO_ALPHA_PC) ||
+	num == REGNO_ALPHA_SIGRETURN;
   }
 
   uint64_t getRegister(int num) const {
     assert(validRegister(num));
-    return reg[num];
+    if (num == REGNO_ALPHA_SIGRETURN)
+      return sigreturn_reg;
+    else
+      return reg[num];
   }
 
   void setRegister(int num, uint64_t value) {
     assert(validRegister(num));
-    reg[num] = value;
+    if (num == REGNO_ALPHA_SIGRETURN)
+      sigreturn_reg = value;
+    else
+      reg[num] = value;
   }
 
   uint64_t getIP() const { return reg[REGNO_ALPHA_PC]; }
@@ -856,6 +865,7 @@ public:
 private:
   uint64_t reg[REGNO_ALPHA_PC + 1];
   uint64_t fpreg[31];
+  uint64_t sigreturn_reg;
 };
 
 enum {
