@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.953 2021/10/17 18:40:14 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.954 2021/11/20 17:51:48 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -140,7 +140,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.953 2021/10/17 18:40:14 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.954 2021/11/20 17:51:48 rillig Exp $");
 
 /*
  * Variables are defined using one of the VAR=value assignments.  Their
@@ -2399,8 +2399,8 @@ ModifyWords(ModChain *ch,
 
 	words = Substring_Words(val, false);
 
-	DEBUG2(VAR, "ModifyWords: split \"%s\" into %u words\n",
-	    val, (unsigned)words.len);
+	DEBUG3(VAR, "ModifyWords: split \"%s\" into %u %s\n",
+	    val, (unsigned)words.len, words.len != 1 ? "words" : "word");
 
 	SepBuf_Init(&result, ch->sep);
 	for (i = 0; i < words.len; i++) {
