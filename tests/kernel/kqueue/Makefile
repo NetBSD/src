@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.9 2021/10/23 18:46:26 thorpej Exp $
+# $NetBSD: Makefile,v 1.10 2021/11/21 09:35:39 hannken Exp $
 
 WARNS?=6
 NOMAN=		# defined
@@ -23,5 +23,7 @@ TESTS_C+=	t_timer
 TESTS_C+=	t_vnode
 
 LDADD.t_scan+=	-lpthread
+
+CPPFLAGS.t_timer.c+=	-I${.CURDIR}/../../lib/libc/gen
 
 .include <bsd.test.mk>
