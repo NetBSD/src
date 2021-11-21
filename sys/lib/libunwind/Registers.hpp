@@ -1076,7 +1076,7 @@ public:
   }
 
   bool validRegister(int num) const {
-    return num >= REGNO_MIPS64_PC && num <= REGNO_MIPS64_R31 ||
+    return (num >= REGNO_MIPS64_PC && num <= REGNO_MIPS64_R31) ||
         (num >= REGNO_MIPS64_MDHI && num <= REGNO_MIPS64_SIGRETURN);
   }
 
