@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.5 2018/02/28 21:00:02 uwe Exp $
+#	$NetBSD: genassym.cf,v 1.6 2021/11/21 21:31:24 thorpej Exp $
 
 #
 # Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -42,10 +42,49 @@ define CALLFRAME_LR	offsetof(struct callframe, cf_lr)
 define CALLFRAME_R30	offsetof(struct callframe, cf_r30)
 define CALLFRAME_R31	offsetof(struct callframe, cf_r31)
 
+define UC_GREGS		offsetof(ucontext_t, uc_mcontext.__gregs[0])
 define UC_GREGS_R1	offsetof(ucontext_t, uc_mcontext.__gregs[_REG_R1])
 define UC_GREGS_R3	offsetof(ucontext_t, uc_mcontext.__gregs[_REG_R3])
 define UC_GREGS_R30	offsetof(ucontext_t, uc_mcontext.__gregs[_REG_R30])
 define UC_GREGS_PC	offsetof(ucontext_t, uc_mcontext.__gregs[_REG_PC])
+
+define _REG_R0		_REG_R0
+define _REG_R1		_REG_R1
+define _REG_R2		_REG_R2
+define _REG_R3		_REG_R3
+define _REG_R4		_REG_R4
+define _REG_R5		_REG_R5
+define _REG_R6		_REG_R6
+define _REG_R7		_REG_R7
+define _REG_R8		_REG_R8
+define _REG_R9		_REG_R9
+define _REG_R10		_REG_R10
+define _REG_R11		_REG_R11
+define _REG_R12		_REG_R12
+define _REG_R13		_REG_R13
+define _REG_R14		_REG_R14
+define _REG_R15		_REG_R15
+define _REG_R16		_REG_R16
+define _REG_R17		_REG_R17
+define _REG_R18		_REG_R18
+define _REG_R19		_REG_R19
+define _REG_R20		_REG_R20
+define _REG_R21		_REG_R21
+define _REG_R22		_REG_R22
+define _REG_R23		_REG_R23
+define _REG_R24		_REG_R24
+define _REG_R25		_REG_R25
+define _REG_R26		_REG_R26
+define _REG_R27		_REG_R27
+define _REG_R28		_REG_R28
+define _REG_R29		_REG_R29
+define _REG_R30		_REG_R30
+define _REG_R31		_REG_R31
+define _REG_CR		_REG_CR
+define _REG_LR		_REG_LR
+define _REG_PC		_REG_PC
+define _REG_CTR		_REG_CTR
+define _REG_XER		_REG_XER
 
 define SIG_BLOCK	SIG_BLOCK
 define SIG_SETMASK	SIG_SETMASK
