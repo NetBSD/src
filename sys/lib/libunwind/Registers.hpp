@@ -561,6 +561,9 @@ enum {
   DWARF_M68K_FP0 = 16,
   DWARF_M68K_FP7 = 23,
   DWARF_M68K_PC = 24,
+  // DWARF pseudo-register that is an alternate that may be used
+  // for the return address.
+  DWARF_M68K_ALT_PC = 25,
 
   REGNO_M68K_A0 = 0,
   REGNO_M68K_A7 = 7,
@@ -589,7 +592,7 @@ public:
       return REGNO_M68K_D0 + (num - DWARF_M68K_D0);
     if (num >= DWARF_M68K_FP0 && num <= DWARF_M68K_FP7)
       return REGNO_M68K_FP0 + (num - DWARF_M68K_FP0);
-    if (num == DWARF_M68K_PC)
+    if (num == DWARF_M68K_PC || num == DWARF_M68K_ALT_PC)
       return REGNO_M68K_PC;
     return LAST_REGISTER + 1;
   }
