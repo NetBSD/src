@@ -1,4 +1,4 @@
-/*      $NetBSD: epcomvar.h,v 1.8 2015/04/14 20:32:35 riastradh Exp $        */
+/*      $NetBSD: epcomvar.h,v 1.9 2021/11/21 08:44:28 skrll Exp $        */
 /*-
  * Copyright (c) 2004 Jesse Off
  *
@@ -96,5 +96,6 @@ void	epcom_attach_subr(struct epcom_softc *);
 int	epcomintr(void* arg);
 int	epcomcnattach(bus_space_tag_t, bus_addr_t, bus_space_handle_t,
 		       int, tcflag_t);
+int	epcom_kgdb_attach(bus_space_tag_t, bus_addr_t, int, tcflag_t);
 
 #endif /* _EPCOMVAR_H_ */
