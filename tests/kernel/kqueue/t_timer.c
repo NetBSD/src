@@ -1,4 +1,4 @@
-/* $NetBSD: t_timer.c,v 1.3 2021/10/22 13:53:20 thorpej Exp $ */
+/* $NetBSD: t_timer.c,v 1.4 2021/11/21 09:35:39 hannken Exp $ */
 
 /*-
  * Copyright (c) 2021 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_timer.c,v 1.3 2021/10/22 13:53:20 thorpej Exp $");
+__RCSID("$NetBSD: t_timer.c,v 1.4 2021/11/21 09:35:39 hannken Exp $");
 
 #include <sys/types.h>
 #include <sys/event.h>
@@ -38,6 +38,36 @@ __RCSID("$NetBSD: t_timer.c,v 1.3 2021/10/22 13:53:20 thorpej Exp $");
 #include <unistd.h>
 
 #include <atf-c.h>
+
+#include "isqemu.h"
+
+static bool
+check_timespec(struct timespec *ts, time_t seconds)
+{
+	time_t upper = seconds;
+	bool result = true;
+
+	/*
+	 * If running under QEMU make sure the upper bound is large
+	 * enough for the effect of kern/43997
+	 */
+	if (isQEMU()) {
+		upper *= 4;
+	}
+
+	if (ts->tv_sec < seconds - 1 ||
+	    (ts->tv_sec == seconds - 1 && ts->tv_nsec < 500000000))
+		result = false;
+	else if (ts->tv_sec > upper ||
+	    (ts->tv_sec == upper && ts->tv_nsec >= 500000000))
+		result = false;
+
+	printf("time %" PRId64 ".%09ld %sin [ %" PRId64 ".5, %" PRId64 ".5 )\n",
+		ts->tv_sec, ts->tv_nsec, (result ? "" : "not "),
+		seconds - 1, upper);
+
+	return result;
+}
 
 ATF_TC(basic_timer);
 ATF_TC_HEAD(basic_timer, tc)
@@ -83,13 +113,8 @@ ATF_TC_BODY(basic_timer, tc)
 				ATF_REQUIRE(clock_gettime(CLOCK_MONOTONIC,
 				    &ts) == 0);
 				timespecsub(&ts, &ots, &ts);
-				ATF_REQUIRE(ts.tv_sec ==
-					    (TIME1_TOTAL_SEC - 1) ||
-				    ts.tv_sec == TIME1_TOTAL_SEC);
-				if (ts.tv_sec == TIME1_TOTAL_SEC - 1) {
-					ATF_REQUIRE(ts.tv_nsec >=
-					    900000000);
-				}
+				ATF_REQUIRE(check_timespec(&ts,
+				    TIME1_TOTAL_SEC));
 				EV_SET(&event[0], 1, EVFILT_TIMER, EV_DELETE,
 				    0, 0, NULL);
 				ATF_REQUIRE(kevent(kq, event, 1, NULL, 0,
@@ -106,12 +131,7 @@ ATF_TC_BODY(basic_timer, tc)
 			ATF_REQUIRE(clock_gettime(CLOCK_MONOTONIC,
 			    &ts) == 0);
 			timespecsub(&ts, &ots, &ts);
-			ATF_REQUIRE(ts.tv_sec ==
-				    (TIME2_TOTAL_SEC - 1) ||
-			    ts.tv_sec == TIME2_TOTAL_SEC);
-			if (ts.tv_sec == TIME2_TOTAL_SEC - 1) {
-				ATF_REQUIRE(ts.tv_nsec >= 900000000);
-			}
+			ATF_REQUIRE(check_timespec(&ts, TIME2_TOTAL_SEC));
 			EV_SET(&event[0], 2, EVFILT_TIMER, EV_DELETE,
 			    0, 0, NULL);
 			ATF_REQUIRE_ERRNO(ENOENT,
@@ -130,14 +150,7 @@ ATF_TC_BODY(basic_timer, tc)
 	ATF_REQUIRE(kevent(kq, NULL, 0, event, 1, &ts) == 0);
 	ATF_REQUIRE(clock_gettime(CLOCK_MONOTONIC, &ts) == 0);
 	timespecsub(&ts, &ots, &ts);
-	ATF_REQUIRE(ts.tv_sec == (TIME2_TOTAL_SEC - 1) ||
-	    ts.tv_sec == TIME2_TOTAL_SEC ||
-	    ts.tv_sec == (TIME2_TOTAL_SEC + 1));
-	if (ts.tv_sec == TIME2_TOTAL_SEC - 1) {
-		ATF_REQUIRE(ts.tv_nsec >= 900000000);
-	} else if (ts.tv_sec == TIME2_TOTAL_SEC + 1) {
-		ATF_REQUIRE(ts.tv_nsec < 500000000);
-	}
+	ATF_REQUIRE(check_timespec(&ts, TIME2_TOTAL_SEC));
 }
 
 ATF_TC(count_expirations);
@@ -272,9 +285,6 @@ ATF_TC_BODY(abstime, tc)
 	ATF_REQUIRE(ots.tv_sec < INTPTR_MAX - TIME1_TOTAL_SEC);
 
 	seconds = ots.tv_sec + TIME1_TOTAL_SEC;
-	if (ots.tv_nsec >= 500000000) {
-		seconds++;
-	}
 
 	EV_SET(&event[0], 1, EVFILT_TIMER, EV_ADD,
 	    NOTE_ABSTIME | NOTE_SECONDS, seconds, NULL);
@@ -287,10 +297,7 @@ ATF_TC_BODY(abstime, tc)
 	 * We're not going for precision here; just verify that it was
 	 * delivered anywhere between 4.5-6.whatever seconds later.
 	 */
-	ATF_REQUIRE(ts.tv_sec >= 4 && ts.tv_sec <= 6);
-	if (ts.tv_sec == 4) {
-		ATF_REQUIRE(ts.tv_nsec >= 500000000);
-	}
+	ATF_REQUIRE(check_timespec(&ts, 4) || check_timespec(&ts, 5));
 
 	ts.tv_sec = 0;
 	ts.tv_nsec = 0;
@@ -316,13 +323,8 @@ do_test_timer_units(const char *which, uint32_t fflag, int64_t data)
 	ATF_REQUIRE(clock_gettime(CLOCK_MONOTONIC, &ts) == 0);
 
 	timespecsub(&ts, &ots, &ts);
-	ATF_REQUIRE_MSG(ts.tv_sec == (PREC_TIMEOUT_SEC - 1) ||
-		    ts.tv_sec == PREC_TIMEOUT_SEC,
-		    "units '%s' failed [sec]", which);
-	if (ts.tv_sec == PREC_TIMEOUT_SEC - 1) {
-		ATF_REQUIRE_MSG(ts.tv_nsec >= 900000000,
-		"units '%s' failed [nsec]", which);
-	}
+	ATF_REQUIRE_MSG(check_timespec(&ts, PREC_TIMEOUT_SEC),
+	    "units '%s' failed", which);
 
 	(void)close(kq);
 }
