@@ -1,4 +1,4 @@
-/*	$NetBSD: tsarm_machdep.c,v 1.32 2021/08/17 22:00:29 andvar Exp $ */
+/*	$NetBSD: tsarm_machdep.c,v 1.33 2021/11/21 08:44:28 skrll Exp $ */
 
 /*
  * Copyright (c) 2001, 2002, 2003 Wasabi Systems, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tsarm_machdep.c,v 1.32 2021/08/17 22:00:29 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tsarm_machdep.c,v 1.33 2021/11/21 08:44:28 skrll Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_console.h"
@@ -829,8 +829,8 @@ consinit(void)
 #if KGDB
 #if NEPCOM > 0
 	if (strcmp(kgdb_devname, "epcom") == 0) {
-		com_kgdb_attach(&ep93xx_bs_tag, kgdb_devaddr, kgdb_devrate,
-			kgdb_devmode);
+		epcom_kgdb_attach(&ep93xx_bs_tag, kgdb_devaddr, kgdb_devrate,
+				  kgdb_devmode);
 	}
 #endif	/* NEPCOM > 0 */
 #endif	/* KGDB */
