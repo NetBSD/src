@@ -1,4 +1,4 @@
-/*	$NetBSD: epsoc.c,v 1.15 2021/08/07 16:18:43 thorpej Exp $	*/
+/*	$NetBSD: epsoc.c,v 1.16 2021/11/21 08:25:26 skrll Exp $	*/
 
 /*
  * Copyright (c) 2004 Jesse Off
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: epsoc.c,v 1.15 2021/08/07 16:18:43 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: epsoc.c,v 1.16 2021/11/21 08:25:26 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -41,7 +41,7 @@ __KERNEL_RCSID(0, "$NetBSD: epsoc.c,v 1.15 2021/08/07 16:18:43 thorpej Exp $");
 
 #include <arm/cpufunc.h>
 
-#include <arm/ep93xx/ep93xxreg.h> 
+#include <arm/ep93xx/ep93xxreg.h>
 #include <arm/ep93xx/ep93xxvar.h>
 #include <arm/ep93xx/epsocvar.h>
 
@@ -119,13 +119,13 @@ epsoc_attach(device_t parent, device_t self, void *aux)
 	}
 	printf(": Cirrus Logic EP93xx SoC rev %s\n", rev);
 
-	clkset1 = bus_space_read_4(sc->sc_iot, sc->sc_ioh, 
+	clkset1 = bus_space_read_4(sc->sc_iot, sc->sc_ioh,
 		EP93XX_SYSCON_ClkSet1);
 	{
 		int fclkdiv, hclkdiv, pclkdiv, pll1_ps;
 		int pll1x1fbd1, pll1x2fbd2, pll1x2ipd;
 		int hclkdivisors[] = {1, 2, 4, 5, 6, 8, 16, 32};
-		
+
 		fclkdiv =    (clkset1 & 0x0e000000) >> 25;
 		hclkdiv =    (clkset1 & 0x00700000) >> 20;
 		pclkdiv =    (clkset1 & 0x000c0000) >> 18;
@@ -143,10 +143,10 @@ epsoc_attach(device_t parent, device_t self, void *aux)
 		else
 			fclk = 14745600ULL;
 	}
-	printf("%s: fclk %lld.%02lld MHz hclk %lld.%02lld MHz pclk %lld.%02lld MHz\n", 
+	printf("%s: fclk %lld.%02lld MHz hclk %lld.%02lld MHz pclk %lld.%02lld MHz\n",
 		device_xname(self),
-		fclk / 1000000, (fclk % 1000000 + 5000) / 10000, 
-		hclk / 1000000, (hclk % 1000000 + 5000) / 10000, 
+		fclk / 1000000, (fclk % 1000000 + 5000) / 10000,
+		hclk / 1000000, (hclk % 1000000 + 5000) / 10000,
 		pclk / 1000000, (pclk % 1000000 + 5000) / 10000);
 
 	sc->sc_fclk = fclk;
