@@ -1,4 +1,4 @@
-/* $NetBSD: xlint.c,v 1.82 2021/09/05 18:17:15 rillig Exp $ */
+/* $NetBSD: xlint.c,v 1.83 2021/11/21 10:08:10 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: xlint.c,v 1.82 2021/09/05 18:17:15 rillig Exp $");
+__RCSID("$NetBSD: xlint.c,v 1.83 2021/11/21 10:08:10 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -120,10 +120,6 @@ static	const	char *currfn;
 #endif
 static const char target_prefix[] = TARGET_PREFIX;
 
-static	char	*concat2(const char *, const char *);
-static	void	terminate(int) __attribute__((__noreturn__));
-static	const	char *lbasename(const char *, int);
-static	void	usage(void);
 static	void	fname(const char *);
 static	void	runchild(const char *, char *const *, const char *, int);
 static	void	findlibs(char *const *);
@@ -253,7 +249,7 @@ concat2(const char *s1, const char *s2)
 /*
  * Clean up after a signal.
  */
-static void
+static void __attribute__((__noreturn__))
 terminate(int signo)
 {
 	int	i;
