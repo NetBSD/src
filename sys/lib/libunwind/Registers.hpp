@@ -148,8 +148,11 @@ enum {
   DWARF_PPC32_F0 = 32,
   DWARF_PPC32_F31 = 63,
   DWARF_PPC32_LR = 65,
+  DWARF_PPC32_CTR = 66,
   DWARF_PPC32_CR = 70,
+  DWARF_PPC32_XER = 76,
   DWARF_PPC32_V0 = 77,
+  DWARF_PPC32_SIGRETURN = 99,
   DWARF_PPC32_V31 = 108,
 
   REGNO_PPC32_R0 = 0,
@@ -163,13 +166,17 @@ enum {
   REGNO_PPC32_F31 = REGNO_PPC32_F0 + 31,
   REGNO_PPC32_V0 = REGNO_PPC32_F31 + 1,
   REGNO_PPC32_V31 = REGNO_PPC32_V0 + 31,
+
+  REGNO_PPC32_CTR = REGNO_PPC32_V31 + 1,
+  REGNO_PPC32_XER = REGNO_PPC32_CTR + 1,
+  REGNO_PPC32_SIGRETURN = REGNO_PPC32_XER + 1
 };
 
 class Registers_ppc32 {
 public:
   enum {
-    LAST_REGISTER = REGNO_PPC32_V31,
-    LAST_RESTORE_REG = REGNO_PPC32_V31,
+    LAST_REGISTER = REGNO_PPC32_SIGRETURN,
+    LAST_RESTORE_REG = REGNO_PPC32_SIGRETURN,
     RETURN_OFFSET = 0,
     RETURN_MASK = 0,
   };
@@ -188,23 +195,51 @@ public:
       return REGNO_PPC32_LR;
     case DWARF_PPC32_CR:
       return REGNO_PPC32_CR;
+    case DWARF_PPC32_CTR:
+      return REGNO_PPC32_CTR;
+    case DWARF_PPC32_XER:
+      return REGNO_PPC32_XER;
+    case DWARF_PPC32_SIGRETURN:
+      return REGNO_PPC32_SIGRETURN;
     default:
       return LAST_REGISTER + 1;
     }
   }
 
   bool validRegister(int num) const {
-    return num >= 0 && num <= LAST_RESTORE_REG;
+    return (num >= 0 && num <= REGNO_PPC32_SRR0) ||
+	(num >= REGNO_PPC32_CTR && num <= REGNO_PPC32_SIGRETURN);
   }
 
   uint64_t getRegister(int num) const {
     assert(validRegister(num));
-    return reg[num];
+    switch (num) {
+    case REGNO_PPC32_CTR:
+      return ctr_reg;
+    case REGNO_PPC32_XER:
+      return xer_reg;
+    case REGNO_PPC32_SIGRETURN:
+      return sigreturn_reg;
+    default:
+      return reg[num];
+    }
   }
 
   void setRegister(int num, uint64_t value) {
     assert(validRegister(num));
-    reg[num] = value;
+    switch (num) {
+    case REGNO_PPC32_CTR:
+      ctr_reg = value;
+      break;
+    case REGNO_PPC32_XER:
+      xer_reg = value;
+      break;
+    case REGNO_PPC32_SIGRETURN:
+      sigreturn_reg = value;
+      break;
+    default:
+      reg[num] = value;
+    }
   }
 
   uint64_t getIP() const { return reg[REGNO_PPC32_SRR0]; }
@@ -238,6 +273,9 @@ private:
   uint32_t dummy;
   uint64_t fpreg[32];
   vecreg_t vecreg[64];
+  uint32_t ctr_reg;
+  uint32_t xer_reg;
+  uint32_t sigreturn_reg;
 };
 
 enum {
