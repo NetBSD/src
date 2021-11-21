@@ -1,4 +1,4 @@
-/*	$NetBSD: mount.c,v 1.104 2021/06/04 11:55:45 simonb Exp $	*/
+/*	$NetBSD: mount.c,v 1.105 2021/11/21 05:09:15 simonb Exp $	*/
 
 /*
  * Copyright (c) 1980, 1989, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1989, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)mount.c	8.25 (Berkeley) 5/8/95";
 #else
-__RCSID("$NetBSD: mount.c,v 1.104 2021/06/04 11:55:45 simonb Exp $");
+__RCSID("$NetBSD: mount.c,v 1.105 2021/11/21 05:09:15 simonb Exp $");
 #endif
 #endif /* not lint */
 
@@ -173,7 +173,7 @@ main(int argc, char *argv[])
 	rval = 0;
 	switch (argc) {
 	case 0:
-		if (all)
+		if (all) {
 			while ((fs = getfsent()) != NULL) {
 				if (BADTYPE(fs->fs_type))
 					continue;
@@ -199,7 +199,7 @@ main(int argc, char *argv[])
 				    fs->fs_mntops, !forceall, NULL, 0))
 					rval = 1;
 			}
-		else {
+		} else {
 			if ((mntsize = getmntinfo(&mntbuf, MNT_NOWAIT)) == 0)
 				err(EXIT_FAILURE, "getmntinfo");
 			for (i = 0; i < mntsize; i++) {
