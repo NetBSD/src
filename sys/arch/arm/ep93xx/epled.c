@@ -1,4 +1,4 @@
-/*	$NetBSD: epled.c,v 1.4 2012/10/27 17:17:37 chs Exp $	*/
+/*	$NetBSD: epled.c,v 1.5 2021/11/21 08:25:26 skrll Exp $	*/
 
 /*
  * Copyright (c) 2005 HAMAJIMA Katsuomi. All rights reserved.
@@ -26,15 +26,15 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: epled.c,v 1.4 2012/10/27 17:17:37 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: epled.c,v 1.5 2021/11/21 08:25:26 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/device.h>
 #include <sys/bus.h>
-#include <arm/ep93xx/epgpiovar.h> 
-#include <arm/ep93xx/epledvar.h> 
+#include <arm/ep93xx/epgpiovar.h>
+#include <arm/ep93xx/epledvar.h>
 
 struct epled_softc {
 	int			sc_port;
@@ -59,7 +59,7 @@ epled_match(device_t parent, cfdata_t cf, void *aux)
 
 void
 epled_attach(device_t parent, device_t self, void *aux)
-{       
+{
 	struct epled_softc *sc = device_private(self);
 	struct epgpio_attach_args *ga = aux;
 

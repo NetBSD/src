@@ -1,4 +1,4 @@
-/*	$NetBSD: ep93xx_space.c,v 1.6 2018/03/16 17:56:31 ryo Exp $ */
+/*	$NetBSD: ep93xx_space.c,v 1.7 2021/11/21 08:25:26 skrll Exp $ */
 
 /*
  * Copyright (c) 2004 Jesse Off
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ep93xx_space.c,v 1.6 2018/03/16 17:56:31 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ep93xx_space.c,v 1.7 2021/11/21 08:25:26 skrll Exp $");
 
 /*
  * bus_space I/O functions for ep93xx
@@ -196,7 +196,7 @@ ep93xx_bs_alloc(void *t, bus_addr_t rstart, bus_addr_t rend,
 	panic("ep93xx_bs_alloc(): not implemented\n");
 }
 
-void    
+void
 ep93xx_bs_free(void *t, bus_space_handle_t bsh, bus_size_t size)
 {
 	panic("ep93xx_bs_free(): not implemented\n");
@@ -228,5 +228,5 @@ ep93xx_bs_barrier(void *t, bus_space_handle_t bsh, bus_size_t offset,
     bus_size_t len, int flags)
 {
 /* NULL */
-}	
+}
 /* End of ep93xx_space.c */

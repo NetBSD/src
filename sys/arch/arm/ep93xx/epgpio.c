@@ -1,4 +1,4 @@
-/*	$NetBSD: epgpio.c,v 1.7 2021/08/07 16:18:43 thorpej Exp $	*/
+/*	$NetBSD: epgpio.c,v 1.8 2021/11/21 08:25:26 skrll Exp $	*/
 
 /*
  * Copyright (c) 2005 HAMAJIMA Katsuomi. All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: epgpio.c,v 1.7 2021/08/07 16:18:43 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: epgpio.c,v 1.8 2021/11/21 08:25:26 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -36,8 +36,8 @@ __KERNEL_RCSID(0, "$NetBSD: epgpio.c,v 1.7 2021/08/07 16:18:43 thorpej Exp $");
 #include <machine/intr.h>
 #include <sys/gpio.h>
 #include <dev/gpio/gpiovar.h>
-#include <arm/ep93xx/ep93xxvar.h> 
-#include <arm/ep93xx/epsocvar.h> 
+#include <arm/ep93xx/ep93xxvar.h>
+#include <arm/ep93xx/epsocvar.h>
 #include <arm/ep93xx/epgpioreg.h>
 #include <arm/ep93xx/epgpiovar.h>
 #include "opt_ep93xx_gpio_mask.h"
