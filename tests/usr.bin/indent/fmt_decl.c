@@ -1,4 +1,4 @@
-/*	$NetBSD: fmt_decl.c,v 1.21 2021/11/20 11:13:18 rillig Exp $	*/
+/*	$NetBSD: fmt_decl.c,v 1.22 2021/11/21 11:02:25 rillig Exp $	*/
 /* $FreeBSD: head/usr.bin/indent/tests/declarations.0 334478 2018-06-01 09:41:15Z pstef $ */
 
 /*
@@ -529,5 +529,45 @@ aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
 #indent run
 int	       *aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
 		(void){
+}
+#indent end
+
+
+/*
+ * Before 1990, when C90 standardized function prototypes, a function
+ * declaration or definition did not contain a '*' that may have looked
+ * similar to the binary operator '*' because it was surrounded by two
+ * identifiers.
+ *
+ * As of 2021-11-21, indent interprets the '*' in the function declaration in
+ * line 1 as a binary operator, even though it is followed by a ',' directly.
+ * In the function declaration in line 2, as well as the function definition
+ * in line 4, indent interprets the '*' as a binary operator as well, which
+ * kind of makes sense since it is surrounded by words, but it's still in a
+ * declaration.
+ *
+ * Essentially, as of 2021, indent has missed the last 31 years of advances in
+ * the C programming language.  Instead, the workaround has been to pass all
+ * type names via the options '-ta' and '-T'.
+ */
+#indent input
+void		buffer_add(buffer *, char);
+void		buffer_add(buffer *buf, char ch);
+
+void
+buffer_add(buffer *buf, char ch)
+{
+	*buf->e++ = ch;
+}
+#indent end
+
+#indent run
+void		buffer_add(buffer *, char);
+void		buffer_add(buffer * buf, char ch);
+
+void
+buffer_add(buffer * buf, char ch)
+{
+	*buf->e++ = ch;
 }
 #indent end
