@@ -1,4 +1,4 @@
-.\"	$NetBSD: sh.1,v 1.240 2021/11/20 17:18:31 rillig Exp $
+.\"	$NetBSD: sh.1,v 1.241 2021/11/21 16:23:20 kre Exp $
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -541,9 +541,9 @@ Make an interactive shell always print the new directory name when
 changed by the
 .Ic cd
 command.
-In a non-interactive shell this option only has an effect if the
+If the
 .Em posix
-option is set.
+option is set, this option also applies to non-interactive shells.
 However,
 .Em cdprint
 is an extension to POSIX, so these two options should
