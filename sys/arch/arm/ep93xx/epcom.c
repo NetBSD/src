@@ -1,4 +1,4 @@
-/*	$NetBSD: epcom.c,v 1.32 2020/11/20 18:03:52 thorpej Exp $ */
+/*	$NetBSD: epcom.c,v 1.33 2021/11/21 08:25:26 skrll Exp $ */
 /*
  * Copyright (c) 1998, 1999, 2001, 2002, 2004 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: epcom.c,v 1.32 2020/11/20 18:03:52 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: epcom.c,v 1.33 2021/11/21 08:25:26 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -291,7 +291,7 @@ epcomparam(struct tty *tp, struct termios *t)
 	sc->sc_lcrhi = cflag2lcrhi(t->c_cflag);
 	sc->sc_lcrlo = EPCOMSPEED2BRD(t->c_ospeed) & 0xff;
 	sc->sc_lcrmid = EPCOMSPEED2BRD(t->c_ospeed) >> 8;
-	
+
 	/* And copy to tty. */
 	tp->t_ispeed = 0;
 	tp->t_ospeed = t->c_ospeed;
@@ -542,7 +542,7 @@ epcomopen(dev_t dev, int flag, int mode, struct lwp *l)
 
 		splx(s2);
 	}
-	
+
 	splx(s);
 
 	error = ttyopen(tp, COMDIALOUT(dev), ISSET(flag, O_NONBLOCK));
@@ -603,7 +603,7 @@ epcomread(dev_t dev, struct uio *uio, int flag)
 
 	if (COM_ISALIVE(sc) == 0)
 		return (EIO);
- 
+
 	return ((*tp->t_linesw->l_read)(tp, uio, flag));
 }
 
@@ -615,7 +615,7 @@ epcomwrite(dev_t dev, struct uio *uio, int flag)
 
 	if (COM_ISALIVE(sc) == 0)
 		return (EIO);
- 
+
 	return ((*tp->t_linesw->l_write)(tp, uio, flag));
 }
 
@@ -627,7 +627,7 @@ epcompoll(dev_t dev, int events, struct lwp *l)
 
 	if (COM_ISALIVE(sc) == 0)
 		return (EIO);
- 
+
 	return ((*tp->t_linesw->l_poll)(tp, events, l));
 }
 
@@ -678,7 +678,7 @@ epcomioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 
 	case TIOCSFLAGS:
 		error = kauth_authorize_device_tty(l->l_cred,
-		    KAUTH_DEVICE_TTY_PRIVSET, tp); 
+		    KAUTH_DEVICE_TTY_PRIVSET, tp);
 		if (error)
 			break;
 		sc->sc_swflags = *(int *)data;
@@ -735,7 +735,7 @@ cflag2lcrhi(tcflag_t cflag)
 	lcrhi |= (cflag & PARODD) ? 0 : LinCtrlHigh_EPS;
 	lcrhi |= (cflag & CSTOPB) ? LinCtrlHigh_STP2 : 0;
 	lcrhi |= LinCtrlHigh_FEN;  /* FIFO always enabled */
-	
+
 	return (lcrhi);
 }
 
@@ -971,7 +971,7 @@ epcom_rxsoft(struct epcom_softc *sc, struct tty *tp)
 	if (cc != scc) {
 		sc->sc_rbget = get;
 		s = splserial();
-		
+
 		cc = sc->sc_rbavail += scc - cc;
 		/* Buffers should be ok again, release possible block. */
 		if (cc >= 1) {
@@ -1022,7 +1022,7 @@ epcomintr(void* arg)
 
 	(void) bus_space_read_4(iot, ioh, EPCOM_IntIDIntClr);
 
-	if (COM_ISALIVE(sc) == 0) 
+	if (COM_ISALIVE(sc) == 0)
 		panic("intr on disabled epcom");
 
 	flagr = bus_space_read_4(iot, ioh, EPCOM_Flag);

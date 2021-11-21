@@ -1,4 +1,4 @@
-/*	$NetBSD: ep93xxreg.h,v 1.8 2021/09/17 08:13:06 andvar Exp $ */
+/*	$NetBSD: ep93xxreg.h,v 1.9 2021/11/21 08:25:26 skrll Exp $ */
 
 /*
  * Copyright (c) 2004 Jesse Off
@@ -30,7 +30,7 @@
 #define _EP93XXREG_H_
 
 /*
- * Physical memory map for the Cirrus Logic EP93XX 
+ * Physical memory map for the Cirrus Logic EP93XX
  */
 
 /*

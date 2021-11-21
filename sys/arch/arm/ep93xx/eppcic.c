@@ -1,4 +1,4 @@
-/*	$NetBSD: eppcic.c,v 1.10 2021/08/07 16:18:43 thorpej Exp $	*/
+/*	$NetBSD: eppcic.c,v 1.11 2021/11/21 08:25:26 skrll Exp $	*/
 
 /*
  * Copyright (c) 2005 HAMAJIMA Katsuomi. All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: eppcic.c,v 1.10 2021/08/07 16:18:43 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: eppcic.c,v 1.11 2021/11/21 08:25:26 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -39,14 +39,14 @@ __KERNEL_RCSID(0, "$NetBSD: eppcic.c,v 1.10 2021/08/07 16:18:43 thorpej Exp $");
 #include <dev/pcmcia/pcmciareg.h>
 #include <dev/pcmcia/pcmciavar.h>
 #include <dev/pcmcia/pcmciachip.h>
-#include <arm/ep93xx/epsocvar.h> 
-#include <arm/ep93xx/epgpiovar.h> 
-#include <arm/ep93xx/eppcicvar.h> 
+#include <arm/ep93xx/epsocvar.h>
+#include <arm/ep93xx/epgpiovar.h>
+#include <arm/ep93xx/eppcicvar.h>
 #include <arm/ep93xx/ep93xxreg.h>
 #include <arm/ep93xx/epsmcreg.h>
 #include "epled.h"
 #if NEPLED > 0
-#include <arm/ep93xx/epledvar.h> 
+#include <arm/ep93xx/epledvar.h>
 #endif
 
 #include "epgpio.h"
@@ -265,11 +265,11 @@ eppcic_config_socket(struct eppcic_handle *ph)
 	    ph->ph_socket);
 }
 
-static int     
+static int
 eppcic_print(void *arg, const char *pnp)
-{                       
+{
 	return (UNCONF);
-}       
+}
 
 static void
 eppcic_event_thread(void *arg)

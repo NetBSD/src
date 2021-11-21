@@ -1,4 +1,4 @@
-/*	$NetBSD: eprtc.c,v 1.6 2012/10/27 17:17:37 chs Exp $	*/
+/*	$NetBSD: eprtc.c,v 1.7 2021/11/21 08:25:26 skrll Exp $	*/
 
 /*
  * Copyright (c) 2005 HAMAJIMA Katsuomi. All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: eprtc.c,v 1.6 2012/10/27 17:17:37 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: eprtc.c,v 1.7 2021/11/21 08:25:26 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -34,9 +34,9 @@ __KERNEL_RCSID(0, "$NetBSD: eprtc.c,v 1.6 2012/10/27 17:17:37 chs Exp $");
 #include <sys/device.h>
 #include <dev/clock_subr.h>
 #include <sys/bus.h>
-#include <arm/ep93xx/ep93xxvar.h> 
-#include <arm/ep93xx/epsocvar.h> 
-#include <arm/ep93xx/eprtcreg.h> 
+#include <arm/ep93xx/ep93xxvar.h>
+#include <arm/ep93xx/epsocvar.h>
+#include <arm/ep93xx/eprtcreg.h>
 
 struct eprtc_softc {
 	bus_space_tag_t		sc_iot;
