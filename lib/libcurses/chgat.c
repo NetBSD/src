@@ -1,4 +1,4 @@
-/*	$NetBSD: chgat.c,v 1.7 2021/09/06 07:45:48 rin Exp $	*/
+/*	$NetBSD: chgat.c,v 1.8 2021/11/22 21:25:25 blymn Exp $	*/
 
 /*
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: chgat.c,v 1.7 2021/09/06 07:45:48 rin Exp $");
+__RCSID("$NetBSD: chgat.c,v 1.8 2021/11/22 21:25:25 blymn Exp $");
 
 #include "curses.h"
 #include "curses_private.h"
@@ -82,8 +82,9 @@ mvwchgat(WINDOW *win , int y, int x, int count, attr_t attr, short color,
 	if (x + win->ch_off + count > *lp->lastchp)
 		*lp->lastchp = x + win->ch_off + count;
 
+	lp->flags |= __ISDIRTY;
+
 	while (count-- > 0) {
-		lp->flags |= __ISDIRTY;
 #ifdef HAVE_WCHAR
 		lc->attr = (lc->attr & ~WA_ATTRIBUTES) | attr;
 #else
