@@ -152,10 +152,10 @@ estimate_argon2_params(argon2_type atype, uint32_t *etime,
 	uint32_t tmp_hash[32];
 	char tmp_encoded[256];
 	struct rlimit rlim;
-	uint64_t max_mem;
+	uint64_t max_mem; /* usermem64 returns bytes */
 	size_t max_mem_sz = sizeof(max_mem);
 	/* low values from argon2 test suite... */
-	uint32_t memory = 256;
+	uint32_t memory = 256; /* 256k; argon2 wants kilobytes */
 	uint32_t time = 3;
 	uint32_t threads = 1;
 
@@ -177,7 +177,7 @@ estimate_argon2_params(argon2_type atype, uint32_t *etime,
 		 * Do we need to be concerned about memory usage during
 		 * concurrent connections?
 		 */
-		max_mem /= 1000000;
+		max_mem /= 1000000; /* bytes down to mb */
 		if (max_mem > 30000) {
 			memory = 32768;
 		} else if (max_mem > 15000) {
