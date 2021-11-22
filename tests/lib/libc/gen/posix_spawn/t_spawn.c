@@ -1,4 +1,4 @@
-/* $NetBSD: t_spawn.c,v 1.6 2021/11/20 14:28:29 christos Exp $ */
+/* $NetBSD: t_spawn.c,v 1.7 2021/11/22 15:09:16 christos Exp $ */
 
 /*-
  * Copyright (c) 2012, 2021 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_spawn.c,v 1.6 2021/11/20 14:28:29 christos Exp $");
+__RCSID("$NetBSD: t_spawn.c,v 1.7 2021/11/22 15:09:16 christos Exp $");
 
 #include <atf-c.h>
 
@@ -583,6 +583,8 @@ ATF_TC_BODY(t_spawn_fchdir_closed, tc)
 	posix_spawnattr_destroy(&attr);
 }
 
+#undef CHDIR
+#undef FCHDIR
 #undef CHDIRPATH
 #undef FILENAME
 #undef FILEPATH
