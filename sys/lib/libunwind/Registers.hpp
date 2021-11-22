@@ -324,14 +324,14 @@ public:
 
   uint64_t getRegister(int num) const {
     assert(validRegister(num));
-    if (reg == REGNO_AARCH64_SIGRETURN)
+    if (num == REGNO_AARCH64_SIGRETURN)
       return sigreturn_reg;
     return reg[num];
   }
 
   void setRegister(int num, uint64_t value) {
     assert(validRegister(num));
-    if (reg == REGNO_AARCH64_SIGRETURN)
+    if (num == REGNO_AARCH64_SIGRETURN)
       sigreturn_reg = value;
     else
       reg[num] = value;
