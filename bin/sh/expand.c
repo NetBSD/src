@@ -1,4 +1,4 @@
-/*	$NetBSD: expand.c,v 1.140 2021/11/10 15:26:34 kre Exp $	*/
+/*	$NetBSD: expand.c,v 1.141 2021/11/22 05:17:43 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)expand.c	8.5 (Berkeley) 5/15/95";
 #else
-__RCSID("$NetBSD: expand.c,v 1.140 2021/11/10 15:26:34 kre Exp $");
+__RCSID("$NetBSD: expand.c,v 1.141 2021/11/22 05:17:43 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -143,16 +143,16 @@ STATIC void rmescapes_nl(char *);
  * Expand shell variables and backquotes inside a here document.
  */
 
-void
-expandhere(union node *arg, int fd)
+char *
+expandhere(union node *arg)
 {
 	int len;
 
-	VTRACE(DBG_EXPAND|DBG_REDIR, ("expandhere() fd=%d\n", fd));
-	herefd = fd;
+	VTRACE(DBG_EXPAND|DBG_REDIR, ("expandhere(%p)\n", arg));
 	expandarg(arg, NULL, 0);
 	len = rmescapes(stackblock());
-	xwrite(fd, stackblock(),  len);
+	VTRACE(DBG_EXPAND|DBG_REDIR, ("expandhere() -> %d\n", len));
+	return stalloc(len + 1);	/* include the \0 */
 }
 
 
