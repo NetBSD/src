@@ -1,4 +1,4 @@
-/*	$NetBSD: ethertypes.h,v 1.21 2021/11/22 05:50:29 msaitoh Exp $	*/
+/*	$NetBSD: ethertypes.h,v 1.22 2021/11/22 05:57:25 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -300,6 +300,8 @@
 #define	ETHERTYPE_PAE		0x888e	/* EAPOL PAE/802.1x */
 #define	ETHERTYPE_AOE		0x88a2	/* ATA over Ethernet */
 #define	ETHERTYPE_QINQ		0x88a8	/* 802.1ad VLAN stacking */
+#define	ETHERTYPE_LLDP		0x88CC	/* Link Layer Discovery Protocol */
+#define	ETHERTYPE_MACSEC	0x88E5	/* 802.1AE MAC Security */
 #define	ETHERTYPE_FCOE		0x8906	/* Fibre Channel over Ethernet */
 #define	ETHERTYPE_LOOPBACK	0x9000	/* Loopback */
 #define	ETHERTYPE_LBACK		ETHERTYPE_LOOPBACK	/* DEC MOP loopback */
