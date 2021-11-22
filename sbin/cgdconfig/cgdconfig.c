@@ -1,4 +1,4 @@
-/* $NetBSD: cgdconfig.c,v 1.52 2021/06/16 23:22:08 riastradh Exp $ */
+/* $NetBSD: cgdconfig.c,v 1.53 2021/11/22 14:34:35 nia Exp $ */
 
 /*-
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -33,9 +33,12 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 2002, 2003\
  The NetBSD Foundation, Inc.  All rights reserved.");
-__RCSID("$NetBSD: cgdconfig.c,v 1.52 2021/06/16 23:22:08 riastradh Exp $");
+__RCSID("$NetBSD: cgdconfig.c,v 1.53 2021/11/22 14:34:35 nia Exp $");
 #endif
 
+#ifdef HAVE_ARGON2
+#include <argon2.h>
+#endif
 #include <err.h>
 #include <errno.h>
 #include <fcntl.h>
@@ -113,6 +116,9 @@ static void	 eliminate_cores(void);
 static bits_t	*getkey(const char *, struct keygen *, size_t);
 static bits_t	*getkey_storedkey(const char *, struct keygen *, size_t);
 static bits_t	*getkey_randomkey(const char *, struct keygen *, size_t, int);
+#ifdef HAVE_ARGON2
+static bits_t	*getkey_argon2id(const char *, struct keygen *, size_t);
+#endif
 static bits_t	*getkey_pkcs5_pbkdf2(const char *, struct keygen *, size_t,
 				     int);
 static bits_t	*getkey_shell_cmd(const char *, struct keygen *, size_t);
@@ -337,6 +343,11 @@ getkey(const char *dev, struct keygen *kg, size_t len)
 		case KEYGEN_URANDOMKEY:
 			tmp = getkey_randomkey(dev, kg, len, 0);
 			break;
+#ifdef HAVE_ARGON2
+		case KEYGEN_ARGON2ID:
+			tmp = getkey_argon2id(dev, kg, len);
+			break;
+#endif
 		case KEYGEN_PKCS5_PBKDF2_SHA1:
 			tmp = getkey_pkcs5_pbkdf2(dev, kg, len, 0);
 			break;
@@ -453,6 +464,40 @@ getkey_pkcs5_pbkdf2(const char *target, struct keygen *kg, size_t keylen,
 	free(tmp);
 	return ret;
 }
+
+#ifdef HAVE_ARGON2
+static bits_t *
+getkey_argon2id(const char *target, struct keygen *kg, size_t keylen)
+{
+	bits_t *ret;
+	char *passp;
+	char buf[1024];
+	uint8_t	raw[256];
+	int err;
+
+	snprintf(buf, sizeof(buf), "%s's passphrase%s:", target,
+	    pflag & PFLAG_GETPASS_ECHO ? " (echo)" : "");
+	passp = maybe_getpass(buf);
+	if ((err = argon2_hash(kg->kg_iterations, kg->kg_memory,
+	    kg->kg_parallelism,
+	    passp, strlen(passp),
+	    bits_getbuf(kg->kg_salt),
+	    BITS2BYTES(bits_len(kg->kg_salt)),
+	    raw, sizeof(raw),
+	    NULL, 0,
+	    Argon2_id, kg->kg_version)) != ARGON2_OK) {
+		warnx("failed to generate Argon2id key, error code %d", err);
+		return NULL;
+	}
+
+	ret = bits_new(raw, keylen);
+	kg->kg_key = bits_dup(ret);
+	explicit_memset(passp, 0, strlen(passp));
+	explicit_memset(raw, 0, sizeof(raw));
+	free(passp);
+	return ret;
+}
+#endif
 
 /*ARGSUSED*/
 static bits_t *
@@ -606,8 +651,9 @@ configure(int argc, char **argv, struct params *inparams, int flags)
 	for (kg = p->keygen;
 	    (pflag & PFLAG_GETPASS_MASK) && kg;
 	    kg = kg->next)
-		if ((kg->kg_method == KEYGEN_PKCS5_PBKDF2_SHA1) ||
-		    (kg->kg_method == KEYGEN_PKCS5_PBKDF2_OLD )) {
+		if (kg->kg_method == KEYGEN_ARGON2ID ||
+		    kg->kg_method == KEYGEN_PKCS5_PBKDF2_SHA1 ||
+		    kg->kg_method == KEYGEN_PKCS5_PBKDF2_OLD) {
 			loop = 1;
 			break;
 		}
@@ -984,22 +1030,39 @@ static int
 verify_reenter(struct params *p)
 {
 	struct keygen *kg;
-	bits_t *orig_key, *key;
+	bits_t *orig_key, *key = NULL;
 	int ret;
 
 	ret = 0;
 	for (kg = p->keygen; kg && !ret; kg = kg->next) {
-		if ((kg->kg_method != KEYGEN_PKCS5_PBKDF2_SHA1) &&
-		    (kg->kg_method != KEYGEN_PKCS5_PBKDF2_OLD ))
+		if (kg->kg_method != KEYGEN_ARGON2ID &&
+		    kg->kg_method != KEYGEN_PKCS5_PBKDF2_SHA1 &&
+		    kg->kg_method != KEYGEN_PKCS5_PBKDF2_OLD)
 			continue;
 
 		orig_key = kg->kg_key;
 		kg->kg_key = NULL;
 
-		/* add a compat flag till the _OLD method goes away */
-		key = getkey_pkcs5_pbkdf2("re-enter device", kg,
-			bits_len(orig_key),
-			kg->kg_method == KEYGEN_PKCS5_PBKDF2_OLD);
+		switch (kg->kg_method) {
+#ifdef HAVE_ARGON2
+		case KEYGEN_ARGON2ID:
+			key = getkey_argon2id("re-enter device", kg,
+				bits_len(orig_key));
+			break;
+#endif
+		case KEYGEN_PKCS5_PBKDF2_SHA1:
+			key = getkey_pkcs5_pbkdf2("re-enter device", kg,
+				bits_len(orig_key), 0);
+			break;
+		case KEYGEN_PKCS5_PBKDF2_OLD:
+			key = getkey_pkcs5_pbkdf2("re-enter device", kg,
+				bits_len(orig_key), 1);
+			break;
+		default:
+			warnx("unsupported keygen method");
+			kg->kg_key = orig_key;
+			return -1;
+		}
 
 		ret = !bits_match(key, orig_key);
 

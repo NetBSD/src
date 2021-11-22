@@ -1,4 +1,4 @@
-/* $NetBSD: params.h,v 1.11 2014/12/14 12:31:39 mlelstv Exp $ */
+/* $NetBSD: params.h,v 1.12 2021/11/22 14:34:35 nia Exp $ */
 
 /*-
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -37,6 +37,9 @@
 struct keygen {
 	int		 kg_method;
 	size_t		 kg_iterations;
+	size_t		 kg_memory;		/* only used for Argon2 */
+	size_t		 kg_parallelism;	/* only used for Argon2 */
+	size_t		 kg_version;		/* only used for Argon2 */
 	bits_t		*kg_salt;
 	bits_t		*kg_key;
 	string_t	*kg_cmd;
@@ -63,6 +66,7 @@ struct params {
 #define KEYGEN_URANDOMKEY		0x4
 #define KEYGEN_PKCS5_PBKDF2_SHA1	0x5
 #define KEYGEN_SHELL_CMD		0x6
+#define KEYGEN_ARGON2ID			0x7
 
 /* verification methods */
 
@@ -108,6 +112,9 @@ struct keygen	*keygen_method(string_t *);
 struct keygen	*keygen_set_method(struct keygen *, string_t *);
 struct keygen	*keygen_salt(bits_t *);
 struct keygen	*keygen_iterations(size_t);
+struct keygen	*keygen_memory(size_t);
+struct keygen	*keygen_parallelism(size_t);
+struct keygen	*keygen_version(size_t);
 struct keygen	*keygen_key(bits_t *);
 struct keygen	*keygen_cmd(string_t *);
 

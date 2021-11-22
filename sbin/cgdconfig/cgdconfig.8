@@ -1,4 +1,4 @@
-.\" $NetBSD: cgdconfig.8,v 1.50 2021/04/30 21:07:34 nia Exp $
+.\" $NetBSD: cgdconfig.8,v 1.51 2021/11/22 14:34:35 nia Exp $
 .\"
 .\" Copyright (c) 2002, The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd April 18, 2021
+.Dd November 4, 2021
 .Dt CGDCONFIG 8
 .Os
 .Sh NAME
@@ -164,6 +164,14 @@ evaluates all of the key generation methods in the parameters file
 and uses the exclusive-or of the outputs of all the methods.
 The methods and descriptions are as follows:
 .Bl -tag -width indentxxxxxxxxxxx
+.It argon2id
+This method requires a passphrase which is entered at configuration
+time.
+Argon2 is a memory-hard password hashing scheme and winner of the
+2013-2015 Password Hashing Competition.
+It has numerous parameters allowing its hardness to scale with the
+performance of the system.
+Recommended for passphrase-based initialization.
 .It pkcs5_pbkdf2/sha1
 This method requires a passphrase which is entered at configuration
 time.
@@ -231,8 +239,8 @@ scan for a valid FFS file system.
 .It re-enter
 prompt for passphrase twice, and ensure entered passphrases are
 identical.
-This method only works with the pkcs5_pbkdf2/sha1 and pkcs5_pbkdf2 key
-generators.
+This method only works with the argon2id, pkcs5_pbkdf2/sha1, and
+pkcs5_pbkdf2 key generators.
 .El
 .Ss /etc/cgd/cgd.conf
 The file
@@ -358,10 +366,22 @@ The command to execute.
 Only used for the shell_cmd key generation method.
 .It iterations Ar integer
 The number of iterations.
-Only used for pkcs5_pbkdf2/sha1 and pkcs5_pbkdf2.
+Only used for argon2id, pkcs5_pbkdf2/sha1, and pkcs5_pbkdf2.
 .It salt Ar base64
 The salt.
-Only used for pkcs5_pbkdf2/sha1 and pkcs5_pbkdf2.
+Only used for argon2id, pkcs5_pbkdf2/sha1, and pkcs5_pbkdf2.
+.It memory Ar integer
+Memory consumption in kilobytes.
+Only used for argon2id.
+.It parallelism Ar integer
+Number of threads to use to compute the password hash.
+Should be equivalent to the number of CPUs/hardware threads.
+Only used for argon2id.
+.It version Ar integer
+Version of Argon2 to use.
+Should be the most recent version, currently
+.Dv 19 .
+Only used for argon2id.
 .El
 .Sh FILES
 .Bl -tag -width indentxxxxxxxxxxxxxxxxxx -compact
@@ -475,6 +495,15 @@ program's execution.
 .Xr fstab 5 ,
 .Xr disklabel 8 ,
 .Xr gpt 8
+.Rs
+.%T "Argon2: the memory-hard function for password hashing and other applications"
+.%A Alex Biryukov
+.%A Daniel Dinu
+.%A Dmitry Khovratovich
+.%D 2017
+.%I University of Luxembourg
+.%U https://www.password-hashing.net/
+.Re
 .Pp
 .Dq PKCS #5 v2.0: Password-Based Cryptography Standard ,
 RSA Laboratories, March 25, 1999.
@@ -483,5 +512,9 @@ The
 .Nm
 utility appeared in
 .Nx 2.0 .
+.Pp
+.Li argon2id
+support appeared in
+.Nx 10.0 .
 .Sh BUGS
 Pass phrases are limited to 1023 bytes.
