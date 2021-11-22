@@ -1,4 +1,4 @@
-/*	$NetBSD: ethertypes.h,v 1.20 2021/11/22 05:33:57 msaitoh Exp $	*/
+/*	$NetBSD: ethertypes.h,v 1.21 2021/11/22 05:50:29 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -108,7 +108,7 @@
 #define	ETHERTYPE_NBPDG		0x3C07	/* 3Com NBP Datagram (like XNS IDP) not registered */
 #define	ETHERTYPE_NBPDGB	0x3C08	/* 3Com NBP Datagram broadcast not registered */
 #define	ETHERTYPE_NBPCLAIM	0x3C09	/* 3Com NBP Claim NetBIOS name not registered */
-#define	ETHERTYPE_NBPDLTE	0x3C0A	/* 3Com NBP Delete Netbios name not registered */
+#define	ETHERTYPE_NBPDLTE	0x3C0A	/* 3Com NBP Delete NetBIOS name not registered */
 #define	ETHERTYPE_NBPRAS	0x3C0B	/* 3Com NBP Remote adaptor status request not registered */
 #define	ETHERTYPE_NBPRAR	0x3C0C	/* 3Com NBP Remote adaptor response not registered */
 #define	ETHERTYPE_NBPRST	0x3C0D	/* 3Com NBP Reset not registered */
@@ -289,7 +289,7 @@
 #define	ETHERTYPE_SECUREDATA	0x876D	/* Secure Data (RFC1701) */
 #define	ETHERTYPE_FLOWCONTROL	0x8808	/* 802.3x flow control packet */
 #define	ETHERTYPE_SLOWPROTOCOLS	0x8809	/* Slow protocols */
-#define	ETHERTYPE_PPP		0x880B	/* PPP (obsolete by PPPOE) */
+#define	ETHERTYPE_PPP		0x880B	/* PPP (obsolete by PPPoE) */
 #define	ETHERTYPE_HITACHI	0x8820	/* Hitachi Cable (Optoelectronic Systems Laboratory) */
 #define	ETHERTYPE_MPLS		0x8847	/* MPLS Unicast */
 #define	ETHERTYPE_MPLS_MCAST	0x8848	/* MPLS Multicast */
