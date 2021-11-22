@@ -1,4 +1,4 @@
-# $NetBSD: t_option.sh,v 1.7 2019/07/11 03:49:51 msaitoh Exp $
+# $NetBSD: t_option.sh,v 1.8 2021/11/22 05:07:15 kre Exp $
 #
 # Copyright (c) 2016 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -454,7 +454,8 @@ set_v_body() {
 			-o not-match:for -o not-match:do -o not-match:done \
 			-e match:printf -e match:111 -e not-match:111222 \
 			-e match:for -e match:do -e match:done \
-				${TEST_SH}
+				${TEST_SH} ||
+		atf_fail '111 222 333 test failure'
 }
 
 atf_test_case set_x

@@ -1,4 +1,4 @@
-# $NetBSD: t_syntax.sh,v 1.11 2021/11/16 11:12:14 kre Exp $
+# $NetBSD: t_syntax.sh,v 1.12 2021/11/22 05:07:15 kre Exp $
 #
 # Copyright (c) 2017 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -113,7 +113,7 @@ b_comments_body() {
 	atf_check -s exit:0 -o 'inline:##\n' -e empty ${TEST_SH} -c \
 		'echo \## #\#'
 
-	cat <<-'DONE'|atf_check -s exit:0 -o inline:'foo\n' -e empty ${TEST_SH}
+	cat <<-'DONE' |
 		# test comments do not provoke synax errors !\
 		echo foo # ( { " hello
 		while : # that's forever
@@ -124,6 +124,8 @@ b_comments_body() {
 		# "hello
 		exit 0
 	DONE
+		atf_check -s exit:0 -o inline:'foo\n' -e empty ${TEST_SH} ||
+			atf_fail "ignoring comments"
 }
 
 atf_test_case c_line_wrapping
