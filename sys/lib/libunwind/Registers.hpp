@@ -284,19 +284,21 @@ enum {
   DWARF_AARCH64_SP = 31,
   DWARF_AARCH64_V0 = 64,
   DWARF_AARCH64_V31 = 95,
+  DWARF_AARCH64_SIGRETURN = 96,
 
   REGNO_AARCH64_X0 = 0,
   REGNO_AARCH64_X30 = 30,
   REGNO_AARCH64_SP = 31,
   REGNO_AARCH64_V0 = 32,
   REGNO_AARCH64_V31 = 63,
+  REGNO_AARCH64_SIGRETURN = 64,
 };
 
 class Registers_aarch64 {
 public:
   enum {
-    LAST_RESTORE_REG = REGNO_AARCH64_V31,
-    LAST_REGISTER = REGNO_AARCH64_V31,
+    LAST_RESTORE_REG = REGNO_AARCH64_SIGRETURN,
+    LAST_REGISTER = REGNO_AARCH64_SIGRETURN,
     RETURN_OFFSET = 0,
     RETURN_MASK = 0,
   };
@@ -310,21 +312,29 @@ public:
       return REGNO_AARCH64_SP;
     if (num >= DWARF_AARCH64_V0 && num <= DWARF_AARCH64_V31)
       return REGNO_AARCH64_V0 + (num - DWARF_AARCH64_V0);
+    if (num == DWARF_AARCH64_SIGRETURN)
+      return REGNO_AARCH64_SIGRETURN;
     return LAST_REGISTER + 1;
   }
 
   bool validRegister(int num) const {
-    return num >= 0 && num <= LAST_RESTORE_REG;
+    return (num >= DWARF_AARCH64_X0 && num <= DWARF_AARCH64_SP) ||
+	num == DWARF_AARCH64_SIGRETURN;
   }
 
   uint64_t getRegister(int num) const {
     assert(validRegister(num));
+    if (reg == REGNO_AARCH64_SIGRETURN)
+      return sigreturn_reg;
     return reg[num];
   }
 
   void setRegister(int num, uint64_t value) {
     assert(validRegister(num));
-    reg[num] = value;
+    if (reg == REGNO_AARCH64_SIGRETURN)
+      sigreturn_reg = value;
+    else
+      reg[num] = value;
   }
 
   uint64_t getIP() const { return reg[REGNO_AARCH64_X30]; }
@@ -349,6 +359,7 @@ public:
 private:
   uint64_t reg[REGNO_AARCH64_SP + 1];
   uint64_t vecreg[64];
+  uint64_t sigreturn_reg;
 };
 
 enum {
