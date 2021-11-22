@@ -1,4 +1,4 @@
-# $NetBSD: t_varval.sh,v 1.1 2016/03/16 15:49:19 christos Exp $
+# $NetBSD: t_varval.sh,v 1.2 2021/11/22 05:07:15 kre Exp $
 #
 # Copyright (c) 2016 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -82,23 +82,28 @@ aaa_head() {
 aaa_body() {
 	oneline "echo " 9 '' |
 		atf_check -s exit:0 -o inline:'prefix\tsuffix\n' -e empty \
-			${TEST_SH}
+			${TEST_SH} ||
+				atf_fail 'echo 9 -> tab'
 
 	oneline "VAR=" 65 '; echo "${#VAR}:${VAR}"' |
 		atf_check -s exit:0 -o inline:'13:prefixAsuffix\n' -e empty \
-			${TEST_SH}
+			${TEST_SH} ||
+				atf_fail '65 -> A'
 
 	oneline "VAR=" 1 '; echo "${#VAR}:${VAR}"' |
 		atf_check -s exit:0 -o inline:'13:prefixsuffix\n' -e empty \
-			${TEST_SH}
+			${TEST_SH} ||
+				atf_fail '1 -> ^A'
 
 	oneline "VAR=" 10 '; echo "${#VAR}:${VAR}"' |
 		atf_check -s exit:0 -o inline:'13:prefix\nsuffix\n' -e empty \
-			${TEST_SH}
+			${TEST_SH} ||
+				atf_fail '10 -> \n'
 
 	rm -f prefix* 2>/dev/null || :
 	oneline "echo hello >" 45 "" |
-		atf_check -s exit:0 -o empty -e empty ${TEST_SH}
+		atf_check -s exit:0 -o empty -e empty ${TEST_SH} ||
+			atf_fail 'redir into 45 -> E'
 	test -f "prefix-suffix" ||
 		atf_fail "failed to create prefix-suffix (45)"
 	test -s "prefix-suffix" ||
@@ -119,7 +124,8 @@ assignment_body() {
 
 	rm -f results || :
 	mkdata "VAR=" -- '; echo ${#VAR}' |
-		atf_check -s exit:0 -o save:results -e empty ${TEST_SH}
+		atf_check -s exit:0 -o save:results -e empty ${TEST_SH} ||
+			atf_fail 'making results'
 	test -z $( grep -v "^13$" results ) ||
 		atf_fail "Incorrect lengths: $(grep -nv '^13$' results)"
 
@@ -136,7 +142,8 @@ cmdline_body() {
 
 	rm -f results || :
 	mkdata "VAR=" -- '; echo "${VAR}"' |
-		atf_check -s exit:0 -o save:results -e empty ${TEST_SH}
+		atf_check -s exit:0 -o save:results -e empty ${TEST_SH} ||
+			atf_fail 'making results'
 
 	# 256 because one output line contains a \n ...
 	test $( wc -l < results ) -eq 256 ||
@@ -165,7 +172,8 @@ redirect_body() {
 
 	mkdir prefix		# one of the files will be prefix/suffix
 	mkdata "VAR=" -- '; echo "${VAR}" > "${VAR}"' |
-		atf_check -s exit:0 -o empty -e empty ${TEST_SH}
+		atf_check -s exit:0 -o empty -e empty ${TEST_SH} ||
+			atf_fail "$VAR -> ./$VAR"
 
 	test -f "prefix/suffix" ||
 		atf_fail "Failed to create file in subdirectory"
@@ -220,7 +228,8 @@ read_body() {
 				(prefix | suffix)	continue;;
 				esac
 				echo "${VAR}" > "${VAR}"
-			done'
+			done' ||
+				atf_fail 'mkdata'
 
 	test -f "prefix/suffix" ||
 		atf_fail "Failed to create file in subdirectory"
