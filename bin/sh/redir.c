@@ -1,4 +1,4 @@
-/*	$NetBSD: redir.c,v 1.71 2021/11/16 11:27:50 kre Exp $	*/
+/*	$NetBSD: redir.c,v 1.72 2021/11/22 05:17:43 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)redir.c	8.2 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: redir.c,v 1.71 2021/11/16 11:27:50 kre Exp $");
+__RCSID("$NetBSD: redir.c,v 1.72 2021/11/22 05:17:43 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -459,12 +459,12 @@ openhere(const union node *redir)
 
 	if (pipe(pip) < 0)
 		error("Pipe call failed");
-	if (redir->type == NHERE) {
-		len = strlen(redir->nhere.doc->narg.text);
-		if (len <= PIPESIZE) {
-			xwrite(pip[1], redir->nhere.doc->narg.text, len);
-			goto out;
-		}
+	len = strlen(redir->nhere.text);
+	VTRACE(DBG_REDIR, ("openhere(%p) [%d] \"%.*s\"%s\n", redir, len,
+	    (len < 40 ? len : 40), redir->nhere.text, (len < 40 ? "" : "...")));
+	if (len <= PIPESIZE) {		/* XXX eventually copy FreeBSD method */
+		xwrite(pip[1], redir->nhere.text, len);
+		goto out;
 	}
 	VTRACE(DBG_REDIR, (" forking [%d,%d]\n", pip[0], pip[1]));
 	if (forkshell(NULL, NULL, FORK_NOJOB) == 0) {
@@ -476,10 +476,7 @@ openhere(const union node *redir)
 		signal(SIGTSTP, SIG_IGN);
 #endif
 		signal(SIGPIPE, SIG_DFL);
-		if (redir->type == NHERE)
-			xwrite(pip[1], redir->nhere.doc->narg.text, len);
-		else
-			expandhere(redir->nhere.doc, pip[1]);
+		xwrite(pip[1], redir->nhere.text, len);
 		VTRACE(DBG_PROCS|DBG_REDIR, ("wrote here doc.  exiting(0)\n"));
 		_exit(0);
 	}

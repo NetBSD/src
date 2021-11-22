@@ -1,4 +1,4 @@
-/*	$NetBSD: eval.c,v 1.185 2021/11/16 11:27:50 kre Exp $	*/
+/*	$NetBSD: eval.c,v 1.186 2021/11/22 05:17:43 kre Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)eval.c	8.9 (Berkeley) 6/8/95";
 #else
-__RCSID("$NetBSD: eval.c,v 1.185 2021/11/16 11:27:50 kre Exp $");
+__RCSID("$NetBSD: eval.c,v 1.186 2021/11/22 05:17:43 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -617,6 +617,12 @@ expredir(union node *n)
 				expandarg(redir->ndup.vname, &fn, EXP_TILDE | EXP_REDIR);
 				fixredir(redir, fn.list->text, 1);
 			}
+			break;
+		case NHERE:
+			redir->nhere.text = redir->nhere.doc->narg.text;
+			break;
+		case NXHERE:
+			redir->nhere.text = expandhere(redir->nhere.doc);
 			break;
 		}
 	}
