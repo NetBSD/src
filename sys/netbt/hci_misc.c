@@ -1,4 +1,4 @@
-/*	$NetBSD: hci_misc.c,v 1.3 2007/09/16 19:59:30 plunky Exp $	*/
+/*	$NetBSD: hci_misc.c,v 1.4 2021/11/22 05:33:57 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 2005 Iain Hibbert.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hci_misc.c,v 1.3 2007/09/16 19:59:30 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hci_misc.c,v 1.4 2021/11/22 05:33:57 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -79,7 +79,7 @@ hci_route_lookup(bdaddr_t *src, bdaddr_t *dest)
 
 	/*
 	 * Now check all the memos to see if there has been an
-	 * inquiry repsonse..
+	 * inquiry response..
 	 */
 	SIMPLEQ_FOREACH(unit, &hci_unit_list, hci_next) {
 		if ((unit->hci_flags & BTF_UP) == 0)

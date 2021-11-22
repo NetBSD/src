@@ -1,4 +1,4 @@
-/*	$NetBSD: ethertypes.h,v 1.19 2020/01/01 10:04:37 ryo Exp $	*/
+/*	$NetBSD: ethertypes.h,v 1.20 2021/11/22 05:33:57 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -101,7 +101,7 @@
 #define	ETHERTYPE_NBPVCD	0x3C00	/* 3Com NBP virtual circuit datagram (like XNS SPP) not registered */
 #define	ETHERTYPE_NBPSCD	0x3C01	/* 3Com NBP System control datagram not registered */
 #define	ETHERTYPE_NBPCREQ	0x3C02	/* 3Com NBP Connect request (virtual cct) not registered */
-#define	ETHERTYPE_NBPCRSP	0x3C03	/* 3Com NBP Connect repsonse not registered */
+#define	ETHERTYPE_NBPCRSP	0x3C03	/* 3Com NBP Connect response not registered */
 #define	ETHERTYPE_NBPCC		0x3C04	/* 3Com NBP Connect complete not registered */
 #define	ETHERTYPE_NBPCLREQ	0x3C05	/* 3Com NBP Close request (virtual cct) not registered */
 #define	ETHERTYPE_NBPCLRSP	0x3C06	/* 3Com NBP Close response not registered */
