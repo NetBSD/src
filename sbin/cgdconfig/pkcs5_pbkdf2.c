@@ -1,4 +1,4 @@
-/* $NetBSD: pkcs5_pbkdf2.c,v 1.16 2016/07/01 22:50:09 christos Exp $ */
+/* $NetBSD: pkcs5_pbkdf2.c,v 1.17 2021/11/22 16:04:03 nia Exp $ */
 
 /*-
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -46,13 +46,14 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: pkcs5_pbkdf2.c,v 1.16 2016/07/01 22:50:09 christos Exp $");
+__RCSID("$NetBSD: pkcs5_pbkdf2.c,v 1.17 2021/11/22 16:04:03 nia Exp $");
 #endif
 
 #include <sys/resource.h>
 #include <sys/endian.h>
 
 #include <assert.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <err.h>
@@ -189,6 +190,8 @@ pkcs5_pbkdf2_calibrate(size_t dkLen, int microseconds)
 	int	t = 0;
 	size_t	ret, i;
 
+	fprintf(stderr, "pkcs5_pbkdf2: calibrating iterations...");
+
 	for (i = 0; i < 5; i++) {
 		/*
 		 * First we get a meaningfully long time by doubling the
@@ -197,6 +200,7 @@ pkcs5_pbkdf2_calibrate(size_t dkLen, int microseconds)
 		 */
 		for (c = 1;; c *= 2) {
 			t = pkcs5_pbkdf2_time(dkLen, c);
+			fprintf(stderr, ".");
 			if (t > CAL_TIME)
 				break;
 		}
@@ -214,7 +218,9 @@ pkcs5_pbkdf2_calibrate(size_t dkLen, int microseconds)
 		/* if we are over 5% off, return an error */
 		if (abs(microseconds - t) > (microseconds / 20))
 			continue;
+		fprintf(stderr, " done\n");
 		return ret;
 	}
+	fprintf(stderr, " failed\n");
 	return -1;
 }
