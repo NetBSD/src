@@ -1,4 +1,4 @@
-$NetBSD: UPDATING,v 1.324 2021/11/20 16:18:18 martin Exp $
+$NetBSD: UPDATING,v 1.325 2021/11/22 12:30:34 martin Exp $
 
 This file (UPDATING) is intended to be a brief reference to recent
 changes that might cause problems in the build process, and a guide for
@@ -21,7 +21,7 @@ Recent changes:
 
 20211116:
 	Changes in the xorg build require clean obj dirs for external/mit/xorg
-	(or a full clealn/non-update build).
+	(or a full clean/non-update build).
 
 20211112:
 	Device tree sources were updated for evbarm.  Some device nodes
