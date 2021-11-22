@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.3,v 1.1.2.47 2021/11/20 15:18:41 martin Exp $
+# $NetBSD: CHANGES-9.3,v 1.1.2.48 2021/11/22 17:06:24 martin Exp $
 
 A complete list of changes from the NetBSD 9.2 release to the NetBSD 9.3
 release:
@@ -963,4 +963,10 @@ sys/dev/pci/ixgbe/ix_txrx.c			1.94
 	- Reduce bus_dmamap_sync() cost.
 	- Use macro. Fix typos in comment.
 	[msaitoh, ticket #1374]
+
+sys/arch/x86/x86/cpu_topology.c			1.20
+usr.sbin/cpuctl/arch/i386.c			1.123
+
+	amd64: fix cpu topology detection for zen3 systems.
+	[mrg, ticket #1375]
 
