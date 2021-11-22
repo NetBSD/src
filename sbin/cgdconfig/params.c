@@ -1,4 +1,4 @@
-/* $NetBSD: params.c,v 1.31 2021/06/03 15:40:27 prlw1 Exp $ */
+/* $NetBSD: params.c,v 1.32 2021/11/22 14:34:35 nia Exp $ */
 
 /*-
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: params.c,v 1.31 2021/06/03 15:40:27 prlw1 Exp $");
+__RCSID("$NetBSD: params.c,v 1.32 2021/11/22 14:34:35 nia Exp $");
 #endif
 
 #include <sys/types.h>
@@ -44,6 +44,11 @@ __RCSID("$NetBSD: params.c,v 1.31 2021/06/03 15:40:27 prlw1 Exp $");
 #include <stdlib.h>
 #include <string.h>
 #include <util.h>
+
+#ifdef HAVE_ARGON2
+#include <argon2.h>
+#include "argon2_utils.h"
+#endif
 
 #include "params.h"
 #include "pkcs5_pbkdf2.h"
@@ -314,6 +319,9 @@ keygen_new(void)
 	kg = emalloc(sizeof(*kg));
 	kg->kg_method = KEYGEN_UNKNOWN;
 	kg->kg_iterations = (size_t)-1;
+	kg->kg_memory = (size_t)-1;
+	kg->kg_parallelism = (size_t)-1;
+	kg->kg_version = (size_t)-1;
 	kg->kg_salt = NULL;
 	kg->kg_key = NULL;
 	kg->kg_cmd = NULL;
@@ -346,6 +354,34 @@ keygen_verify(const struct keygen *kg)
 	if (!kg)
 		return 1;
 	switch (kg->kg_method) {
+#ifdef HAVE_ARGON2
+	case KEYGEN_ARGON2ID:
+		if (kg->kg_iterations == (size_t)-1) {
+			warnx("keygen argon2id must provide `iterations'");
+			return 0;
+		}
+		if (kg->kg_memory == (size_t)-1) {
+			warnx("keygen argon2id must provide `memory'");
+			return 0;
+		}
+		if (kg->kg_parallelism == (size_t)-1) {
+			warnx("keygen argon2id must provide `parallelism'");
+			return 0;
+		}
+		if (kg->kg_version == (size_t)-1) {
+			warnx("keygen argon2id must provide `version'");
+			return 0;
+		}
+		if (kg->kg_cmd)
+			warnx("keygen argon2id does not need a `cmd'");
+		if (kg->kg_key)
+			warnx("keygen argon2id does not need a `key'");
+		if (!kg->kg_salt) {
+			warnx("keygen argon2id must provide a salt");
+			return 0;
+		}
+		break;
+#endif
 	case KEYGEN_PKCS5_PBKDF2_OLD:
 		if (kg->kg_iterations == (size_t)-1) {
 			warnx("keygen pkcs5_pbkdf2 must provide `iterations'");
@@ -445,6 +481,14 @@ keygen_filldefaults(struct keygen *kg, size_t keylen)
 	case KEYGEN_URANDOMKEY:
 	case KEYGEN_SHELL_CMD:
 		break;
+#ifdef HAVE_ARGON2
+	case KEYGEN_ARGON2ID:
+		kg->kg_version = ARGON2_VERSION_NUMBER;
+		kg->kg_salt = bits_getrandombits(DEFAULT_SALTLEN, 1);
+		argon2id_calibrate(BITS2BYTES(keylen), DEFAULT_SALTLEN,
+		    &kg->kg_iterations, &kg->kg_memory, &kg->kg_parallelism);
+		break;
+#endif
 	case KEYGEN_PKCS5_PBKDF2_OLD:
 	case KEYGEN_PKCS5_PBKDF2_SHA1:
 		kg->kg_salt = bits_getrandombits(DEFAULT_SALTLEN, 1);
@@ -488,6 +532,15 @@ keygen_combine(struct keygen *kg1, struct keygen *kg2)
 	if (kg2->kg_iterations != (size_t)-1 && kg2->kg_iterations > 0)
 		kg1->kg_iterations = kg2->kg_iterations;
 
+	if (kg2->kg_memory != (size_t)-1 && kg2->kg_memory > 0)
+		kg1->kg_memory = kg2->kg_memory;
+
+	if (kg2->kg_parallelism != (size_t)-1 && kg2->kg_parallelism > 0)
+		kg1->kg_parallelism = kg2->kg_parallelism;
+
+	if (kg2->kg_version != (size_t)-1 && kg2->kg_version > 0)
+		kg1->kg_version = kg2->kg_version;
+
 	if (kg2->kg_salt)
 		bits_assign(&kg1->kg_salt, kg2->kg_salt);
 
@@ -506,6 +559,10 @@ keygen_method(string_t *in)
 	struct keygen *kg = keygen_new();
 	const char *kgm = string_tocharstar(in);
 
+#ifdef HAVE_ARGON2
+	if (!strcmp("argon2id", kgm))
+		kg->kg_method = KEYGEN_ARGON2ID;
+#endif
 	if (!strcmp("pkcs5_pbkdf2", kgm))
 		kg->kg_method = KEYGEN_PKCS5_PBKDF2_OLD;
 	if (!strcmp("pkcs5_pbkdf2/sha1", kgm))
@@ -548,6 +605,33 @@ keygen_iterations(size_t in)
 	struct keygen *kg = keygen_new();
 
 	kg->kg_iterations = in;
+	return kg;
+}
+
+struct keygen *
+keygen_memory(size_t in)
+{
+	struct keygen *kg = keygen_new();
+
+	kg->kg_memory = in;
+	return kg;
+}
+
+struct keygen *
+keygen_parallelism(size_t in)
+{
+	struct keygen *kg = keygen_new();
+
+	kg->kg_parallelism = in;
+	return kg;
+}
+
+struct keygen *
+keygen_version(size_t in)
+{
+	struct keygen *kg = keygen_new();
+
+	kg->kg_version = in;
 	return kg;
 }
 
@@ -743,6 +827,17 @@ keygen_fput(struct keygen *kg, int ts, FILE *f)
 	case KEYGEN_URANDOMKEY:
 		(void)fprintf(f, "urandomkey;\n");
 		break;
+#ifdef HAVE_ARGON2
+	case KEYGEN_ARGON2ID:
+		(void)fprintf(f, "argon2id {\n");
+		print_kvpair_int(f, ts, "iterations", kg->kg_iterations);
+		print_kvpair_int(f, ts, "memory", kg->kg_memory);
+		print_kvpair_int(f, ts, "parallelism", kg->kg_parallelism);
+		print_kvpair_int(f, ts, "version", kg->kg_version);
+		print_kvpair_b64(f, 0, ts, "salt", kg->kg_salt);
+		(void)fprintf(f, "};\n");
+		break;
+#endif
 	case KEYGEN_PKCS5_PBKDF2_OLD:
 		(void)fprintf(f, "pkcs5_pbkdf2 {\n");
 		print_kvpair_int(f, ts, "iterations", kg->kg_iterations);

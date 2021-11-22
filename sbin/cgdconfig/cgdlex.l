@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgdlex.l,v 1.5 2009/10/29 14:49:03 christos Exp $ */
+/* $NetBSD: cgdlex.l,v 1.6 2021/11/22 14:34:35 nia Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: cgdlex.l,v 1.5 2009/10/29 14:49:03 christos Exp $");
+__RCSID("$NetBSD: cgdlex.l,v 1.6 2021/11/22 14:34:35 nia Exp $");
 #endif
 
 #include <err.h>
@@ -98,6 +98,9 @@ verify_method				{ RETTOKEN(VERIFY_METHOD); }
 keygen					{ RETTOKEN(KEYGEN); }
 salt					{ RETTOKEN(SALT); }
 iterations				{ RETTOKEN(ITERATIONS); }
+memory					{ RETTOKEN(MEMORY); }
+parallelism				{ RETTOKEN(PARALLELISM); }
+version					{ RETTOKEN(VERSION); }
 key					{ RETTOKEN(KEY); }
 cmd					{ RETTOKEN(CMD); }
 keygen_method				{ RETTOKEN(KEYGEN_METHOD); }
