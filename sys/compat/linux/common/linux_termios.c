@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_termios.c,v 1.38 2019/08/23 12:09:17 maxv Exp $	*/
+/*	$NetBSD: linux_termios.c,v 1.39 2021/11/23 17:54:08 pho Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_termios.c,v 1.38 2019/08/23 12:09:17 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_termios.c,v 1.39 2021/11/23 17:54:08 pho Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ptm.h"
@@ -275,6 +275,12 @@ linux_ioctl_termios(struct lwp *l, const struct linux_sys_ioctl_args *uap, regis
 		break;
 	case LINUX_TIOCSPGRP:
 		SCARG(&ia, com) = TIOCSPGRP;
+		break;
+	case LINUX_FIOCLEX:
+		SCARG(&ia, com) = FIOCLEX;
+		break;
+	case LINUX_FIONCLEX:
+		SCARG(&ia, com) = FIONCLEX;
 		break;
 	case LINUX_FIONREAD:
 		SCARG(&ia, com) = FIONREAD;
