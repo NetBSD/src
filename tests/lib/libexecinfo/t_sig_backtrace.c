@@ -1,4 +1,4 @@
-/*	$NetBSD: t_sig_backtrace.c,v 1.1 2021/11/18 15:03:19 thorpej Exp $	*/
+/*	$NetBSD: t_sig_backtrace.c,v 1.2 2021/11/23 23:29:55 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2021 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_sig_backtrace.c,v 1.1 2021/11/18 15:03:19 thorpej Exp $");
+__RCSID("$NetBSD: t_sig_backtrace.c,v 1.2 2021/11/23 23:29:55 thorpej Exp $");
 
 #include <sys/mman.h>
 #include <execinfo.h>
@@ -50,6 +50,10 @@ stack_t sig_stack;
 char *foo;
 
 static int the_loop(int);
+
+#ifdef NOINLINE_HACK
+volatile int noinline;
+#endif
 
 static int __noinline
 func1(int i)
@@ -84,6 +88,11 @@ the_loop(int i)
 		i = func1(i);
 		i = func2(i);
 	}
+
+#ifdef NOINLINE_HACK
+	if (noinline)
+		vfork();
+#endif
 
 	return i;
 }
