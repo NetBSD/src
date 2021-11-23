@@ -1,4 +1,4 @@
-/* $NetBSD: __sigtramp2.S,v 1.6 2020/10/24 07:02:20 skrll Exp $ */
+/* $NetBSD: __sigtramp2.S,v 1.7 2021/11/23 02:49:56 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -41,7 +41,58 @@
  *		ucontext structure
  *	sp->	siginfo structure
  * and x28 points to the ucontext
+ *
+ * A DWARF pseudo-register is used for the return address from the
+ * signal trampoline.
  */
+
+#if defined(__LIBGCC_DWARF_ALT_FRAME_RETURN_COLUMN__)
+#define	DWARF_SIGRETURN_REG		__LIBGCC_DWARF_ALT_FRAME_RETURN_COLUMN__
+#else
+#define	DWARF_SIGRETURN_REG		96
+#endif
+
+#define	CFI_OFFSET_DWARF_REG(d, r)	.cfi_offset d, r * 8
+#define	CFI_OFFSET(r)			CFI_OFFSET_DWARF_REG(r, r)
+
+	.text
+	.cfi_startproc simple
+	.cfi_signal_frame
+	.cfi_def_cfa _REG_X28, _UC_GREGS
+	CFI_OFFSET(_REG_X0)
+	CFI_OFFSET(_REG_X1)
+	CFI_OFFSET(_REG_X2)
+	CFI_OFFSET(_REG_X3)
+	CFI_OFFSET(_REG_X4)
+	CFI_OFFSET(_REG_X5)
+	CFI_OFFSET(_REG_X6)
+	CFI_OFFSET(_REG_X7)
+	CFI_OFFSET(_REG_X8)
+	CFI_OFFSET(_REG_X9)
+	CFI_OFFSET(_REG_X10)
+	CFI_OFFSET(_REG_X11)
+	CFI_OFFSET(_REG_X12)
+	CFI_OFFSET(_REG_X13)
+	CFI_OFFSET(_REG_X14)
+	CFI_OFFSET(_REG_X15)
+	CFI_OFFSET(_REG_X16)
+	CFI_OFFSET(_REG_X17)
+	CFI_OFFSET(_REG_X18)
+	CFI_OFFSET(_REG_X19)
+	CFI_OFFSET(_REG_X20)
+	CFI_OFFSET(_REG_X21)
+	CFI_OFFSET(_REG_X22)
+	CFI_OFFSET(_REG_X23)
+	CFI_OFFSET(_REG_X24)
+	CFI_OFFSET(_REG_X25)
+	CFI_OFFSET(_REG_X26)
+	CFI_OFFSET(_REG_X27)
+	CFI_OFFSET(_REG_X28)
+	CFI_OFFSET(_REG_X29)
+	CFI_OFFSET(_REG_X30)	/* a.k.a. _REG_LR */
+	CFI_OFFSET(_REG_X31)	/* a.k.a. _REG_SP */
+	.cfi_return_column DWARF_SIGRETURN_REG
+	CFI_OFFSET_DWARF_REG(DWARF_SIGRETURN_REG, _REG_PC)
 
 /*
  * The unwind entry includes the one instruction prior to the trampoline
@@ -49,42 +100,8 @@
  * Normally this would be the jump / branch, but since there isn't one in
  * this case, we place an explicit nop there instead.
  */
-	.cfi_startproc simple
-	.cfi_signal_frame
-	.cfi_def_cfa x28, 0
-	.cfi_offset x0, _UC_REGS_X0
-	.cfi_offset x1, _UC_REGS_X1
-	.cfi_offset x2, _UC_REGS_X2
-	.cfi_offset x3, _UC_REGS_X3
-	.cfi_offset x4, _UC_REGS_X4
-	.cfi_offset x5, _UC_REGS_X5
-	.cfi_offset x6, _UC_REGS_X6
-	.cfi_offset x7, _UC_REGS_X7
-	.cfi_offset x8, _UC_REGS_X8
-	.cfi_offset x9, _UC_REGS_X9
-	.cfi_offset x10, _UC_REGS_X10
-	.cfi_offset x11, _UC_REGS_X11
-	.cfi_offset x12, _UC_REGS_X12
-	.cfi_offset x13, _UC_REGS_X13
-	.cfi_offset x14, _UC_REGS_X14
-	.cfi_offset x15, _UC_REGS_X15
-	.cfi_offset x16, _UC_REGS_X16
-	.cfi_offset x17, _UC_REGS_X17
-	.cfi_offset x18, _UC_REGS_X18
-	.cfi_offset x19, _UC_REGS_X19
-	.cfi_offset x20, _UC_REGS_X20
-	.cfi_offset x21, _UC_REGS_X21
-	.cfi_offset x22, _UC_REGS_X22
-	.cfi_offset x23, _UC_REGS_X23
-	.cfi_offset x24, _UC_REGS_X24
-	.cfi_offset x25, _UC_REGS_X25
-	.cfi_offset x26, _UC_REGS_X26
-	.cfi_offset x27, _UC_REGS_X27
-	.cfi_offset x28, _UC_REGS_X28
-	.cfi_offset x29, _UC_REGS_X29
-	.cfi_offset lr, _UC_REGS_LR
-	.cfi_offset sp, _UC_REGS_SP
 	nop
+
 ENTRY_NP(__sigtramp_siginfo_2)
 	mov	x0, x28				/* set the arg         */
 	SYSTRAP(setcontext)			/* and call setcontext */
