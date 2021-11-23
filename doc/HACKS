@@ -1,4 +1,4 @@
-# $NetBSD: HACKS,v 1.225 2021/10/13 20:11:54 nia Exp $
+# $NetBSD: HACKS,v 1.226 2021/11/23 23:29:55 thorpej Exp $
 #
 # This file is intended to document workarounds for currently unsolved
 # (mostly) compiler bugs.
@@ -1019,4 +1019,15 @@ who	nia
 file	src/lib/libcrypt/Makefile: 1.200
 descr	GCC 10 fails to build blake2b.c with an internal compiler
 	error unless optimization is disabled.
+kcah
+
+port	arm
+hack	compile t_sig_backtrace with -fno-omit-frame-pointer for arm
+cdate	Tue Nov 23 23:24:37 UTC 2021
+mdate	Tue Nov 23 23:24:37 UTC 2021
+who	thorpej
+file	src/tests/lib/libexecinfo/Makefile: 1.8
+file	src/tests/lib/libexecinfo/t_sig_backtrace: 1.2
+descr	Unit test fails to pass unless t_sig_backtrace.c is compiled
+	with -fno-omit-frame-pointer and -DNOINLINE_HACK.
 kcah
