@@ -1,4 +1,4 @@
-/*	$NetBSD: fmt_decl.c,v 1.22 2021/11/21 11:02:25 rillig Exp $	*/
+/*	$NetBSD: fmt_decl.c,v 1.23 2021/11/24 21:34:34 rillig Exp $	*/
 /* $FreeBSD: head/usr.bin/indent/tests/declarations.0 334478 2018-06-01 09:41:15Z pstef $ */
 
 /*
@@ -569,5 +569,211 @@ void
 buffer_add(buffer * buf, char ch)
 {
 	*buf->e++ = ch;
+}
+#indent end
+
+
+/*
+ * Indent gets easily confused by type names it does not know about.
+ */
+#indent input
+static Token
+ToToken(bool cond)
+{
+}
+#indent end
+
+#indent run
+static Token
+/* $ FIXME: missing space between ')' and '{'. */
+ToToken(bool cond){
+}
+#indent end
+
+#indent run-equals-input -TToken
+
+
+/*
+ * Indent gets easily confused by unknown type names in struct declarations.
+ */
+#indent input
+typedef struct OpenDirs {
+	CachedDirList	list;
+	HashTable /* of CachedDirListNode */ table;
+}		OpenDirs;
+#indent end
+
+/* FIXME: The word 'HashTable' must not be aligned like a member name. */
+#indent run
+typedef struct OpenDirs {
+	CachedDirList	list;
+			HashTable /* of CachedDirListNode */ table;
+}		OpenDirs;
+#indent end
+
+#indent run-equals-input -THashTable
+
+
+/*
+ * Indent gets easily confused by unknown type names, even in declarations
+ * that are syntactically unambiguous.
+ */
+#indent input
+static CachedDir *dot = NULL;
+#indent end
+
+/* FIXME: The space after '*' is wrong. */
+#indent run
+static CachedDir * dot = NULL;
+#indent end
+
+#indent run-equals-input -TCachedDir
+
+
+/*
+ * Indent gets easily confused by unknown type names in declarations.
+ */
+#indent input
+static CachedDir *
+CachedDir_New(const char *name)
+{
+}
+#indent end
+
+/* FIXME: The space between '){' is missing. */
+/* FIXME: The '{' must be in column 1 of the next line. */
+#indent run
+static CachedDir *
+CachedDir_New(const char *name){
+}
+#indent end
+
+
+/*
+ * Indent gets easily confused by unknown type names in function declarations.
+ */
+#indent input
+static CachedDir *
+CachedDir_Ref(CachedDir *dir)
+{
+}
+#indent end
+
+/* FIXME: Extraneous ' ' between '*' and 'dir'. */
+/* FIXME: The '{' must be in column 1 of the next line. */
+#indent run
+static CachedDir *
+CachedDir_Ref(CachedDir * dir) {
+}
+#indent end
+
+
+/*
+ * In some cases, indent does not get confused by unknown type names. At least
+ * it gets the placement of the '{' correct in this example.
+ */
+#indent input
+static bool
+HashEntry_KeyEquals(const HashEntry *he, Substring key)
+{
+}
+#indent end
+
+#indent run
+static bool
+HashEntry_KeyEquals(const HashEntry * he, Substring key)
+{
+}
+#indent end
+
+
+/*
+ * Indent doesn't notice that the two '*' are in a declaration, instead it
+ * interprets the first '*' as a binary operator.
+ */
+#indent input
+static void
+CachedDir_Assign(CachedDir **var, CachedDir *dir)
+{
+}
+#indent end
+
+/* FIXME: Extraneous space between '*' and '*'. */
+#indent run
+static void
+CachedDir_Assign(CachedDir * *var, CachedDir * dir)
+{
+}
+#indent end
+
+#indent run-equals-input -TCachedDir
+
+
+/*
+ * All initializer expressions after the first one are indented as if they
+ * would be statement continuations. Maybe the comma is interpreted as a
+ * binary operator instead of being a separator.
+ */
+#indent input
+static Shell shells[] = {
+	{
+		first,
+		second,
+	},
+};
+#indent end
+
+#indent run
+static Shell shells[] = {
+	{
+		first,
+/* $ FIXME: The identifier 'second' gets indented too far. */
+			second,
+	},
+};
+#indent end
+
+
+/*
+ * Indent gets easily confused by function attribute macros that follow the
+ * function declaration.
+ */
+#indent input
+static void JobInterrupt(bool, int) MAKE_ATTR_DEAD;
+static void JobRestartJobs(void);
+#indent end
+
+#indent run
+/* $ FIXME: This is a declaration, not a definition, thus no line break before the name. */
+/* $ FIXME: Missing space before 'MAKE_ATTR_DEAD'. */
+static void
+JobInterrupt(bool, int)MAKE_ATTR_DEAD;
+/* $ FIXME: Must not be indented. */
+	static void	JobRestartJobs(void);
+#indent end
+
+
+/*
+ * Indent gets easily confused by function modifier macros.
+ */
+#indent input
+MAKE_INLINE const char *
+GNode_VarTarget(GNode *gn) { return GNode_ValueDirect(gn, TARGET); }
+#indent end
+
+/* FIXME: The function name must be in column 1 of a separate line. */
+/* FIXME: The '{' must be in column 1 of the next line. */
+/* FIXME: The '*' before 'gn' is extraneous. */
+/* FIXME: The indentation depends on the function body; try 'return 0'. */
+#indent run
+MAKE_INLINE const char *GNode_VarTarget(GNode * gn) {
+	return GNode_ValueDirect(gn, TARGET);
+}
+#indent end
+
+/* FIXME: Missing space between '*' and 'gn'. */
+#indent run -TGNode
+MAKE_INLINE const char *GNode_VarTarget(GNode *gn){
+	return GNode_ValueDirect(gn, TARGET);
 }
 #indent end
