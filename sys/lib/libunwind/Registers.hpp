@@ -655,18 +655,26 @@ enum {
   DWARF_SH3_R15 = 15,
   DWARF_SH3_PC = 16,
   DWARF_SH3_PR = 17,
+  DWARF_SH3_GBR = 18,
+  DWARF_SH3_MACH = 20,
+  DWARF_SH3_MACL = 21,
+  DWARF_SH3_SR = 22,
 
   REGNO_SH3_R0 = 0,
   REGNO_SH3_R15 = 15,
   REGNO_SH3_PC = 16,
   REGNO_SH3_PR = 17,
+  REGNO_SH3_GBR = 18,
+  REGNO_SH3_MACH = 20,
+  REGNO_SH3_MACL = 21,
+  REGNO_SH3_SR = 22,
 };
 
 class Registers_SH3 {
 public:
   enum {
-    LAST_REGISTER = REGNO_SH3_PR,
-    LAST_RESTORE_REG = REGNO_SH3_PR,
+    LAST_REGISTER = REGNO_SH3_SR,
+    LAST_RESTORE_REG = REGNO_SH3_SR,
     RETURN_OFFSET = 0,
     RETURN_MASK = 0,
   };
@@ -676,15 +684,27 @@ public:
   static int dwarf2regno(int num) {
     if (num >= DWARF_SH3_R0 && num <= DWARF_SH3_R15)
       return REGNO_SH3_R0 + (num - DWARF_SH3_R0);
-    if (num == DWARF_SH3_PC)
+    switch (num) {
+    case DWARF_SH3_PC:
       return REGNO_SH3_PC;
-    if (num == DWARF_SH3_PR)
+    case DWARF_SH3_PR:
       return REGNO_SH3_PR;
-    return LAST_REGISTER + 1;
+    case DWARF_SH3_GBR:
+      return REGNO_SH3_GBR;
+    case DWARF_SH3_MACH:
+      return REGNO_SH3_MACH;
+    case DWARF_SH3_MACL:
+      return REGNO_SH3_MACL;
+    case DWARF_SH3_SR:
+      return REGNO_SH3_SR;
+    default:
+      return LAST_REGISTER + 1;
+    }
   }
 
   bool validRegister(int num) const {
-    return num >= 0 && num <= REGNO_SH3_PR;
+    return (num >= 0 && num <= REGNO_SH3_GBR) ||
+	(num >= REGNO_SH3_MACH && num <= REGNO_SH3_SR);
   }
 
   uint64_t getRegister(int num) const {
@@ -712,7 +732,7 @@ public:
   __dso_hidden void jumpto() const __dead;
 
 private:
-  uint32_t reg[REGNO_SH3_PR + 1];
+  uint32_t reg[REGNO_SH3_SR + 1];
 };
 
 enum {
