@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.73 2021/09/20 02:20:02 thorpej Exp $
+	$NetBSD: syscalls.master,v 1.74 2021/11/24 18:52:13 ryo Exp $
 
 ; Derived from sys/compat/linux/arch/*/syscalls.master
 ; and from Linux 2.4.12 arch/arm/kernel/calls.S
@@ -613,7 +613,8 @@
 382	UNIMPL		renameat2
 383	UNIMPL		seccomp
 ; XXX FIX-me?
-; 384	UNIMPL		getrandom
+; 384	NOARGS		{ ssize_t|sys||getrandom(void *buf, size_t buflen, \
+			    unsigned int flags); }
 ; 385	UNIMPL		memfd_create
 
 ; ARMLinux actually has two ranges of syscalls.  Normal syscalls use
