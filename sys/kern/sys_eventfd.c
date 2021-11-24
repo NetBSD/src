@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_eventfd.c,v 1.7 2021/09/27 00:40:49 thorpej Exp $	*/
+/*	$NetBSD: sys_eventfd.c,v 1.8 2021/11/24 16:35:33 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_eventfd.c,v 1.7 2021/09/27 00:40:49 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_eventfd.c,v 1.8 2021/11/24 16:35:33 thorpej Exp $");
 
 /*
  * eventfd
@@ -64,7 +64,6 @@ struct eventfd {
 	kmutex_t	efd_lock;
 	kcondvar_t	efd_read_wait;
 	kcondvar_t	efd_write_wait;
-	kcondvar_t	efd_restart_wait;
 	struct selinfo	efd_read_sel;
 	struct selinfo	efd_write_sel;
 	eventfd_t	efd_val;
@@ -97,7 +96,6 @@ eventfd_create(unsigned int const val, int const flags)
 	mutex_init(&efd->efd_lock, MUTEX_DEFAULT, IPL_NONE);
 	cv_init(&efd->efd_read_wait, "efdread");
 	cv_init(&efd->efd_write_wait, "efdwrite");
-	cv_init(&efd->efd_restart_wait, "efdrstrt");
 	selinit(&efd->efd_read_sel);
 	selinit(&efd->efd_write_sel);
 	efd->efd_val = val;
@@ -119,13 +117,11 @@ eventfd_destroy(struct eventfd * const efd)
 {
 
 	KASSERT(efd->efd_nwaiters == 0);
-	KASSERT(efd->efd_restarting == false);
 	KASSERT(efd->efd_has_read_waiters == false);
 	KASSERT(efd->efd_has_write_waiters == false);
 
 	cv_destroy(&efd->efd_read_wait);
 	cv_destroy(&efd->efd_write_wait);
-	cv_destroy(&efd->efd_restart_wait);
 
 	seldestroy(&efd->efd_read_sel);
 	seldestroy(&efd->efd_write_sel);
@@ -152,11 +148,10 @@ eventfd_wait(struct eventfd * const efd, int const fflag, bool const is_write)
 	}
 
 	/*
-	 * We're going to block.  If there is a restart in-progress,
-	 * wait for that to complete first.
+	 * We're going to block.  Check if we need to return ERESTART.
 	 */
-	while (efd->efd_restarting) {
-		cv_wait(&efd->efd_restart_wait, &efd->efd_lock);
+	if (efd->efd_restarting) {
+		return ERESTART;
 	}
 
 	if (is_write) {
@@ -175,17 +170,11 @@ eventfd_wait(struct eventfd * const efd, int const fflag, bool const is_write)
 
 	/*
 	 * If a restart was triggered while we were asleep, we need
-	 * to return ERESTART if no other error was returned.  If we
-	 * are the last waiter coming out of the restart drain, clear
-	 * the condition.
+	 * to return ERESTART if no other error was returned.
 	 */
 	if (efd->efd_restarting) {
 		if (error == 0) {
 			error = ERESTART;
-		}
-		if (efd->efd_nwaiters == 0) {
-			efd->efd_restarting = false;
-			cv_broadcast(&efd->efd_restart_wait);
 		}
 	}
 
