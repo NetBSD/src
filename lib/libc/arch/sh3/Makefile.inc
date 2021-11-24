@@ -1,6 +1,8 @@
-#	$NetBSD: Makefile.inc,v 1.8 2021/10/31 22:24:35 thorpej Exp $
+#	$NetBSD: Makefile.inc,v 1.9 2021/11/24 02:01:15 thorpej Exp $
 
 SRCS+=	__sigtramp2.S
+
+CPPFLAGS+= -I.
 
 .if ${MKSOFTFLOAT} != "no"
 
