@@ -1,4 +1,4 @@
-/* $NetBSD: linux_syscallargs.h,v 1.111 2021/09/20 02:20:31 thorpej Exp $ */
+/* $NetBSD: linux_syscallargs.h,v 1.112 2021/11/24 18:57:25 ryo Exp $ */
 
 /*
  * System call argument lists.
@@ -1175,6 +1175,8 @@ struct linux_sys_pwritev_args {
 };
 check_syscall_args(linux_sys_pwritev)
 
+struct sys_getrandom_args;
+
 struct linux_sys_accept4_args {
 	syscallarg(int) s;
 	syscallarg(struct osockaddr *) name;
@@ -1683,6 +1685,8 @@ int	linux_sys_pipe2(struct lwp *, const struct linux_sys_pipe2_args *, register_
 int	linux_sys_preadv(struct lwp *, const struct linux_sys_preadv_args *, register_t *);
 
 int	linux_sys_pwritev(struct lwp *, const struct linux_sys_pwritev_args *, register_t *);
+
+int	sys_getrandom(struct lwp *, const struct sys_getrandom_args *, register_t *);
 
 int	linux_sys_accept4(struct lwp *, const struct linux_sys_accept4_args *, register_t *);
 

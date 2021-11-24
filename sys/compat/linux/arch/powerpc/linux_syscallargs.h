@@ -1,4 +1,4 @@
-/* $NetBSD: linux_syscallargs.h,v 1.89 2021/09/20 02:20:31 thorpej Exp $ */
+/* $NetBSD: linux_syscallargs.h,v 1.90 2021/11/24 18:57:25 ryo Exp $ */
 
 /*
  * System call argument lists.
@@ -1125,6 +1125,8 @@ struct linux_sys_sendmmsg_args {
 };
 check_syscall_args(linux_sys_sendmmsg)
 
+struct sys_getrandom_args;
+
 /*
  * System call prototypes.
  */
@@ -1584,5 +1586,7 @@ int	linux_sys_recvmmsg(struct lwp *, const struct linux_sys_recvmmsg_args *, reg
 int	linux_sys_accept4(struct lwp *, const struct linux_sys_accept4_args *, register_t *);
 
 int	linux_sys_sendmmsg(struct lwp *, const struct linux_sys_sendmmsg_args *, register_t *);
+
+int	sys_getrandom(struct lwp *, const struct sys_getrandom_args *, register_t *);
 
 #endif /* _LINUX_SYS_SYSCALLARGS_H_ */
