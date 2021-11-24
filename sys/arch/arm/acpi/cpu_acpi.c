@@ -1,4 +1,4 @@
-/* $NetBSD: cpu_acpi.c,v 1.11 2021/10/17 12:41:05 jmcneill Exp $ */
+/* $NetBSD: cpu_acpi.c,v 1.12 2021/11/24 10:01:24 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_acpi.c,v 1.11 2021/10/17 12:41:05 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_acpi.c,v 1.12 2021/11/24 10:01:24 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -93,6 +93,7 @@ cpu_acpi_match(device_t parent, cfdata_t cf, void *aux)
 static void
 cpu_acpi_attach(device_t parent, device_t self, void *aux)
 {
+	prop_dictionary_t dict = device_properties(self);
 	ACPI_MADT_GENERIC_INTERRUPT *gicc = aux;
 	const uint64_t mpidr = gicc->ArmMpidr;
 	const int unit = device_unit(self);
@@ -122,6 +123,10 @@ cpu_acpi_attach(device_t parent, device_t self, void *aux)
 		}
 	}
 #endif /* MULTIPROCESSOR */
+
+	/* Assume that less efficient processors are faster. */
+	prop_dictionary_set_uint32(dict, "capacity_dmips_mhz",
+	    gicc->EfficiencyClass);
 
 	/* Store the ACPI Processor UID in cpu_info */
 	ci->ci_acpiid = gicc->Uid;
