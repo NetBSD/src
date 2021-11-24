@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.72 2021/09/20 02:20:02 thorpej Exp $  
+	$NetBSD: syscalls.master,v 1.73 2021/11/24 18:52:13 ryo Exp $  
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -587,7 +587,8 @@
 351	UNIMPL		sched_getattr
 352	UNIMPL		renameat2
 353	UNIMPL		seccomp
-354	UNIMPL		getrandom
+354	NOARGS		{ ssize_t|sys||getrandom(void *buf, size_t buflen, \
+			    unsigned int flags); }
 355	UNIMPL		memfd_create
 356	UNIMPL		bpf
 357	UNIMPL		execveat
