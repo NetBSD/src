@@ -1,4 +1,4 @@
-/* $NetBSD: linux_syscalls.c,v 1.83 2021/09/20 02:20:31 thorpej Exp $ */
+/* $NetBSD: linux_syscalls.c,v 1.84 2021/11/24 18:57:25 ryo Exp $ */
 
 /*
  * System call names.
@@ -8,7 +8,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_syscalls.c,v 1.83 2021/09/20 02:20:31 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_syscalls.c,v 1.84 2021/11/24 18:57:25 ryo Exp $");
 
 #if defined(_KERNEL_OPT)
 #include <sys/param.h>
@@ -384,7 +384,7 @@ const char *const linux_syscallnames[] = {
 	/* 351 */	"#351 (unimplemented sched_getattr)",
 	/* 352 */	"#352 (unimplemented renameat2)",
 	/* 353 */	"#353 (unimplemented seccomp)",
-	/* 354 */	"#354 (unimplemented getrandom)",
+	/* 354 */	"getrandom",
 	/* 355 */	"#355 (unimplemented memfd_create)",
 	/* 356 */	"#356 (unimplemented bpf)",
 	/* 357 */	"#357 (unimplemented execveat)",
@@ -901,7 +901,7 @@ const char *const altlinux_syscallnames[] = {
 	/* 351 */	NULL, /* unimplemented sched_getattr */
 	/* 352 */	NULL, /* unimplemented renameat2 */
 	/* 353 */	NULL, /* unimplemented seccomp */
-	/* 354 */	NULL, /* unimplemented getrandom */
+	/* 354 */	NULL, /* getrandom */
 	/* 355 */	NULL, /* unimplemented memfd_create */
 	/* 356 */	NULL, /* unimplemented bpf */
 	/* 357 */	NULL, /* unimplemented execveat */
