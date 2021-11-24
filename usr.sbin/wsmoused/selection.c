@@ -1,4 +1,4 @@
-/* $NetBSD: selection.c,v 1.10 2007/05/27 15:05:00 jmmv Exp $ */
+/* $NetBSD: selection.c,v 1.11 2021/11/24 14:34:51 uwe Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004, 2007 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: selection.c,v 1.10 2007/05/27 15:05:00 jmmv Exp $");
+__RCSID("$NetBSD: selection.c,v 1.11 2021/11/24 14:34:51 uwe Exp $");
 #endif /* not lint */
 
 #include <sys/ioctl.h>
@@ -226,6 +226,7 @@ selection_cleanup(void)
 void
 selection_wsmouse_event(struct wscons_event evt)
 {
+	const struct wsmouse_calibcoords *abs = &Selmouse.sm_mouse->m_calib;
 
 	if (IS_MOTION_EVENT(evt.type)) {
 		if (Selmouse.sm_selecting)
@@ -259,7 +260,30 @@ selection_wsmouse_event(struct wscons_event evt)
 				Selmouse.sm_count_y++;
 			break;
 
-		case WSCONS_EVENT_MOUSE_DELTA_Z:
+		case WSCONS_EVENT_MOUSE_DELTA_Z: /* FALLTHROUGH */
+		case WSCONS_EVENT_MOUSE_DELTA_W:
+			break;
+
+		case WSCONS_EVENT_MOUSE_ABSOLUTE_X:
+			if (!Selmouse.sm_mouse->m_doabs)
+				break;
+			/* max x is inclusive in both selmouse and tpcalib */
+			Selmouse.sm_x
+			    = ((evt.value - abs->minx) * (Selmouse.sm_max_x + 1))
+			      / (abs->maxx - abs->minx + 1);
+			break;
+
+		case WSCONS_EVENT_MOUSE_ABSOLUTE_Y:
+			if (!Selmouse.sm_mouse->m_doabs)
+				break;
+			/* max y is inclusive in both selmouse and tpcalib */
+			Selmouse.sm_y
+			    = ((evt.value - abs->miny) * (Selmouse.sm_max_y + 1))
+			      / (abs->maxy - abs->miny + 1);
+			break;
+
+		case WSCONS_EVENT_MOUSE_ABSOLUTE_Z: /* FALLTHROUGH */
+		case WSCONS_EVENT_MOUSE_ABSOLUTE_W:
 			break;
 
 		default:

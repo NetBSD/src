@@ -1,4 +1,4 @@
-/* $NetBSD: wsmoused.h,v 1.9 2006/03/18 02:06:38 elad Exp $ */
+/* $NetBSD: wsmoused.h,v 1.10 2021/11/24 14:34:51 uwe Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 The NetBSD Foundation, Inc.
@@ -34,7 +34,13 @@
 
 #define IS_MOTION_EVENT(type) (((type) == WSCONS_EVENT_MOUSE_DELTA_X) || \
                                ((type) == WSCONS_EVENT_MOUSE_DELTA_Y) || \
-                               ((type) == WSCONS_EVENT_MOUSE_DELTA_Z))
+                               ((type) == WSCONS_EVENT_MOUSE_DELTA_Z) || \
+                               ((type) == WSCONS_EVENT_MOUSE_DELTA_W) || \
+                               ((type) == WSCONS_EVENT_MOUSE_ABSOLUTE_X) || \
+                               ((type) == WSCONS_EVENT_MOUSE_ABSOLUTE_Y) || \
+                               ((type) == WSCONS_EVENT_MOUSE_ABSOLUTE_Z) || \
+                               ((type) == WSCONS_EVENT_MOUSE_ABSOLUTE_W))
+
 #define IS_BUTTON_EVENT(type) (((type) == WSCONS_EVENT_MOUSE_UP) || \
                                ((type) == WSCONS_EVENT_MOUSE_DOWN))
 
@@ -45,6 +51,10 @@ struct mouse {
 	char *m_devname;        /* File name of wsmouse device */
 	char *m_fifoname;       /* File name of fifo */
 	int   m_disabled;       /* Whether if the mouse is disabled or not */
+
+	/* support for absolute position events */
+	int m_doabs;
+	struct wsmouse_calibcoords m_calib;
 };
 
 struct mode_bootstrap {
