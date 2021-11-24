@@ -1,4 +1,4 @@
-/* $NetBSD: lsym_case_label.c,v 1.2 2021/11/20 16:54:17 rillig Exp $ */
+/* $NetBSD: lsym_case_label.c,v 1.3 2021/11/24 21:34:34 rillig Exp $ */
 /* $FreeBSD$ */
 
 /*
@@ -21,3 +21,41 @@
 #indent end
 
 #indent run-equals-input
+
+
+/*
+ * If there is a '{' after a case label, it gets indented using tabs instead
+ * of spaces. Indent does not necessarily insert a space in this situation,
+ * which looks strange.
+ */
+#indent input
+void
+function(void)
+{
+	switch (expr) {
+	case 1: {
+		break;
+	}
+	case 11: {
+		break;
+	}
+	}
+}
+#indent end
+
+#indent run
+void
+function(void)
+{
+	switch (expr) {
+	/* $ The space between the ':' and the '{' is actually a tab. */
+	case 1:	{
+			break;
+		}
+	/* $ FIXME: missing space between ':' and '{'. */
+	case 11:{
+			break;
+		}
+	}
+}
+#indent end
