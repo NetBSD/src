@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_timerfd.c,v 1.6 2021/09/27 00:40:49 thorpej Exp $	*/
+/*	$NetBSD: sys_timerfd.c,v 1.7 2021/11/24 16:35:33 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_timerfd.c,v 1.6 2021/09/27 00:40:49 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_timerfd.c,v 1.7 2021/11/24 16:35:33 thorpej Exp $");
 
 /*
  * timerfd
@@ -71,7 +71,6 @@ __KERNEL_RCSID(0, "$NetBSD: sys_timerfd.c,v 1.6 2021/09/27 00:40:49 thorpej Exp 
 struct timerfd {
 	struct itimer	tfd_itimer;
 	kcondvar_t	tfd_read_wait;
-	kcondvar_t	tfd_restart_wait;
 	struct selinfo	tfd_read_sel;
 	int64_t		tfd_nwaiters;
 	bool		tfd_cancel_on_set;
@@ -162,7 +161,6 @@ timerfd_create(clockid_t const clock_id, int const flags)
 	KASSERT(clock_id == CLOCK_REALTIME || clock_id == CLOCK_MONOTONIC);
 
 	cv_init(&tfd->tfd_read_wait, "tfdread");
-	cv_init(&tfd->tfd_restart_wait, "tfdrstrt");
 	selinit(&tfd->tfd_read_sel);
 	getnanotime(&tfd->tfd_btime);
 
@@ -188,14 +186,12 @@ timerfd_destroy(struct timerfd * const tfd)
 {
 
 	KASSERT(tfd->tfd_nwaiters == 0);
-	KASSERT(tfd->tfd_restarting == false);
 
 	itimer_lock();
 	itimer_poison(&tfd->tfd_itimer);
 	itimer_fini(&tfd->tfd_itimer);	/* drops itimer lock */
 
 	cv_destroy(&tfd->tfd_read_wait);
-	cv_destroy(&tfd->tfd_restart_wait);
 
 	seldestroy(&tfd->tfd_read_sel);
 
@@ -219,11 +215,10 @@ timerfd_wait(struct timerfd * const tfd, int const fflag)
 	}
 
 	/*
-	 * We're going to block.  If there is a restart in-progress,
-	 * wait for that to complete first.
+	 * We're going to block.  Check if we need to return ERESTART.
 	 */
-	while (tfd->tfd_restarting) {
-		cv_wait(&tfd->tfd_restart_wait, &itimer_mutex);
+	if (tfd->tfd_restarting) {
+		return ERESTART;
 	}
 
 	tfd->tfd_nwaiters++;
@@ -234,17 +229,11 @@ timerfd_wait(struct timerfd * const tfd, int const fflag)
 
 	/*
 	 * If a restart was triggered while we were asleep, we need
-	 * to return ERESTART if no other error was returned.  If we
-	 * are the last waiter coming out of the restart drain, clear
-	 * the condition.
+	 * to return ERESTART if no other error was returned.
 	 */
 	if (tfd->tfd_restarting) {
 		if (error == 0) {
 			error = ERESTART;
-		}
-		if (tfd->tfd_nwaiters == 0) {
-			tfd->tfd_restarting = false;
-			cv_broadcast(&tfd->tfd_restart_wait);
 		}
 	}
 
