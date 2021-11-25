@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_fcntl.h,v 1.19 2021/09/23 06:56:27 ryo Exp $	*/
+/*	$NetBSD: linux_fcntl.h,v 1.20 2021/11/25 02:27:08 ryo Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -52,6 +52,8 @@
 
 int linux_to_bsd_ioflags(int);
 int linux_to_bsd_atflags(int);
+int bsd_to_linux_statx(struct stat *, struct linux_statx *, unsigned int);
+int linux_statat(struct lwp *, int, const char *, int, struct stat *);
 
 struct linux_flock {
 	short       l_type;
