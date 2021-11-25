@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_file64.c,v 1.65 2021/11/25 02:08:55 ryo Exp $	*/
+/*	$NetBSD: linux_file64.c,v 1.66 2021/11/25 02:09:23 ryo Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 2000, 2008 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_file64.c,v 1.65 2021/11/25 02:08:55 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_file64.c,v 1.66 2021/11/25 02:09:23 ryo Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
