@@ -1,4 +1,4 @@
-/*	$NetBSD: args.c,v 1.71 2021/11/19 20:23:17 rillig Exp $	*/
+/*	$NetBSD: args.c,v 1.72 2021/11/25 21:48:23 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)args.c	8.1 (Berkeley) 6/6/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: args.c,v 1.71 2021/11/19 20:23:17 rillig Exp $");
+__RCSID("$NetBSD: args.c,v 1.72 2021/11/25 21:48:23 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/args.c 336318 2018-07-15 21:04:21Z pstef $");
 #endif
@@ -162,7 +162,7 @@ set_special_option(const char *arg, const char *option_source)
     if (strncmp(arg, "cli", 3) == 0) {
 	arg_end = arg + 3;
 	if (arg_end[0] == '\0')
-	    goto need_param;
+	    goto need_arg;
 	char *end;
 	opt.case_indent = (float)strtod(arg_end, &end);
 	if (*end != '\0')
@@ -182,7 +182,7 @@ set_special_option(const char *arg, const char *option_source)
     if (arg[0] == 'T') {
 	arg_end = arg + 1;
 	if (arg_end[0] == '\0')
-	    goto need_param;
+	    goto need_arg;
 	register_typename(arg_end);
 	return true;
     }
@@ -190,15 +190,15 @@ set_special_option(const char *arg, const char *option_source)
     if (arg[0] == 'U') {
 	arg_end = arg + 1;
 	if (arg_end[0] == '\0')
-	    goto need_param;
+	    goto need_arg;
 	add_typedefs_from_file(arg_end);
 	return true;
     }
 
     return false;
 
-need_param:
-    errx(1, "%s: ``%.*s'' requires an argument",
+need_arg:
+    errx(1, "%s: ``-%.*s'' requires an argument",
 	option_source, (int)(arg_end - arg), arg);
     /* NOTREACHED */
 }
