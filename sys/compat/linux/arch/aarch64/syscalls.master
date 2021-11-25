@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.2 2021/11/24 18:52:13 ryo Exp $
+	$NetBSD: syscalls.master,v 1.3 2021/11/25 02:29:33 ryo Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -523,7 +523,9 @@
 288	UNIMPL		pkey_mprotect
 289	UNIMPL		pkey_alloc
 290	UNIMPL		pkey_free
-291	UNIMPL		statx
+291	STD		{ int|linux_sys||statx(int fd, const char *path, \
+			    int flag, unsigned int mask, \
+			    struct linux_statx *sp); }
 292	UNIMPL		io_pgetevents
 293	UNIMPL		rseq
 294	UNIMPL		kexec_file_load
