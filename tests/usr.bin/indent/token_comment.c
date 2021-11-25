@@ -1,4 +1,4 @@
-/* $NetBSD: token_comment.c,v 1.25 2021/11/25 20:14:00 rillig Exp $ */
+/* $NetBSD: token_comment.c,v 1.26 2021/11/25 20:44:10 rillig Exp $ */
 /* $FreeBSD$ */
 
 /*
@@ -1052,7 +1052,8 @@ line 4
 
 
 /*
- * The function analyze_comment wrongly joins the two comments.
+ * Since 2019-04-04 and before pr_comment.c 1.123 from 2021-11-25, the
+ * function analyze_comment wrongly joined the two comments.
  */
 #indent input
 /*
@@ -1060,16 +1061,19 @@ line 4
 join*/
 #indent end
 
+/* FIXME: The last line of the first comment must not be modified. */
 #indent run -nfc1
 /*
-  *
+  *//*
   * join
   */
 #indent end
 
 
 /*
- * The function analyze_comment generates malformed output.
+ * Since 2019-04-04 and before pr_comment.c 1.123 from 2021-11-25, the
+ * function analyze_comment generated malformed output by terminating the
+ * first comment but omitting the start of the second comment.
  */
 #indent input
 /*
@@ -1079,7 +1083,7 @@ error*/
 
 #indent run -nfc1
 /*
- */
+ *//*
   * error
   */
 #indent end

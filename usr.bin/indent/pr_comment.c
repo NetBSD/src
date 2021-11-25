@@ -1,4 +1,4 @@
-/*	$NetBSD: pr_comment.c,v 1.122 2021/11/25 20:14:00 rillig Exp $	*/
+/*	$NetBSD: pr_comment.c,v 1.123 2021/11/25 20:44:09 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)pr_comment.c	8.1 (Berkeley) 6/6/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: pr_comment.c,v 1.122 2021/11/25 20:14:00 rillig Exp $");
+__RCSID("$NetBSD: pr_comment.c,v 1.123 2021/11/25 20:44:09 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/pr_comment.c 334927 2018-06-10 16:44:18Z pstef $");
 #endif
@@ -178,14 +178,6 @@ analyze_comment(bool *p_may_wrap, bool *p_break_delim,
 	break_delim = false;
 
     if (break_delim) {
-	/*
-	 * FIXME: This code wrongly joins comments in '-nfc1' mode and
-	 * generates malformed code.
-	 *
-	 * See test token_comment.c, keyword 'analyze_comment'.
-	 */
-	com.e = com.s + 2;
-	*com.e = '\0';
 	if (opt.blanklines_before_block_comments &&
 		ps.prev_token != lsym_lbrace)
 	    blank_line_before = true;
