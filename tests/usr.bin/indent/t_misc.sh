@@ -1,5 +1,5 @@
 #! /bin/sh
-# $NetBSD: t_misc.sh,v 1.17 2021/11/20 09:59:53 rillig Exp $
+# $NetBSD: t_misc.sh,v 1.18 2021/11/25 21:39:21 rillig Exp $
 #
 # Copyright (c) 2021 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -51,6 +51,24 @@ in_place_body()
 	    cat code.c
 	atf_check -o 'file:code.c.orig' \
 	    cat code.c.bak
+}
+
+atf_test_case 'in_place_parse_error'
+in_place_parse_error_body()
+{
+	# On normal parse errors, indent continues until the end of the file.
+	# This means that even in the case of errors, not much is lost.
+
+	cat <<-\EOF > code.c
+		int line1;
+		}
+		int line3;
+	EOF
+
+	atf_check -s 'exit:1' -e 'ignore' \
+	   "$indent" code.c
+	atf_check -o 'inline:int\t\tline1;\n}\nint\t\tline3;\n' \
+	    cat code.c
 }
 
 atf_test_case 'verbose_profile'
@@ -397,4 +415,5 @@ atf_init_test_cases()
 	atf_add_test_case 'default_backup_extension'
 	atf_add_test_case 'several_profiles'
 	atf_add_test_case 'command_line_vs_profile'
+	atf_add_test_case 'in_place_parse_error'
 }
