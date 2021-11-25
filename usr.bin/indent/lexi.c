@@ -1,4 +1,4 @@
-/*	$NetBSD: lexi.c,v 1.157 2021/11/25 16:51:24 rillig Exp $	*/
+/*	$NetBSD: lexi.c,v 1.158 2021/11/25 17:10:53 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)lexi.c	8.1 (Berkeley) 6/6/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: lexi.c,v 1.157 2021/11/25 16:51:24 rillig Exp $");
+__RCSID("$NetBSD: lexi.c,v 1.158 2021/11/25 17:10:53 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/lexi.c 337862 2018-08-15 18:19:45Z pstef $");
 #endif
@@ -453,9 +453,29 @@ cmp_keyword_by_name(const void *key, const void *elem)
 static bool
 probably_looking_at_definition(void)
 {
-    for (const char *p = inp_p(), *e = inp_line_end(); p < e;)
-	if (*p++ == ')' && (*p == ';' || *p == ','))
-	    return false;
+    int paren_level = 0;
+    for (const char *p = inp_p(), *e = inp_line_end(); p < e; p++) {
+proceed:
+	if (*p == '(')
+	    paren_level++;
+	if (*p == ')' && --paren_level == 0) {
+	    p++;
+	    while (p < e && (ch_isspace(*p) || is_identifier_part(*p)))
+		p++;
+	    if (*p == '(')
+		goto proceed;
+	    return !(*p == ';' || *p == ',');
+	}
+    }
+
+    /*
+     * To further reduce the cases where indent wrongly treats an incomplete
+     * function declaration as a function definition, thus adding a newline
+     * before the function name, it may be worth looking for parameter names,
+     * as these are often omitted in function declarations and only included
+     * in function definitions. Or just increase the lookahead to more than
+     * just the current line of input, until the next '{'.
+     */
     return true;
 }
 
