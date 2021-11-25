@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.390 2021/07/01 15:06:01 chs Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.391 2021/11/25 09:40:45 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.390 2021/07/01 15:06:01 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.391 2021/11/25 09:40:45 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_pax.h"
@@ -1121,7 +1121,7 @@ uvm_map_prepare(struct vm_map *map, vaddr_t start, vsize_t size,
 	vm_prot_t maxprot = UVM_MAXPROTECTION(flags);
 
 	UVMHIST_FUNC(__func__);
-	UVMHIST_CALLARGS(maphist, "(map=%#jx, start=%#jx, size=%ju, flags=%#jx)",
+	UVMHIST_CALLARGS(maphist, "(map=%#jx, start=%#jx, size=%jx, flags=%#jx)",
 	    (uintptr_t)map, start, size, flags);
 	UVMHIST_LOG(maphist, "  uobj/offset %#jx/%jd", (uintptr_t)uobj,
 	    uoffset,0,0);
@@ -1801,8 +1801,10 @@ uvm_map_findspace(struct vm_map *map, vaddr_t hint, vsize_t length,
 	vaddr_t orig_hint __diagused;
 	const int topdown = map->flags & VM_MAP_TOPDOWN;
 	UVMHIST_FUNC(__func__);
-	UVMHIST_CALLARGS(maphist, "(map=%#jx, hint=%#jx, len=%ju, flags=%#jx)",
+	UVMHIST_CALLARGS(maphist, "(map=%#jx, hint=%#jx, len=%ju, flags=%#jx...",
 	    (uintptr_t)map, hint, length, flags);
+	UVMHIST_LOG(maphist, " uobj=%#jx, uoffset=%#jx, align=%#jx)",
+	    (uintptr_t)uobj, uoffset, align, 0);
 
 	KASSERT((flags & UVM_FLAG_COLORMATCH) != 0 || powerof2(align));
 	KASSERT((flags & UVM_FLAG_COLORMATCH) == 0 || align < uvmexp.ncolors);
@@ -1830,6 +1832,9 @@ uvm_map_findspace(struct vm_map *map, vaddr_t hint, vsize_t length,
 		return (NULL);
 	}
 
+	UVMHIST_LOG(maphist,"<- VA %#jx vs range [%#jx->%#jx]",
+	    hint, vm_map_min(map), vm_map_max(map), 0);
+
 	/*
 	 * hint may not be aligned properly; we need round up or down it
 	 * before proceeding further.
@@ -1837,6 +1842,8 @@ uvm_map_findspace(struct vm_map *map, vaddr_t hint, vsize_t length,
 	if ((flags & UVM_FLAG_COLORMATCH) == 0)
 		uvm_map_align_va(&hint, align, topdown);
 
+	UVMHIST_LOG(maphist,"<- VA %#jx vs range [%#jx->%#jx]",
+	    hint, vm_map_min(map), vm_map_max(map), 0);
 	/*
 	 * Look for the first possible address; if there's already
 	 * something at this address, we have to start after it.
