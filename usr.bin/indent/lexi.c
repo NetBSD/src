@@ -1,4 +1,4 @@
-/*	$NetBSD: lexi.c,v 1.158 2021/11/25 17:10:53 rillig Exp $	*/
+/*	$NetBSD: lexi.c,v 1.159 2021/11/25 17:28:13 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)lexi.c	8.1 (Berkeley) 6/6/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: lexi.c,v 1.158 2021/11/25 17:10:53 rillig Exp $");
+__RCSID("$NetBSD: lexi.c,v 1.159 2021/11/25 17:28:13 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/lexi.c 337862 2018-08-15 18:19:45Z pstef $");
 #endif
@@ -576,100 +576,101 @@ lexi(void)
     *token.e = '\0';
 
     lexer_symbol lsym;
-    bool unary_delim = false;	/* whether the current token forces a
-				 * following operator to be unary */
+    bool next_unary;
 
     switch (token.e[-1]) {
     case '\n':
-	unary_delim = ps.next_unary;
-	ps.next_col_1 = true;
-	/* if data has been exhausted, the newline is a dummy. */
+	/* if data has been exhausted, the '\n' is a dummy. */
 	lsym = had_eof ? lsym_eof : lsym_newline;
+	next_unary = ps.next_unary;
+	ps.next_col_1 = true;
 	break;
 
     case '\'':
     case '"':
 	lex_char_or_string();
 	lsym = lsym_word;
+	next_unary = false;
 	break;
 
     case '(':
     case '[':
-	unary_delim = true;
 	lsym = lsym_lparen_or_lbracket;
+	next_unary = true;
 	break;
 
     case ')':
     case ']':
 	lsym = lsym_rparen_or_rbracket;
+	next_unary = false;
 	break;
 
     case '#':
-	unary_delim = ps.next_unary;
 	lsym = lsym_preprocessing;
+	next_unary = ps.next_unary;
 	break;
 
     case '?':
-	unary_delim = true;
 	lsym = lsym_question;
+	next_unary = true;
 	break;
 
     case ':':
 	lsym = lsym_colon;
-	unary_delim = true;
+	next_unary = true;
 	break;
 
     case ';':
-	unary_delim = true;
 	lsym = lsym_semicolon;
+	next_unary = true;
 	break;
 
     case '{':
-	unary_delim = true;
 	lsym = lsym_lbrace;
+	next_unary = true;
 	break;
 
     case '}':
-	unary_delim = true;
 	lsym = lsym_rbrace;
+	next_unary = true;
 	break;
 
     case '\f':
-	unary_delim = ps.next_unary;
-	ps.next_col_1 = true;
 	lsym = lsym_form_feed;
+	next_unary = ps.next_unary;
+	ps.next_col_1 = true;
 	break;
 
     case ',':
-	unary_delim = true;
 	lsym = lsym_comma;
+	next_unary = true;
 	break;
 
     case '.':
-	unary_delim = false;
 	lsym = lsym_period;
+	next_unary = false;
 	break;
 
     case '-':
     case '+':
 	lsym = ps.next_unary ? lsym_unary_op : lsym_binary_op;
-	unary_delim = true;
+	next_unary = true;
 
-	if (inp_peek() == token.e[-1]) {	/* ++, -- */
+	if (inp_peek() == token.e[-1]) {	/* '++' or '--' */
 	    *token.e++ = inp_next();
 	    if (ps.prev_token == lsym_word ||
 		    ps.prev_token == lsym_rparen_or_rbracket) {
 		lsym = ps.next_unary ? lsym_unary_op : lsym_postfix_op;
-		unary_delim = false;
+		next_unary = false;
 	    }
 
-	} else if (inp_peek() == '=') {	/* += */
+	} else if (inp_peek() == '=') {	/* '+=' or '-=' */
 	    *token.e++ = inp_next();
 
-	} else if (inp_peek() == '>') {	/* -> */
+	} else if (inp_peek() == '>') {	/* '->' */
 	    *token.e++ = inp_next();
-	    unary_delim = false;
 	    lsym = lsym_unary_op;
+	    next_unary = false;
 	    ps.want_blank = false;
 	}
 	break;
@@ -682,7 +683,7 @@ lexi(void)
 	    *token.e = '\0';
 	}
 	lsym = lsym_binary_op;
-	unary_delim = true;
+	next_unary = true;
 	break;
 
     case '>':
@@ -693,16 +694,16 @@ lexi(void)
 	if (inp_peek() == '=')
 	    *token.e++ = inp_next();
 	lsym = ps.next_unary ? lsym_unary_op : lsym_binary_op;
-	unary_delim = true;
+	next_unary = true;
 	break;
 
     case '*':
-	unary_delim = true;
 	if (!ps.next_unary && !ps.in_parameter_declaration &&
 		!(ps.in_decl && ps.p_l_follow > 0)) {
 	    if (inp_peek() == '=')
 		*token.e++ = inp_next();
 	    lsym = lsym_binary_op;
+	    next_unary = true;
 	    break;
 	}
 
@@ -731,13 +732,14 @@ lexi(void)
 	}
 
 	lsym = lsym_unary_op;
+	next_unary = true;
 	break;
 
     default:
 	if (token.e[-1] == '/' && (inp_peek() == '*' || inp_peek() == '/')) {
 	    *token.e++ = inp_next();
 	    lsym = lsym_comment;
-	    unary_delim = ps.next_unary;
+	    next_unary = ps.next_unary;
 	    break;
 	}
 
@@ -746,10 +748,10 @@ lexi(void)
 	    token_add_char(inp_next());
 
 	lsym = ps.next_unary ? lsym_unary_op : lsym_binary_op;
-	unary_delim = true;
+	next_unary = true;
     }
 
-    ps.next_unary = unary_delim;
+    ps.next_unary = next_unary;
 
     check_size_token(1);
     *token.e = '\0';
