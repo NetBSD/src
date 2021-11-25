@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_exec.h,v 1.7 2017/04/26 22:41:59 christos Exp $ */
+/*	$NetBSD: linux32_exec.h,v 1.8 2021/11/25 02:38:56 ryo Exp $ */
 
 /*-
  * Copyright (c) 2006 Emmanuel Dreyfus, all rights reserved.
@@ -82,8 +82,6 @@ struct linux32_extra_stack_data {
 
 #endif
 
-#ifdef _KERNEL
-int linux32_exec_setup_stack(struct lwp *, struct exec_package *);
-#endif
+#define linux32_exec_setup_stack	linux_exec_setup_stack
 
 #endif /* !_AMD64_LINUX32_EXEC_H */
