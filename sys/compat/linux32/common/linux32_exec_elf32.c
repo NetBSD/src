@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_exec_elf32.c,v 1.20 2021/09/07 11:43:04 riastradh Exp $ */
+/*	$NetBSD: linux32_exec_elf32.c,v 1.21 2021/11/25 02:48:00 ryo Exp $ */
 
 /*-                     
  * Copyright (c) 1995, 1998, 2000, 2001,2006 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux32_exec_elf32.c,v 1.20 2021/09/07 11:43:04 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_exec_elf32.c,v 1.21 2021/11/25 02:48:00 ryo Exp $");
 
 #define	ELFSIZE		32
 
@@ -107,19 +107,19 @@ int
 linux32_elf32_copyargs(struct lwp *l, struct exec_package *pack,
     struct ps_strings *arginfo, char **stackp, void *argp)
 {
-	Aux32Info ai[LINUX32_ELF_AUX_ENTRIES], *a;
-	uint32_t randbytes[4];
+	struct linux32_extra_stack_data esd, *esdp;
+	Aux32Info *a, *ai __diagused;
 	struct elf_args *ap;
 	struct vattr *vap;
-	size_t len;
 	int error;
 
 	if ((error = netbsd32_copyargs(l, pack, arginfo, stackp, argp)) != 0)
 		return error;
 
-	a = ai;
+	esdp = (struct linux32_extra_stack_data *)(*stackp);	/* userspace */
 
-	memset(ai, 0, sizeof(ai));
+	memset(&esd, 0, sizeof(esd));
+	ai = a = esd.ai;
 
 	/*
 	 * Push extra arguments on the stack needed by dynamically
@@ -189,66 +189,55 @@ linux32_elf32_copyargs(struct lwp *l, struct exec_package *pack,
 	a++;
 
 	a->a_type = LINUX_AT_RANDOM;
-	a->a_v = NETBSD32PTR32I(*stackp);
+	a->a_v = NETBSD32PTR32I(&esdp->randbytes[0]);
 	a++;
+	esd.randbytes[0] = cprng_strong32();
+	esd.randbytes[1] = cprng_strong32();
+	esd.randbytes[2] = cprng_strong32();
+	esd.randbytes[3] = cprng_strong32();
 
-#if 0
-	/* XXX: increase LINUX32_ELF_AUX_ENTRIES if we enable those things */
-
+#if 0 /* defined(__amd64__) */
+	/* XXX: broken. vsyscall must be placed in the executable page */
 	a->a_type = LINUX_AT_SYSINFO;
 	a->a_v = NETBSD32PTR32I(&esdp->kernel_vsyscall[0]);
 	a++;
+	memcpy(esd.kernel_vsyscall, linux32_kernel_vsyscall,
+	    sizeof(linux32_kernel_vsyscall));
+#endif
 
+#if 0 /* notyet */
 	a->a_type = LINUX_AT_SYSINFO_EHDR;
 	a->a_v = NETBSD32PTR32I(&esdp->elfhdr);
 	a++;
+	memcpy(&esd.elfhdr, eh, sizeof(*eh));
+#endif
 
+#ifdef LINUX32_CPUCAP
 	a->a_type = LINUX_AT_HWCAP;
 	a->a_v = LINUX32_CPUCAP;
 	a++;
+#endif
 
+#ifdef LINUX32_PLATFORM
 	a->a_type = LINUX_AT_PLATFORM;
 	a->a_v = NETBSD32PTR32I(&esdp->hw_platform[0]);
 	a++;
+	strncpy(esd.hw_platform, LINUX32_PLATFORM, sizeof(esd.hw_platform));
 #endif
 
 	a->a_type = AT_NULL;
 	a->a_v = 0;
 	a++;
 
-	randbytes[0] = cprng_strong32();
-	randbytes[1] = cprng_strong32();
-	randbytes[2] = cprng_strong32();
-	randbytes[3] = cprng_strong32();
+	KASSERTMSG(a <= &ai[LINUX32_ELF_AUX_ENTRIES],
+	    "increase LINUX32_ELF_AUX_ENTRIES to %lu", a - ai);
 
-	len = sizeof(randbytes);
-	if ((error = copyout(randbytes, *stackp, len)) != 0)
-		return error;
-	*stackp += len;
-
-#if 0
-	memset(&esd, 0, sizeof(esd));
-
-	memcpy(esd.kernel_vsyscall, linux32_kernel_vsyscall,
-	    sizeof(linux32_kernel_vsyscall));
-
-	memcpy(&esd.elfhdr, eh, sizeof(*eh));
-
-	strcpy(esd.hw_platform, LINUX32_PLATFORM);
-	
 	/*
 	 * Copy out the ELF auxiliary table and hw platform name
 	 */
 	if ((error = copyout(&esd, esdp, sizeof(esd))) != 0)
 		return error;
 	*stackp += sizeof(esd);
-#endif
-
-	len = (a - ai) * sizeof(Aux32Info);
-	KASSERT(len <= LINUX32_ELF_AUX_ENTRIES * sizeof(Aux32Info));
-	if ((error = copyout(ai, *stackp, len)) != 0)
-		return error;
-	*stackp += len;
 
 	return 0;
 }
