@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.h,v 1.98 2021/11/19 20:23:17 rillig Exp $	*/
+/*	$NetBSD: indent.h,v 1.99 2021/11/25 07:41:13 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-FreeBSD
@@ -316,7 +316,7 @@ extern struct parser_state {
     bool in_stmt;		/* TODO: rename to something appropriate; this
 				 * is set to true in struct declarations as
 				 * well, so 'stmt' isn't accurate */
-    bool ind_stmt;		/* whether the next line should have an extra
+    bool in_stmt_cont;		/* whether the next line should have an extra
 				 * indentation level because we are in the
 				 * middle of a statement */
     bool is_case_label;		/* 'case' and 'default' labels are indented

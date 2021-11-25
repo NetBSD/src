@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.c,v 1.229 2021/11/25 07:30:54 rillig Exp $	*/
+/*	$NetBSD: indent.c,v 1.230 2021/11/25 07:41:13 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)indent.c	5.17 (Berkeley) 6/7/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: indent.c,v 1.229 2021/11/25 07:30:54 rillig Exp $");
+__RCSID("$NetBSD: indent.c,v 1.230 2021/11/25 07:41:13 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/indent.c 340138 2018-11-04 19:24:49Z oshogbo $");
 #endif
@@ -917,7 +917,7 @@ process_lbrace(bool *force_nl, bool *spaced_expr, stmt_head hd,
     }
 
     if (code.s == code.e)
-	ps.ind_stmt = false;	/* don't indent the '{' itself */
+	ps.in_stmt_cont = false;	/* don't indent the '{' itself */
     if (ps.in_decl && ps.init_or_struct) {
 	di_stack[ps.decl_level] = *decl_ind;
 	if (++ps.decl_level == di_stack_cap) {
@@ -970,7 +970,7 @@ process_rbrace(bool *spaced_expr, int *decl_ind, const int *di_stack)
     *code.e++ = '}';
     ps.want_blank = true;
     ps.in_stmt = false;
-    ps.ind_stmt = false;
+    ps.in_stmt_cont = false;
 
     if (ps.decl_level > 0) { /* we are in multi-level structure declaration */
 	*decl_ind = di_stack[--ps.decl_level];
@@ -1041,7 +1041,7 @@ process_type(int *decl_ind, bool *tabs_to_var)
     if (ps.in_parameter_declaration && opt.indent_parameters &&
 	    ps.decl_level == 0) {
 	ps.ind_level = ps.ind_level_follow = 1;
-	ps.ind_stmt = false;
+	ps.in_stmt_cont = false;
     }
 
     ps.init_or_struct = /* maybe */ true;
