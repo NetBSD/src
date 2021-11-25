@@ -1,4 +1,4 @@
-/* $NetBSD: tprof_armv7.c,v 1.4 2020/10/30 18:54:37 skrll Exp $ */
+/* $NetBSD: tprof_armv7.c,v 1.5 2021/11/25 09:36:21 skrll Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tprof_armv7.c,v 1.4 2020/10/30 18:54:37 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tprof_armv7.c,v 1.5 2021/11/25 09:36:21 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -41,6 +41,7 @@ __KERNEL_RCSID(0, "$NetBSD: tprof_armv7.c,v 1.4 2020/10/30 18:54:37 skrll Exp $"
 
 #include <dev/tprof/tprof_armv7.h>
 
+#define	PMCR_N			__BITS(15,11)
 #define	PMCR_D			__BIT(3)
 #define	PMCR_E			__BIT(0)
 
@@ -170,7 +171,10 @@ armv7_pmu_ident(void)
 static int
 armv7_pmu_start(const tprof_param_t *param)
 {
-	uint64_t xc;
+	/* PMCR.N of 0 means that no event counters are available */
+	if (__SHIFTOUT(armreg_pmcr_read(), PMCR_N) == 0) {
+		return EINVAL;
+	}
 
 	if (!armv7_pmu_event_implemented(param->p_event)) {
 		printf("%s: event %#llx not implemented on this CPU\n",
