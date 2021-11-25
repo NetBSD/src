@@ -1,4 +1,4 @@
-/* $NetBSD: opt_fc1.c,v 1.5 2021/11/20 16:54:17 rillig Exp $ */
+/* $NetBSD: opt_fc1.c,v 1.6 2021/11/25 20:44:10 rillig Exp $ */
 /* $FreeBSD$ */
 
 /*
@@ -97,6 +97,10 @@
 #indent end
 
 
+/*
+ * Since 2019-04-04 and before pr_comment.c 1.123 from 2021-11-25, the
+ * function analyze_comment wrongly joined the two comments.
+ */
 #indent input
 /*
  * A multi-line comment that starts
@@ -109,20 +113,19 @@
 #indent run -fc1
 /*
  * A multi-line comment that starts in column 1.
- *
+ *//*
  * followed by another multi-line comment that starts in column 4.
  */
-/* $ FIXME: The two comments have been merged into a single comment. */
 #indent end
 
+/* FIXME: The last line of the first comment must not be modified. */
 #indent run -nfc1
 /*
  * A multi-line comment that starts
  * in column 1.
-  *
+  *//*
   * followed by another multi-line comment that starts in column 4.
   */
-/* $ FIXME: The two comments have been merged into a single comment. */
 #indent end
 
 
