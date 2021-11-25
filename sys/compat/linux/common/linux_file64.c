@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_file64.c,v 1.64 2021/09/23 06:56:27 ryo Exp $	*/
+/*	$NetBSD: linux_file64.c,v 1.65 2021/11/25 02:08:55 ryo Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 2000, 2008 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_file64.c,v 1.64 2021/09/23 06:56:27 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_file64.c,v 1.65 2021/11/25 02:08:55 ryo Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -67,7 +67,7 @@ __KERNEL_RCSID(0, "$NetBSD: linux_file64.c,v 1.64 2021/09/23 06:56:27 ryo Exp $"
 
 #include <compat/linux/linux_syscallargs.h>
 
-static void bsd_to_linux_stat(struct stat *, struct linux_stat64 *);
+static void bsd_to_linux_stat64(struct stat *, struct linux_stat64 *);
 
 /*
  * Convert a NetBSD stat structure to a Linux stat structure.
@@ -78,7 +78,7 @@ static void bsd_to_linux_stat(struct stat *, struct linux_stat64 *);
  * things against constant major device numbers? sigh)
  */
 static void
-bsd_to_linux_stat(struct stat *bsp, struct linux_stat64 *lsp)
+bsd_to_linux_stat64(struct stat *bsp, struct linux_stat64 *lsp)
 {
 	memset(lsp, 0, sizeof(*lsp));
 	lsp->lst_dev     = linux_fakedev(bsp->st_dev, 0);
@@ -126,7 +126,7 @@ linux_sys_fstat64(struct lwp *l, const struct linux_sys_fstat64_args *uap, regis
 	if (error != 0)
 		return error;
 
-	bsd_to_linux_stat(&tmpst, &tmplst);
+	bsd_to_linux_stat64(&tmpst, &tmplst);
 
 	return copyout(&tmplst, SCARG(uap, sp), sizeof tmplst);
 }
@@ -143,7 +143,7 @@ linux_do_stat64(struct lwp *l, const struct linux_sys_stat64_args *uap, register
 	if (error != 0)
 		return error;
 
-	bsd_to_linux_stat(&tmpst, &tmplst);
+	bsd_to_linux_stat64(&tmpst, &tmplst);
 
 	return copyout(&tmplst, SCARG(uap, sp), sizeof tmplst);
 }
@@ -225,7 +225,7 @@ linux_sys_fstatat64(struct lwp *l, const struct linux_sys_fstatat64_args *uap, r
 		return error;
 
 done:
-	bsd_to_linux_stat(&tmpst, &tmplst);
+	bsd_to_linux_stat64(&tmpst, &tmplst);
 
 	return copyout(&tmplst, SCARG(uap, sp), sizeof tmplst);
 }
