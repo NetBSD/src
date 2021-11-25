@@ -1,4 +1,4 @@
-/*	$NetBSD: fmt_decl.c,v 1.29 2021/11/25 18:36:30 rillig Exp $	*/
+/*	$NetBSD: fmt_decl.c,v 1.30 2021/11/25 20:02:06 rillig Exp $	*/
 /* $FreeBSD: head/usr.bin/indent/tests/declarations.0 334478 2018-06-01 09:41:15Z pstef $ */
 
 /*
@@ -16,11 +16,11 @@
  * align the newly declared type name with the other variables.
  */
 #indent input
-typedef   void   (   *   voidptr   )   (   int   *   )   ;
+typedef   void   (   *   function_ptr   )   (   int   *   )   ;
 #indent end
 
 #indent run
-typedef void (*voidptr)(int *);
+typedef void (*function_ptr)(int *);
 #indent end
 
 
