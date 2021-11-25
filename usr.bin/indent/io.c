@@ -1,4 +1,4 @@
-/*	$NetBSD: io.c,v 1.131 2021/11/25 07:45:32 rillig Exp $	*/
+/*	$NetBSD: io.c,v 1.132 2021/11/25 20:00:31 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)io.c	8.1 (Berkeley) 6/6/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: io.c,v 1.131 2021/11/25 07:45:32 rillig Exp $");
+__RCSID("$NetBSD: io.c,v 1.132 2021/11/25 20:00:31 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/io.c 334927 2018-06-10 16:44:18Z pstef $");
 #endif
@@ -173,8 +173,8 @@ inp_comment_init_newline(void)
 	return;
 
     inbuf.save_com_s = inbuf.save_com_buf;
-    inbuf.save_com_s[0] = ' ';	/* see search_stmt_lbrace */
-    inbuf.save_com_s[1] = ' ';	/* see search_stmt_lbrace */
+    inbuf.save_com_s[0] = ' ';	/* see inp_comment_insert_lbrace */
+    inbuf.save_com_s[1] = ' ';	/* see inp_comment_insert_lbrace */
     inbuf.save_com_e = &inbuf.save_com_s[2];
     debug_inp(__func__);
 }
@@ -209,8 +209,8 @@ inp_comment_init_comment(void)
     assert(line_len < array_length(inbuf.save_com_buf));
     memcpy(inbuf.save_com_buf, inbuf.inp.buf, line_len);
     inbuf.save_com_s = inbuf.save_com_buf + line_len;
-    inbuf.save_com_s[0] = ' ';	/* see search_stmt_lbrace */
-    inbuf.save_com_s[1] = ' ';	/* see search_stmt_lbrace */
+    inbuf.save_com_s[0] = ' ';	/* see inp_comment_insert_lbrace */
+    inbuf.save_com_s[1] = ' ';	/* see inp_comment_insert_lbrace */
     inbuf.save_com_e = &inbuf.save_com_s[2];
     debug_vis_range("search_stmt_comment: before save_com is \"",
 	inbuf.save_com_buf, inbuf.save_com_s, "\"\n");
