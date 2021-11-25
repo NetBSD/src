@@ -1,4 +1,4 @@
-/*	$NetBSD: lexi.c,v 1.153 2021/11/25 08:03:08 rillig Exp $	*/
+/*	$NetBSD: lexi.c,v 1.154 2021/11/25 08:08:28 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)lexi.c	8.1 (Berkeley) 6/6/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: lexi.c,v 1.153 2021/11/25 08:03:08 rillig Exp $");
+__RCSID("$NetBSD: lexi.c,v 1.154 2021/11/25 08:08:28 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/lexi.c 337862 2018-08-15 18:19:45Z pstef $");
 #endif
@@ -471,13 +471,10 @@ lexi_alnum(void)
     while (ch_isblank(inp_peek()))
 	inp_skip();
 
-    if (ps.prev_token == lsym_tag && ps.p_l_follow == 0) {
-	ps.next_unary = true;
-	return lsym_type_outside_parentheses;
-    }
+    ps.next_unary = ps.prev_token == lsym_tag;	/* for 'struct s *' */
 
-    /* Operator after identifier is binary unless last token was 'struct'. */
-    ps.next_unary = ps.prev_token == lsym_tag;
+    if (ps.prev_token == lsym_tag && ps.p_l_follow == 0)
+	return lsym_type_outside_parentheses;
 
     const struct keyword *kw = bsearch(token.s, keywords,
 	array_length(keywords), sizeof(keywords[0]), cmp_keyword_by_name);
