@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.511 2021/11/07 13:47:49 christos Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.512 2021/11/25 02:37:38 ryo Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2019, 2020 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.511 2021/11/07 13:47:49 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.512 2021/11/25 02:37:38 ryo Exp $");
 
 #include "opt_exec.h"
 #include "opt_execfmt.h"
@@ -139,6 +139,8 @@ static int copyinargs(struct execve_data * restrict, char * const *,
     char * const *, execve_fetch_element_t, char **);
 static int copyinargstrs(struct execve_data * restrict, char * const *,
     execve_fetch_element_t, char **, size_t *, void (*)(const void *, size_t));
+static int exec_sigcode_alloc(const struct emul *);
+static void exec_sigcode_free(const struct emul *);
 static int exec_sigcode_map(struct proc *, const struct emul *);
 
 #if defined(DEBUG) && !defined(DEBUG_EXEC)
@@ -249,8 +251,6 @@ struct emul emul_netbsd = {
  * This must not be static so that netbsd32 can access it, too.
  */
 krwlock_t exec_lock __cacheline_aligned;
-
-static kmutex_t sigobject_lock __cacheline_aligned;
 
 /*
  * Data used between a loadvm and execve part of an "exec" operation
@@ -1815,7 +1815,7 @@ int
 exec_add(struct execsw *esp, int count)
 {
 	struct exec_entry	*it;
-	int			i;
+	int			i, error = 0;
 
 	if (count == 0) {
 		return 0;
@@ -1840,7 +1840,22 @@ exec_add(struct execsw *esp, int count)
 	for (i = 0; i < count; i++) {
 		it = kmem_alloc(sizeof(*it), KM_SLEEP);
 		it->ex_sw = &esp[i];
+		error = exec_sigcode_alloc(it->ex_sw->es_emul);
+		if (error != 0) {
+			kmem_free(it, sizeof(*it));
+			break;
+		}
 		LIST_INSERT_HEAD(&ex_head, it, ex_list);
+	}
+	/* If even one fails, remove them all back. */
+	if (error != 0) {
+		for (i--; i >= 0; i--) {
+			it = LIST_FIRST(&ex_head);
+			LIST_REMOVE(it, ex_list);
+			exec_sigcode_free(it->ex_sw->es_emul);
+			kmem_free(it, sizeof(*it));
+		}
+		return error;
 	}
 
 	/* update execsw[] */
@@ -1886,6 +1901,7 @@ exec_remove(struct execsw *esp, int count)
 			next = LIST_NEXT(it, ex_list);
 			if (it->ex_sw == &esp[i]) {
 				LIST_REMOVE(it, ex_list);
+				exec_sigcode_free(it->ex_sw->es_emul);
 				kmem_free(it, sizeof(*it));
 				break;
 			}
@@ -1919,7 +1935,6 @@ exec_init(int init_boot)
 		vaddr_t vmin = 0, vmax;
 
 		rw_init(&exec_lock);
-		mutex_init(&sigobject_lock, MUTEX_DEFAULT, IPL_NONE);
 		exec_map = uvm_km_suballoc(kernel_map, &vmin, &vmax,
 		    maxexec*NCARGS, VM_MAP_PAGEABLE, false, NULL);
 		pool_init(&exec_pool, NCARGS, 0, 0, PR_NOALIGN|PR_NOTOUCH,
@@ -1987,21 +2002,24 @@ exec_init(int init_boot)
 }
 
 static int
-exec_sigcode_map(struct proc *p, const struct emul *e)
+exec_sigcode_alloc(const struct emul *e)
 {
 	vaddr_t va;
 	vsize_t sz;
 	int error;
 	struct uvm_object *uobj;
 
-	sz = (vaddr_t)e->e_esigcode - (vaddr_t)e->e_sigcode;
+	KASSERT(rw_lock_held(&exec_lock));
 
-	if (e->e_sigobject == NULL || sz == 0) {
+	if (e == NULL || e->e_sigobject == NULL)
 		return 0;
-	}
+
+	sz = (vaddr_t)e->e_esigcode - (vaddr_t)e->e_sigcode;
+	if (sz == 0)
+		return 0;
 
 	/*
-	 * If we don't have a sigobject for this emulation, create one.
+	 * Create a sigobject for this emulation.
 	 *
 	 * sigobject is an anonymous memory object (just like SYSV shared
 	 * memory) that we keep a permanent reference to and that we map
@@ -2011,32 +2029,61 @@ exec_sigcode_map(struct proc *p, const struct emul *e)
 	 * We map it with PROT_READ|PROT_EXEC into the process just
 	 * the way sys_mmap() would map it.
 	 */
+	KASSERT(*e->e_sigobject == NULL);
+	uobj = uao_create(sz, 0);
+	(*uobj->pgops->pgo_reference)(uobj);
+	va = vm_map_min(kernel_map);
+	if ((error = uvm_map(kernel_map, &va, round_page(sz),
+	    uobj, 0, 0,
+	    UVM_MAPFLAG(UVM_PROT_RW, UVM_PROT_RW,
+	    UVM_INH_SHARE, UVM_ADV_RANDOM, 0)))) {
+		printf("sigcode kernel mapping failed %d\n", error);
+		(*uobj->pgops->pgo_detach)(uobj);
+		return error;
+	}
+	memcpy((void *)va, e->e_sigcode, sz);
+#ifdef PMAP_NEED_PROCWR
+	pmap_procwr(&proc0, va, sz);
+#endif
+	uvm_unmap(kernel_map, va, va + round_page(sz));
+	*e->e_sigobject = uobj;
+
+	return 0;
+}
+
+static void
+exec_sigcode_free(const struct emul *e)
+{
+	struct uvm_object *uobj;
+
+	KASSERT(rw_lock_held(&exec_lock));
+
+	if (e == NULL || e->e_sigobject == NULL)
+		return;
 
 	uobj = *e->e_sigobject;
-	if (uobj == NULL) {
-		mutex_enter(&sigobject_lock);
-		if ((uobj = *e->e_sigobject) == NULL) {
-			uobj = uao_create(sz, 0);
-			(*uobj->pgops->pgo_reference)(uobj);
-			va = vm_map_min(kernel_map);
-			if ((error = uvm_map(kernel_map, &va, round_page(sz),
-			    uobj, 0, 0,
-			    UVM_MAPFLAG(UVM_PROT_RW, UVM_PROT_RW,
-			    UVM_INH_SHARE, UVM_ADV_RANDOM, 0)))) {
-				printf("kernel mapping failed %d\n", error);
-				(*uobj->pgops->pgo_detach)(uobj);
-				mutex_exit(&sigobject_lock);
-				return error;
-			}
-			memcpy((void *)va, e->e_sigcode, sz);
-#ifdef PMAP_NEED_PROCWR
-			pmap_procwr(&proc0, va, sz);
-#endif
-			uvm_unmap(kernel_map, va, va + round_page(sz));
-			*e->e_sigobject = uobj;
-		}
-		mutex_exit(&sigobject_lock);
-	}
+	if (uobj == NULL)
+		return;
+
+	(*uobj->pgops->pgo_detach)(uobj);
+	*e->e_sigobject = NULL;
+}
+
+static int
+exec_sigcode_map(struct proc *p, const struct emul *e)
+{
+	vaddr_t va;
+	vsize_t sz;
+	int error;
+	struct uvm_object *uobj;
+
+	sz = (vaddr_t)e->e_esigcode - (vaddr_t)e->e_sigcode;
+	if (e->e_sigobject == NULL || sz == 0)
+		return 0;
+
+	uobj = *e->e_sigobject;
+	if (uobj == NULL)
+		return 0;
 
 	/* Just a hint to uvm_map where to put it. */
 	va = e->e_vm_default_addr(p, (vaddr_t)p->p_vmspace->vm_daddr,
