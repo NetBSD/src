@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.c,v 1.231 2021/11/25 07:45:32 rillig Exp $	*/
+/*	$NetBSD: indent.c,v 1.232 2021/11/25 18:48:37 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)indent.c	5.17 (Berkeley) 6/7/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: indent.c,v 1.231 2021/11/25 07:45:32 rillig Exp $");
+__RCSID("$NetBSD: indent.c,v 1.232 2021/11/25 18:48:37 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/indent.c 340138 2018-11-04 19:24:49Z oshogbo $");
 #endif
@@ -834,7 +834,7 @@ process_semicolon(bool *seen_case, int *quest_level, int decl_ind,
     *seen_case = false;		/* these will only need resetting in an error */
     *quest_level = 0;
     if (ps.prev_token == lsym_rparen_or_rbracket)
-	ps.in_parameter_declaration = false;
+	ps.in_func_def_params = false;
     ps.cast_mask = 0;
     ps.not_cast_mask = 0;
     ps.block_init = false;
@@ -893,7 +893,7 @@ process_lbrace(bool *force_nl, bool *spaced_expr, stmt_head hd,
 	if (!opt.brace_same_line) {
 	    dump_line();
 	    ps.want_blank = false;
-	} else if (ps.in_parameter_declaration && !ps.init_or_struct) {
+	} else if (ps.in_func_def_params && !ps.init_or_struct) {
 	    ps.ind_level_follow = 0;
 	    if (opt.function_brace_split) {	/* dump the line prior to the
 						 * brace ... */
@@ -904,7 +904,7 @@ process_lbrace(bool *force_nl, bool *spaced_expr, stmt_head hd,
 	}
     }
 
-    if (ps.in_parameter_declaration)
+    if (ps.in_func_def_params)
 	blank_line_before = false;
 
     if (ps.p_l_follow > 0) {
@@ -930,9 +930,9 @@ process_lbrace(bool *force_nl, bool *spaced_expr, stmt_head hd,
 	ps.decl_on_line = false;	/* we can't be in the middle of a
 					 * declaration, so don't do special
 					 * indentation of comments */
-	if (opt.blanklines_after_decl_at_top && ps.in_parameter_declaration)
+	if (opt.blanklines_after_decl_at_top && ps.in_func_def_params)
 	    blank_line_after = true;
-	ps.in_parameter_declaration = false;
+	ps.in_func_def_params = false;
 	ps.in_decl = false;
     }
 
@@ -975,7 +975,7 @@ process_rbrace(bool *spaced_expr, int *decl_ind, const int *di_stack)
 
     if (ps.decl_level > 0) { /* we are in multi-level structure declaration */
 	*decl_ind = di_stack[--ps.decl_level];
-	if (ps.decl_level == 0 && !ps.in_parameter_declaration) {
+	if (ps.decl_level == 0 && !ps.in_func_def_params) {
 	    ps.just_saw_decl = 2;
 	    *decl_ind = ps.ind_level == 0
 		? opt.decl_indent : opt.local_decl_indent;
@@ -1039,7 +1039,7 @@ process_type(int *decl_ind, bool *tabs_to_var)
 	}
     }
 
-    if (ps.in_parameter_declaration && opt.indent_parameters &&
+    if (ps.in_func_def_params && opt.indent_parameters &&
 	    ps.decl_level == 0) {
 	ps.ind_level = ps.ind_level_follow = 1;
 	ps.in_stmt_cont = false;
