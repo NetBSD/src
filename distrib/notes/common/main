@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.551.2.10 2020/10/23 08:32:27 martin Exp $
+.\"	$NetBSD: main,v 1.551.2.11 2021/11/25 17:49:22 martin Exp $
 .\"
 .\" Copyright (c) 1999-2012 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -265,6 +265,11 @@ Many commercial and freeware programs are available to burn CD-ROMs.
 .Pp
 If installing via USB, you must first uncompress the USB image, which
 is gzipped.
+.if \n[amd64] \{\
+Note the \*M architecture has two images, NetBSD-\*V-\*M-install.img.gz
+and NetBSD-\*V-\*M-bios-install.img.gz. The latter is intended for older
+hardware which is unable to boot using a hybrid MBR and GPT image.
+.\}
 .Dl $ Ic "gunzip NetBSD-\*V-\*M-install.img.gz"
 Next, write the USB image to a USB stick/drive.
 Note that this will overwrite any existing data on the device that you
