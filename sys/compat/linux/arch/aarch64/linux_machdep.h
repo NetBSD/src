@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.h,v 1.1 2021/09/23 06:56:27 ryo Exp $	*/
+/*	$NetBSD: linux_machdep.h,v 1.2 2021/11/25 03:08:04 ryo Exp $	*/
 
 /*-
  * Copyright (c) 2021 The NetBSD Foundation, Inc.
@@ -74,6 +74,49 @@ struct linux_rt_sigframe {
 	struct linux_ucontext uc;
 };
 
+/*
+ * Not required for COMPAT_LINUX,
+ * but required for COMPAT_LINUX32.
+ */
+struct linux_sys_open_args {
+	syscallarg(const char *) path;
+	syscallarg(int) flags;
+	syscallarg(linux_umode_t) mode;
+};
+int linux_sys_open(struct lwp *, const struct linux_sys_open_args *, register_t *);
+
+struct linux_sys_eventfd_args {
+	syscallarg(unsigned int) initval;
+};
+int linux_sys_eventfd(struct lwp *, const struct linux_sys_eventfd_args *, register_t *);
+
+struct linux_sys_llseek_args {
+	syscallarg(int) fd;
+	syscallarg(u_int32_t) ohigh;
+	syscallarg(u_int32_t) olow;
+	syscallarg(void *) res;
+	syscallarg(int) whence;
+};
+int linux_sys_llseek(struct lwp *, const struct linux_sys_llseek_args *, register_t *);
+
+struct linux_sys_unlink_args {
+	syscallarg(const char *) path;
+};
+int linux_sys_unlink(struct lwp *, const struct linux_sys_unlink_args *, register_t *);
+
+struct linux_sys_mknod_args {
+	syscallarg(const char *) path;
+	syscallarg(linux_umode_t) mode;
+	syscallarg(unsigned) dev;
+};
+int linux_sys_mknod(struct lwp *, const struct linux_sys_mknod_args *, register_t *);
+
+struct linux_sys_alarm_args {
+	syscallarg(unsigned int) secs;
+};
+int linux_sys_alarm(struct lwp *, const struct linux_sys_alarm_args *, register_t *);
+
+int linux_sys_pause(struct lwp *, const void *, register_t *);
 
 #ifdef _KERNEL
 __BEGIN_DECLS

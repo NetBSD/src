@@ -1,4 +1,4 @@
-#	$NetBSD: files.aarch64,v 1.35 2021/10/30 18:44:24 jmcneill Exp $
+#	$NetBSD: files.aarch64,v 1.36 2021/11/25 03:08:04 ryo Exp $
 
 defflag opt_cpuoptions.h	AARCH64_ALIGNMENT_CHECK
 defflag opt_cpuoptions.h	AARCH64_EL0_STACK_ALIGNMENT_CHECK
@@ -134,7 +134,12 @@ file	arch/aarch64/aarch64/netbsd32_syscall.c		compat_netbsd32
 include "compat/ossaudio/files.ossaudio"
 include "compat/linux/files.linux"
 include "compat/linux/arch/aarch64/files.linux_aarch64"
-file	arch/aarch64/aarch64/linux_syscall.c	compat_linux
+file	arch/aarch64/aarch64/linux_syscall.c		compat_linux
+
+# Linux 32 bit compatibility (COMPAT_LINUX32)
+include "compat/linux32/files.linux32"
+include "compat/linux32/arch/aarch64/files.linux32_aarch64"
+file	arch/aarch64/aarch64/linux32_syscall.c		compat_linux32
 
 # profiling support
 file	dev/tprof/tprof_armv8.c			tprof	needs-flag

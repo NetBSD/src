@@ -1,0 +1,11 @@
+#	$NetBSD: files.linux32_aarch64,v 1.1 2021/11/25 03:08:04 ryo Exp $
+
+file	compat/linux32/arch/aarch64/linux32_syscalls.c		compat_linux32
+file	compat/linux32/arch/aarch64/linux32_sysent.c		compat_linux32
+file	compat/linux32/arch/aarch64/linux32_exec_machdep.c	compat_linux32
+file	compat/linux32/arch/aarch64/linux32_machdep.c		compat_linux32
+file	compat/linux32/arch/aarch64/linux32_missing.c		compat_linux32
+file	compat/linux32/arch/aarch64/linux32_sigcode.S		compat_linux32
+
+file	compat/linux32/common/linux32_ipccall.c			compat_linux32
+file	compat/linux32/common/linux32_uid16.c			compat_linux32

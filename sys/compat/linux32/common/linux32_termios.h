@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_termios.h,v 1.1 2006/02/15 09:31:17 manu Exp $ */
+/*	$NetBSD: linux32_termios.h,v 1.2 2021/11/25 03:08:04 ryo Exp $ */
 
 /*-
  * Copyright (c) 2006 Emmanuel Dreyfus, all rights reserved.
@@ -34,8 +34,12 @@
 #ifndef _LINUX32_TERMIOS_H
 #define _LINUX32_TERMIOS_H
 
-#if defined(__amd64__)
+#if defined(__aarch64__)
+#include <compat/linux32/arch/aarch64/linux32_termios.h>
+#elif defined(__amd64__)
 #include <compat/linux32/arch/amd64/linux32_termios.h>
+#else
+#error Undefined linux32_termios.h machine type.
 #endif
 
 /*

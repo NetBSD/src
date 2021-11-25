@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.260 2021/11/06 13:34:39 brad Exp $
+#	$NetBSD: Makefile,v 1.261 2021/11/25 03:08:05 ryo Exp $
 
 .include <bsd.own.mk>
 
@@ -365,6 +365,7 @@ SUBDIR+=	wbsio
 
 .if ${MACHINE_CPU} == "aarch64"
 SUBDIR+=	compat_linux
+SUBDIR+=	compat_linux32
 .endif
 
 .if ${MACHINE_CPU} == "m68k"

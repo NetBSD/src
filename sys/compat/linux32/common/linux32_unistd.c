@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_unistd.c,v 1.42 2019/11/09 23:44:31 jdolecek Exp $ */
+/*	$NetBSD: linux32_unistd.c,v 1.43 2021/11/25 03:08:04 ryo Exp $ */
 
 /*-
  * Copyright (c) 2006 Emmanuel Dreyfus, all rights reserved.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: linux32_unistd.c,v 1.42 2019/11/09 23:44:31 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_unistd.c,v 1.43 2021/11/25 03:08:04 ryo Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -73,6 +73,7 @@ __KERNEL_RCSID(0, "$NetBSD: linux32_unistd.c,v 1.42 2019/11/09 23:44:31 jdolecek
 #include <compat/linux32/common/linux32_sched.h>
 #include <compat/linux32/common/linux32_sysctl.h>
 #include <compat/linux32/common/linux32_socketcall.h>
+#include <compat/linux32/linux32_syscall.h>
 #include <compat/linux32/linux32_syscallargs.h>
 
 static int linux32_select1(struct lwp *, register_t *, 
@@ -475,6 +476,7 @@ linux32_sys_mknod(struct lwp *l, const struct linux32_sys_mknod_args *uap, regis
 	return linux_sys_mknod(l, &ua, retval);
 }
 
+#ifdef LINUX32_SYS_break
 int
 linux32_sys_break(struct lwp *l, const struct linux32_sys_break_args *uap, register_t *retval)
 {
@@ -486,6 +488,7 @@ linux32_sys_break(struct lwp *l, const struct linux32_sys_break_args *uap, regis
 
 	return ENOSYS;
 }
+#endif
 
 int
 linux32_sys_swapon(struct lwp *l, const struct linux32_sys_swapon_args *uap, register_t *retval)

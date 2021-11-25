@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_commons.c,v 1.2 2021/10/12 08:36:28 andvar Exp $	*/
+/*	$NetBSD: linux_commons.c,v 1.3 2021/11/25 03:08:04 ryo Exp $	*/
 
 /*
  * This file includes C files from the common
@@ -13,7 +13,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_commons.c,v 1.2 2021/10/12 08:36:28 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_commons.c,v 1.3 2021/11/25 03:08:04 ryo Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_sysv.h"
@@ -34,4 +34,5 @@ __KERNEL_RCSID(0, "$NetBSD: linux_commons.c,v 1.2 2021/10/12 08:36:28 andvar Exp
 #include "../../common/linux_pipe.c"
 #include "../../common/linux_file64.c"
 #include "../../common/linux_misc_notalpha.c"
+#include "../../common/linux_sig_notalpha.c"
 #include "../../common/linux_fadvise64.c"

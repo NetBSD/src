@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_misc.c,v 1.33 2021/09/20 02:20:03 thorpej Exp $	*/
+/*	$NetBSD: linux32_misc.c,v 1.34 2021/11/25 03:08:04 ryo Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 1999 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux32_misc.c,v 1.33 2021/09/20 02:20:03 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_misc.c,v 1.34 2021/11/25 03:08:04 ryo Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -51,6 +51,7 @@ __KERNEL_RCSID(0, "$NetBSD: linux32_misc.c,v 1.33 2021/09/20 02:20:03 thorpej Ex
 #include <compat/linux/common/linux_types.h>
 
 #include <compat/linux32/common/linux32_types.h>
+#include <compat/linux32/common/linux32_machdep.h>
 #include <compat/linux32/common/linux32_signal.h>
 #include <compat/linux32/common/linux32_sched.h>
 #include <compat/linux32/linux32_syscallargs.h>
@@ -165,7 +166,7 @@ linux32_sys_ptrace(struct lwp *l, const struct linux32_sys_ptrace_args *uap, reg
 {
 	/* {
 		i386, m68k, powerpc: T=int
-		alpha, amd64: T=long
+		aarch64, alpha, amd64: T=long
 		syscallarg(T) request;
 		syscallarg(T) pid;
 		syscallarg(T) addr;

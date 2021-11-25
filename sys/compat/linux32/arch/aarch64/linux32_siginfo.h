@@ -1,11 +1,11 @@
-/*	$NetBSD: linux32_systrace_args.c,v 1.2 2021/11/25 03:08:05 ryo Exp $	*/
+/*	$NetBSD: linux32_siginfo.h,v 1.1 2021/11/25 03:08:04 ryo Exp $	*/
 
 /*-
- * Copyright (c) 1998 The NetBSD Foundation, Inc.
+ * Copyright (c) 2021 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Eric Haszlakiewicz.
+ * by Ryo Shimizu.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -29,15 +29,70 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-/* XXX XXX This exists to keep kdump and friends happy. */
+#ifndef _AARCH64_LINUX32_SIGINFO_H_
+#define _AARCH64_LINUX32_SIGINFO_H_
 
-#include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: linux32_systrace_args.c,v 1.2 2021/11/25 03:08:05 ryo Exp $");
+#include <compat/linux32/common/linux32_sigevent.h>
 
-#if defined(__aarch64__)
-#include "../../sys/compat/linux32/arch/aarch64/linux32_systrace_args.c"
-#elif defined(__amd64__)
-#include "../../sys/compat/linux32/arch/amd64/linux32_systrace_args.c"
-#else
-#error "fix me"
-#endif
+#define SI_MAX_SIZE	128
+#define SI_PAD_SIZE	((SI_MAX_SIZE/sizeof(int)) - 3)	/* 3=signo,errno,pad */
+
+typedef struct linux32_siginfo {
+	int lsi_signo;
+	int lsi_errno;
+	int lsi_code;
+	union {
+		int _pad[SI_PAD_SIZE];
+
+		/* kill() */
+		struct {
+			linux32_pid_t	_pid;
+			linux32_uid_t	_uid;
+		} _kill;
+
+		/* POSIX.1b timers */
+		struct {
+			int _tid;
+			int _overrun;
+			linux32_sigval_t _sigval;
+			int _sys_private;
+		} _timer;
+
+		/* POSIX.1b signals */
+		struct {
+			linux32_pid_t _pid;
+			linux32_uid_t _uid;
+			linux32_sigval_t _sigval;
+		} _rt;
+
+		/* SIGCHLD */
+		struct {
+			linux32_pid_t _pid;
+			linux32_uid_t _uid;
+			int _status;
+			linux32_clock_t _utime;
+			linux32_clock_t _stime;
+		} _sigchld;
+
+		/* SIGILL, SIGFPE, SIGSEGV, SIGBUS, SIGTRAP, SIGEMT */
+		struct {
+			netbsd32_voidp _addr;
+			/* ... */
+		} _sigfault;
+
+		/* SIGPOLL */
+		struct {
+			int _band;
+			int _fd;
+		} _sigpoll;
+
+		/* SIGSYS */
+		struct {
+			netbsd32_voidp _call_addr;
+			int _syscall;
+			unsigned int _arch;
+		} _sigsys;
+	} _sidata;
+} linux32_siginfo_t;
+
+#endif /* _AARCH64_LINUX32_SIGINFO_H_ */

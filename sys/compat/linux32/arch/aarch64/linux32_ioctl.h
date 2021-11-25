@@ -1,4 +1,4 @@
-/* $NetBSD: linux32_signal.h,v 1.5 2021/11/25 03:08:04 ryo Exp $ */
+/*	$NetBSD: linux32_ioctl.h,v 1.1 2021/11/25 03:08:04 ryo Exp $	*/
 
 /*-
  * Copyright (c) 2006 Emmanuel Dreyfus, all rights reserved.
@@ -30,33 +30,18 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-#ifndef _LINUX32_SIGNAL_H_
-#define _LINUX32_SIGNAL_H_
+#ifndef _AARCH64_LINUX32_IOCTL_H_
+#define _AARCH64_LINUX32_IOCTL_H_
 
-#include <compat/linux32/common/linux32_siginfo.h>
-#if defined(__aarch64__)
-#include <compat/linux32/arch/aarch64/linux32_signal.h>
-#elif defined(__amd64__)
-#include <compat/linux32/arch/amd64/linux32_signal.h>
-#else
-#error Undefined linux32_signal.h machine type.
-#endif
+#define _LINUX32_IOC_NRBITS	8
+#define _LINUX32_IOC_TYPEBITS	8
+#define _LINUX32_IOC_SIZEBITS	14
+#define _LINUX32_IOC_DIRBITS	2
 
-void linux32_to_native_sigset(sigset_t *, const linux32_sigset_t *);
-void native_to_linux32_sigset(linux32_sigset_t *, const sigset_t *);
-int linux32_to_native_sigflags(const unsigned long);
-unsigned int native_to_linux32_sigflags(const int);
-void linux32_to_native_sigaction(struct sigaction *, 
-	const struct linux32_sigaction *);
-void native_to_linux32_sigaction(struct linux32_sigaction *, 
-	const struct sigaction *);
-void native_to_linux32_sigaltstack(struct linux32_sigaltstack *,
-    const stack_t *);
-void native_to_linux32_old_sigset(linux32_old_sigset_t *, const sigset_t *);
-void linux32_old_extra_to_native_sigset(sigset_t *,
-    const linux32_old_sigset_t *, const unsigned long *);
-void linux32_old_to_native_sigset(sigset_t *, const linux32_old_sigset_t *);
-int native_to_linux32_si_code(int);
-int native_to_linux32_si_status(int, int);
+#define _LINUX32_IOC_NRSHIFT	0
 
-#endif /* _LINUX32_SIGNAL_H_ */
+#define _LINUX32_IOC_NONE	0U
+#define _LINUX32_IOC_WRITE	1U
+#define _LINUX32_IOC_READ	2U
+
+#endif /* _AARCH64_LINUX32_IOCTL_H_ */

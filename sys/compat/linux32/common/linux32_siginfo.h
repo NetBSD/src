@@ -1,4 +1,4 @@
-/* 	$NetBSD: linux32_siginfo.h,v 1.1 2011/11/18 04:08:56 christos Exp $	*/
+/* 	$NetBSD: linux32_siginfo.h,v 1.2 2021/11/25 03:08:04 ryo Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -32,8 +32,12 @@
 #ifndef _LINUX32_SIGINFO_H
 #define _LINUX32_SIGINFO_H
 
-#if defined(__amd64__)
+#if defined(__aarch64__)
+#include <compat/linux32/arch/aarch64/linux32_siginfo.h>
+#elif defined(__amd64__)
 #include <compat/linux32/arch/amd64/linux32_siginfo.h>
+#else
+#error Undefined linux32_siginfo.h machine type.
 #endif
 
 /* si_code values for non signal */

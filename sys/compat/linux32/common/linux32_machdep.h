@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_machdep.h,v 1.3 2010/07/07 01:30:35 chs Exp $ */
+/*	$NetBSD: linux32_machdep.h,v 1.4 2021/11/25 03:08:04 ryo Exp $ */
 
 /*-
  * Copyright (c) 2006 Emmanuel Dreyfus, all rights reserved.
@@ -34,7 +34,9 @@
 #ifndef _LINUX32_MACHDEP_H
 #define _LINUX32_MACHDEP_H
 
-#if defined(__amd64__)
+#if defined(__aarch64__)
+#include <compat/linux32/arch/aarch64/linux32_machdep.h>
+#elif defined(__amd64__)
 #include <compat/linux32/arch/amd64/linux32_machdep.h>
 #else
 #error Undefined linux32_machdep.h machine type.

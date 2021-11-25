@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_types.h,v 1.16 2021/11/25 02:27:08 ryo Exp $ */
+/*	$NetBSD: linux32_types.h,v 1.17 2021/11/25 03:08:04 ryo Exp $ */
 
 /*-
  * Copyright (c) 2006 Emmanuel Dreyfus, all rights reserved.
@@ -34,8 +34,12 @@
 #ifndef _LINUX32_TYPES_H
 #define _LINUX32_TYPES_H
 
-#ifdef __amd64__
+#if defined(__aarch64__)
+#include <compat/linux32/arch/aarch64/linux32_types.h>
+#elif defined(__amd64__)
 #include <compat/linux32/arch/amd64/linux32_types.h>
+#else
+#error Undefined linux32_types.h machine type.
 #endif
 
 typedef uint16_t linux32_gid16_t;

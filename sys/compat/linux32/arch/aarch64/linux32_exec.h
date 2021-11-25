@@ -1,11 +1,11 @@
-/*	$NetBSD: linux32_systrace_args.c,v 1.2 2021/11/25 03:08:05 ryo Exp $	*/
+/*	$NetBSD: linux32_exec.h,v 1.1 2021/11/25 03:08:04 ryo Exp $	*/
 
 /*-
- * Copyright (c) 1998 The NetBSD Foundation, Inc.
+ * Copyright (c) 2021 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Eric Haszlakiewicz.
+ * by Ryo Shimizu.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -29,15 +29,29 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-/* XXX XXX This exists to keep kdump and friends happy. */
+#ifndef _AARCH64_LINUX32_EXEC_H_
+#define _AARCH64_LINUX32_EXEC_H_
 
-#include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: linux32_systrace_args.c,v 1.2 2021/11/25 03:08:05 ryo Exp $");
+#include <sys/exec_elf.h>
 
-#if defined(__aarch64__)
-#include "../../sys/compat/linux32/arch/aarch64/linux32_systrace_args.c"
-#elif defined(__amd64__)
-#include "../../sys/compat/linux32/arch/amd64/linux32_systrace_args.c"
-#else
-#error "fix me"
-#endif
+#define LINUX32_ELF_AUX_ENTRIES	20
+#define LINUX32_PLATFORM	"v7l"
+
+/* The extra data (ELF auxiliary table and platform name) on stack */
+struct linux32_extra_stack_data {
+	Aux32Info ai[LINUX32_ELF_AUX_ENTRIES];
+	uint32_t randbytes[4];
+	char hw_platform[8];	/* sizeof(LINUX32_PLATFORM) + align */
+};
+
+#define LINUX32_ELF_AUX_ARGSIZ	sizeof(struct linux32_extra_stack_data)
+
+#define LINUX32_ARM_KUSER_HELPER_ADDR	0xffff0000
+#define LINUX32_ARM_KUSER_HELPER_SIZE	0x00001000
+/* avoid 0xffff0000-. linux/arm uses this area as kuser_helper */
+#define LINUX32_USRSTACK	((vaddr_t)0xfffef000)
+#define LINUX32_MAXSSIZ		MAXSSIZ32	/* from machine/vmparam.h */
+
+int linux32_exec_setup_stack(struct lwp *, struct exec_package *);
+
+#endif /* _AARCH64_LINUX32_EXEC_H_ */

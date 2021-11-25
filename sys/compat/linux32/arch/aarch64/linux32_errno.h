@@ -1,11 +1,11 @@
-/*	$NetBSD: linux32_systrace_args.c,v 1.2 2021/11/25 03:08:05 ryo Exp $	*/
+/*	$NetBSD: linux32_errno.h,v 1.1 2021/11/25 03:08:04 ryo Exp $	*/
 
 /*-
- * Copyright (c) 1998 The NetBSD Foundation, Inc.
+ * Copyright (c) 2021 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Eric Haszlakiewicz.
+ * by Ryo Shimizu.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -29,15 +29,11 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-/* XXX XXX This exists to keep kdump and friends happy. */
+#ifndef _AARCH64_LINUX32_ERRNO_H_
+#define _AARCH64_LINUX32_ERRNO_H_
 
-#include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: linux32_systrace_args.c,v 1.2 2021/11/25 03:08:05 ryo Exp $");
+#include <compat/linux/common/linux_errno.h>
 
-#if defined(__aarch64__)
-#include "../../sys/compat/linux32/arch/aarch64/linux32_systrace_args.c"
-#elif defined(__amd64__)
-#include "../../sys/compat/linux32/arch/amd64/linux32_systrace_args.c"
-#else
-#error "fix me"
-#endif
+#define native_to_linux32_errno native_to_linux_errno
+
+#endif /* _AARCH64_LINUX32_ERRNO_H_ */
