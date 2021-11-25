@@ -1,4 +1,4 @@
-/*	$NetBSD: lexi.c,v 1.159 2021/11/25 17:28:13 rillig Exp $	*/
+/*	$NetBSD: lexi.c,v 1.160 2021/11/25 17:35:46 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)lexi.c	8.1 (Berkeley) 6/6/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: lexi.c,v 1.159 2021/11/25 17:28:13 rillig Exp $");
+__RCSID("$NetBSD: lexi.c,v 1.160 2021/11/25 17:35:46 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/lexi.c 337862 2018-08-15 18:19:45Z pstef $");
 #endif
@@ -579,60 +579,26 @@ lexi(void)
     bool next_unary;
 
     switch (token.e[-1]) {
+
+    /* INDENT OFF */
+    case '(':
+    case '[':	lsym = lsym_lparen_or_lbracket;	next_unary = true;	break;
+    case ')':
+    case ']':	lsym = lsym_rparen_or_rbracket;	next_unary = false;	break;
+    case '?':	lsym = lsym_question;		next_unary = true;	break;
+    case ':':	lsym = lsym_colon;		next_unary = true;	break;
+    case ';':	lsym = lsym_semicolon;		next_unary = true;	break;
+    case '{':	lsym = lsym_lbrace;		next_unary = true;	break;
+    case '}':	lsym = lsym_rbrace;		next_unary = true;	break;
+    case ',':	lsym = lsym_comma;		next_unary = true;	break;
+    case '.':	lsym = lsym_period;		next_unary = false;	break;
+    /* INDENT ON */
+
     case '\n':
 	/* if data has been exhausted, the '\n' is a dummy. */
 	lsym = had_eof ? lsym_eof : lsym_newline;
 	next_unary = ps.next_unary;
 	ps.next_col_1 = true;
-	break;
-
-    case '\'':
-    case '"':
-	lex_char_or_string();
-	lsym = lsym_word;
-	next_unary = false;
-	break;
-
-    case '(':
-    case '[':
-	lsym = lsym_lparen_or_lbracket;
-	next_unary = true;
-	break;
-
-    case ')':
-    case ']':
-	lsym = lsym_rparen_or_rbracket;
-	next_unary = false;
-	break;
-
-    case '#':
-	lsym = lsym_preprocessing;
-	next_unary = ps.next_unary;
-	break;
-
-    case '?':
-	lsym = lsym_question;
-	next_unary = true;
-	break;
-
-    case ':':
-	lsym = lsym_colon;
-	next_unary = true;
-	break;
-
-    case ';':
-	lsym = lsym_semicolon;
-	next_unary = true;
-	break;
-
-    case '{':
-	lsym = lsym_lbrace;
-	next_unary = true;
-	break;
-
-    case '}':
-	lsym = lsym_rbrace;
-	next_unary = true;
 	break;
 
     case '\f':
@@ -641,13 +607,15 @@ lexi(void)
 	ps.next_col_1 = true;
 	break;
 
-    case ',':
-	lsym = lsym_comma;
-	next_unary = true;
+    case '#':
+	lsym = lsym_preprocessing;
+	next_unary = ps.next_unary;
 	break;
 
-    case '.':
-	lsym = lsym_period;
+    case '\'':
+    case '"':
+	lex_char_or_string();
+	lsym = lsym_word;
 	next_unary = false;
 	break;
 
