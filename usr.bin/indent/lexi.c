@@ -1,4 +1,4 @@
-/*	$NetBSD: lexi.c,v 1.162 2021/11/25 17:50:00 rillig Exp $	*/
+/*	$NetBSD: lexi.c,v 1.163 2021/11/25 18:36:30 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)lexi.c	8.1 (Berkeley) 6/6/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: lexi.c,v 1.162 2021/11/25 17:50:00 rillig Exp $");
+__RCSID("$NetBSD: lexi.c,v 1.163 2021/11/25 18:36:30 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/lexi.c 337862 2018-08-15 18:19:45Z pstef $");
 #endif
@@ -552,6 +552,17 @@ found_typename:
     return is_type ? lsym_type_in_parentheses : lsym_word;
 }
 
+static bool
+is_asterisk_unary(void)
+{
+    if (ps.next_unary || ps.in_parameter_declaration)
+	return true;
+    if (ps.prev_token == lsym_word ||
+	    ps.prev_token == lsym_rparen_or_rbracket)
+	return false;
+    return ps.in_decl && ps.p_l_follow > 0;
+}
+
 static void
 lex_asterisk_unary(void)
 {
@@ -694,8 +705,7 @@ lexi(void)
 	break;
 
     case '*':
-	if (ps.next_unary || ps.in_parameter_declaration ||
-		(ps.in_decl && ps.p_l_follow > 0)) {
+	if (is_asterisk_unary()) {
 	    lex_asterisk_unary();
 	    lsym = lsym_unary_op;
 	    next_unary = true;

@@ -1,4 +1,4 @@
-/*	$NetBSD: fmt_decl.c,v 1.28 2021/11/25 18:20:21 rillig Exp $	*/
+/*	$NetBSD: fmt_decl.c,v 1.29 2021/11/25 18:36:30 rillig Exp $	*/
 /* $FreeBSD: head/usr.bin/indent/tests/declarations.0 334478 2018-06-01 09:41:15Z pstef $ */
 
 /*
@@ -590,7 +590,17 @@ buffer_add(buffer *buf, char ch)
 #indent end
 
 /* Before lexi.c 1.156 from 2021-11-25, indent generated 'buffer * buf'. */
-#indent run-equals-input
+#indent run
+void		buffer_add(buffer *, char);
+/* $ FIXME: space after '*' */
+void		buffer_add(buffer * buf, char ch);
+
+void
+buffer_add(buffer *buf, char ch)
+{
+	*buf->e++ = ch;
+}
+#indent end
 
 
 /*
@@ -793,9 +803,8 @@ function(void)
 
 /*
  * In declarations, most occurrences of '*' are pointer type derivations.
- * There are a few exceptions though.
- *
- * Broken since lexi.c 1.156 from 2021-11-25.
+ * There are a few exceptions though. Some of these are hard to detect
+ * without knowing which identifiers are type names.
  */
 #indent input
 char str[expr * expr];
@@ -809,17 +818,13 @@ char str[sizeof(**ptr)];
 #indent end
 
 #indent run -di0
-/* $ FIXME: The '*' must be a binary operator. */
-char str[expr *expr];
-/* $ FIXME: The first '*' must be a binary operator. */
-char str[expr **ptr];
-/* $ FIXME: The second '*' must be a binary operator. */
-char str[*ptr **ptr];
-/* $ FIXME: The '*' must be a binary operator. */
-char str[sizeof(expr *expr)];
-/* $ FIXME: The '*' must be a binary operator. */
-char str[sizeof(int) *expr];
+char str[expr * expr];
+char str[expr * *ptr];
+char str[*ptr * *ptr];
+char str[sizeof(expr * expr)];
+char str[sizeof(int) * expr];
 char str[sizeof(*ptr)];
-char str[sizeof(type **)];
+/* $ FIXME: should be 'type **' */
+char str[sizeof(type * *)];
 char str[sizeof(**ptr)];
 #indent end

@@ -1,4 +1,4 @@
-/* $NetBSD: lsym_sizeof.c,v 1.2 2021/11/25 18:10:23 rillig Exp $ */
+/* $NetBSD: lsym_sizeof.c,v 1.3 2021/11/25 18:36:30 rillig Exp $ */
 /* $FreeBSD$ */
 
 /*
@@ -20,14 +20,9 @@
 /*
  * After 'sizeof', a type name in parentheses does not start a cast
  * expression.
- *
- * Broken since lexi.c 1.156 from 2021-11-25.
  */
 #indent input
 char str[sizeof(int) * CHAR_BIT + 1];
 #indent end
 
-/* FIXME: The '*' must be a binary operator here. */
-#indent run -di0
-char str[sizeof(int) *CHAR_BIT + 1];
-#indent end
+#indent run-equals-input -di0
