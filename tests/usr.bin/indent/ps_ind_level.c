@@ -1,4 +1,4 @@
-/* $NetBSD: ps_ind_level.c,v 1.3 2021/11/20 16:54:17 rillig Exp $ */
+/* $NetBSD: ps_ind_level.c,v 1.4 2021/11/25 19:56:03 rillig Exp $ */
 /* $FreeBSD$ */
 
 /*
@@ -32,10 +32,10 @@ void function_in_column_1(void){}
  * In the above function declaration, the space between '){' is missing. This
  * is because the tokenizer only recognizes function definitions if they start
  * at indentation level 0, but this declaration starts at indentation level 4,
- * due to the indentation in line 1. It's an edge case and probably not worth
- * fixing.
+ * due to the indentation in line 1. It's an edge case that is probably not
+ * worth fixing.
  *
- * See 'in_parameter_declaration = true'.
+ * See 'in_func_def_params = true'.
  */
 
 
