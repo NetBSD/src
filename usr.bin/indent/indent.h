@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.h,v 1.100 2021/11/25 07:45:32 rillig Exp $	*/
+/*	$NetBSD: indent.h,v 1.101 2021/11/25 07:47:55 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-FreeBSD
@@ -305,7 +305,7 @@ extern struct parser_state {
 				 * declaration or an initializer */
     bool decl_on_line;		/* whether this line of code has part of a
 				 * declaration on it */
-    bool in_decl;		/* whether we are in a declaration stmt. The
+    bool in_decl;		/* whether we are in a declaration. The
 				 * processing of braces is then slightly
 				 * different */
     int just_saw_decl;
