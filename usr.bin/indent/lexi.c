@@ -1,4 +1,4 @@
-/*	$NetBSD: lexi.c,v 1.150 2021/11/20 09:59:53 rillig Exp $	*/
+/*	$NetBSD: lexi.c,v 1.151 2021/11/25 07:41:13 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)lexi.c	8.1 (Berkeley) 6/6/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: lexi.c,v 1.150 2021/11/20 09:59:53 rillig Exp $");
+__RCSID("$NetBSD: lexi.c,v 1.151 2021/11/25 07:41:13 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/lexi.c 337862 2018-08-15 18:19:45Z pstef $");
 #endif
@@ -305,7 +305,7 @@ debug_lexi(lexer_symbol lsym)
     debug_ps_bool(decl_indent_done);
 
     debug_ps_bool(in_stmt);
-    debug_ps_bool(ind_stmt);
+    debug_ps_bool(in_stmt_cont);
     debug_ps_bool(is_case_label);
 
     debug_ps_bool(search_stmt);
