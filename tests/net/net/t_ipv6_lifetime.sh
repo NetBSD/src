@@ -1,4 +1,4 @@
-#	$NetBSD: t_ipv6_lifetime.sh,v 1.6 2016/11/25 08:51:17 ozaki-r Exp $
+#	$NetBSD: t_ipv6_lifetime.sh,v 1.7 2021/11/25 14:17:22 hannken Exp $
 #
 # Copyright (c) 2015 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -97,7 +97,7 @@ basic_body()
 	atf_check -s exit:0 -o match:'pltime' rump.ifconfig -L shmif0
 	atf_check -s exit:0 -o match:'vltime' rump.ifconfig -L shmif0
 
-	if sysctl machdep.cpu_brand 2>/dev/null | grep QEMU >/dev/null 2>&1
+	if drvctl -l qemufwcfg0 >/dev/null 2>&1
 	then
 		atf_check -s exit:0 rump.ifconfig shmif0 inet6 $ip delete
 		atf_skip "unreliable under qemu, skip until PR kern/43997 fixed"

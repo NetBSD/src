@@ -1,4 +1,4 @@
-#	$NetBSD: net_common.sh,v 1.42 2021/07/09 05:54:11 yamaguchi Exp $
+#	$NetBSD: net_common.sh,v 1.43 2021/11/25 14:17:22 hannken Exp $
 #
 # Copyright (c) 2016 Internet Initiative Japan Inc.
 # All rights reserved.
@@ -537,7 +537,7 @@ dump()
 
 skip_if_qemu()
 {
-	if sysctl machdep.cpu_brand 2>/dev/null | grep QEMU >/dev/null 2>&1
+	if drvctl -l qemufwcfg0 >/dev/null 2>&1
 	then
 	    atf_skip "unreliable under qemu, skip until PR kern/43997 fixed"
 	fi
