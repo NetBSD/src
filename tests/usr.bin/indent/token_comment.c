@@ -1,4 +1,4 @@
-/* $NetBSD: token_comment.c,v 1.24 2021/11/20 16:54:17 rillig Exp $ */
+/* $NetBSD: token_comment.c,v 1.25 2021/11/25 20:14:00 rillig Exp $ */
 /* $FreeBSD$ */
 
 /*
@@ -1049,3 +1049,37 @@ line 4
 #indent end
 
 #indent run-equals-input
+
+
+/*
+ * The function analyze_comment wrongly joins the two comments.
+ */
+#indent input
+/*
+ *//*
+join*/
+#indent end
+
+#indent run -nfc1
+/*
+  *
+  * join
+  */
+#indent end
+
+
+/*
+ * The function analyze_comment generates malformed output.
+ */
+#indent input
+/*
+*//*
+error*/
+#indent end
+
+#indent run -nfc1
+/*
+ */
+  * error
+  */
+#indent end
