@@ -1,4 +1,4 @@
-/*	$NetBSD: lexi.c,v 1.156 2021/11/25 16:41:33 rillig Exp $	*/
+/*	$NetBSD: lexi.c,v 1.157 2021/11/25 16:51:24 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)lexi.c	8.1 (Berkeley) 6/6/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: lexi.c,v 1.156 2021/11/25 16:41:33 rillig Exp $");
+__RCSID("$NetBSD: lexi.c,v 1.157 2021/11/25 16:51:24 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/lexi.c 337862 2018-08-15 18:19:45Z pstef $");
 #endif
@@ -517,7 +517,7 @@ found_typename:
     if (inp_peek() == '(' && ps.tos <= 1 && ps.ind_level == 0 &&
 	!ps.in_parameter_declaration && !ps.block_init) {
 
-	if (probably_looking_at_definition()) {
+	if (ps.p_l_follow == 0 && probably_looking_at_definition()) {
 	    ps.is_function_definition = true;
 	    if (ps.in_decl)
 		ps.in_parameter_declaration = true;
