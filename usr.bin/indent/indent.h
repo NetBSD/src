@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.h,v 1.101 2021/11/25 07:47:55 rillig Exp $	*/
+/*	$NetBSD: indent.h,v 1.102 2021/11/25 18:48:37 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-FreeBSD
@@ -309,7 +309,7 @@ extern struct parser_state {
 				 * processing of braces is then slightly
 				 * different */
     int just_saw_decl;
-    bool in_parameter_declaration;
+    bool in_func_def_params;
     bool decl_indent_done;	/* whether the indentation for a declaration
 				 * has been added to the code buffer. */
 
