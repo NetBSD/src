@@ -1,4 +1,4 @@
-/*	$NetBSD: pr_comment.c,v 1.123 2021/11/25 20:44:09 rillig Exp $	*/
+/*	$NetBSD: pr_comment.c,v 1.124 2021/11/25 21:01:32 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)pr_comment.c	8.1 (Berkeley) 6/6/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: pr_comment.c,v 1.123 2021/11/25 20:44:09 rillig Exp $");
+__RCSID("$NetBSD: pr_comment.c,v 1.124 2021/11/25 21:01:32 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/pr_comment.c 334927 2018-06-10 16:44:18Z pstef $");
 #endif
@@ -83,7 +83,7 @@ com_terminate(void)
 }
 
 static bool
-fits_in_one_line(int max_line_length)
+fits_in_one_line(int com_ind, int max_line_length)
 {
     for (const char *p = inp_p(); *p != '\n'; p++) {
 	assert(*p != '\0');
@@ -91,7 +91,7 @@ fits_in_one_line(int max_line_length)
 	if (!(p[0] == '*' && p[1] == '/'))
 	    continue;
 
-	int len = ind_add(ps.com_ind + 3, inp_p(), p);
+	int len = ind_add(com_ind + 3, inp_p(), p);
 	len += ch_isblank(p[-1]) ? 2 : 3;
 	return len <= max_line_length;
     }
@@ -174,7 +174,7 @@ analyze_comment(bool *p_may_wrap, bool *p_break_delim,
     if (inp_peek() != ' ' && may_wrap)
 	com_add_char(' ');
 
-    if (break_delim && fits_in_one_line(adj_max_line_length))
+    if (break_delim && fits_in_one_line(com_ind, adj_max_line_length))
 	break_delim = false;
 
     if (break_delim) {
