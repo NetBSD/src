@@ -1,5 +1,5 @@
 #! /bin/sh
-# $NetBSD: t_errors.sh,v 1.20 2021/11/07 18:09:56 rillig Exp $
+# $NetBSD: t_errors.sh,v 1.21 2021/11/25 21:45:28 rillig Exp $
 #
 # Copyright (c) 2021 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -30,8 +30,6 @@
 # Tests for error handling in indent.
 
 indent=$(atf_config_get usr.bin.indent.test_indent /usr/bin/indent)
-nl='
-'
 
 expect_error()
 {
@@ -41,7 +39,7 @@ expect_error()
 	shift
 
 	atf_check -s 'exit:1' \
-	    -e "inline:$msg$nl" \
+	    -e "inline:$msg\n" \
 	    "$indent" "$@"
 }
 
@@ -147,7 +145,7 @@ atf_test_case 'option_npro_trailing_garbage'
 option_npro_trailing_garbage_body()
 {
 	atf_check -s 'exit:1' \
-	    -e 'inline:indent: Command line: unknown option "-npro-garbage"'"$nl" \
+	    -e 'inline:indent: Command line: unknown option "-npro-garbage"\n' \
 	    "$indent" -npro-garbage
 }
 
@@ -155,7 +153,7 @@ atf_test_case 'option_st_trailing_garbage'
 option_st_trailing_garbage_body()
 {
 	atf_check -s 'exit:1' \
-	    -e 'inline:indent: Command line: unknown option "-stdio"'"$nl" \
+	    -e 'inline:indent: Command line: unknown option "-stdio"\n' \
 	    "$indent" -stdio
 }
 
@@ -163,7 +161,7 @@ atf_test_case 'option_version_trailing_garbage'
 option_version_trailing_garbage_body()
 {
 	atf_check -s 'exit:1' \
-	    -e 'inline:indent: Command line: unknown option "--version-dump"'"$nl" \
+	    -e 'inline:indent: Command line: unknown option "--version-dump"\n' \
 	    "$indent" --version-dump
 }
 
@@ -204,8 +202,8 @@ unterminated_comment_wrap_body()
 	echo '/*' > comment.c
 
 	atf_check -s 'exit:1' \
-	    -o 'inline:/*'"$nl"' *'"$nl" \
-	    -e 'inline:error: Standard Input:2: Unterminated comment'"$nl" \
+	    -o 'inline:/*\n *\n' \
+	    -e 'inline:error: Standard Input:2: Unterminated comment\n' \
 	    "$indent" -st < comment.c
 }
 
@@ -215,8 +213,8 @@ unterminated_comment_nowrap_body()
 	echo '/*-' > comment.c
 
 	atf_check -s 'exit:1' \
-	    -o 'inline:/*-'"$nl$nl" \
-	    -e 'inline:error: Standard Input:2: Unterminated comment'"$nl" \
+	    -o 'inline:/*-\n\n' \
+	    -e 'inline:error: Standard Input:2: Unterminated comment\n' \
 	    "$indent" -st < comment.c
 }
 
@@ -232,7 +230,7 @@ in_place_wrong_backup_body()
 	# a file named 'code.c/subdir', but 'code.c' is already a regular
 	# file, not a directory.
 	atf_check -s 'exit:1' \
-	    -e 'inline:indent: code.c/subdir: Not a directory'"$nl" \
+	    -e 'inline:indent: code.c/subdir: Not a directory\n' \
 	    env SIMPLE_BACKUP_SUFFIX="/subdir" "$indent" code.c
 
 	# Since there was an early error, the original file is kept as is.
@@ -244,7 +242,7 @@ atf_test_case 'argument_input_enoent'
 argument_input_enoent_body()
 {
 	atf_check -s 'exit:1' \
-	    -e 'inline:indent: ./nonexistent.c: No such file or directory'"$nl" \
+	    -e 'inline:indent: ./nonexistent.c: No such file or directory\n' \
 	    "$indent" ./nonexistent.c
 }
 
@@ -254,7 +252,7 @@ argument_output_equals_input_name_body()
 	echo '/* comment */' > code.c
 
 	atf_check -s 'exit:1' \
-	    -e 'inline:indent: input and output files must be different'"$nl" \
+	    -e 'inline:indent: input and output files must be different\n' \
 	    "$indent" code.c code.c
 }
 
@@ -300,7 +298,7 @@ unexpected_end_of_file_body()
 	    code.c
 
 	atf_check \
-	    -o 'inline:struct {'"$nl" \
+	    -o 'inline:struct {\n' \
 	    cat code.c
 }
 
@@ -313,7 +311,7 @@ unexpected_closing_brace_top_level_body()
 	    'error: code.c:1: Statement nesting error' \
 	    code.c
 	atf_check \
-	    -o 'inline:}'"$nl" \
+	    -o 'inline:}\n' \
 	    cat code.c
 }
 
@@ -328,7 +326,7 @@ unexpected_closing_brace_decl_body()
 	# Despite the error message, the original file got overwritten with a
 	# best-effort rewrite of the code.
 	atf_check \
-	    -o 'inline:int		i = 3};'"$nl" \
+	    -o 'inline:int		i = 3};\n' \
 	    cat code.c
 }
 
