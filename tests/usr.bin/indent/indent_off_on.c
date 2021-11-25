@@ -1,4 +1,4 @@
-/* $NetBSD: indent_off_on.c,v 1.5 2021/11/20 11:13:18 rillig Exp $ */
+/* $NetBSD: indent_off_on.c,v 1.6 2021/11/25 17:10:53 rillig Exp $ */
 /* $FreeBSD$ */
 
 /*
@@ -189,14 +189,12 @@ void indent_off ( void ) ;
 /* $ XXX: space even though the comment might be regarded to be still in */
 /* $ XXX: the OFF section. */
 /* INDENT */
-void
-indent_on(void);
+void		indent_on(void);
 /* INDENT OFF */
 void indent_off ( void ) ;
 /* $ XXX: The below comment got moved from column 9 to column 1. */
 /* INDENT ON */
-void
-indent_on(void);		/* the comment may be indented */
+void		indent_on(void);	/* the comment may be indented */
 /* INDENT		OFF					*/
 void indent_off ( void ) ;
 /* INDENTATION ON */
@@ -204,16 +202,14 @@ void indent_still_off ( void ) ;	/* due to the word 'INDENTATION' */
 /* INDENT ON * */
 void indent_still_off ( void ) ;	/* due to the extra '*' at the end */
 /* INDENT ON */
-void
-indent_on(void);
+void		indent_on(void);
 /* INDENT: OFF */
-void
-indent_still_on(void);		/* due to the colon in the middle */
+void		indent_still_on(void);	/* due to the colon in the middle */
 /* $ The extra comment got moved to the left since there is no code in */
 /* $ that line. */
 /* INDENT OFF *//* extra comment */
-void
-indent_still_on(void);		/* due to the extra comment to the right */
+void		indent_still_on(void);	/* due to the extra comment to the
+					 * right */
 #indent end
 
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: fmt_decl.c,v 1.26 2021/11/25 16:41:33 rillig Exp $	*/
+/*	$NetBSD: fmt_decl.c,v 1.27 2021/11/25 17:10:53 rillig Exp $	*/
 /* $FreeBSD: head/usr.bin/indent/tests/declarations.0 334478 2018-06-01 09:41:15Z pstef $ */
 
 /*
@@ -726,8 +726,13 @@ static Shell	shells[] = {
 
 
 /*
- * Indent gets easily confused by function attribute macros that follow the
- * function declaration.
+ * Before lexi.c 1.158 from 2021-11-25, indent easily got confused by function
+ * attribute macros that followed the function declaration. Its primitive
+ * heuristic between deciding between a function declaration and a function
+ * definition only looked for ')' immediately followed by ',' or ';'. This was
+ * sufficient for well-formatted code before 1990. With the addition of
+ * function prototypes and GCC attributes, the situation became more
+ * complicated, and it took indent 31 years to adapt to this new reality.
  */
 #indent input
 static void JobInterrupt(bool, int) MAKE_ATTR_DEAD;
@@ -735,17 +740,16 @@ static void JobRestartJobs(void);
 #indent end
 
 #indent run
-/* $ FIXME: This is a declaration, not a definition, thus no line break before the name. */
 /* $ FIXME: Missing space before 'MAKE_ATTR_DEAD'. */
-static void
-JobInterrupt(bool, int)MAKE_ATTR_DEAD;
-/* $ FIXME: Must not be indented. */
-	static void	JobRestartJobs(void);
+static void	JobInterrupt(bool, int)MAKE_ATTR_DEAD;
+static void	JobRestartJobs(void);
 #indent end
 
 
 /*
- * Indent gets easily confused by function modifier macros.
+ * Before lexi.c 1.158 from 2021-11-25, indent easily got confused by the
+ * tokens ')' and ';' in the function body. It wrongly regarded them as
+ * finishing a function declaration.
  */
 #indent input
 MAKE_INLINE const char *
@@ -755,22 +759,19 @@ GNode_VarTarget(GNode *gn) { return GNode_ValueDirect(gn, TARGET); }
 /*
  * Before lexi.c 1.156 from 2021-11-25, indent generated 'GNode * gn' with an
  * extra space.
+ *
+ * Before lexi.c 1.158 from 2021-11-25, indent wrongly placed the function
+ * name in line 1, together with the '{'.
  */
-/* FIXME: The function name must be in column 1 of a separate line. */
-/* FIXME: The '{' must be in column 1 of the next line. */
-/* FIXME: The indentation depends on the function body; try 'return 0'. */
 #indent run
-MAKE_INLINE const char *GNode_VarTarget(GNode *gn) {
+MAKE_INLINE const char *
+GNode_VarTarget(GNode *gn)
+{
 	return GNode_ValueDirect(gn, TARGET);
 }
 #indent end
 
-/* FIXME: Missing space between '*' and 'gn'. */
-#indent run -TGNode
-MAKE_INLINE const char *GNode_VarTarget(GNode *gn){
-	return GNode_ValueDirect(gn, TARGET);
-}
-#indent end
+#indent run-equals-prev-output -TGNode
 
 
 /*
