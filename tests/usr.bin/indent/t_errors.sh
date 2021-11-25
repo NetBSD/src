@@ -1,5 +1,5 @@
 #! /bin/sh
-# $NetBSD: t_errors.sh,v 1.21 2021/11/25 21:45:28 rillig Exp $
+# $NetBSD: t_errors.sh,v 1.22 2021/11/25 21:48:23 rillig Exp $
 #
 # Copyright (c) 2021 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -182,17 +182,16 @@ option_buffer_overflow_body()
 atf_test_case 'option_special_missing_param'
 option_special_missing_param_body()
 {
-	# TODO: Write '-cli' instead of only 'cli'.
 	expect_error \
-	    'indent: Command line: ``cli'\'\'' requires an argument' \
+	    'indent: Command line: ``-cli'\'\'' requires an argument' \
 	    -cli
 
 	expect_error \
-	    'indent: Command line: ``T'\'\'' requires an argument' \
+	    'indent: Command line: ``-T'\'\'' requires an argument' \
 	    -T
 
 	expect_error \
-	    'indent: Command line: ``U'\'\'' requires an argument' \
+	    'indent: Command line: ``-U'\'\'' requires an argument' \
 	    -U
 }
 
