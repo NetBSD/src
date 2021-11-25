@@ -1,5 +1,5 @@
 #! /bin/sh
-# $NetBSD: t_misc.sh,v 1.18 2021/11/25 21:39:21 rillig Exp $
+# $NetBSD: t_misc.sh,v 1.19 2021/11/25 21:45:28 rillig Exp $
 #
 # Copyright (c) 2021 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -31,8 +31,6 @@
 # used in t_indent.
 
 indent=$(atf_config_get usr.bin.indent.test_indent /usr/bin/indent)
-nl='
-'
 
 atf_test_case 'in_place'
 in_place_body()
@@ -204,7 +202,7 @@ option_P_in_profile_file_body()
 
 	echo 'syntax # error' > code.c
 
-	atf_check -o 'inline:syntax'"$nl"'#error'"$nl" \
+	atf_check -o 'inline:syntax\n#error\n' \
 	    "$indent" < code.c
 }
 
