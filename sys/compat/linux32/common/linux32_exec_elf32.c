@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_exec_elf32.c,v 1.21 2021/11/25 02:48:00 ryo Exp $ */
+/*	$NetBSD: linux32_exec_elf32.c,v 1.22 2021/11/25 03:08:04 ryo Exp $ */
 
 /*-                     
  * Copyright (c) 1995, 1998, 2000, 2001,2006 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux32_exec_elf32.c,v 1.21 2021/11/25 02:48:00 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_exec_elf32.c,v 1.22 2021/11/25 03:08:04 ryo Exp $");
 
 #define	ELFSIZE		32
 
@@ -53,7 +53,9 @@ __KERNEL_RCSID(0, "$NetBSD: linux32_exec_elf32.c,v 1.21 2021/11/25 02:48:00 ryo 
 #include <compat/netbsd32/netbsd32_exec.h>
 #include <compat/linux32/common/linux32_exec.h>
 
+#ifndef __aarch64__
 #include <machine/cpuvar.h>
+#endif
 #include <machine/frame.h>
 
 #ifdef DEBUG_LINUX

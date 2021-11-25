@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_exec.h,v 1.7 2010/07/07 01:30:35 chs Exp $ */
+/*	$NetBSD: linux32_exec.h,v 1.8 2021/11/25 03:08:04 ryo Exp $ */
 
 /*-
  * Copyright (c) 2006 Emmanuel Dreyfus, all rights reserved.
@@ -36,8 +36,12 @@
 
 #include <compat/netbsd32/netbsd32.h>
 
-#if defined(__amd64__)
+#if defined(__aarch64__)
+#include <compat/linux32/arch/aarch64/linux32_exec.h>
+#elif defined(__amd64__)
 #include <compat/linux32/arch/amd64/linux32_exec.h>
+#else
+#error Undefined linux32_exec.h machine type.
 #endif
 
 extern struct emul emul_linux32;

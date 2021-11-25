@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_sysinfo.c,v 1.13 2020/06/11 22:21:05 ad Exp $ */
+/*	$NetBSD: linux32_sysinfo.c,v 1.14 2021/11/25 03:08:04 ryo Exp $ */
 
 /*-
  * Copyright (c) 2006 Emmanuel Dreyfus, all rights reserved.
@@ -33,10 +33,11 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: linux32_sysinfo.c,v 1.13 2020/06/11 22:21:05 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_sysinfo.c,v 1.14 2021/11/25 03:08:04 ryo Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
+#include <sys/atomic.h>
 #include <sys/kernel.h>
 #include <sys/dirent.h>
 #include <sys/proc.h>

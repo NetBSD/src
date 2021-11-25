@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_misc_notalpha.c,v 1.113 2021/09/23 11:28:47 christos Exp $	*/
+/*	$NetBSD: linux_misc_notalpha.c,v 1.114 2021/11/25 03:08:04 ryo Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 2008, 2020 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_misc_notalpha.c,v 1.113 2021/09/23 11:28:47 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_misc_notalpha.c,v 1.114 2021/11/25 03:08:04 ryo Exp $");
 
 /*
  * Note that we must NOT include "opt_compat_linux32.h" here,
@@ -85,7 +85,6 @@ __KERNEL_RCSID(0, "$NetBSD: linux_misc_notalpha.c,v 1.113 2021/09/23 11:28:47 ch
 #endif
 
 #ifndef COMPAT_LINUX32
-#if !defined(__aarch64__)
 /*
  * Alarm. This is a libc call which uses setitimer(2) in NetBSD.
  * Do the same here.
@@ -121,7 +120,6 @@ linux_sys_alarm(struct lwp *l, const struct linux_sys_alarm_args *uap, register_
 	*retval = oitv.it_value.tv_sec;
 	return 0;
 }
-#endif
 #endif /* !COMPAT_LINUX32 */
 
 #if !defined(__aarch64__) && !defined(__amd64__)
