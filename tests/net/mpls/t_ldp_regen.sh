@@ -1,4 +1,4 @@
-# $NetBSD: t_ldp_regen.sh,v 1.10 2020/04/01 01:51:02 christos Exp $
+# $NetBSD: t_ldp_regen.sh,v 1.11 2021/11/25 14:17:22 hannken Exp $
 #
 # Copyright (c) 2013 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -139,7 +139,7 @@ wait_ldp_ok() {
 
 ldp_regen_body() {
 
-        if sysctl machdep.cpu_brand 2>/dev/null | grep QEMU >/dev/null 2>&1
+	if drvctl -l qemufwcfg0 >/dev/null 2>&1
 	then
 	    atf_skip "unreliable under qemu, skip until PR kern/43997 fixed"
 	fi
