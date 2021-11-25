@@ -1,4 +1,4 @@
-/*	$NetBSD: fmt_decl.c,v 1.25 2021/11/25 16:05:07 rillig Exp $	*/
+/*	$NetBSD: fmt_decl.c,v 1.26 2021/11/25 16:41:33 rillig Exp $	*/
 /* $FreeBSD: head/usr.bin/indent/tests/declarations.0 334478 2018-06-01 09:41:15Z pstef $ */
 
 /*
@@ -558,16 +558,25 @@ int	       *aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
  * similar to the binary operator '*' because it was surrounded by two
  * identifiers.
  *
- * As of 2021-11-21, indent interprets the '*' in the function declaration in
- * line 1 as a binary operator, even though it is followed by a ',' directly.
- * In the function declaration in line 2, as well as the function definition
- * in line 4, indent interprets the '*' as a binary operator as well, which
- * kind of makes sense since it is surrounded by words, but it's still in a
- * declaration.
+ * As of 2021-11-21, indent interpreted the '*' in the function declaration in
+ * line 1 as a binary operator, even though the '*' was followed by a ','
+ * directly. This was not visible in the output though since indent never
+ * outputs a space before a comma.
  *
- * Essentially, as of 2021, indent has missed the last 31 years of advances in
- * the C programming language.  Instead, the workaround has been to pass all
- * type names via the options '-ta' and '-T'.
+ * In the function declaration in line 2 and the function definition in line
+ * 5, indent interpreted the '*' as a binary operator as well and accordingly
+ * placed spaces around the '*'. On a very low syntactical analysis level,
+ * this may have made sense since the '*' was surrounded by words, but still
+ * the '*' is part of a declaration, where a binary operator does not make
+ * sense.
+ *
+ * Essentially, as of 2021, indent had missed the last 31 years of advances in
+ * the C programming language, in particular the invention of function
+ * prototypes. Instead, the workaround had been to require all type names to
+ * be specified via the options '-ta' and '-T'. This put the burden on the
+ * user instead of the implementer.
+ *
+ * Fixed in lexi.c 1.156 from 2021-11-25.
  */
 #indent input
 void		buffer_add(buffer *, char);
@@ -580,16 +589,8 @@ buffer_add(buffer *buf, char ch)
 }
 #indent end
 
-#indent run
-void		buffer_add(buffer *, char);
-void		buffer_add(buffer * buf, char ch);
-
-void
-buffer_add(buffer * buf, char ch)
-{
-	*buf->e++ = ch;
-}
-#indent end
+/* Before lexi.c 1.156 from 2021-11-25, indent generated 'buffer * buf'. */
+#indent run-equals-input
 
 
 /*
@@ -642,7 +643,9 @@ static CachedDir *dot = NULL;
 
 
 /*
- * Indent gets easily confused by unknown type names in declarations.
+ * Before lexi.c 1.156 from 2021-11-25, indent easily got confused by unknown
+ * type names in declarations and generated 'HashEntry * he' with an extra
+ * space.
  */
 #indent input
 static CachedDir *
@@ -656,7 +659,9 @@ CachedDir_New(const char *name)
 
 
 /*
- * Indent gets easily confused by unknown type names in function declarations.
+ * Before lexi.c 1.156 from 2021-11-25, indent easily got confused by unknown
+ * type names in declarations and generated 'CachedDir * dir' with an extra
+ * space.
  */
 #indent input
 static CachedDir *
@@ -665,18 +670,16 @@ CachedDir_Ref(CachedDir *dir)
 }
 #indent end
 
-/* FIXME: Extraneous ' ' between '*' and 'dir'. */
-#indent run
-static CachedDir *
-CachedDir_Ref(CachedDir * dir)
-{
-}
-#indent end
+#indent run-equals-input
 
 
 /*
- * In some cases, indent does not get confused by unknown type names. At least
- * it gets the placement of the '{' correct in this example.
+ * Before lexi.c 1.156 from 2021-11-25, indent easily got confused by unknown
+ * type names in declarations and generated 'HashEntry * he' with an extra
+ * space.
+ *
+ * Before lexi.c 1.153 from 2021-11-25, indent also placed the '{' at the end
+ * of the line.
  */
 #indent input
 static bool
@@ -685,17 +688,13 @@ HashEntry_KeyEquals(const HashEntry *he, Substring key)
 }
 #indent end
 
-#indent run
-static bool
-HashEntry_KeyEquals(const HashEntry * he, Substring key)
-{
-}
-#indent end
+#indent run-equals-input
 
 
 /*
- * Indent doesn't notice that the two '*' are in a declaration, instead it
- * interprets the first '*' as a binary operator.
+ * Before lexi.c 1.156 from 2021-11-25, indent didn't notice that the two '*'
+ * are in a declaration, instead it interpreted the first '*' as a binary
+ * operator, therefore generating 'CachedDir * *var' with an extra space.
  */
 #indent input
 static void
@@ -704,14 +703,7 @@ CachedDir_Assign(CachedDir **var, CachedDir *dir)
 }
 #indent end
 
-/* FIXME: Extraneous space between '*' and '*'. */
-#indent run
-static void
-CachedDir_Assign(CachedDir * *var, CachedDir * dir)
-{
-}
-#indent end
-
+#indent run-equals-input
 #indent run-equals-input -TCachedDir
 
 
@@ -760,12 +752,15 @@ MAKE_INLINE const char *
 GNode_VarTarget(GNode *gn) { return GNode_ValueDirect(gn, TARGET); }
 #indent end
 
+/*
+ * Before lexi.c 1.156 from 2021-11-25, indent generated 'GNode * gn' with an
+ * extra space.
+ */
 /* FIXME: The function name must be in column 1 of a separate line. */
 /* FIXME: The '{' must be in column 1 of the next line. */
-/* FIXME: The '*' before 'gn' is extraneous. */
 /* FIXME: The indentation depends on the function body; try 'return 0'. */
 #indent run
-MAKE_INLINE const char *GNode_VarTarget(GNode * gn) {
+MAKE_INLINE const char *GNode_VarTarget(GNode *gn) {
 	return GNode_ValueDirect(gn, TARGET);
 }
 #indent end
