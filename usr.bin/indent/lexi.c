@@ -1,4 +1,4 @@
-/*	$NetBSD: lexi.c,v 1.154 2021/11/25 08:08:28 rillig Exp $	*/
+/*	$NetBSD: lexi.c,v 1.155 2021/11/25 16:09:02 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)lexi.c	8.1 (Berkeley) 6/6/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: lexi.c,v 1.154 2021/11/25 08:08:28 rillig Exp $");
+__RCSID("$NetBSD: lexi.c,v 1.155 2021/11/25 16:09:02 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/lexi.c 337862 2018-08-15 18:19:45Z pstef $");
 #endif
@@ -450,6 +450,15 @@ cmp_keyword_by_name(const void *key, const void *elem)
     return strcmp(key, ((const struct keyword *)elem)->name);
 }
 
+static bool
+probably_looking_at_definition(void)
+{
+    for (const char *p = inp_p(), *e = inp_line_end(); p < e;)
+	if (*p++ == ')' && (*p == ';' || *p == ','))
+	    return false;
+    return true;
+}
+
 /* Read an alphanumeric token into 'token', or return lsym_eof. */
 static lexer_symbol
 lexi_alnum(void)
@@ -508,15 +517,12 @@ found_typename:
     if (inp_peek() == '(' && ps.tos <= 1 && ps.ind_level == 0 &&
 	!ps.in_parameter_declaration && !ps.block_init) {
 
-	for (const char *p = inp_p(), *e = inp_line_end(); p < e;)
-	    if (*p++ == ')' && (*p == ';' || *p == ','))
-		goto no_function_definition;
-
-	ps.is_function_definition = true;
-	if (ps.in_decl)
-	    ps.in_parameter_declaration = true;
-	return lsym_funcname;
-no_function_definition:;
+	if (probably_looking_at_definition()) {
+	    ps.is_function_definition = true;
+	    if (ps.in_decl)
+		ps.in_parameter_declaration = true;
+	    return lsym_funcname;
+	}
 
     } else if (ps.p_l_follow == 0 && probably_typename()) {
 	ps.next_unary = true;
