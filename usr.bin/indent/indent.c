@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.c,v 1.230 2021/11/25 07:41:13 rillig Exp $	*/
+/*	$NetBSD: indent.c,v 1.231 2021/11/25 07:45:32 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)indent.c	5.17 (Berkeley) 6/7/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: indent.c,v 1.230 2021/11/25 07:41:13 rillig Exp $");
+__RCSID("$NetBSD: indent.c,v 1.231 2021/11/25 07:45:32 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/indent.c 340138 2018-11-04 19:24:49Z oshogbo $");
 #endif
@@ -730,7 +730,8 @@ process_rparen_or_rbracket(bool *spaced_expr, bool *force_nl, stmt_head hd)
 	*spaced_expr = false;
 	*force_nl = true;	/* must force newline after if */
 	ps.next_unary = true;
-	ps.in_stmt = false;	/* don't use stmt continuation indentation */
+	ps.in_stmt_or_decl = false;	/* don't use stmt continuation
+					 * indentation */
 
 	parse_stmt_head(hd);
     }
@@ -817,7 +818,7 @@ process_colon(int *quest_level, bool *force_nl, bool *seen_case)
     buf_terminate(&lab);
     buf_reset(&code);
 
-    ps.in_stmt = false;
+    ps.in_stmt_or_decl = false;
     ps.is_case_label = *seen_case;
     *force_nl = *seen_case;
     *seen_case = false;
@@ -866,7 +867,7 @@ process_semicolon(bool *seen_case, int *quest_level, int decl_ind,
     }
     *code.e++ = ';';
     ps.want_blank = true;
-    ps.in_stmt = ps.p_l_follow > 0;
+    ps.in_stmt_or_decl = ps.p_l_follow > 0;
 
     if (!*spaced_expr) {	/* if not if for (;;) */
 	parse(psym_semicolon);	/* let parser know about end of stmt */
@@ -878,7 +879,7 @@ static void
 process_lbrace(bool *force_nl, bool *spaced_expr, stmt_head hd,
     int *di_stack, int di_stack_cap, int *decl_ind)
 {
-    ps.in_stmt = false;		/* don't indent the {} */
+    ps.in_stmt_or_decl = false;		/* don't indent the {} */
 
     if (!ps.block_init)
 	*force_nl = true;	/* force other stuff on same line as '{' onto
@@ -969,7 +970,7 @@ process_rbrace(bool *spaced_expr, int *decl_ind, const int *di_stack)
 
     *code.e++ = '}';
     ps.want_blank = true;
-    ps.in_stmt = false;
+    ps.in_stmt_or_decl = false;
     ps.in_stmt_cont = false;
 
     if (ps.decl_level > 0) { /* we are in multi-level structure declaration */
@@ -995,7 +996,7 @@ process_rbrace(bool *spaced_expr, int *decl_ind, const int *di_stack)
 static void
 process_do(bool *force_nl, bool *last_else)
 {
-    ps.in_stmt = false;
+    ps.in_stmt_or_decl = false;
 
     if (code.e != code.s) {	/* make sure this starts a line */
 	if (opt.verbose)
@@ -1012,7 +1013,7 @@ process_do(bool *force_nl, bool *last_else)
 static void
 process_else(bool *force_nl, bool *last_else)
 {
-    ps.in_stmt = false;
+    ps.in_stmt_or_decl = false;
 
     if (code.e > code.s && !(opt.cuddle_else && code.e[-1] == '}')) {
 	if (opt.verbose)
@@ -1085,7 +1086,7 @@ process_ident(lexer_symbol lsym, int decl_ind, bool tabs_to_var,
 	*spaced_expr = false;
 	*force_nl = true;
 	ps.next_unary = true;
-	ps.in_stmt = false;
+	ps.in_stmt_or_decl = false;
 	parse_stmt_head(hd);
     }
 }
@@ -1298,8 +1299,8 @@ main_loop(void)
 	    force_nl = false;
 	else if (lsym != lsym_comment) {
 	    maybe_break_line(lsym, &force_nl);
-	    ps.in_stmt = true;	/* add an extra level of indentation; turned
-				 * off again by a ';' or '}' */
+	    ps.in_stmt_or_decl = true;	/* add an extra level of indentation;
+					 * turned off again by a ';' or '}' */
 	    if (com.s != com.e)
 		move_com_to_code();
 	}

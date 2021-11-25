@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.h,v 1.99 2021/11/25 07:41:13 rillig Exp $	*/
+/*	$NetBSD: indent.h,v 1.100 2021/11/25 07:45:32 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-FreeBSD
@@ -313,9 +313,8 @@ extern struct parser_state {
     bool decl_indent_done;	/* whether the indentation for a declaration
 				 * has been added to the code buffer. */
 
-    bool in_stmt;		/* TODO: rename to something appropriate; this
-				 * is set to true in struct declarations as
-				 * well, so 'stmt' isn't accurate */
+    bool in_stmt_or_decl;	/* whether in a statement or a struct
+				 * declaration or a plain declaration */
     bool in_stmt_cont;		/* whether the next line should have an extra
 				 * indentation level because we are in the
 				 * middle of a statement */
