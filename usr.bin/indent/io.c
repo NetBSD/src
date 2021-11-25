@@ -1,4 +1,4 @@
-/*	$NetBSD: io.c,v 1.129 2021/11/19 20:23:17 rillig Exp $	*/
+/*	$NetBSD: io.c,v 1.130 2021/11/25 07:41:13 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)io.c	8.1 (Berkeley) 6/6/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: io.c,v 1.129 2021/11/19 20:23:17 rillig Exp $");
+__RCSID("$NetBSD: io.c,v 1.130 2021/11/25 07:41:13 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/io.c 334927 2018-06-10 16:44:18Z pstef $");
 #endif
@@ -471,9 +471,7 @@ output_line(char line_terminator)
 	    output_char('\n');
 
 	if (ps.ind_level == 0)
-	    ps.ind_stmt = false;	/* this is a class A kludge. don't do
-					 * additional statement indentation if
-					 * we are at bracket level 0 */
+	    ps.in_stmt_cont = false;	/* this is a class A kludge */
 
 	if (lab.e != lab.s || code.e != code.s)
 	    ps.stats.code_lines++;
@@ -498,7 +496,7 @@ output_line(char line_terminator)
     }
 
     ps.decl_on_line = ps.in_decl;	/* for proper comment indentation */
-    ps.ind_stmt = ps.in_stmt && !ps.in_decl;
+    ps.in_stmt_cont = ps.in_stmt && !ps.in_decl;
     ps.decl_indent_done = false;
 
     *(lab.e = lab.s) = '\0';	/* reset buffers */
@@ -553,7 +551,7 @@ compute_code_indent(void)
     int base_ind = ps.ind_level * opt.indent_size;
 
     if (ps.paren_level == 0) {
-	if (ps.ind_stmt)
+	if (ps.in_stmt_cont)
 	    return base_ind + opt.continuation_indent;
 	return base_ind;
     }
