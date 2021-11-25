@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_fcntl.c,v 1.10 2014/05/17 09:30:07 njoly Exp $ */
+/*	$NetBSD: linux32_fcntl.c,v 1.11 2021/11/25 02:35:00 ryo Exp $ */
 
 /*-
  * Copyright (c) 2006 Emmanuel Dreyfus, all rights reserved.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: linux32_fcntl.c,v 1.10 2014/05/17 09:30:07 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_fcntl.c,v 1.11 2021/11/25 02:35:00 ryo Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -57,8 +57,10 @@ __KERNEL_RCSID(0, "$NetBSD: linux32_fcntl.c,v 1.10 2014/05/17 09:30:07 njoly Exp
 #include <compat/linux/linux_syscallargs.h>
 
 #include <compat/linux32/common/linux32_types.h>
+#include <compat/linux32/common/linux32_fcntl.h>
 #include <compat/linux32/common/linux32_signal.h>
 #include <compat/linux32/common/linux32_machdep.h>
+#include <compat/linux32/linux32_syscall.h>
 #include <compat/linux32/linux32_syscallargs.h>
 
 struct linux32_flock {
@@ -120,18 +122,18 @@ linux32_sys_fcntl(struct lwp *l, const struct linux32_sys_fcntl_args *uap, regis
 	int cmd =  SCARG(uap, cmd);
 
 	switch (cmd) {
-	case LINUX_F_GETLK64:
+	case LINUX32_F_GETLK64:
 		do_linux_getlk(SCARG(uap, fd), cmd, SCARG_P32(uap, arg),
 		    linux32, flock64);
-	case LINUX_F_SETLK64:
-	case LINUX_F_SETLKW64:
+	case LINUX32_F_SETLK64:
+	case LINUX32_F_SETLKW64:
 		do_linux_setlk(SCARG(uap, fd), cmd, SCARG_P32(uap, arg),
 		    linux32, flock64, LINUX_F_SETLK64);
-	case LINUX_F_GETLK:
+	case LINUX32_F_GETLK:
 		do_linux_getlk(SCARG(uap, fd), cmd, SCARG_P32(uap, arg),
 		    linux32, flock);
-	case LINUX_F_SETLK:
-	case LINUX_F_SETLKW:
+	case LINUX32_F_SETLK:
+	case LINUX32_F_SETLKW:
 		do_linux_setlk(SCARG(uap, fd), cmd, SCARG_P32(uap, arg),
 		    linux32, flock, LINUX_F_SETLK);
 	default:
@@ -145,6 +147,7 @@ linux32_sys_fcntl(struct lwp *l, const struct linux32_sys_fcntl_args *uap, regis
 	return linux_sys_fcntl(l, &ua, retval);
 }
 
+#ifdef LINUX32_SYS_fadvise64
 int
 linux32_sys_fadvise64(struct lwp *l,
     const struct linux32_sys_fadvise64_args *uap, register_t *retval)
@@ -161,6 +164,7 @@ linux32_sys_fadvise64(struct lwp *l,
 	return do_posix_fadvise(SCARG(uap, fd), off,
 	    SCARG(uap, len), linux_to_bsd_posix_fadv(SCARG(uap, advice)));
 }
+#endif
 
 int
 linux32_sys_fadvise64_64(struct lwp *l,
