@@ -1,4 +1,4 @@
-/* $NetBSD: tprof_armv8.c,v 1.8 2021/11/01 17:03:53 skrll Exp $ */
+/* $NetBSD: tprof_armv8.c,v 1.9 2021/11/25 09:36:21 skrll Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tprof_armv8.c,v 1.8 2021/11/01 17:03:53 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tprof_armv8.c,v 1.9 2021/11/25 09:36:21 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -149,7 +149,10 @@ armv8_pmu_ident(void)
 static int
 armv8_pmu_start(const tprof_param_t *param)
 {
-	uint64_t xc;
+	/* PMCR.N of 0 means that no event counters are available */
+	if (__SHIFTOUT(reg_pmcr_el0_read(), PMCR_N) == 0) {
+		return EINVAL;
+	}
 
 	if (!armv8_pmu_event_implemented(param->p_event)) {
 		printf("%s: event %#" PRIx64 " not implemented on this CPU\n",

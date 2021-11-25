@@ -1,4 +1,4 @@
-/* $NetBSD: cpu_acpi.c,v 1.12 2021/11/24 10:01:24 jmcneill Exp $ */
+/* $NetBSD: cpu_acpi.c,v 1.13 2021/11/25 09:36:20 skrll Exp $ */
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_acpi.c,v 1.12 2021/11/24 10:01:24 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_acpi.c,v 1.13 2021/11/25 09:36:20 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -225,7 +225,12 @@ cpu_acpi_tprof_intr_establish(ACPI_SUBTABLE_HEADER *hdrp, void *aux)
 static void
 cpu_acpi_tprof_init(device_t self)
 {
-	armv8_pmu_init();
+	int err = armv8_pmu_init();
+	if (err) {
+		aprint_error_dev(self,
+		    "failed to initialize PMU event counter\n");
+		return;
+	}
 
 	if (acpi_madt_map() != AE_OK) {
 		aprint_error_dev(self,
