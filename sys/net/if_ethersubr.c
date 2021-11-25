@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ethersubr.c,v 1.304 2021/11/15 07:07:05 yamaguchi Exp $	*/
+/*	$NetBSD: if_ethersubr.c,v 1.305 2021/11/25 00:49:34 msaitoh Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.304 2021/11/15 07:07:05 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.305 2021/11/25 00:49:34 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -584,7 +584,7 @@ ether_input_llc(struct ifnet *ifp, struct mbuf *m, struct ether_header *eh)
 	struct llc *l;
 
 	if (m->m_len < sizeof(*eh) + sizeof(struct llc))
-		goto drop;
+		goto error;
 
 	l = (struct llc *)(eh+1);
 	switch (l->llc_dsap) {
@@ -593,7 +593,7 @@ ether_input_llc(struct ifnet *ifp, struct mbuf *m, struct ether_header *eh)
 		switch (l->llc_control) {
 		case LLC_UI:
 			if (l->llc_ssap != LLC_SNAP_LSAP)
-				goto drop;
+				goto error;
 
 			if (memcmp(&(l->llc_snap_org_code)[0],
 			    at_org_code, sizeof(at_org_code)) == 0 &&
@@ -618,21 +618,25 @@ ether_input_llc(struct ifnet *ifp, struct mbuf *m, struct ether_header *eh)
 			}
 
 		default:
-			goto drop;
+			goto error;
 		}
 		break;
 #endif
 	default:
-		goto drop;
+		goto noproto;
 	}
 
 	KASSERT(inq != NULL);
 	IFQ_ENQUEUE_ISR(inq, m, isr);
 	return;
 
-drop:
+noproto:
 	m_freem(m);
-	if_statinc(ifp, if_ierrors); /* XXX should have a dedicated counter? */
+	if_statinc(ifp, if_noproto);
+	return;
+error:
+	m_freem(m);
+	if_statinc(ifp, if_ierrors);
 	return;
 }
 #endif /* defined (LLC) || defined (NETATALK) */
@@ -699,7 +703,7 @@ ether_input(struct ifnet *ifp, struct mbuf *m)
 		}
 		mutex_exit(&bigpktpps_lock);
 #endif
-		goto drop;
+		goto error;
 	}
 
 	if (ETHER_IS_MULTICAST(eh->ether_dhost)) {
@@ -795,7 +799,7 @@ ether_input(struct ifnet *ifp, struct mbuf *m)
 		vlan_input(ifp, m);
 		return;
 #else
-		goto drop;
+		goto noproto;
 #endif
 	}
 
@@ -832,7 +836,7 @@ ether_input(struct ifnet *ifp, struct mbuf *m)
 			return;
 		} else
 #endif
-			goto drop;
+			goto noproto;
 	}
 
 #if NPPPOE > 0
@@ -849,7 +853,7 @@ ether_input(struct ifnet *ifp, struct mbuf *m)
 		uint8_t subtype;
 
 		if (m->m_pkthdr.len < sizeof(*eh) + sizeof(subtype))
-			goto drop;
+			goto error;
 
 		m_copydata(m, sizeof(*eh), sizeof(subtype), &subtype);
 		switch (subtype) {
@@ -897,7 +901,7 @@ ether_input(struct ifnet *ifp, struct mbuf *m)
 		ether_input_llc(ifp, m, eh);
 		return;
 #else
-		goto error;
+		goto noproto;
 #endif
 	}
 
@@ -927,7 +931,7 @@ ether_input(struct ifnet *ifp, struct mbuf *m)
 #ifdef INET6
 	case ETHERTYPE_IPV6:
 		if (__predict_false(!in6_present))
-			goto drop;
+			goto noproto;
 #ifdef GATEWAY
 		if (ip6flow_fastforward(&m))
 			return;
@@ -955,7 +959,7 @@ ether_input(struct ifnet *ifp, struct mbuf *m)
 #endif
 
 	default:
-		goto drop;
+		goto noproto;
 	}
 
 	if (__predict_true(pktq)) {
@@ -976,11 +980,15 @@ ether_input(struct ifnet *ifp, struct mbuf *m)
 
 drop:
 	m_freem(m);
-	if_statinc(ifp, if_iqdrops); /* XXX should have a dedicated counter? */
+	if_statinc(ifp, if_iqdrops);
+	return;
+noproto:
+	m_freem(m);
+	if_statinc(ifp, if_noproto);
 	return;
 error:
 	m_freem(m);
-	if_statinc(ifp, if_ierrors); /* XXX should have a dedicated counter? */
+	if_statinc(ifp, if_ierrors);
 	return;
 }
 
