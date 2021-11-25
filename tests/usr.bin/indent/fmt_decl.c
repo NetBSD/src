@@ -1,4 +1,4 @@
-/*	$NetBSD: fmt_decl.c,v 1.24 2021/11/25 08:03:08 rillig Exp $	*/
+/*	$NetBSD: fmt_decl.c,v 1.25 2021/11/25 16:05:07 rillig Exp $	*/
 /* $FreeBSD: head/usr.bin/indent/tests/declarations.0 334478 2018-06-01 09:41:15Z pstef $ */
 
 /*
@@ -186,6 +186,25 @@ MAXALIGN(offsetof(int, test)) + MAXIMUM_ALIGNOF;
 #indent end
 
 #indent run-equals-input
+
+
+/*
+ * Ensure that the usual GCC-style function attributes are formatted in a
+ * sensible way.
+ */
+#indent input
+void function(const char *, ...) __attribute__((format(printf, 1, 2)));
+#indent end
+
+/* FIXME: missing space before '__attribute__' */
+#indent run -di0
+void function(const char *, ...)__attribute__((format(printf, 1, 2)));
+#indent end
+
+/* FIXME: missing space before '__attribute__' */
+#indent run
+void		function(const char *, ...)__attribute__((format(printf, 1, 2)));
+#indent end
 
 
 #indent input
@@ -757,3 +776,20 @@ MAKE_INLINE const char *GNode_VarTarget(GNode *gn){
 	return GNode_ValueDirect(gn, TARGET);
 }
 #indent end
+
+
+/*
+ * Ensure that '*' in declarations is interpreted (or at least formatted) as
+ * a 'pointer to' type derivation, not as a binary or unary operator.
+ */
+#indent input
+number *var = a * b;
+
+void
+function(void)
+{
+	number *var = a * b;
+}
+#indent end
+
+#indent run-equals-input -di0
