@@ -1,4 +1,4 @@
-/* $NetBSD: lsym_binary_op.c,v 1.1 2021/11/18 21:19:19 rillig Exp $ */
+/* $NetBSD: lsym_binary_op.c,v 1.2 2021/11/25 17:46:51 rillig Exp $ */
 /* $FreeBSD$ */
 
 /*
@@ -27,3 +27,16 @@
 #indent end
 
 #indent run-equals-input
+
+
+/*
+ * If a '*' is immediately followed by another '*', they still form separate
+ * operators. The first is a binary operator, the second is unary.
+ */
+#indent input
+int var = expr**ptr;
+#indent end
+
+#indent run -di0
+int var = expr * *ptr;
+#indent end
