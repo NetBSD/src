@@ -1,4 +1,4 @@
-/*	$NetBSD: lexi.c,v 1.160 2021/11/25 17:35:46 rillig Exp $	*/
+/*	$NetBSD: lexi.c,v 1.161 2021/11/25 17:46:51 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)lexi.c	8.1 (Berkeley) 6/6/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: lexi.c,v 1.160 2021/11/25 17:35:46 rillig Exp $");
+__RCSID("$NetBSD: lexi.c,v 1.161 2021/11/25 17:46:51 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/lexi.c 337862 2018-08-15 18:19:45Z pstef $");
 #endif
@@ -552,6 +552,34 @@ found_typename:
     return is_type ? lsym_type_in_parentheses : lsym_word;
 }
 
+static void
+lex_asterisk_unary(void)
+{
+    while (inp_peek() == '*' || ch_isspace(inp_peek())) {
+	if (inp_peek() == '*')
+	    token_add_char('*');
+	inp_skip();
+    }
+
+    if (ps.in_decl) {
+	const char *tp = inp_p(), *e = inp_line_end();
+
+	while (tp < e) {
+	    if (ch_isspace(*tp))
+		tp++;
+	    else if (is_identifier_start(*tp)) {
+		tp++;
+		while (tp < e && is_identifier_part(*tp))
+		    tp++;
+	    } else
+		break;
+	}
+
+	if (tp < e && *tp == '(')
+	    ps.is_function_definition = true;
+    }
+}
+
 /* Reads the next token, placing it in the global variable "token". */
 lexer_symbol
 lexi(void)
@@ -675,30 +703,7 @@ lexi(void)
 	    break;
 	}
 
-	while (inp_peek() == '*' || ch_isspace(inp_peek())) {
-	    if (inp_peek() == '*')
-		token_add_char('*');
-	    inp_skip();
-	}
-
-	if (ps.in_decl) {
-	    const char *tp = inp_p(), *e = inp_line_end();
-
-	    while (tp < e) {
-		if (ch_isspace(*tp))
-		    tp++;
-		else if (is_identifier_start(*tp)) {
-		    tp++;
-		    while (tp < e && is_identifier_part(*tp))
-			tp++;
-		} else
-		    break;
-	    }
-
-	    if (tp < e && *tp == '(')
-		ps.is_function_definition = true;
-	}
-
+	lex_asterisk_unary();
 	lsym = lsym_unary_op;
 	next_unary = true;
 	break;
