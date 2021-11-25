@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_stat.c,v 1.17 2013/11/18 01:32:52 chs Exp $ */
+/*	$NetBSD: linux32_stat.c,v 1.18 2021/11/25 02:27:08 ryo Exp $ */
 
 /*-
  * Copyright (c) 2006 Emmanuel Dreyfus, all rights reserved.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: linux32_stat.c,v 1.17 2013/11/18 01:32:52 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_stat.c,v 1.18 2021/11/25 02:27:08 ryo Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -73,6 +73,7 @@ __KERNEL_RCSID(0, "$NetBSD: linux32_stat.c,v 1.17 2013/11/18 01:32:52 chs Exp $"
 #include <compat/linux32/common/linux32_machdep.h>
 #include <compat/linux32/common/linux32_sysctl.h>
 #include <compat/linux32/common/linux32_socketcall.h>
+#include <compat/linux32/linux32_syscall.h>
 #include <compat/linux32/linux32_syscallargs.h>
 
 static inline void bsd_to_linux32_stat(struct stat *, struct linux32_stat *);
@@ -252,7 +253,8 @@ linux32_sys_fstat64(struct lwp *l, const struct linux32_sys_fstat64_args *uap, r
 }
 
 int
-linux32_sys_fstatat64(struct lwp *l, const struct linux32_sys_fstatat64_args *uap, register_t *retval)
+linux32_sys_fstatat64(struct lwp *l,
+    const struct linux32_sys_fstatat64_args *uap, register_t *retval)
 {
 	/* {
 		syscallarg(int) fd;
@@ -260,16 +262,12 @@ linux32_sys_fstatat64(struct lwp *l, const struct linux32_sys_fstatat64_args *ua
 		syscallarg(linux32_stat64p) sp;
 		syscallarg(int) flag;
 	} */
-	int error, nd_flag;
-	struct stat st;
 	struct linux32_stat64 st32;
+	struct stat st;
+	int error;
 
-	if (SCARG(uap, flag) & LINUX_AT_SYMLINK_NOFOLLOW)
-		nd_flag = NOFOLLOW;
-	else
-		nd_flag = FOLLOW;
-
-	error = do_sys_statat(l, SCARG(uap, fd), SCARG_P32(uap, path), nd_flag, &st);
+	error = linux_statat(l, SCARG(uap, fd), SCARG_P32(uap, path),
+	    SCARG(uap, flag), &st);
 	if (error != 0)
 		return error;
 
@@ -277,3 +275,33 @@ linux32_sys_fstatat64(struct lwp *l, const struct linux32_sys_fstatat64_args *ua
 
 	return copyout(&st32, SCARG_P32(uap, sp), sizeof st32);
 }
+
+#ifdef LINUX32_SYS_statx
+int
+linux32_sys_statx(struct lwp *l, const struct linux32_sys_statx_args *uap,
+    register_t *retval)
+{
+	/* {
+		syscallarg(int) fd;
+		syscallarg(netbsd32_charp) path;
+		syscallarg(int) flag;
+		syscallarg(unsigned int) mask;
+		syscallarg(linux32_statxp) sp;
+	} */
+	struct linux_statx stx;
+	struct stat st;
+	int error;
+
+	error = linux_statat(l, SCARG(uap, fd), SCARG_P32(uap, path),
+	    SCARG(uap, flag), &st);
+	if (error != 0)
+		return error;
+
+	/* struct statx has binary compatibilities between 32bit and 64bit */
+	error = bsd_to_linux_statx(&st, &stx, SCARG(uap, mask));
+	if (error != 0)
+		return error;
+
+	return copyout(&stx, SCARG_P32(uap, sp), sizeof stx);
+}
+#endif /* LINUX32_SYS_statx */

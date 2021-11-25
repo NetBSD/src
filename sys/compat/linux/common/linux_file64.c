@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_file64.c,v 1.66 2021/11/25 02:09:23 ryo Exp $	*/
+/*	$NetBSD: linux_file64.c,v 1.67 2021/11/25 02:27:08 ryo Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 2000, 2008 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_file64.c,v 1.66 2021/11/25 02:09:23 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_file64.c,v 1.67 2021/11/25 02:27:08 ryo Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -65,6 +65,7 @@ __KERNEL_RCSID(0, "$NetBSD: linux_file64.c,v 1.66 2021/11/25 02:09:23 ryo Exp $"
 #include <compat/linux/common/linux_ipc.h>
 #include <compat/linux/common/linux_sem.h>
 
+#include <compat/linux/linux_syscall.h>
 #include <compat/linux/linux_syscallargs.h>
 
 static void bsd_to_linux_stat64(struct stat *, struct linux_stat64 *);
@@ -105,6 +106,73 @@ bsd_to_linux_stat64(struct stat *bsp, struct linux_stat64 *lsp)
 #  if LINUX_STAT64_HAS_BROKEN_ST_INO
 	lsp->__lst_ino   = (linux_ino_t) bsp->st_ino;
 #  endif
+}
+
+int
+bsd_to_linux_statx(struct stat *st, struct linux_statx *stx,
+    unsigned int mask)
+{
+	if (mask & STATX__RESERVED)
+		return EINVAL;
+
+	/* XXX: STATX_MNT_ID is not supported */
+	unsigned int rmask = STATX_TYPE | STATX_MODE | STATX_NLINK |
+	    STATX_UID | STATX_GID | STATX_ATIME | STATX_MTIME | STATX_CTIME |
+	    STATX_INO | STATX_SIZE | STATX_BLOCKS | STATX_BTIME;
+
+	memset(stx, 0, sizeof(*stx));
+
+	if ((st->st_flags & UF_NODUMP) != 0)
+		stx->stx_attributes |= STATX_ATTR_NODUMP;
+	if ((st->st_flags & (UF_IMMUTABLE|SF_IMMUTABLE)) != 0)
+		stx->stx_attributes |= STATX_ATTR_IMMUTABLE;
+	if ((st->st_flags & (UF_APPEND|SF_APPEND)) != 0)
+		stx->stx_attributes |= STATX_ATTR_APPEND;
+
+	stx->stx_attributes_mask =
+	    STATX_ATTR_NODUMP | STATX_ATTR_IMMUTABLE | STATX_ATTR_APPEND;
+
+	stx->stx_blksize = st->st_blksize;
+
+	stx->stx_nlink = st->st_nlink;
+	stx->stx_uid = st->st_uid;
+	stx->stx_gid = st->st_gid;
+	stx->stx_mode |= st->st_mode & S_IFMT;
+	stx->stx_mode |= st->st_mode & ~S_IFMT;
+	stx->stx_ino = st->st_ino;
+	stx->stx_size = st->st_size;
+	stx->stx_blocks = st->st_blocks;
+
+	stx->stx_atime.tv_sec = st->st_atime;
+	stx->stx_atime.tv_nsec = st->st_atimensec;
+
+	/* some filesystem has no birthtime returns 0 or -1 */
+	if ((st->st_birthtime == 0 && st->st_birthtimensec == 0) ||
+	    (st->st_birthtime == (time_t)-1 &&
+	    st->st_birthtimensec == (long)-1)) {
+		rmask &= ~STATX_BTIME;
+	} else {
+		stx->stx_btime.tv_sec = st->st_birthtime;
+		stx->stx_btime.tv_nsec = st->st_birthtimensec;
+	}
+
+	stx->stx_ctime.tv_sec = st->st_ctime;
+	stx->stx_ctime.tv_nsec = st->st_ctimensec;
+
+	stx->stx_mtime.tv_sec = st->st_mtime;
+	stx->stx_mtime.tv_nsec = st->st_mtimensec;
+
+	if (S_ISCHR(st->st_mode) || S_ISBLK(st->st_mode)) {
+		stx->stx_rdev_major = major(st->st_rdev);
+		stx->stx_rdev_minor = minor(st->st_rdev);
+	} else {
+		stx->stx_dev_major = major(st->st_rdev);
+		stx->stx_dev_minor = minor(st->st_rdev);
+	}
+
+	stx->stx_mask = rmask;
+
+	return 0;
 }
 
 /*
@@ -171,6 +239,53 @@ linux_sys_lstat64(struct lwp *l, const struct linux_sys_lstat64_args *uap, regis
 }
 #endif
 
+/*
+ * This is an internal function for the *statat() variant of linux,
+ * which returns struct stat, but flags and other handling are
+ * the same as in linux.
+ */
+int
+linux_statat(struct lwp *l, int fd, const char *path, int lflag,
+    struct stat *st)
+{
+	struct vnode *vp;
+	int error, nd_flag;
+	uint8_t c;
+
+	if (lflag & LINUX_AT_EMPTY_PATH) {
+		/*
+		 * If path is null string:
+		 */
+		error = ufetch_8(path, &c);
+		if (error != 0)
+			return error;
+		if (c == '\0') {
+			if (fd == LINUX_AT_FDCWD) {
+				/*
+				 * operate on current directory
+				 */
+				vp = l->l_proc->p_cwdi->cwdi_cdir;
+				vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
+				error = vn_stat(vp, st);
+				VOP_UNLOCK(vp);
+			} else {
+				/*
+				 * operate on fd
+				 */
+				error = do_sys_fstat(fd, st);
+			}
+			return error;
+		}
+	}
+
+	if (lflag & LINUX_AT_SYMLINK_NOFOLLOW)
+		nd_flag = NOFOLLOW;
+	else
+		nd_flag = FOLLOW;
+
+	return do_sys_statat(l, fd, path, nd_flag, st);
+}
+
 int
 linux_sys_fstatat64(struct lwp *l, const struct linux_sys_fstatat64_args *uap, register_t *retval)
 {
@@ -182,53 +297,46 @@ linux_sys_fstatat64(struct lwp *l, const struct linux_sys_fstatat64_args *uap, r
 	} */
 	struct linux_stat64 tmplst;
 	struct stat tmpst;
-	struct vnode *vp;
-	int error, nd_flag, fd;
-	uint8_t c;
+	int error;
 
-	if (SCARG(uap, flag) & LINUX_AT_EMPTY_PATH) {
-		/*
-		 * If path is null string:
-		 */
-		error = ufetch_8(SCARG(uap, path), &c);
-		if (error != 0)
-			return error;
-		if (c == '\0') {
-			fd = SCARG(uap, fd);
-			if (fd == AT_FDCWD) {
-				/*
-				 * operate on current directory
-				 */
-				vp = l->l_proc->p_cwdi->cwdi_cdir;
-				vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
-				error = vn_stat(vp, &tmpst);
-				VOP_UNLOCK(vp);
-			} else {
-				/*
-				 * operate on fd
-				 */
-				error = do_sys_fstat(fd, &tmpst);
-			}
-			if (error != 0)
-				return error;
-			goto done;
-		}
-	}
-
-	if (SCARG(uap, flag) & LINUX_AT_SYMLINK_NOFOLLOW)
-		nd_flag = NOFOLLOW;
-	else
-		nd_flag = FOLLOW;
-
-	error = do_sys_statat(l, SCARG(uap, fd), SCARG(uap, path), nd_flag, &tmpst);
+	error = linux_statat(l, SCARG(uap, fd), SCARG(uap, path),
+	    SCARG(uap, flag), &tmpst);
 	if (error != 0)
 		return error;
 
-done:
 	bsd_to_linux_stat64(&tmpst, &tmplst);
 
 	return copyout(&tmplst, SCARG(uap, sp), sizeof tmplst);
 }
+
+#ifdef LINUX_SYS_statx
+int
+linux_sys_statx(struct lwp *l, const struct linux_sys_statx_args *uap,
+    register_t *retval)
+{
+	/* {
+		syscallarg(int) fd;
+		syscallarg(const char *) path;
+		syscallarg(int) flag;
+		syscallarg(unsigned int) mask;
+		syscallarg(struct linux_statx *) sp;
+	} */
+	struct linux_statx stx;
+	struct stat st;
+	int error;
+
+	error = linux_statat(l, SCARG(uap, fd), SCARG(uap, path),
+	    SCARG(uap, flag), &st);
+	if (error != 0)
+		return error;
+
+	error = bsd_to_linux_statx(&st, &stx, SCARG(uap, mask));
+	if (error != 0)
+		return error;
+
+	return copyout(&stx, SCARG(uap, sp), sizeof stx);
+}
+#endif /* LINUX_SYS_statx */
 
 #ifndef __alpha__
 int
