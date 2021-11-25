@@ -1,11 +1,11 @@
-/*	$NetBSD: linux32_systrace_args.c,v 1.2 2021/11/25 03:08:05 ryo Exp $	*/
+/*	$NetBSD: linux32_missing.c,v 1.1 2021/11/25 03:08:04 ryo Exp $	*/
 
 /*-
- * Copyright (c) 1998 The NetBSD Foundation, Inc.
+ * Copyright (c) 2021 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Eric Haszlakiewicz.
+ * by Ryo Shimizu.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -29,15 +29,32 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-/* XXX XXX This exists to keep kdump and friends happy. */
-
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: linux32_systrace_args.c,v 1.2 2021/11/25 03:08:05 ryo Exp $");
 
-#if defined(__aarch64__)
-#include "../../sys/compat/linux32/arch/aarch64/linux32_systrace_args.c"
-#elif defined(__amd64__)
-#include "../../sys/compat/linux32/arch/amd64/linux32_systrace_args.c"
-#else
-#error "fix me"
+#ifdef _KERNEL_OPT
+#include "opt_compat_linux32.h"
 #endif
+
+#include <sys/types.h>
+#include <sys/time.h>
+#include <sys/param.h>
+#include <sys/lwp.h>
+#include <sys/ucred.h>
+#include <sys/mount.h>
+#include <sys/systm.h>
+#include <sys/syscallargs.h>
+
+#include <compat/netbsd32/netbsd32.h>
+
+#include <compat/linux32/common/linux32_types.h>
+#include <compat/linux32/common/linux32_signal.h>
+
+#include <compat/linux32/arch/aarch64/linux32_missing.h>
+#include <compat/linux32/arch/aarch64/linux32_syscallargs.h>
+
+#include <compat/linux/common/linux_ipc.h>
+#include <compat/linux/common/linux_sem.h>
+
+#include <compat/linux/common/linux_llseek.c>
+#include <compat/linux/common/linux_oldmmap.c>
+#include <compat/linux/common/linux_uid16.c>

@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_file.c,v 1.121 2021/09/23 06:56:27 ryo Exp $	*/
+/*	$NetBSD: linux_file.c,v 1.122 2021/11/25 03:08:04 ryo Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 2008 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_file.c,v 1.121 2021/09/23 06:56:27 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_file.c,v 1.122 2021/11/25 03:08:04 ryo Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -206,7 +206,6 @@ linux_open_ctty(struct lwp *l, int flags, int fd)
         }
 }
 
-#if !defined(__aarch64__)
 /*
  * open(2). Take care of the different flag values, and let the
  * NetBSD syscall do the real work. See if this operation
@@ -236,7 +235,6 @@ linux_sys_open(struct lwp *l, const struct linux_sys_open_args *uap, register_t 
 	linux_open_ctty(l, fl, *retval);
 	return 0;
 }
-#endif
 
 int
 linux_sys_openat(struct lwp *l, const struct linux_sys_openat_args *uap, register_t *retval)
@@ -612,7 +610,6 @@ linux_unlink_dircheck(const char *path)
 	return error ? error : EPERM;
 }
 
-#if !defined(__aarch64__)
 int
 linux_sys_unlink(struct lwp *l, const struct linux_sys_unlink_args *uap, register_t *retval)
 {
@@ -627,7 +624,6 @@ linux_sys_unlink(struct lwp *l, const struct linux_sys_unlink_args *uap, registe
 
 	return error;
 }
-#endif
 
 int
 linux_sys_unlinkat(struct lwp *l, const struct linux_sys_unlinkat_args *uap, register_t *retval)
@@ -651,7 +647,6 @@ linux_sys_unlinkat(struct lwp *l, const struct linux_sys_unlinkat_args *uap, reg
 	return error;
 }
 
-#if !defined(__aarch64__)
 int
 linux_sys_mknod(struct lwp *l, const struct linux_sys_mknod_args *uap, register_t *retval)
 {
@@ -669,7 +664,6 @@ linux_sys_mknod(struct lwp *l, const struct linux_sys_mknod_args *uap, register_
 
 	return linux_sys_mknodat(l, &ua, retval);
 }
-#endif
 
 int
 linux_sys_mknodat(struct lwp *l, const struct linux_sys_mknodat_args *uap, register_t *retval)

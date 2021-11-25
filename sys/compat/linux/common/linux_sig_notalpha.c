@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_sig_notalpha.c,v 1.40 2021/09/23 06:56:27 ryo Exp $	*/
+/*	$NetBSD: linux_sig_notalpha.c,v 1.41 2021/11/25 03:08:04 ryo Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_sig_notalpha.c,v 1.40 2021/09/23 06:56:27 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_sig_notalpha.c,v 1.41 2021/11/25 03:08:04 ryo Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -56,9 +56,10 @@ __KERNEL_RCSID(0, "$NetBSD: linux_sig_notalpha.c,v 1.40 2021/09/23 06:56:27 ryo 
 #include <compat/linux/linux_syscallargs.h>
 
 /* Used on: arm, i386, m68k, mips, sparc, sparc64 */
-/* Not used on: aarch64, alpha */
+/* Partly used on: aarch64, amd64 */
+/* Not used on: alpha */
 
-#if !defined(__amd64__)
+#if !defined(__aarch64__) && !defined(__amd64__)
 /*
  * The Linux signal() system call. I think that the signal() in the C
  * library actually calls sigaction, so I doubt this one is ever used.

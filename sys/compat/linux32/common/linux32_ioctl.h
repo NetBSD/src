@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_ioctl.h,v 1.5 2008/06/19 16:09:25 christos Exp $ */
+/*	$NetBSD: linux32_ioctl.h,v 1.6 2021/11/25 03:08:04 ryo Exp $ */
 
 /*-
  * Copyright (c) 1995-2006 The NetBSD Foundation, Inc.
@@ -32,8 +32,12 @@
 #ifndef _LINUX32_IOCTL_H
 #define _LINUX32_IOCTL_H
 
-#if defined(__amd64__)
+#if defined(__aarch64__)
+#include <compat/linux32/arch/aarch64/linux32_ioctl.h>
+#elif defined(__amd64__)
 #include <compat/linux32/arch/amd64/linux32_ioctl.h>
+#else
+#error Undefined linux32_ioctl.h machine type.
 #endif
 
 #ifdef _KERNEL

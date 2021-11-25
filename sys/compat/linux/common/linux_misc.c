@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_misc.c,v 1.254 2021/09/23 06:56:27 ryo Exp $	*/
+/*	$NetBSD: linux_misc.c,v 1.255 2021/11/25 03:08:04 ryo Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 1999, 2008 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.254 2021/09/23 06:56:27 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.255 2021/11/25 03:08:04 ryo Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1616,7 +1616,6 @@ linux_do_eventfd2(struct lwp *l, unsigned int initval, int flags,
 	return do_eventfd(l, initval, nflags, retval);
 }
 
-#if !defined(__aarch64__)
 int
 linux_sys_eventfd(struct lwp *l, const struct linux_sys_eventfd_args *uap,
     register_t *retval)
@@ -1627,7 +1626,6 @@ linux_sys_eventfd(struct lwp *l, const struct linux_sys_eventfd_args *uap,
 
 	return linux_do_eventfd2(l, SCARG(uap, initval), 0, retval);
 }
-#endif
 
 int
 linux_sys_eventfd2(struct lwp *l, const struct linux_sys_eventfd2_args *uap,

@@ -1,11 +1,11 @@
-/*	$NetBSD: linux32_systrace_args.c,v 1.2 2021/11/25 03:08:05 ryo Exp $	*/
+/*	$NetBSD: linux32_missing.h,v 1.1 2021/11/25 03:08:04 ryo Exp $	*/
 
 /*-
- * Copyright (c) 1998 The NetBSD Foundation, Inc.
+ * Copyright (c) 2021 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Eric Haszlakiewicz.
+ * by Ryo Shimizu.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -29,15 +29,31 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-/* XXX XXX This exists to keep kdump and friends happy. */
+#ifndef _AARCH64_LINUX32_MISSING_H_
+#define _AARCH64_LINUX32_MISSING_H_
 
-#include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: linux32_systrace_args.c,v 1.2 2021/11/25 03:08:05 ryo Exp $");
+#include <compat/netbsd32/netbsd32.h>
+#include <compat/linux/common/linux_types.h>
+#include <compat/linux/common/linux_machdep.h>
 
-#if defined(__aarch64__)
-#include "../../sys/compat/linux32/arch/aarch64/linux32_systrace_args.c"
-#elif defined(__amd64__)
-#include "../../sys/compat/linux32/arch/amd64/linux32_systrace_args.c"
-#else
-#error "fix me"
-#endif
+/*
+ * system calls not defined for COMPAT_LINUX/aarch64
+ * but needed for COMPAT_LINUX32
+ */
+struct linux_sys_old_mmap_args {
+	syscallarg(struct linux_oldmmap *) lmp;
+};
+int linux_sys_old_mmap(struct lwp *, const struct linux_sys_old_mmap_args *, register_t *);
+
+struct linux_sys_getgroups16_args {
+	syscallarg(int) gidsetsize;
+	syscallarg(linux_gid16_t *) gidset;
+};
+struct linux_sys_setgroups16_args {
+	syscallarg(int) gidsetsize;
+	syscallarg(linux_gid16_t *) gidset;
+};
+int linux_sys_getgroups16(struct lwp *, const struct linux_sys_getgroups16_args *, register_t *);
+int linux_sys_setgroups16(struct lwp *, const struct linux_sys_setgroups16_args *, register_t *);
+
+#endif /* _AARCH64_LINUX32_MISSING_H_ */

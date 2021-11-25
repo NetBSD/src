@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.9 2019/02/17 04:05:45 rin Exp $
+#	$NetBSD: Makefile,v 1.10 2021/11/25 03:08:05 ryo Exp $
 
 .include "../Makefile.inc"
 .include "../Makefile.assym"
@@ -16,6 +16,18 @@ SRCS+=	linux32_mod.c linux32_resource.c linux32_sched.c linux32_signal.c
 SRCS+=	linux32_socket.c linux32_socketcall.c linux32_stat.c linux32_sysctl.c
 SRCS+=	linux32_sysinfo.c linux32_termios.c linux32_time.c
 SRCS+=	linux32_unistd.c linux32_utsname.c linux32_wait.c
+
+.if ${MACHINE_ARCH} == "aarch64"
+CPPFLAGS+=	-DEXEC_ELF32
+.PATH:	${S}/compat/linux32/arch/aarch64
+SRCS+=	linux32_exec_machdep.c linux32_ipccall.c linux32_machdep.c
+SRCS+=	linux32_missing.c linux32_sigcode.S linux32_syscalls.c linux32_sysent.c
+SRCS+=	linux32_uid16.c
+.PATH:	${S}/arch/aarch64/aarch64
+SRCS+=	linux32_syscall.c
+.PATH:	${S}/compat/linux/common
+SRCS+=	linux_exec_elf32.c
+.endif
 
 .if ${MACHINE_ARCH} == "x86_64"
 CPPFLAGS+=	-DEXEC_ELF32 -DLINUX32_DEBUGLINK_SIGNATURE
