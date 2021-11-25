@@ -1,4 +1,4 @@
-/*	$NetBSD: fmt_decl.c,v 1.23 2021/11/24 21:34:34 rillig Exp $	*/
+/*	$NetBSD: fmt_decl.c,v 1.24 2021/11/25 08:03:08 rillig Exp $	*/
 /* $FreeBSD: head/usr.bin/indent/tests/declarations.0 334478 2018-06-01 09:41:15Z pstef $ */
 
 /*
@@ -583,14 +583,9 @@ ToToken(bool cond)
 }
 #indent end
 
-#indent run
-static Token
-/* $ FIXME: missing space between ')' and '{'. */
-ToToken(bool cond){
-}
-#indent end
-
 #indent run-equals-input -TToken
+/* Since lexi.c 1.153 from 2021-11-25. */
+#indent run-equals-input
 
 
 /*
@@ -622,12 +617,9 @@ typedef struct OpenDirs {
 static CachedDir *dot = NULL;
 #indent end
 
-/* FIXME: The space after '*' is wrong. */
-#indent run
-static CachedDir * dot = NULL;
-#indent end
-
 #indent run-equals-input -TCachedDir
+/* Since lexi.c 1.153 from 2021-11-25. */
+#indent run-equals-input
 
 
 /*
@@ -640,13 +632,8 @@ CachedDir_New(const char *name)
 }
 #indent end
 
-/* FIXME: The space between '){' is missing. */
-/* FIXME: The '{' must be in column 1 of the next line. */
-#indent run
-static CachedDir *
-CachedDir_New(const char *name){
-}
-#indent end
+/* Since lexi.c 1.153 from 2021-11-25. */
+#indent run-equals-input
 
 
 /*
@@ -660,10 +647,10 @@ CachedDir_Ref(CachedDir *dir)
 #indent end
 
 /* FIXME: Extraneous ' ' between '*' and 'dir'. */
-/* FIXME: The '{' must be in column 1 of the next line. */
 #indent run
 static CachedDir *
-CachedDir_Ref(CachedDir * dir) {
+CachedDir_Ref(CachedDir * dir)
+{
 }
 #indent end
 
@@ -710,12 +697,12 @@ CachedDir_Assign(CachedDir * *var, CachedDir * dir)
 
 
 /*
- * All initializer expressions after the first one are indented as if they
- * would be statement continuations. Maybe the comma is interpreted as a
- * binary operator instead of being a separator.
+ * Before lexi.c 1.153 from 2021-11-25, all initializer expressions after the
+ * first one were indented as if they would be statement continuations. This
+ * was because the token 'Shell' was identified as a word, not as a type name.
  */
 #indent input
-static Shell shells[] = {
+static Shell	shells[] = {
 	{
 		first,
 		second,
@@ -723,15 +710,8 @@ static Shell shells[] = {
 };
 #indent end
 
-#indent run
-static Shell shells[] = {
-	{
-		first,
-/* $ FIXME: The identifier 'second' gets indented too far. */
-			second,
-	},
-};
-#indent end
+/* Since lexi.c 1.153 from 2021-11-25. */
+#indent run-equals-input
 
 
 /*
