@@ -1,4 +1,4 @@
-/* $NetBSD: apple_intc.c,v 1.5 2021/11/26 19:36:17 skrll Exp $ */
+/* $NetBSD: apple_intc.c,v 1.6 2021/11/26 19:39:58 skrll Exp $ */
 
 /*-
  * Copyright (c) 2021 Jared McNeill <jmcneill@invisible.ca>
@@ -32,7 +32,7 @@
 #define	_INTR_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: apple_intc.c,v 1.5 2021/11/26 19:36:17 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: apple_intc.c,v 1.6 2021/11/26 19:39:58 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -291,9 +291,9 @@ static const struct fdtbus_interrupt_controller_func apple_intc_fdt_funcs = {
 static void
 apple_intc_mark_pending(struct pic_softc *pic, u_int intno)
 {
-	const int group = intno / 32;
+	const int base = intno & ~0x1f;
 	const uint32_t pending = __BIT(intno & 0x1f);
-	pic_mark_pending_sources(pic, group * 32, pending);
+	pic_mark_pending_sources(pic, base, pending);
 }
 
 static void
