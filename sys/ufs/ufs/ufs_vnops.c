@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_vnops.c,v 1.260 2021/10/20 03:08:19 thorpej Exp $	*/
+/*	$NetBSD: ufs_vnops.c,v 1.261 2021/11/26 17:35:12 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2020 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.260 2021/10/20 03:08:19 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.261 2021/11/26 17:35:12 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -345,8 +345,8 @@ ufs_accessx(void *v)
 		return error;
 
 #ifdef UFS_ACL
-	if ((vp->v_mount->mnt_flag & (MNT_POSIX1EACLS | MNT_ACLS)) != 0) {
-		if (vp->v_mount->mnt_flag & MNT_ACLS)
+	if ((vp->v_mount->mnt_flag & (MNT_POSIX1EACLS | MNT_NFS4ACLS)) != 0) {
+		if (vp->v_mount->mnt_flag & MNT_NFS4ACLS)
 			type = ACL_TYPE_NFS4;
 		else
 			type = ACL_TYPE_ACCESS;
@@ -730,7 +730,7 @@ ufs_chmod(struct vnode *vp, int mode, kauth_cred_t cred, struct lwp *l)
 		return (error);
 
 #ifdef UFS_ACL
-	if ((vp->v_mount->mnt_flag & MNT_ACLS) != 0) {
+	if ((vp->v_mount->mnt_flag & MNT_NFS4ACLS) != 0) {
 		error = ufs_update_nfs4_acl_after_mode_change(vp, mode,
 		    ip->i_uid, cred, l);
 		if (error)
@@ -1291,7 +1291,7 @@ ufs_mkdir(void *v)
 		    cnp->cn_cred, l);
 		if (error)
 			goto bad;
-	} else if (dvp->v_mount->mnt_flag & MNT_ACLS) {
+	} else if (dvp->v_mount->mnt_flag & MNT_NFS4ACLS) {
 		error = ufs_do_nfs4_acl_inheritance(dvp, tvp, dmode,
 		    cnp->cn_cred, l);
 		if (error)
@@ -2105,7 +2105,7 @@ ufs_pathconf(void *v)
 			*ap->a_retval = 0;
 		return 0;
 	case _PC_ACL_NFS4:
-		if (ap->a_vp->v_mount->mnt_flag & MNT_ACLS)
+		if (ap->a_vp->v_mount->mnt_flag & MNT_NFS4ACLS)
 			*ap->a_retval = 1;
 		else
 			*ap->a_retval = 0;
@@ -2113,7 +2113,7 @@ ufs_pathconf(void *v)
 #endif
 	case _PC_ACL_PATH_MAX:
 #ifdef UFS_ACL
-		if (ap->a_vp->v_mount->mnt_flag & (MNT_POSIX1EACLS | MNT_ACLS))
+		if (ap->a_vp->v_mount->mnt_flag & (MNT_POSIX1EACLS | MNT_NFS4ACLS))
 			*ap->a_retval = ACL_MAX_ENTRIES;
 		else
 			*ap->a_retval = 3;
@@ -2272,7 +2272,7 @@ ufs_makeinode(struct vattr *vap, struct vnode *dvp,
 		    ip->i_mode, cnp->cn_cred, l);
 		if (error)
 			goto bad;
-	} else if (dvp->v_mount->mnt_flag & MNT_ACLS) {
+	} else if (dvp->v_mount->mnt_flag & MNT_NFS4ACLS) {
 		error = ufs_do_nfs4_acl_inheritance(dvp, tvp, ip->i_mode,
 		    cnp->cn_cred, l);
 		if (error)
