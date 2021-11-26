@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: bluetooth,v 1.1 2011/05/27 09:28:42 plunky Exp $
+# $NetBSD: bluetooth,v 1.2 2021/11/26 12:51:24 sborrill Exp $
 #
 
 # PROVIDE: bluetooth
@@ -10,7 +10,7 @@
 $_rc_subr_loaded . /etc/rc.subr
 
 name="bluetooth"
-rcvar=${name}
+rcvar=$name
 start_cmd="bluetooth_start"
 stop_cmd="bluetooth_stop"
 

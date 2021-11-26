@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: envsys,v 1.4 2007/10/07 05:30:56 xtraeme Exp $
+# $NetBSD: envsys,v 1.5 2021/11/26 12:51:24 sborrill Exp $
 #
 
 # PROVIDE: envsys
@@ -9,7 +9,7 @@
 $_rc_subr_loaded . /etc/rc.subr
 
 name="envsys"
-rcvar=${name}
+rcvar=$name
 command="/usr/sbin/envstat"
 required_files="/etc/envsys.conf"
 start_cmd="do_start"
