@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_termios.c,v 1.15 2019/08/23 12:09:18 maxv Exp $ */
+/*	$NetBSD: linux32_termios.c,v 1.16 2021/11/26 19:28:37 ryo Exp $ */
 
 /*-
  * Copyright (c) 1995-2006, 2008  The NetBSD Foundation, Inc.
@@ -30,21 +30,20 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux32_termios.c,v 1.15 2019/08/23 12:09:18 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_termios.c,v 1.16 2021/11/26 19:28:37 ryo Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_linux32.h"
+#include "opt_ptm.h"
 #endif
 
-#include <sys/types.h>
 #include <sys/param.h>
-#include <sys/time.h>
-#include <sys/ucred.h>
 #include <sys/proc.h>
-#include <sys/lwp.h>
+#include <sys/systm.h>
 #include <sys/file.h>
 #include <sys/filedesc.h>
-#include <sys/fcntl.h>
+#include <sys/ioctl.h>
+#include <sys/mount.h>
 #include <sys/termios.h>
 #include <sys/kernel.h>
 
@@ -64,7 +63,14 @@ __KERNEL_RCSID(0, "$NetBSD: linux32_termios.c,v 1.15 2019/08/23 12:09:18 maxv Ex
 #include <compat/linux/common/linux_termios.h>
 #include <compat/linux/common/linux_ipc.h>
 #include <compat/linux/common/linux_sem.h>
+
 #include <compat/linux/linux_syscallargs.h>
+
+#ifdef DEBUG_LINUX
+#define DPRINTF(a)	uprintf a
+#else
+#define DPRINTF(a)
+#endif
 
 int
 linux32_ioctl_termios(struct lwp *l, const struct linux32_sys_ioctl_args *uap, register_t *retval)
@@ -89,7 +95,6 @@ linux32_ioctl_termios(struct lwp *l, const struct linux32_sys_ioctl_args *uap, r
 		return (EBADF);
 
 	if ((fp->f_flag & (FREAD | FWRITE)) == 0) {
-		fd_putfile(SCARG(uap, fd));
 		error = EBADF;
 		goto out;
 	}
@@ -279,6 +284,12 @@ linux32_ioctl_termios(struct lwp *l, const struct linux32_sys_ioctl_args *uap, r
 	case LINUX32_TIOCSPGRP:
 		SCARG(&ia, com) = TIOCSPGRP;
 		break;
+	case LINUX32_FIOCLEX:
+		SCARG(&ia, com) = FIOCLEX;
+		break;
+	case LINUX32_FIONCLEX:
+		SCARG(&ia, com) = FIONCLEX;
+		break;
 	case LINUX32_FIONREAD:
 		SCARG(&ia, com) = FIONREAD;
 		break;
@@ -344,6 +355,31 @@ linux32_ioctl_termios(struct lwp *l, const struct linux32_sys_ioctl_args *uap, r
 		}
 #endif /* NO_DEV_PTM */
 #endif /* LINUX32_TIOCGPTN */
+#ifdef LINUX32_TIOCSPTLCK
+	case LINUX32_TIOCSPTLCK:
+			fd_putfile(SCARG(uap, fd));
+			error = copyin(SCARG_P32(uap, data), &idat, sizeof(idat));
+			if (error)
+				return error;
+			DPRINTF(("TIOCSPTLCK %d\n", idat));
+			return 0;
+#endif
+	case LINUX32_TCXONC:
+		idat = (u_long)SCARG_P32(uap, data);
+		switch (idat) {
+		case LINUX_TCOOFF:
+			SCARG(&ia, com) = TIOCSTOP;
+			break;
+		case LINUX_TCOON:
+			SCARG(&ia, com) = TIOCSTART;
+			break;
+		case LINUX_TCIOFF:
+		case LINUX_TCION:
+		default:
+			error = EINVAL;
+			goto out;
+		}
+		break;
 	default:
 		error = EINVAL;
 		goto out;
