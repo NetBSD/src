@@ -1,4 +1,4 @@
-/*	$NetBSD: io.c,v 1.134 2021/11/26 14:17:01 rillig Exp $	*/
+/*	$NetBSD: io.c,v 1.135 2021/11/26 14:27:19 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)io.c	8.1 (Berkeley) 6/6/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: io.c,v 1.134 2021/11/26 14:17:01 rillig Exp $");
+__RCSID("$NetBSD: io.c,v 1.135 2021/11/26 14:27:19 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/io.c 334927 2018-06-10 16:44:18Z pstef $");
 #endif
@@ -342,31 +342,7 @@ dump_line_label(void)
     *lab.e = '\0';
 
     ind = output_indent(0, compute_label_indent());
-
-    if (lab.s[0] == '#' && (strncmp(lab.s, "#else", 5) == 0
-	    || strncmp(lab.s, "#endif", 6) == 0)) {
-	const char *s = lab.s;
-	if (lab.e[-1] == '\n')
-	    lab.e--;
-	do {
-	    output_char(*s++);
-	} while (s < lab.e && 'a' <= *s && *s <= 'z');
-
-	while (s < lab.e && ch_isblank(*s))
-	    s++;
-
-	if (s < lab.e) {
-	    if (s[0] == '/' && s[1] == '*') {
-		output_char('\t');
-		output_range(s, lab.e);
-	    } else {
-		output_string("\t/* ");
-		output_range(s, lab.e);
-		output_string(" */");
-	    }
-	}
-    } else
-	output_range(lab.s, lab.e);
+    output_range(lab.s, lab.e);
     ind = ind_add(ind, lab.s, lab.e);
 
     ps.is_case_label = false;
