@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_exec.h,v 1.1 2021/09/23 06:56:27 ryo Exp $	*/
+/*	$NetBSD: linux_exec.h,v 1.2 2021/11/26 08:56:28 ryo Exp $	*/
 
 /*-
  * Copyright (c) 2021 The NetBSD Foundation, Inc.
@@ -33,5 +33,7 @@
 	(LINUX_ELF_AUX_ENTRIES * sizeof(Aux64Info) + LINUX_RANDOM_BYTES)
 
 #define linux_exec_setup_stack	exec_setup_stack
+
+#define LINUX_GO_RT0_SIGNATURE
 
 #endif /* !_AARCH64_LINUX_EXEC_H */
