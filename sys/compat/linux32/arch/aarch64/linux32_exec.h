@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_exec.h,v 1.1 2021/11/25 03:08:04 ryo Exp $	*/
+/*	$NetBSD: linux32_exec.h,v 1.2 2021/11/26 08:56:28 ryo Exp $	*/
 
 /*-
  * Copyright (c) 2021 The NetBSD Foundation, Inc.
@@ -53,5 +53,7 @@ struct linux32_extra_stack_data {
 #define LINUX32_MAXSSIZ		MAXSSIZ32	/* from machine/vmparam.h */
 
 int linux32_exec_setup_stack(struct lwp *, struct exec_package *);
+
+#define LINUX32_GO_RT0_SIGNATURE
 
 #endif /* _AARCH64_LINUX32_EXEC_H_ */

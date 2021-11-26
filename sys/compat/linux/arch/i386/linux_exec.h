@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_exec.h,v 1.13 2017/02/12 21:02:19 chs Exp $	*/
+/*	$NetBSD: linux_exec.h,v 1.14 2021/11/26 08:56:28 ryo Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -40,6 +40,7 @@
 	(LINUX_ELF_AUX_ENTRIES * sizeof(Aux32Info) + LINUX_RANDOM_BYTES)
 
 #define LINUX_DEBUGLINK_SIGNATURE
+#define LINUX_GO_RT0_SIGNATURE
 
 #ifdef _KERNEL
 int linux_exec_setup_stack(struct lwp *, struct exec_package *);

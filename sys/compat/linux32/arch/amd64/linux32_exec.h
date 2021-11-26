@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_exec.h,v 1.9 2021/11/25 02:48:00 ryo Exp $ */
+/*	$NetBSD: linux32_exec.h,v 1.10 2021/11/26 08:56:28 ryo Exp $ */
 
 /*-
  * Copyright (c) 2006 Emmanuel Dreyfus, all rights reserved.
@@ -40,6 +40,7 @@
 #define LINUX32_USRSTACK	0xC0000000
 
 #define LINUX32_DEBUGLINK_SIGNATURE	1
+#define LINUX32_GO_RT0_SIGNATURE	1
 
 /* Counted from common/linux32_exec_elf32.c */
 #define LINUX32_ELF_AUX_ENTRIES	20
