@@ -1,4 +1,4 @@
-#	$NetBSD: t_misc.sh,v 1.10 2021/06/17 12:45:58 riastradh Exp $
+#	$NetBSD: t_misc.sh,v 1.11 2021/11/26 20:02:35 gson Exp $
 #
 # Copyright (c) 2018 Ryota Ozaki <ozaki.ryota@gmail.com>
 # All rights reserved.
@@ -197,6 +197,8 @@ wg_handshake_timeout_body()
 	$DEBUG && cat $outfile
 
 	n=$(grep "$ip_local.$port > $ip_peer.$port" $outfile |wc -l)
+
+	atf_expect_fail "PR kern/56252"
 
 	# Give up handshaking after three attempts
 	atf_check_equal $n 3
