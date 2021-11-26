@@ -1,4 +1,4 @@
-/* $NetBSD: token_preprocessing.c,v 1.1 2021/10/18 22:30:34 rillig Exp $ */
+/* $NetBSD: token_preprocessing.c,v 1.2 2021/11/26 14:27:19 rillig Exp $ */
 /* $FreeBSD$ */
 
 /*-
@@ -136,8 +136,9 @@ int		unary_plus =
 
 
 /*
- * Preprocessing lines that don't expect an argument but have one are fixed.
- * They are indented with a single tab.
+ * Before io.c 1.135 from 2021-11-26, indent fixed malformed preprocessing
+ * lines that had arguments even though they shouldn't. It is not the task of
+ * an indenter to fix code, that's what a linter is for.
  */
 #indent input
 #if 0
@@ -146,12 +147,7 @@ int		unary_plus =
 #endif 0
 #indent end
 
-#indent run
-#if 0
-#elif 1
-#else	/* if 3 */
-#endif	/* 0 */
-#indent end
+#indent run-equals-input
 
 
 /*
