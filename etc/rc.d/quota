@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: quota,v 1.5 2004/08/13 18:08:03 mycroft Exp $
+# $NetBSD: quota,v 1.6 2021/11/26 12:51:24 sborrill Exp $
 #
 
 # PROVIDE: quota
@@ -10,7 +10,7 @@
 $_rc_subr_loaded . /etc/rc.subr
 
 name="quota"
-rcvar="quota"
+rcvar=$name
 start_cmd="quota_start"
 stop_cmd="/usr/sbin/quotaoff -a"
 

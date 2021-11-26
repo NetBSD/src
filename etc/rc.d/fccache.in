@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: fccache.in,v 1.4 2020/07/04 06:24:53 skrll Exp $
+# $NetBSD: fccache.in,v 1.5 2021/11/26 12:51:24 sborrill Exp $
 #
 
 # PROVIDE: fccache
@@ -10,7 +10,7 @@
 $_rc_subr_loaded . /etc/rc.subr
 
 name="fccache"
-rcvar=${name}
+rcvar=$name
 command="@X11ROOTDIR@/bin/fc-cache"
 start_cmd="fccache_start"
 stop_cmd=":"
