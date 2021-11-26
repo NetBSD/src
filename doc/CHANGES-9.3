@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.3,v 1.1.2.49 2021/11/25 17:50:25 martin Exp $
+# $NetBSD: CHANGES-9.3,v 1.1.2.50 2021/11/26 16:51:14 martin Exp $
 
 A complete list of changes from the NetBSD 9.2 release to the NetBSD 9.3
 release:
@@ -975,4 +975,11 @@ distrib/notes/common/main			1.566,1.567
 	Add a note to the install documentations for amd64
 	explaining the legacy amd64-bios-install image.
 	[gutteridge, ticket #1376]
+
+etc/rc.d/npf_boot				1.5
+etc/rc.d/pf_boot				1.8
+
+	Load rc configuration based on rcvar, not name, so that settings
+	in /etc/rc.conf.d are loaded if present.
+	[sborrill, ticket #1377]
 
