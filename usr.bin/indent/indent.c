@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.c,v 1.232 2021/11/25 18:48:37 rillig Exp $	*/
+/*	$NetBSD: indent.c,v 1.233 2021/11/26 14:17:01 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)indent.c	5.17 (Berkeley) 6/7/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: indent.c,v 1.232 2021/11/25 18:48:37 rillig Exp $");
+__RCSID("$NetBSD: indent.c,v 1.233 2021/11/26 14:17:01 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/indent.c 340138 2018-11-04 19:24:49Z oshogbo $");
 #endif
@@ -213,6 +213,26 @@ diag(int level, const char *msg, ...)
     vfprintf(stderr, msg, ap);
     fprintf(stderr, "\n");
     va_end(ap);
+}
+
+/*
+ * Compute the indentation from starting at 'ind' and adding the text from
+ * 'start' to 'end'.
+ */
+int
+ind_add(int ind, const char *start, const char *end)
+{
+    for (const char *p = start; p != end; ++p) {
+	if (*p == '\n' || *p == '\f')
+	    ind = 0;
+	else if (*p == '\t')
+	    ind = next_tab(ind);
+	else if (*p == '\b')
+	    --ind;
+	else
+	    ++ind;
+    }
+    return ind;
 }
 
 static void

@@ -1,4 +1,4 @@
-/*	$NetBSD: io.c,v 1.133 2021/11/25 21:59:40 rillig Exp $	*/
+/*	$NetBSD: io.c,v 1.134 2021/11/26 14:17:01 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)io.c	8.1 (Berkeley) 6/6/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: io.c,v 1.133 2021/11/25 21:59:40 rillig Exp $");
+__RCSID("$NetBSD: io.c,v 1.134 2021/11/26 14:17:01 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/io.c 334927 2018-06-10 16:44:18Z pstef $");
 #endif
@@ -683,20 +683,4 @@ inp_read_line(void)
 
     if (inhibit_formatting)
 	output_range(inbuf.inp.s, inbuf.inp.e);
-}
-
-int
-ind_add(int ind, const char *start, const char *end)
-{
-    for (const char *p = start; p != end; ++p) {
-	if (*p == '\n' || *p == '\f')
-	    ind = 0;
-	else if (*p == '\t')
-	    ind = next_tab(ind);
-	else if (*p == '\b')
-	    --ind;
-	else
-	    ++ind;
-    }
-    return ind;
 }
