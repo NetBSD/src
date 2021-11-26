@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: pf_boot,v 1.7 2020/09/08 12:52:18 martin Exp $
+# $NetBSD: pf_boot,v 1.8 2021/11/26 13:11:36 sborrill Exp $
 #
 
 # PROVIDE: pf_boot
@@ -29,5 +29,5 @@ pf_boot_start()
 	/sbin/pfctl -q -e
 }
 
-load_rc_config $name
+load_rc_config $rcvar
 run_rc_command "$1"
