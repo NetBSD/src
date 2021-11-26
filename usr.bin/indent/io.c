@@ -1,4 +1,4 @@
-/*	$NetBSD: io.c,v 1.136 2021/11/26 14:33:12 rillig Exp $	*/
+/*	$NetBSD: io.c,v 1.137 2021/11/26 14:48:03 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)io.c	8.1 (Berkeley) 6/6/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: io.c,v 1.136 2021/11/26 14:33:12 rillig Exp $");
+__RCSID("$NetBSD: io.c,v 1.137 2021/11/26 14:48:03 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/io.c 334927 2018-06-10 16:44:18Z pstef $");
 #endif
@@ -306,6 +306,45 @@ inp_comment_insert_lbrace(void)
     inbuf.save_com_s[0] = '{';
 }
 
+static char *
+inp_enlarge(char *p)
+{
+    size_t new_size = (size_t)(inbuf.inp.l - inbuf.inp.buf) * 2 + 10;
+    size_t offset = (size_t)(p - inbuf.inp.buf);
+    inbuf.inp.buf = xrealloc(inbuf.inp.buf, new_size);
+    inbuf.inp.l = inbuf.inp.buf + new_size - 2;
+    return inbuf.inp.buf + offset;
+}
+
+static void
+inp_read_next_line(FILE *f)
+{
+    char *p;
+    int ch;
+
+    for (p = inbuf.inp.buf;;) {
+	if (p >= inbuf.inp.l)
+	    p = inp_enlarge(p);
+
+	if ((ch = getc(f)) == EOF) {
+	    if (!inhibit_formatting) {
+		*p++ = ' ';
+		*p++ = '\n';
+	    }
+	    had_eof = true;
+	    break;
+	}
+
+	if (ch != '\0')
+	    *p++ = (char)ch;
+	if (ch == '\n')
+	    break;
+    }
+
+    inbuf.inp.s = inbuf.inp.buf;
+    inbuf.inp.e = p;
+}
+
 static void
 output_char(char ch)
 {
@@ -318,12 +357,6 @@ output_range(const char *s, const char *e)
 {
     fwrite(s, 1, (size_t)(e - s), output);
     debug_vis_range("output_range \"", s, e, "\"\n");
-}
-
-static inline void
-output_string(const char *s)
-{
-    output_range(s, s + strlen(s));
 }
 
 static int
@@ -622,50 +655,15 @@ parse_indent_comment(void)
     }
 }
 
-/*
- * Copyright (C) 1976 by the Board of Trustees of the University of Illinois
- *
- * All rights reserved
- */
 void
 inp_read_line(void)
 {
-    char *p;
-    int ch;
-    FILE *f = input;
-
     if (inp_from_file())
 	return;
 
-    for (p = inbuf.inp.buf;;) {
-	if (p >= inbuf.inp.l) {
-	    size_t size = (size_t)(inbuf.inp.l - inbuf.inp.buf) * 2 + 10;
-	    size_t offset = (size_t)(p - inbuf.inp.buf);
-	    inbuf.inp.buf = xrealloc(inbuf.inp.buf, size);
-	    p = inbuf.inp.buf + offset;
-	    inbuf.inp.l = inbuf.inp.buf + size - 2;
-	}
+    inp_read_next_line(input);
 
-	if ((ch = getc(f)) == EOF) {
-	    if (!inhibit_formatting) {
-		*p++ = ' ';
-		*p++ = '\n';
-	    }
-	    had_eof = true;
-	    break;
-	}
-
-	if (ch != '\0')
-	    *p++ = (char)ch;
-	if (ch == '\n')
-	    break;
-    }
-
-    inbuf.inp.s = inbuf.inp.buf;
-    inbuf.inp.e = p;
-
-    if (p - inbuf.inp.s >= 3 && p[-3] == '*' && p[-2] == '/')
-	parse_indent_comment();
+    parse_indent_comment();
 
     if (inhibit_formatting)
 	output_range(inbuf.inp.s, inbuf.inp.e);
