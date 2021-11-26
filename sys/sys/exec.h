@@ -1,4 +1,4 @@
-/*	$NetBSD: exec.h,v 1.160 2021/11/10 16:19:48 msaitoh Exp $	*/
+/*	$NetBSD: exec.h,v 1.161 2021/11/26 08:06:12 ryo Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -289,6 +289,8 @@ int	cpu_coredump32(struct lwp *, struct coredump_iostate *, struct core32 *);
 
 int	exec_add(struct execsw *, int);
 int	exec_remove(struct execsw *, int);
+int	exec_sigcode_alloc(const struct emul *);
+void	exec_sigcode_free(const struct emul *);
 
 void	new_vmcmd(struct exec_vmcmd_set *,
 		    int (*)(struct lwp *, struct exec_vmcmd *),
