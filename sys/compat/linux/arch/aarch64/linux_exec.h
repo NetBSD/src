@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_exec.h,v 1.2 2021/11/26 08:56:28 ryo Exp $	*/
+/*	$NetBSD: linux_exec.h,v 1.3 2021/11/26 09:05:05 ryo Exp $	*/
 
 /*-
  * Copyright (c) 2021 The NetBSD Foundation, Inc.
@@ -35,5 +35,11 @@
 #define linux_exec_setup_stack	exec_setup_stack
 
 #define LINUX_GO_RT0_SIGNATURE
+/*
+ * linux/arm golang architecture name and netbsd machine_arch{,32}[] are
+ * different and cannot be used as is.
+ */
+#define LINUX_GO_RT0_SIGNATURE_ARCH32	"arm"
+#define LINUX_GO_RT0_SIGNATURE_ARCH64	"arm64"
 
 #endif /* !_AARCH64_LINUX_EXEC_H */
