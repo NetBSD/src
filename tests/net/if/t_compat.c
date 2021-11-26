@@ -1,4 +1,4 @@
-/*	$NetBSD: t_compat.c,v 1.4 2016/11/12 15:12:59 kre Exp $	*/
+/*	$NetBSD: t_compat.c,v 1.5 2021/11/26 15:45:52 gson Exp $	*/
 
 #include <sys/socket.h>
 #include <sys/ioctl.h>
@@ -25,9 +25,9 @@ struct oifreq {
                 struct  sockaddr ifru_addr;
                 struct  sockaddr ifru_dstaddr;
                 struct  sockaddr ifru_broadaddr;
-                short   ifru_flags;  
+                short   ifru_flags;
                 int     ifru_metric;
-                int     ifru_mtu; 
+                int     ifru_mtu;
                 int     ifru_dlt;
                 u_int   ifru_value;
                 void *  ifru_data;
@@ -36,7 +36,7 @@ struct oifreq {
                         void            *b_buf;
                 } ifru_b;
         } ifr_ifru;
-};      
+};
 #define OOSIOCGIFBRDADDR _IOWR('i', 18, struct oifreq)
 
 ATF_TC(OOSIOCGIFBRDADDR);
