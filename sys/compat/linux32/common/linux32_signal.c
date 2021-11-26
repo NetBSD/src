@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_signal.c,v 1.23 2021/11/01 05:07:16 thorpej Exp $ */
+/*	$NetBSD: linux32_signal.c,v 1.24 2021/11/26 13:32:38 christos Exp $ */
 
 /*-
  * Copyright (c) 2006 Emmanuel Dreyfus, all rights reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux32_signal.c,v 1.23 2021/11/01 05:07:16 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_signal.c,v 1.24 2021/11/26 13:32:38 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/ucred.h>
@@ -679,12 +679,8 @@ linux32_to_native_sigevent(struct sigevent *nsep,
 		return ENOTSUP;
 	}
 
-#if _BYTE_ORDER == _LITTLE_ENDIAN
 	nsep->sigev_value.sival_ptr =
 	    NETBSD32PTR64(lsep->sigev_value.sival_ptr);
-#else
-#error This is probably broken on big-endian platforms.
-#endif
 
 	if (lsep->sigev_signo < 0 || lsep->sigev_signo >= LINUX32__NSIG) {
 		return EINVAL;
