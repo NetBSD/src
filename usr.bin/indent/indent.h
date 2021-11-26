@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.h,v 1.102 2021/11/25 18:48:37 rillig Exp $	*/
+/*	$NetBSD: indent.h,v 1.103 2021/11/26 15:18:18 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-FreeBSD
@@ -405,6 +405,8 @@ void *xrealloc(void *, size_t);
 char *xstrdup(const char *);
 
 void buf_expand(struct buffer *, size_t);
+void buf_add_char(struct buffer *, char);
+void buf_add_range(struct buffer *, const char *, const char *);
 
 static inline bool
 ch_isalnum(char ch)

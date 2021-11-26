@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.c,v 1.233 2021/11/26 14:17:01 rillig Exp $	*/
+/*	$NetBSD: indent.c,v 1.234 2021/11/26 15:18:18 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)indent.c	5.17 (Berkeley) 6/7/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: indent.c,v 1.233 2021/11/26 14:17:01 rillig Exp $");
+__RCSID("$NetBSD: indent.c,v 1.234 2021/11/26 15:18:18 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/indent.c 340138 2018-11-04 19:24:49Z oshogbo $");
 #endif
@@ -170,20 +170,26 @@ buf_reserve(struct buffer *buf, size_t n)
 	buf_expand(buf, n);
 }
 
-static void
+void
 buf_add_char(struct buffer *buf, char ch)
 {
     buf_reserve(buf, 1);
     *buf->e++ = ch;
 }
 
+void
+buf_add_range(struct buffer *buf, const char *s, const char *e)
+{
+    size_t len = (size_t)(e - s);
+    buf_reserve(buf, len);
+    memcpy(buf->e, s, len);
+    buf->e += len;
+}
+
 static void
 buf_add_buf(struct buffer *buf, const struct buffer *add)
 {
-    size_t len = buf_len(add);
-    buf_reserve(buf, len);
-    memcpy(buf->e, add->s, len);
-    buf->e += len;
+    buf_add_range(buf, add->s, add->e);
 }
 
 static void
@@ -335,8 +341,8 @@ search_stmt_other(lexer_symbol lsym, bool *force_nl,
 	    diag(0, "Line broken");
     }
 
-    for (const char *t_ptr = token.s; *t_ptr != '\0'; ++t_ptr)
-	inp_comment_add_char(*t_ptr);
+    inp_comment_add_range(token.s, token.e);
+
     debug_inp("search_stmt_other end");
     return true;
 }
@@ -379,12 +385,12 @@ search_stmt_lookahead(lexer_symbol *lsym)
     }
 
     struct parser_state backup_ps = ps;
-    debug_println("made backup of parser state");
+    debug_println("backed up parser state");
     *lsym = lexi();
     if (*lsym == lsym_newline || *lsym == lsym_form_feed ||
 	*lsym == lsym_comment || ps.search_stmt) {
 	ps = backup_ps;
-	debug_println("rolled back parser state");
+	debug_println("restored parser state");
     }
 }
 
