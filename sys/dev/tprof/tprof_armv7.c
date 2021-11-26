@@ -1,4 +1,4 @@
-/* $NetBSD: tprof_armv7.c,v 1.5 2021/11/25 09:36:21 skrll Exp $ */
+/* $NetBSD: tprof_armv7.c,v 1.6 2021/11/26 13:24:28 christos Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tprof_armv7.c,v 1.5 2021/11/25 09:36:21 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tprof_armv7.c,v 1.6 2021/11/26 13:24:28 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -185,7 +185,7 @@ armv7_pmu_start(const tprof_param_t *param)
 	counter_reset_val = -counter_val + 1;
 
 	armv7_pmu_param = *param;
-	xc = xc_broadcast(0, armv7_pmu_start_cpu, NULL, NULL);
+	uint64_t xc = xc_broadcast(0, armv7_pmu_start_cpu, NULL, NULL);
 	xc_wait(xc);
 
 	return 0;
