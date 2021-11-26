@@ -1,4 +1,4 @@
-/*	$NetBSD: io.c,v 1.138 2021/11/26 15:08:48 rillig Exp $	*/
+/*	$NetBSD: io.c,v 1.139 2021/11/26 15:21:38 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)io.c	8.1 (Berkeley) 6/6/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: io.c,v 1.138 2021/11/26 15:08:48 rillig Exp $");
+__RCSID("$NetBSD: io.c,v 1.139 2021/11/26 15:21:38 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/io.c 334927 2018-06-10 16:44:18Z pstef $");
 #endif
@@ -133,18 +133,25 @@ inp_next(void)
 }
 
 #ifdef debug
+static void
+debug_inp_buf(const char *name, const char *s, const char *e)
+{
+    if (s != NULL && e != NULL) {
+	debug_printf("    %-12s ", name);
+	debug_vis_range("\"", s, e, "\"\n");
+    }
+}
+
 void
 debug_inp(const char *prefix)
 {
-    debug_printf("%s:", prefix);
-    debug_vis_range(" inp \"", inbuf.inp.s, inbuf.inp.e, "\"");
-    if (inbuf.save_com_s != NULL)
-	debug_vis_range(" save_com \"",
-			inbuf.save_com_s, inbuf.save_com_e, "\"");
-    if (inbuf.saved_inp_s != NULL)
-	debug_vis_range(" saved_inp \"",
-			inbuf.saved_inp_s, inbuf.saved_inp_e, "\"");
-    debug_printf("\n");
+    debug_println("%s %s:", __func__, prefix);
+    if (inbuf.saved_inp_s == NULL)
+	debug_inp_buf("inp.buf", inbuf.inp.buf, inbuf.inp.s);
+    debug_inp_buf("inp", inbuf.inp.s, inbuf.inp.e);	/* never null */
+    debug_inp_buf("save_com.buf", inbuf.save_com_buf, inbuf.save_com_s);
+    debug_inp_buf("save_com", inbuf.save_com_s, inbuf.save_com_e);
+    debug_inp_buf("saved_inp", inbuf.saved_inp_s, inbuf.saved_inp_e);
 }
 #endif
 
@@ -202,11 +209,14 @@ inp_comment_init_comment(void)
     assert((size_t)(inbuf.inp.s - inbuf.inp.buf) >= 4);
     size_t line_len = (size_t)(inbuf.inp.s - inbuf.inp.buf) - 4;
     assert(line_len < array_length(inbuf.save_com_buf));
+
     memcpy(inbuf.save_com_buf, inbuf.inp.buf, line_len);
     inbuf.save_com_s = inbuf.save_com_buf + line_len;
+
     inbuf.save_com_s[0] = ' ';	/* see inp_comment_insert_lbrace */
     inbuf.save_com_s[1] = ' ';	/* see inp_comment_insert_lbrace */
     inbuf.save_com_e = &inbuf.save_com_s[2];
+
     debug_vis_range("search_stmt_comment: before save_com is \"",
 	inbuf.save_com_buf, inbuf.save_com_s, "\"\n");
     debug_vis_range("search_stmt_comment: save_com is \"",
@@ -272,6 +282,7 @@ inp_comment_rtrim_newline(void)
 void
 inp_from_comment(void)
 {
+    debug_inp("before inp_from_comment");
     inbuf.saved_inp_s = inbuf.inp.s;
     inbuf.saved_inp_e = inbuf.inp.e;
 
@@ -279,7 +290,7 @@ inp_from_comment(void)
     inbuf.inp.e = inbuf.save_com_e;
     inbuf.save_com_s = NULL;
     inbuf.save_com_e = NULL;
-    debug_inp(__func__);
+    debug_inp("after inp_from_comment");
 }
 
 /*
