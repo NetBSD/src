@@ -1,4 +1,4 @@
-/*	$NetBSD: io.c,v 1.135 2021/11/26 14:27:19 rillig Exp $	*/
+/*	$NetBSD: io.c,v 1.136 2021/11/26 14:33:12 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)io.c	8.1 (Berkeley) 6/6/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: io.c,v 1.135 2021/11/26 14:27:19 rillig Exp $");
+__RCSID("$NetBSD: io.c,v 1.136 2021/11/26 14:33:12 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/io.c 334927 2018-06-10 16:44:18Z pstef $");
 #endif
@@ -280,6 +280,23 @@ inp_from_comment(void)
     inbuf.save_com_s = NULL;
     inbuf.save_com_e = NULL;
     debug_inp(__func__);
+}
+
+/*
+ * After having read from save_com, continue with the rest of the input line
+ * before reading the next line from the input file.
+ */
+static bool
+inp_from_file(void)
+{
+    if (inbuf.saved_inp_s == NULL)
+	return false;
+
+    inbuf.inp.s = inbuf.saved_inp_s;
+    inbuf.inp.e = inbuf.saved_inp_e;
+    inbuf.saved_inp_s = inbuf.saved_inp_e = NULL;
+    debug_println("switched inp.s back to saved_inp_s");
+    return inbuf.inp.s < inbuf.inp.e;
 }
 
 void
@@ -617,15 +634,8 @@ inp_read_line(void)
     int ch;
     FILE *f = input;
 
-    if (inbuf.saved_inp_s != NULL) {	/* there is a partly filled input buffer left */
-	inbuf.inp.s = inbuf.saved_inp_s;	/* do not read anything, just switch buffers */
-	inbuf.inp.e = inbuf.saved_inp_e;
-	inbuf.saved_inp_s = inbuf.saved_inp_e = NULL;
-	debug_println("switched inp.s back to saved_inp_s");
-	if (inbuf.inp.s < inbuf.inp.e)
-	    return;		/* only return if there is really something in
-				 * this buffer */
-    }
+    if (inp_from_file())
+	return;
 
     for (p = inbuf.inp.buf;;) {
 	if (p >= inbuf.inp.l) {
