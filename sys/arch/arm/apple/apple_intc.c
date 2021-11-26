@@ -1,4 +1,4 @@
-/* $NetBSD: apple_intc.c,v 1.4 2021/10/31 16:23:47 skrll Exp $ */
+/* $NetBSD: apple_intc.c,v 1.5 2021/11/26 19:36:17 skrll Exp $ */
 
 /*-
  * Copyright (c) 2021 Jared McNeill <jmcneill@invisible.ca>
@@ -32,7 +32,7 @@
 #define	_INTR_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: apple_intc.c,v 1.4 2021/10/31 16:23:47 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: apple_intc.c,v 1.5 2021/11/26 19:36:17 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -277,7 +277,7 @@ apple_intc_fdt_intrstr(device_t dev, u_int *specifier, char *buf, size_t buflen)
 	/* 2nd cell is the interrupt number */
 	const u_int intno = be32toh(specifier[1]);
 
-	snprintf(buf, buflen, "%s %u", type == 0 ? "IRQ" : "FIQ", intno);
+	snprintf(buf, buflen, "%s %u", type == 0 ? "irq" : "fiq", intno);
 
 	return true;
 }
