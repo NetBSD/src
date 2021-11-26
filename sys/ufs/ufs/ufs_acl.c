@@ -36,7 +36,7 @@
 #if 0
 __FBSDID("$FreeBSD: head/sys/ufs/ufs/ufs_acl.c 356669 2020-01-13 02:31:51Z mjg $");
 #endif
-__KERNEL_RCSID(0, "$NetBSD: ufs_acl.c,v 1.3 2021/10/20 03:08:19 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_acl.c,v 1.4 2021/11/26 17:35:12 christos Exp $");
 
 #if defined(_KERNEL_OPT) 
 #include "opt_ffs.h"
@@ -215,7 +215,7 @@ ufs_getacl_nfs4(struct vop_getacl_args *ap, struct lwp *l)
 {
 	int error;
 
-	if ((ap->a_vp->v_mount->mnt_flag & MNT_ACLS) == 0)
+	if ((ap->a_vp->v_mount->mnt_flag & MNT_NFS4ACLS) == 0)
 		return (EINVAL);
 
 	error = VOP_ACCESSX(ap->a_vp, VREAD_ACL, ap->a_cred);
@@ -362,7 +362,7 @@ ufs_getacl(void *v)
 {
 	struct vop_getacl_args *ap = v;
 
-	if ((ap->a_vp->v_mount->mnt_flag & (MNT_POSIX1EACLS | MNT_ACLS)) == 0)
+	if ((ap->a_vp->v_mount->mnt_flag & (MNT_POSIX1EACLS | MNT_NFS4ACLS)) == 0)
 		return (EOPNOTSUPP);
 
 	if (ap->a_type == ACL_TYPE_NFS4)
@@ -438,7 +438,7 @@ ufs_setacl_nfs4(struct vop_setacl_args *ap, struct lwp *l)
 	int error;
 	struct inode *ip = VTOI(ap->a_vp);
 
-	if ((ap->a_vp->v_mount->mnt_flag & MNT_ACLS) == 0)
+	if ((ap->a_vp->v_mount->mnt_flag & MNT_NFS4ACLS) == 0)
 		return (EINVAL);
 
 	if (ap->a_vp->v_mount->mnt_flag & MNT_RDONLY)
@@ -612,7 +612,7 @@ int
 ufs_setacl(void *v)
 {
 	struct vop_setacl_args *ap = v;
-	if ((ap->a_vp->v_mount->mnt_flag & (MNT_POSIX1EACLS | MNT_ACLS)) == 0)
+	if ((ap->a_vp->v_mount->mnt_flag & (MNT_POSIX1EACLS | MNT_NFS4ACLS)) == 0)
 		return (EOPNOTSUPP);
 
 	if (ap->a_type == ACL_TYPE_NFS4)
@@ -627,7 +627,7 @@ ufs_aclcheck_nfs4(struct vop_aclcheck_args *ap, struct lwp *l)
 {
 	int is_directory = 0;
 
-	if ((ap->a_vp->v_mount->mnt_flag & MNT_ACLS) == 0)
+	if ((ap->a_vp->v_mount->mnt_flag & MNT_NFS4ACLS) == 0)
 		return (EINVAL);
 
 	/*
@@ -683,7 +683,7 @@ ufs_aclcheck(void *v)
 {
 	struct vop_aclcheck_args *ap = v;
 
-	if ((ap->a_vp->v_mount->mnt_flag & (MNT_POSIX1EACLS | MNT_ACLS)) == 0)
+	if ((ap->a_vp->v_mount->mnt_flag & (MNT_POSIX1EACLS | MNT_NFS4ACLS)) == 0)
 		return (EOPNOTSUPP);
 
 	if (ap->a_type == ACL_TYPE_NFS4)
