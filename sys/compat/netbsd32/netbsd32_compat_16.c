@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_compat_16.c,v 1.3 2019/12/15 16:48:26 tsutsui Exp $	*/
+/*	$NetBSD: netbsd32_compat_16.c,v 1.4 2021/11/26 08:06:11 ryo Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -29,12 +29,13 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_16.c,v 1.3 2019/12/15 16:48:26 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_16.c,v 1.4 2021/11/26 08:06:11 ryo Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/module.h>
 #include <sys/dirent.h>
+#include <sys/exec.h>
 #include <sys/lwp.h>
 #include <sys/syscallargs.h>
 #include <sys/syscallvar.h>
@@ -51,19 +52,33 @@ MODULE(MODULE_CLASS_EXEC, compat_netbsd32_16, "compat_netbsd32_20,compat_16");
 static int
 compat_netbsd32_16_modcmd(modcmd_t cmd, void *arg)
 {
+	int error;
 
 	switch (cmd) {
 	case MODULE_CMD_INIT:
+		rw_enter(&exec_lock, RW_WRITER);
 		emul_netbsd32.e_sigcode = netbsd32_sigcode;
         	emul_netbsd32.e_esigcode = netbsd32_esigcode;
         	emul_netbsd32.e_sigobject = &emul_netbsd32_object;
+		error = exec_sigcode_alloc(&emul_netbsd);
+		if (error) {
+			emul_netbsd32.e_sigcode = NULL;
+			emul_netbsd32.e_esigcode = NULL;
+			emul_netbsd32.e_sigobject = NULL;
+		}
+		rw_exit(&exec_lock);
+		if (error)
+			return error;
 		netbsd32_machdep_md_16_init();
 		return 0;
 
 	case MODULE_CMD_FINI:
+		rw_enter(&exec_lock, RW_WRITER);
+		exec_sigcode_free(&emul_netbsd);
 		emul_netbsd32.e_sigcode = NULL;
         	emul_netbsd32.e_esigcode = NULL;
         	emul_netbsd32.e_sigobject = NULL;
+		rw_exit(&exec_lock);
 		netbsd32_machdep_md_16_fini();
 		return 0;
 
