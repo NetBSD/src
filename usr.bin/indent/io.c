@@ -1,4 +1,4 @@
-/*	$NetBSD: io.c,v 1.137 2021/11/26 14:48:03 rillig Exp $	*/
+/*	$NetBSD: io.c,v 1.138 2021/11/26 15:08:48 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)io.c	8.1 (Berkeley) 6/6/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: io.c,v 1.137 2021/11/26 14:48:03 rillig Exp $");
+__RCSID("$NetBSD: io.c,v 1.138 2021/11/26 15:08:48 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/io.c 334927 2018-06-10 16:44:18Z pstef $");
 #endif
@@ -306,43 +306,42 @@ inp_comment_insert_lbrace(void)
     inbuf.save_com_s[0] = '{';
 }
 
-static char *
-inp_enlarge(char *p)
+static void
+inp_add(char ch)
 {
-    size_t new_size = (size_t)(inbuf.inp.l - inbuf.inp.buf) * 2 + 10;
-    size_t offset = (size_t)(p - inbuf.inp.buf);
-    inbuf.inp.buf = xrealloc(inbuf.inp.buf, new_size);
-    inbuf.inp.l = inbuf.inp.buf + new_size - 2;
-    return inbuf.inp.buf + offset;
+    if (inbuf.inp.e >= inbuf.inp.l) {
+	size_t new_size = (size_t)(inbuf.inp.l - inbuf.inp.buf) * 2 + 10;
+	size_t offset = (size_t)(inbuf.inp.e - inbuf.inp.buf);
+	inbuf.inp.buf = xrealloc(inbuf.inp.buf, new_size);
+	inbuf.inp.s = inbuf.inp.buf;
+	inbuf.inp.e = inbuf.inp.buf + offset;
+	inbuf.inp.l = inbuf.inp.buf + new_size - 2;
+    }
+    *inbuf.inp.e++ = ch;
 }
 
 static void
 inp_read_next_line(FILE *f)
 {
-    char *p;
-    int ch;
+    inbuf.inp.s = inbuf.inp.buf;
+    inbuf.inp.e = inbuf.inp.buf;
 
-    for (p = inbuf.inp.buf;;) {
-	if (p >= inbuf.inp.l)
-	    p = inp_enlarge(p);
-
-	if ((ch = getc(f)) == EOF) {
+    for (;;) {
+	int ch = getc(f);
+	if (ch == EOF) {
 	    if (!inhibit_formatting) {
-		*p++ = ' ';
-		*p++ = '\n';
+		inp_add(' ');
+		inp_add('\n');
 	    }
 	    had_eof = true;
 	    break;
 	}
 
 	if (ch != '\0')
-	    *p++ = (char)ch;
+	    inp_add((char)ch);
 	if (ch == '\n')
 	    break;
     }
-
-    inbuf.inp.s = inbuf.inp.buf;
-    inbuf.inp.e = p;
 }
 
 static void
