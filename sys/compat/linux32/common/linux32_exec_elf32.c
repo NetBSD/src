@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_exec_elf32.c,v 1.22 2021/11/25 03:08:04 ryo Exp $ */
+/*	$NetBSD: linux32_exec_elf32.c,v 1.23 2021/11/26 08:56:29 ryo Exp $ */
 
 /*-                     
  * Copyright (c) 1995, 1998, 2000, 2001,2006 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux32_exec_elf32.c,v 1.22 2021/11/25 03:08:04 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_exec_elf32.c,v 1.23 2021/11/26 08:56:29 ryo Exp $");
 
 #define	ELFSIZE		32
 
@@ -82,6 +82,9 @@ ELFNAME2(linux32,probe)(struct lwp *l, struct exec_package *epp,
 #endif
 #ifdef LINUX32_DEBUGLINK_SIGNATURE
 	    ((error = ELFNAME2(linux,debuglink_signature)(l, epp, eh)) != 0) &&
+#endif
+#ifdef LINUX32_GO_RT0_SIGNATURE
+	    ((error = ELFNAME2(linux,go_rt0_signature)(l, epp, eh)) != 0) &&
 #endif
 	    1)
 			return error;

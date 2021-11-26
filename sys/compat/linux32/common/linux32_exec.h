@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_exec.h,v 1.8 2021/11/25 03:08:04 ryo Exp $ */
+/*	$NetBSD: linux32_exec.h,v 1.9 2021/11/26 08:56:29 ryo Exp $ */
 
 /*-
  * Copyright (c) 2006 Emmanuel Dreyfus, all rights reserved.
@@ -65,6 +65,10 @@ int linux_elf32_debuglink_signature(struct lwp *l,
 #endif
 #ifdef LINUX32_ATEXIT_SIGNATURE
 int linux_elf32_atexit_signature(struct lwp *l,
+        struct exec_package *, Elf32_Ehdr *);
+#endif
+#ifdef LINUX32_GO_RT0_SIGNATURE
+int linux_elf32_go_rt0_signature(struct lwp *l,
         struct exec_package *, Elf32_Ehdr *);
 #endif
 

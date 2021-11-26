@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_exec.h,v 1.16 2017/02/12 21:02:19 chs Exp $ */
+/*	$NetBSD: linux_exec.h,v 1.17 2021/11/26 08:56:28 ryo Exp $ */
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -57,6 +57,7 @@
 
 #define LINUX_ATEXIT_SIGNATURE 1
 #define LINUX_GCC_SIGNATURE 1
+#define LINUX_GO_RT0_SIGNATURE 1
 
 #define LINUX_ELF_AUX_ARGSIZ \
 	(LINUX_ELF_AUX_ENTRIES * sizeof(Aux32Info) + LINUX_RANDOM_BYTES)
