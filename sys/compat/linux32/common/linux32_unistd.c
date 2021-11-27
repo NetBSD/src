@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_unistd.c,v 1.43 2021/11/25 03:08:04 ryo Exp $ */
+/*	$NetBSD: linux32_unistd.c,v 1.44 2021/11/27 21:15:07 ryo Exp $ */
 
 /*-
  * Copyright (c) 2006 Emmanuel Dreyfus, all rights reserved.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: linux32_unistd.c,v 1.43 2021/11/25 03:08:04 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_unistd.c,v 1.44 2021/11/27 21:15:07 ryo Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -224,6 +224,83 @@ linux32_select1(struct lwp *l, register_t *retval, int nfds,
 	}
 
 	return 0;
+}
+
+int
+linux32_sys_pselect6(struct lwp *l, const struct linux32_sys_pselect6_args *uap,
+    register_t *retval)
+{
+	/* {
+		syscallarg(int) nfds;
+		syscallarg(netbsd32_fd_setp_t) readfds;
+		syscallarg(netbsd32_fd_setp_t) writefds;
+		syscallarg(netbsd32_fd_setp_t) exceptfds;
+		syscallarg(linux32_timespecp_t) timeout;
+		syscallarg(linux32_sized_sigsetp_t) ss;
+	} */
+	struct timespec uts, ts0, ts1, *tsp;
+	linux32_sized_sigset_t lsss;
+	struct linux32_timespec lts;
+	linux32_sigset_t lss;
+	sigset_t *ssp;
+	sigset_t ss;
+	int error;
+	void *p;
+
+	ssp = NULL;
+	if ((p = SCARG_P32(uap, ss)) != NULL) {
+		if ((error = copyin(p, &lsss, sizeof(lsss))) != 0)
+			return (error);
+		if (lsss.ss_len != sizeof(lss))
+			return (EINVAL);
+		if ((p = NETBSD32PTR64(lsss.ss)) != NULL) {
+			if ((error = copyin(p, &lss, sizeof(lss))) != 0)
+				return (error);
+			linux32_to_native_sigset(&ss, &lss);
+			ssp = &ss;
+		}
+	}
+
+	if ((p = SCARG_P32(uap, timeout)) != NULL) {
+		error = copyin(p, &lts, sizeof(lts));
+		if (error != 0)
+			return (error);
+		linux32_to_native_timespec(&uts, &lts);
+
+		if (itimespecfix(&uts))
+			return (EINVAL);
+
+		nanotime(&ts0);
+		tsp = &uts;
+	} else {
+		tsp = NULL;
+	}
+
+	error = selcommon(retval, SCARG(uap, nfds), SCARG_P32(uap, readfds),
+	    SCARG_P32(uap, writefds), SCARG_P32(uap, exceptfds), tsp, ssp);
+
+	if (error == 0 && tsp != NULL) {
+		if (retval != 0) {
+			/*
+			 * Compute how much time was left of the timeout,
+			 * by subtracting the current time and the time
+			 * before we started the call, and subtracting
+			 * that result from the user-supplied value.
+			 */
+			nanotime(&ts1);
+			timespecsub(&ts1, &ts0, &ts1);
+			timespecsub(&uts, &ts1, &uts);
+			if (uts.tv_sec < 0)
+				timespecclear(&uts);
+		} else {
+			timespecclear(&uts);
+		}
+
+		native_to_linux32_timespec(&lts, &uts);
+		error = copyout(&lts, SCARG_P32(uap, timeout), sizeof(lts));
+	}
+
+	return (error);
 }
 
 int

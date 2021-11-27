@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.1 2021/11/25 03:08:04 ryo Exp $
+	$NetBSD: syscalls.master,v 1.2 2021/11/27 21:15:07 ryo Exp $
 
 ; NetBSD aarch64 COMPAT_LINUX32 system call name/number "master" file.
 ;
@@ -584,7 +584,12 @@
 		    linux_umode_t mode); }
 334	STD	{ int|linux32_sys||faccessat(int fd, netbsd32_charp path, \
 		    int amode); }
-335	UNIMPL	pselect6
+335	STD	{ int|linux32_sys||pselect6(int nfds, \
+		   netbsd32_fd_setp_t readfds, \
+		   netbsd32_fd_setp_t writefds, \
+		   netbsd32_fd_setp_t exceptfds, \
+		   linux32_timespecp_t timeout, \
+		   linux32_sized_sigsetp_t ss); }
 336	STD	{ int|linux32_sys||ppoll(netbsd32_pollfdp_t fds, u_int nfds, \
 		    linux32_timespecp_t timeout, linux32_sigsetp_t sigset); }
 337	UNIMPL	unshare
