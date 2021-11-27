@@ -1,4 +1,4 @@
-/*	$NetBSD: make.h,v 1.265 2021/09/12 09:51:14 rillig Exp $	*/
+/*	$NetBSD: make.h,v 1.266 2021/11/27 22:04:02 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -581,7 +581,7 @@ void debug_printf(const char *, ...) MAKE_ATTR_PRINTFLIKE(1, 2);
 	do { \
 		if (DEBUG(module)) \
 			debug_printf args; \
-	} while (/*CONSTCOND*/false)
+	} while (false)
 
 #define DEBUG0(module, text) \
 	DEBUG_IMPL(module, ("%s", text))
