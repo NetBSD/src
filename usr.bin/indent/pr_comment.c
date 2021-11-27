@@ -1,4 +1,4 @@
-/*	$NetBSD: pr_comment.c,v 1.125 2021/11/26 15:18:18 rillig Exp $	*/
+/*	$NetBSD: pr_comment.c,v 1.126 2021/11/27 18:37:17 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)pr_comment.c	8.1 (Berkeley) 6/6/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: pr_comment.c,v 1.125 2021/11/26 15:18:18 rillig Exp $");
+__RCSID("$NetBSD: pr_comment.c,v 1.126 2021/11/27 18:37:17 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/pr_comment.c 334927 2018-06-10 16:44:18Z pstef $");
 #endif
@@ -153,7 +153,7 @@ analyze_comment(bool *p_may_wrap, bool *p_break_delim,
     if (!may_wrap) {
 	/*
 	 * Find out how much indentation there was originally, because that
-	 * much will have to be ignored by dump_line().
+	 * much will have to be ignored by output_complete_line.
 	 */
 	const char *start = inp_line_start();
 	ps.n_comment_delta = -ind_add(0, start, inp_p() - 2);
@@ -178,7 +178,7 @@ analyze_comment(bool *p_may_wrap, bool *p_break_delim,
 	if (opt.blanklines_before_block_comments &&
 		ps.prev_token != lsym_lbrace)
 	    blank_line_before = true;
-	dump_line();
+	output_line();
 	com_add_delim();
     }
 
@@ -201,7 +201,7 @@ copy_comment_wrap(int adj_max_line_length, bool break_delim)
     for (;;) {
 	switch (inp_peek()) {
 	case '\f':
-	    dump_line_ff();
+	    output_line_ff();
 	    last_blank = -1;
 	    com_add_delim();
 	    inp_skip();
@@ -212,7 +212,7 @@ copy_comment_wrap(int adj_max_line_length, bool break_delim)
 	case '\n':
 	    if (had_eof) {
 		diag(1, "Unterminated comment");
-		dump_line();
+		output_line();
 		return;
 	    }
 
@@ -221,10 +221,10 @@ copy_comment_wrap(int adj_max_line_length, bool break_delim)
 		if (com.s == com.e)
 		    com_add_char(' ');	/* force empty line of output */
 		if (com.e - com.s > 3) {
-		    dump_line();
+		    output_line();
 		    com_add_delim();
 		}
-		dump_line();
+		output_line();
 		com_add_delim();
 
 	    } else {
@@ -257,7 +257,7 @@ copy_comment_wrap(int adj_max_line_length, bool break_delim)
 
 		if (break_delim) {
 		    if (com.e - com.s > 3)
-			dump_line();
+			output_line();
 		    else
 			com.e = com.s;
 		    com_add_char(' ');
@@ -297,7 +297,7 @@ copy_comment_wrap(int adj_max_line_length, bool break_delim)
 		break;
 
 	    if (last_blank == -1) {	/* only a single word in this line */
-		dump_line();
+		output_line();
 		com_add_delim();
 		break;
 	    }
@@ -305,7 +305,7 @@ copy_comment_wrap(int adj_max_line_length, bool break_delim)
 	    const char *last_word_s = com.buf + last_blank + 1;
 	    size_t last_word_len = (size_t)(com.e - last_word_s);
 	    com.e = com.buf + last_blank;
-	    dump_line();
+	    output_line();
 	    com_add_delim();
 
 	    memcpy(com.e, last_word_s, last_word_len);
@@ -325,13 +325,13 @@ copy_comment_nowrap(void)
 
 	    if (had_eof) {
 		diag(1, "Unterminated comment");
-		dump_line();
+		output_line();
 		return;
 	    }
 
 	    if (com.s == com.e)
 		com_add_char(' ');	/* force output of an empty line */
-	    dump_line();
+	    output_line();
 	    ++line_no;
 	    inp_skip();
 	    continue;

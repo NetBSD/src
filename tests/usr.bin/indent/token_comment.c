@@ -1,4 +1,4 @@
-/* $NetBSD: token_comment.c,v 1.26 2021/11/25 20:44:10 rillig Exp $ */
+/* $NetBSD: token_comment.c,v 1.27 2021/11/27 18:37:17 rillig Exp $ */
 /* $FreeBSD$ */
 
 /*
@@ -895,7 +895,7 @@ int		decl;
 /*
  * A completely empty line in a box comment must be copied unmodified to the
  * output. This is done in process_comment by adding a space to the end of an
- * otherwise empty comment. This space forces dump_line to add some output,
+ * otherwise empty comment. This space forces output_complete_line to add some output,
  * but the trailing space is discarded, resulting in an empty line.
  */
 #indent input
