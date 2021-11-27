@@ -1,4 +1,4 @@
-/* $NetBSD: pci_msi_machdep.h,v 1.3 2018/11/16 15:06:22 jmcneill Exp $ */
+/* $NetBSD: pci_msi_machdep.h,v 1.4 2021/11/27 06:44:16 skrll Exp $ */
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -33,7 +33,6 @@
 #define _ARM_PCI_MSI_MACHDEP_H
 
 #include <sys/queue.h>
-#include <arm/pic/picvar.h>
 
 struct arm_pci_msi {
 	device_t		msi_dev;
