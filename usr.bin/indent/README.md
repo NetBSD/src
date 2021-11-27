@@ -8,12 +8,12 @@ additions to provide "Kernel Normal Form" were contributed by the folks at Sun
 Microsystems.
 
 Between 2000 and 2019, FreeBSD maintained the code, adding several features.
-NetBSD imported these changes on 2019-04.04.
+NetBSD imported these changes on 2019-04-04.
 
-In 2021, indent was updated to handle C99 comments, cleaning up the code.  It
-got a proper test suite, uncovering many inconsistencies and bugs that either
-had been there forever or had been introduced by importing the FreeBSD version
-in 2019.
+In 2021, indent was updated to handle C99 comments and the code got a major
+overhaul.  Indent got an extensive and systematic test suite, which uncovered
+many inconsistencies and bugs.  Several of these bugs had been introduced by 
+importing the FreeBSD version on 2019-04-04.
 
 # References
 
