@@ -1,4 +1,4 @@
-/*	$NetBSD: sign.c,v 1.7 2018/02/06 21:36:46 christos Exp $	*/
+/*	$NetBSD: sign.c,v 1.8 2021/11/27 22:30:26 rillig Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: sign.c,v 1.7 2018/02/06 21:36:46 christos Exp $");
+__RCSID("$NetBSD: sign.c,v 1.8 2021/11/27 22:30:26 rillig Exp $");
 
 #ifndef DISABLE_SIGN
 #include "syslogd.h"
@@ -313,14 +313,14 @@ sign_sg_init(struct filed *Files)
 		logerror("Unable to allocate memory");	\
 		return false;				\
 	}						\
-} while (/*CONSTCOND*/0)
+} while (0)
 
 #define ALLOC_SG(x) do {				\
 	ALLOC_OR_FALSE(x);				\
 	(x)->last_msg_num = 1; /* cf. section 4.2.5 */	\
 	STAILQ_INIT(&(x)->hashes);			\
 	STAILQ_INIT(&(x)->files);			\
-} while (/*CONSTCOND*/0)
+} while (0)
 
 /* alloc(fq) and add to SGs file queue */
 #define ASSIGN_FQ() do {				\
@@ -329,7 +329,7 @@ sign_sg_init(struct filed *Files)
 	f->f_sg = newsg;				\
 	DPRINTF(D_SIGN, "SG@%p <--> f@%p\n", newsg, f); \
 	STAILQ_INSERT_TAIL(&newsg->files, fq, entries); \
-} while (/*CONSTCOND*/0)
+} while (0)
 
 	switch (GlobalSign.sg) {
 	case 0:

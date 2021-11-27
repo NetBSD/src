@@ -1,4 +1,4 @@
-/*	$NetBSD: pwd_mkdb.c,v 1.58 2017/05/04 16:26:09 sevan Exp $	*/
+/*	$NetBSD: pwd_mkdb.c,v 1.59 2021/11/27 22:30:26 rillig Exp $	*/
 
 /*
  * Copyright (c) 2000, 2009 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@ __COPYRIGHT("@(#) Copyright (c) 2000, 2009\
  The NetBSD Foundation, Inc.  All rights reserved.\
   Copyright (c) 1991, 1993, 1994\
  The Regents of the University of California.  All rights reserved.");
-__RCSID("$NetBSD: pwd_mkdb.c,v 1.58 2017/05/04 16:26:09 sevan Exp $");
+__RCSID("$NetBSD: pwd_mkdb.c,v 1.59 2021/11/27 22:30:26 rillig Exp $");
 #endif /* not lint */
 
 #if HAVE_NBTOOL_CONFIG_H
@@ -850,7 +850,7 @@ putdbents(struct pwddb *db, struct passwd *pw, const char *passwd, int flags,
 			(void)memmove(p, &pwvar, sizeof(pwvar)); \
 			p += sizeof(pwvar); \
 		} \
-	} while (/*CONSTCOND*/0)
+	} while (0)
 
 	/* Create insecure data. */
 	p = buf;
@@ -1007,7 +1007,7 @@ getdbent(struct pwddb *db, int type, void *keyp, struct passwd **tpwd)
 			if (lorder != BYTE_ORDER) \
 				pwvar = SWAP(pwvar); \
 		} \
-	} while (/*CONSTCOND*/0)
+	} while (0)
 		
 	READPWTIMEVAR(pwd.pw_change);
 

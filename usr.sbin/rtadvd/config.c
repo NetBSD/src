@@ -1,4 +1,4 @@
-/*	$NetBSD: config.c,v 1.46 2021/03/23 18:16:53 christos Exp $	*/
+/*	$NetBSD: config.c,v 1.47 2021/11/27 22:30:26 rillig Exp $	*/
 /*	$KAME: config.c,v 1.93 2005/10/17 14:40:02 suz Exp $	*/
 
 /*
@@ -178,13 +178,13 @@ getconfig(const char *intface, int exithard)
 		goto errexit;						\
 	}								\
 	var = t;							\
-     } while (/*CONSTCOND*/0)
+     } while (0)
 
 #define MAYHAVE(var, cap, def)						\
      do {								\
 	if ((var = agetnum(cap)) < 0)					\
 		var = def;						\
-     } while (/*CONSTCOND*/0)
+     } while (0)
 
 #define	ELM_MALLOC(p)							\
 	do {								\
@@ -1072,7 +1072,7 @@ make_packet(struct rainfo *rainfo)
 			    __func__, __LINE__, packlen); \
 			exit(EXIT_FAILURE); \
 		} \
-	} while (/*CONSTCOND*/0)
+	} while (0)
 	/*
 	 * construct the packet
 	 */

@@ -1,4 +1,4 @@
-/*	$NetBSD: pstat.c,v 1.132 2021/04/12 05:11:09 mrg Exp $	*/
+/*	$NetBSD: pstat.c,v 1.133 2021/11/27 22:30:26 rillig Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1991, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)pstat.c	8.16 (Berkeley) 5/9/95";
 #else
-__RCSID("$NetBSD: pstat.c,v 1.132 2021/04/12 05:11:09 mrg Exp $");
+__RCSID("$NetBSD: pstat.c,v 1.133 2021/11/27 22:30:26 rillig Exp $");
 #endif
 #endif /* not lint */
 
@@ -135,13 +135,13 @@ struct flagbit_desc {
 #define	KGET2(addr, p, s, msg) do {					\
 	if (kvm_read(kd, (u_long)(addr), p, s) != s)			\
 		warnx("cannot read %s: %s", msg, kvm_geterr(kd));	\
-} while (/* CONSTCOND */0)
+} while (0)
 #define	KGETRET(addr, p, s, msg) do {					\
 	if (kvm_read(kd, (u_long)(addr), p, s) != s) {			\
 		warnx("cannot read %s: %s", msg, kvm_geterr(kd));	\
 		return (0);						\
 	}								\
-} while (/* CONSTCOND */0)
+} while (0)
 
 #if 1				/* This is copied from vmstat/vmstat.c */
 /*
@@ -158,7 +158,7 @@ struct flagbit_desc {
 	    (val)) - (width);				\
 	if ((ovflw) < 0)				\
 		(ovflw) = 0;				\
-} while (/* CONSTCOND */0)
+} while (0)
 #endif
 
 void	filemode(void);

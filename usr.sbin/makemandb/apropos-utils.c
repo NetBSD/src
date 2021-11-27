@@ -1,4 +1,4 @@
-/*	$NetBSD: apropos-utils.c,v 1.47 2019/08/18 09:14:30 abhinav Exp $	*/
+/*	$NetBSD: apropos-utils.c,v 1.48 2021/11/27 22:30:25 rillig Exp $	*/
 /*-
  * Copyright (c) 2011 Abhinav Upadhyay <er.abhinav.upadhyay@gmail.com>
  * All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: apropos-utils.c,v 1.47 2019/08/18 09:14:30 abhinav Exp $");
+__RCSID("$NetBSD: apropos-utils.c,v 1.48 2021/11/27 22:30:25 rillig Exp $");
 
 #include <sys/queue.h>
 #include <sys/stat.h>
@@ -784,7 +784,7 @@ get_escaped_html_string(const char *src, size_t *slen)
     do {					\
 	memcpy(dst, (a), sizeof(a) - 1);	\
 	dst += sizeof(a) - 1; 			\
-    } while (/*CONSTCOND*/0)
+    } while (0)
 
 
 	ddst = dst = emalloc(*slen + count * 5 + 1);
