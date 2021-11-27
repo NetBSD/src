@@ -1,4 +1,4 @@
-/*	$NetBSD: io.c,v 1.139 2021/11/26 15:21:38 rillig Exp $	*/
+/*	$NetBSD: io.c,v 1.140 2021/11/27 18:26:48 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)io.c	8.1 (Berkeley) 6/6/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: io.c,v 1.139 2021/11/26 15:21:38 rillig Exp $");
+__RCSID("$NetBSD: io.c,v 1.140 2021/11/27 18:26:48 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/io.c 334927 2018-06-10 16:44:18Z pstef $");
 #endif
@@ -85,6 +85,7 @@ inp_init(void)
 const char *
 inp_p(void)
 {
+    assert(inbuf.inp.s < inbuf.inp.e);
     return inbuf.inp.s;
 }
 
@@ -107,18 +108,21 @@ inp_line_end(void)
 char
 inp_peek(void)
 {
+    assert(inbuf.inp.s < inbuf.inp.e);
     return *inbuf.inp.s;
 }
 
 char
 inp_lookahead(size_t i)
 {
+    assert(i < (size_t)(inbuf.inp.e - inbuf.inp.s));
     return inbuf.inp.s[i];
 }
 
 void
 inp_skip(void)
 {
+    assert(inbuf.inp.s < inbuf.inp.e);
     inbuf.inp.s++;
     if (inbuf.inp.s >= inbuf.inp.e)
 	inp_read_line();
