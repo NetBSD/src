@@ -1,4 +1,4 @@
-/*	$NetBSD: armreg.h,v 1.133 2021/11/13 01:48:12 jmcneill Exp $	*/
+/*	$NetBSD: armreg.h,v 1.134 2021/11/27 08:25:18 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Ben Harris
@@ -916,7 +916,16 @@ ARMREG_WRITE64_INLINE(cntv_cval, "p15,3,%Q0,%R0,c14") /* PL1 Virtual Timer Compa
 ARMREG_READ64_INLINE(cntvoff, "p15,4,%Q0,%R0,c14") /* Virtual Offset Register */
 ARMREG_WRITE64_INLINE(cntvoff, "p15,4,%Q0,%R0,c14") /* Virtual Offset Register */
 /* cp15 c15 registers */
+/* Cortex A17 Diagnostic control registers */
+ARMREG_READ_INLINE(dgnctlr0, "p15,0,%0,c15,c0,0")	/* DGNCTLR0 */
+ARMREG_WRITE_INLINE(dgnctlr0, "p15,0,%0,c15,c0,0")	/* DGNCTLR0 */
+ARMREG_READ_INLINE(dgnctlr1, "p15,0,%0,c15,c0,1")	/* DGNCTLR1 */
+ARMREG_WRITE_INLINE(dgnctlr1, "p15,0,%0,c15,c0,1")	/* DGNCTLR1 */
+ARMREG_READ_INLINE(dgnctlr2, "p15,0,%0,c15,c0,2")	/* DGNCTLR2 */
+ARMREG_WRITE_INLINE(dgnctlr2, "p15,0,%0,c15,c0,2")	/* DGNCTLR2 */
+
 ARMREG_READ_INLINE(cbar, "p15,4,%0,c15,c0,0")	/* Configuration Base Address Register */
+
 ARMREG_READ_INLINE(pmcrv6, "p15,0,%0,c15,c12,0") /* PMC Control Register (armv6) */
 ARMREG_WRITE_INLINE(pmcrv6, "p15,0,%0,c15,c12,0") /* PMC Control Register (armv6) */
 ARMREG_READ_INLINE(pmccntrv6, "p15,0,%0,c15,c12,1") /* PMC Cycle Counter (armv6) */
