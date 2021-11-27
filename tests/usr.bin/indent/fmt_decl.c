@@ -1,4 +1,4 @@
-/*	$NetBSD: fmt_decl.c,v 1.31 2021/11/27 19:21:42 rillig Exp $	*/
+/*	$NetBSD: fmt_decl.c,v 1.32 2021/11/27 20:33:39 rillig Exp $	*/
 /* $FreeBSD: head/usr.bin/indent/tests/declarations.0 334478 2018-06-01 09:41:15Z pstef $ */
 
 /*
@@ -831,13 +831,13 @@ char str[sizeof(**ptr)];
 
 
 /*
- * FIXME: Whether or not the function 'a' is a declaration or a definition
- * depends on the preceding struct, in particular the length of the 'pn'
- * line. This doesn't make sense at all and looks like an out-of-bounds memory
- * access.
+ * Since lexi.c 1.158 from 2021-11-25, whether the function 'a' was considered
+ * a declaration or a definition depended on the preceding struct, in
+ * particular the length of the 'pn' line. This didn't make sense at all and
+ * was due to an out-of-bounds memory access.
  *
- * Since lexi.c 1.158 from 2021-11-25.
  * Seen amongst others in args.c 1.72, function add_typedefs_from_file.
+ * Fixed in lexi.c 1.165 from 2021-11-27.
  */
 #indent input
 struct {
@@ -868,7 +868,8 @@ struct {
 };
 
 static void
-     a(char *fe){
+a(char *fe)
+{
 }
 
 struct {
