@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.c,v 1.234 2021/11/26 15:18:18 rillig Exp $	*/
+/*	$NetBSD: indent.c,v 1.235 2021/11/27 18:29:29 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)indent.c	5.17 (Berkeley) 6/7/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: indent.c,v 1.234 2021/11/26 15:18:18 rillig Exp $");
+__RCSID("$NetBSD: indent.c,v 1.235 2021/11/27 18:29:29 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/indent.c 340138 2018-11-04 19:24:49Z oshogbo $");
 #endif
@@ -269,11 +269,11 @@ search_stmt_comment(void)
     if (token.e[-1] == '/') {
 	while (inp_peek() != '\n')
 	    inp_comment_add_char(inp_next());
-	debug_inp("search_stmt_comment end C99");
+	debug_inp("search_stmt_comment: end of C99 comment");
     } else {
 	while (!inp_comment_complete_block())
 	    inp_comment_add_char(inp_next());
-	debug_inp("search_stmt_comment end block");
+	debug_inp("search_stmt_comment: end of block comment");
     }
 }
 
@@ -330,8 +330,8 @@ search_stmt_other(lexer_symbol lsym, bool *force_nl,
 	inp_comment_rtrim_newline();
     }
 
-    if (*force_nl) {		/* if we should insert a nl here, put it into
-				 * the buffer */
+    if (*force_nl) {		/* if we should insert a newline here, put it
+				 * into the buffer */
 	*force_nl = false;
 	--line_no;		/* this will be re-increased when the newline
 				 * is read from the buffer */
@@ -345,14 +345,6 @@ search_stmt_other(lexer_symbol lsym, bool *force_nl,
 
     debug_inp("search_stmt_other end");
     return true;
-}
-
-static void
-switch_buffer(void)
-{
-    ps.search_stmt = false;
-    inp_comment_add_char(' ');		/* add trailing blank, just in case */
-    inp_from_comment();
 }
 
 static void
@@ -426,7 +418,9 @@ search_stmt(lexer_symbol *lsym, bool *force_nl, bool *last_else)
 		    *last_else))
 		return;
     switch_buffer:
-	    switch_buffer();
+	    ps.search_stmt = false;
+	    inp_comment_add_char(' ');	/* add trailing blank, just in case */
+	    inp_from_comment();
 	}
 	search_stmt_lookahead(lsym);
     }
