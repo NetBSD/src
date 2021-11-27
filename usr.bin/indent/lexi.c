@@ -1,4 +1,4 @@
-/*	$NetBSD: lexi.c,v 1.164 2021/11/25 18:48:37 rillig Exp $	*/
+/*	$NetBSD: lexi.c,v 1.165 2021/11/27 20:33:39 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)lexi.c	8.1 (Berkeley) 6/6/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: lexi.c,v 1.164 2021/11/25 18:48:37 rillig Exp $");
+__RCSID("$NetBSD: lexi.c,v 1.165 2021/11/27 20:33:39 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/lexi.c 337862 2018-08-15 18:19:45Z pstef $");
 #endif
@@ -450,21 +450,27 @@ cmp_keyword_by_name(const void *key, const void *elem)
     return strcmp(key, ((const struct keyword *)elem)->name);
 }
 
+/*
+ * Looking at a line starting with 'function_name(something)', guess whether
+ * this starts a function definition or a declaration.
+ */
 static bool
 probably_looking_at_definition(void)
 {
     int paren_level = 0;
     for (const char *p = inp_p(), *e = inp_line_end(); p < e; p++) {
-proceed:
 	if (*p == '(')
 	    paren_level++;
 	if (*p == ')' && --paren_level == 0) {
 	    p++;
 	    while (p < e && (ch_isspace(*p) || is_identifier_part(*p)))
 		p++;
-	    if (*p == '(')
-		goto proceed;
-	    return !(*p == ';' || *p == ',');
+	    if (p < e && (*p == ';' || *p == ','))
+		return false;
+	    if (p < e && *p == '(')
+		paren_level++;
+	    else
+		break;
 	}
     }
 
