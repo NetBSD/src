@@ -1,4 +1,4 @@
-/* $NetBSD: linux32_systrace_args.c,v 1.12 2021/09/20 02:20:31 thorpej Exp $ */
+/* $NetBSD: linux32_systrace_args.c,v 1.13 2021/11/27 21:15:53 ryo Exp $ */
 
 /*
  * System call argument to DTrace register array conversion.
@@ -1849,6 +1849,18 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 		uarg[1] = (intptr_t) SCARG(p, path).i32; /* netbsd32_charp */
 		iarg[2] = SCARG(p, amode); /* int */
 		*n_args = 3;
+		break;
+	}
+	/* linux32_sys_pselect6 */
+	case 308: {
+		const struct linux32_sys_pselect6_args *p = params;
+		iarg[0] = SCARG(p, nfds); /* int */
+		uarg[1] = (intptr_t) SCARG(p, readfds).i32; /* netbsd32_fd_setp_t */
+		uarg[2] = (intptr_t) SCARG(p, writefds).i32; /* netbsd32_fd_setp_t */
+		uarg[3] = (intptr_t) SCARG(p, exceptfds).i32; /* netbsd32_fd_setp_t */
+		uarg[4] = (intptr_t) SCARG(p, timeout).i32; /* linux32_timespecp_t */
+		uarg[5] = (intptr_t) SCARG(p, ss).i32; /* linux32_sized_sigsetp_t */
+		*n_args = 6;
 		break;
 	}
 	/* linux32_sys_ppoll */
@@ -4983,6 +4995,31 @@ systrace_entry_setargdesc(int sysnum, int ndx, char *desc, size_t descsz)
 			break;
 		};
 		break;
+	/* linux32_sys_pselect6 */
+	case 308:
+		switch(ndx) {
+		case 0:
+			p = "int";
+			break;
+		case 1:
+			p = "netbsd32_fd_setp_t";
+			break;
+		case 2:
+			p = "netbsd32_fd_setp_t";
+			break;
+		case 3:
+			p = "netbsd32_fd_setp_t";
+			break;
+		case 4:
+			p = "linux32_timespecp_t";
+			break;
+		case 5:
+			p = "linux32_sized_sigsetp_t";
+			break;
+		default:
+			break;
+		};
+		break;
 	/* linux32_sys_ppoll */
 	case 309:
 		switch(ndx) {
@@ -6292,6 +6329,11 @@ systrace_return_setargdesc(int sysnum, int ndx, char *desc, size_t descsz)
 		break;
 	/* linux32_sys_faccessat */
 	case 307:
+		if (ndx == 0 || ndx == 1)
+			p = "int";
+		break;
+	/* linux32_sys_pselect6 */
+	case 308:
 		if (ndx == 0 || ndx == 1)
 			p = "int";
 		break;
