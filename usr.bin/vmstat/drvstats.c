@@ -1,4 +1,4 @@
-/*	$NetBSD: drvstats.c,v 1.13 2019/06/30 19:57:24 he Exp $	*/
+/*	$NetBSD: drvstats.c,v 1.14 2021/11/27 22:16:42 rillig Exp $	*/
 
 /*
  * Copyright (c) 1996 John M. Vinopal
@@ -64,7 +64,7 @@ char		**dr_name;
 #define	timerset(tvp, uvp) do {						\
 	((uvp)->tv_sec = (tvp)->tv_sec);				\
 	((uvp)->tv_usec = (tvp)->tv_usec);				\
-} while (/* CONSTCOND */0)
+} while (0)
 
 /*
  * Take the delta between the present values and the last recorded
@@ -81,7 +81,7 @@ drvswap(void)
 	tmp = cur.fld;							\
 	cur.fld -= last.fld;						\
 	last.fld = tmp;							\
-} while (/* CONSTCOND */0)
+} while (0)
 
 #define DELTA(x) do {							\
 		timerclear(&tmp_timer);					\
@@ -89,7 +89,7 @@ drvswap(void)
 		timersub(&tmp_timer, &(last.x), &(cur.x));		\
 		timerclear(&(last.x));					\
 		timerset(&tmp_timer, &(last.x));			\
-} while (/* CONSTCOND */0)
+} while (0)
 
 	for (i = 0; i < ndrive; i++) {
 		struct timeval	tmp_timer;
@@ -194,7 +194,7 @@ drvreadstats(void)
 #define COPYT(x,k,l) do {						\
 		cur.x[k].tv_sec = drives[l].x##_sec;			\
 		cur.x[k].tv_usec = drives[l].x##_usec;			\
-} while (/* CONSTCOND */0)
+} while (0)
 
 	for (i = 0, j = 0; i < ndrive && j < count; i++) {
 

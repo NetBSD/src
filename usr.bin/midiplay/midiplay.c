@@ -1,4 +1,4 @@
-/*	$NetBSD: midiplay.c,v 1.33 2019/02/01 08:37:21 mrg Exp $	*/
+/*	$NetBSD: midiplay.c,v 1.34 2021/11/27 22:16:41 rillig Exp $	*/
 
 /*
  * Copyright (c) 1998, 2002 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: midiplay.c,v 1.33 2019/02/01 08:37:21 mrg Exp $");
+__RCSID("$NetBSD: midiplay.c,v 1.34 2021/11/27 22:16:41 rillig Exp $");
 #endif
 
 
@@ -842,7 +842,7 @@ main(int argc, char **argv)
     struct track *_t = t[i].indirect; \
     t[i].indirect = t[j].indirect; \
     t[j].indirect = _t; \
-} while (/*CONSTCOND*/ 0)
+} while (0)
 
 static void
 Heapify(struct track *t, int ntrks, int node)
