@@ -1,4 +1,4 @@
-/*	$NetBSD: ndp.c,v 1.58 2020/09/15 10:11:35 roy Exp $	*/
+/*	$NetBSD: ndp.c,v 1.59 2021/11/27 22:30:25 rillig Exp $	*/
 /*	$KAME: ndp.c,v 1.121 2005/07/13 11:30:13 keiichi Exp $	*/
 
 /*
@@ -812,7 +812,7 @@ ifinfo(char *ifname, int argc, char **argv)
 				newflags |= (f);\
 			flagset = true; \
 		}\
-	} while (/*CONSTCOND*/0)
+	} while (0)
 /*
  * XXX: this macro is not 100% correct, in that it matches "nud" against
  *      "nudbogus".  But we just let it go since this is minor.
@@ -833,7 +833,7 @@ ifinfo(char *ifname, int argc, char **argv)
 			v = newval; \
 			valset = true; \
 		} \
-	} while (/*CONSTCOND*/0)
+	} while (0)
 
 #ifdef ND6_IFF_IFDISABLED
 		SETFLAG("disabled", ND6_IFF_IFDISABLED);

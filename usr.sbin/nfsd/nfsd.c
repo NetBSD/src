@@ -1,4 +1,4 @@
-/*	$NetBSD: nfsd.c,v 1.73 2020/09/17 12:48:12 christos Exp $	*/
+/*	$NetBSD: nfsd.c,v 1.74 2021/11/27 22:30:25 rillig Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)nfsd.c	8.9 (Berkeley) 3/29/95";
 #else
-__RCSID("$NetBSD: nfsd.c,v 1.73 2020/09/17 12:48:12 christos Exp $");
+__RCSID("$NetBSD: nfsd.c,v 1.74 2021/11/27 22:30:25 rillig Exp $");
 #endif
 #endif /* not lint */
 
@@ -114,7 +114,7 @@ do {									\
 	} else {							\
 		syslog(e, s, ## args);					\
 	}								\
-} while (/*CONSTCOND*/0)
+} while (0)
 
 static void	nonfs(int);
 __dead static void	usage(void);

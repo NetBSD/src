@@ -1,4 +1,4 @@
-/*	$NetBSD: tls.c,v 1.18 2021/09/16 22:19:12 andvar Exp $	*/
+/*	$NetBSD: tls.c,v 1.19 2021/11/27 22:30:26 rillig Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: tls.c,v 1.18 2021/09/16 22:19:12 andvar Exp $");
+__RCSID("$NetBSD: tls.c,v 1.19 2021/11/27 22:30:26 rillig Exp $");
 
 #ifndef DISABLE_TLS
 #include <sys/stat.h>
@@ -123,7 +123,7 @@ out:
 		    TLS_CONN_STATES[x], TLS_CONN_STATES[y]);	\
 		(x) = (y);					\
 	}							\
-} while (/*CONSTCOND*/0)
+} while (0)
 
 static unsigned
 getVerifySetting(const char *x509verifystring)

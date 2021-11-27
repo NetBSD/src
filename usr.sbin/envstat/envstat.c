@@ -1,4 +1,4 @@
-/* $NetBSD: envstat.c,v 1.100 2020/11/14 16:32:53 mlelstv Exp $ */
+/* $NetBSD: envstat.c,v 1.101 2021/11/27 22:30:25 rillig Exp $ */
 
 /*-
  * Copyright (c) 2007, 2008 Juan Romero Pardines.
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: envstat.c,v 1.100 2020/11/14 16:32:53 mlelstv Exp $");
+__RCSID("$NetBSD: envstat.c,v 1.101 2021/11/27 22:30:25 rillig Exp $");
 #endif /* not lint */
 
 #include <stdio.h>
@@ -986,7 +986,7 @@ do {								\
 		ilen = 9;					\
 	} else							\
 		ilen += 9;					\
-} while (/* CONSTCOND */ 0)
+} while (0)
 
 		/* temperatures */
 		} else if (strcmp(sensor->type, "Temperature") == 0) {

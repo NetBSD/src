@@ -1,4 +1,4 @@
-/*	$NetBSD: syslogd.h,v 1.8 2019/02/11 19:45:54 mrg Exp $	*/
+/*	$NetBSD: syslogd.h,v 1.9 2021/11/27 22:30:26 rillig Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -163,7 +163,7 @@ void dbprintf(const char *, const char *, size_t, const char *, ...)
 	if (event_add(x, NULL) == -1) {					\
 		DPRINTF(D_EVENT, "Failure in event_add()\n");		\
 	}								\
-} while (/*CONSTCOND*/0)
+} while (0)
 #define RETRYEVENT_ADD(x) do {						\
 	struct timeval _tv;						\
 	_tv.tv_sec = 0;							\
@@ -172,13 +172,13 @@ void dbprintf(const char *, const char *, size_t, const char *, ...)
 	if (event_add(x, &_tv) == -1) {					\
 		DPRINTF(D_EVENT, "Failure in event_add()\n");		\
 	}								\
-} while (/*CONSTCOND*/0)
+} while (0)
 #define DEL_EVENT(x) do {						\
 	DPRINTF(D_MEM2, "DEL_EVENT(%s@%p)\n", #x, x);			\
 	if ((x) && (event_del(x) == -1)) {				\
 		DPRINTF(D_EVENT, "Failure in event_del()\n");		\
 	}								\
-} while (/*CONSTCOND*/0)
+} while (0)
 
 /* safe calls to free() */
 #define FREEPTR(x)	if (x) {					\
@@ -213,7 +213,7 @@ void dbprintf(const char *, const char *, size_t, const char *, ...)
 		message_allqueues_purge();				\
 	}								\
 	DPRINTF(D_MEM2, "MALLOC(%s@%p, %zu)\n", #ptr, ptr, size);	\
-} while (/*CONSTCOND*/0)
+} while (0)
 
 #define CALLOC(ptr, size) do {						\
 	while(!(ptr = calloc(1, size))) {				\
@@ -221,7 +221,7 @@ void dbprintf(const char *, const char *, size_t, const char *, ...)
 		message_allqueues_purge();				\
 	}								\
 	DPRINTF(D_MEM2, "CALLOC(%s@%p, %zu)\n", #ptr, ptr, size);	\
-} while (/*CONSTCOND*/0)
+} while (0)
 
 /* define strlen(NULL) to be 0 */
 #define SAFEstrlen(x) ((x) ? strlen(x) : 0)
@@ -232,7 +232,7 @@ void dbprintf(const char *, const char *, size_t, const char *, ...)
 	sigaddset(&newmask, SIGHUP);					\
 	sigaddset(&newmask, SIGALRM);					\
 	sigprocmask(SIG_BLOCK, &newmask, &omask);			\
-} while (/*CONSTCOND*/0)
+} while (0)
 
 #define RESTORE_SIGNALS(omask) sigprocmask(SIG_SETMASK, &omask, NULL)
 
@@ -240,7 +240,7 @@ void dbprintf(const char *, const char *, size_t, const char *, ...)
 #define SEND_QUEUE(f) do {						\
 	if ((f)->f_qelements)						\
 		send_queue(0, 0, f);	      				\
-} while (/*CONSTCOND*/0)
+} while (0)
 
 #define MAXUNAMES		20	/* maximum number of user names */
 #define BSD_TIMESTAMPLEN	(14+1)
