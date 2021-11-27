@@ -1,4 +1,4 @@
-/*	$NetBSD: io.c,v 1.141 2021/11/27 18:37:17 rillig Exp $	*/
+/*	$NetBSD: io.c,v 1.142 2021/11/27 21:15:58 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)io.c	8.1 (Berkeley) 6/6/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: io.c,v 1.141 2021/11/27 18:37:17 rillig Exp $");
+__RCSID("$NetBSD: io.c,v 1.142 2021/11/27 21:15:58 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/io.c 334927 2018-06-10 16:44:18Z pstef $");
 #endif
@@ -93,8 +93,8 @@ const char *
 inp_line_start(void)
 {
     /*
-     * The comment we're about to read usually comes from inp.buf, unless
-     * it has been copied into save_com.
+     * The comment we're about to read usually comes from inp.buf, unless it
+     * has been copied into save_com.
      */
     return inbuf.saved_inp_s != NULL ? inbuf.save_com_buf : inbuf.inp.buf;
 }
@@ -167,7 +167,7 @@ inp_comment_check_size(size_t n)
 	return;
 
     diag(1, "Internal buffer overflow - "
-	    "Move big comment from right after if, while, or whatever");
+	"Move big comment from right after if, while, or whatever");
     fflush(output);
     exit(1);
 }
@@ -192,9 +192,8 @@ inp_comment_init_comment(void)
 	return;
 
     /*
-     * Copy everything from the start of the line, because
-     * process_comment() will use that to calculate the original
-     * indentation of a boxed comment.
+     * Copy everything from the start of the line, because process_comment()
+     * will use that to calculate the original indentation of a boxed comment.
      */
     /*
      * TODO: Don't store anything in the memory range [input.inp.buf,
@@ -202,8 +201,8 @@ inp_comment_init_comment(void)
      */
     /*
      * FIXME: The '4' below is completely wrong. For example, in the snippet
-     * 'if(expr)/''*comment', the 'r)' of the code is not copied. If there
-     * is an additional line break before the ')', memcpy tries to copy
+     * 'if(expr)/''*comment', the 'r)' of the code is not copied. If there is
+     * an additional line break before the ')', memcpy tries to copy
      * (size_t)-1 bytes.
      *
      * The original author of this magic number doesn't remember its purpose

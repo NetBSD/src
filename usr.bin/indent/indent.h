@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.h,v 1.104 2021/11/27 18:37:17 rillig Exp $	*/
+/*	$NetBSD: indent.h,v 1.105 2021/11/27 21:15:58 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-FreeBSD
@@ -148,8 +148,8 @@ extern FILE *input;
 extern FILE *output;
 
 extern struct buffer token;	/* the current token to be processed, is
-				 * typically copied to the buffer 'code',
-				 * or in some cases to 'lab'. */
+				 * typically copied to the buffer 'code', or
+				 * in some cases to 'lab'. */
 
 extern struct buffer lab;	/* the label or preprocessor directive */
 extern struct buffer code;	/* the main part of the current line of code */
