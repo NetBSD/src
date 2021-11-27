@@ -1,4 +1,4 @@
-/* $NetBSD: linux32_signal.h,v 1.5 2021/11/25 03:08:04 ryo Exp $ */
+/* $NetBSD: linux32_signal.h,v 1.6 2021/11/27 21:15:07 ryo Exp $ */
 
 /*-
  * Copyright (c) 2006 Emmanuel Dreyfus, all rights reserved.
@@ -41,6 +41,11 @@
 #else
 #error Undefined linux32_signal.h machine type.
 #endif
+
+typedef struct {
+	linux32_sigsetp_t ss;
+	netbsd32_size_t ss_len;
+} linux32_sized_sigset_t;
 
 void linux32_to_native_sigset(sigset_t *, const linux32_sigset_t *);
 void native_to_linux32_sigset(linux32_sigset_t *, const sigset_t *);
