@@ -1,4 +1,4 @@
-/*	$NetBSD: __sigtramp2.S,v 1.4 2021/11/23 18:45:53 thorpej Exp $	*/
+/*	$NetBSD: __sigtramp2.S,v 1.5 2021/11/27 10:00:01 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -67,12 +67,12 @@
 	.cfi_return_column _REG_R15
 	CFI_OFFSET(_REG_R15)	/* a.k.a. _REG_PC */
 
-/*      
+/*
  * The unwind entry includes the one instruction prior to the trampoline
  * because the unwinder will look up (return PC - 1) while unwinding.
  * Normally this would be the jump / branch, but since there isn't one in
  * this case, we place an explicit nop there instead.
- */     
+ */
 	nop
 
 ENTRY_NP(__sigtramp_siginfo_2)

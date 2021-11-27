@@ -1,4 +1,4 @@
-/*	$NetBSD: __sigtramp2.S,v 1.4 2021/11/21 21:31:24 thorpej Exp $	*/
+/*	$NetBSD: __sigtramp2.S,v 1.5 2021/11/27 10:00:01 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 #include "assym.h"
 
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: __sigtramp2.S,v 1.4 2021/11/21 21:31:24 thorpej Exp $")
+__RCSID("$NetBSD: __sigtramp2.S,v 1.5 2021/11/27 10:00:01 skrll Exp $")
 #endif /* LIBC_SCCS && !lint */
 
 /*
@@ -115,12 +115,12 @@ __RCSID("$NetBSD: __sigtramp2.S,v 1.4 2021/11/21 21:31:24 thorpej Exp $")
 	.cfi_return_column DWARF_SIGRETURN_REG
 	CFI_OFFSET_DWARF_REG(DWARF_SIGRETURN_REG, _REG_PC)
 
-/*      
+/*
  * The unwind entry includes one instruction slot prior to the trampoline
  * because the unwinder will look up to (return PC - 1 insn) while unwinding.
  * Normally this would be the jump / branch, but since there isn't one in
  * this case, we place an explicit nop there instead.
- */     
+ */
 	nop
 
 ENTRY_NOPROFILE(__sigtramp_siginfo_2)
