@@ -1,4 +1,4 @@
-/*	$NetBSD: su_pam.c,v 1.22 2021/09/10 21:52:18 rillig Exp $	*/
+/*	$NetBSD: su_pam.c,v 1.23 2021/11/27 22:16:42 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988 The Regents of the University of California.
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988\
 #if 0
 static char sccsid[] = "@(#)su.c	8.3 (Berkeley) 4/2/94";*/
 #else
-__RCSID("$NetBSD: su_pam.c,v 1.22 2021/09/10 21:52:18 rillig Exp $");
+__RCSID("$NetBSD: su_pam.c,v 1.23 2021/11/27 22:16:42 rillig Exp $");
 #endif
 #endif /* not lint */
 
@@ -293,12 +293,12 @@ main(int argc, char **argv)
 #define ERRX_PAM_END(args) do {			\
 	(void)pam_end(pamh, pam_err);		\
 	errx args;				\
-} while (/* CONSTCOND */0)
+} while (0)
 
 #define ERR_PAM_END(args) do {			\
 	(void)pam_end(pamh, pam_err);		\
 	err args;				\
-} while (/* CONSTCOND */0)
+} while (0)
 
 	/* force the usage of specified class */
 	if (class) {

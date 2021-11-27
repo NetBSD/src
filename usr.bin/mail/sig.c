@@ -1,4 +1,4 @@
-/*	$NetBSD: sig.c,v 1.3 2012/06/12 19:03:26 christos Exp $	*/
+/*	$NetBSD: sig.c,v 1.4 2021/11/27 22:16:41 rillig Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: sig.c,v 1.3 2012/06/12 19:03:26 christos Exp $");
+__RCSID("$NetBSD: sig.c,v 1.4 2021/11/27 22:16:41 rillig Exp $");
 #endif /* not lint */
 
 #include <assert.h>
@@ -63,7 +63,7 @@ static struct {
 #define SIGQUEUE_INIT(p)  do {\
 	(p)->qe_first = NULL;\
 	(p)->qe_last = &((p)->qe_first);\
-  } while (/*CONSTCOND*/ 0)
+  } while (0)
 
 /*
  * The routines alloc_entry() and free_entry() manage the queue
