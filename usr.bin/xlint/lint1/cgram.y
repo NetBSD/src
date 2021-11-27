@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.370 2021/11/16 21:01:05 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.371 2021/11/27 20:13:48 christos Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: cgram.y,v 1.370 2021/11/16 21:01:05 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.371 2021/11/27 20:13:48 christos Exp $");
 #endif
 
 #include <limits.h>
@@ -257,6 +257,7 @@ anonymize(sym_t *s)
 %token			T_AT_SECTION
 %token			T_AT_SENTINEL
 %token			T_AT_STRING
+%token			T_AT_TARGET
 %token			T_AT_TLS_MODEL
 %token			T_AT_TUNION
 %token			T_AT_UNUSED
@@ -2098,6 +2099,7 @@ gcc_attribute_spec:
 	| T_AT_SECTION T_LPAREN string T_RPAREN
 	| T_AT_SENTINEL T_LPAREN constant_expr T_RPAREN
 	| T_AT_SENTINEL
+	| T_AT_TARGET T_LPAREN string T_RPAREN
 	| T_AT_TLS_MODEL T_LPAREN string T_RPAREN
 	| T_AT_TUNION
 	| T_AT_UNUSED {

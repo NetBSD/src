@@ -1,4 +1,4 @@
-/* $NetBSD: lex.c,v 1.87 2021/11/16 18:33:14 rillig Exp $ */
+/* $NetBSD: lex.c,v 1.88 2021/11/27 20:13:48 christos Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: lex.c,v 1.87 2021/11/16 18:33:14 rillig Exp $");
+__RCSID("$NetBSD: lex.c,v 1.88 2021/11/27 20:13:48 christos Exp $");
 #endif
 
 #include <ctype.h>
@@ -224,6 +224,7 @@ static	struct	kwtab {
 	kwdef_keyword(	"switch",	T_SWITCH),
 	kwdef_token(	"__symbolrename",	T_SYMBOLRENAME,	0,0,0,0,1),
 	kwdef_gcc_attr(	"syslog",	T_AT_FORMAT_SYSLOG),
+	kwdef_gcc_attr(	"target",	T_AT_TARGET),
 	kwdef_tqual(	"__thread",	THREAD,			0,0,1,0,1),
 	kwdef_tqual(	"_Thread_local", THREAD,		0,1,0,0,1),
 	kwdef_gcc_attr(	"tls_model",	T_AT_TLS_MODEL),
