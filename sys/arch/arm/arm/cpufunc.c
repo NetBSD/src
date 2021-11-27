@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.c,v 1.182 2021/11/13 01:48:12 jmcneill Exp $	*/
+/*	$NetBSD: cpufunc.c,v 1.183 2021/11/27 08:51:01 skrll Exp $	*/
 
 /*
  * arm7tdmi support code Copyright (c) 2001 John Fremlin
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpufunc.c,v 1.182 2021/11/13 01:48:12 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpufunc.c,v 1.183 2021/11/27 08:51:01 skrll Exp $");
 
 #include "opt_arm_start.h"
 #include "opt_compat_netbsd.h"
@@ -3008,6 +3008,24 @@ armv7_setup(char *args)
 	} else if (CPU_ID_CORTEX_A12_P(lcputype) ||
 		   CPU_ID_CORTEX_A17_P(lcputype)) {
 		actlr_set = CORTEXA17_ACTLR_SMP;
+		uint32_t diagset = 0;
+		const uint16_t varrev =
+		   __SHIFTIN(__SHIFTOUT(lcputype, CPU_ID_VARIANT_MASK), __BITS(7,4)) |
+		   __SHIFTIN(__SHIFTOUT(lcputype, CPU_ID_REVISION_MASK), __BITS(3,0)) |
+		   0;
+		/* Errata 852421 exists upto r1p2 */
+		if (varrev < 0x12) {
+			diagset |= __BIT(24);
+		}
+		/* Errata 852423 exists upto r1p2 */
+		if (varrev < 0x12) {
+			diagset |= __BIT(12);
+		}
+		/* Errata 857272 */
+		diagset |= __BITS(11,10);
+
+		const uint32_t dgnctlr1 = armreg_dgnctlr1_read();
+		armreg_dgnctlr1_write(dgnctlr1 | diagset);
 	} else if (CPU_ID_CORTEX_A53_P(lcputype)) {
 	} else if (CPU_ID_CORTEX_A57_P(lcputype)) {
 	} else if (CPU_ID_CORTEX_A72_P(lcputype)) {
