@@ -1,4 +1,4 @@
-/*	$NetBSD: t_renamerace.c,v 1.42 2021/10/23 17:43:08 hannken Exp $	*/
+/*	$NetBSD: t_renamerace.c,v 1.43 2021/11/27 15:23:33 gson Exp $	*/
 
 /*
  * Modified for rump and atf from a program supplied
@@ -253,6 +253,12 @@ renamerace_cycle(const atf_tc_t *tc, const char *mp)
 
 	if (FSTYPE_UDF(tc))
 		atf_tc_fail("PR kern/56253 did not trigger this time");
+	if (FSTYPE_P2K_FFS(tc))
+		atf_tc_fail("did not fail this time");
+	if (FSTYPE_PUFFS(tc))
+		atf_tc_fail("did not fail this time");
+	if (FSTYPE_NFS(tc))
+		atf_tc_fail("did not fail this time");
 }
 
 ATF_TC_FSAPPLY(renamerace, "rename(2) race with file unlinked mid-operation");
