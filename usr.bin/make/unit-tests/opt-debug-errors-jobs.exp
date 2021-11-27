@@ -45,4 +45,11 @@ word1 word2
 *** [fail-multiline-intention] Error code 1
 
 make: stopped in unit-tests
+
+*** Failed target: fail-vars
+*** Failed commands:
+	@${COMPILE_C} ${COMPILE_C_FLAGS}
+*** [fail-vars] Error code 1
+
+make: stopped in unit-tests
 exit status 1
