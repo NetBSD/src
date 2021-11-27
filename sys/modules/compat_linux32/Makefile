@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.10 2021/11/25 03:08:05 ryo Exp $
+#	$NetBSD: Makefile,v 1.11 2021/11/27 05:36:39 ryo Exp $
 
 .include "../Makefile.inc"
 .include "../Makefile.assym"
@@ -17,7 +17,7 @@ SRCS+=	linux32_socket.c linux32_socketcall.c linux32_stat.c linux32_sysctl.c
 SRCS+=	linux32_sysinfo.c linux32_termios.c linux32_time.c
 SRCS+=	linux32_unistd.c linux32_utsname.c linux32_wait.c
 
-.if ${MACHINE_ARCH} == "aarch64"
+.if ${MACHINE_ARCH} == "aarch64" || ${MACHINE_ARCH} == "aarch64eb"
 CPPFLAGS+=	-DEXEC_ELF32
 .PATH:	${S}/compat/linux32/arch/aarch64
 SRCS+=	linux32_exec_machdep.c linux32_ipccall.c linux32_machdep.c
