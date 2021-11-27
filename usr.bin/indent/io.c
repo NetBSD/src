@@ -1,4 +1,4 @@
-/*	$NetBSD: io.c,v 1.140 2021/11/27 18:26:48 rillig Exp $	*/
+/*	$NetBSD: io.c,v 1.141 2021/11/27 18:37:17 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)io.c	8.1 (Berkeley) 6/6/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: io.c,v 1.140 2021/11/27 18:26:48 rillig Exp $");
+__RCSID("$NetBSD: io.c,v 1.141 2021/11/27 18:37:17 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/io.c 334927 2018-06-10 16:44:18Z pstef $");
 #endif
@@ -397,7 +397,7 @@ output_indent(int old_ind, int new_ind)
 }
 
 static int
-dump_line_label(void)
+output_line_label(void)
 {
     int ind;
 
@@ -414,7 +414,7 @@ dump_line_label(void)
 }
 
 static int
-dump_line_code(int ind)
+output_line_code(int ind)
 {
 
     int target_ind = compute_code_indent();
@@ -434,7 +434,7 @@ dump_line_code(int ind)
 }
 
 static void
-dump_line_comment(int ind)
+output_line_comment(int ind)
 {
     int target_ind = ps.com_ind;
     const char *p = com.s;
@@ -478,7 +478,7 @@ dump_line_comment(int ind)
  * the label, the code and the comment.
  */
 static void
-output_line(char line_terminator)
+output_complete_line(char line_terminator)
 {
     static bool first_line = true;
 
@@ -513,11 +513,11 @@ output_line(char line_terminator)
 
 	int ind = 0;
 	if (lab.e != lab.s)
-	    ind = dump_line_label();
+	    ind = output_line_label();
 	if (code.e != code.s)
-	    ind = dump_line_code(ind);
+	    ind = output_line_code(ind);
 	if (com.e != com.s)
-	    dump_line_comment(ind);
+	    output_line_comment(ind);
 
 	output_char(line_terminator);
 	ps.stats.lines++;
@@ -551,15 +551,15 @@ output_line(char line_terminator)
 }
 
 void
-dump_line(void)
+output_line(void)
 {
-    output_line('\n');
+    output_complete_line('\n');
 }
 
 void
-dump_line_ff(void)
+output_line_ff(void)
 {
-    output_line('\f');
+    output_complete_line('\f');
 }
 
 static int
@@ -658,7 +658,7 @@ parse_indent_comment(void)
 	return;
 
     if (com.s != com.e || lab.s != lab.e || code.s != code.e)
-	dump_line();
+	output_line();
 
     inhibit_formatting = !on;
     if (on) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.c,v 1.235 2021/11/27 18:29:29 rillig Exp $	*/
+/*	$NetBSD: indent.c,v 1.236 2021/11/27 18:37:17 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)indent.c	5.17 (Berkeley) 6/7/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: indent.c,v 1.235 2021/11/27 18:29:29 rillig Exp $");
+__RCSID("$NetBSD: indent.c,v 1.236 2021/11/27 18:37:17 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/indent.c 340138 2018-11-04 19:24:49Z oshogbo $");
 #endif
@@ -596,7 +596,7 @@ static void __attribute__((__noreturn__))
 process_eof(void)
 {
     if (lab.s != lab.e || code.s != code.e || com.s != com.e)
-	dump_line();
+	output_line();
 
     if (ps.tos > 1)		/* check for balanced braces */
 	diag(1, "Stuff missing from end of file");
@@ -624,7 +624,7 @@ maybe_break_line(lexer_symbol lsym, bool *force_nl)
 
     if (opt.verbose)
 	diag(0, "Line broken");
-    dump_line();
+    output_line();
     ps.want_blank = false;
     *force_nl = false;
 }
@@ -643,7 +643,7 @@ move_com_to_code(void)
 static void
 process_form_feed(void)
 {
-    dump_line_ff();
+    output_line_ff();
     ps.want_blank = false;
 }
 
@@ -655,7 +655,7 @@ process_newline(void)
 	com.s == com.e)
 	goto stay_in_line;
 
-    dump_line();
+    output_line();
     ps.want_blank = false;
 
 stay_in_line:
@@ -911,13 +911,13 @@ process_lbrace(bool *force_nl, bool *spaced_expr, stmt_head hd,
 
     if (code.s != code.e && !ps.block_init) {
 	if (!opt.brace_same_line) {
-	    dump_line();
+	    output_line();
 	    ps.want_blank = false;
 	} else if (ps.in_func_def_params && !ps.init_or_struct) {
 	    ps.ind_level_follow = 0;
 	    if (opt.function_brace_split) {	/* dump the line prior to the
 						 * brace ... */
-		dump_line();
+		output_line();
 		ps.want_blank = false;
 	    } else		/* add a space between the decl and brace */
 		ps.want_blank = true;
@@ -985,7 +985,7 @@ process_rbrace(bool *spaced_expr, int *decl_ind, const int *di_stack)
     if (code.s != code.e && !ps.block_init) {	/* '}' must be first on line */
 	if (opt.verbose)
 	    diag(0, "Line broken");
-	dump_line();
+	output_line();
     }
 
     *code.e++ = '}';
@@ -1021,7 +1021,7 @@ process_do(bool *force_nl, bool *last_else)
     if (code.e != code.s) {	/* make sure this starts a line */
 	if (opt.verbose)
 	    diag(0, "Line broken");
-	dump_line();
+	output_line();
 	ps.want_blank = false;
     }
 
@@ -1038,7 +1038,7 @@ process_else(bool *force_nl, bool *last_else)
     if (code.e > code.s && !(opt.cuddle_else && code.e[-1] == '}')) {
 	if (opt.verbose)
 	    diag(0, "Line broken");
-	dump_line();		/* make sure this starts a line */
+	output_line();		/* make sure this starts a line */
 	ps.want_blank = false;
     }
 
@@ -1054,7 +1054,7 @@ process_type(int *decl_ind, bool *tabs_to_var)
 
     if (ps.prev_token == lsym_rparen_or_rbracket && ps.tos <= 1) {
 	if (code.s != code.e) {
-	    dump_line();
+	    output_line();
 	    ps.want_blank = false;
 	}
     }
@@ -1089,7 +1089,7 @@ process_ident(lexer_symbol lsym, int decl_ind, bool tabs_to_var,
 	    ps.in_decl = false;
 	    if (opt.procnames_start_line && code.s != code.e) {
 		*code.e = '\0';
-		dump_line();
+		output_line();
 	    } else if (ps.want_blank) {
 		*code.e++ = ' ';
 	    }
@@ -1234,7 +1234,7 @@ static void
 process_preprocessing(void)
 {
     if (com.s != com.e || lab.s != lab.e || code.s != code.e)
-	dump_line();
+	output_line();
 
     read_preprocessing_line();
 
