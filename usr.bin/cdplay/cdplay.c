@@ -1,4 +1,4 @@
-/* 	$NetBSD: cdplay.c,v 1.50 2020/10/18 21:58:32 rillig Exp $	*/
+/* 	$NetBSD: cdplay.c,v 1.51 2021/11/27 22:16:41 rillig Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Andrew Doran.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: cdplay.c,v 1.50 2020/10/18 21:58:32 rillig Exp $");
+__RCSID("$NetBSD: cdplay.c,v 1.51 2021/11/27 22:16:41 rillig Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -130,7 +130,7 @@ static struct cmdtab {
 			fd = -1;		\
 		} else				\
 			warn("ioctl(" #ctl ")");\
-	} while (/* CONSTCOND */ 0)
+	} while (0)
 
 #define CDDA_SIZE	2352
 

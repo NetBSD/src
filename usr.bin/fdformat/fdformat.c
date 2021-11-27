@@ -1,4 +1,4 @@
-/*	$NetBSD: fdformat.c,v 1.17 2016/09/05 00:40:28 sevan Exp $	*/
+/*	$NetBSD: fdformat.c,v 1.18 2021/11/27 22:16:41 rillig Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: fdformat.c,v 1.17 2016/09/05 00:40:28 sevan Exp $");
+__RCSID("$NetBSD: fdformat.c,v 1.18 2021/11/27 22:16:41 rillig Exp $");
 #endif
 
 #include <sys/types.h>
@@ -135,7 +135,7 @@ usage(void)
 			# which, optarg); 			\
 		parms.which = tmplong; 				\
 		parmmask |= MASK_##maskn;			\
-	} while (/* CONSTCOND */0)
+	} while (0)
 
 #define getparm(structname, maskname) 				\
 	do {							\
@@ -144,7 +144,7 @@ usage(void)
 			    " missing for type `%s'", optarg);	\
 		parms.structname = tmplong; 			\
 		parmmask |= MASK_ ## maskname;			\
-	} while (/* CONSTCOND */0)
+	} while (0)
 
 
 #define copyparm(which, mask) 					\
