@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_types.h,v 1.17 2021/11/25 03:08:04 ryo Exp $ */
+/*	$NetBSD: linux32_types.h,v 1.18 2021/11/27 21:15:07 ryo Exp $ */
 
 /*-
  * Copyright (c) 2006 Emmanuel Dreyfus, all rights reserved.
@@ -54,6 +54,7 @@ typedef netbsd32_pointer_t linux32_statfs64p;
 typedef netbsd32_pointer_t linux32_statxp;
 typedef netbsd32_pointer_t linux32_sigactionp_t;
 typedef netbsd32_pointer_t linux32_sigsetp_t;
+typedef netbsd32_pointer_t linux32_sized_sigsetp_t;
 typedef netbsd32_pointer_t linux32___sysctlp_t;
 typedef netbsd32_pointer_t linux32_direntp_t;
 typedef netbsd32_pointer_t linux32_dirent64p_t;
