@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.c,v 1.236 2021/11/27 18:37:17 rillig Exp $	*/
+/*	$NetBSD: indent.c,v 1.237 2021/11/27 21:15:58 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)indent.c	5.17 (Berkeley) 6/7/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: indent.c,v 1.236 2021/11/27 18:37:17 rillig Exp $");
+__RCSID("$NetBSD: indent.c,v 1.237 2021/11/27 21:15:58 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/indent.c 340138 2018-11-04 19:24:49Z oshogbo $");
 #endif
@@ -899,7 +899,7 @@ static void
 process_lbrace(bool *force_nl, bool *spaced_expr, stmt_head hd,
     int *di_stack, int di_stack_cap, int *decl_ind)
 {
-    ps.in_stmt_or_decl = false;		/* don't indent the {} */
+    ps.in_stmt_or_decl = false;	/* don't indent the {} */
 
     if (!ps.block_init)
 	*force_nl = true;	/* force other stuff on same line as '{' onto
@@ -993,7 +993,7 @@ process_rbrace(bool *spaced_expr, int *decl_ind, const int *di_stack)
     ps.in_stmt_or_decl = false;
     ps.in_stmt_cont = false;
 
-    if (ps.decl_level > 0) { /* we are in multi-level structure declaration */
+    if (ps.decl_level > 0) {	/* multi-level structure declaration */
 	*decl_ind = di_stack[--ps.decl_level];
 	if (ps.decl_level == 0 && !ps.in_func_def_params) {
 	    ps.just_saw_decl = 2;
