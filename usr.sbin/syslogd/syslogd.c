@@ -1,4 +1,4 @@
-/*	$NetBSD: syslogd.c,v 1.137 2021/08/13 20:19:14 andvar Exp $	*/
+/*	$NetBSD: syslogd.c,v 1.138 2021/11/27 22:30:26 rillig Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1988, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)syslogd.c	8.3 (Berkeley) 4/4/94";
 #else
-__RCSID("$NetBSD: syslogd.c,v 1.137 2021/08/13 20:19:14 andvar Exp $");
+__RCSID("$NetBSD: syslogd.c,v 1.138 2021/11/27 22:30:26 rillig Exp $");
 #endif
 #endif /* not lint */
 
@@ -3518,7 +3518,7 @@ init(int fd, short event, void *ev)
 	}							\
 	src->f_qsize = 0;					\
 	src->f_qelements = 0;					\
-} while (/*CONSTCOND*/0)
+} while (0)
 
 	/*
 	 *  Free old log files.

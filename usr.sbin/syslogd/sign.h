@@ -1,4 +1,4 @@
-/*	$NetBSD: sign.h,v 1.2 2008/11/07 07:36:38 minskim Exp $	*/
+/*	$NetBSD: sign.h,v 1.3 2021/11/27 22:30:26 rillig Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -126,7 +126,7 @@
 		    ERR_error_string(ERR_get_error(), NULL));	     	\
 		return 1;					     	\
 	}								\
-} while (/*CONSTCOND*/0)
+} while (0)
 
 /* structs use uint_fast64_t in different places because the standard
  * requires values in interval [0:9999999999 = SIGN_MAX_COUNT] */
