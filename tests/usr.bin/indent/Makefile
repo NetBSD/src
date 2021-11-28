@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.35 2021/11/28 14:29:03 rillig Exp $
+#	$NetBSD: Makefile,v 1.36 2021/11/28 14:49:28 rillig Exp $
 
 .include <bsd.own.mk>
 
@@ -112,7 +112,6 @@ FILES+=		psym_while_expr.c
 FILES+=		t_options.awk
 FILES+=		token_binary_op.c
 FILES+=		token_case_label.c
-FILES+=		token_colon.c
 FILES+=		token_comma.c
 FILES+=		token_comment.c
 FILES+=		token_decl.c
