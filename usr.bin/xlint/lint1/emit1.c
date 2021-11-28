@@ -1,4 +1,4 @@
-/* $NetBSD: emit1.c,v 1.59 2021/09/12 10:06:03 rillig Exp $ */
+/* $NetBSD: emit1.c,v 1.60 2021/11/28 10:01:36 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: emit1.c,v 1.59 2021/09/12 10:06:03 rillig Exp $");
+__RCSID("$NetBSD: emit1.c,v 1.60 2021/11/28 10:01:36 rillig Exp $");
 #endif
 
 #include "lint1.h"
@@ -186,6 +186,8 @@ outsym(const sym_t *sym, scl_t sc, def_t def)
 	 * before their first declaration at level 0.
 	 */
 	if (sc != EXTERN && !(sc == STATIC && sym->s_type->t_tspec == FUNC))
+		return;
+	if (ch_isdigit(sym->s_name[0]))	/* 00000000_tmp */
 		return;
 
 	/* reset buffer */
@@ -586,6 +588,9 @@ outfstrg(strg_t *strg)
 void
 outusg(const sym_t *sym)
 {
+	if (ch_isdigit(sym->s_name[0]))	/* 00000000_tmp */
+		return;
+
 	/* reset buffer */
 	outclr();
 
