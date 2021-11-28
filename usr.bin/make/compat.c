@@ -1,4 +1,4 @@
-/*	$NetBSD: compat.c,v 1.228 2021/11/28 19:51:06 rillig Exp $	*/
+/*	$NetBSD: compat.c,v 1.229 2021/11/28 23:12:51 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -96,7 +96,7 @@
 #include "pathnames.h"
 
 /*	"@(#)compat.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: compat.c,v 1.228 2021/11/28 19:51:06 rillig Exp $");
+MAKE_RCSID("$NetBSD: compat.c,v 1.229 2021/11/28 23:12:51 rillig Exp $");
 
 static GNode *curTarg = NULL;
 static pid_t compatChild;
@@ -237,7 +237,7 @@ Compat_RunCommand(const char *cmdp, GNode *gn, StringListNode *ln)
 				 * using a shell */
 	const char *volatile cmd = cmdp;
 
-	silent = (gn->type & OP_SILENT) != 0;
+	silent = (gn->type & OP_SILENT) != OP_NONE;
 	errCheck = !(gn->type & OP_IGNORE);
 	doIt = false;
 
@@ -562,7 +562,7 @@ MakeUnmade(GNode *gn, GNode *pgn)
 			RunCommands(gn);
 			curTarg = NULL;
 		} else {
-			Job_Touch(gn, (gn->type & OP_SILENT) != 0);
+			Job_Touch(gn, (gn->type & OP_SILENT) != OP_NONE);
 		}
 	} else {
 		gn->made = ERROR;
