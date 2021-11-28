@@ -1,4 +1,4 @@
-/* $NetBSD: read.c,v 1.69 2021/11/16 22:12:44 rillig Exp $ */
+/* $NetBSD: read.c,v 1.70 2021/11/28 08:21:49 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: read.c,v 1.69 2021/11/16 22:12:44 rillig Exp $");
+__RCSID("$NetBSD: read.c,v 1.70 2021/11/28 08:21:49 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -139,7 +139,7 @@ parse_short(const char **p)
 }
 
 static void
-read_ln_line(char *line, size_t len)
+read_ln_line(const char *line, size_t len)
 {
 	const char *cp;
 	int cline, isrc, iline;
@@ -148,9 +148,6 @@ read_ln_line(char *line, size_t len)
 
 	flines[srcfile]++;
 
-	if (len == 0 || line[len - 1] != '\n')
-		inperr("%s", &line[len - 1]);
-	line[len - 1] = '\0';
 	cp = line;
 
 	/* line number in csrcfile */
@@ -230,8 +227,13 @@ readfile(const char *name)
 	if ((inp = fopen(name, "r")) == NULL)
 		err(1, "cannot open %s", name);
 
-	while ((line = fgetln(inp, &len)) != NULL)
+	while ((line = fgetln(inp, &len)) != NULL) {
+		if (len == 0 || line[len - 1] != '\n')
+			inperr("%s", &line[len - 1]);
+		line[len - 1] = '\0';
+
 		read_ln_line(line, len);
+	}
 
 	_destroyhash(renametab);
 
