@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1168 2021/11/18 21:19:18 rillig Exp $
+# $NetBSD: mi,v 1.1169 2021/11/28 14:29:03 rillig Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -4823,7 +4823,7 @@
 ./usr/tests/usr.bin/indent/lsym_semicolon.c				tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/indent/lsym_sizeof.c				tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/indent/lsym_storage_class.c				tests-usr.bin-tests	compattestfile,atf
-./usr/tests/usr.bin/indent/lsym_string_prefix.c				tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/indent/lsym_string_prefix.c				tests-obsolete		obsolete,atf
 ./usr/tests/usr.bin/indent/lsym_switch.c				tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/indent/lsym_tag.c					tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/indent/lsym_type_in_parentheses.c			tests-usr.bin-tests	compattestfile,atf

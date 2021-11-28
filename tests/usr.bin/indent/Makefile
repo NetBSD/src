@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.34 2021/11/18 21:19:19 rillig Exp $
+#	$NetBSD: Makefile,v 1.35 2021/11/28 14:29:03 rillig Exp $
 
 .include <bsd.own.mk>
 
@@ -43,7 +43,6 @@ FILES+=		lsym_rparen_or_rbracket.c
 FILES+=		lsym_semicolon.c
 FILES+=		lsym_sizeof.c
 FILES+=		lsym_storage_class.c
-FILES+=		lsym_string_prefix.c
 FILES+=		lsym_switch.c
 FILES+=		lsym_tag.c
 FILES+=		lsym_type_in_parentheses.c
