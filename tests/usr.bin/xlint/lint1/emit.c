@@ -1,4 +1,4 @@
-/*	$NetBSD: emit.c,v 1.8 2021/11/28 09:47:18 rillig Exp $	*/
+/*	$NetBSD: emit.c,v 1.9 2021/11/28 10:11:15 rillig Exp $	*/
 # 3 "emit.c"
 
 /*
@@ -293,7 +293,7 @@ use_vars(void)
  * The objects that are created for these compound literals are unnamed,
  * therefore there is no point in exporting them to the .ln file.
  *
- * Before TODO, lint exported them.
+ * Before emit1.c 1.60 from 2021-11-28, lint exported them.
  */
 struct compound_expression_in_initializer {
 	const char * const *info;
