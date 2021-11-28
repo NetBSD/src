@@ -1,4 +1,4 @@
-.\"	$NetBSD: compat_linux.8,v 1.45 2021/10/12 15:25:27 andvar Exp $
+.\"	$NetBSD: compat_linux.8,v 1.46 2021/11/28 18:08:51 ryo Exp $
 .\"
 .\" Copyright (c) 1995 Frank van der Linden
 .\" All rights reserved.
@@ -42,7 +42,7 @@ This applies to aarch64, alpha, amd64, arm, i386, m68k, and powerpc systems for 
 Both the a.out and ELF binary formats are supported.
 Most programs should work.
 .Nx
-amd64 can execute both 32-bit and 64-bit Linux programs.
+aarch64 and amd64 can execute both 32-bit and 64-bit Linux programs.
 Programs that will not work include some that use
 i386-specific calls, such as enabling virtual 8086 mode.
 Currently, sound is supported through OSSv3 compat.
