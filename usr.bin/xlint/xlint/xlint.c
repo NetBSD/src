@@ -1,4 +1,4 @@
-/* $NetBSD: xlint.c,v 1.84 2021/11/21 10:39:47 rillig Exp $ */
+/* $NetBSD: xlint.c,v 1.85 2021/11/28 02:07:02 christos Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: xlint.c,v 1.84 2021/11/21 10:39:47 rillig Exp $");
+__RCSID("$NetBSD: xlint.c,v 1.85 2021/11/28 02:07:02 christos Exp $");
 #endif
 
 #include <sys/param.h>
@@ -46,6 +46,7 @@ __RCSID("$NetBSD: xlint.c,v 1.84 2021/11/21 10:39:47 rillig Exp $");
 #include <sys/stat.h>
 #include <sys/utsname.h>
 #include <errno.h>
+#include <stdarg.h>
 #include <fcntl.h>
 #include <paths.h>
 #include <signal.h>
@@ -299,13 +300,20 @@ lbasename(const char *strg, int delim)
 	return *cp1 == '\0' ? cp2 : cp1;
 }
 
-static void __attribute__((noreturn))
-usage(void)
+static void __attribute__((__noreturn__, __format__(__printf__, 1, 2)))
+usage(const char *fmt, ...)
 {
 	const char *name;
 	int indent;
+	va_list ap;
 
 	name = getprogname();
+	fprintf(stderr, "%s: ", name);
+	va_start(ap, fmt);
+	vfprintf(stderr, fmt, ap);
+	va_end(ap);
+	fprintf(stderr, "\n");
+
 	indent = (int)(strlen("usage: ") + strlen(name));
 	(void)fprintf(stderr,
 	    "usage: %s [-abceghprvwxzHFST] [-s|-t] [-i|-nu]\n"
@@ -412,7 +420,8 @@ main(int argc, char *argv[])
 
 		case 'i':
 			if (Cflag)
-				usage();
+				usage("%c and %s flags cannot be specified "
+				    "together", 'C', "i");
 			iflag = true;
 			break;
 
@@ -430,7 +439,8 @@ main(int argc, char *argv[])
 
 		case 's':
 			if (tflag)
-				usage();
+				usage("%c and %s flags cannot be specified "
+				    "together", 's', "t");
 			list_clear(&cpp.lcflags);
 			list_add(&cpp.lcflags, "-trigraphs");
 			list_add(&cpp.lcflags, "-Wtrigraphs");
@@ -443,7 +453,8 @@ main(int argc, char *argv[])
 
 		case 'S':
 			if (tflag)
-				usage();
+				usage("%c and %s flags cannot be specified "
+				    "together", 'S', "t");
 			pass_flag_to_lint1(c);
 			break;
 
@@ -455,7 +466,8 @@ main(int argc, char *argv[])
 #if !HAVE_NBTOOL_CONFIG_H
 		case 't':
 			if (sflag)
-				usage();
+				usage("%c and %s flags cannot be specified "
+				    "together", 's', "t");
 			tflag = true;
 			list_clear(&cpp.lcflags);
 			list_add(&cpp.lcflags, "-traditional");
@@ -473,8 +485,13 @@ main(int argc, char *argv[])
 			break;
 
 		case 'C':
-			if (Cflag || oflag || iflag)
-				usage();
+			if (Cflag)
+				usage("%c flag already specified", 'C');
+			usage("%c and %s flags cannot be specified "
+			    "together", 'C', "o or i");
+			if (oflag || iflag)
+				usage("%c and %s flags cannot be specified "
+				    "together", 'C', "o or i");
 			Cflag = true;
 			pass_flag_to_lint2(c);
 			pass_to_lint2(optarg);
@@ -484,7 +501,7 @@ main(int argc, char *argv[])
 
 		case 'd':
 			if (dflag)
-				usage();
+				usage("%c flag already specified", 'd');
 			dflag = true;
 			pass_to_cpp("-nostdinc");
 			pass_to_cpp("-isystem");
@@ -504,8 +521,11 @@ main(int argc, char *argv[])
 			break;
 
 		case 'o':
-			if (Cflag || oflag)
-				usage();
+			if (oflag)
+				usage("%c flag already specified", 'o');
+			if (Cflag)
+				usage("%c and %s flags cannot be specified "
+				    "together", 'C', "o");
 			oflag = true;
 			outputfn = xstrdup(optarg);
 			break;
@@ -527,7 +547,7 @@ main(int argc, char *argv[])
 			break;
 
 		default:
-			usage();
+			usage("Unknown flag %c", c);
 			/* NOTREACHED */
 		}
 	}
@@ -553,7 +573,7 @@ main(int argc, char *argv[])
 			else if (arg[1] == 'L')
 				list = &libsrchpath;
 			else {
-				usage();
+				usage("Unknown argument %s", arg);
 				/* NOTREACHED */
 			}
 
@@ -563,7 +583,7 @@ main(int argc, char *argv[])
 				argc--;
 				list_add(list, *++argv);
 			} else
-				usage();
+				usage("Missing argument for l or L");
 		} else {
 			/* filename */
 			fname(arg);
@@ -574,7 +594,7 @@ main(int argc, char *argv[])
 	}
 
 	if (first)
-		usage();
+		usage("Missing filename");
 
 	if (iflag)
 		terminate(0);
