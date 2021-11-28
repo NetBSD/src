@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.371 2021/11/27 20:13:48 christos Exp $ */
+/* $NetBSD: cgram.y,v 1.372 2021/11/28 09:59:59 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: cgram.y,v 1.371 2021/11/27 20:13:48 christos Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.372 2021/11/28 09:59:59 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -361,7 +361,7 @@ anonymize(sym_t *s)
 
 %{
 #if defined(YYDEBUG) && defined(YYBISON)
-static void cgram_print(FILE *, int, YYSTYPE);
+static inline void cgram_print(FILE *, int, YYSTYPE);
 #endif
 %}
 
@@ -2185,7 +2185,7 @@ cgram_to_string(int token, YYSTYPE val)
 #endif
 
 #if defined(YYDEBUG) && defined(YYBISON)
-static void
+static inline void
 cgram_print(FILE *output, int token, YYSTYPE val)
 {
 	(void)fprintf(output, "%s", cgram_to_string(token, val));
