@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.prog.mk,v 1.339 2021/08/23 22:13:27 mrg Exp $
+#	$NetBSD: bsd.prog.mk,v 1.340 2021/11/28 15:49:36 christos Exp $
 #	@(#)bsd.prog.mk	8.2 (Berkeley) 4/2/94
 
 .ifndef HOSTPROG
@@ -632,7 +632,11 @@ ${DESTDIR}${DEBUGDIR}${BINDIR.${_P}}/${_PROGDEBUG.${_P}}: .MADE
 lint: lint-${_P}
 lint-${_P}: ${LOBJS.${_P}}
 .if defined(LOBJS.${_P}) && !empty(LOBJS.${_P})
+.if defined(DESTDIR)
+	${LINT} ${LINTFLAGS} ${_LDFLAGS.${_P}:C/-L[  ]*/-L/Wg:M-L*} -L${DESTDIR}/usr/libdata/lint ${LOBJS.${_P}} ${_LDADD.${_P}}
+.else
 	${LINT} ${LINTFLAGS} ${_LDFLAGS.${_P}:C/-L[  ]*/-L/Wg:M-L*} ${LOBJS.${_P}} ${_LDADD.${_P}}
+.endif
 .endif
 
 .endfor # _P in ${PROGS} ${PROGS_CXX}					# }
