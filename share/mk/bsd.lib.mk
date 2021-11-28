@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.lib.mk,v 1.387 2021/10/27 03:06:59 ryo Exp $
+#	$NetBSD: bsd.lib.mk,v 1.388 2021/11/28 15:47:33 christos Exp $
 #	@(#)bsd.lib.mk	8.3 (Berkeley) 4/22/94
 
 .include <bsd.init.mk>
@@ -16,17 +16,16 @@ LIBISCXX?=	no
 .if ${LIBISMODULE} != "no"
 _LIB_PREFIX?=	# empty
 MKDEBUGLIB:=	no
-MKLINT:=	no
 MKPICINSTALL:=	no
 MKPROFILE:=	no
 MKSTATICLIB:=	no
+_LINTINSTALL?=	no
 .else
 _LIB_PREFIX?=	lib
 .endif
 
 .if ${LIBISPRIVATE} != "no"
 MKDEBUGLIB:=	no
-MKLINT:=	no
 MKPICINSTALL:=	no
 . if defined(NOSTATICLIB) && ${MKPICLIB} != "no"
 MKSTATICLIB:=	no
@@ -34,7 +33,10 @@ MKSTATICLIB:=	no
 MKPIC:=		no
 . endif
 MKPROFILE:=	no
+_LINTINSTALL?=	no
 .endif
+
+_LINTINSTALL?=	${MKLINT}
 
 ##### Basic targets
 .PHONY:		checkver libinstall
@@ -845,7 +847,7 @@ ${_DEST.DEBUG}/${_LIB.so.debug}: ${_LIB.so.debug}
 .endif
 .endif
 
-.if ${MKLINT} != "no" && !empty(LOBJS)
+.if ${_LINTINSTALL} != "no" && !empty(LOBJS)
 libinstall:: ${_DEST.LINT}/${_LIB.ln}
 .PRECIOUS: ${_DEST.LINT}/${_LIB.ln}
 
