@@ -1,4 +1,4 @@
-/*	$NetBSD: make.c,v 1.245 2021/11/28 18:58:58 rillig Exp $	*/
+/*	$NetBSD: make.c,v 1.246 2021/11/28 19:51:06 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -104,7 +104,7 @@
 #include "job.h"
 
 /*	"@(#)make.c	8.1 (Berkeley) 6/6/93"	*/
-MAKE_RCSID("$NetBSD: make.c,v 1.245 2021/11/28 18:58:58 rillig Exp $");
+MAKE_RCSID("$NetBSD: make.c,v 1.246 2021/11/28 19:51:06 rillig Exp $");
 
 /* Sequence # to detect recursion. */
 static unsigned int checked_seqno = 1;
@@ -196,16 +196,16 @@ GNodeFlags_ToString(GNodeFlags flags, void **freeIt)
 	Buffer buf;
 
 	Buf_InitSize(&buf, 32);
-#define ADD(flag) Buf_AddFlag(&buf, (flags & (flag)) != 0, #flag)
-	ADD(REMAKE);
-	ADD(CHILDMADE);
-	ADD(FORCE);
-	ADD(DONE_WAIT);
-	ADD(DONE_ORDER);
-	ADD(FROM_DEPEND);
-	ADD(DONE_ALLSRC);
-	ADD(CYCLE);
-	ADD(DONECYCLE);
+#define ADD(flag, name) Buf_AddFlag(&buf, flags.flag, name)
+	ADD(remake, "REMAKE");
+	ADD(childMade, "CHILDMADE");
+	ADD(force, "FORCE");
+	ADD(doneWait, "DONE_WAIT");
+	ADD(doneOrder, "DONE_ORDER");
+	ADD(fromDepend, "FROM_DEPEND");
+	ADD(doneAllsrc, "DONE_ALLSRC");
+	ADD(cycle, "CYCLE");
+	ADD(doneCycle, "DONECYCLE");
 #undef ADD
 	return buf.len == 0 ? "none" : (*freeIt = Buf_DoneData(&buf));
 }
@@ -344,8 +344,8 @@ GNode_IsOODate(GNode *gn)
 		 */
 		DEBUG0(MAKE, ".JOIN node...");
 		DEBUG1(MAKE, "source %smade...",
-		    gn->flags & CHILDMADE ? "" : "not ");
-		oodate = (gn->flags & CHILDMADE) != 0;
+		    gn->flags.childMade ? "" : "not ");
+		oodate = gn->flags.childMade;
 	} else if (gn->type & (OP_FORCE | OP_EXEC | OP_PHONY)) {
 		/*
 		 * A node which is the object of the force (!) operator or
@@ -373,10 +373,10 @@ GNode_IsOODate(GNode *gn)
 		 * child after it was considered made.
 		 */
 		if (DEBUG(MAKE)) {
-			if (gn->flags & FORCE)
+			if (gn->flags.force)
 				debug_printf("non existing child...");
 		}
-		oodate = (gn->flags & FORCE) != 0;
+		oodate = gn->flags.force;
 	}
 
 #ifdef USE_META
@@ -626,7 +626,7 @@ UpdateImplicitParentsVars(GNode *cgn, const char *cname)
 
 	for (ln = cgn->implicitParents.first; ln != NULL; ln = ln->next) {
 		GNode *pgn = ln->datum;
-		if (pgn->flags & REMAKE) {
+		if (pgn->flags.remake) {
 			Var_Set(pgn, IMPSRC, cname);
 			if (cpref != NULL)
 				Var_Set(pgn, PREFIX, cpref);
@@ -643,7 +643,7 @@ IsWaitingForOrder(GNode *gn)
 	for (ln = gn->order_pred.first; ln != NULL; ln = ln->next) {
 		GNode *ogn = ln->datum;
 
-		if (GNode_IsDone(ogn) || !(ogn->flags & REMAKE))
+		if (GNode_IsDone(ogn) || !ogn->flags.remake)
 			continue;
 
 		DEBUG2(MAKE,
@@ -742,13 +742,13 @@ Make_Update(GNode *cgn)
 			debug_printf(", unmade %d ", pgn->unmade - 1);
 		}
 
-		if (!(pgn->flags & REMAKE)) {
+		if (!pgn->flags.remake) {
 			/* This parent isn't needed */
 			DEBUG0(MAKE, "- not needed\n");
 			continue;
 		}
 		if (mtime == 0 && !(cgn->type & OP_WAIT))
-			pgn->flags |= FORCE;
+			pgn->flags.force = true;
 
 		/*
 		 * If the parent has the .MADE attribute, its timestamp got
@@ -765,7 +765,7 @@ Make_Update(GNode *cgn)
 
 		if (!(cgn->type & (OP_EXEC | OP_USE | OP_USEBEFORE))) {
 			if (cgn->made == MADE)
-				pgn->flags |= CHILDMADE;
+				pgn->flags.childMade = true;
 			GNode_UpdateYoungestChild(pgn, cgn);
 		}
 
@@ -798,7 +798,7 @@ Make_Update(GNode *cgn)
 		 * nodes.
 		 */
 		if (pgn->unmade != 0 && !(centurion->type & OP_WAIT)
-		    && !(centurion->flags & DONE_ORDER)) {
+		    && !centurion->flags.doneOrder) {
 			DEBUG0(MAKE, "- unmade children\n");
 			continue;
 		}
@@ -931,7 +931,7 @@ GNode_SetLocalVars(GNode *gn)
 {
 	GNodeListNode *ln;
 
-	if (gn->flags & DONE_ALLSRC)
+	if (gn->flags.doneAllsrc)
 		return;
 
 	UnmarkChildren(gn);
@@ -945,7 +945,7 @@ GNode_SetLocalVars(GNode *gn)
 
 	if (gn->type & OP_JOIN)
 		Var_Set(gn, TARGET, GNode_VarAllsrc(gn));
-	gn->flags |= DONE_ALLSRC;
+	gn->flags.doneAllsrc = true;
 }
 
 static bool
@@ -1000,7 +1000,7 @@ MakeBuildParent(GNode *pn, GNodeListNode *toBeMadeNext)
 
 	if (!MakeBuildChild(pn, toBeMadeNext)) {
 		/* When this node is built, reschedule its parents. */
-		pn->flags |= DONE_ORDER;
+		pn->flags.doneOrder = true;
 	}
 }
 
@@ -1143,7 +1143,7 @@ static void MakePrintStatusList(GNodeList *, int *);
 static bool
 MakePrintStatus(GNode *gn, int *errors)
 {
-	if (gn->flags & DONECYCLE) {
+	if (gn->flags.doneCycle) {
 		/*
 		 * We've completely processed this node before, don't do
 		 * it again.
@@ -1152,7 +1152,7 @@ MakePrintStatus(GNode *gn, int *errors)
 	}
 
 	if (gn->unmade == 0) {
-		gn->flags |= DONECYCLE;
+		gn->flags.doneCycle = true;
 		switch (gn->made) {
 		case UPTODATE:
 			printf("`%s%s' is up to date.\n", gn->name,
@@ -1196,17 +1196,17 @@ MakePrintStatus(GNode *gn, int *errors)
 	 * If printing cycles and came to one that has unmade children,
 	 * print out the cycle by recursing on its children.
 	 */
-	if (!(gn->flags & CYCLE)) {
+	if (!gn->flags.cycle) {
 		/* First time we've seen this node, check all children */
-		gn->flags |= CYCLE;
+		gn->flags.cycle = true;
 		MakePrintStatusList(&gn->children, errors);
 		/* Mark that this node needn't be processed again */
-		gn->flags |= DONECYCLE;
+		gn->flags.doneCycle = true;
 		return false;
 	}
 
 	/* Only output the error once per node */
-	gn->flags |= DONECYCLE;
+	gn->flags.doneCycle = true;
 	Error("Graph cycles through `%s%s'", gn->name, gn->cohort_num);
 	if ((*errors)++ > 100)
 		/* Abandon the whole error report */
@@ -1235,7 +1235,7 @@ ExamineLater(GNodeList *examine, GNodeList *toBeExamined)
 	for (ln = toBeExamined->first; ln != NULL; ln = ln->next) {
 		GNode *gn = ln->datum;
 
-		if (gn->flags & REMAKE)
+		if (gn->flags.remake)
 			continue;
 		if (gn->type & (OP_USE | OP_USEBEFORE))
 			continue;
@@ -1271,10 +1271,10 @@ Make_ExpandUse(GNodeList *targs)
 	while (!Lst_IsEmpty(&examine)) {
 		GNode *gn = Lst_Dequeue(&examine);
 
-		if (gn->flags & REMAKE)
+		if (gn->flags.remake)
 			/* We've looked at this one already */
 			continue;
-		gn->flags |= REMAKE;
+		gn->flags.remake = true;
 		DEBUG2(MAKE, "Make_ExpandUse: examine %s%s\n",
 		    gn->name, gn->cohort_num);
 
@@ -1359,7 +1359,7 @@ Make_ProcessWait(GNodeList *targs)
 	 */
 
 	pgn = GNode_New(".MAIN");
-	pgn->flags = REMAKE;
+	pgn->flags.remake = true;
 	pgn->type = OP_PHONY | OP_DEPENDS;
 	/* Get it displayed in the diag dumps */
 	Lst_Prepend(Targ_List(), pgn);
@@ -1387,9 +1387,9 @@ Make_ProcessWait(GNodeList *targs)
 		pgn = Lst_Dequeue(&examine);
 
 		/* We only want to process each child-list once */
-		if (pgn->flags & DONE_WAIT)
+		if (pgn->flags.doneWait)
 			continue;
-		pgn->flags |= DONE_WAIT;
+		pgn->flags.doneWait = true;
 		DEBUG1(MAKE, "Make_ProcessWait: examine %s\n", pgn->name);
 
 		if (pgn->type & OP_DOUBLEDEP)

@@ -1,4 +1,4 @@
-/*	$NetBSD: arch.c,v 1.203 2021/08/25 22:14:38 rillig Exp $	*/
+/*	$NetBSD: arch.c,v 1.204 2021/11/28 19:51:06 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -126,7 +126,7 @@
 #include "config.h"
 
 /*	"@(#)arch.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: arch.c,v 1.203 2021/08/25 22:14:38 rillig Exp $");
+MAKE_RCSID("$NetBSD: arch.c,v 1.204 2021/11/28 19:51:06 rillig Exp $");
 
 typedef struct List ArchList;
 typedef struct ListNode ArchListNode;
@@ -944,12 +944,12 @@ Arch_UpdateMemberMTime(GNode *gn)
 			const char *nameEnd = strchr(nameStart, ')');
 			size_t nameLen = (size_t)(nameEnd - nameStart);
 
-			if ((pgn->flags & REMAKE) &&
+			if (pgn->flags.remake &&
 			    strncmp(nameStart, gn->name, nameLen) == 0) {
 				Arch_UpdateMTime(pgn);
 				gn->mtime = pgn->mtime;
 			}
-		} else if (pgn->flags & REMAKE) {
+		} else if (pgn->flags.remake) {
 			/*
 			 * Something which isn't a library depends on the
 			 * existence of this target, so it needs to exist.

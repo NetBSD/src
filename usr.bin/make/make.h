@@ -1,4 +1,4 @@
-/*	$NetBSD: make.h,v 1.267 2021/11/28 18:58:58 rillig Exp $	*/
+/*	$NetBSD: make.h,v 1.268 2021/11/28 19:51:06 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -321,26 +321,25 @@ typedef enum GNodeType {
 	OP_NOTARGET	= OP_NOTMAIN | OP_USE | OP_EXEC | OP_TRANSFORM
 } GNodeType;
 
-typedef enum GNodeFlags {
-	GNF_NONE	= 0,
+typedef struct GNodeFlagsS {
 	/* this target needs to be (re)made */
-	REMAKE		= 1 << 0,
+	bool remake:1;
 	/* children of this target were made */
-	CHILDMADE	= 1 << 1,
+	bool childMade:1;
 	/* children don't exist, and we pretend made */
-	FORCE		= 1 << 2,
+	bool force:1;
 	/* Set by Make_ProcessWait() */
-	DONE_WAIT	= 1 << 3,
+	bool doneWait:1;
 	/* Build requested by .ORDER processing */
-	DONE_ORDER	= 1 << 4,
+	bool doneOrder:1;
 	/* Node created from .depend */
-	FROM_DEPEND	= 1 << 5,
+	bool fromDepend:1;
 	/* We do it once only */
-	DONE_ALLSRC	= 1 << 6,
+	bool doneAllsrc:1;
 	/* Used by MakePrintStatus */
-	CYCLE		= 1 << 12,
+	bool cycle:1;
 	/* Used by MakePrintStatus */
-	DONECYCLE	= 1 << 13
+	bool doneCycle:1;
 } GNodeFlags;
 
 typedef struct List StringList;
@@ -719,7 +718,7 @@ GNode_Path(const GNode *gn)
 MAKE_INLINE bool
 GNode_IsWaitingFor(const GNode *gn)
 {
-	return (gn->flags & REMAKE) && gn->made <= REQUESTED;
+	return gn->flags.remake && gn->made <= REQUESTED;
 }
 
 MAKE_INLINE bool
