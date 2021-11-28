@@ -1,4 +1,4 @@
-# $NetBSD: t_lint2.sh,v 1.9 2021/11/28 09:10:36 rillig Exp $
+# $NetBSD: t_lint2.sh,v 1.10 2021/11/28 09:16:46 rillig Exp $
 #
 # Copyright (c) 2021 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -76,6 +76,7 @@ emit_lp64_body()
 	std_emit_body 'emit_lp64'
 }
 
+# usage: test_error input message-regex [input-regex]
 test_error()
 {
 	printf '%s\n' \
@@ -86,7 +87,8 @@ test_error()
 	    "$1" \
 	    > 'input.ln'
 
-	atf_check -s 'exit:1' -e "match:input file error: input\\.ln,3 \($2\)\$" \
+	atf_check -s 'exit:1' \
+	    -e "match:error: input\\.ln:3: $2 \\(for '${3-$1}'\\)\$" \
 	    "$lint2" 'input.ln'
 }
 
@@ -141,9 +143,9 @@ error_cases_body()
 	test_error '0c0.0s2"'		'trailing data: '
 	test_error '0c0.0s2"%'		'missing closing quote'
 	# shellcheck disable=SC1003
-	test_error '0c0.0s2"\'		'missing after \\'
+	test_error '0c0.0s2"\'		'missing after \\'	'0c0\.0s2"\\'
 	# shellcheck disable=SC1003
-	test_error '0c0.0s2"%\'		'missing after \\'
+	test_error '0c0.0s2"%\'		'missing after \\'	'0c0\.0s2"%\\'
 
 	# declarations and definitions
 	test_error '0d0'		'bad line number'
@@ -168,6 +170,7 @@ error_cases_body()
 	test_error '0u0.0'		'bad delim '
 	test_error '0u0.0_'		'bad delim _'
 	test_error '0u0.0x'		'not a number: '
+
 	# trailing garbage is not detected
 	test_error_ignored '0u0.0x3var_'
 }
