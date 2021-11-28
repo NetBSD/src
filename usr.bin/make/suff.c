@@ -1,4 +1,4 @@
-/*	$NetBSD: suff.c,v 1.353 2021/11/28 22:27:35 rillig Exp $	*/
+/*	$NetBSD: suff.c,v 1.354 2021/11/28 22:38:17 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -115,7 +115,7 @@
 #include "dir.h"
 
 /*	"@(#)suff.c	8.4 (Berkeley) 3/21/94"	*/
-MAKE_RCSID("$NetBSD: suff.c,v 1.353 2021/11/28 22:27:35 rillig Exp $");
+MAKE_RCSID("$NetBSD: suff.c,v 1.354 2021/11/28 22:38:17 rillig Exp $");
 
 typedef List SuffixList;
 typedef ListNode SuffixListNode;
@@ -2134,30 +2134,23 @@ Buf_AddFlag(Buffer *buf, bool flag, const char *name)
 	}
 }
 
-static const char *
-SuffixFlags_ToString(const Suffix *suff, void **freeIt)
-{
-	Buffer buf;
-
-	Buf_InitSize(&buf, 32);
-	Buf_AddFlag(&buf, suff->include, "SUFF_INCLUDE");
-	Buf_AddFlag(&buf, suff->library, "SUFF_LIBRARY");
-	Buf_AddFlag(&buf, suff->isNull, "SUFF_NULL");
-	return buf.len == 0 ? "none" : (*freeIt = Buf_DoneData(&buf));
-}
-
 static void
 Suffix_Print(const Suffix *suff)
 {
+	Buffer buf;
+
+	Buf_InitSize(&buf, 16);
+	Buf_AddFlag(&buf, suff->include, "SUFF_INCLUDE");
+	Buf_AddFlag(&buf, suff->library, "SUFF_LIBRARY");
+	Buf_AddFlag(&buf, suff->isNull, "SUFF_NULL");
+
 	debug_printf("# \"%s\" (num %d, ref %d)",
 	    suff->name, suff->sNum, suff->refCount);
-	if (suff->include || suff->library || suff->isNull) {
-		void *flags_freeIt = NULL;
-		debug_printf(" (%s)",
-		    SuffixFlags_ToString(suff, &flags_freeIt));
-		free(flags_freeIt);
-	}
+	if (buf.len > 0)
+		debug_printf(" (%s)", buf.data);
 	debug_printf("\n");
+
+	Buf_Done(&buf);
 
 	PrintSuffNames("To", &suff->parents);
 	PrintSuffNames("From", &suff->children);
