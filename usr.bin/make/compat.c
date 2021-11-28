@@ -1,4 +1,4 @@
-/*	$NetBSD: compat.c,v 1.227 2021/04/27 15:19:25 christos Exp $	*/
+/*	$NetBSD: compat.c,v 1.228 2021/11/28 19:51:06 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -96,7 +96,7 @@
 #include "pathnames.h"
 
 /*	"@(#)compat.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: compat.c,v 1.227 2021/04/27 15:19:25 christos Exp $");
+MAKE_RCSID("$NetBSD: compat.c,v 1.228 2021/11/28 19:51:06 rillig Exp $");
 
 static GNode *curTarg = NULL;
 static pid_t compatChild;
@@ -494,7 +494,7 @@ MakeUnmade(GNode *gn, GNode *pgn)
 	 * again. This is our signal to not attempt to do anything but abort
 	 * our parent as well.
 	 */
-	gn->flags |= REMAKE;
+	gn->flags.remake = true;
 	gn->made = BEINGMADE;
 
 	if (!(gn->type & OP_MADE))
@@ -502,9 +502,9 @@ MakeUnmade(GNode *gn, GNode *pgn)
 
 	MakeNodes(&gn->children, gn);
 
-	if (!(gn->flags & REMAKE)) {
+	if (!gn->flags.remake) {
 		gn->made = ABORTED;
-		pgn->flags &= ~(unsigned)REMAKE;
+		pgn->flags.remake = false;
 		return false;
 	}
 
@@ -582,13 +582,13 @@ MakeUnmade(GNode *gn, GNode *pgn)
 		 */
 		gn->made = MADE;
 		if (Make_Recheck(gn) == 0)
-			pgn->flags |= FORCE;
+			pgn->flags.force = true;
 		if (!(gn->type & OP_EXEC)) {
-			pgn->flags |= CHILDMADE;
+			pgn->flags.childMade = true;
 			GNode_UpdateYoungestChild(pgn, gn);
 		}
 	} else if (opts.keepgoing) {
-		pgn->flags &= ~(unsigned)REMAKE;
+		pgn->flags.remake = false;
 	} else {
 		PrintOnError(gn, "\nStop.");
 		exit(1);
@@ -609,11 +609,11 @@ MakeOther(GNode *gn, GNode *pgn)
 	case BEINGMADE:
 		Error("Graph cycles through %s", gn->name);
 		gn->made = ERROR;
-		pgn->flags &= ~(unsigned)REMAKE;
+		pgn->flags.remake = false;
 		break;
 	case MADE:
 		if (!(gn->type & OP_EXEC)) {
-			pgn->flags |= CHILDMADE;
+			pgn->flags.childMade = true;
 			GNode_UpdateYoungestChild(pgn, gn);
 		}
 		break;
@@ -660,7 +660,7 @@ Compat_Make(GNode *gn, GNode *pgn)
 		 * Already had an error when making this.
 		 * Tell the parent to abort.
 		 */
-		pgn->flags &= ~(unsigned)REMAKE;
+		pgn->flags.remake = false;
 	} else {
 		MakeOther(gn, pgn);
 	}
