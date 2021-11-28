@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.16 2021/11/22 14:34:35 nia Exp $
+# $NetBSD: Makefile,v 1.17 2021/11/28 02:01:30 christos Exp $
 
 RUMPPRG=cgdconfig
 MAN=	cgdconfig.8
@@ -31,7 +31,7 @@ CPPFLAGS+=	-DHAVE_ARGON2
 
 PROGDPLIBS+=	argon2 ${ARGON2DIR}/lib/libargon2
 
-LDADD+=		-pthread
+LDADD+=		-lpthread
 DPADD+=		${LIBPTHREAD}
 .endif
 
