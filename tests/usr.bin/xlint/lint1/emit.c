@@ -1,4 +1,4 @@
-/*	$NetBSD: emit.c,v 1.7 2021/09/10 20:02:51 rillig Exp $	*/
+/*	$NetBSD: emit.c,v 1.8 2021/11/28 09:47:18 rillig Exp $	*/
 # 3 "emit.c"
 
 /*
@@ -285,3 +285,22 @@ use_vars(void)
 	declared_used_var++;
 	defined_used_var++;
 }
+
+/*
+ * Since C99, an initializer may contain a compound expression. This allows
+ * to create trees of pointer data structures at compile time.
+ *
+ * The objects that are created for these compound literals are unnamed,
+ * therefore there is no point in exporting them to the .ln file.
+ *
+ * Before TODO, lint exported them.
+ */
+struct compound_expression_in_initializer {
+	const char * const *info;
+};
+
+struct compound_expression_in_initializer compound = {
+	.info = (const char *[16]){
+		[0] = "zero",
+	},
+};
