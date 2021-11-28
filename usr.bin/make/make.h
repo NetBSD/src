@@ -1,4 +1,4 @@
-/*	$NetBSD: make.h,v 1.269 2021/11/28 20:11:45 rillig Exp $	*/
+/*	$NetBSD: make.h,v 1.270 2021/11/28 23:12:51 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -706,7 +706,7 @@ bool GNode_ShouldExecute(GNode *gn);
 MAKE_INLINE bool
 GNode_IsTarget(const GNode *gn)
 {
-	return (gn->type & OP_OPMASK) != 0;
+	return (gn->type & OP_OPMASK) != OP_NONE;
 }
 
 MAKE_INLINE const char *
