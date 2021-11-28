@@ -1,4 +1,4 @@
-#	$NetBSD: sys.mk,v 1.146 2021/03/23 22:02:44 christos Exp $
+#	$NetBSD: sys.mk,v 1.147 2021/11/28 00:21:12 rillig Exp $
 #	@(#)sys.mk	8.2 (Berkeley) 3/21/94
 #
 # This file contains the basic rules for make(1) and is read first
@@ -139,7 +139,7 @@ YACC.y?=	${YACC} ${YFLAGS}
 	rm -f ${.PREFIX}.o
 .c.ln:
 	${LINT} ${LINTFLAGS} \
-	    ${CPPFLAGS:C/-([IDU])[  ]*/-\1/Wg:M-[IDU]*} \
+	    ${CPPFLAGS:C/-([IDU]) */-\1/Wg:M-[IDU]*} \
 	    -i ${.IMPSRC}
 
 # C++
