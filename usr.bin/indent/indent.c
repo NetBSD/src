@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.c,v 1.237 2021/11/27 21:15:58 rillig Exp $	*/
+/*	$NetBSD: indent.c,v 1.238 2021/11/28 11:49:10 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)indent.c	5.17 (Berkeley) 6/7/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: indent.c,v 1.237 2021/11/27 21:15:58 rillig Exp $");
+__RCSID("$NetBSD: indent.c,v 1.238 2021/11/28 11:49:10 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/indent.c 340138 2018-11-04 19:24:49Z oshogbo $");
 #endif
@@ -322,7 +322,7 @@ search_stmt_other(lexer_symbol lsym, bool *force_nl,
     }
 
     debug_inp(__func__);
-    inp_comment_rtrim();
+    inp_comment_rtrim_blank();
 
     if (opt.swallow_optional_blanklines ||
 	(!comment_buffered && remove_newlines)) {

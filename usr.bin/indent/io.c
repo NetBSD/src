@@ -1,4 +1,4 @@
-/*	$NetBSD: io.c,v 1.142 2021/11/27 21:15:58 rillig Exp $	*/
+/*	$NetBSD: io.c,v 1.143 2021/11/28 11:49:10 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)io.c	8.1 (Berkeley) 6/6/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: io.c,v 1.142 2021/11/27 21:15:58 rillig Exp $");
+__RCSID("$NetBSD: io.c,v 1.143 2021/11/28 11:49:10 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/io.c 334927 2018-06-10 16:44:18Z pstef $");
 #endif
@@ -55,18 +55,41 @@ __FBSDID("$FreeBSD: head/usr.bin/indent/io.c 334927 2018-06-10 16:44:18Z pstef $
 
 #include "indent.h"
 
+/*
+ * There are 3 modes for reading the input.
+ *
+ * default: In this mode, the input comes from the input file. The buffer
+ * 'inp' contains the current line, terminated with '\n'. The current read
+ * position is inp.s, and there is always inp.buf <= inp.s < inp.e. All other
+ * pointers are null.
+ *
+ * copy-in: After reading 'if (expr)' or similar tokens, the input still comes
+ * from 'inp', but instead of processing it, it is copied to 'save_com'. The
+ * goal of this mode is to move the comments after the '{', that is to
+ * transform 'if (expr) comment {' to 'if (expr) { comment'. When the next
+ * token cannot be part of this transformation, switch to copy-out.
+ *
+ * copy-out: In this mode, the input comes from 'save_com', which contains the
+ * tokens to be placed after the '{'. The input still comes from the range
+ * [inp.s, inp.e), but these two members have been overwritten with pointers
+ * into save_com_buf, so inp.buf and inp.s are unrelated, which is unusual.
+ * In this mode, inp.e[-1] is usually not terminated with '\n'. After reading
+ * all tokens from save_com, switch to default mode again.
+ */
 static struct {
     struct buffer inp;		/* one line of input, ready to be split into
-				 * tokens; occasionally this buffer switches
+				 * tokens; occasionally 's' and 'e' switch
 				 * to save_com_buf */
     char save_com_buf[5000];	/* input text is saved here when looking for
 				 * the brace after an if, while, etc */
-    char *save_com_s;		/* start of the comment in save_com_buf */
-    char *save_com_e;		/* end of the comment in save_com_buf */
+    char *save_com_s;		/* start of the comment in save_com_buf, or
+				 * null */
+    char *save_com_e;		/* end of the comment in save_com_buf, or
+				 * null */
 
     char *saved_inp_s;		/* saved value of inp.s when taking input from
-				 * save_com */
-    char *saved_inp_e;		/* saved value of inp.e */
+				 * save_com, or null */
+    char *saved_inp_e;		/* saved value of inp.e, or null */
 } inbuf;
 
 static int paren_indent;
@@ -92,10 +115,6 @@ inp_p(void)
 const char *
 inp_line_start(void)
 {
-    /*
-     * The comment we're about to read usually comes from inp.buf, unless it
-     * has been copied into save_com.
-     */
     return inbuf.saved_inp_s != NULL ? inbuf.save_com_buf : inbuf.inp.buf;
 }
 
@@ -149,6 +168,9 @@ debug_inp_buf(const char *name, const char *s, const char *e)
 void
 debug_inp(const char *prefix)
 {
+    assert(inp_line_start() <= inbuf.inp.s);
+    assert(inbuf.inp.s <= inbuf.inp.e);
+
     debug_println("%s %s:", __func__, prefix);
     if (inbuf.saved_inp_s == NULL)
 	debug_inp_buf("inp.buf", inbuf.inp.buf, inbuf.inp.s);
@@ -231,6 +253,10 @@ inp_comment_init_preproc(void)
 {
     if (inbuf.save_com_e == NULL) {	/* if this is the first comment, we
 					 * must set up the buffer */
+	/*
+	 * XXX: No space is reserved for a potential '{' here, unlike in
+	 * inp_comment_init_comment.
+	 */
 	inbuf.save_com_s = inbuf.save_com_buf;
 	inbuf.save_com_e = inbuf.save_com_s;
     } else {
@@ -269,19 +295,25 @@ inp_comment_seen(void)
 }
 
 void
-inp_comment_rtrim(void)
+inp_comment_rtrim_blank(void)
 {
-    while (inbuf.save_com_e > inbuf.save_com_s && ch_isblank(inbuf.save_com_e[-1]))
+    while (inbuf.save_com_e > inbuf.save_com_s &&
+	    ch_isblank(inbuf.save_com_e[-1]))
 	inbuf.save_com_e--;
 }
 
 void
 inp_comment_rtrim_newline(void)
 {
-    while (inbuf.save_com_e > inbuf.save_com_s && inbuf.save_com_e[-1] == '\n')
+    while (inbuf.save_com_e > inbuf.save_com_s &&
+	    inbuf.save_com_e[-1] == '\n')
 	inbuf.save_com_e--;
 }
 
+/*
+ * Switch the input to come from save_com, replaying the copied tokens while
+ * looking for the next '{'.
+ */
 void
 inp_from_comment(void)
 {
@@ -289,7 +321,7 @@ inp_from_comment(void)
     inbuf.saved_inp_s = inbuf.inp.s;
     inbuf.saved_inp_e = inbuf.inp.e;
 
-    inbuf.inp.s = inbuf.save_com_s;	/* redirect lexi input to save_com_s */
+    inbuf.inp.s = inbuf.save_com_s;
     inbuf.inp.e = inbuf.save_com_e;
     inbuf.save_com_s = NULL;
     inbuf.save_com_e = NULL;
@@ -521,6 +553,7 @@ output_complete_line(char line_terminator)
 	output_char(line_terminator);
 	ps.stats.lines++;
 
+	/* TODO: rename to blank_line_after_decl */
 	if (ps.just_saw_decl == 1 && opt.blanklines_after_decl) {
 	    blank_line_before = true;
 	    ps.just_saw_decl = 0;
@@ -643,8 +676,8 @@ parse_indent_comment(void)
     skip_blank(&p);
     if (!skip_string(&p, "INDENT"))
 	return;
-    skip_blank(&p);
 
+    skip_blank(&p);
     if (*p == '*' || skip_string(&p, "ON"))
 	on = true;
     else if (skip_string(&p, "OFF"))
@@ -661,6 +694,10 @@ parse_indent_comment(void)
 
     inhibit_formatting = !on;
     if (on) {
+	/*
+	 * XXX: Does this make sense? Is the handling of blank lines above
+	 * INDENT OFF comments essentially the same?
+	 */
 	blank_lines_to_output = 0;
 	blank_line_after = false;
 	blank_line_before = false;
