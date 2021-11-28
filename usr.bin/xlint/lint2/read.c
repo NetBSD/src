@@ -1,4 +1,4 @@
-/* $NetBSD: read.c,v 1.70 2021/11/28 08:21:49 rillig Exp $ */
+/* $NetBSD: read.c,v 1.71 2021/11/28 09:16:46 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: read.c,v 1.70 2021/11/28 08:21:49 rillig Exp $");
+__RCSID("$NetBSD: read.c,v 1.71 2021/11/28 09:16:46 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -90,6 +90,7 @@ static	hte_t **renametab;
 /* index of current C source file (as specified at the command line) */
 static	int	csrcfile;
 
+static	const char *readfile_line;
 
 static	void	inperr(const char *, ...)
     __attribute__((format(printf, 1, 2), noreturn));
@@ -228,11 +229,13 @@ readfile(const char *name)
 		err(1, "cannot open %s", name);
 
 	while ((line = fgetln(inp, &len)) != NULL) {
+		readfile_line = line;
 		if (len == 0 || line[len - 1] != '\n')
 			inperr("%s", &line[len - 1]);
 		line[len - 1] = '\0';
 
 		read_ln_line(line, len);
+		readfile_line = NULL;
 	}
 
 	_destroyhash(renametab);
@@ -254,8 +257,8 @@ inperr(const char *fmt, ...)
 	(void)vsnprintf(buf, sizeof(buf), fmt, ap);
 	va_end(ap);
 
-	errx(1, "input file error: %s,%zu (%s)",
-	    fnames[srcfile], flines[srcfile], buf);
+	errx(1, "error: %s:%zu: %s (for '%s')",
+	    fnames[srcfile], flines[srcfile], buf, readfile_line);
 }
 
 /*
