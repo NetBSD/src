@@ -1,4 +1,4 @@
-# $NetBSD: t_lint2.sh,v 1.8 2021/09/05 18:17:15 rillig Exp $
+# $NetBSD: t_lint2.sh,v 1.9 2021/11/28 09:10:36 rillig Exp $
 #
 # Copyright (c) 2021 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -141,9 +141,9 @@ error_cases_body()
 	test_error '0c0.0s2"'		'trailing data: '
 	test_error '0c0.0s2"%'		'missing closing quote'
 	# shellcheck disable=SC1003
-	test_error '0c0.0s2"\'		'missing after \'
+	test_error '0c0.0s2"\'		'missing after \\'
 	# shellcheck disable=SC1003
-	test_error '0c0.0s2"%\'		'missing after \'
+	test_error '0c0.0s2"%\'		'missing after \\'
 
 	# declarations and definitions
 	test_error '0d0'		'bad line number'
