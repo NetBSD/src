@@ -1,4 +1,4 @@
-/* $NetBSD: lsym_case_label.c,v 1.3 2021/11/24 21:34:34 rillig Exp $ */
+/* $NetBSD: lsym_case_label.c,v 1.4 2021/11/28 16:05:59 rillig Exp $ */
 /* $FreeBSD$ */
 
 /*
@@ -14,13 +14,29 @@
  *	C11 6.5.1.1		"Generic selection"
  */
 
-// TODO: test C11 _Generic
-
+/*
+ * A case label can be used in a 'switch' statement.
+ */
 #indent input
-// TODO: add input
+void function(void){switch(expr){case 1:;case 2:break;default:switch(inner){case 4:break;}}}
 #indent end
 
-#indent run-equals-input
+#indent run
+void
+function(void)
+{
+	switch (expr) {
+	case 1:	;
+	case 2:
+		break;
+	default:
+		switch (inner) {
+		case 4:
+			break;
+		}
+	}
+}
+#indent end
 
 
 /*
@@ -58,4 +74,43 @@ function(void)
 		}
 	}
 }
+#indent end
+
+
+/*
+ * Since C11, the _Generic selection expression allows a switch on the data
+ * type of an expression.
+ */
+#indent input
+const char *type_name = _Generic(
+	' ',
+	int: "character constants have type 'int'",
+	char: "character constants have type 'char'",
+	default: "character constants have some other type"
+);
+#indent end
+
+#indent run -di0
+const char *type_name = _Generic(
+// $ XXX: It's strange to align the arguments at the parenthesis even though
+// $ XXX: the first argument is already on a separate line.
+				 ' ',
+// $ TODO: indent the type names
+int:				 "character constants have type 'int'",
+char:				 "character constants have type 'char'",
+default:
+// $ TODO: remove the newline after 'default:'
+				 "character constants have some other type"
+);
+#indent end
+
+#indent run -di0 -nlp
+const char *type_name = _Generic(
+	' ',
+// $ TODO: indent the type names
+int:	"character constants have type 'int'",
+char:	"character constants have type 'char'",
+default:
+	"character constants have some other type"
+);
 #indent end

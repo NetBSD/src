@@ -1,4 +1,4 @@
-/* $NetBSD: lsym_colon.c,v 1.2 2021/11/28 14:49:28 rillig Exp $ */
+/* $NetBSD: lsym_colon.c,v 1.3 2021/11/28 16:05:59 rillig Exp $ */
 /* $FreeBSD$ */
 
 /*
@@ -12,8 +12,12 @@
  *
  * In the declaration of a struct member that is a bit-field.
  *
+ * Since C11, in the _Generic selection to separate the type from its
+ * corresponding expression.
+ *
  * See also:
  *	label.c
+ *	lsym_case_label.c	for the C11 _Generic expression
  *	lsym_question.c
  */
 
