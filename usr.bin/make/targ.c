@@ -1,4 +1,4 @@
-/*	$NetBSD: targ.c,v 1.172 2021/09/12 08:32:23 rillig Exp $	*/
+/*	$NetBSD: targ.c,v 1.173 2021/11/28 19:51:06 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -113,7 +113,7 @@
 #include "dir.h"
 
 /*	"@(#)targ.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: targ.c,v 1.172 2021/09/12 08:32:23 rillig Exp $");
+MAKE_RCSID("$NetBSD: targ.c,v 1.173 2021/11/28 19:51:06 rillig Exp $");
 
 /*
  * All target nodes that appeared on the left-hand side of one of the
@@ -187,7 +187,7 @@ GNode_New(const char *name)
 	gn->uname = NULL;
 	gn->path = NULL;
 	gn->type = name[0] == '-' && name[1] == 'l' ? OP_LIB : OP_NONE;
-	gn->flags = GNF_NONE;
+	memset(&gn->flags, 0, sizeof(gn->flags));
 	gn->made = UNMADE;
 	gn->unmade = 0;
 	gn->mtime = 0;
@@ -309,7 +309,7 @@ Targ_NewInternalNode(const char *name)
 	Lst_Append(&allTargets, gn);
 	DEBUG1(TARG, "Adding \"%s\" to all targets.\n", gn->name);
 	if (doing_depend)
-		gn->flags |= FROM_DEPEND;
+		gn->flags.fromDepend = true;
 	return gn;
 }
 
@@ -481,13 +481,27 @@ GNode_OpName(const GNode *gn)
 	return "";
 }
 
+static bool
+GNodeFlags_IsNone(GNodeFlags flags)
+{
+	return !flags.remake
+	       && !flags.childMade
+	       && !flags.force
+	       && !flags.doneWait
+	       && !flags.doneOrder
+	       && !flags.fromDepend
+	       && !flags.doneAllsrc
+	       && !flags.cycle
+	       && !flags.doneCycle;
+}
+
 /* Print the contents of a node. */
 void
 Targ_PrintNode(GNode *gn, int pass)
 {
 	debug_printf("# %s%s", gn->name, gn->cohort_num);
 	GNode_FprintDetails(opts.debug_file, ", ", gn, "\n");
-	if (gn->flags == 0)
+	if (GNodeFlags_IsNone(gn->flags))
 		return;
 
 	if (!GNode_IsTarget(gn))
