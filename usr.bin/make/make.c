@@ -1,4 +1,4 @@
-/*	$NetBSD: make.c,v 1.246 2021/11/28 19:51:06 rillig Exp $	*/
+/*	$NetBSD: make.c,v 1.247 2021/11/28 22:48:06 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -104,7 +104,7 @@
 #include "job.h"
 
 /*	"@(#)make.c	8.1 (Berkeley) 6/6/93"	*/
-MAKE_RCSID("$NetBSD: make.c,v 1.246 2021/11/28 19:51:06 rillig Exp $");
+MAKE_RCSID("$NetBSD: make.c,v 1.247 2021/11/28 22:48:06 rillig Exp $");
 
 /* Sequence # to detect recursion. */
 static unsigned int checked_seqno = 1;
@@ -136,16 +136,6 @@ make_abort(GNode *gn, int lineno)
 	Targ_PrintNodes(&toBeMade, 2);
 	Targ_PrintGraph(3);
 	abort();
-}
-
-static void
-Buf_AddFlag(Buffer *buf, bool flag, const char *name)
-{
-	if (flag) {
-		if (buf->len > 0)
-			Buf_AddByte(buf, '|');
-		Buf_AddBytes(buf, name, strlen(name));
-	}
 }
 
 static const char *
