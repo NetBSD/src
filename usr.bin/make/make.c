@@ -1,4 +1,4 @@
-/*	$NetBSD: make.c,v 1.244 2021/04/04 10:05:08 rillig Exp $	*/
+/*	$NetBSD: make.c,v 1.245 2021/11/28 18:58:58 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -104,7 +104,7 @@
 #include "job.h"
 
 /*	"@(#)make.c	8.1 (Berkeley) 6/6/93"	*/
-MAKE_RCSID("$NetBSD: make.c,v 1.244 2021/04/04 10:05:08 rillig Exp $");
+MAKE_RCSID("$NetBSD: make.c,v 1.245 2021/11/28 18:58:58 rillig Exp $");
 
 /* Sequence # to detect recursion. */
 static unsigned int checked_seqno = 1;
@@ -138,35 +138,93 @@ make_abort(GNode *gn, int lineno)
 	abort();
 }
 
-ENUM_FLAGS_RTTI_31(GNodeType,
-    OP_DEPENDS, OP_FORCE, OP_DOUBLEDEP,
-/* OP_OPMASK is omitted since it combines other flags */
-    OP_OPTIONAL, OP_USE, OP_EXEC, OP_IGNORE,
-    OP_PRECIOUS, OP_SILENT, OP_MAKE, OP_JOIN,
-    OP_MADE, OP_SPECIAL, OP_USEBEFORE, OP_INVISIBLE,
-    OP_NOTMAIN, OP_PHONY, OP_NOPATH, OP_WAIT,
-    OP_NOMETA, OP_META, OP_NOMETA_CMP, OP_SUBMAKE,
-    OP_TRANSFORM, OP_MEMBER, OP_LIB, OP_ARCHV,
-    OP_HAS_COMMANDS, OP_SAVE_CMDS, OP_DEPS_FOUND, OP_MARK);
+static void
+Buf_AddFlag(Buffer *buf, bool flag, const char *name)
+{
+	if (flag) {
+		if (buf->len > 0)
+			Buf_AddByte(buf, '|');
+		Buf_AddBytes(buf, name, strlen(name));
+	}
+}
 
-ENUM_FLAGS_RTTI_9(GNodeFlags,
-    REMAKE, CHILDMADE, FORCE, DONE_WAIT,
-    DONE_ORDER, FROM_DEPEND, DONE_ALLSRC, CYCLE,
-    DONECYCLE);
+static const char *
+GNodeType_ToString(GNodeType type, void **freeIt)
+{
+	Buffer buf;
+
+	Buf_InitSize(&buf, 32);
+#define ADD(flag) Buf_AddFlag(&buf, (type & (flag)) != 0, #flag)
+	ADD(OP_DEPENDS);
+	ADD(OP_FORCE);
+	ADD(OP_DOUBLEDEP);
+	ADD(OP_OPTIONAL);
+	ADD(OP_USE);
+	ADD(OP_EXEC);
+	ADD(OP_IGNORE);
+	ADD(OP_PRECIOUS);
+	ADD(OP_SILENT);
+	ADD(OP_MAKE);
+	ADD(OP_JOIN);
+	ADD(OP_MADE);
+	ADD(OP_SPECIAL);
+	ADD(OP_USEBEFORE);
+	ADD(OP_INVISIBLE);
+	ADD(OP_NOTMAIN);
+	ADD(OP_PHONY);
+	ADD(OP_NOPATH);
+	ADD(OP_WAIT);
+	ADD(OP_NOMETA);
+	ADD(OP_META);
+	ADD(OP_NOMETA_CMP);
+	ADD(OP_SUBMAKE);
+	ADD(OP_TRANSFORM);
+	ADD(OP_MEMBER);
+	ADD(OP_LIB);
+	ADD(OP_ARCHV);
+	ADD(OP_HAS_COMMANDS);
+	ADD(OP_SAVE_CMDS);
+	ADD(OP_DEPS_FOUND);
+	ADD(OP_MARK);
+#undef ADD
+	return buf.len == 0 ? "none" : (*freeIt = Buf_DoneData(&buf));
+}
+
+static const char *
+GNodeFlags_ToString(GNodeFlags flags, void **freeIt)
+{
+	Buffer buf;
+
+	Buf_InitSize(&buf, 32);
+#define ADD(flag) Buf_AddFlag(&buf, (flags & (flag)) != 0, #flag)
+	ADD(REMAKE);
+	ADD(CHILDMADE);
+	ADD(FORCE);
+	ADD(DONE_WAIT);
+	ADD(DONE_ORDER);
+	ADD(FROM_DEPEND);
+	ADD(DONE_ALLSRC);
+	ADD(CYCLE);
+	ADD(DONECYCLE);
+#undef ADD
+	return buf.len == 0 ? "none" : (*freeIt = Buf_DoneData(&buf));
+}
 
 void
 GNode_FprintDetails(FILE *f, const char *prefix, const GNode *gn,
 		    const char *suffix)
 {
-	char type_buf[GNodeType_ToStringSize];
-	char flags_buf[GNodeFlags_ToStringSize];
+	void *type_freeIt = NULL;
+	void *flags_freeIt = NULL;
 
 	fprintf(f, "%s%s, type %s, flags %s%s",
 	    prefix,
 	    GNodeMade_Name(gn->made),
-	    GNodeType_ToString(type_buf, gn->type),
-	    GNodeFlags_ToString(flags_buf, gn->flags),
+	    GNodeType_ToString(gn->type, &type_freeIt),
+	    GNodeFlags_ToString(gn->flags, &flags_freeIt),
 	    suffix);
+	free(type_freeIt);
+	free(flags_freeIt);
 }
 
 bool

@@ -1,4 +1,4 @@
-/*	$NetBSD: make.h,v 1.266 2021/11/27 22:04:02 rillig Exp $	*/
+/*	$NetBSD: make.h,v 1.267 2021/11/28 18:58:58 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -163,7 +163,6 @@ typedef unsigned char bool;
 #endif
 
 #include "lst.h"
-#include "enum.h"
 #include "make_malloc.h"
 #include "str.h"
 #include "hash.h"
