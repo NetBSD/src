@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1172 2021/11/28 16:05:59 rillig Exp $
+# $NetBSD: mi,v 1.1173 2021/11/28 16:20:13 rillig Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -5268,7 +5268,7 @@
 ./usr/tests/usr.bin/indent/token_period.c				tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/indent/token_postfix_op.c				tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/indent/token_preprocessing.c			tests-usr.bin-tests	compattestfile,atf
-./usr/tests/usr.bin/indent/token_question.c				tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/indent/token_question.c				tests-obsolete		obsolete,atf
 ./usr/tests/usr.bin/indent/token_rbrace.c				tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/indent/token_rparen.c				tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/indent/token_semicolon.c				tests-usr.bin-tests	compattestfile,atf

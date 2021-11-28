@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.38 2021/11/28 16:05:59 rillig Exp $
+#	$NetBSD: Makefile,v 1.39 2021/11/28 16:20:13 rillig Exp $
 
 .include <bsd.own.mk>
 
@@ -133,7 +133,6 @@ FILES+=		token_newline.c
 FILES+=		token_period.c
 FILES+=		token_postfix_op.c
 FILES+=		token_preprocessing.c
-FILES+=		token_question.c
 FILES+=		token_rbrace.c
 FILES+=		token_rparen.c
 FILES+=		token_semicolon.c
