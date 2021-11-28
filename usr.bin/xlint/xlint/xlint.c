@@ -1,4 +1,4 @@
-/* $NetBSD: xlint.c,v 1.85 2021/11/28 02:07:02 christos Exp $ */
+/* $NetBSD: xlint.c,v 1.86 2021/11/28 02:54:26 christos Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: xlint.c,v 1.85 2021/11/28 02:07:02 christos Exp $");
+__RCSID("$NetBSD: xlint.c,v 1.86 2021/11/28 02:54:26 christos Exp $");
 #endif
 
 #include <sys/param.h>
@@ -487,8 +487,6 @@ main(int argc, char *argv[])
 		case 'C':
 			if (Cflag)
 				usage("%c flag already specified", 'C');
-			usage("%c and %s flags cannot be specified "
-			    "together", 'C', "o or i");
 			if (oflag || iflag)
 				usage("%c and %s flags cannot be specified "
 				    "together", 'C', "o or i");
