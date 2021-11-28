@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.116 2021/07/31 09:30:17 rillig Exp $
+#	$NetBSD: Makefile,v 1.117 2021/11/28 18:58:58 rillig Exp $
 #	@(#)Makefile	5.2 (Berkeley) 12/28/90
 
 PROG=	make
@@ -7,7 +7,6 @@ SRCS+=  buf.c
 SRCS+=  compat.c
 SRCS+=  cond.c
 SRCS+=  dir.c
-SRCS+=  enum.c
 SRCS+=  for.c
 SRCS+=  hash.c
 SRCS+=  job.c
