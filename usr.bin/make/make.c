@@ -1,4 +1,4 @@
-/*	$NetBSD: make.c,v 1.247 2021/11/28 22:48:06 rillig Exp $	*/
+/*	$NetBSD: make.c,v 1.248 2021/11/28 23:12:51 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -104,7 +104,7 @@
 #include "job.h"
 
 /*	"@(#)make.c	8.1 (Berkeley) 6/6/93"	*/
-MAKE_RCSID("$NetBSD: make.c,v 1.247 2021/11/28 22:48:06 rillig Exp $");
+MAKE_RCSID("$NetBSD: make.c,v 1.248 2021/11/28 23:12:51 rillig Exp $");
 
 /* Sequence # to detect recursion. */
 static unsigned int checked_seqno = 1;
@@ -144,7 +144,7 @@ GNodeType_ToString(GNodeType type, void **freeIt)
 	Buffer buf;
 
 	Buf_InitSize(&buf, 32);
-#define ADD(flag) Buf_AddFlag(&buf, (type & (flag)) != 0, #flag)
+#define ADD(flag) Buf_AddFlag(&buf, (type & (flag)) != OP_NONE, #flag)
 	ADD(OP_DEPENDS);
 	ADD(OP_FORCE);
 	ADD(OP_DOUBLEDEP);
