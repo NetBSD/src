@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.README,v 1.422 2021/11/01 10:05:19 nia Exp $
+#	$NetBSD: bsd.README,v 1.423 2021/11/28 15:47:33 christos Exp $
 #	@(#)bsd.README	8.2 (Berkeley) 4/2/94
 
 This is the README file for the make "include" files for the NetBSD
@@ -1341,12 +1341,12 @@ USE_SHLIBDIR	If not "no", use ${SHLIBINSTALLDIR} instead of ${LIBDIR}
 		Default: no
 
 LIBISMODULE	If not "no", install as ${LIB}.so (without the "lib" prefix),
-		and act as "MKDEBUGLIB=no MKLINT=no MKPICINSTALL=no
-		MKPROFILE=no MKSTATICLIB=no".
+		and act as "MKDEBUGLIB=no MKPICINSTALL=no MKPROFILE=no
+		MKSTATICLIB=no". Also do not install the lint library.
 		Default: no
 
-LIBISPRIVATE	If not "no", act as "MKDEBUGLIB=no MKLINT=no MKPIC=no
-		MKPROFILE=no", and don't install the (.a) library.
+LIBISPRIVATE	If not "no", act as "MKDEBUGLIB=no MKPIC=no MKPROFILE=no",
+		and don't install the (.a) library or the lint library.
 		This is useful for "build only" helper libraries.
 		If set to "pic", then a _pic.a library is also produced,
 		so that it can be incorporated into other shared objects.
