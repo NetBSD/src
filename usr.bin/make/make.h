@@ -1,4 +1,4 @@
-/*	$NetBSD: make.h,v 1.268 2021/11/28 19:51:06 rillig Exp $	*/
+/*	$NetBSD: make.h,v 1.269 2021/11/28 20:11:45 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -321,7 +321,7 @@ typedef enum GNodeType {
 	OP_NOTARGET	= OP_NOTMAIN | OP_USE | OP_EXEC | OP_TRANSFORM
 } GNodeType;
 
-typedef struct GNodeFlagsS {
+typedef struct GNodeFlags {
 	/* this target needs to be (re)made */
 	bool remake:1;
 	/* children of this target were made */
