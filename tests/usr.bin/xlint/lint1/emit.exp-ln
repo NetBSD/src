@@ -81,3 +81,6 @@ Semit.c
 285u0.285x17declared_used_var
 286u0.286x16defined_used_var
 283d0.283d8use_varsF0V
+302d0.302d8compoundsT134compound_expression_in_initializer
+303d-1.0d1200000000_tmpA16PcC
+305u0.305x1200000000_tmp
