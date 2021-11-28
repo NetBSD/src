@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.c,v 1.238 2021/11/28 11:49:10 rillig Exp $	*/
+/*	$NetBSD: indent.c,v 1.239 2021/11/28 14:29:03 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)indent.c	5.17 (Berkeley) 6/7/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: indent.c,v 1.238 2021/11/28 11:49:10 rillig Exp $");
+__RCSID("$NetBSD: indent.c,v 1.239 2021/11/28 14:29:03 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/indent.c 340138 2018-11-04 19:24:49Z oshogbo $");
 #endif
@@ -1120,13 +1120,6 @@ copy_token(void)
 }
 
 static void
-process_string_prefix(void)
-{
-    copy_token();
-    ps.want_blank = false;
-}
-
-static void
 process_period(void)
 {
     if (code.e > code.s && code.e[-1] == ',')
@@ -1438,10 +1431,6 @@ main_loop(void)
 	    copy_token();
 	    if (lsym != lsym_funcname)
 		ps.want_blank = true;
-	    break;
-
-	case lsym_string_prefix:
-	    process_string_prefix();
 	    break;
 
 	case lsym_period:

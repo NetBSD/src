@@ -1,4 +1,4 @@
-/*	$NetBSD: lexi.c,v 1.166 2021/11/27 20:58:16 rillig Exp $	*/
+/*	$NetBSD: lexi.c,v 1.167 2021/11/28 14:29:03 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)lexi.c	8.1 (Berkeley) 6/6/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: lexi.c,v 1.166 2021/11/27 20:58:16 rillig Exp $");
+__RCSID("$NetBSD: lexi.c,v 1.167 2021/11/28 14:29:03 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/lexi.c 337862 2018-08-15 18:19:45Z pstef $");
 #endif
@@ -219,7 +219,6 @@ lsym_name(lexer_symbol sym)
 	"type_in_parentheses",
 	"tag",
 	"case_label",
-	"string_prefix",
 	"sizeof",
 	"offsetof",
 	"word",
@@ -500,14 +499,22 @@ lexi_alnum(void)
 	lex_number();
     } else if (is_identifier_part(inp_peek())) {
 	lex_word();
+
+	if (token.s[0] == 'L' && token.e - token.s == 1 &&
+		(inp_peek() == '"' || inp_peek() == '\'')) {
+	    token_add_char(inp_next());
+	    lex_char_or_string();
+	    ps.next_unary = false;
+
+	    check_size_token(1);
+	    *token.e = '\0';
+
+	    return lsym_word;
+	}
     } else
 	return lsym_eof;	/* just as a placeholder */
 
     *token.e = '\0';
-
-    if (token.s[0] == 'L' && token.s[1] == '\0' &&
-	    (inp_peek() == '"' || inp_peek() == '\''))
-	return lsym_string_prefix;
 
     while (ch_isblank(inp_peek()))
 	inp_skip();
