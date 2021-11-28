@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.438 2021/11/28 17:20:39 rillig Exp $	*/
+/*	$NetBSD: job.c,v 1.439 2021/11/28 17:26:07 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -142,7 +142,7 @@
 #include "trace.h"
 
 /*	"@(#)job.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: job.c,v 1.438 2021/11/28 17:20:39 rillig Exp $");
+MAKE_RCSID("$NetBSD: job.c,v 1.439 2021/11/28 17:26:07 rillig Exp $");
 
 /*
  * A shell defines how the commands are run.  All commands for a target are
@@ -1072,15 +1072,14 @@ DebugFailedJob(const Job *job)
 	debug_printf("*** Failed target: %s\n", job->node->name);
 	debug_printf("*** Failed commands:\n");
 	for (ln = job->node->commands.first; ln != NULL; ln = ln->next) {
-		const char *unexpanded = (const char *)ln->datum;
-		debug_printf("\t%s\n", unexpanded);
+		const char *cmd = ln->datum;
+		debug_printf("\t%s\n", cmd);
 
-		if (strchr(unexpanded, '$') != NULL) {
-			char *expanded;
-			(void)Var_Subst((const char *)ln->datum, job->node,
-			    VARE_WANTRES, &expanded);
-			debug_printf("\t=> %s\n", expanded);
-			free(expanded);
+		if (strchr(cmd, '$') != NULL) {
+			char *xcmd;
+			(void)Var_Subst(cmd, job->node, VARE_WANTRES, &xcmd);
+			debug_printf("\t=> %s\n", xcmd);
+			free(xcmd);
 		}
 	}
 }
