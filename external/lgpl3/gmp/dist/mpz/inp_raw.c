@@ -88,8 +88,11 @@ mpz_inp_raw (mpz_ptr x, FILE *fp)
 
   abs_csize = ABS (csize);
 
+  if (UNLIKELY (abs_csize > ~(mp_bitcnt_t) 0 / 8))
+    return 0; /* Bit size overflows */
+
   /* round up to a multiple of limbs */
-  abs_xsize = BITS_TO_LIMBS (abs_csize*8);
+  abs_xsize = BITS_TO_LIMBS ((mp_bitcnt_t) abs_csize * 8);
 
   if (abs_xsize != 0)
     {
