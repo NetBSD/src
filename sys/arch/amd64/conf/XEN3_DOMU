@@ -1,4 +1,4 @@
-# $NetBSD: XEN3_DOMU,v 1.97 2021/01/20 13:22:08 nia Exp $
+# $NetBSD: XEN3_DOMU,v 1.98 2021/11/29 20:03:15 jdolecek Exp $
 
 include 	"arch/amd64/conf/std.xen"
 
@@ -11,7 +11,7 @@ options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 #options 	UVMHIST_PRINT
 #options 	SYSCALL_DEBUG
 
-#ident		"XEN3_DOMU-$Revision: 1.97 $"
+#ident		"XEN3_DOMU-$Revision: 1.98 $"
 
 maxusers	32		# estimated number of users
 
@@ -80,6 +80,7 @@ options 	QUOTA2		# new, in-filesystem UFS quotas
 #options 	FFS_EI		# FFS Endian Independent support
 options 	WAPBL		# File system journaling support
 #options 	UFS_DIRHASH	# UFS Large Directory Hashing - Experimental
+options		UFS_ACL		# UFS Access Control Lists
 options 	NFSSERVER	# Network File System server
 #options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
 options 	UFS_EXTATTR	# Extended attribute support for UFS1
