@@ -1,4 +1,4 @@
-/*	$NetBSD: df.c,v 1.98 2021/01/03 01:43:12 ginsbach Exp $ */
+/*	$NetBSD: df.c,v 1.99 2021/11/29 05:59:58 simonb Exp $ */
 
 /*
  * Copyright (c) 1980, 1990, 1993, 1994
@@ -45,7 +45,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)df.c	8.7 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: df.c,v 1.98 2021/01/03 01:43:12 ginsbach Exp $");
+__RCSID("$NetBSD: df.c,v 1.99 2021/11/29 05:59:58 simonb Exp $");
 #endif
 #endif /* not lint */
 
@@ -213,7 +213,7 @@ main(int argc, char *argv[])
 
 	if (cflag) {
 		memset(&totals, 0, sizeof(totals));
-		totals.f_bsize = DEV_BSIZE;
+		totals.f_frsize = DEV_BSIZE;
 		strlcpy(totals.f_mntfromname, "total",
 			sizeof(totals.f_mntfromname));
 	}
