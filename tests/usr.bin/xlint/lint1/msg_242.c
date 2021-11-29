@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_242.c,v 1.4 2021/08/14 12:46:24 rillig Exp $	*/
+/*	$NetBSD: msg_242.c,v 1.5 2021/11/29 23:58:06 rillig Exp $	*/
 # 3 "msg_242.c"
 
 // Test for message: combination of '%s' and '%s', op %s [242]
@@ -31,4 +31,27 @@ example(enum E e, int i)
 	sink_enum(e3);
 	sink_int(i2);
 	sink_int(i3);
+}
+
+
+/*
+ * In C, the only ways to create named compile-time integer constants are
+ * preprocessor macros or enum constants. All other expressions do not count
+ * as constant expressions, even if they are declared 'static const' or
+ * 'const'.
+ */
+unsigned
+unnamed_enum(void)
+{
+	enum {
+		compile_time_constant = 2
+	};
+
+	unsigned i = 3;
+
+	/* expect+3: warning: dubious operation on enum, op * [241] */
+	/* FIXME: Combining 'unsigned int' with 'unsigned int' is OK. */
+	/* expect+1: warning: combination of 'unsigned int' and 'unsigned int', op = [242] */
+	i = compile_time_constant * i;
+	return i;
 }
