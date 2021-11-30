@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.3,v 1.1.2.52 2021/11/26 18:10:36 martin Exp $
+# $NetBSD: CHANGES-9.3,v 1.1.2.53 2021/11/30 11:46:22 martin Exp $
 
 A complete list of changes from the NetBSD 9.2 release to the NetBSD 9.3
 release:
@@ -976,3 +976,8 @@ distrib/notes/common/main			1.566,1.567
 	explaining the legacy amd64-bios-install image.
 	[gutteridge, ticket #1376]
  
+sys/dev/pci/piixpm.c				patch
+
+	PR 56525: fix a bug that I2C access panics on old AMD chipset
+	(e.g SB600).
+	[msaitoh, ticket #1378]
