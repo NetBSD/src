@@ -1,8 +1,14 @@
-# $NetBSD: var-op-expand.mk,v 1.14 2021/11/20 17:47:33 rillig Exp $
+# $NetBSD: var-op-expand.mk,v 1.15 2021/11/30 23:52:19 rillig Exp $
 #
 # Tests for the := variable assignment operator, which expands its
 # right-hand side.
+#
+# See also:
+#	varname-dot-make-save_dollars.mk
 
+# Force the test results to be independent of the default value of this
+# setting, which is 'yes' for NetBSD's usr.bin/make but 'no' for the bmake
+# distribution and pkgsrc/devel/bmake.
 .MAKE.SAVE_DOLLARS:=      yes
 
 # If the right-hand side does not contain a dollar sign, the ':=' assignment
