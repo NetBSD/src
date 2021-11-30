@@ -1,4 +1,4 @@
-/*	$NetBSD: refuse.c,v 1.101 2019/09/23 12:00:57 christos Exp $	*/
+/*	$NetBSD: refuse.c,v 1.102 2021/11/30 12:13:12 pho Exp $	*/
 
 /*
  * Copyright © 2007 Alistair Crooks.  All rights reserved.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: refuse.c,v 1.101 2019/09/23 12:00:57 christos Exp $");
+__RCSID("$NetBSD: refuse.c,v 1.102 2021/11/30 12:13:12 pho Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -1276,9 +1276,6 @@ fuse_new(struct fuse_args *args,
 	fusectx->pid = 0;
 	fusectx->private_data = userdata;
 
-	if (fuse->op.init != NULL)
-		fusectx->private_data = fuse->op.init(NULL); /* XXX */
-
 	/* initialise the puffs operations structure */
         PUFFSOP_INIT(pops);
 
@@ -1328,6 +1325,18 @@ fuse_new(struct fuse_args *args,
 int
 fuse_loop(struct fuse *fuse)
 {
+	if (fuse->op.init != NULL) {
+		struct fuse_context *fusectx = fuse_get_context();
+
+		/* XXX: prototype incompatible with FUSE: a secondary argument
+		 * of struct fuse_config* needs to be passed.
+		 *
+		 * XXX: Our struct fuse_conn_info is not fully compatible with
+		 * the FUSE one.
+		 */
+		fusectx->private_data = fuse->op.init(NULL);
+	}
+
 	return puffs_mainloop(fuse->pu);
 }
 
