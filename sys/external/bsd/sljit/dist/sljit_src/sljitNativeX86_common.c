@@ -1,4 +1,4 @@
-/*	$NetBSD: sljitNativeX86_common.c,v 1.9 2019/01/20 23:14:16 alnsn Exp $	*/
+/*	$NetBSD: sljitNativeX86_common.c,v 1.10 2021/11/30 12:32:09 christos Exp $	*/
 
 /*
  *    Stack-less Just-In-Time compiler
@@ -317,7 +317,7 @@ static void get_cpu_features(void)
 	__cpuid(CPUInfo, 1);
 	features = (sljit_u32)CPUInfo[3];
 
-#elif defined(__GNUC__) || defined(__INTEL_COMPILER) || defined(__SUNPRO_C)
+#elif defined(__GNUC__) || defined(__INTEL_COMPILER) || defined(__SUNPRO_C) || defined(__lint__)
 
 	/* AT&T syntax. */
 	__asm__ (
