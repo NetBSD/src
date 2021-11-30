@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee8023_slowprotocols.h,v 1.2 2005/12/10 23:21:39 elad Exp $	*/
+/*	$NetBSD: ether_slowprotocols.h,v 1.1 2021/11/30 01:17:02 yamaguchi Exp $	*/
 
 /*-
  * Copyright (c)2005 YAMAMOTO Takashi,
@@ -26,15 +26,13 @@
  * SUCH DAMAGE.
  */
 
-#ifndef _NET_AGR_IEEE8023_SLOWPROTOCOLS_H_
-#define	_NET_AGR_IEEE8023_SLOWPROTOCOLS_H_
+#ifndef _NET_ETHER_SLOWPROTOCOLS_H_
+#define	_NET_ETHER_SLOWPROTOCOLS_H_
 
 /*
  * IEEE802.3 slow protocols
  *
  * protocol (on-wire) definitions.
- *
- * XXX should be elsewhere.
  */
 
 #define	SLOWPROTOCOLS_SUBTYPE_LACP	1
@@ -45,4 +43,4 @@ struct slowprothdr {
 	uint8_t sph_version;
 } __packed;
 
-#endif /* !_NET_AGR_IEEE8023_SLOWPROTOCOLS_H_ */
+#endif /* !_NET_ETHER_SLOWPROTOCOLS_H_ */
