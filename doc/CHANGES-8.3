@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.3,v 1.1.2.109 2021/11/20 15:22:35 martin Exp $
+# $NetBSD: CHANGES-8.3,v 1.1.2.110 2021/11/30 11:49:40 martin Exp $
 
 A complete list of changes from the NetBSD 8.2 release to the NetBSD 8.3
 release:
@@ -2215,3 +2215,8 @@ sys/dev/pci/ixgbe/ix_txrx.c			1.94
 	- Use macro. Fix typos in comment.
 	[msaitoh, ticket #1708]
 
+sys/dev/pci/piixpm.c				patch
+
+	PR 56525: fix a bug that I2C access panics on old AMD chipset
+	(e.g SB600).
+	[msaitoh, ticket #1709]
