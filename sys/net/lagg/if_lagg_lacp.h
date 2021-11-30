@@ -1,4 +1,4 @@
-/*	$NetBSD: if_lagg_lacp.h,v 1.2 2021/05/24 06:08:28 yamaguchi Exp $	*/
+/*	$NetBSD: if_lagg_lacp.h,v 1.3 2021/11/30 01:17:02 yamaguchi Exp $	*/
 
 /*
  * Copyright (c) 2021 Internet Initiative Japan Inc.
@@ -47,14 +47,6 @@
 					LACP_STATE_COLLECTING | \
 					LACP_STATE_DISTRIBUTING)
 #define LACP_PARTNER_ADMIN_STRICT	0
-
-#define SLOWPROTOCOLS_SUBTYPE_LACP	1
-#define SLOWPROTOCOLS_SUBTYPE_MARKER	2
-
-struct slowprothdr {
-	uint8_t		 sph_subtype;
-	uint8_t		 sph_version;
-} __packed;
 
 #define TLV_TYPE_TERMINATE	0
 

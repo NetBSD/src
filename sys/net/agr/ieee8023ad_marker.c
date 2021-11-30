@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee8023ad_marker.c,v 1.5 2021/09/30 03:15:25 yamaguchi Exp $	*/
+/*	$NetBSD: ieee8023ad_marker.c,v 1.6 2021/11/30 01:17:02 yamaguchi Exp $	*/
 
 /*-
  * Copyright (c)2005 YAMAMOTO Takashi,
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ieee8023ad_marker.c,v 1.5 2021/09/30 03:15:25 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee8023ad_marker.c,v 1.6 2021/11/30 01:17:02 yamaguchi Exp $");
 
 #include <sys/param.h>
 #include <sys/callout.h>
@@ -36,9 +36,9 @@ __KERNEL_RCSID(0, "$NetBSD: ieee8023ad_marker.c,v 1.5 2021/09/30 03:15:25 yamagu
 
 #include <net/if.h>
 #include <net/if_ether.h>
+#include <net/ether_slowprotocols.h>
 
 #include <net/agr/if_agrvar_impl.h>
-#include <net/agr/ieee8023_slowprotocols.h>
 #include <net/agr/ieee8023_tlv.h>
 #include <net/agr/ieee8023ad.h>
 #include <net/agr/ieee8023ad_marker.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ethersubr.c,v 1.305 2021/11/25 00:49:34 msaitoh Exp $	*/
+/*	$NetBSD: if_ethersubr.c,v 1.306 2021/11/30 01:17:02 yamaguchi Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.305 2021/11/25 00:49:34 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.306 2021/11/30 01:17:02 yamaguchi Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -120,7 +120,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.305 2021/11/25 00:49:34 msaitoh E
 #endif
 
 #if NAGR > 0
-#include <net/agr/ieee8023_slowprotocols.h>	/* XXX */
+#include <net/ether_slowprotocols.h>
 #include <net/agr/ieee8023ad.h>
 #include <net/agr/if_agrvar.h>
 #endif
