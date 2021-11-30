@@ -1,4 +1,4 @@
-/* $NetBSD: piixpm.c,v 1.52.6.2 2020/08/05 16:11:56 martin Exp $ */
+/* $NetBSD: piixpm.c,v 1.52.6.3 2021/11/30 11:48:29 martin Exp $ */
 /*	$OpenBSD: piixpm.c,v 1.39 2013/10/01 20:06:02 sf Exp $	*/
 
 /*
@@ -22,7 +22,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: piixpm.c,v 1.52.6.2 2020/08/05 16:11:56 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: piixpm.c,v 1.52.6.3 2021/11/30 11:48:29 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -123,6 +123,8 @@ static bool	piixpm_resume(device_t, const pmf_qual_t *);
 
 static int	piixpm_sb800_init(struct piixpm_softc *);
 static void	piixpm_csb5_reset(void *);
+static int	piixpm_i2c_sb600_acquire_bus(void *, int);
+static void	piixpm_i2c_sb600_release_bus(void *, int);
 static int	piixpm_i2c_sb800_acquire_bus(void *, int);
 static void	piixpm_i2c_sb800_release_bus(void *, int);
 static int	piixpm_i2c_exec(void *, i2c_op_t, i2c_addr_t, const void *,
@@ -338,8 +340,8 @@ piixpm_rescan(device_t self, const char *ifattr, const int *flags)
 			tag->ic_acquire_bus = piixpm_i2c_sb800_acquire_bus;
 			tag->ic_release_bus = piixpm_i2c_sb800_release_bus;
 		} else {
-			tag->ic_acquire_bus = NULL;
-			tag->ic_release_bus = NULL;
+			tag->ic_acquire_bus = piixpm_i2c_sb600_acquire_bus;
+			tag->ic_release_bus = piixpm_i2c_sb600_release_bus;
 		}
 		tag->ic_exec = piixpm_i2c_exec;
 		memset(&iba, 0, sizeof(iba));
@@ -484,6 +486,28 @@ piixpm_csb5_reset(void *arg)
 	pci_conf_write(sc->sc_pc, sc->sc_pcitag, PIIX_SMB_HOSTC, hostc);
 
 	(void) tsleep(&sc, PRIBIO, "csb5reset", hz/2);
+}
+
+static int
+piixpm_i2c_sb600_acquire_bus(void *cookie, int flags)
+{
+	struct piixpm_smbus *smbus = cookie;
+	struct piixpm_softc *sc = smbus->softc;
+
+	if (!cold)
+		mutex_enter(&sc->sc_i2c_mutex);
+
+	return 0;
+}
+
+static void
+piixpm_i2c_sb600_release_bus(void *cookie, int flags)
+{
+	struct piixpm_smbus *smbus = cookie;
+	struct piixpm_softc *sc = smbus->softc;
+
+	if (!cold)
+		mutex_exit(&sc->sc_i2c_mutex);
 }
 
 static int
