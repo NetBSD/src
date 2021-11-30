@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee8023ad_lacp_sm_mux.c,v 1.4 2007/02/21 23:00:07 thorpej Exp $	*/
+/*	$NetBSD: ieee8023ad_lacp_sm_mux.c,v 1.5 2021/11/30 01:17:02 yamaguchi Exp $	*/
 
 /*-
  * Copyright (c)2005 YAMAMOTO Takashi,
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ieee8023ad_lacp_sm_mux.c,v 1.4 2007/02/21 23:00:07 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee8023ad_lacp_sm_mux.c,v 1.5 2021/11/30 01:17:02 yamaguchi Exp $");
 
 #include <sys/param.h>
 #include <sys/callout.h>
@@ -36,8 +36,8 @@ __KERNEL_RCSID(0, "$NetBSD: ieee8023ad_lacp_sm_mux.c,v 1.4 2007/02/21 23:00:07 t
 
 #include <net/if.h>
 #include <net/if_ether.h>
+#include <net/ether_slowprotocols.h>
 
-#include <net/agr/ieee8023_slowprotocols.h>
 #include <net/agr/ieee8023_tlv.h>
 #include <net/agr/ieee8023ad_lacp.h>
 #include <net/agr/ieee8023ad_lacp_impl.h>

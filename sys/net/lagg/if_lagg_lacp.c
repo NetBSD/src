@@ -1,4 +1,4 @@
-/*	$NetBSD: if_lagg_lacp.c,v 1.8 2021/11/16 04:48:43 yamaguchi Exp $	*/
+/*	$NetBSD: if_lagg_lacp.c,v 1.9 2021/11/30 01:17:02 yamaguchi Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-NetBSD
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_lagg_lacp.c,v 1.8 2021/11/16 04:48:43 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_lagg_lacp.c,v 1.9 2021/11/30 01:17:02 yamaguchi Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_lagg.h"
@@ -51,6 +51,8 @@ __KERNEL_RCSID(0, "$NetBSD: if_lagg_lacp.c,v 1.8 2021/11/16 04:48:43 yamaguchi E
 #include <net/if_dl.h>
 #include <net/if_ether.h>
 #include <net/if_media.h>
+
+#include <net/ether_slowprotocols.h>
 
 #include <net/lagg/if_lagg.h>
 #include <net/lagg/if_laggproto.h>
