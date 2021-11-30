@@ -2182,6 +2182,7 @@ zfs_statvfs(vfs_t *vfsp, struct statvfs *statp)
 	statp->f_blocks = (refdbytes + availbytes) >> SPA_MINBLOCKSHIFT;
 	statp->f_bfree = availbytes / statp->f_bsize;
 	statp->f_bavail = statp->f_bfree; /* no root reservation */
+	statp->f_bresvd = 0;
 
 	/*
 	 * statvfs() should really be called statufs(), because it assumes
@@ -2196,6 +2197,7 @@ zfs_statvfs(vfs_t *vfsp, struct statvfs *statp)
 	statp->f_favail = statp->f_ffree;	/* no "root reservation" */
 #endif
 	statp->f_files = statp->f_ffree + usedobjs;
+	statp->f_fresvd = 0;
 
 #ifdef __FreeBSD__
 	(void) cmpldev(&d32, vfsp->vfs_dev);
