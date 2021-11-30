@@ -1,4 +1,4 @@
-#	$NetBSD: special,v 1.171 2021/02/26 18:39:10 jakllsch Exp $
+#	$NetBSD: special,v 1.172 2021/11/30 06:21:58 simonb Exp $
 #	@(#)special	8.2 (Berkeley) 1/23/94
 #
 # This file may be overwritten on upgrades.
@@ -338,6 +338,8 @@
 ./etc/ssh/ssh_host_dsa_key.pub	type=file mode=0644 optional
 ./etc/ssh/ssh_host_ecdsa_key	type=file mode=0600 optional tags=nodiff
 ./etc/ssh/ssh_host_ecdsa_key.pub	type=file mode=0644 optional
+./etc/ssh/ssh_host_ed25519_key	type=file mode=0600 optional tags=nodiff
+./etc/ssh/ssh_host_ed25519_key.pub	type=file mode=0644 optional
 ./etc/ssh/ssh_host_key		type=file mode=0600 optional tags=nodiff tags=nodiff
 ./etc/ssh/ssh_host_key.pub	type=file mode=0644 optional
 ./etc/ssh/ssh_host_rsa_key	type=file mode=0600 optional tags=nodiff
