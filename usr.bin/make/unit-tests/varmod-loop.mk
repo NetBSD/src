@@ -1,7 +1,10 @@
-# $NetBSD: varmod-loop.mk,v 1.15 2021/04/11 13:35:56 rillig Exp $
+# $NetBSD: varmod-loop.mk,v 1.16 2021/11/30 23:52:19 rillig Exp $
 #
 # Tests for the :@var@...${var}...@ variable modifier.
 
+# Force the test results to be independent of the default value of this
+# setting, which is 'yes' for NetBSD's usr.bin/make but 'no' for the bmake
+# distribution and pkgsrc/devel/bmake.
 .MAKE.SAVE_DOLLARS=	yes
 
 all: varname-overwriting-target

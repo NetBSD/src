@@ -1,8 +1,11 @@
-# $NetBSD: varmod-loop-varname.mk,v 1.2 2021/04/04 13:35:26 rillig Exp $
+# $NetBSD: varmod-loop-varname.mk,v 1.3 2021/11/30 23:52:19 rillig Exp $
 #
 # Tests for the first part of the variable modifier ':@var@...@', which
 # contains the variable name to use during the loop.
 
+# Force the test results to be independent of the default value of this
+# setting, which is 'yes' for NetBSD's usr.bin/make but 'no' for the bmake
+# distribution and pkgsrc/devel/bmake.
 .MAKE.SAVE_DOLLARS=	yes
 
 
