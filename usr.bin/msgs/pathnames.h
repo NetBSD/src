@@ -1,4 +1,4 @@
-/*	$NetBSD: pathnames.h,v 1.4 2003/08/07 11:15:18 agc Exp $	*/
+/*	$NetBSD: pathnames.h,v 1.4.100.1 2021/11/30 13:11:47 martin Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -32,7 +32,7 @@
  */
 
 #define	_PATH_MSGS	"/var/msgs"
-#define	_PATH_MAIL	"/usr/bin/Mail -f %s"
+#define	_PATH_MAIL	"/usr/bin/mailx -f %s"
 #define	_PATH_PAGER	"/usr/bin/more -%d"
 #undef _PATH_TMP
 #define	_PATH_TMP	"/tmp/msgXXXXXX"
