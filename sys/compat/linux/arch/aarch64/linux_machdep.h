@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.h,v 1.2 2021/11/25 03:08:04 ryo Exp $	*/
+/*	$NetBSD: linux_machdep.h,v 1.3 2021/11/30 01:52:06 ryo Exp $	*/
 
 /*-
  * Copyright (c) 2021 The NetBSD Foundation, Inc.
@@ -123,5 +123,12 @@ __BEGIN_DECLS
 void linux_syscall_intern(struct proc *);
 __END_DECLS
 #endif /* !_KERNEL */
+
+#if BYTE_ORDER != BIG_ENDIAN
+#define LINUX_UNAME_ARCH	"aarch64"
+#else
+#define LINUX_UNAME_ARCH	"aarch64_be"
+#endif
+#define LINUX_LARGEFILE64
 
 #endif /* !_AARCH64_LINUX_MACHDEP_H */
