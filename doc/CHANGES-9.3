@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.3,v 1.1.2.53 2021/11/30 11:46:22 martin Exp $
+# $NetBSD: CHANGES-9.3,v 1.1.2.54 2021/11/30 13:13:10 martin Exp $
 
 A complete list of changes from the NetBSD 9.2 release to the NetBSD 9.3
 release:
@@ -981,3 +981,9 @@ sys/dev/pci/piixpm.c				patch
 	PR 56525: fix a bug that I2C access panics on old AMD chipset
 	(e.g SB600).
 	[msaitoh, ticket #1378]
+
+usr.bin/msgs/pathnames.h			1.5
+
+	msgs(1): avoid executing /usr/bin/Mail, it no longer exists.
+	[nia, ticket #1379]
+
