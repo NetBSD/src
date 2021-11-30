@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.1443 2021/11/03 15:09:42 msaitoh Exp $
+$NetBSD: pcidevs,v 1.1444 2021/11/30 15:16:18 msaitoh Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -5736,6 +5736,18 @@ product INTEL EHL_PSE_I2C_7	0x4bc0	Elkhart Lake PSE I2C 7
 product INTEL EHL_PSE_CAN_0	0x4bc1	Elkhart Lake PSE CAN 0
 product INTEL EHL_PSE_CAN_1	0x4bc2	Elkhart Lake PSE CAN 1
 product INTEL EHL_PSE_QEP_0	0x4bc3	Elkhart Lake PSE QEP 0
+product INTEL RKL_PCIE_RP_0	0x4c01	Rocket Lake PCIe Root Port 0 (x16)
+product INTEL RKL_DPTF		0x4c03	Rocket Lake DPTF
+product INTEL RKL_PCIE_RP_1	0x4c05	Rocket Lake PCIe Root Port 1 (x8)
+product INTEL RKL_PCIE_RP_2	0x4c07	Rocket Lake PCIe Root Port 2 (x4)
+product INTEL RKL_PCIE_RP_3	0x4c09	Rocket Lake PCIe Root Port 3 (x4)
+product INTEL RKL_GNA		0x4c11	Rocket Lake Gauss Newton Algorithm
+product INTEL RKL_8C_HOST	0x4c43	Rocket Lake (8Core) Host
+product INTEL RKL_6C_HOST	0x4c53	Rocket Lake (8Core) Host
+product INTEL RKL_IGD_1		0x4c8a	Rocket Lake UHD Graphics 750 (32EU)
+product INTEL RKL_IGD_2		0x4c8b	Rocket Lake UHD Graphics 730 (24EU)
+product INTEL RKL_IGD_3		0x4c90	Rocket Lake (Xeon W) UHD Graphics 750
+product INTEL RKL_IGD_4		0x4c9a	Rocket Lake (Xeon E) UHD Graphics 750
 product INTEL JSL_ESPI		0x4d87	Jasper Lake eSPI
 product INTEL JSL_P2SB		0x4da0	Jasper Lake P2SB
 product INTEL JSL_PMC		0x4da1	Jasper Lake PMC
