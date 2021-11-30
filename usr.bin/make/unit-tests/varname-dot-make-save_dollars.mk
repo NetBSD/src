@@ -1,4 +1,4 @@
-# $NetBSD: varname-dot-make-save_dollars.mk,v 1.3 2021/11/30 23:52:19 rillig Exp $
+# $NetBSD: varname-dot-make-save_dollars.mk,v 1.4 2021/11/30 23:58:10 rillig Exp $
 #
 # Tests for the special .MAKE.SAVE_DOLLARS variable, which controls whether
 # the assignment operator ':=' converts '$$' to a single '$' or keeps it
@@ -51,8 +51,27 @@ VAR:=		$$$$-${.MAKE.SAVE_DOLLARS::=yes}-$$$$
 
 # The '$' from the ':U' expressions are indirect, therefore SAVE_DOLLARS
 # doesn't apply to them.
+.MAKE.SAVE_DOLLARS=	no
 VAR:=		${:U\$\$\$\$}-${.MAKE.SAVE_DOLLARS::=yes}-${:U\$\$\$\$}
 .if ${VAR} != "\$\$--\$\$"
+.  error
+.endif
+
+# Undefining .MAKE.SAVE_DOLLARS does not have any effect, in particular it
+# does not restore the default behavior.
+.MAKE.SAVE_DOLLARS=	no
+.undef .MAKE.SAVE_DOLLARS
+VAR:=		$$$$$$$$
+.if ${VAR} != "\$\$"
+.  error
+.endif
+
+# Undefining .MAKE.SAVE_DOLLARS does not have any effect, in particular it
+# does not restore the default behavior.
+.MAKE.SAVE_DOLLARS=	yes
+.undef .MAKE.SAVE_DOLLARS
+VAR:=		$$$$$$$$
+.if ${VAR} != "\$\$\$\$"
 .  error
 .endif
 
