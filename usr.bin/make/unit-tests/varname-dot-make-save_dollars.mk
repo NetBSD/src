@@ -1,12 +1,12 @@
-# $NetBSD: varname-dot-make-save_dollars.mk,v 1.4 2021/11/30 23:58:10 rillig Exp $
+# $NetBSD: varname-dot-make-save_dollars.mk,v 1.5 2021/12/01 23:15:38 rillig Exp $
 #
 # Tests for the special .MAKE.SAVE_DOLLARS variable, which controls whether
 # the assignment operator ':=' converts '$$' to a single '$' or keeps it
 # as-is.
 #
 # See also:
-#	var-op-expand.mk
-#	varmisc.mk		for the boolean values
+#	var-op-expand.mk	for ':=' in general
+#	varmisc.mk		for parsing the boolean values
 
 # Initially, the variable .MAKE.SAVE_DOLLARS is undefined. At this point the
 # behavior of the assignment operator ':=' depends.  NetBSD's usr.bin/make
@@ -18,23 +18,25 @@
 
 
 # Even when dollars are preserved, it only applies to literal dollars, not
-# those that come indirectly from other expressions.
-.MAKE.SAVE_DOLLARS=	yes
+# to those that come indirectly from other expressions.
 DOLLARS=		$$$$$$$$
+.MAKE.SAVE_DOLLARS=	yes
 VAR:=			${DOLLARS}
 # The reduction from 8 '$' to 4 '$' happens when ${VAR} is evaluated in the
-# condition; .MAKE.SAVE_DOLLARS only applies to the operator ':='.
+# condition; .MAKE.SAVE_DOLLARS only applies at the moment where the
+# assignment is performed using ':='.
 .if ${VAR} != "\$\$\$\$"
 .  error
 .endif
 
-# Dollars from the literal value are preserved now.
+# The 'yes' preserves the dollars from the literal.
 .MAKE.SAVE_DOLLARS=	yes
 VAR:=			$$$$$$$$
 .if ${VAR} != "\$\$\$\$"
 .  error
 .endif
 
+# The 'no' converts each '$$' to '$'.
 .MAKE.SAVE_DOLLARS=	no
 VAR:=			$$$$$$$$
 .if ${VAR} != "\$\$"
@@ -42,14 +44,14 @@ VAR:=			$$$$$$$$
 .endif
 
 # It's even possible to change the dollar interpretation in the middle of
-# evaluating an expression, even though there is no practical need for it.
+# evaluating an expression, but there is no practical need for it.
 .MAKE.SAVE_DOLLARS=	no
 VAR:=		$$$$-${.MAKE.SAVE_DOLLARS::=yes}-$$$$
 .if ${VAR} != "\$--\$\$"
 .  error
 .endif
 
-# The '$' from the ':U' expressions are indirect, therefore SAVE_DOLLARS
+# The '$' from the ':U' expressions are indirect, therefore .MAKE.SAVE_DOLLARS
 # doesn't apply to them.
 .MAKE.SAVE_DOLLARS=	no
 VAR:=		${:U\$\$\$\$}-${.MAKE.SAVE_DOLLARS::=yes}-${:U\$\$\$\$}
