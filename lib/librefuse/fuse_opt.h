@@ -1,4 +1,4 @@
-/*	$NetBSD: fuse_opt.h,v 1.8 2021/12/01 13:51:33 pho Exp $	*/
+/*	$NetBSD: fuse_opt.h,v 1.9 2021/12/01 14:17:50 pho Exp $	*/
 
 /*
  * Copyright (c) 2007 Alistair Crooks.  All rights reserved.
@@ -46,11 +46,11 @@ enum {
 
 struct fuse_opt {
 	const char	*templ;
-	unsigned long	offset;
-	int		value;
+	int32_t		offset;
+	int32_t		value;
 };
 
-#define FUSE_OPT_KEY(templ, key) { templ, -1U, key }
+#define FUSE_OPT_KEY(templ, key) { templ, -1, key }
 #define FUSE_OPT_END { .templ = NULL }
 
 typedef int (*fuse_opt_proc_t)(void *, const char *, int, struct fuse_args *);
