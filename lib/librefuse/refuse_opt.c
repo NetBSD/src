@@ -1,4 +1,4 @@
-/* 	$NetBSD: refuse_opt.c,v 1.19 2021/10/30 09:06:34 nia Exp $	*/
+/* 	$NetBSD: refuse_opt.c,v 1.20 2021/12/01 13:51:33 pho Exp $	*/
 
 /*-
  * Copyright (c) 2007 Juan Romero Pardines.
@@ -286,7 +286,7 @@ parse_matched_arg(const char* arg, struct fuse_args *outargs,
 		const struct fuse_opt* opt, int sep_idx, void* data,
 		fuse_opt_proc_t proc, bool is_opt)
 {
-	if (opt->offset == -1) {
+	if (opt->offset == -1U) {
 		/* The option description does not want any variables to be
 		 * updated.*/
 		if (call_proc(proc, data, arg, opt->value, outargs, is_opt) == -1)
