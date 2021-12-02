@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.3 2021/11/25 02:29:33 ryo Exp $
+	$NetBSD: syscalls.master,v 1.4 2021/12/02 04:29:47 ryo Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -490,7 +490,8 @@
 259	UNIMPL
 260	STD		{ int|linux_sys||wait4(int pid, int *status, \
 			    int options, struct rusage50 *rusage); }
-261	UNIMPL		prlimit64
+261	STD		{ int|linux_sys||prlimit64(pid_t pid, int which, \
+			    struct rlimit *new_rlp, struct rlimit *old_rlp); }
 262	UNIMPL		fanotify_init
 263	UNIMPL		fanotify_mark
 264	UNIMPL		name_to_handle_at

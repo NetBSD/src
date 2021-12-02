@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.74 2021/11/24 18:52:13 ryo Exp $
+	$NetBSD: syscalls.master,v 1.75 2021/12/02 04:29:48 ryo Exp $
 
 ; Derived from sys/compat/linux/arch/*/syscalls.master
 ; and from Linux 2.4.12 arch/arm/kernel/calls.S
@@ -595,7 +595,8 @@
 			    int *anamelen, int flags); }
 367	UNIMPL		fanotify_init
 368	UNIMPL		fanotify_mark
-369	UNIMPL		prlimit64
+369	STD		{ int|linux_sys||prlimit64(pid_t pid, int which, \
+			    struct rlimit *new_rlp, struct rlimit *old_rlp); }
 370	UNIMPL		name_to_handle_at
 371	UNIMPL		open_by_handle_at
 372	UNIMPL		clock_adjtime

@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_misc.c,v 1.255 2021/11/25 03:08:04 ryo Exp $	*/
+/*	$NetBSD: linux_misc.c,v 1.256 2021/12/02 04:29:48 ryo Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 1999, 2008 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.255 2021/11/25 03:08:04 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.256 2021/12/02 04:29:48 ryo Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1451,6 +1451,48 @@ linux_sys_ugetrlimit(struct lwp *l, const struct linux_sys_ugetrlimit_args *uap,
 	return linux_sys_getrlimit(l, (const void *)uap, retval);
 }
 # endif
+
+int
+linux_sys_prlimit64(struct lwp *l, const struct linux_sys_prlimit64_args *uap, register_t *retval)
+{
+	/* {
+		syscallarg(pid_t) pid;
+		syscallarg(int) witch;
+		syscallarg(struct rlimit *) new_rlp;
+		syscallarg(struct rlimit *) old_rlp;
+	}; */
+	struct rlimit rl, nrl, orl;
+	struct rlimit *p;
+	int which;
+	int error;
+
+	/* XXX: Cannot operate any process other than its own */
+	if (SCARG(uap, pid) != 0)
+		return EPERM;
+
+	which = linux_to_bsd_limit(SCARG(uap, which));
+	if (which < 0)
+		return -which;
+
+	p = SCARG(uap, old_rlp);
+	if (p != NULL) {
+		memset(&orl, 0, sizeof(orl));
+		bsd_to_linux_rlimit64(&orl, &l->l_proc->p_rlimit[which]);
+		if ((error = copyout(&orl, p, sizeof(orl))) != 0)
+			return error;
+	}
+
+	p = SCARG(uap, new_rlp);
+	if (p != NULL) {
+		if ((error = copyin(p, &nrl, sizeof(nrl))) != 0)
+			return error;
+
+		linux_to_bsd_rlimit(&rl, &nrl);
+		return dosetrlimit(l, l->l_proc, which, &rl);
+	}
+
+	return 0;
+}
 
 /*
  * This gets called for unsupported syscalls. The difference to sys_nosys()
