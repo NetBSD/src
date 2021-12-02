@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig_16.c,v 1.7 2021/11/26 08:06:11 ryo Exp $	*/
+/*	$NetBSD: kern_sig_16.c,v 1.8 2021/12/02 04:26:09 ryo Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig_16.c,v 1.7 2021/11/26 08:06:11 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig_16.c,v 1.8 2021/12/02 04:26:09 ryo Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -161,10 +161,12 @@ kern_sig_16_init(void)
 		emul_netbsd.e_sigobject = NULL;
 	}
 	rw_exit(&exec_lock);
+	if (error)
+		return error;
 	MODULE_HOOK_SET(sendsig_sigcontext_16_hook, sendsig_sigcontext);
 #endif
 
-	return error;
+	return 0;
 }
 
 int
