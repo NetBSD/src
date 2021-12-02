@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_resource.c,v 1.12 2021/09/07 11:43:04 riastradh Exp $ */
+/*	$NetBSD: linux32_resource.c,v 1.13 2021/12/02 04:29:49 ryo Exp $ */
 
 /*-
  * Copyright (c) 2006 Emmanuel Dreyfus, all rights reserved.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: linux32_resource.c,v 1.12 2021/09/07 11:43:04 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_resource.c,v 1.13 2021/12/02 04:29:49 ryo Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -121,6 +121,48 @@ int
 linux32_sys_ugetrlimit(struct lwp *l, const struct linux32_sys_ugetrlimit_args *uap, register_t *retval)
 {
 	return linux32_sys_getrlimit(l, (const void *)uap, retval);
+}
+
+int
+linux32_sys_prlimit64(struct lwp *l, const struct linux32_sys_prlimit64_args *uap, register_t *retval)
+{
+	/* {
+		syscallarg(pid_t) pid;
+		syscallarg(int) which;
+		syscallarg(netbsd32_rlimitp_t) new_rlp;
+		syscallarg(netbsd32_rlimitp_t) old_rlp;
+	}; */
+	struct rlimit rl, nrl, orl;
+	struct rlimit *p;
+	int which;
+	int error;
+
+	/* XXX: Cannot operate any process other than its own */
+	if (SCARG(uap, pid) != 0)
+		return EPERM;
+
+	which = linux_to_bsd_limit(SCARG(uap, which));
+	if (which < 0)
+		return -which;
+
+	p = SCARG_P32(uap, old_rlp);
+	if (p != NULL) {
+		memset(&orl, 0, sizeof(orl));
+		bsd_to_linux_rlimit64(&orl, &l->l_proc->p_rlimit[which]);
+		if ((error = copyout(&orl, p, sizeof(orl))) != 0)
+			return error;
+	}
+
+	p = SCARG_P32(uap, new_rlp);
+	if (p != NULL) {
+		if ((error = copyin(p, &nrl, sizeof(nrl))) != 0)
+			return error;
+
+		linux_to_bsd_rlimit(&rl, &nrl);
+		return dosetrlimit(l, l->l_proc, which, &rl);
+	}
+
+	return 0;
 }
 
 int

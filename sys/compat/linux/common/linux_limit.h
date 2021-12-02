@@ -1,4 +1,4 @@
-/* 	$NetBSD: linux_limit.h,v 1.7 2015/02/28 13:08:00 njoly Exp $ */
+/* 	$NetBSD: linux_limit.h,v 1.8 2021/12/02 04:29:48 ryo Exp $ */
 
 /*-
  * Copyright (c) 1995, 1998, 1999 The NetBSD Foundation, Inc.
@@ -35,20 +35,27 @@
 
 static int linux_to_bsd_limit(int);
 
-#ifdef LINUX_LARGEFILE64
-#define bsd_to_linux_rlimit1(l, b, f) \
+#define bsd_to_linux_rlimit64_1(l, b, f) \
     (l)->f = ((b)->f == RLIM_INFINITY || \
 	     ((b)->f & 0x8000000000000000UL) != 0) ? \
     LINUX_RLIM_INFINITY : (b)->f
-#else
-#define bsd_to_linux_rlimit1(l, b, f) \
+#define bsd_to_linux_rlimit32_1(l, b, f) \
     (l)->f = ((b)->f == RLIM_INFINITY || \
 	     ((b)->f & 0xffffffff00000000ULL) != 0) ? \
     LINUX_RLIM_INFINITY : (int32_t)(b)->f
+
+#define bsd_to_linux_rlimit64(l, b) \
+    bsd_to_linux_rlimit64_1(l, b, rlim_cur); \
+    bsd_to_linux_rlimit64_1(l, b, rlim_max)
+#define bsd_to_linux_rlimit32(l, b) \
+    bsd_to_linux_rlimit32_1(l, b, rlim_cur); \
+    bsd_to_linux_rlimit32_1(l, b, rlim_max)
+
+#ifdef LINUX_LARGEFILE64
+#define bsd_to_linux_rlimit(l, b)	bsd_to_linux_rlimit64(l, b)
+#else
+#define bsd_to_linux_rlimit(l, b)	bsd_to_linux_rlimit32(l, b)
 #endif
-#define bsd_to_linux_rlimit(l, b) \
-    bsd_to_linux_rlimit1(l, b, rlim_cur); \
-    bsd_to_linux_rlimit1(l, b, rlim_max)
 
 #define linux_to_bsd_rlimit1(b, l, f) \
     (b)->f = (l)->f == LINUX_RLIM_INFINITY ? RLIM_INFINITY : (l)->f

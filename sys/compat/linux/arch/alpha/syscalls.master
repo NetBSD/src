@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.101 2021/09/20 02:20:02 thorpej Exp $
+	$NetBSD: syscalls.master,v 1.102 2021/12/02 04:29:47 ryo Exp $
 ;
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -794,7 +794,8 @@
 493	UNIMPL		perf_counter_open
 494	UNIMPL		fanotify_init
 495	UNIMPL		fanotify_mark
-496	UNIMPL		prlimit64
+496	STD		{ int|linux_sys||prlimit64(pid_t pid, int which, \
+			    struct rlimit *new_rlp, struct rlimit *old_rlp); }
 497	UNIMPL		name_to_handle_at
 498	UNIMPL		open_by_handle_at
 499	UNIMPL		clock_adjtime

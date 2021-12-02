@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.2 2021/11/27 21:15:07 ryo Exp $
+	$NetBSD: syscalls.master,v 1.3 2021/12/02 04:29:48 ryo Exp $
 
 ; NetBSD aarch64 COMPAT_LINUX32 system call name/number "master" file.
 ;
@@ -642,7 +642,8 @@
 366	UNIMPL	accept4
 367	UNIMPL	fanotify_init
 368	UNIMPL	fanotify_mark
-369	UNIMPL	prlimit64
+369	STD	{ int|linux32_sys||prlimit64(pid_t pid, int which, \
+		    netbsd32_rlimitp_t new_rlp, netbsd32_rlimitp_t old_rlp); }
 370	UNIMPL	name_to_handle_at
 371	UNIMPL	open_by_handle_at
 372	UNIMPL	clock_adjtime
