@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.79 2021/11/24 18:52:13 ryo Exp $  
+	$NetBSD: syscalls.master,v 1.80 2021/12/02 04:29:48 ryo Exp $  
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -562,7 +562,8 @@
 322	UNIMPL		rt_tgsigqueueinfo
 323	UNIMPL		fanotify_init
 324	UNIMPL		fanotify_mark
-325	UNIMPL		prlimit64
+325	STD		{ int|linux_sys||prlimit64(pid_t pid, int which, \
+			    struct rlimit *new_rlp, struct rlimit *old_rlp); }
 326	UNIMPL		socket
 327	UNIMPL		bind
 328	UNIMPL		connect
