@@ -1,4 +1,4 @@
-/* $NetBSD: linux32_syscallargs.h,v 1.86 2021/11/27 21:15:53 ryo Exp $ */
+/* $NetBSD: linux32_syscallargs.h,v 1.87 2021/12/02 04:39:45 ryo Exp $ */
 
 /*
  * System call argument lists.
@@ -1105,6 +1105,14 @@ struct linux32_sys_pwritev_args {
 };
 check_syscall_args(linux32_sys_pwritev)
 
+struct linux32_sys_prlimit64_args {
+	syscallarg(pid_t) pid;
+	syscallarg(int) which;
+	syscallarg(netbsd32_rlimitp_t) new_rlp;
+	syscallarg(netbsd32_rlimitp_t) old_rlp;
+};
+check_syscall_args(linux32_sys_prlimit64)
+
 /*
  * System call prototypes.
  */
@@ -1578,5 +1586,7 @@ int	linux32_sys_pipe2(struct lwp *, const struct linux32_sys_pipe2_args *, regis
 int	linux32_sys_preadv(struct lwp *, const struct linux32_sys_preadv_args *, register_t *);
 
 int	linux32_sys_pwritev(struct lwp *, const struct linux32_sys_pwritev_args *, register_t *);
+
+int	linux32_sys_prlimit64(struct lwp *, const struct linux32_sys_prlimit64_args *, register_t *);
 
 #endif /* _LINUX32_SYS_SYSCALLARGS_H_ */

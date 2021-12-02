@@ -1,4 +1,4 @@
-/* $NetBSD: linux32_sysent.c,v 1.2 2021/11/27 21:15:53 ryo Exp $ */
+/* $NetBSD: linux32_sysent.c,v 1.3 2021/12/02 04:39:45 ryo Exp $ */
 
 /*
  * System call switch table.
@@ -8,7 +8,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux32_sysent.c,v 1.2 2021/11/27 21:15:53 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_sysent.c,v 1.3 2021/12/02 04:39:45 ryo Exp $");
 
 #include <sys/param.h>
 #include <sys/syscallargs.h>
@@ -1379,8 +1379,9 @@ struct sysent linux32_sysent[] = {
 		.sy_call = linux_sys_nosys,
 	},		/* 368 = filler */
 	{
-		.sy_call = linux_sys_nosys,
-	},		/* 369 = filler */
+		ns(struct linux32_sys_prlimit64_args),
+		.sy_call = (sy_call_t *)linux32_sys_prlimit64
+	},		/* 369 = prlimit64 */
 	{
 		.sy_call = linux_sys_nosys,
 	},		/* 370 = filler */
