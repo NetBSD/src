@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs.c,v 1.2 2019/12/28 08:22:30 tkusumi Exp $	*/
+/*	$NetBSD: ntfs.c,v 1.3 2021/12/02 14:26:12 christos Exp $	*/
 
 /*-
  * Copyright (c) 2017 The NetBSD Foundation, Inc.
@@ -35,10 +35,11 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: ntfs.c,v 1.2 2019/12/28 08:22:30 tkusumi Exp $");
+__RCSID("$NetBSD: ntfs.c,v 1.3 2021/12/02 14:26:12 christos Exp $");
 
 #include <err.h>
 #include <iconv.h>
+#include <langinfo.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -108,8 +109,7 @@ convert_label(const void *label /* LE */, size_t labellen, char *label_out,
 	iconv_t cd;
 	size_t rc;
 
-	/* dstname="" means convert to the current locale. */
-	cd = iconv_open("", NTFS_ENC);
+	cd = iconv_open(nl_langinfo(CODESET), NTFS_ENC);
 	if (cd == (iconv_t)-1) {
 		warn("ntfs: Could not open iconv");
 		return;
