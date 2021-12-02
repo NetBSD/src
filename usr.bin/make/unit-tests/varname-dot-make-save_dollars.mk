@@ -1,4 +1,4 @@
-# $NetBSD: varname-dot-make-save_dollars.mk,v 1.5 2021/12/01 23:15:38 rillig Exp $
+# $NetBSD: varname-dot-make-save_dollars.mk,v 1.6 2021/12/02 22:41:01 rillig Exp $
 #
 # Tests for the special .MAKE.SAVE_DOLLARS variable, which controls whether
 # the assignment operator ':=' converts '$$' to a single '$' or keeps it
@@ -17,8 +17,8 @@
 .endif
 
 
-# Even when dollars are preserved, it only applies to literal dollars, not
-# to those that come indirectly from other expressions.
+# When dollars are preserved, this setting not only applies to literal
+# dollars, but also to those that come indirectly from other expressions.
 DOLLARS=		$$$$$$$$
 .MAKE.SAVE_DOLLARS=	yes
 VAR:=			${DOLLARS}
@@ -26,6 +26,15 @@ VAR:=			${DOLLARS}
 # condition; .MAKE.SAVE_DOLLARS only applies at the moment where the
 # assignment is performed using ':='.
 .if ${VAR} != "\$\$\$\$"
+.  error
+.endif
+
+# When dollars are preserved, this setting not only applies to literal
+# dollars, but also to those that come indirectly from other expressions.
+DOLLARS=		$$$$$$$$
+.MAKE.SAVE_DOLLARS=	no
+VAR:=			${DOLLARS}
+.if ${VAR} != "\$\$"
 .  error
 .endif
 
@@ -51,8 +60,10 @@ VAR:=		$$$$-${.MAKE.SAVE_DOLLARS::=yes}-$$$$
 .  error
 .endif
 
-# The '$' from the ':U' expressions are indirect, therefore .MAKE.SAVE_DOLLARS
-# doesn't apply to them.
+# The '$' from the ':U' expressions do not appear as literal '$$' to the
+# parser (no matter whether directly or indirectly), they only appear as '$$'
+# in the value of an expression, therefore .MAKE.SAVE_DOLLARS doesn't apply
+# here.
 .MAKE.SAVE_DOLLARS=	no
 VAR:=		${:U\$\$\$\$}-${.MAKE.SAVE_DOLLARS::=yes}-${:U\$\$\$\$}
 .if ${VAR} != "\$\$--\$\$"
@@ -73,6 +84,26 @@ VAR:=		$$$$$$$$
 .MAKE.SAVE_DOLLARS=	yes
 .undef .MAKE.SAVE_DOLLARS
 VAR:=		$$$$$$$$
+.if ${VAR} != "\$\$\$\$"
+.  error
+.endif
+
+# The variable '.MAKE.SAVE_DOLLARS' not only affects literal '$$' on the
+# right-hand side of the assignment operator ':=', it also affects dollars
+# in indirect expressions.
+#
+# In this example, it affects the command in CMD itself, not the result of
+# running that command.
+.MAKE.SAVE_DOLLARS=	no
+CMD=			echo '$$$$$$$$'
+VAR:=			${CMD:sh}
+.if ${VAR} != "\$\$"
+.  error
+.endif
+
+.MAKE.SAVE_DOLLARS=	yes
+CMD=			echo '$$$$$$$$'
+VAR:=			${CMD:sh}
 .if ${VAR} != "\$\$\$\$"
 .  error
 .endif
