@@ -1,4 +1,4 @@
-/* $NetBSD: linux_syscalls.c,v 1.115 2021/09/20 02:20:30 thorpej Exp $ */
+/* $NetBSD: linux_syscalls.c,v 1.116 2021/12/02 04:39:44 ryo Exp $ */
 
 /*
  * System call names.
@@ -8,7 +8,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_syscalls.c,v 1.115 2021/09/20 02:20:30 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_syscalls.c,v 1.116 2021/12/02 04:39:44 ryo Exp $");
 
 #if defined(_KERNEL_OPT)
 #if defined(_KERNEL_OPT)
@@ -555,7 +555,7 @@ const char *const linux_syscallnames[] = {
 	/* 493 */	"#493 (unimplemented perf_counter_open)",
 	/* 494 */	"#494 (unimplemented fanotify_init)",
 	/* 495 */	"#495 (unimplemented fanotify_mark)",
-	/* 496 */	"#496 (unimplemented prlimit64)",
+	/* 496 */	"prlimit64",
 	/* 497 */	"#497 (unimplemented name_to_handle_at)",
 	/* 498 */	"#498 (unimplemented open_by_handle_at)",
 	/* 499 */	"#499 (unimplemented clock_adjtime)",
@@ -1096,7 +1096,7 @@ const char *const altlinux_syscallnames[] = {
 	/* 493 */	NULL, /* unimplemented perf_counter_open */
 	/* 494 */	NULL, /* unimplemented fanotify_init */
 	/* 495 */	NULL, /* unimplemented fanotify_mark */
-	/* 496 */	NULL, /* unimplemented prlimit64 */
+	/* 496 */	NULL, /* prlimit64 */
 	/* 497 */	NULL, /* unimplemented name_to_handle_at */
 	/* 498 */	NULL, /* unimplemented open_by_handle_at */
 	/* 499 */	NULL, /* unimplemented clock_adjtime */

@@ -1,4 +1,4 @@
-/* $NetBSD: linux32_syscall.h,v 1.86 2021/11/27 21:15:53 ryo Exp $ */
+/* $NetBSD: linux32_syscall.h,v 1.87 2021/12/02 04:39:45 ryo Exp $ */
 
 /*
  * System call numbers.
@@ -749,6 +749,9 @@
 
 /* syscall: "pwritev" ret: "int" args: "int" "const netbsd32_iovecp_t" "int" "netbsd32_u_long" "netbsd32_u_long" */
 #define	LINUX32_SYS_pwritev	334
+
+/* syscall: "prlimit64" ret: "int" args: "pid_t" "int" "netbsd32_rlimitp_t" "netbsd32_rlimitp_t" */
+#define	LINUX32_SYS_prlimit64	340
 
 #define	LINUX32_SYS_MAXSYSCALL	351
 #define	LINUX32_SYS_NSYSENT	512
