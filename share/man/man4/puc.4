@@ -1,4 +1,4 @@
-.\" $NetBSD: puc.4,v 1.42 2020/03/31 07:08:59 ryo Exp $
+.\" $NetBSD: puc.4,v 1.43 2021/12/02 05:10:04 msaitoh Exp $
 .\"
 .\" Copyright (c) 1998 Christopher G. Demetriou
 .\" All rights reserved.
@@ -32,7 +32,7 @@
 .\"
 .\" <<Id: LICENSE,v 1.2 2000/06/14 15:57:33 cgd Exp>>
 .\"
-.Dd March 31, 2020
+.Dd December 2, 2021
 .Dt PUC 4
 .Os
 .Sh NAME
@@ -67,6 +67,7 @@ The driver currently supports the following cards:
 .It Tn "Advantech PCI-1610 (4 port serial)"
 .It Tn "Advantech PCI-1612 (4 port serial)"
 .It Tn "Advantech PCI-1620 (8 port serial)"
+.It Tn "ASIX AX9910 (4 port serial)"
 .It Tn "Avlab Low Profile PCI 4S Quartet (4 port serial)"
 .It Tn "Avlab Low Profile PCI 4 Serial (4 port serial)"
 .It Tn "Avlab PCI 2S (2 port serial)"
@@ -124,7 +125,7 @@ The driver currently supports the following cards:
 .It Tn "NetMos NM9845 series (up to 6 serial and 1 parallel)"
 .It Tn "NetMos NM9855 series (up to 4 serial and 1 parallel)"
 .It Tn "NetMos NM9865 series (up to 4 serial and 2 parallel)"
-.It Tn "NetMos NM9900 PCIe (4 port serial)"
+.It Tn "NetMos NM9900 PCIe (4 port or 8 port serial)"
 .It Tn "NetMos NM9901 PCIe (1 serial or 1 parallel)"
 .It Tn "NetMos NM9904 PCIe (4 port serial)"
 .It Tn "NetMos NM9912 PCIe (2 serial or 1 parallel)"
@@ -135,6 +136,7 @@ The driver currently supports the following cards:
 .It Tn "Oxford Semiconductor OXPCIe952 (2 port serial, legacy mode)"
 .It Tn "Oxford Semiconductor OXPCIe954 (4 port serial)"
 .It Tn "Oxford Semiconductor OXmPCI952 (2 port serial)"
+.It Tn "Oxford Semiconductor Exsys EX-41098 (4 port serial)"
 .It Tn "Perle Systems PCI-RAS 4 modem ports"
 .It Tn "Perle Systems PCI-RAS 8 modem ports"
 .It Tn "Perle Systems PCI-RASV92 4 modem ports"
