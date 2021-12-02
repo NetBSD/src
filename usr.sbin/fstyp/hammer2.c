@@ -1,4 +1,4 @@
-/*        $NetBSD: hammer2.c,v 1.8 2021/01/10 13:44:57 martin Exp $      */
+/*        $NetBSD: hammer2.c,v 1.9 2021/12/02 14:26:42 christos Exp $      */
 
 /*-
  * Copyright (c) 2017-2019 The DragonFly Project
@@ -27,7 +27,11 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hammer2.c,v 1.8 2021/01/10 13:44:57 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hammer2.c,v 1.9 2021/12/02 14:26:42 christos Exp $");
+
+#include <sys/param.h>
+#include <sys/ioctl.h>
+#include <sys/disk.h>
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -44,32 +48,37 @@ static ssize_t
 get_file_size(FILE *fp)
 {
 	ssize_t siz;
+	struct dkwedge_info dkw;
+
+	if (ioctl(fileno(fp), DIOCGWEDGEINFO, &dkw) != -1) {
+		return (ssize_t)dkw.dkw_size * DEV_BSIZE;
+	}
 
 	if (fseek(fp, 0, SEEK_END) == -1) {
 		warnx("hammer2: failed to seek media end");
-		return (-1);
+		return -1;
 	}
 
 	siz = ftell(fp);
 	if (siz == -1) {
 		warnx("hammer2: failed to tell media end");
-		return (-1);
+		return -1;
 	}
 
-	return (siz);
+	return siz;
 }
 
 static hammer2_volume_data_t *
 read_voldata(FILE *fp, int i)
 {
 	if (i < 0 || i >= HAMMER2_NUM_VOLHDRS)
-		return (NULL);
+		return NULL;
 
 	if ((hammer2_off_t)i * (hammer2_off_t)HAMMER2_ZONE_BYTES64 >= (hammer2_off_t)get_file_size(fp))
-		return (NULL);
+		return NULL;
 
-	return (read_buf(fp, (off_t)i * (off_t)HAMMER2_ZONE_BYTES64,
-	    sizeof(hammer2_volume_data_t)));
+	return read_buf(fp, (off_t)i * (off_t)HAMMER2_ZONE_BYTES64,
+	    sizeof(hammer2_volume_data_t));
 }
 
 static int
@@ -86,20 +95,20 @@ test_voldata(FILE *fp)
 		voldata = read_voldata(fp, i);
 		if (voldata == NULL) {
 			warnx("hammer2: failed to read volume data");
-			return (1);
+			return 1;
 		}
 		if (voldata->magic != HAMMER2_VOLUME_ID_HBO &&
 		    voldata->magic != HAMMER2_VOLUME_ID_ABO) {
 			free(voldata);
-			return (1);
+			return 1;
 		}
 		if (voldata->volu_id > HAMMER2_MAX_VOLUMES - 1) {
 			free(voldata);
-			return (1);
+			return 1;
 		}
 		if (voldata->nvolumes > HAMMER2_MAX_VOLUMES) {
 			free(voldata);
-			return (1);
+			return 1;
 		}
 
 		if (count == 0) {
@@ -109,21 +118,21 @@ test_voldata(FILE *fp)
 		} else {
 			if (voldata->nvolumes != count) {
 				free(voldata);
-				return (1);
+				return 1;
 			}
 			if (!uuid_equal(&fsid, &voldata->fsid, NULL)) {
 				free(voldata);
-				return (1);
+				return 1;
 			}
 			if (!uuid_equal(&fstype, &voldata->fstype, NULL)) {
 				free(voldata);
-				return (1);
+				return 1;
 			}
 		}
 		free(voldata);
 	}
 
-	return (0);
+	return 0;
 }
 
 static hammer2_media_data_t*
@@ -140,7 +149,7 @@ read_media(FILE *fp, const hammer2_blockref_t *bref, size_t *media_bytes)
 
 	if (!bytes) {
 		warnx("hammer2: blockref has no data");
-		return (NULL);
+		return NULL;
 	}
 
 	io_off = bref->data_off & ~HAMMER2_OFF_MASK_RADIX;
@@ -153,7 +162,7 @@ read_media(FILE *fp, const hammer2_blockref_t *bref, size_t *media_bytes)
 
 	if (io_bytes > sizeof(hammer2_media_data_t)) {
 		warnx("hammer2: invalid I/O bytes");
-		return (NULL);
+		return NULL;
 	}
 
 	/*
@@ -163,26 +172,26 @@ read_media(FILE *fp, const hammer2_blockref_t *bref, size_t *media_bytes)
 	fbytes = (size_t)get_file_size(fp);
 	if ((ssize_t)fbytes == -1) {
 		warnx("hammer2: failed to get media size");
-		return (NULL);
+		return NULL;
 	}
 	if (io_base >= fbytes) {
 		warnx("hammer2: XXX read beyond HAMMER2 root volume limit unsupported");
-		return (NULL);
+		return NULL;
 	}
 
 	if (fseeko(fp, (off_t)io_base, SEEK_SET) == -1) {
 		warnx("hammer2: failed to seek media");
-		return (NULL);
+		return NULL;
 	}
 	media = read_buf(fp, (off_t)io_base, io_bytes);
 	if (media == NULL) {
 		warnx("hammer2: failed to read media");
-		return (NULL);
+		return NULL;
 	}
 	if (boff)
 		memcpy(media, (char *)media + boff, bytes);
 
-	return (media);
+	return media;
 }
 
 static int
@@ -196,7 +205,7 @@ find_pfs(FILE *fp, const hammer2_blockref_t *bref, const char *pfs, bool *res)
 
 	media = read_media(fp, bref, &bytes);
 	if (media == NULL)
-		return (-1);
+		return -1;
 
 	switch (bref->type) {
 	case HAMMER2_BREF_TYPE_INODE:
@@ -221,7 +230,7 @@ find_pfs(FILE *fp, const hammer2_blockref_t *bref, const char *pfs, bool *res)
 				}
 			} else {
 				free(media);
-				return (-1);
+				return -1;
 			}
 		}
 		break;
@@ -239,13 +248,13 @@ find_pfs(FILE *fp, const hammer2_blockref_t *bref, const char *pfs, bool *res)
 		if (bscan[i].type != HAMMER2_BREF_TYPE_EMPTY) {
 			if (find_pfs(fp, &bscan[i], pfs, res) == -1) {
 				free(media);
-				return (-1);
+				return -1;
 			}
 		}
 	}
 	free(media);
 
-	return (0);
+	return 0;
 }
 
 static char*
@@ -254,7 +263,7 @@ extract_device_name(const char *devpath)
 	char *p, *head;
 
 	if (!devpath)
-		return (NULL);
+		return NULL;
 
 	p = strdup(devpath);
 	head = p;
@@ -268,14 +277,14 @@ extract_device_name(const char *devpath)
 		p++;
 		if (*p == 0) {
 			free(head);
-			return (NULL);
+			return NULL;
 		}
 		p = strdup(p);
 		free(head);
-		return (p);
+		return p;
 	}
 
-	return (head);
+	return head;
 }
 
 static int
@@ -377,7 +386,7 @@ fail:
 	for (i = 0; i < HAMMER2_NUM_VOLHDRS; i++)
 		free(vols[i]);
 
-	return (error);
+	return error;
 }
 
 int
@@ -386,6 +395,8 @@ fstyp_hammer2(FILE *fp, char *label, size_t size)
 	hammer2_volume_data_t *voldata = read_voldata(fp, 0);
 	int error = 1;
 
+	if (voldata == NULL)
+		goto fail;
 	if (voldata->volu_id != HAMMER2_ROOT_VOLUME)
 		goto fail;
 	if (voldata->nvolumes != 0)
@@ -396,7 +407,7 @@ fstyp_hammer2(FILE *fp, char *label, size_t size)
 	error = read_label(fp, label, size, NULL);
 fail:
 	free(voldata);
-	return (error);
+	return error;
 }
 
 static int
@@ -498,17 +509,17 @@ fail:
 		fclose(fp);
 	free(voldata);
 	free(dup);
-	return (error);
+	return error;
 }
 
 int
 fsvtyp_hammer2(const char *blkdevs, char *label, size_t size)
 {
-	return (__fsvtyp_hammer2(blkdevs, label, size, 0));
+	return __fsvtyp_hammer2(blkdevs, label, size, 0);
 }
 
 int
 fsvtyp_hammer2_partial(const char *blkdevs, char *label, size_t size)
 {
-	return (__fsvtyp_hammer2(blkdevs, label, size, 1));
+	return __fsvtyp_hammer2(blkdevs, label, size, 1);
 }
