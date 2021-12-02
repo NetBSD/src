@@ -1,4 +1,4 @@
-/*	$NetBSD: mount.c,v 1.105 2021/11/21 05:09:15 simonb Exp $	*/
+/*	$NetBSD: mount.c,v 1.106 2021/12/02 13:26:39 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1989, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1989, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)mount.c	8.25 (Berkeley) 5/8/95";
 #else
-__RCSID("$NetBSD: mount.c,v 1.105 2021/11/21 05:09:15 simonb Exp $");
+__RCSID("$NetBSD: mount.c,v 1.106 2021/12/02 13:26:39 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -348,7 +348,7 @@ hasopt(const char *mntopts, const char *option)
 			found = !negative;
 	}
 	free(optbuf);
-	return (found);
+	return found;
 }
 
 static int
@@ -376,7 +376,7 @@ mountfs(const char *vfstype, const char *spec, const char *name,
 
 	if (realpath(name, mntpath) == NULL) {
 		warn("realpath `%s'", name);
-		return (1);
+		return 1;
 	}
 
 	name = mntpath;
@@ -399,7 +399,7 @@ mountfs(const char *vfstype, const char *spec, const char *name,
 	else if (skipmounted) {
 		if ((numfs = getmntinfo(&sfp, MNT_WAIT)) == 0) {
 			warn("getmntinfo");
-			return (1);
+			return 1;
 		}
 		for(i = 0; i < numfs; i++) {
 			const char *mountedtype = sfp[i].f_fstypename;
@@ -427,7 +427,7 @@ mountfs(const char *vfstype, const char *spec, const char *name,
 					    (int)sizeof(sfp[i].f_fstypename),
 					    sfp[i].f_fstypename,
 					    "already mounted");
-				return (0);
+				return 0;
 			}
 		}
 	}
@@ -482,7 +482,7 @@ mountfs(const char *vfstype, const char *spec, const char *name,
 		if (optbuf)
 			free(optbuf);
 		free(argv);
-		return (1);
+		return 1;
 
 	case 0:					/* Child. */
 		if (debug)
@@ -543,22 +543,22 @@ mountfs(const char *vfstype, const char *spec, const char *name,
 
 		if (waitpid(pid, &status, 0) == -1) {
 			warn("waitpid");
-			return (1);
+			return 1;
 		}
 
 		if (WIFEXITED(status)) {
 			if (WEXITSTATUS(status) != 0)
-				return (WEXITSTATUS(status));
+				return WEXITSTATUS(status);
 		} else if (WIFSIGNALED(status)) {
 			warnx("%s: %s", name, strsignal(WTERMSIG(status)));
-			return (1);
+			return 1;
 		}
 
 		if (buf == NULL) {
 			if (verbose) {
 				if (statvfs(name, &sf) == -1) {
 					warn("statvfs %s", name);
-					return (1);
+					return 1;
 				}
 				prmount(&sf);
 			}
@@ -566,7 +566,7 @@ mountfs(const char *vfstype, const char *spec, const char *name,
 		break;
 	}
 
-	return (0);
+	return 0;
 }
 
 static void
@@ -628,13 +628,13 @@ getmntargs(struct statvfs *sfs, char *buf, size_t buflen)
 
 	if (mountfs(sfs->f_fstypename, sfs->f_mntfromname, sfs->f_mntonname, 0,
 	    "getargs", NULL, 0, buf, buflen))
-		return (0);
+		return 0;
 	else {
 		if (*buf == '\0')
-			return (0);
+			return 0;
 		if ((buf = strchr(buf, '\n')) != NULL)
 			*buf = '\0';
-		return (1);
+		return 1;
 	}
 }
 
@@ -648,8 +648,8 @@ getmntpt(const char *name)
 	for (i = 0; i < mntsize; i++)
 		if (strcmp(mntbuf[i].f_mntfromname, name) == 0 ||
 		    strcmp(mntbuf[i].f_mntonname, name) == 0)
-			return (&mntbuf[i]);
-	return (NULL);
+			return &mntbuf[i];
+	return NULL;
 }
 
 static void
@@ -736,19 +736,21 @@ getfslab(const char *str)
 
 		/* Silently fail here - mount call can display error */
 		if ((fd = open(buf, O_RDONLY)) == -1)
-			return (NULL);
+			return NULL;
 	}
 
 	/* Check to see if this is a wedge. */
 	if (ioctl(fd, DIOCGWEDGEINFO, &dkw) == 0) {
 		/* Yup, this is easy. */
-		(void) close(fd);
-		return (dkw.dkw_ptype);
+		close(fd);
+		if (dkw.dkw_ptype && *dkw.dkw_ptype)
+			return dkw.dkw_ptype;
+		return NULL;
 	}
 
 	if (ioctl(fd, DIOCGDINFO, &dl) == -1) {
 		(void) close(fd);
-		return (NULL);
+		return NULL;
 	}
 
 	(void) close(fd);
@@ -756,7 +758,7 @@ getfslab(const char *str)
 	part = str[strlen(str) - 1] - 'a';
 
 	if (part < 0 || part >= dl.d_npartitions)
-		return (NULL);
+		return NULL;
 
 	/* Return NULL for unknown types - caller can fall back to ffs */
 	if ((fstype = dl.d_partitions[part].p_fstype) >= FSMAXMOUNTNAMES)
@@ -764,7 +766,7 @@ getfslab(const char *str)
 	else
 		vfstype = mountnames[fstype];
 
-	return (vfstype);
+	return vfstype;
 }
 
 static void
