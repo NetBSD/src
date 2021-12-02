@@ -1,4 +1,4 @@
-/* $NetBSD: linux_systrace_args.c,v 1.3 2021/11/25 02:32:24 ryo Exp $ */
+/* $NetBSD: linux_systrace_args.c,v 1.4 2021/12/02 04:39:44 ryo Exp $ */
 
 /*
  * System call argument to DTrace register array conversion.
@@ -1598,6 +1598,16 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 		uarg[1] = (intptr_t) SCARG(p, status); /* int * */
 		iarg[2] = SCARG(p, options); /* int */
 		uarg[3] = (intptr_t) SCARG(p, rusage); /* struct rusage50 * */
+		*n_args = 4;
+		break;
+	}
+	/* linux_sys_prlimit64 */
+	case 261: {
+		const struct linux_sys_prlimit64_args *p = params;
+		iarg[0] = SCARG(p, pid); /* pid_t */
+		iarg[1] = SCARG(p, which); /* int */
+		uarg[2] = (intptr_t) SCARG(p, new_rlp); /* struct rlimit * */
+		uarg[3] = (intptr_t) SCARG(p, old_rlp); /* struct rlimit * */
 		*n_args = 4;
 		break;
 	}
@@ -4337,6 +4347,25 @@ systrace_entry_setargdesc(int sysnum, int ndx, char *desc, size_t descsz)
 			break;
 		};
 		break;
+	/* linux_sys_prlimit64 */
+	case 261:
+		switch(ndx) {
+		case 0:
+			p = "pid_t";
+			break;
+		case 1:
+			p = "int";
+			break;
+		case 2:
+			p = "struct rlimit *";
+			break;
+		case 3:
+			p = "struct rlimit *";
+			break;
+		default:
+			break;
+		};
+		break;
 	/* linux_sys_sendmmsg */
 	case 269:
 		switch(ndx) {
@@ -5308,6 +5337,11 @@ systrace_return_setargdesc(int sysnum, int ndx, char *desc, size_t descsz)
 		break;
 	/* linux_sys_wait4 */
 	case 260:
+		if (ndx == 0 || ndx == 1)
+			p = "int";
+		break;
+	/* linux_sys_prlimit64 */
+	case 261:
 		if (ndx == 0 || ndx == 1)
 			p = "int";
 		break;

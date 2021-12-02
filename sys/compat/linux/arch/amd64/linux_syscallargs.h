@@ -1,4 +1,4 @@
-/* $NetBSD: linux_syscallargs.h,v 1.75 2021/09/20 02:20:30 thorpej Exp $ */
+/* $NetBSD: linux_syscallargs.h,v 1.76 2021/12/02 04:39:44 ryo Exp $ */
 
 /*
  * System call argument lists.
@@ -1110,6 +1110,14 @@ struct linux_sys_recvmmsg_args {
 };
 check_syscall_args(linux_sys_recvmmsg)
 
+struct linux_sys_prlimit64_args {
+	syscallarg(pid_t) pid;
+	syscallarg(int) which;
+	syscallarg(struct rlimit *) new_rlp;
+	syscallarg(struct rlimit *) old_rlp;
+};
+check_syscall_args(linux_sys_prlimit64)
+
 struct linux_sys_sendmmsg_args {
 	syscallarg(int) s;
 	syscallarg(struct linux_mmsghdr *) msgvec;
@@ -1582,6 +1590,8 @@ int	linux_sys_preadv(struct lwp *, const struct linux_sys_preadv_args *, registe
 int	linux_sys_pwritev(struct lwp *, const struct linux_sys_pwritev_args *, register_t *);
 
 int	linux_sys_recvmmsg(struct lwp *, const struct linux_sys_recvmmsg_args *, register_t *);
+
+int	linux_sys_prlimit64(struct lwp *, const struct linux_sys_prlimit64_args *, register_t *);
 
 int	linux_sys_sendmmsg(struct lwp *, const struct linux_sys_sendmmsg_args *, register_t *);
 

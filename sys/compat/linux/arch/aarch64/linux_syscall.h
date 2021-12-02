@@ -1,4 +1,4 @@
-/* $NetBSD: linux_syscall.h,v 1.3 2021/11/25 02:32:24 ryo Exp $ */
+/* $NetBSD: linux_syscall.h,v 1.4 2021/12/02 04:39:44 ryo Exp $ */
 
 /*
  * System call numbers.
@@ -578,6 +578,9 @@
 
 /* syscall: "wait4" ret: "int" args: "int" "int *" "int" "struct rusage50 *" */
 #define	LINUX_SYS_wait4	260
+
+/* syscall: "prlimit64" ret: "int" args: "pid_t" "int" "struct rlimit *" "struct rlimit *" */
+#define	LINUX_SYS_prlimit64	261
 
 /* syscall: "sendmmsg" ret: "int" args: "int" "struct linux_mmsghdr *" "unsigned int" "unsigned int" */
 #define	LINUX_SYS_sendmmsg	269

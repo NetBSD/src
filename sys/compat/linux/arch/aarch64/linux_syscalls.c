@@ -1,4 +1,4 @@
-/* $NetBSD: linux_syscalls.c,v 1.3 2021/11/25 02:32:24 ryo Exp $ */
+/* $NetBSD: linux_syscalls.c,v 1.4 2021/12/02 04:39:44 ryo Exp $ */
 
 /*
  * System call names.
@@ -8,7 +8,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_syscalls.c,v 1.3 2021/11/25 02:32:24 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_syscalls.c,v 1.4 2021/12/02 04:39:44 ryo Exp $");
 
 #if defined(_KERNEL_OPT)
 #if defined(_KERNEL_OPT)
@@ -322,7 +322,7 @@ const char *const linux_syscallnames[] = {
 	/* 258 */	"#258 (unimplemented)",
 	/* 259 */	"#259 (unimplemented)",
 	/* 260 */	"wait4",
-	/* 261 */	"#261 (unimplemented prlimit64)",
+	/* 261 */	"prlimit64",
 	/* 262 */	"#262 (unimplemented fanotify_init)",
 	/* 263 */	"#263 (unimplemented fanotify_mark)",
 	/* 264 */	"#264 (unimplemented name_to_handle_at)",
@@ -860,7 +860,7 @@ const char *const altlinux_syscallnames[] = {
 	/* 258 */	NULL, /* unimplemented */
 	/* 259 */	NULL, /* unimplemented */
 	/* 260 */	NULL, /* wait4 */
-	/* 261 */	NULL, /* unimplemented prlimit64 */
+	/* 261 */	NULL, /* prlimit64 */
 	/* 262 */	NULL, /* unimplemented fanotify_init */
 	/* 263 */	NULL, /* unimplemented fanotify_mark */
 	/* 264 */	NULL, /* unimplemented name_to_handle_at */

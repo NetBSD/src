@@ -1,4 +1,4 @@
-/* $NetBSD: linux_syscall.h,v 1.114 2021/09/20 02:20:30 thorpej Exp $ */
+/* $NetBSD: linux_syscall.h,v 1.115 2021/12/02 04:39:44 ryo Exp $ */
 
 /*
  * System call numbers.
@@ -746,6 +746,9 @@
 
 /* syscall: "pwritev" ret: "int" args: "int" "const struct iovcnt *" "int" "unsigned long" "unsigned long" */
 #define	LINUX_SYS_pwritev	491
+
+/* syscall: "prlimit64" ret: "int" args: "pid_t" "int" "struct rlimit *" "struct rlimit *" */
+#define	LINUX_SYS_prlimit64	496
 
 /* syscall: "accept4" ret: "int" args: "int" "struct osockaddr *" "int *" "int" */
 #define	LINUX_SYS_accept4	502

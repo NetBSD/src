@@ -1,4 +1,4 @@
-/* $NetBSD: linux_sysent.c,v 1.3 2021/11/25 02:32:24 ryo Exp $ */
+/* $NetBSD: linux_sysent.c,v 1.4 2021/12/02 04:39:44 ryo Exp $ */
 
 /*
  * System call switch table.
@@ -8,7 +8,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_sysent.c,v 1.3 2021/11/25 02:32:24 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_sysent.c,v 1.4 2021/12/02 04:39:44 ryo Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_sysv.h"
@@ -1170,8 +1170,10 @@ struct sysent linux_sysent[] = {
 		.sy_call = (sy_call_t *)linux_sys_wait4
 	},		/* 260 = wait4 */
 	{
-		.sy_call = linux_sys_nosys,
-	},		/* 261 = filler */
+		ns(struct linux_sys_prlimit64_args),
+		.sy_flags = SYCALL_ARG_PTR,
+		.sy_call = (sy_call_t *)linux_sys_prlimit64
+	},		/* 261 = prlimit64 */
 	{
 		.sy_call = linux_sys_nosys,
 	},		/* 262 = filler */
