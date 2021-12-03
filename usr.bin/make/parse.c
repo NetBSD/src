@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.566 2021/12/03 23:13:29 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.567 2021/12/03 23:29:30 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -109,7 +109,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.566 2021/12/03 23:13:29 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.567 2021/12/03 23:29:30 rillig Exp $");
 
 /* types and constants */
 
@@ -2123,7 +2123,7 @@ Parse_AddIncludeDir(const char *dir)
  * line options.
  */
 static void
-IncludeFile(char *file, bool isSystem, bool depinc, bool silent)
+IncludeFile(const char *file, bool isSystem, bool depinc, bool silent)
 {
 	struct loadedfile *lf;
 	char *fullname;		/* full pathname of file */
@@ -2237,8 +2237,8 @@ IncludeFile(char *file, bool isSystem, bool depinc, bool silent)
 static void
 ParseInclude(char *directive)
 {
-	char endc;		/* the character which ends the file spec */
-	char *p, *xfile;
+	char endc;		/* '>' or '"' */
+	char *p;
 	bool silent = directive[0] != 'i';
 	FStr file;
 
@@ -2269,11 +2269,15 @@ ParseInclude(char *directive)
 
 	*p = '\0';
 
-	(void)Var_Subst(file.str, SCOPE_CMDLINE, VARE_WANTRES, &xfile);
-	/* TODO: handle errors */
+	if (strchr(file.str, '$') != NULL) {
+		char *xfile;
+		Var_Subst(file.str, SCOPE_CMDLINE, VARE_WANTRES, &xfile);
+		/* TODO: handle errors */
+		file = FStr_InitOwn(xfile);
+	}
 
-	IncludeFile(xfile, endc == '>', directive[0] == 'd', silent);
-	free(xfile);
+	IncludeFile(file.str, endc == '>', directive[0] == 'd', silent);
+	FStr_Done(&file);
 }
 
 /*
