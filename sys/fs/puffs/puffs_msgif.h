@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_msgif.h,v 1.86 2021/03/08 17:34:30 christos Exp $	*/
+/*	$NetBSD: puffs_msgif.h,v 1.87 2021/12/03 13:08:10 pho Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -705,7 +705,7 @@ struct puffs_vnmsg_pathconf {
 	struct puffs_req	pvn_pr;
 
 	int			pvnr_name;		/* OUT	*/
-	register_t		pvnr_retval;		/* IN	*/
+	__register_t		pvnr_retval;		/* IN	*/
 };
 
 struct puffs_vnmsg_advlock {
