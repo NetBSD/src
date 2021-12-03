@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs.h,v 1.129 2021/12/03 14:00:59 pho Exp $	*/
+/*	$NetBSD: puffs.h,v 1.130 2021/12/03 17:12:17 pho Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -503,7 +503,7 @@ void			puffs_setroot(struct puffs_usermount *,
 				      struct puffs_node *);
 struct puffs_node 	*puffs_getroot(struct puffs_usermount *);
 void			puffs_setrootinfo(struct puffs_usermount *,
-					  enum vtype, voff_t, dev_t); 
+					  enum vtype, size_t, dev_t); 
 
 void			*puffs_getspecific(struct puffs_usermount *);
 void			puffs_setspecific(struct puffs_usermount *, void *);

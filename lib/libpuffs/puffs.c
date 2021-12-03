@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs.c,v 1.126 2021/12/03 14:00:59 pho Exp $	*/
+/*	$NetBSD: puffs.c,v 1.127 2021/12/03 17:12:17 pho Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: puffs.c,v 1.126 2021/12/03 14:00:59 pho Exp $");
+__RCSID("$NetBSD: puffs.c,v 1.127 2021/12/03 17:12:17 pho Exp $");
 #endif /* !lint */
 
 #include <sys/param.h>
@@ -265,7 +265,7 @@ puffs_getroot(struct puffs_usermount *pu)
 
 void
 puffs_setrootinfo(struct puffs_usermount *pu, enum vtype vt,
-	voff_t vsize, dev_t rdev)
+	size_t vsize, dev_t rdev)
 {
 	struct puffs_kargs *pargs = pu->pu_kargp;
 
@@ -275,7 +275,7 @@ puffs_setrootinfo(struct puffs_usermount *pu, enum vtype vt,
 	}
 
 	pargs->pa_root_vtype = vt;
-	pargs->pa_root_vsize = vsize;
+	pargs->pa_root_vsize = (voff_t)vsize;
 	pargs->pa_root_rdev = rdev;
 }
 
