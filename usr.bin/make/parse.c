@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.567 2021/12/03 23:29:30 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.568 2021/12/03 23:37:30 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -109,7 +109,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.567 2021/12/03 23:29:30 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.568 2021/12/03 23:37:30 rillig Exp $");
 
 /* types and constants */
 
@@ -2299,8 +2299,8 @@ SetFilenameVars(const char *filename, const char *dirvar, const char *filevar)
 		basename = slash + 1;
 	}
 
-	Global_SetExpand(dirvar, dirname.str);
-	Global_SetExpand(filevar, basename);
+	Global_Set(dirvar, dirname.str);
+	Global_Set(filevar, basename);
 
 	DEBUG5(PARSE, "%s: ${%s} = `%s' ${%s} = `%s'\n",
 	    __func__, dirvar, dirname.str, filevar, basename);
