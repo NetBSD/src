@@ -166,7 +166,7 @@ hwaddr_aton(unsigned char *buffer, const char *addr)
 			errno = EINVAL;
 			return 0;
 		}
-		/* Ensure that next data is EOL or a seperator with data */
+		/* Ensure that next data is EOL or a separator with data */
 		if (!(*p == '\0' || (*p == ':' && *(p + 1) != '\0'))) {
 			errno = EINVAL;
 			return 0;

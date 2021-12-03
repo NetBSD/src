@@ -1,4 +1,4 @@
-/* $Id: imx23_olinuxino_machdep.c,v 1.12 2021/08/10 06:47:48 skrll Exp $ */
+/* $Id: imx23_olinuxino_machdep.c,v 1.13 2021/12/03 13:27:38 andvar Exp $ */
 
 /*
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -320,7 +320,7 @@ power_vddio_from_dcdc(int target, int brownout)
 {
         uint32_t tmp_r;
 
-        /* BO_OFFSET must be withing 2700mV - 3475mV */
+        /* BO_OFFSET must be within 2700mV - 3475mV */
         if (brownout > 3475)
                 brownout = 3475;
         else if (brownout < 2700)

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.14 2014/07/15 13:27:58 christos Exp $
+#	$NetBSD: Makefile,v 1.15 2021/12/03 13:27:38 andvar Exp $
 #	from: @(#)Makefile	8.2 (Berkeley) 5/23/94
 
 SECTION=reference/ref3
@@ -16,7 +16,7 @@ CLEANFILES+= ${CEXAMPLES} intro.2.tbl
 
 #
 # this section formats C input source into nice troffable (or nroffable)
-# versions.  It uses the capabilites of "vgrind", which sets keywords in
+# versions.  It uses the capabilities of "vgrind", which sets keywords in
 # bold font, and comments in italics.
 #
 
