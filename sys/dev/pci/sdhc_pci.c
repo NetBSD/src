@@ -1,4 +1,4 @@
-/*	$NetBSD: sdhc_pci.c,v 1.14 2017/04/27 10:01:54 msaitoh Exp $	*/
+/*	$NetBSD: sdhc_pci.c,v 1.14.2.1 2021/12/03 19:31:19 martin Exp $	*/
 /*	$OpenBSD: sdhc_pci.c,v 1.7 2007/10/30 18:13:45 chl Exp $	*/
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdhc_pci.c,v 1.14 2017/04/27 10:01:54 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdhc_pci.c,v 1.14.2.1 2021/12/03 19:31:19 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_sdmmc.h"
@@ -250,6 +250,7 @@ sdhc_pci_attach(device_t parent, device_t self, void *aux)
 	bus_space_handle_t ioh;
 	bus_size_t size;
 	uint32_t flags;
+	int width;
 	char intrbuf[PCI_INTRSTR_LEN];
 
 	sc->sc.sc_dev = self;
@@ -313,13 +314,23 @@ sdhc_pci_attach(device_t parent, device_t self, void *aux)
 	if ((PCI_INTERFACE(pa->pa_class) == SDHC_PCI_INTERFACE_DMA))
 		SET(sc->sc.sc_flags, SDHC_FLAG_USE_DMA);
 
-	/* XXX: handle 64-bit BARs */
 	cnt = 0;
 	for (reg = SDHC_PCI_BAR_START + SDHC_PCI_FIRST_BAR(slotinfo) *
 		 sizeof(uint32_t);
 	     reg < SDHC_PCI_BAR_END && nslots > 0;
-	     reg += sizeof(uint32_t), nslots--) {
-		if (pci_mapreg_map(pa, reg, PCI_MAPREG_TYPE_MEM, 0,
+	     reg += width, nslots--) {
+		pcireg_t type;
+
+		type = pci_mapreg_type(pa->pa_pc, pa->pa_tag, reg);
+		if (type == PCI_MAPREG_TYPE_IO)
+			break;
+		else if (PCI_MAPREG_MEM_TYPE(type)
+		    == PCI_MAPREG_MEM_TYPE_64BIT)
+			width = 8;
+		else
+			width = 4;
+
+		if (pci_mapreg_map(pa, reg, type, 0,
 		    &iot, &ioh, NULL, &size)) {
 			continue;
 		}

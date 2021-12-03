@@ -1,4 +1,4 @@
-/*	$NetBSD: sdhc.c,v 1.100.4.2 2020/08/05 16:14:25 martin Exp $	*/
+/*	$NetBSD: sdhc.c,v 1.100.4.3 2021/12/03 19:31:19 martin Exp $	*/
 /*	$OpenBSD: sdhc.c,v 1.25 2009/01/13 19:44:20 grange Exp $	*/
 
 /*
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdhc.c,v 1.100.4.2 2020/08/05 16:14:25 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdhc.c,v 1.100.4.3 2021/12/03 19:31:19 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_sdmmc.h"
@@ -136,7 +136,7 @@ hwrite1(struct sdhc_host *hp, bus_size_t o, uint8_t val)
 		const size_t shift = 8 * (o & 3);
 		o &= -4;
 		uint32_t tmp = bus_space_read_4(hp->iot, hp->ioh, o);
-		tmp = (val << shift) | (tmp & ~(0xff << shift));
+		tmp = (val << shift) | (tmp & ~(0xffU << shift));
 		bus_space_write_4(hp->iot, hp->ioh, o, tmp);
 	}
 }
@@ -151,7 +151,7 @@ hwrite2(struct sdhc_host *hp, bus_size_t o, uint16_t val)
 		const size_t shift = 8 * (o & 2);
 		o &= -4;
 		uint32_t tmp = bus_space_read_4(hp->iot, hp->ioh, o);
-		tmp = (val << shift) | (tmp & ~(0xffff << shift));
+		tmp = (val << shift) | (tmp & ~(0xffffU << shift));
 		bus_space_write_4(hp->iot, hp->ioh, o, tmp);
 	}
 }
@@ -395,7 +395,7 @@ sdhc_host_found(struct sdhc_softc *sc, bus_space_tag_t iot,
 
 	/*
 	 * Use DMA if the host system and the controller support it.
-	 * Suports integrated or external DMA egine, with or without
+	 * Supports integrated or external DMA egine, with or without
 	 * SDHC_DMA_ENABLE in the command.
 	 */
 	if (ISSET(sc->sc_flags, SDHC_FLAG_FORCE_DMA) ||
