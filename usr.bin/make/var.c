@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.956 2021/12/03 18:08:51 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.957 2021/12/03 18:23:03 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -140,7 +140,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.956 2021/12/03 18:08:51 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.957 2021/12/03 18:23:03 rillig Exp $");
 
 /*
  * Variables are defined using one of the VAR=value assignments.  Their
@@ -2139,6 +2139,24 @@ IsEscapedModifierPart(const char *p, char delim,
 }
 
 /*
+ * In a part of a modifier, parse a subexpression and evaluate it.
+ */
+static void
+ParseModifierPartExpr(const char **pp, LazyBuf *part, const ModChain *ch,
+		      VarEvalMode emode)
+{
+	const char *p = *pp;
+	FStr nested_val;
+
+	(void)Var_Parse(&p, ch->expr->scope,
+	    VarEvalMode_WithoutKeepDollar(emode), &nested_val);
+	/* TODO: handle errors */
+	LazyBuf_AddStr(part, nested_val.str);
+	FStr_Done(&nested_val);
+	*pp = p;
+}
+
+/*
  * In a part of a modifier, parse a subexpression but don't evaluate it.
  *
  * XXX: This whole block is very similar to Var_Parse with VARE_PARSE_ONLY.
@@ -2228,21 +2246,10 @@ ParseModifierPartSubst(
 			continue;
 		}
 
-		if (VarEvalMode_ShouldEval(emode)) {
-			/* Nested variable, evaluated */
-			const char *nested_p = p;
-			FStr nested_val;
-
-			(void)Var_Parse(&nested_p, ch->expr->scope,
-			    VarEvalMode_WithoutKeepDollar(emode), &nested_val);
-			/* TODO: handle errors */
-			LazyBuf_AddStr(part, nested_val.str);
-			FStr_Done(&nested_val);
-			p += nested_p - p;
-			continue;
-		}
-
-		ParseModifierPartDollar(&p, part);
+		if (VarEvalMode_ShouldEval(emode))
+			ParseModifierPartExpr(&p, part, ch, emode);
+		else
+			ParseModifierPartDollar(&p, part);
 	}
 
 	if (*p != delim) {
