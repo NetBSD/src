@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.955 2021/11/28 22:58:55 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.956 2021/12/03 18:08:51 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -140,7 +140,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.955 2021/11/28 22:58:55 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.956 2021/12/03 18:08:51 rillig Exp $");
 
 /*
  * Variables are defined using one of the VAR=value assignments.  Their
@@ -2138,6 +2138,45 @@ IsEscapedModifierPart(const char *p, char delim,
 	return p[1] == '&' && subst != NULL;
 }
 
+/*
+ * In a part of a modifier, parse a subexpression but don't evaluate it.
+ *
+ * XXX: This whole block is very similar to Var_Parse with VARE_PARSE_ONLY.
+ * There may be subtle edge cases though that are not yet covered in the unit
+ * tests and that are parsed differently, depending on whether they are
+ * evaluated or not.
+ *
+ * This subtle difference is not documented in the manual page, neither is
+ * the difference between parsing ':D' and ':M' documented.  No code should
+ * ever depend on these details, but who knows.
+ */
+static void
+ParseModifierPartDollar(const char **pp, LazyBuf *part)
+{
+	const char *p = *pp;
+	const char *start = *pp;
+
+	if (p[1] == '(' || p[1] == '{') {
+		char startc = p[1];
+		int endc = startc == '(' ? ')' : '}';
+		int depth = 1;
+
+		for (p += 2; *p != '\0' && depth > 0; p++) {
+			if (p[-1] != '\\') {
+				if (*p == startc)
+					depth++;
+				if (*p == endc)
+					depth--;
+			}
+		}
+		LazyBuf_AddBytesBetween(part, start, p);
+		*pp = p;
+	} else {
+		LazyBuf_Add(part, *start);
+		*pp = p + 1;
+	}
+}
+
 /* See ParseModifierPart for the documentation. */
 static VarParseResult
 ParseModifierPartSubst(
@@ -2164,7 +2203,6 @@ ParseModifierPartSubst(
 	 * variable expressions on the way.
 	 */
 	while (*p != '\0' && *p != delim) {
-		const char *varstart;
 
 		if (IsEscapedModifierPart(p, delim, subst)) {
 			LazyBuf_Add(part, p[1]);
@@ -2204,43 +2242,7 @@ ParseModifierPartSubst(
 			continue;
 		}
 
-		/*
-		 * XXX: This whole block is very similar to Var_Parse without
-		 * VARE_WANTRES.  There may be subtle edge cases
-		 * though that are not yet covered in the unit tests and that
-		 * are parsed differently, depending on whether they are
-		 * evaluated or not.
-		 *
-		 * This subtle difference is not documented in the manual
-		 * page, neither is the difference between parsing :D and
-		 * :M documented. No code should ever depend on these
-		 * details, but who knows.
-		 */
-
-		varstart = p;	/* Nested variable, only parsed */
-		if (p[1] == '(' || p[1] == '{') {
-			/*
-			 * Find the end of this variable reference
-			 * and suck it in without further ado.
-			 * It will be interpreted later.
-			 */
-			char startc = p[1];
-			int endc = startc == '(' ? ')' : '}';
-			int depth = 1;
-
-			for (p += 2; *p != '\0' && depth > 0; p++) {
-				if (p[-1] != '\\') {
-					if (*p == startc)
-						depth++;
-					if (*p == endc)
-						depth--;
-				}
-			}
-			LazyBuf_AddBytesBetween(part, varstart, p);
-		} else {
-			LazyBuf_Add(part, *varstart);
-			p++;
-		}
+		ParseModifierPartDollar(&p, part);
 	}
 
 	if (*p != delim) {
