@@ -1,4 +1,4 @@
-.\"	$NetBSD: puffs.3,v 1.64 2019/12/27 10:13:59 msaitoh Exp $
+.\"	$NetBSD: puffs.3,v 1.65 2021/12/03 14:00:59 pho Exp $
 .\"
 .\" Copyright (c) 2006, 2007, 2008 Antti Kantee.  All rights reserved.
 .\"
@@ -55,7 +55,7 @@
 .Fn puffs_setroot "struct puffs_usermount *pu" "struct puffs_node *node"
 .Ft void
 .Fo puffs_setrootinfo
-.Fa "struct puffs_usermount *pu" "enum vtype vt" "vsize_t vsize" "dev_t rdev"
+.Fa "struct puffs_usermount *pu" "enum vtype vt" "voff_t vsize" "dev_t rdev"
 .Fc
 .Ft struct puffs_node *
 .Fn puffs_getroot "struct puffs_usermount *pu"

@@ -1,4 +1,4 @@
-.\"	$NetBSD: puffs_ops.3,v 1.47 2021/08/04 09:31:25 andvar Exp $
+.\"	$NetBSD: puffs_ops.3,v 1.48 2021/12/03 14:00:59 pho Exp $
 .\"
 .\" Copyright (c) 2007 Antti Kantee.  All rights reserved.
 .\"
@@ -120,7 +120,7 @@
 .Ft int
 .Fo puffs_node_pathconf
 .Fa "struct puffs_usermount *pu" "puffs_cookie_t opc" "int name"
-.Fa "register_t *retval"
+.Fa "__register_t *retval"
 .Fc
 .Ft int
 .Fo puffs_node_advlock
