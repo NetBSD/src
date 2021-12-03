@@ -1,4 +1,4 @@
-/*	$NetBSD: pci.c,v 1.154.4.2 2019/11/06 09:52:20 martin Exp $	*/
+/*	$NetBSD: pci.c,v 1.154.4.3 2021/12/03 19:40:38 martin Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997, 1998
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci.c,v 1.154.4.2 2019/11/06 09:52:20 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci.c,v 1.154.4.3 2021/12/03 19:40:38 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pci.h"
@@ -708,7 +708,7 @@ pci_enumerate_bus(struct pci_softc *sc, const int *locators,
 		if (pci_get_capability(ppbpc, ppbtag, PCI_CAP_PCIEXPRESS,
 		    &pciecap, &capreg) != 0) {
 			switch (PCIE_XCAP_TYPE(capreg)) {
-			case PCIE_XCAP_TYPE_ROOT:
+			case PCIE_XCAP_TYPE_RP:
 			case PCIE_XCAP_TYPE_DOWN:
 			case PCIE_XCAP_TYPE_PCI2PCIE:
 				downstream_port = true;
@@ -934,7 +934,7 @@ pci_conf_capture(pci_chipset_tag_t pc, pcitag_t tag,
 	/* For MSI */
 	if (pci_get_capability(pc, tag, PCI_CAP_MSI, &off, NULL) != 0) {
 		bool bit64, pvmask;
-		
+
 		pcs->msi_ctl = pci_conf_read(pc, tag, off + PCI_MSI_CTL);
 
 		bit64 = pcs->msi_ctl & PCI_MSI_CTL_64BIT_ADDR;

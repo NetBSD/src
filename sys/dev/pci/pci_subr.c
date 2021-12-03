@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_subr.c,v 1.215.2.4 2020/07/26 10:46:14 martin Exp $	*/
+/*	$NetBSD: pci_subr.c,v 1.215.2.5 2021/12/03 19:40:38 martin Exp $	*/
 
 /*
  * Copyright (c) 1997 Zubin D. Dittia.  All rights reserved.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.215.2.4 2020/07/26 10:46:14 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.215.2.5 2021/12/03 19:40:38 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pci.h"
@@ -129,7 +129,15 @@ static const struct pci_class pci_interface_sata[] = {
 static const struct pci_class pci_interface_nvm[] = {
 	{ "vendor specific",	PCI_INTERFACE_NVM_VND,		NULL,	},
 	{ "NVMHCI 1.0",		PCI_INTERFACE_NVM_NVMHCI10,	NULL,	},
-	{ "NVMe",		PCI_INTERFACE_NVM_NVME,		NULL,	},
+	{ "NVMe I/O",		PCI_INTERFACE_NVM_NVME_IO,	NULL,	},
+	{ "NVMe admin",		PCI_INTERFACE_NVM_NVME_ADMIN,	NULL,	},
+	{ NULL,			0,				NULL,	},
+};
+
+/* UFS programming interface */
+static const struct pci_class pci_interface_ufs[] = {
+	{ "vendor specific",	PCI_INTERFACE_UFS_VND,		NULL,	},
+	{ "UFSHCI",		PCI_INTERFACE_UFS_UFSHCI,	NULL,	},
 	{ NULL,			0,				NULL,	},
 };
 
@@ -147,6 +155,8 @@ static const struct pci_class pci_subclass_mass_storage[] = {
 	{ "SAS",		PCI_SUBCLASS_MASS_STORAGE_SAS,	NULL,	},
 	{ "Flash",		PCI_SUBCLASS_MASS_STORAGE_NVM,
 	  pci_interface_nvm,	},
+	{ "UFS",		PCI_SUBCLASS_MASS_STORAGE_UFS,
+	  pci_interface_ufs,	},
 	{ "miscellaneous",	PCI_SUBCLASS_MASS_STORAGE_MISC,	NULL,	},
 	{ NULL,			0,				NULL,	},
 };
@@ -163,6 +173,8 @@ static const struct pci_class pci_subclass_network[] = {
 	{ "ISDN",		PCI_SUBCLASS_NETWORK_ISDN,	NULL,	},
 	{ "WorldFip",		PCI_SUBCLASS_NETWORK_WORLDFIP,	NULL,	},
 	{ "PCMIG Multi Computing", PCI_SUBCLASS_NETWORK_PCIMGMULTICOMP, NULL, },
+	{ "InfiniBand",		PCI_SUBCLASS_NETWORK_INFINIBAND, NULL, },
+	{ "Host fabric",	PCI_SUBCLASS_NETWORK_HFC,	NULL, },
 	{ "miscellaneous",	PCI_SUBCLASS_NETWORK_MISC,	NULL,	},
 	{ NULL,			0,				NULL,	},
 };
@@ -191,11 +203,20 @@ static const struct pci_class pci_subclass_display[] = {
  * Class 0x04.
  * Multimedia device.
  */
+
+/* HD Audio programming interface */
+static const struct pci_class pci_interface_hda[] = {
+	{ "HD Audio 1.0",	PCI_INTERFACE_HDAUDIO,		NULL,	},
+	{ "HD Audio 1.0 + vendor ext",	PCI_INTERFACE_HDAUDIO_VND, NULL, },
+	{ NULL,			0,				NULL,	},
+};
+
 static const struct pci_class pci_subclass_multimedia[] = {
 	{ "video",		PCI_SUBCLASS_MULTIMEDIA_VIDEO,	NULL,	},
 	{ "audio",		PCI_SUBCLASS_MULTIMEDIA_AUDIO,	NULL,	},
 	{ "telephony",		PCI_SUBCLASS_MULTIMEDIA_TELEPHONY, NULL,},
-	{ "mixed mode",		PCI_SUBCLASS_MULTIMEDIA_HDAUDIO, NULL, },
+	{ "mixed mode",		PCI_SUBCLASS_MULTIMEDIA_HDAUDIO,
+	  pci_interface_hda, },
 	{ "miscellaneous",	PCI_SUBCLASS_MULTIMEDIA_MISC,	NULL,	},
 	{ NULL,			0,				NULL,	},
 };
@@ -431,6 +452,7 @@ static const struct pci_class pci_interface_usb[] = {
 	{ "OHCI",		PCI_INTERFACE_USB_OHCI,		NULL,	},
 	{ "EHCI",		PCI_INTERFACE_USB_EHCI,		NULL,	},
 	{ "xHCI",		PCI_INTERFACE_USB_XHCI,		NULL,	},
+	{ "USB4 HCI",		PCI_INTERFACE_USB_USB4HCI,	NULL,	},
 	{ "other HC",		PCI_INTERFACE_USB_OTHERHC,	NULL,	},
 	{ "device",		PCI_INTERFACE_USB_DEVICE,	NULL,	},
 	{ NULL,			0,				NULL,	},
@@ -460,6 +482,7 @@ static const struct pci_class pci_subclass_serialbus[] = {
 	  pci_interface_ipmi, },
 	{ "SERCOS",		PCI_SUBCLASS_SERIALBUS_SERCOS,	NULL,	},
 	{ "CANbus",		PCI_SUBCLASS_SERIALBUS_CANBUS,	NULL,	},
+	{ "MIPI I3C",		PCI_SUBCLASS_SERIALBUS_MIPI_I3C, NULL,	},
 	{ "miscellaneous",	PCI_SUBCLASS_SERIALBUS_MISC,	NULL,	},
 	{ NULL,			0,				NULL,	},
 };
@@ -476,6 +499,8 @@ static const struct pci_class pci_subclass_wireless[] = {
 	{ "broadband",		PCI_SUBCLASS_WIRELESS_BROADBAND, NULL,	},
 	{ "802.11a (5 GHz)",	PCI_SUBCLASS_WIRELESS_802_11A,	NULL,	},
 	{ "802.11b (2.4 GHz)",	PCI_SUBCLASS_WIRELESS_802_11B,	NULL,	},
+	{ "Cellular",		PCI_SUBCLASS_WIRELESS_CELL,	NULL,	},
+	{ "Cellular + Ethernet", PCI_SUBCLASS_WIRELESS_CELL_E,	NULL,	},
 	{ "miscellaneous",	PCI_SUBCLASS_WIRELESS_MISC,	NULL,	},
 	{ NULL,			0,				NULL,	},
 };
@@ -843,7 +868,7 @@ pci_conf_print_common(
 
 		if (pci_conf_find_cap(regs, PCI_CAP_PCIEXPRESS, &pcie_capoff)) {
 			reg = regs[o2i(pcie_capoff + PCIE_XCAP)];
-			if (PCIE_XCAP_TYPE(reg) == PCIE_XCAP_TYPE_ROOT_EVNTC)
+			if (PCIE_XCAP_TYPE(reg) == PCIE_XCAP_TYPE_RC_EVNTC)
 				subclass = PCI_SUBCLASS_SYSTEM_RCEC;
 		}
 	}
@@ -1697,7 +1722,9 @@ pci_print_pcie_compl_timeout(uint32_t val)
 	}
 }
 
-static const char * const pcie_linkspeeds[] = {"2.5", "5.0", "8.0", "16.0"};
+static const char * const pcie_linkspeeds[] = {
+	"2.5", "5.0", "8.0", "16.0", "32.0"
+};
 
 /*
  * Print link speed. This function is used for the following register bits:
@@ -1788,7 +1815,7 @@ pci_conf_print_pcie_cap(const pcireg_t *regs, int capoff)
 		printf("Legacy PCI Express Endpoint device\n");
 		check_upstreamport = true;
 		break;
-	case PCIE_XCAP_TYPE_ROOT:	/* 0x4 */
+	case PCIE_XCAP_TYPE_RP:		/* 0x4 */
 		printf("Root Port of PCI Express Root Complex\n");
 		check_slot = true;
 		break;
@@ -1809,10 +1836,10 @@ pci_conf_print_pcie_cap(const pcireg_t *regs, int capoff)
 		/* Upstream port is not PCIe */
 		check_slot = true;
 		break;
-	case PCIE_XCAP_TYPE_ROOT_INTEP:	/* 0x9 */
+	case PCIE_XCAP_TYPE_RCIEP:	/* 0x9 */
 		printf("Root Complex Integrated Endpoint\n");
 		break;
-	case PCIE_XCAP_TYPE_ROOT_EVNTC:	/* 0xa */
+	case PCIE_XCAP_TYPE_RC_EVNTC:	/* 0xa */
 		printf("Root Complex Event Collector\n");
 		break;
 	default:
@@ -2575,9 +2602,7 @@ pci_conf_print_ea_cap(const pcireg_t *regs, int capoff)
 		printf("        range: 0x%016" PRIx64 "-0x%016" PRIx64
 			    "\n", base, base + offset);
 
-		entoff += 4;
-		entoff += baseis64 ? 8 : 4;
-		entoff += offsetis64 ? 8 : 4;
+		entoff += 4 + (4 * entry_size);
 	}
 }
 
@@ -2692,7 +2717,7 @@ pci_conf_print_caplist(
 
 		/*
 		 * The type was found. Search capability list again and
-		 * print all capabilities that the capabiliy type is
+		 * print all capabilities that the capability type is
 		 * the same. This is required because some capabilities
 		 * appear multiple times (e.g. HyperTransport capability).
 		 */
@@ -2859,8 +2884,8 @@ pci_conf_print_aer_cap(const pcireg_t *regs, int extcapoff)
 	    extcapoff + PCI_AER_ROOTERR_CMD);
 
 	switch (pcie_devtype) {
-	case PCIE_XCAP_TYPE_ROOT: /* Root Port of PCI Express Root Complex */
-	case PCIE_XCAP_TYPE_ROOT_EVNTC:	/* Root Complex Event Collector */
+	case PCIE_XCAP_TYPE_RP:	/* Root Port of PCI Express Root Complex */
+	case PCIE_XCAP_TYPE_RC_EVNTC:	/* Root Complex Event Collector */
 		reg = regs[o2i(extcapoff + PCI_AER_ROOTERR_CMD)];
 		printf("    Root Error Command register: 0x%08x\n", reg);
 		pci_conf_print_aer_cap_rooterr_cmd(reg);
@@ -3496,7 +3521,7 @@ pci_conf_print_multicast_cap(const pcireg_t *regs, int extcapoff)
 	/* Endpoint Only */
 	n = __SHIFTOUT(reg, PCI_MCAST_CAP_WINSIZEREQ);
 	if (n > 0)
-		printf("      Windw Size Requested: %d\n", 1 << (n - 1));
+		printf("      Window Size Requested: %d\n", 1 << (n - 1));
 
 	onoff("ECRC Regeneration Supported", reg, PCI_MCAST_CAP_ECRCREGEN);
 
@@ -3680,7 +3705,7 @@ pci_conf_print_dpa_cap(const pcireg_t *regs, int extcapoff)
 	    (unsigned int)__SHIFTOUT(reg, PCI_DPA_CAP_XLCY1));
 
 	reg = regs[o2i(extcapoff + PCI_DPA_LATIND)];
-	printf("    Latency Indicatior register: 0x%08x\n", reg);
+	printf("    Latency Indicator register: 0x%08x\n", reg);
 
 	reg = regs[o2i(extcapoff + PCI_DPA_CS)];
 	printf("    Status register: 0x%04x\n", reg & 0xffff);
@@ -3726,7 +3751,7 @@ pci_conf_print_tph_req_cap(const pcireg_t *regs, int extcapoff)
 	onoff("No ST Mode Supported", reg, PCI_TPH_REQ_CAP_NOST);
 	onoff("Interrupt Vector Mode Supported", reg, PCI_TPH_REQ_CAP_INTVEC);
 	onoff("Device Specific Mode Supported", reg, PCI_TPH_REQ_CAP_DEVSPEC);
-	onoff("Extend TPH Reqester Supported", reg, PCI_TPH_REQ_CAP_XTPHREQ);
+	onoff("Extend TPH Requester Supported", reg, PCI_TPH_REQ_CAP_XTPHREQ);
 	sttbloc = __SHIFTOUT(reg, PCI_TPH_REQ_CAP_STTBLLOC);
 	printf("      ST Table Location: %s\n",
 	    pci_conf_print_tph_req_cap_sttabloc(sttbloc));
@@ -4079,7 +4104,7 @@ pci_conf_print_l1pm_cap(const pcireg_t *regs, int extcapoff)
 	if (pci_conf_find_cap(regs, PCI_CAP_PCIEXPRESS, &pcie_capoff)) {
 		uint32_t t = regs[o2i(pcie_capoff)];
 
-		if ((t == PCIE_XCAP_TYPE_ROOT) || (t == PCIE_XCAP_TYPE_DOWN))
+		if ((t == PCIE_XCAP_TYPE_RP) || (t == PCIE_XCAP_TYPE_DOWN))
 			onoff("Link Activation Supported", reg,
 			    PCI_L1PM_CAP_LA);
 	}
@@ -4132,7 +4157,7 @@ pci_conf_print_ptm_cap(const pcireg_t *regs, int extcapoff)
 	pcireg_t reg;
 	uint32_t val;
 
-	printf("\n  Precision Time Management\n");
+	printf("\n  Precision Time Measurement\n");
 
 	reg = regs[o2i(extcapoff + PCI_PTM_CAP)];
 	printf("    PTM Capability register: 0x%08x\n", reg);
@@ -4269,7 +4294,7 @@ static struct {
 	  pci_conf_print_dpc_cap },
 	{ PCI_EXTCAP_L1PM,	"L1 PM Substates",
 	  pci_conf_print_l1pm_cap },
-	{ PCI_EXTCAP_PTM,	"Precision Time Management",
+	{ PCI_EXTCAP_PTM,	"Precision Time Measurement",
 	  pci_conf_print_ptm_cap },
 	{ PCI_EXTCAP_MPCIE,	"M-PCIe",
 	  NULL },
@@ -4281,9 +4306,9 @@ static struct {
 	  NULL },
 	{ PCI_EXTCAP_VF_RESIZBAR, "VF Resizable BARs",
 	  NULL },
-	{ PCI_EXTCAP_DLF, "Data link Feature", pci_conf_print_dlf_cap },
+	{ PCI_EXTCAP_DLF,	"Data link Feature", pci_conf_print_dlf_cap },
 	{ PCI_EXTCAP_PYSLAY_16GT, "Physical Layer 16.0 GT/s", NULL },
-	{ 0x27, "unknown", NULL },
+	{ PCI_EXTCAP_LMR,	"Lane Margining at the Receiver", NULL },
 	{ PCI_EXTCAP_HIERARCHYID, "Hierarchy ID",
 	  NULL },
 	{ PCI_EXTCAP_NPEM,	"Native PCIe Enclosure Management",
@@ -4366,7 +4391,7 @@ pci_conf_print_extcaplist(
 
 		/*
 		 * The type was found. Search capability list again and
-		 * print all capabilities that the capabiliy type is
+		 * print all capabilities that the capability type is
 		 * the same.
 		 */
 		if (pci_conf_find_extcap(regs, i, &off) == 0)

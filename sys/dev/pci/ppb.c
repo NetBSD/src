@@ -1,4 +1,4 @@
-/*	$NetBSD: ppb.c,v 1.69 2019/07/09 12:13:42 msaitoh Exp $	*/
+/*	$NetBSD: ppb.c,v 1.69.2.1 2021/12/03 19:40:38 martin Exp $	*/
 
 /*
  * Copyright (c) 1996, 1998 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ppb.c,v 1.69 2019/07/09 12:13:42 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ppb.c,v 1.69.2.1 2021/12/03 19:40:38 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ppb.h"
@@ -150,7 +150,7 @@ ppb_print_pcie(device_t self)
 	case PCIE_XCAP_TYPE_PCI_DEV:
 		aprint_normal("Legacy PCI-E Endpoint device");
 		break;
-	case PCIE_XCAP_TYPE_ROOT:
+	case PCIE_XCAP_TYPE_RP:
 		aprint_normal("Root Port of PCI-E Root Complex");
 		break;
 	case PCIE_XCAP_TYPE_UP:
@@ -171,7 +171,7 @@ ppb_print_pcie(device_t self)
 	}
 
 	switch (devtype) {
-	case PCIE_XCAP_TYPE_ROOT:
+	case PCIE_XCAP_TYPE_RP:
 	case PCIE_XCAP_TYPE_DOWN:
 	case PCIE_XCAP_TYPE_PCI2PCIE:
 		reg = pci_conf_read(sc->sc_pc, sc->sc_tag, off + PCIE_LCAP);
