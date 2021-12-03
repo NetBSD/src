@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.3,v 1.1.2.54 2021/11/30 13:13:10 martin Exp $
+# $NetBSD: CHANGES-9.3,v 1.1.2.55 2021/12/03 19:51:52 martin Exp $
 
 A complete list of changes from the NetBSD 9.2 release to the NetBSD 9.3
 release:
@@ -986,4 +986,73 @@ usr.bin/msgs/pathnames.h			1.5
 
 	msgs(1): avoid executing /usr/bin/Mail, it no longer exists.
 	[nia, ticket #1379]
+
+sys/dev/pci/pcidevs				1.1441-1.1444
+sys/dev/pci/pcidevs.h				regen
+sys/dev/pci/pcidevs_data.h			regen
+
+	- Add Intel Gemini Lake TXE HECI 1.
+	- Add Intel Elkhart Lake and Rocket Lake devices.
+	- Update Jasper Lake's Processor Transaction Routers.
+	[msaitoh, ticket #1380]
+
+sys/dev/pci/ichsmb.c				1.69, 1.71, 1.73-1.75 via patch
+	- Add Intel 400, 495, and 500 series support.
+	- Add Intel Jasper Lake and Elkhart Lake support.
+	- Ignore the SMBALERT# interrupt. Same as other OSes.
+	[msaitoh, ticket #1381]
+
+sys/dev/pci/pucdata.c				1.106-1.112
+share/man/man4/puc.4				1.42-1.43
+
+	- Add NetMos NM9900 Quad and Octal serial card.
+	- Add ASIX AX99100 PCIe 4port serial card.
+	- Add Oxford Semiconductor Exsys EX-41098 PCI serial card.
+	[msaitoh, ticket #1382]
+
+sys/dev/sdmmc/sdhc.c				1.110, 1.112
+sys/dev/sdmmc/sdmmc_mem.c			1.74
+sys/dev/pci/sdhc_pci.c				1.18
+
+	- Support 64bit BAR.
+	- Use unsigned to avoid undefined behavior in hwrite[12]() and
+	  sdmmc_mem_sd_switch().
+	- Fix typo in comment.
+	[msaitoh, ticket #1383]
+
+sys/dev/pci/pcireg.h			1.152-1.154, 1.156-1.161
+sys/dev/pci/pci_subr.c			1.222, 1.227-1.232 via patch
+sys/dev/pci/nvme_pci.c			1.31
+sys/dev/pci/pci.c			1.158, 1.163
+sys/dev/pci/ppb.c			1.74
+
+	- When parsing Enhanced Allocation entries, use the correct calculation
+	  for finding the next entry.
+	- Add 32.0GT/s to the list of pcie speeds (PCIe 5.x.).
+	- Add Some PCI config information:
+	  - Lane Margining at the Receiver
+	  - NVME admin interface
+	  - UFSHCI
+	  - InfiniBand
+	  - Host fabric
+	  - HDA 1.0 with vendor ext
+	  - USB4 HCI
+	  - MIPI I3C
+	  - Cellular controller/modem (+ Ethernet)
+	- Change PCI_VENDOR_MASK and PCI_PRODUCT_MASK to unsigned values, to
+	  prevent sign extension of product ID when shifted up into place in
+	  PCI_ID_CODE(). Fixes PR kern/56176.
+	- Add LCAP & LCAP2 definitions.
+	- Use PCI-SIG official acronyms for some macros.
+	- Fix typo in some messages.
+	- Fix typo in comments.
+	- Whitespace fixes.
+	[msaitoh, ticket #1384]
+
+sys/arch/x86/x86/procfs_machdep.c		1.40-1.42
+
+	- Add v_spec_ctrl, avx512_fp16, sme, sev, sev_es, sgx, sgx_lc,
+	  serialize and tsxldtrk.
+	- Whitespace fix.
+	[msaitoh, ticket #1385]
 
