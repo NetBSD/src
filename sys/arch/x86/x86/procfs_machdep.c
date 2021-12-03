@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_machdep.c,v 1.15.2.11 2020/07/20 18:40:08 martin Exp $ */
+/*	$NetBSD: procfs_machdep.c,v 1.15.2.12 2021/12/03 19:53:32 martin Exp $ */
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_machdep.c,v 1.15.2.11 2020/07/20 18:40:08 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_machdep.c,v 1.15.2.12 2021/12/03 19:53:32 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -82,11 +82,13 @@ static const char * const x86_features[][32] = {
 	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL},
 
 	{ /* (3) Linux mapping */
-	"cxmmx", NULL, "cyrix_arr", "centaur_mcr", NULL,
-	"constant_tsc", NULL, NULL,
-	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
-	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
-	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL},
+	"cxmmx", "k6_mtrr", "cyrix_arr", "centaur_mcr", NULL, NULL, NULL, NULL,
+	"constant_tsc", "up", "art", "arch_perfmon",
+	"pebs", "bts", NULL, NULL,
+	"rep_good", NULL, NULL, "acc_power",
+	"nopl", NULL, "xtopology", "tsc_reliable",
+	"nonstop_tsc", "cpuid", "extd_apicid", "amd_dcm",
+	"aperfmperf", "rapl", "nonstop_tsc_s3", "tsc_known_freq"},
 
 	{ /* (4) Intel-defined: 0x00000001 ecx */
 	"pni", "pclmulqdq", "dtes64", "monitor", "ds_cpl", "vmx", "smx", "est",
@@ -112,7 +114,7 @@ static const char * const x86_features[][32] = {
 
 	{ /* (7) Linux mapping */
 	NULL, NULL, "cpb", "ebp", NULL, "pln", "pts", "dtherm",
-	"hw_pstate", "proc_feedback", "sme", NULL,
+	"hw_pstate", "proc_feedback", NULL, NULL,
 	NULL, NULL, NULL, NULL,
 	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
 	NULL, "ibrs", "ibpb", "stibp", NULL, NULL, NULL, NULL},
@@ -126,7 +128,7 @@ static const char * const x86_features[][32] = {
 	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL},
 
 	{ /* (9) Intel-defined: 00000007 ebx */
-	"fsgsbase", "tsc_adjust", NULL, "bmi1", "hle", "avx2", NULL, "smep",
+	"fsgsbase", "tsc_adjust", "sgx", "bmi1", "hle", "avx2", NULL, "smep",
 	"bmi2", "erms", "invpcid", "rtm", "cqm", NULL, "mpx", "rdt_a",
 	"avx512f", "avx512dq", "rdseed", "adx",
 	"smap", "avx512ifma", NULL, "clflushopt",
@@ -165,12 +167,12 @@ static const char * const x86_features[][32] = {
 	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
 	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL},
 
-	{ /* (15) 0x8000000a edx */
+	{ /* (15) AMD 0x8000000a edx */
 	"npt", "lbrv", "svm_lock", "nrip_save",
 	"tsc_scale", "vmcb_clean", "flushbyasid", "decodeassists",
 	NULL, NULL, "pausefilter", NULL, "pfthreshold", "avic", NULL,
 	"v_vmsave_vmload",
-	"vgif", NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+	"vgif", NULL, NULL, NULL, "v_spec_ctrl", NULL, NULL, NULL,
 	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL},
 
 	{ /* (16) 0x00000007:0 ecx */
@@ -179,7 +181,7 @@ static const char * const x86_features[][32] = {
 	"gfni", "vaes", "vpclmulqdq", "avx512_vnni",
 	"avx512_bitalg", "tme", "avx512_vpopcntdq", NULL,
 	"la57", NULL, NULL, NULL, NULL, NULL, "rdpid", NULL,
-	NULL, "cldemote", NULL, "movdiri", "movdir64b", NULL, NULL, NULL},
+	NULL, "cldemote", NULL, "movdiri", "movdir64b", NULL, "sgx_lc", NULL},
 
 	{ /* (17) 0x80000007 ebx */
 	"overflow_recov", "succor", NULL, "smca", NULL, NULL, NULL, NULL,
@@ -189,10 +191,16 @@ static const char * const x86_features[][32] = {
 
 	{ /* (18) Intel 0x00000007 edx */
 	NULL, NULL, "avx512_4vnniw", "avx512_4fmaps", "fsrm", NULL, NULL, NULL,
-	"vp2intersect", NULL, "md_clear", NULL, NULL, NULL, NULL, NULL,
-	NULL, NULL, "pconfig", NULL, NULL, NULL, NULL, NULL,
+	"vp2intersect", NULL, "md_clear", NULL, NULL, NULL, "serialize", NULL,
+	"tsxldtrk", NULL, "pconfig", NULL, NULL, NULL, NULL, "avx512_fp16",
 	NULL, NULL, NULL, NULL,
 	"flush_l1d", "arch_capabilities", NULL, "ssbd"},
+
+	{ /* (19) AMD 0x8000001f eax */
+	"sme", "sev", NULL, "sev_es", NULL, NULL, NULL, NULL,
+	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL},
 };
 
 static int	procfs_getonecpu(int, struct cpu_info *, char *, size_t *);
@@ -272,7 +280,7 @@ procfs_getonecpufeatures(struct cpu_info *ci, char *p, size_t *left)
 
 	/* x86_features[2] is for Transmeta */
 	/* x86_features[3] is Linux defined mapping */
-	
+
 	procfs_getonefeatreg(ci->ci_feat_val[1], x86_features[4], p + diff,
 	    left);
 	diff = last - *left;
@@ -350,6 +358,14 @@ procfs_getonecpufeatures(struct cpu_info *ci, char *p, size_t *left)
 	    && (ci->ci_max_cpuid >= 0x00000007)) {
 		x86_cpuid(0x00000007, descs);
 		procfs_getonefeatreg(descs[3], x86_features[18], p + diff,
+		    left);
+		diff = last - *left;
+	}
+
+	if ((cpu_vendor == CPUVENDOR_AMD)
+	    && (ci->ci_max_ext_cpuid >= 0x80000019)) {
+		x86_cpuid(0x8000001f, descs);
+		procfs_getonefeatreg(descs[0], x86_features[19], p + diff,
 		    left);
 		diff = last - *left;
 	}
