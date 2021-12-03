@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.565 2021/09/21 23:06:18 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.566 2021/12/03 23:13:29 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -109,7 +109,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.565 2021/09/21 23:06:18 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.566 2021/12/03 23:13:29 rillig Exp $");
 
 /* types and constants */
 
@@ -2228,54 +2228,52 @@ IncludeFile(char *file, bool isSystem, bool depinc, bool silent)
 		doing_depend = depinc;	/* only turn it on */
 }
 
+/*
+ * Parse a directive like '.include' or '.-include'.
+ *
+ * .include "user-makefile.mk"
+ * .include <system-makefile.mk>
+ */
 static void
 ParseInclude(char *directive)
 {
 	char endc;		/* the character which ends the file spec */
-	char *cp;		/* current position in file spec */
+	char *p, *xfile;
 	bool silent = directive[0] != 'i';
-	char *file = directive + (silent ? 8 : 7);
+	FStr file;
 
-	/* Skip to delimiter character so we know where to look */
-	pp_skip_hspace(&file);
+	p = directive + (silent ? 8 : 7);
+	pp_skip_hspace(&p);
 
-	if (*file != '"' && *file != '<') {
+	if (*p != '"' && *p != '<') {
 		Parse_Error(PARSE_FATAL,
 		    ".include filename must be delimited by '\"' or '<'");
 		return;
 	}
 
-	/*
-	 * Set the search path on which to find the include file based on the
-	 * characters which bracket its name. Angle-brackets imply it's
-	 * a system Makefile while double-quotes imply it's a user makefile
-	 */
-	if (*file == '<')
+	if (*p++ == '<')
 		endc = '>';
 	else
 		endc = '"';
+	file = FStr_InitRefer(p);
 
 	/* Skip to matching delimiter */
-	for (cp = ++file; *cp != '\0' && *cp != endc; cp++)
-		continue;
+	while (*p != '\0' && *p != endc)
+		p++;
 
-	if (*cp != endc) {
+	if (*p != endc) {
 		Parse_Error(PARSE_FATAL,
 		    "Unclosed .include filename. '%c' expected", endc);
 		return;
 	}
 
-	*cp = '\0';
+	*p = '\0';
 
-	/*
-	 * Substitute for any variables in the filename before trying to
-	 * find the file.
-	 */
-	(void)Var_Subst(file, SCOPE_CMDLINE, VARE_WANTRES, &file);
+	(void)Var_Subst(file.str, SCOPE_CMDLINE, VARE_WANTRES, &xfile);
 	/* TODO: handle errors */
 
-	IncludeFile(file, endc == '>', directive[0] == 'd', silent);
-	free(file);
+	IncludeFile(xfile, endc == '>', directive[0] == 'd', silent);
+	free(xfile);
 }
 
 /*
