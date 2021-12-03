@@ -1,4 +1,4 @@
-# $NetBSD: directive-include.mk,v 1.6 2021/12/03 22:43:50 rillig Exp $
+# $NetBSD: directive-include.mk,v 1.7 2021/12/03 22:48:07 rillig Exp $
 #
 # Tests for the .include directive, which includes another file.
 
@@ -45,5 +45,10 @@ DEV=	null
 # line, which is ignored as of 2021-12-03.
 DQUOT=	"
 .include "${DQUOT}"
+
+# When the expression in a filename cannot be evaluated, the failing
+# expression is skipped and the file is included nevertheless.
+# FIXME: Add proper error handling, no file must be included here.
+.include "nonexistent${:U123:Z}.mk"
 
 all:
