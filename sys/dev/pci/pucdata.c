@@ -1,4 +1,4 @@
-/*	$NetBSD: pucdata.c,v 1.99.8.5 2019/11/14 15:48:07 martin Exp $	*/
+/*	$NetBSD: pucdata.c,v 1.99.8.6 2021/12/03 18:14:28 martin Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Christopher G. Demetriou.  All rights reserved.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pucdata.c,v 1.99.8.5 2019/11/14 15:48:07 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pucdata.c,v 1.99.8.6 2021/12/03 18:14:28 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -128,6 +128,26 @@ const struct puc_device_description puc_devices[] = {
 		{ PUC_PORT_TYPE_COM, PCI_BAR3, 0x08, COM_FREQ },
 		{ PUC_PORT_TYPE_COM, PCI_BAR4, 0x00, COM_FREQ },
 		{ PUC_PORT_TYPE_COM, PCI_BAR4, 0x08, COM_FREQ },
+	    },
+	},
+
+	/*
+	 * Amazon.com EC2 virtual 16650-compatible PCI serial device.
+	 */
+	{   "Amazon.com EC2 Serial",
+	    {	PCI_VENDOR_AMAZON, PCI_PRODUCT_AMAZON_UART,	0, 0  },
+	    {	0xffff, 0xffff,					0, 0  },
+	    {
+		{ PUC_PORT_TYPE_COM, PCI_BAR0, 0x00, COM_FREQ },
+	    }
+	},
+
+	/* ASIX PCIe AX99100 : 4S */
+	{   "ASIX AX99100 UART",
+	    {	PCI_VENDOR_ASIX, PCI_PRODUCT_ASIX_AX99100,	0xa000, 0x1000 },
+	    {	0xffff, 0xffff,					0xffff, 0xffff },
+	    {
+		{ PUC_PORT_TYPE_COM, PCI_BAR0, 0x00, COM_FREQ },
 	    },
 	},
 
@@ -972,6 +992,25 @@ const struct puc_device_description puc_devices[] = {
 	    },
 	},
 
+	/* NetMos PCIe NM9900 : 4S */
+	{   "NetMos NM9900 UART",
+	    {	PCI_VENDOR_NETMOS, PCI_PRODUCT_NETMOS_NM9900, 0xa000, 0x1000 },
+	    {	0xffff,	0xffff,				      0xffff, 0xffff },
+	    {
+		{ PUC_PORT_TYPE_COM, PCI_BAR0, 0x00, COM_FREQ },
+	    },
+	},
+
+	/* NetMos PCIe NM9900 : 8S */
+	{   "NetMos NM9900 UART 8S",
+	    {	PCI_VENDOR_NETMOS, PCI_PRODUCT_NETMOS_NM9900, 0xa000, 0x3002 },
+	    {	0xffff,	0xffff,				      0xffff, 0xffff },
+	    {
+		{ PUC_PORT_TYPE_COM, PCI_BAR0, 0x00, COM_FREQ },
+		{ PUC_PORT_TYPE_COM, PCI_BAR3, 0x00, COM_FREQ },
+	    },
+	},
+
 	/* NetMos PCIe Peripheral Controller :UART part */
 	{   "NetMos NM9901 UART",
 	    {   PCI_VENDOR_NETMOS, PCI_PRODUCT_NETMOS_NM9901, 0xa000, 0x1000 },
@@ -1280,6 +1319,19 @@ const struct puc_device_description puc_devices[] = {
 		{ PUC_PORT_TYPE_COM, PCI_BAR0, 0x08, COM_FREQ},
 		{ PUC_PORT_TYPE_COM, PCI_BAR0, 0x10, COM_FREQ},
 		{ PUC_PORT_TYPE_COM, PCI_BAR0, 0x18, COM_FREQ},
+	    },
+	},
+
+	/* Oxford Semiconductor Exsys EX-41098 PCI UARTs */
+	{   "Oxford Semiconductor Exsys EX-41098 UARTs",
+	    {	PCI_VENDOR_OXFORDSEMI,	PCI_PRODUCT_OXFORDSEMI_EXSYS_EX41098,
+		PCI_VENDOR_OXFORDSEMI,	0 },
+	    {	0xffff,	0xffff,	0xffff,	0	},
+	    {
+		{ PUC_PORT_TYPE_COM, PCI_BAR0, 0x00, COM_FREQ * 8},
+		{ PUC_PORT_TYPE_COM, PCI_BAR0, 0x08, COM_FREQ * 8},
+		{ PUC_PORT_TYPE_COM, PCI_BAR0, 0x10, COM_FREQ * 8},
+		{ PUC_PORT_TYPE_COM, PCI_BAR0, 0x18, COM_FREQ * 8},
 	    },
 	},
 
@@ -1976,6 +2028,51 @@ const struct puc_device_description puc_devices[] = {
 	    },
 	},
 
+	/* Intel Comet Lake KT */
+	{   "Intel Comet Lake KT",
+	    {	PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_CMTLK_KT, 0, 0 },
+	    {	0xffff,	0xffff,	0,	0	},
+	    {
+		{ PUC_PORT_TYPE_COM, PCI_BAR0, 0x00, COM_FREQ },
+	    },
+	},
+
+	/* Intel 400 Series (H) KT */
+	{   "Intel 400 Series (H) KT",
+	    {	PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_4HS_H_KT, 0, 0 },
+	    {	0xffff,	0xffff,	0,	0	},
+	    {
+		{ PUC_PORT_TYPE_COM, PCI_BAR0, 0x00, COM_FREQ },
+	    },
+	},
+
+	/* Intel 400 Series (V) KT */
+	{   "Intel 400 Series (V) KT",
+	    {	PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_4HS_V_KT, 0, 0 },
+	    {	0xffff,	0xffff,	0,	0	},
+	    {
+		{ PUC_PORT_TYPE_COM, PCI_BAR0, 0x00, COM_FREQ },
+	    },
+	},
+
+	/* Intel 495 Series KT */
+	{   "Intel 495 Series KT",
+	    {	PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_495_YU_KT, 0, 0 },
+	    {	0xffff,	0xffff,	0,	0	},
+	    {
+		{ PUC_PORT_TYPE_COM, PCI_BAR0, 0x00, COM_FREQ },
+	    },
+	},
+
+	/* Intel 500 Series (H) KT */
+	{   "Intel 500 Series (H) KT",
+	    {	PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_5HS_H_KT, 0, 0 },
+	    {	0xffff,	0xffff,	0,	0	},
+	    {
+		{ PUC_PORT_TYPE_COM, PCI_BAR0, 0x00, COM_FREQ },
+	    },
+	},
+	
 	/* Intel C600/X79 Series KT */
 	{   "Intel C600/X79 Series KT",
 	    {	PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_C600_KT, 0, 0 },
@@ -1988,6 +2085,15 @@ const struct puc_device_description puc_devices[] = {
 	/* Intel Core 4G (mobile) KT */
 	{   "Intel Core 4G (mobile) KT",
 	    {	PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_CORE4G_M_KT, 0, 0 },
+	    {	0xffff,	0xffff,	0,	0	},
+	    {
+		{ PUC_PORT_TYPE_COM, PCI_BAR0, 0x00, COM_FREQ },
+	    },
+	},
+
+	/* Intel Core 5G (mobile) KT */
+	{   "Intel Core 5G (mobile) KT",
+	    {	PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_CORE5G_M_KT, 0, 0 },
 	    {	0xffff,	0xffff,	0,	0	},
 	    {
 		{ PUC_PORT_TYPE_COM, PCI_BAR0, 0x00, COM_FREQ },
