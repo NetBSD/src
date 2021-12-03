@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.h,v 1.10 2008/11/12 12:36:10 ad Exp $ */
+/*	$NetBSD: linux_machdep.h,v 1.11 2021/12/03 13:27:38 andvar Exp $ */
 
 /*-
  * Copyright (c) 1995, 2000, 2001 The NetBSD Foundation, Inc.
@@ -104,7 +104,7 @@ typedef linux_elf_greg_t linux_elf_gregset_t[LINUX_ELF_NGREG];
  * defines a rt_sigframe struct, but it is only used for RT signals. for
  * non RT signals, struct sigregs is used instead.
  *
- * About the ltramp filed: that trampoline code is not used. Instead, the
+ * About the ltramp field: that trampoline code is not used. Instead, the
  * sigcode (7 bytes long) trampoline code, copied by exec() on program startup
  * is used. However, Linux binaries might expect it to be here.
  */

@@ -1,4 +1,4 @@
-/*	$NetBSD: synaptics.c,v 1.73 2021/10/21 04:49:28 blymn Exp $	*/
+/*	$NetBSD: synaptics.c,v 1.74 2021/12/03 13:27:39 andvar Exp $	*/
 
 /*
  * Copyright (c) 2005, Steve C. Woodford
@@ -48,7 +48,7 @@
 #include "opt_pms.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: synaptics.c,v 1.73 2021/10/21 04:49:28 blymn Exp $");
+__KERNEL_RCSID(0, "$NetBSD: synaptics.c,v 1.74 2021/12/03 13:27:39 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -413,7 +413,7 @@ pms_synaptics_probe_init(void *vsc)
 	/* Query the hardware capabilities. */
 	res = synaptics_special_read(psc, SYNAPTICS_READ_CAPABILITIES, resp);
 	if (res) {
-		/* Hmm, failed to get capabilites. */
+		/* Hmm, failed to get capabilities. */
 		aprint_error_dev(psc->sc_dev,
 		    "synaptics_probe: Failed to query capabilities.\n");
 		goto doreset;

@@ -1,4 +1,4 @@
-/*	$NetBSD: hifn7751var.h,v 1.17 2020/05/17 00:54:05 riastradh Exp $	*/
+/*	$NetBSD: hifn7751var.h,v 1.18 2021/12/03 13:27:38 andvar Exp $	*/
 /*	$OpenBSD: hifn7751var.h,v 1.54 2020/01/11 21:34:04 cheloha Exp $	*/
 
 /*
@@ -166,7 +166,7 @@ struct hifn_softc {
 	int			sc_d_busy;	/* destination data ring busy */
 	int			sc_r_busy;	/* result ring busy */
 	int			sc_active;	/* for initial countdown */
-	int			sc_needwakeup;	/* ops q'd wating on resources */
+	int			sc_needwakeup;	/* ops q'd waiting on resources */
 	uint8_t			sc_sessions[2048/NBBY];
 	pci_chipset_tag_t sc_pci_pc;
 	pcitag_t sc_pci_tag;
