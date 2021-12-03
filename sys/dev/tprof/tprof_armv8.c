@@ -1,4 +1,4 @@
-/* $NetBSD: tprof_armv8.c,v 1.10 2021/11/26 13:24:28 christos Exp $ */
+/* $NetBSD: tprof_armv8.c,v 1.11 2021/12/03 08:00:13 skrll Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tprof_armv8.c,v 1.10 2021/11/26 13:24:28 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tprof_armv8.c,v 1.11 2021/12/03 08:00:13 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -42,7 +42,7 @@ __KERNEL_RCSID(0, "$NetBSD: tprof_armv8.c,v 1.10 2021/11/26 13:24:28 christos Ex
 #include <dev/tprof/tprof_armv8.h>
 
 static tprof_param_t armv8_pmu_param;
-static const u_int armv8_pmu_counter = 1;
+static const u_int armv8_pmu_counter = 0;
 static uint32_t counter_val;
 static uint32_t counter_reset_val;
 
