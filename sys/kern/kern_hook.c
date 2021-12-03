@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_hook.c,v 1.11 2021/09/30 07:15:02 skrll Exp $	*/
+/*	$NetBSD: kern_hook.c,v 1.12 2021/12/03 08:33:30 gson Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2002, 2007, 2008 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_hook.c,v 1.11 2021/09/30 07:15:02 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_hook.c,v 1.12 2021/12/03 08:33:30 gson Exp $");
 
 #include <sys/param.h>
 #include <sys/condvar.h>
@@ -524,7 +524,7 @@ simplehook_dohooks(khook_list_t *l)
 }
 
 khook_t *
-simplehook_establish(khook_list_t *l,  void (*fn)(void *), void *arg)
+simplehook_establish(khook_list_t *l, void (*fn)(void *), void *arg)
 {
 	struct hook_desc *hd;
 
