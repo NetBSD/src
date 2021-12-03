@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.1281.2.20 2021/10/23 11:31:22 martin Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.1281.2.21 2021/12/03 17:39:55 martin Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.1289.2.20 2021/10/23 11:27:26 martin Exp
+ *	NetBSD: pcidevs,v 1.1289.2.21 2021/12/03 17:38:16 martin Exp
  */
 
 /*
@@ -5164,6 +5164,7 @@
 #define	PCI_PRODUCT_INTEL_GLK_FASTSPI	0x3196		/* Gemini Lake Fast SPI */
 #define	PCI_PRODUCT_INTEL_GLK_ESPI	0x3197		/* Gemini Lake eSPI */
 #define	PCI_PRODUCT_INTEL_GLK_HDA	0x3198		/* Gemini Lake HD Audio */
+#define	PCI_PRODUCT_INTEL_GLK_TXE_HECI_1	0x319a		/* Gemini Lake TXE HECI 1 */
 #define	PCI_PRODUCT_INTEL_GLK_ISH	0x31a2		/* Gemini Lake Integrated Sensor Hub */
 #define	PCI_PRODUCT_INTEL_GLK_XHCI	0x31a8		/* Gemini Lake USB Host (xHCI) */
 #define	PCI_PRODUCT_INTEL_GLK_XDCI	0x31aa		/* Gemini Lake USB Device (xDCI) */
@@ -5631,12 +5632,134 @@
 #define	PCI_PRODUCT_INTEL_5HS_H_GSPI_2	0x43fb		/* 500 Series PCH-H GSPI 2 */
 #define	PCI_PRODUCT_INTEL_5HS_H_ISH	0x43fc		/* 500 Series PCH-H Integrated Sensor Hub */
 #define	PCI_PRODUCT_INTEL_5HS_H_GSPI_3	0x43fd		/* 500 Series PCH-H GSPI 3 */
+#define	PCI_PRODUCT_INTEL_EHL_TROUTER_3	0x4512		/* Elkhart Lake Transaction Router (SKU 3) */
+#define	PCI_PRODUCT_INTEL_EHL_TROUTER_3A	0x451e		/* Elkhart Lake Transaction Router (SKU 3A) */
+#define	PCI_PRODUCT_INTEL_EHL_TROUTER_5	0x4514		/* Elkhart Lake Transaction Router (SKU 5) */
+#define	PCI_PRODUCT_INTEL_EHL_TROUTER_8	0x4516		/* Elkhart Lake Transaction Router (SKU 8) */
+#define	PCI_PRODUCT_INTEL_EHL_TROUTER_12	0x4518		/* Elkhart Lake Transaction Router (SKU 12) */
+#define	PCI_PRODUCT_INTEL_EHL_TROUTER_1	0x4522		/* Elkhart Lake Transaction Router (SKU 1) */
+#define	PCI_PRODUCT_INTEL_EHL_TROUTER_1A	0x4538		/* Elkhart Lake Transaction Router (SKU 1A) */
+#define	PCI_PRODUCT_INTEL_EHL_TROUTER_4	0x4526		/* Elkhart Lake Transaction Router (SKU 4) */
+#define	PCI_PRODUCT_INTEL_EHL_TROUTER_6	0x4528		/* Elkhart Lake Transaction Router (SKU 6) */
+#define	PCI_PRODUCT_INTEL_EHL_TROUTER_7	0x452a		/* Elkhart Lake Transaction Router (SKU 7) */
+#define	PCI_PRODUCT_INTEL_EHL_TROUTER_9	0x452c		/* Elkhart Lake Transaction Router (SKU 9) */
+#define	PCI_PRODUCT_INTEL_EHL_TROUTER_10	0x452e		/* Elkhart Lake Transaction Router (SKU 10) */
+#define	PCI_PRODUCT_INTEL_EHL_TROUTER_11	0x4532		/* Elkhart Lake Transaction Router (SKU 11) */
+#define	PCI_PRODUCT_INTEL_EHL_TROUTER_2	0x453a		/* Elkhart Lake Transaction Router (SKU 2) */
+#define	PCI_PRODUCT_INTEL_EHL_GPU_16	0x4551		/* Elkhart Lake GPU (16EU) */
+#define	PCI_PRODUCT_INTEL_EHL_GPU_32_SUPER	0x4551		/* Elkhart Lake GPU (32EU Super) */
+#define	PCI_PRODUCT_INTEL_EHL_GPU_32	0x4551		/* Elkhart Lake GPU (32EU) */
+#define	PCI_PRODUCT_INTEL_EHL_DPTF	0x4503		/* Elkhart Lake DPTF */
+#define	PCI_PRODUCT_INTEL_EHL_GNA	0x4511		/* Elkhart Lake GNA */
+#define	PCI_PRODUCT_INTEL_EHL_TRACE_2	0x4529		/* Elkhart Lake Trace Hub (Compute Die) */
+#define	PCI_PRODUCT_INTEL_EHL_ESPI	0x4b00		/* Elkhart Lake eSPI */
+#define	PCI_PRODUCT_INTEL_EHL_P2SB	0x4b20		/* Elkhart Lake P2SB */
+#define	PCI_PRODUCT_INTEL_EHL_PMC	0x4b21		/* Elkhart Lake PMC */
+#define	PCI_PRODUCT_INTEL_EHL_SMB	0x4b23		/* Elkhart Lake SMBus */
+#define	PCI_PRODUCT_INTEL_EHL_SPI_FLASH	0x4b24		/* Elkhart Lake SPI (FLASH & TPM) */
+#define	PCI_PRODUCT_INTEL_EHL_TRACE_1	0x4b26		/* Elkhart Lake Trace Hub (PCH) */
+#define	PCI_PRODUCT_INTEL_EHL_SIO_UART_0	0x4b28		/* Elkhart Lake SIO UART 0 */
+#define	PCI_PRODUCT_INTEL_EHL_SIO_UART_1	0x4b29		/* Elkhart Lake SIO UART 1 */
+#define	PCI_PRODUCT_INTEL_EHL_SIO_SPI_0	0x4b2a		/* Elkhart Lake SIO SPI 0 */
+#define	PCI_PRODUCT_INTEL_EHL_SIO_SPI_1	0x4b2b		/* Elkhart Lake SIO SPI 1 */
+#define	PCI_PRODUCT_INTEL_EHL_IEH	0x4b2f		/* Elkhart Lake IEH */
+#define	PCI_PRODUCT_INTEL_EHL_ETH	0x4b32		/* Elkhart Lake Ethernet */
+#define	PCI_PRODUCT_INTEL_EHL_SIO_SPI_2	0x4b37		/* Elkhart Lake SIO SPI 2 */
+#define	PCI_PRODUCT_INTEL_EHL_PCIE_RP_0	0x4b38		/* Elkhart Lake PCIe Root Port 0 (PCIe 0, Single VC) */
+#define	PCI_PRODUCT_INTEL_EHL_PCIE_RP_1	0x4b39		/* Elkhart Lake PCIe Root Port 1 (PCIe 0, Single VC) */
+#define	PCI_PRODUCT_INTEL_EHL_PCIE_RP_2	0x4b3a		/* Elkhart Lake PCIe Root Port 2 (PCIe 0, Single VC) */
+#define	PCI_PRODUCT_INTEL_EHL_PCIE_RP_3	0x4b3b		/* Elkhart Lake PCIe Root Port 3 (PCIe 0, Single VC) */
+#define	PCI_PRODUCT_INTEL_EHL_PCIE_RP_4	0x4b3c		/* Elkhart Lake PCIe Root Port 4 (PCIe 1, Multi VC) */
+#define	PCI_PRODUCT_INTEL_EHL_PCIE_RP_5	0x4b3d		/* Elkhart Lake PCIe Root Port 5 (PCIe 2, Multi VC) */
+#define	PCI_PRODUCT_INTEL_EHL_PCIE_RP_6	0x4b3e		/* Elkhart Lake PCIe Root Port 6 (PCIe 3, Multi VC) */
+#define	PCI_PRODUCT_INTEL_EHL_SIO_I2C_6	0x4b44		/* Elkhart Lake SIO I2C 6 */
+#define	PCI_PRODUCT_INTEL_EHL_SIO_I2C_7	0x4b45		/* Elkhart Lake SIO I2C 7 */
+#define	PCI_PRODUCT_INTEL_EHL_EMMC	0x4b47		/* Elkhart Lake eMMC */
+#define	PCI_PRODUCT_INTEL_EHL_SDIO	0x4b48		/* Elkhart Lake SDIO */
+#define	PCI_PRODUCT_INTEL_EHL_SI	0x4b4a		/* Elkhart Lake Safety Island */
+#define	PCI_PRODUCT_INTEL_EHL_SIO_I2C_4	0x4b4b		/* Elkhart Lake SIO I2C 4 */
+#define	PCI_PRODUCT_INTEL_EHL_SIO_I2C_5	0x4b4c		/* Elkhart Lake SIO I2C 5 */
+#define	PCI_PRODUCT_INTEL_EHL_SIO_UART_2	0x4b4d		/* Elkhart Lake SIO UART 2 */
+#define	PCI_PRODUCT_INTEL_EHL_CAVS_1	0x4b55		/* Elkhart Lake cAVS */
+#define	PCI_PRODUCT_INTEL_EHL_CAVS_2	0x4b56		/* Elkhart Lake cAVS */
+#define	PCI_PRODUCT_INTEL_EHL_CAVS_3	0x4b57		/* Elkhart Lake cAVS */
+#define	PCI_PRODUCT_INTEL_EHL_CAVS_4	0x4b58		/* Elkhart Lake cAVS */
+#define	PCI_PRODUCT_INTEL_EHL_CAVS_5	0x4b59		/* Elkhart Lake cAVS */
+#define	PCI_PRODUCT_INTEL_EHL_CAVS_6	0x4b5a		/* Elkhart Lake cAVS */
+#define	PCI_PRODUCT_INTEL_EHL_CAVS_7	0x4b5b		/* Elkhart Lake cAVS */
+#define	PCI_PRODUCT_INTEL_EHL_CAVS_8	0x4b5c		/* Elkhart Lake cAVS */
+#define	PCI_PRODUCT_INTEL_EHL_AHCI	0x4b60		/* Elkhart Lake AHCI */
+#define	PCI_PRODUCT_INTEL_EHL_HPET	0x4b68		/* Elkhart Lake HPET */
+#define	PCI_PRODUCT_INTEL_EHL_IOAPIC	0x4b69		/* Elkhart Lake IOAPIC */
+#define	PCI_PRODUCT_INTEL_EHL_CSE_UMA	0x4b6c		/* Elkhart Lake CSE UMA Access */
+#define	PCI_PRODUCT_INTEL_EHL_CSE_PTTDMA	0x4b6b		/* Elkhart Lake CSE PTT DMA */
+#define	PCI_PRODUCT_INTEL_EHL_CSE_HECI_0	0x4b70		/* Elkhart Lake CSE HECI 0 */
+#define	PCI_PRODUCT_INTEL_EHL_CSE_HECI_1	0x4b71		/* Elkhart Lake CSE HECI 1 */
+#define	PCI_PRODUCT_INTEL_EHL_CSE_HECI_2	0x4b74		/* Elkhart Lake CSE HECI 2 */
+#define	PCI_PRODUCT_INTEL_EHL_CSE_HECI_3	0x4b75		/* Elkhart Lake CSE HECI 3 */
+#define	PCI_PRODUCT_INTEL_EHL_SIO_I2C_0	0x4b78		/* Elkhart Lake SIO I2C 0 */
+#define	PCI_PRODUCT_INTEL_EHL_SIO_I2C_1	0x4b79		/* Elkhart Lake SIO I2C 1 */
+#define	PCI_PRODUCT_INTEL_EHL_SIO_I2C_2	0x4b7a		/* Elkhart Lake SIO I2C 2 */
+#define	PCI_PRODUCT_INTEL_EHL_SIO_I2C_3	0x4b7b		/* Elkhart Lake SIO I2C 3 */
+#define	PCI_PRODUCT_INTEL_EHL_XHCI	0x4b7d		/* Elkhart Lake xHCI */
+#define	PCI_PRODUCT_INTEL_EHL_XDCI	0x4b7e		/* Elkhart Lake xDCI */
+#define	PCI_PRODUCT_INTEL_EHL_PSE_QEP_1	0x4b81		/* Elkhart Lake PSE QEP 1 */
+#define	PCI_PRODUCT_INTEL_EHL_PSE_QEP_2	0x4b82		/* Elkhart Lake PSE QEP 2 */
+#define	PCI_PRODUCT_INTEL_EHL_PSE_QEP_3	0x4b83		/* Elkhart Lake PSE QEP 3 */
+#define	PCI_PRODUCT_INTEL_EHL_PSE_SPI_0	0x4b84		/* Elkhart Lake PSE SPI 0 */
+#define	PCI_PRODUCT_INTEL_EHL_PSE_SPI_1	0x4b85		/* Elkhart Lake PSE SPI 1 */
+#define	PCI_PRODUCT_INTEL_EHL_PSE_SPI_2	0x4b86		/* Elkhart Lake PSE SPI 2 */
+#define	PCI_PRODUCT_INTEL_EHL_PSE_SPI_3	0x4b87		/* Elkhart Lake PSE SPI 3 */
+#define	PCI_PRODUCT_INTEL_EHL_PSE_GPIO_0	0x4b88		/* Elkhart Lake PSE GPIO 0 */
+#define	PCI_PRODUCT_INTEL_EHL_PSE_GPIO_1	0x4b89		/* Elkhart Lake PSE GPIO 1 */
+#define	PCI_PRODUCT_INTEL_EHL_PSE_UART_0	0x4b96		/* Elkhart Lake PSE UART 0 */
+#define	PCI_PRODUCT_INTEL_EHL_PSE_UART_1	0x4b97		/* Elkhart Lake PSE UART 1 */
+#define	PCI_PRODUCT_INTEL_EHL_PSE_UART_2	0x4b98		/* Elkhart Lake PSE UART 2 */
+#define	PCI_PRODUCT_INTEL_EHL_PSE_UART_3	0x4b99		/* Elkhart Lake PSE UART 3 */
+#define	PCI_PRODUCT_INTEL_EHL_PSE_UART_4	0x4b9a		/* Elkhart Lake PSE UART 4 */
+#define	PCI_PRODUCT_INTEL_EHL_PSE_UART_5	0x4b9b		/* Elkhart Lake PSE UART 5 */
+#define	PCI_PRODUCT_INTEL_EHL_PSE_I2S_0	0x4b9c		/* Elkhart Lake PSE I2S 0 */
+#define	PCI_PRODUCT_INTEL_EHL_PSE_I2S_1	0x4b9d		/* Elkhart Lake PSE I2S 1 */
+#define	PCI_PRODUCT_INTEL_EHL_PSE_ETH_0_RGMII	0x4ba0		/* Elkhart Lake PSE Ethernet 0 (RGMII 1G) */
+#define	PCI_PRODUCT_INTEL_EHL_PSE_ETH_0_SGMII_1G	0x4ba1		/* Elkhart Lake PSE Ethernet 0 (SGMII 1G) */
+#define	PCI_PRODUCT_INTEL_EHL_PSE_ETH_0_SGMII_2_5G	0x4ba2		/* Elkhart Lake PSE Ethernet 0 (SGMII 2.5G) */
+#define	PCI_PRODUCT_INTEL_EHL_PSE_ETH_1_RGMII	0x4bb0		/* Elkhart Lake PSE Ethernet 1 (RGMII 1G) */
+#define	PCI_PRODUCT_INTEL_EHL_PSE_ETH_1_SGMII_1G	0x4bb1		/* Elkhart Lake PSE Ethernet 1 (SGMII 1G) */
+#define	PCI_PRODUCT_INTEL_EHL_PSE_ETH_1_SGMII_2_5G	0x4bb2		/* Elkhart Lake PSE Ethernet 1 (SGMII 1G) */
+#define	PCI_PRODUCT_INTEL_EHL_PSE_LH2OSE	0x4bb3		/* Elkhart Lake PSE LH2OSE */
+#define	PCI_PRODUCT_INTEL_EHL_PSE_DMA_0	0x4bb4		/* Elkhart Lake PSE DMA 0 */
+#define	PCI_PRODUCT_INTEL_EHL_PSE_DMA_1	0x4bb5		/* Elkhart Lake PSE DMA 1 */
+#define	PCI_PRODUCT_INTEL_EHL_PSE_DMA_2	0x4bb6		/* Elkhart Lake PSE DMA 2 */
+#define	PCI_PRODUCT_INTEL_EHL_PSE_PWM	0x4bb7		/* Elkhart Lake PSE PWM */
+#define	PCI_PRODUCT_INTEL_EHL_PSE_I2C_0	0x4bb9		/* Elkhart Lake PSE I2C 0 */
+#define	PCI_PRODUCT_INTEL_EHL_PSE_I2C_1	0x4bba		/* Elkhart Lake PSE I2C 1 */
+#define	PCI_PRODUCT_INTEL_EHL_PSE_I2C_2	0x4bbb		/* Elkhart Lake PSE I2C 2 */
+#define	PCI_PRODUCT_INTEL_EHL_PSE_I2C_3	0x4bbc		/* Elkhart Lake PSE I2C 3 */
+#define	PCI_PRODUCT_INTEL_EHL_PSE_I2C_4	0x4bbd		/* Elkhart Lake PSE I2C 4 */
+#define	PCI_PRODUCT_INTEL_EHL_PSE_I2C_5	0x4bbe		/* Elkhart Lake PSE I2C 5 */
+#define	PCI_PRODUCT_INTEL_EHL_PSE_I2C_6	0x4bbf		/* Elkhart Lake PSE I2C 6 */
+#define	PCI_PRODUCT_INTEL_EHL_PSE_I2C_7	0x4bc0		/* Elkhart Lake PSE I2C 7 */
+#define	PCI_PRODUCT_INTEL_EHL_PSE_CAN_0	0x4bc1		/* Elkhart Lake PSE CAN 0 */
+#define	PCI_PRODUCT_INTEL_EHL_PSE_CAN_1	0x4bc2		/* Elkhart Lake PSE CAN 1 */
+#define	PCI_PRODUCT_INTEL_EHL_PSE_QEP_0	0x4bc3		/* Elkhart Lake PSE QEP 0 */
+#define	PCI_PRODUCT_INTEL_RKL_PCIE_RP_0	0x4c01		/* Rocket Lake PCIe Root Port 0 (x16) */
+#define	PCI_PRODUCT_INTEL_RKL_DPTF	0x4c03		/* Rocket Lake DPTF */
+#define	PCI_PRODUCT_INTEL_RKL_PCIE_RP_1	0x4c05		/* Rocket Lake PCIe Root Port 1 (x8) */
+#define	PCI_PRODUCT_INTEL_RKL_PCIE_RP_2	0x4c07		/* Rocket Lake PCIe Root Port 2 (x4) */
+#define	PCI_PRODUCT_INTEL_RKL_PCIE_RP_3	0x4c09		/* Rocket Lake PCIe Root Port 3 (x4) */
+#define	PCI_PRODUCT_INTEL_RKL_GNA	0x4c11		/* Rocket Lake Gauss Newton Algorithm */
+#define	PCI_PRODUCT_INTEL_RKL_8C_HOST	0x4c43		/* Rocket Lake (8Core) Host */
+#define	PCI_PRODUCT_INTEL_RKL_6C_HOST	0x4c53		/* Rocket Lake (8Core) Host */
+#define	PCI_PRODUCT_INTEL_RKL_IGD_1	0x4c8a		/* Rocket Lake UHD Graphics 750 (32EU) */
+#define	PCI_PRODUCT_INTEL_RKL_IGD_2	0x4c8b		/* Rocket Lake UHD Graphics 730 (24EU) */
+#define	PCI_PRODUCT_INTEL_RKL_IGD_3	0x4c90		/* Rocket Lake (Xeon W) UHD Graphics 750 */
+#define	PCI_PRODUCT_INTEL_RKL_IGD_4	0x4c9a		/* Rocket Lake (Xeon E) UHD Graphics 750 */
 #define	PCI_PRODUCT_INTEL_JSL_ESPI	0x4d87		/* Jasper Lake eSPI */
 #define	PCI_PRODUCT_INTEL_JSL_P2SB	0x4da0		/* Jasper Lake P2SB */
 #define	PCI_PRODUCT_INTEL_JSL_PMC	0x4da1		/* Jasper Lake PMC */
 #define	PCI_PRODUCT_INTEL_JSL_SMB	0x4da3		/* Jasper Lake SMBus */
 #define	PCI_PRODUCT_INTEL_JSL_SPI_FLASH	0x4da4		/* Jasper Lake SPI (FLASH) */
-#define	PCI_PRODUCT_INTEL_JSL_TRACE	0x4da6		/* Jasper Lake Intel Trace Hub */
+#define	PCI_PRODUCT_INTEL_JSL_TRACE_1	0x4da6		/* Jasper Lake Intel Trace Hub (PCH) */
 #define	PCI_PRODUCT_INTEL_JSL_UART_0	0x4da8		/* Jasper Lake UART 0 */
 #define	PCI_PRODUCT_INTEL_JSL_UART_1	0x4da9		/* Jasper Lake UART 1 */
 #define	PCI_PRODUCT_INTEL_JSL_SPI_0	0x4daa		/* Jasper Lake SPI 0 */
@@ -5676,7 +5799,13 @@
 #define	PCI_PRODUCT_INTEL_JSL_SCS	0x4df8		/* Jasper Lake SD Card */
 #define	PCI_PRODUCT_INTEL_JSL_SPI_2	0x4dfb		/* Jasper Lake SPI 2 */
 #define	PCI_PRODUCT_INTEL_JSL_DPTF	0x4e03		/* Jasper Lake DPTF */
-#define	PCI_PRODUCT_INTEL_JSL_HB	0x4e22		/* Jasper Lake Processor Transaction Route */
+#define	PCI_PRODUCT_INTEL_JSL_TROUTER_4_1	0x4e12		/* Jasper Lake Processor Transaction Router (SKU 4) */
+#define	PCI_PRODUCT_INTEL_JSL_TROUTER_2_1	0x4e14		/* Jasper Lake Processor Transaction Router (SKU 2) */
+#define	PCI_PRODUCT_INTEL_JSL_TROUTER_2_2	0x4e22		/* Jasper Lake Processor Transaction Router (SKU 2) */
+#define	PCI_PRODUCT_INTEL_JSL_TROUTER_4_2	0x4e24		/* Jasper Lake Processor Transaction Router (SKU 4) */
+#define	PCI_PRODUCT_INTEL_JSL_TROUTER_4_3	0x4e26		/* Jasper Lake Processor Transaction Router (SKU 4) */
+#define	PCI_PRODUCT_INTEL_JSL_TROUTER_4_4	0x4e28		/* Jasper Lake Processor Transaction Router (SKU 4) */
+#define	PCI_PRODUCT_INTEL_JSL_TRACE_2	0x4da6		/* Jasper Lake Intel Trace Hub (Compute Die) */
 #define	PCI_PRODUCT_INTEL_JSL_GPU_EU_16	0x4e55		/* Jasper Lake GPU 16 EU */
 #define	PCI_PRODUCT_INTEL_JSL_GPU_EU_24	0x4e61		/* Jasper Lake GPU 24 EU */
 #define	PCI_PRODUCT_INTEL_JSL_GPU_EU_32	0x4e71		/* Jasper Lake GPU 32 EU */
