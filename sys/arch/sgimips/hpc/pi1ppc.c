@@ -1,4 +1,4 @@
-/* $NetBSD: pi1ppc.c,v 1.15 2021/08/07 16:19:04 thorpej Exp $ */
+/* $NetBSD: pi1ppc.c,v 1.16 2021/12/03 13:27:38 andvar Exp $ */
 
 /*
  * Copyright (c) 2001 Alcove - Nicolas Souchu
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pi1ppc.c,v 1.15 2021/08/07 16:19:04 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pi1ppc.c,v 1.16 2021/12/03 13:27:38 andvar Exp $");
 
 #include "opt_pi1ppc.h"
 
@@ -235,7 +235,7 @@ pi1ppc_sc_attach(struct pi1ppc_softc *lsc)
 
 	/* Set up parport_adapter structure */
 
-	/* Set capabilites */
+	/* Set capabilities */
 	sc_parport_adapter.capabilities = 0;
 	if (lsc->sc_has & PI1PPC_HAS_INTR) {
 		sc_parport_adapter.capabilities |= PPBUS_HAS_INTR;

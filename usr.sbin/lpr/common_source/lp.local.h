@@ -1,4 +1,4 @@
-/*	$NetBSD: lp.local.h,v 1.8 2003/08/07 11:25:25 agc Exp $	*/
+/*	$NetBSD: lp.local.h,v 1.9 2021/12/03 13:27:40 andvar Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -67,7 +67,7 @@
 #define DROP	3		/* offset to drop characters with descenders */
 
 /*
- * Define TERMCAP if the terminal capabilites are to be used for lpq.
+ * Define TERMCAP if the terminal capabilities are to be used for lpq.
  */
 #define TERMCAP
 

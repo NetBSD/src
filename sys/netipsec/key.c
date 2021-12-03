@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.271 2020/03/13 06:55:35 knakahara Exp $	*/
+/*	$NetBSD: key.c,v 1.272 2021/12/03 13:27:39 andvar Exp $	*/
 /*	$FreeBSD: key.c,v 1.3.2.3 2004/02/14 22:23:23 bms Exp $	*/
 /*	$KAME: key.c,v 1.191 2001/06/27 10:46:49 sakane Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.271 2020/03/13 06:55:35 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.272 2021/12/03 13:27:39 andvar Exp $");
 
 /*
  * This code is referred to RFC 2367
@@ -4900,7 +4900,7 @@ key_timehandler_spd(void)
 		mutex_enter(&key_spd.lock);
 		/*
 		 * To avoid for sp->created to overtake "now" because of
-		 * wating mutex, set time_uptime here.
+		 * waiting mutex, set time_uptime here.
 		 */
 		now = time_uptime;
 		SPLIST_WRITER_FOREACH(sp, dir) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_subr.c,v 1.232 2021/10/10 23:28:36 msaitoh Exp $	*/
+/*	$NetBSD: pci_subr.c,v 1.233 2021/12/03 13:27:38 andvar Exp $	*/
 
 /*
  * Copyright (c) 1997 Zubin D. Dittia.  All rights reserved.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.232 2021/10/10 23:28:36 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.233 2021/12/03 13:27:38 andvar Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pci.h"
@@ -3899,7 +3899,7 @@ pci_conf_print_sec_pcie_cap(const pcireg_t *regs, int extcapoff)
 		reg = regs[o2i(pcie_capoff + PCIE_LCAP)];
 		maxlinkwidth = PCIREG_SHIFTOUT(reg, PCIE_LCAP_MAX_WIDTH);
 	} else {
-		printf("error: falied to get PCIe capablity\n");
+		printf("error: failed to get PCIe capability\n");
 		return;
 	}
 	for (i = 0; i < maxlinkwidth; i++) {

@@ -1,4 +1,4 @@
-/* $NetBSD: atppc_isa.c,v 1.15 2011/05/26 02:29:23 jakllsch Exp $ */
+/* $NetBSD: atppc_isa.c,v 1.16 2021/12/03 13:27:38 andvar Exp $ */
 
 /*-
  * Copyright (c) 2001 Alcove - Nicolas Souchu
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atppc_isa.c,v 1.15 2011/05/26 02:29:23 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atppc_isa.c,v 1.16 2021/12/03 13:27:38 andvar Exp $");
 
 #include "opt_atppc.h"
 
@@ -53,10 +53,10 @@ __KERNEL_RCSID(0, "$NetBSD: atppc_isa.c,v 1.15 2011/05/26 02:29:23 jakllsch Exp 
 
 /*
  * ISA bus attach code for atppc driver.
- * Note on capabilities: capabilites may exist in the chipset but may not
+ * Note on capabilities: capabilities may exist in the chipset but may not
  * necessarily be useable. I.e. you may specify an IRQ in the autoconfig, but
  * will the port actually have an IRQ assigned to it at the hardware level?
- * How can you test if the capabilites can be used? For interrupts, see if a
+ * How can you test if the capabilities can be used? For interrupts, see if a
  * handler exists (sc_intr != NULL). For DMA, see if the sc_dma_start() and
  * sc_dma_finish() function pointers are not NULL.
  */

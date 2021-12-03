@@ -136,7 +136,7 @@ drive, then invest in an Adaptec 154X or a PCI controller.
 
 2) No support for the SCSI port of the Pro AudioStudio 16.
 
-This is also unfortunate and may not be able to be remedied withing the
+This is also unfortunate and may not be able to be remedied within the
 current framework of the bus_space() functions and the nca driver.
 
 The problem is this: In most adapters, the eight 53C80 registers are mapped

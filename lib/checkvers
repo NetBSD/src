@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$NetBSD: checkvers,v 1.7 2008/04/30 13:10:50 martin Exp $
+#	$NetBSD: checkvers,v 1.8 2021/12/03 13:27:37 andvar Exp $
 #
 # Copyright (c) 1998 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -33,7 +33,7 @@
 # checkvers [-q] [systemlibdir [library name]]
 #
 # This is a wrapper script around checkver.  It will find
-# all directories withing the current directory containing
+# all directories within the current directory containing
 # a shlib_version file and call checkver for each.
 #
 # As with checkver, a list of directories of installed libraries
@@ -44,7 +44,7 @@
 # will not work correctly if it finds shlib_version files
 # corresponding to a different library.
 #
-# This script produces no output if all library version are ok.
+# This script produces no output if all library versions are ok.
 # If the versions aren't ok the header will be displayed once
 # followed by a list of problematic libraries.
 #

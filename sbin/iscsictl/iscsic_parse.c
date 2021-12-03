@@ -1,4 +1,4 @@
-/*	$NetBSD: iscsic_parse.c,v 1.3 2015/05/30 15:57:32 joerg Exp $	*/
+/*	$NetBSD: iscsic_parse.c,v 1.4 2021/12/03 13:27:38 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2005,2006,2011 The NetBSD Foundation, Inc.
@@ -204,7 +204,7 @@ cl_get_target(iscsid_add_target_req_t ** ptarg, int argc, char **argv, int nreq)
 	size_t num, len, name;
 	int i, p;
 
-	/* count number of addreses first, so we know how much memory to allocate */
+	/* count number of addresses first, so we know how much memory to allocate */
 	for (i = (int)(num = name = 0); i < argc; i++) {
 		if (!argv[i] || argv[i][0] != '-')
 			continue;

@@ -1,4 +1,4 @@
-/* $NetBSD: pi1ppcvar.h,v 1.6 2011/07/01 18:53:47 dyoung Exp $ */
+/* $NetBSD: pi1ppcvar.h,v 1.7 2021/12/03 13:27:38 andvar Exp $ */
 
 /*-
  * Copyright (c) 2001 Alcove - Nicolas Souchu
@@ -43,7 +43,7 @@
 /* Maximum time to wait for device response */
 #define MAXBUSYWAIT	(5 * (hz))
 
-/* Poll interval when wating for device to become ready */
+/* Poll interval when waiting for device to become ready */
 #define PI1PPC_POLL	((hz)/10)
 
 /* Diagnostic and verbose printing macros */

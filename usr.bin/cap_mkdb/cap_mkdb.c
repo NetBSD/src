@@ -1,4 +1,4 @@
-/*	$NetBSD: cap_mkdb.c,v 1.29 2013/03/26 20:58:35 christos Exp $	*/
+/*	$NetBSD: cap_mkdb.c,v 1.30 2021/12/03 13:27:39 andvar Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1992, 1993\
 #if 0
 static char sccsid[] = "@(#)cap_mkdb.c	8.2 (Berkeley) 4/27/95";
 #endif
-__RCSID("$NetBSD: cap_mkdb.c,v 1.29 2013/03/26 20:58:35 christos Exp $");
+__RCSID("$NetBSD: cap_mkdb.c,v 1.30 2021/12/03 13:27:39 andvar Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -168,7 +168,7 @@ dounlink(void)
 #define SHADOW	(char)2
 
 /*
- * Db_build() builds the name and capabilty databases according to the
+ * Db_build() builds the name and capability databases according to the
  * details above.
  */
 static void
