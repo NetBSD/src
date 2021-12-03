@@ -1,8 +1,15 @@
-# $NetBSD: opt-tracefile.mk,v 1.2 2020/08/16 14:25:16 rillig Exp $
+# $NetBSD: opt-tracefile.mk,v 1.3 2021/12/03 21:55:10 rillig Exp $
 #
-# Tests for the -T command line option.
+# Tests for the command line option '-T', which in jobs mode appends a trace
+# record to a trace log whenever a job is started or completed.
 
-# TODO: Implementation
+all: .PHONY
+	@rm -f opt-tracefile.log
+	@${MAKE} -f opt-tracefile.mk -j1 -Topt-tracefile.log trace
+	# Remove timestamps, process IDs and directory paths.
+	@awk '{ print $$2, $$3 }' opt-tracefile.log
 
-all:
-	@:;
+trace dependency1 dependency2: .PHONY
+	@echo 'Making ${.TARGET} from ${.ALLSRC:S,^$,<nothing>,W}.'
+
+trace: dependency1 dependency2
