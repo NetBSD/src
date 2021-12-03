@@ -1,4 +1,4 @@
-/* $NetBSD: tprof_armv8.c,v 1.12 2021/12/03 08:02:52 skrll Exp $ */
+/* $NetBSD: tprof_armv8.c,v 1.13 2021/12/03 10:54:19 skrll Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tprof_armv8.c,v 1.12 2021/12/03 08:02:52 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tprof_armv8.c,v 1.13 2021/12/03 10:54:19 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -57,7 +57,7 @@ armv8_pmu_event_implemented(uint16_t event)
 	eid[0] = reg_pmceid0_el0_read();
 	eid[1] = reg_pmceid1_el0_read();
 
-	/* The low 32bits of PMCEID[01]_EL0 contain the commmon events 0 to n */
+	/* The low 32bits of PMCEID[01]_EL0 contain the common events 0 to n */
 	const u_int idx = event / 32;
 	const u_int bit = event % 32;
 
