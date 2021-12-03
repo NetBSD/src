@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_machdep.c,v 1.1 2021/11/25 03:08:04 ryo Exp $	*/
+/*	$NetBSD: linux32_machdep.c,v 1.2 2021/12/03 09:20:23 ryo Exp $	*/
 
 /*-
  * Copyright (c) 2021 Ryo Shimizu <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux32_machdep.c,v 1.1 2021/11/25 03:08:04 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_machdep.c,v 1.2 2021/12/03 09:20:23 ryo Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -64,7 +64,6 @@ linux32_save_sigcontext(struct lwp *l, struct linux32_ucontext *luc)
 
 	cpu_getmcontext32(l, &uc.uc_mcontext, &uc.uc_flags);
 
-	memset(luc, 0, sizeof(*luc));
 	luc->luc_mcontext.arm_r0 = gr[_REG_R0];
 	luc->luc_mcontext.arm_r1 = gr[_REG_R1];
 	luc->luc_mcontext.arm_r2 = gr[_REG_R2];
@@ -109,13 +108,27 @@ linux32_save_sigcontext(struct lwp *l, struct linux32_ucontext *luc)
 static int
 linux32_restore_sigcontext(struct lwp *l, struct linux32_ucontext *luc)
 {
+	struct proc * const p = l->l_proc;
 	ucontext32_t uc;
 	__greg32_t *gr = uc.uc_mcontext.__gregs;
 	__vfpregset32_t *vfpregs = &uc.uc_mcontext.__vfpregs;
 	struct linux32_aux_sigframe *aux;
-	int i;
+	int i, error;
 
 	memset(&uc, 0, sizeof(uc));
+
+	/* build .uc_sigmask */
+	linux32_to_native_sigset(&uc.uc_sigmask, &luc->luc_sigmask);
+	uc.uc_flags |= _UC_SIGMASK;
+
+	/* build .uc_stack */
+	if (luc->luc_stack.ss_flags & LINUX_SS_ONSTACK)
+		uc.uc_stack.ss_flags |= SS_ONSTACK;
+	if (luc->luc_stack.ss_flags & LINUX_SS_DISABLE)
+		uc.uc_stack.ss_flags |= SS_DISABLE;
+	uc.uc_flags |= _UC_STACK;
+
+	/* build .uc_mcontext */
 	gr[_REG_R0] = luc->luc_mcontext.arm_r0;
 	gr[_REG_R1] = luc->luc_mcontext.arm_r1;
 	gr[_REG_R2] = luc->luc_mcontext.arm_r2;
@@ -148,7 +161,11 @@ linux32_restore_sigcontext(struct lwp *l, struct linux32_ucontext *luc)
 		uc.uc_flags |= _UC_FPU;
 	}
 
-	return cpu_setmcontext32(l, &uc.uc_mcontext, uc.uc_flags);
+	mutex_enter(p->p_lock);
+	error = setucontext32(l, &uc);
+	mutex_exit(p->p_lock);
+
+	return error;
 }
 
 void
