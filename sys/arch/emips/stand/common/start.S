@@ -1,4 +1,4 @@
-/*	$NetBSD: start.S,v 1.3 2014/02/06 19:20:11 matt Exp $	*/
+/*	$NetBSD: start.S,v 1.4 2021/12/03 10:49:25 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -82,7 +82,7 @@
 /* PROM_MODE means the user plans to keep this code around while running an OS.
  * So we act kind of like PROM code (BIOS?), but we live in RAM.
  * So we need to safeguard ourselves against corruptions, some unavoidable.
- * Like the overriding of the exception vectors, rigth where our "start" code is.
+ * Like the overriding of the exception vectors, right where our "start" code is.
  */
 
         IMPORT(main,4)
