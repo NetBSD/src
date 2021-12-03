@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs.h,v 1.128 2019/09/23 12:00:57 christos Exp $	*/
+/*	$NetBSD: puffs.h,v 1.129 2021/12/03 14:00:59 pho Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -223,7 +223,7 @@ struct puffs_ops {
 	int (*puffs_node_inactive)(struct puffs_usermount *, puffs_cookie_t);
 	int (*puffs_node_print)(struct puffs_usermount *, puffs_cookie_t);
 	int (*puffs_node_pathconf)(struct puffs_usermount *,
-	    puffs_cookie_t, int, register_t *);
+	    puffs_cookie_t, int, __register_t *);
 	int (*puffs_node_advlock)(struct puffs_usermount *,
 	    puffs_cookie_t, void *, int, struct flock *, int);
 	int (*puffs_node_read)(struct puffs_usermount *, puffs_cookie_t,
@@ -385,7 +385,7 @@ enum {
 	int fsname##_node_print(struct puffs_usermount *,		\
 	    puffs_cookie_t);						\
 	int fsname##_node_pathconf(struct puffs_usermount *,		\
-	    puffs_cookie_t, int, register_t *);				\
+	    puffs_cookie_t, int, __register_t *);				\
 	int fsname##_node_advlock(struct puffs_usermount *,		\
 	    puffs_cookie_t, void *, int, struct flock *, int);		\
 	int fsname##_node_read(struct puffs_usermount *, puffs_cookie_t,\
@@ -503,7 +503,7 @@ void			puffs_setroot(struct puffs_usermount *,
 				      struct puffs_node *);
 struct puffs_node 	*puffs_getroot(struct puffs_usermount *);
 void			puffs_setrootinfo(struct puffs_usermount *,
-					  enum vtype, vsize_t, dev_t); 
+					  enum vtype, voff_t, dev_t); 
 
 void			*puffs_getspecific(struct puffs_usermount *);
 void			puffs_setspecific(struct puffs_usermount *, void *);
