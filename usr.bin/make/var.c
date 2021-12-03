@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.957 2021/12/03 18:23:03 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.958 2021/12/03 18:29:35 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -140,7 +140,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.957 2021/12/03 18:23:03 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.958 2021/12/03 18:29:35 rillig Exp $");
 
 /*
  * Variables are defined using one of the VAR=value assignments.  Their
@@ -2216,37 +2216,23 @@ ParseModifierPartSubst(
 	p = *pp;
 	LazyBuf_Init(part, p);
 
-	/*
-	 * Skim through until the matching delimiter is found; pick up
-	 * variable expressions on the way.
-	 */
 	while (*p != '\0' && *p != delim) {
-
 		if (IsEscapedModifierPart(p, delim, subst)) {
 			LazyBuf_Add(part, p[1]);
 			p += 2;
-			continue;
-		}
-
-		if (*p != '$') {	/* Unescaped, simple text */
+		} else if (*p != '$') {	/* Unescaped, simple text */
 			if (subst != NULL && *p == '&')
 				LazyBuf_AddSubstring(part, subst->lhs);
 			else
 				LazyBuf_Add(part, *p);
 			p++;
-			continue;
-		}
-
-		if (p[1] == delim) {	/* Unescaped $ at end of pattern */
+		} else if (p[1] == delim) {	/* Unescaped '$' at end */
 			if (out_pflags != NULL)
 				out_pflags->anchorEnd = true;
 			else
 				LazyBuf_Add(part, *p);
 			p++;
-			continue;
-		}
-
-		if (VarEvalMode_ShouldEval(emode))
+		} else if (VarEvalMode_ShouldEval(emode))
 			ParseModifierPartExpr(&p, part, ch, emode);
 		else
 			ParseModifierPartDollar(&p, part);
