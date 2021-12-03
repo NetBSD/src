@@ -1,4 +1,4 @@
-# $NetBSD: varname-dot-make-save_dollars.mk,v 1.6 2021/12/02 22:41:01 rillig Exp $
+# $NetBSD: varname-dot-make-save_dollars.mk,v 1.7 2021/12/03 18:43:52 rillig Exp $
 #
 # Tests for the special .MAKE.SAVE_DOLLARS variable, which controls whether
 # the assignment operator ':=' converts '$$' to a single '$' or keeps it
@@ -107,5 +107,24 @@ VAR:=			${CMD:sh}
 .if ${VAR} != "\$\$\$\$"
 .  error
 .endif
+
+
+# In the modifier ':@var@body@', .MAKE.SAVE_DOLLARS does not affect the body.
+# In both cases, each '$$' is replaced with a single '$', no matter whether
+# directly or indirectly via another expression.
+.MAKE.SAVE_DOLLARS=	no
+DOLLARS=		$$$$$$$$
+VAR:=			${word:L:@word@$$$$$$$$-${DOLLARS}@}
+.if ${VAR} != "\$\$-\$\$"
+.  error
+.endif
+
+.MAKE.SAVE_DOLLARS=	yes
+DOLLARS=		$$$$$$$$
+VAR:=			${word:L:@word@$$$$$$$$-${DOLLARS}@}
+.if ${VAR} != "\$\$-\$\$"
+.  error
+.endif
+
 
 all:
