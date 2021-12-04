@@ -1,4 +1,4 @@
-/*	$NetBSD: pckbc_js.c,v 1.20 2020/11/22 03:55:33 thorpej Exp $ */
+/*	$NetBSD: pckbc_js.c,v 1.21 2021/12/04 13:34:35 andvar Exp $ */
 
 /*
  * Copyright (c) 2002 Valeriy E. Ushakov
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pckbc_js.c,v 1.20 2020/11/22 03:55:33 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pckbc_js.c,v 1.21 2021/12/04 13:34:35 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -52,7 +52,7 @@ struct pckbc_js_softc {
 
 	/* kbd and mouse share interrupt in both mr.coffee and krups */
 	uint32_t jsc_intr;
-	int jsc_establised;
+	int jsc_established;
 	void *jsc_int_cookie;
 };
 
@@ -165,7 +165,7 @@ pckbc_js_attach_common(struct pckbc_js_softc *jsc,
 
 	jsc->jsc_pckbc.intr_establish = pckbc_js_intr_establish;
 	jsc->jsc_intr = intr;
-	jsc->jsc_establised = 0;
+	jsc->jsc_established = 0;
 
 	if (isconsole) {
 		int status;
@@ -238,7 +238,7 @@ pckbc_js_intr_establish(struct pckbc_softc *sc, pckbport_slot_t slot)
 	struct pckbc_js_softc *jsc = (struct pckbc_js_softc *)sc;
 	void *res;
 
-	if (jsc->jsc_establised) {
+	if (jsc->jsc_established) {
 #ifdef DEBUG
 		aprint_verbose_dev(sc->sc_dv,
 		    "%s slot shares interrupt (already established)\n",
@@ -248,7 +248,7 @@ pckbc_js_intr_establish(struct pckbc_softc *sc, pckbport_slot_t slot)
 	}
 
 	/*
-	 * We can not choose the devic class interruptlevel freely,
+	 * We can not choose the device class interrupt level freely,
 	 * so we debounce via a softinterrupt.
 	 */
 	jsc->jsc_int_cookie = softint_establish(SOFTINT_SERIAL,
@@ -266,7 +266,7 @@ pckbc_js_intr_establish(struct pckbc_softc *sc, pckbport_slot_t slot)
 		    "unable to establish %s slot interrupt\n",
 		    pckbc_slot_names[slot]);
 	else
-		jsc->jsc_establised = 1;
+		jsc->jsc_established = 1;
 }
 
 static int
