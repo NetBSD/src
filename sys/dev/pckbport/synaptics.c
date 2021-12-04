@@ -1,4 +1,4 @@
-/*	$NetBSD: synaptics.c,v 1.74 2021/12/03 13:27:39 andvar Exp $	*/
+/*	$NetBSD: synaptics.c,v 1.75 2021/12/04 14:53:56 nia Exp $	*/
 
 /*
  * Copyright (c) 2005, Steve C. Woodford
@@ -48,7 +48,7 @@
 #include "opt_pms.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: synaptics.c,v 1.74 2021/12/03 13:27:39 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: synaptics.c,v 1.75 2021/12/04 14:53:56 nia Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1031,6 +1031,8 @@ pms_synaptics_parse(struct pms_softc *psc)
 	struct synaptics_packet nsp;
 	char new_buttons, ew_mode;
 	unsigned v, primary_finger, secondary_finger;
+	int ext_left = -1, ext_right = -1, ext_middle = -1,
+	    ext_up = -1, ext_down = -1;
 
 	sc->total_packets++;
 
@@ -1177,29 +1179,29 @@ pms_synaptics_parse(struct pms_softc *psc)
 			    psc->packet[3], psc->packet[4], psc->packet[5]);
 
 			if ((psc->packet[4] & SYN_1BUTMASK) != 0)
-				sc->ext_left = PMS_LBUTMASK;
+				ext_left = PMS_LBUTMASK;
 			else
-				sc->ext_left = 0;
+				ext_left = 0;
 
 			if ((psc->packet[4] & SYN_3BUTMASK) != 0)
-				sc->ext_middle = PMS_MBUTMASK;
+				ext_middle = PMS_MBUTMASK;
 			else
-				sc->ext_middle = 0;
+				ext_middle = 0;
 
 			if ((psc->packet[5] & SYN_2BUTMASK) != 0)
-				sc->ext_right = PMS_RBUTMASK;
+				ext_right = PMS_RBUTMASK;
 			else
-				sc->ext_right = 0;
+				ext_right = 0;
 
 			if ((psc->packet[5] & SYN_4BUTMASK) != 0)
-				sc->ext_up = 1;
+				ext_up = 1;
 			else
-				sc->ext_up = 0;
+				ext_up = 0;
 
 			if ((psc->packet[4] & SYN_5BUTMASK) != 0)
-				sc->ext_down = 1;
+				ext_down = 1;
 			else
-				sc->ext_down = 0;
+				ext_down = 0;
 		} else {
 			/* Left/Right button handling. */
 			nsp.sp_left = psc->packet[0] & PMS_LBUTMASK;
@@ -1275,16 +1277,38 @@ pms_synaptics_parse(struct pms_softc *psc)
 			/* Old style Middle Button. */
 			nsp.sp_middle = (psc->packet[0] & PMS_LBUTMASK) ^
 		    	    (psc->packet[3] & PMS_LBUTMASK);
-		} else if (synaptics_up_down_emul != 1) {
+		} else {
 			nsp.sp_middle = 0;
 		}
 
-		/* Overlay extended button state */
-		nsp.sp_left |= sc->ext_left;
-		nsp.sp_right |= sc->ext_right;
-		nsp.sp_middle |= sc->ext_middle;
-		nsp.sp_up |= sc->ext_up;
-		nsp.sp_down |= sc->ext_down;
+		/*
+		 * Overlay extended button state if anything changed,
+		 * preserve the state if a button is being held.
+		 */
+		if (ext_left != -1)
+			nsp.sp_left = sc->ext_left = ext_left;
+		else if (sc->ext_left != 0)
+			nsp.sp_left = sc->ext_left;
+
+		if (ext_right != -1)
+			nsp.sp_right = sc->ext_right = ext_right;
+		else if (sc->ext_right != 0)
+			nsp.sp_right = sc->ext_right;
+
+		if (ext_middle != -1)
+			nsp.sp_middle = sc->ext_middle = ext_middle;
+		else if (sc->ext_middle != 0)
+			nsp.sp_middle = sc->ext_middle;
+
+		if (ext_up != -1)
+			nsp.sp_up = sc->ext_up = ext_up;
+		else if (sc->ext_up != 0)
+			nsp.sp_up = sc->ext_up;
+
+		if (ext_down != -1)
+			nsp.sp_down = sc->ext_down = ext_down;
+		else if (sc->ext_down != 0)
+			nsp.sp_down = sc->ext_down;
 
 		switch (synaptics_up_down_emul) {
 		case 1:
@@ -1328,7 +1352,12 @@ skip_position:
 	/* If no fingers and we at least saw the primary finger
 	 * or the buttons changed then process the last packet.
 	 */
-	if (pms_synaptics_get_fingers(psc, nsp.sp_w, nsp.sp_z) == 0) {
+	if (pms_synaptics_get_fingers(psc, nsp.sp_w, nsp.sp_z) == 0 ||
+	    nsp.sp_left != packet.sp_left ||
+	    nsp.sp_right != packet.sp_right ||
+	    nsp.sp_middle != packet.sp_middle ||
+	    nsp.sp_up != packet.sp_up ||
+	    nsp.sp_down != packet.sp_down) {
 		if (nsp.sp_primary == 1) {
 			pms_synaptics_process_packet(psc, &nsp);
 			sc->packet_count[SYN_PRIMARY_FINGER] = 0;
