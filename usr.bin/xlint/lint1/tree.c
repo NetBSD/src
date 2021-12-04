@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.395 2021/11/16 21:01:05 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.396 2021/12/04 00:01:24 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.395 2021/11/16 21:01:05 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.396 2021/12/04 00:01:24 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -1039,7 +1039,7 @@ typeok_compare(op_t op,
 
 	lx = lt == PTR ? "pointer" : "integer";
 	rx = rt == PTR ? "pointer" : "integer";
-	/* illegal combination of %s (%s) and %s (%s), op %s */
+	/* illegal combination of %s '%s' and %s '%s', op '%s' */
 	warning(123, lx, type_name(ltp), rx, type_name(rtp), op_name(op));
 	return true;
 }
@@ -1103,7 +1103,7 @@ typeok_colon(const mod_t *mp,
 	if ((lt == PTR && is_integer(rt)) || (is_integer(lt) && rt == PTR)) {
 		const char *lx = lt == PTR ? "pointer" : "integer";
 		const char *rx = rt == PTR ? "pointer" : "integer";
-		/* illegal combination of %s (%s) and %s (%s), op %s */
+		/* illegal combination of %s '%s' and %s '%s', op '%s' */
 		warning(123, lx, type_name(ltp),
 		    rx, type_name(rtp), mp->m_name);
 		return true;
@@ -1572,7 +1572,7 @@ check_assign_pointer_integer(op_t op, int arg,
 		    lx, type_name(ltp), rx, type_name(rtp), arg);
 		break;
 	default:
-		/* illegal combination of %s (%s) and %s (%s), op %s */
+		/* illegal combination of %s '%s' and %s '%s', op '%s' */
 		warning(123,
 		    lx, type_name(ltp), rx, type_name(rtp), op_name(op));
 		break;
