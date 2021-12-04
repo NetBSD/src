@@ -1,4 +1,4 @@
-.\" $NetBSD: cgdconfig.8,v 1.51 2021/11/22 14:34:35 nia Exp $
+.\" $NetBSD: cgdconfig.8,v 1.52 2021/12/04 15:03:58 nia Exp $
 .\"
 .\" Copyright (c) 2002, The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -394,7 +394,7 @@ cgd configuration file.
 To set up and configure a cgd that uses adiantum, which takes a 256-bit
 key:
 .Bd -literal
-	# cgdconfig -g -o /etc/cgd/wd0e adiantum 256
+	# cgdconfig -g -k argon2id -o /etc/cgd/wd0e adiantum 256
 	# cgdconfig cgd0 /dev/wd0e
 	/dev/wd0e's passphrase:
 .Ed
@@ -407,7 +407,7 @@ when we configure the first time to set up the disk.
 Here is the
 sequence of commands that is recommended:
 .Bd -literal
-	# cgdconfig -g -o /etc/cgd/dk3 -V gpt adiantum
+	# cgdconfig -g -k argon2id -o /etc/cgd/dk3 -V gpt adiantum
 	# cgdconfig -V re-enter cgd0 /dev/dk3
 	/dev/dk3's passphrase:
 	re-enter device's passphrase:
