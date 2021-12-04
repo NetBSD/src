@@ -1,4 +1,4 @@
-/*	$NetBSD: reloc.c,v 1.116 2020/02/29 04:24:33 kamil Exp $	 */
+/*	$NetBSD: reloc.c,v 1.117 2021/12/04 08:53:34 skrll Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: reloc.c,v 1.116 2020/02/29 04:24:33 kamil Exp $");
+__RCSID("$NetBSD: reloc.c,v 1.117 2021/12/04 08:53:34 skrll Exp $");
 #endif /* not lint */
 
 #include <err.h>
@@ -259,6 +259,16 @@ _rtld_resolve_ifunc2(const Obj_Entry *obj, Elf_Addr addr)
 
 	return target;
 }
+
+#if \
+    !defined(RTLD_COMMON_CALL_IFUNC_RELA) && \
+    !defined(RTLD_COMMON_CALL_IFUNC_REL) && \
+    !defined(RTLD_ARCH_CALL_IFUNC)
+void
+_rtld_call_ifunc(Obj_Entry *obj, sigset_t *mask, u_int cur_objgen)
+{
+}
+#endif
 
 #ifdef RTLD_COMMON_CALL_IFUNC_RELA
 #  ifdef __sparc__
