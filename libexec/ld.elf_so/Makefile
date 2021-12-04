@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.143 2020/02/09 09:11:59 kamil Exp $
+#	$NetBSD: Makefile,v 1.144 2021/12/04 08:45:56 skrll Exp $
 #
 # NOTE: when changing ld.so, ensure that ldd still compiles.
 #
@@ -49,6 +49,7 @@ LDFLAGS+=	${${ACTIVE_CC} == "clang":? -Wl,-Bsymbolic : -symbolic} \
 		-shared -nostartfiles -nodefaultlibs
 LDFLAGS+=	-Wl,-static
 LDFLAGS+=	-Wl,--warn-shared-textrel
+LDFLAGS+=	-Wl,--no-undefined
 LDFLAGS+=	-Wl,-Map=${.TARGET}.map
 
 COPTS+=		-fvisibility=hidden
