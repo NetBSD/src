@@ -1,4 +1,4 @@
-/* 	$NetBSD: refuse_opt.c,v 1.21 2021/12/01 14:17:50 pho Exp $	*/
+/* 	$NetBSD: refuse_opt.c,v 1.22 2021/12/04 06:42:39 pho Exp $	*/
 
 /*-
  * Copyright (c) 2007 Juan Romero Pardines.
@@ -28,7 +28,7 @@
 #include <sys/types.h>
 
 #include <err.h>
-#include <fuse.h>
+#include <fuse_internal.h>
 #include <fuse_opt.h>
 #include <stdbool.h>
 #include <stdio.h>
