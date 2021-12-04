@@ -1,5 +1,5 @@
 /*	$KAME: dccp_usrreq.c,v 1.67 2005/11/03 16:05:04 nishida Exp $	*/
-/*	$NetBSD: dccp_usrreq.c,v 1.21 2018/12/16 17:46:58 christos Exp $ */
+/*	$NetBSD: dccp_usrreq.c,v 1.22 2021/12/04 13:23:04 andvar Exp $ */
 
 /*
  * Copyright (c) 2003 Joacim Häggmark, Magnus Erixzon, Nils-Erik Mattsson 
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dccp_usrreq.c,v 1.21 2018/12/16 17:46:58 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dccp_usrreq.c,v 1.22 2021/12/04 13:23:04 andvar Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -967,7 +967,7 @@ dccp_notify(struct inpcb *inp, int errno)
 }
 
 /*
- * Called when we get ICMP errors (destination unrechable,
+ * Called when we get ICMP errors (destination unreachable,
  * parameter problem, source quench, time exceeded and redirects)
  */
 void *
@@ -1231,7 +1231,7 @@ dccp_output(struct dccpcb *dp, u_int8_t extra)
 	}
 
 	if (dp->state != DCCPS_ESTAB && extra == 1) {
-		/* Only let cc decide when to resend if we are in establised state */
+		/* Only let cc decide when to resend if we are in established state */
 		return 0;
 	}
 
@@ -1792,7 +1792,7 @@ dccp_attach(struct socket *so, int proto)
 
 #ifdef INET6
 	if (proto == PF_INET6) {
-		DCCP_DEBUG((LOG_INFO, "We are a ipv6 socket!!!\n"));
+		DCCP_DEBUG((LOG_INFO, "We are an ipv6 socket!!!\n"));
 		dp->inp_vflag |= INP_IPV6;
 	} else 
 #endif
@@ -1868,7 +1868,7 @@ dccp_connect(struct socket *so, struct sockaddr *nam, struct lwp *l)
 	dp = (struct dccpcb *)inp->inp_ppcb;
 
 	if (dp->state == DCCPS_ESTAB) {
-		DCCP_DEBUG((LOG_INFO, "Why are we in connect when we already have a established connection?\n"));
+		DCCP_DEBUG((LOG_INFO, "Why are we in connect when we already have an established connection?\n"));
 	}
 
 	dp->who = DCCP_CLIENT;
@@ -2067,7 +2067,7 @@ dccp_disconnect(struct socket *so)
 }
 
 /*
- * If we have don't have a established connection
+ * If we have don't have an established connection
  * we can call dccp_close, otherwise we can just
  * set SS_ISDISCONNECTED and flush the receive queue.
  */
