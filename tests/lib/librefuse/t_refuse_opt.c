@@ -1,4 +1,4 @@
-/*	$NetBSD: t_refuse_opt.c,v 1.8 2017/01/13 21:30:41 christos Exp $ */
+/*	$NetBSD: t_refuse_opt.c,v 1.9 2021/12/04 06:42:39 pho Exp $ */
 
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -26,13 +26,13 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_refuse_opt.c,v 1.8 2017/01/13 21:30:41 christos Exp $");
+__RCSID("$NetBSD: t_refuse_opt.c,v 1.9 2021/12/04 06:42:39 pho Exp $");
 
-#define _KERNTYPES
 #include <sys/types.h>
 
 #include <atf-c.h>
 
+#define FUSE_USE_VERSION FUSE_MAKE_VERSION(2, 6)
 #include <fuse.h>
 
 #include "h_macros.h"

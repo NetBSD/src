@@ -1,4 +1,4 @@
-/*  $NetBSD: perfused.h,v 1.10 2012/02/04 18:36:30 joerg Exp $ */
+/*  $NetBSD: perfused.h,v 1.11 2021/12/04 06:42:39 pho Exp $ */
 
 /*-
  *  Copyright (c) 2010 Emmanuel Dreyfus. All rights reserved.
@@ -30,7 +30,6 @@
 
 #include <puffs.h>
 #include "../../lib/libperfuse/perfuse_if.h"
-#include "fuse.h"
 
 #define PERFUSE_MSG_T struct puffs_framebuf
 

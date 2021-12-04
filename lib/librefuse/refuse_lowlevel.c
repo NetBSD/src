@@ -1,4 +1,4 @@
-/*	$NetBSD: refuse_lowlevel.c,v 1.1 2016/11/20 13:26:28 pho Exp $	*/
+/*	$NetBSD: refuse_lowlevel.c,v 1.2 2021/12/04 06:42:39 pho Exp $	*/
 
 /*
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -31,10 +31,10 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: refuse_lowlevel.c,v 1.1 2016/11/20 13:26:28 pho Exp $");
+__RCSID("$NetBSD: refuse_lowlevel.c,v 1.2 2021/12/04 06:42:39 pho Exp $");
 #endif /* !lint */
 
-#include <fuse_lowlevel.h>
+#include <fuse_internal.h>
 #include <fuse_opt.h>
 #include <stddef.h>
 #include <stdio.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: refuse.c,v 1.102 2021/11/30 12:13:12 pho Exp $	*/
+/*	$NetBSD: refuse.c,v 1.103 2021/12/04 06:42:39 pho Exp $	*/
 
 /*
  * Copyright © 2007 Alistair Crooks.  All rights reserved.
@@ -31,16 +31,20 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: refuse.c,v 1.102 2021/11/30 12:13:12 pho Exp $");
+__RCSID("$NetBSD: refuse.c,v 1.103 2021/12/04 06:42:39 pho Exp $");
 #endif /* !lint */
+
+/* We emit a compiler warning for anyone including <fuse.h> without
+ * defining FUSE_USE_VERSION. Define it here, or otherwise we'll be
+ * warned too. */
+#define FUSE_USE_VERSION	FUSE_VERSION
 
 #include <sys/types.h>
 
 #include <assert.h>
 #include <err.h>
 #include <errno.h>
-#include <fuse.h>
-#include <fuse_lowlevel.h>
+#include <fuse_internal.h>
 #include <fuse_opt.h>
 #include <paths.h>
 #include <stddef.h>

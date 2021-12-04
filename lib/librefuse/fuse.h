@@ -1,4 +1,4 @@
-/* $NetBSD: fuse.h,v 1.23 2019/04/10 21:38:02 maya Exp $ */
+/* $NetBSD: fuse.h,v 1.24 2021/12/04 06:42:39 pho Exp $ */
 
 /*
  * Copyright © 2007 Alistair Crooks.  All rights reserved.
@@ -28,18 +28,32 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #ifndef FUSE_H_
-#define FUSE_H_	20070123
-
-/* set the default version to use for the fuse interface */
-/* this value determines the API to be used */
-#ifndef FUSE_USE_VERSION
-#define FUSE_USE_VERSION	26
-#endif
+#define FUSE_H_	20211204
 
 #include <sys/types.h>
 
 #include <puffs.h>
 #include <utime.h>
+
+/* The latest version of FUSE API currently provided by refuse. */
+#define FUSE_MAJOR_VERSION	2
+#define FUSE_MINOR_VERSION	6
+
+#define FUSE_MAKE_VERSION(maj, min)	((maj) * 10 + (min))
+#define FUSE_VERSION	FUSE_MAKE_VERSION(FUSE_MAJOR_VERSION, FUSE_MINOR_VERSION)
+
+/* FUSE_USE_VERSION is expected to be defined by user code to
+ * determine the API to be used. Although defining this macro is
+ * mandatory in the original FUSE implementation, refuse hasn't
+ * required this so we only emit a warning if it's undefined. */
+#if defined(FUSE_USE_VERSION)
+#	if FUSE_USE_VERSION > FUSE_VERSION
+#		warning "The requested API version is higher than the latest one supported by refuse."
+#	endif
+#else
+#	warning "User code including <fuse.h> should define FUSE_USE_VERSION before including this header. Defaulting to the latest version."
+#	define FUSE_USE_VERSION	FUSE_VERSION
+#endif
 
 #ifdef __cplusplus
 extern "C" {
@@ -96,10 +110,6 @@ typedef struct puffs_fuse_dirh *fuse_dirh_t;
 
 typedef int (*fuse_fill_dir_t)(void *, const char *, const struct stat *, off_t);
 typedef int (*fuse_dirfil_t)(fuse_dirh_t, const char *, int, ino_t);
-
-#define FUSE_VERSION	26
-#define FUSE_MAJOR_VERSION	2
-#define FUSE_MINOR_VERSION	6
 
 /*
  * These operations shadow those in puffs_usermount, and are used
