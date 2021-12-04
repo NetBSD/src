@@ -1,4 +1,4 @@
-/*	$NetBSD: err.c,v 1.147 2021/10/30 22:04:42 rillig Exp $	*/
+/*	$NetBSD: err.c,v 1.148 2021/12/04 00:01:24 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: err.c,v 1.147 2021/10/30 22:04:42 rillig Exp $");
+__RCSID("$NetBSD: err.c,v 1.148 2021/12/04 00:01:24 rillig Exp $");
 #endif
 
 #include <sys/types.h>
@@ -177,7 +177,7 @@ const char *const msgs[] = {
 	"bitwise '%s' on signed value nonportable",		      /* 120 */
 	"negative shift",					      /* 121 */
 	"shift amount %llu is greater than bit-size %llu of '%s'",    /* 122 */
-	"illegal combination of %s (%s) and %s (%s), op %s",	      /* 123 */
+	"illegal combination of %s '%s' and %s '%s', op '%s'",	      /* 123 */
 	"illegal combination of '%s' and '%s', op '%s'",	      /* 124 */
 	"ANSI C forbids ordered comparisons of pointers to functions",/* 125 */
 	"incompatible types '%s' and '%s' in conditional",	      /* 126 */
