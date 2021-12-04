@@ -1,4 +1,4 @@
-/*	$NetBSD: timer_sun4m.c,v 1.31 2018/01/12 06:01:33 mrg Exp $	*/
+/*	$NetBSD: timer_sun4m.c,v 1.32 2021/12/04 13:23:03 andvar Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: timer_sun4m.c,v 1.31 2018/01/12 06:01:33 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: timer_sun4m.c,v 1.32 2021/12/04 13:23:03 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -290,7 +290,7 @@ timerattach_obio_4m(device_t parent, device_t self, void *aux)
 	if (sparc_ncpus > 1) {
 		/*
 		 * Note that we don't actually use this cookie after checking
-		 * it was establised, we call directly via raise_ipi() on
+		 * it was established, we call directly via raise_ipi() on
 		 * IPL_HARDCLOCK.
 		 */
 		void *hardclock_cookie;

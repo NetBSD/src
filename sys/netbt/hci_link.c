@@ -1,4 +1,4 @@
-/*	$NetBSD: hci_link.c,v 1.25 2018/09/07 14:47:15 plunky Exp $	*/
+/*	$NetBSD: hci_link.c,v 1.26 2021/12/04 13:23:04 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2005 Iain Hibbert.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hci_link.c,v 1.25 2018/09/07 14:47:15 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hci_link.c,v 1.26 2021/12/04 13:23:04 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -123,7 +123,7 @@ hci_acl_open(struct hci_unit *unit, bdaddr_t *bdaddr)
 
 	case HCI_LINK_OPEN:
 		/*
-		 * If already open, halt any expiry timeouts. We dont need
+		 * If already open, halt any expiry timeouts. We don't need
 		 * to care about already invoking timeouts since refcnt >0
 		 * will keep the link alive.
 		 */
@@ -352,7 +352,7 @@ hci_acl_linkmode(struct hci_link *link)
 	/*
 	 * The link state will only be OPEN here if the mode change
 	 * was successful. So, we can proceed with L2CAP connections,
-	 * or notify already establshed channels, to allow any that
+	 * or notify already established channels, to allow any that
 	 * are dissatisfied to disconnect before we restart.
 	 */
 	next = LIST_FIRST(&l2cap_active_list);

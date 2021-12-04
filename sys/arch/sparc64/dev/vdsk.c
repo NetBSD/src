@@ -1,4 +1,4 @@
-/*	$NetBSD: vdsk.c,v 1.8 2021/08/07 16:19:05 thorpej Exp $	*/
+/*	$NetBSD: vdsk.c,v 1.9 2021/12/04 13:23:03 andvar Exp $	*/
 /*	$OpenBSD: vdsk.c,v 1.46 2015/01/25 21:42:13 kettenis Exp $	*/
 /*
  * Copyright (c) 2009, 2011 Mark Kettenis
@@ -251,7 +251,7 @@ vdsk_attach(device_t parent, device_t self, void *aux)
 
 	/*
 	 * Un-configure queues before registering interrupt handlers,
-	 * such that we dont get any stale LDC packets or events.
+	 * such that we don't get any stale LDC packets or events.
 	 */
 	hv_ldc_tx_qconf(ca->ca_id, 0, 0);
 	hv_ldc_rx_qconf(ca->ca_id, 0, 0);
@@ -357,7 +357,7 @@ vdsk_attach(device_t parent, device_t self, void *aux)
 
 	/*
 	 * Interrupts aren't enabled during autoconf, so poll for VIO
-	 * peer-to-peer hanshake completion.
+	 * peer-to-peer handshake completion.
 	 */
 	s = splbio();
 	timeout = 10 * 1000;
@@ -370,7 +370,7 @@ vdsk_attach(device_t parent, device_t self, void *aux)
 	splx(s);
 
 	if (sc->sc_vio_state != VIO_ESTABLISHED) {
-	  printf("vio not establshed: %d\n", sc->sc_vio_state);
+	  printf("vio not established: %d\n", sc->sc_vio_state);
 	  return;
 	}
 
