@@ -1,4 +1,4 @@
-/*	$NetBSD: hppa_reloc.c,v 1.47 2020/05/16 16:43:00 skrll Exp $	*/
+/*	$NetBSD: hppa_reloc.c,v 1.48 2021/12/04 14:39:08 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2004 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hppa_reloc.c,v 1.47 2020/05/16 16:43:00 skrll Exp $");
+__RCSID("$NetBSD: hppa_reloc.c,v 1.48 2021/12/04 14:39:08 skrll Exp $");
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -724,19 +724,6 @@ _rtld_relocate_plt_objects(const Obj_Entry *obj)
 			return -1;
 	}
 	return 0;
-}
-
-void
-_rtld_call_function_void(const Obj_Entry *obj, Elf_Addr ptr)
-{
-	volatile hppa_plabel plabel;
-	void (*f)(void);
-
-	plabel.hppa_plabel_pc = (Elf_Addr)ptr;
-	plabel.hppa_plabel_sl = (Elf_Addr)(obj->pltgot);
-	f = (void (*)(void))RTLD_MAKE_PLABEL(&plabel);
-
-	f();
 }
 
 Elf_Addr
