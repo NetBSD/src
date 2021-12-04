@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.c,v 1.209 2021/06/16 21:53:51 riastradh Exp $	 */
+/*	$NetBSD: rtld.c,v 1.210 2021/12/04 14:39:08 skrll Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: rtld.c,v 1.209 2021/06/16 21:53:51 riastradh Exp $");
+__RCSID("$NetBSD: rtld.c,v 1.210 2021/12/04 14:39:08 skrll Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -137,25 +137,25 @@ static Obj_Entry *_rtld_obj_from_addr(const void *);
 static void _rtld_fill_dl_phdr_info(const Obj_Entry *, struct dl_phdr_info *);
 
 static inline void
-_rtld_call_initfini_function(const Obj_Entry *obj, Elf_Addr func, sigset_t *mask)
+_rtld_call_initfini_function(fptr_t func, sigset_t *mask)
 {
 	_rtld_exclusive_exit(mask);
-	_rtld_call_function_void(obj, func);
+	(*func)();
 	_rtld_exclusive_enter(mask);
 }
 
 static void
 _rtld_call_fini_function(Obj_Entry *obj, sigset_t *mask, u_int cur_objgen)
 {
-	if (obj->fini_arraysz == 0 && (obj->fini == 0 || obj->fini_called))
+	if (obj->fini_arraysz == 0 && (obj->fini == NULL || obj->fini_called))
 		return;
 
-	if (obj->fini != 0 && !obj->fini_called) {
+	if (obj->fini != NULL && !obj->fini_called) {
 		dbg (("calling fini function %s at %p%s", obj->path,
 		    (void *)obj->fini,
 		    obj->z_initfirst ? " (DF_1_INITFIRST)" : ""));
 		obj->fini_called = 1;
-		_rtld_call_initfini_function(obj, obj->fini, mask);
+		_rtld_call_initfini_function(obj->fini, mask);
 	}
 #ifdef HAVE_INITFINI_ARRAY
 	/*
@@ -165,12 +165,12 @@ _rtld_call_fini_function(Obj_Entry *obj, sigset_t *mask, u_int cur_objgen)
 	 * the loop.
 	 */
 	while (obj->fini_arraysz > 0 && _rtld_objgen == cur_objgen) {
-		Elf_Addr fini = *obj->fini_array++;
+		fptr_t fini = *obj->fini_array++;
 		obj->fini_arraysz--;
 		dbg (("calling fini array function %s at %p%s", obj->path,
 		    (void *)fini,
 		    obj->z_initfirst ? " (DF_1_INITFIRST)" : ""));
-		_rtld_call_initfini_function(obj, fini, mask);
+		_rtld_call_initfini_function(fini, mask);
 	}
 #endif /* HAVE_INITFINI_ARRAY */
 }
@@ -231,15 +231,15 @@ restart:
 static void
 _rtld_call_init_function(Obj_Entry *obj, sigset_t *mask, u_int cur_objgen)
 {
-	if (obj->init_arraysz == 0 && (obj->init_called || obj->init == 0))
+	if (obj->init_arraysz == 0 && (obj->init_called || obj->init == NULL))
 		return;
 
-	if (!obj->init_called && obj->init != 0) {
+	if (!obj->init_called && obj->init != NULL) {
 		dbg (("calling init function %s at %p%s",
 		    obj->path, (void *)obj->init,
 		    obj->z_initfirst ? " (DF_1_INITFIRST)" : ""));
 		obj->init_called = 1;
-		_rtld_call_initfini_function(obj, obj->init, mask);
+		_rtld_call_initfini_function(obj->init, mask);
 	}
 
 #ifdef HAVE_INITFINI_ARRAY
@@ -250,12 +250,12 @@ _rtld_call_init_function(Obj_Entry *obj, sigset_t *mask, u_int cur_objgen)
 	 * the loop.
 	 */
 	while (obj->init_arraysz > 0 && _rtld_objgen == cur_objgen) {
-		Elf_Addr init = *obj->init_array++;
+		fptr_t init = *obj->init_array++;
 		obj->init_arraysz--;
 		dbg (("calling init_array function %s at %p%s",
 		    obj->path, (void *)init,
 		    obj->z_initfirst ? " (DF_1_INITFIRST)" : ""));
-		_rtld_call_initfini_function(obj, init, mask);
+		_rtld_call_initfini_function(init, mask);
 	}
 #endif /* HAVE_INITFINI_ARRAY */
 }
