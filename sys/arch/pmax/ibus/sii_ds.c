@@ -1,4 +1,4 @@
-/*	$NetBSD: sii_ds.c,v 1.10 2015/06/09 20:23:53 matt Exp $	*/
+/*	$NetBSD: sii_ds.c,v 1.11 2021/12/04 13:23:03 andvar Exp $	*/
 
 /*
  * Copyright 1996 The Board of Trustees of The Leland Stanford
@@ -16,7 +16,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sii_ds.c,v 1.10 2015/06/09 20:23:53 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sii_ds.c,v 1.11 2021/12/04 13:23:03 andvar Exp $");
 
 #include "sii.h"
 
@@ -38,7 +38,7 @@ __KERNEL_RCSID(0, "$NetBSD: sii_ds.c,v 1.10 2015/06/09 20:23:53 matt Exp $");
 #include <pmax/ibus/siireg.h>
 #include <pmax/ibus/siivar.h>
 
-#include <pmax/ibus/ibusvar.h>		/* interrupt etablish */
+#include <pmax/ibus/ibusvar.h>		/* interrupt establish */
 
 #include <pmax/pmax/kn01.h>		/* kn01 (ds3100) address constants */
 #include <pmax/pmax/pmaxtype.h>
