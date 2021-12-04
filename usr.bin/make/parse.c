@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.568 2021/12/03 23:37:30 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.569 2021/12/04 23:47:09 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -109,7 +109,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.568 2021/12/03 23:37:30 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.569 2021/12/04 23:47:09 rillig Exp $");
 
 /* types and constants */
 
@@ -2997,12 +2997,6 @@ ParseLine_ShellCommand(const char *p)
 	}
 }
 
-MAKE_INLINE bool
-IsDirective(const char *dir, size_t dirlen, const char *name)
-{
-	return dirlen == strlen(name) && memcmp(dir, name, dirlen) == 0;
-}
-
 /*
  * See if the line starts with one of the known directives, and if so, handle
  * the directive.
@@ -3011,8 +3005,8 @@ static bool
 ParseDirective(char *line)
 {
 	char *cp = line + 1;
-	const char *dir, *arg;
-	size_t dirlen;
+	const char *arg;
+	Substring dir;
 
 	pp_skip_whitespace(&cp);
 	if (IsInclude(cp, false)) {
@@ -3020,10 +3014,10 @@ ParseDirective(char *line)
 		return true;
 	}
 
-	dir = cp;
+	dir.start = cp;
 	while (ch_isalpha(*cp) || *cp == '-')
 		cp++;
-	dirlen = (size_t)(cp - dir);
+	dir.end = cp;
 
 	if (*cp != '\0' && !ch_isspace(*cp))
 		return false;
@@ -3031,31 +3025,31 @@ ParseDirective(char *line)
 	pp_skip_whitespace(&cp);
 	arg = cp;
 
-	if (IsDirective(dir, dirlen, "undef")) {
-		Var_Undef(cp);
+	if (Substring_Equals(dir, "undef")) {
+		Var_Undef(arg);
 		return true;
-	} else if (IsDirective(dir, dirlen, "export")) {
+	} else if (Substring_Equals(dir, "export")) {
 		Var_Export(VEM_PLAIN, arg);
 		return true;
-	} else if (IsDirective(dir, dirlen, "export-env")) {
+	} else if (Substring_Equals(dir, "export-env")) {
 		Var_Export(VEM_ENV, arg);
 		return true;
-	} else if (IsDirective(dir, dirlen, "export-literal")) {
+	} else if (Substring_Equals(dir, "export-literal")) {
 		Var_Export(VEM_LITERAL, arg);
 		return true;
-	} else if (IsDirective(dir, dirlen, "unexport")) {
+	} else if (Substring_Equals(dir, "unexport")) {
 		Var_UnExport(false, arg);
 		return true;
-	} else if (IsDirective(dir, dirlen, "unexport-env")) {
+	} else if (Substring_Equals(dir, "unexport-env")) {
 		Var_UnExport(true, arg);
 		return true;
-	} else if (IsDirective(dir, dirlen, "info")) {
+	} else if (Substring_Equals(dir, "info")) {
 		ParseMessage(PARSE_INFO, "info", arg);
 		return true;
-	} else if (IsDirective(dir, dirlen, "warning")) {
+	} else if (Substring_Equals(dir, "warning")) {
 		ParseMessage(PARSE_WARNING, "warning", arg);
 		return true;
-	} else if (IsDirective(dir, dirlen, "error")) {
+	} else if (Substring_Equals(dir, "error")) {
 		ParseMessage(PARSE_FATAL, "error", arg);
 		return true;
 	}
