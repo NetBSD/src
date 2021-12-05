@@ -1,4 +1,4 @@
-/* $NetBSD: nilfs_subr.c,v 1.15 2020/03/21 13:39:31 reinoud Exp $ */
+/* $NetBSD: nilfs_subr.c,v 1.16 2021/12/05 07:47:40 msaitoh Exp $ */
 
 /*
  * Copyright (c) 2008, 2009 Reinoud Zandijk
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: nilfs_subr.c,v 1.15 2020/03/21 13:39:31 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nilfs_subr.c,v 1.16 2021/12/05 07:47:40 msaitoh Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -591,7 +591,7 @@ nilfs_search_super_root(struct nilfs_device *nilfsdev)
 
 	error = 0;
 	cno = nilfs_rw64(nilfsdev->super.s_last_cno);
-	DPRINTF(VOLUMES, ("nilfs: seach_super_root start in pseg %"PRIu64"\n",
+	DPRINTF(VOLUMES, ("nilfs: search_super_root start in pseg %"PRIu64"\n",
 			ri->pseg));
 	for (;;) {
 		DPRINTF(VOLUMES, (" at pseg %"PRIu64"\n", ri->pseg));

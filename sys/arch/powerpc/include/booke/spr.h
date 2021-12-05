@@ -1,4 +1,4 @@
-/*	$NetBSD: spr.h,v 1.14 2021/08/03 23:12:14 andvar Exp $	*/
+/*	$NetBSD: spr.h,v 1.15 2021/12/05 07:47:40 msaitoh Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -474,7 +474,7 @@
 #define	  MAS4_MD		  0x00000004 /* default Memory coherency req. */
 #define	  MAS4_GD		  0x00000002 /* default Guarded */
 #define	  MAS4_ED		  0x00000001 /* default [little] Endianness */
-#define	SPR_MAS6		630	/* E... MAS Register 6 (TLB Seach CTX) */
+#define	SPR_MAS6		630	/* E... MAS Register 6 (TLB Search CTX) */
 #define   MAS6_SPID0		  0x0fff0000 /* PID used with tlbsx */
 #define	  MAS6_SPID0_SHIFT	  16
 #define   MAS6_SAS		  0x00000001 /* Address space (IS/DS MSR) ... */
