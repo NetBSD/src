@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_softint.c,v 1.66 2020/05/17 14:11:30 ad Exp $	*/
+/*	$NetBSD: kern_softint.c,v 1.67 2021/12/05 04:56:40 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2019, 2020 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  *	Since software interrupts are a limited resource and run with
  *	higher priority than most other LWPs in the system, all
  *	block-and-resume activity by a software interrupt must be kept
- *	short to allow futher processing at that level to continue.  By
+ *	short to allow further processing at that level to continue.  By
  *	extension, code running with process context must take care to
  *	ensure that any lock that may be taken from a software interrupt
  *	can not be held for more than a short period of time.
@@ -170,7 +170,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_softint.c,v 1.66 2020/05/17 14:11:30 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_softint.c,v 1.67 2021/12/05 04:56:40 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
