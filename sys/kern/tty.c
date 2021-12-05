@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.298 2021/09/29 13:14:39 thorpej Exp $	*/
+/*	$NetBSD: tty.c,v 1.299 2021/12/05 07:44:53 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2020 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.298 2021/09/29 13:14:39 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.299 2021/12/05 07:44:53 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -2618,11 +2618,11 @@ ttygetinfo(struct tty *tp, int fromsig, char *buf, size_t bufsz)
 #ifdef LWP_PC
 #define FMT_RUN "%#"PRIxVADDR
 #define VAL_RUNNING (vaddr_t)LWP_PC(l)
-#define VAL_RUNABLE (vaddr_t)LWP_PC(l)
+#define VAL_RUNNABLE (vaddr_t)LWP_PC(l)
 #else
 #define FMT_RUN "%s"
 #define VAL_RUNNING "running"
-#define VAL_RUNABLE "runnable"
+#define VAL_RUNNABLE "runnable"
 #endif
 		switch (l->l_stat) {
 		case LSONPROC:
@@ -2631,7 +2631,7 @@ ttygetinfo(struct tty *tp, int fromsig, char *buf, size_t bufsz)
 			lp = lmsg;
 			break;
 		case LSRUN:
-			snprintf(lmsg, sizeof(lmsg), FMT_RUN, VAL_RUNABLE);
+			snprintf(lmsg, sizeof(lmsg), FMT_RUN, VAL_RUNNABLE);
 			lp = lmsg;
 			break;
 		default:

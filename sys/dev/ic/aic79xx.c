@@ -1,4 +1,4 @@
-/*	$NetBSD: aic79xx.c,v 1.61 2021/12/05 07:23:44 msaitoh Exp $	*/
+/*	$NetBSD: aic79xx.c,v 1.62 2021/12/05 07:44:53 msaitoh Exp $	*/
 
 /*
  * Core routines and tables shareable across OS platforms.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aic79xx.c,v 1.61 2021/12/05 07:23:44 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aic79xx.c,v 1.62 2021/12/05 07:44:53 msaitoh Exp $");
 
 #include <dev/ic/aic79xx_osm.h>
 #include <dev/ic/aic79xx_inline.h>
@@ -5243,7 +5243,7 @@ ahd_shutdown(void *arg)
  * that is only available just after a reset.  If "reinit" is
  * non-zero, this reset occurred after initial configuration
  * and the caller requests that the chip be fully reinitialized
- * to a runable state.  Chip interrupts are *not* enabled after
+ * to a runnable state.  Chip interrupts are *not* enabled after
  * a reinitialization.  The caller must enable interrupts via
  * ahd_intr_enable().
  */

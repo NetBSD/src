@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysctl.7,v 1.155 2021/10/21 13:21:54 andvar Exp $
+.\"	$NetBSD: sysctl.7,v 1.156 2021/12/05 07:35:17 msaitoh Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	@(#)sysctl.3	8.4 (Berkeley) 5/9/95
 .\"
-.Dd July 13, 2021
+.Dd December 5, 2021
 .Dt SYSCTL 7
 .Os
 .Sh NAME
@@ -1162,7 +1162,7 @@ A small value gives more weight to the past, a larger values more weight
 on the current situation.
 Defaults to 50 and must be between 0 and 100.
 .It Li kern.sched.min_catch ( dynamic )
-Minimum count of migratable (runable) threads for catching (stealing)
+Minimum count of migratable (runnable) threads for catching (stealing)
 from another CPU.
 Defaults to 1 but can be increased to decrease chance of thread
 migration between CPUs.
