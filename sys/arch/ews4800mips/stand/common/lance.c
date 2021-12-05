@@ -1,4 +1,4 @@
-/*	$NetBSD: lance.c,v 1.7 2018/09/04 15:08:30 riastradh Exp $	*/
+/*	$NetBSD: lance.c,v 1.8 2021/12/05 03:04:41 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -283,7 +283,7 @@ bool
 lance_do_initialize(void)
 {
 
-	/* Initialze LANCE */
+	/* Initialize LANCE */
 	*LANCE_RAP = LE_CSR0;
 	*LANCE_RDP = LE_C0_INEA | LE_C0_INIT;
 

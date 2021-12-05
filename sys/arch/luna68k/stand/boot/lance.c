@@ -1,4 +1,4 @@
-/*	$NetBSD: lance.c,v 1.4 2018/09/04 15:08:30 riastradh Exp $	*/
+/*	$NetBSD: lance.c,v 1.5 2021/12/05 03:04:41 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2013 Izumi Tsutsui.  All rights reserved.
@@ -298,7 +298,7 @@ lance_do_initialize(struct le_softc *sc)
 	sc->sc_curtmd = 0;
 	sc->sc_currmd = 0;
 
-	/* Initialze LANCE */
+	/* Initialize LANCE */
 	lereg->ler_rap = LE_CSR0;
 	lereg->ler_rdp = LE_C0_INIT;
 

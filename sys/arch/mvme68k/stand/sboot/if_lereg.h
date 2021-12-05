@@ -1,4 +1,4 @@
-/*	$NetBSD: if_lereg.h,v 1.4 2005/12/11 12:18:19 christos Exp $ */
+/*	$NetBSD: if_lereg.h,v 1.5 2021/12/05 03:04:41 msaitoh Exp $ */
 
 /*-
  * Copyright (c) 1982, 1992, 1993
@@ -116,7 +116,7 @@ struct lereg2 {
 	volatile char	ler2_tbuf[LETBUF][LEMTU];
 };
 
-/* Initialzation block (mode) */
+/* Initialization block (mode) */
 #define	LE_MODE_PROM	0x8000		/* promiscuous mode */
 /*			0x7f80		   reserved, must be zero */
 #define	LE_MODE_INTL	0x0040		/* internal loopback */
