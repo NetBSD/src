@@ -1,4 +1,4 @@
-# $NetBSD: varmisc.mk,v 1.31 2021/11/30 23:52:19 rillig Exp $
+# $NetBSD: varmisc.mk,v 1.32 2021/12/05 10:02:51 rillig Exp $
 #
 # Miscellaneous variable tests.
 
@@ -83,7 +83,9 @@ SD_VALUES=	0 1 2 False True false true Yes No yes no On Off ON OFF on off
 SD_4_DOLLARS=	$$$$
 
 .for val in ${SD_VALUES}
-.MAKE.SAVE_DOLLARS:=	${val}	# Must be := since a simple '=' has no effect.
+# The assignment must be done using ':=' since a simple '=' would be
+# interpreted as 'yes', due to the leading '$'; see ParseBoolean.
+.MAKE.SAVE_DOLLARS:=	${val}
 SD.${val}:=		${SD_4_DOLLARS}
 .endfor
 .MAKE.SAVE_DOLLARS:=	yes
