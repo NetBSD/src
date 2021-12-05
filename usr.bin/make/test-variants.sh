@@ -1,5 +1,5 @@
 #! /bin/sh
-# $NetBSD: test-variants.sh,v 1.12 2021/09/12 10:28:40 rillig Exp $
+# $NetBSD: test-variants.sh,v 1.13 2021/12/05 14:57:36 rillig Exp $
 #
 # Build several variants of make and run the tests on them.
 #
@@ -30,7 +30,7 @@ testcase() {
 	&& env -i PATH="$PATH" USETOOLS="no" "$@" \
 		sh -ce "make -ks -j6 dependall" \
 	&& size *.o make \
-	&& env -i PATH="$PATH" USETOOLS="no" MALLOC_OPTIONS="JA" \
+	&& env -i PATH="$PATH" USETOOLS="no" MALLOC_CONF="junk:true" \
 		_MKMSG_TEST=":" "$@" \
 		sh -ce "make -s test" \
 	|| fail
