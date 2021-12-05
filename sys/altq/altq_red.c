@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_red.c,v 1.34 2021/09/21 14:30:15 christos Exp $	*/
+/*	$NetBSD: altq_red.c,v 1.35 2021/12/05 04:43:57 msaitoh Exp $	*/
 /*	$KAME: altq_red.c,v 1.20 2005/04/13 03:44:25 suz Exp $	*/
 
 /*
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: altq_red.c,v 1.34 2021/09/21 14:30:15 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: altq_red.c,v 1.35 2021/12/05 04:43:57 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_altq.h"
@@ -313,7 +313,7 @@ red_alloc(int weight, int inv_pmax, int th_min, int th_max, int flags,
 #ifdef ALTQ_FLOWVALVE
 	if (flags & REDF_FLOWVALVE)
 		rp->red_flowvalve = fv_alloc(rp);
-	/* if fv_alloc failes, flowvalve is just disabled */
+	/* if fv_alloc fails, flowvalve is just disabled */
 #endif
 #endif /* ALTQ3_COMPAT */
 	return (rp);
