@@ -1,4 +1,4 @@
-# $NetBSD: opt-file.mk,v 1.12 2021/04/04 10:13:09 rillig Exp $
+# $NetBSD: opt-file.mk,v 1.13 2021/12/05 14:57:36 rillig Exp $
 #
 # Tests for the -f command line option.
 
@@ -19,7 +19,7 @@ all: file-containing-null-byte
 # outside of the file buffer.
 #
 #	printf '%s' 'VAR=value\' \
-#	| MALLOC_OPTIONS=JA make-2014.01.01.00.00.00 -r -f - -V VAR -dA 2>&1 \
+#	| MALLOC_CONF="junk:true" make-2014.01.01.00.00.00 -r -f - -V VAR -dA 2>&1 \
 #	| less
 #
 # The debug output shows how make happily uses freshly allocated memory (the
