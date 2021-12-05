@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM PREVIOUS RELEASES:			<$Revision: 1.160 $>
+LIST OF CHANGES FROM PREVIOUS RELEASES:			<$Revision: 1.161 $>
 
 
 Changes from 386bsd 0.1 + patchkit 0.2.2 to NetBSD 0.8:
@@ -273,7 +273,7 @@ Changes from NetBSD 0.8 to NetBSD 0.9:
 	execve(2): replace execve with new one, based on work by Wolfgang
 		Solfrank <ws@tools.de>, but beaten up a good amount by cgd.
 		(after several iterations of beating have gone on,
-		this code is *really* differnt...) (cgd)
+		this code is *really* different...) (cgd)
 	update kvm library for the new exec, and add a kvm_getenv function,
 		to get a process's environment var list.  ps and w
 		apply strvis() to args/environment before printing (cgd)
