@@ -1,4 +1,4 @@
-/* $NetBSD: udf_readwrite.c,v 1.12 2016/05/24 09:55:57 reinoud Exp $ */
+/* $NetBSD: udf_readwrite.c,v 1.13 2021/12/05 04:32:36 msaitoh Exp $ */
 
 /*
  * Copyright (c) 2007, 2008 Reinoud Zandijk
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_readwrite.c,v 1.12 2016/05/24 09:55:57 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_readwrite.c,v 1.13 2021/12/05 04:32:36 msaitoh Exp $");
 #endif /* not lint */
 
 
@@ -105,7 +105,7 @@ udf_fixup_fid_block(uint8_t *blob, int lb_size,
 			break;
 		}
 
-		/* update sector number and recalculate checkum */
+		/* update sector number and recalculate checksum */
 		fid->tag.tag_loc = udf_rw32(lb_num);
 		udf_validate_tag_sum((union dscrptr *) fid);
 
