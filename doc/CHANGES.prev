@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM PREVIOUS RELEASES:			<$Revision: 1.158 $>
+LIST OF CHANGES FROM PREVIOUS RELEASES:			<$Revision: 1.159 $>
 
 
 Changes from 386bsd 0.1 + patchkit 0.2.2 to NetBSD 0.8:
@@ -3968,12 +3968,12 @@ Changes from NetBSD 1.3 to NetBSD 1.4:
 		to bus_dmamap_t which holds the size of the current
 		DMA mapping.  See bus_dma(9) for details.  [thorpej 19980203]
 	sun3: Merged arch/sun3x into arch/sun3.	 [gwr 19980204]
-	uvm:  commited new virtual memory system written by chuck cranor
+	uvm:  committed new virtual memory system written by chuck cranor
 		<chuck@maria.wustl.edu>.  uvm totally replaces the old Mach
 		vm code (though parts of uvm are somewhat derived from some
 		of the Mach code).  [mrg 19980205]
-	sparc:	commited sparc potions of UVM framework.  [mrg 19980205]
-	i386:  commited i386 potions of UVM framework.	[mrg 19980206]
+	sparc:	committed sparc potions of UVM framework.  [mrg 19980205]
+	i386:  committed i386 potions of UVM framework.	[mrg 19980206]
 	standards: Added EIDRM errno for SysV IPC.  [mikel 19980206]
 	sun3: Better frame buffer probes (Use P4 reg).	[gwr 19980207]
 	standards: Added ENOMSG errno for SysV IPC and message catalogs.
