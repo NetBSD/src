@@ -1,4 +1,4 @@
-/*	$NetBSD: undefined.h,v 1.15 2021/10/31 16:23:47 skrll Exp $	*/
+/*	$NetBSD: undefined.h,v 1.16 2021/12/05 04:42:55 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1995-1996 Mark Brinicombe.
@@ -94,7 +94,7 @@ struct undefined_handler {
 
 /*
  * Handlers installed using install_coproc_handler_static shouldn't be
- * removed.  We special case the 'test vfp existance' handler.
+ * removed.  We special case the 'test vfp existence' handler.
  */
 void install_coproc_handler_static(int, struct undefined_handler *);
 

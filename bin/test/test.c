@@ -1,4 +1,4 @@
-/* $NetBSD: test.c,v 1.43 2018/09/13 22:00:58 kre Exp $ */
+/* $NetBSD: test.c,v 1.44 2021/12/05 04:42:55 msaitoh Exp $ */
 
 /*
  * test(1); version 7-like  --  author Erik Baalbergen
@@ -12,7 +12,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: test.c,v 1.43 2018/09/13 22:00:58 kre Exp $");
+__RCSID("$NetBSD: test.c,v 1.44 2021/12/05 04:42:55 msaitoh Exp $");
 #endif
 
 #include <sys/stat.h>
@@ -661,7 +661,7 @@ perform_binop(enum token op_num, const char *opnd1, const char *opnd2)
  * wording in 1003.2-1992, not the other way around.  I think 1003.2b goes much
  * too far the wrong way without any valid rationale and that it's best if we
  * stick with 1003.2-1992 and test the flags, and not mimic the behaviour of
- * open() since we already know very well how it will work -- existance of the
+ * open() since we already know very well how it will work -- existence of the
  * file is all that matters to open() for root.
  * 
  * Unfortunately the SVID is no help at all (which is, I guess, partly why
