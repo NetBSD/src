@@ -1,4 +1,4 @@
-/*	$NetBSD: md.h,v 1.5 2019/12/11 19:25:50 martin Exp $	*/
+/*	$NetBSD: md.h,v 1.6 2021/12/05 04:42:55 msaitoh Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -72,7 +72,7 @@
 
 /*
  * We rely on kernel support to translate native RDB partitions
- * to in-core disklabels, so we can not check for existance of "real"
+ * to in-core disklabels, so we can not check for existence of "real"
  * disklabels on-disk before offering disklabel partitions.
  */
 #define	DISKLABEL_NO_ONDISK_VERIFY	1
