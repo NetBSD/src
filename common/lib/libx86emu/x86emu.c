@@ -1,4 +1,5 @@
-/*	$NetBSD: x86emu.c,v 1.11 2021/12/05 03:24:19 msaitoh Exp $	*/
+
+/*	$NetBSD: x86emu.c,v 1.12 2021/12/05 04:24:08 msaitoh Exp $	*/
 
 /****************************************************************************
 *
@@ -174,7 +175,7 @@ static uint32_t	pop_long (struct X86EMU *);
 
 /****************************************************************************
 REMARKS:
-Handles any pending asychronous interrupts.
+Handles any pending asynchronous interrupts.
 ****************************************************************************/
 static void
 x86emu_intr_dispatch(struct X86EMU *emu, uint8_t intno)
