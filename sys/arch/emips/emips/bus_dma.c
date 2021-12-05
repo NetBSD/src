@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.5 2020/11/21 19:24:17 thorpej Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.6 2021/12/05 03:07:15 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.5 2020/11/21 19:24:17 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.6 2021/12/05 03:07:15 msaitoh Exp $");
 
 #include "opt_cputype.h"
 
@@ -462,7 +462,7 @@ _bus_dmamap_sync_r3k(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t offset,
 		return;
 
 	/*
-	 * No cache invlidation is necessary if the DMA map covers
+	 * No cache invalidation is necessary if the DMA map covers
 	 * COHERENT DMA-safe memory (which is mapped un-cached).
 	 */
 	if (map->_dm_flags & EMIPS_DMAMAP_COHERENT)
