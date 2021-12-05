@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuframe.h,v 1.7 2020/09/07 23:41:38 mrg Exp $	*/
+/*	$NetBSD: cpuframe.h,v 1.8 2021/12/05 02:53:51 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -188,7 +188,7 @@ struct fpframe {
 #define fpf_unimp	FPF_u2.FPF_unimp
 
 /* 
- * This is incompatible with the earlier one; expecially, an earlier frame 
+ * This is incompatible with the earlier one; especially, an earlier frame 
  * must not be FRESTOREd on a 060 or vv, because a frame error exception is
  * not guaranteed.
  */
