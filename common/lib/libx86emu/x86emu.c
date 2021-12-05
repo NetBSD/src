@@ -1,4 +1,4 @@
-/*	$NetBSD: x86emu.c,v 1.10 2014/08/04 21:41:44 joerg Exp $	*/
+/*	$NetBSD: x86emu.c,v 1.11 2021/12/05 03:24:19 msaitoh Exp $	*/
 
 /****************************************************************************
 *
@@ -392,7 +392,7 @@ cpu-state-varible emu->x86.mode. There are several potential states:
 	gs segment override
 	ss segment override
 
-	ds/ss select (in absense of override)
+	ds/ss select (in absence of override)
 
 Each of the above 7 items are handled with a bit in the mode field.
 ****************************************************************************/
