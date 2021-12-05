@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs.h,v 1.79 2021/06/04 10:44:58 hannken Exp $	*/
+/*	$NetBSD: nfs.h,v 1.80 2021/12/05 07:44:53 msaitoh Exp $	*/
 /*
  * Copyright (c) 1989, 1993, 1995
  *	The Regents of the University of California.  All rights reserved.
@@ -91,7 +91,7 @@
  * NFS client IO daemon threads. May be overridden by config options.
  */
 #ifndef NFS_MAXASYNCDAEMON
-#define	NFS_MAXASYNCDAEMON 	128	/* Max. number async_daemons runable */
+#define	NFS_MAXASYNCDAEMON 	128    /* Max. number async_daemons runnable */
 #endif
 
 /*
