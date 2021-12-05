@@ -1,4 +1,4 @@
-/* $NetBSD: isp.c,v 1.132 2021/12/05 04:29:53 msaitoh Exp $ */
+/* $NetBSD: isp.c,v 1.133 2021/12/05 13:10:43 rillig Exp $ */
 /*
  * Machine and OS Independent (well, as best as possible)
  * code for the Qlogic ISP SCSI adapters.
@@ -43,7 +43,7 @@
  */
 #ifdef	__NetBSD__
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isp.c,v 1.132 2021/12/05 04:29:53 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isp.c,v 1.133 2021/12/05 13:10:43 rillig Exp $");
 #include <dev/ic/isp_netbsd.h>
 #endif
 #ifdef	__FreeBSD__
@@ -2725,7 +2725,7 @@ not_on_fabric:
  * layer appropriately).
  *
  * We also do initiator map target id assignment here for new initiator
- * devices and refresh old ones ot make sure that they point to the correct
+ * devices and refresh old ones to make sure that they point to the correct
  * entities.
  */
 static int
