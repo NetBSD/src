@@ -1,4 +1,4 @@
-*	$NetBSD: ssin.sa,v 1.5 2021/08/21 23:00:31 andvar Exp $
+*	$NetBSD: ssin.sa,v 1.6 2021/12/05 07:04:30 msaitoh Exp $
 
 *	MOTOROLA MICROPROCESSOR & MEMORY TECHNOLOGY GROUP
 *	M68000 Hi-Performance Microprocessor Division
@@ -64,7 +64,7 @@
 *	2. If |X| >= 15Pi or |X| < 2**(-40), go to 7.
 *
 *	3. Decompose X as X = N(Pi/2) + r where |r| <= Pi/4. Let
-*		k = N mod 4, so in particular, k = 0,1,2,or 3. Overwirte
+*		k = N mod 4, so in particular, k = 0,1,2,or 3. Overwrite
 *		k by k := k + AdjN.
 *
 *	4. If k is even, go to 6.
