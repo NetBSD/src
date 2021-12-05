@@ -1484,7 +1484,7 @@
 	  src/racoon/samples/roadwarrior/server/phase1-down.sh: Also 
 	  flush SAD when disconnecting.
 	* src/racoon/admin.c: Send a notification when deleting ISAKMP SA
-	* src/racoon/samples/roadwarrior/README: accomodate the recent
+	* src/racoon/samples/roadwarrior/README: accommodate the recent
 	  sysconfdir change
 
 2004-11-18  Michal Ludvig  <mludvig@suse.cz>
