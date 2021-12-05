@@ -1,5 +1,5 @@
 /*	$KAME: sctp_header.h,v 1.14 2005/03/06 16:04:17 itojun Exp $	*/
-/*	$NetBSD: sctp_header.h,v 1.2 2017/06/27 11:55:07 rjs Exp $ */
+/*	$NetBSD: sctp_header.h,v 1.3 2021/12/05 04:28:53 msaitoh Exp $ */
 
 #ifndef __SCTP_HEADER_H__
 #define __SCTP_HEADER_H__
@@ -420,7 +420,7 @@ struct sctp_stream_reset_response {
 	u_int16_t list_of_streams[0];   /* if not all list of streams */
 } __packed;
 
-/* convience structures, note that if you
+/* convenience structures, note that if you
  * are making a request for specific streams
  * then the request will need to be an overlay
  * structure.

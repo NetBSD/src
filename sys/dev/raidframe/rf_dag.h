@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_dag.h,v 1.21 2020/06/19 19:29:39 jdolecek Exp $	*/
+/*	$NetBSD: rf_dag.h,v 1.22 2021/12/05 04:28:53 msaitoh Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -196,7 +196,7 @@ struct RF_DagList_s {
 	struct RF_DagList_s *next;     /* next DagList, if any */
 };
 
-/* convience macro for declaring a create dag function */
+/* convenience macro for declaring a create dag function */
 
 #define RF_CREATE_DAG_FUNC_DECL(_name_) \
 void _name_ ( \
