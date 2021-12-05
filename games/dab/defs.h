@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.3 2011/05/23 23:06:41 joerg Exp $	*/
+/*	$NetBSD: defs.h,v 1.4 2021/12/05 09:22:45 rillig Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 /*
- * defs.h: Macro defines
+ * Macro defines
  */
 
 #ifndef _H_DEFS

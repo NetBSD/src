@@ -1,4 +1,4 @@
-/*	$NetBSD: ttyscrn.cc,v 1.5 2012/10/06 19:39:51 christos Exp $	*/
+/*	$NetBSD: ttyscrn.cc,v 1.6 2021/12/05 09:22:45 rillig Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -30,11 +30,11 @@
  */
 
 /*
- * ttyscrn.C: Curses screen implementation for dots
+ * Curses screen implementation for dots
  */
 
 #include "defs.h"
-RCSID("$NetBSD: ttyscrn.cc,v 1.5 2012/10/06 19:39:51 christos Exp $")
+RCSID("$NetBSD: ttyscrn.cc,v 1.6 2021/12/05 09:22:45 rillig Exp $")
 
 #include <stdio.h>
 #include <curses.h>

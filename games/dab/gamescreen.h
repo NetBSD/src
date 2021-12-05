@@ -1,4 +1,4 @@
-/*	$NetBSD: gamescreen.h,v 1.3 2010/12/08 17:08:07 joerg Exp $	*/
+/*	$NetBSD: gamescreen.h,v 1.4 2021/12/05 09:22:45 rillig Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 /*
- * screen.h: Screen base class
+ * Screen base class
  */
 
 #ifndef _H_GAMESCREEN

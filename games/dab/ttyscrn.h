@@ -1,4 +1,4 @@
-/*	$NetBSD: ttyscrn.h,v 1.4 2012/10/06 19:39:51 christos Exp $	*/
+/*	$NetBSD: ttyscrn.h,v 1.5 2021/12/05 09:22:45 rillig Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 /*
- * ttyscrn.h: Curses based screen for dots
+ * Curses based screen for dots
  */
 
 #ifndef _H_TTYSCRN
