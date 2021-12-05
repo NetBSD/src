@@ -13,4 +13,5 @@ mod-loop-dollar:$3$:
 mod-loop-dollar:$${word}$$:
 mod-loop-dollar:$$5$$:
 mod-loop-dollar:$$${word}$$$:
+: all: ' rest of the value'
 exit status 0

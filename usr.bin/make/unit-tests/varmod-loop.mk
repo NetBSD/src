@@ -1,4 +1,4 @@
-# $NetBSD: varmod-loop.mk,v 1.16 2021/11/30 23:52:19 rillig Exp $
+# $NetBSD: varmod-loop.mk,v 1.17 2021/12/05 15:01:04 rillig Exp $
 #
 # Tests for the :@var@...${var}...@ variable modifier.
 
@@ -187,6 +187,31 @@ CMDLINE=	global		# needed for deleting the environment
 .endif
 
 
-# TODO: Actually trigger the undefined behavior (use after free) that was
-#  already suspected in Var_Parse, in the comment 'the value of the variable
-#  must not change'.
+# A side effect of the modifier ':@' is that the loop variable is created as
+# an actual variable in the current evaluation scope (Command/Global/target),
+# and at the end of the loop, this variable is deleted.  Before var.c 1.TODO
+# from 2021-12-05, a variable could be deleted while it was in use, leading to
+# a use-after-free bug.
+#
+# See Var_Parse, comment 'the value of the variable must not change'.
+
+# Set up the variable that deletes itself when it is evaluated.
+VAR=	${:U:@VAR@@} rest of the value
+
+# In an assignment, the scope is 'Global'.  Since the variable 'VAR' is
+# defined in the global scope, it deletes itself.
+EVAL:=	${:U rest of the value} #${VAR} # FIXME: use-after-free
+.if ${EVAL} != " rest of the value"
+.  error
+.endif
+
+VAR=	${:U:@VAR@@} rest of the value
+all: .PHONY
+	# In the command that is associated with a target, the scope is the
+	# one from the target.  That scope only contains a few variables like
+	# '.TARGET', '.ALLSRC', '.IMPSRC'.  Make does not expect that these
+	# variables get modified from the outside.
+	#
+	# There is no variable named 'VAR' in the local scope, so nothing
+	# happens.
+	: $@: '${VAR}'

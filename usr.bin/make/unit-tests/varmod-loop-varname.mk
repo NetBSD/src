@@ -1,4 +1,4 @@
-# $NetBSD: varmod-loop-varname.mk,v 1.3 2021/11/30 23:52:19 rillig Exp $
+# $NetBSD: varmod-loop-varname.mk,v 1.4 2021/12/05 15:01:04 rillig Exp $
 #
 # Tests for the first part of the variable modifier ':@var@...@', which
 # contains the variable name to use during the loop.
@@ -14,6 +14,8 @@
 # Since var.c 1.907 from 2021-04-04, a '$' is no longer allowed in the
 # variable name.
 .if ${:Uone two three:@${:Ubar:S,b,v,}@+${var}+@} != "+one+ +two+ +three+"
+.  error
+.else
 .  error
 .endif
 
