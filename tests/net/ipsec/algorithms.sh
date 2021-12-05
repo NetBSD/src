@@ -1,4 +1,4 @@
-#	$NetBSD: algorithms.sh,v 1.6 2017/10/27 04:31:50 ozaki-r Exp $
+#	$NetBSD: algorithms.sh,v 1.7 2021/12/05 02:49:21 msaitoh Exp $
 #
 # Copyright (c) 2017 Internet Initiative Japan Inc.
 # All rights reserved.
@@ -29,7 +29,7 @@ ESP_ENCRYPTION_ALGORITHMS="des-cbc 3des-cbc null blowfish-cbc cast128-cbc \
     des-deriv rijndael-cbc aes-ctr camellia-cbc aes-gcm-16 aes-gmac"
 ESP_ENCRYPTION_ALGORITHMS_MINIMUM="null rijndael-cbc"
 
-# Valid key lengths of ESP encription algorithms
+# Valid key lengths of ESP encryption algorithms
 #    des-cbc         64
 #    3des-cbc        192
 #    null            0 to 2048     XXX only accept 0 length
