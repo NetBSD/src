@@ -1,4 +1,4 @@
-/*	$NetBSD: makemandb.c,v 1.60 2019/05/18 07:56:43 abhinav Exp $	*/
+/*	$NetBSD: makemandb.c,v 1.61 2021/12/05 08:18:18 msaitoh Exp $	*/
 /*
  * Copyright (c) 2011 Abhinav Upadhyay <er.abhinav.upadhyay@gmail.com>
  * Copyright (c) 2011 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: makemandb.c,v 1.60 2019/05/18 07:56:43 abhinav Exp $");
+__RCSID("$NetBSD: makemandb.c,v 1.61 2021/12/05 08:18:18 msaitoh Exp $");
 
 #include <sys/stat.h>
 #include <sys/types.h>
@@ -1259,7 +1259,7 @@ pman_sh(const struct roff_node *n, mandb_rec *rec)
 
 	/*
 	 * Check if this section should be extracted and
-	 * where it should be stored. Handled the trival cases first.
+	 * where it should be stored. Handled the trivial cases first.
 	 */
 	for (i = 0; i < sizeof(mapping) / sizeof(mapping[0]); ++i) {
 		if (strcmp(head->string, mapping[i].header) == 0) {
