@@ -1,4 +1,4 @@
-/* $NetBSD: am79c930reg.h,v 1.7 2008/04/28 20:23:49 martin Exp $ */
+/* $NetBSD: am79c930reg.h,v 1.8 2021/12/05 04:54:21 msaitoh Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 /*
- * Device register definitions gleaned from from the AMD "Am79C930
+ * Device register definitions gleaned from the AMD "Am79C930
  * PCnet(tm)-Mobile Single Chip Wireless LAN Media Access Controller"
  * data sheet, AMD Pub #20183, Rev B, amendment/0, issue date August 1997.
  *

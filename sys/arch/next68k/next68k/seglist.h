@@ -1,7 +1,7 @@
-/*	$NetBSD: seglist.h,v 1.6 2009/10/23 17:01:08 snj Exp $ */
+/*	$NetBSD: seglist.h,v 1.7 2021/12/05 04:54:21 msaitoh Exp $ */
 
 /*
- * This file was taken from from mvme68k/mvme68k/seglist.h
+ * This file was taken from mvme68k/mvme68k/seglist.h
  * should probably be re-synced when needed.
  * Darrin B. Jewell <jewell@mit.edu>  Tue Nov 10 05:07:16 1998
  * original cvs id: NetBSD: seglist.h,v 1.4 1998/08/22 10:55:35 scw Exp

@@ -1,7 +1,7 @@
-/* $NetBSD: bus_dma.h,v 1.16 2008/04/28 20:23:29 martin Exp $	*/
+/* $NetBSD: bus_dma.h,v 1.17 2021/12/05 04:54:20 msaitoh Exp $	*/
 
 /*
- * This file was extracted from from next68k/include/bus.h
+ * This file was extracted from next68k/include/bus.h
  * and should probably be resynced when needed.
  * original cvs id: NetBSD: bus_dma.h,v 1.3 1999/08/05 01:50:59 dbj Exp
  */

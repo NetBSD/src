@@ -1,7 +1,7 @@
-/*	$NetBSD: vmparam.h,v 1.27 2020/02/01 19:41:49 tsutsui Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.28 2021/12/05 04:54:21 msaitoh Exp $	*/
 
 /*
- * This file was taken from from mvme68k/include/vmparam.h and
+ * This file was taken from mvme68k/include/vmparam.h and
  * should probably be re-synced when needed.
  * Darrin B Jewell <jewell@mit.edu>  Fri Aug 28 03:22:07 1998
  * original cvs id: NetBSD: vmparam.h,v 1.9 1998/08/22 10:55:34 scw Exp 

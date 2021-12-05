@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.README,v 1.423 2021/11/28 15:47:33 christos Exp $
+#	$NetBSD: bsd.README,v 1.424 2021/12/05 04:54:20 msaitoh Exp $
 #	@(#)bsd.README	8.2 (Berkeley) 4/2/94
 
 This is the README file for the make "include" files for the NetBSD
@@ -1419,7 +1419,7 @@ Libraries are ranlib'd when made.
 =-=-=-=-=   bsd.links.mk   =-=-=-=-=
 
 The include file <bsd.links.mk> handles the LINKS and SYMLINKS variables
-and is included from from <bsd.lib.mk> and <bsd.prog.mk>.
+and is included from <bsd.lib.mk> and <bsd.prog.mk>.
 
 LINKSOWN, LINKSGRP, and LINKSMODE, are relevant only if a metadata log
 is used. The defaults may be modified by other bsd.*.mk files which
