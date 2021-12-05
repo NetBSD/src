@@ -1,4 +1,4 @@
-/*	$NetBSD: str.h,v 1.9 2021/05/30 21:16:54 rillig Exp $	*/
+/*	$NetBSD: str.h,v 1.10 2021/12/05 11:40:03 rillig Exp $	*/
 
 /*
  Copyright (c) 2021 Roland Illig <rillig@NetBSD.org>
@@ -351,6 +351,14 @@ Words_Free(Words w)
 
 
 SubstringWords Substring_Words(const char *, bool);
+
+MAKE_INLINE void
+SubstringWords_Init(SubstringWords *w)
+{
+	w->words = NULL;
+	w->len = 0;
+	w->freeIt = NULL;
+}
 
 MAKE_INLINE void
 SubstringWords_Free(SubstringWords w)
