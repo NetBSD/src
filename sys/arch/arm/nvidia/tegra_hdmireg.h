@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_hdmireg.h,v 1.5 2015/11/10 00:33:46 jmcneill Exp $ */
+/* $NetBSD: tegra_hdmireg.h,v 1.6 2021/12/05 07:56:10 msaitoh Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -147,7 +147,7 @@
 #define HDMI_NV_PDISP_HDMI_SPARE_CTS_RESET_VAL			__BITS(18,16)
 
 #define HDMI_NV_PDISP_HDMI_SPDIF_CHN_STATUS1_REG		0x140
-#define HDMI_NV_PDISP_HDMI_SPDIF_CHN_STAUTS2_REG		0x144
+#define HDMI_NV_PDISP_HDMI_SPDIF_CHN_STATUS2_REG		0x144
 #define HDMI_NV_PDISP_CRC_CONTROL_REG				0x258
 
 #define HDMI_NV_PDISP_INPUT_CONTROL_REG				0x25c
