@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.229 2020/04/08 03:37:14 knakahara Exp $	*/
+/*	$NetBSD: route.c,v 1.230 2021/12/05 04:57:38 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2008 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.229 2020/04/08 03:37:14 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.230 2021/12/05 04:57:38 msaitoh Exp $");
 
 #include <sys/param.h>
 #ifdef RTFLUSH_DEBUG
@@ -174,7 +174,7 @@ static void	rt_timer_timer(void *);
  *   - API: RT_RLOCK and friends
  * - rtcaches are NOT protected by the framework
  *   - Callers must guarantee a rtcache isn't accessed simultaneously
- *   - How the constraint is guranteed in the wild
+ *   - How the constraint is guaranteed in the wild
  *     - Protect a rtcache by a mutex (e.g., inp_route)
  *     - Make rtcache per-CPU and allow only accesses from softint
  *       (e.g., ipforward_rt_percpu)
