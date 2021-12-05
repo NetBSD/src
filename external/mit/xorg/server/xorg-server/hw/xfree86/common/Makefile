@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.33 2018/12/31 11:14:04 mrg Exp $
+#	$NetBSD: Makefile,v 1.34 2021/12/05 22:59:32 nia Exp $
 
 .include <bsd.own.mk>
 
@@ -81,6 +81,8 @@ CPPFLAGS+=	-DPCCONS_SUPPORT -DPCVT_SUPPORT
 .if ${MACHINE} == "cats" || ${MACHINE} == "ofppc"
 CPPFLAGS+=	-DPCVT_SUPPORT
 .endif
+
+CPPFLAGS+=	-DCONFIG_WSCONS
 
 OS_RELEASE!=	${HOST_SH} ${NETBSDSRCDIR}/sys/conf/osrelease.sh
 
