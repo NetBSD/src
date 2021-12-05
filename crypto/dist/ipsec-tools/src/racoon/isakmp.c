@@ -1,4 +1,4 @@
-/*	$NetBSD: isakmp.c,v 1.78 2018/05/19 20:14:56 maxv Exp $	*/
+/*	$NetBSD: isakmp.c,v 1.79 2021/12/05 07:56:10 msaitoh Exp $	*/
 
 /* Id: isakmp.c,v 1.74 2006/05/07 21:32:59 manubsd Exp */
 
@@ -687,7 +687,7 @@ isakmp_main(msg, remote, local)
 			return -1;
 		}
 
-		/* search isakmp phase 2 stauts record. */
+		/* search isakmp phase 2 status record. */
 		iph2 = getph2bymsgid(iph1, msgid);
 		if (iph2 == NULL) {
 			/* it must be new negotiation as responder */
