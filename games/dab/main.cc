@@ -1,4 +1,4 @@
-/*	$NetBSD: main.cc,v 1.6 2012/10/06 19:39:51 christos Exp $	*/
+/*	$NetBSD: main.cc,v 1.7 2021/12/05 09:22:45 rillig Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -30,10 +30,11 @@
  */
 
 /*
- * main.C: Main dots program
+ * Main dots program
  */
+
 #include "defs.h"
-RCSID("$NetBSD: main.cc,v 1.6 2012/10/06 19:39:51 christos Exp $")
+RCSID("$NetBSD: main.cc,v 1.7 2021/12/05 09:22:45 rillig Exp $")
 
 #include <stdio.h>
 #include <unistd.h>

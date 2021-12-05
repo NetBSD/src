@@ -1,4 +1,4 @@
-/*	$NetBSD: box.cc,v 1.3 2008/04/28 20:22:53 martin Exp $	*/
+/*	$NetBSD: box.cc,v 1.4 2021/12/05 09:22:45 rillig Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -30,10 +30,11 @@
  */
 
 /*
- * box.C: Box computations
+ * Box computations
  */
+
 #include "defs.h"
-RCSID("$NetBSD: box.cc,v 1.3 2008/04/28 20:22:53 martin Exp $")
+RCSID("$NetBSD: box.cc,v 1.4 2021/12/05 09:22:45 rillig Exp $")
 
 #include "box.h"
 #include "board.h"

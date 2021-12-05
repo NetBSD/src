@@ -1,4 +1,4 @@
-/*	$NetBSD: algor.h,v 1.5 2012/06/15 10:51:25 joerg Exp $	*/
+/*	$NetBSD: algor.h,v 1.6 2021/12/05 09:22:45 rillig Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 /*
- * algor.h: Computer's algorithm
+ * Computer's algorithm
  */
 
 #ifndef _H_ALGOR
