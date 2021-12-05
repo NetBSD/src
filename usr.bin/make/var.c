@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.960 2021/12/05 12:06:23 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.961 2021/12/05 12:10:28 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -140,7 +140,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.960 2021/12/05 12:06:23 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.961 2021/12/05 12:10:28 rillig Exp $");
 
 /*
  * Variables are defined using one of the VAR=value assignments.  Their
@@ -2725,9 +2725,10 @@ ApplyModifier_Range(const char **pp, ModChain *ch)
 		return AMR_OK;
 
 	if (n == 0) {
-		Words words = Str_Words(ch->expr->value.str, false);
+		SubstringWords words = Substring_Words(ch->expr->value.str,
+		    false);
 		n = words.len;
-		Words_Free(words);
+		SubstringWords_Free(words);
 	}
 
 	Buf_Init(&buf);
@@ -3203,9 +3204,10 @@ ApplyModifier_Words(const char **pp, ModChain *ch)
 		} else {
 			Buffer buf;
 
-			Words words = Str_Words(expr->value.str, false);
+			SubstringWords words = Substring_Words(
+			    expr->value.str, false);
 			size_t ac = words.len;
-			Words_Free(words);
+			SubstringWords_Free(words);
 
 			/* 3 digits + '\0' is usually enough */
 			Buf_InitSize(&buf, 4);
