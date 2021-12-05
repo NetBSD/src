@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exit.c,v 1.292 2021/10/10 18:07:51 thorpej Exp $	*/
+/*	$NetBSD: kern_exit.c,v 1.293 2021/12/05 08:13:12 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2006, 2007, 2008, 2020 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.292 2021/10/10 18:07:51 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.293 2021/12/05 08:13:12 msaitoh Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_dtrace.h"
@@ -801,7 +801,7 @@ sys_wait6(struct lwp *l, const struct sys_wait6_args *uap, register_t *retval)
 #if 0
 	/*
 	 * should we copyout if there was no process, hence no useful data?
-	 * We don't for an old sytle wait4() (etc) but I believe
+	 * We don't for an old style wait4() (etc) but I believe
 	 * FreeBSD does for wait6(), so a tossup...  Go with FreeBSD for now.
 	 */
 	if (pid == 0)
