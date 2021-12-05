@@ -1,4 +1,4 @@
-/*        $NetBSD: hammer_disk.h,v 1.2 2021/12/05 04:47:17 msaitoh Exp $      */
+/*        $NetBSD: hammer_disk.h,v 1.3 2021/12/05 07:25:11 msaitoh Exp $      */
 
 /*
  * Copyright (c) 2007 The DragonFly Project.  All rights reserved.
@@ -36,7 +36,7 @@
  * $DragonFly: src/sys/vfs/hammer/hammer_disk.h,v 1.55 2008/11/13 02:18:43 dillon Exp $
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hammer_disk.h,v 1.2 2021/12/05 04:47:17 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hammer_disk.h,v 1.3 2021/12/05 07:25:11 msaitoh Exp $");
 
 #ifndef VFS_HAMMER_DISK_H_
 #define VFS_HAMMER_DISK_H_
@@ -948,7 +948,7 @@ typedef struct hammer_inode_data {
  * localization field.  The low 16 bits must be 0 and are reserved for
  * future use.
  *
- * Directory entries are indexed with a 128 bit namekey rather then an
+ * Directory entries are indexed with a 128 bit namekey rather than an
  * offset.  A portion of the namekey is an iterator/randomizer to deal
  * with collisions.
  *
