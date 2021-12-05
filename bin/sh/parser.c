@@ -1,4 +1,4 @@
-/*	$NetBSD: parser.c,v 1.175 2021/11/16 11:25:44 kre Exp $	*/
+/*	$NetBSD: parser.c,v 1.176 2021/12/05 04:42:54 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)parser.c	8.7 (Berkeley) 5/16/95";
 #else
-__RCSID("$NetBSD: parser.c,v 1.175 2021/11/16 11:25:44 kre Exp $");
+__RCSID("$NetBSD: parser.c,v 1.176 2021/12/05 04:42:54 msaitoh Exp $");
 #endif
 #endif /* not lint */
 
@@ -1355,7 +1355,7 @@ cleanup_state_stack(VSS *stack)
 #define	PARSEARITH()	{goto parsearith; parsearith_return:;}
 
 /*
- * The following macros all assume the existance of a local var "stack"
+ * The following macros all assume the existence of a local var "stack"
  * which contains a pointer to the current struct stackstate
  */
 
