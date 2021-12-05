@@ -1,4 +1,4 @@
-/*	$NetBSD: human.h,v 1.3 2008/04/28 20:22:54 martin Exp $	*/
+/*	$NetBSD: human.h,v 1.4 2021/12/05 09:22:45 rillig Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 /*
- * human.h: Human input interface
+ * Human input interface
  */
 
 #ifndef _H_HUMAN

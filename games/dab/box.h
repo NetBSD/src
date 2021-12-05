@@ -1,4 +1,4 @@
-/*	$NetBSD: box.h,v 1.2 2008/04/28 20:22:53 martin Exp $	*/
+/*	$NetBSD: box.h,v 1.3 2021/12/05 09:22:45 rillig Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -30,8 +30,8 @@
  */
 
 /*
- * box.C: Single box utilities; A box is an entity with four edges, four
- *	  corners, and a center that maps directly to a board
+ * Single box utilities; A box is an entity with four edges, four corners, and
+ * a center that maps directly to a board
  */
 
 #ifndef _H_BOX

@@ -1,4 +1,4 @@
-/*	$NetBSD: board.h,v 1.4 2012/02/29 23:39:53 joerg Exp $	*/
+/*	$NetBSD: board.h,v 1.5 2021/12/05 09:22:45 rillig Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 /*
- * board.h: Board functions
+ * Board functions
  */
 
 #ifndef _H_BOARD

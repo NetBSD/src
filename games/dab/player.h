@@ -1,4 +1,4 @@
-/*	$NetBSD: player.h,v 1.3 2008/04/28 20:22:54 martin Exp $	*/
+/*	$NetBSD: player.h,v 1.4 2021/12/05 09:22:45 rillig Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -30,8 +30,9 @@
  */
 
 /*
- * player.h: Player base class
+ * Player base class
  */
+
 #ifndef _H_PLAYER
 #define _H_PLAYER
 

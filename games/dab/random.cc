@@ -1,4 +1,4 @@
-/*	$NetBSD: random.cc,v 1.3 2008/04/28 20:22:54 martin Exp $	*/
+/*	$NetBSD: random.cc,v 1.4 2021/12/05 09:22:45 rillig Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -30,11 +30,11 @@
  */
 
 /*
- * random.C: Randomizer for the dots program
+ * Randomizer for the dots program
  */
 
 #include "defs.h"
-RCSID("$NetBSD: random.cc,v 1.3 2008/04/28 20:22:54 martin Exp $")
+RCSID("$NetBSD: random.cc,v 1.4 2021/12/05 09:22:45 rillig Exp $")
 
 #include <time.h>
 #include <string.h>
