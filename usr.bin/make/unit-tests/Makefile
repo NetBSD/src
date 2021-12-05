@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.285 2021/12/05 14:57:36 rillig Exp $
+# $NetBSD: Makefile,v 1.286 2021/12/05 15:20:13 rillig Exp $
 #
 # Unit tests for make(1)
 #
@@ -351,6 +351,7 @@ TESTS+=		varmod-indirect
 TESTS+=		varmod-l-name-to-value
 TESTS+=		varmod-localtime
 TESTS+=		varmod-loop
+TESTS+=		varmod-loop-delete
 TESTS+=		varmod-loop-varname
 TESTS+=		varmod-match
 TESTS+=		varmod-match-escape
