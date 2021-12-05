@@ -1,4 +1,4 @@
-/*	$NetBSD: clnt_dg.c,v 1.30 2021/08/21 23:00:30 andvar Exp $	*/
+/*	$NetBSD: clnt_dg.c,v 1.31 2021/12/05 08:03:06 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2010, Oracle America, Inc.
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)clnt_dg.c 1.19 89/03/16 Copyr 1988 Sun Micro";
 #else
-__RCSID("$NetBSD: clnt_dg.c,v 1.30 2021/08/21 23:00:30 andvar Exp $");
+__RCSID("$NetBSD: clnt_dg.c,v 1.31 2021/12/05 08:03:06 msaitoh Exp $");
 #endif
 #endif
 
@@ -484,7 +484,7 @@ send_again:
 			}
 		}		/* end successful completion */
 		/*
-		 * If unsuccesful AND error is an authentication error
+		 * If unsuccessful AND error is an authentication error
 		 * then refresh credentials and try again, else break
 		 */
 		else if (cu->cu_error.re_status == RPC_AUTHERROR)

@@ -1,4 +1,4 @@
-/*	$NetBSD: pr.c,v 1.24 2012/08/01 02:27:48 ginsbach Exp $	*/
+/*	$NetBSD: pr.c,v 1.25 2021/12/05 08:03:07 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1991 Keith Muller.
@@ -45,7 +45,7 @@ __COPYRIGHT("@(#) Copyright (c) 1993\
 #if 0
 from: static char sccsid[] = "@(#)pr.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: pr.c,v 1.24 2012/08/01 02:27:48 ginsbach Exp $");
+__RCSID("$NetBSD: pr.c,v 1.25 2021/12/05 08:03:07 msaitoh Exp $");
 #endif
 #endif /* not lint */
 
@@ -841,7 +841,7 @@ mulfile(int argc, char *argv[])
 	 * do not know how many columns yet. The number of operands provide an
 	 * upper bound on the number of columns. We use the number of files
 	 * we can open successfully to set the number of columns. The operation
-	 * of the merge operation (-m) in relation to unsuccesful file opens
+	 * of the merge operation (-m) in relation to unsuccessful file opens
 	 * is unspecified by posix.
 	 */
 	j = 0;
