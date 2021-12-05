@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wpi.c,v 1.91 2021/06/16 00:21:18 riastradh Exp $	*/
+/*	$NetBSD: if_wpi.c,v 1.92 2021/12/05 07:08:08 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wpi.c,v 1.91 2021/06/16 00:21:18 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wpi.c,v 1.92 2021/12/05 07:08:08 msaitoh Exp $");
 
 /*
  * Driver for Intel PRO/Wireless 3945ABG 802.11 network adapters.
@@ -2002,7 +2002,7 @@ wpi_tx_data(struct wpi_softc *sc, struct mbuf *m0, struct ieee80211_node *ni,
 
 	tx->rate = wpi_plcp_signal(rate);
 
-	/* be very persistant at sending frames out */
+	/* be very persistent at sending frames out */
 	tx->rts_ntries = 7;
 	tx->data_ntries = 15;
 
