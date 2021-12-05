@@ -1,4 +1,4 @@
-/*	$NetBSD: strfmon.c,v 1.13 2017/11/27 23:54:28 maya Exp $	*/
+/*	$NetBSD: strfmon.c,v 1.14 2021/12/05 08:09:30 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 2001 Alexey Zelkin <phantom@FreeBSD.org>
@@ -32,7 +32,7 @@
 #if 0
 __FBSDID("$FreeBSD: src/lib/libc/stdlib/strfmon.c,v 1.14 2003/03/20 08:18:55 ache Exp $");
 #else
-__RCSID("$NetBSD: strfmon.c,v 1.13 2017/11/27 23:54:28 maya Exp $");
+__RCSID("$NetBSD: strfmon.c,v 1.14 2021/12/05 08:09:30 msaitoh Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -58,7 +58,7 @@ __RCSID("$NetBSD: strfmon.c,v 1.13 2017/11/27 23:54:28 maya Exp $");
 #define	SIGN_POSN_USED		0x02	/* '+' or '(' usage flag */
 #define	LOCALE_POSN		0x04	/* use locale defined +/- (default) */
 #define	PARENTH_POSN		0x08	/* enclose negative amount in () */
-#define	SUPRESS_CURR_SYMBOL	0x10	/* supress the currency from output */
+#define	SUPPRESS_CURR_SYMBOL	0x10	/* suppress the currency from output */
 #define	LEFT_JUSTIFY		0x20	/* left justify */
 #define	USE_INTL_CURRENCY	0x40	/* use international currency symbol */
 #define IS_NEGATIVE		0x80	/* is argument value negative ? */
@@ -187,7 +187,7 @@ vstrfmon_l(char * __restrict s, size_t maxsize, locale_t loc,
 					flags |= (SIGN_POSN_USED|PARENTH_POSN);
 					continue;
 				case '!':	/* suppress currency symbol */
-					flags |= SUPRESS_CURR_SYMBOL;
+					flags |= SUPPRESS_CURR_SYMBOL;
 					continue;
 				case '-':	/* alignment (left)  */
 					flags |= LEFT_JUSTIFY;
@@ -327,7 +327,7 @@ vstrfmon_l(char * __restrict s, size_t maxsize, locale_t loc,
 					PRINT(' ');
 			}
 
-			if (!(flags & SUPRESS_CURR_SYMBOL)) {
+			if (!(flags & SUPPRESS_CURR_SYMBOL)) {
 				PRINTS(currency_symbol);
 
 				if (sign_posn == 4) {
@@ -351,7 +351,7 @@ vstrfmon_l(char * __restrict s, size_t maxsize, locale_t loc,
 				PRINTS(signstr);
 			}
 
-			if (!(flags & SUPRESS_CURR_SYMBOL)) {
+			if (!(flags & SUPPRESS_CURR_SYMBOL)) {
 				if ((sign_posn == 3 && sep_by_space == 2)
 				    || (sep_by_space == 1
 				    && (sign_posn == 0
