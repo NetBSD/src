@@ -1,4 +1,4 @@
-/* $NetBSD: t_des.c,v 1.1 2010/08/25 16:46:36 jmmv Exp $ */
+/* $NetBSD: t_des.c,v 1.2 2021/12/05 07:33:56 msaitoh Exp $ */
 
 /*
  * Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com) All rights
@@ -31,7 +31,7 @@
  * mentioning features or use of this software must display the following
  * acknowledgement: "This product includes cryptographic software written by
  * Eric Young (eay@cryptsoft.com)" The word 'cryptographic' can be left out
- * if the rouines from the library being used are not cryptographic related
+ * if the routines from the library being used are not cryptographic related
  * :-). 4. If you include any Windows specific code (or a derivative thereof)
  * from the apps directory (application code) you must include an
  * acknowledgement: "This product includes software written by Tim Hudson
