@@ -1,6 +1,6 @@
-| $NetBSD: vectors.s,v 1.11 2011/02/08 20:20:21 rmind Exp $
+| $NetBSD: vectors.s,v 1.12 2021/12/05 04:54:21 msaitoh Exp $
 
-| This file was taken from from mvme68k/mvme68k/vectors.s
+| This file was taken from mvme68k/mvme68k/vectors.s
 | should probably be re-synced when needed.
 | Darrin B. Jewell <jewell@mit.edu>  Tue Nov 10 05:07:16 1998
 | original cvs id: NetBSD: vectors.s,v 1.7 1998/10/18 04:42:37 itohy Exp

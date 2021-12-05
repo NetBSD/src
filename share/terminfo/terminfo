@@ -24744,7 +24744,7 @@ v3220|LANPAR Vision II model 3220/3221/3222,
 #	* Replaced Qume QVT and Freedom-series entries with purpose-built
 #	  terminfo entries.
 #	* Enhanced vt220, tvi910, tvi924, hpterm, hp2645, adm42, tek
-#	  and dg200 entries using caps from from SCO.
+#	  and dg200 entries using caps from SCO.
 #	* Added the usual set of function-key mappings to ANSI entry.
 #	* Corrected xterm's function-key capabilities.
 # 9.4.5 (Tue Mar 28 14:27:49 EST 1995):

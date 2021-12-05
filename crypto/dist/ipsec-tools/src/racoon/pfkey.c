@@ -1,6 +1,6 @@
-/*	$NetBSD: pfkey.c,v 1.61 2018/05/19 20:14:56 maxv Exp $	*/
+/*	$NetBSD: pfkey.c,v 1.62 2021/12/05 04:54:20 msaitoh Exp $	*/
 
-/* $Id: pfkey.c,v 1.61 2018/05/19 20:14:56 maxv Exp $ */
+/* $Id: pfkey.c,v 1.62 2021/12/05 04:54:20 msaitoh Exp $ */
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -3252,7 +3252,7 @@ migrate_sp_isr_list(sp, xisr_list, xisr_list_len)
 	int xisr_old_len, xisr_new_len;
 	struct ipsecrequest *isr_cur;
 
-	isr_cur = sp->req; /* ipsecrequest list from from sp */
+	isr_cur = sp->req; /* ipsecrequest list from sp */
 
 	while (xisr_list_len > 0 && isr_cur != NULL) {
 		/* Get old xisr (length field is in bytes) */
