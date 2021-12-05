@@ -1,4 +1,4 @@
-/*	$NetBSD: prop_dictionary.c,v 1.42 2020/06/06 21:25:59 thorpej Exp $	*/
+/*	$NetBSD: prop_dictionary.c,v 1.43 2021/12/05 02:52:17 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2020 The NetBSD Foundation, Inc.
@@ -970,7 +970,7 @@ prop_dictionary_get_keysym(prop_dictionary_t pd, prop_dictionary_keysym_t pdk)
 /*
  * prop_dictionary_set --
  *	Store a reference to an object at with the specified key.
- *	If the key already exisit, the original object is released.
+ *	If the key already exist, the original object is released.
  */
 bool
 prop_dictionary_set(prop_dictionary_t pd, const char *key, prop_object_t po)
