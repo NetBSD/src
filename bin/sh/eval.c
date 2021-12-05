@@ -1,4 +1,4 @@
-/*	$NetBSD: eval.c,v 1.186 2021/11/22 05:17:43 kre Exp $	*/
+/*	$NetBSD: eval.c,v 1.187 2021/12/05 04:35:38 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)eval.c	8.9 (Berkeley) 6/8/95";
 #else
-__RCSID("$NetBSD: eval.c,v 1.186 2021/11/22 05:17:43 kre Exp $");
+__RCSID("$NetBSD: eval.c,v 1.187 2021/12/05 04:35:38 msaitoh Exp $");
 #endif
 #endif /* not lint */
 
@@ -176,7 +176,7 @@ sh_pipe(int fds[2])
 
 
 /*
- * The eval commmand.
+ * The eval command.
  */
 
 int
