@@ -1,4 +1,4 @@
-/* $NetBSD: if_jmereg.h,v 1.6 2021/08/26 21:33:36 andvar Exp $ */
+/* $NetBSD: if_jmereg.h,v 1.7 2021/12/05 03:43:50 msaitoh Exp $ */
 
 /*-
  * Copyright (c) 2008, Pyun YongHyeon <yongari@FreeBSD.org>
@@ -775,7 +775,7 @@
 #define	TIMER_CNT_SHIFT		0
 #define	TIMER_UNIT		1024	/* 1024us */
 
-/* Aggresive power mode control. */
+/* Aggressive power mode control. */
 #define	JME_APMC		0x7C
 #define	APMC_PCIE_SDOWN_STAT	0x80000000
 #define	APMC_PCIE_SDOWN_ENB	0x40000000
