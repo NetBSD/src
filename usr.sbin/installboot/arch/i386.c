@@ -1,4 +1,4 @@
-/* $NetBSD: i386.c,v 1.42 2019/05/07 04:35:31 thorpej Exp $ */
+/* $NetBSD: i386.c,v 1.43 2021/12/05 04:47:18 msaitoh Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(__lint)
-__RCSID("$NetBSD: i386.c,v 1.42 2019/05/07 04:35:31 thorpej Exp $");
+__RCSID("$NetBSD: i386.c,v 1.43 2021/12/05 04:47:18 msaitoh Exp $");
 #endif /* !__lint */
 
 #include <sys/param.h>
@@ -462,7 +462,7 @@ i386_setboot(ib_params *params)
 				u = disk_buf.b[1];
 			}
 			if (params->s1start != 0)
-				/* Fixup physical offset of filesytem */
+				/* Fixup physical offset of filesystem */
 				bpb->bpbHiddenSecs = htole32(params->s1start);
 			memcpy(bootstrap.b + 2, disk_buf.b + 2, u);
 		}
