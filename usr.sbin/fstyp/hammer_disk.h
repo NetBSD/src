@@ -1,4 +1,4 @@
-/*        $NetBSD: hammer_disk.h,v 1.1 2020/01/01 08:56:41 tkusumi Exp $      */
+/*        $NetBSD: hammer_disk.h,v 1.2 2021/12/05 04:47:17 msaitoh Exp $      */
 
 /*
  * Copyright (c) 2007 The DragonFly Project.  All rights reserved.
@@ -36,7 +36,7 @@
  * $DragonFly: src/sys/vfs/hammer/hammer_disk.h,v 1.55 2008/11/13 02:18:43 dillon Exp $
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hammer_disk.h,v 1.1 2020/01/01 08:56:41 tkusumi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hammer_disk.h,v 1.2 2021/12/05 04:47:17 msaitoh Exp $");
 
 #ifndef VFS_HAMMER_DISK_H_
 #define VFS_HAMMER_DISK_H_
@@ -768,7 +768,7 @@ typedef struct hammer_volume_ondisk {
 
 	/*
 	 * These fields are initialized and space is reserved in every
-	 * volume making up a HAMMER filesytem, but only the root volume
+	 * volume making up a HAMMER filesystem, but only the root volume
 	 * contains valid data.  Note that vol0_stat_bigblocks does not
 	 * include big-blocks for freemap and undomap initially allocated
 	 * by newfs_hammer(8).

@@ -1,4 +1,4 @@
-/*	$NetBSD: advfsops.c,v 1.79 2020/03/16 21:20:09 pgoyette Exp $	*/
+/*	$NetBSD: advfsops.c,v 1.80 2021/12/05 04:47:17 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: advfsops.c,v 1.79 2020/03/16 21:20:09 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: advfsops.c,v 1.80 2021/12/05 04:47:17 msaitoh Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -227,7 +227,7 @@ adosfs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 	blksperdisk = numsecs / secsperblk;
 
 
-	/* The filesytem variant ('dostype') is stored in the boot block */
+	/* The filesystem variant ('dostype') is stored in the boot block */
 	bp = NULL;
 	if ((error = bread(devvp, (daddr_t)BBOFF,
 			   amp->bsize, 0, &bp)) != 0) {
