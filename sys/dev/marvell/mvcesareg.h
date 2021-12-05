@@ -1,4 +1,4 @@
-/*	$NetBSD: mvcesareg.h,v 1.2 2013/09/28 05:46:51 kiyohara Exp $	*/
+/*	$NetBSD: mvcesareg.h,v 1.3 2021/12/05 02:41:44 msaitoh Exp $	*/
 /*
  * Copyright (c) 2008 KIYOHARA Takashi
  * All rights reserved.
@@ -80,7 +80,7 @@
 #define MVCESA_SHA1MD5I_AC_IVBYTESWAP		(1 << 4)
 #define MVCESA_SHA1MD5I_AC_TERMINATION		(1 << 31)
 
-/* AES Encryption/Decription Interface Registers */
+/* AES Encryption/Decryption Interface Registers */
 #define MVCESA_AES_ENCRYPTION	0xd80
 #define MVCESA_AES_DECRYPTION	0xdc0
 #define MVCESA_AES_DIOC_OFF	  0x20	/* Data In/Out Column */

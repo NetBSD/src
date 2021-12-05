@@ -1,4 +1,4 @@
-/*	$NetBSD: mvcesa.c,v 1.3 2020/06/14 23:29:23 riastradh Exp $	*/
+/*	$NetBSD: mvcesa.c,v 1.4 2021/12/05 02:41:44 msaitoh Exp $	*/
 /*
  * Copyright (c) 2008 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mvcesa.c,v 1.3 2020/06/14 23:29:23 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mvcesa.c,v 1.4 2021/12/05 02:41:44 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -716,7 +716,7 @@ mvcesa_des_encdec(struct mvcesa_softc *sc, struct mvcesa_session *ses,
 		}
 
 		/*
-		 * Encryption/Decription calculation time is 9 cycles in DES
+		 * Encryption/Decryption calculation time is 9 cycles in DES
 		 * mode and 25 cycles in 3DES mode.
 		 */
 		bus_space_write_4(sc->sc_iot, sc->sc_ioh, MVCESA_DESE_DBL,
