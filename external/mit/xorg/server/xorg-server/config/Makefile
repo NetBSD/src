@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2016/08/11 08:32:42 mrg Exp $
+#	$NetBSD: Makefile,v 1.3 2021/12/05 22:59:32 nia Exp $
 
 .include "../Makefile.serverlib"
 .include "../Makefile.servermod"
@@ -16,6 +16,8 @@ CPPFLAGS+=	-I${X11SRCDIR.xorg-server}/include \
 		-I${DESTDIR}${X11INCDIR}/xorg \
 		-I${DESTDIR}${X11INCDIR}/pixman-1 \
 		-I${X11SRCDIR.xorg-server}/../include
+
+CPPFLAGS+=	-DCONFIG_WSCONS
 
 .include <bsd.x11.mk>
 .include <bsd.lib.mk>
