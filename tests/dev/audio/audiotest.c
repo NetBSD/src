@@ -1,4 +1,4 @@
-/*	$NetBSD: audiotest.c,v 1.15 2021/08/21 09:59:46 andvar Exp $	*/
+/*	$NetBSD: audiotest.c,v 1.16 2021/12/05 07:30:51 msaitoh Exp $	*/
 
 /*
  * Copyright (C) 2019 Tetsuya Isaki. All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: audiotest.c,v 1.15 2021/08/21 09:59:46 andvar Exp $");
+__RCSID("$NetBSD: audiotest.c,v 1.16 2021/12/05 07:30:51 msaitoh Exp $");
 
 #include <errno.h>
 #include <fcntl.h>
@@ -2238,7 +2238,7 @@ DEF(rept_read)
 /*
  * Opening with O_RDWR on half-duplex hardware falls back to O_WRONLY.
  * expwrite: expected to be able to play.
- * expread : expected to be able to recored.
+ * expread : expected to be able to record.
  */
 void
 test_rdwr_fallback(int openmode, bool expwrite, bool expread)
