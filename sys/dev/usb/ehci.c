@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.286 2021/08/31 08:22:28 mrg Exp $ */
+/*	$NetBSD: ehci.c,v 1.287 2021/12/05 11:05:37 riastradh Exp $ */
 
 /*
  * Copyright (c) 2004-2012,2016,2020 The NetBSD Foundation, Inc.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.286 2021/08/31 08:22:28 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.287 2021/12/05 11:05:37 riastradh Exp $");
 
 #include "ohci.h"
 #include "uhci.h"
@@ -1385,10 +1385,6 @@ ehci_activate(device_t self, enum devact act)
 /*
  * Handle suspend/resume.
  *
- * We need to switch to polling mode here, because this routine is
- * called from an interrupt context.  This is all right since we
- * are almost suspended anyway.
- *
  * Note that this power handler isn't to be registered directly; the
  * bus glue needs to call out to it.
  */
@@ -1401,9 +1397,7 @@ ehci_suspend(device_t dv, const pmf_qual_t *qual)
 
 	EHCIHIST_FUNC(); EHCIHIST_CALLED();
 
-	mutex_spin_enter(&sc->sc_intr_lock);
-	sc->sc_bus.ub_usepolling++;
-	mutex_spin_exit(&sc->sc_intr_lock);
+	mutex_enter(&sc->sc_lock);
 
 	for (i = 1; i <= sc->sc_noport; i++) {
 		cmd = EOREAD4(sc, EHCI_PORTSC(i)) & ~EHCI_PS_CLEAR;
@@ -1439,9 +1433,7 @@ ehci_suspend(device_t dv, const pmf_qual_t *qual)
 	if (hcr != EHCI_STS_HCH)
 		printf("%s: config timeout\n", device_xname(dv));
 
-	mutex_spin_enter(&sc->sc_intr_lock);
-	sc->sc_bus.ub_usepolling--;
-	mutex_spin_exit(&sc->sc_intr_lock);
+	mutex_exit(&sc->sc_lock);
 
 	return true;
 }
@@ -1454,6 +1446,8 @@ ehci_resume(device_t dv, const pmf_qual_t *qual)
 	uint32_t cmd, hcr;
 
 	EHCIHIST_FUNC(); EHCIHIST_CALLED();
+
+	mutex_enter(&sc->sc_lock);
 
 	/* restore things in case the bios sucks */
 	EOWRITE4(sc, EHCI_CTRLDSSEGMENT, 0);
@@ -1499,6 +1493,8 @@ ehci_resume(device_t dv, const pmf_qual_t *qual)
 	}
 	if (hcr == EHCI_STS_HCH)
 		printf("%s: config timeout\n", device_xname(dv));
+
+	mutex_exit(&sc->sc_lock);
 
 	return true;
 }
