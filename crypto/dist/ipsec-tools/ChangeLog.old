@@ -863,7 +863,7 @@
 
 	* src/libipsec/ipsec_dump_policy.c: display port numbers in policies 
 	* src/racoon/{isakmp.c|isakmp_cfg.c|isakmp_inf.c|pfkey.c}: don't
-	  forget port numbers so that mutiple clients behind the same NAT 
+	  forget port numbers so that multiple clients behind the same NAT 
 	  can work. 
 
 	From Larry Baird <lab@gta.com>
