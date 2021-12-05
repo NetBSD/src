@@ -1,4 +1,4 @@
-.\"	$NetBSD: install,v 1.43 2019/11/21 19:23:20 martin Exp $
+.\"	$NetBSD: install,v 1.44 2021/12/05 04:47:17 msaitoh Exp $
 .\"
 .\" Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -431,7 +431,7 @@ section.
 The file
 .Pa \*M/installation/netboot/diskimage.tar.gz
 contains a suitable set of files for installing on an NFS server to set
-up a diskless root filesytem.
+up a diskless root filesystem.
 (It is a tar copy of the contents of an
 installation ramdisk file system contained in the install kernel.)
 You will need to find an NFS server, unpack the tarfile, and setup
