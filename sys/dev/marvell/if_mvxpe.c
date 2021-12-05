@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mvxpe.c,v 1.36 2021/09/17 08:13:06 andvar Exp $	*/
+/*	$NetBSD: if_mvxpe.c,v 1.37 2021/12/05 07:57:38 msaitoh Exp $	*/
 /*
  * Copyright (c) 2015 Internet Initiative Japan Inc.
  * All rights reserved.
@@ -25,7 +25,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mvxpe.c,v 1.36 2021/09/17 08:13:06 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mvxpe.c,v 1.37 2021/12/05 07:57:38 msaitoh Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -1600,15 +1600,15 @@ mvxpe_rxtx_intr(void *arg)
 			MVXPE_EVCNT_INCR(&sc->sc_ev.ev_rxtx_tbrq);
 		}
 		if (prxtxic & MVXPE_PRXTXI_PRXTXTHICSUMMARY) {
-			DPRINTIFNET(ifp, 1, "PRXTXTHIC Sumary\n");
+			DPRINTIFNET(ifp, 1, "PRXTXTHIC Summary\n");
 			MVXPE_EVCNT_INCR(&sc->sc_ev.ev_rxtx_rxtxth);
 		}
 		if (prxtxic & MVXPE_PRXTXI_PTXERRORSUMMARY) {
-			DPRINTIFNET(ifp, 1, "PTXERROR Sumary\n");
+			DPRINTIFNET(ifp, 1, "PTXERROR Summary\n");
 			MVXPE_EVCNT_INCR(&sc->sc_ev.ev_rxtx_txerr);
 		}
 		if (prxtxic & MVXPE_PRXTXI_PMISCICSUMMARY) {
-			DPRINTIFNET(ifp, 1, "PMISCIC Sumary\n");
+			DPRINTIFNET(ifp, 1, "PMISCIC Summary\n");
 			MVXPE_EVCNT_INCR(&sc->sc_ev.ev_rxtx_misc);
 		}
 	}
