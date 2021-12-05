@@ -1,13 +1,13 @@
-# $NetBSD: varmod-loop-delete.mk,v 1.1 2021/12/05 15:20:13 rillig Exp $
+# $NetBSD: varmod-loop-delete.mk,v 1.2 2021/12/05 15:51:33 rillig Exp $
 #
 # Tests for the variable modifier ':@', which as a side effect allows to
 # delete an arbitrary variable.
 
 # A side effect of the modifier ':@' is that the loop variable is created as
 # an actual variable in the current evaluation scope (Command/Global/target),
-# and at the end of the loop, this variable is deleted.  Before var.c 1.963
-# from 2021-12-05, a variable could be deleted while it was in use, leading to
-# a use-after-free bug.
+# and at the end of the loop, this variable is deleted.  Since var.c 1.204
+# from 2016-02-18 and before var.c 1.963 from 2021-12-05, a variable could be
+# deleted while it was in use, leading to a use-after-free bug.
 #
 # See Var_Parse, comment 'the value of the variable must not change'.
 
