@@ -1,5 +1,5 @@
 /*
- * $NetBSD: main.c,v 1.31 2016/06/11 07:01:25 dholland Exp $
+ * $NetBSD: main.c,v 1.32 2021/12/05 08:09:30 msaitoh Exp $
  *
  *
  * Copyright (c) 1996,1999 Ignatios Souvatzis
@@ -409,7 +409,7 @@ printf("Kernel load failed\n");
         if (marks[MARK_NSYM] && (*kvers == 0x4e73 || *kvers <= 1)) {
 		nkcd = (int *)marks[MARK_SYM];
 		esym = 0;
-printf("Supressing %ld kernel symbols\n", marks[MARK_NSYM]);
+printf("Suppressing %ld kernel symbols\n", marks[MARK_NSYM]);
 		timelimit = 60;
 		(void)getchar();
 	}
