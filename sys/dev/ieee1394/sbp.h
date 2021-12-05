@@ -1,4 +1,4 @@
-/*	$NetBSD: sbp.h,v 1.6 2010/08/29 21:14:16 cegger Exp $	*/
+/*	$NetBSD: sbp.h,v 1.7 2021/12/05 02:21:08 msaitoh Exp $	*/
 /*-
  * Copyright (c) 2003 Hidetoshi Shimokawa
  * Copyright (c) 1998-2002 Katsushi Kobayashi and Hidetoshi Shimokawa
@@ -122,7 +122,7 @@ struct sbp_status{
 #define STATUS_LUR		5
 /*   6: Maximum payload too small */
 /*   7: Reserved for future standardization */
-/*   8: Resource unavailabe */
+/*   8: Resource unavailable */
 #define STATUS_RES_UNAVAIL	8
 /*   9: Function Rejected */
 /*  10: Login ID not recognized */
