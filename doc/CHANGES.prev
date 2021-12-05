@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM PREVIOUS RELEASES:			<$Revision: 1.159 $>
+LIST OF CHANGES FROM PREVIOUS RELEASES:			<$Revision: 1.160 $>
 
 
 Changes from 386bsd 0.1 + patchkit 0.2.2 to NetBSD 0.8:
@@ -757,7 +757,7 @@ Changes from NetBSD 0.9 to NetBSD 1.0:
 		syscalls are in new architecure specific library -
 		libarch/libi386.  (brezak)
 	i386: add clearing of direction flag back to i386 bcopy and memmove.
-		The previous change to remove it was too aggresive and broke
+		The previous change to remove it was too aggressive and broke
 		things like the Xserver. (brezak)
 	libc: fixed isascii(3) man page (cgd)
 	made biodone() work properly, from spec in daemon book and

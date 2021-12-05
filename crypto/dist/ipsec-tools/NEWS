@@ -124,7 +124,7 @@ Version history:
 0.3rc4	- 25 March 2004
 	o Fixed adding "null" encryption via 'setkey'.
 	o Fixed segfault when using AES in Phase1 with OpenSSL>=0.9.7
-	o Fixed NAT-T in aggresive mode.
+	o Fixed NAT-T in aggressive mode.
 	o Fixed testsuite and added testsuite run into make check.
 
 0.3rc3	- 19 March 2004
