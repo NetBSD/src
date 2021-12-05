@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.718 2021/11/05 05:52:49 msaitoh Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.719 2021/12/05 04:32:36 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.718 2021/11/05 05:52:49 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.719 2021/12/05 04:32:36 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -3086,7 +3086,7 @@ alloc_retry:
 		sc->sc_ethercom.ec_capabilities |= ETHERCAP_EEE;
 
 	/*
-	 * We can perform TCPv4 and UDPv4 checkums in-bound.  Only
+	 * We can perform TCPv4 and UDPv4 checksums in-bound.  Only
 	 * on i82543 and later.
 	 */
 	if (sc->sc_type >= WM_T_82543) {

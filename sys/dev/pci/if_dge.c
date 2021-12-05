@@ -1,4 +1,4 @@
-/*	$NetBSD: if_dge.c,v 1.61 2021/11/10 16:47:41 msaitoh Exp $ */
+/*	$NetBSD: if_dge.c,v 1.62 2021/12/05 04:32:36 msaitoh Exp $ */
 
 /*
  * Copyright (c) 2004, SUNET, Swedish University Computer Network.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_dge.c,v 1.61 2021/11/10 16:47:41 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_dge.c,v 1.62 2021/12/05 04:32:36 msaitoh Exp $");
 
 
 
@@ -929,7 +929,7 @@ dge_attach(device_t parent, device_t self, void *aux)
 	    ETHERCAP_JUMBO_MTU | ETHERCAP_VLAN_MTU;
 
 	/*
-	 * We can perform TCPv4 and UDPv4 checkums in-bound.
+	 * We can perform TCPv4 and UDPv4 checksums in-bound.
 	 */
 	ifp->if_capabilities |=
 	    IFCAP_CSUM_IPv4_Tx | IFCAP_CSUM_IPv4_Rx |
