@@ -1,4 +1,4 @@
-/* $NetBSD: ahdilabel.c,v 1.11 2016/10/09 14:51:26 christos Exp $ */
+/* $NetBSD: ahdilabel.c,v 1.12 2021/12/05 07:06:17 msaitoh Exp $ */
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -127,7 +127,7 @@ main (int argc, char *argv[])
 			change_part (&ptable, key - 'A', units);
 		if (key == 'R') {
 			if (ahdi_buildlabel (&ptable)) {
-				printf ("Partiton table adjusted\n");
+				printf ("Partition table adjusted\n");
 			} else {
 				printf ("No changes necessary\n");
 			}

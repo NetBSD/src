@@ -1,4 +1,4 @@
-Some Amigas are incapable of booting from partiton utilizing a bootblock.  One
+Some Amigas are incapable of booting from partition utilizing a bootblock.  One
 example is the PPS Zeus accelerator.  The Zeus has two major problems with
 booting from a bootblock.  The first (and fatal) one is the driver is just
 plain buggy and will not work.  The second problem (if the first problem
