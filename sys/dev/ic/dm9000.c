@@ -1,4 +1,4 @@
-/*	$NetBSD: dm9000.c,v 1.31 2021/11/10 17:19:30 msaitoh Exp $	*/
+/*	$NetBSD: dm9000.c,v 1.32 2021/12/05 07:26:35 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2009 Paul Fleischer
@@ -737,7 +737,7 @@ dme_receive(struct ifnet *ifp)
 			break;
 		}
 	} while (avail == 01);
-	/* frame receieved successfully */
+	/* frame received successfully */
 }
 
 int

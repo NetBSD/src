@@ -1,5 +1,5 @@
 /*	$KAME: dccp_tfrc.c,v 1.16 2006/03/01 17:34:08 nishida Exp $	*/
-/*	$NetBSD: dccp_tfrc.c,v 1.7 2021/09/07 13:24:46 andvar Exp $ */
+/*	$NetBSD: dccp_tfrc.c,v 1.8 2021/12/05 07:26:35 msaitoh Exp $ */
 
 /*
  * Copyright (c) 2003  Nils-Erik Mattsson
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dccp_tfrc.c,v 1.7 2021/09/07 13:24:46 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dccp_tfrc.c,v 1.8 2021/12/05 07:26:35 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_dccp.h"
@@ -883,9 +883,9 @@ tfrc_send_packet_recv(void *ccb, char *options, int optlen)
 	if (pinv == 0xFFFFFFFF) pinv = 0;
 
 	if (t_elapsed)
-		TFRC_DEBUG((LOG_INFO, "TFRC - Receieved options on ack %llu: pinv=%u, t_elapsed=%u, x_recv=%u ! (tfrc_send_packet_recv)\n", cb->pcb->ack_rcv, pinv, t_elapsed, x_recv));
+		TFRC_DEBUG((LOG_INFO, "TFRC - Received options on ack %llu: pinv=%u, t_elapsed=%u, x_recv=%u ! (tfrc_send_packet_recv)\n", cb->pcb->ack_rcv, pinv, t_elapsed, x_recv));
 	else
-		TFRC_DEBUG((LOG_INFO, "TFRC - Receieved options on ack %llu: pinv=%u, t_elapsed=%u, x_recv=%u ! (tfrc_send_packet_recv)\n", cb->pcb->ack_rcv, pinv, t_elapsed_l, x_recv));
+		TFRC_DEBUG((LOG_INFO, "TFRC - Received options on ack %llu: pinv=%u, t_elapsed=%u, x_recv=%u ! (tfrc_send_packet_recv)\n", cb->pcb->ack_rcv, pinv, t_elapsed_l, x_recv));
 
 	mutex_enter(&(cb->mutex));
 
