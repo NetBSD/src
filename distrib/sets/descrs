@@ -106,7 +106,7 @@ base-netutil-root	root file system support for networking utilities
 base-nfsclient-bin	network file system client utilities
 base-nfsclient-root	root file system support for network file system client utilities
 base-nfsserver-bin	network file system server program
-base-nis-bin	progams and utilities for the NIS network information system
+base-nis-bin	programs and utilities for the NIS network information system
 base-nis-root	root file system support for the NIS network information system
 base-ntfs-root	root file system support for the Windows NT file system
 base-ntp-bin	utilities for network time protocol support
