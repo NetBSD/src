@@ -1,4 +1,4 @@
-/*	$NetBSD: oakley.c,v 1.27 2018/05/19 20:21:23 maxv Exp $	*/
+/*	$NetBSD: oakley.c,v 1.28 2021/12/05 08:19:57 msaitoh Exp $	*/
 
 /* Id: oakley.c,v 1.32 2006/05/26 12:19:46 manubsd Exp */
 
@@ -401,7 +401,7 @@ oakley_setdhgroup(group, dhgrp)
 		return 0;
 	}
 
-	/* set defined dh vlaues */
+	/* set defined dh values */
 	memcpy(*dhgrp, g, sizeof(*g));
 	(*dhgrp)->prime = vdup(g->prime);
 
