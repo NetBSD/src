@@ -1,4 +1,4 @@
-/*	$NetBSD: octeon_pip.c,v 1.13 2021/08/07 16:18:59 thorpej Exp $	*/
+/*	$NetBSD: octeon_pip.c,v 1.14 2021/12/05 03:12:14 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: octeon_pip.c,v 1.13 2021/08/07 16:18:59 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: octeon_pip.c,v 1.14 2021/12/05 03:12:14 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -93,7 +93,7 @@ octpip_iobus_attach(device_t parent, device_t self, void *aux)
 
 	/*
 	 * XXX: In a non-FDT world, should allow for the configuration
-	 * of multple GMX devices.
+	 * of multiple GMX devices.
 	 */
 	ndevs = 1;
 
