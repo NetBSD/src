@@ -1,4 +1,4 @@
-/* $NetBSD: ofwoea_machdep.c,v 1.61 2021/04/02 16:59:59 macallan Exp $ */
+/* $NetBSD: ofwoea_machdep.c,v 1.62 2021/12/05 07:13:48 msaitoh Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofwoea_machdep.c,v 1.61 2021/04/02 16:59:59 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofwoea_machdep.c,v 1.62 2021/12/05 07:13:48 msaitoh Exp $");
 
 #include "ksyms.h"
 #include "wsdisplay.h"
@@ -463,7 +463,7 @@ find_ranges(int base, rangemap_t *regions, int *cur, int type)
 	 * There exist ISA buses with empty ranges properties.  This is
 	 * known to occur on the Pegasos II machine, and likely others.
 	 * According to them, that means that the isa bus is a fake bus, and
-	 * the real maps are the PCI maps of the preceeding bus.  To deal
+	 * the real maps are the PCI maps of the preceding bus.  To deal
 	 * with this, we will set cur to -1 and return.
 	 */
 	if (type == RANGE_TYPE_ISA && strcmp("isa", tmp) == 0 && len == 0) {
