@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.110 2021/10/10 11:21:05 riastradh Exp $	*/
+/*	$NetBSD: audio.c,v 1.111 2021/12/05 02:56:55 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -138,7 +138,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.110 2021/10/10 11:21:05 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.111 2021/12/05 02:56:55 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "audio.h"
@@ -3854,7 +3854,7 @@ audio_track_freq_up(audio_filter_arg_t *arg)
 	d = arg->dst;
 
 	/*
-	 * In order to faciliate interpolation for each block, slide (delay)
+	 * In order to facilitate interpolation for each block, slide (delay)
 	 * input by one sample.  As a result, strictly speaking, the output
 	 * phase is delayed by 1/dstfreq.  However, I believe there is no
 	 * observable impact.
