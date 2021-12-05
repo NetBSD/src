@@ -1,4 +1,4 @@
-/*	$NetBSD: union_vnops.c,v 1.79 2021/10/20 03:08:17 thorpej Exp $	*/
+/*	$NetBSD: union_vnops.c,v 1.80 2021/12/05 16:16:58 hannken Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994, 1995
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: union_vnops.c,v 1.79 2021/10/20 03:08:17 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: union_vnops.c,v 1.80 2021/12/05 16:16:58 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -771,6 +771,13 @@ union_access(void *v)
 		}
 	}
 
+	if (un->un_uppervp == NULLVP &&
+	    (un->un_lowervp->v_type == VREG) &&
+	    (ap->a_accmode & VWRITE)) {
+		error = union_copyup(un, 1, ap->a_cred, curlwp);
+		if (error)
+			return error;
+	}
 
 	if ((vp = un->un_uppervp) != NULLVP) {
 		ap->a_vp = vp;
