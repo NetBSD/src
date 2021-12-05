@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: checkver,v 1.17 2021/09/17 02:12:16 christos Exp $
+#	$NetBSD: checkver,v 1.18 2021/12/05 08:09:30 msaitoh Exp $
 #
 # Copyright (c) 1998 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -63,7 +63,7 @@
 # version greater than the source is found, checkver prints a
 # header and a list of the names of the offending installed libraries.
 #
-# The header may be supressed by passing "-q" as the first argument.
+# The header may be suppressed by passing "-q" as the first argument.
 #
 
 TMP=/tmp/checkver.$$
