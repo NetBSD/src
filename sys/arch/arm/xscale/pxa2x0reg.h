@@ -1,4 +1,4 @@
-/* $NetBSD: pxa2x0reg.h,v 1.24 2021/11/10 16:22:44 msaitoh Exp $ */
+/* $NetBSD: pxa2x0reg.h,v 1.25 2021/12/05 07:56:10 msaitoh Exp $ */
 
 /*
  * Copyright (c) 2002  Genetec Corporation.  All rights reserved.
@@ -1005,7 +1005,7 @@ struct pxa2x0_dma_desc {
 #define USBHC_UHCRHDB	0x004c	/* UHC Root Hub Descriptor B */
 #define  UHCRHDB_PPCM(p) ((1<<(p))<<16)	/* Port Power Control Mask [1:3] */
 #define  UHCRHDB_DNR(p)	 ((1<<(p))<<0)	/* Device Not Removable [1:3] */
-#define USBHC_UHCRHS	0x0050	/* UHC Root Hub Stauts */
+#define USBHC_UHCRHS	0x0050	/* UHC Root Hub Status */
 #define USBHC_UHCHR	0x0064	/* UHC Reset Register */
 #define  UHCHR_SSEP3	(1<<11)	/* Sleep standby enable for port3 */
 #define  UHCHR_SSEP2	(1<<10)	/* Sleep standby enable for port2 */
