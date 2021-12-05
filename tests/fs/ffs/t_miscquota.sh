@@ -1,4 +1,4 @@
-# $NetBSD: t_miscquota.sh,v 1.8 2013/01/22 06:24:11 dholland Exp $ 
+# $NetBSD: t_miscquota.sh,v 1.9 2021/12/05 07:51:26 msaitoh Exp $ 
 #
 #  Copyright (c) 2011 Manuel Bouyer
 #  All rights reserved.
@@ -29,19 +29,19 @@ test_case_root walk_list_user quota_walk_list \
     "walk user quota list over several disk blocks" -b le 1 user
 
 test_case_root psnapshot_user quota_snap \
-    "create a persistent shapshot of quota-enabled fs, and do some writes" \
+    "create a persistent snapshot of quota-enabled fs, and do some writes" \
     -b le 1 user
 
 test_case_root npsnapshot_user quota_snap \
-    "create a non-persistent shapshot of quota-enabled fs, and do some writes" \
+    "create a non-persistent snapshot of quota-enabled fs, and do some writes" \
     -boL le 1 user
 
 test_case_root psnapshot_unconf_user quota_snap \
-    "create a persistent shapshot of quota-enabled fs, and do some writes and unconf" \
+    "create a persistent snapshot of quota-enabled fs, and do some writes and unconf" \
     -boC le 1 user
 
 test_case_root npsnapshot_unconf_user quota_snap \
-    "create a non-persistent shapshot of quota-enabled fs, and do some writes and unconf" \
+    "create a non-persistent snapshot of quota-enabled fs, and do some writes and unconf" \
     -boLC le 1 user
 
 test_case log_unlink quota_log \

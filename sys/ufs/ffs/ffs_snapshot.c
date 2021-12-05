@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_snapshot.c,v 1.152 2020/04/18 19:18:34 christos Exp $	*/
+/*	$NetBSD: ffs_snapshot.c,v 1.153 2021/12/05 07:51:26 msaitoh Exp $	*/
 
 /*
  * Copyright 2000 Marshall Kirk McKusick. All Rights Reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_snapshot.c,v 1.152 2020/04/18 19:18:34 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_snapshot.c,v 1.153 2021/12/05 07:51:26 msaitoh Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -457,7 +457,7 @@ snapshot_setup(struct mount *mp, struct vnode *vp)
 	if (error)
 		return error;
 #if defined(QUOTA) || defined(QUOTA2)
-	/* shapshot inodes are not accounted in quotas */
+	/* snapshot inodes are not accounted in quotas */
 	chkiq(ip, -1, l->l_cred, 0);
 #endif
 	ip->i_flags |= (SF_SNAPSHOT | SF_SNAPINVAL);
