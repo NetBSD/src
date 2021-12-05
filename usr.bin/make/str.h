@@ -1,4 +1,4 @@
-/*	$NetBSD: str.h,v 1.10 2021/12/05 11:40:03 rillig Exp $	*/
+/*	$NetBSD: str.h,v 1.11 2021/12/05 12:17:49 rillig Exp $	*/
 
 /*
  Copyright (c) 2021 Roland Illig <rillig@NetBSD.org>
@@ -180,6 +180,14 @@ Substring_Equals(Substring sub, const char *str)
 	size_t len = strlen(str);
 	return Substring_Length(sub) == len &&
 	       memcmp(sub.start, str, len) == 0;
+}
+
+MAKE_INLINE bool
+Substring_Eq(Substring sub, Substring str)
+{
+	size_t len = Substring_Length(sub);
+	return len == Substring_Length(str) &&
+	       memcmp(sub.start, str.start, len) == 0;
 }
 
 MAKE_STATIC Substring

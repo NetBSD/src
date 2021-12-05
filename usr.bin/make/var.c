@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.961 2021/12/05 12:10:28 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.962 2021/12/05 12:17:49 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -140,7 +140,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.961 2021/12/05 12:10:28 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.962 2021/12/05 12:17:49 rillig Exp $");
 
 /*
  * Variables are defined using one of the VAR=value assignments.  Their
@@ -1807,7 +1807,7 @@ ModifyWord_Realpath(Substring word, SepBuf *buf, void *data MAKE_ATTR_UNUSED)
 
 
 static char *
-Words_JoinFree(Words words)
+SubstringWords_JoinFree(SubstringWords words)
 {
 	Buffer buf;
 	size_t i;
@@ -1819,10 +1819,11 @@ Words_JoinFree(Words words)
 			/* XXX: Use ch->sep instead of ' ', for consistency. */
 			Buf_AddByte(&buf, ' ');
 		}
-		Buf_AddStr(&buf, words.words[i]);
+		Buf_AddBytesBetween(&buf,
+		    words.words[i].start, words.words[i].end);
 	}
 
-	Words_Free(words);
+	SubstringWords_Free(words);
 
 	return Buf_DoneData(&buf);
 }
@@ -3332,13 +3333,13 @@ str_cmp_desc(const void *a, const void *b)
 }
 
 static void
-ShuffleStrings(char **strs, size_t n)
+ShuffleSubstrings(Substring *strs, size_t n)
 {
 	size_t i;
 
 	for (i = n - 1; i > 0; i--) {
 		size_t rndidx = (size_t)random() % (i + 1);
-		char *t = strs[i];
+		Substring t = strs[i];
 		strs[i] = strs[rndidx];
 		strs[rndidx] = t;
 	}
@@ -3355,7 +3356,7 @@ static ApplyModifierResult
 ApplyModifier_Order(const char **pp, ModChain *ch)
 {
 	const char *mod = *pp;
-	Words words;
+	SubstringWords words;
 	int (*cmp)(const void *, const void *);
 
 	if (IsDelimiter(mod[1], ch) || mod[1] == '\0') {
@@ -3385,12 +3386,12 @@ ApplyModifier_Order(const char **pp, ModChain *ch)
 	if (!ModChain_ShouldEval(ch))
 		return AMR_OK;
 
-	words = Str_Words(ch->expr->value.str, false);
+	words = Substring_Words(ch->expr->value.str, false);
 	if (cmp == NULL)
-		ShuffleStrings(words.words, words.len);
+		ShuffleSubstrings(words.words, words.len);
 	else
 		qsort(words.words, words.len, sizeof(words.words[0]), cmp);
-	Expr_SetValueOwn(ch->expr, Words_JoinFree(words));
+	Expr_SetValueOwn(ch->expr, SubstringWords_JoinFree(words));
 
 	return AMR_OK;
 
@@ -3620,7 +3621,7 @@ ApplyModifier_WordFunc(const char **pp, ModChain *ch,
 static ApplyModifierResult
 ApplyModifier_Unique(const char **pp, ModChain *ch)
 {
-	Words words;
+	SubstringWords words;
 
 	if (!IsDelimiter((*pp)[1], ch))
 		return AMR_UNKNOWN;
@@ -3629,14 +3630,14 @@ ApplyModifier_Unique(const char **pp, ModChain *ch)
 	if (!ModChain_ShouldEval(ch))
 		return AMR_OK;
 
-	words = Str_Words(ch->expr->value.str, false);
+	words = Substring_Words(ch->expr->value.str, false);
 
 	if (words.len > 1) {
 		size_t si, di;
 
 		di = 0;
 		for (si = 1; si < words.len; si++) {
-			if (strcmp(words.words[si], words.words[di]) != 0) {
+			if (!Substring_Eq(words.words[si], words.words[di])) {
 				di++;
 				if (di != si)
 					words.words[di] = words.words[si];
@@ -3645,7 +3646,7 @@ ApplyModifier_Unique(const char **pp, ModChain *ch)
 		words.len = di + 1;
 	}
 
-	Expr_SetValueOwn(ch->expr, Words_JoinFree(words));
+	Expr_SetValueOwn(ch->expr, SubstringWords_JoinFree(words));
 
 	return AMR_OK;
 }
