@@ -1,4 +1,4 @@
-/* $NetBSD: tcdsreg.h,v 1.8 2021/11/06 06:52:48 msaitoh Exp $ */
+/* $NetBSD: tcdsreg.h,v 1.9 2021/12/05 02:59:50 msaitoh Exp $ */
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -137,7 +137,7 @@ void tcds_scsi_reset(int);
  * Start of MACH #defines, minimal changes to port to NetBSD.
  *
  * The following register is the SCSI control interrupt register.  It
- * starts, stops and resets scsi DMA.  It takes over the SCSI funtions
+ * starts, stops and resets scsi DMA.  It takes over the SCSI functions
  * that were handled by the ASIC on the 3min.
  */
 #define KN15AA_SYS_SCSI		0x1d0000000

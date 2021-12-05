@@ -1,4 +1,4 @@
-/*	$NetBSD: fp.S,v 1.58 2021/05/29 12:35:27 simonb Exp $	*/
+/*	$NetBSD: fp.S,v 1.59 2021/12/05 02:59:50 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -256,7 +256,7 @@ paired_single_op:
 #define	cvt_s_pu	ill
 
 /*
- * Paired Single funtions
+ * Paired Single functions
  */
 #define	addr_ps		ill
 #define	abs_ps		ill
