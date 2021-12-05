@@ -1,4 +1,4 @@
-/* $NetBSD: ttwogareg.h,v 1.4 2012/02/06 02:14:15 matt Exp $ */
+/* $NetBSD: ttwogareg.h,v 1.5 2021/12/05 04:31:06 msaitoh Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -189,7 +189,7 @@ extern bus_addr_t ttwoga_gamma_cbus_bias;
 #define	IOCSR_ENTLBEC	0x0000000000000080UL	/* enable TLB error check */
 #define	IOCSR_ENCCMDA	0x0000000000000100UL	/* enable CXACK check */
 	/*		0x0000000000000200UL	   must be zero */
-#define	IOCSR_ENXXCHG	0x0000000000000400UL	/* EV5 excl. exchage enable */
+#define	IOCSR_ENXXCHG	0x0000000000000400UL	/* EV5 excl. exchange enable */
 	/*		0x0000000000000800UL	   must be zero */
 #define	IOCSR_CAWWP0	0x0000000000001000UL	/* CBUS c/a wr. wrong parity */
 #define	IOCSR_CAWWP2	0x0000000000002000UL	/* CBUS c/a wr. wrong parity */
