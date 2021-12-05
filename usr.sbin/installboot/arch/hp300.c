@@ -1,4 +1,4 @@
-/* $NetBSD: hp300.c,v 1.16 2019/05/07 04:35:31 thorpej Exp $ */
+/* $NetBSD: hp300.c,v 1.17 2021/12/05 05:01:50 msaitoh Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(__lint)
-__RCSID("$NetBSD: hp300.c,v 1.16 2019/05/07 04:35:31 thorpej Exp $");
+__RCSID("$NetBSD: hp300.c,v 1.17 2021/12/05 05:01:50 msaitoh Exp $");
 #endif /* !__lint */
 
 /* We need the target disklabel.h, not the hosts one..... */
@@ -160,7 +160,7 @@ hp300_setboot(ib_params *params)
 	bootstrap = mmap(NULL, params->s1stat.st_size, PROT_READ | PROT_WRITE,
 			    MAP_PRIVATE, params->s1fd, 0);
 	if (bootstrap == MAP_FAILED) {
-		warn("mmaping `%s'", params->stage1);
+		warn("mmapping `%s'", params->stage1);
 		goto done;
 	}
 
