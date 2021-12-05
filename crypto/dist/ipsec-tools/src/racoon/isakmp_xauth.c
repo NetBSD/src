@@ -1,4 +1,4 @@
-/*	$NetBSD: isakmp_xauth.c,v 1.33 2020/11/25 18:11:00 bouyer Exp $	*/
+/*	$NetBSD: isakmp_xauth.c,v 1.34 2021/12/05 02:59:50 msaitoh Exp $	*/
 
 /* Id: isakmp_xauth.c,v 1.38 2006/08/22 18:17:17 manubsd Exp */
 
@@ -1458,7 +1458,7 @@ group_check(iph1, grp_list, grp_count)
 			return res;
 		}
 
-		/* call appropriate group validation funtion */
+		/* call appropriate group validation function */
 
 		switch (isakmp_cfg_config.groupsource) {
 
