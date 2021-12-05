@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.963 2021/12/05 15:20:13 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.964 2021/12/05 17:00:02 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -140,7 +140,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.963 2021/12/05 15:20:13 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.964 2021/12/05 17:00:02 rillig Exp $");
 
 /*
  * Variables are defined using one of the VAR=value assignments.  Their
@@ -3285,13 +3285,13 @@ bad_modifier:
 #endif
 
 static NUM_TYPE
-num_val(const char *s)
+num_val(Substring s)
 {
 	NUM_TYPE val;
 	char *ep;
 
-	val = strtoll(s, &ep, 0);
-	if (ep != s) {
+	val = strtoll(s.start, &ep, 0);
+	if (ep != s.start) {
 		switch (*ep) {
 		case 'K':
 		case 'k':
@@ -3311,31 +3311,32 @@ num_val(const char *s)
 }
 
 static int
-num_cmp_asc(const void *sa, const void *sb)
+SubNumAsc(const void *sa, const void *sb)
 {
 	NUM_TYPE a, b;
 
-	a = num_val(*(const char *const *)sa);
-	b = num_val(*(const char *const *)sb);
+	a = num_val(*((const Substring *)sa));
+	b = num_val(*((const Substring *)sb));
 	return (a > b) ? 1 : (b > a) ? -1 : 0;
 }
 
 static int
-num_cmp_desc(const void *sa, const void *sb)
+SubNumDesc(const void *sa, const void *sb)
 {
-	return num_cmp_asc(sb, sa);
+	return SubNumAsc(sb, sa);
 }
 
 static int
-str_cmp_asc(const void *a, const void *b)
+SubStrAsc(const void *sa, const void *sb)
 {
-	return strcmp(*(const char *const *)a, *(const char *const *)b);
+	return strcmp(
+	    ((const Substring *)sa)->start, ((const Substring *)sb)->start);
 }
 
 static int
-str_cmp_desc(const void *a, const void *b)
+SubStrDesc(const void *sa, const void *sb)
 {
-	return str_cmp_asc(b, a);
+	return SubStrAsc(sb, sa);
 }
 
 static void
@@ -3366,13 +3367,13 @@ ApplyModifier_Order(const char **pp, ModChain *ch)
 	int (*cmp)(const void *, const void *);
 
 	if (IsDelimiter(mod[1], ch) || mod[1] == '\0') {
-		cmp = str_cmp_asc;
+		cmp = SubStrAsc;
 		(*pp)++;
 	} else if (IsDelimiter(mod[2], ch) || mod[2] == '\0') {
 		if (mod[1] == 'n')
-			cmp = num_cmp_asc;
+			cmp = SubNumAsc;
 		else if (mod[1] == 'r')
-			cmp = str_cmp_desc;
+			cmp = SubStrDesc;
 		else if (mod[1] == 'x')
 			cmp = NULL;
 		else
@@ -3381,7 +3382,7 @@ ApplyModifier_Order(const char **pp, ModChain *ch)
 	} else if (IsDelimiter(mod[3], ch) || mod[3] == '\0') {
 		if ((mod[1] == 'n' && mod[2] == 'r') ||
 		    (mod[1] == 'r' && mod[2] == 'n'))
-			cmp = num_cmp_desc;
+			cmp = SubNumDesc;
 		else
 			goto bad;
 		*pp += 3;
@@ -3395,8 +3396,10 @@ ApplyModifier_Order(const char **pp, ModChain *ch)
 	words = Substring_Words(ch->expr->value.str, false);
 	if (cmp == NULL)
 		ShuffleSubstrings(words.words, words.len);
-	else
+	else {
+		assert(words.words[0].end[0] == '\0');
 		qsort(words.words, words.len, sizeof(words.words[0]), cmp);
+	}
 	Expr_SetValueOwn(ch->expr, SubstringWords_JoinFree(words));
 
 	return AMR_OK;
@@ -4803,6 +4806,14 @@ Var_Stats(void)
 	HashTable_DebugStats(&SCOPE_GLOBAL->vars, "Global variables");
 }
 
+static int
+StrAsc(const void *sa, const void *sb)
+{
+	return strcmp(
+	    *((const char *const *)sa), *((const char *const *)sb));
+}
+
+
 /* Print all variables in a scope, sorted by name. */
 void
 Var_Dump(GNode *scope)
@@ -4819,7 +4830,7 @@ Var_Dump(GNode *scope)
 		*(const char **)Vector_Push(&vec) = hi.entry->key;
 	varnames = vec.items;
 
-	qsort(varnames, vec.len, sizeof varnames[0], str_cmp_asc);
+	qsort(varnames, vec.len, sizeof varnames[0], StrAsc);
 
 	for (i = 0; i < vec.len; i++) {
 		const char *varname = varnames[i];
