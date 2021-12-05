@@ -1,4 +1,4 @@
-.\"	$NetBSD: install,v 1.17 2021/04/27 19:52:06 nia Exp $
+.\"	$NetBSD: install,v 1.18 2021/12/05 19:43:30 nia Exp $
 .\"
 .\" Copyright (c) 2001-2020 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -69,10 +69,6 @@ Or a Rockchip device (e.g. RockPro64):
 # dd if=/usr/pkg/share/u-boot/rockpro64/rksd_loader.img of=/dev/rld0 seek=64 conv=sync progress=1
 .Ed
 .El
-.Pp
-If you do not want to prepare a SD card image manually, NetBSD developer
-Jared McNeill provides pre-prepared images on his website
-.Lk http://www.armbsd.org/arm/ "armbsd.org" .
 .Ss2 Installing NetBSD/evbarm to a SATA hard disk
 Some Arm boards offer a SATA interface, and you might want to install NetBSD
 to a hard disk after you've got it running from an SD card.
