@@ -1,4 +1,4 @@
-/*	$NetBSD: aes_selftest.c,v 1.6 2020/09/08 22:48:24 riastradh Exp $	*/
+/*	$NetBSD: aes_selftest.c,v 1.7 2021/12/05 04:48:35 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: aes_selftest.c,v 1.6 2020/09/08 22:48:24 riastradh Exp $");
+__KERNEL_RCSID(1, "$NetBSD: aes_selftest.c,v 1.7 2021/12/05 04:48:35 msaitoh Exp $");
 
 #ifdef _KERNEL
 
@@ -133,7 +133,7 @@ aes_selftest_encdec(const struct aes_impl *impl)
 	if (outbuf[17] != 0x1a)
 		return aes_selftest_fail(impl, outbuf + 17,
 		    (const uint8_t[1]){0x1a}, 1,
-		    "AES overrun folllowing");
+		    "AES overrun following");
 
 	/* Success!  */
 	return 0;
