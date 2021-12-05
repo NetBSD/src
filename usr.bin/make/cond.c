@@ -1,4 +1,4 @@
-/*	$NetBSD: cond.c,v 1.280 2021/09/26 03:23:06 rillig Exp $	*/
+/*	$NetBSD: cond.c,v 1.281 2021/12/05 10:11:31 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -95,7 +95,7 @@
 #include "dir.h"
 
 /*	"@(#)cond.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: cond.c,v 1.280 2021/09/26 03:23:06 rillig Exp $");
+MAKE_RCSID("$NetBSD: cond.c,v 1.281 2021/12/05 10:11:31 rillig Exp $");
 
 /*
  * The parsing of conditional expressions is based on this grammar:
@@ -1055,7 +1055,7 @@ CondParser_Eval(CondParser *par, bool *out_value)
  *	COND_PARSE	if the condition was valid grammatically
  *	COND_INVALID	if not a valid conditional.
  *
- *	(*value) is set to the boolean value of the condition
+ *	*out_value	is set to the boolean value of the condition
  */
 static CondEvalResult
 CondEvalExpression(const char *cond, bool *out_value, bool plain,
@@ -1230,7 +1230,7 @@ Cond_EvalLine(const char *line)
 		if (p[1] != 'l') {
 			/*
 			 * Unknown directive.  It might still be a
-			 * transformation rule like '.elisp.scm',
+			 * transformation rule like '.err.txt',
 			 * therefore no error message here.
 			 */
 			return COND_INVALID;
