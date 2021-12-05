@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwmreg.h,v 1.10 2021/11/10 15:36:43 msaitoh Exp $	*/
+/*	$NetBSD: if_iwmreg.h,v 1.11 2021/12/05 02:21:08 msaitoh Exp $	*/
 /*	OpenBSD: if_iwmreg.h,v 1.19 2016/09/20 11:46:09 stsp Exp 	*/
 
 /*-
@@ -3380,7 +3380,7 @@ enum iwm_sf_scenario {
 /**
  * Smart Fifo configuration command.
  * @state: smart fifo state, types listed in enum %iwm_sf_state.
- * @watermark: Minimum allowed availabe free space in RXF for transient state.
+ * @watermark: Minimum allowed available free space in RXF for transient state.
  * @long_delay_timeouts: aging and idle timer values for each scenario
  * in long delay state.
  * @full_on_timeouts: timer values for each scenario in full on state.
