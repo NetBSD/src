@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_acct.c,v 1.98 2021/06/29 22:40:53 dholland Exp $	*/
+/*	$NetBSD: kern_acct.c,v 1.99 2021/12/05 04:35:38 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_acct.c,v 1.98 2021/06/29 22:40:53 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_acct.c,v 1.99 2021/12/05 04:35:38 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -448,7 +448,7 @@ acct_process(struct lwp *l)
 	acct.ac_utime = encode_comp_t(ut.tv_sec, ut.tv_usec);
 	acct.ac_stime = encode_comp_t(st.tv_sec, st.tv_usec);
 
-	/* (3) The elapsed time the commmand ran (and its starting time) */
+	/* (3) The elapsed time the command ran (and its starting time) */
 	acct.ac_btime = p->p_stats->p_start.tv_sec;
 	getmicrotime(&tmp);
 	timersub(&tmp, &p->p_stats->p_start, &tmp);

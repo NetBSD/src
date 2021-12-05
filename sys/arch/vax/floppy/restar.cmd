@@ -1,6 +1,6 @@
-!	$NetBSD: restar.cmd,v 1.2 1998/01/05 20:52:12 perry Exp $
+!	$NetBSD: restar.cmd,v 1.3 2021/12/05 04:35:38 msaitoh Exp $
 !
-!	RESTART COMMMAND FILE
+!	RESTART COMMAND FILE
 SET DEF HEX
 SET DEF LONG
 SET REL:0

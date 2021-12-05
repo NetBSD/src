@@ -1,4 +1,4 @@
-.\"	$NetBSD: csh.g,v 1.5 2003/08/07 09:05:08 agc Exp $
+.\"	$NetBSD: csh.g,v 1.6 2021/12/05 04:35:38 msaitoh Exp $
 .\"
 .\" Copyright (c) 1980, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -1503,7 +1503,7 @@ The shell variable
 is set to the 
 .I status 
 returned by the last command.
-It is most useful in shell commmand scripts (3.6).
+It is most useful in shell command scripts (3.6).
 .IP stop
 The
 .I stop
