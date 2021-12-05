@@ -1,4 +1,4 @@
-/*	$NetBSD: box.h,v 1.3 2021/12/05 09:22:45 rillig Exp $	*/
+/*	$NetBSD: box.h,v 1.4 2021/12/05 09:53:15 rillig Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@ class BOX {
     int& name(void);
     int& edge(int e);
 
-    // Edge maniputations
+    // Edge manipulations
     void set(int e);
     void clr(int e);
     int isset(int e) const;
