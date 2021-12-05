@@ -1,4 +1,4 @@
-/*	$NetBSD: vme_two.c,v 1.8 2009/03/14 15:36:19 dsl Exp $	*/
+/*	$NetBSD: vme_two.c,v 1.9 2021/12/05 07:21:59 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2002 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vme_two.c,v 1.8 2009/03/14 15:36:19 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vme_two.c,v 1.9 2021/12/05 07:21:59 msaitoh Exp $");
 
 #include "vmetwo.h"
 
@@ -147,7 +147,7 @@ vmetwo_init(struct vmetwo_softc *sc)
 	}
 
 	/*
-	 * Now read the progammable maps
+	 * Now read the programmable maps
 	 */
 	for (i = 0; i < VME2_MASTER_WINDOWS; i++)
 		vmetwo_master_range(sc, i,

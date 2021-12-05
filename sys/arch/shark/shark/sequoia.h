@@ -1,4 +1,4 @@
-/*	$NetBSD: sequoia.h,v 1.5 2021/04/30 02:11:37 thorpej Exp $	*/
+/*	$NetBSD: sequoia.h,v 1.6 2021/12/05 07:21:59 msaitoh Exp $	*/
 
 /*
  * Copyright 1997
@@ -2127,7 +2127,7 @@
 #define PTOTR0_M_TMR0EN		(1 << PTOTR0_V_TMR0EN)
 
 /*
-** Progammable Time-out Timer 0 
+** Programmable Time-out Timer 0 
 */
 #define PROGTMR0_2S		0x000
 #define PROGTMR0_5S		PTOTR0_M_PROGTMR00
@@ -2183,7 +2183,7 @@
 #define PTOTR1_M_TMR1EN		(1 << PTOTR1_V_TMR1EN)
 
 /*
-** Progammable Time-out Timer 1 
+** Programmable Time-out Timer 1 
 */
 #define PROGTMR1_2S		0x000
 #define PROGTMR1_5S		PTOTR1_M_PROGTMR10
@@ -2239,7 +2239,7 @@
 #define PTOTR2_M_TMR2EN		(1 << PTOTR2_V_TMR2EN)
 
 /*
-** Progammable Time-out Timer 2
+** Programmable Time-out Timer 2
 */
 #define PROGTMR2_2S		0x000
 #define PROGTMR2_5S		PTOTR2_M_PROGTMR20
@@ -2295,7 +2295,7 @@
 #define PTOTR3_M_TMR3EN		(1 << PTOTR3_V_TMR3EN)
 
 /*
-** Progammable Time-out Timer 3
+** Programmable Time-out Timer 3
 */
 #define PROGTMR3_2S		0x000
 #define PROGTMR3_5S		PTOTR3_M_PROGTMR30
@@ -2372,7 +2372,7 @@
 #define PTOTSR1_M_KBTMRSELEN	(1 << PTOTSR1_V_KBTMRSELEN)
 
 /*
-** Video Activity Progammable Time-out Timer
+** Video Activity Programmable Time-out Timer
 */
 #define VDTMRSEL_0		0x000
 #define VDTMRSEL_1		PTOTSR1_M_VDTMRSEL0
@@ -2380,7 +2380,7 @@
 #define VDTMRSEL_3		(PTOTSR1_M_VDTMRSEL0 | PTOTSR1_M_VDTMRSEL1)
 
 /*
-** Hard Drive Activity Progammable Time-out Timer
+** Hard Drive Activity Programmable Time-out Timer
 */
 #define HDTMRSEL_0		0x000
 #define HDTMRSEL_1		PTOTSR1_M_HDTMRSEL0
@@ -2388,7 +2388,7 @@
 #define HDTMRSEL_3		(PTOTSR1_M_HDTMRSEL0 | PTOTSR1_M_HDTMRSEL1)
 
 /*
-** Floppy Drive Activity Progammable Time-out Timer
+** Floppy Drive Activity Programmable Time-out Timer
 */
 #define FDTMRSEL_0		0x000
 #define FDTMRSEL_1		PTOTSR1_M_FDTMRSEL0
@@ -2396,7 +2396,7 @@
 #define FDTMRSEL_3		(PTOTSR1_M_FDTMRSEL0 | PTOTSR1_M_FDTMRSEL1)
 
 /*
-** Keyboard Activity Progammable Time-out Timer
+** Keyboard Activity Programmable Time-out Timer
 */
 #define KBTMRSEL_0		0x000
 #define KBTMRSEL_1		PTOTSR1_M_KBTMRSEL0
@@ -2461,7 +2461,7 @@
 #define PTOTSR2_M_PR1TMRSELEN	(1 << PTOTSR2_V_PR1TMRSELEN)
 
 /*
-** Serial Port Activity Progammable Time-out Timer
+** Serial Port Activity Programmable Time-out Timer
 */
 #define SIOTMRSEL_0		0x000
 #define SIOTMRSEL_1		PTOTSR2_M_SIOTMRSEL0
@@ -2469,7 +2469,7 @@
 #define SIOTMRSEL_3		(PTOTSR2_M_SIOTMRSEL0 | PTOTSR2_M_SIOTMRSEL1)
 
 /*
-** Parallel Port Activity Progammable Time-out Timer
+** Parallel Port Activity Programmable Time-out Timer
 */
 #define PIOTMRSEL_0		0x000
 #define PIOTMRSEL_1		PTOTSR2_M_PIOTMRSEL0
@@ -2477,7 +2477,7 @@
 #define PIOTMRSEL_3		(PTOTSR2_M_PIOTMRSEL0 | PTOTSR2_M_PIOTMRSEL1)
 
 /*
-** PRM 0 Activity Progammable Time-out Timer
+** PRM 0 Activity Programmable Time-out Timer
 */
 #define PR0TMRSEL_0		0x000
 #define PR0TMRSEL_1		PTOTSR2_M_PR0TMRSEL0
@@ -2485,7 +2485,7 @@
 #define PR0TMRSEL_3		(PTOTSR2_M_PR0TMRSEL0 | PTOTSR2_M_PR0TMRSEL1)
 
 /*
-** PRM 1 Activity Progammable Time-out Timer
+** PRM 1 Activity Programmable Time-out Timer
 */
 #define PR1TMRSEL_0		0x000
 #define PR1TMRSEL_1		PTOTSR2_M_PR1TMRSEL0
@@ -2528,7 +2528,7 @@
 #define PTOTSR3_M_PR3TMRSELEN	(1 << PTOTSR3_V_PR3TMRSELEN)
 
 /*
-** PRM 2 Activity Progammable Time-out Timer
+** PRM 2 Activity Programmable Time-out Timer
 */
 #define PR2TMRSEL_0		0x000
 #define PR2TMRSEL_1		PTOTSR3_M_PR2TMRSEL0
@@ -2536,7 +2536,7 @@
 #define PR2TMRSEL_3		(PTOTSR3_M_PR2TMRSEL0 | PTOTSR3_M_PR2TMRSEL1)
 
 /*
-** PRM 3 Activity Progammable Time-out Timer
+** PRM 3 Activity Programmable Time-out Timer
 */
 #define PR3TMRSEL_0		0x000
 #define PR3TMRSEL_1		PTOTSR3_M_PR3TMRSEL0
@@ -2601,7 +2601,7 @@
 #define PTOTSR4_M_EXT3TMRSELEN	(1 << PTOTSR4_V_EXT3TMRSELEN)
 
 /*
-** EXTACT0 Activity Progammable Time-out Timer
+** EXTACT0 Activity Programmable Time-out Timer
 */
 #define EXT0TMRSEL_0		0x000
 #define EXT0TMRSEL_1		PTOTSR4_M_EXT0TMRSEL0
@@ -2609,7 +2609,7 @@
 #define EXT0TMRSEL_3		(PTOTSR4_M_EXT0TMRSEL0 | PTOTSR4_M_EXT0TMRSEL1)
 
 /*
-** EXTACT1 Activity Progammable Time-out Timer
+** EXTACT1 Activity Programmable Time-out Timer
 */
 #define EXT1TMRSEL_0		0x000
 #define EXT1TMRSEL_1		PTOTSR4_M_EXT1TMRSEL0
@@ -2617,7 +2617,7 @@
 #define EXT1TMRSEL_3		(PTOTSR4_M_EXT1TMRSEL0 | PTOTSR4_M_EXT1TMRSEL1)
 
 /*
-** EXTACT2 Activity Progammable Time-out Timer
+** EXTACT2 Activity Programmable Time-out Timer
 */
 #define EXT2TMRSEL_0		0x000
 #define EXT2TMRSEL_1		PTOTSR4_M_EXT2TMRSEL0
@@ -2625,7 +2625,7 @@
 #define EXT2TMRSEL_3		(PTOTSR4_M_EXT2TMRSEL0 | PTOTSR4_M_EXT2TMRSEL1)
 
 /*
-** EXTACT3 Activity Progammable Time-out Timer
+** EXTACT3 Activity Programmable Time-out Timer
 */
 #define EXT3TMRSEL_0		0x000
 #define EXT3TMRSEL_1		PTOTSR4_M_EXT3TMRSEL0

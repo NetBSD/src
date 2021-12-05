@@ -1,4 +1,4 @@
-/* $NetBSD: sbmac.c,v 1.62 2020/01/29 05:30:14 thorpej Exp $ */
+/* $NetBSD: sbmac.c,v 1.63 2021/12/05 07:21:59 msaitoh Exp $ */
 
 /*
  * Copyright 2000, 2001, 2004
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbmac.c,v 1.62 2020/01/29 05:30:14 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbmac.c,v 1.63 2021/12/05 07:21:59 msaitoh Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -1883,7 +1883,7 @@ sbmac_setmulti(struct sbmac_softc *sc)
 	}
 
 	/*
-	 * Progam new multicast entries.  For now, only use the
+	 * Program new multicast entries.  For now, only use the
 	 * perfect filter.  In the future we'll need to use the
 	 * hash filter if the perfect filter overflows
 	 */
