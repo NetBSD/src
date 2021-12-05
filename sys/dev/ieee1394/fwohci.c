@@ -1,4 +1,4 @@
-/*	$NetBSD: fwohci.c,v 1.148 2021/08/21 11:55:25 andvar Exp $	*/
+/*	$NetBSD: fwohci.c,v 1.149 2021/12/05 08:17:21 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 2003 Hidetoshi Shimokawa
@@ -37,7 +37,7 @@
  *
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fwohci.c,v 1.148 2021/08/21 11:55:25 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fwohci.c,v 1.149 2021/12/05 08:17:21 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -1670,7 +1670,7 @@ fwohci_txd(struct fwohci_softc *sc, struct fwohci_dbch *dbch)
 			mutex_enter(&dbch->xferq.q_mtx);
 			/*
 			 * The watchdog timer takes care of split
-			 * transcation timeout for ACKPEND case.
+			 * transaction timeout for ACKPEND case.
 			 */
 		} else
 			aprint_error_dev(fc->dev, "this shouldn't happen\n");
