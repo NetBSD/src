@@ -1,4 +1,4 @@
-/*	$NetBSD: localtime.c,v 1.125 2021/10/27 11:27:25 christos Exp $	*/
+/*	$NetBSD: localtime.c,v 1.126 2021/12/05 18:06:24 christos Exp $	*/
 
 /* Convert timestamp from time_t to struct tm.  */
 
@@ -12,7 +12,7 @@
 #if 0
 static char	elsieid[] = "@(#)localtime.c	8.17";
 #else
-__RCSID("$NetBSD: localtime.c,v 1.125 2021/10/27 11:27:25 christos Exp $");
+__RCSID("$NetBSD: localtime.c,v 1.126 2021/12/05 18:06:24 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -97,6 +97,8 @@ static const char	gmt[] = "GMT";
 #define TZDEFRULESTRING ",M3.2.0,M11.1.0"
 #endif
 
+typedef int_fast64_t __time_t;
+
 struct ttinfo {				/* time type information */
 	int_fast32_t	tt_utoff;	/* UT offset in seconds */
 	bool		tt_isdst;	/* used to set tm_isdst */
@@ -106,7 +108,7 @@ struct ttinfo {				/* time type information */
 };
 
 struct lsinfo {				/* leap second information */
-	time_t		ls_trans;	/* transition time */
+	__time_t	ls_trans;	/* transition time */
 	int_fast32_t	ls_corr;	/* correction to apply */
 };
 
@@ -128,7 +130,7 @@ struct state {
 	int		charcnt;
 	bool		goback;
 	bool		goahead;
-	time_t		ats[TZ_MAX_TIMES];
+	__time_t	ats[TZ_MAX_TIMES];
 	unsigned char	types[TZ_MAX_TIMES];
 	struct ttinfo	ttis[TZ_MAX_TYPES];
 	char		chars[/*CONSTCOND*/BIGGEST(BIGGEST(TZ_MAX_CHARS + 1,
@@ -158,7 +160,7 @@ struct rule {
 static struct tm *gmtsub(struct state const *, time_t const *, int_fast32_t,
 			 struct tm *);
 static bool increment_overflow(int *, int);
-static bool increment_overflow_time(time_t *, int_fast32_t);
+static bool increment_overflow_time(__time_t *, int_fast32_t);
 static int_fast32_t leapcorr(struct state const *, time_t);
 static bool normalize_overflow32(int_fast32_t *, int *, int);
 static struct tm *timesub(time_t const *, int_fast32_t, struct state const *,
@@ -691,7 +693,7 @@ tzloadbody(char const *name, struct state *sp, bool doextend,
 			    for (i = 0;
 				 i < ts->timecnt && sp->timecnt < TZ_MAX_TIMES;
 				 i++) {
-			      time_t t = ts->ats[i];
+			      __time_t t = ts->ats[i];
 			      if (increment_overflow_time(&t, leapcorr(sp, t))
 				  || (0 < sp->timecnt
 				      && t <= sp->ats[sp->timecnt - 1]))
@@ -1208,7 +1210,7 @@ tzparse(const char *name, struct state *sp, struct state *basep)
 			struct rule	end;
 			int		year;
 			int		timecnt;
-			time_t		janfirst;
+			__time_t	janfirst;
 			int_fast32_t janoffset = 0;
 			int yearbeg, yearlim;
 
@@ -1248,7 +1250,7 @@ tzparse(const char *name, struct state *sp, struct state *basep)
 			  int_fast32_t yearsecs
 			    = year_lengths[isleap(yearbeg)] * SECSPERDAY;
 			  int yearbeg1 = yearbeg;
-			  time_t janfirst1 = janfirst;
+			  __time_t janfirst1 = janfirst;
 			  if (increment_overflow_time(&janfirst1, yearsecs)
 			      || increment_overflow(&yearbeg1, 1)
 			      || atlo <= janfirst1)
@@ -1767,7 +1769,7 @@ offtime_r(const time_t *timep, long offset, struct tm *tmp)
 time_t
 time(time_t *p)
 {
-  time_t r = sys_time(0);
+  __time_t r = sys_time(0);
   if (r != (time_t) -1) {
     int_fast32_t offset = EPOCH_LOCAL ? (daylight ? timezone : altzone) : 0;
     if (increment_overflow32(&offset, -EPOCH_OFFSET)
@@ -1777,8 +1779,8 @@ time(time_t *p)
     }
   }
   if (p)
-    *p = r;
-  return r;
+    *p = (time_t)r;
+  return (time_t)r;
 }
 #endif
 
@@ -1986,7 +1988,7 @@ increment_overflow32(int_fast32_t *const lp, int const m)
 }
 
 static bool
-increment_overflow_time(time_t *tp, int_fast32_t j)
+increment_overflow_time(__time_t *tp, int_fast32_t j)
 {
 	/*
 	** This is like
@@ -2208,16 +2210,17 @@ again:
 		     YOURTM.TM_GMTOFF is plausible, so try it instead.
 		     It's OK if YOURTM.TM_GMTOFF contains uninitialized data,
 		     since the guess gets checked.  */
-		  time_t altt = t;
+		  __time_t altt = t;
 		  int_fast32_t diff = (int_fast32_t)
 		      (mytm.TM_GMTOFF - yourtm.TM_GMTOFF);
 		  if (!increment_overflow_time(&altt, diff)) {
 		    struct tm alttm;
-		    if (funcp(sp, &altt, offset, &alttm)
+		    time_t xaltt = (time_t)altt;
+		    if (funcp(sp, &xaltt, offset, &alttm)
 			&& alttm.tm_isdst == mytm.tm_isdst
 			&& alttm.TM_GMTOFF == yourtm.TM_GMTOFF
 			&& tmcomp(&alttm, &yourtm) == 0) {
-		      t = altt;
+		      t = xaltt;
 		      mytm = alttm;
 		    }
 		  }
