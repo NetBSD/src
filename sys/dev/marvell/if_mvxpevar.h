@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mvxpevar.h,v 1.5 2019/09/13 07:55:07 msaitoh Exp $	*/
+/*	$NetBSD: if_mvxpevar.h,v 1.6 2021/12/05 02:47:01 msaitoh Exp $	*/
 /*
  * Copyright (c) 2015 Internet Initiative Japan Inc.
  * All rights reserved.
@@ -102,7 +102,7 @@
  * DMA Descriptor
  *
  * the ethernet device has 8 rx/tx DMA queues. each of queue has its own
- * decriptor list. descriptors are simply index by counter inside the device.
+ * descriptor list. descriptors are simply index by counter inside the device.
  */
 #define MVXPE_TX_RING_CNT	IFQ_MAXLEN
 #define MVXPE_TX_RING_MSK	(MVXPE_TX_RING_CNT - 1)

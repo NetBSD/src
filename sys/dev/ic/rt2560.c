@@ -1,4 +1,4 @@
-/*	$NetBSD: rt2560.c,v 1.39 2021/06/16 00:21:18 riastradh Exp $	*/
+/*	$NetBSD: rt2560.c,v 1.40 2021/12/05 02:47:01 msaitoh Exp $	*/
 /*	$OpenBSD: rt2560.c,v 1.15 2006/04/20 20:31:12 miod Exp $  */
 /*	$FreeBSD: rt2560.c,v 1.3 2006/03/21 21:15:43 damien Exp $*/
 
@@ -24,7 +24,7 @@
  * http://www.ralinktech.com/
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rt2560.c,v 1.39 2021/06/16 00:21:18 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rt2560.c,v 1.40 2021/12/05 02:47:01 msaitoh Exp $");
 
 
 #include <sys/param.h>
@@ -1238,7 +1238,7 @@ rt2560_decryption_intr(struct rt2560_softc *sc)
 	struct mbuf *mnew, *m;
 	int hw, error, s;
 
-	/* retrieve last decriptor index processed by cipher engine */
+	/* retrieve last descriptor index processed by cipher engine */
 	hw = (RAL_READ(sc, RT2560_SECCSR0) - sc->rxq.physaddr) /
 	    RT2560_RX_DESC_SIZE;
 

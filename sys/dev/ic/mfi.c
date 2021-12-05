@@ -1,4 +1,4 @@
-/* $NetBSD: mfi.c,v 1.66 2021/11/06 06:52:48 msaitoh Exp $ */
+/* $NetBSD: mfi.c,v 1.67 2021/12/05 02:47:01 msaitoh Exp $ */
 /* $OpenBSD: mfi.c,v 1.66 2006/11/28 23:59:45 dlg Exp $ */
 
 /*
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mfi.c,v 1.66 2021/11/06 06:52:48 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mfi.c,v 1.67 2021/12/05 02:47:01 msaitoh Exp $");
 
 #include "bio.h"
 
@@ -2924,7 +2924,7 @@ mfi_tbolt_init_desc_pool(struct mfi_softc *sc)
 	uint32_t     offset = 0;
 	uint8_t      *addr = MFIMEM_KVA(sc->sc_tbolt_reqmsgpool);
 
-	/* Request Decriptors alignment restrictions */
+	/* Request Descriptors alignment restrictions */
 	KASSERT(((uintptr_t)addr & 0xFF) == 0);
 
 	/* Skip request message pool */

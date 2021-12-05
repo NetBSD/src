@@ -1,4 +1,4 @@
-/* 	$NetBSD: if_temac.c,v 1.17 2021/03/29 13:14:13 rin Exp $ */
+/* 	$NetBSD: if_temac.c,v 1.18 2021/12/05 02:47:01 msaitoh Exp $ */
 
 /*
  * Copyright (c) 2006 Jachym Holecek
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_temac.c,v 1.17 2021/03/29 13:14:13 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_temac.c,v 1.18 2021/12/05 02:47:01 msaitoh Exp $");
 
 
 #include <sys/param.h>
@@ -1165,7 +1165,9 @@ temac_rxreap(struct temac_softc *sc)
 		if ((stat & CDMAC_STAT_DONE) == 0)
 			break;
 
-		/* Count any decriptor we've collected, regardless of status. */
+		/*
+		 * Count any descriptor we've collected, regardless of status.
+		 */
 		nseg ++;
 
 		/* XXXFreza: This won't work for jumbo frames. */

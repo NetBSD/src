@@ -1,4 +1,4 @@
-/*	$NetBSD: cdboot.S,v 1.12 2011/01/04 16:53:05 jakllsch Exp $	*/
+/*	$NetBSD: cdboot.S,v 1.13 2021/12/05 02:47:01 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -222,7 +222,7 @@ boot_cdrom:
 	movw	$str_banner, %si
 	call	message
 
-/* Read volume descriptor sectors until Primary decriptor found */
+/* Read volume descriptor sectors until Primary descriptor found */
 	movl	$VD_LBA, %eax
 next_block:
 	movb	$1, %dh			/* Number of sectors to read */
