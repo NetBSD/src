@@ -1,4 +1,4 @@
-/* $NetBSD: udf_subr.c,v 1.158 2021/09/16 22:19:11 andvar Exp $ */
+/* $NetBSD: udf_subr.c,v 1.159 2021/12/05 04:21:31 msaitoh Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_subr.c,v 1.158 2021/09/16 22:19:11 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_subr.c,v 1.159 2021/12/05 04:21:31 msaitoh Exp $");
 #endif /* not lint */
 
 
@@ -2064,7 +2064,7 @@ udf_process_vds(struct udf_mount *ump) {
 			}
 			break;
 		default:
-			panic("bad alloction type in udf's ump->vtop\n");
+			panic("bad allocation type in udf's ump->vtop\n");
 		}
 	}
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: vme_machdep.c,v 1.74 2021/08/07 16:19:05 thorpej Exp $	*/
+/*	$NetBSD: vme_machdep.c,v 1.75 2021/12/05 04:21:31 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vme_machdep.c,v 1.74 2021/08/07 16:19:05 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vme_machdep.c,v 1.75 2021/12/05 04:21:31 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/extent.h>
@@ -963,7 +963,7 @@ sparc_vct_iommu_dmamap_create(void *cookie, vme_size_t size, vme_am_t am,
 
 	/*
 	 * Each I/O cache line maps to a 8K section of VME DVMA space, so
-	 * we must ensure that DVMA alloctions are always 8K aligned.
+	 * we must ensure that DVMA allocations are always 8K aligned.
 	 */
 	map->_dm_align = VME_IOC_PAGESZ;
 
