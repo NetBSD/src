@@ -1,4 +1,4 @@
-/*	$NetBSD: dp8573areg.h,v 1.2 2021/12/05 04:26:37 msaitoh Exp $	*/
+/*	$NetBSD: dp8573areg.h,v 1.3 2021/12/05 15:25:56 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2003 Steve Rumble
@@ -96,7 +96,7 @@
 #define DP8573A_YEAR		0x0b	/* Years */
 #define DP8573A_DOW		0x0e	/* Day of Week */
 
-/* Comparision Registers */
+/* Comparison Registers */
 #define DP8573A_CMP_SEC		0x13	/* Seconds */ 
 #define DP8573A_CMP_MIN		0x14	/* Minutes */
 #define DP8573A_CMP_HOUR	0x15	/* Hours */
