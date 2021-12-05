@@ -1,4 +1,4 @@
-/*	$NetBSD: sctp_output.c,v 1.26 2021/10/21 13:21:55 andvar Exp $ */
+/*	$NetBSD: sctp_output.c,v 1.27 2021/12/05 03:08:19 msaitoh Exp $ */
 /*	$KAME: sctp_output.c,v 1.48 2005/06/16 18:29:24 jinmei Exp $	*/
 
 /*
@@ -30,7 +30,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sctp_output.c,v 1.26 2021/10/21 13:21:55 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sctp_output.c,v 1.27 2021/12/05 03:08:19 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ipsec.h"
@@ -4900,7 +4900,7 @@ sctp_clean_up_datalist(struct sctp_tcb *stcb,
 		if (i) {
 			/* Any chunk NOT 0 you zap the time
 			 * chunk 0 gets zapped or set based on
-			 * if a RTO measurment is needed.
+			 * if a RTO measurement is needed.
 			 */
 			data_list[i]->do_rtt = 0;
 		}
