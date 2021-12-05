@@ -1,4 +1,4 @@
-/*	$NetBSD: mvsata.c,v 1.61 2021/10/05 08:01:05 rin Exp $	*/
+/*	$NetBSD: mvsata.c,v 1.62 2021/12/05 04:37:11 msaitoh Exp $	*/
 /*
  * Copyright (c) 2008 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mvsata.c,v 1.61 2021/10/05 08:01:05 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mvsata.c,v 1.62 2021/12/05 04:37:11 msaitoh Exp $");
 
 #include "opt_mvsata.h"
 
@@ -474,7 +474,7 @@ mvsata_error(struct mvsata_port *mvport)
 
 	cause = MVSATA_EDMA_READ_4(mvport, EDMA_IEC);
 	/*
-	 * We must ack SATA_SE and SATA_FISIC before acking coresponding bits
+	 * We must ack SATA_SE and SATA_FISIC before acking corresponding bits
 	 * in EDMA_IEC.
 	 */
 	if (cause & EDMA_IE_SERRINT) {
