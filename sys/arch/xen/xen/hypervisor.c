@@ -1,4 +1,4 @@
-/* $NetBSD: hypervisor.c,v 1.92 2021/08/07 16:19:08 thorpej Exp $ */
+/* $NetBSD: hypervisor.c,v 1.93 2021/12/05 02:59:50 msaitoh Exp $ */
 
 /*
  * Copyright (c) 2005 Manuel Bouyer.
@@ -53,7 +53,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hypervisor.c,v 1.92 2021/08/07 16:19:08 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hypervisor.c,v 1.93 2021/12/05 02:59:50 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -441,7 +441,7 @@ xen_hvm_init(void)
 	/*
 	 * PR port-amd64/55543
 	 * workround for amazon's Xen 4.2: it looks like the Xen clock is not
-	 * fully funtionnal here. This version also doesn't support
+	 * fully functional here. This version also doesn't support
 	 * HVM_PARAM_CONSOLE_PFN. 
 	 */
 	if (xencons_interface != 0) {
