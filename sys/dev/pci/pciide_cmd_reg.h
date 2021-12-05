@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide_cmd_reg.h,v 1.17 2009/10/19 18:41:15 bouyer Exp $	*/
+/*	$NetBSD: pciide_cmd_reg.h,v 1.18 2021/12/05 04:49:36 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1998 Manuel Bouyer.
@@ -75,7 +75,7 @@
 #define CMD_DMA			0x00
 #define CMD_DMA_MULTIPLE	0x01
 #define CMD_DMA_LINE		0x03
-/* the followings bits are only for 0646U/646U2/648/649 */
+/* the following bits are only for 0646U/646U2/648/649 */
 #define CMD_DMA_IRQ(chan) 	(0x4 << (chan))
 #define CMD_DMA_IRQ_DIS(chan) 	(0x10 << (chan))
 #define CMD_DMA_RST		0x40
