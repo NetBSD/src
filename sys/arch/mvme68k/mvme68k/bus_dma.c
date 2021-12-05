@@ -1,7 +1,7 @@
-/* $NetBSD: bus_dma.c,v 1.38 2020/11/21 17:59:13 thorpej Exp $	*/
+/* $NetBSD: bus_dma.c,v 1.39 2021/12/05 04:54:21 msaitoh Exp $	*/
 
 /*
- * This file was taken from from next68k/dev/bus_dma.c, which was originally
+ * This file was taken from next68k/dev/bus_dma.c, which was originally
  * taken from alpha/common/bus_dma.c.
  * It should probably be re-synced when needed.
  * original cvs id: NetBSD: bus_dma.c,v 1.13 1999/11/13 00:30:40 thorpej Exp
@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.38 2020/11/21 17:59:13 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.39 2021/12/05 04:54:21 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

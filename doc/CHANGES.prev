@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM PREVIOUS RELEASES:			<$Revision: 1.161 $>
+LIST OF CHANGES FROM PREVIOUS RELEASES:			<$Revision: 1.162 $>
 
 
 Changes from 386bsd 0.1 + patchkit 0.2.2 to NetBSD 0.8:
@@ -939,7 +939,7 @@ Changes from NetBSD 0.9 to NetBSD 1.0:
 	ed(1): fixed line addressing to be consistent with SunOS ed (alm)
 	i386: change bootcode to not skip the 256 bytes of BIOS variables
 		if load address isn't 0 (ws)
-	stdio: more fixes from from torek with help from cgd. (cgd)
+	stdio: more fixes from torek with help from cgd. (cgd)
 	termcap(3): Fix man page to have the correct definition of
 		tgetstr().  fix supplied by
 		gordon@sneaky.lonestar.org (Gordon Burditt). (cgd)
@@ -3809,7 +3809,7 @@ Changes from NetBSD 1.2 to NetBSD 1.3:
 	ethernet: add ne2000 ISA Plug-and-Play attachment. [matt 19971016]
 	audio: Add libossaudio to make porting Linux audio programs easier.
 		[augustss 19971016]
-	pcmcia: Add Marc Horowitz's new PCMCIA framework, with help from from
+	pcmcia: Add Marc Horowitz's new PCMCIA framework, with help from
 		John Kohl, Matt Thomas, Enami Tsugutomo, Bill Sommerfeld,
 		Jason Thorpe, and others.  Supports several common PCMCIA
 		devices.  [thorpej 19971016]
@@ -8465,7 +8465,7 @@ Changes from NetBSD 3.0 to NetBSD 4.0:
 	sun3: Add MI softintr(9) support by shared sources with sun2 port.
 		[tsutsui 20061005]
 	sparc64: Add floppy support based on sparc driver and hints from
-		from OpenBSD for sbus/ebus attachment.  [jnemeth 20061006]
+		OpenBSD for sbus/ebus attachment.  [jnemeth 20061006]
 	find(1): Add support for "find ... -exec ... +".  Written by
 		John Hawkinson.  [apb 20061007]
 	tcp_congctl(9): API for TCP congestion control algorithms.
