@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.958 2021/12/03 18:29:35 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.959 2021/12/05 11:57:18 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -140,7 +140,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.958 2021/12/03 18:29:35 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.959 2021/12/05 11:57:18 rillig Exp $");
 
 /*
  * Variables are defined using one of the VAR=value assignments.  Their
@@ -848,15 +848,17 @@ GetVarnamesToUnexport(bool isEnv, const char *arg,
 }
 
 static void
-UnexportVar(const char *varname, UnexportWhat what)
+UnexportVar(Substring varname, UnexportWhat what)
 {
-	Var *v = VarFind(varname, SCOPE_GLOBAL, false);
+	Var *v = VarFindSubstring(varname, SCOPE_GLOBAL, false);
 	if (v == NULL) {
-		DEBUG1(VAR, "Not unexporting \"%s\" (not found)\n", varname);
+		DEBUG2(VAR, "Not unexporting \"%.*s\" (not found)\n",
+		    (int)Substring_Length(varname), varname.start);
 		return;
 	}
 
-	DEBUG1(VAR, "Unexporting \"%s\"\n", varname);
+	DEBUG2(VAR, "Unexporting \"%.*s\"\n",
+	    (int)Substring_Length(varname), varname.start);
 	if (what != UNEXPORT_ENV && v->exported && !v->reexport)
 		unsetenv(v->name.str);
 	v->exported = false;
@@ -880,17 +882,15 @@ static void
 UnexportVars(FStr *varnames, UnexportWhat what)
 {
 	size_t i;
-	Words words;
+	SubstringWords words;
 
 	if (what == UNEXPORT_ENV)
 		ClearEnv();
 
-	words = Str_Words(varnames->str, false);
-	for (i = 0; i < words.len; i++) {
-		const char *varname = words.words[i];
-		UnexportVar(varname, what);
-	}
-	Words_Free(words);
+	words = Substring_Words(varnames->str, false);
+	for (i = 0; i < words.len; i++)
+		UnexportVar(words.words[i], what);
+	SubstringWords_Free(words);
 
 	if (what != UNEXPORT_NAMED)
 		Global_Delete(MAKE_EXPORTED);
