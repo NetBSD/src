@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_msi_machdep.c,v 1.15 2021/03/14 08:10:23 skrll Exp $	*/
+/*	$NetBSD: pci_msi_machdep.c,v 1.16 2021/12/05 04:56:39 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2015 Internet Initiative Japan Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_msi_machdep.c,v 1.15 2021/03/14 08:10:23 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_msi_machdep.c,v 1.16 2021/12/05 04:56:39 msaitoh Exp $");
 
 #include "opt_intrdebug.h"
 #include "ioapic.h"
@@ -622,7 +622,7 @@ pci_msix_alloc_exact(const struct pci_attach_args *pa, pci_intr_handle_t **ihps,
 
 /*
  * This function is used by device drivers like pci_intr_map().
- * Futhermore, this function can map each handle to a MSI-X table index.
+ * Furthermore, this function can map each handle to a MSI-X table index.
  *
  * "ihps" is the array of vector numbers which MSI-X used instead of IRQ number.
  * "count" can not decrease.
