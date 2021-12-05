@@ -1,4 +1,4 @@
-/*	$NetBSD: subr.S,v 1.39 2021/10/04 20:25:20 andvar Exp $	   */
+/*	$NetBSD: subr.S,v 1.40 2021/12/05 03:01:59 msaitoh Exp $	   */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -319,7 +319,7 @@ softint_process:
 #endif
 
 	mtpr	PCB_PADDR(%r3),$PR_PCBB	/* restore PA of interrupted pcb */
-	ldpctx				/* implictily updates curlwp */
+	ldpctx				/* implicitly updates curlwp */
 	rei
 
 
