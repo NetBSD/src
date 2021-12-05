@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_fault.c,v 1.228 2020/07/09 05:57:15 skrll Exp $	*/
+/*	$NetBSD: uvm_fault.c,v 1.229 2021/12/05 07:28:20 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.228 2020/07/09 05:57:15 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.229 2021/12/05 07:28:20 msaitoh Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -701,7 +701,7 @@ uvmfault_update_stats(struct uvm_faultinfo *ufi)
  * => called from MD code to resolve a page fault
  * => VM data structures usually should be unlocked.   however, it is
  *	possible to call here with the main map locked if the caller
- *	gets a write lock, sets it recusive, and then calls us (c.f.
+ *	gets a write lock, sets it recursive, and then calls us (c.f.
  *	uvm_map_pageable).   this should be avoided because it keeps
  *	the map locked off during I/O.
  * => MUST NEVER BE CALLED IN INTERRUPT CONTEXT
