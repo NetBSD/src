@@ -1,4 +1,4 @@
-/*	$NetBSD: mbr.c,v 1.39 2021/05/09 10:37:49 martin Exp $ */
+/*	$NetBSD: mbr.c,v 1.40 2021/12/05 07:06:17 msaitoh Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -184,10 +184,10 @@ static size_t mbr_type_from_gen_desc(const struct part_type_desc *desc);
  *           b      100     1000	extended LBA (type 15)
  *
  *    100 -> a       63       37        user
- *           b      100      200	extended partiton (type 5)
+ *           b      100      200	extended partition (type 5)
  *
  *    200 -> a       63       37        user
- *           b      200      300	extended partiton (type 5)
+ *           b      200      300	extended partition (type 5)
  *
  *    300 -> a       63       37	user
  *           b        0        0        0 (end of chain)
@@ -427,7 +427,7 @@ find_mbr_space(const struct mbr_info_t *mbrs, uint *start, uint *size,
 		}
 		if (s <= from && e > from && is_extended) {
 			/*
-			 * if we start in the extended partiton,
+			 * if we start in the extended partition,
 			 * we must end before its end
 			 */
 			sz = e - from;
