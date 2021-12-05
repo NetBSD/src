@@ -1,4 +1,4 @@
-#	$NetBSD: FOUR_TTYS,v 1.53 2007/10/17 19:57:44 garbled Exp $
+#	$NetBSD: FOUR_TTYS,v 1.54 2021/12/05 07:02:28 msaitoh Exp $
 
 # FOUR_TTYS Sun3 (3/50, 3/60, 3/110, 3/160, 3/260)
 # like GENERIC but both zs chips are used as ttys
@@ -6,7 +6,7 @@
 include "arch/sun3/conf/GENERIC"
 
 #
-# Note that by ommitting "kdb0" and "ms0" one can build
+# Note that by omitting "kdb0" and "ms0" one can build
 # a kernel that operates four plain serial lines, where
 # two of them are data-leads-only ports wired up using
 # a custom cable on the keyboard connector.  The flags 1
