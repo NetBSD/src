@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_vnops.c,v 1.223 2021/10/20 03:08:17 thorpej Exp $	*/
+/*	$NetBSD: puffs_vnops.c,v 1.224 2021/12/05 03:07:16 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.223 2021/10/20 03:08:17 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.224 2021/12/05 03:07:16 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -2474,7 +2474,7 @@ puffs_vnop_write(void *v)
 
 		/*
 		 * Direct I/O on write but not on read: we must
-		 * invlidate the written pages so that we read
+		 * invalidate the written pages so that we read
 		 * the written data and not the stalled cache.
 		 */
 		if ((error == 0) && 
