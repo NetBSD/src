@@ -1,4 +1,4 @@
-/*	$NetBSD: aic79xx.c,v 1.62 2021/12/05 07:44:53 msaitoh Exp $	*/
+/*	$NetBSD: aic79xx.c,v 1.63 2021/12/05 15:22:37 msaitoh Exp $	*/
 
 /*
  * Core routines and tables shareable across OS platforms.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aic79xx.c,v 1.62 2021/12/05 07:44:53 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aic79xx.c,v 1.63 2021/12/05 15:22:37 msaitoh Exp $");
 
 #include <dev/ic/aic79xx_osm.h>
 #include <dev/ic/aic79xx_inline.h>
@@ -4798,7 +4798,7 @@ ahd_handle_ign_wide_residue(struct ahd_softc *ahd,
 				/*
 				 * The residual data count is not updated
 				 * for the command run to completion case.
-				 * Expilcitly zero the count.
+				 * Explicitly zero the count.
 				 */
 				data_cnt &= ~AHD_SG_LEN_MASK;
 			}
