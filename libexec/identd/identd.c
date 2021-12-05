@@ -1,4 +1,4 @@
-/* $NetBSD: identd.c,v 1.37 2021/09/16 21:29:41 andvar Exp $ */
+/* $NetBSD: identd.c,v 1.38 2021/12/05 05:03:05 msaitoh Exp $ */
 
 /*
  * identd.c - TCP/IP Ident protocol server.
@@ -8,7 +8,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: identd.c,v 1.37 2021/09/16 21:29:41 andvar Exp $");
+__RCSID("$NetBSD: identd.c,v 1.38 2021/12/05 05:03:05 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/socket.h>
@@ -513,7 +513,7 @@ idhandle(int fd, const char *charset, const char *fmt, const char *osname,
 		return 0;
 	}
 
-	/* Return numberic user ID? */
+	/* Return numeric user ID? */
 	if (nflag)
 		(void)snprintf(idbuf, sizeof(idbuf), "%u", uid);
 	else
