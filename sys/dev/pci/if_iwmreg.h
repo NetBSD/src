@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwmreg.h,v 1.11 2021/12/05 02:21:08 msaitoh Exp $	*/
+/*	$NetBSD: if_iwmreg.h,v 1.12 2021/12/05 04:37:12 msaitoh Exp $	*/
 /*	OpenBSD: if_iwmreg.h,v 1.19 2016/09/20 11:46:09 stsp Exp 	*/
 
 /*-
@@ -4782,7 +4782,7 @@ struct iwm_ba_notif {
 /*
  * struct iwm_mac_beacon_cmd - beacon template command
  * @tx: the tx commands associated with the beacon frame
- * @template_id: currently equal to the mac context id of the coresponding
+ * @template_id: currently equal to the mac context id of the corresponding
  *  mac.
  * @tim_idx: the offset of the tim IE in the beacon
  * @tim_size: the length of the tim IE

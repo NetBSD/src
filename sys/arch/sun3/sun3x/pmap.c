@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.117 2020/08/19 13:11:42 tsutsui Exp $	*/
+/*	$NetBSD: pmap.c,v 1.118 2021/12/05 04:37:11 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -105,7 +105,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.117 2020/08/19 13:11:42 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.118 2021/12/05 04:37:11 msaitoh Exp $");
 
 #include "opt_ddb.h"
 #include "opt_pmap_debug.h"
@@ -934,7 +934,7 @@ pmap_alloc_pv(void)
 	 * At this time we also initialize the offset of each bank's
 	 * starting pv_head within the pv_head list so that the physical
 	 * memory state routines (pmap_is_referenced(),
-	 * pmap_is_modified(), et al.) can quickly find coresponding
+	 * pmap_is_modified(), et al.) can quickly find corresponding
 	 * pv_heads in spite of the non-contiguity.
 	 */
 	total_mem = 0;
