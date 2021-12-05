@@ -1,4 +1,4 @@
-/*	$NetBSD: if_qn.c,v 1.49 2020/01/29 05:23:16 thorpej Exp $ */
+/*	$NetBSD: if_qn.c,v 1.50 2021/12/05 08:16:10 msaitoh Exp $ */
 
 /*
  * Copyright (c) 1995 Mika Kortelainen
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_qn.c,v 1.49 2020/01/29 05:23:16 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_qn.c,v 1.50 2021/12/05 08:16:10 msaitoh Exp $");
 
 #include "qn.h"
 #if NQN > 0
@@ -416,13 +416,13 @@ qnstart(struct ifnet *ifp)
 	/* Wait for the packet to really leave. */
 	while (!(*sc->nic_t_status & T_TMT_OK) && --timout) {
 		if ((timout % 10000) == 0)
-			log(LOG_INFO, "qn: timout...\n");
+			log(LOG_INFO, "qn: timeout...\n");
 	}
 
 	if (timout == 0)
 		/* Maybe we should try to recover from this one? */
 		/* But now, let's just fall thru and hope the best... */
-		log(LOG_INFO, "qn: transmit timout (fatal?)\n");
+		log(LOG_INFO, "qn: transmit timeout (fatal?)\n");
 
 	sc->transmit_pending = 1;
 	*sc->nic_t_mask = INT_TMT_OK | INT_SIXTEEN_COL;
