@@ -1,5 +1,5 @@
 /*	$KAME: sctputil.c,v 1.39 2005/06/16 20:54:06 jinmei Exp $	*/
-/*	$NetBSD: sctputil.c,v 1.17 2021/07/24 21:31:39 andvar Exp $	*/
+/*	$NetBSD: sctputil.c,v 1.18 2021/12/05 03:08:19 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Cisco Systems, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sctputil.c,v 1.17 2021/07/24 21:31:39 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sctputil.c,v 1.18 2021/12/05 03:08:19 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1719,7 +1719,7 @@ sctp_calculate_rto(struct sctp_tcb *stcb,
 			net->lastsv = SCTP_CLOCK_GRANULARITY;
 		}
 	} else {
-		/* First RTO measurment */
+		/* First RTO measurement */
 		net->lastsa = calc_time;
 		net->lastsv = calc_time >> 1;
 		first_measure = 1;
