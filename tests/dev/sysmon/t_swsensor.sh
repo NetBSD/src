@@ -1,4 +1,4 @@
-# $NetBSD: t_swsensor.sh,v 1.12 2021/06/13 14:45:36 riastradh Exp $
+# $NetBSD: t_swsensor.sh,v 1.13 2021/12/05 08:16:10 msaitoh Exp $
 
 get_sensor_info() {
 	rump.envstat -x | \
@@ -134,7 +134,7 @@ common_body() {
 	# (use $(( ... )) since the timeout is displayed in hex!)
 	rump.envstat -c env0.conf
 	if [ $(( $( get_sensor_key refresh-timeout ) )) -ne 2 ] ; then
-		atf_fail "1: Could not set refresh-timout to 2s"
+		atf_fail "1: Could not set refresh-timeout to 2s"
 	fi
 
 	# Step 2 - verify that we can read sensor's value
