@@ -1,4 +1,4 @@
-/*	$NetBSD: fil.c,v 1.34 2021/12/05 04:58:59 msaitoh Exp $	*/
+/*	$NetBSD: fil.c,v 1.35 2021/12/05 07:28:20 msaitoh Exp $	*/
 
 /*
  * Copyright (C) 2012 by Darren Reed.
@@ -141,7 +141,7 @@ extern struct timeout ipf_slowtimer_ch;
 #if !defined(lint)
 #if defined(__NetBSD__)
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fil.c,v 1.34 2021/12/05 04:58:59 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fil.c,v 1.35 2021/12/05 07:28:20 msaitoh Exp $");
 #else
 static const char sccsid[] = "@(#)fil.c	1.36 6/5/96 (C) 1993-2000 Darren Reed";
 static const char rcsid[] = "@(#)Id: fil.c,v 1.1.1.2 2012/07/22 13:45:07 darrenr Exp $";
@@ -2362,7 +2362,7 @@ ipf_check_ipf(fr_info_t *fin, frentry_t *fr, int portcmp)
 /* If a match is found, the value of fr_flags from the rule becomes the     */
 /* return value and fin->fin_fr points to the matched rule.                 */
 /*                                                                          */
-/* This function may be called recusively upto 16 times (limit inbuilt.)    */
+/* This function may be called recursively upto 16 times (limit inbuilt.)   */
 /* When unwinding, it should finish up with fin_depth as 0.                 */
 /*                                                                          */
 /* Could be per interface, but this gets real nasty when you don't have,    */

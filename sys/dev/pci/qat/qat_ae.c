@@ -1,4 +1,4 @@
-/*	$NetBSD: qat_ae.c,v 1.1 2019/11/20 09:37:46 hikaru Exp $	*/
+/*	$NetBSD: qat_ae.c,v 1.2 2021/12/05 07:28:20 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2019 Internet Initiative Japan, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: qat_ae.c,v 1.1 2019/11/20 09:37:46 hikaru Exp $");
+__KERNEL_RCSID(0, "$NetBSD: qat_ae.c,v 1.2 2021/12/05 07:28:20 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1485,7 +1485,7 @@ qat_ae_concat_ucode(uint64_t *ucode, u_int ninst, u_int size, u_int addr,
 		addr += sizeof(u_int);
 		size -= sizeof(u_int);
 	}
-	/* call this function recusive when the left size less than 4 */
+	/* call this function recursive when the left size less than 4 */
 	ninst +=
 	    qat_ae_concat_ucode(ucode, ninst, size, addr, value + vali);
 
