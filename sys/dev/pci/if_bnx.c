@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bnx.c,v 1.109 2021/08/13 20:26:07 andvar Exp $	*/
+/*	$NetBSD: if_bnx.c,v 1.110 2021/12/05 02:52:17 msaitoh Exp $	*/
 /*	$OpenBSD: if_bnx.c,v 1.101 2013/03/28 17:21:44 brad Exp $	*/
 
 /*-
@@ -35,7 +35,7 @@
 #if 0
 __FBSDID("$FreeBSD: src/sys/dev/bce/if_bce.c,v 1.3 2006/04/13 14:12:26 ru Exp $");
 #endif
-__KERNEL_RCSID(0, "$NetBSD: if_bnx.c,v 1.109 2021/08/13 20:26:07 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bnx.c,v 1.110 2021/12/05 02:52:17 msaitoh Exp $");
 
 /*
  * The following controllers are supported by this driver:
@@ -4701,7 +4701,7 @@ bnx_rx_intr(struct bnx_softc *sc)
 
 				if_statinc(ifp, if_ierrors);
 
-				/* Try and reuse the exisitng mbuf. */
+				/* Try and reuse the existing mbuf. */
 				if (bnx_add_buf(sc, m, &sw_prod,
 				    &sw_chain_prod, &sw_prod_bseq)) {
 					DBRUNIF(1, bnx_breakpoint(sc));
@@ -5647,7 +5647,7 @@ allmulti:
 		REG_WR(sc, BNX_EMAC_RX_MODE, rx_mode);
 	}
 
-	/* Disable and clear the exisitng sort before enabling a new sort. */
+	/* Disable and clear the existing sort before enabling a new sort. */
 	REG_WR(sc, BNX_RPM_SORT_USER0, 0x0);
 	REG_WR(sc, BNX_RPM_SORT_USER0, sort_mode);
 	REG_WR(sc, BNX_RPM_SORT_USER0, sort_mode | BNX_RPM_SORT_USER0_ENA);

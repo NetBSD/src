@@ -1,4 +1,4 @@
-/*	$NetBSD: part_edit.c,v 1.25 2021/01/31 22:45:46 rillig Exp $ */
+/*	$NetBSD: part_edit.c,v 1.26 2021/12/05 02:52:17 msaitoh Exp $ */
 
 /*
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -838,7 +838,7 @@ outer_fill_part_menu_opts(const struct disk_partitions *parts, size_t *cnt)
 		return NULL;
 	}
 
-	/* add all exisiting partitions */
+	/* add all existing partitions */
 	for (op = opts, i = 0; i < parts->num_part && i < (num_opts-2);
 	    op++, i++) {
 		op->opt_flags = OPT_SUB;

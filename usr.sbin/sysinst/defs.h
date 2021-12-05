@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.75 2021/10/08 15:59:55 martin Exp $	*/
+/*	$NetBSD: defs.h,v 1.76 2021/12/05 02:52:17 msaitoh Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -110,7 +110,7 @@ const char *getfslabelname(uint, uint);
 
 /* for bsddisklabel.c */
 enum layout_type {
-	LY_KEEPEXISTING,	/* keep exisiting partitions */
+	LY_KEEPEXISTING,	/* keep existing partitions */
 	LY_OTHERSCHEME,		/* delete all, select new partitioning scheme */
 	LY_SETSIZES,		/* edit sizes */
 	LY_USEDEFAULT,		/* use default sizes */

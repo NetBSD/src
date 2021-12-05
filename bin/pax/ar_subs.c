@@ -1,4 +1,4 @@
-/*	$NetBSD: ar_subs.c,v 1.56 2011/08/31 16:24:54 plunky Exp $	*/
+/*	$NetBSD: ar_subs.c,v 1.57 2021/12/05 02:52:17 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)ar_subs.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: ar_subs.c,v 1.56 2011/08/31 16:24:54 plunky Exp $");
+__RCSID("$NetBSD: ar_subs.c,v 1.57 2021/12/05 02:52:17 msaitoh Exp $");
 #endif
 #endif /* not lint */
 
@@ -1053,7 +1053,7 @@ copy(void)
 		}
 
 		/*
-		 * Non standard -Y and -Z flag. When the exisiting file is
+		 * Non standard -Y and -Z flag. When the existing file is
 		 * same age or newer skip
 		 */
 		if ((Yflag || Zflag) && ((lstat(arcn->name, &sb) == 0))) {
