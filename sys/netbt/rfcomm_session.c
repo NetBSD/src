@@ -1,4 +1,4 @@
-/*	$NetBSD: rfcomm_session.c,v 1.27 2020/02/29 11:40:06 maxv Exp $	*/
+/*	$NetBSD: rfcomm_session.c,v 1.28 2021/12/05 04:35:38 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rfcomm_session.c,v 1.27 2020/02/29 11:40:06 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rfcomm_session.c,v 1.28 2021/12/05 04:35:38 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -1480,7 +1480,7 @@ rfcomm_session_send_frame(struct rfcomm_session *rs, int type, int dlci)
 
 	/*
 	 * The CR (command/response) bit identifies the frame either as a
-	 * commmand or a response and is used along with the DLCI to form
+	 * command or a response and is used along with the DLCI to form
 	 * the address. Commands contain the non-initiator address, whereas
 	 * responses contain the initiator address, so the CR value is
 	 * also dependent on the session direction.
