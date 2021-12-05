@@ -1,4 +1,4 @@
-/*	$NetBSD: sljitLir.h,v 1.4 2019/01/20 23:14:16 alnsn Exp $	*/
+/*	$NetBSD: sljitLir.h,v 1.5 2021/12/05 04:38:54 msaitoh Exp $	*/
 
 /*
  *    Stack-less Just-In-Time compiler
@@ -659,7 +659,7 @@ SLJIT_API_FUNC_ATTRIBUTE sljit_s32 sljit_emit_fast_return(struct sljit_compiler 
    be mixed. The only exception is SLJIT_MOV32 and SLJIT_MOVU32 whose source
    register can hold any 32 or 64 bit value, and it is converted to a 32 bit
    compatible format first. This conversion is free (no instructions are
-   emitted) on most CPUs. A 32 bit value can also be coverted to a 64 bit
+   emitted) on most CPUs. A 32 bit value can also be converted to a 64 bit
    value by SLJIT_MOV_S32 (sign extension) or SLJIT_MOV_U32 (zero extension).
 
    Note: memory addressing always uses 64 bit values on 64 bit systems so
