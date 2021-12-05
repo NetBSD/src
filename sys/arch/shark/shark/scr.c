@@ -1,4 +1,4 @@
-/*	$NetBSD: scr.c,v 1.33 2021/08/09 21:38:04 andvar Exp $	*/
+/*	$NetBSD: scr.c,v 1.34 2021/12/05 08:03:07 msaitoh Exp $	*/
 
 /*
  * Copyright 1997
@@ -102,7 +102,7 @@
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scr.c,v 1.33 2021/08/09 21:38:04 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scr.c,v 1.34 2021/12/05 08:03:07 msaitoh Exp $");
 
 #include "opt_ddb.h"
 
@@ -663,7 +663,7 @@ const struct cdevsw scr_cdevsw = {
 **     
 **     This is the probe routine for the Smart Card.  Because the 
 **     Smart Card is hard wired, there is no probing to peform.  The
-**     function ensures that a succesfull problem occurs only once.
+**     function ensures that a successfull problem occurs only once.
 **
 **  FORMAL PARAMETERS:
 **
