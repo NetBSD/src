@@ -1,4 +1,4 @@
-/*	$NetBSD: coda_vnops.c,v 1.116 2021/10/20 03:08:16 thorpej Exp $	*/
+/*	$NetBSD: coda_vnops.c,v 1.117 2021/12/05 08:10:39 msaitoh Exp $	*/
 
 /*
  *
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: coda_vnops.c,v 1.116 2021/10/20 03:08:16 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: coda_vnops.c,v 1.117 2021/12/05 08:10:39 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1465,7 +1465,7 @@ coda_symlink(void *v)
     /*
      * Here's the strategy for the moment: perform the symlink, then
      * do a lookup to grab the resulting vnode.  I know this requires
-     * two communications with Venus for a new sybolic link, but
+     * two communications with Venus for a new symbolic link, but
      * that's the way the ball bounces.  I don't yet want to change
      * the way the Mach symlink works.  When Mach support is
      * deprecated, we should change symlink so that the common case
