@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1173 2021/11/28 16:20:13 rillig Exp $
+# $NetBSD: mi,v 1.1174 2021/12/05 15:20:13 rillig Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -5985,6 +5985,8 @@
 ./usr/tests/usr.bin/make/unit-tests/varmod-l-name-to-value.mk			tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/make/unit-tests/varmod-localtime.exp			tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/make/unit-tests/varmod-localtime.mk				tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/make/unit-tests/varmod-loop-delete.exp			tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/make/unit-tests/varmod-loop-delete.mk			tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/make/unit-tests/varmod-loop-varname.exp			tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/make/unit-tests/varmod-loop-varname.mk			tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/make/unit-tests/varmod-loop.exp				tests-usr.bin-tests	compattestfile,atf
