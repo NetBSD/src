@@ -1,4 +1,4 @@
-/*	$NetBSD: for.c,v 1.147 2021/09/02 07:02:07 rillig Exp $	*/
+/*	$NetBSD: for.c,v 1.148 2021/12/05 11:40:03 rillig Exp $	*/
 
 /*
  * Copyright (c) 1992, The Regents of the University of California.
@@ -58,7 +58,7 @@
 #include "make.h"
 
 /*	"@(#)for.c	8.1 (Berkeley) 6/6/93"	*/
-MAKE_RCSID("$NetBSD: for.c,v 1.147 2021/09/02 07:02:07 rillig Exp $");
+MAKE_RCSID("$NetBSD: for.c,v 1.148 2021/12/05 11:40:03 rillig Exp $");
 
 
 /* One of the variables to the left of the "in" in a .for loop. */
@@ -70,7 +70,7 @@ typedef struct ForVar {
 typedef struct ForLoop {
 	Buffer body;		/* Unexpanded body of the loop */
 	Vector /* of ForVar */ vars; /* Iteration variables */
-	Words items;		/* Substitution items */
+	SubstringWords items;	/* Substitution items */
 	Buffer curBody;		/* Expanded body of the current iteration */
 	unsigned int sub_next;	/* Where to continue iterating */
 } ForLoop;
@@ -87,8 +87,7 @@ ForLoop_New(void)
 
 	Buf_Init(&f->body);
 	Vector_Init(&f->vars, sizeof(ForVar));
-	f->items.words = NULL;
-	f->items.freeIt = NULL;
+	SubstringWords_Init(&f->items);
 	Buf_Init(&f->curBody);
 	f->sub_next = 0;
 
@@ -106,7 +105,7 @@ ForLoop_Free(ForLoop *f)
 	}
 	Vector_Done(&f->vars);
 
-	Words_Free(f->items);
+	SubstringWords_Free(f->items);
 	Buf_Done(&f->curBody);
 
 	free(f);
@@ -171,10 +170,10 @@ ForLoop_ParseItems(ForLoop *f, const char *p)
 		return false;
 	}
 
-	f->items = Str_Words(items, false);
+	f->items = Substring_Words(items, false);
 	free(items);
 
-	if (f->items.len == 1 && f->items.words[0][0] == '\0')
+	if (f->items.len == 1 && Substring_IsEmpty(f->items.words[0]))
 		f->items.len = 0; /* .for var in ${:U} */
 
 	if (f->items.len != 0 && f->items.len % f->vars.len != 0) {
@@ -278,17 +277,16 @@ For_Accum(const char *line)
 
 
 static size_t
-ExprLen(const char *expr)
+ExprLen(const char *s, const char *e)
 {
-	char ch, expr_open, expr_close;
+	char expr_open, expr_close;
 	int depth;
-	size_t len;
+	const char *p;
 
-	expr_open = expr[0];
-	if (expr_open == '\0')
-		/* just escape the $ */
-		return 0;
+	if (s == e)
+		return 0;	/* just escape the '$' */
 
+	expr_open = s[0];
 	if (expr_open == '(')
 		expr_close = ')';
 	else if (expr_open == '{')
@@ -297,11 +295,11 @@ ExprLen(const char *expr)
 		return 1;	/* Single char variable */
 
 	depth = 1;
-	for (len = 1; (ch = expr[len++]) != '\0';) {
-		if (ch == expr_open)
+	for (p = s + 1; p != e; p++) {
+		if (*p == expr_open)
 			depth++;
-		else if (ch == expr_close && --depth == 0)
-			return len;
+		else if (*p == expr_close && --depth == 0)
+			return (size_t)(p + 1 - s);
 	}
 
 	/* Expression end not found, escape the $ */
@@ -313,11 +311,11 @@ ExprLen(const char *expr)
  * that characters that break this syntax must be backslash-escaped.
  */
 static bool
-NeedsEscapes(const char *value, char endc)
+NeedsEscapes(Substring value, char endc)
 {
 	const char *p;
 
-	for (p = value; *p != '\0'; p++) {
+	for (p = value.start; p != value.end; p++) {
 		if (*p == ':' || *p == '$' || *p == '\\' || *p == endc ||
 		    *p == '\n')
 			return true;
@@ -332,27 +330,29 @@ NeedsEscapes(const char *value, char endc)
  * The result is later unescaped by ApplyModifier_Defined.
  */
 static void
-Buf_AddEscaped(Buffer *cmds, const char *item, char endc)
+Buf_AddEscaped(Buffer *cmds, Substring item, char endc)
 {
+	const char *p;
 	char ch;
 
 	if (!NeedsEscapes(item, endc)) {
-		Buf_AddStr(cmds, item);
+		Buf_AddBytesBetween(cmds, item.start, item.end);
 		return;
 	}
 
 	/* Escape ':', '$', '\\' and 'endc' - these will be removed later by
 	 * :U processing, see ApplyModifier_Defined. */
-	while ((ch = *item++) != '\0') {
+	for (p = item.start; p != item.end; p++) {
+		ch = *p;
 		if (ch == '$') {
-			size_t len = ExprLen(item);
+			size_t len = ExprLen(p + 1, item.end);
 			if (len != 0) {
 				/*
 				 * XXX: Should a '\' be added here?
 				 * See directive-for-escape.mk, ExprLen.
 				 */
-				Buf_AddBytes(cmds, item - 1, len + 1);
-				item += len;
+				Buf_AddBytes(cmds, p, 1 + len);
+				p += len;
 				continue;
 			}
 			Buf_AddByte(cmds, '\\');
