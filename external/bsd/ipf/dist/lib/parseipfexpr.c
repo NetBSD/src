@@ -1,4 +1,4 @@
-/*	$NetBSD: parseipfexpr.c,v 1.1.1.2 2012/07/22 13:44:40 darrenr Exp $	*/
+/*	$NetBSD: parseipfexpr.c,v 1.2 2021/12/05 08:19:57 msaitoh Exp $	*/
 
 #include "ipf.h"
 #include <ctype.h>
@@ -79,7 +79,7 @@ parseipfexpr(line, errorptr)
 	for (ops = strtok(temp, ";"); ops != NULL; ops = strtok(NULL, ";")) {
 		arg = strchr(ops, '=');
 		if ((arg < ops + 2) || (arg == NULL)) {
-			error = "bad 'arg' vlaue";
+			error = "bad 'arg' value";
 			goto parseerror;
 		}
 
