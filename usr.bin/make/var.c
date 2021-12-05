@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.959 2021/12/05 11:57:18 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.960 2021/12/05 12:06:23 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -140,7 +140,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.959 2021/12/05 11:57:18 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.960 2021/12/05 12:06:23 rillig Exp $");
 
 /*
  * Variables are defined using one of the VAR=value assignments.  Their
@@ -1735,7 +1735,7 @@ static char *
 VarSelectWords(const char *str, int first, int last,
 	       char sep, bool oneBigWord)
 {
-	Words words;
+	SubstringWords words;
 	int len, start, end, step;
 	int i;
 
@@ -1743,15 +1743,13 @@ VarSelectWords(const char *str, int first, int last,
 	SepBuf_Init(&buf, sep);
 
 	if (oneBigWord) {
-		/* fake what Str_Words() would do if there were only one word */
+		/* fake what Substring_Words() would do */
 		words.len = 1;
-		words.words = bmake_malloc(
-		    (words.len + 1) * sizeof(words.words[0]));
-		words.freeIt = bmake_strdup(str);
-		words.words[0] = words.freeIt;
-		words.words[1] = NULL;
+		words.words = bmake_malloc(sizeof(words.words[0]));
+		words.freeIt = NULL;
+		words.words[0] = Substring_InitStr(str); /* no need to copy */
 	} else {
-		words = Str_Words(str, false);
+		words = Substring_Words(str, false);
 	}
 
 	/*
@@ -1777,11 +1775,11 @@ VarSelectWords(const char *str, int first, int last,
 	}
 
 	for (i = start; (step < 0) == (i >= end); i += step) {
-		SepBuf_AddStr(&buf, words.words[i]);
+		SepBuf_AddSubstring(&buf, words.words[i]);
 		SepBuf_Sep(&buf);
 	}
 
-	Words_Free(words);
+	SubstringWords_Free(words);
 
 	return SepBuf_DoneData(&buf);
 }
