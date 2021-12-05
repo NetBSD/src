@@ -1,4 +1,4 @@
-/*	$NetBSD: fil.c,v 1.33 2020/04/09 18:20:40 christos Exp $	*/
+/*	$NetBSD: fil.c,v 1.34 2021/12/05 04:58:59 msaitoh Exp $	*/
 
 /*
  * Copyright (C) 2012 by Darren Reed.
@@ -141,7 +141,7 @@ extern struct timeout ipf_slowtimer_ch;
 #if !defined(lint)
 #if defined(__NetBSD__)
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fil.c,v 1.33 2020/04/09 18:20:40 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fil.c,v 1.34 2021/12/05 04:58:59 msaitoh Exp $");
 #else
 static const char sccsid[] = "@(#)fil.c	1.36 6/5/96 (C) 1993-2000 Darren Reed";
 static const char rcsid[] = "@(#)Id: fil.c,v 1.1.1.2 2012/07/22 13:45:07 darrenr Exp $";
@@ -611,7 +611,7 @@ ipf_pr_ipv6hdr(fr_info_t *fin)
 
 	/*
 	 * IPv6 fragment case 1 - see comment for ipf_pr_fragment6().
-	 * "go != 0" imples the above loop hasn't arrived at a layer 4 header.
+	 * "go != 0" implies the above loop hasn't arrived at a layer 4 header.
 	 */
 	if ((go != 0) && (fin->fin_flx & FI_FRAG) && (fin->fin_off == 0)) {
 		ipf_main_softc_t *softc = fin->fin_main_soft;
