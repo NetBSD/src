@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: fgen.l,v 1.38 2020/09/06 08:18:21 mrg Exp $	*/
+/*	$NetBSD: fgen.l,v 1.39 2021/12/05 03:13:50 msaitoh Exp $	*/
 /* FLEX input for FORTH input file scanner */
 /*  
  * Copyright (c) 1998 Eduardo Horvath.
@@ -42,7 +42,7 @@
 #endif
 
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: fgen.l,v 1.38 2020/09/06 08:18:21 mrg Exp $");
+__RCSID("$NetBSD: fgen.l,v 1.39 2021/12/05 03:13:50 msaitoh Exp $");
 #endif
 
 %}
@@ -1071,7 +1071,7 @@ main(int argc, char *argv[])
 
 /*
  * Tokenize one file.  This is a separate function so it can
- * be called recursively to parse mutiple levels of include files.
+ * be called recursively to parse mutliple levels of include files.
  */
 
 static void
