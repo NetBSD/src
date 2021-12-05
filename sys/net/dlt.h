@@ -1,4 +1,4 @@
-/*	$NetBSD: dlt.h,v 1.21 2021/12/05 03:42:01 msaitoh Exp $	*/
+/*	$NetBSD: dlt.h,v 1.22 2021/12/05 07:13:48 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -1396,7 +1396,7 @@
 
 /*
  * DisplayPort AUX channel monitoring data as specified by VESA
- * DisplayPort(DP) Standard preceeded by a pseudo-header.
+ * DisplayPort(DP) Standard preceded by a pseudo-header.
  *    per dirk.eibach at gdsys.cc
  */
 #define DLT_DISPLAYPORT_AUX	275

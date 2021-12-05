@@ -1,4 +1,4 @@
-/*	$NetBSD: custom_apropos_tokenizer.c,v 1.2 2017/10/31 10:14:27 abhinav Exp $	*/
+/*	$NetBSD: custom_apropos_tokenizer.c,v 1.3 2021/12/05 07:13:49 msaitoh Exp $	*/
 /*
 ** 2006 September 30
 **
@@ -304,7 +304,7 @@ star_oh(const char *z)
 
 /*
  * If the word ends with zFrom and xCond() is true for the stem
- * of the word that preceeds the zFrom ending, then change the 
+ * of the word that preceds the zFrom ending, then change the 
  * ending to zTo.
  *
  * The input word *pz and zFrom are both in reverse order.  zTo

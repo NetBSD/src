@@ -430,7 +430,7 @@ extern int      stbi_gif_info_from_file   (FILE *f,                  int *x, int
 #endif
 #ifdef _KERNEL
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: stb_image.c,v 1.9 2018/02/04 09:18:44 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: stb_image.c,v 1.10 2021/12/05 07:13:48 msaitoh Exp $");
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
@@ -3914,7 +3914,7 @@ static stbi_uc *psd_load(stbi *s, int *x, int *y, int *comp, int req_comp)
       //     Else if n is 128, noop.
       // Endloop
 
-      // The RLE-compressed data is preceeded by a 2-byte data count for each row in the data,
+      // The RLE-compressed data is preceded by a 2-byte data count for each row in the data,
       // which we're going to just skip.
       skip(s, h * channelCount * 2 );
 
