@@ -1,4 +1,4 @@
-/*	$NetBSD: aic79xx.c,v 1.60 2021/12/05 02:54:53 msaitoh Exp $	*/
+/*	$NetBSD: aic79xx.c,v 1.61 2021/12/05 07:23:44 msaitoh Exp $	*/
 
 /*
  * Core routines and tables shareable across OS platforms.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aic79xx.c,v 1.60 2021/12/05 02:54:53 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aic79xx.c,v 1.61 2021/12/05 07:23:44 msaitoh Exp $");
 
 #include <dev/ic/aic79xx_osm.h>
 #include <dev/ic/aic79xx_inline.h>
@@ -9090,7 +9090,7 @@ ahd_acquire_seeprom(struct ahd_softc *ahd)
 	 * We should be able to determine the SEEPROM type
 	 * from the flexport logic, but unfortunately not
 	 * all implementations have this logic and there is
-	 * no programatic method for determining if the logic
+	 * no programmatic method for determining if the logic
 	 * is present.
 	 */
 
