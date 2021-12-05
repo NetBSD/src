@@ -1,4 +1,4 @@
-/*	$NetBSD: psshfs.c,v 1.66 2012/11/04 22:46:08 christos Exp $	*/
+/*	$NetBSD: psshfs.c,v 1.67 2021/12/05 08:11:39 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2006-2009  Antti Kantee.  All Rights Reserved.
@@ -29,7 +29,7 @@
  * psshfs: puffs sshfs
  *
  * psshfs implements sshfs functionality on top of puffs making it
- * possible to mount a filesystme through the sftp service.
+ * possible to mount a filesystem through the sftp service.
  *
  * psshfs can execute multiple operations in "parallel" by using the
  * puffs_cc framework for continuations.
@@ -41,7 +41,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: psshfs.c,v 1.66 2012/11/04 22:46:08 christos Exp $");
+__RCSID("$NetBSD: psshfs.c,v 1.67 2021/12/05 08:11:39 msaitoh Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
