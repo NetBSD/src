@@ -1,4 +1,4 @@
-/*	$NetBSD: in6.c,v 1.283 2021/09/21 15:06:21 christos Exp $	*/
+/*	$NetBSD: in6.c,v 1.284 2021/12/05 03:12:14 msaitoh Exp $	*/
 /*	$KAME: in6.c,v 1.198 2001/07/18 09:12:38 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.283 2021/09/21 15:06:21 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.284 2021/12/05 03:12:14 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -208,7 +208,7 @@ in6_ifremlocal(struct ifaddr *ifa)
 	 * from an interface direct route, when removing the direct route
 	 * (see comments in net/net_osdep.h).  Even for variants that do remove
 	 * cloned routes, they could fail to remove the cloned routes when
-	 * we handle multple addresses that share a common prefix.
+	 * we handle multiple addresses that share a common prefix.
 	 * So, we should remove the route corresponding to the deleted address.
 	 */
 
