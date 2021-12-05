@@ -1,4 +1,4 @@
-# $NetBSD: directive-for-escape.mk,v 1.11 2021/09/02 07:02:08 rillig Exp $
+# $NetBSD: directive-for-escape.mk,v 1.12 2021/12/05 11:40:03 rillig Exp $
 #
 # Test escaping of special characters in the iteration values of a .for loop.
 # These values get expanded later using the :U variable modifier, and this
@@ -13,8 +13,8 @@
 ASCII=	!"\#$$%&'()*+,-./0-9:;<=>?@A-Z[\]_^a-z{|}~
 
 # XXX: As of 2020-12-31, the '#' is not preserved in the expanded body of
-# the loop since it would not need only the escaping for the :U variable
-# modifier but also the escaping for the line-end comment.
+# the loop.  Not only would it need the escaping for the variable modifier
+# ':U' but also the escaping for the line-end comment.
 .for chars in ${ASCII}
 .  info ${chars}
 .endfor
@@ -34,7 +34,7 @@ ASCII.2020-12-31=	!"\\\#$$%&'()*+,-./0-9:;<=>?@A-Z[\]_^a-z{|}~
 # XXX: It is unexpected that the variable V gets expanded in the loop body.
 # The double '$$' should intuitively prevent exactly this.  Probably nobody
 # was adventurous enough to use literal dollar signs in the values of a .for
-# loop.
+# loop, allowing this edge case to go unnoticed for years.
 #
 # See for.c, function ExprLen.
 V=		value
