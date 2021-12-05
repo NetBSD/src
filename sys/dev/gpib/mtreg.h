@@ -1,4 +1,4 @@
-/*	$NetBSD: mtreg.h,v 1.5 2019/05/28 08:59:34 msaitoh Exp $	*/
+/*	$NetBSD: mtreg.h,v 1.6 2021/12/05 02:25:29 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1992, The University of Utah and
@@ -227,7 +227,7 @@ struct	mt_stat {
  *	 64	Tape mark timeout (no gap following tape mark)
  * (POSITION or SERVO ERRORS) - these are ALL internal to tape drive
  *	 81	Servo unresponsive
- *	 82	Servo didn't respond with corect state
+ *	 82	Servo didn't respond with correct state
  *	 83	Servo shutdown
  *	 84	Servo detected hardware failure
  *	 85	Servo protocol error
