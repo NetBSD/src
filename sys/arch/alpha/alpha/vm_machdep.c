@@ -1,4 +1,4 @@
-/* $NetBSD: vm_machdep.c,v 1.121 2021/07/16 19:13:21 thorpej Exp $ */
+/* $NetBSD: vm_machdep.c,v 1.122 2021/12/05 07:53:57 msaitoh Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.121 2021/07/16 19:13:21 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.122 2021/12/05 07:53:57 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -112,7 +112,7 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 
 	/*
 	 * Copy pcb and user stack pointer from proc p1 to p2.
-	 * If specificed, give the child a different stack.
+	 * If specified, give the child a different stack.
 	 * Floating point state from the FP chip has already been saved.
 	 */
 	*pcb2 = *pcb1;

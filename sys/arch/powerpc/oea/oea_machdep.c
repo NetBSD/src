@@ -1,4 +1,4 @@
-/*	$NetBSD: oea_machdep.c,v 1.82 2021/02/27 01:16:52 thorpej Exp $	*/
+/*	$NetBSD: oea_machdep.c,v 1.83 2021/12/05 07:53:57 msaitoh Exp $	*/
 
 /*
  * Copyright (C) 2002 Matt Thomas
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: oea_machdep.c,v 1.82 2021/02/27 01:16:52 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: oea_machdep.c,v 1.83 2021/12/05 07:53:57 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_altivec.h"
@@ -787,7 +787,7 @@ oea_batinit(paddr_t pa, ...)
 	 */
 
 	/*
-	 * Add any I/O BATs specificed;
+	 * Add any I/O BATs specified;
 	 */
 	va_start(ap, pa);
 	while (pa != 0) {

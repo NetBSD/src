@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.README,v 1.424 2021/12/05 04:54:20 msaitoh Exp $
+#	$NetBSD: bsd.README,v 1.425 2021/12/05 07:53:57 msaitoh Exp $
 #	@(#)bsd.README	8.2 (Berkeley) 4/2/94
 
 This is the README file for the make "include" files for the NetBSD
@@ -781,7 +781,7 @@ X11SRCDIR.local	The path to the local X11 src tree.  [${X11SRCDIR}/local]
 
 X11SRCDIR.lib<package>
 X11SRCDIR.<package>
-		The path to the xorg src tree for the specificed package>.
+		The path to the xorg src tree for the specified package>.
 		[${X11SRCDIR}/external/mit/xorg/<package>/dist]
 
 X11ROOTDIR	Root directory of the X11 installation.  [/usr/X11R7]
