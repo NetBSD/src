@@ -1,4 +1,4 @@
-/*	$NetBSD: radix.c,v 1.13 2006/02/25 00:58:35 wiz Exp $	*/
+/*	$NetBSD: radix.c,v 1.14 2021/12/05 07:15:03 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1993
@@ -42,7 +42,7 @@
 #include "defs.h"
 
 #ifdef __NetBSD__
-__RCSID("$NetBSD: radix.c,v 1.13 2006/02/25 00:58:35 wiz Exp $");
+__RCSID("$NetBSD: radix.c,v 1.14 2021/12/05 07:15:03 msaitoh Exp $");
 #elif defined(__FreeBSD__)
 __RCSID("$FreeBSD$");
 #else
@@ -247,7 +247,7 @@ rn_match(void *v_arg,
 	 *
 	 * In this case, we have a complete match of the key.  Unless
 	 * the node is one of the roots, we are finished.
-	 * If it is the zeros root, then take what we have, prefering
+	 * If it is the zeros root, then take what we have, preferring
 	 * any real data.
 	 * If it is the ones root, then pretend the target key was followed
 	 * by a byte of zeros.
