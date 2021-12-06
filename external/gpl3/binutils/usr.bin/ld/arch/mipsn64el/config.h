@@ -88,7 +88,7 @@
 #define HAVE_GLOB 1
 
 /* Define .init_array/.fini_array sections are available and working. */
-/* #undef HAVE_INITFINI_ARRAY */
+#define HAVE_INITFINI_ARRAY 1
 
 /* Define to 1 if you have the <inttypes.h> header file. */
 #define HAVE_INTTYPES_H 1
@@ -237,7 +237,7 @@
 
 /* Define to 1 if `lex' declares `yytext' as a `char *' by default, not a
    `char[]'. */
-/* #undef YYTEXT_POINTER */
+#define YYTEXT_POINTER 1
 
 /* Enable large inode numbers on Mac OS X 10.5.  */
 #ifndef _DARWIN_USE_64_BIT_INODE
