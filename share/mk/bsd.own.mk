@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.1268 2021/11/13 10:13:42 skrll Exp $
+#	$NetBSD: bsd.own.mk,v 1.1269 2021/12/06 17:52:00 abs Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -1344,6 +1344,7 @@ MKSLJIT=	yes
     ${MACHINE} == "macppc"	|| \
     ${MACHINE} == "netwinder"	|| \
     ${MACHINE} == "newsmips"	|| \
+    ${MACHINE} == "pmax"	|| \
     ${MACHINE} == "prep"	|| \
     ${MACHINE} == "ofppc"	|| \
     ${MACHINE} == "sgimips"	|| \
