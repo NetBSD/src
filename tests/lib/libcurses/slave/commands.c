@@ -1,4 +1,4 @@
-/*	$NetBSD: commands.c,v 1.16 2021/09/04 01:34:32 rin Exp $	*/
+/*	$NetBSD: commands.c,v 1.17 2021/12/06 22:45:42 rillig Exp $	*/
 
 /*-
  * Copyright 2009 Brett Lymn <blymn@NetBSD.org>
@@ -108,7 +108,7 @@ write_to_director_type(data_enum_t return_type)
 }
 
 /*
- * Report an pointer value back to the director
+ * Report a pointer value back to the director
  */
 void
 report_ptr(void *ptr)
