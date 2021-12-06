@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.965 2021/12/06 21:24:07 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.966 2021/12/06 22:07:53 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -140,7 +140,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.965 2021/12/06 21:24:07 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.966 2021/12/06 22:07:53 rillig Exp $");
 
 /*
  * Variables are defined using one of the VAR=value assignments.  Their
@@ -2027,7 +2027,7 @@ static const char ExprDefined_Name[][10] = {
 #define const_member /* no const possible */
 #endif
 
-/* A variable expression such as $@ or ${VAR:Mpattern:Q}. */
+/* An expression based on a variable, such as $@ or ${VAR:Mpattern:Q}. */
 typedef struct Expr {
 	const char *name;
 	FStr value;
@@ -4445,11 +4445,11 @@ ParseVarnameLong(
 
 /* Free the environment variable now since we own it. */
 static void
-FreeEnvVar(Var *v, FStr *inout_val)
+FreeEnvVar(Var *v, Expr *expr)
 {
 	char *varValue = Buf_DoneData(&v->val);
-	if (inout_val->str == varValue)
-		inout_val->freeIt = varValue;
+	if (expr->value.str == varValue)
+		expr->value.freeIt = varValue;
 	else
 		free(varValue);
 
@@ -4615,14 +4615,14 @@ Var_Parse(const char **pp, GNode *scope, VarEvalMode emode, FStr *out_val)
 	 * Before applying any modifiers, expand any nested expressions from
 	 * the variable value.
 	 */
-	if (strchr(expr.value.str, '$') != NULL &&
+	if (strchr(Expr_Str(&expr), '$') != NULL &&
 	    VarEvalMode_ShouldEval(emode)) {
 		char *expanded;
 		VarEvalMode nested_emode = emode;
 		if (opts.strict)
 			nested_emode = VarEvalMode_UndefOk(nested_emode);
 		v->inUse = true;
-		(void)Var_Subst(expr.value.str, scope, nested_emode,
+		(void)Var_Subst(Expr_Str(&expr), scope, nested_emode,
 		    &expanded);
 		v->inUse = false;
 		/* TODO: handle errors */
@@ -4645,7 +4645,7 @@ Var_Parse(const char **pp, GNode *scope, VarEvalMode emode, FStr *out_val)
 	*pp = p;
 
 	if (v->fromEnv) {
-		FreeEnvVar(v, &expr.value);
+		FreeEnvVar(v, &expr);
 
 	} else if (expr.defined != DEF_REGULAR) {
 		if (expr.defined == DEF_UNDEF) {
