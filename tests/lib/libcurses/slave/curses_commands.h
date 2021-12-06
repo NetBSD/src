@@ -1,4 +1,4 @@
-/*	$NetBSD: curses_commands.h,v 1.8 2021/06/13 19:17:53 rillig Exp $	*/
+/*	$NetBSD: curses_commands.h,v 1.9 2021/12/06 22:45:42 rillig Exp $	*/
 
 /*-
  * Copyright 2009 Brett Lymn <blymn@NetBSD.org>
@@ -42,7 +42,7 @@ struct command_def {
 
 void cmd_DRAIN(int, char **); /* not a curses function */
 
-/* These functions can be called before initscr*/
+/* These functions can be called before initscr */
 void cmd_filter(int, char **);
 void cmd_ripoffline(int, char **);
 void cmd_use_env(int, char **);
@@ -398,7 +398,7 @@ void cmd_mvwinwstr(int, char **);
 void cmd_winnwstr(int, char **);
 void cmd_winwstr(int, char **);
 
-/* cchar handlgin */
+/* cchar handling */
 void cmd_setcchar(int, char **);
 void cmd_getcchar(int, char **);
 
