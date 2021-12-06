@@ -10,4 +10,4 @@ G_OFILES=ldgram.o ldlex-wrapper.o lexsup.o ldlang.o  mri.o ldctor.o ldmain.o plu
 G_STRINGIFY=astring.sed
 G_TEXINFOS=ld.texi
 G_target_alias=aarch64--netbsd
-G_enable_initfini_array=no
+G_enable_initfini_array=yes
