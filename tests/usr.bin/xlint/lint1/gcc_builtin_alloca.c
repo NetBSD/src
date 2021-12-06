@@ -1,4 +1,4 @@
-/*	$NetBSD: gcc_builtin_alloca.c,v 1.1 2021/12/06 23:20:26 rillig Exp $	*/
+/*	$NetBSD: gcc_builtin_alloca.c,v 1.2 2021/12/06 23:26:28 rillig Exp $	*/
 # 3 "gcc_builtin_alloca.c"
 
 /*
@@ -11,11 +11,13 @@
 void
 example(void)
 {
-	/* expect+1: warning: illegal combination of pointer (pointer to char) and integer (int) [183] */
 	char *ptr = __builtin_alloca(8);
 	ptr[4] = '4';
 
-	/* expect+1: warning: illegal combination of pointer (pointer to char) and integer (int) [183] */
 	char *aligned_ptr = __builtin_alloca_with_align(8, 64);
 	aligned_ptr[0] = '\0';
+
+	/* expect+1: warning: illegal combination of pointer (pointer to char) and integer (int) [183] */
+	char *unknown = __builtin_allocate(8);
+	unknown[0] = '\0';
 }

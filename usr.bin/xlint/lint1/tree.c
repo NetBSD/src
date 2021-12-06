@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.396 2021/12/04 00:01:24 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.397 2021/12/06 23:26:28 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.396 2021/12/04 00:01:24 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.397 2021/12/06 23:26:28 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -234,6 +234,14 @@ is_gcc_bool_builtin(const char *name)
 		str_endswith(name, "_overflow_p"));
 }
 
+/* https://gcc.gnu.org/onlinedocs/gcc/Other-Builtins.html */
+static bool
+is_gcc_void_pointer_builtin(const char *name)
+{
+	return strcmp(name, "__builtin_alloca") == 0 ||
+	       strncmp(name, "__builtin_alloca_", 17) == 0;
+}
+
 static void
 build_name_call(sym_t *sym)
 {
@@ -247,6 +255,8 @@ build_name_call(sym_t *sym)
 
 		if (is_gcc_bool_builtin(sym->s_name))
 			sym->s_type = gettyp(BOOL);
+		else if (is_gcc_void_pointer_builtin(sym->s_name))
+			sym->s_type = derive_type(gettyp(VOID), PTR);
 
 	} else if (Sflag) {
 		/* function '%s' implicitly declared to return int */
