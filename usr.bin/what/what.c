@@ -1,4 +1,4 @@
-/*	$NetBSD: what.c,v 1.12 2015/12/12 09:50:12 dholland Exp $	*/
+/*	$NetBSD: what.c,v 1.13 2021/12/06 22:13:56 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1988, 1993
@@ -39,10 +39,11 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1988, 1993\
 #if 0
 static char sccsid[] = "@(#)what.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: what.c,v 1.12 2015/12/12 09:50:12 dholland Exp $");
+__RCSID("$NetBSD: what.c,v 1.13 2021/12/06 22:13:56 christos Exp $");
 #endif /* not lint */
 
 #include <locale.h>
+#include <err.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -81,16 +82,15 @@ main(int argc, char **argv)
 		usage();
 	} else do {
 		if (freopen(*argv, "r", stdin) == NULL) {
-			perror(*argv);
-			exit(matches ? EXIT_SUCCESS : 1);
+			warn("Cannot open `%s", *argv);
+			break;
 		}
-		printf("%s\n", *argv);
+		printf("%s:\n", *argv);
 		search();
 	} while (*++argv != NULL);
 
 	/* Note: the standard explicitly specifies an exit status of 1. */
-	exit(matches ? EXIT_SUCCESS : 1);
-	/* NOTREACHED */
+	return matches ? EXIT_SUCCESS : EXIT_FAILURE;
 }
 
 static void
@@ -122,6 +122,6 @@ static void
 usage(void)
 {
 
-	(void)fprintf(stderr, "usage: what [-s] file ...\n");
+	(void)fprintf(stderr, "Usage: %s [-s] file ...\n", getprogname());
 	exit(1);
 }
