@@ -1,4 +1,4 @@
-/* $NetBSD: spdmem_i2c.c,v 1.23 2021/11/30 05:02:29 msaitoh Exp $ */
+/* $NetBSD: spdmem_i2c.c,v 1.24 2021/12/06 04:25:36 msaitoh Exp $ */
 
 /*
  * Copyright (c) 2007 Nicolas Joly
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spdmem_i2c.c,v 1.23 2021/11/30 05:02:29 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spdmem_i2c.c,v 1.24 2021/12/06 04:25:36 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -117,6 +117,9 @@ spdmem_reset_page(struct spdmem_i2c_softc *sc)
 	 */
 	rv = iic_exec(sc->sc_tag, I2C_OP_READ_WITH_STOP, sc->sc_addr, &reg, 1,
 	    &byte0, 1, 0);
+	if (rv != 0)
+		goto error;
+
 	reg = 2;
 	rv |= iic_exec(sc->sc_tag, I2C_OP_READ_WITH_STOP, sc->sc_addr, &reg, 1,
 	    &byte2, 1, 0);
