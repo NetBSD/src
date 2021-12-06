@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.103 2021/08/28 08:56:10 maya Exp $
+#	$NetBSD: Makefile,v 1.104 2021/12/06 17:51:59 abs Exp $
 
 .include <bsd.own.mk>
 
@@ -337,10 +337,11 @@ SUBDIR+= \
 .endif	# ${MACHINE} == "sparc"
 .endif	# ${MACHINE} == "sparc" || ${MACHINE} == "sparc64"
 
-.if ${MACHINE} == "vax"
+.if ${MACHINE} == "pmax" || \
+    ${MACHINE} == "vax"
 SUBDIR+= \
 	xf86-video-wsfb
-.endif	# ${MACHINE} == "vax"
+.endif	# ${MACHINE} == "pmax" || ${MACHINE} == "vax"
 
 .if ${MACHINE} == "zaurus"
 SUBDIR+= \

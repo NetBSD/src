@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.49 2021/03/07 10:42:27 rin Exp $
+#	$NetBSD: Makefile,v 1.50 2021/12/06 17:51:59 abs Exp $
 
 .include "../../../Makefile.serverlib"
 .include "../../../Makefile.servermod"
@@ -108,7 +108,8 @@ CPPFLAGS.${_FN}=	-DWSCONS_SUPPORT -DUSESTDRES -DHAVE_SYSV_IPC
 .endfor
 .endif
 
-.if ${MACHINE} == "vax"
+.if ${MACHINE} == "pmax" || \
+    ${MACHINE} == "vax"
 SRCS.bsd+=	ppc_video.c pm_noop.c agp_noop.c
 .for _FN in ${SRCS.bsd}
 CPPFLAGS.${_FN}=	-DWSCONS_SUPPORT -DUSESTDRES -DHAVE_SYSV_IPC
