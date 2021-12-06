@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1174 2021/12/05 15:20:13 rillig Exp $
+# $NetBSD: mi,v 1.1175 2021/12/06 23:20:26 rillig Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -6468,6 +6468,8 @@
 ./usr/tests/usr.bin/xlint/lint1/gcc_attribute_var.exp		tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/xlint/lint1/gcc_bit_field_types.c		tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/xlint/lint1/gcc_bit_field_types.exp		tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/xlint/lint1/gcc_builtin_alloca.c		tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/xlint/lint1/gcc_builtin_alloca.exp		tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/xlint/lint1/gcc_builtin_overflow.c		tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/xlint/lint1/gcc_builtin_overflow.exp	tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/xlint/lint1/gcc_cast_union.c		tests-usr.bin-tests	compattestfile,atf
