@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.964 2021/12/05 17:00:02 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.965 2021/12/06 21:24:07 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -140,7 +140,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.964 2021/12/05 17:00:02 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.965 2021/12/06 21:24:07 rillig Exp $");
 
 /*
  * Variables are defined using one of the VAR=value assignments.  Their
@@ -2085,6 +2085,12 @@ Expr_Define(Expr *expr)
 		expr->defined = DEF_DEFINED;
 }
 
+static const char *
+Expr_Str(const Expr *expr)
+{
+	return expr->value.str;
+}
+
 static void
 Expr_SetValue(Expr *expr, FStr value)
 {
@@ -2383,7 +2389,7 @@ ModifyWords(ModChain *ch,
 	    bool oneBigWord)
 {
 	Expr *expr = ch->expr;
-	const char *val = expr->value.str;
+	const char *val = Expr_Str(expr);
 	SepBuf result;
 	SubstringWords words;
 	size_t i;
@@ -2587,7 +2593,7 @@ ApplyModifier_Gmtime(const char **pp, ModChain *ch)
 	expr = ch->expr;
 	if (Expr_ShouldEval(expr))
 		Expr_SetValueOwn(expr,
-		    VarStrftime(expr->value.str, true, utc));
+		    VarStrftime(Expr_Str(expr), true, utc));
 
 	return AMR_OK;
 }
@@ -2619,7 +2625,7 @@ ApplyModifier_Localtime(const char **pp, ModChain *ch)
 	expr = ch->expr;
 	if (Expr_ShouldEval(expr))
 		Expr_SetValueOwn(expr,
-		    VarStrftime(expr->value.str, false, utc));
+		    VarStrftime(Expr_Str(expr), false, utc));
 
 	return AMR_OK;
 }
@@ -2633,7 +2639,7 @@ ApplyModifier_Hash(const char **pp, ModChain *ch)
 	*pp += 4;
 
 	if (ModChain_ShouldEval(ch))
-		Expr_SetValueOwn(ch->expr, VarHash(ch->expr->value.str));
+		Expr_SetValueOwn(ch->expr, VarHash(Expr_Str(ch->expr)));
 
 	return AMR_OK;
 }
@@ -2732,7 +2738,7 @@ ApplyModifier_Range(const char **pp, ModChain *ch)
 		return AMR_OK;
 
 	if (n == 0) {
-		SubstringWords words = Substring_Words(ch->expr->value.str,
+		SubstringWords words = Substring_Words(Expr_Str(ch->expr),
 		    false);
 		n = words.len;
 		SubstringWords_Free(words);
@@ -3003,7 +3009,7 @@ ApplyModifier_Quote(const char **pp, ModChain *ch)
 	if (!ModChain_ShouldEval(ch))
 		return AMR_OK;
 
-	VarQuote(ch->expr->value.str, quoteDollar, &buf);
+	VarQuote(Expr_Str(ch->expr), quoteDollar, &buf);
 	if (buf.data != NULL)
 		Expr_SetValue(ch->expr, LazyBuf_DoneGet(&buf));
 	else
@@ -3155,14 +3161,14 @@ ApplyModifier_To(const char **pp, ModChain *ch)
 	if (mod[1] == 'u') {				/* :tu */
 		*pp = mod + 2;
 		if (Expr_ShouldEval(expr))
-			Expr_SetValueOwn(expr, str_toupper(expr->value.str));
+			Expr_SetValueOwn(expr, str_toupper(Expr_Str(expr)));
 		return AMR_OK;
 	}
 
 	if (mod[1] == 'l') {				/* :tl */
 		*pp = mod + 2;
 		if (Expr_ShouldEval(expr))
-			Expr_SetValueOwn(expr, str_tolower(expr->value.str));
+			Expr_SetValueOwn(expr, str_tolower(Expr_Str(expr)));
 		return AMR_OK;
 	}
 
@@ -3212,7 +3218,7 @@ ApplyModifier_Words(const char **pp, ModChain *ch)
 			Buffer buf;
 
 			SubstringWords words = Substring_Words(
-			    expr->value.str, false);
+			    Expr_Str(expr), false);
 			size_t ac = words.len;
 			SubstringWords_Free(words);
 
@@ -3268,7 +3274,7 @@ ApplyModifier_Words(const char **pp, ModChain *ch)
 
 	/* Normal case: select the words described by first and last. */
 	Expr_SetValueOwn(expr,
-	    VarSelectWords(expr->value.str, first, last,
+	    VarSelectWords(Expr_Str(expr), first, last,
 	        ch->sep, ch->oneBigWord));
 
 ok:
@@ -3393,7 +3399,7 @@ ApplyModifier_Order(const char **pp, ModChain *ch)
 	if (!ModChain_ShouldEval(ch))
 		return AMR_OK;
 
-	words = Substring_Words(ch->expr->value.str, false);
+	words = Substring_Words(Expr_Str(ch->expr), false);
 	if (cmp == NULL)
 		ShuffleSubstrings(words.words, words.len);
 	else {
@@ -3602,7 +3608,7 @@ ApplyModifier_Remember(const char **pp, ModChain *ch)
 		*pp = mod + 1;
 
 	if (Expr_ShouldEval(expr))
-		Var_Set(expr->scope, name.str, expr->value.str);
+		Var_Set(expr->scope, name.str, Expr_Str(expr));
 	FStr_Done(&name);
 
 	return AMR_OK;
@@ -3639,7 +3645,7 @@ ApplyModifier_Unique(const char **pp, ModChain *ch)
 	if (!ModChain_ShouldEval(ch))
 		return AMR_OK;
 
-	words = Substring_Words(ch->expr->value.str, false);
+	words = Substring_Words(Expr_Str(ch->expr), false);
 
 	if (words.len > 1) {
 		size_t si, di;
@@ -3711,7 +3717,7 @@ ApplyModifier_SysV(const char **pp, ModChain *ch)
 	(*pp)--;		/* Go back to the ch->endc. */
 
 	/* Do not turn an empty expression into non-empty. */
-	if (lhsBuf.len == 0 && expr->value.str[0] == '\0')
+	if (lhsBuf.len == 0 && Expr_Str(expr)[0] == '\0')
 		goto done;
 
 	lhs = LazyBuf_Get(&lhsBuf);
@@ -3745,9 +3751,9 @@ ApplyModifier_SunShell(const char **pp, ModChain *ch)
 
 	if (Expr_ShouldEval(expr)) {
 		const char *errfmt;
-		char *output = Cmd_Exec(expr->value.str, &errfmt);
+		char *output = Cmd_Exec(Expr_Str(expr), &errfmt);
 		if (errfmt != NULL)
-			Error(errfmt, expr->value.str);
+			Error(errfmt, Expr_Str(expr));
 		Expr_SetValueOwn(expr, output);
 	}
 
@@ -3777,13 +3783,13 @@ LogBeforeApply(const ModChain *ch, const char *mod)
 		debug_printf(
 		    "Evaluating modifier ${%s:%c%s} on value \"%s\"\n",
 		    expr->name, mod[0], is_single_char ? "" : "...",
-		    expr->value.str);
+		    Expr_Str(expr));
 		return;
 	}
 
 	debug_printf(
 	    "Evaluating modifier ${%s:%c%s} on value \"%s\" (%s, %s)\n",
-	    expr->name, mod[0], is_single_char ? "" : "...", expr->value.str,
+	    expr->name, mod[0], is_single_char ? "" : "...", Expr_Str(expr),
 	    VarEvalMode_Name[expr->emode], ExprDefined_Name[expr->defined]);
 }
 
@@ -3791,7 +3797,7 @@ static void
 LogAfterApply(const ModChain *ch, const char *p, const char *mod)
 {
 	const Expr *expr = ch->expr;
-	const char *value = expr->value.str;
+	const char *value = Expr_Str(expr);
 	const char *quot = value == var_Error ? "" : "\"";
 
 	if ((expr->emode == VARE_WANTRES || expr->emode == VARE_UNDEFERR) &&
@@ -3922,7 +3928,7 @@ ApplyModifiersIndirect(ModChain *ch, const char **pp)
 	if (mods.str[0] != '\0') {
 		const char *modsp = mods.str;
 		ApplyModifiers(expr, &modsp, '\0', '\0');
-		if (expr->value.str == var_Error || *modsp != '\0') {
+		if (Expr_Str(expr) == var_Error || *modsp != '\0') {
 			FStr_Done(&mods);
 			*pp = p;
 			return AMIR_OUT;	/* error already reported */
@@ -3990,7 +3996,7 @@ ApplySingleModifier(const char **pp, ModChain *ch)
 		    "modifier \"%.*s\" of variable \"%s\" with value \"%s\"",
 		    ch->endc,
 		    (int)(p - mod), mod,
-		    ch->expr->name, ch->expr->value.str);
+		    ch->expr->name, Expr_Str(ch->expr));
 	} else if (*p == ':') {
 		p++;
 	} else if (opts.strict && *p != '\0' && *p != ch->endc) {
@@ -4038,7 +4044,7 @@ ApplyModifiers(
 
 	assert(startc == '(' || startc == '{' || startc == '\0');
 	assert(endc == ')' || endc == '}' || endc == '\0');
-	assert(expr->value.str != NULL);
+	assert(Expr_Str(expr) != NULL);
 
 	p = *pp;
 
@@ -4076,7 +4082,7 @@ ApplyModifiers(
 	}
 
 	*pp = p;
-	assert(expr->value.str != NULL); /* Use var_Error or varUndefined. */
+	assert(Expr_Str(expr) != NULL); /* Use var_Error or varUndefined. */
 	return;
 
 bad_modifier:
