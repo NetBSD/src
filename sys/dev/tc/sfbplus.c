@@ -1,4 +1,4 @@
-/* $NetBSD: sfbplus.c,v 1.41 2021/08/07 16:19:16 thorpej Exp $ */
+/* $NetBSD: sfbplus.c,v 1.42 2021/12/06 17:43:50 abs Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sfbplus.c,v 1.41 2021/08/07 16:19:16 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sfbplus.c,v 1.42 2021/12/06 17:43:50 abs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -430,6 +430,11 @@ sfbioctl(void *v, void *vs, u_long cmd, void *data, int flag, struct lwp *l)
 	case WSDISPLAYIO_GTYPE:
 		*(u_int *)data = WSDISPLAY_TYPE_SFBP;
 		return (0);
+
+	case WSDISPLAYIO_GET_FBINFO: {
+		struct wsdisplayio_fbinfo *fbi = data;
+		return wsdisplayio_get_fbinfo(sc->sc_ri, fbi);
+	}
 
 	case WSDISPLAYIO_GINFO:
 #define	wsd_fbip ((struct wsdisplay_fbinfo *)data)
