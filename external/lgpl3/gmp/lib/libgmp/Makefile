@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.30 2021/12/06 23:05:36 rillig Exp $
+#	$NetBSD: Makefile,v 1.31 2021/12/06 23:07:49 rillig Exp $
 
 .include <bsd.init.mk>
 
@@ -219,7 +219,7 @@ ${.OBJDIR}/config.m4: ${.CURDIR}/arch/${GMP_MACHINE_ARCH}/config.m4
 CLEANFILES+=	config.m4
 clean: cleandummy
 cleandummy: .PHONY
-	-rmdir dummy
+	-if [ -d dummy ]; then rmdir dummy; fi
 
 BUILD_S_INCS=	-I${.CURDIR} -I${.OBJDIR}/dummy -I${DIST}/ -I${DIST}/mpn \
 		-I${.OBJDIR}
