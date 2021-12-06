@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vlan.c,v 1.165 2021/11/15 07:07:05 yamaguchi Exp $	*/
+/*	$NetBSD: if_vlan.c,v 1.166 2021/12/06 05:50:39 yamaguchi Exp $	*/
 
 /*
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vlan.c,v 1.165 2021/11/15 07:07:05 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vlan.c,v 1.166 2021/12/06 05:50:39 yamaguchi Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -434,17 +434,16 @@ vlan_config(struct ifvlan *ifv, struct ifnet *p, uint16_t tag)
 	case IFT_ETHER:
 	    {
 		struct ethercom *ec = (void *)p;
-		bool vlanmtu_enabled;
 
 		nmib->ifvm_msw = &vlan_ether_multisw;
 		nmib->ifvm_encaplen = ETHER_VLAN_ENCAP_LEN;
 		nmib->ifvm_mintu = ETHERMIN;
 
-		error = ether_add_vlantag(p, tag, &vlanmtu_enabled);
+		error = ether_add_vlantag(p, tag, NULL);
 		if (error != 0)
 			goto done;
 
-		if (vlanmtu_enabled) {
+		if (ec->ec_capenable & ETHERCAP_VLAN_MTU) {
 			nmib->ifvm_mtufudge = 0;
 		} else {
 			/*
