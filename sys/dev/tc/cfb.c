@@ -1,4 +1,4 @@
-/* $NetBSD: cfb.c,v 1.65 2021/08/07 16:19:16 thorpej Exp $ */
+/* $NetBSD: cfb.c,v 1.66 2021/12/06 16:00:07 abs Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cfb.c,v 1.65 2021/08/07 16:19:16 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cfb.c,v 1.66 2021/12/06 16:00:07 abs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -362,6 +362,11 @@ cfbioctl(void *v, void *vs, u_long cmd, void *data, int flag, struct lwp *l)
 	case WSDISPLAYIO_GTYPE:
 		*(u_int *)data = WSDISPLAY_TYPE_CFB;
 		return (0);
+
+	case WSDISPLAYIO_GET_FBINFO: {
+		struct wsdisplayio_fbinfo *fbi = data;
+		return wsdisplayio_get_fbinfo(sc->sc_ri, fbi);
+	}
 
 	case WSDISPLAYIO_GINFO:
 #define	wsd_fbip ((struct wsdisplay_fbinfo *)data)
