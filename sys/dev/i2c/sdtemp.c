@@ -1,4 +1,4 @@
-/*      $NetBSD: sdtemp.c,v 1.32.8.2 2020/07/20 19:00:40 martin Exp $        */
+/*      $NetBSD: sdtemp.c,v 1.32.8.3 2021/12/06 19:34:29 martin Exp $        */
 
 /*
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdtemp.c,v 1.32.8.2 2020/07/20 19:00:40 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdtemp.c,v 1.32.8.3 2021/12/06 19:34:29 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -696,8 +696,8 @@ sdtemp_config_mcp(struct sdtemp_softc *sc)
 	if (rv == 0)
 		sc->sc_resolution = SDTEMP_CAP_RESOLUTION_MAX;
 	else
-		aprint_error("%s: error %d writing resolution register\n",
-		    device_xname(sc->sc_dev), rv);
+		aprint_debug_dev(sc->sc_dev,
+		    "error %d writing resolution register\n", rv);
 }
 
 static void
@@ -716,8 +716,8 @@ sdtemp_config_idt(struct sdtemp_softc *sc)
 	if (rv == 0)
 		sc->sc_resolution = SDTEMP_CAP_RESOLUTION_MAX;
 	else
-		aprint_error("%s: error %d writing resolution register\n",
-		    device_xname(sc->sc_dev), rv);
+		aprint_debug_dev(sc->sc_dev,
+		    "error %d writing resolution register\n", rv);
 }
 
 MODULE(MODULE_CLASS_DRIVER, sdtemp, "i2cexec,sysmon_envsys");
