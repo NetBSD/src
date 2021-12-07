@@ -1,4 +1,4 @@
-/*	$NetBSD: svc_vc.c,v 1.35 2021/08/08 20:54:48 nia Exp $	*/
+/*	$NetBSD: svc_vc.c,v 1.36 2021/12/07 22:09:59 andvar Exp $	*/
 
 /*
  * Copyright (c) 2010, Oracle America, Inc.
@@ -37,7 +37,7 @@
 static char *sccsid = "@(#)svc_tcp.c 1.21 87/08/11 Copyr 1984 Sun Micro";
 static char *sccsid = "@(#)svc_tcp.c	2.2 88/08/01 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: svc_vc.c,v 1.35 2021/08/08 20:54:48 nia Exp $");
+__RCSID("$NetBSD: svc_vc.c,v 1.36 2021/12/07 22:09:59 andvar Exp $");
 #endif
 #endif
 
@@ -45,7 +45,7 @@ __RCSID("$NetBSD: svc_vc.c,v 1.35 2021/08/08 20:54:48 nia Exp $");
  * svc_vc.c, Server side for Connection Oriented based RPC. 
  *
  * Actually implements two flavors of transporter -
- * a tcp rendezvouser (a listner and connection establisher)
+ * a tcp rendezvouser (a listener and connection establisher)
  * and a record/tcp stream.
  */
 
