@@ -1,4 +1,4 @@
-/*	$NetBSD: ahci.c,v 1.26 2021/10/04 21:02:40 andvar Exp $	*/
+/*	$NetBSD: ahci.c,v 1.27 2021/12/07 06:49:15 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2007 Ruslan Ermilov and Vsevolod Lobko.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahci.c,v 1.26 2021/10/04 21:02:40 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahci.c,v 1.27 2021/12/07 06:49:15 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1236,7 +1236,7 @@ ahci_device_bulk_start(struct usbd_xfer *xfer)
 
 	i = 0;
 	offset = 0;
-	while (len > 0) || i == 0) {
+	while (len > 0 || i == 0) {
 		tlen = uimin(len,4096);
 		td[i]->buffer = DMAADDR(&xfer->ux_dmabuf, offset) | 0xa0000000;
 		td[i]->buflen = tlen;
