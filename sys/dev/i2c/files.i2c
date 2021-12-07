@@ -1,4 +1,4 @@
-#	$NetBSD: files.i2c,v 1.119 2021/11/06 13:34:40 brad Exp $
+#	$NetBSD: files.i2c,v 1.120 2021/12/07 17:39:54 brad Exp $
 
 obsolete defflag	opt_i2cbus.h		I2C_SCAN
 define	i2cbus { }
@@ -420,3 +420,7 @@ file	dev/i2c/pcagpio.c			pcagpio
 device	pcf8574io: leds, sysmon_envsys
 attach	pcf8574io at iic
 file	dev/i2c/pcf8574.c			pcf8574io
+
+# Sparkfun Serial motor controller
+attach  scmd at iic with scmdi2c
+file	dev/i2c/scmdi2c.c			scmdi2c

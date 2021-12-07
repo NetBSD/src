@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.261 2021/11/25 03:08:05 ryo Exp $
+#	$NetBSD: Makefile,v 1.262 2021/12/07 17:39:54 brad Exp $
 
 .include <bsd.own.mk>
 
@@ -67,11 +67,7 @@ SUBDIR+=	gpioirq
 SUBDIR+=	gpiopps
 SUBDIR+=	hfs
 SUBDIR+=	hythygtemp
-SUBDIR+=	si70xxtemp
 SUBDIR+=	am2315temp
-SUBDIR+=	sht3xtemp
-SUBDIR+=	sht4xtemp
-SUBDIR+=	sgp40mox
 SUBDIR+=	i2cexec
 SUBDIR+=	i2c_bitbang
 SUBDIR+=	if_agr
@@ -149,12 +145,18 @@ SUBDIR+=	puffs
 SUBDIR+=	putter
 SUBDIR+=	raid
 SUBDIR+=	scsiverbose
+SUBDIR+=	scmd
+SUBDIR+=	scmdi2c
 SUBDIR+=	sdtemp
 SUBDIR+=	secmodel_bsd44
 SUBDIR+=	secmodel_extensions
 SUBDIR+=	secmodel_overlay
 SUBDIR+=	securelevel
 SUBDIR+=	sequencer
+SUBDIR+=	sgp40mox
+SUBDIR+=	sht3xtemp
+SUBDIR+=	sht4xtemp
+SUBDIR+=	si70xxtemp
 SUBDIR+=	skipjack
 SUBDIR+=	slcompress
 SUBDIR+=	spdmem

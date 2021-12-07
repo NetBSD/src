@@ -1,4 +1,4 @@
-# $NetBSD: module.mi,v 1.15 2021/11/06 13:34:40 brad Exp $
+# $NetBSD: module.mi,v 1.16 2021/12/07 17:39:53 brad Exp $
 ./usr/libdata/debug/@MODULEDIR@					modules-base-kernel	kmod,debug
 ./usr/libdata/debug/@MODULEDIR@/accf_dataready			modules-base-kernel	kmod,debug
 ./usr/libdata/debug/@MODULEDIR@/accf_dataready/accf_dataready.kmod.debug	modules-base-kernel	kmod,debug
@@ -318,6 +318,10 @@
 ./usr/libdata/debug/@MODULEDIR@/putter/putter.kmod.debug		modules-base-kernel	kmod,debug
 ./usr/libdata/debug/@MODULEDIR@/raid				modules-base-kernel	kmod,debug
 ./usr/libdata/debug/@MODULEDIR@/raid/raid.kmod.debug			modules-base-kernel	kmod,debug
+./usr/libdata/debug/@MODULEDIR@/scmd				modules-base-kernel	kmod,debug
+./usr/libdata/debug/@MODULEDIR@/scmd/scmd.kmod.debug		modules-base-kernel	kmod,debug
+./usr/libdata/debug/@MODULEDIR@/scmdi2c				modules-base-kernel	kmod,debug
+./usr/libdata/debug/@MODULEDIR@/scmdi2c/scmdi2c.kmod.debug		modules-base-kernel	kmod,debug
 ./usr/libdata/debug/@MODULEDIR@/scsiverbose			modules-base-kernel	kmod,debug
 ./usr/libdata/debug/@MODULEDIR@/scsiverbose/scsiverbose.kmod.debug	modules-base-kernel	kmod,debug
 ./usr/libdata/debug/@MODULEDIR@/sdtemp				modules-base-kernel	kmod,debug

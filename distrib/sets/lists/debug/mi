@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.368 2021/11/18 15:03:19 thorpej Exp $
+# $NetBSD: mi,v 1.369 2021/12/07 17:39:53 brad Exp $
 ./etc/mtree/set.debug                           comp-sys-root
 ./usr/lib					comp-sys-usr		compatdir
 ./usr/lib/i18n/libBIG5_g.a			comp-c-debuglib		debuglib,compatfile
@@ -787,6 +787,7 @@
 ./usr/libdata/debug/usr/bin/rusers.debug	comp-netutil-debug	debug
 ./usr/libdata/debug/usr/bin/rwall.debug		comp-netutil-debug	debug
 ./usr/libdata/debug/usr/bin/rwho.debug		comp-netutil-debug	debug
+./usr/libdata/debug/usr/bin/scmdctl.debug	comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/scp.debug		comp-secsh-debug	debug
 ./usr/libdata/debug/usr/bin/script.debug	comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/sdiff.debug		comp-util-debug		debug
