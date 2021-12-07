@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1729 2021/11/06 13:34:40 brad Exp $
+# $NetBSD: mi,v 1.1730 2021/12/07 17:39:53 brad Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -514,6 +514,7 @@
 ./usr/share/man/cat1/rusers.0			man-netutil-catman	.cat
 ./usr/share/man/cat1/rwall.0			man-netutil-catman	.cat
 ./usr/share/man/cat1/rwho.0			man-netutil-catman	.cat
+./usr/share/man/cat1/scmdctl.0			man-util-catman		.cat
 ./usr/share/man/cat1/scp.0			man-secsh-catman	.cat
 ./usr/share/man/cat1/screenblank.0		man-sysutil-catman	.cat
 ./usr/share/man/cat1/script.0			man-util-catman		.cat
@@ -1685,6 +1686,9 @@
 ./usr/share/man/cat4/sc.0			man-sys-catman		.cat
 ./usr/share/man/cat4/scc.0			man-obsolete		obsolete
 ./usr/share/man/cat4/schide.0			man-sys-catman		.cat
+./usr/share/man/cat4/scmd.0			man-sys-catman		.cat
+./usr/share/man/cat4/scmdi2c.0			man-sys-catman		.cat
+./usr/share/man/cat4/scmdspi.0			man-sys-catman		.cat
 ./usr/share/man/cat4/scsi.0			man-sys-catman		.cat
 ./usr/share/man/cat4/scsibus.0			man-sys-catman		.cat
 ./usr/share/man/cat4/sctp.0			man-sys-catman		.cat
@@ -3814,6 +3818,7 @@
 ./usr/share/man/html1/rusers.html		man-netutil-htmlman	html
 ./usr/share/man/html1/rwall.html		man-netutil-htmlman	html
 ./usr/share/man/html1/rwho.html			man-netutil-htmlman	html
+./usr/share/man/html1/scmdctl.html		man-util-htmlman	html
 ./usr/share/man/html1/scp.html			man-secsh-htmlman	html
 ./usr/share/man/html1/screenblank.html		man-sysutil-htmlman	html
 ./usr/share/man/html1/script.html		man-util-htmlman	html
@@ -4862,6 +4867,9 @@
 ./usr/share/man/html4/sc.html			man-sys-htmlman		html
 ./usr/share/man/html4/scc.html			man-obsolete		obsolete
 ./usr/share/man/html4/schide.html		man-sys-htmlman		html
+./usr/share/man/html4/scmd.html			man-sys-htmlman		html
+./usr/share/man/html4/scmdi2c.html		man-sys-htmlman		html
+./usr/share/man/html4/scmdspi.html		man-sys-htmlman		html
 ./usr/share/man/html4/scsi.html			man-sys-htmlman		html
 ./usr/share/man/html4/scsibus.html		man-sys-htmlman		html
 ./usr/share/man/html4/sctp.html			man-sys-htmlman		html
@@ -6770,6 +6778,7 @@
 ./usr/share/man/man1/rusers.1			man-netutil-man		.man
 ./usr/share/man/man1/rwall.1			man-netutil-man		.man
 ./usr/share/man/man1/rwho.1			man-netutil-man		.man
+./usr/share/man/man1/scmdctl.1			man-util-man		.man
 ./usr/share/man/man1/scp.1			man-secsh-man		.man
 ./usr/share/man/man1/screenblank.1		man-sysutil-man		.man
 ./usr/share/man/man1/script.1			man-util-man		.man
@@ -7945,6 +7954,9 @@
 ./usr/share/man/man4/sc.4			man-sys-man		.man
 ./usr/share/man/man4/scc.4			man-obsolete		obsolete
 ./usr/share/man/man4/schide.4			man-sys-man		.man
+./usr/share/man/man4/scmd.4			man-sys-man		.man
+./usr/share/man/man4/scmdi2c.4			man-sys-man		.man
+./usr/share/man/man4/scmdspi.4			man-sys-man		.man
 ./usr/share/man/man4/scsi.4			man-sys-man		.man
 ./usr/share/man/man4/scsibus.4			man-sys-man		.man
 ./usr/share/man/man4/sctp.4			man-sys-man		.man

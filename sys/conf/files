@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.1290 2021/11/19 23:46:54 rin Exp $
+#	$NetBSD: files,v 1.1291 2021/12/07 17:39:54 brad Exp $
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
 version 	20171118
@@ -423,6 +423,10 @@ file	dev/ic/spdmem.c			spdmem
 # SSD1306 or SH1106 OLED/PLED display (attaches via I2C or SPI)
 device	ssdfb:	wsemuldisplaydev
 file	dev/ic/ssdfb.c	ssdfb
+
+# Sparkfun Serial motor controller (attaches via I2C or SPI)
+device  scmd
+file	dev/ic/scmd.c	scmd
 
 # Generic HID support (used by USB, bluetooth and i2c)
 include "dev/hid/files.hid"

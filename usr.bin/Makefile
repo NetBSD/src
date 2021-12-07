@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.235 2021/05/07 21:51:20 nia Exp $
+#	$NetBSD: Makefile,v 1.236 2021/12/07 17:39:55 brad Exp $
 #	from: @(#)Makefile	8.3 (Berkeley) 1/7/94
 
 .include <bsd.own.mk>
@@ -23,7 +23,7 @@ SUBDIR= aiomixer apply asa at audio audiocfg \
 	pagesize passwd paste patch pathchk pkill pmap pr \
 	printenv printf progress pwait pwhash qsubst quota radioctl rdist \
 	realpath renice resize rev revoke rfcomm_sppd rlogin rpcgen rpcinfo rs rsh \
-	rup ruptime rusers rwall rwho \
+	rup ruptime rusers rwall rwho scmdctl \
 	script sdiff sdpquery sed seq shar shlock \
 	showmount shuffle sockstat sort sortinfo \
 	spell split stat su sys_info systat \
