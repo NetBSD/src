@@ -210,6 +210,8 @@ see https://www.gnu.org/licenses/.  */
 #     else
 #      if !defined (__NetBSD__)
         char *alloca ();
+#      else
+#       include <stdlib.h>
 #      endif
 #     endif
 #    endif
