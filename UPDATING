@@ -1,4 +1,4 @@
-$NetBSD: UPDATING,v 1.326 2021/12/07 21:37:36 andvar Exp $
+$NetBSD: UPDATING,v 1.327 2021/12/07 21:45:31 andvar Exp $
 
 This file (UPDATING) is intended to be a brief reference to recent
 changes that might cause problems in the build process, and a guide for
@@ -526,7 +526,7 @@ Recent changes:
 	group(5) in order to make the program work with existing setups.
 
 20101125:
-	The latest changes to setenv(3) dissallow setting environment
+	The latest changes to setenv(3) disallow setting environment
 	variables with names that contain '='.  Revision 1.18 of env.c
 	assumed that this was allowed.  Installing a new libc with an
 	old copy of /usr/bin/env causes env x=1 printenv | grep x= to
