@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.289 2021/12/07 07:58:20 skrll Exp $ */
+/*	$NetBSD: ehci.c,v 1.290 2021/12/07 08:04:10 skrll Exp $ */
 
 /*
  * Copyright (c) 2004-2012,2016,2020 The NetBSD Foundation, Inc.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.289 2021/12/07 07:58:20 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.290 2021/12/07 08:04:10 skrll Exp $");
 
 #include "ohci.h"
 #include "uhci.h"
@@ -401,7 +401,7 @@ static const uint8_t revbits[EHCI_MAX_POLLRATE] = {
 int
 ehci_init(ehci_softc_t *sc)
 {
-	uint32_t vers, sparams, cparams, hcr;
+	uint32_t vers, hcr;
 	u_int i;
 	int err;
 	ehci_soft_qh_t *sqh;
@@ -432,10 +432,10 @@ ehci_init(ehci_softc_t *sc)
 	aprint_verbose("%s: EHCI version %x.%x\n", device_xname(sc->sc_dev),
 	    vers >> 8, vers & 0xff);
 
-	sparams = EREAD4(sc, EHCI_HCSPARAMS);
-	DPRINTF("sparams=%#jx", sparams, 0, 0, 0);
-	sc->sc_npcomp = EHCI_HCS_N_PCC(sparams);
-	ncomp = EHCI_HCS_N_CC(sparams);
+	const uint32_t hcsparams = EREAD4(sc, EHCI_HCSPARAMS);
+	DPRINTF("hcsparams=%#jx", hcsparams, 0, 0, 0);
+	sc->sc_npcomp = EHCI_HCS_N_PCC(hcsparams);
+	ncomp = EHCI_HCS_N_CC(hcsparams);
 	if (ncomp != sc->sc_ncomp) {
 		aprint_verbose("%s: wrong number of companions (%d != %d)\n",
 		    device_xname(sc->sc_dev), ncomp, sc->sc_ncomp);
@@ -452,8 +452,8 @@ ehci_init(ehci_softc_t *sc)
 		    "%d companion controller%s, %d port%s%s",
 		    sc->sc_ncomp,
 		    sc->sc_ncomp!=1 ? "s" : "",
-		    EHCI_HCS_N_PCC(sparams),
-		    EHCI_HCS_N_PCC(sparams)!=1 ? "s" : "",
+		    EHCI_HCS_N_PCC(hcsparams),
+		    EHCI_HCS_N_PCC(hcsparams)!=1 ? "s" : "",
 		    sc->sc_ncomp!=1 ? " each" : "");
 		if (sc->sc_comps[0]) {
 			aprint_normal(":");
@@ -468,21 +468,21 @@ ehci_init(ehci_softc_t *sc)
 		cv_init(&sc->sc_compcv, "ehciccv");
 		sc->sc_comp_state = CO_EARLY;
 	}
-	sc->sc_noport = EHCI_HCS_N_PORTS(sparams);
-	sc->sc_hasppc = EHCI_HCS_PPC(sparams);
+	sc->sc_noport = EHCI_HCS_N_PORTS(hcsparams);
+	sc->sc_hasppc = EHCI_HCS_PPC(hcsparams);
 
-	cparams = EREAD4(sc, EHCI_HCCPARAMS);
-	DPRINTF("cparams=%#jx", cparams, 0, 0, 0);
+	const uint32_t hccparams = EREAD4(sc, EHCI_HCCPARAMS);
+	DPRINTF("hccparams=%#jx", hccparams, 0, 0, 0);
 
-	if (EHCI_HCC_64BIT(cparams)) {
+	if (EHCI_HCC_64BIT(hccparams)) {
 		/* MUST clear segment register if 64 bit capable. */
 		EOWRITE4(sc, EHCI_CTRLDSSEGMENT, 0);
 	}
 
-	if (cparams & EHCI_HCC_IST_FULLFRAME) {
+	if (hccparams & EHCI_HCC_IST_FULLFRAME) {
 		sc->sc_istthreshold = 0;
 	} else {
-		sc->sc_istthreshold = EHCI_HCC_GET_IST_THRESHOLD(cparams);
+		sc->sc_istthreshold = EHCI_HCC_GET_IST_THRESHOLD(hccparams);
 	}
 
 	sc->sc_bus.ub_revision = USBREV_2_0;
