@@ -1,4 +1,4 @@
-/*	$NetBSD: what.c,v 1.13 2021/12/06 22:13:56 christos Exp $	*/
+/*	$NetBSD: what.c,v 1.14 2021/12/07 06:53:56 rillig Exp $	*/
 
 /*
  * Copyright (c) 1980, 1988, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1988, 1993\
 #if 0
 static char sccsid[] = "@(#)what.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: what.c,v 1.13 2021/12/06 22:13:56 christos Exp $");
+__RCSID("$NetBSD: what.c,v 1.14 2021/12/07 06:53:56 rillig Exp $");
 #endif /* not lint */
 
 #include <locale.h>
@@ -82,7 +82,7 @@ main(int argc, char **argv)
 		usage();
 	} else do {
 		if (freopen(*argv, "r", stdin) == NULL) {
-			warn("Cannot open `%s", *argv);
+			warn("Cannot open `%s'", *argv);
 			break;
 		}
 		printf("%s:\n", *argv);
