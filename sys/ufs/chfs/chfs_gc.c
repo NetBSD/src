@@ -1,4 +1,4 @@
-/*	$NetBSD: chfs_gc.c,v 1.11 2021/07/19 22:24:55 andvar Exp $	*/
+/*	$NetBSD: chfs_gc.c,v 1.12 2021/12/07 22:13:56 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2010 Department of Software Engineering,
@@ -1034,7 +1034,7 @@ chfs_gcollect_deletion_dirent(struct chfs_mount *chmp,
 
 		if (retlen != nref_len) {
 			dbg_gc("Error reading node:"
-			    " read: %zu insted of: %zu\n", retlen, nref_len);
+			    " read: %zu instead of: %zu\n", retlen, nref_len);
 			continue;
 		}
 
