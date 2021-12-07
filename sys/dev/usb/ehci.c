@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.288 2021/12/07 07:54:32 skrll Exp $ */
+/*	$NetBSD: ehci.c,v 1.289 2021/12/07 07:58:20 skrll Exp $ */
 
 /*
  * Copyright (c) 2004-2012,2016,2020 The NetBSD Foundation, Inc.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.288 2021/12/07 07:54:32 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.289 2021/12/07 07:58:20 skrll Exp $");
 
 #include "ohci.h"
 #include "uhci.h"
@@ -403,7 +403,7 @@ ehci_init(ehci_softc_t *sc)
 {
 	uint32_t vers, sparams, cparams, hcr;
 	u_int i;
-	usbd_status err;
+	int err;
 	ehci_soft_qh_t *sqh;
 	u_int ncomp;
 
