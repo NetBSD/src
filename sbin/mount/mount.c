@@ -1,4 +1,4 @@
-/*	$NetBSD: mount.c,v 1.106 2021/12/02 13:26:39 christos Exp $	*/
+/*	$NetBSD: mount.c,v 1.107 2021/12/07 14:31:13 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1989, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1989, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)mount.c	8.25 (Berkeley) 5/8/95";
 #else
-__RCSID("$NetBSD: mount.c,v 1.106 2021/12/02 13:26:39 christos Exp $");
+__RCSID("$NetBSD: mount.c,v 1.107 2021/12/07 14:31:13 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -743,7 +743,7 @@ getfslab(const char *str)
 	if (ioctl(fd, DIOCGWEDGEINFO, &dkw) == 0) {
 		/* Yup, this is easy. */
 		close(fd);
-		if (dkw.dkw_ptype && *dkw.dkw_ptype)
+		if (*dkw.dkw_ptype)
 			return dkw.dkw_ptype;
 		return NULL;
 	}
