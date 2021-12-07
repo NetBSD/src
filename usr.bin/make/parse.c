@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.569 2021/12/04 23:47:09 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.570 2021/12/07 23:20:09 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -109,7 +109,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.569 2021/12/04 23:47:09 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.570 2021/12/07 23:20:09 rillig Exp $");
 
 /* types and constants */
 
@@ -2641,6 +2641,7 @@ ParseRawLine(IFile *curFile, char **out_line, char **out_line_end,
 	     char **out_firstBackslash, char **out_firstComment)
 {
 	char *line = curFile->buf_ptr;
+	char *buf_end = curFile->buf_end;
 	char *p = line;
 	char *line_end = line;
 	char *firstBackslash = NULL;
@@ -2652,14 +2653,14 @@ ParseRawLine(IFile *curFile, char **out_line, char **out_line_end,
 	for (;;) {
 		char ch;
 
-		if (p == curFile->buf_end) {
+		if (p == buf_end) {
 			res = PRLR_EOF;
 			break;
 		}
 
 		ch = *p;
 		if (ch == '\0' ||
-		    (ch == '\\' && p + 1 < curFile->buf_end && p[1] == '\0')) {
+		    (ch == '\\' && p + 1 < buf_end && p[1] == '\0')) {
 			Parse_Error(PARSE_FATAL, "Zero byte read from file");
 			return PRLR_ERROR;
 		}
@@ -2670,7 +2671,7 @@ ParseRawLine(IFile *curFile, char **out_line, char **out_line_end,
 				firstBackslash = p;
 			if (p[1] == '\n') {
 				curFile->lineno++;
-				if (p + 2 == curFile->buf_end) {
+				if (p + 2 == buf_end) {
 					line_end = p;
 					*line_end = '\n';
 					p += 2;
@@ -2679,7 +2680,7 @@ ParseRawLine(IFile *curFile, char **out_line, char **out_line_end,
 			}
 			p += 2;
 			line_end = p;
-			assert(p <= curFile->buf_end);
+			assert(p <= buf_end);
 			continue;
 		}
 
