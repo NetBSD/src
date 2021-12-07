@@ -1,4 +1,4 @@
-/*      $NetBSD: sp_common.c,v 1.42 2020/06/13 16:51:59 kamil Exp $	*/
+/*      $NetBSD: sp_common.c,v 1.43 2021/12/07 10:39:33 gson Exp $	*/
 
 /*
  * Copyright (c) 2010, 2011 Antti Kantee.  All Rights Reserved.
@@ -670,12 +670,10 @@ unix_parse(const char *addr, struct sockaddr **sa, int allow_wildcard)
 		}
 	}
 	strcat(s_un.sun_path, addr);
-#if defined(__linux__) || defined(__sun__) || defined(__CYGWIN__)
-	slen = sizeof(s_un);
-#else
+#if !(defined(__linux__) || defined(__sun__) || defined(__CYGWIN__))
 	s_un.sun_len = SUN_LEN(&s_un);
-	slen = s_un.sun_len+1; /* get the 0 too */
 #endif
+	slen = sizeof(s_un);
 
 	if (savepath && *parsedurl == '\0') {
 		snprintf(parsedurl, sizeof(parsedurl),
