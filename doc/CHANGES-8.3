@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.3,v 1.1.2.111 2021/12/03 19:55:03 martin Exp $
+# $NetBSD: CHANGES-8.3,v 1.1.2.112 2021/12/07 12:42:23 martin Exp $
 
 A complete list of changes from the NetBSD 8.2 release to the NetBSD 8.3
 release:
@@ -2304,4 +2304,26 @@ sys/arch/x86/x86/procfs_machdep.c		1.40-1.42
 	  serialize and tsxldtrk.
 	- Whitespace fix.
 	[msaitoh, ticket #1715]
+
+sys/dev/i2c/sdtemp.c				1.41
+
+	sdtemp(4): use aprint_debug instead of aprint_error for expected
+	failure.
+	[msaitoh, ticket #1716]
+
+sys/dev/i2c/spdmem_i2c.c			1.23-1.25 via patch
+
+	- Carefully access to the I2C bus in the match function.
+	- Improve bank reset code for DDR4.
+	[msaitoh, ticket #1717]
+
+sys/arch/x86/x86/identcpu.c			1.103-1.105
+
+	Identify Vortex86EX2.
+	[msaitoh, ticket #1718]
+
+sys/arch/x86/x86/identcpu.c			1.121
+
+	Make a numeric literal unsigned as it is bit-negated.
+	[msaitoh, ticket #1719]
 
