@@ -1,4 +1,4 @@
-/*	$NetBSD: what.c,v 1.14 2021/12/07 06:53:56 rillig Exp $	*/
+/*	$NetBSD: what.c,v 1.15 2021/12/07 18:38:50 rillig Exp $	*/
 
 /*
  * Copyright (c) 1980, 1988, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1988, 1993\
 #if 0
 static char sccsid[] = "@(#)what.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: what.c,v 1.14 2021/12/07 06:53:56 rillig Exp $");
+__RCSID("$NetBSD: what.c,v 1.15 2021/12/07 18:38:50 rillig Exp $");
 #endif /* not lint */
 
 #include <locale.h>
@@ -89,8 +89,8 @@ main(int argc, char **argv)
 		search();
 	} while (*++argv != NULL);
 
-	/* Note: the standard explicitly specifies an exit status of 1. */
-	return matches ? EXIT_SUCCESS : EXIT_FAILURE;
+	/* Note: the standard explicitly specifies an exit status of 0/1. */
+	return matches ? 0 : 1;
 }
 
 static void
