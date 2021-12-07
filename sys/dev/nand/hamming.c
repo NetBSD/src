@@ -1,4 +1,4 @@
-/*	$NetBSD: hamming.c,v 1.1 2011/02/26 18:07:31 ahoka Exp $	*/
+/*	$NetBSD: hamming.c,v 1.2 2021/12/07 21:37:37 andvar Exp $	*/
 
 /*
  * Copyright (c) 2008, Atmel Corporation
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hamming.c,v 1.1 2011/02/26 18:07:31 ahoka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hamming.c,v 1.2 2021/12/07 21:37:37 andvar Exp $");
 
 #include <sys/param.h>
 #include <lib/libkern/libkern.h>
@@ -102,7 +102,7 @@ hamming_compute_256(const uint8_t *data, uint8_t *code)
 
 	/*- 
 	 * At this point, we have the line parities, and the column sum.
-	 * First, We must caculate the parity group values on the column sum.
+	 * First, We must calculate the parity group values on the column sum.
 	 */
 	for (i = 0; i < 8; i++) {
 		if (column_sum & 1) {

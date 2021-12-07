@@ -1,4 +1,4 @@
-/*	$NetBSD: chfs_malloc.c,v 1.6 2019/06/17 17:14:56 ryoon Exp $	*/
+/*	$NetBSD: chfs_malloc.c,v 1.7 2021/12/07 21:37:37 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2010 Department of Software Engineering,
@@ -373,7 +373,7 @@ chfs_free_node_frag(struct chfs_node_frag *frag)
 	pool_cache_put(chfs_node_frag_cache, frag);
 }
 
-/* chfs_alloc_tmp_dnode - allocating a temporarly used dnode */
+/* chfs_alloc_tmp_dnode - allocating a temporarily used dnode */
 struct chfs_tmp_dnode *
 chfs_alloc_tmp_dnode(void)
 {
@@ -383,14 +383,14 @@ chfs_alloc_tmp_dnode(void)
 	return ret;
 }
 
-/* chfs_free_tmp_dnode - freeing a temporarly used dnode */
+/* chfs_free_tmp_dnode - freeing a temporarily used dnode */
 void
 chfs_free_tmp_dnode(struct chfs_tmp_dnode *td)
 {
 	pool_cache_put(chfs_tmp_dnode_cache, td);
 }
 
-/* chfs_alloc_tmp_dnode_info - allocating a temporarly used dnode descriptor */
+/* chfs_alloc_tmp_dnode_info - allocating a temporarily used dnode descriptor */
 struct chfs_tmp_dnode_info *
 chfs_alloc_tmp_dnode_info(void)
 {
@@ -400,7 +400,7 @@ chfs_alloc_tmp_dnode_info(void)
 	return ret;
 }
 
-/* chfs_free_tmp_dnode_info - freeing a temporarly used dnode descriptor */
+/* chfs_free_tmp_dnode_info - freeing a temporarily used dnode descriptor */
 void
 chfs_free_tmp_dnode_info(struct chfs_tmp_dnode_info *di)
 {

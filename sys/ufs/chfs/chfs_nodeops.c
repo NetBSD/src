@@ -1,4 +1,4 @@
-/*	$NetBSD: chfs_nodeops.c,v 1.4 2013/12/09 09:35:17 wiz Exp $	*/
+/*	$NetBSD: chfs_nodeops.c,v 1.5 2021/12/07 21:37:37 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2010 Department of Software Engineering,
@@ -206,7 +206,7 @@ chfs_add_fd_to_inode(struct chfs_mount *chmp,
 			return;
 		}
 	}
-	/* if we couldnt fit it elsewhere, lets add to the end */
+	/* if we couldn't fit it elsewhere, lets add to the end */
 	/* FIXME insert tail or insert head? */
 	TAILQ_INSERT_HEAD(&parent->dents, new, fds);
 }

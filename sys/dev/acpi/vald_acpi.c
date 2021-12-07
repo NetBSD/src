@@ -1,4 +1,4 @@
-/*	$NetBSD: vald_acpi.c,v 1.7 2021/11/01 21:28:03 andvar Exp $ */
+/*	$NetBSD: vald_acpi.c,v 1.8 2021/12/07 21:37:36 andvar Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vald_acpi.c,v 1.7 2021/11/01 21:28:03 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vald_acpi.c,v 1.8 2021/12/07 21:37:36 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -439,7 +439,7 @@ vald_acpi_libright_get_bus(ACPI_HANDLE handle, uint32_t level,
 	sc->lcd_handle = handle;
 	param = buf.Pointer;
 	if (param->Type == ACPI_TYPE_PACKAGE) {
-		printf("_BCL retrun: %d packages\n", param->Package.Count);
+		printf("_BCL return: %d packages\n", param->Package.Count);
 
 		sc->lcd_num = param->Package.Count;
 		sc->lcd_level = ACPI_ALLOCATE(sizeof(int) * sc->lcd_num);

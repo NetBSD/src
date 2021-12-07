@@ -1,4 +1,4 @@
-/*	$NetBSD: ebh.c,v 1.8 2021/08/09 21:38:05 andvar Exp $	*/
+/*	$NetBSD: ebh.c,v 1.9 2021/12/07 21:37:37 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2010 Department of Software Engineering,
@@ -129,7 +129,7 @@ nand_calc_data_offs(struct chfs_ebh *ebh, int pebnr, int offset)
 }
 
 /**
- * nor_read_eb_hdr - read ereaseblock header from NOR flash
+ * nor_read_eb_hdr - read eraseblock header from NOR flash
  *
  * @ebh: chfs eraseblock handler
  * @pebnr: eraseblock number
@@ -167,7 +167,7 @@ nor_read_eb_hdr(struct chfs_ebh *ebh,
 }
 
 /**
- * nand_read_eb_hdr - read ereaseblock header from NAND flash
+ * nand_read_eb_hdr - read eraseblock header from NAND flash
  *
  * @ebh: chfs eraseblock handler
  * @pebnr: eraseblock number
@@ -206,7 +206,7 @@ nand_read_eb_hdr(struct chfs_ebh *ebh, int pebnr,
 }
 
 /**
- * nor_write_eb_hdr - write ereaseblock header to NOR flash
+ * nor_write_eb_hdr - write eraseblock header to NOR flash
  *
  * @ebh: chfs eraseblock handler
  * @pebnr: eraseblock number whereto write
@@ -243,7 +243,7 @@ nor_write_eb_hdr(struct chfs_ebh *ebh, int pebnr, struct chfs_eb_hdr *ebhdr)
 }
 
 /**
- * nand_write_eb_hdr - write ereaseblock header to NAND flash
+ * nand_write_eb_hdr - write eraseblock header to NAND flash
  *
  * @ebh: chfs eraseblock handler
  * @pebnr: eraseblock number whereto write
@@ -282,7 +282,7 @@ nand_write_eb_hdr(struct chfs_ebh *ebh, int pebnr,
 }
 
 /**
- * nor_check_eb_hdr - check ereaseblock header read from NOR flash
+ * nor_check_eb_hdr - check eraseblock header read from NOR flash
  *
  * @ebh: chfs eraseblock handler
  * @buf: eraseblock header to check
@@ -361,7 +361,7 @@ nor_check_eb_hdr(struct chfs_ebh *ebh, void *buf)
 }
 
 /**
- * nand_check_eb_hdr - check ereaseblock header read from NAND flash
+ * nand_check_eb_hdr - check eraseblock header read from NAND flash
  *
  * @ebh: chfs eraseblock handler
  * @buf: eraseblock header to check
@@ -421,7 +421,7 @@ nand_check_eb_hdr(struct chfs_ebh *ebh, void *buf)
 }
 
 /**
- * nor_mark_eb_hdr_dirty_flash- mark ereaseblock header dirty on NOR flash
+ * nor_mark_eb_hdr_dirty_flash- mark eraseblock header dirty on NOR flash
  *
  * @ebh: chfs eraseblock handler
  * @pebnr: eraseblock number
@@ -456,7 +456,7 @@ nor_mark_eb_hdr_dirty_flash(struct chfs_ebh *ebh, int pebnr, int lid)
 }
 
 /**
- * nor_invalidate_eb_hdr - invalidate ereaseblock header on NOR flash
+ * nor_invalidate_eb_hdr - invalidate eraseblock header on NOR flash
  *
  * @ebh: chfs eraseblock handler
  * @pebnr: eraseblock number
@@ -491,7 +491,7 @@ nor_invalidate_eb_hdr(struct chfs_ebh *ebh, int pebnr)
 }
 
 /**
- * mark_eb_hdr_free - free ereaseblock header on NOR or NAND flash
+ * mark_eb_hdr_free - free eraseblock header on NOR or NAND flash
  *
  * @ebh: chfs eraseblock handler
  * @pebnr: eraseblock number
@@ -1423,7 +1423,7 @@ count_mean:
 }
 
 /**
- * chfs_scan - scans the media and returns informations about it
+ * chfs_scan - scans the media and returns information about it
  * @ebh: chfs eraseblock handler
  *
  * This function scans through the media and returns information about it or if
@@ -1593,7 +1593,7 @@ out_free:
 /*****************************************************************************/
 
 /**
- * ebh_open - opens mtd device and init ereaseblock header
+ * ebh_open - opens mtd device and init eraseblock header
  * @ebh: eraseblock handler
  * @flash_nr: flash device number to use
  *
@@ -1998,7 +1998,7 @@ write_error:
  * @ebh: eraseblock handler
  * @lnr: leb number
  *
- * Retruns zero on success, error code in case of fail.
+ * Returns zero on success, error code in case of fail.
  */
 int
 ebh_unmap_leb(struct chfs_ebh *ebh, int lnr)
@@ -2019,7 +2019,7 @@ ebh_unmap_leb(struct chfs_ebh *ebh, int lnr)
  * @ebh: eraseblock handler
  * @lnr: leb number
  *
- * Retruns 0 if the logical eraseblock is mapped, negative error code otherwise.
+ * Returns 0 if the logical eraseblock is mapped, negative error code otherwise.
  */
 int
 ebh_is_mapped(struct chfs_ebh *ebh, int lnr)

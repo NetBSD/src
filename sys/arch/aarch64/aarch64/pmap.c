@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.119 2021/10/23 06:49:46 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.120 2021/12/07 21:37:36 andvar Exp $	*/
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.119 2021/10/23 06:49:46 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.120 2021/12/07 21:37:36 andvar Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_ddb.h"
@@ -179,7 +179,7 @@ PMAP_COUNTER(unwire_failure, "pmap_unwire failure");
 
 /*
  * require access permission in pte to invalidate instruction cache.
- * change the pte to accessible temporarly before cpu_icache_sync_range().
+ * change the pte to be accessible temporarily before cpu_icache_sync_range().
  * this macro modifies PTE (*ptep). need to update PTE after this.
  */
 #define PTE_ICACHE_SYNC_PAGE(pte, ptep, asid, va, ll)			\
