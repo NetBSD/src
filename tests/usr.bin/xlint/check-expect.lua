@@ -1,5 +1,5 @@
 #!  /usr/bin/lua
--- $NetBSD: check-expect.lua,v 1.13 2021/09/05 19:16:37 rillig Exp $
+-- $NetBSD: check-expect.lua,v 1.14 2021/12/07 07:09:12 rillig Exp $
 
 --[[
 
@@ -9,6 +9,14 @@ Check that the /* expect: ... */ comments in the .c source files match the
 actual messages found in the corresponding .exp files.
 
 ]]
+
+
+local had_errors = false
+---@param fmt string
+function print_error(fmt, ...)
+  print(fmt:format(...))
+  had_errors = true
+end
 
 
 local function load_lines(fname)
@@ -26,7 +34,7 @@ local function load_lines(fname)
 end
 
 
-local function load_expect_comments_from_c(fname, errors)
+local function load_expect_comments_from_c(fname)
 
   local lines = load_lines(fname)
   if lines == nil then return nil, nil end
@@ -61,7 +69,7 @@ local function load_expect_comments_from_c(fname, errors)
     local ppl_lineno, ppl_fname = line:match("^#%s*(%d+)%s+\"([^\"]+)\"")
     if ppl_lineno ~= nil then
       if ppl_fname == fname and tonumber(ppl_lineno) ~= phys_lineno + 1 then
-        errors:add("error: %s:%d: preprocessor line number must be %d",
+        print_error("error: %s:%d: preprocessor line number must be %d",
           fname, phys_lineno, phys_lineno + 1)
       end
       pp_fname = ppl_fname
@@ -93,11 +101,11 @@ local function load_actual_messages_from_exp(exp_fname)
 end
 
 
-local function check_test(c_fname, errors)
+local function check_test(c_fname)
   local exp_fname = c_fname:gsub("%.c$", ".exp")
 
   local comment_locations, comments_by_location =
-    load_expect_comments_from_c(c_fname, errors)
+    load_expect_comments_from_c(c_fname)
   if comment_locations == nil then return end
 
   local messages = load_actual_messages_from_exp(exp_fname)
@@ -117,14 +125,15 @@ local function check_test(c_fname, errors)
     end
 
     if not found then
-      errors:add("error: %s: missing /* expect+1: %s */", act.location, exp_comment)
+      print_error("error: %s: missing /* expect+1: %s */",
+        act.location, exp_comment)
     end
   end
 
   for _, location in ipairs(comment_locations) do
     for _, message in ipairs(comments_by_location[location]) do
       if message ~= "" then
-        errors:add(
+        print_error(
           "error: %s: declared message \"%s\" is not in the actual output",
           location, message)
       end
@@ -134,20 +143,11 @@ end
 
 
 local function main(args)
-  local errors = {}
-  errors.add = function(self, fmt, ...)
-    table.insert(self, string.format(fmt, ...))
-  end
-
   for _, name in ipairs(args) do
-    check_test(name, errors)
+    check_test(name)
   end
-
-  for _, error in ipairs(errors) do
-    print(error)
-  end
-
-  return #errors == 0
 end
 
-os.exit(main(arg))
+
+main(arg)
+os.exit(not had_errors)
