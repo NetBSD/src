@@ -1,4 +1,4 @@
-.\"	$NetBSD: m4.ms,v 1.1 2021/12/07 20:04:00 uwe Exp $
+.\"	$NetBSD: m4.ms,v 1.2 2021/12/07 20:26:20 uwe Exp $
 .\"
 .\" Copyright (C) Caldera International Inc.  2001-2002.
 .\" All rights reserved.
@@ -34,6 +34,10 @@
 .\"
 .\"	@(#)m4.ms	6.3 (Berkeley) 6/5/93
 .\"
+.de MH	\" bring this over from the old tmac.sU
+AT&T Bell Laboratories
+Murray Hill, New Jersey 07974
+..
 .EH 'PSD:17-%''The M4 Macro Processor'
 .OH 'The M4 Macro Processor''PSD:17-%'
 .if n .ls 2
@@ -80,9 +84,9 @@
 .		\"2=not last lines; 4= no -xx; 8=no xx-
 .		\"special chars in programs
 .	\" start of text
-.\".RP
-.....TR 59
-.....TM 77-1273-6 39199 39199-11
+.\" RP				\" release paper style
+.\" TR 59			\" Comp. Sci. Tech Rept series.
+.\" TM 77-1273-6 39199 39199-11	\" Technical Memorandum
 .ND "July 1, 1977"
 .TL
 The M4 Macro Processor
@@ -123,7 +127,8 @@ file manipulation
 .PP
 This paper is a user's manual for M4.
 .AE
-.CS 6 0 6 0 0 1
+.\" don't spew out cover sheet
+.\" .CS 6 0 6 0 0 1
 .if t .2C
 .SH
 Introduction
@@ -956,7 +961,8 @@ and especially Jim Weythman,
 whose pioneering use of M4 has led to several valuable improvements.
 We are also deeply grateful to Weythman for several substantial contributions
 to the code.
-.SG
+.\" don't print signature
+.\" .SG
 .SH
 References
 .LP
