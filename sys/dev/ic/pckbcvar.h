@@ -1,4 +1,4 @@
-/* $NetBSD: pckbcvar.h,v 1.21 2015/04/13 16:33:24 riastradh Exp $ */
+/* $NetBSD: pckbcvar.h,v 1.22 2021/12/07 19:45:05 skrll Exp $ */
 
 /*
  * Copyright (c) 1998
@@ -84,11 +84,6 @@ struct pckbc_softc {
 	struct pckbc_internal *id;
 
 	void (*intr_establish)(struct pckbc_softc *, pckbc_slot_t);
-};
-
-struct pckbc_attach_args {
-	pckbc_tag_t pa_tag;
-	pckbc_slot_t pa_slot;
 };
 
 extern const char * const pckbc_slot_names[];
