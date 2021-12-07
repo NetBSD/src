@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.966 2021/12/06 22:07:53 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.967 2021/12/07 21:30:11 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -140,7 +140,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.966 2021/12/06 22:07:53 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.967 2021/12/07 21:30:11 rillig Exp $");
 
 /*
  * Variables are defined using one of the VAR=value assignments.  Their
@@ -2091,6 +2091,12 @@ Expr_Str(const Expr *expr)
 	return expr->value.str;
 }
 
+static SubstringWords
+Expr_Words(const Expr *expr)
+{
+	return Substring_Words(Expr_Str(expr), false);
+}
+
 static void
 Expr_SetValue(Expr *expr, FStr value)
 {
@@ -2738,8 +2744,7 @@ ApplyModifier_Range(const char **pp, ModChain *ch)
 		return AMR_OK;
 
 	if (n == 0) {
-		SubstringWords words = Substring_Words(Expr_Str(ch->expr),
-		    false);
+		SubstringWords words = Expr_Words(ch->expr);
 		n = words.len;
 		SubstringWords_Free(words);
 	}
@@ -3217,8 +3222,7 @@ ApplyModifier_Words(const char **pp, ModChain *ch)
 		} else {
 			Buffer buf;
 
-			SubstringWords words = Substring_Words(
-			    Expr_Str(expr), false);
+			SubstringWords words = Expr_Words(expr);
 			size_t ac = words.len;
 			SubstringWords_Free(words);
 
@@ -3399,7 +3403,7 @@ ApplyModifier_Order(const char **pp, ModChain *ch)
 	if (!ModChain_ShouldEval(ch))
 		return AMR_OK;
 
-	words = Substring_Words(Expr_Str(ch->expr), false);
+	words = Expr_Words(ch->expr);
 	if (cmp == NULL)
 		ShuffleSubstrings(words.words, words.len);
 	else {
@@ -3645,7 +3649,7 @@ ApplyModifier_Unique(const char **pp, ModChain *ch)
 	if (!ModChain_ShouldEval(ch))
 		return AMR_OK;
 
-	words = Substring_Words(Expr_Str(ch->expr), false);
+	words = Expr_Words(ch->expr);
 
 	if (words.len > 1) {
 		size_t si, di;
