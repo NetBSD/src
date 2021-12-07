@@ -1,4 +1,4 @@
-.\"	$NetBSD: m4.ms,v 1.2 2021/12/07 20:26:20 uwe Exp $
+.\"	$NetBSD: m4.ms,v 1.3 2021/12/07 20:41:04 uwe Exp $
 .\"
 .\" Copyright (C) Caldera International Inc.  2001-2002.
 .\" All rights reserved.
@@ -34,10 +34,17 @@
 .\"
 .\"	@(#)m4.ms	6.3 (Berkeley) 6/5/93
 .\"
-.de MH	\" bring this over from the old tmac.sU
+.
+.\" bring this over from the old tmac.sU
+.nr P1 1	\" page number on page 1
+.nr LL 6.5i	\" make the text wider
+.ll \n(LLu
+.lt 6.5i
+.de MH
 AT&T Bell Laboratories
 Murray Hill, New Jersey 07974
 ..
+.\"
 .EH 'PSD:17-%''The M4 Macro Processor'
 .OH 'The M4 Macro Processor''PSD:17-%'
 .if n .ls 2
