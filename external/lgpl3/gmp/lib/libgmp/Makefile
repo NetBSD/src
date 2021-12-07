@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.33 2021/12/07 19:12:54 rillig Exp $
+#	$NetBSD: Makefile,v 1.34 2021/12/07 19:14:05 rillig Exp $
 
 .include <bsd.init.mk>
 
@@ -240,8 +240,8 @@ mpn_${_build}: Makefile
 
 CPPFLAGS.mpn_${_build}+= -DOPERATION_${_build:R}
 
-SRCS+=		mpn_${_build}   
-CLEANFILES+=	mpn_${_build}   
+SRCS+=		mpn_${_build}
+CLEANFILES+=	mpn_${_build}
 .endfor
 
 .include <bsd.lib.mk>
