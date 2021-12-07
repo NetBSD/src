@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2852 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2853 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -457,3 +457,5 @@ Changes from NetBSD 9.0 to NetBSD 10.0:
 	cgdconfig(8): Added 'argon2id' password-based key generation method.
 		[nia 20211122]
 	aarch64: Add initial COMPAT_LINUX32 support. [ryo 20211125]
+	scmd: Driver and userland utility for the Sparkfun Serial Controlled
+		Motor Driver [brad 20211207]
