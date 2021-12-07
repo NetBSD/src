@@ -1,4 +1,4 @@
-*	$NetBSD: res_func.sa,v 1.5 2001/09/16 16:34:32 wiz Exp $
+*	$NetBSD: res_func.sa,v 1.6 2021/12/07 21:37:36 andvar Exp $
 
 *	MOTOROLA MICROPROCESSOR & MEMORY TECHNOLOGY GROUP
 *	M68000 Hi-Performance Microprocessor Division
@@ -438,7 +438,7 @@ fix_stk:
 
 *
 * cu_dnrm handles all cu-only instructions (fmove, fabs, fneg, and
-* ftst) completly in software without an frestore to the 040. 
+* ftst) completely in software without an frestore to the 040. 
 *
 cu_dnrm:
 	st.b	CU_ONLY(a6)

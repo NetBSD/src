@@ -1,4 +1,4 @@
-/*	$NetBSD: chfs.h,v 1.10 2018/04/19 21:50:10 christos Exp $	*/
+/*	$NetBSD: chfs.h,v 1.11 2021/12/07 21:37:37 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2010 Department of Software Engineering,
@@ -199,7 +199,7 @@ struct chfs_dirent
 	uint8_t  name[0];				/* name of the directory */
 };
 
-/* struct chfs_tmp_dnode - used temporarly while building a data node */
+/* struct chfs_tmp_dnode - used temporarily while building a data node */
 struct chfs_tmp_dnode {
 	struct chfs_full_dnode *node;	/* associated full dnode */
 	uint64_t version;				/* version of the tmp node */
@@ -376,7 +376,7 @@ struct chfs_mount {
 
 	/*
 	 * eraseblock queues
-	 * free: completly free
+	 * free: completely free
 	 * clean: contains only valid data
 	 * dirty: contains valid and deleted data
 	 * very_dirty: contains mostly deleted data (should be GC'd)
