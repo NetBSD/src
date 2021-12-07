@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe.c,v 1.294 2021/11/12 06:56:50 skrll Exp $ */
+/* $NetBSD: ixgbe.c,v 1.295 2021/12/07 22:13:56 andvar Exp $ */
 
 /******************************************************************************
 
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixgbe.c,v 1.294 2021/11/12 06:56:50 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixgbe.c,v 1.295 2021/12/07 22:13:56 andvar Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -723,7 +723,7 @@ ixgbe_initialize_transmit_units(struct adapter *adapter)
 		/* Disable Head Writeback */
 		/*
 		 * Note: for X550 series devices, these registers are actually
-		 * prefixed with TPH_ isntead of DCA_, but the addresses and
+		 * prefixed with TPH_ instead of DCA_, but the addresses and
 		 * fields remain the same.
 		 */
 		switch (hw->mac.type) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: chfs_vnode.c,v 1.19 2020/05/16 18:31:53 christos Exp $	*/
+/*	$NetBSD: chfs_vnode.c,v 1.20 2021/12/07 22:13:56 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2010 Department of Software Engineering,
@@ -106,7 +106,7 @@ chfs_readvnode(struct mount *mp, ino_t ino, struct vnode **vpp)
 			return err;
 		}
 		if (retlen != len) {
-			chfs_err("Error reading vnode: read: %zu insted of: %zu\n",
+			chfs_err("Error reading vnode: read: %zu instead of: %zu\n",
 			    len, retlen);
 			kmem_free(buf, len);
 			return EIO;
@@ -155,7 +155,7 @@ chfs_readdirent(struct mount *mp, struct chfs_node_ref *chnr, struct chfs_inode 
 		return err;
 	}
 	if (retlen != len) {
-		chfs_err("Error reading vnode: read: %zu insted of: %zu\n",
+		chfs_err("Error reading vnode: read: %zu instead of: %zu\n",
 		    retlen, len);
 		return EIO;
 	}
@@ -175,7 +175,7 @@ chfs_readdirent(struct mount *mp, struct chfs_node_ref *chnr, struct chfs_inode 
 	}
 
 	if (retlen != chfdn.nsize) {
-		chfs_err("Error reading vnode: read: %zu insted of: %zu\n",
+		chfs_err("Error reading vnode: read: %zu instead of: %zu\n",
 		    len, retlen);
 		return EIO;
 	}

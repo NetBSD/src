@@ -1,4 +1,4 @@
-/*	$NetBSD: sio16.c,v 1.27 2021/08/07 16:19:15 thorpej Exp $	*/
+/*	$NetBSD: sio16.c,v 1.28 2021/12/07 22:13:56 andvar Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sio16.c,v 1.27 2021/08/07 16:19:15 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sio16.c,v 1.28 2021/12/07 22:13:56 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -133,7 +133,7 @@ sio16_attach(device_t parent, device_t self, void *aux)
 	sc->sc_dev = self;
 
 	if (sa->sa_nreg != 4)
-		panic("sio16_attach: got %d registers intead of 4",
+		panic("sio16_attach: got %d registers instead of 4",
 		    sa->sa_nreg);
 
 	/* copy our bus tag, we will need it */
