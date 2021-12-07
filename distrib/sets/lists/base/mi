@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1285 2021/10/22 21:03:01 kre Exp $
+# $NetBSD: mi,v 1.1286 2021/12/07 17:39:53 brad Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -811,6 +811,7 @@
 ./usr/bin/rusers				base-netutil-bin
 ./usr/bin/rwall					base-netutil-bin
 ./usr/bin/rwho					base-netutil-bin
+./usr/bin/scmdctl				base-util-bin
 ./usr/bin/scp					base-secsh-bin
 ./usr/bin/script				base-util-bin
 ./usr/bin/sdiff					base-util-bin

@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: MAKEDEV.tmpl,v 1.227 2021/11/06 13:34:40 brad Exp $
+#	$NetBSD: MAKEDEV.tmpl,v 1.228 2021/12/07 17:39:53 brad Exp $
 #
 # Copyright (c) 2003,2007,2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -267,6 +267,7 @@
 #	radio*	radio devices
 #	random	Random number generator
 #	rtc*	RealTimeClock
+#	scmd*	Sparkfun Serial Controlled Motor Driver
 #	scsibus* SCSI busses
 #	se*	SCSI Ethernet
 #	ses*	SES/SAF-TE SCSI Devices
@@ -847,6 +848,7 @@ all)
 	makedev ipmi0
 	makedev qemufwcfg
 	makedev sht3xtemp0
+	makedev scmd0
 	makedev local # do this last
 	;;
 
@@ -917,6 +919,10 @@ ramdisk)
 
 sht3xtemp)
     	makedev sht3xtemp0
+    	;;
+
+scmd)
+    	makedev scmd0
     	;;
 
 usbs)
@@ -2259,6 +2265,11 @@ efi)
 sht3xtemp[0-9]*)
 	unit=${i#sht3xtemp}
 	mkdev sht3xtemp$unit c %sht3xtemp_chr% $unit 664
+	;;
+
+scmd[0-9]*)
+	unit=${i#scmd}
+	mkdev scmd$unit c %scmd_chr% $unit 666
 	;;
 
 midevend)

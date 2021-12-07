@@ -1,4 +1,4 @@
-#	$NetBSD: files.spi,v 1.7 2019/11/02 14:33:27 tnn Exp $
+#	$NetBSD: files.spi,v 1.8 2021/12/07 17:39:54 brad Exp $
 
 define	spibus { }
 
@@ -44,3 +44,7 @@ file	dev/spi/ssdfb_spi.c		ssdfb_spi
 device	mcp3kadc: sysmon_envsys
 attach	mcp3kadc at spi
 file	dev/spi/mcp3k.c			mcp3kadc
+
+# Sparkfun Serial motor controller
+attach  scmd at spi with scmdspi
+file	dev/spi/scmdspi.c			scmdspi

@@ -1,0 +1,16 @@
+ioconf scmdi2c
+
+include "conf/files"
+
+pseudo-root iic*
+
+scmd* at iic? addr 0x58
+scmd* at iic? addr 0x59
+scmd* at iic? addr 0x5a
+scmd* at iic? addr 0x5b
+scmd* at iic? addr 0x5c
+scmd* at iic? addr 0x5d
+scmd* at iic? addr 0x5e
+scmd* at iic? addr 0x5f
+scmd* at iic? addr 0x60
+scmd* at iic? addr 0x61
