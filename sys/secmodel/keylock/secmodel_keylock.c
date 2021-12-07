@@ -1,4 +1,4 @@
-/* $NetBSD: secmodel_keylock.c,v 1.11 2020/12/05 17:40:00 thorpej Exp $ */
+/* $NetBSD: secmodel_keylock.c,v 1.12 2021/12/07 21:45:31 andvar Exp $ */
 /*-
  * Copyright (c) 2009 Marc Balmer <marc@msys.ch>
  * Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
@@ -37,7 +37,7 @@
  * Rules:
  *
  * - If the number of possible keylock positions is 0, assume there is no
- *   keylock present, do not dissallow any action, i.e. do nothing
+ *   keylock present, do not disallow any action, i.e. do nothing
  *
  * - If the number of possible keylock positions is greater than 0, but the
  *   current lock position is 0, assume tampering with the lock and forbid
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: secmodel_keylock.c,v 1.11 2020/12/05 17:40:00 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: secmodel_keylock.c,v 1.12 2021/12/07 21:45:31 andvar Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
