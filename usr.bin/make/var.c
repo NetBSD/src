@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.967 2021/12/07 21:30:11 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.968 2021/12/07 21:47:21 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -140,7 +140,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.967 2021/12/07 21:30:11 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.968 2021/12/07 21:47:21 rillig Exp $");
 
 /*
  * Variables are defined using one of the VAR=value assignments.  Their
@@ -3841,6 +3841,7 @@ ApplyModifier(const char **pp, ModChain *ch)
 		return ApplyModifier_Regex(pp, ch);
 #endif
 	case 'D':
+	case 'U':
 		return ApplyModifier_Defined(pp, ch);
 	case 'E':
 		return ApplyModifier_WordFunc(pp, ch, ModifyWord_Suffix);
@@ -3878,8 +3879,6 @@ ApplyModifier(const char **pp, ModChain *ch)
 		return ApplyModifier_WordFunc(pp, ch, ModifyWord_Tail);
 	case 't':
 		return ApplyModifier_To(pp, ch);
-	case 'U':
-		return ApplyModifier_Defined(pp, ch);
 	case 'u':
 		return ApplyModifier_Unique(pp, ch);
 	default:
