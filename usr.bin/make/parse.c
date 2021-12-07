@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.570 2021/12/07 23:20:09 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.571 2021/12/07 23:56:06 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -109,7 +109,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.570 2021/12/07 23:20:09 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.571 2021/12/07 23:56:06 rillig Exp $");
 
 /* types and constants */
 
@@ -124,10 +124,14 @@ typedef struct IFile {
 	unsigned int cond_depth; /* 'if' nesting when file opened */
 	bool depending;	/* state of doing_depend on EOF */
 
-	/* The buffer from which the file's content is read. */
+	/*
+	 * The buffer from which the file's content is read.  The buffer
+	 * always ends with '\n', the buffer is not null-terminated, that is,
+	 * buf_end[0] is already out of bounds.
+	 */
 	char *buf_freeIt;
 	char *buf_ptr;		/* next char to be read */
-	char *buf_end;
+	char *buf_end;		/* buf_end[-1] == '\n' */
 
 	/* Function to read more data, with a single opaque argument. */
 	ReadMoreProc readMore;
@@ -2634,7 +2638,8 @@ typedef enum ParseRawLineResult {
 
 /*
  * Parse until the end of a line, taking into account lines that end with
- * backslash-newline.
+ * backslash-newline.  The resulting line goes from out_line to out_line_end;
+ * the line is not null-terminated.
  */
 static ParseRawLineResult
 ParseRawLine(IFile *curFile, char **out_line, char **out_line_end,
