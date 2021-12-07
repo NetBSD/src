@@ -1,4 +1,4 @@
-/*	$NetBSD: identcpu.c,v 1.55.2.10 2021/12/07 12:37:04 martin Exp $	*/
+/*	$NetBSD: identcpu.c,v 1.55.2.11 2021/12/07 12:40:57 martin Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.55.2.10 2021/12/07 12:37:04 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.55.2.11 2021/12/07 12:40:57 martin Exp $");
 
 #include "opt_xen.h"
 
@@ -465,7 +465,7 @@ cpu_probe_cyrix_cmn(struct cpu_info *ci)
 	/* cyrix's workaround  for the "coma bug" */
 	cyrix_write_reg(0x31, cyrix_read_reg(0x31) | 0xf8);
 	cyrix_write_reg(0x32, cyrix_read_reg(0x32) | 0x7f);
-	cyrix_write_reg(0x33, cyrix_read_reg(0x33) & ~0xff);
+	cyrix_write_reg(0x33, cyrix_read_reg(0x33) & ~0xffu);
 	cyrix_write_reg(0x3c, cyrix_read_reg(0x3c) | 0x87);
 	/* disable access to ccr4/ccr5 */
 	cyrix_write_reg(0xC3, c3);
