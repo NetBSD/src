@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.31 2021/12/06 23:07:49 rillig Exp $
+#	$NetBSD: Makefile,v 1.32 2021/12/07 19:04:27 rillig Exp $
 
 .include <bsd.init.mk>
 
@@ -266,8 +266,6 @@ CWARNFLAGS.clang+=	-Wno-unused-value -Wno-tautological-compare -Wno-parentheses
 M4FLAGS+=-DPIC
 .endif
 
-# redc_n.c(62): error: function 'alloca' implicitly declared to return int [215]
-LINTFLAGS+=	-Dalloca=__builtin_alloca
 # gmp-impl.h(5172): warning: constant in conditional context [161]
 LINTFLAGS+=	-X 161
 # gmp-impl.h(5187): warning: bitwise '>>' on signed value possibly nonportable [117]
