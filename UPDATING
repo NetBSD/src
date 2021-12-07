@@ -1,4 +1,4 @@
-$NetBSD: UPDATING,v 1.325 2021/11/22 12:30:34 martin Exp $
+$NetBSD: UPDATING,v 1.326 2021/12/07 21:37:36 andvar Exp $
 
 This file (UPDATING) is intended to be a brief reference to recent
 changes that might cause problems in the build process, and a guide for
@@ -192,7 +192,7 @@ Recent changes:
 20190723:
 	The jemalloc allocator in libc is now build without extended
 	debugging (for performance reasons). In update builds make sure
-	to rebuild it completly, by removing all affected object files,
+	to rebuild it completely, by removing all affected object files,
 	including compat builds, something like:
 	cd /usr/obj && find . -type d -name jemalloc|xargs rm -rf
 

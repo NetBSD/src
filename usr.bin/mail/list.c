@@ -1,4 +1,4 @@
-/*	$NetBSD: list.c,v 1.28 2017/11/09 20:27:50 christos Exp $	*/
+/*	$NetBSD: list.c,v 1.29 2021/12/07 21:37:37 andvar Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)list.c	8.4 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: list.c,v 1.28 2017/11/09 20:27:50 christos Exp $");
+__RCSID("$NetBSD: list.c,v 1.29 2021/12/07 21:37:37 andvar Exp $");
 #endif
 #endif /* not lint */
 
@@ -946,7 +946,7 @@ markall_core(int *markarray, char **bufp, int f, int level)
 		LOP_XOR
 	} logic_op;		/* binary logic operation */
 	int logic_invert;	/* invert the result */
-	int *tmparray;	/* temporarly array with result */
+	int *tmparray;	/* temporary array with result */
 	int msgCount;	/* tmparray length and message count */
 	int beg;	/* first value of a range */
 	int colmod;	/* the colon-modifier for this group */

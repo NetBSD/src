@@ -1,4 +1,4 @@
-/*	$NetBSD: chfs_write.c,v 1.6 2021/07/19 21:04:39 andvar Exp $	*/
+/*	$NetBSD: chfs_write.c,v 1.7 2021/12/07 21:37:37 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2010 Department of Software Engineering,
@@ -110,7 +110,7 @@ retry:
 
 	mutex_enter(&chmp->chm_lock_sizes);
 
-	/* caculating offset and sizes  */
+	/* calculating offset and sizes  */
 	nref->nref_offset = chmp->chm_ebh->eb_size - chmp->chm_nextblock->free_size;
 	chfs_change_size_free(chmp, chmp->chm_nextblock, -CHFS_PAD(size));
 	vec.iov_base = fvnode;
