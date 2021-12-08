@@ -1,4 +1,4 @@
-/*	$NetBSD: sxreg.h,v 1.19 2021/12/08 16:40:14 macallan Exp $	*/
+/*	$NetBSD: sxreg.h,v 1.20 2021/12/08 17:03:38 macallan Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -253,18 +253,18 @@
 				SX_UCHAN_24 | (sreg << 7) | (o))
 
 /* ROP and SELECT instructions */
-#define SX_ROPB	(0x0 << 21)	/* mask bits apply to bytes */
-#define SX_ROPM	(0x1 << 21)	/* mask bits apply to each bit */
-#define SX_ROPL	(0x2 << 21)	/* mask bits apply per register */
-#define SX_SELB	(0x4 << 21)	/* byte select scalar */
-#define SX_SELV (0x6 << 21)	/* register select vector */
-#define SX_SELS (0x7 << 21)	/* register select scalar */
+#define SX_ROP_B	(0x0 << 21)	/* mask bits apply to bytes */
+#define SX_ROP_M	(0x1 << 21)	/* mask bits apply to each bit */
+#define SX_ROP_L	(0x2 << 21)	/* mask bits apply per register */
+#define SX_SEL_B	(0x4 << 21)	/* byte select scalar */
+#define SX_SEL_V	(0x6 << 21)	/* register select vector */
+#define SX_SEL_S	(0x7 << 21)	/* register select scalar */
 
-#define SX_ROP(sa, sb, d, cnt) (0x90000000 | ((cnt) << 24) | SX_ROPL | \
+#define SX_ROP(sa, sb, d, cnt) (0x90000000 | ((cnt) << 24) | SX_ROP_L | \
 		((sa) << 14) | (sb) | ((d) << 7))
-#define SX_ROPB(sa, sb, d, cnt) (0x90000000 | ((cnt) << 24) | SX_ROPB | \
+#define SX_ROPB(sa, sb, d, cnt) (0x90000000 | ((cnt) << 24) | SX_ROP_B | \
 		((sa) << 14) | (sb) | ((d) << 7))
-#define SX_SELECT_S(sa, sb, d, cnt) (0x90000000 | ((cnt) << 24) | SX_SELS | \
+#define SX_SELECT_S(sa, sb, d, cnt) (0x90000000 | ((cnt) << 24) | SX_SEL_S | \
 		((sa) << 14) | (sb) | ((d) << 7))
 
 /* multiply group */
@@ -350,30 +350,30 @@
 		 ((sa) << 14) | ((d) << 7) | (sb))
 		 
 /* shift group */
-#define SX_SRLV 	(0 << 21)	/* shift right logical, by vector */
-#define SX_SRLI 	(1 << 21)	/* shift right logical, by immediate */
-#define SX_SRAV 	(2 << 21)	/* shift right arithmetic, by vector */
-#define SX_SRAI 	(3 << 21)	/* shift right arithmetic, by immediate */
-#define SX_SLLV 	(4 << 21)	/* shift left logical, by vector */
-#define SX_SLLI 	(5 << 21)	/* shift left logical, by immediate */
-#define SX_SLFS 	(6 << 21)	/* shift left funnel, by SRCB */
-#define SX_SLFI 	(7 << 21)	/* shift left funnel, by immediate */
+#define SX_SRL_V 	(0 << 21)	/* shift right logical, by vector */
+#define SX_SRL_I 	(1 << 21)	/* shift right logical, by immediate */
+#define SX_SRA_V 	(2 << 21)	/* shift right arithmetic, by vector */
+#define SX_SRA_I 	(3 << 21)	/* shift right arithmetic, by immediate */
+#define SX_SLL_V 	(4 << 21)	/* shift left logical, by vector */
+#define SX_SLL_I 	(5 << 21)	/* shift left logical, by immediate */
+#define SX_SLF_S 	(6 << 21)	/* shift left funnel, by SRCB */
+#define SX_SLF_I 	(7 << 21)	/* shift left funnel, by immediate */
 
-#define SX_SRL_V(sa, sb, d, cnt) (0xc0000000 | ((cnt) << 24) | SX_SRLV | \
+#define SX_SRLV(sa, sb, d, cnt) (0xc0000000 | ((cnt) << 24) | SX_SRL_V | \
 		  ((sa) << 14) | ((d) << 7) | (sb))
-#define SX_SRL_I(sa, sb, d, cnt) (0xc0000000 | ((cnt) << 24) | SX_SRLI | \
+#define SX_SRLI(sa, sb, d, cnt) (0xc0000000 | ((cnt) << 24) | SX_SRL_I | \
 		  ((sa) << 14) | ((d) << 7) | (sb))
-#define SX_SRA_V(sa, sb, d, cnt) (0xc0000000 | ((cnt) << 24) | SX_SRAV | \
+#define SX_SRAV(sa, sb, d, cnt) (0xc0000000 | ((cnt) << 24) | SX_SRA_V | \
 		  ((sa) << 14) | ((d) << 7) | (sb))
-#define SX_SRA_I(sa, sb, d, cnt) (0xc0000000 | ((cnt) << 24) | SX_SRAI | \
+#define SX_SRAI(sa, sb, d, cnt) (0xc0000000 | ((cnt) << 24) | SX_SRA_I | \
 		  ((sa) << 14) | ((d) << 7) | (sb))
-#define SX_SLL_V(sa, sb, d, cnt) (0xc0000000 | ((cnt) << 24) | SX_SLLV | \
+#define SX_SLLV(sa, sb, d, cnt) (0xc0000000 | ((cnt) << 24) | SX_SLL_V | \
 		  ((sa) << 14) | ((d) << 7) | (sb))
-#define SX_SLL_I(sa, sb, d, cnt) (0xc0000000 | ((cnt) << 24) | SX_SLLI | \
+#define SX_SLLI(sa, sb, d, cnt) (0xc0000000 | ((cnt) << 24) | SX_SLL_I | \
 		  ((sa) << 14) | ((d) << 7) | (sb))
-#define SX_FUNNEL_S(sa, sb, d, cnt) (0xc0000000 | ((cnt) << 24) | SX_SLFS | \
+#define SX_FUNNEL_S(sa, sb, d, cnt) (0xc0000000 | ((cnt) << 24) | SX_SLF_S | \
 		  ((sa) << 14) | ((d) << 7) | (sb))
-#define SX_FUNNEL_I(sa, sb, d, cnt) (0xc0000000 | ((cnt) << 24) | SX_SLFI | \
+#define SX_FUNNEL_I(sa, sb, d, cnt) (0xc0000000 | ((cnt) << 24) | SX_SLF_I | \
 		  ((sa) << 14) | ((d) << 7) | (sb))
 
 #endif /* SXREG_H */
