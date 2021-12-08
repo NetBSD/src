@@ -6,7 +6,7 @@
 #include <machine/asm.h>
 
 #if defined(LIBC_SCCS)
-	RCSID("$NetBSD: strlen.S,v 1.3 2021/10/04 21:02:40 andvar Exp $")
+	RCSID("$NetBSD: strlen.S,v 1.4 2021/12/08 20:11:54 andvar Exp $")
 #endif
 
 ENTRY(strlen)
@@ -24,7 +24,7 @@ ENTRY(strlen)
 	/*
 	 * There are many well known branch-free sequences which are used
 	 * for determining whether a zero-byte is contained within a word.
-	 * These sequences are generally much more efficent than loading
+	 * These sequences are generally much more efficient than loading
 	 * and comparing each byte individually.
 	 *
 	 * The expression [1,2]:
