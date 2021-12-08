@@ -1,4 +1,4 @@
-/*	$NetBSD: attributes.c,v 1.32 2021/09/06 07:03:49 rin Exp $	*/
+/*	$NetBSD: attributes.c,v 1.33 2021/12/08 20:50:01 andvar Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: attributes.c,v 1.32 2021/09/06 07:03:49 rin Exp $");
+__RCSID("$NetBSD: attributes.c,v 1.33 2021/12/08 20:50:01 andvar Exp $");
 #endif				/* not lint */
 
 #include "curses.h"
@@ -364,7 +364,7 @@ __wattr_on(WINDOW *win, attr_t attr)
 	const TERMINAL *t = win->screen->term;
 
 	__CTRACE(__CTRACE_ATTR, "wattr_on: win %p, attr %08x\n", win, attr);
-	/* If can enter modes, set the relevent attribute bits. */
+	/* If can enter modes, set the relevant attribute bits. */
 	if (t_exit_attribute_mode(t) != NULL) {
 		if (attr & __BLINK && t_enter_blink_mode(t) != NULL)
 			win->wattr |= __BLINK;
@@ -411,7 +411,7 @@ __wattr_off(WINDOW *win, attr_t attr)
 	const TERMINAL *t = win->screen->term;
 
 	__CTRACE(__CTRACE_ATTR, "wattr_off: win %p, attr %08x\n", win, attr);
-	/* If can do exit modes, unset the relevent attribute bits. */
+	/* If can do exit modes, unset the relevant attribute bits. */
 	if (t_exit_attribute_mode(t) != NULL) {
 		if (attr & __BLINK)
 			win->wattr &= ~__BLINK;

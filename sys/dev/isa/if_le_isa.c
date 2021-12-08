@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le_isa.c,v 1.51 2021/08/07 16:19:12 thorpej Exp $	*/
+/*	$NetBSD: if_le_isa.c,v 1.52 2021/12/08 20:50:02 andvar Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_le_isa.c,v 1.51 2021/08/07 16:19:12 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_le_isa.c,v 1.52 2021/12/08 20:50:02 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -348,7 +348,7 @@ le_isa_attach(device_t parent, struct le_softc *lesc,
 	}
 	if (bus_dmamap_load(dmat, lesc->sc_dmam,
 			sc->sc_mem, LE_ISA_MEMSIZE, NULL, BUS_DMA_NOWAIT)) {
-		aprint_error_dev(sc->sc_dev, "coundn't load DMA map\n");
+		aprint_error_dev(sc->sc_dev, "couldn't load DMA map\n");
 		bus_dmamem_free(dmat, &seg, rseg);
 		return;
 	}
