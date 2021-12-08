@@ -1,4 +1,4 @@
-/* $NetBSD: fp_complete.c,v 1.28 2021/10/04 21:02:40 andvar Exp $ */
+/* $NetBSD: fp_complete.c,v 1.29 2021/12/08 20:21:09 andvar Exp $ */
 
 /*-
  * Copyright (c) 2001 Ross Harvey
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: fp_complete.c,v 1.28 2021/10/04 21:02:40 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fp_complete.c,v 1.29 2021/12/08 20:21:09 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -435,7 +435,7 @@ uint64_t
 alpha_read_fp_c(struct lwp *l)
 {
 	/*
-	 * A possibly-desireable EV6-specific optimization would deviate from
+	 * A possibly-desirable EV6-specific optimization would deviate from
 	 * the Alpha Architecture spec and keep some FP_C bits in the FPCR,
 	 * but in a transparent way. Some of the code for that would need to
 	 * go right here.

@@ -1,4 +1,4 @@
-/*	$NetBSD: parser.c,v 1.176 2021/12/05 04:42:54 msaitoh Exp $	*/
+/*	$NetBSD: parser.c,v 1.177 2021/12/08 20:21:09 andvar Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)parser.c	8.7 (Berkeley) 5/16/95";
 #else
-__RCSID("$NetBSD: parser.c,v 1.176 2021/12/05 04:42:54 msaitoh Exp $");
+__RCSID("$NetBSD: parser.c,v 1.177 2021/12/08 20:21:09 andvar Exp $");
 #endif
 #endif /* not lint */
 
@@ -673,7 +673,7 @@ simplecmd(union node **rpp, union node *redir)
 			/*
 			 * Make sure there are no unquoted $'s in the
 			 * name (allowing those, not expanding them,
-			 * simply treating '$' as a character, is desireable
+			 * simply treating '$' as a character, is desirable
 			 * but the parser has converted them to CTLxxx
 			 * chars, and that's not what we want
 			 *

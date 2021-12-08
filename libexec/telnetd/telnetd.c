@@ -1,4 +1,4 @@
-/*	$NetBSD: telnetd.c,v 1.56 2019/08/15 01:15:21 kamil Exp $	*/
+/*	$NetBSD: telnetd.c,v 1.57 2021/12/08 20:21:09 andvar Exp $	*/
 
 /*
  * Copyright (C) 1997 and 1998 WIDE Project.
@@ -65,7 +65,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\
 #if 0
 static char sccsid[] = "@(#)telnetd.c	8.4 (Berkeley) 5/30/95";
 #else
-__RCSID("$NetBSD: telnetd.c,v 1.56 2019/08/15 01:15:21 kamil Exp $");
+__RCSID("$NetBSD: telnetd.c,v 1.57 2021/12/08 20:21:09 andvar Exp $");
 #endif
 #endif /* not lint */
 
@@ -749,7 +749,7 @@ telnet(int f, int p)
 	get_slc_defaults();
 
 	/*
-	 * Do some tests where it is desireable to wait for a response.
+	 * Do some tests where it is desirable to wait for a response.
 	 * Rather than doing them slowly, one at a time, do them all
 	 * at once.
 	 */
