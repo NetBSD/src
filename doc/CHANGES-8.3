@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.3,v 1.1.2.112 2021/12/07 12:42:23 martin Exp $
+# $NetBSD: CHANGES-8.3,v 1.1.2.113 2021/12/08 15:58:11 martin Exp $
 
 A complete list of changes from the NetBSD 8.2 release to the NetBSD 8.3
 release:
@@ -2326,4 +2326,24 @@ sys/arch/x86/x86/identcpu.c			1.121
 
 	Make a numeric literal unsigned as it is bit-negated.
 	[msaitoh, ticket #1719]
+
+sys/arch/x86/include/specialreg.h		1.146, 1.171,
+						1.173-1.178 via patch
+sys/arch/x86/x86/identcpu.c			1.106, 1.117, 1.122 via patch
+sys/arch/x86/x86/pmap.c				patch
+sys/external/bsd/drm2/drm/drm_cache.c		1.14
+usr.sbin/cpuctl/arch/i386.c			1.114-1.117
+
+
+	- Add PT, PKRU, HDC, LA57, PKE, PKS, CET, CET_U, CET_S, HWP, KL,
+	  AVX512_BF16, TME_EN and PCONFIG.
+	- Rename some macros to match the x86 specification and the other OSes.
+	- Print CPUID 0x8000008 %ebx on Intel, too.
+	- Print CPUID leaf 7 subleaf 1.
+	- Identify Tiger Lake, 3rd gen Xeon Scalable (Ice Lake), Elkhart Lake
+	  and Jasper Lake.
+	- Remove a few unused MSRs.
+	- Add comment.
+	- KNF. Whitespace fix.
+	[msaitoh, ticket #1720]
 
