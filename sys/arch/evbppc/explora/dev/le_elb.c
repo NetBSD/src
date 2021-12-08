@@ -1,4 +1,4 @@
-/*	$NetBSD: le_elb.c,v 1.10 2021/03/02 12:01:02 rin Exp $	*/
+/*	$NetBSD: le_elb.c,v 1.11 2021/12/08 20:50:02 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: le_elb.c,v 1.10 2021/03/02 12:01:02 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: le_elb.c,v 1.11 2021/12/08 20:50:02 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -136,7 +136,7 @@ le_elb_attach(device_t parent, device_t self, void *aux)
 	}
 	if (bus_dmamap_load(msc->sc_dmat, msc->sc_dmam,
 	    sc->sc_mem, LE_MEMSIZE, NULL, BUS_DMA_NOWAIT)) {
-		aprint_error_dev(self, "coundn't load DMA map\n");
+		aprint_error_dev(self, "couldn't load DMA map\n");
 		bus_dmamem_free(msc->sc_dmat, &seg, rseg);
 		return;
 	}

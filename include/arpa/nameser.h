@@ -1,4 +1,4 @@
-/*	$NetBSD: nameser.h,v 1.26 2020/10/10 19:51:48 christos Exp $	*/
+/*	$NetBSD: nameser.h,v 1.27 2021/12/08 20:50:01 andvar Exp $	*/
 
 /*
  * Portions Copyright (C) 2004, 2005, 2008, 2009  Internet Systems Consortium, Inc. ("ISC")
@@ -113,7 +113,7 @@ typedef enum __ns_sect {
 } ns_sect;
 
 /*%
- * Network name (compressed or not) type.  Equivilent to a pointer when used
+ * Network name (compressed or not) type.  Equivalent to a pointer when used
  * in a function prototype.  Can be const'd.
  */
 typedef u_char ns_nname[NS_MAXNNAME];

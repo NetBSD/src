@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.11 2016/12/22 14:47:59 cherry Exp $	*/
+/*	$NetBSD: machdep.c,v 1.12 2021/12/08 20:50:02 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.11 2016/12/22 14:47:59 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.12 2021/12/08 20:50:02 andvar Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
@@ -254,7 +254,7 @@ initppc(u_long startkernel, u_long endkernel, u_int args, void *btinfo)
 
 		/*
 		 * Some machines incorrectly report memory size in
-		 * MB.  Stupid stupid IBM breaking thier own spec.
+		 * MB.  Stupid stupid IBM breaking their own spec.
 		 * on conformant machines, it is:
 		 * The highest addressable real memory address byte+1
 		 */

@@ -1,4 +1,4 @@
-/*	$NetBSD: audiotest.c,v 1.16 2021/12/05 07:30:51 msaitoh Exp $	*/
+/*	$NetBSD: audiotest.c,v 1.17 2021/12/08 20:50:03 andvar Exp $	*/
 
 /*
  * Copyright (C) 2019 Tetsuya Isaki. All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: audiotest.c,v 1.16 2021/12/05 07:30:51 msaitoh Exp $");
+__RCSID("$NetBSD: audiotest.c,v 1.17 2021/12/08 20:50:03 andvar Exp $");
 
 #include <errno.h>
 #include <fcntl.h>
@@ -5929,7 +5929,7 @@ getenc_make_table(int fd, int expected[][5])
 	 *   (e.g., encoding=AUDIO_ENCODING_PCM8, precision=16) but
 	 *   it's due to historical reasons.
 	 * - It's incomplete for NetBSD7 and NetBSD8.  I don't really
-	 *   understand thier rule...  This is just memo, not specification.
+	 *   understand their rule...  This is just memo, not specification.
 	 */
 #define SET(x) do {	\
 	if ((x) == 0)	\

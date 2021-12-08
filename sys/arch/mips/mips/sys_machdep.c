@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_machdep.c,v 1.34 2011/02/20 07:45:48 matt Exp $	*/
+/*	$NetBSD: sys_machdep.c,v 1.35 2021/12/08 20:50:02 andvar Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.34 2011/02/20 07:45:48 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.35 2021/12/08 20:50:02 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -132,7 +132,7 @@ mips_user_cacheflush(struct proc *p, vaddr_t va, size_t nbytes, int whichcache)
 		 * XXX: still to be done:
 		 *   Check that base is user-space.
 		 *   Check that we have a mapping, calculate physaddr.
-		 *   Flush relevent cache(s).
+		 *   Flush relevant cache(s).
 		 */
 		if (whichcache & ICACHE) {
 			MachFlushCache(uncached_physaddr, len);

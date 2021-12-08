@@ -1,4 +1,4 @@
-/*	$NetBSD: fdc_pcmcia.c,v 1.22 2021/08/07 16:19:15 thorpej Exp $	*/
+/*	$NetBSD: fdc_pcmcia.c,v 1.23 2021/12/08 20:50:02 andvar Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdc_pcmcia.c,v 1.22 2021/08/07 16:19:15 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdc_pcmcia.c,v 1.23 2021/12/08 20:50:02 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -168,7 +168,7 @@ fdc_pcmcia_attach(device_t parent, device_t self, void *aux)
 	TAILQ_INIT(&fdc->sc_drives);
 
 	if (!fdcfind(fdc->sc_iot, fdc->sc_ioh, 1))
-		aprint_error_dev(self, "coundn't find fdc\n");
+		aprint_error_dev(self, "couldn't find fdc\n");
 
 	fdc_conf(fdc);
 
