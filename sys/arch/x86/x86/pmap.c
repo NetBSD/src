@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.245.6.6 2018/03/22 16:59:04 martin Exp $	*/
+/*	$NetBSD: pmap.c,v 1.245.6.7 2021/12/08 15:56:18 martin Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2010, 2016, 2017 The NetBSD Foundation, Inc.
@@ -171,7 +171,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.245.6.6 2018/03/22 16:59:04 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.245.6.7 2021/12/08 15:56:18 martin Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -1594,7 +1594,7 @@ pmap_init_directmap(struct pmap *kpm)
 	 * Map the direct map RW. Use super pages (1GB) or large pages (2MB) if
 	 * they are supported. Note: PG_G is not allowed on non-leaf PTPs.
 	 */
-	if (cpu_feature[2] & CPUID_P1GB) {
+	if (cpu_feature[2] & CPUID_PAGE1GB) {
 		/* Super pages are supported. Just create L3. */
 		for (i = 0; i < nL3e; i++) {
 			pdp = (paddr_t)&(((pd_entry_t *)L3page_pa)[i]);

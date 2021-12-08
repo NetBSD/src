@@ -1,4 +1,4 @@
-/*	$NetBSD: i386.c,v 1.74.6.11 2020/08/05 15:48:53 martin Exp $	*/
+/*	$NetBSD: i386.c,v 1.74.6.12 2021/12/08 15:56:18 martin Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: i386.c,v 1.74.6.11 2020/08/05 15:48:53 martin Exp $");
+__RCSID("$NetBSD: i386.c,v 1.74.6.12 2021/12/08 15:56:18 martin Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -344,14 +344,18 @@ const struct cpu_cpuid_nameclass i386_cpuid_cpus[] = {
 				[0x5e] = "6th gen Core, Xeon E3-1[25]00 v5 (Skylake)",
 				[0x5f] = "Atom (Goldmont, Denverton)",
 				[0x66] = "8th gen Core i3 (Cannon Lake)",
-				[0x6a] = "Future Xeon (Ice Lake)",
-				[0x6c] = "Future Xeon (Ice Lake)",
+				[0x6a] = "3rd gen Xeon Scalable (Ice Lake)",
+				[0x6c] = "3rd gen Xeon Scalable (Ice Lake)",
 				[0x7a] = "Atom (Goldmont Plus)",
 				[0x7d] = "10th gen Core (Ice Lake)",
 				[0x7e] = "10th gen Core (Ice Lake)",
 				[0x85] = "Xeon Phi 7215, 7285, 7295 (Knights Mill)",
 				[0x86] = "Atom (Tremont)",
+				[0x8c] = "11th gen Core (Tiger Lake)",
+				[0x8d] = "11th gen Core (Tiger Lake)",
 				[0x8e] = "7th or 8th gen Core (Kaby Lake, Coffee Lake) or Xeon E (Coffee Lake)",
+				[0x96] = "Atom x6000E (Elkhart Lake)",
+				[0x9c] = "Pentium Silver N6xxx, Celeron N45xx, Celeron N51xx (Jasper Lake)",
 				[0x9e] = "7th or 8th gen Core (Kaby Lake, Coffee Lake) or Xeon E (Coffee Lake)",
 				[0xa5] = "10th gen Core (Comet Lake)",
 				[0xa6] = "10th gen Core (Comet Lake)",
@@ -1627,7 +1631,7 @@ cpu_probe_base_features(struct cpu_info *ci, const char *cpuname)
 	 * If the processor serial number misfeature is present and supported,
 	 * extract it here.
 	 */
-	if ((ci->ci_feat_val[0] & CPUID_PN) != 0) {
+	if ((ci->ci_feat_val[0] & CPUID_PSN) != 0) {
 		ci->ci_cpu_serial[0] = ci->ci_signature;
 		x86_cpuid(3, descs);
 		ci->ci_cpu_serial[2] = descs[2];
@@ -2109,7 +2113,7 @@ identifycpu(int fd, const char *cpuname)
 
 	x86_print_cache_and_tlb_info(ci);
 
-	if (ci->ci_max_cpuid >= 3 && (ci->ci_feat_val[0] & CPUID_PN)) {
+	if (ci->ci_max_cpuid >= 3 && (ci->ci_feat_val[0] & CPUID_PSN)) {
 		aprint_verbose("%s: serial number %04X-%04X-%04X-%04X-%04X-%04X\n",
 		    cpuname,
 		    ci->ci_cpu_serial[0] / 65536, ci->ci_cpu_serial[0] % 65536,
@@ -2176,19 +2180,25 @@ identifycpu(int fd, const char *cpuname)
 		x86_cpuid(7, descs);
 		aprint_verbose("%s: SEF highest subleaf %08x\n",
 		    cpuname, descs[0]);
+		if (descs[0] >= 1) {
+			x86_cpuid2(7, 1, descs);
+			print_bits(cpuname, "SEF-subleaf1-eax",
+			    CPUID_SEF1_FLAGS_A, descs[0]);
+		}
 	}
 
-	if ((cpu_vendor == CPUVENDOR_INTEL) || (cpu_vendor == CPUVENDOR_AMD))
+	if ((cpu_vendor == CPUVENDOR_INTEL) || (cpu_vendor == CPUVENDOR_AMD)) {
 		if (ci->ci_max_ext_cpuid >= 0x80000007)
 			powernow_probe(ci);
 
-	if (cpu_vendor == CPUVENDOR_AMD) {
 		if (ci->ci_max_ext_cpuid >= 0x80000008) {
 			x86_cpuid(0x80000008, descs);
 			print_bits(cpuname, "AMD Extended features",
 			    CPUID_CAPEX_FLAGS, descs[1]);
 		}
+	}
 
+	if (cpu_vendor == CPUVENDOR_AMD) {
 		if ((ci->ci_max_ext_cpuid >= 0x8000000a)
 		    && (ci->ci_feat_val[3] & CPUID_SVM) != 0) {
 			x86_cpuid(0x8000000a, descs);
