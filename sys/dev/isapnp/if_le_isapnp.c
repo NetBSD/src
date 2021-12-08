@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le_isapnp.c,v 1.35 2010/11/13 13:52:03 uebayasi Exp $	*/
+/*	$NetBSD: if_le_isapnp.c,v 1.36 2021/12/08 20:50:02 andvar Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_le_isapnp.c,v 1.35 2010/11/13 13:52:03 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_le_isapnp.c,v 1.36 2021/12/08 20:50:02 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -220,7 +220,7 @@ le_isapnp_attach(device_t parent, device_t self, void *aux)
 	}
 	if (bus_dmamap_load(dmat, lesc->sc_dmam,
 	    sc->sc_mem, LE_ISAPNP_MEMSIZE, NULL, BUS_DMA_NOWAIT)) {
-		aprint_error(": coundn't load DMA map\n");
+		aprint_error(": couldn't load DMA map\n");
 		bus_dmamem_free(dmat, &seg, rseg);
 		return;
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: wait.h,v 1.36 2018/07/03 22:38:33 kamil Exp $	*/
+/*	$NetBSD: wait.h,v 1.37 2021/12/08 20:50:03 andvar Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993, 1994
@@ -41,7 +41,7 @@
 #include <sys/idtype.h>
 
 /*
- * This file holds definitions relevent to the wait4 system call
+ * This file holds definitions relevant to the wait4 system call
  * and the alternate interfaces that use it (wait, wait3, waitpid).
  */
 

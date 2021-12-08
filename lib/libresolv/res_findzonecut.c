@@ -1,4 +1,4 @@
-/*	$NetBSD: res_findzonecut.c,v 1.1 2012/11/15 18:48:48 christos Exp $	*/
+/*	$NetBSD: res_findzonecut.c,v 1.2 2021/12/08 20:50:01 andvar Exp $	*/
 
 /*
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -20,7 +20,7 @@
 #if 0
 static const char rcsid[] = "Id: res_findzonecut.c,v 1.10 2005/10/11 00:10:16 marka Exp ";
 #else
-__RCSID("$NetBSD: res_findzonecut.c,v 1.1 2012/11/15 18:48:48 christos Exp $");
+__RCSID("$NetBSD: res_findzonecut.c,v 1.2 2021/12/08 20:50:01 andvar Exp $");
 #endif
 
 
@@ -120,7 +120,7 @@ static void	res_dprintf(const char *, ...) ISC_FORMAT_PRINTF(1, 2);
  * notes:
  *\li	this function calls res_nsend() which means it depends on correctly
  *	functioning recursive nameservers (usually defined in /etc/resolv.conf
- *	or its local equivilent).
+ *	or its local equivalent).
  *
  *\li	we start by asking for an SOA<dname,class>.  if we get one as an
  *	answer, that just means <dname,class> is a zone top, which is fine.

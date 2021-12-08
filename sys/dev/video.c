@@ -1,4 +1,4 @@
-/* $NetBSD: video.c,v 1.42 2021/08/09 21:38:04 andvar Exp $ */
+/* $NetBSD: video.c,v 1.43 2021/12/08 20:50:02 andvar Exp $ */
 
 /*
  * Copyright (c) 2008 Patrick Mahoney <pat@polycrystal.org>
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: video.c,v 1.42 2021/08/09 21:38:04 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: video.c,v 1.43 2021/12/08 20:50:02 andvar Exp $");
 
 #include "video.h"
 #if NVIDEO > 0
@@ -136,7 +136,7 @@ struct video_stream {
 
 	int			vs_frameno; /* toggles between 0 and 1,
 					     * or -1 if new */
-	uint32_t		vs_sequence; /* absoulte frame/sample number in
+	uint32_t		vs_sequence; /* absolute frame/sample number in
 					      * sequence, wraps around */
 	bool			vs_drop; /* drop payloads from current
 					  * frameno? */
@@ -2378,7 +2378,7 @@ videommap(dev_t dev, off_t off, int prot)
 }
 
 
-/* Allocates buffers and initizlizes some fields.  The format field
+/* Allocates buffers and initializes some fields.  The format field
  * must already have been initialized. */
 void
 video_stream_init(struct video_stream *vs)
