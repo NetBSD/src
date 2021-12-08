@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_vnops.c,v 1.219 2021/10/05 18:00:28 christos Exp $	*/
+/*	$NetBSD: procfs_vnops.c,v 1.220 2021/12/08 20:11:54 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008, 2020 The NetBSD Foundation, Inc.
@@ -105,7 +105,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_vnops.c,v 1.219 2021/10/05 18:00:28 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_vnops.c,v 1.220 2021/12/08 20:11:54 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -1259,7 +1259,7 @@ procfs_root_readdir_callback(struct proc *p, void *arg)
  *
  * the strategy here with procfs is to generate a single
  * directory entry at a time (struct dirent) and then
- * copy that out to userland using uiomove.  a more efficent
+ * copy that out to userland using uiomove.  a more efficient
  * though more complex implementation, would try to minimize
  * the number of calls to uiomove().  for procfs, this is
  * hardly worth the added code complexity.
