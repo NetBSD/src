@@ -1,4 +1,4 @@
-/*	$NetBSD: strlen.S,v 1.6 2014/03/22 19:16:34 jakllsch Exp $	*/
+/*	$NetBSD: strlen.S,v 1.7 2021/12/08 20:11:54 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -37,13 +37,13 @@
 #include <machine/asm.h>
 
 #if defined(LIBC_SCCS)
-	RCSID("$NetBSD: strlen.S,v 1.6 2014/03/22 19:16:34 jakllsch Exp $")
+	RCSID("$NetBSD: strlen.S,v 1.7 2021/12/08 20:11:54 andvar Exp $")
 #endif
 
 /*
  * There are many well known branch-free sequences which are used
  * for determining whether a zero-byte is contained within a word.
- * These sequences are generally much more efficent than loading
+ * These sequences are generally much more efficient than loading
  * and comparing each byte individually.
  *
  * The expression [1,2]:

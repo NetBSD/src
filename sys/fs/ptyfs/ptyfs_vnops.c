@@ -1,4 +1,4 @@
-/*	$NetBSD: ptyfs_vnops.c,v 1.67 2021/10/20 03:08:17 thorpej Exp $	*/
+/*	$NetBSD: ptyfs_vnops.c,v 1.68 2021/12/08 20:11:54 andvar Exp $	*/
 
 /*
  * Copyright (c) 1993, 1995
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ptyfs_vnops.c,v 1.67 2021/10/20 03:08:17 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ptyfs_vnops.c,v 1.68 2021/12/08 20:11:54 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -633,7 +633,7 @@ ptyfs_lookup(void *v)
  *
  * the strategy here with ptyfs is to generate a single
  * directory entry at a time (struct dirent) and then
- * copy that out to userland using uiomove.  a more efficent
+ * copy that out to userland using uiomove.  a more efficient
  * though more complex implementation, would try to minimize
  * the number of calls to uiomove().  for ptyfs, this is
  * hardly worth the added code complexity.
