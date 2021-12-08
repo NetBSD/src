@@ -1,4 +1,4 @@
-/*	$NetBSD: omap_mputmr.c,v 1.7 2020/05/29 12:30:39 rin Exp $	*/
+/*	$NetBSD: omap_mputmr.c,v 1.8 2021/12/08 20:21:10 andvar Exp $	*/
 
 /*
  * Based on i80321_timer.c and arch/arm/sa11x0/sa11x0_ost.c
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: omap_mputmr.c,v 1.7 2020/05/29 12:30:39 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: omap_mputmr.c,v 1.8 2021/12/08 20:21:10 andvar Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -412,7 +412,7 @@ calc_timer_factors(int ints_per_sec, timer_factors *tf)
 	 *
 	 * To save that last smidgen of power, find the largest prescaler that
 	 * will give us a reload value that doesn't have any error.  However,
-	 * to keep delay() accurate, it is desireable to have the number of
+	 * to keep delay() accurate, it is desirable to have the number of
 	 * counts per us be non-fractional.
 	 *
 	 * us_incs = OMAP_MPU_TIMER_CLOCK_FREQ / 2**(PTV+1) / 1,000,000
