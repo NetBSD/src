@@ -1,4 +1,4 @@
-.\"	$NetBSD: install,v 1.59 2019/11/21 19:23:20 martin Exp $
+.\"	$NetBSD: install,v 1.60 2021/12/08 12:54:15 uwe Exp $
 .\"
 .\" Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -336,7 +336,7 @@ Run the following commands:
 .disp)
 .Pp
 Now you can transfer the
-.Nx \*V.
+.Nx \*V .
 distribution sets from
 .Pq Pa binary/sets
 to the tape by using a series of additional
@@ -476,4 +476,4 @@ instead using the following commands:
 .Pp
 .Em Congratulations ,
 you have successfully installed
-.Nx \*V.
+.Nx \*V .
