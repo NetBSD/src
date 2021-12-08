@@ -1,4 +1,4 @@
-#	$NetBSD: fstab.sd0.amiga,v 1.4 2005/05/06 08:41:00 hubertf Exp $
+#	$NetBSD: fstab.sd0.amiga,v 1.5 2021/12/08 19:28:30 andvar Exp $
 #
 # Sample fstab for Amiga.
 #
@@ -12,9 +12,9 @@
 #	fast file system on /usr (NBU\7) next to lowest scsi disk unit
 /dev/sd0d	/usr	ffs	rw		1	2	
 #	amigados file system on /amiga (DOS/1)
-#	It is recomended that you mount it on a dir that matches the
+#	It is recommended that you mount it on a dir that matches the
 #	volume name and then slinks will resolve correctly. All ados
-#	unknonwn and NBU type filesystems are addressed in physical
+#	unknown and NBU type filesystems are addressed in physical
 #	offset (on media) order.  So in this example the bsd usr part is
 #	first on the disk followed by the ados.
 #/dev/sd0e	/amiga	ados	ro
