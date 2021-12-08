@@ -1,4 +1,4 @@
-/* $NetBSD: ipsec.c,v 1.172 2020/08/28 06:20:44 ozaki-r Exp $ */
+/* $NetBSD: ipsec.c,v 1.173 2021/12/08 20:03:26 andvar Exp $ */
 /* $FreeBSD: ipsec.c,v 1.2.2.2 2003/07/01 01:38:13 sam Exp $ */
 /* $KAME: ipsec.c,v 1.103 2001/05/24 07:14:18 sakane Exp $ */
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.172 2020/08/28 06:20:44 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.173 2021/12/08 20:03:26 andvar Exp $");
 
 /*
  * IPsec controller part.
@@ -1849,7 +1849,7 @@ skippolicycheck:
  *
  *   IPv6 receivers MUST discard UDP packets with a zero checksum.
  *
- * There is more relaxed speficication RFC6935(IPv6 and UDP Checksums for
+ * There is more relaxed specification RFC6935(IPv6 and UDP Checksums for
  * Tunneled Packets). The document allows zero checksum. It's too
  * late to publish, there are a lot of interoperability problems...
  */
