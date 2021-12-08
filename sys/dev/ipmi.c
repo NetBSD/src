@@ -1,4 +1,4 @@
-/*	$NetBSD: ipmi.c,v 1.4.4.1 2020/08/18 09:36:36 martin Exp $ */
+/*	$NetBSD: ipmi.c,v 1.4.4.2 2021/12/08 15:50:13 martin Exp $ */
 
 /*
  * Copyright (c) 2019 Michael van Elst
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipmi.c,v 1.4.4.1 2020/08/18 09:36:36 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipmi.c,v 1.4.4.2 2021/12/08 15:50:13 martin Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -238,7 +238,6 @@ static	int bmc_io_wait(struct ipmi_softc *, int, uint8_t, uint8_t, const char *)
 static	int bmc_io_wait_spin(struct ipmi_softc *, int, uint8_t, uint8_t);
 static	int bmc_io_wait_sleep(struct ipmi_softc *, int, uint8_t, uint8_t);
 
-static	void *bt_buildmsg(struct ipmi_softc *, int, int, int, const void *, int *);
 static	void *cmn_buildmsg(struct ipmi_softc *, int, int, int, const void *, int *);
 
 static	int getbits(uint8_t *, int, int);
@@ -268,6 +267,7 @@ static	int kcs_reset(struct ipmi_softc *);
 static	int kcs_sendmsg(struct ipmi_softc *, int, const uint8_t *);
 static	int kcs_recvmsg(struct ipmi_softc *, int, int *len, uint8_t *);
 
+static	void *bt_buildmsg(struct ipmi_softc *, int, int, int, const void *, int *);
 static	int bt_probe(struct ipmi_softc *);
 static	int bt_reset(struct ipmi_softc *);
 static	int bt_sendmsg(struct ipmi_softc *, int, const uint8_t *);
@@ -1984,13 +1984,8 @@ ipmi_thread(void *cookie)
 			break;
 
 	/* allocate and fill sensor arrays */
-	sc->sc_sensor =
-	    malloc(sizeof(envsys_data_t) * sc->sc_nsensors,
-	        M_DEVBUF, M_WAITOK | M_ZERO);
-	if (sc->sc_sensor == NULL) {
-		aprint_error_dev(self, "can't allocate envsys_data_t\n");
-		kthread_exit(0);
-	}
+	sc->sc_sensor = malloc(sizeof(sc->sc_sensor[0]) * sc->sc_nsensors,
+	    M_DEVBUF, M_WAITOK | M_ZERO);
 
 	sc->sc_envsys = sysmon_envsys_create();
 	sc->sc_envsys->sme_cookie = sc;
@@ -2034,6 +2029,7 @@ ipmi_thread(void *cookie)
 	if (sysmon_envsys_register(sc->sc_envsys)) {
 		aprint_error_dev(self, "unable to register with sysmon\n");
 		sysmon_envsys_destroy(sc->sc_envsys);
+		sc->sc_envsys = NULL;
 	}
 
 	/* initialize sensor list for thread */
@@ -2089,6 +2085,8 @@ ipmi_thread(void *cookie)
 	if (!pmf_device_register(self, ipmi_suspend, NULL))
                 aprint_error_dev(self, "couldn't establish a power handler\n");
 
+	config_pending_decr(self);
+
 	mutex_enter(&sc->sc_poll_mtx);
 	while (sc->sc_thread_running) {
 		while (sc->sc_mode == IPMI_MODE_COMMAND)
@@ -2107,7 +2105,6 @@ ipmi_thread(void *cookie)
 		    SENSOR_REFRESH_RATE);
 	}
 	mutex_exit(&sc->sc_poll_mtx);
-	self->dv_flags &= ~DVF_ATTACH_INPROGRESS;
 	kthread_exit(0);
 }
 
@@ -2130,11 +2127,11 @@ ipmi_attach(device_t parent, device_t self, void *aux)
 	cv_init(&sc->sc_poll_cv, "ipmipoll");
 	cv_init(&sc->sc_mode_cv, "ipmimode");
 
-	if (kthread_create(PRI_NONE, 0, NULL, ipmi_thread, self,
+	if (kthread_create(PRI_NONE, KTHREAD_MUSTJOIN, NULL, ipmi_thread, self,
 	    &sc->sc_kthread, "%s", device_xname(self)) != 0) {
 		aprint_error_dev(self, "unable to create thread, disabled\n");
 	} else
-		self->dv_flags |= DVF_ATTACH_INPROGRESS;
+		config_pending_incr(self);
 }
 
 static int
@@ -2148,6 +2145,8 @@ ipmi_detach(device_t self, int flags)
 	sc->sc_thread_running = false;
 	cv_signal(&sc->sc_poll_cv);
 	mutex_exit(&sc->sc_poll_mtx);
+	if (sc->sc_kthread)
+		(void)kthread_join(sc->sc_kthread);
 
 	if ((rc = sysmon_wdog_unregister(&sc->sc_wdog)) != 0) {
 		if (rc == ERESTART)
@@ -2314,6 +2313,13 @@ ipmi_suspend(device_t dev, const pmf_qual_t *qual)
 static int
 ipmi_open(dev_t dev, int flag, int fmt, lwp_t *l)
 {
+	struct ipmi_softc *sc;
+	int unit;
+
+	unit = IPMIUNIT(dev);
+	if ((sc = device_lookup_private(&ipmi_cd, unit)) == NULL)
+		return (ENXIO);
+
 	return 0;
 }
 
