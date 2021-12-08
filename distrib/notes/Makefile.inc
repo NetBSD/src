@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.56 2020/06/23 06:28:01 martin Exp $
+#	$NetBSD: Makefile.inc,v 1.57 2021/12/08 13:06:44 uwe Exp $
 #
 
 # Ross Harvey <ross@NetBSD.org>
@@ -48,6 +48,8 @@ PRESET+=	-rFOR_RELEASE=0
 .endif
 .if (${DISTRIBVER:M*.99.*})
 PRESET+=	-rRELEASE_BRANCH=0
+# make .Nx \*V happy
+PRESET+=	-doperating-system-NetBSD-${DISTRIBVER}=${DISTRIBVER}
 .elif (${DISTRIBVER:M*.[0-9]*})
 PRESET+=	-rRELEASE_BRANCH=1
 PRESET+=	-rminor=${DISTRIBVER:C/^[0-9]+\.([0-9])+.*$/\1/}
