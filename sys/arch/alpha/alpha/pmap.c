@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.303 2021/09/19 20:43:46 andvar Exp $ */
+/* $NetBSD: pmap.c,v 1.304 2021/12/09 21:13:18 andvar Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001, 2007, 2008, 2020
@@ -135,7 +135,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.303 2021/09/19 20:43:46 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.304 2021/12/09 21:13:18 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2106,7 +2106,7 @@ pmap_enter_l2pt_delref(pmap_t const pmap, pt_entry_t * const l1pte,
 	/*
 	 * PALcode may have tried to service a TLB miss with
 	 * this L2 PTE, so we need to make sure we don't actually
-	 * free the PT page untl we've shot down any TLB entries
+	 * free the PT page until we've shot down any TLB entries
 	 * for this VPT index.
 	 */
 
@@ -3810,7 +3810,7 @@ pmap_l2pt_delref(pmap_t pmap, pt_entry_t *l1pte, pt_entry_t *l2pte,
 			    "0x%lx\n", pmap_pte_pa(l1pte));
 #endif
 		/*
-		 * You can pass NULL if you know the last refrence won't
+		 * You can pass NULL if you know the last reference won't
 		 * be dropped.
 		 */
 		KASSERT(tlbctx != NULL);
@@ -3870,7 +3870,7 @@ pmap_asn_alloc(pmap_t const pmap, struct cpu_info * const ci)
 	KASSERT(pmap->pm_percpu[ci->ci_cpuid].pmc_lev1map != kernel_lev1map);
 	KASSERT(kpreempt_disabled());
 
-	/* No work to do if the the CPU does not implement ASNs. */
+	/* No work to do if the CPU does not implement ASNs. */
 	if (pmap_max_asn == 0)
 		return 0;
 
