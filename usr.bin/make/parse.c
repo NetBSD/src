@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.571 2021/12/07 23:56:06 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.572 2021/12/09 20:13:09 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -109,7 +109,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.571 2021/12/07 23:56:06 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.572 2021/12/09 20:13:09 rillig Exp $");
 
 /* types and constants */
 
@@ -2895,7 +2895,7 @@ ParseForLoop(const char *line)
 		line = ParseGetLine(GLM_FOR_BODY);
 		if (line == NULL) {
 			Parse_Error(PARSE_FATAL,
-			    "Unexpected end of file in for loop.");
+			    "Unexpected end of file in .for loop");
 			break;
 		}
 	} while (For_Accum(line));

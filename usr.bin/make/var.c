@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.968 2021/12/07 21:47:21 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.969 2021/12/09 20:13:10 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -140,7 +140,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.968 2021/12/07 21:47:21 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.969 2021/12/09 20:13:10 rillig Exp $");
 
 /*
  * Variables are defined using one of the VAR=value assignments.  Their
@@ -498,7 +498,7 @@ Var_Delete(GNode *scope, const char *varname)
 	v = he->value;
 	if (v->inUse) {
 		Parse_Error(PARSE_FATAL,
-		    "Cannot delete variable \"%s\" while it is used.",
+		    "Cannot delete variable \"%s\" while it is used",
 		    v->name.str);
 		return;
 	}
@@ -2449,7 +2449,7 @@ ApplyModifier_Loop(const char **pp, ModChain *ch)
 	if (strchr(args.var, '$') != NULL) {
 		Parse_Error(PARSE_FATAL,
 		    "In the :@ modifier of \"%s\", the variable name \"%s\" "
-		    "must not contain a dollar.",
+		    "must not contain a dollar",
 		    expr->name, args.var);
 		return AMR_CLEANUP;
 	}
