@@ -1,4 +1,4 @@
-.\"	$NetBSD: 2.2.t,v 1.5 2013/10/06 05:45:19 dholland Exp $
+.\"	$NetBSD: 2.2.t,v 1.6 2021/12/09 21:14:50 andvar Exp $
 .\"
 .\" Copyright (c) 1983, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -311,7 +311,7 @@ properties.  A hard link ensures that the target
 file will always be accessible, even after its original
 directory entry is removed; no such guarantee exists for a symbolic link.
 Unlike hard links,
-symbolic links can refernce directories and span filesystems boundaries.
+symbolic links can reference directories and span filesystems boundaries.
 An
 .Fn lstat
 (see section
