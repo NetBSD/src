@@ -1,4 +1,4 @@
-make: "var-eval-short.mk" line 41: In the :@ modifier of "", the variable name "${FAIL}" must not contain a dollar.
+make: "var-eval-short.mk" line 41: In the :@ modifier of "", the variable name "${FAIL}" must not contain a dollar
 make: "var-eval-short.mk" line 41: Malformed conditional (0 && ${:Uword:@${FAIL}@expr@})
 make: "var-eval-short.mk" line 81: Invalid time value: ${FAIL}}
 make: "var-eval-short.mk" line 81: Malformed conditional (0 && ${:Uword:gmtime=${FAIL}})
