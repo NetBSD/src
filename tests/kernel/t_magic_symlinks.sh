@@ -1,4 +1,4 @@
-# $NetBSD: t_magic_symlinks.sh,v 1.1 2020/07/01 13:49:26 jruoho Exp $
+# $NetBSD: t_magic_symlinks.sh,v 1.2 2021/12/09 06:38:23 rillig Exp $
 #
 # Copyright (c) 2020 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -222,7 +222,7 @@ atf_test_case realpath cleanup
 nointerpreter_head() {
 	atf_set "require.user" "root"
 	atf_set "descr" "Check that realpath(1) agrees with the "
-		"the kernel on magic symlink(7)'s (PR lib/55361)"
+		"kernel on magic symlink(7)'s (PR lib/55361)"
 }
 
 realpath_body() {
