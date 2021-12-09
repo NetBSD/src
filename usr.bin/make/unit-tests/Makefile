@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.286 2021/12/05 15:20:13 rillig Exp $
+# $NetBSD: Makefile,v 1.287 2021/12/09 20:47:33 rillig Exp $
 #
 # Unit tests for make(1)
 #
@@ -652,7 +652,8 @@ TMPDIR:=	/tmp/uid${.MAKE.UID}
 x!= echo; mkdir -p ${TMPDIR}
 .endif
 
-MAKE_TEST_ENV?=	MALLOC_CONF="junk:true"	# for jemalloc
+MAKE_TEST_ENV=	MALLOC_OPTIONS="JA"	# for jemalloc 100
+MAKE_TEST_ENV+=	MALLOC_CONF="junk:true"	# for jemalloc 510
 MAKE_TEST_ENV+= TMPDIR=${TMPDIR}
 
 .if ${.MAKE.OS} == "NetBSD"
