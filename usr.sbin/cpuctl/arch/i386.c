@@ -1,4 +1,4 @@
-/*	$NetBSD: i386.c,v 1.123 2021/10/27 04:15:42 mrg Exp $	*/
+/*	$NetBSD: i386.c,v 1.124 2021/12/09 14:23:06 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: i386.c,v 1.123 2021/10/27 04:15:42 mrg Exp $");
+__RCSID("$NetBSD: i386.c,v 1.124 2021/12/09 14:23:06 msaitoh Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -2420,11 +2420,13 @@ x86_print_cache_and_tlb_info(struct cpu_info *ci)
 
 	sep = print_tlb_config(ci, CAI_ITLB, "ITLB:", NULL);
 	sep = print_tlb_config(ci, CAI_ITLB2, "ITLB:", sep);
+	sep = print_tlb_config(ci, CAI_L1_1GBITLB, "ITLB:", sep);
 	if (sep != NULL)
 		aprint_verbose("\n");
 
 	sep = print_tlb_config(ci, CAI_DTLB, "DTLB:", NULL);
 	sep = print_tlb_config(ci, CAI_DTLB2, "DTLB:", sep);
+	sep = print_tlb_config(ci, CAI_L1_1GBDTLB, "DTLB:", sep);
 	if (sep != NULL)
 		aprint_verbose("\n");
 
@@ -2438,33 +2440,19 @@ x86_print_cache_and_tlb_info(struct cpu_info *ci)
 
 	sep = print_tlb_config(ci, CAI_L2_ITLB, "L2 ITLB:", NULL);
 	sep = print_tlb_config(ci, CAI_L2_ITLB2, "L2 ITLB:", sep);
+	sep = print_tlb_config(ci, CAI_L2_1GBITLB, "L2 ITLB:", sep);
 	if (sep != NULL)
 		aprint_verbose("\n");
 
 	sep = print_tlb_config(ci, CAI_L2_DTLB, "L2 DTLB:", NULL);
 	sep = print_tlb_config(ci, CAI_L2_DTLB2, "L2 DTLB:", sep);
+	sep = print_tlb_config(ci, CAI_L2_1GBDTLB, "L2 DTLB:", sep);
 	if (sep != NULL)
 		aprint_verbose("\n");
 
 	sep = print_tlb_config(ci, CAI_L2_STLB, "L2 STLB:", NULL);
 	sep = print_tlb_config(ci, CAI_L2_STLB2, "L2 STLB:", sep);
 	sep = print_tlb_config(ci, CAI_L2_STLB3, "L2 STLB:", sep);
-	if (sep != NULL)
-		aprint_verbose("\n");
-
-	sep = print_tlb_config(ci, CAI_L1_1GBITLB, "L1 1GB page ITLB:", NULL);
-	if (sep != NULL)
-		aprint_verbose("\n");
-
-	sep = print_tlb_config(ci, CAI_L1_1GBDTLB, "L1 1GB page DTLB:", NULL);
-	if (sep != NULL)
-		aprint_verbose("\n");
-
-	sep = print_tlb_config(ci, CAI_L2_1GBITLB, "L2 1GB page ITLB:", NULL);
-	if (sep != NULL)
-		aprint_verbose("\n");
-
-	sep = print_tlb_config(ci, CAI_L2_1GBDTLB, "L2 1GB page DTLB:", NULL);
 	if (sep != NULL)
 		aprint_verbose("\n");
 }
