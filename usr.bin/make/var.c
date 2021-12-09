@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.969 2021/12/09 20:13:10 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.970 2021/12/09 20:27:01 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -140,7 +140,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.969 2021/12/09 20:13:10 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.970 2021/12/09 20:27:01 rillig Exp $");
 
 /*
  * Variables are defined using one of the VAR=value assignments.  Their
@@ -2587,7 +2587,7 @@ ApplyModifier_Gmtime(const char **pp, ModChain *ch)
 		const char *p = mod + 7;
 		if (!TryParseTime(&p, &utc)) {
 			Parse_Error(PARSE_FATAL,
-			    "Invalid time value: %s", mod + 7);
+			    "Invalid time value at \"%s\"", mod + 7);
 			return AMR_CLEANUP;
 		}
 		*pp = p;
@@ -2619,7 +2619,7 @@ ApplyModifier_Localtime(const char **pp, ModChain *ch)
 		const char *p = mod + 10;
 		if (!TryParseTime(&p, &utc)) {
 			Parse_Error(PARSE_FATAL,
-			    "Invalid time value: %s", mod + 10);
+			    "Invalid time value at \"%s\"", mod + 10);
 			return AMR_CLEANUP;
 		}
 		*pp = p;
@@ -3092,7 +3092,7 @@ ApplyModifier_ToSep(const char **pp, ModChain *ch)
 
 		if (!TryParseChar(&p, base, &ch->sep)) {
 			Parse_Error(PARSE_FATAL,
-			    "Invalid character number: %s", p);
+			    "Invalid character number at \"%s\"", p);
 			return AMR_CLEANUP;
 		}
 		if (!IsDelimiter(*p, ch)) {
