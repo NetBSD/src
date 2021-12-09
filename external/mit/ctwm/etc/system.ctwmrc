@@ -1,5 +1,5 @@
 #
-# $NetBSD: system.ctwmrc,v 1.13 2021/04/11 11:05:49 nia Exp $
+# $NetBSD: system.ctwmrc,v 1.14 2021/12/09 07:33:24 nia Exp $
 #
 # ctwmrc by nia
 #
@@ -149,8 +149,6 @@ NoStackMode
 StayUpMenus
 WarpToDefaultMenuEntry
 MenuShadowDepth      1
-
-TitleFocus
 
 # warp through all windows in the current workspace
 WindowRing
