@@ -1,4 +1,4 @@
-/*	$NetBSD: suff.c,v 1.355 2021/11/28 22:48:06 rillig Exp $	*/
+/*	$NetBSD: suff.c,v 1.356 2021/12/09 20:13:09 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -115,7 +115,7 @@
 #include "dir.h"
 
 /*	"@(#)suff.c	8.4 (Berkeley) 3/21/94"	*/
-MAKE_RCSID("$NetBSD: suff.c,v 1.355 2021/11/28 22:48:06 rillig Exp $");
+MAKE_RCSID("$NetBSD: suff.c,v 1.356 2021/12/09 20:13:09 rillig Exp $");
 
 typedef List SuffixList;
 typedef ListNode SuffixListNode;
@@ -2072,7 +2072,7 @@ Suff_SetNull(const char *name)
 	Suffix *suff = FindSuffixByName(name);
 	if (suff == NULL) {
 		Parse_Error(PARSE_WARNING,
-		    "Desired null suffix %s not defined.",
+		    "Desired null suffix %s not defined",
 		    name);
 		return;
 	}
