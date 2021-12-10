@@ -1,4 +1,4 @@
-/*	$NetBSD: cond.c,v 1.288 2021/12/10 23:33:05 rillig Exp $	*/
+/*	$NetBSD: cond.c,v 1.289 2021/12/10 23:56:17 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -95,7 +95,7 @@
 #include "dir.h"
 
 /*	"@(#)cond.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: cond.c,v 1.288 2021/12/10 23:33:05 rillig Exp $");
+MAKE_RCSID("$NetBSD: cond.c,v 1.289 2021/12/10 23:56:17 rillig Exp $");
 
 /*
  * The parsing of conditional expressions is based on this grammar:
@@ -196,16 +196,6 @@ static Token
 ToToken(bool cond)
 {
 	return cond ? TOK_TRUE : TOK_FALSE;
-}
-
-/* Push back the most recent token read. We only need one level of this. */
-static void
-CondParser_PushBack(CondParser *par, Token t)
-{
-	assert(par->curr == TOK_NONE);
-	assert(t != TOK_NONE);
-
-	par->curr = t;
 }
 
 static void
@@ -933,6 +923,22 @@ CondParser_Token(CondParser *par, bool doEval)
 	}
 }
 
+/* Skip the next token if it equals t. */
+static bool
+CondParser_Skip(CondParser *par, Token t)
+{
+	Token actual;
+
+	actual = CondParser_Token(par, false);
+	if (actual == t)
+		return true;
+
+	assert(par->curr == TOK_NONE);
+	assert(actual != TOK_NONE);
+	par->curr = actual;
+	return false;
+}
+
 /*
  * Term -> '(' Or ')'
  * Term -> '!' Term
@@ -979,7 +985,6 @@ static CondResult
 CondParser_And(CondParser *par, bool doEval)
 {
 	CondResult res, rhs;
-	Token op;
 
 	res = CR_TRUE;
 	do {
@@ -989,9 +994,8 @@ CondParser_And(CondParser *par, bool doEval)
 			res = CR_FALSE;
 			doEval = false;
 		}
-	} while ((op = CondParser_Token(par, false)) == TOK_AND);
+	} while (CondParser_Skip(par, TOK_AND));
 
-	CondParser_PushBack(par, op);
 	return res;
 }
 
@@ -1002,7 +1006,6 @@ static CondResult
 CondParser_Or(CondParser *par, bool doEval)
 {
 	CondResult res, rhs;
-	Token op;
 
 	res = CR_FALSE;
 	do {
@@ -1012,9 +1015,8 @@ CondParser_Or(CondParser *par, bool doEval)
 			res = CR_TRUE;
 			doEval = false;
 		}
-	} while ((op = CondParser_Token(par, false)) == TOK_OR);
+	} while (CondParser_Skip(par, TOK_OR));
 
-	CondParser_PushBack(par, op);
 	return res;
 }
 
