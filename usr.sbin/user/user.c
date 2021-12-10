@@ -1,4 +1,4 @@
-/* $NetBSD: user.c,v 1.133 2019/07/29 09:33:21 wiz Exp $ */
+/* $NetBSD: user.c,v 1.134 2021/12/10 20:06:29 nia Exp $ */
 
 /*
  * Copyright (c) 1999 Alistair G. Crooks.  All rights reserved.
@@ -33,7 +33,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 1999\
  The NetBSD Foundation, Inc.  All rights reserved.");
-__RCSID("$NetBSD: user.c,v 1.133 2019/07/29 09:33:21 wiz Exp $");
+__RCSID("$NetBSD: user.c,v 1.134 2021/12/10 20:06:29 nia Exp $");
 #endif
 
 #include <sys/types.h>
@@ -934,6 +934,9 @@ typedef struct passwd_type_t {
 } passwd_type_t;
 
 static passwd_type_t	passwd_types[] = {
+	{ "$argon2i",	8,	SIZE_MAX,	"\\$[^$]+\\$[^$]+\\$[^$]+\\$(.*)", 1 },	/* Argon2i */
+	{ "$argon2id",	9,	SIZE_MAX,	"\\$[^$]+\\$[^$]+\\$[^$]+\\$(.*)", 1 },	/* Argon2id */
+	{ "$argon2d",	8,	SIZE_MAX,	"\\$[^$]+\\$[^$]+\\$[^$]+\\$(.*)", 1 },	/* Argon2id */
 	{ "$sha1",	5,	28,	"\\$[^$]+\\$[^$]+\\$[^$]+\\$(.*)", 1 },	/* SHA1 */
 	{ "$2a",	3,	53,	"\\$[^$]+\\$[^$]+\\$(.*)",	1 },	/* Blowfish */
 	{ "$1",		2,	34,	NULL,				0 },	/* MD5 */
@@ -953,14 +956,16 @@ valid_password_length(char *newpasswd)
 	for (pwtp = passwd_types; pwtp->desc_length != (size_t)~0; pwtp++) {
 		if (strncmp(newpasswd, pwtp->type, pwtp->desc_length) == 0) {
 			if (pwtp->regex == NULL) {
-				return strlen(newpasswd) == pwtp->length;
+				return pwtp->length == SIZE_MAX ||
+				    strlen(newpasswd) == pwtp->length;
 			}
 			(void)regcomp(&r, pwtp->regex, REG_EXTENDED);
 			if (regexec(&r, newpasswd, 10, matchv, 0) == 0) {
 				regfree(&r);
-				return (int)(matchv[pwtp->re_sub].rm_eo -
-				    matchv[pwtp->re_sub].rm_so) ==
-				    pwtp->length;
+				return pwtp->length == SIZE_MAX ||
+				    (int)(matchv[pwtp->re_sub].rm_eo -
+					matchv[pwtp->re_sub].rm_so) ==
+					pwtp->length;
 			}
 			regfree(&r);
 		}
