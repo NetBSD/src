@@ -1,4 +1,4 @@
-/*	$NetBSD: sxreg.h,v 1.20 2021/12/08 17:03:38 macallan Exp $	*/
+/*	$NetBSD: sxreg.h,v 1.21 2021/12/10 20:36:03 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -82,13 +82,13 @@
  */
 #if 0
 #define SX_PB		0x00001000	/* enable page bound checking */
-#define SX_WO		0x00002000	/* write occured ( by SX ) */
+#define SX_WO		0x00002000	/* write occurred ( by SX ) */
 #define SX_GO		0x00004000	/* start/stop the processor */
 #define SX_MT		0x00008000	/* instruction queue is empty */
 #endif
 
 #define SX_PB		0x00000400	/* enable page bound checking */
-#define SX_WO		0x00000800	/* write occured ( by SX ) */
+#define SX_WO		0x00000800	/* write occurred ( by SX ) */
 #define SX_GO		0x00001000	/* start/stop the processor */
 #define SX_JB		0x00002000	/* Jammed/Busy specifies the type of events */
 					/* which increment the SX timer */
@@ -98,16 +98,16 @@
 					/* instruction is pending in the Q      */
 #define SX_B0MOD	0x00010000	/* When set by SX it indicates that a write */
 					/* to bank zero of the SX registers (0-31) */
-					/* occured */
+					/* occurred */
 #define SX_B1MOD	0x00020000	/* When set by SX it indicates that a write */
 					/* to bank 1 of the SX registers (32-63) */
-					/* occured */
+					/* occurred */
 #define SX_B2MOD	0x00040000	/* When set by SX it indicates that a write */
 					/* to bank 2 of the SX registers (64-95) */
-					/* occured */
+					/* occurred */
 #define SX_B3MOD	0x00080000	/* When set by SX it indicates that a write */
 					/* to bank 3 of the SX registers (96-127) */
-					/* occured */
+					/* occurred */
 
 /* SX_ERROR */
 #define SX_SE1		0x00000001	/* illegal instruction */

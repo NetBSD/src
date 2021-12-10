@@ -1,4 +1,4 @@
-/*	$NetBSD: hil.c,v 1.5 2021/08/07 16:19:11 thorpej Exp $	*/
+/*	$NetBSD: hil.c,v 1.6 2021/12/10 20:36:03 andvar Exp $	*/
 /*	$OpenBSD: hil.c,v 1.24 2010/11/20 16:45:46 miod Exp $	*/
 /*
  * Copyright (c) 2003, 2004, Miodrag Vallat.
@@ -390,7 +390,7 @@ hil_process_poll(struct hil_softc *sc, uint8_t stat, uint8_t c)
 			case HIL_UNPLUGGED:
 				/*
 				 * Remember that an unplugged event
-				 * occured; it will be processed upon
+				 * occurred; it will be processed upon
 				 * leaving polled mode...
 				 */
 				sc->sc_pending = HIL_PENDING_UNPLUGGED;

@@ -28,7 +28,7 @@ POSSIBILITY OF SUCH DAMAGE.
 ***************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cxgb_t3_hw.c,v 1.6 2021/11/10 17:19:30 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cxgb_t3_hw.c,v 1.7 2021/12/10 20:36:04 andvar Exp $");
 
 
 #ifdef CONFIG_DEFINED
@@ -1218,7 +1218,7 @@ struct intr_info {
  *
  *  A table driven interrupt handler that applies a set of masks to an
  *  interrupt status word and performs the corresponding actions if the
- *  interrupts described by the mask have occured.  The actions include
+ *  interrupts described by the mask have occurred.  The actions include
  *  optionally printing a warning or alert message, and optionally
  *  incrementing a stat counter.  The table is terminated by an entry
  *  specifying mask 0.  Returns the number of fatal interrupt conditions.

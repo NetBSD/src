@@ -1,4 +1,4 @@
-/*	$NetBSD: sl811hs.c,v 1.107 2021/08/09 20:49:10 andvar Exp $	*/
+/*	$NetBSD: sl811hs.c,v 1.108 2021/12/10 20:36:03 andvar Exp $	*/
 
 /*
  * Not (c) 2007 Matthew Orgass
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sl811hs.c,v 1.107 2021/08/09 20:49:10 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sl811hs.c,v 1.108 2021/12/10 20:36:03 andvar Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_slhci.h"
@@ -2026,7 +2026,7 @@ slhci_abdone(struct slhci_softc *sc, int ab)
 	 * However, I have seen this problem again ("done but not started"
 	 * errors), which in some cases cases the SETUP status bit to remain
 	 * set on future transfers.  In other cases, the SETUP bit is not set
-	 * and no data corruption occurs.  This occured while using both umass
+	 * and no data corruption occurs.  This occurred while using both umass
 	 * and aue on a powered hub (maybe triggered by some local activity
 	 * also) and needs several reads of the 200MB file to trigger.  The
 	 * driver now halts if SETUP is detected.

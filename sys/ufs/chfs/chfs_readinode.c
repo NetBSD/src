@@ -1,4 +1,4 @@
-/*	$NetBSD: chfs_readinode.c,v 1.11 2021/07/15 22:39:06 andvar Exp $	*/
+/*	$NetBSD: chfs_readinode.c,v 1.12 2021/12/10 20:36:04 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2010 Department of Software Engineering,
@@ -135,7 +135,7 @@ const rb_tree_ops_t frag_rbtree_ops = {
  * Returns: 0 - if everything OK;
  * 	    	1 - if CRC is incorrect;
  * 	    	2 - else;
- *	    	error code if an error occured.
+ *	    	error code if an error occurred.
  */
 int
 chfs_check_td_data(struct chfs_mount *chmp,

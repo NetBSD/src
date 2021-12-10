@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_reconstruct.h,v 1.30 2021/07/23 00:54:45 oster Exp $	*/
+/*	$NetBSD: rf_reconstruct.h,v 1.31 2021/12/10 20:36:04 andvar Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -130,7 +130,7 @@ struct RF_ReconCtrl_s {
 	RF_ReconUnitCount_t  numRUsComplete; /* number of Reconstruction Units done */
 	RF_ReconUnitCount_t  numRUsTotal;    /* total number of Reconstruction Units */
 	int error;              /* non-0 indicates that an error has
-				   occured during reconstruction, and
+				   occurred during reconstruction, and
 				   the reconstruction is in the process of
 				   bailing out. */
 
