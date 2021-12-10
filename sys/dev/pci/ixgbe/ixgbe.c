@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe.c,v 1.296 2021/12/10 11:33:11 msaitoh Exp $ */
+/* $NetBSD: ixgbe.c,v 1.297 2021/12/10 11:39:48 msaitoh Exp $ */
 
 /******************************************************************************
 
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixgbe.c,v 1.296 2021/12/10 11:33:11 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixgbe.c,v 1.297 2021/12/10 11:39:48 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -919,9 +919,6 @@ ixgbe_attach(device_t parent, device_t dev, void *aux)
 		break;
 	}
 	aprint_normal_dev(dev, "device %s\n", str);
-
-	if (hw->mbx.ops.init_params)
-		hw->mbx.ops.init_params(hw);
 
 	hw->allow_unsupported_sfp = allow_unsupported_sfp;
 

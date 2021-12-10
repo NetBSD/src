@@ -1,4 +1,4 @@
-/* $NetBSD: if_sriov.c,v 1.13 2021/12/10 11:21:44 msaitoh Exp $ */
+/* $NetBSD: if_sriov.c,v 1.14 2021/12/10 11:39:48 msaitoh Exp $ */
 /******************************************************************************
 
   Copyright (c) 2001-2017, Intel Corporation
@@ -34,7 +34,7 @@
 /*$FreeBSD: head/sys/dev/ixgbe/if_sriov.c 327031 2017-12-20 18:15:06Z erj $*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sriov.c,v 1.13 2021/12/10 11:21:44 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sriov.c,v 1.14 2021/12/10 11:39:48 msaitoh Exp $");
 
 #include "ixgbe.h"
 #include "ixgbe_sriov.h"
@@ -714,6 +714,7 @@ ixgbe_init_iov(device_t dev, u16 num_vfs, const nvlist_t *config)
 	}
 
 	adapter->num_vfs = num_vfs;
+	ixgbe_init_mbx_params_pf(&adapter->hw);
 
 	/* set the SRIOV flag now as it's needed
 	 * by ixgbe_init_locked() */
