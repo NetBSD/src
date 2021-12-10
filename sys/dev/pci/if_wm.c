@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.719 2021/12/05 04:32:36 msaitoh Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.720 2021/12/10 05:39:22 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -39,21 +39,21 @@
 
   Copyright (c) 2001-2005, Intel Corporation
   All rights reserved.
- 
+
   Redistribution and use in source and binary forms, with or without
   modification, are permitted provided that the following conditions are met:
- 
+
    1. Redistributions of source code must retain the above copyright notice,
       this list of conditions and the following disclaimer.
- 
+
    2. Redistributions in binary form must reproduce the above copyright
       notice, this list of conditions and the following disclaimer in the
       documentation and/or other materials provided with the distribution.
- 
+
    3. Neither the name of the Intel Corporation nor the names of its
       contributors may be used to endorse or promote products derived from
       this software without specific prior written permission.
- 
+
   THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
   AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
   IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.719 2021/12/05 04:32:36 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.720 2021/12/10 05:39:22 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -17158,7 +17158,7 @@ wm_sysctl_tdh_handler(SYSCTLFN_ARGS)
 	struct sysctlnode node = *rnode;
 	struct wm_txqueue *txq = (struct wm_txqueue *)node.sysctl_data;
 	struct wm_queue *wmq = container_of(txq, struct wm_queue, wmq_txq);
-	struct wm_softc *sc = txq->txq_sc; 
+	struct wm_softc *sc = txq->txq_sc;
 	uint32_t reg;
 
 	reg = CSR_READ(sc, WMREG_TDH(wmq->wmq_id));
@@ -17172,7 +17172,7 @@ wm_sysctl_tdt_handler(SYSCTLFN_ARGS)
 	struct sysctlnode node = *rnode;
 	struct wm_txqueue *txq = (struct wm_txqueue *)node.sysctl_data;
 	struct wm_queue *wmq = container_of(txq, struct wm_queue, wmq_txq);
-	struct wm_softc *sc = txq->txq_sc; 
+	struct wm_softc *sc = txq->txq_sc;
 	uint32_t reg;
 
 	reg = CSR_READ(sc, WMREG_TDT(wmq->wmq_id));
