@@ -1,4 +1,4 @@
-# $NetBSD: cond-op-or.mk,v 1.7 2021/12/09 23:57:19 rillig Exp $
+# $NetBSD: cond-op-or.mk,v 1.8 2021/12/10 19:14:35 rillig Exp $
 #
 # Tests for the || operator in .if conditions.
 
@@ -24,10 +24,30 @@
 .if 1 || ${UNDEF}
 .endif
 
-# When an outer condition makes the '||' expression irrelevant, neither of its
-# operands must be evaluated.  This had been wrong in cond.c 1.283 from
+# When an outer condition makes the inner '||' condition irrelevant, neither
+# of its operands must be evaluated.  This had been wrong in cond.c 1.283 from
 # 2021-12-09 and was reverted in cond.c 1.284 an hour later.
 .if 0 && (!defined(UNDEF) || ${UNDEF})
+.endif
+
+# Test combinations of outer '&&' with inner '||', to ensure that the operands
+# of the inner '||' is only evaluated if necessary.
+DEF=	defined
+.if 0 && (${DEF} || ${UNDEF})
+.endif
+.if 0 && (!${DEF} || ${UNDEF})
+.endif
+.if 0 && (${UNDEF} || ${UNDEF})
+.endif
+.if 0 && (!${UNDEF} || ${UNDEF})
+.endif
+.if 1 && (${DEF} || ${UNDEF})
+.endif
+.if 1 && (!${DEF} || ${UNDEF})
+.endif
+.if 1 && (${UNDEF} || ${UNDEF})
+.endif
+.if 1 && (!${UNDEF} || ${UNDEF})
 .endif
 
 
