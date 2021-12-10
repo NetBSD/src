@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe_dcb.c,v 1.11 2021/04/30 06:55:32 msaitoh Exp $ */
+/* $NetBSD: ixgbe_dcb.c,v 1.12 2021/12/10 11:31:22 msaitoh Exp $ */
 /******************************************************************************
   SPDX-License-Identifier: BSD-3-Clause
 
@@ -35,7 +35,7 @@
 /*$FreeBSD: head/sys/dev/ixgbe/ixgbe_dcb.c 331224 2018-03-19 20:55:05Z erj $*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixgbe_dcb.c,v 1.11 2021/04/30 06:55:32 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixgbe_dcb.c,v 1.12 2021/12/10 11:31:22 msaitoh Exp $");
 
 #include "ixgbe_type.h"
 #include "ixgbe_dcb.h"
@@ -304,11 +304,11 @@ void ixgbe_dcb_unpack_map_cee(struct ixgbe_dcb_config *cfg, int direction,
  * The following rules are checked:
  * 1. The sum of bandwidth percentages of all Bandwidth Groups must total 100%.
  * 2. The sum of bandwidth percentages of all Traffic Classes within a Bandwidth
- *    Group must total 100.
+ *   Group must total 100.
  * 3. A Traffic Class should not be set to both Link Strict Priority
- *    and Group Strict Priority.
+ *   and Group Strict Priority.
  * 4. Link strict Bandwidth Groups can only have link strict traffic classes
- *    with zero bandwidth.
+ *   with zero bandwidth.
  */
 s32 ixgbe_dcb_check_config_cee(struct ixgbe_dcb_config *dcb_config)
 {
