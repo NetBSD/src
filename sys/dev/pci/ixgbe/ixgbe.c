@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe.c,v 1.295 2021/12/07 22:13:56 andvar Exp $ */
+/* $NetBSD: ixgbe.c,v 1.296 2021/12/10 11:33:11 msaitoh Exp $ */
 
 /******************************************************************************
 
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixgbe.c,v 1.295 2021/12/07 22:13:56 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixgbe.c,v 1.296 2021/12/10 11:33:11 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -235,7 +235,7 @@ static void	ixgbe_add_hw_stats(struct adapter *);
 static void	ixgbe_clear_evcnt(struct adapter *);
 static int	ixgbe_set_flowcntl(struct adapter *, int);
 static int	ixgbe_set_advertise(struct adapter *, int);
-static int	ixgbe_get_advertise(struct adapter *);
+static int	ixgbe_get_default_advertise(struct adapter *);
 
 /* Sysctl handlers */
 static void	ixgbe_set_sysctl_value(struct adapter *, const char *,
@@ -1229,7 +1229,7 @@ ixgbe_attach(device_t parent, device_t dev, void *aux)
 	/* Set an initial dmac value */
 	adapter->dmac = 0;
 	/* Set initial advertised speeds (if applicable) */
-	adapter->advertise = ixgbe_get_advertise(adapter);
+	adapter->advertise = ixgbe_get_default_advertise(adapter);
 
 	if (adapter->feat_cap & IXGBE_FEATURE_SRIOV)
 		ixgbe_define_iov_schemas(dev, &error);
@@ -5536,10 +5536,10 @@ ixgbe_sysctl_advertise(SYSCTLFN_ARGS)
  *
  *   Flags:
  *     0x00 - Default (all capable link speed)
- *     0x01 - advertise 100 Mb
- *     0x02 - advertise 1G
- *     0x04 - advertise 10G
- *     0x08 - advertise 10 Mb
+ *     0x1  - advertise 100 Mb
+ *     0x2  - advertise 1G
+ *     0x4  - advertise 10G
+ *     0x8  - advertise 10 Mb (yes, Mb)
  *     0x10 - advertise 2.5G
  *     0x20 - advertise 5G
  ************************************************************************/
@@ -5640,19 +5640,19 @@ ixgbe_set_advertise(struct adapter *adapter, int advertise)
 } /* ixgbe_set_advertise */
 
 /************************************************************************
- * ixgbe_get_advertise - Get current advertised speed settings
+ * ixgbe_get_default_advertise - Get default advertised speed settings
  *
  *   Formatted for sysctl usage.
  *   Flags:
- *     0x01 - advertise 100 Mb
- *     0x02 - advertise 1G
- *     0x04 - advertise 10G
- *     0x08 - advertise 10 Mb (yes, Mb)
+ *     0x1  - advertise 100 Mb
+ *     0x2  - advertise 1G
+ *     0x4  - advertise 10G
+ *     0x8  - advertise 10 Mb (yes, Mb)
  *     0x10 - advertise 2.5G
  *     0x20 - advertise 5G
  ************************************************************************/
 static int
-ixgbe_get_advertise(struct adapter *adapter)
+ixgbe_get_default_advertise(struct adapter *adapter)
 {
 	struct ixgbe_hw	 *hw = &adapter->hw;
 	int		 speed;
@@ -5673,15 +5673,15 @@ ixgbe_get_advertise(struct adapter *adapter)
 		return (0);
 
 	speed =
-	    ((link_caps & IXGBE_LINK_SPEED_10GB_FULL)  ? 0x04 : 0) |
-	    ((link_caps & IXGBE_LINK_SPEED_1GB_FULL)   ? 0x02 : 0) |
-	    ((link_caps & IXGBE_LINK_SPEED_100_FULL)   ? 0x01 : 0) |
-	    ((link_caps & IXGBE_LINK_SPEED_10_FULL)    ? 0x08 : 0) |
+	    ((link_caps & IXGBE_LINK_SPEED_10GB_FULL)  ? 0x4  : 0) |
+	    ((link_caps & IXGBE_LINK_SPEED_5GB_FULL)   ? 0x20 : 0) |
 	    ((link_caps & IXGBE_LINK_SPEED_2_5GB_FULL) ? 0x10 : 0) |
-	    ((link_caps & IXGBE_LINK_SPEED_5GB_FULL)   ? 0x20 : 0);
+	    ((link_caps & IXGBE_LINK_SPEED_1GB_FULL)   ? 0x2  : 0) |
+	    ((link_caps & IXGBE_LINK_SPEED_100_FULL)   ? 0x1  : 0) |
+	    ((link_caps & IXGBE_LINK_SPEED_10_FULL)    ? 0x8  : 0);
 
 	return speed;
-} /* ixgbe_get_advertise */
+} /* ixgbe_get_default_advertise */
 
 /************************************************************************
  * ixgbe_sysctl_dmac - Manage DMA Coalescing

@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe.h,v 1.83 2021/11/17 06:37:44 msaitoh Exp $ */
+/* $NetBSD: ixgbe.h,v 1.84 2021/12/10 11:33:11 msaitoh Exp $ */
 
 /******************************************************************************
   SPDX-License-Identifier: BSD-3-Clause
@@ -676,10 +676,10 @@ struct adapter {
 /* Sysctl help messages; displayed with sysctl -d */
 #define IXGBE_SYSCTL_DESC_ADV_SPEED \
 	"\nControl advertised link speed using these flags:\n" \
-	"\t0x01 - advertise 100M\n" \
-	"\t0x02 - advertise 1G\n" \
-	"\t0x04 - advertise 10G\n" \
-	"\t0x08 - advertise 10M\n" \
+	"\t0x1  - advertise 100M\n" \
+	"\t0x2  - advertise 1G\n" \
+	"\t0x4  - advertise 10G\n" \
+	"\t0x8  - advertise 10M\n" \
 	"\t0x10 - advertise 2.5G\n" \
 	"\t0x20 - advertise 5G\n\n" \
 	"\t5G, 2.5G, 100M and 10M are only supported on certain adapters."
