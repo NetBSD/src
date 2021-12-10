@@ -1,4 +1,4 @@
-/* $NetBSD: if_sriov.c,v 1.12 2021/12/10 11:18:30 msaitoh Exp $ */
+/* $NetBSD: if_sriov.c,v 1.13 2021/12/10 11:21:44 msaitoh Exp $ */
 /******************************************************************************
 
   Copyright (c) 2001-2017, Intel Corporation
@@ -34,7 +34,7 @@
 /*$FreeBSD: head/sys/dev/ixgbe/if_sriov.c 327031 2017-12-20 18:15:06Z erj $*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sriov.c,v 1.12 2021/12/10 11:18:30 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sriov.c,v 1.13 2021/12/10 11:21:44 msaitoh Exp $");
 
 #include "ixgbe.h"
 #include "ixgbe_sriov.h"
@@ -255,8 +255,9 @@ ixgbe_vf_set_default_vlan(struct adapter *adapter, struct ixgbe_vf *vf,
 
 
 static void
-ixgbe_clear_vfmbmem(struct ixgbe_hw *hw, struct ixgbe_vf *vf)
+ixgbe_clear_vfmbmem(struct adapter *adapter, struct ixgbe_vf *vf)
 {
+	struct ixgbe_hw *hw = &adapter->hw;
 	uint32_t vf_index = IXGBE_VF_INDEX(vf->pool);
 	uint16_t mbx_size = hw->mbx.size;
 	uint16_t i;
@@ -323,7 +324,7 @@ ixgbe_process_vf_reset(struct adapter *adapter, struct ixgbe_vf *vf)
 	// XXX clear multicast addresses
 
 	ixgbe_clear_rar(&adapter->hw, vf->rar_index);
-	ixgbe_clear_vfmbmem(&adapter->hw, vf);
+	ixgbe_clear_vfmbmem(adapter, vf);
 	ixgbe_toggle_txdctl(&adapter->hw, IXGBE_VF_INDEX(vf->pool));
 
 	vf->api_ver = IXGBE_API_VER_UNKNOWN;
