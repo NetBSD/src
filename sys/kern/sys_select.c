@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_select.c,v 1.56 2021/09/29 02:47:22 thorpej Exp $	*/
+/*	$NetBSD: sys_select.c,v 1.57 2021/12/10 20:36:04 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2009, 2010, 2019, 2020 The NetBSD Foundation, Inc.
@@ -84,7 +84,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_select.c,v 1.56 2021/09/29 02:47:22 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_select.c,v 1.57 2021/12/10 20:36:04 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -295,7 +295,7 @@ sel_do_scan(const char *opname, void *fds, const int nf, const size_t ni,
 			break;
 		/*
 		 * Acquire the lock and perform the (re)checks.  Note, if
-		 * collision has occured, then our state does not matter,
+		 * collision has occurred, then our state does not matter,
 		 * as we must perform re-scan.  Therefore, check it first.
 		 */
 state_check:
@@ -307,12 +307,12 @@ state_check:
 			continue;
 		}
 		if (__predict_true(l->l_selflag == SEL_EVENT)) {
-			/* Events occured, they are set directly. */
+			/* Events occurred, they are set directly. */
 			mutex_spin_exit(lock);
 			break;
 		}
 		if (__predict_true(l->l_selflag == SEL_RESET)) {
-			/* Events occured, but re-scan is requested. */
+			/* Events occurred, but re-scan is requested. */
 			mutex_spin_exit(lock);
 			selclear();
 			continue;

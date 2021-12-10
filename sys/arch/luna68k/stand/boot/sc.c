@@ -1,4 +1,4 @@
-/*	$NetBSD: sc.c,v 1.18 2021/06/15 17:16:16 tsutsui Exp $	*/
+/*	$NetBSD: sc.c,v 1.19 2021/12/10 20:36:02 andvar Exp $	*/
 
 /*
  * Copyright (c) 1992 OMRON Corporation.
@@ -651,7 +651,7 @@ scintr(void)
 			goto get_intr;
 	}
 
-	/* Unknown Interrupt occured */
+	/* Unknown interrupt occurred */
 	return -1;
 
 

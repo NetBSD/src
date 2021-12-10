@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.111 2021/12/05 02:56:55 msaitoh Exp $	*/
+/*	$NetBSD: audio.c,v 1.112 2021/12/10 20:36:03 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -138,7 +138,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.111 2021/12/05 02:56:55 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.112 2021/12/10 20:36:03 andvar Exp $");
 
 #ifdef _KERNEL_OPT
 #include "audio.h"
@@ -6917,7 +6917,7 @@ audio_mixers_get_format(struct audio_softc *sc, struct audio_info *ai)
  *	It indicates the number of times reached EOF(?).
  *
  * ai.{play,record}.error		(R/-)
- *	Non-zero indicates overflow/underflow has occured.
+ *	Non-zero indicates overflow/underflow has occurred.
  *
  * ai.{play,record}.waiting		(R/-)
  *	Non-zero indicates that other process waits to open.

@@ -1,4 +1,4 @@
-/*	$NetBSD: timex.h,v 1.18 2009/04/05 19:59:26 christos Exp $	*/
+/*	$NetBSD: timex.h,v 1.19 2021/12/10 20:36:04 andvar Exp $	*/
 
 /*-
  ***********************************************************************
@@ -186,7 +186,7 @@ f\17\1CLK\0=\0A\0=\1B\0"
 #define TIME_INS	1	/* insert leap second warning */
 #define TIME_DEL	2	/* delete leap second warning */
 #define TIME_OOP	3	/* leap second in progress */
-#define TIME_WAIT	4	/* leap second has occured */
+#define TIME_WAIT	4	/* leap second has occurred */
 #define TIME_ERROR	5	/* error (see status word) */
 
 /*

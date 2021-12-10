@@ -1,4 +1,4 @@
-/*	$NetBSD: bozohttpd.c,v 1.136 2021/08/24 09:47:36 mrg Exp $	*/
+/*	$NetBSD: bozohttpd.c,v 1.137 2021/12/10 20:36:02 andvar Exp $	*/
 
 /*	$eterna: bozohttpd.c,v 1.178 2011/11/18 09:21:15 mrg Exp $	*/
 
@@ -2164,7 +2164,7 @@ static struct errors_map {
 	{ 413, 	"413 Payload Too Large", "Use smaller requests", },
 	{ 417,	"417 Expectation Failed","Expectations not available", },
 	{ 420,	"420 Enhance Your Calm","Chill, Winston", },
-	{ 500,	"500 Internal Error",	"An error occured on the server", },
+	{ 500,	"500 Internal Error",	"An error occurred on the server", },
 	{ 501,	"501 Not Implemented",	"This request is not available", },
 	{ 0,	NULL,			NULL, },
 };
