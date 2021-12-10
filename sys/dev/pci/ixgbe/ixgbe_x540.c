@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe_x540.c,v 1.19 2021/05/19 08:19:20 msaitoh Exp $ */
+/* $NetBSD: ixgbe_x540.c,v 1.20 2021/12/10 11:20:13 msaitoh Exp $ */
 
 /******************************************************************************
   SPDX-License-Identifier: BSD-3-Clause
@@ -36,7 +36,7 @@
 /*$FreeBSD: head/sys/dev/ixgbe/ixgbe_x540.c 331224 2018-03-19 20:55:05Z erj $*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixgbe_x540.c,v 1.19 2021/05/19 08:19:20 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixgbe_x540.c,v 1.20 2021/12/10 11:20:13 msaitoh Exp $");
 
 #include "ixgbe_x540.h"
 #include "ixgbe_type.h"
@@ -328,7 +328,7 @@ s32 ixgbe_start_hw_X540(struct ixgbe_hw *hw)
 	if (ret_val != IXGBE_SUCCESS)
 		goto out;
 
-	ret_val = ixgbe_start_hw_gen2(hw);
+	ixgbe_start_hw_gen2(hw);
 
 out:
 	return ret_val;

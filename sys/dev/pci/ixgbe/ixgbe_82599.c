@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe_82599.c,v 1.24 2021/12/10 11:16:54 msaitoh Exp $ */
+/* $NetBSD: ixgbe_82599.c,v 1.25 2021/12/10 11:20:13 msaitoh Exp $ */
 
 /******************************************************************************
   SPDX-License-Identifier: BSD-3-Clause
@@ -36,7 +36,7 @@
 /*$FreeBSD: head/sys/dev/ixgbe/ixgbe_82599.c 331224 2018-03-19 20:55:05Z erj $*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixgbe_82599.c,v 1.24 2021/12/10 11:16:54 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixgbe_82599.c,v 1.25 2021/12/10 11:20:13 msaitoh Exp $");
 
 #include "ixgbe_type.h"
 #include "ixgbe_82599.h"
@@ -2144,9 +2144,7 @@ s32 ixgbe_start_hw_82599(struct ixgbe_hw *hw)
 	if (ret_val != IXGBE_SUCCESS)
 		goto out;
 
-	ret_val = ixgbe_start_hw_gen2(hw);
-	if (ret_val != IXGBE_SUCCESS)
-		goto out;
+	ixgbe_start_hw_gen2(hw);
 
 	/* We need to run link autotry after the driver loads */
 	hw->mac.autotry_restart = TRUE;
