@@ -1,4 +1,4 @@
-.\"	$NetBSD: libnvmm.3,v 1.27 2020/09/05 07:22:25 maxv Exp $
+.\"	$NetBSD: libnvmm.3,v 1.28 2021/12/10 11:08:45 msaitoh Exp $
 .\"
 .\" Copyright (c) 2018-2020 Maxime Villard, m00nbsd.net
 .\" All rights reserved.
@@ -26,7 +26,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd February 9, 2020
+.Dd December 10, 2021
 .Dt LIBNVMM 3
 .Os
 .Sh NAME
@@ -246,7 +246,7 @@ the guest virtual address given in
 .Fa gva
 into a guest physical address returned in
 .Fa gpa .
-The associated page premissions are returned in
+The associated page permissions are returned in
 .Fa prot .
 .Fa gva
 must be page-aligned.
@@ -258,7 +258,7 @@ the guest physical address indicated in
 .Fa gpa
 into a host virtual address returned in
 .Fa hva .
-The associated page premissions are returned in
+The associated page permissions are returned in
 .Fa prot .
 .Fa gpa
 must be page-aligned.
