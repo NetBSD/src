@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe_common.c,v 1.36 2021/12/10 11:22:41 msaitoh Exp $ */
+/* $NetBSD: ixgbe_common.c,v 1.37 2021/12/10 11:25:22 msaitoh Exp $ */
 
 /******************************************************************************
   SPDX-License-Identifier: BSD-3-Clause
@@ -36,7 +36,7 @@
 /*$FreeBSD: head/sys/dev/ixgbe/ixgbe_common.c 331224 2018-03-19 20:55:05Z erj $*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixgbe_common.c,v 1.36 2021/12/10 11:22:41 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixgbe_common.c,v 1.37 2021/12/10 11:25:22 msaitoh Exp $");
 
 #include "ixgbe_common.h"
 #include "ixgbe_phy.h"
@@ -3835,11 +3835,11 @@ s32 ixgbe_clear_vmdq_generic(struct ixgbe_hw *hw, u32 rar, u32 vmdq)
 	if (vmdq == IXGBE_CLEAR_VMDQ_ALL) {
 		if (mpsar_lo) {
 			IXGBE_WRITE_REG(hw, IXGBE_MPSAR_LO(rar), 0);
-			mpsar_lo = 0;
+			mpsar_lo = IXGBE_READ_REG(hw, IXGBE_MPSAR_LO(rar));
 		}
 		if (mpsar_hi) {
 			IXGBE_WRITE_REG(hw, IXGBE_MPSAR_HI(rar), 0);
-			mpsar_hi = 0;
+			mpsar_hi = IXGBE_READ_REG(hw, IXGBE_MPSAR_HI(rar));
 		}
 	} else if (vmdq < 32) {
 		mpsar_lo &= ~(1 << vmdq);
