@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe_type.h,v 1.50 2021/11/01 21:28:03 andvar Exp $ */
+/* $NetBSD: ixgbe_type.h,v 1.51 2021/12/10 11:30:09 msaitoh Exp $ */
 
 /******************************************************************************
   SPDX-License-Identifier: BSD-3-Clause
@@ -1114,8 +1114,10 @@ struct ixgbe_dmac_config {
 #define IXGBE_HSMC0R		0x15F04
 #define IXGBE_HSMC1R		0x15F08
 #define IXGBE_SWSR		0x15F10
+#define IXGBE_FWRESETCNT	0x15F40
 #define IXGBE_HFDR		0x15FE8
 #define IXGBE_FLEX_MNG		0x15800 /* 0x15800 - 0x15EFC */
+#define IXGBE_FLEX_MNG_PTR(_i)	(IXGBE_FLEX_MNG + ((_i) * 4))
 
 #define IXGBE_HICR_EN		0x01  /* Enable bit - RO */
 /* Driver sets this bit when done to put command in RAM */
@@ -2405,6 +2407,17 @@ enum {
 #define IXGBE_PHYFW_REV			0x19
 #define IXGBE_ALT_MAC_ADDR_PTR		0x37
 #define IXGBE_FREE_SPACE_PTR		0X3E
+
+#if defined(PREBOOT_SUPPORT) || defined(QV_RELEASE)
+/* Minimum Rollback Revision offsets */
+#define IXGBE_MINRREV_PHY_ANALOG_LO	0x46
+#define IXGBE_MINRREV_PHY_ANALOG_HI	0x47
+#define IXGBE_MINRREV_OROM_LO		0x48
+#define IXGBE_MINRREV_OROM_HI		0x49
+#define IXGBE_MINRREV_FW_LO		0x4A
+#define IXGBE_MINRREV_FW_HI		0x4B
+#endif /* PREBOOT_SUPPORT || QV_RELEASE*/
+
 
 #define IXGBE_SAN_MAC_ADDR_PTR		0x28
 #define IXGBE_NVM_MAP_VER		0x29
