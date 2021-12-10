@@ -1,4 +1,4 @@
-/* $NetBSD: term.h,v 1.24 2020/06/05 22:08:10 roy Exp $ */
+/* $NetBSD: term.h,v 1.25 2021/12/10 20:36:02 andvar Exp $ */
 
 /*
  * Copyright (c) 2009, 2010, 2011, 2013, 2020 The NetBSD Foundation, Inc.
@@ -1749,7 +1749,7 @@ enum TISTRS{
  * key_ll: sent by home-down key
  * key_mark: sent by mark key
  * key_message: sent by message key
- * key_mouse: 0631, Mouse event has occured
+ * key_mouse: 0631, Mouse event has occurred
  * key_move: sent by move key
  * key_next: sent by next-object key
  * key_npage: sent by next-page key

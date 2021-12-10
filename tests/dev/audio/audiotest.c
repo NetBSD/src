@@ -1,4 +1,4 @@
-/*	$NetBSD: audiotest.c,v 1.17 2021/12/08 20:50:03 andvar Exp $	*/
+/*	$NetBSD: audiotest.c,v 1.18 2021/12/10 20:36:05 andvar Exp $	*/
 
 /*
  * Copyright (C) 2019 Tetsuya Isaki. All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: audiotest.c,v 1.17 2021/12/08 20:50:03 andvar Exp $");
+__RCSID("$NetBSD: audiotest.c,v 1.18 2021/12/10 20:36:05 andvar Exp $");
 
 #include <errno.h>
 #include <fcntl.h>
@@ -6072,7 +6072,7 @@ DEF(AUDIO_GETENC_range)
 	memset(&expected, 0, sizeof(expected));
 	i = getenc_make_table(fd, expected);
 
-	/* When error has occured, the next index should also occur error */
+	/* When error has occurred, the next index should also occur error */
 	ae.index = i + 1;
 	r = IOCTL(fd, AUDIO_GETENC, &ae, "index=%d", ae.index);
 	XP_SYS_NG(EINVAL, r);

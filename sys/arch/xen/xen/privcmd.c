@@ -1,4 +1,4 @@
-/* $NetBSD: privcmd.c,v 1.60 2020/11/30 17:06:02 bouyer Exp $ */
+/* $NetBSD: privcmd.c,v 1.61 2021/12/10 20:36:03 andvar Exp $ */
 
 /*-
  * Copyright (c) 2004 Christian Limpach.
@@ -27,7 +27,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: privcmd.c,v 1.60 2020/11/30 17:06:02 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: privcmd.c,v 1.61 2021/12/10 20:36:03 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -772,7 +772,7 @@ privcmd_ioctl(void *v)
 				hc->retval = error;
 				error = 0;
 			} else {
-				/* error occured, return the errno */
+				/* error occurred, return the errno */
 				error = privcmd_xen2bsd_errno(error);
 				hc->retval = 0;
 			}

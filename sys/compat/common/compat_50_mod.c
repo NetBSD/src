@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_50_mod.c,v 1.3 2019/04/15 02:07:11 pgoyette Exp $	*/
+/*	$NetBSD: compat_50_mod.c,v 1.4 2021/12/10 20:36:03 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: compat_50_mod.c,v 1.3 2019/04/15 02:07:11 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_50_mod.c,v 1.4 2021/12/10 20:36:03 andvar Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -91,7 +91,7 @@ compat_50_init(void)
 
 	return error;
 
-/* If an error occured, undo all previous set-up before returning */
+/* If an error occurred, undo all previous set-up before returning */
 
  err3:
 	kern_select_50_fini();

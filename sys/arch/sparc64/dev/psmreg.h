@@ -71,7 +71,7 @@
 #define PSM_STAT_OVT	0x02	/* Over temperature condition */
 #define PSM_STAT_UN1	0x04	/* Unused */
 #define PSM_STAT_UN2	0x08	/* Unused */
-#define PSM_STAT_ERR	0x10	/* Hardware error occured */
+#define PSM_STAT_ERR	0x10	/* Hardware error occurred */
 #define PSM_STAT_MCR	0x20	/* Master Command Register busy */
 #define PSM_STAT_WBF	0x40	/* Write buffer full */
 #define PSM_STAT_RDA	0x80	/* Read data available */

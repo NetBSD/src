@@ -1,5 +1,5 @@
 /*	$KAME: dccp_tfrc.c,v 1.16 2006/03/01 17:34:08 nishida Exp $	*/
-/*	$NetBSD: dccp_tfrc.c,v 1.8 2021/12/05 07:26:35 msaitoh Exp $ */
+/*	$NetBSD: dccp_tfrc.c,v 1.9 2021/12/10 20:36:04 andvar Exp $ */
 
 /*
  * Copyright (c) 2003  Nils-Erik Mattsson
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dccp_tfrc.c,v 1.8 2021/12/05 07:26:35 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dccp_tfrc.c,v 1.9 2021/12/10 20:36:04 andvar Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_dccp.h"
@@ -1463,7 +1463,7 @@ tfrc_recv_detectLoss(struct tfrc_recv_ccb * cb)
 		TFRC_RECV_FINDDATAPACKET(cb, aLoss, num_later);
 		if (aLoss == NULL) {
 			if (TAILQ_EMPTY(&(cb->li_hist))) {
-				/* no loss event have occured yet */
+				/* no loss event have occurred yet */
 
 				/* todo: find a lost data packet by comparing
 				 * to initial seq num */

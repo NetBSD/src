@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.120 2021/12/07 21:37:36 andvar Exp $	*/
+/*	$NetBSD: pmap.c,v 1.121 2021/12/10 20:36:02 andvar Exp $	*/
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.120 2021/12/07 21:37:36 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.121 2021/12/10 20:36:02 andvar Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_ddb.h"
@@ -2495,7 +2495,7 @@ pmap_fault_fixup(struct pmap *pm, vaddr_t va, vm_prot_t accessprot, bool user)
 		goto done;
 	}
 
-	/* pte is readable and writable, but occured fault? probably copy(9) */
+	/* pte is readable and writable, but occurred fault? probably copy(9) */
 	if ((pte & LX_BLKPAG_AF) && ((pte & LX_BLKPAG_AP) == LX_BLKPAG_AP_RW))
 		goto done;
 

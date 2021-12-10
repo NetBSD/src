@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.83 2021/11/14 16:56:32 riastradh Exp $	*/
+/*	$NetBSD: locore.S,v 1.84 2021/12/10 20:36:02 andvar Exp $	*/
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -38,7 +38,7 @@
 #include <aarch64/hypervisor.h>
 #include "assym.h"
 
-RCSID("$NetBSD: locore.S,v 1.83 2021/11/14 16:56:32 riastradh Exp $")
+RCSID("$NetBSD: locore.S,v 1.84 2021/12/10 20:36:02 andvar Exp $")
 
 #ifdef AARCH64_DEVICE_MEM_STRONGLY_ORDERED
 #define	MAIR_DEVICE_MEM		MAIR_DEVICE_nGnRnE
@@ -148,7 +148,7 @@ ASENTRY_NP(aarch64_start)
 	br	x20		/* jump to the kernel virtual address */
 
 aarch64_fatal:
-	PRINT("fatal error occured while booting\n")
+	PRINT("fatal error occurred while booting\n")
 	/* return to bootloader. if switched from EL2 to EL1, It might fail */
 	mov	lr, x27
 	mov	sp, x28

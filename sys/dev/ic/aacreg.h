@@ -1,4 +1,4 @@
-/*	$NetBSD: aacreg.h,v 1.13 2008/10/02 08:21:57 sborrill Exp $	*/
+/*	$NetBSD: aacreg.h,v 1.14 2021/12/10 20:36:03 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2007 The NetBSD Foundation, Inc.
@@ -1325,7 +1325,7 @@ typedef enum {
 	AifEnSMARTEvent, 	       	/* SMART Event */
 	AifEnBatteryNeedsRecond,	/* The battery needs reconditioning */
 	AifEnClusterEvent,		/* Some cluster event */
-	AifEnDiskSetEvent,		/* A disk set event occured. */
+	AifEnDiskSetEvent,		/* A disk set event occurred. */
 	AifDriverNotifyStart=199,	/* Notifies for host driver go here */
 	/* Host driver notifications start here */
 	AifDenMorphComplete, 		/* A morph operation completed */

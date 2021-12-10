@@ -1,4 +1,4 @@
-/*	$NetBSD: kbms_sbdio.c,v 1.14 2021/09/18 15:14:40 tsutsui Exp $	*/
+/*	$NetBSD: kbms_sbdio.c,v 1.15 2021/12/10 20:36:02 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2005 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kbms_sbdio.c,v 1.14 2021/09/18 15:14:40 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kbms_sbdio.c,v 1.15 2021/12/10 20:36:02 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -203,7 +203,7 @@ kbms_sbdio_intr(void *arg)
 		*reg->mouse_csr = 1;
 		if (((v = *reg->mouse_csr) &
 		    (ZSRR1_FE | ZSRR1_DO | ZSRR1_PE)) != 0) {
-			/* Error occured. re-initialize */
+			/* Error occurred. re-initialize */
 			printf("initialize mouse. error=%02x\n", v);
 			mouse_init(sc);
 		} else {

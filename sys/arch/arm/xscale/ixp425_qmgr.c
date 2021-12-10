@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp425_qmgr.c,v 1.10 2019/12/27 09:25:57 msaitoh Exp $	*/
+/*	$NetBSD: ixp425_qmgr.c,v 1.11 2021/12/10 20:36:02 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2006 Sam Leffler, Errno Consulting
@@ -60,7 +60,7 @@
 */
 #include <sys/cdefs.h>
 /*__FBSDID("$FreeBSD: src/sys/arm/xscale/ixp425/ixp425_qmgr.c,v 1.1 2006/11/19 23:55:23 sam Exp $");*/
-__KERNEL_RCSID(0, "$NetBSD: ixp425_qmgr.c,v 1.10 2019/12/27 09:25:57 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixp425_qmgr.c,v 1.11 2021/12/10 20:36:02 andvar Exp $");
 
 /*
  * Intel XScale Queue Manager support.
@@ -436,7 +436,7 @@ ixpqmgr_qwrite(int qId, uint32_t entry)
 		    return ENOSPC;
 		}
 		/*
-		 * No overflow occured : someone is draining the queue
+		 * No overflow occurred : someone is draining the queue
 		 * and the current counter needs to be
 		 * updated from the current number of entries in the queue
 		 */

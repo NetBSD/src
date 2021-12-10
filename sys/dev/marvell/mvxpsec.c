@@ -1,4 +1,4 @@
-/*	$NetBSD: mvxpsec.c,v 1.8 2021/08/13 20:26:07 andvar Exp $	*/
+/*	$NetBSD: mvxpsec.c,v 1.9 2021/12/10 20:36:04 andvar Exp $	*/
 /*
  * Copyright (c) 2015 Internet Initiative Japan Inc.
  * All rights reserved.
@@ -1280,7 +1280,7 @@ mvxpsec_eintr_ack(struct mvxpsec_softc *sc)
 /*
  * Interrupt statistics
  *
- * this is NOT a statistics of how may times the events 'occured'.
+ * this is NOT a statistics of how many times the events 'occurred'.
  * this ONLY means how many times the events 'handled'.
  */
 INLINE void

@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_interrupt.c,v 1.4 2018/01/28 22:24:58 christos Exp $	*/
+/*	$NetBSD: subr_interrupt.c,v 1.5 2021/12/10 20:36:04 andvar Exp $	*/
 
 /*
  * Copyright (c) 2015 Internet Initiative Japan Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_interrupt.c,v 1.4 2018/01/28 22:24:58 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_interrupt.c,v 1.5 2021/12/10 20:36:04 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -202,7 +202,7 @@ interrupt_intrio_list_size(size_t *ilsize)
 
 /*
  * Set intrctl list data to "il", and return list structure bytes.
- * If error occured, return <0.
+ * If error occurred, return <0.
  * If "data" == NULL, simply return list structure bytes.
  */
 static int
