@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.720 2021/12/10 05:39:22 skrll Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.721 2021/12/10 05:55:06 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.720 2021/12/10 05:39:22 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.721 2021/12/10 05:55:06 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -1762,11 +1762,8 @@ wm_82575_write_8bit_ctlr_reg(struct wm_softc *sc, uint32_t reg, uint32_t off,
 static inline void
 wm_set_dma_addr(volatile wiseman_addr_t *wa, bus_addr_t v)
 {
-	wa->wa_low = htole32(v & 0xffffffffU);
-	if (sizeof(bus_addr_t) == 8)
-		wa->wa_high = htole32((uint64_t) v >> 32);
-	else
-		wa->wa_high = 0;
+	wa->wa_low = htole32(BUS_ADDR_LO32(v));
+	wa->wa_high = htole32(BUS_ADDR_HI32(v));
 }
 
 /*
