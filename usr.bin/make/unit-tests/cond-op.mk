@@ -1,4 +1,4 @@
-# $NetBSD: cond-op.mk,v 1.13 2021/01/19 18:20:30 rillig Exp $
+# $NetBSD: cond-op.mk,v 1.14 2021/12/10 20:22:54 rillig Exp $
 #
 # Tests for operators like &&, ||, ! in .if conditions.
 #
@@ -72,11 +72,20 @@
 # This would add a good deal of complexity to the code though, for almost
 # no benefit, especially since most expressions and conditions are side
 # effect free.
+.undef ERR
 .if 0 ${ERR::=evaluated}
 .  error
 .endif
 .if ${ERR:Uundefined} == evaluated
-.  info After detecting a parse error, the rest is evaluated.
+.  info After detecting a parse error after 0, the rest is evaluated.
+.endif
+
+.undef ERR
+.if 1 ${ERR::=evaluated}
+.  error
+.endif
+.if ${ERR:Uundefined} == evaluated
+.  info After detecting a parse error after 1, the rest is evaluated.
 .endif
 
 # Just in case that parsing should ever stop on the first error.
