@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe_common.c,v 1.33 2021/08/02 12:56:24 andvar Exp $ */
+/* $NetBSD: ixgbe_common.c,v 1.34 2021/12/10 11:16:54 msaitoh Exp $ */
 
 /******************************************************************************
   SPDX-License-Identifier: BSD-3-Clause
@@ -36,7 +36,7 @@
 /*$FreeBSD: head/sys/dev/ixgbe/ixgbe_common.c 331224 2018-03-19 20:55:05Z erj $*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixgbe_common.c,v 1.33 2021/08/02 12:56:24 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixgbe_common.c,v 1.34 2021/12/10 11:16:54 msaitoh Exp $");
 
 #include "ixgbe_common.h"
 #include "ixgbe_phy.h"
@@ -783,7 +783,7 @@ s32 ixgbe_read_pba_num_generic(struct ixgbe_hw *hw, u32 *pba_num)
 		DEBUGOUT("NVM Read Error\n");
 		return ret_val;
 	}
-	*pba_num |= data;
+	*pba_num |= (u32)data;
 
 	return IXGBE_SUCCESS;
 }

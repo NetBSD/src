@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe_x550.c,v 1.21 2021/12/10 11:14:18 msaitoh Exp $ */
+/* $NetBSD: ixgbe_x550.c,v 1.22 2021/12/10 11:16:54 msaitoh Exp $ */
 
 /******************************************************************************
 
@@ -35,7 +35,7 @@
 /*$FreeBSD: head/sys/dev/ixgbe/ixgbe_x550.c 331224 2018-03-19 20:55:05Z erj $*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixgbe_x550.c,v 1.21 2021/12/10 11:14:18 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixgbe_x550.c,v 1.22 2021/12/10 11:16:54 msaitoh Exp $");
 
 #include "ixgbe_x550.h"
 #include "ixgbe_x540.h"
@@ -845,7 +845,7 @@ static s32 ixgbe_setup_fw_link(struct ixgbe_hw *hw)
 
 	for (i = 0; i < sizeof(ixgbe_fw_map) / sizeof(ixgbe_fw_map[0]); ++i) {
 		if (hw->phy.autoneg_advertised & ixgbe_fw_map[i].phy_speed)
-			setup[0] |= ixgbe_fw_map[i].fw_speed;
+			setup[0] |= (u32)(ixgbe_fw_map[i].fw_speed);
 	}
 	setup[0] |= FW_PHY_ACT_SETUP_LINK_HP | FW_PHY_ACT_SETUP_LINK_AN;
 

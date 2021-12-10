@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe_dcb_82598.c,v 1.9 2021/04/30 06:55:32 msaitoh Exp $ */
+/* $NetBSD: ixgbe_dcb_82598.c,v 1.10 2021/12/10 11:16:54 msaitoh Exp $ */
 /******************************************************************************
   SPDX-License-Identifier: BSD-3-Clause
 
@@ -35,7 +35,7 @@
 /*$FreeBSD: head/sys/dev/ixgbe/ixgbe_dcb_82598.c 331224 2018-03-19 20:55:05Z erj $*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixgbe_dcb_82598.c,v 1.9 2021/04/30 06:55:32 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixgbe_dcb_82598.c,v 1.10 2021/12/10 11:16:54 msaitoh Exp $");
 
 #include "ixgbe_type.h"
 #include "ixgbe_dcb.h"
@@ -201,7 +201,7 @@ s32 ixgbe_dcb_config_tx_desc_arbiter_82598(struct ixgbe_hw *hw,
 	for (i = 0; i < IXGBE_DCB_MAX_TRAFFIC_CLASS; i++) {
 		max_credits = max[i];
 		reg = max_credits << IXGBE_TDTQ2TCCR_MCL_SHIFT;
-		reg |= refill[i];
+		reg |= (u32)(refill[i]);
 		reg |= (u32)(bwg_id[i]) << IXGBE_TDTQ2TCCR_BWG_SHIFT;
 
 		if (tsa[i] == ixgbe_dcb_tsa_group_strict_cee)
