@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe_x550.c,v 1.20 2021/05/19 08:19:20 msaitoh Exp $ */
+/* $NetBSD: ixgbe_x550.c,v 1.21 2021/12/10 11:14:18 msaitoh Exp $ */
 
 /******************************************************************************
 
@@ -35,7 +35,7 @@
 /*$FreeBSD: head/sys/dev/ixgbe/ixgbe_x550.c 331224 2018-03-19 20:55:05Z erj $*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixgbe_x550.c,v 1.20 2021/05/19 08:19:20 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixgbe_x550.c,v 1.21 2021/12/10 11:14:18 msaitoh Exp $");
 
 #include "ixgbe_x550.h"
 #include "ixgbe_x540.h"
@@ -3322,6 +3322,7 @@ s32 ixgbe_read_ee_hostif_X550(struct ixgbe_hw *hw, u16 offset, u16 *data)
 	/* one word */
 	buffer.length = IXGBE_CPU_TO_BE16(sizeof(u16));
 	buffer.pad2 = 0;
+	buffer.data = 0;
 	buffer.pad3 = 0;
 
 	status = hw->mac.ops.acquire_swfw_sync(hw, mask);
@@ -3382,6 +3383,7 @@ s32 ixgbe_read_ee_hostif_buffer_X550(struct ixgbe_hw *hw,
 		buffer.address = IXGBE_CPU_TO_BE32((offset + current_word) * 2);
 		buffer.length = IXGBE_CPU_TO_BE16(words_to_read * 2);
 		buffer.pad2 = 0;
+		buffer.data = 0;
 		buffer.pad3 = 0;
 
 		status = ixgbe_hic_unlocked(hw, (u32 *)&buffer, sizeof(buffer),
