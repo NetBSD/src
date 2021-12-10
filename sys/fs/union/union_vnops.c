@@ -1,4 +1,4 @@
-/*	$NetBSD: union_vnops.c,v 1.81 2021/12/10 09:20:38 hannken Exp $	*/
+/*	$NetBSD: union_vnops.c,v 1.82 2021/12/10 19:30:05 andvar Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994, 1995
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: union_vnops.c,v 1.81 2021/12/10 09:20:38 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: union_vnops.c,v 1.82 2021/12/10 19:30:05 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -775,7 +775,7 @@ union_access(void *v)
 	 * Copy up to prevent checking (and failing) against
 	 * underlying file system mounted read only.
 	 * Check for read access first to prevent implicit
-	 * copy of unaccessible underlying vnode.
+	 * copy of inaccessible underlying vnode.
 	 */
 	if (un->un_uppervp == NULLVP &&
 	    (un->un_lowervp->v_type == VREG) &&

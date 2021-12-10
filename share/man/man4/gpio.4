@@ -1,4 +1,4 @@
-.\" $NetBSD: gpio.4,v 1.36 2021/05/04 17:47:51 christos Exp $
+.\" $NetBSD: gpio.4,v 1.37 2021/12/10 19:30:05 andvar Exp $
 .\"	$OpenBSD: gpio.4,v 1.5 2004/11/23 09:39:29 reyk Exp $
 .\"
 .\" Copyright (c) 2004 Alexander Yurchenko <grange@openbsd.org>
@@ -187,7 +187,7 @@ Only GPIO pins that have been set using
 will be accessible at securelevels greater than 0.
 .Pp
 .It Dv GPIOUNSET ( struct gpio_set )
-Unset the specified pin, i.e. clear its name and make it unaccessible
+Unset the specified pin, i.e. clear its name and make it inaccessible
 at securelevels greater than 0.
 .Pp
 .It Dv GPIOATTACH ( struct gpio_attach )
