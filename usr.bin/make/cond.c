@@ -1,4 +1,4 @@
-/*	$NetBSD: cond.c,v 1.287 2021/12/10 23:19:59 rillig Exp $	*/
+/*	$NetBSD: cond.c,v 1.288 2021/12/10 23:33:05 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -95,13 +95,12 @@
 #include "dir.h"
 
 /*	"@(#)cond.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: cond.c,v 1.287 2021/12/10 23:19:59 rillig Exp $");
+MAKE_RCSID("$NetBSD: cond.c,v 1.288 2021/12/10 23:33:05 rillig Exp $");
 
 /*
  * The parsing of conditional expressions is based on this grammar:
  *	Or -> And ('||' And)*
- *	And -> Term
- *	And -> And '&&' Term
+ *	And -> Term ('&&' Term)*
  *	Term -> Function '(' Argument ')'
  *	Term -> Leaf Operator Leaf
  *	Term -> Leaf
@@ -974,27 +973,23 @@ CondParser_Term(CondParser *par, bool doEval)
 }
 
 /*
- * And -> Term
- * And -> And '&&' Term
+ * And -> Term ('&&' Term)*
  */
 static CondResult
 CondParser_And(CondParser *par, bool doEval)
 {
-	CondResult res;
+	CondResult res, rhs;
 	Token op;
 
-	res = CondParser_Term(par, doEval);
-	if (res == CR_ERROR)
-		return CR_ERROR;
-
-	op = CondParser_Token(par, false);
-	if (op == TOK_AND) {
-		if (res == CR_TRUE)
-			return CondParser_And(par, doEval);
-		if (CondParser_And(par, false) == CR_ERROR)
+	res = CR_TRUE;
+	do {
+		if ((rhs = CondParser_Term(par, doEval)) == CR_ERROR)
 			return CR_ERROR;
-		return res;
-	}
+		if (rhs == CR_FALSE) {
+			res = CR_FALSE;
+			doEval = false;
+		}
+	} while ((op = CondParser_Token(par, false)) == TOK_AND);
 
 	CondParser_PushBack(par, op);
 	return res;
