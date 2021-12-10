@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe_common.c,v 1.34 2021/12/10 11:16:54 msaitoh Exp $ */
+/* $NetBSD: ixgbe_common.c,v 1.35 2021/12/10 11:20:13 msaitoh Exp $ */
 
 /******************************************************************************
   SPDX-License-Identifier: BSD-3-Clause
@@ -36,7 +36,7 @@
 /*$FreeBSD: head/sys/dev/ixgbe/ixgbe_common.c 331224 2018-03-19 20:55:05Z erj $*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixgbe_common.c,v 1.34 2021/12/10 11:16:54 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixgbe_common.c,v 1.35 2021/12/10 11:20:13 msaitoh Exp $");
 
 #include "ixgbe_common.h"
 #include "ixgbe_phy.h"
@@ -462,7 +462,7 @@ s32 ixgbe_start_hw_generic(struct ixgbe_hw *hw)
  *     82599
  *     X540
  **/
-s32 ixgbe_start_hw_gen2(struct ixgbe_hw *hw)
+void ixgbe_start_hw_gen2(struct ixgbe_hw *hw)
 {
 	u32 i;
 	u32 regval;
@@ -489,8 +489,6 @@ s32 ixgbe_start_hw_gen2(struct ixgbe_hw *hw)
 			    IXGBE_DCA_RXCTRL_HEAD_WRO_EN);
 		IXGBE_WRITE_REG(hw, IXGBE_DCA_RXCTRL(i), regval);
 	}
-
-	return IXGBE_SUCCESS;
 }
 
 /**
