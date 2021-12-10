@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ethersubr.c,v 1.306 2021/11/30 01:17:02 yamaguchi Exp $	*/
+/*	$NetBSD: if_ethersubr.c,v 1.307 2021/12/10 01:18:29 msaitoh Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.306 2021/11/30 01:17:02 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.307 2021/12/10 01:18:29 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -901,6 +901,7 @@ ether_input(struct ifnet *ifp, struct mbuf *m)
 		ether_input_llc(ifp, m, eh);
 		return;
 #else
+		/* ethertype of 0-1500 is regarded as noproto */
 		goto noproto;
 #endif
 	}
