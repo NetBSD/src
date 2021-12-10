@@ -1,4 +1,4 @@
-/* $NetBSD: if_sriov.c,v 1.11 2021/04/30 06:55:32 msaitoh Exp $ */
+/* $NetBSD: if_sriov.c,v 1.12 2021/12/10 11:18:30 msaitoh Exp $ */
 /******************************************************************************
 
   Copyright (c) 2001-2017, Intel Corporation
@@ -34,7 +34,7 @@
 /*$FreeBSD: head/sys/dev/ixgbe/if_sriov.c 327031 2017-12-20 18:15:06Z erj $*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sriov.c,v 1.11 2021/04/30 06:55:32 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sriov.c,v 1.12 2021/12/10 11:18:30 msaitoh Exp $");
 
 #include "ixgbe.h"
 #include "ixgbe_sriov.h"
@@ -640,7 +640,7 @@ ixgbe_process_vf_msg(struct adapter *adapter, struct ixgbe_vf *vf)
 
 /* Tasklet for handling VF -> PF mailbox messages */
 void
-ixgbe_handle_mbx(void *context, int pending)
+ixgbe_handle_mbx(void *context)
 {
 	struct adapter *adapter = context;
 	struct ixgbe_hw *hw;
@@ -920,9 +920,9 @@ ixgbe_add_vf(device_t dev, u16 vfnum, const nvlist_t *config)
 #else
 
 void
-ixgbe_handle_mbx(void *context, int pending)
+ixgbe_handle_mbx(void *context)
 {
-	UNREFERENCED_2PARAMETER(context, pending);
+	UNREFERENCED_1PARAMETER(context);
 } /* ixgbe_handle_mbx */
 
 inline int
