@@ -1,4 +1,4 @@
-/*	$NetBSD: cond.c,v 1.291 2021/12/11 10:07:31 rillig Exp $	*/
+/*	$NetBSD: cond.c,v 1.292 2021/12/11 10:14:32 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -95,7 +95,7 @@
 #include "dir.h"
 
 /*	"@(#)cond.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: cond.c,v 1.291 2021/12/11 10:07:31 rillig Exp $");
+MAKE_RCSID("$NetBSD: cond.c,v 1.292 2021/12/11 10:14:32 rillig Exp $");
 
 /*
  * The parsing of conditional expressions is based on this grammar:
@@ -715,11 +715,11 @@ done_lhs:
  * The argument to empty() is a variable name, optionally followed by
  * variable modifiers.
  */
-static size_t
+static Token
 ParseEmptyArg(const char **pp, bool doEval)
 {
 	FStr val;
-	size_t magic_res;
+	Token tok;
 
 	(*pp)--;		/* Make (*pp)[1] point to the '('. */
 	(void)Var_Parse(pp, SCOPE_CMDLINE,
@@ -729,7 +729,7 @@ ParseEmptyArg(const char **pp, bool doEval)
 
 	if (val.str == var_Error) {
 		FStr_Done(&val);
-		return (size_t)-1;
+		return TOK_ERROR;
 	}
 
 	/*
@@ -738,19 +738,15 @@ ParseEmptyArg(const char **pp, bool doEval)
 	 */
 	cpp_skip_whitespace(&val.str);
 
-	/*
-	 * For consistency with the other functions we can't generate the
-	 * true/false here.
-	 */
-	magic_res = val.str[0] != '\0' ? 2 : 1;
+	tok = val.str[0] != '\0' ? TOK_FALSE : TOK_TRUE;
 	FStr_Done(&val);
-	return magic_res;
+	return tok;
 }
 
 static bool
 CondParser_FuncCallEmpty(CondParser *par, bool doEval, Token *out_token)
 {
-	size_t arglen;
+	Token tok;
 	const char *cp = par->p;
 
 	if (!is_token(cp, "empty", 5))
@@ -761,14 +757,14 @@ CondParser_FuncCallEmpty(CondParser *par, bool doEval, Token *out_token)
 	if (*cp != '(')
 		return false;
 
-	arglen = ParseEmptyArg(&cp, doEval);
-	if (arglen == 0 || arglen == (size_t)-1) {
+	tok = ParseEmptyArg(&cp, doEval);
+	if (tok == TOK_ERROR) {
 		par->p = cp;
-		*out_token = arglen == 0 ? TOK_FALSE : TOK_ERROR;
+		*out_token = TOK_ERROR;
 		return true;
 	}
 
-	*out_token = ToToken(!doEval || arglen == 1);
+	*out_token = ToToken(!doEval || tok == TOK_TRUE);
 	par->p = cp;
 	return true;
 }
