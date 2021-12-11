@@ -1,4 +1,4 @@
-/*	$NetBSD: cache.c,v 1.11 2016/07/07 06:55:38 msaitoh Exp $	*/
+/*	$NetBSD: cache.c,v 1.12 2021/12/11 19:24:21 mrg Exp $	*/
 
 /*
  * Copyright (c) 2011 Matthew R. Green
@@ -12,8 +12,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
@@ -35,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cache.c,v 1.11 2016/07/07 06:55:38 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cache.c,v 1.12 2021/12/11 19:24:21 mrg Exp $");
 
 #include "opt_multiprocessor.h"
 
