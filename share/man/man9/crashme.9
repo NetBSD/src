@@ -1,4 +1,4 @@
-.\" $NetBSD: crashme.9,v 1.4 2021/12/11 19:24:19 mrg Exp $
+.\" $NetBSD: crashme.9,v 1.5 2021/12/11 23:47:53 riastradh Exp $
 .\"
 .\" Copyright (c) 2019 Matthew R. Green
 .\" All rights reserved.
@@ -81,8 +81,8 @@ The following
 variables are provided by the
 .Nm
 subsystem:
-.Bl -tag -width "123456" -offset indent
-.It Ic debug.crashme_enable
+.Bl -tag -width Li
+.It Li debug.crashme_enable
 Must be set to 1 for any
 .Nm
 node to be executed.
@@ -91,16 +91,16 @@ node to be executed.
 The following
 .Xr sysctl 8
 nodes trigger crashes in different ways when written:
-.Bl -tag -width "123456" -offset indent
-.It Ic debug.crashme.panic
+.Bl -tag -width ".Li debug.crashme.null_deref"
+.It Li debug.crashme.panic
 Call
 .Xr panic 9 .
-.It Ic debug.crashme.null_deref
+.It Li debug.crashme.null_deref
 Dereference a null pointer.
-.It Ic debug.crashme.null_jump
+.It Li debug.crashme.null_jump
 Call a null function pointer, i.e., jump to the instruction address
 zero.
-.It Ic debug.crashme.ddb
+.It Li debug.crashme.ddb
 Enter
 .Xr ddb 9
 directly by calling
