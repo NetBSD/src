@@ -1,4 +1,4 @@
-/*	$NetBSD: cond.c,v 1.289 2021/12/10 23:56:17 rillig Exp $	*/
+/*	$NetBSD: cond.c,v 1.290 2021/12/11 10:01:16 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -95,7 +95,7 @@
 #include "dir.h"
 
 /*	"@(#)cond.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: cond.c,v 1.289 2021/12/10 23:56:17 rillig Exp $");
+MAKE_RCSID("$NetBSD: cond.c,v 1.290 2021/12/11 10:01:16 rillig Exp $");
 
 /*
  * The parsing of conditional expressions is based on this grammar:
@@ -761,6 +761,35 @@ FuncEmpty(size_t arglen, const char *arg MAKE_ATTR_UNUSED)
 	return arglen == 1;
 }
 
+static bool
+CondParser_FuncCallEmpty(CondParser *par, bool doEval, Token *out_token)
+{
+	char *arg = NULL;
+	size_t arglen;
+	const char *cp = par->p;
+
+	if (!is_token(cp, "empty", 5))
+		return false;
+	cp += 5;
+
+	cpp_skip_whitespace(&cp);
+	if (*cp != '(')
+		return false;
+
+	arglen = ParseEmptyArg(par, &cp, doEval, "empty", &arg);
+	if (arglen == 0 || arglen == (size_t)-1) {
+		par->p = cp;
+		*out_token = arglen == 0 ? TOK_FALSE : TOK_ERROR;
+		return true;
+	}
+
+	/* Evaluate the argument using the required function. */
+	*out_token = ToToken(!doEval || FuncEmpty(arglen, arg));
+	free(arg);
+	par->p = cp;
+	return true;
+}
+
 /* Parse a function call expression, such as 'defined(${file})'. */
 static bool
 CondParser_FuncCall(CondParser *par, bool doEval, Token *out_token)
@@ -768,16 +797,13 @@ CondParser_FuncCall(CondParser *par, bool doEval, Token *out_token)
 	static const struct fn_def {
 		const char fn_name[9];
 		unsigned char fn_name_len;
-		size_t (*fn_parse)(CondParser *, const char **, bool,
-				   const char *, char **);
 		bool (*fn_eval)(size_t, const char *);
 	} fns[] = {
-		{ "defined",  7, ParseFuncArg,  FuncDefined },
-		{ "make",     4, ParseFuncArg,  FuncMake },
-		{ "exists",   6, ParseFuncArg,  FuncExists },
-		{ "empty",    5, ParseEmptyArg, FuncEmpty },
-		{ "target",   6, ParseFuncArg,  FuncTarget },
-		{ "commands", 8, ParseFuncArg,  FuncCommands }
+		{ "defined",  7, FuncDefined },
+		{ "make",     4, FuncMake },
+		{ "exists",   6, FuncExists },
+		{ "target",   6, FuncTarget },
+		{ "commands", 8, FuncCommands }
 	};
 	const struct fn_def *fn;
 	char *arg = NULL;
@@ -794,7 +820,7 @@ CondParser_FuncCall(CondParser *par, bool doEval, Token *out_token)
 	if (*cp != '(')
 		return false;
 
-	arglen = fn->fn_parse(par, &cp, doEval, fn->fn_name, &arg);
+	arglen = ParseFuncArg(par, &cp, doEval, fn->fn_name, &arg);
 	if (arglen == 0 || arglen == (size_t)-1) {
 		par->p = cp;
 		*out_token = arglen == 0 ? TOK_FALSE : TOK_ERROR;
@@ -917,6 +943,8 @@ CondParser_Token(CondParser *par, bool doEval)
 		return CondParser_Comparison(par, doEval);
 
 	default:
+		if (CondParser_FuncCallEmpty(par, doEval, &t))
+			return t;
 		if (CondParser_FuncCall(par, doEval, &t))
 			return t;
 		return CondParser_ComparisonOrLeaf(par, doEval);
