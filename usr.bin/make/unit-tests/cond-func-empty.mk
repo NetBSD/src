@@ -1,4 +1,4 @@
-# $NetBSD: cond-func-empty.mk,v 1.15 2021/12/11 09:53:53 rillig Exp $
+# $NetBSD: cond-func-empty.mk,v 1.16 2021/12/11 10:41:31 rillig Exp $
 #
 # Tests for the empty() function in .if conditions, which tests a variable
 # expression for emptiness.
@@ -89,9 +89,9 @@ WORD=	word
 # Now the variable named " " gets a non-empty value, which demonstrates that
 # neither leading nor trailing spaces are trimmed in the argument of the
 # function.  If the spaces were trimmed, the variable name would be "" and
-# that variable is indeed undefined.  Since ParseEmptyArg calls Var_Parse
-# without VARE_UNDEFERR, the value of the undefined variable is returned as an
-# empty string.
+# that variable is indeed undefined.  Since CondParser_FuncCallEmpty calls
+# Var_Parse without VARE_UNDEFERR, the value of the undefined variable is
+# returned as an empty string.
 ${:U }=	space
 .if empty( )
 .  error
@@ -126,8 +126,8 @@ ${:U }=	space
 #
 # If everything goes well, the argument expands to "WORD", and that variable
 # is defined at the beginning of this file.  The surrounding 'W' and 'D'
-# ensure that ParseEmptyArg keeps track of the parsing position, both before
-# and after the call to Var_Parse.
+# ensure that CondParser_FuncCallEmpty keeps track of the parsing position,
+# both before and after the call to Var_Parse.
 .if empty(W${:UOR}D)
 .  error
 .endif

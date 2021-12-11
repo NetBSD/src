@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.970 2021/12/09 20:27:01 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.971 2021/12/11 10:41:31 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -140,7 +140,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.970 2021/12/09 20:27:01 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.971 2021/12/11 10:41:31 rillig Exp $");
 
 /*
  * Variables are defined using one of the VAR=value assignments.  Their
@@ -4517,9 +4517,9 @@ Var_Parse_FastLane(const char **pp, VarEvalMode emode, FStr *out_value)
  *
  * Input:
  *	*pp		The string to parse.
- *			When parsing a condition in ParseEmptyArg, it may also
- *			point to the "y" of "empty(VARNAME:Modifiers)", which
- *			is syntactically the same.
+ *			In CondParser_FuncCallEmpty, it may also point to the
+ *			"y" of "empty(VARNAME:Modifiers)", which is
+ *			syntactically the same.
  *	scope		The scope for finding variables
  *	emode		Controls the exact details of parsing and evaluation
  *
