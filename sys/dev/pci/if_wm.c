@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.721 2021/12/10 05:55:06 skrll Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.722 2021/12/11 17:05:50 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.721 2021/12/10 05:55:06 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.722 2021/12/11 17:05:50 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -6209,7 +6209,7 @@ wm_init_locked(struct ifnet *ifp)
 		 * 82574's EITR should be set same throttling value as ITR.
 		 *
 		 * For N interrupts/sec, set this value to:
-		 * 1,000,000 / N in contrast to ITR throttoling value.
+		 * 1,000,000 / N in contrast to ITR throttling value.
 		 */
 		sc->sc_itr_init = 450;
 	} else if (sc->sc_type >= WM_T_82543) {
