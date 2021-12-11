@@ -1,4 +1,4 @@
-/*	$NetBSD: cond.c,v 1.290 2021/12/11 10:01:16 rillig Exp $	*/
+/*	$NetBSD: cond.c,v 1.291 2021/12/11 10:07:31 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -95,7 +95,7 @@
 #include "dir.h"
 
 /*	"@(#)cond.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: cond.c,v 1.290 2021/12/11 10:01:16 rillig Exp $");
+MAKE_RCSID("$NetBSD: cond.c,v 1.291 2021/12/11 10:07:31 rillig Exp $");
 
 /*
  * The parsing of conditional expressions is based on this grammar:
@@ -715,17 +715,11 @@ done_lhs:
  * The argument to empty() is a variable name, optionally followed by
  * variable modifiers.
  */
-/*ARGSUSED*/
 static size_t
-ParseEmptyArg(CondParser *par MAKE_ATTR_UNUSED, const char **pp,
-	      bool doEval, const char *func MAKE_ATTR_UNUSED,
-	      char **out_arg)
+ParseEmptyArg(const char **pp, bool doEval)
 {
 	FStr val;
 	size_t magic_res;
-
-	/* We do all the work here and return the result as the length */
-	*out_arg = NULL;
 
 	(*pp)--;		/* Make (*pp)[1] point to the '('. */
 	(void)Var_Parse(pp, SCOPE_CMDLINE,
@@ -753,18 +747,9 @@ ParseEmptyArg(CondParser *par MAKE_ATTR_UNUSED, const char **pp,
 	return magic_res;
 }
 
-/*ARGSUSED*/
-static bool
-FuncEmpty(size_t arglen, const char *arg MAKE_ATTR_UNUSED)
-{
-	/* Magic values ahead, see ParseEmptyArg. */
-	return arglen == 1;
-}
-
 static bool
 CondParser_FuncCallEmpty(CondParser *par, bool doEval, Token *out_token)
 {
-	char *arg = NULL;
 	size_t arglen;
 	const char *cp = par->p;
 
@@ -776,16 +761,14 @@ CondParser_FuncCallEmpty(CondParser *par, bool doEval, Token *out_token)
 	if (*cp != '(')
 		return false;
 
-	arglen = ParseEmptyArg(par, &cp, doEval, "empty", &arg);
+	arglen = ParseEmptyArg(&cp, doEval);
 	if (arglen == 0 || arglen == (size_t)-1) {
 		par->p = cp;
 		*out_token = arglen == 0 ? TOK_FALSE : TOK_ERROR;
 		return true;
 	}
 
-	/* Evaluate the argument using the required function. */
-	*out_token = ToToken(!doEval || FuncEmpty(arglen, arg));
-	free(arg);
+	*out_token = ToToken(!doEval || arglen == 1);
 	par->p = cp;
 	return true;
 }
