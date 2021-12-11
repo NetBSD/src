@@ -1,4 +1,4 @@
-/*	$NetBSD: cond.c,v 1.292 2021/12/11 10:14:32 rillig Exp $	*/
+/*	$NetBSD: cond.c,v 1.293 2021/12/11 10:21:02 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -95,7 +95,7 @@
 #include "dir.h"
 
 /*	"@(#)cond.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: cond.c,v 1.292 2021/12/11 10:14:32 rillig Exp $");
+MAKE_RCSID("$NetBSD: cond.c,v 1.293 2021/12/11 10:21:02 rillig Exp $");
 
 /*
  * The parsing of conditional expressions is based on this grammar:
@@ -727,18 +727,13 @@ ParseEmptyArg(const char **pp, bool doEval)
 	/* TODO: handle errors */
 	/* If successful, *pp points beyond the closing ')' now. */
 
-	if (val.str == var_Error) {
-		FStr_Done(&val);
-		return TOK_ERROR;
+	if (val.str == var_Error)
+		tok = TOK_ERROR;
+	else {
+		cpp_skip_whitespace(&val.str);
+		tok = val.str[0] != '\0' ? TOK_FALSE : TOK_TRUE;
 	}
 
-	/*
-	 * A variable is empty when it just contains spaces...
-	 * 4/15/92, christos
-	 */
-	cpp_skip_whitespace(&val.str);
-
-	tok = val.str[0] != '\0' ? TOK_FALSE : TOK_TRUE;
 	FStr_Done(&val);
 	return tok;
 }
