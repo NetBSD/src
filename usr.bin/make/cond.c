@@ -1,4 +1,4 @@
-/*	$NetBSD: cond.c,v 1.295 2021/12/11 10:41:31 rillig Exp $	*/
+/*	$NetBSD: cond.c,v 1.296 2021/12/11 10:51:03 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -95,7 +95,7 @@
 #include "dir.h"
 
 /*	"@(#)cond.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: cond.c,v 1.295 2021/12/11 10:41:31 rillig Exp $");
+MAKE_RCSID("$NetBSD: cond.c,v 1.296 2021/12/11 10:51:03 rillig Exp $");
 
 /*
  * The parsing of conditional expressions is based on this grammar:
@@ -737,18 +737,15 @@ CondParser_FuncCallEmpty(CondParser *par, bool doEval, Token *out_token)
 	(void)Var_Parse(&cp, SCOPE_CMDLINE,
 	    doEval ? VARE_WANTRES : VARE_PARSE_ONLY, &val);
 	/* TODO: handle errors */
-	/* If successful, cp points beyond the closing ')' now. */
 
 	if (val.str == var_Error)
 		tok = TOK_ERROR;
 	else {
 		cpp_skip_whitespace(&val.str);
-		tok = val.str[0] != '\0' ? TOK_FALSE : TOK_TRUE;
+		tok = val.str[0] != '\0' && doEval ? TOK_FALSE : TOK_TRUE;
 	}
 
 	FStr_Done(&val);
-	if (tok == TOK_FALSE && !doEval)
-		tok = TOK_TRUE;
 	*out_token = tok;
 	par->p = cp;
 	return true;
