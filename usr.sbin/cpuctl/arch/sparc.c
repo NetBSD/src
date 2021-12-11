@@ -1,4 +1,4 @@
-/*	$NetBSD: sparc.c,v 1.1 2018/01/16 08:23:18 mrg Exp $	*/
+/*	$NetBSD: sparc.c,v 1.2 2021/12/11 19:24:22 mrg Exp $	*/
 
 /*
  * Copyright (c) 2018 Matthew R. Green
@@ -12,8 +12,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
@@ -30,7 +28,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: sparc.c,v 1.1 2018/01/16 08:23:18 mrg Exp $");
+__RCSID("$NetBSD: sparc.c,v 1.2 2021/12/11 19:24:22 mrg Exp $");
 #endif
 
 #include <sys/types.h>
