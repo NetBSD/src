@@ -1,4 +1,4 @@
-.\" $NetBSD: crashme.9,v 1.2 2019/01/09 09:48:44 wiz Exp $
+.\" $NetBSD: crashme.9,v 1.3 2021/12/11 19:16:48 riastradh Exp $
 .\"
 .\" Copyright (c) 2019 Matthew R. Green
 .\" All rights reserved.
@@ -88,12 +88,28 @@ subsystem:
 Must be set to 1 for any
 .Nm
 node to be executed.
+.El
+.Pp
+The following
+.Xr sysctl 8
+nodes trigger crashes in different ways when written:
+.Bl -tag -width "123456" -offset indent
 .It Ic debug.crashme.panic
-Basic panic node.
+Call
+.Xr panic 9 .
 .It Ic debug.crashme.null_deref
-Dereference
-.Dv NULL
-node.
+Dereference a null pointer.
+.It Ic debug.crashme.null_jump
+Call a null function pointer, i.e., jump to the instruction address
+zero.
+.It Ic debug.crashme.ddb
+Enter
+.Xr ddb 9
+directly by calling
+.Xr Debugger 9 .
+Requires
+.Xr options 4
+.Dv DDB .
 .El
 .Sh SEE ALSO
 .Xr options 4 ,
