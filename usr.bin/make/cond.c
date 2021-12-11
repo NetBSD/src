@@ -1,4 +1,4 @@
-/*	$NetBSD: cond.c,v 1.294 2021/12/11 10:28:59 rillig Exp $	*/
+/*	$NetBSD: cond.c,v 1.295 2021/12/11 10:41:31 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -95,7 +95,7 @@
 #include "dir.h"
 
 /*	"@(#)cond.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: cond.c,v 1.294 2021/12/11 10:28:59 rillig Exp $");
+MAKE_RCSID("$NetBSD: cond.c,v 1.295 2021/12/11 10:41:31 rillig Exp $");
 
 /*
  * The parsing of conditional expressions is based on this grammar:
@@ -563,7 +563,10 @@ EvalNotEmpty(CondParser *par, const char *value, bool quoted)
 	/* For .if ${...}, check for non-empty string.  This is different from
 	 * the evaluation function from that .if variant, which would test
 	 * whether a variable of the given name were defined. */
-	/* XXX: Whitespace should count as empty, just as in ParseEmptyArg. */
+	/*
+	 * XXX: Whitespace should count as empty, just as in
+	 * CondParser_FuncCallEmpty.
+	 */
 	if (par->plain)
 		return value[0] != '\0';
 
@@ -715,34 +718,12 @@ done_lhs:
  * The argument to empty() is a variable name, optionally followed by
  * variable modifiers.
  */
-static Token
-ParseEmptyArg(const char **pp, bool doEval)
-{
-	FStr val;
-	Token tok;
-
-	(*pp)--;		/* Make (*pp)[1] point to the '('. */
-	(void)Var_Parse(pp, SCOPE_CMDLINE,
-	    doEval ? VARE_WANTRES : VARE_PARSE_ONLY, &val);
-	/* TODO: handle errors */
-	/* If successful, *pp points beyond the closing ')' now. */
-
-	if (val.str == var_Error)
-		tok = TOK_ERROR;
-	else {
-		cpp_skip_whitespace(&val.str);
-		tok = val.str[0] != '\0' ? TOK_FALSE : TOK_TRUE;
-	}
-
-	FStr_Done(&val);
-	return tok;
-}
-
 static bool
 CondParser_FuncCallEmpty(CondParser *par, bool doEval, Token *out_token)
 {
-	Token tok;
 	const char *cp = par->p;
+	Token tok;
+	FStr val;
 
 	if (!is_token(cp, "empty", 5))
 		return false;
@@ -752,7 +733,20 @@ CondParser_FuncCallEmpty(CondParser *par, bool doEval, Token *out_token)
 	if (*cp != '(')
 		return false;
 
-	tok = ParseEmptyArg(&cp, doEval);
+	cp--;			/* Make cp[1] point to the '('. */
+	(void)Var_Parse(&cp, SCOPE_CMDLINE,
+	    doEval ? VARE_WANTRES : VARE_PARSE_ONLY, &val);
+	/* TODO: handle errors */
+	/* If successful, cp points beyond the closing ')' now. */
+
+	if (val.str == var_Error)
+		tok = TOK_ERROR;
+	else {
+		cpp_skip_whitespace(&val.str);
+		tok = val.str[0] != '\0' ? TOK_FALSE : TOK_TRUE;
+	}
+
+	FStr_Done(&val);
 	if (tok == TOK_FALSE && !doEval)
 		tok = TOK_TRUE;
 	*out_token = tok;
