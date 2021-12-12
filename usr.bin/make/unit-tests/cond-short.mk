@@ -1,4 +1,4 @@
-# $NetBSD: cond-short.mk,v 1.17 2021/09/07 20:41:58 rillig Exp $
+# $NetBSD: cond-short.mk,v 1.18 2021/12/12 09:49:09 rillig Exp $
 #
 # Demonstrates that in conditions, the right-hand side of an && or ||
 # is only evaluated if it can actually influence the result.
@@ -223,5 +223,57 @@ x!=	echo '0 || $${iV2:U2} < $${V42}: $x' >&2; echo
 .if defined(UNDEF) && ${UNDEF} != "undefined"
 .  error
 .endif
+
+
+# Ensure that irrelevant conditions do not influence the result of the whole
+# condition.  As of cond.c 1.302 from 2021-12-11, an irrelevant function call
+# evaluates to true (see CondParser_FuncCall and CondParser_FuncCallEmpty), an
+# irrelevant comparison evaluates to false (see CondParser_Comparison).
+#
+# An irrelevant true bubbles up to the outermost CondParser_And, where it is
+# ignored.  An irrelevant false bubbles up to the outermost CondParser_Or,
+# where it is ignored.
+#
+# If the condition parser should ever be restructured, the bubbling up of the
+# irrelevant evaluation results might show up accidentally.  Prevent this.
+DEF=	defined
+.undef UNDEF
+
+.if 0 && defined(DEF)
+.  error
+.endif
+
+.if 1 && defined(DEF)
+.else
+.  error
+.endif
+
+.if 0 && defined(UNDEF)
+.  error
+.endif
+
+.if 1 && defined(UNDEF)
+.  error
+.endif
+
+.if 0 || defined(DEF)
+.else
+.  error
+.endif
+
+.if 1 || defined(DEF)
+.else
+.  error
+.endif
+
+.if 0 || defined(UNDEF)
+.  error
+.endif
+
+.if 1 || defined(UNDEF)
+.else
+.  error
+.endif
+
 
 all:
