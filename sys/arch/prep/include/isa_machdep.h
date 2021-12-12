@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.h,v 1.14 2016/10/18 22:04:34 jdolecek Exp $	*/
+/*	$NetBSD: isa_machdep.h,v 1.15 2021/12/12 11:10:04 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@ extern int isa_pcmciamask;
 	genppc_isa_intr_alloc(ic, isa_pic, mask & isa_pcmciamask, type, irqp)
 
 /*
- * Miscellanous functions.
+ * Miscellaneous functions.
  */
 void isabeep(int, int);		/* beep with the system speaker */
 
