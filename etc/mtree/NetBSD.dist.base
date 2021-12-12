@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist.base,v 1.238 2021/09/16 23:32:50 christos Exp $
+#	$NetBSD: NetBSD.dist.base,v 1.239 2021/12/12 20:33:21 maya Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 # Do not customize this file as it may be overwritten on upgrades.
@@ -66,6 +66,7 @@
 ./lib/npf
 ./libdata
 ./libdata/firmware
+./libdata/firmware/amdgpu
 ./libdata/firmware/if_athn
 ./libdata/firmware/if_bwfm
 ./libdata/firmware/if_ipw
