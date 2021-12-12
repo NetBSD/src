@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.287 2021/12/09 20:47:33 rillig Exp $
+# $NetBSD: Makefile,v 1.288 2021/12/12 22:16:48 rillig Exp $
 #
 # Unit tests for make(1)
 #
@@ -418,6 +418,7 @@ TESTS+=		varname-dot-parsedir
 TESTS+=		varname-dot-parsefile
 TESTS+=		varname-dot-path
 TESTS+=		varname-dot-shell
+TESTS+=		varname-dot-suffixes
 TESTS+=		varname-dot-targets
 TESTS+=		varname-empty
 TESTS+=		varname-make
@@ -443,7 +444,6 @@ TESTS:= ${TESTS:${BROKEN_TESTS:S,^,N,:ts:}}
 #	char-0020-space.mk
 #	char-005C-backslash.mk
 #	escape-cond-str.mk
-#	escape-cond-func-arg.mk
 #	escape-cond-func-arg.mk
 #	escape-varmod.mk
 #	escape-varmod-define.mk
