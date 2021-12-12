@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.64 2020/09/15 08:13:51 mrg Exp $
+#	$NetBSD: INSTALL,v 1.65 2021/12/12 22:20:52 andvar Exp $
 #
 #	INSTALL -- Installation kernel
 #
@@ -112,7 +112,7 @@ pcic0	at isa? port 0x3e0 iomem 0xd0000 iosiz 0x10000
 # ISA Plug-and-Play bus support
 #isapnp0 at isa?
 
-# PNP bus device for attaching objects descibed in the residual
+# PNP bus device for attaching objects described in the residual
 pnpbus0	at mainbus0
 
 # Console Devices
