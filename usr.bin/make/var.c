@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.971 2021/12/11 10:41:31 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.972 2021/12/12 16:41:39 sjg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -140,7 +140,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.971 2021/12/11 10:41:31 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.972 2021/12/12 16:41:39 sjg Exp $");
 
 /*
  * Variables are defined using one of the VAR=value assignments.  Their
@@ -4367,6 +4367,7 @@ ParseVarnameLong(
 )
 {
 	LazyBuf varname;
+	Substring name;
 	Var *v;
 	bool haveModifier;
 	bool dynamic = false;
@@ -4377,13 +4378,13 @@ ParseVarnameLong(
 
 	p += 2;			/* skip "${" or "$(" or "y(" */
 	ParseVarname(&p, startc, endc, scope, emode, &varname);
+	name = LazyBuf_Get(&varname);
 
 	if (*p == ':') {
 		haveModifier = true;
 	} else if (*p == endc) {
 		haveModifier = false;
 	} else {
-		Substring name = LazyBuf_Get(&varname);
 		Parse_Error(PARSE_FATAL, "Unclosed variable \"%.*s\"",
 		    (int)Substring_Length(name), name.start);
 		LazyBuf_Done(&varname);
@@ -4393,13 +4394,13 @@ ParseVarnameLong(
 		return false;
 	}
 
-	v = VarFindSubstring(LazyBuf_Get(&varname), scope, true);
+	v = VarFindSubstring(name, scope, true);
 
 	/* At this point, p points just after the variable name,
 	 * either at ':' or at endc. */
 
 	if (v == NULL) {
-		v = FindLocalLegacyVar(LazyBuf_Get(&varname), scope,
+		v = FindLocalLegacyVar(name, scope,
 		    out_true_extraModifiers);
 	}
 
@@ -4408,14 +4409,14 @@ ParseVarnameLong(
 		 * Defer expansion of dynamic variables if they appear in
 		 * non-local scope since they are not defined there.
 		 */
-		dynamic = VarnameIsDynamic(LazyBuf_Get(&varname)) &&
+		dynamic = VarnameIsDynamic(name) &&
 			  (scope == SCOPE_CMDLINE || scope == SCOPE_GLOBAL);
 
 		if (!haveModifier) {
 			p++;	/* skip endc */
 			*out_false_pp = p;
 			*out_false_res = EvalUndefined(dynamic, start, p,
-			    LazyBuf_Get(&varname), emode, out_false_val);
+			    name, emode, out_false_val);
 			return false;
 		}
 
