@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.573 2021/12/12 15:36:52 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.574 2021/12/12 15:44:41 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -109,7 +109,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.573 2021/12/12 15:36:52 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.574 2021/12/12 15:44:41 rillig Exp $");
 
 /* types and constants */
 
@@ -2115,7 +2115,7 @@ Parse_AddIncludeDir(const char *dir)
 /*
  * Handle one of the .[-ds]include directives by remembering the current file
  * and pushing the included file on the stack.  After the included file has
- * finished, parsing continues with the including file; see Parse_SetInput
+ * finished, parsing continues with the including file; see Parse_PushInput
  * and ParseEOF.
  *
  * System includes are looked up in sysIncPath, any other includes are looked
@@ -2222,7 +2222,7 @@ IncludeFile(const char *file, bool isSystem, bool depinc, bool silent)
 	lf = loadfile(fullname, fd);
 
 	/* Start reading from this file next */
-	Parse_SetInput(fullname, 0, -1, loadedfile_readMore, lf);
+	Parse_PushInput(fullname, 0, -1, loadedfile_readMore, lf);
 	CurFile()->lf = lf;
 	if (depinc)
 		doing_depend = depinc;	/* only turn it on */
@@ -2404,7 +2404,7 @@ ParseTrackInput(const char *name)
  * The given file is added to the includes stack.
  */
 void
-Parse_SetInput(const char *name, int lineno, int fd,
+Parse_PushInput(const char *name, int lineno, int fd,
 	       ReadMoreProc readMore, void *readMoreArg)
 {
 	IFile *curFile;
@@ -2417,7 +2417,7 @@ Parse_SetInput(const char *name, int lineno, int fd,
 	else
 		ParseTrackInput(name);
 
-	DEBUG3(PARSE, "Parse_SetInput: %s %s, line %d\n",
+	DEBUG3(PARSE, "Parse_PushInput: %s %s, line %d\n",
 	    readMore == loadedfile_readMore ? "file" : ".for loop in",
 	    name, lineno);
 
@@ -3233,7 +3233,7 @@ Parse_File(const char *name, int fd)
 	if (name == NULL)
 		name = "(stdin)";
 
-	Parse_SetInput(name, 0, -1, loadedfile_readMore, lf);
+	Parse_PushInput(name, 0, -1, loadedfile_readMore, lf);
 	CurFile()->lf = lf;
 
 	do {
