@@ -1,4 +1,4 @@
-/*	$NetBSD: arch.c,v 1.205 2021/12/12 22:41:47 rillig Exp $	*/
+/*	$NetBSD: arch.c,v 1.206 2021/12/12 23:32:03 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -126,7 +126,7 @@
 #include "config.h"
 
 /*	"@(#)arch.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: arch.c,v 1.205 2021/12/12 22:41:47 rillig Exp $");
+MAKE_RCSID("$NetBSD: arch.c,v 1.206 2021/12/12 23:32:03 rillig Exp $");
 
 typedef struct List ArchList;
 typedef struct ListNode ArchListNode;
@@ -199,16 +199,17 @@ FullName(const char *archive, const char *member)
 bool
 Arch_ParseArchive(char **pp, GNodeList *gns, GNode *scope)
 {
-	char *cp;		/* Pointer into line */
+	char *spec = *pp;	/* For modifying some bytes of *pp */
+	const char *cp;		/* Pointer into line */
 	GNode *gn;		/* New node */
-	MFStr libName;		/* Library-part of specification */
+	FStr libName;		/* Library-part of specification */
 	FStr mem;		/* Member-part of specification */
 	char saveChar;		/* Ending delimiter of member-name */
 	bool expandLibName;	/* Whether the parsed libName contains
 				 * variable expressions that need to be
 				 * expanded */
 
-	libName = MFStr_InitRefer(*pp);
+	libName = FStr_InitRefer(spec);
 	expandLibName = false;
 
 	for (cp = libName.str; *cp != '(' && *cp != '\0';) {
@@ -234,12 +235,12 @@ Arch_ParseArchive(char **pp, GNodeList *gns, GNode *scope)
 			cp++;
 	}
 
-	*cp++ = '\0';
+	spec[cp++ - spec] = '\0';
 	if (expandLibName) {
 		char *expanded;
 		(void)Var_Subst(libName.str, scope, VARE_UNDEFERR, &expanded);
 		/* TODO: handle errors */
-		libName = MFStr_InitOwn(expanded);
+		libName = FStr_InitOwn(expanded);
 	}
 
 
@@ -251,7 +252,7 @@ Arch_ParseArchive(char **pp, GNodeList *gns, GNode *scope)
 		 */
 		bool doSubst = false;
 
-		pp_skip_whitespace(&cp);
+		cpp_skip_whitespace(&cp);
 
 		mem = FStr_InitRefer(cp);
 		while (*cp != '\0' && *cp != ')' && !ch_isspace(*cp)) {
@@ -298,7 +299,7 @@ Arch_ParseArchive(char **pp, GNodeList *gns, GNode *scope)
 			break;
 
 		saveChar = *cp;
-		*cp = '\0';
+		spec[cp - spec] = '\0';
 
 		/*
 		 * XXX: This should be taken care of intelligently by
@@ -384,15 +385,15 @@ Arch_ParseArchive(char **pp, GNodeList *gns, GNode *scope)
 		}
 		FStr_Done(&mem);
 
-		*cp = saveChar;
+		spec[cp - spec] = saveChar;
 	}
 
-	MFStr_Done(&libName);
+	FStr_Done(&libName);
 
 	cp++;			/* skip the ')' */
 	/* We promised that pp would be set up at the next non-space. */
-	pp_skip_whitespace(&cp);
-	*pp = cp;
+	cpp_skip_whitespace(&cp);
+	*pp += cp - *pp;
 	return true;
 }
 
