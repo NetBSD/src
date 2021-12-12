@@ -1,4 +1,4 @@
-/*	$NetBSD: cond.c,v 1.301 2021/12/12 08:55:28 rillig Exp $	*/
+/*	$NetBSD: cond.c,v 1.302 2021/12/12 09:36:00 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -95,7 +95,7 @@
 #include "dir.h"
 
 /*	"@(#)cond.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: cond.c,v 1.301 2021/12/12 08:55:28 rillig Exp $");
+MAKE_RCSID("$NetBSD: cond.c,v 1.302 2021/12/12 09:36:00 rillig Exp $");
 
 /*
  * The parsing of conditional expressions is based on this grammar:
@@ -782,8 +782,11 @@ CondParser_FuncCall(CondParser *par, bool doEval, Token *out_token)
 }
 
 /*
- * Parse a comparison such as '${VAR} == "value"', or a simple leaf without
+ * Parse a comparison that neither starts with '"' nor '$', such as the
+ * unusual 'bare == right' or '3 == ${VAR}', or a simple leaf without
  * operator, which is a number, a variable expression or a string literal.
+ *
+ * TODO: Can this be merged into CondParser_Comparison?
  */
 static Token
 CondParser_ComparisonOrLeaf(CondParser *par, bool doEval)
