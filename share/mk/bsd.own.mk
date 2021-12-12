@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.1269 2021/12/06 17:52:00 abs Exp $
+#	$NetBSD: bsd.own.mk,v 1.1270 2021/12/12 20:33:22 maya Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -1288,6 +1288,7 @@ MKLLVMRT.aarch64=	yes
 # sorted with at most one letter per line.
 #
 _MKVARS.no= \
+	MKAMDGPUFIRMWARE \
 	MKARZERO \
 	MKBSDGREP \
 	MKCATPAGES MKCOMPATTESTS MKCOMPATX11 MKCTF \
