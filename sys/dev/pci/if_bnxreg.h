@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bnxreg.h,v 1.27 2021/02/13 16:33:30 jakllsch Exp $	*/
+/*	$NetBSD: if_bnxreg.h,v 1.28 2021/12/12 13:05:14 andvar Exp $	*/
 /*	$OpenBSD: if_bnxreg.h,v 1.33 2009/09/05 16:02:28 claudio Exp $  */
 
 /*-
@@ -4634,7 +4634,7 @@ struct l2_fhdr {
 #define MB_RX_CID_ADDR		BNX_MB_GET_CID_ADDR(RX_CID)
 
 /****************************************************************************/
-/* BNX Processor Firmwware Load Definitions				    */
+/* BNX Processor Firmware Load Definitions				    */
 /****************************************************************************/
 
 struct cpu_reg {

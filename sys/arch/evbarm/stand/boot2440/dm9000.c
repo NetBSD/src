@@ -1,4 +1,4 @@
-/* $NetBSD: dm9000.c,v 1.3 2017/03/29 09:04:35 msaitoh Exp $ */
+/* $NetBSD: dm9000.c,v 1.4 2021/12/12 13:05:13 andvar Exp $ */
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
 #define  RCR_DIS_CRC	0x10	/* discard CRC error Rx frame */
 #define  RCR_ALL	0x08	/* accept MCAST frames */
 #define  RCR_RUNT	0x04	/* accept runt Rx frame */
-#define  RCR_PRMSC	0x02	/* promiscous */
+#define  RCR_PRMSC	0x02	/* promiscuous */
 #define  RCR_RXEN	0x01	/* enable frame reception */
 #define RSR	0x06		/* RX status */
 #define  RSR_MF		(1<<6)	/* bcast/mcast frame found */

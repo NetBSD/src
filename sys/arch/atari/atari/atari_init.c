@@ -1,4 +1,4 @@
-/*	$NetBSD: atari_init.c,v 1.102 2021/08/17 22:00:27 andvar Exp $	*/
+/*	$NetBSD: atari_init.c,v 1.103 2021/12/12 13:05:13 andvar Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atari_init.c,v 1.102 2021/08/17 22:00:27 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atari_init.c,v 1.103 2021/12/12 13:05:13 andvar Exp $");
 
 #include "opt_ddb.h"
 #include "opt_mbtype.h"
@@ -698,7 +698,7 @@ start_c(int id, u_int ttphystart, u_int ttphysize, u_int stphysize,
 
 #if defined(_MILANHW_)
 /*
- * Probe and return available memory size in MB at specfied address.
+ * Probe and return available memory size in MB at specified address.
  * The first slot SIMM have at least 16MB, so check if it has 32 or 64 MB.
  *
  * Note it seems Milan does not generate bus errors on accesses against
@@ -762,7 +762,7 @@ milan_probe_bank_1(paddr_t start_paddr)
 }
 
 /*
- * Probe and return available memory size in MB at specfied address.
+ * Probe and return available memory size in MB at specified address.
  * The rest slot could be empty so check all possible size.
  */
 static u_int

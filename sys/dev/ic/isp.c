@@ -1,4 +1,4 @@
-/* $NetBSD: isp.c,v 1.134 2021/12/12 09:00:07 andvar Exp $ */
+/* $NetBSD: isp.c,v 1.135 2021/12/12 13:05:14 andvar Exp $ */
 /*
  * Machine and OS Independent (well, as best as possible)
  * code for the Qlogic ISP SCSI adapters.
@@ -43,7 +43,7 @@
  */
 #ifdef	__NetBSD__
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isp.c,v 1.134 2021/12/12 09:00:07 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isp.c,v 1.135 2021/12/12 13:05:14 andvar Exp $");
 #include <dev/ic/isp_netbsd.h>
 #endif
 #ifdef	__FreeBSD__
@@ -889,7 +889,7 @@ isp_reset(ispsoftc_t *isp, int do_load_defaults)
 			 * three chunks. We loaded the first at the code_org
 			 * address. The other two chunks, which follow right
 			 * after each other in memory here, get loaded at
-			 * addresses specfied at offset 0x9..0xB.
+			 * addresses specified at offset 0x9..0xB.
 			 */
 
 			nxtaddr = ptr[3];
@@ -3919,7 +3919,7 @@ isp_login_device(ispsoftc_t *isp, int chan, uint32_t portid, isp_pdb_t *p, uint1
 			break;
 		} else if ((r & 0xffff) == MBOX_PORT_ID_USED) {
 			/*
-			 * If we get here, then the firmwware still thinks we're logged into this device, but with a different
+			 * If we get here, then the firmware still thinks we're logged into this device, but with a different
 			 * handle. We need to break that association. We used to try and just substitute the handle, but then
 			 * failed to get any data via isp_getpdb (below).
 			 */
@@ -6709,7 +6709,7 @@ static const uint32_t mbpscsi[] = {
 	ISPOPMAP(0xdf, 0xdf),	/* 0x51: DUMP RAM A64 */
 	ISPOPMAP(0xdf, 0xff),	/* 0x52: INITIALIZE REQUEST QUEUE A64 */
 	ISPOPMAP(0xef, 0xff),	/* 0x53: INITIALIZE RESPONSE QUEUE A64 */
-	ISPOPMAP(0xcf, 0x01),	/* 0x54: EXECUCUTE COMMAND IOCB A64 */
+	ISPOPMAP(0xcf, 0x01),	/* 0x54: EXECUTE COMMAND IOCB A64 */
 	ISPOPMAP(0x07, 0x01),	/* 0x55: ENABLE TARGET MODE */
 	ISPOPMAP(0x03, 0x0f),	/* 0x56: GET TARGET STATUS */
 	ISPOPMAP(0x00, 0x00),	/* 0x57: */
@@ -6718,7 +6718,7 @@ static const uint32_t mbpscsi[] = {
 	ISPOPMAP(0x03, 0x03),	/* 0x5a: SET DATA OVERRUN RECOVERY MODE */
 	ISPOPMAP(0x01, 0x03),	/* 0x5b: GET DATA OVERRUN RECOVERY MODE */
 	ISPOPMAP(0x0f, 0x0f),	/* 0x5c: SET HOST DATA */
-	ISPOPMAP(0x01, 0x01)	/* 0x5d: GET NOST DATA */
+	ISPOPMAP(0x01, 0x01)	/* 0x5d: GET HOST DATA */
 };
 
 static const char *scsi_mbcmd_names[] = {
@@ -6815,7 +6815,7 @@ static const char *scsi_mbcmd_names[] = {
 	"SET DATA OVERRUN RECOVERY MODE",
 	"GET DATA OVERRUN RECOVERY MODE",
 	"SET HOST DATA",
-	"GET NOST DATA",
+	"GET HOST DATA",
 };
 
 static const uint32_t mbpfc[] = {

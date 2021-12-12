@@ -1,4 +1,4 @@
-/*	$NetBSD: bereg.h,v 1.9 2009/09/19 11:53:42 tsutsui Exp $	*/
+/*	$NetBSD: bereg.h,v 1.10 2021/12/12 13:05:14 andvar Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -194,7 +194,7 @@ struct be_bregs {
 #define BE_BR_RXCFG_ENABLE	0x00000001	/* enable the receiver */
 #define BE_BR_RXCFG_FIFO	0x0000000e	/* default rx fthresh */
 #define BE_BR_RXCFG_PSTRIP	0x00000020	/* pad byte strip enable */
-#define BE_BR_RXCFG_PMISC	0x00000040	/* enable promiscous mode */
+#define BE_BR_RXCFG_PMISC	0x00000040	/* enable promiscuous mode */
 #define BE_BR_RXCFG_DERR	0x00000080	/* disable error checking */
 #define BE_BR_RXCFG_DCRCS	0x00000100	/* disable crc stripping */
 #define BE_BR_RXCFG_ME		0x00000200	/* receive packets for me */
