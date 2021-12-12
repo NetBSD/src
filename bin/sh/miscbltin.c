@@ -1,4 +1,4 @@
-/*	$NetBSD: miscbltin.c,v 1.46 2021/11/16 11:27:50 kre Exp $	*/
+/*	$NetBSD: miscbltin.c,v 1.47 2021/12/12 11:18:46 andvar Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,12 +37,12 @@
 #if 0
 static char sccsid[] = "@(#)miscbltin.c	8.4 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: miscbltin.c,v 1.46 2021/11/16 11:27:50 kre Exp $");
+__RCSID("$NetBSD: miscbltin.c,v 1.47 2021/12/12 11:18:46 andvar Exp $");
 #endif
 #endif /* not lint */
 
 /*
- * Miscelaneous builtins.
+ * Miscellaneous builtins.
  */
 
 #include <sys/types.h>		/* quad_t */
@@ -71,7 +71,7 @@ __RCSID("$NetBSD: miscbltin.c,v 1.46 2021/11/16 11:27:50 kre Exp $");
 
 /*
  * The read builtin.
- * Backslahes escape the next char unless -r is specified.
+ * Backslashes escape the next char unless -r is specified.
  *
  * This uses unbuffered input, which may be avoidable in some cases.
  *
