@@ -1,4 +1,4 @@
-.\"	$NetBSD: make.1,v 1.299 2021/08/03 07:12:50 wiz Exp $
+.\"	$NetBSD: make.1,v 1.300 2021/12/12 20:45:48 sjg Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	from: @(#)make.1	8.4 (Berkeley) 3/19/94
 .\"
-.Dd August 3, 2021
+.Dd December 12, 2021
 .Dt MAKE 1
 .Os
 .Sh NAME
@@ -1161,6 +1161,9 @@ for all programs which
 executes.
 .It Ev .SHELL
 The pathname of the shell used to run target scripts.
+It is read-only.
+.It Ev .SUFFIXES
+The list of known suffixes.
 It is read-only.
 .It Ev .TARGETS
 The list of targets explicitly specified on the command line, if any.
