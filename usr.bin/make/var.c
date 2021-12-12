@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.972 2021/12/12 16:41:39 sjg Exp $	*/
+/*	$NetBSD: var.c,v 1.973 2021/12/12 20:45:48 sjg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -140,7 +140,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.972 2021/12/12 16:41:39 sjg Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.973 2021/12/12 20:45:48 sjg Exp $");
 
 /*
  * Variables are defined using one of the VAR=value assignments.  Their
@@ -976,6 +976,12 @@ Var_SetWithFlags(GNode *scope, const char *name, const char *val,
 			 * See ExistsInCmdline.
 			 */
 			Var_Delete(SCOPE_GLOBAL, name);
+		}
+		if (strcmp(name, ".SUFFIXES") == 0) {
+			/* special: treat as readOnly */
+			DEBUG3(VAR, "%s: %s = %s ignored (read-only)\n",
+			    scope->name, name, val);
+			return;
 		}
 		v = VarAdd(name, val, scope, flags);
 	} else {
@@ -4400,8 +4406,12 @@ ParseVarnameLong(
 	 * either at ':' or at endc. */
 
 	if (v == NULL) {
-		v = FindLocalLegacyVar(name, scope,
-		    out_true_extraModifiers);
+		if (Substring_Equals(name, ".SUFFIXES"))
+			v = VarNew(Substring_Str(name),
+			    Suff_NamesStr(), false, true);
+		else
+			v = FindLocalLegacyVar(name, scope,
+			    out_true_extraModifiers);
 	}
 
 	if (v == NULL) {
