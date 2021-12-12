@@ -1,4 +1,4 @@
-/* $NetBSD: isp_stds.h,v 1.5 2010/03/26 20:52:00 mjacob Exp $ */
+/* $NetBSD: isp_stds.h,v 1.6 2021/12/12 09:00:07 andvar Exp $ */
 /*-
  *  Copyright (c) 1997-2008 by Matthew Jacob
  *  All rights reserved.
@@ -134,7 +134,7 @@ typedef struct {
 #define CT_FC_SUBTYPE_NS	0x02
 
 /*
- * RFT_ID Requet CT_IU
+ * RFT_ID Request CT_IU
  *
  * Source: NCITS xxx-200x Generic Services- 5 Rev 8.5 Section 5.2.5.30
  */

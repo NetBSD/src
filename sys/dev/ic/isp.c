@@ -1,4 +1,4 @@
-/* $NetBSD: isp.c,v 1.133 2021/12/05 13:10:43 rillig Exp $ */
+/* $NetBSD: isp.c,v 1.134 2021/12/12 09:00:07 andvar Exp $ */
 /*
  * Machine and OS Independent (well, as best as possible)
  * code for the Qlogic ISP SCSI adapters.
@@ -43,7 +43,7 @@
  */
 #ifdef	__NetBSD__
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isp.c,v 1.133 2021/12/05 13:10:43 rillig Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isp.c,v 1.134 2021/12/12 09:00:07 andvar Exp $");
 #include <dev/ic/isp_netbsd.h>
 #endif
 #ifdef	__FreeBSD__
@@ -5363,7 +5363,7 @@ again:
 	if (nlooked) {
 		ISP_WRITE(isp, isp->isp_respoutrp, optr);
 		/*
-		 * While we're at it, read the requst queue out pointer.
+		 * While we're at it, read the request queue out pointer.
 		 */
 		isp->isp_reqodx = ISP_READ(isp, isp->isp_rqstoutrp);
 		if (isp->isp_rscchiwater < ndone) {
