@@ -1,4 +1,4 @@
-/* $NetBSD: user.c,v 1.134 2021/12/10 20:06:29 nia Exp $ */
+/* $NetBSD: user.c,v 1.135 2021/12/12 14:33:13 nia Exp $ */
 
 /*
  * Copyright (c) 1999 Alistair G. Crooks.  All rights reserved.
@@ -33,7 +33,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 1999\
  The NetBSD Foundation, Inc.  All rights reserved.");
-__RCSID("$NetBSD: user.c,v 1.134 2021/12/10 20:06:29 nia Exp $");
+__RCSID("$NetBSD: user.c,v 1.135 2021/12/12 14:33:13 nia Exp $");
 #endif
 
 #include <sys/types.h>
@@ -936,7 +936,7 @@ typedef struct passwd_type_t {
 static passwd_type_t	passwd_types[] = {
 	{ "$argon2i",	8,	SIZE_MAX,	"\\$[^$]+\\$[^$]+\\$[^$]+\\$(.*)", 1 },	/* Argon2i */
 	{ "$argon2id",	9,	SIZE_MAX,	"\\$[^$]+\\$[^$]+\\$[^$]+\\$(.*)", 1 },	/* Argon2id */
-	{ "$argon2d",	8,	SIZE_MAX,	"\\$[^$]+\\$[^$]+\\$[^$]+\\$(.*)", 1 },	/* Argon2id */
+	{ "$argon2d",	8,	SIZE_MAX,	"\\$[^$]+\\$[^$]+\\$[^$]+\\$(.*)", 1 },	/* Argon2d */
 	{ "$sha1",	5,	28,	"\\$[^$]+\\$[^$]+\\$[^$]+\\$(.*)", 1 },	/* SHA1 */
 	{ "$2a",	3,	53,	"\\$[^$]+\\$[^$]+\\$(.*)",	1 },	/* Blowfish */
 	{ "$1",		2,	34,	NULL,				0 },	/* MD5 */
