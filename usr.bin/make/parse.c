@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.572 2021/12/09 20:13:09 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.573 2021/12/12 15:36:52 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -109,7 +109,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.572 2021/12/09 20:13:09 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.573 2021/12/12 15:36:52 rillig Exp $");
 
 /* types and constants */
 
@@ -318,8 +318,6 @@ static const struct {
 /* file loader */
 
 struct loadedfile {
-	/* XXX: What is the lifetime of this path? Who manages the memory? */
-	const char *path;	/* name, for error reports */
 	char *buf;		/* contents buffer */
 	size_t len;		/* length of contents */
 	bool used;		/* XXX: have we used the data yet */
@@ -327,12 +325,11 @@ struct loadedfile {
 
 /* XXX: What is the lifetime of the path? Who manages the memory? */
 static struct loadedfile *
-loadedfile_create(const char *path, char *buf, size_t buflen)
+loadedfile_create(char *buf, size_t buflen)
 {
 	struct loadedfile *lf;
 
 	lf = bmake_malloc(sizeof *lf);
-	lf->path = path == NULL ? "(stdin)" : path;
 	lf->buf = buf;
 	lf->len = buflen;
 	lf->used = false;
@@ -457,8 +454,7 @@ loadfile(const char *path, int fd)
 		close(fd);
 
 	{
-		struct loadedfile *lf = loadedfile_create(path,
-		    buf.data, buf.len);
+		struct loadedfile *lf = loadedfile_create(buf.data, buf.len);
 		Buf_DoneData(&buf);
 		return lf;
 	}
@@ -2230,6 +2226,7 @@ IncludeFile(const char *file, bool isSystem, bool depinc, bool silent)
 	CurFile()->lf = lf;
 	if (depinc)
 		doing_depend = depinc;	/* only turn it on */
+	/* TODO: consider free(fullname); */
 }
 
 /*
