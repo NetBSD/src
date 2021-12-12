@@ -1,4 +1,4 @@
-/*	$NetBSD: random.c,v 1.6 2020/02/22 14:47:29 fox Exp $	*/
+/*	$NetBSD: random.c,v 1.7 2021/12/12 22:20:52 andvar Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -35,7 +35,7 @@
 #if 0
 static char sccsid[] = "@(#)random.c	8.2 (Berkeley) 5/19/95";
 #else
-__RCSID("$NetBSD: random.c,v 1.6 2020/02/22 14:47:29 fox Exp $");
+__RCSID("$NetBSD: random.c,v 1.7 2021/12/12 22:20:52 andvar Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -79,7 +79,7 @@ static long random_unlocked(void);
  * then initialized to contain information for random number generation with
  * that much state information.  Good sizes for the amount of state
  * information are 32, 64, 128, and 256 bytes.  The state can be switched by
- * calling the setstate() routine with the same array as was initiallized
+ * calling the setstate() routine with the same array as was initialized
  * with initstate().  By default, the package runs with 128 bytes of state
  * information and generates far better random numbers than a linear
  * congruential generator.  If the amount of state information is less than
