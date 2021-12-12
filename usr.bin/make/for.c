@@ -1,4 +1,4 @@
-/*	$NetBSD: for.c,v 1.149 2021/12/12 14:27:48 rillig Exp $	*/
+/*	$NetBSD: for.c,v 1.150 2021/12/12 15:44:41 rillig Exp $	*/
 
 /*
  * Copyright (c) 1992, The Regents of the University of California.
@@ -58,7 +58,7 @@
 #include "make.h"
 
 /*	"@(#)for.c	8.1 (Berkeley) 6/6/93"	*/
-MAKE_RCSID("$NetBSD: for.c,v 1.149 2021/12/12 14:27:48 rillig Exp $");
+MAKE_RCSID("$NetBSD: for.c,v 1.150 2021/12/12 15:44:41 rillig Exp $");
 
 
 /* One of the variables to the left of the "in" in a .for loop. */
@@ -517,5 +517,5 @@ For_Run(int lineno)
 		return;
 	}
 
-	Parse_SetInput(NULL, lineno, -1, ForReadMore, f);
+	Parse_PushInput(NULL, lineno, -1, ForReadMore, f);
 }
