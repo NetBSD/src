@@ -1,4 +1,4 @@
-/*	$NetBSD: for.c,v 1.148 2021/12/05 11:40:03 rillig Exp $	*/
+/*	$NetBSD: for.c,v 1.149 2021/12/12 14:27:48 rillig Exp $	*/
 
 /*
  * Copyright (c) 1992, The Regents of the University of California.
@@ -45,9 +45,9 @@
  *
  * After reaching the .endfor, the values from the .for line are grouped
  * according to the number of variables.  For each such group, the unexpanded
- * body is scanned for variable expressions, and those that match the variable
- * names are replaced with expressions of the form ${:U...} or $(:U...).
- * After that, the body is treated like a file from an .include directive.
+ * body is scanned for variable expressions, and those that match the
+ * variable names are replaced with expressions of the form ${:U...}.  After
+ * that, the body is treated like a file from an .include directive.
  *
  * Interface:
  *	For_Eval	Evaluate the loop in the passed line.
@@ -58,7 +58,7 @@
 #include "make.h"
 
 /*	"@(#)for.c	8.1 (Berkeley) 6/6/93"	*/
-MAKE_RCSID("$NetBSD: for.c,v 1.148 2021/12/05 11:40:03 rillig Exp $");
+MAKE_RCSID("$NetBSD: for.c,v 1.149 2021/12/12 14:27:48 rillig Exp $");
 
 
 /* One of the variables to the left of the "in" in a .for loop. */
@@ -72,7 +72,7 @@ typedef struct ForLoop {
 	Vector /* of ForVar */ vars; /* Iteration variables */
 	SubstringWords items;	/* Substitution items */
 	Buffer curBody;		/* Expanded body of the current iteration */
-	unsigned int sub_next;	/* Where to continue iterating */
+	unsigned int nextItem;	/* Where to continue iterating */
 } ForLoop;
 
 
@@ -89,7 +89,7 @@ ForLoop_New(void)
 	Vector_Init(&f->vars, sizeof(ForVar));
 	SubstringWords_Init(&f->items);
 	Buf_Init(&f->curBody);
-	f->sub_next = 0;
+	f->nextItem = 0;
 
 	return f;
 }
@@ -398,7 +398,7 @@ ForLoop_SubstVarLong(ForLoop *f, const char **pp, const char *bodyEnd,
 		Buf_AddBytesBetween(&f->curBody, *inout_mark, p);
 		Buf_AddStr(&f->curBody, ":U");
 		Buf_AddEscaped(&f->curBody,
-		    f->items.words[f->sub_next + i], endc);
+		    f->items.words[f->nextItem + i], endc);
 
 		p += varnameLen;
 		*inout_mark = p;
@@ -436,7 +436,7 @@ found:
 
 	/* Replace $<ch> with ${:U<value>} */
 	Buf_AddStr(&f->curBody, "{:U");
-	Buf_AddEscaped(&f->curBody, f->items.words[f->sub_next + i], '}');
+	Buf_AddEscaped(&f->curBody, f->items.words[f->nextItem + i], '}');
 	Buf_AddByte(&f->curBody, '}');
 }
 
@@ -487,7 +487,7 @@ ForReadMore(void *v_arg, size_t *out_len)
 {
 	ForLoop *f = v_arg;
 
-	if (f->sub_next == f->items.len) {
+	if (f->nextItem == f->items.len) {
 		/* No more iterations */
 		ForLoop_Free(f);
 		return NULL;
@@ -495,7 +495,7 @@ ForReadMore(void *v_arg, size_t *out_len)
 
 	ForLoop_SubstBody(f);
 	DEBUG1(FOR, "For: loop body:\n%s", f->curBody.data);
-	f->sub_next += (unsigned int)f->vars.len;
+	f->nextItem += (unsigned int)f->vars.len;
 
 	*out_len = f->curBody.len;
 	return f->curBody.data;
