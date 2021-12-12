@@ -1,4 +1,4 @@
-/*  $NetBSD: perfuse_if.h,v 1.23 2020/03/05 15:56:20 msaitoh Exp $ */
+/*  $NetBSD: perfuse_if.h,v 1.24 2021/12/12 09:00:07 andvar Exp $ */
 
 /*-
  *  Copyright (c) 2010-2011 Emmanuel Dreyfus. All rights reserved.
@@ -42,9 +42,9 @@
  */
 extern int perfuse_diagflags;
 #define PDF_FOREGROUND	0x0001	/* we run in foreground */
-#define PDF_FUSE	0x0002	/* Display FUSE reqeusts and reply */
+#define PDF_FUSE	0x0002	/* Display FUSE requests and reply */
 #define PDF_DUMP	0x0004	/* Dump FUSE frames */
-#define PDF_PUFFS	0x0008	/* Display PUFFS requets and reply */
+#define PDF_PUFFS	0x0008	/* Display PUFFS requests and reply */
 #define PDF_FH		0x0010	/* File handles */
 #define PDF_RECLAIM	0x0020	/* Reclaimed files */
 #define PDF_READDIR	0x0040	/* readdir operations */

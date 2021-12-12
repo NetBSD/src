@@ -1,4 +1,4 @@
-/* $NetBSD: moused.c,v 1.26 2021/04/12 09:30:32 mrg Exp $ */
+/* $NetBSD: moused.c,v 1.27 2021/12/12 09:00:07 andvar Exp $ */
 /**
  ** Copyright (c) 1995 Michael Smith, All rights reserved.
  **
@@ -48,7 +48,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: moused.c,v 1.26 2021/04/12 09:30:32 mrg Exp $");
+__RCSID("$NetBSD: moused.c,v 1.27 2021/12/12 09:00:07 andvar Exp $");
 #endif /* not lint */
 
 #include <ctype.h>
@@ -1764,7 +1764,7 @@ r_protocol(u_char rBuf, mousestatus_t *act)
 	 * Moused usually operates the psm driver at the operation level 1
 	 * which sends mouse data in MOUSE_PROTO_SYSMOUSE protocol.
 	 * The following code takes effect only when the user explicitly 
-	 * requets the level 2 at which wheel movement and additional button 
+	 * requests the level 2 at which wheel movement and additional button 
 	 * actions are encoded in model-dependent formats. At the level 0
 	 * the following code is no-op because the psm driver says the model
 	 * is MOUSE_MODEL_GENERIC.
