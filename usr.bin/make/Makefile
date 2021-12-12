@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.117 2021/11/28 18:58:58 rillig Exp $
+#	$NetBSD: Makefile,v 1.118 2021/12/12 10:33:03 rillig Exp $
 #	@(#)Makefile	5.2 (Berkeley) 12/28/90
 
 PROG=	make
@@ -187,12 +187,14 @@ test-coverage: .PHONY
 	@env USE_COVERAGE=yes COPTS="-O0 -ggdb" USER_CPPFLAGS="-DCLEANUP" \
 		sh -c 'make -s all -j8 && make -s test'
 
+.if ${USE_COVERAGE} == "yes"
 report-coverage: .PHONY
 	@echo 'covered  uncovered  file'
-	@${GCOV} ${GCOV_OPTS} *.gcda 2>&1 \
+	@${GCOV} ${GCOV_OPTS} *.gcda \
 	| perl -ne ${GCOV_PERL:Q} \
 	| sort -nr
 	@sed -i 's,^\([^:]*\): *[0-9]*:,\1: ,' *.gcov
+.endif
 
 .include <bsd.prog.mk>
 .include <bsd.subdir.mk>
