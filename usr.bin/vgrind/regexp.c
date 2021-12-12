@@ -1,4 +1,4 @@
-/*	$NetBSD: regexp.c,v 1.14 2019/12/27 09:32:10 msaitoh Exp $	*/
+/*	$NetBSD: regexp.c,v 1.15 2021/12/12 08:49:58 andvar Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -44,7 +44,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\
 #if 0
 static char sccsid[] = "@(#)regexp.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: regexp.c,v 1.14 2019/12/27 09:32:10 msaitoh Exp $");
+__RCSID("$NetBSD: regexp.c,v 1.15 2021/12/12 08:49:58 andvar Exp $");
 #endif /* not lint */
 
 #include <assert.h>
@@ -122,7 +122,7 @@ STRNCMP(char *s1, char *s2, int len)
  *				character count
  *				the string
  *
- *		operatins :=	descriptor
+ *		operations :=	descriptor
  *				symbol
  *				character count
  */

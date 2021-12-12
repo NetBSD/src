@@ -1,4 +1,4 @@
-/*	$NetBSD: pxa2x0_i2c.c,v 1.8 2011/08/06 03:42:11 kiyohara Exp $	*/
+/*	$NetBSD: pxa2x0_i2c.c,v 1.9 2021/12/12 08:49:57 andvar Exp $	*/
 /*	$OpenBSD: pxa2x0_i2c.c,v 1.2 2005/05/26 03:52:07 pascoe Exp $	*/
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pxa2x0_i2c.c,v 1.8 2011/08/06 03:42:11 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pxa2x0_i2c.c,v 1.9 2021/12/12 08:49:57 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -252,7 +252,7 @@ err:
 }
 
 /*
- * XXX The quick_{read,write} opertions are untested!
+ * XXX The quick_{read,write} operations are untested!
  */
 int
 pxa2x0_i2c_quick(struct pxa2x0_i2c_softc *sc, u_char slave, u_char rw)
