@@ -1,4 +1,4 @@
-/*	$NetBSD: cond.c,v 1.300 2021/12/12 08:42:29 rillig Exp $	*/
+/*	$NetBSD: cond.c,v 1.301 2021/12/12 08:55:28 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -95,7 +95,7 @@
 #include "dir.h"
 
 /*	"@(#)cond.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: cond.c,v 1.300 2021/12/12 08:42:29 rillig Exp $");
+MAKE_RCSID("$NetBSD: cond.c,v 1.301 2021/12/12 08:55:28 rillig Exp $");
 
 /*
  * The parsing of conditional expressions is based on this grammar:
@@ -205,7 +205,9 @@ CondParser_SkipWhitespace(CondParser *par)
 }
 
 /*
- * Parse the argument of a built-in function.
+ * Parse a single word, taking into account balanced parentheses as well as
+ * embedded expressions.  Used for the argument of a built-in function as
+ * well as for bare words, which are then passed to the default function.
  *
  * Arguments:
  *	*pp initially points at the '(',
@@ -214,12 +216,12 @@ CondParser_SkipWhitespace(CondParser *par)
  *	*out_arg receives the argument as string.
  *
  *	func says whether the argument belongs to an actual function, or
- *	whether the parsed argument is passed to the default function.
+ *	NULL when parsing a bare word.
  *
- * Return the length of the argument, or 0 on error.
+ * Return the length of the argument, or an ambiguous 0 on error.
  */
 static size_t
-ParseFuncArg(CondParser *par, const char **pp, bool doEval, const char *func,
+ParseWord(CondParser *par, const char **pp, bool doEval, const char *func,
 	     char **out_arg)
 {
 	const char *p = *pp;
@@ -771,7 +773,7 @@ CondParser_FuncCall(CondParser *par, bool doEval, Token *out_token)
 	if (*cp != '(')
 		return false;
 
-	arglen = ParseFuncArg(par, &cp, doEval, fn->fn_name, &arg);
+	arglen = ParseWord(par, &cp, doEval, fn->fn_name, &arg);
 	*out_token = ToToken(arglen != 0 && (!doEval || fn->fn_eval(arg)));
 
 	free(arg);
@@ -808,7 +810,7 @@ CondParser_ComparisonOrLeaf(CondParser *par, bool doEval)
 	 * XXX: Is it possible to have a variable expression evaluated twice
 	 *  at this point?
 	 */
-	(void)ParseFuncArg(par, &cp, doEval, NULL, &arg);
+	(void)ParseWord(par, &cp, doEval, NULL, &arg);
 	cp1 = cp;
 	cpp_skip_whitespace(&cp1);
 	if (*cp1 == '=' || *cp1 == '!' || *cp1 == '<' || *cp1 == '>')

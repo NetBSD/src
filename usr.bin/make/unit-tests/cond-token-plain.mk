@@ -1,4 +1,4 @@
-# $NetBSD: cond-token-plain.mk,v 1.12 2021/09/21 22:38:25 rillig Exp $
+# $NetBSD: cond-token-plain.mk,v 1.13 2021/12/12 08:55:28 rillig Exp $
 #
 # Tests for plain tokens (that is, string literals without quotes)
 # in .if conditions.
@@ -152,7 +152,7 @@ VAR=	defined
 .endif
 
 # The '\\' is not a line continuation.  Neither is it an unquoted string
-# literal.  Instead, it is parsed as a function argument (ParseFuncArg),
+# literal.  Instead, it is parsed as a bare word (ParseWord),
 # and in that context, the backslash is just an ordinary character. The
 # function argument thus stays '\\' (2 backslashes).  This string is passed
 # to FuncDefined, and since there is no variable named '\\', the condition
