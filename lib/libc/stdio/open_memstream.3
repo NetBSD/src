@@ -1,4 +1,4 @@
-.\"	$NetBSD: open_memstream.3,v 1.3 2014/10/26 14:19:28 christos Exp $
+.\"	$NetBSD: open_memstream.3,v 1.4 2021/12/12 08:49:57 andvar Exp $
 .\" Copyright (c) 2013 Advanced Computing Technologies LLC
 .\" Written by: John H. Baldwin <jhb@FreeBSD.org>
 .\" All rights reserved.
@@ -111,7 +111,7 @@ These multibyte characters are then converted back to wide characters when
 written into the stream.
 As a result,
 the wide-oriented streams maintain an internal multibyte character conversion
-state that is cleared on any seek opertion that changes the current position.
+state that is cleared on any seek operation that changes the current position.
 This should have no effect as long as wide-oriented output operations are used
 on a wide-oriented stream.
 .Sh RETURN VALUES
