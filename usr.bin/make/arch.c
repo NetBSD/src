@@ -1,4 +1,4 @@
-/*	$NetBSD: arch.c,v 1.206 2021/12/12 23:32:03 rillig Exp $	*/
+/*	$NetBSD: arch.c,v 1.207 2021/12/12 23:47:21 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -126,7 +126,7 @@
 #include "config.h"
 
 /*	"@(#)arch.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: arch.c,v 1.206 2021/12/12 23:32:03 rillig Exp $");
+MAKE_RCSID("$NetBSD: arch.c,v 1.207 2021/12/12 23:47:21 rillig Exp $");
 
 typedef struct List ArchList;
 typedef struct ListNode ArchListNode;
@@ -199,20 +199,21 @@ FullName(const char *archive, const char *member)
 bool
 Arch_ParseArchive(char **pp, GNodeList *gns, GNode *scope)
 {
-	char *spec = *pp;	/* For modifying some bytes of *pp */
+	char *spec;		/* For modifying some bytes of *pp */
 	const char *cp;		/* Pointer into line */
 	GNode *gn;		/* New node */
-	FStr libName;		/* Library-part of specification */
+	FStr lib;		/* Library-part of specification */
 	FStr mem;		/* Member-part of specification */
 	char saveChar;		/* Ending delimiter of member-name */
-	bool expandLibName;	/* Whether the parsed libName contains
+	bool expandLib;		/* Whether the parsed lib contains
 				 * variable expressions that need to be
 				 * expanded */
 
-	libName = FStr_InitRefer(spec);
-	expandLibName = false;
+	spec = *pp;
+	lib = FStr_InitRefer(spec);
+	expandLib = false;
 
-	for (cp = libName.str; *cp != '(' && *cp != '\0';) {
+	for (cp = lib.str; *cp != '(' && *cp != '\0';) {
 		if (*cp == '$') {
 			/* Expand nested variable expressions. */
 			/* XXX: This code can probably be shortened. */
@@ -229,20 +230,19 @@ Arch_ParseArchive(char **pp, GNodeList *gns, GNode *scope)
 			if (isError)
 				return false;
 
-			expandLibName = true;
+			expandLib = true;
 			cp += nested_p - cp;
 		} else
 			cp++;
 	}
 
 	spec[cp++ - spec] = '\0';
-	if (expandLibName) {
+	if (expandLib) {
 		char *expanded;
-		(void)Var_Subst(libName.str, scope, VARE_UNDEFERR, &expanded);
+		(void)Var_Subst(lib.str, scope, VARE_UNDEFERR, &expanded);
 		/* TODO: handle errors */
-		libName = FStr_InitOwn(expanded);
+		lib = FStr_InitOwn(expanded);
 	}
-
 
 	for (;;) {
 		/*
@@ -328,7 +328,7 @@ Arch_ParseArchive(char **pp, GNodeList *gns, GNode *scope)
 			 * Now form an archive spec and recurse to deal with
 			 * nested variables and multi-word variable values.
 			 */
-			fullName = FullName(libName.str, mem.str);
+			fullName = FullName(lib.str, mem.str);
 			p = fullName;
 
 			if (strcmp(mem.str, unexpandedMem) == 0) {
@@ -357,7 +357,7 @@ Arch_ParseArchive(char **pp, GNodeList *gns, GNode *scope)
 
 			while (!Lst_IsEmpty(&members)) {
 				char *member = Lst_Dequeue(&members);
-				char *fullname = FullName(libName.str, member);
+				char *fullname = FullName(lib.str, member);
 				free(member);
 
 				gn = Targ_GetNode(fullname);
@@ -369,7 +369,7 @@ Arch_ParseArchive(char **pp, GNodeList *gns, GNode *scope)
 			Lst_Done(&members);
 
 		} else {
-			char *fullname = FullName(libName.str, mem.str);
+			char *fullname = FullName(lib.str, mem.str);
 			gn = Targ_GetNode(fullname);
 			free(fullname);
 
@@ -388,7 +388,7 @@ Arch_ParseArchive(char **pp, GNodeList *gns, GNode *scope)
 		spec[cp - spec] = saveChar;
 	}
 
-	FStr_Done(&libName);
+	FStr_Done(&lib);
 
 	cp++;			/* skip the ')' */
 	/* We promised that pp would be set up at the next non-space. */
