@@ -26,7 +26,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: print-bootp.c,v 1.11 2013/10/19 17:16:37 christos Exp $");
+__RCSID("$NetBSD: print-bootp.c,v 1.12 2021/12/12 22:20:52 andvar Exp $");
 /* 93/10/10 <gwr@mc.com> New data-driven option print routine. */
 #endif
 
@@ -185,7 +185,7 @@ bootp_print(struct bootp *bp, int length, u_short sport, u_short dport)
 
 /*
  * Option description data follows.
- * These are decribed in: RFC-1048, RFC-1395, RFC-1497, RFC-1533
+ * These are described in: RFC-1048, RFC-1395, RFC-1497, RFC-1533
  *
  * The first char of each option string encodes the data format:
  * ?: unknown

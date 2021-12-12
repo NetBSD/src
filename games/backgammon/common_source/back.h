@@ -1,4 +1,4 @@
-/*	$NetBSD: back.h,v 1.22 2020/12/06 11:41:47 dholland Exp $	*/
+/*	$NetBSD: back.h,v 1.23 2021/12/12 22:20:52 andvar Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -71,7 +71,7 @@ struct move {
  *	Numeric values which are one color or the other use
  *	-1 for white, 1 for red.
  *	Hence, white will be negative values, red positive one.
- *	This makes a lot of sense since white is going in decending
+ *	This makes a lot of sense since white is going in descending
  *	order around the board, and red is ascending.
  *
  */

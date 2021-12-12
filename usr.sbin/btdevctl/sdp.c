@@ -1,4 +1,4 @@
-/*	$NetBSD: sdp.c,v 1.11 2020/06/07 00:12:00 thorpej Exp $	*/
+/*	$NetBSD: sdp.c,v 1.12 2021/12/12 22:20:52 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: sdp.c,v 1.11 2020/06/07 00:12:00 thorpej Exp $");
+__RCSID("$NetBSD: sdp.c,v 1.12 2021/12/12 22:20:52 andvar Exp $");
 
 #include <sys/types.h>
 
@@ -466,7 +466,7 @@ parse_boolean(sdp_data_t *value)
 /*
  * The ProtocolDescriptorList attribute describes one or
  * more protocol stacks that may be used to gain access to
- * the service dscribed by the service record.
+ * the service described by the service record.
  *
  * If the ProtocolDescriptorList describes a single stack,
  * the attribute value takes the form of a data element

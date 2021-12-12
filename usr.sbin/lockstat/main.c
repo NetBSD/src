@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.20 2020/04/04 16:40:50 ad Exp $	*/
+/*	$NetBSD: main.c,v 1.21 2021/12/12 22:20:53 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2009 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: main.c,v 1.20 2020/04/04 16:40:50 ad Exp $");
+__RCSID("$NetBSD: main.c,v 1.21 2021/12/12 22:20:53 andvar Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -631,7 +631,7 @@ makelists(int mask, int event)
 			continue;
 
 		/*
-		 * Look for a record descibing this lock, and allocate a
+		 * Look for a record describing this lock, and allocate a
 		 * new one if needed.
 		 */
 		bp = HASH(lb->lb_lock);
