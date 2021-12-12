@@ -1,4 +1,4 @@
-/*	$NetBSD: if_slvar.h,v 1.34 2019/07/11 03:49:51 msaitoh Exp $	*/
+/*	$NetBSD: if_slvar.h,v 1.35 2021/12/12 13:05:14 andvar Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -53,7 +53,7 @@ struct sl_softc {
 	u_int	sc_flags;		/* see below */
 	u_int	sc_escape;	/* =1 if last char input was FRAME_ESCAPE */
 	long	sc_lasttime;		/* last time a char arrived */
-	long	sc_abortcount;		/* number of abort esacpe chars */
+	long	sc_abortcount;		/* number of abort escape chars */
 	long	sc_starttime;		/* time of first abort in window */
 	long	sc_oqlen;		/* previous output queue size */
 	long	sc_otimeout;		/* number of times output's stalled */
