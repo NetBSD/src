@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.21 2011/08/17 13:11:22 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.22 2021/12/12 13:05:14 andvar Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: main.c,v 1.21 2011/08/17 13:11:22 christos Exp $");
+__RCSID("$NetBSD: main.c,v 1.22 2021/12/12 13:05:14 andvar Exp $");
 #endif /* not lint */
 
 #include <signal.h>
@@ -252,7 +252,7 @@ forkvi(int argc, char **argv)
 		}
 	}
 	/*
-	 *	ed_agument's first argument is
+	 *	ed_argument's first argument is
 	 *	a vi/ex compatible search argument
 	 *	to find the first occurrence of ###
 	 */

@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.112 2021/12/10 20:36:03 andvar Exp $	*/
+/*	$NetBSD: audio.c,v 1.113 2021/12/12 13:05:13 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -138,7 +138,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.112 2021/12/10 20:36:03 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.113 2021/12/12 13:05:13 andvar Exp $");
 
 #ifdef _KERNEL_OPT
 #include "audio.h"
@@ -7314,7 +7314,7 @@ audio_track_setinfo_check(audio_track_t *track,
 }
 
 /*
- * Change water marks for playback track if specfied.
+ * Change water marks for playback track if specified.
  */
 static void
 audio_track_setinfo_water(audio_track_t *track, const struct audio_info *ai)
