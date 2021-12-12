@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.23 2008/04/28 20:23:21 martin Exp $	*/
+/*	$NetBSD: bus.h,v 1.24 2021/12/12 08:49:57 andvar Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2001 The NetBSD Foundation, Inc.
@@ -84,7 +84,7 @@ typedef struct bus_space_tag *bus_space_tag_t;
 #endif
 
 /*
- * bus space operaion table
+ * bus space operation table
  */
 struct bus_space_ops {
 	/* mapping/unmapping */
@@ -947,7 +947,7 @@ typedef struct bus_dmamap	*bus_dmamap_t;
 #define BUS_DMA_TAG_VALID(t)    ((t) != (bus_dma_tag_t)0)
 
 /*
- * bus DMA operaion table
+ * bus DMA operation table
  */
 struct bus_dma_ops {
 	/*

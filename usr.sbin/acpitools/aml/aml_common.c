@@ -1,4 +1,4 @@
-/*	$NetBSD: aml_common.c,v 1.4 2013/10/19 17:16:37 christos Exp $	*/
+/*	$NetBSD: aml_common.c,v 1.5 2021/12/12 08:49:58 andvar Exp $	*/
 
 /*-
  * Copyright (c) 1999 Takanori Watanabe
@@ -30,7 +30,7 @@
  *	$FreeBSD: src/usr.sbin/acpi/amldb/aml/aml_common.c,v 1.6 2000/11/09 06:24:45 iwasaki Exp $
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: aml_common.c,v 1.4 2013/10/19 17:16:37 christos Exp $");
+__RCSID("$NetBSD: aml_common.c,v 1.5 2021/12/12 08:49:58 andvar Exp $");
 
 #include <sys/param.h>
 
@@ -179,7 +179,7 @@ aml_showobject(union aml_object * obj)
 		    obj->pres.level, obj->pres.order);
 		break;
 	case aml_t_opregion:
-		printf("OprationRegion:Busspace%d, Offset 0x%x Length 0x%x\n",
+		printf("OperationRegion:Busspace%d, Offset 0x%x Length 0x%x\n",
 		    obj->opregion.space, obj->opregion.offset,
 		    obj->opregion.length);
 		break;
