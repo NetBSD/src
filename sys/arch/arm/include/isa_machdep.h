@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.h,v 1.12 2016/10/18 22:04:33 jdolecek Exp $	*/
+/*	$NetBSD: isa_machdep.h,v 1.13 2021/12/12 11:10:03 andvar Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -140,7 +140,7 @@ int isa_intr_alloc(isa_chipset_tag_t ic, int mask, int type, int *irq);
 void	isa_intr_init(void);
 
 /*
- * Miscellanous functions.
+ * Miscellaneous functions.
  */
 void sysbeep(int, int);		/* beep with the system speaker */
 void isa_fillw(u_int val, void *addr, size_t len);

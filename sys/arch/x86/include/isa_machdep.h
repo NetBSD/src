@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.h,v 1.12 2016/10/15 16:46:14 jdolecek Exp $	*/
+/*	$NetBSD: isa_machdep.h,v 1.13 2021/12/12 11:10:04 andvar Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -224,7 +224,7 @@ extern vaddr_t atdevbase;         /* kernel virtual address of "hole" */
 
 
 /*
- * Miscellanous functions.
+ * Miscellaneous functions.
  */
 void sysbeep(int, int);		/* beep with the system speaker */
 

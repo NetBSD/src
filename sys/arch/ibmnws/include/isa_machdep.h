@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.h,v 1.7 2016/10/18 22:04:34 jdolecek Exp $	*/
+/*	$NetBSD: isa_machdep.h,v 1.8 2021/12/12 11:10:03 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@ extern struct pic_ops *isa_pic;
 
 
 /*
- * Miscellanous functions.
+ * Miscellaneous functions.
  */
 void isabeep(int, int);		/* beep with the system speaker */
 
