@@ -1,11 +1,12 @@
-#	$NetBSD: Makefile.boot,v 1.23 2020/10/25 13:25:19 rillig Exp $
+#	$NetBSD: Makefile.boot,v 1.24 2021/12/12 11:02:23 rillig Exp $
 #
 # A very simple makefile...
 #
 # You only want to use this if you aren't running NetBSD.
 #
 # Modify MACHINE and MACHINE_ARCH as appropriate for your target architecture.
-# See config.h and the various #ifdef directives for further configuration.
+# See config.h and the various #ifdef directives for further configuration, in
+# particular in util.c.
 #
 
 PROG=		bmake
@@ -16,7 +17,7 @@ CFLAGS=		-O -g
 EXTRA_CFLAGS=
 EXTRA_LIBS=
 
-OBJS=	arch.o buf.o compat.o cond.o dir.o enum.o for.o hash.o \
+OBJS=	arch.o buf.o compat.o cond.o dir.o for.o hash.o \
 	job.o lst.o main.o make.o make_malloc.o metachar.o parse.o \
 	str.o suff.o targ.o trace.o var.o util.o
 
