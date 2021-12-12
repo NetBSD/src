@@ -1,4 +1,4 @@
-/*	$NetBSD: nonints.h,v 1.215 2021/09/12 08:03:48 rillig Exp $	*/
+/*	$NetBSD: nonints.h,v 1.216 2021/12/12 15:44:41 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -162,7 +162,7 @@ bool Parse_IsVar(const char *, VarAssign *out_var);
 void Parse_Var(VarAssign *, GNode *);
 void Parse_AddIncludeDir(const char *);
 void Parse_File(const char *, int);
-void Parse_SetInput(const char *, int, int, ReadMoreProc, void *);
+void Parse_PushInput(const char *, int, int, ReadMoreProc, void *);
 void Parse_MainName(GNodeList *);
 int Parse_NumErrors(void);
 
