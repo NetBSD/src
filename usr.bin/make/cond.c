@@ -1,4 +1,4 @@
-/*	$NetBSD: cond.c,v 1.298 2021/12/11 11:13:30 rillig Exp $	*/
+/*	$NetBSD: cond.c,v 1.299 2021/12/12 08:36:21 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -95,7 +95,7 @@
 #include "dir.h"
 
 /*	"@(#)cond.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: cond.c,v 1.298 2021/12/11 11:13:30 rillig Exp $");
+MAKE_RCSID("$NetBSD: cond.c,v 1.299 2021/12/12 08:36:21 rillig Exp $");
 
 /*
  * The parsing of conditional expressions is based on this grammar:
@@ -229,11 +229,6 @@ ParseFuncArg(CondParser *par, const char **pp, bool doEval, const char *func,
 
 	if (func != NULL)
 		p++;		/* Skip opening '(' - verified by caller */
-
-	if (*p == '\0') {
-		*out_arg = NULL; /* Missing closing parenthesis: */
-		return 0;	/* .if defined( */
-	}
 
 	cpp_skip_hspace(&p);
 
@@ -778,8 +773,9 @@ CondParser_FuncCall(CondParser *par, bool doEval, Token *out_token)
 
 	arglen = ParseFuncArg(par, &cp, doEval, fn->fn_name, &arg);
 	if (arglen == 0) {
-		par->p = cp;
 		*out_token = TOK_FALSE;
+		free(arg);
+		par->p = cp;
 		return true;
 	}
 
