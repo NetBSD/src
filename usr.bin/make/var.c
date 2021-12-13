@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.981 2021/12/13 02:57:44 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.982 2021/12/13 03:03:42 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -140,7 +140,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.981 2021/12/13 02:57:44 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.982 2021/12/13 03:03:42 rillig Exp $");
 
 /*
  * Variables are defined using one of the VAR=value assignments.  Their
@@ -1692,7 +1692,7 @@ again:
 	if (xrv != REG_NOMATCH)
 		VarREError(xrv, &args->re, "Unexpected regex error");
 no_match:
-	SepBuf_AddStr(buf, wp);
+	SepBuf_AddBytesBetween(buf, wp, word.end);
 	return;
 
 ok:
