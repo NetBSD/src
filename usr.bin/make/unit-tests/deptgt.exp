@@ -9,6 +9,9 @@ ParseReadLine (37): '	: command for empty targets list'
 ParseReadLine (38): '.MAKEFLAGS: -d0'
 ParseDependency(.MAKEFLAGS: -d0)
 make: "deptgt.mk" line 46: Unknown modifier "Z"
+make: "deptgt.mk" line 49: warning: Extra target ignored
+make: "deptgt.mk" line 52: warning: Extra target (ordinary) ignored
+make: "deptgt.mk" line 55: warning: Special and mundane targets don't mix. Mundane ones ignored
 make: Fatal errors encountered -- cannot continue
 make: stopped in unit-tests
 exit status 1
