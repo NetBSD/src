@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.984 2021/12/13 03:41:57 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.985 2021/12/13 03:55:16 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -140,7 +140,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.984 2021/12/13 03:41:57 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.985 2021/12/13 03:55:16 rillig Exp $");
 
 /*
  * Variables are defined using one of the VAR=value assignments.  Their
@@ -3436,8 +3436,8 @@ ApplyModifier_IfElse(const char **pp, ModChain *ch)
 {
 	Expr *expr = ch->expr;
 	VarParseResult res;
-	LazyBuf buf;
-	FStr then_expr, else_expr;
+	LazyBuf thenBuf;
+	LazyBuf elseBuf;
 
 	bool value = false;
 	VarEvalMode then_emode = VARE_PARSE_ONLY;
@@ -3453,37 +3453,39 @@ ApplyModifier_IfElse(const char **pp, ModChain *ch)
 	}
 
 	(*pp)++;			/* skip past the '?' */
-	res = ParseModifierPart(pp, ':', then_emode, ch, &buf);
+	res = ParseModifierPart(pp, ':', then_emode, ch, &thenBuf);
 	if (res != VPR_OK)
 		return AMR_CLEANUP;
-	then_expr = LazyBuf_DoneGet(&buf);
 
-	res = ParseModifierPart(pp, ch->endc, else_emode, ch, &buf);
+	res = ParseModifierPart(pp, ch->endc, else_emode, ch, &elseBuf);
 	if (res != VPR_OK) {
-		FStr_Done(&then_expr);
+		LazyBuf_Done(&thenBuf);
 		return AMR_CLEANUP;
 	}
-	else_expr = LazyBuf_DoneGet(&buf);
 
 	(*pp)--;		/* Go back to the ch->endc. */
 
 	if (cond_rc == COND_INVALID) {
-		Error("Bad conditional expression '%s' in '%s?%s:%s'",
-		    expr->name, expr->name, then_expr.str, else_expr.str);
-		FStr_Done(&then_expr);
-		FStr_Done(&else_expr);
+		Substring thenExpr = LazyBuf_Get(&thenBuf);
+		Substring elseExpr = LazyBuf_Get(&elseBuf);
+		Error("Bad conditional expression '%s' in '%s?%.*s:%.*s'",
+		    expr->name, expr->name,
+		    (int)Substring_Length(thenExpr), thenExpr.start,
+		    (int)Substring_Length(elseExpr), elseExpr.start);
+		LazyBuf_Done(&thenBuf);
+		LazyBuf_Done(&elseBuf);
 		return AMR_CLEANUP;
 	}
 
 	if (!Expr_ShouldEval(expr)) {
-		FStr_Done(&then_expr);
-		FStr_Done(&else_expr);
+		LazyBuf_Done(&thenBuf);
+		LazyBuf_Done(&elseBuf);
 	} else if (value) {
-		Expr_SetValue(expr, then_expr);
-		FStr_Done(&else_expr);
+		Expr_SetValue(expr, LazyBuf_DoneGet(&thenBuf));
+		LazyBuf_Done(&elseBuf);
 	} else {
-		FStr_Done(&then_expr);
-		Expr_SetValue(expr, else_expr);
+		LazyBuf_Done(&thenBuf);
+		Expr_SetValue(expr, LazyBuf_DoneGet(&elseBuf));
 	}
 	Expr_Define(expr);
 	return AMR_OK;
