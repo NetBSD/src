@@ -1,4 +1,4 @@
-/* $NetBSD: cgd.c,v 1.140 2021/10/17 14:42:15 jmcneill Exp $ */
+/* $NetBSD: cgd.c,v 1.141 2021/12/13 21:15:26 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgd.c,v 1.140 2021/10/17 14:42:15 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgd.c,v 1.141 2021/12/13 21:15:26 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -692,14 +692,20 @@ cgd_create_worker(void)
 static void
 cgd_destroy_worker(struct cgd_worker *cw)
 {
+
+	/*
+	 * Wait for all worker threads to complete before destroying
+	 * the rest of the cgd_worker.
+	 */
+	if (cw->cw_wq)
+		workqueue_destroy(cw->cw_wq);
+
 	mutex_destroy(&cw->cw_lock);
 
 	if (cw->cw_cpool) {
 		pool_destroy(cw->cw_cpool);
 		kmem_free(cw->cw_cpool, sizeof(struct pool));
 	}
-	if (cw->cw_wq)
-		workqueue_destroy(cw->cw_wq);
 
 	kmem_free(cw, sizeof(struct cgd_worker));
 }
