@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.541 2021/08/14 13:32:12 rillig Exp $	*/
+/*	$NetBSD: main.c,v 1.542 2021/12/13 05:25:04 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -111,7 +111,7 @@
 #include "trace.h"
 
 /*	"@(#)main.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: main.c,v 1.541 2021/08/14 13:32:12 rillig Exp $");
+MAKE_RCSID("$NetBSD: main.c,v 1.542 2021/12/13 05:25:04 rillig Exp $");
 #if defined(MAKE_NATIVE) && !defined(lint)
 __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993 "
 	    "The Regents of the University of California.  "
@@ -1346,6 +1346,7 @@ main_Init(int argc, char **argv)
 	/* default to writing debug to stderr */
 	opts.debug_file = stderr;
 
+	Str_Intern_Init();
 	HashTable_Init(&cached_realpaths);
 
 #ifdef SIGINFO
