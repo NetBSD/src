@@ -1,4 +1,4 @@
-/*	$NetBSD: ppp_tty.c,v 1.68 2021/09/27 07:13:30 msaitoh Exp $	*/
+/*	$NetBSD: ppp_tty.c,v 1.69 2021/12/13 02:53:43 msaitoh Exp $	*/
 /*	Id: ppp_tty.c,v 1.3 1996/07/01 01:04:11 paulus Exp 	*/
 
 /*
@@ -93,7 +93,7 @@
 /* from NetBSD: if_ppp.c,v 1.15.2.2 1994/07/28 05:17:58 cgd Exp */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ppp_tty.c,v 1.68 2021/09/27 07:13:30 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ppp_tty.c,v 1.69 2021/12/13 02:53:43 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "ppp.h"
@@ -1008,7 +1008,7 @@ pppinput(int c, struct tty *tp)
 	sc->sc_flags |= SC_RCV_B7_1;
     else
 	sc->sc_flags |= SC_RCV_B7_0;
-    if (paritytab[c >> 5] & (1 << (c & 0x1F)))
+    if (paritytab[c >> 5] & (1U << (c & 0x1F)))
 	sc->sc_flags |= SC_RCV_ODDP;
     else
 	sc->sc_flags |= SC_RCV_EVNP;
@@ -1089,7 +1089,7 @@ pppinput(int c, struct tty *tp)
 	return 0;
     }
 
-    if (c < 0x20 && (sc->sc_rasyncmap & (1 << c)))
+    if (c < 0x20 && (sc->sc_rasyncmap & (1U << c)))
 	return 0;
 
     s = spltty();
