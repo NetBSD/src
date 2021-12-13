@@ -1,4 +1,4 @@
-/*	$NetBSD: cond.c,v 1.303 2021/12/13 07:06:39 rillig Exp $	*/
+/*	$NetBSD: cond.c,v 1.304 2021/12/13 07:47:07 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -95,7 +95,7 @@
 #include "dir.h"
 
 /*	"@(#)cond.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: cond.c,v 1.303 2021/12/13 07:06:39 rillig Exp $");
+MAKE_RCSID("$NetBSD: cond.c,v 1.304 2021/12/13 07:47:07 rillig Exp $");
 
 /*
  * The parsing of conditional expressions is based on this grammar:
@@ -623,33 +623,19 @@ CondParser_ComparisonOp(CondParser *par, ComparisonOp *out_op)
 {
 	const char *p = par->p;
 
-	if (p[0] == '<' && p[1] == '=') {
-		*out_op = LE;
-		goto length_2;
-	} else if (p[0] == '<') {
-		*out_op = LT;
-		goto length_1;
-	} else if (p[0] == '>' && p[1] == '=') {
-		*out_op = GE;
-		goto length_2;
-	} else if (p[0] == '>') {
-		*out_op = GT;
-		goto length_1;
-	} else if (p[0] == '=' && p[1] == '=') {
-		*out_op = EQ;
-		goto length_2;
-	} else if (p[0] == '!' && p[1] == '=') {
-		*out_op = NE;
-		goto length_2;
-	}
+	if (p[0] == '<' && p[1] == '=')
+		return par->p += 2, *out_op = LE, true;
+	if (p[0] == '<')
+		return par->p += 1, *out_op = LT, true;
+	if (p[0] == '>' && p[1] == '=')
+		return par->p += 2, *out_op = GE, true;
+	if (p[0] == '>')
+		return par->p += 1, *out_op = GT, true;
+	if (p[0] == '=' && p[1] == '=')
+		return par->p += 2, *out_op = EQ, true;
+	if (p[0] == '!' && p[1] == '=')
+		return par->p += 2, *out_op = NE, true;
 	return false;
-
-length_2:
-	par->p = p + 2;
-	return true;
-length_1:
-	par->p = p + 1;
-	return true;
 }
 
 /*
