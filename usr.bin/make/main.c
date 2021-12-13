@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.542 2021/12/13 05:25:04 rillig Exp $	*/
+/*	$NetBSD: main.c,v 1.543 2021/12/13 22:26:21 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -111,7 +111,7 @@
 #include "trace.h"
 
 /*	"@(#)main.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: main.c,v 1.542 2021/12/13 05:25:04 rillig Exp $");
+MAKE_RCSID("$NetBSD: main.c,v 1.543 2021/12/13 22:26:21 rillig Exp $");
 #if defined(MAKE_NATIVE) && !defined(lint)
 __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993 "
 	    "The Regents of the University of California.  "
@@ -247,79 +247,79 @@ MainParseArgDebug(const char *argvalue)
 	for (modules = argvalue; *modules != '\0'; modules++) {
 		switch (*modules) {
 		case '0':	/* undocumented, only intended for tests */
-			debug = DEBUG_NONE;
+			memset(&debug, 0, sizeof(debug));
 			break;
 		case 'A':
-			debug = DEBUG_ALL;
+			memset(&debug, ~0, sizeof(debug));
 			break;
 		case 'a':
-			debug |= DEBUG_ARCH;
+			debug.DEBUG_ARCH = true;
 			break;
 		case 'C':
-			debug |= DEBUG_CWD;
+			debug.DEBUG_CWD = true;
 			break;
 		case 'c':
-			debug |= DEBUG_COND;
+			debug.DEBUG_COND = true;
 			break;
 		case 'd':
-			debug |= DEBUG_DIR;
+			debug.DEBUG_DIR = true;
 			break;
 		case 'e':
-			debug |= DEBUG_ERROR;
+			debug.DEBUG_ERROR = true;
 			break;
 		case 'f':
-			debug |= DEBUG_FOR;
+			debug.DEBUG_FOR = true;
 			break;
 		case 'g':
 			if (modules[1] == '1') {
-				debug |= DEBUG_GRAPH1;
+				debug.DEBUG_GRAPH1 = true;
 				modules++;
 			} else if (modules[1] == '2') {
-				debug |= DEBUG_GRAPH2;
+				debug.DEBUG_GRAPH2 = true;
 				modules++;
 			} else if (modules[1] == '3') {
-				debug |= DEBUG_GRAPH3;
+				debug.DEBUG_GRAPH3 = true;
 				modules++;
 			}
 			break;
 		case 'h':
-			debug |= DEBUG_HASH;
+			debug.DEBUG_HASH = true;
 			break;
 		case 'j':
-			debug |= DEBUG_JOB;
+			debug.DEBUG_JOB = true;
 			break;
 		case 'L':
 			opts.strict = true;
 			break;
 		case 'l':
-			debug |= DEBUG_LOUD;
+			debug.DEBUG_LOUD = true;
 			break;
 		case 'M':
-			debug |= DEBUG_META;
+			debug.DEBUG_META = true;
 			break;
 		case 'm':
-			debug |= DEBUG_MAKE;
+			debug.DEBUG_MAKE = true;
 			break;
 		case 'n':
-			debug |= DEBUG_SCRIPT;
+			debug.DEBUG_SCRIPT = true;
 			break;
 		case 'p':
-			debug |= DEBUG_PARSE;
+			debug.DEBUG_PARSE = true;
 			break;
 		case 's':
-			debug |= DEBUG_SUFF;
+			debug.DEBUG_SUFF = true;
 			break;
 		case 't':
-			debug |= DEBUG_TARG;
+			debug.DEBUG_TARG = true;
 			break;
 		case 'V':
 			opts.debugVflag = true;
 			break;
 		case 'v':
-			debug |= DEBUG_VAR;
+			debug.DEBUG_VAR = true;
 			break;
 		case 'x':
-			debug |= DEBUG_SHELL;
+			debug.DEBUG_SHELL = true;
 			break;
 		case 'F':
 			MainParseArgDebugFile(modules + 1);
@@ -1114,7 +1114,7 @@ static void
 CmdOpts_Init(void)
 {
 	opts.compatMake = false;
-	opts.debug = DEBUG_NONE;
+	memset(&opts.debug, 0, sizeof(opts.debug));
 	/* opts.debug_file has already been initialized earlier */
 	opts.strict = false;
 	opts.debugVflag = false;
