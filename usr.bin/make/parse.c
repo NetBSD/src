@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.574 2021/12/12 15:44:41 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.575 2021/12/13 00:09:07 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -109,7 +109,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.574 2021/12/12 15:44:41 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.575 2021/12/13 00:09:07 rillig Exp $");
 
 /* types and constants */
 
@@ -2226,7 +2226,7 @@ IncludeFile(const char *file, bool isSystem, bool depinc, bool silent)
 	CurFile()->lf = lf;
 	if (depinc)
 		doing_depend = depinc;	/* only turn it on */
-	/* TODO: consider free(fullname); */
+	free(fullname);
 }
 
 /*
