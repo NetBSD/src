@@ -1,4 +1,4 @@
-/*	$NetBSD: make.h,v 1.271 2021/12/13 05:25:04 rillig Exp $	*/
+/*	$NetBSD: make.h,v 1.272 2021/12/13 22:26:21 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -543,34 +543,32 @@ extern pid_t myPid;
 # define MAKE_LEVEL_ENV	"MAKELEVEL"
 #endif
 
-typedef enum DebugFlags {
-	DEBUG_NONE	= 0,
-	DEBUG_ARCH	= 1 << 0,
-	DEBUG_COND	= 1 << 1,
-	DEBUG_CWD	= 1 << 2,
-	DEBUG_DIR	= 1 << 3,
-	DEBUG_ERROR	= 1 << 4,
-	DEBUG_FOR	= 1 << 5,
-	DEBUG_GRAPH1	= 1 << 6,
-	DEBUG_GRAPH2	= 1 << 7,
-	DEBUG_GRAPH3	= 1 << 8,
-	DEBUG_HASH	= 1 << 9,
-	DEBUG_JOB	= 1 << 10,
-	DEBUG_LOUD	= 1 << 11,
-	DEBUG_MAKE	= 1 << 12,
-	DEBUG_META	= 1 << 13,
-	DEBUG_PARSE	= 1 << 14,
-	DEBUG_SCRIPT	= 1 << 15,
-	DEBUG_SHELL	= 1 << 16,
-	DEBUG_SUFF	= 1 << 17,
-	DEBUG_TARG	= 1 << 18,
-	DEBUG_VAR	= 1 << 19,
-	DEBUG_ALL	= (1 << 20) - 1
+typedef struct DebugFlags {
+	bool DEBUG_ARCH: 1;
+	bool DEBUG_COND: 1;
+	bool DEBUG_CWD: 1;
+	bool DEBUG_DIR: 1;
+	bool DEBUG_ERROR: 1;
+	bool DEBUG_FOR: 1;
+	bool DEBUG_GRAPH1: 1;
+	bool DEBUG_GRAPH2: 1;
+	bool DEBUG_GRAPH3: 1;
+	bool DEBUG_HASH: 1;
+	bool DEBUG_JOB: 1;
+	bool DEBUG_LOUD: 1;
+	bool DEBUG_MAKE: 1;
+	bool DEBUG_META: 1;
+	bool DEBUG_PARSE: 1;
+	bool DEBUG_SCRIPT: 1;
+	bool DEBUG_SHELL: 1;
+	bool DEBUG_SUFF: 1;
+	bool DEBUG_TARG: 1;
+	bool DEBUG_VAR: 1;
 } DebugFlags;
 
 #define CONCAT(a, b) a##b
 
-#define DEBUG(module) ((opts.debug & CONCAT(DEBUG_, module)) != 0)
+#define DEBUG(module) (opts.debug.CONCAT(DEBUG_, module))
 
 void debug_printf(const char *, ...) MAKE_ATTR_PRINTFLIKE(1, 2);
 
