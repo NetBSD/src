@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.976 2021/12/13 01:37:51 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.977 2021/12/13 02:07:58 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -140,7 +140,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.976 2021/12/13 01:37:51 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.977 2021/12/13 02:07:58 rillig Exp $");
 
 /*
  * Variables are defined using one of the VAR=value assignments.  Their
@@ -155,8 +155,8 @@ MAKE_RCSID("$NetBSD: var.c,v 1.976 2021/12/13 01:37:51 rillig Exp $");
  * not be possible to undefine a variable during the evaluation of an
  * expression, or Var.name might point nowhere.
  *
- * Environment variables are temporary.  They are returned by VarFind, and
- * after using them, they must be freed using VarFreeEnv.
+ * Environment variables are short-lived.  They are returned by VarFind, and
+ * after using them, they must be freed using VarFreeShortLived.
  *
  * Undefined variables occur during evaluation of variable expressions such
  * as ${UNDEF:Ufallback} in Var_Parse and ApplyModifiers.
@@ -391,8 +391,8 @@ GNode_FindVar(GNode *scope, Substring varname, unsigned int hash)
  *
  * Results:
  *	The found variable, or NULL if the variable does not exist.
- *	If the variable is an environment variable, it must be freed using
- *	VarFreeEnv after use.
+ *	If the variable is short-lived (such as environment variables), it
+ *	must be freed using VarFreeShortLived after use.
  */
 static Var *
 VarFindSubstring(Substring name, GNode *scope, bool elsewhere)
@@ -455,11 +455,11 @@ VarFind(const char *name, GNode *scope, bool elsewhere)
 	return VarFindSubstring(Substring_InitStr(name), scope, elsewhere);
 }
 
-/* If the variable is an environment variable, free it, including its value. */
+/* If the variable is short-lived, free it, including its value. */
 static void
-VarFreeEnv(Var *v)
+VarFreeShortLived(Var *v)
 {
-	if (!v->fromEnv)
+	if (!v->fromEnv)	/* TODO: replace with v->shortLived */
 		return;
 
 	FStr_Done(&v->name);
@@ -940,7 +940,7 @@ ExistsInCmdline(const char *name, const char *val)
 		return true;
 	}
 
-	VarFreeEnv(v);
+	VarFreeShortLived(v);
 	return false;
 }
 
@@ -1025,7 +1025,7 @@ Var_SetWithFlags(GNode *scope, const char *name, const char *val,
 		save_dollars = ParseBoolean(val, save_dollars);
 
 	if (v != NULL)
-		VarFreeEnv(v);
+		VarFreeShortLived(v);
 }
 
 /* See Var_Set for documentation. */
@@ -1199,7 +1199,7 @@ Var_Exists(GNode *scope, const char *name)
 	if (v == NULL)
 		return false;
 
-	VarFreeEnv(v);
+	VarFreeShortLived(v);
 	return true;
 }
 
@@ -3557,7 +3557,7 @@ ok:
 		if (gv == NULL)
 			scope = SCOPE_GLOBAL;
 		else
-			VarFreeEnv(gv);
+			VarFreeShortLived(gv);
 	}
 
 	switch (op[0]) {
@@ -4465,7 +4465,7 @@ FreeShortLived(Var *v, Expr *expr)
 		expr->value.freeIt = v->val.data;
 		v->val.data = NULL;
 	}
-	VarFreeEnv(v);
+	VarFreeShortLived(v);
 }
 
 #if __STDC_VERSION__ >= 199901L
