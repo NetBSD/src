@@ -1,4 +1,4 @@
-/*	$NetBSD: db_machdep.c,v 1.7 2018/02/11 08:27:18 maxv Exp $	*/
+/*	$NetBSD: db_machdep.c,v 1.8 2021/12/13 01:25:29 chs Exp $	*/
 
 /*
  * Mach Operating System
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_machdep.c,v 1.7 2018/02/11 08:27:18 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_machdep.c,v 1.8 2021/12/13 01:25:29 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -255,6 +255,10 @@ db_frame_info(long *frame, db_addr_t callpc, const char **namep,
 	const char *name;
 
 	sym = db_search_symbol(callpc, DB_STGY_ANY, &offset);
+	if (sym != 0 && offset == 0) {
+		sym = db_search_symbol(callpc - 1, DB_STGY_ANY, &offset);
+		offset++;
+	}
 	db_symbol_values(sym, &name, NULL);
 	if (sym == (db_sym_t)0)
 		return (db_sym_t)0;
