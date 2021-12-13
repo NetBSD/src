@@ -1,4 +1,4 @@
-/*      $NetBSD: meta.c,v 1.185 2021/11/27 22:04:02 rillig Exp $ */
+/*      $NetBSD: meta.c,v 1.186 2021/12/13 01:51:12 rillig Exp $ */
 
 /*
  * Implement 'meta' mode.
@@ -379,7 +379,7 @@ printCMD(const char *ucmd, FILE *fp, GNode *gn)
     FStr xcmd = FStr_InitRefer(ucmd);
 
     if (strchr(ucmd, '$') != NULL) {
-    	char *expanded;
+	char *expanded;
 	(void)Var_Subst(ucmd, gn, VARE_WANTRES, &expanded);
 	/* TODO: handle errors */
 	xcmd = FStr_InitOwn(expanded);
