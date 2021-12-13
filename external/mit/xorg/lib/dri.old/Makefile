@@ -1,6 +1,9 @@
-# $NetBSD: Makefile,v 1.2 2021/07/11 20:53:35 mrg Exp $
+# $NetBSD: Makefile,v 1.3 2021/12/13 20:53:22 christos Exp $
 
 # Link the mesa_dri_drivers mega driver.
+
+# XXX: anonymous structs inside anonymous unions don't work.
+NOLINT=yes
 
 .include <bsd.own.mk>
 
@@ -491,6 +494,11 @@ CWARNFLAGS.clang+=	-Wno-error=initializer-overrides -Wno-error=switch \
 COPTS+= -Wno-error=stack-protector
 
 COPTS.u_atomic.c+=	${${ACTIVE_CC} == "gcc" && ${HAVE_GCC:U0} >= 10:? -Wno-builtin-declaration-mismatch :}
+
+COPTS.brw_eu_compact.c+=	-Wno-error=stack-protector
+COPTS.brw_fs_copy_propagation.cpp+=	-Wno-error=stack-protector
+COPTS.brw_fs.cpp+=	-Wno-error=stack-protector
+COPTS.brw_fs_reg_allocate.cpp+=	-Wno-error=stack-protector
 
 .include <bsd.lib.mk>
 .else
