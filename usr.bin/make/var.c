@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.979 2021/12/13 02:22:14 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.980 2021/12/13 02:34:15 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -140,7 +140,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.979 2021/12/13 02:22:14 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.980 2021/12/13 02:34:15 rillig Exp $");
 
 /*
  * Variables are defined using one of the VAR=value assignments.  Their
@@ -4452,12 +4452,8 @@ ParseVarnameLong(
 		 * is still undefined, Var_Parse will return an empty string
 		 * instead of the actually computed value.
 		 */
-		/*
-		 * XXX: shortLived == true sounds more sensible, this will
-		 * allow to merge duplicate code at the end of Var_Parse.
-		 */
 		v = VarNew(LazyBuf_DoneGet(&varname), "",
-		    false, false, false);
+		    true, false, false);
 		*out_true_exprDefined = DEF_UNDEF;
 	} else
 		LazyBuf_Done(&varname);
@@ -4468,18 +4464,6 @@ ParseVarnameLong(
 	*out_true_haveModifier = haveModifier;
 	*out_true_dynamic = dynamic;
 	return true;
-}
-
-/* Free the short-lived variable, since we own it. */
-static void
-FreeShortLived(Var *v, Expr *expr)
-{
-	if (expr->value.str == v->val.data) {
-		/* move ownership */
-		expr->value.freeIt = v->val.data;
-		v->val.data = NULL;
-	}
-	VarFreeShortLived(v);
 }
 
 #if __STDC_VERSION__ >= 199901L
@@ -4669,31 +4653,30 @@ Var_Parse(const char **pp, GNode *scope, VarEvalMode emode, FStr *out_val)
 
 	*pp = p;
 
-	if (v->shortLived) {
-		FreeShortLived(v, &expr);
-
-	} else if (expr.defined != DEF_REGULAR) {
-		if (expr.defined == DEF_UNDEF) {
-			if (dynamic) {
-				Expr_SetValueOwn(&expr,
-				    bmake_strsedup(start, p));
-			} else {
-				/*
-				 * The expression is still undefined,
-				 * therefore discard the actual value and
-				 * return an error marker instead.
-				 */
-				Expr_SetValueRefer(&expr,
-				    emode == VARE_UNDEFERR
-					? var_Error : varUndefined);
-			}
+	if (expr.defined == DEF_UNDEF) {
+		if (dynamic)
+			Expr_SetValueOwn(&expr, bmake_strsedup(start, p));
+		else {
+			/*
+			 * The expression is still undefined, therefore
+			 * discard the actual value and return an error marker
+			 * instead.
+			 */
+			Expr_SetValueRefer(&expr,
+			    emode == VARE_UNDEFERR
+				? var_Error : varUndefined);
 		}
-		/* XXX: This is not standard memory management. */
-		if (expr.value.str != v->val.data)
-			Buf_Done(&v->val);
-		FStr_Done(&v->name);
-		free(v);
 	}
+
+	if (v->shortLived) {
+		if (expr.value.str == v->val.data) {
+			/* move ownership */
+			expr.value.freeIt = v->val.data;
+			v->val.data = NULL;
+		}
+		VarFreeShortLived(v);
+	}
+
 	*out_val = expr.value;
 	return VPR_OK;		/* XXX: Is not correct in all cases */
 }
