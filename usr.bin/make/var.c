@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.980 2021/12/13 02:34:15 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.981 2021/12/13 02:57:44 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -140,7 +140,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.980 2021/12/13 02:34:15 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.981 2021/12/13 02:57:44 rillig Exp $");
 
 /*
  * Variables are defined using one of the VAR=value assignments.  Their
@@ -1606,6 +1606,25 @@ VarREError(int reerr, const regex_t *pat, const char *str)
 	free(errbuf);
 }
 
+/* In the modifier ':C', replace a backreference from \0 to \9. */
+static void
+RegexReplaceBackref(char ref, SepBuf *buf, const char *wp,
+		    const regmatch_t *m, size_t nsub)
+{
+	unsigned int n = ref - '0';
+
+	if (n >= nsub)
+		Error("No subexpression \\%u", n);
+	else if (m[n].rm_so == -1) {
+		if (opts.strict)
+			Error("No match for subexpression \\%u", n);
+	} else {
+		SepBuf_AddBytesBetween(buf,
+		    wp + (size_t)m[n].rm_so,
+		    wp + (size_t)m[n].rm_eo);
+	}
+}
+
 /*
  * Replacement of regular expressions is not specified by POSIX, therefore
  * re-implement it here.
@@ -1615,7 +1634,6 @@ RegexReplace(const char *replace, SepBuf *buf, const char *wp,
 	     const regmatch_t *m, size_t nsub)
 {
 	const char *rp;
-	unsigned int n;
 
 	for (rp = replace; *rp != '\0'; rp++) {
 		if (*rp == '\\' && (rp[1] == '&' || rp[1] == '\\')) {
@@ -1636,21 +1654,8 @@ RegexReplace(const char *replace, SepBuf *buf, const char *wp,
 			continue;
 		}
 
-		/* \0 to \9 backreference */
-		n = rp[1] - '0';
 		rp++;
-
-		if (n >= nsub) {
-			Error("No subexpression \\%u", n);
-		} else if (m[n].rm_so == -1) {
-			if (opts.strict) {
-				Error("No match for subexpression \\%u", n);
-			}
-		} else {
-			SepBuf_AddBytesBetween(buf,
-			    wp + (size_t)m[n].rm_so,
-			    wp + (size_t)m[n].rm_eo);
-		}
+		RegexReplaceBackref(*rp, buf, wp, m, nsub);
 	}
 }
 
