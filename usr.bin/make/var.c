@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.983 2021/12/13 03:19:32 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.984 2021/12/13 03:41:57 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -140,7 +140,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.983 2021/12/13 03:19:32 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.984 2021/12/13 03:41:57 rillig Exp $");
 
 /*
  * Variables are defined using one of the VAR=value assignments.  Their
@@ -1630,15 +1630,17 @@ RegexReplaceBackref(char ref, SepBuf *buf, const char *wp,
  * buffer, taking back-references from 'wp'.
  */
 static void
-RegexReplace(const char *replace, SepBuf *buf, const char *wp,
+RegexReplace(Substring replace, SepBuf *buf, const char *wp,
 	     const regmatch_t *m, size_t nsub)
 {
 	const char *rp;
 
-	for (rp = replace; *rp != '\0'; rp++) {
-		if (*rp == '\\' && (rp[1] == '&' || rp[1] == '\\'))
+	for (rp = replace.start; rp != replace.end; rp++) {
+		if (*rp == '\\' && rp + 1 != replace.end &&
+		    (rp[1] == '&' || rp[1] == '\\'))
 			SepBuf_AddBytes(buf, ++rp, 1);
-		else if (*rp == '\\' && ch_isdigit(rp[1]))
+		else if (*rp == '\\' && rp + 1 != replace.end &&
+			 ch_isdigit(rp[1]))
 			RegexReplaceBackref(*++rp, buf, wp, m, nsub);
 		else if (*rp == '&') {
 			SepBuf_AddBytesBetween(buf,
@@ -1652,7 +1654,7 @@ RegexReplace(const char *replace, SepBuf *buf, const char *wp,
 struct ModifyWord_SubstRegexArgs {
 	regex_t re;
 	size_t nsub;
-	const char *replace;
+	Substring replace;
 	PatternFlags pflags;
 	bool matched;
 };
@@ -2952,7 +2954,7 @@ ApplyModifier_Regex(const char **pp, ModChain *ch)
 	int error;
 	VarParseResult res;
 	LazyBuf reBuf, replaceBuf;
-	FStr re, replace;
+	FStr re;
 
 	char delim = (*pp)[1];
 	if (delim == '\0') {
@@ -2973,8 +2975,7 @@ ApplyModifier_Regex(const char **pp, ModChain *ch)
 		FStr_Done(&re);
 		return AMR_CLEANUP;
 	}
-	replace = LazyBuf_DoneGet(&replaceBuf);
-	args.replace = replace.str;
+	args.replace = LazyBuf_Get(&replaceBuf);
 
 	args.pflags = PatternFlags_None();
 	args.matched = false;
@@ -2982,7 +2983,7 @@ ApplyModifier_Regex(const char **pp, ModChain *ch)
 	ParsePatternFlags(pp, &args.pflags, &oneBigWord);
 
 	if (!ModChain_ShouldEval(ch)) {
-		FStr_Done(&replace);
+		LazyBuf_Done(&replaceBuf);
 		FStr_Done(&re);
 		return AMR_OK;
 	}
@@ -2990,7 +2991,7 @@ ApplyModifier_Regex(const char **pp, ModChain *ch)
 	error = regcomp(&args.re, re.str, REG_EXTENDED);
 	if (error != 0) {
 		VarREError(error, &args.re, "Regex compilation error");
-		FStr_Done(&replace);
+		LazyBuf_Done(&replaceBuf);
 		FStr_Done(&re);
 		return AMR_CLEANUP;
 	}
@@ -3002,7 +3003,7 @@ ApplyModifier_Regex(const char **pp, ModChain *ch)
 	ModifyWords(ch, ModifyWord_SubstRegex, &args, oneBigWord);
 
 	regfree(&args.re);
-	FStr_Done(&replace);
+	LazyBuf_Done(&replaceBuf);
 	FStr_Done(&re);
 	return AMR_OK;
 }
