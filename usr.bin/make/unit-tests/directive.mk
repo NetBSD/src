@@ -1,4 +1,4 @@
-# $NetBSD: directive.mk,v 1.4 2020/11/15 11:57:00 rillig Exp $
+# $NetBSD: directive.mk,v 1.5 2021/12/13 23:38:54 rillig Exp $
 #
 # Tests for the preprocessing directives, such as .if or .info.
 
@@ -31,5 +31,8 @@
 # Not even the space after the '.info' can change anything about this.
 .${:Uinfo} : source
 
-all:
-	@:;
+# expect+1: Invalid line type
+target-without-colon
+
+# expect+1: Invalid line type
+target-without-colon another-target

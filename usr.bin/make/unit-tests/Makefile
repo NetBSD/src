@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.288 2021/12/12 22:16:48 rillig Exp $
+# $NetBSD: Makefile,v 1.289 2021/12/13 23:38:54 rillig Exp $
 #
 # Unit tests for make(1)
 #
@@ -278,6 +278,7 @@ TESTS+=		opt-warnings-as-errors
 TESTS+=		opt-where-am-i
 TESTS+=		opt-x-reduce-exported
 TESTS+=		order
+TESTS+=		parse
 TESTS+=		parse-var
 TESTS+=		phony-end
 TESTS+=		posix
