@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.982 2021/12/13 03:03:42 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.983 2021/12/13 03:19:32 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -140,7 +140,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.982 2021/12/13 03:03:42 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.983 2021/12/13 03:19:32 rillig Exp $");
 
 /*
  * Variables are defined using one of the VAR=value assignments.  Their
@@ -1626,8 +1626,8 @@ RegexReplaceBackref(char ref, SepBuf *buf, const char *wp,
 }
 
 /*
- * Replacement of regular expressions is not specified by POSIX, therefore
- * re-implement it here.
+ * The regular expression matches the word; now add the replacement to the
+ * buffer, taking back-references from 'wp'.
  */
 static void
 RegexReplace(const char *replace, SepBuf *buf, const char *wp,
@@ -1636,26 +1636,16 @@ RegexReplace(const char *replace, SepBuf *buf, const char *wp,
 	const char *rp;
 
 	for (rp = replace; *rp != '\0'; rp++) {
-		if (*rp == '\\' && (rp[1] == '&' || rp[1] == '\\')) {
-			SepBuf_AddBytes(buf, rp + 1, 1);
-			rp++;
-			continue;
-		}
-
-		if (*rp == '&') {
+		if (*rp == '\\' && (rp[1] == '&' || rp[1] == '\\'))
+			SepBuf_AddBytes(buf, ++rp, 1);
+		else if (*rp == '\\' && ch_isdigit(rp[1]))
+			RegexReplaceBackref(*++rp, buf, wp, m, nsub);
+		else if (*rp == '&') {
 			SepBuf_AddBytesBetween(buf,
 			    wp + (size_t)m[0].rm_so,
 			    wp + (size_t)m[0].rm_eo);
-			continue;
-		}
-
-		if (*rp != '\\' || !ch_isdigit(rp[1])) {
+		} else
 			SepBuf_AddBytes(buf, rp, 1);
-			continue;
-		}
-
-		rp++;
-		RegexReplaceBackref(*rp, buf, wp, m, nsub);
 	}
 }
 
