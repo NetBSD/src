@@ -1,9 +1,10 @@
-# $NetBSD: Makefile,v 1.5 2021/09/26 15:52:40 maya Exp $
+# $NetBSD: Makefile,v 1.6 2021/12/13 23:59:35 maya Exp $
 
 .include <bsd.own.mk>
 
 .if ${MKNOUVEAUFIRMWARE} != "no"
 SUBDIR+=	gm20x
+SUBDIR+=	nouveau
 .endif
 
 .if ${MKTEGRAFIRMWARE} != "no"
