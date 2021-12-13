@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.575 2021/12/13 00:09:07 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.576 2021/12/13 05:25:04 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -109,7 +109,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.575 2021/12/13 00:09:07 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.576 2021/12/13 05:25:04 rillig Exp $");
 
 /* types and constants */
 
@@ -117,7 +117,7 @@ MAKE_RCSID("$NetBSD: parse.c,v 1.575 2021/12/13 00:09:07 rillig Exp $");
  * Structure for a file being read ("included file")
  */
 typedef struct IFile {
-	char *fname;		/* name of file (relative? absolute?) */
+	FStr name;		/* absolute or relative to the cwd */
 	bool fromForLoop;	/* simulated .include by the .for loop */
 	int lineno;		/* current line number in file */
 	int first_lineno;	/* line number of start of text */
@@ -491,7 +491,7 @@ PrintStackTrace(void)
 
 	for (i = n; i-- > 0;) {
 		const IFile *entry = entries + i;
-		const char *fname = entry->fname;
+		const char *fname = entry->name.str;
 		bool printLineno;
 		char dirbuf[MAXPATHLEN + 1];
 
@@ -533,7 +533,7 @@ static void
 RememberLocation(GNode *gn)
 {
 	IFile *curFile = CurFile();
-	gn->fname = curFile->fname;
+	gn->fname = Str_Intern(curFile->name.str);
 	gn->lineno = curFile->lineno;
 }
 
@@ -662,7 +662,7 @@ Parse_Error(ParseErrorLevel type, const char *fmt, ...)
 		lineno = 0;
 	} else {
 		IFile *curFile = CurFile();
-		fname = curFile->fname;
+		fname = curFile->name.str;
 		lineno = (size_t)curFile->lineno;
 	}
 
@@ -2143,7 +2143,7 @@ IncludeFile(const char *file, bool isSystem, bool depinc, bool silent)
 		 * we can locate the file.
 		 */
 
-		incdir = bmake_strdup(CurFile()->fname);
+		incdir = bmake_strdup(CurFile()->name.str);
 		slash = strrchr(incdir, '/');
 		if (slash != NULL) {
 			*slash = '\0';
@@ -2322,7 +2322,7 @@ GetActuallyIncludingFile(void)
 
 	for (i = includes.len; i >= 2; i--)
 		if (!incs[i - 1].fromForLoop)
-			return incs[i - 2].fname;
+			return incs[i - 2].name.str;
 	return NULL;
 }
 
@@ -2413,7 +2413,7 @@ Parse_PushInput(const char *name, int lineno, int fd,
 	bool fromForLoop = name == NULL;
 
 	if (fromForLoop)
-		name = CurFile()->fname;
+		name = CurFile()->name.str;
 	else
 		ParseTrackInput(name);
 
@@ -2426,7 +2426,7 @@ Parse_PushInput(const char *name, int lineno, int fd,
 		return;
 
 	curFile = Vector_Push(&includes);
-	curFile->fname = bmake_strdup(name);
+	curFile->name = FStr_InitOwn(bmake_strdup(name));
 	curFile->fromForLoop = fromForLoop;
 	curFile->lineno = lineno;
 	curFile->first_lineno = lineno;
@@ -2441,8 +2441,7 @@ Parse_PushInput(const char *name, int lineno, int fd,
 	buf = curFile->readMore(curFile->readMoreArg, &len);
 	if (buf == NULL) {
 		/* Was all a waste of time ... */
-		if (curFile->fname != NULL)
-			free(curFile->fname);
+		FStr_Done(&curFile->name);
 		free(curFile);
 		return;
 	}
@@ -2605,8 +2604,7 @@ ParseEOF(void)
 		curFile->lf = NULL;
 	}
 
-	/* Dispose of curFile info */
-	/* Leak curFile->fname because all the GNodes have pointers to it. */
+	FStr_Done(&curFile->name);
 	free(curFile->buf_freeIt);
 	Vector_Pop(&includes);
 
@@ -2621,9 +2619,9 @@ ParseEOF(void)
 
 	curFile = CurFile();
 	DEBUG2(PARSE, "ParseEOF: returning to file %s, line %d\n",
-	    curFile->fname, curFile->lineno);
+	    curFile->name.str, curFile->lineno);
 
-	ParseSetParseFile(curFile->fname);
+	ParseSetParseFile(curFile->name.str);
 	return true;
 }
 
