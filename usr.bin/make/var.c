@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.974 2021/12/13 00:33:33 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.975 2021/12/13 01:00:10 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -140,7 +140,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.974 2021/12/13 00:33:33 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.975 2021/12/13 01:00:10 rillig Exp $");
 
 /*
  * Variables are defined using one of the VAR=value assignments.  Their
@@ -4407,7 +4407,8 @@ ParseVarnameLong(
 
 	if (v == NULL && Substring_Equals(name, ".SUFFIXES")) {
 		char *suffixes = Suff_NamesStr();
-		v = VarNew(Substring_Str(name), suffixes, false, true);
+		v = VarNew(FStr_InitRefer(".SUFFIXES"), suffixes,
+		    false, true);
 		free(suffixes);
 	} else if (v == NULL)
 		v = FindLocalLegacyVar(name, scope, out_true_extraModifiers);
