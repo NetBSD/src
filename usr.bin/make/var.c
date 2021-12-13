@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.977 2021/12/13 02:07:58 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.978 2021/12/13 02:17:59 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -140,7 +140,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.977 2021/12/13 02:07:58 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.978 2021/12/13 02:17:59 rillig Exp $");
 
 /*
  * Variables are defined using one of the VAR=value assignments.  Their
@@ -176,11 +176,17 @@ typedef struct Var {
 	bool fromCmd: 1;
 
 	/*
-	 * The variable comes from the environment.
+	 * The variable is short-lived.
 	 * These variables are not registered in any GNode, therefore they
-	 * must be freed as soon as they are not used anymore.
+	 * must be freed after use.
 	 */
-	bool fromEnv: 1;
+	bool shortLived: 1;
+
+	/*
+	 * The variable comes from the environment.
+	 * Appending to its value moves the variable to the global scope.
+	 */
+	bool fromEnvironment: 1;
 
 	/*
 	 * The variable value cannot be changed anymore, and the variable
@@ -329,7 +335,8 @@ static const char VarEvalMode_Name[][32] = {
 
 
 static Var *
-VarNew(FStr name, const char *value, bool fromEnv, bool readOnly)
+VarNew(FStr name, const char *value,
+       bool shortLived, bool fromEnvironment, bool readOnly)
 {
 	size_t value_len = strlen(value);
 	Var *var = bmake_malloc(sizeof *var);
@@ -337,7 +344,8 @@ VarNew(FStr name, const char *value, bool fromEnv, bool readOnly)
 	Buf_InitSize(&var->val, value_len + 1);
 	Buf_AddBytes(&var->val, value, value_len);
 	var->fromCmd = false;
-	var->fromEnv = fromEnv;
+	var->shortLived = shortLived;
+	var->fromEnvironment = fromEnvironment;
 	var->readOnly = readOnly;
 	var->inUse = false;
 	var->exported = false;
@@ -431,7 +439,7 @@ VarFindSubstring(Substring name, GNode *scope, bool elsewhere)
 		envName = Substring_Str(name);
 		envValue = getenv(envName.str);
 		if (envValue != NULL)
-			return VarNew(envName, envValue, true, false);
+			return VarNew(envName, envValue, true, true, false);
 		FStr_Done(&envName);
 
 		if (opts.checkEnvFirst && scope != SCOPE_GLOBAL) {
@@ -459,7 +467,7 @@ VarFind(const char *name, GNode *scope, bool elsewhere)
 static void
 VarFreeShortLived(Var *v)
 {
-	if (!v->fromEnv)	/* TODO: replace with v->shortLived */
+	if (!v->shortLived)
 		return;
 
 	FStr_Done(&v->name);
@@ -473,7 +481,7 @@ VarAdd(const char *name, const char *value, GNode *scope, VarSetFlags flags)
 {
 	HashEntry *he = HashTable_CreateEntry(&scope->vars, name, NULL);
 	Var *v = VarNew(FStr_InitRefer(/* aliased to */ he->key), value,
-	    false, (flags & VAR_SET_READONLY) != 0);
+	    false, false, (flags & VAR_SET_READONLY) != 0);
 	HashEntry_Set(he, v);
 	DEBUG3(VAR, "%s: %s = %s\n", scope->name, name, value);
 	return v;
@@ -1121,17 +1129,18 @@ Var_Append(GNode *scope, const char *name, const char *val)
 
 		DEBUG3(VAR, "%s: %s = %s\n", scope->name, name, v->val.data);
 
-		if (v->fromEnv) {
+		if (v->fromEnvironment) {
 			/*
-			 * If the original variable came from the environment,
-			 * we have to install it in the global scope (we
-			 * could place it in the environment, but then we
-			 * should provide a way to export other variables...)
+			 * The variable originally came from the environment.
+			 * Install it in the global scope (we could place it
+			 * in the environment, but then we should provide a
+			 * way to export other variables...)
 			 */
-			v->fromEnv = false;
+			v->fromEnvironment = false;
+			v->shortLived = false;
 			/*
 			 * This is the only place where a variable is
-			 * created whose v->name is not the same as
+			 * created in a scope, where v->name does not alias
 			 * scope->vars->key.
 			 */
 			HashTable_Set(&scope->vars, name, v);
@@ -1250,13 +1259,13 @@ Var_Value(GNode *scope, const char *name)
 	if (v == NULL)
 		return FStr_InitRefer(NULL);
 
-	if (!v->fromEnv)
+	if (!v->shortLived)
 		return FStr_InitRefer(v->val.data);
 
-	/* Since environment variables are short-lived, free it now. */
-	FStr_Done(&v->name);
-	value = Buf_DoneData(&v->val);
-	free(v);
+	value = v->val.data;
+	v->val.data = NULL;
+	VarFreeShortLived(v);
+
 	return FStr_InitOwn(value);
 }
 
@@ -4408,7 +4417,8 @@ ParseVarnameLong(
 	if (v == NULL && Substring_Equals(name, ".SUFFIXES")) {
 		char *suffixes = Suff_NamesStr();
 		v = VarNew(FStr_InitRefer(".SUFFIXES"), suffixes,
-		    false, true);
+		    /* TODO: change to true to fix memory leak */
+		    false, false, true);
 		free(suffixes);
 	} else if (v == NULL)
 		v = FindLocalLegacyVar(name, scope, out_true_extraModifiers);
@@ -4443,7 +4453,12 @@ ParseVarnameLong(
 		 * is still undefined, Var_Parse will return an empty string
 		 * instead of the actually computed value.
 		 */
-		v = VarNew(LazyBuf_DoneGet(&varname), "", false, false);
+		/*
+		 * XXX: shortLived == true sounds more sensible, this will
+		 * allow to merge duplicate code at the end of Var_Parse.
+		 */
+		v = VarNew(LazyBuf_DoneGet(&varname), "",
+		    false, false, false);
 		*out_true_exprDefined = DEF_UNDEF;
 	} else
 		LazyBuf_Done(&varname);
@@ -4655,7 +4670,7 @@ Var_Parse(const char **pp, GNode *scope, VarEvalMode emode, FStr *out_val)
 
 	*pp = p;
 
-	if (v->fromEnv) {
+	if (v->shortLived) {
 		FreeShortLived(v, &expr);
 
 	} else if (expr.defined != DEF_REGULAR) {
