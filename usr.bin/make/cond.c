@@ -1,4 +1,4 @@
-/*	$NetBSD: cond.c,v 1.302 2021/12/12 09:36:00 rillig Exp $	*/
+/*	$NetBSD: cond.c,v 1.303 2021/12/13 07:06:39 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -95,7 +95,7 @@
 #include "dir.h"
 
 /*	"@(#)cond.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: cond.c,v 1.302 2021/12/12 09:36:00 rillig Exp $");
+MAKE_RCSID("$NetBSD: cond.c,v 1.303 2021/12/13 07:06:39 rillig Exp $");
 
 /*
  * The parsing of conditional expressions is based on this grammar:
@@ -523,8 +523,9 @@ CondParser_Leaf(CondParser *par, bool doEval, bool unquotedOK,
 	}
 got_str:
 	str = FStr_InitOwn(buf.data);
+	buf.data = NULL;
 cleanup:
-	Buf_DoneData(&buf);	/* XXX: memory leak on failure? */
+	Buf_Done(&buf);
 	*out_str = str;
 }
 
