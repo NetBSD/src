@@ -1,4 +1,4 @@
-/*	$NetBSD: suff.c,v 1.357 2021/12/12 20:45:48 sjg Exp $	*/
+/*	$NetBSD: suff.c,v 1.358 2021/12/13 00:33:33 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -115,7 +115,7 @@
 #include "dir.h"
 
 /*	"@(#)suff.c	8.4 (Berkeley) 3/21/94"	*/
-MAKE_RCSID("$NetBSD: suff.c,v 1.357 2021/12/12 20:45:48 sjg Exp $");
+MAKE_RCSID("$NetBSD: suff.c,v 1.358 2021/12/13 00:33:33 rillig Exp $");
 
 typedef List SuffixList;
 typedef ListNode SuffixListNode;
@@ -2178,7 +2178,7 @@ Suff_PrintAll(void)
 	}
 }
 
-const char *
+char *
 Suff_NamesStr(void)
 {
 	Buffer buf;

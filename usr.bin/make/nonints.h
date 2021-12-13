@@ -1,4 +1,4 @@
-/*	$NetBSD: nonints.h,v 1.217 2021/12/12 20:45:48 sjg Exp $	*/
+/*	$NetBSD: nonints.h,v 1.218 2021/12/13 00:33:33 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -184,7 +184,7 @@ void Suff_FindDeps(GNode *);
 SearchPath *Suff_FindPath(GNode *);
 void Suff_SetNull(const char *);
 void Suff_PrintAll(void);
-const char *Suff_NamesStr(void);
+char *Suff_NamesStr(void);
 
 /* targ.c */
 void Targ_Init(void);
