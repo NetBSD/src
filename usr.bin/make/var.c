@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.985 2021/12/13 03:55:16 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.986 2021/12/13 04:18:01 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -140,7 +140,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.985 2021/12/13 03:55:16 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.986 2021/12/13 04:18:01 rillig Exp $");
 
 /*
  * Variables are defined using one of the VAR=value assignments.  Their
@@ -4433,6 +4433,7 @@ ParseVarnameLong(
 			*out_false_pp = p;
 			*out_false_res = EvalUndefined(dynamic, start, p,
 			    name, emode, out_false_val);
+			LazyBuf_Done(&varname);
 			return false;
 		}
 
