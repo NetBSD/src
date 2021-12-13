@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.975 2021/12/13 01:00:10 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.976 2021/12/13 01:37:51 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -140,7 +140,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.975 2021/12/13 01:00:10 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.976 2021/12/13 01:37:51 rillig Exp $");
 
 /*
  * Variables are defined using one of the VAR=value assignments.  Their
@@ -4456,18 +4456,16 @@ ParseVarnameLong(
 	return true;
 }
 
-/* Free the environment variable now since we own it. */
+/* Free the short-lived variable, since we own it. */
 static void
-FreeEnvVar(Var *v, Expr *expr)
+FreeShortLived(Var *v, Expr *expr)
 {
-	char *varValue = Buf_DoneData(&v->val);
-	if (expr->value.str == varValue)
-		expr->value.freeIt = varValue;
-	else
-		free(varValue);
-
-	FStr_Done(&v->name);
-	free(v);
+	if (expr->value.str == v->val.data) {
+		/* move ownership */
+		expr->value.freeIt = v->val.data;
+		v->val.data = NULL;
+	}
+	VarFreeEnv(v);
 }
 
 #if __STDC_VERSION__ >= 199901L
@@ -4658,7 +4656,7 @@ Var_Parse(const char **pp, GNode *scope, VarEvalMode emode, FStr *out_val)
 	*pp = p;
 
 	if (v->fromEnv) {
-		FreeEnvVar(v, &expr);
+		FreeShortLived(v, &expr);
 
 	} else if (expr.defined != DEF_REGULAR) {
 		if (expr.defined == DEF_UNDEF) {
