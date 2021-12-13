@@ -1,4 +1,4 @@
-/*	$NetBSD: db_sym.c,v 1.67 2021/04/12 02:49:02 mrg Exp $	*/
+/*	$NetBSD: db_sym.c,v 1.68 2021/12/13 01:25:29 chs Exp $	*/
 
 /*
  * Mach Operating System
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_sym.c,v 1.67 2021/04/12 02:49:02 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_sym.c,v 1.68 2021/12/13 01:25:29 chs Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddbparam.h"
@@ -347,6 +347,12 @@ db_symstr(char *buf, size_t buflen, db_expr_t off, db_strategy_t strategy)
 	if (ksyms_getname(&mod, &name, (vaddr_t)off,
 	    strategy|KSYMS_CLOSEST) == 0) {
 		(void)ksyms_getval_unlocked(mod, name, NULL, &val, KSYMS_ANY);
+		if (strategy & KSYMS_PROC && val == off) {
+			if (ksyms_getname(&mod, &name, (vaddr_t)off - 1,
+					  strategy|KSYMS_CLOSEST) != 0)
+				goto out;
+			(void)ksyms_getval_unlocked(mod, name, NULL, &val, KSYMS_ANY);
+		}
 		if (((off - val) < db_maxoff) && val) {
 			snprintf(buf, buflen, "%s:%s", mod, name);
 			if (off - val) {
@@ -365,6 +371,7 @@ db_symstr(char *buf, size_t buflen, db_expr_t off, db_strategy_t strategy)
 			return;
 		}
 	}
+out:
 	strlcpy(buf, db_num_to_str(off), buflen);
 #endif
 }
@@ -418,6 +425,12 @@ db_printsym(db_expr_t off, db_strategy_t strategy,
 	if (ksyms_getname(&mod, &name, (vaddr_t)off,
 	    strategy|KSYMS_CLOSEST) == 0) {
 		(void)ksyms_getval_unlocked(mod, name, NULL, &uval, KSYMS_ANY);
+		if (strategy & KSYMS_PROC && uval == off) {
+			if (ksyms_getname(&mod, &name, (vaddr_t)off - 1,
+					  strategy|KSYMS_CLOSEST) != 0)
+				goto out;
+			(void)ksyms_getval_unlocked(mod, name, NULL, &uval, KSYMS_ANY);
+		}
 		val = (long) uval;
 		if (((off - val) < db_maxoff) && val) {
 			(*pr)("%s:%s", mod, name);
@@ -437,6 +450,7 @@ db_printsym(db_expr_t off, db_strategy_t strategy,
 		}
 	}
 #endif
+out:
 	(*pr)("%s", db_num_to_str(off));
 	return;
 }
