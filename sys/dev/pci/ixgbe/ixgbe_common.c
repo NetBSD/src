@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe_common.c,v 1.39 2021/12/14 05:28:46 msaitoh Exp $ */
+/* $NetBSD: ixgbe_common.c,v 1.40 2021/12/14 05:33:08 msaitoh Exp $ */
 
 /******************************************************************************
   SPDX-License-Identifier: BSD-3-Clause
@@ -36,7 +36,7 @@
 /*$FreeBSD: head/sys/dev/ixgbe/ixgbe_common.c 331224 2018-03-19 20:55:05Z erj $*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixgbe_common.c,v 1.39 2021/12/14 05:28:46 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixgbe_common.c,v 1.40 2021/12/14 05:33:08 msaitoh Exp $");
 
 #include "ixgbe_common.h"
 #include "ixgbe_phy.h"
@@ -4696,7 +4696,8 @@ s32 ixgbe_host_interface_command(struct ixgbe_hw *hw, u32 *buffer,
 	 * Read Flash command requires reading buffer length from
 	 * two byes instead of one byte
 	 */
-	if (resp->cmd == 0x30 || resp->cmd == 0x31) {
+	if (resp->cmd == IXGBE_HOST_INTERFACE_FLASH_READ_CMD ||
+	    resp->cmd == IXGBE_HOST_INTERFACE_SHADOW_RAM_READ_CMD) {
 		for (; bi < dword_len + 2; bi++) {
 			buffer[bi] = IXGBE_READ_REG_ARRAY(hw, IXGBE_FLEX_MNG,
 							  bi);
