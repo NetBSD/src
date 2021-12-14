@@ -1,4 +1,4 @@
-/*	$NetBSD: hard-locale.c,v 1.2 2016/01/10 22:16:40 christos Exp $	*/
+/*	$NetBSD: hard-locale.c,v 1.3 2021/12/14 21:38:24 christos Exp $	*/
 
 /* hard-locale.c -- Determine whether a locale is hard.
    Copyright 1997, 1998, 1999 Free Software Foundation, Inc.
@@ -21,7 +21,7 @@
 # include <config.h>
 #endif
 
-#ifndef __GNUC__
+#if !defined(__GNUC__) && !defined(__lint__)
 # ifdef HAVE_ALLOCA_H
 #  include <alloca.h>
 # else

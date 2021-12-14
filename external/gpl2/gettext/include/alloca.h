@@ -36,7 +36,7 @@
        request, the program just crashes.
  */
 
-#ifdef __GNUC__
+#if defined(__GNUC__) || defined(__lint__)
 # ifndef alloca
 #  define alloca __builtin_alloca
 # endif
