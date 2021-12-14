@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe_common.c,v 1.38 2021/12/10 11:31:22 msaitoh Exp $ */
+/* $NetBSD: ixgbe_common.c,v 1.39 2021/12/14 05:28:46 msaitoh Exp $ */
 
 /******************************************************************************
   SPDX-License-Identifier: BSD-3-Clause
@@ -36,7 +36,7 @@
 /*$FreeBSD: head/sys/dev/ixgbe/ixgbe_common.c 331224 2018-03-19 20:55:05Z erj $*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixgbe_common.c,v 1.38 2021/12/10 11:31:22 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixgbe_common.c,v 1.39 2021/12/14 05:28:46 msaitoh Exp $");
 
 #include "ixgbe_common.h"
 #include "ixgbe_phy.h"
@@ -3140,8 +3140,9 @@ void ixgbe_fc_autoneg(struct ixgbe_hw *hw)
 	 * - link is not up.
 	 */
 	if (hw->fc.disable_fc_autoneg) {
-		ERROR_REPORT1(IXGBE_ERROR_UNSUPPORTED,
-			     "Flow control autoneg is disabled");
+		/* TODO: This should be just an informative log */
+		ERROR_REPORT1(IXGBE_ERROR_CAUTION,
+			      "Flow control autoneg is disabled");
 		goto out;
 	}
 
