@@ -1,4 +1,12 @@
-#	$NetBSD: Makefile.inc,v 1.29 2021/12/14 16:13:37 christos Exp $
+#	$NetBSD: Makefile.inc,v 1.30 2021/12/14 16:27:20 christos Exp $
+
+# For now, don't lint:
+# 1. postfix uses 'struct { const char *name; int value } foo[] =
+#    { "n1", v1, "n2, v2", 0 };' and this is broken (should be fixed in lint)
+# 2. uses macros with extra ; (macros should be fixed)
+# 3. lint2 is broken (should be fixed in lint2)
+# 4. use use MKLINT:=no since this might have been included too late.
+MKLINT:=no
 
 .include <bsd.own.mk>
 
