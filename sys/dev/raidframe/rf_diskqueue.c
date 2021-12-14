@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_diskqueue.c,v 1.62 2021/07/27 03:01:48 oster Exp $	*/
+/*	$NetBSD: rf_diskqueue.c,v 1.63 2021/12/14 00:46:43 mrg Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -66,7 +66,7 @@
  ****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_diskqueue.c,v 1.62 2021/07/27 03:01:48 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_diskqueue.c,v 1.63 2021/12/14 00:46:43 mrg Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -416,6 +416,9 @@ rf_CreateDiskQueueData(RF_IoType_t typ, RF_SectorNum_t ssect,
 void
 rf_FreeDiskQueueData(RF_DiskQueueData_t *p)
 {
+
+	buf_destroy(p->bp);
+
 	pool_put(&p->raidPtr->pools.bufio, p->bp);
 	pool_put(&p->raidPtr->pools.dqd, p);
 }
