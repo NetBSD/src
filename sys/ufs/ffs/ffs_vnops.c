@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vnops.c,v 1.137 2021/07/18 23:57:15 dholland Exp $	*/
+/*	$NetBSD: ffs_vnops.c,v 1.138 2021/12/14 11:06:12 chs Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vnops.c,v 1.137 2021/07/18 23:57:15 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vnops.c,v 1.138 2021/12/14 11:06:12 chs Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -212,9 +212,11 @@ const struct vnodeopv_entry_desc ffs_fifoop_entries[] = {
 	{ &vop_reclaim_desc, ffs_reclaim },		/* reclaim */
 	{ &vop_lock_desc, genfs_lock },			/* lock */
 	{ &vop_unlock_desc, genfs_unlock },		/* unlock */
+	{ &vop_bmap_desc, ufs_bmap },			/* bmap */
 	{ &vop_strategy_desc, ffsext_strategy },	/* strategy */
 	{ &vop_print_desc, ufs_print },			/* print */
 	{ &vop_islocked_desc, genfs_islocked },		/* islocked */
+	{ &vop_pathconf_desc, ufs_pathconf },		/* pathconf */
 	{ &vop_bwrite_desc, vn_bwrite },		/* bwrite */
 	{ &vop_openextattr_desc, ffs_openextattr },	/* openextattr */
 	{ &vop_closeextattr_desc, ffs_closeextattr },	/* closeextattr */
