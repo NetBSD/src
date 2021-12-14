@@ -329,7 +329,7 @@ So instead we use the macro below and test it against specific values.  */
 /* We use __extension__ in some places to suppress -pedantic warnings
    about GCC extensions.  This feature didn't work properly before
    gcc 2.8.  */
-#if GCC_VERSION < 2008
+#if GCC_VERSION < 2008 && !defined(__extension__)
 #define __extension__
 #endif
 
