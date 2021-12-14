@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe.c,v 1.297 2021/12/10 11:39:48 msaitoh Exp $ */
+/* $NetBSD: ixgbe.c,v 1.298 2021/12/14 05:31:12 msaitoh Exp $ */
 
 /******************************************************************************
 
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixgbe.c,v 1.297 2021/12/10 11:39:48 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixgbe.c,v 1.298 2021/12/14 05:31:12 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1613,12 +1613,10 @@ ixgbe_update_stats_counters(struct adapter *adapter)
 	struct ixgbe_hw_stats *stats = &adapter->stats.pf;
 	u32		      missed_rx = 0, bprc, lxon, lxoff, total;
 	u64		      total_missed_rx = 0;
-	uint64_t	      crcerrs, rlec;
 	unsigned int	      queue_counters;
 	int		      i;
 
-	crcerrs = IXGBE_READ_REG(hw, IXGBE_CRCERRS);
-	stats->crcerrs.ev_count += crcerrs;
+	stats->crcerrs.ev_count += IXGBE_READ_REG(hw, IXGBE_CRCERRS);
 	stats->illerrc.ev_count += IXGBE_READ_REG(hw, IXGBE_ILLERRC);
 	stats->errbc.ev_count += IXGBE_READ_REG(hw, IXGBE_ERRBC);
 	stats->mspdc.ev_count += IXGBE_READ_REG(hw, IXGBE_MSPDC);
@@ -1677,8 +1675,7 @@ ixgbe_update_stats_counters(struct adapter *adapter)
 		stats->mlfc.ev_count += IXGBE_READ_REG(hw, IXGBE_MLFC);
 		stats->mrfc.ev_count += IXGBE_READ_REG(hw, IXGBE_MRFC);
 	}
-	rlec = IXGBE_READ_REG(hw, IXGBE_RLEC);
-	stats->rlec.ev_count += rlec;
+	stats->rlec.ev_count += IXGBE_READ_REG(hw, IXGBE_RLEC);
 
 	/* Hardware workaround, gprc counts missed packets */
 	stats->gprc.ev_count += IXGBE_READ_REG(hw, IXGBE_GPRC) - missed_rx;
@@ -1764,7 +1761,28 @@ ixgbe_update_stats_counters(struct adapter *adapter)
 	 */
 	net_stat_ref_t nsr = IF_STAT_GETREF(ifp);
 	if_statadd_ref(nsr, if_iqdrops, total_missed_rx);
-	if_statadd_ref(nsr, if_ierrors, crcerrs + rlec);
+
+	/*
+	 * Aggregate following types of errors as RX errors:
+	 * - CRC error count,
+	 * - illegal byte error count,
+	 * - length error count,
+	 * - undersized packets count,
+	 * - fragmented packets count,
+	 * - oversized packets count,
+	 * - jabber count.
+	 */
+#define EVC(x)	stats->x.ev_count
+	if_statadd_ref(nsr, if_ierrors,
+	    EVC(crcerrs) +
+	    EVC(illerrc) +
+	    EVC(rlec) +
+	    EVC(ruc) +
+	    EVC(rfc) +
+	    EVC(roc) +
+	    EVC(rjc));
+#undef EVC
+
 	IF_STAT_PUTREF(ifp);
 } /* ixgbe_update_stats_counters */
 
