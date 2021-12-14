@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.578 2021/12/14 00:02:57 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.579 2021/12/14 00:17:53 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -109,7 +109,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.578 2021/12/14 00:02:57 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.579 2021/12/14 00:17:53 rillig Exp $");
 
 /* types and constants */
 
@@ -1732,8 +1732,8 @@ AdjustVarassignOp(const VarAssignParsed *pvar, const char *value,
 	VarAssignOp type;
 
 	if (op > name && op[-1] == '+') {
-		type = VAR_APPEND;
 		op--;
+		type = VAR_APPEND;
 
 	} else if (op > name && op[-1] == '?') {
 		op--;
@@ -1753,10 +1753,9 @@ AdjustVarassignOp(const VarAssignParsed *pvar, const char *value,
 		while (op > name && ch_isspace(op[-1]))
 			op--;
 
-		if (op >= name + 3 && op[-3] == ':' && op[-2] == 's' &&
-		    op[-1] == 'h') {
-			type = VAR_SHELL;
+		if (op >= name + 3 && memcmp(op - 3, ":sh", 3) == 0) {
 			op -= 3;
+			type = VAR_SHELL;
 		}
 #endif
 	}
@@ -1979,7 +1978,7 @@ VarAssignSpecial(const char *name, const char *avalue)
 		Var_ExportVars(avalue);
 }
 
-/* Perform the variable variable assignment in the given scope. */
+/* Perform the variable assignment in the given scope. */
 void
 Parse_Var(VarAssign *var, GNode *scope)
 {
@@ -2009,7 +2008,7 @@ MaybeSubMake(const char *cmd)
 		char endc;
 
 		/* XXX: What if progname != "make"? */
-		if (p[0] == 'm' && p[1] == 'a' && p[2] == 'k' && p[3] == 'e')
+		if (strncmp(p, "make", 4) == 0)
 			if (start == cmd || !ch_isalnum(p[-1]))
 				if (!ch_isalnum(p[4]))
 					return true;
@@ -2029,7 +2028,7 @@ MaybeSubMake(const char *cmd)
 		if (*p == '.')	/* Accept either ${.MAKE} or ${MAKE}. */
 			p++;
 
-		if (p[0] == 'M' && p[1] == 'A' && p[2] == 'K' && p[3] == 'E')
+		if (strncmp(p, "MAKE", 4) == 0)
 			if (p[4] == endc)
 				return true;
 	}
