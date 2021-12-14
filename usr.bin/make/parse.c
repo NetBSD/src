@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.577 2021/12/13 06:11:34 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.578 2021/12/14 00:02:57 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -109,7 +109,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.577 2021/12/13 06:11:34 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.578 2021/12/14 00:02:57 rillig Exp $");
 
 /* types and constants */
 
@@ -1265,34 +1265,15 @@ ParseDependencyCheckSpec(ParseSpecial specType)
  * In a dependency line like 'targets: sources' or 'targets! sources', parse
  * the operator ':', '::' or '!' from between the targets and the sources.
  */
-static bool
-ParseDependencyOp(char **pp, const char *lstart, GNodeType *out_op)
+static GNodeType
+ParseDependencyOp(char **pp)
 {
-	const char *cp = *pp;
-
-	if (*cp == '!') {
-		*out_op = OP_FORCE;
-		(*pp)++;
-		return true;
-	}
-
-	if (*cp == ':') {
-		if (cp[1] == ':') {
-			*out_op = OP_DOUBLEDEP;
-			(*pp) += 2;
-		} else {
-			*out_op = OP_DEPENDS;
-			(*pp)++;
-		}
-		return true;
-	}
-
-	{
-		const char *msg = lstart[0] == '.'
-		    ? "Unknown directive" : "Missing dependency operator";
-		Parse_Error(PARSE_FATAL, "%s", msg);
-		return false;
-	}
+	if (**pp == '!')
+		return (*pp)++, OP_FORCE;
+	if ((*pp)[1] == ':')
+		return (*pp) += 2, OP_DOUBLEDEP;
+	else
+		return (*pp)++, OP_DEPENDS;
 }
 
 static void
@@ -1708,16 +1689,11 @@ ParseDependency(char *line)
 		ParseDependencyCheckSpec(specType);
 
 	/*
-	 * Have now parsed all the target names. Must parse the operator next.
-	 */
-	if (!ParseDependencyOp(&cp, lstart, &op))
-		goto out;
-
-	/*
 	 * Apply the operator to the target. This is how we remember which
 	 * operator a target was defined with. It fails if the operator
 	 * used isn't consistent across all references.
 	 */
+	op = ParseDependencyOp(&cp);
 	ApplyDependencyOperator(op);
 
 	/*
