@@ -1,4 +1,4 @@
-29~# $NetBSD: CHANGES-9.3,v 1.1.2.57 2021/12/08 15:51:53 martin Exp $
+29~# $NetBSD: CHANGES-9.3,v 1.1.2.58 2021/12/14 19:06:08 martin Exp $
 
 A complete list of changes from the NetBSD 9.2 release to the NetBSD 9.3
 release:
@@ -1105,4 +1105,10 @@ sys/dev/ipmi.c					1.6-1.9
 
 	ipmi(4): various stability improvements and fix for PR 56539.
 	[hauke, ticket #1392]
+
+sys/dev/cgd.c					1.141
+
+	cgd(4): PR 56546: wait for worker threads to complete before
+	destroying mutex.
+	[riastradh, ticket #1393]
 
