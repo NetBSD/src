@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.580 2021/12/14 00:45:11 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.581 2021/12/14 01:18:14 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -109,7 +109,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.580 2021/12/14 00:45:11 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.581 2021/12/14 01:18:14 rillig Exp $");
 
 /* types and constants */
 
@@ -2988,35 +2988,27 @@ ParseDirective(char *line)
 	pp_skip_whitespace(&cp);
 	arg = cp;
 
-	if (Substring_Equals(dir, "undef")) {
+	if (Substring_Equals(dir, "undef"))
 		Var_Undef(arg);
-		return true;
-	} else if (Substring_Equals(dir, "export")) {
+	else if (Substring_Equals(dir, "export"))
 		Var_Export(VEM_PLAIN, arg);
-		return true;
-	} else if (Substring_Equals(dir, "export-env")) {
+	else if (Substring_Equals(dir, "export-env"))
 		Var_Export(VEM_ENV, arg);
-		return true;
-	} else if (Substring_Equals(dir, "export-literal")) {
+	else if (Substring_Equals(dir, "export-literal"))
 		Var_Export(VEM_LITERAL, arg);
-		return true;
-	} else if (Substring_Equals(dir, "unexport")) {
+	else if (Substring_Equals(dir, "unexport"))
 		Var_UnExport(false, arg);
-		return true;
-	} else if (Substring_Equals(dir, "unexport-env")) {
+	else if (Substring_Equals(dir, "unexport-env"))
 		Var_UnExport(true, arg);
-		return true;
-	} else if (Substring_Equals(dir, "info")) {
+	else if (Substring_Equals(dir, "info"))
 		ParseMessage(PARSE_INFO, "info", arg);
-		return true;
-	} else if (Substring_Equals(dir, "warning")) {
+	else if (Substring_Equals(dir, "warning"))
 		ParseMessage(PARSE_WARNING, "warning", arg);
-		return true;
-	} else if (Substring_Equals(dir, "error")) {
+	else if (Substring_Equals(dir, "error"))
 		ParseMessage(PARSE_FATAL, "error", arg);
-		return true;
-	}
-	return false;
+	else
+		return false;
+	return true;
 }
 
 static bool
