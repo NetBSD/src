@@ -1,4 +1,4 @@
-/* $NetBSD: lex.c,v 1.88 2021/11/27 20:13:48 christos Exp $ */
+/* $NetBSD: lex.c,v 1.89 2021/12/14 20:13:13 christos Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: lex.c,v 1.88 2021/11/27 20:13:48 christos Exp $");
+__RCSID("$NetBSD: lex.c,v 1.89 2021/12/14 20:13:13 christos Exp $");
 #endif
 
 #include <ctype.h>
@@ -205,7 +205,7 @@ static	struct	kwtab {
 	kwdef_token(	"__real__",	T_REAL,			0,0,1,0,1),
 	kwdef_sclass(	"register",	REG,			0,0,0,0,1),
 	kwdef_gcc_attr(	"regparm",	T_AT_REGPARM),
-	kwdef_tqual(	"restrict",	RESTRICT,		0,1,0,0,5),
+	kwdef_tqual(	"restrict",	RESTRICT,		0,1,0,0,7),
 	kwdef_keyword(	"return",	T_RETURN),
 	kwdef_gcc_attr(	"returns_nonnull",T_AT_RETURNS_NONNULL),
 	kwdef_gcc_attr(	"returns_twice",T_AT_RETURNS_TWICE),
