@@ -1,4 +1,4 @@
-/*	$NetBSD: thread.c,v 1.11 2021/09/10 21:52:18 rillig Exp $	*/
+/*	$NetBSD: thread.c,v 1.12 2021/12/14 21:12:03 christos Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #ifndef __lint__
-__RCSID("$NetBSD: thread.c,v 1.11 2021/09/10 21:52:18 rillig Exp $");
+__RCSID("$NetBSD: thread.c,v 1.12 2021/12/14 21:12:03 christos Exp $");
 #endif /* not __lint__ */
 
 #include <assert.h>
@@ -594,6 +594,9 @@ first_visible_message(struct message *mp)
 
 	if (mp == NULL)
 		mp = current_thread.t_head;
+
+	if (mp == NULL)
+		return NULL;
 
 	oldmp = mp;
 	if ((S_IS_RESTRICT(state) && is_tagged(mp)) || mp->m_flag & MDELETED)
