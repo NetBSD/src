@@ -1,4 +1,4 @@
-.\" $NetBSD: lint.1,v 1.48 2021/12/14 16:22:30 christos Exp $
+.\" $NetBSD: lint.1,v 1.49 2021/12/14 16:55:45 christos Exp $
 .\"
 .\" Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
 .\" Copyright (c) 1994, 1995 Jochen Pohl
@@ -396,6 +396,9 @@ run the C preprocessor and
 first and second pass.
 .It Fl v
 Suppress complaints about unused arguments in functions.
+.It Fl W Ar cppwarnarg
+Pass the warning directive to
+.Xr cpp 1 .
 .It Fl w
 Treat warnings as errors.
 .It Fl X Ar id Ns Op ,id ...
