@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.dep.mk,v 1.87 2020/07/01 07:38:29 lukem Exp $
+#	$NetBSD: bsd.dep.mk,v 1.88 2021/12/14 16:22:07 christos Exp $
 
 ##### Basic targets
 realdepend:	beforedepend .depend afterdepend
@@ -61,7 +61,7 @@ _MKDEP_FILEFLAGS=
 .c.d:
 	${_MKTARGET_CREATE}
 	${MKDEP} -f ${.TARGET}.tmp ${_MKDEP_FILEFLAGS} -- ${MKDEPFLAGS} \
-	    ${CFLAGS:M-std=*} ${CFLAGS:C/-([IDU])[  ]*/-\1/Wg:M-[IDU]*} \
+	    ${CFLAGS:M-std=*} ${CFLAGS:C/-([IDUW])[  ]*/-\1/Wg:M-[IDUW]*} \
 	    ${CPPFLAGS:N-Wp,-iremap,*} ${COPTS.${.IMPSRC:T}} ${CPUFLAGS.${.IMPSRC:T}} \
 	    ${CPPFLAGS.${.IMPSRC:T}} ${.IMPSRC} && \
 	    ${MV} ${.TARGET}.tmp ${.TARGET}
@@ -69,7 +69,7 @@ _MKDEP_FILEFLAGS=
 .m.d:
 	${_MKTARGET_CREATE}
 	${MKDEP} -f ${.TARGET}.tmp ${_MKDEP_FILEFLAGS} -- ${MKDEPFLAGS} \
-	    ${OBJCFLAGS:C/-([IDU])[  ]*/-\1/Wg:M-[IDU]*} \
+	    ${OBJCFLAGS:C/-([IDUW])[  ]*/-\1/Wg:M-[IDUW]*} \
 	    ${CPPFLAGS:N-Wp,-iremap,*} ${COPTS.${.IMPSRC:T}} ${CPUFLAGS.${.IMPSRC:T}} \
 	    ${CPPFLAGS.${.IMPSRC:T}} ${.IMPSRC} && \
 	    ${MV} ${.TARGET}.tmp ${.TARGET}
@@ -77,7 +77,7 @@ _MKDEP_FILEFLAGS=
 .s.d .S.d:
 	${_MKTARGET_CREATE}
 	${MKDEP} -f ${.TARGET}.tmp ${_MKDEP_FILEFLAGS} -- ${MKDEPFLAGS} \
-	    ${AFLAGS:C/-([IDU])[  ]*/-\1/Wg:M-[IDU]*} \
+	    ${AFLAGS:C/-([IDUW])[  ]*/-\1/Wg:M-[IDUW]*} \
 	    ${CPPFLAGS:N-Wp,-iremap,*} ${AFLAGS.${.IMPSRC:T}} ${CPPFLAGS.${.IMPSRC:T}} \
 	    ${__acpp_flags} ${.IMPSRC} && \
 	    ${MV} ${.TARGET}.tmp ${.TARGET}
@@ -85,7 +85,7 @@ _MKDEP_FILEFLAGS=
 .C.d .cc.d .cpp.d .cxx.d:
 	${_MKTARGET_CREATE}
 	${MKDEPCXX} -f ${.TARGET}.tmp ${_MKDEP_FILEFLAGS} -- ${MKDEPFLAGS} \
-	    ${CXXFLAGS:M-std=*} ${CXXFLAGS:C/-([IDU])[  ]*/-\1/Wg:M-[IDU]*} \
+	    ${CXXFLAGS:M-std=*} ${CXXFLAGS:C/-([IDUW])[  ]*/-\1/Wg:M-[IDUW]*} \
 	    ${CPPFLAGS:N-Wp,-iremap,*} ${COPTS.${.IMPSRC:T}} ${CPUFLAGS.${.IMPSRC:T}} \
 	    ${CPPFLAGS.${.IMPSRC:T}} ${.IMPSRC} && \
 	    ${MV} ${.TARGET}.tmp ${.TARGET}
