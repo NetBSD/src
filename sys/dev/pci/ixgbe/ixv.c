@@ -1,4 +1,4 @@
-/* $NetBSD: ixv.c,v 1.169 2021/09/30 04:02:27 yamaguchi Exp $ */
+/* $NetBSD: ixv.c,v 1.170 2021/12/14 05:37:44 msaitoh Exp $ */
 
 /******************************************************************************
 
@@ -35,7 +35,7 @@
 /*$FreeBSD: head/sys/dev/ixgbe/if_ixv.c 331224 2018-03-19 20:55:05Z erj $*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixv.c,v 1.169 2021/09/30 04:02:27 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixv.c,v 1.170 2021/12/14 05:37:44 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -549,6 +549,10 @@ ixv_attach(device_t parent, device_t dev, void *aux)
 		aprint_error_dev(dev, "ixv_setup_interface() failed!\n");
 		goto err_late;
 	}
+
+	/* Allocate multicast array memory */
+	adapter->mta = malloc(sizeof(*adapter->mta) *
+	    IXGBE_MAX_VF_MC, M_DEVBUF, M_WAITOK);
 
 	/* Do the stats setup */
 	ixv_save_stats(adapter);
@@ -1102,7 +1106,7 @@ ixv_negotiate_api(struct adapter *adapter)
 static int
 ixv_set_rxfilter(struct adapter *adapter)
 {
-	u8	mta[IXGBE_MAX_VF_MC * IXGBE_ETH_LENGTH_OF_ADDRESS];
+	struct ixgbe_mc_addr	*mta;
 	struct ifnet		*ifp = adapter->ifp;
 	struct ixgbe_hw		*hw = &adapter->hw;
 	u8			*update_ptr;
@@ -1115,6 +1119,9 @@ ixv_set_rxfilter(struct adapter *adapter)
 
 	KASSERT(mutex_owned(&adapter->core_mtx));
 	IOCTL_DEBUGOUT("ixv_set_rxfilter: begin");
+
+	mta = adapter->mta;
+	bzero(mta, sizeof(*mta) * IXGBE_MAX_VF_MC);
 
 	/* 1: For PROMISC */
 	if (ifp->if_flags & IFF_PROMISC) {
@@ -1153,8 +1160,7 @@ ixv_set_rxfilter(struct adapter *adapter)
 			break;
 		}
 		bcopy(enm->enm_addrlo,
-		    &mta[mcnt * IXGBE_ETH_LENGTH_OF_ADDRESS],
-		    IXGBE_ETH_LENGTH_OF_ADDRESS);
+		    mta[mcnt].addr, IXGBE_ETH_LENGTH_OF_ADDRESS);
 		mcnt++;
 		ETHER_NEXT_MULTI(step, enm);
 	}
@@ -1205,8 +1211,7 @@ ixv_set_rxfilter(struct adapter *adapter)
 		    "operation to normal. error = %d\n", error);
 	}
 
-	update_ptr = mta;
-
+	update_ptr = (u8 *)mta;
 	error = adapter->hw.mac.ops.update_mc_addr_list(&adapter->hw,
 	    update_ptr, mcnt, ixv_mc_array_itr, TRUE);
 	if (rc == 0)
@@ -1225,15 +1230,14 @@ ixv_set_rxfilter(struct adapter *adapter)
 static u8 *
 ixv_mc_array_itr(struct ixgbe_hw *hw, u8 **update_ptr, u32 *vmdq)
 {
-	u8 *addr = *update_ptr;
-	u8 *newptr;
+	struct ixgbe_mc_addr *mta;
+
+	mta = (struct ixgbe_mc_addr *)*update_ptr;
 
 	*vmdq = 0;
+	*update_ptr = (u8*)(mta + 1);
 
-	newptr = addr + IXGBE_ETH_LENGTH_OF_ADDRESS;
-	*update_ptr = newptr;
-
-	return addr;
+	return (mta->addr);
 } /* ixv_mc_array_itr */
 
 /************************************************************************
