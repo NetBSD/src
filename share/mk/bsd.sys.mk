@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.sys.mk,v 1.308 2021/11/01 10:05:19 nia Exp $
+#	$NetBSD: bsd.sys.mk,v 1.309 2021/12/14 16:22:07 christos Exp $
 #
 # Build definitions used for NetBSD source tree builds.
 
@@ -272,8 +272,8 @@ STRIP?=		strip
 .c.ln:
 	${_MKTARGET_COMPILE}
 	${LINT} ${LINTFLAGS} ${LINTFLAGS.${.IMPSRC:T}} \
-	    ${CPPFLAGS:C/-([IDU])[  ]*/-\1/Wg:M-[IDU]*} \
-	    ${CPPFLAGS.${.IMPSRC:T}:C/-([IDU])[  ]*/-\1/Wg:M-[IDU]*} \
+	    ${CPPFLAGS:C/-([IDUW])[  ]*/-\1/Wg:M-[IDUW]*} \
+	    ${CPPFLAGS.${.IMPSRC:T}:C/-([IDUW])[  ]*/-\1/Wg:M-[IDUW]*} \
 	    -i ${.IMPSRC}
 
 # C++
