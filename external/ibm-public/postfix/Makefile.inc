@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.28 2021/08/14 16:17:57 christos Exp $
+#	$NetBSD: Makefile.inc,v 1.29 2021/12/14 16:13:37 christos Exp $
 
 .include <bsd.own.mk>
 
@@ -18,7 +18,7 @@ CPPFLAGS+= -DNETBSD7 -DUSE_SASL_AUTH -DNO_EAI \
 	-I${PFIX_DISTDIR}/src/master -I${PFIX_DISTDIR}/src/util \
 	-I${PFIX_DISTDIR}/src/tls -I${PFIX_DISTDIR}/src/milter \
 	-I${PFIX_DISTDIR}/src/xsasl \
-	${${ACTIVE_CC} == "clang":?-Wno-comment:}
+	-Wno-comment
 
 CPPFLAGS+= -DUSE_SASL_AUTH
 CPPFLAGS+= -DDEF_SERVER_SASL_TYPE=\"dovecot\"
