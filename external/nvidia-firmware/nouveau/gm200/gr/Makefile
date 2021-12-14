@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.1 2021/12/13 23:59:36 maya Exp $
+# $NetBSD: Makefile,v 1.2 2021/12/14 22:47:07 maya Exp $
 
 NOMAN=	# defined
 
@@ -76,12 +76,6 @@ SYMLINKS+=	${FIRMWAREDIR}/nouveau/nvidia/gp102/gr/fecs_bl.bin \
 
 SYMLINKS+=	${FIRMWAREDIR}/nouveau/nvidia/gp102/gr/fecs_bl.bin \
 		${FIRMWAREDIR}/nouveau/nvidia/gp106/gr/fecs_bl.bin
-
-SYMLINKS+=	${FIRMWAREDIR}/nouveau/nvidia/gp102/gr/fecs_bl.bin \
-		${FIRMWAREDIR}/nouveau/nvidia/gp107/gr/fecs_bl.bin
-
-SYMLINKS+=	${FIRMWAREDIR}/nouveau/nvidia/gp102/gr/fecs_bl.bin \
-		${FIRMWAREDIR}/nouveau/nvidia/gp108/gr/fecs_bl.bin
 
 .include <bsd.links.mk>
 .include <bsd.files.mk>
