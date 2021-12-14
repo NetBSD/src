@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_extattr.c,v 1.7 2020/09/05 16:30:13 riastradh Exp $	*/
+/*	$NetBSD: ffs_extattr.c,v 1.8 2021/12/14 11:06:50 chs Exp $	*/
 
 /*-
  * SPDX-License-Identifier: (BSD-2-Clause-FreeBSD AND BSD-3-Clause)
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_extattr.c,v 1.7 2020/09/05 16:30:13 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_extattr.c,v 1.8 2021/12/14 11:06:50 chs Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -587,8 +587,10 @@ ffs_openextattr(void *v)
 	if (fs->fs_magic == FS_UFS1_MAGIC)
 		return (EOPNOTSUPP);
 
+#ifdef __FreeBSD__
 	if (ap->a_vp->v_type == VCHR || ap->a_vp->v_type == VBLK)
 		return (EOPNOTSUPP);
+#endif
 
 	return (ffs_open_ea(ap->a_vp, ap->a_cred));
 }
@@ -612,8 +614,10 @@ ffs_closeextattr(void *v)
 	if (fs->fs_magic == FS_UFS1_MAGIC)
 		return (EOPNOTSUPP);
 
+#ifdef __FreeBSD__
 	if (ap->a_vp->v_type == VCHR || ap->a_vp->v_type == VBLK)
 		return (EOPNOTSUPP);
+#endif
 
 	if (ap->a_commit && (ap->a_vp->v_mount->mnt_flag & MNT_RDONLY))
 		return (EROFS);
@@ -649,8 +653,10 @@ ffs_getextattr(void *v)
 	unsigned easize;
 	int error, ealen;
 
+#ifdef __FreeBSD__
 	if (ap->a_vp->v_type == VCHR || ap->a_vp->v_type == VBLK)
 		return (EOPNOTSUPP);
+#endif
 
 	error = extattr_check_cred(ap->a_vp, ap->a_attrnamespace,
 	    ap->a_cred, VREAD);
@@ -892,8 +898,10 @@ ffs_deleteextattr(void *v)
 	u_char *eae;
 	void *tmp;
 
+#ifdef __FreeBSD__
 	if (ap->a_vp->v_type == VCHR || ap->a_vp->v_type == VBLK)
 		return (EOPNOTSUPP);
+#endif
 
 	if (strlen(ap->a_name) == 0)
 		return (EINVAL);
