@@ -1,4 +1,4 @@
-# $NetBSD: directive-include.mk,v 1.7 2021/12/03 22:48:07 rillig Exp $
+# $NetBSD: directive-include.mk,v 1.8 2021/12/14 00:38:32 rillig Exp $
 #
 # Tests for the .include directive, which includes another file.
 
@@ -50,5 +50,18 @@ DQUOT=	"
 # expression is skipped and the file is included nevertheless.
 # FIXME: Add proper error handling, no file must be included here.
 .include "nonexistent${:U123:Z}.mk"
+
+# The traditional include directive is seldom used.
+include /dev/null		# comment
+# expect+1: Cannot open /nonexistent
+include /nonexistent		# comment
+sinclude /nonexistent		# comment
+include ${:U/dev/null}		# comment
+include /dev/null /dev/null
+# expect+1: Invalid line type
+include
+# XXX: trailing whitespace in diagnostic, missing quotes around filename
+# expect+1: Could not find
+include ${:U}
 
 all:
