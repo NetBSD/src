@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.5 2021/12/13 23:59:35 maya Exp $
+# $NetBSD: mi,v 1.6 2021/12/14 12:13:38 maya Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -365,7 +365,7 @@
 ./libdata/firmware/amdgpu/verde_rlc.bin			base-gpufw	amdgpufirmware
 ./libdata/firmware/amdgpu/verde_smc.bin			base-gpufw	amdgpufirmware
 ./libdata/firmware/nouveau/nvidia/LICENCE.nvidia	base-gpufw	 nouveaufirmware
-./libdata/firmware/nouveau/nvidia/gk20a				base-gpufw	nouveaufirmware
+./libdata/firmware/nouveau/nvidia/gk20a				base-gpufw
 ./libdata/firmware/nouveau/nvidia/gk20a/fecs_data.bin		base-gpufw	nouveaufirmware
 ./libdata/firmware/nouveau/nvidia/gk20a/fecs_inst.bin		base-gpufw	nouveaufirmware
 ./libdata/firmware/nouveau/nvidia/gk20a/gpccs_data.bin		base-gpufw	nouveaufirmware
@@ -374,12 +374,12 @@
 ./libdata/firmware/nouveau/nvidia/gk20a/sw_ctx.bin		base-gpufw	nouveaufirmware
 ./libdata/firmware/nouveau/nvidia/gk20a/sw_method_init.bin	base-gpufw	nouveaufirmware
 ./libdata/firmware/nouveau/nvidia/gk20a/sw_nonctx.bin		base-gpufw	nouveaufirmware
-./libdata/firmware/nouveau/nvidia/gm200				base-gpufw	nouveaufirmware
-./libdata/firmware/nouveau/nvidia/gm200/acr			base-gpufw	nouveaufirmware
+./libdata/firmware/nouveau/nvidia/gm200				base-gpufw
+./libdata/firmware/nouveau/nvidia/gm200/acr			base-gpufw
 ./libdata/firmware/nouveau/nvidia/gm200/acr/bl.bin		base-gpufw	nouveaufirmware
 ./libdata/firmware/nouveau/nvidia/gm200/acr/ucode_load.bin	base-gpufw	nouveaufirmware
 ./libdata/firmware/nouveau/nvidia/gm200/acr/ucode_unload.bin	base-gpufw	nouveaufirmware
-./libdata/firmware/nouveau/nvidia/gm200/gr			base-gpufw	nouveaufirmware
+./libdata/firmware/nouveau/nvidia/gm200/gr			base-gpufw
 ./libdata/firmware/nouveau/nvidia/gm200/gr/fecs_bl.bin		base-gpufw	nouveaufirmware
 ./libdata/firmware/nouveau/nvidia/gm200/gr/fecs_data.bin	base-gpufw	nouveaufirmware
 ./libdata/firmware/nouveau/nvidia/gm200/gr/fecs_inst.bin	base-gpufw	nouveaufirmware
@@ -392,12 +392,12 @@
 ./libdata/firmware/nouveau/nvidia/gm200/gr/sw_ctx.bin		base-gpufw	nouveaufirmware
 ./libdata/firmware/nouveau/nvidia/gm200/gr/sw_method_init.bin	base-gpufw	nouveaufirmware
 ./libdata/firmware/nouveau/nvidia/gm200/gr/sw_nonctx.bin	base-gpufw	nouveaufirmware
-./libdata/firmware/nouveau/nvidia/gm204				base-gpufw	nouveaufirmware
-./libdata/firmware/nouveau/nvidia/gm204/acr			base-gpufw	nouveaufirmware
+./libdata/firmware/nouveau/nvidia/gm204				base-gpufw
+./libdata/firmware/nouveau/nvidia/gm204/acr			base-gpufw
 ./libdata/firmware/nouveau/nvidia/gm204/acr/bl.bin		base-gpufw	nouveaufirmware
 ./libdata/firmware/nouveau/nvidia/gm204/acr/ucode_load.bin	base-gpufw	nouveaufirmware
 ./libdata/firmware/nouveau/nvidia/gm204/acr/ucode_unload.bin	base-gpufw	nouveaufirmware
-./libdata/firmware/nouveau/nvidia/gm204/gr			base-gpufw	nouveaufirmware
+./libdata/firmware/nouveau/nvidia/gm204/gr			base-gpufw
 ./libdata/firmware/nouveau/nvidia/gm204/gr/fecs_bl.bin		base-gpufw	nouveaufirmware
 ./libdata/firmware/nouveau/nvidia/gm204/gr/fecs_data.bin	base-gpufw	nouveaufirmware
 ./libdata/firmware/nouveau/nvidia/gm204/gr/fecs_inst.bin	base-gpufw	nouveaufirmware
@@ -410,15 +410,16 @@
 ./libdata/firmware/nouveau/nvidia/gm204/gr/sw_ctx.bin		base-gpufw	nouveaufirmware
 ./libdata/firmware/nouveau/nvidia/gm204/gr/sw_method_init.bin	base-gpufw	nouveaufirmware
 ./libdata/firmware/nouveau/nvidia/gm204/gr/sw_nonctx.bin	base-gpufw	nouveaufirmware
-./libdata/firmware/nouveau/nvidia/gm206/acr			base-gpufw	nouveaufirmware
+./libdata/firmware/nouveau/nvidia/gm206				base-gpufw
+./libdata/firmware/nouveau/nvidia/gm206/acr			base-gpufw
 ./libdata/firmware/nouveau/nvidia/gm206/acr/bl.bin		base-gpufw	nouveaufirmware
 ./libdata/firmware/nouveau/nvidia/gm206/acr/ucode_load.bin	base-gpufw	nouveaufirmware
 ./libdata/firmware/nouveau/nvidia/gm206/acr/ucode_unload.bin	base-gpufw	nouveaufirmware
-./libdata/firmware/nouveau/nvidia/gm206/fecs_data.bin		base-gpufw	 nouveaufirmware
-./libdata/firmware/nouveau/nvidia/gm206/fecs_inst.bin		base-gpufw	 nouveaufirmware
-./libdata/firmware/nouveau/nvidia/gm206/gpccs_data.bin		base-gpufw	 nouveaufirmware
-./libdata/firmware/nouveau/nvidia/gm206/gpccs_inst.bin		base-gpufw	 nouveaufirmware
-./libdata/firmware/nouveau/nvidia/gm206/gr			base-gpufw	nouveaufirmware
+./libdata/firmware/nouveau/nvidia/gm206/fecs_data.bin		base-gpufw	nouveaufirmware
+./libdata/firmware/nouveau/nvidia/gm206/fecs_inst.bin		base-gpufw	nouveaufirmware
+./libdata/firmware/nouveau/nvidia/gm206/gpccs_data.bin		base-gpufw	nouveaufirmware
+./libdata/firmware/nouveau/nvidia/gm206/gpccs_inst.bin		base-gpufw	nouveaufirmware
+./libdata/firmware/nouveau/nvidia/gm206/gr			base-gpufw
 ./libdata/firmware/nouveau/nvidia/gm206/gr/fecs_bl.bin		base-gpufw	nouveaufirmware
 ./libdata/firmware/nouveau/nvidia/gm206/gr/fecs_data.bin	base-gpufw	nouveaufirmware
 ./libdata/firmware/nouveau/nvidia/gm206/gr/fecs_inst.bin	base-gpufw	nouveaufirmware
@@ -431,11 +432,11 @@
 ./libdata/firmware/nouveau/nvidia/gm206/gr/sw_ctx.bin		base-gpufw	nouveaufirmware
 ./libdata/firmware/nouveau/nvidia/gm206/gr/sw_method_init.bin	base-gpufw	nouveaufirmware
 ./libdata/firmware/nouveau/nvidia/gm206/gr/sw_nonctx.bin	base-gpufw	nouveaufirmware
-./libdata/firmware/nouveau/nvidia/gm20b				base-gpufw	nouveaufirmware
-./libdata/firmware/nouveau/nvidia/gm20b/acr			base-gpufw	nouveaufirmware
+./libdata/firmware/nouveau/nvidia/gm20b				base-gpufw
+./libdata/firmware/nouveau/nvidia/gm20b/acr			base-gpufw
 ./libdata/firmware/nouveau/nvidia/gm20b/acr/bl.bin		base-gpufw	nouveaufirmware
 ./libdata/firmware/nouveau/nvidia/gm20b/acr/ucode_load.bin	base-gpufw	nouveaufirmware
-./libdata/firmware/nouveau/nvidia/gm20b/gr			base-gpufw	nouveaufirmware
+./libdata/firmware/nouveau/nvidia/gm20b/gr			base-gpufw
 ./libdata/firmware/nouveau/nvidia/gm20b/gr/fecs_bl.bin		base-gpufw	nouveaufirmware
 ./libdata/firmware/nouveau/nvidia/gm20b/gr/fecs_data.bin	base-gpufw	nouveaufirmware
 ./libdata/firmware/nouveau/nvidia/gm20b/gr/fecs_inst.bin	base-gpufw	nouveaufirmware
@@ -446,16 +447,16 @@
 ./libdata/firmware/nouveau/nvidia/gm20b/gr/sw_ctx.bin		base-gpufw	nouveaufirmware
 ./libdata/firmware/nouveau/nvidia/gm20b/gr/sw_method_init.bin	base-gpufw	nouveaufirmware
 ./libdata/firmware/nouveau/nvidia/gm20b/gr/sw_nonctx.bin	base-gpufw	nouveaufirmware
-./libdata/firmware/nouveau/nvidia/gm20b/pmu			base-gpufw	nouveaufirmware
+./libdata/firmware/nouveau/nvidia/gm20b/pmu			base-gpufw
 ./libdata/firmware/nouveau/nvidia/gm20b/pmu/desc.bin		base-gpufw	nouveaufirmware
 ./libdata/firmware/nouveau/nvidia/gm20b/pmu/image.bin		base-gpufw	nouveaufirmware
 ./libdata/firmware/nouveau/nvidia/gm20b/pmu/sig.bin		base-gpufw	nouveaufirmware
-./libdata/firmware/nouveau/nvidia/gp100				base-gpufw	nouveaufirmware
-./libdata/firmware/nouveau/nvidia/gp100/acr			base-gpufw	nouveaufirmware
+./libdata/firmware/nouveau/nvidia/gp100				base-gpufw
+./libdata/firmware/nouveau/nvidia/gp100/acr			base-gpufw
 ./libdata/firmware/nouveau/nvidia/gp100/acr/bl.bin		base-gpufw	nouveaufirmware
 ./libdata/firmware/nouveau/nvidia/gp100/acr/ucode_load.bin	base-gpufw	nouveaufirmware
 ./libdata/firmware/nouveau/nvidia/gp100/acr/ucode_unload.bin	base-gpufw	nouveaufirmware
-./libdata/firmware/nouveau/nvidia/gp100/gr			base-gpufw	nouveaufirmware
+./libdata/firmware/nouveau/nvidia/gp100/gr			base-gpufw
 ./libdata/firmware/nouveau/nvidia/gp100/gr/fecs_bl.bin		base-gpufw	nouveaufirmware
 ./libdata/firmware/nouveau/nvidia/gp100/gr/fecs_data.bin	base-gpufw	nouveaufirmware
 ./libdata/firmware/nouveau/nvidia/gp100/gr/fecs_inst.bin	base-gpufw	nouveaufirmware
@@ -468,13 +469,13 @@
 ./libdata/firmware/nouveau/nvidia/gp100/gr/sw_ctx.bin		base-gpufw	nouveaufirmware
 ./libdata/firmware/nouveau/nvidia/gp100/gr/sw_method_init.bin	base-gpufw	nouveaufirmware
 ./libdata/firmware/nouveau/nvidia/gp100/gr/sw_nonctx.bin	base-gpufw	nouveaufirmware
-./libdata/firmware/nouveau/nvidia/gp102				base-gpufw	nouveaufirmware
-./libdata/firmware/nouveau/nvidia/gp102/acr			base-gpufw	nouveaufirmware
+./libdata/firmware/nouveau/nvidia/gp102				base-gpufw
+./libdata/firmware/nouveau/nvidia/gp102/acr			base-gpufw
 ./libdata/firmware/nouveau/nvidia/gp102/acr/bl.bin		base-gpufw	nouveaufirmware
 ./libdata/firmware/nouveau/nvidia/gp102/acr/ucode_load.bin	base-gpufw	nouveaufirmware
 ./libdata/firmware/nouveau/nvidia/gp102/acr/ucode_unload.bin	base-gpufw	nouveaufirmware
 ./libdata/firmware/nouveau/nvidia/gp102/acr/unload_bl.bin	base-gpufw	nouveaufirmware
-./libdata/firmware/nouveau/nvidia/gp102/gr			base-gpufw	nouveaufirmware
+./libdata/firmware/nouveau/nvidia/gp102/gr			base-gpufw
 ./libdata/firmware/nouveau/nvidia/gp102/gr/fecs_bl.bin		base-gpufw	nouveaufirmware
 ./libdata/firmware/nouveau/nvidia/gp102/gr/fecs_data.bin	base-gpufw	nouveaufirmware
 ./libdata/firmware/nouveau/nvidia/gp102/gr/fecs_inst.bin	base-gpufw	nouveaufirmware
@@ -487,22 +488,22 @@
 ./libdata/firmware/nouveau/nvidia/gp102/gr/sw_ctx.bin		base-gpufw	nouveaufirmware
 ./libdata/firmware/nouveau/nvidia/gp102/gr/sw_method_init.bin	base-gpufw	nouveaufirmware
 ./libdata/firmware/nouveau/nvidia/gp102/gr/sw_nonctx.bin	base-gpufw	nouveaufirmware
-./libdata/firmware/nouveau/nvidia/gp102/nvdec			base-gpufw	nouveaufirmware
+./libdata/firmware/nouveau/nvidia/gp102/nvdec			base-gpufw
 ./libdata/firmware/nouveau/nvidia/gp102/nvdec/scrubber.bin	base-gpufw	nouveaufirmware
-./libdata/firmware/nouveau/nvidia/gp102/sec2			base-gpufw	nouveaufirmware
+./libdata/firmware/nouveau/nvidia/gp102/sec2			base-gpufw
 ./libdata/firmware/nouveau/nvidia/gp102/sec2/desc-1.bin		base-gpufw	nouveaufirmware
 ./libdata/firmware/nouveau/nvidia/gp102/sec2/desc.bin		base-gpufw	nouveaufirmware
 ./libdata/firmware/nouveau/nvidia/gp102/sec2/image-1.bin	base-gpufw	nouveaufirmware
 ./libdata/firmware/nouveau/nvidia/gp102/sec2/image.bin		base-gpufw	nouveaufirmware
 ./libdata/firmware/nouveau/nvidia/gp102/sec2/sig-1.bin		base-gpufw	nouveaufirmware
 ./libdata/firmware/nouveau/nvidia/gp102/sec2/sig.bin		base-gpufw	nouveaufirmware
-./libdata/firmware/nouveau/nvidia/gp104				base-gpufw	nouveaufirmware
-./libdata/firmware/nouveau/nvidia/gp104/acr			base-gpufw	nouveaufirmware
+./libdata/firmware/nouveau/nvidia/gp104				base-gpufw
+./libdata/firmware/nouveau/nvidia/gp104/acr			base-gpufw
 ./libdata/firmware/nouveau/nvidia/gp104/acr/bl.bin		base-gpufw	nouveaufirmware
 ./libdata/firmware/nouveau/nvidia/gp104/acr/ucode_load.bin	base-gpufw	nouveaufirmware
 ./libdata/firmware/nouveau/nvidia/gp104/acr/ucode_unload.bin	base-gpufw	nouveaufirmware
 ./libdata/firmware/nouveau/nvidia/gp104/acr/unload_bl.bin	base-gpufw	nouveaufirmware
-./libdata/firmware/nouveau/nvidia/gp104/gr			base-gpufw	nouveaufirmware
+./libdata/firmware/nouveau/nvidia/gp104/gr			base-gpufw
 ./libdata/firmware/nouveau/nvidia/gp104/gr/fecs_bl.bin		base-gpufw	nouveaufirmware
 ./libdata/firmware/nouveau/nvidia/gp104/gr/fecs_data.bin	base-gpufw	nouveaufirmware
 ./libdata/firmware/nouveau/nvidia/gp104/gr/fecs_inst.bin	base-gpufw	nouveaufirmware
@@ -515,22 +516,22 @@
 ./libdata/firmware/nouveau/nvidia/gp104/gr/sw_ctx.bin		base-gpufw	nouveaufirmware
 ./libdata/firmware/nouveau/nvidia/gp104/gr/sw_method_init.bin	base-gpufw	nouveaufirmware
 ./libdata/firmware/nouveau/nvidia/gp104/gr/sw_nonctx.bin	base-gpufw	nouveaufirmware
-./libdata/firmware/nouveau/nvidia/gp104/nvdec			base-gpufw	nouveaufirmware
+./libdata/firmware/nouveau/nvidia/gp104/nvdec			base-gpufw
 ./libdata/firmware/nouveau/nvidia/gp104/nvdec/scrubber.bin	base-gpufw	nouveaufirmware
-./libdata/firmware/nouveau/nvidia/gp104/sec2			base-gpufw	nouveaufirmware
+./libdata/firmware/nouveau/nvidia/gp104/sec2			base-gpufw
 ./libdata/firmware/nouveau/nvidia/gp104/sec2/desc-1.bin		base-gpufw	nouveaufirmware
 ./libdata/firmware/nouveau/nvidia/gp104/sec2/desc.bin		base-gpufw	nouveaufirmware
 ./libdata/firmware/nouveau/nvidia/gp104/sec2/image-1.bin	base-gpufw	nouveaufirmware
 ./libdata/firmware/nouveau/nvidia/gp104/sec2/image.bin		base-gpufw	nouveaufirmware
 ./libdata/firmware/nouveau/nvidia/gp104/sec2/sig-1.bin		base-gpufw	nouveaufirmware
 ./libdata/firmware/nouveau/nvidia/gp104/sec2/sig.bin		base-gpufw	nouveaufirmware
-./libdata/firmware/nouveau/nvidia/gp106				base-gpufw	nouveaufirmware
-./libdata/firmware/nouveau/nvidia/gp106/acr			base-gpufw	nouveaufirmware
+./libdata/firmware/nouveau/nvidia/gp106				base-gpufw
+./libdata/firmware/nouveau/nvidia/gp106/acr			base-gpufw
 ./libdata/firmware/nouveau/nvidia/gp106/acr/bl.bin		base-gpufw	nouveaufirmware
 ./libdata/firmware/nouveau/nvidia/gp106/acr/ucode_load.bin	base-gpufw	nouveaufirmware
 ./libdata/firmware/nouveau/nvidia/gp106/acr/ucode_unload.bin	base-gpufw	nouveaufirmware
 ./libdata/firmware/nouveau/nvidia/gp106/acr/unload_bl.bin	base-gpufw	nouveaufirmware
-./libdata/firmware/nouveau/nvidia/gp106/gr			base-gpufw	nouveaufirmware
+./libdata/firmware/nouveau/nvidia/gp106/gr			base-gpufw
 ./libdata/firmware/nouveau/nvidia/gp106/gr/fecs_bl.bin		base-gpufw	nouveaufirmware
 ./libdata/firmware/nouveau/nvidia/gp106/gr/fecs_data.bin	base-gpufw	nouveaufirmware
 ./libdata/firmware/nouveau/nvidia/gp106/gr/fecs_inst.bin	base-gpufw	nouveaufirmware
@@ -543,22 +544,22 @@
 ./libdata/firmware/nouveau/nvidia/gp106/gr/sw_ctx.bin		base-gpufw	nouveaufirmware
 ./libdata/firmware/nouveau/nvidia/gp106/gr/sw_method_init.bin	base-gpufw	nouveaufirmware
 ./libdata/firmware/nouveau/nvidia/gp106/gr/sw_nonctx.bin	base-gpufw	nouveaufirmware
-./libdata/firmware/nouveau/nvidia/gp106/nvdec			base-gpufw	nouveaufirmware
+./libdata/firmware/nouveau/nvidia/gp106/nvdec			base-gpufw
 ./libdata/firmware/nouveau/nvidia/gp106/nvdec/scrubber.bin	base-gpufw	nouveaufirmware
-./libdata/firmware/nouveau/nvidia/gp106/sec2			base-gpufw	nouveaufirmware
+./libdata/firmware/nouveau/nvidia/gp106/sec2			base-gpufw
 ./libdata/firmware/nouveau/nvidia/gp106/sec2/desc-1.bin		base-gpufw	nouveaufirmware
 ./libdata/firmware/nouveau/nvidia/gp106/sec2/desc.bin		base-gpufw	nouveaufirmware
 ./libdata/firmware/nouveau/nvidia/gp106/sec2/image-1.bin	base-gpufw	nouveaufirmware
 ./libdata/firmware/nouveau/nvidia/gp106/sec2/image.bin		base-gpufw	nouveaufirmware
 ./libdata/firmware/nouveau/nvidia/gp106/sec2/sig-1.bin		base-gpufw	nouveaufirmware
 ./libdata/firmware/nouveau/nvidia/gp106/sec2/sig.bin		base-gpufw	nouveaufirmware
-./libdata/firmware/nouveau/nvidia/gp107				base-gpufw	nouveaufirmware
-./libdata/firmware/nouveau/nvidia/gp107/acr			base-gpufw	nouveaufirmware
+./libdata/firmware/nouveau/nvidia/gp107				base-gpufw
+./libdata/firmware/nouveau/nvidia/gp107/acr			base-gpufw
 ./libdata/firmware/nouveau/nvidia/gp107/acr/bl.bin		base-gpufw	nouveaufirmware
 ./libdata/firmware/nouveau/nvidia/gp107/acr/ucode_load.bin	base-gpufw	nouveaufirmware
 ./libdata/firmware/nouveau/nvidia/gp107/acr/ucode_unload.bin	base-gpufw	nouveaufirmware
 ./libdata/firmware/nouveau/nvidia/gp107/acr/unload_bl.bin	base-gpufw	nouveaufirmware
-./libdata/firmware/nouveau/nvidia/gp107/gr			base-gpufw	nouveaufirmware
+./libdata/firmware/nouveau/nvidia/gp107/gr			base-gpufw
 ./libdata/firmware/nouveau/nvidia/gp107/gr/fecs_bl.bin		base-gpufw	nouveaufirmware
 ./libdata/firmware/nouveau/nvidia/gp107/gr/fecs_data.bin	base-gpufw	nouveaufirmware
 ./libdata/firmware/nouveau/nvidia/gp107/gr/fecs_inst.bin	base-gpufw	nouveaufirmware
@@ -571,22 +572,22 @@
 ./libdata/firmware/nouveau/nvidia/gp107/gr/sw_ctx.bin		base-gpufw	nouveaufirmware
 ./libdata/firmware/nouveau/nvidia/gp107/gr/sw_method_init.bin	base-gpufw	nouveaufirmware
 ./libdata/firmware/nouveau/nvidia/gp107/gr/sw_nonctx.bin	base-gpufw	nouveaufirmware
-./libdata/firmware/nouveau/nvidia/gp107/nvdec			base-gpufw	nouveaufirmware
+./libdata/firmware/nouveau/nvidia/gp107/nvdec			base-gpufw
 ./libdata/firmware/nouveau/nvidia/gp107/nvdec/scrubber.bin	base-gpufw	nouveaufirmware
-./libdata/firmware/nouveau/nvidia/gp107/sec2			base-gpufw	nouveaufirmware
+./libdata/firmware/nouveau/nvidia/gp107/sec2			base-gpufw
 ./libdata/firmware/nouveau/nvidia/gp107/sec2/desc-1.bin		base-gpufw	nouveaufirmware
 ./libdata/firmware/nouveau/nvidia/gp107/sec2/desc.bin		base-gpufw	nouveaufirmware
 ./libdata/firmware/nouveau/nvidia/gp107/sec2/image-1.bin	base-gpufw	nouveaufirmware
 ./libdata/firmware/nouveau/nvidia/gp107/sec2/image.bin		base-gpufw	nouveaufirmware
 ./libdata/firmware/nouveau/nvidia/gp107/sec2/sig-1.bin		base-gpufw	nouveaufirmware
 ./libdata/firmware/nouveau/nvidia/gp107/sec2/sig.bin		base-gpufw	nouveaufirmware
-./libdata/firmware/nouveau/nvidia/gp108				base-gpufw	nouveaufirmware
-./libdata/firmware/nouveau/nvidia/gp108/acr			base-gpufw	nouveaufirmware
+./libdata/firmware/nouveau/nvidia/gp108				base-gpufw
+./libdata/firmware/nouveau/nvidia/gp108/acr			base-gpufw
 ./libdata/firmware/nouveau/nvidia/gp108/acr/bl.bin		base-gpufw	nouveaufirmware
 ./libdata/firmware/nouveau/nvidia/gp108/acr/ucode_load.bin	base-gpufw	nouveaufirmware
 ./libdata/firmware/nouveau/nvidia/gp108/acr/ucode_unload.bin	base-gpufw	nouveaufirmware
 ./libdata/firmware/nouveau/nvidia/gp108/acr/unload_bl.bin	base-gpufw	nouveaufirmware
-./libdata/firmware/nouveau/nvidia/gp108/gr			base-gpufw	nouveaufirmware
+./libdata/firmware/nouveau/nvidia/gp108/gr			base-gpufw
 ./libdata/firmware/nouveau/nvidia/gp108/gr/fecs_bl.bin		base-gpufw	nouveaufirmware
 ./libdata/firmware/nouveau/nvidia/gp108/gr/fecs_data.bin	base-gpufw	nouveaufirmware
 ./libdata/firmware/nouveau/nvidia/gp108/gr/fecs_inst.bin	base-gpufw	nouveaufirmware
@@ -599,17 +600,17 @@
 ./libdata/firmware/nouveau/nvidia/gp108/gr/sw_ctx.bin		base-gpufw	nouveaufirmware
 ./libdata/firmware/nouveau/nvidia/gp108/gr/sw_method_init.bin	base-gpufw	nouveaufirmware
 ./libdata/firmware/nouveau/nvidia/gp108/gr/sw_nonctx.bin	base-gpufw	nouveaufirmware
-./libdata/firmware/nouveau/nvidia/gp108/nvdec			base-gpufw	nouveaufirmware
+./libdata/firmware/nouveau/nvidia/gp108/nvdec			base-gpufw
 ./libdata/firmware/nouveau/nvidia/gp108/nvdec/scrubber.bin	base-gpufw	nouveaufirmware
-./libdata/firmware/nouveau/nvidia/gp108/sec2			base-gpufw	nouveaufirmware
+./libdata/firmware/nouveau/nvidia/gp108/sec2			base-gpufw
 ./libdata/firmware/nouveau/nvidia/gp108/sec2/desc.bin		base-gpufw	nouveaufirmware
 ./libdata/firmware/nouveau/nvidia/gp108/sec2/image.bin		base-gpufw	nouveaufirmware
 ./libdata/firmware/nouveau/nvidia/gp108/sec2/sig.bin		base-gpufw	nouveaufirmware
-./libdata/firmware/nouveau/nvidia/gp10b				base-gpufw	nouveaufirmware
-./libdata/firmware/nouveau/nvidia/gp10b/acr			base-gpufw	nouveaufirmware
+./libdata/firmware/nouveau/nvidia/gp10b				base-gpufw
+./libdata/firmware/nouveau/nvidia/gp10b/acr			base-gpufw
 ./libdata/firmware/nouveau/nvidia/gp10b/acr/bl.bin		base-gpufw	nouveaufirmware
 ./libdata/firmware/nouveau/nvidia/gp10b/acr/ucode_load.bin	base-gpufw	nouveaufirmware
-./libdata/firmware/nouveau/nvidia/gp10b/gr			base-gpufw	nouveaufirmware
+./libdata/firmware/nouveau/nvidia/gp10b/gr			base-gpufw
 ./libdata/firmware/nouveau/nvidia/gp10b/gr/fecs_bl.bin		base-gpufw	nouveaufirmware
 ./libdata/firmware/nouveau/nvidia/gp10b/gr/fecs_data.bin	base-gpufw	nouveaufirmware
 ./libdata/firmware/nouveau/nvidia/gp10b/gr/fecs_inst.bin	base-gpufw	nouveaufirmware
@@ -622,17 +623,17 @@
 ./libdata/firmware/nouveau/nvidia/gp10b/gr/sw_ctx.bin		base-gpufw	nouveaufirmware
 ./libdata/firmware/nouveau/nvidia/gp10b/gr/sw_method_init.bin	base-gpufw	nouveaufirmware
 ./libdata/firmware/nouveau/nvidia/gp10b/gr/sw_nonctx.bin	base-gpufw	nouveaufirmware
-./libdata/firmware/nouveau/nvidia/gp10b/pmu			base-gpufw	nouveaufirmware
+./libdata/firmware/nouveau/nvidia/gp10b/pmu			base-gpufw
 ./libdata/firmware/nouveau/nvidia/gp10b/pmu/desc.bin		base-gpufw	nouveaufirmware
 ./libdata/firmware/nouveau/nvidia/gp10b/pmu/image.bin		base-gpufw	nouveaufirmware
 ./libdata/firmware/nouveau/nvidia/gp10b/pmu/sig.bin		base-gpufw	nouveaufirmware
-./libdata/firmware/nouveau/nvidia/gv100				base-gpufw	nouveaufirmware
-./libdata/firmware/nouveau/nvidia/gv100/acr			base-gpufw	nouveaufirmware
+./libdata/firmware/nouveau/nvidia/gv100				base-gpufw
+./libdata/firmware/nouveau/nvidia/gv100/acr			base-gpufw
 ./libdata/firmware/nouveau/nvidia/gv100/acr/bl.bin		base-gpufw	nouveaufirmware
 ./libdata/firmware/nouveau/nvidia/gv100/acr/ucode_load.bin	base-gpufw	nouveaufirmware
 ./libdata/firmware/nouveau/nvidia/gv100/acr/ucode_unload.bin	base-gpufw	nouveaufirmware
 ./libdata/firmware/nouveau/nvidia/gv100/acr/unload_bl.bin	base-gpufw	nouveaufirmware
-./libdata/firmware/nouveau/nvidia/gv100/gr			base-gpufw	nouveaufirmware
+./libdata/firmware/nouveau/nvidia/gv100/gr			base-gpufw
 ./libdata/firmware/nouveau/nvidia/gv100/gr/fecs_bl.bin		base-gpufw	nouveaufirmware
 ./libdata/firmware/nouveau/nvidia/gv100/gr/fecs_data.bin	base-gpufw	nouveaufirmware
 ./libdata/firmware/nouveau/nvidia/gv100/gr/fecs_inst.bin	base-gpufw	nouveaufirmware
@@ -645,20 +646,20 @@
 ./libdata/firmware/nouveau/nvidia/gv100/gr/sw_ctx.bin		base-gpufw	nouveaufirmware
 ./libdata/firmware/nouveau/nvidia/gv100/gr/sw_method_init.bin	base-gpufw	nouveaufirmware
 ./libdata/firmware/nouveau/nvidia/gv100/gr/sw_nonctx.bin	base-gpufw	nouveaufirmware
-./libdata/firmware/nouveau/nvidia/gv100/nvdec			base-gpufw	nouveaufirmware
+./libdata/firmware/nouveau/nvidia/gv100/nvdec			base-gpufw
 ./libdata/firmware/nouveau/nvidia/gv100/nvdec/scrubber.bin	base-gpufw	nouveaufirmware
-./libdata/firmware/nouveau/nvidia/gv100/sec2			base-gpufw	nouveaufirmware
+./libdata/firmware/nouveau/nvidia/gv100/sec2			base-gpufw
 ./libdata/firmware/nouveau/nvidia/gv100/sec2/desc.bin		base-gpufw	nouveaufirmware
 ./libdata/firmware/nouveau/nvidia/gv100/sec2/image.bin		base-gpufw	nouveaufirmware
 ./libdata/firmware/nouveau/nvidia/gv100/sec2/sig.bin		base-gpufw	nouveaufirmware
-./libdata/firmware/nouveau/nvidia/tu102				base-gpufw	nouveaufirmware
-./libdata/firmware/nouveau/nvidia/tu102/acr			base-gpufw	nouveaufirmware
+./libdata/firmware/nouveau/nvidia/tu102				base-gpufw
+./libdata/firmware/nouveau/nvidia/tu102/acr			base-gpufw
 ./libdata/firmware/nouveau/nvidia/tu102/acr/bl.bin		base-gpufw	nouveaufirmware
 ./libdata/firmware/nouveau/nvidia/tu102/acr/ucode_ahesasc.bin	base-gpufw	nouveaufirmware
 ./libdata/firmware/nouveau/nvidia/tu102/acr/ucode_asb.bin	base-gpufw	nouveaufirmware
 ./libdata/firmware/nouveau/nvidia/tu102/acr/ucode_unload.bin	base-gpufw	nouveaufirmware
 ./libdata/firmware/nouveau/nvidia/tu102/acr/unload_bl.bin	base-gpufw	nouveaufirmware
-./libdata/firmware/nouveau/nvidia/tu102/gr			base-gpufw	nouveaufirmware
+./libdata/firmware/nouveau/nvidia/tu102/gr			base-gpufw
 ./libdata/firmware/nouveau/nvidia/tu102/gr/fecs_bl.bin		base-gpufw	nouveaufirmware
 ./libdata/firmware/nouveau/nvidia/tu102/gr/fecs_data.bin	base-gpufw	nouveaufirmware
 ./libdata/firmware/nouveau/nvidia/tu102/gr/fecs_inst.bin	base-gpufw	nouveaufirmware
@@ -672,20 +673,20 @@
 ./libdata/firmware/nouveau/nvidia/tu102/gr/sw_method_init.bin	base-gpufw	nouveaufirmware
 ./libdata/firmware/nouveau/nvidia/tu102/gr/sw_nonctx.bin	base-gpufw	nouveaufirmware
 ./libdata/firmware/nouveau/nvidia/tu102/gr/sw_veid_bundle_init.bin		base-gpufw	nouveaufirmware
-./libdata/firmware/nouveau/nvidia/tu102/nvdec			base-gpufw	nouveaufirmware
+./libdata/firmware/nouveau/nvidia/tu102/nvdec			base-gpufw
 ./libdata/firmware/nouveau/nvidia/tu102/nvdec/scrubber.bin	base-gpufw	nouveaufirmware
-./libdata/firmware/nouveau/nvidia/tu102/sec2			base-gpufw	nouveaufirmware
+./libdata/firmware/nouveau/nvidia/tu102/sec2			base-gpufw
 ./libdata/firmware/nouveau/nvidia/tu102/sec2/desc.bin		base-gpufw	nouveaufirmware
 ./libdata/firmware/nouveau/nvidia/tu102/sec2/image.bin		base-gpufw	nouveaufirmware
 ./libdata/firmware/nouveau/nvidia/tu102/sec2/sig.bin		base-gpufw	nouveaufirmware
-./libdata/firmware/nouveau/nvidia/tu104				base-gpufw	nouveaufirmware
-./libdata/firmware/nouveau/nvidia/tu104/acr			base-gpufw	nouveaufirmware
+./libdata/firmware/nouveau/nvidia/tu104				base-gpufw
+./libdata/firmware/nouveau/nvidia/tu104/acr			base-gpufw
 ./libdata/firmware/nouveau/nvidia/tu104/acr/bl.bin		base-gpufw	nouveaufirmware
 ./libdata/firmware/nouveau/nvidia/tu104/acr/ucode_ahesasc.bin	base-gpufw	nouveaufirmware
 ./libdata/firmware/nouveau/nvidia/tu104/acr/ucode_asb.bin	base-gpufw	nouveaufirmware
 ./libdata/firmware/nouveau/nvidia/tu104/acr/ucode_unload.bin	base-gpufw	nouveaufirmware
 ./libdata/firmware/nouveau/nvidia/tu104/acr/unload_bl.bin	base-gpufw	nouveaufirmware
-./libdata/firmware/nouveau/nvidia/tu104/gr			base-gpufw	nouveaufirmware
+./libdata/firmware/nouveau/nvidia/tu104/gr			base-gpufw
 ./libdata/firmware/nouveau/nvidia/tu104/gr/fecs_bl.bin		base-gpufw	nouveaufirmware
 ./libdata/firmware/nouveau/nvidia/tu104/gr/fecs_data.bin	base-gpufw	nouveaufirmware
 ./libdata/firmware/nouveau/nvidia/tu104/gr/fecs_inst.bin	base-gpufw	nouveaufirmware
@@ -699,20 +700,20 @@
 ./libdata/firmware/nouveau/nvidia/tu104/gr/sw_method_init.bin	base-gpufw	nouveaufirmware
 ./libdata/firmware/nouveau/nvidia/tu104/gr/sw_nonctx.bin	base-gpufw	nouveaufirmware
 ./libdata/firmware/nouveau/nvidia/tu104/gr/sw_veid_bundle_init.bin	base-gpufw	nouveaufirmware
-./libdata/firmware/nouveau/nvidia/tu104/nvdec			base-gpufw	nouveaufirmware
+./libdata/firmware/nouveau/nvidia/tu104/nvdec			base-gpufw
 ./libdata/firmware/nouveau/nvidia/tu104/nvdec/scrubber.bin	base-gpufw	nouveaufirmware
-./libdata/firmware/nouveau/nvidia/tu104/sec2			base-gpufw	nouveaufirmware
+./libdata/firmware/nouveau/nvidia/tu104/sec2			base-gpufw
 ./libdata/firmware/nouveau/nvidia/tu104/sec2/desc.bin		base-gpufw	nouveaufirmware
 ./libdata/firmware/nouveau/nvidia/tu104/sec2/image.bin		base-gpufw	nouveaufirmware
 ./libdata/firmware/nouveau/nvidia/tu104/sec2/sig.bin		base-gpufw	nouveaufirmware
-./libdata/firmware/nouveau/nvidia/tu106				base-gpufw	nouveaufirmware
-./libdata/firmware/nouveau/nvidia/tu106/acr			base-gpufw	nouveaufirmware
+./libdata/firmware/nouveau/nvidia/tu106				base-gpufw
+./libdata/firmware/nouveau/nvidia/tu106/acr			base-gpufw
 ./libdata/firmware/nouveau/nvidia/tu106/acr/bl.bin		base-gpufw	nouveaufirmware
 ./libdata/firmware/nouveau/nvidia/tu106/acr/ucode_ahesasc.bin	base-gpufw	nouveaufirmware
 ./libdata/firmware/nouveau/nvidia/tu106/acr/ucode_asb.bin	base-gpufw	nouveaufirmware
 ./libdata/firmware/nouveau/nvidia/tu106/acr/ucode_unload.bin	base-gpufw	nouveaufirmware
 ./libdata/firmware/nouveau/nvidia/tu106/acr/unload_bl.bin	base-gpufw	nouveaufirmware
-./libdata/firmware/nouveau/nvidia/tu106/gr			base-gpufw	nouveaufirmware
+./libdata/firmware/nouveau/nvidia/tu106/gr			base-gpufw
 ./libdata/firmware/nouveau/nvidia/tu106/gr/fecs_bl.bin		base-gpufw	nouveaufirmware
 ./libdata/firmware/nouveau/nvidia/tu106/gr/fecs_data.bin	base-gpufw	nouveaufirmware
 ./libdata/firmware/nouveau/nvidia/tu106/gr/fecs_inst.bin	base-gpufw	nouveaufirmware
@@ -726,20 +727,20 @@
 ./libdata/firmware/nouveau/nvidia/tu106/gr/sw_method_init.bin	base-gpufw	nouveaufirmware
 ./libdata/firmware/nouveau/nvidia/tu106/gr/sw_nonctx.bin	base-gpufw	nouveaufirmware
 ./libdata/firmware/nouveau/nvidia/tu106/gr/sw_veid_bundle_init.bin	base-gpufw	nouveaufirmware
-./libdata/firmware/nouveau/nvidia/tu106/nvdec			base-gpufw	nouveaufirmware
+./libdata/firmware/nouveau/nvidia/tu106/nvdec			base-gpufw
 ./libdata/firmware/nouveau/nvidia/tu106/nvdec/scrubber.bin	base-gpufw	nouveaufirmware
-./libdata/firmware/nouveau/nvidia/tu106/sec2			base-gpufw	nouveaufirmware
+./libdata/firmware/nouveau/nvidia/tu106/sec2			base-gpufw
 ./libdata/firmware/nouveau/nvidia/tu106/sec2/desc.bin		base-gpufw	nouveaufirmware
 ./libdata/firmware/nouveau/nvidia/tu106/sec2/image.bin		base-gpufw	nouveaufirmware
 ./libdata/firmware/nouveau/nvidia/tu106/sec2/sig.bin		base-gpufw	nouveaufirmware
-./libdata/firmware/nouveau/nvidia/tu116				base-gpufw	nouveaufirmware
-./libdata/firmware/nouveau/nvidia/tu116/acr			base-gpufw	nouveaufirmware
+./libdata/firmware/nouveau/nvidia/tu116				base-gpufw
+./libdata/firmware/nouveau/nvidia/tu116/acr			base-gpufw
 ./libdata/firmware/nouveau/nvidia/tu116/acr/bl.bin		base-gpufw	nouveaufirmware
 ./libdata/firmware/nouveau/nvidia/tu116/acr/ucode_ahesasc.bin	base-gpufw	nouveaufirmware
 ./libdata/firmware/nouveau/nvidia/tu116/acr/ucode_asb.bin	base-gpufw	nouveaufirmware
 ./libdata/firmware/nouveau/nvidia/tu116/acr/ucode_unload.bin	base-gpufw	nouveaufirmware
 ./libdata/firmware/nouveau/nvidia/tu116/acr/unload_bl.bin	base-gpufw	nouveaufirmware
-./libdata/firmware/nouveau/nvidia/tu116/gr			base-gpufw	nouveaufirmware
+./libdata/firmware/nouveau/nvidia/tu116/gr			base-gpufw
 ./libdata/firmware/nouveau/nvidia/tu116/gr/fecs_bl.bin		base-gpufw	nouveaufirmware
 ./libdata/firmware/nouveau/nvidia/tu116/gr/fecs_data.bin	base-gpufw	nouveaufirmware
 ./libdata/firmware/nouveau/nvidia/tu116/gr/fecs_inst.bin	base-gpufw	nouveaufirmware
@@ -753,20 +754,20 @@
 ./libdata/firmware/nouveau/nvidia/tu116/gr/sw_method_init.bin	base-gpufw	nouveaufirmware
 ./libdata/firmware/nouveau/nvidia/tu116/gr/sw_nonctx.bin	base-gpufw	nouveaufirmware
 ./libdata/firmware/nouveau/nvidia/tu116/gr/sw_veid_bundle_init.bin	base-gpufw	nouveaufirmware
-./libdata/firmware/nouveau/nvidia/tu116/nvdec			base-gpufw	nouveaufirmware
+./libdata/firmware/nouveau/nvidia/tu116/nvdec			base-gpufw
 ./libdata/firmware/nouveau/nvidia/tu116/nvdec/scrubber.bin	base-gpufw	nouveaufirmware
-./libdata/firmware/nouveau/nvidia/tu116/sec2			base-gpufw	nouveaufirmware
+./libdata/firmware/nouveau/nvidia/tu116/sec2			base-gpufw
 ./libdata/firmware/nouveau/nvidia/tu116/sec2/desc.bin		base-gpufw	nouveaufirmware
 ./libdata/firmware/nouveau/nvidia/tu116/sec2/image.bin		base-gpufw	nouveaufirmware
 ./libdata/firmware/nouveau/nvidia/tu116/sec2/sig.bin		base-gpufw	nouveaufirmware
-./libdata/firmware/nouveau/nvidia/tu117				base-gpufw	nouveaufirmware
-./libdata/firmware/nouveau/nvidia/tu117/acr			base-gpufw	nouveaufirmware
+./libdata/firmware/nouveau/nvidia/tu117				base-gpufw
+./libdata/firmware/nouveau/nvidia/tu117/acr			base-gpufw
 ./libdata/firmware/nouveau/nvidia/tu117/acr/bl.bin		base-gpufw	nouveaufirmware
 ./libdata/firmware/nouveau/nvidia/tu117/acr/ucode_ahesasc.bin	base-gpufw	nouveaufirmware
 ./libdata/firmware/nouveau/nvidia/tu117/acr/ucode_asb.bin	base-gpufw	nouveaufirmware
 ./libdata/firmware/nouveau/nvidia/tu117/acr/ucode_unload.bin	base-gpufw	nouveaufirmware
 ./libdata/firmware/nouveau/nvidia/tu117/acr/unload_bl.bin	base-gpufw	nouveaufirmware
-./libdata/firmware/nouveau/nvidia/tu117/gr			base-gpufw	nouveaufirmware
+./libdata/firmware/nouveau/nvidia/tu117/gr			base-gpufw
 ./libdata/firmware/nouveau/nvidia/tu117/gr/fecs_bl.bin		base-gpufw	nouveaufirmware
 ./libdata/firmware/nouveau/nvidia/tu117/gr/fecs_data.bin	base-gpufw	nouveaufirmware
 ./libdata/firmware/nouveau/nvidia/tu117/gr/fecs_inst.bin	base-gpufw	nouveaufirmware
@@ -780,9 +781,9 @@
 ./libdata/firmware/nouveau/nvidia/tu117/gr/sw_method_init.bin	base-gpufw	nouveaufirmware
 ./libdata/firmware/nouveau/nvidia/tu117/gr/sw_nonctx.bin	base-gpufw	nouveaufirmware
 ./libdata/firmware/nouveau/nvidia/tu117/gr/sw_veid_bundle_init.bin	base-gpufw	nouveaufirmware
-./libdata/firmware/nouveau/nvidia/tu117/nvdec			base-gpufw	nouveaufirmware
+./libdata/firmware/nouveau/nvidia/tu117/nvdec			base-gpufw
 ./libdata/firmware/nouveau/nvidia/tu117/nvdec/scrubber.bin	base-gpufw	nouveaufirmware
-./libdata/firmware/nouveau/nvidia/tu117/sec2			base-gpufw	nouveaufirmware
+./libdata/firmware/nouveau/nvidia/tu117/sec2			base-gpufw
 ./libdata/firmware/nouveau/nvidia/tu117/sec2/desc.bin		base-gpufw	nouveaufirmware
 ./libdata/firmware/nouveau/nvidia/tu117/sec2/image.bin		base-gpufw	nouveaufirmware
 ./libdata/firmware/nouveau/nvidia/tu117/sec2/sig.bin		base-gpufw	nouveaufirmware
