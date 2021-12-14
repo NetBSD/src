@@ -1,4 +1,4 @@
-# $NetBSD: directive-include.mk,v 1.8 2021/12/14 00:38:32 rillig Exp $
+# $NetBSD: directive-include.mk,v 1.9 2021/12/14 01:00:04 rillig Exp $
 #
 # Tests for the .include directive, which includes another file.
 
@@ -60,8 +60,15 @@ include ${:U/dev/null}		# comment
 include /dev/null /dev/null
 # expect+1: Invalid line type
 include
+
 # XXX: trailing whitespace in diagnostic, missing quotes around filename
-# expect+1: Could not find
-include ${:U}
+### expect+1: Could not find
+# The following include directive behaves differently, depending on whether
+# the current file has a slash or is a relative filename.  In the first case,
+# make opens the directory of the current file and tries to read from it,
+# resulting in the error message """ line 1: Zero byte read from file".
+# In the second case, the error message is "Could not find ", without quotes
+# or any other indicator for the empty filename at the end of the line.
+#include ${:U}
 
 all:
