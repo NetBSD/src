@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe_common.c,v 1.40 2021/12/14 05:33:08 msaitoh Exp $ */
+/* $NetBSD: ixgbe_common.c,v 1.41 2021/12/14 05:35:46 msaitoh Exp $ */
 
 /******************************************************************************
   SPDX-License-Identifier: BSD-3-Clause
@@ -36,7 +36,7 @@
 /*$FreeBSD: head/sys/dev/ixgbe/ixgbe_common.c 331224 2018-03-19 20:55:05Z erj $*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixgbe_common.c,v 1.40 2021/12/14 05:33:08 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixgbe_common.c,v 1.41 2021/12/14 05:35:46 msaitoh Exp $");
 
 #include "ixgbe_common.h"
 #include "ixgbe_phy.h"
@@ -5433,10 +5433,10 @@ s32 ixgbe_setup_mac_link_multispeed_fiber(struct ixgbe_hw *hw,
 		ixgbe_flap_tx_laser(hw);
 
 		/* Wait for the controller to acquire link.  Per IEEE 802.3ap,
-		 * Section 73.10.2, we may have to wait up to 500ms if KR is
+		 * Section 73.10.2, we may have to wait up to 1000ms if KR is
 		 * attempted.  82599 uses the same timing for 10g SFI.
 		 */
-		for (i = 0; i < 5; i++) {
+		for (i = 0; i < 10; i++) {
 			/* Wait for the link partner to also set speed */
 			msec_delay(100);
 
