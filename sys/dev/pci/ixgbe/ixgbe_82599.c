@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe_82599.c,v 1.26 2021/12/10 11:31:22 msaitoh Exp $ */
+/* $NetBSD: ixgbe_82599.c,v 1.27 2021/12/14 05:26:08 msaitoh Exp $ */
 
 /******************************************************************************
   SPDX-License-Identifier: BSD-3-Clause
@@ -36,7 +36,7 @@
 /*$FreeBSD: head/sys/dev/ixgbe/ixgbe_82599.c 331224 2018-03-19 20:55:05Z erj $*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixgbe_82599.c,v 1.26 2021/12/10 11:31:22 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixgbe_82599.c,v 1.27 2021/12/14 05:26:08 msaitoh Exp $");
 
 #include "ixgbe_type.h"
 #include "ixgbe_82599.h"
@@ -1883,6 +1883,7 @@ s32 ixgbe_fdir_set_input_mask_82599(struct ixgbe_hw *hw,
 				     ~input_mask->formatted.src_ip[0]);
 		IXGBE_WRITE_REG_BE32(hw, IXGBE_FDIRDIP4M,
 				     ~input_mask->formatted.dst_ip[0]);
+		IXGBE_WRITE_REG_BE32(hw, IXGBE_FDIRIP6M, 0xFFFFFFFF);
 	}
 	return IXGBE_SUCCESS;
 }
