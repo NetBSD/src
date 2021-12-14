@@ -1,4 +1,4 @@
-/* $NetBSD: t_sem.c,v 1.5 2020/05/14 08:34:19 msaitoh Exp $ */
+/* $NetBSD: t_sem.c,v 1.6 2021/12/14 16:25:11 wiz Exp $ */
 
 /*
  * Copyright (c) 2008, 2010, 2019 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2008, 2010, 2019\
  The NetBSD Foundation, inc. All rights reserved.");
-__RCSID("$NetBSD: t_sem.c,v 1.5 2020/05/14 08:34:19 msaitoh Exp $");
+__RCSID("$NetBSD: t_sem.c,v 1.6 2021/12/14 16:25:11 wiz Exp $");
 
 #include <sys/mman.h>
 #include <sys/wait.h>
@@ -313,6 +313,32 @@ ATF_TC_CLEANUP(invalid_ops, tc)
 	(void)sem_unlink("/sem_c");
 }
 
+ATF_TC_WITH_CLEANUP(sem_open_address);
+ATF_TC_HEAD(sem_open_address, tc)
+{
+	atf_tc_set_md_var(tc, "descr", "Validate that multiple sem_open calls "
+	    "return the same address");
+}
+ATF_TC_BODY(sem_open_address, tc)
+{
+	sem_t *sem, *sem2, *sem3;
+	atf_tc_expect_fail("kern/56549: consecutive sem_open() do not return the same address");
+	sem = sem_open("/sem_d", O_CREAT | O_EXCL, 0777, 0);
+	ATF_REQUIRE(sem != SEM_FAILED);
+	sem2 = sem_open("/sem_d", O_CREAT | O_EXCL, 0777, 0);
+	ATF_REQUIRE(sem2 == SEM_FAILED && errno == EEXIST);
+	sem3 = sem_open("/sem_d", 0);
+	ATF_REQUIRE(sem3 != SEM_FAILED);
+	ATF_REQUIRE(sem == sem3);
+	ATF_REQUIRE_EQ(sem_close(sem3), 0);
+	ATF_REQUIRE_EQ(sem_close(sem), 0);
+	ATF_REQUIRE_EQ(sem_unlink("/sem_d"), 0);
+}
+ATF_TC_CLEANUP(sem_open_address, tc)
+{
+	(void)sem_unlink("/sem_d");
+}
+
 ATF_TP_ADD_TCS(tp)
 {
 
@@ -320,6 +346,7 @@ ATF_TP_ADD_TCS(tp)
 	ATF_TP_ADD_TC(tp, child);
 	ATF_TP_ADD_TC(tp, pshared);
 	ATF_TP_ADD_TC(tp, invalid_ops);
+	ATF_TP_ADD_TC(tp, sem_open_address);
 
 	return atf_no_error();
 }
