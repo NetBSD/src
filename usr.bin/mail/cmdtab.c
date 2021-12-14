@@ -1,4 +1,4 @@
-/*	$NetBSD: cmdtab.c,v 1.21 2009/04/10 13:08:24 christos Exp $	*/
+/*	$NetBSD: cmdtab.c,v 1.22 2021/12/14 15:13:41 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)cmdtab.c	8.2 (Berkeley) 4/20/95";
 #else
-__RCSID("$NetBSD: cmdtab.c,v 1.21 2009/04/10 13:08:24 christos Exp $");
+__RCSID("$NetBSD: cmdtab.c,v 1.22 2021/12/14 15:13:41 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -152,32 +152,32 @@ const struct cmd cmdtab[] = {
 /* R */	{ "Detach",	Detach,		S, CMP(F)	STRLIST,	0,		0 },
 #endif
 #ifdef THREAD_SUPPORT
-	{ "flatten",	flattencmd,	0, CMP(n)	T|NDMLIST,	0,		MMNDEL },
-	{ "reverse",	reversecmd,	0, CMP(n)	T|STRLIST,	0,		0 },
-	{ "sort",	sortcmd,	0, CMP(T)	T|STRLIST,	0,		0 },
-	{ "thread",	threadcmd,	0, CMP(T)	T|STRLIST,	0,		0 },
-	{ "unthread",	unthreadcmd,	0, CMP(n)	T|STRLIST,	0,		0 },
+	{ "flatten",	flattencmd,	0, CMP(n)	I|T|NDMLIST,	0,		MMNDEL },
+	{ "reverse",	reversecmd,	0, CMP(n)	I|T|STRLIST,	0,		0 },
+	{ "sort",	sortcmd,	0, CMP(T)	I|T|STRLIST,	0,		0 },
+	{ "thread",	threadcmd,	0, CMP(T)	I|T|STRLIST,	0,		0 },
+	{ "unthread",	unthreadcmd,	0, CMP(n)	I|T|STRLIST,	0,		0 },
 
-	{ "down",	downcmd,	0, CMP(n)	T|MSGLIST,	0,		MMNDEL },
-	{ "tset",	tsetcmd,	0, CMP(n)	T|MSGLIST,	0,		MMNDEL },
-	{ "up",		upcmd,		0, CMP(n)	T|STRLIST,	0,		0 },
+	{ "down",	downcmd,	0, CMP(n)	I|T|MSGLIST,	0,		MMNDEL },
+	{ "tset",	tsetcmd,	0, CMP(n)	I|T|MSGLIST,	0,		MMNDEL },
+	{ "up",		upcmd,		0, CMP(n)	I|T|STRLIST,	0,		0 },
 
-	{ "expose",	exposecmd,	0, CMP(n)	T|STRLIST,	0,		0 },
-	{ "hide",	hidecmd,	0, CMP(n)	T|STRLIST,	0,		0 },
-	{ "showthreads",exposecmd,	0, CMP(n)	T|STRLIST,	0,		0 },
-	{ "hidethreads",hidecmd,	0, CMP(n)	T|STRLIST,	0,		0 },
+	{ "expose",	exposecmd,	0, CMP(n)	I|T|STRLIST,	0,		0 },
+	{ "hide",	hidecmd,	0, CMP(n)	I|T|STRLIST,	0,		0 },
+	{ "showthreads",exposecmd,	0, CMP(n)	I|T|STRLIST,	0,		0 },
+	{ "hidethreads",hidecmd,	0, CMP(n)	I|T|STRLIST,	0,		0 },
 #ifdef THREAD_DEBUG
-	{ "debug_links",thread_showcmd,	S, CMP(n)	T|MSGLIST,	0,		MMNDEL },
+	{ "debug_links",thread_showcmd,	S, CMP(n)	I|T|MSGLIST,	0,		MMNDEL },
 #endif
-/* R */	{ "tag",	tagcmd,		0, CMP(n)	T|MSGLIST,	0,		MMNDEL },
-/* R */	{ "untag",	untagcmd,	0, CMP(n)	T|MSGLIST,	0,		MMNDEL },
-/* R */	{ "invtags",	invtagscmd,	0, CMP(n)	T|MSGLIST,	0,	 	MMNDEL },
-	{ "tagbelow",	tagbelowcmd,	0, CMP(n)	T|MSGLIST,	0,		MMNDEL },
+/* R */	{ "tag",	tagcmd,		0, CMP(n)	I|T|MSGLIST,	0,		MMNDEL },
+/* R */	{ "untag",	untagcmd,	0, CMP(n)	I|T|MSGLIST,	0,		MMNDEL },
+/* R */	{ "invtags",	invtagscmd,	0, CMP(n)	I|T|MSGLIST,	0,	 	MMNDEL },
+	{ "tagbelow",	tagbelowcmd,	0, CMP(n)	I|T|MSGLIST,	0,		MMNDEL },
 
-	{ "hidetags",	hidetagscmd,	0, CMP(n)	T|STRLIST,	0,		0 },
-	{ "showtags",	showtagscmd,	0, CMP(n)	T|STRLIST,	0,		0 },
+	{ "hidetags",	hidetagscmd,	0, CMP(n)	I|T|STRLIST,	0,		0 },
+	{ "showtags",	showtagscmd,	0, CMP(n)	I|T|STRLIST,	0,		0 },
 
-	{ "deldups",	deldupscmd,	0, CMP(n)	T|STRLIST,	0,		0 },
+	{ "deldups",	deldupscmd,	0, CMP(n)	I|T|STRLIST,	0,		0 },
 #endif /* THREAD_SUPPORT */
 	{ 0,		0,		0, CMP0		0,		0,		0 }
 };
