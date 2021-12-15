@@ -1,11 +1,10 @@
-#	$NetBSD: Makefile,v 1.21 2021/12/15 15:24:11 christos Exp $
+#	$NetBSD: Makefile,v 1.22 2021/12/15 15:27:30 christos Exp $
 
 DRIVER=		xf86-input-keyboard
 DRIVER_NAME=	kbd_drv
 
 SRCS=		kbd.c bsd_KbdMap.c bsd_kbd.c at_scancode.c
 MAN=		kbd.4
-LINTFLAGS+=	-D__GNUC__
 
 .if ${MACHINE_ARCH} == "i386" || ${MACHINE_ARCH} == "x86_64" || ${MACHINE} == "cats"
 CPPFLAGS+=	-DPCVT_SUPPORT
