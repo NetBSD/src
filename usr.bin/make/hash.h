@@ -1,4 +1,4 @@
-/*	$NetBSD: hash.h,v 1.42 2021/12/15 09:53:41 rillig Exp $	*/
+/*	$NetBSD: hash.h,v 1.43 2021/12/15 10:07:53 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -137,8 +137,7 @@ unsigned int Hash_Substring(Substring) MAKE_ATTR_USE;
 void *HashTable_FindValueBySubstringHash(HashTable *, Substring, unsigned int)
     MAKE_ATTR_USE;
 HashEntry *HashTable_CreateEntry(HashTable *, const char *, bool *);
-/* TODO: change return type to void */
-HashEntry *HashTable_Set(HashTable *, const char *, void *);
+void HashTable_Set(HashTable *, const char *, void *);
 void HashTable_DeleteEntry(HashTable *, HashEntry *);
 void HashTable_DebugStats(HashTable *, const char *);
 
