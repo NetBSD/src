@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.986 2021/12/13 04:18:01 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.987 2021/12/15 11:58:40 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -140,7 +140,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.986 2021/12/13 04:18:01 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.987 2021/12/15 11:58:40 rillig Exp $");
 
 /*
  * Variables are defined using one of the VAR=value assignments.  Their
@@ -173,20 +173,20 @@ typedef struct Var {
 	Buffer val;
 
 	/* The variable came from the command line. */
-	bool fromCmd: 1;
+	bool fromCmd:1;
 
 	/*
 	 * The variable is short-lived.
 	 * These variables are not registered in any GNode, therefore they
 	 * must be freed after use.
 	 */
-	bool shortLived: 1;
+	bool shortLived:1;
 
 	/*
 	 * The variable comes from the environment.
 	 * Appending to its value moves the variable to the global scope.
 	 */
-	bool fromEnvironment: 1;
+	bool fromEnvironment:1;
 
 	/*
 	 * The variable value cannot be changed anymore, and the variable
@@ -195,19 +195,19 @@ typedef struct Var {
 	 *
 	 * See VAR_SET_READONLY.
 	 */
-	bool readOnly: 1;
+	bool readOnly:1;
 
 	/*
 	* The variable's value is currently being used by Var_Parse or
 	* Var_Subst.  This marker is used to avoid endless recursion.
 	*/
-	bool inUse: 1;
+	bool inUse:1;
 
 	/*
 	 * The variable is exported to the environment, to be used by child
 	 * processes.
 	 */
-	bool exported: 1;
+	bool exported:1;
 
 	/*
 	 * At the point where this variable was exported, it contained an
@@ -215,7 +215,7 @@ typedef struct Var {
 	 * process is started, it needs to be exported again, in the hope
 	 * that the referenced variable can then be resolved.
 	 */
-	bool reexport: 1;
+	bool reexport:1;
 } Var;
 
 /*
@@ -248,10 +248,10 @@ typedef enum UnexportWhat {
 
 /* Flags for pattern matching in the :S and :C modifiers */
 typedef struct PatternFlags {
-	bool subGlobal: 1;	/* 'g': replace as often as possible */
-	bool subOnce: 1;	/* '1': replace only once */
-	bool anchorStart: 1;	/* '^': match only at start of word */
-	bool anchorEnd: 1;	/* '$': match only at end of word */
+	bool subGlobal:1;	/* 'g': replace as often as possible */
+	bool subOnce:1;		/* '1': replace only once */
+	bool anchorStart:1;	/* '^': match only at start of word */
+	bool anchorEnd:1;	/* '$': match only at end of word */
 } PatternFlags;
 
 /* SepBuf builds a string from words interleaved with separators. */
