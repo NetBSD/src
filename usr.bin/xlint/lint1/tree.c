@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.397 2021/12/06 23:26:28 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.398 2021/12/15 00:44:05 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.397 2021/12/06 23:26:28 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.398 2021/12/15 00:44:05 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -350,7 +350,7 @@ build_string(strg_t *strg)
  * Returns a symbol which has the same name as the msym argument and is a
  * member of the struct or union specified by the tn argument.
  */
-sym_t *
+static sym_t *
 struct_or_union_member(tnode_t *tn, op_t op, sym_t *msym)
 {
 	struct_or_union	*str;
