@@ -1,4 +1,4 @@
-/*	$NetBSD: lst.h,v 1.100 2021/12/15 09:53:41 rillig Exp $	*/
+/*	$NetBSD: lst.h,v 1.101 2021/12/15 12:08:25 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -197,4 +197,4 @@ Vector_Done(Vector *v) {
 	free(v->items);
 }
 
-#endif /* MAKE_LST_H */
+#endif

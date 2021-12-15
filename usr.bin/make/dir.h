@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.h,v 1.45 2021/12/15 09:53:41 rillig Exp $	*/
+/*	$NetBSD: dir.h,v 1.46 2021/12/15 12:08:25 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -104,4 +104,4 @@ struct cached_stat {
 int cached_lstat(const char *, struct cached_stat *);
 int cached_stat(const char *, struct cached_stat *);
 
-#endif /* MAKE_DIR_H */
+#endif
