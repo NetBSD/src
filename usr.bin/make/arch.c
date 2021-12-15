@@ -1,4 +1,4 @@
-/*	$NetBSD: arch.c,v 1.207 2021/12/12 23:47:21 rillig Exp $	*/
+/*	$NetBSD: arch.c,v 1.208 2021/12/15 12:24:13 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -126,7 +126,7 @@
 #include "config.h"
 
 /*	"@(#)arch.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: arch.c,v 1.207 2021/12/12 23:47:21 rillig Exp $");
+MAKE_RCSID("$NetBSD: arch.c,v 1.208 2021/12/15 12:24:13 rillig Exp $");
 
 typedef struct List ArchList;
 typedef struct ListNode ArchListNode;
@@ -287,8 +287,8 @@ Arch_ParseArchive(char **pp, GNodeList *gns, GNode *scope)
 		 */
 		if (*cp == '\0') {
 			Parse_Error(PARSE_FATAL,
-				    "No closing parenthesis "
-				    "in archive specification");
+			    "No closing parenthesis "
+			    "in archive specification");
 			return false;
 		}
 
@@ -625,7 +625,7 @@ ArchSVR4Entry(Arch *ar, char *inout_name, size_t size, FILE *arch)
 
 		if (ar->fnametab != NULL) {
 			DEBUG0(ARCH,
-			       "Attempted to redefine an SVR4 name table\n");
+			    "Attempted to redefine an SVR4 name table\n");
 			return -1;
 		}
 
@@ -646,8 +646,9 @@ ArchSVR4Entry(Arch *ar, char *inout_name, size_t size, FILE *arch)
 				entry++;
 				*ptr = '\0';
 			}
-		DEBUG1(ARCH, "Found svr4 archive name table with %lu entries\n",
-		       (unsigned long)entry);
+		DEBUG1(ARCH,
+		    "Found svr4 archive name table with %lu entries\n",
+		    (unsigned long)entry);
 		return 0;
 	}
 
@@ -661,7 +662,7 @@ ArchSVR4Entry(Arch *ar, char *inout_name, size_t size, FILE *arch)
 	}
 	if (entry >= ar->fnamesize) {
 		DEBUG2(ARCH, "SVR4 entry offset %s is greater than %lu\n",
-		       inout_name, (unsigned long)ar->fnamesize);
+		    inout_name, (unsigned long)ar->fnamesize);
 		return 2;
 	}
 
@@ -762,9 +763,9 @@ ArchFindMember(const char *archive, const char *member, struct ar_hdr *out_arh,
 		}
 
 		DEBUG5(ARCH, "Reading archive %s member %.*s mtime %.*s\n",
-		       archive,
-		       (int)sizeof out_arh->ar_name, out_arh->ar_name,
-		       (int)sizeof out_arh->ar_date, out_arh->ar_date);
+		    archive,
+		    (int)sizeof out_arh->ar_name, out_arh->ar_name,
+		    (int)sizeof out_arh->ar_date, out_arh->ar_date);
 
 		if (ArchiveMember_HasName(out_arh, member, len)) {
 			/*
@@ -865,7 +866,7 @@ Arch_Touch(GNode *gn)
 	struct ar_hdr arh;
 
 	f = ArchFindMember(GNode_VarArchive(gn), GNode_VarMember(gn), &arh,
-			   "r+");
+	    "r+");
 	if (f == NULL)
 		return;
 

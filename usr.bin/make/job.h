@@ -1,4 +1,4 @@
-/*	$NetBSD: job.h,v 1.75 2021/12/15 12:08:25 rillig Exp $	*/
+/*	$NetBSD: job.h,v 1.76 2021/12/15 12:24:13 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -92,16 +92,15 @@
 #define pollfd emul_pollfd
 
 struct emul_pollfd {
-    int fd;
-    short events;
-    short revents;
+	int fd;
+	short events;
+	short revents;
 };
 
 #define POLLIN		0x0001
 #define POLLOUT		0x0004
 
-int
-emul_poll(struct pollfd *fd, int nfd, int timeout);
+int emul_poll(struct pollfd *, int, int);
 #endif
 
 /*

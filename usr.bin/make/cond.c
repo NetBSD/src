@@ -1,4 +1,4 @@
-/*	$NetBSD: cond.c,v 1.304 2021/12/13 07:47:07 rillig Exp $	*/
+/*	$NetBSD: cond.c,v 1.305 2021/12/15 12:24:13 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -95,7 +95,7 @@
 #include "dir.h"
 
 /*	"@(#)cond.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: cond.c,v 1.304 2021/12/13 07:47:07 rillig Exp $");
+MAKE_RCSID("$NetBSD: cond.c,v 1.305 2021/12/15 12:24:13 rillig Exp $");
 
 /*
  * The parsing of conditional expressions is based on this grammar:
@@ -317,7 +317,7 @@ FuncExists(const char *arg)
 
 	path = Dir_FindFile(arg, &dirSearchPath);
 	DEBUG2(COND, "exists(%s) result is \"%s\"\n",
-	       arg, path != NULL ? path : "");
+	    arg, path != NULL ? path : "");
 	result = path != NULL;
 	free(path);
 	return result;
@@ -1212,7 +1212,7 @@ Cond_EvalLine(const char *line)
 			} else {
 				if (state & IFS_SEEN_ELSE)
 					Parse_Error(PARSE_WARNING,
-						    "extra else");
+					    "extra else");
 				state = IFS_WAS_ACTIVE | IFS_SEEN_ELSE;
 			}
 			cond_states[cond_depth] = state;
@@ -1261,8 +1261,7 @@ Cond_EvalLine(const char *line)
 			 */
 			cond_states_cap += 32;
 			cond_states = bmake_realloc(cond_states,
-						    cond_states_cap *
-						    sizeof *cond_states);
+			    cond_states_cap * sizeof *cond_states);
 		}
 		state = cond_states[cond_depth];
 		cond_depth++;
@@ -1301,7 +1300,7 @@ Cond_restore_depth(unsigned int saved_depth)
 
 	if (open_conds != 0 || saved_depth > cond_depth) {
 		Parse_Error(PARSE_FATAL, "%u open conditional%s",
-			    open_conds, open_conds == 1 ? "" : "s");
+		    open_conds, open_conds == 1 ? "" : "s");
 		cond_depth = cond_min_depth;
 	}
 
