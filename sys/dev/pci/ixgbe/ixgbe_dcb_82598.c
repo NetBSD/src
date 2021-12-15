@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe_dcb_82598.c,v 1.10 2021/12/10 11:16:54 msaitoh Exp $ */
+/* $NetBSD: ixgbe_dcb_82598.c,v 1.11 2021/12/15 09:52:44 msaitoh Exp $ */
 /******************************************************************************
   SPDX-License-Identifier: BSD-3-Clause
 
@@ -35,7 +35,7 @@
 /*$FreeBSD: head/sys/dev/ixgbe/ixgbe_dcb_82598.c 331224 2018-03-19 20:55:05Z erj $*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixgbe_dcb_82598.c,v 1.10 2021/12/10 11:16:54 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixgbe_dcb_82598.c,v 1.11 2021/12/15 09:52:44 msaitoh Exp $");
 
 #include "ixgbe_type.h"
 #include "ixgbe_dcb.h"
@@ -70,14 +70,6 @@ s32 ixgbe_dcb_get_tc_stats_82598(struct ixgbe_hw *hw,
 		stats->qprc[tc] += IXGBE_READ_REG(hw, IXGBE_QPRC(tc));
 		/* Received Bytes */
 		stats->qbrc[tc] += IXGBE_READ_REG(hw, IXGBE_QBRC(tc));
-
-#if 0
-		/* Can we get rid of these??  Consequently, getting rid
-		 * of the tc_stats structure.
-		 */
-		tc_stats_array[up]->in_overflow_discards = 0;
-		tc_stats_array[up]->out_overflow_discards = 0;
-#endif
 	}
 
 	return IXGBE_SUCCESS;
