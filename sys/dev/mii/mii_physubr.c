@@ -1,4 +1,4 @@
-/*	$NetBSD: mii_physubr.c,v 1.95 2021/06/29 21:03:36 pgoyette Exp $	*/
+/*	$NetBSD: mii_physubr.c,v 1.96 2021/12/15 08:28:22 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mii_physubr.c,v 1.95 2021/06/29 21:03:36 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mii_physubr.c,v 1.96 2021/12/15 08:28:22 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -79,7 +79,7 @@ mii_get_descr(char *descr, size_t len, uint32_t oui, uint32_t model)
 		strlcat(descr, temp, len);
 		return descr;
 	}
-	snprintf(descr, len, "oui 0x%6x model 0x%04x", oui, model);
+	snprintf(descr, len, "OUI 0x%06x model 0x%04x", oui, model);
 	return NULL;
 }
 
