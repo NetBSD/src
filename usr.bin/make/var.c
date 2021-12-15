@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.987 2021/12/15 11:58:40 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.988 2021/12/15 12:58:01 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -140,7 +140,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.987 2021/12/15 11:58:40 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.988 2021/12/15 12:58:01 rillig Exp $");
 
 /*
  * Variables are defined using one of the VAR=value assignments.  Their
@@ -1023,8 +1023,10 @@ Var_SetWithFlags(GNode *scope, const char *name, const char *val,
 		if (!opts.varNoExportEnv)
 			setenv(name, val, 1);
 		/* XXX: What about .MAKE.EXPORTED? */
-		/* XXX: Why not just mark the variable for needing export,
-		 *  as in ExportVarPlain? */
+		/*
+		 * XXX: Why not just mark the variable for needing export, as
+		 * in ExportVarPlain?
+		 */
 
 		Global_Append(MAKEOVERRIDES, name);
 	}
@@ -1834,7 +1836,9 @@ SubstringWords_JoinFree(SubstringWords words)
 
 	for (i = 0; i < words.len; i++) {
 		if (i != 0) {
-			/* XXX: Use ch->sep instead of ' ', for consistency. */
+			/*
+			 * XXX: Use ch->sep instead of ' ', for consistency.
+			 */
 			Buf_AddByte(&buf, ' ');
 		}
 		Buf_AddBytesBetween(&buf,
@@ -2232,11 +2236,15 @@ ParseModifierPartSubst(
     VarEvalMode emode,
     ModChain *ch,
     LazyBuf *part,
-    /* For the first part of the modifier ':S', set anchorEnd if the last
-     * character of the pattern is a $. */
+    /*
+     * For the first part of the modifier ':S', set anchorEnd if the last
+     * character of the pattern is a $.
+     */
     PatternFlags *out_pflags,
-    /* For the second part of the :S modifier, allow ampersands to be
-     * escaped and replace unescaped ampersands with subst->lhs. */
+    /*
+     * For the second part of the :S modifier, allow ampersands to be escaped
+     * and replace unescaped ampersands with subst->lhs.
+     */
     struct ModifyWord_SubstArgs *subst
 )
 {
@@ -2506,9 +2514,11 @@ ApplyModifier_Defined(const char **pp, ModChain *ch)
 	LazyBuf_Init(&buf, p);
 	while (!IsDelimiter(*p, ch) && *p != '\0') {
 
-		/* XXX: This code is similar to the one in Var_Parse.
-		 * See if the code can be merged.
-		 * See also ApplyModifier_Match and ParseModifierPart. */
+		/*
+		 * XXX: This code is similar to the one in Var_Parse. See if
+		 * the code can be merged. See also ApplyModifier_Match and
+		 * ParseModifierPart.
+		 */
 
 		/* Escaped delimiter or other special character */
 		/* See Buf_AddEscaped in for.c. */
@@ -2716,7 +2726,7 @@ ApplyModifier_ShellCommand(const char **pp, ModChain *ch)
 	else
 		Expr_SetValueRefer(expr, "");
 	if (errfmt != NULL)
-		Error(errfmt, cmd.str); /* XXX: why still return AMR_OK? */
+		Error(errfmt, cmd.str);	/* XXX: why still return AMR_OK? */
 	FStr_Done(&cmd);
 	Expr_Define(expr);
 
@@ -2765,7 +2775,9 @@ ApplyModifier_Range(const char **pp, ModChain *ch)
 
 	for (i = 0; i < n; i++) {
 		if (i != 0) {
-			/* XXX: Use ch->sep instead of ' ', for consistency. */
+			/*
+			 * XXX: Use ch->sep instead of ' ', for consistency.
+			 */
 			Buf_AddByte(&buf, ' ');
 		}
 		Buf_AddInt(&buf, 1 + (int)i);
@@ -3452,7 +3464,7 @@ ApplyModifier_IfElse(const char **pp, ModChain *ch)
 			else_emode = expr->emode;
 	}
 
-	(*pp)++;			/* skip past the '?' */
+	(*pp)++;		/* skip past the '?' */
 	res = ParseModifierPart(pp, ':', then_emode, ch, &thenBuf);
 	if (res != VPR_OK)
 		return AMR_CLEANUP;
@@ -3723,7 +3735,9 @@ ApplyModifier_SysV(const char **pp, ModChain *ch)
 	if (res != VPR_OK)
 		return AMR_CLEANUP;
 
-	/* The SysV modifier lasts until the end of the variable expression. */
+	/*
+	 * The SysV modifier lasts until the end of the variable expression.
+	 */
 	res = ParseModifierPart(pp, ch->endc, expr->emode, ch, &rhsBuf);
 	if (res != VPR_OK) {
 		LazyBuf_Done(&lhsBuf);
@@ -4098,7 +4112,7 @@ ApplyModifiers(
 	}
 
 	*pp = p;
-	assert(Expr_Str(expr) != NULL); /* Use var_Error or varUndefined. */
+	assert(Expr_Str(expr) != NULL);	/* Use var_Error or varUndefined. */
 	return;
 
 bad_modifier:
@@ -4409,8 +4423,10 @@ ParseVarnameLong(
 
 	v = VarFindSubstring(name, scope, true);
 
-	/* At this point, p points just after the variable name,
-	 * either at ':' or at endc. */
+	/*
+	 * At this point, p points just after the variable name, either at
+	 * ':' or at endc.
+	 */
 
 	if (v == NULL && Substring_Equals(name, ".SUFFIXES")) {
 		char *suffixes = Suff_NamesStr();
@@ -4643,7 +4659,7 @@ Var_Parse(const char **pp, GNode *scope, VarEvalMode emode, FStr *out_val)
 	}
 
 	if (haveModifier) {
-		p++;	/* Skip initial colon. */
+		p++;		/* Skip initial colon. */
 		ApplyModifiers(&expr, &p, startc, endc);
 	}
 
@@ -4726,10 +4742,12 @@ VarSubstExpr(const char **pp, Buffer *buf, GNode *scope,
 			p = nested_p;
 			*inout_errorReported = true;
 		} else {
-			/* Copy the initial '$' of the undefined expression,
+			/*
+			 * Copy the initial '$' of the undefined expression,
 			 * thereby deferring expansion of the expression, but
-			 * expand nested expressions if already possible.
-			 * See unit-tests/varparse-undef-partial.mk. */
+			 * expand nested expressions if already possible. See
+			 * unit-tests/varparse-undef-partial.mk.
+			 */
 			Buf_AddByte(buf, *p);
 			p++;
 		}
@@ -4776,8 +4794,10 @@ Var_Subst(const char *str, GNode *scope, VarEvalMode emode, char **out_res)
 	const char *p = str;
 	Buffer res;
 
-	/* Set true if an error has already been reported,
-	 * to prevent a plethora of messages when recursing */
+	/*
+	 * Set true if an error has already been reported, to prevent a
+	 * plethora of messages when recursing
+	 */
 	/* XXX: Why is the 'static' necessary here? */
 	static bool errorReported;
 

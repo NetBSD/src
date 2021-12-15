@@ -1,4 +1,4 @@
-/*	$NetBSD: hash.h,v 1.44 2021/12/15 12:08:25 rillig Exp $	*/
+/*	$NetBSD: hash.h,v 1.45 2021/12/15 12:58:01 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -88,8 +88,8 @@ typedef struct HashEntry {
 
 /* The hash table containing the entries. */
 typedef struct HashTable {
-	HashEntry **buckets;	/* Pointers to HashEntry, one
-				 * for each bucket in the table. */
+	HashEntry **buckets;	/* Pointers to HashEntry, one for each bucket
+				 * in the table. */
 	unsigned int bucketsSize;
 	unsigned int numEntries; /* Number of entries in the table. */
 	unsigned int bucketsMask; /* Used to select the bucket for a hash. */
