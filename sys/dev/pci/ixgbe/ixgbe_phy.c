@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe_phy.c,v 1.27 2021/12/10 11:31:22 msaitoh Exp $ */
+/* $NetBSD: ixgbe_phy.c,v 1.28 2021/12/15 09:19:34 msaitoh Exp $ */
 
 /******************************************************************************
   SPDX-License-Identifier: BSD-3-Clause
@@ -36,7 +36,7 @@
 /*$FreeBSD: head/sys/dev/ixgbe/ixgbe_phy.c 331224 2018-03-19 20:55:05Z erj $*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixgbe_phy.c,v 1.27 2021/12/10 11:31:22 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixgbe_phy.c,v 1.28 2021/12/15 09:19:34 msaitoh Exp $");
 
 #include "ixgbe_api.h"
 #include "ixgbe_common.h"
@@ -470,8 +470,7 @@ enum ixgbe_phy_type ixgbe_get_phy_type_from_id(u32 phy_id)
 	case TN1010_PHY_ID:
 		phy_type = ixgbe_phy_tn;
 		break;
-	case X550_PHY_ID2:
-	case X550_PHY_ID3:
+	case X550_PHY_ID:
 	case X540_PHY_ID:
 		phy_type = ixgbe_phy_aq;
 		break;
