@@ -1,4 +1,4 @@
-/*	$NetBSD: job.h,v 1.76 2021/12/15 12:24:13 rillig Exp $	*/
+/*	$NetBSD: job.h,v 1.77 2021/12/15 12:58:01 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -80,7 +80,7 @@
 #ifndef MAKE_JOB_H
 #define MAKE_JOB_H
 
-#define TMPPAT	"makeXXXXXX"		/* relative to tmpdir */
+#define TMPPAT	"makeXXXXXX"	/* relative to tmpdir */
 
 #ifdef USE_SELECT
 /*
@@ -144,9 +144,11 @@ typedef struct Job {
 	/* The target the child is making */
 	GNode *node;
 
-	/* If one of the shell commands is "...", all following commands are
-	* delayed until the .END node is made.  This list node points to the
-	* first of these commands, if any. */
+	/*
+	 * If one of the shell commands is "...", all following commands are
+	 * delayed until the .END node is made.  This list node points to the
+	 * first of these commands, if any.
+	 */
 	StringListNode *tailCmds;
 
 	/* This is where the shell commands go. */

@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.546 2021/12/15 12:24:13 rillig Exp $	*/
+/*	$NetBSD: main.c,v 1.547 2021/12/15 12:58:01 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -111,7 +111,7 @@
 #include "trace.h"
 
 /*	"@(#)main.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: main.c,v 1.546 2021/12/15 12:24:13 rillig Exp $");
+MAKE_RCSID("$NetBSD: main.c,v 1.547 2021/12/15 12:58:01 rillig Exp $");
 #if defined(MAKE_NATIVE) && !defined(lint)
 __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993 "
 	    "The Regents of the University of California.  "
@@ -134,7 +134,7 @@ static const char *tracefile;
 static int ReadMakefile(const char *);
 static void purge_relative_cached_realpaths(void);
 
-static bool ignorePWD;	/* if we use -C, PWD is meaningless */
+static bool ignorePWD;		/* if we use -C, PWD is meaningless */
 static char objdir[MAXPATHLEN + 1]; /* where we chdir'ed to */
 char curdir[MAXPATHLEN + 1];	/* Startup directory */
 const char *progname;
@@ -619,7 +619,10 @@ rearg:
 		/* '-' found at some earlier point */
 		optspec = strchr(optspecs, c);
 		if (c != '\0' && optspec != NULL && optspec[1] == ':') {
-			/* -<something> found, and <something> should have an arg */
+			/*
+			 * -<something> found, and <something> should have an
+			 * argument
+			 */
 			inOption = false;
 			arginc = 1;
 			argvalue = optscan;
@@ -906,7 +909,7 @@ static bool
 runTargets(void)
 {
 	GNodeList targs = LST_INIT;	/* target nodes to create */
-	bool outOfDate;	/* false if all targets up to date */
+	bool outOfDate;		/* false if all targets up to date */
 
 	/*
 	 * Have now read the entire graph and need to make a list of
@@ -1226,8 +1229,13 @@ ReadBuiltinRules(void)
 		Fatal("%s: cannot open %s.",
 		    progname, (const char *)sysMkFiles.first->datum);
 
-	/* Free the list nodes but not the actual filenames since these may
-	 * still be used in GNodes. */
+	/*
+	 * Free the list nodes but not the actual filenames since these may
+	 * still be used in GNodes.
+	 *
+	 * TODO: Check whether the above is still true after Str_Intern has
+	 *  been added.
+	 */
 	Lst_Done(&sysMkFiles);
 }
 
@@ -1317,10 +1325,12 @@ ReadFirstDefaultMakefile(void)
 	    SCOPE_CMDLINE, VARE_WANTRES, &prefs);
 	/* TODO: handle errors */
 
-	/* XXX: This should use a local list instead of opts.makefiles
-	 * since these makefiles do not come from the command line.  They
-	 * also have different semantics in that only the first file that
-	 * is found is processed.  See ReadAllMakefiles. */
+	/*
+	 * XXX: This should use a local list instead of opts.makefiles since
+	 * these makefiles do not come from the command line.  They also have
+	 * different semantics in that only the first file that is found is
+	 * processed.  See ReadAllMakefiles.
+	 */
 	(void)str2Lst_Append(&opts.makefiles, prefs);
 
 	for (ln = opts.makefiles.first; ln != NULL; ln = ln->next)
@@ -1390,7 +1400,7 @@ main_Init(int argc, char **argv)
 #ifdef MAKE_VERSION
 	Global_Set("MAKE_VERSION", MAKE_VERSION);
 #endif
-	Global_Set(".newline", "\n"); /* handy for :@ loops */
+	Global_Set(".newline", "\n");	/* handy for :@ loops */
 	/*
 	 * This is the traditional preference for makefiles.
 	 */
@@ -1811,7 +1821,7 @@ Cmd_Exec(const char *cmd, const char **errfmt)
 
 		(void)execv(shellPath, UNCONST(args));
 		_exit(1);
-		/*NOTREACHED*/
+		/* NOTREACHED */
 
 	case -1:
 		*errfmt = "Couldn't exec \"%s\"";
@@ -1850,7 +1860,10 @@ Cmd_Exec(const char *cmd, const char **errfmt)
 		else if (WEXITSTATUS(status) != 0)
 			*errfmt = "\"%s\" returned non-zero status";
 
-		/* Convert newlines to spaces.  A final newline is just stripped */
+		/*
+		 * Convert newlines to spaces.  A final newline is just
+		 * stripped.
+		 */
 		if (res_len > 0 && res[res_len - 1] == '\n')
 			res[res_len - 1] = '\0';
 		for (cp = res; *cp != '\0'; cp++)
@@ -2044,8 +2057,10 @@ purge_relative_cached_realpaths(void)
 		if (he->key[0] != '/') {
 			DEBUG1(DIR, "cached_realpath: purging %s\n", he->key);
 			HashTable_DeleteEntry(&cached_realpaths, he);
-			/* XXX: What about the allocated he->value? Either
-			 * free them or document why they cannot be freed. */
+			/*
+			 * XXX: What about the allocated he->value? Either
+			 * free them or document why they cannot be freed.
+			 */
 		}
 		he = nhe;
 	}

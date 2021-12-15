@@ -1,4 +1,4 @@
-/*	$NetBSD: arch.c,v 1.208 2021/12/15 12:24:13 rillig Exp $	*/
+/*	$NetBSD: arch.c,v 1.209 2021/12/15 12:58:01 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -126,7 +126,7 @@
 #include "config.h"
 
 /*	"@(#)arch.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: arch.c,v 1.208 2021/12/15 12:24:13 rillig Exp $");
+MAKE_RCSID("$NetBSD: arch.c,v 1.209 2021/12/15 12:58:01 rillig Exp $");
 
 typedef struct List ArchList;
 typedef struct ListNode ArchListNode;
@@ -205,9 +205,8 @@ Arch_ParseArchive(char **pp, GNodeList *gns, GNode *scope)
 	FStr lib;		/* Library-part of specification */
 	FStr mem;		/* Member-part of specification */
 	char saveChar;		/* Ending delimiter of member-name */
-	bool expandLib;		/* Whether the parsed lib contains
-				 * variable expressions that need to be
-				 * expanded */
+	bool expandLib;		/* Whether the parsed lib contains variable
+				 * expressions that need to be expanded */
 
 	spec = *pp;
 	lib = FStr_InitRefer(spec);
@@ -258,7 +257,9 @@ Arch_ParseArchive(char **pp, GNodeList *gns, GNode *scope)
 		while (*cp != '\0' && *cp != ')' && !ch_isspace(*cp)) {
 			if (*cp == '$') {
 				/* Expand nested variable expressions. */
-				/* XXX: This code can probably be shortened. */
+				/*
+				 * XXX: This code can probably be shortened.
+				 */
 				FStr result;
 				bool isError;
 				const char *nested_p = cp;
@@ -691,8 +692,10 @@ ArchiveMember_HasName(const struct ar_hdr *hdr,
 	if (ar_name[namelen] == ' ')
 		return true;
 
-	/* In archives created by GNU binutils 2.27, the member names end with
-	 * a slash. */
+	/*
+	 * In archives created by GNU binutils 2.27, the member names end
+	 * with a slash.
+	 */
 	if (ar_name[namelen] == '/' &&
 	    (namelen == ar_name_len || ar_name[namelen + 1] == ' '))
 		return true;

@@ -1,4 +1,4 @@
-/*	$NetBSD: nonints.h,v 1.220 2021/12/15 10:04:49 rillig Exp $	*/
+/*	$NetBSD: nonints.h,v 1.221 2021/12/15 12:58:01 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -270,8 +270,10 @@ typedef enum VarSetFlags {
 	/* do not export */
 	VAR_SET_NO_EXPORT	= 1 << 0,
 
-	/* Make the variable read-only. No further modification is possible,
-	 * except for another call to Var_Set with the same flag. */
+	/*
+	 * Make the variable read-only. No further modification is possible,
+	 * except for another call to Var_Set with the same flag.
+	 */
 	VAR_SET_READONLY	= 1 << 1
 } VarSetFlags;
 

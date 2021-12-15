@@ -1,4 +1,4 @@
-/*	$NetBSD: cond.c,v 1.305 2021/12/15 12:24:13 rillig Exp $	*/
+/*	$NetBSD: cond.c,v 1.306 2021/12/15 12:58:01 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -95,7 +95,7 @@
 #include "dir.h"
 
 /*	"@(#)cond.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: cond.c,v 1.305 2021/12/15 12:24:13 rillig Exp $");
+MAKE_RCSID("$NetBSD: cond.c,v 1.306 2021/12/15 12:58:01 rillig Exp $");
 
 /*
  * The parsing of conditional expressions is based on this grammar:
@@ -445,7 +445,7 @@ CondParser_StringExpr(CondParser *par, const char *start,
 
 	Buf_AddStr(buf, inout_str->str);
 	FStr_Done(inout_str);
-	*inout_str = FStr_InitRefer(NULL); /* not finished yet */
+	*inout_str = FStr_InitRefer(NULL);	/* not finished yet */
 	return true;
 }
 
@@ -553,9 +553,11 @@ EvalNotEmpty(CondParser *par, const char *value, bool quoted)
 	if (TryParseNumber(value, &num))
 		return num != 0.0;
 
-	/* For .if ${...}, check for non-empty string.  This is different from
-	 * the evaluation function from that .if variant, which would test
-	 * whether a variable of the given name were defined. */
+	/*
+	 * For .if ${...}, check for non-empty string.  This is different
+	 * from the evaluation function from that .if variant, which would
+	 * test whether a variable of the given name were defined.
+	 */
 	/*
 	 * XXX: Whitespace should count as empty, just as in
 	 * CondParser_FuncCallEmpty.
@@ -1132,8 +1134,10 @@ Cond_EvalLine(const char *line)
 		/* None of the previous <cond> evaluated to true. */
 		IFS_INITIAL	= 0,
 
-		/* The previous <cond> evaluated to true.
-		 * The lines following this condition are interpreted. */
+		/*
+		 * The previous <cond> evaluated to true. The lines following
+		 * this condition are interpreted.
+		 */
 		IFS_ACTIVE	= 1 << 0,
 
 		/* The previous directive was an '.else'. */
@@ -1278,7 +1282,9 @@ Cond_EvalLine(const char *line)
 	/* And evaluate the conditional expression */
 	if (CondEvalExpression(p, &value, plain, evalBare, negate,
 	    true, false) == COND_INVALID) {
-		/* Syntax error in conditional, error message already output. */
+		/*
+		 * Syntax error in conditional, error message already output.
+		 */
 		/* Skip everything to matching .endif */
 		/* XXX: An extra '.else' is not detected in this case. */
 		cond_states[cond_depth] = IFS_WAS_ACTIVE;

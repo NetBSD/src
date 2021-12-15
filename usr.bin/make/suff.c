@@ -1,4 +1,4 @@
-/*	$NetBSD: suff.c,v 1.359 2021/12/15 12:24:13 rillig Exp $	*/
+/*	$NetBSD: suff.c,v 1.360 2021/12/15 12:58:01 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -115,7 +115,7 @@
 #include "dir.h"
 
 /*	"@(#)suff.c	8.4 (Berkeley) 3/21/94"	*/
-MAKE_RCSID("$NetBSD: suff.c,v 1.359 2021/12/15 12:24:13 rillig Exp $");
+MAKE_RCSID("$NetBSD: suff.c,v 1.360 2021/12/15 12:58:01 rillig Exp $");
 
 typedef List SuffixList;
 typedef ListNode SuffixListNode;
@@ -207,20 +207,26 @@ typedef struct Suffix {
 typedef struct Candidate {
 	/* The file or node to look for. */
 	char *file;
-	/* The prefix from which file was formed.
-	 * Its memory is shared among all candidates. */
+	/*
+	 * The prefix from which file was formed. Its memory is shared among
+	 * all candidates.
+	 */
 	char *prefix;
 	/* The suffix on the file. */
 	Suffix *suff;
 
-	/* The candidate that can be made from this,
-	 * or NULL for the top-level candidate. */
+	/*
+	 * The candidate that can be made from this, or NULL for the
+	 * top-level candidate.
+	 */
 	struct Candidate *parent;
 	/* The node describing the file. */
 	GNode *node;
 
-	/* Count of existing children, only used for memory management, so we
-	 * don't free this candidate too early or too late. */
+	/*
+	 * Count of existing children, only used for memory management, so we
+	 * don't free this candidate too early or too late.
+	 */
 	int numChildren;
 #ifdef DEBUG_SRC
 	CandidateList childrenList;
@@ -692,7 +698,9 @@ RebuildGraph(GNode *transform, Suffix *suff)
 	size_t nameLen = strlen(name);
 	const char *toName;
 
-	/* See if it is a transformation from this suffix to another suffix. */
+	/*
+	 * See if it is a transformation from this suffix to another suffix.
+	 */
 	toName = StrTrimPrefix(suff->name, name);
 	if (toName != NULL) {
 		Suffix *to = FindSuffixByName(toName);
@@ -702,7 +710,9 @@ RebuildGraph(GNode *transform, Suffix *suff)
 		}
 	}
 
-	/* See if it is a transformation from another suffix to this suffix. */
+	/*
+	 * See if it is a transformation from another suffix to this suffix.
+	 */
 	toName = Suffix_TrimSuffix(suff, nameLen, name + nameLen);
 	if (toName != NULL) {
 		Suffix *from = FindSuffixByNameLen(name,
@@ -1197,7 +1207,9 @@ FindCmds(Candidate *targ, CandidateSearcher *cs)
 		base = str_basename(sgn->name);
 		if (strncmp(base, targ->prefix, prefLen) != 0)
 			continue;
-		/* The node matches the prefix, see if it has a known suffix. */
+		/*
+		 * The node matches the prefix, see if it has a known suffix.
+		 */
 		suff = FindSuffixByName(base + prefLen);
 		if (suff == NULL)
 			continue;
@@ -1254,7 +1266,7 @@ ExpandWildcards(GNodeListNode *cln, GNode *pgn)
 		DEBUG1(SUFF, "%s...", cp);
 		gn = Targ_GetNode(cp);
 
-		/* Add gn to the parents child list before the original child */
+		/* Insert gn before the original child. */
 		Lst_InsertBefore(&pgn->children, cln, gn);
 		Lst_Append(&gn->parents, pgn);
 		pgn->unmade++;

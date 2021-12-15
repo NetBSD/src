@@ -1,4 +1,4 @@
-/*	$NetBSD: make.h,v 1.276 2021/12/15 12:08:25 rillig Exp $	*/
+/*	$NetBSD: make.h,v 1.277 2021/12/15 12:58:01 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -196,26 +196,34 @@ typedef unsigned char bool;
 typedef enum GNodeMade {
 	/* Not examined yet. */
 	UNMADE,
-	/* The node has been examined but is not yet ready since its
-	 * dependencies have to be made first. */
+	/*
+	 * The node has been examined but is not yet ready since its
+	 * dependencies have to be made first.
+	 */
 	DEFERRED,
 
 	/* The node is on the toBeMade list. */
 	REQUESTED,
 
-	/* The node is already being made. Trying to build a node in this
-	 * state indicates a cycle in the graph. */
+	/*
+	 * The node is already being made. Trying to build a node in this
+	 * state indicates a cycle in the graph.
+	 */
 	BEINGMADE,
 
 	/* Was out-of-date and has been made. */
 	MADE,
 	/* Was already up-to-date, does not need to be made. */
 	UPTODATE,
-	/* An error occurred while it was being made.
-	 * Used only in compat mode. */
+	/*
+	 * An error occurred while it was being made. Used only in compat
+	 * mode.
+	 */
 	ERROR,
-	/* The target was aborted due to an error making a dependency.
-	 * Used only in compat mode. */
+	/*
+	 * The target was aborted due to an error making a dependency. Used
+	 * only in compat mode.
+	 */
 	ABORTED
 } GNodeMade;
 
@@ -231,16 +239,22 @@ typedef enum GNodeMade {
 typedef enum GNodeType {
 	OP_NONE		= 0,
 
-	/* The dependency operator ':' is the most common one.  The commands
-	 * of this node are executed if any child is out-of-date. */
+	/*
+	 * The dependency operator ':' is the most common one.  The commands
+	 * of this node are executed if any child is out-of-date.
+	 */
 	OP_DEPENDS	= 1 << 0,
-	/* The dependency operator '!' always executes its commands, even if
-	 * its children are up-to-date. */
+	/*
+	 * The dependency operator '!' always executes its commands, even if
+	 * its children are up-to-date.
+	 */
 	OP_FORCE	= 1 << 1,
-	/* The dependency operator '::' behaves like ':', except that it
+	/*
+	 * The dependency operator '::' behaves like ':', except that it
 	 * allows multiple dependency groups to be defined.  Each of these
-	 * groups is executed on its own, independently from the others.
-	 * Each individual dependency group is called a cohort. */
+	 * groups is executed on its own, independently from the others. Each
+	 * individual dependency group is called a cohort.
+	 */
 	OP_DOUBLEDEP	= 1 << 2,
 
 	/* Matches the dependency operators ':', '!' and '::'. */
@@ -250,21 +264,29 @@ typedef enum GNodeType {
 	OP_OPTIONAL	= 1 << 3,
 	/* Use associated commands for parents. */
 	OP_USE		= 1 << 4,
-	/* Target is never out of date, but always execute commands anyway.
-	 * Its time doesn't matter, so it has none...sort of. */
+	/*
+	 * Target is never out of date, but always execute commands anyway.
+	 * Its time doesn't matter, so it has none...sort of.
+	 */
 	OP_EXEC		= 1 << 5,
-	/* Ignore non-zero exit status from shell commands when creating the
-	 * node. */
+	/*
+	 * Ignore non-zero exit status from shell commands when creating the
+	 * node.
+	 */
 	OP_IGNORE	= 1 << 6,
 	/* Don't remove the target when interrupted. */
 	OP_PRECIOUS	= 1 << 7,
 	/* Don't echo commands when executed. */
 	OP_SILENT	= 1 << 8,
-	/* Target is a recursive make so its commands should always be
-	 * executed when it is out of date, regardless of the state of the
-	 * -n or -t flags. */
+	/*
+	 * Target is a recursive make so its commands should always be
+	 * executed when it is out of date, regardless of the state of the -n
+	 * or -t flags.
+	 */
 	OP_MAKE		= 1 << 9,
-	/* Target is out-of-date only if any of its children was out-of-date. */
+	/*
+	 * Target is out-of-date only if any of its children was out-of-date.
+	 */
 	OP_JOIN		= 1 << 10,
 	/* Assume the children of the node have been already made. */
 	OP_MADE		= 1 << 11,
@@ -272,20 +294,26 @@ typedef enum GNodeType {
 	OP_SPECIAL	= 1 << 12,
 	/* Like .USE, only prepend commands. */
 	OP_USEBEFORE	= 1 << 13,
-	/* The node is invisible to its parents. I.e. it doesn't show up in
-	 * the parents' local variables (.IMPSRC, .ALLSRC). */
+	/*
+	 * The node is invisible to its parents. I.e. it doesn't show up in
+	 * the parents' local variables (.IMPSRC, .ALLSRC).
+	 */
 	OP_INVISIBLE	= 1 << 14,
-	/* The node does not become the main target, even if it is the first
-	 * target in the first makefile. */
+	/*
+	 * The node does not become the main target, even if it is the first
+	 * target in the first makefile.
+	 */
 	OP_NOTMAIN	= 1 << 15,
 	/* Not a file target; run always. */
 	OP_PHONY	= 1 << 16,
 	/* Don't search for the file in the path. */
 	OP_NOPATH	= 1 << 17,
-	/* In a dependency line "target: source1 .WAIT source2", source1 is
+	/*
+	 * In a dependency line "target: source1 .WAIT source2", source1 is
 	 * made first, including its children.  Once that is finished,
 	 * source2 is made, including its children.  The .WAIT keyword may
-	 * appear more than once in a single dependency declaration. */
+	 * appear more than once in a single dependency declaration.
+	 */
 	OP_WAIT		= 1 << 18,
 	/* .NOMETA do not create a .meta file */
 	OP_NOMETA	= 1 << 19,
@@ -303,23 +331,32 @@ typedef enum GNodeType {
 	/* Target is a member of an archive */
 	/* XXX: How does this differ from OP_ARCHV? */
 	OP_MEMBER	= 1 << 29,
-	/* The node is a library,
-	 * its name has the form "-l<libname>" */
+	/*
+	 * The node is a library, its name has the form "-l<libname>".
+	 */
 	OP_LIB		= 1 << 28,
-	/* The node is an archive member,
-	 * its name has the form "archive(member)" */
+	/*
+	 * The node is an archive member, its name has the form
+	 * "archive(member)".
+	 */
 	/* XXX: How does this differ from OP_MEMBER? */
 	OP_ARCHV	= 1 << 27,
-	/* Target has all the commands it should. Used when parsing to catch
+	/*
+	 * Target has all the commands it should. Used when parsing to catch
 	 * multiple command groups for a target.  Only applies to the
-	 * dependency operators ':' and '!', but not to '::'. */
+	 * dependency operators ':' and '!', but not to '::'.
+	 */
 	OP_HAS_COMMANDS	= 1 << 26,
-	/* The special command "..." has been seen. All further commands from
-	 * this node will be saved on the .END node instead, to be executed at
-	 * the very end. */
+	/*
+	 * The special command "..." has been seen. All further commands from
+	 * this node will be saved on the .END node instead, to be executed
+	 * at the very end.
+	 */
 	OP_SAVE_CMDS	= 1 << 25,
-	/* Already processed by Suff_FindDeps, to find dependencies from
-	 * suffix transformation rules. */
+	/*
+	 * Already processed by Suff_FindDeps, to find dependencies from
+	 * suffix transformation rules.
+	 */
 	OP_DEPS_FOUND	= 1 << 24,
 	/* Node found while expanding .ALLSRC */
 	OP_MARK		= 1 << 23,
@@ -367,14 +404,20 @@ typedef struct GNode {
 	char *name;
 	/* The unexpanded name of a .USE node */
 	char *uname;
-	/* The full pathname of the file belonging to the target.
+	/*
+	 * The full pathname of the file belonging to the target.
+	 *
 	 * XXX: What about .PHONY targets? These don't have an associated
-	 * path. */
+	 * path.
+	 */
 	char *path;
 
-	/* The type of operator used to define the sources (see the OP flags
+	/*
+	 * The type of operator used to define the sources (see the OP flags
 	 * below).
-	 * XXX: This looks like a wild mixture of type and flags. */
+	 *
+	 * XXX: This looks like a wild mixture of type and flags.
+	 */
 	GNodeType type;
 	GNodeFlags flags;
 
@@ -383,29 +426,39 @@ typedef struct GNode {
 	/* The number of unmade children */
 	int unmade;
 
-	/* The modification time; 0 means the node does not have a
-	 * corresponding file; see GNode_IsOODate. */
+	/*
+	 * The modification time; 0 means the node does not have a
+	 * corresponding file; see GNode_IsOODate.
+	 */
 	time_t mtime;
 	struct GNode *youngestChild;
 
-	/* The GNodes for which this node is an implied source. May be empty.
-	 * For example, when there is an inference rule for .c.o, the node for
-	 * file.c has the node for file.o in this list. */
+	/*
+	 * The GNodes for which this node is an implied source. May be empty.
+	 * For example, when there is an inference rule for .c.o, the node
+	 * for file.c has the node for file.o in this list.
+	 */
 	GNodeList implicitParents;
 
-	/* The nodes that depend on this one, or in other words, the nodes for
-	 * which this is a source. */
+	/*
+	 * The nodes that depend on this one, or in other words, the nodes
+	 * for which this is a source.
+	 */
 	GNodeList parents;
 	/* The nodes on which this one depends. */
 	GNodeList children;
 
-	/* .ORDER nodes we need made. The nodes that must be made (if they're
+	/*
+	 * .ORDER nodes we need made. The nodes that must be made (if they're
 	 * made) before this node can be made, but that do not enter into the
-	 * datedness of this node. */
+	 * datedness of this node.
+	 */
 	GNodeList order_pred;
-	/* .ORDER nodes who need us. The nodes that must be made (if they're
+	/*
+	 * .ORDER nodes who need us. The nodes that must be made (if they're
 	 * made at all) after this node is made, but that do not depend on
-	 * this node, in the normal sense. */
+	 * this node, in the normal sense.
+	 */
 	GNodeList order_succ;
 
 	/*
@@ -417,8 +470,10 @@ typedef struct GNode {
 	char cohort_num[8];
 	/* The number of unmade instances on the cohorts list */
 	int unmade_cohorts;
-	/* Pointer to the first instance of a '::' node; only set when on a
-	 * cohorts list */
+	/*
+	 * Pointer to the first instance of a '::' node; only set when on a
+	 * cohorts list
+	 */
 	struct GNode *centurion;
 
 	/* Last time (sequence number) we tried to make this node */
@@ -437,8 +492,10 @@ typedef struct GNode {
 	/* The commands to be given to a shell to create this target. */
 	StringList commands;
 
-	/* Suffix for the node (determined by Suff_FindDeps and opaque to
-	 * everyone but the Suff module) */
+	/*
+	 * Suffix for the node (determined by Suff_FindDeps and opaque to
+	 * everyone but the Suff module)
+	 */
 	struct Suffix *suffix;
 
 	/* Filename where the GNode got defined, unlimited lifetime */
@@ -449,8 +506,10 @@ typedef struct GNode {
 
 /* Error levels for diagnostics during parsing. */
 typedef enum ParseErrorLevel {
-	/* Exit when the current top-level makefile has been parsed
-	 * completely. */
+	/*
+	 * Exit when the current top-level makefile has been parsed
+	 * completely.
+	 */
 	PARSE_FATAL = 1,
 	/* Print "warning"; may be upgraded to fatal by the -w option. */
 	PARSE_WARNING,
@@ -468,13 +527,13 @@ typedef enum CondEvalResult {
 } CondEvalResult;
 
 /* Names of the variables that are "local" to a specific target. */
-#define TARGET	"@"	/* Target of dependency */
-#define OODATE	"?"	/* All out-of-date sources */
-#define ALLSRC	">"	/* All sources */
-#define IMPSRC	"<"	/* Source implied by transformation */
-#define PREFIX	"*"	/* Common prefix */
-#define ARCHIVE	"!"	/* Archive in "archive(member)" syntax */
-#define MEMBER	"%"	/* Member in "archive(member)" syntax */
+#define TARGET	"@"		/* Target of dependency */
+#define OODATE	"?"		/* All out-of-date sources */
+#define ALLSRC	">"		/* All sources */
+#define IMPSRC	"<"		/* Source implied by transformation */
+#define PREFIX	"*"		/* Common prefix */
+#define ARCHIVE	"!"		/* Archive in "archive(member)" syntax */
+#define MEMBER	"%"		/* Member in "archive(member)" syntax */
 
 /*
  * Global Variables
@@ -608,17 +667,21 @@ typedef struct CmdOpts {
 	/* -B: whether we are make compatible */
 	bool compatMake;
 
-	/* -d: debug control: There is one bit per module.  It is up to the
-	 * module what debug information to print. */
+	/*
+	 * -d: debug control: There is one bit per module.  It is up to the
+	 * module what debug information to print.
+	 */
 	DebugFlags debug;
 
 	/* -df: debug output is written here - default stderr */
 	FILE *debug_file;
 
-	/* -dL: lint mode
+	/*
+	 * -dL: lint mode
 	 *
 	 * Runs make in strict mode, with additional checks and better error
-	 * handling. */
+	 * handling.
+	 */
 	bool strict;
 
 	/* -dV: for the -V option, print unexpanded variable values */
@@ -633,12 +696,16 @@ typedef struct CmdOpts {
 	/* -i: if true, ignore all errors from shell commands */
 	bool ignoreErrors;
 
-	/* -j: the maximum number of jobs that can run in parallel;
-	 * this is coordinated with the submakes */
+	/*
+	 * -j: the maximum number of jobs that can run in parallel; this is
+	 * coordinated with the submakes
+	 */
 	int maxJobs;
 
-	/* -k: if true and an error occurs while making a node, continue
-	 * making nodes that do not depend on the erroneous node */
+	/*
+	 * -k: if true and an error occurs while making a node, continue
+	 * making nodes that do not depend on the erroneous node
+	 */
 	bool keepgoing;
 
 	/* -N: execute no commands from the targets */
@@ -659,8 +726,10 @@ typedef struct CmdOpts {
 	/* -s: don't echo the shell commands before executing them */
 	bool beSilent;
 
-	/* -t: touch the targets if they are out-of-date, but don't actually
-	 * make them */
+	/*
+	 * -t: touch the targets if they are out-of-date, but don't actually
+	 * make them
+	 */
 	bool touchFlag;
 
 	/* -[Vv]: print expanded or unexpanded selected variables */
@@ -674,12 +743,16 @@ typedef struct CmdOpts {
 	/* -w: print 'Entering' and 'Leaving' for submakes */
 	bool enterFlag;
 
-	/* -X: if true, do not export variables set on the command line to the
-	 * environment. */
+	/*
+	 * -X: if true, do not export variables set on the command line to
+	 * the environment.
+	 */
 	bool varNoExportEnv;
 
-	/* The target names specified on the command line.
-	 * Used to resolve .if make(...) statements. */
+	/*
+	 * The target names specified on the command line. Used to resolve
+	 * .if make(...) statements.
+	 */
 	StringList create;
 
 } CmdOpts;

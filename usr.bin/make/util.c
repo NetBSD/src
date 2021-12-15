@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.77 2021/12/15 12:24:13 rillig Exp $	*/
+/*	$NetBSD: util.c,v 1.78 2021/12/15 12:58:01 rillig Exp $	*/
 
 /*
  * Missing stuff from OS's
@@ -15,7 +15,7 @@
 
 #include "make.h"
 
-MAKE_RCSID("$NetBSD: util.c,v 1.77 2021/12/15 12:24:13 rillig Exp $");
+MAKE_RCSID("$NetBSD: util.c,v 1.78 2021/12/15 12:58:01 rillig Exp $");
 
 #if !defined(MAKE_NATIVE) && !defined(HAVE_STRERROR)
 extern int errno, sys_nerr;
@@ -75,7 +75,7 @@ unsetenv(const char *name)
 		return -1;
 	}
 
-	while (findenv(name, &offset))	{ /* if set multiple times */
+	while (findenv(name, &offset)) {	/* if set multiple times */
 		for (p = &environ[offset];; p++)
 			if (!(*p = *(p + 1)))
 				break;
@@ -96,7 +96,7 @@ setenv(const char *name, const char *value, int rewrite)
 		return -1;
 	}
 
-	if (*value == '=')			/* no `=' in value */
+	if (*value == '=')	/* no `=' in value */
 		value++;
 	l_value = strlen(value);
 

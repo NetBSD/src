@@ -1,4 +1,4 @@
-/*	$NetBSD: for.c,v 1.150 2021/12/12 15:44:41 rillig Exp $	*/
+/*	$NetBSD: for.c,v 1.151 2021/12/15 12:58:01 rillig Exp $	*/
 
 /*
  * Copyright (c) 1992, The Regents of the University of California.
@@ -58,7 +58,7 @@
 #include "make.h"
 
 /*	"@(#)for.c	8.1 (Berkeley) 6/6/93"	*/
-MAKE_RCSID("$NetBSD: for.c,v 1.150 2021/12/12 15:44:41 rillig Exp $");
+MAKE_RCSID("$NetBSD: for.c,v 1.151 2021/12/15 12:58:01 rillig Exp $");
 
 
 /* One of the variables to the left of the "in" in a .for loop. */
@@ -174,7 +174,7 @@ ForLoop_ParseItems(ForLoop *f, const char *p)
 	free(items);
 
 	if (f->items.len == 1 && Substring_IsEmpty(f->items.words[0]))
-		f->items.len = 0; /* .for var in ${:U} */
+		f->items.len = 0;	/* .for var in ${:U} */
 
 	if (f->items.len != 0 && f->items.len % f->vars.len != 0) {
 		Parse_Error(PARSE_FATAL,
@@ -340,8 +340,10 @@ Buf_AddEscaped(Buffer *cmds, Substring item, char endc)
 		return;
 	}
 
-	/* Escape ':', '$', '\\' and 'endc' - these will be removed later by
-	 * :U processing, see ApplyModifier_Defined. */
+	/*
+	 * Escape ':', '$', '\\' and 'endc' - these will be removed later by
+	 * :U processing, see ApplyModifier_Defined.
+	 */
 	for (p = item.start; p != item.end; p++) {
 		ch = *p;
 		if (ch == '$') {
