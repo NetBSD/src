@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.988 2021/12/15 12:58:01 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.989 2021/12/15 13:03:33 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -140,7 +140,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.988 2021/12/15 12:58:01 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.989 2021/12/15 13:03:33 rillig Exp $");
 
 /*
  * Variables are defined using one of the VAR=value assignments.  Their
@@ -2038,9 +2038,9 @@ static const char ExprDefined_Name[][10] = {
 };
 
 #if __STDC_VERSION__ >= 199901L
-#define const_member const
+#define const_member		const
 #else
-#define const_member /* no const possible */
+#define const_member		/* no const possible */
 #endif
 
 /* An expression based on a variable, such as $@ or ${VAR:Mpattern:Q}. */
