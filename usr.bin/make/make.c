@@ -1,4 +1,4 @@
-/*	$NetBSD: make.c,v 1.248 2021/11/28 23:12:51 rillig Exp $	*/
+/*	$NetBSD: make.c,v 1.249 2021/12/15 12:58:01 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -104,7 +104,7 @@
 #include "job.h"
 
 /*	"@(#)make.c	8.1 (Berkeley) 6/6/93"	*/
-MAKE_RCSID("$NetBSD: make.c,v 1.248 2021/11/28 23:12:51 rillig Exp $");
+MAKE_RCSID("$NetBSD: make.c,v 1.249 2021/12/15 12:58:01 rillig Exp $");
 
 /* Sequence # to detect recursion. */
 static unsigned int checked_seqno = 1;
@@ -599,8 +599,9 @@ Make_Recheck(GNode *gn)
 	}
 #endif
 
-	/* XXX: The returned mtime may differ from gn->mtime.
-	 * Intentionally? */
+	/*
+	 * XXX: The returned mtime may differ from gn->mtime. Intentionally?
+	 */
 	return mtime;
 }
 
@@ -952,7 +953,9 @@ MakeBuildChild(GNode *cn, GNodeListNode *toBeMadeNext)
 
 	/* If this node is on the RHS of a .ORDER, check LHSs. */
 	if (IsWaitingForOrder(cn)) {
-		/* Can't build this (or anything else in this child list) yet */
+		/*
+		 * Can't build this (or anything else in this child list) yet
+		 */
 		cn->made = DEFERRED;
 		return false;	/* but keep looking */
 	}
@@ -1327,7 +1330,9 @@ add_wait_dependency(GNodeListNode *owln, GNode *wn)
 		DEBUG3(MAKE, ".WAIT: add dependency %s%s -> %s\n",
 		    cn->name, cn->cohort_num, wn->name);
 
-		/* XXX: This pattern should be factored out, it repeats often */
+		/*
+		 * XXX: This pattern should be factored out, it repeats often
+		 */
 		Lst_Append(&wn->children, cn);
 		wn->unmade++;
 		Lst_Append(&cn->parents, wn);

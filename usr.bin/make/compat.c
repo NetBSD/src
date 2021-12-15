@@ -1,4 +1,4 @@
-/*	$NetBSD: compat.c,v 1.231 2021/12/15 12:24:13 rillig Exp $	*/
+/*	$NetBSD: compat.c,v 1.232 2021/12/15 12:58:01 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -96,7 +96,7 @@
 #include "pathnames.h"
 
 /*	"@(#)compat.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: compat.c,v 1.231 2021/12/15 12:24:13 rillig Exp $");
+MAKE_RCSID("$NetBSD: compat.c,v 1.232 2021/12/15 12:58:01 rillig Exp $");
 
 static GNode *curTarg = NULL;
 static pid_t compatChild;
@@ -167,8 +167,10 @@ DebugFailedTarget(const char *cmd, const GNode *gn)
 	debug_printf("\n*** Failed target:  %s\n*** Failed command: ",
 		     gn->name);
 
-	/* Replace runs of whitespace with a single space, to reduce
-	 * the amount of whitespace for multi-line command lines. */
+	/*
+	 * Replace runs of whitespace with a single space, to reduce the
+	 * amount of whitespace for multi-line command lines.
+	 */
 	while (*p != '\0') {
 		if (ch_isspace(*p)) {
 			debug_printf(" ");
@@ -712,9 +714,11 @@ Compat_Run(GNodeList *targs)
 
 	InitSignals();
 
-	/* Create the .END node now, to keep the (debug) output of the
-	 * counter.mk test the same as before 2020-09-23.  This implementation
-	 * detail probably doesn't matter though. */
+	/*
+	 * Create the .END node now, to keep the (debug) output of the
+	 * counter.mk test the same as before 2020-09-23.  This
+	 * implementation detail probably doesn't matter though.
+	 */
 	(void)Targ_GetEndNode();
 
 	if (!opts.queryFlag)

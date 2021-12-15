@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.582 2021/12/15 10:12:20 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.583 2021/12/15 12:58:01 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -109,7 +109,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.582 2021/12/15 10:12:20 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.583 2021/12/15 12:58:01 rillig Exp $");
 
 /* types and constants */
 
@@ -569,8 +569,10 @@ PrintLocation(FILE *f, const char *fname, size_t lineno)
 		return;
 	}
 
-	/* Find out which makefile is the culprit.
-	 * We try ${.PARSEDIR} and apply realpath(3) if not absolute. */
+	/*
+	 * Find out which makefile is the culprit. We try ${.PARSEDIR} and
+	 * apply realpath(3) if not absolute.
+	 */
 
 	dir = Var_Value(SCOPE_GLOBAL, ".PARSEDIR");
 	if (dir.str == NULL)
@@ -1251,7 +1253,9 @@ ParseDependencyCheckSpec(ParseSpecial specType)
 		 * shouldn't be empty.
 		 */
 	case SP_NOT:
-		/* Nothing special here -- targets can be empty if it wants. */
+		/*
+		 * Nothing special here -- targets can be empty if it wants.
+		 */
 		break;
 	default:
 		Parse_Error(PARSE_WARNING,
@@ -1651,8 +1655,8 @@ ParseDependency(char *line)
 {
 	char *cp;		/* our current position */
 	GNodeType op;		/* the operator on the line */
-	SearchPathList *paths;	/* search paths to alter when parsing
-				 * a list of .PATH targets */
+	SearchPathList *paths;	/* search paths to alter when parsing a list
+				 * of .PATH targets */
 	GNodeType tOp;		/* operator from special target */
 	/* target names to be found and added to the targets list */
 	StringList curTargs = LST_INIT;
@@ -1963,7 +1967,7 @@ static void
 VarAssignSpecial(const char *name, const char *avalue)
 {
 	if (strcmp(name, MAKEOVERRIDES) == 0)
-		Main_ExportMAKEFLAGS(false); /* re-export MAKEFLAGS */
+		Main_ExportMAKEFLAGS(false);	/* re-export MAKEFLAGS */
 	else if (strcmp(name, ".CURDIR") == 0) {
 		/*
 		 * Someone is being (too?) clever...
@@ -1982,7 +1986,7 @@ VarAssignSpecial(const char *name, const char *avalue)
 void
 Parse_Var(VarAssign *var, GNode *scope)
 {
-	FStr avalue;	/* actual value (maybe expanded) */
+	FStr avalue;		/* actual value (maybe expanded) */
 
 	VarCheckSyntax(var->op, var->value, scope);
 	if (VarAssign_Eval(var->varname, var->op, var->value, scope, &avalue)) {
@@ -2558,7 +2562,10 @@ ParseEOF(void)
 	if (ptr != NULL)
 		return true;	/* Iterate again */
 
-	/* Ensure the makefile (or loop) didn't have mismatched conditionals */
+	/*
+	 * Ensure the makefile (or .for loop) didn't have mismatched
+	 * conditionals.
+	 */
 	Cond_restore_depth(curFile->cond_depth);
 
 	if (curFile->lf != NULL) {
@@ -2793,7 +2800,7 @@ ParseGetLine(GetLineMode mode)
 		break;
 	}
 
-	/* Brutally ignore anything after a non-escaped '#' in non-commands. */
+	/* Ignore anything after a non-escaped '#' in non-commands. */
 	if (firstComment != NULL && line[0] != '\t')
 		*firstComment = '\0';
 
@@ -3087,20 +3094,22 @@ ParseDependencyLine(char *line)
 	 * in which the middle is interpreted as a source, not a target.
 	 */
 
-	/* In lint mode, allow undefined variables to appear in
-	 * dependency lines.
+	/*
+	 * In lint mode, allow undefined variables to appear in dependency
+	 * lines.
 	 *
-	 * Ideally, only the right-hand side would allow undefined
-	 * variables since it is common to have optional dependencies.
-	 * Having undefined variables on the left-hand side is more
-	 * unusual though.  Since both sides are expanded in a single
-	 * pass, there is not much choice what to do here.
+	 * Ideally, only the right-hand side would allow undefined variables
+	 * since it is common to have optional dependencies. Having undefined
+	 * variables on the left-hand side is more unusual though.  Since
+	 * both sides are expanded in a single pass, there is not much choice
+	 * what to do here.
 	 *
-	 * In normal mode, it does not matter whether undefined
-	 * variables are allowed or not since as of 2020-09-14,
-	 * Var_Parse does not print any parse errors in such a case.
-	 * It simply returns the special empty string var_Error,
-	 * which cannot be detected in the result of Var_Subst. */
+	 * In normal mode, it does not matter whether undefined variables are
+	 * allowed or not since as of 2020-09-14, Var_Parse does not print
+	 * any parse errors in such a case. It simply returns the special
+	 * empty string var_Error, which cannot be detected in the result of
+	 * Var_Subst.
+	 */
 	emode = opts.strict ? VARE_WANTRES : VARE_UNDEFERR;
 	(void)Var_Subst(line, SCOPE_CMDLINE, emode, &expanded_line);
 	/* TODO: handle errors */

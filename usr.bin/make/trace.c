@@ -1,4 +1,4 @@
-/*	$NetBSD: trace.c,v 1.29 2021/09/21 23:06:18 rillig Exp $	*/
+/*	$NetBSD: trace.c,v 1.30 2021/12/15 12:58:01 rillig Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
 #include "job.h"
 #include "trace.h"
 
-MAKE_RCSID("$NetBSD: trace.c,v 1.29 2021/09/21 23:06:18 rillig Exp $");
+MAKE_RCSID("$NetBSD: trace.c,v 1.30 2021/12/15 12:58:01 rillig Exp $");
 
 static FILE *trfile;
 static pid_t trpid;
@@ -69,8 +69,10 @@ Trace_Init(const char *pathname)
 	if (pathname != NULL) {
 		FStr curDir;
 		trpid = getpid();
-		/* XXX: This variable may get overwritten later, which
-		 * would make trwd point to undefined behavior. */
+		/*
+		 * XXX: This variable may get overwritten later, which would
+		 * make trwd point to undefined behavior.
+		 */
 		curDir = Var_Value(SCOPE_GLOBAL, ".CURDIR");
 		trwd = curDir.str;
 
