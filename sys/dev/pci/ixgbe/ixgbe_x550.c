@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe_x550.c,v 1.23 2021/12/10 11:31:22 msaitoh Exp $ */
+/* $NetBSD: ixgbe_x550.c,v 1.24 2021/12/15 09:50:21 msaitoh Exp $ */
 
 /******************************************************************************
 
@@ -35,7 +35,7 @@
 /*$FreeBSD: head/sys/dev/ixgbe/ixgbe_x550.c 331224 2018-03-19 20:55:05Z erj $*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixgbe_x550.c,v 1.23 2021/12/10 11:31:22 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixgbe_x550.c,v 1.24 2021/12/15 09:50:21 msaitoh Exp $");
 
 #include "ixgbe_x550.h"
 #include "ixgbe_x540.h"
@@ -3444,7 +3444,17 @@ s32 ixgbe_write_ee_hostif_data_X550(struct ixgbe_hw *hw, u16 offset,
 
 	status = ixgbe_host_interface_command(hw, (u32 *)&buffer,
 					      sizeof(buffer),
-					      IXGBE_HI_COMMAND_TIMEOUT, FALSE);
+					      IXGBE_HI_COMMAND_TIMEOUT, TRUE);
+	if (status != IXGBE_SUCCESS) {
+		DEBUGOUT2("for offset %04x failed with status %d\n",
+			  offset, status);
+		return status;
+	}
+	if (buffer.hdr.rsp.buf_lenh_status != FW_CEM_RESP_STATUS_SUCCESS) {
+		DEBUGOUT2("for offset %04x host interface return status %02x\n",
+			  offset, buffer.hdr.rsp.buf_lenh_status);
+		return IXGBE_ERR_HOST_INTERFACE_COMMAND;
+	}
 
 	return status;
 }
