@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.544 2021/12/15 10:57:01 rillig Exp $	*/
+/*	$NetBSD: main.c,v 1.545 2021/12/15 11:01:39 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -111,7 +111,7 @@
 #include "trace.h"
 
 /*	"@(#)main.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: main.c,v 1.544 2021/12/15 10:57:01 rillig Exp $");
+MAKE_RCSID("$NetBSD: main.c,v 1.545 2021/12/15 11:01:39 rillig Exp $");
 #if defined(MAKE_NATIVE) && !defined(lint)
 __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993 "
 	    "The Regents of the University of California.  "
@@ -843,7 +843,7 @@ PrintVar(const char *varname, bool expandVars)
 		(void)Var_Subst(varname, SCOPE_GLOBAL, VARE_WANTRES, &evalue);
 		/* TODO: handle errors */
 		printf("%s\n", evalue);
-		bmake_free(evalue);
+		free(evalue);
 
 	} else if (expandVars) {
 		char *expr = str_concat3("${", varname, "}");
@@ -852,7 +852,7 @@ PrintVar(const char *varname, bool expandVars)
 		/* TODO: handle errors */
 		free(expr);
 		printf("%s\n", evalue);
-		bmake_free(evalue);
+		free(evalue);
 
 	} else {
 		FStr value = Var_Value(SCOPE_GLOBAL, varname);
