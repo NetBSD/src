@@ -1,4 +1,4 @@
-/*	$NetBSD: make.h,v 1.272 2021/12/13 22:26:21 rillig Exp $	*/
+/*	$NetBSD: make.h,v 1.273 2021/12/15 09:29:55 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -128,6 +128,12 @@
 	    __attribute__((__format__ (__printf__, fmtarg, firstvararg)))
 #else
 #define MAKE_ATTR_PRINTFLIKE(fmtarg, firstvararg)	/* delete */
+#endif
+
+#if MAKE_GNUC_PREREQ(4, 0)
+#define MAKE_ATTR_USE __attribute__((__warn_unused_result__))
+#else
+#define MAKE_ATTR_USE /* delete */
 #endif
 
 #define MAKE_INLINE static inline MAKE_ATTR_UNUSED
