@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.373 2021/12/14 20:13:13 christos Exp $ */
+/* $NetBSD: cgram.y,v 1.374 2021/12/15 15:20:51 christos Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: cgram.y,v 1.373 2021/12/14 20:13:13 christos Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.374 2021/12/15 15:20:51 christos Exp $");
 #endif
 
 #include <limits.h>
@@ -226,6 +226,7 @@ anonymize(sym_t *s)
 %token			T_AT_CONSTRUCTOR
 %token			T_AT_DEPRECATED
 %token			T_AT_DESTRUCTOR
+%token			T_AT_DISABLE_SANITIZER_INSTRUMENTATION
 %token			T_AT_FALLTHROUGH
 %token			T_AT_FORMAT
 %token			T_AT_FORMAT_ARG
@@ -241,6 +242,8 @@ anonymize(sym_t *s)
 %token			T_AT_MAY_ALIAS
 %token			T_AT_MINBYTES
 %token			T_AT_MODE
+%token			T_AT_NO_SANITIZE
+%token			T_AT_NO_SANITIZE_THREAD
 %token			T_AT_NOINLINE
 %token			T_AT_NONNULL
 %token			T_AT_NONSTRING
@@ -2075,6 +2078,7 @@ gcc_attribute_spec:
 	| T_AT_DEPRECATED
 	| T_AT_DESTRUCTOR T_LPAREN constant_expr T_RPAREN
 	| T_AT_DESTRUCTOR
+	| T_AT_DISABLE_SANITIZER_INSTRUMENTATION
 	| T_AT_FALLTHROUGH {
 		fallthru(1);
 	  }
@@ -2086,6 +2090,8 @@ gcc_attribute_spec:
 	| T_AT_MALLOC
 	| T_AT_MAY_ALIAS
 	| T_AT_MODE T_LPAREN T_NAME T_RPAREN
+	| T_AT_NO_SANITIZE T_LPAREN T_NAME T_RPAREN
+	| T_AT_NO_SANITIZE_THREAD
 	| T_AT_NOINLINE
 	| T_AT_NONNULL T_LPAREN constant_expr_list_opt T_RPAREN
 	| T_AT_NONNULL

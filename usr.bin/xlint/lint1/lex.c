@@ -1,4 +1,4 @@
-/* $NetBSD: lex.c,v 1.89 2021/12/14 20:13:13 christos Exp $ */
+/* $NetBSD: lex.c,v 1.90 2021/12/15 15:20:51 christos Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: lex.c,v 1.89 2021/12/14 20:13:13 christos Exp $");
+__RCSID("$NetBSD: lex.c,v 1.90 2021/12/15 15:20:51 christos Exp $");
 #endif
 
 #include <ctype.h>
@@ -160,6 +160,8 @@ static	struct	kwtab {
 	kwdef_keyword(	"default",	T_DEFAULT),
 	kwdef_gcc_attr(	"deprecated",	T_AT_DEPRECATED),
 	kwdef_gcc_attr(	"destructor",	T_AT_DESTRUCTOR),
+	kwdef_gcc_attr(	"disable_sanitizer_instrumentation",
+	    T_AT_DISABLE_SANITIZER_INSTRUMENTATION),
 	kwdef_keyword(	"do",		T_DO),
 	kwdef_type(	"double",	DOUBLE,			0,0,0,0,1),
 	kwdef_keyword(	"else",		T_ELSE),
@@ -190,6 +192,8 @@ static	struct	kwtab {
 	kwdef_gcc_attr(	"mode",		T_AT_MODE),
 	kwdef_gcc_attr("no_instrument_function",
 					T_AT_NO_INSTRUMENT_FUNCTION),
+	kwdef_gcc_attr(	"no_sanitize",	T_AT_NO_SANITIZE),
+	kwdef_gcc_attr(	"no_sanitize_thread",	T_AT_NO_SANITIZE_THREAD),
 	kwdef_gcc_attr(	"noinline",	T_AT_NOINLINE),
 	kwdef_gcc_attr(	"nonnull",	T_AT_NONNULL),
 	kwdef_gcc_attr(	"nonstring",	T_AT_NONSTRING),
