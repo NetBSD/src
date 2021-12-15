@@ -1,4 +1,4 @@
-/*	$NetBSD: buf.h,v 1.44 2021/11/28 22:48:06 rillig Exp $	*/
+/*	$NetBSD: buf.h,v 1.45 2021/12/15 09:29:55 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -101,7 +101,7 @@ Buf_AddByte(Buffer *buf, char byte)
 	end[1] = '\0';
 }
 
-MAKE_INLINE bool
+MAKE_INLINE bool MAKE_ATTR_USE
 Buf_EndsWith(const Buffer *buf, char ch)
 {
 	return buf->len > 0 && buf->data[buf->len - 1] == ch;
@@ -116,7 +116,7 @@ void Buf_Empty(Buffer *);
 void Buf_Init(Buffer *);
 void Buf_InitSize(Buffer *, size_t);
 void Buf_Done(Buffer *);
-char *Buf_DoneData(Buffer *);
-char *Buf_DoneDataCompact(Buffer *);
+char *Buf_DoneData(Buffer *) MAKE_ATTR_USE;
+char *Buf_DoneDataCompact(Buffer *) MAKE_ATTR_USE;
 
 #endif /* MAKE_BUF_H */
