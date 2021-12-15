@@ -1,4 +1,4 @@
-/*	$NetBSD: isqemu.h,v 1.5 2020/08/23 11:00:18 gson Exp $	*/
+/*	$NetBSD: isqemu.h,v 1.6 2021/12/15 09:19:28 gson Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -72,10 +72,18 @@ isQEMU_TCG(void) {
 			return false;
 		err(EXIT_FAILURE, "sysctl");
 	}
-	return strstr(name, "QEMU") != NULL;
-#else
-	return false;
+	if (strstr(name, "QEMU") == NULL)
+		return false;
+	if (sysctlbyname("machdep.hypervisor", name, &len, NULL, 0) == -1) {
+		if (errno == ENOENT)
+			return true;
+		err(EXIT_FAILURE, "sysctl");
+	}
+	if (strcmp(name, "KVM") == 0)
+		return false;
+	return true;
 #endif
+	return false;
 }
 
 #ifdef TEST
