@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.581 2021/12/14 01:18:14 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.582 2021/12/15 10:12:20 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -109,7 +109,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.581 2021/12/14 01:18:14 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.582 2021/12/15 10:12:20 rillig Exp $");
 
 /* types and constants */
 
@@ -1240,11 +1240,6 @@ static void
 ParseDependencyCheckSpec(ParseSpecial specType)
 {
 	switch (specType) {
-	default:
-		Parse_Error(PARSE_WARNING,
-		    "Special and mundane targets don't mix. "
-		    "Mundane ones ignored");
-		break;
 	case SP_DEFAULT:
 	case SP_STALE:
 	case SP_BEGIN:
@@ -1257,6 +1252,11 @@ ParseDependencyCheckSpec(ParseSpecial specType)
 		 */
 	case SP_NOT:
 		/* Nothing special here -- targets can be empty if it wants. */
+		break;
+	default:
+		Parse_Error(PARSE_WARNING,
+		    "Special and mundane targets don't mix. "
+		    "Mundane ones ignored");
 		break;
 	}
 }
