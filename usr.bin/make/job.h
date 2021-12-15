@@ -1,4 +1,4 @@
-/*	$NetBSD: job.h,v 1.74 2021/12/15 09:53:41 rillig Exp $	*/
+/*	$NetBSD: job.h,v 1.75 2021/12/15 12:08:25 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -208,4 +208,4 @@ bool Job_RunTarget(const char *, const char *);
 void Job_FlagsToString(const Job *, char *, size_t);
 int Job_TempFile(const char *, char *, size_t) MAKE_ATTR_USE;
 
-#endif /* MAKE_JOB_H */
+#endif

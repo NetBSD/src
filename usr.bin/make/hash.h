@@ -1,4 +1,4 @@
-/*	$NetBSD: hash.h,v 1.43 2021/12/15 10:07:53 rillig Exp $	*/
+/*	$NetBSD: hash.h,v 1.44 2021/12/15 12:08:25 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -177,4 +177,4 @@ HashIter_InitSet(HashIter *hi, HashSet *set)
 	HashIter_Init(hi, &set->tbl);
 }
 
-#endif /* MAKE_HASH_H */
+#endif

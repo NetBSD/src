@@ -1,4 +1,4 @@
-/*	$NetBSD: make.h,v 1.275 2021/12/15 11:58:40 rillig Exp $	*/
+/*	$NetBSD: make.h,v 1.276 2021/12/15 12:08:25 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -838,4 +838,4 @@ pp_skip_hspace(char **pp)
 # define MAKE_RCSID(id) static volatile char rcsid[] = id
 #endif
 
-#endif /* MAKE_MAKE_H */
+#endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: metachar.h,v 1.18 2021/12/15 09:53:41 rillig Exp $	*/
+/*	$NetBSD: metachar.h,v 1.19 2021/12/15 12:08:25 rillig Exp $	*/
 
 /*
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -49,4 +49,4 @@ needshell(const char *cmd)
 	return *cmd != '\0';
 }
 
-#endif /* MAKE_METACHAR_H */
+#endif
