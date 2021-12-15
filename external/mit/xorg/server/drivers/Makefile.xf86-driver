@@ -1,10 +1,11 @@
-#	$NetBSD: Makefile.xf86-driver,v 1.30 2021/12/15 15:27:30 christos Exp $
+#	$NetBSD: Makefile.xf86-driver,v 1.31 2021/12/15 15:45:26 christos Exp $
 
 LIBISMODULE=	yes
 SHLIB_MAJOR=	${PACKAGE_MAJOR}
 
 NOFULLRELRO=	yes
 LINTFLAGS+=-D__GNUC__
+NOLINT=yes	# XXX: lint2 is broken for most of them
 
 .include <bsd.own.mk>
 .include <bsd.x11.mk>
