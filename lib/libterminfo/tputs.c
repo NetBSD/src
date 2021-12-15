@@ -1,4 +1,4 @@
-/* $NetBSD: tputs.c,v 1.5 2019/10/03 18:02:05 christos Exp $ */
+/* $NetBSD: tputs.c,v 1.6 2021/12/15 21:07:12 blymn Exp $ */
 
 /*
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: tputs.c,v 1.5 2019/10/03 18:02:05 christos Exp $");
+__RCSID("$NetBSD: tputs.c,v 1.6 2021/12/15 21:07:12 blymn Exp $");
 
 #include <assert.h>
 #include <ctype.h>
@@ -135,8 +135,10 @@ ti_puts(const TERMINAL *term, const char *str, int affcnt,
 	char pc;
 
 	_DIAGASSERT(term != NULL);
-	_DIAGASSERT(str != NULL);
 	_DIAGASSERT(outc != NULL);
+
+	if (str == NULL)
+		return OK;
 
 	dodelay = (str == t_bell(term) ||
 	    str == t_flash_screen(term) ||
@@ -155,7 +157,6 @@ ti_putp(const TERMINAL *term, const char *str)
 {
 
 	_DIAGASSERT(term != NULL);
-	_DIAGASSERT(str != NULL);
 	return ti_puts(term, str, 1,
 	    (int (*)(int, void *))(void *)putchar, NULL);
 }
@@ -164,7 +165,6 @@ int
 tputs(const char *str, int affcnt, int (*outc)(int))
 {
 
-	_DIAGASSERT(str != NULL);
 	_DIAGASSERT(outc != NULL);
 	return _ti_puts(1, ospeed, PC, str, affcnt,
 	    (int (*)(int, void *))(void *)outc, NULL);
@@ -174,6 +174,5 @@ int
 putp(const char *str)
 {
 
-	_DIAGASSERT(str != NULL);
 	return tputs(str, 1, putchar);
 }
