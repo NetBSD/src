@@ -1,4 +1,4 @@
-/*	$NetBSD: make.h,v 1.274 2021/12/15 09:53:41 rillig Exp $	*/
+/*	$NetBSD: make.h,v 1.275 2021/12/15 11:58:40 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -550,26 +550,26 @@ extern pid_t myPid;
 #endif
 
 typedef struct DebugFlags {
-	bool DEBUG_ARCH: 1;
-	bool DEBUG_COND: 1;
-	bool DEBUG_CWD: 1;
-	bool DEBUG_DIR: 1;
-	bool DEBUG_ERROR: 1;
-	bool DEBUG_FOR: 1;
-	bool DEBUG_GRAPH1: 1;
-	bool DEBUG_GRAPH2: 1;
-	bool DEBUG_GRAPH3: 1;
-	bool DEBUG_HASH: 1;
-	bool DEBUG_JOB: 1;
-	bool DEBUG_LOUD: 1;
-	bool DEBUG_MAKE: 1;
-	bool DEBUG_META: 1;
-	bool DEBUG_PARSE: 1;
-	bool DEBUG_SCRIPT: 1;
-	bool DEBUG_SHELL: 1;
-	bool DEBUG_SUFF: 1;
-	bool DEBUG_TARG: 1;
-	bool DEBUG_VAR: 1;
+	bool DEBUG_ARCH:1;
+	bool DEBUG_COND:1;
+	bool DEBUG_CWD:1;
+	bool DEBUG_DIR:1;
+	bool DEBUG_ERROR:1;
+	bool DEBUG_FOR:1;
+	bool DEBUG_GRAPH1:1;
+	bool DEBUG_GRAPH2:1;
+	bool DEBUG_GRAPH3:1;
+	bool DEBUG_HASH:1;
+	bool DEBUG_JOB:1;
+	bool DEBUG_LOUD:1;
+	bool DEBUG_MAKE:1;
+	bool DEBUG_META:1;
+	bool DEBUG_PARSE:1;
+	bool DEBUG_SCRIPT:1;
+	bool DEBUG_SHELL:1;
+	bool DEBUG_SUFF:1;
+	bool DEBUG_TARG:1;
+	bool DEBUG_VAR:1;
 } DebugFlags;
 
 #define CONCAT(a, b) a##b
