@@ -1,4 +1,4 @@
-/*	$NetBSD: lst.h,v 1.101 2021/12/15 12:08:25 rillig Exp $	*/
+/*	$NetBSD: lst.h,v 1.102 2021/12/15 12:24:13 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -158,7 +158,8 @@ void LstNode_SetNull(ListNode *);
 
 /* Add a datum at the tail of the queue. */
 MAKE_INLINE void
-Lst_Enqueue(List *list, void *datum) {
+Lst_Enqueue(List *list, void *datum)
+{
 	Lst_Append(list, datum);
 }
 
@@ -193,7 +194,8 @@ void *Vector_Push(Vector *);
 void *Vector_Pop(Vector *);
 
 MAKE_INLINE void
-Vector_Done(Vector *v) {
+Vector_Done(Vector *v)
+{
 	free(v->items);
 }
 

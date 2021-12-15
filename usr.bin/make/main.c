@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.545 2021/12/15 11:01:39 rillig Exp $	*/
+/*	$NetBSD: main.c,v 1.546 2021/12/15 12:24:13 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -111,7 +111,7 @@
 #include "trace.h"
 
 /*	"@(#)main.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: main.c,v 1.545 2021/12/15 11:01:39 rillig Exp $");
+MAKE_RCSID("$NetBSD: main.c,v 1.546 2021/12/15 12:24:13 rillig Exp $");
 #if defined(MAKE_NATIVE) && !defined(lint)
 __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993 "
 	    "The Regents of the University of California.  "
@@ -465,7 +465,8 @@ MainParseArg(char c, const char *argvalue)
 		MainParseArgChdir(argvalue);
 		break;
 	case 'D':
-		if (argvalue[0] == '\0') return false;
+		if (argvalue[0] == '\0')
+			return false;
 		Global_SetExpand(argvalue, "1");
 		Global_Append(MAKEFLAGS, "-D");
 		Global_Append(MAKEFLAGS, argvalue);
@@ -1720,7 +1721,7 @@ ReadMakefile(const char *fname)
 		name = Dir_FindFile(fname, parseIncPath);
 		if (name == NULL) {
 			SearchPath *sysInc = Lst_IsEmpty(&sysIncPath->dirs)
-					     ? defSysIncPath : sysIncPath;
+			    ? defSysIncPath : sysIncPath;
 			name = Dir_FindFile(fname, sysInc);
 		}
 		if (name == NULL || (fd = open(name, O_RDONLY)) == -1) {
@@ -2149,7 +2150,7 @@ PrintOnError(GNode *gn, const char *msg)
 	{
 		char *errorVarsValues;
 		(void)Var_Subst("${MAKE_PRINT_VAR_ON_ERROR:@v@$v='${$v}'\n@}",
-				SCOPE_GLOBAL, VARE_WANTRES, &errorVarsValues);
+		    SCOPE_GLOBAL, VARE_WANTRES, &errorVarsValues);
 		/* TODO: handle errors */
 		printf("%s", errorVarsValues);
 		free(errorVarsValues);
@@ -2228,8 +2229,8 @@ mkTempFile(const char *pattern, char *tfile, size_t tfile_sz)
 	if (tmpdir == NULL)
 		tmpdir = getTmpdir();
 	if (tfile == NULL) {
-	    tfile = tbuf;
-	    tfile_sz = sizeof tbuf;
+		tfile = tbuf;
+		tfile_sz = sizeof tbuf;
 	}
 	if (pattern[0] == '/') {
 		snprintf(tfile, tfile_sz, "%s", pattern);

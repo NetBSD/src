@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.441 2021/12/15 10:04:49 rillig Exp $	*/
+/*	$NetBSD: job.c,v 1.442 2021/12/15 12:24:13 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -142,7 +142,7 @@
 #include "trace.h"
 
 /*	"@(#)job.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: job.c,v 1.441 2021/12/15 10:04:49 rillig Exp $");
+MAKE_RCSID("$NetBSD: job.c,v 1.442 2021/12/15 12:24:13 rillig Exp $");
 
 /*
  * A shell defines how the commands are run.  All commands for a target are
@@ -2818,7 +2818,7 @@ Job_TempFile(const char *pattern, char *tfile, size_t tfile_sz)
 	JobSigLock(&mask);
 	fd = mkTempFile(pattern, tfile, tfile_sz);
 	if (tfile != NULL && !DEBUG(SCRIPT))
-	    unlink(tfile);
+		unlink(tfile);
 	JobSigUnlock(&mask);
 
 	return fd;
