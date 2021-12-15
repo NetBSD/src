@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.37 2021/12/15 12:52:36 christos Exp $
+#	$NetBSD: Makefile,v 1.38 2021/12/15 13:22:34 christos Exp $
 
 NOMAN=		# defined
 
@@ -34,7 +34,7 @@ SRCS+=	exec_image.S memset.S strcmp.S
 
 CFLAGS=	-Os -fomit-frame-pointer -fno-unwind-tables
 CFLAGS+= -m68020-60
-CFLAGS+= -Wall -Wstrict-prototypes -Wmissing-prototypes
+CFLAGS+= -Wextra -Wall -Wstrict-prototypes -Wmissing-prototypes
 CPPFLAGS+= -DTEXTADDR="$(TEXT)" -DBOOT_TEXTADDR="$(BOOT_TEXT)"
 CPPFLAGS+= -DBOOT=\"$(BOOT)\" -DBOOT_VERS=\"$(VERSION)\"
 CPPFLAGS+= -DSCSI_ADHOC_BOOTPART
