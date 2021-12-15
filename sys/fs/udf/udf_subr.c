@@ -1,4 +1,4 @@
-/* $NetBSD: udf_subr.c,v 1.159 2021/12/05 04:21:31 msaitoh Exp $ */
+/* $NetBSD: udf_subr.c,v 1.160 2021/12/15 22:02:30 reinoud Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_subr.c,v 1.159 2021/12/05 04:21:31 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_subr.c,v 1.160 2021/12/15 22:02:30 reinoud Exp $");
 #endif /* not lint */
 
 
@@ -3102,7 +3102,7 @@ udf_search_vat(struct udf_mount *ump, union udf_pmap *mapping)
 			if (vat_node)
 				vput(vat_node->vnode);
 			vat_loc++;	/* walk forward */
-		} while (vat_loc < late_vat_loc);
+		} while (vat_loc <= late_vat_loc);
 		if (accepted_vat_node)
 			break;
 
