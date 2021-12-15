@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe_dcb.h,v 1.7 2021/04/30 06:41:36 msaitoh Exp $ */
+/* $NetBSD: ixgbe_dcb.h,v 1.8 2021/12/15 09:54:56 msaitoh Exp $ */
 /******************************************************************************
   SPDX-License-Identifier: BSD-3-Clause
 
@@ -42,9 +42,9 @@
 /* DCB defines */
 /* DCB credit calculation defines */
 #define IXGBE_DCB_CREDIT_QUANTUM	64
-#define IXGBE_DCB_MAX_CREDIT_REFILL	200   /* 200 * 64B = 12800B */
+#define IXGBE_DCB_MAX_CREDIT_REFILL	511   /* 0x1FF * 64B = 32704B */
 #define IXGBE_DCB_MAX_TSO_SIZE		(32 * 1024) /* Max TSO pkt size in DCB*/
-#define IXGBE_DCB_MAX_CREDIT		(2 * IXGBE_DCB_MAX_CREDIT_REFILL)
+#define IXGBE_DCB_MAX_CREDIT		4095 /* Maximum credit supported: 256KB * 1024 / 64B */
 
 /* 513 for 32KB TSO packet */
 #define IXGBE_DCB_MIN_TSO_CREDIT	\
