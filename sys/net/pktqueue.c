@@ -1,4 +1,4 @@
-/*	$NetBSD: pktqueue.c,v 1.14 2021/10/11 05:13:11 knakahara Exp $	*/
+/*	$NetBSD: pktqueue.c,v 1.15 2021/12/15 07:47:22 knakahara Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pktqueue.c,v 1.14 2021/10/11 05:13:11 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pktqueue.c,v 1.15 2021/12/15 07:47:22 knakahara Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -276,8 +276,8 @@ pktq_rps_hash_toeplitz(const struct mbuf *m)
 }
 
 /*
- * topelitz without curcpu.
- * Generally, this has better performance than topelitz.
+ * toeplitz without curcpu.
+ * Generally, this has better performance than toeplitz.
  */
 static uint32_t
 pktq_rps_hash_toeplitz_othercpus(const struct mbuf *m)
