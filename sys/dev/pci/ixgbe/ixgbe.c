@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe.c,v 1.298 2021/12/14 05:31:12 msaitoh Exp $ */
+/* $NetBSD: ixgbe.c,v 1.299 2021/12/15 08:42:48 msaitoh Exp $ */
 
 /******************************************************************************
 
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixgbe.c,v 1.298 2021/12/14 05:31:12 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixgbe.c,v 1.299 2021/12/15 08:42:48 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1185,9 +1185,8 @@ ixgbe_attach(device_t parent, device_t dev, void *aux)
 		rev = MII_REV(id2);
 		mii_get_descr(descr, sizeof(descr), oui, model);
 		if (descr[0])
-			aprint_normal_dev(dev,
-			    "PHY: %s (OUI 0x%06x, model 0x%04x), rev. %d\n",
-			    descr, oui, model, rev);
+			aprint_normal_dev(dev, "PHY: %s, rev. %d\n",
+			    descr, rev);
 		else
 			aprint_normal_dev(dev,
 			    "PHY OUI 0x%06x, model 0x%04x, rev. %d\n",
