@@ -1,4 +1,4 @@
-/*	$NetBSD: make.h,v 1.277 2021/12/15 12:58:01 rillig Exp $	*/
+/*	$NetBSD: make.h,v 1.278 2021/12/15 13:03:33 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -105,9 +105,9 @@
 #define MAKE_GNUC_PREREQ(x, y)						\
 	((__GNUC__ == (x) && __GNUC_MINOR__ >= (y)) ||			\
 	 (__GNUC__ > (x)))
-#else /* defined(__GNUC__) */
+#else
 #define MAKE_GNUC_PREREQ(x, y)	0
-#endif /* defined(__GNUC__) */
+#endif
 
 #if MAKE_GNUC_PREREQ(2, 7)
 #define MAKE_ATTR_UNUSED	__attribute__((__unused__))
@@ -131,9 +131,9 @@
 #endif
 
 #if MAKE_GNUC_PREREQ(4, 0)
-#define MAKE_ATTR_USE __attribute__((__warn_unused_result__))
+#define MAKE_ATTR_USE		__attribute__((__warn_unused_result__))
 #else
-#define MAKE_ATTR_USE /* delete */
+#define MAKE_ATTR_USE		/* delete */
 #endif
 
 #define MAKE_INLINE static inline MAKE_ATTR_UNUSED

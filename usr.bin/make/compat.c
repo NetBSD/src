@@ -1,4 +1,4 @@
-/*	$NetBSD: compat.c,v 1.232 2021/12/15 12:58:01 rillig Exp $	*/
+/*	$NetBSD: compat.c,v 1.233 2021/12/15 13:03:33 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -96,7 +96,7 @@
 #include "pathnames.h"
 
 /*	"@(#)compat.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: compat.c,v 1.232 2021/12/15 12:58:01 rillig Exp $");
+MAKE_RCSID("$NetBSD: compat.c,v 1.233 2021/12/15 13:03:33 rillig Exp $");
 
 static GNode *curTarg = NULL;
 static pid_t compatChild;
@@ -165,7 +165,7 @@ DebugFailedTarget(const char *cmd, const GNode *gn)
 {
 	const char *p = cmd;
 	debug_printf("\n*** Failed target:  %s\n*** Failed command: ",
-		     gn->name);
+	    gn->name);
 
 	/*
 	 * Replace runs of whitespace with a single space, to reduce the
@@ -228,15 +228,15 @@ Compat_RunCommand(const char *cmdp, GNode *gn, StringListNode *ln)
 	char *bp;
 	bool silent;		/* Don't print command */
 	bool doIt;		/* Execute even if -n */
-	volatile bool errCheck; /* Check errors */
+	volatile bool errCheck;	/* Check errors */
 	int reason;		/* Reason for child's death */
 	int status;		/* Description of child's death */
 	pid_t cpid;		/* Child actually found */
 	pid_t retstat;		/* Result of wait */
 	const char **volatile av; /* Argument vector for thing to exec */
 	char **volatile mav;	/* Copy of the argument vector for freeing */
-	bool useShell;		/* True if command should be executed
-				 * using a shell */
+	bool useShell;		/* True if command should be executed using a
+				 * shell */
 	const char *volatile cmd = cmdp;
 
 	silent = (gn->type & OP_SILENT) != OP_NONE;
