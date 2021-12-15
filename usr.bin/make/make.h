@@ -1,4 +1,4 @@
-/*	$NetBSD: make.h,v 1.273 2021/12/15 09:29:55 rillig Exp $	*/
+/*	$NetBSD: make.h,v 1.274 2021/12/15 09:53:41 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -689,75 +689,75 @@ extern CmdOpts opts;
 #include "nonints.h"
 
 void GNode_UpdateYoungestChild(GNode *, GNode *);
-bool GNode_IsOODate(GNode *);
+bool GNode_IsOODate(GNode *) MAKE_ATTR_USE;
 void Make_ExpandUse(GNodeList *);
-time_t Make_Recheck(GNode *);
+time_t Make_Recheck(GNode *) MAKE_ATTR_USE;
 void Make_HandleUse(GNode *, GNode *);
 void Make_Update(GNode *);
 void GNode_SetLocalVars(GNode *);
 bool Make_Run(GNodeList *);
-bool shouldDieQuietly(GNode *, int);
+bool shouldDieQuietly(GNode *, int) MAKE_ATTR_USE;
 void PrintOnError(GNode *, const char *);
 void Main_ExportMAKEFLAGS(bool);
 bool Main_SetObjdir(bool, const char *, ...) MAKE_ATTR_PRINTFLIKE(2, 3);
-int mkTempFile(const char *, char *, size_t);
+int mkTempFile(const char *, char *, size_t) MAKE_ATTR_USE;
 int str2Lst_Append(StringList *, char *);
 void GNode_FprintDetails(FILE *, const char *, const GNode *, const char *);
-bool GNode_ShouldExecute(GNode *gn);
+bool GNode_ShouldExecute(GNode *gn) MAKE_ATTR_USE;
 
 /* See if the node was seen on the left-hand side of a dependency operator. */
-MAKE_INLINE bool
+MAKE_INLINE bool MAKE_ATTR_USE
 GNode_IsTarget(const GNode *gn)
 {
 	return (gn->type & OP_OPMASK) != OP_NONE;
 }
 
-MAKE_INLINE const char *
+MAKE_INLINE const char * MAKE_ATTR_USE
 GNode_Path(const GNode *gn)
 {
 	return gn->path != NULL ? gn->path : gn->name;
 }
 
-MAKE_INLINE bool
+MAKE_INLINE bool MAKE_ATTR_USE
 GNode_IsWaitingFor(const GNode *gn)
 {
 	return gn->flags.remake && gn->made <= REQUESTED;
 }
 
-MAKE_INLINE bool
+MAKE_INLINE bool MAKE_ATTR_USE
 GNode_IsReady(const GNode *gn)
 {
 	return gn->made > DEFERRED;
 }
 
-MAKE_INLINE bool
+MAKE_INLINE bool MAKE_ATTR_USE
 GNode_IsDone(const GNode *gn)
 {
 	return gn->made >= MADE;
 }
 
-MAKE_INLINE bool
+MAKE_INLINE bool MAKE_ATTR_USE
 GNode_IsError(const GNode *gn)
 {
 	return gn->made == ERROR || gn->made == ABORTED;
 }
 
-MAKE_INLINE const char *
+MAKE_INLINE const char * MAKE_ATTR_USE
 GNode_VarTarget(GNode *gn) { return GNode_ValueDirect(gn, TARGET); }
-MAKE_INLINE const char *
+MAKE_INLINE const char * MAKE_ATTR_USE
 GNode_VarOodate(GNode *gn) { return GNode_ValueDirect(gn, OODATE); }
-MAKE_INLINE const char *
+MAKE_INLINE const char * MAKE_ATTR_USE
 GNode_VarAllsrc(GNode *gn) { return GNode_ValueDirect(gn, ALLSRC); }
-MAKE_INLINE const char *
+MAKE_INLINE const char * MAKE_ATTR_USE
 GNode_VarImpsrc(GNode *gn) { return GNode_ValueDirect(gn, IMPSRC); }
-MAKE_INLINE const char *
+MAKE_INLINE const char * MAKE_ATTR_USE
 GNode_VarPrefix(GNode *gn) { return GNode_ValueDirect(gn, PREFIX); }
-MAKE_INLINE const char *
+MAKE_INLINE const char * MAKE_ATTR_USE
 GNode_VarArchive(GNode *gn) { return GNode_ValueDirect(gn, ARCHIVE); }
-MAKE_INLINE const char *
+MAKE_INLINE const char * MAKE_ATTR_USE
 GNode_VarMember(GNode *gn) { return GNode_ValueDirect(gn, MEMBER); }
 
-MAKE_INLINE void *
+MAKE_INLINE void * MAKE_ATTR_USE
 UNCONST(const void *ptr)
 {
 	void *ret;
@@ -780,19 +780,19 @@ UNCONST(const void *ptr)
 #define KILLPG(pid, sig) killpg((pid), (sig))
 #endif
 
-MAKE_INLINE bool
+MAKE_INLINE bool MAKE_ATTR_USE
 ch_isalnum(char ch) { return isalnum((unsigned char)ch) != 0; }
-MAKE_INLINE bool
+MAKE_INLINE bool MAKE_ATTR_USE
 ch_isalpha(char ch) { return isalpha((unsigned char)ch) != 0; }
-MAKE_INLINE bool
+MAKE_INLINE bool MAKE_ATTR_USE
 ch_isdigit(char ch) { return isdigit((unsigned char)ch) != 0; }
-MAKE_INLINE bool
+MAKE_INLINE bool MAKE_ATTR_USE
 ch_isspace(char ch) { return isspace((unsigned char)ch) != 0; }
-MAKE_INLINE bool
+MAKE_INLINE bool MAKE_ATTR_USE
 ch_isupper(char ch) { return isupper((unsigned char)ch) != 0; }
-MAKE_INLINE char
+MAKE_INLINE char MAKE_ATTR_USE
 ch_tolower(char ch) { return (char)tolower((unsigned char)ch); }
-MAKE_INLINE char
+MAKE_INLINE char MAKE_ATTR_USE
 ch_toupper(char ch) { return (char)toupper((unsigned char)ch); }
 
 MAKE_INLINE void

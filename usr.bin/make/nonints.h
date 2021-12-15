@@ -1,4 +1,4 @@
-/*	$NetBSD: nonints.h,v 1.218 2021/12/13 00:33:33 rillig Exp $	*/
+/*	$NetBSD: nonints.h,v 1.219 2021/12/15 09:53:41 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -82,8 +82,8 @@ void Arch_TouchLib(GNode *);
 void Arch_UpdateMTime(GNode *gn);
 void Arch_UpdateMemberMTime(GNode *gn);
 void Arch_FindLib(GNode *, SearchPath *);
-bool Arch_LibOODate(GNode *);
-bool Arch_IsLib(GNode *);
+bool Arch_LibOODate(GNode *) MAKE_ATTR_USE;
+bool Arch_IsLib(GNode *) MAKE_ATTR_USE;
 
 /* compat.c */
 int Compat_RunCommand(const char *, GNode *, StringListNode *);
@@ -91,21 +91,21 @@ void Compat_Run(GNodeList *);
 void Compat_Make(GNode *, GNode *);
 
 /* cond.c */
-CondEvalResult Cond_EvalCondition(const char *, bool *);
-CondEvalResult Cond_EvalLine(const char *);
+CondEvalResult Cond_EvalCondition(const char *, bool *) MAKE_ATTR_USE;
+CondEvalResult Cond_EvalLine(const char *) MAKE_ATTR_USE;
 void Cond_restore_depth(unsigned int);
-unsigned int Cond_save_depth(void);
+unsigned int Cond_save_depth(void) MAKE_ATTR_USE;
 
 /* dir.c; see also dir.h */
 
-MAKE_INLINE const char *
+MAKE_INLINE const char * MAKE_ATTR_USE
 str_basename(const char *pathname)
 {
 	const char *lastSlash = strrchr(pathname, '/');
 	return lastSlash != NULL ? lastSlash + 1 : pathname;
 }
 
-MAKE_INLINE SearchPath *
+MAKE_INLINE SearchPath * MAKE_ATTR_USE
 SearchPath_New(void)
 {
 	SearchPath *path = bmake_malloc(sizeof *path);
@@ -116,8 +116,8 @@ SearchPath_New(void)
 void SearchPath_Free(SearchPath *);
 
 /* for.c */
-int For_Eval(const char *);
-bool For_Accum(const char *);
+int For_Eval(const char *) MAKE_ATTR_USE;
+bool For_Accum(const char *) MAKE_ATTR_USE;
 void For_Run(int);
 
 /* job.c */
@@ -125,16 +125,16 @@ void JobReapChild(pid_t, int, bool);
 
 /* main.c */
 void Main_ParseArgLine(const char *);
-char *Cmd_Exec(const char *, const char **);
+char *Cmd_Exec(const char *, const char **) MAKE_ATTR_USE;
 void Error(const char *, ...) MAKE_ATTR_PRINTFLIKE(1, 2);
 void Fatal(const char *, ...) MAKE_ATTR_PRINTFLIKE(1, 2) MAKE_ATTR_DEAD;
 void Punt(const char *, ...) MAKE_ATTR_PRINTFLIKE(1, 2) MAKE_ATTR_DEAD;
 void DieHorribly(void) MAKE_ATTR_DEAD;
 void Finish(int) MAKE_ATTR_DEAD;
-int eunlink(const char *);
+int eunlink(const char *) MAKE_ATTR_USE;
 void execDie(const char *, const char *);
-char *getTmpdir(void);
-bool ParseBoolean(const char *, bool);
+char *getTmpdir(void) MAKE_ATTR_USE;
+bool ParseBoolean(const char *, bool) MAKE_ATTR_USE;
 char *cached_realpath(const char *, char *);
 
 /* parse.c */
@@ -158,13 +158,13 @@ typedef struct VarAssign {
 typedef char *(*ReadMoreProc)(void *, size_t *);
 
 void Parse_Error(ParseErrorLevel, const char *, ...) MAKE_ATTR_PRINTFLIKE(2, 3);
-bool Parse_IsVar(const char *, VarAssign *out_var);
+bool Parse_IsVar(const char *, VarAssign *out_var) MAKE_ATTR_USE;
 void Parse_Var(VarAssign *, GNode *);
 void Parse_AddIncludeDir(const char *);
 void Parse_File(const char *, int);
 void Parse_PushInput(const char *, int, int, ReadMoreProc, void *);
 void Parse_MainName(GNodeList *);
-int Parse_NumErrors(void);
+int Parse_NumErrors(void) MAKE_ATTR_USE;
 
 
 /* suff.c */
@@ -172,42 +172,42 @@ void Suff_Init(void);
 void Suff_End(void);
 
 void Suff_ClearSuffixes(void);
-bool Suff_IsTransform(const char *);
+bool Suff_IsTransform(const char *) MAKE_ATTR_USE;
 GNode *Suff_AddTransform(const char *);
 void Suff_EndTransform(GNode *);
 void Suff_AddSuffix(const char *, GNode **);
-SearchPath *Suff_GetPath(const char *);
+SearchPath *Suff_GetPath(const char *) MAKE_ATTR_USE;
 void Suff_ExtendPaths(void);
 void Suff_AddInclude(const char *);
 void Suff_AddLib(const char *);
 void Suff_FindDeps(GNode *);
-SearchPath *Suff_FindPath(GNode *);
+SearchPath *Suff_FindPath(GNode *) MAKE_ATTR_USE;
 void Suff_SetNull(const char *);
 void Suff_PrintAll(void);
-char *Suff_NamesStr(void);
+char *Suff_NamesStr(void) MAKE_ATTR_USE;
 
 /* targ.c */
 void Targ_Init(void);
 void Targ_End(void);
 
 void Targ_Stats(void);
-GNodeList *Targ_List(void);
-GNode *GNode_New(const char *);
-GNode *Targ_FindNode(const char *);
-GNode *Targ_GetNode(const char *);
-GNode *Targ_NewInternalNode(const char *);
+GNodeList *Targ_List(void) MAKE_ATTR_USE;
+GNode *GNode_New(const char *) MAKE_ATTR_USE;
+GNode *Targ_FindNode(const char *) MAKE_ATTR_USE;
+GNode *Targ_GetNode(const char *) MAKE_ATTR_USE;
+GNode *Targ_NewInternalNode(const char *) MAKE_ATTR_USE;
 GNode *Targ_GetEndNode(void);
 void Targ_FindList(GNodeList *, StringList *);
-bool Targ_Precious(const GNode *);
+bool Targ_Precious(const GNode *) MAKE_ATTR_USE;
 void Targ_SetMain(GNode *);
 void Targ_PrintCmds(GNode *);
 void Targ_PrintNode(GNode *, int);
 void Targ_PrintNodes(GNodeList *, int);
-const char *Targ_FmtTime(time_t);
+const char *Targ_FmtTime(time_t) MAKE_ATTR_USE;
 void Targ_PrintType(GNodeType);
 void Targ_PrintGraph(int);
 void Targ_Propagate(void);
-const char *GNodeMade_Name(GNodeMade);
+const char *GNodeMade_Name(GNodeMade) MAKE_ATTR_USE;
 
 /* var.c */
 void Var_Init(void);
@@ -317,10 +317,10 @@ void Var_SetWithFlags(GNode *, const char *, const char *, VarSetFlags);
 void Var_SetExpandWithFlags(GNode *, const char *, const char *, VarSetFlags);
 void Var_Append(GNode *, const char *, const char *);
 void Var_AppendExpand(GNode *, const char *, const char *);
-bool Var_Exists(GNode *, const char *);
-bool Var_ExistsExpand(GNode *, const char *);
-FStr Var_Value(GNode *, const char *);
-const char *GNode_ValueDirect(GNode *, const char *);
+bool Var_Exists(GNode *, const char *) MAKE_ATTR_USE;
+bool Var_ExistsExpand(GNode *, const char *) MAKE_ATTR_USE;
+FStr Var_Value(GNode *, const char *) MAKE_ATTR_USE;
+const char *GNode_ValueDirect(GNode *, const char *) MAKE_ATTR_USE;
 VarParseResult Var_Parse(const char **, GNode *, VarEvalMode, FStr *);
 VarParseResult Var_Subst(const char *, GNode *, VarEvalMode, char **);
 void Var_Stats(void);

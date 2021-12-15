@@ -1,4 +1,4 @@
-/*	$NetBSD: lst.h,v 1.99 2021/12/05 10:11:31 rillig Exp $	*/
+/*	$NetBSD: lst.h,v 1.100 2021/12/15 09:53:41 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -104,7 +104,7 @@ typedef void LstFreeProc(void *);
 /* Create or destroy a list */
 
 /* Create a new list. */
-List *Lst_New(void);
+List *Lst_New(void) MAKE_ATTR_USE;
 /* Free the list nodes, but not the list itself. */
 void Lst_Done(List *);
 /* Free the list nodes, freeing the node data using the given function. */
@@ -124,14 +124,14 @@ Lst_Init(List *list)
 
 /* Get information about a list */
 
-MAKE_INLINE bool
+MAKE_INLINE bool MAKE_ATTR_USE
 Lst_IsEmpty(List *list)
 {
 	return list->first == NULL;
 }
 
 /* Find the first node that contains the given datum, or NULL. */
-ListNode *Lst_FindDatum(List *, const void *);
+ListNode *Lst_FindDatum(List *, const void *) MAKE_ATTR_USE;
 
 /* Modify a list */
 
@@ -163,7 +163,7 @@ Lst_Enqueue(List *list, void *datum) {
 }
 
 /* Remove the head node of the queue and return its datum. */
-void *Lst_Dequeue(List *);
+void *Lst_Dequeue(List *) MAKE_ATTR_USE;
 
 /*
  * A vector is an ordered collection of items, allowing for fast indexed
@@ -182,7 +182,7 @@ void Vector_Init(Vector *, size_t);
  * Return the pointer to the given item in the vector.
  * The returned data is valid until the next modifying operation.
  */
-MAKE_INLINE void *
+MAKE_INLINE void * MAKE_ATTR_USE
 Vector_Get(Vector *v, size_t i)
 {
 	unsigned char *items = v->items;
