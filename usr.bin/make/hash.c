@@ -1,4 +1,4 @@
-/*	$NetBSD: hash.c,v 1.66 2021/12/07 21:58:01 rillig Exp $	*/
+/*	$NetBSD: hash.c,v 1.67 2021/12/15 10:07:53 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -74,7 +74,7 @@
 #include "make.h"
 
 /*	"@(#)hash.c	8.1 (Berkeley) 6/6/93"	*/
-MAKE_RCSID("$NetBSD: hash.c,v 1.66 2021/12/07 21:58:01 rillig Exp $");
+MAKE_RCSID("$NetBSD: hash.c,v 1.67 2021/12/15 10:07:53 rillig Exp $");
 
 /*
  * The ratio of # entries to # buckets at which we rebuild the table to
@@ -307,12 +307,11 @@ HashTable_CreateEntry(HashTable *t, const char *key, bool *out_isNew)
 	return he;
 }
 
-HashEntry *
+void
 HashTable_Set(HashTable *t, const char *key, void *value)
 {
 	HashEntry *he = HashTable_CreateEntry(t, key, NULL);
 	HashEntry_Set(he, value);
-	return he;
 }
 
 /* Delete the entry from the table and free the associated memory. */
