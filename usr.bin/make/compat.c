@@ -1,4 +1,4 @@
-/*	$NetBSD: compat.c,v 1.229 2021/11/28 23:12:51 rillig Exp $	*/
+/*	$NetBSD: compat.c,v 1.230 2021/12/15 10:04:49 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -96,7 +96,7 @@
 #include "pathnames.h"
 
 /*	"@(#)compat.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: compat.c,v 1.229 2021/11/28 23:12:51 rillig Exp $");
+MAKE_RCSID("$NetBSD: compat.c,v 1.230 2021/12/15 10:04:49 rillig Exp $");
 
 static GNode *curTarg = NULL;
 static pid_t compatChild;
@@ -217,9 +217,9 @@ UseShell(const char *cmd MAKE_ATTR_UNUSED)
  *	ln		List node that contains the command
  *
  * Results:
- *	0 if the command succeeded, 1 if an error occurred.
+ *	true if the command succeeded.
  */
-int
+bool
 Compat_RunCommand(const char *cmdp, GNode *gn, StringListNode *ln)
 {
 	char *cmdStart;		/* Start of expanded command */
@@ -246,7 +246,7 @@ Compat_RunCommand(const char *cmdp, GNode *gn, StringListNode *ln)
 
 	if (cmdStart[0] == '\0') {
 		free(cmdStart);
-		return 0;
+		return true;
 	}
 	cmd = cmdStart;
 	LstNode_Set(ln, cmdStart);
@@ -266,12 +266,12 @@ Compat_RunCommand(const char *cmdp, GNode *gn, StringListNode *ln)
 			 * usual '$$'.
 			 */
 			Lst_Append(&endNode->commands, cmdStart);
-			return 0;
+			return true;
 		}
 	}
 	if (strcmp(cmdStart, "...") == 0) {
 		gn->type |= OP_SAVE_CMDS;
-		return 0;
+		return true;
 	}
 
 	for (;;) {
@@ -295,7 +295,7 @@ Compat_RunCommand(const char *cmdp, GNode *gn, StringListNode *ln)
 	 * If we did not end up with a command, just skip it.
 	 */
 	if (cmd[0] == '\0')
-		return 0;
+		return true;
 
 	useShell = UseShell(cmd);
 	/*
@@ -312,7 +312,7 @@ Compat_RunCommand(const char *cmdp, GNode *gn, StringListNode *ln)
 	 * we go...
 	 */
 	if (!doIt && !GNode_ShouldExecute(gn))
-		return 0;
+		return true;
 
 	DEBUG1(JOB, "Execute: '%s'\n", cmd);
 
@@ -454,7 +454,7 @@ Compat_RunCommand(const char *cmdp, GNode *gn, StringListNode *ln)
 		kill(myPid, compatSigno);
 	}
 
-	return status;
+	return status == 0;
 }
 
 static void
@@ -464,7 +464,7 @@ RunCommands(GNode *gn)
 
 	for (ln = gn->commands.first; ln != NULL; ln = ln->next) {
 		const char *cmd = ln->datum;
-		if (Compat_RunCommand(cmd, gn, ln) != 0)
+		if (!Compat_RunCommand(cmd, gn, ln))
 			break;
 	}
 }
