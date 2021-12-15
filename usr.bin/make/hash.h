@@ -1,4 +1,4 @@
-/*	$NetBSD: hash.h,v 1.41 2021/12/07 21:58:01 rillig Exp $	*/
+/*	$NetBSD: hash.h,v 1.42 2021/12/15 09:53:41 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -108,7 +108,7 @@ typedef struct HashSet {
 	HashTable tbl;
 } HashSet;
 
-MAKE_INLINE void *
+MAKE_INLINE void * MAKE_ATTR_USE
 HashEntry_Get(HashEntry *h)
 {
 	return h->value;
@@ -131,11 +131,13 @@ HashIter_Init(HashIter *hi, HashTable *t)
 
 void HashTable_Init(HashTable *);
 void HashTable_Done(HashTable *);
-HashEntry *HashTable_FindEntry(HashTable *, const char *);
-void *HashTable_FindValue(HashTable *, const char *);
-unsigned int Hash_Substring(Substring);
-void *HashTable_FindValueBySubstringHash(HashTable *, Substring, unsigned int);
+HashEntry *HashTable_FindEntry(HashTable *, const char *) MAKE_ATTR_USE;
+void *HashTable_FindValue(HashTable *, const char *) MAKE_ATTR_USE;
+unsigned int Hash_Substring(Substring) MAKE_ATTR_USE;
+void *HashTable_FindValueBySubstringHash(HashTable *, Substring, unsigned int)
+    MAKE_ATTR_USE;
 HashEntry *HashTable_CreateEntry(HashTable *, const char *, bool *);
+/* TODO: change return type to void */
 HashEntry *HashTable_Set(HashTable *, const char *, void *);
 void HashTable_DeleteEntry(HashTable *, HashEntry *);
 void HashTable_DebugStats(HashTable *, const char *);
@@ -164,7 +166,7 @@ HashSet_Add(HashSet *set, const char *key)
 	return isNew;
 }
 
-MAKE_INLINE bool
+MAKE_INLINE bool MAKE_ATTR_USE
 HashSet_Contains(HashSet *set, const char *key)
 {
 	return HashTable_FindEntry(&set->tbl, key) != NULL;
