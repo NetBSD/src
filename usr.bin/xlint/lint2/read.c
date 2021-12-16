@@ -1,4 +1,4 @@
-/* $NetBSD: read.c,v 1.71 2021/11/28 09:16:46 rillig Exp $ */
+/* $NetBSD: read.c,v 1.72 2021/12/16 03:53:13 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: read.c,v 1.71 2021/11/28 09:16:46 rillig Exp $");
+__RCSID("$NetBSD: read.c,v 1.72 2021/12/16 03:53:13 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -147,8 +147,6 @@ read_ln_line(const char *line, size_t len)
 	char rt;
 	pos_t pos;
 
-	flines[srcfile]++;
-
 	cp = line;
 
 	/* line number in csrcfile */
@@ -229,9 +227,11 @@ readfile(const char *name)
 		err(1, "cannot open %s", name);
 
 	while ((line = fgetln(inp, &len)) != NULL) {
+		flines[srcfile]++;
+
 		readfile_line = line;
 		if (len == 0 || line[len - 1] != '\n')
-			inperr("%s", &line[len - 1]);
+			inperr("missing newline after '%s'", &line[len - 1]);
 		line[len - 1] = '\0';
 
 		read_ln_line(line, len);
