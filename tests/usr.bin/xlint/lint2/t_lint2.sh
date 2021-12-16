@@ -1,4 +1,4 @@
-# $NetBSD: t_lint2.sh,v 1.12 2021/12/16 03:53:13 rillig Exp $
+# $NetBSD: t_lint2.sh,v 1.13 2021/12/16 09:38:54 rillig Exp $
 #
 # Copyright (c) 2021 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -182,7 +182,7 @@ missing_newline_head()
 
 missing_newline_body()
 {
-	# Before read.c 1.71 from 2021-12-16, the error message was just 'c'
+	# Before read.c 1.72 from 2021-12-16, the error message was just 'c'
 	# without any textual description or context, and the line number was
 	# off by one, it was reported as line 0.
 
