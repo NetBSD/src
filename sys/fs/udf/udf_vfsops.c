@@ -1,4 +1,4 @@
-/* $NetBSD: udf_vfsops.c,v 1.82 2021/09/16 22:19:11 andvar Exp $ */
+/* $NetBSD: udf_vfsops.c,v 1.83 2021/12/16 21:39:53 reinoud Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_vfsops.c,v 1.82 2021/09/16 22:19:11 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_vfsops.c,v 1.83 2021/12/16 21:39:53 reinoud Exp $");
 #endif /* not lint */
 
 
@@ -182,7 +182,7 @@ SYSCTL_SETUP(udf_sysctl_setup, "udf sysctl")
 		       SYSCTL_DESCR("OSTA Universal File System"),
 		       NULL, 0, NULL, 0,
 		       CTL_VFS, 24, CTL_EOL);
-#ifdef DEBUG
+#ifdef UDF_DEBUG
 	sysctl_createv(clog, 0, NULL, &node,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 		       CTLTYPE_INT, "verbose",
