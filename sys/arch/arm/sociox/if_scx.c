@@ -1,4 +1,4 @@
-/*	$NetBSD: if_scx.c,v 1.25 2021/08/02 12:56:22 andvar Exp $	*/
+/*	$NetBSD: if_scx.c,v 1.26 2021/12/16 11:32:22 nisimura Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
 #define NOT_MP_SAFE	0
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_scx.c,v 1.25 2021/08/02 12:56:22 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_scx.c,v 1.26 2021/12/16 11:32:22 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -73,7 +73,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_scx.c,v 1.25 2021/08/02 12:56:22 andvar Exp $");
 #include <dev/acpi/acpivar.h>
 #include <dev/acpi/acpi_intr.h>
 
-/* Socionext SC2A11 descriptor format */
+/* SC2A11 GbE 64-bit paddr descriptor */
 struct tdes {
 	uint32_t t0, t1, t2, t3;
 };
@@ -84,103 +84,131 @@ struct rdes {
 
 #define T0_OWN		(1U<<31)	/* desc is ready to Tx */
 #define T0_EOD		(1U<<30)	/* end of descriptor array */
-#define T0_DRID		(24)		/* 29:24 D-RID */
-#define T0_PT		(1U<<21)	/* 23:21 PT */
-#define T0_TRID		(16)		/* 20:16 T-RID */
+#define T0_DRID		(24)		/* 29:24 desc ring id */
+#define T0_PT		(1U<<21)	/* 23:21 "pass-through" */
+#define T0_TDRID	(16)		/* 20:16 target desc ring id: GMAC=15 */
 #define T0_FS		(1U<<9)		/* first segment of frame */
 #define T0_LS		(1U<<8)		/* last segment of frame */
 #define T0_CSUM		(1U<<7)		/* enable check sum offload */
-#define T0_SGOL		(1U<<6)		/* enable TCP segment offload */
-#define T0_TRS		(1U<<4)		/* 5:4 TRS */
-#define T0_IOC		(0)		/* XXX TBD interrupt when completed */
-/* T1 segment address 63:32 */
-/* T2 segment address 31:0 */
-/* T3 31:16 TCP segment length, 15:0 segment length to transmit */
+#define T0_TSO		(1U<<6)		/* enable TCP segment offload */
+#define T0_TRS		(1U<<4)		/* 5:4 "TRS" */
+/* T1 frame segment address 63:32 */
+/* T2 frame segment address 31:0 */
+/* T3 31:16 TCP segment length, 15:0 frame segment length to transmit */
 
 #define R0_OWN		(1U<<31)	/* desc is empty */
 #define R0_EOD		(1U<<30)	/* end of descriptor array */
-#define R0_SRID		(24)		/* 29:24 S-RID */
-#define R0_FR		(1U<<23)	/* FR */
+#define R0_SDRID	(24)		/* 29:24 source desc ring id */
+#define R0_FR		(1U<<23)	/* found fragmented */
 #define R0_ER		(1U<<21)	/* Rx error indication */
 #define R0_ERR		(3U<<16)	/* 18:16 receive error code */
-#define R0_TDRID	(14)		/* 15:14 TD-RID */
+#define R0_TDRID	(12)		/* 15:12 target desc ring id */
 #define R0_FS		(1U<<9)		/* first segment of frame */
 #define R0_LS		(1U<<8)		/* last segment of frame */
 #define R0_CSUM		(3U<<6)		/* 7:6 checksum status */
-#define R0_CERR		(2U<<6)		/* 0 (undone), 1 (found ok), 2 (bad) */
+#define R0_CERR		(2U<<6)		/* 0: undone, 1: found ok, 2: bad */
 /* R1 frame address 63:32 */
 /* R2 frame address 31:0 */
 /* R3 31:16 received frame length, 15:0 buffer length to receive */
 
 /*
- * SC2A11 NetSec registers. 0x100 - 1204
+ * SC2A11 registers. 0x100 - 1204
  */
 #define SWRESET		0x104
+#define  SRST_RUN	(1U<<31)	/* instruct start, 0 to stop */
 #define COMINIT		0x120
+#define  INIT_DB	(1U<<2)		/* ???; self clear when done */
+#define  INIT_CLS	(1U<<1)		/* ???; self clear when done */
+#define PKTCTRL		0x140		/* pkt engine control */
+#define  MODENRM	(1U<<28)	/* change mode to normal */
+#define  ENJUMBO	(1U<<27)	/* allow jumbo frame */
+#define  RPTCSUMERR	(1U<<3)		/* log Rx checksum error */
+#define  RPTHDCOMP	(1U<<2)		/* log HD imcomplete condition */
+#define  RPTHDERR	(1U<<1)		/* log HD error */
+#define  DROPNOMATCH	(1U<<0)		/* drop no match frames */
 #define xINTSR		0x200		/* aggregated interrupt status report */
 #define  IRQ_RX		(1U<<1)		/* top level Rx interrupt */
 #define  IRQ_TX		(1U<<0)		/* top level Rx interrupt */
+#define  IRQ_UCODE	(1U<<20)	/* ucode load completed */
 #define xINTAEN		0x204		/* INT_A enable */
-#define xINTA_SET	0x234		/* bit to set */
-#define xINTA_CLR	0x238		/* bit to clr */
+#define xINTAE_SET	0x234		/* bit to set */
+#define xINTAE_CLR	0x238		/* bit to clr */
 #define xINTBEN		0x23c		/* INT_B enable */
-#define xINTB_SET	0x240		/* bit to set */
-#define xINTB_CLR	0x244		/* bit to clr */
-/* 0x00c - 048 */			/* pkt,tls,s0,s1 SR/IE/SET/CLR */
-#define TXISR		0x400
-#define TXIEN		0x404
-#define TXI_SET		0x428
-#define TXI_CLR		0x42c
-#define  TXI_NTOWNR	(1U<<17)
-#define  TXI_TR_ERR	(1U<<16)
-#define  TXI_TXDONE	(1U<<15)
-#define  TXI_TMREXP	(1U<<14)
-#define RXISR		0x440
-#define RXIEN		0x444
-#define RXI_SET		0x468
-#define RXI_CLR		0x46c
-#define  RXI_RC_ERR	(1U<<16)
-#define  RXI_PKTCNT	(1U<<15)
-#define  RXI_TMREXP	(1U<<14)
-#define TXTIMER		0x41c
-#define RXTIMER		0x45c
-#define TXCOUNT		0x410
-#define RXCOUNT		0x454
-#define H2MENG		0x210		/* DMAC host2media ucode port */
-#define M2HENG		0x21c		/* DMAC media2host ucode port */
-#define PKTENG		0x0d0		/* packet engine ucode port */
+#define xINTBE_SET	0x240		/* bit to set */
+#define xINTBE_CLR	0x244		/* bit to clr */
+#define TXISR		0x400		/* transmit status */
+#define TXIEN		0x404		/* tx interrupt enable */
+#define TXIE_SET	0x428		/* bit to set */
+#define TXIE_CLR	0x42c		/* bit to clr */
+#define  TXI_NTOWNR	(1U<<17)	/* ready desc got empty */
+#define  TXI_TR_ERR	(1U<<16)	/* tx error */
+#define  TXI_TXDONE	(1U<<15)	/* tx completed */
+#define  TXI_TMREXP	(1U<<14)	/* coalesce timer expired */
+#define RXISR		0x440		/* receipt status */
+#define RXIEN		0x444		/* rx interrupt enable */
+#define RXIE_SET	0x468		/* bit to set */
+#define RXIE_CLR	0x46c		/* bit to clr */
+#define  RXI_RC_ERR	(1U<<16)	/* rx error */
+#define  RXI_PKTCNT	(1U<<15)	/* rx counter has new value report */
+#define  RXI_TMREXP	(1U<<14)	/* coalesce timer expired */
+#define TDBA_LO		0x408		/* tdes array base addr 31:0 */
+#define TDBA_HI		0x434		/* tdes array base addr 63:32 */
+#define RDBA_LO		0x448		/* rdes array base addr 31:0 */
+#define RDBA_HI		0x474		/* rdes array base addr 63:32 */
+/* 13 pairs of special purpose desc array address registers exit */
+#define TXCONF		0x430
+#define RXCONF		0x470
+#define  DESCNF_UP	(1U<<31)	/* up-and-running */
+#define  DESCNF_CHRST	(1U<<30)	/* channel reset */
+#define  DESCNF_TMR	(1U<<4)		/* coalesce timer mode select */
+#define  DESCNF_LE	(1)		/* little endian desc format */
+#define TXCOLMAX	0x410		/* tx intr coalesce upper bound */
+#define RXCOLMAX	0x454		/* rx intr coalesce upper bound */
+#define TXITIMER	0x420		/* coalesce timer usec, MSB to use */
+#define RXITIMER	0x460		/* coalesce timer usec, MSB to use */
+#define TXDONECNT	0x424		/* tx completion report, auto-clear */
+#define RXDONECNT	0x458		/* rx completion report, auto-clear */
+#define UCODE_H2M	0x210		/* host2media engine ucode port */
+#define UCODE_M2H	0x21c		/* media2host engine ucode port */
+#define CORESTAT	0x218		/* engine run state */
+#define  PKTSTOP	(1U<<2)
+#define  M2HSTOP	(1U<<1)
+#define  H2MSTOP	(1U<<0)
+#define DMACTL_H2M	0x214		/* host2media engine control */
+#define DMACTL_M2H	0x220		/* media2host engine control */
+#define  DMACTL_STOP	(1U<<0)		/* instruct stop; self-clear */
+#define UCODE_PKT	0x0d0		/* packet engine ucode port */
 #define CLKEN		0x100		/* clock distribution enable */
-#define  CLK_G		(1U<<5)
-#define  CLK_ALL	0x13		/* 0x24 ??? */
+#define  CLK_G		(1U<<5)		/* feed clk domain E */
+#define  CLK_C		(1U<<1)		/* feed clk domain C */
+#define  CLK_D		(1U<<0)		/* feed clk domain D */
+#define  CLK_ALL	0x23		/* all above; 0x24 ??? 0x3f ??? */
+
+/* GMAC register indirect access. thru MACCMD/MACDATA operation */
+#define MACDATA		0x11c0		/* gmac register rd/wr data */
+#define MACCMD		0x11c4		/* gmac register operation */
+#define  CMD_IOWR	(1U<<28)	/* write op */
+#define  CMD_BUSY	(1U<<31)	/* busy bit */
+#define MACSTAT		0x1024		/* gmac status; ??? */
+#define MACINTE		0x1028		/* interrupt enable; ??? */
+
+#define FLOWTHR		0x11cc		/* flow control threshold */
+/* 31:16 pause threshold, 15:0 resume threshold */
+#define INTF_SEL	0x11d4		/* ??? */
+
+#define DESC_INIT	0x11fc		/* write 1 for desc init, SC */
+#define DESC_SRST	0x1204		/* write 1 for desc sw reset, SC */
+#define MODE_TRANS	0x500		/* mode change completion status */
+#define  N2T_DONE	(1U<<20)	/* normal->taiki change completed */
+#define  T2N_DONE	(1U<<19)	/* taiki->normal change completed */
 #define MACADRH		0x10c		/* ??? */
 #define MACADRL		0x110		/* ??? */
 #define MCVER		0x22c		/* micro controller version */
 #define HWVER		0x230		/* hardware version */
 
-/* 0x800 */		/* dec Tx  SR/EN/SET/CLR */
-/* 0x840 */		/* enc Rx  SR/EN/SET/CLR */
-/* 0x880 */		/* enc TLS Tx  SR/IE/SET/CLR */
-/* 0x8c0 */		/* dec TLS Tx  SR/IE/SET/CLR */
-/* 0x900 */		/* enc TLS Rx  SR/IE/SET/CLR */
-/* 0x940 */		/* dec TLS Rx  SR/IE/SET/CLR */
-/* 0x980 */		/* enc RAW Tx  SR/IE/SET/CLR */
-/* 0x9c0 */		/* dec RAW Tx  SR/IE/SET/CLR */
-/* 0xA00 */		/* enc RAW Rx  SR/IE/SET/CLR */
-/* 0xA40 */		/* dec RAW Rx  SR/IE/SET/CLR */
-
-/* indirect GMAC registers. accessed thru MACCMD/MACDATA operation */
-#define MACCMD		0x11c4		/* gmac operation */
-#define  CMD_IOWR	(1U<<28)	/* write op */
-#define  CMD_BUSY	(1U<<31)	/* busy bit */
-#define MACSTAT		0x1024		/* gmac status */
-#define MACDATA		0x11c0		/* gmac rd/wr data */
-#define MACINTE		0x1028		/* interrupt enable */
-#define DESC_INIT	0x11fc		/* desc engine init */
-#define DESC_SRST	0x1204		/* desc engine sw reset */
-
 /*
- * GMAC registers. not memory mapped, but handled by indirect access.
- * Mostly identical to Synopsys DesignWare Core Ethernet.
+ * GMAC registers are mostly identical to Synopsys DesignWare Core
+ * Ethernet. These must be handled by indirect access.
  */
 #define GMACMCR		0x0000		/* MAC configuration */
 #define  MCR_IBN	(1U<<30)	/* ??? */
@@ -191,8 +219,8 @@ struct rdes {
 #define  MCR_DRCS	(1U<<16)	/* ignore (G)MII HDX Tx error */
 #define  MCR_USEMII	(1U<<15)	/* 1: RMII/MII, 0: RGMII (_PS) */
 #define  MCR_SPD100	(1U<<14)	/* force speed 100 (_FES) */
-#define  MCR_DO		(1U<<13)	/* */
-#define  MCR_LOOP	(1U<<12)	/* */
+#define  MCR_DO		(1U<<13)	/* ??? don't receive my own Tx frames */
+#define  MCR_LOOP	(1U<<12)	/* run loop back */
 #define  MCR_USEFDX	(1U<<11)	/* force full duplex */
 #define  MCR_IPCEN	(1U<<10)	/* handle checksum */
 #define  MCR_ACS	(1U<<7)		/* auto pad strip CRC */
@@ -206,7 +234,7 @@ struct rdes {
 #define  AFR_HPF	(1U<<10)	/* hash+perfect filter, or hash only */
 #define  AFR_SAF	(1U<<9)		/* source address filter */
 #define  AFR_SAIF	(1U<<8)		/* SA inverse filtering */
-#define  AFR_PCF	(2U<<6)		/* */
+#define  AFR_PCF	(2U<<6)		/* ??? */
 #define  AFR_DBF	(1U<<5)		/* reject broadcast frame */
 #define  AFR_PM		(1U<<4)		/* accept all multicast frame */
 #define  AFR_DAIF	(1U<<3)		/* DA inverse filtering */
@@ -214,20 +242,26 @@ struct rdes {
 #define  AFR_UHTE	(1U<<1)		/* use hash table for unicast */
 #define  AFR_PR		(1U<<0)		/* run promisc mode */
 #define GMACGAR		0x0010		/* MDIO operation */
-#define  GAR_PHY	(11)		/* mii phy 15:11 */
-#define  GAR_REG	(6)		/* mii reg 10:6 */
-#define  GAR_CTL	(2)		/* control 5:2 */
+#define  GAR_PHY	(11)		/* 15:11 mii phy */
+#define  GAR_REG	(6)		/* 10:6 mii reg */
+#define  GAR_CLK	(2)		/* 5:2 mdio clock tick ratio */
 #define  GAR_IOWR	(1U<<1)		/* MDIO write op */
-#define  GAR_BUSY	(1U)		/* busy bit */
+#define  GAR_BUSY	(1U<<0)		/* busy bit */
+#define  GAR_MDIO_25_35MHZ	2
+#define  GAR_MDIO_35_60MHZ	3
+#define  GAR_MDIO_60_100MHZ	0
+#define  GAR_MDIO_100_150MHZ	1
+#define  GAR_MDIO_150_250MHZ	4
+#define  GAR_MDIO_250_300MHZ	5
 #define GMACGDR		0x0014		/* MDIO rd/wr data */
 #define GMACFCR		0x0018		/* 802.3x flowcontrol */
-/* 31:16 pause timer value, 5:4 pause timer threthold */
+/* 31:16 pause timer value, 5:4 pause timer threshold */
 #define  FCR_RFE	(1U<<2)		/* accept PAUSE to throttle Tx */
 #define  FCR_TFE	(1U<<1)		/* generate PAUSE to moderate Rx lvl */
 #define GMACVTAG	0x001c		/* VLAN tag control */
 #define GMACIMPL	0x0020		/* implementation number XX.YY */
-#define GMACLPIS	0x0030		/* AXI LPI control */
-#define GMACLPIC	0x0034		/* AXI LPI control */
+#define GMACLPIS	0x0030		/* ??? AXI LPI control */
+#define GMACLPIC	0x0034		/* ??? AXI LPI control */
 #define GMACISR		0x0038		/* interrupt status, clear when read */
 #define GMACIMR		0x003c		/* interrupt enable */
 #define  ISR_TS		(1U<<9)		/* time stamp operation detected */
@@ -257,15 +291,15 @@ struct rdes {
 /* 24    4PBL 8???
  * 23    USP
  * 22:17 RPBL
- * 16    fixed burst, or undefined b.
+ * 16    fixed burst
  * 15:14 priority between Rx and Tx
  *  3    rxtx ratio 41
  *  2    rxtx ratio 31
  *  1    rxtx ratio 21
  *  0    rxtx ratio 11
- * 13:8  PBL packet burst len
+ * 13:8  PBL possible DMA burst length
  *  7    alternative des8
- *  0    reset op. (SC)
+ *  0    GMAC reset op. self-clear
  */
 #define  _BMR		0x00412080	/* XXX TBD */
 #define  _BMR0		0x00020181	/* XXX TBD */
@@ -274,47 +308,46 @@ struct rdes {
 #define GMACRPD		0x1008		/* write any to resume rdes */
 #define GMACRDLA	0x100c		/* rdes base address 32bit paddr */
 #define GMACTDLA	0x1010		/* tdes base address 32bit paddr */
-#define  _RDLA		0x18000		/* XXX TBD system SRAM ? */
-#define  _TDLA		0x1c000		/* XXX TBD system SRAM ? */
+#define  _RDLA		0x18000		/* system RAM for GMAC rdes */
+#define  _TDLA		0x1c000		/* system RAM for GMAC tdes */
 #define GMACDSR		0x1014		/* DMA status detail report; W1C */
-#define GMACOMR		0x1018		/* DMA operation */
+#define GMACOMR		0x1018		/* DMA operation mode */
 #define  OMR_TSF	(1U<<25)	/* 1: Tx store&forword, 0: immed. */
 #define  OMR_RSF	(1U<<21)	/* 1: Rx store&forward, 0: immed. */
 #define  OMR_ST		(1U<<13)	/* run Tx DMA engine, 0 to stop */
 #define  OMR_EFC	(1U<<8)		/* transmit PAUSE to throttle Rx lvl. */
 #define  OMR_FEF	(1U<<7)		/* allow to receive error frames */
-#define  OMR_RS		(1U<<1)		/* run Rx DMA engine, 0 to stop */
+#define  OMR_SR		(1U<<1)		/* run Rx DMA engine, 0 to stop */
 #define GMACIE		0x101c		/* interrupt enable */
 #define GMACEVCS	0x1020		/* missed frame or ovf detected */
 #define GMACRWDT	0x1024		/* receive watchdog timer count */
 #define GMACAXIB	0x1028		/* AXI bus mode control */
 #define GMACAXIS	0x102c		/* AXI status report */
-/* 0x1048 - 1054 */			/* descriptor and buffer cur. address */
-#define HWFEA		0x1058		/* feature report */
+/* 0x1048 current tx desc address */
+/* 0x104c current rx desc address */
+/* 0x1050 current tx buffer address */
+/* 0x1054 current rx buffer address */
+#define HWFEA		0x1058		/* DWC feature report */
 
 #define GMACEVCTL	0x0100		/* event counter control */
-#define GMACEVCNT(i)	((i)*4+0x114)	/* event counter 0x114 - 0x284 */
-
-/* memory mapped CSR register */
-#define CSR_READ(sc,off) \
-	    bus_space_read_4((sc)->sc_st, (sc)->sc_sh, (off))
-#define CSR_WRITE(sc,off,val) \
-	    bus_space_write_4((sc)->sc_st, (sc)->sc_sh, (off), (val))
-
-/* flash memory access */
-#define EE_READ(sc,off) \
-	    bus_space_read_4((sc)->sc_st, (sc)->sc_eesh, (off))
+#define  EVC_FHP	(1U<<5)		/* full-half preset */
+#define  EVC_CP		(1U<<4)		/* counters preset */
+#define  EVC_MCF	(1U<<3)		/* MMC counter freeze */
+#define  EVC_ROR	(1U<<2)		/* auto-zero on counter read */
+#define  EVC_CSR	(1U<<1)		/* counter stop rollover */
+#define  EVC_CR		(1U<<0)		/* reset counters */
+#define GMACEVCNT(i)	((i)*4+0x114)	/* 80 event counters 0x114 - 0x284 */
 
 /*
  * flash memory layout
  * 0x00 - 07	48-bit MAC station address. 4 byte wise in BE order.
- * 0x08 - 0b	H->MAC xfer uengine program start addr 63:32.
- * 0x0c - 0f	H2M program addr 31:0 (these are absolute addr, not relative)
+ * 0x08 - 0b	H->MAC xfer engine program start addr 63:32.
+ * 0x0c - 0f	H2M program addr 31:0 (these are absolute addr, not offset)
  * 0x10 - 13	H2M program length in 4 byte count.
- * 0x14 - 0b	M->HOST xfer uengine program start addr 63:32.
- * 0x18 - 0f	M2H program addr 31:0 (absolute, not relative)
+ * 0x14 - 0b	M->HOST xfer engine program start addr 63:32.
+ * 0x18 - 0f	M2H program addr 31:0 (absolute addr, not relative)
  * 0x1c - 13	M2H program length in 4 byte count.
- * 0x20 - 23	packet uengine program addr 31:0, (absolute, not relative)
+ * 0x20 - 23	packet engine program addr 31:0, (absolute addr, not offset)
  * 0x24 - 27	packet program length in 4 byte count.
  *
  * above ucode are loaded via mapped reg 0x210, 0x21c and 0x0c0.
