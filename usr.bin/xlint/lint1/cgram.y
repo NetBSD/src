@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.374 2021/12/15 15:20:51 christos Exp $ */
+/* $NetBSD: cgram.y,v 1.375 2021/12/16 23:46:21 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: cgram.y,v 1.374 2021/12/15 15:20:51 christos Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.375 2021/12/16 23:46:21 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -432,7 +432,7 @@ primary_expression:
 			yychar = yylex();
 		sys_next = in_system_header;
 		in_system_header = sys_name;
-		$$ = build_name(getsym($1), yychar);
+		$$ = build_name(getsym($1), yychar == T_LPAREN);
 		in_system_header = sys_next;
 	  }
 	| T_CON {
@@ -513,7 +513,7 @@ postfix_expression:
 		if (!Sflag)
 			 /* compound literals are a C9X/GCC extension */
 			 gnuism(319);
-		$$ = build_name(*current_initsym(), 0);
+		$$ = build_name(*current_initsym(), false);
 		end_initialization();
 	  }
 	| T_LPAREN compound_statement_lbrace gcc_statement_expr_list {
@@ -525,7 +525,7 @@ postfix_expression:
 		/* ({ }) is a GCC extension */
 		gnuism(320);
 	  } compound_statement_rbrace T_RPAREN {
-		$$ = build_name(*current_initsym(), 0);
+		$$ = build_name(*current_initsym(), false);
 		end_initialization();
 	  }
 	;

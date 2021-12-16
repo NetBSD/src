@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.398 2021/12/15 00:44:05 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.399 2021/12/16 23:46:21 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.398 2021/12/15 00:44:05 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.399 2021/12/16 23:46:21 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -275,18 +275,17 @@ build_name_call(sym_t *sym)
  * follow_token is the token which follows the name.
  */
 tnode_t *
-build_name(sym_t *sym, int follow_token)
+build_name(sym_t *sym, bool is_funcname)
 {
 	tnode_t	*n;
 
 	if (sym->s_scl == NOSCL) {
 		sym->s_scl = EXTERN;
 		sym->s_def = DECL;
-		if (follow_token == T_LPAREN) {
+		if (is_funcname)
 			build_name_call(sym);
-		} else {
+		else
 			fallback_symbol(sym);
-		}
 	}
 
 	lint_assert(sym->s_kind == FVFT || sym->s_kind == FMEMBER);
@@ -723,7 +722,7 @@ build_member_access(tnode_t *ln, op_t op, bool sys, sbuf_t *member)
 		ln = cconv(ln);
 	}
 	msym = struct_or_union_member(ln, op, getsym(member));
-	return build_binary(ln, op, sys, build_name(msym, 0));
+	return build_binary(ln, op, sys, build_name(msym, false));
 }
 
 /*
