@@ -1,4 +1,4 @@
-/*	$NetBSD: externs1.h,v 1.141 2021/12/15 00:44:05 rillig Exp $	*/
+/*	$NetBSD: externs1.h,v 1.142 2021/12/16 23:46:21 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -235,7 +235,7 @@ extern	type_t	*derive_type(type_t *, tspec_t);
 extern	type_t	*expr_derive_type(type_t *, tspec_t);
 extern	bool	is_compiler_builtin(const char *);
 extern	tnode_t	*build_constant(type_t *, val_t *);
-extern	tnode_t	*build_name(sym_t *, int);
+extern	tnode_t	*build_name(sym_t *, bool);
 extern	tnode_t	*build_string(strg_t *);
 extern	tnode_t	*build_generic_selection(const tnode_t *,
 		    struct generic_association *);
