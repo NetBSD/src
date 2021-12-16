@@ -1,4 +1,4 @@
-/*	$NetBSD: if_scx.c,v 1.26 2021/12/16 11:32:22 nisimura Exp $	*/
+/*	$NetBSD: if_scx.c,v 1.27 2021/12/16 11:36:25 nisimura Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
 #define NOT_MP_SAFE	0
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_scx.c,v 1.26 2021/12/16 11:32:22 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_scx.c,v 1.27 2021/12/16 11:36:25 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -408,7 +408,7 @@ struct scx_softc {
 	int sc_phy_id;			/* PHY address */
 	int sc_flowflags;		/* 802.3x PAUSE flow control */
 	uint32_t sc_mdclk;		/* GAR 5:2 clock selection */
-	uint32_t sc_t0coso;		/* T0_CSUM | T0_SGOL to run */
+	uint32_t sc_t0cotso;		/* T0_CSUM | T0_TSO to run */
 	int sc_ucodeloaded;		/* ucode for H2M/M2H/PKT */
 	int sc_100mii;			/* 1 for RMII/MII, 0 for RGMII */
 	int sc_phandle;			/* fdt phandle */
@@ -431,6 +431,9 @@ struct scx_softc {
 	int sc_rxptr;			/* next ready Rx descriptor/descsoft */
 
 	krndsource_t rnd_source;	/* random source */
+#ifdef GMAC_EVENT_COUNTER
+	/* 80 event counter exist */
+#endif
 };
 
 #define SCX_CDTXADDR(sc, x)	((sc)->sc_cddma + SCX_CDTXOFF((x)))
@@ -476,6 +479,16 @@ do {									\
 	__rxd->r0 = R0_OWN | R0_FS | R0_LS;				\
 	if ((x) == MD_NRXDESC - 1) __rxd->r0 |= R0_EOD;			\
 } while (/*CONSTCOND*/0)
+
+/* memory mapped CSR register access */
+#define CSR_READ(sc,off) \
+	    bus_space_read_4((sc)->sc_st, (sc)->sc_sh, (off))
+#define CSR_WRITE(sc,off,val) \
+	    bus_space_write_4((sc)->sc_st, (sc)->sc_sh, (off), (val))
+
+/* flash memory access */
+#define EE_READ(sc,off) \
+	    bus_space_read_4((sc)->sc_st, (sc)->sc_eesh, (off))
 
 static int scx_fdt_match(device_t, cfdata_t, void *);
 static void scx_fdt_attach(device_t, device_t, void *);
@@ -558,6 +571,10 @@ static const struct device_compatible_entry compat_data[] = {
 	{ .compat = "socionext,synquacer-netsec" },
 	DEVICE_COMPAT_EOL
 };
+static const struct device_compatible_entry compatible[] = {
+	{ .compat = "SCX0001" },
+	DEVICE_COMPAT_EOL
+};
 
 static int
 scx_fdt_match(device_t parent, cfdata_t cf, void *aux)
@@ -634,15 +651,9 @@ scx_fdt_attach(device_t parent, device_t self, void *aux)
 static int
 scx_acpi_match(device_t parent, cfdata_t cf, void *aux)
 {
-	static const char * compatible[] = {
-		"SCX0001",
-		NULL
-	};
 	struct acpi_attach_args *aa = aux;
 
-	if (aa->aa_node->ad_type != ACPI_TYPE_DEVICE)
-		return 0;
-	return acpi_match_hid(aa->aa_node->ad_devinfo, compatible);
+	return acpi_compatible_match(aa, compatible);
 }
 
 static void
@@ -660,6 +671,7 @@ scx_acpi_attach(device_t parent, device_t self, void *aux)
 	ACPI_INTEGER acpi_phy, acpi_freq;
 	ACPI_STATUS rv;
 
+aprint_normal(": Gigabit Ethernet Controller\n");
 	rv = acpi_resource_parse(self, handle, "_CRS",
 	    &res, &acpi_resource_parse_ops_default);
 	if (ACPI_FAILURE(rv))
@@ -713,7 +725,7 @@ scx_acpi_attach(device_t parent, device_t self, void *aux)
 	sc->sc_sh = bsh;
 	sc->sc_eesh = eebsh;
 	sc->sc_dmat = aa->aa_dmat64;
-	sc->sc_dmat32 = aa->aa_dmat;	/* descriptor needs dma32 */
+	sc->sc_dmat32 = aa->aa_dmat;
 
 aprint_normal_dev(self,
 "phy mode %s, phy id %d, freq %ld\n", phy_mode, (int)acpi_phy, acpi_freq);
@@ -742,18 +754,19 @@ scx_attach_i(struct scx_softc *sc)
 	struct ifnet * const ifp = &sc->sc_ethercom.ec_if;
 	struct mii_data * const mii = &sc->sc_mii;
 	struct ifmedia * const ifm = &mii->mii_media;
-	uint32_t hwver, dwimp, dwfea;
+	uint32_t which, dwimp, dwfea;
 	uint8_t enaddr[ETHER_ADDR_LEN];
 	bus_dma_segment_t seg;
 	uint32_t csr;
 	int i, nseg, error = 0;
 
-	hwver = CSR_READ(sc, HWVER);	/* Socionext version */
-	dwimp = mac_read(sc, GMACIMPL);	/* DW EMAC XX.YY */
-	dwfea = mac_read(sc, HWFEA);	/* DW feature */
+	which = CSR_READ(sc, HWVER);	/* Socionext version 5.00xx */
+	dwimp = mac_read(sc, GMACIMPL);	/* DWC EMAC XX.YY */
+	dwfea = mac_read(sc, HWFEA);	/* DWC feature */
 	aprint_normal_dev(sc->sc_dev,
-	    "Socionext NetSec GbE %d.%d (impl 0x%x, feature 0x%x)\n",
-	    hwver >> 16, hwver & 0xffff,
+	    "Socionext NetSec GbE %x.%x"
+	    " (impl 0x%x, feature 0x%x)\n",
+	    which >> 16, which & 0xffff,
 	    dwimp, dwfea);
 
 	/* fetch MAC address in flash. stored in big endian order */
@@ -762,14 +775,13 @@ scx_attach_i(struct scx_softc *sc)
 	enaddr[1] = csr >> 16;
 	enaddr[2] = csr >> 8;
 	enaddr[3] = csr;
-	csr = bus_space_read_4(sc->sc_st, sc->sc_eesh, 4);
 	csr = EE_READ(sc, 0x04);
 	enaddr[4] = csr >> 24;
 	enaddr[5] = csr >> 16;
 	aprint_normal_dev(sc->sc_dev,
 	    "Ethernet address %s\n", ether_sprintf(enaddr));
 
-	sc->sc_mdclk = get_mdioclk(sc->sc_freq); /* 5:2 clk control */
+	sc->sc_mdclk = get_mdioclk(sc->sc_freq) << GAR_CLK; /* 5:2 clk ratio */
 
 	if (sc->sc_ucodeloaded == 0)
 		loaducode(sc);
@@ -917,10 +929,11 @@ scx_reset(struct scx_softc *sc)
 	mac_write(sc, GMACBMR, _BMR);
 	mac_write(sc, GMACAFR, 0);
 
-	CSR_WRITE(sc, CLKEN, CLK_ALL);	/* distribute clock sources */
-	CSR_WRITE(sc, SWRESET, 0);	/* reset operation */
-	CSR_WRITE(sc, SWRESET, 1U<<31);	/* manifest run */
-	CSR_WRITE(sc, COMINIT, 3); 	/* DB|CLS */
+	CSR_WRITE(sc, CLKEN, CLK_ALL);		/* distribute clock sources */
+	CSR_WRITE(sc, SWRESET, 0);		/* reset operation */
+	CSR_WRITE(sc, SWRESET, SRST_RUN);	/* manifest run */
+	CSR_WRITE(sc, COMINIT, INIT_DB | INIT_CLS);
+	WAIT_FOR_CLR(sc, COMINIT, (INIT_DB | INIT_CLS), 0);
 
 	mac_write(sc, GMACEVCTL, 1);
 }
@@ -930,6 +943,7 @@ scx_init(struct ifnet *ifp)
 {
 	struct scx_softc *sc = ifp->if_softc;
 	const uint8_t *ea = CLLADDR(ifp->if_sadl);
+	paddr_t paddr;
 	uint32_t csr;
 	int i, error;
 
@@ -984,15 +998,34 @@ scx_init(struct ifnet *ifp)
 	if ((error = ether_mediachange(ifp)) != 0)
 		goto out;
 
-	/* XXX 32 bit paddr XXX hand Tx/Rx rings to HW XXX */
-	mac_write(sc, GMACTDLA, SCX_CDTXADDR(sc, 0));
-	mac_write(sc, GMACRDLA, SCX_CDRXADDR(sc, 0));
+	paddr = SCX_CDTXADDR(sc, 0);
+	mac_write(sc, TDBA_HI, BUS_ADDR_HI32(paddr));
+	mac_write(sc, TDBA_LO, BUS_ADDR_LO32(paddr));
+	paddr = SCX_CDRXADDR(sc, 0);
+	mac_write(sc, RDBA_HI, BUS_ADDR_HI32(paddr));
+	mac_write(sc, RDBA_LO, BUS_ADDR_LO32(paddr));
+
+	CSR_WRITE(sc, TXCONF, DESCNF_LE);	/* little endian */
+	CSR_WRITE(sc, RXCONF, DESCNF_LE);	/* little endian */
+
+	CSR_WRITE(sc, DESC_SRST, 01);
+	WAIT_FOR_CLR(sc, DESC_SRST, 01, 0);
+
+	CSR_WRITE(sc, DESC_INIT, 01);
+	WAIT_FOR_CLR(sc, DESC_INIT, 01, 0);
+
+	CSR_WRITE(sc, GMACRDLA, _RDLA);
+	CSR_WRITE(sc, GMACTDLA, _TDLA);
+
+	CSR_WRITE(sc, FLOWTHR, (48<<16) | 36);	/* pause|resume threshold */
+	mac_write(sc, GMACFCR, 256 << 16);	/* 31:16 pause value */
+
+	CSR_WRITE(sc, RXIE_CLR, ~0);
+	CSR_WRITE(sc, TXIE_CLR, ~0);
 
 	/* kick to start GMAC engine */
-	CSR_WRITE(sc, RXI_CLR, ~0);
-	CSR_WRITE(sc, TXI_CLR, ~0);
 	csr = mac_read(sc, GMACOMR);
-	mac_write(sc, GMACOMR, csr | OMR_RS | OMR_ST);
+	mac_write(sc, GMACOMR, csr | OMR_SR | OMR_ST);
 
 	ifp->if_flags |= IFF_RUNNING;
 	ifp->if_flags &= ~IFF_OACTIVE;
@@ -1017,6 +1050,14 @@ scx_stop(struct ifnet *ifp, int disable)
 	/* Mark the interface down and cancel the watchdog timer. */
 	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
 	ifp->if_timer = 0;
+
+	if (CSR_READ(sc, CORESTAT) != 0) {
+		CSR_WRITE(sc, DMACTL_H2M, DMACTL_STOP);
+		CSR_WRITE(sc, DMACTL_M2H, DMACTL_STOP);
+
+		WAIT_FOR_CLR(sc, DMACTL_H2M, DMACTL_STOP, 0);
+		WAIT_FOR_CLR(sc, DMACTL_M2H, DMACTL_STOP, 0);
+	}
 }
 
 static int
@@ -1066,6 +1107,16 @@ scx_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 
 	splx(s);
 	return error;
+}
+
+static uint32_t
+bit_reverse_32(uint32_t x)
+{
+	x = (((x & 0xaaaaaaaa) >> 1) | ((x & 0x55555555) << 1));
+	x = (((x & 0xcccccccc) >> 2) | ((x & 0x33333333) << 2));
+	x = (((x & 0xf0f0f0f0) >> 4) | ((x & 0x0f0f0f0f) << 4));
+	x = (((x & 0xff00ff00) >> 8) | ((x & 0x00ff00ff) << 8));
+	return (x >> 16) | (x << 16);
 }
 
 static void
@@ -1128,8 +1179,8 @@ printf("[%d] %s\n", i, ether_sprintf(enm->enm_addrlo));
 			mac_write(sc, GMACMAH(i), addr | 1U<<31);
 		} else {
 			/* use hash table when too many */
-			/* bit_reserve_32(~crc) !? */
 			crc = ether_crc32_le(enm->enm_addrlo, ETHER_ADDR_LEN);
+			crc = bit_reverse_32(~crc);
 			/* 1(31) 5(30:26) bit sampling */
 			mchash[crc >> 31] |= 1 << ((crc >> 26) & 0x1f);
 		}
@@ -1152,7 +1203,7 @@ static void
 scx_start(struct ifnet *ifp)
 {
 	struct scx_softc *sc = ifp->if_softc;
-	struct mbuf *m0, *m;
+	struct mbuf *m0;
 	struct scx_txsoft *txs;
 	bus_dmamap_t dmamap;
 	int error, nexttx, lasttx, ofree, seg;
@@ -1236,26 +1287,12 @@ scx_start(struct ifnet *ifp)
 			tdes->t2 = htole32(BUS_ADDR_LO32(paddr));
 			tdes->t1 = htole32(BUS_ADDR_HI32(paddr));
 			tdes->t0 = tdes0 | (tdes->t0 & T0_EOD) |
-					(15 << T0_TRID) | T0_PT |
-					sc->sc_t0coso | T0_TRS;
+					(15 << T0_TDRID) | T0_PT |
+					sc->sc_t0cotso | T0_TRS;
 			tdes0 = T0_OWN; /* 2nd and other segments */
+			/* NB; t0 DRID field contains zero */
 			lasttx = nexttx;
 		}
-		/*
-		 * Outgoing NFS mbuf must be unloaded when Tx completed.
-		 * Without T1_IC NFS mbuf is left unack'ed for excessive
-		 * time and NFS stops to proceed until scx_watchdog()
-		 * calls txreap() to reclaim the unack'ed mbuf.
-		 * It's painful to traverse every mbuf chain to determine
-		 * whether someone is waiting for Tx completion.
-		 */
-		m = m0;
-		do {
-			if ((m->m_flags & M_EXT) && m->m_ext.ext_free) {
-				sc->sc_txdescs[lasttx].t0 |= T0_IOC; /* !!! */
-				break;
-			}
-		} while ((m = m->m_next) != NULL);
 
 		/* Write deferred 1st segment T0_OWN at the final stage */
 		sc->sc_txdescs[lasttx].t0 |= T0_LS;
@@ -1546,11 +1583,7 @@ mii_readreg(device_t self, int phy, int reg, uint16_t *val)
 	uint32_t miia;
 	int ntries;
 
-#define CLK_150_250M (1<<2)
-uint32_t clk = CSR_READ(sc, CLKEN);
-CSR_WRITE(sc, CLKEN, clk | CLK_G);
-
-	miia = (phy << GAR_PHY) | (reg << GAR_REG) | CLK_150_250M;
+	miia = (phy << GAR_PHY) | (reg << GAR_REG) | sc->sc_mdclk;
 	mac_write(sc, GMACGAR, miia | GAR_BUSY);
 	for (ntries = 0; ntries < 1000; ntries++) {
 		if ((mac_read(sc, GMACGAR) & GAR_BUSY) == 0)
@@ -1570,9 +1603,6 @@ mii_writereg(device_t self, int phy, int reg, uint16_t val)
 	uint32_t miia;
 	uint16_t dummy;
 	int ntries;
-
-uint32_t clk = CSR_READ(sc, CLKEN);
-CSR_WRITE(sc, CLKEN, clk | CLK_G);
 
 	miia = (phy << GAR_PHY) | (reg << GAR_REG) | sc->sc_mdclk;
 	mac_write(sc, GMACGDR, val);
@@ -1598,7 +1628,7 @@ phy_tick(void *arg)
 	s = splnet();
 	mii_tick(mii);
 	splx(s);
-#ifdef SCX_EVENT_COUNTERS /* if tally counter details are made clear */
+#ifdef GMAC_EVENT_COUNTERS
 #endif
 	callout_schedule(&sc->sc_callout, hz);
 }
@@ -1621,20 +1651,20 @@ loaducode(struct scx_softc *sc)
 	sz *= 4;
 	addr = ((uint64_t)up << 32) | lo;
 aprint_normal_dev(sc->sc_dev, "0x%x H2M ucode %u\n", lo, sz);
-	injectucode(sc, H2MENG, (bus_addr_t)addr, (bus_size_t)sz);
+	injectucode(sc, UCODE_H2M, (bus_addr_t)addr, (bus_size_t)sz);
 
 	up = EE_READ(sc, 0x14); /* M->H ucode addr high */
 	lo = EE_READ(sc, 0x18); /* M->H ucode addr low */
 	sz = EE_READ(sc, 0x1c); /* M->H ucode size */
 	sz *= 4;
 	addr = ((uint64_t)up << 32) | lo;
-	injectucode(sc, M2HENG, (bus_addr_t)addr, (bus_size_t)sz);
+	injectucode(sc, UCODE_M2H, (bus_addr_t)addr, (bus_size_t)sz);
 aprint_normal_dev(sc->sc_dev, "0x%x M2H ucode %u\n", lo, sz);
 
 	lo = EE_READ(sc, 0x20); /* PKT ucode addr */
 	sz = EE_READ(sc, 0x24); /* PKT ucode size */
 	sz *= 4;
-	injectucode(sc, PKTENG, (bus_addr_t)lo, (bus_size_t)sz);
+	injectucode(sc, UCODE_PKT, (bus_addr_t)lo, (bus_size_t)sz);
 aprint_normal_dev(sc->sc_dev, "0x%x PKT ucode %u\n", lo, sz);
 }
 
@@ -1658,31 +1688,23 @@ injectucode(struct scx_softc *sc, int port,
 	bus_space_unmap(sc->sc_st, bsh, size);
 }
 
-/* bit selection to determine MDIO speed */
-
+/* GAR 5:2 MDIO frequency selection */
 static int
 get_mdioclk(uint32_t freq)
 {
 
-	const struct {
-		uint16_t freq, bit; /* GAR 5:2 MDIO frequency selection */
-	} mdioclk[] = {
-		{ 35,	2 },	/* 25-35 MHz */
-		{ 60,	3 },	/* 35-60 MHz */
-		{ 100,	0 },	/* 60-100 MHz */
-		{ 150,	1 },	/* 100-150 MHz */
-		{ 250,	4 },	/* 150-250 MHz */
-		{ 300,	5 },	/* 250-300 MHz */
-	};
-	int i;
 
 	freq /= 1000 * 1000;
-	/* convert MDIO clk to a divisor value */
-	if (freq < mdioclk[0].freq)
-		return mdioclk[0].bit;
-	for (i = 1; i < __arraycount(mdioclk); i++) {
-		if (freq < mdioclk[i].freq)
-			return mdioclk[i-1].bit;
-	}
-	return mdioclk[__arraycount(mdioclk) - 1].bit << GAR_CTL;
+
+	if (freq < 35)
+		return GAR_MDIO_25_35MHZ;
+	if (freq < 60)
+		return GAR_MDIO_35_60MHZ;
+	if (freq < 100)
+		return GAR_MDIO_60_100MHZ;
+	if (freq < 150)
+		return GAR_MDIO_100_150MHZ;
+	if (freq < 250)
+		return GAR_MDIO_150_250MHZ;
+	return GAR_MDIO_250_300MHZ;
 }
