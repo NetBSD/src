@@ -1,4 +1,4 @@
-# $NetBSD: t_lint2.sh,v 1.11 2021/12/16 03:44:48 rillig Exp $
+# $NetBSD: t_lint2.sh,v 1.12 2021/12/16 03:53:13 rillig Exp $
 #
 # Copyright (c) 2021 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -182,12 +182,14 @@ missing_newline_head()
 
 missing_newline_body()
 {
+	# Before read.c 1.71 from 2021-12-16, the error message was just 'c'
+	# without any textual description or context, and the line number was
+	# off by one, it was reported as line 0.
+
 	printf '1d1.1e5func' > 'input.ln'
 
-	# FIXME: The error message is not understandable.
-	# FIXME: The line number is off by one.
 	atf_check -s 'exit:1' \
-	    -e 'match:^.*: error: input\.ln:0: c \(for .1d1\.1e5func.\)$' \
+	    -e 'match:^.*: error: input\.ln:1: missing newline after .c. \(for .1d1\.1e5func.\)$' \
 	    "$lint2" 'input.ln'
 }
 
