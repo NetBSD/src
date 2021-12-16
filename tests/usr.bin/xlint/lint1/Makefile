@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.115 2021/12/06 23:20:26 rillig Exp $
+# $NetBSD: Makefile,v 1.116 2021/12/16 11:00:15 rillig Exp $
 
 NOMAN=		# defined
 MAX_MESSAGE=	348		# see lint1/err.c
@@ -11,6 +11,7 @@ TESTSDIR=	${TESTSBASE}/usr.bin/xlint/lint1
 
 TESTS_SH=	t_integration
 TESTS_SH_SRC_t_integration=	archsubdir.sh t_integration.sh
+CLEANFILES+=	archsubdir.sh
 
 archsubdir.sh:
 	@echo archsubdir=${ARCHSUBDIR} >${.TARGET}
