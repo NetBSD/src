@@ -1,4 +1,4 @@
-# $NetBSD: t_lint2.sh,v 1.10 2021/11/28 09:16:46 rillig Exp $
+# $NetBSD: t_lint2.sh,v 1.11 2021/12/16 03:44:48 rillig Exp $
 #
 # Copyright (c) 2021 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -175,6 +175,22 @@ error_cases_body()
 	test_error_ignored '0u0.0x3var_'
 }
 
+missing_newline_head()
+{
+	std_head
+}
+
+missing_newline_body()
+{
+	printf '1d1.1e5func' > 'input.ln'
+
+	# FIXME: The error message is not understandable.
+	# FIXME: The line number is off by one.
+	atf_check -s 'exit:1' \
+	    -e 'match:^.*: error: input\.ln:0: c \(for .1d1\.1e5func.\)$' \
+	    "$lint2" 'input.ln'
+}
+
 atf_init_test_cases()
 {
 	local i
@@ -200,4 +216,5 @@ atf_init_test_cases()
 	done
 
 	atf_add_test_case 'error_cases'
+	atf_add_test_case 'missing_newline'
 }
