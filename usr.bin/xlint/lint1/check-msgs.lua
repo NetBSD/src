@@ -1,5 +1,5 @@
 #! /usr/bin/lua
--- $NetBSD: check-msgs.lua,v 1.12 2021/09/04 12:30:46 rillig Exp $
+-- $NetBSD: check-msgs.lua,v 1.13 2021/12/16 21:14:58 rillig Exp $
 
 --[[
 
@@ -98,6 +98,8 @@ local function file_contains(filename, text)
 end
 
 
+-- Ensure that each test file for a particular message mentions the full text
+-- of that message and the message ID.
 local function check_test_files(msgs)
 
   local msgids = {}
@@ -107,13 +109,20 @@ local function check_test_files(msgs)
   table.sort(msgids)
 
   local testdir = "../../../tests/usr.bin/xlint/lint1"
-  for _, msgid in ipairs(msgids) do
-    local msg = msgs[msgid]:gsub("\\(.)", "%1")
-    local filename = ("%s/msg_%03d.c"):format(testdir, msgid)
-    if not file_contains(filename, msg) then
-      print_error("%s must contain: %s", filename, msg)
+  local cmd = ("cd '%s' && printf '%%s\\n' msg_[0-9][0-9][0-9]*.c"):format(testdir)
+  local filenames = assert(io.popen(cmd))
+  for filename in filenames:lines() do
+    local msgid = tonumber(filename:match("^msg_(%d%d%d)"))
+    if msgs[msgid] then
+      local unescaped_msg = msgs[msgid]:gsub("\\(.)", "%1")
+      local expected_text = ("%s [%d]"):format(unescaped_msg, msgid)
+      local fullname = ("%s/%s"):format(testdir, filename)
+      if not file_contains(fullname, expected_text) then
+        print_error("%s must contain: %s", fullname, expected_text)
+      end
     end
   end
+  filenames:close()
 end
 
 local function main(arg)
