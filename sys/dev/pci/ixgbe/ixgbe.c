@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe.c,v 1.299 2021/12/15 08:42:48 msaitoh Exp $ */
+/* $NetBSD: ixgbe.c,v 1.300 2021/12/16 10:48:49 msaitoh Exp $ */
 
 /******************************************************************************
 
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixgbe.c,v 1.299 2021/12/15 08:42:48 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixgbe.c,v 1.300 2021/12/16 10:48:49 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1020,6 +1020,23 @@ ixgbe_attach(device_t parent, device_t dev, void *aux)
 	/* NVM Image Version */
 	high = low = 0;
 	switch (hw->mac.type) {
+	case ixgbe_mac_82598EB:
+		/*
+		 * Print version from the dev starter version (0x29). The
+		 * location is the same as newer device's IXGBE_NVM_MAP_VER.
+		 */
+		hw->eeprom.ops.read(hw, IXGBE_NVM_MAP_VER, &nvmreg);
+		if (nvmreg == 0xffff)
+			break;
+		high = (nvmreg >> 12) & 0x0f;
+		low = (nvmreg >> 4) & 0xff;
+		id = nvmreg & 0x0f;
+		/*
+		 * The following output might not be correct. Some 82598 cards
+		 * have 0x1070 or 0x2090. 82598 spec update notes about 2.9.0.
+		 */
+		aprint_normal(" NVM Image Version %u.%u.%u,", high, low, id);
+		break;
 	case ixgbe_mac_X540:
 	case ixgbe_mac_X550EM_a:
 		hw->eeprom.ops.read(hw, IXGBE_NVM_IMAGE_VER, &nvmreg);
