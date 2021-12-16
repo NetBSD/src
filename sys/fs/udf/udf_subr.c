@@ -1,4 +1,4 @@
-/* $NetBSD: udf_subr.c,v 1.161 2021/12/16 22:19:08 reinoud Exp $ */
+/* $NetBSD: udf_subr.c,v 1.162 2021/12/16 22:24:10 reinoud Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_subr.c,v 1.161 2021/12/16 22:19:08 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_subr.c,v 1.162 2021/12/16 22:24:10 reinoud Exp $");
 #endif /* not lint */
 
 
@@ -614,7 +614,7 @@ udf_search_writing_tracks(struct udf_mount *ump)
 
 /*
  * Check if the blob starts with a good UDF tag. Tags are protected by a
- * checksum over the reader except one byte at position 4 that is the checksum
+ * checksum over the header except one byte at position 4 that is the checksum
  * itself.
  */
 
