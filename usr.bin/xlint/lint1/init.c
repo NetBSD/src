@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.214 2021/12/17 10:33:23 rillig Exp $	*/
+/*	$NetBSD: init.c,v 1.215 2021/12/17 11:06:15 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: init.c,v 1.214 2021/12/17 10:33:23 rillig Exp $");
+__RCSID("$NetBSD: init.c,v 1.215 2021/12/17 11:06:15 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -936,7 +936,8 @@ initialization_expr(struct initialization *in, tnode_t *tn)
 	 * in repeating the same check in lint.  If needed, support for these
 	 * edge cases could be added, but that would increase the complexity.
 	 */
-	if (is_scalar(tn->tn_type->t_tspec) &&
+	if ((is_scalar(tn->tn_type->t_tspec) ||
+	     tn->tn_type->t_tspec == FUNC) &&
 	    (tp->t_tspec == ARRAY || is_struct_or_union(tp->t_tspec)) &&
 	    bl != NULL) {
 		bl->bl_confused = true;
