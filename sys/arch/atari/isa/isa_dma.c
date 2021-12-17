@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_dma.c,v 1.13 2021/01/04 18:23:10 thorpej Exp $	*/
+/*	$NetBSD: isa_dma.c,v 1.14 2021/12/17 06:26:13 skrll Exp $	*/
 
 #define ISA_DMA_STATS
 
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isa_dma.c,v 1.13 2021/01/04 18:23:10 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isa_dma.c,v 1.14 2021/12/17 06:26:13 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -180,7 +180,7 @@ isadma_bounce_cookieflags(bus_dma_tag_t const t, bus_dmamap_t const map,
 	 */
 	if (avail_end <= t->_bounce_thresh ||
 	    (flags & ISABUS_DMA_32BIT) != 0) {
-		/* Bouncing not necessary due to memory size. */ 
+		/* Bouncing not necessary due to memory size. */
 		map->_dm_bounce_thresh = 0;
 	}
 	if (map->_dm_bounce_thresh != 0 ||
@@ -364,7 +364,7 @@ _isa_bus_dmamap_load(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
  */
 int
 _isa_bus_dmamap_load_mbuf(bus_dma_tag_t t, bus_dmamap_t map, struct mbuf *m0,
-    int flags)  
+    int flags)
 {
 	struct atari_isa_dma_cookie *cookie = map->_dm_cookie;
 	int error;

@@ -1,4 +1,4 @@
-/* $NetBSD: isadma_bounce.c,v 1.16 2020/11/18 02:14:13 thorpej Exp $ */
+/* $NetBSD: isadma_bounce.c,v 1.17 2021/12/17 06:26:13 skrll Exp $ */
 /* NetBSD: isadma_bounce.c,v 1.2 2000/06/01 05:49:36 thorpej Exp  */
 
 /*-
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: isadma_bounce.c,v 1.16 2020/11/18 02:14:13 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isadma_bounce.c,v 1.17 2021/12/17 06:26:13 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -164,7 +164,7 @@ isadma_bounce_cookiesize(bus_dmamap_t const map, int cookieflags)
 static int
 isadma_bounce_cookie_alloc(bus_dma_tag_t const t, bus_dmamap_t const map,
     int const flags)
-{        
+{
 	struct isadma_bounce_cookie *cookie;
 	int cookieflags = isadma_bounce_cookieflags(t, map);
 
@@ -181,7 +181,7 @@ isadma_bounce_cookie_alloc(bus_dma_tag_t const t, bus_dmamap_t const map,
 
 static void
 isadma_bounce_cookie_free(bus_dmamap_t const map)
-{        
+{
 	struct isadma_bounce_cookie *cookie = map->_dm_cookie;
 
 	if (cookie != NULL) {
