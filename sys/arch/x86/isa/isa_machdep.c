@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.c,v 1.50 2021/12/17 06:26:14 skrll Exp $	*/
+/*	$NetBSD: isa_machdep.c,v 1.51 2021/12/17 06:28:20 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isa_machdep.c,v 1.50 2021/12/17 06:26:14 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isa_machdep.c,v 1.51 2021/12/17 06:28:20 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -310,7 +310,7 @@ isa_mem_free(bus_space_tag_t t, bus_space_handle_t bsh, bus_size_t size)
  * in memory below the 16M boundary.  On DMA reads,
  * DMA happens to the bounce buffers, and is copied into
  * the caller's buffer.  On writes, data is copied into
- * but bounce buffer, and the DMA happens from those
+ * the bounce buffer, and the DMA happens from those
  * pages.  To software using the DMA mapping interface,
  * this looks simply like a data cache.
  *
