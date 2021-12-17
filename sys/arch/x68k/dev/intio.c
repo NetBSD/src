@@ -1,4 +1,4 @@
-/*	$NetBSD: intio.c,v 1.49 2021/08/07 16:19:07 thorpej Exp $	*/
+/*	$NetBSD: intio.c,v 1.50 2021/12/17 06:26:13 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intio.c,v 1.49 2021/08/07 16:19:07 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intio.c,v 1.50 2021/12/17 06:26:13 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -445,7 +445,7 @@ _intio_bus_dmamap_create(bus_dma_tag_t t, bus_size_t size, int nsegments,
 	/*
 	 * Allocate our cookie.
 	 */
-	cookie = malloc(cookiesize, M_DMAMAP, 
+	cookie = malloc(cookiesize, M_DMAMAP,
 	    ((flags & BUS_DMA_NOWAIT) ? M_NOWAIT : M_WAITOK) | M_ZERO);
 	if (cookie == NULL) {
 		error = ENOMEM;

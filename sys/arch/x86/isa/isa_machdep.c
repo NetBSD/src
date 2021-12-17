@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.c,v 1.49 2021/10/16 13:15:01 jmcneill Exp $	*/
+/*	$NetBSD: isa_machdep.c,v 1.50 2021/12/17 06:26:14 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isa_machdep.c,v 1.49 2021/10/16 13:15:01 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isa_machdep.c,v 1.50 2021/12/17 06:26:14 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -255,7 +255,7 @@ isa_intr_disestablish(isa_chipset_tag_t ic, void *arg)
 		panic("intr_disestablish: bogus irq");
 
 	intr_disestablish(ih);
-#endif	
+#endif
 }
 
 void

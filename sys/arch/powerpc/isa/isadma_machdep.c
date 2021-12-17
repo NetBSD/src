@@ -1,4 +1,4 @@
-/*	$NetBSD: isadma_machdep.c,v 1.11 2016/12/23 07:15:27 cherry Exp $	*/
+/*	$NetBSD: isadma_machdep.c,v 1.12 2021/12/17 06:26:13 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isadma_machdep.c,v 1.11 2016/12/23 07:15:27 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isadma_machdep.c,v 1.12 2021/12/17 06:26:13 skrll Exp $");
 
 #define ISA_DMA_STATS
 
@@ -130,7 +130,7 @@ struct powerpc_bus_dma_tag isa_bus_dma_tag = {
 	_bus_dmamem_free,
 	_bus_dmamem_map,
 	_bus_dmamem_unmap,
-	_bus_dmamem_mmap, 
+	_bus_dmamem_mmap,
 };
 
 /**********************************************************************
@@ -570,7 +570,7 @@ _isa_bus_dmamap_sync(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t offset,
 		 */
 		break;
 	    }
-	
+
 	case ID_BUFTYPE_UIO:
 		panic("_isa_bus_dmamap_sync: ID_BUFTYPE_UIO");
 		break;
