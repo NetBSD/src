@@ -1,4 +1,4 @@
-/*	$NetBSD: refresh.c,v 1.116 2021/09/07 01:23:09 rin Exp $	*/
+/*	$NetBSD: refresh.c,v 1.117 2021/12/17 03:50:18 uwe Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)refresh.c	8.7 (Berkeley) 8/13/94";
 #else
-__RCSID("$NetBSD: refresh.c,v 1.116 2021/09/07 01:23:09 rin Exp $");
+__RCSID("$NetBSD: refresh.c,v 1.117 2021/12/17 03:50:18 uwe Exp $");
 #endif
 #endif				/* not lint */
 
@@ -1916,7 +1916,7 @@ __unsetattr(int checkms)
 }
 
 #ifdef HAVE_WCHAR
-/* compare two cells on screen, must have the same forground/background,
+/* compare two cells on screen, must have the same foreground/background,
  * and the same sequence of non-spacing characters */
 static int
 celleq(__LDATA *x, __LDATA *y)
