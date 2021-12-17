@@ -1,4 +1,4 @@
-/* $NetBSD: hdafg.c,v 1.23 2020/06/11 02:39:30 thorpej Exp $ */
+/* $NetBSD: hdafg.c,v 1.24 2021/12/17 13:36:36 christos Exp $ */
 
 /*
  * Copyright (c) 2009 Precedence Technologies Ltd <support@precedence.co.uk>
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hdafg.c,v 1.23 2020/06/11 02:39:30 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hdafg.c,v 1.24 2021/12/17 13:36:36 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -2887,7 +2887,8 @@ hdafg_build_mixers(struct hdafg_softc *sc)
 		mx[index].mx_di.prev = mx[index].mx_di.next = AUDIO_MIXER_LAST;
 		mx[index].mx_di.un.v.num_channels = 2;	/* XXX */
 		mx[index].mx_di.mixer_class = HDAUDIO_MIXER_CLASS_OUTPUTS;
-		mx[index].mx_di.un.v.delta = 256 / (masterctl->ctl_step + 1);
+		mx[index].mx_di.un.v.delta = 256 / 
+		    (ctl->ctl_step ? ctl->ctl_step : 1);
 		strcpy(mx[index].mx_di.label.name, AudioNmaster);
 		strcpy(mx[index].mx_di.un.v.units.name, AudioNvolume);
 		hda_trace(sc, "  adding outputs.%s\n",
@@ -2922,7 +2923,8 @@ hdafg_build_mixers(struct hdafg_softc *sc)
 		mx[index].mx_di.type = AUDIO_MIXER_VALUE;
 		mx[index].mx_di.prev = mx[index].mx_di.next = AUDIO_MIXER_LAST;
 		mx[index].mx_di.un.v.num_channels = 2;	/* XXX */
-		mx[index].mx_di.un.v.delta = 256 / (ctl->ctl_step + 1);
+		mx[index].mx_di.un.v.delta = 256 /
+		    (ctl->ctl_step ? ctl->ctl_step : 1);
 		if (ctrlcnt[audiodev] > 0)
 			snprintf(mx[index].mx_di.label.name,
 			    sizeof(mx[index].mx_di.label.name),
