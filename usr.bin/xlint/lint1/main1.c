@@ -1,4 +1,4 @@
-/*	$NetBSD: main1.c,v 1.57 2021/08/28 13:29:26 rillig Exp $	*/
+/*	$NetBSD: main1.c,v 1.58 2021/12/17 00:05:24 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: main1.c,v 1.57 2021/08/28 13:29:26 rillig Exp $");
+__RCSID("$NetBSD: main1.c,v 1.58 2021/12/17 00:05:24 rillig Exp $");
 #endif
 
 #include <sys/types.h>
@@ -133,7 +133,17 @@ static	void	usage(void);
 static FILE *
 gcc_builtins(void)
 {
+	/* https://gcc.gnu.org/onlinedocs/gcc/Other-Builtins.html */
 	static const char builtins[] =
+	    "typedef typeof(sizeof(0)) __lint_size_t;\n"
+
+	    "void *alloca(__lint_size_t);\n"
+	    "void *__builtin_alloca(__lint_size_t);\n"
+	    "void *__builtin_alloca_with_align"
+		"(__lint_size_t, __lint_size_t);\n"
+	    "void *__builtin_alloca_with_align_and_max"
+		"(__lint_size_t, __lint_size_t, __lint_size_t);\n"
+
 	    "int __builtin_isinf(long double);\n"
 	    "int __builtin_isnan(long double);\n"
 	    "int __builtin_copysign(long double, long double);\n";
