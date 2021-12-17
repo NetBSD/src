@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.213 2021/12/17 09:12:45 rillig Exp $	*/
+/*	$NetBSD: init.c,v 1.214 2021/12/17 10:33:23 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: init.c,v 1.213 2021/12/17 09:12:45 rillig Exp $");
+__RCSID("$NetBSD: init.c,v 1.214 2021/12/17 10:33:23 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -161,7 +161,7 @@ struct initialization {
 	struct brace_level *in_brace_level;
 
 	/*
-	 * Is set as soon as a fatal error occurred in the initialization.
+	 * Is set when a structural error occurred in the initialization.
 	 * The effect is that the rest of the initialization is ignored
 	 * (parsed by yacc, expression trees built, but no initialization
 	 * takes place).
@@ -773,7 +773,7 @@ initialization_set_size_of_unknown_array(struct initialization *in)
 		return;
 
 	dim = in->in_brace_level->bl_max_subscript;
-	if (dim == 0 && in->in_err)
+	if (dim == 0 && (in->in_err || in->in_brace_level->bl_confused))
 		dim = 1;	/* prevent "empty array declaration: %s" */
 
 	update_type_of_array_of_unknown_size(in->in_sym, dim);
