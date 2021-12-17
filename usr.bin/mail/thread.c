@@ -1,4 +1,4 @@
-/*	$NetBSD: thread.c,v 1.12 2021/12/14 21:12:03 christos Exp $	*/
+/*	$NetBSD: thread.c,v 1.13 2021/12/17 13:14:54 christos Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #ifndef __lint__
-__RCSID("$NetBSD: thread.c,v 1.12 2021/12/14 21:12:03 christos Exp $");
+__RCSID("$NetBSD: thread.c,v 1.13 2021/12/17 13:14:54 christos Exp $");
 #endif /* not __lint__ */
 
 #include <assert.h>
@@ -594,6 +594,8 @@ first_visible_message(struct message *mp)
 
 	if (mp == NULL)
 		mp = current_thread.t_head;
+	if (mp == NULL)
+		return;
 
 	if (mp == NULL)
 		return NULL;
@@ -826,6 +828,9 @@ static void
 thread_array(struct key_sort_s *marray, size_t mcount, int cutit)
 {
 	struct message *parent;
+
+	if (mcount == 0)
+		return;
 
 	parent = marray[0].mp->m_plink;
 	qsort(marray, mcount, sizeof(*marray), qsort_cmpfn);
