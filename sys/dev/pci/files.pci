@@ -1,4 +1,4 @@
-#	$NetBSD: files.pci,v 1.439 2021/11/12 06:51:04 skrll Exp $
+#	$NetBSD: files.pci,v 1.440 2021/12/17 08:27:06 knakahara Exp $
 #
 # Config file and device description for machine-independent PCI code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -677,6 +677,8 @@ file	dev/pci/if_wm.c			wm
 defflag	opt_if_wm.h	WM_EVENT_COUNTERS WM_DISABLE_EVENT_COUNTERS
 defparam opt_if_wm.h	WM_RX_PROCESS_LIMIT_DEFAULT
 			WM_RX_INTR_PROCESS_LIMIT_DEFAULT
+			WM_TX_PROCESS_LIMIT_DEFAULT
+			WM_TX_INTR_PROCESS_LIMIT_DEFAULT
 			WM_DISABLE_MSI
 			WM_DISABLE_MSIX
 
