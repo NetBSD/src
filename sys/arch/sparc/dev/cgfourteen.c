@@ -1,4 +1,4 @@
-/*	$NetBSD: cgfourteen.c,v 1.91 2021/12/17 18:51:02 macallan Exp $ */
+/*	$NetBSD: cgfourteen.c,v 1.92 2021/12/17 19:27:57 macallan Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -1042,6 +1042,12 @@ cg14_set_depth(struct cgfourteen_softc *sc, int depth)
 {
 	int i;
 
+	/* init mask */
+	if (sc->sc_sx != NULL) {
+		sc->sc_mask = 0xffffffff;
+		sx_write(sc->sc_sx, SX_QUEUED(R_MASK), sc->sc_mask);
+	}
+
 	if (sc->sc_depth == depth)
 		return;
 
@@ -1226,6 +1232,13 @@ cg14_rectfill_a(void *cookie, int dstx, int dsty,
 	    sc->sc_vd.active->scr_ri.ri_devcmap[(attr >> 24 & 0xf)]);
 }
 
+static inline void
+cg14_set_mask(struct cgfourteen_softc *sc, uint32_t mask)
+{
+	if (mask == sc->sc_mask) return;
+	sc->sc_mask = mask;
+	sx_write(sc->sc_sx, SX_QUEUED(R_MASK), mask);
+}
 /*
  * invert a rectangle, used only to (un)draw the cursor.
  * - does a scanline at a time
@@ -1258,27 +1271,27 @@ cg14_invert(struct cgfourteen_softc *sc, int x, int y, int wi, int he)
 	}
 	words = (wi + pre + 3) >> 2;
 	cnt = words - pwrds;
-	sx_write(sc->sc_sx, SX_QUEUED(7), 0xe0e0e0e0); /* four red pixels */
+
 	for (line = 0; line < he; line++) {
 		pptr = addr;
 		/* load a whole scanline */
 		sta(pptr & ~7, ASI_SX, SX_LD(8, words - 1, pptr & 7));
 		reg = 8;
 		if (pre) {
-			sx_write(sc->sc_sx, SX_QUEUED(R_MASK), lmask);
+			cg14_set_mask(sc, lmask);
 			sx_write(sc->sc_sx, SX_INSTRUCTIONS,
 			    SX_ROPB(8, 8, 40, 0));
 			reg++;
 		}
 		if (cnt > 0) {
-			sx_write(sc->sc_sx, SX_QUEUED(R_MASK), 0xffffffff);
+			cg14_set_mask(sc, 0xffffffff);
 			/* XXX handle cnt > 16 */
 			sx_write(sc->sc_sx, SX_INSTRUCTIONS,
 			    SX_ROP(reg, reg, reg + 32, cnt - 1));
 			reg += cnt;
 		}
 		if (post) {
-			sx_write(sc->sc_sx, SX_QUEUED(R_MASK), rmask);
+			cg14_set_mask(sc, rmask);
 			sx_write(sc->sc_sx, SX_INSTRUCTIONS,
 			    SX_ROPB(reg, 7, reg + 32, 0));
 			reg++;
@@ -1500,8 +1513,7 @@ cg14_putchar(void *cookie, int row, int col, u_int c, long attr)
 			uint32_t reg;
 			for (i = 0; i < he; i++) {
 				reg = *data8;
-				sx_write(sc->sc_sx, SX_QUEUED(R_MASK),
-				    reg << 24);
+				cg14_set_mask(sc, reg << 24);
 				sta(addr & ~7, ASI_SX, SX_STBS(8, wi - 1, addr & 7));
 				data8++;
 				addr += stride;
@@ -1513,8 +1525,7 @@ cg14_putchar(void *cookie, int row, int col, u_int c, long attr)
 			uint32_t reg;
 			for (i = 0; i < he; i++) {
 				reg = *data16;
-				sx_write(sc->sc_sx, SX_QUEUED(R_MASK),
-				    reg << 16);
+				cg14_set_mask(sc, reg << 16);
 				sta(addr & ~7, ASI_SX, SX_STBS(8, wi - 1, addr & 7));
 				data16++;
 				addr += stride;
