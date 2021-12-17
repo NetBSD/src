@@ -1,4 +1,4 @@
-/*	$NetBSD: color.c,v 1.44 2021/09/06 07:45:48 rin Exp $	*/
+/*	$NetBSD: color.c,v 1.45 2021/12/17 03:50:18 uwe Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: color.c,v 1.44 2021/09/06 07:45:48 rin Exp $");
+__RCSID("$NetBSD: color.c,v 1.45 2021/12/17 03:50:18 uwe Exp $");
 #endif				/* not lint */
 
 #include "curses.h"
@@ -536,7 +536,7 @@ __set_color( /*ARGSUSED*/ WINDOW *win, attr_t attr)
 	    _cursesi_screen->colour_pairs[pair].fore,
 	    _cursesi_screen->colour_pairs[pair].back);
 	switch (_cursesi_screen->color_type) {
-	/* Set ANSI forground and background colours */
+	/* Set ANSI foreground and background colours */
 	case COLOR_ANSI:
 		if (_cursesi_screen->colour_pairs[pair].fore < 0 ||
 		    _cursesi_screen->colour_pairs[pair].back < 0)
@@ -583,7 +583,7 @@ __unset_color(WINDOW *win)
 {
 	__CTRACE(__CTRACE_COLOR, "__unset_color\n");
 	switch (_cursesi_screen->color_type) {
-	/* Clear ANSI forground and background colours */
+	/* Clear ANSI foreground and background colours */
 	case COLOR_ANSI:
 		if (orig_pair != NULL) {
 			tputs(orig_pair, 0, __cputchar);
