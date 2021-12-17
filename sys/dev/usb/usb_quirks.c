@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_quirks.c,v 1.100 2021/10/16 05:40:46 mrg Exp $	*/
+/*	$NetBSD: usb_quirks.c,v 1.101 2021/12/17 08:17:40 mrg Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_quirks.c,v 1.30 2003/01/02 04:15:55 imp Exp $	*/
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb_quirks.c,v 1.100 2021/10/16 05:40:46 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb_quirks.c,v 1.101 2021/12/17 08:17:40 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -184,7 +184,11 @@ Static const struct usbd_quirk_entry {
  /* Devices which should be ignored by uhid */
  { USB_VENDOR_APC,		USB_PRODUCT_APC_UPS,			ANY,
 	{ UQ_HID_IGNORE, NULL }},
+ { USB_VENDOR_CYBERPOWER,	USB_PRODUCT_CYBERPOWER_UPS0,		ANY,
+	{ UQ_HID_IGNORE, NULL }},
  { USB_VENDOR_CYBERPOWER,	USB_PRODUCT_CYBERPOWER_UPS,		ANY,
+	{ UQ_HID_IGNORE, NULL }},
+ { USB_VENDOR_CYBERPOWER,	USB_PRODUCT_CYBERPOWER_UPS2,		ANY,
 	{ UQ_HID_IGNORE, NULL }},
  { USB_VENDOR_GRETAGMACBETH,	ANY,					ANY,
 	{ UQ_HID_IGNORE, NULL }},
