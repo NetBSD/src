@@ -1,4 +1,4 @@
-/*	$NetBSD: cgfourteenvar.h,v 1.18 2016/04/30 05:23:03 macallan Exp $ */
+/*	$NetBSD: cgfourteenvar.h,v 1.19 2021/12/17 19:27:57 macallan Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -98,6 +98,7 @@ struct cgfourteen_softc {
 #if NSX > 0
 	struct sx_softc *sc_sx;
 	uint32_t sc_fb_paddr;
+	uint32_t sc_mask;
 	glyphcache sc_gc;
 #endif /* NSX > 0 */
 #endif
