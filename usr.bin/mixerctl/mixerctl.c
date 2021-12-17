@@ -1,4 +1,4 @@
-/*	$NetBSD: mixerctl.c,v 1.28 2021/12/17 13:42:06 christos Exp $	*/
+/*	$NetBSD: mixerctl.c,v 1.29 2021/12/17 13:50:10 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: mixerctl.c,v 1.28 2021/12/17 13:42:06 christos Exp $");
+__RCSID("$NetBSD: mixerctl.c,v 1.29 2021/12/17 13:50:10 christos Exp $");
 #endif
 
 #include <stdio.h>
@@ -46,20 +46,18 @@ __RCSID("$NetBSD: mixerctl.c,v 1.28 2021/12/17 13:42:06 christos Exp $");
 
 #include <paths.h>
 
-FILE *out = stdout;
-int vflag = 0;
+static FILE *out = stdout;
+static int vflag = 0;
 
-char *prog;
-
-struct field {
+static struct field {
 	char *name;
 	mixer_ctrl_t *valp;
 	mixer_devinfo_t *infp;
 	char changed;
 } *fields, *rfields;
 
-mixer_ctrl_t *values;
-mixer_devinfo_t *infos;
+static mixer_ctrl_t *values;
+static mixer_devinfo_t *infos;
 
 static const char mixer_path[] = _PATH_MIXER;
 
@@ -70,12 +68,12 @@ catstr(char *p, char *q)
 
 	asprintf(&r, "%s.%s", p, q);
 	if (!r)
-		err(1, "malloc");
+		err(EXIT_FAILURE, "malloc");
 	return r;
 }
 
 static struct field *
-findfield(char *name)
+findfield(const char *name)
 {
 	int i;
 	for (i = 0; fields[i].name; i++)
@@ -134,7 +132,7 @@ prfield(struct field *p, const char *sep, int prvalset)
 		break;
 	default:
 		printf("\n");
-		errx(1, "Invalid format.");
+		errx(EXIT_FAILURE, "Invalid format %d", m->type);
 	}
 }
 
@@ -210,7 +208,7 @@ rdfield(struct field *p, char *q)
 		}
 		break;
 	default:
-		errx(1, "Invalid format.");
+		errx(EXIT_FAILURE, "Invalid format %d", m->type);
 	}
 	p->changed = 1;
 	return 1;
@@ -249,7 +247,7 @@ incfield(struct field *p, int inc)
 		}
 		break;
 	default:
-		errx(1, "Invalid format.");
+		errx(EXIT_FAILURE, "Invalid format %d", m->type);
 	}
 	p->changed = 1;
 	return 1;
@@ -300,12 +298,13 @@ wrarg(int fd, char *arg, const char *sep)
 	else
 		r = incfield(p, incdec);
 	if (r) {
-		if (ioctl(fd, AUDIO_MIXER_WRITE, p->valp) < 0)
+		if (ioctl(fd, AUDIO_MIXER_WRITE, p->valp) == -1)
 			warn("AUDIO_MIXER_WRITE");
 		else if (sep) {
 			*p->valp = val;
 			prfield(p, ": ", 0);
-			ioctl(fd, AUDIO_MIXER_READ, p->valp);
+			if (ioctl(fd, AUDIO_MIXER_READ, p->valp) == -1)
+				warn("AUDIO_MIXER_READ");
 			printf(" -> ");
 			prfield(p, 0, 0);
 			printf("\n");
@@ -328,10 +327,12 @@ prarg(int fd, char *arg, const char *sep)
 static inline void __dead
 usage(void)
 {
-	fprintf(out, "%s [-d file] [-v] [-n] name ...\n", prog);
-	fprintf(out, "%s [-d file] [-v] [-n] -w name=value ...\n",prog);
-	fprintf(out, "%s [-d file] [-v] [-n] -a\n", prog);
-	exit(0);
+	const char *prog = getprogname();
+
+	fprintf(stderr, "Usage\t%s [-d file] [-v] [-n] name ...\n", prog);
+	fprintf(stderr, "\t%s [-d file] [-v] [-n] -w name=value ...\n",prog);
+	fprintf(stderr, "\t%s [-d file] [-v] [-n] -a\n", prog);
+	exit(EXIT_FAILURE);
 }
 
 int
@@ -348,7 +349,6 @@ main(int argc, char **argv)
 	if (file == NULL)
 		file = mixer_path;
 
-	prog = *argv;
 
 	while ((ch = getopt(argc, argv, "ad:f:nvw")) != -1) {
 		switch(ch) {
@@ -381,17 +381,17 @@ main(int argc, char **argv)
 
 	fd = open(file, O_RDWR);
 	/* Try with mixer0 but only if using the default device. */
-	if (fd < 0 && file == mixer_path) {
+	if (fd == -1 && file == mixer_path) {
 		file = _PATH_MIXER0;
 		fd = open(file, O_RDWR);
 	}
 
-	if (fd < 0)
-		err(1, "%s", file);
+	if (fd == -1)
+		err(EXIT_FAILURE, "Can't open `%s'", file);
 
 	for (ndev = 0; ; ndev++) {
 		dinfo.index = ndev;
-		if (ioctl(fd, AUDIO_MIXER_DEVINFO, &dinfo) < 0)
+		if (ioctl(fd, AUDIO_MIXER_DEVINFO, &dinfo) == -1)
 			break;
 	}
 	rfields = calloc(ndev, sizeof *rfields);
@@ -401,7 +401,8 @@ main(int argc, char **argv)
 
 	for (i = 0; i < ndev; i++) {
 		infos[i].index = i;
-		ioctl(fd, AUDIO_MIXER_DEVINFO, &infos[i]);
+		if (ioctl(fd, AUDIO_MIXER_DEVINFO, &infos[i]) == -1)
+			warn("AUDIO_MIXER_DEVINFO for %d", i);
 	}
 
 	for (i = 0; i < ndev; i++) {
@@ -415,10 +416,11 @@ main(int argc, char **argv)
 		values[i].type = infos[i].type;
 		if (infos[i].type != AUDIO_MIXER_CLASS) {
 			values[i].un.value.num_channels = 2;
-			if (ioctl(fd, AUDIO_MIXER_READ, &values[i]) < 0) {
+			if (ioctl(fd, AUDIO_MIXER_READ, &values[i]) == -1) {
 				values[i].un.value.num_channels = 1;
-				if (ioctl(fd, AUDIO_MIXER_READ, &values[i]) < 0)
-					err(1, "AUDIO_MIXER_READ");
+				if (ioctl(fd, AUDIO_MIXER_READ, &values[i])
+				    == -1)
+					err(EXIT_FAILURE, "AUDIO_MIXER_READ");
 			}
 		}
 	}
@@ -460,5 +462,5 @@ main(int argc, char **argv)
 		}
 	} else
 		usage();
-	exit(0);
+	return EXIT_SUCCESS;
 }
