@@ -1,4 +1,4 @@
-/* $NetBSD: isadma_bounce.c,v 1.15 2021/05/07 16:58:33 thorpej Exp $ */
+/* $NetBSD: isadma_bounce.c,v 1.16 2021/12/17 06:28:20 skrll Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: isadma_bounce.c,v 1.15 2021/05/07 16:58:33 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isadma_bounce.c,v 1.16 2021/12/17 06:28:20 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -112,7 +112,7 @@ isadma_bounce_cookieflags(bus_dma_tag_t const t, bus_dmamap_t const map)
 	 * in memory below the 16M boundary.  On DMA reads,
 	 * DMA happens to the bounce buffers, and is copied into
 	 * the caller's buffer.  On writes, data is copied into
-	 * but bounce buffer, and the DMA happens from those
+	 * the bounce buffer, and the DMA happens from those
 	 * pages.  To software using the DMA mapping interface,
 	 * this looks simply like a data cache.
 	 *
