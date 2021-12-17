@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.3 2021/12/17 09:12:46 rillig Exp $	*/
+/*	$NetBSD: init.c,v 1.4 2021/12/17 10:22:30 rillig Exp $	*/
 # 3 "init.c"
 
 /*
@@ -42,3 +42,12 @@ const histogram_entry hgr[] = {
 	"odd", 5,
 	"even", 5,
 };
+
+
+/* Initialization with fewer braces than usual, must still be accepted. */
+struct {
+	int x, y;
+} points[] = {
+	0, 0, 3, 0, 0, 4, 3, 4
+};
+/* expect-1: error: empty array declaration: points [190] */
