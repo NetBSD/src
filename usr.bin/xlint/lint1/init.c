@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.215 2021/12/17 11:06:15 rillig Exp $	*/
+/*	$NetBSD: init.c,v 1.216 2021/12/17 17:21:48 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: init.c,v 1.215 2021/12/17 11:06:15 rillig Exp $");
+__RCSID("$NetBSD: init.c,v 1.216 2021/12/17 17:21:48 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -537,49 +537,6 @@ brace_level_debug(const struct brace_level *bl)
 #define brace_level_debug(level) do { } while (false)
 #endif
 
-static const type_t *
-brace_level_sub_type_struct_or_union(const struct brace_level *bl)
-{
-
-	if (bl->bl_member == NULL) {
-		/* too many struct/union initializers */
-		error(172);
-		return NULL;
-	}
-
-	lint_assert(!is_unnamed(bl->bl_member));
-	return sym_type(bl->bl_member);
-}
-
-static const type_t *
-brace_level_sub_type_array(const struct brace_level *bl, bool is_string)
-{
-
-	if (!bl->bl_confused && !bl->bl_type->t_incomplete_array &&
-	    bl->bl_subscript >= (size_t)bl->bl_type->t_dim) {
-		/* too many array initializers, expected %d */
-		error(173, bl->bl_type->t_dim);
-	}
-
-	if (is_string && bl->bl_subscript == 0 &&
-	    bl->bl_type->t_subt->t_tspec != ARRAY)
-		return bl->bl_type;
-
-	return bl->bl_type->t_subt;
-}
-
-static const type_t *
-brace_level_sub_type_scalar(const struct brace_level *bl)
-{
-
-	if (bl->bl_scalar_done) {
-		/* too many initializers */
-		error(174);
-	}
-
-	return bl->bl_type;
-}
-
 /* Return the type of the sub-object that is currently being initialized. */
 static const type_t *
 brace_level_sub_type(const struct brace_level *bl, bool is_string)
@@ -591,11 +548,34 @@ brace_level_sub_type(const struct brace_level *bl, bool is_string)
 	switch (bl->bl_type->t_tspec) {
 	case STRUCT:
 	case UNION:
-		return brace_level_sub_type_struct_or_union(bl);
+		if (bl->bl_member == NULL) {
+			/* too many struct/union initializers */
+			error(172);
+			return NULL;
+		}
+
+		lint_assert(!is_unnamed(bl->bl_member));
+		return sym_type(bl->bl_member);
+
 	case ARRAY:
-		return brace_level_sub_type_array(bl, is_string);
+		if (!bl->bl_confused && !bl->bl_type->t_incomplete_array &&
+		    bl->bl_subscript >= (size_t)bl->bl_type->t_dim) {
+			/* too many array initializers, expected %d */
+			error(173, bl->bl_type->t_dim);
+		}
+
+		if (is_string && bl->bl_subscript == 0 &&
+		    bl->bl_type->t_subt->t_tspec != ARRAY)
+			return bl->bl_type;
+		return bl->bl_type->t_subt;
+
 	default:
-		return brace_level_sub_type_scalar(bl);
+		if (bl->bl_scalar_done) {
+			/* too many initializers */
+			error(174);
+		}
+
+		return bl->bl_type;
 	}
 }
 
