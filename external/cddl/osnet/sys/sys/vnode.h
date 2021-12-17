@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode.h,v 1.20 2021/07/18 07:22:22 kardel Exp $	*/
+/*	$NetBSD: vnode.h,v 1.21 2021/12/17 08:07:12 simonb Exp $	*/
 
 /*
  * CDDL HEADER START
@@ -227,6 +227,8 @@ vattr_init_mask(vattr_t *vap)
 		vap->va_mask |= AT_MTIME;
 	if (vap->va_mode != (mode_t)VNOVAL)
 		vap->va_mask |= AT_MODE;
+	if (vap->va_flags != VNOVAL)
+		vap->va_mask |= AT_XVATTR;
 }
 
 #define	FCREAT	O_CREAT
