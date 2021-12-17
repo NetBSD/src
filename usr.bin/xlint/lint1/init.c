@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.212 2021/12/17 01:24:00 rillig Exp $	*/
+/*	$NetBSD: init.c,v 1.213 2021/12/17 09:12:45 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: init.c,v 1.212 2021/12/17 01:24:00 rillig Exp $");
+__RCSID("$NetBSD: init.c,v 1.213 2021/12/17 09:12:45 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -766,11 +766,17 @@ done:
 static void
 initialization_set_size_of_unknown_array(struct initialization *in)
 {
+	size_t dim;
 
-	if (in->in_sym->s_type->t_incomplete_array &&
-	    in->in_brace_level->bl_enclosing == NULL)
-		update_type_of_array_of_unknown_size(in->in_sym,
-		    in->in_brace_level->bl_max_subscript);
+	if (!(in->in_sym->s_type->t_incomplete_array &&
+	      in->in_brace_level->bl_enclosing == NULL))
+		return;
+
+	dim = in->in_brace_level->bl_max_subscript;
+	if (dim == 0 && in->in_err)
+		dim = 1;	/* prevent "empty array declaration: %s" */
+
+	update_type_of_array_of_unknown_size(in->in_sym, dim);
 }
 
 static void
@@ -778,12 +784,11 @@ initialization_end_brace_level(struct initialization *in)
 {
 	struct brace_level *bl;
 
-	if (in->in_err)
-		return;
-
 	debug_enter();
 
 	initialization_set_size_of_unknown_array(in);
+	if (in->in_err)
+		goto done;
 
 	bl = in->in_brace_level;
 	in->in_brace_level = bl->bl_enclosing;
@@ -795,6 +800,7 @@ initialization_end_brace_level(struct initialization *in)
 	if (bl != NULL)
 		designation_reset(&bl->bl_designation);
 
+done:
 	initialization_debug(in);
 	debug_leave();
 }
@@ -853,8 +859,15 @@ initialization_init_array_using_string(struct initialization *in, tnode_t *tn)
 	tp = initialization_sub_type(in, true);
 	strg = tn->tn_string;
 
-	if (!is_character_array(tp, strg->st_tspec))
+	if (!is_character_array(tp, strg->st_tspec)) {
+		/* TODO: recursively try first member or [0] */
+		if (is_struct_or_union(tp->t_tspec) ||
+		    (tp->t_tspec == ARRAY &&
+		     is_struct_or_union(tp->t_subt->t_tspec)))
+			in->in_err = true;
 		return false;
+	}
+
 	if (bl != NULL && tp->t_tspec != ARRAY && bl->bl_subscript != 0)
 		return false;
 
@@ -901,6 +914,8 @@ initialization_expr(struct initialization *in, tnode_t *tn)
 		goto done;
 	if (initialization_init_array_using_string(in, tn))
 		goto advance;
+	if (in->in_err)
+		goto done;
 
 	if (bl != NULL)
 		brace_level_apply_designation(bl);
