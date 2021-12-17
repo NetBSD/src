@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.211 2021/12/16 23:46:21 rillig Exp $	*/
+/*	$NetBSD: init.c,v 1.212 2021/12/17 01:24:00 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: init.c,v 1.211 2021/12/16 23:46:21 rillig Exp $");
+__RCSID("$NetBSD: init.c,v 1.212 2021/12/17 01:24:00 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -190,7 +190,7 @@ has_automatic_storage_duration(const sym_t *sym)
 
 /* C99 6.7.8p14, 6.7.8p15 */
 static bool
-is_string_array(const type_t *tp, tspec_t t)
+is_character_array(const type_t *tp, tspec_t t)
 {
 	tspec_t st;
 
@@ -853,7 +853,7 @@ initialization_init_array_using_string(struct initialization *in, tnode_t *tn)
 	tp = initialization_sub_type(in, true);
 	strg = tn->tn_string;
 
-	if (!is_string_array(tp, strg->st_tspec))
+	if (!is_character_array(tp, strg->st_tspec))
 		return false;
 	if (bl != NULL && tp->t_tspec != ARRAY && bl->bl_subscript != 0)
 		return false;
