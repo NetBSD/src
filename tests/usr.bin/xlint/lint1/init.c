@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.5 2021/12/17 10:33:23 rillig Exp $	*/
+/*	$NetBSD: init.c,v 1.6 2021/12/17 10:51:45 rillig Exp $	*/
 # 3 "init.c"
 
 /*
@@ -54,4 +54,24 @@ struct {
 	int x, y;
 } points[] = {
 	0, 0, 3, 0, 0, 4, 3, 4
+};
+
+
+/*
+ * Initialization with fewer braces than usual, must still be accepted.
+ *
+ * TODO: Properly handle this situation; as of init.c 1.214 from 2021-12-17,
+ *  the below initialization sets in->in_err but shouldn't.
+ */
+void do_nothing(void);
+
+struct {
+	void (*action_1) (void);
+	void (*action_2) (void);
+} actions[1] = {
+	/* expect+1: error: cannot initialize 'struct <unnamed>' from 'pointer to function(void) returning void' [185] */
+	do_nothing,
+	/* expect+2: error: too many array initializers, expected 1 [173] */
+	/* expect+1: error: cannot initialize 'struct <unnamed>' from 'pointer to function(void) returning void' [185] */
+	do_nothing,
 };
