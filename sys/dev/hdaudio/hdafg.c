@@ -1,4 +1,4 @@
-/* $NetBSD: hdafg.c,v 1.24 2021/12/17 13:36:36 christos Exp $ */
+/* $NetBSD: hdafg.c,v 1.25 2021/12/17 17:02:40 kre Exp $ */
 
 /*
  * Copyright (c) 2009 Precedence Technologies Ltd <support@precedence.co.uk>
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hdafg.c,v 1.24 2021/12/17 13:36:36 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hdafg.c,v 1.25 2021/12/17 17:02:40 kre Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -2888,7 +2888,7 @@ hdafg_build_mixers(struct hdafg_softc *sc)
 		mx[index].mx_di.un.v.num_channels = 2;	/* XXX */
 		mx[index].mx_di.mixer_class = HDAUDIO_MIXER_CLASS_OUTPUTS;
 		mx[index].mx_di.un.v.delta = 256 / 
-		    (ctl->ctl_step ? ctl->ctl_step : 1);
+		    (masterctl->ctl_step ? masterctl->ctl_step : 1);
 		strcpy(mx[index].mx_di.label.name, AudioNmaster);
 		strcpy(mx[index].mx_di.un.v.units.name, AudioNvolume);
 		hda_trace(sc, "  adding outputs.%s\n",
