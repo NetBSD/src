@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.1 2021/07/10 09:24:27 rillig Exp $	*/
+/*	$NetBSD: init.c,v 1.2 2021/12/17 01:00:50 rillig Exp $	*/
 # 3 "init.c"
 
 /*
@@ -22,3 +22,21 @@ double array_with_empty_initializer[3] = {};
 struct {
 	int member;
 } empty_struct_initializer = {};
+
+
+typedef struct {
+	const char *key;
+	int n;
+} histogram_entry;
+
+/*
+ * The C standards allow omitting braces around the structural levels.  For
+ * human readers, it is usually clearer to include them.
+ *
+ * Seen in external/ibm-public/postfix/dist/src/util/dict.c(624).
+ */
+const histogram_entry hgr[] = {
+	/* expect+1: error: cannot initialize 'struct typedef histogram_entry' from 'pointer to char' [185] */
+	"odd", 5,
+	"even", 5,
+};
