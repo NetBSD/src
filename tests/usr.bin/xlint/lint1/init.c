@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.2 2021/12/17 01:00:50 rillig Exp $	*/
+/*	$NetBSD: init.c,v 1.3 2021/12/17 09:12:46 rillig Exp $	*/
 # 3 "init.c"
 
 /*
@@ -34,9 +34,11 @@ typedef struct {
  * human readers, it is usually clearer to include them.
  *
  * Seen in external/ibm-public/postfix/dist/src/util/dict.c(624).
+ *
+ * TODO: Properly handle this situation; as of init.c 1.212 from 2021-12-17,
+ *  the below initialization sets in->in_err but shouldn't.
  */
 const histogram_entry hgr[] = {
-	/* expect+1: error: cannot initialize 'struct typedef histogram_entry' from 'pointer to char' [185] */
 	"odd", 5,
 	"even", 5,
 };
