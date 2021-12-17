@@ -1,4 +1,4 @@
-/*	$NetBSD: d_c99_init.c,v 1.33 2021/04/09 23:03:26 rillig Exp $	*/
+/*	$NetBSD: d_c99_init.c,v 1.34 2021/12/17 15:52:30 rillig Exp $	*/
 # 3 "d_c99_init.c"
 
 /*
@@ -15,8 +15,9 @@ typedef struct any {
 } any;
 
 
-// C99 6.7.8p11 says "optionally enclosed in braces".  There is no limitation
-// on the number of brace pairs.
+// C99 6.7.8p11 says "optionally enclosed in braces".  Whether this wording
+// means "a single pair of braces" or "as many pairs of braces as you want"
+// is left for interpretation to the reader.
 int scalar_without_braces = 3;
 int scalar_with_optional_braces = { 3 };
 int scalar_with_too_many_braces = {{ 3 }};
@@ -262,10 +263,25 @@ struct ten ten = {
 	6,
 };
 
-int c99_6_7_8_p26_example3[4][3] = {
+
+/*
+ * ISO C99 6.7.8 provides a large list of examples for initialization,
+ * covering all tricky edge cases.
+ */
+
+int c99_6_7_8_p24_example1_i = 3.5;
+double _Complex c99_6_7_8_p24_example1_c = 5 + 3 * 1.0fi;
+
+int c99_6_7_8_p25_example2[] = { 1, 3, 5 };
+
+int c99_6_7_8_p26_example3a[4][3] = {
 	{ 1, 3, 5 },
 	{ 2, 4, 6 },
 	{ 3, 5, 7 },
+};
+
+int c99_6_7_8_p26_example3b[4][3] = {
+	1, 3, 5, 2, 4, 6, 3, 5, 7
 };
 
 int c99_6_7_8_p27_example4[4][3] = {
@@ -275,8 +291,8 @@ int c99_6_7_8_p27_example4[4][3] = {
 struct {
 	int a[3], b;
 } c99_6_7_8_p28_example5[] = {
-	{ 1 },		/* just parsed, not checked in detail */
-	2,		/* just parsed, not checked in detail */
+	{ 1 },
+	2,
 };
 
 short c99_6_7_8_p29_example6a[4][3][2] = {
@@ -304,10 +320,59 @@ short c99_6_7_8_p29_example6c[4][3][2] = {
 	}
 };
 
+void
+c99_6_7_8_p31_example7(void)
+{
+	typedef int A[];
+
+	A a = { 1, 2 }, b = { 3, 4, 5 };
+
+	/* expect+1: error: negative array dimension (-8) [20] */
+	typedef int reveal_sizeof_a[-(int)(sizeof(a))];
+	/* expect+1: error: negative array dimension (-12) [20] */
+	typedef int reveal_sizeof_b[-(int)(sizeof(b))];
+}
+
+char c99_6_7_8_p32_example8_s1[] = "abc",
+     c99_6_7_8_p32_example8_t1[3] = "abc";
+char c99_6_7_8_p32_example8_s2[] = { 'a', 'b', 'c', '\0' },
+     c99_6_7_8_p32_example8_t2[3] = { 'a', 'b', 'c' };
+char *c99_6_7_8_p32_example8_p = "abc";
+
+enum { member_one, member_two };
+const char *c99_6_7_8_p33_example9[] = {
+	[member_two] = "member two",
+	[member_one] = "member one",
+};
+
+struct {
+	int quot, rem;
+} c99_6_7_8_p34_example10 = { .quot = 2, .rem = -1 };
+
+struct { int a[3], b; } c99_6_7_8_p35_example11[] =
+	{ [0].a = {1}, [1].a[0] = 2 };
+
+int c99_6_7_8_p36_example12a[16] = {
+	1, 3, 5, 7, 9, [16-5] = 8, 6, 4, 2, 0
+};
+
+int c99_6_7_8_p36_example12b[8] = {
+	1, 3, 5, 7, 9, [8-5] = 8, 6, 4, 2, 0
+};
+
+union {
+	int first_member;
+	void *second_member;
+	unsigned char any_member;
+} c99_6_7_8_p38_example13 = { .any_member = 42 };
+
+
 /*
  * During initialization of an object of type array of unknown size, the type
  * information on the symbol is updated in-place.  Ensure that this happens on
  * a copy of the type.
+ *
+ * C99 6.7.8p31 example 7
  */
 void
 ensure_array_type_is_not_modified_during_initialization(void)
@@ -324,6 +389,9 @@ ensure_array_type_is_not_modified_during_initialization(void)
 	case 12:
 		break;
 	}
+
+	/* expect+1: error: negative array dimension (-12) [20] */
+	typedef int reveal_sizeof_a1[-(int)(sizeof(a1))];
 }
 
 struct point unknown_member_name_beginning = {
