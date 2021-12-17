@@ -1,4 +1,1 @@
 init.c(16): error: empty array declaration: empty_array_with_initializer [190]
-init.c(73): error: cannot initialize 'struct <unnamed>' from 'pointer to function(void) returning void' [185]
-init.c(76): error: too many array initializers, expected 1 [173]
-init.c(76): error: cannot initialize 'struct <unnamed>' from 'pointer to function(void) returning void' [185]
