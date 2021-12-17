@@ -1,4 +1,4 @@
-/*	$NetBSD: mixerctl.c,v 1.27 2017/02/23 14:09:11 kre Exp $	*/
+/*	$NetBSD: mixerctl.c,v 1.28 2021/12/17 13:42:06 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: mixerctl.c,v 1.27 2017/02/23 14:09:11 kre Exp $");
+__RCSID("$NetBSD: mixerctl.c,v 1.28 2021/12/17 13:42:06 christos Exp $");
 #endif
 
 #include <stdio.h>
@@ -139,6 +139,16 @@ prfield(struct field *p, const char *sep, int prvalset)
 }
 
 static int
+clip(int vol)
+{
+	if (vol <= AUDIO_MIN_GAIN)
+		return AUDIO_MIN_GAIN;
+	if (vol >= AUDIO_MAX_GAIN)
+		return AUDIO_MAX_GAIN;
+	return vol;
+}
+
+static int
 rdfield(struct field *p, char *q)
 {
 	mixer_ctrl_t *m;
@@ -181,17 +191,18 @@ rdfield(struct field *p, char *q)
 	case AUDIO_MIXER_VALUE:
 		if (m->un.value.num_channels == 1) {
 			if (sscanf(q, "%d", &v) == 1) {
-				m->un.value.level[0] = v;
+				m->un.value.level[0] = clip(v);
 			} else {
 				warnx("Bad number %s", q);
 				return 0;
 			}
 		} else {
 			if (sscanf(q, "%d,%d", &v0, &v1) == 2) {
-				m->un.value.level[0] = v0;
-				m->un.value.level[1] = v1;
+				m->un.value.level[0] = clip(v0);
+				m->un.value.level[1] = clip(v1);
 			} else if (sscanf(q, "%d", &v) == 1) {
-				m->un.value.level[0] = m->un.value.level[1] = v;
+				m->un.value.level[0] =
+				    m->un.value.level[1] = clip(v);
 			} else {
 				warnx("Bad numbers %s", q);
 				return 0;
@@ -234,11 +245,7 @@ incfield(struct field *p, int inc)
 		for (i = 0; i < m->un.value.num_channels; i++) {
 			v = m->un.value.level[i];
 			v += inc;
-			if (v < AUDIO_MIN_GAIN)
-				v = AUDIO_MIN_GAIN;
-			if (v > AUDIO_MAX_GAIN)
-				v = AUDIO_MAX_GAIN;
-			m->un.value.level[i] = v;
+			m->un.value.level[i] = clip(v);
 		}
 		break;
 	default:
