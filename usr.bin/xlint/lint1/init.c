@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.216 2021/12/17 17:21:48 rillig Exp $	*/
+/*	$NetBSD: init.c,v 1.217 2021/12/17 17:27:19 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: init.c,v 1.216 2021/12/17 17:21:48 rillig Exp $");
+__RCSID("$NetBSD: init.c,v 1.217 2021/12/17 17:27:19 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -637,12 +637,13 @@ brace_level_advance(struct brace_level *bl)
 
 
 static struct initialization *
-initialization_new(sym_t *sym)
+initialization_new(sym_t *sym, struct initialization *enclosing)
 {
 	struct initialization *in;
 
 	in = xcalloc(1, sizeof(*in));
 	in->in_sym = sym;
+	in->in_enclosing = enclosing;
 
 	return in;
 }
@@ -961,14 +962,11 @@ current_initsym(void)
 void
 begin_initialization(sym_t *sym)
 {
-	struct initialization *in;
 
 	debug_step("begin initialization of '%s'", type_name(sym->s_type));
 	debug_indent_inc();
 
-	in = initialization_new(sym);
-	in->in_enclosing = init;
-	init = in;
+	init = initialization_new(sym, init);
 }
 
 void
