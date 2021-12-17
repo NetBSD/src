@@ -1,1 +1,2 @@
 init.c(16): error: empty array declaration: empty_array_with_initializer [190]
+init.c(40): error: cannot initialize 'struct typedef histogram_entry' from 'pointer to char' [185]
