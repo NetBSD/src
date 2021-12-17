@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.4 2021/12/17 10:22:30 rillig Exp $	*/
+/*	$NetBSD: init.c,v 1.5 2021/12/17 10:33:23 rillig Exp $	*/
 # 3 "init.c"
 
 /*
@@ -35,7 +35,7 @@ typedef struct {
  *
  * Seen in external/ibm-public/postfix/dist/src/util/dict.c(624).
  *
- * TODO: Properly handle this situation; as of init.c 1.212 from 2021-12-17,
+ * TODO: Properly handle this situation; as of init.c 1.214 from 2021-12-17,
  *  the below initialization sets in->in_err but shouldn't.
  */
 const histogram_entry hgr[] = {
@@ -44,10 +44,14 @@ const histogram_entry hgr[] = {
 };
 
 
-/* Initialization with fewer braces than usual, must still be accepted. */
+/*
+ * Initialization with fewer braces than usual, must still be accepted.
+ *
+ * TODO: Properly handle this situation; as of init.c 1.214 from 2021-12-17,
+ *  the below initialization sets in->in_err but shouldn't.
+ */
 struct {
 	int x, y;
 } points[] = {
 	0, 0, 3, 0, 0, 4, 3, 4
 };
-/* expect-1: error: empty array declaration: points [190] */
