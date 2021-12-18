@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic.h,v 1.21 2019/12/03 04:57:38 riastradh Exp $	*/
+/*	$NetBSD: atomic.h,v 1.22 2021/12/18 16:31:40 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
@@ -390,6 +390,8 @@ __END_DECLS
 /* Pre-C11 definitions */
 
 #include <sys/cdefs.h>
+
+#include <lib/libkern/libkern.h>
 
 #ifdef _LP64
 #define	__HAVE_ATOMIC64_LOADSTORE	1
