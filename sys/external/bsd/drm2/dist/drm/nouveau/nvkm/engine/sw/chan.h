@@ -1,10 +1,13 @@
-/*	$NetBSD: chan.h,v 1.1.1.1 2018/08/27 01:34:56 riastradh Exp $	*/
+/*	$NetBSD: chan.h,v 1.1.1.2 2021/12/18 20:15:40 riastradh Exp $	*/
 
+/* SPDX-License-Identifier: MIT */
 #ifndef __NVKM_SW_CHAN_H__
 #define __NVKM_SW_CHAN_H__
 #define nvkm_sw_chan(p) container_of((p), struct nvkm_sw_chan, object)
-#include "priv.h"
+#include <core/object.h>
 #include <core/event.h>
+
+#include "priv.h"
 
 struct nvkm_sw_chan {
 	const struct nvkm_sw_chan_func *func;

@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_nvkm_engine_fifo_chan.c,v 1.1.1.1 2018/08/27 01:34:56 riastradh Exp $	*/
+/*	$NetBSD: nouveau_nvkm_engine_fifo_chan.c,v 1.1.1.2 2021/12/18 20:15:38 riastradh Exp $	*/
 
 /*
  * Copyright 2012 Red Hat Inc.
@@ -24,7 +24,7 @@
  * Authors: Ben Skeggs
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_engine_fifo_chan.c,v 1.1.1.1 2018/08/27 01:34:56 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_engine_fifo_chan.c,v 1.1.1.2 2021/12/18 20:15:38 riastradh Exp $");
 
 #include "chan.h"
 
@@ -122,8 +122,8 @@ nvkm_fifo_chan_child_del(struct nvkm_oproxy *base)
 		if (chan->func->engine_dtor)
 			chan->func->engine_dtor(chan, engine);
 		nvkm_object_del(&engn->object);
-		if (chan->vm)
-			atomic_dec(&chan->vm->engref[engine->subdev.index]);
+		if (chan->vmm)
+			atomic_dec(&chan->vmm->engref[engine->subdev.index]);
 	}
 }
 
@@ -156,8 +156,8 @@ nvkm_fifo_chan_child_new(const struct nvkm_oclass *oclass, void *data, u32 size,
 			.engine = oclass->engine,
 		};
 
-		if (chan->vm)
-			atomic_inc(&chan->vm->engref[engine->subdev.index]);
+		if (chan->vmm)
+			atomic_inc(&chan->vmm->engref[engine->subdev.index]);
 
 		if (engine->func->fifo.cclass) {
 			ret = engine->func->fifo.cclass(chan, &cclass,
@@ -258,9 +258,11 @@ nvkm_fifo_chan_ntfy(struct nvkm_object *object, u32 type,
 }
 
 static int
-nvkm_fifo_chan_map(struct nvkm_object *object, u64 *addr, u32 *size)
+nvkm_fifo_chan_map(struct nvkm_object *object, void *argv, u32 argc,
+		   enum nvkm_object_map *type, u64 *addr, u64 *size)
 {
 	struct nvkm_fifo_chan *chan = nvkm_fifo_chan(object);
+	*type = NVKM_OBJECT_MAP_IO;
 	*addr = chan->addr;
 	*size = chan->size;
 	return 0;
@@ -330,7 +332,10 @@ nvkm_fifo_chan_dtor(struct nvkm_object *object)
 	if (chan->user)
 		iounmap(chan->user);
 
-	nvkm_vm_ref(NULL, &chan->vm, NULL);
+	if (chan->vmm) {
+		nvkm_vmm_part(chan->vmm, chan->inst->memory);
+		nvkm_vmm_unref(&chan->vmm);
+	}
 
 	nvkm_gpuobj_del(&chan->push);
 	nvkm_gpuobj_del(&chan->inst);
@@ -352,13 +357,12 @@ nvkm_fifo_chan_func = {
 int
 nvkm_fifo_chan_ctor(const struct nvkm_fifo_chan_func *func,
 		    struct nvkm_fifo *fifo, u32 size, u32 align, bool zero,
-		    u64 vm, u64 push, u64 engines, int bar, u32 base, u32 user,
-		    const struct nvkm_oclass *oclass,
+		    u64 hvmm, u64 push, u64 engines, int bar, u32 base,
+		    u32 user, const struct nvkm_oclass *oclass,
 		    struct nvkm_fifo_chan *chan)
 {
 	struct nvkm_client *client = oclass->client;
 	struct nvkm_device *device = fifo->engine.subdev.device;
-	struct nvkm_mmu *mmu = device->mmu;
 	struct nvkm_dmaobj *dmaobj;
 	unsigned long flags;
 	int ret;
@@ -376,9 +380,9 @@ nvkm_fifo_chan_ctor(const struct nvkm_fifo_chan_func *func,
 
 	/* allocate push buffer ctxdma instance */
 	if (push) {
-		dmaobj = nvkm_dma_search(device->dma, oclass->client, push);
-		if (!dmaobj)
-			return -ENOENT;
+		dmaobj = nvkm_dmaobj_search(client, push);
+		if (IS_ERR(dmaobj))
+			return PTR_ERR(dmaobj);
 
 		ret = nvkm_object_bind(&dmaobj->object, chan->inst, -16,
 				       &chan->push);
@@ -387,16 +391,19 @@ nvkm_fifo_chan_ctor(const struct nvkm_fifo_chan_func *func,
 	}
 
 	/* channel address space */
-	if (!vm && mmu) {
-		if (!client->vm || client->vm->mmu == mmu) {
-			ret = nvkm_vm_ref(client->vm, &chan->vm, NULL);
-			if (ret)
-				return ret;
-		} else {
+	if (hvmm) {
+		struct nvkm_vmm *vmm = nvkm_uvmm_search(client, hvmm);
+		if (IS_ERR(vmm))
+			return PTR_ERR(vmm);
+
+		if (vmm->mmu != device->mmu)
 			return -EINVAL;
-		}
-	} else {
-		return -ENOENT;
+
+		ret = nvkm_vmm_join(vmm, chan->inst->memory);
+		if (ret)
+			return ret;
+
+		chan->vmm = nvkm_vmm_ref(vmm);
 	}
 
 	/* allocate channel id */
@@ -415,6 +422,6 @@ nvkm_fifo_chan_ctor(const struct nvkm_fifo_chan_func *func,
 		     base + user * chan->chid;
 	chan->size = user;
 
-	nvkm_event_send(&fifo->cevent, 1, 0, NULL, 0);
+	nvkm_fifo_cevent(fifo);
 	return 0;
 }

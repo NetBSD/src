@@ -1,3 +1,5 @@
+/*	$NetBSD: sil164_drv.c,v 1.1.1.2 2021/12/18 20:15:23 riastradh Exp $	*/
+
 /*
  * Copyright (C) 2010 Francisco Jerez.
  * All Rights Reserved.
@@ -24,11 +26,15 @@
  *
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: sil164_drv.c,v 1.1.1.2 2021/12/18 20:15:23 riastradh Exp $");
+
 #include <linux/module.h>
 
-#include <drm/drmP.h>
-#include <drm/drm_crtc_helper.h>
+#include <drm/drm_drv.h>
 #include <drm/drm_encoder_slave.h>
+#include <drm/drm_print.h>
+#include <drm/drm_probe_helper.h>
 #include <drm/i2c/sil164.h>
 
 struct sil164_priv {
@@ -43,7 +49,7 @@ struct sil164_priv {
 	((struct sil164_priv *)to_encoder_slave(x)->slave_priv)
 
 #define sil164_dbg(client, format, ...) do {				\
-		if (drm_debug & DRM_UT_KMS)				\
+		if (drm_debug_enabled(DRM_UT_KMS))			\
 			dev_printk(KERN_DEBUG, &client->dev,		\
 				   "%s: " format, __func__, ## __VA_ARGS__); \
 	} while (0)
@@ -252,14 +258,6 @@ sil164_encoder_restore(struct drm_encoder *encoder)
 				     priv->saved_slave_state);
 }
 
-static bool
-sil164_encoder_mode_fixup(struct drm_encoder *encoder,
-			  const struct drm_display_mode *mode,
-			  struct drm_display_mode *adjusted_mode)
-{
-	return true;
-}
-
 static int
 sil164_encoder_mode_valid(struct drm_encoder *encoder,
 			  struct drm_display_mode *mode)
@@ -334,20 +332,18 @@ sil164_encoder_destroy(struct drm_encoder *encoder)
 {
 	struct sil164_priv *priv = to_sil164_priv(encoder);
 
-	if (priv->duallink_slave)
-		i2c_unregister_device(priv->duallink_slave);
+	i2c_unregister_device(priv->duallink_slave);
 
 	kfree(priv);
 	drm_i2c_encoder_destroy(encoder);
 }
 
-static struct drm_encoder_slave_funcs sil164_encoder_funcs = {
+static const struct drm_encoder_slave_funcs sil164_encoder_funcs = {
 	.set_config = sil164_encoder_set_config,
 	.destroy = sil164_encoder_destroy,
 	.dpms = sil164_encoder_dpms,
 	.save = sil164_encoder_save,
 	.restore = sil164_encoder_restore,
-	.mode_fixup = sil164_encoder_mode_fixup,
 	.mode_valid = sil164_encoder_mode_valid,
 	.mode_set = sil164_encoder_mode_set,
 	.detect = sil164_encoder_detect,
@@ -424,7 +420,7 @@ sil164_encoder_init(struct i2c_client *client,
 	return 0;
 }
 
-static struct i2c_device_id sil164_ids[] = {
+static const struct i2c_device_id sil164_ids[] = {
 	{ "sil164", 0 },
 	{ }
 };

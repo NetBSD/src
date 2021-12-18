@@ -1,5 +1,6 @@
-/*	$NetBSD: nv50.h,v 1.1.1.1 2018/08/27 01:34:56 riastradh Exp $	*/
+/*	$NetBSD: nv50.h,v 1.1.1.2 2021/12/18 20:15:39 riastradh Exp $	*/
 
+/* SPDX-License-Identifier: MIT */
 #ifndef __NV50_GR_H__
 #define __NV50_GR_H__
 #define nv50_gr(p) container_of((p), struct nv50_gr, base)
@@ -21,6 +22,7 @@ u64 nv50_gr_units(struct nvkm_gr *);
 int g84_gr_tlb_flush(struct nvkm_gr *);
 
 #define nv50_gr_chan(p) container_of((p), struct nv50_gr_chan, object)
+#include <core/object.h>
 
 struct nv50_gr_chan {
 	struct nvkm_object object;

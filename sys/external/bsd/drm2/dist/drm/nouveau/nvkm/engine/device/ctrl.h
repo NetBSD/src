@@ -1,9 +1,10 @@
-/*	$NetBSD: ctrl.h,v 1.1.1.1 2018/08/27 01:34:55 riastradh Exp $	*/
+/*	$NetBSD: ctrl.h,v 1.1.1.2 2021/12/18 20:15:37 riastradh Exp $	*/
 
+/* SPDX-License-Identifier: MIT */
 #ifndef __NVKM_DEVICE_CTRL_H__
 #define __NVKM_DEVICE_CTRL_H__
 #define nvkm_control(p) container_of((p), struct nvkm_control, object)
-#include <core/device.h>
+#include <core/object.h>
 
 struct nvkm_control {
 	struct nvkm_object object;

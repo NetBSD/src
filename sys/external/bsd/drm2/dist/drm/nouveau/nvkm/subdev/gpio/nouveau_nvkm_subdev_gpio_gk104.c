@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_nvkm_subdev_gpio_gk104.c,v 1.1.1.1 2018/08/27 01:34:56 riastradh Exp $	*/
+/*	$NetBSD: nouveau_nvkm_subdev_gpio_gk104.c,v 1.1.1.2 2021/12/18 20:15:41 riastradh Exp $	*/
 
 /*
  * Copyright 2012 Red Hat Inc.
@@ -24,7 +24,7 @@
  * Authors: Ben Skeggs
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_subdev_gpio_gk104.c,v 1.1.1.1 2018/08/27 01:34:56 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_subdev_gpio_gk104.c,v 1.1.1.2 2021/12/18 20:15:41 riastradh Exp $");
 
 #include "priv.h"
 
@@ -42,7 +42,7 @@ gk104_gpio_intr_stat(struct nvkm_gpio *gpio, u32 *hi, u32 *lo)
 	nvkm_wr32(device, 0x00dc80, intr1);
 }
 
-void
+static void
 gk104_gpio_intr_mask(struct nvkm_gpio *gpio, u32 type, u32 mask, u32 data)
 {
 	struct nvkm_device *device = gpio->subdev.device;

@@ -1,13 +1,14 @@
-/*	$NetBSD: radeon_trace.h,v 1.1.1.2 2018/08/27 01:34:59 riastradh Exp $	*/
+/*	$NetBSD: radeon_trace.h,v 1.1.1.3 2021/12/18 20:15:52 riastradh Exp $	*/
 
+/* SPDX-License-Identifier: MIT */
 #if !defined(_RADEON_TRACE_H) || defined(TRACE_HEADER_MULTI_READ)
 #define _RADEON_TRACE_H_
 
 #include <linux/stringify.h>
-#include <linux/types.h>
 #include <linux/tracepoint.h>
+#include <linux/types.h>
 
-#include <drm/drmP.h>
+#include <drm/drm_file.h>
 
 #undef TRACE_SYSTEM
 #define TRACE_SYSTEM radeon
@@ -206,5 +207,5 @@ DEFINE_EVENT(radeon_semaphore_request, radeon_semaphore_wait,
 
 /* This part must be outside protection */
 #undef TRACE_INCLUDE_PATH
-#define TRACE_INCLUDE_PATH .
+#define TRACE_INCLUDE_PATH ../../drivers/gpu/drm/radeon
 #include <trace/define_trace.h>

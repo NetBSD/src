@@ -1,4 +1,4 @@
-/*	$NetBSD: radeon_agp.c,v 1.1.1.2 2018/08/27 01:34:58 riastradh Exp $	*/
+/*	$NetBSD: radeon_agp.c,v 1.1.1.3 2021/12/18 20:15:45 riastradh Exp $	*/
 
 /*
  * Copyright 2008 Red Hat Inc.
@@ -26,12 +26,17 @@
  *    Dave Airlie
  *    Jerome Glisse <glisse@freedesktop.org>
  */
-#include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radeon_agp.c,v 1.1.1.2 2018/08/27 01:34:58 riastradh Exp $");
 
-#include <drm/drmP.h>
-#include "radeon.h"
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: radeon_agp.c,v 1.1.1.3 2021/12/18 20:15:45 riastradh Exp $");
+
+#include <linux/pci.h>
+
+#include <drm/drm_agpsupport.h>
+#include <drm/drm_device.h>
 #include <drm/radeon_drm.h>
+
+#include "radeon.h"
 
 #if IS_ENABLED(CONFIG_AGP)
 

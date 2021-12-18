@@ -1,4 +1,4 @@
-/*	$NetBSD: radeon_encoders.c,v 1.1.1.2 2018/08/27 01:34:58 riastradh Exp $	*/
+/*	$NetBSD: radeon_encoders.c,v 1.1.1.3 2021/12/18 20:15:48 riastradh Exp $	*/
 
 /*
  * Copyright 2007-8 Advanced Micro Devices, Inc.
@@ -25,12 +25,16 @@
  * Authors: Dave Airlie
  *          Alex Deucher
  */
-#include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radeon_encoders.c,v 1.1.1.2 2018/08/27 01:34:58 riastradh Exp $");
 
-#include <drm/drmP.h>
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: radeon_encoders.c,v 1.1.1.3 2021/12/18 20:15:48 riastradh Exp $");
+
+#include <linux/pci.h>
+
 #include <drm/drm_crtc_helper.h>
+#include <drm/drm_device.h>
 #include <drm/radeon_drm.h>
+
 #include "radeon.h"
 #include "atom.h"
 
@@ -216,7 +220,7 @@ radeon_link_encoder_connector(struct drm_device *dev)
 		list_for_each_entry(encoder, &dev->mode_config.encoder_list, head) {
 			radeon_encoder = to_radeon_encoder(encoder);
 			if (radeon_encoder->devices & radeon_connector->devices) {
-				drm_mode_connector_attach_encoder(connector, encoder);
+				drm_connector_attach_encoder(connector, encoder);
 				if (radeon_encoder->devices & (ATOM_DEVICE_LCD_SUPPORT))
 					radeon_encoder_add_backlight(radeon_encoder, connector);
 			}

@@ -1,4 +1,4 @@
-/*	$NetBSD: cik_dpm.h,v 1.1.1.1 2018/08/27 01:34:44 riastradh Exp $	*/
+/*	$NetBSD: cik_dpm.h,v 1.1.1.2 2021/12/18 20:11:13 riastradh Exp $	*/
 
 /*
  * Copyright 2014 Advanced Micro Devices, Inc.
@@ -26,7 +26,6 @@
 #ifndef __CIK_DPM_H__
 #define __CIK_DPM_H__
 
-extern const struct amd_ip_funcs ci_dpm_ip_funcs;
-extern const struct amd_ip_funcs kv_dpm_ip_funcs;
+extern const struct amdgpu_ip_block_version kv_smu_ip_block;
 
 #endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_nvkm_subdev_therm_ic.c,v 1.1.1.1 2018/08/27 01:34:56 riastradh Exp $	*/
+/*	$NetBSD: nouveau_nvkm_subdev_therm_ic.c,v 1.1.1.2 2021/12/18 20:15:43 riastradh Exp $	*/
 
 /*
  * Copyright 2012 Nouveau community
@@ -24,7 +24,7 @@
  * Authors: Martin Peres
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_subdev_therm_ic.c,v 1.1.1.1 2018/08/27 01:34:56 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_subdev_therm_ic.c,v 1.1.1.2 2021/12/18 20:15:43 riastradh Exp $");
 
 #include "priv.h"
 
@@ -120,6 +120,9 @@ nvkm_therm_ic_ctor(struct nvkm_therm *therm)
 		if (therm->ic)
 			return;
 	}
+
+	if (nvbios_extdev_skip_probe(bios))
+		return;
 
 	/* The vbios doesn't provide the address of an exisiting monitoring
 	   device. Let's try our static list.

@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_platform.h,v 1.1.1.1 2018/08/27 01:34:55 riastradh Exp $	*/
+/*	$NetBSD: nouveau_platform.h,v 1.1.1.2 2021/12/18 20:15:36 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2014, NVIDIA CORPORATION. All rights reserved.
@@ -23,7 +23,7 @@
  */
 #ifndef __NOUVEAU_PLATFORM_H__
 #define __NOUVEAU_PLATFORM_H__
-#include "nouveau_drm.h"
+#include "nouveau_drv.h"
 
 extern struct platform_driver nouveau_platform_driver;
 #endif

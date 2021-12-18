@@ -1,5 +1,6 @@
-/*	$NetBSD: channv04.h,v 1.1.1.1 2018/08/27 01:34:56 riastradh Exp $	*/
+/*	$NetBSD: channv04.h,v 1.1.1.2 2021/12/18 20:15:38 riastradh Exp $	*/
 
+/* SPDX-License-Identifier: MIT */
 #ifndef __NV04_FIFO_CHAN_H__
 #define __NV04_FIFO_CHAN_H__
 #define nv04_fifo_chan(p) container_of((p), struct nv04_fifo_chan, base)

@@ -1,5 +1,6 @@
-/*	$NetBSD: os.h,v 1.1.1.1 2018/08/27 01:34:55 riastradh Exp $	*/
+/*	$NetBSD: os.h,v 1.1.1.2 2021/12/18 20:15:37 riastradh Exp $	*/
 
+/* SPDX-License-Identifier: MIT */
 #ifndef __NOUVEAU_OS_H__
 #define __NOUVEAU_OS_H__
 
@@ -35,18 +36,4 @@
 
 #include <soc/tegra/fuse.h>
 #include <soc/tegra/pmc.h>
-
-#ifndef ioread32_native
-#ifdef __BIG_ENDIAN
-#define ioread16_native ioread16be
-#define iowrite16_native iowrite16be
-#define ioread32_native  ioread32be
-#define iowrite32_native iowrite32be
-#else /* def __BIG_ENDIAN */
-#define ioread16_native ioread16
-#define iowrite16_native iowrite16
-#define ioread32_native  ioread32
-#define iowrite32_native iowrite32
-#endif /* def __BIG_ENDIAN else */
-#endif /* !ioread32_native */
 #endif

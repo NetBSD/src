@@ -1,5 +1,6 @@
-/*	$NetBSD: priv.h,v 1.1.1.1 2018/08/27 01:34:56 riastradh Exp $	*/
+/*	$NetBSD: priv.h,v 1.1.1.2 2021/12/18 20:15:40 riastradh Exp $	*/
 
+/* SPDX-License-Identifier: MIT */
 #ifndef __NVKM_MSPDEC_PRIV_H__
 #define __NVKM_MSPDEC_PRIV_H__
 #include <engine/mspdec.h>

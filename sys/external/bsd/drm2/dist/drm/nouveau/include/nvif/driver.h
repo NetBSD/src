@@ -1,7 +1,10 @@
-/*	$NetBSD: driver.h,v 1.1.1.1 2018/08/27 01:34:55 riastradh Exp $	*/
+/*	$NetBSD: driver.h,v 1.1.1.2 2021/12/18 20:15:37 riastradh Exp $	*/
 
+/* SPDX-License-Identifier: MIT */
 #ifndef __NVIF_DRIVER_H__
 #define __NVIF_DRIVER_H__
+#include <nvif/os.h>
+struct nvif_client;
 
 struct nvif_driver {
 	const char *name;
@@ -16,9 +19,11 @@ struct nvif_driver {
 	bool keep;
 };
 
+int nvif_driver_init(const char *drv, const char *cfg, const char *dbg,
+		     const char *name, u64 device, struct nvif_client *);
+
 extern const struct nvif_driver nvif_driver_nvkm;
 extern const struct nvif_driver nvif_driver_drm;
 extern const struct nvif_driver nvif_driver_lib;
 extern const struct nvif_driver nvif_driver_null;
-
 #endif

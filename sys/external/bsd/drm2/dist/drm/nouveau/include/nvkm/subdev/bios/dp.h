@@ -1,7 +1,12 @@
-/*	$NetBSD: dp.h,v 1.1.1.1 2018/08/27 01:34:55 riastradh Exp $	*/
+/*	$NetBSD: dp.h,v 1.1.1.2 2021/12/18 20:15:37 riastradh Exp $	*/
 
+/* SPDX-License-Identifier: MIT */
 #ifndef __NVBIOS_DP_H__
 #define __NVBIOS_DP_H__
+
+u16
+nvbios_dp_table(struct nvkm_bios *bios, u8 *ver, u8 *hdr, u8 *cnt, u8 *len);
+
 struct nvbios_dpout {
 	u16 type;
 	u16 mask;

@@ -1,12 +1,13 @@
-/*	$NetBSD: radeon_trace_points.c,v 1.1.1.2 2018/08/27 01:34:59 riastradh Exp $	*/
+/*	$NetBSD: radeon_trace_points.c,v 1.1.1.3 2021/12/18 20:15:52 riastradh Exp $	*/
 
+// SPDX-License-Identifier: MIT
 /* Copyright Red Hat Inc 2010.
  * Author : Dave Airlie <airlied@redhat.com>
  */
-#include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radeon_trace_points.c,v 1.1.1.2 2018/08/27 01:34:59 riastradh Exp $");
 
-#include <drm/drmP.h>
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: radeon_trace_points.c,v 1.1.1.3 2021/12/18 20:15:52 riastradh Exp $");
+
 #include <drm/radeon_drm.h>
 #include "radeon.h"
 

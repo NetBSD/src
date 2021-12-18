@@ -1,5 +1,6 @@
-/*	$NetBSD: sw.h,v 1.1.1.1 2018/08/27 01:34:55 riastradh Exp $	*/
+/*	$NetBSD: sw.h,v 1.1.1.2 2021/12/18 20:15:37 riastradh Exp $	*/
 
+/* SPDX-License-Identifier: MIT */
 #ifndef __NVKM_SW_H__
 #define __NVKM_SW_H__
 #include <core/engine.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvd_v4_2.h,v 1.1.1.1 2018/08/27 01:34:46 riastradh Exp $	*/
+/*	$NetBSD: uvd_v4_2.h,v 1.1.1.2 2021/12/18 20:11:14 riastradh Exp $	*/
 
 /*
  * Copyright 2014 Advanced Micro Devices, Inc.
@@ -26,6 +26,6 @@
 #ifndef __UVD_V4_2_H__
 #define __UVD_V4_2_H__
 
-extern const struct amd_ip_funcs uvd_v4_2_ip_funcs;
+extern const struct amdgpu_ip_block_version uvd_v4_2_ip_block;
 
 #endif

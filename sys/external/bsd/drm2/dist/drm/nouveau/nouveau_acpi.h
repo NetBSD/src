@@ -1,5 +1,6 @@
-/*	$NetBSD: nouveau_acpi.h,v 1.1.1.2 2018/08/27 01:34:55 riastradh Exp $	*/
+/*	$NetBSD: nouveau_acpi.h,v 1.1.1.3 2021/12/18 20:15:35 riastradh Exp $	*/
 
+/* SPDX-License-Identifier: MIT */
 #ifndef __NOUVEAU_ACPI_H__
 #define __NOUVEAU_ACPI_H__
 

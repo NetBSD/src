@@ -1,7 +1,8 @@
-/*	$NetBSD: nouveau_nvkm_engine_gr_nv34.c,v 1.1.1.1 2018/08/27 01:34:56 riastradh Exp $	*/
+/*	$NetBSD: nouveau_nvkm_engine_gr_nv34.c,v 1.1.1.2 2021/12/18 20:15:39 riastradh Exp $	*/
 
+// SPDX-License-Identifier: MIT
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_engine_gr_nv34.c,v 1.1.1.1 2018/08/27 01:34:56 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_engine_gr_nv34.c,v 1.1.1.2 2021/12/18 20:15:39 riastradh Exp $");
 
 #include "nv20.h"
 #include "regs.h"
@@ -128,6 +129,7 @@ nv34_gr = {
 		{ -1, -1, 0x0389, &nv04_gr_object }, /* sifm (nv30) */
 		{ -1, -1, 0x038a, &nv04_gr_object }, /* ifc (nv30) */
 		{ -1, -1, 0x039e, &nv04_gr_object }, /* swzsurf (nv30) */
+		{ -1, -1, 0x0597, &nv04_gr_object }, /* kelvin */
 		{ -1, -1, 0x0697, &nv04_gr_object }, /* rankine */
 		{}
 	}

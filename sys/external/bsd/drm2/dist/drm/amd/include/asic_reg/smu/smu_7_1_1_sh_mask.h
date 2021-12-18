@@ -1,4 +1,4 @@
-/*	$NetBSD: smu_7_1_1_sh_mask.h,v 1.1.1.1 2018/08/27 01:34:53 riastradh Exp $	*/
+/*	$NetBSD: smu_7_1_1_sh_mask.h,v 1.1.1.2 2021/12/18 20:15:12 riastradh Exp $	*/
 
 /*
  * SMU_7_1_1 Register documentation
@@ -4862,5 +4862,7 @@
 #define ROM_SW_DATA_63__ROM_SW_DATA__SHIFT 0x0
 #define ROM_SW_DATA_64__ROM_SW_DATA_MASK 0xffffffff
 #define ROM_SW_DATA_64__ROM_SW_DATA__SHIFT 0x0
+#define CURRENT_PG_STATUS__VCE_PG_STATUS_MASK 0x00000002
+#define CURRENT_PG_STATUS__UVD_PG_STATUS_MASK 0x00000004
 
 #endif /* SMU_7_1_1_SH_MASK_H */

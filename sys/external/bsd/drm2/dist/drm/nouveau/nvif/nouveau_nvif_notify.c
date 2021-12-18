@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_nvif_notify.c,v 1.1.1.1 2018/08/27 01:34:55 riastradh Exp $	*/
+/*	$NetBSD: nouveau_nvif_notify.c,v 1.1.1.2 2021/12/18 20:15:37 riastradh Exp $	*/
 
 /*
  * Copyright 2014 Red Hat Inc.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_nvif_notify.c,v 1.1.1.1 2018/08/27 01:34:55 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_nvif_notify.c,v 1.1.1.2 2021/12/18 20:15:37 riastradh Exp $");
 
 #include <nvif/client.h>
 #include <nvif/driver.h>
@@ -160,10 +160,8 @@ nvif_notify_fini(struct nvif_notify *notify)
 	int ret = nvif_notify_put(notify);
 	if (ret >= 0 && object) {
 		ret = nvif_object_ioctl(object, &args, sizeof(args), NULL);
-		if (ret == 0) {
-			notify->object = NULL;
-			kfree((void *)notify->data);
-		}
+		notify->object = NULL;
+		kfree((void *)notify->data);
 	}
 	return ret;
 }

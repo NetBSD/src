@@ -1,5 +1,6 @@
-/*	$NetBSD: instmem.h,v 1.1.1.1 2018/08/27 01:34:55 riastradh Exp $	*/
+/*	$NetBSD: instmem.h,v 1.1.1.2 2021/12/18 20:15:37 riastradh Exp $	*/
 
+/* SPDX-License-Identifier: MIT */
 #ifndef __NVKM_INSTMEM_H__
 #define __NVKM_INSTMEM_H__
 #include <core/subdev.h>
@@ -11,6 +12,7 @@ struct nvkm_instmem {
 
 	spinlock_t lock;
 	struct list_head list;
+	struct list_head boot;
 	u32 reserved;
 
 	struct nvkm_memory *vbios;

@@ -1,4 +1,4 @@
-/*	$NetBSD: atombios_crtc.h,v 1.1.1.1 2018/08/27 01:34:44 riastradh Exp $	*/
+/*	$NetBSD: atombios_crtc.h,v 1.1.1.2 2021/12/18 20:11:13 riastradh Exp $	*/
 
 /*
  * Copyright 2014 Advanced Micro Devices, Inc.
@@ -39,6 +39,8 @@ void amdgpu_atombios_crtc_set_dtd_timing(struct drm_crtc *crtc,
 				  struct drm_display_mode *mode);
 void amdgpu_atombios_crtc_set_disp_eng_pll(struct amdgpu_device *adev,
 				    u32 dispclk);
+u32 amdgpu_atombios_crtc_set_dce_clock(struct amdgpu_device *adev,
+				       u32 freq, u8 clk_type, u8 clk_src);
 void amdgpu_atombios_crtc_program_pll(struct drm_crtc *crtc,
 			       u32 crtc_id,
 			       int pll_id,

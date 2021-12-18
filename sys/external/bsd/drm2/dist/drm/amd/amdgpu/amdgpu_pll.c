@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu_pll.c,v 1.1.1.1 2018/08/27 01:34:44 riastradh Exp $	*/
+/*	$NetBSD: amdgpu_pll.c,v 1.1.1.2 2021/12/18 20:11:10 riastradh Exp $	*/
 
 /*
  * Copyright 2014 Advanced Micro Devices, Inc.
@@ -22,14 +22,15 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  *
  */
-#include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdgpu_pll.c,v 1.1.1.1 2018/08/27 01:34:44 riastradh Exp $");
 
-#include <drm/drmP.h>
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: amdgpu_pll.c,v 1.1.1.2 2021/12/18 20:11:10 riastradh Exp $");
+
 #include <drm/amdgpu_drm.h>
 #include "amdgpu.h"
 #include "atom.h"
 #include "atombios_encoders.h"
+#include "amdgpu_pll.h"
 #include <asm/div64.h>
 #include <linux/gcd.h>
 

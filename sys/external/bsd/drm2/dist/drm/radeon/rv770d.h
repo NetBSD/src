@@ -1,4 +1,4 @@
-/*	$NetBSD: rv770d.h,v 1.1.1.2 2018/08/27 01:34:59 riastradh Exp $	*/
+/*	$NetBSD: rv770d.h,v 1.1.1.3 2021/12/18 20:15:52 riastradh Exp $	*/
 
 /*
  * Copyright 2009 Advanced Micro Devices, Inc.
@@ -389,6 +389,7 @@
 #define UVD_UDEC_TILING_CONFIG                          0xef40
 #define UVD_UDEC_DB_TILING_CONFIG                       0xef44
 #define UVD_UDEC_DBW_TILING_CONFIG                      0xef48
+#define UVD_NO_OP					0xeffc
 
 #define	GC_USER_SHADER_PIPE_CONFIG			0x8954
 #define		INACTIVE_QD_PIPES(x)				((x) << 8)

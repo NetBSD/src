@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_nvkm_subdev_fb_g84.c,v 1.1.1.1 2018/08/27 01:34:56 riastradh Exp $	*/
+/*	$NetBSD: nouveau_nvkm_subdev_fb_g84.c,v 1.1.1.2 2021/12/18 20:15:41 riastradh Exp $	*/
 
 /*
  * Copyright 2012 Red Hat Inc.
@@ -24,7 +24,7 @@
  * Authors: Ben Skeggs
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_subdev_fb_g84.c,v 1.1.1.1 2018/08/27 01:34:56 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_subdev_fb_g84.c,v 1.1.1.2 2021/12/18 20:15:41 riastradh Exp $");
 
 #include "nv50.h"
 #include "ram.h"
@@ -32,6 +32,7 @@ __KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_subdev_fb_g84.c,v 1.1.1.1 2018/08/27 01
 static const struct nv50_fb_func
 g84_fb = {
 	.ram_new = nv50_ram_new,
+	.tags = nv20_fb_tags,
 	.trap = 0x001d07ff,
 };
 

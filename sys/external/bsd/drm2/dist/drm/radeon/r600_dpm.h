@@ -1,4 +1,4 @@
-/*	$NetBSD: r600_dpm.h,v 1.1.1.2 2018/08/27 01:34:58 riastradh Exp $	*/
+/*	$NetBSD: r600_dpm.h,v 1.1.1.3 2021/12/18 20:15:45 riastradh Exp $	*/
 
 /*
  * Copyright 2011 Advanced Micro Devices, Inc.
@@ -24,6 +24,8 @@
  */
 #ifndef __R600_DPM_H__
 #define __R600_DPM_H__
+
+#include "radeon.h"
 
 #define R600_ASI_DFLT                                10000
 #define R600_BSP_DFLT                                0x41EB

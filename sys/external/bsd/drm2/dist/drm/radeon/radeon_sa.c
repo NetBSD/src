@@ -1,4 +1,4 @@
-/*	$NetBSD: radeon_sa.c,v 1.1.1.2 2018/08/27 01:34:59 riastradh Exp $	*/
+/*	$NetBSD: radeon_sa.c,v 1.1.1.3 2021/12/18 20:15:51 riastradh Exp $	*/
 
 /*
  * Copyright 2011 Red Hat Inc.
@@ -43,10 +43,10 @@
  * If we are asked to block we wait on all the oldest fence of all
  * rings. We just wait for any of those fence to complete.
  */
-#include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radeon_sa.c,v 1.1.1.2 2018/08/27 01:34:59 riastradh Exp $");
 
-#include <drm/drmP.h>
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: radeon_sa.c,v 1.1.1.3 2021/12/18 20:15:51 riastradh Exp $");
+
 #include "radeon.h"
 
 static void radeon_sa_bo_remove_locked(struct radeon_sa_bo *sa_bo);

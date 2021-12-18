@@ -1,4 +1,4 @@
-/*	$NetBSD: radeon_i2c.c,v 1.1.1.2 2018/08/27 01:34:58 riastradh Exp $	*/
+/*	$NetBSD: radeon_i2c.c,v 1.1.1.3 2021/12/18 20:15:48 riastradh Exp $	*/
 
 /*
  * Copyright 2007-8 Advanced Micro Devices, Inc.
@@ -25,14 +25,17 @@
  * Authors: Dave Airlie
  *          Alex Deucher
  */
+
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radeon_i2c.c,v 1.1.1.2 2018/08/27 01:34:58 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radeon_i2c.c,v 1.1.1.3 2021/12/18 20:15:48 riastradh Exp $");
 
 #include <linux/export.h>
+#include <linux/pci.h>
 
-#include <drm/drmP.h>
+#include <drm/drm_device.h>
 #include <drm/drm_edid.h>
 #include <drm/radeon_drm.h>
+
 #include "radeon.h"
 #include "atom.h"
 
@@ -943,10 +946,8 @@ struct radeon_i2c_chan *radeon_i2c_create(struct drm_device *dev,
 			 "Radeon i2c hw bus %s", name);
 		i2c->adapter.algo = &radeon_i2c_algo;
 		ret = i2c_add_adapter(&i2c->adapter);
-		if (ret) {
-			DRM_ERROR("Failed to register hw i2c %s\n", name);
+		if (ret)
 			goto out_free;
-		}
 	} else if (rec->hw_capable &&
 		   radeon_hw_i2c &&
 		   ASIC_IS_DCE3(rdev)) {
@@ -955,10 +956,8 @@ struct radeon_i2c_chan *radeon_i2c_create(struct drm_device *dev,
 			 "Radeon i2c hw bus %s", name);
 		i2c->adapter.algo = &radeon_atom_i2c_algo;
 		ret = i2c_add_adapter(&i2c->adapter);
-		if (ret) {
-			DRM_ERROR("Failed to register hw i2c %s\n", name);
+		if (ret)
 			goto out_free;
-		}
 	} else {
 		/* set the radeon bit adapter */
 		snprintf(i2c->adapter.name, sizeof(i2c->adapter.name),
@@ -991,9 +990,8 @@ void radeon_i2c_destroy(struct radeon_i2c_chan *i2c)
 {
 	if (!i2c)
 		return;
+	WARN_ON(i2c->has_aux);
 	i2c_del_adapter(&i2c->adapter);
-	if (i2c->has_aux)
-		drm_dp_aux_unregister(&i2c->aux);
 	kfree(i2c);
 }
 

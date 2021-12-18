@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_nvkm_engine_dma_base.c,v 1.1.1.1 2018/08/27 01:34:56 riastradh Exp $	*/
+/*	$NetBSD: nouveau_nvkm_engine_dma_base.c,v 1.1.1.2 2021/12/18 20:15:38 riastradh Exp $	*/
 
 /*
  * Copyright 2012 Red Hat Inc.
@@ -24,7 +24,7 @@
  * Authors: Ben Skeggs
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_engine_dma_base.c,v 1.1.1.1 2018/08/27 01:34:56 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_engine_dma_base.c,v 1.1.1.2 2021/12/18 20:15:38 riastradh Exp $");
 
 #include "priv.h"
 
@@ -33,24 +33,6 @@ __KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_engine_dma_base.c,v 1.1.1.1 2018/08/27 
 
 #include <nvif/class.h>
 
-struct nvkm_dmaobj *
-nvkm_dma_search(struct nvkm_dma *dma, struct nvkm_client *client, u64 object)
-{
-	struct rb_node *node = client->dmaroot.rb_node;
-	while (node) {
-		struct nvkm_dmaobj *dmaobj =
-			container_of(node, typeof(*dmaobj), rb);
-		if (object < dmaobj->handle)
-			node = node->rb_left;
-		else
-		if (object > dmaobj->handle)
-			node = node->rb_right;
-		else
-			return dmaobj;
-	}
-	return NULL;
-}
-
 static int
 nvkm_dma_oclass_new(struct nvkm_device *device,
 		    const struct nvkm_oclass *oclass, void *data, u32 size,
@@ -58,34 +40,12 @@ nvkm_dma_oclass_new(struct nvkm_device *device,
 {
 	struct nvkm_dma *dma = nvkm_dma(oclass->engine);
 	struct nvkm_dmaobj *dmaobj = NULL;
-	struct nvkm_client *client = oclass->client;
-	struct rb_node **ptr = &client->dmaroot.rb_node;
-	struct rb_node *parent = NULL;
 	int ret;
 
 	ret = dma->func->class_new(dma, oclass, data, size, &dmaobj);
 	if (dmaobj)
 		*pobject = &dmaobj->object;
-	if (ret)
-		return ret;
-
-	dmaobj->handle = oclass->object;
-
-	while (*ptr) {
-		struct nvkm_dmaobj *obj = container_of(*ptr, typeof(*obj), rb);
-		parent = *ptr;
-		if (dmaobj->handle < obj->handle)
-			ptr = &parent->rb_left;
-		else
-		if (dmaobj->handle > obj->handle)
-			ptr = &parent->rb_right;
-		else
-			return -EEXIST;
-	}
-
-	rb_link_node(&dmaobj->rb, parent, ptr);
-	rb_insert_color(&dmaobj->rb, &client->dmaroot);
-	return 0;
+	return ret;
 }
 
 static const struct nvkm_device_oclass
@@ -157,6 +117,5 @@ nvkm_dma_new_(const struct nvkm_dma_func *func, struct nvkm_device *device,
 		return -ENOMEM;
 	dma->func = func;
 
-	return nvkm_engine_ctor(&nvkm_dma, device, index,
-				0, true, &dma->engine);
+	return nvkm_engine_ctor(&nvkm_dma, device, index, true, &dma->engine);
 }

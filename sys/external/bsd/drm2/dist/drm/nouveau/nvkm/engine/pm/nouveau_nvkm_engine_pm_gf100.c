@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_nvkm_engine_pm_gf100.c,v 1.1.1.1 2018/08/27 01:34:56 riastradh Exp $	*/
+/*	$NetBSD: nouveau_nvkm_engine_pm_gf100.c,v 1.1.1.2 2021/12/18 20:15:40 riastradh Exp $	*/
 
 /*
  * Copyright 2013 Red Hat Inc.
@@ -24,7 +24,7 @@
  * Authors: Ben Skeggs
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_engine_pm_gf100.c,v 1.1.1.1 2018/08/27 01:34:56 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_engine_pm_gf100.c,v 1.1.1.2 2021/12/18 20:15:40 riastradh Exp $");
 
 #include "gf100.h"
 
@@ -107,7 +107,7 @@ gf100_pm_gpc[] = {
 	{}
 };
 
-const struct nvkm_specdom
+static const struct nvkm_specdom
 gf100_pm_part[] = {
 	{ 0xe0, (const struct nvkm_specsig[]) {
 			{ 0x0f, "part00_pbfb_00", gf100_pbfb_sources },

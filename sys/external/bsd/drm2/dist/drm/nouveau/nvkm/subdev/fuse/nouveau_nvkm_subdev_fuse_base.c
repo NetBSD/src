@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_nvkm_subdev_fuse_base.c,v 1.1.1.1 2018/08/27 01:34:56 riastradh Exp $	*/
+/*	$NetBSD: nouveau_nvkm_subdev_fuse_base.c,v 1.1.1.2 2021/12/18 20:15:41 riastradh Exp $	*/
 
 /*
  * Copyright 2014 Martin Peres
@@ -24,7 +24,7 @@
  * Authors: Martin Peres
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_subdev_fuse_base.c,v 1.1.1.1 2018/08/27 01:34:56 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_subdev_fuse_base.c,v 1.1.1.2 2021/12/18 20:15:41 riastradh Exp $");
 
 #include "priv.h"
 
@@ -52,7 +52,7 @@ nvkm_fuse_new_(const struct nvkm_fuse_func *func, struct nvkm_device *device,
 	struct nvkm_fuse *fuse;
 	if (!(fuse = *pfuse = kzalloc(sizeof(*fuse), GFP_KERNEL)))
 		return -ENOMEM;
-	nvkm_subdev_ctor(&nvkm_fuse, device, index, 0, &fuse->subdev);
+	nvkm_subdev_ctor(&nvkm_fuse, device, index, &fuse->subdev);
 	fuse->func = func;
 	spin_lock_init(&fuse->lock);
 	return 0;

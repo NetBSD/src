@@ -1,5 +1,6 @@
-/*	$NetBSD: P0260.h,v 1.1.1.1 2018/08/27 01:34:55 riastradh Exp $	*/
+/*	$NetBSD: P0260.h,v 1.1.1.2 2021/12/18 20:15:37 riastradh Exp $	*/
 
+/* SPDX-License-Identifier: MIT */
 #ifndef __NVBIOS_P0260_H__
 #define __NVBIOS_P0260_H__
 u32 nvbios_P0260Te(struct nvkm_bios *,

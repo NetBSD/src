@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_nvkm_engine_sw_chan.c,v 1.1.1.1 2018/08/27 01:34:56 riastradh Exp $	*/
+/*	$NetBSD: nouveau_nvkm_engine_sw_chan.c,v 1.1.1.2 2021/12/18 20:15:40 riastradh Exp $	*/
 
 /*
  * Copyright 2015 Red Hat Inc.
@@ -24,7 +24,7 @@
  * Authors: Ben Skeggs <bskeggs@redhat.com>
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_engine_sw_chan.c,v 1.1.1.1 2018/08/27 01:34:56 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_engine_sw_chan.c,v 1.1.1.2 2021/12/18 20:15:40 riastradh Exp $");
 
 #include "chan.h"
 
@@ -58,9 +58,9 @@ nvkm_sw_chan_event_ctor(struct nvkm_object *object, void *data, u32 size,
 	union {
 		struct nvif_notify_uevent_req none;
 	} *req = data;
-	int ret;
+	int ret = -ENOSYS;
 
-	if (nvif_unvers(req->none)) {
+	if (!(ret = nvif_unvers(ret, &data, &size, req->none))) {
 		notify->size  = sizeof(struct nvif_notify_uevent_rep);
 		notify->types = 1;
 		notify->index = 0;

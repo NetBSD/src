@@ -1,5 +1,6 @@
-/*	$NetBSD: hwsq.h,v 1.1.1.1 2018/08/27 01:34:56 riastradh Exp $	*/
+/*	$NetBSD: hwsq.h,v 1.1.1.2 2021/12/18 20:15:41 riastradh Exp $	*/
 
+/* SPDX-License-Identifier: MIT */
 #ifndef __NVKM_BUS_HWSQ_H__
 #define __NVKM_BUS_HWSQ_H__
 #include <subdev/bus.h>

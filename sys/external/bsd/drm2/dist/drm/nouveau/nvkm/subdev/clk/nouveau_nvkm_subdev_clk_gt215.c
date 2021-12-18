@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_nvkm_subdev_clk_gt215.c,v 1.1.1.1 2018/08/27 01:34:56 riastradh Exp $	*/
+/*	$NetBSD: nouveau_nvkm_subdev_clk_gt215.c,v 1.1.1.2 2021/12/18 20:15:41 riastradh Exp $	*/
 
 /*
  * Copyright 2012 Red Hat Inc.
@@ -25,7 +25,7 @@
  *          Roy Spliet
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_subdev_clk_gt215.c,v 1.1.1.1 2018/08/27 01:34:56 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_subdev_clk_gt215.c,v 1.1.1.2 2021/12/18 20:15:41 riastradh Exp $");
 
 #define gt215_clk(p) container_of((p), struct gt215_clk, base)
 #include "gt215.h"
@@ -115,6 +115,7 @@ read_pll(struct gt215_clk *clk, int idx, u32 pll)
 	struct nvkm_device *device = clk->base.subdev.device;
 	u32 ctrl = nvkm_rd32(device, pll + 0);
 	u32 sclk = 0, P = 1, N = 1, M = 1;
+	u32 MP;
 
 	if (!(ctrl & 0x00000008)) {
 		if (ctrl & 0x00000001) {
@@ -135,10 +136,12 @@ read_pll(struct gt215_clk *clk, int idx, u32 pll)
 		sclk = read_clk(clk, 0x10 + idx, false);
 	}
 
-	if (M * P)
-		return sclk * N / (M * P);
+	MP = M * P;
 
-	return 0;
+	if (!MP)
+		return 0;
+
+	return sclk * N / MP;
 }
 
 static int
@@ -163,7 +166,7 @@ gt215_clk_read(struct nvkm_clk *base, enum nv_clk_src src)
 		return read_clk(clk, 0x20, false);
 	case nv_clk_src_vdec:
 		return read_clk(clk, 0x21, false);
-	case nv_clk_src_daemon:
+	case nv_clk_src_pmu:
 		return read_clk(clk, 0x25, false);
 	case nv_clk_src_host:
 		hsrc = (nvkm_rd32(device, 0xc040) & 0x30000000) >> 28;
@@ -185,7 +188,7 @@ gt215_clk_read(struct nvkm_clk *base, enum nv_clk_src src)
 	return 0;
 }
 
-int
+static int
 gt215_clk_info(struct nvkm_clk *base, int idx, u32 khz,
 	       struct gt215_clk_info *info)
 {

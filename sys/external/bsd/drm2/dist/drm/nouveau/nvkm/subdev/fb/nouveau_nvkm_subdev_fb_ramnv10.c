@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_nvkm_subdev_fb_ramnv10.c,v 1.1.1.1 2018/08/27 01:34:56 riastradh Exp $	*/
+/*	$NetBSD: nouveau_nvkm_subdev_fb_ramnv10.c,v 1.1.1.2 2021/12/18 20:15:41 riastradh Exp $	*/
 
 /*
  * Copyright 2013 Red Hat Inc.
@@ -24,7 +24,7 @@
  * Authors: Ben Skeggs
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_subdev_fb_ramnv10.c,v 1.1.1.1 2018/08/27 01:34:56 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_subdev_fb_ramnv10.c,v 1.1.1.2 2021/12/18 20:15:41 riastradh Exp $");
 
 #include "ram.h"
 
@@ -41,5 +41,5 @@ nv10_ram_new(struct nvkm_fb *fb, struct nvkm_ram **pram)
 	else
 		type = NVKM_RAM_TYPE_SDRAM;
 
-	return nvkm_ram_new_(&nv04_ram_func, fb, type, size, 0, pram);
+	return nvkm_ram_new_(&nv04_ram_func, fb, type, size, pram);
 }

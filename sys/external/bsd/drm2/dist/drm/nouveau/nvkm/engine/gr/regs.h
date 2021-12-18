@@ -1,5 +1,6 @@
-/*	$NetBSD: regs.h,v 1.1.1.1 2018/08/27 01:34:56 riastradh Exp $	*/
+/*	$NetBSD: regs.h,v 1.1.1.2 2021/12/18 20:15:39 riastradh Exp $	*/
 
+/* SPDX-License-Identifier: MIT */
 #ifndef __NVKM_GR_REGS_H__
 #define __NVKM_GR_REGS_H__
 

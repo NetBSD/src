@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_flip_work.c,v 1.1.1.2 2018/08/27 01:34:42 riastradh Exp $	*/
+/*	$NetBSD: drm_flip_work.c,v 1.1.1.3 2021/12/18 20:11:02 riastradh Exp $	*/
 
 /*
  * Copyright (C) 2013 Red Hat
@@ -24,10 +24,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_flip_work.c,v 1.1.1.2 2018/08/27 01:34:42 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_flip_work.c,v 1.1.1.3 2021/12/18 20:11:02 riastradh Exp $");
 
-#include <drm/drmP.h>
+#include <linux/slab.h>
+
 #include <drm/drm_flip_work.h>
+#include <drm/drm_print.h>
+#include <drm/drm_util.h>
 
 /**
  * drm_flip_work_allocate_task - allocate a flip-work task

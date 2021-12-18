@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_nvkm_subdev_bios_dcb.c,v 1.1.1.1 2018/08/27 01:34:56 riastradh Exp $	*/
+/*	$NetBSD: nouveau_nvkm_subdev_bios_dcb.c,v 1.1.1.2 2021/12/18 20:15:40 riastradh Exp $	*/
 
 /*
  * Copyright 2012 Red Hat Inc.
@@ -24,7 +24,7 @@
  * Authors: Ben Skeggs
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_subdev_bios_dcb.c,v 1.1.1.1 2018/08/27 01:34:56 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_subdev_bios_dcb.c,v 1.1.1.2 2021/12/18 20:15:40 riastradh Exp $");
 
 #include <subdev/bios.h>
 #include <subdev/bios/dcb.h>
@@ -148,15 +148,18 @@ dcb_outp_parse(struct nvkm_bios *bios, u8 idx, u8 *ver, u8 *len,
 			switch (outp->type) {
 			case DCB_OUTPUT_DP:
 				switch (conf & 0x00e00000) {
-				case 0x00000000:
+				case 0x00000000: /* 1.62 */
 					outp->dpconf.link_bw = 0x06;
 					break;
-				case 0x00200000:
+				case 0x00200000: /* 2.7 */
 					outp->dpconf.link_bw = 0x0a;
 					break;
-				case 0x00400000:
-				default:
+				case 0x00400000: /* 5.4 */
 					outp->dpconf.link_bw = 0x14;
+					break;
+				case 0x00600000: /* 8.1 */
+				default:
+					outp->dpconf.link_bw = 0x1e;
 					break;
 				}
 
