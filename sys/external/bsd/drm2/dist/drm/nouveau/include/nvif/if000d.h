@@ -1,0 +1,14 @@
+/*	$NetBSD: if000d.h,v 1.1.1.1 2021/12/18 20:15:37 riastradh Exp $	*/
+
+#ifndef __NVIF_IF000D_H__
+#define __NVIF_IF000D_H__
+#include "if000c.h"
+
+struct nv04_vmm_vn {
+	/* nvif_vmm_vX ... */
+};
+
+struct nv04_vmm_map_vn {
+	/* nvif_vmm_map_vX ... */
+};
+#endif

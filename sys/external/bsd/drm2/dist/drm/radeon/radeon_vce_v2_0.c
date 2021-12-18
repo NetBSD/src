@@ -1,4 +1,4 @@
-/*	$NetBSD: radeon_vce_v2_0.c,v 1.1 2018/08/27 14:38:20 riastradh Exp $	*/
+/*	$NetBSD: radeon_vce_v2_0.c,v 1.1.1.1 2021/12/18 20:15:52 riastradh Exp $	*/
 
 /*
  * Copyright 2013 Advanced Micro Devices, Inc.
@@ -28,10 +28,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radeon_vce_v2_0.c,v 1.1 2018/08/27 14:38:20 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radeon_vce_v2_0.c,v 1.1.1.1 2021/12/18 20:15:52 riastradh Exp $");
 
 #include <linux/firmware.h>
-#include <drm/drmP.h>
+
 #include "radeon.h"
 #include "radeon_asic.h"
 #include "cikd.h"
@@ -58,7 +58,7 @@ static void vce_v2_0_set_sw_cg(struct radeon_device *rdev, bool gated)
 		WREG32(VCE_UENC_REG_CLOCK_GATING, tmp);
 
 		WREG32(VCE_CGTT_CLK_OVERRIDE, 0);
-    } else {
+	} else {
 		tmp = RREG32(VCE_CLOCK_GATING_B);
 		tmp |= 0xe7;
 		tmp &= ~0xe70000;
@@ -109,6 +109,10 @@ static void vce_v2_0_disable_cg(struct radeon_device *rdev)
 	WREG32(VCE_CGTT_CLK_OVERRIDE, 7);
 }
 
+/*
+ * Local variable sw_cg is used for debugging purposes, in case we
+ * ran into problems with dynamic clock gating. Don't remove it.
+ */
 void vce_v2_0_enable_mgcg(struct radeon_device *rdev, bool enable)
 {
 	bool sw_cg = false;

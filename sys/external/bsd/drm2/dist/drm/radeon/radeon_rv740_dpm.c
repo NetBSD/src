@@ -1,4 +1,4 @@
-/*	$NetBSD: radeon_rv740_dpm.c,v 1.1 2018/08/27 14:38:20 riastradh Exp $	*/
+/*	$NetBSD: radeon_rv740_dpm.c,v 1.1.1.1 2021/12/18 20:15:50 riastradh Exp $	*/
 
 /*
  * Copyright 2011 Advanced Micro Devices, Inc.
@@ -25,9 +25,8 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radeon_rv740_dpm.c,v 1.1 2018/08/27 14:38:20 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radeon_rv740_dpm.c,v 1.1.1.1 2021/12/18 20:15:50 riastradh Exp $");
 
-#include "drmP.h"
 #include "radeon.h"
 #include "rv740d.h"
 #include "r600_dpm.h"
@@ -41,28 +40,28 @@ u32 rv740_get_decoded_reference_divider(u32 encoded_ref)
 	u32 ref = 0;
 
 	switch (encoded_ref) {
-        case 0:
+	case 0:
 		ref = 1;
 		break;
-        case 16:
+	case 16:
 		ref = 2;
 		break;
-        case 17:
+	case 17:
 		ref = 3;
 		break;
-        case 18:
+	case 18:
 		ref = 2;
 		break;
-        case 19:
+	case 19:
 		ref = 3;
 		break;
-        case 20:
+	case 20:
 		ref = 4;
 		break;
-        case 21:
+	case 21:
 		ref = 5;
 		break;
-        default:
+	default:
 		DRM_ERROR("Invalid encoded Reference Divider\n");
 		ref = 0;
 		break;
