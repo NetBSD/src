@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.219 2021/12/18 13:06:33 rillig Exp $	*/
+/*	$NetBSD: init.c,v 1.220 2021/12/18 13:23:09 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: init.c,v 1.219 2021/12/18 13:06:33 rillig Exp $");
+__RCSID("$NetBSD: init.c,v 1.220 2021/12/18 13:23:09 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -60,11 +60,10 @@ __RCSID("$NetBSD: init.c,v 1.219 2021/12/18 13:06:33 rillig Exp $");
  *	struct { int x, y; } point = { 3, 4 };
  *	struct { int x, y; } point = { .y = 4, .x = 3 };
  *
- * Any scalar expression in the initializer may be surrounded by arbitrarily
- * many extra pairs of braces, like in the example 'number_with_braces' (C99
- * 6.7.8p11).
+ * Any scalar expression or string in the initializer may be surrounded by
+ * additional pairs of braces.
  *
- * For multi-dimensional arrays, the inner braces may be omitted like in
+ * For nested aggregate objects, the inner braces may be omitted like in
  * array_flat or spelled out like in array_nested.  This is unusual in
  * practice and therefore only supported very basically.
  *
@@ -84,6 +83,7 @@ __RCSID("$NetBSD: init.c,v 1.219 2021/12/18 13:06:33 rillig Exp $");
  *
  * See also:
  *	C99 6.7.8 "Initialization"
+ *	C11 6.7.9 "Initialization"
  *	d_c99_init.c for more examples
  */
 
@@ -100,44 +100,66 @@ struct designator {
 };
 
 /*
- * The optional designation for an initializer, saying which sub-object to
- * initialize.  Examples for designations are '.member' or
- * '.member[123].member.member[1][1]'.
+ * The path from the "current object" of a brace level to the sub-object that
+ * will be initialized by the next expression.  Examples for designations are
+ * '.member' or '.member[123].member.member[1][1]'.
  *
  * C99 6.7.8p6, 6.7.8p7
  */
 struct designation {
 	struct designator *dn_items;
-	size_t dn_len;
-	size_t dn_cap;
+	size_t		dn_len;
+	size_t		dn_cap;
 };
 
 /*
- * Describes a single brace level of an ongoing initialization.
+ * Everything that happens between a '{' and the corresponding '}' of an
+ * initialization.
  *
- * See C99 6.7.8p17.
+ * C99 6.7.8p17
  */
 struct brace_level {
-	/*
-	 * The type of the current object that is initialized at this brace
-	 * level.
-	 */
+	/* The type of the "current object". */
 	const type_t	*bl_type;
 
-	struct designation bl_designation;	/* .member[123].member */
+	/*
+	 * The path to the sub-object of the "current object" that is
+	 * initialized by the next expression.
+	 *
+	 * TODO: use this not only for explicit designations but also for
+	 *  implicit designations, like in C90.
+	 */
+	struct designation bl_designation;
 
 	/*
 	 * The next member of the struct or union that is to be initialized,
 	 * unless a specific member is selected by a designator.
+	 *
+	 * TODO: use bl_designation instead.
 	 */
 	const sym_t	*bl_member;
 	/*
 	 * The subscript of the next array element that is to be initialized,
 	 * unless a specific subscript is selected by a designator.
+	 *
+	 * TODO: use bl_designation instead.
 	 */
 	size_t		bl_subscript;
-	bool		bl_scalar_done: 1;	/* for scalars */
-	bool		bl_confused: 1;		/* skip further checks */
+
+	/*
+	 * Whether the designation is used up, that is, there is no next
+	 * sub-object left to be initialized.
+	 */
+	bool		bl_scalar_done:1;	/* for scalars */
+
+	/*
+	 * Whether lint has been confused by allowed but extra or omitted
+	 * braces.  In such a case, lint skips further type checks on the
+	 * initializer expressions.
+	 *
+	 * TODO: properly handle the omitted braces.
+	 */
+	bool		bl_confused:1;
 
 	struct brace_level *bl_enclosing;
 };
