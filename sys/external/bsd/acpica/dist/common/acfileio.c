@@ -444,10 +444,15 @@ AcValidateTableHeader (
     /* Read a potential table header */
 
     OriginalOffset = ftell (File);
-    fseek (File, TableOffset, SEEK_SET);
-
+    if (fseek (File, TableOffset, SEEK_SET))
+    {
+        fprintf (stderr, "SEEK error\n");
+    }
     Actual = fread (&TableHeader, 1, sizeof (ACPI_TABLE_HEADER), File);
-    fseek (File, OriginalOffset, SEEK_SET);
+    if (fseek (File, OriginalOffset, SEEK_SET))
+    {
+        fprintf (stderr, "SEEK error\n");
+    }
 
     if (Actual < sizeof (ACPI_TABLE_HEADER))
     {

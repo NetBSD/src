@@ -302,6 +302,8 @@ const char                      *AslTableCompilerMsgs [] =
 /*    ASL_MSG_ENTRY_LIST */                 "Invalid entry initializer list",
 /*    ASL_MSG_UNKNOWN_FORMAT */             "Unknown format value",
 /*    ASL_MSG_RESERVED_VALUE */             "Value for field is reserved or unknown",
+/*    ASL_MSG_TWO_ZERO_VALUES */            "32-bit DSDT Address and 64-bit X_DSDT Address cannot both be zero",
+/*    ASL_MSG_BAD_PARSE_TREE */             "Parse tree appears to be ill-defined"
 };
 
 /* Preprocessor */

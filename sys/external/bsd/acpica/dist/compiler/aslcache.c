@@ -75,6 +75,11 @@ UtLocalCacheCalloc (
     UINT32                  CacheSize = ASL_STRING_CACHE_SIZE;
 
 
+#ifdef ACPI_MISALIGNMENT_NOT_SUPPORTED
+    /* Used for objects other than strings, so keep allocations aligned */
+    Length = ACPI_ROUND_UP_TO_NATIVE_WORD (Length);
+#endif
+
     if (Length > CacheSize)
     {
         CacheSize = Length;

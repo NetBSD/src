@@ -385,6 +385,20 @@ ACPI_DMTABLE_INFO           AcpiDmTableInfoTcpaServer[] =
 
 /*******************************************************************************
  *
+ * TDEL - TD-Event Log Table
+ *
+ ******************************************************************************/
+
+ACPI_DMTABLE_INFO           AcpiDmTableInfoTdel[] =
+{
+    {ACPI_DMT_UINT32,   ACPI_TDEL_OFFSET (Reserved),                "Reserved", 0},
+    {ACPI_DMT_UINT64,   ACPI_TDEL_OFFSET (LogAreaMinimumLength),    "Log Area Minimum Length", 0},
+    {ACPI_DMT_UINT64,   ACPI_TDEL_OFFSET (LogAreaStartAddress),     "Log Area Start Address", 0},
+    ACPI_DMT_TERMINATOR
+};
+
+/*******************************************************************************
+ *
  * TPM2 - Trusted Platform Module (TPM) 2.0 Hardware Interface Table
  *
  ******************************************************************************/

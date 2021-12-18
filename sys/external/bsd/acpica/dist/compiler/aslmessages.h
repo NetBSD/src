@@ -304,6 +304,8 @@ typedef enum
     ASL_MSG_ENTRY_LIST,
     ASL_MSG_UNKNOWN_FORMAT,
     ASL_MSG_RESERVED_VALUE,
+    ASL_MSG_TWO_ZERO_VALUES,
+    ASL_MSG_BAD_PARSE_TREE,
 
     /* These messages are used by the Preprocessor only */
 
