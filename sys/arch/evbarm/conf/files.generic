@@ -1,4 +1,4 @@
-#	$NetBSD: files.generic,v 1.12 2021/11/12 22:02:08 jmcneill Exp $
+#	$NetBSD: files.generic,v 1.13 2021/12/18 16:31:06 riastradh Exp $
 #
 # A generic (aarch32) kernel configuration info
 #
@@ -17,6 +17,7 @@ file	arch/arm/arm/arm_generic_dma.c
 file	arch/arm/arm/bus_space_a4x.S
 
 # Add other board files here
+include "arch/arm/acpi/files.acpi"
 include "arch/arm/altera/files.altera"
 include "arch/arm/amlogic/files.meson"
 include "arch/arm/broadcom/files.bcm2835"
