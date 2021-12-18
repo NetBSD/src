@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.218 2021/12/18 11:25:15 rillig Exp $	*/
+/*	$NetBSD: init.c,v 1.219 2021/12/18 13:06:33 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: init.c,v 1.218 2021/12/18 11:25:15 rillig Exp $");
+__RCSID("$NetBSD: init.c,v 1.219 2021/12/18 13:06:33 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -136,11 +136,6 @@ struct brace_level {
 	 * unless a specific subscript is selected by a designator.
 	 */
 	size_t		bl_subscript;
-	/*
-	 * The maximum subscript that has ever be seen; only relevant for an
-	 * array of unknown size at the outermost brace level.
-	 */
-	size_t		bl_max_subscript;
 	bool		bl_scalar_done: 1;	/* for scalars */
 	bool		bl_confused: 1;		/* skip further checks */
 
@@ -159,6 +154,12 @@ struct initialization {
 
 	/* The innermost brace level. */
 	struct brace_level *in_brace_level;
+
+	/*
+	 * The maximum subscript that has ever be seen for an array of
+	 * unknown size, which can only occur at the outermost brace level.
+	 */
+	size_t		in_max_subscript;
 
 	/*
 	 * Is set when a structural error occurred in the initialization.
@@ -595,7 +596,7 @@ brace_level_apply_designation(struct brace_level *bl)
  * C99 6.7.8p17
  */
 static void
-brace_level_advance(struct brace_level *bl)
+brace_level_advance(struct brace_level *bl, size_t *max_subscript)
 {
 
 	switch (bl->bl_type->t_tspec) {
@@ -608,8 +609,8 @@ brace_level_advance(struct brace_level *bl)
 		break;
 	case ARRAY:
 		bl->bl_subscript++;
-		if (bl->bl_subscript > bl->bl_max_subscript)
-			bl->bl_max_subscript = bl->bl_subscript;
+		if (bl->bl_subscript > *max_subscript)
+			*max_subscript = bl->bl_subscript;
 		break;
 	default:
 		bl->bl_scalar_done = true;
@@ -735,7 +736,7 @@ initialization_set_size_of_unknown_array(struct initialization *in)
 	      in->in_brace_level->bl_enclosing == NULL))
 		return;
 
-	dim = in->in_brace_level->bl_max_subscript;
+	dim = in->in_max_subscript;
 	if (dim == 0 && (in->in_err || in->in_brace_level->bl_confused))
 		dim = 1;	/* prevent "empty array declaration: %s" */
 
@@ -759,7 +760,7 @@ initialization_end_brace_level(struct initialization *in)
 	bl = in->in_brace_level;
 
 	if (bl != NULL)
-		brace_level_advance(bl);
+		brace_level_advance(bl, &in->in_max_subscript);
 	if (bl != NULL)
 		designation_reset(&bl->bl_designation);
 
@@ -913,7 +914,7 @@ initialization_expr(struct initialization *in, tnode_t *tn)
 
 advance:
 	if (bl != NULL)
-		brace_level_advance(bl);
+		brace_level_advance(bl, &in->in_max_subscript);
 done:
 	if (bl != NULL)
 		designation_reset(&bl->bl_designation);
