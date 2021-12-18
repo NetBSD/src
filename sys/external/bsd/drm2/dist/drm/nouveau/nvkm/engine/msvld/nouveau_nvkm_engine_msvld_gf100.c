@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_nvkm_engine_msvld_gf100.c,v 1.2 2018/08/27 04:58:32 riastradh Exp $	*/
+/*	$NetBSD: nouveau_nvkm_engine_msvld_gf100.c,v 1.3 2021/12/18 23:45:36 riastradh Exp $	*/
 
 /*
  * Copyright 2012 Maarten Lankhorst
@@ -24,7 +24,7 @@
  * Authors: Maarten Lankhorst
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_engine_msvld_gf100.c,v 1.2 2018/08/27 04:58:32 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_engine_msvld_gf100.c,v 1.3 2021/12/18 23:45:36 riastradh Exp $");
 
 #include "priv.h"
 
@@ -40,7 +40,6 @@ gf100_msvld_init(struct nvkm_falcon *msvld)
 
 static const struct nvkm_falcon_func
 gf100_msvld = {
-	.pmc_enable = 0x00008000,
 	.init = gf100_msvld_init,
 	.sclass = {
 		{ -1, -1, GF100_MSVLD },

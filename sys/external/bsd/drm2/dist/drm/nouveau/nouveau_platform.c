@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_platform.c,v 1.2 2018/08/27 04:58:24 riastradh Exp $	*/
+/*	$NetBSD: nouveau_platform.c,v 1.3 2021/12/18 23:45:32 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2014, NVIDIA CORPORATION. All rights reserved.
@@ -22,7 +22,7 @@
  * DEALINGS IN THE SOFTWARE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_platform.c,v 1.2 2018/08/27 04:58:24 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_platform.c,v 1.3 2021/12/18 23:45:32 riastradh Exp $");
 
 #include "nouveau_platform.h"
 
@@ -41,7 +41,7 @@ static int nouveau_platform_probe(struct platform_device *pdev)
 
 	ret = drm_dev_register(drm, 0);
 	if (ret < 0) {
-		drm_dev_unref(drm);
+		drm_dev_put(drm);
 		return ret;
 	}
 
@@ -58,6 +58,19 @@ static int nouveau_platform_remove(struct platform_device *pdev)
 #if IS_ENABLED(CONFIG_OF)
 static const struct nvkm_device_tegra_func gk20a_platform_data = {
 	.iommu_bit = 34,
+	.require_vdd = true,
+};
+
+static const struct nvkm_device_tegra_func gm20b_platform_data = {
+	.iommu_bit = 34,
+	.require_vdd = true,
+	.require_ref_clk = true,
+};
+
+static const struct nvkm_device_tegra_func gp10b_platform_data = {
+	.iommu_bit = 36,
+	/* power provided by generic PM domains */
+	.require_vdd = false,
 };
 
 static const struct of_device_id nouveau_platform_match[] = {
@@ -67,7 +80,11 @@ static const struct of_device_id nouveau_platform_match[] = {
 	},
 	{
 		.compatible = "nvidia,gm20b",
-		.data = &gk20a_platform_data,
+		.data = &gm20b_platform_data,
+	},
+	{
+		.compatible = "nvidia,gp10b",
+		.data = &gp10b_platform_data,
 	},
 	{ }
 };
@@ -83,3 +100,14 @@ struct platform_driver nouveau_platform_driver = {
 	.probe = nouveau_platform_probe,
 	.remove = nouveau_platform_remove,
 };
+
+#if IS_ENABLED(CONFIG_ARCH_TEGRA_124_SOC) || IS_ENABLED(CONFIG_ARCH_TEGRA_132_SOC)
+MODULE_FIRMWARE("nvidia/gk20a/fecs_data.bin");
+MODULE_FIRMWARE("nvidia/gk20a/fecs_inst.bin");
+MODULE_FIRMWARE("nvidia/gk20a/gpccs_data.bin");
+MODULE_FIRMWARE("nvidia/gk20a/gpccs_inst.bin");
+MODULE_FIRMWARE("nvidia/gk20a/sw_bundle_init.bin");
+MODULE_FIRMWARE("nvidia/gk20a/sw_ctx.bin");
+MODULE_FIRMWARE("nvidia/gk20a/sw_method_init.bin");
+MODULE_FIRMWARE("nvidia/gk20a/sw_nonctx.bin");
+#endif

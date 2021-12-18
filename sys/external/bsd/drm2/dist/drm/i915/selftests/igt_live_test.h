@@ -1,4 +1,4 @@
-/*	$NetBSD: igt_live_test.h,v 1.1.1.1 2021/12/18 20:15:35 riastradh Exp $	*/
+/*	$NetBSD: igt_live_test.h,v 1.2 2021/12/18 23:45:31 riastradh Exp $	*/
 
 /*
  * SPDX-License-Identifier: MIT

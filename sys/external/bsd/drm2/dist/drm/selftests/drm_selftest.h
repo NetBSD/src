@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_selftest.h,v 1.1.1.1 2021/12/18 20:15:53 riastradh Exp $	*/
+/*	$NetBSD: drm_selftest.h,v 1.2 2021/12/18 23:45:44 riastradh Exp $	*/
 
 /*
  * Copyright © 2016 Intel Corporation

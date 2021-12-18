@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_nvkm_subdev_i2c_pad.c,v 1.4 2020/02/14 04:35:20 riastradh Exp $	*/
+/*	$NetBSD: nouveau_nvkm_subdev_i2c_pad.c,v 1.5 2021/12/18 23:45:40 riastradh Exp $	*/
 
 /*
  * Copyright 2015 Red Hat Inc.
@@ -24,7 +24,7 @@
  * Authors: Ben Skeggs <bskeggs@redhat.com>
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_subdev_i2c_pad.c,v 1.4 2020/02/14 04:35:20 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_subdev_i2c_pad.c,v 1.5 2021/12/18 23:45:40 riastradh Exp $");
 
 #include "pad.h"
 

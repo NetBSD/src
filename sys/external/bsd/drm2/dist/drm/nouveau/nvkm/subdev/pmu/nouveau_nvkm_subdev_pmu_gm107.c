@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_nvkm_subdev_pmu_gm107.c,v 1.2 2018/08/27 04:58:35 riastradh Exp $	*/
+/*	$NetBSD: nouveau_nvkm_subdev_pmu_gm107.c,v 1.3 2021/12/18 23:45:41 riastradh Exp $	*/
 
 /*
  * Copyright 2013 Red Hat Inc.
@@ -24,7 +24,7 @@
  * Authors: Ben Skeggs
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_subdev_pmu_gm107.c,v 1.2 2018/08/27 04:58:35 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_subdev_pmu_gm107.c,v 1.3 2021/12/18 23:45:41 riastradh Exp $");
 
 #include "priv.h"
 #define gk208_pmu_code gm107_pmu_code
@@ -33,14 +33,28 @@ __KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_subdev_pmu_gm107.c,v 1.2 2018/08/27 04:
 
 static const struct nvkm_pmu_func
 gm107_pmu = {
+	.flcn = &gt215_pmu_flcn,
 	.code.data = gm107_pmu_code,
 	.code.size = sizeof(gm107_pmu_code),
 	.data.data = gm107_pmu_data,
 	.data.size = sizeof(gm107_pmu_data),
+	.enabled = gf100_pmu_enabled,
+	.reset = gf100_pmu_reset,
+	.init = gt215_pmu_init,
+	.fini = gt215_pmu_fini,
+	.intr = gt215_pmu_intr,
+	.send = gt215_pmu_send,
+	.recv = gt215_pmu_recv,
+};
+
+static const struct nvkm_pmu_fwif
+gm107_pmu_fwif[] = {
+	{ -1, gf100_pmu_nofw, &gm107_pmu },
+	{}
 };
 
 int
 gm107_pmu_new(struct nvkm_device *device, int index, struct nvkm_pmu **ppmu)
 {
-	return nvkm_pmu_new_(&gm107_pmu, device, index, ppmu);
+	return nvkm_pmu_new_(gm107_pmu_fwif, device, index, ppmu);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_rps.c,v 1.1.1.1 2021/12/18 20:15:33 riastradh Exp $	*/
+/*	$NetBSD: intel_rps.c,v 1.2 2021/12/18 23:45:30 riastradh Exp $	*/
 
 /*
  * SPDX-License-Identifier: MIT
@@ -7,7 +7,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intel_rps.c,v 1.1.1.1 2021/12/18 20:15:33 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intel_rps.c,v 1.2 2021/12/18 23:45:30 riastradh Exp $");
 
 #include "i915_drv.h"
 #include "intel_gt.h"
@@ -20,7 +20,11 @@ __KERNEL_RCSID(0, "$NetBSD: intel_rps.c,v 1.1.1.1 2021/12/18 20:15:33 riastradh 
 /*
  * Lock protecting IPS related data structures
  */
+#ifdef __NetBSD__
+spinlock_t mchdev_lock;
+#else
 static DEFINE_SPINLOCK(mchdev_lock);
+#endif
 
 static struct intel_gt *rps_to_gt(struct intel_rps *rps)
 {
@@ -1731,6 +1735,7 @@ static struct drm_i915_private __rcu *ips_mchdev;
 static void
 ips_ping_for_i915_load(void)
 {
+#ifndef __NetBSD__		/* XXX IPS GPU turbo limits what?  */
 	void (*link)(void);
 
 	link = symbol_get(ips_link_to_i915_driver);
@@ -1738,6 +1743,7 @@ ips_ping_for_i915_load(void)
 		link();
 		symbol_put(ips_link_to_i915_driver);
 	}
+#endif
 }
 
 void intel_rps_driver_register(struct intel_rps *rps)

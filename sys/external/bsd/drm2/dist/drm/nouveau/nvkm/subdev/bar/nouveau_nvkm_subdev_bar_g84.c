@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_nvkm_subdev_bar_g84.c,v 1.2 2018/08/27 04:58:33 riastradh Exp $	*/
+/*	$NetBSD: nouveau_nvkm_subdev_bar_g84.c,v 1.3 2021/12/18 23:45:38 riastradh Exp $	*/
 
 /*
  * Copyright 2015 Red Hat Inc.
@@ -24,7 +24,7 @@
  * Authors: Ben Skeggs <bskeggs@redhat.com>
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_subdev_bar_g84.c,v 1.2 2018/08/27 04:58:33 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_subdev_bar_g84.c,v 1.3 2021/12/18 23:45:38 riastradh Exp $");
 
 #include "nv50.h"
 
@@ -49,8 +49,14 @@ g84_bar_func = {
 	.dtor = nv50_bar_dtor,
 	.oneinit = nv50_bar_oneinit,
 	.init = nv50_bar_init,
-	.kmap = nv50_bar_kmap,
-	.umap = nv50_bar_umap,
+	.bar1.init = nv50_bar_bar1_init,
+	.bar1.fini = nv50_bar_bar1_fini,
+	.bar1.wait = nv50_bar_bar1_wait,
+	.bar1.vmm = nv50_bar_bar1_vmm,
+	.bar2.init = nv50_bar_bar2_init,
+	.bar2.fini = nv50_bar_bar2_fini,
+	.bar2.wait = nv50_bar_bar1_wait,
+	.bar2.vmm = nv50_bar_bar2_vmm,
 	.flush = g84_bar_flush,
 };
 

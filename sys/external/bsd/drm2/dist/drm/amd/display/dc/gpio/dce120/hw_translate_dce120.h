@@ -1,4 +1,4 @@
-/*	$NetBSD: hw_translate_dce120.h,v 1.1.1.1 2021/12/18 20:11:25 riastradh Exp $	*/
+/*	$NetBSD: hw_translate_dce120.h,v 1.2 2021/12/18 23:45:04 riastradh Exp $	*/
 
 /*
  * Copyright 2013-15 Advanced Micro Devices, Inc.

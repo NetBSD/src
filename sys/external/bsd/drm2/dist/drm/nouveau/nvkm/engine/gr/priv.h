@@ -1,5 +1,6 @@
-/*	$NetBSD: priv.h,v 1.2 2018/08/27 04:58:32 riastradh Exp $	*/
+/*	$NetBSD: priv.h,v 1.3 2021/12/18 23:45:36 riastradh Exp $	*/
 
+/* SPDX-License-Identifier: MIT */
 #ifndef __NVKM_GR_PRIV_H__
 #define __NVKM_GR_PRIV_H__
 #define nvkm_gr(p) container_of((p), struct nvkm_gr, engine)
@@ -9,8 +10,7 @@ struct nvkm_fb_tile;
 struct nvkm_fifo_chan;
 
 int nvkm_gr_ctor(const struct nvkm_gr_func *, struct nvkm_device *,
-		 int index, u32 pmc_enable, bool enable,
-		 struct nvkm_gr *);
+		 int index, bool enable, struct nvkm_gr *);
 
 bool nv04_gr_idle(struct nvkm_gr *);
 
@@ -18,6 +18,7 @@ struct nvkm_gr_func {
 	void *(*dtor)(struct nvkm_gr *);
 	int (*oneinit)(struct nvkm_gr *);
 	int (*init)(struct nvkm_gr *);
+	int (*fini)(struct nvkm_gr *, bool);
 	void (*intr)(struct nvkm_gr *);
 	void (*tile)(struct nvkm_gr *, int region, struct nvkm_fb_tile *);
 	int (*tlb_flush)(struct nvkm_gr *);
@@ -27,6 +28,12 @@ struct nvkm_gr_func {
 	/* Returns chipset-specific counts of units packed into an u64.
 	 */
 	u64 (*units)(struct nvkm_gr *);
+	bool (*chsw_load)(struct nvkm_gr *);
+	struct {
+		int (*pause)(struct nvkm_gr *);
+		int (*resume)(struct nvkm_gr *);
+		u32 (*inst)(struct nvkm_gr *);
+	} ctxsw;
 	struct nvkm_sclass sclass[];
 };
 

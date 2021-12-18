@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_nvkm_engine_mpeg_nv31.c,v 1.2 2018/08/27 04:58:32 riastradh Exp $	*/
+/*	$NetBSD: nouveau_nvkm_engine_mpeg_nv31.c,v 1.3 2021/12/18 23:45:36 riastradh Exp $	*/
 
 /*
  * Copyright 2012 Red Hat Inc.
@@ -24,7 +24,7 @@
  * Authors: Ben Skeggs
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_engine_mpeg_nv31.c,v 1.2 2018/08/27 04:58:32 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_engine_mpeg_nv31.c,v 1.3 2021/12/18 23:45:36 riastradh Exp $");
 
 #include "nv31.h"
 
@@ -129,6 +129,8 @@ nv31_mpeg_tile(struct nvkm_engine *engine, int i, struct nvkm_fb_tile *tile)
 static bool
 nv31_mpeg_mthd_dma(struct nvkm_device *device, u32 mthd, u32 data)
 {
+	struct nv31_mpeg *mpeg = nv31_mpeg(device->mpeg);
+	struct nvkm_subdev *subdev = &mpeg->engine.subdev;
 	u32 inst = data << 4;
 	u32 dma0 = nvkm_rd32(device, 0x700000 + inst);
 	u32 dma1 = nvkm_rd32(device, 0x700004 + inst);
@@ -137,8 +139,11 @@ nv31_mpeg_mthd_dma(struct nvkm_device *device, u32 mthd, u32 data)
 	u32 size = dma1 + 1;
 
 	/* only allow linear DMA objects */
-	if (!(dma0 & 0x00002000))
+	if (!(dma0 & 0x00002000)) {
+		nvkm_error(subdev, "inst %08x dma0 %08x dma1 %08x dma2 %08x\n",
+			   inst, dma0, dma1, dma2);
 		return false;
+	}
 
 	if (mthd == 0x0190) {
 		/* DMA_CMD */
@@ -283,7 +288,7 @@ nv31_mpeg_new_(const struct nv31_mpeg_func *func, struct nvkm_device *device,
 	mpeg->func = func;
 	*pmpeg = &mpeg->engine;
 
-	return nvkm_engine_ctor(&nv31_mpeg_, device, index, 0x00000002,
+	return nvkm_engine_ctor(&nv31_mpeg_, device, index,
 				true, &mpeg->engine);
 }
 

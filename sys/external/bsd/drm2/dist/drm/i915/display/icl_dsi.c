@@ -1,4 +1,4 @@
-/*	$NetBSD: icl_dsi.c,v 1.1.1.1 2021/12/18 20:15:27 riastradh Exp $	*/
+/*	$NetBSD: icl_dsi.c,v 1.2 2021/12/18 23:45:29 riastradh Exp $	*/
 
 /*
  * Copyright © 2018 Intel Corporation
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: icl_dsi.c,v 1.1.1.1 2021/12/18 20:15:27 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: icl_dsi.c,v 1.2 2021/12/18 23:45:29 riastradh Exp $");
 
 #include <drm/drm_atomic_helper.h>
 #include <drm/drm_mipi_dsi.h>

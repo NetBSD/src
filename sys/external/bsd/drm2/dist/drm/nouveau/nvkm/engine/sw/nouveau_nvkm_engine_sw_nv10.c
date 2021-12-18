@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_nvkm_engine_sw_nv10.c,v 1.2 2018/08/27 04:58:32 riastradh Exp $	*/
+/*	$NetBSD: nouveau_nvkm_engine_sw_nv10.c,v 1.3 2021/12/18 23:45:37 riastradh Exp $	*/
 
 /*
  * Copyright 2012 Red Hat Inc.
@@ -24,13 +24,13 @@
  * Authors: Ben Skeggs
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_engine_sw_nv10.c,v 1.2 2018/08/27 04:58:32 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_engine_sw_nv10.c,v 1.3 2021/12/18 23:45:37 riastradh Exp $");
 
 #include "priv.h"
 #include "chan.h"
 #include "nvsw.h"
 
-#include <nvif/ioctl.h>
+#include <nvif/class.h>
 
 /*******************************************************************************
  * software context
@@ -61,7 +61,7 @@ static const struct nvkm_sw_func
 nv10_sw = {
 	.chan_new = nv10_sw_chan_new,
 	.sclass = {
-		{ nvkm_nvsw_new, { -1, -1, NVIF_IOCTL_NEW_V0_SW_NV10 } },
+		{ nvkm_nvsw_new, { -1, -1, NVIF_CLASS_SW_NV10 } },
 		{}
 	}
 };

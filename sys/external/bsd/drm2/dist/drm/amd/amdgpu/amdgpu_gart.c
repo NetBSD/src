@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu_gart.c,v 1.4 2020/10/17 10:47:28 jmcneill Exp $	*/
+/*	$NetBSD: amdgpu_gart.c,v 1.5 2021/12/18 23:44:58 riastradh Exp $	*/
 
 /*
  * Copyright 2008 Advanced Micro Devices, Inc.
@@ -27,11 +27,17 @@
  *          Alex Deucher
  *          Jerome Glisse
  */
-#include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdgpu_gart.c,v 1.4 2020/10/17 10:47:28 jmcneill Exp $");
 
-#include <drm/drmP.h>
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: amdgpu_gart.c,v 1.5 2021/12/18 23:44:58 riastradh Exp $");
+
+#include <linux/pci.h>
+#include <linux/vmalloc.h>
+
 #include <drm/amdgpu_drm.h>
+#ifdef CONFIG_X86
+#include <asm/set_memory.h>
+#endif
 #include "amdgpu.h"
 
 /*
@@ -57,108 +63,91 @@ __KERNEL_RCSID(0, "$NetBSD: amdgpu_gart.c,v 1.4 2020/10/17 10:47:28 jmcneill Exp
 /*
  * Common GART table functions.
  */
+
 /**
- * amdgpu_gart_table_ram_alloc - allocate system ram for gart page table
+ * amdgpu_dummy_page_init - init dummy page used by the driver
  *
  * @adev: amdgpu_device pointer
  *
- * Allocate system memory for GART page table
- * (r1xx-r3xx, non-pcie r4xx, rs400).  These asics require the
- * gart table to be in system memory.
- * Returns 0 for success, -ENOMEM for failure.
+ * Allocate the dummy page used by the driver (all asics).
+ * This dummy page is used by the driver as a filler for gart entries
+ * when pages are taken out of the GART
+ * Returns 0 on sucess, -ENOMEM on failure.
  */
-int amdgpu_gart_table_ram_alloc(struct amdgpu_device *adev)
+static int amdgpu_gart_dummy_page_init(struct amdgpu_device *adev)
 {
 #ifdef __NetBSD__
 	int rsegs;
 	int error;
 
-	error = bus_dmamem_alloc(adev->ddev->dmat, adev->gart.table_size,
-	    PAGE_SIZE, 0, &adev->gart.ag_table_seg, 1, &rsegs, BUS_DMA_WAITOK);
+	/* XXX Can this be called more than once??  */
+	if (adev->dummy_page_map != NULL)
+		return 0;
+
+	error = bus_dmamem_alloc(adev->ddev->dmat, PAGE_SIZE, PAGE_SIZE, 0,
+	    &adev->dummy_page_seg, 1, &rsegs, BUS_DMA_WAITOK);
 	if (error)
 		goto fail0;
 	KASSERT(rsegs == 1);
-	error = bus_dmamap_create(adev->ddev->dmat, adev->gart.table_size, 1,
-	    adev->gart.table_size, 0, BUS_DMA_WAITOK,
-	    &adev->gart.ag_table_map);
+	error = bus_dmamap_create(adev->ddev->dmat, PAGE_SIZE, 1, PAGE_SIZE, 0,
+	    BUS_DMA_WAITOK, &adev->dummy_page_map);
 	if (error)
 		goto fail1;
-	error = bus_dmamem_map(adev->ddev->dmat, &adev->gart.ag_table_seg, 1,
-	    adev->gart.table_size, &adev->gart.ptr,
-	    BUS_DMA_WAITOK|BUS_DMA_NOCACHE);
+	error = bus_dmamap_load_raw(adev->ddev->dmat, adev->dummy_page_map,
+	    &adev->dummy_page_seg, 1, PAGE_SIZE, BUS_DMA_WAITOK);
 	if (error)
 		goto fail2;
-	error = bus_dmamap_load(adev->ddev->dmat, adev->gart.ag_table_map,
-	    adev->gart.ptr, adev->gart.table_size, NULL, BUS_DMA_WAITOK);
-	if (error)
-		goto fail3;
 
 	/* Success!  */
-	adev->gart.table_addr = adev->gart.ag_table_map->dm_segs[0].ds_addr;
+	adev->dummy_page_addr = adev->dummy_page_map->dm_segs[0].ds_addr;
 	return 0;
 
-fail4: __unused
-	bus_dmamap_unload(adev->ddev->dmat, adev->gart.ag_table_map);
-fail3:	bus_dmamem_unmap(adev->ddev->dmat, adev->gart.ptr,
-	    adev->gart.table_size);
-fail2:	bus_dmamap_destroy(adev->ddev->dmat, adev->gart.ag_table_map);
-fail1:	bus_dmamem_free(adev->ddev->dmat, &adev->gart.ag_table_seg, 1);
+fail3: __unused
+	bus_dmamap_unload(adev->ddev->dmat, adev->dummy_page_map);
+fail2:	bus_dmamap_destroy(adev->ddev->dmat, adev->dummy_page_map);
+fail1:	bus_dmamem_free(adev->ddev->dmat, &adev->dummy_page_seg, 1);
 fail0:	KASSERT(error);
+	adev->dummy_page_map = NULL;
+	adev->dummy_page_addr = 0; /* paranoia */
 	/* XXX errno NetBSD->Linux */
 	return -error;
 #else  /* __NetBSD__ */
-	void *ptr;
+	struct page *dummy_page = ttm_bo_glob.dummy_read_page;
 
-	ptr = pci_alloc_consistent(adev->pdev, adev->gart.table_size,
-				   &adev->gart.table_addr);
-	if (ptr == NULL) {
+	if (adev->dummy_page_addr)
+		return 0;
+	adev->dummy_page_addr = pci_map_page(adev->pdev, dummy_page, 0,
+					     PAGE_SIZE, PCI_DMA_BIDIRECTIONAL);
+	if (pci_dma_mapping_error(adev->pdev, adev->dummy_page_addr)) {
+		dev_err(&adev->pdev->dev, "Failed to DMA MAP the dummy page\n");
+		adev->dummy_page_addr = 0;
 		return -ENOMEM;
 	}
-#ifdef CONFIG_X86
-	if (0) {
-		set_memory_uc((unsigned long)ptr,
-			      adev->gart.table_size >> PAGE_SHIFT);
-	}
-#endif
-	adev->gart.ptr = ptr;
-	memset((void *)adev->gart.ptr, 0, adev->gart.table_size);
 	return 0;
 #endif	/* __NetBSD__ */
 }
 
 /**
- * amdgpu_gart_table_ram_free - free system ram for gart page table
+ * amdgpu_dummy_page_fini - free dummy page used by the driver
  *
  * @adev: amdgpu_device pointer
  *
- * Free system memory for GART page table
- * (r1xx-r3xx, non-pcie r4xx, rs400).  These asics require the
- * gart table to be in system memory.
+ * Frees the dummy page used by the driver (all asics).
  */
-void amdgpu_gart_table_ram_free(struct amdgpu_device *adev)
+static void amdgpu_gart_dummy_page_fini(struct amdgpu_device *adev)
 {
-	if (adev->gart.ptr == NULL) {
+	if (!adev->dummy_page_addr)
 		return;
-	}
 #ifdef __NetBSD__
-	bus_dmamap_unload(adev->ddev->dmat, adev->gart.ag_table_map);
-	bus_dmamem_unmap(adev->ddev->dmat, adev->gart.ptr,
-	    adev->gart.table_size);
-	bus_dmamap_destroy(adev->ddev->dmat, adev->gart.ag_table_map);
-	bus_dmamem_free(adev->ddev->dmat, &adev->gart.ag_table_seg, 1);
+	bus_dmamap_unload(adev->ddev->dmat, adev->dummy_page_map);
+	bus_dmamap_destroy(adev->ddev->dmat, adev->dummy_page_map);
+	bus_dmamem_free(adev->ddev->dmat, &adev->dummy_page_seg, 1);
+	adev->dummy_page_map = NULL;
 #else
-#ifdef CONFIG_X86
-	if (0) {
-		set_memory_wb((unsigned long)adev->gart.ptr,
-			      adev->gart.table_size >> PAGE_SHIFT);
-	}
+	pci_unmap_page(adev->pdev, adev->dummy_page_addr,
+		       PAGE_SIZE, PCI_DMA_BIDIRECTIONAL);
 #endif
-	pci_free_consistent(adev->pdev, adev->gart.table_size,
-			    (void *)adev->gart.ptr,
-			    adev->gart.table_addr);
-	adev->gart.ptr = NULL;
-	adev->gart.table_addr = 0;
-#endif
+	adev->dummy_page_addr = 0;
 }
 
 /**
@@ -175,11 +164,18 @@ int amdgpu_gart_table_vram_alloc(struct amdgpu_device *adev)
 {
 	int r;
 
-	if (adev->gart.robj == NULL) {
-		r = amdgpu_bo_create(adev, adev->gart.table_size,
-				     PAGE_SIZE, true, AMDGPU_GEM_DOMAIN_VRAM,
-				     AMDGPU_GEM_CREATE_CPU_ACCESS_REQUIRED,
-				     NULL, NULL, &adev->gart.robj);
+	if (adev->gart.bo == NULL) {
+		struct amdgpu_bo_param bp;
+
+		memset(&bp, 0, sizeof(bp));
+		bp.size = adev->gart.table_size;
+		bp.byte_align = PAGE_SIZE;
+		bp.domain = AMDGPU_GEM_DOMAIN_VRAM;
+		bp.flags = AMDGPU_GEM_CREATE_CPU_ACCESS_REQUIRED |
+			AMDGPU_GEM_CREATE_VRAM_CONTIGUOUS;
+		bp.type = ttm_bo_type_kernel;
+		bp.resv = NULL;
+		r = amdgpu_bo_create(adev, &bp, &adev->gart.bo);
 		if (r) {
 			return r;
 		}
@@ -199,23 +195,20 @@ int amdgpu_gart_table_vram_alloc(struct amdgpu_device *adev)
  */
 int amdgpu_gart_table_vram_pin(struct amdgpu_device *adev)
 {
-	uint64_t gpu_addr;
 	int r;
 
-	r = amdgpu_bo_reserve(adev->gart.robj, false);
+	r = amdgpu_bo_reserve(adev->gart.bo, false);
 	if (unlikely(r != 0))
 		return r;
-	r = amdgpu_bo_pin(adev->gart.robj,
-				AMDGPU_GEM_DOMAIN_VRAM, &gpu_addr);
+	r = amdgpu_bo_pin(adev->gart.bo, AMDGPU_GEM_DOMAIN_VRAM);
 	if (r) {
-		amdgpu_bo_unreserve(adev->gart.robj);
+		amdgpu_bo_unreserve(adev->gart.bo);
 		return r;
 	}
-	r = amdgpu_bo_kmap(adev->gart.robj, &adev->gart.ptr);
+	r = amdgpu_bo_kmap(adev->gart.bo, &adev->gart.ptr);
 	if (r)
-		amdgpu_bo_unpin(adev->gart.robj);
-	amdgpu_bo_unreserve(adev->gart.robj);
-	adev->gart.table_addr = gpu_addr;
+		amdgpu_bo_unpin(adev->gart.bo);
+	amdgpu_bo_unreserve(adev->gart.bo);
 	return r;
 }
 
@@ -231,14 +224,14 @@ void amdgpu_gart_table_vram_unpin(struct amdgpu_device *adev)
 {
 	int r;
 
-	if (adev->gart.robj == NULL) {
+	if (adev->gart.bo == NULL) {
 		return;
 	}
-	r = amdgpu_bo_reserve(adev->gart.robj, false);
+	r = amdgpu_bo_reserve(adev->gart.bo, true);
 	if (likely(r == 0)) {
-		amdgpu_bo_kunmap(adev->gart.robj);
-		amdgpu_bo_unpin(adev->gart.robj);
-		amdgpu_bo_unreserve(adev->gart.robj);
+		amdgpu_bo_kunmap(adev->gart.bo);
+		amdgpu_bo_unpin(adev->gart.bo);
+		amdgpu_bo_unreserve(adev->gart.bo);
 		adev->gart.ptr = NULL;
 	}
 }
@@ -254,10 +247,10 @@ void amdgpu_gart_table_vram_unpin(struct amdgpu_device *adev)
  */
 void amdgpu_gart_table_vram_free(struct amdgpu_device *adev)
 {
-	if (adev->gart.robj == NULL) {
+	if (adev->gart.bo == NULL) {
 		return;
 	}
-	amdgpu_bo_unref(&adev->gart.robj);
+	amdgpu_bo_unref(&adev->gart.bo);
 }
 
 #ifdef __NetBSD__
@@ -345,40 +338,82 @@ amdgpu_gart_unbind(struct amdgpu_device *adev, uint64_t gpu_start,
  *
  * Unbinds the requested pages from the gart page table and
  * replaces them with the dummy page (all asics).
+ * Returns 0 for success, -EINVAL for failure.
  */
-void amdgpu_gart_unbind(struct amdgpu_device *adev, uint64_t offset,
+int amdgpu_gart_unbind(struct amdgpu_device *adev, uint64_t offset,
 			int pages)
 {
 	unsigned t;
 	unsigned p;
 	int i, j;
 	u64 page_base;
-	uint32_t flags = AMDGPU_PTE_SYSTEM;
+	/* Starting from VEGA10, system bit must be 0 to mean invalid. */
+	uint64_t flags = 0;
 
 	if (!adev->gart.ready) {
 		WARN(1, "trying to unbind memory from uninitialized GART !\n");
-		return;
+		return -EINVAL;
 	}
 
 	t = offset / AMDGPU_GPU_PAGE_SIZE;
-	p = t / (PAGE_SIZE / AMDGPU_GPU_PAGE_SIZE);
+	p = t / AMDGPU_GPU_PAGES_IN_CPU_PAGE;
 	for (i = 0; i < pages; i++, p++) {
-		if (adev->gart.pages[p]) {
-			adev->gart.pages[p] = NULL;
-			adev->gart.pages_addr[p] = adev->dummy_page.addr;
-			page_base = adev->gart.pages_addr[p];
-			if (!adev->gart.ptr)
-				continue;
+#ifdef CONFIG_DRM_AMDGPU_GART_DEBUGFS
+		adev->gart.pages[p] = NULL;
+#endif
+		page_base = adev->dummy_page_addr;
+		if (!adev->gart.ptr)
+			continue;
 
-			for (j = 0; j < (PAGE_SIZE / AMDGPU_GPU_PAGE_SIZE); j++, t++) {
-				amdgpu_gart_set_pte_pde(adev, adev->gart.ptr,
-							t, page_base, flags);
-				page_base += AMDGPU_GPU_PAGE_SIZE;
-			}
+		for (j = 0; j < AMDGPU_GPU_PAGES_IN_CPU_PAGE; j++, t++) {
+			amdgpu_gmc_set_pte_pde(adev, adev->gart.ptr,
+					       t, page_base, flags);
+			page_base += AMDGPU_GPU_PAGE_SIZE;
 		}
 	}
 	mb();
-	amdgpu_gart_flush_gpu_tlb(adev, 0);
+	amdgpu_asic_flush_hdp(adev, NULL);
+	for (i = 0; i < adev->num_vmhubs; i++)
+		amdgpu_gmc_flush_gpu_tlb(adev, 0, i, 0);
+
+	return 0;
+}
+
+/**
+ * amdgpu_gart_map - map dma_addresses into GART entries
+ *
+ * @adev: amdgpu_device pointer
+ * @offset: offset into the GPU's gart aperture
+ * @pages: number of pages to bind
+ * @dma_addr: DMA addresses of pages
+ * @flags: page table entry flags
+ * @dst: CPU address of the gart table
+ *
+ * Map the dma_addresses into GART entries (all asics).
+ * Returns 0 for success, -EINVAL for failure.
+ */
+int amdgpu_gart_map(struct amdgpu_device *adev, uint64_t offset,
+		    int pages, dma_addr_t *dma_addr, uint64_t flags,
+		    void *dst)
+{
+	uint64_t page_base;
+	unsigned i, j, t;
+
+	if (!adev->gart.ready) {
+		WARN(1, "trying to bind memory to uninitialized GART !\n");
+		return -EINVAL;
+	}
+
+	t = offset / AMDGPU_GPU_PAGE_SIZE;
+
+	for (i = 0; i < pages; i++) {
+		page_base = dma_addr[i];
+		for (j = 0; j < AMDGPU_GPU_PAGES_IN_CPU_PAGE; j++, t++) {
+			amdgpu_gmc_set_pte_pde(adev, dst, t, page_base, flags);
+			page_base += AMDGPU_GPU_PAGE_SIZE;
+		}
+	}
+	return 0;
 }
 #endif	/* __NetBSD__ */
 
@@ -433,6 +468,7 @@ amdgpu_gart_bind(struct amdgpu_device *adev, uint64_t gpu_start,
  * @pages: number of pages to bind
  * @pagelist: pages to bind
  * @dma_addr: DMA addresses of pages
+ * @flags: page table entry flags
  *
  * Binds the requested pages to the gart page table
  * (all asics).
@@ -440,34 +476,37 @@ amdgpu_gart_bind(struct amdgpu_device *adev, uint64_t gpu_start,
  */
 int amdgpu_gart_bind(struct amdgpu_device *adev, uint64_t offset,
 		     int pages, struct page **pagelist, dma_addr_t *dma_addr,
-		     uint32_t flags)
+		     uint64_t flags)
 {
-	unsigned t;
-	unsigned p;
-	uint64_t page_base;
-	int i, j;
+#ifdef CONFIG_DRM_AMDGPU_GART_DEBUGFS
+	unsigned t,p;
+#endif
+	int r, i;
 
 	if (!adev->gart.ready) {
 		WARN(1, "trying to bind memory to uninitialized GART !\n");
 		return -EINVAL;
 	}
 
+#ifdef CONFIG_DRM_AMDGPU_GART_DEBUGFS
 	t = offset / AMDGPU_GPU_PAGE_SIZE;
-	p = t / (PAGE_SIZE / AMDGPU_GPU_PAGE_SIZE);
+	p = t / AMDGPU_GPU_PAGES_IN_CPU_PAGE;
+	for (i = 0; i < pages; i++, p++)
+		adev->gart.pages[p] = pagelist ? pagelist[i] : NULL;
+#endif
 
-	for (i = 0; i < pages; i++, p++) {
-		adev->gart.pages_addr[p] = dma_addr[i];
-		adev->gart.pages[p] = pagelist[i];
-		if (adev->gart.ptr) {
-			page_base = adev->gart.pages_addr[p];
-			for (j = 0; j < (PAGE_SIZE / AMDGPU_GPU_PAGE_SIZE); j++, t++) {
-				amdgpu_gart_set_pte_pde(adev, adev->gart.ptr, t, page_base, flags);
-				page_base += AMDGPU_GPU_PAGE_SIZE;
-			}
-		}
-	}
+	if (!adev->gart.ptr)
+		return 0;
+
+	r = amdgpu_gart_map(adev, offset, pages, dma_addr, flags,
+		    adev->gart.ptr);
+	if (r)
+		return r;
+
 	mb();
-	amdgpu_gart_flush_gpu_tlb(adev, 0);
+	amdgpu_asic_flush_hdp(adev, NULL);
+	for (i = 0; i < adev->num_vmhubs; i++)
+		amdgpu_gmc_flush_gpu_tlb(adev, 0, i, 0);
 	return 0;
 }
 #endif
@@ -482,40 +521,33 @@ int amdgpu_gart_bind(struct amdgpu_device *adev, uint64_t offset,
  */
 int amdgpu_gart_init(struct amdgpu_device *adev)
 {
-	int r, i;
+	int r;
 
-	if (adev->gart.pages) {
+	if (adev->dummy_page_addr)
 		return 0;
-	}
+
 	/* We need PAGE_SIZE >= AMDGPU_GPU_PAGE_SIZE */
 	if (PAGE_SIZE < AMDGPU_GPU_PAGE_SIZE) {
 		DRM_ERROR("Page size is smaller than GPU page size!\n");
 		return -EINVAL;
 	}
-	r = amdgpu_dummy_page_init(adev);
+	r = amdgpu_gart_dummy_page_init(adev);
 	if (r)
 		return r;
 	/* Compute table size */
-	adev->gart.num_cpu_pages = adev->mc.gtt_size / PAGE_SIZE;
-	adev->gart.num_gpu_pages = adev->mc.gtt_size / AMDGPU_GPU_PAGE_SIZE;
+	adev->gart.num_cpu_pages = adev->gmc.gart_size / PAGE_SIZE;
+	adev->gart.num_gpu_pages = adev->gmc.gart_size / AMDGPU_GPU_PAGE_SIZE;
 	DRM_INFO("GART: num cpu pages %u, num gpu pages %u\n",
 		 adev->gart.num_cpu_pages, adev->gart.num_gpu_pages);
+
+#ifdef CONFIG_DRM_AMDGPU_GART_DEBUGFS
 	/* Allocate pages table */
-	adev->gart.pages = vzalloc(sizeof(void *) * adev->gart.num_cpu_pages);
-	if (adev->gart.pages == NULL) {
-		amdgpu_gart_fini(adev);
+	adev->gart.pages = vzalloc(array_size(sizeof(void *),
+					      adev->gart.num_cpu_pages));
+	if (adev->gart.pages == NULL)
 		return -ENOMEM;
-	}
-	adev->gart.pages_addr = vzalloc(sizeof(dma_addr_t) *
-					adev->gart.num_cpu_pages);
-	if (adev->gart.pages_addr == NULL) {
-		amdgpu_gart_fini(adev);
-		return -ENOMEM;
-	}
-	/* set GART entry to point to the dummy page by default */
-	for (i = 0; i < adev->gart.num_cpu_pages; i++) {
-		adev->gart.pages_addr[i] = adev->dummy_page.addr;
-	}
+#endif
+
 	return 0;
 }
 
@@ -528,15 +560,9 @@ int amdgpu_gart_init(struct amdgpu_device *adev)
  */
 void amdgpu_gart_fini(struct amdgpu_device *adev)
 {
-	if (adev->gart.pages && adev->gart.pages_addr && adev->gart.ready) {
-		/* unbind pages */
-		amdgpu_gart_unbind(adev, 0, adev->gart.num_cpu_pages);
-	}
-	adev->gart.ready = false;
+#ifdef CONFIG_DRM_AMDGPU_GART_DEBUGFS
 	vfree(adev->gart.pages);
-	vfree(adev->gart.pages_addr);
 	adev->gart.pages = NULL;
-	adev->gart.pages_addr = NULL;
-
-	amdgpu_dummy_page_fini(adev);
+#endif
+	amdgpu_gart_dummy_page_fini(adev);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_usif.c,v 1.7 2019/02/18 23:23:41 christos Exp $	*/
+/*	$NetBSD: nouveau_usif.c,v 1.8 2021/12/18 23:45:32 riastradh Exp $	*/
 
 /*
  * Copyright 2014 Red Hat Inc.
@@ -25,9 +25,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_usif.c,v 1.7 2019/02/18 23:23:41 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_usif.c,v 1.8 2021/12/18 23:45:32 riastradh Exp $");
 
-#include "nouveau_drm.h"
+#include "nouveau_drv.h"
 #include "nouveau_usif.h"
 #include "nouveau_abi16.h"
 
@@ -108,7 +108,7 @@ usif_notify(const void *header, u32 length, const void *data, u32 size)
 	}
 		break;
 	default:
-		BUG_ON(1);
+		BUG();
 		break;
 	}
 
@@ -139,20 +139,21 @@ usif_notify_new(struct drm_file *f, void *data, u32 size, void *argv, u32 argc)
 		struct nvif_notify_req_v0 v0;
 	} *req;
 	struct usif_notify *ntfy;
-	int ret;
+	int ret = -ENOSYS;
 
-	if (nvif_unpack(args->v0, 0, 0, true)) {
+	if (!(ret = nvif_unpack(ret, &data, &size, args->v0, 0, 0, true))) {
 		if (usif_notify_find(f, args->v0.index))
 			return -EEXIST;
 	} else
 		return ret;
 	req = data;
+	ret = -ENOSYS;
 
 	if (!(ntfy = kmalloc(sizeof(*ntfy), GFP_KERNEL)))
 		return -ENOMEM;
 	atomic_set(&ntfy->enabled, 0);
 
-	if (nvif_unpack(req->v0, 0, 0, true)) {
+	if (!(ret = nvif_unpack(ret, &data, &size, req->v0, 0, 0, true))) {
 		ntfy->reply = sizeof(struct nvif_notify_rep_v0) + req->v0.reply;
 		ntfy->route = req->v0.route;
 		ntfy->token = req->v0.token;
@@ -180,9 +181,9 @@ usif_notify_del(struct drm_file *f, void *data, u32 size, void *argv, u32 argc)
 		struct nvif_ioctl_ntfy_del_v0 v0;
 	} *args = data;
 	struct usif_notify *ntfy;
-	int ret;
+	int ret = -ENOSYS;
 
-	if (nvif_unpack(args->v0, 0, 0, true)) {
+	if (!(ret = nvif_unpack(ret, &data, &size, args->v0, 0, 0, true))) {
 		if (!(ntfy = usif_notify_find(f, args->v0.index)))
 			return -ENOENT;
 	} else
@@ -203,9 +204,9 @@ usif_notify_get(struct drm_file *f, void *data, u32 size, void *argv, u32 argc)
 		struct nvif_ioctl_ntfy_del_v0 v0;
 	} *args = data;
 	struct usif_notify *ntfy;
-	int ret;
+	int ret = -ENOSYS;
 
-	if (nvif_unpack(args->v0, 0, 0, true)) {
+	if (!(ret = nvif_unpack(ret, &data, &size, args->v0, 0, 0, true))) {
 		if (!(ntfy = usif_notify_find(f, args->v0.index)))
 			return -ENOENT;
 	} else
@@ -219,12 +220,6 @@ usif_notify_get(struct drm_file *f, void *data, u32 size, void *argv, u32 argc)
 		goto done;
 	ntfy->p->base.event = &ntfy->p->e.base;
 	ntfy->p->base.file_priv = f;
-#ifdef __NetBSD__
-	ntfy->p->base.pid = curproc->p_pid;
-#else
-	ntfy->p->base.pid = current->pid;
-#endif
-	ntfy->p->base.destroy =(void(*)(struct drm_pending_event *))kfree;
 	ntfy->p->e.base.type = DRM_NOUVEAU_EVENT_NVIF;
 	ntfy->p->e.base.length = sizeof(ntfy->p->e.base) + ntfy->reply;
 
@@ -246,9 +241,9 @@ usif_notify_put(struct drm_file *f, void *data, u32 size, void *argv, u32 argc)
 		struct nvif_ioctl_ntfy_put_v0 v0;
 	} *args = data;
 	struct usif_notify *ntfy;
-	int ret;
+	int ret = -ENOSYS;
 
-	if (nvif_unpack(args->v0, 0, 0, true)) {
+	if (!(ret = nvif_unpack(ret, &data, &size, args->v0, 0, 0, true))) {
 		if (!(ntfy = usif_notify_find(f, args->v0.index)))
 			return -ENOENT;
 	} else
@@ -283,13 +278,13 @@ usif_object_new(struct drm_file *f, void *data, u32 size, void *argv, u32 argc)
 		struct nvif_ioctl_new_v0 v0;
 	} *args = data;
 	struct usif_object *object;
-	int ret;
+	int ret = -ENOSYS;
 
 	if (!(object = kmalloc(sizeof(*object), GFP_KERNEL)))
 		return -ENOMEM;
 	list_add(&object->head, &cli->objects);
 
-	if (nvif_unpack(args->v0, 0, 0, true)) {
+	if (!(ret = nvif_unpack(ret, &data, &size, args->v0, 0, 0, true))) {
 		object->route = args->v0.route;
 		object->token = args->v0.token;
 		args->v0.route = NVDRM_OBJECT_USIF;
@@ -331,7 +326,7 @@ usif_ioctl(struct drm_file *filp, void __user *user, u32 argc)
 		goto done;
 #endif
 
-	if (nvif_unpack(argv->v0, 0, 0, true)) {
+	if (!(ret = nvif_unpack(-ENOSYS, &data, &size, argv->v0, 0, 0, true))) {
 		/* block access to objects not created via this interface */
 		owner = argv->v0.owner;
 		if (argv->v0.object == 0ULL &&

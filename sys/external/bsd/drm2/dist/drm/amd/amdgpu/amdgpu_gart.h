@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu_gart.h,v 1.1.1.1 2021/12/18 20:11:06 riastradh Exp $	*/
+/*	$NetBSD: amdgpu_gart.h,v 1.2 2021/12/18 23:44:58 riastradh Exp $	*/
 
 /*
  * Copyright 2017 Advanced Micro Devices, Inc.
@@ -63,6 +63,13 @@ int amdgpu_gart_table_vram_pin(struct amdgpu_device *adev);
 void amdgpu_gart_table_vram_unpin(struct amdgpu_device *adev);
 int amdgpu_gart_init(struct amdgpu_device *adev);
 void amdgpu_gart_fini(struct amdgpu_device *adev);
+#ifdef __NetBSD__
+void amdgpu_gart_unbind(struct amdgpu_device *adev, uint64_t gpu_start,
+    unsigned npages);
+int amdgpu_gart_bind(struct amdgpu_device *adev, uint64_t gpu_start,
+    unsigned npages, struct page **pagelist, bus_dmamap_t dmamap,
+    uint32_t flags);
+#else
 int amdgpu_gart_unbind(struct amdgpu_device *adev, uint64_t offset,
 		       int pages);
 int amdgpu_gart_map(struct amdgpu_device *adev, uint64_t offset,
@@ -71,5 +78,6 @@ int amdgpu_gart_map(struct amdgpu_device *adev, uint64_t offset,
 int amdgpu_gart_bind(struct amdgpu_device *adev, uint64_t offset,
 		     int pages, struct page **pagelist,
 		     dma_addr_t *dma_addr, uint64_t flags);
+#endif
 
 #endif

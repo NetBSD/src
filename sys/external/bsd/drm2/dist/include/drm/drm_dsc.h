@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_dsc.h,v 1.1.1.1 2021/12/18 20:15:57 riastradh Exp $	*/
+/*	$NetBSD: drm_dsc.h,v 1.2 2021/12/18 23:45:45 riastradh Exp $	*/
 
 /* SPDX-License-Identifier: MIT
  * Copyright (C) 2018 Intel Corp.

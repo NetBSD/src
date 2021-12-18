@@ -1,4 +1,4 @@
-/*	$NetBSD: vgem_drv.h,v 1.2 2018/08/27 04:58:37 riastradh Exp $	*/
+/*	$NetBSD: vgem_drv.h,v 1.3 2021/12/18 23:45:44 riastradh Exp $	*/
 
 /*
  * Copyright © 2012 Intel Corporation
@@ -31,18 +31,34 @@
 #ifndef _VGEM_DRV_H_
 #define _VGEM_DRV_H_
 
-#include <drm/drmP.h>
 #include <drm/drm_gem.h>
+#include <drm/drm_cache.h>
+
+#include <uapi/drm/vgem_drm.h>
+
+struct vgem_file {
+	struct idr fence_idr;
+	struct mutex fence_mutex;
+};
 
 #define to_vgem_bo(x) container_of(x, struct drm_vgem_gem_object, base)
 struct drm_vgem_gem_object {
 	struct drm_gem_object base;
+
 	struct page **pages;
-	bool use_dma_buf;
+	unsigned int pages_pin_count;
+	struct mutex pages_lock;
+
+	struct sg_table *table;
 };
 
-/* vgem_drv.c */
-extern void vgem_gem_put_pages(struct drm_vgem_gem_object *obj);
-extern int vgem_gem_get_pages(struct drm_vgem_gem_object *obj);
+int vgem_fence_open(struct vgem_file *file);
+int vgem_fence_attach_ioctl(struct drm_device *dev,
+			    void *data,
+			    struct drm_file *file);
+int vgem_fence_signal_ioctl(struct drm_device *dev,
+			    void *data,
+			    struct drm_file *file);
+void vgem_fence_close(struct vgem_file *file);
 
 #endif

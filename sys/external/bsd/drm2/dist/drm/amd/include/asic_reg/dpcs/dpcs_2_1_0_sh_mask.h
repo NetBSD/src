@@ -1,4 +1,4 @@
-/*	$NetBSD: dpcs_2_1_0_sh_mask.h,v 1.1.1.1 2021/12/18 20:12:39 riastradh Exp $	*/
+/*	$NetBSD: dpcs_2_1_0_sh_mask.h,v 1.2 2021/12/18 23:45:13 riastradh Exp $	*/
 
 /*
  * Copyright (C) 2019  Advanced Micro Devices, Inc.

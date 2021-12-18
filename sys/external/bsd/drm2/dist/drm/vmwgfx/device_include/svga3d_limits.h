@@ -1,7 +1,8 @@
-/*	$NetBSD: svga3d_limits.h,v 1.2 2018/08/27 04:58:37 riastradh Exp $	*/
+/*	$NetBSD: svga3d_limits.h,v 1.3 2021/12/18 23:45:45 riastradh Exp $	*/
 
+/* SPDX-License-Identifier: GPL-2.0 OR MIT */
 /**********************************************************
- * Copyright 2007-2015 VMware, Inc.  All rights reserved.
+ * Copyright 2007-2015 VMware, Inc.
  *
  * Permission is hereby granted, free of charge, to any person
  * obtaining a copy of this software and associated documentation
@@ -64,7 +65,9 @@
  * Maximum size in dwords of shader text the SVGA device will allow.
  * Currently 8 MB.
  */
-#define SVGA3D_MAX_SHADER_MEMORY  (8 * 1024 * 1024 / sizeof(uint32))
+#define SVGA3D_MAX_SHADER_MEMORY_BYTES (8 * 1024 * 1024)
+#define SVGA3D_MAX_SHADER_MEMORY  (SVGA3D_MAX_SHADER_MEMORY_BYTES / \
+                                   sizeof(uint32))
 
 #define SVGA3D_MAX_CLIP_PLANES    6
 

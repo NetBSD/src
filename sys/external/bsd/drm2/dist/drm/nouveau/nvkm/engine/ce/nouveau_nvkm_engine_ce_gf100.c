@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_nvkm_engine_ce_gf100.c,v 1.2 2018/08/27 04:58:31 riastradh Exp $	*/
+/*	$NetBSD: nouveau_nvkm_engine_ce_gf100.c,v 1.3 2021/12/18 23:45:34 riastradh Exp $	*/
 
 /*
  * Copyright 2012 Red Hat Inc.
@@ -24,7 +24,7 @@
  * Authors: Ben Skeggs
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_engine_ce_gf100.c,v 1.2 2018/08/27 04:58:31 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_engine_ce_gf100.c,v 1.3 2021/12/18 23:45:34 riastradh Exp $");
 
 #include "priv.h"
 #include "fuc/gf100.fuc3.h"
@@ -45,7 +45,6 @@ gf100_ce0 = {
 	.code.size = sizeof(gf100_ce_code),
 	.data.data = gf100_ce_data,
 	.data.size = sizeof(gf100_ce_data),
-	.pmc_enable = 0x00000040,
 	.init = gf100_ce_init,
 	.intr = gt215_ce_intr,
 	.sclass = {
@@ -60,7 +59,6 @@ gf100_ce1 = {
 	.code.size = sizeof(gf100_ce_code),
 	.data.data = gf100_ce_data,
 	.data.size = sizeof(gf100_ce_data),
-	.pmc_enable = 0x00000080,
 	.init = gf100_ce_init,
 	.intr = gt215_ce_intr,
 	.sclass = {

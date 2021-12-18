@@ -1,4 +1,4 @@
-/*	$NetBSD: r128_irq.c,v 1.2 2018/08/27 04:58:35 riastradh Exp $	*/
+/*	$NetBSD: r128_irq.c,v 1.3 2021/12/18 23:45:42 riastradh Exp $	*/
 
 /* r128_irq.c -- IRQ handling for radeon -*- linux-c -*- */
 /*
@@ -33,10 +33,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: r128_irq.c,v 1.2 2018/08/27 04:58:35 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: r128_irq.c,v 1.3 2021/12/18 23:45:42 riastradh Exp $");
 
-#include <drm/drmP.h>
+#include <drm/drm_device.h>
+#include <drm/drm_print.h>
+#include <drm/drm_vblank.h>
 #include <drm/r128_drm.h>
+
 #include "r128_drv.h"
 
 u32 r128_get_vblank_counter(struct drm_device *dev, unsigned int pipe)

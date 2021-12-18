@@ -1,4 +1,4 @@
-/*	$NetBSD: rn_clk_mgr_vbios_smu.h,v 1.1.1.1 2021/12/18 20:11:18 riastradh Exp $	*/
+/*	$NetBSD: rn_clk_mgr_vbios_smu.h,v 1.2 2021/12/18 23:45:02 riastradh Exp $	*/
 
 /*
  * Copyright 2018 Advanced Micro Devices, Inc.

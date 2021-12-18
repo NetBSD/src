@@ -1,4 +1,4 @@
-/*	$NetBSD: via_drv.c,v 1.7 2018/08/28 03:41:39 riastradh Exp $	*/
+/*	$NetBSD: via_drv.c,v 1.8 2021/12/18 23:45:44 riastradh Exp $	*/
 
 /*
  * Copyright 1998-2003 VIA Technologies, Inc. All Rights Reserved.
@@ -25,15 +25,18 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: via_drv.c,v 1.7 2018/08/28 03:41:39 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: via_drv.c,v 1.8 2021/12/18 23:45:44 riastradh Exp $");
 
 #include <linux/module.h>
+#include <linux/pci.h>
 
-#include <drm/drmP.h>
+#include <drm/drm_drv.h>
+#include <drm/drm_file.h>
+#include <drm/drm_pciids.h>
 #include <drm/via_drm.h>
+
 #include "via_drv.h"
 
-#include <drm/drm_pciids.h>
 
 static int via_driver_open(struct drm_device *dev, struct drm_file *file)
 {
@@ -70,24 +73,19 @@ static const struct file_operations via_driver_fops = {
 	.unlocked_ioctl = drm_ioctl,
 	.mmap = drm_legacy_mmap,
 	.poll = drm_poll,
-#ifdef CONFIG_COMPAT
 	.compat_ioctl = drm_compat_ioctl,
-#endif
 	.llseek = noop_llseek,
 };
 #endif
 
 static struct drm_driver driver = {
 	.driver_features =
-	    DRIVER_USE_AGP | DRIVER_HAVE_IRQ |
-	    DRIVER_IRQ_SHARED,
+	    DRIVER_USE_AGP | DRIVER_HAVE_IRQ | DRIVER_LEGACY,
 	.load = via_driver_load,
 	.unload = via_driver_unload,
 	.open = via_driver_open,
 	.preclose = via_reclaim_buffers_locked,
 	.postclose = via_driver_postclose,
-	.set_busid = drm_pci_set_busid,
-	.set_unique = drm_pci_set_unique,
 	.context_dtor = via_final_context,
 	.get_vblank_counter = via_get_vblank_counter,
 	.enable_vblank = via_enable_vblank,
@@ -130,12 +128,12 @@ static int __init via_init(void)
 {
 	driver.num_ioctls = via_max_ioctl;
 	via_init_command_verifier();
-	return drm_pci_init(&driver, &via_pci_driver);
+	return drm_legacy_pci_init(&driver, &via_pci_driver);
 }
 
 static void __exit via_exit(void)
 {
-	drm_pci_exit(&driver, &via_pci_driver);
+	drm_legacy_pci_exit(&driver, &via_pci_driver);
 }
 #endif	/* __NetBSD__ */
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_nvkm_subdev_therm_nv40.c,v 1.2 2018/08/27 04:58:35 riastradh Exp $	*/
+/*	$NetBSD: nouveau_nvkm_subdev_therm_nv40.c,v 1.3 2021/12/18 23:45:41 riastradh Exp $	*/
 
 /*
  * Copyright 2012 Red Hat Inc.
@@ -25,7 +25,7 @@
  * 	    Martin Peres
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_subdev_therm_nv40.c,v 1.2 2018/08/27 04:58:35 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_subdev_therm_nv40.c,v 1.3 2021/12/18 23:45:41 riastradh Exp $");
 
 #include "priv.h"
 
@@ -112,7 +112,7 @@ nv40_fan_pwm_ctrl(struct nvkm_therm *therm, int line, bool enable)
 {
 	struct nvkm_subdev *subdev = &therm->subdev;
 	struct nvkm_device *device = subdev->device;
-	u32 mask = enable ? 0x80000000 : 0x0000000;
+	u32 mask = enable ? 0x80000000 : 0x00000000;
 	if      (line == 2) nvkm_mask(device, 0x0010f0, 0x80000000, mask);
 	else if (line == 9) nvkm_mask(device, 0x0015f4, 0x80000000, mask);
 	else {

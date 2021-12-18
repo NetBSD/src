@@ -1,5 +1,6 @@
-/*	$NetBSD: dcb.h,v 1.2 2018/08/27 04:58:30 riastradh Exp $	*/
+/*	$NetBSD: dcb.h,v 1.3 2021/12/18 23:45:33 riastradh Exp $	*/
 
+/* SPDX-License-Identifier: MIT */
 #ifndef __NVBIOS_DCB_H__
 #define __NVBIOS_DCB_H__
 enum dcb_output_type {
@@ -8,6 +9,7 @@ enum dcb_output_type {
 	DCB_OUTPUT_TMDS		= 0x2,
 	DCB_OUTPUT_LVDS		= 0x3,
 	DCB_OUTPUT_DP		= 0x6,
+	DCB_OUTPUT_WFD		= 0x8,
 	DCB_OUTPUT_EOL		= 0xe,
 	DCB_OUTPUT_UNUSED	= 0xf,
 	DCB_OUTPUT_MERGED	= 100,

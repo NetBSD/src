@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.h,v 1.1.1.1 2021/12/18 20:15:42 riastradh Exp $	*/
+/*	$NetBSD: mem.h,v 1.2 2021/12/18 23:45:40 riastradh Exp $	*/
 
 #ifndef __NVKM_MEM_H__
 #define __NVKM_MEM_H__

@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu_atomfirmware.h,v 1.1.1.1 2021/12/18 20:11:04 riastradh Exp $	*/
+/*	$NetBSD: amdgpu_atomfirmware.h,v 1.2 2021/12/18 23:44:58 riastradh Exp $	*/
 
 /*
  * Copyright 2014 Advanced Micro Devices, Inc.

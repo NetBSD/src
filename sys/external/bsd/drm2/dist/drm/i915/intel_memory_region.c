@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_memory_region.c,v 1.1.1.1 2021/12/18 20:15:26 riastradh Exp $	*/
+/*	$NetBSD: intel_memory_region.c,v 1.2 2021/12/18 23:45:28 riastradh Exp $	*/
 
 // SPDX-License-Identifier: MIT
 /*
@@ -6,7 +6,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intel_memory_region.c,v 1.1.1.1 2021/12/18 20:15:26 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intel_memory_region.c,v 1.2 2021/12/18 23:45:28 riastradh Exp $");
 
 #include "intel_memory_region.h"
 #include "i915_drv.h"

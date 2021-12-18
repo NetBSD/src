@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_nvkm_subdev_volt_gk104.c,v 1.3 2018/08/27 07:38:57 riastradh Exp $	*/
+/*	$NetBSD: nouveau_nvkm_subdev_volt_gk104.c,v 1.4 2021/12/18 23:45:42 riastradh Exp $	*/
 
 /*
  * Copyright 2015 Martin Peres
@@ -24,7 +24,7 @@
  * Authors: Martin Peres
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_subdev_volt_gk104.c,v 1.3 2018/08/27 07:38:57 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_subdev_volt_gk104.c,v 1.4 2021/12/18 23:45:42 riastradh Exp $");
 
 #include "priv.h"
 
@@ -32,6 +32,7 @@ __KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_subdev_volt_gk104.c,v 1.3 2018/08/27 07
 #include <subdev/gpio.h>
 #include <subdev/bios.h>
 #include <subdev/bios/volt.h>
+#include <subdev/fuse.h>
 
 #define gk104_volt(p) container_of((p), struct gk104_volt, base)
 struct gk104_volt {
@@ -61,7 +62,7 @@ gk104_volt_set(struct nvkm_volt *base, u32 uv)
 
 	/* the blob uses this crystal frequency, let's use it too. */
 	div = 27648000 / bios->pwm_freq;
-	duty = (uv - bios->base) * div / bios->pwm_range;
+	duty = DIV_ROUND_UP((uv - bios->base) * div, bios->pwm_range);
 
 	nvkm_wr32(device, 0x20340, div);
 	nvkm_wr32(device, 0x20344, 0x80000000 | duty);
@@ -69,13 +70,33 @@ gk104_volt_set(struct nvkm_volt *base, u32 uv)
 	return 0;
 }
 
+static int
+gk104_volt_speedo_read(struct nvkm_volt *volt)
+{
+	struct nvkm_device *device = volt->subdev.device;
+	struct nvkm_fuse *fuse = device->fuse;
+	int ret;
+
+	if (!fuse)
+		return -EINVAL;
+
+	nvkm_wr32(device, 0x122634, 0x0);
+	ret = nvkm_fuse_read(fuse, 0x3a8);
+	nvkm_wr32(device, 0x122634, 0x41);
+	return ret;
+}
+
 static const struct nvkm_volt_func
 gk104_volt_pwm = {
+	.oneinit = gf100_volt_oneinit,
 	.volt_get = gk104_volt_get,
 	.volt_set = gk104_volt_set,
+	.speedo_read = gk104_volt_speedo_read,
 }, gk104_volt_gpio = {
+	.oneinit = gf100_volt_oneinit,
 	.vid_get = nvkm_voltgpio_get,
 	.vid_set = nvkm_voltgpio_set,
+	.speedo_read = gk104_volt_speedo_read,
 };
 
 int

@@ -1,4 +1,4 @@
-/*	$NetBSD: acp_gfx_if.h,v 1.1.1.1 2021/12/18 20:11:03 riastradh Exp $	*/
+/*	$NetBSD: acp_gfx_if.h,v 1.2 2021/12/18 23:44:57 riastradh Exp $	*/
 
 /*
  * Copyright 2015 Advanced Micro Devices, Inc.

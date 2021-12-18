@@ -1,4 +1,4 @@
-/*	$NetBSD: atombios_i2c.h,v 1.2 2018/08/27 04:58:20 riastradh Exp $	*/
+/*	$NetBSD: atombios_i2c.h,v 1.3 2021/12/18 23:44:58 riastradh Exp $	*/
 
 /*
  * Copyright 2014 Advanced Micro Devices, Inc.
@@ -29,5 +29,7 @@
 int amdgpu_atombios_i2c_xfer(struct i2c_adapter *i2c_adap,
 		      struct i2c_msg *msgs, int num);
 u32 amdgpu_atombios_i2c_func(struct i2c_adapter *adap);
+void amdgpu_atombios_i2c_channel_trans(struct amdgpu_device* adev,
+		u8 slave_addr, u8 line_number, u8 offset, u8 data);
 
 #endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_nvkm_engine_gr_gk208.c,v 1.2 2018/08/27 04:58:32 riastradh Exp $	*/
+/*	$NetBSD: nouveau_nvkm_engine_gr_gk208.c,v 1.3 2021/12/18 23:45:36 riastradh Exp $	*/
 
 /*
  * Copyright 2013 Red Hat Inc.
@@ -24,7 +24,7 @@
  * Authors: Ben Skeggs <bskeggs@redhat.com>
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_engine_gr_gk208.c,v 1.2 2018/08/27 04:58:32 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_engine_gr_gk208.c,v 1.3 2021/12/18 23:45:36 riastradh Exp $");
 
 #include "gf100.h"
 #include "ctxgf100.h"
@@ -126,6 +126,7 @@ gk208_gr_pack_mmio[] = {
 	{ gf119_gr_init_gpm_0 },
 	{ gk110_gr_init_gpc_unk_1 },
 	{ gf100_gr_init_gcc_0 },
+	{ gk104_gr_init_gpc_unk_2 },
 	{ gk104_gr_init_tpccs_0 },
 	{ gk208_gr_init_tex_0 },
 	{ gk104_gr_init_pe_0 },
@@ -166,12 +167,29 @@ gk208_gr_gpccs_ucode = {
 
 static const struct gf100_gr_func
 gk208_gr = {
-	.init = gk104_gr_init,
+	.oneinit_tiles = gf100_gr_oneinit_tiles,
+	.oneinit_sm_id = gf100_gr_oneinit_sm_id,
+	.init = gf100_gr_init,
+	.init_gpc_mmu = gf100_gr_init_gpc_mmu,
+	.init_vsc_stream_master = gk104_gr_init_vsc_stream_master,
+	.init_zcull = gf117_gr_init_zcull,
+	.init_num_active_ltcs = gf100_gr_init_num_active_ltcs,
+	.init_rop_active_fbps = gk104_gr_init_rop_active_fbps,
+	.init_fecs_exceptions = gf100_gr_init_fecs_exceptions,
+	.init_sked_hww_esr = gk104_gr_init_sked_hww_esr,
+	.init_419cc0 = gf100_gr_init_419cc0,
+	.init_ppc_exceptions = gk104_gr_init_ppc_exceptions,
+	.init_tex_hww_esr = gf100_gr_init_tex_hww_esr,
+	.init_shader_exceptions = gf100_gr_init_shader_exceptions,
+	.init_400054 = gf100_gr_init_400054,
+	.trap_mp = gf100_gr_trap_mp,
 	.mmio = gk208_gr_pack_mmio,
 	.fecs.ucode = &gk208_gr_fecs_ucode,
 	.gpccs.ucode = &gk208_gr_gpccs_ucode,
+	.rops = gf100_gr_rops,
 	.ppc_nr = 1,
 	.grctx = &gk208_grctx,
+	.zbc = &gf100_gr_zbc,
 	.sclass = {
 		{ -1, -1, FERMI_TWOD_A },
 		{ -1, -1, KEPLER_INLINE_TO_MEMORY_B },
@@ -181,8 +199,15 @@ gk208_gr = {
 	}
 };
 
+static const struct gf100_gr_fwif
+gk208_gr_fwif[] = {
+	{ -1, gf100_gr_load, &gk208_gr },
+	{ -1, gf100_gr_nofw, &gk208_gr },
+	{}
+};
+
 int
 gk208_gr_new(struct nvkm_device *device, int index, struct nvkm_gr **pgr)
 {
-	return gf100_gr_new_(&gk208_gr, device, index, pgr);
+	return gf100_gr_new_(gk208_gr_fwif, device, index, pgr);
 }

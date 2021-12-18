@@ -1,4 +1,4 @@
-/*	$NetBSD: r128_drv.h,v 1.2 2018/08/27 04:58:35 riastradh Exp $	*/
+/*	$NetBSD: r128_drv.h,v 1.3 2021/12/18 23:45:42 riastradh Exp $	*/
 
 /* r128_drv.h -- Private header for r128 driver -*- linux-c -*-
  * Created: Mon Dec 13 09:51:11 1999 by faith@precisioninsight.com
@@ -37,8 +37,15 @@
 #ifndef __R128_DRV_H__
 #define __R128_DRV_H__
 
-#include <drm/ati_pcigart.h>
+#include <linux/delay.h>
+#include <linux/io.h>
+#include <linux/irqreturn.h>
+
+#include <drm/drm_ioctl.h>
 #include <drm/drm_legacy.h>
+#include <drm/r128_drm.h>
+
+#include "ati_pcigart.h"
 
 /* General customization:
  */
@@ -148,6 +155,10 @@ extern int r128_cce_idle(struct drm_device *dev, void *data, struct drm_file *fi
 extern int r128_engine_reset(struct drm_device *dev, void *data, struct drm_file *file_priv);
 extern int r128_fullscreen(struct drm_device *dev, void *data, struct drm_file *file_priv);
 extern int r128_cce_buffers(struct drm_device *dev, void *data, struct drm_file *file_priv);
+
+extern int r128_cce_stipple(struct drm_device *dev, void *data, struct drm_file *file_priv);
+extern int r128_cce_depth(struct drm_device *dev, void *data, struct drm_file *file_priv);
+extern int r128_getparam(struct drm_device *dev, void *data, struct drm_file *file_priv);
 
 extern void r128_freelist_reset(struct drm_device *dev);
 
@@ -395,10 +406,10 @@ extern long r128_compat_ioctl(struct file *filp, unsigned int cmd,
 
 #define R128_PCIGART_TABLE_SIZE         32768
 
-#define R128_READ(reg)		DRM_READ32(dev_priv->mmio, (reg))
-#define R128_WRITE(reg, val)	DRM_WRITE32(dev_priv->mmio, (reg), (val))
-#define R128_READ8(reg)		DRM_READ8(dev_priv->mmio, (reg))
-#define R128_WRITE8(reg, val)	DRM_WRITE8(dev_priv->mmio, (reg), (val))
+#define R128_READ(reg)		readl(((void __iomem *)dev_priv->mmio->handle) + (reg))
+#define R128_WRITE(reg, val)	writel(val, ((void __iomem *)dev_priv->mmio->handle) + (reg))
+#define R128_READ8(reg)		readb(((void __iomem *)dev_priv->mmio->handle) + (reg))
+#define R128_WRITE8(reg, val)	writeb(val, ((void __iomem *)dev_priv->mmio->handle) + (reg))
 
 #define R128_WRITE_PLL(addr, val)					\
 do {									\
@@ -443,7 +454,7 @@ do {									\
 			r128_update_ring_snapshot(dev_priv);		\
 			if (ring->space >= ring->high_mark)		\
 				goto __ring_space_done;			\
-			DRM_UDELAY(1);					\
+			udelay(1);					\
 		}							\
 		DRM_ERROR("ring space check failed!\n");		\
 		return -EBUSY;						\

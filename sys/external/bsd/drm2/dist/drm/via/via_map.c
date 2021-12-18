@@ -1,4 +1,4 @@
-/*	$NetBSD: via_map.c,v 1.2 2018/08/27 04:58:37 riastradh Exp $	*/
+/*	$NetBSD: via_map.c,v 1.3 2021/12/18 23:45:44 riastradh Exp $	*/
 
 /*
  * Copyright 1998-2003 VIA Technologies, Inc. All Rights Reserved.
@@ -23,11 +23,16 @@
  * ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  */
-#include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: via_map.c,v 1.2 2018/08/27 04:58:37 riastradh Exp $");
 
-#include <drm/drmP.h>
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: via_map.c,v 1.3 2021/12/18 23:45:44 riastradh Exp $");
+
+#include <linux/pci.h>
+
+#include <drm/drm_device.h>
+#include <drm/drm_vblank.h>
 #include <drm/via_drm.h>
+
 #include "via_drv.h"
 
 static int via_do_init_map(struct drm_device *dev, drm_via_init_t *init)
@@ -121,13 +126,11 @@ int via_driver_load(struct drm_device *dev, unsigned long chipset)
 	return 0;
 }
 
-int via_driver_unload(struct drm_device *dev)
+void via_driver_unload(struct drm_device *dev)
 {
 	drm_via_private_t *dev_priv = dev->dev_private;
 
 	idr_destroy(&dev_priv->object_idr);
 
 	kfree(dev_priv);
-
-	return 0;
 }

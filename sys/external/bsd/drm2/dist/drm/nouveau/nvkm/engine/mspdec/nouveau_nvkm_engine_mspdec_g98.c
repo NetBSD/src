@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_nvkm_engine_mspdec_g98.c,v 1.2 2018/08/27 04:58:32 riastradh Exp $	*/
+/*	$NetBSD: nouveau_nvkm_engine_mspdec_g98.c,v 1.3 2021/12/18 23:45:36 riastradh Exp $	*/
 
 /*
  * Copyright 2012 Red Hat Inc.
@@ -24,7 +24,7 @@
  * Authors: Ben Skeggs, Maarten Lankhorst, Ilia Mirkin
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_engine_mspdec_g98.c,v 1.2 2018/08/27 04:58:32 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_engine_mspdec_g98.c,v 1.3 2021/12/18 23:45:36 riastradh Exp $");
 
 #include "priv.h"
 
@@ -40,7 +40,6 @@ g98_mspdec_init(struct nvkm_falcon *mspdec)
 
 static const struct nvkm_falcon_func
 g98_mspdec = {
-	.pmc_enable = 0x01020000,
 	.init = g98_mspdec_init,
 	.sclass = {
 		{ -1, -1, G98_MSPDEC },

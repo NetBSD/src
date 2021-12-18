@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_nvkm_core_client.c,v 1.3 2018/08/27 07:36:07 riastradh Exp $	*/
+/*	$NetBSD: nouveau_nvkm_core_client.c,v 1.4 2021/12/18 23:45:34 riastradh Exp $	*/
 
 /*
  * Copyright 2012 Red Hat Inc.
@@ -24,7 +24,7 @@
  * Authors: Ben Skeggs
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_core_client.c,v 1.3 2018/08/27 07:36:07 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_core_client.c,v 1.4 2021/12/18 23:45:34 riastradh Exp $");
 
 #include <core/client.h>
 #include <core/device.h>
@@ -33,7 +33,45 @@ __KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_core_client.c,v 1.3 2018/08/27 07:36:07
 
 #include <nvif/class.h>
 #include <nvif/event.h>
+#include <nvif/if0000.h>
 #include <nvif/unpack.h>
+
+static int
+nvkm_uclient_new(const struct nvkm_oclass *oclass, void *argv, u32 argc,
+		 struct nvkm_object **pobject)
+{
+	union {
+		struct nvif_client_v0 v0;
+	} *args = argv;
+	struct nvkm_client *client;
+	int ret = -ENOSYS;
+
+	if (!(ret = nvif_unpack(ret, &argv, &argc, args->v0, 0, 0, false))){
+		args->v0.name[sizeof(args->v0.name) - 1] = 0;
+		ret = nvkm_client_new(args->v0.name, args->v0.device, NULL,
+				      NULL, oclass->client->ntfy, &client);
+		if (ret)
+			return ret;
+	} else
+		return ret;
+
+	client->object.client = oclass->client;
+	client->object.handle = oclass->handle;
+	client->object.route  = oclass->route;
+	client->object.token  = oclass->token;
+	client->object.object = oclass->object;
+	client->debug = oclass->client->debug;
+	*pobject = &client->object;
+	return 0;
+}
+
+const struct nvkm_sclass
+nvkm_uclient_sclass = {
+	.oclass = NVIF_CLASS_CLIENT,
+	.minver = 0,
+	.maxver = 0,
+	.ctor = nvkm_uclient_new,
+};
 
 struct nvkm_client_notify {
 	struct nvkm_client *client;
@@ -101,7 +139,7 @@ nvkm_client_notify_new(struct nvkm_object *object,
 		struct nvif_notify_req_v0 v0;
 	} *req = data;
 	u8  index, reply;
-	int ret;
+	int ret = -ENOSYS;
 
 	for (index = 0; index < ARRAY_SIZE(client->notify); index++) {
 		if (!client->notify[index])
@@ -116,7 +154,7 @@ nvkm_client_notify_new(struct nvkm_object *object,
 		return -ENOMEM;
 
 	nvif_ioctl(object, "notify new size %d\n", size);
-	if (nvif_unpack(req->v0, 0, 0, true)) {
+	if (!(ret = nvif_unpack(ret, &data, &size, req->v0, 0, 0, true))) {
 		nvif_ioctl(object, "notify new vers %d reply %d route %02x "
 				   "token %"PRIx64"", req->v0.version,
 			   req->v0.reply, req->v0.route, req->v0.token);
@@ -142,17 +180,30 @@ nvkm_client_notify_new(struct nvkm_object *object,
 	return ret;
 }
 
+static const struct nvkm_object_func nvkm_client;
+struct nvkm_client *
+nvkm_client_search(struct nvkm_client *client, u64 handle)
+{
+	struct nvkm_object *object;
+
+	object = nvkm_object_search(client, handle, &nvkm_client);
+	if (IS_ERR(object))
+		return (void *)object;
+
+	return nvkm_client(object);
+}
+
 static int
-nvkm_client_mthd_devlist(struct nvkm_object *object, void *data, u32 size)
+nvkm_client_mthd_devlist(struct nvkm_client *client, void *data, u32 size)
 {
 	union {
-		struct nv_client_devlist_v0 v0;
+		struct nvif_client_devlist_v0 v0;
 	} *args = data;
-	int ret;
+	int ret = -ENOSYS;
 
-	nvif_ioctl(object, "client devlist size %d\n", size);
-	if (nvif_unpack(args->v0, 0, 0, true)) {
-		nvif_ioctl(object, "client devlist vers %d count %d\n",
+	nvif_ioctl(&client->object, "client devlist size %d\n", size);
+	if (!(ret = nvif_unpack(ret, &data, &size, args->v0, 0, 0, true))) {
+		nvif_ioctl(&client->object, "client devlist vers %d count %d\n",
 			   args->v0.version, args->v0.count);
 		if (size == sizeof(args->v0.device[0]) * args->v0.count) {
 			ret = nvkm_device_list(args->v0.device, args->v0.count);
@@ -171,9 +222,10 @@ nvkm_client_mthd_devlist(struct nvkm_object *object, void *data, u32 size)
 static int
 nvkm_client_mthd(struct nvkm_object *object, u32 mthd, void *data, u32 size)
 {
+	struct nvkm_client *client = nvkm_client(object);
 	switch (mthd) {
-	case NV_CLIENT_DEVLIST:
-		return nvkm_client_mthd_devlist(object, data, size);
+	case NVIF_CLIENT_V0_DEVLIST:
+		return nvkm_client_mthd_devlist(client, data, size);
 	default:
 		break;
 	}
@@ -194,7 +246,8 @@ nvkm_client_child_get(struct nvkm_object *object, int index,
 	const struct nvkm_sclass *sclass;
 
 	switch (index) {
-	case 0: sclass = &nvkm_udevice_sclass; break;
+	case 0: sclass = &nvkm_uclient_sclass; break;
+	case 1: sclass = &nvkm_udevice_sclass; break;
 	default:
 		return -EINVAL;
 	}
@@ -204,161 +257,50 @@ nvkm_client_child_get(struct nvkm_object *object, int index,
 	return 0;
 }
 
-static const struct nvkm_object_func
-nvkm_client_object_func = {
-	.mthd = nvkm_client_mthd,
-	.sclass = nvkm_client_child_get,
-};
-
-void
-nvkm_client_remove(struct nvkm_client *client, struct nvkm_object *object)
+static int
+nvkm_client_fini(struct nvkm_object *object, bool suspend)
 {
-#ifdef __NetBSD__
-	if (object->on_tree) {
-		rb_tree_remove_node(&client->objtree, object);
-		object->on_tree = false;
-	}
-#else
-	if (!RB_EMPTY_NODE(&object->node))
-		rb_erase(&object->node, &client->objroot);
-#endif
-}
-
-bool
-nvkm_client_insert(struct nvkm_client *client, struct nvkm_object *object)
-{
-#ifdef __NetBSD__
-	struct nvkm_object *collision;
-
-	collision = rb_tree_insert_node(&client->objtree, object);
-	if (collision != object)
-		return false;
-	object->on_tree = true;
-	return true;
-#else
-	struct rb_node **ptr = &client->objroot.rb_node;
-	struct rb_node *parent = NULL;
-
-	while (*ptr) {
-		struct nvkm_object *this =
-			container_of(*ptr, typeof(*this), node);
-		parent = *ptr;
-		if (object->object < this->object)
-			ptr = &parent->rb_left;
-		else
-		if (object->object > this->object)
-			ptr = &parent->rb_right;
-		else
-			return false;
-	}
-
-	rb_link_node(&object->node, parent, ptr);
-	rb_insert_color(&object->node, &client->objroot);
-	return true;
-#endif
-}
-
-struct nvkm_object *
-nvkm_client_search(struct nvkm_client *client, u64 handle)
-{
-#ifdef __NetBSD__
-	return rb_tree_find_node(&client->objtree, &handle);
-#else
-	struct rb_node *node = client->objroot.rb_node;
-	while (node) {
-		struct nvkm_object *object =
-			container_of(node, typeof(*object), node);
-		if (handle < object->object)
-			node = node->rb_left;
-		else
-		if (handle > object->object)
-			node = node->rb_right;
-		else
-			return object;
-	}
-	return NULL;
-#endif
-}
-
-int
-nvkm_client_fini(struct nvkm_client *client, bool suspend)
-{
-	struct nvkm_object *object = &client->object;
+	struct nvkm_client *client = nvkm_client(object);
 	const char *name[2] = { "fini", "suspend" };
 	int i;
 	nvif_debug(object, "%s notify\n", name[suspend]);
 	for (i = 0; i < ARRAY_SIZE(client->notify); i++)
 		nvkm_client_notify_put(client, i);
-	return nvkm_object_fini(&client->object, suspend);
+	return 0;
 }
 
-int
-nvkm_client_init(struct nvkm_client *client)
+static void *
+nvkm_client_dtor(struct nvkm_object *object)
 {
-	return nvkm_object_init(&client->object);
-}
-
-void
-nvkm_client_del(struct nvkm_client **pclient)
-{
-	struct nvkm_client *client = *pclient;
+	struct nvkm_client *client = nvkm_client(object);
 	int i;
-	if (client) {
-		nvkm_client_fini(client, false);
-		for (i = 0; i < ARRAY_SIZE(client->notify); i++)
-			nvkm_client_notify_del(client, i);
-		nvkm_object_dtor(&client->object);
-		kfree(*pclient);
-		*pclient = NULL;
-	}
+	for (i = 0; i < ARRAY_SIZE(client->notify); i++)
+		nvkm_client_notify_del(client, i);
+	return client;
 }
 
-#ifdef __NetBSD__
-static int
-compare_object_nodes(void *cookie, const void *va, const void *vb)
-{
-	const struct nvkm_object *oa = va;
-	const struct nvkm_object *ob = vb;
-
-	if (oa->object < ob->object)
-		return -1;
-	if (oa->object > ob->object)
-		return +1;
-	return 0;
-}
-
-static int
-compare_object_key(void *cookie, const void *vo, const void *vk)
-{
-	const struct nvkm_object *o = vo;
-	const u64 *k = vk;
-
-	if (o->object < *k)
-		return -1;
-	if (o->object > *k)
-		return +1;
-	return 0;
-}
-
-static const rb_tree_ops_t nvkm_client_objtree_ops = {
-	.rbto_compare_nodes = compare_object_nodes,
-	.rbto_compare_key = compare_object_key,
-	.rbto_node_offset = offsetof(struct nvkm_object, node),
+static const struct nvkm_object_func
+nvkm_client = {
+	.dtor = nvkm_client_dtor,
+	.fini = nvkm_client_fini,
+	.mthd = nvkm_client_mthd,
+	.sclass = nvkm_client_child_get,
 };
-#endif
 
 int
 nvkm_client_new(const char *name, u64 device, const char *cfg,
-		const char *dbg, struct nvkm_client **pclient)
+		const char *dbg,
+		int (*ntfy)(const void *, u32, const void *, u32),
+		struct nvkm_client **pclient)
 {
-	struct nvkm_oclass oclass = {};
+	struct nvkm_oclass oclass = { .base = nvkm_uclient_sclass };
 	struct nvkm_client *client;
 
 	if (!(client = *pclient = kzalloc(sizeof(*client), GFP_KERNEL)))
 		return -ENOMEM;
 	oclass.client = client;
 
-	nvkm_object_ctor(&nvkm_client_object_func, &oclass, &client->object);
+	nvkm_object_ctor(&nvkm_client, &oclass, &client->object);
 	snprintf(client->name, sizeof(client->name), "%s", name);
 	client->device = device;
 	client->debug = nvkm_dbgopt(dbg, "CLIENT");
@@ -367,7 +309,9 @@ nvkm_client_new(const char *name, u64 device, const char *cfg,
 	rb_tree_init(&client->dmatree, &nvkm_client_dmatree_ops);
 #else
 	client->objroot = RB_ROOT;
-	client->dmaroot = RB_ROOT;
 #endif
+	client->ntfy = ntfy;
+	INIT_LIST_HEAD(&client->umem);
+	spin_lock_init(&client->lock);
 	return 0;
 }

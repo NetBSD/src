@@ -1,4 +1,4 @@
-/*	$NetBSD: jpeg_v1_0.h,v 1.1.1.1 2021/12/18 20:11:13 riastradh Exp $	*/
+/*	$NetBSD: jpeg_v1_0.h,v 1.2 2021/12/18 23:44:59 riastradh Exp $	*/
 
 /*
  * Copyright 2019 Advanced Micro Devices, Inc.

@@ -1,4 +1,4 @@
-/*	$NetBSD: kfd_queue.c,v 1.2 2018/08/27 04:58:20 riastradh Exp $	*/
+/*	$NetBSD: kfd_queue.c,v 1.3 2021/12/18 23:44:59 riastradh Exp $	*/
 
 /*
  * Copyright 2014 Advanced Micro Devices, Inc.
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kfd_queue.c,v 1.2 2018/08/27 04:58:20 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kfd_queue.c,v 1.3 2021/12/18 23:44:59 riastradh Exp $");
 
 #include <linux/slab.h>
 #include "kfd_priv.h"
@@ -41,8 +41,8 @@ void print_queue_properties(struct queue_properties *q)
 	pr_debug("Queue Address: 0x%llX\n", q->queue_address);
 	pr_debug("Queue Id: %u\n", q->queue_id);
 	pr_debug("Queue Process Vmid: %u\n", q->vmid);
-	pr_debug("Queue Read Pointer: 0x%p\n", q->read_ptr);
-	pr_debug("Queue Write Pointer: 0x%p\n", q->write_ptr);
+	pr_debug("Queue Read Pointer: 0x%px\n", q->read_ptr);
+	pr_debug("Queue Write Pointer: 0x%px\n", q->write_ptr);
 	pr_debug("Queue Doorbell Pointer: 0x%p\n", q->doorbell_ptr);
 	pr_debug("Queue Doorbell Offset: %u\n", q->doorbell_off);
 }
@@ -58,8 +58,8 @@ void print_queue(struct queue *q)
 	pr_debug("Queue Address: 0x%llX\n", q->properties.queue_address);
 	pr_debug("Queue Id: %u\n", q->properties.queue_id);
 	pr_debug("Queue Process Vmid: %u\n", q->properties.vmid);
-	pr_debug("Queue Read Pointer: 0x%p\n", q->properties.read_ptr);
-	pr_debug("Queue Write Pointer: 0x%p\n", q->properties.write_ptr);
+	pr_debug("Queue Read Pointer: 0x%px\n", q->properties.read_ptr);
+	pr_debug("Queue Write Pointer: 0x%px\n", q->properties.write_ptr);
 	pr_debug("Queue Doorbell Pointer: 0x%p\n", q->properties.doorbell_ptr);
 	pr_debug("Queue Doorbell Offset: %u\n", q->properties.doorbell_off);
 	pr_debug("Queue MQD Address: 0x%p\n", q->mqd);
@@ -68,19 +68,17 @@ void print_queue(struct queue *q)
 	pr_debug("Queue Device Address: 0x%p\n", q->device);
 }
 
-int init_queue(struct queue **q, struct queue_properties properties)
+int init_queue(struct queue **q, const struct queue_properties *properties)
 {
-	struct queue *tmp;
+	struct queue *tmp_q;
 
-	BUG_ON(!q);
-
-	tmp = kzalloc(sizeof(struct queue), GFP_KERNEL);
-	if (!tmp)
+	tmp_q = kzalloc(sizeof(*tmp_q), GFP_KERNEL);
+	if (!tmp_q)
 		return -ENOMEM;
 
-	memcpy(&tmp->properties, &properties, sizeof(struct queue_properties));
+	memcpy(&tmp_q->properties, properties, sizeof(*properties));
 
-	*q = tmp;
+	*q = tmp_q;
 	return 0;
 }
 

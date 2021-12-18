@@ -1,5 +1,6 @@
-/*	$NetBSD: nouveau_abi16.h,v 1.2 2018/08/27 04:58:24 riastradh Exp $	*/
+/*	$NetBSD: nouveau_abi16.h,v 1.3 2021/12/18 23:45:32 riastradh Exp $	*/
 
+/* SPDX-License-Identifier: MIT */
 #ifndef __NOUVEAU_ABI16_H__
 #define __NOUVEAU_ABI16_H__
 
@@ -7,7 +8,6 @@
 	struct drm_device *dev, void *data, struct drm_file *file_priv
 
 int nouveau_abi16_ioctl_getparam(ABI16_IOCTL_ARGS);
-int nouveau_abi16_ioctl_setparam(ABI16_IOCTL_ARGS);
 int nouveau_abi16_ioctl_channel_alloc(ABI16_IOCTL_ARGS);
 int nouveau_abi16_ioctl_channel_free(ABI16_IOCTL_ARGS);
 int nouveau_abi16_ioctl_grobj_alloc(ABI16_IOCTL_ARGS);
@@ -25,7 +25,7 @@ struct nouveau_abi16_chan {
 	struct nouveau_channel *chan;
 	struct list_head notifiers;
 	struct nouveau_bo *ntfy;
-	struct nvkm_vma ntfy_vma;
+	struct nouveau_vma *ntfy_vma;
 	struct nvkm_mm  heap;
 };
 

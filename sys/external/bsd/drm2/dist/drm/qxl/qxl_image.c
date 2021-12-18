@@ -1,4 +1,4 @@
-/*	$NetBSD: qxl_image.c,v 1.2 2018/08/27 04:58:35 riastradh Exp $	*/
+/*	$NetBSD: qxl_image.c,v 1.3 2021/12/18 23:45:42 riastradh Exp $	*/
 
 /*
  * Copyright 2013 Red Hat Inc.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: qxl_image.c,v 1.2 2018/08/27 04:58:35 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: qxl_image.c,v 1.3 2021/12/18 23:45:42 riastradh Exp $");
 
 #include <linux/gfp.h>
 #include <linux/slab.h>
@@ -141,6 +141,7 @@ qxl_image_init_helper(struct qxl_device *qdev,
 		int remain;
 		int page;
 		int size;
+
 		if (stride == linesize && chunk_stride == stride) {
 			remain = linesize * height;
 			page = 0;
@@ -167,7 +168,8 @@ qxl_image_init_helper(struct qxl_device *qdev,
 				page++;
 			}
 		} else {
-			unsigned page_base, page_offset, out_offset;
+			unsigned int page_base, page_offset, out_offset;
+
 			for (i = 0 ; i < height ; ++i) {
 				i_data = (void *)data + i * stride;
 				remain = linesize;

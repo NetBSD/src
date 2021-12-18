@@ -1,5 +1,6 @@
-/*	$NetBSD: gf100.h,v 1.3 2018/08/27 07:40:22 riastradh Exp $	*/
+/*	$NetBSD: gf100.h,v 1.4 2021/12/18 23:45:39 riastradh Exp $	*/
 
+/* SPDX-License-Identifier: MIT */
 #ifndef __NVKM_RAM_NVC0_H__
 #define __NVKM_RAM_NVC0_H__
 #define gf100_fb(p) container_of((p), struct gf100_fb, base)
@@ -22,4 +23,8 @@ int gf100_fb_new_(const struct nvkm_fb_func *, struct nvkm_device *,
 void *gf100_fb_dtor(struct nvkm_fb *);
 void gf100_fb_init(struct nvkm_fb *);
 void gf100_fb_intr(struct nvkm_fb *);
+
+void gp100_fb_init(struct nvkm_fb *);
+
+void gm200_fb_init(struct nvkm_fb *base);
 #endif

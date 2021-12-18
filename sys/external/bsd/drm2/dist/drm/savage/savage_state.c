@@ -1,4 +1,4 @@
-/*	$NetBSD: savage_state.c,v 1.2 2018/08/27 04:58:36 riastradh Exp $	*/
+/*	$NetBSD: savage_state.c,v 1.3 2021/12/18 23:45:43 riastradh Exp $	*/
 
 /* savage_state.c -- State and drawing support for Savage
  *
@@ -24,11 +24,18 @@
  * CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
-#include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: savage_state.c,v 1.2 2018/08/27 04:58:36 riastradh Exp $");
 
-#include <drm/drmP.h>
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: savage_state.c,v 1.3 2021/12/18 23:45:43 riastradh Exp $");
+
+#include <linux/slab.h>
+#include <linux/uaccess.h>
+
+#include <drm/drm_device.h>
+#include <drm/drm_file.h>
+#include <drm/drm_print.h>
 #include <drm/savage_drm.h>
+
 #include "savage_drv.h"
 
 void savage_emit_clip_rect_s3d(drm_savage_private_t * dev_priv,
@@ -304,6 +311,7 @@ static int savage_dispatch_dma_prim(drm_savage_private_t * dev_priv,
 	case SAVAGE_PRIM_TRILIST_201:
 		reorder = 1;
 		prim = SAVAGE_PRIM_TRILIST;
+		/* fall through */
 	case SAVAGE_PRIM_TRILIST:
 		if (n % 3 != 0) {
 			DRM_ERROR("wrong number of vertices %u in TRILIST\n",
@@ -441,6 +449,7 @@ static int savage_dispatch_vb_prim(drm_savage_private_t * dev_priv,
 	case SAVAGE_PRIM_TRILIST_201:
 		reorder = 1;
 		prim = SAVAGE_PRIM_TRILIST;
+		/* fall through */
 	case SAVAGE_PRIM_TRILIST:
 		if (n % 3 != 0) {
 			DRM_ERROR("wrong number of vertices %u in TRILIST\n",
@@ -562,6 +571,7 @@ static int savage_dispatch_dma_idx(drm_savage_private_t * dev_priv,
 	case SAVAGE_PRIM_TRILIST_201:
 		reorder = 1;
 		prim = SAVAGE_PRIM_TRILIST;
+		/* fall through */
 	case SAVAGE_PRIM_TRILIST:
 		if (n % 3 != 0) {
 			DRM_ERROR("wrong number of indices %u in TRILIST\n", n);
@@ -700,6 +710,7 @@ static int savage_dispatch_vb_idx(drm_savage_private_t * dev_priv,
 	case SAVAGE_PRIM_TRILIST_201:
 		reorder = 1;
 		prim = SAVAGE_PRIM_TRILIST;
+		/* fall through */
 	case SAVAGE_PRIM_TRILIST:
 		if (n % 3 != 0) {
 			DRM_ERROR("wrong number of indices %u in TRILIST\n", n);
@@ -976,7 +987,7 @@ int savage_bci_cmdbuf(struct drm_device *dev, void *data, struct drm_file *file_
 	LOCK_TEST_WITH_RETURN(dev, file_priv);
 
 	if (dma && dma->buflist) {
-		if (cmdbuf->dma_idx > dma->buf_count) {
+		if (cmdbuf->dma_idx >= dma->buf_count) {
 			DRM_ERROR
 			    ("vertex buffer index %u out of range (0-%u)\n",
 			     cmdbuf->dma_idx, dma->buf_count - 1);
@@ -1006,15 +1017,10 @@ int savage_bci_cmdbuf(struct drm_device *dev, void *data, struct drm_file *file_
 		cmdbuf->cmd_addr = kcmd_addr;
 	}
 	if (cmdbuf->vb_size) {
-		kvb_addr = kmalloc(cmdbuf->vb_size, GFP_KERNEL);
-		if (kvb_addr == NULL) {
-			ret = -ENOMEM;
-			goto done;
-		}
-
-		if (copy_from_user(kvb_addr, cmdbuf->vb_addr,
-				       cmdbuf->vb_size)) {
-			ret = -EFAULT;
+		kvb_addr = memdup_user(cmdbuf->vb_addr, cmdbuf->vb_size);
+		if (IS_ERR(kvb_addr)) {
+			ret = PTR_ERR(kvb_addr);
+			kvb_addr = NULL;
 			goto done;
 		}
 		cmdbuf->vb_addr = kvb_addr;

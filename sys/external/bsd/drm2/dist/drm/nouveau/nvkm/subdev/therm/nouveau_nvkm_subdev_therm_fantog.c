@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_nvkm_subdev_therm_fantog.c,v 1.2 2018/08/27 04:58:35 riastradh Exp $	*/
+/*	$NetBSD: nouveau_nvkm_subdev_therm_fantog.c,v 1.3 2021/12/18 23:45:41 riastradh Exp $	*/
 
 /*
  * Copyright 2012 The Nouveau community
@@ -24,7 +24,7 @@
  * Authors: Martin Peres
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_subdev_therm_fantog.c,v 1.2 2018/08/27 04:58:35 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_subdev_therm_fantog.c,v 1.3 2021/12/18 23:45:41 riastradh Exp $");
 
 #include "priv.h"
 

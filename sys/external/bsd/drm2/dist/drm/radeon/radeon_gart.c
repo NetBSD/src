@@ -1,4 +1,4 @@
-/*	$NetBSD: radeon_gart.c,v 1.12 2020/10/17 10:46:39 jmcneill Exp $	*/
+/*	$NetBSD: radeon_gart.c,v 1.13 2021/12/18 23:45:43 riastradh Exp $	*/
 
 /*
  * Copyright 2008 Advanced Micro Devices, Inc.
@@ -27,11 +27,17 @@
  *          Alex Deucher
  *          Jerome Glisse
  */
-#include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radeon_gart.c,v 1.12 2020/10/17 10:46:39 jmcneill Exp $");
 
-#include <drm/drmP.h>
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: radeon_gart.c,v 1.13 2021/12/18 23:45:43 riastradh Exp $");
+
+#include <linux/pci.h>
+#include <linux/vmalloc.h>
+
 #include <drm/radeon_drm.h>
+#ifdef CONFIG_X86
+#include <asm/set_memory.h>
+#endif
 #include "radeon.h"
 
 /*
@@ -517,13 +523,14 @@ int radeon_gart_init(struct radeon_device *rdev)
 	DRM_INFO("GART: num cpu pages %u, num gpu pages %u\n",
 		 rdev->gart.num_cpu_pages, rdev->gart.num_gpu_pages);
 	/* Allocate pages table */
-	rdev->gart.pages = vzalloc(sizeof(void *) * rdev->gart.num_cpu_pages);
+	rdev->gart.pages = vzalloc(array_size(sizeof(void *),
+				   rdev->gart.num_cpu_pages));
 	if (rdev->gart.pages == NULL) {
 		radeon_gart_fini(rdev);
 		return -ENOMEM;
 	}
-	rdev->gart.pages_entry = vmalloc(sizeof(uint64_t) *
-					 rdev->gart.num_gpu_pages);
+	rdev->gart.pages_entry = vmalloc(array_size(sizeof(uint64_t),
+						    rdev->gart.num_gpu_pages));
 	if (rdev->gart.pages_entry == NULL) {
 		radeon_gart_fini(rdev);
 		return -ENOMEM;

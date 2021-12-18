@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu_atombios_encoders.c,v 1.3 2020/02/14 14:34:57 maya Exp $	*/
+/*	$NetBSD: amdgpu_atombios_encoders.c,v 1.4 2021/12/18 23:44:58 riastradh Exp $	*/
 
 /*
  * Copyright 2007-11 Advanced Micro Devices, Inc.
@@ -25,21 +25,24 @@
  * Authors: Dave Airlie
  *          Alex Deucher
  */
-#include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdgpu_atombios_encoders.c,v 1.3 2020/02/14 14:34:57 maya Exp $");
 
-#include <drm/drmP.h>
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: amdgpu_atombios_encoders.c,v 1.4 2021/12/18 23:44:58 riastradh Exp $");
+
+#include <linux/pci.h>
+
 #include <drm/drm_crtc_helper.h>
 #include <drm/amdgpu_drm.h>
 #include "amdgpu.h"
 #include "amdgpu_connectors.h"
+#include "amdgpu_display.h"
 #include "atom.h"
 #include "atombios_encoders.h"
 #include "atombios_dp.h"
 #include <linux/backlight.h>
 #include "bif/bif_4_1_d.h"
 
-static u8
+u8
 amdgpu_atombios_encoder_get_backlight_level_from_reg(struct amdgpu_device *adev)
 {
 	u8 backlight_level;
@@ -53,7 +56,7 @@ amdgpu_atombios_encoder_get_backlight_level_from_reg(struct amdgpu_device *adev)
 	return backlight_level;
 }
 
-static void
+void
 amdgpu_atombios_encoder_set_backlight_level_to_reg(struct amdgpu_device *adev,
 					    u8 backlight_level)
 {
@@ -186,9 +189,6 @@ void amdgpu_atombios_encoder_init_backlight(struct amdgpu_encoder *amdgpu_encode
 	if (!amdgpu_encoder->enc_priv)
 		return;
 
-	if (!adev->is_atom_bios)
-		return;
-
 	if (!(adev->mode_info.firmware_flags & ATOM_BIOS_INFO_BL_CONTROLLED_BY_GPU))
 		return;
 
@@ -239,9 +239,6 @@ amdgpu_atombios_encoder_fini_backlight(struct amdgpu_encoder *amdgpu_encoder)
 	struct amdgpu_encoder_atom_dig *dig;
 
 	if (!amdgpu_encoder->enc_priv)
-		return;
-
-	if (!adev->is_atom_bios)
 		return;
 
 	if (!(adev->mode_info.firmware_flags & ATOM_BIOS_INFO_BL_CONTROLLED_BY_GPU))
@@ -574,6 +571,7 @@ union dig_encoder_control {
 	DIG_ENCODER_CONTROL_PARAMETERS_V2 v2;
 	DIG_ENCODER_CONTROL_PARAMETERS_V3 v3;
 	DIG_ENCODER_CONTROL_PARAMETERS_V4 v4;
+	DIG_ENCODER_CONTROL_PARAMETERS_V5 v5;
 };
 
 void
@@ -701,6 +699,47 @@ amdgpu_atombios_encoder_setup_dig_encoder(struct drm_encoder *encoder,
 			else
 				args.v4.ucHPD_ID = hpd_id + 1;
 			break;
+		case 5:
+			switch (action) {
+			case ATOM_ENCODER_CMD_SETUP_PANEL_MODE:
+				args.v5.asDPPanelModeParam.ucAction = action;
+				args.v5.asDPPanelModeParam.ucPanelMode = panel_mode;
+				args.v5.asDPPanelModeParam.ucDigId = dig->dig_encoder;
+				break;
+			case ATOM_ENCODER_CMD_STREAM_SETUP:
+				args.v5.asStreamParam.ucAction = action;
+				args.v5.asStreamParam.ucDigId = dig->dig_encoder;
+				args.v5.asStreamParam.ucDigMode =
+					amdgpu_atombios_encoder_get_encoder_mode(encoder);
+				if (ENCODER_MODE_IS_DP(args.v5.asStreamParam.ucDigMode))
+					args.v5.asStreamParam.ucLaneNum = dp_lane_count;
+				else if (amdgpu_dig_monitor_is_duallink(encoder,
+									amdgpu_encoder->pixel_clock))
+					args.v5.asStreamParam.ucLaneNum = 8;
+				else
+					args.v5.asStreamParam.ucLaneNum = 4;
+				args.v5.asStreamParam.ulPixelClock =
+					cpu_to_le32(amdgpu_encoder->pixel_clock / 10);
+				args.v5.asStreamParam.ucBitPerColor =
+					amdgpu_atombios_encoder_get_bpc(encoder);
+				args.v5.asStreamParam.ucLinkRateIn270Mhz = dp_clock / 27000;
+				break;
+			case ATOM_ENCODER_CMD_DP_LINK_TRAINING_START:
+			case ATOM_ENCODER_CMD_DP_LINK_TRAINING_PATTERN1:
+			case ATOM_ENCODER_CMD_DP_LINK_TRAINING_PATTERN2:
+			case ATOM_ENCODER_CMD_DP_LINK_TRAINING_PATTERN3:
+			case ATOM_ENCODER_CMD_DP_LINK_TRAINING_PATTERN4:
+			case ATOM_ENCODER_CMD_DP_LINK_TRAINING_COMPLETE:
+			case ATOM_ENCODER_CMD_DP_VIDEO_OFF:
+			case ATOM_ENCODER_CMD_DP_VIDEO_ON:
+				args.v5.asCmdParam.ucAction = action;
+				args.v5.asCmdParam.ucDigId = dig->dig_encoder;
+				break;
+			default:
+				DRM_ERROR("Unsupported action 0x%x\n", action);
+				break;
+			}
+			break;
 		default:
 			DRM_ERROR("Unknown table version %d, %d\n", frev, crev);
 			break;
@@ -721,11 +760,12 @@ union dig_transmitter_control {
 	DIG_TRANSMITTER_CONTROL_PARAMETERS_V3 v3;
 	DIG_TRANSMITTER_CONTROL_PARAMETERS_V4 v4;
 	DIG_TRANSMITTER_CONTROL_PARAMETERS_V1_5 v5;
+	DIG_TRANSMITTER_CONTROL_PARAMETERS_V1_6 v6;
 };
 
 void
 amdgpu_atombios_encoder_setup_dig_transmitter(struct drm_encoder *encoder, int action,
-				       uint8_t lane_num, uint8_t lane_set)
+					      uint8_t lane_num, uint8_t lane_set)
 {
 	struct drm_device *dev = encoder->dev;
 	struct amdgpu_device *adev = dev->dev_private;
@@ -1076,6 +1116,54 @@ amdgpu_atombios_encoder_setup_dig_transmitter(struct drm_encoder *encoder, int a
 				args.v5.asConfig.ucHPDSel = hpd_id + 1;
 			args.v5.ucDigEncoderSel = 1 << dig_encoder;
 			args.v5.ucDPLaneSet = lane_set;
+			break;
+		case 6:
+			args.v6.ucAction = action;
+			if (is_dp)
+				args.v6.ulSymClock = cpu_to_le32(dp_clock / 10);
+			else
+				args.v6.ulSymClock = cpu_to_le32(amdgpu_encoder->pixel_clock / 10);
+
+			switch (amdgpu_encoder->encoder_id) {
+			case ENCODER_OBJECT_ID_INTERNAL_UNIPHY:
+				if (dig->linkb)
+					args.v6.ucPhyId = ATOM_PHY_ID_UNIPHYB;
+				else
+					args.v6.ucPhyId = ATOM_PHY_ID_UNIPHYA;
+				break;
+			case ENCODER_OBJECT_ID_INTERNAL_UNIPHY1:
+				if (dig->linkb)
+					args.v6.ucPhyId = ATOM_PHY_ID_UNIPHYD;
+				else
+					args.v6.ucPhyId = ATOM_PHY_ID_UNIPHYC;
+				break;
+			case ENCODER_OBJECT_ID_INTERNAL_UNIPHY2:
+				if (dig->linkb)
+					args.v6.ucPhyId = ATOM_PHY_ID_UNIPHYF;
+				else
+					args.v6.ucPhyId = ATOM_PHY_ID_UNIPHYE;
+				break;
+			case ENCODER_OBJECT_ID_INTERNAL_UNIPHY3:
+				args.v6.ucPhyId = ATOM_PHY_ID_UNIPHYG;
+				break;
+			}
+			if (is_dp)
+				args.v6.ucLaneNum = dp_lane_count;
+			else if (amdgpu_dig_monitor_is_duallink(encoder, amdgpu_encoder->pixel_clock))
+				args.v6.ucLaneNum = 8;
+			else
+				args.v6.ucLaneNum = 4;
+			args.v6.ucConnObjId = connector_object_id;
+			if (action == ATOM_TRANSMITTER_ACTION_SETUP_VSEMPH)
+				args.v6.ucDPLaneSet = lane_set;
+			else
+				args.v6.ucDigMode = amdgpu_atombios_encoder_get_encoder_mode(encoder);
+
+			if (hpd_id == AMDGPU_HPD_NONE)
+				args.v6.ucHPDSel = 0;
+			else
+				args.v6.ucHPDSel = hpd_id + 1;
+			args.v6.ucDigEncoderSel = 1 << dig_encoder;
 			break;
 		default:
 			DRM_ERROR("Unknown table version %d, %d\n", frev, crev);

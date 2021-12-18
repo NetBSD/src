@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_fbcon.h,v 1.3 2018/08/27 04:58:24 riastradh Exp $	*/
+/*	$NetBSD: nouveau_fbcon.h,v 1.4 2021/12/18 23:45:32 riastradh Exp $	*/
 
 /*
  * Copyright (C) 2008 Maarten Maathuis.
@@ -34,10 +34,7 @@
 #include "nouveau_display.h"
 
 struct nouveau_fbdev {
-	struct drm_fb_helper helper;
-	struct nouveau_framebuffer nouveau_fb;
-	struct list_head fbdev_list;
-	struct drm_device *dev;
+	struct drm_fb_helper helper; /* must be first */
 	unsigned int saved_flags;
 	struct nvif_object surf2d;
 	struct nvif_object clip;
@@ -46,6 +43,9 @@ struct nouveau_fbdev {
 	struct nvif_object gdi;
 	struct nvif_object blit;
 	struct nvif_object twod;
+
+	struct mutex hotplug_lock;
+	bool hotplug_waiting;
 };
 
 void nouveau_fbcon_restore(void);
@@ -76,7 +76,7 @@ void nouveau_fbcon_accel_save_disable(struct drm_device *dev);
 void nouveau_fbcon_accel_restore(struct drm_device *dev);
 
 void nouveau_fbcon_output_poll_changed(struct drm_device *dev);
-
+void nouveau_fbcon_hotplug_resume(struct nouveau_fbdev *fbcon);
 extern int nouveau_nofbaccel;
 
 #endif /* __NV50_FBCON_H__ */

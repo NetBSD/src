@@ -1,4 +1,4 @@
-/*	$NetBSD: radeon_atombios_i2c.c,v 1.1.1.1 2021/12/18 20:15:46 riastradh Exp $	*/
+/*	$NetBSD: radeon_atombios_i2c.c,v 1.2 2021/12/18 23:45:43 riastradh Exp $	*/
 
 /*
  * Copyright 2011 Advanced Micro Devices, Inc.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radeon_atombios_i2c.c,v 1.1.1.1 2021/12/18 20:15:46 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radeon_atombios_i2c.c,v 1.2 2021/12/18 23:45:43 riastradh Exp $");
 
 #include <drm/radeon_drm.h>
 #include "radeon.h"
@@ -73,6 +73,8 @@ static int radeon_process_i2c_ch(struct radeon_i2c_chan *chan,
 			memcpy(&out, &buf[1], num);
 		args.lpI2CDataOut = cpu_to_le16(out);
 	} else {
+		CTASSERT(ATOM_MAX_HW_I2C_READ <
+		    (uintmax_t)1 << (CHAR_BIT*sizeof(num)));
 		args.ucRegIndex = 0;
 		args.lpI2CDataOut = 0;
 	}

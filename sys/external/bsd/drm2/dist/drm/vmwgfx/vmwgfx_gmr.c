@@ -1,9 +1,9 @@
-/*	$NetBSD: vmwgfx_gmr.c,v 1.2 2018/08/27 04:58:37 riastradh Exp $	*/
+/*	$NetBSD: vmwgfx_gmr.c,v 1.3 2021/12/18 23:45:45 riastradh Exp $	*/
 
+// SPDX-License-Identifier: GPL-2.0 OR MIT
 /**************************************************************************
  *
- * Copyright © 2009-2015 VMware, Inc., Palo Alto, CA., USA
- * All Rights Reserved.
+ * Copyright 2009-2015 VMware, Inc., Palo Alto, CA., USA
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the
@@ -28,11 +28,11 @@
  **************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vmwgfx_gmr.c,v 1.2 2018/08/27 04:58:37 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vmwgfx_gmr.c,v 1.3 2021/12/18 23:45:45 riastradh Exp $");
+
+#include <drm/ttm/ttm_bo_driver.h>
 
 #include "vmwgfx_drv.h"
-#include <drm/drmP.h>
-#include <drm/ttm/ttm_bo_driver.h>
 
 #define VMW_PPN_SIZE (sizeof(unsigned long))
 /* A future safe maximum remap size. */
@@ -56,7 +56,7 @@ static int vmw_gmr2_bind(struct vmw_private *dev_priv,
 	uint32_t cmd_size = define_size + remap_size;
 	uint32_t i;
 
-	cmd_orig = cmd = vmw_fifo_reserve(dev_priv, cmd_size);
+	cmd_orig = cmd = VMW_FIFO_RESERVE(dev_priv, cmd_size);
 	if (unlikely(cmd == NULL))
 		return -ENOMEM;
 
@@ -115,11 +115,10 @@ static void vmw_gmr2_unbind(struct vmw_private *dev_priv,
 	uint32_t define_size = sizeof(define_cmd) + 4;
 	uint32_t *cmd;
 
-	cmd = vmw_fifo_reserve(dev_priv, define_size);
-	if (unlikely(cmd == NULL)) {
-		DRM_ERROR("GMR2 unbind failed.\n");
+	cmd = VMW_FIFO_RESERVE(dev_priv, define_size);
+	if (unlikely(cmd == NULL))
 		return;
-	}
+
 	define_cmd.gmrId = gmr_id;
 	define_cmd.numPages = 0;
 

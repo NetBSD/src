@@ -1,4 +1,4 @@
-/*	$NetBSD: cik_reg.h,v 1.2 2018/08/27 04:58:35 riastradh Exp $	*/
+/*	$NetBSD: cik_reg.h,v 1.3 2021/12/18 23:45:42 riastradh Exp $	*/
 
 /*
  * Copyright 2012 Advanced Micro Devices, Inc.
@@ -148,8 +148,6 @@
 #       define CIK_INTERLEAVE_EN                  (1 << 3)
 
 #define CIK_LB_DESKTOP_HEIGHT                     0x6b0c
-
-#define KFD_CIK_SDMA_QUEUE_OFFSET		0x200
 
 #define SQ_IND_INDEX					0x8DE0
 #define SQ_CMD						0x8DEC

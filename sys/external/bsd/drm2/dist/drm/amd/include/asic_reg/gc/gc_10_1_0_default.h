@@ -1,4 +1,4 @@
-/*	$NetBSD: gc_10_1_0_default.h,v 1.1.1.1 2021/12/18 20:12:40 riastradh Exp $	*/
+/*	$NetBSD: gc_10_1_0_default.h,v 1.2 2021/12/18 23:45:13 riastradh Exp $	*/
 
 /*
  * Copyright (C) 2019  Advanced Micro Devices, Inc.

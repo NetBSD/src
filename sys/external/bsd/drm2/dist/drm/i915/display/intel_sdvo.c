@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_sdvo.c,v 1.1.1.1 2021/12/18 20:15:30 riastradh Exp $	*/
+/*	$NetBSD: intel_sdvo.c,v 1.2 2021/12/18 23:45:30 riastradh Exp $	*/
 
 /*
  * Copyright 2006 Dave Airlie <airlied@linux.ie>
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intel_sdvo.c,v 1.1.1.1 2021/12/18 20:15:30 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intel_sdvo.c,v 1.2 2021/12/18 23:45:30 riastradh Exp $");
 
 #include <linux/delay.h>
 #include <linux/export.h>
@@ -427,7 +427,7 @@ static void intel_sdvo_debug_write(struct intel_sdvo *intel_sdvo, u8 cmd,
 
 
 	for (i = 0; i < args_len; i++) {
-		BUF_PRINT("%02X ", ((u8 *)args)[i]);
+		BUF_PRINT("%02X ", ((const u8 *)args)[i]);
 	}
 	for (; i < 8; i++) {
 		BUF_PRINT("   ");
@@ -490,7 +490,7 @@ static bool __intel_sdvo_write_cmd(struct intel_sdvo *intel_sdvo, u8 cmd,
 		msgs[i].len = 2;
 		msgs[i].buf = buf + 2 *i;
 		buf[2*i + 0] = SDVO_I2C_ARG_0 - i;
-		buf[2*i + 1] = ((u8*)args)[i];
+		buf[2*i + 1] = ((const u8*)args)[i];
 	}
 	msgs[i].addr = intel_sdvo->slave_addr;
 	msgs[i].flags = 0;
@@ -2391,9 +2391,13 @@ intel_sdvo_connector_register(struct drm_connector *connector)
 	if (ret)
 		return ret;
 
+#ifdef __NetBSD__ /* XXX post-merge audit */
+	return 0;
+#else
 	return sysfs_create_link(&connector->kdev->kobj,
 				 &sdvo->ddc.dev.kobj,
 				 sdvo->ddc.dev.kobj.name);
+#endif
 }
 
 static void
@@ -3222,7 +3226,7 @@ intel_sdvo_init_ddc_proxy(struct intel_sdvo *sdvo,
 	sdvo->ddc.owner = THIS_MODULE;
 	sdvo->ddc.class = I2C_CLASS_DDC;
 	snprintf(sdvo->ddc.name, I2C_NAME_SIZE, "SDVO DDC proxy");
-	sdvo->ddc.dev.parent = &pdev->dev;
+	sdvo->ddc.dev.parent = dev->dev;
 	sdvo->ddc.algo_data = sdvo;
 	sdvo->ddc.algo = &intel_sdvo_ddc_proxy;
 	sdvo->ddc.lock_ops = &proxy_lock_ops;

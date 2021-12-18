@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_vmm.h,v 1.1.1.1 2021/12/18 20:15:36 riastradh Exp $	*/
+/*	$NetBSD: nouveau_vmm.h,v 1.2 2021/12/18 23:45:32 riastradh Exp $	*/
 
 #ifndef __NOUVEAU_VMA_H__
 #define __NOUVEAU_VMA_H__

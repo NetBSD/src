@@ -1,4 +1,4 @@
-/*	$NetBSD: smu_types.h,v 1.1.1.1 2021/12/18 20:15:22 riastradh Exp $	*/
+/*	$NetBSD: smu_types.h,v 1.2 2021/12/18 23:45:26 riastradh Exp $	*/
 
 /*
  * Copyright 2019 Advanced Micro Devices, Inc.

@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu_afmt.c,v 1.2 2018/08/27 04:58:19 riastradh Exp $	*/
+/*	$NetBSD: amdgpu_afmt.c,v 1.3 2021/12/18 23:44:58 riastradh Exp $	*/
 
 /*
  * Copyright 2008 Advanced Micro Devices, Inc.
@@ -26,11 +26,11 @@
  * Authors: Christian König
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdgpu_afmt.c,v 1.2 2018/08/27 04:58:19 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdgpu_afmt.c,v 1.3 2021/12/18 23:44:58 riastradh Exp $");
 
 #include <linux/hdmi.h>
 #include <linux/gcd.h>
-#include <drm/drmP.h>
+
 #include <drm/amdgpu_drm.h>
 #include "amdgpu.h"
 
@@ -79,9 +79,9 @@ static void amdgpu_afmt_calc_cts(uint32_t clock, int *CTS, int *N, int freq)
 
 	/* Check that we are in spec (not always possible) */
 	if (n < (128*freq/1500))
-		printk(KERN_WARNING "Calculated ACR N value is too small. You may experience audio problems.\n");
+		pr_warn("Calculated ACR N value is too small. You may experience audio problems.\n");
 	if (n > (128*freq/300))
-		printk(KERN_WARNING "Calculated ACR N value is too large. You may experience audio problems.\n");
+		pr_warn("Calculated ACR N value is too large. You may experience audio problems.\n");
 
 	*N = n;
 	*CTS = cts;

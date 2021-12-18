@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_nvkm_subdev_i2c_aux.c,v 1.4 2020/02/14 04:35:20 riastradh Exp $	*/
+/*	$NetBSD: nouveau_nvkm_subdev_i2c_aux.c,v 1.5 2021/12/18 23:45:40 riastradh Exp $	*/
 
 /*
  * Copyright 2009 Red Hat Inc.
@@ -24,7 +24,7 @@
  * Authors: Ben Skeggs
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_subdev_i2c_aux.c,v 1.4 2020/02/14 04:35:20 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_subdev_i2c_aux.c,v 1.5 2021/12/18 23:45:40 riastradh Exp $");
 
 #include "aux.h"
 #include "pad.h"
@@ -47,8 +47,7 @@ nvkm_i2c_aux_i2c_xfer(struct i2c_adapter *adap, struct i2c_msg *msgs, int num)
 		u8 *ptr = msg->buf;
 
 		while (remaining) {
-			u8 cnt = (remaining > 16) ? 16 : remaining;
-			u8 cmd;
+			u8 cnt, retries, cmd;
 
 			if (msg->flags & I2C_M_RD)
 				cmd = 1;
@@ -58,10 +57,19 @@ nvkm_i2c_aux_i2c_xfer(struct i2c_adapter *adap, struct i2c_msg *msgs, int num)
 			if (mcnt || remaining > 16)
 				cmd |= 4; /* MOT */
 
-			ret = aux->func->xfer(aux, true, cmd, msg->addr, ptr, cnt);
-			if (ret < 0) {
-				nvkm_i2c_aux_release(aux);
-				return ret;
+			for (retries = 0, cnt = 0;
+			     retries < 32 && !cnt;
+			     retries++) {
+				cnt = min_t(u8, remaining, 16);
+				ret = aux->func->xfer(aux, true, cmd,
+						      msg->addr, ptr, &cnt);
+				if (ret < 0)
+					goto out;
+			}
+			if (!cnt) {
+				AUX_TRACE(aux, "no data after 32 retries");
+				ret = -EIO;
+				goto out;
 			}
 
 			ptr += cnt;
@@ -71,8 +79,10 @@ nvkm_i2c_aux_i2c_xfer(struct i2c_adapter *adap, struct i2c_msg *msgs, int num)
 		msg++;
 	}
 
+	ret = num;
+out:
 	nvkm_i2c_aux_release(aux);
-	return num;
+	return ret;
 }
 
 static u32
@@ -81,7 +91,7 @@ nvkm_i2c_aux_i2c_func(struct i2c_adapter *adap)
 	return I2C_FUNC_I2C | I2C_FUNC_SMBUS_EMUL;
 }
 
-const struct i2c_algorithm
+static const struct i2c_algorithm
 nvkm_i2c_aux_i2c_algo = {
 	.master_xfer = nvkm_i2c_aux_i2c_xfer,
 	.functionality = nvkm_i2c_aux_i2c_func
@@ -112,9 +122,15 @@ nvkm_i2c_aux_acquire(struct nvkm_i2c_aux *aux)
 {
 	struct nvkm_i2c_pad *pad = aux->pad;
 	int ret;
+
 	AUX_TRACE(aux, "acquire");
 	mutex_lock(&aux->mutex);
-	ret = nvkm_i2c_pad_acquire(pad, NVKM_I2C_PAD_AUX);
+
+	if (aux->enabled)
+		ret = nvkm_i2c_pad_acquire(pad, NVKM_I2C_PAD_AUX);
+	else
+		ret = -EIO;
+
 	if (ret)
 		mutex_unlock(&aux->mutex);
 	return ret;
@@ -122,8 +138,12 @@ nvkm_i2c_aux_acquire(struct nvkm_i2c_aux *aux)
 
 int
 nvkm_i2c_aux_xfer(struct nvkm_i2c_aux *aux, bool retry, u8 type,
-		  u32 addr, u8 *data, u8 size)
+		  u32 addr, u8 *data, u8 *size)
 {
+	if (!*size && !aux->func->address_only) {
+		AUX_ERR(aux, "address-only transaction dropped");
+		return -ENOSYS;
+	}
 	return aux->func->xfer(aux, retry, type, addr, data, size);
 }
 
@@ -147,6 +167,24 @@ nvkm_i2c_aux_del(struct nvkm_i2c_aux **paux)
 		kfree(*paux);
 		*paux = NULL;
 	}
+}
+
+void
+nvkm_i2c_aux_init(struct nvkm_i2c_aux *aux)
+{
+	AUX_TRACE(aux, "init");
+	mutex_lock(&aux->mutex);
+	aux->enabled = true;
+	mutex_unlock(&aux->mutex);
+}
+
+void
+nvkm_i2c_aux_fini(struct nvkm_i2c_aux *aux)
+{
+	AUX_TRACE(aux, "fini");
+	mutex_lock(&aux->mutex);
+	aux->enabled = false;
+	mutex_unlock(&aux->mutex);
 }
 
 int

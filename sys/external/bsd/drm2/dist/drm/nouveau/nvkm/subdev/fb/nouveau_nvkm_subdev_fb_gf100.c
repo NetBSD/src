@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_nvkm_subdev_fb_gf100.c,v 1.3 2018/08/27 07:40:22 riastradh Exp $	*/
+/*	$NetBSD: nouveau_nvkm_subdev_fb_gf100.c,v 1.4 2021/12/18 23:45:39 riastradh Exp $	*/
 
 /*
  * Copyright 2012 Red Hat Inc.
@@ -24,19 +24,14 @@
  * Authors: Ben Skeggs
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_subdev_fb_gf100.c,v 1.3 2018/08/27 07:40:22 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_subdev_fb_gf100.c,v 1.4 2021/12/18 23:45:39 riastradh Exp $");
 
 #include "gf100.h"
 #include "ram.h"
 
-extern const u8 gf100_pte_storage_type_map[256];
-
-bool
-gf100_fb_memtype_valid(struct nvkm_fb *fb, u32 tile_flags)
-{
-	u8 memtype = (tile_flags & 0x0000ff00) >> 8;
-	return likely((gf100_pte_storage_type_map[memtype] != 0xff));
-}
+#include <core/memory.h>
+#include <core/option.h>
+#include <subdev/therm.h>
 
 void
 gf100_fb_intr(struct nvkm_fb *base)
@@ -51,53 +46,25 @@ gf100_fb_intr(struct nvkm_fb *base)
 		nvkm_debug(subdev, "PBFB intr\n");
 }
 
-void
-gf100_fb_init(struct nvkm_fb *base)
-{
-	struct gf100_fb *fb = gf100_fb(base);
-	struct nvkm_device *device = fb->base.subdev.device;
-
-	if (fb->r100c10_page)
-		nvkm_wr32(device, 0x100c10, fb->r100c10 >> 8);
-
-	nvkm_mask(device, 0x100c80, 0x00000001, 0x00000000); /* 128KiB lpg */
-}
-
-void *
-gf100_fb_dtor(struct nvkm_fb *base)
-{
-	struct gf100_fb *fb = gf100_fb(base);
-	struct nvkm_device *device = fb->base.subdev.device;
-
-	if (fb->r100c10_page) {
-#ifdef __NetBSD__
-		const bus_dma_tag_t dmat = device->func->dma_tag(device);
-
-		bus_dmamap_unload(dmat, fb->r100c10_page);
-		bus_dmamem_unmap(dmat, fb->r100c10_kva, PAGE_SIZE);
-		bus_dmamap_destroy(dmat, fb->r100c10_page);
-		bus_dmamem_free(dmat, &fb->r100c10_seg, 1);
-		fb->r100c10_page = NULL;
-#else
-		dma_unmap_page(device->dev, fb->r100c10, PAGE_SIZE,
-			       DMA_BIDIRECTIONAL);
-		__free_page(fb->r100c10_page);
-#endif
-	}
-
-	return fb;
-}
-
 int
-gf100_fb_new_(const struct nvkm_fb_func *func, struct nvkm_device *device,
-	      int index, struct nvkm_fb **pfb)
+gf100_fb_oneinit(struct nvkm_fb *base)
 {
-	struct gf100_fb *fb;
+	struct gf100_fb *fb = gf100_fb(base);
+	struct nvkm_device *device = fb->base.subdev.device;
+	int ret, size = 1 << (fb->base.page ? fb->base.page : 17);
 
-	if (!(fb = kzalloc(sizeof(*fb), GFP_KERNEL)))
-		return -ENOMEM;
-	nvkm_fb_ctor(func, device, index, &fb->base);
-	*pfb = &fb->base;
+	size = nvkm_longopt(device->cfgopt, "MmuDebugBufferSize", size);
+	size = max(size, 0x1000);
+
+	ret = nvkm_memory_new(device, NVKM_MEM_TARGET_INST, size, 0x1000,
+			      true, &fb->base.mmu_rd);
+	if (ret)
+		return ret;
+
+	ret = nvkm_memory_new(device, NVKM_MEM_TARGET_INST, size, 0x1000,
+			      true, &fb->base.mmu_wr);
+	if (ret)
+		return ret;
 
 #ifdef __NetBSD__
     {
@@ -151,6 +118,72 @@ fail3: __unused	bus_dmamem_unmap(dmat, fb->r100c10_kva, PAGE_SIZE);
 			return -EFAULT;
 	}
 #endif
+	return 0;
+}
+
+int
+gf100_fb_init_page(struct nvkm_fb *fb)
+{
+	struct nvkm_device *device = fb->subdev.device;
+	switch (fb->page) {
+	case 16: nvkm_mask(device, 0x100c80, 0x00000001, 0x00000001); break;
+	case 17: nvkm_mask(device, 0x100c80, 0x00000001, 0x00000000); break;
+	default:
+		return -EINVAL;
+	}
+	return 0;
+}
+
+void
+gf100_fb_init(struct nvkm_fb *base)
+{
+	struct gf100_fb *fb = gf100_fb(base);
+	struct nvkm_device *device = fb->base.subdev.device;
+
+	if (fb->r100c10_page)
+		nvkm_wr32(device, 0x100c10, fb->r100c10 >> 8);
+
+	if (base->func->clkgate_pack) {
+		nvkm_therm_clkgate_init(device->therm,
+					base->func->clkgate_pack);
+	}
+}
+
+void *
+gf100_fb_dtor(struct nvkm_fb *base)
+{
+	struct gf100_fb *fb = gf100_fb(base);
+	struct nvkm_device *device = fb->base.subdev.device;
+
+	if (fb->r100c10_page) {
+#ifdef __NetBSD__
+		const bus_dma_tag_t dmat = device->func->dma_tag(device);
+
+		bus_dmamap_unload(dmat, fb->r100c10_page);
+		bus_dmamem_unmap(dmat, fb->r100c10_kva, PAGE_SIZE);
+		bus_dmamap_destroy(dmat, fb->r100c10_page);
+		bus_dmamem_free(dmat, &fb->r100c10_seg, 1);
+		fb->r100c10_page = NULL;
+#else
+		dma_unmap_page(device->dev, fb->r100c10, PAGE_SIZE,
+			       DMA_BIDIRECTIONAL);
+		__free_page(fb->r100c10_page);
+#endif
+	}
+
+	return fb;
+}
+
+int
+gf100_fb_new_(const struct nvkm_fb_func *func, struct nvkm_device *device,
+	      int index, struct nvkm_fb **pfb)
+{
+	struct gf100_fb *fb;
+
+	if (!(fb = kzalloc(sizeof(*fb), GFP_KERNEL)))
+		return -ENOMEM;
+	nvkm_fb_ctor(func, device, index, &fb->base);
+	*pfb = &fb->base;
 
 	return 0;
 }
@@ -158,10 +191,12 @@ fail3: __unused	bus_dmamem_unmap(dmat, fb->r100c10_kva, PAGE_SIZE);
 static const struct nvkm_fb_func
 gf100_fb = {
 	.dtor = gf100_fb_dtor,
+	.oneinit = gf100_fb_oneinit,
 	.init = gf100_fb_init,
+	.init_page = gf100_fb_init_page,
 	.intr = gf100_fb_intr,
 	.ram_new = gf100_ram_new,
-	.memtype_valid = gf100_fb_memtype_valid,
+	.default_bigpage = 17,
 };
 
 int

@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_dp_aux_dev.c,v 1.1.1.1 2021/12/18 20:11:01 riastradh Exp $	*/
+/*	$NetBSD: drm_dp_aux_dev.c,v 1.2 2021/12/18 23:44:57 riastradh Exp $	*/
 
 /*
  * Copyright © 2015 Intel Corporation
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_dp_aux_dev.c,v 1.1.1.1 2021/12/18 20:11:01 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_dp_aux_dev.c,v 1.2 2021/12/18 23:44:57 riastradh Exp $");
 
 #include <linux/device.h>
 #include <linux/fs.h>

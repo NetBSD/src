@@ -1,4 +1,4 @@
-/*	$NetBSD: oss_1_0_d.h,v 1.1.1.1 2021/12/18 20:15:00 riastradh Exp $	*/
+/*	$NetBSD: oss_1_0_d.h,v 1.2 2021/12/18 23:45:21 riastradh Exp $	*/
 
 /*
  *

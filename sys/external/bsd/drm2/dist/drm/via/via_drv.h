@@ -1,4 +1,4 @@
-/*	$NetBSD: via_drv.h,v 1.5 2018/08/27 04:58:37 riastradh Exp $	*/
+/*	$NetBSD: via_drv.h,v 1.6 2021/12/18 23:45:44 riastradh Exp $	*/
 
 /*
  * Copyright 1998-2003 VIA Technologies, Inc. All Rights Reserved.
@@ -26,8 +26,16 @@
 #ifndef _VIA_DRV_H_
 #define _VIA_DRV_H_
 
-#include <drm/drm_mm.h>
+#include <linux/irqreturn.h>
+#include <linux/jiffies.h>
+#include <linux/sched.h>
+#include <linux/sched/signal.h>
+#include <linux/wait.h>
+
+#include <drm/drm_ioctl.h>
 #include <drm/drm_legacy.h>
+#include <drm/drm_mm.h>
+#include <drm/via_drm.h>
 
 #define DRIVER_AUTHOR	"Various"
 
@@ -90,9 +98,9 @@ typedef struct drm_via_private {
 	volatile uint32_t *last_pause_ptr;
 	volatile uint32_t *hw_addr_ptr;
 	drm_via_ring_buffer_t ring;
-	struct timeval last_vblank;
+	ktime_t last_vblank;
 	int last_vblank_valid;
-	unsigned usec_per_vblank;
+	ktime_t nsec_per_vblank;
 	atomic_t vbl_received;
 	drm_via_state_t hc_state;
 	char pci_buf[VIA_PCI_BUF_SIZE];
@@ -129,12 +137,67 @@ enum via_family {
 };
 
 /* VIA MMIO register access */
-#define VIA_BASE ((dev_priv->mmio))
+static inline u32 via_read(struct drm_via_private *dev_priv, u32 reg)
+{
+	return readl((void __iomem *)(dev_priv->mmio->handle + reg));
+}
 
-#define VIA_READ(reg)		DRM_READ32(VIA_BASE, reg)
-#define VIA_WRITE(reg, val)	DRM_WRITE32(VIA_BASE, reg, val)
-#define VIA_READ8(reg)		DRM_READ8(VIA_BASE, reg)
-#define VIA_WRITE8(reg, val)	DRM_WRITE8(VIA_BASE, reg, val)
+static inline void via_write(struct drm_via_private *dev_priv, u32 reg,
+			     u32 val)
+{
+	writel(val, (void __iomem *)(dev_priv->mmio->handle + reg));
+}
+
+static inline void via_write8(struct drm_via_private *dev_priv, u32 reg,
+			      u32 val)
+{
+	writeb(val, (void __iomem *)(dev_priv->mmio->handle + reg));
+}
+
+static inline void via_write8_mask(struct drm_via_private *dev_priv,
+				   u32 reg, u32 mask, u32 val)
+{
+	u32 tmp;
+
+	tmp = readb((void __iomem *)(dev_priv->mmio->handle + reg));
+	tmp = (tmp & ~mask) | (val & mask);
+	writeb(tmp, (void __iomem *)(dev_priv->mmio->handle + reg));
+}
+
+/*
+ * Poll in a loop waiting for 'contidition' to be true.
+ * Note: A direct replacement with wait_event_interruptible_timeout()
+ *       will not work unless driver is updated to emit wake_up()
+ *       in relevant places that can impact the 'condition'
+ *
+ * Returns:
+ *   ret keeps current value if 'condition' becomes true
+ *   ret = -BUSY if timeout happens
+ *   ret = -EINTR if a signal interrupted the waiting period
+ */
+#define VIA_WAIT_ON( ret, queue, timeout, condition )		\
+do {								\
+	DECLARE_WAITQUEUE(entry, current);			\
+	unsigned long end = jiffies + (timeout);		\
+	add_wait_queue(&(queue), &entry);			\
+								\
+	for (;;) {						\
+		__set_current_state(TASK_INTERRUPTIBLE);	\
+		if (condition)					\
+			break;					\
+		if (time_after_eq(jiffies, end)) {		\
+			ret = -EBUSY;				\
+			break;					\
+		}						\
+		schedule_timeout((HZ/100 > 1) ? HZ/100 : 1);	\
+		if (signal_pending(current)) {			\
+			ret = -EINTR;				\
+			break;					\
+		}						\
+	}							\
+	__set_current_state(TASK_RUNNING);			\
+	remove_wait_queue(&(queue), &entry);			\
+} while (0)
 
 extern const struct drm_ioctl_desc via_ioctls[];
 extern int via_max_ioctl;
@@ -150,7 +213,7 @@ extern int via_dma_blit_sync(struct drm_device *dev, void *data, struct drm_file
 extern int via_dma_blit(struct drm_device *dev, void *data, struct drm_file *file_priv);
 
 extern int via_driver_load(struct drm_device *dev, unsigned long chipset);
-extern int via_driver_unload(struct drm_device *dev);
+extern void via_driver_unload(struct drm_device *dev);
 
 extern int via_init_context(struct drm_device *dev, int context);
 extern int via_final_context(struct drm_device *dev, int context);

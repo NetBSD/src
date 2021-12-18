@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu_vega20_thermal.c,v 1.1.1.1 2021/12/18 20:15:21 riastradh Exp $	*/
+/*	$NetBSD: amdgpu_vega20_thermal.c,v 1.2 2021/12/18 23:45:26 riastradh Exp $	*/
 
 /*
  * Copyright 2018 Advanced Micro Devices, Inc.
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdgpu_vega20_thermal.c,v 1.1.1.1 2021/12/18 20:15:21 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdgpu_vega20_thermal.c,v 1.2 2021/12/18 23:45:26 riastradh Exp $");
 
 #include "vega20_thermal.h"
 #include "vega20_hwmgr.h"

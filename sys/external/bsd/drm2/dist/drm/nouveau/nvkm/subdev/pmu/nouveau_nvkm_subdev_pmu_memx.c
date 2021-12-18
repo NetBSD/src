@@ -1,7 +1,8 @@
-/*	$NetBSD: nouveau_nvkm_subdev_pmu_memx.c,v 1.2 2018/08/27 04:58:35 riastradh Exp $	*/
+/*	$NetBSD: nouveau_nvkm_subdev_pmu_memx.c,v 1.3 2021/12/18 23:45:41 riastradh Exp $	*/
 
+// SPDX-License-Identifier: MIT
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_subdev_pmu_memx.c,v 1.2 2018/08/27 04:58:35 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_subdev_pmu_memx.c,v 1.3 2021/12/18 23:45:41 riastradh Exp $");
 
 #ifndef __NVKM_PMU_MEMX_H__
 #define __NVKM_PMU_MEMX_H__
@@ -92,10 +93,10 @@ nvkm_memx_fini(struct nvkm_memx **pmemx, bool exec)
 	if (exec) {
 		nvkm_pmu_send(pmu, reply, PROC_MEMX, MEMX_MSG_EXEC,
 			      memx->base, finish);
+		nvkm_debug(subdev, "Exec took %uns, PMU_IN %08x\n",
+			   reply[0], reply[1]);
 	}
 
-	nvkm_debug(subdev, "Exec took %uns, PMU_IN %08x\n",
-		   reply[0], reply[1]);
 	kfree(memx);
 	return 0;
 }

@@ -1,5 +1,6 @@
-/*	$NetBSD: nv40.h,v 1.2 2018/08/27 04:58:32 riastradh Exp $	*/
+/*	$NetBSD: nv40.h,v 1.3 2021/12/18 23:45:36 riastradh Exp $	*/
 
+/* SPDX-License-Identifier: MIT */
 #ifndef __NV40_GR_H__
 #define __NV40_GR_H__
 #define nv40_gr(p) container_of((p), struct nv40_gr, base)
@@ -18,6 +19,7 @@ void nv40_gr_intr(struct nvkm_gr *);
 u64 nv40_gr_units(struct nvkm_gr *);
 
 #define nv40_gr_chan(p) container_of((p), struct nv40_gr_chan, object)
+#include <core/object.h>
 
 struct nv40_gr_chan {
 	struct nvkm_object object;

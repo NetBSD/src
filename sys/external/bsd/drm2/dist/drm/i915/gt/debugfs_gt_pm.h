@@ -1,4 +1,4 @@
-/*	$NetBSD: debugfs_gt_pm.h,v 1.1.1.1 2021/12/18 20:15:32 riastradh Exp $	*/
+/*	$NetBSD: debugfs_gt_pm.h,v 1.2 2021/12/18 23:45:30 riastradh Exp $	*/
 
 /* SPDX-License-Identifier: MIT */
 /*

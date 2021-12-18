@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_drm.h,v 1.2 2018/08/27 04:58:38 riastradh Exp $	*/
+/*	$NetBSD: i915_drm.h,v 1.3 2021/12/18 23:45:46 riastradh Exp $	*/
 
 /*
  * Copyright 2003 Tungsten Graphics, Inc., Cedar Park, Texas.
@@ -32,11 +32,14 @@
 #include <uapi/drm/i915_drm.h>
 
 /* For use by IPS driver */
-extern unsigned long i915_read_mch_val(void);
-extern bool i915_gpu_raise(void);
-extern bool i915_gpu_lower(void);
-extern bool i915_gpu_busy(void);
-extern bool i915_gpu_turbo_disable(void);
+unsigned long i915_read_mch_val(void);
+bool i915_gpu_raise(void);
+bool i915_gpu_lower(void);
+bool i915_gpu_busy(void);
+bool i915_gpu_turbo_disable(void);
+
+/* Exported from arch/x86/kernel/early-quirks.c */
+extern struct resource intel_graphics_stolen_res;
 
 /*
  * The Bridge device's PCI config space has information about the
@@ -93,5 +96,10 @@ extern bool i915_gpu_turbo_disable(void);
 #define    I845_TSEG_SIZE_MASK	(3 << 1)
 #define    I845_TSEG_SIZE_512K	(2 << 1)
 #define    I845_TSEG_SIZE_1M	(3 << 1)
+
+#define INTEL_BSM		0x5c
+#define INTEL_GEN11_BSM_DW0	0xc0
+#define INTEL_GEN11_BSM_DW1	0xc4
+#define   INTEL_BSM_MASK	(-(1u << 20))
 
 #endif				/* _I915_DRM_H_ */

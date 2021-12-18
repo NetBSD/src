@@ -1,4 +1,4 @@
-/*	$NetBSD: vce_v2_0.h,v 1.2 2018/08/27 04:58:20 riastradh Exp $	*/
+/*	$NetBSD: vce_v2_0.h,v 1.3 2021/12/18 23:44:59 riastradh Exp $	*/
 
 /*
  * Copyright 2014 Advanced Micro Devices, Inc.
@@ -26,6 +26,6 @@
 #ifndef __VCE_V2_0_H__
 #define __VCE_V2_0_H__
 
-extern const struct amd_ip_funcs vce_v2_0_ip_funcs;
+extern const struct amdgpu_ip_block_version vce_v2_0_ip_block;
 
 #endif

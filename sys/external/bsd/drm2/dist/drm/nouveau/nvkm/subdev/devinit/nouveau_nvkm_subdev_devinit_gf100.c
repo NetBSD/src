@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_nvkm_subdev_devinit_gf100.c,v 1.2 2018/08/27 04:58:33 riastradh Exp $	*/
+/*	$NetBSD: nouveau_nvkm_subdev_devinit_gf100.c,v 1.3 2021/12/18 23:45:39 riastradh Exp $	*/
 
 /*
  * Copyright 2013 Red Hat Inc.
@@ -24,7 +24,7 @@
  * Authors: Ben Skeggs
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_subdev_devinit_gf100.c,v 1.2 2018/08/27 04:58:33 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_subdev_devinit_gf100.c,v 1.3 2021/12/18 23:45:39 riastradh Exp $");
 
 #include "nv50.h"
 
@@ -95,9 +95,23 @@ gf100_devinit_disable(struct nvkm_devinit *init)
 	return disable;
 }
 
+void
+gf100_devinit_preinit(struct nvkm_devinit *base)
+{
+	struct nv50_devinit *init = nv50_devinit(base);
+	struct nvkm_subdev *subdev = &init->base.subdev;
+	struct nvkm_device *device = subdev->device;
+
+	/*
+	 * This bit is set by devinit, and flips back to 0 on suspend. We
+	 * can use it as a reliable way to know whether we should run devinit.
+	 */
+	base->post = ((nvkm_rd32(device, 0x2240c) & BIT(1)) == 0);
+}
+
 static const struct nvkm_devinit_func
 gf100_devinit = {
-	.preinit = nv50_devinit_preinit,
+	.preinit = gf100_devinit_preinit,
 	.init = nv50_devinit_init,
 	.post = nv04_devinit_post,
 	.pll_set = gf100_devinit_pll_set,

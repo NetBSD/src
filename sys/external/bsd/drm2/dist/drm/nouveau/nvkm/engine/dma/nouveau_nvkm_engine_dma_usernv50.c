@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_nvkm_engine_dma_usernv50.c,v 1.2 2018/08/27 04:58:31 riastradh Exp $	*/
+/*	$NetBSD: nouveau_nvkm_engine_dma_usernv50.c,v 1.3 2021/12/18 23:45:35 riastradh Exp $	*/
 
 /*
  * Copyright 2012 Red Hat Inc.
@@ -24,7 +24,7 @@
  * Authors: Ben Skeggs
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_engine_dma_usernv50.c,v 1.2 2018/08/27 04:58:31 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_engine_dma_usernv50.c,v 1.3 2021/12/18 23:45:35 riastradh Exp $");
 
 #define nv50_dmaobj(p) container_of((p), struct nv50_dmaobj, base)
 #include "user.h"
@@ -33,7 +33,7 @@ __KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_engine_dma_usernv50.c,v 1.2 2018/08/27 
 #include <core/gpuobj.h>
 #include <subdev/fb.h>
 
-#include <nvif/class.h>
+#include <nvif/cl0002.h>
 #include <nvif/unpack.h>
 
 struct nv50_dmaobj {
@@ -92,10 +92,11 @@ nv50_dmaobj_new(struct nvkm_dma *dma, const struct nvkm_oclass *oclass,
 	if (ret)
 		return ret;
 
+	ret  = -ENOSYS;
 	args = data;
 
 	nvif_ioctl(parent, "create nv50 dma size %d\n", size);
-	if (nvif_unpack(args->v0, 0, 0, false)) {
+	if (!(ret = nvif_unpack(ret, &data, &size, args->v0, 0, 0, false))) {
 		nvif_ioctl(parent, "create nv50 dma vers %d priv %d part %d "
 				   "comp %d kind %02x\n", args->v0.version,
 			   args->v0.priv, args->v0.part, args->v0.comp,

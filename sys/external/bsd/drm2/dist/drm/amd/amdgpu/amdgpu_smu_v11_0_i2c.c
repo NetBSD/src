@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu_smu_v11_0_i2c.c,v 1.1.1.1 2021/12/18 20:11:11 riastradh Exp $	*/
+/*	$NetBSD: amdgpu_smu_v11_0_i2c.c,v 1.2 2021/12/18 23:44:58 riastradh Exp $	*/
 
 /*
  * Copyright 2019 Advanced Micro Devices, Inc.
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdgpu_smu_v11_0_i2c.c,v 1.1.1.1 2021/12/18 20:11:11 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdgpu_smu_v11_0_i2c.c,v 1.2 2021/12/18 23:44:58 riastradh Exp $");
 
 #include "smuio/smuio_11_0_0_offset.h"
 #include "smuio/smuio_11_0_0_sh_mask.h"

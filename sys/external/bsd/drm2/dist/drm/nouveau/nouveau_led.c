@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_led.c,v 1.1.1.1 2021/12/18 20:15:36 riastradh Exp $	*/
+/*	$NetBSD: nouveau_led.c,v 1.2 2021/12/18 23:45:32 riastradh Exp $	*/
 
 /*
  * Copyright (C) 2016 Martin Peres
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_led.c,v 1.1.1.1 2021/12/18 20:15:36 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_led.c,v 1.2 2021/12/18 23:45:32 riastradh Exp $");
 
 #include <linux/leds.h>
 

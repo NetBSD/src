@@ -1,4 +1,4 @@
-/*	$NetBSD: bif_4_1_sh_mask.h,v 1.2 2018/08/27 04:58:20 riastradh Exp $	*/
+/*	$NetBSD: bif_4_1_sh_mask.h,v 1.3 2021/12/18 23:45:09 riastradh Exp $	*/
 
 /*
  * BIF_4_1 Register documentation
@@ -34,6 +34,8 @@
 #define MM_INDEX_HI__MM_OFFSET_HI__SHIFT 0x0
 #define MM_DATA__MM_DATA_MASK 0xffffffff
 #define MM_DATA__MM_DATA__SHIFT 0x0
+#define CC_BIF_BX_FUSESTRAP0__STRAP_BIF_PX_CAPABLE_MASK    0x2
+#define CC_BIF_BX_FUSESTRAP0__STRAP_BIF_PX_CAPABLE__SHIFT  0x1
 #define BUS_CNTL__BIOS_ROM_WRT_EN_MASK 0x1
 #define BUS_CNTL__BIOS_ROM_WRT_EN__SHIFT 0x0
 #define BUS_CNTL__BIOS_ROM_DIS_MASK 0x2

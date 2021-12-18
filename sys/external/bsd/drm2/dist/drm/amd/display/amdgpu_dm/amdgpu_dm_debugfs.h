@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu_dm_debugfs.h,v 1.1.1.1 2021/12/18 20:11:16 riastradh Exp $	*/
+/*	$NetBSD: amdgpu_dm_debugfs.h,v 1.2 2021/12/18 23:45:00 riastradh Exp $	*/
 
 /*
  * Copyright 2018 Advanced Micro Devices, Inc.

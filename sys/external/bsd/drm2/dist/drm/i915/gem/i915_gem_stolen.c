@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_gem_stolen.c,v 1.1.1.1 2021/12/18 20:15:31 riastradh Exp $	*/
+/*	$NetBSD: i915_gem_stolen.c,v 1.2 2021/12/18 23:45:30 riastradh Exp $	*/
 
 /*
  * SPDX-License-Identifier: MIT
@@ -7,7 +7,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_gem_stolen.c,v 1.1.1.1 2021/12/18 20:15:31 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_gem_stolen.c,v 1.2 2021/12/18 23:45:30 riastradh Exp $");
 
 #include <linux/errno.h>
 #include <linux/mutex.h>
@@ -18,6 +18,8 @@ __KERNEL_RCSID(0, "$NetBSD: i915_gem_stolen.c,v 1.1.1.1 2021/12/18 20:15:31 rias
 #include "gem/i915_gem_region.h"
 #include "i915_drv.h"
 #include "i915_gem_stolen.h"
+
+#include <linux/nbsd-namespace.h>
 
 /*
  * The BIOS typically reserves some of the system's memory for the exclusive
@@ -120,6 +122,7 @@ static int i915_adjust_stolen(struct drm_i915_private *i915,
 		}
 	}
 
+#ifndef __NetBSD__		/* XXX */
 	/*
 	 * Verify that nothing else uses this physical address. Stolen
 	 * memory should be reserved by the BIOS and hidden from the
@@ -153,6 +156,7 @@ static int i915_adjust_stolen(struct drm_i915_private *i915,
 			return -EBUSY;
 		}
 	}
+#endif
 
 	return 0;
 }
@@ -162,6 +166,7 @@ static void i915_gem_cleanup_stolen(struct drm_i915_private *i915)
 	if (!drm_mm_initialized(&i915->mm.stolen))
 		return;
 
+	mutex_destroy(&i915->mm.stolen_lock);
 	drm_mm_takedown(&i915->mm.stolen);
 }
 
@@ -188,6 +193,9 @@ static void g4x_get_stolen_reserved(struct drm_i915_private *i915,
 	 */
 	WARN(IS_GEN(i915, 5), "ILK stolen reserved found? 0x%08x\n",
 	     reg_val);
+
+	if (!(reg_val & G4X_STOLEN_RESERVED_ADDR2_MASK))
+		return;
 
 	if (!(reg_val & G4X_STOLEN_RESERVED_ADDR2_MASK))
 		return;
@@ -490,6 +498,56 @@ static int i915_gem_init_stolen(struct drm_i915_private *i915)
 	return 0;
 }
 
+#ifdef __NetBSD__
+static bus_dmamap_t
+i915_pages_create_for_stolen(struct drm_device *dev, u32 offset, u32 size)
+{
+	struct drm_i915_private *const dev_priv = dev->dev_private;
+	bus_dmamap_t dmamap = NULL;
+	bus_dma_segment_t *seg;
+	int nseg, i;
+	int ret;
+
+	KASSERT((size % PAGE_SIZE) == 0);
+	nseg = size / PAGE_SIZE;
+	seg = kmem_alloc(nseg * sizeof(seg[0]), KM_SLEEP);
+
+	/*
+	 * x86 bus_dmamap_load_raw fails to respect the maxsegsz we
+	 * pass to bus_dmamap_create, so we have to create page-sized
+	 * segments to begin with.
+	 */
+	for (i = 0; i < nseg; i++) {
+		seg[i].ds_addr = (bus_addr_t)dev_priv->mm.stolen_base +
+		    offset + i*PAGE_SIZE;
+		seg[i].ds_len = PAGE_SIZE;
+	}
+
+	/* XXX errno NetBSD->Linux */
+	ret = -bus_dmamap_create(dev->dmat, size, nseg, PAGE_SIZE,
+	    0, BUS_DMA_WAITOK, &dmamap);
+	if (ret) {
+		DRM_ERROR("failed to create DMA map for stolen object: %d\n",
+		    ret);
+fail0:		dmamap = NULL;	/* paranoia */
+		goto out;
+	}
+
+	/* XXX errno NetBSD->Liux */
+	ret = -bus_dmamap_load_raw(dev->dmat, dmamap, seg, nseg, size,
+	    BUS_DMA_WAITOK);
+	if (ret) {
+		DRM_ERROR("failed to load DMA map for stolen object: %d\n",
+		    ret);
+fail1: __unused
+		bus_dmamap_destroy(dev->dmat, dmamap);
+		goto fail0;
+	}
+
+out:	kmem_free(seg, nseg*sizeof(seg[0]));
+	return dmamap;
+}
+#else
 static struct sg_table *
 i915_pages_create_for_stolen(struct drm_device *dev,
 			     resource_size_t offset, resource_size_t size)
@@ -523,6 +581,7 @@ i915_pages_create_for_stolen(struct drm_device *dev,
 
 	return st;
 }
+#endif
 
 static int i915_gem_object_get_pages_stolen(struct drm_i915_gem_object *obj)
 {
@@ -542,8 +601,13 @@ static void i915_gem_object_put_pages_stolen(struct drm_i915_gem_object *obj,
 					     struct sg_table *pages)
 {
 	/* Should only be called from i915_gem_object_release_stolen() */
+#ifdef __NetBSD__
+	bus_dmamap_unload(obj->base.dev->dmat, obj->pages);
+	bus_dmamap_destroy(obj->base.dev->dmat, obj->pages);
+#else
 	sg_free_table(pages);
 	kfree(pages);
+#endif
 }
 
 static void

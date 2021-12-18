@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_nvkm_engine_gr_nv04.c,v 1.2 2018/08/27 04:58:32 riastradh Exp $	*/
+/*	$NetBSD: nouveau_nvkm_engine_gr_nv04.c,v 1.3 2021/12/18 23:45:36 riastradh Exp $	*/
 
 /*
  * Copyright 2007 Stephane Marchesin
@@ -24,7 +24,7 @@
  * DEALINGS IN THE SOFTWARE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_engine_gr_nv04.c,v 1.2 2018/08/27 04:58:32 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_engine_gr_nv04.c,v 1.3 2021/12/18 23:45:36 riastradh Exp $");
 
 #include "priv.h"
 #include "regs.h"
@@ -1427,6 +1427,5 @@ nv04_gr_new(struct nvkm_device *device, int index, struct nvkm_gr **pgr)
 	spin_lock_init(&gr->lock);
 	*pgr = &gr->base;
 
-	return nvkm_gr_ctor(&nv04_gr, device, index, 0x00001000,
-			    true, &gr->base);
+	return nvkm_gr_ctor(&nv04_gr, device, index, true, &gr->base);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: dcn21_hubp.h,v 1.1.1.1 2021/12/18 20:11:22 riastradh Exp $	*/
+/*	$NetBSD: dcn21_hubp.h,v 1.2 2021/12/18 23:45:03 riastradh Exp $	*/
 
 /*
 * Copyright 2018 Advanced Micro Devices, Inc.

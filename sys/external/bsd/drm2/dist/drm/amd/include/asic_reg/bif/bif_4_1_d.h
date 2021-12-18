@@ -1,4 +1,4 @@
-/*	$NetBSD: bif_4_1_d.h,v 1.2 2018/08/27 04:58:20 riastradh Exp $	*/
+/*	$NetBSD: bif_4_1_d.h,v 1.3 2021/12/18 23:45:09 riastradh Exp $	*/
 
 /*
  * BIF_4_1 Register documentation
@@ -29,6 +29,7 @@
 #define mmMM_INDEX                                                              0x0
 #define mmMM_INDEX_HI                                                           0x6
 #define mmMM_DATA                                                               0x1
+#define mmCC_BIF_BX_FUSESTRAP0							0x14D7
 #define mmBUS_CNTL                                                              0x1508
 #define mmCONFIG_CNTL                                                           0x1509
 #define mmCONFIG_MEMSIZE                                                        0x150a

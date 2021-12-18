@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_nvkm_subdev_bios_disp.c,v 1.2 2018/08/27 04:58:33 riastradh Exp $	*/
+/*	$NetBSD: nouveau_nvkm_subdev_bios_disp.c,v 1.3 2021/12/18 23:45:38 riastradh Exp $	*/
 
 /*
  * Copyright 2012 Red Hat Inc.
@@ -24,7 +24,7 @@
  * Authors: Ben Skeggs
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_subdev_bios_disp.c,v 1.2 2018/08/27 04:58:33 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_subdev_bios_disp.c,v 1.3 2021/12/18 23:45:38 riastradh Exp $");
 
 #include <subdev/bios.h>
 #include <subdev/bios/bit.h>
@@ -146,7 +146,8 @@ nvbios_ocfg_parse(struct nvkm_bios *bios, u16 outp, u8 idx,
 {
 	u16 data = nvbios_ocfg_entry(bios, outp, idx, ver, hdr, cnt, len);
 	if (data) {
-		info->match     = nvbios_rd16(bios, data + 0x00);
+		info->proto     = nvbios_rd08(bios, data + 0x00);
+		info->flags     = nvbios_rd16(bios, data + 0x01);
 		info->clkcmp[0] = nvbios_rd16(bios, data + 0x02);
 		info->clkcmp[1] = nvbios_rd16(bios, data + 0x04);
 	}
@@ -154,12 +155,13 @@ nvbios_ocfg_parse(struct nvkm_bios *bios, u16 outp, u8 idx,
 }
 
 u16
-nvbios_ocfg_match(struct nvkm_bios *bios, u16 outp, u16 type,
+nvbios_ocfg_match(struct nvkm_bios *bios, u16 outp, u8 proto, u8 flags,
 		  u8 *ver, u8 *hdr, u8 *cnt, u8 *len, struct nvbios_ocfg *info)
 {
 	u16 data, idx = 0;
 	while ((data = nvbios_ocfg_parse(bios, outp, idx++, ver, hdr, cnt, len, info))) {
-		if (info->match == type)
+		if ((info->proto == proto || info->proto == 0xff) &&
+		    (info->flags == flags))
 			break;
 	}
 	return data;

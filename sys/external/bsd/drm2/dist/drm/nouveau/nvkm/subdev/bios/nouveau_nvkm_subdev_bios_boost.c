@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_nvkm_subdev_bios_boost.c,v 1.2 2018/08/27 04:58:33 riastradh Exp $	*/
+/*	$NetBSD: nouveau_nvkm_subdev_bios_boost.c,v 1.3 2021/12/18 23:45:38 riastradh Exp $	*/
 
 /*
  * Copyright 2013 Red Hat Inc.
@@ -24,22 +24,22 @@
  * Authors: Ben Skeggs
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_subdev_bios_boost.c,v 1.2 2018/08/27 04:58:33 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_subdev_bios_boost.c,v 1.3 2021/12/18 23:45:38 riastradh Exp $");
 
 #include <subdev/bios.h>
 #include <subdev/bios/bit.h>
 #include <subdev/bios/boost.h>
 
-u16
+u32
 nvbios_boostTe(struct nvkm_bios *bios,
 	       u8 *ver, u8 *hdr, u8 *cnt, u8 *len, u8 *snr, u8 *ssz)
 {
 	struct bit_entry bit_P;
-	u16 boost = 0x0000;
+	u32 boost = 0;
 
 	if (!bit_entry(bios, 'P', &bit_P)) {
-		if (bit_P.version == 2)
-			boost = nvbios_rd16(bios, bit_P.offset + 0x30);
+		if (bit_P.version == 2 && bit_P.length >= 0x34)
+			boost = nvbios_rd32(bios, bit_P.offset + 0x30);
 
 		if (boost) {
 			*ver = nvbios_rd08(bios, boost + 0);
@@ -57,15 +57,15 @@ nvbios_boostTe(struct nvkm_bios *bios,
 		}
 	}
 
-	return 0x0000;
+	return 0;
 }
 
-u16
+u32
 nvbios_boostEe(struct nvkm_bios *bios, int idx,
 	       u8 *ver, u8 *hdr, u8 *cnt, u8 *len)
 {
 	u8  snr, ssz;
-	u16 data = nvbios_boostTe(bios, ver, hdr, cnt, len, &snr, &ssz);
+	u32 data = nvbios_boostTe(bios, ver, hdr, cnt, len, &snr, &ssz);
 	if (data && idx < *cnt) {
 		data = data + *hdr + (idx * (*len + (snr * ssz)));
 		*hdr = *len;
@@ -73,14 +73,14 @@ nvbios_boostEe(struct nvkm_bios *bios, int idx,
 		*len = ssz;
 		return data;
 	}
-	return 0x0000;
+	return 0;
 }
 
-u16
+u32
 nvbios_boostEp(struct nvkm_bios *bios, int idx,
 	       u8 *ver, u8 *hdr, u8 *cnt, u8 *len, struct nvbios_boostE *info)
 {
-	u16 data = nvbios_boostEe(bios, idx, ver, hdr, cnt, len);
+	u32 data = nvbios_boostEe(bios, idx, ver, hdr, cnt, len);
 	memset(info, 0x00, sizeof(*info));
 	if (data) {
 		info->pstate = (nvbios_rd16(bios, data + 0x00) & 0x01e0) >> 5;
@@ -90,7 +90,7 @@ nvbios_boostEp(struct nvkm_bios *bios, int idx,
 	return data;
 }
 
-u16
+u32
 nvbios_boostEm(struct nvkm_bios *bios, u8 pstate,
 	       u8 *ver, u8 *hdr, u8 *cnt, u8 *len, struct nvbios_boostE *info)
 {
@@ -102,21 +102,21 @@ nvbios_boostEm(struct nvkm_bios *bios, u8 pstate,
 	return data;
 }
 
-u16
+u32
 nvbios_boostSe(struct nvkm_bios *bios, int idx,
-	       u16 data, u8 *ver, u8 *hdr, u8 cnt, u8 len)
+	       u32 data, u8 *ver, u8 *hdr, u8 cnt, u8 len)
 {
 	if (data && idx < cnt) {
 		data = data + *hdr + (idx * len);
 		*hdr = len;
 		return data;
 	}
-	return 0x0000;
+	return 0;
 }
 
-u16
+u32
 nvbios_boostSp(struct nvkm_bios *bios, int idx,
-	       u16 data, u8 *ver, u8 *hdr, u8 cnt, u8 len,
+	       u32 data, u8 *ver, u8 *hdr, u8 cnt, u8 len,
 	       struct nvbios_boostS *info)
 {
 	data = nvbios_boostSe(bios, idx, data, ver, hdr, cnt, len);

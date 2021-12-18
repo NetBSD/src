@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_nvkm_subdev_bar_base.c,v 1.2 2018/08/27 04:58:33 riastradh Exp $	*/
+/*	$NetBSD: nouveau_nvkm_subdev_bar_base.c,v 1.3 2021/12/18 23:45:38 riastradh Exp $	*/
 
 /*
  * Copyright 2012 Red Hat Inc.
@@ -24,7 +24,7 @@
  * Authors: Ben Skeggs
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_subdev_bar_base.c,v 1.2 2018/08/27 04:58:33 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_subdev_bar_base.c,v 1.3 2021/12/18 23:45:38 riastradh Exp $");
 
 #include "priv.h"
 
@@ -35,19 +35,83 @@ nvkm_bar_flush(struct nvkm_bar *bar)
 		bar->func->flush(bar);
 }
 
-struct nvkm_vm *
-nvkm_bar_kmap(struct nvkm_bar *bar)
+struct nvkm_vmm *
+nvkm_bar_bar1_vmm(struct nvkm_device *device)
 {
-	/* disallow kmap() until after vm has been bootstrapped */
-	if (bar && bar->func->kmap && bar->subdev.oneinit)
-		return bar->func->kmap(bar);
+	return device->bar->func->bar1.vmm(device->bar);
+}
+
+void
+nvkm_bar_bar1_reset(struct nvkm_device *device)
+{
+	struct nvkm_bar *bar = device->bar;
+	if (bar) {
+		bar->func->bar1.init(bar);
+		bar->func->bar1.wait(bar);
+	}
+}
+
+struct nvkm_vmm *
+nvkm_bar_bar2_vmm(struct nvkm_device *device)
+{
+	/* Denies access to BAR2 when it's not initialised, used by INSTMEM
+	 * to know when object access needs to go through the BAR0 window.
+	 */
+	struct nvkm_bar *bar = device->bar;
+	if (bar && bar->bar2)
+		return bar->func->bar2.vmm(bar);
 	return NULL;
 }
 
-int
-nvkm_bar_umap(struct nvkm_bar *bar, u64 size, int type, struct nvkm_vma *vma)
+void
+nvkm_bar_bar2_reset(struct nvkm_device *device)
 {
-	return bar->func->umap(bar, size, type, vma);
+	struct nvkm_bar *bar = device->bar;
+	if (bar && bar->bar2) {
+		bar->func->bar2.init(bar);
+		bar->func->bar2.wait(bar);
+	}
+}
+
+void
+nvkm_bar_bar2_fini(struct nvkm_device *device)
+{
+	struct nvkm_bar *bar = device->bar;
+	if (bar && bar->bar2) {
+		bar->func->bar2.fini(bar);
+		bar->bar2 = false;
+	}
+}
+
+void
+nvkm_bar_bar2_init(struct nvkm_device *device)
+{
+	struct nvkm_bar *bar = device->bar;
+	if (bar && bar->subdev.oneinit && !bar->bar2 && bar->func->bar2.init) {
+		bar->func->bar2.init(bar);
+		bar->func->bar2.wait(bar);
+		bar->bar2 = true;
+	}
+}
+
+static int
+nvkm_bar_fini(struct nvkm_subdev *subdev, bool suspend)
+{
+	struct nvkm_bar *bar = nvkm_bar(subdev);
+	if (bar->func->bar1.fini)
+		bar->func->bar1.fini(bar);
+	return 0;
+}
+
+static int
+nvkm_bar_init(struct nvkm_subdev *subdev)
+{
+	struct nvkm_bar *bar = nvkm_bar(subdev);
+	bar->func->bar1.init(bar);
+	bar->func->bar1.wait(bar);
+	if (bar->func->init)
+		bar->func->init(bar);
+	return 0;
 }
 
 static int
@@ -57,17 +121,11 @@ nvkm_bar_oneinit(struct nvkm_subdev *subdev)
 	return bar->func->oneinit(bar);
 }
 
-static int
-nvkm_bar_init(struct nvkm_subdev *subdev)
-{
-	struct nvkm_bar *bar = nvkm_bar(subdev);
-	return bar->func->init(bar);
-}
-
 static void *
 nvkm_bar_dtor(struct nvkm_subdev *subdev)
 {
 	struct nvkm_bar *bar = nvkm_bar(subdev);
+	nvkm_bar_bar2_fini(subdev->device);
 	return bar->func->dtor(bar);
 }
 
@@ -76,13 +134,14 @@ nvkm_bar = {
 	.dtor = nvkm_bar_dtor,
 	.oneinit = nvkm_bar_oneinit,
 	.init = nvkm_bar_init,
+	.fini = nvkm_bar_fini,
 };
 
 void
 nvkm_bar_ctor(const struct nvkm_bar_func *func, struct nvkm_device *device,
 	      int index, struct nvkm_bar *bar)
 {
-	nvkm_subdev_ctor(&nvkm_bar, device, index, 0, &bar->subdev);
+	nvkm_subdev_ctor(&nvkm_bar, device, index, &bar->subdev);
 	bar->func = func;
 	spin_lock_init(&bar->lock);
 }

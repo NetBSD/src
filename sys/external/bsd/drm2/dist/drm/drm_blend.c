@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_blend.c,v 1.1.1.1 2021/12/18 20:10:59 riastradh Exp $	*/
+/*	$NetBSD: drm_blend.c,v 1.2 2021/12/18 23:44:57 riastradh Exp $	*/
 
 /*
  * Copyright (C) 2016 Samsung Electronics Co.Ltd
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_blend.c,v 1.1.1.1 2021/12/18 20:10:59 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_blend.c,v 1.2 2021/12/18 23:44:57 riastradh Exp $");
 
 #include <linux/export.h>
 #include <linux/slab.h>

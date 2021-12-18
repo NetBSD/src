@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_nvkm_subdev_bios_rammap.c,v 1.2 2018/08/27 04:58:33 riastradh Exp $	*/
+/*	$NetBSD: nouveau_nvkm_subdev_bios_rammap.c,v 1.3 2021/12/18 23:45:38 riastradh Exp $	*/
 
 /*
  * Copyright 2013 Red Hat Inc.
@@ -24,7 +24,7 @@
  * Authors: Ben Skeggs
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_subdev_bios_rammap.c,v 1.2 2018/08/27 04:58:33 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_subdev_bios_rammap.c,v 1.3 2021/12/18 23:45:38 riastradh Exp $");
 
 #include <subdev/bios.h>
 #include <subdev/bios/bit.h>
@@ -35,11 +35,11 @@ nvbios_rammapTe(struct nvkm_bios *bios, u8 *ver, u8 *hdr,
 		u8 *cnt, u8 *len, u8 *snr, u8 *ssz)
 {
 	struct bit_entry bit_P;
-	u16 rammap = 0x0000;
+	u32 rammap = 0x0000;
 
 	if (!bit_entry(bios, 'P', &bit_P)) {
 		if (bit_P.version == 2)
-			rammap = nvbios_rd16(bios, bit_P.offset + 4);
+			rammap = nvbios_rd32(bios, bit_P.offset + 4);
 
 		if (rammap) {
 			*ver = nvbios_rd08(bios, rammap + 0);
@@ -66,7 +66,7 @@ nvbios_rammapEe(struct nvkm_bios *bios, int idx,
 		u8 *ver, u8 *hdr, u8 *cnt, u8 *len)
 {
 	u8  snr, ssz;
-	u16 rammap = nvbios_rammapTe(bios, ver, hdr, cnt, len, &snr, &ssz);
+	u32 rammap = nvbios_rammapTe(bios, ver, hdr, cnt, len, &snr, &ssz);
 	if (rammap && idx < *cnt) {
 		rammap = rammap + *hdr + (idx * (*len + (snr * ssz)));
 		*hdr = *len;

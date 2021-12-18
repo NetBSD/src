@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_nvkm_subdev_timer_base.c,v 1.3 2020/02/14 04:38:48 riastradh Exp $	*/
+/*	$NetBSD: nouveau_nvkm_subdev_timer_base.c,v 1.4 2021/12/18 23:45:42 riastradh Exp $	*/
 
 /*
  * Copyright 2012 Red Hat Inc.
@@ -24,11 +24,46 @@
  * Authors: Ben Skeggs
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_subdev_timer_base.c,v 1.3 2020/02/14 04:38:48 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_subdev_timer_base.c,v 1.4 2021/12/18 23:45:42 riastradh Exp $");
 
 #include "priv.h"
 
 #include <linux/nbsd-namespace.h>
+s64
+nvkm_timer_wait_test(struct nvkm_timer_wait *wait)
+{
+	struct nvkm_subdev *subdev = &wait->tmr->subdev;
+	u64 time = nvkm_timer_read(wait->tmr);
+
+	if (wait->reads == 0) {
+		wait->time0 = time;
+		wait->time1 = time;
+	}
+
+	if (wait->time1 == time) {
+		if (wait->reads++ == 16) {
+			nvkm_fatal(subdev, "stalled at %016llx\n", time);
+			return -ETIMEDOUT;
+		}
+	} else {
+		wait->time1 = time;
+		wait->reads = 1;
+	}
+
+	if (wait->time1 - wait->time0 > wait->limit)
+		return -ETIMEDOUT;
+
+	return wait->time1 - wait->time0;
+}
+
+void
+nvkm_timer_wait_init(struct nvkm_device *device, u64 nsec,
+		     struct nvkm_timer_wait *wait)
+{
+	wait->tmr = device->timer;
+	wait->limit = nsec;
+	wait->reads = 0;
+}
 
 u64
 nvkm_timer_read(struct nvkm_timer *tmr)
@@ -112,15 +147,6 @@ nvkm_timer_alarm(struct nvkm_timer *tmr, u32 nsec, struct nvkm_alarm *alarm)
 	spin_unlock_irqrestore(&tmr->lock, flags);
 }
 
-void
-nvkm_timer_alarm_cancel(struct nvkm_timer *tmr, struct nvkm_alarm *alarm)
-{
-	unsigned long flags;
-	spin_lock_irqsave(&tmr->lock, flags);
-	list_del_init(&alarm->head);
-	spin_unlock_irqrestore(&tmr->lock, flags);
-}
-
 static void
 nvkm_timer_intr(struct nvkm_subdev *subdev)
 {
@@ -170,7 +196,7 @@ nvkm_timer_new_(const struct nvkm_timer_func *func, struct nvkm_device *device,
 	if (!(tmr = *ptmr = kzalloc(sizeof(*tmr), GFP_KERNEL)))
 		return -ENOMEM;
 
-	nvkm_subdev_ctor(&nvkm_timer, device, index, 0, &tmr->subdev);
+	nvkm_subdev_ctor(&nvkm_timer, device, index, &tmr->subdev);
 	tmr->func = func;
 	INIT_LIST_HEAD(&tmr->alarms);
 	spin_lock_init(&tmr->lock);
