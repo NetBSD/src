@@ -1,5 +1,6 @@
-/*	$NetBSD: debug.h,v 1.1.1.1 2018/08/27 01:36:13 riastradh Exp $	*/
+/*	$NetBSD: debug.h,v 1.1.1.2 2021/12/18 20:23:00 riastradh Exp $	*/
 
+/* SPDX-License-Identifier: MIT */
 #ifndef __NVKM_DEBUG_H__
 #define __NVKM_DEBUG_H__
 #define NV_DBG_FATAL    0

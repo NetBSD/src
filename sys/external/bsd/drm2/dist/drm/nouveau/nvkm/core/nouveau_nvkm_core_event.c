@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_nvkm_core_event.c,v 1.1.1.1 2018/08/27 01:36:13 riastradh Exp $	*/
+/*	$NetBSD: nouveau_nvkm_core_event.c,v 1.1.1.2 2021/12/18 20:23:00 riastradh Exp $	*/
 
 /*
  * Copyright 2013-2014 Red Hat Inc.
@@ -22,7 +22,7 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_core_event.c,v 1.1.1.1 2018/08/27 01:36:13 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_core_event.c,v 1.1.1.2 2021/12/18 20:23:00 riastradh Exp $");
 
 #include <core/event.h>
 #include <core/notify.h>
@@ -89,7 +89,8 @@ int
 nvkm_event_init(const struct nvkm_event_func *func, int types_nr, int index_nr,
 		struct nvkm_event *event)
 {
-	event->refs = kzalloc(sizeof(*event->refs) * index_nr * types_nr,
+	event->refs = kzalloc(array3_size(index_nr, types_nr,
+					  sizeof(*event->refs)),
 			      GFP_KERNEL);
 	if (!event->refs)
 		return -ENOMEM;

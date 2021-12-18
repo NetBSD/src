@@ -1,8 +1,10 @@
-/*	$NetBSD: ramht.h,v 1.1.1.1 2018/08/27 01:36:13 riastradh Exp $	*/
+/*	$NetBSD: ramht.h,v 1.1.1.2 2021/12/18 20:23:00 riastradh Exp $	*/
 
+/* SPDX-License-Identifier: MIT */
 #ifndef __NVKM_RAMHT_H__
 #define __NVKM_RAMHT_H__
 #include <core/gpuobj.h>
+struct nvkm_object;
 
 struct nvkm_ramht_data {
 	struct nvkm_gpuobj *inst;

@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_nvkm_core_object.c,v 1.1.1.1 2018/08/27 01:36:13 riastradh Exp $	*/
+/*	$NetBSD: nouveau_nvkm_core_object.c,v 1.1.1.2 2021/12/18 20:23:00 riastradh Exp $	*/
 
 /*
  * Copyright 2012 Red Hat Inc.
@@ -24,11 +24,70 @@
  * Authors: Ben Skeggs
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_core_object.c,v 1.1.1.1 2018/08/27 01:36:13 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_core_object.c,v 1.1.1.2 2021/12/18 20:23:00 riastradh Exp $");
 
 #include <core/object.h>
 #include <core/client.h>
 #include <core/engine.h>
+
+struct nvkm_object *
+nvkm_object_search(struct nvkm_client *client, u64 handle,
+		   const struct nvkm_object_func *func)
+{
+	struct nvkm_object *object;
+
+	if (handle) {
+		struct rb_node *node = client->objroot.rb_node;
+		while (node) {
+			object = rb_entry(node, typeof(*object), node);
+			if (handle < object->object)
+				node = node->rb_left;
+			else
+			if (handle > object->object)
+				node = node->rb_right;
+			else
+				goto done;
+		}
+		return ERR_PTR(-ENOENT);
+	} else {
+		object = &client->object;
+	}
+
+done:
+	if (unlikely(func && object->func != func))
+		return ERR_PTR(-EINVAL);
+	return object;
+}
+
+void
+nvkm_object_remove(struct nvkm_object *object)
+{
+	if (!RB_EMPTY_NODE(&object->node))
+		rb_erase(&object->node, &object->client->objroot);
+}
+
+bool
+nvkm_object_insert(struct nvkm_object *object)
+{
+	struct rb_node **ptr = &object->client->objroot.rb_node;
+	struct rb_node *parent = NULL;
+
+	while (*ptr) {
+		struct nvkm_object *this = rb_entry(*ptr, typeof(*this), node);
+		parent = *ptr;
+		if (object->object < this->object)
+			ptr = &parent->rb_left;
+		else
+		if (object->object > this->object)
+			ptr = &parent->rb_right;
+		else
+			return false;
+	}
+
+	rb_link_node(&object->node, parent, ptr);
+	rb_insert_color(&object->node, &object->client->objroot);
+	return true;
+}
 
 int
 nvkm_object_mthd(struct nvkm_object *object, u32 mthd, void *data, u32 size)
@@ -48,10 +107,19 @@ nvkm_object_ntfy(struct nvkm_object *object, u32 mthd,
 }
 
 int
-nvkm_object_map(struct nvkm_object *object, u64 *addr, u32 *size)
+nvkm_object_map(struct nvkm_object *object, void *argv, u32 argc,
+		enum nvkm_object_map *type, u64 *addr, u64 *size)
 {
 	if (likely(object->func->map))
-		return object->func->map(object, addr, size);
+		return object->func->map(object, argv, argc, type, addr, size);
+	return -ENODEV;
+}
+
+int
+nvkm_object_unmap(struct nvkm_object *object)
+{
+	if (likely(object->func->unmap))
+		return object->func->unmap(object);
 	return -ENODEV;
 }
 
@@ -205,6 +273,7 @@ nvkm_object_dtor(struct nvkm_object *object)
 	}
 
 	nvif_debug(object, "destroy running...\n");
+	nvkm_object_unmap(object);
 	if (object->func->dtor)
 		data = object->func->dtor(object);
 	nvkm_engine_unref(&object->engine);
@@ -219,7 +288,7 @@ nvkm_object_del(struct nvkm_object **pobject)
 	struct nvkm_object *object = *pobject;
 	if (object && !WARN_ON(!object->func)) {
 		*pobject = nvkm_object_dtor(object);
-		nvkm_client_remove(object->client, object);
+		nvkm_object_remove(object);
 		list_del(&object->head);
 		kfree(*pobject);
 		*pobject = NULL;
@@ -235,10 +304,13 @@ nvkm_object_ctor(const struct nvkm_object_func *func,
 	object->engine = nvkm_engine_ref(oclass->engine);
 	object->oclass = oclass->base.oclass;
 	object->handle = oclass->handle;
+	object->route  = oclass->route;
+	object->token  = oclass->token;
+	object->object = oclass->object;
 	INIT_LIST_HEAD(&object->head);
 	INIT_LIST_HEAD(&object->tree);
 	RB_CLEAR_NODE(&object->node);
-	WARN_ON(oclass->engine && !object->engine);
+	WARN_ON(IS_ERR(object->engine));
 }
 
 int

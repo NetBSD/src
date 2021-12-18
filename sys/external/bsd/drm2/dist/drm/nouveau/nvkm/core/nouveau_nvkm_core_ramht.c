@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_nvkm_core_ramht.c,v 1.1.1.1 2018/08/27 01:36:13 riastradh Exp $	*/
+/*	$NetBSD: nouveau_nvkm_core_ramht.c,v 1.1.1.2 2021/12/18 20:23:00 riastradh Exp $	*/
 
 /*
  * Copyright 2012 Red Hat Inc.
@@ -22,10 +22,11 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_core_ramht.c,v 1.1.1.1 2018/08/27 01:36:13 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_core_ramht.c,v 1.1.1.2 2021/12/18 20:23:00 riastradh Exp $");
 
 #include <core/ramht.h>
 #include <core/engine.h>
+#include <core/object.h>
 
 static u32
 nvkm_ramht_hash(struct nvkm_ramht *ramht, int chid, u32 handle)
@@ -148,8 +149,7 @@ nvkm_ramht_new(struct nvkm_device *device, u32 size, u32 align,
 	struct nvkm_ramht *ramht;
 	int ret, i;
 
-	if (!(ramht = *pramht = vzalloc(sizeof(*ramht) +
-					(size >> 3) * sizeof(*ramht->data))))
+	if (!(ramht = *pramht = vzalloc(struct_size(ramht, data, (size >> 3)))))
 		return -ENOMEM;
 
 	ramht->device = device;
