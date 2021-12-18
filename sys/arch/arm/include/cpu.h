@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.121 2021/11/01 14:45:24 skrll Exp $	*/
+/*	$NetBSD: cpu.h,v 1.122 2021/12/18 16:41:37 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -66,6 +66,8 @@ void cpu_clr_mbox(int);
 void cpu_set_hatched(int);
 
 #endif
+
+struct proc;
 
 void	cpu_proc_fork(struct proc *, struct proc *);
 
