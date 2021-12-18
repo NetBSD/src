@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.290 2021/12/07 08:04:10 skrll Exp $ */
+/*	$NetBSD: ehci.c,v 1.291 2021/12/18 14:48:14 skrll Exp $ */
 
 /*
  * Copyright (c) 2004-2012,2016,2020 The NetBSD Foundation, Inc.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.290 2021/12/07 08:04:10 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.291 2021/12/18 14:48:14 skrll Exp $");
 
 #include "ohci.h"
 #include "uhci.h"
@@ -2426,11 +2426,10 @@ ehci_roothub_ctrl(struct usbd_bus *bus, usb_device_request_t *req,
 		totlen = uimin(buflen, sizeof(hubd));
 		memcpy(&hubd, buf, totlen);
 		hubd.bNbrPorts = sc->sc_noport;
-		v = EOREAD4(sc, EHCI_HCSPARAMS);
+		v = EREAD4(sc, EHCI_HCSPARAMS);
 		USETW(hubd.wHubCharacteristics,
-		    EHCI_HCS_PPC(v) ? UHD_PWR_INDIVIDUAL : UHD_PWR_NO_SWITCH |
-		    EHCI_HCS_P_INDICATOR(EREAD4(sc, EHCI_HCSPARAMS))
-			? UHD_PORT_IND : 0);
+		    (EHCI_HCS_PPC(v) ? UHD_PWR_INDIVIDUAL : UHD_PWR_NO_SWITCH) |
+		    (EHCI_HCS_P_INDICATOR(v) ? UHD_PORT_IND : 0));
 		hubd.bPwrOn2PwrGood = 200; /* XXX can't find out? */
 		for (i = 0, l = sc->sc_noport; l > 0; i++, l -= 8, v >>= 8)
 			hubd.DeviceRemovable[i++] = 0; /* XXX can't find out? */
