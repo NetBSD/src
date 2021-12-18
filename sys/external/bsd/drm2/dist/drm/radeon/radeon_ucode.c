@@ -1,4 +1,4 @@
-/*	$NetBSD: radeon_ucode.c,v 1.3 2018/08/27 07:51:27 riastradh Exp $	*/
+/*	$NetBSD: radeon_ucode.c,v 1.4 2021/12/18 23:45:43 riastradh Exp $	*/
 
 /*
  * Copyright 2014 Advanced Micro Devices, Inc.
@@ -24,12 +24,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radeon_ucode.c,v 1.3 2018/08/27 07:51:27 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radeon_ucode.c,v 1.4 2021/12/18 23:45:43 riastradh Exp $");
 
 #include <linux/firmware.h>
 #include <linux/slab.h>
 #include <linux/module.h>
-#include <drm/drmP.h>
+
 #include "radeon.h"
 #include "radeon_ucode.h"
 

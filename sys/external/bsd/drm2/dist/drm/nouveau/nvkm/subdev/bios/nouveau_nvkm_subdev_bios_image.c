@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_nvkm_subdev_bios_image.c,v 1.2 2018/08/27 04:58:33 riastradh Exp $	*/
+/*	$NetBSD: nouveau_nvkm_subdev_bios_image.c,v 1.3 2021/12/18 23:45:38 riastradh Exp $	*/
 
 /*
  * Copyright 2014 Red Hat Inc.
@@ -24,7 +24,7 @@
  * Authors: Ben Skeggs <bskeggs@redhat.com>
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_subdev_bios_image.c,v 1.2 2018/08/27 04:58:33 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_subdev_bios_image.c,v 1.3 2021/12/18 23:45:38 riastradh Exp $");
 
 #include <subdev/bios.h>
 #include <subdev/bios/image.h>
@@ -73,11 +73,16 @@ nvbios_imagen(struct nvkm_bios *bios, struct nvbios_image *image)
 bool
 nvbios_image(struct nvkm_bios *bios, int idx, struct nvbios_image *image)
 {
+	u32 imaged_addr = bios->imaged_addr;
 	memset(image, 0x00, sizeof(*image));
+	bios->imaged_addr = 0;
 	do {
 		image->base += image->size;
-		if (image->last || !nvbios_imagen(bios, image))
+		if (image->last || !nvbios_imagen(bios, image)) {
+			bios->imaged_addr = imaged_addr;
 			return false;
+		}
 	} while(idx--);
+	bios->imaged_addr = imaged_addr;
 	return true;
 }

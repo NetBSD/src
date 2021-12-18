@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_nvkm_engine_disp_rootgm107.c,v 1.2 2018/08/27 04:58:31 riastradh Exp $	*/
+/*	$NetBSD: nouveau_nvkm_engine_disp_rootgm107.c,v 1.3 2021/12/18 23:45:35 riastradh Exp $	*/
 
 /*
  * Copyright 2012 Red Hat Inc.
@@ -24,25 +24,22 @@
  * Authors: Ben Skeggs
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_engine_disp_rootgm107.c,v 1.2 2018/08/27 04:58:31 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_engine_disp_rootgm107.c,v 1.3 2021/12/18 23:45:35 riastradh Exp $");
 
 #include "rootnv50.h"
-#include "dmacnv50.h"
+#include "channv50.h"
 
 #include <nvif/class.h>
 
 static const struct nv50_disp_root_func
 gm107_disp_root = {
-	.init = gf119_disp_root_init,
-	.fini = gf119_disp_root_fini,
-	.dmac = {
-		&gm107_disp_core_oclass,
-		&gk110_disp_base_oclass,
-		&gk104_disp_ovly_oclass,
-	},
-	.pioc = {
-		&gk104_disp_oimm_oclass,
-		&gk104_disp_curs_oclass,
+	.user = {
+		{{0,0,GK104_DISP_CURSOR             }, gf119_disp_curs_new },
+		{{0,0,GK104_DISP_OVERLAY            }, gf119_disp_oimm_new },
+		{{0,0,GK110_DISP_BASE_CHANNEL_DMA   }, gf119_disp_base_new },
+		{{0,0,GM107_DISP_CORE_CHANNEL_DMA   }, gk104_disp_core_new },
+		{{0,0,GK104_DISP_OVERLAY_CONTROL_DMA}, gk104_disp_ovly_new },
+		{}
 	},
 };
 

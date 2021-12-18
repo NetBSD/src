@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_nvkm_engine_disp_piocnv50.c,v 1.2 2018/08/27 04:58:31 riastradh Exp $	*/
+/*	$NetBSD: nouveau_nvkm_engine_disp_piocnv50.c,v 1.3 2021/12/18 23:45:35 riastradh Exp $	*/
 
 /*
  * Copyright 2012 Red Hat Inc.
@@ -24,7 +24,7 @@
  * Authors: Ben Skeggs
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_engine_disp_piocnv50.c,v 1.2 2018/08/27 04:58:31 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_engine_disp_piocnv50.c,v 1.3 2021/12/18 23:45:35 riastradh Exp $");
 
 #include "channv50.h"
 #include "rootnv50.h"
@@ -34,47 +34,49 @@ __KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_engine_disp_piocnv50.c,v 1.2 2018/08/27
 static void
 nv50_disp_pioc_fini(struct nv50_disp_chan *chan)
 {
-	struct nv50_disp *disp = chan->root->disp;
+	struct nv50_disp *disp = chan->disp;
 	struct nvkm_subdev *subdev = &disp->base.engine.subdev;
 	struct nvkm_device *device = subdev->device;
-	int chid = chan->chid;
+	int ctrl = chan->chid.ctrl;
+	int user = chan->chid.user;
 
-	nvkm_mask(device, 0x610200 + (chid * 0x10), 0x00000001, 0x00000000);
+	nvkm_mask(device, 0x610200 + (ctrl * 0x10), 0x00000001, 0x00000000);
 	if (nvkm_msec(device, 2000,
-		if (!(nvkm_rd32(device, 0x610200 + (chid * 0x10)) & 0x00030000))
+		if (!(nvkm_rd32(device, 0x610200 + (ctrl * 0x10)) & 0x00030000))
 			break;
 	) < 0) {
-		nvkm_error(subdev, "ch %d timeout: %08x\n", chid,
-			   nvkm_rd32(device, 0x610200 + (chid * 0x10)));
+		nvkm_error(subdev, "ch %d timeout: %08x\n", user,
+			   nvkm_rd32(device, 0x610200 + (ctrl * 0x10)));
 	}
 }
 
 static int
 nv50_disp_pioc_init(struct nv50_disp_chan *chan)
 {
-	struct nv50_disp *disp = chan->root->disp;
+	struct nv50_disp *disp = chan->disp;
 	struct nvkm_subdev *subdev = &disp->base.engine.subdev;
 	struct nvkm_device *device = subdev->device;
-	int chid = chan->chid;
+	int ctrl = chan->chid.ctrl;
+	int user = chan->chid.user;
 
-	nvkm_wr32(device, 0x610200 + (chid * 0x10), 0x00002000);
+	nvkm_wr32(device, 0x610200 + (ctrl * 0x10), 0x00002000);
 	if (nvkm_msec(device, 2000,
-		if (!(nvkm_rd32(device, 0x610200 + (chid * 0x10)) & 0x00030000))
+		if (!(nvkm_rd32(device, 0x610200 + (ctrl * 0x10)) & 0x00030000))
 			break;
 	) < 0) {
-		nvkm_error(subdev, "ch %d timeout0: %08x\n", chid,
-			   nvkm_rd32(device, 0x610200 + (chid * 0x10)));
+		nvkm_error(subdev, "ch %d timeout0: %08x\n", user,
+			   nvkm_rd32(device, 0x610200 + (ctrl * 0x10)));
 		return -EBUSY;
 	}
 
-	nvkm_wr32(device, 0x610200 + (chid * 0x10), 0x00000001);
+	nvkm_wr32(device, 0x610200 + (ctrl * 0x10), 0x00000001);
 	if (nvkm_msec(device, 2000,
-		u32 tmp = nvkm_rd32(device, 0x610200 + (chid * 0x10));
+		u32 tmp = nvkm_rd32(device, 0x610200 + (ctrl * 0x10));
 		if ((tmp & 0x00030000) == 0x00010000)
 			break;
 	) < 0) {
-		nvkm_error(subdev, "ch %d timeout1: %08x\n", chid,
-			   nvkm_rd32(device, 0x610200 + (chid * 0x10)));
+		nvkm_error(subdev, "ch %d timeout1: %08x\n", user,
+			   nvkm_rd32(device, 0x610200 + (ctrl * 0x10)));
 		return -EBUSY;
 	}
 
@@ -85,4 +87,6 @@ const struct nv50_disp_chan_func
 nv50_disp_pioc_func = {
 	.init = nv50_disp_pioc_init,
 	.fini = nv50_disp_pioc_fini,
+	.intr = nv50_disp_chan_intr,
+	.user = nv50_disp_chan_user,
 };

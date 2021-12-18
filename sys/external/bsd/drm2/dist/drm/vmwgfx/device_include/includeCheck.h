@@ -1,4 +1,4 @@
-/*	$NetBSD: includeCheck.h,v 1.2 2018/08/27 04:58:37 riastradh Exp $	*/
+/*	$NetBSD: includeCheck.h,v 1.3 2021/12/18 23:45:45 riastradh Exp $	*/
 
 /*
  * Intentionally empty file.

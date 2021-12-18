@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_nv10_fence.c,v 1.5 2019/01/27 02:08:42 pgoyette Exp $	*/
+/*	$NetBSD: nouveau_nv10_fence.c,v 1.6 2021/12/18 23:45:32 riastradh Exp $	*/
 
 /*
  * Copyright 2012 Red Hat Inc.
@@ -25,9 +25,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_nv10_fence.c,v 1.5 2019/01/27 02:08:42 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_nv10_fence.c,v 1.6 2021/12/18 23:45:32 riastradh Exp $");
 
-#include "nouveau_drm.h"
+#include "nouveau_drv.h"
 #include "nouveau_dma.h"
 #include "nv10_fence.h"
 
@@ -62,10 +62,7 @@ void
 nv10_fence_context_del(struct nouveau_channel *chan)
 {
 	struct nv10_fence_chan *fctx = chan->fence;
-	int i;
 	nouveau_fence_context_del(&fctx->base);
-	for (i = 0; i < ARRAY_SIZE(fctx->head); i++)
-		nvif_object_fini(&fctx->head[i]);
 	nvif_object_fini(&fctx->sema);
 	chan->fence = NULL;
 	nouveau_fence_context_free(&fctx->base);
@@ -112,8 +109,6 @@ nv10_fence_create(struct nouveau_drm *drm)
 	priv->base.dtor = nv10_fence_destroy;
 	priv->base.context_new = nv10_fence_context_new;
 	priv->base.context_del = nv10_fence_context_del;
-	priv->base.contexts = 31;
-	priv->base.context_base = fence_context_alloc(priv->base.contexts);
 	spin_lock_init(&priv->lock);
 	return 0;
 }

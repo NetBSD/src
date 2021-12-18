@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_nvkm_engine_gr_g84.c,v 1.2 2018/08/27 04:58:32 riastradh Exp $	*/
+/*	$NetBSD: nouveau_nvkm_engine_gr_g84.c,v 1.3 2021/12/18 23:45:36 riastradh Exp $	*/
 
 /*
  * Copyright 2012 Red Hat Inc.
@@ -24,11 +24,13 @@
  * Authors: Ben Skeggs
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_engine_gr_g84.c,v 1.2 2018/08/27 04:58:32 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_engine_gr_g84.c,v 1.3 2021/12/18 23:45:36 riastradh Exp $");
 
 #include "nv50.h"
 
 #include <subdev/timer.h>
+
+#include <nvif/class.h>
 
 static const struct nvkm_bitfield nv50_gr_status[] = {
 	{ 0x00000001, "BUSY" }, /* set when any bit is set */
@@ -185,11 +187,11 @@ g84_gr = {
 	.tlb_flush = g84_gr_tlb_flush,
 	.units = nv50_gr_units,
 	.sclass = {
-		{ -1, -1, 0x0030, &nv50_gr_object },
-		{ -1, -1, 0x502d, &nv50_gr_object },
-		{ -1, -1, 0x5039, &nv50_gr_object },
-		{ -1, -1, 0x50c0, &nv50_gr_object },
-		{ -1, -1, 0x8297, &nv50_gr_object },
+		{ -1, -1, NV_NULL_CLASS, &nv50_gr_object },
+		{ -1, -1, NV50_TWOD, &nv50_gr_object },
+		{ -1, -1, NV50_MEMORY_TO_MEMORY_FORMAT, &nv50_gr_object },
+		{ -1, -1, NV50_COMPUTE, &nv50_gr_object },
+		{ -1, -1, G82_TESLA, &nv50_gr_object },
 		{}
 	}
 };

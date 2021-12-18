@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_gem_context.c,v 1.1.1.1 2021/12/18 20:15:31 riastradh Exp $	*/
+/*	$NetBSD: i915_gem_context.c,v 1.2 2021/12/18 23:45:30 riastradh Exp $	*/
 
 /*
  * SPDX-License-Identifier: MIT
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_gem_context.c,v 1.1.1.1 2021/12/18 20:15:31 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_gem_context.c,v 1.2 2021/12/18 23:45:30 riastradh Exp $");
 
 #include <linux/log2.h>
 #include <linux/nospec.h>
@@ -897,6 +897,7 @@ int i915_gem_vm_create_ioctl(struct drm_device *dev, void *data,
 			goto err_put;
 	}
 
+	idr_preload(GFP_KERNEL);
 	err = mutex_lock_interruptible(&file_priv->vm_idr_lock);
 	if (err)
 		goto err_put;
@@ -908,12 +909,14 @@ int i915_gem_vm_create_ioctl(struct drm_device *dev, void *data,
 	GEM_BUG_ON(err == 0); /* reserved for invalid/unassigned ppgtt */
 
 	mutex_unlock(&file_priv->vm_idr_lock);
+	idr_preload_end();
 
 	args->vm_id = err;
 	return 0;
 
 err_unlock:
 	mutex_unlock(&file_priv->vm_idr_lock);
+	idr_preload_end();
 err_put:
 	i915_vm_put(&ppgtt->vm);
 	return err;
@@ -1051,6 +1054,7 @@ static int get_ppgtt(struct drm_i915_file_private *file_priv,
 	vm = context_get_vm_rcu(ctx);
 	rcu_read_unlock();
 
+	idr_preload(GFP_KERNEL);
 	ret = mutex_lock_interruptible(&file_priv->vm_idr_lock);
 	if (ret)
 		goto err_put;
@@ -1068,6 +1072,7 @@ static int get_ppgtt(struct drm_i915_file_private *file_priv,
 	ret = 0;
 err_unlock:
 	mutex_unlock(&file_priv->vm_idr_lock);
+	idr_preload_end();
 err_put:
 	i915_vm_put(vm);
 	return ret;

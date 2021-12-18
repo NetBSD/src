@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu_dml1_display_rq_dlg_calc.c,v 1.1.1.1 2021/12/18 20:11:23 riastradh Exp $	*/
+/*	$NetBSD: amdgpu_dml1_display_rq_dlg_calc.c,v 1.2 2021/12/18 23:45:04 riastradh Exp $	*/
 
 /*
  * Copyright 2017 Advanced Micro Devices, Inc.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdgpu_dml1_display_rq_dlg_calc.c,v 1.1.1.1 2021/12/18 20:11:23 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdgpu_dml1_display_rq_dlg_calc.c,v 1.2 2021/12/18 23:45:04 riastradh Exp $");
 
 #include "dml1_display_rq_dlg_calc.h"
 #include "display_mode_lib.h"

@@ -1,4 +1,4 @@
-/*	$NetBSD: cz_ih.h,v 1.2 2018/08/27 04:58:20 riastradh Exp $	*/
+/*	$NetBSD: cz_ih.h,v 1.3 2021/12/18 23:44:59 riastradh Exp $	*/
 
 /*
  * Copyright 2014 Advanced Micro Devices, Inc.
@@ -26,6 +26,6 @@
 #ifndef __CZ_IH_H__
 #define __CZ_IH_H__
 
-extern const struct amd_ip_funcs cz_ih_ip_funcs;
+extern const struct amdgpu_ip_block_version cz_ih_ip_block;
 
 #endif /* __CZ_IH_H__ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: radeon_atombios_crtc.c,v 1.1.1.1 2021/12/18 20:15:46 riastradh Exp $	*/
+/*	$NetBSD: radeon_atombios_crtc.c,v 1.2 2021/12/18 23:45:43 riastradh Exp $	*/
 
 /*
  * Copyright 2007-8 Advanced Micro Devices, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radeon_atombios_crtc.c,v 1.1.1.1 2021/12/18 20:15:46 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radeon_atombios_crtc.c,v 1.2 2021/12/18 23:45:43 riastradh Exp $");
 
 #include <drm/drm_crtc_helper.h>
 #include <drm/drm_fb_helper.h>
@@ -37,6 +37,7 @@ __KERNEL_RCSID(0, "$NetBSD: radeon_atombios_crtc.c,v 1.1.1.1 2021/12/18 20:15:46
 #include <drm/radeon_drm.h>
 
 #include "radeon.h"
+#include "radeon_asic.h"
 #include "atom.h"
 #include "atom-bits.h"
 
@@ -1180,18 +1181,22 @@ static int dce4_crtc_do_set_base(struct drm_crtc *crtc,
 	 */
 	obj = target_fb->obj[0];
 	rbo = gem_to_radeon_bo(obj);
-	r = radeon_bo_reserve(rbo, false);
-	if (unlikely(r != 0))
-		return r;
 
-	if (atomic)
+	if (atomic) {
+		BUG_ON(rbo->pin_count == 0);
 		fb_location = radeon_bo_gpu_offset(rbo);
-	else {
+		tiling_flags = 0;
+	} else {
+		r = radeon_bo_reserve(rbo, false);
+		if (unlikely(r != 0))
+			return r;
 		r = radeon_bo_pin(rbo, RADEON_GEM_DOMAIN_VRAM, &fb_location);
 		if (unlikely(r != 0)) {
 			radeon_bo_unreserve(rbo);
 			return -EINVAL;
 		}
+		radeon_bo_get_tiling_flags(rbo, &tiling_flags, NULL);
+		radeon_bo_unreserve(rbo);
 	}
 
 	radeon_bo_get_tiling_flags(rbo, &tiling_flags, NULL);
@@ -1498,24 +1503,26 @@ static int avivo_crtc_do_set_base(struct drm_crtc *crtc,
 
 	obj = target_fb->obj[0];
 	rbo = gem_to_radeon_bo(obj);
-	r = radeon_bo_reserve(rbo, false);
-	if (unlikely(r != 0))
-		return r;
 
 	/* If atomic, assume fb object is pinned & idle & fenced and
 	 * just update base pointers
 	 */
-	if (atomic)
+	if (atomic) {
+		BUG_ON(rbo->pin_count == 0);
 		fb_location = radeon_bo_gpu_offset(rbo);
-	else {
+		tiling_flags = 0;
+	} else {
+		r = radeon_bo_reserve(rbo, false);
+		if (unlikely(r != 0))
+			return r;
 		r = radeon_bo_pin(rbo, RADEON_GEM_DOMAIN_VRAM, &fb_location);
 		if (unlikely(r != 0)) {
 			radeon_bo_unreserve(rbo);
 			return -EINVAL;
 		}
+		radeon_bo_get_tiling_flags(rbo, &tiling_flags, NULL);
+		radeon_bo_unreserve(rbo);
 	}
-	radeon_bo_get_tiling_flags(rbo, &tiling_flags, NULL);
-	radeon_bo_unreserve(rbo);
 
 	switch (target_fb->format->format) {
 	case DRM_FORMAT_C8:

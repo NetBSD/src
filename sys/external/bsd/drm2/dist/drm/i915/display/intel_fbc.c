@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_fbc.c,v 1.1.1.1 2021/12/18 20:15:30 riastradh Exp $	*/
+/*	$NetBSD: intel_fbc.c,v 1.2 2021/12/18 23:45:30 riastradh Exp $	*/
 
 /*
  * Copyright © 2014 Intel Corporation
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intel_fbc.c,v 1.1.1.1 2021/12/18 20:15:30 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intel_fbc.c,v 1.2 2021/12/18 23:45:30 riastradh Exp $");
 
 #include <drm/drm_fourcc.h>
 
@@ -49,6 +49,8 @@ __KERNEL_RCSID(0, "$NetBSD: intel_fbc.c,v 1.1.1.1 2021/12/18 20:15:30 riastradh 
 #include "intel_display_types.h"
 #include "intel_fbc.h"
 #include "intel_frontbuffer.h"
+
+#include <linux/nbsd-namespace.h>
 
 static inline bool fbc_supported(struct drm_i915_private *dev_priv)
 {
@@ -517,7 +519,7 @@ static int intel_fbc_alloc_cfb(struct drm_i915_private *dev_priv,
 			   dev_priv->dsm.start + compressed_llb->start);
 	}
 
-	DRM_DEBUG_KMS("reserved %llu bytes of contiguous stolen space for FBC, threshold: %d\n",
+	DRM_DEBUG_KMS("reserved %"PRIu64" bytes of contiguous stolen space for FBC, threshold: %d\n",
 		      fbc->compressed_fb.size, fbc->threshold);
 
 	return 0;

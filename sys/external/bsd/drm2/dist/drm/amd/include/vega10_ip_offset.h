@@ -1,4 +1,4 @@
-/*	$NetBSD: vega10_ip_offset.h,v 1.1.1.1 2021/12/18 20:11:31 riastradh Exp $	*/
+/*	$NetBSD: vega10_ip_offset.h,v 1.2 2021/12/18 23:45:08 riastradh Exp $	*/
 
 /*
  * Copyright (C) 2018  Advanced Micro Devices, Inc.

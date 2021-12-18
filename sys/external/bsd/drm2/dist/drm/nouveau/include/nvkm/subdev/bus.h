@@ -1,5 +1,6 @@
-/*	$NetBSD: bus.h,v 1.2 2018/08/27 04:58:30 riastradh Exp $	*/
+/*	$NetBSD: bus.h,v 1.3 2021/12/18 23:45:33 riastradh Exp $	*/
 
+/* SPDX-License-Identifier: MIT */
 #ifndef __NVKM_BUS_H__
 #define __NVKM_BUS_H__
 #include <core/subdev.h>

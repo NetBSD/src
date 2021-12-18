@@ -1,10 +1,10 @@
-/*	$NetBSD: modesetting.c,v 1.1.1.1 2021/12/18 20:15:53 riastradh Exp $	*/
+/*	$NetBSD: modesetting.c,v 1.2 2021/12/18 23:45:44 riastradh Exp $	*/
 
 // SPDX-License-Identifier: MIT
 /* Copyright (C) 2006-2017 Oracle Corporation */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: modesetting.c,v 1.1.1.1 2021/12/18 20:15:53 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: modesetting.c,v 1.2 2021/12/18 23:45:44 riastradh Exp $");
 
 #include <linux/vbox_err.h>
 #include "vbox_drv.h"

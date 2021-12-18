@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_nvkm_subdev_mxm_mxms.c,v 1.3 2018/08/27 07:41:00 riastradh Exp $	*/
+/*	$NetBSD: nouveau_nvkm_subdev_mxm_mxms.c,v 1.4 2021/12/18 23:45:41 riastradh Exp $	*/
 
 /*
  * Copyright 2012 Red Hat Inc.
@@ -24,12 +24,12 @@
  * Authors: Ben Skeggs
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_subdev_mxm_mxms.c,v 1.3 2018/08/27 07:41:00 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_subdev_mxm_mxms.c,v 1.4 2021/12/18 23:45:41 riastradh Exp $");
 
 #include "mxms.h"
 
-#define ROM16(x) le16_to_cpu(*(u16 *)&(x))
-#define ROM32(x) le32_to_cpu(*(u32 *)&(x))
+#define ROM16(x) get_unaligned_le16(&(x))
+#define ROM32(x) get_unaligned_le32(&(x))
 
 static u8 *
 mxms_data(struct nvkm_mxm *mxm)

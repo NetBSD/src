@@ -1,4 +1,4 @@
-/*	$NetBSD: cik_ih.h,v 1.2 2018/08/27 04:58:20 riastradh Exp $	*/
+/*	$NetBSD: cik_ih.h,v 1.3 2021/12/18 23:44:58 riastradh Exp $	*/
 
 /*
  * Copyright 2014 Advanced Micro Devices, Inc.
@@ -26,6 +26,6 @@
 #ifndef __CIK_IH_H__
 #define __CIK_IH_H__
 
-extern const struct amd_ip_funcs cik_ih_ip_funcs;
+extern const struct amdgpu_ip_block_version cik_ih_ip_block;
 
 #endif

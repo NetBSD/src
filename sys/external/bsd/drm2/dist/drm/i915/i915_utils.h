@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_utils.h,v 1.1.1.1 2021/12/18 20:15:26 riastradh Exp $	*/
+/*	$NetBSD: i915_utils.h,v 1.2 2021/12/18 23:45:28 riastradh Exp $	*/
 
 /*
  * Copyright © 2016 Intel Corporation
@@ -298,6 +298,38 @@ wait_remaining_ms_from_jiffies(unsigned long timestamp_jiffies, int to_wait_ms)
  * timeout could be due to preemption or similar and we've never had a chance to
  * check the condition before the timeout.
  */
+#ifdef __NetBSD__
+#define _wait_for(COND, MS, Wmin, Wmax) ({ \
+	int ret__ = 0;							\
+	if (cold) {							\
+		int ms = (MS);						\
+		while (!(COND)) {					\
+			if (--ms < 0) {					\
+				DELAY(1000);				\
+				if (!(COND))				\
+					ret__ = -ETIMEDOUT;		\
+				break;					\
+			}						\
+			DELAY(1000);					\
+		}							\
+	} else {							\
+		unsigned long timeout__ = jiffies + msecs_to_jiffies(MS); \
+		while (!(COND)) {					\
+			if (time_after(jiffies, timeout__)) {		\
+				if (!(COND))				\
+					ret__ = -ETIMEDOUT;		\
+				break;					\
+			}						\
+			if ((Wmin) && drm_can_sleep()) {		\
+				msleep(Wmin); /* XXX respect Wmax */	\
+			} else {					\
+				DELAY(1000);				\
+			}						\
+		}							\
+	}								\
+	ret__;								\
+})
+#else	/* !NetBSD */
 #define __wait_for(OP, COND, US, Wmin, Wmax) ({ \
 	const ktime_t end__ = ktime_add_ns(ktime_get_raw(), 1000ll * (US)); \
 	long wait__ = (Wmin); /* recommended min for usleep is 10 us */	\
@@ -322,6 +354,7 @@ wait_remaining_ms_from_jiffies(unsigned long timestamp_jiffies, int to_wait_ms)
 	}								\
 	ret__;								\
 })
+#endif
 
 #define _wait_for(COND, US, Wmin, Wmax)	__wait_for(, (COND), (US), (Wmin), \
 						   (Wmax))

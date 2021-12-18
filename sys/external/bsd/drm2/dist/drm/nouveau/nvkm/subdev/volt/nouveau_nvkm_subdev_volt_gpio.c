@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_nvkm_subdev_volt_gpio.c,v 1.3 2018/08/27 07:41:41 riastradh Exp $	*/
+/*	$NetBSD: nouveau_nvkm_subdev_volt_gpio.c,v 1.4 2021/12/18 23:45:42 riastradh Exp $	*/
 
 /*
  * Copyright 2013 Red Hat Inc.
@@ -24,12 +24,13 @@
  * Authors: Ben Skeggs
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_subdev_volt_gpio.c,v 1.3 2018/08/27 07:41:41 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_subdev_volt_gpio.c,v 1.4 2021/12/18 23:45:42 riastradh Exp $");
 
 #include <subdev/volt.h>
 #include <subdev/bios.h>
 #include <subdev/bios/gpio.h>
 #include <subdev/gpio.h>
+#include "priv.h"
 
 #include "priv.h"
 

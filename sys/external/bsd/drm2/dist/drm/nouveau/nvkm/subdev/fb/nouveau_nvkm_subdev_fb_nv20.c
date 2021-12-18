@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_nvkm_subdev_fb_nv20.c,v 1.2 2018/08/27 04:58:33 riastradh Exp $	*/
+/*	$NetBSD: nouveau_nvkm_subdev_fb_nv20.c,v 1.3 2021/12/18 23:45:39 riastradh Exp $	*/
 
 /*
  * Copyright (C) 2010 Francisco Jerez.
@@ -26,7 +26,7 @@
  *
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_subdev_fb_nv20.c,v 1.2 2018/08/27 04:58:33 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_subdev_fb_nv20.c,v 1.3 2021/12/18 23:45:39 riastradh Exp $");
 
 #include "priv.h"
 #include "ram.h"
@@ -50,7 +50,7 @@ nv20_fb_tile_comp(struct nvkm_fb *fb, int i, u32 size, u32 flags,
 {
 	u32 tiles = DIV_ROUND_UP(size, 0x40);
 	u32 tags  = round_up(tiles / fb->ram->parts, 0x40);
-	if (!nvkm_mm_head(&fb->ram->tags, 0, 1, tags, tags, 1, &tile->tag)) {
+	if (!nvkm_mm_head(&fb->tags, 0, 1, tags, tags, 1, &tile->tag)) {
 		if (!(flags & 2)) tile->zcomp = 0x00000000; /* Z16 */
 		else              tile->zcomp = 0x04000000; /* Z24S8 */
 		tile->zcomp |= tile->tag->offset;
@@ -68,7 +68,7 @@ nv20_fb_tile_fini(struct nvkm_fb *fb, int i, struct nvkm_fb_tile *tile)
 	tile->limit = 0;
 	tile->pitch = 0;
 	tile->zcomp = 0;
-	nvkm_mm_free(&fb->ram->tags, &tile->tag);
+	nvkm_mm_free(&fb->tags, &tile->tag);
 }
 
 void
@@ -82,15 +82,22 @@ nv20_fb_tile_prog(struct nvkm_fb *fb, int i, struct nvkm_fb_tile *tile)
 	nvkm_wr32(device, 0x100300 + (i * 0x04), tile->zcomp);
 }
 
+u32
+nv20_fb_tags(struct nvkm_fb *fb)
+{
+	const u32 tags = nvkm_rd32(fb->subdev.device, 0x100320);
+	return tags ? tags + 1 : 0;
+}
+
 static const struct nvkm_fb_func
 nv20_fb = {
+	.tags = nv20_fb_tags,
 	.tile.regions = 8,
 	.tile.init = nv20_fb_tile_init,
 	.tile.comp = nv20_fb_tile_comp,
 	.tile.fini = nv20_fb_tile_fini,
 	.tile.prog = nv20_fb_tile_prog,
 	.ram_new = nv20_ram_new,
-	.memtype_valid = nv04_fb_memtype_valid,
 };
 
 int

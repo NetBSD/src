@@ -1,5 +1,6 @@
-/*	$NetBSD: therm.h,v 1.2 2018/08/27 04:58:30 riastradh Exp $	*/
+/*	$NetBSD: therm.h,v 1.3 2021/12/18 23:45:33 riastradh Exp $	*/
 
+/* SPDX-License-Identifier: MIT */
 #ifndef __NVKM_THERM_H__
 #define __NVKM_THERM_H__
 #include <core/subdev.h>
@@ -47,6 +48,16 @@ enum nvkm_therm_attr_type {
 	NVKM_THERM_ATTR_THRS_SHUTDOWN_HYST = 17,
 };
 
+struct nvkm_therm_clkgate_init {
+	u32 addr;
+	u8  count;
+	u32 data;
+};
+
+struct nvkm_therm_clkgate_pack {
+	const struct nvkm_therm_clkgate_init *init;
+};
+
 struct nvkm_therm {
 	const struct nvkm_therm_func *func;
 	struct nvkm_subdev subdev;
@@ -86,16 +97,25 @@ struct nvkm_therm {
 
 	int (*attr_get)(struct nvkm_therm *, enum nvkm_therm_attr_type);
 	int (*attr_set)(struct nvkm_therm *, enum nvkm_therm_attr_type, int);
+
+	bool clkgating_enabled;
 };
 
 int nvkm_therm_temp_get(struct nvkm_therm *);
 int nvkm_therm_fan_sense(struct nvkm_therm *);
 int nvkm_therm_cstate(struct nvkm_therm *, int, int);
+void nvkm_therm_clkgate_init(struct nvkm_therm *,
+			     const struct nvkm_therm_clkgate_pack *);
+void nvkm_therm_clkgate_enable(struct nvkm_therm *);
+void nvkm_therm_clkgate_fini(struct nvkm_therm *, bool);
 
 int nv40_therm_new(struct nvkm_device *, int, struct nvkm_therm **);
 int nv50_therm_new(struct nvkm_device *, int, struct nvkm_therm **);
 int g84_therm_new(struct nvkm_device *, int, struct nvkm_therm **);
 int gt215_therm_new(struct nvkm_device *, int, struct nvkm_therm **);
 int gf119_therm_new(struct nvkm_device *, int, struct nvkm_therm **);
+int gk104_therm_new(struct nvkm_device *, int, struct nvkm_therm **);
 int gm107_therm_new(struct nvkm_device *, int, struct nvkm_therm **);
+int gm200_therm_new(struct nvkm_device *, int, struct nvkm_therm **);
+int gp100_therm_new(struct nvkm_device *, int, struct nvkm_therm **);
 #endif

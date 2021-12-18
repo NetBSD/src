@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu_amdkfd_gfx_v9.h,v 1.1.1.1 2021/12/18 20:11:04 riastradh Exp $	*/
+/*	$NetBSD: amdgpu_amdkfd_gfx_v9.h,v 1.2 2021/12/18 23:44:58 riastradh Exp $	*/
 
 /*
  * Copyright 2019 Advanced Micro Devices, Inc.

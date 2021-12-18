@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_gem_client_blt.c,v 1.1.1.1 2021/12/18 20:15:31 riastradh Exp $	*/
+/*	$NetBSD: i915_gem_client_blt.c,v 1.2 2021/12/18 23:45:30 riastradh Exp $	*/
 
 // SPDX-License-Identifier: MIT
 /*
@@ -6,7 +6,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_gem_client_blt.c,v 1.1.1.1 2021/12/18 20:15:31 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_gem_client_blt.c,v 1.2 2021/12/18 23:45:30 riastradh Exp $");
 
 #include "i915_selftest.h"
 

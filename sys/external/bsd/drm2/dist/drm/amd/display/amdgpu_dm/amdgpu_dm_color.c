@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu_dm_color.c,v 1.1.1.1 2021/12/18 20:11:16 riastradh Exp $	*/
+/*	$NetBSD: amdgpu_dm_color.c,v 1.2 2021/12/18 23:45:00 riastradh Exp $	*/
 
 /*
  * Copyright 2018 Advanced Micro Devices, Inc.
@@ -25,7 +25,7 @@
  *
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdgpu_dm_color.c,v 1.1.1.1 2021/12/18 20:11:16 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdgpu_dm_color.c,v 1.2 2021/12/18 23:45:00 riastradh Exp $");
 
 #include "amdgpu.h"
 #include "amdgpu_mode.h"

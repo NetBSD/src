@@ -1,4 +1,4 @@
-/*	$NetBSD: huge_gem_object.h,v 1.1.1.1 2021/12/18 20:15:31 riastradh Exp $	*/
+/*	$NetBSD: huge_gem_object.h,v 1.2 2021/12/18 23:45:30 riastradh Exp $	*/
 
 /*
  * SPDX-License-Identifier: MIT

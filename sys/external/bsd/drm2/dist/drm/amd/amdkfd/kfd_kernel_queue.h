@@ -1,4 +1,4 @@
-/*	$NetBSD: kfd_kernel_queue.h,v 1.2 2018/08/27 04:58:20 riastradh Exp $	*/
+/*	$NetBSD: kfd_kernel_queue.h,v 1.3 2021/12/18 23:44:59 riastradh Exp $	*/
 
 /*
  * Copyright 2014 Advanced Micro Devices, Inc.
@@ -31,49 +31,33 @@
 #include "kfd_priv.h"
 
 /**
- * struct kernel_queue_ops
- *
- * @initialize: Initialize a kernel queue, including allocations of GART memory
- * needed for the queue.
- *
- * @uninitialize: Uninitialize a kernel queue and free all its memory usages.
- *
- * @acquire_packet_buffer: Returns a pointer to the location in the kernel
+ * kq_acquire_packet_buffer: Returns a pointer to the location in the kernel
  * queue ring buffer where the calling function can write its packet. It is
  * Guaranteed that there is enough space for that packet. It also updates the
  * pending write pointer to that location so subsequent calls to
  * acquire_packet_buffer will get a correct write pointer
  *
- * @submit_packet: Update the write pointer and doorbell of a kernel queue.
+ * kq_submit_packet: Update the write pointer and doorbell of a kernel queue.
  *
- * @sync_with_hw: Wait until the write pointer and the read pointer of a kernel
- * queue are equal, which means the CP has read all the submitted packets.
- *
- * @rollback_packet: This routine is called if we failed to build an acquired
+ * kq_rollback_packet: This routine is called if we failed to build an acquired
  * packet for some reason. It just overwrites the pending wptr with the current
  * one
  *
  */
-struct kernel_queue_ops {
-	bool	(*initialize)(struct kernel_queue *kq, struct kfd_dev *dev,
-			enum kfd_queue_type type, unsigned int queue_size);
-	void	(*uninitialize)(struct kernel_queue *kq);
-	int	(*acquire_packet_buffer)(struct kernel_queue *kq,
-					size_t packet_size_in_dwords,
-					unsigned int **buffer_ptr);
 
-	void	(*submit_packet)(struct kernel_queue *kq);
-	void	(*rollback_packet)(struct kernel_queue *kq);
-};
+int kq_acquire_packet_buffer(struct kernel_queue *kq,
+				size_t packet_size_in_dwords,
+				unsigned int **buffer_ptr);
+void kq_submit_packet(struct kernel_queue *kq);
+void kq_rollback_packet(struct kernel_queue *kq);
+
 
 struct kernel_queue {
-	struct kernel_queue_ops ops;
-	struct kernel_queue_ops ops_asic_specific;
-
 	/* data */
 	struct kfd_dev		*dev;
-	struct mqd_manager	*mqd;
+	struct mqd_manager	*mqd_mgr;
 	struct queue		*queue;
+	uint64_t		pending_wptr64;
 	uint32_t		pending_wptr;
 	unsigned int		nop_packet;
 
@@ -81,7 +65,10 @@ struct kernel_queue {
 	uint32_t		*rptr_kernel;
 	uint64_t		rptr_gpu_addr;
 	struct kfd_mem_obj	*wptr_mem;
-	uint32_t		*wptr_kernel;
+	union {
+		uint64_t	*wptr64_kernel;
+		uint32_t	*wptr_kernel;
+	};
 	uint64_t		wptr_gpu_addr;
 	struct kfd_mem_obj	*pq;
 	uint64_t		pq_gpu_addr;
@@ -96,8 +83,5 @@ struct kernel_queue {
 
 	struct list_head	list;
 };
-
-void kernel_queue_init_cik(struct kernel_queue_ops *ops);
-void kernel_queue_init_vi(struct kernel_queue_ops *ops);
 
 #endif /* KFD_KERNEL_QUEUE_H_ */

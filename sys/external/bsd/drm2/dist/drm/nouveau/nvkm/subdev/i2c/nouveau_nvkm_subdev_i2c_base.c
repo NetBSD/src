@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_nvkm_subdev_i2c_base.c,v 1.2 2018/08/27 04:58:34 riastradh Exp $	*/
+/*	$NetBSD: nouveau_nvkm_subdev_i2c_base.c,v 1.3 2021/12/18 23:45:40 riastradh Exp $	*/
 
 /*
  * Copyright 2013 Red Hat Inc.
@@ -24,7 +24,7 @@
  * Authors: Ben Skeggs
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_subdev_i2c_base.c,v 1.2 2018/08/27 04:58:34 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_subdev_i2c_base.c,v 1.3 2021/12/18 23:45:40 riastradh Exp $");
 
 #include "priv.h"
 #include "aux.h"
@@ -165,7 +165,17 @@ nvkm_i2c_fini(struct nvkm_subdev *subdev, bool suspend)
 {
 	struct nvkm_i2c *i2c = nvkm_i2c(subdev);
 	struct nvkm_i2c_pad *pad;
+	struct nvkm_i2c_bus *bus;
+	struct nvkm_i2c_aux *aux;
 	u32 mask;
+
+	list_for_each_entry(aux, &i2c->aux, head) {
+		nvkm_i2c_aux_fini(aux);
+	}
+
+	list_for_each_entry(bus, &i2c->bus, head) {
+		nvkm_i2c_bus_fini(bus);
+	}
 
 	if ((mask = (1 << i2c->func->aux) - 1), i2c->func->aux_stat) {
 		i2c->func->aux_mask(i2c, NVKM_I2C_ANY, mask, 0);
@@ -180,11 +190,31 @@ nvkm_i2c_fini(struct nvkm_subdev *subdev, bool suspend)
 }
 
 static int
+nvkm_i2c_preinit(struct nvkm_subdev *subdev)
+{
+	struct nvkm_i2c *i2c = nvkm_i2c(subdev);
+	struct nvkm_i2c_bus *bus;
+	struct nvkm_i2c_pad *pad;
+
+	/*
+	 * We init our i2c busses as early as possible, since they may be
+	 * needed by the vbios init scripts on some cards
+	 */
+	list_for_each_entry(pad, &i2c->pad, head)
+		nvkm_i2c_pad_init(pad);
+	list_for_each_entry(bus, &i2c->bus, head)
+		nvkm_i2c_bus_init(bus);
+
+	return 0;
+}
+
+static int
 nvkm_i2c_init(struct nvkm_subdev *subdev)
 {
 	struct nvkm_i2c *i2c = nvkm_i2c(subdev);
 	struct nvkm_i2c_bus *bus;
 	struct nvkm_i2c_pad *pad;
+	struct nvkm_i2c_aux *aux;
 
 	list_for_each_entry(pad, &i2c->pad, head) {
 		nvkm_i2c_pad_init(pad);
@@ -192,6 +222,10 @@ nvkm_i2c_init(struct nvkm_subdev *subdev)
 
 	list_for_each_entry(bus, &i2c->bus, head) {
 		nvkm_i2c_bus_init(bus);
+	}
+
+	list_for_each_entry(aux, &i2c->aux, head) {
+		nvkm_i2c_aux_init(aux);
 	}
 
 	return 0;
@@ -228,6 +262,7 @@ nvkm_i2c_dtor(struct nvkm_subdev *subdev)
 static const struct nvkm_subdev_func
 nvkm_i2c = {
 	.dtor = nvkm_i2c_dtor,
+	.preinit = nvkm_i2c_preinit,
 	.init = nvkm_i2c_init,
 	.fini = nvkm_i2c_fini,
 	.intr = nvkm_i2c_intr,
@@ -259,7 +294,7 @@ nvkm_i2c_new_(const struct nvkm_i2c_func *func, struct nvkm_device *device,
 	if (!(i2c = *pi2c = kzalloc(sizeof(*i2c), GFP_KERNEL)))
 		return -ENOMEM;
 
-	nvkm_subdev_ctor(&nvkm_i2c, device, index, 0, &i2c->subdev);
+	nvkm_subdev_ctor(&nvkm_i2c, device, index, &i2c->subdev);
 	i2c->func = func;
 	INIT_LIST_HEAD(&i2c->pad);
 	INIT_LIST_HEAD(&i2c->bus);

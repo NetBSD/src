@@ -1,4 +1,4 @@
-/*	$NetBSD: drm.h,v 1.1.1.1 2021/12/18 20:15:57 riastradh Exp $	*/
+/*	$NetBSD: drm.h,v 1.2 2021/12/18 23:45:46 riastradh Exp $	*/
 
 /**
  * \file drm.h
@@ -48,13 +48,22 @@ typedef unsigned int drm_handle_t;
 
 #include <linux/types.h>
 #include <asm/ioctl.h>
+
+/* XXX Why was this historically different between Linux and BSD?  */
+#  ifdef __NetBSD__
+typedef unsigned long drm_handle_t;
+#  else
 typedef unsigned int drm_handle_t;
+#  endif
 
-#else /* One of the BSDs */
+#endif
 
+#ifdef __NetBSD__
 #include <stdint.h>
 #include <sys/ioccom.h>
 #include <sys/types.h>
+#include <sys/fcntl.h>
+#ifndef _KERNEL
 typedef int8_t   __s8;
 typedef uint8_t  __u8;
 typedef int16_t  __s16;
@@ -63,6 +72,10 @@ typedef int32_t  __s32;
 typedef uint32_t __u32;
 typedef int64_t  __s64;
 typedef uint64_t __u64;
+#endif
+#  ifndef __user
+#    define	__user
+#  endif
 typedef size_t   __kernel_size_t;
 typedef unsigned long drm_handle_t;
 
@@ -932,6 +945,19 @@ extern "C" {
 #define DRM_IOCTL_MODE_CREATEPROPBLOB	DRM_IOWR(0xBD, struct drm_mode_create_blob)
 #define DRM_IOCTL_MODE_DESTROYPROPBLOB	DRM_IOWR(0xBE, struct drm_mode_destroy_blob)
 
+#ifdef __NetBSD__
+/*
+ * Instrumenting mmap is trickier than just making an ioctl to do it.
+ */
+struct drm_mmap {
+	void		*dnm_addr;  /* in/out */
+	size_t		dnm_size;   /* in */
+	int		dnm_prot;   /* in */
+	int		dnm_flags;  /* in */
+	off_t		dnm_offset; /* in */
+};
+#define	DRM_IOCTL_MMAP	DRM_IOWR(0xff, struct drm_mmap)
+#endif
 #define DRM_IOCTL_SYNCOBJ_CREATE	DRM_IOWR(0xBF, struct drm_syncobj_create)
 #define DRM_IOCTL_SYNCOBJ_DESTROY	DRM_IOWR(0xC0, struct drm_syncobj_destroy)
 #define DRM_IOCTL_SYNCOBJ_HANDLE_TO_FD	DRM_IOWR(0xC1, struct drm_syncobj_handle)

@@ -1,4 +1,4 @@
-/*	$NetBSD: dvo_ch7xxx.c,v 1.1.1.1 2021/12/18 20:15:27 riastradh Exp $	*/
+/*	$NetBSD: dvo_ch7xxx.c,v 1.2 2021/12/18 23:45:29 riastradh Exp $	*/
 
 /**************************************************************************
 
@@ -29,7 +29,7 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 **************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dvo_ch7xxx.c,v 1.1.1.1 2021/12/18 20:15:27 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dvo_ch7xxx.c,v 1.2 2021/12/18 23:45:29 riastradh Exp $");
 
 #include "intel_display_types.h"
 #include "intel_dvo_dev.h"
@@ -92,7 +92,7 @@ __KERNEL_RCSID(0, "$NetBSD: dvo_ch7xxx.c,v 1.1.1.1 2021/12/18 20:15:27 riastradh
 
 static struct ch7xxx_id_struct {
 	u8 vid;
-	char *name;
+	const char *name;
 } ch7xxx_ids[] = {
 	{ CH7011_VID, "CH7011" },
 	{ CH7010B_VID, "CH7010B" },
@@ -103,7 +103,7 @@ static struct ch7xxx_id_struct {
 
 static struct ch7xxx_did_struct {
 	u8 did;
-	char *name;
+	const char *name;
 } ch7xxx_dids[] = {
 	{ CH7xxx_DID, "CH7XXX" },
 	{ CH7010_DID, "CH7010B" },
@@ -113,7 +113,7 @@ struct ch7xxx_priv {
 	bool quiet;
 };
 
-static char *ch7xxx_get_id(u8 vid)
+static const char *ch7xxx_get_id(u8 vid)
 {
 	int i;
 
@@ -125,7 +125,7 @@ static char *ch7xxx_get_id(u8 vid)
 	return NULL;
 }
 
-static char *ch7xxx_get_did(u8 did)
+static const char *ch7xxx_get_did(u8 did)
 {
 	int i;
 
@@ -208,7 +208,7 @@ static bool ch7xxx_init(struct intel_dvo_device *dvo,
 	/* this will detect the CH7xxx chip on the specified i2c bus */
 	struct ch7xxx_priv *ch7xxx;
 	u8 vendor, device;
-	char *name, *devid;
+	const char *name, *devid;
 
 	ch7xxx = kzalloc(sizeof(struct ch7xxx_priv), GFP_KERNEL);
 	if (ch7xxx == NULL)

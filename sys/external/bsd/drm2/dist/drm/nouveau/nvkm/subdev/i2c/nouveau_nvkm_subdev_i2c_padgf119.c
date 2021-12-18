@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_nvkm_subdev_i2c_padgf119.c,v 1.2 2018/08/27 04:58:34 riastradh Exp $	*/
+/*	$NetBSD: nouveau_nvkm_subdev_i2c_padgf119.c,v 1.3 2021/12/18 23:45:40 riastradh Exp $	*/
 
 /*
  * Copyright 2014 Red Hat Inc.
@@ -24,7 +24,7 @@
  * Authors: Ben Skeggs
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_subdev_i2c_padgf119.c,v 1.2 2018/08/27 04:58:34 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_subdev_i2c_padgf119.c,v 1.3 2021/12/18 23:45:40 riastradh Exp $");
 
 #include "pad.h"
 #include "aux.h"
@@ -33,7 +33,7 @@ __KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_subdev_i2c_padgf119.c,v 1.2 2018/08/27 
 static const struct nvkm_i2c_pad_func
 gf119_i2c_pad_s_func = {
 	.bus_new_4 = gf119_i2c_bus_new,
-	.aux_new_6 = g94_i2c_aux_new,
+	.aux_new_6 = gf119_i2c_aux_new,
 	.mode = g94_i2c_pad_mode,
 };
 
@@ -46,7 +46,7 @@ gf119_i2c_pad_s_new(struct nvkm_i2c *i2c, int id, struct nvkm_i2c_pad **ppad)
 static const struct nvkm_i2c_pad_func
 gf119_i2c_pad_x_func = {
 	.bus_new_4 = gf119_i2c_bus_new,
-	.aux_new_6 = g94_i2c_aux_new,
+	.aux_new_6 = gf119_i2c_aux_new,
 };
 
 int

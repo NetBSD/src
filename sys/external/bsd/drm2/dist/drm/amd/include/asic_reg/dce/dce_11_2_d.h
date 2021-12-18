@@ -1,4 +1,4 @@
-/*	$NetBSD: dce_11_2_d.h,v 1.1.1.1 2021/12/18 20:11:45 riastradh Exp $	*/
+/*	$NetBSD: dce_11_2_d.h,v 1.2 2021/12/18 23:45:10 riastradh Exp $	*/
 
 /*
  * DCE_11_2 Register documentation

@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_nvkm_engine_ce_gt215.c,v 1.2 2018/08/27 04:58:31 riastradh Exp $	*/
+/*	$NetBSD: nouveau_nvkm_engine_ce_gt215.c,v 1.3 2021/12/18 23:45:34 riastradh Exp $	*/
 
 /*
  * Copyright 2012 Red Hat Inc.
@@ -24,7 +24,7 @@
  * Authors: Ben Skeggs
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_engine_ce_gt215.c,v 1.2 2018/08/27 04:58:31 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_engine_ce_gt215.c,v 1.3 2021/12/18 23:45:34 riastradh Exp $");
 
 #include "priv.h"
 #include "fuc/gt215.fuc3.h"
@@ -72,7 +72,6 @@ gt215_ce = {
 	.code.size = sizeof(gt215_ce_code),
 	.data.data = gt215_ce_data,
 	.data.size = sizeof(gt215_ce_data),
-	.pmc_enable = 0x00802000,
 	.intr = gt215_ce_intr,
 	.sclass = {
 		{ -1, -1, GT212_DMA },

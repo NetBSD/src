@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_displayid.h,v 1.2 2018/08/27 04:58:37 riastradh Exp $	*/
+/*	$NetBSD: drm_displayid.h,v 1.3 2021/12/18 23:45:45 riastradh Exp $	*/
 
 /*
  * Copyright © 2014 Red Hat Inc.
@@ -42,6 +42,7 @@
 #define DATA_BLOCK_DISPLAY_INTERFACE 0x0f
 #define DATA_BLOCK_STEREO_DISPLAY_INTERFACE 0x10
 #define DATA_BLOCK_TILED_DISPLAY 0x12
+#define DATA_BLOCK_CTA 0x81
 
 #define DATA_BLOCK_VENDOR_SPECIFIC 0x7f
 
@@ -74,5 +75,31 @@ struct displayid_tiled_block {
 	u8 tile_pixel_bezel[5];
 	u8 topology_id[8];
 } __packed;
+
+struct displayid_detailed_timings_1 {
+	u8 pixel_clock[3];
+	u8 flags;
+	u8 hactive[2];
+	u8 hblank[2];
+	u8 hsync[2];
+	u8 hsw[2];
+	u8 vactive[2];
+	u8 vblank[2];
+	u8 vsync[2];
+	u8 vsw[2];
+} __packed;
+
+struct displayid_detailed_timing_block {
+	struct displayid_block base;
+	struct displayid_detailed_timings_1 timings[0];
+};
+
+#define for_each_displayid_db(displayid, block, idx, length) \
+	for ((block) = (struct displayid_block *)&(displayid)[idx]; \
+	     (idx) + sizeof(struct displayid_block) <= (length) && \
+	     (idx) + sizeof(struct displayid_block) + (block)->num_bytes <= (length) && \
+	     (block)->num_bytes > 0; \
+	     (idx) += (block)->num_bytes + sizeof(struct displayid_block), \
+	     (block) = (struct displayid_block *)&(displayid)[idx])
 
 #endif

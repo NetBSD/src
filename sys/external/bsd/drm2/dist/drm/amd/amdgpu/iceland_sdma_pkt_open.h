@@ -1,4 +1,4 @@
-/*	$NetBSD: iceland_sdma_pkt_open.h,v 1.2 2018/08/27 04:58:20 riastradh Exp $	*/
+/*	$NetBSD: iceland_sdma_pkt_open.h,v 1.3 2021/12/18 23:44:59 riastradh Exp $	*/
 
 /*
  * Copyright (C) 2014  Advanced Micro Devices, Inc.

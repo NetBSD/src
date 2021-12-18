@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_dispnv04_arb.c,v 1.4 2020/02/14 04:37:28 riastradh Exp $	*/
+/*	$NetBSD: nouveau_dispnv04_arb.c,v 1.5 2021/12/18 23:45:32 riastradh Exp $	*/
 
 /*
  * Copyright 1993-2003 NVIDIA, Corporation
@@ -24,11 +24,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_dispnv04_arb.c,v 1.4 2020/02/14 04:37:28 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_dispnv04_arb.c,v 1.5 2021/12/18 23:45:32 riastradh Exp $");
 
-#include <drm/drmP.h>
-
-#include "nouveau_drm.h"
+#include "nouveau_drv.h"
 #include "nouveau_reg.h"
 #include "hw.h"
 
@@ -60,8 +58,8 @@ struct nv_sim_state {
 static void
 nv04_calc_arb(struct nv_fifo_info *fifo, struct nv_sim_state *arb)
 {
-	int pagemiss, cas, width __unused, bpp;
-	int nvclks, mclks, pclks __unused, crtpagemiss;
+	int pagemiss, cas, bpp;
+	int nvclks, mclks, crtpagemiss;
 	int found, mclk_extra, mclk_loop, cbs, m1, p1;
 	int mclk_freq, pclk_freq, nvclk_freq;
 	int us_m, us_n, us_p, crtc_drain_rate;
@@ -72,11 +70,9 @@ nv04_calc_arb(struct nv_fifo_info *fifo, struct nv_sim_state *arb)
 	nvclk_freq = arb->nvclk_khz;
 	pagemiss = arb->mem_page_miss;
 	cas = arb->mem_latency;
-	width = arb->memory_width >> 6;
 	bpp = arb->bpp;
 	cbs = 128;
 
-	pclks = 2;
 	nvclks = 10;
 	mclks = 13 + cas;
 	mclk_extra = 3;
@@ -203,7 +199,7 @@ nv04_update_arb(struct drm_device *dev, int VClk, int bpp,
 		int *burst, int *lwm)
 {
 	struct nouveau_drm *drm = nouveau_drm(dev);
-	struct nvif_object *device = &nouveau_drm(dev)->device.object;
+	struct nvif_object *device = &nouveau_drm(dev)->client.device.object;
 	struct nv_fifo_info fifo_data;
 	struct nv_sim_state sim_data;
 	int MClk = nouveau_hw_get_clock(dev, PLL_MEMORY);
@@ -218,8 +214,10 @@ nv04_update_arb(struct drm_device *dev, int VClk, int bpp,
 	if ((dev->pdev->device & 0xffff) == 0x01a0 /*CHIPSET_NFORCE*/ ||
 	    (dev->pdev->device & 0xffff) == 0x01f0 /*CHIPSET_NFORCE2*/) {
 		uint32_t type;
+		int domain = pci_domain_nr(dev->pdev->bus);
 
-		pci_read_config_dword(pci_get_bus_and_slot(0, 1), 0x7c, &type);
+		pci_read_config_dword(pci_get_domain_bus_and_slot(domain, 0, 1),
+				      0x7c, &type);
 
 		sim_data.memory_type = (type >> 12) & 1;
 		sim_data.memory_width = 64;
@@ -232,7 +230,7 @@ nv04_update_arb(struct drm_device *dev, int VClk, int bpp,
 		sim_data.mem_page_miss = ((cfg1 >> 4) & 0xf) + ((cfg1 >> 31) & 0x1);
 	}
 
-	if (drm->device.info.family == NV_DEVICE_INFO_V0_TNT)
+	if (drm->client.device.info.family == NV_DEVICE_INFO_V0_TNT)
 		nv04_calc_arb(&fifo_data, &sim_data);
 	else
 		nv10_calc_arb(&fifo_data, &sim_data);
@@ -259,7 +257,7 @@ nouveau_calc_arb(struct drm_device *dev, int vclk, int bpp, int *burst, int *lwm
 {
 	struct nouveau_drm *drm = nouveau_drm(dev);
 
-	if (drm->device.info.family < NV_DEVICE_INFO_V0_KELVIN)
+	if (drm->client.device.info.family < NV_DEVICE_INFO_V0_KELVIN)
 		nv04_update_arb(dev, vclk, bpp, burst, lwm);
 	else if ((dev->pdev->device & 0xfff0) == 0x0240 /*CHIPSET_C51*/ ||
 		 (dev->pdev->device & 0xfff0) == 0x03d0 /*CHIPSET_C512*/) {

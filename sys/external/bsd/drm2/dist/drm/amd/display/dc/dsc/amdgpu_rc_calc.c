@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu_rc_calc.c,v 1.1.1.1 2021/12/18 20:11:24 riastradh Exp $	*/
+/*	$NetBSD: amdgpu_rc_calc.c,v 1.2 2021/12/18 23:45:04 riastradh Exp $	*/
 
 
 /*
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdgpu_rc_calc.c,v 1.1.1.1 2021/12/18 20:11:24 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdgpu_rc_calc.c,v 1.2 2021/12/18 23:45:04 riastradh Exp $");
 
 #include "os_types.h"
 #include "rc_calc.h"

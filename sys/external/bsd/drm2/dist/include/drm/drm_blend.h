@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_blend.h,v 1.1.1.1 2021/12/18 20:15:56 riastradh Exp $	*/
+/*	$NetBSD: drm_blend.h,v 1.2 2021/12/18 23:45:45 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2016 Intel Corporation

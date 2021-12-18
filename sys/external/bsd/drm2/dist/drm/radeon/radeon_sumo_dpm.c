@@ -1,4 +1,4 @@
-/*	$NetBSD: radeon_sumo_dpm.c,v 1.2 2020/02/14 04:29:42 riastradh Exp $	*/
+/*	$NetBSD: radeon_sumo_dpm.c,v 1.3 2021/12/18 23:45:43 riastradh Exp $	*/
 
 /*
  * Copyright 2012 Advanced Micro Devices, Inc.
@@ -24,9 +24,8 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radeon_sumo_dpm.c,v 1.2 2020/02/14 04:29:42 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radeon_sumo_dpm.c,v 1.3 2021/12/18 23:45:43 riastradh Exp $");
 
-#include "drmP.h"
 #include "radeon.h"
 #include "radeon_asic.h"
 #include "sumod.h"
@@ -792,8 +791,8 @@ static void sumo_program_acpi_power_level(struct radeon_device *rdev)
 	struct atom_clock_dividers dividers;
 	int ret;
 
-        ret = radeon_atom_get_clock_dividers(rdev, COMPUTE_ENGINE_PLL_PARAM,
-                                             pi->acpi_pl.sclk,
+	ret = radeon_atom_get_clock_dividers(rdev, COMPUTE_ENGINE_PLL_PARAM,
+					     pi->acpi_pl.sclk,
 					     false, &dividers);
 	if (ret)
 		return;
@@ -1467,7 +1466,7 @@ static int sumo_parse_power_table(struct radeon_device *rdev)
 	struct _NonClockInfoArray *non_clock_info_array;
 	union power_info *power_info;
 	int index = GetIndexIntoMasterTable(DATA, PowerPlayInfo);
-        u16 data_offset;
+	u16 data_offset;
 	u8 frev, crev;
 	u8 *power_state_offset;
 	struct sumo_ps *ps;
@@ -1487,8 +1486,9 @@ static int sumo_parse_power_table(struct radeon_device *rdev)
 		(mode_info->atom_context->bios + data_offset +
 		 le16_to_cpu(power_info->pplib.usNonClockInfoArrayOffset));
 
-	rdev->pm.dpm.ps = kzalloc(sizeof(struct radeon_ps) *
-				  state_array->ucNumEntries, GFP_KERNEL);
+	rdev->pm.dpm.ps = kcalloc(state_array->ucNumEntries,
+				  sizeof(struct radeon_ps),
+				  GFP_KERNEL);
 	if (!rdev->pm.dpm.ps)
 		return -ENOMEM;
 	power_state_offset = (u8 *)state_array->states;

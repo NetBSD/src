@@ -1,7 +1,8 @@
-/*	$NetBSD: svga_escape.h,v 1.2 2018/08/27 04:58:37 riastradh Exp $	*/
+/*	$NetBSD: svga_escape.h,v 1.3 2021/12/18 23:45:45 riastradh Exp $	*/
 
+/* SPDX-License-Identifier: GPL-2.0 OR MIT */
 /**********************************************************
- * Copyright 2007-2015 VMware, Inc.  All rights reserved.
+ * Copyright 2007-2015 VMware, Inc.
  *
  * Permission is hereby granted, free of charge, to any person
  * obtaining a copy of this software and associated documentation

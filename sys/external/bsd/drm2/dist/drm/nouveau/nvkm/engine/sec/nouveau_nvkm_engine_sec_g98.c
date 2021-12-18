@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_nvkm_engine_sec_g98.c,v 1.2 2018/08/27 04:58:32 riastradh Exp $	*/
+/*	$NetBSD: nouveau_nvkm_engine_sec_g98.c,v 1.3 2021/12/18 23:45:37 riastradh Exp $	*/
 
 /*
  * Copyright 2012 Red Hat Inc.
@@ -24,7 +24,7 @@
  * Authors: Ben Skeggs
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_engine_sec_g98.c,v 1.2 2018/08/27 04:58:32 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_engine_sec_g98.c,v 1.3 2021/12/18 23:45:37 riastradh Exp $");
 
 #include <engine/sec.h>
 #include <engine/fifo.h>
@@ -71,7 +71,6 @@ g98_sec = {
 	.code.size = sizeof(g98_sec_code),
 	.data.data = g98_sec_data,
 	.data.size = sizeof(g98_sec_data),
-	.pmc_enable = 0x00004000,
 	.intr = g98_sec_intr,
 	.sclass = {
 		{ -1, -1, G98_SEC },

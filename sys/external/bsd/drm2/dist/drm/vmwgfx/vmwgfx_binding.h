@@ -1,9 +1,9 @@
-/*	$NetBSD: vmwgfx_binding.h,v 1.2 2018/08/27 04:58:37 riastradh Exp $	*/
+/*	$NetBSD: vmwgfx_binding.h,v 1.3 2021/12/18 23:45:45 riastradh Exp $	*/
 
+/* SPDX-License-Identifier: GPL-2.0 OR MIT */
 /**************************************************************************
  *
- * Copyright © 2015 VMware, Inc., Palo Alto, CA., USA
- * All Rights Reserved.
+ * Copyright 2015 VMware, Inc., Palo Alto, CA., USA
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the
@@ -29,8 +29,9 @@
 #ifndef _VMWGFX_BINDING_H_
 #define _VMWGFX_BINDING_H_
 
-#include "device_include/svga3d_reg.h"
 #include <linux/list.h>
+
+#include "device_include/svga3d_reg.h"
 
 #define VMW_MAX_VIEW_BINDINGS 128
 
@@ -207,5 +208,7 @@ extern void vmw_binding_state_free(struct vmw_ctx_binding_state *cbs);
 extern struct list_head *
 vmw_binding_state_list(struct vmw_ctx_binding_state *cbs);
 extern void vmw_binding_state_reset(struct vmw_ctx_binding_state *cbs);
+extern u32 vmw_binding_dirtying(enum vmw_ctx_binding_type binding_type);
+
 
 #endif

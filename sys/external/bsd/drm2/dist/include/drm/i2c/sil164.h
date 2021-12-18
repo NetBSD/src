@@ -1,4 +1,4 @@
-/*	$NetBSD: sil164.h,v 1.2 2018/08/27 04:58:38 riastradh Exp $	*/
+/*	$NetBSD: sil164.h,v 1.3 2021/12/18 23:45:46 riastradh Exp $	*/
 
 /*
  * Copyright (C) 2010 Francisco Jerez.

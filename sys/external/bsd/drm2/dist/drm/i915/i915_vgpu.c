@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_vgpu.c,v 1.4 2018/08/27 16:15:34 riastradh Exp $	*/
+/*	$NetBSD: i915_vgpu.c,v 1.5 2021/12/18 23:45:28 riastradh Exp $	*/
 
 /*
  * Copyright(c) 2011-2015 Intel Corporation. All rights reserved.
@@ -24,9 +24,8 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_vgpu.c,v 1.4 2018/08/27 16:15:34 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_vgpu.c,v 1.5 2021/12/18 23:45:28 riastradh Exp $");
 
-#include "intel_drv.h"
 #include "i915_vgpu.h"
 
 /**
@@ -57,22 +56,35 @@ __KERNEL_RCSID(0, "$NetBSD: i915_vgpu.c,v 1.4 2018/08/27 16:15:34 riastradh Exp 
  */
 
 /**
- * i915_check_vgpu - detect virtual GPU
- * @dev: drm device *
+ * i915_detect_vgpu - detect virtual GPU
+ * @dev_priv: i915 device private
  *
  * This function is called at the initialization stage, to detect whether
  * running on a vGPU.
  */
-void i915_check_vgpu(struct drm_device *dev)
+void i915_detect_vgpu(struct drm_i915_private *dev_priv)
 {
-	struct drm_i915_private *dev_priv = to_i915(dev);
-	uint64_t magic;
-	uint32_t version;
+	struct pci_dev *pdev = dev_priv->drm.pdev;
+	u64 magic;
+	u16 version_major;
+	void __iomem *shared_area;
 
 	BUILD_BUG_ON(sizeof(struct vgt_if) != VGT_PVINFO_SIZE);
 
-	if (!IS_HASWELL(dev))
+	/*
+	 * This is called before we setup the main MMIO BAR mappings used via
+	 * the uncore structure, so we need to access the BAR directly. Since
+	 * we do not support VGT on older gens, return early so we don't have
+	 * to consider differently numbered or sized MMIO bars
+	 */
+	if (INTEL_GEN(dev_priv) < 6)
 		return;
+
+	shared_area = pci_iomap_range(pdev, 0, VGT_PVINFO_PAGE, VGT_PVINFO_SIZE);
+	if (!shared_area) {
+		DRM_ERROR("failed to map MMIO bar to check for VGT\n");
+		return;
+	}
 
 #ifdef __NetBSD__
 #  ifdef _LP64
@@ -85,29 +97,35 @@ void i915_check_vgpu(struct drm_device *dev)
 	    dev_priv->regs_bsh, vgtif_reg(magic) + 4) << 32;
 #  endif
 #else
-	magic = readq(dev_priv->regs + vgtif_reg(magic));
+	magic = readq(shared_area + vgtif_offset(magic));
 #endif
 	if (magic != VGT_MAGIC)
-		return;
+		goto out;
 
 #ifdef __NetBSD__
-	version = INTEL_VGT_IF_VERSION_ENCODE(
-		bus_space_read_2(dev_priv->regs_bst, dev_priv->regs_bsh,
-		    vgtif_reg(version_major)),
-		bus_space_read_2(dev_priv->regs_bst, dev_priv->regs_bsh,
-		    vgtif_reg(version_minor)));
+	version_major = bus_space_read_2(dev_priv->regs_bst, dev_priv->regs_bsh,
+		    vgtif_reg(version_major));
 #else
-	version = INTEL_VGT_IF_VERSION_ENCODE(
-		readw(dev_priv->regs + vgtif_reg(version_major)),
-		readw(dev_priv->regs + vgtif_reg(version_minor)));
+	version_major = readw(shared_area + vgtif_offset(version_major));
 #endif
-	if (version != INTEL_VGT_IF_VERSION) {
+	if (version_major < VGT_VERSION_MAJOR) {
 		DRM_INFO("VGT interface version mismatch!\n");
-		return;
+		goto out;
 	}
 
+	dev_priv->vgpu.caps = readl(shared_area + vgtif_offset(vgt_caps));
+
 	dev_priv->vgpu.active = true;
+	mutex_init(&dev_priv->vgpu.lock);
 	DRM_INFO("Virtual GPU for Intel GVT-g detected.\n");
+
+out:
+	pci_iounmap(pdev, shared_area);
+}
+
+bool intel_vgpu_has_full_ppgtt(struct drm_i915_private *dev_priv)
+{
+	return dev_priv->vgpu.caps & VGT_CAPS_FULL_PPGTT;
 }
 
 struct _balloon_info_ {
@@ -121,47 +139,65 @@ struct _balloon_info_ {
 
 static struct _balloon_info_ bl_info;
 
+static void vgt_deballoon_space(struct i915_ggtt *ggtt,
+				struct drm_mm_node *node)
+{
+	if (!drm_mm_node_allocated(node))
+		return;
+
+	DRM_DEBUG_DRIVER("deballoon space: range [0x%llx - 0x%llx] %llu KiB.\n",
+			 node->start,
+			 node->start + node->size,
+			 node->size / 1024);
+
+	ggtt->vm.reserved -= node->size;
+	drm_mm_remove_node(node);
+}
+
 /**
  * intel_vgt_deballoon - deballoon reserved graphics address trunks
+ * @ggtt: the global GGTT from which we reserved earlier
  *
  * This function is called to deallocate the ballooned-out graphic memory, when
  * driver is unloaded or when ballooning fails.
  */
-void intel_vgt_deballoon(void)
+void intel_vgt_deballoon(struct i915_ggtt *ggtt)
 {
 	int i;
 
+	if (!intel_vgpu_active(ggtt->vm.i915))
+		return;
+
 	DRM_DEBUG("VGT deballoon.\n");
 
-	for (i = 0; i < 4; i++) {
-		if (bl_info.space[i].allocated)
-			drm_mm_remove_node(&bl_info.space[i]);
-	}
-
-	memset(&bl_info, 0, sizeof(bl_info));
+	for (i = 0; i < 4; i++)
+		vgt_deballoon_space(ggtt, &bl_info.space[i]);
 }
 
-static int vgt_balloon_space(struct drm_mm *mm,
+static int vgt_balloon_space(struct i915_ggtt *ggtt,
 			     struct drm_mm_node *node,
 			     unsigned long start, unsigned long end)
 {
 	unsigned long size = end - start;
+	int ret;
 
-	if (start == end)
+	if (start >= end)
 		return -EINVAL;
 
 	DRM_INFO("balloon space: range [ 0x%lx - 0x%lx ] %lu KiB.\n",
 		 start, end, size / 1024);
+	ret = i915_gem_gtt_reserve(&ggtt->vm, node,
+				   size, start, I915_COLOR_UNEVICTABLE,
+				   0);
+	if (!ret)
+		ggtt->vm.reserved += size;
 
-	node->start = start;
-	node->size = size;
-
-	return drm_mm_reserve_node(mm, node);
+	return ret;
 }
 
 /**
  * intel_vgt_balloon - balloon out reserved graphics address trunks
- * @dev: drm device
+ * @ggtt: the global GGTT from which to reserve
  *
  * This function is called at the initialization stage, to balloon out the
  * graphic address space allocated to other vGPUs, by marking these spaces as
@@ -176,47 +212,53 @@ static int vgt_balloon_space(struct drm_mm *mm,
  * of its graphic space being zero. Yet there are some portions ballooned out(
  * the shadow part, which are marked as reserved by drm allocator). From the
  * host point of view, the graphic address space is partitioned by multiple
- * vGPUs in different VMs.
+ * vGPUs in different VMs. ::
  *
- *                        vGPU1 view         Host view
- *             0 ------> +-----------+     +-----------+
- *               ^       |///////////|     |   vGPU3   |
- *               |       |///////////|     +-----------+
- *               |       |///////////|     |   vGPU2   |
- *               |       +-----------+     +-----------+
- *        mappable GM    | available | ==> |   vGPU1   |
- *               |       +-----------+     +-----------+
- *               |       |///////////|     |           |
- *               v       |///////////|     |   Host    |
- *               +=======+===========+     +===========+
- *               ^       |///////////|     |   vGPU3   |
- *               |       |///////////|     +-----------+
- *               |       |///////////|     |   vGPU2   |
- *               |       +-----------+     +-----------+
- *      unmappable GM    | available | ==> |   vGPU1   |
- *               |       +-----------+     +-----------+
- *               |       |///////////|     |           |
- *               |       |///////////|     |   Host    |
- *               v       |///////////|     |           |
- * total GM size ------> +-----------+     +-----------+
+ *                         vGPU1 view         Host view
+ *              0 ------> +-----------+     +-----------+
+ *                ^       |###########|     |   vGPU3   |
+ *                |       |###########|     +-----------+
+ *                |       |###########|     |   vGPU2   |
+ *                |       +-----------+     +-----------+
+ *         mappable GM    | available | ==> |   vGPU1   |
+ *                |       +-----------+     +-----------+
+ *                |       |###########|     |           |
+ *                v       |###########|     |   Host    |
+ *                +=======+===========+     +===========+
+ *                ^       |###########|     |   vGPU3   |
+ *                |       |###########|     +-----------+
+ *                |       |###########|     |   vGPU2   |
+ *                |       +-----------+     +-----------+
+ *       unmappable GM    | available | ==> |   vGPU1   |
+ *                |       +-----------+     +-----------+
+ *                |       |###########|     |           |
+ *                |       |###########|     |   Host    |
+ *                v       |###########|     |           |
+ *  total GM size ------> +-----------+     +-----------+
  *
  * Returns:
  * zero on success, non-zero if configuration invalid or ballooning failed
  */
-int intel_vgt_balloon(struct drm_device *dev)
+int intel_vgt_balloon(struct i915_ggtt *ggtt)
 {
-	struct drm_i915_private *dev_priv = to_i915(dev);
-	struct i915_address_space *ggtt_vm = &dev_priv->gtt.base;
-	unsigned long ggtt_vm_end = ggtt_vm->start + ggtt_vm->total;
+	struct intel_uncore *uncore = &ggtt->vm.i915->uncore;
+	unsigned long ggtt_end = ggtt->vm.total;
 
 	unsigned long mappable_base, mappable_size, mappable_end;
 	unsigned long unmappable_base, unmappable_size, unmappable_end;
 	int ret;
 
-	mappable_base = I915_READ(vgtif_reg(avail_rs.mappable_gmadr.base));
-	mappable_size = I915_READ(vgtif_reg(avail_rs.mappable_gmadr.size));
-	unmappable_base = I915_READ(vgtif_reg(avail_rs.nonmappable_gmadr.base));
-	unmappable_size = I915_READ(vgtif_reg(avail_rs.nonmappable_gmadr.size));
+	if (!intel_vgpu_active(ggtt->vm.i915))
+		return 0;
+
+	mappable_base =
+	  intel_uncore_read(uncore, vgtif_reg(avail_rs.mappable_gmadr.base));
+	mappable_size =
+	  intel_uncore_read(uncore, vgtif_reg(avail_rs.mappable_gmadr.size));
+	unmappable_base =
+	  intel_uncore_read(uncore, vgtif_reg(avail_rs.nonmappable_gmadr.base));
+	unmappable_size =
+	  intel_uncore_read(uncore, vgtif_reg(avail_rs.nonmappable_gmadr.size));
 
 	mappable_end = mappable_base + mappable_size;
 	unmappable_end = unmappable_base + unmappable_size;
@@ -227,63 +269,56 @@ int intel_vgt_balloon(struct drm_device *dev)
 	DRM_INFO("Unmappable graphic memory: base 0x%lx size %ldKiB\n",
 		 unmappable_base, unmappable_size / 1024);
 
-	if (mappable_base < ggtt_vm->start ||
-	    mappable_end > dev_priv->gtt.mappable_end ||
-	    unmappable_base < dev_priv->gtt.mappable_end ||
-	    unmappable_end > ggtt_vm_end) {
+	if (mappable_end > ggtt->mappable_end ||
+	    unmappable_base < ggtt->mappable_end ||
+	    unmappable_end > ggtt_end) {
 		DRM_ERROR("Invalid ballooning configuration!\n");
 		return -EINVAL;
 	}
 
 	/* Unmappable graphic memory ballooning */
-	if (unmappable_base > dev_priv->gtt.mappable_end) {
-		ret = vgt_balloon_space(&ggtt_vm->mm,
-					&bl_info.space[2],
-					dev_priv->gtt.mappable_end,
-					unmappable_base);
+	if (unmappable_base > ggtt->mappable_end) {
+		ret = vgt_balloon_space(ggtt, &bl_info.space[2],
+					ggtt->mappable_end, unmappable_base);
 
 		if (ret)
 			goto err;
 	}
 
-	/*
-	 * No need to partition out the last physical page,
-	 * because it is reserved to the guard page.
-	 */
-	if (unmappable_end < ggtt_vm_end - PAGE_SIZE) {
-		ret = vgt_balloon_space(&ggtt_vm->mm,
-					&bl_info.space[3],
-					unmappable_end,
-					ggtt_vm_end - PAGE_SIZE);
+	if (unmappable_end < ggtt_end) {
+		ret = vgt_balloon_space(ggtt, &bl_info.space[3],
+					unmappable_end, ggtt_end);
 		if (ret)
-			goto err;
+			goto err_upon_mappable;
 	}
 
 	/* Mappable graphic memory ballooning */
-	if (mappable_base > ggtt_vm->start) {
-		ret = vgt_balloon_space(&ggtt_vm->mm,
-					&bl_info.space[0],
-					ggtt_vm->start, mappable_base);
+	if (mappable_base) {
+		ret = vgt_balloon_space(ggtt, &bl_info.space[0],
+					0, mappable_base);
 
 		if (ret)
-			goto err;
+			goto err_upon_unmappable;
 	}
 
-	if (mappable_end < dev_priv->gtt.mappable_end) {
-		ret = vgt_balloon_space(&ggtt_vm->mm,
-					&bl_info.space[1],
-					mappable_end,
-					dev_priv->gtt.mappable_end);
+	if (mappable_end < ggtt->mappable_end) {
+		ret = vgt_balloon_space(ggtt, &bl_info.space[1],
+					mappable_end, ggtt->mappable_end);
 
 		if (ret)
-			goto err;
+			goto err_below_mappable;
 	}
 
 	DRM_INFO("VGT balloon successfully\n");
 	return 0;
 
+err_below_mappable:
+	vgt_deballoon_space(ggtt, &bl_info.space[0]);
+err_upon_unmappable:
+	vgt_deballoon_space(ggtt, &bl_info.space[3]);
+err_upon_mappable:
+	vgt_deballoon_space(ggtt, &bl_info.space[2]);
 err:
 	DRM_ERROR("VGT balloon fail\n");
-	intel_vgt_deballoon();
 	return ret;
 }

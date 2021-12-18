@@ -1,4 +1,4 @@
-/*	$NetBSD: nv50_display.h,v 1.2 2018/08/27 04:58:24 riastradh Exp $	*/
+/*	$NetBSD: nv50_display.h,v 1.3 2021/12/18 23:45:32 riastradh Exp $	*/
 
 /*
  * Copyright (C) 2008 Maarten Maathuis.
@@ -30,18 +30,10 @@
 #define __NV50_DISPLAY_H__
 
 #include "nouveau_display.h"
-#include "nouveau_crtc.h"
 #include "nouveau_reg.h"
 
 int  nv50_display_create(struct drm_device *);
 void nv50_display_destroy(struct drm_device *);
 int  nv50_display_init(struct drm_device *);
 void nv50_display_fini(struct drm_device *);
-
-void nv50_display_flip_stop(struct drm_crtc *);
-int  nv50_display_flip_next(struct drm_crtc *, struct drm_framebuffer *,
-			    struct nouveau_channel *, u32 swap_interval);
-
-struct nouveau_bo *nv50_display_crtc_sema(struct drm_device *, int head);
-
 #endif /* __NV50_DISPLAY_H__ */

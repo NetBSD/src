@@ -1,12 +1,14 @@
-/*	$NetBSD: nouveau_sgdma.c,v 1.2 2018/08/27 04:58:24 riastradh Exp $	*/
+/*	$NetBSD: nouveau_sgdma.c,v 1.3 2021/12/18 23:45:32 riastradh Exp $	*/
 
+// SPDX-License-Identifier: MIT
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_sgdma.c,v 1.2 2018/08/27 04:58:24 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_sgdma.c,v 1.3 2021/12/18 23:45:32 riastradh Exp $");
 
 #include <linux/pagemap.h>
 #include <linux/slab.h>
 
-#include "nouveau_drm.h"
+#include "nouveau_drv.h"
+#include "nouveau_mem.h"
 #include "nouveau_ttm.h"
 
 struct nouveau_sgdma_be {
@@ -14,7 +16,7 @@ struct nouveau_sgdma_be {
 	 * nouve_bo.c works properly, otherwise have to move them here
 	 */
 	struct ttm_dma_tt ttm;
-	struct nvkm_mem *node;
+	struct nouveau_mem *mem;
 };
 
 static void
@@ -29,22 +31,23 @@ nouveau_sgdma_destroy(struct ttm_tt *ttm)
 }
 
 static int
-nv04_sgdma_bind(struct ttm_tt *ttm, struct ttm_mem_reg *mem)
+nv04_sgdma_bind(struct ttm_tt *ttm, struct ttm_mem_reg *reg)
 {
 	struct nouveau_sgdma_be *nvbe = (struct nouveau_sgdma_be *)ttm;
-	struct nvkm_mem *node = mem->mm_node;
+	struct nouveau_mem *mem = nouveau_mem(reg);
+	int ret;
 
-	if (ttm->sg) {
-		node->sg    = ttm->sg;
-		node->pages = NULL;
-	} else {
-		node->sg    = NULL;
-		node->pages = nvbe->ttm.dma_address;
+	ret = nouveau_mem_host(reg, &nvbe->ttm);
+	if (ret)
+		return ret;
+
+	ret = nouveau_mem_map(mem, &mem->cli->vmm.vmm, &mem->vma[0]);
+	if (ret) {
+		nouveau_mem_fini(mem);
+		return ret;
 	}
-	node->size = (mem->num_pages << PAGE_SHIFT) >> 12;
 
-	nvkm_vm_map(&node->vma[0], node);
-	nvbe->node = node;
+	nvbe->mem = mem;
 	return 0;
 }
 
@@ -52,7 +55,7 @@ static int
 nv04_sgdma_unbind(struct ttm_tt *ttm)
 {
 	struct nouveau_sgdma_be *nvbe = (struct nouveau_sgdma_be *)ttm;
-	nvkm_vm_unmap(&nvbe->node->vma[0]);
+	nouveau_mem_fini(nvbe->mem);
 	return 0;
 }
 
@@ -63,54 +66,42 @@ static struct ttm_backend_func nv04_sgdma_backend = {
 };
 
 static int
-nv50_sgdma_bind(struct ttm_tt *ttm, struct ttm_mem_reg *mem)
+nv50_sgdma_bind(struct ttm_tt *ttm, struct ttm_mem_reg *reg)
 {
 	struct nouveau_sgdma_be *nvbe = (struct nouveau_sgdma_be *)ttm;
-	struct nvkm_mem *node = mem->mm_node;
+	struct nouveau_mem *mem = nouveau_mem(reg);
+	int ret;
 
-	/* noop: bound in move_notify() */
-	if (ttm->sg) {
-		node->sg    = ttm->sg;
-		node->pages = NULL;
-	} else {
-		node->sg    = NULL;
-		node->pages = nvbe->ttm.dma_address;
-	}
-	node->size = (mem->num_pages << PAGE_SHIFT) >> 12;
-	return 0;
-}
+	ret = nouveau_mem_host(reg, &nvbe->ttm);
+	if (ret)
+		return ret;
 
-static int
-nv50_sgdma_unbind(struct ttm_tt *ttm)
-{
-	/* noop: unbound in move_notify() */
+	nvbe->mem = mem;
 	return 0;
 }
 
 static struct ttm_backend_func nv50_sgdma_backend = {
 	.bind			= nv50_sgdma_bind,
-	.unbind			= nv50_sgdma_unbind,
+	.unbind			= nv04_sgdma_unbind,
 	.destroy		= nouveau_sgdma_destroy
 };
 
 struct ttm_tt *
-nouveau_sgdma_create_ttm(struct ttm_bo_device *bdev,
-			 unsigned long size, uint32_t page_flags,
-			 struct page *dummy_read_page)
+nouveau_sgdma_create_ttm(struct ttm_buffer_object *bo, uint32_t page_flags)
 {
-	struct nouveau_drm *drm = nouveau_bdev(bdev);
+	struct nouveau_drm *drm = nouveau_bdev(bo->bdev);
 	struct nouveau_sgdma_be *nvbe;
 
 	nvbe = kzalloc(sizeof(*nvbe), GFP_KERNEL);
 	if (!nvbe)
 		return NULL;
 
-	if (drm->device.info.family < NV_DEVICE_INFO_V0_TESLA)
+	if (drm->client.device.info.family < NV_DEVICE_INFO_V0_TESLA)
 		nvbe->ttm.ttm.func = &nv04_sgdma_backend;
 	else
 		nvbe->ttm.ttm.func = &nv50_sgdma_backend;
 
-	if (ttm_dma_tt_init(&nvbe->ttm, bdev, size, page_flags, dummy_read_page))
+	if (ttm_dma_tt_init(&nvbe->ttm, bo, page_flags))
 		/*
 		 * A failing ttm_dma_tt_init() will call ttm_tt_destroy()
 		 * and thus our nouveau_sgdma_destroy() hook, so we don't need

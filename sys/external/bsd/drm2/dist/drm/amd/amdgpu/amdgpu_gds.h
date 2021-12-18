@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu_gds.h,v 1.2 2018/08/27 04:58:19 riastradh Exp $	*/
+/*	$NetBSD: amdgpu_gds.h,v 1.3 2021/12/18 23:44:58 riastradh Exp $	*/
 
 /*
  * Copyright 2014 Advanced Micro Devices, Inc.
@@ -26,42 +26,14 @@
 #ifndef __AMDGPU_GDS_H__
 #define __AMDGPU_GDS_H__
 
-/* Because TTM request that alloacted buffer should be PAGE_SIZE aligned,
- * we should report GDS/GWS/OA size as PAGE_SIZE aligned
- * */
-#define AMDGPU_GDS_SHIFT	2
-#define AMDGPU_GWS_SHIFT	PAGE_SHIFT
-#define AMDGPU_OA_SHIFT		PAGE_SHIFT
-
-#define AMDGPU_PL_GDS		TTM_PL_PRIV0
-#define AMDGPU_PL_GWS		TTM_PL_PRIV1
-#define AMDGPU_PL_OA		TTM_PL_PRIV2
-
-#define AMDGPU_PL_FLAG_GDS		TTM_PL_FLAG_PRIV0
-#define AMDGPU_PL_FLAG_GWS		TTM_PL_FLAG_PRIV1
-#define AMDGPU_PL_FLAG_OA		TTM_PL_FLAG_PRIV2
-
 struct amdgpu_ring;
 struct amdgpu_bo;
 
-struct amdgpu_gds_asic_info {
-	uint32_t 	total_size;
-	uint32_t	gfx_partition_size;
-	uint32_t	cs_partition_size;
-};
-
 struct amdgpu_gds {
-	struct amdgpu_gds_asic_info	mem;
-	struct amdgpu_gds_asic_info	gws;
-	struct amdgpu_gds_asic_info	oa;
-	/* At present, GDS, GWS and OA resources for gfx (graphics) 
-	 * is always pre-allocated and available for graphics operation. 
-	 * Such resource is shared between all gfx clients.
-	 * TODO: move this operation to user space
-	 * */
-	struct amdgpu_bo*		gds_gfx_bo;
-	struct amdgpu_bo*		gws_gfx_bo;
-	struct amdgpu_bo*		oa_gfx_bo;
+	uint32_t gds_size;
+	uint32_t gws_size;
+	uint32_t oa_size;
+	uint32_t gds_compute_max_wave_id;
 };
 
 struct amdgpu_gds_reg_offset {

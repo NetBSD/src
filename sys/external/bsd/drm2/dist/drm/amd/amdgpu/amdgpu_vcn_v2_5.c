@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu_vcn_v2_5.c,v 1.1.1.1 2021/12/18 20:11:12 riastradh Exp $	*/
+/*	$NetBSD: amdgpu_vcn_v2_5.c,v 1.2 2021/12/18 23:44:58 riastradh Exp $	*/
 
 /*
  * Copyright 2019 Advanced Micro Devices, Inc.
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdgpu_vcn_v2_5.c,v 1.1.1.1 2021/12/18 20:11:12 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdgpu_vcn_v2_5.c,v 1.2 2021/12/18 23:44:58 riastradh Exp $");
 
 #include <linux/firmware.h>
 

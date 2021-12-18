@@ -1,5 +1,6 @@
-/*	$NetBSD: ttm_module.c,v 1.2 2018/08/27 04:58:37 riastradh Exp $	*/
+/*	$NetBSD: ttm_module.c,v 1.3 2021/12/18 23:45:44 riastradh Exp $	*/
 
+/* SPDX-License-Identifier: GPL-2.0 OR MIT */
 /**************************************************************************
  *
  * Copyright (c) 2006-2009 VMware, Inc., Palo Alto, CA., USA
@@ -31,7 +32,7 @@
  * 	    Jerome Glisse
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ttm_module.c,v 1.2 2018/08/27 04:58:37 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ttm_module.c,v 1.3 2021/12/18 23:45:44 riastradh Exp $");
 
 #include <linux/module.h>
 #include <linux/device.h>

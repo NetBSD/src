@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu_ioc32.c,v 1.2 2018/08/27 04:58:19 riastradh Exp $	*/
+/*	$NetBSD: amdgpu_ioc32.c,v 1.3 2021/12/18 23:44:58 riastradh Exp $	*/
 
 /**
  * \file amdgpu_ioc32.c
@@ -30,12 +30,13 @@
  * IN THE SOFTWARE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdgpu_ioc32.c,v 1.2 2018/08/27 04:58:19 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdgpu_ioc32.c,v 1.3 2021/12/18 23:44:58 riastradh Exp $");
 
 #include <linux/compat.h>
 
-#include <drm/drmP.h>
 #include <drm/amdgpu_drm.h>
+#include <drm/drm_ioctl.h>
+
 #include "amdgpu_drv.h"
 
 long amdgpu_kms_compat_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)

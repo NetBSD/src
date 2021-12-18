@@ -1,4 +1,4 @@
-/*	$NetBSD: qxl_dumb.c,v 1.2 2018/08/27 04:58:35 riastradh Exp $	*/
+/*	$NetBSD: qxl_dumb.c,v 1.3 2021/12/18 23:45:42 riastradh Exp $	*/
 
 /*
  * Copyright 2013 Red Hat Inc.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: qxl_dumb.c,v 1.2 2018/08/27 04:58:35 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: qxl_dumb.c,v 1.3 2021/12/18 23:45:42 riastradh Exp $");
 
 #include "qxl_drv.h"
 #include "qxl_object.h"
@@ -43,6 +43,7 @@ int qxl_mode_dumb_create(struct drm_file *file_priv,
 	int r;
 	struct qxl_surface surf;
 	uint32_t pitch, format;
+
 	pitch = args->width * ((args->bpp + 1) / 8);
 	args->size = pitch * args->height;
 	args->size = ALIGN(args->size, PAGE_SIZE);
@@ -57,17 +58,18 @@ int qxl_mode_dumb_create(struct drm_file *file_priv,
 	default:
 		return -EINVAL;
 	}
-	  
+
 	surf.width = args->width;
 	surf.height = args->height;
 	surf.stride = pitch;
 	surf.format = format;
 	r = qxl_gem_object_create_with_handle(qdev, file_priv,
-					      QXL_GEM_DOMAIN_VRAM,
+					      QXL_GEM_DOMAIN_SURFACE,
 					      args->size, &surf, &qobj,
 					      &handle);
 	if (r)
 		return r;
+	qobj->is_dumb = true;
 	args->pitch = pitch;
 	args->handle = handle;
 	return 0;
@@ -81,11 +83,11 @@ int qxl_mode_dumb_mmap(struct drm_file *file_priv,
 	struct qxl_bo *qobj;
 
 	BUG_ON(!offset_p);
-	gobj = drm_gem_object_lookup(dev, file_priv, handle);
+	gobj = drm_gem_object_lookup(file_priv, handle);
 	if (gobj == NULL)
 		return -ENOENT;
 	qobj = gem_to_qxl_bo(gobj);
 	*offset_p = qxl_bo_mmap_offset(qobj);
-	drm_gem_object_unreference_unlocked(gobj);
+	drm_gem_object_put_unlocked(gobj);
 	return 0;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu_cik_ih.c,v 1.3 2020/02/14 14:34:57 maya Exp $	*/
+/*	$NetBSD: amdgpu_cik_ih.c,v 1.4 2021/12/18 23:44:58 riastradh Exp $	*/
 
 /*
  * Copyright 2012 Advanced Micro Devices, Inc.
@@ -22,10 +22,12 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  *
  */
-#include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdgpu_cik_ih.c,v 1.3 2020/02/14 14:34:57 maya Exp $");
 
-#include "drmP.h"
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: amdgpu_cik_ih.c,v 1.4 2021/12/18 23:44:58 riastradh Exp $");
+
+#include <linux/pci.h>
+
 #include "amdgpu.h"
 #include "amdgpu_ih.h"
 #include "cikd.h"
@@ -108,16 +110,15 @@ static void cik_ih_disable_interrupts(struct amdgpu_device *adev)
  */
 static int cik_ih_irq_init(struct amdgpu_device *adev)
 {
-	int ret = 0;
+	struct amdgpu_ih_ring *ih = &adev->irq.ih;
 	int rb_bufsz;
 	u32 interrupt_cntl, ih_cntl, ih_rb_cntl;
-	u64 wptr_off;
 
 	/* disable irqs */
 	cik_ih_disable_interrupts(adev);
 
 	/* setup interrupt control */
-	WREG32(mmINTERRUPT_CNTL2, adev->dummy_page.addr >> 8);
+	WREG32(mmINTERRUPT_CNTL2, adev->dummy_page_addr >> 8);
 	interrupt_cntl = RREG32(mmINTERRUPT_CNTL);
 	/* INTERRUPT_CNTL__IH_DUMMY_RD_OVERRIDE_MASK=0 - dummy read disabled with msi, enabled without msi
 	 * INTERRUPT_CNTL__IH_DUMMY_RD_OVERRIDE_MASK=1 - dummy read controlled by IH_DUMMY_RD_EN
@@ -137,9 +138,8 @@ static int cik_ih_irq_init(struct amdgpu_device *adev)
 	ih_rb_cntl |= IH_RB_CNTL__WPTR_WRITEBACK_ENABLE_MASK;
 
 	/* set the writeback address whether it's enabled or not */
-	wptr_off = adev->wb.gpu_addr + (adev->irq.ih.wptr_offs * 4);
-	WREG32(mmIH_RB_WPTR_ADDR_LO, lower_32_bits(wptr_off));
-	WREG32(mmIH_RB_WPTR_ADDR_HI, upper_32_bits(wptr_off) & 0xFF);
+	WREG32(mmIH_RB_WPTR_ADDR_LO, lower_32_bits(ih->wptr_addr));
+	WREG32(mmIH_RB_WPTR_ADDR_HI, upper_32_bits(ih->wptr_addr) & 0xFF);
 
 	WREG32(mmIH_RB_CNTL, ih_rb_cntl);
 
@@ -161,7 +161,7 @@ static int cik_ih_irq_init(struct amdgpu_device *adev)
 	/* enable irqs */
 	cik_ih_enable_interrupts(adev);
 
-	return ret;
+	return 0;
 }
 
 /**
@@ -189,11 +189,12 @@ static void cik_ih_irq_disable(struct amdgpu_device *adev)
  * Used by cik_irq_process().
  * Returns the value of the wptr.
  */
-static u32 cik_ih_get_wptr(struct amdgpu_device *adev)
+static u32 cik_ih_get_wptr(struct amdgpu_device *adev,
+			   struct amdgpu_ih_ring *ih)
 {
 	u32 wptr, tmp;
 
-	wptr = le32_to_cpu(adev->wb.wb[adev->irq.ih.wptr_offs]);
+	wptr = le32_to_cpu(*ih->wptr_cpu);
 
 	if (wptr & IH_RB_WPTR__RB_OVERFLOW_MASK) {
 		wptr &= ~IH_RB_WPTR__RB_OVERFLOW_MASK;
@@ -202,13 +203,13 @@ static u32 cik_ih_get_wptr(struct amdgpu_device *adev)
 		 * this should allow us to catchup.
 		 */
 		dev_warn(adev->dev, "IH ring buffer overflow (0x%08X, 0x%08X, 0x%08X)\n",
-			wptr, adev->irq.ih.rptr, (wptr + 16) & adev->irq.ih.ptr_mask);
-		adev->irq.ih.rptr = (wptr + 16) & adev->irq.ih.ptr_mask;
+			 wptr, ih->rptr, (wptr + 16) & ih->ptr_mask);
+		ih->rptr = (wptr + 16) & ih->ptr_mask;
 		tmp = RREG32(mmIH_RB_CNTL);
 		tmp |= IH_RB_CNTL__WPTR_OVERFLOW_CLEAR_MASK;
 		WREG32(mmIH_RB_CNTL, tmp);
 	}
-	return (wptr & adev->irq.ih.ptr_mask);
+	return (wptr & ih->ptr_mask);
 }
 
 /*        CIK IV Ring
@@ -243,25 +244,27 @@ static u32 cik_ih_get_wptr(struct amdgpu_device *adev)
  * position and also advance the position.
  */
 static void cik_ih_decode_iv(struct amdgpu_device *adev,
+			     struct amdgpu_ih_ring *ih,
 			     struct amdgpu_iv_entry *entry)
 {
 	/* wptr/rptr are in bytes! */
-	u32 ring_index = adev->irq.ih.rptr >> 2;
+	u32 ring_index = ih->rptr >> 2;
 	uint32_t dw[4];
-	
-	dw[0] = le32_to_cpu(adev->irq.ih.ring[ring_index + 0]);
-	dw[1] = le32_to_cpu(adev->irq.ih.ring[ring_index + 1]);
-	dw[2] = le32_to_cpu(adev->irq.ih.ring[ring_index + 2]);
-	dw[3] = le32_to_cpu(adev->irq.ih.ring[ring_index + 3]);
 
+	dw[0] = le32_to_cpu(ih->ring[ring_index + 0]);
+	dw[1] = le32_to_cpu(ih->ring[ring_index + 1]);
+	dw[2] = le32_to_cpu(ih->ring[ring_index + 2]);
+	dw[3] = le32_to_cpu(ih->ring[ring_index + 3]);
+
+	entry->client_id = AMDGPU_IRQ_CLIENTID_LEGACY;
 	entry->src_id = dw[0] & 0xff;
-	entry->src_data = dw[1] & 0xfffffff;
+	entry->src_data[0] = dw[1] & 0xfffffff;
 	entry->ring_id = dw[2] & 0xff;
-	entry->vm_id = (dw[2] >> 8) & 0xff;
-	entry->pas_id = (dw[2] >> 16) & 0xffff;
+	entry->vmid = (dw[2] >> 8) & 0xff;
+	entry->pasid = (dw[2] >> 16) & 0xffff;
 
 	/* wptr/rptr are in bytes! */
-	adev->irq.ih.rptr += 16;
+	ih->rptr += 16;
 }
 
 /**
@@ -271,14 +274,20 @@ static void cik_ih_decode_iv(struct amdgpu_device *adev,
  *
  * Set the IH ring buffer rptr.
  */
-static void cik_ih_set_rptr(struct amdgpu_device *adev)
+static void cik_ih_set_rptr(struct amdgpu_device *adev,
+			    struct amdgpu_ih_ring *ih)
 {
-	WREG32(mmIH_RB_RPTR, adev->irq.ih.rptr);
+	WREG32(mmIH_RB_RPTR, ih->rptr);
 }
 
 static int cik_ih_early_init(void *handle)
 {
 	struct amdgpu_device *adev = (struct amdgpu_device *)handle;
+	int ret;
+
+	ret = amdgpu_irq_add_domain(adev);
+	if (ret)
+		return ret;
 
 	cik_ih_set_interrupt_funcs(adev);
 
@@ -290,7 +299,7 @@ static int cik_ih_sw_init(void *handle)
 	int r;
 	struct amdgpu_device *adev = (struct amdgpu_device *)handle;
 
-	r = amdgpu_ih_ring_init(adev, 64 * 1024, false);
+	r = amdgpu_ih_ring_init(adev, &adev->irq.ih, 64 * 1024, false);
 	if (r)
 		return r;
 
@@ -304,7 +313,8 @@ static int cik_ih_sw_fini(void *handle)
 	struct amdgpu_device *adev = (struct amdgpu_device *)handle;
 
 	amdgpu_irq_fini(adev);
-	amdgpu_ih_ring_fini(adev);
+	amdgpu_ih_ring_fini(adev, &adev->irq.ih);
+	amdgpu_irq_remove_domain(adev);
 
 	return 0;
 }
@@ -371,35 +381,6 @@ static int cik_ih_wait_for_idle(void *handle)
 	return -ETIMEDOUT;
 }
 
-static void cik_ih_print_status(void *handle)
-{
-	struct amdgpu_device *adev = (struct amdgpu_device *)handle;
-
-	dev_info(adev->dev, "CIK IH registers\n");
-	dev_info(adev->dev, "  SRBM_STATUS=0x%08X\n",
-		RREG32(mmSRBM_STATUS));
-	dev_info(adev->dev, "  SRBM_STATUS2=0x%08X\n",
-		RREG32(mmSRBM_STATUS2));
-	dev_info(adev->dev, "  INTERRUPT_CNTL=0x%08X\n",
-		 RREG32(mmINTERRUPT_CNTL));
-	dev_info(adev->dev, "  INTERRUPT_CNTL2=0x%08X\n",
-		 RREG32(mmINTERRUPT_CNTL2));
-	dev_info(adev->dev, "  IH_CNTL=0x%08X\n",
-		 RREG32(mmIH_CNTL));
-	dev_info(adev->dev, "  IH_RB_CNTL=0x%08X\n",
-		 RREG32(mmIH_RB_CNTL));
-	dev_info(adev->dev, "  IH_RB_BASE=0x%08X\n",
-		 RREG32(mmIH_RB_BASE));
-	dev_info(adev->dev, "  IH_RB_WPTR_ADDR_LO=0x%08X\n",
-		 RREG32(mmIH_RB_WPTR_ADDR_LO));
-	dev_info(adev->dev, "  IH_RB_WPTR_ADDR_HI=0x%08X\n",
-		 RREG32(mmIH_RB_WPTR_ADDR_HI));
-	dev_info(adev->dev, "  IH_RB_RPTR=0x%08X\n",
-		 RREG32(mmIH_RB_RPTR));
-	dev_info(adev->dev, "  IH_RB_WPTR=0x%08X\n",
-		 RREG32(mmIH_RB_WPTR));
-}
-
 static int cik_ih_soft_reset(void *handle)
 {
 	struct amdgpu_device *adev = (struct amdgpu_device *)handle;
@@ -411,8 +392,6 @@ static int cik_ih_soft_reset(void *handle)
 		srbm_soft_reset |= SRBM_SOFT_RESET__SOFT_RESET_IH_MASK;
 
 	if (srbm_soft_reset) {
-		cik_ih_print_status((void *)adev);
-
 		tmp = RREG32(mmSRBM_SOFT_RESET);
 		tmp |= srbm_soft_reset;
 		dev_info(adev->dev, "SRBM_SOFT_RESET=0x%08X\n", tmp);
@@ -427,8 +406,6 @@ static int cik_ih_soft_reset(void *handle)
 
 		/* Wait a little for things to settle down */
 		udelay(50);
-
-		cik_ih_print_status((void *)adev);
 	}
 
 	return 0;
@@ -446,7 +423,8 @@ static int cik_ih_set_powergating_state(void *handle,
 	return 0;
 }
 
-const struct amd_ip_funcs cik_ih_ip_funcs = {
+static const struct amd_ip_funcs cik_ih_ip_funcs = {
+	.name = "cik_ih",
 	.early_init = cik_ih_early_init,
 	.late_init = NULL,
 	.sw_init = cik_ih_sw_init,
@@ -458,7 +436,6 @@ const struct amd_ip_funcs cik_ih_ip_funcs = {
 	.is_idle = cik_ih_is_idle,
 	.wait_for_idle = cik_ih_wait_for_idle,
 	.soft_reset = cik_ih_soft_reset,
-	.print_status = cik_ih_print_status,
 	.set_clockgating_state = cik_ih_set_clockgating_state,
 	.set_powergating_state = cik_ih_set_powergating_state,
 };
@@ -471,6 +448,14 @@ static const struct amdgpu_ih_funcs cik_ih_funcs = {
 
 static void cik_ih_set_interrupt_funcs(struct amdgpu_device *adev)
 {
-	if (adev->irq.ih_funcs == NULL)
-		adev->irq.ih_funcs = &cik_ih_funcs;
+	adev->irq.ih_funcs = &cik_ih_funcs;
 }
+
+const struct amdgpu_ip_block_version cik_ih_ip_block =
+{
+	.type = AMD_IP_BLOCK_TYPE_IH,
+	.major = 2,
+	.minor = 0,
+	.rev = 0,
+	.funcs = &cik_ih_ip_funcs,
+};

@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_nvkm_subdev_mc_g98.c,v 1.2 2018/08/27 04:58:34 riastradh Exp $	*/
+/*	$NetBSD: nouveau_nvkm_subdev_mc_g98.c,v 1.3 2021/12/18 23:45:40 riastradh Exp $	*/
 
 /*
  * Copyright 2012 Red Hat Inc.
@@ -24,28 +24,35 @@
  * Authors: Ben Skeggs
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_subdev_mc_g98.c,v 1.2 2018/08/27 04:58:34 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_subdev_mc_g98.c,v 1.3 2021/12/18 23:45:40 riastradh Exp $");
 
 #include "priv.h"
 
-static const struct nvkm_mc_intr
-g98_mc_intr[] = {
-	{ 0x04000000, NVKM_ENGINE_DISP },  /* DISP first, so pageflip timestamps work */
-	{ 0x00000001, NVKM_ENGINE_MSPPP },
+static const struct nvkm_mc_map
+g98_mc_reset[] = {
+	{ 0x04008000, NVKM_ENGINE_MSVLD },
+	{ 0x02004000, NVKM_ENGINE_SEC },
+	{ 0x01020000, NVKM_ENGINE_MSPDEC },
+	{ 0x00400002, NVKM_ENGINE_MSPPP },
+	{ 0x00201000, NVKM_ENGINE_GR },
 	{ 0x00000100, NVKM_ENGINE_FIFO },
-	{ 0x00001000, NVKM_ENGINE_GR },
-	{ 0x00004000, NVKM_ENGINE_SEC },	/* NV84:NVA3 */
-	{ 0x00008000, NVKM_ENGINE_MSVLD },
+	{}
+};
+
+static const struct nvkm_mc_map
+g98_mc_intr[] = {
+	{ 0x04000000, NVKM_ENGINE_DISP },
 	{ 0x00020000, NVKM_ENGINE_MSPDEC },
-	{ 0x00040000, NVKM_SUBDEV_PMU },	/* NVA3:NVC0 */
-	{ 0x00080000, NVKM_SUBDEV_THERM },	/* NVA3:NVC0 */
-	{ 0x00100000, NVKM_SUBDEV_TIMER },
-	{ 0x00200000, NVKM_SUBDEV_GPIO },	/* PMGR->GPIO */
-	{ 0x00200000, NVKM_SUBDEV_I2C }, 	/* PMGR->I2C/AUX */
-	{ 0x00400000, NVKM_ENGINE_CE0 },	/* NVA3-     */
+	{ 0x00008000, NVKM_ENGINE_MSVLD },
+	{ 0x00004000, NVKM_ENGINE_SEC },
+	{ 0x00001000, NVKM_ENGINE_GR },
+	{ 0x00000100, NVKM_ENGINE_FIFO },
+	{ 0x00000001, NVKM_ENGINE_MSPPP },
+	{ 0x0002d101, NVKM_SUBDEV_FB },
 	{ 0x10000000, NVKM_SUBDEV_BUS },
-	{ 0x80000000, NVKM_ENGINE_SW },
-	{ 0x0042d101, NVKM_SUBDEV_FB },
+	{ 0x00200000, NVKM_SUBDEV_GPIO },
+	{ 0x00200000, NVKM_SUBDEV_I2C },
+	{ 0x00100000, NVKM_SUBDEV_TIMER },
 	{},
 };
 
@@ -55,7 +62,8 @@ g98_mc = {
 	.intr = g98_mc_intr,
 	.intr_unarm = nv04_mc_intr_unarm,
 	.intr_rearm = nv04_mc_intr_rearm,
-	.intr_mask = nv04_mc_intr_mask,
+	.intr_stat = nv04_mc_intr_stat,
+	.reset = g98_mc_reset,
 };
 
 int

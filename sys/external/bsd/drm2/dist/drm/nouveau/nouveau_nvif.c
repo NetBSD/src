@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_nvif.c,v 1.5 2018/09/09 03:10:03 pgoyette Exp $	*/
+/*	$NetBSD: nouveau_nvif.c,v 1.6 2021/12/18 23:45:32 riastradh Exp $	*/
 
 /*
  * Copyright 2014 Red Hat Inc.
@@ -29,7 +29,7 @@
  ******************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_nvif.c,v 1.5 2018/09/09 03:10:03 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_nvif.c,v 1.6 2021/12/18 23:45:32 riastradh Exp $");
 
 #include <core/client.h>
 #include <core/notify.h>
@@ -41,7 +41,7 @@ __KERNEL_RCSID(0, "$NetBSD: nouveau_nvif.c,v 1.5 2018/09/09 03:10:03 pgoyette Ex
 #include <nvif/event.h>
 #include <nvif/ioctl.h>
 
-#include "nouveau_drm.h"
+#include "nouveau_drv.h"
 #include "nouveau_usif.h"
 
 #ifdef __NetBSD__
@@ -121,20 +121,15 @@ nvkm_client_ioctl(void *priv, bool super, void *data, u32 size, void **hack)
 static int
 nvkm_client_resume(void *priv)
 {
-	return nvkm_client_init(priv);
+	struct nvkm_client *client = priv;
+	return nvkm_object_init(&client->object);
 }
 
 static int
 nvkm_client_suspend(void *priv)
 {
-	return nvkm_client_fini(priv, true);
-}
-
-static void
-nvkm_client_driver_fini(void *priv)
-{
 	struct nvkm_client *client = priv;
-	nvkm_client_del(&client);
+	return nvkm_object_fini(&client->object, true);
 }
 
 static int
@@ -169,23 +164,14 @@ static int
 nvkm_client_driver_init(const char *name, u64 device, const char *cfg,
 			const char *dbg, void **ppriv)
 {
-	struct nvkm_client *client;
-	int ret;
-
-	ret = nvkm_client_new(name, device, cfg, dbg, &client);
-	*ppriv = client;
-	if (ret)
-		return ret;
-
-	client->ntfy = nvkm_client_ntfy;
-	return 0;
+	return nvkm_client_new(name, device, cfg, dbg, nvkm_client_ntfy,
+			       (struct nvkm_client **)ppriv);
 }
 
 const struct nvif_driver
 nvif_driver_nvkm = {
 	.name = "nvkm",
 	.init = nvkm_client_driver_init,
-	.fini = nvkm_client_driver_fini,
 	.suspend = nvkm_client_suspend,
 	.resume = nvkm_client_resume,
 	.ioctl = nvkm_client_ioctl,

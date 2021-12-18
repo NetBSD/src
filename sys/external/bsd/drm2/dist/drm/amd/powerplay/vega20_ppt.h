@@ -1,4 +1,4 @@
-/*	$NetBSD: vega20_ppt.h,v 1.1.1.1 2021/12/18 20:15:18 riastradh Exp $	*/
+/*	$NetBSD: vega20_ppt.h,v 1.2 2021/12/18 23:45:26 riastradh Exp $	*/
 
 /*
  * Copyright 2019 Advanced Micro Devices, Inc.

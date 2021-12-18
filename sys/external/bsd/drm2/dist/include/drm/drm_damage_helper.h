@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_damage_helper.h,v 1.1.1.1 2021/12/18 20:15:56 riastradh Exp $	*/
+/*	$NetBSD: drm_damage_helper.h,v 1.2 2021/12/18 23:45:45 riastradh Exp $	*/
 
 /* SPDX-License-Identifier: GPL-2.0 OR MIT */
 /**************************************************************************

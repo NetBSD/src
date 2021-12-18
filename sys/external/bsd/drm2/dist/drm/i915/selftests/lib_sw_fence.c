@@ -1,4 +1,4 @@
-/*	$NetBSD: lib_sw_fence.c,v 1.1.1.1 2021/12/18 20:15:35 riastradh Exp $	*/
+/*	$NetBSD: lib_sw_fence.c,v 1.2 2021/12/18 23:45:31 riastradh Exp $	*/
 
 /*
  * Copyright © 2017 Intel Corporation
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lib_sw_fence.c,v 1.1.1.1 2021/12/18 20:15:35 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lib_sw_fence.c,v 1.2 2021/12/18 23:45:31 riastradh Exp $");
 
 #include "lib_sw_fence.h"
 

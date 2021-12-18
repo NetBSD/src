@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_mm.c,v 1.1.1.1 2021/12/18 20:15:25 riastradh Exp $	*/
+/*	$NetBSD: i915_mm.c,v 1.2 2021/12/18 23:45:28 riastradh Exp $	*/
 
 /*
  * Copyright © 2014 Intel Corporation
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_mm.c,v 1.1.1.1 2021/12/18 20:15:25 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_mm.c,v 1.2 2021/12/18 23:45:28 riastradh Exp $");
 
 #include <linux/mm.h>
 #include <linux/io-mapping.h>

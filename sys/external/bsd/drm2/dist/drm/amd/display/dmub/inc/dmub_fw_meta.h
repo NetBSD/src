@@ -1,4 +1,4 @@
-/*	$NetBSD: dmub_fw_meta.h,v 1.1.1.1 2021/12/18 20:11:25 riastradh Exp $	*/
+/*	$NetBSD: dmub_fw_meta.h,v 1.2 2021/12/18 23:45:06 riastradh Exp $	*/
 
 /*
  * Copyright 2019 Advanced Micro Devices, Inc.

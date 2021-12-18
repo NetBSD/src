@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_nvkm_engine_msppp_gt215.c,v 1.2 2018/08/27 04:58:32 riastradh Exp $	*/
+/*	$NetBSD: nouveau_nvkm_engine_msppp_gt215.c,v 1.3 2021/12/18 23:45:36 riastradh Exp $	*/
 
 /*
  * Copyright 2012 Red Hat Inc.
@@ -24,7 +24,7 @@
  * Authors: Ben Skeggs, Maarten Lankhorst, Ilia Mirkin
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_engine_msppp_gt215.c,v 1.2 2018/08/27 04:58:32 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_engine_msppp_gt215.c,v 1.3 2021/12/18 23:45:36 riastradh Exp $");
 
 #include "priv.h"
 
@@ -32,7 +32,6 @@ __KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_engine_msppp_gt215.c,v 1.2 2018/08/27 0
 
 static const struct nvkm_falcon_func
 gt215_msppp = {
-	.pmc_enable = 0x00400002,
 	.init = g98_msppp_init,
 	.sclass = {
 		{ -1, -1, GT212_MSPPP },

@@ -1,4 +1,4 @@
-/*	$NetBSD: gpio_service.h,v 1.1.1.1 2021/12/18 20:11:24 riastradh Exp $	*/
+/*	$NetBSD: gpio_service.h,v 1.2 2021/12/18 23:45:04 riastradh Exp $	*/
 
 /*
  * Copyright 2012-15 Advanced Micro Devices, Inc.

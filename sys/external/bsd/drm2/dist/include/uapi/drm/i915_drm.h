@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_drm.h,v 1.1.1.1 2021/12/18 20:15:58 riastradh Exp $	*/
+/*	$NetBSD: i915_drm.h,v 1.2 2021/12/18 23:45:46 riastradh Exp $	*/
 
 /*
  * Copyright 2003 Tungsten Graphics, Inc., Cedar Park, Texas.

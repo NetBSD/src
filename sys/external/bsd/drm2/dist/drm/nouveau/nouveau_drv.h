@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_drv.h,v 1.1.1.1 2021/12/18 20:15:35 riastradh Exp $	*/
+/*	$NetBSD: nouveau_drv.h,v 1.2 2021/12/18 23:45:32 riastradh Exp $	*/
 
 /* SPDX-License-Identifier: MIT */
 #ifndef __NOUVEAU_DRV_H__
@@ -66,6 +66,12 @@
 
 struct nouveau_channel;
 struct platform_device;
+
+#ifdef _LP64
+#define DRM_FILE_PAGE_OFFSET (0x100000000ULL >> PAGE_SHIFT)
+#else
+#define DRM_FILE_PAGE_OFFSET (0xa0000000UL >> PAGE_SHIFT)
+#endif
 
 #include "nouveau_fence.h"
 #include "nouveau_bios.h"
@@ -235,8 +241,13 @@ nouveau_drm_use_coherent_gpu_mapping(struct nouveau_drm *drm)
 	return !(mmu->type[drm->ttm.type_host[0]].type & NVIF_MEM_UNCACHED);
 }
 
+#ifdef __NetBSD__
+int nouveau_pmops_suspend(struct drm_device *);
+int nouveau_pmops_resume(struct drm_device *);
+#else
 int nouveau_pmops_suspend(struct device *);
 int nouveau_pmops_resume(struct device *);
+#endif
 bool nouveau_pmops_runtime(void);
 
 #include <nvkm/core/tegra.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: firmware.h,v 1.1.1.1 2021/12/18 20:23:00 riastradh Exp $	*/
+/*	$NetBSD: firmware.h,v 1.2 2021/12/18 23:45:33 riastradh Exp $	*/
 
 /* SPDX-License-Identifier: MIT */
 #ifndef __NVKM_FIRMWARE_H__

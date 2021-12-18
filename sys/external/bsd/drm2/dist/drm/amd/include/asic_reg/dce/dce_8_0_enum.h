@@ -1,4 +1,4 @@
-/*	$NetBSD: dce_8_0_enum.h,v 1.1.1.1 2021/12/18 20:12:02 riastradh Exp $	*/
+/*	$NetBSD: dce_8_0_enum.h,v 1.2 2021/12/18 23:45:11 riastradh Exp $	*/
 
 /*
  * DCE_8_0 Register documentation

@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_nvkm_engine_fifo_dmanv40.c,v 1.2 2018/08/27 04:58:31 riastradh Exp $	*/
+/*	$NetBSD: nouveau_nvkm_engine_fifo_dmanv40.c,v 1.3 2021/12/18 23:45:35 riastradh Exp $	*/
 
 /*
  * Copyright 2012 Red Hat Inc.
@@ -24,7 +24,7 @@
  * Authors: Ben Skeggs
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_engine_fifo_dmanv40.c,v 1.2 2018/08/27 04:58:31 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_engine_fifo_dmanv40.c,v 1.3 2021/12/18 23:45:35 riastradh Exp $");
 
 #include "channv04.h"
 #include "regsnv04.h"
@@ -34,6 +34,7 @@ __KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_engine_fifo_dmanv40.c,v 1.2 2018/08/27 
 #include <subdev/instmem.h>
 
 #include <nvif/class.h>
+#include <nvif/cl006b.h>
 #include <nvif/unpack.h>
 
 static bool
@@ -48,6 +49,8 @@ nv40_fifo_dma_engine(struct nvkm_engine *engine, u32 *reg, u32 *ctx)
 		*ctx = 0x38;
 		return true;
 	case NVKM_ENGINE_MPEG:
+		if (engine->subdev.device->chipset < 0x44)
+			return false;
 		*reg = 0x00330c;
 		*ctx = 0x54;
 		return true;
@@ -193,10 +196,10 @@ nv40_fifo_dma_new(struct nvkm_fifo *base, const struct nvkm_oclass *oclass,
 	struct nv04_fifo_chan *chan = NULL;
 	struct nvkm_device *device = fifo->base.engine.subdev.device;
 	struct nvkm_instmem *imem = device->imem;
-	int ret;
+	int ret = -ENOSYS;
 
 	nvif_ioctl(parent, "create channel dma size %d\n", size);
-	if (nvif_unpack(args->v0, 0, 0, false)) {
+	if (!(ret = nvif_unpack(ret, &data, &size, args->v0, 0, 0, false))) {
 		nvif_ioctl(parent, "create channel dma vers %d pushbuf %"PRIx64" "
 				   "offset %08x\n", args->v0.version,
 			   args->v0.pushbuf, args->v0.offset);

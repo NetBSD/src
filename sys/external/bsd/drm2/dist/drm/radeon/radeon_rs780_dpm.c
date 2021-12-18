@@ -1,4 +1,4 @@
-/*	$NetBSD: radeon_rs780_dpm.c,v 1.1.1.1 2021/12/18 20:15:50 riastradh Exp $	*/
+/*	$NetBSD: radeon_rs780_dpm.c,v 1.2 2021/12/18 23:45:43 riastradh Exp $	*/
 
 /*
  * Copyright 2011 Advanced Micro Devices, Inc.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radeon_rs780_dpm.c,v 1.1.1.1 2021/12/18 20:15:50 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radeon_rs780_dpm.c,v 1.2 2021/12/18 23:45:43 riastradh Exp $");
 
 #include <linux/pci.h>
 #include <linux/seq_file.h>
@@ -984,6 +984,7 @@ u32 rs780_dpm_get_mclk(struct radeon_device *rdev, bool low)
 	return pi->bootup_uma_clk;
 }
 
+#ifdef CONFIG_DEBUG_FS
 void rs780_dpm_debugfs_print_current_performance_level(struct radeon_device *rdev,
 						       struct seq_file *m)
 {
@@ -1007,6 +1008,7 @@ void rs780_dpm_debugfs_print_current_performance_level(struct radeon_device *rde
 		seq_printf(m, "power level 1    sclk: %u vddc_index: %d\n",
 			   ps->sclk_high, ps->max_voltage);
 }
+#endif
 
 /* get the current sclk in 10 khz units */
 u32 rs780_dpm_get_current_sclk(struct radeon_device *rdev)

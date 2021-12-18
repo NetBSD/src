@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_nv17_fence.c,v 1.2 2018/08/27 04:58:24 riastradh Exp $	*/
+/*	$NetBSD: nouveau_nv17_fence.c,v 1.3 2021/12/18 23:45:32 riastradh Exp $	*/
 
 /*
  * Copyright 2012 Red Hat Inc.
@@ -25,12 +25,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_nv17_fence.c,v 1.2 2018/08/27 04:58:24 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_nv17_fence.c,v 1.3 2021/12/18 23:45:32 riastradh Exp $");
 
 #include <nvif/os.h>
 #include <nvif/class.h>
+#include <nvif/cl0002.h>
 
-#include "nouveau_drm.h"
+#include "nouveau_drv.h"
 #include "nouveau_dma.h"
 #include "nv10_fence.h"
 
@@ -80,9 +81,9 @@ nv17_fence_context_new(struct nouveau_channel *chan)
 {
 	struct nv10_fence_priv *priv = chan->drm->fence;
 	struct nv10_fence_chan *fctx;
-	struct ttm_mem_reg *mem = &priv->bo->bo.mem;
-	u32 start = mem->start * PAGE_SIZE;
-	u32 limit = start + mem->size - 1;
+	struct ttm_mem_reg *reg = &priv->bo->bo.mem;
+	u32 start = reg->start * PAGE_SIZE;
+	u32 limit = start + reg->size - 1;
 	int ret = 0;
 
 	fctx = chan->fence = kzalloc(sizeof(*fctx), GFP_KERNEL);
@@ -129,11 +130,9 @@ nv17_fence_create(struct nouveau_drm *drm)
 	priv->base.resume = nv17_fence_resume;
 	priv->base.context_new = nv17_fence_context_new;
 	priv->base.context_del = nv10_fence_context_del;
-	priv->base.contexts = 31;
-	priv->base.context_base = fence_context_alloc(priv->base.contexts);
 	spin_lock_init(&priv->lock);
 
-	ret = nouveau_bo_new(drm->dev, 4096, 0x1000, TTM_PL_FLAG_VRAM,
+	ret = nouveau_bo_new(&drm->client, 4096, 0x1000, TTM_PL_FLAG_VRAM,
 			     0, 0x0000, NULL, NULL, &priv->bo);
 	if (!ret) {
 		ret = nouveau_bo_pin(priv->bo, TTM_PL_FLAG_VRAM, false);

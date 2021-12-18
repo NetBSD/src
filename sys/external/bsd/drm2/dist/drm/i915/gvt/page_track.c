@@ -1,4 +1,4 @@
-/*	$NetBSD: page_track.c,v 1.1.1.1 2021/12/18 20:15:34 riastradh Exp $	*/
+/*	$NetBSD: page_track.c,v 1.2 2021/12/18 23:45:31 riastradh Exp $	*/
 
 /*
  * Copyright(c) 2011-2017 Intel Corporation. All rights reserved.
@@ -23,7 +23,7 @@
  * SOFTWARE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: page_track.c,v 1.1.1.1 2021/12/18 20:15:34 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: page_track.c,v 1.2 2021/12/18 23:45:31 riastradh Exp $");
 
 #include "i915_drv.h"
 #include "gvt.h"

@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_dispnv04_dfp.c,v 1.2 2018/08/27 04:58:29 riastradh Exp $	*/
+/*	$NetBSD: nouveau_dispnv04_dfp.c,v 1.3 2021/12/18 23:45:32 riastradh Exp $	*/
 
 /*
  * Copyright 2003 NVIDIA, Corporation
@@ -27,12 +27,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_dispnv04_dfp.c,v 1.2 2018/08/27 04:58:29 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_dispnv04_dfp.c,v 1.3 2021/12/18 23:45:32 riastradh Exp $");
 
-#include <drm/drmP.h>
 #include <drm/drm_crtc_helper.h>
+#include <drm/drm_fourcc.h>
 
-#include "nouveau_drm.h"
+#include "nouveau_drv.h"
 #include "nouveau_reg.h"
 #include "nouveau_encoder.h"
 #include "nouveau_connector.h"
@@ -286,7 +286,7 @@ static void nv04_dfp_mode_set(struct drm_encoder *encoder,
 			      struct drm_display_mode *adjusted_mode)
 {
 	struct drm_device *dev = encoder->dev;
-	struct nvif_object *device = &nouveau_drm(dev)->device.object;
+	struct nvif_object *device = &nouveau_drm(dev)->client.device.object;
 	struct nouveau_drm *drm = nouveau_drm(dev);
 	struct nouveau_crtc *nv_crtc = nouveau_crtc(encoder->crtc);
 	struct nv04_crtc_reg *regp = &nv04_display(dev)->mode_reg.crtc_reg[nv_crtc->index];
@@ -295,6 +295,7 @@ static void nv04_dfp_mode_set(struct drm_encoder *encoder,
 	struct nouveau_encoder *nv_encoder = nouveau_encoder(encoder);
 	struct drm_display_mode *output_mode = &nv_encoder->mode;
 	struct drm_connector *connector = &nv_connector->base;
+	const struct drm_framebuffer *fb = encoder->crtc->primary->fb;
 	uint32_t mode_ratio, panel_ratio;
 
 	NV_DEBUG(drm, "Output mode on CRTC %d:\n", nv_crtc->index);
@@ -420,8 +421,8 @@ static void nv04_dfp_mode_set(struct drm_encoder *encoder,
 	/* Output property. */
 	if ((nv_connector->dithering_mode == DITHERING_MODE_ON) ||
 	    (nv_connector->dithering_mode == DITHERING_MODE_AUTO &&
-	     encoder->crtc->primary->fb->depth > connector->display_info.bpc * 3)) {
-		if (drm->device.info.chipset == 0x11)
+	     fb->format->depth > connector->display_info.bpc * 3)) {
+		if (drm->client.device.info.chipset == 0x11)
 			regp->dither = savep->dither | 0x00010000;
 		else {
 			int i;
@@ -432,7 +433,7 @@ static void nv04_dfp_mode_set(struct drm_encoder *encoder,
 			}
 		}
 	} else {
-		if (drm->device.info.chipset != 0x11) {
+		if (drm->client.device.info.chipset != 0x11) {
 			/* reset them */
 			int i;
 			for (i = 0; i < 3; i++) {
@@ -468,7 +469,7 @@ static void nv04_dfp_commit(struct drm_encoder *encoder)
 		NVReadRAMDAC(dev, head, NV_PRAMDAC_FP_TG_CONTROL);
 
 	/* This could use refinement for flatpanels, but it should work this way */
-	if (drm->device.info.chipset < 0x44)
+	if (drm->client.device.info.chipset < 0x44)
 		NVWriteRAMDAC(dev, 0, NV_PRAMDAC_TEST_CONTROL + nv04_dac_output_offset(encoder), 0xf0000000);
 	else
 		NVWriteRAMDAC(dev, 0, NV_PRAMDAC_TEST_CONTROL + nv04_dac_output_offset(encoder), 0x00100000);
@@ -490,7 +491,7 @@ static void nv04_dfp_update_backlight(struct drm_encoder *encoder, int mode)
 {
 #ifdef __powerpc__
 	struct drm_device *dev = encoder->dev;
-	struct nvif_object *device = &nouveau_drm(dev)->device.object;
+	struct nvif_object *device = &nouveau_drm(dev)->client.device.object;
 
 	/* BIOS scripts usually take care of the backlight, thanks
 	 * Apple for your consistency.
@@ -628,7 +629,7 @@ static void nv04_tmds_slave_init(struct drm_encoder *encoder)
 	struct drm_device *dev = encoder->dev;
 	struct dcb_output *dcb = nouveau_encoder(encoder)->dcb;
 	struct nouveau_drm *drm = nouveau_drm(dev);
-	struct nvkm_i2c *i2c = nvxx_i2c(&drm->device);
+	struct nvkm_i2c *i2c = nvxx_i2c(&drm->client.device);
 	struct nvkm_i2c_bus *bus = nvkm_i2c_bus_find(i2c, NVKM_I2C_BUS_PRI);
 	struct nvkm_i2c_bus_probe info[] = {
 		{
@@ -657,8 +658,6 @@ static void nv04_tmds_slave_init(struct drm_encoder *encoder)
 
 static const struct drm_encoder_helper_funcs nv04_lvds_helper_funcs = {
 	.dpms = nv04_lvds_dpms,
-	.save = nv04_dfp_save,
-	.restore = nv04_dfp_restore,
 	.mode_fixup = nv04_dfp_mode_fixup,
 	.prepare = nv04_dfp_prepare,
 	.commit = nv04_dfp_commit,
@@ -668,8 +667,6 @@ static const struct drm_encoder_helper_funcs nv04_lvds_helper_funcs = {
 
 static const struct drm_encoder_helper_funcs nv04_tmds_helper_funcs = {
 	.dpms = nv04_tmds_dpms,
-	.save = nv04_dfp_save,
-	.restore = nv04_dfp_restore,
 	.mode_fixup = nv04_dfp_mode_fixup,
 	.prepare = nv04_dfp_prepare,
 	.commit = nv04_dfp_commit,
@@ -706,12 +703,15 @@ nv04_dfp_create(struct drm_connector *connector, struct dcb_output *entry)
 	if (!nv_encoder)
 		return -ENOMEM;
 
+	nv_encoder->enc_save = nv04_dfp_save;
+	nv_encoder->enc_restore = nv04_dfp_restore;
+
 	encoder = to_drm_encoder(nv_encoder);
 
 	nv_encoder->dcb = entry;
 	nv_encoder->or = ffs(entry->or) - 1;
 
-	drm_encoder_init(connector->dev, encoder, &nv04_dfp_funcs, type);
+	drm_encoder_init(connector->dev, encoder, &nv04_dfp_funcs, type, NULL);
 	drm_encoder_helper_add(encoder, helper);
 
 	encoder->possible_crtcs = entry->heads;
@@ -721,6 +721,6 @@ nv04_dfp_create(struct drm_connector *connector, struct dcb_output *entry)
 	    entry->location != DCB_LOC_ON_CHIP)
 		nv04_tmds_slave_init(encoder);
 
-	drm_mode_connector_attach_encoder(connector, encoder);
+	drm_connector_attach_encoder(connector, encoder);
 	return 0;
 }

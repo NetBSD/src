@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_dma.c,v 1.4 2019/01/27 02:08:42 pgoyette Exp $	*/
+/*	$NetBSD: nouveau_dma.c,v 1.5 2021/12/18 23:45:32 riastradh Exp $	*/
 
 /*
  * Copyright (C) 2007 Ben Skeggs.
@@ -27,10 +27,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_dma.c,v 1.4 2019/01/27 02:08:42 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_dma.c,v 1.5 2021/12/18 23:45:32 riastradh Exp $");
 
-#include "nouveau_drm.h"
+#include "nouveau_drv.h"
 #include "nouveau_dma.h"
+#include "nouveau_vmm.h"
+
+#include <nvif/user.h>
 
 #ifdef __NetBSD__
 #  define	__iomem
@@ -86,26 +89,19 @@ READ_GET(struct nouveau_channel *chan, uint64_t *prev_get, int *timeout)
 			return -EBUSY;
 	}
 
-	if (val < chan->push.vma.offset ||
-	    val > chan->push.vma.offset + (chan->dma.max << 2))
+	if (val < chan->push.addr ||
+	    val > chan->push.addr + (chan->dma.max << 2))
 		return -EINVAL;
 
-	return (val - chan->push.vma.offset) >> 2;
+	return (val - chan->push.addr) >> 2;
 }
 
 void
-nv50_dma_push(struct nouveau_channel *chan, struct nouveau_bo *bo,
-	      int delta, int length)
+nv50_dma_push(struct nouveau_channel *chan, u64 offset, int length)
 {
-	struct nouveau_cli *cli = (void *)chan->user.client;
+	struct nvif_user *user = &chan->drm->client.device.user;
 	struct nouveau_bo *pb = chan->push.buffer;
-	struct nvkm_vma *vma;
 	int ip = (chan->dma.ib_put * 2) + chan->dma.ib_base;
-	u64 offset;
-
-	vma = nouveau_bo_vma_find(bo, cli->vm);
-	BUG_ON(!vma);
-	offset = vma->offset + delta;
 
 	BUG_ON(chan->dma.ib_free < 1);
 
@@ -119,6 +115,8 @@ nv50_dma_push(struct nouveau_channel *chan, struct nouveau_bo *bo,
 	nouveau_bo_rd32(pb, 0);
 
 	nvif_wr32(&chan->user, 0x8c, chan->dma.ib_put);
+	if (user->func && user->func->doorbell)
+		user->func->doorbell(user, chan->token);
 	chan->dma.ib_free--;
 }
 
@@ -135,7 +133,7 @@ nv50_dma_push_wait(struct nouveau_channel *chan, int count)
 		}
 
 		if ((++cnt & 0xff) == 0) {
-			DRM_UDELAY(1);
+			udelay(1);
 			if (cnt > 100000)
 				return -EBUSY;
 		}
@@ -239,7 +237,7 @@ nouveau_dma_wait(struct nouveau_channel *chan, int slots, int size)
 			 * instruct the GPU to jump back to the start right
 			 * after processing the currently pending commands.
 			 */
-			OUT_RING(chan, chan->push.vma.offset | 0x20000000);
+			OUT_RING(chan, chan->push.addr | 0x20000000);
 
 			/* wait for GET to depart from the skips area.
 			 * prevents writing GET==PUT and causing a race

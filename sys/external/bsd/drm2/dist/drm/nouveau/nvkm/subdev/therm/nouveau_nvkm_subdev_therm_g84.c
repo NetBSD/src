@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_nvkm_subdev_therm_g84.c,v 1.2 2018/08/27 04:58:35 riastradh Exp $	*/
+/*	$NetBSD: nouveau_nvkm_subdev_therm_g84.c,v 1.3 2021/12/18 23:45:41 riastradh Exp $	*/
 
 /*
  * Copyright 2012 Red Hat Inc.
@@ -25,7 +25,7 @@
  * 	    Martin Peres
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_subdev_therm_g84.c,v 1.2 2018/08/27 04:58:35 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_subdev_therm_g84.c,v 1.3 2021/12/18 23:45:41 riastradh Exp $");
 
 #include "priv.h"
 
@@ -208,7 +208,7 @@ g84_therm_fini(struct nvkm_therm *therm)
 	nvkm_wr32(device, 0x1100, 0x10000); /* PBUS */
 }
 
-static void
+void
 g84_therm_init(struct nvkm_therm *therm)
 {
 	g84_sensor_setup(therm);

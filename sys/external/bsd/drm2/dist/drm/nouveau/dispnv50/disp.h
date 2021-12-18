@@ -1,4 +1,4 @@
-/*	$NetBSD: disp.h,v 1.1.1.1 2021/12/18 20:15:36 riastradh Exp $	*/
+/*	$NetBSD: disp.h,v 1.2 2021/12/18 23:45:32 riastradh Exp $	*/
 
 #ifndef __NV50_KMS_H__
 #define __NV50_KMS_H__
@@ -69,7 +69,7 @@ struct nv50_dmac {
 	/* Protects against concurrent pushbuf access to this channel, lock is
 	 * grabbed by evo_wait (if the pushbuf reservation is successful) and
 	 * dropped again by evo_kick. */
-	struct mutex lock;
+	struct spinlock lock;
 };
 
 int nv50_dmac_create(struct nvif_device *device, struct nvif_object *disp,

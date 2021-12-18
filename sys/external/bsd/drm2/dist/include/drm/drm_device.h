@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_device.h,v 1.1.1.1 2021/12/18 20:15:56 riastradh Exp $	*/
+/*	$NetBSD: drm_device.h,v 1.2 2021/12/18 23:45:45 riastradh Exp $	*/
 
 #ifndef _DRM_DEVICE_H_
 #define _DRM_DEVICE_H_
@@ -11,6 +11,10 @@
 #include <drm/drm_hashtab.h>
 #include <drm/drm_mode_config.h>
 
+#ifdef __NetBSD__
+#include <dev/sysmon/sysmonvar.h>
+#endif
+
 struct drm_driver;
 struct drm_minor;
 struct drm_master;
@@ -21,8 +25,6 @@ struct drm_local_map;
 struct drm_vma_offset_manager;
 struct drm_vram_mm;
 struct drm_fb_helper;
-
-struct inode;
 
 struct pci_dev;
 struct pci_controller;
@@ -121,7 +123,7 @@ struct drm_device {
 	bool unplugged;
 
 	/** @anon_inode: inode for private address-space */
-	struct inode *anon_inode;
+	void *anon_inode;
 
 	/** @unique: Unique name of the device */
 	char *unique;
@@ -309,6 +311,10 @@ struct drm_device {
 	 * Set by drm_fb_helper_init() and cleared by drm_fb_helper_fini().
 	 */
 	struct drm_fb_helper *fb_helper;
+
+#ifdef __NetBSD__
+	struct sysmon_pswitch sc_monitor_hotplug;
+#endif
 
 	/* Everything below here is for legacy driver, never use! */
 	/* private: */

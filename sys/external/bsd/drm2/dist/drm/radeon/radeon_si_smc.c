@@ -1,4 +1,4 @@
-/*	$NetBSD: radeon_si_smc.c,v 1.2 2019/08/09 06:27:21 msaitoh Exp $	*/
+/*	$NetBSD: radeon_si_smc.c,v 1.3 2021/12/18 23:45:43 riastradh Exp $	*/
 
 /*
  * Copyright 2011 Advanced Micro Devices, Inc.
@@ -25,10 +25,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radeon_si_smc.c,v 1.2 2019/08/09 06:27:21 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radeon_si_smc.c,v 1.3 2021/12/18 23:45:43 riastradh Exp $");
 
 #include <linux/firmware.h>
-#include "drmP.h"
+
 #include "radeon.h"
 #include "sid.h"
 #include "ppsmc.h"

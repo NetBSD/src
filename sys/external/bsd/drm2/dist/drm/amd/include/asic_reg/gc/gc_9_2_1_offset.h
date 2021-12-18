@@ -1,4 +1,4 @@
-/*	$NetBSD: gc_9_2_1_offset.h,v 1.1.1.1 2021/12/18 20:13:02 riastradh Exp $	*/
+/*	$NetBSD: gc_9_2_1_offset.h,v 1.2 2021/12/18 23:45:14 riastradh Exp $	*/
 
 /*
  * Copyright (C) 2017  Advanced Micro Devices, Inc.

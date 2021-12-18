@@ -1,4 +1,4 @@
-/*	$NetBSD: mga_state.c,v 1.2 2018/08/27 04:58:24 riastradh Exp $	*/
+/*	$NetBSD: mga_state.c,v 1.3 2021/12/18 23:45:32 riastradh Exp $	*/
 
 /* mga_state.c -- State support for MGA G200/G400 -*- linux-c -*-
  * Created: Thu Jan 27 02:53:43 2000 by jhartmann@precisioninsight.com
@@ -35,10 +35,8 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mga_state.c,v 1.2 2018/08/27 04:58:24 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mga_state.c,v 1.3 2021/12/18 23:45:32 riastradh Exp $");
 
-#include <drm/drmP.h>
-#include <drm/mga_drm.h>
 #include "mga_drv.h"
 
 /* ================================================================
@@ -1010,7 +1008,7 @@ static int mga_dma_blit(struct drm_device *dev, void *data, struct drm_file *fil
 	return 0;
 }
 
-static int mga_getparam(struct drm_device *dev, void *data, struct drm_file *file_priv)
+int mga_getparam(struct drm_device *dev, void *data, struct drm_file *file_priv)
 {
 	drm_mga_private_t *dev_priv = dev->dev_private;
 	drm_mga_getparam_t *param = data;
@@ -1021,7 +1019,7 @@ static int mga_getparam(struct drm_device *dev, void *data, struct drm_file *fil
 		return -EINVAL;
 	}
 
-	DRM_DEBUG("pid=%d\n", DRM_CURRENTPID);
+	DRM_DEBUG("pid=%d\n", task_pid_nr(current));
 
 	switch (param->param) {
 	case MGA_PARAM_IRQ_NR:
@@ -1053,7 +1051,7 @@ static int mga_set_fence(struct drm_device *dev, void *data, struct drm_file *fi
 		return -EINVAL;
 	}
 
-	DRM_DEBUG("pid=%d\n", DRM_CURRENTPID);
+	DRM_DEBUG("pid=%d\n", task_pid_nr(current));
 
 	/* I would normal do this assignment in the declaration of fence,
 	 * but dev_priv may be NULL.
@@ -1082,7 +1080,7 @@ file_priv)
 		return -EINVAL;
 	}
 
-	DRM_DEBUG("pid=%d\n", DRM_CURRENTPID);
+	DRM_DEBUG("pid=%d\n", task_pid_nr(current));
 
 	mga_driver_fence_wait(dev, fence);
 	return 0;

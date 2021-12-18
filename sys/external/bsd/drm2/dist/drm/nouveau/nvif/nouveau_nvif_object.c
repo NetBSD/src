@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_nvif_object.c,v 1.4 2018/08/27 14:47:53 riastradh Exp $	*/
+/*	$NetBSD: nouveau_nvif_object.c,v 1.5 2021/12/18 23:45:33 riastradh Exp $	*/
 
 /*
  * Copyright 2014 Red Hat Inc.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_nvif_object.c,v 1.4 2018/08/27 14:47:53 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_nvif_object.c,v 1.5 2021/12/18 23:45:33 riastradh Exp $");
 
 #include <nvif/object.h>
 #include <nvif/client.h>
@@ -88,7 +88,7 @@ nvif_object_sclass_get(struct nvif_object *object, struct nvif_sclass **psclass)
 			return ret;
 	}
 
-	*psclass = kzalloc(sizeof(**psclass) * args->sclass.count, GFP_KERNEL);
+	*psclass = kcalloc(args->sclass.count, sizeof(**psclass), GFP_KERNEL);
 	if (*psclass) {
 		for (i = 0; i < args->sclass.count; i++) {
 			(*psclass)[i].oclass = args->sclass.oclass[i].oclass;
@@ -171,35 +171,22 @@ nvif_object_mthd(struct nvif_object *object, u32 mthd, void *data, u32 size)
 }
 
 void
-nvif_object_unmap(struct nvif_object *object)
+nvif_object_unmap_handle(struct nvif_object *object)
 {
-	if (object->map.size) {
-		struct nvif_client *client = object->client;
-		struct {
-			struct nvif_ioctl_v0 ioctl;
-			struct nvif_ioctl_unmap unmap;
-		} args = {
-			.ioctl.type = NVIF_IOCTL_V0_UNMAP,
-		};
+	struct {
+		struct nvif_ioctl_v0 ioctl;
+		struct nvif_ioctl_unmap unmap;
+	} args = {
+		.ioctl.type = NVIF_IOCTL_V0_UNMAP,
+	};
 
-		if (object->map.ptr) {
-			client->driver->unmap(client, object->map.tag,
-						      object->map.handle,
-						      object->map.addr,
-						      object->map.ptr,
-						      object->map.size);
-			object->map.ptr = NULL;
-		}
-
-		nvif_object_ioctl(object, &args, sizeof(args), NULL);
-		object->map.size = 0;
-	}
+	nvif_object_ioctl(object, &args, sizeof(args), NULL);
 }
 
 int
-nvif_object_map(struct nvif_object *object)
+nvif_object_map_handle(struct nvif_object *object, void *argv, u32 argc,
+		       u64 *handle, u64 *length)
 {
-	struct nvif_client *client = object->client;
 	struct {
 		struct nvif_ioctl_v0 ioctl;
 #ifdef __NetBSD__
@@ -207,33 +194,74 @@ nvif_object_map(struct nvif_object *object)
 #else
 		struct nvif_ioctl_map_v0 map;
 #endif
-	} args = {
+	} *args;
+	u32 argn = sizeof(*args) + argc;
+	int ret, maptype;
+
+	if (!(args = kzalloc(argn, GFP_KERNEL)))
+		return -ENOMEM;
 #ifdef __NetBSD__
-		.ioctl.type = NVIF_IOCTL_V0_MAP_NETBSD,
+	args->ioctl.type = NVIF_IOCTL_V0_MAP_NETBSD;
 #else
-		.ioctl.type = NVIF_IOCTL_V0_MAP,
+	args->ioctl.type = NVIF_IOCTL_V0_MAP;
 #endif
-	};
-	int ret = nvif_object_ioctl(object, &args, sizeof(args), NULL);
-	if (ret == 0) {
-		object->map.size = args.map.length;
-#ifdef __NetBSD__
-		object->map.tag = args.map.tag;
-		object->map.addr = args.map.handle;
-		ret = client->driver->map(client, args.map.tag,
-		    args.map.handle, object->map.size, &object->map.handle,
-		    &object->map.ptr);
-		if (ret) {
-			nvif_object_unmap(object);
-			return -ENOMEM;
-		}
-#else
-		object->map.ptr = client->driver->map(client, args.map.handle,
+	memcpy(args->map.data, argv, argc);
+
+	ret = nvif_object_ioctl(object, args, argn, NULL);
+	*handle = args->map.handle;
+	*length = args->map.length;
+	maptype = args->map.type;
+	kfree(args);
+	return ret ? ret : (maptype == NVIF_IOCTL_MAP_V0_IO);
+}
+
+void
+nvif_object_unmap(struct nvif_object *object)
+{
+	struct nvif_client *client = object->client;
+	if (object->map.ptr) {
+		if (object->map.size) {
+			client->driver->unmap(client, object->map.ptr,
 						      object->map.size);
-		if (ret = -ENOMEM, object->map.ptr)
-			return 0;
-		nvif_object_unmap(object);
+			object->map.size = 0;
+		}
+		object->map.ptr = NULL;
+		nvif_object_unmap_handle(object);
+	}
+}
+
+int
+nvif_object_map(struct nvif_object *object, void *argv, u32 argc)
+{
+	struct nvif_client *client = object->client;
+	u64 handle, length;
+	int ret = nvif_object_map_handle(object, argv, argc, &handle, &length);
+	if (ret >= 0) {
+		if (ret) {
+#ifdef __NetBSD__
+			object->map.tag = args.map.tag;
+			object->map.addr = args.map.handle;
+			ret = client->driver->map(client, args.map.tag,
+			    args.map.handle, object->map.size, &object->map.handle,
+			    &object->map.ptr);
+			if (ret) {
+				nvif_object_unmap(object);
+				return -ENOMEM;
+			}
+#else
+			object->map.ptr = client->driver->map(client,
+							      handle,
+							      length);
+			if (ret = -ENOMEM, object->map.ptr) {
+				object->map.size = length;
+				return 0;
+			}
 #endif
+		} else {
+			object->map.ptr = (void *)(unsigned long)handle;
+			return 0;
+		}
+		nvif_object_unmap_handle(object);
 	}
 	return ret;
 }

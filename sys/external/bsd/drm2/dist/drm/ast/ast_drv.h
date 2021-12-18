@@ -1,4 +1,4 @@
-/*	$NetBSD: ast_drv.h,v 1.2 2018/08/27 04:58:23 riastradh Exp $	*/
+/*	$NetBSD: ast_drv.h,v 1.3 2021/12/18 23:45:27 riastradh Exp $	*/
 
 /*
  * Copyright 2012 Red Hat Inc.
@@ -30,18 +30,17 @@
 #ifndef __AST_DRV_H__
 #define __AST_DRV_H__
 
-#include <drm/drm_fb_helper.h>
-
-#include <drm/ttm/ttm_bo_api.h>
-#include <drm/ttm/ttm_bo_driver.h>
-#include <drm/ttm/ttm_placement.h>
-#include <drm/ttm/ttm_memory.h>
-#include <drm/ttm/ttm_module.h>
-
-#include <drm/drm_gem.h>
-
+#include <linux/types.h>
+#include <linux/io.h>
 #include <linux/i2c.h>
 #include <linux/i2c-algo-bit.h>
+
+#include <drm/drm_connector.h>
+#include <drm/drm_crtc.h>
+#include <drm/drm_encoder.h>
+#include <drm/drm_mode.h>
+#include <drm/drm_framebuffer.h>
+#include <drm/drm_fb_helper.h>
 
 #define DRIVER_AUTHOR		"Dave Airlie"
 
@@ -66,6 +65,7 @@ enum ast_chip {
 	AST2150,
 	AST2300,
 	AST2400,
+	AST2500,
 	AST1180,
 };
 
@@ -82,8 +82,26 @@ enum ast_tx_chip {
 #define AST_DRAM_1Gx32   3
 #define AST_DRAM_2Gx16   6
 #define AST_DRAM_4Gx16   7
+#define AST_DRAM_8Gx16   8
 
-struct ast_fbdev;
+
+#define AST_MAX_HWC_WIDTH	64
+#define AST_MAX_HWC_HEIGHT	64
+
+#define AST_HWC_SIZE		(AST_MAX_HWC_WIDTH * AST_MAX_HWC_HEIGHT * 2)
+#define AST_HWC_SIGNATURE_SIZE	32
+
+#define AST_DEFAULT_HWC_NUM	2
+
+/* define for signature structure */
+#define AST_HWC_SIGNATURE_CHECKSUM	0x00
+#define AST_HWC_SIGNATURE_SizeX		0x04
+#define AST_HWC_SIGNATURE_SizeY		0x08
+#define AST_HWC_SIGNATURE_X		0x0C
+#define AST_HWC_SIGNATURE_Y		0x10
+#define AST_HWC_SIGNATURE_HOTSPOTX	0x14
+#define AST_HWC_SIGNATURE_HOTSPOTY	0x18
+
 
 struct ast_private {
 	struct drm_device *dev;
@@ -98,22 +116,16 @@ struct ast_private {
 	uint32_t mclk;
 	uint32_t vram_size;
 
-	struct ast_fbdev *fbdev;
-
 	int fb_mtrr;
 
 	struct {
-		struct drm_global_reference mem_global_ref;
-		struct ttm_bo_global_ref bo_global_ref;
-		struct ttm_bo_device bdev;
-	} ttm;
+		struct drm_gem_vram_object *gbo[AST_DEFAULT_HWC_NUM];
+		unsigned int next_index;
+	} cursor;
 
-	struct drm_gem_object *cursor_cache;
-	uint64_t cursor_cache_gpu_addr;
-	/* Acces to this cache is protected by the crtc->mutex of the only crtc
-	 * we have. */
-	struct ttm_bo_kmap_obj cache_kmap;
-	int next_cursor;
+	struct drm_plane primary_plane;
+	struct drm_plane cursor_plane;
+
 	bool support_wide_screen;
 	enum {
 		ast_use_p2a,
@@ -128,9 +140,7 @@ struct ast_private {
 };
 
 int ast_driver_load(struct drm_device *dev, unsigned long flags);
-int ast_driver_unload(struct drm_device *dev);
-
-struct ast_gem_object;
+void ast_driver_unload(struct drm_device *dev);
 
 #define AST_IO_AR_PORT_WRITE		(0x40)
 #define AST_IO_MISC_PORT_WRITE		(0x42)
@@ -214,23 +224,6 @@ static inline void ast_open_key(struct ast_private *ast)
 
 #define AST_VIDMEM_DEFAULT_SIZE AST_VIDMEM_SIZE_8M
 
-#define AST_MAX_HWC_WIDTH 64
-#define AST_MAX_HWC_HEIGHT 64
-
-#define AST_HWC_SIZE                (AST_MAX_HWC_WIDTH*AST_MAX_HWC_HEIGHT*2)
-#define AST_HWC_SIGNATURE_SIZE      32
-
-#define AST_DEFAULT_HWC_NUM 2
-/* define for signature structure */
-#define AST_HWC_SIGNATURE_CHECKSUM  0x00
-#define AST_HWC_SIGNATURE_SizeX     0x04
-#define AST_HWC_SIGNATURE_SizeY     0x08
-#define AST_HWC_SIGNATURE_X         0x0C
-#define AST_HWC_SIGNATURE_Y         0x10
-#define AST_HWC_SIGNATURE_HOTSPOTX  0x14
-#define AST_HWC_SIGNATURE_HOTSPOTY  0x18
-
-
 struct ast_i2c_chan {
 	struct i2c_adapter adapter;
 	struct drm_device *dev;
@@ -244,10 +237,6 @@ struct ast_connector {
 
 struct ast_crtc {
 	struct drm_crtc base;
-	u8 lut_r[256], lut_g[256], lut_b[256];
-	struct drm_gem_object *cursor_bo;
-	uint64_t cursor_addr;
-	int cursor_width, cursor_height;
 	u8 offset_x, offset_y;
 };
 
@@ -255,26 +244,9 @@ struct ast_encoder {
 	struct drm_encoder base;
 };
 
-struct ast_framebuffer {
-	struct drm_framebuffer base;
-	struct drm_gem_object *obj;
-};
-
-struct ast_fbdev {
-	struct drm_fb_helper helper;
-	struct ast_framebuffer afb;
-	struct list_head fbdev_list;
-	void *sysram;
-	int size;
-	struct ttm_bo_kmap_obj mapping;
-	int x1, y1, x2, y2; /* dirty rect */
-	spinlock_t dirty_lock;
-};
-
 #define to_ast_crtc(x) container_of(x, struct ast_crtc, base)
 #define to_ast_connector(x) container_of(x, struct ast_connector, base)
 #define to_ast_encoder(x) container_of(x, struct ast_encoder, base)
-#define to_ast_framebuffer(x) container_of(x, struct ast_framebuffer, base)
 
 struct ast_vbios_stdtable {
 	u8 misc;
@@ -307,91 +279,29 @@ struct ast_vbios_dclk_info {
 };
 
 struct ast_vbios_mode_info {
-	struct ast_vbios_stdtable *std_table;
-	struct ast_vbios_enhtable *enh_table;
+	const struct ast_vbios_stdtable *std_table;
+	const struct ast_vbios_enhtable *enh_table;
 };
+
+struct ast_crtc_state {
+	struct drm_crtc_state base;
+
+	/* Last known format of primary plane */
+	const struct drm_format_info *format;
+
+	struct ast_vbios_mode_info vbios_mode_info;
+};
+
+#define to_ast_crtc_state(state) container_of(state, struct ast_crtc_state, base)
 
 extern int ast_mode_init(struct drm_device *dev);
 extern void ast_mode_fini(struct drm_device *dev);
 
-int ast_framebuffer_init(struct drm_device *dev,
-			 struct ast_framebuffer *ast_fb,
-			 struct drm_mode_fb_cmd2 *mode_cmd,
-			 struct drm_gem_object *obj);
-
-int ast_fbdev_init(struct drm_device *dev);
-void ast_fbdev_fini(struct drm_device *dev);
-void ast_fbdev_set_suspend(struct drm_device *dev, int state);
-void ast_fbdev_set_base(struct ast_private *ast, unsigned long gpu_addr);
-
-struct ast_bo {
-	struct ttm_buffer_object bo;
-	struct ttm_placement placement;
-	struct ttm_bo_kmap_obj kmap;
-	struct drm_gem_object gem;
-	struct ttm_place placements[3];
-	int pin_count;
-};
-#define gem_to_ast_bo(gobj) container_of((gobj), struct ast_bo, gem)
-
-static inline struct ast_bo *
-ast_bo(struct ttm_buffer_object *bo)
-{
-	return container_of(bo, struct ast_bo, bo);
-}
-
-
-#define to_ast_obj(x) container_of(x, struct ast_gem_object, base)
-
 #define AST_MM_ALIGN_SHIFT 4
 #define AST_MM_ALIGN_MASK ((1 << AST_MM_ALIGN_SHIFT) - 1)
 
-extern int ast_dumb_create(struct drm_file *file,
-			   struct drm_device *dev,
-			   struct drm_mode_create_dumb *args);
-
-extern void ast_gem_free_object(struct drm_gem_object *obj);
-extern int ast_dumb_mmap_offset(struct drm_file *file,
-				struct drm_device *dev,
-				uint32_t handle,
-				uint64_t *offset);
-
-#define DRM_FILE_PAGE_OFFSET (0x100000000ULL >> PAGE_SHIFT)
-
 int ast_mm_init(struct ast_private *ast);
 void ast_mm_fini(struct ast_private *ast);
-
-int ast_bo_create(struct drm_device *dev, int size, int align,
-		  uint32_t flags, struct ast_bo **pastbo);
-
-int ast_gem_create(struct drm_device *dev,
-		   u32 size, bool iskernel,
-		   struct drm_gem_object **obj);
-
-int ast_bo_pin(struct ast_bo *bo, u32 pl_flag, u64 *gpu_addr);
-int ast_bo_unpin(struct ast_bo *bo);
-
-static inline int ast_bo_reserve(struct ast_bo *bo, bool no_wait)
-{
-	int ret;
-
-	ret = ttm_bo_reserve(&bo->bo, true, no_wait, false, NULL);
-	if (ret) {
-		if (ret != -ERESTARTSYS && ret != -EBUSY)
-			DRM_ERROR("reserve failed %p\n", bo);
-		return ret;
-	}
-	return 0;
-}
-
-static inline void ast_bo_unreserve(struct ast_bo *bo)
-{
-	ttm_bo_unreserve(&bo->bo);
-}
-
-void ast_ttm_placement(struct ast_bo *bo, int domain);
-int ast_bo_push_sysram(struct ast_bo *bo);
-int ast_mmap(struct file *filp, struct vm_area_struct *vma);
 
 /* ast post */
 void ast_enable_vga(struct drm_device *dev);
@@ -401,11 +311,10 @@ void ast_post_gpu(struct drm_device *dev);
 u32 ast_mindwm(struct ast_private *ast, u32 r);
 void ast_moutdwm(struct ast_private *ast, u32 r, u32 v);
 /* ast dp501 */
-int ast_load_dp501_microcode(struct drm_device *dev);
 void ast_set_dp501_video_output(struct drm_device *dev, u8 mode);
-bool ast_launch_m68k(struct drm_device *dev);
 bool ast_backup_fw(struct drm_device *dev, u8 *addr, u32 size);
 bool ast_dp501_read_edid(struct drm_device *dev, u8 *ediddata);
 u8 ast_get_dp501_max_clk(struct drm_device *dev);
 void ast_init_3rdtx(struct drm_device *dev);
+void ast_release_firmware(struct drm_device *dev);
 #endif

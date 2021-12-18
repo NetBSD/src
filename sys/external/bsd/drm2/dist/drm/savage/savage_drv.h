@@ -1,4 +1,4 @@
-/*	$NetBSD: savage_drv.h,v 1.2 2018/08/27 04:58:36 riastradh Exp $	*/
+/*	$NetBSD: savage_drv.h,v 1.3 2021/12/18 23:45:43 riastradh Exp $	*/
 
 /* savage_drv.h -- Private header for the savage driver */
 /*
@@ -28,7 +28,11 @@
 #ifndef __SAVAGE_DRV_H__
 #define __SAVAGE_DRV_H__
 
+#include <linux/io.h>
+
+#include <drm/drm_ioctl.h>
 #include <drm/drm_legacy.h>
+#include <drm/savage_drm.h>
 
 #define DRIVER_AUTHOR	"Felix Kuehling"
 
@@ -212,7 +216,7 @@ extern uint32_t *savage_dma_alloc(drm_savage_private_t * dev_priv,
 extern int savage_driver_load(struct drm_device *dev, unsigned long chipset);
 extern int savage_driver_firstopen(struct drm_device *dev);
 extern void savage_driver_lastclose(struct drm_device *dev);
-extern int savage_driver_unload(struct drm_device *dev);
+extern void savage_driver_unload(struct drm_device *dev);
 extern void savage_reclaim_buffers(struct drm_device *dev,
 				   struct drm_file *file_priv);
 
@@ -486,8 +490,10 @@ extern void savage_emit_clip_rect_s4(drm_savage_private_t * dev_priv,
 /*
  * access to MMIO
  */
-#define SAVAGE_READ(reg)	DRM_READ32(  dev_priv->mmio, (reg) )
-#define SAVAGE_WRITE(reg)	DRM_WRITE32( dev_priv->mmio, (reg) )
+#define SAVAGE_READ(reg) \
+       readl(((void __iomem *)dev_priv->mmio->handle) + (reg))
+#define SAVAGE_WRITE(reg) \
+	writel(val, ((void __iomem *)dev_priv->mmio->handle) + (reg))
 
 /*
  * access to the burst command interface (BCI)
