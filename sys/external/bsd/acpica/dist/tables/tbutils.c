@@ -228,9 +228,8 @@ AcpiTbGetRootTableEntry (
          * 32-bit platform, RSDT: Return 32-bit table entry
          * 64-bit platform, RSDT: Expand 32-bit to 64-bit and return
          */
-        UINT32 addr;
-        memcpy(&addr, ACPI_CAST_PTR (UINT32, TableEntry), sizeof(addr));
-        return (ACPI_PHYSICAL_ADDRESS) addr;
+        return ((ACPI_PHYSICAL_ADDRESS) (*ACPI_CAST_PTR (
+            UINT32, TableEntry)));
     }
     else
     {
@@ -393,7 +392,8 @@ AcpiTbParseRootTable (
         }
 
         Status = AcpiTbInstallStandardTable (Address,
-            ACPI_TABLE_ORIGIN_INTERNAL_PHYSICAL, FALSE, TRUE, &TableIndex);
+            ACPI_TABLE_ORIGIN_INTERNAL_PHYSICAL, NULL, FALSE, TRUE,
+            &TableIndex);
 
         if (ACPI_SUCCESS (Status) &&
             ACPI_COMPARE_NAMESEG (
