@@ -1,4 +1,4 @@
-# $NetBSD: t_mixerctl.sh,v 1.10 2017/07/25 22:28:22 kre Exp $
+# $NetBSD: t_mixerctl.sh,v 1.11 2021/12/18 10:50:48 kre Exp $
 
 audio_setup() {
 	# Open /dev/pad0 so we have a configured audio device.
@@ -35,7 +35,7 @@ noargs_usage_head() {
 noargs_usage_body() {
 	audio_setup
 
-	atf_check -s exit:0 -o not-empty -e ignore \
+	atf_check -s exit:1 -o empty -e not-empty \
 		mixerctl
 
 	${padpid+kill -HUP ${padpid}} 2>/dev/null || :
