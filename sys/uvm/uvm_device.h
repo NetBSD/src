@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_device.h,v 1.14 2020/09/05 16:30:13 riastradh Exp $	*/
+/*	$NetBSD: uvm_device.h,v 1.15 2021/12/18 16:31:53 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -29,6 +29,13 @@
 
 #ifndef _UVM_UVM_DEVICE_H_
 #define _UVM_UVM_DEVICE_H_
+
+#include <sys/types.h>
+#include <sys/queue.h>
+
+#include <uvm/uvm_object.h>
+#include <uvm/uvm_param.h>
+#include <uvm/uvm_prot.h>
 
 /*
  * uvm_device.h
