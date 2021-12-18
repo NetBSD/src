@@ -727,8 +727,8 @@ ErrorExit:
  * RETURN:      Status
  *
  * DESCRIPTION: Open the specified input file, and save the directory path to
- *              the file so that include files can be opened in
- *              the same directory.
+ *              the file so that include files can be opened in the same
+ *              directory. NOTE: File is opened in text mode.
  *
  ******************************************************************************/
 

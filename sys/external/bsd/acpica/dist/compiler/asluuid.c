@@ -103,4 +103,3 @@ AuValidateUuid (
 
     return (AE_OK);
 }
-
