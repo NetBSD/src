@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.217 2021/12/17 17:27:19 rillig Exp $	*/
+/*	$NetBSD: init.c,v 1.218 2021/12/18 11:25:15 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: init.c,v 1.217 2021/12/17 17:27:19 rillig Exp $");
+__RCSID("$NetBSD: init.c,v 1.218 2021/12/18 11:25:15 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -97,7 +97,6 @@ __RCSID("$NetBSD: init.c,v 1.217 2021/12/17 17:27:19 rillig Exp $");
 struct designator {
 	const char	*dr_name;	/* for struct and union */
 	size_t		dr_subscript;	/* for array */
-	struct designator *dr_next;
 };
 
 /*
@@ -108,8 +107,9 @@ struct designator {
  * C99 6.7.8p6, 6.7.8p7
  */
 struct designation {
-	struct designator *dn_head;
-	struct designator *dn_tail;
+	struct designator *dn_items;
+	size_t dn_len;
+	size_t dn_cap;
 };
 
 /*
@@ -371,25 +371,6 @@ check_init_expr(const type_t *tp, sym_t *sym, tnode_t *tn)
 }
 
 
-static struct designator *
-designator_new(const char *name, size_t subscript)
-{
-	struct designator *dr;
-
-	dr = xcalloc(1, sizeof(*dr));
-	dr->dr_name = name;
-	dr->dr_subscript = subscript;
-	return dr;
-}
-
-static void
-designator_free(struct designator *dr)
-{
-
-	free(dr);
-}
-
-
 static const type_t *
 designator_look_up(const struct designator *dr, const type_t *tp)
 {
@@ -427,14 +408,15 @@ designator_look_up(const struct designator *dr, const type_t *tp)
 static void
 designation_debug(const struct designation *dn)
 {
-	const struct designator *dr;
+	size_t i;
 
-	if (dn->dn_head == NULL)
+	if (dn->dn_len == 0)
 		return;
 
 	debug_indent();
 	debug_printf("designation: ");
-	for (dr = dn->dn_head; dr != NULL; dr = dr->dr_next) {
+	for (i = 0; i < dn->dn_len; i++) {
+		const struct designator *dr = dn->dn_items + i;
 		if (dr->dr_name != NULL) {
 			debug_printf(".%s", dr->dr_name);
 			lint_assert(dr->dr_subscript == 0);
@@ -450,17 +432,16 @@ designation_debug(const struct designation *dn)
 static void
 designation_add(struct designation *dn, const char *name, size_t subscript)
 {
-	struct designator *dr;
 
-	dr = designator_new(name, subscript);
-
-	if (dn->dn_head != NULL) {
-		dn->dn_tail->dr_next = dr;
-		dn->dn_tail = dr;
-	} else {
-		dn->dn_head = dr;
-		dn->dn_tail = dr;
+	if (dn->dn_len == dn->dn_cap) {
+		dn->dn_cap += 4;
+		dn->dn_items = xrealloc(dn->dn_items,
+		    dn->dn_cap * sizeof(dn->dn_items[0]));
 	}
+
+	dn->dn_items[dn->dn_len].dr_name = name;
+	dn->dn_items[dn->dn_len].dr_subscript = subscript;
+	dn->dn_len++;
 }
 
 /*
@@ -472,25 +453,25 @@ designation_add(struct designation *dn, const char *name, size_t subscript)
 static const type_t *
 designation_look_up(const struct designation *dn, const type_t *tp)
 {
-	const struct designator *dr;
+	size_t i;
 
-	for (dr = dn->dn_head; dr != NULL && tp != NULL; dr = dr->dr_next)
-		tp = designator_look_up(dr, tp);
+	for (i = 0; i < dn->dn_len && tp != NULL; i++)
+		tp = designator_look_up(dn->dn_items + i, tp);
 	return tp;
 }
 
 static void
 designation_reset(struct designation *dn)
 {
-	struct designator *dr, *next;
 
-	for (dr = dn->dn_head; dr != NULL; dr = next) {
-		next = dr->dr_next;
-		designator_free(dr);
-	}
+	dn->dn_len = 0;
+}
 
-	dn->dn_head = NULL;
-	dn->dn_tail = NULL;
+static void
+designation_free(struct designation *dn)
+{
+
+	free(dn->dn_items);
 }
 
 
@@ -512,7 +493,7 @@ static void
 brace_level_free(struct brace_level *bl)
 {
 
-	designation_reset(&bl->bl_designation);
+	designation_free(&bl->bl_designation);
 	free(bl);
 }
 
@@ -542,7 +523,7 @@ static const type_t *
 brace_level_sub_type(const struct brace_level *bl, bool is_string)
 {
 
-	if (bl->bl_designation.dn_head != NULL)
+	if (bl->bl_designation.dn_len > 0)
 		return designation_look_up(&bl->bl_designation, bl->bl_type);
 
 	switch (bl->bl_type->t_tspec) {
@@ -583,10 +564,11 @@ brace_level_sub_type(const struct brace_level *bl, bool is_string)
 static void
 brace_level_apply_designation(struct brace_level *bl)
 {
-	const struct designator *dr = bl->bl_designation.dn_head;
+	const struct designator *dr;
 
-	if (dr == NULL)
+	if (bl->bl_designation.dn_len == 0)
 		return;
+	dr = &bl->bl_designation.dn_items[0];
 
 	designation_debug(&bl->bl_designation);
 
