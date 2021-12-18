@@ -1,4 +1,4 @@
-/*	$NetBSD: wimm.h,v 1.1.1.1 2021/12/18 20:15:37 riastradh Exp $	*/
+/*	$NetBSD: wimm.h,v 1.2 2021/12/18 23:45:32 riastradh Exp $	*/
 
 #ifndef __NV50_KMS_WIMM_H__
 #define __NV50_KMS_WIMM_H__

@@ -1,4 +1,4 @@
-/*	$NetBSD: dcn10_link_encoder.h,v 1.1.1.1 2021/12/18 20:11:21 riastradh Exp $	*/
+/*	$NetBSD: dcn10_link_encoder.h,v 1.2 2021/12/18 23:45:03 riastradh Exp $	*/
 
 /*
  * Copyright 2012-15 Advanced Micro Devices, Inc.

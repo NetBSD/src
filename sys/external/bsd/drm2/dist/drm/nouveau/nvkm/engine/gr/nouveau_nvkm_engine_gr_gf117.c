@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_nvkm_engine_gr_gf117.c,v 1.2 2018/08/27 04:58:32 riastradh Exp $	*/
+/*	$NetBSD: nouveau_nvkm_engine_gr_gf117.c,v 1.3 2021/12/18 23:45:36 riastradh Exp $	*/
 
 /*
  * Copyright 2013 Red Hat Inc.
@@ -24,7 +24,7 @@
  * Authors: Ben Skeggs <bskeggs@redhat.com>
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_engine_gr_gf117.c,v 1.2 2018/08/27 04:58:32 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_engine_gr_gf117.c,v 1.3 2021/12/18 23:45:36 riastradh Exp $");
 
 #include "gf100.h"
 #include "ctxgf100.h"
@@ -107,7 +107,7 @@ gf117_gr_pack_mmio[] = {
 
 #include "fuc/hubgf117.fuc3.h"
 
-struct gf100_gr_ucode
+static struct gf100_gr_ucode
 gf117_gr_fecs_ucode = {
 	.code.data = gf117_grhub_code,
 	.code.size = sizeof(gf117_grhub_code),
@@ -117,7 +117,7 @@ gf117_gr_fecs_ucode = {
 
 #include "fuc/gpcgf117.fuc3.h"
 
-struct gf100_gr_ucode
+static struct gf100_gr_ucode
 gf117_gr_gpccs_ucode = {
 	.code.data = gf117_grgpc_code,
 	.code.size = sizeof(gf117_grgpc_code),
@@ -125,14 +125,58 @@ gf117_gr_gpccs_ucode = {
 	.data.size = sizeof(gf117_grgpc_data),
 };
 
+void
+gf117_gr_init_zcull(struct gf100_gr *gr)
+{
+	struct nvkm_device *device = gr->base.engine.subdev.device;
+	const u32 magicgpc918 = DIV_ROUND_UP(0x00800000, gr->tpc_total);
+	const u8 tile_nr = ALIGN(gr->tpc_total, 32);
+	u8 bank[GPC_MAX] = {}, gpc, i, j;
+	u32 data;
+
+	for (i = 0; i < tile_nr; i += 8) {
+		for (data = 0, j = 0; j < 8 && i + j < gr->tpc_total; j++) {
+			data |= bank[gr->tile[i + j]] << (j * 4);
+			bank[gr->tile[i + j]]++;
+		}
+		nvkm_wr32(device, GPC_BCAST(0x0980 + ((i / 8) * 4)), data);
+	}
+
+	for (gpc = 0; gpc < gr->gpc_nr; gpc++) {
+		nvkm_wr32(device, GPC_UNIT(gpc, 0x0914),
+			  gr->screen_tile_row_offset << 8 | gr->tpc_nr[gpc]);
+		nvkm_wr32(device, GPC_UNIT(gpc, 0x0910), 0x00040000 |
+							 gr->tpc_total);
+		nvkm_wr32(device, GPC_UNIT(gpc, 0x0918), magicgpc918);
+	}
+
+	nvkm_wr32(device, GPC_BCAST(0x3fd4), magicgpc918);
+}
+
 static const struct gf100_gr_func
 gf117_gr = {
+	.oneinit_tiles = gf100_gr_oneinit_tiles,
+	.oneinit_sm_id = gf100_gr_oneinit_sm_id,
 	.init = gf100_gr_init,
+	.init_gpc_mmu = gf100_gr_init_gpc_mmu,
+	.init_vsc_stream_master = gf100_gr_init_vsc_stream_master,
+	.init_zcull = gf117_gr_init_zcull,
+	.init_num_active_ltcs = gf100_gr_init_num_active_ltcs,
+	.init_fecs_exceptions = gf100_gr_init_fecs_exceptions,
+	.init_40601c = gf100_gr_init_40601c,
+	.init_419cc0 = gf100_gr_init_419cc0,
+	.init_419eb4 = gf100_gr_init_419eb4,
+	.init_tex_hww_esr = gf100_gr_init_tex_hww_esr,
+	.init_shader_exceptions = gf100_gr_init_shader_exceptions,
+	.init_400054 = gf100_gr_init_400054,
+	.trap_mp = gf100_gr_trap_mp,
 	.mmio = gf117_gr_pack_mmio,
 	.fecs.ucode = &gf117_gr_fecs_ucode,
 	.gpccs.ucode = &gf117_gr_gpccs_ucode,
+	.rops = gf100_gr_rops,
 	.ppc_nr = 1,
 	.grctx = &gf117_grctx,
+	.zbc = &gf100_gr_zbc,
 	.sclass = {
 		{ -1, -1, FERMI_TWOD_A },
 		{ -1, -1, FERMI_MEMORY_TO_MEMORY_FORMAT_A },
@@ -145,8 +189,15 @@ gf117_gr = {
 	}
 };
 
+static const struct gf100_gr_fwif
+gf117_gr_fwif[] = {
+	{ -1, gf100_gr_load, &gf117_gr },
+	{ -1, gf100_gr_nofw, &gf117_gr },
+	{}
+};
+
 int
 gf117_gr_new(struct nvkm_device *device, int index, struct nvkm_gr **pgr)
 {
-	return gf100_gr_new_(&gf117_gr, device, index, pgr);
+	return gf100_gr_new_(gf117_gr_fwif, device, index, pgr);
 }

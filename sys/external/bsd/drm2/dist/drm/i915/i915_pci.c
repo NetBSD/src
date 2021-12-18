@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_pci.c,v 1.1.1.1 2021/12/18 20:15:25 riastradh Exp $	*/
+/*	$NetBSD: i915_pci.c,v 1.2 2021/12/18 23:45:28 riastradh Exp $	*/
 
 /*
  * Copyright © 2016 Intel Corporation
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_pci.c,v 1.1.1.1 2021/12/18 20:15:25 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_pci.c,v 1.2 2021/12/18 23:45:28 riastradh Exp $");
 
 #include <linux/console.h>
 #include <linux/vga_switcheroo.h>
@@ -1020,6 +1020,7 @@ static int i915_pci_probe(struct pci_dev *pdev, const struct pci_device_id *ent)
 	return 0;
 }
 
+#ifndef __NetBSD__
 static struct pci_driver i915_pci_driver = {
 	.name = DRIVER_NAME,
 	.id_table = pciidlist,
@@ -1027,6 +1028,7 @@ static struct pci_driver i915_pci_driver = {
 	.remove = i915_pci_remove,
 	.driver.pm = &i915_pm_ops,
 };
+#endif
 
 static int __init i915_init(void)
 {

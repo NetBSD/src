@@ -1,4 +1,4 @@
-/*	$NetBSD: clk_mgr_internal.h,v 1.1.1.1 2021/12/18 20:11:25 riastradh Exp $	*/
+/*	$NetBSD: clk_mgr_internal.h,v 1.2 2021/12/18 23:45:05 riastradh Exp $	*/
 
 /*
  * Copyright 2018 Advanced Micro Devices, Inc.

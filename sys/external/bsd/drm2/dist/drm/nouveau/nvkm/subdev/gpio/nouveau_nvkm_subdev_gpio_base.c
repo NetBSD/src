@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_nvkm_subdev_gpio_base.c,v 1.3 2020/04/01 15:57:46 msaitoh Exp $	*/
+/*	$NetBSD: nouveau_nvkm_subdev_gpio_base.c,v 1.4 2021/12/18 23:45:39 riastradh Exp $	*/
 
 /*
  * Copyright 2011 Red Hat Inc.
@@ -24,10 +24,11 @@
  * Authors: Ben Skeggs
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_subdev_gpio_base.c,v 1.3 2020/04/01 15:57:46 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_subdev_gpio_base.c,v 1.4 2021/12/18 23:45:39 riastradh Exp $");
 
 #include "priv.h"
 
+#include <core/option.h>
 #include <core/notify.h>
 
 static int
@@ -176,7 +177,7 @@ nvkm_gpio_fini(struct nvkm_subdev *subdev, bool suspend)
 	return 0;
 }
 
-static struct dmi_system_id gpio_reset_ids[] = {
+static const struct dmi_system_id gpio_reset_ids[] = {
 	{
 		.ident = "Apple Macbook 10,1",
 		.matches = {
@@ -187,12 +188,43 @@ static struct dmi_system_id gpio_reset_ids[] = {
 	{ }
 };
 
+static enum dcb_gpio_func_name power_checks[] = {
+	DCB_GPIO_THERM_EXT_POWER_EVENT,
+	DCB_GPIO_POWER_ALERT,
+	DCB_GPIO_EXT_POWER_LOW,
+};
+
 static int
 nvkm_gpio_init(struct nvkm_subdev *subdev)
 {
 	struct nvkm_gpio *gpio = nvkm_gpio(subdev);
+	struct dcb_gpio_func func;
+	int ret;
+	int i;
+
 	if (dmi_check_system(gpio_reset_ids))
 		nvkm_gpio_reset(gpio, DCB_GPIO_UNUSED);
+
+	if (nvkm_boolopt(subdev->device->cfgopt, "NvPowerChecks", true)) {
+		for (i = 0; i < ARRAY_SIZE(power_checks); ++i) {
+			ret = nvkm_gpio_find(gpio, 0, power_checks[i],
+					     DCB_GPIO_UNUSED, &func);
+			if (ret)
+				continue;
+
+			ret = nvkm_gpio_get(gpio, 0, func.func, func.line);
+			if (!ret)
+				continue;
+
+			nvkm_error(&gpio->subdev,
+				   "GPU is missing power, check its power "
+				   "cables.  Boot with "
+				   "nouveau.config=NvPowerChecks=0 to "
+				   "disable.\n");
+			return -EINVAL;
+		}
+	}
+
 	return 0;
 }
 
@@ -221,7 +253,7 @@ nvkm_gpio_new_(const struct nvkm_gpio_func *func, struct nvkm_device *device,
 	if (!(gpio = *pgpio = kzalloc(sizeof(*gpio), GFP_KERNEL)))
 		return -ENOMEM;
 
-	nvkm_subdev_ctor(&nvkm_gpio, device, index, 0, &gpio->subdev);
+	nvkm_subdev_ctor(&nvkm_gpio, device, index, &gpio->subdev);
 	gpio->func = func;
 
 	return nvkm_event_init(&nvkm_gpio_intr_func, 2, func->lines,

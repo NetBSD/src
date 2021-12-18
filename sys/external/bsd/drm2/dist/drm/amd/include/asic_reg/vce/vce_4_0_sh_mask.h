@@ -1,4 +1,4 @@
-/*	$NetBSD: vce_4_0_sh_mask.h,v 1.1.1.1 2021/12/18 20:15:16 riastradh Exp $	*/
+/*	$NetBSD: vce_4_0_sh_mask.h,v 1.2 2021/12/18 23:45:24 riastradh Exp $	*/
 
 /*
  * Copyright (C) 2017  Advanced Micro Devices, Inc.

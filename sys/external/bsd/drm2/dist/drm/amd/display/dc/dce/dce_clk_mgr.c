@@ -1,4 +1,4 @@
-/*	$NetBSD: dce_clk_mgr.c,v 1.1.1.1 2021/12/18 20:11:19 riastradh Exp $	*/
+/*	$NetBSD: dce_clk_mgr.c,v 1.2 2021/12/18 23:45:02 riastradh Exp $	*/
 
 /*
  * Copyright 2012-16 Advanced Micro Devices, Inc.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dce_clk_mgr.c,v 1.1.1.1 2021/12/18 20:11:19 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dce_clk_mgr.c,v 1.2 2021/12/18 23:45:02 riastradh Exp $");
 
 #include <linux/slab.h>
 

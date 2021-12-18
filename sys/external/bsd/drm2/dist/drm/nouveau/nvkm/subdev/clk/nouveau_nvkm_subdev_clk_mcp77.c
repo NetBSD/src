@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_nvkm_subdev_clk_mcp77.c,v 1.2 2018/08/27 04:58:33 riastradh Exp $	*/
+/*	$NetBSD: nouveau_nvkm_subdev_clk_mcp77.c,v 1.3 2021/12/18 23:45:39 riastradh Exp $	*/
 
 /*
  * Copyright 2012 Red Hat Inc.
@@ -24,7 +24,7 @@
  * Authors: Ben Skeggs
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_subdev_clk_mcp77.c,v 1.2 2018/08/27 04:58:33 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_subdev_clk_mcp77.c,v 1.3 2021/12/18 23:45:39 riastradh Exp $");
 
 #define mcp77_clk(p) container_of((p), struct mcp77_clk, base)
 #include "gt215.h"
@@ -368,6 +368,7 @@ mcp77_clk_prog(struct nvkm_clk *base)
 	switch (clk->vsrc) {
 	case nv_clk_src_cclk:
 		mast |= 0x00400000;
+		/* fall through */
 	default:
 		nvkm_wr32(device, 0x4600, clk->vdiv);
 	}

@@ -1,5 +1,6 @@
-/*	$NetBSD: client.h,v 1.2 2018/08/27 04:58:30 riastradh Exp $	*/
+/*	$NetBSD: client.h,v 1.3 2021/12/18 23:45:33 riastradh Exp $	*/
 
+/* SPDX-License-Identifier: MIT */
 #ifndef __NVIF_CLIENT_H__
 #define __NVIF_CLIENT_H__
 
@@ -13,8 +14,7 @@ struct nvif_client {
 	bool super;
 };
 
-int  nvif_client_init(const char *drv, const char *name, u64 device,
-		      const char *cfg, const char *dbg,
+int  nvif_client_init(struct nvif_client *parent, const char *name, u64 device,
 		      struct nvif_client *);
 void nvif_client_fini(struct nvif_client *);
 int  nvif_client_ioctl(struct nvif_client *, void *, u32);

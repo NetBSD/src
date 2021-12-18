@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_nvkm_engine_fifo_gpfifonv50.c,v 1.2 2018/08/27 04:58:31 riastradh Exp $	*/
+/*	$NetBSD: nouveau_nvkm_engine_fifo_gpfifonv50.c,v 1.3 2021/12/18 23:45:35 riastradh Exp $	*/
 
 /*
  * Copyright 2012 Red Hat Inc.
@@ -24,7 +24,7 @@
  * Authors: Ben Skeggs
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_engine_fifo_gpfifonv50.c,v 1.2 2018/08/27 04:58:31 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_engine_fifo_gpfifonv50.c,v 1.3 2021/12/18 23:45:35 riastradh Exp $");
 
 #include "channv50.h"
 
@@ -32,6 +32,7 @@ __KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_engine_fifo_gpfifonv50.c,v 1.2 2018/08/
 #include <core/ramht.h>
 
 #include <nvif/class.h>
+#include <nvif/cl506f.h>
 #include <nvif/unpack.h>
 
 static int
@@ -45,14 +46,14 @@ nv50_fifo_gpfifo_new(struct nvkm_fifo *base, const struct nvkm_oclass *oclass,
 	struct nv50_fifo *fifo = nv50_fifo(base);
 	struct nv50_fifo_chan *chan;
 	u64 ioffset, ilength;
-	int ret;
+	int ret = -ENOSYS;
 
 	nvif_ioctl(parent, "create channel gpfifo size %d\n", size);
-	if (nvif_unpack(args->v0, 0, 0, false)) {
-		nvif_ioctl(parent, "create channel gpfifo vers %d vm %"PRIx64" "
+	if (!(ret = nvif_unpack(ret, &data, &size, args->v0, 0, 0, false))) {
+		nvif_ioctl(parent, "create channel gpfifo vers %d vmm %"PRIx64" "
 				   "pushbuf %"PRIx64" ioffset %016"PRIx64" "
 				   "ilength %08x\n",
-			   args->v0.version, args->v0.vm, args->v0.pushbuf,
+			   args->v0.version, args->v0.vmm, args->v0.pushbuf,
 			   args->v0.ioffset, args->v0.ilength);
 		if (!args->v0.pushbuf)
 			return -EINVAL;
@@ -63,7 +64,7 @@ nv50_fifo_gpfifo_new(struct nvkm_fifo *base, const struct nvkm_oclass *oclass,
 		return -ENOMEM;
 	*pobject = &chan->base.object;
 
-	ret = nv50_fifo_chan_ctor(fifo, args->v0.vm, args->v0.pushbuf,
+	ret = nv50_fifo_chan_ctor(fifo, args->v0.vmm, args->v0.pushbuf,
 				  oclass, chan);
 	if (ret)
 		return ret;

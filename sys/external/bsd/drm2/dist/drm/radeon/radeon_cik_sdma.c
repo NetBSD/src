@@ -1,4 +1,4 @@
-/*	$NetBSD: radeon_cik_sdma.c,v 1.2 2020/02/14 14:34:59 maya Exp $	*/
+/*	$NetBSD: radeon_cik_sdma.c,v 1.3 2021/12/18 23:45:43 riastradh Exp $	*/
 
 /*
  * Copyright 2013 Advanced Micro Devices, Inc.
@@ -24,10 +24,10 @@
  * Authors: Alex Deucher
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radeon_cik_sdma.c,v 1.2 2020/02/14 14:34:59 maya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radeon_cik_sdma.c,v 1.3 2021/12/18 23:45:43 riastradh Exp $");
 
 #include <linux/firmware.h>
-#include <drm/drmP.h>
+
 #include "radeon.h"
 #include "radeon_ucode.h"
 #include "radeon_asic.h"
@@ -338,7 +338,7 @@ void cik_sdma_enable(struct radeon_device *rdev, bool enable)
 	u32 me_cntl, reg_offset;
 	int i;
 
-	if (enable == false) {
+	if (!enable) {
 		cik_sdma_gfx_stop(rdev);
 		cik_sdma_rlc_stop(rdev);
 	}
@@ -584,7 +584,7 @@ void cik_sdma_fini(struct radeon_device *rdev)
 struct radeon_fence *cik_copy_dma(struct radeon_device *rdev,
 				  uint64_t src_offset, uint64_t dst_offset,
 				  unsigned num_gpu_pages,
-				  struct reservation_object *resv)
+				  struct dma_resv *resv)
 {
 	struct radeon_fence *fence;
 	struct radeon_sync sync;
@@ -682,7 +682,7 @@ int cik_sdma_ring_test(struct radeon_device *rdev,
 		tmp = le32_to_cpu(rdev->wb.wb[index/4]);
 		if (tmp == 0xDEADBEEF)
 			break;
-		DRM_UDELAY(1);
+		udelay(1);
 	}
 
 	if (i < rdev->usec_timeout) {
@@ -742,16 +742,21 @@ int cik_sdma_ib_test(struct radeon_device *rdev, struct radeon_ring *ring)
 		DRM_ERROR("radeon: failed to schedule ib (%d).\n", r);
 		return r;
 	}
-	r = radeon_fence_wait(ib.fence, false);
-	if (r) {
+	r = radeon_fence_wait_timeout(ib.fence, false, usecs_to_jiffies(
+		RADEON_USEC_IB_TEST_TIMEOUT));
+	if (r < 0) {
 		DRM_ERROR("radeon: fence wait failed (%d).\n", r);
 		return r;
+	} else if (r == 0) {
+		DRM_ERROR("radeon: fence wait timed out.\n");
+		return -ETIMEDOUT;
 	}
+	r = 0;
 	for (i = 0; i < rdev->usec_timeout; i++) {
 		tmp = le32_to_cpu(rdev->wb.wb[index/4]);
 		if (tmp == 0xDEADBEEF)
 			break;
-		DRM_UDELAY(1);
+		udelay(1);
 	}
 	if (i < rdev->usec_timeout) {
 		DRM_INFO("ib test on ring %d succeeded in %u usecs\n", ib.fence->ring, i);

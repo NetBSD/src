@@ -1,4 +1,4 @@
-/*	$NetBSD: v9_structs.h,v 1.1.1.1 2021/12/18 20:11:29 riastradh Exp $	*/
+/*	$NetBSD: v9_structs.h,v 1.2 2021/12/18 23:45:08 riastradh Exp $	*/
 
 /*
  * Copyright 2012-2016 Advanced Micro Devices, Inc.

@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_dp.c,v 1.1.1.1 2021/12/18 20:15:29 riastradh Exp $	*/
+/*	$NetBSD: intel_dp.c,v 1.2 2021/12/18 23:45:30 riastradh Exp $	*/
 
 /*
  * Copyright © 2008 Intel Corporation
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intel_dp.c,v 1.1.1.1 2021/12/18 20:15:29 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intel_dp.c,v 1.2 2021/12/18 23:45:30 riastradh Exp $");
 
 #include <linux/export.h>
 #include <linux/i2c.h>
@@ -1189,8 +1189,29 @@ intel_dp_aux_wait_done(struct intel_dp *intel_dp)
 	bool done;
 
 #define C (((status = intel_uncore_read_notrace(&i915->uncore, ch_ctl)) & DP_AUX_CH_CTL_SEND_BUSY) == 0)
+#ifdef __NetBSD__
+	if (!cold) {
+		int ret;
+		spin_lock(&i915->gmbus_wait_lock);
+		DRM_SPIN_TIMED_WAIT_NOINTR_UNTIL(ret,
+		    &i915->gmbus_wait_queue, &i915->gmbus_wait_lock,
+		    msecs_to_jiffies_timeout(timeout_ms),
+		    C);
+		if (ret < 0)	/* Failure: pretend same as done.  */
+			done = true;
+		else if (ret == 0) /* Timed out: not done.  */
+			done = false;
+		else		/* Succeeded (ret > 0): done.  */
+			done = true;
+		spin_unlock(&i915->gmbus_wait_lock);
+	} else {
+		done = wait_for_atomic(C, timeout_ms) == 0;
+	}
+#else
 	done = wait_event_timeout(i915->gmbus_wait_queue, C,
 				  msecs_to_jiffies_timeout(timeout_ms));
+
+#endif
 
 	/* just trace the final value */
 	trace_i915_reg_rw(false, ch_ctl, status, sizeof(status), true);
@@ -5822,8 +5843,13 @@ intel_dp_connector_register(struct drm_connector *connector)
 
 	i915_debugfs_connector_add(connector);
 
+#ifdef __NetBSD__
+	DRM_DEBUG_KMS("registering %s bus for %s\n",
+		      intel_dp->aux.name, device_xname(connector->kdev));
+#else
 	DRM_DEBUG_KMS("registering %s bus for %s\n",
 		      intel_dp->aux.name, connector->kdev->kobj.name);
+#endif
 
 	intel_dp->aux.dev = connector->kdev;
 	ret = drm_dp_aux_register(&intel_dp->aux);
@@ -7286,7 +7312,6 @@ intel_dp_drrs_init(struct intel_connector *connector,
 	struct drm_display_mode *downclock_mode = NULL;
 
 	INIT_DELAYED_WORK(&dev_priv->drrs.work, intel_edp_drrs_downclock_work);
-	mutex_init(&dev_priv->drrs.mutex);
 
 	if (INTEL_GEN(dev_priv) <= 6) {
 		DRM_DEBUG_KMS("DRRS supported for Gen7 and above\n");

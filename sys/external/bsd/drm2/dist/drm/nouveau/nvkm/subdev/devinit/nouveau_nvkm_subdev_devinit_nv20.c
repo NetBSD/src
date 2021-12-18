@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_nvkm_subdev_devinit_nv20.c,v 1.2 2018/08/27 04:58:33 riastradh Exp $	*/
+/*	$NetBSD: nouveau_nvkm_subdev_devinit_nv20.c,v 1.3 2021/12/18 23:45:39 riastradh Exp $	*/
 
 /*
  * Copyright (C) 2010 Francisco Jerez.
@@ -26,7 +26,7 @@
  *
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_subdev_devinit_nv20.c,v 1.2 2018/08/27 04:58:33 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_subdev_devinit_nv20.c,v 1.3 2021/12/18 23:45:39 riastradh Exp $");
 
 #include "nv04.h"
 #include "fbmem.h"

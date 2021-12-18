@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_nvkm_engine_disp_cursgf119.c,v 1.2 2018/08/27 04:58:31 riastradh Exp $	*/
+/*	$NetBSD: nouveau_nvkm_engine_disp_cursgf119.c,v 1.3 2021/12/18 23:45:35 riastradh Exp $	*/
 
 /*
  * Copyright 2012 Red Hat Inc.
@@ -24,19 +24,14 @@
  * Authors: Ben Skeggs
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_engine_disp_cursgf119.c,v 1.2 2018/08/27 04:58:31 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_engine_disp_cursgf119.c,v 1.3 2021/12/18 23:45:35 riastradh Exp $");
 
 #include "channv50.h"
-#include "rootnv50.h"
 
-#include <nvif/class.h>
-
-const struct nv50_disp_pioc_oclass
-gf119_disp_curs_oclass = {
-	.base.oclass = GF110_DISP_CURSOR,
-	.base.minver = 0,
-	.base.maxver = 0,
-	.ctor = nv50_disp_curs_new,
-	.func = &gf119_disp_pioc_func,
-	.chid = 13,
-};
+int
+gf119_disp_curs_new(const struct nvkm_oclass *oclass, void *argv, u32 argc,
+		    struct nv50_disp *disp, struct nvkm_object **pobject)
+{
+	return nv50_disp_curs_new_(&gf119_disp_pioc_func, disp, 13, 13,
+				   oclass, argv, argc, pobject);
+}

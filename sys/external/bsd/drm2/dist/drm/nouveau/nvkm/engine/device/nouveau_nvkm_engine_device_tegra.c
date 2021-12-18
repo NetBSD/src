@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_nvkm_engine_device_tegra.c,v 1.2 2018/08/27 04:58:31 riastradh Exp $	*/
+/*	$NetBSD: nouveau_nvkm_engine_device_tegra.c,v 1.3 2021/12/18 23:45:34 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2014, NVIDIA CORPORATION. All rights reserved.
@@ -22,49 +22,66 @@
  * DEALINGS IN THE SOFTWARE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_engine_device_tegra.c,v 1.2 2018/08/27 04:58:31 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_engine_device_tegra.c,v 1.3 2021/12/18 23:45:34 riastradh Exp $");
 
 #include <core/tegra.h>
 #ifdef CONFIG_NOUVEAU_PLATFORM_DRIVER
 #include "priv.h"
+
+#if IS_ENABLED(CONFIG_ARM_DMA_USE_IOMMU)
+#include <asm/dma-iommu.h>
+#endif
 
 static int
 nvkm_device_tegra_power_up(struct nvkm_device_tegra *tdev)
 {
 	int ret;
 
-	ret = regulator_enable(tdev->vdd);
-	if (ret)
-		goto err_power;
+	if (tdev->vdd) {
+		ret = regulator_enable(tdev->vdd);
+		if (ret)
+			goto err_power;
+	}
 
 	ret = clk_prepare_enable(tdev->clk);
 	if (ret)
 		goto err_clk;
+	if (tdev->clk_ref) {
+		ret = clk_prepare_enable(tdev->clk_ref);
+		if (ret)
+			goto err_clk_ref;
+	}
 	ret = clk_prepare_enable(tdev->clk_pwr);
 	if (ret)
 		goto err_clk_pwr;
 	clk_set_rate(tdev->clk_pwr, 204000000);
 	udelay(10);
 
-	reset_control_assert(tdev->rst);
-	udelay(10);
+	if (!tdev->pdev->dev.pm_domain) {
+		reset_control_assert(tdev->rst);
+		udelay(10);
 
-	ret = tegra_powergate_remove_clamping(TEGRA_POWERGATE_3D);
-	if (ret)
-		goto err_clamp;
-	udelay(10);
+		ret = tegra_powergate_remove_clamping(TEGRA_POWERGATE_3D);
+		if (ret)
+			goto err_clamp;
+		udelay(10);
 
-	reset_control_deassert(tdev->rst);
-	udelay(10);
+		reset_control_deassert(tdev->rst);
+		udelay(10);
+	}
 
 	return 0;
 
 err_clamp:
 	clk_disable_unprepare(tdev->clk_pwr);
 err_clk_pwr:
+	if (tdev->clk_ref)
+		clk_disable_unprepare(tdev->clk_ref);
+err_clk_ref:
 	clk_disable_unprepare(tdev->clk);
 err_clk:
-	regulator_disable(tdev->vdd);
+	if (tdev->vdd)
+		regulator_disable(tdev->vdd);
 err_power:
 	return ret;
 }
@@ -72,14 +89,21 @@ err_power:
 static int
 nvkm_device_tegra_power_down(struct nvkm_device_tegra *tdev)
 {
-	reset_control_assert(tdev->rst);
-	udelay(10);
+	int ret;
 
 	clk_disable_unprepare(tdev->clk_pwr);
+	if (tdev->clk_ref)
+		clk_disable_unprepare(tdev->clk_ref);
 	clk_disable_unprepare(tdev->clk);
 	udelay(10);
 
-	return regulator_disable(tdev->vdd);
+	if (tdev->vdd) {
+		ret = regulator_disable(tdev->vdd);
+		if (ret)
+			return ret;
+	}
+
+	return 0;
 }
 
 static void
@@ -90,6 +114,15 @@ nvkm_device_tegra_probe_iommu(struct nvkm_device_tegra *tdev)
 	unsigned long pgsize_bitmap;
 	int ret;
 
+#if IS_ENABLED(CONFIG_ARM_DMA_USE_IOMMU)
+	if (dev->archdata.mapping) {
+		struct dma_iommu_mapping *mapping = to_dma_iommu_mapping(dev);
+
+		arm_iommu_detach_device(dev);
+		arm_iommu_release_mapping(mapping);
+	}
+#endif
+
 	if (!tdev->func->iommu_bit)
 		return;
 
@@ -97,7 +130,7 @@ nvkm_device_tegra_probe_iommu(struct nvkm_device_tegra *tdev)
 
 	if (iommu_present(&platform_bus_type)) {
 		tdev->iommu.domain = iommu_domain_alloc(&platform_bus_type);
-		if (IS_ERR(tdev->iommu.domain))
+		if (!tdev->iommu.domain)
 			goto error;
 
 		/*
@@ -121,7 +154,7 @@ nvkm_device_tegra_probe_iommu(struct nvkm_device_tegra *tdev)
 		if (ret)
 			goto free_domain;
 
-		ret = nvkm_mm_init(&tdev->iommu.mm, 0,
+		ret = nvkm_mm_init(&tdev->iommu.mm, 0, 0,
 				   (1ULL << tdev->func->iommu_bit) >>
 				   tdev->iommu.pgshift, 1);
 		if (ret)
@@ -194,13 +227,11 @@ static irqreturn_t
 nvkm_device_tegra_intr(int irq, void *arg)
 {
 	struct nvkm_device_tegra *tdev = arg;
-	struct nvkm_mc *mc = tdev->device.mc;
+	struct nvkm_device *device = &tdev->device;
 	bool handled = false;
-	if (likely(mc)) {
-		nvkm_mc_intr_unarm(mc);
-		nvkm_mc_intr(mc, &handled);
-		nvkm_mc_intr_rearm(mc);
-	}
+	nvkm_mc_intr_unarm(device);
+	nvkm_mc_intr(device, &handled);
+	nvkm_mc_intr_rearm(device);
 	return handled ? IRQ_HANDLED : IRQ_NONE;
 }
 
@@ -211,7 +242,7 @@ nvkm_device_tegra_fini(struct nvkm_device *device, bool suspend)
 	if (tdev->irq) {
 		free_irq(tdev->irq, tdev);
 		tdev->irq = 0;
-	};
+	}
 }
 
 static int
@@ -264,6 +295,7 @@ nvkm_device_tegra_new(const struct nvkm_device_tegra_func *func,
 		      struct nvkm_device **pdevice)
 {
 	struct nvkm_device_tegra *tdev;
+	unsigned long rate;
 	int ret;
 
 	if (!(tdev = kzalloc(sizeof(*tdev), GFP_KERNEL)))
@@ -271,12 +303,13 @@ nvkm_device_tegra_new(const struct nvkm_device_tegra_func *func,
 
 	tdev->func = func;
 	tdev->pdev = pdev;
-	tdev->irq = -1;
 
-	tdev->vdd = devm_regulator_get(&pdev->dev, "vdd");
-	if (IS_ERR(tdev->vdd)) {
-		ret = PTR_ERR(tdev->vdd);
-		goto free;
+	if (func->require_vdd) {
+		tdev->vdd = devm_regulator_get(&pdev->dev, "vdd");
+		if (IS_ERR(tdev->vdd)) {
+			ret = PTR_ERR(tdev->vdd);
+			goto free;
+		}
 	}
 
 	tdev->rst = devm_reset_control_get(&pdev->dev, "gpu");
@@ -291,11 +324,36 @@ nvkm_device_tegra_new(const struct nvkm_device_tegra_func *func,
 		goto free;
 	}
 
+	rate = clk_get_rate(tdev->clk);
+	if (rate == 0) {
+		ret = clk_set_rate(tdev->clk, ULONG_MAX);
+		if (ret < 0)
+			goto free;
+
+		rate = clk_get_rate(tdev->clk);
+
+		dev_dbg(&pdev->dev, "GPU clock set to %lu\n", rate);
+	}
+
+	if (func->require_ref_clk)
+		tdev->clk_ref = devm_clk_get(&pdev->dev, "ref");
+	if (IS_ERR(tdev->clk_ref)) {
+		ret = PTR_ERR(tdev->clk_ref);
+		goto free;
+	}
+
 	tdev->clk_pwr = devm_clk_get(&pdev->dev, "pwr");
 	if (IS_ERR(tdev->clk_pwr)) {
 		ret = PTR_ERR(tdev->clk_pwr);
 		goto free;
 	}
+
+	/**
+	 * The IOMMU bit defines the upper limit of the GPU-addressable space.
+	 */
+	ret = dma_set_mask(&pdev->dev, DMA_BIT_MASK(tdev->func->iommu_bit));
+	if (ret)
+		goto free;
 
 	nvkm_device_tegra_probe_iommu(tdev);
 
@@ -304,6 +362,7 @@ nvkm_device_tegra_new(const struct nvkm_device_tegra_func *func,
 		goto remove;
 
 	tdev->gpu_speedo = tegra_sku_info.gpu_speedo_value;
+	tdev->gpu_speedo_id = tegra_sku_info.gpu_speedo_id;
 	ret = nvkm_device_ctor(&nvkm_device_tegra_func, NULL, &pdev->dev,
 			       NVKM_DEVICE_TEGRA, pdev->id, NULL,
 			       cfg, dbg, detect, mmio, subdev_mask,

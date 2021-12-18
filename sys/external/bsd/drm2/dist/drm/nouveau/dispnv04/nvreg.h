@@ -1,4 +1,4 @@
-/*	$NetBSD: nvreg.h,v 1.2 2018/08/27 04:58:29 riastradh Exp $	*/
+/*	$NetBSD: nvreg.h,v 1.3 2021/12/18 23:45:32 riastradh Exp $	*/
 
 /* $XConsortium: nvreg.h /main/2 1996/10/28 05:13:41 kaleb $ */
 /*

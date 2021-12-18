@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_nvkm_subdev_volt_gm20b.c,v 1.1.1.1 2021/12/18 20:15:43 riastradh Exp $	*/
+/*	$NetBSD: nouveau_nvkm_subdev_volt_gm20b.c,v 1.2 2021/12/18 23:45:42 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2016, NVIDIA CORPORATION. All rights reserved.
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_subdev_volt_gm20b.c,v 1.1.1.1 2021/12/18 20:15:43 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_subdev_volt_gm20b.c,v 1.2 2021/12/18 23:45:42 riastradh Exp $");
 
 #include "priv.h"
 #include "gk20a.h"

@@ -1,4 +1,4 @@
-/*	$NetBSD: r600d.h,v 1.4 2019/10/16 01:44:48 msaitoh Exp $	*/
+/*	$NetBSD: r600d.h,v 1.5 2021/12/18 23:45:42 riastradh Exp $	*/
 
 /*
  * Copyright 2009 Advanced Micro Devices, Inc.
@@ -1492,6 +1492,7 @@
 #define UVD_GPCOM_VCPU_DATA0				0xef10
 #define UVD_GPCOM_VCPU_DATA1				0xef14
 #define UVD_ENGINE_CNTL					0xef18
+#define UVD_NO_OP					0xeffc
 
 #define UVD_SEMA_CNTL					0xf400
 #define UVD_RB_ARB_CTRL					0xf480

@@ -1,4 +1,4 @@
-/*	$NetBSD: umc_6_1_2_sh_mask.h,v 1.1.1.1 2021/12/18 20:15:15 riastradh Exp $	*/
+/*	$NetBSD: umc_6_1_2_sh_mask.h,v 1.2 2021/12/18 23:45:24 riastradh Exp $	*/
 
 /*
  * Copyright (C) 2020  Advanced Micro Devices, Inc.

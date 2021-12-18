@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu_smu8_smumgr.c,v 1.1.1.1 2021/12/18 20:15:23 riastradh Exp $	*/
+/*	$NetBSD: amdgpu_smu8_smumgr.c,v 1.2 2021/12/18 23:45:27 riastradh Exp $	*/
 
 /*
  * Copyright 2015 Advanced Micro Devices, Inc.
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdgpu_smu8_smumgr.c,v 1.1.1.1 2021/12/18 20:15:23 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdgpu_smu8_smumgr.c,v 1.2 2021/12/18 23:45:27 riastradh Exp $");
 
 #include <linux/delay.h>
 #include <linux/gfp.h>

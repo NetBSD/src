@@ -1,4 +1,4 @@
-/*	$NetBSD: ci_dpm.h,v 1.2 2018/08/27 04:58:35 riastradh Exp $	*/
+/*	$NetBSD: ci_dpm.h,v 1.3 2021/12/18 23:45:42 riastradh Exp $	*/
 
 /*
  * Copyright 2013 Advanced Micro Devices, Inc.
@@ -26,6 +26,7 @@
 #define __CI_DPM_H__
 
 #include "ppsmc.h"
+#include "radeon.h"
 
 #define SMU__NUM_SCLK_DPM_STATE  8
 #define SMU__NUM_MCLK_DPM_LEVELS 6
@@ -332,7 +333,6 @@ int ci_program_jump_on_start(struct radeon_device *rdev);
 void ci_stop_smc_clock(struct radeon_device *rdev);
 void ci_start_smc_clock(struct radeon_device *rdev);
 bool ci_is_smc_running(struct radeon_device *rdev);
-PPSMC_Result ci_send_msg_to_smc(struct radeon_device *rdev, PPSMC_Msg msg);
 PPSMC_Result ci_wait_for_smc_inactive(struct radeon_device *rdev);
 int ci_load_smc_ucode(struct radeon_device *rdev, u32 limit);
 int ci_read_smc_sram_dword(struct radeon_device *rdev,

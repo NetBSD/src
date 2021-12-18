@@ -1,4 +1,4 @@
-/*	$NetBSD: r300_reg.h,v 1.2 2018/08/27 04:58:36 riastradh Exp $	*/
+/*	$NetBSD: r300_reg.h,v 1.3 2021/12/18 23:45:42 riastradh Exp $	*/
 
 /*
  * Copyright 2005 Nicolai Haehnle et al.

@@ -1,4 +1,4 @@
-/*	$NetBSD: dce_11_0_d.h,v 1.2 2018/08/27 04:58:21 riastradh Exp $	*/
+/*	$NetBSD: dce_11_0_d.h,v 1.3 2021/12/18 23:45:09 riastradh Exp $	*/
 
 /*
  * DCE_11_0 Register documentation
@@ -4546,6 +4546,15 @@
 #define mmDP6_DP_DPHY_PRBS_CNTL                                                 0x54b5
 #define mmDP7_DP_DPHY_PRBS_CNTL                                                 0x56b5
 #define mmDP8_DP_DPHY_PRBS_CNTL                                                 0x57b5
+#define mmDP_DPHY_SCRAM_CNTL                                                    0x4ab6
+#define mmDP0_DP_DPHY_SCRAM_CNTL                                                0x4ab6
+#define mmDP1_DP_DPHY_SCRAM_CNTL                                                0x4bb6
+#define mmDP2_DP_DPHY_SCRAM_CNTL                                                0x4cb6
+#define mmDP3_DP_DPHY_SCRAM_CNTL                                                0x4db6
+#define mmDP4_DP_DPHY_SCRAM_CNTL                                                0x4eb6
+#define mmDP5_DP_DPHY_SCRAM_CNTL                                                0x4fb6
+#define mmDP6_DP_DPHY_SCRAM_CNTL                                                0x54b6
+#define mmDP8_DP_DPHY_SCRAM_CNTL                                                0x56b6
 #define mmDP_DPHY_BS_SR_SWAP_CNTL                                               0x4adc
 #define mmDP0_DP_DPHY_BS_SR_SWAP_CNTL                                           0x4adc
 #define mmDP1_DP_DPHY_BS_SR_SWAP_CNTL                                           0x4bdc

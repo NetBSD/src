@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_scdc_helper.c,v 1.1.1.1 2021/12/18 20:11:03 riastradh Exp $	*/
+/*	$NetBSD: drm_scdc_helper.c,v 1.2 2021/12/18 23:44:57 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2015 NVIDIA Corporation. All rights reserved.
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_scdc_helper.c,v 1.1.1.1 2021/12/18 20:11:03 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_scdc_helper.c,v 1.2 2021/12/18 23:44:57 riastradh Exp $");
 
 #include <linux/slab.h>
 #include <linux/delay.h>

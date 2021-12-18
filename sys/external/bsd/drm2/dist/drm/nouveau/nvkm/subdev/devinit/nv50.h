@@ -1,5 +1,6 @@
-/*	$NetBSD: nv50.h,v 1.2 2018/08/27 04:58:33 riastradh Exp $	*/
+/*	$NetBSD: nv50.h,v 1.3 2021/12/18 23:45:39 riastradh Exp $	*/
 
+/* SPDX-License-Identifier: MIT */
 #ifndef __NV50_DEVINIT_H__
 #define __NV50_DEVINIT_H__
 #define nv50_devinit(p) container_of((p), struct nv50_devinit, base)
@@ -22,6 +23,10 @@ int  gf100_devinit_ctor(struct nvkm_object *, struct nvkm_object *,
 			struct nvkm_oclass *, void *, u32,
 			struct nvkm_object **);
 int  gf100_devinit_pll_set(struct nvkm_devinit *, u32, u32);
+void gf100_devinit_preinit(struct nvkm_devinit *);
 
 u64  gm107_devinit_disable(struct nvkm_devinit *);
+
+int gm200_devinit_post(struct nvkm_devinit *, bool);
+void gm200_devinit_preos(struct nv50_devinit *, bool);
 #endif

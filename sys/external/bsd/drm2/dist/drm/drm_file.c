@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_file.c,v 1.1.1.1 2021/12/18 20:11:02 riastradh Exp $	*/
+/*	$NetBSD: drm_file.c,v 1.2 2021/12/18 23:44:57 riastradh Exp $	*/
 
 /*
  * \author Rickard E. (Rik) Faith <faith@valinux.com>
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_file.c,v 1.1.1.1 2021/12/18 20:11:02 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_file.c,v 1.2 2021/12/18 23:44:57 riastradh Exp $");
 
 #include <linux/anon_inodes.h>
 #include <linux/dma-fence.h>

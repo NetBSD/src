@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_nvkm_engine_fifo_gm200.c,v 1.1.1.1 2021/12/18 20:15:38 riastradh Exp $	*/
+/*	$NetBSD: nouveau_nvkm_engine_fifo_gm200.c,v 1.2 2021/12/18 23:45:35 riastradh Exp $	*/
 
 /*
  * Copyright 2015 Red Hat Inc.
@@ -24,7 +24,7 @@
  * Authors: Ben Skeggs
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_engine_fifo_gm200.c,v 1.1.1.1 2021/12/18 20:15:38 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_engine_fifo_gm200.c,v 1.2 2021/12/18 23:45:35 riastradh Exp $");
 
 #include "gk104.h"
 #include "changk104.h"

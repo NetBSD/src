@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_dispnv50_disp.c,v 1.1.1.1 2021/12/18 20:15:36 riastradh Exp $	*/
+/*	$NetBSD: nouveau_dispnv50_disp.c,v 1.2 2021/12/18 23:45:32 riastradh Exp $	*/
 
 /*
  * Copyright 2011 Red Hat Inc.
@@ -24,7 +24,7 @@
  * Authors: Ben Skeggs
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_dispnv50_disp.c,v 1.1.1.1 2021/12/18 20:15:36 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_dispnv50_disp.c,v 1.2 2021/12/18 23:45:32 riastradh Exp $");
 
 #include "disp.h"
 #include "atom.h"
@@ -102,8 +102,15 @@ nv50_chan_create(struct nvif_device *device, struct nvif_object *disp,
 			if (sclass[i].oclass == oclass[0]) {
 				ret = nvif_object_init(disp, 0, oclass[0],
 						       data, size, &chan->user);
-				if (ret == 0)
-					nvif_object_map(&chan->user, NULL, 0);
+				if (ret == 0) {
+					ret = nvif_object_map(&chan->user, NULL, 0);
+					if (ret) {
+						printk(KERN_ERR "%s:%d"
+						    ": nvif_object_map, %d\n",
+						    __func__, __LINE__, ret);
+						nvif_object_fini(&chan->user);
+					}
+				}
 				nvif_object_sclass_put(&sclass);
 				return ret;
 			}
@@ -128,6 +135,7 @@ nv50_chan_destroy(struct nv50_chan *chan)
 void
 nv50_dmac_destroy(struct nv50_dmac *dmac)
 {
+	spin_lock_destroy(&dmac->lock);
 	nvif_object_fini(&dmac->vram);
 	nvif_object_fini(&dmac->sync);
 
@@ -146,7 +154,7 @@ nv50_dmac_create(struct nvif_device *device, struct nvif_object *disp,
 	u8 type = NVIF_MEM_COHERENT;
 	int ret;
 
-	mutex_init(&dmac->lock);
+	spin_lock_init(&dmac->lock);
 
 	/* Pascal added support for 47-bit physical addresses, but some
 	 * parts of EVO still only accept 40-bit PAs.
@@ -227,7 +235,7 @@ evo_wait(struct nv50_dmac *evoc, int nr)
 	struct nvif_device *device = dmac->base.device;
 	u32 put = nvif_rd32(&dmac->base.user, 0x0000) / 4;
 
-	mutex_lock(&dmac->lock);
+	spin_lock(&dmac->lock);
 	if (put + nr >= (PAGE_SIZE / 4) - 8) {
 		dmac->ptr[put] = 0x20000000;
 		evo_flush(dmac);
@@ -237,7 +245,7 @@ evo_wait(struct nv50_dmac *evoc, int nr)
 			if (!nvif_rd32(&dmac->base.user, 0x0004))
 				break;
 		) < 0) {
-			mutex_unlock(&dmac->lock);
+			spin_unlock(&dmac->lock);
 			pr_err("nouveau: evo channel stalled\n");
 			return NULL;
 		}
@@ -256,7 +264,7 @@ evo_kick(u32 *push, struct nv50_dmac *evoc)
 	evo_flush(dmac);
 
 	nvif_wr32(&dmac->base.user, 0x0000, (push - dmac->ptr) << 2);
-	mutex_unlock(&dmac->lock);
+	spin_unlock(&dmac->lock);
 }
 
 /******************************************************************************

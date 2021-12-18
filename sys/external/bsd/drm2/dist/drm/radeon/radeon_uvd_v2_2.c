@@ -1,4 +1,4 @@
-/*	$NetBSD: radeon_uvd_v2_2.c,v 1.2 2019/08/09 06:27:21 msaitoh Exp $	*/
+/*	$NetBSD: radeon_uvd_v2_2.c,v 1.3 2021/12/18 23:45:43 riastradh Exp $	*/
 
 /*
  * Copyright 2013 Advanced Micro Devices, Inc.
@@ -25,10 +25,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radeon_uvd_v2_2.c,v 1.2 2019/08/09 06:27:21 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radeon_uvd_v2_2.c,v 1.3 2021/12/18 23:45:43 riastradh Exp $");
 
 #include <linux/firmware.h>
-#include <drm/drmP.h>
+
 #include "radeon.h"
 #include "radeon_asic.h"
 #include "rv770d.h"
@@ -121,12 +121,13 @@ int uvd_v2_2_resume(struct radeon_device *rdev)
 	WREG32(UVD_VCPU_CACHE_SIZE0, size);
 
 	addr += size;
-	size = RADEON_UVD_STACK_SIZE >> 3;
+	size = RADEON_UVD_HEAP_SIZE >> 3;
 	WREG32(UVD_VCPU_CACHE_OFFSET1, addr);
 	WREG32(UVD_VCPU_CACHE_SIZE1, size);
 
 	addr += size;
-	size = RADEON_UVD_HEAP_SIZE >> 3;
+	size = (RADEON_UVD_STACK_SIZE +
+	       (RADEON_UVD_SESSION_SIZE * rdev->uvd.max_handles)) >> 3;
 	WREG32(UVD_VCPU_CACHE_OFFSET2, addr);
 	WREG32(UVD_VCPU_CACHE_SIZE2, size);
 

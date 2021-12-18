@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_nvkm_engine_fifo_channv50.c,v 1.2 2018/08/27 04:58:31 riastradh Exp $	*/
+/*	$NetBSD: nouveau_nvkm_engine_fifo_channv50.c,v 1.3 2021/12/18 23:45:35 riastradh Exp $	*/
 
 /*
  * Copyright 2012 Red Hat Inc.
@@ -24,7 +24,7 @@
  * Authors: Ben Skeggs
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_engine_fifo_channv50.c,v 1.2 2018/08/27 04:58:31 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_engine_fifo_channv50.c,v 1.3 2021/12/18 23:45:35 riastradh Exp $");
 
 #include "channv50.h"
 
@@ -211,7 +211,6 @@ void *
 nv50_fifo_chan_dtor(struct nvkm_fifo_chan *base)
 {
 	struct nv50_fifo_chan *chan = nv50_fifo_chan(base);
-	nvkm_vm_ref(NULL, &chan->vm, chan->pgd);
 	nvkm_ramht_del(&chan->ramht);
 	nvkm_gpuobj_del(&chan->pgd);
 	nvkm_gpuobj_del(&chan->eng);
@@ -234,15 +233,18 @@ nv50_fifo_chan_func = {
 };
 
 int
-nv50_fifo_chan_ctor(struct nv50_fifo *fifo, u64 vm, u64 push,
+nv50_fifo_chan_ctor(struct nv50_fifo *fifo, u64 vmm, u64 push,
 		    const struct nvkm_oclass *oclass,
 		    struct nv50_fifo_chan *chan)
 {
 	struct nvkm_device *device = fifo->base.engine.subdev.device;
 	int ret;
 
+	if (!vmm)
+		return -EINVAL;
+
 	ret = nvkm_fifo_chan_ctor(&nv50_fifo_chan_func, &fifo->base,
-				  0x10000, 0x1000, false, vm, push,
+				  0x10000, 0x1000, false, vmm, push,
 				  (1ULL << NVKM_ENGINE_DMAOBJ) |
 				  (1ULL << NVKM_ENGINE_SW) |
 				  (1ULL << NVKM_ENGINE_GR) |
@@ -267,9 +269,5 @@ nv50_fifo_chan_ctor(struct nv50_fifo *fifo, u64 vm, u64 push,
 	if (ret)
 		return ret;
 
-	ret = nvkm_ramht_new(device, 0x8000, 16, chan->base.inst, &chan->ramht);
-	if (ret)
-		return ret;
-
-	return nvkm_vm_ref(chan->base.vm, &chan->vm, chan->pgd);
+	return nvkm_ramht_new(device, 0x8000, 16, chan->base.inst, &chan->ramht);
 }

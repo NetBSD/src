@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_nvkm_engine_gr_nv50.c,v 1.2 2018/08/27 04:58:32 riastradh Exp $	*/
+/*	$NetBSD: nouveau_nvkm_engine_gr_nv50.c,v 1.3 2021/12/18 23:45:36 riastradh Exp $	*/
 
 /*
  * Copyright 2012 Red Hat Inc.
@@ -24,13 +24,15 @@
  * Authors: Ben Skeggs
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_engine_gr_nv50.c,v 1.2 2018/08/27 04:58:32 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_engine_gr_nv50.c,v 1.3 2021/12/18 23:45:36 riastradh Exp $");
 
 #include "nv50.h"
 
 #include <core/client.h>
 #include <core/gpuobj.h>
 #include <engine/fifo.h>
+
+#include <nvif/class.h>
 
 u64
 nv50_gr_units(struct nvkm_gr *gr)
@@ -773,7 +775,7 @@ nv50_gr_new_(const struct nvkm_gr_func *func, struct nvkm_device *device,
 	spin_lock_init(&gr->lock);
 	*pgr = &gr->base;
 
-	return nvkm_gr_ctor(func, device, index, 0x00201000, true, &gr->base);
+	return nvkm_gr_ctor(func, device, index, true, &gr->base);
 }
 
 static const struct nvkm_gr_func
@@ -783,11 +785,11 @@ nv50_gr = {
 	.chan_new = nv50_gr_chan_new,
 	.units = nv50_gr_units,
 	.sclass = {
-		{ -1, -1, 0x0030, &nv50_gr_object },
-		{ -1, -1, 0x502d, &nv50_gr_object },
-		{ -1, -1, 0x5039, &nv50_gr_object },
-		{ -1, -1, 0x5097, &nv50_gr_object },
-		{ -1, -1, 0x50c0, &nv50_gr_object },
+		{ -1, -1, NV_NULL_CLASS, &nv50_gr_object },
+		{ -1, -1, NV50_TWOD, &nv50_gr_object },
+		{ -1, -1, NV50_MEMORY_TO_MEMORY_FORMAT, &nv50_gr_object },
+		{ -1, -1, NV50_TESLA, &nv50_gr_object },
+		{ -1, -1, NV50_COMPUTE, &nv50_gr_object },
 		{}
 	}
 };

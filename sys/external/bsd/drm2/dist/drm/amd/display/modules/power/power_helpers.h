@@ -1,4 +1,4 @@
-/*	$NetBSD: power_helpers.h,v 1.1.1.1 2021/12/18 20:11:26 riastradh Exp $	*/
+/*	$NetBSD: power_helpers.h,v 1.2 2021/12/18 23:45:07 riastradh Exp $	*/
 
 /* Copyright 2018 Advanced Micro Devices, Inc.
  *

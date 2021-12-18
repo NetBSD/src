@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_display.c,v 1.1.1.1 2021/12/18 20:15:28 riastradh Exp $	*/
+/*	$NetBSD: intel_display.c,v 1.2 2021/12/18 23:45:29 riastradh Exp $	*/
 
 /*
  * Copyright © 2006-2007 Intel Corporation
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intel_display.c,v 1.1.1.1 2021/12/18 20:15:28 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intel_display.c,v 1.2 2021/12/18 23:45:29 riastradh Exp $");
 
 #include <linux/i2c.h>
 #include <linux/input.h>
@@ -88,6 +88,8 @@ __KERNEL_RCSID(0, "$NetBSD: intel_display.c,v 1.1.1.1 2021/12/18 20:15:28 riastr
 #include "intel_sprite.h"
 #include "intel_tc.h"
 #include "intel_vga.h"
+
+#include <linux/nbsd-namespace.h>
 
 /* Primary plane formats for gen <= 3 */
 static const u32 i8xx_primary_formats[] = {
@@ -17529,6 +17531,8 @@ int intel_modeset_init(struct drm_i915_private *i915)
 	struct intel_crtc *crtc;
 	int ret;
 
+	mutex_init(&i915->drrs.mutex);
+
 	i915->modeset_wq = alloc_ordered_workqueue("i915_modeset", 0);
 	i915->flip_wq = alloc_workqueue("i915_flip", WQ_HIGHPRI |
 					WQ_UNBOUND, WQ_UNBOUND_MAX_ACTIVE);
@@ -17579,7 +17583,9 @@ int intel_modeset_init(struct drm_i915_private *i915)
 		intel_update_max_cdclk(i915);
 
 	/* Just disable it once at startup */
+#ifndef __NetBSD__		/* XXX We wait until intelfb is ready.  */
 	intel_vga_disable(i915);
+#endif
 	intel_setup_outputs(i915);
 
 	drm_modeset_lock_all(dev);
@@ -18522,6 +18528,8 @@ void intel_modeset_driver_remove(struct drm_i915_private *i915)
 
 	destroy_workqueue(i915->flip_wq);
 	destroy_workqueue(i915->modeset_wq);
+
+	mutex_destroy(&i915->drrs.mutex);
 
 	intel_fbc_cleanup_cfb(i915);
 }

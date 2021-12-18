@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_gem_dmabuf.c,v 1.1.1.1 2021/12/18 20:15:31 riastradh Exp $	*/
+/*	$NetBSD: i915_gem_dmabuf.c,v 1.2 2021/12/18 23:45:30 riastradh Exp $	*/
 
 /*
  * SPDX-License-Identifier: MIT
@@ -7,7 +7,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_gem_dmabuf.c,v 1.1.1.1 2021/12/18 20:15:31 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_gem_dmabuf.c,v 1.2 2021/12/18 23:45:30 riastradh Exp $");
 
 #include <linux/dma-buf.h>
 #include <linux/highmem.h>
@@ -19,7 +19,9 @@ __KERNEL_RCSID(0, "$NetBSD: i915_gem_dmabuf.c,v 1.1.1.1 2021/12/18 20:15:31 rias
 
 static struct drm_i915_gem_object *dma_buf_to_obj(struct dma_buf *buf)
 {
-	return to_intel_bo(buf->priv);
+	struct drm_gem_object *obj = buf->priv;
+
+	return to_intel_bo(obj);
 }
 
 static struct sg_table *i915_gem_map_dma_buf(struct dma_buf_attachment *attachment,
@@ -27,13 +29,22 @@ static struct sg_table *i915_gem_map_dma_buf(struct dma_buf_attachment *attachme
 {
 	struct drm_i915_gem_object *obj = dma_buf_to_obj(attachment->dmabuf);
 	struct sg_table *st;
+#ifdef __NetBSD__
+	int ret;
+#else
 	struct scatterlist *src, *dst;
 	int ret, i;
+#endif
 
 	ret = i915_gem_object_pin_pages(obj);
 	if (ret)
 		goto err;
 
+#ifdef __NetBSD__
+	st = drm_prime_pglist_to_sg(&obj->pageq, obj->base.size >> PAGE_SHIFT);
+	if (IS_ERR(st))
+		goto err_unpin;
+#else
 	/* Copy sg so that we make an independent mapping */
 	st = kmalloc(sizeof(struct sg_table), GFP_KERNEL);
 	if (st == NULL) {
@@ -57,13 +68,16 @@ static struct sg_table *i915_gem_map_dma_buf(struct dma_buf_attachment *attachme
 		ret = -ENOMEM;
 		goto err_free_sg;
 	}
+#endif
 
 	return st;
 
+#ifndef __NetBSD__
 err_free_sg:
 	sg_free_table(st);
 err_free:
 	kfree(st);
+#endif
 err_unpin_pages:
 	i915_gem_object_unpin_pages(obj);
 err:
@@ -76,9 +90,13 @@ static void i915_gem_unmap_dma_buf(struct dma_buf_attachment *attachment,
 {
 	struct drm_i915_gem_object *obj = dma_buf_to_obj(attachment->dmabuf);
 
+#ifdef __NetBSD__
+	drm_prime_sg_free(sg);
+#else
 	dma_unmap_sg(attachment->dev, sg->sgl, sg->nents, dir);
 	sg_free_table(sg);
 	kfree(sg);
+#endif
 
 	i915_gem_object_unpin_pages(obj);
 }

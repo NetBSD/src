@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_nvkm_engine_disp_changf119.c,v 1.2 2018/08/27 04:58:31 riastradh Exp $	*/
+/*	$NetBSD: nouveau_nvkm_engine_disp_changf119.c,v 1.3 2021/12/18 23:45:35 riastradh Exp $	*/
 
 /*
  * Copyright 2012 Red Hat Inc.
@@ -24,7 +24,7 @@
  * Authors: Ben Skeggs
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_engine_disp_changf119.c,v 1.2 2018/08/27 04:58:31 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_engine_disp_changf119.c,v 1.3 2021/12/18 23:45:35 riastradh Exp $");
 
 #include "channv50.h"
 
@@ -52,3 +52,16 @@ gf119_disp_chan_uevent = {
 	.init = gf119_disp_chan_uevent_init,
 	.fini = gf119_disp_chan_uevent_fini,
 };
+
+void
+gf119_disp_chan_intr(struct nv50_disp_chan *chan, bool en)
+{
+	struct nvkm_device *device = chan->disp->base.engine.subdev.device;
+	const u32 mask = 0x00000001 << chan->chid.user;
+	if (!en) {
+		nvkm_mask(device, 0x610090, mask, 0x00000000);
+		nvkm_mask(device, 0x6100a0, mask, 0x00000000);
+	} else {
+		nvkm_mask(device, 0x6100a0, mask, mask);
+	}
+}

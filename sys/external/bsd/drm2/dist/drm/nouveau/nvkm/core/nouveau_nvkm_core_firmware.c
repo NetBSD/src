@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_nvkm_core_firmware.c,v 1.1.1.1 2021/12/18 20:23:00 riastradh Exp $	*/
+/*	$NetBSD: nouveau_nvkm_core_firmware.c,v 1.2 2021/12/18 23:45:34 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2016, NVIDIA CORPORATION. All rights reserved.
@@ -22,7 +22,7 @@
  * DEALINGS IN THE SOFTWARE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_core_firmware.c,v 1.1.1.1 2021/12/18 20:23:00 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_core_firmware.c,v 1.2 2021/12/18 23:45:34 riastradh Exp $");
 
 #include <core/device.h>
 #include <core/firmware.h>

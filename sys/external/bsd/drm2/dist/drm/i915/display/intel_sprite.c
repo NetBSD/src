@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_sprite.c,v 1.1.1.1 2021/12/18 20:15:31 riastradh Exp $	*/
+/*	$NetBSD: intel_sprite.c,v 1.2 2021/12/18 23:45:30 riastradh Exp $	*/
 
 /*
  * Copyright © 2011 Intel Corporation
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intel_sprite.c,v 1.1.1.1 2021/12/18 20:15:31 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intel_sprite.c,v 1.2 2021/12/18 23:45:30 riastradh Exp $");
 
 #include <drm/drm_atomic.h>
 #include <drm/drm_atomic_helper.h>
@@ -91,10 +91,15 @@ void intel_pipe_update_start(const struct intel_crtc_state *new_crtc_state)
 	const struct drm_display_mode *adjusted_mode = &new_crtc_state->hw.adjusted_mode;
 	long timeout = msecs_to_jiffies_timeout(1);
 	int scanline, min, max, vblank_start;
+#ifdef __NetBSD__
+	drm_waitqueue_t *wq = drm_crtc_vblank_waitqueue(&crtc->base);
+	int ret;
+#else
 	wait_queue_head_t *wq = drm_crtc_vblank_waitqueue(&crtc->base);
 	bool need_vlv_dsi_wa = (IS_VALLEYVIEW(dev_priv) || IS_CHERRYVIEW(dev_priv)) &&
 		intel_crtc_has_type(new_crtc_state, INTEL_OUTPUT_DSI);
 	DEFINE_WAIT(wait);
+#endif
 	u32 psr_status;
 
 	vblank_start = adjusted_mode->crtc_vblank_start;
@@ -121,12 +126,25 @@ void intel_pipe_update_start(const struct intel_crtc_state *new_crtc_state)
 		DRM_ERROR("PSR idle timed out 0x%x, atomic update may fail\n",
 			  psr_status);
 
+#ifdef __NetBSD__
+	spin_lock(&dev->vbl_lock);
+#else
 	local_irq_disable();
+#endif
 
 	crtc->debug.min_vbl = min;
 	crtc->debug.max_vbl = max;
 	trace_intel_pipe_update_start(crtc);
 
+#ifdef __NetBSD__
+	DRM_SPIN_TIMED_WAIT_NOINTR_UNTIL(ret, wq, &dev->vbl_lock, timeout,
+	    (scanline = intel_get_crtc_scanline(crtc),
+		scanline < min || scanline > max));
+	if (ret <= 0)
+		DRM_ERROR("Potential atomic update failure on pipe %c: %d\n",
+		    pipe_name(crtc->pipe), ret ? ret : -EWOULDBLOCK);
+	drm_crtc_vblank_put_locked(&crtc->base);
+#else
 	for (;;) {
 		/*
 		 * prepare_to_wait() has a memory barrier, which guarantees
@@ -155,6 +173,7 @@ void intel_pipe_update_start(const struct intel_crtc_state *new_crtc_state)
 	finish_wait(wq, &wait);
 
 	drm_crtc_vblank_put(&crtc->base);
+#endif
 
 	/*
 	 * On VLV/CHV DSI the scanline counter would appear to
@@ -219,14 +238,18 @@ void intel_pipe_update_end(struct intel_crtc_state *new_crtc_state)
 		new_crtc_state->uapi.event = NULL;
 	}
 
+#ifdef __NetBSD__
+	spin_unlock(&dev->vbl_lock);
+#else
 	local_irq_enable();
+#endif
 
 	if (intel_vgpu_active(dev_priv))
 		return;
 
 	if (crtc->debug.start_vbl_count &&
 	    crtc->debug.start_vbl_count != end_vbl_count) {
-		DRM_ERROR("Atomic update failure on pipe %c (start=%u end=%u) time %lld us, min %d, max %d, scanline start %d, end %d\n",
+		DRM_ERROR("Atomic update failure on pipe %c (start=%u end=%u) time %"PRIdMAX" us, min %d, max %d, scanline start %d, end %d\n",
 			  pipe_name(pipe), crtc->debug.start_vbl_count,
 			  end_vbl_count,
 			  ktime_us_delta(end_vbl_time, crtc->debug.start_vbl_time),

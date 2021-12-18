@@ -1,8 +1,9 @@
-/*	$NetBSD: cstep.h,v 1.2 2018/08/27 04:58:30 riastradh Exp $	*/
+/*	$NetBSD: cstep.h,v 1.3 2021/12/18 23:45:33 riastradh Exp $	*/
 
+/* SPDX-License-Identifier: MIT */
 #ifndef __NVBIOS_CSTEP_H__
 #define __NVBIOS_CSTEP_H__
-u16 nvbios_cstepTe(struct nvkm_bios *,
+u32 nvbios_cstepTe(struct nvkm_bios *,
 		   u8 *ver, u8 *hdr, u8 *cnt, u8 *len, u8 *xnr, u8 *xsz);
 
 struct nvbios_cstepE {
@@ -10,10 +11,10 @@ struct nvbios_cstepE {
 	u8  index;
 };
 
-u16 nvbios_cstepEe(struct nvkm_bios *, int idx, u8 *ver, u8 *hdr);
-u16 nvbios_cstepEp(struct nvkm_bios *, int idx, u8 *ver, u8 *hdr,
+u32 nvbios_cstepEe(struct nvkm_bios *, int idx, u8 *ver, u8 *hdr);
+u32 nvbios_cstepEp(struct nvkm_bios *, int idx, u8 *ver, u8 *hdr,
 		   struct nvbios_cstepE *);
-u16 nvbios_cstepEm(struct nvkm_bios *, u8 pstate, u8 *ver, u8 *hdr,
+u32 nvbios_cstepEm(struct nvkm_bios *, u8 pstate, u8 *ver, u8 *hdr,
 		   struct nvbios_cstepE *);
 
 struct nvbios_cstepX {
@@ -22,7 +23,7 @@ struct nvbios_cstepX {
 	u8  voltage;
 };
 
-u16 nvbios_cstepXe(struct nvkm_bios *, int idx, u8 *ver, u8 *hdr);
-u16 nvbios_cstepXp(struct nvkm_bios *, int idx, u8 *ver, u8 *hdr,
+u32 nvbios_cstepXe(struct nvkm_bios *, int idx, u8 *ver, u8 *hdr);
+u32 nvbios_cstepXp(struct nvkm_bios *, int idx, u8 *ver, u8 *hdr,
 		   struct nvbios_cstepX *);
 #endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_nvkm_subdev_devinit_gm107.c,v 1.2 2018/08/27 04:58:33 riastradh Exp $	*/
+/*	$NetBSD: nouveau_nvkm_subdev_devinit_gm107.c,v 1.3 2021/12/18 23:45:39 riastradh Exp $	*/
 
 /*
  * Copyright 2013 Red Hat Inc.
@@ -24,7 +24,7 @@
  * Authors: Ben Skeggs
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_subdev_devinit_gm107.c,v 1.2 2018/08/27 04:58:33 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_subdev_devinit_gm107.c,v 1.3 2021/12/18 23:45:39 riastradh Exp $");
 
 #include "nv50.h"
 
@@ -51,7 +51,7 @@ gm107_devinit_disable(struct nvkm_devinit *init)
 
 static const struct nvkm_devinit_func
 gm107_devinit = {
-	.preinit = nv50_devinit_preinit,
+	.preinit = gf100_devinit_preinit,
 	.init = nv50_devinit_init,
 	.post = nv04_devinit_post,
 	.pll_set = gf100_devinit_pll_set,

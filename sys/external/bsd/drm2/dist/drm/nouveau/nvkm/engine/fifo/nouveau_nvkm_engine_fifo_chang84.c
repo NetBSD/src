@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_nvkm_engine_fifo_chang84.c,v 1.3 2018/08/27 07:38:56 riastradh Exp $	*/
+/*	$NetBSD: nouveau_nvkm_engine_fifo_chang84.c,v 1.4 2021/12/18 23:45:35 riastradh Exp $	*/
 
 /*
  * Copyright 2012 Red Hat Inc.
@@ -24,7 +24,7 @@
  * Authors: Ben Skeggs
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_engine_fifo_chang84.c,v 1.3 2018/08/27 07:38:56 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_engine_fifo_chang84.c,v 1.4 2021/12/18 23:45:35 riastradh Exp $");
 
 #include "channv50.h"
 
@@ -33,14 +33,14 @@ __KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_engine_fifo_chang84.c,v 1.3 2018/08/27 
 #include <subdev/mmu.h>
 #include <subdev/timer.h>
 
-#include <nvif/class.h>
+#include <nvif/cl826e.h>
 
-int
+static int
 g84_fifo_chan_ntfy(struct nvkm_fifo_chan *chan, u32 type,
 		   struct nvkm_event **pevent)
 {
 	switch (type) {
-	case G82_CHANNEL_DMA_V0_NTFY_UEVENT:
+	case NV826E_V0_NTFY_NON_STALL_INTERRUPT:
 		*pevent = &chan->fifo->uevent;
 		return 0;
 	default:
@@ -234,15 +234,18 @@ g84_fifo_chan_func = {
 };
 
 int
-g84_fifo_chan_ctor(struct nv50_fifo *fifo, u64 vm, u64 push,
+g84_fifo_chan_ctor(struct nv50_fifo *fifo, u64 vmm, u64 push,
 		   const struct nvkm_oclass *oclass,
 		   struct nv50_fifo_chan *chan)
 {
 	struct nvkm_device *device = fifo->base.engine.subdev.device;
 	int ret;
 
+	if (!vmm)
+		return -EINVAL;
+
 	ret = nvkm_fifo_chan_ctor(&g84_fifo_chan_func, &fifo->base,
-				  0x10000, 0x1000, false, vm, push,
+				  0x10000, 0x1000, false, vmm, push,
 				  (1ULL << NVKM_ENGINE_BSP) |
 				  (1ULL << NVKM_ENGINE_CE0) |
 				  (1ULL << NVKM_ENGINE_CIPHER) |
@@ -282,9 +285,5 @@ g84_fifo_chan_ctor(struct nv50_fifo *fifo, u64 vm, u64 push,
 	if (ret)
 		return ret;
 
-	ret = nvkm_ramht_new(device, 0x8000, 16, chan->base.inst, &chan->ramht);
-	if (ret)
-		return ret;
-
-	return nvkm_vm_ref(chan->base.vm, &chan->vm, chan->pgd);
+	return nvkm_ramht_new(device, 0x8000, 16, chan->base.inst, &chan->ramht);
 }

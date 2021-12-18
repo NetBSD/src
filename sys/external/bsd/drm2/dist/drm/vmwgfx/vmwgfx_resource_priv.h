@@ -1,9 +1,9 @@
-/*	$NetBSD: vmwgfx_resource_priv.h,v 1.2 2018/08/27 04:58:37 riastradh Exp $	*/
+/*	$NetBSD: vmwgfx_resource_priv.h,v 1.3 2021/12/18 23:45:45 riastradh Exp $	*/
 
+/* SPDX-License-Identifier: GPL-2.0 OR MIT */
 /**************************************************************************
  *
- * Copyright © 2012-2014 VMware, Inc., Palo Alto, CA., USA
- * All Rights Reserved.
+ * Copyright 2012-2014 VMware, Inc., Palo Alto, CA., USA
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the
@@ -31,6 +31,13 @@
 #define _VMWGFX_RESOURCE_PRIV_H_
 
 #include "vmwgfx_drv.h"
+
+/*
+ * Extra memory required by the resource id's ida storage, which is allocated
+ * separately from the base object itself. We estimate an on-average 128 bytes
+ * per ida.
+ */
+#define VMW_IDA_ACC_SIZE 128
 
 enum vmw_cmdbuf_res_state {
 	VMW_CMDBUF_RES_COMMITTED,
@@ -66,6 +73,13 @@ struct vmw_user_resource_conv {
  * @commit_notify:     If the resource is a command buffer managed resource,
  *                     callback to notify that a define or remove command
  *                     has been committed to the device.
+ * @dirty_alloc:       Allocate a dirty tracker. NULL if dirty-tracking is not
+ *                     supported.
+ * @dirty_free:        Free the dirty tracker.
+ * @dirty_sync:        Upload the dirty mob contents to the resource.
+ * @dirty_add_range:   Add a sequential dirty range to the resource
+ *                     dirty tracker.
+ * @clean:             Clean the resource.
  */
 struct vmw_res_func {
 	enum vmw_res_type res_type;
@@ -73,6 +87,8 @@ struct vmw_res_func {
 	const char *type_name;
 	struct ttm_placement *backup_placement;
 	bool may_evict;
+	u32 prio;
+	u32 dirty_prio;
 
 	int (*create) (struct vmw_resource *res);
 	int (*destroy) (struct vmw_resource *res);
@@ -83,6 +99,41 @@ struct vmw_res_func {
 		       struct ttm_validate_buffer *val_buf);
 	void (*commit_notify)(struct vmw_resource *res,
 			      enum vmw_cmdbuf_res_state state);
+	int (*dirty_alloc)(struct vmw_resource *res);
+	void (*dirty_free)(struct vmw_resource *res);
+	int (*dirty_sync)(struct vmw_resource *res);
+	void (*dirty_range_add)(struct vmw_resource *res, size_t start,
+				 size_t end);
+	int (*clean)(struct vmw_resource *res);
+};
+
+/**
+ * struct vmw_simple_resource_func - members and functions common for the
+ * simple resource helpers.
+ * @res_func:  struct vmw_res_func as described above.
+ * @ttm_res_type:  TTM resource type used for handle recognition.
+ * @size:  Size of the simple resource information struct.
+ * @init:  Initialize the simple resource information.
+ * @hw_destroy:  A resource hw_destroy function.
+ * @set_arg_handle:  Set the handle output argument of the ioctl create struct.
+ */
+struct vmw_simple_resource_func {
+	const struct vmw_res_func res_func;
+	int ttm_res_type;
+	size_t size;
+	int (*init)(struct vmw_resource *res, void *data);
+	void (*hw_destroy)(struct vmw_resource *res);
+	void (*set_arg_handle)(void *data, u32 handle);
+};
+
+/**
+ * struct vmw_simple_resource - Kernel only side simple resource
+ * @res: The resource we derive from.
+ * @func: The method and member virtual table.
+ */
+struct vmw_simple_resource {
+	struct vmw_resource res;
+	const struct vmw_simple_resource_func *func;
 };
 
 int vmw_resource_alloc_id(struct vmw_resource *res);
@@ -91,6 +142,13 @@ int vmw_resource_init(struct vmw_private *dev_priv, struct vmw_resource *res,
 		      bool delay_id,
 		      void (*res_free) (struct vmw_resource *res),
 		      const struct vmw_res_func *func);
-void vmw_resource_activate(struct vmw_resource *res,
-			   void (*hw_destroy) (struct vmw_resource *));
+int
+vmw_simple_resource_create_ioctl(struct drm_device *dev,
+				 void *data,
+				 struct drm_file *file_priv,
+				 const struct vmw_simple_resource_func *func);
+struct vmw_resource *
+vmw_simple_resource_lookup(struct ttm_object_file *tfile,
+			   uint32_t handle,
+			   const struct vmw_simple_resource_func *func);
 #endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: dml_inline_defs.h,v 1.1.1.1 2021/12/18 20:11:23 riastradh Exp $	*/
+/*	$NetBSD: dml_inline_defs.h,v 1.2 2021/12/18 23:45:04 riastradh Exp $	*/
 
 /*
  * Copyright 2017 Advanced Micro Devices, Inc.

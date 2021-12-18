@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_dispnv04_tvnv04.c,v 1.5 2020/02/14 14:34:58 maya Exp $	*/
+/*	$NetBSD: nouveau_dispnv04_tvnv04.c,v 1.6 2021/12/18 23:45:32 riastradh Exp $	*/
 
 /*
  * Copyright (C) 2009 Francisco Jerez.
@@ -27,10 +27,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_dispnv04_tvnv04.c,v 1.5 2020/02/14 14:34:58 maya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_dispnv04_tvnv04.c,v 1.6 2021/12/18 23:45:32 riastradh Exp $");
 
-#include <drm/drmP.h>
-#include "nouveau_drm.h"
+#include "nouveau_drv.h"
 #include "nouveau_reg.h"
 #include "nouveau_encoder.h"
 #include "nouveau_connector.h"
@@ -59,7 +58,7 @@ static struct nvkm_i2c_bus_probe nv04_tv_encoder_info[] = {
 int nv04_tv_identify(struct drm_device *dev, int i2c_index)
 {
 	struct nouveau_drm *drm = nouveau_drm(dev);
-	struct nvkm_i2c *i2c = nvxx_i2c(&drm->device);
+	struct nvkm_i2c *i2c = nvxx_i2c(&drm->client.device);
 	struct nvkm_i2c_bus *bus = nvkm_i2c_bus_find(i2c, i2c_index);
 	if (bus) {
 		return nvkm_i2c_bus_probe(bus, "TV encoder",
@@ -199,8 +198,6 @@ static const struct drm_encoder_funcs nv04_tv_funcs = {
 
 static const struct drm_encoder_helper_funcs nv04_tv_helper_funcs = {
 	.dpms = nv04_tv_dpms,
-	.save = drm_i2c_encoder_save,
-	.restore = drm_i2c_encoder_restore,
 	.mode_fixup = drm_i2c_encoder_mode_fixup,
 	.prepare = nv04_tv_prepare,
 	.commit = nv04_tv_commit,
@@ -215,7 +212,7 @@ nv04_tv_create(struct drm_connector *connector, struct dcb_output *entry)
 	struct drm_encoder *encoder;
 	struct drm_device *dev = connector->dev;
 	struct nouveau_drm *drm = nouveau_drm(dev);
-	struct nvkm_i2c *i2c = nvxx_i2c(&drm->device);
+	struct nvkm_i2c *i2c = nvxx_i2c(&drm->client.device);
 	struct nvkm_i2c_bus *bus = nvkm_i2c_bus_find(i2c, entry->i2c_index);
 	int type, ret;
 
@@ -232,8 +229,12 @@ nv04_tv_create(struct drm_connector *connector, struct dcb_output *entry)
 	/* Initialize the common members */
 	encoder = to_drm_encoder(nv_encoder);
 
-	drm_encoder_init(dev, encoder, &nv04_tv_funcs, DRM_MODE_ENCODER_TVDAC);
+	drm_encoder_init(dev, encoder, &nv04_tv_funcs, DRM_MODE_ENCODER_TVDAC,
+			 NULL);
 	drm_encoder_helper_add(encoder, &nv04_tv_helper_funcs);
+
+	nv_encoder->enc_save = drm_i2c_encoder_save;
+	nv_encoder->enc_restore = drm_i2c_encoder_restore;
 
 	encoder->possible_crtcs = entry->heads;
 	encoder->possible_clones = 0;
@@ -249,7 +250,7 @@ nv04_tv_create(struct drm_connector *connector, struct dcb_output *entry)
 
 	/* Attach it to the specified connector. */
 	get_slave_funcs(encoder)->create_resources(encoder, connector);
-	drm_mode_connector_attach_encoder(connector, encoder);
+	drm_connector_attach_encoder(connector, encoder);
 
 	return 0;
 

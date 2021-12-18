@@ -1,4 +1,4 @@
-/*	$NetBSD: stats.c,v 1.1.1.1 2021/12/18 20:11:26 riastradh Exp $	*/
+/*	$NetBSD: stats.c,v 1.2 2021/12/18 23:45:08 riastradh Exp $	*/
 
 /*
  * Copyright 2016 Advanced Micro Devices, Inc.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: stats.c,v 1.1.1.1 2021/12/18 20:11:26 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: stats.c,v 1.2 2021/12/18 23:45:08 riastradh Exp $");
 
 #include "mod_stats.h"
 #include "dm_services.h"

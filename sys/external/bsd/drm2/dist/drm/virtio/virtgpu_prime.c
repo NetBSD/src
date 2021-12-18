@@ -1,4 +1,4 @@
-/*	$NetBSD: virtgpu_prime.c,v 1.2 2018/08/27 04:58:37 riastradh Exp $	*/
+/*	$NetBSD: virtgpu_prime.c,v 1.3 2021/12/18 23:45:45 riastradh Exp $	*/
 
 /*
  * Copyright 2014 Canonical
@@ -25,52 +25,19 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: virtgpu_prime.c,v 1.2 2018/08/27 04:58:37 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: virtgpu_prime.c,v 1.3 2021/12/18 23:45:45 riastradh Exp $");
+
+#include <drm/drm_prime.h>
 
 #include "virtgpu_drv.h"
 
 /* Empty Implementations as there should not be any other driver for a virtual
- * device that might share buffers with virtgpu */
-
-int virtgpu_gem_prime_pin(struct drm_gem_object *obj)
-{
-	WARN_ONCE(1, "not implemented");
-	return -ENODEV;
-}
-
-void virtgpu_gem_prime_unpin(struct drm_gem_object *obj)
-{
-	WARN_ONCE(1, "not implemented");
-}
-
-
-struct sg_table *virtgpu_gem_prime_get_sg_table(struct drm_gem_object *obj)
-{
-	WARN_ONCE(1, "not implemented");
-	return ERR_PTR(-ENODEV);
-}
+ * device that might share buffers with virtgpu
+ */
 
 struct drm_gem_object *virtgpu_gem_prime_import_sg_table(
 	struct drm_device *dev, struct dma_buf_attachment *attach,
 	struct sg_table *table)
 {
-	WARN_ONCE(1, "not implemented");
 	return ERR_PTR(-ENODEV);
-}
-
-void *virtgpu_gem_prime_vmap(struct drm_gem_object *obj)
-{
-	WARN_ONCE(1, "not implemented");
-	return ERR_PTR(-ENODEV);
-}
-
-void virtgpu_gem_prime_vunmap(struct drm_gem_object *obj, void *vaddr)
-{
-	WARN_ONCE(1, "not implemented");
-}
-
-int virtgpu_gem_prime_mmap(struct drm_gem_object *obj,
-		       struct vm_area_struct *area)
-{
-	return -ENODEV;
 }

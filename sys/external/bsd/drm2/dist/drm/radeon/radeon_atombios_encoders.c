@@ -1,4 +1,4 @@
-/*	$NetBSD: radeon_atombios_encoders.c,v 1.1.1.1 2021/12/18 20:15:46 riastradh Exp $	*/
+/*	$NetBSD: radeon_atombios_encoders.c,v 1.2 2021/12/18 23:45:43 riastradh Exp $	*/
 
 /*
  * Copyright 2007-11 Advanced Micro Devices, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radeon_atombios_encoders.c,v 1.1.1.1 2021/12/18 20:15:46 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radeon_atombios_encoders.c,v 1.2 2021/12/18 23:45:43 riastradh Exp $");
 
 #include <linux/backlight.h>
 #include <linux/dmi.h>
@@ -145,7 +145,7 @@ atombios_set_backlight_level(struct radeon_encoder *radeon_encoder, u8 level)
 	}
 }
 
-#if defined(CONFIG_BACKLIGHT_CLASS_DEVICE) || defined(CONFIG_BACKLIGHT_CLASS_DEVICE_MODULE)
+#if IS_ENABLED(CONFIG_BACKLIGHT_CLASS_DEVICE) || IS_ENABLED(CONFIG_BACKLIGHT_CLASS_DEVICE_MODULE)
 
 static u8 radeon_atom_bl_level(struct backlight_device *bd)
 {

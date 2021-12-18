@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_encoder_slave.c,v 1.2 2018/08/27 04:58:19 riastradh Exp $	*/
+/*	$NetBSD: drm_encoder_slave.c,v 1.3 2021/12/18 23:44:57 riastradh Exp $	*/
 
 /*
  * Copyright (C) 2009 Francisco Jerez.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_encoder_slave.c,v 1.2 2018/08/27 04:58:19 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_encoder_slave.c,v 1.3 2021/12/18 23:44:57 riastradh Exp $");
 
 #include <linux/module.h>
 
@@ -48,7 +48,7 @@ __KERNEL_RCSID(0, "$NetBSD: drm_encoder_slave.c,v 1.2 2018/08/27 04:58:19 riastr
  * &drm_encoder_slave. The @slave_funcs field will be initialized with
  * the hooks provided by the slave driver.
  *
- * If @info->platform_data is non-NULL it will be used as the initial
+ * If @info.platform_data is non-NULL it will be used as the initial
  * slave config.
  *
  * Returns 0 on success or a negative errno on failure, in particular,
@@ -129,7 +129,7 @@ EXPORT_SYMBOL(drm_i2c_encoder_destroy);
  * Wrapper fxns which can be plugged in to drm_encoder_helper_funcs:
  */
 
-static inline struct drm_encoder_slave_funcs *
+static inline const struct drm_encoder_slave_funcs *
 get_slave_funcs(struct drm_encoder *enc)
 {
 	return to_encoder_slave(enc)->slave_funcs;
@@ -145,6 +145,9 @@ bool drm_i2c_encoder_mode_fixup(struct drm_encoder *encoder,
 		const struct drm_display_mode *mode,
 		struct drm_display_mode *adjusted_mode)
 {
+	if (!get_slave_funcs(encoder)->mode_fixup)
+		return true;
+
 	return get_slave_funcs(encoder)->mode_fixup(encoder, mode, adjusted_mode);
 }
 EXPORT_SYMBOL(drm_i2c_encoder_mode_fixup);

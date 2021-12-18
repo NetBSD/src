@@ -1,4 +1,4 @@
-/*	$NetBSD: bif_5_1_d.h,v 1.2 2018/08/27 04:58:20 riastradh Exp $	*/
+/*	$NetBSD: bif_5_1_d.h,v 1.3 2021/12/18 23:45:09 riastradh Exp $	*/
 
 /*
  * BIF_5_1 Register documentation

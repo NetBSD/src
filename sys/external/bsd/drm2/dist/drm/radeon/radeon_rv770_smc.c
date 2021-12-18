@@ -1,4 +1,4 @@
-/*	$NetBSD: radeon_rv770_smc.c,v 1.2 2019/08/17 17:03:32 msaitoh Exp $	*/
+/*	$NetBSD: radeon_rv770_smc.c,v 1.3 2021/12/18 23:45:43 riastradh Exp $	*/
 
 /*
  * Copyright 2011 Advanced Micro Devices, Inc.
@@ -25,10 +25,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radeon_rv770_smc.c,v 1.2 2019/08/17 17:03:32 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radeon_rv770_smc.c,v 1.3 2021/12/18 23:45:43 riastradh Exp $");
 
 #include <linux/firmware.h>
-#include "drmP.h"
+
 #include "radeon.h"
 #include "rv770d.h"
 #include "rv770_dpm.h"

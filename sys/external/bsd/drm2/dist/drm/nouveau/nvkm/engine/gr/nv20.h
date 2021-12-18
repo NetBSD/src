@@ -1,5 +1,6 @@
-/*	$NetBSD: nv20.h,v 1.2 2018/08/27 04:58:32 riastradh Exp $	*/
+/*	$NetBSD: nv20.h,v 1.3 2021/12/18 23:45:36 riastradh Exp $	*/
 
+/* SPDX-License-Identifier: MIT */
 #ifndef __NV20_GR_H__
 #define __NV20_GR_H__
 #define nv20_gr(p) container_of((p), struct nv20_gr, base)
@@ -21,6 +22,7 @@ void nv20_gr_tile(struct nvkm_gr *, int, struct nvkm_fb_tile *);
 int nv30_gr_init(struct nvkm_gr *);
 
 #define nv20_gr_chan(p) container_of((p), struct nv20_gr_chan, object)
+#include <core/object.h>
 
 struct nv20_gr_chan {
 	struct nvkm_object object;

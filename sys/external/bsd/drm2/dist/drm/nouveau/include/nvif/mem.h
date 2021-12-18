@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.h,v 1.1.1.1 2021/12/18 20:15:37 riastradh Exp $	*/
+/*	$NetBSD: mem.h,v 1.2 2021/12/18 23:45:33 riastradh Exp $	*/
 
 #ifndef __NVIF_MEM_H__
 #define __NVIF_MEM_H__

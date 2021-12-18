@@ -1,5 +1,6 @@
-/*	$NetBSD: nv10_fence.h,v 1.2 2018/08/27 04:58:24 riastradh Exp $	*/
+/*	$NetBSD: nv10_fence.h,v 1.3 2021/12/18 23:45:32 riastradh Exp $	*/
 
+/* SPDX-License-Identifier: MIT */
 #ifndef __NV10_FENCE_H_
 #define __NV10_FENCE_H_
 
@@ -9,7 +10,6 @@
 struct nv10_fence_chan {
 	struct nouveau_fence_chan base;
 	struct nvif_object sema;
-	struct nvif_object head[4];
 };
 
 struct nv10_fence_priv {

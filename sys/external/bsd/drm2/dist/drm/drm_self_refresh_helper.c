@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_self_refresh_helper.c,v 1.1.1.1 2021/12/18 20:11:03 riastradh Exp $	*/
+/*	$NetBSD: drm_self_refresh_helper.c,v 1.2 2021/12/18 23:44:57 riastradh Exp $	*/
 
 // SPDX-License-Identifier: MIT
 /*
@@ -8,7 +8,7 @@
  * Sean Paul <seanpaul@chromium.org>
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_self_refresh_helper.c,v 1.1.1.1 2021/12/18 20:11:03 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_self_refresh_helper.c,v 1.2 2021/12/18 23:44:57 riastradh Exp $");
 
 #include <linux/average.h>
 #include <linux/bitops.h>

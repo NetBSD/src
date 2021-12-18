@@ -1,4 +1,4 @@
-/*	$NetBSD: radeon_uvd_v1_0.c,v 1.4 2020/12/16 19:49:05 christos Exp $	*/
+/*	$NetBSD: radeon_uvd_v1_0.c,v 1.5 2021/12/18 23:45:43 riastradh Exp $	*/
 
 /*
  * Copyright 2013 Advanced Micro Devices, Inc.
@@ -25,10 +25,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radeon_uvd_v1_0.c,v 1.4 2020/12/16 19:49:05 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radeon_uvd_v1_0.c,v 1.5 2021/12/18 23:45:43 riastradh Exp $");
 
 #include <linux/firmware.h>
-#include <drm/drmP.h>
+
 #include "radeon.h"
 #include "radeon_asic.h"
 #include "r600d.h"
@@ -129,12 +129,13 @@ int uvd_v1_0_resume(struct radeon_device *rdev)
 	WREG32(UVD_VCPU_CACHE_SIZE0, size);
 
 	addr += size;
-	size = RADEON_UVD_STACK_SIZE >> 3;
+	size = RADEON_UVD_HEAP_SIZE >> 3;
 	WREG32(UVD_VCPU_CACHE_OFFSET1, addr);
 	WREG32(UVD_VCPU_CACHE_SIZE1, size);
 
 	addr += size;
-	size = RADEON_UVD_HEAP_SIZE >> 3;
+	size = (RADEON_UVD_STACK_SIZE +
+	       (RADEON_UVD_SESSION_SIZE * rdev->uvd.max_handles)) >> 3;
 	WREG32(UVD_VCPU_CACHE_OFFSET2, addr);
 	WREG32(UVD_VCPU_CACHE_SIZE2, size);
 
@@ -442,7 +443,7 @@ int uvd_v1_0_ring_test(struct radeon_device *rdev, struct radeon_ring *ring)
 		tmp = RREG32(UVD_CONTEXT_ID);
 		if (tmp == 0xDEADBEEF)
 			break;
-		DRM_UDELAY(1);
+		udelay(1);
 	}
 
 	if (i < rdev->usec_timeout) {
@@ -527,11 +528,17 @@ int uvd_v1_0_ib_test(struct radeon_device *rdev, struct radeon_ring *ring)
 		goto error;
 	}
 
-	r = radeon_fence_wait(fence, false);
-	if (r) {
+	r = radeon_fence_wait_timeout(fence, false, usecs_to_jiffies(
+		RADEON_USEC_IB_TEST_TIMEOUT));
+	if (r < 0) {
 		DRM_ERROR("radeon: fence wait failed (%d).\n", r);
 		goto error;
+	} else if (r == 0) {
+		DRM_ERROR("radeon: fence wait timed out.\n");
+		r = -ETIMEDOUT;
+		goto error;
 	}
+	r = 0;
 	DRM_INFO("ib test on ring %d succeeded\n",  ring->idx);
 error:
 	radeon_fence_unref(&fence);

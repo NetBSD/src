@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu_ppatomfwctrl.c,v 1.1.1.1 2021/12/18 20:15:19 riastradh Exp $	*/
+/*	$NetBSD: amdgpu_ppatomfwctrl.c,v 1.2 2021/12/18 23:45:26 riastradh Exp $	*/
 
 /*
  * Copyright 2016 Advanced Micro Devices, Inc.
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdgpu_ppatomfwctrl.c,v 1.1.1.1 2021/12/18 20:15:19 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdgpu_ppatomfwctrl.c,v 1.2 2021/12/18 23:45:26 riastradh Exp $");
 
 #include "ppatomfwctrl.h"
 #include "atomfirmware.h"

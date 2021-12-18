@@ -1,5 +1,6 @@
-/*	$NetBSD: seq.h,v 1.2 2018/08/27 04:58:33 riastradh Exp $	*/
+/*	$NetBSD: seq.h,v 1.3 2021/12/18 23:45:39 riastradh Exp $	*/
 
+/* SPDX-License-Identifier: MIT */
 #ifndef __NVKM_CLK_SEQ_H__
 #define __NVKM_CLK_SEQ_H__
 #include <subdev/bus/hwsq.h>

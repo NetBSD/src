@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_nvkm_core_mm.c,v 1.2 2018/08/27 04:58:30 riastradh Exp $	*/
+/*	$NetBSD: nouveau_nvkm_core_mm.c,v 1.3 2021/12/18 23:45:34 riastradh Exp $	*/
 
 /*
  * Copyright 2012 Red Hat Inc.
@@ -24,7 +24,7 @@
  * Authors: Ben Skeggs
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_core_mm.c,v 1.2 2018/08/27 04:58:30 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_core_mm.c,v 1.3 2021/12/18 23:45:34 riastradh Exp $");
 
 #include <core/mm.h>
 
@@ -36,15 +36,15 @@ nvkm_mm_dump(struct nvkm_mm *mm, const char *header)
 {
 	struct nvkm_mm_node *node;
 
-	printk(KERN_ERR "nvkm: %s\n", header);
-	printk(KERN_ERR "nvkm: node list:\n");
+	pr_err("nvkm: %s\n", header);
+	pr_err("nvkm: node list:\n");
 	list_for_each_entry(node, &mm->nodes, nl_entry) {
-		printk(KERN_ERR "nvkm: \t%08x %08x %d\n",
+		pr_err("nvkm: \t%08x %08x %d\n",
 		       node->offset, node->length, node->type);
 	}
-	printk(KERN_ERR "nvkm: free list:\n");
+	pr_err("nvkm: free list:\n");
 	list_for_each_entry(node, &mm->free, fl_entry) {
-		printk(KERN_ERR "nvkm: \t%08x %08x %d\n",
+		pr_err("nvkm: \t%08x %08x %d\n",
 		       node->offset, node->length, node->type);
 	}
 }
@@ -152,6 +152,7 @@ nvkm_mm_head(struct nvkm_mm *mm, u8 heap, u8 type, u32 size_max, u32 size_min,
 		if (!this)
 			return -ENOMEM;
 
+		this->next = NULL;
 		this->type = type;
 		list_del(&this->fl_entry);
 		*pnode = this;
@@ -230,6 +231,7 @@ nvkm_mm_tail(struct nvkm_mm *mm, u8 heap, u8 type, u32 size_max, u32 size_min,
 		if (!this)
 			return -ENOMEM;
 
+		this->next = NULL;
 		this->type = type;
 		list_del(&this->fl_entry);
 		*pnode = this;
@@ -240,7 +242,7 @@ nvkm_mm_tail(struct nvkm_mm *mm, u8 heap, u8 type, u32 size_max, u32 size_min,
 }
 
 int
-nvkm_mm_init(struct nvkm_mm *mm, u32 offset, u32 length, u32 block)
+nvkm_mm_init(struct nvkm_mm *mm, u8 heap, u32 offset, u32 length, u32 block)
 {
 	struct nvkm_mm_node *node, *prev;
 	u32 next;
@@ -277,7 +279,8 @@ nvkm_mm_init(struct nvkm_mm *mm, u32 offset, u32 length, u32 block)
 
 	list_add_tail(&node->nl_entry, &mm->nodes);
 	list_add_tail(&node->fl_entry, &mm->free);
-	node->heap = ++mm->heap_nodes;
+	node->heap = heap;
+	mm->heap_nodes++;
 	return 0;
 }
 

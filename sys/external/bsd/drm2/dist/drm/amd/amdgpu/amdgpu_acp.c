@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu_acp.c,v 1.1.1.1 2021/12/18 20:11:04 riastradh Exp $	*/
+/*	$NetBSD: amdgpu_acp.c,v 1.2 2021/12/18 23:44:58 riastradh Exp $	*/
 
 /*
  * Copyright 2015 Advanced Micro Devices, Inc.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdgpu_acp.c,v 1.1.1.1 2021/12/18 20:11:04 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdgpu_acp.c,v 1.2 2021/12/18 23:44:58 riastradh Exp $");
 
 #include <linux/irqdomain.h>
 #include <linux/pci.h>

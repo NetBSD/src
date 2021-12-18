@@ -1,4 +1,4 @@
-/*	$NetBSD: smuio_11_0_0_sh_mask.h,v 1.1.1.1 2021/12/18 20:15:14 riastradh Exp $	*/
+/*	$NetBSD: smuio_11_0_0_sh_mask.h,v 1.2 2021/12/18 23:45:23 riastradh Exp $	*/
 
 /*
  * Copyright (C) 2019  Advanced Micro Devices, Inc.

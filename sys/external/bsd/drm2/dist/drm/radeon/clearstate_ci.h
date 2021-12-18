@@ -1,4 +1,4 @@
-/*	$NetBSD: clearstate_ci.h,v 1.2 2018/08/27 04:58:35 riastradh Exp $	*/
+/*	$NetBSD: clearstate_ci.h,v 1.3 2021/12/18 23:45:42 riastradh Exp $	*/
 
 /*
  * Copyright 2013 Advanced Micro Devices, Inc.
@@ -22,6 +22,8 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  *
  */
+
+#include "clearstate_defs.h"
 
 static const unsigned int ci_SECT_CONTEXT_def_1[] =
 {

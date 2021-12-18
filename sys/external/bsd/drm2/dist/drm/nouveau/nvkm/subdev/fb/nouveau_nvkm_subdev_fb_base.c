@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_nvkm_subdev_fb_base.c,v 1.2 2018/08/27 04:58:33 riastradh Exp $	*/
+/*	$NetBSD: nouveau_nvkm_subdev_fb_base.c,v 1.3 2021/12/18 23:45:39 riastradh Exp $	*/
 
 /*
  * Copyright 2012 Red Hat Inc.
@@ -24,21 +24,17 @@
  * Authors: Ben Skeggs
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_subdev_fb_base.c,v 1.2 2018/08/27 04:58:33 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_subdev_fb_base.c,v 1.3 2021/12/18 23:45:39 riastradh Exp $");
 
 #include "priv.h"
 #include "ram.h"
 
+#include <core/memory.h>
+#include <core/option.h>
 #include <subdev/bios.h>
 #include <subdev/bios/M0203.h>
 #include <engine/gr.h>
 #include <engine/mpeg.h>
-
-bool
-nvkm_fb_memtype_valid(struct nvkm_fb *fb, u32 memtype)
-{
-	return fb->func->memtype_valid(fb, memtype);
-}
 
 void
 nvkm_fb_tile_fini(struct nvkm_fb *fb, int region, struct nvkm_fb_tile *tile)
@@ -77,10 +73,13 @@ nvkm_fb_bios_memtype(struct nvkm_bios *bios)
 
 	if (nvbios_M0203Em(bios, ramcfg, &ver, &hdr, &M0203E)) {
 		switch (M0203E.type) {
-		case M0203E_TYPE_DDR2 : return NVKM_RAM_TYPE_DDR2;
-		case M0203E_TYPE_DDR3 : return NVKM_RAM_TYPE_DDR3;
-		case M0203E_TYPE_GDDR3: return NVKM_RAM_TYPE_GDDR3;
-		case M0203E_TYPE_GDDR5: return NVKM_RAM_TYPE_GDDR5;
+		case M0203E_TYPE_DDR2  : return NVKM_RAM_TYPE_DDR2;
+		case M0203E_TYPE_DDR3  : return NVKM_RAM_TYPE_DDR3;
+		case M0203E_TYPE_GDDR3 : return NVKM_RAM_TYPE_GDDR3;
+		case M0203E_TYPE_GDDR5 : return NVKM_RAM_TYPE_GDDR5;
+		case M0203E_TYPE_GDDR5X: return NVKM_RAM_TYPE_GDDR5X;
+		case M0203E_TYPE_GDDR6 : return NVKM_RAM_TYPE_GDDR6;
+		case M0203E_TYPE_HBM2  : return NVKM_RAM_TYPE_HBM2;
 		default:
 			nvkm_warn(subdev, "M0203E type %02x\n", M0203E.type);
 			return NVKM_RAM_TYPE_UNKNOWN;
@@ -103,6 +102,8 @@ static int
 nvkm_fb_oneinit(struct nvkm_subdev *subdev)
 {
 	struct nvkm_fb *fb = nvkm_fb(subdev);
+	u32 tags = 0;
+
 	if (fb->func->ram_new) {
 		int ret = fb->func->ram_new(fb, &fb->ram);
 		if (ret) {
@@ -110,6 +111,50 @@ nvkm_fb_oneinit(struct nvkm_subdev *subdev)
 			return ret;
 		}
 	}
+
+	if (fb->func->oneinit) {
+		int ret = fb->func->oneinit(fb);
+		if (ret)
+			return ret;
+	}
+
+	/* Initialise compression tag allocator.
+	 *
+	 * LTC oneinit() will override this on Fermi and newer.
+	 */
+	if (fb->func->tags) {
+		tags = fb->func->tags(fb);
+		nvkm_debug(subdev, "%d comptags\n", tags);
+	}
+
+	return nvkm_mm_init(&fb->tags, 0, 0, tags, 1);
+}
+
+static int
+nvkm_fb_init_scrub_vpr(struct nvkm_fb *fb)
+{
+	struct nvkm_subdev *subdev = &fb->subdev;
+	int ret;
+
+	nvkm_debug(subdev, "VPR locked, running scrubber binary\n");
+
+	if (!fb->vpr_scrubber.size) {
+		nvkm_warn(subdev, "VPR locked, but no scrubber binary!\n");
+		return 0;
+	}
+
+	ret = fb->func->vpr.scrub(fb);
+	if (ret) {
+		nvkm_error(subdev, "VPR scrubber binary failed\n");
+		return ret;
+	}
+
+	if (fb->func->vpr.scrub_required(fb)) {
+		nvkm_error(subdev, "VPR still locked after scrub!\n");
+		return -EIO;
+	}
+
+	nvkm_debug(subdev, "VPR scrubber binary successful\n");
 	return 0;
 }
 
@@ -130,6 +175,26 @@ nvkm_fb_init(struct nvkm_subdev *subdev)
 
 	if (fb->func->init)
 		fb->func->init(fb);
+
+	if (fb->func->init_remapper)
+		fb->func->init_remapper(fb);
+
+	if (fb->func->init_page) {
+		ret = fb->func->init_page(fb);
+		if (WARN_ON(ret))
+			return ret;
+	}
+
+	if (fb->func->init_unkn)
+		fb->func->init_unkn(fb);
+
+	if (fb->func->vpr.scrub_required &&
+	    fb->func->vpr.scrub_required(fb)) {
+		ret = nvkm_fb_init_scrub_vpr(fb);
+		if (ret)
+			return ret;
+	}
+
 	return 0;
 }
 
@@ -139,10 +204,16 @@ nvkm_fb_dtor(struct nvkm_subdev *subdev)
 	struct nvkm_fb *fb = nvkm_fb(subdev);
 	int i;
 
+	nvkm_memory_unref(&fb->mmu_wr);
+	nvkm_memory_unref(&fb->mmu_rd);
+
 	for (i = 0; i < fb->tile.regions; i++)
 		fb->func->tile.fini(fb, i, &fb->tile.region[i]);
 
+	nvkm_mm_fini(&fb->tags);
 	nvkm_ram_del(&fb->ram);
+
+	nvkm_blob_dtor(&fb->vpr_scrubber);
 
 	if (fb->func->dtor)
 		return fb->func->dtor(fb);
@@ -161,9 +232,11 @@ void
 nvkm_fb_ctor(const struct nvkm_fb_func *func, struct nvkm_device *device,
 	     int index, struct nvkm_fb *fb)
 {
-	nvkm_subdev_ctor(&nvkm_fb, device, index, 0, &fb->subdev);
+	nvkm_subdev_ctor(&nvkm_fb, device, index, &fb->subdev);
 	fb->func = func;
 	fb->tile.regions = fb->func->tile.regions;
+	fb->page = nvkm_longopt(device->cfgopt, "NvFbBigPage",
+				fb->func->default_bigpage);
 }
 
 int

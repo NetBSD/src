@@ -1,4 +1,4 @@
-/*	$NetBSD: qxl_ioctl.c,v 1.2 2018/08/27 04:58:35 riastradh Exp $	*/
+/*	$NetBSD: qxl_ioctl.c,v 1.3 2021/12/18 23:45:42 riastradh Exp $	*/
 
 /*
  * Copyright 2013 Red Hat Inc.
@@ -26,7 +26,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: qxl_ioctl.c,v 1.2 2018/08/27 04:58:35 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: qxl_ioctl.c,v 1.3 2021/12/18 23:45:42 riastradh Exp $");
+
+#include <linux/pci.h>
+#include <linux/uaccess.h>
 
 #include "qxl_drv.h"
 #include "qxl_object.h"
@@ -69,7 +72,7 @@ static int qxl_map_ioctl(struct drm_device *dev, void *data,
 	struct qxl_device *qdev = dev->dev_private;
 	struct drm_qxl_map *qxl_map = data;
 
-	return qxl_mode_dumb_mmap(file_priv, qdev->ddev, qxl_map->handle,
+	return qxl_mode_dumb_mmap(file_priv, &qdev->ddev, qxl_map->handle,
 				  &qxl_map->offset);
 }
 
@@ -90,6 +93,7 @@ static void
 apply_reloc(struct qxl_device *qdev, struct qxl_reloc_info *info)
 {
 	void *reloc_page;
+
 	reloc_page = qxl_bo_kmap_atomic_page(qdev, info->dst_bo, info->dst_offset & PAGE_MASK);
 	*(uint64_t *)(reloc_page + (info->dst_offset & ~PAGE_MASK)) = qxl_bo_physical_address(qdev,
 											      info->src_bo,
@@ -112,22 +116,21 @@ apply_surf_reloc(struct qxl_device *qdev, struct qxl_reloc_info *info)
 }
 
 /* return holding the reference to this object */
-static int qxlhw_handle_to_bo(struct qxl_device *qdev,
-			      struct drm_file *file_priv, uint64_t handle,
+static int qxlhw_handle_to_bo(struct drm_file *file_priv, uint64_t handle,
 			      struct qxl_release *release, struct qxl_bo **qbo_p)
 {
 	struct drm_gem_object *gobj;
 	struct qxl_bo *qobj;
 	int ret;
 
-	gobj = drm_gem_object_lookup(qdev->ddev, file_priv, handle);
+	gobj = drm_gem_object_lookup(file_priv, handle);
 	if (!gobj)
 		return -EINVAL;
 
 	qobj = gem_to_qxl_bo(gobj);
 
 	ret = qxl_release_list_add(release, qobj);
-	drm_gem_object_unreference_unlocked(gobj);
+	drm_gem_object_put_unlocked(gobj);
 	if (ret)
 		return ret;
 
@@ -168,8 +171,7 @@ static int qxl_process_single_command(struct qxl_device *qdev,
 	if (cmd->command_size > PAGE_SIZE - sizeof(union qxl_release_info))
 		return -EINVAL;
 
-	if (!access_ok(VERIFY_READ,
-		       (void *)(unsigned long)cmd->command,
+	if (!access_ok(u64_to_user_ptr(cmd->command),
 		       cmd->command_size))
 		return -EFAULT;
 
@@ -188,11 +190,14 @@ static int qxl_process_single_command(struct qxl_device *qdev,
 		goto out_free_reloc;
 
 	/* TODO copy slow path code from i915 */
-	fb_cmd = qxl_bo_kmap_atomic_page(qdev, cmd_bo, (release->release_offset & PAGE_SIZE));
-	unwritten = __copy_from_user_inatomic_nocache(fb_cmd + sizeof(union qxl_release_info) + (release->release_offset & ~PAGE_SIZE), (void *)(unsigned long)cmd->command, cmd->command_size);
+	fb_cmd = qxl_bo_kmap_atomic_page(qdev, cmd_bo, (release->release_offset & PAGE_MASK));
+	unwritten = __copy_from_user_inatomic_nocache
+		(fb_cmd + sizeof(union qxl_release_info) + (release->release_offset & ~PAGE_MASK),
+		 u64_to_user_ptr(cmd->command), cmd->command_size);
 
 	{
 		struct qxl_drawable *draw = fb_cmd;
+
 		draw->mm_time = qdev->rom->mm_clock;
 	}
 
@@ -207,10 +212,9 @@ static int qxl_process_single_command(struct qxl_device *qdev,
 	num_relocs = 0;
 	for (i = 0; i < cmd->relocs_num; ++i) {
 		struct drm_qxl_reloc reloc;
+		struct drm_qxl_reloc __user *u = u64_to_user_ptr(cmd->relocs);
 
-		if (copy_from_user(&reloc,
-				       &((struct drm_qxl_reloc *)(uintptr_t)cmd->relocs)[i],
-				       sizeof(reloc))) {
+		if (copy_from_user(&reloc, u + i, sizeof(reloc))) {
 			ret = -EFAULT;
 			goto out_free_bos;
 		}
@@ -226,7 +230,7 @@ static int qxl_process_single_command(struct qxl_device *qdev,
 		reloc_info[i].type = reloc.reloc_type;
 
 		if (reloc.dst_handle) {
-			ret = qxlhw_handle_to_bo(qdev, file_priv, reloc.dst_handle, release,
+			ret = qxlhw_handle_to_bo(file_priv, reloc.dst_handle, release,
 						 &reloc_info[i].dst_bo);
 			if (ret)
 				goto out_free_bos;
@@ -239,7 +243,7 @@ static int qxl_process_single_command(struct qxl_device *qdev,
 
 		/* reserve and validate the reloc dst bo */
 		if (reloc.reloc_type == QXL_RELOC_TYPE_BO || reloc.src_handle) {
-			ret = qxlhw_handle_to_bo(qdev, file_priv, reloc.src_handle, release,
+			ret = qxlhw_handle_to_bo(file_priv, reloc.src_handle, release,
 						 &reloc_info[i].src_bo);
 			if (ret)
 				goto out_free_bos;
@@ -288,10 +292,10 @@ static int qxl_execbuffer_ioctl(struct drm_device *dev, void *data,
 
 	for (cmd_num = 0; cmd_num < execbuffer->commands_num; ++cmd_num) {
 
-		struct drm_qxl_command *commands =
-			(struct drm_qxl_command *)(uintptr_t)execbuffer->commands;
+		struct drm_qxl_command __user *commands =
+			u64_to_user_ptr(execbuffer->commands);
 
-		if (copy_from_user(&user_cmd, &commands[cmd_num],
+		if (copy_from_user(&user_cmd, commands + cmd_num,
 				       sizeof(user_cmd)))
 			return -EFAULT;
 
@@ -314,12 +318,13 @@ static int qxl_update_area_ioctl(struct drm_device *dev, void *data,
 	int ret;
 	struct drm_gem_object *gobj = NULL;
 	struct qxl_bo *qobj = NULL;
+	struct ttm_operation_ctx ctx = { true, false };
 
 	if (update_area->left >= update_area->right ||
 	    update_area->top >= update_area->bottom)
 		return -EINVAL;
 
-	gobj = drm_gem_object_lookup(dev, file, update_area->handle);
+	gobj = drm_gem_object_lookup(file, update_area->handle);
 	if (gobj == NULL)
 		return -ENOENT;
 
@@ -331,8 +336,7 @@ static int qxl_update_area_ioctl(struct drm_device *dev, void *data,
 
 	if (!qobj->pin_count) {
 		qxl_ttm_placement_from_domain(qobj, qobj->type, false);
-		ret = ttm_bo_validate(&qobj->tbo, &qobj->placement,
-				      true, false);
+		ret = ttm_bo_validate(&qobj->tbo, &qobj->placement, &ctx);
 		if (unlikely(ret))
 			goto out;
 	}
@@ -348,7 +352,7 @@ out2:
 	qxl_bo_unreserve(qobj);
 
 out:
-	drm_gem_object_unreference_unlocked(gobj);
+	drm_gem_object_put_unlocked(gobj);
 	return ret;
 }
 
@@ -381,7 +385,7 @@ static int qxl_clientcap_ioctl(struct drm_device *dev, void *data,
 	byte = param->index / 8;
 	idx = param->index % 8;
 
-	if (qdev->pdev->revision < 4)
+	if (dev->pdev->revision < 4)
 		return -ENOSYS;
 
 	if (byte >= 58)

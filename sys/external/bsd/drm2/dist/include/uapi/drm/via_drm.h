@@ -1,4 +1,4 @@
-/*	$NetBSD: via_drm.h,v 1.1.1.1 2021/12/18 20:15:58 riastradh Exp $	*/
+/*	$NetBSD: via_drm.h,v 1.2 2021/12/18 23:45:46 riastradh Exp $	*/
 
 /*
  * Copyright 1998-2003 VIA Technologies, Inc. All Rights Reserved.

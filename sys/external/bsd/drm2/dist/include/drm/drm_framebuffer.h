@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_framebuffer.h,v 1.1.1.1 2021/12/18 20:15:57 riastradh Exp $	*/
+/*	$NetBSD: drm_framebuffer.h,v 1.2 2021/12/18 23:45:46 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2016 Intel Corporation

@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_nvif_device.c,v 1.2 2018/08/27 04:58:30 riastradh Exp $	*/
+/*	$NetBSD: nouveau_nvif_device.c,v 1.3 2021/12/18 23:45:33 riastradh Exp $	*/
 
 /*
  * Copyright 2014 Red Hat Inc.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_nvif_device.c,v 1.2 2018/08/27 04:58:30 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_nvif_device.c,v 1.3 2021/12/18 23:45:33 riastradh Exp $");
 
 #include <nvif/device.h>
 
@@ -42,6 +42,9 @@ nvif_device_time(struct nvif_device *device)
 void
 nvif_device_fini(struct nvif_device *device)
 {
+	nvif_user_fini(device);
+	kfree(device->runlist);
+	device->runlist = NULL;
 	nvif_object_fini(&device->object);
 }
 
@@ -51,6 +54,8 @@ nvif_device_init(struct nvif_object *parent, u32 handle, s32 oclass,
 {
 	int ret = nvif_object_init(parent, handle, oclass, data, size,
 				   &device->object);
+	device->runlist = NULL;
+	device->user.func = NULL;
 	if (ret == 0) {
 		device->info.version = 0;
 		ret = nvif_object_mthd(&device->object, NV_DEVICE_V0_INFO,

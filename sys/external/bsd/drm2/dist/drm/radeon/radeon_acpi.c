@@ -1,4 +1,4 @@
-/*	$NetBSD: radeon_acpi.c,v 1.2 2018/08/27 04:58:36 riastradh Exp $	*/
+/*	$NetBSD: radeon_acpi.c,v 1.3 2021/12/18 23:45:43 riastradh Exp $	*/
 
 /*
  * Copyright 2012 Advanced Micro Devices, Inc.
@@ -24,18 +24,29 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radeon_acpi.c,v 1.2 2018/08/27 04:58:36 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radeon_acpi.c,v 1.3 2021/12/18 23:45:43 riastradh Exp $");
 
-#include <linux/pci.h>
 #include <linux/acpi.h>
-#include <linux/slab.h>
+#include <linux/pci.h>
+#include <linux/pm_runtime.h>
 #include <linux/power_supply.h>
+#include <linux/slab.h>
+
+#include <acpi/acpi_bus.h>
 #include <acpi/video.h>
-#include <drm/drmP.h>
+
 #include <drm/drm_crtc_helper.h>
+#include <drm/drm_probe_helper.h>
+
+#include "atom.h"
 #include "radeon.h"
 #include "radeon_acpi.h"
-#include "atom.h"
+
+#if defined(CONFIG_VGA_SWITCHEROO)
+bool radeon_atpx_dgpu_req_power_for_displays(void);
+#else
+static inline bool radeon_atpx_dgpu_req_power_for_displays(void) { return false; }
+#endif
 
 #define ACPI_AC_CLASS           "ac_adapter"
 
@@ -349,7 +360,7 @@ out:
  * handles it.
  * Returns NOTIFY code
  */
-int radeon_atif_handler(struct radeon_device *rdev,
+static int radeon_atif_handler(struct radeon_device *rdev,
 		struct acpi_bus_event *event)
 {
 	struct radeon_atif *atif = &rdev->atif;
@@ -397,6 +408,16 @@ int radeon_atif_handler(struct radeon_device *rdev,
 						       BACKLIGHT_UPDATE_HOTKEY);
 			}
 #endif
+		}
+	}
+	if (req.pending & ATIF_DGPU_DISPLAY_EVENT) {
+		if ((rdev->flags & RADEON_IS_PX) &&
+		    radeon_atpx_dgpu_req_power_for_displays()) {
+			pm_runtime_get_sync(rdev->ddev->dev);
+			/* Just fire off a uevent and let userspace tell us what to do */
+			drm_helper_hpd_irq_event(rdev->ddev);
+			pm_runtime_mark_last_busy(rdev->ddev->dev);
+			pm_runtime_put_autosuspend(rdev->ddev->dev);
 		}
 	}
 	/* TODO: check other events */
@@ -746,13 +767,6 @@ int radeon_acpi_init(struct radeon_device *rdev)
 		}
 
 		atif->encoder_for_bl = target;
-		if (!target) {
-			/* Brightness change notification is enabled, but we
-			 * didn't find a backlight controller, this should
-			 * never happen.
-			 */
-			DRM_ERROR("Cannot find a backlight controller\n");
-		}
 	}
 
 	if (atif->functions.sbios_requests && !atif->functions.system_params) {

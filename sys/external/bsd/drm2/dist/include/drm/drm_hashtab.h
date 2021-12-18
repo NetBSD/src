@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_hashtab.h,v 1.3 2018/08/27 04:58:37 riastradh Exp $	*/
+/*	$NetBSD: drm_hashtab.h,v 1.4 2021/12/18 23:45:46 riastradh Exp $	*/
 
 /**************************************************************************
  *
@@ -53,17 +53,17 @@ struct drm_open_hash {
 	u8 order;
 };
 
-extern int drm_ht_create(struct drm_open_hash *ht, unsigned int order);
-extern int drm_ht_insert_item(struct drm_open_hash *ht, struct drm_hash_item *item);
-extern int drm_ht_just_insert_please(struct drm_open_hash *ht, struct drm_hash_item *item,
-				     unsigned long seed, int bits, int shift,
-				     unsigned long add);
-extern int drm_ht_find_item(struct drm_open_hash *ht, unsigned long key, struct drm_hash_item **item);
+int drm_ht_create(struct drm_open_hash *ht, unsigned int order);
+int drm_ht_insert_item(struct drm_open_hash *ht, struct drm_hash_item *item);
+int drm_ht_just_insert_please(struct drm_open_hash *ht, struct drm_hash_item *item,
+			      unsigned long seed, int bits, int shift,
+			      unsigned long add);
+int drm_ht_find_item(struct drm_open_hash *ht, unsigned long key, struct drm_hash_item **item);
 
-extern void drm_ht_verbose_list(struct drm_open_hash *ht, unsigned long key);
-extern int drm_ht_remove_key(struct drm_open_hash *ht, unsigned long key);
-extern int drm_ht_remove_item(struct drm_open_hash *ht, struct drm_hash_item *item);
-extern void drm_ht_remove(struct drm_open_hash *ht);
+void drm_ht_verbose_list(struct drm_open_hash *ht, unsigned long key);
+int drm_ht_remove_key(struct drm_open_hash *ht, unsigned long key);
+int drm_ht_remove_item(struct drm_open_hash *ht, struct drm_hash_item *item);
+void drm_ht_remove(struct drm_open_hash *ht);
 
 /*
  * RCU-safe interface

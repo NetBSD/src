@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_ggtt.c,v 1.1.1.1 2021/12/18 20:15:32 riastradh Exp $	*/
+/*	$NetBSD: intel_ggtt.c,v 1.2 2021/12/18 23:45:30 riastradh Exp $	*/
 
 // SPDX-License-Identifier: MIT
 /*
@@ -6,7 +6,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intel_ggtt.c,v 1.1.1.1 2021/12/18 20:15:32 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intel_ggtt.c,v 1.2 2021/12/18 23:45:30 riastradh Exp $");
 
 #include <linux/stop_machine.h>
 
@@ -172,10 +172,43 @@ static void gmch_ggtt_invalidate(struct i915_ggtt *ggtt)
 	intel_gtt_chipset_flush();
 }
 
+#ifdef __NetBSD__
+static inline void
+gen8_set_pte(bus_space_tag_t bst, bus_space_handle_t bsh, unsigned i,
+    gen8_pte_t pte)
+{
+        CTASSERT(_BYTE_ORDER == _LITTLE_ENDIAN); /* x86 */
+        CTASSERT(sizeof(gen8_pte_t) == 8);
+#ifdef _LP64                    /* XXX How to detect bus_space_write_8?  */
+        bus_space_write_8(bst, bsh, 8*i, pte);
+#else
+        bus_space_write_4(bst, bsh, 8*i, (uint32_t)pte);
+        bus_space_write_4(bst, bsh, 8*i + 4, (uint32_t)(pte >> 32));
+#endif
+}
+static gen8_pte_t
+gen8_get_pte(bus_space_tag_t bst, bus_space_handle_t bsh, unsigned i)
+{
+	CTASSERT(_BYTE_ORDER == _LITTLE_ENDIAN); /* x86 */
+	CTASSERT(sizeof(gen8_pte_t) == 8);
+#ifdef _LP64                    /* XXX How to detect bus_space_read_8?  */
+	return bus_space_read_8(bst, bsh, 8*i);
+#else
+	/*
+	 * XXX I'm not sure this case can actually happen in practice:
+	 * 32-bit gen8 chipsets?
+	 */
+	return bus_space_read_4(bst, bsh, 8*i) |
+	    ((uint64_t)bus_space_read_4(bst, bsh, 8*i + 4) << 32);
+#endif
+}
+
+#else
 static void gen8_set_pte(void __iomem *addr, gen8_pte_t pte)
 {
 	writeq(pte, addr);
 }
+#endif
 
 static void gen8_ggtt_insert_page(struct i915_address_space *vm,
 				  dma_addr_t addr,
@@ -192,6 +225,33 @@ static void gen8_ggtt_insert_page(struct i915_address_space *vm,
 	ggtt->invalidate(ggtt);
 }
 
+#ifdef __NetBSD__
+static void
+gen8_ggtt_insert_entries(struct i915_address_space *vm, bus_dmamap_t dmamap,
+    uint64_t start, enum i915_cache_level level, uint32_t flags)
+{
+	struct drm_i915_private *dev_priv = vm->dev->dev_private;
+	unsigned first_entry = start >> PAGE_SHIFT;
+	const bus_space_tag_t bst = dev_priv->gtt.bst;
+	const bus_space_handle_t bsh = dev_priv->gtt.bsh;
+	unsigned i;
+
+	KASSERT(0 < dmamap->dm_nsegs);
+	for (i = 0; i < dmamap->dm_nsegs; i++) {
+		KASSERT(dmamap->dm_segs[i].ds_len == PAGE_SIZE);
+		gen8_set_pte(bst, bsh, first_entry + i,
+		    gen8_pte_encode(dmamap->dm_segs[i].ds_addr, level, true, flags));
+	}
+	if (0 < i) {
+		/* Posting read.  */
+		WARN_ON(gen8_get_pte(bst, bsh, (first_entry + i - 1))
+		    != gen8_pte_encode(dmamap->dm_segs[i - 1].ds_addr, level,
+			true, flags));
+	}
+	I915_WRITE(GFX_FLSH_CNTL_GEN6, GFX_FLSH_CNTL_EN);
+	POSTING_READ(GFX_FLSH_CNTL_GEN6);
+}
+#else
 static void gen8_ggtt_insert_entries(struct i915_address_space *vm,
 				     struct i915_vma *vma,
 				     enum i915_cache_level level,
@@ -219,6 +279,7 @@ static void gen8_ggtt_insert_entries(struct i915_address_space *vm,
 	 */
 	ggtt->invalidate(ggtt);
 }
+#endif
 
 static void gen6_ggtt_insert_page(struct i915_address_space *vm,
 				  dma_addr_t addr,
@@ -241,6 +302,36 @@ static void gen6_ggtt_insert_page(struct i915_address_space *vm,
  * reference offsets within the global GTT as well as accessible by the GPU
  * through the GMADR mapped BAR (i915->mm.gtt->gtt).
  */
+
+#ifdef __NetBSD__
+static void
+gen6_ggtt_insert_entries(struct i915_address_space *vm, bus_dmamap_t dmamap,
+    uint64_t start, enum i915_cache_level level, uint32_t flags)
+{
+	struct drm_i915_private *dev_priv = vm->dev->dev_private;
+	unsigned first_entry = start >> PAGE_SHIFT;
+	const bus_space_tag_t bst = dev_priv->gtt.bst;
+	const bus_space_handle_t bsh = dev_priv->gtt.bsh;
+	unsigned i;
+
+	KASSERT(0 < dmamap->dm_nsegs);
+	for (i = 0; i < dmamap->dm_nsegs; i++) {
+		KASSERT(dmamap->dm_segs[i].ds_len == PAGE_SIZE);
+		CTASSERT(sizeof(gen6_pte_t) == 4);
+		bus_space_write_4(bst, bsh, 4*(first_entry + i),
+		    vm->pte_encode(dmamap->dm_segs[i].ds_addr, level, true,
+			flags));
+	}
+	if (0 < i) {
+		/* Posting read.  */
+		WARN_ON(bus_space_read_4(bst, bsh, 4*(first_entry + i - 1))
+		    != vm->pte_encode(dmamap->dm_segs[i - 1].ds_addr, level,
+			true, flags));
+	}
+	I915_WRITE(GFX_FLSH_CNTL_GEN6, GFX_FLSH_CNTL_EN);
+	POSTING_READ(GFX_FLSH_CNTL_GEN6);
+}
+#else
 static void gen6_ggtt_insert_entries(struct i915_address_space *vm,
 				     struct i915_vma *vma,
 				     enum i915_cache_level level,
@@ -261,6 +352,7 @@ static void gen6_ggtt_insert_entries(struct i915_address_space *vm,
 	 */
 	ggtt->invalidate(ggtt);
 }
+#endif
 
 static void nop_clear_range(struct i915_address_space *vm,
 			    u64 start, u64 length)
@@ -274,8 +366,13 @@ static void gen8_ggtt_clear_range(struct i915_address_space *vm,
 	unsigned int first_entry = start / I915_GTT_PAGE_SIZE;
 	unsigned int num_entries = length / I915_GTT_PAGE_SIZE;
 	const gen8_pte_t scratch_pte = vm->scratch[0].encode;
+#ifdef __NetBSD__
+	const bus_space_tag_t bst = dev_priv->gtt.bst;
+	const bus_space_handle_t bsh = dev_priv->gtt.bsh;
+#else
 	gen8_pte_t __iomem *gtt_base =
 		(gen8_pte_t __iomem *)ggtt->gsm + first_entry;
+#endif
 	const int max_entries = ggtt_total_entries(ggtt) - first_entry;
 	int i;
 
@@ -284,8 +381,14 @@ static void gen8_ggtt_clear_range(struct i915_address_space *vm,
 		 first_entry, num_entries, max_entries))
 		num_entries = max_entries;
 
+#ifdef __NetBSD__
+	for (i = 0; i < num_entries; i++)
+		gen8_set_pte(bst, bsh, first_entry + i, scratch_pte);
+	(void)gen8_get_pte(bst, bsh, first_entry);
+#else
 	for (i = 0; i < num_entries; i++)
 		gen8_set_pte(&gtt_base[i], scratch_pte);
+#endif
 }
 
 static void bxt_vtd_ggtt_wa(struct i915_address_space *vm)
@@ -386,8 +489,14 @@ static void gen6_ggtt_clear_range(struct i915_address_space *vm,
 	struct i915_ggtt *ggtt = i915_vm_to_ggtt(vm);
 	unsigned int first_entry = start / I915_GTT_PAGE_SIZE;
 	unsigned int num_entries = length / I915_GTT_PAGE_SIZE;
+#ifdef __NetBSD__
+	const bus_space_tag_t bst = dev_priv->gtt.bst;
+	const bus_space_handle_t bsh = dev_priv->gtt.bsh;
+	gen6_pte_t scratch_pte;
+#else
 	gen6_pte_t scratch_pte, __iomem *gtt_base =
 		(gen6_pte_t __iomem *)ggtt->gsm + first_entry;
+#endif
 	const int max_entries = ggtt_total_entries(ggtt) - first_entry;
 	int i;
 
@@ -397,8 +506,15 @@ static void gen6_ggtt_clear_range(struct i915_address_space *vm,
 		num_entries = max_entries;
 
 	scratch_pte = vm->scratch[0].encode;
+#ifdef __NetBSD__
+        CTASSERT(sizeof(gen6_pte_t) == 4);
+        for (i = 0; i < num_entries; i++)
+                bus_space_write_4(bst, bsh, 4*(first_entry + i), scratch_pte);
+        (void)bus_space_read_4(bst, bsh, 4*first_entry);
+#else
 	for (i = 0; i < num_entries; i++)
 		iowrite32(scratch_pte, &gtt_base[i]);
+#endif
 }
 
 static void i915_ggtt_insert_page(struct i915_address_space *vm,

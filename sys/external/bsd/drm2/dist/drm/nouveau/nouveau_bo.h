@@ -1,5 +1,6 @@
-/*	$NetBSD: nouveau_bo.h,v 1.4 2018/08/27 04:58:24 riastradh Exp $	*/
+/*	$NetBSD: nouveau_bo.h,v 1.5 2021/12/18 23:45:32 riastradh Exp $	*/
 
+/* SPDX-License-Identifier: MIT */
 #ifndef __NOUVEAU_BO_H__
 #define __NOUVEAU_BO_H__
 
@@ -30,16 +31,15 @@ struct nouveau_bo {
 	bool validate_mapped;
 
 	struct list_head vma_list;
-	unsigned page_shift;
 
-	u32 tile_mode;
-	u32 tile_flags;
+	unsigned contig:1;
+	unsigned page:5;
+	unsigned kind:8;
+	unsigned comp:3;
+	unsigned zeta:3;
+	unsigned mode;
+
 	struct nouveau_drm_tile *tile;
-
-	/* Only valid if allocated via nouveau_gem_new() and iff you hold a
-	 * gem reference to it! For debugging, use gem.filp != NULL to test
-	 * whether it is valid. */
-	struct drm_gem_object gem;
 
 	/* protect by the ttm reservation lock */
 	int pin_refcnt;
@@ -62,12 +62,14 @@ nouveau_bo_ref(struct nouveau_bo *ref, struct nouveau_bo **pnvbo)
 		return -EINVAL;
 	prev = *pnvbo;
 
-	*pnvbo = ref ? nouveau_bo(ttm_bo_reference(&ref->bo)) : NULL;
-	if (prev) {
-		struct ttm_buffer_object *bo = &prev->bo;
-
-		ttm_bo_unref(&bo);
+	if (ref) {
+		ttm_bo_get(&ref->bo);
+		*pnvbo = nouveau_bo(&ref->bo);
+	} else {
+		*pnvbo = NULL;
 	}
+	if (prev)
+		ttm_bo_put(&prev->bo);
 
 	return 0;
 }
@@ -75,9 +77,13 @@ nouveau_bo_ref(struct nouveau_bo *ref, struct nouveau_bo **pnvbo)
 extern struct ttm_bo_driver nouveau_bo_driver;
 
 void nouveau_bo_move_init(struct nouveau_drm *);
-int  nouveau_bo_new(struct drm_device *, int size, int align, u32 flags,
+struct nouveau_bo *nouveau_bo_alloc(struct nouveau_cli *, u64 *size, int *align,
+				    u32 flags, u32 tile_mode, u32 tile_flags);
+int  nouveau_bo_init(struct nouveau_bo *, u64 size, int align, u32 flags,
+		     struct sg_table *sg, struct dma_resv *robj);
+int  nouveau_bo_new(struct nouveau_cli *, u64 size, int align, u32 flags,
 		    u32 tile_mode, u32 tile_flags, struct sg_table *sg,
-		    struct reservation_object *robj,
+		    struct dma_resv *robj,
 		    struct nouveau_bo **);
 int  nouveau_bo_pin(struct nouveau_bo *, u32 flags, bool contig);
 int  nouveau_bo_unpin(struct nouveau_bo *);
@@ -92,13 +98,6 @@ int  nouveau_bo_validate(struct nouveau_bo *, bool interruptible,
 			 bool no_wait_gpu);
 void nouveau_bo_sync_for_device(struct nouveau_bo *nvbo);
 void nouveau_bo_sync_for_cpu(struct nouveau_bo *nvbo);
-
-struct nvkm_vma *
-nouveau_bo_vma_find(struct nouveau_bo *, struct nvkm_vm *);
-
-int  nouveau_bo_vma_add(struct nouveau_bo *, struct nvkm_vm *,
-			struct nvkm_vma *);
-void nouveau_bo_vma_del(struct nouveau_bo *, struct nvkm_vma *);
 
 #ifdef __NetBSD__
 #  define	__iomem	volatile
@@ -121,4 +120,32 @@ nvbo_kmap_obj_iovirtual(struct nouveau_bo *nvbo)
 #  undef	__force
 #endif
 
+static inline void
+nouveau_bo_unmap_unpin_unref(struct nouveau_bo **pnvbo)
+{
+	if (*pnvbo) {
+		nouveau_bo_unmap(*pnvbo);
+		nouveau_bo_unpin(*pnvbo);
+		nouveau_bo_ref(NULL, pnvbo);
+	}
+}
+
+static inline int
+nouveau_bo_new_pin_map(struct nouveau_cli *cli, u64 size, int align, u32 flags,
+		       struct nouveau_bo **pnvbo)
+{
+	int ret = nouveau_bo_new(cli, size, align, flags,
+				 0, 0, NULL, NULL, pnvbo);
+	if (ret == 0) {
+		ret = nouveau_bo_pin(*pnvbo, flags, true);
+		if (ret == 0) {
+			ret = nouveau_bo_map(*pnvbo);
+			if (ret == 0)
+				return ret;
+			nouveau_bo_unpin(*pnvbo);
+		}
+		nouveau_bo_ref(NULL, pnvbo);
+	}
+	return ret;
+}
 #endif

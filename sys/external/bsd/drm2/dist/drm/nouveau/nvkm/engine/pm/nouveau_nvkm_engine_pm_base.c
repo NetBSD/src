@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_nvkm_engine_pm_base.c,v 1.3 2018/08/27 07:38:56 riastradh Exp $	*/
+/*	$NetBSD: nouveau_nvkm_engine_pm_base.c,v 1.4 2021/12/18 23:45:37 riastradh Exp $	*/
 
 /*
  * Copyright 2013 Red Hat Inc.
@@ -24,7 +24,7 @@
  * Authors: Ben Skeggs
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_engine_pm_base.c,v 1.3 2018/08/27 07:38:56 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_engine_pm_base.c,v 1.4 2021/12/18 23:45:37 riastradh Exp $");
 
 #include "priv.h"
 
@@ -32,6 +32,8 @@ __KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_engine_pm_base.c,v 1.3 2018/08/27 07:38
 #include <core/option.h>
 
 #include <nvif/class.h>
+#include <nvif/if0002.h>
+#include <nvif/if0003.h>
 #include <nvif/ioctl.h>
 #include <nvif/unpack.h>
 
@@ -215,10 +217,10 @@ nvkm_perfdom_init(struct nvkm_perfdom *dom, void *data, u32 size)
 	} *args = data;
 	struct nvkm_object *object = &dom->object;
 	struct nvkm_pm *pm = dom->perfmon->pm;
-	int ret, i;
+	int ret = -ENOSYS, i;
 
 	nvif_ioctl(object, "perfdom init size %d\n", size);
-	if (nvif_unvers(args->none)) {
+	if (!(ret = nvif_unvers(ret, &data, &size, args->none))) {
 		nvif_ioctl(object, "perfdom init\n");
 	} else
 		return ret;
@@ -245,10 +247,10 @@ nvkm_perfdom_sample(struct nvkm_perfdom *dom, void *data, u32 size)
 	} *args = data;
 	struct nvkm_object *object = &dom->object;
 	struct nvkm_pm *pm = dom->perfmon->pm;
-	int ret;
+	int ret = -ENOSYS;
 
 	nvif_ioctl(object, "perfdom sample size %d\n", size);
-	if (nvif_unvers(args->none)) {
+	if (!(ret = nvif_unvers(ret, &data, &size, args->none))) {
 		nvif_ioctl(object, "perfdom sample\n");
 	} else
 		return ret;
@@ -269,10 +271,10 @@ nvkm_perfdom_read(struct nvkm_perfdom *dom, void *data, u32 size)
 	} *args = data;
 	struct nvkm_object *object = &dom->object;
 	struct nvkm_pm *pm = dom->perfmon->pm;
-	int ret, i;
+	int ret = -ENOSYS, i;
 
 	nvif_ioctl(object, "perfdom read size %d\n", size);
-	if (nvif_unpack(args->v0, 0, 0, false)) {
+	if (!(ret = nvif_unpack(ret, &data, &size, args->v0, 0, 0, false))) {
 		nvif_ioctl(object, "perfdom read vers %d\n", args->v0.version);
 	} else
 		return ret;
@@ -379,10 +381,10 @@ nvkm_perfdom_new_(struct nvkm_perfmon *perfmon,
 	struct nvkm_perfctr *ctr[4] = {};
 	struct nvkm_perfdom *dom;
 	int c, s, m;
-	int ret;
+	int ret = -ENOSYS;
 
 	nvif_ioctl(parent, "create perfdom size %d\n", size);
-	if (nvif_unpack(args->v0, 0, 0, false)) {
+	if (!(ret = nvif_unpack(ret, &data, &size, args->v0, 0, 0, false))) {
 		nvif_ioctl(parent, "create perfdom vers %d dom %d mode %02x\n",
 			   args->v0.version, args->v0.domain, args->v0.mode);
 	} else
@@ -444,10 +446,10 @@ nvkm_perfmon_mthd_query_domain(struct nvkm_perfmon *perfmon,
 	struct nvkm_pm *pm = perfmon->pm;
 	struct nvkm_perfdom *dom;
 	u8 domain_nr;
-	int di, ret;
+	int di, ret = -ENOSYS;
 
 	nvif_ioctl(object, "perfmon query domain size %d\n", size);
-	if (nvif_unpack(args->v0, 0, 0, false)) {
+	if (!(ret = nvif_unpack(ret, &data, &size, args->v0, 0, 0, false))) {
 		nvif_ioctl(object, "perfmon domain vers %d iter %02x\n",
 			   args->v0.version, args->v0.iter);
 		di = (args->v0.iter & 0xff) - 1;
@@ -465,7 +467,7 @@ nvkm_perfmon_mthd_query_domain(struct nvkm_perfmon *perfmon,
 
 		args->v0.id         = di;
 		args->v0.signal_nr  = nvkm_perfdom_count_perfsig(dom);
-		strncpy(args->v0.name, dom->name, sizeof(args->v0.name));
+		strncpy(args->v0.name, dom->name, sizeof(args->v0.name) - 1);
 
 		/* Currently only global counters (PCOUNTER) are implemented
 		 * but this will be different for local counters (MP). */
@@ -495,10 +497,10 @@ nvkm_perfmon_mthd_query_signal(struct nvkm_perfmon *perfmon,
 	struct nvkm_perfsig *sig;
 	const bool all = nvkm_boolopt(device->cfgopt, "NvPmShowAll", false);
 	const bool raw = nvkm_boolopt(device->cfgopt, "NvPmUnnamed", all);
-	int ret, si;
+	int ret = -ENOSYS, si;
 
 	nvif_ioctl(object, "perfmon query signal size %d\n", size);
-	if (nvif_unpack(args->v0, 0, 0, false)) {
+	if (!(ret = nvif_unpack(ret, &data, &size, args->v0, 0, 0, false))) {
 		nvif_ioctl(object,
 			   "perfmon query signal vers %d dom %d iter %04x\n",
 			   args->v0.version, args->v0.domain, args->v0.iter);
@@ -517,7 +519,7 @@ nvkm_perfmon_mthd_query_signal(struct nvkm_perfmon *perfmon,
 				 "/%s/%02x", dom->name, si);
 		} else {
 			strncpy(args->v0.name, sig->name,
-				sizeof(args->v0.name));
+				sizeof(args->v0.name) - 1);
 		}
 
 		args->v0.signal = si;
@@ -548,10 +550,10 @@ nvkm_perfmon_mthd_query_source(struct nvkm_perfmon *perfmon,
 	struct nvkm_perfsig *sig;
 	struct nvkm_perfsrc *src;
 	u8 source_nr = 0;
-	int si, ret;
+	int si, ret = -ENOSYS;
 
 	nvif_ioctl(object, "perfmon query source size %d\n", size);
-	if (nvif_unpack(args->v0, 0, 0, false)) {
+	if (!(ret = nvif_unpack(ret, &data, &size, args->v0, 0, 0, false))) {
 		nvif_ioctl(object,
 			   "perfmon source vers %d dom %d sig %02x iter %02x\n",
 			   args->v0.version, args->v0.domain, args->v0.signal,
@@ -575,7 +577,7 @@ nvkm_perfmon_mthd_query_source(struct nvkm_perfmon *perfmon,
 
 		args->v0.source = sig->source[si];
 		args->v0.mask   = src->mask;
-		strncpy(args->v0.name, src->name, sizeof(args->v0.name));
+		strncpy(args->v0.name, src->name, sizeof(args->v0.name) - 1);
 	}
 
 	if (++si < source_nr) {
@@ -617,7 +619,7 @@ nvkm_perfmon_child_get(struct nvkm_object *object, int index,
 		       struct nvkm_oclass *oclass)
 {
 	if (index == 0) {
-		oclass->base.oclass = NVIF_IOCTL_NEW_V0_PERFDOM;
+		oclass->base.oclass = NVIF_CLASS_PERFDOM;
 		oclass->base.minver = 0;
 		oclass->base.maxver = 0;
 		oclass->ctor = nvkm_perfmon_child_new;
@@ -684,7 +686,7 @@ nvkm_pm_oclass_new(struct nvkm_device *device, const struct nvkm_oclass *oclass,
 
 static const struct nvkm_device_oclass
 nvkm_pm_oclass = {
-	.base.oclass = NVIF_IOCTL_NEW_V0_PERFMON,
+	.base.oclass = NVIF_CLASS_PERFMON,
 	.base.minver = -1,
 	.base.maxver = -1,
 	.ctor = nvkm_pm_oclass_new,
@@ -782,8 +784,8 @@ nvkm_perfdom_new(struct nvkm_pm *pm, const char *name, u32 mask,
 
 		sdom = spec;
 		while (sdom->signal_nr) {
-			dom = kzalloc(sizeof(*dom) + sdom->signal_nr *
-				      sizeof(*dom->signal), GFP_KERNEL);
+			dom = kzalloc(struct_size(dom, signal, sdom->signal_nr),
+				      GFP_KERNEL);
 			if (!dom)
 				return -ENOMEM;
 
@@ -866,5 +868,5 @@ nvkm_pm_ctor(const struct nvkm_pm_func *func, struct nvkm_device *device,
 	pm->func = func;
 	INIT_LIST_HEAD(&pm->domains);
 	INIT_LIST_HEAD(&pm->sources);
-	return nvkm_engine_ctor(&nvkm_pm, device, index, 0, true, &pm->engine);
+	return nvkm_engine_ctor(&nvkm_pm, device, index, true, &pm->engine);
 }

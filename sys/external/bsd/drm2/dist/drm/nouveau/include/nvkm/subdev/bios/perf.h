@@ -1,8 +1,9 @@
-/*	$NetBSD: perf.h,v 1.2 2018/08/27 04:58:30 riastradh Exp $	*/
+/*	$NetBSD: perf.h,v 1.3 2021/12/18 23:45:33 riastradh Exp $	*/
 
+/* SPDX-License-Identifier: MIT */
 #ifndef __NVBIOS_PERF_H__
 #define __NVBIOS_PERF_H__
-u16 nvbios_perf_table(struct nvkm_bios *, u8 *ver, u8 *hdr,
+u32 nvbios_perf_table(struct nvkm_bios *, u8 *ver, u8 *hdr,
 		      u8 *cnt, u8 *len, u8 *snr, u8 *ssz);
 
 struct nvbios_perfE {
@@ -15,11 +16,13 @@ struct nvbios_perfE {
 	u32 vdec;
 	u32 disp;
 	u32 script;
+	u8  pcie_speed;
+	u8  pcie_width;
 };
 
-u16 nvbios_perf_entry(struct nvkm_bios *, int idx,
+u32 nvbios_perf_entry(struct nvkm_bios *, int idx,
 		      u8 *ver, u8 *hdr, u8 *cnt, u8 *len);
-u16 nvbios_perfEp(struct nvkm_bios *, int idx,
+u32 nvbios_perfEp(struct nvkm_bios *, int idx,
 		  u8 *ver, u8 *hdr, u8 *cnt, u8 *len, struct nvbios_perfE *);
 
 struct nvbios_perfS {

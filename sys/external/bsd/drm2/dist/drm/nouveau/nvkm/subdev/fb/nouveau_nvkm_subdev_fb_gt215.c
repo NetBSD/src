@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_nvkm_subdev_fb_gt215.c,v 1.2 2018/08/27 04:58:33 riastradh Exp $	*/
+/*	$NetBSD: nouveau_nvkm_subdev_fb_gt215.c,v 1.3 2021/12/18 23:45:39 riastradh Exp $	*/
 
 /*
  * Copyright 2012 Red Hat Inc.
@@ -24,7 +24,7 @@
  * Authors: Ben Skeggs
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_subdev_fb_gt215.c,v 1.2 2018/08/27 04:58:33 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_subdev_fb_gt215.c,v 1.3 2021/12/18 23:45:39 riastradh Exp $");
 
 #include "nv50.h"
 #include "ram.h"
@@ -32,6 +32,7 @@ __KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_subdev_fb_gt215.c,v 1.2 2018/08/27 04:5
 static const struct nv50_fb_func
 gt215_fb = {
 	.ram_new = gt215_ram_new,
+	.tags = nv20_fb_tags,
 	.trap = 0x000d0fff,
 };
 

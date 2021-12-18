@@ -1,4 +1,4 @@
-/*	$NetBSD: hw.h,v 1.2 2018/08/27 04:58:29 riastradh Exp $	*/
+/*	$NetBSD: hw.h,v 1.3 2021/12/18 23:45:32 riastradh Exp $	*/
 
 /*
  * Copyright 2008 Stuart Bennett
@@ -25,7 +25,6 @@
 #ifndef __NOUVEAU_HW_H__
 #define __NOUVEAU_HW_H__
 
-#include <drm/drmP.h>
 #include "disp.h"
 #include "nvreg.h"
 
@@ -62,7 +61,7 @@ extern void nouveau_calc_arb(struct drm_device *, int vclk, int bpp,
 static inline uint32_t NVReadCRTC(struct drm_device *dev,
 					int head, uint32_t reg)
 {
-	struct nvif_object *device = &nouveau_drm(dev)->device.object;
+	struct nvif_object *device = &nouveau_drm(dev)->client.device.object;
 	uint32_t val;
 	if (head)
 		reg += NV_PCRTC0_SIZE;
@@ -73,7 +72,7 @@ static inline uint32_t NVReadCRTC(struct drm_device *dev,
 static inline void NVWriteCRTC(struct drm_device *dev,
 					int head, uint32_t reg, uint32_t val)
 {
-	struct nvif_object *device = &nouveau_drm(dev)->device.object;
+	struct nvif_object *device = &nouveau_drm(dev)->client.device.object;
 	if (head)
 		reg += NV_PCRTC0_SIZE;
 	nvif_wr32(device, reg, val);
@@ -82,7 +81,7 @@ static inline void NVWriteCRTC(struct drm_device *dev,
 static inline uint32_t NVReadRAMDAC(struct drm_device *dev,
 					int head, uint32_t reg)
 {
-	struct nvif_object *device = &nouveau_drm(dev)->device.object;
+	struct nvif_object *device = &nouveau_drm(dev)->client.device.object;
 	uint32_t val;
 	if (head)
 		reg += NV_PRAMDAC0_SIZE;
@@ -93,7 +92,7 @@ static inline uint32_t NVReadRAMDAC(struct drm_device *dev,
 static inline void NVWriteRAMDAC(struct drm_device *dev,
 					int head, uint32_t reg, uint32_t val)
 {
-	struct nvif_object *device = &nouveau_drm(dev)->device.object;
+	struct nvif_object *device = &nouveau_drm(dev)->client.device.object;
 	if (head)
 		reg += NV_PRAMDAC0_SIZE;
 	nvif_wr32(device, reg, val);
@@ -122,7 +121,7 @@ static inline void nv_write_tmds(struct drm_device *dev,
 static inline void NVWriteVgaCrtc(struct drm_device *dev,
 					int head, uint8_t index, uint8_t value)
 {
-	struct nvif_object *device = &nouveau_drm(dev)->device.object;
+	struct nvif_object *device = &nouveau_drm(dev)->client.device.object;
 	nvif_wr08(device, NV_PRMCIO_CRX__COLOR + head * NV_PRMCIO_SIZE, index);
 	nvif_wr08(device, NV_PRMCIO_CR__COLOR + head * NV_PRMCIO_SIZE, value);
 }
@@ -130,7 +129,7 @@ static inline void NVWriteVgaCrtc(struct drm_device *dev,
 static inline uint8_t NVReadVgaCrtc(struct drm_device *dev,
 					int head, uint8_t index)
 {
-	struct nvif_object *device = &nouveau_drm(dev)->device.object;
+	struct nvif_object *device = &nouveau_drm(dev)->client.device.object;
 	uint8_t val;
 	nvif_wr08(device, NV_PRMCIO_CRX__COLOR + head * NV_PRMCIO_SIZE, index);
 	val = nvif_rd08(device, NV_PRMCIO_CR__COLOR + head * NV_PRMCIO_SIZE);
@@ -167,13 +166,13 @@ static inline uint8_t NVReadVgaCrtc5758(struct drm_device *dev, int head, uint8_
 static inline uint8_t NVReadPRMVIO(struct drm_device *dev,
 					int head, uint32_t reg)
 {
-	struct nvif_object *device = &nouveau_drm(dev)->device.object;
+	struct nvif_object *device = &nouveau_drm(dev)->client.device.object;
 	struct nouveau_drm *drm = nouveau_drm(dev);
 	uint8_t val;
 
 	/* Only NV4x have two pvio ranges; other twoHeads cards MUST call
 	 * NVSetOwner for the relevant head to be programmed */
-	if (head && drm->device.info.family == NV_DEVICE_INFO_V0_CURIE)
+	if (head && drm->client.device.info.family == NV_DEVICE_INFO_V0_CURIE)
 		reg += NV_PRMVIO_SIZE;
 
 	val = nvif_rd08(device, reg);
@@ -183,12 +182,12 @@ static inline uint8_t NVReadPRMVIO(struct drm_device *dev,
 static inline void NVWritePRMVIO(struct drm_device *dev,
 					int head, uint32_t reg, uint8_t value)
 {
-	struct nvif_object *device = &nouveau_drm(dev)->device.object;
+	struct nvif_object *device = &nouveau_drm(dev)->client.device.object;
 	struct nouveau_drm *drm = nouveau_drm(dev);
 
 	/* Only NV4x have two pvio ranges; other twoHeads cards MUST call
 	 * NVSetOwner for the relevant head to be programmed */
-	if (head && drm->device.info.family == NV_DEVICE_INFO_V0_CURIE)
+	if (head && drm->client.device.info.family == NV_DEVICE_INFO_V0_CURIE)
 		reg += NV_PRMVIO_SIZE;
 
 	nvif_wr08(device, reg, value);
@@ -196,14 +195,14 @@ static inline void NVWritePRMVIO(struct drm_device *dev,
 
 static inline void NVSetEnablePalette(struct drm_device *dev, int head, bool enable)
 {
-	struct nvif_object *device = &nouveau_drm(dev)->device.object;
+	struct nvif_object *device = &nouveau_drm(dev)->client.device.object;
 	nvif_rd08(device, NV_PRMCIO_INP0__COLOR + head * NV_PRMCIO_SIZE);
 	nvif_wr08(device, NV_PRMCIO_ARX + head * NV_PRMCIO_SIZE, enable ? 0 : 0x20);
 }
 
 static inline bool NVGetEnablePalette(struct drm_device *dev, int head)
 {
-	struct nvif_object *device = &nouveau_drm(dev)->device.object;
+	struct nvif_object *device = &nouveau_drm(dev)->client.device.object;
 	nvif_rd08(device, NV_PRMCIO_INP0__COLOR + head * NV_PRMCIO_SIZE);
 	return !(nvif_rd08(device, NV_PRMCIO_ARX + head * NV_PRMCIO_SIZE) & 0x20);
 }
@@ -211,7 +210,7 @@ static inline bool NVGetEnablePalette(struct drm_device *dev, int head)
 static inline void NVWriteVgaAttr(struct drm_device *dev,
 					int head, uint8_t index, uint8_t value)
 {
-	struct nvif_object *device = &nouveau_drm(dev)->device.object;
+	struct nvif_object *device = &nouveau_drm(dev)->client.device.object;
 	if (NVGetEnablePalette(dev, head))
 		index &= ~0x20;
 	else
@@ -225,7 +224,7 @@ static inline void NVWriteVgaAttr(struct drm_device *dev,
 static inline uint8_t NVReadVgaAttr(struct drm_device *dev,
 					int head, uint8_t index)
 {
-	struct nvif_object *device = &nouveau_drm(dev)->device.object;
+	struct nvif_object *device = &nouveau_drm(dev)->client.device.object;
 	uint8_t val;
 	if (NVGetEnablePalette(dev, head))
 		index &= ~0x20;
@@ -261,10 +260,10 @@ static inline void NVVgaProtect(struct drm_device *dev, int head, bool protect)
 static inline bool
 nv_heads_tied(struct drm_device *dev)
 {
-	struct nvif_object *device = &nouveau_drm(dev)->device.object;
+	struct nvif_object *device = &nouveau_drm(dev)->client.device.object;
 	struct nouveau_drm *drm = nouveau_drm(dev);
 
-	if (drm->device.info.chipset == 0x11)
+	if (drm->client.device.info.chipset == 0x11)
 		return !!(nvif_rd32(device, NV_PBUS_DEBUG_1) & (1 << 28));
 
 	return NVReadVgaCrtc(dev, 0, NV_CIO_CRE_44) & 0x4;
@@ -320,7 +319,7 @@ NVLockVgaCrtcs(struct drm_device *dev, bool lock)
 	NVWriteVgaCrtc(dev, 0, NV_CIO_SR_LOCK_INDEX,
 		       lock ? NV_CIO_SR_LOCK_VALUE : NV_CIO_SR_UNLOCK_RW_VALUE);
 	/* NV11 has independently lockable extended crtcs, except when tied */
-	if (drm->device.info.chipset == 0x11 && !nv_heads_tied(dev))
+	if (drm->client.device.info.chipset == 0x11 && !nv_heads_tied(dev))
 		NVWriteVgaCrtc(dev, 1, NV_CIO_SR_LOCK_INDEX,
 			       lock ? NV_CIO_SR_LOCK_VALUE :
 				      NV_CIO_SR_UNLOCK_RW_VALUE);
@@ -337,7 +336,7 @@ static inline int nv_cursor_width(struct drm_device *dev)
 {
 	struct nouveau_drm *drm = nouveau_drm(dev);
 
-	return drm->device.info.family >= NV_DEVICE_INFO_V0_CELSIUS ? NV10_CURSOR_SIZE : NV04_CURSOR_SIZE;
+	return drm->client.device.info.family >= NV_DEVICE_INFO_V0_CELSIUS ? NV10_CURSOR_SIZE : NV04_CURSOR_SIZE;
 }
 
 static inline void
@@ -359,7 +358,7 @@ nv_set_crtc_base(struct drm_device *dev, int head, uint32_t offset)
 
 	NVWriteCRTC(dev, head, NV_PCRTC_START, offset);
 
-	if (drm->device.info.family == NV_DEVICE_INFO_V0_TNT) {
+	if (drm->client.device.info.family == NV_DEVICE_INFO_V0_TNT) {
 		/*
 		 * Hilarious, the 24th bit doesn't want to stick to
 		 * PCRTC_START...
@@ -384,7 +383,7 @@ nv_show_cursor(struct drm_device *dev, int head, bool show)
 		*curctl1 &= ~MASK(NV_CIO_CRE_HCUR_ADDR1_ENABLE);
 	NVWriteVgaCrtc(dev, head, NV_CIO_CRE_HCUR_ADDR1_INDEX, *curctl1);
 
-	if (drm->device.info.family == NV_DEVICE_INFO_V0_CURIE)
+	if (drm->client.device.info.family == NV_DEVICE_INFO_V0_CURIE)
 		nv_fix_nv40_hw_cursor(dev, head);
 }
 
@@ -400,7 +399,7 @@ nv_pitch_align(struct drm_device *dev, uint32_t width, int bpp)
 		bpp = 8;
 
 	/* Alignment requirements taken from the Haiku driver */
-	if (drm->device.info.family == NV_DEVICE_INFO_V0_TNT)
+	if (drm->client.device.info.family == NV_DEVICE_INFO_V0_TNT)
 		mask = 128 / bpp - 1;
 	else
 		mask = 512 / bpp - 1;

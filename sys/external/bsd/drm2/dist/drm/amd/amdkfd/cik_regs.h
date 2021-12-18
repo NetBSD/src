@@ -1,4 +1,4 @@
-/*	$NetBSD: cik_regs.h,v 1.2 2018/08/27 04:58:20 riastradh Exp $	*/
+/*	$NetBSD: cik_regs.h,v 1.3 2021/12/18 23:44:59 riastradh Exp $	*/
 
 /*
  * Copyright 2014 Advanced Micro Devices, Inc.
@@ -35,7 +35,8 @@
 #define	APE1_MTYPE(x)					((x) << 7)
 
 /* valid for both DEFAULT_MTYPE and APE1_MTYPE */
-#define	MTYPE_CACHED					0
+#define	MTYPE_CACHED_NV					0
+#define	MTYPE_CACHED					1
 #define	MTYPE_NONCACHED					3
 
 #define	DEFAULT_CP_HQD_PERSISTENT_STATE			(0x33U << 8)
@@ -68,7 +69,5 @@
 #define	AQL_ENABLE					1
 
 #define GRBM_GFX_INDEX					0x30800
-
-#define	ATC_VMID_PASID_MAPPING_VALID			(1U << 31)
 
 #endif

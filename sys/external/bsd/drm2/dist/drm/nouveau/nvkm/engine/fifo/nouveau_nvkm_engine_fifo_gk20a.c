@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_nvkm_engine_fifo_gk20a.c,v 1.2 2018/08/27 04:58:31 riastradh Exp $	*/
+/*	$NetBSD: nouveau_nvkm_engine_fifo_gk20a.c,v 1.3 2021/12/18 23:45:35 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2014, NVIDIA CORPORATION. All rights reserved.
@@ -22,24 +22,24 @@
  * DEALINGS IN THE SOFTWARE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_engine_fifo_gk20a.c,v 1.2 2018/08/27 04:58:31 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_engine_fifo_gk20a.c,v 1.3 2021/12/18 23:45:35 riastradh Exp $");
 
 #include "gk104.h"
 #include "changk104.h"
 
-static const struct nvkm_fifo_func
+#include <nvif/class.h>
+
+static const struct gk104_fifo_func
 gk20a_fifo = {
-	.dtor = gk104_fifo_dtor,
-	.oneinit = gk104_fifo_oneinit,
-	.init = gk104_fifo_init,
-	.fini = gk104_fifo_fini,
-	.intr = gk104_fifo_intr,
-	.uevent_init = gk104_fifo_uevent_init,
-	.uevent_fini = gk104_fifo_uevent_fini,
-	.chan = {
-		&gk104_fifo_gpfifo_oclass,
-		NULL
-	},
+	.intr.fault = gf100_fifo_intr_fault,
+	.pbdma = &gk208_fifo_pbdma,
+	.fault.access = gk104_fifo_fault_access,
+	.fault.engine = gk104_fifo_fault_engine,
+	.fault.reason = gk104_fifo_fault_reason,
+	.fault.hubclient = gk104_fifo_fault_hubclient,
+	.fault.gpcclient = gk104_fifo_fault_gpcclient,
+	.runlist = &gk110_fifo_runlist,
+	.chan = {{0,0,KEPLER_CHANNEL_GPFIFO_A}, gk104_fifo_gpfifo_new },
 };
 
 int

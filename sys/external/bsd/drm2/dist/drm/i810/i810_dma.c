@@ -1,4 +1,4 @@
-/*	$NetBSD: i810_dma.c,v 1.2 2018/08/27 04:58:23 riastradh Exp $	*/
+/*	$NetBSD: i810_dma.c,v 1.3 2021/12/18 23:45:27 riastradh Exp $	*/
 
 /* i810_dma.c -- DMA support for the i810 -*- linux-c -*-
  * Created: Mon Dec 13 01:50:01 1999 by jhartmann@precisioninsight.com
@@ -33,15 +33,22 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i810_dma.c,v 1.2 2018/08/27 04:58:23 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i810_dma.c,v 1.3 2021/12/18 23:45:27 riastradh Exp $");
 
-#include <drm/drmP.h>
-#include <drm/i810_drm.h>
-#include "i810_drv.h"
-#include <linux/interrupt.h>	/* For task queue support */
 #include <linux/delay.h>
-#include <linux/slab.h>
-#include <linux/pagemap.h>
+#include <linux/mman.h>
+#include <linux/pci.h>
+
+#include <drm/drm_agpsupport.h>
+#include <drm/drm_device.h>
+#include <drm/drm_drv.h>
+#include <drm/drm_file.h>
+#include <drm/drm_ioctl.h>
+#include <drm/drm_irq.h>
+#include <drm/drm_print.h>
+#include <drm/i810_drm.h>
+
+#include "i810_drv.h"
 
 #define I810_BUF_FREE		2
 #define I810_BUF_CLIENT		1
@@ -118,9 +125,7 @@ static const struct file_operations i810_buffer_fops = {
 	.release = drm_release,
 	.unlocked_ioctl = drm_ioctl,
 	.mmap = i810_mmap_buffers,
-#ifdef CONFIG_COMPAT
 	.compat_ioctl = drm_compat_ioctl,
-#endif
 	.llseek = noop_llseek,
 };
 
@@ -728,7 +733,7 @@ static void i810_dma_dispatch_vertex(struct drm_device *dev,
 	if (nbox > I810_NR_SAREA_CLIPRECTS)
 		nbox = I810_NR_SAREA_CLIPRECTS;
 
-	if (used > 4 * 1024)
+	if (used < 0 || used > 4 * 1024)
 		used = 0;
 
 	if (sarea_priv->dirty)
@@ -941,7 +946,7 @@ static int i810_dma_vertex(struct drm_device *dev, void *data,
 	DRM_DEBUG("idx %d used %d discard %d\n",
 		  vertex->idx, vertex->used, vertex->discard);
 
-	if (vertex->idx < 0 || vertex->idx > dma->buf_count)
+	if (vertex->idx < 0 || vertex->idx >= dma->buf_count)
 		return -EINVAL;
 
 	i810_dma_dispatch_vertex(dev,
@@ -1048,7 +1053,7 @@ static void i810_dma_dispatch_mc(struct drm_device *dev, struct drm_buf *buf, in
 	if (u != I810_BUF_CLIENT)
 		DRM_DEBUG("MC found buffer that isn't mine!\n");
 
-	if (used > 4 * 1024)
+	if (used < 0 || used > 4 * 1024)
 		used = 0;
 
 	sarea_priv->dirty = 0x7f;
@@ -1197,6 +1202,14 @@ static int i810_flip_bufs(struct drm_device *dev, void *data,
 
 int i810_driver_load(struct drm_device *dev, unsigned long flags)
 {
+	dev->agp = drm_agp_init(dev);
+	if (dev->agp) {
+		dev->agp->agp_mtrr = arch_phys_wc_add(
+			dev->agp->agp_info.aper_base,
+			dev->agp->agp_info.aper_size *
+			1024 * 1024);
+	}
+
 	/* Our userspace depends upon the agp mapping support. */
 	if (!dev->agp)
 		return -EINVAL;
@@ -1256,19 +1269,3 @@ const struct drm_ioctl_desc i810_ioctls[] = {
 };
 
 int i810_max_ioctl = ARRAY_SIZE(i810_ioctls);
-
-/**
- * Determine if the device really is AGP or not.
- *
- * All Intel graphics chipsets are treated as AGP, even if they are really
- * PCI-e.
- *
- * \param dev   The device to be tested.
- *
- * \returns
- * A value of 1 is always retured to indictate every i810 is AGP.
- */
-int i810_driver_device_is_agp(struct drm_device *dev)
-{
-	return 1;
-}

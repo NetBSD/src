@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_uc_fw.c,v 1.1.1.1 2021/12/18 20:15:33 riastradh Exp $	*/
+/*	$NetBSD: intel_uc_fw.c,v 1.2 2021/12/18 23:45:31 riastradh Exp $	*/
 
 // SPDX-License-Identifier: MIT
 /*
@@ -6,7 +6,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intel_uc_fw.c,v 1.1.1.1 2021/12/18 20:15:33 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intel_uc_fw.c,v 1.2 2021/12/18 23:45:31 riastradh Exp $");
 
 #include <linux/bitfield.h>
 #include <linux/firmware.h>
@@ -579,13 +579,32 @@ void intel_uc_fw_cleanup_fetch(struct intel_uc_fw *uc_fw)
  */
 size_t intel_uc_fw_copy_rsa(struct intel_uc_fw *uc_fw, void *dst, u32 max_len)
 {
+#ifdef __NetBSD__
+	struct iovec iov;
+	struct uio uio;
+#else
 	struct sg_table *pages = uc_fw->obj->mm.pages;
+#endif
 	u32 size = min_t(u32, uc_fw->rsa_size, max_len);
 	u32 offset = sizeof(struct uc_css_header) + uc_fw->ucode_size;
 
 	GEM_BUG_ON(!intel_uc_fw_is_available(uc_fw));
 
+#ifdef __NetBSD__
+	iov.iov_base = dst;
+	iov.iov_len = size;
+	uio.uio_iov = &iov;
+	uio.uio_iovcnt = 1;
+	uio.uio_offset = offset;
+	uio.uio_resid = size;
+	uio.uio_rw = UIO_READ;
+	UIO_SETUP_SYSSPACE(&uio);
+	/* XXX errno NetBSD->Linux */
+	return -ubc_uiomove(uc_fw->obj.base.filp, &uio, size, UVM_ADV_NORMAL,
+	    UBC_READ);
+#else
 	return sg_pcopy_to_buffer(pages->sgl, pages->nents, dst, size, offset);
+#endif
 }
 
 /**

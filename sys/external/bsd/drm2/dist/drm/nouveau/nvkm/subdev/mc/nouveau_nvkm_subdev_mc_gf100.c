@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_nvkm_subdev_mc_gf100.c,v 1.2 2018/08/27 04:58:34 riastradh Exp $	*/
+/*	$NetBSD: nouveau_nvkm_subdev_mc_gf100.c,v 1.3 2021/12/18 23:45:40 riastradh Exp $	*/
 
 /*
  * Copyright 2012 Red Hat Inc.
@@ -24,32 +24,43 @@
  * Authors: Ben Skeggs
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_subdev_mc_gf100.c,v 1.2 2018/08/27 04:58:34 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_subdev_mc_gf100.c,v 1.3 2021/12/18 23:45:40 riastradh Exp $");
 
 #include "priv.h"
 
-const struct nvkm_mc_intr
-gf100_mc_intr[] = {
-	{ 0x04000000, NVKM_ENGINE_DISP },  /* DISP first, so pageflip timestamps work. */
-	{ 0x00000001, NVKM_ENGINE_MSPPP },
-	{ 0x00000020, NVKM_ENGINE_CE0 },
-	{ 0x00000040, NVKM_ENGINE_CE1 },
-	{ 0x00000080, NVKM_ENGINE_CE2 },
-	{ 0x00000100, NVKM_ENGINE_FIFO },
-	{ 0x00001000, NVKM_ENGINE_GR },
-	{ 0x00002000, NVKM_SUBDEV_FB },
-	{ 0x00008000, NVKM_ENGINE_MSVLD },
-	{ 0x00040000, NVKM_SUBDEV_THERM },
+static const struct nvkm_mc_map
+gf100_mc_reset[] = {
 	{ 0x00020000, NVKM_ENGINE_MSPDEC },
-	{ 0x00100000, NVKM_SUBDEV_TIMER },
-	{ 0x00200000, NVKM_SUBDEV_GPIO },	/* PMGR->GPIO */
-	{ 0x00200000, NVKM_SUBDEV_I2C },	/* PMGR->I2C/AUX */
-	{ 0x01000000, NVKM_SUBDEV_PMU },
-	{ 0x02000000, NVKM_SUBDEV_LTC },
-	{ 0x08000000, NVKM_SUBDEV_FB },
-	{ 0x10000000, NVKM_SUBDEV_BUS },
+	{ 0x00008000, NVKM_ENGINE_MSVLD },
+	{ 0x00002000, NVKM_SUBDEV_PMU, true },
+	{ 0x00001000, NVKM_ENGINE_GR },
+	{ 0x00000100, NVKM_ENGINE_FIFO },
+	{ 0x00000080, NVKM_ENGINE_CE1 },
+	{ 0x00000040, NVKM_ENGINE_CE0 },
+	{ 0x00000002, NVKM_ENGINE_MSPPP },
+	{}
+};
+
+static const struct nvkm_mc_map
+gf100_mc_intr[] = {
+	{ 0x04000000, NVKM_ENGINE_DISP },
+	{ 0x00020000, NVKM_ENGINE_MSPDEC },
+	{ 0x00008000, NVKM_ENGINE_MSVLD },
+	{ 0x00001000, NVKM_ENGINE_GR },
+	{ 0x00000100, NVKM_ENGINE_FIFO },
+	{ 0x00000040, NVKM_ENGINE_CE1 },
+	{ 0x00000020, NVKM_ENGINE_CE0 },
+	{ 0x00000001, NVKM_ENGINE_MSPPP },
 	{ 0x40000000, NVKM_SUBDEV_IBUS },
-	{ 0x80000000, NVKM_ENGINE_SW },
+	{ 0x10000000, NVKM_SUBDEV_BUS },
+	{ 0x08000000, NVKM_SUBDEV_FB },
+	{ 0x02000000, NVKM_SUBDEV_LTC },
+	{ 0x01000000, NVKM_SUBDEV_PMU },
+	{ 0x00200000, NVKM_SUBDEV_GPIO },
+	{ 0x00200000, NVKM_SUBDEV_I2C },
+	{ 0x00100000, NVKM_SUBDEV_TIMER },
+	{ 0x00040000, NVKM_SUBDEV_THERM },
+	{ 0x00002000, NVKM_SUBDEV_FB },
 	{},
 };
 
@@ -71,12 +82,20 @@ gf100_mc_intr_rearm(struct nvkm_mc *mc)
 }
 
 u32
-gf100_mc_intr_mask(struct nvkm_mc *mc)
+gf100_mc_intr_stat(struct nvkm_mc *mc)
 {
 	struct nvkm_device *device = mc->subdev.device;
 	u32 intr0 = nvkm_rd32(device, 0x000100);
 	u32 intr1 = nvkm_rd32(device, 0x000104);
 	return intr0 | intr1;
+}
+
+void
+gf100_mc_intr_mask(struct nvkm_mc *mc, u32 mask, u32 stat)
+{
+	struct nvkm_device *device = mc->subdev.device;
+	nvkm_mask(device, 0x000640, mask, stat);
+	nvkm_mask(device, 0x000644, mask, stat);
 }
 
 void
@@ -92,6 +111,8 @@ gf100_mc = {
 	.intr_unarm = gf100_mc_intr_unarm,
 	.intr_rearm = gf100_mc_intr_rearm,
 	.intr_mask = gf100_mc_intr_mask,
+	.intr_stat = gf100_mc_intr_stat,
+	.reset = gf100_mc_reset,
 	.unk260 = gf100_mc_unk260,
 };
 

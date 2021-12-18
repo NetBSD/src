@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_mode_object.c,v 1.1.1.1 2021/12/18 20:11:03 riastradh Exp $	*/
+/*	$NetBSD: drm_mode_object.c,v 1.2 2021/12/18 23:44:57 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2016 Intel Corporation
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_mode_object.c,v 1.1.1.1 2021/12/18 20:11:03 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_mode_object.c,v 1.2 2021/12/18 23:44:57 riastradh Exp $");
 
 #include <linux/export.h>
 #include <linux/uaccess.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: osssys_4_0_1_offset.h,v 1.1.1.1 2021/12/18 20:15:02 riastradh Exp $	*/
+/*	$NetBSD: osssys_4_0_1_offset.h,v 1.2 2021/12/18 23:45:22 riastradh Exp $	*/
 
 /*
  * Copyright (C) 2017  Advanced Micro Devices, Inc.

@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_nvkm_engine_nvdec_gm107.c,v 1.1.1.1 2021/12/18 20:15:40 riastradh Exp $	*/
+/*	$NetBSD: nouveau_nvkm_engine_nvdec_gm107.c,v 1.2 2021/12/18 23:45:37 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2017, NVIDIA CORPORATION. All rights reserved.
@@ -22,7 +22,7 @@
  * DEALINGS IN THE SOFTWARE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_engine_nvdec_gm107.c,v 1.1.1.1 2021/12/18 20:15:40 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_engine_nvdec_gm107.c,v 1.2 2021/12/18 23:45:37 riastradh Exp $");
 
 #include "priv.h"
 

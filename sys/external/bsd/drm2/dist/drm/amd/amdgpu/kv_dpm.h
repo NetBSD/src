@@ -1,4 +1,4 @@
-/*	$NetBSD: kv_dpm.h,v 1.2 2018/08/27 04:58:20 riastradh Exp $	*/
+/*	$NetBSD: kv_dpm.h,v 1.3 2021/12/18 23:44:59 riastradh Exp $	*/
 
 /*
  * Copyright 2013 Advanced Micro Devices, Inc.

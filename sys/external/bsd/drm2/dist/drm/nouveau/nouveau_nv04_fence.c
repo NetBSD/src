@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_nv04_fence.c,v 1.3 2019/01/27 02:08:42 pgoyette Exp $	*/
+/*	$NetBSD: nouveau_nv04_fence.c,v 1.4 2021/12/18 23:45:32 riastradh Exp $	*/
 
 /*
  * Copyright 2012 Red Hat Inc.
@@ -25,11 +25,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_nv04_fence.c,v 1.3 2019/01/27 02:08:42 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_nv04_fence.c,v 1.4 2021/12/18 23:45:32 riastradh Exp $");
 
-#include "nouveau_drm.h"
+#include "nouveau_drv.h"
 #include "nouveau_dma.h"
 #include "nouveau_fence.h"
+
+#include <nvif/if0004.h>
 
 struct nv04_fence_chan {
 	struct nouveau_fence_chan base;
@@ -112,7 +114,5 @@ nv04_fence_create(struct nouveau_drm *drm)
 	priv->base.dtor = nv04_fence_destroy;
 	priv->base.context_new = nv04_fence_context_new;
 	priv->base.context_del = nv04_fence_context_del;
-	priv->base.contexts = 15;
-	priv->base.context_base = fence_context_alloc(priv->base.contexts);
 	return 0;
 }

@@ -1,5 +1,6 @@
-/*	$NetBSD: gr.h,v 1.2 2018/08/27 04:58:30 riastradh Exp $	*/
+/*	$NetBSD: gr.h,v 1.3 2021/12/18 23:45:33 riastradh Exp $	*/
 
+/* SPDX-License-Identifier: MIT */
 #ifndef __NVKM_GR_H__
 #define __NVKM_GR_H__
 #include <core/engine.h>
@@ -11,6 +12,9 @@ struct nvkm_gr {
 
 u64 nvkm_gr_units(struct nvkm_gr *);
 int nvkm_gr_tlb_flush(struct nvkm_gr *);
+int nvkm_gr_ctxsw_pause(struct nvkm_device *);
+int nvkm_gr_ctxsw_resume(struct nvkm_device *);
+u32 nvkm_gr_ctxsw_inst(struct nvkm_device *);
 
 int nv04_gr_new(struct nvkm_device *, int, struct nvkm_gr **);
 int nv10_gr_new(struct nvkm_device *, int, struct nvkm_gr **);
@@ -42,7 +46,14 @@ int gk110b_gr_new(struct nvkm_device *, int, struct nvkm_gr **);
 int gk208_gr_new(struct nvkm_device *, int, struct nvkm_gr **);
 int gk20a_gr_new(struct nvkm_device *, int, struct nvkm_gr **);
 int gm107_gr_new(struct nvkm_device *, int, struct nvkm_gr **);
-int gm204_gr_new(struct nvkm_device *, int, struct nvkm_gr **);
-int gm206_gr_new(struct nvkm_device *, int, struct nvkm_gr **);
+int gm200_gr_new(struct nvkm_device *, int, struct nvkm_gr **);
 int gm20b_gr_new(struct nvkm_device *, int, struct nvkm_gr **);
+int gp100_gr_new(struct nvkm_device *, int, struct nvkm_gr **);
+int gp102_gr_new(struct nvkm_device *, int, struct nvkm_gr **);
+int gp104_gr_new(struct nvkm_device *, int, struct nvkm_gr **);
+int gp107_gr_new(struct nvkm_device *, int, struct nvkm_gr **);
+int gp108_gr_new(struct nvkm_device *, int, struct nvkm_gr **);
+int gp10b_gr_new(struct nvkm_device *, int, struct nvkm_gr **);
+int gv100_gr_new(struct nvkm_device *, int, struct nvkm_gr **);
+int tu102_gr_new(struct nvkm_device *, int, struct nvkm_gr **);
 #endif

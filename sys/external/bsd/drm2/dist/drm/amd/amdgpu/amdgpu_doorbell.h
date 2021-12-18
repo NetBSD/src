@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu_doorbell.h,v 1.1.1.1 2021/12/18 20:11:06 riastradh Exp $	*/
+/*	$NetBSD: amdgpu_doorbell.h,v 1.2 2021/12/18 23:44:58 riastradh Exp $	*/
 
 /*
  * Copyright 2018 Advanced Micro Devices, Inc.
@@ -30,7 +30,12 @@ struct amdgpu_doorbell {
 	/* doorbell mmio */
 	resource_size_t		base;
 	resource_size_t		size;
+#ifdef __NetBSD__
+	bus_space_tag_t		bst;
+	bus_space_handle_t	bsh;
+#else
 	u32 __iomem		*ptr;
+#endif
 	u32			num_doorbells;	/* Number of doorbells actually reserved for amdgpu. */
 };
 

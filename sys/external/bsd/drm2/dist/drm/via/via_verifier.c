@@ -1,4 +1,4 @@
-/*	$NetBSD: via_verifier.c,v 1.2 2018/08/27 04:58:37 riastradh Exp $	*/
+/*	$NetBSD: via_verifier.c,v 1.3 2021/12/18 23:45:44 riastradh Exp $	*/
 
 /*
  * Copyright 2004 The Unichrome Project. All Rights Reserved.
@@ -31,14 +31,15 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: via_verifier.c,v 1.2 2018/08/27 04:58:37 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: via_verifier.c,v 1.3 2021/12/18 23:45:44 riastradh Exp $");
+
+#include <drm/drm_device.h>
+#include <drm/drm_legacy.h>
+#include <drm/via_drm.h>
 
 #include "via_3d_reg.h"
-#include <drm/drmP.h>
-#include <drm/via_drm.h>
-#include <drm/drm_legacy.h>
-#include "via_verifier.h"
 #include "via_drv.h"
+#include "via_verifier.h"
 
 typedef enum {
 	state_command,
@@ -729,14 +730,14 @@ via_parse_header2(drm_via_private_t *dev_priv, uint32_t const **buffer,
 	next_fire = dev_priv->fire_offsets[*fire_count];
 	buf++;
 	cmd = (*buf & 0xFFFF0000) >> 16;
-	VIA_WRITE(HC_REG_TRANS_SET + HC_REG_BASE, *buf++);
+	via_write(dev_priv, HC_REG_TRANS_SET + HC_REG_BASE, *buf++);
 	switch (cmd) {
 	case HC_ParaType_CmdVdata:
 		while ((buf < buf_end) &&
 		       (*fire_count < dev_priv->num_fire_offsets) &&
 		       (*buf & HC_ACMD_MASK) == HC_ACMD_HCmdB) {
 			while (buf <= next_fire) {
-				VIA_WRITE(HC_REG_TRANS_SPACE + HC_REG_BASE +
+				via_write(dev_priv, HC_REG_TRANS_SPACE + HC_REG_BASE +
 					  (burst & 63), *buf++);
 				burst += 4;
 			}
@@ -757,7 +758,7 @@ via_parse_header2(drm_via_private_t *dev_priv, uint32_t const **buffer,
 			    (*buf & VIA_VIDEOMASK) == VIA_VIDEO_HEADER6)
 				break;
 
-			VIA_WRITE(HC_REG_TRANS_SPACE + HC_REG_BASE +
+			via_write(dev_priv, HC_REG_TRANS_SPACE + HC_REG_BASE +
 				  (burst & 63), *buf++);
 			burst += 4;
 		}
@@ -847,7 +848,7 @@ via_parse_header1(drm_via_private_t *dev_priv, uint32_t const **buffer,
 		cmd = *buf;
 		if ((cmd & HALCYON_HEADER1MASK) != HALCYON_HEADER1)
 			break;
-		VIA_WRITE((cmd & ~HALCYON_HEADER1MASK) << 2, *++buf);
+		via_write(dev_priv, (cmd & ~HALCYON_HEADER1MASK) << 2, *++buf);
 		buf++;
 	}
 	*buffer = buf;
@@ -898,7 +899,7 @@ via_parse_vheader5(drm_via_private_t *dev_priv, uint32_t const **buffer,
 	i = count = *buf;
 	buf += 3;
 	while (i--)
-		VIA_WRITE(addr, *buf++);
+		via_write(dev_priv, addr, *buf++);
 	if (count & 3)
 		buf += 4 - (count & 3);
 	*buffer = buf;
@@ -954,7 +955,7 @@ via_parse_vheader6(drm_via_private_t *dev_priv, uint32_t const **buffer,
 	buf += 3;
 	while (i--) {
 		addr = *buf++;
-		VIA_WRITE(addr, *buf++);
+		via_write(dev_priv, addr, *buf++);
 	}
 	count <<= 1;
 	if (count & 3)
@@ -1107,10 +1108,7 @@ setup_hazard_table(hz_init_t init_table[], hazard_t table[], int size)
 
 void via_init_command_verifier(void)
 {
-	setup_hazard_table(init_table1, table1,
-			   sizeof(init_table1) / sizeof(hz_init_t));
-	setup_hazard_table(init_table2, table2,
-			   sizeof(init_table2) / sizeof(hz_init_t));
-	setup_hazard_table(init_table3, table3,
-			   sizeof(init_table3) / sizeof(hz_init_t));
+	setup_hazard_table(init_table1, table1, ARRAY_SIZE(init_table1));
+	setup_hazard_table(init_table2, table2, ARRAY_SIZE(init_table2));
+	setup_hazard_table(init_table3, table3, ARRAY_SIZE(init_table3));
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_nvkm_subdev_bios_therm.c,v 1.2 2018/08/27 04:58:33 riastradh Exp $	*/
+/*	$NetBSD: nouveau_nvkm_subdev_bios_therm.c,v 1.3 2021/12/18 23:45:38 riastradh Exp $	*/
 
 /*
  * Copyright 2012 Nouveau Community
@@ -24,23 +24,23 @@
  * Authors: Martin Peres
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_subdev_bios_therm.c,v 1.2 2018/08/27 04:58:33 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_subdev_bios_therm.c,v 1.3 2021/12/18 23:45:38 riastradh Exp $");
 
 #include <subdev/bios.h>
 #include <subdev/bios/bit.h>
 #include <subdev/bios/therm.h>
 
-static u16
+static u32
 therm_table(struct nvkm_bios *bios, u8 *ver, u8 *hdr, u8 *len, u8 *cnt)
 {
 	struct bit_entry bit_P;
-	u16 therm = 0;
+	u32 therm = 0;
 
 	if (!bit_entry(bios, 'P', &bit_P)) {
 		if (bit_P.version == 1)
-			therm = nvbios_rd16(bios, bit_P.offset + 12);
+			therm = nvbios_rd32(bios, bit_P.offset + 12);
 		else if (bit_P.version == 2)
-			therm = nvbios_rd16(bios, bit_P.offset + 16);
+			therm = nvbios_rd32(bios, bit_P.offset + 16);
 		else
 			nvkm_error(&bios->subdev,
 				   "unknown offset for thermal in BIT P %d\n",
@@ -49,7 +49,7 @@ therm_table(struct nvkm_bios *bios, u8 *ver, u8 *hdr, u8 *len, u8 *cnt)
 
 	/* exit now if we haven't found the thermal table */
 	if (!therm)
-		return 0x0000;
+		return 0;
 
 	*ver = nvbios_rd08(bios, therm + 0);
 	*hdr = nvbios_rd08(bios, therm + 1);
@@ -58,14 +58,14 @@ therm_table(struct nvkm_bios *bios, u8 *ver, u8 *hdr, u8 *len, u8 *cnt)
 	return therm + nvbios_rd08(bios, therm + 1);
 }
 
-static u16
+static u32
 nvbios_therm_entry(struct nvkm_bios *bios, int idx, u8 *ver, u8 *len)
 {
 	u8 hdr, cnt;
-	u16 therm = therm_table(bios, ver, &hdr, len, &cnt);
+	u32 therm = therm_table(bios, ver, &hdr, len, &cnt);
 	if (therm && idx < cnt)
 		return therm + idx * *len;
-	return 0x0000;
+	return 0;
 }
 
 int
@@ -75,7 +75,7 @@ nvbios_therm_sensor_parse(struct nvkm_bios *bios,
 {
 	s8 thrs_section, sensor_section, offset;
 	u8 ver, len, i;
-	u16 entry;
+	u32 entry;
 
 	/* we only support the core domain for now */
 	if (domain != NVBIOS_THERM_DOMAIN_CORE)
@@ -159,7 +159,7 @@ nvbios_therm_fan_parse(struct nvkm_bios *bios, struct nvbios_therm_fan *fan)
 {
 	struct nvbios_therm_trip_point *cur_trip = NULL;
 	u8 ver, len, i;
-	u16 entry;
+	u32 entry;
 
 	uint8_t duty_lut[] = { 0, 0, 25, 0, 40, 0, 50, 0,
 				75, 0, 85, 0, 100, 0, 100, 0 };

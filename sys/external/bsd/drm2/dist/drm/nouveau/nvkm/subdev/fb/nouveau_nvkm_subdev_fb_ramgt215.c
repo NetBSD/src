@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_nvkm_subdev_fb_ramgt215.c,v 1.3 2018/08/27 07:38:56 riastradh Exp $	*/
+/*	$NetBSD: nouveau_nvkm_subdev_fb_ramgt215.c,v 1.4 2021/12/18 23:45:39 riastradh Exp $	*/
 
 /*
  * Copyright 2013 Red Hat Inc.
@@ -25,12 +25,13 @@
  * 	    Roy Spliet <rspliet@eclipso.eu>
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_subdev_fb_ramgt215.c,v 1.3 2018/08/27 07:38:56 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_subdev_fb_ramgt215.c,v 1.4 2021/12/18 23:45:39 riastradh Exp $");
 
 #define gt215_ram(p) container_of((p), struct gt215_ram, base)
 #include "ram.h"
 #include "ramfuc.h"
 
+#include <core/memory.h>
 #include <core/option.h>
 #include <subdev/bios.h>
 #include <subdev/bios/M0205.h>
@@ -91,7 +92,7 @@ struct gt215_ltrain {
 	u32 r_100720;
 	u32 r_1111e0;
 	u32 r_111400;
-	struct nvkm_mem *mem;
+	struct nvkm_memory *memory;
 };
 
 struct gt215_ram {
@@ -175,7 +176,7 @@ gt215_link_train(struct gt215_ram *ram)
 		return -ENOSYS;
 
 	/* XXX: Multiple partitions? */
-	result = kmalloc(64 * sizeof(u32), GFP_KERNEL);
+	result = kmalloc_array(64, sizeof(u32), GFP_KERNEL);
 	if (!result)
 		return -ENOMEM;
 
@@ -284,10 +285,10 @@ gt215_link_train_init(struct gt215_ram *ram)
 	struct gt215_ltrain *train = &ram->ltrain;
 	struct nvkm_device *device = ram->base.fb->subdev.device;
 	struct nvkm_bios *bios = device->bios;
-	struct nvkm_mem *mem;
 	struct nvbios_M0205E M0205E;
 	u8 ver, hdr, cnt, len;
 	u32 r001700;
+	u64 addr;
 	int ret, i = 0;
 
 	train->state = NVA3_TRAIN_UNSUPPORTED;
@@ -302,14 +303,14 @@ gt215_link_train_init(struct gt215_ram *ram)
 
 	train->state = NVA3_TRAIN_ONCE;
 
-	ret = ram->base.func->get(&ram->base, 0x8000, 0x10000, 0, 0x800,
-				  &ram->ltrain.mem);
+	ret = nvkm_ram_get(device, NVKM_RAM_MM_NORMAL, 0x01, 16, 0x8000,
+			   true, true, &ram->ltrain.memory);
 	if (ret)
 		return ret;
 
-	mem = ram->ltrain.mem;
+	addr = nvkm_memory_addr(ram->ltrain.memory);
 
-	nvkm_wr32(device, 0x100538, 0x10000000 | (mem->offset >> 16));
+	nvkm_wr32(device, 0x100538, 0x10000000 | (addr >> 16));
 	nvkm_wr32(device, 0x1005a8, 0x0000ffff);
 	nvkm_mask(device, 0x10f800, 0x00000001, 0x00000001);
 
@@ -325,7 +326,7 @@ gt215_link_train_init(struct gt215_ram *ram)
 
 	/* And upload the pattern */
 	r001700 = nvkm_rd32(device, 0x1700);
-	nvkm_wr32(device, 0x1700, mem->offset >> 16);
+	nvkm_wr32(device, 0x1700, addr >> 16);
 	for (i = 0; i < 16; i++)
 		nvkm_wr32(device, 0x700000 + (i << 2), pattern[i]);
 	for (i = 0; i < 16; i++)
@@ -341,8 +342,7 @@ gt215_link_train_init(struct gt215_ram *ram)
 static void
 gt215_link_train_fini(struct gt215_ram *ram)
 {
-	if (ram->ltrain.mem)
-		ram->base.func->put(&ram->base, &ram->ltrain.mem);
+	nvkm_memory_unref(&ram->ltrain.memory);
 }
 
 /*
@@ -936,8 +936,6 @@ static const struct nvkm_ram_func
 gt215_ram_func = {
 	.dtor = gt215_ram_dtor,
 	.init = gt215_ram_init,
-	.get = nv50_ram_get,
-	.put = nv50_ram_put,
 	.calc = gt215_ram_calc,
 	.prog = gt215_ram_prog,
 	.tidy = gt215_ram_tidy,

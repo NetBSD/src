@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_atomic_uapi.c,v 1.1.1.1 2021/12/18 20:10:59 riastradh Exp $	*/
+/*	$NetBSD: drm_atomic_uapi.c,v 1.2 2021/12/18 23:44:57 riastradh Exp $	*/
 
 /*
  * Copyright (C) 2014 Red Hat
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_atomic_uapi.c,v 1.1.1.1 2021/12/18 20:10:59 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_atomic_uapi.c,v 1.2 2021/12/18 23:44:57 riastradh Exp $");
 
 #include <drm/drm_atomic_uapi.h>
 #include <drm/drm_atomic.h>

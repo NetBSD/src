@@ -1,5 +1,6 @@
-/*	$NetBSD: volt.h,v 1.2 2018/08/27 04:58:30 riastradh Exp $	*/
+/*	$NetBSD: volt.h,v 1.3 2021/12/18 23:45:33 riastradh Exp $	*/
 
+/* SPDX-License-Identifier: MIT */
 #ifndef __NVBIOS_VOLT_H__
 #define __NVBIOS_VOLT_H__
 
@@ -15,16 +16,17 @@ struct nvbios_volt {
 	u32 base;
 
 	/* GPIO mode */
-	u8  vidmask;
-	s16 step;
+	bool ranged;
+	u8   vidmask;
+	s16  step;
 
 	/* PWM mode */
 	u32 pwm_freq;
 	u32 pwm_range;
 };
 
-u16 nvbios_volt_table(struct nvkm_bios *, u8 *ver, u8 *hdr, u8 *cnt, u8 *len);
-u16 nvbios_volt_parse(struct nvkm_bios *, u8 *ver, u8 *hdr, u8 *cnt, u8 *len,
+u32 nvbios_volt_table(struct nvkm_bios *, u8 *ver, u8 *hdr, u8 *cnt, u8 *len);
+u32 nvbios_volt_parse(struct nvkm_bios *, u8 *ver, u8 *hdr, u8 *cnt, u8 *len,
 		      struct nvbios_volt *);
 
 struct nvbios_volt_entry {
@@ -32,7 +34,7 @@ struct nvbios_volt_entry {
 	u8  vid;
 };
 
-u16 nvbios_volt_entry(struct nvkm_bios *, int idx, u8 *ver, u8 *len);
-u16 nvbios_volt_entry_parse(struct nvkm_bios *, int idx, u8 *ver, u8 *len,
+u32 nvbios_volt_entry(struct nvkm_bios *, int idx, u8 *ver, u8 *len);
+u32 nvbios_volt_entry_parse(struct nvkm_bios *, int idx, u8 *ver, u8 *len,
 			    struct nvbios_volt_entry *);
 #endif

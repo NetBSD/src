@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu_drv.h,v 1.2 2018/08/27 04:58:19 riastradh Exp $	*/
+/*	$NetBSD: amdgpu_drv.h,v 1.3 2021/12/18 23:44:58 riastradh Exp $	*/
 
 /* amdgpu_drv.h -- Private header for amdgpu driver -*- linux-c -*-
  *

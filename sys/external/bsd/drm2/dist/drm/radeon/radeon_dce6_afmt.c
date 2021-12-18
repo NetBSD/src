@@ -1,4 +1,4 @@
-/*	$NetBSD: radeon_dce6_afmt.c,v 1.1.1.1 2021/12/18 20:15:48 riastradh Exp $	*/
+/*	$NetBSD: radeon_dce6_afmt.c,v 1.2 2021/12/18 23:45:43 riastradh Exp $	*/
 
 /*
  * Copyright 2013 Advanced Micro Devices, Inc.
@@ -23,7 +23,7 @@
  *
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radeon_dce6_afmt.c,v 1.1.1.1 2021/12/18 20:15:48 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radeon_dce6_afmt.c,v 1.2 2021/12/18 23:45:43 riastradh Exp $");
 
 #include <linux/hdmi.h>
 

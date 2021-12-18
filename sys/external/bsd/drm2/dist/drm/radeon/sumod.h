@@ -1,4 +1,4 @@
-/*	$NetBSD: sumod.h,v 1.3 2019/12/18 13:25:58 msaitoh Exp $	*/
+/*	$NetBSD: sumod.h,v 1.4 2021/12/18 23:45:43 riastradh Exp $	*/
 
 /*
  * Copyright 2012 Advanced Micro Devices, Inc.

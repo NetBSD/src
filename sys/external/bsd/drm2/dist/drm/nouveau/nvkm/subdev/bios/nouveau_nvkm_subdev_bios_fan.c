@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_nvkm_subdev_bios_fan.c,v 1.3 2018/08/27 07:38:56 riastradh Exp $	*/
+/*	$NetBSD: nouveau_nvkm_subdev_bios_fan.c,v 1.4 2021/12/18 23:45:38 riastradh Exp $	*/
 
 /*
  * Copyright 2014 Martin Peres
@@ -24,21 +24,21 @@
  * Authors: Martin Peres
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_subdev_bios_fan.c,v 1.3 2018/08/27 07:38:56 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_subdev_bios_fan.c,v 1.4 2021/12/18 23:45:38 riastradh Exp $");
 
 #include <subdev/bios.h>
 #include <subdev/bios/bit.h>
 #include <subdev/bios/fan.h>
 
-static u16
+static u32
 nvbios_fan_table(struct nvkm_bios *bios, u8 *ver, u8 *hdr, u8 *cnt, u8 *len)
 {
 	struct bit_entry bit_P;
-	u16 fan = 0x0000;
+	u32 fan = 0;
 
 	if (!bit_entry(bios, 'P', &bit_P)) {
-		if (bit_P.version == 2 && bit_P.length >= 0x5a)
-			fan = nvbios_rd16(bios, bit_P.offset + 0x58);
+		if (bit_P.version == 2 && bit_P.length >= 0x5c)
+			fan = nvbios_rd32(bios, bit_P.offset + 0x58);
 
 		if (fan) {
 			*ver = nvbios_rd08(bios, fan + 0);
@@ -54,25 +54,25 @@ nvbios_fan_table(struct nvkm_bios *bios, u8 *ver, u8 *hdr, u8 *cnt, u8 *len)
 		}
 	}
 
-	return 0x0000;
+	return 0;
 }
 
-static u16
+static u32
 nvbios_fan_entry(struct nvkm_bios *bios, int idx, u8 *ver, u8 *hdr,
 		 u8 *cnt, u8 *len)
 {
-	u16 data = nvbios_fan_table(bios, ver, hdr, cnt, len);
+	u32 data = nvbios_fan_table(bios, ver, hdr, cnt, len);
 	if (data && idx < *cnt)
 		return data + *hdr + (idx * (*len));
-	return 0x0000;
+	return 0;
 }
 
-u16
+u32
 nvbios_fan_parse(struct nvkm_bios *bios, struct nvbios_therm_fan *fan)
 {
 	u8 ver, hdr, cnt, len;
 
-	u16 data = nvbios_fan_entry(bios, 0, &ver, &hdr, &cnt, &len);
+	u32 data = nvbios_fan_entry(bios, 0, &ver, &hdr, &cnt, &len);
 	if (data) {
 		u8 type = nvbios_rd08(bios, data + 0x00);
 		switch (type) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_nvkm_engine_mpeg_nv50.c,v 1.2 2018/08/27 04:58:32 riastradh Exp $	*/
+/*	$NetBSD: nouveau_nvkm_engine_mpeg_nv50.c,v 1.3 2021/12/18 23:45:36 riastradh Exp $	*/
 
 /*
  * Copyright 2012 Red Hat Inc.
@@ -24,11 +24,12 @@
  * Authors: Ben Skeggs
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_engine_mpeg_nv50.c,v 1.2 2018/08/27 04:58:32 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_engine_mpeg_nv50.c,v 1.3 2021/12/18 23:45:36 riastradh Exp $");
 
 #include "priv.h"
 
 #include <core/gpuobj.h>
+#include <core/object.h>
 #include <subdev/timer.h>
 
 #include <nvif/class.h>
@@ -135,6 +136,5 @@ nv50_mpeg = {
 int
 nv50_mpeg_new(struct nvkm_device *device, int index, struct nvkm_engine **pmpeg)
 {
-	return nvkm_engine_new_(&nv50_mpeg, device, index, 0x00400002,
-				true, pmpeg);
+	return nvkm_engine_new_(&nv50_mpeg, device, index, true, pmpeg);
 }

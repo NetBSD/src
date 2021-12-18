@@ -1,5 +1,6 @@
-/*	$NetBSD: vm_basic_types.h,v 1.2 2018/08/27 04:58:37 riastradh Exp $	*/
+/*	$NetBSD: vm_basic_types.h,v 1.3 2021/12/18 23:45:45 riastradh Exp $	*/
 
+/* SPDX-License-Identifier: GPL-2.0 */
 #ifndef _VM_BASIC_TYPES_H_
 #define _VM_BASIC_TYPES_H_
 #include <linux/kernel.h>

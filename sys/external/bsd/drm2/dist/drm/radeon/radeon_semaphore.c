@@ -1,4 +1,4 @@
-/*	$NetBSD: radeon_semaphore.c,v 1.2 2018/08/27 04:58:36 riastradh Exp $	*/
+/*	$NetBSD: radeon_semaphore.c,v 1.3 2021/12/18 23:45:43 riastradh Exp $	*/
 
 /*
  * Copyright 2011 Christian König.
@@ -29,10 +29,10 @@
  * Authors:
  *    Christian König <deathsimple@vodafone.de>
  */
-#include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radeon_semaphore.c,v 1.2 2018/08/27 04:58:36 riastradh Exp $");
 
-#include <drm/drmP.h>
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: radeon_semaphore.c,v 1.3 2021/12/18 23:45:43 riastradh Exp $");
+
 #include "radeon.h"
 #include "radeon_trace.h"
 
@@ -61,7 +61,7 @@ int radeon_semaphore_create(struct radeon_device *rdev,
 }
 
 bool radeon_semaphore_emit_signal(struct radeon_device *rdev, int ridx,
-			          struct radeon_semaphore *semaphore)
+				  struct radeon_semaphore *semaphore)
 {
 	struct radeon_ring *ring = &rdev->ring[ridx];
 
@@ -78,7 +78,7 @@ bool radeon_semaphore_emit_signal(struct radeon_device *rdev, int ridx,
 }
 
 bool radeon_semaphore_emit_wait(struct radeon_device *rdev, int ridx,
-			        struct radeon_semaphore *semaphore)
+				struct radeon_semaphore *semaphore)
 {
 	struct radeon_ring *ring = &rdev->ring[ridx];
 

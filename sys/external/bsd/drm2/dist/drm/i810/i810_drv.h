@@ -1,4 +1,4 @@
-/*	$NetBSD: i810_drv.h,v 1.2 2018/08/27 04:58:23 riastradh Exp $	*/
+/*	$NetBSD: i810_drv.h,v 1.3 2021/12/18 23:45:27 riastradh Exp $	*/
 
 /* i810_drv.h -- Private header for the Matrox g200/g400 driver -*- linux-c -*-
  * Created: Mon Dec 13 01:50:01 1999 by jhartmann@precisioninsight.com
@@ -34,7 +34,9 @@
 #ifndef _I810_DRV_H_
 #define _I810_DRV_H_
 
+#include <drm/drm_ioctl.h>
 #include <drm/drm_legacy.h>
+#include <drm/i810_drm.h>
 
 /* General customization:
  */
@@ -126,7 +128,6 @@ extern int i810_driver_load(struct drm_device *, unsigned long flags);
 extern void i810_driver_lastclose(struct drm_device *dev);
 extern void i810_driver_preclose(struct drm_device *dev,
 				 struct drm_file *file_priv);
-extern int i810_driver_device_is_agp(struct drm_device *dev);
 
 extern long i810_ioctl(struct file *file, unsigned int cmd, unsigned long arg);
 extern const struct drm_ioctl_desc i810_ioctls[];

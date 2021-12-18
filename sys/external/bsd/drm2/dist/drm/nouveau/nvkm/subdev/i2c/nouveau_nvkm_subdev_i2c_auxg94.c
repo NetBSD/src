@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_nvkm_subdev_i2c_auxg94.c,v 1.2 2018/08/27 04:58:34 riastradh Exp $	*/
+/*	$NetBSD: nouveau_nvkm_subdev_i2c_auxg94.c,v 1.3 2021/12/18 23:45:40 riastradh Exp $	*/
 
 /*
  * Copyright 2015 Red Hat Inc.
@@ -24,7 +24,7 @@
  * Authors: Ben Skeggs <bskeggs@redhat.com>
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_subdev_i2c_auxg94.c,v 1.2 2018/08/27 04:58:34 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_subdev_i2c_auxg94.c,v 1.3 2021/12/18 23:45:40 riastradh Exp $");
 
 #define g94_i2c_aux(p) container_of((p), struct g94_i2c_aux, base)
 #include "aux.h"
@@ -77,18 +77,18 @@ g94_i2c_aux_init(struct g94_i2c_aux *aux)
 	return 0;
 }
 
-static int
+int
 g94_i2c_aux_xfer(struct nvkm_i2c_aux *obj, bool retry,
-		 u8 type, u32 addr, u8 *data, u8 size)
+		 u8 type, u32 addr, u8 *data, u8 *size)
 {
 	struct g94_i2c_aux *aux = g94_i2c_aux(obj);
 	struct nvkm_device *device = aux->base.pad->i2c->subdev.device;
 	const u32 base = aux->ch * 0x50;
-	u32 ctrl, stat, timeout, retries;
+	u32 ctrl, stat, timeout, retries = 0;
 	u32 xbuf[4] = {};
 	int ret, i;
 
-	AUX_TRACE(&aux->base, "%d: %08x %d", type, addr, size);
+	AUX_TRACE(&aux->base, "%d: %08x %d", type, addr, *size);
 
 	ret = g94_i2c_aux_init(aux);
 	if (ret < 0)
@@ -102,7 +102,7 @@ g94_i2c_aux_xfer(struct nvkm_i2c_aux *obj, bool retry,
 	}
 
 	if (!(type & 1)) {
-		memcpy(xbuf, data, size);
+		memcpy(xbuf, data, *size);
 		for (i = 0; i < 16; i += 4) {
 			AUX_TRACE(&aux->base, "wr %08x", xbuf[i / 4]);
 			nvkm_wr32(device, 0x00e4c0 + base + i, xbuf[i / 4]);
@@ -110,13 +110,13 @@ g94_i2c_aux_xfer(struct nvkm_i2c_aux *obj, bool retry,
 	}
 
 	ctrl  = nvkm_rd32(device, 0x00e4e4 + base);
-	ctrl &= ~0x0001f0ff;
+	ctrl &= ~0x0001f1ff;
 	ctrl |= type << 12;
-	ctrl |= size - 1;
+	ctrl |= (*size ? (*size - 1) : 0x00000100);
 	nvkm_wr32(device, 0x00e4e0 + base, addr);
 
 	/* (maybe) retry transaction a number of times on failure... */
-	for (retries = 0; !ret && retries < 32; retries++) {
+	do {
 		/* reset, and delay a while if this is a retry */
 		nvkm_wr32(device, 0x00e4e4 + base, 0x80000000 | ctrl);
 		nvkm_wr32(device, 0x00e4e4 + base, 0x00000000 | ctrl);
@@ -136,27 +136,28 @@ g94_i2c_aux_xfer(struct nvkm_i2c_aux *obj, bool retry,
 				goto out;
 			}
 		} while (ctrl & 0x00010000);
-		ret = 1;
+		ret = 0;
 
 		/* read status, and check if transaction completed ok */
 		stat = nvkm_mask(device, 0x00e4e8 + base, 0, 0);
 		if ((stat & 0x000f0000) == 0x00080000 ||
 		    (stat & 0x000f0000) == 0x00020000)
-			ret = retry ? 0 : 1;
+			ret = 1;
 		if ((stat & 0x00000100))
 			ret = -ETIMEDOUT;
 		if ((stat & 0x00000e00))
 			ret = -EIO;
 
 		AUX_TRACE(&aux->base, "%02d %08x %08x", retries, ctrl, stat);
-	}
+	} while (ret && retry && retries++ < 32);
 
 	if (type & 1) {
 		for (i = 0; i < 16; i += 4) {
 			xbuf[i / 4] = nvkm_rd32(device, 0x00e4d0 + base + i);
 			AUX_TRACE(&aux->base, "rd %08x", xbuf[i / 4]);
 		}
-		memcpy(data, xbuf, size);
+		memcpy(data, xbuf, *size);
+		*size = stat & 0x0000001f;
 	}
 
 out:
@@ -164,14 +165,10 @@ out:
 	return ret < 0 ? ret : (stat & 0x000f0000) >> 16;
 }
 
-static const struct nvkm_i2c_aux_func
-g94_i2c_aux_func = {
-	.xfer = g94_i2c_aux_xfer,
-};
-
 int
-g94_i2c_aux_new(struct nvkm_i2c_pad *pad, int index, u8 drive,
-		struct nvkm_i2c_aux **paux)
+g94_i2c_aux_new_(const struct nvkm_i2c_aux_func *func,
+		 struct nvkm_i2c_pad *pad, int index, u8 drive,
+		 struct nvkm_i2c_aux **paux)
 {
 	struct g94_i2c_aux *aux;
 
@@ -179,8 +176,20 @@ g94_i2c_aux_new(struct nvkm_i2c_pad *pad, int index, u8 drive,
 		return -ENOMEM;
 	*paux = &aux->base;
 
-	nvkm_i2c_aux_ctor(&g94_i2c_aux_func, pad, index, &aux->base);
+	nvkm_i2c_aux_ctor(func, pad, index, &aux->base);
 	aux->ch = drive;
 	aux->base.intr = 1 << aux->ch;
 	return 0;
+}
+
+static const struct nvkm_i2c_aux_func
+g94_i2c_aux = {
+	.xfer = g94_i2c_aux_xfer,
+};
+
+int
+g94_i2c_aux_new(struct nvkm_i2c_pad *pad, int index, u8 drive,
+		struct nvkm_i2c_aux **paux)
+{
+	return g94_i2c_aux_new_(&g94_i2c_aux, pad, index, drive, paux);
 }

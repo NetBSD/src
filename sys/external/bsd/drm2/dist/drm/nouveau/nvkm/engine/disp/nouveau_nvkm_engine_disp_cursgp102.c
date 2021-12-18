@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_nvkm_engine_disp_cursgp102.c,v 1.1.1.1 2021/12/18 20:15:37 riastradh Exp $	*/
+/*	$NetBSD: nouveau_nvkm_engine_disp_cursgp102.c,v 1.2 2021/12/18 23:45:35 riastradh Exp $	*/
 
 /*
  * Copyright 2016 Red Hat Inc.
@@ -24,7 +24,7 @@
  * Authors: Ben Skeggs <bskeggs@redhat.com>
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_engine_disp_cursgp102.c,v 1.1.1.1 2021/12/18 20:15:37 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_engine_disp_cursgp102.c,v 1.2 2021/12/18 23:45:35 riastradh Exp $");
 
 #include "channv50.h"
 

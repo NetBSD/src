@@ -1,5 +1,6 @@
-/*	$NetBSD: gf100.h,v 1.2 2018/08/27 04:58:32 riastradh Exp $	*/
+/*	$NetBSD: gf100.h,v 1.3 2021/12/18 23:45:37 riastradh Exp $	*/
 
+/* SPDX-License-Identifier: MIT */
 #ifndef __NVKM_PM_NVC0_H__
 #define __NVKM_PM_NVC0_H__
 #include "priv.h"

@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_dp_dual_mode_helper.c,v 1.1.1.1 2021/12/18 20:11:01 riastradh Exp $	*/
+/*	$NetBSD: drm_dp_dual_mode_helper.c,v 1.2 2021/12/18 23:44:57 riastradh Exp $	*/
 
 /*
  * Copyright © 2016 Intel Corporation
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_dp_dual_mode_helper.c,v 1.1.1.1 2021/12/18 20:11:01 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_dp_dual_mode_helper.c,v 1.2 2021/12/18 23:44:57 riastradh Exp $");
 
 #include <linux/delay.h>
 #include <linux/errno.h>

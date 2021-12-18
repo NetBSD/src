@@ -1,6 +1,6 @@
-/*	$NetBSD: drm_scatter.c,v 1.2 2018/08/27 04:58:19 riastradh Exp $	*/
+/*	$NetBSD: drm_scatter.c,v 1.3 2021/12/18 23:44:57 riastradh Exp $	*/
 
-/**
+/*
  * \file drm_scatter.c
  * IOCTLs to manage scatter/gather memory
  *
@@ -34,11 +34,16 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_scatter.c,v 1.2 2018/08/27 04:58:19 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_scatter.c,v 1.3 2021/12/18 23:44:57 riastradh Exp $");
 
-#include <linux/vmalloc.h>
+#include <linux/mm.h>
 #include <linux/slab.h>
-#include <drm/drmP.h>
+#include <linux/vmalloc.h>
+
+#include <drm/drm.h>
+#include <drm/drm_drv.h>
+#include <drm/drm_print.h>
+
 #include "drm_legacy.h"
 
 #define DEBUG_SCATTER 0
@@ -46,7 +51,7 @@ __KERNEL_RCSID(0, "$NetBSD: drm_scatter.c,v 1.2 2018/08/27 04:58:19 riastradh Ex
 static inline void *drm_vmalloc_dma(unsigned long size)
 {
 #if defined(__powerpc__) && defined(CONFIG_NOT_COHERENT_CACHE)
-	return __vmalloc(size, GFP_KERNEL, PAGE_KERNEL | _PAGE_NO_CACHE);
+	return __vmalloc(size, GFP_KERNEL, pgprot_noncached_wc(PAGE_KERNEL));
 #else
 	return vmalloc_32(size);
 #endif
@@ -73,7 +78,7 @@ static void drm_sg_cleanup(struct drm_sg_mem * entry)
 void drm_legacy_sg_cleanup(struct drm_device *dev)
 {
 	if (drm_core_check_feature(dev, DRIVER_SG) && dev->sg &&
-	    !drm_core_check_feature(dev, DRIVER_MODESET)) {
+	    drm_core_check_feature(dev, DRIVER_LEGACY)) {
 		drm_sg_cleanup(dev->sg);
 		dev->sg = NULL;
 	}
@@ -93,11 +98,11 @@ int drm_legacy_sg_alloc(struct drm_device *dev, void *data,
 
 	DRM_DEBUG("\n");
 
-	if (drm_core_check_feature(dev, DRIVER_MODESET))
-		return -EINVAL;
+	if (!drm_core_check_feature(dev, DRIVER_LEGACY))
+		return -EOPNOTSUPP;
 
 	if (!drm_core_check_feature(dev, DRIVER_SG))
-		return -EINVAL;
+		return -EOPNOTSUPP;
 
 	if (dev->sg)
 		return -EINVAL;
@@ -206,11 +211,11 @@ int drm_legacy_sg_free(struct drm_device *dev, void *data,
 	struct drm_scatter_gather *request = data;
 	struct drm_sg_mem *entry;
 
-	if (drm_core_check_feature(dev, DRIVER_MODESET))
-		return -EINVAL;
+	if (!drm_core_check_feature(dev, DRIVER_LEGACY))
+		return -EOPNOTSUPP;
 
 	if (!drm_core_check_feature(dev, DRIVER_SG))
-		return -EINVAL;
+		return -EOPNOTSUPP;
 
 	entry = dev->sg;
 	dev->sg = NULL;

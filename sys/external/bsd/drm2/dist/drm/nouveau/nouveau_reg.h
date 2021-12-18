@@ -1,5 +1,6 @@
-/*	$NetBSD: nouveau_reg.h,v 1.2 2018/08/27 04:58:24 riastradh Exp $	*/
+/*	$NetBSD: nouveau_reg.h,v 1.3 2021/12/18 23:45:32 riastradh Exp $	*/
 
+/* SPDX-License-Identifier: MIT */
 
 #define NV04_PFB_BOOT_0						0x00100000
 #	define NV04_PFB_BOOT_0_RAM_AMOUNT			0x00000003

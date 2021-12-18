@@ -1,4 +1,4 @@
-/*	$NetBSD: radeon_benchmark.c,v 1.3 2018/08/27 04:58:36 riastradh Exp $	*/
+/*	$NetBSD: radeon_benchmark.c,v 1.4 2021/12/18 23:45:43 riastradh Exp $	*/
 
 /*
  * Copyright 2009 Jerome Glisse.
@@ -23,10 +23,10 @@
  *
  * Authors: Jerome Glisse
  */
-#include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radeon_benchmark.c,v 1.3 2018/08/27 04:58:36 riastradh Exp $");
 
-#include <drm/drmP.h>
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: radeon_benchmark.c,v 1.4 2021/12/18 23:45:43 riastradh Exp $");
+
 #include <drm/radeon_drm.h>
 #include "radeon_reg.h"
 #include "radeon.h"
@@ -40,7 +40,7 @@ __KERNEL_RCSID(0, "$NetBSD: radeon_benchmark.c,v 1.3 2018/08/27 04:58:36 riastra
 static int radeon_benchmark_do_move(struct radeon_device *rdev, unsigned size,
 				    uint64_t saddr, uint64_t daddr,
 				    int flag, int n,
-				    struct reservation_object *resv)
+				    struct dma_resv *resv)
 {
 	unsigned long start_jiffies;
 	unsigned long end_jiffies;
@@ -127,7 +127,7 @@ static void radeon_benchmark_move(struct radeon_device *rdev, unsigned size,
 	if (rdev->asic->copy.dma) {
 		time = radeon_benchmark_do_move(rdev, size, saddr, daddr,
 						RADEON_BENCHMARK_COPY_DMA, n,
-						dobj->tbo.resv);
+						dobj->tbo.base.resv);
 		if (time < 0)
 			goto out_cleanup;
 		if (time > 0)
@@ -138,7 +138,7 @@ static void radeon_benchmark_move(struct radeon_device *rdev, unsigned size,
 	if (rdev->asic->copy.blit) {
 		time = radeon_benchmark_do_move(rdev, size, saddr, daddr,
 						RADEON_BENCHMARK_COPY_BLIT, n,
-						dobj->tbo.resv);
+						dobj->tbo.base.resv);
 		if (time < 0)
 			goto out_cleanup;
 		if (time > 0)

@@ -1,12 +1,11 @@
-/*	$NetBSD: object.h,v 1.5 2018/08/27 14:54:32 riastradh Exp $	*/
+/*	$NetBSD: object.h,v 1.6 2021/12/18 23:45:33 riastradh Exp $	*/
 
+/* SPDX-License-Identifier: MIT */
 #ifndef __NVKM_OBJECT_H__
 #define __NVKM_OBJECT_H__
-#include <core/os.h>
-#include <core/debug.h>
+#include <core/oclass.h>
 struct nvkm_event;
 struct nvkm_gpuobj;
-struct nvkm_oclass;
 
 struct nvkm_object {
 	const struct nvkm_object_func *func;
@@ -26,6 +25,11 @@ struct nvkm_object {
 #endif
 };
 
+enum nvkm_object_map {
+	NVKM_OBJECT_MAP_IO,
+	NVKM_OBJECT_MAP_VA
+};
+
 struct nvkm_object_func {
 	void *(*dtor)(struct nvkm_object *);
 	int (*init)(struct nvkm_object *);
@@ -33,11 +37,14 @@ struct nvkm_object_func {
 	int (*mthd)(struct nvkm_object *, u32 mthd, void *data, u32 size);
 	int (*ntfy)(struct nvkm_object *, u32 mthd, struct nvkm_event **);
 #ifdef __NetBSD__
-	int (*map)(struct nvkm_object *, bus_space_tag_t *tagp, u64 *addr,
-	    u32 *size);
+	int (*map)(struct nvkm_object *, bus_space_tag_t *tagp,
+		   void *argv, u32 argc,
+		   enum nvkm_object_map *, u64 *addr, u64 *size);
 #else
-	int (*map)(struct nvkm_object *, u64 *addr, u32 *size);
+	int (*map)(struct nvkm_object *, void *argv, u32 argc,
+		   enum nvkm_object_map *, u64 *addr, u64 *size);
 #endif
+	int (*unmap)(struct nvkm_object *);
 	int (*rd08)(struct nvkm_object *, u64 addr, u8 *data);
 	int (*rd16)(struct nvkm_object *, u64 addr, u16 *data);
 	int (*rd32)(struct nvkm_object *, u64 addr, u32 *data);
@@ -63,11 +70,14 @@ int nvkm_object_fini(struct nvkm_object *, bool suspend);
 int nvkm_object_mthd(struct nvkm_object *, u32 mthd, void *data, u32 size);
 int nvkm_object_ntfy(struct nvkm_object *, u32 mthd, struct nvkm_event **);
 #ifdef __NetBSD__
-int nvkm_object_map(struct nvkm_object *, bus_space_tag_t *, u64 *addr,
-    u32 *size);
+int nvkm_object_map(struct nvkm_object *, bus_space_tag_t *,
+		    void *argv, u32 argc,
+		    enum nvkm_object_map *, u64 *addr, u64 *size);
 #else
-int nvkm_object_map(struct nvkm_object *, u64 *addr, u32 *size);
+int nvkm_object_map(struct nvkm_object *, void *argv, u32 argc,
+		    enum nvkm_object_map *, u64 *addr, u64 *size);
 #endif
+int nvkm_object_unmap(struct nvkm_object *);
 int nvkm_object_rd08(struct nvkm_object *, u64 addr, u8  *data);
 int nvkm_object_rd16(struct nvkm_object *, u64 addr, u16 *data);
 int nvkm_object_rd32(struct nvkm_object *, u64 addr, u32 *data);
@@ -77,27 +87,8 @@ int nvkm_object_wr32(struct nvkm_object *, u64 addr, u32  data);
 int nvkm_object_bind(struct nvkm_object *, struct nvkm_gpuobj *, int align,
 		     struct nvkm_gpuobj **);
 
-struct nvkm_sclass {
-	int minver;
-	int maxver;
-	s32 oclass;
-	const struct nvkm_object_func *func;
-	int (*ctor)(const struct nvkm_oclass *, void *data, u32 size,
-		    struct nvkm_object **);
-};
-
-struct nvkm_oclass {
-	int (*ctor)(const struct nvkm_oclass *, void *data, u32 size,
-		    struct nvkm_object **);
-	struct nvkm_sclass base;
-	const void *priv;
-	const void *engn;
-	u32 handle;
-	u8  route;
-	u64 token;
-	u64 object;
-	struct nvkm_client *client;
-	struct nvkm_object *parent;
-	struct nvkm_engine *engine;
-};
+bool nvkm_object_insert(struct nvkm_object *);
+void nvkm_object_remove(struct nvkm_object *);
+struct nvkm_object *nvkm_object_search(struct nvkm_client *, u64 object,
+				       const struct nvkm_object_func *);
 #endif

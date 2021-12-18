@@ -1,4 +1,4 @@
-/*	$NetBSD: atombios_encoders.h,v 1.2 2018/08/27 04:58:20 riastradh Exp $	*/
+/*	$NetBSD: atombios_encoders.h,v 1.3 2021/12/18 23:44:58 riastradh Exp $	*/
 
 /*
  * Copyright 2014 Advanced Micro Devices, Inc.
@@ -26,6 +26,11 @@
 #ifndef __ATOMBIOS_ENCODER_H__
 #define __ATOMBIOS_ENCODER_H__
 
+u8
+amdgpu_atombios_encoder_get_backlight_level_from_reg(struct amdgpu_device *adev);
+void
+amdgpu_atombios_encoder_set_backlight_level_to_reg(struct amdgpu_device *adev,
+						   u8 backlight_level);
 u8
 amdgpu_atombios_encoder_get_backlight_level(struct amdgpu_encoder *amdgpu_encoder);
 void

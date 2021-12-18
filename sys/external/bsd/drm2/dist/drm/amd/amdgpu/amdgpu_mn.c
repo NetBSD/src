@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu_mn.c,v 1.2 2018/08/27 04:58:19 riastradh Exp $	*/
+/*	$NetBSD: amdgpu_mn.c,v 1.3 2021/12/18 23:44:58 riastradh Exp $	*/
 
 /*
  * Copyright 2014 Advanced Micro Devices, Inc.
@@ -30,206 +30,101 @@
  *    Christian König <christian.koenig@amd.com>
  */
 
+/**
+ * DOC: MMU Notifier
+ *
+ * For coherent userptr handling registers an MMU notifier to inform the driver
+ * about updates on the page tables of a process.
+ *
+ * When somebody tries to invalidate the page tables we block the update until
+ * all operations on the pages in question are completed, then those pages are
+ * marked as accessed and also dirty if it wasn't a read only access.
+ *
+ * New command submissions using the userptrs in question are delayed until all
+ * page table invalidation are completed and we once more see a coherent process
+ * address space.
+ */
+
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdgpu_mn.c,v 1.2 2018/08/27 04:58:19 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdgpu_mn.c,v 1.3 2021/12/18 23:44:58 riastradh Exp $");
 
 #include <linux/firmware.h>
 #include <linux/module.h>
-#include <linux/mmu_notifier.h>
-#include <drm/drmP.h>
 #include <drm/drm.h>
 
 #include "amdgpu.h"
-
-struct amdgpu_mn {
-	/* constant after initialisation */
-	struct amdgpu_device	*adev;
-	struct mm_struct	*mm;
-	struct mmu_notifier	mn;
-
-	/* only used on destruction */
-	struct work_struct	work;
-
-	/* protected by adev->mn_lock */
-	struct hlist_node	node;
-
-	/* objects protected by lock */
-	struct mutex		lock;
-	struct rb_root		objects;
-};
-
-struct amdgpu_mn_node {
-	struct interval_tree_node	it;
-	struct list_head		bos;
-};
+#include "amdgpu_amdkfd.h"
 
 /**
- * amdgpu_mn_destroy - destroy the rmn
+ * amdgpu_mn_invalidate_gfx - callback to notify about mm change
  *
- * @work: previously sheduled work item
+ * @mni: the range (mm) is about to update
+ * @range: details on the invalidation
+ * @cur_seq: Value to pass to mmu_interval_set_seq()
  *
- * Lazy destroys the notifier from a work item
+ * Block for operations on BOs to finish and mark pages as accessed and
+ * potentially dirty.
  */
-static void amdgpu_mn_destroy(struct work_struct *work)
+static bool amdgpu_mn_invalidate_gfx(struct mmu_interval_notifier *mni,
+				     const struct mmu_notifier_range *range,
+				     unsigned long cur_seq)
 {
-	struct amdgpu_mn *rmn = container_of(work, struct amdgpu_mn, work);
-	struct amdgpu_device *adev = rmn->adev;
-	struct amdgpu_mn_node *node, *next_node;
-	struct amdgpu_bo *bo, *next_bo;
+	struct amdgpu_bo *bo = container_of(mni, struct amdgpu_bo, notifier);
+	struct amdgpu_device *adev = amdgpu_ttm_adev(bo->tbo.bdev);
+	long r;
 
-	mutex_lock(&adev->mn_lock);
-	mutex_lock(&rmn->lock);
-	hash_del(&rmn->node);
-	rbtree_postorder_for_each_entry_safe(node, next_node, &rmn->objects,
-					     it.rb) {
+	if (!mmu_notifier_range_blockable(range))
+		return false;
 
-		interval_tree_remove(&node->it, &rmn->objects);
-		list_for_each_entry_safe(bo, next_bo, &node->bos, mn_list) {
-			bo->mn = NULL;
-			list_del_init(&bo->mn_list);
-		}
-		kfree(node);
-	}
-	mutex_unlock(&rmn->lock);
-	mutex_unlock(&adev->mn_lock);
-	mmu_notifier_unregister(&rmn->mn, rmn->mm);
-	kfree(rmn);
+	mutex_lock(&adev->notifier_lock);
+
+	mmu_interval_set_seq(mni, cur_seq);
+
+	r = dma_resv_wait_timeout_rcu(bo->tbo.base.resv, true, false,
+				      MAX_SCHEDULE_TIMEOUT);
+	mutex_unlock(&adev->notifier_lock);
+	if (r <= 0)
+		DRM_ERROR("(%ld) failed to wait for user bo\n", r);
+	return true;
 }
 
-/**
- * amdgpu_mn_release - callback to notify about mm destruction
- *
- * @mn: our notifier
- * @mn: the mm this callback is about
- *
- * Shedule a work item to lazy destroy our notifier.
- */
-static void amdgpu_mn_release(struct mmu_notifier *mn,
-			      struct mm_struct *mm)
-{
-	struct amdgpu_mn *rmn = container_of(mn, struct amdgpu_mn, mn);
-	INIT_WORK(&rmn->work, amdgpu_mn_destroy);
-	schedule_work(&rmn->work);
-}
-
-/**
- * amdgpu_mn_invalidate_range_start - callback to notify about mm change
- *
- * @mn: our notifier
- * @mn: the mm this callback is about
- * @start: start of updated range
- * @end: end of updated range
- *
- * We block for all BOs between start and end to be idle and
- * unmap them by move them into system domain again.
- */
-static void amdgpu_mn_invalidate_range_start(struct mmu_notifier *mn,
-					     struct mm_struct *mm,
-					     unsigned long start,
-					     unsigned long end)
-{
-	struct amdgpu_mn *rmn = container_of(mn, struct amdgpu_mn, mn);
-	struct interval_tree_node *it;
-
-	/* notification is exclusive, but interval is inclusive */
-	end -= 1;
-
-	mutex_lock(&rmn->lock);
-
-	it = interval_tree_iter_first(&rmn->objects, start, end);
-	while (it) {
-		struct amdgpu_mn_node *node;
-		struct amdgpu_bo *bo;
-		long r;
-
-		node = container_of(it, struct amdgpu_mn_node, it);
-		it = interval_tree_iter_next(it, start, end);
-
-		list_for_each_entry(bo, &node->bos, mn_list) {
-
-			if (!amdgpu_ttm_tt_affect_userptr(bo->tbo.ttm, start,
-							  end))
-				continue;
-
-			r = amdgpu_bo_reserve(bo, true);
-			if (r) {
-				DRM_ERROR("(%ld) failed to reserve user bo\n", r);
-				continue;
-			}
-
-			r = reservation_object_wait_timeout_rcu(bo->tbo.resv,
-				true, false, MAX_SCHEDULE_TIMEOUT);
-			if (r <= 0)
-				DRM_ERROR("(%ld) failed to wait for user bo\n", r);
-
-			amdgpu_ttm_placement_from_domain(bo, AMDGPU_GEM_DOMAIN_CPU);
-			r = ttm_bo_validate(&bo->tbo, &bo->placement, false, false);
-			if (r)
-				DRM_ERROR("(%ld) failed to validate user bo\n", r);
-
-			amdgpu_bo_unreserve(bo);
-		}
-	}
-
-	mutex_unlock(&rmn->lock);
-}
-
-static const struct mmu_notifier_ops amdgpu_mn_ops = {
-	.release = amdgpu_mn_release,
-	.invalidate_range_start = amdgpu_mn_invalidate_range_start,
+static const struct mmu_interval_notifier_ops amdgpu_mn_gfx_ops = {
+	.invalidate = amdgpu_mn_invalidate_gfx,
 };
 
 /**
- * amdgpu_mn_get - create notifier context
+ * amdgpu_mn_invalidate_hsa - callback to notify about mm change
  *
- * @adev: amdgpu device pointer
+ * @mni: the range (mm) is about to update
+ * @range: details on the invalidation
+ * @cur_seq: Value to pass to mmu_interval_set_seq()
  *
- * Creates a notifier context for current->mm.
+ * We temporarily evict the BO attached to this range. This necessitates
+ * evicting all user-mode queues of the process.
  */
-static struct amdgpu_mn *amdgpu_mn_get(struct amdgpu_device *adev)
+static bool amdgpu_mn_invalidate_hsa(struct mmu_interval_notifier *mni,
+				     const struct mmu_notifier_range *range,
+				     unsigned long cur_seq)
 {
-	struct mm_struct *mm = current->mm;
-	struct amdgpu_mn *rmn;
-	int r;
+	struct amdgpu_bo *bo = container_of(mni, struct amdgpu_bo, notifier);
+	struct amdgpu_device *adev = amdgpu_ttm_adev(bo->tbo.bdev);
 
-	down_write(&mm->mmap_sem);
-	mutex_lock(&adev->mn_lock);
+	if (!mmu_notifier_range_blockable(range))
+		return false;
 
-	hash_for_each_possible(adev->mn_hash, rmn, node, (unsigned long)mm)
-		if (rmn->mm == mm)
-			goto release_locks;
+	mutex_lock(&adev->notifier_lock);
 
-	rmn = kzalloc(sizeof(*rmn), GFP_KERNEL);
-	if (!rmn) {
-		rmn = ERR_PTR(-ENOMEM);
-		goto release_locks;
-	}
+	mmu_interval_set_seq(mni, cur_seq);
 
-	rmn->adev = adev;
-	rmn->mm = mm;
-	rmn->mn.ops = &amdgpu_mn_ops;
-	mutex_init(&rmn->lock);
-	rmn->objects = RB_ROOT;
+	amdgpu_amdkfd_evict_userptr(bo->kfd_bo, bo->notifier.mm);
+	mutex_unlock(&adev->notifier_lock);
 
-	r = __mmu_notifier_register(&rmn->mn, mm);
-	if (r)
-		goto free_rmn;
-
-	hash_add(adev->mn_hash, &rmn->node, (unsigned long)mm);
-
-release_locks:
-	mutex_unlock(&adev->mn_lock);
-	up_write(&mm->mmap_sem);
-
-	return rmn;
-
-free_rmn:
-	mutex_unlock(&adev->mn_lock);
-	up_write(&mm->mmap_sem);
-	kfree(rmn);
-
-	return ERR_PTR(r);
+	return true;
 }
+
+static const struct mmu_interval_notifier_ops amdgpu_mn_hsa_ops = {
+	.invalidate = amdgpu_mn_invalidate_hsa,
+};
 
 /**
  * amdgpu_mn_register - register a BO for notifier updates
@@ -237,56 +132,18 @@ free_rmn:
  * @bo: amdgpu buffer object
  * @addr: userptr addr we should monitor
  *
- * Registers an MMU notifier for the given BO at the specified address.
+ * Registers a mmu_notifier for the given BO at the specified address.
  * Returns 0 on success, -ERRNO if anything goes wrong.
  */
 int amdgpu_mn_register(struct amdgpu_bo *bo, unsigned long addr)
 {
-	unsigned long end = addr + amdgpu_bo_size(bo) - 1;
-	struct amdgpu_device *adev = bo->adev;
-	struct amdgpu_mn *rmn;
-	struct amdgpu_mn_node *node = NULL;
-	struct list_head bos;
-	struct interval_tree_node *it;
-
-	rmn = amdgpu_mn_get(adev);
-	if (IS_ERR(rmn))
-		return PTR_ERR(rmn);
-
-	INIT_LIST_HEAD(&bos);
-
-	mutex_lock(&rmn->lock);
-
-	while ((it = interval_tree_iter_first(&rmn->objects, addr, end))) {
-		kfree(node);
-		node = container_of(it, struct amdgpu_mn_node, it);
-		interval_tree_remove(&node->it, &rmn->objects);
-		addr = min(it->start, addr);
-		end = max(it->last, end);
-		list_splice(&node->bos, &bos);
-	}
-
-	if (!node) {
-		node = kmalloc(sizeof(struct amdgpu_mn_node), GFP_KERNEL);
-		if (!node) {
-			mutex_unlock(&rmn->lock);
-			return -ENOMEM;
-		}
-	}
-
-	bo->mn = rmn;
-
-	node->it.start = addr;
-	node->it.last = end;
-	INIT_LIST_HEAD(&node->bos);
-	list_splice(&bos, &node->bos);
-	list_add(&bo->mn_list, &node->bos);
-
-	interval_tree_insert(&node->it, &rmn->objects);
-
-	mutex_unlock(&rmn->lock);
-
-	return 0;
+	if (bo->kfd_bo)
+		return mmu_interval_notifier_insert(&bo->notifier, current->mm,
+						    addr, amdgpu_bo_size(bo),
+						    &amdgpu_mn_hsa_ops);
+	return mmu_interval_notifier_insert(&bo->notifier, current->mm, addr,
+					    amdgpu_bo_size(bo),
+					    &amdgpu_mn_gfx_ops);
 }
 
 /**
@@ -294,35 +151,12 @@ int amdgpu_mn_register(struct amdgpu_bo *bo, unsigned long addr)
  *
  * @bo: amdgpu buffer object
  *
- * Remove any registration of MMU notifier updates from the buffer object.
+ * Remove any registration of mmu notifier updates from the buffer object.
  */
 void amdgpu_mn_unregister(struct amdgpu_bo *bo)
 {
-	struct amdgpu_device *adev = bo->adev;
-	struct amdgpu_mn *rmn;
-	struct list_head *head;
-
-	mutex_lock(&adev->mn_lock);
-	rmn = bo->mn;
-	if (rmn == NULL) {
-		mutex_unlock(&adev->mn_lock);
+	if (!bo->notifier.mm)
 		return;
-	}
-
-	mutex_lock(&rmn->lock);
-	/* save the next list entry for later */
-	head = bo->mn_list.next;
-
-	bo->mn = NULL;
-	list_del(&bo->mn_list);
-
-	if (list_empty(head)) {
-		struct amdgpu_mn_node *node;
-		node = container_of(head, struct amdgpu_mn_node, bos);
-		interval_tree_remove(&node->it, &rmn->objects);
-		kfree(node);
-	}
-
-	mutex_unlock(&rmn->lock);
-	mutex_unlock(&adev->mn_lock);
+	mmu_interval_notifier_remove(&bo->notifier);
+	bo->notifier.mm = NULL;
 }

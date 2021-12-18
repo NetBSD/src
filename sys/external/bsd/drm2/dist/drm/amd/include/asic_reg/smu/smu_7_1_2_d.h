@@ -1,4 +1,4 @@
-/*	$NetBSD: smu_7_1_2_d.h,v 1.2 2018/08/27 04:58:22 riastradh Exp $	*/
+/*	$NetBSD: smu_7_1_2_d.h,v 1.3 2021/12/18 23:45:23 riastradh Exp $	*/
 
 /*
  * SMU_7_1_2 Register documentation
@@ -51,6 +51,7 @@
 #define ixCG_SPLL_FUNC_CNTL_5                                                   0xc0500150
 #define ixCG_SPLL_FUNC_CNTL_6                                                   0xc0500154
 #define ixCG_SPLL_FUNC_CNTL_7                                                   0xc0500158
+#define ixCG_SPLL_STATUS                                                        0xC050015C
 #define ixSPLL_CNTL_MODE                                                        0xc0500160
 #define ixCG_SPLL_SPREAD_SPECTRUM                                               0xc0500164
 #define ixCG_SPLL_SPREAD_SPECTRUM_2                                             0xc0500168
@@ -89,6 +90,8 @@
 #define mmSMC_IND_DATA_6                                                        0x8d
 #define mmSMC_IND_INDEX_7                                                       0x8e
 #define mmSMC_IND_DATA_7                                                        0x8f
+#define mmSMC_IND_INDEX_11														0x1AC
+#define mmSMC_IND_DATA_11														0x1AD
 #define mmSMC_IND_ACCESS_CNTL                                                   0x92
 #define mmSMC_MESSAGE_0                                                         0x94
 #define mmSMC_RESP_0                                                            0x95
@@ -1271,5 +1274,7 @@
 #define ixROM_SW_DATA_62                                                        0xc060011c
 #define ixROM_SW_DATA_63                                                        0xc0600120
 #define ixROM_SW_DATA_64                                                        0xc0600124
+#define ixCURRENT_PG_STATUS                                                     0xc020029c
+#define ixCURRENT_PG_STATUS_APU                                                 0xd020029c
 
 #endif /* SMU_7_1_2_D_H */

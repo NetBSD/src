@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_nvkm_subdev_fb_nv40.c,v 1.2 2018/08/27 04:58:33 riastradh Exp $	*/
+/*	$NetBSD: nouveau_nvkm_subdev_fb_nv40.c,v 1.3 2021/12/18 23:45:39 riastradh Exp $	*/
 
 /*
  * Copyright (C) 2010 Francisco Jerez.
@@ -26,7 +26,7 @@
  *
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_subdev_fb_nv40.c,v 1.2 2018/08/27 04:58:33 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_subdev_fb_nv40.c,v 1.3 2021/12/18 23:45:39 riastradh Exp $");
 
 #include "priv.h"
 #include "ram.h"
@@ -38,7 +38,7 @@ nv40_fb_tile_comp(struct nvkm_fb *fb, int i, u32 size, u32 flags,
 	u32 tiles = DIV_ROUND_UP(size, 0x80);
 	u32 tags  = round_up(tiles / fb->ram->parts, 0x100);
 	if ( (flags & 2) &&
-	    !nvkm_mm_head(&fb->ram->tags, 0, 1, tags, tags, 1, &tile->tag)) {
+	    !nvkm_mm_head(&fb->tags, 0, 1, tags, tags, 1, &tile->tag)) {
 		tile->zcomp  = 0x28000000; /* Z24S8_SPLIT_GRAD */
 		tile->zcomp |= ((tile->tag->offset           ) >> 8);
 		tile->zcomp |= ((tile->tag->offset + tags - 1) >> 8) << 13;
@@ -56,6 +56,7 @@ nv40_fb_init(struct nvkm_fb *fb)
 
 static const struct nvkm_fb_func
 nv40_fb = {
+	.tags = nv20_fb_tags,
 	.init = nv40_fb_init,
 	.tile.regions = 8,
 	.tile.init = nv30_fb_tile_init,
@@ -63,7 +64,6 @@ nv40_fb = {
 	.tile.fini = nv20_fb_tile_fini,
 	.tile.prog = nv20_fb_tile_prog,
 	.ram_new = nv40_ram_new,
-	.memtype_valid = nv04_fb_memtype_valid,
 };
 
 int

@@ -1,4 +1,4 @@
-/*	$NetBSD: dce120_hw_sequencer.h,v 1.1.1.1 2021/12/18 20:11:20 riastradh Exp $	*/
+/*	$NetBSD: dce120_hw_sequencer.h,v 1.2 2021/12/18 23:45:03 riastradh Exp $	*/
 
 /*
 * Copyright 2012-15 Advanced Micro Devices, Inc.

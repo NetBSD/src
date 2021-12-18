@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_prime.c,v 1.2 2018/08/27 04:58:24 riastradh Exp $	*/
+/*	$NetBSD: nouveau_prime.c,v 1.3 2021/12/18 23:45:32 riastradh Exp $	*/
 
 /*
  * Copyright 2011 Red Hat Inc.
@@ -25,12 +25,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_prime.c,v 1.2 2018/08/27 04:58:24 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_prime.c,v 1.3 2021/12/18 23:45:32 riastradh Exp $");
 
-#include <drm/drmP.h>
 #include <linux/dma-buf.h>
 
-#include "nouveau_drm.h"
+#include "nouveau_drv.h"
 #include "nouveau_gem.h"
 
 struct sg_table *nouveau_gem_prime_get_sg_table(struct drm_gem_object *obj)
@@ -65,31 +64,47 @@ struct drm_gem_object *nouveau_gem_prime_import_sg_table(struct drm_device *dev,
 							 struct dma_buf_attachment *attach,
 							 struct sg_table *sg)
 {
+	struct nouveau_drm *drm = nouveau_drm(dev);
+	struct drm_gem_object *obj;
 	struct nouveau_bo *nvbo;
-	struct reservation_object *robj = attach->dmabuf->resv;
+	struct dma_resv *robj = attach->dmabuf->resv;
+	u64 size = attach->dmabuf->size;
 	u32 flags = 0;
+	int align = 0;
 	int ret;
 
 	flags = TTM_PL_FLAG_TT;
 
-	ww_mutex_lock(&robj->lock, NULL);
-	ret = nouveau_bo_new(dev, attach->dmabuf->size, 0, flags, 0, 0,
-			     sg, robj, &nvbo);
-	ww_mutex_unlock(&robj->lock);
-	if (ret)
-		return ERR_PTR(ret);
+	dma_resv_lock(robj, NULL);
+	nvbo = nouveau_bo_alloc(&drm->client, &size, &align, flags, 0, 0);
+	if (IS_ERR(nvbo)) {
+		obj = ERR_CAST(nvbo);
+		goto unlock;
+	}
 
 	nvbo->valid_domains = NOUVEAU_GEM_DOMAIN_GART;
 
 	/* Initialize the embedded gem-object. We return a single gem-reference
 	 * to the caller, instead of a normal nouveau_bo ttm reference. */
-	ret = drm_gem_object_init(dev, &nvbo->gem, nvbo->bo.mem.size);
+	ret = drm_gem_object_init(dev, &nvbo->bo.base, size);
 	if (ret) {
 		nouveau_bo_ref(NULL, &nvbo);
-		return ERR_PTR(-ENOMEM);
+		obj = ERR_PTR(-ENOMEM);
+		goto unlock;
 	}
 
-	return &nvbo->gem;
+	ret = nouveau_bo_init(nvbo, size, align, flags, sg, robj);
+	if (ret) {
+		nouveau_bo_ref(NULL, &nvbo);
+		obj = ERR_PTR(ret);
+		goto unlock;
+	}
+
+	obj = &nvbo->bo.base;
+
+unlock:
+	dma_resv_unlock(robj);
+	return obj;
 }
 
 int nouveau_gem_prime_pin(struct drm_gem_object *obj)
@@ -110,11 +125,4 @@ void nouveau_gem_prime_unpin(struct drm_gem_object *obj)
 	struct nouveau_bo *nvbo = nouveau_gem_object(obj);
 
 	nouveau_bo_unpin(nvbo);
-}
-
-struct reservation_object *nouveau_gem_prime_res_obj(struct drm_gem_object *obj)
-{
-	struct nouveau_bo *nvbo = nouveau_gem_object(obj);
-
-	return nvbo->bo.resv;
 }

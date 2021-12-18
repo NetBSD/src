@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_nvkm_subdev_fb_ramnv44.c,v 1.2 2018/08/27 04:58:33 riastradh Exp $	*/
+/*	$NetBSD: nouveau_nvkm_subdev_fb_ramnv44.c,v 1.3 2021/12/18 23:45:39 riastradh Exp $	*/
 
 /*
  * Copyright 2013 Red Hat Inc.
@@ -24,7 +24,7 @@
  * Authors: Ben Skeggs
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_subdev_fb_ramnv44.c,v 1.2 2018/08/27 04:58:33 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_subdev_fb_ramnv44.c,v 1.3 2021/12/18 23:45:39 riastradh Exp $");
 
 #include "ramnv40.h"
 
@@ -43,5 +43,5 @@ nv44_ram_new(struct nvkm_fb *fb, struct nvkm_ram **pram)
 	if (fb474 & 0x00000001)
 		type = NVKM_RAM_TYPE_DDR1;
 
-	return nv40_ram_new_(fb, type, size, 0, pram);
+	return nv40_ram_new_(fb, type, size, pram);
 }

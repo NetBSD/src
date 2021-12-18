@@ -1,5 +1,6 @@
-/*	$NetBSD: channv50.h,v 1.2 2018/08/27 04:58:31 riastradh Exp $	*/
+/*	$NetBSD: channv50.h,v 1.3 2021/12/18 23:45:35 riastradh Exp $	*/
 
+/* SPDX-License-Identifier: MIT */
 #ifndef __NV50_FIFO_CHAN_H__
 #define __NV50_FIFO_CHAN_H__
 #define nv50_fifo_chan(p) container_of((p), struct nv50_fifo_chan, base)
@@ -15,19 +16,18 @@ struct nv50_fifo_chan {
 	struct nvkm_gpuobj *eng;
 	struct nvkm_gpuobj *pgd;
 	struct nvkm_ramht *ramht;
-	struct nvkm_vm *vm;
 
 	struct nvkm_gpuobj *engn[NVKM_SUBDEV_NR];
 };
 
-int nv50_fifo_chan_ctor(struct nv50_fifo *, u64 vm, u64 push,
+int nv50_fifo_chan_ctor(struct nv50_fifo *, u64 vmm, u64 push,
 			const struct nvkm_oclass *, struct nv50_fifo_chan *);
 void *nv50_fifo_chan_dtor(struct nvkm_fifo_chan *);
 void nv50_fifo_chan_fini(struct nvkm_fifo_chan *);
 void nv50_fifo_chan_engine_dtor(struct nvkm_fifo_chan *, struct nvkm_engine *);
 void nv50_fifo_chan_object_dtor(struct nvkm_fifo_chan *, int);
 
-int g84_fifo_chan_ctor(struct nv50_fifo *, u64 vm, u64 push,
+int g84_fifo_chan_ctor(struct nv50_fifo *, u64 vmm, u64 push,
 		       const struct nvkm_oclass *, struct nv50_fifo_chan *);
 
 extern const struct nvkm_fifo_chan_oclass nv50_fifo_dma_oclass;

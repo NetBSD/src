@@ -1,4 +1,4 @@
-/*	$NetBSD: radeon_cursor.c,v 1.2 2018/08/27 04:58:36 riastradh Exp $	*/
+/*	$NetBSD: radeon_cursor.c,v 1.3 2021/12/18 23:45:43 riastradh Exp $	*/
 
 /*
  * Copyright 2007-8 Advanced Micro Devices, Inc.
@@ -25,11 +25,13 @@
  * Authors: Dave Airlie
  *          Alex Deucher
  */
-#include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radeon_cursor.c,v 1.2 2018/08/27 04:58:36 riastradh Exp $");
 
-#include <drm/drmP.h>
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: radeon_cursor.c,v 1.3 2021/12/18 23:45:43 riastradh Exp $");
+
+#include <drm/drm_device.h>
 #include <drm/radeon_drm.h>
+
 #include "radeon.h"
 
 static void radeon_lock_cursor(struct drm_crtc *crtc, bool lock)
@@ -303,7 +305,7 @@ int radeon_crtc_cursor_set2(struct drm_crtc *crtc,
 		return -EINVAL;
 	}
 
-	obj = drm_gem_object_lookup(crtc->dev, file_priv, handle);
+	obj = drm_gem_object_lookup(file_priv, handle);
 	if (!obj) {
 		DRM_ERROR("Cannot find cursor object %x for crtc %d\n", handle, radeon_crtc->crtc_id);
 		return -ENOENT;
@@ -312,7 +314,7 @@ int radeon_crtc_cursor_set2(struct drm_crtc *crtc,
 	robj = gem_to_radeon_bo(obj);
 	ret = radeon_bo_reserve(robj, false);
 	if (ret != 0) {
-		drm_gem_object_unreference_unlocked(obj);
+		drm_gem_object_put_unlocked(obj);
 		return ret;
 	}
 	/* Only 27 bit offset for legacy cursor */
@@ -322,7 +324,7 @@ int radeon_crtc_cursor_set2(struct drm_crtc *crtc,
 	radeon_bo_unreserve(robj);
 	if (ret) {
 		DRM_ERROR("Failed to pin new cursor BO (%d)\n", ret);
-		drm_gem_object_unreference_unlocked(obj);
+		drm_gem_object_put_unlocked(obj);
 		return ret;
 	}
 
@@ -357,7 +359,7 @@ unpin:
 			radeon_bo_unpin(robj);
 			radeon_bo_unreserve(robj);
 		}
-		drm_gem_object_unreference_unlocked(radeon_crtc->cursor_bo);
+		drm_gem_object_put_unlocked(radeon_crtc->cursor_bo);
 	}
 
 	radeon_crtc->cursor_bo = obj;

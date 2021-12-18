@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_gmbus.c,v 1.1.1.1 2021/12/18 20:15:30 riastradh Exp $	*/
+/*	$NetBSD: intel_gmbus.c,v 1.2 2021/12/18 23:45:30 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2006 Dave Airlie <airlied@linux.ie>
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intel_gmbus.c,v 1.1.1.1 2021/12/18 20:15:30 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intel_gmbus.c,v 1.2 2021/12/18 23:45:30 riastradh Exp $");
 
 #include <linux/export.h>
 #include <linux/i2c-algo-bit.h>
@@ -42,6 +42,8 @@ __KERNEL_RCSID(0, "$NetBSD: intel_gmbus.c,v 1.1.1.1 2021/12/18 20:15:30 riastrad
 #include "i915_drv.h"
 #include "intel_display_types.h"
 #include "intel_gmbus.h"
+
+#include <linux/nbsd-namespace.h>
 
 struct gmbus_pin {
 	const char *name;
@@ -330,7 +332,9 @@ intel_gpio_setup(struct intel_gmbus *bus, unsigned int pin)
 
 static int gmbus_wait(struct drm_i915_private *dev_priv, u32 status, u32 irq_en)
 {
+#ifndef __NetBSD__
 	DEFINE_WAIT(wait);
+#endif
 	u32 gmbus2;
 	int ret;
 
@@ -338,8 +342,13 @@ static int gmbus_wait(struct drm_i915_private *dev_priv, u32 status, u32 irq_en)
 	 * we also need to check for NAKs besides the hw ready/idle signal, we
 	 * need to wake up periodically and check that ourselves.
 	 */
+#ifdef __NetBSD__
+	if (cold || !HAS_GMBUS_IRQ(dev_priv->dev))
+		irq_en = 0;
+#else
 	if (!HAS_GMBUS_IRQ(dev_priv))
 		irq_en = 0;
+#endif
 
 	add_wait_queue(&dev_priv->gmbus_wait_queue, &wait);
 	I915_WRITE_FW(GMBUS4, irq_en);
@@ -367,15 +376,28 @@ gmbus_wait_idle(struct drm_i915_private *dev_priv)
 
 	/* Important: The hw handles only the first bit, so set only one! */
 	irq_enable = 0;
+#ifdef __NetBSD__
+	if (cold || !HAS_GMBUS_IRQ(dev_priv->dev))
+		irq_enable = GMBUS_IDLE_EN;
+#else
 	if (HAS_GMBUS_IRQ(dev_priv))
 		irq_enable = GMBUS_IDLE_EN;
+#endif
 
 	add_wait_queue(&dev_priv->gmbus_wait_queue, &wait);
 	I915_WRITE_FW(GMBUS4, irq_enable);
 
+#ifdef __NetBSD__ /* XXX post-merge audit */
+	spin_lock(&dev_priv->gmbus_wait_lock);
+	DRM_SPIN_TIMED_WAIT_NOINTR_UNTIL(ret, &dev_priv->gmbus_wait_queue,
+	    &dev_priv->gmbus_wait_lock, msecs_to_jiffies_timeout(10),
+	    C);
+	spin_unlock(&dev_priv->gmbus_wait_lock);
+#else
 	ret = intel_wait_for_register_fw(&dev_priv->uncore,
 					 GMBUS2, GMBUS_ACTIVE, 0,
 					 10);
+#endif
 
 	I915_WRITE_FW(GMBUS4, 0);
 	remove_wait_queue(&dev_priv->gmbus_wait_queue, &wait);
@@ -854,7 +876,13 @@ int intel_gmbus_setup(struct drm_i915_private *dev_priv)
 		dev_priv->gpio_mmio_base = PCH_DISPLAY_BASE;
 
 	mutex_init(&dev_priv->gmbus_mutex);
+
+#ifdef __NetBSD__
+	spin_lock_init(&dev_priv->gmbus_wait_lock);
+	DRM_INIT_WAITQUEUE(&dev_priv->gmbus_wait_queue, "i915i2c");
+#else
 	init_waitqueue_head(&dev_priv->gmbus_wait_queue);
+#endif
 
 	for (pin = 0; pin < ARRAY_SIZE(dev_priv->gmbus); pin++) {
 		if (!intel_gmbus_is_valid_pin(dev_priv, pin))
@@ -869,7 +897,11 @@ int intel_gmbus_setup(struct drm_i915_private *dev_priv)
 			 "i915 gmbus %s",
 			 get_gmbus_pin(dev_priv, pin)->name);
 
+#ifdef __NetBSD__
+		bus->adapter.dev.parent = dev->dev;
+#else
 		bus->adapter.dev.parent = &pdev->dev;
+#endif
 		bus->dev_priv = dev_priv;
 
 		bus->adapter.algo = &gmbus_algorithm;
@@ -960,4 +992,10 @@ void intel_gmbus_teardown(struct drm_i915_private *dev_priv)
 		bus = &dev_priv->gmbus[pin];
 		i2c_del_adapter(&bus->adapter);
 	}
+
+#ifdef __NetBSD__
+	DRM_DESTROY_WAITQUEUE(&dev_priv->gmbus_wait_queue);
+	spin_lock_destroy(&dev_priv->gmbus_wait_lock);
+#endif
+	mutex_destroy(&dev_priv->gmbus_mutex);
 }

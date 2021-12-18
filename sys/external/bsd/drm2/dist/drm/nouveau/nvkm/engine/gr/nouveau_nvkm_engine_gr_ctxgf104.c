@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_nvkm_engine_gr_ctxgf104.c,v 1.2 2018/08/27 04:58:31 riastradh Exp $	*/
+/*	$NetBSD: nouveau_nvkm_engine_gr_ctxgf104.c,v 1.3 2021/12/18 23:45:36 riastradh Exp $	*/
 
 /*
  * Copyright 2013 Red Hat Inc.
@@ -24,7 +24,7 @@
  * Authors: Ben Skeggs <bskeggs@redhat.com>
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_engine_gr_ctxgf104.c,v 1.2 2018/08/27 04:58:31 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_engine_gr_ctxgf104.c,v 1.3 2021/12/18 23:45:36 riastradh Exp $");
 
 #include "ctxgf100.h"
 
@@ -89,7 +89,8 @@ gf104_grctx = {
 	.main  = gf100_grctx_generate_main,
 	.unkn  = gf100_grctx_generate_unkn,
 	.hub   = gf100_grctx_pack_hub,
-	.gpc   = gf100_grctx_pack_gpc,
+	.gpc_0 = gf100_grctx_pack_gpc_0,
+	.gpc_1 = gf100_grctx_pack_gpc_1,
 	.zcull = gf100_grctx_pack_zcull,
 	.tpc   = gf104_grctx_pack_tpc,
 	.icmd  = gf100_grctx_pack_icmd,
@@ -101,4 +102,11 @@ gf104_grctx = {
 	.attrib = gf100_grctx_generate_attrib,
 	.attrib_nr_max = 0x324,
 	.attrib_nr = 0x218,
+	.sm_id = gf100_grctx_generate_sm_id,
+	.tpc_nr = gf100_grctx_generate_tpc_nr,
+	.r4060a8 = gf100_grctx_generate_r4060a8,
+	.rop_mapping = gf100_grctx_generate_rop_mapping,
+	.alpha_beta_tables = gf100_grctx_generate_alpha_beta_tables,
+	.max_ways_evict = gf100_grctx_generate_max_ways_evict,
+	.r419cb8 = gf100_grctx_generate_r419cb8,
 };

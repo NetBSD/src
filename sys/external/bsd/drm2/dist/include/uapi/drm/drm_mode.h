@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_mode.h,v 1.1.1.1 2021/12/18 20:15:57 riastradh Exp $	*/
+/*	$NetBSD: drm_mode.h,v 1.2 2021/12/18 23:45:46 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2007 Dave Airlie <airlied@linux.ie>
@@ -539,7 +539,7 @@ struct drm_mode_fb_cmd2 {
  * allows userspace to tell the kernel and the hardware what
  * regions of the framebuffer have changed.
  *
- * The kernel or hardware is free to update more then just the
+ * The kernel or hardware is free to update more than just the
  * region specified by the clip rects. The kernel or hardware
  * may also delay and/or coalesce several calls to dirty into a
  * single update.

@@ -1,6 +1,7 @@
-/*	$NetBSD: gf100.fuc3.h,v 1.2 2018/08/27 04:58:31 riastradh Exp $	*/
+/*	$NetBSD: gf100.fuc3.h,v 1.3 2021/12/18 23:45:34 riastradh Exp $	*/
 
-uint32_t gf100_ce_data[] = {
+/* SPDX-License-Identifier: MIT */
+static uint32_t gf100_ce_data[] = {
 /* 0x0000: ctx_object */
 	0x00000000,
 /* 0x0004: ctx_query_address_high */
@@ -173,7 +174,7 @@ uint32_t gf100_ce_data[] = {
 	0x00000800,
 };
 
-uint32_t gf100_ce_code[] = {
+static uint32_t gf100_ce_code[] = {
 /* 0x0000: main */
 	0x04fe04bd,
 	0x3517f000,

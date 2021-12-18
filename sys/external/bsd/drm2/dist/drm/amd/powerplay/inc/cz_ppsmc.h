@@ -1,4 +1,4 @@
-/*	$NetBSD: cz_ppsmc.h,v 1.1.1.1 2021/12/18 20:15:21 riastradh Exp $	*/
+/*	$NetBSD: cz_ppsmc.h,v 1.2 2021/12/18 23:45:26 riastradh Exp $	*/
 
 /*
  * Copyright 2014 Advanced Micro Devices, Inc.

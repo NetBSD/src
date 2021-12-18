@@ -1,4 +1,4 @@
-/*	$NetBSD: nid.h,v 1.3 2019/08/09 06:27:21 msaitoh Exp $	*/
+/*	$NetBSD: nid.h,v 1.4 2021/12/18 23:45:42 riastradh Exp $	*/
 
 /*
  * Copyright 2010 Advanced Micro Devices, Inc.
@@ -1139,6 +1139,7 @@
 #define UVD_UDEC_ADDR_CONFIG				0xEF4C
 #define UVD_UDEC_DB_ADDR_CONFIG				0xEF50
 #define UVD_UDEC_DBW_ADDR_CONFIG			0xEF54
+#define UVD_NO_OP					0xEFFC
 #define UVD_RBC_RB_RPTR					0xF690
 #define UVD_RBC_RB_WPTR					0xF694
 #define UVD_STATUS					0xf6bc

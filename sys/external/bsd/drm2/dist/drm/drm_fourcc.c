@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_fourcc.c,v 1.1.1.1 2021/12/18 20:11:02 riastradh Exp $	*/
+/*	$NetBSD: drm_fourcc.c,v 1.2 2021/12/18 23:44:57 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2016 Laurent Pinchart <laurent.pinchart@ideasonboard.com>
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_fourcc.c,v 1.1.1.1 2021/12/18 20:11:02 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_fourcc.c,v 1.2 2021/12/18 23:44:57 riastradh Exp $");
 
 #include <linux/bug.h>
 #include <linux/ctype.h>

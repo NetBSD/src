@@ -1,4 +1,4 @@
-/*	$NetBSD: vce_3_0_d.h,v 1.2 2018/08/27 04:58:23 riastradh Exp $	*/
+/*	$NetBSD: vce_3_0_d.h,v 1.3 2021/12/18 23:45:24 riastradh Exp $	*/
 
 /*
  * VCE_3_0 Register documentation

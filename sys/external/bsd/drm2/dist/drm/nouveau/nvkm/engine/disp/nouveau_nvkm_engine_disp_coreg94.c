@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_nvkm_engine_disp_coreg94.c,v 1.2 2018/08/27 04:58:31 riastradh Exp $	*/
+/*	$NetBSD: nouveau_nvkm_engine_disp_coreg94.c,v 1.3 2021/12/18 23:45:35 riastradh Exp $	*/
 
 /*
  * Copyright 2012 Red Hat Inc.
@@ -24,14 +24,11 @@
  * Authors: Ben Skeggs
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_engine_disp_coreg94.c,v 1.2 2018/08/27 04:58:31 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_engine_disp_coreg94.c,v 1.3 2021/12/18 23:45:35 riastradh Exp $");
 
-#include "dmacnv50.h"
-#include "rootnv50.h"
+#include "channv50.h"
 
-#include <nvif/class.h>
-
-const struct nv50_disp_mthd_list
+static const struct nv50_disp_mthd_list
 g94_disp_core_mthd_sor = {
 	.mthd = 0x0040,
 	.addr = 0x000008,
@@ -42,27 +39,24 @@ g94_disp_core_mthd_sor = {
 };
 
 const struct nv50_disp_chan_mthd
-g94_disp_core_chan_mthd = {
+g94_disp_core_mthd = {
 	.name = "Core",
 	.addr = 0x000000,
 	.prev = 0x000004,
 	.data = {
 		{ "Global", 1, &nv50_disp_core_mthd_base },
-		{    "DAC", 3, &g84_disp_core_mthd_dac  },
-		{    "SOR", 4, &g94_disp_core_mthd_sor  },
+		{    "DAC", 3, &g84_disp_core_mthd_dac },
+		{    "SOR", 4, &g94_disp_core_mthd_sor },
 		{   "PIOR", 3, &nv50_disp_core_mthd_pior },
 		{   "HEAD", 2, &g84_disp_core_mthd_head },
 		{}
 	}
 };
 
-const struct nv50_disp_dmac_oclass
-g94_disp_core_oclass = {
-	.base.oclass = GT206_DISP_CORE_CHANNEL_DMA,
-	.base.minver = 0,
-	.base.maxver = 0,
-	.ctor = nv50_disp_core_new,
-	.func = &nv50_disp_core_func,
-	.mthd = &g94_disp_core_chan_mthd,
-	.chid = 0,
-};
+int
+g94_disp_core_new(const struct nvkm_oclass *oclass, void *argv, u32 argc,
+		  struct nv50_disp *disp, struct nvkm_object **pobject)
+{
+	return nv50_disp_core_new_(&nv50_disp_core_func, &g94_disp_core_mthd,
+				   disp, 0, oclass, argv, argc, pobject);
+}

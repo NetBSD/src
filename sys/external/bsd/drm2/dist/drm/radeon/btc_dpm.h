@@ -1,4 +1,4 @@
-/*	$NetBSD: btc_dpm.h,v 1.2 2018/08/27 04:58:35 riastradh Exp $	*/
+/*	$NetBSD: btc_dpm.h,v 1.3 2021/12/18 23:45:42 riastradh Exp $	*/
 
 /*
  * Copyright 2011 Advanced Micro Devices, Inc.
@@ -24,6 +24,9 @@
  */
 #ifndef __BTC_DPM_H__
 #define __BTC_DPM_H__
+
+#include "radeon.h"
+#include "rv770_dpm.h"
 
 #define BTC_RLP_UVD_DFLT                              20
 #define BTC_RMP_UVD_DFLT                              50

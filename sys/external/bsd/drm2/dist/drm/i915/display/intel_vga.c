@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_vga.c,v 1.1.1.1 2021/12/18 20:15:31 riastradh Exp $	*/
+/*	$NetBSD: intel_vga.c,v 1.2 2021/12/18 23:45:30 riastradh Exp $	*/
 
 // SPDX-License-Identifier: MIT
 /*
@@ -6,7 +6,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intel_vga.c,v 1.1.1.1 2021/12/18 20:15:31 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intel_vga.c,v 1.2 2021/12/18 23:45:30 riastradh Exp $");
 
 #include <linux/pci.h>
 #include <linux/vgaarb.h>
@@ -33,12 +33,35 @@ void intel_vga_disable(struct drm_i915_private *dev_priv)
 	i915_reg_t vga_reg = intel_vga_cntrl_reg(dev_priv);
 	u8 sr1;
 
+#ifdef __NetBSD__
+    {
+	const bus_addr_t vgabase = 0x3c0;
+	const bus_space_tag_t iot = pdev->pd_pa.pa_iot;
+	bus_space_handle_t ioh;
+	int error;
+
+	error = bus_space_map(iot, vgabase, 0x10, 0, &ioh);
+	if (error) {
+		aprint_error_dev(pdev->pd_dev,
+		    "unable to map VGA registers: %d\n", error);
+	} else {
+		DRMCTASSERT(vgabase <= VGA_SR_INDEX);
+		DRMCTASSERT(vgabase <= VGA_SR_DATA);
+		bus_space_write_1(iot, ioh, VGA_SR_INDEX - vgabase, SR01);
+		sr1 = bus_space_read_1(iot, ioh, VGA_SR_DATA - vgabase);
+		bus_space_write_1(iot, ioh, VGA_SR_DATA - vgabase,
+		    (sr1 | __BIT(5)));
+		bus_space_unmap(iot, ioh, 0x10);
+	}
+    }
+#else
 	/* WaEnableVGAAccessThroughIOPort:ctg,elk,ilk,snb,ivb,vlv,hsw */
 	vga_get_uninterruptible(pdev, VGA_RSRC_LEGACY_IO);
 	outb(SR01, VGA_SR_INDEX);
 	sr1 = inb(VGA_SR_DATA);
 	outb(sr1 | 1 << 5, VGA_SR_DATA);
 	vga_put(pdev, VGA_RSRC_LEGACY_IO);
+#endif
 	udelay(300);
 
 	I915_WRITE(vga_reg, VGA_DISP_DISABLE);

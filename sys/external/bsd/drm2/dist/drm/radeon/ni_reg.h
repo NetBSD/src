@@ -1,4 +1,4 @@
-/*	$NetBSD: ni_reg.h,v 1.2 2018/08/27 04:58:36 riastradh Exp $	*/
+/*	$NetBSD: ni_reg.h,v 1.3 2021/12/18 23:45:42 riastradh Exp $	*/
 
 /*
  * Copyright 2010 Advanced Micro Devices, Inc.
@@ -111,6 +111,8 @@
 #define NI_DP_MSE_SAT2                                 0x7398
 
 #define NI_DP_MSE_SAT_UPDATE                           0x739c
+#       define NI_DP_MSE_SAT_UPDATE_MASK               0x3
+#       define NI_DP_MSE_16_MTP_KEEPOUT                0x100
 
 #define NI_DIG_BE_CNTL                                 0x7140
 #       define NI_DIG_FE_SOURCE_SELECT(x)              (((x) & 0x7f) << 8)

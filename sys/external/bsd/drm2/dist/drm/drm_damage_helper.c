@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_damage_helper.c,v 1.1.1.1 2021/12/18 20:11:01 riastradh Exp $	*/
+/*	$NetBSD: drm_damage_helper.c,v 1.2 2021/12/18 23:44:57 riastradh Exp $	*/
 
 // SPDX-License-Identifier: GPL-2.0 OR MIT
 /**************************************************************************
@@ -33,7 +33,7 @@
  **************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_damage_helper.c,v 1.1.1.1 2021/12/18 20:11:01 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_damage_helper.c,v 1.2 2021/12/18 23:44:57 riastradh Exp $");
 
 #include <drm/drm_atomic.h>
 #include <drm/drm_damage_helper.h>

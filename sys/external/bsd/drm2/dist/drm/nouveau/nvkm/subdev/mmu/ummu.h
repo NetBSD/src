@@ -1,4 +1,4 @@
-/*	$NetBSD: ummu.h,v 1.1.1.1 2021/12/18 20:15:42 riastradh Exp $	*/
+/*	$NetBSD: ummu.h,v 1.2 2021/12/18 23:45:41 riastradh Exp $	*/
 
 #ifndef __NVKM_UMMU_H__
 #define __NVKM_UMMU_H__

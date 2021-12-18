@@ -1,4 +1,4 @@
-/*	$NetBSD: radeon_kv_dpm.c,v 1.1.1.1 2021/12/18 20:15:49 riastradh Exp $	*/
+/*	$NetBSD: radeon_kv_dpm.c,v 1.2 2021/12/18 23:45:43 riastradh Exp $	*/
 
 /*
  * Copyright 2013 Advanced Micro Devices, Inc.
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radeon_kv_dpm.c,v 1.1.1.1 2021/12/18 20:15:49 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radeon_kv_dpm.c,v 1.2 2021/12/18 23:45:43 riastradh Exp $");
 
 #include <linux/pci.h>
 #include <linux/seq_file.h>
@@ -1557,8 +1557,10 @@ static u8 kv_get_acp_boot_level(struct radeon_device *rdev)
 		&rdev->pm.dpm.dyn_state.acp_clock_voltage_dependency_table;
 
 	for (i = 0; i < table->count; i++) {
+#if 0		/* XXX Upstream has changed this to make sense.  */
 		if (table->entries[i].clk >= 0) /* XXX */
 			break;
+#endif
 	}
 
 	if (i >= table->count)
@@ -2803,6 +2805,7 @@ int kv_dpm_init(struct radeon_device *rdev)
 	return 0;
 }
 
+#ifdef CONFIG_DEBUG_FS
 void kv_dpm_debugfs_print_current_performance_level(struct radeon_device *rdev,
 						    struct seq_file *m)
 {
@@ -2826,6 +2829,7 @@ void kv_dpm_debugfs_print_current_performance_level(struct radeon_device *rdev,
 			   current_index, sclk, vddc);
 	}
 }
+#endif	/* CONFIG_DEBUG_FS */
 
 u32 kv_dpm_get_current_sclk(struct radeon_device *rdev)
 {

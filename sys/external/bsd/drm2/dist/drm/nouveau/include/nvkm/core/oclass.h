@@ -1,4 +1,4 @@
-/*	$NetBSD: oclass.h,v 1.1.1.1 2021/12/18 20:23:00 riastradh Exp $	*/
+/*	$NetBSD: oclass.h,v 1.2 2021/12/18 23:45:33 riastradh Exp $	*/
 
 #ifndef __NVKM_OCLASS_H__
 #define __NVKM_OCLASS_H__

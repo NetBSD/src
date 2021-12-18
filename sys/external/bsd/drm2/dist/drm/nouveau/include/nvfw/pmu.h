@@ -1,4 +1,4 @@
-/*	$NetBSD: pmu.h,v 1.1.1.1 2021/12/18 20:15:37 riastradh Exp $	*/
+/*	$NetBSD: pmu.h,v 1.2 2021/12/18 23:45:32 riastradh Exp $	*/
 
 #ifndef __NVFW_PMU_H__
 #define __NVFW_PMU_H__

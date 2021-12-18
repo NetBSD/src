@@ -1,4 +1,4 @@
-/*	$NetBSD: cmd_parser.h,v 1.1.1.1 2021/12/18 20:15:33 riastradh Exp $	*/
+/*	$NetBSD: cmd_parser.h,v 1.2 2021/12/18 23:45:31 riastradh Exp $	*/
 
 /*
  * Copyright(c) 2011-2016 Intel Corporation. All rights reserved.

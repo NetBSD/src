@@ -1,4 +1,4 @@
-/*	$NetBSD: smu_v11_0_i2c.h,v 1.1.1.1 2021/12/18 20:11:14 riastradh Exp $	*/
+/*	$NetBSD: smu_v11_0_i2c.h,v 1.2 2021/12/18 23:44:59 riastradh Exp $	*/
 
 /*
  * Copyright 2019 Advanced Micro Devices, Inc.

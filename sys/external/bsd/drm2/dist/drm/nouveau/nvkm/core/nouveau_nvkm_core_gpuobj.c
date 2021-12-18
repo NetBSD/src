@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_nvkm_core_gpuobj.c,v 1.4 2018/08/27 14:51:33 riastradh Exp $	*/
+/*	$NetBSD: nouveau_nvkm_core_gpuobj.c,v 1.5 2021/12/18 23:45:34 riastradh Exp $	*/
 
 /*
  * Copyright 2012 Red Hat Inc.
@@ -24,7 +24,7 @@
  * Authors: Ben Skeggs
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_core_gpuobj.c,v 1.4 2018/08/27 14:51:33 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_core_gpuobj.c,v 1.5 2021/12/18 23:45:34 riastradh Exp $");
 
 #include <core/gpuobj.h>
 #include <core/engine.h>
@@ -85,6 +85,14 @@ nvkm_gpuobj_wr32_fast(struct nvkm_gpuobj *gpuobj, u32 offset, u32 data)
 #endif
 
 /* accessor functions for gpuobjs allocated directly from instmem */
+static int
+nvkm_gpuobj_heap_map(struct nvkm_gpuobj *gpuobj, u64 offset,
+		     struct nvkm_vmm *vmm, struct nvkm_vma *vma,
+		     void *argv, u32 argc)
+{
+	return nvkm_memory_map(gpuobj->memory, offset, vmm, vma, argv, argc);
+}
+
 static u32
 nvkm_gpuobj_heap_rd32(struct nvkm_gpuobj *gpuobj, u32 offset)
 {
@@ -110,6 +118,7 @@ nvkm_gpuobj_heap_fast = {
 	.release = nvkm_gpuobj_heap_release,
 	.rd32 = nvkm_gpuobj_rd32_fast,
 	.wr32 = nvkm_gpuobj_wr32_fast,
+	.map = nvkm_gpuobj_heap_map,
 };
 
 static const struct nvkm_gpuobj_func
@@ -117,6 +126,7 @@ nvkm_gpuobj_heap_slow = {
 	.release = nvkm_gpuobj_heap_release,
 	.rd32 = nvkm_gpuobj_heap_rd32,
 	.wr32 = nvkm_gpuobj_heap_wr32,
+	.map = nvkm_gpuobj_heap_map,
 };
 
 static void *
@@ -133,9 +143,19 @@ nvkm_gpuobj_heap_acquire(struct nvkm_gpuobj *gpuobj)
 static const struct nvkm_gpuobj_func
 nvkm_gpuobj_heap = {
 	.acquire = nvkm_gpuobj_heap_acquire,
+	.map = nvkm_gpuobj_heap_map,
 };
 
 /* accessor functions for gpuobjs sub-allocated from a parent gpuobj */
+static int
+nvkm_gpuobj_map(struct nvkm_gpuobj *gpuobj, u64 offset,
+		struct nvkm_vmm *vmm, struct nvkm_vma *vma,
+		void *argv, u32 argc)
+{
+	return nvkm_memory_map(gpuobj->parent, gpuobj->node->offset + offset,
+			       vmm, vma, argv, argc);
+}
+
 static u32
 nvkm_gpuobj_rd32(struct nvkm_gpuobj *gpuobj, u32 offset)
 {
@@ -161,6 +181,7 @@ nvkm_gpuobj_fast = {
 	.release = nvkm_gpuobj_release,
 	.rd32 = nvkm_gpuobj_rd32_fast,
 	.wr32 = nvkm_gpuobj_wr32_fast,
+	.map = nvkm_gpuobj_map,
 };
 
 static const struct nvkm_gpuobj_func
@@ -168,6 +189,7 @@ nvkm_gpuobj_slow = {
 	.release = nvkm_gpuobj_release,
 	.rd32 = nvkm_gpuobj_rd32,
 	.wr32 = nvkm_gpuobj_wr32,
+	.map = nvkm_gpuobj_map,
 };
 
 static void *
@@ -186,6 +208,7 @@ nvkm_gpuobj_acquire(struct nvkm_gpuobj *gpuobj)
 static const struct nvkm_gpuobj_func
 nvkm_gpuobj_func = {
 	.acquire = nvkm_gpuobj_acquire,
+	.map = nvkm_gpuobj_map,
 };
 
 static int
@@ -228,7 +251,7 @@ nvkm_gpuobj_ctor(struct nvkm_device *device, u32 size, int align, bool zero,
 		gpuobj->size = nvkm_memory_size(gpuobj->memory);
 	}
 
-	return nvkm_mm_init(&gpuobj->heap, 0, gpuobj->size, 1);
+	return nvkm_mm_init(&gpuobj->heap, 0, 0, gpuobj->size, 1);
 }
 
 void
@@ -239,7 +262,7 @@ nvkm_gpuobj_del(struct nvkm_gpuobj **pgpuobj)
 		if (gpuobj->parent)
 			nvkm_mm_free(&gpuobj->parent->heap, &gpuobj->node);
 		nvkm_mm_fini(&gpuobj->heap);
-		nvkm_memory_del(&gpuobj->memory);
+		nvkm_memory_unref(&gpuobj->memory);
 		kfree(*pgpuobj);
 		*pgpuobj = NULL;
 	}
@@ -261,26 +284,6 @@ nvkm_gpuobj_new(struct nvkm_device *device, u32 size, int align, bool zero,
 	return ret;
 }
 
-int
-nvkm_gpuobj_map(struct nvkm_gpuobj *gpuobj, struct nvkm_vm *vm,
-		u32 access, struct nvkm_vma *vma)
-{
-	struct nvkm_memory *memory = gpuobj->memory;
-	int ret = nvkm_vm_get(vm, gpuobj->size, 12, access, vma);
-	if (ret == 0)
-		nvkm_memory_map(memory, vma, 0);
-	return ret;
-}
-
-void
-nvkm_gpuobj_unmap(struct nvkm_vma *vma)
-{
-	if (vma->node) {
-		nvkm_vm_unmap(vma);
-		nvkm_vm_put(vma);
-	}
-}
-
 /* the below is basically only here to support sharing the paged dma object
  * for PCI(E)GART on <=nv4x chipsets, and should *not* be expected to work
  * anywhere else.
@@ -295,4 +298,24 @@ nvkm_gpuobj_wrap(struct nvkm_memory *memory, struct nvkm_gpuobj **pgpuobj)
 	(*pgpuobj)->addr = nvkm_memory_addr(memory);
 	(*pgpuobj)->size = nvkm_memory_size(memory);
 	return 0;
+}
+
+void
+nvkm_gpuobj_memcpy_to(struct nvkm_gpuobj *dst, u32 dstoffset, void *src,
+		      u32 length)
+{
+	int i;
+
+	for (i = 0; i < length; i += 4)
+		nvkm_wo32(dst, dstoffset + i, *(u32 *)(src + i));
+}
+
+void
+nvkm_gpuobj_memcpy_from(void *dst, struct nvkm_gpuobj *src, u32 srcoffset,
+			u32 length)
+{
+	int i;
+
+	for (i = 0; i < length; i += 4)
+		((u32 *)src)[i / 4] = nvkm_ro32(src, srcoffset + i);
 }

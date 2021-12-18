@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_nvkm_engine_falcon.c,v 1.2 2018/08/27 04:58:30 riastradh Exp $	*/
+/*	$NetBSD: nouveau_nvkm_engine_falcon.c,v 1.3 2021/12/18 23:45:34 riastradh Exp $	*/
 
 /*
  * Copyright 2012 Red Hat Inc.
@@ -22,11 +22,12 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_engine_falcon.c,v 1.2 2018/08/27 04:58:30 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_engine_falcon.c,v 1.3 2021/12/18 23:45:34 riastradh Exp $");
 
 #include <engine/falcon.h>
 
 #include <core/gpuobj.h>
+#include <subdev/mc.h>
 #include <subdev/timer.h>
 #include <engine/fifo.h>
 
@@ -104,7 +105,7 @@ nvkm_falcon_fini(struct nvkm_engine *engine, bool suspend)
 	const u32 base = falcon->addr;
 
 	if (!suspend) {
-		nvkm_memory_del(&falcon->core);
+		nvkm_memory_unref(&falcon->core);
 		if (falcon->external) {
 			vfree(falcon->data.data);
 			vfree(falcon->code.data);
@@ -112,8 +113,10 @@ nvkm_falcon_fini(struct nvkm_engine *engine, bool suspend)
 		}
 	}
 
-	nvkm_mask(device, base + 0x048, 0x00000003, 0x00000000);
-	nvkm_wr32(device, base + 0x014, 0xffffffff);
+	if (nvkm_mc_enabled(device, engine->subdev.index)) {
+		nvkm_mask(device, base + 0x048, 0x00000003, 0x00000000);
+		nvkm_wr32(device, base + 0x014, 0xffffffff);
+	}
 	return 0;
 }
 
@@ -353,6 +356,6 @@ nvkm_falcon_new_(const struct nvkm_falcon_func *func,
 	falcon->data.size = func->data.size;
 	*pengine = &falcon->engine;
 
-	return nvkm_engine_ctor(&nvkm_falcon, device, index, func->pmc_enable,
+	return nvkm_engine_ctor(&nvkm_falcon, device, index,
 				enable, &falcon->engine);
 }

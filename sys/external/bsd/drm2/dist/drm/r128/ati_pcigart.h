@@ -1,4 +1,4 @@
-/*	$NetBSD: ati_pcigart.h,v 1.1.1.1 2021/12/18 20:15:43 riastradh Exp $	*/
+/*	$NetBSD: ati_pcigart.h,v 1.2 2021/12/18 23:45:42 riastradh Exp $	*/
 
 /* SPDX-License-Identifier: GPL-2.0 */
 #ifndef DRM_ATI_PCIGART_H

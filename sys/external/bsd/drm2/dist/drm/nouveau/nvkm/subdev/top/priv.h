@@ -1,4 +1,4 @@
-/*	$NetBSD: priv.h,v 1.1.1.1 2021/12/18 20:15:43 riastradh Exp $	*/
+/*	$NetBSD: priv.h,v 1.2 2021/12/18 23:45:42 riastradh Exp $	*/
 
 /* SPDX-License-Identifier: MIT */
 #ifndef __NVKM_TOP_PRIV_H__

@@ -1,4 +1,4 @@
-/*	$NetBSD: vmwgfx_bo.c,v 1.1.1.1 2021/12/18 20:15:54 riastradh Exp $	*/
+/*	$NetBSD: vmwgfx_bo.c,v 1.2 2021/12/18 23:45:45 riastradh Exp $	*/
 
 // SPDX-License-Identifier: GPL-2.0 OR MIT
 /**************************************************************************
@@ -29,7 +29,7 @@
  **************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vmwgfx_bo.c,v 1.1.1.1 2021/12/18 20:15:54 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vmwgfx_bo.c,v 1.2 2021/12/18 23:45:45 riastradh Exp $");
 
 #include <drm/ttm/ttm_placement.h>
 

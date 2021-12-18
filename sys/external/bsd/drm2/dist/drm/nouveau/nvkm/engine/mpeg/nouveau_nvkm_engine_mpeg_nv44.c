@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_nvkm_engine_mpeg_nv44.c,v 1.2 2018/08/27 04:58:32 riastradh Exp $	*/
+/*	$NetBSD: nouveau_nvkm_engine_mpeg_nv44.c,v 1.3 2021/12/18 23:45:36 riastradh Exp $	*/
 
 /*
  * Copyright 2012 Red Hat Inc.
@@ -24,7 +24,7 @@
  * Authors: Ben Skeggs
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_engine_mpeg_nv44.c,v 1.2 2018/08/27 04:58:32 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_engine_mpeg_nv44.c,v 1.3 2021/12/18 23:45:36 riastradh Exp $");
 
 #define nv44_mpeg(p) container_of((p), struct nv44_mpeg, engine)
 #include "priv.h"
@@ -217,6 +217,5 @@ nv44_mpeg_new(struct nvkm_device *device, int index, struct nvkm_engine **pmpeg)
 	INIT_LIST_HEAD(&mpeg->chan);
 	*pmpeg = &mpeg->engine;
 
-	return nvkm_engine_ctor(&nv44_mpeg, device, index, 0x00000002,
-				true, &mpeg->engine);
+	return nvkm_engine_ctor(&nv44_mpeg, device, index, true, &mpeg->engine);
 }

@@ -1,5 +1,6 @@
-/*	$NetBSD: nv04.h,v 1.2 2018/08/27 04:58:33 riastradh Exp $	*/
+/*	$NetBSD: nv04.h,v 1.3 2021/12/18 23:45:39 riastradh Exp $	*/
 
+/* SPDX-License-Identifier: MIT */
 #ifndef __NV04_DEVINIT_H__
 #define __NV04_DEVINIT_H__
 #define nv04_devinit(p) container_of((p), struct nv04_devinit, base)

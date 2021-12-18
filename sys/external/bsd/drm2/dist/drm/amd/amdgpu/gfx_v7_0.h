@@ -1,4 +1,4 @@
-/*	$NetBSD: gfx_v7_0.h,v 1.2 2018/08/27 04:58:20 riastradh Exp $	*/
+/*	$NetBSD: gfx_v7_0.h,v 1.3 2021/12/18 23:44:59 riastradh Exp $	*/
 
 /*
  * Copyright 2014 Advanced Micro Devices, Inc.
@@ -26,14 +26,14 @@
 #ifndef __GFX_V7_0_H__
 #define __GFX_V7_0_H__
 
-extern const struct amd_ip_funcs gfx_v7_0_ip_funcs;
+extern const struct amdgpu_ip_block_version gfx_v7_0_ip_block;
+extern const struct amdgpu_ip_block_version gfx_v7_1_ip_block;
+extern const struct amdgpu_ip_block_version gfx_v7_2_ip_block;
+extern const struct amdgpu_ip_block_version gfx_v7_3_ip_block;
 
-/* XXX these shouldn't be exported */
-void gfx_v7_0_enter_rlc_safe_mode(struct amdgpu_device *adev);
-void gfx_v7_0_exit_rlc_safe_mode(struct amdgpu_device *adev);
-void gfx_v7_0_rlc_stop(struct amdgpu_device *adev);
-uint64_t gfx_v7_0_get_gpu_clock_counter(struct amdgpu_device *adev);
-void gfx_v7_0_select_se_sh(struct amdgpu_device *adev, u32 se_num, u32 sh_num);
-int gfx_v7_0_get_cu_info(struct amdgpu_device *adev, struct amdgpu_cu_info *cu_info);
+struct amdgpu_device;
+struct cik_mqd;
+
+int gfx_v7_0_mqd_commit(struct amdgpu_device *adev, struct cik_mqd *mqd);
 
 #endif

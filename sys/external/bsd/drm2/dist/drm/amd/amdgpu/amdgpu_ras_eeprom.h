@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu_ras_eeprom.h,v 1.1.1.1 2021/12/18 20:11:10 riastradh Exp $	*/
+/*	$NetBSD: amdgpu_ras_eeprom.h,v 1.2 2021/12/18 23:44:58 riastradh Exp $	*/
 
 /*
  * Copyright 2019 Advanced Micro Devices, Inc.

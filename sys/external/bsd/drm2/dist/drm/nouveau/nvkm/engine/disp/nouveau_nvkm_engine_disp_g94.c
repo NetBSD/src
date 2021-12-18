@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_nvkm_engine_disp_g94.c,v 1.2 2018/08/27 04:58:31 riastradh Exp $	*/
+/*	$NetBSD: nouveau_nvkm_engine_disp_g94.c,v 1.3 2021/12/18 23:45:35 riastradh Exp $	*/
 
 /*
  * Copyright 2012 Red Hat Inc.
@@ -24,38 +24,29 @@
  * Authors: Ben Skeggs
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_engine_disp_g94.c,v 1.2 2018/08/27 04:58:31 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_engine_disp_g94.c,v 1.3 2021/12/18 23:45:35 riastradh Exp $");
 
 #include "nv50.h"
+#include "head.h"
+#include "ior.h"
 #include "rootnv50.h"
 
 static const struct nv50_disp_func
 g94_disp = {
+	.init = nv50_disp_init,
+	.fini = nv50_disp_fini,
 	.intr = nv50_disp_intr,
 	.uevent = &nv50_disp_chan_uevent,
-	.super = nv50_disp_intr_supervisor,
+	.super = nv50_disp_super,
 	.root = &g94_disp_root_oclass,
-	.head.vblank_init = nv50_disp_vblank_init,
-	.head.vblank_fini = nv50_disp_vblank_fini,
-	.head.scanoutpos = nv50_disp_root_scanoutpos,
-	.outp.internal.crt = nv50_dac_output_new,
-	.outp.internal.tmds = nv50_sor_output_new,
-	.outp.internal.lvds = nv50_sor_output_new,
-	.outp.internal.dp = g94_sor_dp_new,
-	.outp.external.tmds = nv50_pior_output_new,
-	.outp.external.dp = nv50_pior_dp_new,
-	.dac.nr = 3,
-	.dac.power = nv50_dac_power,
-	.dac.sense = nv50_dac_sense,
-	.sor.nr = 4,
-	.sor.power = nv50_sor_power,
-	.sor.hdmi = g84_hdmi_ctrl,
-	.pior.nr = 3,
-	.pior.power = nv50_pior_power,
+	.head = { .cnt = nv50_head_cnt, .new = nv50_head_new },
+	.dac = { .cnt = nv50_dac_cnt, .new = nv50_dac_new },
+	.sor = { .cnt = g94_sor_cnt, .new = g94_sor_new },
+	.pior = { .cnt = nv50_pior_cnt, .new = nv50_pior_new },
 };
 
 int
 g94_disp_new(struct nvkm_device *device, int index, struct nvkm_disp **pdisp)
 {
-	return nv50_disp_new_(&g94_disp, device, index, 2, pdisp);
+	return nv50_disp_new_(&g94_disp, device, index, pdisp);
 }

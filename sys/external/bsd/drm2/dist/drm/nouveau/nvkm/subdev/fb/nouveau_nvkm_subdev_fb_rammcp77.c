@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_nvkm_subdev_fb_rammcp77.c,v 1.2 2018/08/27 04:58:33 riastradh Exp $	*/
+/*	$NetBSD: nouveau_nvkm_subdev_fb_rammcp77.c,v 1.3 2021/12/18 23:45:39 riastradh Exp $	*/
 
 /*
  * Copyright 2013 Red Hat Inc.
@@ -24,7 +24,7 @@
  * Authors: Ben Skeggs
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_subdev_fb_rammcp77.c,v 1.2 2018/08/27 04:58:33 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_subdev_fb_rammcp77.c,v 1.3 2021/12/18 23:45:39 riastradh Exp $");
 
 #define mcp77_ram(p) container_of((p), struct mcp77_ram, base)
 #include "ram.h"
@@ -44,7 +44,7 @@ mcp77_ram_init(struct nvkm_ram *base)
 	u32 flush  = ((ram->base.size - (ram->poller_base + 0x40)) >> 5) - 1;
 
 	/* Enable NISO poller for various clients and set their associated
-	 * read address, only for MCP77/78 and MCP79/7A. (fd#25701)
+	 * read address, only for MCP77/78 and MCP79/7A. (fd#27501)
 	 */
 	nvkm_wr32(device, 0x100c18, dniso);
 	nvkm_mask(device, 0x100c14, 0x00000000, 0x00000001);
@@ -58,8 +58,6 @@ mcp77_ram_init(struct nvkm_ram *base)
 static const struct nvkm_ram_func
 mcp77_ram_func = {
 	.init = mcp77_ram_init,
-	.get = nv50_ram_get,
-	.put = nv50_ram_put,
 };
 
 int
@@ -78,7 +76,7 @@ mcp77_ram_new(struct nvkm_fb *fb, struct nvkm_ram **pram)
 	*pram = &ram->base;
 
 	ret = nvkm_ram_ctor(&mcp77_ram_func, fb, NVKM_RAM_TYPE_STOLEN,
-			    size, 0, &ram->base);
+			    size, &ram->base);
 	if (ret)
 		return ret;
 
@@ -86,7 +84,8 @@ mcp77_ram_new(struct nvkm_fb *fb, struct nvkm_ram **pram)
 	ram->base.stolen = base;
 	nvkm_mm_fini(&ram->base.vram);
 
-	return nvkm_mm_init(&ram->base.vram, rsvd_head >> NVKM_RAM_MM_SHIFT,
+	return nvkm_mm_init(&ram->base.vram, NVKM_RAM_MM_NORMAL,
+			    rsvd_head >> NVKM_RAM_MM_SHIFT,
 			    (size - rsvd_head - rsvd_tail) >>
 			    NVKM_RAM_MM_SHIFT, 1);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: radeon_rs600.c,v 1.1.1.1 2021/12/18 20:15:50 riastradh Exp $	*/
+/*	$NetBSD: radeon_rs600.c,v 1.2 2021/12/18 23:45:43 riastradh Exp $	*/
 
 /*
  * Copyright 2008 Advanced Micro Devices, Inc.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radeon_rs600.c,v 1.1.1.1 2021/12/18 20:15:50 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radeon_rs600.c,v 1.2 2021/12/18 23:45:43 riastradh Exp $");
 
 #include <linux/io-64-nonatomic-lo-hi.h>
 #include <linux/pci.h>
@@ -655,12 +655,30 @@ uint64_t rs600_gart_get_page_entry(uint64_t addr, uint32_t flags)
 	return addr;
 }
 
+#ifdef __NetBSD__
+#  define	__iomem	volatile
+#  define	writeq	fake_writeq
+
+static inline void
+fake_writeq(uint64_t v, void __iomem *ptr)
+{
+
+	membar_producer();
+	*(uint64_t __iomem *)ptr = v;
+}
+#endif
+
 void rs600_gart_set_page(struct radeon_device *rdev, unsigned i,
 			 uint64_t entry)
 {
 	void __iomem *ptr = (void *)rdev->gart.ptr;
-	writeq(entry, ptr + (i * 8));
+	writeq(entry, (char __iomem *)ptr + (i * 8));
 }
+
+#ifdef __NetBSD__
+#  undef	writeq
+#  undef	__iomem
+#endif
 
 int rs600_irq_set(struct radeon_device *rdev)
 {
@@ -797,8 +815,15 @@ int rs600_irq_process(struct radeon_device *rdev)
 		if (G_007EDC_LB_D1_VBLANK_INTERRUPT(rdev->irq.stat_regs.r500.disp_int)) {
 			if (rdev->irq.crtc_vblank_int[0]) {
 				drm_handle_vblank(rdev->ddev, 0);
+#ifdef __NetBSD__
+				spin_lock(&rdev->irq.vblank_lock);
+				rdev->pm.vblank_sync = true;
+				DRM_SPIN_WAKEUP_ONE(&rdev->irq.vblank_queue, &rdev->irq.vblank_lock);
+				spin_unlock(&rdev->irq.vblank_lock);
+#else
 				rdev->pm.vblank_sync = true;
 				wake_up(&rdev->irq.vblank_queue);
+#endif
 			}
 			if (atomic_read(&rdev->irq.pflip[0]))
 				radeon_crtc_handle_vblank(rdev, 0);
@@ -806,8 +831,15 @@ int rs600_irq_process(struct radeon_device *rdev)
 		if (G_007EDC_LB_D2_VBLANK_INTERRUPT(rdev->irq.stat_regs.r500.disp_int)) {
 			if (rdev->irq.crtc_vblank_int[1]) {
 				drm_handle_vblank(rdev->ddev, 1);
+#ifdef __NetBSD__
+				spin_lock(&rdev->irq.vblank_lock);
+				rdev->pm.vblank_sync = true;
+				DRM_SPIN_WAKEUP_ONE(&rdev->irq.vblank_queue, &rdev->irq.vblank_lock);
+				spin_unlock(&rdev->irq.vblank_lock);
+#else
 				rdev->pm.vblank_sync = true;
 				wake_up(&rdev->irq.vblank_queue);
+#endif
 			}
 			if (atomic_read(&rdev->irq.pflip[1]))
 				radeon_crtc_handle_vblank(rdev, 1);

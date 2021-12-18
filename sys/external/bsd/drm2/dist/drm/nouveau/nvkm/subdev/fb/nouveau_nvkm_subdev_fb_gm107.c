@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_nvkm_subdev_fb_gm107.c,v 1.2 2018/08/27 04:58:33 riastradh Exp $	*/
+/*	$NetBSD: nouveau_nvkm_subdev_fb_gm107.c,v 1.3 2021/12/18 23:45:39 riastradh Exp $	*/
 
 /*
  * Copyright 2012 Red Hat Inc.
@@ -24,7 +24,7 @@
  * Authors: Ben Skeggs
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_subdev_fb_gm107.c,v 1.2 2018/08/27 04:58:33 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_subdev_fb_gm107.c,v 1.3 2021/12/18 23:45:39 riastradh Exp $");
 
 #include "gf100.h"
 #include "ram.h"
@@ -32,10 +32,12 @@ __KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_subdev_fb_gm107.c,v 1.2 2018/08/27 04:5
 static const struct nvkm_fb_func
 gm107_fb = {
 	.dtor = gf100_fb_dtor,
+	.oneinit = gf100_fb_oneinit,
 	.init = gf100_fb_init,
+	.init_page = gf100_fb_init_page,
 	.intr = gf100_fb_intr,
 	.ram_new = gm107_ram_new,
-	.memtype_valid = gf100_fb_memtype_valid,
+	.default_bigpage = 17,
 };
 
 int

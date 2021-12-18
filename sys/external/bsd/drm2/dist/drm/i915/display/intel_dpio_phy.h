@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_dpio_phy.h,v 1.1.1.1 2021/12/18 20:15:29 riastradh Exp $	*/
+/*	$NetBSD: intel_dpio_phy.h,v 1.2 2021/12/18 23:45:30 riastradh Exp $	*/
 
 /* SPDX-License-Identifier: MIT */
 /*

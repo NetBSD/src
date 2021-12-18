@@ -1,13 +1,18 @@
-/*	$NetBSD: gpio.h,v 1.2 2018/08/27 04:58:30 riastradh Exp $	*/
+/*	$NetBSD: gpio.h,v 1.3 2021/12/18 23:45:33 riastradh Exp $	*/
 
+/* SPDX-License-Identifier: MIT */
 #ifndef __NVBIOS_GPIO_H__
 #define __NVBIOS_GPIO_H__
 enum dcb_gpio_func_name {
 	DCB_GPIO_PANEL_POWER = 0x01,
-	DCB_GPIO_TVDAC0 = 0x0c,
-	DCB_GPIO_TVDAC1 = 0x2d,
 	DCB_GPIO_FAN = 0x09,
+	DCB_GPIO_TVDAC0 = 0x0c,
+	DCB_GPIO_THERM_EXT_POWER_EVENT = 0x10,
+	DCB_GPIO_TVDAC1 = 0x2d,
 	DCB_GPIO_FAN_SENSE = 0x3d,
+	DCB_GPIO_POWER_ALERT = 0x4c,
+	DCB_GPIO_EXT_POWER_LOW = 0x79,
+	DCB_GPIO_LOGO_LED_PWM = 0x84,
 	DCB_GPIO_UNUSED = 0xff,
 	DCB_GPIO_VID0 = 0x04,
 	DCB_GPIO_VID1 = 0x05,

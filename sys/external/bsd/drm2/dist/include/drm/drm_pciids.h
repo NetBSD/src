@@ -1,5 +1,6 @@
-/*	$NetBSD: drm_pciids.h,v 1.3 2018/08/27 04:58:38 riastradh Exp $	*/
+/*	$NetBSD: drm_pciids.h,v 1.4 2021/12/18 23:45:46 riastradh Exp $	*/
 
+/* SPDX-License-Identifier: MIT */
 #define radeon_PCI_IDS \
 	{0x1002, 0x1304, PCI_ANY_ID, PCI_ANY_ID, 0, 0, CHIP_KAVERI|RADEON_IS_MOBILITY|RADEON_NEW_MEMMAP|RADEON_IS_IGP}, \
 	{0x1002, 0x1305, PCI_ANY_ID, PCI_ANY_ID, 0, 0, CHIP_KAVERI|RADEON_NEW_MEMMAP|RADEON_IS_IGP}, \

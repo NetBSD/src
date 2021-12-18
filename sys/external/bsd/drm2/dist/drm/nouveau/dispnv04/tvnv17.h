@@ -1,4 +1,4 @@
-/*	$NetBSD: tvnv17.h,v 1.3 2018/08/27 04:58:29 riastradh Exp $	*/
+/*	$NetBSD: tvnv17.h,v 1.4 2021/12/18 23:45:32 riastradh Exp $	*/
 
 /*
  * Copyright (C) 2009 Francisco Jerez.
@@ -132,13 +132,13 @@ void nv17_ctv_update_rescaler(struct drm_encoder *encoder);
 static inline void nv_write_ptv(struct drm_device *dev, uint32_t reg,
 				uint32_t val)
 {
-	struct nvif_device *device = &nouveau_drm(dev)->device;
+	struct nvif_device *device = &nouveau_drm(dev)->client.device;
 	nvif_wr32(&device->object, reg, val);
 }
 
 static inline uint32_t nv_read_ptv(struct drm_device *dev, uint32_t reg)
 {
-	struct nvif_device *device = &nouveau_drm(dev)->device;
+	struct nvif_device *device = &nouveau_drm(dev)->client.device;
 	return nvif_rd32(&device->object, reg);
 }
 

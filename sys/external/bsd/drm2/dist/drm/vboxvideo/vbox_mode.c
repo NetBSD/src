@@ -1,4 +1,4 @@
-/*	$NetBSD: vbox_mode.c,v 1.1.1.1 2021/12/18 20:15:53 riastradh Exp $	*/
+/*	$NetBSD: vbox_mode.c,v 1.2 2021/12/18 23:45:44 riastradh Exp $	*/
 
 // SPDX-License-Identifier: MIT
 /*
@@ -12,7 +12,7 @@
  *          Hans de Goede <hdegoede@redhat.com>
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vbox_mode.c,v 1.1.1.1 2021/12/18 20:15:53 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vbox_mode.c,v 1.2 2021/12/18 23:45:44 riastradh Exp $");
 
 #include <linux/export.h>
 

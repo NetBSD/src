@@ -1,4 +1,4 @@
-/*	$NetBSD: navi10_enum.h,v 1.1.1.1 2021/12/18 20:11:29 riastradh Exp $	*/
+/*	$NetBSD: navi10_enum.h,v 1.2 2021/12/18 23:45:08 riastradh Exp $	*/
 
 /*
  * Copyright (C) 2019  Advanced Micro Devices, Inc.

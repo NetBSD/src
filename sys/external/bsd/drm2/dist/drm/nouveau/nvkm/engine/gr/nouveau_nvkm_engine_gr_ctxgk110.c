@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_nvkm_engine_gr_ctxgk110.c,v 1.2 2018/08/27 04:58:31 riastradh Exp $	*/
+/*	$NetBSD: nouveau_nvkm_engine_gr_ctxgk110.c,v 1.3 2021/12/18 23:45:36 riastradh Exp $	*/
 
 /*
  * Copyright 2013 Red Hat Inc.
@@ -24,7 +24,7 @@
  * Authors: Ben Skeggs <bskeggs@redhat.com>
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_engine_gr_ctxgk110.c,v 1.2 2018/08/27 04:58:31 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_engine_gr_ctxgk110.c,v 1.3 2021/12/18 23:45:36 riastradh Exp $");
 
 #include "ctxgf100.h"
 
@@ -709,12 +709,17 @@ gk110_grctx_init_gpc_unk_2[] = {
 };
 
 const struct gf100_gr_pack
-gk110_grctx_pack_gpc[] = {
+gk110_grctx_pack_gpc_0[] = {
 	{ gf100_grctx_init_gpc_unk_0 },
 	{ gf119_grctx_init_prop_0 },
 	{ gf119_grctx_init_gpc_unk_1 },
 	{ gk110_grctx_init_setup_0 },
 	{ gf100_grctx_init_zcull_0 },
+	{}
+};
+
+const struct gf100_gr_pack
+gk110_grctx_pack_gpc_1[] = {
 	{ gf119_grctx_init_crstr_0 },
 	{ gk104_grctx_init_gpm_0 },
 	{ gk110_grctx_init_gpc_unk_2 },
@@ -813,12 +818,20 @@ gk110_grctx_pack_ppc[] = {
  * PGRAPH context implementation
  ******************************************************************************/
 
+void
+gk110_grctx_generate_r419eb0(struct gf100_gr *gr)
+{
+	struct nvkm_device *device = gr->base.engine.subdev.device;
+	nvkm_mask(device, 0x419eb0, 0x00001000, 0x00001000);
+}
+
 const struct gf100_grctx_func
 gk110_grctx = {
-	.main  = gk104_grctx_generate_main,
+	.main  = gf100_grctx_generate_main,
 	.unkn  = gk104_grctx_generate_unkn,
 	.hub   = gk110_grctx_pack_hub,
-	.gpc   = gk110_grctx_pack_gpc,
+	.gpc_0 = gk110_grctx_pack_gpc_0,
+	.gpc_1 = gk110_grctx_pack_gpc_1,
 	.zcull = gf100_grctx_pack_zcull,
 	.tpc   = gk110_grctx_pack_tpc,
 	.ppc   = gk110_grctx_pack_ppc,
@@ -835,4 +848,13 @@ gk110_grctx = {
 	.attrib_nr = 0x218,
 	.alpha_nr_max = 0x7ff,
 	.alpha_nr = 0x648,
+	.patch_ltc = gk104_grctx_generate_patch_ltc,
+	.sm_id = gf100_grctx_generate_sm_id,
+	.tpc_nr = gf100_grctx_generate_tpc_nr,
+	.rop_mapping = gf117_grctx_generate_rop_mapping,
+	.alpha_beta_tables = gk104_grctx_generate_alpha_beta_tables,
+	.dist_skip_table = gf117_grctx_generate_dist_skip_table,
+	.gpc_tpc_nr = gk104_grctx_generate_gpc_tpc_nr,
+	.r418800 = gk104_grctx_generate_r418800,
+	.r419eb0 = gk110_grctx_generate_r419eb0,
 };

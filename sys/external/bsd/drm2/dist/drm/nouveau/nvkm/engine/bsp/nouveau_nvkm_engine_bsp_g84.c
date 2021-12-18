@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_nvkm_engine_bsp_g84.c,v 1.2 2018/08/27 04:58:31 riastradh Exp $	*/
+/*	$NetBSD: nouveau_nvkm_engine_bsp_g84.c,v 1.3 2021/12/18 23:45:34 riastradh Exp $	*/
 
 /*
  * Copyright 2012 Red Hat Inc.
@@ -24,7 +24,7 @@
  * Authors: Ben Skeggs, Ilia Mirkin
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_engine_bsp_g84.c,v 1.2 2018/08/27 04:58:31 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_engine_bsp_g84.c,v 1.3 2021/12/18 23:45:34 riastradh Exp $");
 
 #include <engine/bsp.h>
 
@@ -32,7 +32,6 @@ __KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_engine_bsp_g84.c,v 1.2 2018/08/27 04:58
 
 static const struct nvkm_xtensa_func
 g84_bsp = {
-	.pmc_enable = 0x04008000,
 	.fifo_val = 0x1111,
 	.unkd28 = 0x90044,
 	.sclass = {

@@ -1,4 +1,4 @@
-/*	$NetBSD: mp_10_0_offset.h,v 1.1.1.1 2021/12/18 20:13:37 riastradh Exp $	*/
+/*	$NetBSD: mp_10_0_offset.h,v 1.2 2021/12/18 23:45:16 riastradh Exp $	*/
 
 /*
  * Copyright (C) 2017  Advanced Micro Devices, Inc.

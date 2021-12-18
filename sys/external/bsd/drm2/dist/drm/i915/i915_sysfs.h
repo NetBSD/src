@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_sysfs.h,v 1.1.1.1 2021/12/18 20:15:26 riastradh Exp $	*/
+/*	$NetBSD: i915_sysfs.h,v 1.2 2021/12/18 23:45:28 riastradh Exp $	*/
 
 /* SPDX-License-Identifier: MIT */
 /*

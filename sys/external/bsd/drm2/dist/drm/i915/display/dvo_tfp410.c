@@ -1,4 +1,4 @@
-/*	$NetBSD: dvo_tfp410.c,v 1.1.1.1 2021/12/18 20:15:27 riastradh Exp $	*/
+/*	$NetBSD: dvo_tfp410.c,v 1.2 2021/12/18 23:45:29 riastradh Exp $	*/
 
 /*
  * Copyright © 2007 Dave Mueller
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dvo_tfp410.c,v 1.1.1.1 2021/12/18 20:15:27 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dvo_tfp410.c,v 1.2 2021/12/18 23:45:29 riastradh Exp $");
 
 #include "intel_display_types.h"
 #include "intel_dvo_dev.h"

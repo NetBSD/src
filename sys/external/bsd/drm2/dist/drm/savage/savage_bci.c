@@ -1,4 +1,4 @@
-/*	$NetBSD: savage_bci.c,v 1.2 2018/08/27 04:58:36 riastradh Exp $	*/
+/*	$NetBSD: savage_bci.c,v 1.3 2021/12/18 23:45:43 riastradh Exp $	*/
 
 /* savage_bci.c -- BCI support for Savage
  *
@@ -24,11 +24,20 @@
  * CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
-#include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: savage_bci.c,v 1.2 2018/08/27 04:58:36 riastradh Exp $");
 
-#include <drm/drmP.h>
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: savage_bci.c,v 1.3 2021/12/18 23:45:43 riastradh Exp $");
+
+#include <linux/delay.h>
+#include <linux/pci.h>
+#include <linux/slab.h>
+#include <linux/uaccess.h>
+
+#include <drm/drm_device.h>
+#include <drm/drm_file.h>
+#include <drm/drm_print.h>
 #include <drm/savage_drm.h>
+
 #include "savage_drv.h"
 
 /* Need a long timeout for shadow status updates can take a while
@@ -58,7 +67,7 @@ savage_bci_wait_fifo_shadow(drm_savage_private_t * dev_priv, unsigned int n)
 		status = dev_priv->status_ptr[0];
 		if ((status & mask) < threshold)
 			return 0;
-		DRM_UDELAY(1);
+		udelay(1);
 	}
 
 #if SAVAGE_BCI_DEBUG
@@ -79,7 +88,7 @@ savage_bci_wait_fifo_s3d(drm_savage_private_t * dev_priv, unsigned int n)
 		status = SAVAGE_READ(SAVAGE_STATUS_WORD0);
 		if ((status & SAVAGE_FIFO_USED_MASK_S3D) <= maxUsed)
 			return 0;
-		DRM_UDELAY(1);
+		udelay(1);
 	}
 
 #if SAVAGE_BCI_DEBUG
@@ -100,7 +109,7 @@ savage_bci_wait_fifo_s4(drm_savage_private_t * dev_priv, unsigned int n)
 		status = SAVAGE_READ(SAVAGE_ALT_STATUS_WORD0);
 		if ((status & SAVAGE_FIFO_USED_MASK_S4) <= maxUsed)
 			return 0;
-		DRM_UDELAY(1);
+		udelay(1);
 	}
 
 #if SAVAGE_BCI_DEBUG
@@ -133,7 +142,7 @@ savage_bci_wait_event_shadow(drm_savage_private_t * dev_priv, uint16_t e)
 		if ((((status & 0xffff) - e) & 0xffff) <= 0x7fff ||
 		    (status & 0xffff) == 0)
 			return 0;
-		DRM_UDELAY(1);
+		udelay(1);
 	}
 
 #if SAVAGE_BCI_DEBUG
@@ -155,7 +164,7 @@ savage_bci_wait_event_reg(drm_savage_private_t * dev_priv, uint16_t e)
 		if ((((status & 0xffff) - e) & 0xffff) <= 0x7fff ||
 		    (status & 0xffff) == 0)
 			return 0;
-		DRM_UDELAY(1);
+		udelay(1);
 	}
 
 #if SAVAGE_BCI_DEBUG
@@ -303,8 +312,9 @@ static int savage_dma_init(drm_savage_private_t * dev_priv)
 
 	dev_priv->nr_dma_pages = dev_priv->cmd_dma->size /
 	    (SAVAGE_DMA_PAGE_SIZE * 4);
-	dev_priv->dma_pages = kmalloc(sizeof(drm_savage_dma_page_t) *
-				      dev_priv->nr_dma_pages, GFP_KERNEL);
+	dev_priv->dma_pages = kmalloc_array(dev_priv->nr_dma_pages,
+					    sizeof(drm_savage_dma_page_t),
+					    GFP_KERNEL);
 	if (dev_priv->dma_pages == NULL)
 		return -ENOMEM;
 
@@ -660,13 +670,11 @@ void savage_driver_lastclose(struct drm_device *dev)
 	}
 }
 
-int savage_driver_unload(struct drm_device *dev)
+void savage_driver_unload(struct drm_device *dev)
 {
 	drm_savage_private_t *dev_priv = dev->dev_private;
 
 	kfree(dev_priv);
-
-	return 0;
 }
 
 static int savage_do_init_bci(struct drm_device * dev, drm_savage_init_t * init)
@@ -1020,7 +1028,7 @@ int savage_bci_buffers(struct drm_device *dev, void *data, struct drm_file *file
 	 */
 	if (d->send_count != 0) {
 		DRM_ERROR("Process %d trying to send %d buffers via drmDMA\n",
-			  DRM_CURRENTPID, d->send_count);
+			  task_pid_nr(current), d->send_count);
 		return -EINVAL;
 	}
 
@@ -1028,7 +1036,7 @@ int savage_bci_buffers(struct drm_device *dev, void *data, struct drm_file *file
 	 */
 	if (d->request_count < 0 || d->request_count > dma->buf_count) {
 		DRM_ERROR("Process %d trying to get %d buffers (of %d max)\n",
-			  DRM_CURRENTPID, d->request_count, dma->buf_count);
+			  task_pid_nr(current), d->request_count, dma->buf_count);
 		return -EINVAL;
 	}
 

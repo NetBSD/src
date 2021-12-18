@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_nv04_fbcon.c,v 1.3 2019/01/27 02:08:42 pgoyette Exp $	*/
+/*	$NetBSD: nouveau_nv04_fbcon.c,v 1.4 2021/12/18 23:45:32 riastradh Exp $	*/
 
 /*
  * Copyright 2009 Ben Skeggs
@@ -25,9 +25,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_nv04_fbcon.c,v 1.3 2019/01/27 02:08:42 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_nv04_fbcon.c,v 1.4 2021/12/18 23:45:32 riastradh Exp $");
 
-#include "nouveau_drm.h"
+#include "nouveau_drv.h"
 #include "nouveau_dma.h"
 #include "nouveau_fbcon.h"
 
@@ -35,7 +35,7 @@ int
 nv04_fbcon_copyarea(struct fb_info *info, const struct fb_copyarea *region)
 {
 	struct nouveau_fbdev *nfbdev = info->par;
-	struct nouveau_drm *drm = nouveau_drm(nfbdev->dev);
+	struct nouveau_drm *drm = nouveau_drm(nfbdev->helper.dev);
 	struct nouveau_channel *chan = drm->channel;
 	int ret;
 
@@ -55,7 +55,7 @@ int
 nv04_fbcon_fillrect(struct fb_info *info, const struct fb_fillrect *rect)
 {
 	struct nouveau_fbdev *nfbdev = info->par;
-	struct nouveau_drm *drm = nouveau_drm(nfbdev->dev);
+	struct nouveau_drm *drm = nouveau_drm(nfbdev->helper.dev);
 	struct nouveau_channel *chan = drm->channel;
 	int ret;
 
@@ -82,7 +82,7 @@ int
 nv04_fbcon_imageblit(struct fb_info *info, const struct fb_image *image)
 {
 	struct nouveau_fbdev *nfbdev = info->par;
-	struct nouveau_drm *drm = nouveau_drm(nfbdev->dev);
+	struct nouveau_drm *drm = nouveau_drm(nfbdev->helper.dev);
 	struct nouveau_channel *chan = drm->channel;
 	uint32_t fg;
 	uint32_t bg;
@@ -138,10 +138,10 @@ int
 nv04_fbcon_accel_init(struct fb_info *info)
 {
 	struct nouveau_fbdev *nfbdev = info->par;
-	struct drm_device *dev = nfbdev->dev;
+	struct drm_device *dev = nfbdev->helper.dev;
 	struct nouveau_drm *drm = nouveau_drm(dev);
 	struct nouveau_channel *chan = drm->channel;
-	struct nvif_device *device = &drm->device;
+	struct nvif_device *device = &drm->client.device;
 	int surface_fmt, pattern_fmt, rect_fmt;
 	int ret;
 

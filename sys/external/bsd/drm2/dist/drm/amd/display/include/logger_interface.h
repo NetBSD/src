@@ -1,4 +1,4 @@
-/*	$NetBSD: logger_interface.h,v 1.1.1.1 2021/12/18 20:11:25 riastradh Exp $	*/
+/*	$NetBSD: logger_interface.h,v 1.2 2021/12/18 23:45:07 riastradh Exp $	*/
 
 /*
  * Copyright 2012-15 Advanced Micro Devices, Inc.

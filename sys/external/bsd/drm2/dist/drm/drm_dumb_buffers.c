@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_dumb_buffers.c,v 1.1.1.1 2021/12/18 20:11:01 riastradh Exp $	*/
+/*	$NetBSD: drm_dumb_buffers.c,v 1.2 2021/12/18 23:44:57 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2006-2008 Intel Corporation
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_dumb_buffers.c,v 1.1.1.1 2021/12/18 20:11:01 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_dumb_buffers.c,v 1.2 2021/12/18 23:44:57 riastradh Exp $");
 
 #include <drm/drm_device.h>
 #include <drm/drm_drv.h>

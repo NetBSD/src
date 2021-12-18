@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_gem_evict.c,v 1.1.1.1 2021/12/18 20:15:34 riastradh Exp $	*/
+/*	$NetBSD: i915_gem_evict.c,v 1.2 2021/12/18 23:45:31 riastradh Exp $	*/
 
 /*
  * Copyright © 2016 Intel Corporation
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_gem_evict.c,v 1.1.1.1 2021/12/18 20:15:34 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_gem_evict.c,v 1.2 2021/12/18 23:45:31 riastradh Exp $");
 
 #include "gem/i915_gem_pm.h"
 #include "gem/selftests/igt_gem_utils.h"

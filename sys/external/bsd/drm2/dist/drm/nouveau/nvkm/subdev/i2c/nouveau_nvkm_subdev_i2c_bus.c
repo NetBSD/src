@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_nvkm_subdev_i2c_bus.c,v 1.4 2020/02/14 04:35:20 riastradh Exp $	*/
+/*	$NetBSD: nouveau_nvkm_subdev_i2c_bus.c,v 1.5 2021/12/18 23:45:40 riastradh Exp $	*/
 
 /*
  * Copyright 2015 Red Hat Inc.
@@ -24,7 +24,7 @@
  * Authors: Ben Skeggs <bskeggs@redhat.com>
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_subdev_i2c_bus.c,v 1.4 2020/02/14 04:35:20 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_subdev_i2c_bus.c,v 1.5 2021/12/18 23:45:40 riastradh Exp $");
 
 #include "bus.h"
 #include "pad.h"
@@ -117,6 +117,19 @@ nvkm_i2c_bus_init(struct nvkm_i2c_bus *bus)
 	BUS_TRACE(bus, "init");
 	if (bus->func->init)
 		bus->func->init(bus);
+
+	mutex_lock(&bus->mutex);
+	bus->enabled = true;
+	mutex_unlock(&bus->mutex);
+}
+
+void
+nvkm_i2c_bus_fini(struct nvkm_i2c_bus *bus)
+{
+	BUS_TRACE(bus, "fini");
+	mutex_lock(&bus->mutex);
+	bus->enabled = false;
+	mutex_unlock(&bus->mutex);
 }
 
 void
@@ -133,9 +146,15 @@ nvkm_i2c_bus_acquire(struct nvkm_i2c_bus *bus)
 {
 	struct nvkm_i2c_pad *pad = bus->pad;
 	int ret;
+
 	BUS_TRACE(bus, "acquire");
 	mutex_lock(&bus->mutex);
-	ret = nvkm_i2c_pad_acquire(pad, NVKM_I2C_PAD_I2C);
+
+	if (bus->enabled)
+		ret = nvkm_i2c_pad_acquire(pad, NVKM_I2C_PAD_I2C);
+	else
+		ret = -EIO;
+
 	if (ret)
 		mutex_unlock(&bus->mutex);
 	return ret;

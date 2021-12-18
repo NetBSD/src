@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_nvkm_subdev_ibus_gf100.c,v 1.2 2018/08/27 04:58:34 riastradh Exp $	*/
+/*	$NetBSD: nouveau_nvkm_subdev_ibus_gf100.c,v 1.3 2021/12/18 23:45:40 riastradh Exp $	*/
 
 /*
  * Copyright 2012 Red Hat Inc.
@@ -24,7 +24,7 @@
  * Authors: Ben Skeggs
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_subdev_ibus_gf100.c,v 1.2 2018/08/27 04:58:34 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_subdev_ibus_gf100.c,v 1.3 2021/12/18 23:45:40 riastradh Exp $");
 
 #include "priv.h"
 
@@ -35,7 +35,7 @@ gf100_ibus_intr_hub(struct nvkm_subdev *ibus, int i)
 	u32 addr = nvkm_rd32(device, 0x122120 + (i * 0x0400));
 	u32 data = nvkm_rd32(device, 0x122124 + (i * 0x0400));
 	u32 stat = nvkm_rd32(device, 0x122128 + (i * 0x0400));
-	nvkm_error(ibus, "HUB%d: %06x %08x (%08x)\n", i, addr, data, stat);
+	nvkm_debug(ibus, "HUB%d: %06x %08x (%08x)\n", i, addr, data, stat);
 	nvkm_mask(device, 0x122128 + (i * 0x0400), 0x00000200, 0x00000000);
 }
 
@@ -46,7 +46,7 @@ gf100_ibus_intr_rop(struct nvkm_subdev *ibus, int i)
 	u32 addr = nvkm_rd32(device, 0x124120 + (i * 0x0400));
 	u32 data = nvkm_rd32(device, 0x124124 + (i * 0x0400));
 	u32 stat = nvkm_rd32(device, 0x124128 + (i * 0x0400));
-	nvkm_error(ibus, "ROP%d: %06x %08x (%08x)\n", i, addr, data, stat);
+	nvkm_debug(ibus, "ROP%d: %06x %08x (%08x)\n", i, addr, data, stat);
 	nvkm_mask(device, 0x124128 + (i * 0x0400), 0x00000200, 0x00000000);
 }
 
@@ -57,7 +57,7 @@ gf100_ibus_intr_gpc(struct nvkm_subdev *ibus, int i)
 	u32 addr = nvkm_rd32(device, 0x128120 + (i * 0x0400));
 	u32 data = nvkm_rd32(device, 0x128124 + (i * 0x0400));
 	u32 stat = nvkm_rd32(device, 0x128128 + (i * 0x0400));
-	nvkm_error(ibus, "GPC%d: %06x %08x (%08x)\n", i, addr, data, stat);
+	nvkm_debug(ibus, "GPC%d: %06x %08x (%08x)\n", i, addr, data, stat);
 	nvkm_mask(device, 0x128128 + (i * 0x0400), 0x00000200, 0x00000000);
 }
 
@@ -122,6 +122,6 @@ gf100_ibus_new(struct nvkm_device *device, int index,
 	struct nvkm_subdev *ibus;
 	if (!(ibus = *pibus = kzalloc(sizeof(*ibus), GFP_KERNEL)))
 		return -ENOMEM;
-	nvkm_subdev_ctor(&gf100_ibus, device, index, 0, ibus);
+	nvkm_subdev_ctor(&gf100_ibus, device, index, ibus);
 	return 0;
 }

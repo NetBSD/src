@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_opregion.c,v 1.1.1.1 2021/12/18 20:15:30 riastradh Exp $	*/
+/*	$NetBSD: intel_opregion.c,v 1.2 2021/12/18 23:45:30 riastradh Exp $	*/
 
 /*
  * Copyright 2008 Intel Corporation <hong.liu@intel.com>
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intel_opregion.c,v 1.1.1.1 2021/12/18 20:15:30 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intel_opregion.c,v 1.2 2021/12/18 23:45:30 riastradh Exp $");
 
 #include <linux/acpi.h>
 #include <linux/dmi.h>
@@ -275,13 +275,13 @@ struct opregion_asle_ext {
 static int swsci(struct drm_i915_private *dev_priv,
 		 u32 function, u32 parm, u32 *parm_out)
 {
+	struct drm_i915_private *dev_priv = dev->dev_private;
 	struct opregion_swsci *swsci = dev_priv->opregion.swsci;
-	struct pci_dev *pdev = dev_priv->drm.pdev;
 	u32 main_function, sub_function, scic;
 	u16 swsci_val;
 	u32 dslp;
 
-	if (!swsci)
+	if (!region_swsci)
 		return -ENODEV;
 
 	main_function = (function & SWSCI_SCIC_MAIN_FUNCTION_MASK) >>
@@ -301,7 +301,7 @@ static int swsci(struct drm_i915_private *dev_priv,
 	}
 
 	/* Driver sleep timeout in ms. */
-	dslp = swsci->dslp;
+	dslp = region_swsci->dslp;
 	if (!dslp) {
 		/* The spec says 2ms should be the default, but it's too small
 		 * for some machines. */
@@ -314,7 +314,7 @@ static int swsci(struct drm_i915_private *dev_priv,
 	}
 
 	/* The spec tells us to do this, but we are the only user... */
-	scic = swsci->scic;
+	scic = region_swsci->scic;
 	if (scic & SWSCI_SCIC_INDICATOR) {
 		DRM_DEBUG_DRIVER("SWSCI request already in progress\n");
 		return -EBUSY;
@@ -322,8 +322,8 @@ static int swsci(struct drm_i915_private *dev_priv,
 
 	scic = function | SWSCI_SCIC_INDICATOR;
 
-	swsci->parm = parm;
-	swsci->scic = scic;
+	region_swsci->parm = parm;
+	region_swsci->scic = scic;
 
 	/* Ensure SCI event is selected and event trigger is cleared. */
 	pci_read_config_word(pdev, SWSCI, &swsci_val);
@@ -338,7 +338,7 @@ static int swsci(struct drm_i915_private *dev_priv,
 	pci_write_config_word(pdev, SWSCI, swsci_val);
 
 	/* Poll for the result. */
-#define C (((scic = swsci->scic) & SWSCI_SCIC_INDICATOR) == 0)
+#define C (((scic = region_swsci->scic) & SWSCI_SCIC_INDICATOR) == 0)
 	if (wait_for(C, dslp)) {
 		DRM_DEBUG_DRIVER("SWSCI request timed out\n");
 		return -ETIMEDOUT;
@@ -354,7 +354,7 @@ static int swsci(struct drm_i915_private *dev_priv,
 	}
 
 	if (parm_out)
-		*parm_out = swsci->parm;
+		*parm_out = region_swsci->parm;
 
 	return 0;
 
@@ -455,10 +455,12 @@ static u32 asle_set_backlight(struct drm_i915_private *dev_priv, u32 bclp)
 
 	DRM_DEBUG_DRIVER("bclp = 0x%08x\n", bclp);
 
+#ifndef __NetBSD__ /* XXX backlight */
 	if (acpi_video_get_backlight_type() == acpi_backlight_native) {
 		DRM_DEBUG_KMS("opregion backlight request ignored\n");
 		return 0;
 	}
+#endif
 
 	if (!(bclp & ASLE_BCLP_VALID))
 		return ASLC_BACKLIGHT_FAILED;
@@ -620,6 +622,29 @@ void intel_opregion_asle_intr(struct drm_i915_private *dev_priv)
 #define ACPI_EV_LID            (1<<1)
 #define ACPI_EV_DOCK           (1<<2)
 
+#ifdef __NetBSD__
+static void
+intel_opregion_video_event(ACPI_HANDLE hdl, uint32_t notify, void *opaque)
+{
+	device_t self = opaque;
+	struct opregion_acpi *acpi;
+
+	DRM_DEBUG_DRIVER("notify=0x%08x\n", notify);
+
+	if (!system_opregion)
+		return;
+
+	acpi = system_opregion->acpi;
+
+	if (notify != 0x80) {
+		aprint_error_dev(self, "unknown notify 0x%02x\n", notify);
+	} else if ((acpi->cevt & 1) == 0) {
+		aprint_error_dev(self, "bad notify\n");
+	}
+
+	acpi->csts = 0;
+}
+#else	/* !__NetBSD__ */
 /*
  * The only video events relevant to opregion are 0x80. These indicate either a
  * docking event, lid switch or display switch request. In Linux, these are
@@ -646,6 +671,7 @@ static int intel_opregion_video_event(struct notifier_block *nb,
 
 	return ret;
 }
+#endif
 
 /*
  * Initialise the DIDL field in opregion. This passes a list of devices to
@@ -923,7 +949,18 @@ int intel_opregion_setup(struct drm_i915_private *dev_priv)
 
 	INIT_WORK(&opregion->asle_work, asle_work);
 
+#ifdef __NetBSD__
+	opregion->bst = dev->pdev->pd_pa.pa_memt;
+	err = -bus_space_map(opregion->bst, asls, OPREGION_SIZE,
+	    BUS_SPACE_MAP_LINEAR|BUS_SPACE_MAP_CACHEABLE, &opregion->bsh);
+	if (err) {
+		DRM_DEBUG_DRIVER("Failed to map opregion: %d\n", err);
+		return err;
+	}
+	base = bus_space_vaddr(opregion->bst, opregion->bsh);
+#else
 	base = memremap(asls, OPREGION_SIZE, MEMREMAP_WB);
+#endif
 	if (!base)
 		return -ENOMEM;
 
@@ -1034,7 +1071,11 @@ out:
 	return 0;
 
 err_out:
+#ifdef __NetBSD__
+	bus_space_unmap(opregion->bst, opregion->bsh, OPREGION_SIZE);
+#else
 	memunmap(base);
+#endif
 	return err;
 }
 
@@ -1101,9 +1142,14 @@ void intel_opregion_register(struct drm_i915_private *i915)
 		return;
 
 	if (opregion->acpi) {
+#ifdef __NetBSD__ /* XXX post-merge audit */
+		if (dev->pdev->pd_ad != NULL)
+			acpi_deregister_notify(dev->pdev->pd_ad);
+#else
 		opregion->acpi_notifier.notifier_call =
 			intel_opregion_video_event;
 		register_acpi_notifier(&opregion->acpi_notifier);
+#endif
 	}
 
 	intel_opregion_resume(i915);
@@ -1165,8 +1211,13 @@ void intel_opregion_unregister(struct drm_i915_private *i915)
 		return;
 
 	if (opregion->acpi_notifier.notifier_call) {
+#ifdef __NetBSD__
+		if (dev->pdev->pd_ad != NULL)
+			acpi_deregister_notify(dev->pdev->pd_ad);
+#else
 		unregister_acpi_notifier(&opregion->acpi_notifier);
 		opregion->acpi_notifier.notifier_call = NULL;
+#endif
 	}
 
 	/* just clear all opregion memory pointers now */

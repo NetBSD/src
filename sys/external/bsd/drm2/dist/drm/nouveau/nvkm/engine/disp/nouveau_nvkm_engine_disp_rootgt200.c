@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_nvkm_engine_disp_rootgt200.c,v 1.2 2018/08/27 04:58:31 riastradh Exp $	*/
+/*	$NetBSD: nouveau_nvkm_engine_disp_rootgt200.c,v 1.3 2021/12/18 23:45:35 riastradh Exp $	*/
 
 /*
  * Copyright 2012 Red Hat Inc.
@@ -24,25 +24,22 @@
  * Authors: Ben Skeggs
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_engine_disp_rootgt200.c,v 1.2 2018/08/27 04:58:31 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_engine_disp_rootgt200.c,v 1.3 2021/12/18 23:45:35 riastradh Exp $");
 
 #include "rootnv50.h"
-#include "dmacnv50.h"
+#include "channv50.h"
 
 #include <nvif/class.h>
 
 static const struct nv50_disp_root_func
 gt200_disp_root = {
-	.init = nv50_disp_root_init,
-	.fini = nv50_disp_root_fini,
-	.dmac = {
-		&gt200_disp_core_oclass,
-		&gt200_disp_base_oclass,
-		&gt200_disp_ovly_oclass,
-	},
-	.pioc = {
-		&g84_disp_oimm_oclass,
-		&g84_disp_curs_oclass,
+	.user = {
+		{{0,0,  G82_DISP_CURSOR             },  nv50_disp_curs_new },
+		{{0,0,  G82_DISP_OVERLAY            },  nv50_disp_oimm_new },
+		{{0,0,GT200_DISP_BASE_CHANNEL_DMA   },   g84_disp_base_new },
+		{{0,0,GT200_DISP_CORE_CHANNEL_DMA   },   g84_disp_core_new },
+		{{0,0,GT200_DISP_OVERLAY_CHANNEL_DMA}, gt200_disp_ovly_new },
+		{}
 	},
 };
 
