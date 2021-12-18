@@ -188,8 +188,6 @@ AcpiDmDumpAest (
             case ACPI_AEST_GENERIC_RESOURCE:
                 InfoTable = AcpiDmTableInfoAestGenRsrc;
                 Length = sizeof (ACPI_AEST_PROCESSOR_GENERIC);
-                AcpiOsPrintf ("Generic Resource Type (%X) is not supported at this time\n",
-                    ProcessorSubtable->ResourceType);
                 break;
 
             /* Error case below */
