@@ -1,4 +1,4 @@
-/*	$NetBSD: radeon_dce3_1_afmt.c,v 1.1 2018/08/27 14:38:20 riastradh Exp $	*/
+/*	$NetBSD: radeon_dce3_1_afmt.c,v 1.1.1.1 2021/12/18 20:15:48 riastradh Exp $	*/
 
 /*
  * Copyright 2013 Advanced Micro Devices, Inc.
@@ -23,10 +23,10 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radeon_dce3_1_afmt.c,v 1.1 2018/08/27 14:38:20 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radeon_dce3_1_afmt.c,v 1.1.1.1 2021/12/18 20:15:48 riastradh Exp $");
 
 #include <linux/hdmi.h>
-#include <drm/drmP.h>
+
 #include "radeon.h"
 #include "radeon_asic.h"
 #include "radeon_audio.h"

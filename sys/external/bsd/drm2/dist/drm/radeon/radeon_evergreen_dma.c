@@ -1,4 +1,4 @@
-/*	$NetBSD: radeon_evergreen_dma.c,v 1.1 2018/08/27 14:38:20 riastradh Exp $	*/
+/*	$NetBSD: radeon_evergreen_dma.c,v 1.1.1.1 2021/12/18 20:15:48 riastradh Exp $	*/
 
 /*
  * Copyright 2010 Advanced Micro Devices, Inc.
@@ -23,10 +23,10 @@
  *
  * Authors: Alex Deucher
  */
-#include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radeon_evergreen_dma.c,v 1.1 2018/08/27 14:38:20 riastradh Exp $");
 
-#include <drm/drmP.h>
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: radeon_evergreen_dma.c,v 1.1.1.1 2021/12/18 20:15:48 riastradh Exp $");
+
 #include "radeon.h"
 #include "radeon_asic.h"
 #include "evergreend.h"
@@ -113,7 +113,7 @@ struct radeon_fence *evergreen_copy_dma(struct radeon_device *rdev,
 					uint64_t src_offset,
 					uint64_t dst_offset,
 					unsigned num_gpu_pages,
-					struct reservation_object *resv)
+					struct dma_resv *resv)
 {
 	struct radeon_fence *fence;
 	struct radeon_sync sync;

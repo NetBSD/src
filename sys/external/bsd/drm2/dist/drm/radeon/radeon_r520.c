@@ -1,4 +1,4 @@
-/*	$NetBSD: radeon_r520.c,v 1.1 2018/08/27 14:38:20 riastradh Exp $	*/
+/*	$NetBSD: radeon_r520.c,v 1.1.1.1 2021/12/18 20:15:49 riastradh Exp $	*/
 
 /*
  * Copyright 2008 Advanced Micro Devices, Inc.
@@ -27,10 +27,10 @@
  *          Alex Deucher
  *          Jerome Glisse
  */
-#include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radeon_r520.c,v 1.1 2018/08/27 14:38:20 riastradh Exp $");
 
-#include <drm/drmP.h>
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: radeon_r520.c,v 1.1.1.1 2021/12/18 20:15:49 riastradh Exp $");
+
 #include "radeon.h"
 #include "radeon_asic.h"
 #include "atom.h"
@@ -49,7 +49,7 @@ int r520_mc_wait_for_idle(struct radeon_device *rdev)
 		if (tmp & R520_MC_STATUS_IDLE) {
 			return 0;
 		}
-		DRM_UDELAY(1);
+		udelay(1);
 	}
 	return -1;
 }
@@ -91,8 +91,7 @@ static void r520_gpu_init(struct radeon_device *rdev)
 	      (((gb_pipe_select >> 8) & 0xF) << 4);
 	WREG32_PLL(0x000D, tmp);
 	if (r520_mc_wait_for_idle(rdev)) {
-		printk(KERN_WARNING "Failed to wait MC idle while "
-		       "programming pipes. Bad things might happen.\n");
+		pr_warn("Failed to wait MC idle while programming pipes. Bad things might happen.\n");
 	}
 }
 

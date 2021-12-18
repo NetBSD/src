@@ -1,4 +1,4 @@
-/*	$NetBSD: radeon_rs600.c,v 1.1 2018/08/27 14:38:20 riastradh Exp $	*/
+/*	$NetBSD: radeon_rs600.c,v 1.1.1.1 2021/12/18 20:15:50 riastradh Exp $	*/
 
 /*
  * Copyright 2008 Advanced Micro Devices, Inc.
@@ -37,17 +37,22 @@
  * close to the one of the R600 family (R600 likely being an evolution
  * of the RS600 GART block).
  */
-#include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radeon_rs600.c,v 1.1 2018/08/27 14:38:20 riastradh Exp $");
 
-#include <drm/drmP.h>
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: radeon_rs600.c,v 1.1.1.1 2021/12/18 20:15:50 riastradh Exp $");
+
+#include <linux/io-64-nonatomic-lo-hi.h>
+#include <linux/pci.h>
+
+#include <drm/drm_device.h>
+#include <drm/drm_vblank.h>
+
+#include "atom.h"
 #include "radeon.h"
 #include "radeon_asic.h"
 #include "radeon_audio.h"
-#include "atom.h"
-#include "rs600d.h"
-
 #include "rs600_reg_safe.h"
+#include "rs600d.h"
 
 static void rs600_gpu_init(struct radeon_device *rdev);
 int rs600_mc_wait_for_idle(struct radeon_device *rdev);
@@ -115,7 +120,7 @@ void avivo_wait_for_vblank(struct radeon_device *rdev, int crtc)
 	}
 }
 
-void rs600_page_flip(struct radeon_device *rdev, int crtc_id, u64 crtc_base)
+void rs600_page_flip(struct radeon_device *rdev, int crtc_id, u64 crtc_base, bool async)
 {
 	struct radeon_crtc *radeon_crtc = rdev->mode_info.crtcs[crtc_id];
 	u32 tmp = RREG32(AVIVO_D1GRPH_UPDATE + radeon_crtc->crtc_offset);
@@ -126,6 +131,8 @@ void rs600_page_flip(struct radeon_device *rdev, int crtc_id, u64 crtc_base)
 	WREG32(AVIVO_D1GRPH_UPDATE + radeon_crtc->crtc_offset, tmp);
 
 	/* update the scanout addresses */
+	WREG32(AVIVO_D1GRPH_FLIP_CONTROL + radeon_crtc->crtc_offset,
+	       async ? AVIVO_D1GRPH_SURFACE_UPDATE_H_RETRACE_EN : 0);
 	WREG32(AVIVO_D1GRPH_SECONDARY_SURFACE_ADDRESS + radeon_crtc->crtc_offset,
 	       (u32)crtc_base);
 	WREG32(AVIVO_D1GRPH_PRIMARY_SURFACE_ADDRESS + radeon_crtc->crtc_offset,
@@ -418,7 +425,8 @@ void rs600_hpd_init(struct radeon_device *rdev)
 		default:
 			break;
 		}
-		enable |= 1 << radeon_connector->hpd.hpd;
+		if (radeon_connector->hpd.hpd != RADEON_HPD_NONE)
+			enable |= 1 << radeon_connector->hpd.hpd;
 		radeon_hpd_set_polarity(rdev, radeon_connector->hpd.hpd);
 	}
 	radeon_irq_kms_enable_hpd(rdev, enable);
@@ -444,12 +452,13 @@ void rs600_hpd_fini(struct radeon_device *rdev)
 		default:
 			break;
 		}
-		disable |= 1 << radeon_connector->hpd.hpd;
+		if (radeon_connector->hpd.hpd != RADEON_HPD_NONE)
+			disable |= 1 << radeon_connector->hpd.hpd;
 	}
 	radeon_irq_kms_disable_hpd(rdev, disable);
 }
 
-int rs600_asic_reset(struct radeon_device *rdev)
+int rs600_asic_reset(struct radeon_device *rdev, bool hard)
 {
 	struct rv515_mc_save save;
 	u32 status, tmp;
@@ -646,30 +655,12 @@ uint64_t rs600_gart_get_page_entry(uint64_t addr, uint32_t flags)
 	return addr;
 }
 
-#ifdef __NetBSD__
-#  define	__iomem	volatile
-#  define	writeq	fake_writeq
-
-static inline void
-fake_writeq(uint64_t v, void __iomem *ptr)
-{
-
-	membar_producer();
-	*(uint64_t __iomem *)ptr = v;
-}
-#endif
-
 void rs600_gart_set_page(struct radeon_device *rdev, unsigned i,
 			 uint64_t entry)
 {
 	void __iomem *ptr = (void *)rdev->gart.ptr;
-	writeq(entry, (char __iomem *)ptr + (i * 8));
+	writeq(entry, ptr + (i * 8));
 }
-
-#ifdef __NetBSD__
-#  undef	writeq
-#  undef	__iomem
-#endif
 
 int rs600_irq_set(struct radeon_device *rdev)
 {
@@ -806,15 +797,8 @@ int rs600_irq_process(struct radeon_device *rdev)
 		if (G_007EDC_LB_D1_VBLANK_INTERRUPT(rdev->irq.stat_regs.r500.disp_int)) {
 			if (rdev->irq.crtc_vblank_int[0]) {
 				drm_handle_vblank(rdev->ddev, 0);
-#ifdef __NetBSD__
-				spin_lock(&rdev->irq.vblank_lock);
-				rdev->pm.vblank_sync = true;
-				DRM_SPIN_WAKEUP_ONE(&rdev->irq.vblank_queue, &rdev->irq.vblank_lock);
-				spin_unlock(&rdev->irq.vblank_lock);
-#else
 				rdev->pm.vblank_sync = true;
 				wake_up(&rdev->irq.vblank_queue);
-#endif
 			}
 			if (atomic_read(&rdev->irq.pflip[0]))
 				radeon_crtc_handle_vblank(rdev, 0);
@@ -822,15 +806,8 @@ int rs600_irq_process(struct radeon_device *rdev)
 		if (G_007EDC_LB_D2_VBLANK_INTERRUPT(rdev->irq.stat_regs.r500.disp_int)) {
 			if (rdev->irq.crtc_vblank_int[1]) {
 				drm_handle_vblank(rdev->ddev, 1);
-#ifdef __NetBSD__
-				spin_lock(&rdev->irq.vblank_lock);
-				rdev->pm.vblank_sync = true;
-				DRM_SPIN_WAKEUP_ONE(&rdev->irq.vblank_queue, &rdev->irq.vblank_lock);
-				spin_unlock(&rdev->irq.vblank_lock);
-#else
 				rdev->pm.vblank_sync = true;
 				wake_up(&rdev->irq.vblank_queue);
-#endif
 			}
 			if (atomic_read(&rdev->irq.pflip[1]))
 				radeon_crtc_handle_vblank(rdev, 1);

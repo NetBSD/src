@@ -1,4 +1,4 @@
-/*	$NetBSD: radeon_kv_dpm.c,v 1.1 2018/08/27 14:38:20 riastradh Exp $	*/
+/*	$NetBSD: radeon_kv_dpm.c,v 1.1.1.1 2021/12/18 20:15:49 riastradh Exp $	*/
 
 /*
  * Copyright 2013 Advanced Micro Devices, Inc.
@@ -24,15 +24,16 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radeon_kv_dpm.c,v 1.1 2018/08/27 14:38:20 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radeon_kv_dpm.c,v 1.1.1.1 2021/12/18 20:15:49 riastradh Exp $");
 
-#include "drmP.h"
-#include "radeon.h"
-#include "cikd.h"
-#include "r600_dpm.h"
-#include "kv_dpm.h"
-#include "radeon_asic.h"
+#include <linux/pci.h>
 #include <linux/seq_file.h>
+
+#include "cikd.h"
+#include "kv_dpm.h"
+#include "r600_dpm.h"
+#include "radeon.h"
+#include "radeon_asic.h"
 
 #define KV_MAX_DEEPSLEEP_DIVIDER_ID     5
 #define KV_MINIMUM_ENGINE_CLOCK         800
@@ -1556,10 +1557,8 @@ static u8 kv_get_acp_boot_level(struct radeon_device *rdev)
 		&rdev->pm.dpm.dyn_state.acp_clock_voltage_dependency_table;
 
 	for (i = 0; i < table->count; i++) {
-#if 0		/* XXX Upstream has changed this to make sense.  */
 		if (table->entries[i].clk >= 0) /* XXX */
 			break;
-#endif
 	}
 
 	if (i >= table->count)
@@ -2171,7 +2170,7 @@ static void kv_apply_state_adjust_rules(struct radeon_device *rdev,
 	if (pi->caps_stable_p_state) {
 		stable_p_state_sclk = (max_limits->sclk * 75) / 100;
 
-		for (i = table->count - 1; i >= 0; i++) {
+		for (i = table->count - 1; i >= 0; i--) {
 			if (stable_p_state_sclk >= table->entries[i].clk) {
 				stable_p_state_sclk = table->entries[i].clk;
 				break;
@@ -2647,7 +2646,7 @@ static int kv_parse_power_table(struct radeon_device *rdev)
 	struct _NonClockInfoArray *non_clock_info_array;
 	union power_info *power_info;
 	int index = GetIndexIntoMasterTable(DATA, PowerPlayInfo);
-        u16 data_offset;
+	u16 data_offset;
 	u8 frev, crev;
 	u8 *power_state_offset;
 	struct kv_ps *ps;
@@ -2667,8 +2666,9 @@ static int kv_parse_power_table(struct radeon_device *rdev)
 		(mode_info->atom_context->bios + data_offset +
 		 le16_to_cpu(power_info->pplib.usNonClockInfoArrayOffset));
 
-	rdev->pm.dpm.ps = kzalloc(sizeof(struct radeon_ps) *
-				  state_array->ucNumEntries, GFP_KERNEL);
+	rdev->pm.dpm.ps = kcalloc(state_array->ucNumEntries,
+				  sizeof(struct radeon_ps),
+				  GFP_KERNEL);
 	if (!rdev->pm.dpm.ps)
 		return -ENOMEM;
 	power_state_offset = (u8 *)state_array->states;
@@ -2745,7 +2745,7 @@ int kv_dpm_init(struct radeon_device *rdev)
 	for (i = 0; i < SUMO_MAX_HARDWARE_POWERLEVELS; i++)
 		pi->at[i] = TRINITY_AT_DFLT;
 
-        pi->sram_end = SMC_RAM_END;
+	pi->sram_end = SMC_RAM_END;
 
 	/* Enabling nb dpm on an asrock system prevents dpm from working */
 	if (rdev->pdev->subsystem_vendor == 0x1849)
@@ -2803,7 +2803,6 @@ int kv_dpm_init(struct radeon_device *rdev)
 	return 0;
 }
 
-#ifdef CONFIG_DEBUG_FS
 void kv_dpm_debugfs_print_current_performance_level(struct radeon_device *rdev,
 						    struct seq_file *m)
 {
@@ -2827,7 +2826,6 @@ void kv_dpm_debugfs_print_current_performance_level(struct radeon_device *rdev,
 			   current_index, sclk, vddc);
 	}
 }
-#endif	/* CONFIG_DEBUG_FS */
 
 u32 kv_dpm_get_current_sclk(struct radeon_device *rdev)
 {

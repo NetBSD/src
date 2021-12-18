@@ -1,4 +1,4 @@
-/*	$NetBSD: radeon_rv6xx_dpm.c,v 1.1 2018/08/27 14:38:20 riastradh Exp $	*/
+/*	$NetBSD: radeon_rv6xx_dpm.c,v 1.1.1.1 2021/12/18 20:15:50 riastradh Exp $	*/
 
 /*
  * Copyright 2011 Advanced Micro Devices, Inc.
@@ -25,9 +25,8 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radeon_rv6xx_dpm.c,v 1.1 2018/08/27 14:38:20 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radeon_rv6xx_dpm.c,v 1.1.1.1 2021/12/18 20:15:50 riastradh Exp $");
 
-#include "drmP.h"
 #include "radeon.h"
 #include "radeon_asic.h"
 #include "rv6xxd.h"
@@ -214,7 +213,7 @@ static struct rv6xx_sclk_stepping rv6xx_next_vco_step(struct radeon_device *rdev
 
 static bool rv6xx_can_step_post_div(struct radeon_device *rdev,
 				    struct rv6xx_sclk_stepping *cur,
-                                    struct rv6xx_sclk_stepping *target)
+				    struct rv6xx_sclk_stepping *target)
 {
 	return (cur->post_divider > target->post_divider) &&
 		((cur->vco_frequency * target->post_divider) <=
@@ -244,7 +243,7 @@ static bool rv6xx_reached_stepping_target(struct radeon_device *rdev,
 
 static void rv6xx_generate_steps(struct radeon_device *rdev,
 				 u32 low, u32 high,
-                                 u32 start_index, u8 *end_index)
+				 u32 start_index, u8 *end_index)
 {
 	struct rv6xx_sclk_stepping cur;
 	struct rv6xx_sclk_stepping target;
@@ -1361,23 +1360,23 @@ static void rv6xx_set_dpm_event_sources(struct radeon_device *rdev, u32 sources)
 	enum radeon_dpm_event_src dpm_event_src;
 
 	switch (sources) {
-        case 0:
-        default:
+	case 0:
+	default:
 		want_thermal_protection = false;
 		break;
-        case (1 << RADEON_DPM_AUTO_THROTTLE_SRC_THERMAL):
+	case (1 << RADEON_DPM_AUTO_THROTTLE_SRC_THERMAL):
 		want_thermal_protection = true;
 		dpm_event_src = RADEON_DPM_EVENT_SRC_DIGITAL;
 		break;
 
-        case (1 << RADEON_DPM_AUTO_THROTTLE_SRC_EXTERNAL):
+	case (1 << RADEON_DPM_AUTO_THROTTLE_SRC_EXTERNAL):
 		want_thermal_protection = true;
 		dpm_event_src = RADEON_DPM_EVENT_SRC_EXTERNAL;
 		break;
 
-        case ((1 << RADEON_DPM_AUTO_THROTTLE_SRC_EXTERNAL) |
+	case ((1 << RADEON_DPM_AUTO_THROTTLE_SRC_EXTERNAL) |
 	      (1 << RADEON_DPM_AUTO_THROTTLE_SRC_THERMAL)):
-		want_thermal_protection = true;
+			want_thermal_protection = true;
 		dpm_event_src = RADEON_DPM_EVENT_SRC_DIGIAL_OR_EXTERNAL;
 		break;
 	}
@@ -1884,7 +1883,7 @@ static int rv6xx_parse_power_table(struct radeon_device *rdev)
 	union pplib_clock_info *clock_info;
 	union power_info *power_info;
 	int index = GetIndexIntoMasterTable(DATA, PowerPlayInfo);
-        u16 data_offset;
+	u16 data_offset;
 	u8 frev, crev;
 	struct rv6xx_ps *ps;
 
@@ -1893,8 +1892,9 @@ static int rv6xx_parse_power_table(struct radeon_device *rdev)
 		return -EINVAL;
 	power_info = (union power_info *)(mode_info->atom_context->bios + data_offset);
 
-	rdev->pm.dpm.ps = kzalloc(sizeof(struct radeon_ps) *
-				  power_info->pplib.ucNumStates, GFP_KERNEL);
+	rdev->pm.dpm.ps = kcalloc(power_info->pplib.ucNumStates,
+				  sizeof(struct radeon_ps),
+				  GFP_KERNEL);
 	if (!rdev->pm.dpm.ps)
 		return -ENOMEM;
 
@@ -2030,7 +2030,6 @@ void rv6xx_dpm_print_power_state(struct radeon_device *rdev,
 	r600_dpm_print_ps_status(rdev, rps);
 }
 
-#ifdef CONFIG_DEBUG_FS
 void rv6xx_dpm_debugfs_print_current_performance_level(struct radeon_device *rdev,
 						       struct seq_file *m)
 {
@@ -2055,7 +2054,6 @@ void rv6xx_dpm_debugfs_print_current_performance_level(struct radeon_device *rde
 			   current_index, pl->sclk, pl->mclk, pl->vddc);
 	}
 }
-#endif
 
 /* get the current sclk in 10 khz units */
 u32 rv6xx_dpm_get_current_sclk(struct radeon_device *rdev)
