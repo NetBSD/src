@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.375 2021/12/16 23:46:21 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.376 2021/12/18 11:37:00 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: cgram.y,v 1.375 2021/12/16 23:46:21 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.376 2021/12/18 11:37:00 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -1374,11 +1374,11 @@ array_size:
 		$$ = $3;
 	  }
 	| T_QUAL {
-		/* C11, 6.7.6.2 */
+		/* C11 6.7.6.2 */
 		if ($1 != RESTRICT)
 			yyerror("Bad attribute");
 		$$ = NULL;
-	}
+	  }
 	| constant_expr
 	;
 
