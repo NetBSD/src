@@ -1,4 +1,4 @@
-/*	$NetBSD: radeon_rs400.c,v 1.1 2018/08/27 14:38:20 riastradh Exp $	*/
+/*	$NetBSD: radeon_rs400.c,v 1.1.1.1 2021/12/18 20:15:50 riastradh Exp $	*/
 
 /*
  * Copyright 2008 Advanced Micro Devices, Inc.
@@ -27,12 +27,17 @@
  *          Alex Deucher
  *          Jerome Glisse
  */
+
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radeon_rs400.c,v 1.1 2018/08/27 14:38:20 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radeon_rs400.c,v 1.1.1.1 2021/12/18 20:15:50 riastradh Exp $");
 
 #include <linux/seq_file.h>
 #include <linux/slab.h>
-#include <drm/drmP.h>
+
+#include <drm/drm_debugfs.h>
+#include <drm/drm_device.h>
+#include <drm/drm_file.h>
+
 #include "radeon.h"
 #include "radeon_asic.h"
 #include "rs400d.h"
@@ -72,7 +77,7 @@ void rs400_gart_tlb_flush(struct radeon_device *rdev)
 		tmp = RREG32_MC(RS480_GART_CACHE_CNTRL);
 		if ((tmp & RS480_GART_CACHE_INVALIDATE) == 0)
 			break;
-		DRM_UDELAY(1);
+		udelay(1);
 		timeout--;
 	} while (timeout > 0);
 	WREG32_MC(RS480_GART_CACHE_CNTRL, 0);
@@ -250,7 +255,7 @@ int rs400_mc_wait_for_idle(struct radeon_device *rdev)
 		if (tmp & RADEON_MC_IDLE) {
 			return 0;
 		}
-		DRM_UDELAY(1);
+		udelay(1);
 	}
 	return -1;
 }
@@ -260,8 +265,8 @@ static void rs400_gpu_init(struct radeon_device *rdev)
 	/* FIXME: is this correct ? */
 	r420_pipes_init(rdev);
 	if (rs400_mc_wait_for_idle(rdev)) {
-		printk(KERN_WARNING "rs400: Failed to wait MC idle while "
-		       "programming pipes. Bad things might happen. %08x\n", RREG32(RADEON_MC_STATUS));
+		pr_warn("rs400: Failed to wait MC idle while programming pipes. Bad things might happen. %08x\n",
+			RREG32(RADEON_MC_STATUS));
 	}
 }
 

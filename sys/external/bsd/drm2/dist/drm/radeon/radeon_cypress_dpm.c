@@ -1,4 +1,4 @@
-/*	$NetBSD: radeon_cypress_dpm.c,v 1.1 2018/08/27 14:38:20 riastradh Exp $	*/
+/*	$NetBSD: radeon_cypress_dpm.c,v 1.1.1.1 2021/12/18 20:15:48 riastradh Exp $	*/
 
 /*
  * Copyright 2011 Advanced Micro Devices, Inc.
@@ -25,15 +25,16 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radeon_cypress_dpm.c,v 1.1 2018/08/27 14:38:20 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radeon_cypress_dpm.c,v 1.1.1.1 2021/12/18 20:15:48 riastradh Exp $");
 
-#include "drmP.h"
-#include "radeon.h"
-#include "radeon_asic.h"
+#include <linux/pci.h>
+
+#include "atom.h"
+#include "cypress_dpm.h"
 #include "evergreend.h"
 #include "r600_dpm.h"
-#include "cypress_dpm.h"
-#include "atom.h"
+#include "radeon.h"
+#include "radeon_asic.h"
 
 #define SMC_RAM_END 0x8000
 
@@ -1625,14 +1626,14 @@ static int cypress_init_smc_table(struct radeon_device *rdev,
 	cypress_populate_smc_voltage_tables(rdev, table);
 
 	switch (rdev->pm.int_thermal_type) {
-        case THERMAL_TYPE_EVERGREEN:
-        case THERMAL_TYPE_EMC2103_WITH_INTERNAL:
+	case THERMAL_TYPE_EVERGREEN:
+	case THERMAL_TYPE_EMC2103_WITH_INTERNAL:
 		table->thermalProtectType = PPSMC_THERMAL_PROTECT_TYPE_INTERNAL;
 		break;
-        case THERMAL_TYPE_NONE:
+	case THERMAL_TYPE_NONE:
 		table->thermalProtectType = PPSMC_THERMAL_PROTECT_TYPE_NONE;
 		break;
-        default:
+	default:
 		table->thermalProtectType = PPSMC_THERMAL_PROTECT_TYPE_EXTERNAL;
 		break;
 	}

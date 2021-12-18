@@ -1,4 +1,4 @@
-/*	$NetBSD: radeon_ci_smc.c,v 1.1 2018/08/27 14:38:20 riastradh Exp $	*/
+/*	$NetBSD: radeon_ci_smc.c,v 1.1.1.1 2021/12/18 20:15:47 riastradh Exp $	*/
 
 /*
  * Copyright 2011 Advanced Micro Devices, Inc.
@@ -25,10 +25,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radeon_ci_smc.c,v 1.1 2018/08/27 14:38:20 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radeon_ci_smc.c,v 1.1.1.1 2021/12/18 20:15:47 riastradh Exp $");
 
 #include <linux/firmware.h>
-#include "drmP.h"
+
 #include "radeon.h"
 #include "cikd.h"
 #include "ppsmc.h"
@@ -168,27 +168,6 @@ bool ci_is_smc_running(struct radeon_device *rdev)
 	return false;
 }
 
-PPSMC_Result ci_send_msg_to_smc(struct radeon_device *rdev, PPSMC_Msg msg)
-{
-	u32 tmp;
-	int i;
-
-	if (!ci_is_smc_running(rdev))
-		return PPSMC_Result_Failed;
-
-	WREG32(SMC_MESSAGE_0, msg);
-
-	for (i = 0; i < rdev->usec_timeout; i++) {
-		tmp = RREG32(SMC_RESP_0);
-		if (tmp != 0)
-			break;
-		udelay(1);
-	}
-	tmp = RREG32(SMC_RESP_0);
-
-	return (PPSMC_Result)tmp;
-}
-
 #if 0
 PPSMC_Result ci_wait_for_smc_inactive(struct radeon_device *rdev)
 {
@@ -199,11 +178,11 @@ PPSMC_Result ci_wait_for_smc_inactive(struct radeon_device *rdev)
 		return PPSMC_Result_OK;
 
 	for (i = 0; i < rdev->usec_timeout; i++) {
-                tmp = RREG32_SMC(SMC_SYSCON_CLOCK_CNTL_0);
-                if ((tmp & CKEN) == 0)
+		tmp = RREG32_SMC(SMC_SYSCON_CLOCK_CNTL_0);
+		if ((tmp & CKEN) == 0)
 			break;
-                udelay(1);
-        }
+		udelay(1);
+	}
 
 	return PPSMC_Result_OK;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: radeon_r600_hdmi.c,v 1.1 2018/08/27 14:38:20 riastradh Exp $	*/
+/*	$NetBSD: radeon_r600_hdmi.c,v 1.1.1.1 2021/12/18 20:15:50 riastradh Exp $	*/
 
 /*
  * Copyright 2008 Advanced Micro Devices, Inc.
@@ -26,11 +26,11 @@
  * Authors: Christian König
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radeon_r600_hdmi.c,v 1.1 2018/08/27 14:38:20 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radeon_r600_hdmi.c,v 1.1.1.1 2021/12/18 20:15:50 riastradh Exp $");
 
 #include <linux/hdmi.h>
 #include <linux/gcd.h>
-#include <drm/drmP.h>
+
 #include <drm/radeon_drm.h>
 #include "radeon.h"
 #include "radeon_asic.h"
@@ -63,7 +63,7 @@ enum r600_hdmi_iec_status_bits {
 
 static struct r600_audio_pin r600_audio_status(struct radeon_device *rdev)
 {
-	struct r600_audio_pin status;
+	struct r600_audio_pin status = {};
 	uint32_t value;
 
 	value = RREG32(R600_AUDIO_RATE_BPS_CHANNEL);
@@ -220,7 +220,7 @@ void r600_hdmi_update_acr(struct drm_encoder *encoder, long offset,
  * build a HDMI Video Info Frame
  */
 void r600_set_avi_packet(struct radeon_device *rdev, u32 offset,
-    unsigned char *buffer, size_t size)
+			 unsigned char *buffer, size_t size)
 {
 	uint8_t *frame = buffer + 3;
 
@@ -253,7 +253,7 @@ static void r600_hdmi_update_audio_infoframe(struct drm_encoder *encoder,
 	struct radeon_encoder *radeon_encoder = to_radeon_encoder(encoder);
 	struct radeon_encoder_atom_dig *dig = radeon_encoder->enc_priv;
 	uint32_t offset = dig->afmt->offset;
-	const u8 *frame = (const u8 *)buffer + 3;
+	const u8 *frame = buffer + 3;
 
 	WREG32(HDMI0_AUDIO_INFO0 + offset,
 		frame[0x0] | (frame[0x1] << 8) | (frame[0x2] << 16) | (frame[0x3] << 24));
@@ -317,7 +317,7 @@ void r600_hdmi_audio_workaround(struct drm_encoder *encoder)
 }
 
 void r600_hdmi_audio_set_dto(struct radeon_device *rdev,
-    struct radeon_crtc *crtc, unsigned int clock)
+			     struct radeon_crtc *crtc, unsigned int clock)
 {
 	struct radeon_encoder *radeon_encoder;
 	struct radeon_encoder_atom_dig *dig;
