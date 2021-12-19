@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_request.c,v 1.9 2021/12/19 12:00:48 riastradh Exp $	*/
+/*	$NetBSD: i915_request.c,v 1.10 2021/12/19 12:03:48 riastradh Exp $	*/
 
 /*
  * Copyright © 2008-2015 Intel Corporation
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_request.c,v 1.9 2021/12/19 12:00:48 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_request.c,v 1.10 2021/12/19 12:03:48 riastradh Exp $");
 
 #include <linux/dma-fence-array.h>
 #include <linux/irq_work.h>
@@ -118,8 +118,10 @@ static void i915_fence_release(struct dma_fence *fence)
 	 * freed when the slab cache itself is freed, and so we would get
 	 * caught trying to reuse dead objects.
 	 */
+#ifndef __NetBSD__
 	i915_sw_fence_fini(&rq->submit);
 	i915_sw_fence_fini(&rq->semaphore);
+#endif
 
 	kmem_cache_free(global.slab_requests, rq);
 }
@@ -613,6 +615,10 @@ static void __i915_request_dtor(void *arg)
 	struct i915_request *rq = arg;
 
 	dma_fence_destroy(&rq->fence);
+#ifdef __NetBSD__
+	i915_sw_fence_fini(&rq->submit);
+	i915_sw_fence_fini(&rq->semaphore);
+#endif
 	spin_lock_destroy(&rq->lock);
 }
 
