@@ -1,8 +1,8 @@
-/*	$NetBSD: amdgpu_dc_link_dp.c,v 1.4 2021/12/19 10:59:36 riastradh Exp $	*/
+/*	$NetBSD: amdgpu_dc_link_dp.c,v 1.5 2021/12/19 11:22:40 riastradh Exp $	*/
 
 /* Copyright 2015 Advanced Micro Devices, Inc. */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdgpu_dc_link_dp.c,v 1.4 2021/12/19 10:59:36 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdgpu_dc_link_dp.c,v 1.5 2021/12/19 11:22:40 riastradh Exp $");
 
 #include "dm_services.h"
 #include "dc.h"
@@ -4010,7 +4010,7 @@ void dp_set_panel_mode(struct dc_link *link, enum dp_panel_mode panel_mode)
 
 		if (edp_config_set.bits.PANEL_MODE_EDP
 			!= panel_mode_edp) {
-			enum ddc_result result = DDC_RESULT_UNKNOWN;
+			enum dc_status result = DC_ERROR_UNEXPECTED;
 
 			edp_config_set.bits.PANEL_MODE_EDP =
 			panel_mode_edp;
@@ -4020,7 +4020,7 @@ void dp_set_panel_mode(struct dc_link *link, enum dp_panel_mode panel_mode)
 				&edp_config_set.raw,
 				sizeof(edp_config_set.raw));
 
-			ASSERT(result == DDC_RESULT_SUCESSFULL);
+			ASSERT(result == DC_OK);
 		}
 	}
 	DC_LOG_DETECTION_DP_CAPS("Link: %d eDP panel mode supported: %d "
