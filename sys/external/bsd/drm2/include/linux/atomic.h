@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic.h,v 1.32 2021/12/19 11:02:38 riastradh Exp $	*/
+/*	$NetBSD: atomic.h,v 1.33 2021/12/19 11:02:46 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -37,14 +37,6 @@
 #include <machine/limits.h>
 
 #include <asm/barrier.h>
-
-#if defined(MULTIPROCESSOR) && !defined(__HAVE_ATOMIC_AS_MEMBAR)
-#  define	smp_mb__before_atomic()		membar_exit()
-#  define	smp_mb__after_atomic()		membar_enter()
-#else
-#  define	smp_mb__before_atomic()		__insn_barrier()
-#  define	smp_mb__after_atomic()		__insn_barrier()
-#endif
 
 #define	xchg(P, V)							      \
 	(sizeof(*(P)) == 4 ? atomic_swap_32((volatile uint32_t *)P, V)	      \
