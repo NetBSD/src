@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_gem_phys.c,v 1.5 2021/12/19 11:33:49 riastradh Exp $	*/
+/*	$NetBSD: i915_gem_phys.c,v 1.6 2021/12/19 12:10:20 riastradh Exp $	*/
 
 /*
  * SPDX-License-Identifier: MIT
@@ -7,7 +7,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_gem_phys.c,v 1.5 2021/12/19 11:33:49 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_gem_phys.c,v 1.6 2021/12/19 12:10:20 riastradh Exp $");
 
 #include <linux/highmem.h>
 #include <linux/shmem_fs.h>
@@ -92,12 +92,12 @@ static int i915_gem_object_get_pages_phys(struct drm_i915_gem_object *obj)
 	    roundup_pow_of_two(obj->base.size), 0, BUS_DMA_WAITOK,
 	    &sg->sg_dmamap);
 	if (ret)
-		goto err_st;
+		goto err_st1;
 	/* XXX errno NetBSD->Linux */
 	ret = -bus_dmamap_load_raw(dmat, sg->sg_dmamap, &obj->mm.u.phys.seg, 1,
 	    roundup_pow_of_two(obj->base.size), BUS_DMA_WAITOK);
 	if (ret)
-		goto err_st;
+		goto err_st1;
 	loaded = true;
 #else
 	sg->offset = 0;
@@ -136,17 +136,18 @@ static int i915_gem_object_get_pages_phys(struct drm_i915_gem_object *obj)
 
 	return 0;
 
-err_st:
 #ifdef __NetBSD__
+err_st1:
 	if (loaded)
 		bus_dmamap_unload(dmat, st->sgl->sg_dmamap);
 	if (st->sgl->sg_dmamap) {
 		bus_dmamap_destroy(dmat, st->sgl->sg_dmamap);
 		st->sgl->sg_dmamap = NULL;
 	}
-#endif
-	kfree(st);
 	sg_free_table(st);
+#endif
+err_st:
+	kfree(st);
 err_pci:
 #ifdef __NetBSD__
 	if (vaddr) {
