@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_fb_helper.c,v 1.17 2021/12/18 23:44:57 riastradh Exp $	*/
+/*	$NetBSD: drm_fb_helper.c,v 1.18 2021/12/19 00:29:02 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2006-2009 Red Hat Inc.
@@ -30,7 +30,7 @@
  *      Jesse Barnes <jesse.barnes@intel.com>
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_fb_helper.c,v 1.17 2021/12/18 23:44:57 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_fb_helper.c,v 1.18 2021/12/19 00:29:02 riastradh Exp $");
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
@@ -615,11 +615,8 @@ void drm_fb_helper_fini(struct drm_fb_helper *fb_helper)
 	mutex_lock(&kernel_fb_helper_lock);
 	if (!list_empty(&fb_helper->kernel_fb_list)) {
 		list_del(&fb_helper->kernel_fb_list);
-		if (list_empty(&kernel_fb_helper_list)) {
-#ifndef __NetBSD__		/* XXX drm sysrq */
+		if (list_empty(&kernel_fb_helper_list))
 			unregister_sysrq_key('v', &sysrq_drm_fb_helper_restore_op);
-#endif
-		}
 	}
 	mutex_unlock(&kernel_fb_helper_lock);
 
