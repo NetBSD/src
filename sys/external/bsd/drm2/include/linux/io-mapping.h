@@ -1,4 +1,4 @@
-/*	$NetBSD: io-mapping.h,v 1.12 2021/12/19 12:27:49 riastradh Exp $	*/
+/*	$NetBSD: io-mapping.h,v 1.13 2021/12/19 12:28:04 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -32,13 +32,18 @@
 #ifndef _LINUX_IO_MAPPING_H_
 #define _LINUX_IO_MAPPING_H_
 
-#include <sys/param.h>
-#include <sys/bus.h>
-#include <sys/kmem.h>
-#include <sys/systm.h>
-#include <sys/mman.h>
+#include <sys/types.h>
 
-#include <uvm/uvm_extern.h>
+#include <sys/bus.h>
+
+#define	bus_space_io_mapping_init_wc	linux_bus_space_io_mapping_init_wc
+#define	bus_space_io_mapping_create_wc	linux_bus_space_io_mapping_create_wc
+#define	io_mapping_fini			linux_io_mapping_fini
+#define	io_mapping_free			linux_io_mapping_free
+#define	io_mapping_map_wc		linux_io_mapping_map_wc
+#define	io_mapping_unmap		linux_io_mapping_unmap
+#define	io_mapping_map_atomic_wc	linux_io_mapping_map_atomic_wc
+#define	io_mapping_unmap_atomic		linux_io_mapping_unmap_atomic
 
 struct io_mapping {
 	bus_space_tag_t		diom_bst;
@@ -48,157 +53,18 @@ struct io_mapping {
 	bool			diom_atomic;
 };
 
-static inline bool
-bus_space_io_mapping_init_wc(bus_space_tag_t bst, struct io_mapping *mapping,
-    bus_addr_t addr, bus_size_t size)
-{
-	bus_size_t offset;
+bool bus_space_io_mapping_init_wc(bus_space_tag_t, struct io_mapping *,
+    bus_addr_t, bus_size_t);
+void io_mapping_fini(struct io_mapping *);
 
-	KASSERT(PAGE_SIZE <= size);
-	KASSERT(0 == (size & (PAGE_SIZE - 1)));
-	KASSERT(__type_fit(off_t, size));
+struct io_mapping *bus_space_io_mapping_create_wc(bus_space_tag_t, bus_addr_t,
+    bus_size_t);
+void io_mapping_free(struct io_mapping *);
 
-	/*
-	 * XXX For x86: Reserve the region (bus_space_reserve) and set
-	 * an MTRR to make it write-combining.  Doesn't matter if we
-	 * have PAT and we use pmap_kenter_pa, but matters if we don't
-	 * have PAT or if we later make this use direct map.
-	 */
+void *io_mapping_map_wc(struct io_mapping *, bus_addr_t, bus_size_t);
+void io_mapping_unmap(struct io_mapping *, void *, bus_size_t);
 
-	/* Make sure the region is mappable.  */
-	for (offset = 0; offset < size; offset += PAGE_SIZE) {
-		if (bus_space_mmap(bst, addr, offset, PROT_READ|PROT_WRITE,
-			BUS_SPACE_MAP_LINEAR|BUS_SPACE_MAP_PREFETCHABLE)
-		    == (paddr_t)-1)
-			return false;
-	}
-
-	/* Initialize the mapping record.  */
-	mapping->diom_bst = bst;
-	mapping->base = addr;
-	mapping->size = size;
-	mapping->diom_atomic = false;
-
-	/* Allocate kva for one page.  */
-	mapping->diom_va = uvm_km_alloc(kernel_map, PAGE_SIZE, PAGE_SIZE,
-	    UVM_KMF_VAONLY | UVM_KMF_WAITVA);
-	KASSERT(mapping->diom_va != 0);
-
-	return true;
-}
-
-static inline void
-io_mapping_fini(struct io_mapping *mapping)
-{
-
-	KASSERT(!mapping->diom_atomic);
-
-	uvm_km_free(kernel_map, mapping->diom_va, PAGE_SIZE, UVM_KMF_VAONLY);
-	mapping->diom_va = 0;	/* paranoia */
-}
-
-static inline struct io_mapping *
-bus_space_io_mapping_create_wc(bus_space_tag_t bst, bus_addr_t addr,
-    bus_size_t size)
-{
-	struct io_mapping *mapping;
-
-	mapping = kmem_alloc(sizeof(*mapping), KM_SLEEP);
-	if (!bus_space_io_mapping_init_wc(bst, mapping, addr, size)) {
-		kmem_free(mapping, sizeof(*mapping));
-		return NULL;
-	}
-
-	return mapping;
-}
-
-static inline void
-io_mapping_free(struct io_mapping *mapping)
-{
-
-	io_mapping_fini(mapping);
-	kmem_free(mapping, sizeof(*mapping));
-}
-
-static inline void *
-io_mapping_map_wc(struct io_mapping *mapping, bus_addr_t offset,
-    bus_size_t size)
-{
-	bus_size_t pg, npgs = size >> PAGE_SHIFT;
-	vaddr_t va;
-	paddr_t cookie;
-
-	KASSERT(0 == (offset & (PAGE_SIZE - 1)));
-	KASSERT(PAGE_SIZE <= mapping->size);
-	KASSERT(offset <= (mapping->size - PAGE_SIZE));
-	KASSERT(__type_fit(off_t, offset));
-
-	va = uvm_km_alloc(kernel_map, size, PAGE_SIZE,
-	    UVM_KMF_VAONLY|UVM_KMF_WAITVA);
-	KASSERT(va != mapping->diom_va);
-	for (pg = 0; pg < npgs; pg++) {
-		cookie = bus_space_mmap(mapping->diom_bst, mapping->base,
-		    offset + pg*PAGE_SIZE,
-		    PROT_READ|PROT_WRITE,
-		    BUS_SPACE_MAP_LINEAR|BUS_SPACE_MAP_PREFETCHABLE);
-		KASSERT(cookie != (paddr_t)-1);
-
-		pmap_kenter_pa(va + pg*PAGE_SIZE, pmap_phys_address(cookie),
-		    PROT_READ|PROT_WRITE, pmap_mmap_flags(cookie));
-	}
-	pmap_update(pmap_kernel());
-
-	return (void *)va;
-}
-
-static inline void
-io_mapping_unmap(struct io_mapping *mapping, void *ptr, bus_size_t size)
-{
-	vaddr_t va = (vaddr_t)ptr;
-
-	KASSERT(mapping->diom_va != va);
-
-	pmap_kremove(va, size);
-	pmap_update(pmap_kernel());
-
-	uvm_km_free(kernel_map, va, size, UVM_KMF_VAONLY);
-}
-
-static inline void *
-io_mapping_map_atomic_wc(struct io_mapping *mapping, bus_addr_t offset)
-{
-	paddr_t cookie;
-
-	KASSERT(0 == (offset & (PAGE_SIZE - 1)));
-	KASSERT(PAGE_SIZE <= mapping->size);
-	KASSERT(offset <= (mapping->size - PAGE_SIZE));
-	KASSERT(__type_fit(off_t, offset));
-	KASSERT(!mapping->diom_atomic);
-
-	cookie = bus_space_mmap(mapping->diom_bst, mapping->base, offset,
-	    PROT_READ|PROT_WRITE,
-	    BUS_SPACE_MAP_LINEAR|BUS_SPACE_MAP_PREFETCHABLE);
-	KASSERT(cookie != (paddr_t)-1);
-
-	pmap_kenter_pa(mapping->diom_va, pmap_phys_address(cookie),
-	    PROT_READ|PROT_WRITE, pmap_mmap_flags(cookie));
-	pmap_update(pmap_kernel());
-
-	mapping->diom_atomic = true;
-	return (void *)mapping->diom_va;
-}
-
-static inline void
-io_mapping_unmap_atomic(struct io_mapping *mapping, void *ptr __diagused)
-{
-
-	KASSERT(mapping->diom_atomic);
-	KASSERT(mapping->diom_va == (vaddr_t)ptr);
-
-	pmap_kremove(mapping->diom_va, PAGE_SIZE);
-	pmap_update(pmap_kernel());
-
-	mapping->diom_atomic = false;
-}
+void *io_mapping_map_atomic_wc(struct io_mapping *, bus_addr_t);
+void io_mapping_unmap_atomic(struct io_mapping *, void *);
 
 #endif  /* _LINUX_IO_MAPPING_H_ */
