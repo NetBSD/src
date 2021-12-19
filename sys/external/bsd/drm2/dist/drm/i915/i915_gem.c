@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_gem.c,v 1.63 2021/12/19 01:24:25 riastradh Exp $	*/
+/*	$NetBSD: i915_gem.c,v 1.64 2021/12/19 01:34:08 riastradh Exp $	*/
 
 /*
  * Copyright © 2008-2015 Intel Corporation
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_gem.c,v 1.63 2021/12/19 01:24:25 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_gem.c,v 1.64 2021/12/19 01:34:08 riastradh Exp $");
 
 #ifdef __NetBSD__
 #if 0				/* XXX uvmhist option?  */
@@ -283,7 +283,11 @@ i915_gem_dumb_create(struct drm_file *file,
 	}
 
 	/* have to work out size/pitch and return them */
+#ifdef __NetBSD__		/* ALIGN means something else. */
+	args->pitch = round_up(args->width * cpp, 64);
+#else
 	args->pitch = ALIGN(args->width * cpp, 64);
+#endif
 
 	/* align stride to page size so that we can remap */
 	if (args->pitch > intel_plane_fb_max_stride(to_i915(dev), format,

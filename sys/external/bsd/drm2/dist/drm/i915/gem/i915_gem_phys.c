@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_gem_phys.c,v 1.2 2021/12/18 23:45:30 riastradh Exp $	*/
+/*	$NetBSD: i915_gem_phys.c,v 1.3 2021/12/19 01:34:08 riastradh Exp $	*/
 
 /*
  * SPDX-License-Identifier: MIT
@@ -7,7 +7,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_gem_phys.c,v 1.2 2021/12/18 23:45:30 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_gem_phys.c,v 1.3 2021/12/19 01:34:08 riastradh Exp $");
 
 #include <linux/highmem.h>
 #include <linux/shmem_fs.h>
@@ -155,7 +155,11 @@ static const struct drm_i915_gem_object_ops i915_gem_phys_ops = {
 
 int i915_gem_object_attach_phys(struct drm_i915_gem_object *obj, int align)
 {
+#ifdef __NetBSD__
+	bus_dmamap_t pages;
+#else
 	struct sg_table *pages;
+#endif
 	int err;
 
 	if (align > obj->base.size)
@@ -209,7 +213,13 @@ int i915_gem_object_attach_phys(struct drm_i915_gem_object *obj, int align)
 err_xfer:
 	obj->ops = &i915_gem_shmem_ops;
 	if (!IS_ERR_OR_NULL(pages)) {
+#ifdef __NetBSD__
+		unsigned int sg_page_sizes = 0, seg;
+		for (seg = 0; seg < pages->dm_nsegs; seg++)
+			sg_page_sizes |= pages->dm_segs[seg].ds_len;
+#else
 		unsigned int sg_page_sizes = i915_sg_page_sizes(pages->sgl);
+#endif
 
 		__i915_gem_object_set_pages(obj, pages, sg_page_sizes);
 	}
