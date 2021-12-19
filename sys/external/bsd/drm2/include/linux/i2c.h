@@ -1,4 +1,4 @@
-/*	$NetBSD: i2c.h,v 1.12 2021/12/19 10:36:07 riastradh Exp $	*/
+/*	$NetBSD: i2c.h,v 1.13 2021/12/19 10:57:27 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -61,6 +61,7 @@ struct i2c_msg;
  * I2C_CLASS_*: i2c_adapter classes
  */
 #define	I2C_CLASS_DDC	0x01
+#define	I2C_CLASS_SPD	0x02
 
 /*
  * I2C_FUNC_*: i2c_adapter functionality bits
