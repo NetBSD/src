@@ -1,4 +1,4 @@
-#	$NetBSD: files.drmkms,v 1.37 2021/12/19 00:25:53 riastradh Exp $
+#	$NetBSD: files.drmkms,v 1.38 2021/12/19 00:26:09 riastradh Exp $
 
 include "external/bsd/drm2/linux/files.drmkms_linux"
 
@@ -101,8 +101,9 @@ file	external/bsd/drm2/dist/drm/drm_hdcp.c	drmkms
 file	external/bsd/drm2/dist/drm/drm_ioctl.c	drmkms
 file	external/bsd/drm2/dist/drm/drm_irq.c	drmkms
 file	external/bsd/drm2/dist/drm/drm_kms_helper_common.c	drmkms
-file	external/bsd/drm2/dist/drm/drm_lease.c	drmkms
-file	external/bsd/drm2/dist/drm/drm_memory.c	drmkms
+file	external/bsd/drm2/drm/drm_lease.c	drmkms
+file	external/bsd/drm2/drm/drm_lock.c	drmkms
+file	external/bsd/drm2/drm/drm_memory.c	drmkms
 file	external/bsd/drm2/dist/drm/drm_mm.c	drmkms
 file	external/bsd/drm2/dist/drm/drm_mode_config.c	drmkms
 file	external/bsd/drm2/dist/drm/drm_mode_object.c	drmkms
@@ -129,6 +130,7 @@ file	external/bsd/drm2/dist/drm/drm_writeback.c	drmkms
 file	external/bsd/drm2/drm/drm_cache.c	drmkms
 file	external/bsd/drm2/drm/drm_fops.c	drmkms
 file	external/bsd/drm2/drm/drm_gem_framebuffer_helper.c	drmkms
+file	external/bsd/drm2/drm/drm_lease.c	drmkms
 file	external/bsd/drm2/drm/drm_lock.c	drmkms
 file	external/bsd/drm2/drm/drm_memory.c	drmkms
 file	external/bsd/drm2/drm/drm_scatter.c	drmkms
