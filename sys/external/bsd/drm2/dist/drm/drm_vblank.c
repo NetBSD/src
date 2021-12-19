@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_vblank.c,v 1.9 2021/12/19 11:52:16 riastradh Exp $	*/
+/*	$NetBSD: drm_vblank.c,v 1.10 2021/12/19 11:52:25 riastradh Exp $	*/
 
 /*
  * drm_irq.c IRQ and vblank support
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_vblank.c,v 1.9 2021/12/19 11:52:16 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_vblank.c,v 1.10 2021/12/19 11:52:25 riastradh Exp $");
 
 #include <linux/export.h>
 #include <linux/moduleparam.h>
@@ -463,10 +463,8 @@ void drm_vblank_cleanup(struct drm_device *dev)
 			drm_core_check_feature(dev, DRIVER_MODESET));
 
 		del_timer_sync(&vblank->disable_timer);
-#ifdef __NetBSD__
 		teardown_timer(&vblank->disable_timer);
 		seqlock_destroy(&vblank->seqlock);
-#endif
 	}
 
 	kfree(dev->vblank);
@@ -505,11 +503,7 @@ int drm_vblank_init(struct drm_device *dev, unsigned int num_crtcs)
 
 		vblank->dev = dev;
 		vblank->pipe = i;
-#ifdef __NetBSD__
 		DRM_INIT_WAITQUEUE(&vblank->queue, "drmvblnq");
-#else
-		init_waitqueue_head(&vblank->queue);
-#endif
 		timer_setup(&vblank->disable_timer, vblank_disable_fn, 0);
 		seqlock_init(&vblank->seqlock);
 	}
@@ -545,11 +539,7 @@ EXPORT_SYMBOL(drm_vblank_init);
  * Drivers can use this to implement vblank waits using wait_event() and related
  * functions.
  */
-#ifdef __NetBSD__
 drm_waitqueue_t *drm_crtc_vblank_waitqueue(struct drm_crtc *crtc)
-#else
-wait_queue_head_t *drm_crtc_vblank_waitqueue(struct drm_crtc *crtc)
-#endif
 {
 	return &crtc->dev->vblank[drm_crtc_index(crtc)].queue;
 }
@@ -1190,20 +1180,12 @@ void drm_wait_one_vblank(struct drm_device *dev, unsigned int pipe)
 	if (WARN(ret, "vblank not available on crtc %i, ret=%i\n", pipe, ret))
 		return;
 
-#ifdef __NetBSD__
 	spin_lock(&dev->vbl_lock);
 	last = drm_vblank_count(dev, pipe);
 	DRM_SPIN_TIMED_WAIT_UNTIL(ret, &vblank->queue, &dev->vbl_lock,
 	    msecs_to_jiffies(100),
 	    last != drm_vblank_count(dev, pipe));
 	spin_unlock(&dev->vbl_lock);
-#else
-	last = drm_vblank_count(dev, pipe);
-
-	ret = wait_event_timeout(vblank->queue,
-				 last != drm_vblank_count(dev, pipe),
-				 msecs_to_jiffies(100));
-#endif
 
 	WARN(ret == 0, "vblank wait timed out on crtc %i\n", pipe);
 
@@ -1261,11 +1243,7 @@ void drm_crtc_vblank_off(struct drm_crtc *crtc)
 	if (drm_core_check_feature(dev, DRIVER_ATOMIC) || !vblank->inmodeset)
 		drm_vblank_disable_and_save(dev, pipe);
 
-#ifdef __NetBSD__
 	DRM_SPIN_WAKEUP_ONE(&vblank->queue, &dev->vbl_lock);
-#else
-	wake_up(&vblank->queue);
-#endif
 
 	/*
 	 * Prevent subsequent drm_vblank_get() from re-enabling
@@ -1784,17 +1762,10 @@ int drm_wait_vblank_ioctl(struct drm_device *dev, void *data,
 
 		DRM_DEBUG("waiting on vblank count %"PRIu64", crtc %u\n",
 			  req_seq, pipe);
-#ifdef __NetBSD__
 		DRM_SPIN_TIMED_WAIT_UNTIL(wait, &vblank->queue,
 		    &dev->vbl_lock, msecs_to_jiffies(3000),
-		    vblank_passed(drm_vblank_count(dev, pipe), req_seq) ||
-				  !READ_ONCE(vblank->enabled));
-#else
-		wait = wait_event_interruptible_timeout(vblank->queue,
-			vblank_passed(drm_vblank_count(dev, pipe), req_seq) ||
-				      !READ_ONCE(vblank->enabled),
-			msecs_to_jiffies(3000));
-#endif
+		    (vblank_passed(drm_vblank_count(dev, pipe), req_seq) ||
+			!READ_ONCE(vblank->enabled)));
 
 		switch (wait) {
 		case 0:
@@ -1897,11 +1868,7 @@ bool drm_handle_vblank(struct drm_device *dev, unsigned int pipe)
 
 	spin_unlock(&dev->vblank_time_lock);
 
-#ifdef __NetBSD__
 	DRM_SPIN_WAKEUP_ONE(&vblank->queue, &dev->vbl_lock);
-#else
-	wake_up(&vblank->queue);
-#endif
 
 	/* With instant-off, we defer disabling the interrupt until after
 	 * we finish processing the following vblank after all events have
