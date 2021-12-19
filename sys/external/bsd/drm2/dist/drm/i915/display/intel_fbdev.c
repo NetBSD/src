@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_fbdev.c,v 1.6 2021/12/19 11:39:32 riastradh Exp $	*/
+/*	$NetBSD: intel_fbdev.c,v 1.7 2021/12/19 11:39:45 riastradh Exp $	*/
 
 /*
  * Copyright © 2007 David Airlie
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intel_fbdev.c,v 1.6 2021/12/19 11:39:32 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intel_fbdev.c,v 1.7 2021/12/19 11:39:45 riastradh Exp $");
 
 #include <linux/async.h>
 #include <linux/console.h>
@@ -568,7 +568,9 @@ void intel_fbdev_unregister(struct drm_i915_private *dev_priv)
 		return;
 
 	cancel_work_sync(&dev_priv->fbdev_suspend_work);
+#ifndef __NetBSD__		/* XXX fb async */
 	if (!current_is_async())
+#endif
 		intel_fbdev_sync(ifbdev);
 
 	drm_fb_helper_unregister_fbi(&ifbdev->helper);
