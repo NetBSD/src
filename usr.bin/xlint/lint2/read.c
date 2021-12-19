@@ -1,4 +1,4 @@
-/* $NetBSD: read.c,v 1.74 2021/12/19 10:29:06 rillig Exp $ */
+/* $NetBSD: read.c,v 1.75 2021/12/19 10:42:36 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: read.c,v 1.74 2021/12/19 10:29:06 rillig Exp $");
+__RCSID("$NetBSD: read.c,v 1.75 2021/12/19 10:42:36 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -342,13 +342,13 @@ again:
 	case 's':
 		ai = xalloc(sizeof(*ai));
 		ai->a_num = parse_int(&cp);
-		if (c == 'z') {
+		if (c == 'z')
 			ai->a_pcon = ai->a_zero = true;
-		} else if (c == 'p') {
+		else if (c == 'p')
 			ai->a_pcon = true;
-		} else if (c == 'n') {
+		else if (c == 'n')
 			ai->a_ncon = true;
-		} else {
+		else {
 			ai->a_fmt = true;
 			ai->a_fstrg = inpqstrg(cp, &cp);
 		}
@@ -522,9 +522,8 @@ decldef(pos_t pos, const char *cp)
 		    symp->s_type == sym.s_type &&
 		    ((symp->s_def == DECL && sym.s_def == DECL) ||
 		     (!sflag && symp->s_def == TDEF && sym.s_def == TDEF)) &&
-		    !symp->s_static && !sym.s_static) {
+		    !symp->s_static && !sym.s_static)
 			break;
-		}
 	}
 
 	if (symp == NULL) {
@@ -697,9 +696,8 @@ inptype(const char *cp, const char **epp)
 				if (i == narg - 1 && *cp == 'E') {
 					tp->t_vararg = true;
 					cp++;
-				} else {
+				} else
 					tp->t_args[i] = TP(inptype(cp, &cp));
-				}
 			}
 		}
 		tp->t_subt = TP(inptype(cp, &cp));
@@ -780,59 +778,52 @@ gettlen(const char *cp, const char **epp)
 			t = BOOL;
 		break;
 	case 'C':
-		if (s == 's') {
+		if (s == 's')
 			t = SCHAR;
-		} else if (s == 'u') {
+		else if (s == 'u')
 			t = UCHAR;
-		} else if (s == '\0') {
+		else if (s == '\0')
 			t = CHAR;
-		}
 		break;
 	case 'S':
-		if (s == 'u') {
+		if (s == 'u')
 			t = USHORT;
-		} else if (s == '\0') {
+		else if (s == '\0')
 			t = SHORT;
-		}
 		break;
 	case 'I':
-		if (s == 'u') {
+		if (s == 'u')
 			t = UINT;
-		} else if (s == '\0') {
+		else if (s == '\0')
 			t = INT;
-		}
 		break;
 	case 'L':
-		if (s == 'u') {
+		if (s == 'u')
 			t = ULONG;
-		} else if (s == '\0') {
+		else if (s == '\0')
 			t = LONG;
-		}
 		break;
 	case 'Q':
-		if (s == 'u') {
+		if (s == 'u')
 			t = UQUAD;
-		} else if (s == '\0') {
+		else if (s == '\0')
 			t = QUAD;
-		}
 		break;
 #ifdef INT128_SIZE
 	case 'J':
-		if (s == 'u') {
+		if (s == 'u')
 			t = UINT128;
-		} else if (s == '\0') {
+		else if (s == '\0')
 			t = INT128;
-		}
 		break;
 #endif
 	case 'D':
-		if (s == 's') {
+		if (s == 's')
 			t = FLOAT;
-		} else if (s == 'l') {
+		else if (s == 'l')
 			t = LDOUBLE;
-		} else if (s == '\0') {
+		else if (s == '\0')
 			t = DOUBLE;
-		}
 		break;
 	case 'V':
 		if (s == '\0')
@@ -852,22 +843,20 @@ gettlen(const char *cp, const char **epp)
 			t = FUNC;
 		break;
 	case 'T':
-		if (s == 'e') {
+		if (s == 'e')
 			t = ENUM;
-		} else if (s == 's') {
+		else if (s == 's')
 			t = STRUCT;
-		} else if (s == 'u') {
+		else if (s == 'u')
 			t = UNION;
-		}
 		break;
 	case 'X':
-		if (s == 's') {
+		if (s == 's')
 			t = FCOMPLEX;
-		} else if (s == 'l') {
+		else if (s == 'l')
 			t = LCOMPLEX;
-		} else if (s == '\0') {
+		else if (s == '\0')
 			t = DCOMPLEX;
-		}
 		break;
 	default:
 		break;
@@ -889,11 +878,10 @@ gettlen(const char *cp, const char **epp)
 		if (ch_isdigit(c)) {
 			narg = parse_int(&cp);
 			for (i = 0; i < narg; i++) {
-				if (i == narg - 1 && *cp == 'E') {
+				if (i == narg - 1 && *cp == 'E')
 					cp++;
-				} else {
+				else
 					(void)gettlen(cp, &cp);
-				}
 			}
 		}
 		(void)gettlen(cp, &cp);
