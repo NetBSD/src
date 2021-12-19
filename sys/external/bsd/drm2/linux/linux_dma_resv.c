@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_dma_resv.c,v 1.9 2021/12/19 12:13:53 riastradh Exp $	*/
+/*	$NetBSD: linux_dma_resv.c,v 1.10 2021/12/19 12:14:02 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_dma_resv.c,v 1.9 2021/12/19 12:13:53 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_dma_resv.c,v 1.10 2021/12/19 12:14:02 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/poll.h>
@@ -108,15 +108,22 @@ dma_resv_fini(struct dma_resv *robj)
 {
 	unsigned i;
 
-	if (robj->robj_prealloc)
+	if (robj->robj_prealloc) {
 		objlist_free(robj->robj_prealloc);
-	if (robj->fence) {
-		for (i = 0; i < robj->fence->shared_count; i++)
-			dma_fence_put(robj->fence->shared[i]);
-		objlist_free(robj->fence);
+		robj->robj_prealloc = NULL; /* paranoia */
 	}
-	if (robj->fence_excl)
+	if (robj->fence) {
+		for (i = 0; i < robj->fence->shared_count; i++) {
+			dma_fence_put(robj->fence->shared[i]);
+			robj->fence->shared[i] = NULL; /* paranoia */
+		}
+		objlist_free(robj->fence);
+		robj->fence = NULL; /* paranoia */
+	}
+	if (robj->fence_excl) {
 		dma_fence_put(robj->fence_excl);
+		robj->fence_excl = NULL; /* paranoia */
+	}
 	ww_mutex_destroy(&robj->lock);
 }
 
@@ -472,13 +479,18 @@ dma_resv_add_excl_fence(struct dma_resv *robj,
 	dma_resv_write_commit(robj, &ticket);
 
 	/* Release the old exclusive fence, if any.  */
-	if (old_fence)
+	if (old_fence) {
 		dma_fence_put(old_fence);
+		old_fence = NULL; /* paranoia */
+	}
 
 	/* Release any old shared fences.  */
 	if (old_list) {
-		while (old_shared_count--)
+		while (old_shared_count--) {
 			dma_fence_put(old_list->shared[old_shared_count]);
+			/* paranoia */
+			old_list->shared[old_shared_count] = NULL;
+		}
 	}
 }
 
@@ -593,8 +605,10 @@ dma_resv_add_shared_fence(struct dma_resv *robj,
 	}
 
 	/* Release a fence if we replaced it.  */
-	if (replace)
+	if (replace) {
 		dma_fence_put(replace);
+		replace = NULL;	/* paranoia */
+	}
 }
 
 /*
@@ -621,13 +635,14 @@ int
 dma_resv_get_fences_rcu(const struct dma_resv *robj,
     struct dma_fence **fencep, unsigned *nsharedp, struct dma_fence ***sharedp)
 {
-	const struct dma_resv_list *list;
-	struct dma_fence *fence;
+	const struct dma_resv_list *list = NULL;
+	struct dma_fence *fence = NULL;
 	struct dma_fence **shared = NULL;
 	unsigned shared_alloc, shared_count, i;
 	struct dma_resv_read_ticket ticket;
 
-top:
+top:	KASSERT(fence == NULL);
+
 	/* Enter an RCU read section and get a read ticket.  */
 	rcu_read_lock();
 	dma_resv_read_begin(robj, &ticket);
@@ -693,6 +708,7 @@ top:
 	}
 
 	/* If there is an exclusive fence, grab it.  */
+	KASSERT(fence == NULL);
 	fence = atomic_load_consume(&robj->fence_excl);
 
 	/*
@@ -700,8 +716,10 @@ top:
 	 * parking ticket.  If it's invalid, do not pass go and do not
 	 * collect $200.
 	 */
-	if (!dma_resv_read_valid(robj, &ticket))
+	if (!dma_resv_read_valid(robj, &ticket)) {
+		fence = NULL;
 		goto restart;
+	}
 
 	/*
 	 * Try to get a reference to the exclusive fence, if there is
@@ -735,10 +753,11 @@ put_restart:
 	}
 	if (fence) {
 		dma_fence_put(fence);
-		fence = NULL;	/* paranoia */
+		fence = NULL;
 	}
 
 restart:
+	KASSERT(fence == NULL);
 	rcu_read_unlock();
 	goto top;
 }
@@ -766,7 +785,8 @@ dma_resv_copy_fences(struct dma_resv *dst_robj,
 
 	KASSERT(dma_resv_held(dst_robj));
 
-top:
+top:	KASSERT(fence == NULL);
+
 	/* Enter an RCU read section and get a read ticket.  */
 	rcu_read_lock();
 	dma_resv_read_begin(src_robj, &read_ticket);
@@ -792,6 +812,7 @@ top:
 		/* Copy over all fences that are not yet signalled.  */
 		dst_list->shared_count = 0;
 		for (i = 0; i < shared_count; i++) {
+			KASSERT(fence == NULL);
 			fence = atomic_load_relaxed(&src_list->shared[i]);
 			if ((fence = dma_fence_get_rcu(fence)) == NULL)
 				goto restart;
@@ -806,6 +827,7 @@ top:
 	}
 
 	/* Get the exclusive fence.  */
+	KASSERT(fence == NULL);
 	if ((fence = atomic_load_consume(&src_robj->fence_excl)) != NULL) {
 
 		/*
@@ -857,31 +879,34 @@ top:
 	dma_resv_write_commit(dst_robj, &write_ticket);
 
 	/* Release the old exclusive fence, if any.  */
-	if (old_fence)
+	if (old_fence) {
 		dma_fence_put(old_fence);
+		old_fence = NULL; /* paranoia */
+	}
 
 	/* Release any old shared fences.  */
 	if (old_list) {
-		for (i = old_list->shared_count; i --> 0;)
+		for (i = old_list->shared_count; i --> 0;) {
 			dma_fence_put(old_list->shared[i]);
+			old_list->shared[i] = NULL; /* paranoia */
+		}
+		objlist_free(old_list);
+		old_list = NULL; /* paranoia */
 	}
 
 	/* Success!  */
 	return 0;
 
 restart:
+	KASSERT(fence == NULL);
 	rcu_read_unlock();
 	if (dst_list) {
 		for (i = dst_list->shared_count; i --> 0;) {
 			dma_fence_put(dst_list->shared[i]);
-			dst_list->shared[i] = NULL;
+			dst_list->shared[i] = NULL; /* paranoia */
 		}
 		objlist_free(dst_list);
 		dst_list = NULL;
-	}
-	if (fence) {
-		dma_fence_put(fence);
-		fence = NULL;
 	}
 	goto top;
 }
@@ -903,19 +928,18 @@ dma_resv_test_signaled_rcu(const struct dma_resv *robj,
 {
 	struct dma_resv_read_ticket ticket;
 	struct dma_resv_list *list;
-	struct dma_fence *fence;
+	struct dma_fence *fence = NULL;
 	uint32_t i, shared_count;
 	bool signaled = true;
 
-top:
+top:	KASSERT(fence == NULL);
+
 	/* Enter an RCU read section and get a read ticket.  */
 	rcu_read_lock();
 	dma_resv_read_begin(robj, &ticket);
 
 	/* If shared is requested and there is a shared list, test it.  */
-	if (!shared)
-		goto excl;
-	if ((list = atomic_load_consume(&robj->fence)) != NULL) {
+	if (shared && (list = atomic_load_consume(&robj->fence)) != NULL) {
 
 		/* Find out how long it is.  */
 		shared_count = atomic_load_relaxed(&list->shared_count);
@@ -934,19 +958,20 @@ top:
 		 * signalled.
 		 */
 		for (i = 0; i < shared_count; i++) {
+			KASSERT(fence == NULL);
 			fence = atomic_load_relaxed(&list->shared[i]);
-			fence = dma_fence_get_rcu(fence);
-			if (fence == NULL)
+			if ((fence = dma_fence_get_rcu(fence)) == NULL)
 				goto restart;
 			signaled &= dma_fence_is_signaled(fence);
 			dma_fence_put(fence);
+			fence = NULL;
 			if (!signaled)
 				goto out;
 		}
 	}
 
-excl:
 	/* If there is an exclusive fence, test it.  */
+	KASSERT(fence == NULL);
 	if ((fence = atomic_load_consume(&robj->fence_excl)) != NULL) {
 
 		/*
@@ -955,8 +980,10 @@ excl:
 		 * XXX I'm not actually sure this is necessary since
 		 * pointer writes are supposed to be atomic.
 		 */
-		if (!dma_resv_read_valid(robj, &ticket))
+		if (!dma_resv_read_valid(robj, &ticket)) {
+			fence = NULL;
 			goto restart;
+		}
 
 		/*
 		 * If it is going away, restart.  Otherwise, acquire a
@@ -966,14 +993,17 @@ excl:
 			goto restart;
 		signaled &= dma_fence_is_signaled(fence);
 		dma_fence_put(fence);
+		fence = NULL;
 		if (!signaled)
 			goto out;
 	}
 
-out:	rcu_read_unlock();
+out:	KASSERT(fence == NULL);
+	rcu_read_unlock();
 	return signaled;
 
 restart:
+	KASSERT(fence == NULL);
 	rcu_read_unlock();
 	goto top;
 }
@@ -997,22 +1027,21 @@ dma_resv_wait_timeout_rcu(const struct dma_resv *robj,
 {
 	struct dma_resv_read_ticket ticket;
 	struct dma_resv_list *list;
-	struct dma_fence *fence;
+	struct dma_fence *fence = NULL;
 	uint32_t i, shared_count;
 	long ret;
 
 	if (timeout == 0)
 		return dma_resv_test_signaled_rcu(robj, shared);
 
-top:
+top:	KASSERT(fence == NULL);
+
 	/* Enter an RCU read section and get a read ticket.  */
 	rcu_read_lock();
 	dma_resv_read_begin(robj, &ticket);
 
 	/* If shared is requested and there is a shared list, wait on it.  */
-	if (!shared)
-		goto excl;
-	if ((list = atomic_load_consume(&robj->fence)) != NULL) {
+	if (shared && (list = atomic_load_consume(&robj->fence)) != NULL) {
 
 		/* Find out how long it is.  */
 		shared_count = list->shared_count;
@@ -1031,18 +1060,19 @@ top:
 		 * is not signalled.
 		 */
 		for (i = 0; i < shared_count; i++) {
+			KASSERT(fence == NULL);
 			fence = atomic_load_relaxed(&list->shared[i]);
-			fence = dma_fence_get_rcu(fence);
-			if (fence == NULL)
+			if ((fence = dma_fence_get_rcu(fence)) == NULL)
 				goto restart;
 			if (!dma_fence_is_signaled(fence))
 				goto wait;
 			dma_fence_put(fence);
+			fence = NULL;
 		}
 	}
 
-excl:
 	/* If there is an exclusive fence, test it.  */
+	KASSERT(fence == NULL);
 	if ((fence = atomic_load_consume(&robj->fence_excl)) != NULL) {
 
 		/*
@@ -1051,8 +1081,10 @@ excl:
 		 * XXX I'm not actually sure this is necessary since
 		 * pointer writes are supposed to be atomic.
 		 */
-		if (!dma_resv_read_valid(robj, &ticket))
+		if (!dma_resv_read_valid(robj, &ticket)) {
+			fence = NULL;
 			goto restart;
+		}
 
 		/*
 		 * If it is going away, restart.  Otherwise, acquire a
@@ -1064,13 +1096,16 @@ excl:
 		if (!dma_fence_is_signaled(fence))
 			goto wait;
 		dma_fence_put(fence);
+		fence = NULL;
 	}
 
 	/* Success!  Return the number of ticks left.  */
 	rcu_read_unlock();
+	KASSERT(fence == NULL);
 	return timeout;
 
 restart:
+	KASSERT(fence == NULL);
 	rcu_read_unlock();
 	goto top;
 
@@ -1084,6 +1119,7 @@ wait:
 	rcu_read_unlock();
 	ret = dma_fence_wait_timeout(fence, intr, timeout);
 	dma_fence_put(fence);
+	fence = NULL;
 	if (ret <= 0)
 		return ret;
 	KASSERT(ret <= timeout);
@@ -1160,7 +1196,7 @@ dma_resv_do_poll(const struct dma_resv *robj, int events,
 {
 	struct dma_resv_read_ticket ticket;
 	struct dma_resv_list *list;
-	struct dma_fence *fence;
+	struct dma_fence *fence = NULL;
 	uint32_t i, shared_count;
 	int revents;
 	bool recorded = false;	/* curlwp is on the selq */
@@ -1177,15 +1213,15 @@ dma_resv_do_poll(const struct dma_resv *robj, int events,
 	if (revents == 0)
 		return 0;
 
-top:
+top:	KASSERT(fence == NULL);
+
 	/* Enter an RCU read section and get a read ticket.  */
 	rcu_read_lock();
 	dma_resv_read_begin(robj, &ticket);
 
 	/* If we want to wait for all fences, get the shared list.  */
-	if (!(events & POLLOUT))
-		goto excl;
-	if ((list = atomic_load_consume(&robj->fence)) != NULL) do {
+	if ((events & POLLOUT) != 0 &&
+	    (list = atomic_load_consume(&robj->fence)) != NULL) do {
 
 		/* Find out how long it is.  */
 		shared_count = list->shared_count;
@@ -1204,15 +1240,17 @@ top:
 		 * find any that is not signalled.
 		 */
 		for (i = 0; i < shared_count; i++) {
+			KASSERT(fence == NULL);
 			fence = atomic_load_relaxed(&list->shared[i]);
-			fence = dma_fence_get_rcu(fence);
-			if (fence == NULL)
+			if ((fence = dma_fence_get_rcu(fence)) == NULL)
 				goto restart;
 			if (!dma_fence_is_signaled(fence)) {
 				dma_fence_put(fence);
+				fence = NULL;
 				break;
 			}
 			dma_fence_put(fence);
+			fence = NULL;
 		}
 
 		/* If all shared fences have been signalled, move on.  */
@@ -1241,23 +1279,25 @@ top:
 		 * callback later.
 		 */
 		for (i = 0; i < shared_count; i++) {
+			KASSERT(fence == NULL);
 			fence = atomic_load_relaxed(&list->shared[i]);
-			fence = dma_fence_get_rcu(fence);
-			if (fence == NULL)
+			if ((fence = dma_fence_get_rcu(fence)) == NULL)
 				goto restart;
 			if (!dma_fence_add_callback(fence, &rpoll->rp_fcb,
 				dma_resv_poll_cb)) {
 				dma_fence_put(fence);
+				fence = NULL;
 				revents &= ~POLLOUT;
 				callback = true;
 				break;
 			}
 			dma_fence_put(fence);
+			fence = NULL;
 		}
 	} while (0);
 
-excl:
 	/* We always wait for at least the exclusive fence, so get it.  */
+	KASSERT(fence == NULL);
 	if ((fence = atomic_load_consume(&robj->fence_excl)) != NULL) do {
 
 		/*
@@ -1266,8 +1306,10 @@ excl:
 		 * XXX I'm not actually sure this is necessary since
 		 * pointer writes are supposed to be atomic.
 		 */
-		if (!dma_resv_read_valid(robj, &ticket))
+		if (!dma_resv_read_valid(robj, &ticket)) {
+			fence = NULL;
 			goto restart;
+		}
 
 		/*
 		 * If it is going away, restart.  Otherwise, acquire a
@@ -1278,12 +1320,14 @@ excl:
 			goto restart;
 		if (dma_fence_is_signaled(fence)) {
 			dma_fence_put(fence);
+			fence = NULL;
 			break;
 		}
 
 		/* Put ourselves on the selq if we haven't already.  */
 		if (!recorded) {
 			dma_fence_put(fence);
+			fence = NULL;
 			goto record;
 		}
 
@@ -1294,6 +1338,7 @@ excl:
 		 */
 		if (!claimed || callback) {
 			dma_fence_put(fence);
+			fence = NULL;
 			revents = 0;
 			break;
 		}
@@ -1307,12 +1352,15 @@ excl:
 		if (!dma_fence_add_callback(fence, &rpoll->rp_fcb,
 			dma_resv_poll_cb)) {
 			dma_fence_put(fence);
+			fence = NULL;
 			revents = 0;
 			callback = true;
 			break;
 		}
 		dma_fence_put(fence);
+		fence = NULL;
 	} while (0);
+	KASSERT(fence == NULL);
 
 	/* All done reading the fences.  */
 	rcu_read_unlock();
@@ -1330,10 +1378,12 @@ excl:
 	return revents;
 
 restart:
+	KASSERT(fence == NULL);
 	rcu_read_unlock();
 	goto top;
 
 record:
+	KASSERT(fence == NULL);
 	rcu_read_unlock();
 	mutex_enter(&rpoll->rp_lock);
 	selrecord(curlwp, &rpoll->rp_selq);
