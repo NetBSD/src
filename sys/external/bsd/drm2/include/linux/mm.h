@@ -1,4 +1,4 @@
-/*	$NetBSD: mm.h,v 1.22 2021/12/19 11:46:58 riastradh Exp $	*/
+/*	$NetBSD: mm.h,v 1.23 2021/12/19 12:07:55 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -31,8 +31,6 @@
 
 #ifndef _LINUX_MM_H_
 #define _LINUX_MM_H_
-
-#include <sys/malloc.h>
 
 #include <uvm/uvm_extern.h>
 #include <uvm/uvm_object.h>
@@ -135,16 +133,15 @@ kvmalloc_array(size_t nelem, size_t elemsize, gfp_t gfp)
 }
 
 /*
- * XXX Requires that kmalloc in <linux/slab.h> and vmalloc in
- * <linux/vmalloc.h> both use malloc(9).  If you change either of
- * those, be sure to update this.
+ * XXX kvfree must additionally work on kmalloc (linux/slab.h) and
+ * vmalloc (linux/vmalloc.h).  If you change either of those, be sure
+ * to change this too.
  */
+
 static inline void
 kvfree(void *ptr)
 {
-
-	if (ptr != NULL)
-		free(ptr, M_TEMP);
+	kfree(ptr);
 }
 
 static inline void

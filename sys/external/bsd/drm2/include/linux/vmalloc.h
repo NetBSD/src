@@ -1,4 +1,4 @@
-/*	$NetBSD: vmalloc.h,v 1.10 2021/12/19 10:51:24 riastradh Exp $	*/
+/*	$NetBSD: vmalloc.h,v 1.11 2021/12/19 12:07:55 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013, 2018 The NetBSD Foundation, Inc.
@@ -32,21 +32,21 @@
 #ifndef _LINUX_VMALLOC_H_
 #define _LINUX_VMALLOC_H_
 
-#include <sys/malloc.h>
-
 #include <uvm/uvm_extern.h>
 
 #include <linux/mm.h>
 #include <linux/mm_types.h>
 #include <linux/overflow.h>
+#include <linux/slab.h>
 
 #include <asm/page.h>
 
 struct notifier_block;
 
 /*
- * XXX vmalloc and kmalloc both use malloc(9).  If you change this, be
- * sure to update kmalloc in <linux/slab.h> and kvfree in <linux/mm.h>.
+ * XXX vmalloc and kvmalloc both use kmalloc.  If you change that, be
+ * sure to update this so kvfree in <linux/mm.h> still works on vmalloc
+ * addresses.
  */
 
 static inline bool
@@ -58,27 +58,25 @@ is_vmalloc_addr(void *addr)
 static inline void *
 vmalloc(unsigned long size)
 {
-	return malloc(size, M_TEMP, M_WAITOK);
+	return kmalloc(size, GFP_KERNEL);
 }
 
 static inline void *
 vmalloc_user(unsigned long size)
 {
-	return malloc(size, M_TEMP, (M_WAITOK | M_ZERO));
+	return kzalloc(size, GFP_KERNEL);
 }
 
 static inline void *
 vzalloc(unsigned long size)
 {
-	return malloc(size, M_TEMP, (M_WAITOK | M_ZERO));
+	return kzalloc(size, GFP_KERNEL);
 }
 
 static inline void
 vfree(void *ptr)
 {
-	if (ptr == NULL)
-		return;
-	return free(ptr, M_TEMP);
+	return kfree(ptr);
 }
 
 #define	PAGE_KERNEL	UVM_PROT_RW
