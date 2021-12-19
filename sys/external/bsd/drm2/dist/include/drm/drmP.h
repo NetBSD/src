@@ -1,4 +1,4 @@
-/*	$NetBSD: drmP.h,v 1.59 2021/12/19 01:59:11 riastradh Exp $	*/
+/*	$NetBSD: drmP.h,v 1.60 2021/12/19 09:51:27 riastradh Exp $	*/
 
 /*
  * Internal Header for the Direct Rendering Manager
@@ -211,10 +211,6 @@ static inline int drm_pci_set_busid(struct drm_device *dev,
 	return -ENOSYS;
 }
 #endif
-
-#define DRM_PCIE_SPEED_25 1
-#define DRM_PCIE_SPEED_50 2
-#define DRM_PCIE_SPEED_80 4
 
 extern int drm_pcie_get_speed_cap_mask(struct drm_device *dev, u32 *speed_mask);
 
