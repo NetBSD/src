@@ -1,4 +1,4 @@
-/*	$NetBSD: dma-fence.h,v 1.12 2021/12/19 11:03:57 riastradh Exp $	*/
+/*	$NetBSD: dma-fence.h,v 1.13 2021/12/19 12:00:48 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -102,6 +102,7 @@ struct dma_fence_cb {
 #define	dma_fence_is_signaled_locked	linux_dma_fence_is_signaled_locked
 #define	dma_fence_put			linux_dma_fence_put
 #define	dma_fence_remove_callback	linux_dma_fence_remove_callback
+#define	dma_fence_reset			linux_dma_fence_reset
 #define	dma_fence_set_error		linux_dma_fence_set_error
 #define	dma_fence_signal		linux_dma_fence_signal
 #define	dma_fence_signal_locked		linux_dma_fence_signal_locked
@@ -113,6 +114,8 @@ extern int	linux_dma_fence_trace;
 
 void	dma_fence_init(struct dma_fence *, const struct dma_fence_ops *,
 	    spinlock_t *, unsigned, unsigned);
+void	dma_fence_reset(struct dma_fence *, const struct dma_fence_ops *,
+	    spinlock_t *, unsigned, unsigned); /* XXX extension */
 void	dma_fence_destroy(struct dma_fence *);
 void	dma_fence_free(struct dma_fence *);
 

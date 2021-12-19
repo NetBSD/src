@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_request.c,v 1.8 2021/12/19 12:00:40 riastradh Exp $	*/
+/*	$NetBSD: i915_request.c,v 1.9 2021/12/19 12:00:48 riastradh Exp $	*/
 
 /*
  * Copyright © 2008-2015 Intel Corporation
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_request.c,v 1.8 2021/12/19 12:00:40 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_request.c,v 1.9 2021/12/19 12:00:48 riastradh Exp $");
 
 #include <linux/dma-fence-array.h>
 #include <linux/irq_work.h>
@@ -121,8 +121,6 @@ static void i915_fence_release(struct dma_fence *fence)
 	i915_sw_fence_fini(&rq->submit);
 	i915_sw_fence_fini(&rq->semaphore);
 
-	dma_fence_destroy(&rq->fence);
-	spin_lock_destroy(&rq->lock);
 	kmem_cache_free(global.slab_requests, rq);
 }
 
@@ -602,14 +600,20 @@ static void __i915_request_ctor(void *arg)
 	i915_sw_fence_init(&rq->submit, submit_notify);
 	i915_sw_fence_init(&rq->semaphore, semaphore_notify);
 
-#ifndef __NetBSD__
 	dma_fence_init(&rq->fence, &i915_fence_ops, &rq->lock, 0, 0);
-#endif
 
 	rq->file_priv = NULL;
 	rq->capture_list = NULL;
 
 	INIT_LIST_HEAD(&rq->execute_cb);
+}
+
+static void __i915_request_dtor(void *arg)
+{
+	struct i915_request *rq = arg;
+
+	dma_fence_destroy(&rq->fence);
+	spin_lock_destroy(&rq->lock);
 }
 
 struct i915_request *
@@ -671,7 +675,7 @@ __i915_request_create(struct intel_context *ce, gfp_t gfp)
 	rq->execution_mask = ce->engine->mask;
 
 #ifdef __NetBSD__
-	dma_fence_init(&rq->fence, &i915_fence_ops, &rq->lock, 0, 0);
+	dma_fence_reset(&rq->fence, &i915_fence_ops, &rq->lock, 0, 0);
 #else
 	kref_init(&rq->fence.refcount);
 	rq->fence.flags = 0;
@@ -1677,13 +1681,14 @@ static struct i915_global_request global = { {
 int __init i915_global_request_init(void)
 {
 	global.slab_requests =
-		kmem_cache_create("i915_request",
+		kmem_cache_create_dtor("i915_request",
 				  sizeof(struct i915_request),
 				  __alignof__(struct i915_request),
 				  SLAB_HWCACHE_ALIGN |
 				  SLAB_RECLAIM_ACCOUNT |
 				  SLAB_TYPESAFE_BY_RCU,
-				  __i915_request_ctor);
+				  __i915_request_ctor,
+				  __i915_request_dtor);
 	if (!global.slab_requests)
 		return -ENOMEM;
 
