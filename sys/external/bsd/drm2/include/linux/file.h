@@ -1,4 +1,4 @@
-/*	$NetBSD: file.h,v 1.6 2021/12/19 09:51:04 riastradh Exp $	*/
+/*	$NetBSD: file.h,v 1.7 2021/12/19 10:39:06 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -38,6 +38,29 @@
 #include <sys/proc.h>
 
 struct file;
+
+struct fd {
+	struct file	*file;
+	int		fd_number;
+};
+
+static inline struct fd
+fdget(int number)
+{
+	struct fd fd;
+
+	fd.file = fd_getfile(number);
+	fd.fd_number = number;
+
+	return fd;
+}
+
+static inline void
+fdput(struct fd fd)
+{
+
+	fd_putfile(fd.fd_number);
+}
 
 /* fget translates; fput(fp) doesn't because we have fd_putfile(fd).  */
 static inline struct file *
