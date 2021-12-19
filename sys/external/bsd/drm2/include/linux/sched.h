@@ -1,4 +1,4 @@
-/*	$NetBSD: sched.h,v 1.19 2021/12/19 11:49:12 riastradh Exp $	*/
+/*	$NetBSD: sched.h,v 1.20 2021/12/19 12:23:17 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -36,7 +36,9 @@
 
 #include <sys/cdefs.h>
 #include <sys/kernel.h>
+#include <sys/lwp.h>
 #include <sys/proc.h>
+#include <sys/sched.h>
 
 #include <asm/barrier.h>
 #include <asm/param.h>
@@ -114,6 +116,20 @@ signal_pending_state(int state, struct proc *p)
 	if (state & TASK_UNINTERRUPTIBLE)
 		return false;
 	return sigispending(curlwp, 0);
+}
+
+static inline void
+sched_setscheduler(struct proc *p, int class, struct sched_param *param)
+{
+
+	KASSERT(p == curproc);
+	KASSERT(class == SCHED_FIFO);
+	KASSERT(param->sched_priority == 1);
+
+	lwp_lock(curlwp);
+	curlwp->l_class = class;
+	lwp_changepri(curlwp, PRI_KERNEL_RT);
+	lwp_unlock(curlwp);
 }
 
 #endif  /* _LINUX_SCHED_H_ */
