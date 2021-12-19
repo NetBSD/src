@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_rcu.c,v 1.6 2021/12/19 12:40:03 riastradh Exp $	*/
+/*	$NetBSD: linux_rcu.c,v 1.7 2021/12/19 12:40:11 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_rcu.c,v 1.6 2021/12/19 12:40:03 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_rcu.c,v 1.7 2021/12/19 12:40:11 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -71,6 +71,7 @@ static struct {
 	struct rcu_head	*first_kfree;
 	struct lwp	*lwp;
 	uint64_t	gen;
+	bool		running;
 	bool		dying;
 } gc __cacheline_aligned;
 
@@ -152,13 +153,28 @@ rcu_barrier(void)
 {
 	uint64_t gen;
 
+	/*
+	 * If the GC isn't running anything yet, then all callbacks of
+	 * interest are queued, and it suffices to wait for the GC to
+	 * advance one generation number.
+	 *
+	 * If the GC is already running, however, and there are any
+	 * callbacks of interest queued but not in the GC's current
+	 * batch of work, then when the advances the generation number
+	 * it will not have completed the queued callbacks.  So we have
+	 * to wait for one more generation -- or until the GC has
+	 * stopped running because there's no work left.
+	 */
+
 	SDT_PROBE0(sdt, linux, rcu, barrier__start);
 	mutex_enter(&gc.lock);
-	if (gc.first_callback != NULL || gc.first_kfree != NULL) {
-		gen = gc.gen;
-		do {
-			cv_wait(&gc.cv, &gc.lock);
-		} while (gc.gen == gen);
+	gen = gc.gen;
+	if (gc.running)
+		gen++;
+	while (gc.running || gc.first_callback || gc.first_kfree) {
+		cv_wait(&gc.cv, &gc.lock);
+		if (gc.gen > gen)
+			break;
 	}
 	mutex_exit(&gc.lock);
 	SDT_PROBE0(sdt, linux, rcu, barrier__done);
@@ -238,7 +254,11 @@ gc_thread(void *cookie)
 			continue;
 		}
 
-		/* We have work to do.  Drop the lock to do it.  */
+		/*
+		 * We have work to do.  Drop the lock to do it, and
+		 * notify rcu_barrier that we're still doing it.
+		 */
+		gc.running = true;
 		mutex_exit(&gc.lock);
 
 		/* Wait for activity on all CPUs.  */
@@ -275,6 +295,7 @@ gc_thread(void *cookie)
 
 		/* Finished a batch of work.  Notify rcu_barrier.  */
 		gc.gen++;
+		gc.running = false;
 		cv_broadcast(&gc.cv);
 
 		/*
