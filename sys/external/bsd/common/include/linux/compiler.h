@@ -1,4 +1,4 @@
-/*	$NetBSD: compiler.h,v 1.1 2021/12/19 00:28:12 riastradh Exp $	*/
+/*	$NetBSD: compiler.h,v 1.1 2021/12/19 00:45:28 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
