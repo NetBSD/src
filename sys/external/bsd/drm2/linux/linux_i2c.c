@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_i2c.c,v 1.4 2021/12/19 00:59:25 riastradh Exp $	*/
+/*	$NetBSD: linux_i2c.c,v 1.5 2021/12/19 09:43:56 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_i2c.c,v 1.4 2021/12/19 00:59:25 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_i2c.c,v 1.5 2021/12/19 09:43:56 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/errno.h>
@@ -177,6 +177,9 @@ netbsd_i2c_transfer(i2c_tag_t i2c, struct i2c_msg *msgs, int n)
 static i2c_op_t
 linux_i2c_flags_op(uint16_t flags, bool stop)
 {
+
+	if (ISSET(flags, I2C_M_STOP))
+		stop = true;
 
 	if (ISSET(flags, I2C_M_RD))
 		return (stop? I2C_OP_READ_WITH_STOP : I2C_OP_READ);

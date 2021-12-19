@@ -1,4 +1,4 @@
-/*	$NetBSD: i2c.h,v 1.9 2021/12/19 00:59:25 riastradh Exp $	*/
+/*	$NetBSD: i2c.h,v 1.10 2021/12/19 09:43:56 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -53,6 +53,7 @@ struct i2c_msg;
 #define	I2C_M_RD		0x01 /* xfer is read, not write */
 #define	I2C_M_NOSTART		0x02 /* don't initiate xfer */
 #define	I2C_M_TEN		0x04 /* 10-bit chip address */
+#define	I2C_M_STOP		0x08 /* send stop after msg */
 
 /*
  * I2C_CLASS_*: i2c_adapter classes
