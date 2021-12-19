@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_vblank.h,v 1.4 2021/12/19 00:46:29 riastradh Exp $	*/
+/*	$NetBSD: drm_vblank.h,v 1.5 2021/12/19 00:47:17 riastradh Exp $	*/
 
 /*
  * Copyright 2016 Intel Corp.
@@ -33,6 +33,10 @@
 
 #include <drm/drm_file.h>
 #include <drm/drm_modes.h>
+
+#ifdef __NetBSD__		/* XXX */
+#include <drm/drm_wait_netbsd.h>
+#endif
 
 #ifdef __NetBSD__		/* XXX */
 #include <drm/drm_wait_netbsd.h>
