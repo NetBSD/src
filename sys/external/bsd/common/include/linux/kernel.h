@@ -1,4 +1,4 @@
-/*	$NetBSD: kernel.h,v 1.31 2021/12/19 00:48:23 riastradh Exp $	*/
+/*	$NetBSD: kernel.h,v 1.32 2021/12/19 00:49:08 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -247,6 +247,13 @@ kasprintf(gfp_t gfp, const char *fmt, ...)
 	va_end(va);
 
 	return str;
+}
+
+static inline void __user *
+u64_to_user_ptr(uint64_t addr)
+{
+
+	return (void __user *)(uintptr_t)addr;
 }
 
 #endif  /* _LINUX_KERNEL_H_ */
