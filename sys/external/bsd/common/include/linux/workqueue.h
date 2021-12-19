@@ -1,4 +1,4 @@
-/*	$NetBSD: workqueue.h,v 1.19 2021/12/19 01:24:13 riastradh Exp $	*/
+/*	$NetBSD: workqueue.h,v 1.20 2021/12/19 01:41:12 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013, 2018 The NetBSD Foundation, Inc.
@@ -133,6 +133,8 @@ struct work_struct *
 	current_work(void);
 
 #define	INIT_WORK_ONSTACK		INIT_WORK
+#define	INIT_DELAYED_WORK_ONSTACK	INIT_DELAYED_WORK
+#define	destroy_delayed_work_on_stack(dw)	__nothing
 
 static inline void
 destroy_work_on_stack(struct work_struct *work)
