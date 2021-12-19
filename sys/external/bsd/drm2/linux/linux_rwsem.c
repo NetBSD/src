@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_rwsem.c,v 1.1 2021/12/19 11:21:30 riastradh Exp $	*/
+/*	$NetBSD: linux_rwsem.c,v 1.2 2021/12/19 11:21:38 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2021 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_rwsem.c,v 1.1 2021/12/19 11:21:30 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_rwsem.c,v 1.2 2021/12/19 11:21:38 riastradh Exp $");
 
 #include <sys/types.h>
 
@@ -45,7 +45,7 @@ void
 init_rwsem(struct rw_semaphore *rwsem)
 {
 
-	mutex_init(&rwsem->rws_lock, MUTEX_DEFAULT, IPL_NONE);
+	mutex_init(&rwsem->rws_lock, MUTEX_DEFAULT, IPL_VM);
 	cv_init(&rwsem->rws_cv, "lnxrwsem");
 	rwsem->rws_writer = NULL;
 	rwsem->rws_readers = 0;
