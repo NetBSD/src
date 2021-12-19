@@ -1,4 +1,4 @@
-/* $NetBSD: fdt_panel.c,v 1.4 2021/11/07 17:11:58 jmcneill Exp $ */
+/* $NetBSD: fdt_panel.c,v 1.5 2021/12/19 11:00:46 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2019 Jonathan A. Kollasch <jakllsch@kollasch.net>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdt_panel.c,v 1.4 2021/11/07 17:11:58 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdt_panel.c,v 1.5 2021/12/19 11:00:46 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -40,7 +40,7 @@ __KERNEL_RCSID(0, "$NetBSD: fdt_panel.c,v 1.4 2021/11/07 17:11:58 jmcneill Exp $
 
 #include <dev/i2c/ddcvar.h>
 
-#include <drm/drmP.h>
+#include <drm/drm_drv.h>
 #include <drm/drm_panel.h>
 #include <drm/drm_edid.h>
 
@@ -158,7 +158,7 @@ panel_fdt_attach(device_t parent, device_t self, void *aux)
 	sc->sc_ports.dp_ep_get_data = panel_fdt_ep_get_data;
 	fdt_ports_register(&sc->sc_ports, self, phandle, EP_DRM_PANEL);
 
-	drm_panel_init(&sc->sc_panel);
+	drm_panel_init(&sc->sc_panel, self, &panel_fdt_funcs, DRM_MODE_CONNECTOR_DPI);
 	sc->sc_panel.funcs = &panel_fdt_funcs;
 
 	drm_panel_add(&sc->sc_panel);

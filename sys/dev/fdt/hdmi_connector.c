@@ -1,4 +1,4 @@
-/* $NetBSD: hdmi_connector.c,v 1.2 2021/01/27 03:10:21 thorpej Exp $ */
+/* $NetBSD: hdmi_connector.c,v 1.3 2021/12/19 11:00:46 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2019 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hdmi_connector.c,v 1.2 2021/01/27 03:10:21 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hdmi_connector.c,v 1.3 2021/12/19 11:00:46 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -40,10 +40,11 @@ __KERNEL_RCSID(0, "$NetBSD: hdmi_connector.c,v 1.2 2021/01/27 03:10:21 thorpej E
 
 #include <dev/i2c/ddcvar.h>
 
-#include <drm/drmP.h>
+#include <drm/drm_drv.h>
 #include <drm/drm_crtc.h>
 #include <drm/drm_crtc_helper.h>
 #include <drm/drm_edid.h>
+#include <drm/drm_probe_helper.h>
 
 static const struct device_compatible_entry compat_data[] = {
 	{ .compat = "hdmi-connector" },
@@ -132,38 +133,16 @@ dispcon_hdmi_connector_get_modes(struct drm_connector *connector)
 		}
 	}
 
-	drm_mode_connector_update_edid_property(connector, pedid);
+	drm_connector_update_edid_property(connector, pedid);
 	if (pedid == NULL)
 		return 0;
 
-	error = drm_add_edid_modes(connector, pedid);
-	drm_edid_to_eld(connector, pedid);
-
-	return error;
-}
-
-static struct drm_encoder *
-dispcon_hdmi_connector_best_encoder(struct drm_connector *connector)
-{
-	int enc_id = connector->encoder_ids[0];
-	struct drm_mode_object *obj;
-	struct drm_encoder *encoder = NULL;
-
-	if (enc_id) {
-		obj = drm_mode_object_find(connector->dev, enc_id,
-		    DRM_MODE_OBJECT_ENCODER);
-		if (obj == NULL)
-			return NULL;
-		encoder = obj_to_encoder(obj);
-	}
-
-	return encoder;
+	return drm_add_edid_modes(connector, pedid);
 }
 
 static const struct drm_connector_helper_funcs dispcon_hdmi_connector_helper_funcs = {
 	.mode_valid = dispcon_hdmi_connector_mode_valid,
 	.get_modes = dispcon_hdmi_connector_get_modes,
-	.best_encoder = dispcon_hdmi_connector_best_encoder,
 };
 
 static int
@@ -191,7 +170,7 @@ dispcon_hdmi_ep_activate(device_t dev, struct fdt_endpoint *ep, bool activate)
 		    hdmi_connector->type);
 		drm_connector_helper_add(connector, &dispcon_hdmi_connector_helper_funcs);
 		drm_connector_register(connector);
-		drm_mode_connector_attach_encoder(connector, encoder);
+		drm_connector_attach_encoder(connector, encoder);
 	}
 
 	return 0;

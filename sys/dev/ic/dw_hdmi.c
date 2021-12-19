@@ -1,4 +1,4 @@
-/* $NetBSD: dw_hdmi.c,v 1.7 2019/12/22 23:23:32 thorpej Exp $ */
+/* $NetBSD: dw_hdmi.c,v 1.8 2021/12/19 11:00:47 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2019 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dw_hdmi.c,v 1.7 2019/12/22 23:23:32 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dw_hdmi.c,v 1.8 2021/12/19 11:00:47 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -47,10 +47,11 @@ __KERNEL_RCSID(0, "$NetBSD: dw_hdmi.c,v 1.7 2019/12/22 23:23:32 thorpej Exp $");
 
 #include <dev/audio/audio_dai.h>
 
-#include <drm/drmP.h>
+#include <drm/drm_drv.h>
 #include <drm/drm_crtc.h>
 #include <drm/drm_crtc_helper.h>
 #include <drm/drm_edid.h>
+#include <drm/drm_probe_helper.h>
 
 #define	HDMI_DESIGN_ID		0x0000
 #define	HDMI_REVISION_ID	0x0001
@@ -601,37 +602,15 @@ dwhdmi_connector_get_modes(struct drm_connector *connector)
 		dwhdmi_connector->monitor_audio = false;
 	}
 
-	drm_mode_connector_update_edid_property(connector, pedid);
+	drm_connector_update_edid_property(connector, pedid);
 	if (pedid == NULL)
 		return 0;
 
-	error = drm_add_edid_modes(connector, pedid);
-	drm_edid_to_eld(connector, pedid);
-
-	return error;
-}
-
-static struct drm_encoder *
-dwhdmi_connector_best_encoder(struct drm_connector *connector)
-{
-	int enc_id = connector->encoder_ids[0];
-	struct drm_mode_object *obj;
-	struct drm_encoder *encoder = NULL;
-
-	if (enc_id) {
-		obj = drm_mode_object_find(connector->dev, enc_id,
-		    DRM_MODE_OBJECT_ENCODER);
-		if (obj == NULL)
-			return NULL;
-		encoder = obj_to_encoder(obj);
-	}
-
-	return encoder;
+	return drm_add_edid_modes(connector, pedid);
 }
 
 static const struct drm_connector_helper_funcs dwhdmi_connector_helper_funcs = {
 	.get_modes = dwhdmi_connector_get_modes,
-	.best_encoder = dwhdmi_connector_best_encoder,
 };
 
 static int
@@ -652,7 +631,7 @@ dwhdmi_bridge_attach(struct drm_bridge *bridge)
 	    DRM_MODE_CONNECTOR_HDMIA);
 	drm_connector_helper_add(connector, &dwhdmi_connector_helper_funcs);
 
-	error = drm_mode_connector_attach_encoder(connector, bridge->encoder);
+	error = drm_connector_attach_encoder(connector, bridge->encoder);
 	if (error != 0)
 		return error;
 
@@ -700,7 +679,8 @@ dwhdmi_bridge_post_disable(struct drm_bridge *bridge)
 
 static void
 dwhdmi_bridge_mode_set(struct drm_bridge *bridge,
-    struct drm_display_mode *mode, struct drm_display_mode *adjusted_mode)
+    const struct drm_display_mode *mode,
+    const struct drm_display_mode *adjusted_mode)
 {
 	struct dwhdmi_softc * const sc = bridge->driver_private;
 
@@ -917,11 +897,9 @@ dwhdmi_bind(struct dwhdmi_softc *sc, struct drm_encoder *encoder)
 	sc->sc_bridge.funcs = &dwhdmi_bridge_funcs;
 	sc->sc_bridge.encoder = encoder;
 
-	error = drm_bridge_attach(encoder->dev, &sc->sc_bridge);
+	error = drm_bridge_attach(encoder, &sc->sc_bridge, NULL);
 	if (error != 0)
 		return EIO;
-
-	encoder->bridge = &sc->sc_bridge;
 
 	return 0;
 }

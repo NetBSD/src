@@ -1,4 +1,4 @@
-/* $NetBSD: rk_fb.c,v 1.2 2021/05/21 09:33:27 jmcneill Exp $ */
+/* $NetBSD: rk_fb.c,v 1.3 2021/12/19 11:00:46 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2015-2019 Jared McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "opt_wsdisplay_compat.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rk_fb.c,v 1.2 2021/05/21 09:33:27 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rk_fb.c,v 1.3 2021/12/19 11:00:46 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -37,7 +37,7 @@ __KERNEL_RCSID(0, "$NetBSD: rk_fb.c,v 1.2 2021/05/21 09:33:27 jmcneill Exp $");
 
 #include <dev/fdt/fdtvar.h>
 
-#include <drm/drmP.h>
+#include <drm/drm_drv.h>
 #include <drm/drmfb.h>
 
 #include <arm/rockchip/rk_drm.h>

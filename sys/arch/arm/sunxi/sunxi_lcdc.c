@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_lcdc.c,v 1.12 2021/01/27 03:10:20 thorpej Exp $ */
+/* $NetBSD: sunxi_lcdc.c,v 1.13 2021/12/19 11:00:46 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2019 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_lcdc.c,v 1.12 2021/01/27 03:10:20 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_lcdc.c,v 1.13 2021/12/19 11:00:46 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -37,8 +37,9 @@ __KERNEL_RCSID(0, "$NetBSD: sunxi_lcdc.c,v 1.12 2021/01/27 03:10:20 thorpej Exp 
 #include <sys/kernel.h>
 #include <sys/conf.h>
 
-#include <drm/drmP.h>
+#include <drm/drm_drv.h>
 #include <drm/drm_crtc_helper.h>
+#include <drm/drm_vblank.h>
 
 #include <dev/fdt/fdtvar.h>
 #include <dev/fdt/fdt_port.h>
@@ -410,7 +411,7 @@ sunxi_lcdc_ep_activate(device_t dev, struct fdt_endpoint *ep, bool activate)
 	out_ep = fdt_endpoint_get_from_index(&sc->sc_ports, TCON_PORT_OUTPUT, 0);
 	if (out_ep != NULL) {
 		drm_encoder_init(crtc->dev, &sc->sc_encoder.base, &sunxi_lcdc_funcs,
-		    sunxi_lcdc_encoder_mode(out_ep));
+		    sunxi_lcdc_encoder_mode(out_ep), NULL);
 		drm_encoder_helper_add(&sc->sc_encoder.base, &sunxi_lcdc_tcon0_helper_funcs);
 
 		sunxi_lcdc_setup_vblank(sc);
@@ -421,7 +422,7 @@ sunxi_lcdc_ep_activate(device_t dev, struct fdt_endpoint *ep, bool activate)
 	out_ep = fdt_endpoint_get_from_index(&sc->sc_ports, TCON_PORT_OUTPUT, 1);
 	if (out_ep != NULL) {
 		drm_encoder_init(crtc->dev, &sc->sc_encoder.base, &sunxi_lcdc_funcs,
-		    sunxi_lcdc_encoder_mode(out_ep));
+		    sunxi_lcdc_encoder_mode(out_ep), NULL);
 		drm_encoder_helper_add(&sc->sc_encoder.base, &sunxi_lcdc_tcon1_helper_funcs);
 
 		sunxi_lcdc_setup_vblank(sc);

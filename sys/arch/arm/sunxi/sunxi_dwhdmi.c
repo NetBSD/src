@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_dwhdmi.c,v 1.9 2021/01/27 03:10:20 thorpej Exp $ */
+/* $NetBSD: sunxi_dwhdmi.c,v 1.10 2021/12/19 11:00:46 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2019 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_dwhdmi.c,v 1.9 2021/01/27 03:10:20 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_dwhdmi.c,v 1.10 2021/12/19 11:00:46 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -37,7 +37,7 @@ __KERNEL_RCSID(0, "$NetBSD: sunxi_dwhdmi.c,v 1.9 2021/01/27 03:10:20 thorpej Exp
 #include <sys/kernel.h>
 #include <sys/conf.h>
 
-#include <drm/drmP.h>
+#include <drm/drm_drv.h>
 
 #include <dev/fdt/fdtvar.h>
 #include <dev/fdt/fdt_port.h>
@@ -183,8 +183,9 @@ sunxi_dwhdmi_disable(struct dwhdmi_softc *dsc)
 }
 
 static void
-sunxi_dwhdmi_mode_set(struct dwhdmi_softc *dsc, struct drm_display_mode *mode,
-    struct drm_display_mode *adjusted_mode)
+sunxi_dwhdmi_mode_set(struct dwhdmi_softc *dsc,
+    const struct drm_display_mode *mode,
+    const struct drm_display_mode *adjusted_mode)
 {
 	struct sunxi_dwhdmi_softc * const sc = to_sunxi_dwhdmi_softc(dsc);
 	int error;
