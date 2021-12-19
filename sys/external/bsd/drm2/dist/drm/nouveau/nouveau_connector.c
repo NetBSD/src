@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_connector.c,v 1.6 2021/12/18 23:45:32 riastradh Exp $	*/
+/*	$NetBSD: nouveau_connector.c,v 1.7 2021/12/19 10:49:21 riastradh Exp $	*/
 
 /*
  * Copyright (C) 2008 Maarten Maathuis.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_connector.c,v 1.6 2021/12/18 23:45:32 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_connector.c,v 1.7 2021/12/19 10:49:21 riastradh Exp $");
 
 #include <acpi/button.h>
 
@@ -104,7 +104,7 @@ nouveau_conn_atomic_get_property(struct drm_connector *connector,
 				 const struct drm_connector_state *state,
 				 struct drm_property *property, u64 *val)
 {
-	struct nouveau_conn_atom *asyc = nouveau_conn_atom(state);
+	const struct nouveau_conn_atom *asyc = nouveau_conn_atom_const(state);
 	struct nouveau_display *disp = nouveau_display(connector->dev);
 	struct drm_device *dev = connector->dev;
 
@@ -424,7 +424,7 @@ nouveau_connector_destroy(struct drm_connector *connector)
 	if (nv_connector->aux.transfer) {
 		drm_dp_cec_unregister_connector(&nv_connector->aux);
 		drm_dp_aux_unregister(&nv_connector->aux);
-		kfree(nv_connector->aux.name);
+		kfree(__UNCONST(nv_connector->aux.name));
 	}
 	kfree(connector);
 }
@@ -458,12 +458,19 @@ nouveau_connector_ddc_detect(struct drm_connector *connector)
 			if (!nv_encoder->i2c)
 				break;
 
+#ifdef __NetBSD__
+			__USE(switcheroo_ddc);
+			__USE(dev);
+#else
 			if (switcheroo_ddc)
 				vga_switcheroo_lock_ddc(dev->pdev);
+#endif
 			if (nvkm_probe_i2c(nv_encoder->i2c, 0x50))
 				found = nv_encoder;
+#ifndef __NetBSD__
 			if (switcheroo_ddc)
 				vga_switcheroo_unlock_ddc(dev->pdev);
+#endif
 
 			break;
 		}
