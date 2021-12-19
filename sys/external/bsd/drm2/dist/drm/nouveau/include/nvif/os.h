@@ -1,4 +1,4 @@
-/*	$NetBSD: os.h,v 1.7 2021/12/19 00:47:24 riastradh Exp $	*/
+/*	$NetBSD: os.h,v 1.8 2021/12/19 10:47:30 riastradh Exp $	*/
 
 /* SPDX-License-Identifier: MIT */
 #ifndef __NOUVEAU_OS_H__
@@ -55,7 +55,8 @@
 #include <soc/tegra/pmc.h>
 
 #ifdef __NetBSD__
-#include <drm/drm_os_netbsd.h>	/* drm_waitqueue_t, IRQ_HANDLED */
+#include <drm/drm_irq_netbsd.h>
+#include <drm/drm_wait_netbsd.h>
 #endif
 
 #endif
