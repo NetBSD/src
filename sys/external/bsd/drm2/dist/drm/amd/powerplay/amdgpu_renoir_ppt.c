@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu_renoir_ppt.c,v 1.2 2021/12/18 23:45:26 riastradh Exp $	*/
+/*	$NetBSD: amdgpu_renoir_ppt.c,v 1.3 2021/12/19 12:21:10 riastradh Exp $	*/
 
 /*
  * Copyright 2019 Advanced Micro Devices, Inc.
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdgpu_renoir_ppt.c,v 1.2 2021/12/18 23:45:26 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdgpu_renoir_ppt.c,v 1.3 2021/12/19 12:21:10 riastradh Exp $");
 
 #include "amdgpu.h"
 #include "amdgpu_smu.h"
@@ -270,12 +270,12 @@ static int renoir_print_clk_levels(struct smu_context *smu,
 			else
 				i = 1;
 
-			size += sprintf(buf + size, "0: %uMhz %s\n", min,
+			size += snprintf(buf + size, SIZE_MAX/*XXX*/, "0: %uMhz %s\n", min,
 					i == 0 ? "*" : "");
-			size += sprintf(buf + size, "1: %uMhz %s\n",
+			size += snprintf(buf + size, SIZE_MAX/*XXX*/, "1: %uMhz %s\n",
 					i == 1 ? cur_value : RENOIR_UMD_PSTATE_GFXCLK,
 					i == 1 ? "*" : "");
-			size += sprintf(buf + size, "2: %uMhz %s\n", max,
+			size += snprintf(buf + size, SIZE_MAX/*XXX*/, "2: %uMhz %s\n", max,
 					i == 2 ? "*" : "");
 		}
 		return size;
@@ -301,7 +301,7 @@ static int renoir_print_clk_levels(struct smu_context *smu,
 
 	for (i = 0; i < count; i++) {
 		GET_DPM_CUR_FREQ(clk_table, clk_type, i, value);
-		size += sprintf(buf + size, "%d: %uMhz %s\n", i, value,
+		size += snprintf(buf + size, SIZE_MAX/*XXX*/, "%d: %uMhz %s\n", i, value,
 				cur_value == value ? "*" : "");
 	}
 
@@ -851,7 +851,7 @@ static int renoir_get_power_profile_mode(struct smu_context *smu,
 		if (workload_type < 0)
 			continue;
 
-		size += sprintf(buf + size, "%2d %14s%s\n",
+		size += snprintf(buf + size, SIZE_MAX/*XXX*/, "%2d %14s%s\n",
 			i, profile_name[i], (i == smu->power_profile_mode) ? "*" : " ");
 	}
 
