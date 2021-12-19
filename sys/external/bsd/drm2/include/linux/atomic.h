@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic.h,v 1.33 2021/12/19 11:02:46 riastradh Exp $	*/
+/*	$NetBSD: atomic.h,v 1.34 2021/12/19 11:03:01 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -446,91 +446,6 @@ atomic_long_cmpxchg(struct atomic_long *a, long expect, long new)
 	smp_mb__after_atomic();
 
 	return old;
-}
-
-static inline void
-set_bit(unsigned int bit, volatile unsigned long *ptr)
-{
-	const unsigned int units = (sizeof(*ptr) * CHAR_BIT);
-
-	/* no memory barrier */
-	atomic_or_ulong(&ptr[bit / units], (1UL << (bit % units)));
-}
-
-static inline void
-clear_bit(unsigned int bit, volatile unsigned long *ptr)
-{
-	const unsigned int units = (sizeof(*ptr) * CHAR_BIT);
-
-	/* no memory barrier */
-	atomic_and_ulong(&ptr[bit / units], ~(1UL << (bit % units)));
-}
-
-static inline void
-clear_bit_unlock(unsigned int bit, volatile unsigned long *ptr)
-{
-	const unsigned int units = (sizeof(*ptr) * CHAR_BIT);
-
-	/* store-release */
-	smp_mb__before_atomic();
-	atomic_and_ulong(&ptr[bit / units], ~(1UL << (bit % units)));
-}
-
-static inline void
-change_bit(unsigned int bit, volatile unsigned long *ptr)
-{
-	const unsigned int units = (sizeof(*ptr) * CHAR_BIT);
-	volatile unsigned long *const p = &ptr[bit / units];
-	const unsigned long mask = (1UL << (bit % units));
-	unsigned long v;
-
-	/* no memory barrier */
-	do v = *p; while (atomic_cas_ulong(p, v, (v ^ mask)) != v);
-}
-
-static inline int
-test_and_set_bit(unsigned int bit, volatile unsigned long *ptr)
-{
-	const unsigned int units = (sizeof(*ptr) * CHAR_BIT);
-	volatile unsigned long *const p = &ptr[bit / units];
-	const unsigned long mask = (1UL << (bit % units));
-	unsigned long v;
-
-	smp_mb__before_atomic();
-	do v = *p; while (atomic_cas_ulong(p, v, (v | mask)) != v);
-	smp_mb__after_atomic();
-
-	return ((v & mask) != 0);
-}
-
-static inline int
-test_and_clear_bit(unsigned int bit, volatile unsigned long *ptr)
-{
-	const unsigned int units = (sizeof(*ptr) * CHAR_BIT);
-	volatile unsigned long *const p = &ptr[bit / units];
-	const unsigned long mask = (1UL << (bit % units));
-	unsigned long v;
-
-	smp_mb__before_atomic();
-	do v = *p; while (atomic_cas_ulong(p, v, (v & ~mask)) != v);
-	smp_mb__after_atomic();
-
-	return ((v & mask) != 0);
-}
-
-static inline int
-test_and_change_bit(unsigned int bit, volatile unsigned long *ptr)
-{
-	const unsigned int units = (sizeof(*ptr) * CHAR_BIT);
-	volatile unsigned long *const p = &ptr[bit / units];
-	const unsigned long mask = (1UL << (bit % units));
-	unsigned long v;
-
-	smp_mb__before_atomic();
-	do v = *p; while (atomic_cas_ulong(p, v, (v ^ mask)) != v);
-	smp_mb__after_atomic();
-
-	return ((v & mask) != 0);
 }
 
 #endif  /* _LINUX_ATOMIC_H_ */
