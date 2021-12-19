@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_ppgtt.c,v 1.3 2021/12/19 11:49:11 riastradh Exp $	*/
+/*	$NetBSD: intel_ppgtt.c,v 1.4 2021/12/19 12:07:47 riastradh Exp $	*/
 
 // SPDX-License-Identifier: MIT
 /*
@@ -6,7 +6,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intel_ppgtt.c,v 1.3 2021/12/19 11:49:11 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intel_ppgtt.c,v 1.4 2021/12/19 12:07:47 riastradh Exp $");
 
 #include <linux/slab.h>
 
@@ -53,6 +53,7 @@ struct i915_page_directory *alloc_pd(struct i915_address_space *vm)
 		return ERR_PTR(-ENOMEM);
 
 	if (unlikely(setup_page_dma(vm, px_base(pd)))) {
+		spin_lock_destroy(&pd->lock);
 		kfree(pd);
 		return ERR_PTR(-ENOMEM);
 	}

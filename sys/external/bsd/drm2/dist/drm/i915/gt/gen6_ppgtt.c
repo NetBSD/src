@@ -1,4 +1,4 @@
-/*	$NetBSD: gen6_ppgtt.c,v 1.5 2021/12/19 11:16:08 riastradh Exp $	*/
+/*	$NetBSD: gen6_ppgtt.c,v 1.6 2021/12/19 12:07:47 riastradh Exp $	*/
 
 // SPDX-License-Identifier: MIT
 /*
@@ -6,7 +6,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gen6_ppgtt.c,v 1.5 2021/12/19 11:16:08 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gen6_ppgtt.c,v 1.6 2021/12/19 12:07:47 riastradh Exp $");
 
 #include <linux/log2.h>
 
@@ -319,6 +319,7 @@ static void gen6_ppgtt_cleanup(struct i915_address_space *vm)
 
 	mutex_destroy(&ppgtt->flush);
 	mutex_destroy(&ppgtt->pin_mutex);
+	spin_lock_destroy(&ppgtt->base.pd->lock);
 	kfree(ppgtt->base.pd);
 }
 
@@ -535,6 +536,7 @@ struct i915_ppgtt *gen6_ppgtt_create(struct intel_gt *gt)
 err_scratch:
 	free_scratch(&ppgtt->base.vm);
 err_pd:
+	spin_lock_destroy(&ppgtt->base.pd->lock);
 	kfree(ppgtt->base.pd);
 err_free:
 	mutex_destroy(&ppgtt->pin_mutex);
