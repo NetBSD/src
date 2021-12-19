@@ -1,4 +1,4 @@
-/*	$NetBSD: reservation.h,v 1.14 2021/12/19 01:23:38 riastradh Exp $	*/
+/*	$NetBSD: reservation.h,v 1.15 2021/12/19 01:25:42 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -38,11 +38,11 @@
 #include <linux/ww_mutex.h>
 
 struct reservation_object {
-	struct ww_mutex		lock;
-	struct seqcount		seq;
+	struct ww_mutex				lock;
+	struct seqcount				seq;
+	struct dma_fence __rcu			*fence_excl;
+	struct reservation_object_list __rcu	*fence;
 
-	struct dma_fence __rcu			*robj_fence;
-	struct reservation_object_list __rcu	*robj_list;
 	struct reservation_object_list __rcu	*robj_prealloc;
 };
 
@@ -126,7 +126,7 @@ int	reservation_object_kqfilter(struct reservation_object *,
 static inline bool
 reservation_object_has_excl_fence(struct reservation_object *robj)
 {
-	return robj->robj_fence != NULL;
+	return robj->fence_excl != NULL;
 }
 
 #endif	/* _LINUX_RESERVATION_H_ */
