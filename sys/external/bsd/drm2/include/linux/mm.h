@@ -1,4 +1,4 @@
-/*	$NetBSD: mm.h,v 1.13 2020/02/23 15:46:40 ad Exp $	*/
+/*	$NetBSD: mm.h,v 1.14 2021/12/19 01:02:17 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -39,6 +39,7 @@
 
 #include <asm/page.h>
 #include <linux/shrinker.h>
+#include <linux/slab.h>
 
 struct file;
 
@@ -78,6 +79,16 @@ static inline unsigned long
 get_num_physpages(void)
 {
 	return uvmexp.npages;
+}
+
+static inline void *
+kvmalloc_array(size_t nelem, size_t elemsize, gfp_t gfp)
+{
+
+	KASSERT(elemsize != 0);
+	if (nelem > SIZE_MAX/elemsize)
+		return NULL;
+	return kmalloc(nelem * elemsize, gfp);
 }
 
 /*
