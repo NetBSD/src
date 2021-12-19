@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_nvkm_subdev_mmu_tu102.c,v 1.2 2021/12/18 23:45:41 riastradh Exp $	*/
+/*	$NetBSD: nouveau_nvkm_subdev_mmu_tu102.c,v 1.3 2021/12/19 10:51:58 riastradh Exp $	*/
 
 /*
  * Copyright 2018 Red Hat Inc.
@@ -23,7 +23,7 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_subdev_mmu_tu102.c,v 1.2 2021/12/18 23:45:41 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_subdev_mmu_tu102.c,v 1.3 2021/12/19 10:51:58 riastradh Exp $");
 
 #include "mem.h"
 #include "vmm.h"
@@ -32,7 +32,7 @@ __KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_subdev_mmu_tu102.c,v 1.2 2021/12/18 23:
 
 #include <nvif/class.h>
 
-const u8 *
+static const u8 *
 tu102_mmu_kind(struct nvkm_mmu *mmu, int *count, u8 *invalid)
 {
 	static const u8

@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_nvkm_subdev_acr_gp102.c,v 1.2 2021/12/18 23:45:38 riastradh Exp $	*/
+/*	$NetBSD: nouveau_nvkm_subdev_acr_gp102.c,v 1.3 2021/12/19 10:51:58 riastradh Exp $	*/
 
 /*
  * Copyright 2019 Red Hat Inc.
@@ -22,7 +22,7 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_subdev_acr_gp102.c,v 1.2 2021/12/18 23:45:38 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_subdev_acr_gp102.c,v 1.3 2021/12/19 10:51:58 riastradh Exp $");
 
 #include "priv.h"
 
@@ -33,6 +33,8 @@ __KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_subdev_acr_gp102.c,v 1.2 2021/12/18 23:
 
 #include <nvfw/acr.h>
 #include <nvfw/flcn.h>
+
+#include <linux/nbsd-namespace.h>
 
 void
 gp102_acr_wpr_patch(struct nvkm_acr *acr, s64 adjust)

@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_nvkm_subdev_acr_base.c,v 1.2 2021/12/18 23:45:38 riastradh Exp $	*/
+/*	$NetBSD: nouveau_nvkm_subdev_acr_base.c,v 1.3 2021/12/19 10:51:58 riastradh Exp $	*/
 
 /*
  * Copyright 2019 Red Hat Inc.
@@ -22,7 +22,7 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_subdev_acr_base.c,v 1.2 2021/12/18 23:45:38 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_subdev_acr_base.c,v 1.3 2021/12/19 10:51:58 riastradh Exp $");
 
 #include "priv.h"
 
@@ -98,7 +98,7 @@ nvkm_acr_load(struct nvkm_acr *acr)
 
 	if (start != acr->wpr_start || limit != acr->wpr_end) {
 		nvkm_error(subdev, "WPR not configured as expected: "
-				   "%016llx-%016llx vs %016llx-%016llx\n",
+				   "%016"PRIx64"-%016"PRIx64" vs %016"PRIx64"-%016"PRIx64"\n",
 			   acr->wpr_start, acr->wpr_end, start, limit);
 		return -EIO;
 	}
@@ -268,7 +268,7 @@ nvkm_acr_oneinit(struct nvkm_subdev *subdev)
 	if (ret)
 		return ret;
 
-	nvkm_debug(subdev, "WPR region is from 0x%llx-0x%llx (shadow 0x%llx)\n",
+	nvkm_debug(subdev, "WPR region is from 0x%"PRIx64"-0x%"PRIx64" (shadow 0x%"PRIx64")\n",
 		   acr->wpr_start, acr->wpr_end, acr->shadow_start);
 
 	/* Write WPR to ucode blob. */

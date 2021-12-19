@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_nvkm_falcon_base.c,v 1.2 2021/12/18 23:45:38 riastradh Exp $	*/
+/*	$NetBSD: nouveau_nvkm_falcon_base.c,v 1.3 2021/12/19 10:51:57 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2016, NVIDIA CORPORATION. All rights reserved.
@@ -22,12 +22,14 @@
  * DEALINGS IN THE SOFTWARE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_falcon_base.c,v 1.2 2021/12/18 23:45:38 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_falcon_base.c,v 1.3 2021/12/19 10:51:57 riastradh Exp $");
 
 #include "priv.h"
 
 #include <subdev/mc.h>
 #include <subdev/top.h>
+
+#include <linux/nbsd-namespace.h>
 
 void
 nvkm_falcon_load_imem(struct nvkm_falcon *falcon, void *data, u32 start,

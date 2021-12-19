@@ -1,4 +1,4 @@
-/*	$NetBSD: umem.h,v 1.2 2021/12/18 23:45:41 riastradh Exp $	*/
+/*	$NetBSD: umem.h,v 1.3 2021/12/19 10:51:58 riastradh Exp $	*/
 
 #ifndef __NVKM_UMEM_H__
 #define __NVKM_UMEM_H__
@@ -21,6 +21,10 @@ struct nvkm_umem {
 		struct nvkm_vma *bar;
 		void *map;
 	};
+#ifdef __NetBSD__
+	bus_dma_tag_t dmat;
+	bus_size_t size;
+#endif
 };
 
 int nvkm_umem_new(const struct nvkm_oclass *, void *argv, u32 argc,

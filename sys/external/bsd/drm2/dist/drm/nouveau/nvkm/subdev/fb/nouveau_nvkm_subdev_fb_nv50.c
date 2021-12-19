@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_nvkm_subdev_fb_nv50.c,v 1.4 2021/12/18 23:45:39 riastradh Exp $	*/
+/*	$NetBSD: nouveau_nvkm_subdev_fb_nv50.c,v 1.5 2021/12/19 10:51:58 riastradh Exp $	*/
 
 /*
  * Copyright 2012 Red Hat Inc.
@@ -24,7 +24,7 @@
  * Authors: Ben Skeggs
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_subdev_fb_nv50.c,v 1.4 2021/12/18 23:45:39 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_subdev_fb_nv50.c,v 1.5 2021/12/19 10:51:58 riastradh Exp $");
 
 #include "nv50.h"
 #include "ram.h"
@@ -203,6 +203,50 @@ nv50_fb_oneinit(struct nvkm_fb *base)
 	struct nv50_fb *fb = nv50_fb(base);
 	struct nvkm_device *device = fb->base.subdev.device;
 
+#ifdef __NetBSD__
+    {
+	const bus_dma_tag_t dmat = device->func->dma_tag(device);
+	int nsegs;
+	int ret;
+
+	fb->r100c08_page = NULL; /* paranoia */
+	fb->r100c08_kva = NULL;
+
+	/* XXX errno NetBSD->Linux */
+	ret = -bus_dmamem_alloc(dmat, PAGE_SIZE, PAGE_SIZE, 0,
+	    &fb->r100c08_seg, 1, &nsegs, BUS_DMA_WAITOK);
+	if (ret)
+fail0:		return ret;
+	KASSERT(nsegs == 1);
+
+	/* XXX errno NetBSD->Linux */
+	ret = -bus_dmamap_create(dmat, PAGE_SIZE, 1, PAGE_SIZE, 0,
+	    BUS_DMA_WAITOK, &fb->r100c08_page);
+	if (ret) {
+fail1:		bus_dmamem_free(dmat, &fb->r100c08_seg, 1);
+		goto fail0;
+	}
+
+	/* XXX errno NetBSD->Linux */
+	ret = -bus_dmamem_map(dmat, &fb->r100c08_seg, 1, PAGE_SIZE,
+	    &fb->r100c08_kva, BUS_DMA_WAITOK);
+	if (ret) {
+fail2:		bus_dmamap_destroy(dmat, fb->r100c08_page);
+		goto fail1;
+	}
+	(void)memset(fb->r100c08_kva, 0, PAGE_SIZE);
+
+	/* XXX errno NetBSD->Linux */
+	ret = -bus_dmamap_load(dmat, fb->r100c08_page, fb->r100c08_kva,
+	    PAGE_SIZE, NULL, BUS_DMA_WAITOK);
+	if (ret) {
+fail3: __unused	bus_dmamem_unmap(dmat, fb->r100c08_kva, PAGE_SIZE);
+		goto fail2;
+	}
+
+	fb->r100c08 = fb->r100c08_page->dm_segs[0].ds_addr;
+    }
+#else
 	fb->r100c08_page = alloc_page(GFP_KERNEL | __GFP_ZERO);
 	if (fb->r100c08_page) {
 		fb->r100c08 = dma_map_page(device->dev, fb->r100c08_page, 0,
@@ -210,6 +254,7 @@ nv50_fb_oneinit(struct nvkm_fb *base)
 		if (dma_mapping_error(device->dev, fb->r100c08))
 			return -EFAULT;
 	}
+#endif
 
 	return 0;
 }
@@ -286,51 +331,6 @@ nv50_fb_new_(const struct nv50_fb_func *func, struct nvkm_device *device,
 	nvkm_fb_ctor(&nv50_fb_, device, index, &fb->base);
 	fb->func = func;
 	*pfb = &fb->base;
-
-#ifdef __NetBSD__ /* XXX post-merge audit */
-    {
-	const bus_dma_tag_t dmat = device->func->dma_tag(device);
-	int nsegs;
-	int ret;
-
-	fb->r100c08_page = NULL; /* paranoia */
-	fb->r100c08_kva = NULL;
-
-	/* XXX errno NetBSD->Linux */
-	ret = -bus_dmamem_alloc(dmat, PAGE_SIZE, PAGE_SIZE, 0,
-	    &fb->r100c08_seg, 1, &nsegs, BUS_DMA_WAITOK);
-	if (ret)
-fail0:		return ret;
-	KASSERT(nsegs == 1);
-
-	/* XXX errno NetBSD->Linux */
-	ret = -bus_dmamap_create(dmat, PAGE_SIZE, 1, PAGE_SIZE, 0,
-	    BUS_DMA_WAITOK, &fb->r100c08_page);
-	if (ret) {
-fail1:		bus_dmamem_free(dmat, &fb->r100c08_seg, 1);
-		goto fail0;
-	}
-
-	/* XXX errno NetBSD->Linux */
-	ret = -bus_dmamem_map(dmat, &fb->r100c08_seg, 1, PAGE_SIZE,
-	    &fb->r100c08_kva, BUS_DMA_WAITOK);
-	if (ret) {
-fail2:		bus_dmamap_destroy(dmat, fb->r100c08_page);
-		goto fail1;
-	}
-	(void)memset(fb->r100c08_kva, 0, PAGE_SIZE);
-
-	/* XXX errno NetBSD->Linux */
-	ret = -bus_dmamap_load(dmat, fb->r100c08_page, fb->r100c08_kva,
-	    PAGE_SIZE, NULL, BUS_DMA_WAITOK);
-	if (ret) {
-fail3: __unused	bus_dmamem_unmap(dmat, fb->r100c08_kva, PAGE_SIZE);
-		goto fail2;
-	}
-
-	fb->r100c08 = fb->r100c08_page->dm_segs[0].ds_addr;
-    }
-#endif
 
 	return 0;
 }

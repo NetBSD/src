@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_nvkm_subdev_ltc_gp10b.c,v 1.2 2021/12/18 23:45:40 riastradh Exp $	*/
+/*	$NetBSD: nouveau_nvkm_subdev_ltc_gp10b.c,v 1.3 2021/12/19 10:51:58 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2019 NVIDIA Corporation.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_subdev_ltc_gp10b.c,v 1.2 2021/12/18 23:45:40 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_subdev_ltc_gp10b.c,v 1.3 2021/12/19 10:51:58 riastradh Exp $");
 
 #include "priv.h"
 
@@ -39,6 +39,9 @@ gp10b_ltc_init(struct nvkm_ltc *ltc)
 	nvkm_wr32(device, 0x17e000, ltc->ltc_nr);
 	nvkm_wr32(device, 0x100800, ltc->ltc_nr);
 
+#ifdef __NetBSD__		/* XXX arm64 iort smmu iommu */
+	__USE(spec);
+#else
 	spec = dev_iommu_fwspec_get(device->dev);
 	if (spec) {
 		u32 sid = spec->ids[0] & 0xffff;
@@ -46,6 +49,7 @@ gp10b_ltc_init(struct nvkm_ltc *ltc)
 		/* stream ID */
 		nvkm_wr32(device, 0x160000, sid << 2);
 	}
+#endif
 }
 
 static const struct nvkm_ltc_func

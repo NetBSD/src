@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_nvkm_falcon_cmdq.c,v 1.2 2021/12/18 23:45:38 riastradh Exp $	*/
+/*	$NetBSD: nouveau_nvkm_falcon_cmdq.c,v 1.3 2021/12/19 10:51:57 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2017, NVIDIA CORPORATION. All rights reserved.
@@ -23,9 +23,11 @@
  *
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_falcon_cmdq.c,v 1.2 2021/12/18 23:45:38 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_falcon_cmdq.c,v 1.3 2021/12/19 10:51:57 riastradh Exp $");
 
 #include "qmgr.h"
+
+#include <linux/nbsd-namespace.h>
 
 static bool
 nvkm_falcon_cmdq_has_room(struct nvkm_falcon_cmdq *cmdq, u32 size, bool *rewind)

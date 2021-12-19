@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_nvkm_subdev_mmu_vmm.c,v 1.2 2021/12/18 23:45:41 riastradh Exp $	*/
+/*	$NetBSD: nouveau_nvkm_subdev_mmu_vmm.c,v 1.3 2021/12/19 10:51:58 riastradh Exp $	*/
 
 /*
  * Copyright 2017 Red Hat Inc.
@@ -22,12 +22,14 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_subdev_mmu_vmm.c,v 1.2 2021/12/18 23:45:41 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_subdev_mmu_vmm.c,v 1.3 2021/12/19 10:51:58 riastradh Exp $");
 
 #define NVKM_VMM_LEVELS_MAX 5
 #include "vmm.h"
 
 #include <subdev/fb.h>
+
+#include <linux/nbsd-namespace.h>
 
 static void
 nvkm_vmm_pt_del(struct nvkm_vmm_pt **ppgt)
@@ -528,7 +530,7 @@ nvkm_vmm_iter(struct nvkm_vmm *vmm, const struct nvkm_vmm_page *page,
 	it.pt[it.max] = vmm->pd;
 
 	it.lvl = 0;
-	TRA(&it, "%s: %016llx %016llx %d %lld PTEs", name,
+	TRA(&it, "%s: %016"PRIx64" %016"PRIx64" %d %lld PTEs", name,
 	         addr, size, page->shift, it.cnt);
 	it.lvl = it.max;
 
@@ -786,10 +788,60 @@ nvkm_vma_tail(struct nvkm_vma *vma, u64 tail)
 	return new;
 }
 
+#ifdef __NetBSD__
+struct nvkm_vma_key {
+	u64 size;
+	u64 addr;
+} __packed;
+
+static int
+compare_vma_free_nodes(void *cookie, const void *va, const void *vb)
+{
+	const struct nvkm_vma *a = va, *b = vb;
+
+	if (a->size < b->size)
+		return -1;
+	if (a->size > b->size)
+		return +1;
+	if (a->addr < b->addr)
+		return -1;
+	if (a->addr > b->addr)
+		return +1;
+	return 0;
+}
+
+static int
+compare_vma_free_key(void *cookie, const void *vn, const void *vk)
+{
+	const struct nvkm_vma *n = vn;
+	const struct nvkm_vma_key *k = vk;
+
+	if (n->size < k->size)
+		return -1;
+	if (n->size > k->size)
+		return +1;
+	if (n->addr < k->addr)
+		return -1;
+	if (n->addr > k->addr)
+		return +1;
+	return 0;
+}
+
+static const rb_tree_ops_t vmm_free_rb_ops = {
+	.rbto_compare_nodes = compare_vma_free_nodes,
+	.rbto_compare_key = compare_vma_free_key,
+	.rbto_node_offset = offsetof(struct nvkm_vma, tree),
+};
+#endif
+
 static inline void
 nvkm_vmm_free_remove(struct nvkm_vmm *vmm, struct nvkm_vma *vma)
 {
+#ifdef __NetBSD__
+	rb_tree_remove_node(&vmm->free, vma);
+#else
 	rb_erase(&vma->tree, &vmm->free);
+#endif
 }
 
 static inline void
@@ -803,6 +855,11 @@ nvkm_vmm_free_delete(struct nvkm_vmm *vmm, struct nvkm_vma *vma)
 static void
 nvkm_vmm_free_insert(struct nvkm_vmm *vmm, struct nvkm_vma *vma)
 {
+#ifdef __NetBSD__
+	struct nvkm_vma *collision __diagused =
+	    rb_tree_insert_node(&vmm->free, vma);
+	KASSERT(collision == vma);
+#else
 	struct rb_node **ptr = &vmm->free.rb_node;
 	struct rb_node *parent = NULL;
 
@@ -826,12 +883,50 @@ nvkm_vmm_free_insert(struct nvkm_vmm *vmm, struct nvkm_vma *vma)
 
 	rb_link_node(&vma->tree, parent, ptr);
 	rb_insert_color(&vma->tree, &vmm->free);
+#endif
 }
+
+#ifdef __NetBSD__
+static int
+compare_vma_nodes(void *cookie, const void *va, const void *vb)
+{
+	const struct nvkm_vma *a = va, *b = vb;
+
+	if (a->addr < b->addr)
+		return -1;
+	if (a->addr > b->addr)
+		return +1;
+	return 0;
+}
+
+static int
+compare_vma_key(void *cookie, const void *vn, const void *vk)
+{
+	const struct nvkm_vma *n = vn;
+	const u64 *k = vk;
+
+	if (n->addr < *k)
+		return -1;
+	if (n->addr > *k)
+		return +1;
+	return 0;
+}
+
+static const rb_tree_ops_t vmm_rb_ops = {
+	.rbto_compare_nodes = compare_vma_nodes,
+	.rbto_compare_key = compare_vma_key,
+	.rbto_node_offset = offsetof(struct nvkm_vma, tree),
+};
+#endif
 
 static inline void
 nvkm_vmm_node_remove(struct nvkm_vmm *vmm, struct nvkm_vma *vma)
 {
+#ifdef __NetBSD__
+	rb_tree_remove_node(&vmm->root, vma);
+#else
 	rb_erase(&vma->tree, &vmm->root);
+#endif
 }
 
 static inline void
@@ -845,6 +940,11 @@ nvkm_vmm_node_delete(struct nvkm_vmm *vmm, struct nvkm_vma *vma)
 static void
 nvkm_vmm_node_insert(struct nvkm_vmm *vmm, struct nvkm_vma *vma)
 {
+#ifdef __NetBSD__
+	struct nvkm_vma *collision __diagused =
+	    rb_tree_insert_node(&vmm->root, vma);
+	KASSERT(collision == vma);
+#else
 	struct rb_node **ptr = &vmm->root.rb_node;
 	struct rb_node *parent = NULL;
 
@@ -862,11 +962,15 @@ nvkm_vmm_node_insert(struct nvkm_vmm *vmm, struct nvkm_vma *vma)
 
 	rb_link_node(&vma->tree, parent, ptr);
 	rb_insert_color(&vma->tree, &vmm->root);
+#endif
 }
 
 struct nvkm_vma *
 nvkm_vmm_node_search(struct nvkm_vmm *vmm, u64 addr)
 {
+#ifdef __NetBSD__
+	return rb_tree_find_node(&vmm->root, &addr);
+#else
 	struct rb_node *node = vmm->root.rb_node;
 	while (node) {
 		struct nvkm_vma *vma = rb_entry(node, typeof(*vma), tree);
@@ -879,6 +983,7 @@ nvkm_vmm_node_search(struct nvkm_vmm *vmm, u64 addr)
 			return vma;
 	}
 	return NULL;
+#endif
 }
 
 #define node(root, dir) (((root)->head.dir == &vmm->list) ? NULL :             \
@@ -956,7 +1061,7 @@ nvkm_vmm_node_split(struct nvkm_vmm *vmm,
 static void
 nvkm_vma_dump(struct nvkm_vma *vma)
 {
-	printk(KERN_ERR "%016llx %016llx %c%c%c%c%c%c%c%c%c %p\n",
+	printk(KERN_ERR "%016"PRIx64" %016"PRIx64" %c%c%c%c%c%c%c%c%c %p\n",
 	       vma->addr, (u64)vma->size,
 	       vma->used ? '-' : 'F',
 	       vma->mapref ? 'R' : '-',
@@ -988,10 +1093,16 @@ nvkm_vmm_dtor(struct nvkm_vmm *vmm)
 	if (0)
 		nvkm_vmm_dump(vmm);
 
+#ifdef __NetBSD__
+	__USE(node);
+	while ((vma = RB_TREE_MIN(&vmm->root)) != NULL)
+		nvkm_vmm_put(vmm, &vma);
+#else
 	while ((node = rb_first(&vmm->root))) {
 		struct nvkm_vma *vma = rb_entry(node, typeof(*vma), tree);
 		nvkm_vmm_put(vmm, &vma);
 	}
+#endif
 
 	if (vmm->bootstrapped) {
 		const struct nvkm_vmm_page *page = vmm->func->page;
@@ -1010,8 +1121,17 @@ nvkm_vmm_dtor(struct nvkm_vmm *vmm)
 	WARN_ON(!list_empty(&vmm->list));
 
 	if (vmm->nullp) {
+#ifdef __NetBSD__
+		struct nvkm_device *device = vmm->mmu->subdev.device;
+		const bus_dma_tag_t dmat = device->func->dma_tag(device);
+		bus_dmamap_unload(dmat, vmm->nullmap);
+		bus_dmamem_unmap(dmat, vmm->nullp, 16 * 1024);
+		bus_dmamap_destroy(dmat, vmm->nullmap);
+		bus_dmamem_free(dmat, &vmm->nullseg, 1);
+#else
 		dma_free_coherent(vmm->mmu->subdev.device->dev, 16 * 1024,
 				  vmm->nullp, vmm->null);
+#endif
 	}
 
 	if (vmm->pd) {
@@ -1092,8 +1212,13 @@ nvkm_vmm_ctor(const struct nvkm_vmm_func *func, struct nvkm_mmu *mmu,
 
 	/* Initialise address-space MM. */
 	INIT_LIST_HEAD(&vmm->list);
+#ifdef __NetBSD__
+	rb_tree_init(&vmm->free, &vmm_free_rb_ops);
+	rb_tree_init(&vmm->root, &vmm_rb_ops);
+#else
 	vmm->free = RB_ROOT;
 	vmm->root = RB_ROOT;
+#endif
 
 	if (managed) {
 		/* Address-space will be managed by the client for the most
@@ -1232,7 +1357,7 @@ nvkm_vmm_pfn_map(struct nvkm_vmm *vmm, u8 shift, u64 addr, u64 size, u64 *pfn)
 	if (!page->shift || !IS_ALIGNED(addr, 1ULL << shift) ||
 			    !IS_ALIGNED(size, 1ULL << shift) ||
 	    addr + size < addr || addr + size > vmm->limit) {
-		VMM_DEBUG(vmm, "paged map %d %d %016llx %016llx\n",
+		VMM_DEBUG(vmm, "paged map %d %d %016"PRIx64" %016"PRIx64"\n",
 			  shift, page->shift, addr, size);
 		return -EINVAL;
 	}
@@ -1404,7 +1529,7 @@ nvkm_vmm_map_valid(struct nvkm_vmm *vmm, struct nvkm_vma *vma,
 	    !IS_ALIGNED((u64)vma->size, 1ULL << map->page->shift) ||
 	    !IS_ALIGNED(   map->offset, 1ULL << map->page->shift) ||
 	    nvkm_memory_page(map->memory) < map->page->shift) {
-		VMM_DEBUG(vmm, "alignment %016llx %016llx %016llx %d %d",
+		VMM_DEBUG(vmm, "alignment %016"PRIx64" %016"PRIx64" %016"PRIx64" %d %d",
 		    vma->addr, (u64)vma->size, map->offset, map->page->shift,
 		    nvkm_memory_page(map->memory));
 		return -EINVAL;
@@ -1434,7 +1559,7 @@ nvkm_vmm_map_locked(struct nvkm_vmm *vmm, struct nvkm_vma *vma,
 
 	/* Make sure we won't overrun the end of the memory object. */
 	if (unlikely(nvkm_memory_size(map->memory) < map->offset + vma->size)) {
-		VMM_DEBUG(vmm, "overrun %016llx %016llx %016llx",
+		VMM_DEBUG(vmm, "overrun %016"PRIx64" %016"PRIx64" %016"PRIx64"",
 			  nvkm_memory_size(map->memory),
 			  map->offset, (u64)vma->size);
 		return -EINVAL;
@@ -1477,6 +1602,7 @@ nvkm_vmm_map_locked(struct nvkm_vmm *vmm, struct nvkm_vma *vma,
 			map->off -= size;
 		}
 		func = map->page->desc->func->mem;
+#ifndef __NetBSD__		/* XXX prime? */
 	} else
 	if (map->sgl) {
 		for (; map->off; map->sgl = sg_next(map->sgl)) {
@@ -1486,6 +1612,7 @@ nvkm_vmm_map_locked(struct nvkm_vmm *vmm, struct nvkm_vma *vma,
 			map->off -= size;
 		}
 		func = map->page->desc->func->sgl;
+#endif
 	} else {
 		map->dma += map->offset >> PAGE_SHIFT;
 		map->off  = map->offset & PAGE_MASK;
@@ -1642,18 +1769,20 @@ nvkm_vmm_get_locked(struct nvkm_vmm *vmm, bool getref, bool mapref, bool sparse,
 		    u8 shift, u8 align, u64 size, struct nvkm_vma **pvma)
 {
 	const struct nvkm_vmm_page *page = &vmm->func->page[NVKM_VMA_PAGE_NONE];
+#ifndef __NetBSD__
 	struct rb_node *node = NULL, *temp;
+#endif
 	struct nvkm_vma *vma = NULL, *tmp;
 	u64 addr, tail;
 	int ret;
 
 	VMM_TRACE(vmm, "getref %d mapref %d sparse %d "
-		       "shift: %d align: %d size: %016llx",
+		       "shift: %d align: %d size: %016"PRIx64"",
 		  getref, mapref, sparse, shift, align, size);
 
 	/* Zero-sized, or lazily-allocated sparse VMAs, make no sense. */
 	if (unlikely(!size || (!getref && !mapref && sparse))) {
-		VMM_DEBUG(vmm, "args %016llx %d %d %d",
+		VMM_DEBUG(vmm, "args %016"PRIx64" %d %d %d",
 			  size, getref, mapref, sparse);
 		return -EINVAL;
 	}
@@ -1665,7 +1794,7 @@ nvkm_vmm_get_locked(struct nvkm_vmm *vmm, bool getref, bool mapref, bool sparse,
 	 * The same goes if we're requesting up-front allocation of PTES.
 	 */
 	if (unlikely((getref || vmm->func->page_block) && !shift)) {
-		VMM_DEBUG(vmm, "page size required: %d %016llx",
+		VMM_DEBUG(vmm, "page size required: %d %016"PRIx64"",
 			  getref, vmm->func->page_block);
 		return -EINVAL;
 	}
@@ -1680,7 +1809,7 @@ nvkm_vmm_get_locked(struct nvkm_vmm *vmm, bool getref, bool mapref, bool sparse,
 		}
 
 		if (!page->shift || !IS_ALIGNED(size, 1ULL << page->shift)) {
-			VMM_DEBUG(vmm, "page %d %016llx", shift, size);
+			VMM_DEBUG(vmm, "page %d %016"PRIx64"", shift, size);
 			return -EINVAL;
 		}
 		align = max_t(u8, align, shift);
@@ -1689,6 +1818,11 @@ nvkm_vmm_get_locked(struct nvkm_vmm *vmm, bool getref, bool mapref, bool sparse,
 	}
 
 	/* Locate smallest block that can possibly satisfy the allocation. */
+#ifdef __NetBSD__
+	struct nvkm_vma_key key = { .size = size, .addr = 0 };
+	for (struct nvkm_vma *this = rb_tree_find_node_geq(&vmm->free, &key);
+		 this != NULL; this = RB_TREE_NEXT(&vmm->free, this)) {
+#else
 	temp = vmm->free.rb_node;
 	while (temp) {
 		struct nvkm_vma *this = rb_entry(temp, typeof(*this), tree);
@@ -1708,6 +1842,7 @@ nvkm_vmm_get_locked(struct nvkm_vmm *vmm, bool getref, bool mapref, bool sparse,
 	 */
 	do {
 		struct nvkm_vma *this = rb_entry(node, typeof(*this), tree);
+#endif
 		struct nvkm_vma *prev = node(this, prev);
 		struct nvkm_vma *next = node(this, next);
 		const int p = page - vmm->func->page;
@@ -1726,7 +1861,11 @@ nvkm_vmm_get_locked(struct nvkm_vmm *vmm, bool getref, bool mapref, bool sparse,
 			vma = this;
 			break;
 		}
+#ifdef __NetBSD__
+	}
+#else
 	} while ((node = rb_next(node)));
+#endif
 
 	if (unlikely(!vma))
 		return -ENOSPC;

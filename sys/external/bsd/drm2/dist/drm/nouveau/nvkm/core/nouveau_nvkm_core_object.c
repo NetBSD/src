@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_nvkm_core_object.c,v 1.7 2021/12/18 23:45:34 riastradh Exp $	*/
+/*	$NetBSD: nouveau_nvkm_core_object.c,v 1.8 2021/12/19 10:51:57 riastradh Exp $	*/
 
 /*
  * Copyright 2012 Red Hat Inc.
@@ -24,7 +24,7 @@
  * Authors: Ben Skeggs
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_core_object.c,v 1.7 2021/12/18 23:45:34 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_core_object.c,v 1.8 2021/12/19 10:51:57 riastradh Exp $");
 
 #include <core/object.h>
 #include <core/client.h>
@@ -37,6 +37,11 @@ nvkm_object_search(struct nvkm_client *client, u64 handle,
 	struct nvkm_object *object;
 
 	if (handle) {
+#ifdef __NetBSD__
+		object = rb_tree_find_node(&client->objtree, &handle);
+		if (object)
+			goto done;
+#else
 		struct rb_node *node = client->objroot.rb_node;
 		while (node) {
 			object = rb_entry(node, typeof(*object), node);
@@ -49,6 +54,7 @@ nvkm_object_search(struct nvkm_client *client, u64 handle,
 				goto done;
 		}
 		return ERR_PTR(-ENOENT);
+#endif
 	} else {
 		object = &client->object;
 	}
@@ -62,13 +68,23 @@ done:
 void
 nvkm_object_remove(struct nvkm_object *object)
 {
+#ifdef __NetBSD__
+	if (!object->on_tree)
+		rb_tree_remove_node(&object->client->objtree, object);
+#else
 	if (!RB_EMPTY_NODE(&object->node))
 		rb_erase(&object->node, &object->client->objroot);
+#endif
 }
 
 bool
 nvkm_object_insert(struct nvkm_object *object)
 {
+#ifdef __NetBSD__
+	struct nvkm_object *collision =
+	    rb_tree_insert_node(&object->client->objtree, object);
+	return collision == object;
+#else
 	struct rb_node **ptr = &object->client->objroot.rb_node;
 	struct rb_node *parent = NULL;
 
@@ -87,6 +103,7 @@ nvkm_object_insert(struct nvkm_object *object)
 	rb_link_node(&object->node, parent, ptr);
 	rb_insert_color(&object->node, &object->client->objroot);
 	return true;
+#endif
 }
 
 int
@@ -108,11 +125,12 @@ nvkm_object_ntfy(struct nvkm_object *object, u32 mthd,
 
 #ifdef __NetBSD__
 int
-nvkm_object_map(struct nvkm_object *object, bus_space_tag_t *tagp, u64 *addr,
-    u32 *size)
+nvkm_object_map(struct nvkm_object *object, void *argv, u32 argc,
+    enum nvkm_object_map *type, bus_space_tag_t *tagp, u64 *addr, u64 *size)
 {
 	if (likely(object->func->map))
-		return object->func->map(object, tagp, addr, size);
+		return object->func->map(object, argv, argc, type, tagp, addr,
+		    size);
 	return -ENODEV;
 }
 #else
@@ -124,6 +142,7 @@ nvkm_object_map(struct nvkm_object *object, void *argv, u32 argc,
 		return object->func->map(object, argv, argc, type, addr, size);
 	return -ENODEV;
 }
+#endif
 
 int
 nvkm_object_unmap(struct nvkm_object *object)
@@ -132,7 +151,6 @@ nvkm_object_unmap(struct nvkm_object *object)
 		return object->func->unmap(object);
 	return -ENODEV;
 }
-#endif
 
 int
 nvkm_object_rd08(struct nvkm_object *object, u64 addr, u8 *data)

@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_nvkm_subdev_therm_temp.c,v 1.4 2021/12/18 23:45:41 riastradh Exp $	*/
+/*	$NetBSD: nouveau_nvkm_subdev_therm_temp.c,v 1.5 2021/12/19 10:51:59 riastradh Exp $	*/
 
 /*
  * Copyright 2012 The Nouveau community
@@ -24,7 +24,7 @@
  * Authors: Martin Peres
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_subdev_therm_temp.c,v 1.4 2021/12/18 23:45:41 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_subdev_therm_temp.c,v 1.5 2021/12/19 10:51:59 riastradh Exp $");
 
 #include "priv.h"
 
@@ -93,7 +93,7 @@ nvkm_therm_sensor_event(struct nvkm_therm *therm, enum nvkm_therm_thrs thrs,
 	};
 	int temperature = therm->func->temp_get(therm);
 
-	if ((unsigned)thrs >= __arraycount(thresolds))
+	if ((unsigned)thrs >= __arraycount(thresholds))
 		return;
 
 	if (dir == NVKM_THERM_THRS_FALLING)

@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_nvkm_engine_gr_gf117.c,v 1.3 2021/12/18 23:45:36 riastradh Exp $	*/
+/*	$NetBSD: nouveau_nvkm_engine_gr_gf117.c,v 1.4 2021/12/19 10:51:57 riastradh Exp $	*/
 
 /*
  * Copyright 2013 Red Hat Inc.
@@ -24,12 +24,14 @@
  * Authors: Ben Skeggs <bskeggs@redhat.com>
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_engine_gr_gf117.c,v 1.3 2021/12/18 23:45:36 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_engine_gr_gf117.c,v 1.4 2021/12/19 10:51:57 riastradh Exp $");
 
 #include "gf100.h"
 #include "ctxgf100.h"
 
 #include <nvif/class.h>
+
+#include <linux/nbsd-namespace.h>
 
 /*******************************************************************************
  * PGRAPH register lists

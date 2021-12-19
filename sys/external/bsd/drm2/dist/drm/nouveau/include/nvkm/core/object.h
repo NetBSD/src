@@ -1,4 +1,4 @@
-/*	$NetBSD: object.h,v 1.6 2021/12/18 23:45:33 riastradh Exp $	*/
+/*	$NetBSD: object.h,v 1.7 2021/12/19 10:51:56 riastradh Exp $	*/
 
 /* SPDX-License-Identifier: MIT */
 #ifndef __NVKM_OBJECT_H__
@@ -37,9 +37,9 @@ struct nvkm_object_func {
 	int (*mthd)(struct nvkm_object *, u32 mthd, void *data, u32 size);
 	int (*ntfy)(struct nvkm_object *, u32 mthd, struct nvkm_event **);
 #ifdef __NetBSD__
-	int (*map)(struct nvkm_object *, bus_space_tag_t *tagp,
-		   void *argv, u32 argc,
-		   enum nvkm_object_map *, u64 *addr, u64 *size);
+	int (*map)(struct nvkm_object *, void *argv, u32 argc,
+		   enum nvkm_object_map *,
+		   bus_space_tag_t *tagp, u64 *addr, u64 *size);
 #else
 	int (*map)(struct nvkm_object *, void *argv, u32 argc,
 		   enum nvkm_object_map *, u64 *addr, u64 *size);
@@ -70,9 +70,9 @@ int nvkm_object_fini(struct nvkm_object *, bool suspend);
 int nvkm_object_mthd(struct nvkm_object *, u32 mthd, void *data, u32 size);
 int nvkm_object_ntfy(struct nvkm_object *, u32 mthd, struct nvkm_event **);
 #ifdef __NetBSD__
-int nvkm_object_map(struct nvkm_object *, bus_space_tag_t *,
-		    void *argv, u32 argc,
-		    enum nvkm_object_map *, u64 *addr, u64 *size);
+int nvkm_object_map(struct nvkm_object *, void *argv, u32 argc,
+		    enum nvkm_object_map *,
+		    bus_space_tag_t *, u64 *addr, u64 *size);
 #else
 int nvkm_object_map(struct nvkm_object *, void *argv, u32 argc,
 		    enum nvkm_object_map *, u64 *addr, u64 *size);

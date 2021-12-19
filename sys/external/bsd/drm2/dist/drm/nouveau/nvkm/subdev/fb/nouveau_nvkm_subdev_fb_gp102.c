@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_nvkm_subdev_fb_gp102.c,v 1.2 2021/12/18 23:45:39 riastradh Exp $	*/
+/*	$NetBSD: nouveau_nvkm_subdev_fb_gp102.c,v 1.3 2021/12/19 10:51:58 riastradh Exp $	*/
 
 /*
  * Copyright 2016 Red Hat Inc.
@@ -24,7 +24,7 @@
  * Authors: Ben Skeggs <bskeggs@redhat.com>
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_subdev_fb_gp102.c,v 1.2 2021/12/18 23:45:39 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_subdev_fb_gp102.c,v 1.3 2021/12/19 10:51:58 riastradh Exp $");
 
 #include "gf100.h"
 #include "ram.h"
@@ -34,6 +34,8 @@ __KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_subdev_fb_gp102.c,v 1.2 2021/12/18 23:4
 #include <nvfw/fw.h>
 #include <nvfw/hs.h>
 #include <engine/nvdec.h>
+
+#include <linux/nbsd-namespace.h>
 
 int
 gp102_fb_vpr_scrub(struct nvkm_fb *fb)

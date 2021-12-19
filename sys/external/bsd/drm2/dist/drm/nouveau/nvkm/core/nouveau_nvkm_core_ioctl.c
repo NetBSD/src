@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_nvkm_core_ioctl.c,v 1.5 2021/12/18 23:45:34 riastradh Exp $	*/
+/*	$NetBSD: nouveau_nvkm_core_ioctl.c,v 1.6 2021/12/19 10:51:57 riastradh Exp $	*/
 
 /*
  * Copyright 2014 Red Hat Inc.
@@ -24,7 +24,7 @@
  * Authors: Ben Skeggs <bskeggs@redhat.com>
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_core_ioctl.c,v 1.5 2021/12/18 23:45:34 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_core_ioctl.c,v 1.6 2021/12/19 10:51:57 riastradh Exp $");
 
 #include <core/ioctl.h>
 #include <core/client.h>
@@ -268,7 +268,8 @@ nvkm_ioctl_map(struct nvkm_client *client,
 	nvif_ioctl(object, "map size %d\n", size);
 	if (!(ret = nvif_unpack(ret, &data, &size, args->v0, 0, 0, true))) {
 		nvif_ioctl(object, "map vers %d\n", args->v0.version);
-		ret = nvkm_object_map(object, data, size, &type,
+		bus_space_tag_t dummy __unused;
+		ret = nvkm_object_map(object, data, size, &type, &dummy,
 				      &args->v0.handle,
 				      &args->v0.length);
 		if (type == NVKM_OBJECT_MAP_IO)
@@ -281,22 +282,19 @@ nvkm_ioctl_map(struct nvkm_client *client,
 }
 
 static int
-nvkm_ioctl_map_netbsd(struct nvkm_object *object, void *data, u32 size)
+nvkm_ioctl_map_netbsd(struct nvkm_client *client, struct nvkm_object *object,
+    void *data, u32 size)
 {
 	union {
 		struct nvif_ioctl_map_netbsd_v0 v0;
 	} *args = data;
-	int ret;
+	enum nvkm_object_map type;
+	int ret = -ENOSYS;
 
 	nvif_ioctl(object, "map size %d\n", size);
-	if (nvif_unpack(args->v0, 0, 0, false)) {
-		nvif_ioctl(object, "map vers %d\n", args->v0.version);
-		ret = nvkm_object_map(object, &args->v0.tag,
-					      &args->v0.handle,
-					      &args->v0.length);
 	if (!(ret = nvif_unpack(ret, &data, &size, args->v0, 0, 0, true))) {
 		nvif_ioctl(object, "map vers %d\n", args->v0.version);
-		ret = nvkm_object_map(object, data, size, &type,
+		ret = nvkm_object_map(object, data, size, &type, &args->v0.tag,
 				      &args->v0.handle,
 				      &args->v0.length);
 		if (type == NVKM_OBJECT_MAP_IO)

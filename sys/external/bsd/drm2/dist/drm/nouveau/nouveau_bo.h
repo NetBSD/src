@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_bo.h,v 1.5 2021/12/18 23:45:32 riastradh Exp $	*/
+/*	$NetBSD: nouveau_bo.h,v 1.6 2021/12/19 10:51:56 riastradh Exp $	*/
 
 /* SPDX-License-Identifier: MIT */
 #ifndef __NOUVEAU_BO_H__
@@ -9,6 +9,7 @@
 #include <ttm/ttm_bo_api.h>
 
 struct nouveau_channel;
+struct nouveau_cli;
 struct nouveau_drm;
 struct nouveau_fence;
 struct nvkm_vm;

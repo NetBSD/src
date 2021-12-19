@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_ttm.c,v 1.8 2021/12/18 23:45:32 riastradh Exp $	*/
+/*	$NetBSD: nouveau_ttm.c,v 1.9 2021/12/19 10:51:56 riastradh Exp $	*/
 
 // SPDX-License-Identifier: GPL-2.0 OR MIT
 /*
@@ -25,7 +25,7 @@
  * USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_ttm.c,v 1.8 2021/12/18 23:45:32 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_ttm.c,v 1.9 2021/12/19 10:51:56 riastradh Exp $");
 
 #include <sys/param.h>
 #include <uvm/uvm_extern.h>	/* pmap_pv_track/untrack */
@@ -329,7 +329,6 @@ nouveau_ttm_fini(struct nouveau_drm *drm)
 	drm->ttm.mtrr = 0;
 
 #ifdef __NetBSD__
-	struct nvkm_device *device = nvxx_device(&drm->device);
 	pmap_pv_untrack(device->func->resource_addr(device, 1),
 	    device->func->resource_size(device, 1));
 #endif
