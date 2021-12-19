@@ -1,4 +1,4 @@
-/*	$NetBSD: interval_tree_generic.h,v 1.3 2021/12/19 11:00:18 riastradh Exp $	*/
+/*	$NetBSD: interval_tree_generic.h,v 1.4 2021/12/19 12:22:28 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -108,6 +108,24 @@ PREFIX##_iter_first(struct rb_root_cached *__root, KT __start, KT __last)     \
 		return NULL;						      \
 									      \
 	return __node;							      \
+}									      \
+									      \
+QUAL T *								      \
+PREFIX##_iter_next(struct rb_root_cached *__root, T *__node,		      \
+    KT __start, KT __last)						      \
+{									      \
+	T *__next;							      \
+									      \
+	KASSERT(__node != NULL);					      \
+	__next = rb_tree_iterate(&__root->rb_root.rbr_tree, __node,	      \
+	    RB_DIR_RIGHT);						      \
+	if (__next == NULL)						      \
+		return NULL;						      \
+	if (__last < START(__next))					      \
+		return NULL;						      \
+	KASSERT(LAST(__next) >= __start);				      \
+									      \
+	return __next;							      \
 }
 
 #endif	/* _LINUX_INTERVAL_TREE_GENERIC_H_ */
