@@ -1,4 +1,4 @@
-/*	$NetBSD: rbtree.h,v 1.7 2021/12/19 01:44:33 riastradh Exp $	*/
+/*	$NetBSD: rbtree.h,v 1.8 2021/12/19 01:48:30 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@ struct rb_root {
 };
 
 struct rb_root_cached {
-	struct rb_root	rbrc_root;
+	struct rb_root	rb_root; /* Linux API name */
 };
 
 static inline bool
@@ -61,7 +61,7 @@ rb_erase(struct rb_node *rbnode, struct rb_root *root)
 static inline void
 rb_erase_cached(struct rb_node *rbnode, struct rb_root_cached *root)
 {
-	rb_erase(rbnode, &root->rbrc_root);
+	rb_erase(rbnode, &root->rb_root);
 }
 
 /*
