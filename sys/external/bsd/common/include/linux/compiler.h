@@ -1,4 +1,4 @@
-/*	$NetBSD: compiler.h,v 1.2 2021/12/19 00:48:23 riastradh Exp $	*/
+/*	$NetBSD: compiler.h,v 1.3 2021/12/19 01:24:36 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -34,6 +34,8 @@
 
 #include <sys/atomic.h>
 
+#include <asm/barrier.h>
+
 #define	READ_ONCE(X)	({						      \
 	typeof(X) __read_once_tmp = (X);				      \
 	membar_datadep_consumer();					      \
@@ -45,5 +47,16 @@
 	(X) = __write_once_tmp;						      \
 	__write_once_tmp;						      \
 })
+
+#define	smp_store_mb(X, V)	do {					      \
+	WRITE_ONCE(X, V);						      \
+	smp_mb();							      \
+} while (0)
+
+#define	smp_store_release(X, V)	do {					      \
+	typeof(X) __smp_store_release_tmp = (V);			      \
+	membar_exit();							      \
+	(X) = __write_once_tmp;						      \
+} while (0)
 
 #endif	/* _LINUX_COMPILER_H_ */
