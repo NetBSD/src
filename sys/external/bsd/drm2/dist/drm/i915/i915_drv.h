@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_drv.h,v 1.36 2021/12/19 11:04:14 riastradh Exp $	*/
+/*	$NetBSD: i915_drv.h,v 1.37 2021/12/19 11:04:21 riastradh Exp $	*/
 
 /* i915_drv.h -- Private header for the I915 driver -*- linux-c -*-
  */
@@ -1700,12 +1700,6 @@ IS_SUBPLATFORM(const struct drm_i915_private *i915,
 #define HAS_OVERLAY(dev_priv)		 (INTEL_INFO(dev_priv)->display.has_overlay)
 #define OVERLAY_NEEDS_PHYSICAL(dev_priv) \
 		(INTEL_INFO(dev_priv)->display.overlay_needs_physical)
-
-/*
- * The Gen7 cmdparser copies the scanned buffer to the ggtt for execution
- * All later gens can run the final buffer from the ppgtt
- */
-#define CMDPARSER_USES_GGTT(dev_priv) IS_GEN7(dev_priv)
 
 /* Early gen2 have a totally busted CS tlb and require pinned batches. */
 #define HAS_BROKEN_CS_TLB(dev_priv)	(IS_I830(dev_priv) || IS_I845G(dev_priv))
