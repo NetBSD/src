@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_ggtt.c,v 1.9 2021/12/19 12:03:38 riastradh Exp $	*/
+/*	$NetBSD: intel_ggtt.c,v 1.10 2021/12/19 12:10:07 riastradh Exp $	*/
 
 // SPDX-License-Identifier: MIT
 /*
@@ -6,7 +6,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intel_ggtt.c,v 1.9 2021/12/19 12:03:38 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intel_ggtt.c,v 1.10 2021/12/19 12:10:07 riastradh Exp $");
 
 #include <linux/stop_machine.h>
 
@@ -1589,19 +1589,103 @@ err_st_alloc:
 	return ERR_PTR(ret);
 }
 
+#endif	/* __NetBSD__ */
+
 static noinline struct sg_table *
 intel_partial_pages(const struct i915_ggtt_view *view,
 		    struct drm_i915_gem_object *obj)
 {
+#ifdef __NetBSD__
+	struct sg_table *st = NULL;
+	int ret = -ENOMEM;
+
+	KASSERTMSG(view->partial.offset <= obj->base.size >> PAGE_SHIFT,
+	    "obj=%p size=0x%zx; view offset=0x%zx size=0x%zx",
+	    obj,
+	    (size_t)obj->base.size >> PAGE_SHIFT,
+	    (size_t)view->partial.offset,
+	    (size_t)view->partial.size);
+	KASSERTMSG((view->partial.size <=
+		(obj->base.size >> PAGE_SHIFT) - view->partial.offset),
+	    "obj=%p size=0x%zx; view offset=0x%zx size=0x%zx",
+	    obj,
+	    (size_t)obj->base.size >> PAGE_SHIFT,
+	    (size_t)view->partial.offset,
+	    (size_t)view->partial.size);
+	KASSERTMSG(view->partial.size <= INT_MAX, "view size=0x%zx",
+	    (size_t)view->partial.size);
+
+	st = kmalloc(sizeof(*st), GFP_KERNEL);
+	if (st == NULL)
+		goto fail;
+	ret = sg_alloc_table(st, view->partial.size, GFP_KERNEL);
+	if (ret) {
+		kfree(st);
+		st = NULL;
+		goto fail;
+	}
+
+	/* XXX errno NetBSD->Linux */
+	if (obj->mm.pages->sgl->sg_dmamap) { /* XXX KASSERT?  */
+		ret = -bus_dmamap_create(obj->base.dev->dmat,
+		    (bus_size_t)view->partial.size << PAGE_SHIFT,
+		    view->partial.size, PAGE_SIZE, 0, BUS_DMA_NOWAIT,
+		    &st->sgl->sg_dmamap);
+		if (ret)
+			goto fail;
+	}
+
+	/*
+	 * Copy over the pages.  The view's offset and size are in
+	 * units of pages already.
+	 */
+	KASSERT(st->sgl->sg_npgs == view->partial.size);
+	memcpy(st->sgl->sg_pgs,
+	    obj->mm.pages->sgl->sg_pgs + view->partial.offset,
+	    sizeof(st->sgl->sg_pgs[0]) * view->partial.size);
+
+	/*
+	 * Copy over the DMA addresses.  For simplicity, we don't do
+	 * anything to compress contiguous pages into larger segments.
+	 */
+	if (obj->mm.pages->sgl->sg_dmamap) {
+		unsigned i, j, k;
+
+		st->sgl->sg_dmamap->dm_nsegs = view->partial.size;
+		for (i = j = 0; i < view->partial.size; j++) {
+			KASSERT(j <= obj->mm.pages->sgl->sg_dmamap->dm_nsegs);
+			const bus_dma_segment_t *iseg =
+			    &obj->mm.pages->sgl->sg_dmamap->dm_segs[j];
+			KASSERT(iseg->ds_len % PAGE_SIZE == 0);
+			for (k = 0; k < iseg->ds_len >> PAGE_SHIFT; k++) {
+				bus_dma_segment_t *oseg =
+				    &st->sgl->sg_dmamap->dm_segs[i++];
+				oseg->ds_addr = iseg->ds_addr + k*PAGE_SIZE;
+				oseg->ds_len = PAGE_SIZE;
+			}
+		}
+	}
+
+	/* Success!  */
+	return st;
+
+fail:	if (st->sgl->sg_dmamap)
+		bus_dmamap_destroy(obj->base.dev->dmat, st->sgl->sg_dmamap);
+	if (st)
+		kfree(st);
+	return ERR_PTR(ret);
+#else
 	struct sg_table *st;
 	struct scatterlist *sg, *iter;
 	unsigned int count = view->partial.size;
 	unsigned int offset;
-	int ret = -ENOMEM;
+	int ret;
 
 	st = kmalloc(sizeof(*st), GFP_KERNEL);
-	if (!st)
+	if (!st) {
+		ret = -ENOMEM;
 		goto err_st_alloc;
+	}
 
 	ret = sg_alloc_table(st, count, GFP_KERNEL);
 	if (ret)
@@ -1640,9 +1724,8 @@ err_sg_alloc:
 	kfree(st);
 err_st_alloc:
 	return ERR_PTR(ret);
-}
-
 #endif	/* __NetBSD__ */
+}
 
 static int
 i915_get_ggtt_vma_pages(struct i915_vma *vma)
@@ -1675,11 +1758,11 @@ i915_get_ggtt_vma_pages(struct i915_vma *vma)
 		vma->pages =
 			intel_remap_pages(&vma->ggtt_view.remapped, vma->obj);
 		break;
+#endif
 
 	case I915_GGTT_VIEW_PARTIAL:
 		vma->pages = intel_partial_pages(&vma->ggtt_view, vma->obj);
 		break;
-#endif
 	}
 
 	ret = 0;
