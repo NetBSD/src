@@ -1,4 +1,4 @@
-/*	$NetBSD: ratelimit.h,v 1.4 2021/12/19 01:20:08 riastradh Exp $	*/
+/*	$NetBSD: ratelimit.h,v 1.5 2021/12/19 11:36:57 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -39,10 +39,16 @@
 #define	ratelimit_state	linux_ratelimit_state
 
 struct ratelimit_state {
+	volatile int		missed;
+
 	volatile unsigned	rl_lock;
 	struct timeval		rl_lasttime;
 	int			rl_curpps;
 	unsigned		rl_maxpps;
+};
+
+enum {
+	RATELIMIT_MSG_ON_RELEASE,
 };
 
 /*
@@ -55,24 +61,42 @@ struct ratelimit_state {
 
 #define	DEFINE_RATELIMIT_STATE(n, i, b)					      \
 	struct ratelimit_state n = {					      \
+		.missed = 0,						      \
 		.rl_lock = 0,						      \
 		.rl_lasttime = { .tv_sec = 0, .tv_usec = 0 },		      \
 		.rl_curpps = 0,						      \
 		.rl_maxpps = (b)/((i)/100),				      \
 	}
 
+static inline void
+ratelimit_state_init(struct ratelimit_state *r, int interval, int burst)
+{
+
+	memset(r, 0, sizeof(*r));
+	r->rl_maxpps = burst/(interval/hz);
+}
+
+static inline void
+ratelimit_set_flags(struct ratelimit_state *r, unsigned long flags)
+{
+}
+
 static inline bool
 __ratelimit(struct ratelimit_state *r)
 {
 	int ok;
 
-	if (atomic_cas_uint(&r->rl_lock, 0, 1))
-		return false;
+	if (atomic_cas_uint(&r->rl_lock, 0, 1)) {
+		ok = false;
+		goto out;
+	}
 	membar_enter();
 	ok = ppsratecheck(&r->rl_lasttime, &r->rl_curpps, r->rl_maxpps);
 	membar_exit();
 	r->rl_lock = 0;
 
+out:	if (!ok)
+		atomic_store_relaxed(&r->missed, 1);
 	return ok;
 }
 

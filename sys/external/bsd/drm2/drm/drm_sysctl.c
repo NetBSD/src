@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_sysctl.c,v 1.7 2018/08/27 13:57:24 riastradh Exp $	*/
+/*	$NetBSD: drm_sysctl.c,v 1.8 2021/12/19 11:36:57 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_sysctl.c,v 1.7 2018/08/27 13:57:24 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_sysctl.c,v 1.8 2021/12/19 11:36:57 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -122,7 +122,6 @@ drm_sysctl_node(const char *name, const struct sysctlnode **node,
 	    CTLFLAG_PERMANENT, CTLTYPE_NODE, name, NULL,
 	    NULL, 0, NULL, 0, CTL_CREATE, CTL_EOL);
 }
-	
 
 void
 drm_sysctl_init(struct drm_sysctl_def *def)
@@ -155,7 +154,6 @@ drm_sysctl_init(struct drm_sysctl_def *def)
 				continue;
 			}
 		}
-			
 	        if ((error = sysctl_createv(&def->log, 0, &cnode,
 		    &cnode, p->mode == 0600 ? CTLFLAG_READWRITE : 0,
 		    drm_sysctl_get_type(p), n,
