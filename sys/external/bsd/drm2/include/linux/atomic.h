@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic.h,v 1.37 2021/12/19 11:16:00 riastradh Exp $	*/
+/*	$NetBSD: atomic.h,v 1.38 2021/12/19 11:26:42 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -39,13 +39,17 @@
 #include <asm/barrier.h>
 
 #define	xchg(P, V)							      \
-	(sizeof(*(P)) == 4 ? atomic_swap_32((volatile uint32_t *)P, V)	      \
-	    : sizeof(*(P)) == 8 ? atomic_swap_64((volatile uint64_t *)P, V)   \
+	(sizeof(*(P)) == 4 ? atomic_swap_32((volatile uint32_t *)(P),	      \
+		(uint32_t)(V))						      \
+	    : sizeof(*(P)) == 8 ? atomic_swap_64((volatile uint64_t *)(P),    \
+		(uint64_t)(V))						      \
 	    : (__builtin_abort(), 0))
 
 #define	cmpxchg(P, O, N)						      \
-	(sizeof(*(P)) == 4 ? atomic_cas_32((volatile uint32_t *)P, O, N)      \
-	    : sizeof(*(P)) == 8 ? atomic_cas_64((volatile uint64_t *)P, O, N) \
+	(sizeof(*(P)) == 4 ? atomic_cas_32((volatile uint32_t *)(P),	      \
+		(uint32_t)(O), (uint32_t)(N))				      \
+	    : sizeof(*(P)) == 8 ? atomic_cas_64((volatile uint64_t *)(P),     \
+		(uint64_t)(O), (uint64_t)(N))				      \
 	    : (__builtin_abort(), 0))
 
 /*
