@@ -1,4 +1,4 @@
-/*	$NetBSD: rcupdate.h,v 1.10 2021/12/19 01:18:09 riastradh Exp $	*/
+/*	$NetBSD: rcupdate.h,v 1.11 2021/12/19 01:19:45 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -72,12 +72,14 @@ struct rcu_head {
 };
 
 #define	call_rcu		linux_call_rcu
+#define	rcu_barrier		linux_rcu_barrier
 #define	synchronize_rcu		linux_synchronize_rcu
 
 int	linux_rcu_gc_init(void);
 void	linux_rcu_gc_fini(void);
 
 void	call_rcu(struct rcu_head *, void (*)(struct rcu_head *));
+void	rcu_barrier(void);
 void	synchronize_rcu(void);
 
 static inline void

@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_rcu.c,v 1.5 2021/07/21 06:34:52 skrll Exp $	*/
+/*	$NetBSD: linux_rcu.c,v 1.6 2021/12/19 01:19:45 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_rcu.c,v 1.5 2021/07/21 06:34:52 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_rcu.c,v 1.6 2021/12/19 01:19:45 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -46,6 +46,8 @@ __KERNEL_RCSID(0, "$NetBSD: linux_rcu.c,v 1.5 2021/07/21 06:34:52 skrll Exp $");
 SDT_PROBE_DEFINE0(sdt, linux, rcu, synchronize__start);
 SDT_PROBE_DEFINE1(sdt, linux, rcu, synchronize__cpu, "unsigned"/*cpu*/);
 SDT_PROBE_DEFINE0(sdt, linux, rcu, synchronize__done);
+SDT_PROBE_DEFINE0(sdt, linux, rcu, barrier__start);
+SDT_PROBE_DEFINE0(sdt, linux, rcu, barrier__done);
 SDT_PROBE_DEFINE2(sdt, linux, rcu, call__queue,
     "struct rcu_head *"/*head*/, "void (*)(struct rcu_head *)"/*callback*/);
 SDT_PROBE_DEFINE2(sdt, linux, rcu, call__run,
@@ -58,6 +60,7 @@ static struct {
 	kcondvar_t	cv;
 	struct rcu_head	*first;
 	struct lwp	*lwp;
+	uint64_t	gen;
 	bool		dying;
 } gc __cacheline_aligned;
 
@@ -68,6 +71,13 @@ synchronize_rcu_xc(void *a, void *b)
 	SDT_PROBE1(sdt, linux, rcu, synchronize__cpu,  cpu_index(curcpu()));
 }
 
+/*
+ * synchronize_rcu()
+ *
+ *	Wait for any pending RCU read section on every CPU to complete
+ *	by triggering on every CPU activity that is blocked by an RCU
+ *	read section.
+ */
 void
 synchronize_rcu(void)
 {
@@ -77,6 +87,36 @@ synchronize_rcu(void)
 	SDT_PROBE0(sdt, linux, rcu, synchronize__done);
 }
 
+/*
+ * rcu_barrier()
+ *
+ *	Wait for all pending RCU callbacks to complete.
+ *
+ *	Does not imply, and is not implied by, synchronize_rcu.
+ */
+void
+rcu_barrier(void)
+{
+	uint64_t gen;
+
+	SDT_PROBE0(sdt, linux, rcu, barrier__start);
+	mutex_enter(&gc.lock);
+	if (gc.first != NULL) {
+		gen = gc.gen;
+		do {
+			cv_wait(&gc.cv, &gc.lock);
+		} while (gc.gen == gen);
+	}
+	mutex_exit(&gc.lock);
+	SDT_PROBE0(sdt, linux, rcu, barrier__done);
+}
+
+/*
+ * call_rcu(head, callback)
+ *
+ *	Arrange to call callback(head) after any pending RCU read
+ *	sections on every CPU is complete.  Return immediately.
+ */
 void
 call_rcu(struct rcu_head *head, void (*callback)(struct rcu_head *))
 {
@@ -86,7 +126,7 @@ call_rcu(struct rcu_head *head, void (*callback)(struct rcu_head *))
 	mutex_enter(&gc.lock);
 	head->rcuh_next = gc.first;
 	gc.first = head;
-	cv_signal(&gc.cv);
+	cv_broadcast(&gc.cv);
 	SDT_PROBE2(sdt, linux, rcu, call__queue,  head, callback);
 	mutex_exit(&gc.lock);
 }
@@ -127,6 +167,8 @@ gc_thread(void *cookie)
 			}
 
 			mutex_enter(&gc.lock);
+			gc.gen++;		/* done running */
+			cv_broadcast(&gc.cv);	/* notify rcu_barrier */
 		}
 
 		/* If we're asked to close shop, do so.  */
@@ -146,6 +188,7 @@ linux_rcu_gc_init(void)
 	mutex_init(&gc.lock, MUTEX_DEFAULT, IPL_VM);
 	cv_init(&gc.cv, "lnxrcugc");
 	gc.first = NULL;
+	gc.gen = 0;
 	gc.dying = false;
 
 	error = kthread_create(PRI_NONE,
@@ -168,7 +211,7 @@ linux_rcu_gc_fini(void)
 
 	mutex_enter(&gc.lock);
 	gc.dying = true;
-	cv_signal(&gc.cv);
+	cv_broadcast(&gc.cv);
 	mutex_exit(&gc.lock);
 
 	kthread_join(gc.lwp);
