@@ -1,4 +1,4 @@
-/*	$NetBSD: barrier.h,v 1.6 2021/12/19 10:56:58 riastradh Exp $	*/
+/*	$NetBSD: barrier.h,v 1.7 2021/12/19 11:02:46 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -68,6 +68,14 @@
 #  define	smp_wmb()			do {} while (0)
 #  define	smp_rmb()			do {} while (0)
 #  define	smp_read_barrier_depends()	do {} while (0)
+#endif
+
+#if defined(MULTIPROCESSOR) && !defined(__HAVE_ATOMIC_AS_MEMBAR)
+#  define	smp_mb__before_atomic()		membar_exit()
+#  define	smp_mb__after_atomic()		membar_enter()
+#else
+#  define	smp_mb__before_atomic()		__insn_barrier()
+#  define	smp_mb__after_atomic()		__insn_barrier()
 #endif
 
 #endif  /* _ASM_BARRIER_H_ */
