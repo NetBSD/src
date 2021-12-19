@@ -1,4 +1,4 @@
-/*	$NetBSD: dma-buf.h,v 1.5 2021/12/19 01:14:29 riastradh Exp $	*/
+/*	$NetBSD: dma-buf.h,v 1.6 2021/12/19 01:23:09 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -65,10 +65,8 @@ struct dma_buf_ops {
 	void	(*unmap_dma_buf)(struct dma_buf_attachment *,
 		    struct sg_table *, enum dma_data_direction);
 	void	(*release)(struct dma_buf *);
-	int	(*begin_cpu_access)(struct dma_buf *, size_t, size_t,
-		    enum dma_data_direction);
-	int	(*end_cpu_access)(struct dma_buf *, size_t, size_t,
-		    enum dma_data_direction);
+	int	(*begin_cpu_access)(struct dma_buf *, enum dma_data_direction);
+	int	(*end_cpu_access)(struct dma_buf *, enum dma_data_direction);
 	void *	(*map)(struct dma_buf *, unsigned long);
 	void	(*unmap)(struct dma_buf *, unsigned long, void *);
 	int	(*mmap)(struct dma_buf *, off_t *, size_t, int, int *,
