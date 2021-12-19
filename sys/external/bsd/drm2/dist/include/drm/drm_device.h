@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_device.h,v 1.3 2021/12/19 01:55:45 riastradh Exp $	*/
+/*	$NetBSD: drm_device.h,v 1.4 2021/12/19 09:52:43 riastradh Exp $	*/
 
 #ifndef _DRM_DEVICE_H_
 #define _DRM_DEVICE_H_
@@ -384,5 +384,9 @@ struct drm_device {
 	struct drm_sg_mem *sg;
 #endif
 };
+
+#ifdef __NetBSD__
+extern const struct cdevsw drm_cdevsw;
+#endif
 
 #endif

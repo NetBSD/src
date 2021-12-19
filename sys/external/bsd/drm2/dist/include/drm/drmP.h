@@ -1,4 +1,4 @@
-/*	$NetBSD: drmP.h,v 1.62 2021/12/19 09:51:41 riastradh Exp $	*/
+/*	$NetBSD: drmP.h,v 1.63 2021/12/19 09:52:43 riastradh Exp $	*/
 
 /*
  * Internal Header for the Direct Rendering Manager
@@ -212,9 +212,5 @@ drm_io_mapping_init_wc(struct drm_device *dev, struct io_mapping *mapping,
 }
 
 #endif	/* defined(__NetBSD__) */
-
-#ifdef __NetBSD__
-extern const struct cdevsw drm_cdevsw;
-#endif
 
 #endif
