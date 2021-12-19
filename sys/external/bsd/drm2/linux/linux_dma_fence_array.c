@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_dma_fence_array.c,v 1.3 2021/12/19 12:33:26 riastradh Exp $	*/
+/*	$NetBSD: linux_dma_fence_array.c,v 1.4 2021/12/19 12:39:56 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2021 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_dma_fence_array.c,v 1.3 2021/12/19 12:33:26 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_dma_fence_array.c,v 1.4 2021/12/19 12:39:56 riastradh Exp $");
 
 #include <sys/systm.h>
 
@@ -39,13 +39,13 @@ __KERNEL_RCSID(0, "$NetBSD: linux_dma_fence_array.c,v 1.3 2021/12/19 12:33:26 ri
 static const char *
 dma_fence_array_driver_name(struct dma_fence *fence)
 {
-	return "dma-fence-array";
+	return "dma_fence_array";
 }
 
 static const char *
 dma_fence_array_timeline_name(struct dma_fence *fence)
 {
-	return "dma-fence-array-timeline";
+	return "unbound";
 }
 
 static void
