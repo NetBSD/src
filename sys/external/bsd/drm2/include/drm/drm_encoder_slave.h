@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_encoder_slave.h,v 1.1 2015/03/05 17:42:48 riastradh Exp $	*/
+/*	$NetBSD: drm_encoder_slave.h,v 1.2 2021/12/19 00:50:26 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -35,7 +35,16 @@
 #include <sys/types.h>
 #include <sys/rbtree.h>
 
-#include <drm/drm_crtc.h>
+#include <drm/drm_connector.h>
+#include <drm/drm_encoder.h>
+
+struct drm_connector;
+struct drm_device;
+struct drm_display_mode;
+struct drm_encoder;
+struct drm_property;
+struct i2c_client;
+struct module;
 
 struct drm_encoder_slave_funcs {
 	void	(*set_config)(struct drm_encoder *, void *);
