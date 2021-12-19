@@ -1,4 +1,4 @@
-/*	$NetBSD: io.h,v 1.7 2021/12/19 10:48:29 riastradh Exp $	*/
+/*	$NetBSD: io.h,v 1.8 2021/12/19 10:59:55 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
 #define	memcpy_toio(d,s,n)	memcpy(__UNVOLATILE(d),(s),(n))
 
 #if defined(__NetBSD__) && defined(__aarch64__)
-static inline void *
+static inline void
 memset_io(volatile void *b, int c, size_t len)
 {
 	volatile uint8_t *ptr = b;
@@ -57,8 +57,6 @@ memset_io(volatile void *b, int c, size_t len)
 		*ptr++ = c;
 		len--;
 	}
-
-	return b;
 }
 #else
 #define	memset_io(b,c,n)	memset(__UNVOLATILE(b),(c),(n))
