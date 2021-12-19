@@ -1,4 +1,4 @@
-/*	$NetBSD: gen8_ppgtt.c,v 1.8 2021/12/19 12:12:00 riastradh Exp $	*/
+/*	$NetBSD: gen8_ppgtt.c,v 1.9 2021/12/19 12:12:54 riastradh Exp $	*/
 
 // SPDX-License-Identifier: MIT
 /*
@@ -6,7 +6,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gen8_ppgtt.c,v 1.8 2021/12/19 12:12:00 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gen8_ppgtt.c,v 1.9 2021/12/19 12:12:54 riastradh Exp $");
 
 #include <linux/log2.h>
 
@@ -735,6 +735,7 @@ gen8_alloc_top_pd(struct i915_address_space *vm)
 		return ERR_PTR(-ENOMEM);
 
 	if (unlikely(setup_page_dma(vm, px_base(pd)))) {
+		spin_lock_destroy(&pd->lock);
 		kfree(pd);
 		return ERR_PTR(-ENOMEM);
 	}
