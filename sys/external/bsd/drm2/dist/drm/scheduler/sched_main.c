@@ -1,4 +1,4 @@
-/*	$NetBSD: sched_main.c,v 1.7 2021/12/19 12:41:44 riastradh Exp $	*/
+/*	$NetBSD: sched_main.c,v 1.8 2021/12/19 12:42:25 riastradh Exp $	*/
 
 /*
  * Copyright 2015 Advanced Micro Devices, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sched_main.c,v 1.7 2021/12/19 12:41:44 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sched_main.c,v 1.8 2021/12/19 12:42:25 riastradh Exp $");
 
 #include <linux/kthread.h>
 #include <linux/wait.h>
@@ -857,7 +857,8 @@ int drm_sched_init(struct drm_gpu_scheduler *sched,
 	atomic64_set(&sched->job_id_count, 0);
 
 	/* Each scheduler will run on a seperate kernel thread */
-	sched->thread = kthread_run(drm_sched_main, sched, sched->name);
+	sched->thread = kthread_run(drm_sched_main, sched, sched->name,
+	    &sched->job_list_lock, &sched->wake_up_worker);
 	if (IS_ERR(sched->thread)) {
 		ret = PTR_ERR(sched->thread);
 		sched->thread = NULL;
