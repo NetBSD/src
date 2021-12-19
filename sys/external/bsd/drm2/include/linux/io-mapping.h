@@ -1,4 +1,4 @@
-/*	$NetBSD: io-mapping.h,v 1.11 2021/12/19 12:04:51 riastradh Exp $	*/
+/*	$NetBSD: io-mapping.h,v 1.12 2021/12/19 12:27:49 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -45,7 +45,6 @@ struct io_mapping {
 	bus_addr_t		base; /* Linux API */
 	bus_size_t		size; /* Linux API */
 	vaddr_t			diom_va;
-	bus_size_t		diom_mapsize;
 	bool			diom_atomic;
 };
 
@@ -78,7 +77,6 @@ bus_space_io_mapping_init_wc(bus_space_tag_t bst, struct io_mapping *mapping,
 	mapping->diom_bst = bst;
 	mapping->base = addr;
 	mapping->size = size;
-	mapping->diom_mapsize = 0;
 	mapping->diom_atomic = false;
 
 	/* Allocate kva for one page.  */
@@ -93,7 +91,6 @@ static inline void
 io_mapping_fini(struct io_mapping *mapping)
 {
 
-	KASSERT(mapping->diom_mapsize == 0);
 	KASSERT(!mapping->diom_atomic);
 
 	uvm_km_free(kernel_map, mapping->diom_va, PAGE_SIZE, UVM_KMF_VAONLY);
@@ -135,11 +132,10 @@ io_mapping_map_wc(struct io_mapping *mapping, bus_addr_t offset,
 	KASSERT(PAGE_SIZE <= mapping->size);
 	KASSERT(offset <= (mapping->size - PAGE_SIZE));
 	KASSERT(__type_fit(off_t, offset));
-	KASSERT(mapping->diom_mapsize == 0);
-	KASSERT(!mapping->diom_atomic);
 
 	va = uvm_km_alloc(kernel_map, size, PAGE_SIZE,
 	    UVM_KMF_VAONLY|UVM_KMF_WAITVA);
+	KASSERT(va != mapping->diom_va);
 	for (pg = 0; pg < npgs; pg++) {
 		cookie = bus_space_mmap(mapping->diom_bst, mapping->base,
 		    offset + pg*PAGE_SIZE,
@@ -152,27 +148,20 @@ io_mapping_map_wc(struct io_mapping *mapping, bus_addr_t offset,
 	}
 	pmap_update(pmap_kernel());
 
-	mapping->diom_mapsize = size;
-	mapping->diom_atomic = false;
 	return (void *)va;
 }
 
 static inline void
-io_mapping_unmap(struct io_mapping *mapping, void *ptr __diagused)
+io_mapping_unmap(struct io_mapping *mapping, void *ptr, bus_size_t size)
 {
 	vaddr_t va = (vaddr_t)ptr;
 
-	KASSERT(mapping->diom_mapsize);
-	KASSERT(!mapping->diom_atomic);
 	KASSERT(mapping->diom_va != va);
 
-	pmap_kremove(va, mapping->diom_mapsize);
+	pmap_kremove(va, size);
 	pmap_update(pmap_kernel());
 
-	uvm_km_free(kernel_map, va, mapping->diom_mapsize, UVM_KMF_VAONLY);
-
-	mapping->diom_mapsize = 0;
-	mapping->diom_atomic = false;
+	uvm_km_free(kernel_map, va, size, UVM_KMF_VAONLY);
 }
 
 static inline void *
@@ -184,7 +173,6 @@ io_mapping_map_atomic_wc(struct io_mapping *mapping, bus_addr_t offset)
 	KASSERT(PAGE_SIZE <= mapping->size);
 	KASSERT(offset <= (mapping->size - PAGE_SIZE));
 	KASSERT(__type_fit(off_t, offset));
-	KASSERT(mapping->diom_mapsize == 0);
 	KASSERT(!mapping->diom_atomic);
 
 	cookie = bus_space_mmap(mapping->diom_bst, mapping->base, offset,
@@ -196,7 +184,6 @@ io_mapping_map_atomic_wc(struct io_mapping *mapping, bus_addr_t offset)
 	    PROT_READ|PROT_WRITE, pmap_mmap_flags(cookie));
 	pmap_update(pmap_kernel());
 
-	mapping->diom_mapsize = PAGE_SIZE;
 	mapping->diom_atomic = true;
 	return (void *)mapping->diom_va;
 }
@@ -205,14 +192,12 @@ static inline void
 io_mapping_unmap_atomic(struct io_mapping *mapping, void *ptr __diagused)
 {
 
-	KASSERT(mapping->diom_mapsize);
 	KASSERT(mapping->diom_atomic);
 	KASSERT(mapping->diom_va == (vaddr_t)ptr);
 
 	pmap_kremove(mapping->diom_va, PAGE_SIZE);
 	pmap_update(pmap_kernel());
 
-	mapping->diom_mapsize = 0;
 	mapping->diom_atomic = false;
 }
 
