@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_gem.h,v 1.6 2021/12/18 23:45:46 riastradh Exp $	*/
+/*	$NetBSD: drm_gem.h,v 1.7 2021/12/19 00:59:10 riastradh Exp $	*/
 
 #ifndef __DRM_GEM_H__
 #define __DRM_GEM_H__
@@ -39,6 +39,8 @@
 #ifdef __NetBSD__
 #include <uvm/uvm.h>
 #endif
+
+#include <linux/types.h>
 #include <linux/kref.h>
 #include <linux/dma-resv.h>
 
