@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_gem_mman.c,v 1.9 2021/12/19 11:57:42 riastradh Exp $	*/
+/*	$NetBSD: i915_gem_mman.c,v 1.10 2021/12/19 11:58:16 riastradh Exp $	*/
 
 /*
  * SPDX-License-Identifier: MIT
@@ -7,12 +7,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_gem_mman.c,v 1.9 2021/12/19 11:57:42 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_gem_mman.c,v 1.10 2021/12/19 11:58:16 riastradh Exp $");
 
 #include <linux/anon_inodes.h>
 #include <linux/mman.h>
 #include <linux/pfn_t.h>
 #include <linux/sizes.h>
+
+#include "drm/drm_gem.h"
 
 #include "gt/intel_gt.h"
 #include "gt/intel_gt_requests.h"
@@ -1023,8 +1025,46 @@ int
 i915_gem_mmap_object(struct drm_device *dev, off_t byte_offset, size_t nbytes,
     int prot, struct uvm_object **uobjp, voff_t *uoffsetp, struct file *fp)
 {
-	__USE(i915_gem_fault);
-	panic("NYI");
+	const unsigned long startpage = byte_offset >> PAGE_SHIFT;
+	const unsigned long npages = nbytes >> PAGE_SHIFT;
+	struct drm_file *file = fp->f_data;
+	struct drm_vma_offset_node *node;
+	struct drm_i915_gem_object *obj = NULL;
+	struct i915_mmap_offset *mmo = NULL;
+
+	if (drm_dev_is_unplugged(dev))
+		return -ENODEV;
+
+	rcu_read_lock();
+	drm_vma_offset_lock_lookup(dev->vma_offset_manager);
+	node = drm_vma_offset_exact_lookup_locked(dev->vma_offset_manager,
+	    startpage, npages);
+	if (node && drm_vma_node_is_allowed(node, file)) {
+		/*
+		 * Skip 0-refcnted objects as it is in the process of being
+		 * destroyed and will be invalid when the vma manager lock
+		 * is released.
+		 */
+		mmo = container_of(node, struct i915_mmap_offset, vma_node);
+		obj = i915_gem_object_get_rcu(mmo->obj);
+	}
+	drm_vma_offset_unlock_lookup(dev->vma_offset_manager);
+	rcu_read_unlock();
+	if (!obj)
+		return node ? -EACCES : -EINVAL;
+
+	if (i915_gem_object_is_readonly(obj)) {
+		if (prot & VM_PROT_WRITE) {
+			i915_gem_object_put(obj);
+			return -EINVAL;
+		}
+	}
+
+	/* Success!  */
+	drm_gem_object_get(&obj->base);
+	*uobjp = &obj->base.gemo_uvmobj;
+	*uoffsetp = 0;
+	return 0;
 }
 
 #else
