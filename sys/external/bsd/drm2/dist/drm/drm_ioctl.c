@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_ioctl.c,v 1.18 2021/12/19 09:48:53 riastradh Exp $	*/
+/*	$NetBSD: drm_ioctl.c,v 1.19 2021/12/19 09:52:09 riastradh Exp $	*/
 
 /*
  * Created: Fri Jan  8 09:01:26 1999 by faith@valinux.com
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_ioctl.c,v 1.18 2021/12/19 09:48:53 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_ioctl.c,v 1.19 2021/12/19 09:52:09 riastradh Exp $");
 
 #include <linux/export.h>
 #include <linux/nospec.h>
@@ -353,7 +353,11 @@ drm_setclientcap(struct drm_device *dev, void *data, struct drm_file *file_priv)
 		if (!drm_core_check_feature(dev, DRIVER_ATOMIC))
 			return -EOPNOTSUPP;
 		/* The modesetting DDX has a totally broken idea of atomic. */
+#ifdef __linux__
 		if (current->comm[0] == 'X' && req->value == 1) {
+#else
+		if (current->p_comm[0] == 'X' && req->value == 1) {
+#endif
 			pr_info("broken atomic modeset userspace detected, disabling atomic\n");
 			return -EOPNOTSUPP;
 		}
