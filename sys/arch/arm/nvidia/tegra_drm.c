@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_drm.c,v 1.13 2021/12/19 12:44:14 riastradh Exp $ */
+/* $NetBSD: tegra_drm.c,v 1.14 2021/12/19 12:44:50 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_drm.c,v 1.13 2021/12/19 12:44:14 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_drm.c,v 1.14 2021/12/19 12:44:50 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -54,6 +54,8 @@ static void	tegra_drm_attach(device_t, device_t, void *);
 
 static int	tegra_drm_load(struct drm_device *, unsigned long);
 static void	tegra_drm_unload(struct drm_device *);
+
+static void	tegra_drm_task_work(struct work *, void *);
 
 static struct drm_driver tegra_drm_driver = {
 	.driver_features = DRIVER_MODESET | DRIVER_GEM,
@@ -123,6 +125,14 @@ tegra_drm_attach(device_t parent, device_t self, void *aux)
 	sc->sc_dmat = faa->faa_dmat;
 	sc->sc_bst = faa->faa_bst;
 	sc->sc_phandle = faa->faa_phandle;
+	sc->sc_task_thread = NULL;
+	SIMPLEQ_INIT(&sc->sc_tasks);
+	if (workqueue_create(&sc->sc_task_wq, "tegradrm",
+	    &tegra_drm_task_work, NULL, PRI_NONE, IPL_NONE, WQ_MPSAFE)) {
+		aprint_error_dev(self, "unable to create workqueue\n");
+		sc->sc_task_wq = NULL;
+		return;
+	}
 
 	aprint_naive("\n");
 	aprint_normal("\n");
@@ -204,19 +214,43 @@ tegra_drm_attach(device_t parent, device_t self, void *aux)
 	sc->sc_ddev->dmat = sc->sc_ddev->bus_dmat;
 	sc->sc_ddev->dmat_subregion_p = false;
 
+	/*
+	 * Cause any tasks issued synchronously during attach to be
+	 * processed at the end of this function.
+	 */
+	sc->sc_task_thread = curlwp;
+
 	error = -drm_dev_register(sc->sc_ddev, 0);
 	if (error) {
 		drm_dev_put(sc->sc_ddev);
+		sc->sc_ddev = NULL;
 		aprint_error_dev(self, "couldn't register DRM device: %d\n",
 		    error);
-		return;
+		goto out;
 	}
+	sc->sc_dev_registered = true;
 
 	aprint_normal_dev(self, "initialized %s %d.%d.%d %s on minor %d\n",
 	    driver->name, driver->major, driver->minor, driver->patchlevel,
 	    driver->date, sc->sc_ddev->primary->index);
 
-	return;
+	/*
+	 * Process asynchronous tasks queued synchronously during
+	 * attach.  This will be for display detection to attach a
+	 * framebuffer, so we have the opportunity for a console device
+	 * to attach before autoconf has completed, in time for init(8)
+	 * to find that console without panicking.
+	 */
+	while (!SIMPLEQ_EMPTY(&sc->sc_tasks)) {
+		struct tegra_drm_task *const task =
+		    SIMPLEQ_FIRST(&sc->sc_tasks);
+
+		SIMPLEQ_REMOVE_HEAD(&sc->sc_tasks, tdt_u.queue);
+		(*task->tdt_fn)(task);
+	}
+
+out:	/* Cause any subesquent tasks to be processed by the workqueue.  */
+	atomic_store_relaxed(&sc->sc_task_thread, NULL);
 }
 
 static int
@@ -245,4 +279,32 @@ tegra_drm_unload(struct drm_device *ddev)
 {
 
 	drm_mode_config_cleanup(ddev);
+}
+
+static void
+tegra_drm_task_work(struct work *work, void *cookie)
+{
+	struct tegra_drm_task *task = container_of(work, struct tegra_drm_task,
+	    tdt_u.work);
+
+	(*task->tdt_fn)(task);
+}
+
+void
+tegra_task_init(struct tegra_drm_task *task,
+    void (*fn)(struct tegra_drm_task *))
+{
+
+	task->tdt_fn = fn;
+}
+
+void
+tegra_task_schedule(device_t self, struct tegra_drm_task *task)
+{
+	struct tegra_drm_softc *sc = device_private(self);
+
+	if (atomic_load_relaxed(&sc->sc_task_thread) == curlwp)
+		SIMPLEQ_INSERT_TAIL(&sc->sc_tasks, task, tdt_u.queue);
+	else
+		workqueue_enqueue(sc->sc_task_wq, &task->tdt_u.work, NULL);
 }
