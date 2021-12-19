@@ -1,8 +1,6 @@
-#	$NetBSD: files.drmkms_pci,v 1.14 2021/12/19 10:55:27 riastradh Exp $
+#	$NetBSD: files.drmkms_pci,v 1.15 2021/12/19 10:55:37 riastradh Exp $
 
 define	drmkms_pci: drmkms
-
-makeoptions	drmkms_pci	"CPPFLAGS.drmkms_pci"+="${CPPFLAGS.drmkms}"
 
 #file	external/bsd/drm2/dist/drm/ati_pcigart.c	drmkms_pci
 file	external/bsd/drm2/dist/drm/drm_agpsupport.c	drmkms_pci & agp
@@ -10,7 +8,6 @@ file	external/bsd/drm2/pci/drm_pci.c			drmkms_pci
 file	external/bsd/drm2/pci/drm_pci_module.c		drmkms_pci
 
 define	drmfb_pci: drmfb, drmkms_pci
-makeoptions	drmfb_pci	"CPPFLAGS.drmfb_pci"+="${CPPFLAGS.drmkms_pci}"
 file	external/bsd/drm2/pci/drmfb_pci.c		drmfb_pci
 
 include "external/bsd/drm2/amdgpu/files.amdgpu"
