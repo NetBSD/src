@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.9 2018/08/27 13:57:11 riastradh Exp $	*/
+/*	$NetBSD: types.h,v 1.1 2021/12/19 01:19:30 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
