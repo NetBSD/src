@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_irq.c,v 1.20 2021/12/18 23:45:28 riastradh Exp $	*/
+/*	$NetBSD: i915_irq.c,v 1.21 2021/12/19 01:43:37 riastradh Exp $	*/
 
 /* i915_irq.c -- IRQ support for the I915 -*- linux-c -*-
  */
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_irq.c,v 1.20 2021/12/18 23:45:28 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_irq.c,v 1.21 2021/12/19 01:43:37 riastradh Exp $");
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
@@ -2411,16 +2411,15 @@ static inline void gen8_master_intr_enable(void __iomem * const regs)
 static irqreturn_t gen8_irq_handler(int irq, void *arg)
 {
 	struct drm_i915_private *dev_priv = arg;
-	void __iomem * const regs = dev_priv->uncore.regs;
 	u32 master_ctl;
 	u32 gt_iir[4];
 
 	if (!intel_irqs_enabled(dev_priv))
 		return IRQ_NONE;
 
-	master_ctl = gen8_master_intr_disable(regs);
+	master_ctl = gen8_master_intr_disable(&dev_priv->uncore);
 	if (!master_ctl) {
-		gen8_master_intr_enable(regs);
+		gen8_master_intr_enable(&dev_priv->uncore);
 		return IRQ_NONE;
 	}
 
@@ -2434,7 +2433,7 @@ static irqreturn_t gen8_irq_handler(int irq, void *arg)
 		enable_rpm_wakeref_asserts(&dev_priv->runtime_pm);
 	}
 
-	gen8_master_intr_enable(regs);
+	gen8_master_intr_enable(&dev_priv->uncore);
 
 	gen8_gt_irq_handler(&dev_priv->gt, master_ctl, gt_iir);
 
@@ -2444,15 +2443,14 @@ static irqreturn_t gen8_irq_handler(int irq, void *arg)
 static u32
 gen11_gu_misc_irq_ack(struct intel_gt *gt, const u32 master_ctl)
 {
-	void __iomem * const regs = gt->uncore->regs;
 	u32 iir;
 
 	if (!(master_ctl & GEN11_GU_MISC_IRQ))
 		return 0;
 
-	iir = raw_reg_read(regs, GEN11_GU_MISC_IIR);
+	iir = raw_reg_read(gt->uncore, GEN11_GU_MISC_IIR);
 	if (likely(iir))
-		raw_reg_write(regs, GEN11_GU_MISC_IIR, iir);
+		raw_reg_write(gt->uncore, GEN11_GU_MISC_IIR, iir);
 
 	return iir;
 }
@@ -2485,17 +2483,16 @@ static inline void gen11_master_intr_enable(void __iomem * const regs)
 static void
 gen11_display_irq_handler(struct drm_i915_private *i915)
 {
-	void __iomem * const regs = i915->uncore.regs;
-	const u32 disp_ctl = raw_reg_read(regs, GEN11_DISPLAY_INT_CTL);
+	const u32 disp_ctl = raw_reg_read(&i915->uncore, GEN11_DISPLAY_INT_CTL);
 
 	disable_rpm_wakeref_asserts(&i915->runtime_pm);
 	/*
 	 * GEN11_DISPLAY_INT_CTL has same format as GEN8_MASTER_IRQ
 	 * for the display related bits.
 	 */
-	raw_reg_write(regs, GEN11_DISPLAY_INT_CTL, 0x0);
+	raw_reg_write(&i915->uncore, GEN11_DISPLAY_INT_CTL, 0x0);
 	gen8_de_irq_handler(i915, disp_ctl);
-	raw_reg_write(regs, GEN11_DISPLAY_INT_CTL,
+	raw_reg_write(&i915->uncore, GEN11_DISPLAY_INT_CTL,
 		      GEN11_DISPLAY_IRQ_ENABLE);
 
 	enable_rpm_wakeref_asserts(&i915->runtime_pm);
@@ -2506,7 +2503,6 @@ __gen11_irq_handler(struct drm_i915_private * const i915,
 		    u32 (*intr_disable)(void __iomem * const regs),
 		    void (*intr_enable)(void __iomem * const regs))
 {
-	void __iomem * const regs = i915->uncore.regs;
 	struct intel_gt *gt = &i915->gt;
 	u32 master_ctl;
 	u32 gu_misc_iir;
@@ -2514,9 +2510,9 @@ __gen11_irq_handler(struct drm_i915_private * const i915,
 	if (!intel_irqs_enabled(i915))
 		return IRQ_NONE;
 
-	master_ctl = intr_disable(regs);
+	master_ctl = intr_disable(&i915->uncore);
 	if (!master_ctl) {
-		intr_enable(regs);
+		intr_enable(&i915->uncore);
 		return IRQ_NONE;
 	}
 
@@ -2529,7 +2525,7 @@ __gen11_irq_handler(struct drm_i915_private * const i915,
 
 	gu_misc_iir = gen11_gu_misc_irq_ack(gt, master_ctl);
 
-	intr_enable(regs);
+	intr_enable(&i915->uncore);
 
 	gen11_gu_misc_irq_handler(gt, gu_misc_iir);
 
