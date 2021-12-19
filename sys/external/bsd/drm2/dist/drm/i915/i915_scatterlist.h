@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_scatterlist.h,v 1.4 2021/12/19 11:11:27 riastradh Exp $	*/
+/*	$NetBSD: i915_scatterlist.h,v 1.5 2021/12/19 11:11:35 riastradh Exp $	*/
 
 /*
  * SPDX-License-Identifier: MIT
@@ -46,7 +46,6 @@ static inline int __sg_page_count(const struct scatterlist *sg)
 {
 	return sg->length >> PAGE_SHIFT;
 }
-#endif
 
 static inline struct scatterlist *____sg_next(struct scatterlist *sg)
 {
@@ -111,7 +110,6 @@ static inline unsigned int i915_sg_page_sizes(struct scatterlist *sg)
 	return page_sizes;
 }
 
-#ifndef __NetBSD__
 static inline unsigned int i915_sg_segment_size(void)
 {
 	unsigned int size = swiotlb_max_segment();
