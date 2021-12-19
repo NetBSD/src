@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_rcu.c,v 1.1 2021/12/19 01:33:17 riastradh Exp $	*/
+/*	$NetBSD: linux_rcu.c,v 1.2 2021/12/19 11:31:04 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_rcu.c,v 1.1 2021/12/19 01:33:17 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_rcu.c,v 1.2 2021/12/19 11:31:04 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -235,6 +235,16 @@ gc_thread(void *cookie)
 	mutex_exit(&gc.lock);
 
 	kthread_exit(0);
+}
+
+void
+init_rcu_head(struct rcu_head *head)
+{
+}
+
+void
+destroy_rcu_head(struct rcu_head *head)
+{
 }
 
 int

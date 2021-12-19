@@ -1,4 +1,4 @@
-/*	$NetBSD: rcupdate.h,v 1.4 2021/12/19 10:47:19 riastradh Exp $	*/
+/*	$NetBSD: rcupdate.h,v 1.5 2021/12/19 11:31:04 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -67,11 +67,16 @@ struct rcu_head {
 
 #define	_kfree_rcu		linux__kfree_rcu
 #define	call_rcu		linux_call_rcu
+#define	destroy_rcu_head	linux_destroy_rcu_head
+#define	init_rcu_head		linux_init_rcu_head
 #define	rcu_barrier		linux_rcu_barrier
 #define	synchronize_rcu		linux_synchronize_rcu
 
 int	linux_rcu_gc_init(void);
 void	linux_rcu_gc_fini(void);
+
+void	init_rcu_head(struct rcu_head *);
+void	destroy_rcu_head(struct rcu_head *);
 
 void	call_rcu(struct rcu_head *, void (*)(struct rcu_head *));
 void	rcu_barrier(void);
