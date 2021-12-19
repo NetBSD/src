@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_atomic_uapi.c,v 1.5 2021/12/19 01:58:32 riastradh Exp $	*/
+/*	$NetBSD: drm_atomic_uapi.c,v 1.6 2021/12/19 01:58:41 riastradh Exp $	*/
 
 /*
  * Copyright (C) 2014 Red Hat
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_atomic_uapi.c,v 1.5 2021/12/19 01:58:32 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_atomic_uapi.c,v 1.6 2021/12/19 01:58:41 riastradh Exp $");
 
 #include <drm/drm_atomic_uapi.h>
 #include <drm/drm_atomic.h>
@@ -682,7 +682,6 @@ static int drm_atomic_connector_set_property(struct drm_connector *connector,
 	struct drm_device *dev = connector->dev;
 	struct drm_mode_config *config = &dev->mode_config;
 	bool replaced = false;
-	int ret;
 
 	if (property == config->prop_crtc_id) {
 		struct drm_crtc *crtc = drm_crtc_find(dev, file_priv, val);
@@ -734,6 +733,7 @@ static int drm_atomic_connector_set_property(struct drm_connector *connector,
 		if (state->link_status != DRM_LINK_STATUS_GOOD)
 			state->link_status = val;
 	} else if (property == config->hdr_output_metadata_property) {
+		int ret;
 		ret = drm_atomic_replace_property_blob_from_id(dev,
 				&state->hdr_output_metadata,
 				val,
