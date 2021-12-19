@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_cmd_parser.c,v 1.25 2021/12/19 11:16:39 riastradh Exp $	*/
+/*	$NetBSD: i915_cmd_parser.c,v 1.26 2021/12/19 11:16:48 riastradh Exp $	*/
 
 /*
  * Copyright © 2013 Intel Corporation
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_cmd_parser.c,v 1.25 2021/12/19 11:16:39 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_cmd_parser.c,v 1.26 2021/12/19 11:16:48 riastradh Exp $");
 
 #include "gt/intel_engine.h"
 
@@ -1338,7 +1338,7 @@ static int check_bbstart(u32 *cmd, u32 offset, u32 length,
 	 * of a u32, so >= test catches both too large and too small
 	 */
 	if (jump_offset >= batch_length) {
-		DRM_DEBUG("CMD: BB_START to 0x%llx jumps out of BB\n",
+		DRM_DEBUG("CMD: BB_START to 0x%"PRIx64" jumps out of BB\n",
 			  jump_target);
 		return -EINVAL;
 	}
@@ -1359,7 +1359,7 @@ static int check_bbstart(u32 *cmd, u32 offset, u32 length,
 		return PTR_ERR(jump_whitelist);
 
 	if (!test_bit(target_cmd_index, jump_whitelist)) {
-		DRM_DEBUG("CMD: BB_START to 0x%llx not a previously executed cmd\n",
+		DRM_DEBUG("CMD: BB_START to 0x%"PRIx64" not a previously executed cmd\n",
 			  jump_target);
 		return -EINVAL;
 	}
