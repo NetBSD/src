@@ -1,4 +1,4 @@
-/*	$NetBSD: rcupdate.h,v 1.7 2018/08/27 13:55:12 riastradh Exp $	*/
+/*	$NetBSD: rcupdate.h,v 1.8 2021/12/19 01:17:54 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -37,6 +37,8 @@
 #include <sys/systm.h>
 
 #define	__rcu
+
+#define	RCU_INIT_POINTER(P, V)	((P) = (V))
 
 #define	rcu_assign_pointer(P, V) do {					      \
 	membar_producer();						      \
