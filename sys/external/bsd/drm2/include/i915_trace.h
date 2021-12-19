@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_trace.h,v 1.22 2021/12/19 11:49:12 riastradh Exp $	*/
+/*	$NetBSD: i915_trace.h,v 1.23 2021/12/19 12:42:06 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013, 2018 The NetBSD Foundation, Inc.
@@ -262,7 +262,7 @@ static inline void
 trace_i915_reg_rw(bool write, i915_reg_t reg, uint64_t value, size_t len,
     bool trace)
 {
-	uint32_t regoff = i915_mmio_reg_offset(reg);
+	uint32_t regoff __trace_used = i915_mmio_reg_offset(reg);
 
 	if (!trace)
 		return;
