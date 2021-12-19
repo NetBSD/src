@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_sgt.c,v 1.1 2021/12/19 12:06:57 riastradh Exp $	*/
+/*	$NetBSD: linux_sgt.c,v 1.2 2021/12/19 12:10:14 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2021 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_sgt.c,v 1.1 2021/12/19 12:06:57 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_sgt.c,v 1.2 2021/12/19 12:10:14 riastradh Exp $");
 
 #include <sys/bus.h>
 #include <sys/errno.h>
@@ -160,8 +160,10 @@ dma_map_sg_attrs(bus_dma_tag_t dmat, struct scatterlist *sg, int nents,
 		flags |= BUS_DMA_READ;
 		break;
 	case DMA_BIDIRECTIONAL:
+		flags |= BUS_DMA_READ|BUS_DMA_WRITE;
 		break;
 	case DMA_NONE:
+	default:
 		panic("invalid DMA direction %d", dir);
 	}
 
@@ -181,6 +183,7 @@ dma_map_sg_attrs(bus_dma_tag_t dmat, struct scatterlist *sg, int nents,
 	KASSERT(sg->sg_dmamap->dm_nsegs > 0);
 	KASSERT(sg->sg_dmamap->dm_nsegs <= nents);
 	ret = sg->sg_dmamap->dm_nsegs;
+	error = 0;
 
 out:	if (error) {
 		if (loaded)
