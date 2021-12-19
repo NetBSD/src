@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_uncore.h,v 1.9 2021/12/19 12:32:15 riastradh Exp $	*/
+/*	$NetBSD: intel_uncore.h,v 1.10 2021/12/19 12:36:50 riastradh Exp $	*/
 
 /*
  * Copyright © 2017 Intel Corporation
@@ -321,7 +321,16 @@ static inline uint32_t __raw_uncore_read32(const struct intel_uncore *uncore,
 }
 static inline uint64_t __raw_uncore_read64(const struct intel_uncore *uncore,
 						i915_reg_t reg) {
+#ifdef _LP64
 	return bus_space_read_8(uncore->regs_bst, uncore->regs_bsh, i915_mmio_reg_offset(reg));
+#else
+	uint64_t lo, hi;
+	lo = bus_space_read_4(uncore->regs_bst, uncore->regs_bsh,
+	    i915_mmio_reg_offset(reg));
+	hi = bus_space_read_4(uncore->regs_bst, uncore->regs_bsh,
+	    i915_mmio_reg_offset(reg) + 4);
+	return lo | (hi << 32);
+#endif
 }
 static inline void __raw_uncore_write8(const struct intel_uncore *uncore,
 						i915_reg_t reg, uint8_t val) {
@@ -337,7 +346,14 @@ static inline void __raw_uncore_write32(const struct intel_uncore *uncore,
 }
 static inline void __raw_uncore_write64(const struct intel_uncore *uncore,
 						i915_reg_t reg, uint64_t val) {
+#ifdef _LP64
 	bus_space_write_8(uncore->regs_bst, uncore->regs_bsh, i915_mmio_reg_offset(reg), val);
+#else
+	bus_space_write_4(uncore->regs_bst, uncore->regs_bsh,
+	    i915_mmio_reg_offset(reg), val & 0xffffffffU);
+	bus_space_write_4(uncore->regs_bst, uncore->regs_bsh,
+	    i915_mmio_reg_offset(reg) + 4, val >> 32);
+#endif
 }
 #endif
 
