@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_mode_config.c,v 1.4 2021/12/19 10:47:29 riastradh Exp $	*/
+/*	$NetBSD: drm_mode_config.c,v 1.5 2021/12/19 12:32:01 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2016 Intel Corporation
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_mode_config.c,v 1.4 2021/12/19 10:47:29 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_mode_config.c,v 1.5 2021/12/19 12:32:01 riastradh Exp $");
 
 #include <linux/uaccess.h>
 
@@ -533,9 +533,14 @@ void drm_mode_config_cleanup(struct drm_device *dev)
 		drm_framebuffer_free(&fb->base.refcount);
 	}
 
+	spin_lock_destroy(&dev->mode_config.connector_list_lock);
 	ida_destroy(&dev->mode_config.connector_ida);
 	idr_destroy(&dev->mode_config.tile_idr);
 	idr_destroy(&dev->mode_config.object_idr);
+	mutex_destroy(&dev->mode_config.blob_lock);
+	mutex_destroy(&dev->mode_config.fb_lock);
+	mutex_destroy(&dev->mode_config.idr_mutex);
 	drm_modeset_lock_fini(&dev->mode_config.connection_mutex);
+	mutex_destroy(&dev->mode_config.mutex);
 }
 EXPORT_SYMBOL(drm_mode_config_cleanup);
