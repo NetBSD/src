@@ -1,4 +1,4 @@
-/*	$NetBSD: pci.h,v 1.49 2021/12/19 11:38:04 riastradh Exp $	*/
+/*	$NetBSD: pci.h,v 1.50 2021/12/19 12:00:16 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -218,6 +218,7 @@ enum pci_bus_speed {
 #define	pci_is_root_bus			linux_pci_is_root_bus
 #define	pci_is_thunderbolt_attached	linux_pci_is_thunderbolt_attached
 #define	pci_map_rom			linux_pci_map_rom
+#define	pci_name			linux_pci_name
 #define	pci_platform_rom		linux_pci_platform_rom
 #define	pci_read_config_byte		linux_pci_read_config_byte
 #define	pci_read_config_dword		linux_pci_read_config_dword
@@ -251,6 +252,7 @@ int		pci_domain_nr(struct pci_bus *);
 device_t	pci_dev_dev(struct pci_dev *);
 void		pci_set_drvdata(struct pci_dev *, void *);
 void *		pci_get_drvdata(struct pci_dev *);
+const char *	pci_name(struct pci_dev *);
 
 int		pci_find_capability(struct pci_dev *, int);
 bool		pci_is_pcie(struct pci_dev *);
