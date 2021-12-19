@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_lock.c,v 1.9 2021/12/19 00:28:20 riastradh Exp $	*/
+/*	$NetBSD: drm_lock.c,v 1.10 2021/12/19 00:57:29 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -46,10 +46,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_lock.c,v 1.9 2021/12/19 00:28:20 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_lock.c,v 1.10 2021/12/19 00:57:29 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/errno.h>
+#include <sys/file.h>
 #include <sys/systm.h>
 
 #include <drm/drmP.h>
@@ -216,25 +217,6 @@ out0:	mutex_lock(&drm_global_mutex);
 }
 
 /*
- * Drop the lock.
- *
- * Return value is an artefact of Linux.  Caller must guarantee
- * preconditions; failure is fatal.
- *
- * XXX Should we also unblock signals like drm_unlock does?
- */
-int
-drm_legacy_lock_free(struct drm_lock_data *lock_data, unsigned int context)
-{
-
-	spin_lock(&lock_data->spinlock);
-	drm_lock_release(lock_data, context);
-	spin_unlock(&lock_data->spinlock);
-
-	return 0;
-}
-
-/*
  * Try to acquire the lock.  Whether or not we acquire it, guarantee
  * that whoever next releases it relinquishes it to the kernel, not to
  * anyone else.
@@ -279,32 +261,25 @@ drm_legacy_idlelock_release(struct drm_lock_data *lock_data)
 }
 
 /*
- * Does this file hold this drm device's hardware lock?
- *
- * Used to decide whether to release the lock when the file is being
- * closed.
- *
- * XXX I don't think this answers correctly in the case that the
- * userland has taken the lock and it is uncontended.  But I don't
- * think we can know what the correct answer is in that case.
+ * Release the lock and free it on closing of a drm file.
  */
-int
-drm_legacy_i_have_hw_lock(struct drm_device *dev, struct drm_file *file)
+void
+drm_legacy_lock_release(struct drm_device *dev, struct file *fp)
 {
+	struct drm_file *const file = fp->f_data;
 	struct drm_lock_data *const lock_data = &file->master->lock;
-	int answer = 0;
 
-	/* If this file has never locked anything, then no.  */
+	/* If this file has never locked anything, nothing to do.  */
 	if (file->lock_count == 0)
-		return 0;
+		return;
 
 	spin_lock(&lock_data->spinlock);
 
-	/* If there is no lock, then this file doesn't hold it.  */
+	/* If there is no lock, nothing to do.  */
 	if (lock_data->hw_lock == NULL)
 		goto out;
 
-	/* If this lock is not held, then this file doesn't hold it.   */
+	/* If this lock is not held, nothing to do.   */
 	if (!_DRM_LOCK_IS_HELD(lock_data->hw_lock->lock))
 		goto out;
 
@@ -315,10 +290,11 @@ drm_legacy_i_have_hw_lock(struct drm_device *dev, struct drm_file *file)
 	 * XXX This is not reliable!  Userland doesn't update this when
 	 * it takes the lock...
 	 */
-	answer = (file == lock_data->file_priv);
+	if (file == lock_data->file_priv)
+		drm_lock_release(lock_data,
+		    _DRM_LOCKING_CONTEXT(file->master->lock.hw_lock->lock));
 
 out:	spin_unlock(&lock_data->spinlock);
-	return answer;
 }
 
 /*
