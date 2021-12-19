@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_ioctl.c,v 1.19 2021/12/19 09:52:09 riastradh Exp $	*/
+/*	$NetBSD: drm_ioctl.c,v 1.20 2021/12/19 10:51:39 riastradh Exp $	*/
 
 /*
  * Created: Fri Jan  8 09:01:26 1999 by faith@valinux.com
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_ioctl.c,v 1.19 2021/12/19 09:52:09 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_ioctl.c,v 1.20 2021/12/19 10:51:39 riastradh Exp $");
 
 #include <linux/export.h>
 #include <linux/nospec.h>
@@ -161,8 +161,8 @@ static int drm_set_busid(struct drm_device *dev, struct drm_file *file_priv)
 	if (master->unique != NULL)
 		drm_unset_busid(dev, master);
 
-	if (dev->dev && dev_is_pci(dev->pdev)) {
-		ret = drm_pci_set_busid(dev, master);
+	if (dev->driver->set_busid) {
+		ret = dev->driver->set_busid(dev, master);
 		if (ret) {
 			drm_unset_busid(dev, master);
 			return ret;
