@@ -1,4 +1,4 @@
-/*	$NetBSD: device.h,v 1.11 2021/12/19 10:36:07 riastradh Exp $	*/
+/*	$NetBSD: device.h,v 1.12 2021/12/19 10:38:05 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -36,6 +36,7 @@
 #include <sys/device.h>
 #include <sys/systm.h>
 
+#include <linux/hrtimer.h>
 #include <linux/ratelimit.h>
 
 #define	dev_crit(DEV, FMT, ...)	do {					      \

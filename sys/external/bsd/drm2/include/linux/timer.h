@@ -1,4 +1,4 @@
-/*	$NetBSD: timer.h,v 1.9 2021/12/19 01:55:29 riastradh Exp $	*/
+/*	$NetBSD: timer.h,v 1.10 2021/12/19 10:38:05 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -42,6 +42,7 @@
 #include <sys/callout.h>
 
 #include <linux/jiffies.h>
+#include <linux/ktime.h>
 
 struct timer_list {
 	struct callout tl_callout;
