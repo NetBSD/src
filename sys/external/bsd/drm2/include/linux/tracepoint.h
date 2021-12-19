@@ -1,4 +1,4 @@
-/*	$NetBSD: tracepoint.h,v 1.3 2021/12/19 10:58:17 riastradh Exp $	*/
+/*	$NetBSD: tracepoint.h,v 1.4 2021/12/19 12:22:10 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -40,6 +40,7 @@
 	/* nothing */
 
 #define	DEFINE_EVENT(CLASS, NAME, PROTOTYPE, ARGS)			      \
-	static inline void trace_##NAME PROTOTYPE {}
+	static inline void trace_##NAME PROTOTYPE {}			      \
+	static inline bool trace_##NAME##_enabled(void) { return false; }
 
 #endif	/* _LINUX_TRACEPOINT_H_ */
