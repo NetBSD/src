@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_agp_hook.c,v 1.4 2021/12/19 00:28:20 riastradh Exp $	*/
+/*	$NetBSD: drm_agp_hook.c,v 1.5 2021/12/19 00:48:45 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_agp_hook.c,v 1.4 2021/12/19 00:28:20 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_agp_hook.c,v 1.5 2021/12/19 00:48:45 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/condvar.h>
@@ -165,7 +165,7 @@ drm_agp_fini(struct drm_device *dev)
 }
 
 void
-drm_agp_clear(struct drm_device *dev)
+drm_legacy_agp_clear(struct drm_device *dev)
 {
 
 	if (dev->agp == NULL)
