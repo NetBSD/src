@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_auth.h,v 1.3 2021/12/19 01:01:42 riastradh Exp $	*/
+/*	$NetBSD: drm_auth.h,v 1.4 2021/12/19 01:54:28 riastradh Exp $	*/
 
 #ifndef _DRM_AUTH_H_
 #define _DRM_AUTH_H_
@@ -61,7 +61,11 @@ struct drm_master;
 struct drm_lock_data {
 	struct drm_hw_lock *hw_lock;
 	struct drm_file *file_priv;
+#ifdef __NetBSD__
+	drm_waitqueue_t lock_queue;     /**< Queue of blocked processes */
+#else
 	wait_queue_head_t lock_queue;
+#endif
 	unsigned long lock_time;
 	spinlock_t spinlock;
 	uint32_t kernel_waiters;
