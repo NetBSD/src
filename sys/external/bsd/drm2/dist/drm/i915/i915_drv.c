@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_drv.c,v 1.36 2021/12/19 11:18:52 riastradh Exp $	*/
+/*	$NetBSD: i915_drv.c,v 1.37 2021/12/19 11:19:01 riastradh Exp $	*/
 
 /* i915_drv.c -- i830,i845,i855,i865,i915 driver -*- linux-c -*-
  */
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_drv.c,v 1.36 2021/12/19 11:18:52 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_drv.c,v 1.37 2021/12/19 11:19:01 riastradh Exp $");
 
 #include <linux/acpi.h>
 #include <linux/device.h>
@@ -2845,6 +2845,16 @@ static const struct drm_ioctl_desc i915_ioctls[] = {
 	DRM_IOCTL_DEF_DRV(I915_GEM_VM_DESTROY, i915_gem_vm_destroy_ioctl, DRM_RENDER_ALLOW),
 };
 
+#ifdef __NetBSD__
+
+static const struct uvm_pagerops i915_gem_uvm_ops = {
+	.pgo_reference = drm_gem_pager_reference,
+	.pgo_detach = drm_gem_pager_detach,
+	.pgo_fault = i915_gem_fault,
+};
+
+#endif
+
 static struct drm_driver driver = {
 	/* Don't use MTRRs here; the Xserver or userspace app should
 	 * deal with them for Intel hardware.
@@ -2894,13 +2904,3 @@ static struct drm_driver driver = {
 	.minor = DRIVER_MINOR,
 	.patchlevel = DRIVER_PATCHLEVEL,
 };
-
-#ifdef __NetBSD__
-
-static const struct uvm_pagerops i915_gem_uvm_ops = {
-	.pgo_reference = drm_gem_pager_reference,
-	.pgo_detach = drm_gem_pager_detach,
-	.pgo_fault = i915_gem_fault,
-};
-
-#endif
