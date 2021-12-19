@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.18 2021/06/03 15:59:04 nia Exp $
+# $NetBSD: Makefile,v 1.19 2021/12/19 01:03:42 riastradh Exp $
 
 .include "../Makefile.inc"
 .include "../drmkms/Makefile.inc"
@@ -26,6 +26,8 @@ CPPFLAGS+=	-DNVGA=1
 
 CWARNFLAGS+=	-Wno-shadow
 CWARNFLAGS+=	-Wno-pointer-arith
+CWARNFLAGS.clang+=	-Wno-error=enum-conversion
+CWARNFLAGS.clang+=	-Wno-error=unused-function
 
 # Code imported from Linux - expects signed overflow to be OK.
 COPTS+=		-fwrapv
