@@ -1,4 +1,4 @@
-#	$NetBSD: files.i915drmkms,v 1.70 2021/12/19 11:33:49 riastradh Exp $
+#	$NetBSD: files.i915drmkms,v 1.71 2021/12/19 11:36:08 riastradh Exp $
 
 version	20180827
 
@@ -31,6 +31,8 @@ makeoptions	i915drmkms	"CPPFLAGS.i915drmkms"+="-DCONFIG_DRM_I915_GVT=0"
 makeoptions	i915drmkms	"CPPFLAGS.i915drmkms"+="-DCONFIG_DRM_I915_PRELIMINARY_HW_SUPPORT=0"
 makeoptions	i915drmkms	"CPPFLAGS.i915drmkms"+="-DCONFIG_DRM_I915_DEBUG_MMIO=1" # XXX
 makeoptions	i915drmkms	"CPPFLAGS.i915drmkms"+="-DCONFIG_DRM_I915_FORCE_PROBE=0"
+makeoptions	i915drmkms	"CPPFLAGS.i915drmkms"+="-DCONFIG_DRM_I915_SPIN_REQUEST=0"
+makeoptions	i915drmkms	"CPPFLAGS.i915drmkms"+="-DCONFIG_DRM_I915_SW_FENCE_CHECK_DAG=1" # XXX expensive debug option?
 
 makeoptions	i915drmkms	"CWARNFLAGS.i915drmkms"+="-Wno-missing-field-initializers"
 makeoptions	i915drmkms	"CWARNFLAGS.i915drmkms"+="-Wno-pointer-arith"
@@ -204,7 +206,7 @@ file	external/bsd/drm2/dist/drm/i915/i915_request.c	i915drmkms
 file	external/bsd/drm2/dist/drm/i915/i915_scatterlist.c	i915drmkms
 file	external/bsd/drm2/dist/drm/i915/i915_scheduler.c	i915drmkms
 file	external/bsd/drm2/dist/drm/i915/i915_suspend.c	i915drmkms
-#file	external/bsd/drm2/dist/drm/i915/i915_sw_fence.c	i915drmkms
+file	external/bsd/drm2/dist/drm/i915/i915_sw_fence.c	i915drmkms
 file	external/bsd/drm2/dist/drm/i915/i915_sw_fence_work.c	i915drmkms
 file	external/bsd/drm2/dist/drm/i915/i915_switcheroo.c	i915drmkms
 file	external/bsd/drm2/dist/drm/i915/i915_syncmap.c	i915drmkms
