@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_encoder_slave.c,v 1.1 2015/03/05 17:42:48 riastradh Exp $	*/
+/*	$NetBSD: drm_encoder_slave.c,v 1.2 2021/12/19 10:48:14 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_encoder_slave.c,v 1.1 2015/03/05 17:42:48 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_encoder_slave.c,v 1.2 2021/12/19 10:48:14 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/atomic.h>
@@ -205,7 +205,7 @@ drm_i2c_encoder_get_client(struct drm_encoder *encoder)
 	return bus_priv->i2c_client;
 }
 
-static inline struct drm_encoder_slave_funcs *
+static inline const struct drm_encoder_slave_funcs *
 slave_funcs(struct drm_encoder *encoder)
 {
 
