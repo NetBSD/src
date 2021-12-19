@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_uncore.c,v 1.18 2021/12/19 11:53:18 riastradh Exp $	*/
+/*	$NetBSD: intel_uncore.c,v 1.19 2021/12/19 11:55:47 riastradh Exp $	*/
 
 /*
  * Copyright © 2013 Intel Corporation
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intel_uncore.c,v 1.18 2021/12/19 11:53:18 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intel_uncore.c,v 1.19 2021/12/19 11:55:47 riastradh Exp $");
 
 #include <linux/pm_runtime.h>
 #include <asm/iosf_mbi.h>
@@ -1519,7 +1519,6 @@ static void fw_domain_fini(struct intel_uncore *uncore,
 	uncore->fw_domains &= ~BIT(domain_id);
 	WARN_ON(d->wake_count);
 	WARN_ON(hrtimer_cancel(&d->timer));
-	hrtimer_destroy(&d->timer);
 	kfree(d);
 }
 
