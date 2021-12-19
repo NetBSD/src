@@ -1,4 +1,4 @@
-#	$NetBSD: files.radeon,v 1.34 2021/12/19 10:55:27 riastradh Exp $
+#	$NetBSD: files.radeon,v 1.35 2021/12/19 10:55:37 riastradh Exp $
 
 version	20180827
 
@@ -14,7 +14,6 @@ attach	radeondrmkmsfb at radeonfbbus
 # overflow is OK.
 makeoptions 	radeon	"COPTS.radeon"+="-fwrapv"
 
-makeoptions	radeon	"CPPFLAGS.radeon"+="${CPPFLAGS.drmkms}"
 makeoptions	radeondrmkmsfb	"CPPFLAGS.radeondrmkmsfb"+="${CPPFLAGS.radeon}"
 
 # Our overrides first.

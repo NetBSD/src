@@ -1,4 +1,4 @@
-#	$NetBSD: files.nouveau,v 1.35 2021/12/19 10:55:27 riastradh Exp $
+#	$NetBSD: files.nouveau,v 1.36 2021/12/19 10:55:37 riastradh Exp $
 
 version	20180827
 
@@ -21,7 +21,6 @@ file	external/bsd/drm2/nouveau/nouveaufb.c			nouveaufb
 # overflow is OK.
 makeoptions 	nouveau	"COPTS.nouveau"+="-fwrapv"
 
-makeoptions	nouveau	"CPPFLAGS.nouveau"+="${CPPFLAGS.drmkms}"
 makeoptions	nouveau	"CPPFLAGS.nouveau"+="-I$S/external/bsd/drm2/dist/drm/nouveau"
 makeoptions	nouveau	"CPPFLAGS.nouveau"+="-I$S/external/bsd/drm2/dist/drm/nouveau/include"
 makeoptions	nouveau	"CPPFLAGS.nouveau"+="-I$S/external/bsd/drm2/dist/drm/nouveau/include/nvkm"

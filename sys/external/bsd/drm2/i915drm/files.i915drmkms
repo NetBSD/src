@@ -1,4 +1,4 @@
-#	$NetBSD: files.i915drmkms,v 1.57 2021/12/19 10:55:27 riastradh Exp $
+#	$NetBSD: files.i915drmkms,v 1.58 2021/12/19 10:55:37 riastradh Exp $
 
 version	20180827
 
@@ -12,8 +12,6 @@ attach	intelfb at intelfbbus
 # This code comes from the Linux kernel, which assumes signed
 # overflow is OK.
 makeoptions 	i915drmkms	"COPTS.i915drmkms"+="-fwrapv"
-
-makeoptions	i915drmkms	"CPPFLAGS.i915drmkms"+="${CPPFLAGS.drmkms}"
 
 makeoptions	i915drmkms	"CPPFLAGS.i915drmkms"+="-I$S/external/bsd/drm2/i915drm"
 
