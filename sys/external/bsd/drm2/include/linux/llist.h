@@ -1,4 +1,4 @@
-/*	$NetBSD: llist.h,v 1.5 2021/12/19 11:39:24 riastradh Exp $	*/
+/*	$NetBSD: llist.h,v 1.6 2021/12/19 11:52:08 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -74,6 +74,20 @@ llist_add(struct llist_node *node, struct llist_head *head)
 	} while (atomic_cas_ptr(&head->first, first, node) != first);
 
 	return first == NULL;
+}
+
+static inline bool
+llist_add_batch(struct llist_node *first, struct llist_node *last,
+    struct llist_head *head)
+{
+	struct llist_node *next;
+
+	do {
+		next = atomic_load_consume(&head->first);
+		last->next = next;
+	} while (atomic_cas_ptr(&head->first, next, first) != next);
+
+	return next == NULL;
 }
 
 static inline struct llist_node *

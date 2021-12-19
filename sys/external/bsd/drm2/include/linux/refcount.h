@@ -1,4 +1,4 @@
-/*	$NetBSD: refcount.h,v 1.2 2021/12/19 10:48:37 riastradh Exp $	*/
+/*	$NetBSD: refcount.h,v 1.3 2021/12/19 11:52:08 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -84,24 +84,8 @@ static inline bool __must_check
 refcount_dec_and_lock_irqsave(struct refcount *rc, struct spinlock *lock,
     unsigned long *flagsp)
 {
-	unsigned old, new;
 
-	do {
-		old = atomic_read(&rc->rc_count);
-		KASSERT(old);
-		if (old == 1) {
-			spin_lock_irqsave(lock, *flagsp);
-			if (atomic_dec_return(&rc->rc_count) == 0)
-				return true;
-			spin_unlock_irqrestore(lock, *flagsp);
-			return false;
-		}
-		new = old - 1;
-	} while (atomic_cmpxchg(&rc->rc_count, old, new) != old);
-
-	KASSERT(old != 1);
-	KASSERT(new != 0);
-	return false;
+	return atomic_dec_and_lock_irqsave(&rc->rc_count, lock, *flagsp);
 }
 
 static inline bool __must_check
