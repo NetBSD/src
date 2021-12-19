@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_drm.c,v 1.22 2021/12/19 12:28:20 riastradh Exp $ */
+/* $NetBSD: sunxi_drm.c,v 1.23 2021/12/19 12:28:44 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2019 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_drm.c,v 1.22 2021/12/19 12:28:20 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_drm.c,v 1.23 2021/12/19 12:28:44 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -138,6 +138,16 @@ sunxi_drm_attach(device_t parent, device_t self, void *aux)
 	prop_dictionary_t dict = device_properties(self);
 	bool is_disabled;
 
+	aprint_naive("\n");
+
+	if (prop_dictionary_get_bool(dict, "disabled", &is_disabled) &&
+	    is_disabled) {
+		aprint_normal(": Display Engine Pipeline (disabled)\n");
+		return;
+	}
+
+	aprint_normal(": Display Engine Pipeline\n");
+
 	sc->sc_dev = self;
 	sc->sc_dmat = faa->faa_dmat;
 	sc->sc_bst = faa->faa_bst;
@@ -150,15 +160,6 @@ sunxi_drm_attach(device_t parent, device_t self, void *aux)
 		sc->sc_task_wq = NULL;
 		return;
 	}
-
-	aprint_naive("\n");
-
-	if (prop_dictionary_get_bool(dict, "disabled", &is_disabled) && is_disabled) {
-		aprint_normal(": Display Engine Pipeline (disabled)\n");
-		return;
-	}
-
-	aprint_normal(": Display Engine Pipeline\n");
 
 	sc->sc_ddev = drm_dev_alloc(driver, sc->sc_dev);
 	if (IS_ERR(sc->sc_ddev)) {
