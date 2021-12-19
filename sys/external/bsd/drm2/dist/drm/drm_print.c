@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_print.c,v 1.9 2021/12/19 11:46:00 riastradh Exp $	*/
+/*	$NetBSD: drm_print.c,v 1.10 2021/12/19 12:04:08 riastradh Exp $	*/
 
 /*
  * Copyright (C) 2016 Red Hat
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_print.c,v 1.9 2021/12/19 11:46:00 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_print.c,v 1.10 2021/12/19 12:04:08 riastradh Exp $");
 
 #ifndef __NetBSD__		/* XXX ??? */
 #define DEBUG /* for pr_debug() */
@@ -35,6 +35,7 @@ __KERNEL_RCSID(0, "$NetBSD: drm_print.c,v 1.9 2021/12/19 11:46:00 riastradh Exp 
 #ifdef __NetBSD__
 #include <sys/param.h>
 #include <sys/stdarg.h>
+#include <sys/cpu.h>
 #include <sys/device.h>
 #include <sys/ksyms.h>
 #else
@@ -78,7 +79,8 @@ drm_symstr(vaddr_t val, char *out, size_t outsize)
 	const char *mod;
 	const char *sym;
 
-	if (ksyms_getname(&mod, &sym, val, KSYMS_PROC|KSYMS_CLOSEST) == 0) {
+	if (!cpu_intr_p() &&
+	    ksyms_getname(&mod, &sym, val, KSYMS_PROC|KSYMS_CLOSEST) == 0) {
 		char offset[32];
 
 		if (ksyms_getval(mod, sym, &naddr, KSYMS_ANY) == 0 &&
