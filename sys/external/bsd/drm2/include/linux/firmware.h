@@ -1,4 +1,4 @@
-/*	$NetBSD: firmware.h,v 1.9 2018/08/27 13:40:15 riastradh Exp $	*/
+/*	$NetBSD: firmware.h,v 1.10 2021/12/19 10:50:37 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -103,6 +103,14 @@ fail0:	KASSERT(ret);
 	kmem_free(fw, sizeof(*fw));
 	*fwp = NULL;
 	return ret;
+}
+
+static inline int
+firmware_request_nowarn(const struct firmware **fwp, const char *image_name,
+    struct device *dev)
+{
+
+	return request_firmware(fwp, image_name, dev);
 }
 
 static inline void
