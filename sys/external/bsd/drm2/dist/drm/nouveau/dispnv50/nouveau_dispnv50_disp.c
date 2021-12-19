@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_dispnv50_disp.c,v 1.2 2021/12/18 23:45:32 riastradh Exp $	*/
+/*	$NetBSD: nouveau_dispnv50_disp.c,v 1.3 2021/12/19 10:49:29 riastradh Exp $	*/
 
 /*
  * Copyright 2011 Red Hat Inc.
@@ -24,7 +24,7 @@
  * Authors: Ben Skeggs
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_dispnv50_disp.c,v 1.2 2021/12/18 23:45:32 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_dispnv50_disp.c,v 1.3 2021/12/19 10:49:29 riastradh Exp $");
 
 #include "disp.h"
 #include "atom.h"
@@ -496,10 +496,14 @@ nv50_dac_create(struct drm_connector *connector, struct dcb_output *dcbe)
 static void
 nv50_audio_component_eld_notify(struct drm_audio_component *acomp, int port)
 {
+#ifndef __NetBSD__		/* XXX nouveau audio component */
 	if (acomp && acomp->audio_ops && acomp->audio_ops->pin_eld_notify)
 		acomp->audio_ops->pin_eld_notify(acomp->audio_ops->audio_ptr,
 						 port, -1);
+#endif
 }
+
+#ifndef __NetBSD__		/* XXX nouveau audio component */
 
 static int
 nv50_audio_component_get_eld(struct device *kdev, int port, int pipe,
@@ -574,20 +578,26 @@ static const struct component_ops nv50_audio_component_bind_ops = {
 	.unbind = nv50_audio_component_unbind,
 };
 
+#endif
+
 static void
 nv50_audio_component_init(struct nouveau_drm *drm)
 {
+#ifndef __NetBSD__		/* XXX nouveau audio component */
 	if (!component_add(drm->dev->dev, &nv50_audio_component_bind_ops))
 		drm->audio.component_registered = true;
+#endif
 }
 
 static void
 nv50_audio_component_fini(struct nouveau_drm *drm)
 {
+#ifndef __NetBSD__		/* XXX nouveau audio component */
 	if (drm->audio.component_registered) {
 		component_del(drm->dev->dev, &nv50_audio_component_bind_ops);
 		drm->audio.component_registered = false;
 	}
+#endif
 }
 
 /******************************************************************************
