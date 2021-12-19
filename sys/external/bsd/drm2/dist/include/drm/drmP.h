@@ -1,4 +1,4 @@
-/*	$NetBSD: drmP.h,v 1.53 2021/12/19 01:56:33 riastradh Exp $	*/
+/*	$NetBSD: drmP.h,v 1.54 2021/12/19 01:56:42 riastradh Exp $	*/
 
 /*
  * Internal Header for the Direct Rendering Manager
@@ -315,33 +315,6 @@ struct drm_minor {
 	struct drm_master *master;
 };
 
-
-#define DRM_SWITCH_POWER_ON 0
-#define DRM_SWITCH_POWER_OFF 1
-#define DRM_SWITCH_POWER_CHANGING 2
-#define DRM_SWITCH_POWER_DYNAMIC_OFF 3
-
-static __inline__ int drm_core_check_feature(struct drm_device *dev,
-					     int feature)
-{
-	return ((dev->driver->driver_features & feature) ? 1 : 0);
-}
-
-static inline bool drm_is_render_client(const struct drm_file *file_priv)
-{
-	return file_priv->minor->type == DRM_MINOR_RENDER;
-}
-
-static inline bool drm_is_control_client(const struct drm_file *file_priv)
-{
-	return file_priv->minor->type == DRM_MINOR_CONTROL;
-}
-
-static inline bool drm_is_primary_client(const struct drm_file *file_priv)
-{
-	return file_priv->minor->type == DRM_MINOR_LEGACY;
-}
-
 /******************************************************************/
 /** \name Internal function definitions */
 /*@{*/
@@ -471,18 +444,6 @@ int drm_guarantee_initialized(void);
 /*@}*/
 
 /* PCI section */
-static __inline__ int drm_pci_device_is_agp(struct drm_device *dev)
-{
-	if (dev->driver->device_is_agp != NULL) {
-		int err = (*dev->driver->device_is_agp) (dev);
-
-		if (err != 2) {
-			return err;
-		}
-	}
-
-	return pci_find_capability(dev->pdev, PCI_CAP_ID_AGP);
-}
 void drm_pci_agp_destroy(struct drm_device *dev);
 
 extern int drm_pci_init(struct drm_driver *driver, struct pci_driver *pdriver);
