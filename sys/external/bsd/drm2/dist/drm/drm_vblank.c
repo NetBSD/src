@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_vblank.c,v 1.5 2021/12/19 09:52:34 riastradh Exp $	*/
+/*	$NetBSD: drm_vblank.c,v 1.6 2021/12/19 11:08:02 riastradh Exp $	*/
 
 /*
  * drm_irq.c IRQ and vblank support
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_vblank.c,v 1.5 2021/12/19 09:52:34 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_vblank.c,v 1.6 2021/12/19 11:08:02 riastradh Exp $");
 
 #include <linux/export.h>
 #include <linux/moduleparam.h>
@@ -167,6 +167,8 @@ static void drm_reset_vblank_timestamp(struct drm_device *dev, unsigned int pipe
 	ktime_t t_vblank;
 	int count = DRM_TIMESTAMP_MAXRETRIES;
 
+	assert_spin_locked(&dev->vbl_lock);
+
 	spin_lock(&dev->vblank_time_lock);
 
 	/*
@@ -217,6 +219,8 @@ static void drm_update_vblank_count(struct drm_device *dev, unsigned int pipe,
 	int count = DRM_TIMESTAMP_MAXRETRIES;
 	int framedur_ns = vblank->framedur_ns;
 	u32 max_vblank_count = drm_max_vblank_count(dev, pipe);
+
+	assert_spin_locked(&dev->vbl_lock);
 
 	/*
 	 * Interrupts were disabled prior to this call, so deal with counter
@@ -1832,8 +1836,11 @@ bool drm_handle_vblank(struct drm_device *dev, unsigned int pipe)
 	 */
 	spin_lock(&dev->vblank_time_lock);
 
+	spin_lock(&dev->vbl_lock);
+
 	/* Vblank irq handling disabled. Nothing to do. */
 	if (!vblank->enabled) {
+		spin_unlock(&dev->vbl_lock);
 		spin_unlock(&dev->vblank_time_lock);
 		spin_unlock_irqrestore(&dev->event_lock, irqflags);
 		return false;
@@ -1857,6 +1864,8 @@ bool drm_handle_vblank(struct drm_device *dev, unsigned int pipe)
 	disable_irq = (dev->vblank_disable_immediate &&
 		       drm_vblank_offdelay > 0 &&
 		       !atomic_read(&vblank->refcount));
+
+	spin_unlock(&dev->vbl_lock);
 
 	drm_handle_vblank_events(dev, pipe);
 
