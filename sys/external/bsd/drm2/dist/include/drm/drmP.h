@@ -1,4 +1,4 @@
-/*	$NetBSD: drmP.h,v 1.43 2021/12/18 23:54:51 riastradh Exp $	*/
+/*	$NetBSD: drmP.h,v 1.44 2021/12/19 00:27:25 riastradh Exp $	*/
 
 /*
  * Internal Header for the Direct Rendering Manager
@@ -85,7 +85,6 @@
 #include <drm/drm_os_linux.h>
 #endif
 
-#include <drm/drm.h>
 #include <drm/drm_agpsupport.h>
 #include <drm/drm_crtc.h>
 #include <drm/drm_global.h>
