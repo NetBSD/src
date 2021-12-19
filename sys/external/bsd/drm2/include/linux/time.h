@@ -1,4 +1,4 @@
-/*	$NetBSD: time.h,v 1.7 2021/12/19 01:21:45 riastradh Exp $	*/
+/*	$NetBSD: time.h,v 1.8 2021/12/19 01:43:04 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -139,6 +139,12 @@ set_normalized_timespec(struct timespec *ts, time_t sec, int64_t nsec)
 	}
 	ts->tv_sec = sec;
 	ts->tv_nsec = nsec;
+}
+
+static inline bool
+time_after32(uint32_t a, uint32_t b)
+{
+	return (int32_t)(b - a) < 0;
 }
 
 #endif  /* _LINUX_TIME_H_ */
