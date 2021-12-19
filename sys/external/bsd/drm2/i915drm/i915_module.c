@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_module.c,v 1.10 2021/12/19 10:32:59 riastradh Exp $	*/
+/*	$NetBSD: i915_module.c,v 1.11 2021/12/19 11:13:30 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_module.c,v 1.10 2021/12/19 10:32:59 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_module.c,v 1.11 2021/12/19 11:13:30 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/module.h>
@@ -52,12 +52,18 @@ MODULE(MODULE_CLASS_DRIVER, i915drmkms, "drmkms,drmkms_pci"); /* XXX drmkms_i2c 
 
 struct drm_sysctl_def i915_def = DRM_SYSCTL_INIT();
 
+int i915_global_buddy_init(void); /* XXX */
+
 static int
 i915drmkms_init(void)
 {
 	int error;
 
 	error = drm_guarantee_initialized();
+	if (error)
+		return error;
+
+	error = -i915_global_buddy_init();
 	if (error)
 		return error;
 

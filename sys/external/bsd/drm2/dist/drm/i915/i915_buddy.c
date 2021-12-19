@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_buddy.c,v 1.3 2021/12/19 11:13:22 riastradh Exp $	*/
+/*	$NetBSD: i915_buddy.c,v 1.4 2021/12/19 11:13:30 riastradh Exp $	*/
 
 // SPDX-License-Identifier: MIT
 /*
@@ -6,7 +6,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_buddy.c,v 1.3 2021/12/19 11:13:22 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_buddy.c,v 1.4 2021/12/19 11:13:30 riastradh Exp $");
 
 #include <linux/err.h>
 #include <linux/kmemleak.h>
@@ -37,6 +37,10 @@ static struct i915_global_block global = { {
 	.shrink = i915_global_buddy_shrink,
 	.exit = i915_global_buddy_exit,
 } };
+
+#ifdef __NetBSD__
+#define	__init	/* called from i915_module.c */
+#endif
 
 int __init i915_global_buddy_init(void)
 {
