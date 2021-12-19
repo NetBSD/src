@@ -1,4 +1,4 @@
-/*	$NetBSD: i2c.h,v 1.10 2021/12/19 09:43:56 riastradh Exp $	*/
+/*	$NetBSD: i2c.h,v 1.11 2021/12/19 09:44:04 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -40,6 +40,7 @@
 #include <dev/i2c/i2cvar.h>
 
 #include <linux/pm.h>
+#include <linux/mutex.h>
 
 struct i2c_adapter;
 struct i2c_algorithm;
