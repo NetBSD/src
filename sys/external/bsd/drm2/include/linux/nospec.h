@@ -1,4 +1,4 @@
-/*	$NetBSD: nospec.h,v 1.2 2021/12/19 01:44:02 riastradh Exp $	*/
+/*	$NetBSD: nospec.h,v 1.3 2021/12/19 01:45:38 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -53,7 +53,7 @@ array_index_nospec(size_t i, size_t n)
 	 * reading from and writing to j but actually does nothing.
 	 */
 	j = i;
-	asm volatile ("" : "=r"(j) : "r"(j));
+	asm volatile ("" : "=r"(j) : "0"(j));
 
 	/* If i >= n, then diff has the high bit set; otherwise clear.  */
 	diff = n - 1 - j;
