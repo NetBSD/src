@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_print.c,v 1.8 2021/12/19 09:50:19 riastradh Exp $	*/
+/*	$NetBSD: drm_print.c,v 1.9 2021/12/19 11:46:00 riastradh Exp $	*/
 
 /*
  * Copyright (C) 2016 Red Hat
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_print.c,v 1.8 2021/12/19 09:50:19 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_print.c,v 1.9 2021/12/19 11:46:00 riastradh Exp $");
 
 #ifndef __NetBSD__		/* XXX ??? */
 #define DEBUG /* for pr_debug() */
@@ -36,6 +36,7 @@ __KERNEL_RCSID(0, "$NetBSD: drm_print.c,v 1.8 2021/12/19 09:50:19 riastradh Exp 
 #include <sys/param.h>
 #include <sys/stdarg.h>
 #include <sys/device.h>
+#include <sys/ksyms.h>
 #else
 #include <stdarg.h>
 
@@ -67,6 +68,30 @@ MODULE_PARM_DESC(debug, "Enable debug output, where each bit enables a debug cat
 "\t\tBit 7 (0x80)  will enable LEASE messages (leasing code)\n"
 "\t\tBit 8 (0x100) will enable DP messages (displayport code)");
 module_param_named(debug, __drm_debug, int, 0600);
+#endif
+
+#ifdef __NetBSD__
+static void
+drm_symstr(vaddr_t val, char *out, size_t outsize)
+{
+	unsigned long naddr;
+	const char *mod;
+	const char *sym;
+
+	if (ksyms_getname(&mod, &sym, val, KSYMS_PROC|KSYMS_CLOSEST) == 0) {
+		char offset[32];
+
+		if (ksyms_getval(mod, sym, &naddr, KSYMS_ANY) == 0 &&
+		    (val - naddr) != 0)
+			snprintf(offset, sizeof offset, "+%p",
+			    (void *)(val - naddr));
+		else
+			offset[0] = '\0';
+		snprintf(out, outsize, "%s:%s%s", mod, sym, offset);
+		return;
+	}
+	snprintf(out, outsize, "%p", (void *)val);
+}
 #endif
 
 void __drm_puts_coredump(struct drm_printer *p, const char *str)
@@ -175,19 +200,34 @@ EXPORT_SYMBOL(__drm_printfn_seq_file);
 
 void __drm_printfn_info(struct drm_printer *p, struct va_format *vaf)
 {
+#ifdef __NetBSD__
+	dev_info(p->arg, "[" DRM_NAME "] ");
+	vprintf(vaf->fmt, *vaf->va);	/* XXX */
+#else
 	dev_info(p->arg, "[" DRM_NAME "] %pV", vaf);
+#endif
 }
 EXPORT_SYMBOL(__drm_printfn_info);
 
 void __drm_printfn_debug(struct drm_printer *p, struct va_format *vaf)
 {
+#ifdef __NetBSD__
+	pr_debug("%s ", p->prefix);
+	vprintf(vaf->fmt, *vaf->va);	/* XXX */
+#else
 	pr_debug("%s %pV", p->prefix, vaf);
+#endif
 }
 EXPORT_SYMBOL(__drm_printfn_debug);
 
 void __drm_printfn_err(struct drm_printer *p, struct va_format *vaf)
 {
+#ifdef __NetBSD__
+	pr_err("*ERROR* %s ", p->prefix);
+	vprintf(vaf->fmt, *vaf->va);	/* XXX */
+#else
 	pr_err("*ERROR* %s %pV", p->prefix, vaf);
+#endif
 }
 EXPORT_SYMBOL(__drm_printfn_err);
 
@@ -259,10 +299,15 @@ void drm_dev_printk(const struct device *dev, const char *level,
 {
 #ifdef __NetBSD__
 	va_list va;
+	char symbuf[128];
+
+	drm_symstr((vaddr_t)__builtin_return_address(0), symbuf, sizeof symbuf);
+	if (dev)
+		printf("%s [" DRM_NAME ":%s] ", device_xname(__UNCONST(dev)), symbuf);
+	else
+		printf("[" DRM_NAME ":%s] ", symbuf);
 
 	va_start(va, format);
-	if (dev)
-		printf("%s: ", device_xname(__UNCONST(dev)));
 	vprintf(format, va);
 	va_end(va);
 #else
@@ -290,13 +335,18 @@ void drm_dev_dbg(const struct device *dev, enum drm_debug_category category,
 {
 #ifdef __NetBSD__
 	va_list va;
+	char symbuf[128];
 
 	if (!(__drm_debug & category))
 		return;
 
-	va_start(va, format);
+	drm_symstr((vaddr_t)__builtin_return_address(0), symbuf, sizeof symbuf);
 	if (dev)
-		printf("%s: ", device_xname(__UNCONST(dev)));
+		printf("%s [" DRM_NAME ":%s] ", device_xname(__UNCONST(dev)), symbuf);
+	else
+		printf("[" DRM_NAME ":%s] ", symbuf);
+
+	va_start(va, format);
 	vprintf(format, va);
 	va_end(va);
 #else
@@ -325,10 +375,14 @@ EXPORT_SYMBOL(drm_dev_dbg);
 void __drm_dbg(enum drm_debug_category category, const char *format, ...)
 {
 #ifdef __NetBSD__
+	char symbuf[128];
 	va_list va;
 
 	if (!(__drm_debug & category))
 		return;
+
+	drm_symstr((vaddr_t)__builtin_return_address(0), symbuf, sizeof symbuf);
+	printf("[" DRM_NAME ":%s] ", symbuf);
 
 	va_start(va, format);
 	vprintf(format, va);
@@ -354,6 +408,17 @@ EXPORT_SYMBOL(__drm_dbg);
 
 void __drm_err(const char *format, ...)
 {
+#ifdef __NetBSD__
+	char symbuf[128];
+	va_list va;
+
+	drm_symstr((vaddr_t)__builtin_return_address(0), symbuf, sizeof symbuf);
+	printf("[" DRM_NAME ":%s] *ERROR* ", symbuf);
+
+	va_start(va, format);
+	vprintf(format, va);
+	va_end(va);
+#else
 	struct va_format vaf;
 	va_list args;
 
@@ -365,6 +430,7 @@ void __drm_err(const char *format, ...)
 	       __builtin_return_address(0), &vaf);
 
 	va_end(args);
+#endif
 }
 EXPORT_SYMBOL(__drm_err);
 
