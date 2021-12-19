@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_nvkm_engine_device_base.c,v 1.11 2021/12/18 23:45:34 riastradh Exp $	*/
+/*	$NetBSD: nouveau_nvkm_engine_device_base.c,v 1.12 2021/12/19 10:50:22 riastradh Exp $	*/
 
 /*
  * Copyright 2012 Red Hat Inc.
@@ -24,7 +24,7 @@
  * Authors: Ben Skeggs
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_engine_device_base.c,v 1.11 2021/12/18 23:45:34 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_engine_device_base.c,v 1.12 2021/12/19 10:50:22 riastradh Exp $");
 
 #include "priv.h"
 #include "acpi.h"
@@ -3016,7 +3016,7 @@ nvkm_device_ctor(const struct nvkm_device_func *func,
 #ifndef __BIG_ENDIAN
 		if (bus_space_read_stream_4(mmiot, mmioh, 4) != 0)
 #else
-		if (bus_space_read_stream_4(mmiot, mmioh, 4) != 1)
+		if (bus_space_read_stream_4(mmiot, mmioh, 4) == 0)
 #endif
 		{
 			bus_space_write_stream_4(mmiot, mmioh, 4, 0x01000001);
