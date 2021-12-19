@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_gem_framebuffer_helper.c,v 1.2 2021/12/19 00:59:34 riastradh Exp $	*/
+/*	$NetBSD: drm_gem_framebuffer_helper.c,v 1.3 2021/12/19 09:49:17 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,11 +30,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_gem_framebuffer_helper.c,v 1.2 2021/12/19 00:59:34 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_gem_framebuffer_helper.c,v 1.3 2021/12/19 09:49:17 riastradh Exp $");
 
 #include <linux/err.h>
 #include <linux/slab.h>
 
+#include <drm/drm_print.h>
+#include <drm/drm_fourcc.h>
 #include <drm/drm_framebuffer.h>
 #include <drm/drm_gem.h>
 #include <drm/drm_gem_framebuffer_helper.h>
