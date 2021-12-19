@@ -1,4 +1,4 @@
-/*	$NetBSD: ioport.h,v 1.4 2021/12/19 01:38:58 riastradh Exp $	*/
+/*	$NetBSD: ioport.h,v 1.5 2021/12/19 01:40:04 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -47,10 +47,21 @@ struct resource {
 	bus_space_handle_t r_bsh;
 };
 
+#define	DEFINE_RES_MEM(START, SIZE)					      \
+	{ .start = (START), .end = (START) + ((SIZE) - 1) }
+
 static inline bus_size_t
 resource_size(struct resource *resource)
 {
 	return resource->end - resource->start + 1;
+}
+
+static inline bool
+resource_contains(struct resource *r1, struct resource *r2)
+{
+	if (r1->r_bst != r2->r_bst)
+		return false;
+	return r1->start <= r2->start && r2->end <= r1->end;
 }
 
 static inline void
