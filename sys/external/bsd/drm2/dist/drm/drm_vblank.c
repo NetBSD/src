@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_vblank.c,v 1.10 2021/12/19 11:52:25 riastradh Exp $	*/
+/*	$NetBSD: drm_vblank.c,v 1.11 2021/12/19 11:55:47 riastradh Exp $	*/
 
 /*
  * drm_irq.c IRQ and vblank support
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_vblank.c,v 1.10 2021/12/19 11:52:25 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_vblank.c,v 1.11 2021/12/19 11:55:47 riastradh Exp $");
 
 #include <linux/export.h>
 #include <linux/moduleparam.h>
@@ -463,7 +463,6 @@ void drm_vblank_cleanup(struct drm_device *dev)
 			drm_core_check_feature(dev, DRIVER_MODESET));
 
 		del_timer_sync(&vblank->disable_timer);
-		teardown_timer(&vblank->disable_timer);
 		seqlock_destroy(&vblank->seqlock);
 	}
 
