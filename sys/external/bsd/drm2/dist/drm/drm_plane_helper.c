@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_plane_helper.c,v 1.5 2021/12/18 23:44:57 riastradh Exp $	*/
+/*	$NetBSD: drm_plane_helper.c,v 1.6 2021/12/19 09:49:56 riastradh Exp $	*/
 
 /*
  * Copyright (C) 2014 Intel Corporation
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_plane_helper.c,v 1.5 2021/12/18 23:44:57 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_plane_helper.c,v 1.6 2021/12/19 09:49:56 riastradh Exp $");
 
 #include <linux/list.h>
 
@@ -178,7 +178,7 @@ static int drm_primary_helper_update(struct drm_plane *plane, struct drm_crtc *c
 	};
 	struct drm_connector **connector_list;
 	int num_connectors, ret;
-	bool visible;
+	bool visible = false; /* XXX wasn't initialized normally. Looks like bug. */
 
 	ret = drm_plane_helper_check_update(plane, crtc, fb,
 					    &src, &dest,
