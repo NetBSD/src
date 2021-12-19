@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu_vm.c,v 1.8 2021/12/19 12:30:47 riastradh Exp $	*/
+/*	$NetBSD: amdgpu_vm.c,v 1.9 2021/12/19 12:31:04 riastradh Exp $	*/
 
 /*
  * Copyright 2008 Advanced Micro Devices, Inc.
@@ -28,7 +28,7 @@
  *          Jerome Glisse
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdgpu_vm.c,v 1.8 2021/12/19 12:30:47 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdgpu_vm.c,v 1.9 2021/12/19 12:31:04 riastradh Exp $");
 
 #include <linux/dma-fence-array.h>
 #include <linux/interval_tree_generic.h>
@@ -2900,10 +2900,12 @@ int amdgpu_vm_init(struct amdgpu_device *adev, struct amdgpu_vm *vm,
 	if (pasid) {
 		unsigned long flags;
 
+		idr_preload(GFP_ATOMIC);
 		spin_lock_irqsave(&adev->vm_manager.pasid_lock, flags);
 		r = idr_alloc(&adev->vm_manager.pasid_idr, vm, pasid, pasid + 1,
 			      GFP_ATOMIC);
 		spin_unlock_irqrestore(&adev->vm_manager.pasid_lock, flags);
+		idr_preload_end();
 		if (r < 0)
 			goto error_free_root;
 
@@ -3007,10 +3009,12 @@ int amdgpu_vm_make_compute(struct amdgpu_device *adev, struct amdgpu_vm *vm,
 	if (pasid) {
 		unsigned long flags;
 
+		idr_preload(GFP_ATOMIC);
 		spin_lock_irqsave(&adev->vm_manager.pasid_lock, flags);
 		r = idr_alloc(&adev->vm_manager.pasid_idr, vm, pasid, pasid + 1,
 			      GFP_ATOMIC);
 		spin_unlock_irqrestore(&adev->vm_manager.pasid_lock, flags);
+		idr_preload_end();
 
 		if (r == -ENOSPC)
 			goto unreserve_bo;
