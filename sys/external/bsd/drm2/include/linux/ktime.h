@@ -1,4 +1,4 @@
-/*	$NetBSD: ktime.h,v 1.9 2020/02/14 14:34:59 maya Exp $	*/
+/*	$NetBSD: ktime.h,v 1.10 2021/12/19 01:15:14 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -40,16 +40,12 @@
 #include <linux/jiffies.h>
 #include <linux/time.h>
 
-union ktime {
-	int64_t kt_nsec;
-};
-
-typedef union ktime ktime_t;
+typedef int64_t	ktime_t;
 
 static inline int64_t
 ktime_to_ns(ktime_t kt)
 {
-	return kt.kt_nsec;
+	return kt;
 }
 
 static inline int64_t
@@ -61,7 +57,7 @@ ktime_to_us(ktime_t kt)
 static inline ktime_t
 ns_to_ktime(int64_t nsec)
 {
-	return (ktime_t) { .kt_nsec = nsec };
+	return nsec;
 }
 
 static inline ktime_t
