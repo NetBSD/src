@@ -1,4 +1,4 @@
-/*	$NetBSD: io.h,v 1.6 2020/01/18 02:42:23 jmcneill Exp $	*/
+/*	$NetBSD: io.h,v 1.7 2021/12/19 10:48:29 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -44,14 +44,14 @@
  */
 #define	mmiowb()	membar_sync()
 
-#define	memcpy_fromio	memcpy
-#define	memcpy_toio	memcpy
+#define	memcpy_fromio(d,s,n)	memcpy((d),__UNVOLATILE(s),(n))
+#define	memcpy_toio(d,s,n)	memcpy(__UNVOLATILE(d),(s),(n))
 
 #if defined(__NetBSD__) && defined(__aarch64__)
 static inline void *
-memset_io(void *b, int c, size_t len)
+memset_io(volatile void *b, int c, size_t len)
 {
-	uint8_t *ptr = b;
+	volatile uint8_t *ptr = b;
 
 	while (len > 0) {
 		*ptr++ = c;
@@ -61,7 +61,7 @@ memset_io(void *b, int c, size_t len)
 	return b;
 }
 #else
-#define	memset_io	memset
+#define	memset_io(b,c,n)	memset(__UNVOLATILE(b),(c),(n))
 #endif
 
 /* XXX wrong place */
