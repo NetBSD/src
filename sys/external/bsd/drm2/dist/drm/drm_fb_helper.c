@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_fb_helper.c,v 1.23 2021/12/19 09:52:24 riastradh Exp $	*/
+/*	$NetBSD: drm_fb_helper.c,v 1.24 2021/12/19 10:46:43 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2006-2009 Red Hat Inc.
@@ -30,7 +30,7 @@
  *      Jesse Barnes <jesse.barnes@intel.com>
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_fb_helper.c,v 1.23 2021/12/19 09:52:24 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_fb_helper.c,v 1.24 2021/12/19 10:46:43 riastradh Exp $");
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
@@ -53,6 +53,8 @@ __KERNEL_RCSID(0, "$NetBSD: drm_fb_helper.c,v 1.23 2021/12/19 09:52:24 riastradh
 
 #include "drm_crtc_helper_internal.h"
 #include "drm_internal.h"
+
+#include <linux/nbsd-namespace.h>
 
 static bool drm_fbdev_emulation = true;
 module_param_named(fbdev_emulation, drm_fbdev_emulation, bool, 0600);
@@ -395,10 +397,10 @@ static void drm_fb_helper_resume_worker(struct work_struct *work)
 #endif
 }
 
-#ifndef __NetBSD__		/* XXX fb dirty */
 static void drm_fb_helper_dirty_blit_real(struct drm_fb_helper *fb_helper,
 					  struct drm_clip_rect *clip)
 {
+#ifndef __NetBSD__		/* XXX fb dirty */
 	struct drm_framebuffer *fb = fb_helper->fb;
 	unsigned int cpp = fb->format->cpp[0];
 	size_t offset = clip->y1 * fb->pitches[0] + clip->x1 * cpp;
@@ -412,6 +414,7 @@ static void drm_fb_helper_dirty_blit_real(struct drm_fb_helper *fb_helper,
 		src = (char *)src + fb->pitches[0];
 		dst = (char *)dst + fb->pitches[0];
 	}
+#endif
 }
 
 static void drm_fb_helper_dirty_work(struct work_struct *work)
@@ -447,7 +450,6 @@ static void drm_fb_helper_dirty_work(struct work_struct *work)
 			drm_client_buffer_vunmap(helper->buffer);
 	}
 }
-#endif	/* __NetBSD__ */
 
 /**
  * drm_fb_helper_prepare - setup a drm_fb_helper structure
@@ -462,19 +464,11 @@ void drm_fb_helper_prepare(struct drm_device *dev, struct drm_fb_helper *helper,
 			   const struct drm_fb_helper_funcs *funcs)
 {
 	INIT_LIST_HEAD(&helper->kernel_fb_list);
-#ifndef __NetBSD__		/* XXX fb dirty */
 	spin_lock_init(&helper->dirty_lock);
-#endif
 	INIT_WORK(&helper->resume_work, drm_fb_helper_resume_worker);
-#ifndef __NetBSD__		/* XXX fb dirty */
 	INIT_WORK(&helper->dirty_work, drm_fb_helper_dirty_work);
 	helper->dirty_clip.x1 = helper->dirty_clip.y1 = ~0;
-#endif
-#ifdef __NetBSD__
-	linux_mutex_init(&helper->lock);
-#else
 	mutex_init(&helper->lock);
-#endif
 	helper->funcs = funcs;
 	helper->dev = dev;
 }
@@ -513,8 +507,16 @@ int drm_fb_helper_init(struct drm_device *dev,
 	 */
 	if (!fb_helper->client.funcs) {
 		ret = drm_client_init(dev, &fb_helper->client, "drm_fb_helper", NULL);
-		if (ret)
+		if (ret) {
+			/*
+			 * XXX Undo what drm_fb_helper_prepare did
+			 * since the caller will not be going through
+			 * drm_fb_helper_fini.
+			 */
+			mutex_destroy(&fb_helper->lock);
+			spin_lock_destroy(&fb_helper->dirty_lock);
 			return ret;
+		}
 	}
 
 	dev->fb_helper = fb_helper;
@@ -522,8 +524,6 @@ int drm_fb_helper_init(struct drm_device *dev,
 	return 0;
 }
 EXPORT_SYMBOL(drm_fb_helper_init);
-
-#ifndef __NetBSD__		/* XXX fb info */
 
 /**
  * drm_fb_helper_alloc_fbi - allocate fb_info and some of its members
@@ -538,6 +538,7 @@ EXPORT_SYMBOL(drm_fb_helper_init);
  * fb_info pointer if things went okay, pointer containing error code
  * otherwise
  */
+#ifndef __NetBSD__		/* XXX fb info */
 struct fb_info *drm_fb_helper_alloc_fbi(struct drm_fb_helper *fb_helper)
 {
 	struct device *dev = fb_helper->dev->dev;
@@ -570,6 +571,7 @@ err_release:
 	return ERR_PTR(ret);
 }
 EXPORT_SYMBOL(drm_fb_helper_alloc_fbi);
+#endif
 
 /**
  * drm_fb_helper_unregister_fbi - unregister fb_info framebuffer device
@@ -581,8 +583,15 @@ EXPORT_SYMBOL(drm_fb_helper_alloc_fbi);
  */
 void drm_fb_helper_unregister_fbi(struct drm_fb_helper *fb_helper)
 {
+#ifdef __NetBSD__
+	/* XXX errno NetBSD->Linux */
+	int ret = -config_detach(fb_helper->fbdev, DETACH_FORCE);
+	if (ret)
+		DRM_ERROR("failed to detach drm framebuffer: %d\n", ret);
+#else
 	if (fb_helper && fb_helper->fbdev)
 		unregister_framebuffer(fb_helper->fbdev);
+#endif
 }
 EXPORT_SYMBOL(drm_fb_helper_unregister_fbi);
 
@@ -594,7 +603,9 @@ EXPORT_SYMBOL(drm_fb_helper_unregister_fbi);
  */
 void drm_fb_helper_fini(struct drm_fb_helper *fb_helper)
 {
+#ifndef __NetBSD__
 	struct fb_info *info;
+#endif
 
 	if (!fb_helper)
 		return;
@@ -607,12 +618,14 @@ void drm_fb_helper_fini(struct drm_fb_helper *fb_helper)
 	cancel_work_sync(&fb_helper->resume_work);
 	cancel_work_sync(&fb_helper->dirty_work);
 
+#ifndef __NetBSD__
 	info = fb_helper->fbdev;
 	if (info) {
 		if (info->cmap.len)
 			fb_dealloc_cmap(&info->cmap);
 		framebuffer_release(info);
 	}
+#endif
 	fb_helper->fbdev = NULL;
 
 	mutex_lock(&kernel_fb_helper_lock);
@@ -624,11 +637,14 @@ void drm_fb_helper_fini(struct drm_fb_helper *fb_helper)
 	mutex_unlock(&kernel_fb_helper_lock);
 
 	mutex_destroy(&fb_helper->lock);
+	spin_lock_destroy(&fb_helper->dirty_lock);
 
 	if (!fb_helper->client.funcs)
 		drm_client_release(&fb_helper->client);
 }
 EXPORT_SYMBOL(drm_fb_helper_fini);
+
+#ifndef __NetBSD__		/* XXX fb dirty */
 
 static bool drm_fbdev_use_shadow_fb(struct drm_fb_helper *fb_helper)
 {
@@ -659,6 +675,8 @@ static void drm_fb_helper_dirty(struct fb_info *info, u32 x, u32 y,
 
 	schedule_work(&helper->dirty_work);
 }
+
+#endif
 
 #ifndef __NetBSD__		/* XXX fb deferred */
 
@@ -832,7 +850,7 @@ EXPORT_SYMBOL(drm_fb_helper_cfb_imageblit);
 #endif	/* __NetBSD__ */
 
 #ifdef __NetBSD__		/* XXX fb info */
-void drm_fb_helper_set_suspend(struct drm_fb_helper *fb_helper, int state)
+void drm_fb_helper_set_suspend(struct drm_fb_helper *fb_helper, bool suspend)
 {
 }
 #else
@@ -878,6 +896,7 @@ void drm_fb_helper_set_suspend_unlocked(struct drm_fb_helper *fb_helper,
 	/* make sure there's no pending/ongoing resume */
 	flush_work(&fb_helper->resume_work);
 
+#ifndef __NetBSD__		/* XXX fb suspend */
 	if (suspend) {
 		if (fb_helper->fbdev->state != FBINFO_STATE_RUNNING)
 			return;
@@ -896,8 +915,11 @@ void drm_fb_helper_set_suspend_unlocked(struct drm_fb_helper *fb_helper,
 
 	fb_set_suspend(fb_helper->fbdev, suspend);
 	console_unlock();
+#endif
 }
 EXPORT_SYMBOL(drm_fb_helper_set_suspend_unlocked);
+
+#ifndef __NetBSD__
 
 static int setcmap_pseudo_palette(struct fb_cmap *cmap, struct fb_info *info)
 {
@@ -1463,6 +1485,7 @@ unlock:
 	return ret;
 }
 EXPORT_SYMBOL(drm_fb_helper_pan_display);
+
 #endif
 
 /*
