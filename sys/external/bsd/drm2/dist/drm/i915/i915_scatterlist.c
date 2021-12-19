@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_scatterlist.c,v 1.2 2021/12/18 23:45:28 riastradh Exp $	*/
+/*	$NetBSD: i915_scatterlist.c,v 1.3 2021/12/19 11:37:05 riastradh Exp $	*/
 
 /*
  * SPDX-License-Identifier: MIT
@@ -7,12 +7,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_scatterlist.c,v 1.2 2021/12/18 23:45:28 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_scatterlist.c,v 1.3 2021/12/19 11:37:05 riastradh Exp $");
 
 #include "i915_scatterlist.h"
 
 bool i915_sg_trim(struct sg_table *orig_st)
 {
+#ifndef __NetBSD__
 	struct sg_table new_st;
 	struct scatterlist *sg, *new_sg;
 	unsigned int i;
@@ -36,6 +37,7 @@ bool i915_sg_trim(struct sg_table *orig_st)
 	sg_free_table(orig_st);
 
 	*orig_st = new_st;
+#endif
 	return true;
 }
 
