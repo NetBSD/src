@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_display_power.c,v 1.3 2021/12/19 11:38:03 riastradh Exp $	*/
+/*	$NetBSD: intel_display_power.c,v 1.4 2021/12/19 11:54:48 riastradh Exp $	*/
 
 /* SPDX-License-Identifier: MIT */
 /*
@@ -6,7 +6,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intel_display_power.c,v 1.3 2021/12/19 11:38:03 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intel_display_power.c,v 1.4 2021/12/19 11:54:48 riastradh Exp $");
 
 #include "display/intel_crt.h"
 #include "display/intel_dp.h"
@@ -273,8 +273,10 @@ bool intel_display_power_is_enabled(struct drm_i915_private *dev_priv,
 static void hsw_power_well_post_enable(struct drm_i915_private *dev_priv,
 				       u8 irq_pipe_mask, bool has_vga)
 {
+#ifndef __NetBSD__ /* XXX We wait until intelfb is ready.  */
 	if (has_vga)
 		intel_vga_reset_io_mem(dev_priv);
+#endif
 
 	if (irq_pipe_mask)
 		gen8_irq_power_well_post_enable(dev_priv, irq_pipe_mask);
