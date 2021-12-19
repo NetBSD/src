@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_gem_mman.c,v 1.16 2021/12/19 12:08:36 riastradh Exp $	*/
+/*	$NetBSD: i915_gem_mman.c,v 1.17 2021/12/19 12:08:46 riastradh Exp $	*/
 
 /*
  * SPDX-License-Identifier: MIT
@@ -7,7 +7,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_gem_mman.c,v 1.16 2021/12/19 12:08:36 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_gem_mman.c,v 1.17 2021/12/19 12:08:46 riastradh Exp $");
 
 #include <linux/anon_inodes.h>
 #include <linux/mman.h>
@@ -567,6 +567,13 @@ i915_gem_fault(struct uvm_faultinfo *ufi, vaddr_t vaddr, struct vm_page **pps,
 	KASSERT(i915_gem_object_type_has(obj,
 		I915_GEM_OBJECT_HAS_STRUCT_PAGE));
 
+	/*
+	 * The lock isn't actually helpful for us and the caller in
+	 * uvm_fault only just acquired it anyway so no important
+	 * invariants are implied by it.
+	 */
+	rw_exit(obj->base.filp->vmobjlock);
+
 	KASSERT(ufi->entry->start <= vaddr);
 	KASSERT((ufi->entry->offset & (PAGE_SIZE - 1)) == 0);
 	uoffset = ufi->entry->offset + (vaddr - ufi->entry->start);
@@ -630,7 +637,7 @@ i915_gem_fault(struct uvm_faultinfo *ufi, vaddr_t vaddr, struct vm_page **pps,
 
 out:	if (pinned)
 		i915_gem_object_unpin_pages(obj);
-	uvmfault_unlockall(ufi, ufi->entry->aref.ar_amap, uobj);
+	uvmfault_unlockall(ufi, ufi->entry->aref.ar_amap, NULL);
 
 	/*
 	 * Remap EINTR to success, so that we return to userland.
