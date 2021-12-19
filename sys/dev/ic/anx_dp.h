@@ -1,4 +1,4 @@
-/* $NetBSD: anx_dp.h,v 1.3 2021/12/19 11:00:47 riastradh Exp $ */
+/* $NetBSD: anx_dp.h,v 1.4 2021/12/19 11:01:11 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2019 Jonathan A. Kollasch <jakllsch@kollasch.net>
@@ -33,10 +33,10 @@
 #include <dev/audio/audio_dai.h>
 #endif
 
-#include <drm/drm_drv.h>
 #include <drm/drm_bridge.h>
 #include <drm/drm_connector.h>
 #include <drm/drm_dp_helper.h>
+#include <drm/drm_drv.h>
 #include <drm/drm_panel.h>
 #include <drm/drm_probe_helper.h>
 

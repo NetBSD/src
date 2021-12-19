@@ -1,4 +1,4 @@
-/* $NetBSD: hdmi_connector.c,v 1.3 2021/12/19 11:00:46 riastradh Exp $ */
+/* $NetBSD: hdmi_connector.c,v 1.4 2021/12/19 11:01:10 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2019 Jared McNeill <jmcneill@invisible.ca>
@@ -27,22 +27,22 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hdmi_connector.c,v 1.3 2021/12/19 11:00:46 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hdmi_connector.c,v 1.4 2021/12/19 11:01:10 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
 #include <sys/device.h>
-#include <sys/systm.h>
 #include <sys/gpio.h>
+#include <sys/systm.h>
 
-#include <dev/fdt/fdtvar.h>
 #include <dev/fdt/fdt_port.h>
+#include <dev/fdt/fdtvar.h>
 
 #include <dev/i2c/ddcvar.h>
 
-#include <drm/drm_drv.h>
 #include <drm/drm_crtc.h>
 #include <drm/drm_crtc_helper.h>
+#include <drm/drm_drv.h>
 #include <drm/drm_edid.h>
 #include <drm/drm_probe_helper.h>
 

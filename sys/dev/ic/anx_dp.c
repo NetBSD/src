@@ -1,4 +1,4 @@
-/* $NetBSD: anx_dp.c,v 1.3 2021/12/19 11:00:47 riastradh Exp $ */
+/* $NetBSD: anx_dp.c,v 1.4 2021/12/19 11:01:11 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2019 Jonathan A. Kollasch <jakllsch@kollasch.net>
@@ -27,15 +27,15 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: anx_dp.c,v 1.3 2021/12/19 11:00:47 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: anx_dp.c,v 1.4 2021/12/19 11:01:11 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
+#include <sys/conf.h>
 #include <sys/device.h>
 #include <sys/intr.h>
-#include <sys/systm.h>
 #include <sys/kernel.h>
-#include <sys/conf.h>
+#include <sys/systm.h>
 
 #include <dev/ic/anx_dp.h>
 
@@ -43,10 +43,10 @@ __KERNEL_RCSID(0, "$NetBSD: anx_dp.c,v 1.3 2021/12/19 11:00:47 riastradh Exp $")
 #include <dev/audio/audio_dai.h>
 #endif
 
-#include <drm/drm_drv.h>
 #include <drm/drm_crtc.h>
 #include <drm/drm_crtc_helper.h>
 #include <drm/drm_dp_helper.h>
+#include <drm/drm_drv.h>
 #include <drm/drm_edid.h>
 
 #define	ANXDP_DP_TX_VERSION	0x010

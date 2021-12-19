@@ -1,4 +1,4 @@
-/* $NetBSD: dw_hdmi.c,v 1.8 2021/12/19 11:00:47 riastradh Exp $ */
+/* $NetBSD: dw_hdmi.c,v 1.9 2021/12/19 11:01:11 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2019 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,29 +27,29 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dw_hdmi.c,v 1.8 2021/12/19 11:00:47 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dw_hdmi.c,v 1.9 2021/12/19 11:01:11 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
+#include <sys/conf.h>
 #include <sys/device.h>
 #include <sys/intr.h>
-#include <sys/systm.h>
 #include <sys/kernel.h>
-#include <sys/conf.h>
+#include <sys/systm.h>
 
 #include <dev/ic/dw_hdmi.h>
 
-#include <dev/i2c/i2cvar.h>
-#include <dev/i2c/ddcvar.h>
 #include <dev/i2c/ddcreg.h>
-#include <dev/videomode/videomode.h>
+#include <dev/i2c/ddcvar.h>
+#include <dev/i2c/i2cvar.h>
 #include <dev/videomode/edidvar.h>
+#include <dev/videomode/videomode.h>
 
 #include <dev/audio/audio_dai.h>
 
-#include <drm/drm_drv.h>
 #include <drm/drm_crtc.h>
 #include <drm/drm_crtc_helper.h>
+#include <drm/drm_drv.h>
 #include <drm/drm_edid.h>
 #include <drm/drm_probe_helper.h>
 
