@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu_dcn10_resource.c,v 1.3 2021/12/19 11:26:14 riastradh Exp $	*/
+/*	$NetBSD: amdgpu_dcn10_resource.c,v 1.4 2021/12/19 11:59:31 riastradh Exp $	*/
 
 /*
 * Copyright 2016 Advanced Micro Devices, Inc.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdgpu_dcn10_resource.c,v 1.3 2021/12/19 11:26:14 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdgpu_dcn10_resource.c,v 1.4 2021/12/19 11:59:31 riastradh Exp $");
 
 #include <linux/slab.h>
 
@@ -256,8 +256,6 @@ static const struct dcn10_stream_encoder_mask se_mask = {
 		SE_COMMON_MASK_SH_LIST_DCN10(_MASK)
 };
 
-#ifndef __NetBSD__		/* XXX amdgpu audio */
-
 #define audio_regs(id)\
 [id] = {\
 		AUD_COMMON_REG_LIST(id)\
@@ -282,8 +280,6 @@ static const struct dce_audio_shift audio_shift = {
 static const struct dce_audio_mask audio_mask = {
 		DCE120_AUD_COMMON_MASK_SH_LIST(_MASK)
 };
-
-#endif
 
 #define aux_regs(id)\
 [id] = {\
@@ -847,14 +843,12 @@ static void read_dce_straps(
 		FN(DC_PINSTRAPS, DC_PINSTRAPS_AUDIO), &straps->dc_pinstraps_audio);
 }
 
-#ifndef __NetBSD__		/* XXX amdgpu audio */
 static struct audio *create_audio(
 		struct dc_context *ctx, unsigned int inst)
 {
 	return dce_audio_create(ctx, inst,
 			&audio_regs[inst], &audio_shift, &audio_mask);
 }
-#endif
 
 static struct stream_encoder *dcn10_stream_encoder_create(
 	enum engine_id eng_id,
@@ -903,18 +897,14 @@ static struct dce_hwseq *dcn10_hwseq_create(
 
 static const struct resource_create_funcs res_create_funcs = {
 	.read_dce_straps = read_dce_straps,
-#ifndef __NetBSD__		/* XXX amdgpu audio */
 	.create_audio = create_audio,
-#endif
 	.create_stream_encoder = dcn10_stream_encoder_create,
 	.create_hwseq = dcn10_hwseq_create,
 };
 
 static const struct resource_create_funcs res_create_maximus_funcs = {
 	.read_dce_straps = NULL,
-#ifndef __NetBSD__		/* XXX amdgpu audio */
 	.create_audio = NULL,
-#endif
 	.create_stream_encoder = NULL,
 	.create_hwseq = dcn10_hwseq_create,
 };
@@ -996,10 +986,8 @@ static void dcn10_resource_destruct(struct dcn10_resource_pool *pool)
 	}
 
 	for (i = 0; i < pool->base.audio_count; i++) {
-#ifndef __NetBSD__		/* XXX amdgpu audio */
 		if (pool->base.audios[i])
 			dce_aud_destroy(&pool->base.audios[i]);
-#endif
 	}
 
 	for (i = 0; i < pool->base.clk_src_count; i++) {
