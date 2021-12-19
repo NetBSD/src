@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_drv.c,v 1.34 2021/12/19 11:18:35 riastradh Exp $	*/
+/*	$NetBSD: i915_drv.c,v 1.35 2021/12/19 11:18:44 riastradh Exp $	*/
 
 /* i915_drv.c -- i830,i845,i855,i865,i915 driver -*- linux-c -*-
  */
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_drv.c,v 1.34 2021/12/19 11:18:35 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_drv.c,v 1.35 2021/12/19 11:18:44 riastradh Exp $");
 
 #include <linux/acpi.h>
 #include <linux/device.h>
@@ -1241,11 +1241,13 @@ static int i915_driver_hw_probe(struct drm_i915_private *dev_priv)
 
 	pci_set_master(pdev);
 
+#ifdef __linux__
 	/*
 	 * We don't have a max segment size, so set it to the max so sg's
 	 * debugging layer doesn't complain
 	 */
 	dma_set_max_seg_size(&pdev->dev, UINT_MAX);
+#endif
 
 #ifndef __NetBSD__		/* Handled in intel_ggtt.c.  */
 	/* overlay on gen2 is broken and can't address above 1G */
