@@ -1,4 +1,4 @@
-/*	$NetBSD: sched.h,v 1.21 2021/12/19 12:35:54 riastradh Exp $	*/
+/*	$NetBSD: sched.h,v 1.22 2021/12/19 12:45:50 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -97,9 +97,8 @@ schedule_timeout_uninterruptible(long timeout)
 static inline bool
 need_resched(void)
 {
-	/* XXX kpreempt_disable */
-	/* XXX ci_want_resched */
-	return (curcpu()->ci_schedstate.spc_flags & SPCF_SHOULDYIELD);
+
+	return preempt_needed();
 }
 
 static inline void
