@@ -1,4 +1,4 @@
-/*	$NetBSD: rcupdate.h,v 1.12 2021/12/19 01:20:45 riastradh Exp $	*/
+/*	$NetBSD: rcupdate.h,v 1.13 2021/12/19 01:22:51 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -51,6 +51,8 @@
 	membar_datadep_consumer();					      \
 	__rcu_dereference_tmp;						      \
 })
+
+#define	rcu_dereference_raw	rcu_dereference
 
 #define	rcu_dereference_protected(P, C) ({				      \
 	WARN_ON(!(C));							      \
