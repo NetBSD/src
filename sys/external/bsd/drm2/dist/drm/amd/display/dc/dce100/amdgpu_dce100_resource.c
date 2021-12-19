@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu_dce100_resource.c,v 1.5 2021/12/19 11:59:30 riastradh Exp $	*/
+/*	$NetBSD: amdgpu_dce100_resource.c,v 1.6 2021/12/19 12:22:49 riastradh Exp $	*/
 
 /*
  * Copyright 2012-15 Advanced Micro Devices, Inc.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdgpu_dce100_resource.c,v 1.5 2021/12/19 11:59:30 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdgpu_dce100_resource.c,v 1.6 2021/12/19 12:22:49 riastradh Exp $");
 
 #include <linux/slab.h>
 
@@ -1132,7 +1132,6 @@ res_create_fail:
 	return false;
 }
 
-static __unused
 struct resource_pool *dce100_create_resource_pool(
 	uint8_t num_virtual_links,
 	struct dc  *dc)

@@ -1,4 +1,4 @@
-/*	$NetBSD: dce_audio.h,v 1.4 2021/12/19 11:59:30 riastradh Exp $	*/
+/*	$NetBSD: dce_audio.h,v 1.5 2021/12/19 12:22:48 riastradh Exp $	*/
 
 /*
  * Copyright 2012-15 Advanced Micro Devices, Inc.
@@ -27,7 +27,7 @@
 #ifndef __DAL_AUDIO_DCE_110_H__
 #define __DAL_AUDIO_DCE_110_H__
 
-#include "audio.h"
+#include "hw/audio.h"
 
 #define AUD_COMMON_REG_LIST(id)\
 	SRI(AZALIA_F0_CODEC_ENDPOINT_INDEX, AZF0ENDPOINT, id),\
