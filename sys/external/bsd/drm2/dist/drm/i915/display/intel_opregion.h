@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_opregion.h,v 1.2 2021/12/18 23:45:30 riastradh Exp $	*/
+/*	$NetBSD: intel_opregion.h,v 1.3 2021/12/19 11:49:11 riastradh Exp $	*/
 
 /*
  * Copyright © 2008-2017 Intel Corporation
@@ -46,7 +46,8 @@ struct opregion_asle;
 struct intel_opregion {
 #ifdef __NetBSD__
 	bus_space_tag_t bst;
-	bus_space_handle_t bsh;
+	bus_space_handle_t asls_bsh;
+	bus_space_handle_t rvda_bsh;
 #endif
 	struct opregion_header *header;
 	struct opregion_acpi *acpi;

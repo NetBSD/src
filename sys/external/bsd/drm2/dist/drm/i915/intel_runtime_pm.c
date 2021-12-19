@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_runtime_pm.c,v 1.10 2021/12/18 23:45:29 riastradh Exp $	*/
+/*	$NetBSD: intel_runtime_pm.c,v 1.11 2021/12/19 11:49:11 riastradh Exp $	*/
 
 /*
  * Copyright © 2012-2014 Intel Corporation
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intel_runtime_pm.c,v 1.10 2021/12/18 23:45:29 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intel_runtime_pm.c,v 1.11 2021/12/19 11:49:11 riastradh Exp $");
 
 #include <linux/pm_runtime.h>
 
@@ -616,7 +616,7 @@ void intel_runtime_pm_init_early(struct intel_runtime_pm *rpm)
 	struct drm_i915_private *i915 =
 			container_of(rpm, struct drm_i915_private, runtime_pm);
 	struct pci_dev *pdev = i915->drm.pdev;
-	struct device *kdev = &pdev->dev;
+	struct device *kdev = pci_dev_dev(pdev);
 
 	rpm->kdev = kdev;
 	rpm->available = HAS_RUNTIME_PM(i915);

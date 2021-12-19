@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_reset_types.h,v 1.3 2021/12/19 11:12:51 riastradh Exp $	*/
+/*	$NetBSD: intel_reset_types.h,v 1.4 2021/12/19 11:49:11 riastradh Exp $	*/
 
 /* SPDX-License-Identifier: MIT */
 /*
@@ -51,11 +51,8 @@ struct intel_reset {
 	 * Waitqueue to signal when the reset has completed. Used by clients
 	 * that wait for dev_priv->mm.wedged to settle.
 	 */
-#ifdef __NetBSD__
+	spinlock_t lock;
 	drm_waitqueue_t queue;
-#else
-	wait_queue_head_t queue;
-#endif
 
 	struct srcu_struct backoff_srcu;
 };

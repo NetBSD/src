@@ -1,4 +1,4 @@
-#	$NetBSD: files.i915drmkms,v 1.78 2021/12/19 11:45:01 riastradh Exp $
+#	$NetBSD: files.i915drmkms,v 1.79 2021/12/19 11:49:12 riastradh Exp $
 
 version	20180827
 
@@ -33,6 +33,10 @@ makeoptions	i915drmkms	"CPPFLAGS.i915drmkms"+="-DCONFIG_DRM_I915_SW_FENCE_CHECK_
 makeoptions	i915drmkms	"CPPFLAGS.i915drmkms"+="-DCONFIG_DRM_I915_HEARTBEAT_INTERVAL=2500" # milliseconds
 makeoptions	i915drmkms	"CPPFLAGS.i915drmkms"+="-DCONFIG_DRM_I915_STOP_TIMEOUT=100" # milliseconds
 makeoptions	i915drmkms	"CPPFLAGS.i915drmkms"+="-DCONFIG_DRM_I915_PREEMPT_TIMEOUT=640" # milliseconds
+makeoptions	i915drmkms	"CPPFLAGS.i915drmkms"+="-DCONFIG_DRM_I915_CAPTURE_ERROR=1"
+makeoptions	i915drmkms	"CPPFLAGS.i915drmkms"+="-DCONFIG_DRM_I915_SELFTEST=0"
+makeoptions	i915drmkms	"CPPFLAGS.i915drmkms"+="-DCONFIG_PM=1"
+makeoptions	i915drmkms	"CPPFLAGS.i915drmkms"+="-DCONFIG_INTEL_MEI_HDCP=0"
 
 makeoptions	i915drmkms	"CWARNFLAGS.i915drmkms"+="-Wno-missing-field-initializers"
 makeoptions	i915drmkms	"CWARNFLAGS.i915drmkms"+="-Wno-pointer-arith"
@@ -50,16 +54,23 @@ makeoptions 	i915drmkms 	"CWARNFLAGS.intel_sdvo.c"+="${${ACTIVE_CC} == gcc && ${
 makeoptions	intelfb		"CPPFLAGS.intelfb"+="${CPPFLAGS.i915drmkms}"
 makeoptions	intelfb		"CWARNFLAGS.intelfb"+="${CWARNFLAGS.i915drmkms}"
 
-file	external/bsd/drm2/i915drm/i915_gem_userptr.c	i915drmkms
-file	external/bsd/drm2/i915drm/i915_gemfs.c	i915drmkms
+# Local additions
 file	external/bsd/drm2/i915drm/i915_module.c		i915drmkms
 file	external/bsd/drm2/i915drm/i915_pci_autoconf.c	i915drmkms
-file	external/bsd/drm2/i915drm/i915_perf.c	i915drmkms
-file	external/bsd/drm2/i915drm/i915_sysfs.c	i915drmkms
-file	external/bsd/drm2/i915drm/i915_switcheroo.c	i915drmkms
-file	external/bsd/drm2/i915drm/icl_dsi.c		i915drmkms
-file	external/bsd/drm2/i915drm/intel_gtt_subr.c	i915drmkms
 file	external/bsd/drm2/i915drm/intelfb.c		intelfb
+
+# Local overrides
+file	external/bsd/drm2/i915drm/i915_gem_userptr.c	i915drmkms
+file	external/bsd/drm2/i915drm/i915_gemfs.c	i915drmkms
+file	external/bsd/drm2/i915drm/i915_perf.c	i915drmkms
+file	external/bsd/drm2/i915drm/i915_switcheroo.c	i915drmkms
+file	external/bsd/drm2/i915drm/i915_sysfs.c	i915drmkms
+file	external/bsd/drm2/i915drm/icl_dsi.c		i915drmkms
+file	external/bsd/drm2/i915drm/intel_dsi_dcs_backlight.c	i915drmkms
+file	external/bsd/drm2/i915drm/intel_gtt_subr.c	i915drmkms
+file	external/bsd/drm2/i915drm/intel_guc_log.c	i915drmkms
+file	external/bsd/drm2/i915drm/intel_lpe_audio.c	i915drmkms
+file	external/bsd/drm2/i915drm/intel_region_lmem.c	i915drmkms
 file	external/bsd/drm2/i915drm/vlv_dsi.c	i915drmkms
 
 # Generated from i915drmkms2netbsd.
@@ -103,7 +114,7 @@ file	external/bsd/drm2/dist/drm/i915/display/intel_gmbus.c	i915drmkms
 file	external/bsd/drm2/dist/drm/i915/display/intel_hdcp.c	i915drmkms
 file	external/bsd/drm2/dist/drm/i915/display/intel_hdmi.c	i915drmkms
 file	external/bsd/drm2/dist/drm/i915/display/intel_hotplug.c	i915drmkms
-file	external/bsd/drm2/dist/drm/i915/display/intel_lpe_audio.c	i915drmkms
+#file	external/bsd/drm2/dist/drm/i915/display/intel_lpe_audio.c	i915drmkms
 file	external/bsd/drm2/dist/drm/i915/display/intel_lspcon.c	i915drmkms
 file	external/bsd/drm2/dist/drm/i915/display/intel_lvds.c	i915drmkms
 file	external/bsd/drm2/dist/drm/i915/display/intel_opregion.c	i915drmkms
@@ -199,7 +210,7 @@ file	external/bsd/drm2/dist/drm/i915/i915_gem_evict.c	i915drmkms
 file	external/bsd/drm2/dist/drm/i915/i915_gem_fence_reg.c	i915drmkms
 file	external/bsd/drm2/dist/drm/i915/i915_gem_gtt.c	i915drmkms
 file	external/bsd/drm2/dist/drm/i915/i915_getparam.c	i915drmkms
-#file	external/bsd/drm2/dist/drm/i915/i915_globals.c	i915drmkms
+file	external/bsd/drm2/dist/drm/i915/i915_globals.c	i915drmkms
 file	external/bsd/drm2/dist/drm/i915/i915_irq.c	i915drmkms
 file	external/bsd/drm2/dist/drm/i915/i915_memcpy.c	i915drmkms
 #file	external/bsd/drm2/dist/drm/i915/i915_mm.c	i915drmkms
@@ -226,7 +237,7 @@ file	external/bsd/drm2/dist/drm/i915/intel_device_info.c	i915drmkms
 file	external/bsd/drm2/dist/drm/i915/intel_memory_region.c	i915drmkms
 file	external/bsd/drm2/dist/drm/i915/intel_pch.c	i915drmkms
 file	external/bsd/drm2/dist/drm/i915/intel_pm.c	i915drmkms
-file	external/bsd/drm2/dist/drm/i915/intel_region_lmem.c	i915drmkms
+#file	external/bsd/drm2/dist/drm/i915/intel_region_lmem.c	i915drmkms
 file	external/bsd/drm2/dist/drm/i915/intel_runtime_pm.c	i915drmkms
 file	external/bsd/drm2/dist/drm/i915/intel_sideband.c	i915drmkms
 file	external/bsd/drm2/dist/drm/i915/intel_uncore.c	i915drmkms

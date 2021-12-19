@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_opregion.c,v 1.3 2021/12/19 11:47:25 riastradh Exp $	*/
+/*	$NetBSD: intel_opregion.c,v 1.4 2021/12/19 11:49:11 riastradh Exp $	*/
 
 /*
  * Copyright 2008 Intel Corporation <hong.liu@intel.com>
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intel_opregion.c,v 1.3 2021/12/19 11:47:25 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intel_opregion.c,v 1.4 2021/12/19 11:49:11 riastradh Exp $");
 
 #include <linux/acpi.h>
 #include <linux/dmi.h>
@@ -622,9 +622,9 @@ void intel_opregion_asle_intr(struct drm_i915_private *dev_priv)
 #define ACPI_EV_LID            (1<<1)
 #define ACPI_EV_DOCK           (1<<2)
 
+#ifdef __NetBSD__
 static struct intel_opregion *system_opregion;
 
-#ifdef __NetBSD__
 static void
 intel_opregion_video_event(ACPI_HANDLE hdl, uint32_t notify, void *opaque)
 {
@@ -898,7 +898,7 @@ static int intel_load_vbt_firmware(struct drm_i915_private *dev_priv)
 	if (!name || !*name)
 		return -ENOENT;
 
-	ret = request_firmware(&fw, name, &dev_priv->drm.pdev->dev);
+	ret = request_firmware(&fw, name, pci_dev_dev(dev_priv->drm.pdev));
 	if (ret) {
 		DRM_ERROR("Requesting VBT firmware \"%s\" failed (%d)\n",
 			  name, ret);
@@ -952,14 +952,15 @@ int intel_opregion_setup(struct drm_i915_private *dev_priv)
 	INIT_WORK(&opregion->asle_work, asle_work);
 
 #ifdef __NetBSD__
-	opregion->bst = dev->pdev->pd_pa.pa_memt;
+	opregion->bst = pdev->pd_pa.pa_memt;
 	err = -bus_space_map(opregion->bst, asls, OPREGION_SIZE,
-	    BUS_SPACE_MAP_LINEAR|BUS_SPACE_MAP_CACHEABLE, &opregion->bsh);
+	    BUS_SPACE_MAP_LINEAR|BUS_SPACE_MAP_CACHEABLE,
+	    &opregion->asls_bsh);
 	if (err) {
 		DRM_DEBUG_DRIVER("Failed to map opregion: %d\n", err);
 		return err;
 	}
-	base = bus_space_vaddr(opregion->bst, opregion->bsh);
+	base = bus_space_vaddr(opregion->bst, opregion->asls_bsh);
 #else
 	base = memremap(asls, OPREGION_SIZE, MEMREMAP_WB);
 #endif
@@ -1033,8 +1034,19 @@ int intel_opregion_setup(struct drm_i915_private *dev_priv)
 			rvda += asls;
 		}
 
+#ifdef __NetBSD__
+		if (bus_space_map(opregion->bst, rvda,
+			opregion->asle->rvds,
+			BUS_SPACE_MAP_LINEAR|BUS_SPACE_MAP_CACHEABLE,
+			&opregion->rvda_bsh))
+			opregion->rvda = NULL;
+		else
+			opregion->rvda = bus_space_vaddr(opregion->bst,
+			    opregion->rvda_bsh);
+#else
 		opregion->rvda = memremap(rvda, opregion->asle->rvds,
 					  MEMREMAP_WB);
+#endif
 
 		vbt = opregion->rvda;
 		vbt_size = opregion->asle->rvds;
@@ -1045,7 +1057,15 @@ int intel_opregion_setup(struct drm_i915_private *dev_priv)
 			goto out;
 		} else {
 			DRM_DEBUG_KMS("Invalid VBT in ACPI OpRegion (RVDA)\n");
+#ifdef __NetBSD__
+			if (opregion->rvda) {
+				bus_space_unmap(opregion->bst,
+				    opregion->rvda_bsh,
+				    opregion->asle->rvds);
+			}
+#else
 			memunmap(opregion->rvda);
+#endif
 			opregion->rvda = NULL;
 		}
 	}
@@ -1074,7 +1094,7 @@ out:
 
 err_out:
 #ifdef __NetBSD__
-	bus_space_unmap(opregion->bst, opregion->bsh, OPREGION_SIZE);
+	bus_space_unmap(opregion->bst, opregion->asls_bsh, OPREGION_SIZE);
 #else
 	memunmap(base);
 #endif
@@ -1144,9 +1164,14 @@ void intel_opregion_register(struct drm_i915_private *i915)
 		return;
 
 	if (opregion->acpi) {
-#ifdef __NetBSD__ /* XXX post-merge audit */
-		if (dev->pdev->pd_ad != NULL)
-			acpi_deregister_notify(dev->pdev->pd_ad);
+#ifdef __NetBSD__
+		if (i915->drm.pdev->pd_ad != NULL) {
+			/* XXX gross but expedient */
+			KASSERT(system_opregion == NULL);
+			system_opregion = opregion;
+			acpi_register_notify(i915->drm.pdev->pd_ad,
+			    intel_opregion_video_event);
+		}
 #else
 		opregion->acpi_notifier.notifier_call =
 			intel_opregion_video_event;
@@ -1212,20 +1237,31 @@ void intel_opregion_unregister(struct drm_i915_private *i915)
 	if (!opregion->header)
 		return;
 
-	if (opregion->acpi_notifier.notifier_call) {
 #ifdef __NetBSD__
-		if (dev->pdev->pd_ad != NULL)
-			acpi_deregister_notify(dev->pdev->pd_ad);
+	if (opregion->acpi) {
+		if (i915->drm.pdev->pd_ad != NULL)
+			acpi_deregister_notify(i915->drm.pdev->pd_ad);
+	}
 #else
+	if (opregion->acpi_notifier.notifier_call) {
 		unregister_acpi_notifier(&opregion->acpi_notifier);
 		opregion->acpi_notifier.notifier_call = NULL;
-#endif
 	}
+#endif
 
 	/* just clear all opregion memory pointers now */
+#ifdef __NetBSD__
+	bus_space_unmap(opregion->bst, opregion->asls_bsh, OPREGION_SIZE);
+#else
 	memunmap(opregion->header);
+#endif
 	if (opregion->rvda) {
+#ifdef __NetBSD__
+		bus_space_unmap(opregion->bst, opregion->rvda_bsh,
+		    opregion->asle->rvds);
+#else
 		memunmap(opregion->rvda);
+#endif
 		opregion->rvda = NULL;
 	}
 	if (opregion->vbt_firmware) {

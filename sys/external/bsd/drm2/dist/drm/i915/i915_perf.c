@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_perf.c,v 1.5 2021/12/19 11:36:56 riastradh Exp $	*/
+/*	$NetBSD: i915_perf.c,v 1.6 2021/12/19 11:49:11 riastradh Exp $	*/
 
 /*
  * Copyright © 2015-2016 Intel Corporation
@@ -194,7 +194,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_perf.c,v 1.5 2021/12/19 11:36:56 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_perf.c,v 1.6 2021/12/19 11:49:11 riastradh Exp $");
 
 #include <linux/anon_inodes.h>
 #include <linux/sizes.h>
@@ -3917,10 +3917,9 @@ int i915_perf_open_ioctl(struct drm_device *dev, void *data,
  */
 void i915_perf_register(struct drm_i915_private *i915)
 {
-	struct i915_perf *perf = &i915->perf;
 #ifndef __NetBSD__
+	struct i915_perf *perf = &i915->perf;
 	int ret;
-#endif
 
 	if (!perf->i915)
 		return;
@@ -3979,7 +3978,9 @@ void i915_perf_register(struct drm_i915_private *i915)
 	if (perf->test_config.id == 0)
 		goto sysfs_error;
 
-#ifndef __NetBSD__		/* XXX i915 sysfs */
+#ifdef __NetBSD__		/* XXX i915 sysfs */
+	__USE(ret);
+#else
 	ret = sysfs_create_group(perf->metrics_kobj,
 				 &perf->test_config.sysfs_metric);
 	if (ret)
@@ -3999,6 +4000,7 @@ sysfs_error:
 
 exit:
 	mutex_unlock(&perf->lock);
+#endif
 }
 
 /**

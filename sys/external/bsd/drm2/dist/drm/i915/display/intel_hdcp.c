@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_hdcp.c,v 1.4 2021/12/19 11:45:50 riastradh Exp $	*/
+/*	$NetBSD: intel_hdcp.c,v 1.5 2021/12/19 11:49:11 riastradh Exp $	*/
 
 /* SPDX-License-Identifier: MIT */
 /*
@@ -11,7 +11,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intel_hdcp.c,v 1.4 2021/12/19 11:45:50 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intel_hdcp.c,v 1.5 2021/12/19 11:49:11 riastradh Exp $");
 
 #include <linux/component.h>
 #include <linux/i2c.h>
@@ -26,6 +26,8 @@ __KERNEL_RCSID(0, "$NetBSD: intel_hdcp.c,v 1.4 2021/12/19 11:45:50 riastradh Exp
 #include "intel_hdcp.h"
 #include "intel_sideband.h"
 #include "intel_connector.h"
+
+#include <linux/nbsd-namespace.h>
 
 #define KEY_LOAD_TRIES	5
 #define ENCRYPT_STATUS_CHANGE_TIMEOUT_MS	50
@@ -2039,7 +2041,9 @@ void intel_hdcp_component_fini(struct drm_i915_private *dev_priv)
 	dev_priv->hdcp_comp_added = false;
 	mutex_unlock(&dev_priv->hdcp_comp_mutex);
 
+#ifndef __NetBSD__		/* XXX i915 hdmi audio */
 	component_del(dev_priv->drm.dev, &i915_hdcp_component_ops);
+#endif
 }
 
 void intel_hdcp_cleanup(struct intel_connector *connector)

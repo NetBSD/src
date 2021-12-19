@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_uncore.h,v 1.7 2021/12/19 11:33:49 riastradh Exp $	*/
+/*	$NetBSD: intel_uncore.h,v 1.8 2021/12/19 11:49:11 riastradh Exp $	*/
 
 /*
  * Copyright © 2017 Intel Corporation
@@ -108,10 +108,17 @@ struct intel_forcewake_range {
 	enum forcewake_domains domains;
 };
 
+
 struct intel_uncore {
-#ifdef __linux__
+#ifdef __NetBSD__
+#  define	__iomem	/* XXX */
+#endif
 	void __iomem *regs;
-#else
+#ifdef __NetBSD__
+#  undef	__iomem
+#endif
+
+#ifdef __NetBSD__
 	bus_space_tag_t regs_bst;
 	bus_space_handle_t regs_bsh;
 #endif

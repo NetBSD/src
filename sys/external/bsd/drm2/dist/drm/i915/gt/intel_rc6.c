@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_rc6.c,v 1.2 2021/12/18 23:45:30 riastradh Exp $	*/
+/*	$NetBSD: intel_rc6.c,v 1.3 2021/12/19 11:49:11 riastradh Exp $	*/
 
 /*
  * SPDX-License-Identifier: MIT
@@ -7,7 +7,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intel_rc6.c,v 1.2 2021/12/18 23:45:30 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intel_rc6.c,v 1.3 2021/12/19 11:49:11 riastradh Exp $");
 
 #include <linux/pm_runtime.h>
 
@@ -482,14 +482,14 @@ static bool rc6_supported(struct intel_rc6 *rc6)
 static void rpm_get(struct intel_rc6 *rc6)
 {
 	GEM_BUG_ON(rc6->wakeref);
-	pm_runtime_get_sync(&rc6_to_i915(rc6)->drm.pdev->dev);
+	pm_runtime_get_sync(pci_dev_dev(rc6_to_i915(rc6)->drm.pdev));
 	rc6->wakeref = true;
 }
 
 static void rpm_put(struct intel_rc6 *rc6)
 {
 	GEM_BUG_ON(!rc6->wakeref);
-	pm_runtime_put(&rc6_to_i915(rc6)->drm.pdev->dev);
+	pm_runtime_put(pci_dev_dev(rc6_to_i915(rc6)->drm.pdev));
 	rc6->wakeref = false;
 }
 

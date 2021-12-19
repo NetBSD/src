@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_sseu.c,v 1.2 2021/12/18 23:45:30 riastradh Exp $	*/
+/*	$NetBSD: intel_sseu.c,v 1.3 2021/12/19 11:49:11 riastradh Exp $	*/
 
 /*
  * SPDX-License-Identifier: MIT
@@ -7,7 +7,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intel_sseu.c,v 1.2 2021/12/18 23:45:30 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intel_sseu.c,v 1.3 2021/12/19 11:49:11 riastradh Exp $");
 
 #include "i915_drv.h"
 #include "intel_lrc_reg.h"
@@ -101,7 +101,7 @@ u32 intel_sseu_make_rpcs(struct drm_i915_private *i915,
 			 * amount of half of all available subslices per slice.
 			 */
 			ctx_sseu.subslice_mask =
-				~(~0 << (hweight8(ctx_sseu.subslice_mask) / 2));
+				~(~0u << (hweight8(ctx_sseu.subslice_mask) / 2));
 			ctx_sseu.slice_mask = 0x1;
 		}
 	}

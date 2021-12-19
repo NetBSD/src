@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_uncore.c,v 1.16 2021/12/19 11:12:59 riastradh Exp $	*/
+/*	$NetBSD: intel_uncore.c,v 1.17 2021/12/19 11:49:11 riastradh Exp $	*/
 
 /*
  * Copyright © 2013 Intel Corporation
@@ -24,10 +24,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intel_uncore.c,v 1.16 2021/12/19 11:12:59 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intel_uncore.c,v 1.17 2021/12/19 11:49:11 riastradh Exp $");
 
 #include <linux/pm_runtime.h>
 #include <asm/iosf_mbi.h>
+
+#ifdef __NetBSD__
+#include <dev/pci/agp_i810var.h>
+#endif
 
 #include "i915_drv.h"
 #include "i915_trace.h"
@@ -92,19 +96,19 @@ intel_uncore_forcewake_domain_to_str(const enum forcewake_domain_id id)
 
 #ifdef __NetBSD__
 static inline u32
-fw_ack(struct intel_uncore_forcewake_domain *d)
+fw_ack(const struct intel_uncore_forcewake_domain *d)
 {
 	return bus_space_read_4(d->uncore->regs_bst, d->uncore->regs_bsh,
 	    d->reg_ack);
 }
 static inline void
-fw_set(struct intel_uncore_forcewake_domain *d, u32 val)
+fw_set(const struct intel_uncore_forcewake_domain *d, u32 val)
 {
 	bus_space_write_4(d->uncore->regs_bst, d->uncore->regs_bsh, d->reg_set,
 	    _MASKED_BIT_ENABLE(val));
 }
 static inline void
-fw_clear(struct intel_uncore_forcewake_domain *d, u32 val)
+fw_clear(const struct intel_uncore_forcewake_domain *d, u32 val)
 {
 	bus_space_write_4(d->uncore->regs_bst, d->uncore->regs_bsh, d->reg_set,
 	    _MASKED_BIT_DISABLE(val));
@@ -1656,7 +1660,7 @@ out:
 #define ASSIGN_FW_DOMAINS_TABLE(uncore, d) \
 { \
 	(uncore)->fw_domains_table = \
-			(struct intel_forcewake_range *)(d); \
+			(const struct intel_forcewake_range *)(d); \
 	(uncore)->fw_domains_table_entries = ARRAY_SIZE((d)); \
 }
 
@@ -1715,19 +1719,22 @@ static int uncore_mmio_setup(struct intel_uncore *uncore)
 		mmio_size = 2 * 1024 * 1024;
 	uncore->regs = pci_iomap(pdev, mmio_bar, mmio_size);
 #ifdef __NetBSD__
-	if (!dev_priv->regs)
-		dev_priv->regs = drm_agp_borrow(&i915->drm, mmio_bar,
-		    mmio_size);
+	if (uncore->regs) {
+		KASSERT(pdev->pd_resources[mmio_bar].mapped);
+		uncore->regs_bst = pdev->pd_resources[mmio_bar].bst;
+		uncore->regs_bsh = pdev->pd_resources[mmio_bar].bsh;
+	} else if (agp_i810_borrow(pdev->pd_resources[mmio_bar].addr,
+		mmio_size, &uncore->regs_bsh)) {
+		KASSERT(!pdev->pd_resources[mmio_bar].mapped);
+		uncore->regs_bst = pdev->pd_pa.pa_memt;
+		uncore->regs = bus_space_vaddr(pdev->pd_pa.pa_memt,
+		    uncore->regs_bsh);
+	}
 #endif
 	if (uncore->regs == NULL) {
 		drm_err(&i915->drm, "failed to map registers\n");
 		return -EIO;
 	}
-
-#ifdef __NetBSD__
-	i915->regs_bst = i915->drm.pdev->pd_resources[mmio_bar].bst;
-	i915->regs_bsh = i915->drm.pdev->pd_resources[mmio_bar].bsh;
-#endif
 
 	return 0;
 }

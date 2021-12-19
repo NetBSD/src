@@ -1,7 +1,7 @@
-/*	$NetBSD: smp.h,v 1.4 2021/12/19 11:49:12 riastradh Exp $	*/
+/*	$NetBSD: intel_lpe_audio.c,v 1.1 2021/12/19 11:49:12 riastradh Exp $	*/
 
 /*-
- * Copyright (c) 2018 The NetBSD Foundation, Inc.
+ * Copyright (c) 2021 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -29,47 +29,33 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef	_LINUX_SMP_H_
-#define	_LINUX_SMP_H_
+/* intel_lpe_audio.c stubs */
 
-#include <sys/cpu.h>
-#include <sys/systm.h>
-#include <sys/xcall.h>
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: intel_lpe_audio.c,v 1.1 2021/12/19 11:49:12 riastradh Exp $");
 
-#define	smp_processor_id()	cpu_number()
+#include "i915_drv.h"
 
-static inline int
-get_cpu(void)
+#include "display/intel_lpe_audio.h"
+
+int
+intel_lpe_audio_init(struct drm_i915_private *dev_priv)
 {
-
-	kpreempt_disable();
-	return cpu_index(curcpu());
+	return 0;
 }
 
-static inline void
-put_cpu(void)
+void
+intel_lpe_audio_teardown(struct drm_i915_private *dev_priv)
 {
-
-	kpreempt_disable();
 }
 
-static inline void
-on_each_cpu_xc(void *a, void *b)
+void
+intel_lpe_audio_irq_handler(struct drm_i915_private *dev_priv)
 {
-	void (**fp)(void *) = a;
-	void *cookie = b;
-
-	(**fp)(cookie);
 }
 
-static inline void
-on_each_cpu(void (*f)(void *), void *cookie, int wait)
+void
+intel_lpe_audio_notify(struct drm_i915_private *dev_priv, enum pipe pipe,
+    enum port port, const void *eld, int ls_clock, bool dp_output)
 {
-	uint64_t ticket;
-
-	ticket = xc_broadcast(0, &on_each_cpu_xc, &f, cookie);
-	if (wait)
-		xc_wait(ticket);
 }
-
-#endif	/* _LINUX_SMP_H_ */

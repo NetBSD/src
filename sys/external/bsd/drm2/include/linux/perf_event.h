@@ -1,4 +1,4 @@
-/*	$NetBSD: perf_event.h,v 1.2 2021/12/19 01:16:59 riastradh Exp $	*/
+/*	$NetBSD: perf_event.h,v 1.3 2021/12/19 11:49:12 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -31,6 +31,8 @@
 
 #ifndef _LINUX_PERF_EVENT_H_
 #define _LINUX_PERF_EVENT_H_
+
+#include <linux/rculist.h>
 
 struct pmu {
 };

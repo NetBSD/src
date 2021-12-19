@@ -1,4 +1,4 @@
-/*	$NetBSD: timer.h,v 1.12 2021/12/19 11:36:00 riastradh Exp $	*/
+/*	$NetBSD: timer.h,v 1.13 2021/12/19 11:49:12 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -71,12 +71,15 @@ teardown_timer(struct timer_list *timer)
 	callout_destroy(&timer->tl_callout);
 }
 
-static inline void
+static inline int
 mod_timer(struct timer_list *timer, unsigned long then)
 {
 	const unsigned long now = jiffies;
+	int pending;
 
+	pending = callout_pending(&timer->tl_callout);
 	callout_schedule(&timer->tl_callout, (now < then? (then - now) : 0));
+	return pending;
 }
 
 static inline void

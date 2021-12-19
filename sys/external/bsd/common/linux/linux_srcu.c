@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_srcu.c,v 1.3 2021/12/19 11:20:33 riastradh Exp $	*/
+/*	$NetBSD: linux_srcu.c,v 1.4 2021/12/19 11:49:11 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_srcu.c,v 1.3 2021/12/19 11:20:33 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_srcu.c,v 1.4 2021/12/19 11:49:11 riastradh Exp $");
 
 /*
  * SRCU: Sleepable RCU
@@ -73,7 +73,7 @@ struct srcu_cpu {
 };
 
 /*
- * srcu_init(srcu, name)
+ * _init_srcu_struct(srcu, name)
  *
  *	Initialize the srcu state with the specified name.  Caller must
  *	call srcu_fini when done.
@@ -84,7 +84,7 @@ struct srcu_cpu {
  *	May sleep.
  */
 void
-srcu_init(struct srcu_struct *srcu, const char *name)
+_init_srcu_struct(struct srcu_struct *srcu, const char *name)
 {
 
 	ASSERT_SLEEPABLE();
@@ -98,7 +98,7 @@ srcu_init(struct srcu_struct *srcu, const char *name)
 }
 
 /*
- * srcu_fini(srcu)
+ * cleanup_srcu_struct(srcu)
  *
  *	Finalize an srcu state, which must not be in use right now.  If
  *	any srcu read sections might be active, caller must wait for
@@ -107,14 +107,14 @@ srcu_init(struct srcu_struct *srcu, const char *name)
  *	May sleep.
  */
 void
-srcu_fini(struct srcu_struct *srcu)
+cleanup_srcu_struct(struct srcu_struct *srcu)
 {
 
 	ASSERT_SLEEPABLE();
 
 	KASSERTMSG((srcu->srcu_sync == NULL),
-	    "srcu_fini in lwp %p while synchronize_srcu running in lwp %p",
-	    curlwp, srcu->srcu_sync);
+	    "%s in lwp %p while synchronize_srcu running in lwp %p",
+	    __func__, curlwp, srcu->srcu_sync);
 	cv_destroy(&srcu->srcu_cv);
 	mutex_destroy(&srcu->srcu_lock);
 	percpu_free(srcu->srcu_percpu, sizeof(struct srcu_cpu));
@@ -297,4 +297,21 @@ synchronize_srcu(struct srcu_struct *srcu)
 	srcu->srcu_sync = NULL;
 	cv_broadcast(&srcu->srcu_cv);
 	mutex_spin_exit(&srcu->srcu_lock);
+}
+
+/*
+ * synchronize_srcu_expedited(srcu)
+ *
+ *	Wait for all srcu readers on all CPUs that may have begun
+ *	before sychronize_srcu to complete.  Try to get an answer
+ *	faster than synchronize_srcu, at the cost of more activity
+ *	triggered on other CPUs.
+ *
+ *	May sleep.  (Practically guaranteed to sleep!)
+ */
+void
+synchronize_srcu_expedited(struct srcu_struct *srcu)
+{
+
+	synchronize_srcu(srcu);
 }

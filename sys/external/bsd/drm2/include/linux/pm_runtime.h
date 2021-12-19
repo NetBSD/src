@@ -1,4 +1,4 @@
-/*	$NetBSD: pm_runtime.h,v 1.7 2021/12/19 10:47:54 riastradh Exp $	*/
+/*	$NetBSD: pm_runtime.h,v 1.8 2021/12/19 11:49:12 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -106,8 +106,19 @@ pm_runtime_use_autosuspend(struct device *dev __unused)
 }
 
 static inline void
+pm_runtime_dont_use_autosuspend(struct device *dev __unused)
+{
+}
+
+static inline void
 pm_runtime_forbid(struct device *dev __unused)
 {
+}
+
+static inline int
+pm_runtime_get_if_in_use(struct device *dev __unused)
+{
+	return 0;
 }
 
 #endif  /* _LINUX_PM_RUNTIME_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_workarounds.c,v 1.2 2021/12/18 23:45:30 riastradh Exp $	*/
+/*	$NetBSD: intel_workarounds.c,v 1.3 2021/12/19 11:49:11 riastradh Exp $	*/
 
 /*
  * SPDX-License-Identifier: MIT
@@ -7,7 +7,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intel_workarounds.c,v 1.2 2021/12/18 23:45:30 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intel_workarounds.c,v 1.3 2021/12/19 11:49:11 riastradh Exp $");
 
 #include "i915_drv.h"
 #include "intel_context.h"
@@ -15,6 +15,8 @@ __KERNEL_RCSID(0, "$NetBSD: intel_workarounds.c,v 1.2 2021/12/18 23:45:30 riastr
 #include "intel_gt.h"
 #include "intel_ring.h"
 #include "intel_workarounds.h"
+
+#include <linux/nbsd-namespace.h>
 
 /**
  * DOC: Hardware workarounds

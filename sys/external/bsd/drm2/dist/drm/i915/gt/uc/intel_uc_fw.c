@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_uc_fw.c,v 1.2 2021/12/18 23:45:31 riastradh Exp $	*/
+/*	$NetBSD: intel_uc_fw.c,v 1.3 2021/12/19 11:49:11 riastradh Exp $	*/
 
 // SPDX-License-Identifier: MIT
 /*
@@ -6,7 +6,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intel_uc_fw.c,v 1.2 2021/12/18 23:45:31 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intel_uc_fw.c,v 1.3 2021/12/19 11:49:11 riastradh Exp $");
 
 #include <linux/bitfield.h>
 #include <linux/firmware.h>
@@ -600,7 +600,7 @@ size_t intel_uc_fw_copy_rsa(struct intel_uc_fw *uc_fw, void *dst, u32 max_len)
 	uio.uio_rw = UIO_READ;
 	UIO_SETUP_SYSSPACE(&uio);
 	/* XXX errno NetBSD->Linux */
-	return -ubc_uiomove(uc_fw->obj.base.filp, &uio, size, UVM_ADV_NORMAL,
+	return -ubc_uiomove(uc_fw->obj->base.filp, &uio, size, UVM_ADV_NORMAL,
 	    UBC_READ);
 #else
 	return sg_pcopy_to_buffer(pages->sgl, pages->nents, dst, size, offset);

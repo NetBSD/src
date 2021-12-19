@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_tv.c,v 1.2 2021/12/18 23:45:30 riastradh Exp $	*/
+/*	$NetBSD: intel_tv.c,v 1.3 2021/12/19 11:49:11 riastradh Exp $	*/
 
 /*
  * Copyright © 2006-2008 Intel Corporation
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intel_tv.c,v 1.2 2021/12/18 23:45:30 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intel_tv.c,v 1.3 2021/12/19 11:49:11 riastradh Exp $");
 
 #include <drm/drm_atomic_helper.h>
 #include <drm/drm_crtc.h>
@@ -1425,7 +1425,7 @@ static void intel_tv_pre_enable(struct intel_encoder *encoder,
 	struct intel_crtc *intel_crtc = to_intel_crtc(pipe_config->uapi.crtc);
 	struct intel_tv *intel_tv = enc_to_tv(encoder);
 	const struct intel_tv_connector_state *tv_conn_state =
-		to_intel_tv_connector_state(conn_state);
+		const_container_of(conn_state, struct intel_tv_connector_state, base);
 	const struct tv_mode *tv_mode = intel_tv_mode_find(conn_state);
 	u32 tv_ctl, tv_filter_ctl;
 	u32 scctl1, scctl2, scctl3;

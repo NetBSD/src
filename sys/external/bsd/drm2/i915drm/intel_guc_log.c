@@ -1,11 +1,8 @@
-/*	$NetBSD: smp.h,v 1.4 2021/12/19 11:49:12 riastradh Exp $	*/
+/*	$NetBSD: intel_guc_log.c,v 1.1 2021/12/19 11:49:12 riastradh Exp $	*/
 
 /*-
- * Copyright (c) 2018 The NetBSD Foundation, Inc.
+ * Copyright (c) 2021 The NetBSD Foundation, Inc.
  * All rights reserved.
- *
- * This code is derived from software contributed to The NetBSD Foundation
- * by Taylor R. Campbell.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -29,47 +26,67 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef	_LINUX_SMP_H_
-#define	_LINUX_SMP_H_
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: intel_guc_log.c,v 1.1 2021/12/19 11:49:12 riastradh Exp $");
 
-#include <sys/cpu.h>
-#include <sys/systm.h>
-#include <sys/xcall.h>
+#include "gt/uc/intel_guc_log.h"
 
-#define	smp_processor_id()	cpu_number()
-
-static inline int
-get_cpu(void)
+void
+intel_guc_log_init_early(struct intel_guc_log *log)
 {
-
-	kpreempt_disable();
-	return cpu_index(curcpu());
 }
 
-static inline void
-put_cpu(void)
+int
+intel_guc_log_create(struct intel_guc_log *log)
 {
 
-	kpreempt_disable();
+	return 0;
 }
 
-static inline void
-on_each_cpu_xc(void *a, void *b)
+void
+intel_guc_log_destroy(struct intel_guc_log *log)
 {
-	void (**fp)(void *) = a;
-	void *cookie = b;
-
-	(**fp)(cookie);
 }
 
-static inline void
-on_each_cpu(void (*f)(void *), void *cookie, int wait)
+int
+intel_guc_log_set_level(struct intel_guc_log *log, u32 level)
 {
-	uint64_t ticket;
 
-	ticket = xc_broadcast(0, &on_each_cpu_xc, &f, cookie);
-	if (wait)
-		xc_wait(ticket);
+	return -ENOSYS;
 }
 
-#endif	/* _LINUX_SMP_H_ */
+bool
+intel_guc_log_relay_created(const struct intel_guc_log *log)
+{
+
+	return false;
+}
+
+int
+intel_guc_log_relay_open(struct intel_guc_log *log)
+{
+
+	return -ENOSYS;
+}
+
+int
+intel_guc_log_relay_start(struct intel_guc_log *log)
+{
+
+	return -ENOSYS;
+}
+
+void
+intel_guc_log_relay_flush(struct intel_guc_log *log)
+{
+}
+
+void
+intel_guc_log_relay_close(struct intel_guc_log *log)
+{
+}
+
+void
+intel_guc_log_handle_flush_event(struct intel_guc_log *log)
+{
+}

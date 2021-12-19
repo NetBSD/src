@@ -1,4 +1,4 @@
-/*	$NetBSD: init.h,v 1.3 2014/04/25 23:54:59 riastradh Exp $	*/
+/*	$NetBSD: init.h,v 1.4 2021/12/19 11:49:12 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -32,6 +32,8 @@
 #ifndef _LINUX_INIT_H_
 #define _LINUX_INIT_H_
 
-#define __init
+#define	__exit			/* call at module unload time */
+#define	__initconst		/* ??? */
+#define	__init			/* call at module load time */
 
 #endif  /* _LINUX_INIT_H_ */
