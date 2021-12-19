@@ -1,4 +1,4 @@
-/*	$NetBSD: completion.h,v 1.8 2021/12/19 00:56:25 riastradh Exp $	*/
+/*	$NetBSD: completion.h,v 1.9 2021/12/19 01:57:27 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -47,6 +47,7 @@
 #define _LINUX_COMPLETION_H_
 
 #include <sys/types.h>
+#include <sys/param.h>
 #include <sys/condvar.h>
 #include <sys/mutex.h>
 
