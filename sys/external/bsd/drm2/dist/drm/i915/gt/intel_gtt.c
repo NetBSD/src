@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_gtt.c,v 1.4 2021/12/19 01:35:35 riastradh Exp $	*/
+/*	$NetBSD: intel_gtt.c,v 1.5 2021/12/19 11:12:13 riastradh Exp $	*/
 
 // SPDX-License-Identifier: MIT
 /*
@@ -6,7 +6,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intel_gtt.c,v 1.4 2021/12/19 01:35:35 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intel_gtt.c,v 1.5 2021/12/19 11:12:13 riastradh Exp $");
 
 #include <linux/slab.h> /* fault-inject.h is not standalone! */
 
@@ -387,6 +387,7 @@ int setup_scratch_page(struct i915_address_space *vm, gfp_t gfp)
 	gfp |= __GFP_ZERO | __GFP_RETRY_MAYFAIL;
 
 	do {
+		unsigned int order = get_order(size);
 #ifdef __NetBSD__
 		struct vm_page *vm_page;
 		void *kva;
@@ -429,7 +430,6 @@ int setup_scratch_page(struct i915_address_space *vm, gfp_t gfp)
 		vm->scratch_page.page = container_of(vm_page, struct page,
 		    p_vmp);
 #else
-		unsigned int order = get_order(size);
 		struct page *page;
 		dma_addr_t addr;
 
@@ -450,8 +450,8 @@ int setup_scratch_page(struct i915_address_space *vm, gfp_t gfp)
 
 		vm->scratch[0].base.page = page;
 		vm->scratch[0].base.daddr = addr;
-		vm->scratch_order = order;
 #endif
+		vm->scratch_order = order;
 		return 0;
 
 #ifdef __NetBSD__

@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_gtt.h,v 1.5 2021/12/19 11:11:03 riastradh Exp $	*/
+/*	$NetBSD: intel_gtt.h,v 1.6 2021/12/19 11:12:13 riastradh Exp $	*/
 
 /* SPDX-License-Identifier: MIT */
 /*
@@ -415,11 +415,7 @@ i915_vm_is_4lvl(const struct i915_address_space *vm)
 static inline bool
 i915_vm_has_scratch_64K(struct i915_address_space *vm)
 {
-#ifdef __NetBSD__
-	return vm->scratch_page.seg.ds_len == I915_GTT_PAGE_SIZE_64K;
-#else
 	return vm->scratch_order == get_order(I915_GTT_PAGE_SIZE_64K);
-#endif
 }
 
 static inline bool
