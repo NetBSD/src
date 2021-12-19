@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_prime.c,v 1.16 2021/12/19 11:33:30 riastradh Exp $	*/
+/*	$NetBSD: drm_prime.c,v 1.17 2021/12/19 11:34:56 riastradh Exp $	*/
 
 /*
  * Copyright © 2012 Red Hat
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_prime.c,v 1.16 2021/12/19 11:33:30 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_prime.c,v 1.17 2021/12/19 11:34:56 riastradh Exp $");
 
 #include <linux/export.h>
 #include <linux/dma-buf.h>
@@ -197,7 +197,7 @@ static int drm_prime_add_buf_handle(struct drm_prime_file_private *prime_fpriv,
 #ifdef __NetBSD__
 	collision = rb_tree_insert_node(&prime_fpriv->dmabufs.rbr_tree,
 	    member);
-	KASSERT(collision == NULL);
+	KASSERT(collision == member);
 #else
 	rb = NULL;
 	p = &prime_fpriv->dmabufs.rb_node;
@@ -218,7 +218,7 @@ static int drm_prime_add_buf_handle(struct drm_prime_file_private *prime_fpriv,
 #ifdef __NetBSD__
 	collision = rb_tree_insert_node(&prime_fpriv->handles.rbr_tree,
 	    member);
-	KASSERT(collision == NULL);
+	KASSERT(collision == member);
 #else
 	rb = NULL;
 	p = &prime_fpriv->handles.rb_node;
