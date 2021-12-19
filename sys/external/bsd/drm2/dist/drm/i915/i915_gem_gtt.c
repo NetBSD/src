@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_gem_gtt.c,v 1.21 2021/12/19 01:35:35 riastradh Exp $	*/
+/*	$NetBSD: i915_gem_gtt.c,v 1.22 2021/12/19 11:32:54 riastradh Exp $	*/
 
 // SPDX-License-Identifier: MIT
 /*
@@ -6,7 +6,7 @@
  * Copyright © 2020 Intel Corporation
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_gem_gtt.c,v 1.21 2021/12/19 01:35:35 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_gem_gtt.c,v 1.22 2021/12/19 11:32:54 riastradh Exp $");
 
 #include <linux/slab.h> /* fault-inject.h is not standalone! */
 
@@ -55,8 +55,9 @@ int i915_gem_gtt_prepare_pages(struct drm_i915_gem_object *obj,
 		 * XXX Not sure whether caller should be passing DMA
 		 * map or page list.
 		 */
-		if (bus_dmamap_load_pglist(obj->base.dev->dmat, pages,
-			&obj->mm.pageq, pages->dm_mapsize, BUS_DMA_NOWAIT) == 0)
+		if (bus_dmamap_load_pages(obj->base.dev->dmat, pages,
+			obj->mm.pagearray, obj->base.size, BUS_DMA_NOWAIT)
+		    == 0)
 			return 0;
 #else
 		if (dma_map_sg_attrs(&obj->base.dev->pdev->dev,

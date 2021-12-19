@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_gem_fence_reg.c,v 1.4 2021/12/19 11:31:26 riastradh Exp $	*/
+/*	$NetBSD: i915_gem_fence_reg.c,v 1.5 2021/12/19 11:32:54 riastradh Exp $	*/
 
 /*
  * Copyright © 2008-2015 Intel Corporation
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_gem_fence_reg.c,v 1.4 2021/12/19 11:31:26 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_gem_fence_reg.c,v 1.5 2021/12/19 11:32:54 riastradh Exp $");
 
 #include <linux/bitmap.h>
 #include <drm/i915_drm.h>
@@ -785,36 +785,35 @@ static void i915_gem_swizzle_page(struct page *page)
 void
 #ifdef __NetBSD__
 i915_gem_object_do_bit_17_swizzle(struct drm_i915_gem_object *obj,
-				  struct pglist *pages)
+				  struct page **pages)
 #else
 i915_gem_object_do_bit_17_swizzle(struct drm_i915_gem_object *obj,
 				  struct sg_table *pages)
 #endif
 {
 #ifdef __NetBSD__
-	struct vm_page *page;
+	struct vm_page *vm_page;
 #else
 	struct sgt_iter sgt_iter;
-	struct page *page;
 #endif
+	struct page *page;
 	int i;
 
 	if (obj->bit_17 == NULL)
 		return;
 
 #ifdef __NetBSD__
-	i = 0;
-	TAILQ_FOREACH(page, &obj->mm.pageq, pageq.queue) {
-		unsigned char new_bit_17 = VM_PAGE_TO_PHYS(page) >> 17;
+	for (i = 0; i < obj->base.size >> PAGE_SHIFT; i++) {
+		page = pages[i];
+		vm_page = &page->p_vmp;
+		unsigned char new_bit_17 = VM_PAGE_TO_PHYS(vm_page) >> 17;
 		if ((new_bit_17 & 0x1) !=
 		    (test_bit(i, obj->bit_17) != 0)) {
-			i915_gem_swizzle_page(container_of(page, struct page,
-				p_vmp));
+			i915_gem_swizzle_page(page);
 			rw_enter(obj->base.filp->vmobjlock, RW_WRITER);
-			uvm_pagemarkdirty(page, UVM_PAGE_STATUS_DIRTY);
+			uvm_pagemarkdirty(vm_page, UVM_PAGE_STATUS_DIRTY);
 			rw_exit(obj->base.filp->vmobjlock);
 		}
-		i += 1;
 	}
 #else
 	i = 0;
@@ -841,18 +840,18 @@ i915_gem_object_do_bit_17_swizzle(struct drm_i915_gem_object *obj,
 void
 #ifdef __NetBSD__
 i915_gem_object_save_bit_17_swizzle(struct drm_i915_gem_object *obj,
-				    struct pglist *pages)
+				    struct page **pages)
 #else
 i915_gem_object_save_bit_17_swizzle(struct drm_i915_gem_object *obj,
 				    struct sg_table *pages)
 #endif
 {
 #ifdef __NetBSD__
-	struct vm_page *page;
+	struct vm_page *vm_page;
 #else
 	struct sg_page_iter sg_iter;
-	struct page *page;
 #endif
+	struct page *page;
 	const unsigned int page_count = obj->base.size >> PAGE_SHIFT;
 	int i;
 
@@ -868,12 +867,13 @@ i915_gem_object_save_bit_17_swizzle(struct drm_i915_gem_object *obj,
 	i = 0;
 
 #ifdef __NetBSD__
-	TAILQ_FOREACH(page, &obj->mm.pageq, pageq.queue) {
-		if (ISSET(VM_PAGE_TO_PHYS(page), __BIT(17)))
+	for (i = 0; i < obj->base.size >> PAGE_SHIFT; i++) {
+		page = pages[i];
+		vm_page = &page->p_vmp;
+		if (ISSET(VM_PAGE_TO_PHYS(vm_page), __BIT(17)))
 			__set_bit(i, obj->bit_17);
 		else
 			__clear_bit(i, obj->bit_17);
-		i++;
 	}
 #else
 	for_each_sgt_page(page, sgt_iter, pages) {

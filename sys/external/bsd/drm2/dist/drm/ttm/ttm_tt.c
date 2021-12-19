@@ -1,4 +1,4 @@
-/*	$NetBSD: ttm_tt.c,v 1.16 2021/12/19 11:05:48 riastradh Exp $	*/
+/*	$NetBSD: ttm_tt.c,v 1.17 2021/12/19 11:32:54 riastradh Exp $	*/
 
 /* SPDX-License-Identifier: GPL-2.0 OR MIT */
 /**************************************************************************
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ttm_tt.c,v 1.16 2021/12/19 11:05:48 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ttm_tt.c,v 1.17 2021/12/19 11:32:54 riastradh Exp $");
 
 #define pr_fmt(fmt) "[TTM] " fmt
 
@@ -251,7 +251,6 @@ static void ttm_tt_init_fields(struct ttm_tt *ttm,
 	    __func__);	/* paranoia -- can't prove in five minutes */
 	ttm->swap_storage = uao_create(PAGE_SIZE * MAX(1, bo->num_pages), 0);
 	uao_set_pgfl(ttm->swap_storage, bus_dmamem_pgfl(ttm->bdev->dmat));
-	TAILQ_INIT(&ttm->pglist);
 #else
 	ttm->swap_storage = NULL;
 #endif
@@ -427,7 +426,7 @@ int
 ttm_tt_wire(struct ttm_tt *ttm)
 {
 	struct uvm_object *uobj = ttm->swap_storage;
-	struct vm_page *page;
+	struct vm_page *vm_page;
 	unsigned i;
 	int error;
 
@@ -438,19 +437,17 @@ ttm_tt_wire(struct ttm_tt *ttm)
 	KASSERT(uobj != NULL);
 
 	error = uvm_obj_wirepages(uobj, 0, (ttm->num_pages << PAGE_SHIFT),
-	    &ttm->pglist);
+	    NULL);
 	if (error)
 		/* XXX errno NetBSD->Linux */
 		return -error;
 
-	i = 0;
-	TAILQ_FOREACH(page, &ttm->pglist, pageq.queue) {
-		KASSERT(i < ttm->num_pages);
-		KASSERT(ttm->pages[i] == NULL);
-		ttm->pages[i] = container_of(page, struct page, p_vmp);
-		i++;
+	rw_enter(uobj->vmobjlock, RW_READER);
+	for (i = 0; i < ttm->num_pages; i++) {
+		vm_page = uvm_pagelookup(uobj, ptoa(i));
+		ttm->pages[i] = container_of(vm_page, struct page, p_vmp);
 	}
-	KASSERT(i == ttm->num_pages);
+	rw_exit(uobj->vmobjlock);
 
 	/* Success!  */
 	return 0;

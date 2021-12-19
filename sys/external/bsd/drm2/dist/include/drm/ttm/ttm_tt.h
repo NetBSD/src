@@ -1,4 +1,4 @@
-/*	$NetBSD: ttm_tt.h,v 1.5 2021/12/19 09:58:30 riastradh Exp $	*/
+/*	$NetBSD: ttm_tt.h,v 1.6 2021/12/19 11:32:54 riastradh Exp $	*/
 
 /**************************************************************************
  *
@@ -113,7 +113,6 @@ struct ttm_tt {
 	struct sg_table *sg; /* for SG objects via dma-buf */
 #ifdef __NetBSD__
 	struct uvm_object *swap_storage;
-	struct pglist pglist;
 #else
 	struct file *swap_storage;
 #endif

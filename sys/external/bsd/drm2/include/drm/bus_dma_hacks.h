@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma_hacks.h,v 1.20 2020/02/20 09:07:39 mrg Exp $	*/
+/*	$NetBSD: bus_dma_hacks.h,v 1.21 2021/12/19 11:32:54 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -39,6 +39,8 @@
 
 #include <uvm/uvm.h>
 #include <uvm/uvm_extern.h>
+
+#include <linux/mm_types.h>	/* XXX struct page */
 
 #if defined(__i386__) || defined(__x86_64__)
 #  include <x86/bus_private.h>
@@ -120,9 +122,15 @@ bus_dmatag_bounces_paddr(bus_dma_tag_t dmat, paddr_t pa)
 
 #define MAX_STACK_SEGS 32	/* XXXMRG: 512 bytes on 16 byte seg platforms */
 
+/*
+ * XXX This should really take an array of struct vm_page pointers, but
+ * Linux drm code stores arrays of struct page pointers, and these two
+ * types (struct page ** and struct vm_page **) are not compatible so
+ * naive conversion would violate strict aliasing rules.
+ */
 static inline int
-bus_dmamap_load_pglist(bus_dma_tag_t tag, bus_dmamap_t map,
-    struct pglist *pglist, bus_size_t size, int flags)
+bus_dmamap_load_pages(bus_dma_tag_t tag, bus_dmamap_t map,
+    struct page **pgs, bus_size_t size, int flags)
 {
 	km_flag_t kmflags;
 	bus_dma_segment_t *segs;
@@ -131,12 +139,11 @@ bus_dmamap_load_pglist(bus_dma_tag_t tag, bus_dmamap_t map,
 	struct vm_page *page;
 	int error;
 
-	nsegs = 0;
-	TAILQ_FOREACH(page, pglist, pageq.queue) {
-		if (nsegs == MIN(INT_MAX, (SIZE_MAX / sizeof(segs[0]))))
-			return ENOMEM;
-		nsegs++;
-	}
+	KASSERT((size & (PAGE_SIZE - 1)) == 0);
+
+	if ((size >> PAGE_SHIFT) > INT_MAX)
+		return ENOMEM;
+	nsegs = size >> PAGE_SHIFT;
 
 	KASSERT(nsegs <= (SIZE_MAX / sizeof(segs[0])));
 	if (nsegs > MAX_STACK_SEGS) {
@@ -157,8 +164,8 @@ bus_dmamap_load_pglist(bus_dma_tag_t tag, bus_dmamap_t map,
 		segs = stacksegs;
 	}
 
-	seg = 0;
-	TAILQ_FOREACH(page, pglist, pageq.queue) {
+	for (seg = 0; seg < nsegs; seg++) {
+		page = &pgs[seg]->p_vmp;
 		paddr_t paddr = VM_PAGE_TO_PHYS(page);
 		bus_addr_t baddr = PHYS_TO_BUS_MEM(tag, paddr);
 

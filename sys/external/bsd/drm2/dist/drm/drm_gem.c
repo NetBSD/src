@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_gem.c,v 1.21 2021/12/19 11:26:14 riastradh Exp $	*/
+/*	$NetBSD: drm_gem.c,v 1.22 2021/12/19 11:32:53 riastradh Exp $	*/
 
 /*
  * Copyright © 2008 Intel Corporation
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_gem.c,v 1.21 2021/12/19 11:26:14 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_gem.c,v 1.22 2021/12/19 11:32:53 riastradh Exp $");
 
 #include <linux/types.h>
 #include <linux/slab.h>
@@ -600,7 +600,6 @@ static void drm_gem_check_release_pagevec(struct pagevec *pvec)
 struct page **
 drm_gem_get_pages(struct drm_gem_object *obj)
 {
-	struct pglist pglist;
 	struct vm_page *vm_page;
 	struct page **pages;
 	unsigned i, npages;
@@ -615,15 +614,17 @@ drm_gem_get_pages(struct drm_gem_object *obj)
 		goto fail0;
 	}
 
-	TAILQ_INIT(&pglist);
 	/* XXX errno NetBSD->Linux */
-	ret = -uvm_obj_wirepages(obj->filp, 0, obj->size, &pglist);
+	ret = -uvm_obj_wirepages(obj->filp, 0, obj->size, NULL);
 	if (ret)
 		goto fail1;
 
-	i = 0;
-	TAILQ_FOREACH(vm_page, &pglist, pageq.queue)
-		pages[i++] = container_of(vm_page, struct page, p_vmp);
+	rw_enter(obj->filp->vmobjlock, RW_READER);
+	for (i = 0; i < npages; i++) {
+		vm_page = uvm_pagelookup(obj->filp, ptoa(i));
+		pages[i] = container_of(vm_page, struct page, p_vmp);
+	}
+	rw_exit(obj->filp->vmobjlock);
 
 	return pages;
 

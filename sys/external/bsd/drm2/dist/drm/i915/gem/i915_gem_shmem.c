@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_gem_shmem.c,v 1.5 2021/12/19 01:44:57 riastradh Exp $	*/
+/*	$NetBSD: i915_gem_shmem.c,v 1.6 2021/12/19 11:32:53 riastradh Exp $	*/
 
 /*
  * SPDX-License-Identifier: MIT
@@ -7,7 +7,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_gem_shmem.c,v 1.5 2021/12/19 01:44:57 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_gem_shmem.c,v 1.6 2021/12/19 11:32:53 riastradh Exp $");
 
 #include <linux/pagevec.h>
 #include <linux/swap.h>
@@ -298,8 +298,13 @@ __i915_gem_object_release_shmem(struct drm_i915_gem_object *obj,
 	    (obj->read_domains & I915_GEM_DOMAIN_CPU) == 0 &&
 	    !(obj->cache_coherent & I915_BO_CACHE_COHERENT_FOR_READ))
 #ifdef __NetBSD__
-		/* XXX Shouldn't realy use obj->... here.  */
-		drm_clflush_pglist(&obj->mm.pageq);
+		/*
+		 * XXX Should maybe use bus_dmamap_sync instead --
+		 * shouldn't really touch obj->mm here since the caller
+		 * already pulled off the pages.
+		 */
+		drm_clflush_pages(obj->mm.pagearray,
+		    obj->base.size >> PAGE_SHIFT);
 #else
 		drm_clflush_sg(pages);
 #endif
