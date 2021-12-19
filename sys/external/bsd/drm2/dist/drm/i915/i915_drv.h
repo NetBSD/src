@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_drv.h,v 1.37 2021/12/19 11:04:21 riastradh Exp $	*/
+/*	$NetBSD: i915_drv.h,v 1.38 2021/12/19 11:11:42 riastradh Exp $	*/
 
 /* i915_drv.h -- Private header for the I915 driver -*- linux-c -*-
  */
@@ -1484,7 +1484,7 @@ IS_PLATFORM(const struct drm_i915_private *i915, enum intel_platform p)
 	return info->platform_mask[pi] & BIT(pb);
 }
 
-static __always_inline bool
+static __always_inline inline bool
 IS_SUBPLATFORM(const struct drm_i915_private *i915,
 	       enum intel_platform p, unsigned int s)
 {
