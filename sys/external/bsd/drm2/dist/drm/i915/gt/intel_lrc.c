@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_lrc.c,v 1.3 2021/12/19 11:37:50 riastradh Exp $	*/
+/*	$NetBSD: intel_lrc.c,v 1.4 2021/12/19 11:46:47 riastradh Exp $	*/
 
 /*
  * Copyright © 2014 Intel Corporation
@@ -134,7 +134,7 @@
  *
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intel_lrc.c,v 1.3 2021/12/19 11:37:50 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intel_lrc.c,v 1.4 2021/12/19 11:46:47 riastradh Exp $");
 
 #include <linux/interrupt.h>
 
@@ -1370,6 +1370,15 @@ static u64 execlists_update_context(struct i915_request *rq)
 
 static inline void write_desc(struct intel_engine_execlists *execlists, u64 desc, u32 port)
 {
+#ifdef __NetBSD__
+	if (execlists->ctrl_reg) {
+		bus_space_write_4(execlists->bst, execlists->bsh, execlists->submit_reg + port * 2, lower_32_bits(desc));
+		bus_space_write_4(execlists->bst, execlists->bsh, execlists->submit_reg + port * 2 + 1, upper_32_bits(desc));
+	} else {
+		bus_space_write_4(execlists->bst, execlists->bsh, execlists->submit_reg, upper_32_bits(desc));
+		bus_space_write_4(execlists->bst, execlists->bsh, execlists->submit_reg, lower_32_bits(desc));
+	}
+#else
 	if (execlists->ctrl_reg) {
 		writel(lower_32_bits(desc), execlists->submit_reg + port * 2);
 		writel(upper_32_bits(desc), execlists->submit_reg + port * 2 + 1);
@@ -1377,6 +1386,7 @@ static inline void write_desc(struct intel_engine_execlists *execlists, u64 desc
 		writel(upper_32_bits(desc), execlists->submit_reg);
 		writel(lower_32_bits(desc), execlists->submit_reg);
 	}
+#endif
 }
 
 static __maybe_unused void
@@ -4348,13 +4358,26 @@ int intel_execlists_submission_setup(struct intel_engine_cs *engine)
 		DRM_ERROR("WA batch buffer initialization failed\n");
 
 	if (HAS_LOGICAL_RING_ELSQ(i915)) {
+#ifdef __NetBSD__
+		execlists->submit_reg = i915_mmio_reg_offset(RING_EXECLIST_SQ_CONTENTS(base));
+		execlists->ctrl_reg = i915_mmio_reg_offset(RING_EXECLIST_CONTROL(base));
+		execlists->bsh = uncore->regs_bsh;
+		execlists->bst = uncore->regs_bst;
+#else
 		execlists->submit_reg = uncore->regs +
 			i915_mmio_reg_offset(RING_EXECLIST_SQ_CONTENTS(base));
 		execlists->ctrl_reg = uncore->regs +
 			i915_mmio_reg_offset(RING_EXECLIST_CONTROL(base));
+#endif
 	} else {
+#ifdef __NetBSD__
+		execlists->submit_reg = i915_mmio_reg_offset(RING_ELSP(base));
+		execlists->bsh = uncore->regs_bsh;
+		execlists->bst = uncore->regs_bst;
+#else
 		execlists->submit_reg = uncore->regs +
 			i915_mmio_reg_offset(RING_ELSP(base));
+#endif
 	}
 
 	execlists->csb_status =
