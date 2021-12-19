@@ -1,4 +1,4 @@
-/*	$NetBSD: workqueue.h,v 1.17 2021/12/19 01:04:05 riastradh Exp $	*/
+/*	$NetBSD: workqueue.h,v 1.18 2021/12/19 01:20:00 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013, 2018 The NetBSD Foundation, Inc.
@@ -47,6 +47,7 @@
 #define	current_work			linux_current_work
 #define	delayed_work_pending		linux_delayed_work_pending
 #define	destroy_workqueue		linux_destroy_workqueue
+#define	drain_workqueue			linux_drain_workqueue
 #define	flush_delayed_work		linux_flush_delayed_work
 #define	flush_scheduled_work		linux_flush_scheduled_work
 #define	flush_work			linux_flush_work
@@ -105,6 +106,7 @@ struct workqueue_struct *
 	alloc_ordered_workqueue(const char *, int);
 void	destroy_workqueue(struct workqueue_struct *);
 void	flush_workqueue(struct workqueue_struct *);
+void	drain_workqueue(struct workqueue_struct *);
 void	flush_scheduled_work(void);
 
 void	INIT_WORK(struct work_struct *, void (*)(struct work_struct *));
