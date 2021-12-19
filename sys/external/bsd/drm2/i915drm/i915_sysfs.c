@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_sysfs.c,v 1.2 2014/03/18 18:20:42 riastradh Exp $	*/
+/*	$NetBSD: i915_sysfs.c,v 1.3 2021/12/19 01:42:55 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -32,16 +32,16 @@
 /* i915_sysfs.c stubs */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_sysfs.c,v 1.2 2014/03/18 18:20:42 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_sysfs.c,v 1.3 2021/12/19 01:42:55 riastradh Exp $");
 
 #include "i915_drv.h"
 
 void
-i915_setup_sysfs(struct drm_device *dev __unused)
+i915_setup_sysfs(struct drm_i915_private *dev __unused)
 {
 }
 
 void
-i915_teardown_sysfs(struct drm_device *dev __unused)
+i915_teardown_sysfs(struct drm_i915_private *dev __unused)
 {
 }
