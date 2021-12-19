@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_cache.c,v 1.15 2021/12/19 00:49:36 riastradh Exp $	*/
+/*	$NetBSD: drm_cache.c,v 1.16 2021/12/19 09:52:00 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_cache.c,v 1.15 2021/12/19 00:49:36 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_cache.c,v 1.16 2021/12/19 09:52:00 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -38,9 +38,9 @@ __KERNEL_RCSID(0, "$NetBSD: drm_cache.c,v 1.15 2021/12/19 00:49:36 riastradh Exp
 
 #include <uvm/uvm_extern.h>
 
+#include <linux/highmem.h>
 #include <linux/mm_types.h>
 
-#include <drm/drmP.h>
 #include <drm/drm_cache.h>
 
 #if !defined(__arm__) && !defined(__aarch64__)

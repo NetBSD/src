@@ -1,4 +1,4 @@
-/* $NetBSD: drm_gem_cma_helper.c,v 1.12 2021/12/19 09:49:08 riastradh Exp $ */
+/* $NetBSD: drm_gem_cma_helper.c,v 1.13 2021/12/19 09:52:00 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2015-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,9 +27,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_gem_cma_helper.c,v 1.12 2021/12/19 09:49:08 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_gem_cma_helper.c,v 1.13 2021/12/19 09:52:00 riastradh Exp $");
 
-#include <drm/drmP.h>
+#include <linux/err.h>
+
+#include <drm/drm_drv.h>
+#include <drm/drm_print.h>
 #include <drm/drm_gem_cma_helper.h>
 #include <drm/bus_dma_hacks.h>
 

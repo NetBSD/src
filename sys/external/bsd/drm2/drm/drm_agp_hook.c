@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_agp_hook.c,v 1.5 2021/12/19 00:48:45 riastradh Exp $	*/
+/*	$NetBSD: drm_agp_hook.c,v 1.6 2021/12/19 09:52:00 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_agp_hook.c,v 1.5 2021/12/19 00:48:45 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_agp_hook.c,v 1.6 2021/12/19 09:52:00 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/condvar.h>
@@ -38,8 +38,8 @@ __KERNEL_RCSID(0, "$NetBSD: drm_agp_hook.c,v 1.5 2021/12/19 00:48:45 riastradh E
 #include <sys/mutex.h>
 #include <sys/once.h>
 
-#include <drm/drmP.h>
-
+#include <drm/drm_agpsupport.h>
+#include <drm/drm_drv.h>
 #include "../dist/drm/drm_internal.h"
 
 static struct {

@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_gem_vm.c,v 1.13 2021/12/19 09:49:31 riastradh Exp $	*/
+/*	$NetBSD: drm_gem_vm.c,v 1.14 2021/12/19 09:52:00 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,14 +30,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_gem_vm.c,v 1.13 2021/12/19 09:49:31 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_gem_vm.c,v 1.14 2021/12/19 09:52:00 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/file.h>
+#include <sys/mman.h>
 
 #include <uvm/uvm_extern.h>
 
-#include <drm/drmP.h>
 #include <drm/drm_drv.h>
 #include <drm/drm_gem.h>
 #include <drm/drm_legacy.h>
