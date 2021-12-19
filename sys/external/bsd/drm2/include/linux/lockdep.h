@@ -1,4 +1,4 @@
-/*	$NetBSD: lockdep.h,v 1.3 2021/12/19 09:43:26 riastradh Exp $	*/
+/*	$NetBSD: lockdep.h,v 1.4 2021/12/19 11:04:42 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -32,6 +32,9 @@
 #ifndef _LINUX_LOCKDEP_H_
 #define _LINUX_LOCKDEP_H_
 
+struct mutex;
+struct spinlock;
+
 #define	__acquires(lock)	/* XXX lockdep annotation */
 #define	__releases(lock)	/* XXX lockdep annotation */
 
@@ -59,5 +62,21 @@
 	    : NULL)
 
 #define	SINGLE_DEPTH_NESTING	0
+
+struct pin_cookie {
+	int	dummy;
+};
+
+static inline struct pin_cookie
+lockdep_pin_lock(struct mutex *m)
+{
+	return (struct pin_cookie) { (int)(intptr_t)m };
+}
+
+static inline void
+lockdep_unpin_lock(struct mutex *m, struct pin_cookie cookie)
+{
+	KASSERT(cookie.dummy == (int)(intptr_t)m);
+}
 
 #endif	/* _LINUX_LOCKDEP_H_ */
