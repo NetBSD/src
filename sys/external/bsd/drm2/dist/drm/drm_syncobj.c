@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_syncobj.c,v 1.6 2021/12/19 12:35:28 riastradh Exp $	*/
+/*	$NetBSD: drm_syncobj.c,v 1.7 2021/12/19 12:35:45 riastradh Exp $	*/
 
 /*
  * Copyright 2017 Red Hat
@@ -125,7 +125,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_syncobj.c,v 1.6 2021/12/19 12:35:28 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_syncobj.c,v 1.7 2021/12/19 12:35:45 riastradh Exp $");
 
 #include <linux/anon_inodes.h>
 #include <linux/file.h>
@@ -168,32 +168,6 @@ struct syncobj_wait_entry {
 	struct dma_fence_cb fence_cb;
 	u64    point;
 };
-
-#ifdef __NetBSD__
-static int
-cv_wait_timeout_sig(kcondvar_t *cv, kmutex_t *lock, long *timeoutp)
-{
-	unsigned long ticks = *timeoutp;
-	unsigned starttime, endtime;
-	int error;
-
-	starttime = hardclock_ticks;
-	error = cv_timedwait_sig(cv, lock, MIN(ticks, INT_MAX));
-	endtime = hardclock_ticks;
-
-	if (error == EINTR || error == ERESTART) {
-		return ERESTARTSYS;
-	} else {
-		KASSERTMSG(error == 0 || error == EWOULDBLOCK,
-		    "error=%d", error);
-		if (endtime - starttime < ticks)
-			*timeoutp = ticks - (endtime - starttime);
-		else
-			*timeoutp = 0;
-		return 0;
-	}
-}
-#endif
 
 static void syncobj_wait_syncobj_func(struct drm_syncobj *syncobj,
 				      struct syncobj_wait_entry *wait);
@@ -404,11 +378,45 @@ int drm_syncobj_find_fence(struct drm_file *file_private,
 
 #ifdef __NetBSD__
 	spin_lock(&syncobj->lock);
-#endif
+	ret = 0;
+	while (wait.fence == NULL) {
+		unsigned start, end;
+
+		if (timeout == 0) {
+			ret = -ETIME;
+			break;
+		}
+		mutex_spin_enter(&lock);
+		spin_unlock(&syncobj->lock);
+		start = getticks();
+		/* XXX errno NetBSD->Linux */
+		ret = -cv_timedwait_sig(&cv, &lock, MIN(timeout, INT_MAX/2));
+		end = getticks();
+		timeout -= MIN(timeout, end - start);
+		mutex_spin_exit(&lock);
+		spin_lock(&syncobj->lock);
+		KASSERTMSG((ret == 0 || ret == -EINTR || ret == -ERESTART ||
+			ret == -EWOULDBLOCK), "ret=%d", ret);
+		if (ret == -EINTR || ret == -ERESTART) {
+			ret = -ERESTARTSYS;
+			break;
+		} else if (ret == -EWOULDBLOCK) {
+			/* Check once more, then give up.  */
+			ret = 0;
+			timeout = 0;
+		} else {
+			KASSERT(ret == 0);
+		}
+	}
+	*fence = wait.fence;
+	if (wait.node.next)
+		list_del_init(&wait.node);
+	spin_unlock(&syncobj->lock);
+	cv_destroy(&cv);
+	mutex_destroy(&lock);
+#else
 	do {
-#ifndef __NetBSD__
 		set_current_state(TASK_INTERRUPTIBLE);
-#endif
 		if (wait.fence) {
 			ret = 0;
 			break;
@@ -418,36 +426,20 @@ int drm_syncobj_find_fence(struct drm_file *file_private,
                         break;
                 }
 
-#ifdef __NetBSD__
-		mutex_enter(&lock);
-		spin_unlock(&syncobj->lock);
-		/* XXX errno NetBSD->Linux */
-		ret = -cv_wait_timeout_sig(&cv, &lock, &timeout);
-		mutex_exit(&lock);
-		spin_lock(&syncobj->lock);
-		if (ret)
-			break;
-#else
 		if (signal_pending(current)) {
 			ret = -ERESTARTSYS;
 			break;
 		}
 
                 timeout = schedule_timeout(timeout);
-#endif
 	} while (1);
 
-#ifdef __NetBSD__
-	spin_unlock(&syncobj->lock);
-	cv_destroy(&cv);
-	mutex_destroy(&lock);
-#else
 	__set_current_state(TASK_RUNNING);
-#endif
 	*fence = wait.fence;
 
 	if (wait.node.next)
 		drm_syncobj_remove_wait(syncobj, &wait);
+#endif
 
 	return ret;
 }
@@ -1184,15 +1176,30 @@ static signed long drm_syncobj_array_wait_timeout(struct drm_syncobj **syncobjs,
 		}
 
 #ifdef __NetBSD__
-		mutex_enter(&lock);
-		if (signalled)
+		mutex_spin_enter(&lock);
+		if (signalled) {
 			ret = 0;
-		else
-			ret = -cv_wait_timeout_sig(&cv, &lock, &timeout);
-		mutex_exit(&lock);
-		if (ret) {
+		} else {
+			unsigned start, end;
+
+			start = getticks();
+			/* XXX errno NetBSD->Linux */
+			ret = -cv_timedwait_sig(&cv, &lock,
+			    MIN(timeout, INT_MAX/2));
+			end = getticks();
+			timeout -= MIN(timeout, end - start);
+		}
+		mutex_spin_exit(&lock);
+		KASSERTMSG((ret == 0 || ret == -EINTR || ret == -ERESTART ||
+			ret == -EWOULDBLOCK), "ret=%d", ret);
+		if (ret == -EINTR || ret == -ERESTART) {
 			timeout = -ERESTARTSYS;
 			goto done_waiting;
+		} else if (ret == -EWOULDBLOCK) {
+			/* Poll fences once more, then exit.  */
+			timeout = 0;
+		} else {
+			KASSERT(ret == 0);
 		}
 #else
 		if (signal_pending(current)) {
