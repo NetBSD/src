@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_nvkm_core_ioctl.c,v 1.6 2021/12/19 10:51:57 riastradh Exp $	*/
+/*	$NetBSD: nouveau_nvkm_core_ioctl.c,v 1.7 2021/12/19 12:40:21 riastradh Exp $	*/
 
 /*
  * Copyright 2014 Red Hat Inc.
@@ -24,7 +24,7 @@
  * Authors: Ben Skeggs <bskeggs@redhat.com>
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_core_ioctl.c,v 1.6 2021/12/19 10:51:57 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_core_ioctl.c,v 1.7 2021/12/19 12:40:21 riastradh Exp $");
 
 #include <core/ioctl.h>
 #include <core/client.h>
@@ -487,6 +487,10 @@ nvkm_ioctl(struct nvkm_client *client, bool supervisor,
 			client->data = NULL;
 		}
 	}
+#ifdef __NetBSD__
+	else
+		ret = 0;
+#endif
 
 	return ret;
 }
