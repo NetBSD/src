@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_syncobj.c,v 1.5 2021/12/19 12:32:01 riastradh Exp $	*/
+/*	$NetBSD: drm_syncobj.c,v 1.6 2021/12/19 12:35:28 riastradh Exp $	*/
 
 /*
  * Copyright 2017 Red Hat
@@ -125,7 +125,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_syncobj.c,v 1.5 2021/12/19 12:32:01 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_syncobj.c,v 1.6 2021/12/19 12:35:28 riastradh Exp $");
 
 #include <linux/anon_inodes.h>
 #include <linux/file.h>
@@ -398,8 +398,8 @@ int drm_syncobj_find_fence(struct drm_file *file_private,
 	wait.cv = &cv;
 #else
 	wait.task = current;
-	wait.point = point;
 #endif
+	wait.point = point;
 	drm_syncobj_fence_add_wait(syncobj, &wait);
 
 #ifdef __NetBSD__
