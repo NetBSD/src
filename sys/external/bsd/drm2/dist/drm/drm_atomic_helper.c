@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_atomic_helper.c,v 1.6 2021/12/18 23:44:57 riastradh Exp $	*/
+/*	$NetBSD: drm_atomic_helper.c,v 1.7 2021/12/19 00:50:01 riastradh Exp $	*/
 
 /*
  * Copyright (C) 2014 Red Hat
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_atomic_helper.c,v 1.6 2021/12/18 23:44:57 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_atomic_helper.c,v 1.7 2021/12/19 00:50:01 riastradh Exp $");
 
 #include <linux/dma-fence.h>
 #include <linux/ktime.h>
@@ -258,7 +258,7 @@ steal_encoder(struct drm_atomic_state *state,
 	      struct drm_encoder *encoder)
 {
 	struct drm_crtc_state *crtc_state;
-	struct drm_connector *connector;
+	struct drm_connector *connector __unused;
 	struct drm_connector_state *old_connector_state, *new_connector_state;
 	int i;
 
@@ -408,7 +408,7 @@ mode_fixup(struct drm_atomic_state *state)
 {
 	struct drm_crtc *crtc;
 	struct drm_crtc_state *new_crtc_state;
-	struct drm_connector *connector;
+	struct drm_connector *connector __unused;
 	struct drm_connector_state *new_conn_state;
 	int i;
 	int ret;
@@ -985,7 +985,7 @@ crtc_needs_disable(struct drm_crtc_state *old_state,
 static void
 disable_outputs(struct drm_device *dev, struct drm_atomic_state *old_state)
 {
-	struct drm_connector *connector;
+	struct drm_connector *connector __unused;
 	struct drm_connector_state *old_conn_state, *new_conn_state;
 	struct drm_crtc *crtc;
 	struct drm_crtc_state *old_crtc_state, *new_crtc_state;
@@ -1176,7 +1176,7 @@ crtc_set_mode(struct drm_device *dev, struct drm_atomic_state *old_state)
 {
 	struct drm_crtc *crtc;
 	struct drm_crtc_state *new_crtc_state;
-	struct drm_connector *connector;
+	struct drm_connector *connector __unused;
 	struct drm_connector_state *new_conn_state;
 	int i;
 
@@ -1299,7 +1299,7 @@ void drm_atomic_helper_commit_modeset_enables(struct drm_device *dev,
 	struct drm_crtc *crtc;
 	struct drm_crtc_state *old_crtc_state;
 	struct drm_crtc_state *new_crtc_state;
-	struct drm_connector *connector;
+	struct drm_connector *connector __unused;
 	struct drm_connector_state *new_conn_state;
 	int i;
 
@@ -1391,7 +1391,7 @@ int drm_atomic_helper_wait_for_fences(struct drm_device *dev,
 				      struct drm_atomic_state *state,
 				      bool pre_swap)
 {
-	struct drm_plane *plane;
+	struct drm_plane *plane __unused;
 	struct drm_plane_state *new_plane_state;
 	int i, ret;
 
@@ -1438,7 +1438,7 @@ drm_atomic_helper_wait_for_vblanks(struct drm_device *dev,
 		struct drm_atomic_state *old_state)
 {
 	struct drm_crtc *crtc;
-	struct drm_crtc_state *old_crtc_state, *new_crtc_state;
+	struct drm_crtc_state *old_crtc_state __unused, *new_crtc_state;
 	int i, ret;
 	unsigned crtc_mask = 0;
 
@@ -1669,7 +1669,7 @@ static void commit_work(struct work_struct *work)
 int drm_atomic_helper_async_check(struct drm_device *dev,
 				   struct drm_atomic_state *state)
 {
-	struct drm_crtc *crtc;
+	struct drm_crtc *crtc __unused;
 	struct drm_crtc_state *crtc_state;
 	struct drm_plane *plane = NULL;
 	struct drm_plane_state *old_plane_state = NULL;
@@ -2042,9 +2042,9 @@ int drm_atomic_helper_setup_commit(struct drm_atomic_state *state,
 {
 	struct drm_crtc *crtc;
 	struct drm_crtc_state *old_crtc_state, *new_crtc_state;
-	struct drm_connector *conn;
+	struct drm_connector *conn __unused;
 	struct drm_connector_state *old_conn_state, *new_conn_state;
-	struct drm_plane *plane;
+	struct drm_plane *plane __unused;
 	struct drm_plane_state *old_plane_state, *new_plane_state;
 	struct drm_crtc_commit *commit;
 	int i, ret;
@@ -2274,7 +2274,7 @@ EXPORT_SYMBOL(drm_atomic_helper_fake_vblank);
  */
 void drm_atomic_helper_commit_hw_done(struct drm_atomic_state *old_state)
 {
-	struct drm_crtc *crtc;
+	struct drm_crtc *crtc __unused;
 	struct drm_crtc_state *old_crtc_state, *new_crtc_state;
 	struct drm_crtc_commit *commit;
 	int i;
@@ -3013,9 +3013,9 @@ int drm_atomic_helper_disable_all(struct drm_device *dev,
 {
 	struct drm_atomic_state *state;
 	struct drm_connector_state *conn_state;
-	struct drm_connector *conn;
+	struct drm_connector *conn __unused;
 	struct drm_plane_state *plane_state;
-	struct drm_plane *plane;
+	struct drm_plane *plane __unused;
 	struct drm_crtc_state *crtc_state;
 	struct drm_crtc *crtc;
 	int ret, i;
@@ -3259,11 +3259,11 @@ int drm_atomic_helper_commit_duplicated_state(struct drm_atomic_state *state,
 {
 	int i, ret;
 	struct drm_plane *plane;
-	struct drm_plane_state *new_plane_state;
+	struct drm_plane_state *new_plane_state __unused;
 	struct drm_connector *connector;
-	struct drm_connector_state *new_conn_state;
+	struct drm_connector_state *new_conn_state __unused;
 	struct drm_crtc *crtc;
-	struct drm_crtc_state *new_crtc_state;
+	struct drm_crtc_state *new_crtc_state __unused;
 
 	state->acquire_ctx = ctx;
 
