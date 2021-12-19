@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_gem.h,v 1.3 2021/12/19 01:19:14 riastradh Exp $	*/
+/*	$NetBSD: i915_gem.h,v 1.4 2021/12/19 01:43:28 riastradh Exp $	*/
 
 /*
  * Copyright © 2016 Intel Corporation
@@ -29,6 +29,7 @@
 
 #include <linux/bug.h>
 #include <linux/interrupt.h>
+#include <linux/stringify.h>
 
 #include <drm/drm_drv.h>
 
