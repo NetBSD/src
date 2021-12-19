@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_reservation.c,v 1.15 2021/12/19 00:31:43 riastradh Exp $	*/
+/*	$NetBSD: linux_reservation.c,v 1.16 2021/12/19 01:20:22 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_reservation.c,v 1.15 2021/12/19 00:31:43 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_reservation.c,v 1.16 2021/12/19 01:20:22 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/poll.h>
@@ -474,6 +474,26 @@ reservation_object_add_shared_fence(struct reservation_object *robj,
 		dma_fence_put(replace);
 }
 
+/*
+ * reservation_object_get_excl_rcu(robj)
+ *
+ *	Note: Caller need not call this from an RCU read section.
+ */
+struct dma_fence *
+reservation_object_get_excl_rcu(struct reservation_object *robj)
+{
+	struct dma_fence *fence;
+
+	rcu_read_lock();
+	fence = dma_fence_get_rcu_safe(&robj->robj_fence);
+	rcu_read_unlock();
+
+	return fence;
+}
+
+/*
+ * reservation_object_get_fences_rcu(robj, fencep, nsharedp, sharedp)
+ */
 int
 reservation_object_get_fences_rcu(struct reservation_object *robj,
     struct dma_fence **fencep, unsigned *nsharedp, struct dma_fence ***sharedp)
