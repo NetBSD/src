@@ -1,4 +1,4 @@
-/*	$NetBSD: interrupt.h,v 1.7 2021/12/19 01:23:16 riastradh Exp $	*/
+/*	$NetBSD: interrupt.h,v 1.8 2021/12/19 10:37:25 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -34,6 +34,7 @@
 
 #include <sys/cpu.h>
 
+#include <linux/irqreturn.h>
 #include <linux/hardirq.h>
 #include <linux/kernel.h>
 #include <linux/tasklet.h>
