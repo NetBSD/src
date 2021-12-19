@@ -1,4 +1,4 @@
-/*	$NetBSD: list.h,v 1.20 2021/12/19 01:19:37 riastradh Exp $	*/
+/*	$NetBSD: list.h,v 1.21 2021/12/19 01:44:41 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -130,10 +130,18 @@ list_add_tail(struct list_head *node, struct list_head *head)
 }
 
 static inline void
-list_del(struct list_head *entry)
+__list_del_entry(struct list_head *entry)
 {
 	entry->prev->next = entry->next;
 	entry->next->prev = entry->prev;
+}
+
+static inline void
+list_del(struct list_head *entry)
+{
+	__list_del_entry(entry);
+	entry->next = (void *)(uintptr_t)1;
+	entry->prev = (void *)(uintptr_t)2;
 }
 
 static inline void
