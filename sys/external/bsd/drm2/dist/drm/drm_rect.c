@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_rect.c,v 1.3 2021/12/18 23:44:57 riastradh Exp $	*/
+/*	$NetBSD: drm_rect.c,v 1.4 2021/12/19 01:15:00 riastradh Exp $	*/
 
 /*
  * Copyright (C) 2011-2013 Intel Corporation
@@ -24,11 +24,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_rect.c,v 1.3 2021/12/18 23:44:57 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_rect.c,v 1.4 2021/12/19 01:15:00 riastradh Exp $");
 
 #include <linux/errno.h>
 #include <linux/export.h>
 #include <linux/kernel.h>
+#include <linux/math64.h>
 
 #include <drm/drm_mode.h>
 #include <drm/drm_print.h>
