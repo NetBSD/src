@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.2 2021/12/19 01:19:37 riastradh Exp $	*/
+/*	$NetBSD: types.h,v 1.3 2021/12/19 01:42:09 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -81,6 +81,8 @@ typedef uint64_t __be64;
 typedef bus_addr_t resource_size_t;
 
 typedef paddr_t phys_addr_t;
+
+typedef bus_addr_t dma_addr_t;
 
 /* XXX Is this the right type?  */
 typedef unsigned long long cycles_t;
