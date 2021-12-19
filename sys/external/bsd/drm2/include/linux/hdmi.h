@@ -1,4 +1,4 @@
-/*	$NetBSD: hdmi.h,v 1.6 2015/11/14 18:04:05 jmcneill Exp $	*/
+/*	$NetBSD: hdmi.h,v 1.7 2021/12/19 00:55:09 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -119,7 +119,7 @@ enum hdmi_colorspace {
 };
 
 enum hdmi_content_type {
-	HDMI_CONTENT_TYPE_NONE			= 0,
+	HDMI_CONTENT_TYPE_GRAPHICS		= 0,
 	HDMI_CONTENT_TYPE_PHOTO			= 1,
 	HDMI_CONTENT_TYPE_CINEMA		= 2,
 	HDMI_CONTENT_TYPE_GAME			= 3,
@@ -144,6 +144,9 @@ enum hdmi_picture_aspect {
 	HDMI_PICTURE_ASPECT_NONE		= 0,
 	HDMI_PICTURE_ASPECT_4_3			= 1,
 	HDMI_PICTURE_ASPECT_16_9		= 2,
+	HDMI_PICTURE_ASPECT_64_27		= 3,
+	HDMI_PICTURE_ASPECT_256_135		= 4,
+	HDMI_PICTURE_ASPECT_RESERVED		= 5,
 };
 
 enum hdmi_quantization_range {
@@ -449,7 +452,8 @@ hdmi_spd_infoframe_pack(struct hdmi_spd_infoframe *frame, void *buf,
 	return length;
 }
 
-#define	HDMI_IEEE_OUI	0x000c03
+#define	HDMI_IEEE_OUI		0x000c03
+#define	HDMI_FORUM_IEEE_OUI	0xc45dd8
 
 struct hdmi_vendor_infoframe {
 	struct hdmi_infoframe_header	header;
