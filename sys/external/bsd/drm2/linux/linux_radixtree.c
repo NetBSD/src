@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_radixtree.c,v 1.3 2021/12/19 11:53:26 riastradh Exp $	*/
+/*	$NetBSD: linux_radixtree.c,v 1.4 2021/12/19 12:07:29 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2021 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_radixtree.c,v 1.3 2021/12/19 11:53:26 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_radixtree.c,v 1.4 2021/12/19 12:07:29 riastradh Exp $");
 
 #include <sys/atomic.h>
 #include <sys/kmem.h>
@@ -63,7 +63,7 @@ radix_tree_insert(struct radix_tree_root *root, unsigned long key, void *datum)
 	int error;
 
 	/* XXX No way to know whether the caller can sleep or not...  */
-	if ((kludge = kzalloc(sizeof(*kludge), GFP_NOWAIT)) == NULL)
+	if ((kludge = kzalloc(sizeof(*kludge), GFP_ATOMIC)) == NULL)
 		return -ENOMEM;
 
 	kludge->k_key = key;
