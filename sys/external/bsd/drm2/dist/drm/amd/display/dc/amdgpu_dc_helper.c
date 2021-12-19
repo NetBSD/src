@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu_dc_helper.c,v 1.2 2021/12/18 23:45:00 riastradh Exp $	*/
+/*	$NetBSD: amdgpu_dc_helper.c,v 1.3 2021/12/19 10:56:50 riastradh Exp $	*/
 
 /*
  * Copyright 2017 Advanced Micro Devices, Inc.
@@ -30,12 +30,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdgpu_dc_helper.c,v 1.2 2021/12/18 23:45:00 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdgpu_dc_helper.c,v 1.3 2021/12/19 10:56:50 riastradh Exp $");
 
 #include <linux/delay.h>
 
 #include "dm_services.h"
-#include <stdarg.h>
+#include <sys/stdarg.h>
 
 #include "dc.h"
 #include "dc_dmub_srv.h"
