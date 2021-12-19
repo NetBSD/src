@@ -1,4 +1,4 @@
-/*	$NetBSD: fb.h,v 1.4 2020/02/14 04:37:10 riastradh Exp $	*/
+/*	$NetBSD: fb.h,v 1.5 2021/12/19 09:43:20 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -41,4 +41,10 @@
 #define	FBINFO_STATE_RUNNING	0
 #define	FBINFO_STATE_SUSPENDED	1
 
+static inline int
+fb_get_options(const char *name, char **options)
+{
+	panic("TODO");
+	return 0;
+}
 #endif  /* _LINUX_FB_H_ */
