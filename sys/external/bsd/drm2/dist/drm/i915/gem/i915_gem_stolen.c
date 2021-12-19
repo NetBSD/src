@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_gem_stolen.c,v 1.2 2021/12/18 23:45:30 riastradh Exp $	*/
+/*	$NetBSD: i915_gem_stolen.c,v 1.3 2021/12/19 01:40:12 riastradh Exp $	*/
 
 /*
  * SPDX-License-Identifier: MIT
@@ -7,7 +7,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_gem_stolen.c,v 1.2 2021/12/18 23:45:30 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_gem_stolen.c,v 1.3 2021/12/19 01:40:12 riastradh Exp $");
 
 #include <linux/errno.h>
 #include <linux/mutex.h>
@@ -355,7 +355,7 @@ static void icl_get_stolen_reserved(struct drm_i915_private *i915,
 {
 	u64 reg_val = intel_uncore_read64(uncore, GEN6_STOLEN_RESERVED);
 
-	DRM_DEBUG_DRIVER("GEN6_STOLEN_RESERVED = 0x%016llx\n", reg_val);
+	DRM_DEBUG_DRIVER("GEN6_STOLEN_RESERVED = 0x%016"PRIx64"\n", reg_val);
 
 	*base = reg_val & GEN11_STOLEN_RESERVED_ADDR_MASK;
 
@@ -485,7 +485,7 @@ static int i915_gem_init_stolen(struct drm_i915_private *i915)
 	 * memory, so just consider the start. */
 	reserved_total = stolen_top - reserved_base;
 
-	DRM_DEBUG_DRIVER("Memory reserved for graphics device: %lluK, usable: %lluK\n",
+	DRM_DEBUG_DRIVER("Memory reserved for graphics device: %"PRIu64"K, usable: %"PRIu64"K\n",
 			 (u64)resource_size(&i915->dsm) >> 10,
 			 ((u64)resource_size(&i915->dsm) - reserved_total) >> 10);
 
@@ -500,14 +500,27 @@ static int i915_gem_init_stolen(struct drm_i915_private *i915)
 
 #ifdef __NetBSD__
 static bus_dmamap_t
-i915_pages_create_for_stolen(struct drm_device *dev, u32 offset, u32 size)
+#else
+static struct sg_table *
+#endif
+i915_pages_create_for_stolen(struct drm_device *dev,
+			     resource_size_t offset, resource_size_t size)
 {
-	struct drm_i915_private *const dev_priv = dev->dev_private;
+	struct drm_i915_private *i915 = to_i915(dev);
+#ifdef __NetBSD__
+	bus_dma_tag_t dmat = i915->drm.dmat;
 	bus_dmamap_t dmamap = NULL;
 	bus_dma_segment_t *seg;
 	int nseg, i;
 	int ret;
+#else
+	struct sg_table *st;
+	struct scatterlist *sg;
+#endif
 
+	GEM_BUG_ON(range_overflows(offset, size, resource_size(&i915->dsm)));
+
+#ifdef __NetBSD__
 	KASSERT((size % PAGE_SIZE) == 0);
 	nseg = size / PAGE_SIZE;
 	seg = kmem_alloc(nseg * sizeof(seg[0]), KM_SLEEP);
@@ -518,14 +531,14 @@ i915_pages_create_for_stolen(struct drm_device *dev, u32 offset, u32 size)
 	 * segments to begin with.
 	 */
 	for (i = 0; i < nseg; i++) {
-		seg[i].ds_addr = (bus_addr_t)dev_priv->mm.stolen_base +
-		    offset + i*PAGE_SIZE;
+		seg[i].ds_addr = (bus_addr_t)i915->dsm.start + offset +
+		    i*PAGE_SIZE;
 		seg[i].ds_len = PAGE_SIZE;
 	}
 
 	/* XXX errno NetBSD->Linux */
-	ret = -bus_dmamap_create(dev->dmat, size, nseg, PAGE_SIZE,
-	    0, BUS_DMA_WAITOK, &dmamap);
+	ret = -bus_dmamap_create(dmat, size, nseg, PAGE_SIZE, 0,
+	    BUS_DMA_WAITOK, &dmamap);
 	if (ret) {
 		DRM_ERROR("failed to create DMA map for stolen object: %d\n",
 		    ret);
@@ -534,30 +547,19 @@ fail0:		dmamap = NULL;	/* paranoia */
 	}
 
 	/* XXX errno NetBSD->Liux */
-	ret = -bus_dmamap_load_raw(dev->dmat, dmamap, seg, nseg, size,
+	ret = -bus_dmamap_load_raw(dmat, dmamap, seg, nseg, size,
 	    BUS_DMA_WAITOK);
 	if (ret) {
 		DRM_ERROR("failed to load DMA map for stolen object: %d\n",
 		    ret);
 fail1: __unused
-		bus_dmamap_destroy(dev->dmat, dmamap);
+		bus_dmamap_destroy(dmat, dmamap);
 		goto fail0;
 	}
 
 out:	kmem_free(seg, nseg*sizeof(seg[0]));
-	return dmamap;
-}
+	return ret ? ERR_PTR(ret) : dmamap;
 #else
-static struct sg_table *
-i915_pages_create_for_stolen(struct drm_device *dev,
-			     resource_size_t offset, resource_size_t size)
-{
-	struct drm_i915_private *i915 = to_i915(dev);
-	struct sg_table *st;
-	struct scatterlist *sg;
-
-	GEM_BUG_ON(range_overflows(offset, size, resource_size(&i915->dsm)));
-
 	/* We hide that we have no struct page backing our stolen object
 	 * by wrapping the contiguous physical allocation with a fake
 	 * dma mapping in a single scatterlist.
@@ -580,12 +582,16 @@ i915_pages_create_for_stolen(struct drm_device *dev,
 	sg_dma_len(sg) = size;
 
 	return st;
-}
 #endif
+}
 
 static int i915_gem_object_get_pages_stolen(struct drm_i915_gem_object *obj)
 {
+#ifdef __NetBSD__
+	bus_dmamap_t pages =
+#else
 	struct sg_table *pages =
+#endif
 		i915_pages_create_for_stolen(obj->base.dev,
 					     obj->stolen->start,
 					     obj->stolen->size);
@@ -602,8 +608,8 @@ static void i915_gem_object_put_pages_stolen(struct drm_i915_gem_object *obj,
 {
 	/* Should only be called from i915_gem_object_release_stolen() */
 #ifdef __NetBSD__
-	bus_dmamap_unload(obj->base.dev->dmat, obj->pages);
-	bus_dmamap_destroy(obj->base.dev->dmat, obj->pages);
+	bus_dmamap_unload(obj->base.dev->dmat, pages);
+	bus_dmamap_destroy(obj->base.dev->dmat, pages);
 #else
 	sg_free_table(pages);
 	kfree(pages);
