@@ -1,4 +1,4 @@
-/*	$NetBSD: ttm_tt.c,v 1.13 2021/12/18 23:45:44 riastradh Exp $	*/
+/*	$NetBSD: ttm_tt.c,v 1.14 2021/12/19 01:49:50 riastradh Exp $	*/
 
 /* SPDX-License-Identifier: GPL-2.0 OR MIT */
 /**************************************************************************
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ttm_tt.c,v 1.13 2021/12/18 23:45:44 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ttm_tt.c,v 1.14 2021/12/19 01:49:50 riastradh Exp $");
 
 #define pr_fmt(fmt) "[TTM] " fmt
 
@@ -245,11 +245,11 @@ static void ttm_tt_init_fields(struct ttm_tt *ttm,
 	ttm->page_flags = page_flags;
 	ttm->state = tt_unpopulated;
 #ifdef __NetBSD__
-	WARN(size == 0, "zero-size allocation in %s, please file a NetBSD PR",
+	WARN(bo->num_pages == 0,
+	    "zero-size allocation in %s, please file a NetBSD PR",
 	    __func__);	/* paranoia -- can't prove in five minutes */
-	size = MAX(size, 1);
-	ttm->swap_storage = uao_create(roundup2(size, PAGE_SIZE), 0);
-	uao_set_pgfl(ttm->swap_storage, bus_dmamem_pgfl(bdev->dmat));
+	ttm->swap_storage = uao_create(MAX(1, bo->num_pages), 0);
+	uao_set_pgfl(ttm->swap_storage, bus_dmamem_pgfl(ttm->bdev->dmat));
 	TAILQ_INIT(&ttm->pglist);
 #else
 	ttm->swap_storage = NULL;
@@ -602,6 +602,7 @@ out_err:
 
 static void ttm_tt_add_mapping(struct ttm_tt *ttm)
 {
+#ifndef __NetBSD__
 	pgoff_t i;
 
 	if (ttm->page_flags & TTM_PAGE_FLAG_SG)
@@ -609,6 +610,7 @@ static void ttm_tt_add_mapping(struct ttm_tt *ttm)
 
 	for (i = 0; i < ttm->num_pages; ++i)
 		ttm->pages[i]->mapping = ttm->bdev->dev_mapping;
+#endif
 }
 
 int ttm_tt_populate(struct ttm_tt *ttm, struct ttm_operation_ctx *ctx)
@@ -621,7 +623,11 @@ int ttm_tt_populate(struct ttm_tt *ttm, struct ttm_operation_ctx *ctx)
 	if (ttm->bdev->driver->ttm_tt_populate)
 		ret = ttm->bdev->driver->ttm_tt_populate(ttm, ctx);
 	else
+#ifdef __NetBSD__
+		panic("no ttm population");
+#else
 		ret = ttm_pool_populate(ttm, ctx);
+#endif
 	if (!ret)
 		ttm_tt_add_mapping(ttm);
 	return ret;
@@ -652,5 +658,9 @@ void ttm_tt_unpopulate(struct ttm_tt *ttm)
 	if (ttm->bdev->driver->ttm_tt_unpopulate)
 		ttm->bdev->driver->ttm_tt_unpopulate(ttm);
 	else
+#ifdef __NetBSD__
+		panic("no ttm pool unpopulation");
+#else
 		ttm_pool_unpopulate(ttm);
+#endif
 }
