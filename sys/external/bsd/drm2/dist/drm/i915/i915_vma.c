@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_vma.c,v 1.10 2021/12/19 12:09:58 riastradh Exp $	*/
+/*	$NetBSD: i915_vma.c,v 1.11 2021/12/19 12:12:15 riastradh Exp $	*/
 
 /*
  * Copyright © 2016 Intel Corporation
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_vma.c,v 1.10 2021/12/19 12:09:58 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_vma.c,v 1.11 2021/12/19 12:12:15 riastradh Exp $");
 
 #include <linux/sched/mm.h>
 #include <drm/drm_gem.h>
@@ -1206,7 +1206,7 @@ void i915_vma_revoke_mmap(struct i915_vma *vma)
 	paddr_t pa = i915->ggtt.gmadr.start + vma->node.start;
 	vsize_t npgs = vma->size >> PAGE_SHIFT;
 	while (npgs --> 0)
-		pmap_pv_protect(pa = (npgs << PAGE_SHIFT), VM_PROT_NONE);
+		pmap_pv_protect(pa + (npgs << PAGE_SHIFT), VM_PROT_NONE);
 #else
 	node = &vma->mmo->vma_node;
 	vma_offset = vma->ggtt_view.partial.offset << PAGE_SHIFT;
