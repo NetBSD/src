@@ -1,4 +1,4 @@
-/*	$NetBSD: mutex.h,v 1.12 2020/02/14 14:34:59 maya Exp $	*/
+/*	$NetBSD: mutex.h,v 1.13 2021/12/19 00:47:24 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -39,6 +39,7 @@
 #include <asm/processor.h>
 
 #include <linux/list.h>
+#include <linux/spinlock.h>
 
 #define	__acquires(lock)			/* XXX lockdep stuff */
 #define	__releases(lock)			/* XXX lockdep stuff */

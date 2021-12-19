@@ -1,4 +1,4 @@
-/*	$NetBSD: os.h,v 1.6 2021/12/18 23:45:33 riastradh Exp $	*/
+/*	$NetBSD: os.h,v 1.7 2021/12/19 00:47:24 riastradh Exp $	*/
 
 /* SPDX-License-Identifier: MIT */
 #ifndef __NOUVEAU_OS_H__
@@ -36,7 +36,6 @@
 #include <linux/kernel.h>
 #include <linux/kref.h>
 #include <linux/list.h>
-#include <linux/spinlock.h>
 #include <linux/math64.h>
 #include <linux/errno.h>
 #include <linux/workqueue.h>
