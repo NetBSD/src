@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_gtt.h,v 1.7 2021/12/19 11:14:48 riastradh Exp $	*/
+/*	$NetBSD: intel_gtt.h,v 1.8 2021/12/19 11:15:33 riastradh Exp $	*/
 
 /* SPDX-License-Identifier: MIT */
 /*
@@ -19,6 +19,7 @@
 #define __INTEL_GTT_H__
 
 #include <linux/io-mapping.h>
+#include <linux/highmem.h>
 #include <linux/kref.h>
 #include <linux/mm.h>
 #include <linux/pagevec.h>
