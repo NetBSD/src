@@ -1,4 +1,4 @@
-/*	$NetBSD: link_hwss.h,v 1.2 2021/12/18 23:45:05 riastradh Exp $	*/
+/*	$NetBSD: link_hwss.h,v 1.3 2021/12/19 10:59:02 riastradh Exp $	*/
 
 /*
  * Copyright 2015 Advanced Micro Devices, Inc.
@@ -73,7 +73,7 @@ void dp_set_hw_lane_settings(
 void dp_set_hw_test_pattern(
 	struct dc_link *link,
 	enum dp_test_pattern test_pattern,
-	uint8_t *custom_pattern,
+	const uint8_t *custom_pattern,
 	uint32_t custom_pattern_size);
 
 void dp_retrain_link_dp_test(struct dc_link *link,

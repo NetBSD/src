@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu_cgs.c,v 1.6 2021/12/18 23:44:58 riastradh Exp $	*/
+/*	$NetBSD: amdgpu_cgs.c,v 1.7 2021/12/19 10:59:01 riastradh Exp $	*/
 
 /*
  * Copyright 2015 Advanced Micro Devices, Inc.
@@ -24,7 +24,7 @@
  *
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdgpu_cgs.c,v 1.6 2021/12/18 23:44:58 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdgpu_cgs.c,v 1.7 2021/12/19 10:59:01 riastradh Exp $");
 
 #include <linux/list.h>
 #include <linux/pci.h>
@@ -35,6 +35,8 @@ __KERNEL_RCSID(0, "$NetBSD: amdgpu_cgs.c,v 1.6 2021/12/18 23:44:58 riastradh Exp
 #include "amdgpu.h"
 #include "atom.h"
 #include "amdgpu_ucode.h"
+
+#include <linux/nbsd-namespace.h>
 
 struct amdgpu_cgs_device {
 	struct cgs_device base;

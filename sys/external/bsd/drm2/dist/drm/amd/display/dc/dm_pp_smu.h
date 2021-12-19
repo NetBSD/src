@@ -1,4 +1,4 @@
-/*	$NetBSD: dm_pp_smu.h,v 1.2 2021/12/18 23:45:00 riastradh Exp $	*/
+/*	$NetBSD: dm_pp_smu.h,v 1.3 2021/12/19 10:59:01 riastradh Exp $	*/
 
 /*
  * Copyright 2017 Advanced Micro Devices, Inc.
@@ -31,8 +31,6 @@
 /*
  * interface to PPLIB/SMU to setup clocks and pstate requirements on SoC
  */
-
-typedef bool BOOLEAN;
 
 enum pp_smu_ver {
 	/*
@@ -242,7 +240,7 @@ struct pp_smu_funcs_nv {
 	 * DC hardware
 	 */
 	enum pp_smu_status (*set_pstate_handshake_support)(struct pp_smu *pp,
-			BOOLEAN pstate_handshake_supported);
+			bool pstate_handshake_supported);
 };
 
 #define PP_SMU_NUM_SOCCLK_DPM_LEVELS  8

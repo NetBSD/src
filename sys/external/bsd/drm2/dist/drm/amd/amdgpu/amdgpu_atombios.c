@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu_atombios.c,v 1.6 2021/12/18 23:44:58 riastradh Exp $	*/
+/*	$NetBSD: amdgpu_atombios.c,v 1.7 2021/12/19 10:59:01 riastradh Exp $	*/
 
 /*
  * Copyright 2007-8 Advanced Micro Devices, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdgpu_atombios.c,v 1.6 2021/12/18 23:44:58 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdgpu_atombios.c,v 1.7 2021/12/19 10:59:01 riastradh Exp $");
 
 #include <drm/amdgpu_drm.h>
 #include "amdgpu.h"
@@ -40,6 +40,8 @@ __KERNEL_RCSID(0, "$NetBSD: amdgpu_atombios.c,v 1.6 2021/12/18 23:44:58 riastrad
 #include "atom-bits.h"
 #include "atombios_encoders.h"
 #include "bif/bif_4_1_d.h"
+
+#include <linux/nbsd-namespace.h>
 
 static void amdgpu_atombios_lookup_i2c_gpio_quirks(struct amdgpu_device *adev,
 					  ATOM_GPIO_I2C_ASSIGMENT *gpio,
@@ -1944,6 +1946,7 @@ static uint32_t cail_ioreg_read(struct card_info *info, uint32_t reg)
 	return r;
 }
 
+#ifdef CONFIG_SYSFS
 static ssize_t amdgpu_atombios_get_vbios_version(struct device *dev,
 						 struct device_attribute *attr,
 						 char *buf)
@@ -1957,6 +1960,7 @@ static ssize_t amdgpu_atombios_get_vbios_version(struct device *dev,
 
 static DEVICE_ATTR(vbios_version, 0444, amdgpu_atombios_get_vbios_version,
 		   NULL);
+#endif
 
 /**
  * amdgpu_atombios_fini - free the driver info and callbacks for atombios
@@ -1978,7 +1982,9 @@ void amdgpu_atombios_fini(struct amdgpu_device *adev)
 	adev->mode_info.atom_context = NULL;
 	kfree(adev->mode_info.atom_card_info);
 	adev->mode_info.atom_card_info = NULL;
+#ifdef CONFIG_SYSFS
 	device_remove_file(adev->dev, &dev_attr_vbios_version);
+#endif
 }
 
 /**
@@ -2043,11 +2049,13 @@ int amdgpu_atombios_init(struct amdgpu_device *adev)
 		amdgpu_atombios_allocate_fb_scratch(adev);
 	}
 
+#ifdef CONFIG_SYSFS
 	ret = device_create_file(adev->dev, &dev_attr_vbios_version);
 	if (ret) {
 		DRM_ERROR("Failed to create device file for VBIOS version\n");
 		return ret;
 	}
+#endif
 
 	return 0;
 }

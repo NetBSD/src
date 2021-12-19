@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu_amdkfd.c,v 1.5 2021/12/19 10:56:50 riastradh Exp $	*/
+/*	$NetBSD: amdgpu_amdkfd.c,v 1.6 2021/12/19 10:59:01 riastradh Exp $	*/
 
 /*
  * Copyright 2014 Advanced Micro Devices, Inc.
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdgpu_amdkfd.c,v 1.5 2021/12/19 10:56:50 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdgpu_amdkfd.c,v 1.6 2021/12/19 10:59:01 riastradh Exp $");
 
 #include "amdgpu_amdkfd.h"
 #include "amd_shared.h"
@@ -385,8 +385,12 @@ void amdgpu_amdkfd_get_local_mem_info(struct kgd_dev *kgd,
 				      struct kfd_local_mem_info *mem_info)
 {
 	struct amdgpu_device *adev = (struct amdgpu_device *)kgd;
+#ifdef __NetBSD__
+	uint64_t address_mask = ~(uint64_t)0; /* XXX */
+#else
 	uint64_t address_mask = adev->dev->dma_mask ? ~*adev->dev->dma_mask :
 					     ~((1ULL << 32) - 1);
+#endif
 	resource_size_t aper_limit = adev->gmc.aper_base + adev->gmc.aper_size;
 
 	memset(mem_info, 0, sizeof(*mem_info));
@@ -400,7 +404,7 @@ void amdgpu_amdkfd_get_local_mem_info(struct kgd_dev *kgd,
 	}
 	mem_info->vram_width = adev->gmc.vram_width;
 
-	pr_debug("Address base: %pap limit %pap public 0x%llx private 0x%llx\n",
+	pr_debug("Address base: %pap limit %pap public 0x%"PRIx64" private 0x%"PRIx64"\n",
 			&adev->gmc.aper_base, &aper_limit,
 			mem_info->local_mem_size_public,
 			mem_info->local_mem_size_private);

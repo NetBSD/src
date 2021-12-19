@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu_dc_link.c,v 1.2 2021/12/18 23:45:02 riastradh Exp $	*/
+/*	$NetBSD: amdgpu_dc_link.c,v 1.3 2021/12/19 10:59:01 riastradh Exp $	*/
 
 /*
  * Copyright 2012-15 Advanced Micro Devices, Inc.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdgpu_dc_link.c,v 1.2 2021/12/18 23:45:02 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdgpu_dc_link.c,v 1.3 2021/12/19 10:59:01 riastradh Exp $");
 
 #include <linux/slab.h>
 
@@ -727,7 +727,7 @@ static bool wait_for_alt_mode(struct dc_link *link)
 			finish_timestamp = dm_get_timestamp(link->ctx);
 			time_taken_in_ns = dm_get_elapse_time_in_ns(
 				link->ctx, finish_timestamp, enter_timestamp);
-			DC_LOG_WARNING("Alt mode entered finished after %llu ms\n",
+			DC_LOG_WARNING("Alt mode entered finished after %"PRIu64" ms\n",
 				       div_u64(time_taken_in_ns, 1000000));
 			return true;
 		}
@@ -736,7 +736,7 @@ static bool wait_for_alt_mode(struct dc_link *link)
 	finish_timestamp = dm_get_timestamp(link->ctx);
 	time_taken_in_ns = dm_get_elapse_time_in_ns(link->ctx, finish_timestamp,
 						    enter_timestamp);
-	DC_LOG_WARNING("Alt mode has timed out after %llu ms\n",
+	DC_LOG_WARNING("Alt mode has timed out after %"PRIu64" ms\n",
 			div_u64(time_taken_in_ns, 1000000));
 	return false;
 }
@@ -2755,7 +2755,7 @@ enum dc_status dc_link_allocate_mst_payload(struct pipe_ctx *pipe_ctx)
 		"stream[%d].vcp_id: %d      "
 		"stream[%d].slot_count: %d\n",
 		i,
-		(void *) link->mst_stream_alloc_table.stream_allocations[i].stream_enc,
+		(const void *) link->mst_stream_alloc_table.stream_allocations[i].stream_enc,
 		i,
 		link->mst_stream_alloc_table.stream_allocations[i].vcp_id,
 		i,
@@ -2847,7 +2847,7 @@ static enum dc_status deallocate_mst_payload(struct pipe_ctx *pipe_ctx)
 		"stream[%d].vcp_id: %d      "
 		"stream[%d].slot_count: %d\n",
 		i,
-		(void *) link->mst_stream_alloc_table.stream_allocations[i].stream_enc,
+		(const void *) link->mst_stream_alloc_table.stream_allocations[i].stream_enc,
 		i,
 		link->mst_stream_alloc_table.stream_allocations[i].vcp_id,
 		i,

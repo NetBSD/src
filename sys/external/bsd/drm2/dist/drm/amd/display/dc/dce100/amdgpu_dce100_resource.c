@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu_dce100_resource.c,v 1.2 2021/12/18 23:45:02 riastradh Exp $	*/
+/*	$NetBSD: amdgpu_dce100_resource.c,v 1.3 2021/12/19 10:59:01 riastradh Exp $	*/
 
 /*
  * Copyright 2012-15 Advanced Micro Devices, Inc.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdgpu_dce100_resource.c,v 1.2 2021/12/18 23:45:02 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdgpu_dce100_resource.c,v 1.3 2021/12/19 10:59:01 riastradh Exp $");
 
 #include <linux/slab.h>
 
@@ -290,6 +290,7 @@ static const struct dce110_aux_registers aux_engine_regs[] = {
 		aux_engine_regs(5)
 };
 
+#ifndef __NetBSD__		/* XXX amdgpu audio */
 #define audio_regs(id)\
 [id] = {\
 	AUD_COMMON_REG_LIST(id)\
@@ -312,6 +313,7 @@ static const struct dce_audio_shift audio_shift = {
 static const struct dce_audio_mask audio_mask = {
 		AUD_COMMON_MASK_SH_LIST(_MASK)
 };
+#endif
 
 #define clk_src_regs(id)\
 [id] = {\
@@ -449,8 +451,12 @@ static void read_dce_straps(
 static struct audio *create_audio(
 		struct dc_context *ctx, unsigned int inst)
 {
+#ifdef __NetBSD__		/* XXX amdgpu audio */
+	return NULL;
+#else
 	return dce_audio_create(ctx, inst,
 			&audio_regs[inst], &audio_shift, &audio_mask);
+#endif
 }
 
 static struct timing_generator *dce100_timing_generator_create(
@@ -610,6 +616,7 @@ static const struct encoder_feature_support link_enc_feature = {
 		.flags.bits.IS_TPS3_CAPABLE = true
 };
 
+static 
 struct link_encoder *dce100_link_encoder_create(
 	const struct encoder_init_data *enc_init_data)
 {
@@ -632,6 +639,7 @@ struct link_encoder *dce100_link_encoder_create(
 	return &enc110->base;
 }
 
+static
 struct output_pixel_processor *dce100_opp_create(
 	struct dc_context *ctx,
 	uint32_t inst)
@@ -647,6 +655,7 @@ struct output_pixel_processor *dce100_opp_create(
 	return &opp->base;
 }
 
+static
 struct dce_aux *dce100_aux_engine_create(
 	struct dc_context *ctx,
 	uint32_t inst)
@@ -685,6 +694,7 @@ static const struct dce_i2c_mask i2c_masks = {
 		I2C_COMMON_MASK_SH_LIST_DCE_COMMON_BASE(_MASK)
 };
 
+static
 struct dce_i2c_hw *dce100_i2c_hw_create(
 	struct dc_context *ctx,
 	uint32_t inst)
@@ -700,6 +710,7 @@ struct dce_i2c_hw *dce100_i2c_hw_create(
 
 	return dce_i2c_hw;
 }
+static
 struct clock_source *dce100_clock_source_create(
 	struct dc_context *ctx,
 	struct dc_bios *bios,
@@ -724,6 +735,7 @@ struct clock_source *dce100_clock_source_create(
 	return NULL;
 }
 
+static
 void dce100_clock_source_destroy(struct clock_source **clk_src)
 {
 	kfree(TO_DCE110_CLK_SRC(*clk_src));
@@ -781,10 +793,12 @@ static void dce100_resource_destruct(struct dce110_resource_pool *pool)
 	if (pool->base.dp_clock_source != NULL)
 		dce100_clock_source_destroy(&pool->base.dp_clock_source);
 
+#ifndef __NetBSD__		/* XXX amdgpu audio */
 	for (i = 0; i < pool->base.audio_count; i++)	{
 		if (pool->base.audios[i] != NULL)
 			dce_aud_destroy(&pool->base.audios[i]);
 	}
+#endif
 
 	if (pool->base.abm != NULL)
 				dce_abm_destroy(&pool->base.abm);
@@ -813,6 +827,7 @@ static enum dc_status build_mapped_resource(
 	return DC_OK;
 }
 
+static
 bool dce100_validate_bandwidth(
 	struct dc  *dc,
 	struct dc_state *context,
@@ -858,6 +873,7 @@ static bool dce100_validate_surface_sets(
 	return true;
 }
 
+static
 enum dc_status dce100_validate_global(
 		struct dc  *dc,
 		struct dc_state *context)
@@ -868,6 +884,7 @@ enum dc_status dce100_validate_global(
 	return DC_OK;
 }
 
+static
 enum dc_status dce100_add_stream_to_ctx(
 		struct dc *dc,
 		struct dc_state *new_ctx,
@@ -895,6 +912,7 @@ static void dce100_destroy_resource_pool(struct resource_pool **pool)
 	*pool = NULL;
 }
 
+static
 enum dc_status dce100_validate_plane(const struct dc_plane_state *plane_state, struct dc_caps *caps)
 {
 
@@ -904,6 +922,7 @@ enum dc_status dce100_validate_plane(const struct dc_plane_state *plane_state, s
 	return DC_FAIL_SURFACE_VALIDATE;
 }
 
+static
 struct stream_encoder *dce100_find_first_free_match_stream_enc_for_link(
 		struct resource_context *res_ctx,
 		const struct resource_pool *pool,
@@ -1132,6 +1151,7 @@ res_create_fail:
 	return false;
 }
 
+static __unused
 struct resource_pool *dce100_create_resource_pool(
 	uint8_t num_virtual_links,
 	struct dc  *dc)

@@ -1,4 +1,4 @@
-/*	$NetBSD: vega10_enum.h,v 1.2 2021/12/18 23:45:08 riastradh Exp $	*/
+/*	$NetBSD: vega10_enum.h,v 1.3 2021/12/19 10:59:02 riastradh Exp $	*/
 
 /*
  * Copyright (C) 2017  Advanced Micro Devices, Inc.
@@ -21407,7 +21407,9 @@ typedef enum CovToShaderSel {
 INPUT_COVERAGE                           = 0x00000000,
 INPUT_INNER_COVERAGE                     = 0x00000001,
 INPUT_DEPTH_COVERAGE                     = 0x00000002,
+#ifndef __NetBSD__		/* XXX @!#&* */
 RAW                                      = 0x00000003,
+#endif
 } CovToShaderSel;
 
 /*******************************************************

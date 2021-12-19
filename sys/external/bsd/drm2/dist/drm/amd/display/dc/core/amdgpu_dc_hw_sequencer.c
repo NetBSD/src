@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu_dc_hw_sequencer.c,v 1.2 2021/12/18 23:45:02 riastradh Exp $	*/
+/*	$NetBSD: amdgpu_dc_hw_sequencer.c,v 1.3 2021/12/19 10:59:01 riastradh Exp $	*/
 
 /*
  * Copyright 2015 Advanced Micro Devices, Inc.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdgpu_dc_hw_sequencer.c,v 1.2 2021/12/18 23:45:02 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdgpu_dc_hw_sequencer.c,v 1.3 2021/12/19 10:59:01 riastradh Exp $");
 
 #include <linux/delay.h>
 
@@ -182,6 +182,7 @@ static bool is_ycbcr709_limited_type(
 		ret = true;
 	return ret;
 }
+static
 enum dc_color_space_type get_color_space_type(enum dc_color_space color_space)
 {
 	enum dc_color_space_type type = COLOR_SPACE_RGB_TYPE;

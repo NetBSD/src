@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu_dc_helper.c,v 1.3 2021/12/19 10:56:50 riastradh Exp $	*/
+/*	$NetBSD: amdgpu_dc_helper.c,v 1.4 2021/12/19 10:59:01 riastradh Exp $	*/
 
 /*
  * Copyright 2017 Advanced Micro Devices, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdgpu_dc_helper.c,v 1.3 2021/12/19 10:56:50 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdgpu_dc_helper.c,v 1.4 2021/12/19 10:59:01 riastradh Exp $");
 
 #include <linux/delay.h>
 
@@ -39,6 +39,7 @@ __KERNEL_RCSID(0, "$NetBSD: amdgpu_dc_helper.c,v 1.3 2021/12/19 10:56:50 riastra
 
 #include "dc.h"
 #include "dc_dmub_srv.h"
+#include "inc/reg_helper.h"
 
 static inline void submit_dmub_read_modify_write(
 	struct dc_reg_helper_state *offload,
