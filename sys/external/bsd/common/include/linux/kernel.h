@@ -1,4 +1,4 @@
-/*	$NetBSD: kernel.h,v 1.32 2021/12/19 00:49:08 riastradh Exp $	*/
+/*	$NetBSD: kernel.h,v 1.33 2021/12/19 01:14:43 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -113,6 +113,8 @@
  */
 #define	DIV_ROUND_UP(X, N)	(((X) + (N) - 1) / (N))
 #define	DIV_ROUND_UP_ULL(X, N)	DIV_ROUND_UP((unsigned long long)(X), (N))
+
+#define	DIV_ROUND_DOWN_ULL(X,N)	((unsigned long long)(X) / (N))
 
 /*
  * Rounding to powers of two -- carefully avoiding multiple evaluation
