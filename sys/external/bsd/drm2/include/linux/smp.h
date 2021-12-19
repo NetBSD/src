@@ -1,4 +1,4 @@
-/*	$NetBSD: smp.h,v 1.1 2021/12/19 01:45:16 riastradh Exp $	*/
+/*	$NetBSD: smp.h,v 1.2 2021/12/19 09:58:50 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -33,6 +33,7 @@
 #define	_LINUX_SMP_H_
 
 #include <sys/systm.h>
+#include <sys/cpu.h>
 
 static inline int
 get_cpu(void)
