@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_fb_helper.h,v 1.10 2021/12/19 01:02:25 riastradh Exp $	*/
+/*	$NetBSD: drm_fb_helper.h,v 1.11 2021/12/19 01:02:34 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2006-2009 Red Hat Inc.
@@ -274,10 +274,10 @@ void drm_fb_helper_set_suspend_unlocked(struct drm_fb_helper *fb_helper,
 
 #ifndef __NetBSD__		/* XXX fb cmap */
 int drm_fb_helper_setcmap(struct fb_cmap *cmap, struct fb_info *info);
-#endif
 
 int drm_fb_helper_ioctl(struct fb_info *info, unsigned int cmd,
 			unsigned long arg);
+#endif
 
 int drm_fb_helper_hotplug_event(struct drm_fb_helper *fb_helper);
 int drm_fb_helper_initial_config(struct drm_fb_helper *fb_helper, int bpp_sel);
