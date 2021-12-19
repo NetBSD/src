@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_framebuffer.c,v 1.3 2021/12/19 01:00:02 riastradh Exp $	*/
+/*	$NetBSD: drm_framebuffer.c,v 1.4 2021/12/19 01:00:09 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2016 Intel Corporation
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_framebuffer.c,v 1.3 2021/12/19 01:00:02 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_framebuffer.c,v 1.4 2021/12/19 01:00:09 riastradh Exp $");
 
 #include <linux/export.h>
 #include <linux/uaccess.h>
@@ -1055,7 +1055,7 @@ void drm_framebuffer_print_info(struct drm_printer *p, unsigned int indent,
 			  drm_framebuffer_read_refcount(fb));
 	drm_printf_indent(p, indent, "format=%s\n",
 			  drm_get_format_name(fb->format->format, &format_name));
-	drm_printf_indent(p, indent, "modifier=0x%llx\n", fb->modifier);
+	drm_printf_indent(p, indent, "modifier=0x%"PRIx64"\n", fb->modifier);
 	drm_printf_indent(p, indent, "size=%ux%u\n", fb->width, fb->height);
 	drm_printf_indent(p, indent, "layers:\n");
 
