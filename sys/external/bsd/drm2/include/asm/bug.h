@@ -1,4 +1,4 @@
-/*	$NetBSD: bug.h,v 1.6 2019/09/20 12:40:23 kamil Exp $	*/
+/*	$NetBSD: bug.h,v 1.7 2021/12/19 00:46:36 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -49,6 +49,7 @@
 #define	BUILD_BUG()		do {} while (0)
 #define	BUILD_BUG_ON(CONDITION)	DRMCTASSERT(!(CONDITION))
 #define	BUILD_BUG_ON_MSG(CONDITION,MSG)	DRMCTASSERT(!(CONDITION))
+#define	BUILD_BUG_ON_INVALID(EXPR)	((void)sizeof(EXPR))
 
 /* XXX Rate limit?  */
 #define WARN(CONDITION, FMT, ...)					\
