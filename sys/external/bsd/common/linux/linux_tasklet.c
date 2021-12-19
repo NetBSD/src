@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_tasklet.c,v 1.2 2021/12/19 01:17:39 riastradh Exp $	*/
+/*	$NetBSD: linux_tasklet.c,v 1.3 2021/12/19 01:17:46 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_tasklet.c,v 1.2 2021/12/19 01:17:39 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_tasklet.c,v 1.3 2021/12/19 01:17:46 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/atomic.h>
@@ -469,4 +469,77 @@ tasklet_kill(struct tasklet_struct *tasklet)
 	 * here.
 	 */
 	membar_sync();
+}
+
+/*
+ * tasklet_disable_sync_once(tasklet)
+ *
+ *	Increment the disable count of tasklet, and if this is the
+ *	first time it was disabled and it was already running,
+ *	busy-wait for it to complete.
+ *
+ *	Caller must not care about whether the tasklet is running, or
+ *	about waiting for any side effects of the tasklet to complete,
+ *	if this was not the first time it was disabled.
+ */
+void
+tasklet_disable_sync_once(struct tasklet_struct *tasklet)
+{
+	unsigned int disablecount;
+
+	/* Increment the disable count.  */
+	disablecount = atomic_inc_uint_nv(&tasklet->tl_disablecount);
+	KASSERT(disablecount < UINT_MAX);
+	KASSERT(disablecount != 0);
+
+	/*
+	 * If it was zero, wait for it to finish running.  If it was
+	 * not zero, caller must not care whether it was running.
+	 */
+	if (disablecount == 1) {
+		while (tasklet->tl_state & TASKLET_RUNNING)
+			SPINLOCK_BACKOFF_HOOK;
+		membar_sync();
+	}
+}
+
+/*
+ * tasklet_enable_sync_once(tasklet)
+ *
+ *	Decrement the disable count of tasklet, and if it goes to zero,
+ *	kill tasklet.
+ */
+void
+tasklet_enable_sync_once(struct tasklet_struct *tasklet)
+{
+	unsigned int disablecount;
+
+	/* Decrement the disable count.  */
+	disablecount = atomic_dec_uint_nv(&tasklet->tl_disablecount);
+	KASSERT(disablecount < UINT_MAX);
+
+	/*
+	 * If it became zero, kill the tasklet.  If it was not zero,
+	 * caller must not care whether it was running.
+	 */
+	if (disablecount == 0)
+		tasklet_kill(tasklet);
+}
+
+/*
+ * tasklet_is_enabled(tasklet)
+ *
+ *	True if tasklet is not currently disabled.  Answer may be stale
+ *	as soon as it is returned -- caller must use it only as a hint,
+ *	or must arrange synchronization externally.
+ */
+bool
+tasklet_is_enabled(const struct tasklet_struct *tasklet)
+{
+	unsigned int disablecount;
+
+	disablecount = tasklet->tl_disablecount;
+	__insn_barrier();
+
+	return (disablecount == 0);
 }
