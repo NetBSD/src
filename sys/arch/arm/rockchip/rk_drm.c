@@ -1,4 +1,4 @@
-/* $NetBSD: rk_drm.c,v 1.12 2021/12/19 12:28:27 riastradh Exp $ */
+/* $NetBSD: rk_drm.c,v 1.13 2021/12/19 12:28:35 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2019 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rk_drm.c,v 1.12 2021/12/19 12:28:27 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rk_drm.c,v 1.13 2021/12/19 12:28:35 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -269,16 +269,8 @@ rk_drm_fb_create(struct drm_device *ddev, struct drm_file *file,
 		return NULL;
 
 	fb = kmem_zalloc(sizeof(*fb), KM_SLEEP);
+	drm_helper_mode_fill_fb_struct(ddev, &fb->base, cmd);
 	fb->obj = to_drm_gem_cma_obj(gem_obj);
-	fb->base.pitches[0] = cmd->pitches[0];
-	fb->base.pitches[1] = cmd->pitches[1];
-	fb->base.pitches[2] = cmd->pitches[2];
-	fb->base.offsets[0] = cmd->offsets[0];
-	fb->base.offsets[1] = cmd->offsets[2];
-	fb->base.offsets[2] = cmd->offsets[1];
-	fb->base.width = cmd->width;
-	fb->base.height = cmd->height;
-	fb->base.format = drm_format_info(cmd->pixel_format);
 
 	error = drm_framebuffer_init(ddev, &fb->base, &rk_drm_framebuffer_funcs);
 	if (error != 0)
@@ -330,10 +322,14 @@ rk_drm_fb_probe(struct drm_fb_helper *helper, struct drm_fb_helper_surface_size 
 		return -ENOMEM;
 	}
 
+	/* similar to drm_helper_mode_fill_fb_struct(), but we have no cmd */
 	fb->pitches[0] = pitch;
 	fb->offsets[0] = 0;
 	fb->width = width;
 	fb->height = height;
+	fb->dev = ddev;
+	fb->modifier = 0;
+	fb->flags = 0;
 #ifdef __ARM_BIG_ENDIAN
 	fb->format = drm_format_info(DRM_FORMAT_BGRX8888);
 #else
