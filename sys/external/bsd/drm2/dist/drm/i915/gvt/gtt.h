@@ -1,4 +1,4 @@
-/*	$NetBSD: gtt.h,v 1.3 2021/12/19 01:24:25 riastradh Exp $	*/
+/*	$NetBSD: gtt.h,v 1.4 2021/12/19 11:15:49 riastradh Exp $	*/
 
 /*
  * Copyright(c) 2011-2016 Intel Corporation. All rights reserved.
@@ -35,17 +35,6 @@
 
 #ifndef _GVT_GTT_H_
 #define _GVT_GTT_H_
-
-#ifdef __NetBSD__
-#include <drm/bus_dma_hacks.h>
-#include <x86/machdep.h>
-#include <x86/pte.h>
-#define	_PAGE_PRESENT	PG_V	/* 0x01 PTE is present / valid */
-#define	_PAGE_RW	PG_RW	/* 0x02 read/write */
-#define	_PAGE_PWT	PG_WT	/* 0x08 write-through */
-#define	_PAGE_PCD	PG_N	/* 0x10 page cache disabled / non-cacheable */
-#define	_PAGE_PAT	PG_PAT	/* 0x80 page attribute table on PTE */
-#endif
 
 #define I915_GTT_PAGE_SHIFT         12
 
