@@ -1,4 +1,4 @@
-/*	$NetBSD: dma-fence-chain.h,v 1.2 2021/12/19 10:38:53 riastradh Exp $	*/
+/*	$NetBSD: dma-fence-chain.h,v 1.3 2021/12/19 10:47:06 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -36,6 +36,8 @@
 struct dma_fence_chain {
 	struct dma_fence	base;
 	uint64_t		prev_seqno;
+
+	spinlock_t		dfc_lock;
 };
 
 #define	dma_fence_chain_find_seqno	linux_dma_fence_chain_find_seqno
