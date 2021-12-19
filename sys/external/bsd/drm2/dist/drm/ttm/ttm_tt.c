@@ -1,4 +1,4 @@
-/*	$NetBSD: ttm_tt.c,v 1.17 2021/12/19 11:32:54 riastradh Exp $	*/
+/*	$NetBSD: ttm_tt.c,v 1.18 2021/12/19 12:29:16 riastradh Exp $	*/
 
 /* SPDX-License-Identifier: GPL-2.0 OR MIT */
 /**************************************************************************
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ttm_tt.c,v 1.17 2021/12/19 11:32:54 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ttm_tt.c,v 1.18 2021/12/19 12:29:16 riastradh Exp $");
 
 #define pr_fmt(fmt) "[TTM] " fmt
 
@@ -98,8 +98,26 @@ static int ttm_tt_alloc_page_directory(struct ttm_tt *ttm)
 	return 0;
 }
 
+static int ttm_sg_tt_alloc_page_directory(struct ttm_dma_tt *);
+
 static int ttm_dma_tt_alloc_page_directory(struct ttm_dma_tt *ttm)
 {
+#ifdef __NetBSD__
+	int r;
+
+	/* Create array of pages at ttm->ttm.pages.  */
+	r = ttm_tt_alloc_page_directory(&ttm->ttm);
+	if (r)
+		return r;
+
+	/* Create bus DMA map at ttm->dma_address.  */
+	r = ttm_sg_tt_alloc_page_directory(ttm);
+	if (r)
+		return r;
+
+	/* Success!  */
+	return 0;
+#else
 	ttm->ttm.pages = kvmalloc_array(ttm->ttm.num_pages,
 					  sizeof(*ttm->ttm.pages) +
 					  sizeof(*ttm->dma_address),
@@ -108,16 +126,25 @@ static int ttm_dma_tt_alloc_page_directory(struct ttm_dma_tt *ttm)
 		return -ENOMEM;
 	ttm->dma_address = (void *) (ttm->ttm.pages + ttm->ttm.num_pages);
 	return 0;
+#endif
 }
 
 static int ttm_sg_tt_alloc_page_directory(struct ttm_dma_tt *ttm)
 {
+#ifdef __NetBSD__
+	ttm->dma_address = NULL;
+	/* XXX errno NetBSD->Linux */
+	return -bus_dmamap_create(ttm->ttm.bdev->dmat,
+	    ttm->ttm.num_pages << PAGE_SHIFT, ttm->ttm.num_pages, PAGE_SIZE, 0,
+	    BUS_DMA_WAITOK, &ttm->dma_address);
+#else
 	ttm->dma_address = kvmalloc_array(ttm->ttm.num_pages,
 					  sizeof(*ttm->dma_address),
 					  GFP_KERNEL | __GFP_ZERO);
 	if (!ttm->dma_address)
 		return -ENOMEM;
 	return 0;
+#endif
 }
 
 static int ttm_tt_set_page_caching(struct page *p,
@@ -295,38 +322,7 @@ int ttm_dma_tt_init(struct ttm_dma_tt *ttm_dma, struct ttm_buffer_object *bo,
 		pr_err("Failed allocating page table\n");
 		return -ENOMEM;
 	}
-#ifdef __NetBSD__
-    {
-	int error;
-
-	if (ttm->num_pages > (SIZE_MAX /
-		MIN(sizeof(ttm_dma->dma_segs[0]), PAGE_SIZE))) {
-		error = ENOMEM;
-		goto fail0;
-	}
-	ttm_dma->dma_segs = kmem_alloc((ttm->num_pages *
-		sizeof(ttm_dma->dma_segs[0])), KM_SLEEP);
-	error = bus_dmamap_create(ttm->bdev->dmat,
-	    (ttm->num_pages * PAGE_SIZE), ttm->num_pages, PAGE_SIZE, 0,
-	    BUS_DMA_WAITOK, &ttm_dma->dma_address);
-	if (error)
-		goto fail1;
-
 	return 0;
-
-fail2: __unused
-	bus_dmamap_destroy(ttm->bdev->dmat, ttm_dma->dma_address);
-fail1:	kmem_free(ttm_dma->dma_segs, (ttm->num_pages *
-		sizeof(ttm_dma->dma_segs[0])));
-fail0:	KASSERT(error);
-	drm_free_large(ttm->pages);
-	uao_detach(ttm->swap_storage);
-	/* XXX errno NetBSD->Linux */
-	return -error;
-    }
-#else
-	return 0;
-#endif
 }
 EXPORT_SYMBOL(ttm_dma_tt_init);
 
@@ -357,23 +353,19 @@ void ttm_dma_tt_fini(struct ttm_dma_tt *ttm_dma)
 	struct ttm_tt *ttm = &ttm_dma->ttm;
 
 #ifdef __NetBSD__
-	bus_dmamap_destroy(ttm->bdev->dmat, ttm_dma->dma_address);
-	kmem_free(ttm_dma->dma_segs, (ttm->num_pages *
-		sizeof(ttm_dma->dma_segs[0])));
-#endif
-
+	if (ttm_dma->dma_address) {
+		bus_dmamap_destroy(ttm->bdev->dmat, ttm_dma->dma_address);
+		ttm_dma->dma_address = NULL;
+	}
+	ttm_tt_fini(ttm);
+#else
 	if (ttm->pages)
 		kvfree(ttm->pages);
 	else
 		kvfree(ttm_dma->dma_address);
 	ttm->pages = NULL;
-
-#ifdef __NetBSD__
-	uao_detach(ttm->swap_storage);
-	ttm->swap_storage = NULL;
-#endif
-
 	ttm_dma->dma_address = NULL;
+#endif
 }
 EXPORT_SYMBOL(ttm_dma_tt_fini);
 
