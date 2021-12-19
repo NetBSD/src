@@ -1,4 +1,4 @@
-/*	$NetBSD: ktime.h,v 1.10 2021/12/19 01:15:14 riastradh Exp $	*/
+/*	$NetBSD: ktime.h,v 1.11 2021/12/19 01:15:35 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -157,6 +157,12 @@ static inline bool
 time_in_range(unsigned long x, unsigned long a, unsigned long b)
 {
 	return ((a <= x) && (x <= b));
+}
+
+static inline bool
+ktime_after(ktime_t a, ktime_t b)
+{
+	return ktime_to_ns(a) > ktime_to_ns(b);
 }
 
 #endif  /* _LINUX_KTIME_H_ */
