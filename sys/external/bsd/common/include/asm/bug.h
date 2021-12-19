@@ -1,4 +1,4 @@
-/*	$NetBSD: bug.h,v 1.7 2021/12/19 00:46:36 riastradh Exp $	*/
+/*	$NetBSD: bug.h,v 1.1 2021/12/19 10:55:15 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
