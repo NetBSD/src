@@ -1,4 +1,4 @@
-/*	$NetBSD: gen8_ppgtt.c,v 1.9 2021/12/19 12:12:54 riastradh Exp $	*/
+/*	$NetBSD: gen8_ppgtt.c,v 1.10 2021/12/19 12:13:01 riastradh Exp $	*/
 
 // SPDX-License-Identifier: MIT
 /*
@@ -6,7 +6,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gen8_ppgtt.c,v 1.9 2021/12/19 12:12:54 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gen8_ppgtt.c,v 1.10 2021/12/19 12:13:01 riastradh Exp $");
 
 #include <linux/log2.h>
 
@@ -228,8 +228,11 @@ static u64 __gen8_ppgtt_clear(struct i915_address_space * const vm,
 			start += count;
 		}
 
-		if (release_pd_entry(pd, idx, pt, scratch))
+		if (release_pd_entry(pd, idx, pt, scratch)) {
+			if (lvl)
+				spin_lock_destroy(&as_pd(pt)->lock);
 			free_px(vm, pt);
+		}
 	} while (idx++, --len);
 
 	return start;
