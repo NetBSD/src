@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic.h,v 1.29 2021/12/19 01:46:01 riastradh Exp $	*/
+/*	$NetBSD: atomic.h,v 1.30 2021/12/19 10:57:12 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -418,6 +418,18 @@ atomic_long_inc_not_zero(struct atomic_long *a)
 {
 	/* membar implied by atomic_long_add_unless */
 	return atomic_long_add_unless(a, 1, 0);
+}
+
+static inline long
+atomic_long_xchg(struct atomic_long *a, long new)
+{
+	long old;
+
+	smp_mb__before_atomic();
+	old = (long)atomic_swap_ulong(&a->al_v, (unsigned long)new);
+	smp_mb__after_atomic();
+
+	return old;
 }
 
 static inline long
