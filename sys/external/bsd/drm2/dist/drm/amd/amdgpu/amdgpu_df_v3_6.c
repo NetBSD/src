@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu_df_v3_6.c,v 1.4 2021/12/19 11:59:45 riastradh Exp $	*/
+/*	$NetBSD: amdgpu_df_v3_6.c,v 1.5 2021/12/19 11:59:53 riastradh Exp $	*/
 
 /*
  * Copyright 2018 Advanced Micro Devices, Inc.
@@ -23,7 +23,7 @@
  *
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdgpu_df_v3_6.c,v 1.4 2021/12/19 11:59:45 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdgpu_df_v3_6.c,v 1.5 2021/12/19 11:59:53 riastradh Exp $");
 
 #include "amdgpu.h"
 #include "df_v3_6.h"
@@ -696,7 +696,7 @@ static void df_v3_6_pmc_get_count(struct amdgpu_device *adev,
 		if (*count >= DF_V3_6_PERFMON_OVERFLOW)
 			*count = 0;
 
-		DRM_DEBUG_DRIVER("config=%llx addr=%08x:%08x val=%08x:%08x",
+		DRM_DEBUG_DRIVER("config=%"PRIx64" addr=%08x:%08x val=%08x:%08x",
 			 config, lo_base_addr, hi_base_addr, lo_val, hi_val);
 
 		break;
