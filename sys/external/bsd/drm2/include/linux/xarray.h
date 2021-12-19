@@ -1,4 +1,4 @@
-/*	$NetBSD: xarray.h,v 1.8 2021/12/19 11:51:07 riastradh Exp $	*/
+/*	$NetBSD: xarray.h,v 1.9 2021/12/19 12:05:25 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
 #ifndef	_LINUX_XARRAY_H_
 #define	_LINUX_XARRAY_H_
 
-#include <sys/radixtree.h>
+#include <sys/rbtree.h>
 
 #include <linux/slab.h>
 
@@ -43,14 +43,14 @@ struct xa_limit {
 
 struct xarray {
 	kmutex_t		xa_lock;
-	struct radix_tree	xa_tree;
+	struct rb_tree		xa_tree;
 	gfp_t			xa_gfp;
 };
 
 #define	xa_for_each(XA, INDEX, ENTRY)					      \
 	for ((INDEX) = 0, (ENTRY) = xa_find((XA), &(INDEX), ULONG_MAX, -1);   \
 		(ENTRY) != NULL;					      \
-		(ENTRY) = xa_find_after((XA), &(INDEX), ULONG_MAX, 0))
+		(ENTRY) = xa_find_after((XA), &(INDEX), ULONG_MAX, -1))
 
 #define	XA_ERROR(error)	((void *)(((uintptr_t)error << 2) | 2))
 
