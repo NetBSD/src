@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu_ras.c,v 1.4 2021/12/19 12:23:16 riastradh Exp $	*/
+/*	$NetBSD: amdgpu_ras.c,v 1.5 2021/12/19 12:31:45 riastradh Exp $	*/
 
 /*
  * Copyright 2018 Advanced Micro Devices, Inc.
@@ -24,7 +24,7 @@
  *
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdgpu_ras.c,v 1.4 2021/12/19 12:23:16 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdgpu_ras.c,v 1.5 2021/12/19 12:31:45 riastradh Exp $");
 
 #include <linux/debugfs.h>
 #include <linux/list.h>
@@ -1688,6 +1688,7 @@ free:
 	kfree((*data)->bps_bo);
 	kfree(*data);
 	con->eh_data = NULL;
+	mutex_destroy(&con->recovery_lock);
 out:
 	DRM_WARN("Failed to initialize ras recovery!\n");
 
@@ -1706,12 +1707,11 @@ static int amdgpu_ras_recovery_fini(struct amdgpu_device *adev)
 	cancel_work_sync(&con->recovery_work);
 	amdgpu_ras_release_bad_pages(adev);
 
-	mutex_lock(&con->recovery_lock);
+	mutex_destroy(&con->recovery_lock);
 	con->eh_data = NULL;
 	kfree(data->bps);
 	kfree(data->bps_bo);
 	kfree(data);
-	mutex_unlock(&con->recovery_lock);
 
 	return 0;
 }

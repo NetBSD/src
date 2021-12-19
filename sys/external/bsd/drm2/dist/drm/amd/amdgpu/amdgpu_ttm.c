@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu_ttm.c,v 1.9 2021/12/19 12:21:29 riastradh Exp $	*/
+/*	$NetBSD: amdgpu_ttm.c,v 1.10 2021/12/19 12:31:45 riastradh Exp $	*/
 
 /*
  * Copyright 2009 Jerome Glisse.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdgpu_ttm.c,v 1.9 2021/12/19 12:21:29 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdgpu_ttm.c,v 1.10 2021/12/19 12:31:45 riastradh Exp $");
 
 #include <linux/dma-mapping.h>
 #include <linux/iommu.h>
@@ -2069,6 +2069,7 @@ void amdgpu_ttm_fini(struct amdgpu_device *adev)
 	ttm_bo_clean_mm(&adev->mman.bdev, AMDGPU_PL_OA);
 	ttm_bo_device_release(&adev->mman.bdev);
 	adev->mman.initialized = false;
+	mutex_destroy(&adev->mman.gtt_window_lock);
 	DRM_INFO("amdgpu: ttm finalized\n");
 }
 

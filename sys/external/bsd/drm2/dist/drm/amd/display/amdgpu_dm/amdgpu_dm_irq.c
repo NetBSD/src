@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu_dm_irq.c,v 1.2 2021/12/18 23:45:00 riastradh Exp $	*/
+/*	$NetBSD: amdgpu_dm_irq.c,v 1.3 2021/12/19 12:31:45 riastradh Exp $	*/
 
 /*
  * Copyright 2015 Advanced Micro Devices, Inc.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdgpu_dm_irq.c,v 1.2 2021/12/18 23:45:00 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdgpu_dm_irq.c,v 1.3 2021/12/19 12:31:45 riastradh Exp $");
 
 #include "dm_services_types.h"
 #include "dc.h"
@@ -414,6 +414,8 @@ void amdgpu_dm_irq_fini(struct amdgpu_device *adev)
 		DM_IRQ_TABLE_UNLOCK(adev, irq_table_flags);
 		flush_work(&lh->work);
 	}
+
+	spin_lock_destroy(&adev->dm.irq_handler_list_table_lock);
 }
 
 int amdgpu_dm_irq_suspend(struct amdgpu_device *adev)

@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu_amd_powerplay.c,v 1.3 2021/12/19 10:59:02 riastradh Exp $	*/
+/*	$NetBSD: amdgpu_amd_powerplay.c,v 1.4 2021/12/19 12:31:45 riastradh Exp $	*/
 
 /*
  * Copyright 2015 Advanced Micro Devices, Inc.
@@ -23,7 +23,7 @@
  *
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdgpu_amd_powerplay.c,v 1.3 2021/12/19 10:59:02 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdgpu_amd_powerplay.c,v 1.4 2021/12/19 12:31:45 riastradh Exp $");
 
 #include "pp_debug.h"
 #include <linux/types.h>
@@ -73,6 +73,7 @@ static void amd_powerplay_destroy(struct amdgpu_device *adev)
 	kfree(hwmgr->hardcode_pp_table);
 	hwmgr->hardcode_pp_table = NULL;
 
+	mutex_destroy(&hwmgr->smu_lock);
 	kfree(hwmgr);
 	hwmgr = NULL;
 }

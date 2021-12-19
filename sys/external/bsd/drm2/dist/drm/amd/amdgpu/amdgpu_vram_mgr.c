@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu_vram_mgr.c,v 1.3 2021/12/19 12:21:29 riastradh Exp $	*/
+/*	$NetBSD: amdgpu_vram_mgr.c,v 1.4 2021/12/19 12:31:45 riastradh Exp $	*/
 
 /*
  * Copyright 2016 Advanced Micro Devices, Inc.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdgpu_vram_mgr.c,v 1.3 2021/12/19 12:21:29 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdgpu_vram_mgr.c,v 1.4 2021/12/19 12:31:45 riastradh Exp $");
 
 #include "amdgpu.h"
 #include "amdgpu_vm.h"
@@ -231,6 +231,7 @@ static int amdgpu_vram_mgr_fini(struct ttm_mem_type_manager *man)
 	spin_lock(&mgr->lock);
 	drm_mm_takedown(&mgr->mm);
 	spin_unlock(&mgr->lock);
+	spin_lock_destroy(&mgr->lock);
 	kfree(mgr);
 	man->priv = NULL;
 #ifdef __NetBSD__		/* XXX amdgpu sysfs */
