@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_vma_manager.h,v 1.1 2014/07/16 20:56:25 riastradh Exp $	*/
+/*	$NetBSD: drm_vma_manager.h,v 1.2 2021/12/19 01:02:02 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -37,6 +37,8 @@
 #include <sys/rbtree.h>
 #include <sys/rwlock.h>
 #include <sys/vmem.h>
+
+struct drm_file;
 
 struct drm_vma_offset_manager {
 	krwlock_t	vom_lock;
@@ -77,7 +79,7 @@ drm_vma_node_offset_addr(struct drm_vma_offset_node *node)
 }
 
 struct drm_vma_offset_file {
-	struct file	*vof_file;
+	struct drm_file	*vof_file;
 	struct rb_node	vof_rb_node;
 };
 
@@ -108,10 +110,11 @@ struct drm_vma_offset_node *
 	drm_vma_offset_exact_lookup(struct drm_vma_offset_manager *,
 	    unsigned long, unsigned long);
 
-int	drm_vma_node_allow(struct drm_vma_offset_node *, struct file *);
-void	drm_vma_node_revoke(struct drm_vma_offset_node *, struct file *);
-bool	drm_vma_node_is_allowed(struct drm_vma_offset_node *, struct file *);
+int	drm_vma_node_allow(struct drm_vma_offset_node *, struct drm_file *);
+void	drm_vma_node_revoke(struct drm_vma_offset_node *, struct drm_file *);
+bool	drm_vma_node_is_allowed(struct drm_vma_offset_node *,
+	    struct drm_file *);
 int	drm_vma_node_verify_access(struct drm_vma_offset_node *,
-	    struct file *);
+	    struct drm_file *);
 
 #endif	/* _DRM_DRM_VMA_MANAGER_H_ */
