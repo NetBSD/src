@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_ioctl.c,v 1.17 2021/12/19 09:48:45 riastradh Exp $	*/
+/*	$NetBSD: drm_ioctl.c,v 1.18 2021/12/19 09:48:53 riastradh Exp $	*/
 
 /*
  * Created: Fri Jan  8 09:01:26 1999 by faith@valinux.com
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_ioctl.c,v 1.17 2021/12/19 09:48:45 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_ioctl.c,v 1.18 2021/12/19 09:48:53 riastradh Exp $");
 
 #include <linux/export.h>
 #include <linux/nospec.h>
@@ -855,7 +855,7 @@ drm_ioctl(struct file *fp, unsigned long cmd, void *data)
 	struct drm_device *const dev = file->minor->dev;
 	const struct drm_ioctl_desc *ioctl;
 
-	if (drm_device_is_unplugged(dev))
+	if (drm_dev_is_unplugged(dev))
 		return ENXIO;
 
 	const bool is_driver_ioctl =
