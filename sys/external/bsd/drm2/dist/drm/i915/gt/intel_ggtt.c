@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_ggtt.c,v 1.3 2021/12/19 01:24:25 riastradh Exp $	*/
+/*	$NetBSD: intel_ggtt.c,v 1.4 2021/12/19 01:35:35 riastradh Exp $	*/
 
 // SPDX-License-Identifier: MIT
 /*
@@ -6,7 +6,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intel_ggtt.c,v 1.3 2021/12/19 01:24:25 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intel_ggtt.c,v 1.4 2021/12/19 01:35:35 riastradh Exp $");
 
 #include <linux/stop_machine.h>
 
@@ -308,7 +308,7 @@ static void gen6_ggtt_insert_entries(struct i915_address_space *vm,
 #ifdef __NetBSD__
 	pgno = vma->node.start >> PAGE_SHIFT;
 	for (seg = 0; seg < map->dm_nsegs; seg++) {
-		bus_addr_t addr = map->dm_segs[seg].ds_addr;
+		addr = map->dm_segs[seg].ds_addr;
 		bus_size_t len = map->dm_segs[seg].ds_len;
 		KASSERT((addr & (PAGE_SIZE - 1)) == 0);
 		KASSERT((len & (PAGE_SIZE - 1)) == 0);
@@ -1259,7 +1259,11 @@ static int ggtt_probe_hw(struct i915_ggtt *ggtt, struct intel_gt *gt)
 
 	ggtt->vm.gt = gt;
 	ggtt->vm.i915 = i915;
+#ifdef __NetBSD__
+	ggtt->vm.dmat = i915->drm.dmat;
+#else
 	ggtt->vm.dma = &i915->drm.pdev->dev;
+#endif
 
 	if (INTEL_GEN(i915) <= 5)
 		ret = i915_gmch_probe(ggtt);
