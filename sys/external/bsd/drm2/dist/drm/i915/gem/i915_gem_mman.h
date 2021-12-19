@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_gem_mman.h,v 1.2 2021/12/18 23:45:30 riastradh Exp $	*/
+/*	$NetBSD: i915_gem_mman.h,v 1.3 2021/12/19 11:17:35 riastradh Exp $	*/
 
 /*
  * SPDX-License-Identifier: MIT
@@ -20,7 +20,9 @@ struct i915_mmap_offset;
 struct mutex;
 
 int i915_gem_mmap_gtt_version(void);
+#ifdef __linux__
 int i915_gem_mmap(struct file *filp, struct vm_area_struct *vma);
+#endif
 
 int i915_gem_dumb_mmap_offset(struct drm_file *file_priv,
 			      struct drm_device *dev,
