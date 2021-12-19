@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_dp.c,v 1.6 2021/12/19 12:40:31 riastradh Exp $	*/
+/*	$NetBSD: intel_dp.c,v 1.7 2021/12/19 12:41:54 riastradh Exp $	*/
 
 /*
  * Copyright © 2008 Intel Corporation
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intel_dp.c,v 1.6 2021/12/19 12:40:31 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intel_dp.c,v 1.7 2021/12/19 12:41:54 riastradh Exp $");
 
 #include <linux/export.h>
 #include <linux/i2c.h>
@@ -1730,6 +1730,7 @@ static i915_reg_t skl_aux_data_reg(struct intel_dp *intel_dp, int index)
 static void
 intel_dp_aux_fini(struct intel_dp *intel_dp)
 {
+	drm_dp_aux_fini(&intel_dp->aux);
 	kfree(__UNCONST(intel_dp->aux.name));
 }
 

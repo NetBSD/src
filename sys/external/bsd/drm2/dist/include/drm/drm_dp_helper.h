@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_dp_helper.h,v 1.8 2021/12/19 10:48:47 riastradh Exp $	*/
+/*	$NetBSD: drm_dp_helper.h,v 1.9 2021/12/19 12:41:54 riastradh Exp $	*/
 
 /*
  * Copyright © 2008 Keith Packard
@@ -1472,6 +1472,7 @@ void drm_dp_downstream_debug(struct seq_file *m, const u8 dpcd[DP_RECEIVER_CAP_S
 
 void drm_dp_remote_aux_init(struct drm_dp_aux *aux);
 void drm_dp_aux_init(struct drm_dp_aux *aux);
+void drm_dp_aux_fini(struct drm_dp_aux *aux);
 int drm_dp_aux_register(struct drm_dp_aux *aux);
 void drm_dp_aux_unregister(struct drm_dp_aux *aux);
 
