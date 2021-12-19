@@ -1,4 +1,4 @@
-/*	$NetBSD: rcupdate.h,v 1.8 2021/12/19 01:17:54 riastradh Exp $	*/
+/*	$NetBSD: rcupdate.h,v 1.9 2021/12/19 01:18:02 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -41,12 +41,13 @@
 #define	RCU_INIT_POINTER(P, V)	((P) = (V))
 
 #define	rcu_assign_pointer(P, V) do {					      \
-	membar_producer();						      \
-	(P) = (V);							      \
+	__typeof__(*(P)) *__rcu_assign_pointer_tmp = (V);		      \
+	membar_exit();							      \
+	(P) = __rcu_assign_pointer_tmp;					      \
 } while (0)
 
 #define	rcu_dereference(P) ({						      \
-	typeof(*(P)) *__rcu_dereference_tmp = (P);			      \
+	__typeof__(*(P)) *__rcu_dereference_tmp = (P);			      \
 	membar_datadep_consumer();					      \
 	__rcu_dereference_tmp;						      \
 })
