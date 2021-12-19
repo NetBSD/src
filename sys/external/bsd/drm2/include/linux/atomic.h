@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic.h,v 1.28 2021/12/19 01:45:53 riastradh Exp $	*/
+/*	$NetBSD: atomic.h,v 1.29 2021/12/19 01:46:01 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -163,7 +163,6 @@ atomic_dec_if_positive(atomic_t *atomic)
 	smp_mb__before_atomic();
 	do {
 		v = atomic->a_u.au_uint;
-		__insn_barrier();
 		if (v <= 0)
 			break;
 	} while (atomic_cas_uint(&atomic->a_u.au_uint, v, v - 1) != v);
@@ -194,7 +193,6 @@ atomic_fetch_xor(int value, atomic_t *atomic)
 	smp_mb__before_atomic();
 	do {
 		old = atomic->a_u.au_uint;
-		__insn_barrier();
 		new = old ^ value;
 	} while (atomic_cas_uint(&atomic->a_u.au_uint, old, new) != old);
 	smp_mb__after_atomic();
@@ -224,7 +222,6 @@ atomic_add_unless(atomic_t *atomic, int addend, int zero)
 	smp_mb__before_atomic();
 	do {
 		value = atomic->a_u.au_int;
-		__insn_barrier();
 		if (value == zero)
 			break;
 	} while (atomic_cas_uint(&atomic->a_u.au_uint, value, (value + addend))
@@ -407,7 +404,6 @@ atomic_long_add_unless(struct atomic_long *a, long addend, long zero)
 	smp_mb__before_atomic();
 	do {
 		value = (long)a->al_v;
-		__insn_barrier();
 		if (value == zero)
 			break;
 	} while (atomic_cas_ulong(&a->al_v, (unsigned long)value,
