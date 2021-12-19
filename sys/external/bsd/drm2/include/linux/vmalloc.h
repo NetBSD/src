@@ -1,4 +1,4 @@
-/*	$NetBSD: vmalloc.h,v 1.9 2021/12/19 01:22:29 riastradh Exp $	*/
+/*	$NetBSD: vmalloc.h,v 1.10 2021/12/19 10:51:24 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013, 2018 The NetBSD Foundation, Inc.
@@ -36,6 +36,7 @@
 
 #include <uvm/uvm_extern.h>
 
+#include <linux/mm.h>
 #include <linux/mm_types.h>
 #include <linux/overflow.h>
 
