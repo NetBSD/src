@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_pci_autoconf.c,v 1.6 2021/12/19 11:53:02 riastradh Exp $	*/
+/*	$NetBSD: i915_pci_autoconf.c,v 1.7 2021/12/19 11:53:51 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_pci_autoconf.c,v 1.6 2021/12/19 11:53:02 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_pci_autoconf.c,v 1.7 2021/12/19 11:53:51 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/queue.h>
@@ -189,7 +189,7 @@ i915drmkms_attach_real(device_t self)
 	}
 
 	/* XXX errno Linux->NetBSD */
-	error = -drm_pci_attach(sc->sc_drm_dev, pa, &sc->sc_pci_dev);
+	error = -drm_pci_attach(sc->sc_drm_dev, &sc->sc_pci_dev);
 	if (error) {
 		aprint_error_dev(self, "unable to attach drm: %d\n", error);
 		return;

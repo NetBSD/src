@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_pci.c,v 1.45 2021/12/19 11:09:48 riastradh Exp $	*/
+/*	$NetBSD: drm_pci.c,v 1.46 2021/12/19 11:53:51 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_pci.c,v 1.45 2021/12/19 11:09:48 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_pci.c,v 1.46 2021/12/19 11:53:51 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/errno.h>
@@ -59,10 +59,10 @@ drm_pci_attach_args(struct drm_device *dev)
 }
 
 int
-drm_pci_attach(struct drm_device *dev, const struct pci_attach_args *pa,
-    struct pci_dev *pdev)
+drm_pci_attach(struct drm_device *dev, struct pci_dev *pdev)
 {
 	device_t self = dev->dev;
+	const struct pci_attach_args *pa = &pdev->pd_pa;
 	unsigned int unit;
 	int ret;
 
