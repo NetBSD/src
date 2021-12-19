@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_vma.h,v 1.4 2021/12/19 11:11:59 riastradh Exp $	*/
+/*	$NetBSD: i915_vma.h,v 1.5 2021/12/19 11:12:06 riastradh Exp $	*/
 
 /*
  * Copyright © 2016 Intel Corporation
@@ -297,7 +297,14 @@ static inline bool i915_node_color_differs(const struct drm_mm_node *node,
  *
  * Returns a valid iomapped pointer or ERR_PTR.
  */
+#ifdef __NetBSD__
+#  define	__iomem		__i915_vma_iomem
+#endif
 void __iomem *i915_vma_pin_iomap(struct i915_vma *vma);
+#ifdef __NetBSD__
+#  undef	__iomem
+#endif
+
 #define IO_ERR_PTR(x) ((void __iomem *)ERR_PTR(x))
 
 /**
