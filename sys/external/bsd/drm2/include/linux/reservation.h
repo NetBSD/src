@@ -1,4 +1,4 @@
-/*	$NetBSD: reservation.h,v 1.8 2018/08/27 15:25:13 riastradh Exp $	*/
+/*	$NetBSD: reservation.h,v 1.9 2021/12/19 00:28:37 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #ifndef	_LINUX_RESERVATION_H_
 #define	_LINUX_RESERVATION_H_
 
-#include <linux/fence.h>
+#include <linux/dma-fence.h>
 #include <linux/rcupdate.h>
 #include <linux/ww_mutex.h>
 
@@ -40,7 +40,7 @@ struct reservation_object {
 	struct ww_mutex		lock;
 
 	unsigned				robj_version;
-	struct fence __rcu			*robj_fence;
+	struct dma_fence __rcu			*robj_fence;
 	struct reservation_object_list __rcu	*robj_list;
 	struct reservation_object_list __rcu	*robj_prealloc;
 };
@@ -50,14 +50,14 @@ struct reservation_object_list {
 
 	uint32_t		shared_count;
 	uint32_t		shared_max;
-	struct fence __rcu	*shared[];
+	struct dma_fence __rcu	*shared[];
 };
 
 /* NetBSD addition */
 struct reservation_poll {
 	kmutex_t		rp_lock;
 	struct selinfo		rp_selq;
-	struct fence_cb		rp_fcb;
+	struct dma_fence_cb		rp_fcb;
 	bool			rp_claimed;
 };
 
@@ -83,18 +83,18 @@ extern struct ww_class	reservation_ww_class;
 void	reservation_object_init(struct reservation_object *);
 void	reservation_object_fini(struct reservation_object *);
 bool	reservation_object_held(struct reservation_object *);
-struct fence *
+struct dma_fence *
 	reservation_object_get_excl(struct reservation_object *);
 struct reservation_object_list *
 	reservation_object_get_list(struct reservation_object *);
 int	reservation_object_reserve_shared(struct reservation_object *);
 void	reservation_object_add_excl_fence(struct reservation_object *,
-	    struct fence *);
+	    struct dma_fence *);
 void	reservation_object_add_shared_fence(struct reservation_object *,
-	    struct fence *);
+	    struct dma_fence *);
 
 int	reservation_object_get_fences_rcu(struct reservation_object *,
-	    struct fence **, unsigned *, struct fence ***);
+	    struct dma_fence **, unsigned *, struct dma_fence ***);
 
 bool	reservation_object_test_signaled_rcu(struct reservation_object *,
 	    bool);
