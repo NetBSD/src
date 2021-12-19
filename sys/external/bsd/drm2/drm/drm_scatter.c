@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_scatter.c,v 1.8 2021/12/19 10:32:59 riastradh Exp $	*/
+/*	$NetBSD: drm_scatter.c,v 1.9 2021/12/19 12:30:05 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,13 +30,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_scatter.c,v 1.8 2021/12/19 10:32:59 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_scatter.c,v 1.9 2021/12/19 12:30:05 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/bus.h>
 #include <sys/errno.h>
 #include <sys/systm.h>
 
+#include <linux/mm.h>
 #include <linux/slab.h>
 
 #include <drm/drm_device.h>
