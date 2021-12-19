@@ -1,4 +1,4 @@
-/*	$NetBSD: io-mapping.h,v 1.8 2021/12/19 11:39:56 riastradh Exp $	*/
+/*	$NetBSD: io-mapping.h,v 1.9 2021/12/19 11:57:43 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
 
 struct io_mapping {
 	bus_space_tag_t		diom_bst;
-	bus_addr_t		diom_addr;
+	bus_addr_t		base; /* Linux API */
 	bus_size_t		size; /* Linux API */
 	vaddr_t			diom_va;
 	bool			diom_mapped;
@@ -75,7 +75,7 @@ bus_space_io_mapping_init_wc(bus_space_tag_t bst, struct io_mapping *mapping,
 
 	/* Initialize the mapping record.  */
 	mapping->diom_bst = bst;
-	mapping->diom_addr = addr;
+	mapping->base = addr;
 	mapping->size = size;
 	mapping->diom_mapped = false;
 
@@ -133,7 +133,7 @@ io_mapping_map_wc(struct io_mapping *mapping, bus_addr_t offset,
 	KASSERT(__type_fit(off_t, offset));
 	KASSERT(!mapping->diom_mapped);
 
-	cookie = bus_space_mmap(mapping->diom_bst, mapping->diom_addr, offset,
+	cookie = bus_space_mmap(mapping->diom_bst, mapping->base, offset,
 	    PROT_READ|PROT_WRITE,
 	    BUS_SPACE_MAP_LINEAR|BUS_SPACE_MAP_PREFETCHABLE);
 	KASSERT(cookie != (paddr_t)-1);

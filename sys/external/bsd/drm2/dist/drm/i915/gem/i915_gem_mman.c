@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_gem_mman.c,v 1.8 2021/12/19 11:56:52 riastradh Exp $	*/
+/*	$NetBSD: i915_gem_mman.c,v 1.9 2021/12/19 11:57:42 riastradh Exp $	*/
 
 /*
  * SPDX-License-Identifier: MIT
@@ -7,7 +7,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_gem_mman.c,v 1.8 2021/12/19 11:56:52 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_gem_mman.c,v 1.9 2021/12/19 11:57:42 riastradh Exp $");
 
 #include <linux/anon_inodes.h>
 #include <linux/mman.h>
@@ -239,16 +239,22 @@ compute_partial_view(const struct drm_i915_gem_object *obj,
 }
 
 #ifdef __NetBSD__
+/*
+ * XXX pmap_enter_default instead of pmap_enter because of a problem
+ * with using weak aliases in kernel modules.
+ *
+ * XXX This probably won't work in a Xen kernel!  Maybe this should be
+ * #ifdef _MODULE?
+ */
+int	pmap_enter_default(pmap_t, vaddr_t, paddr_t, vm_prot_t, unsigned);
+#define	pmap_enter	pmap_enter_default
 
 static int
-i915_gem_fault(struct uvm_faultinfo *ufi, vaddr_t vaddr, struct vm_page **pps,
-    int npages, int centeridx, vm_prot_t access_type, int flags)
+i915_error_to_vmf_fault(int err)
 {
-	panic("NYI");
+	return err;
 }
-
 #else
-
 static vm_fault_t i915_error_to_vmf_fault(int err)
 {
 	switch (err) {
@@ -277,19 +283,36 @@ static vm_fault_t i915_error_to_vmf_fault(int err)
 		return VM_FAULT_NOPAGE;
 	}
 }
+#endif
 
+#ifdef __NetBSD__
+static int
+vm_fault_cpu(struct uvm_faultinfo *ufi, struct i915_mmap_offset *mmo,
+    vaddr_t vaddr, struct vm_page **pps, int npages, int centeridx, int flags)
+#else
 static vm_fault_t vm_fault_cpu(struct vm_fault *vmf)
+#endif
 {
+#ifndef __NetBSD__
 	struct vm_area_struct *area = vmf->vma;
 	struct i915_mmap_offset *mmo = area->vm_private_data;
+#endif
 	struct drm_i915_gem_object *obj = mmo->obj;
+#ifdef __NetBSD__
+	bool write = ufi->entry->protection & VM_PROT_WRITE;
+#else
+	bool write = area->vm_flags & VM_WRITE;
+#endif
 	resource_size_t iomap;
 	int err;
 
 	/* Sanity check that we allow writing into this object */
-	if (unlikely(i915_gem_object_is_readonly(obj) &&
-		     area->vm_flags & VM_WRITE))
+	if (unlikely(i915_gem_object_is_readonly(obj) && write))
+#ifdef __NetBSD__
+		return -EFAULT;
+#else
 		return VM_FAULT_SIGBUS;
+#endif
 
 	err = i915_gem_object_pin_pages(obj);
 	if (err)
@@ -302,11 +325,38 @@ static vm_fault_t vm_fault_cpu(struct vm_fault *vmf)
 	}
 
 	/* PTEs are revoked in obj->ops->put_pages() */
+#ifdef __NetBSD__
+	/* XXX No lmem supported yet.  */
+	KASSERT(i915_gem_object_type_has(obj,
+		I915_GEM_OBJECT_HAS_STRUCT_PAGE));
+
+	struct scatterlist *sg = obj->mm.pages->sgl;
+	unsigned startpage = (ufi->entry->offset + (vaddr - ufi->entry->start))
+	    >> PAGE_SHIFT;
+	paddr_t paddr;
+	int i;
+
+	for (i = 0; i < npages; i++) {
+		if ((flags & PGO_ALLPAGES) == 0 && i != centeridx)
+			continue;
+		if (pps[i] == PGO_DONTCARE)
+			continue;
+		paddr = page_to_phys(sg->sg_pgs[startpage + i]);
+		/* XXX errno NetBSD->Linux */
+		err = -pmap_enter(ufi->orig_map->pmap,
+		    vaddr + i*PAGE_SIZE, paddr, ufi->entry->protection,
+		    PMAP_CANFAIL | ufi->entry->protection);
+		if (err)
+			break;
+	}
+	pmap_update(ufi->orig_map->pmap);
+#else
 	err = remap_io_sg(area,
 			  area->vm_start, area->vm_end - area->vm_start,
 			  obj->mm.pages->sgl, iomap);
+#endif
 
-	if (area->vm_flags & VM_WRITE) {
+	if (write) {
 		GEM_BUG_ON(!i915_gem_object_has_pinned_pages(obj));
 		obj->mm.dirty = true;
 	}
@@ -317,17 +367,29 @@ out:
 	return i915_error_to_vmf_fault(err);
 }
 
+#ifdef __NetBSD__
+static int
+vm_fault_gtt(struct uvm_faultinfo *ufi, struct i915_mmap_offset *mmo,
+    vaddr_t vaddr, struct vm_page **pps, int npages, int centeridx, int flags)
+#else
 static vm_fault_t vm_fault_gtt(struct vm_fault *vmf)
+#endif
 {
 #define MIN_CHUNK_PAGES (SZ_1M >> PAGE_SHIFT)
+#ifndef __NetBSD__
 	struct vm_area_struct *area = vmf->vma;
 	struct i915_mmap_offset *mmo = area->vm_private_data;
+#endif
 	struct drm_i915_gem_object *obj = mmo->obj;
 	struct drm_device *dev = obj->base.dev;
 	struct drm_i915_private *i915 = to_i915(dev);
 	struct intel_runtime_pm *rpm = &i915->runtime_pm;
 	struct i915_ggtt *ggtt = &i915->ggtt;
+#ifdef __NetBSD__
+	bool write = ufi->entry->protection & VM_PROT_WRITE;
+#else
 	bool write = area->vm_flags & VM_WRITE;
+#endif
 	intel_wakeref_t wakeref;
 	struct i915_vma *vma;
 	pgoff_t page_offset;
@@ -336,10 +398,19 @@ static vm_fault_t vm_fault_gtt(struct vm_fault *vmf)
 
 	/* Sanity check that we allow writing into this object */
 	if (i915_gem_object_is_readonly(obj) && write)
+#ifdef __NetBSD__
+		return -EFAULT;
+#else
 		return VM_FAULT_SIGBUS;
+#endif
 
+#ifdef __NetBSD__
+	page_offset = (ufi->entry->offset + (vaddr - ufi->entry->start))
+	    >> PAGE_SHIFT;
+#else
 	/* We don't use vmf->pgoff since that has the fake offset */
 	page_offset = (vmf->address - area->vm_start) >> PAGE_SHIFT;
+#endif
 
 	trace_i915_gem_object_fault(obj, page_offset, true, write);
 
@@ -399,11 +470,33 @@ static vm_fault_t vm_fault_gtt(struct vm_fault *vmf)
 		goto err_unpin;
 
 	/* Finally, remap it using the new GTT offset */
+#ifdef __NetBSD__
+	unsigned startpage = page_offset;
+	paddr_t paddr;
+	int i;
+
+	for (i = 0; i < npages; i++) {
+		if ((flags & PGO_ALLPAGES) == 0 && i != centeridx)
+			continue;
+		if (pps[i] == PGO_DONTCARE)
+			continue;
+		paddr = ggtt->gmadr.start + vma->node.start
+		    + (startpage + i)*PAGE_SIZE;
+		/* XXX errno NetBSD->Linux */
+		ret = -pmap_enter(ufi->orig_map->pmap,
+		    vaddr + i*PAGE_SIZE, paddr, ufi->entry->protection,
+		    PMAP_CANFAIL | ufi->entry->protection);
+		if (ret)
+			break;
+	}
+	pmap_update(ufi->orig_map->pmap);
+#else
 	ret = remap_io_mapping(area,
 			       area->vm_start + (vma->ggtt_view.partial.offset << PAGE_SHIFT),
 			       (ggtt->gmadr.start + vma->node.start) >> PAGE_SHIFT,
 			       min_t(u64, vma->size, area->vm_end - area->vm_start),
 			       &ggtt->iomap);
+#endif
 	if (ret)
 		goto err_fence;
 
@@ -441,7 +534,94 @@ err:
 	return i915_error_to_vmf_fault(ret);
 }
 
-#endif	/* __NetBSD__ */
+#ifdef __NetBSD__
+
+static int
+i915_gem_fault(struct uvm_faultinfo *ufi, vaddr_t vaddr, struct vm_page **pps,
+    int npages, int centeridx, vm_prot_t access_type, int flags)
+{
+	struct uvm_object *uobj = ufi->entry->object.uvm_obj;
+	struct drm_gem_object *gem =
+	    container_of(uobj, struct drm_gem_object, gemo_uvmobj);
+	struct drm_i915_gem_object *obj = to_intel_bo(gem);
+	struct drm_device *dev = obj->base.dev;
+	struct drm_vma_offset_node *node;
+	struct i915_mmap_offset *mmo;
+	bool pinned = false;
+	int error;
+
+	KASSERT(rw_lock_held(obj->base.filp->vmobjlock));
+	KASSERT(!i915_gem_object_is_readonly(obj) ||
+	    (access_type & VM_PROT_WRITE) == 0);
+	KASSERT(i915_gem_object_type_has(obj,
+		I915_GEM_OBJECT_HAS_STRUCT_PAGE|I915_GEM_OBJECT_HAS_IOMEM));
+
+	/* Actually we don't support iomem right now!  */
+	KASSERT(i915_gem_object_type_has(obj,
+		I915_GEM_OBJECT_HAS_STRUCT_PAGE));
+
+	/*
+	 * Look up the mmo again because we can't conveniently store it
+	 * alongside the mapping unless we create a separate uvm object
+	 * for it.  XXX Consider creating a separate uvm object as a
+	 * kind of subobject of the main object.
+	 */
+	rcu_read_lock();
+	drm_vma_offset_lock_lookup(dev->vma_offset_manager);
+	node = drm_vma_offset_exact_lookup_locked(dev->vma_offset_manager,
+	    ufi->entry->start >> PAGE_SHIFT,
+	    (ufi->entry->end - ufi->entry->start) >> PAGE_SHIFT);
+	drm_vma_offset_unlock_lookup(dev->vma_offset_manager);
+	rcu_read_unlock();
+
+	/*
+	 * The mmo had better be there -- hope we can't remove the mmo
+	 * without unmapping first!
+	 */
+	KASSERT(node);
+	mmo = container_of(node, struct i915_mmap_offset, vma_node);
+	KASSERT(obj == mmo->obj);
+
+	/* XXX errno Linux->NetBSD */
+	error = -i915_gem_object_pin_pages(obj);
+	if (error)
+		goto out;
+	pinned = true;
+
+	switch (mmo->mmap_type) {
+	case I915_MMAP_TYPE_WC:
+	case I915_MMAP_TYPE_WB:
+	case I915_MMAP_TYPE_UC:
+		/* XXX errno Linux->NetBSD */
+		error = -vm_fault_cpu(ufi, mmo, vaddr, pps, npages, centeridx,
+		    flags);
+		break;
+	case I915_MMAP_TYPE_GTT:
+		error = -vm_fault_gtt(ufi, mmo, vaddr, pps, npages, centeridx,
+		    flags);
+		break;
+	default:
+		panic("invalid i915 gem mmap offset type: %d",
+		    mmo->mmap_type);
+	}
+
+out:	if (pinned)
+		i915_gem_object_unpin_pages(obj);
+	uvmfault_unlockall(ufi, ufi->entry->aref.ar_amap, uobj);
+
+	/*
+	 * Remap EINTR to success, so that we return to userland.
+	 * On the way out, we'll deliver the signal, and if the signal
+	 * is not fatal then the user code which faulted will most likely
+	 * fault again, and we'll come back here for another try.
+	 */
+	if (error == EINTR)
+		error = 0;
+
+	return error;
+}
+
+#endif
 
 void __i915_gem_object_release_mmap_gtt(struct drm_i915_gem_object *obj)
 {
