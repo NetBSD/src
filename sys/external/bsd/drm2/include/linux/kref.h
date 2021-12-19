@@ -1,4 +1,4 @@
-/*	$NetBSD: kref.h,v 1.8 2021/12/19 00:46:50 riastradh Exp $	*/
+/*	$NetBSD: kref.h,v 1.9 2021/12/19 01:46:01 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -146,7 +146,6 @@ kref_read(const struct kref *kref)
 	unsigned v;
 
 	v = kref->kr_count;
-	__insn_barrier();
 
 	return v;
 }

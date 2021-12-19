@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_tasklet.c,v 1.3 2021/12/19 01:17:46 riastradh Exp $	*/
+/*	$NetBSD: linux_tasklet.c,v 1.4 2021/12/19 01:46:01 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_tasklet.c,v 1.3 2021/12/19 01:17:46 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_tasklet.c,v 1.4 2021/12/19 01:46:01 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/atomic.h>
@@ -208,7 +208,6 @@ tasklet_softintr(void *cookie)
 		 */
 		do {
 			state = tasklet->tl_state;
-			__insn_barrier();
 			/* It had better be scheduled.  */
 			KASSERT(state & TASKLET_SCHEDULED);
 			if (state & TASKLET_RUNNING)
@@ -539,7 +538,6 @@ tasklet_is_enabled(const struct tasklet_struct *tasklet)
 	unsigned int disablecount;
 
 	disablecount = tasklet->tl_disablecount;
-	__insn_barrier();
 
 	return (disablecount == 0);
 }
