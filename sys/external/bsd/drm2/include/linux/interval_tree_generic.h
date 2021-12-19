@@ -1,4 +1,4 @@
-/*	$NetBSD: interval_tree_generic.h,v 1.4 2021/12/19 12:22:28 riastradh Exp $	*/
+/*	$NetBSD: interval_tree_generic.h,v 1.5 2021/12/19 12:33:11 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -32,6 +32,10 @@
 #ifndef	_LINUX_INTERVAL_TREE_GENERIC_H_
 #define	_LINUX_INTERVAL_TREE_GENERIC_H_
 
+/* XXX See interval_tree.h for warnings. */
+
+#include <sys/rbtree.h>
+
 #define	INTERVAL_TREE_DEFINE(T, F, KT, KLAST, NSTART, NLAST, QUAL, PREFIX)    \
 									      \
 static inline int							      \
@@ -49,7 +53,7 @@ PREFIX##__compare_nodes(void *__cookie, const void *__va, const void *__vb)   \
 	if (__alast < __blast)						      \
 		return -1;						      \
 	if (__alast > __blast)						      \
-		return -1;						      \
+		return +1;						      \
 	return 0;		       					      \
 }									      \
 									      \
@@ -103,7 +107,7 @@ PREFIX##_iter_first(struct rb_root_cached *__root, KT __start, KT __last)     \
 	__node = rb_tree_find_node_geq(&__root->rb_root.rbr_tree, &__start);  \
 	if (__node == NULL)						      \
 		return NULL;						      \
-	KASSERT(START(__node) <= __start);				      \
+	KASSERT(__start <= START(__node));				      \
 	if (__last < START(__node))					      \
 		return NULL;						      \
 									      \
