@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic.h,v 1.24 2021/12/19 01:33:51 riastradh Exp $	*/
+/*	$NetBSD: atomic.h,v 1.25 2021/12/19 01:39:20 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -167,6 +167,22 @@ atomic_andnot(int value, atomic_t *atomic)
 {
 	/* no membar */
 	atomic_and_uint(&atomic->a_u.au_uint, ~value);
+}
+
+static inline int
+atomic_fetch_xor(int value, atomic_t *atomic)
+{
+	unsigned old, new;
+
+	smp_mb__before_atomic();
+	do {
+		old = atomic->a_u.au_uint;
+		__insn_barrier();
+		new = old ^ value;
+	} while (atomic_cas_uint(&atomic->a_u.au_uint, old, new) != old);
+	smp_mb__after_atomic();
+
+	return old;
 }
 
 static inline void
