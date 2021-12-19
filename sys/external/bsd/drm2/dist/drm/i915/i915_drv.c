@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_drv.c,v 1.29 2021/12/19 11:17:44 riastradh Exp $	*/
+/*	$NetBSD: i915_drv.c,v 1.30 2021/12/19 11:17:52 riastradh Exp $	*/
 
 /* i915_drv.c -- i830,i845,i855,i865,i915 driver -*- linux-c -*-
  */
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_drv.c,v 1.29 2021/12/19 11:17:44 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_drv.c,v 1.30 2021/12/19 11:17:52 riastradh Exp $");
 
 #include <linux/acpi.h>
 #include <linux/device.h>
@@ -891,12 +891,6 @@ skl_dram_get_channels_info(struct drm_i915_private *dev_priv)
 		      yesno(dram_info->symmetric_memory));
 	return 0;
 }
-
-#ifdef __NetBSD__
-/* XXX Kludge to expose this to NetBSD driver attachment goop.  */
-const struct pci_device_id *const i915_device_ids = pciidlist;
-const size_t i915_n_device_ids = __arraycount(pciidlist);
-#endif
 
 static enum intel_dram_type
 skl_get_dram_type(struct drm_i915_private *dev_priv)
