@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_pci_autoconf.c,v 1.8 2021/12/19 11:54:03 riastradh Exp $	*/
+/*	$NetBSD: i915_pci_autoconf.c,v 1.9 2021/12/19 11:54:10 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_pci_autoconf.c,v 1.8 2021/12/19 11:54:03 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_pci_autoconf.c,v 1.9 2021/12/19 11:54:10 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/queue.h>
@@ -80,8 +80,7 @@ static void	i915drmkms_task_work(struct work *, void *);
 CFATTACH_DECL_NEW(i915drmkms, sizeof(struct i915drmkms_softc),
     i915drmkms_match, i915drmkms_attach, i915drmkms_detach, NULL);
 
-/* XXX Kludge to get these from i915_drv.c.  */
-extern struct drm_driver *const i915_drm_driver;
+/* XXX Kludge to get these from i915_pci.c.  */
 extern const struct pci_device_id *const i915_device_ids;
 extern const size_t i915_n_device_ids;
 
