@@ -1,4 +1,4 @@
-/*	$NetBSD: ktime.h,v 1.16 2021/12/19 11:33:49 riastradh Exp $	*/
+/*	$NetBSD: ktime.h,v 1.17 2021/12/19 11:38:04 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -129,6 +129,13 @@ ktime_get_real(void)
 	nanotime(&ts);
 
 	return timespec_to_ktime(ts);
+}
+
+static inline ktime_t
+ktime_get_boottime(void)
+{
+	/* XXX include time spent in suspend */
+	return ktime_get();
 }
 
 static inline ktime_t

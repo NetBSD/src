@@ -1,4 +1,4 @@
-/*	$NetBSD: list.h,v 1.30 2021/12/19 11:37:41 riastradh Exp $	*/
+/*	$NetBSD: list.h,v 1.31 2021/12/19 11:38:03 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -282,6 +282,11 @@ list_del_init(struct list_head *node)
 	for ((VAR) = list_first((HEAD));				\
 		(VAR) != (HEAD);					\
 		(VAR) = list_next((VAR)))
+
+#define	list_for_each_prev(VAR, HEAD)					\
+	for ((VAR) = list_last((HEAD));					\
+		(VAR) != (HEAD);					\
+		(VAR) = list_prev((VAR)))
 
 #define	list_for_each_safe(VAR, NEXT, HEAD)				\
 	for ((VAR) = list_first((HEAD));				\

@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_dp.h,v 1.2 2021/12/18 23:45:30 riastradh Exp $	*/
+/*	$NetBSD: intel_dp.h,v 1.3 2021/12/19 11:38:03 riastradh Exp $	*/
 
 /* SPDX-License-Identifier: MIT */
 /*
@@ -13,6 +13,9 @@
 #include <drm/i915_drm.h>
 
 #include "i915_reg.h"
+
+#include <sys/file.h>
+#define	pipe	pipe_drmhack	/* see intel_display.h */
 
 enum pipe;
 enum port;

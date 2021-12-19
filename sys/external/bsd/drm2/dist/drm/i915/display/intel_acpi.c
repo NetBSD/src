@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_acpi.c,v 1.3 2021/12/19 10:25:15 riastradh Exp $	*/
+/*	$NetBSD: intel_acpi.c,v 1.4 2021/12/19 11:38:03 riastradh Exp $	*/
 
 // SPDX-License-Identifier: GPL-2.0
 /*
@@ -8,7 +8,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intel_acpi.c,v 1.3 2021/12/19 10:25:15 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intel_acpi.c,v 1.4 2021/12/19 11:38:03 riastradh Exp $");
 
 #include <linux/pci.h>
 #include <linux/acpi.h>
@@ -22,15 +22,19 @@ __KERNEL_RCSID(0, "$NetBSD: intel_acpi.c,v 1.3 2021/12/19 10:25:15 riastradh Exp
 #define _COMPONENT ACPI_BUTTON_COMPONENT
 ACPI_MODULE_NAME("acpi_intel_brightness")
 
+#include <dev/acpi/acpi_pci.h>
+
 #define acpi_handle	ACPI_HANDLE
 #define	buffer		Buffer
+#define	count		Count
 #define	elements	Elements
 #define	integer		Integer
 #define	package		Package
+#define	pointer		Pointer
 #define	value		Value
 
 static ACPI_OBJECT *
-acpi_evaluate_dsm(ACPI_HANDLE handle, const uint8_t *uuid, int rev, int func,
+acpi_evaluate_dsm(ACPI_HANDLE handle, const guid_t *uuid, int rev, int func,
     ACPI_OBJECT *argv4)
 {
 	ACPI_OBJECT_LIST arg;
@@ -68,7 +72,7 @@ acpi_evaluate_dsm(ACPI_HANDLE handle, const uint8_t *uuid, int rev, int func,
 }
 
 static inline ACPI_OBJECT *
-acpi_evaluate_dsm_typed(ACPI_HANDLE handle, const uint8_t *uuid, int rev,
+acpi_evaluate_dsm_typed(ACPI_HANDLE handle, const guid_t *uuid, int rev,
     int func, ACPI_OBJECT *argv4, ACPI_OBJECT_TYPE type)
 {
 	ACPI_OBJECT *obj;
@@ -89,7 +93,7 @@ acpi_evaluate_dsm_typed(ACPI_HANDLE handle, const uint8_t *uuid, int rev,
 }
 
 static bool
-acpi_check_dsm(ACPI_HANDLE handle, const uint8_t *uuid, int rev, uint64_t funcs)
+acpi_check_dsm(ACPI_HANDLE handle, const guid_t *uuid, int rev, uint64_t funcs)
 {
 	ACPI_OBJECT *obj;
 	uint64_t mask = 0;
@@ -122,7 +126,7 @@ static const guid_t intel_dsm_guid =
 	GUID_INIT(0x7ed873d3, 0xc2d0, 0x4e4f,
 		  0xa8, 0x54, 0x0f, 0x13, 0x17, 0xb0, 0x1c, 0x2c);
 
-static char *intel_dsm_port_name(u8 id)
+static const char *intel_dsm_port_name(u8 id)
 {
 	switch (id) {
 	case 0:
@@ -158,7 +162,7 @@ static char *intel_dsm_port_name(u8 id)
 	}
 }
 
-static char *intel_dsm_mux_type(u8 type)
+static const char *intel_dsm_mux_type(u8 type)
 {
 	switch (type) {
 	case 0:
@@ -220,7 +224,7 @@ static void intel_dsm_platform_mux_info(acpi_handle dhandle)
 }
 
 #ifdef __NetBSD__
-static bool intel_dsm_pci_probe(ACPI_HANDLE dhandle)
+static ACPI_HANDLE intel_dsm_pci_probe(ACPI_HANDLE dhandle)
 #else
 static acpi_handle intel_dsm_pci_probe(struct pci_dev *pdev)
 #endif
@@ -247,7 +251,7 @@ static acpi_handle intel_dsm_pci_probe(struct pci_dev *pdev)
 #ifdef __NetBSD__
 
 static int vga_count;
-static bool has_dsm;
+static ACPI_HANDLE intel_dsm_handle;
 
 /* XXX from sys/dev/pci/vga_pcivar.h */
 #define	DEVICE_IS_VGA_PCI(class, id)					\
@@ -266,8 +270,8 @@ intel_dsm_vga_match(const struct pci_attach_args *pa)
 	vga_count++;
 	struct acpi_devnode *node = acpi_pcidev_find(0 /*XXX segment*/,
 	    pa->pa_bus, pa->pa_device, pa->pa_function);
-	if (node != NULL)
-		has_dsm |= intel_dsm_pci_probe(node->ad_handle);
+	if (node != NULL && intel_dsm_handle == NULL)
+		intel_dsm_handle = intel_dsm_pci_probe(node->ad_handle);
 	return 0;
 }
 
@@ -276,11 +280,10 @@ static bool intel_dsm_detect(struct drm_device *dev)
 	char acpi_method_name[255] = { 0 };
 
 	vga_count = 0;
-	has_dsm = false;
 	pci_find_device(&dev->pdev->pd_pa, intel_dsm_vga_match);
 
-	if (vga_count == 2 && has_dsm) {
-		const char *name = acpi_name(intel_dsm_priv.dhandle);
+	if (vga_count == 2 && intel_dsm_handle) {
+		const char *name = acpi_name(intel_dsm_handle);
 		strlcpy(acpi_method_name, name, sizeof(acpi_method_name));
 		DRM_DEBUG_DRIVER("VGA switcheroo: detected DSM switching method %s handle\n",
 				 acpi_method_name);
@@ -317,7 +320,7 @@ static bool intel_dsm_detect(void)
 #ifdef __NetBSD__
 void intel_register_dsm_handler(struct drm_i915_private *i915)
 {
-	if (!intel_dsm_detect(i915->base.pdev))
+	if (!intel_dsm_detect(&i915->drm))
 		return;
 }
 #else

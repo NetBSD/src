@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_crt.h,v 1.2 2021/12/18 23:45:29 riastradh Exp $	*/
+/*	$NetBSD: intel_crt.h,v 1.3 2021/12/19 11:38:03 riastradh Exp $	*/
 
 /* SPDX-License-Identifier: MIT */
 /*
@@ -9,6 +9,9 @@
 #define __INTEL_CRT_H__
 
 #include "i915_reg.h"
+
+#include <sys/file.h>
+#define	pipe	pipe_drmhack	/* see intel_display.h */
 
 enum pipe;
 struct drm_encoder;

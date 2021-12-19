@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi.h,v 1.5 2020/01/18 03:00:04 jmcneill Exp $	*/
+/*	$NetBSD: acpi.h,v 1.6 2021/12/19 11:38:04 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -43,5 +43,7 @@
 #if NACPICA > 0
 #include <dev/acpi/acpivar.h>
 #endif
+
+#include <linux/uuid.h>
 
 #endif  /* _LINUX_ACPI_H_ */
