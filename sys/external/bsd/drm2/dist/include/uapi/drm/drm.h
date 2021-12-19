@@ -1,4 +1,4 @@
-/*	$NetBSD: drm.h,v 1.5 2021/12/19 01:53:57 riastradh Exp $	*/
+/*	$NetBSD: drm.h,v 1.6 2021/12/19 01:54:43 riastradh Exp $	*/
 
 /**
  * \file drm.h
@@ -38,7 +38,7 @@
 #ifndef _DRM_H_
 #define _DRM_H_
 
-#if defined(__KERNEL__)
+#if defined(__linux__) && defined(__KERNEL__)
 
 #include <linux/types.h>
 #include <asm/ioctl.h>
