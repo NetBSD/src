@@ -1,4 +1,4 @@
-/*	$NetBSD: math64.h,v 1.7 2021/12/19 01:14:50 riastradh Exp $	*/
+/*	$NetBSD: math64.h,v 1.8 2021/12/19 10:48:07 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -35,6 +35,8 @@
 #include <sys/types.h>
 
 #include <asm/div64.h>
+
+#include <linux/types.h>
 
 static inline int64_t
 div64_u64(int64_t dividend, uint64_t divisor)
