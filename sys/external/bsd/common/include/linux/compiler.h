@@ -1,4 +1,4 @@
-/*	$NetBSD: compiler.h,v 1.1 2021/12/19 00:45:28 riastradh Exp $	*/
+/*	$NetBSD: compiler.h,v 1.2 2021/12/19 00:48:23 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -31,5 +31,19 @@
 
 #ifndef	_LINUX_COMPILER_H_
 #define	_LINUX_COMPILER_H_
+
+#include <sys/atomic.h>
+
+#define	READ_ONCE(X)	({						      \
+	typeof(X) __read_once_tmp = (X);				      \
+	membar_datadep_consumer();					      \
+	__read_once_tmp;						      \
+})
+
+#define	WRITE_ONCE(X, V)	({					      \
+	typeof(X) __write_once_tmp = (V);				      \
+	(X) = __write_once_tmp;						      \
+	__write_once_tmp;						      \
+})
 
 #endif	/* _LINUX_COMPILER_H_ */

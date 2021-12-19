@@ -1,4 +1,4 @@
-/*	$NetBSD: kernel.h,v 1.30 2021/12/19 00:48:16 riastradh Exp $	*/
+/*	$NetBSD: kernel.h,v 1.31 2021/12/19 00:48:23 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -146,12 +146,6 @@
 		(void)memcpy(&(Y), __swap_tmp, sizeof(X));		\
 	}								\
 } while (0)
-
-#define	ACCESS_ONCE(X) ({						      \
-	typeof(X) __access_once_tmp = (X);				      \
-	__insn_barrier();						      \
-	__access_once_tmp;						      \
-})
 
 static __inline int64_t
 abs64(int64_t x)
