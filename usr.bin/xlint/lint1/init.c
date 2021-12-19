@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.221 2021/12/19 10:17:00 rillig Exp $	*/
+/*	$NetBSD: init.c,v 1.222 2021/12/19 23:50:27 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: init.c,v 1.221 2021/12/19 10:17:00 rillig Exp $");
+__RCSID("$NetBSD: init.c,v 1.222 2021/12/19 23:50:27 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -768,7 +768,7 @@ initialization_set_size_of_unknown_array(initialization *in)
 static void
 initialization_end_brace_level(initialization *in)
 {
-	brace_level *bl;
+	brace_level *inner_bl, *outer_bl;
 
 	debug_enter();
 
@@ -776,15 +776,15 @@ initialization_end_brace_level(initialization *in)
 	if (in->in_err)
 		goto done;
 
-	bl = in->in_brace_level;
-	in->in_brace_level = bl->bl_enclosing;
-	brace_level_free(bl);
-	bl = in->in_brace_level;
+	inner_bl = in->in_brace_level;
+	outer_bl = inner_bl->bl_enclosing;
+	in->in_brace_level = outer_bl;
+	brace_level_free(inner_bl);
 
-	if (bl != NULL)
-		brace_level_advance(bl, &in->in_max_subscript);
-	if (bl != NULL)
-		designation_reset(&bl->bl_designation);
+	if (outer_bl != NULL) {
+		brace_level_advance(outer_bl, &in->in_max_subscript);
+		designation_reset(&outer_bl->bl_designation);
+	}
 
 done:
 	initialization_debug(in);
