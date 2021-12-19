@@ -1,4 +1,4 @@
-/*	$NetBSD: dma-resv.h,v 1.5 2021/12/19 10:19:53 riastradh Exp $	*/
+/*	$NetBSD: dma-resv.h,v 1.6 2021/12/19 10:36:55 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -77,6 +77,8 @@ struct dma_resv_poll {
 #define	dma_resv_kqfilter		linux_dma_resv_kqfilter
 #define	dma_resv_lock			linux_dma_resv_lock
 #define	dma_resv_lock_interruptible	linux_dma_resv_lock_interruptible
+#define	dma_resv_lock_slow		linux_dma_resv_lock_slow
+#define	dma_resv_lock_slow_interruptible linux_dma_resv_lock_slow_interruptible
 #define	dma_resv_reserve_shared		linux_dma_resv_reserve_shared
 #define	dma_resv_test_signaled_rcu	linux_dma_resv_test_signaled_rcu
 #define	dma_resv_trylock		linux_dma_resv_trylock
@@ -92,7 +94,11 @@ void	dma_resv_init(struct dma_resv *);
 void	dma_resv_fini(struct dma_resv *);
 int	dma_resv_lock(struct dma_resv *,
 	    struct ww_acquire_ctx *);
+void	dma_resv_lock_slow(struct dma_resv *,
+	    struct ww_acquire_ctx *);
 int	dma_resv_lock_interruptible(struct dma_resv *,
+	    struct ww_acquire_ctx *);
+int	dma_resv_lock_slow_interruptible(struct dma_resv *,
 	    struct ww_acquire_ctx *);
 bool	dma_resv_trylock(struct dma_resv *) __must_check;
 void	dma_resv_unlock(struct dma_resv *);
