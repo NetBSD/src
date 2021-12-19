@@ -1,4 +1,4 @@
-/*	$NetBSD: mm.h,v 1.17 2021/12/19 01:51:44 riastradh Exp $	*/
+/*	$NetBSD: mm.h,v 1.18 2021/12/19 09:56:10 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -50,6 +50,8 @@ struct file;
 
 #define	PAGE_ALIGN(x)		(((x) + (PAGE_SIZE-1)) & ~(PAGE_SIZE-1))
 #define	offset_in_page(x)	((x) & (PAGE_SIZE-1))
+
+#define	untagged_addr(x)	(x)
 
 struct sysinfo {
 	unsigned long totalram;
