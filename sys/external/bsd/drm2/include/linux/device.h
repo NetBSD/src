@@ -1,4 +1,4 @@
-/*	$NetBSD: device.h,v 1.7 2021/12/19 01:23:23 riastradh Exp $	*/
+/*	$NetBSD: device.h,v 1.8 2021/12/19 09:45:56 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -78,6 +78,7 @@
 } while (0)
 
 #define	dev_name	device_xname
+#define	get_device(x)	(x)
 
 #define	DPM_FLAG_NEVER_SKIP	0
 
