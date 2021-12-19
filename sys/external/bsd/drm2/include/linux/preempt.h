@@ -1,4 +1,4 @@
-/*	$NetBSD: preempt.h,v 1.4 2021/12/19 10:57:50 riastradh Exp $	*/
+/*	$NetBSD: preempt.h,v 1.5 2021/12/19 11:45:01 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -39,5 +39,6 @@
 
 #define	in_atomic()	kpreempt_disabled()
 #define	in_task()	!(cpu_intr_p() || cpu_softintr_p() || in_atomic())
+#define	in_irq()	cpu_intr_p()
 
 #endif  /* _LINUX_PREEMPT_H_ */

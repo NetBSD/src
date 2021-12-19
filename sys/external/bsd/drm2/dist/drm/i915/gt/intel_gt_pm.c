@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_gt_pm.c,v 1.2 2021/12/18 23:45:30 riastradh Exp $	*/
+/*	$NetBSD: intel_gt_pm.c,v 1.3 2021/12/19 11:45:01 riastradh Exp $	*/
 
 /*
  * SPDX-License-Identifier: MIT
@@ -7,7 +7,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intel_gt_pm.c,v 1.2 2021/12/18 23:45:30 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intel_gt_pm.c,v 1.3 2021/12/19 11:45:01 riastradh Exp $");
 
 #include <linux/suspend.h>
 
@@ -273,6 +273,7 @@ void intel_gt_suspend_prepare(struct intel_gt *gt)
 	intel_uc_suspend(&gt->uc);
 }
 
+#ifndef __NetBSD__		/* XXX i915 pm */
 static suspend_state_t pm_suspend_target(void)
 {
 #if IS_ENABLED(CONFIG_SUSPEND) && IS_ENABLED(CONFIG_PM_SLEEP)
@@ -281,6 +282,7 @@ static suspend_state_t pm_suspend_target(void)
 	return PM_SUSPEND_TO_IDLE;
 #endif
 }
+#endif
 
 void intel_gt_suspend_late(struct intel_gt *gt)
 {
@@ -294,6 +296,7 @@ void intel_gt_suspend_late(struct intel_gt *gt)
 
 	GEM_BUG_ON(gt->awake);
 
+#ifndef __NetBSD__
 	/*
 	 * On disabling the device, we want to turn off HW access to memory
 	 * that we no longer own.
@@ -306,6 +309,7 @@ void intel_gt_suspend_late(struct intel_gt *gt)
 	 */
 	if (pm_suspend_target() == PM_SUSPEND_TO_IDLE)
 		return;
+#endif
 
 	with_intel_runtime_pm(gt->uncore->rpm, wakeref) {
 		intel_rps_disable(&gt->rps);

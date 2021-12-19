@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_gtt.c,v 1.13 2021/12/19 11:39:56 riastradh Exp $	*/
+/*	$NetBSD: intel_gtt_subr.c,v 1.1 2021/12/19 11:45:01 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 /* Intel GTT stubs */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intel_gtt.c,v 1.13 2021/12/19 11:39:56 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intel_gtt_subr.c,v 1.1 2021/12/19 11:45:01 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/bus.h>
@@ -44,6 +44,8 @@ __KERNEL_RCSID(0, "$NetBSD: intel_gtt.c,v 1.13 2021/12/19 11:39:56 riastradh Exp
 #include <dev/pci/pcivar.h>		/* XXX agpvar.h needs...  */
 #include <dev/pci/agpvar.h>
 #include <dev/pci/agp_i810var.h>
+
+#include <linux/scatterlist.h>
 
 #include "drm/intel-gtt.h"
 
