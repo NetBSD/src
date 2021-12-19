@@ -1,4 +1,4 @@
-/*	$NetBSD: reservation.h,v 1.12 2021/12/19 01:20:53 riastradh Exp $	*/
+/*	$NetBSD: reservation.h,v 1.13 2021/12/19 01:21:37 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -34,12 +34,13 @@
 
 #include <linux/dma-fence.h>
 #include <linux/rcupdate.h>
+#include <linux/seqlock.h>
 #include <linux/ww_mutex.h>
 
 struct reservation_object {
 	struct ww_mutex		lock;
+	struct seqcount		count;
 
-	unsigned				robj_version;
 	struct dma_fence __rcu			*robj_fence;
 	struct reservation_object_list __rcu	*robj_list;
 	struct reservation_object_list __rcu	*robj_prealloc;
