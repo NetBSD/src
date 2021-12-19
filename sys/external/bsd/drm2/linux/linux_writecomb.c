@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_writecomb.c,v 1.8 2018/08/27 14:42:23 riastradh Exp $	*/
+/*	$NetBSD: linux_writecomb.c,v 1.9 2021/12/19 10:47:13 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_writecomb.c,v 1.8 2018/08/27 14:42:23 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_writecomb.c,v 1.9 2021/12/19 10:47:13 riastradh Exp $");
 
 #if defined(__i386__) || defined(__x86_64__)
 #define HAS_MTRR 1
@@ -156,4 +156,17 @@ arch_phys_wc_index(int handle)
 
 	/* XXX Actually implement this...requires changes to our MTRR API.  */
 	return handle;
+}
+
+/* XXX Reserve PAT space on x86.  */
+
+int
+arch_io_reserve_memtype_wc(resource_size_t start, resource_size_t size)
+{
+	return 0;
+}
+
+void
+arch_io_free_memtype_wc(resource_size_t start, resource_size_t size)
+{
 }
