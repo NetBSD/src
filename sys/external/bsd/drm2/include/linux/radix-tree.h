@@ -1,11 +1,8 @@
-/*	$NetBSD: radix-tree.h,v 1.6 2021/12/19 11:50:31 riastradh Exp $	*/
+/*	$NetBSD: radix-tree.h,v 1.7 2021/12/19 11:51:43 riastradh Exp $	*/
 
 /*-
- * Copyright (c) 2018 The NetBSD Foundation, Inc.
+ * Copyright (c) 2021 The NetBSD Foundation, Inc.
  * All rights reserved.
- *
- * This code is derived from software contributed to The NetBSD Foundation
- * by Taylor R. Campbell.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,13 +29,14 @@
 #ifndef _LINUX_RADIX_TREE_H_
 #define _LINUX_RADIX_TREE_H_
 
+#include <sys/radixtree.h>
+
 #include <linux/gfp.h>
 
 #define	INIT_RADIX_TREE			linux_INIT_RADIX_TREE
 #define	radix_tree_delete		linux_radix_tree_delete
 #define	radix_tree_deref_slot		linux_radix_tree_deref_slot
 #define	radix_tree_empty		linux_radix_tree_empty
-#define	radix_tree_exception		linux_radix_tree_exception
 #define	radix_tree_insert		linux_radix_tree_insert
 #define	radix_tree_iter_delete		linux_radix_tree_iter_delete
 #define	radix_tree_iter_init		linux_radix_tree_iter_init
@@ -47,28 +45,29 @@
 #define	radix_tree_next_slot		linux_radix_tree_next_slot
 
 struct radix_tree_root {
+	struct radix_tree rtr_tree;
 };
 
 struct radix_tree_iter {
-	unsigned long index;
+	unsigned long		index;
+	struct radix_tree	*rti_tree;
 };
 
 void	INIT_RADIX_TREE(struct radix_tree_root *, gfp_t);
 
 int	radix_tree_insert(struct radix_tree_root *, unsigned long, void *);
-void	radix_tree_iter_delete(struct radix_tree_root *,
-	    struct radix_tree_iter *, void **);
 void *	radix_tree_delete(struct radix_tree_root *, unsigned long);
 
 bool	radix_tree_empty(struct radix_tree_root *);
 void *	radix_tree_lookup(const struct radix_tree_root *, unsigned long);
-bool	radix_tree_exception(void *);
 void *	radix_tree_deref_slot(void **);
 
 void **	radix_tree_iter_init(struct radix_tree_iter *, unsigned long);
 void **	radix_tree_next_chunk(const struct radix_tree_root *,
 	    struct radix_tree_iter *, unsigned);
 void **	radix_tree_next_slot(void **, struct radix_tree_iter *, unsigned);
+void	radix_tree_iter_delete(struct radix_tree_root *,
+	    struct radix_tree_iter *, void **);
 
 #define	radix_tree_for_each_slot(N, T, I, S)				      \
 	for ((N) = radix_tree_iter_init((I), (S));			      \
