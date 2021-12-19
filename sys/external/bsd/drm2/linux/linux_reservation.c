@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_reservation.c,v 1.21 2021/12/19 01:48:03 riastradh Exp $	*/
+/*	$NetBSD: linux_reservation.c,v 1.22 2021/12/19 01:50:18 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_reservation.c,v 1.21 2021/12/19 01:48:03 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_reservation.c,v 1.22 2021/12/19 01:50:18 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/poll.h>
@@ -353,7 +353,7 @@ struct reservation_object_read_ticket {
  *	caller must be prepared to retry reading if it fails.
  */
 static void
-reservation_object_read_begin(struct reservation_object *robj,
+reservation_object_read_begin(const struct reservation_object *robj,
     struct reservation_object_read_ticket *ticket)
 {
 
@@ -368,7 +368,7 @@ reservation_object_read_begin(struct reservation_object *robj,
  *	invalidated.
  */
 static bool
-reservation_object_read_valid(struct reservation_object *robj,
+reservation_object_read_valid(const struct reservation_object *robj,
     struct reservation_object_read_ticket *ticket)
 {
 
@@ -542,7 +542,7 @@ reservation_object_add_shared_fence(struct reservation_object *robj,
  *	Note: Caller need not call this from an RCU read section.
  */
 struct dma_fence *
-reservation_object_get_excl_rcu(struct reservation_object *robj)
+reservation_object_get_excl_rcu(const struct reservation_object *robj)
 {
 	struct dma_fence *fence;
 
@@ -557,10 +557,10 @@ reservation_object_get_excl_rcu(struct reservation_object *robj)
  * reservation_object_get_fences_rcu(robj, fencep, nsharedp, sharedp)
  */
 int
-reservation_object_get_fences_rcu(struct reservation_object *robj,
+reservation_object_get_fences_rcu(const struct reservation_object *robj,
     struct dma_fence **fencep, unsigned *nsharedp, struct dma_fence ***sharedp)
 {
-	struct reservation_object_list *list;
+	const struct reservation_object_list *list;
 	struct dma_fence *fence;
 	struct dma_fence **shared = NULL;
 	unsigned shared_alloc, shared_count, i;
@@ -692,7 +692,7 @@ restart:
  *	true only if there are no shared fences?  This makes no sense.
  */
 bool
-reservation_object_test_signaled_rcu(struct reservation_object *robj,
+reservation_object_test_signaled_rcu(const struct reservation_object *robj,
     bool shared)
 {
 	struct reservation_object_read_ticket ticket;
@@ -786,7 +786,7 @@ restart:
  *	sense.
  */
 long
-reservation_object_wait_timeout_rcu(struct reservation_object *robj,
+reservation_object_wait_timeout_rcu(const struct reservation_object *robj,
     bool shared, bool intr, unsigned long timeout)
 {
 	struct reservation_object_read_ticket ticket;
@@ -948,7 +948,7 @@ reservation_poll_cb(struct dma_fence *fence, struct dma_fence_cb *fcb)
  *	selnotify when they are.
  */
 int
-reservation_object_poll(struct reservation_object *robj, int events,
+reservation_object_poll(const struct reservation_object *robj, int events,
     struct reservation_poll *rpoll)
 {
 	struct reservation_object_read_ticket ticket;
@@ -1145,8 +1145,8 @@ record:
  *	dangerous to add never-tested complex code paths to the kernel.
  */
 int
-reservation_object_kqfilter(struct reservation_object *robj, struct knote *kn,
-    struct reservation_poll *rpoll)
+reservation_object_kqfilter(const struct reservation_object *robj,
+    struct knote *kn, struct reservation_poll *rpoll)
 {
 
 	return EINVAL;
