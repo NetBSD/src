@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_lease.h,v 1.2 2021/12/19 00:49:22 riastradh Exp $	*/
+/*	$NetBSD: drm_lease.h,v 1.3 2021/12/19 01:08:07 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@ int	drm_mode_create_lease_ioctl(struct drm_device *, void *,
 	    struct drm_file *);
 int	drm_mode_get_lease_ioctl(struct drm_device *, void *,
 	    struct drm_file *);
-int	drm_mode_list_leases_ioctl(struct drm_device *, void *,
+int	drm_mode_list_lessees_ioctl(struct drm_device *, void *,
 	    struct drm_file *);
 int	drm_mode_revoke_lease_ioctl(struct drm_device *, void *,
 	    struct drm_file *);
