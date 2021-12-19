@@ -1,4 +1,4 @@
-/*	$NetBSD: math64.h,v 1.11 2021/12/19 11:36:57 riastradh Exp $	*/
+/*	$NetBSD: math64.h,v 1.12 2021/12/19 11:48:34 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -86,6 +86,13 @@ static inline uint64_t
 mul_u32_u32(uint32_t a, uint32_t b)
 {
 	return (uint64_t)a * (uint64_t)b;
+}
+
+static inline uint64_t
+mul_u64_u32_div(uint64_t a, uint32_t b, uint32_t div)
+{
+	/* XXX implement to account for overflow */
+	return (a * b) / div;
 }
 
 /* return floor((a*b) / 2^c) */
