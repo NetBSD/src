@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_client_modeset.c,v 1.2 2021/12/18 23:44:57 riastradh Exp $	*/
+/*	$NetBSD: drm_client_modeset.c,v 1.3 2021/12/19 02:00:03 riastradh Exp $	*/
 
 // SPDX-License-Identifier: MIT
 /*
@@ -10,7 +10,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_client_modeset.c,v 1.2 2021/12/18 23:44:57 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_client_modeset.c,v 1.3 2021/12/19 02:00:03 riastradh Exp $");
 
 #include <linux/module.h>
 #include <linux/mutex.h>
@@ -27,6 +27,8 @@ __KERNEL_RCSID(0, "$NetBSD: drm_client_modeset.c,v 1.2 2021/12/18 23:44:57 riast
 
 #include "drm_crtc_internal.h"
 #include "drm_internal.h"
+
+#include <linux/nbsd-namespace.h>
 
 #define DRM_CLIENT_MAX_CLONED_CONNECTORS	8
 
