@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_lrc.c,v 1.4 2021/12/19 11:46:47 riastradh Exp $	*/
+/*	$NetBSD: intel_lrc.c,v 1.5 2021/12/19 11:47:16 riastradh Exp $	*/
 
 /*
  * Copyright © 2014 Intel Corporation
@@ -134,7 +134,7 @@
  *
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intel_lrc.c,v 1.4 2021/12/19 11:46:47 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intel_lrc.c,v 1.5 2021/12/19 11:47:16 riastradh Exp $");
 
 #include <linux/interrupt.h>
 
@@ -152,6 +152,8 @@ __KERNEL_RCSID(0, "$NetBSD: intel_lrc.c,v 1.4 2021/12/19 11:46:47 riastradh Exp 
 #include "intel_reset.h"
 #include "intel_ring.h"
 #include "intel_workarounds.h"
+
+#include <linux/nbsd-namespace.h>
 
 #define RING_EXECLIST_QFULL		(1 << 0x2)
 #define RING_EXECLIST1_VALID		(1 << 0x3)
@@ -1395,7 +1397,7 @@ trace_ports(const struct intel_engine_execlists *execlists,
 	    struct i915_request * const *ports)
 {
 	const struct intel_engine_cs *engine =
-		container_of(execlists, typeof(*engine), execlists);
+		const_container_of(execlists, typeof(*engine), execlists);
 
 	if (!ports[0])
 		return;
