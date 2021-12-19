@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_prime.c,v 1.13 2021/12/19 01:56:58 riastradh Exp $	*/
+/*	$NetBSD: drm_prime.c,v 1.14 2021/12/19 10:38:22 riastradh Exp $	*/
 
 /*
  * Copyright © 2012 Red Hat
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_prime.c,v 1.13 2021/12/19 01:56:58 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_prime.c,v 1.14 2021/12/19 10:38:22 riastradh Exp $");
 
 #include <linux/export.h>
 #include <linux/dma-buf.h>
@@ -45,6 +45,8 @@ __KERNEL_RCSID(0, "$NetBSD: drm_prime.c,v 1.13 2021/12/19 01:56:58 riastradh Exp
 #include "drm_internal.h"
 
 #ifdef __NetBSD__
+
+#include <sys/file.h>
 
 #include <drm/bus_dma_hacks.h>
 
@@ -471,7 +473,9 @@ struct dma_buf *drm_gem_dmabuf_export(struct drm_device *dev,
 
 	drm_dev_get(dev);
 	drm_gem_object_get(obj);
+#ifndef __NetBSD__		/* XXX dmabuf share */
 	dma_buf->file->f_mapping = obj->dev->anon_inode->i_mapping;
+#endif
 
 	return dma_buf;
 }
@@ -848,12 +852,14 @@ struct sg_table *drm_gem_map_dma_buf(struct dma_buf_attachment *attach,
 	else
 		sgt = obj->dev->driver->gem_prime_get_sg_table(obj);
 
+#ifndef __NetBSD__		/* We map/unmap elsewhere.  */
 	if (!dma_map_sg_attrs(attach->dev, sgt->sgl, sgt->nents, dir,
 			      DMA_ATTR_SKIP_CPU_SYNC)) {
 		sg_free_table(sgt);
 		kfree(sgt);
 		sgt = ERR_PTR(-ENOMEM);
 	}
+#endif
 
 	return sgt;
 }
@@ -874,8 +880,10 @@ void drm_gem_unmap_dma_buf(struct dma_buf_attachment *attach,
 	if (!sgt)
 		return;
 
+#ifndef __NetBSD__		/* We map/unmap elsewhere.  */
 	dma_unmap_sg_attrs(attach->dev, sgt->sgl, sgt->nents, dir,
 			   DMA_ATTR_SKIP_CPU_SYNC);
+#endif
 	sg_free_table(sgt);
 	kfree(sgt);
 }
@@ -931,20 +939,37 @@ EXPORT_SYMBOL(drm_gem_dmabuf_vunmap);
  *
  * Drivers can use this as their &drm_driver.gem_prime_mmap callback.
  */
+#ifdef __NetBSD__
+int drm_gem_prime_mmap(struct drm_gem_object *obj, off_t *offp, size_t size,
+    int prot, int *flagsp, int *advicep, struct uvm_object **uobjp,
+    int *maxprotp)
+#else
 int drm_gem_prime_mmap(struct drm_gem_object *obj, struct vm_area_struct *vma)
+#endif
 {
 	struct drm_file *priv;
 	struct file *fil;
 	int ret;
 
 	/* Add the fake offset */
+#ifdef __NetBSD__
+	*offp += drm_vma_node_start(&obj->vma_node);
+#else
 	vma->vm_pgoff += drm_vma_node_start(&obj->vma_node);
+#endif
 
 	if (obj->funcs && obj->funcs->mmap) {
+#ifdef __NetBSD__
+		ret = obj->funcs->mmap(obj, offp, size, prot, flagsp, advicep,
+		    uobjp, maxprotp);
+#else
 		ret = obj->funcs->mmap(obj, vma);
+#endif
 		if (ret)
 			return ret;
+#ifndef __NetBSD__
 		vma->vm_private_data = obj;
+#endif
 		drm_gem_object_get(obj);
 		return 0;
 	}
@@ -958,13 +983,22 @@ int drm_gem_prime_mmap(struct drm_gem_object *obj, struct vm_area_struct *vma)
 
 	/* Used by drm_gem_mmap() to lookup the GEM object */
 	priv->minor = obj->dev->primary;
+#ifdef __NetBSD__
+	fil->f_data = priv;
+#else
 	fil->private_data = priv;
+#endif
 
 	ret = drm_vma_node_allow(&obj->vma_node, priv);
 	if (ret)
 		goto out;
 
+#ifdef __NetBSD__
+	ret = obj->dev->driver->mmap_object(obj->dev, *offp, size, prot, uobjp,
+	    offp, fil);
+#else
 	ret = obj->dev->driver->fops->mmap(fil, vma);
+#endif
 
 	drm_vma_node_revoke(&obj->vma_node, priv);
 out:
@@ -1180,7 +1214,6 @@ struct drm_gem_object *drm_gem_prime_import(struct drm_device *dev,
 EXPORT_SYMBOL(drm_gem_prime_import);
 
 #ifdef __NetBSD__
-/**
 
 struct sg_table *
 drm_prime_bus_dmamem_to_sg(bus_dma_tag_t dmat, const bus_dma_segment_t *segs,
