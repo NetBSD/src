@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_active.c,v 1.4 2021/12/19 11:52:07 riastradh Exp $	*/
+/*	$NetBSD: i915_active.c,v 1.5 2021/12/19 11:57:54 riastradh Exp $	*/
 
 /*
  * SPDX-License-Identifier: MIT
@@ -7,7 +7,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_active.c,v 1.4 2021/12/19 11:52:07 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_active.c,v 1.5 2021/12/19 11:57:54 riastradh Exp $");
 
 #include <linux/debugobjects.h>
 
@@ -854,12 +854,14 @@ void i915_request_add_active_barriers(struct i915_request *rq)
 		smp_store_mb(*ll_to_fence_slot(node), &rq->fence);
 #ifdef __NetBSD__
 		spin_unlock(&rq->lock);
-		struct i915_active_fence *fence =
+		struct i915_active_fence *active =
 		    container_of(node, struct i915_active_fence, llist);
 		/* XXX something bad went wrong in making this code */
-		KASSERT(fence->cb.func == node_retire);
-		(void)dma_fence_add_callback(fence->fence, &fence->cb,
-		    node_retire);
+		KASSERT(active->cb.func == node_retire ||
+		    active->cb.func == excl_retire ||
+		    active->cb.func == i915_active_noop);
+		(void)dma_fence_add_callback(active->fence, &active->cb,
+		    active->cb.func);
 		spin_lock(&rq->lock);
 #else
 		list_add_tail((struct list_head *)node, &rq->fence.cb_list);
@@ -917,7 +919,9 @@ __i915_active_fence_set(struct i915_active_fence *active,
 	if (prev) {
 		GEM_BUG_ON(prev == fence);
 #ifdef __NetBSD__
-		KASSERT(active->cb.func == node_retire);
+		KASSERT(active->cb.func == node_retire ||
+		    active->cb.func == excl_retire ||
+		    active->cb.func == i915_active_noop);
 		(void)dma_fence_remove_callback(prev, &active->cb);
 #else
 		spin_lock_nested(prev->lock, SINGLE_DEPTH_NESTING);
@@ -932,7 +936,9 @@ __i915_active_fence_set(struct i915_active_fence *active,
 	spin_unlock_irqrestore(fence->lock, flags);
 
 #ifdef __NetBSD__
-	KASSERT(active->cb.func == node_retire);
+	KASSERT(active->cb.func == node_retire ||
+	    active->cb.func == excl_retire ||
+	    active->cb.func == i915_active_noop);
 	dma_fence_add_callback(fence, &active->cb, node_retire);
 #endif
 
