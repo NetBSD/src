@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_gem_mman.c,v 1.13 2021/12/19 12:07:20 riastradh Exp $	*/
+/*	$NetBSD: i915_gem_mman.c,v 1.14 2021/12/19 12:08:10 riastradh Exp $	*/
 
 /*
  * SPDX-License-Identifier: MIT
@@ -7,7 +7,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_gem_mman.c,v 1.13 2021/12/19 12:07:20 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_gem_mman.c,v 1.14 2021/12/19 12:08:10 riastradh Exp $");
 
 #include <linux/anon_inodes.h>
 #include <linux/mman.h>
@@ -543,6 +543,8 @@ i915_gem_fault(struct uvm_faultinfo *ufi, vaddr_t vaddr, struct vm_page **pps,
     int npages, int centeridx, vm_prot_t access_type, int flags)
 {
 	struct uvm_object *uobj = ufi->entry->object.uvm_obj;
+	voff_t uoffset;
+	unsigned long startpage;
 	struct drm_gem_object *gem =
 	    container_of(uobj, struct drm_gem_object, gemo_uvmobj);
 	struct drm_i915_gem_object *obj = to_intel_bo(gem);
@@ -562,17 +564,35 @@ i915_gem_fault(struct uvm_faultinfo *ufi, vaddr_t vaddr, struct vm_page **pps,
 	KASSERT(i915_gem_object_type_has(obj,
 		I915_GEM_OBJECT_HAS_STRUCT_PAGE));
 
+	KASSERT(ufi->entry->start <= vaddr);
+	KASSERT((ufi->entry->offset & (PAGE_SIZE - 1)) == 0);
+	KASSERT(ufi->entry->offset <= obj->base.size);
+	KASSERT((vaddr - ufi->entry->start) <=
+	    (obj->base.size - ufi->entry->offset));
+	KASSERTMSG(((size_t)npages << PAGE_SHIFT <=
+		((obj->base.size - ufi->entry->offset) -
+		    (vaddr - ufi->entry->start))),
+	    "vaddr=%jx npages=%d obj=%p size=%zu"
+	    " start=%jx offset=%jx",
+	    (uintmax_t)vaddr, npages, obj, obj->base.size,
+	    (uintmax_t)ufi->entry->start, (uintmax_t)ufi->entry->offset);
+	uoffset = ufi->entry->offset + (vaddr - ufi->entry->start);
+	startpage = uoffset >> PAGE_SHIFT;
+
 	/*
 	 * Look up the mmo again because we can't conveniently store it
 	 * alongside the mapping unless we create a separate uvm object
 	 * for it.  XXX Consider creating a separate uvm object as a
 	 * kind of subobject of the main object.
+	 *
+	 * We use drm_vma_offset_lookup_locked because the number of
+	 * pages we're faulting in here may be different from the
+	 * number of pages that were mapped.
 	 */
 	rcu_read_lock();
 	drm_vma_offset_lock_lookup(dev->vma_offset_manager);
-	node = drm_vma_offset_exact_lookup_locked(dev->vma_offset_manager,
-	    ufi->entry->start >> PAGE_SHIFT,
-	    (ufi->entry->end - ufi->entry->start) >> PAGE_SHIFT);
+	node = drm_vma_offset_lookup_locked(dev->vma_offset_manager,
+	    startpage, npages);
 	drm_vma_offset_unlock_lookup(dev->vma_offset_manager);
 	rcu_read_unlock();
 
@@ -581,6 +601,9 @@ i915_gem_fault(struct uvm_faultinfo *ufi, vaddr_t vaddr, struct vm_page **pps,
 	 * without unmapping first!
 	 */
 	KASSERT(node);
+	KASSERTMSG(startpage == drm_vma_node_start(node),
+	    "map startpage=%lx, node startpage=%lx",
+	    startpage, drm_vma_node_start(node));
 	mmo = container_of(node, struct i915_mmap_offset, vma_node);
 	KASSERT(obj == mmo->obj);
 
