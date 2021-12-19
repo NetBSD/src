@@ -1,4 +1,4 @@
-/* $NetBSD: ti_lcdc.h,v 1.1 2019/11/03 22:59:06 jmcneill Exp $ */
+/* $NetBSD: ti_lcdc.h,v 1.2 2021/12/19 12:44:25 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2019 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,6 +29,7 @@
 #ifndef _ARM_TI_TI_LCDC_H
 #define _ARM_TI_TI_LCDC_H
 
+#include <drm/drm_encoder.h>
 #include <drm/drm_fb_helper.h>
 #include <drm/drm_gem_cma_helper.h>
 
