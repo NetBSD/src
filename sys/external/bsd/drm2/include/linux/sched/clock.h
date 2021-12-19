@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.h,v 1.2 2021/12/19 01:43:21 riastradh Exp $	*/
+/*	$NetBSD: clock.h,v 1.3 2021/12/19 01:45:23 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -34,6 +34,8 @@
 
 #include <sys/types.h>
 #include <sys/time.h>
+
+#include <linux/smp.h>
 
 /* Not actually local...  */
 static inline uint64_t
