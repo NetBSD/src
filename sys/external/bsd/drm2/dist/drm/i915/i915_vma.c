@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_vma.c,v 1.11 2021/12/19 12:12:15 riastradh Exp $	*/
+/*	$NetBSD: i915_vma.c,v 1.12 2021/12/19 12:27:49 riastradh Exp $	*/
 
 /*
  * Copyright © 2016 Intel Corporation
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_vma.c,v 1.11 2021/12/19 12:12:15 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_vma.c,v 1.12 2021/12/19 12:27:49 riastradh Exp $");
 
 #include <linux/sched/mm.h>
 #include <drm/drm_gem.h>
@@ -513,7 +513,8 @@ void __iomem *i915_vma_pin_iomap(struct i915_vma *vma)
 
 		if (unlikely(cmpxchg(&vma->iomap, NULL, ptr))) {
 #ifdef __NetBSD__
-			io_mapping_unmap(&i915_vm_to_ggtt(vma->vm)->iomap, ptr);
+			io_mapping_unmap(&i915_vm_to_ggtt(vma->vm)->iomap, ptr,
+			    vma->node.size);
 #else
 			io_mapping_unmap(ptr);
 #endif
@@ -1181,7 +1182,8 @@ static void __i915_vma_iounmap(struct i915_vma *vma)
 		return;
 
 #ifdef __NetBSD__
-	io_mapping_unmap(&i915_vm_to_ggtt(vma->vm)->iomap, vma->iomap);
+	io_mapping_unmap(&i915_vm_to_ggtt(vma->vm)->iomap, vma->iomap,
+	    vma->node.size);
 #else
 	io_mapping_unmap(vma->iomap);
 #endif

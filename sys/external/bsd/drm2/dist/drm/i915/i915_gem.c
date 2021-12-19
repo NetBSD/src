@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_gem.c,v 1.73 2021/12/19 12:27:09 riastradh Exp $	*/
+/*	$NetBSD: i915_gem.c,v 1.74 2021/12/19 12:27:49 riastradh Exp $	*/
 
 /*
  * Copyright © 2008-2015 Intel Corporation
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_gem.c,v 1.73 2021/12/19 12:27:09 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_gem.c,v 1.74 2021/12/19 12:27:49 riastradh Exp $");
 
 #ifdef __NetBSD__
 #include <drm/bus_dma_hacks.h>
@@ -405,7 +405,7 @@ gtt_user_read(struct io_mapping *mapping,
 					 (void __force *)vaddr + offset,
 					 length);
 #ifdef __NetBSD__
-		io_mapping_unmap(mapping, vaddr);
+		io_mapping_unmap(mapping, vaddr, PAGE_SIZE);
 #else
 		io_mapping_unmap(vaddr);
 #endif
