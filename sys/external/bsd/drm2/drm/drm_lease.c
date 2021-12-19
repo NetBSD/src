@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_lease.c,v 1.3 2021/12/19 01:08:07 riastradh Exp $	*/
+/*	$NetBSD: drm_lease.c,v 1.4 2021/12/19 10:46:09 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_lease.c,v 1.3 2021/12/19 01:08:07 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_lease.c,v 1.4 2021/12/19 10:46:09 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/errno.h>
@@ -177,4 +177,14 @@ drm_mode_revoke_lease_ioctl(struct drm_device *dev, void *data,
 
 	/* XXX not yet implemented */
 	return -ENODEV;
+}
+
+/*
+ * drm_lease_destroy(master)
+ *
+ *	Notify lessees that master is being destroyed.
+ */
+void
+drm_lease_destroy(struct drm_master *master)
+{
 }
