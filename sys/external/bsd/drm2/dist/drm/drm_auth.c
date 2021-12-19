@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_auth.c,v 1.5 2021/12/18 23:44:57 riastradh Exp $	*/
+/*	$NetBSD: drm_auth.c,v 1.6 2021/12/19 12:30:04 riastradh Exp $	*/
 
 /*
  * Created: Tue Feb  2 08:37:54 1999 by faith@valinux.com
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_auth.c,v 1.5 2021/12/18 23:44:57 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_auth.c,v 1.6 2021/12/19 12:30:04 riastradh Exp $");
 
 #include <linux/slab.h>
 
@@ -347,6 +347,12 @@ static void drm_master_destroy(struct kref *kref)
 	idr_destroy(&master->magic_map);
 	idr_destroy(&master->leases);
 	idr_destroy(&master->lessee_idr);
+
+#ifdef CONFIG_DRM_LEGACY
+	/* XXX drm_master_legacy_init unwind */
+	DRM_DESTROY_WAITQUEUE(&master->lock.lock_queue);
+	spin_lock_destroy(&master->lock.spinlock);
+#endif
 
 	kfree(master->unique);
 	kfree(master);
