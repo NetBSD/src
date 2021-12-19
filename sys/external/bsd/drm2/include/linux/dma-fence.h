@@ -1,4 +1,4 @@
-/*	$NetBSD: dma-fence.h,v 1.11 2021/12/19 10:58:04 riastradh Exp $	*/
+/*	$NetBSD: dma-fence.h,v 1.12 2021/12/19 11:03:57 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -39,6 +39,7 @@
 
 #include <linux/err.h>
 #include <linux/kref.h>
+#include <linux/ktime.h>
 #include <linux/rcupdate.h>
 #include <linux/sched.h>
 #include <linux/spinlock.h>
@@ -53,6 +54,7 @@ struct dma_fence {
 	unsigned			seqno;
 	const struct dma_fence_ops	*ops;
 	int				error;
+	ktime_t				timestamp;
 
 	TAILQ_HEAD(, dma_fence_cb)	f_callbacks;
 	kcondvar_t			f_cv;
@@ -61,7 +63,8 @@ struct dma_fence {
 
 #define	DMA_FENCE_FLAG_ENABLE_SIGNAL_BIT	0
 #define	DMA_FENCE_FLAG_SIGNALED_BIT		1
-#define	DMA_FENCE_FLAG_USER_BITS		2
+#define	DMA_FENCE_FLAG_TIMESTAMP_BIT		2
+#define	DMA_FENCE_FLAG_USER_BITS		3
 
 struct dma_fence_ops {
 	const char	*(*get_driver_name)(struct dma_fence *);
@@ -80,6 +83,8 @@ struct dma_fence_cb {
 	bool				fcb_onqueue;
 };
 
+#define	__dma_fence_signal		linux___dma_fence_signal
+#define	__dma_fence_signal_wake		linux___dma_fence_signal_wake
 #define	dma_fence_add_callback		linux_dma_fence_add_callback
 #define	dma_fence_context_alloc		linux_dma_fence_context_alloc
 #define	dma_fence_default_wait		linux_dma_fence_default_wait
@@ -142,6 +147,10 @@ long	dma_fence_wait(struct dma_fence *, bool);
 long	dma_fence_wait_any_timeout(struct dma_fence **, uint32_t, bool, long,
 	    uint32_t *);
 long	dma_fence_wait_timeout(struct dma_fence *, bool, long);
+
+/* i915 hacks */
+bool	__dma_fence_signal(struct dma_fence *);
+void	__dma_fence_signal_wake(struct dma_fence *, ktime_t);
 
 static inline void __printflike(2, 3)
 DMA_FENCE_TRACE(struct dma_fence *f, const char *fmt, ...)
