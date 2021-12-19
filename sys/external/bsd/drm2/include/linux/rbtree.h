@@ -1,4 +1,4 @@
-/*	$NetBSD: rbtree.h,v 1.10 2021/12/19 11:16:32 riastradh Exp $	*/
+/*	$NetBSD: rbtree.h,v 1.11 2021/12/19 11:17:19 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -66,6 +66,11 @@ rb_first(struct rb_root *root)
 	if (vnode)
 		vnode += root->rbr_tree.rbt_ops->rbto_node_offset;
 	return (struct rb_node *)vnode;
+}
+
+static inline struct rb_node *
+rb_next2(struct rb_root *root, struct rb_node *rb) {
+	return RB_TREE_NEXT(&root->rbr_tree, rb);
 }
 
 static inline struct rb_node *
