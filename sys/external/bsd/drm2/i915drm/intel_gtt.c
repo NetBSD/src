@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_gtt.c,v 1.11 2018/08/27 16:15:23 riastradh Exp $	*/
+/*	$NetBSD: intel_gtt.c,v 1.12 2021/12/19 01:35:10 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 /* Intel GTT stubs */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intel_gtt.c,v 1.11 2018/08/27 16:15:23 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intel_gtt.c,v 1.12 2021/12/19 01:35:10 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/bus.h>
@@ -53,15 +53,15 @@ static struct {
 	bus_dmamap_t		scratch_map;
 } intel_gtt;
 
+struct resource intel_graphics_stolen_res;
+
 void
-intel_gtt_get(uint64_t *va_size, size_t *stolen_size, bus_addr_t *aper_base,
-    uint64_t *aper_size)
+intel_gtt_get(uint64_t *va_size, bus_addr_t *aper_base, uint64_t *aper_size)
 {
 	struct agp_softc *const sc = agp_i810_sc;
 
 	if (sc == NULL) {
 		*va_size = 0;
-		*stolen_size = 0;
 		*aper_base = 0;
 		*aper_size = 0;
 		return;
@@ -69,9 +69,13 @@ intel_gtt_get(uint64_t *va_size, size_t *stolen_size, bus_addr_t *aper_base,
 
 	struct agp_i810_softc *const isc = sc->as_chipc;
 	*va_size = ((size_t)(isc->gtt_size/sizeof(uint32_t)) << PAGE_SHIFT);
-	*stolen_size = ((size_t)isc->stolen << PAGE_SHIFT);
 	*aper_base = sc->as_apaddr;
 	*aper_size = sc->as_apsize;
+
+#ifdef notyet
+	intel_graphics_stolen_res.base = ...;
+	intel_graphics_stolen_res.size = isc->stolen;
+#endif
 }
 
 int
@@ -143,21 +147,11 @@ intel_gtt_chipset_flush(void)
 	agp_i810_chipset_flush(agp_i810_sc->as_chipc);
 }
 
-void
-intel_gtt_insert_sg_entries(bus_dmamap_t dmamap, unsigned va_page,
-    unsigned flags)
+static int
+intel_gtt_flags(unsigned flags)
 {
-	struct agp_i810_softc *const isc = agp_i810_sc->as_chipc;
-	off_t va = (va_page << PAGE_SHIFT);
-	unsigned seg;
-	int gtt_flags = 0;
-	int error;
+	int gtt_flags = AGP_I810_GTT_VALID;
 
-	KASSERT(0 <= va);
-	KASSERT((va >> PAGE_SHIFT) == va_page);
-	KASSERT(0 < dmamap->dm_nsegs);
-
-	gtt_flags |= AGP_I810_GTT_VALID;
 	switch (flags) {
 	case AGP_USER_MEMORY:
 		break;
@@ -168,6 +162,42 @@ intel_gtt_insert_sg_entries(bus_dmamap_t dmamap, unsigned va_page,
 		panic("invalid intel gtt flags: %x", flags);
 	}
 
+	return gtt_flags;
+}
+
+void
+intel_gtt_insert_page(bus_addr_t addr, unsigned va_page, unsigned flags)
+{
+	struct agp_i810_softc *const isc = agp_i810_sc->as_chipc;
+	off_t va = (off_t)va_page << PAGE_SHIFT;
+	int gtt_flags = intel_gtt_flags(flags);
+	int error;
+
+	error = agp_i810_write_gtt_entry(isc, va, addr, gtt_flags);
+	if (error)
+		device_printf(agp_i810_sc->as_dev,
+		    "write gtt entry"
+		    " %"PRIxMAX" -> %"PRIxMAX" (flags=%x) failed: %d\n",
+		    (uintmax_t)va, (uintmax_t)addr, flags,
+		    error);
+	agp_i810_post_gtt_entry(isc, va);
+	intel_gtt_chipset_flush();
+}
+
+void
+intel_gtt_insert_sg_entries(bus_dmamap_t dmamap, unsigned va_page,
+    unsigned flags)
+{
+	struct agp_i810_softc *const isc = agp_i810_sc->as_chipc;
+	off_t va = (off_t)va_page << PAGE_SHIFT;
+	unsigned seg;
+	int gtt_flags = intel_gtt_flags(flags);
+	int error;
+
+	KASSERT(0 <= va);
+	KASSERT((va >> PAGE_SHIFT) == va_page);
+	KASSERT(0 < dmamap->dm_nsegs);
+
 	for (seg = 0; seg < dmamap->dm_nsegs; seg++) {
 		const bus_addr_t addr = dmamap->dm_segs[seg].ds_addr;
 		bus_size_t len;
@@ -175,14 +205,14 @@ intel_gtt_insert_sg_entries(bus_dmamap_t dmamap, unsigned va_page,
 		for (len = dmamap->dm_segs[seg].ds_len;
 		     len >= PAGE_SIZE;
 		     len -= PAGE_SIZE, va += PAGE_SIZE) {
-			/* XXX Respect flags.  */
 			error = agp_i810_write_gtt_entry(isc, va, addr,
 			    gtt_flags);
 			if (error)
 				device_printf(agp_i810_sc->as_dev,
 				    "write gtt entry"
-				    " %"PRIxMAX" -> %"PRIxMAX" failed: %d\n",
-				    (uintmax_t)va, (uintmax_t)(addr | 1),
+				    " %"PRIxMAX" -> %"PRIxMAX" (flags=%x)"
+				    " failed: %d\n",
+				    (uintmax_t)va, (uintmax_t)addr, flags,
 				    error);
 		}
 		KASSERTMSG(len == 0,
