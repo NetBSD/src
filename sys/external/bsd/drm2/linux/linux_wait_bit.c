@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_wait_bit.c,v 1.1 2021/12/19 01:22:15 riastradh Exp $	*/
+/*	$NetBSD: linux_wait_bit.c,v 1.2 2021/12/19 01:41:54 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_wait_bit.c,v 1.1 2021/12/19 01:22:15 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_wait_bit.c,v 1.2 2021/12/19 01:41:54 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -146,7 +146,7 @@ wait_on_bit_timeout(const volatile unsigned long *bitmap, unsigned bit,
 		}
 
 		/* If we were interrupted, return -ERESTARTSYS.  */
-		if (error == EINTR || error == EWOULDBLOCK) {
+		if (error == EINTR || error == ERESTART) {
 			ret = -ERESTARTSYS;
 			goto out;
 		}
