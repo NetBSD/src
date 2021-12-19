@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_modes.c,v 1.10 2021/12/18 23:44:57 riastradh Exp $	*/
+/*	$NetBSD: drm_modes.c,v 1.11 2021/12/19 01:13:59 riastradh Exp $	*/
 
 /*
  * Copyright © 1997-2003 by The XFree86 Project, Inc.
@@ -33,12 +33,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_modes.c,v 1.10 2021/12/18 23:44:57 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_modes.c,v 1.11 2021/12/19 01:13:59 riastradh Exp $");
 
 #include <linux/ctype.h>
 #include <linux/list.h>
 #include <linux/list_sort.h>
 #include <linux/export.h>
+#include <asm/div64.h>
 
 #ifdef CONFIG_VIDEOMODE_HELPERS
 #ifdef CONFIG_OF
