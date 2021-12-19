@@ -1,9 +1,9 @@
-#       $NetBSD: files.drmkms_linux,v 1.28 2021/12/19 10:50:46 riastradh Exp $
+#       $NetBSD: files.drmkms_linux,v 1.29 2021/12/19 10:55:27 riastradh Exp $
 
 define	drmkms_linux: i2cexec, i2c_bitbang
 
-makeoptions 	drmkms_linux	CPPFLAGS+="-I$S/external/bsd/common/include"
-makeoptions 	drmkms_linux	CPPFLAGS+="-I$S/external/bsd/drm2/include"
+makeoptions 	drmkms_linux	"CPPFLAGS.drmkms_linux"+="-I$S/external/bsd/common/include"
+makeoptions 	drmkms_linux	"CPPFLAGS.drmkms_linux"+="-I$S/external/bsd/drm2/include"
 
 file	external/bsd/drm2/linux/linux_atomic64.c	drmkms_linux
 file	external/bsd/drm2/linux/linux_backlight.c	drmkms_linux
