@@ -1,4 +1,4 @@
-/*	$NetBSD: via_dmablit.c,v 1.9 2021/12/18 23:45:44 riastradh Exp $	*/
+/*	$NetBSD: via_dmablit.c,v 1.10 2021/12/19 12:29:47 riastradh Exp $	*/
 
 /* via_dmablit.c -- PCI DMA BitBlt support for the VIA Unichrome/Pro
  *
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: via_dmablit.c,v 1.9 2021/12/18 23:45:44 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: via_dmablit.c,v 1.10 2021/12/19 12:29:47 riastradh Exp $");
 
 #include <linux/pagemap.h>
 #include <linux/pci.h>
@@ -212,7 +212,7 @@ via_free_sg_info(struct drm_device *dev, struct pci_dev *pdev,
 		bus_dmamap_unload(dev->dmat, vsg->desc_dmamap);
 		bus_dmamap_destroy(dev->dmat, vsg->desc_dmamap);
 		bus_dmamem_unmap(dev->dmat, vsg->desc_kva,
-		    vsg->num_desc_pages << PAGE_SHIFT);
+		    (bus_size_t)vsg->num_desc_pages << PAGE_SHIFT);
 		bus_dmamem_free(dev->dmat, vsg->desc_segs, vsg->num_desc_segs);
 		kfree(vsg->desc_segs);
 #else
@@ -360,7 +360,8 @@ via_alloc_desc_pages(struct drm_device *dev, drm_via_sg_info_t *vsg)
 		return -ENOMEM;
 	}
 	/* XXX errno NetBSD->Linux */
-	ret = -bus_dmamem_alloc(dev->dmat, vsg->num_desc_pages << PAGE_SHIFT,
+	ret = -bus_dmamem_alloc(dev->dmat,
+	    (bus_size_t)vsg->num_desc_pages << PAGE_SHIFT,
 	    PAGE_SIZE, 0, vsg->desc_segs, vsg->num_pages, &vsg->num_desc_segs,
 	    BUS_DMA_WAITOK);
 	if (ret) {
@@ -371,7 +372,8 @@ via_alloc_desc_pages(struct drm_device *dev, drm_via_sg_info_t *vsg)
 	/* XXX No nice way to scatter/gather map bus_dmamem.  */
 	/* XXX errno NetBSD->Linux */
 	ret = -bus_dmamem_map(dev->dmat, vsg->desc_segs, vsg->num_desc_segs,
-	    vsg->num_desc_pages << PAGE_SHIFT, &vsg->desc_kva, BUS_DMA_WAITOK);
+	    (bus_size_t)vsg->num_desc_pages << PAGE_SHIFT, &vsg->desc_kva,
+	    BUS_DMA_WAITOK);
 	if (ret) {
 		bus_dmamem_free(dev->dmat, vsg->desc_segs, vsg->num_desc_segs);
 		kfree(vsg->desc_segs);
@@ -379,23 +381,25 @@ via_alloc_desc_pages(struct drm_device *dev, drm_via_sg_info_t *vsg)
 		return -ENOMEM;
 	}
 	/* XXX errno NetBSD->Linux */
-	ret = -bus_dmamap_create(dev->dmat, vsg->num_desc_pages << PAGE_SHIFT,
+	ret = -bus_dmamap_create(dev->dmat,
+	    (bus_size_t)vsg->num_desc_pages << PAGE_SHIFT,
 	    vsg->num_desc_pages, PAGE_SIZE, 0, BUS_DMA_WAITOK,
 	    &vsg->desc_dmamap);
 	if (ret) {
 		bus_dmamem_unmap(dev->dmat, vsg->desc_kva,
-		    vsg->num_desc_pages << PAGE_SHIFT);
+		    (bus_size_t)vsg->num_desc_pages << PAGE_SHIFT);
 		bus_dmamem_free(dev->dmat, vsg->desc_segs, vsg->num_desc_segs);
 		kfree(vsg->desc_segs);
 		kfree(vsg->desc_pages);
 		return -ENOMEM;
 	}
 	ret = -bus_dmamap_load(dev->dmat, vsg->desc_dmamap, vsg->desc_kva,
-	    vsg->num_desc_pages << PAGE_SHIFT, NULL, BUS_DMA_WAITOK);
+	    (bus_size_t)vsg->num_desc_pages << PAGE_SHIFT, NULL,
+	    BUS_DMA_WAITOK);
 	if (ret) {
 		bus_dmamap_destroy(dev->dmat, vsg->desc_dmamap);
 		bus_dmamem_unmap(dev->dmat, vsg->desc_kva,
-		    vsg->num_desc_pages << PAGE_SHIFT);
+		    (bus_size_t)vsg->num_desc_pages << PAGE_SHIFT);
 		bus_dmamem_free(dev->dmat, vsg->desc_segs, vsg->num_desc_segs);
 		kfree(vsg->desc_segs);
 		kfree(vsg->desc_pages);
