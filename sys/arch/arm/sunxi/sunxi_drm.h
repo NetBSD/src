@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_drm.h,v 1.2 2019/02/04 12:10:13 jmcneill Exp $ */
+/* $NetBSD: sunxi_drm.h,v 1.3 2021/12/19 12:28:20 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2019 Jared D. McNeill <jmcneill@invisible.ca>
@@ -28,6 +28,9 @@
 
 #ifndef _ARM_SUNXI_DRM_H
 #define _ARM_SUNXI_DRM_H
+
+#include <sys/queue.h>
+#include <sys/workqueue.h>
 
 #include <drm/drm_fb_helper.h>
 #include <drm/drm_gem_cma_helper.h>
@@ -62,6 +65,12 @@ struct sunxi_drm_softc {
 
 	int			sc_phandle;
 
+	struct lwp			*sc_task_thread;
+	SIMPLEQ_HEAD(, sunxi_drm_task)	sc_tasks;
+	struct workqueue		*sc_task_wq;
+
+	bool			sc_dev_registered;
+
 	struct sunxi_drm_vblank	sc_vbl[SUNXI_DRM_MAX_CRTC];
 };
 
@@ -90,10 +99,22 @@ struct sunxi_drmfb_attach_args {
 	uint32_t		sfa_fb_linebytes;
 };
 
+struct sunxi_drm_task {
+	union {
+		SIMPLEQ_ENTRY(sunxi_drm_task)	queue;
+		struct work			work;
+	}		sdt_u;
+	void		(*sdt_fn)(struct sunxi_drm_task *);
+};
+
 #define sunxi_drm_private(ddev)		(ddev)->dev_private
 #define	to_sunxi_drm_framebuffer(x)	container_of(x, struct sunxi_drm_framebuffer, base)
 
 int	sunxi_drm_register_endpoint(int, struct fdt_endpoint *);
 struct drm_device *sunxi_drm_endpoint_device(struct fdt_endpoint *);
+
+void	sunxi_task_init(struct sunxi_drm_task *,
+	    void (*)(struct sunxi_drm_task *));
+void	sunxi_task_schedule(device_t, struct sunxi_drm_task *);
 
 #endif /* _ARM_SUNXI_DRM_H */

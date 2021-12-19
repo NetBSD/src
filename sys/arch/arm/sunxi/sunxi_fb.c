@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_fb.c,v 1.6 2021/12/19 11:25:25 riastradh Exp $ */
+/* $NetBSD: sunxi_fb.c,v 1.7 2021/12/19 12:28:20 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2015-2019 Jared McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "opt_wsdisplay_compat.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_fb.c,v 1.6 2021/12/19 11:25:25 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_fb.c,v 1.7 2021/12/19 12:28:20 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -45,7 +45,7 @@ __KERNEL_RCSID(0, "$NetBSD: sunxi_fb.c,v 1.6 2021/12/19 11:25:25 riastradh Exp $
 static int	sunxi_fb_match(device_t, cfdata_t, void *);
 static void	sunxi_fb_attach(device_t, device_t, void *);
 
-static void	sunxi_fb_init(device_t);
+static void	sunxi_fb_init(struct sunxi_drm_task *);
 
 static bool	sunxi_fb_shutdown(device_t, int);
 
@@ -55,6 +55,7 @@ struct sunxi_fb_softc {
 	struct sunxi_drm_softc	*sc_drm;
 	struct sunxi_drm_framebuffer *sc_fb;
 	struct sunxi_drmfb_attach_args sc_sfa;
+	struct sunxi_drm_task	sc_attach_task;
 };
 
 static paddr_t	sunxi_fb_mmapfb(struct drmfb_softc *, off_t, int);
@@ -96,13 +97,16 @@ sunxi_fb_attach(device_t parent, device_t self, void *aux)
 	const bool is_console = true;
 	prop_dictionary_set_bool(dict, "is_console", is_console);
 #endif
-	config_defer(self, sunxi_fb_init);
+	sunxi_task_init(&sc->sc_attach_task, &sunxi_fb_init);
+	sunxi_task_schedule(parent, &sc->sc_attach_task);
 }
 
 static void
-sunxi_fb_init(device_t dev)
+sunxi_fb_init(struct sunxi_drm_task *task)
 {
-	struct sunxi_fb_softc * const sc = device_private(dev);
+	struct sunxi_fb_softc * const sc =
+	    container_of(task, struct sunxi_fb_softc, sc_attach_task);
+	device_t dev = sc->sc_dev;
 	struct sunxi_drmfb_attach_args * const sfa = &sc->sc_sfa;
 	int error;
 
