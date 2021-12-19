@@ -1,4 +1,4 @@
-/*	$NetBSD: dma-fence.h,v 1.15 2021/12/19 12:10:51 riastradh Exp $	*/
+/*	$NetBSD: dma-fence.h,v 1.16 2021/12/19 12:39:24 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -50,8 +50,8 @@ struct dma_fence {
 	struct kref			refcount;
 	spinlock_t			*lock;
 	volatile unsigned long		flags;
-	unsigned			context;
-	unsigned			seqno;
+	uint64_t			context;
+	uint64_t			seqno;
 	const struct dma_fence_ops	*ops;
 	int				error;
 	ktime_t				timestamp;
@@ -68,6 +68,7 @@ struct dma_fence {
 #define	DMA_FENCE_FLAG_USER_BITS		3
 
 struct dma_fence_ops {
+	bool		use_64bit_seqno;
 	const char	*(*get_driver_name)(struct dma_fence *);
 	const char	*(*get_timeline_name)(struct dma_fence *);
 	bool		(*enable_signaling)(struct dma_fence *);
@@ -84,6 +85,7 @@ struct dma_fence_cb {
 	bool				fcb_onqueue;
 };
 
+#define	__dma_fence_is_later		linux___dma_fence_is_later
 #define	__dma_fence_signal		linux___dma_fence_signal
 #define	__dma_fence_signal_wake		linux___dma_fence_signal_wake
 #define	dma_fence_add_callback		linux_dma_fence_add_callback
@@ -114,14 +116,15 @@ struct dma_fence_cb {
 extern int	linux_dma_fence_trace;
 
 void	dma_fence_init(struct dma_fence *, const struct dma_fence_ops *,
-	    spinlock_t *, unsigned, unsigned);
+	    spinlock_t *, uint64_t, uint64_t);
 void	dma_fence_reset(struct dma_fence *, const struct dma_fence_ops *,
-	    spinlock_t *, unsigned, unsigned); /* XXX extension */
+	    spinlock_t *, uint64_t, uint64_t); /* XXX extension */
 void	dma_fence_destroy(struct dma_fence *);
 void	dma_fence_free(struct dma_fence *);
 
-unsigned
+uint64_t
 	dma_fence_context_alloc(unsigned);
+bool	__dma_fence_is_later(uint64_t, uint64_t, const struct dma_fence_ops *);
 bool	dma_fence_is_later(struct dma_fence *, struct dma_fence *);
 
 struct dma_fence *
@@ -163,7 +166,7 @@ DMA_FENCE_TRACE(struct dma_fence *f, const char *fmt, ...)
 
 	if (__predict_false(linux_dma_fence_trace)) {
 		va_start(va, fmt);
-		printf("fence %u@%u: ", f->context, f->seqno);
+		printf("fence %"PRIu64"@%"PRIu64": ", f->context, f->seqno);
 		vprintf(fmt, va);
 		va_end(va);
 	}

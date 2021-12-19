@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_dma_fence.c,v 1.37 2021/12/19 12:38:33 riastradh Exp $	*/
+/*	$NetBSD: linux_dma_fence.c,v 1.38 2021/12/19 12:39:25 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,10 +30,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_dma_fence.c,v 1.37 2021/12/19 12:38:33 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_dma_fence.c,v 1.38 2021/12/19 12:39:25 riastradh Exp $");
 
 #include <sys/atomic.h>
 #include <sys/condvar.h>
+#include <sys/lock.h>
 #include <sys/queue.h>
 #include <sys/sdt.h>
 
@@ -120,7 +121,7 @@ dma_fence_referenced_p(struct dma_fence *fence)
  */
 void
 dma_fence_init(struct dma_fence *fence, const struct dma_fence_ops *ops,
-    spinlock_t *lock, unsigned context, unsigned seqno)
+    spinlock_t *lock, uint64_t context, uint64_t seqno)
 {
 
 	kref_init(&fence->refcount);
@@ -151,7 +152,7 @@ dma_fence_init(struct dma_fence *fence, const struct dma_fence_ops *ops,
  */
 void
 dma_fence_reset(struct dma_fence *fence, const struct dma_fence_ops *ops,
-    spinlock_t *lock, unsigned context, unsigned seqno)
+    spinlock_t *lock, uint64_t context, uint64_t seqno)
 {
 
 	KASSERTMSG(fence->f_magic != FENCE_MAGIC_BAD, "fence %p", fence);
@@ -235,12 +236,46 @@ dma_fence_free(struct dma_fence *fence)
  *	Return the first of a contiguous sequence of unique
  *	identifiers, at least until the system wraps around.
  */
-unsigned
+uint64_t
 dma_fence_context_alloc(unsigned n)
 {
-	static volatile unsigned next_context = 0;
+	static struct {
+		volatile unsigned lock;
+		uint64_t context;
+	} S;
+	uint64_t c;
 
-	return atomic_add_int_nv(&next_context, n) - n;
+	while (__predict_false(atomic_cas_uint(&S.lock, 0, 1) != 0))
+		SPINLOCK_BACKOFF_HOOK;
+	membar_enter();
+	c = S.context;
+	S.context += n;
+	atomic_store_release(&S.lock, 0);
+
+	return c;
+}
+
+/*
+ * __dma_fence_is_later(a, b, ops)
+ *
+ *	True if sequence number a is later than sequence number b,
+ *	according to the given fence ops.
+ *
+ *	- For fence ops with 64-bit sequence numbers, this is simply
+ *	  defined to be a > b as unsigned 64-bit integers.
+ *
+ *	- For fence ops with 32-bit sequence numbers, this is defined
+ *	  to mean that the 32-bit unsigned difference a - b is less
+ *	  than INT_MAX.
+ */
+bool
+__dma_fence_is_later(uint64_t a, uint64_t b, const struct dma_fence_ops *ops)
+{
+
+	if (ops->use_64bit_seqno)
+		return a > b;
+	else
+		return (unsigned)a - (unsigned)b < INT_MAX;
 }
 
 /*
@@ -252,7 +287,8 @@ dma_fence_context_alloc(unsigned n)
  *	fence a is no more than INT_MAX past the sequence number of
  *	fence b.
  *
- *	The two fences must have the same context.
+ *	The two fences must have the context.  Whether sequence numbers
+ *	are 32-bit is determined by a.
  */
 bool
 dma_fence_is_later(struct dma_fence *a, struct dma_fence *b)
@@ -263,9 +299,10 @@ dma_fence_is_later(struct dma_fence *a, struct dma_fence *b)
 	KASSERTMSG(b->f_magic != FENCE_MAGIC_BAD, "fence %p", b);
 	KASSERTMSG(b->f_magic == FENCE_MAGIC_GOOD, "fence %p", b);
 	KASSERTMSG(a->context == b->context, "incommensurate fences"
-	    ": %u @ %p =/= %u @ %p", a->context, a, b->context, b);
+	    ": %"PRIu64" @ %p =/= %"PRIu64" @ %p",
+	    a->context, a, b->context, b);
 
-	return a->seqno - b->seqno < INT_MAX;
+	return __dma_fence_is_later(a->seqno, b->seqno, a->ops);
 }
 
 static const char *dma_fence_stub_name(struct dma_fence *f)
