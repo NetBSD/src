@@ -1,7 +1,7 @@
-/*	$NetBSD: module.h,v 1.10 2021/12/19 01:41:45 riastradh Exp $	*/
+/*	$NetBSD: stringify.h,v 1.1 2021/12/19 01:41:45 riastradh Exp $	*/
 
 /*-
- * Copyright (c) 2013 The NetBSD Foundation, Inc.
+ * Copyright (c) 2018 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -29,41 +29,12 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _LINUX_MODULE_H_
-#define _LINUX_MODULE_H_
-
-/* XXX Get this first so we don't nuke the module_init declaration.  */
-#include <sys/module.h>
+#ifndef	_LINUX_STRINGIFY_H_
+#define	_LINUX_STRINGIFY_H_
 
 #include <sys/cdefs.h>
 
-#include <linux/export.h>
-#include <linux/moduleparam.h>
-#include <linux/stringify.h>
+#define	__stringify(x)		__STRING(x)
 
-#define	module_init(INIT)
-#define	module_exit(EXIT)
+#endif	/* _LINUX_STRINGIFY_H_ */
 
-#define	MODULE_AUTHOR(AUTHOR)
-#define	MODULE_DESCRIPTION(DESCRIPTION)
-#define	MODULE_DEVICE_TABLE(DESCRIPTION, IDLIST)
-#define	MODULE_FIRMWARE(FIRMWARE)
-#define	MODULE_LICENSE(LICENSE)
-struct linux_module_param_desc {
-	const char *name;
-	const char *description;
-};
-#define	MODULE_PARM_DESC(PARAMETER, DESCRIPTION) \
-static __attribute__((__used__)) \
-const struct linux_module_param_desc PARAMETER ## _desc = { \
-    .name = # PARAMETER, \
-    .description = DESCRIPTION, \
-}; \
-__link_set_add_rodata(linux_module_param_desc, PARAMETER ## _desc)
-
-#define	THIS_MODULE	0
-#define	KBUILD_MODNAME	__file__
-
-#define	__MODULE_STRING(x)	__STRING(x)
-
-#endif  /* _LINUX_MODULE_H_ */
