@@ -1,4 +1,4 @@
-#	$NetBSD: files.i915drmkms,v 1.53 2021/12/19 01:51:27 riastradh Exp $
+#	$NetBSD: files.i915drmkms,v 1.54 2021/12/19 01:51:37 riastradh Exp $
 
 version	20180827
 
@@ -55,7 +55,6 @@ file	external/bsd/drm2/dist/drm/i915/display/dvo_ns2501.c	i915drmkms
 file	external/bsd/drm2/dist/drm/i915/display/dvo_sil164.c	i915drmkms
 file	external/bsd/drm2/dist/drm/i915/display/dvo_tfp410.c	i915drmkms
 file	external/bsd/drm2/dist/drm/i915/display/icl_dsi.c	i915drmkms
-file	external/bsd/drm2/dist/drm/i915/display/intel_acpi.c	i915drmkms
 file	external/bsd/drm2/dist/drm/i915/display/intel_atomic.c	i915drmkms
 file	external/bsd/drm2/dist/drm/i915/display/intel_atomic_plane.c	i915drmkms
 file	external/bsd/drm2/dist/drm/i915/display/intel_audio.c	i915drmkms	# XXX hdaudio
