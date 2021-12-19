@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu_vega12_hwmgr.c,v 1.3 2021/12/19 12:21:30 riastradh Exp $	*/
+/*	$NetBSD: amdgpu_vega12_hwmgr.c,v 1.4 2021/12/19 12:37:54 riastradh Exp $	*/
 
 /*
  * Copyright 2017 Advanced Micro Devices, Inc.
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdgpu_vega12_hwmgr.c,v 1.3 2021/12/19 12:21:30 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdgpu_vega12_hwmgr.c,v 1.4 2021/12/19 12:37:54 riastradh Exp $");
 
 #include <linux/delay.h>
 #include <linux/fb.h>
@@ -51,6 +51,8 @@ __KERNEL_RCSID(0, "$NetBSD: amdgpu_vega12_hwmgr.c,v 1.3 2021/12/19 12:21:30 rias
 #include "pp_overdriver.h"
 #include "pp_thermal.h"
 #include "vega12_baco.h"
+
+#include <linux/nbsd-namespace.h>
 
 
 static int vega12_force_clock_level(struct pp_hwmgr *hwmgr,
@@ -2035,13 +2037,13 @@ static int vega12_get_ppfeature_status(struct pp_hwmgr *hwmgr, char *buf)
 		"[EnableAllSmuFeatures] Failed to get enabled smc features!",
 		return ret);
 
-	size += snprintf(buf + size, SIZE_MAX/*XXX*/, "Current ppfeatures: 0x%016"PRIx64"\n", features_enabled);
-	size += snprintf(buf + size, SIZE_MAX/*XXX*/, "%-19s %-22s %s\n",
+	size += sprintf(buf + size, "Current ppfeatures: 0x%016"PRIx64"\n", features_enabled);
+	size += sprintf(buf + size, "%-19s %-22s %s\n",
 				output_title[0],
 				output_title[1],
 				output_title[2]);
 	for (i = 0; i < GNLD_FEATURES_MAX; i++) {
-		size += snprintf(buf + size, SIZE_MAX/*XXX*/, "%-19s 0x%016llx %6s\n",
+		size += sprintf(buf + size, "%-19s 0x%016llx %6s\n",
 				ppfeature_name[i],
 				1ULL << i,
 				(features_enabled & (1ULL << i)) ? "Y" : "N");
@@ -2105,7 +2107,7 @@ static int vega12_print_clock_levels(struct pp_hwmgr *hwmgr,
 				"Attempt to get gfx clk levels Failed!",
 				return -1);
 		for (i = 0; i < clocks.num_levels; i++)
-			size += snprintf(buf + size, SIZE_MAX/*XXX*/, "%d: %uMhz %s\n",
+			size += sprintf(buf + size, "%d: %uMhz %s\n",
 				i, clocks.data[i].clocks_in_khz / 1000,
 				(clocks.data[i].clocks_in_khz / 1000 == now / 100) ? "*" : "");
 		break;
@@ -2121,7 +2123,7 @@ static int vega12_print_clock_levels(struct pp_hwmgr *hwmgr,
 				"Attempt to get memory clk levels Failed!",
 				return -1);
 		for (i = 0; i < clocks.num_levels; i++)
-			size += snprintf(buf + size, SIZE_MAX/*XXX*/, "%d: %uMhz %s\n",
+			size += sprintf(buf + size, "%d: %uMhz %s\n",
 				i, clocks.data[i].clocks_in_khz / 1000,
 				(clocks.data[i].clocks_in_khz / 1000 == now / 100) ? "*" : "");
 		break;
@@ -2139,7 +2141,7 @@ static int vega12_print_clock_levels(struct pp_hwmgr *hwmgr,
 				"Attempt to get soc clk levels Failed!",
 				return -1);
 		for (i = 0; i < clocks.num_levels; i++)
-			size += snprintf(buf + size, SIZE_MAX/*XXX*/, "%d: %uMhz %s\n",
+			size += sprintf(buf + size, "%d: %uMhz %s\n",
 				i, clocks.data[i].clocks_in_khz / 1000,
 				(clocks.data[i].clocks_in_khz / 1000 == now) ? "*" : "");
 		break;
@@ -2157,7 +2159,7 @@ static int vega12_print_clock_levels(struct pp_hwmgr *hwmgr,
 				"Attempt to get dcef clk levels Failed!",
 				return -1);
 		for (i = 0; i < clocks.num_levels; i++)
-			size += snprintf(buf + size, SIZE_MAX/*XXX*/, "%d: %uMhz %s\n",
+			size += sprintf(buf + size, "%d: %uMhz %s\n",
 				i, clocks.data[i].clocks_in_khz / 1000,
 				(clocks.data[i].clocks_in_khz / 1000 == now) ? "*" : "");
 		break;

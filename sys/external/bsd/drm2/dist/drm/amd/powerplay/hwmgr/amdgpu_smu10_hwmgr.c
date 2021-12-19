@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu_smu10_hwmgr.c,v 1.3 2021/12/19 12:21:29 riastradh Exp $	*/
+/*	$NetBSD: amdgpu_smu10_hwmgr.c,v 1.4 2021/12/19 12:37:54 riastradh Exp $	*/
 
 /*
  * Copyright 2015 Advanced Micro Devices, Inc.
@@ -23,7 +23,7 @@
  *
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdgpu_smu10_hwmgr.c,v 1.3 2021/12/19 12:21:29 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdgpu_smu10_hwmgr.c,v 1.4 2021/12/19 12:37:54 riastradh Exp $");
 
 #include "pp_debug.h"
 #include <linux/types.h>
@@ -41,6 +41,8 @@ __KERNEL_RCSID(0, "$NetBSD: amdgpu_smu10_hwmgr.c,v 1.3 2021/12/19 12:21:29 riast
 #include "power_state.h"
 #include "soc15_common.h"
 #include "smu10.h"
+
+#include <linux/nbsd-namespace.h>
 
 #define SMU10_MAX_DEEPSLEEP_DIVIDER_ID     5
 #define SMU10_MINIMUM_ENGINE_CLOCK         800   /* 8Mhz, the low boundary of engine clock allowed on this chip */
@@ -904,13 +906,13 @@ static int smu10_print_clock_levels(struct pp_hwmgr *hwmgr,
 		else
 			i = 1;
 
-		size += snprintf(buf + size, SIZE_MAX/*XXX*/, "0: %uMhz %s\n",
+		size += sprintf(buf + size, "0: %uMhz %s\n",
 					data->gfx_min_freq_limit/100,
 					i == 0 ? "*" : "");
-		size += snprintf(buf + size, SIZE_MAX/*XXX*/, "1: %uMhz %s\n",
+		size += sprintf(buf + size, "1: %uMhz %s\n",
 					i == 1 ? now : SMU10_UMD_PSTATE_GFXCLK,
 					i == 1 ? "*" : "");
-		size += snprintf(buf + size, SIZE_MAX/*XXX*/, "2: %uMhz %s\n",
+		size += sprintf(buf + size, "2: %uMhz %s\n",
 					data->gfx_max_freq_limit/100,
 					i == 2 ? "*" : "");
 		break;
@@ -919,7 +921,7 @@ static int smu10_print_clock_levels(struct pp_hwmgr *hwmgr,
 		now = smum_get_argument(hwmgr);
 
 		for (i = 0; i < mclk_table->count; i++)
-			size += snprintf(buf + size, SIZE_MAX/*XXX*/, "%d: %uMhz %s\n",
+			size += sprintf(buf + size, "%d: %uMhz %s\n",
 					i,
 					mclk_table->entries[i].clk / 100,
 					((mclk_table->entries[i].clk / 100)
@@ -1264,11 +1266,11 @@ static int smu10_get_power_profile_mode(struct pp_hwmgr *hwmgr, char *buf)
 	if (!buf)
 		return -EINVAL;
 
-	size += snprintf(buf + size, SIZE_MAX/*XXX*/, "%s %16s %s %s %s %s\n",title[0],
+	size += sprintf(buf + size, "%s %16s %s %s %s %s\n",title[0],
 			title[1], title[2], title[3], title[4], title[5]);
 
 	for (i = 0; i <= PP_SMC_POWER_PROFILE_COMPUTE; i++)
-		size += snprintf(buf + size, SIZE_MAX/*XXX*/, "%3d %14s%s: %14d %3d %10d %14d\n",
+		size += sprintf(buf + size, "%3d %14s%s: %14d %3d %10d %14d\n",
 			i, profile_name[i], (i == hwmgr->power_profile_mode) ? "*" : " ",
 			profile_mode_setting[i][0], profile_mode_setting[i][1],
 			profile_mode_setting[i][2], profile_mode_setting[i][3]);
