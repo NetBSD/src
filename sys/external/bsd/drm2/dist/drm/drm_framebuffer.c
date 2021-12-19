@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_framebuffer.c,v 1.5 2021/12/19 09:47:35 riastradh Exp $	*/
+/*	$NetBSD: drm_framebuffer.c,v 1.6 2021/12/19 09:47:44 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2016 Intel Corporation
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_framebuffer.c,v 1.5 2021/12/19 09:47:35 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_framebuffer.c,v 1.6 2021/12/19 09:47:44 riastradh Exp $");
 
 #include <linux/export.h>
 #include <linux/capability.h>
@@ -232,14 +232,14 @@ static int framebuffer_check(struct drm_device *dev,
 		}
 
 		if (r->modifier[i] && !(r->flags & DRM_MODE_FB_MODIFIERS)) {
-			DRM_DEBUG_KMS("bad fb modifier %llu for plane %d\n",
+			DRM_DEBUG_KMS("bad fb modifier %"PRIu64" for plane %d\n",
 				      r->modifier[i], i);
 			return -EINVAL;
 		}
 
 		if (r->flags & DRM_MODE_FB_MODIFIERS &&
 		    r->modifier[i] != r->modifier[0]) {
-			DRM_DEBUG_KMS("bad fb modifier %llu for plane %d\n",
+			DRM_DEBUG_KMS("bad fb modifier %"PRIu64" for plane %d\n",
 				      r->modifier[i], i);
 			return -EINVAL;
 		}
