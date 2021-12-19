@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_scheduler.c,v 1.3 2021/12/19 11:37:05 riastradh Exp $	*/
+/*	$NetBSD: i915_scheduler.c,v 1.4 2021/12/19 11:37:41 riastradh Exp $	*/
 
 /*
  * SPDX-License-Identifier: MIT
@@ -7,7 +7,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_scheduler.c,v 1.3 2021/12/19 11:37:05 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_scheduler.c,v 1.4 2021/12/19 11:37:41 riastradh Exp $");
 
 #include <linux/mutex.h>
 
@@ -15,6 +15,8 @@ __KERNEL_RCSID(0, "$NetBSD: i915_scheduler.c,v 1.3 2021/12/19 11:37:05 riastradh
 #include "i915_globals.h"
 #include "i915_request.h"
 #include "i915_scheduler.h"
+
+#include <linux/nbsd-namespace.h>
 
 static struct i915_global_scheduler {
 	struct i915_global base;
@@ -62,7 +64,9 @@ static void assert_priolists(struct intel_engine_execlists * const execlists)
 		   rb_first(&execlists->queue.rb_root));
 
 	last_prio = (INT_MAX >> I915_USER_PRIORITY_SHIFT) + 1;
-	for (rb = rb_first_cached(&execlists->queue); rb; rb = rb_next(rb)) {
+	for (rb = rb_first_cached(&execlists->queue);
+	     rb;
+	     rb = rb_next2(&execlists->queue.rb_root, rb)) {
 		const struct i915_priolist *p = to_priolist(rb);
 
 		GEM_BUG_ON(p->priority >= last_prio);
@@ -97,6 +101,15 @@ i915_sched_lookup_priolist(struct intel_engine_cs *engine, int prio)
 		prio = I915_PRIORITY_NORMAL;
 
 find_priolist:
+#ifdef __NetBSD__
+	/* XXX  */
+	__USE(first);
+	__USE(parent);
+	__USE(rb);
+	p = rb_tree_find_node(&execlists->queue.rb_root.rbr_tree, &prio);
+	if (p)
+		goto out;
+#else
 	/* most positive priority is scheduled first, equal priorities fifo */
 	rb = NULL;
 	parent = &execlists->queue.rb_root.rb_node;
@@ -112,6 +125,7 @@ find_priolist:
 			goto out;
 		}
 	}
+#endif
 
 	if (prio == I915_PRIORITY_NORMAL) {
 		p = &execlists->default_priolist;
@@ -137,8 +151,15 @@ find_priolist:
 	p->priority = prio;
 	for (i = 0; i < ARRAY_SIZE(p->requests); i++)
 		INIT_LIST_HEAD(&p->requests[i]);
+#ifdef __NetBSD__
+	struct i915_priolist *collision __diagused;
+	collision = rb_tree_insert_node(&execlists->queue.rb_root.rbr_tree,
+	    p);
+	KASSERT(collision == p);
+#else
 	rb_link_node(&p->node, rb, parent);
 	rb_insert_color_cached(&p->node, &execlists->queue, first);
+#endif
 	p->used = 0;
 
 out:

@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic.h,v 1.39 2021/12/19 11:31:11 riastradh Exp $	*/
+/*	$NetBSD: atomic.h,v 1.40 2021/12/19 11:37:41 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -188,6 +188,13 @@ atomic_or(int value, atomic_t *atomic)
 }
 
 static inline void
+atomic_and(int value, atomic_t *atomic)
+{
+	/* no membar */
+	atomic_and_uint(&atomic->a_u.au_uint, value);
+}
+
+static inline void
 atomic_andnot(int value, atomic_t *atomic)
 {
 	/* no membar */
@@ -296,6 +303,16 @@ atomic_cmpxchg(atomic_t *atomic, int expect, int new)
 	smp_mb__after_atomic();
 
 	return old;
+}
+
+static inline bool
+atomic_try_cmpxchg(atomic_t *atomic, int *valuep, int new)
+{
+	int expect = *valuep;
+
+	*valuep = atomic_cmpxchg(atomic, expect, new);
+
+	return *valuep == expect;
 }
 
 struct atomic64 {

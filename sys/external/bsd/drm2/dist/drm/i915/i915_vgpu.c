@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_vgpu.c,v 1.5 2021/12/18 23:45:28 riastradh Exp $	*/
+/*	$NetBSD: i915_vgpu.c,v 1.6 2021/12/19 11:37:41 riastradh Exp $	*/
 
 /*
  * Copyright(c) 2011-2015 Intel Corporation. All rights reserved.
@@ -24,9 +24,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_vgpu.c,v 1.5 2021/12/18 23:45:28 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_vgpu.c,v 1.6 2021/12/19 11:37:41 riastradh Exp $");
 
 #include "i915_vgpu.h"
+
+#include <linux/nbsd-namespace.h>
 
 /**
  * DOC: Intel GVT-g guest support
@@ -67,7 +69,14 @@ void i915_detect_vgpu(struct drm_i915_private *dev_priv)
 	struct pci_dev *pdev = dev_priv->drm.pdev;
 	u64 magic;
 	u16 version_major;
+#ifdef __NetBSD__
+	bus_space_tag_t bst;
+	bus_space_handle_t bsh;
+	bus_size_t off = VGT_PVINFO_PAGE;
+	bus_size_t size = VGT_PVINFO_SIZE;
+#else
 	void __iomem *shared_area;
+#endif
 
 	BUILD_BUG_ON(sizeof(struct vgt_if) != VGT_PVINFO_SIZE);
 
@@ -80,31 +89,38 @@ void i915_detect_vgpu(struct drm_i915_private *dev_priv)
 	if (INTEL_GEN(dev_priv) < 6)
 		return;
 
+#ifdef __NetBSD__
+	bst = pdev->pd_pa.pa_memt;
+	if (off > pdev->pd_resources[0].size ||
+	    size > pdev->pd_resources[0].size - off ||
+	    bus_space_map(bst, pdev->pd_resources[0].addr + off, size,
+		pdev->pd_resources[0].flags, &bsh)) {
+		DRM_ERROR("failed to map MMIO bar to check for VGT\n");
+		return;
+	}
+#  ifdef _LP64
+	magic = bus_space_read_8(bst, bsh, (bus_size_t)vgtif_offset(magic));
+#  else
+	magic = bus_space_read_4(bst, bsh, (bus_size_t)vgtif_offset(magic));
+	magic |= (uint64_t)bus_space_read_4(bst, bsh,
+	    (bus_size_t)vgtif_offset(magic) + 4)
+	    << 32;
+#  endif
+#else
 	shared_area = pci_iomap_range(pdev, 0, VGT_PVINFO_PAGE, VGT_PVINFO_SIZE);
 	if (!shared_area) {
 		DRM_ERROR("failed to map MMIO bar to check for VGT\n");
 		return;
 	}
-
-#ifdef __NetBSD__
-#  ifdef _LP64
-	magic = bus_space_read_8(dev_priv->regs_bst, dev_priv->regs_bsh,
-	    vgtif_reg(magic));
-#  else
-	magic = bus_space_read_4(dev_priv->regs_bst, dev_priv->regs_bsh,
-	    vgtif_reg(magic));
-	magic |= (uint64_t)bus_space_read_4(dev_priv->regs_bst,
-	    dev_priv->regs_bsh, vgtif_reg(magic) + 4) << 32;
-#  endif
-#else
 	magic = readq(shared_area + vgtif_offset(magic));
 #endif
+
 	if (magic != VGT_MAGIC)
 		goto out;
 
 #ifdef __NetBSD__
-	version_major = bus_space_read_2(dev_priv->regs_bst, dev_priv->regs_bsh,
-		    vgtif_reg(version_major));
+	version_major = bus_space_read_2(bst, bsh,
+	    (bus_size_t)vgtif_offset(version_major));
 #else
 	version_major = readw(shared_area + vgtif_offset(version_major));
 #endif
@@ -113,14 +129,23 @@ void i915_detect_vgpu(struct drm_i915_private *dev_priv)
 		goto out;
 	}
 
+#ifdef __NetBSD__
+	dev_priv->vgpu.caps = bus_space_read_4(bst, bsh,
+	    (bus_size_t)vgtif_offset(vgt_caps));
+#else
 	dev_priv->vgpu.caps = readl(shared_area + vgtif_offset(vgt_caps));
+#endif
 
 	dev_priv->vgpu.active = true;
 	mutex_init(&dev_priv->vgpu.lock);
 	DRM_INFO("Virtual GPU for Intel GVT-g detected.\n");
 
 out:
+#ifdef __NetBSD__
+	bus_space_unmap(bst, bsh, size);
+#else
 	pci_iounmap(pdev, shared_area);
+#endif
 }
 
 bool intel_vgpu_has_full_ppgtt(struct drm_i915_private *dev_priv)
@@ -145,7 +170,7 @@ static void vgt_deballoon_space(struct i915_ggtt *ggtt,
 	if (!drm_mm_node_allocated(node))
 		return;
 
-	DRM_DEBUG_DRIVER("deballoon space: range [0x%llx - 0x%llx] %llu KiB.\n",
+	DRM_DEBUG_DRIVER("deballoon space: range [0x%"PRIx64" - 0x%"PRIx64"] %"PRIu64" KiB.\n",
 			 node->start,
 			 node->start + node->size,
 			 node->size / 1024);
