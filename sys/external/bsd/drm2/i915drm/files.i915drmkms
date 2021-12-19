@@ -1,4 +1,4 @@
-#	$NetBSD: files.i915drmkms,v 1.42 2021/12/19 00:25:34 riastradh Exp $
+#	$NetBSD: files.i915drmkms,v 1.43 2021/12/19 00:26:16 riastradh Exp $
 
 version	20180827
 
@@ -194,7 +194,7 @@ file	external/bsd/drm2/dist/drm/i915/i915_sw_fence_work.c	i915drmkms
 file	external/bsd/drm2/dist/drm/i915/i915_switcheroo.c	i915drmkms
 file	external/bsd/drm2/dist/drm/i915/i915_syncmap.c	i915drmkms
 file	external/bsd/drm2/dist/drm/i915/i915_sysfs.c	i915drmkms
-file	external/bsd/drm2/dist/drm/i915/i915_trace_points.c	i915drmkms
+#file	external/bsd/drm2/dist/drm/i915/i915_trace_points.c	i915drmkms
 file	external/bsd/drm2/dist/drm/i915/i915_user_extensions.c	i915drmkms
 file	external/bsd/drm2/dist/drm/i915/i915_utils.c	i915drmkms
 file	external/bsd/drm2/dist/drm/i915/i915_vgpu.c	i915drmkms

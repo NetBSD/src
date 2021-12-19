@@ -1,4 +1,4 @@
-#	$NetBSD: files.radeon,v 1.30 2021/12/19 00:25:34 riastradh Exp $
+#	$NetBSD: files.radeon,v 1.31 2021/12/19 00:26:17 riastradh Exp $
 
 version	20180827
 
@@ -133,7 +133,7 @@ file	external/bsd/drm2/dist/drm/radeon/radeon_sumo_dpm.c	radeon
 file	external/bsd/drm2/dist/drm/radeon/radeon_sumo_smc.c	radeon
 file	external/bsd/drm2/dist/drm/radeon/radeon_sync.c	radeon
 file	external/bsd/drm2/dist/drm/radeon/radeon_test.c	radeon
-file	external/bsd/drm2/dist/drm/radeon/radeon_trace_points.c	radeon
+#file	external/bsd/drm2/dist/drm/radeon/radeon_trace_points.c	radeon
 file	external/bsd/drm2/dist/drm/radeon/radeon_trinity_dpm.c	radeon
 file	external/bsd/drm2/dist/drm/radeon/radeon_trinity_smc.c	radeon
 file	external/bsd/drm2/dist/drm/radeon/radeon_ttm.c	radeon
