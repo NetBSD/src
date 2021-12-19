@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_vma_manager.h,v 1.3 2021/12/19 01:08:15 riastradh Exp $	*/
+/*	$NetBSD: drm_vma_manager.h,v 1.4 2021/12/19 01:20:38 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -52,6 +52,9 @@ struct drm_vma_offset_node {
 	vmem_size_t	von_npages;
 	struct rb_tree	von_files;
 	struct rb_node	von_rb_node;
+
+	/* Linux API names */
+	bool		readonly;
 };
 
 static inline unsigned long
