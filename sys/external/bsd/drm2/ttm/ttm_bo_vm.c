@@ -1,4 +1,4 @@
-/*	$NetBSD: ttm_bo_vm.c,v 1.17 2021/12/19 09:57:33 riastradh Exp $	*/
+/*	$NetBSD: ttm_bo_vm.c,v 1.18 2021/12/19 11:09:25 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ttm_bo_vm.c,v 1.17 2021/12/19 09:57:33 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ttm_bo_vm.c,v 1.18 2021/12/19 11:09:25 riastradh Exp $");
 
 #include <sys/types.h>
 
@@ -65,7 +65,6 @@ ttm_bo_uvm_detach(struct uvm_object *uobj)
 	    struct ttm_buffer_object, uvmobj);
 
 	ttm_bo_put(bo);
-	KASSERT(bo == NULL);
 }
 
 int
