@@ -1,4 +1,4 @@
-/*	$NetBSD: ttm_bo_vm.c,v 1.16 2021/12/19 09:57:17 riastradh Exp $	*/
+/*	$NetBSD: ttm_bo_vm.c,v 1.17 2021/12/19 09:57:33 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ttm_bo_vm.c,v 1.16 2021/12/19 09:57:17 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ttm_bo_vm.c,v 1.17 2021/12/19 09:57:33 riastradh Exp $");
 
 #include <sys/types.h>
 
@@ -110,7 +110,9 @@ ttm_bo_uvm_fault(struct uvm_faultinfo *ufi, vaddr_t vaddr,
 		 * it, and start over.
 		 */
 		uvmfault_unlockall(ufi, ufi->entry->aref.ar_amap, NULL);
-		(void)ttm_bo_wait_unreserved(bo);
+		if (!dma_resv_lock_interruptible(bo->base.resv, NULL))
+			dma_resv_unlock(bo->base.resv);
+
 		return ERESTART;
 	}
 
