@@ -1,4 +1,4 @@
-/* $NetBSD: rk_fb.c,v 1.3 2021/12/19 11:00:46 riastradh Exp $ */
+/* $NetBSD: rk_fb.c,v 1.4 2021/12/19 11:01:10 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2015-2019 Jared McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "opt_wsdisplay_compat.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rk_fb.c,v 1.3 2021/12/19 11:00:46 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rk_fb.c,v 1.4 2021/12/19 11:01:10 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -37,10 +37,10 @@ __KERNEL_RCSID(0, "$NetBSD: rk_fb.c,v 1.3 2021/12/19 11:00:46 riastradh Exp $");
 
 #include <dev/fdt/fdtvar.h>
 
+#include <arm/rockchip/rk_drm.h>
+
 #include <drm/drm_drv.h>
 #include <drm/drmfb.h>
-
-#include <arm/rockchip/rk_drm.h>
 
 static int	rk_fb_match(device_t, cfdata_t, void *);
 static void	rk_fb_attach(device_t, device_t, void *);

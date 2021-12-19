@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_drm.c,v 1.16 2021/12/19 11:00:46 riastradh Exp $ */
+/* $NetBSD: sunxi_drm.c,v 1.17 2021/12/19 11:01:10 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2019 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,19 +27,24 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_drm.c,v 1.16 2021/12/19 11:00:46 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_drm.c,v 1.17 2021/12/19 11:01:10 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
+#include <sys/conf.h>
 #include <sys/device.h>
 #include <sys/intr.h>
-#include <sys/systm.h>
 #include <sys/kernel.h>
-#include <sys/conf.h>
+#include <sys/systm.h>
 
+#include <uvm/uvm_device.h>
 #include <uvm/uvm_extern.h>
 #include <uvm/uvm_object.h>
-#include <uvm/uvm_device.h>
+
+#include <dev/fdt/fdt_port.h>
+#include <dev/fdt/fdtvar.h>
+
+#include <arm/sunxi/sunxi_drm.h>
 
 #include <drm/drm_auth.h>
 #include <drm/drm_crtc_helper.h>
@@ -47,11 +52,6 @@ __KERNEL_RCSID(0, "$NetBSD: sunxi_drm.c,v 1.16 2021/12/19 11:00:46 riastradh Exp
 #include <drm/drm_fb_helper.h>
 #include <drm/drm_fourcc.h>
 #include <drm/drm_vblank.h>
-
-#include <dev/fdt/fdtvar.h>
-#include <dev/fdt/fdt_port.h>
-
-#include <arm/sunxi/sunxi_drm.h>
 
 #define	SUNXI_DRM_MAX_WIDTH	3840
 #define	SUNXI_DRM_MAX_HEIGHT	2160

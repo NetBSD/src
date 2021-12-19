@@ -1,4 +1,4 @@
-/* $NetBSD: dw_hdmi.h,v 1.7 2021/12/19 11:00:47 riastradh Exp $ */
+/* $NetBSD: dw_hdmi.h,v 1.8 2021/12/19 11:01:11 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2019 Jared D. McNeill <jmcneill@invisible.ca>
@@ -34,9 +34,9 @@
 
 #include <dev/audio/audio_dai.h>
 
-#include <drm/drm_drv.h>
 #include <drm/drm_bridge.h>
 #include <drm/drm_connector.h>
+#include <drm/drm_drv.h>
 #include <drm/drm_modes.h>
 
 struct dwhdmi_softc;

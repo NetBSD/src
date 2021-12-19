@@ -1,4 +1,4 @@
-/* $NetBSD: rk_vop.c,v 1.11 2021/12/19 11:00:46 riastradh Exp $ */
+/* $NetBSD: rk_vop.c,v 1.12 2021/12/19 11:01:10 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2019 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,27 +27,27 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rk_vop.c,v 1.11 2021/12/19 11:00:46 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rk_vop.c,v 1.12 2021/12/19 11:01:10 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
+#include <sys/conf.h>
 #include <sys/device.h>
 #include <sys/intr.h>
-#include <sys/systm.h>
 #include <sys/kernel.h>
-#include <sys/conf.h>
 #include <sys/sysctl.h>
+#include <sys/systm.h>
 
-#include <drm/drm_drv.h>
-#include <drm/drm_crtc.h>
-#include <drm/drm_crtc_helper.h>
-#include <drm/drm_fourcc.h>
-#include <drm/drm_plane_helper.h>
-
-#include <dev/fdt/fdtvar.h>
 #include <dev/fdt/fdt_port.h>
+#include <dev/fdt/fdtvar.h>
 
 #include <arm/rockchip/rk_drm.h>
+
+#include <drm/drm_crtc.h>
+#include <drm/drm_crtc_helper.h>
+#include <drm/drm_drv.h>
+#include <drm/drm_fourcc.h>
+#include <drm/drm_plane_helper.h>
 
 #define	VOP_REG_CFG_DONE		0x0000
 #define	 REG_LOAD_EN			__BIT(0)
