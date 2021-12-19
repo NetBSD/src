@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu_smu.c,v 1.4 2021/12/19 12:31:45 riastradh Exp $	*/
+/*	$NetBSD: amdgpu_smu.c,v 1.5 2021/12/19 12:37:54 riastradh Exp $	*/
 
 /*
  * Copyright 2019 Advanced Micro Devices, Inc.
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdgpu_smu.c,v 1.4 2021/12/19 12:31:45 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdgpu_smu.c,v 1.5 2021/12/19 12:37:54 riastradh Exp $");
 
 #include <linux/firmware.h>
 #include <linux/pci.h>
@@ -86,7 +86,7 @@ size_t smu_sys_get_pp_feature_mask(struct smu_context *smu, char *buf)
 	if (ret)
 		goto failed;
 
-	size =  snprintf(buf + size, SIZE_MAX/*XXX*/, "features high: 0x%08x low: 0x%08x\n",
+	size =  sprintf(buf + size, "features high: 0x%08x low: 0x%08x\n",
 			feature_mask[1], feature_mask[0]);
 
 	for (i = 0; i < SMU_FEATURE_COUNT; i++) {
@@ -98,7 +98,7 @@ size_t smu_sys_get_pp_feature_mask(struct smu_context *smu, char *buf)
 	}
 
 	for (i = 0; i < hw_feature_count; i++) {
-		size += snprintf(buf + size, SIZE_MAX/*XXX*/, "%02d. %-20s (%2d) : %s\n",
+		size += sprintf(buf + size, "%02d. %-20s (%2d) : %s\n",
 			       count++,
 			       smu_get_feature_name(smu, sort_feature[i]),
 			       i,
