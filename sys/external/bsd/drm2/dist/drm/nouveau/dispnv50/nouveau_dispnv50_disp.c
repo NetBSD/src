@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_dispnv50_disp.c,v 1.4 2021/12/19 10:49:38 riastradh Exp $	*/
+/*	$NetBSD: nouveau_dispnv50_disp.c,v 1.5 2021/12/19 10:49:47 riastradh Exp $	*/
 
 /*
  * Copyright 2011 Red Hat Inc.
@@ -24,7 +24,7 @@
  * Authors: Ben Skeggs
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_dispnv50_disp.c,v 1.4 2021/12/19 10:49:38 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_dispnv50_disp.c,v 1.5 2021/12/19 10:49:47 riastradh Exp $");
 
 #include "disp.h"
 #include "atom.h"
@@ -175,7 +175,7 @@ nv50_dmac_create(struct nvif_device *device, struct nvif_object *disp,
 	if (ret)
 		return ret;
 
-	dmac->ptr = dmac->push.object.map.ptr;
+	dmac->ptr = __UNVOLATILE(dmac->push.object.map.ptr);
 
 	args->pushbuf = nvif_handle(&dmac->push.object);
 
