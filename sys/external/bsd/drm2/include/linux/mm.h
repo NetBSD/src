@@ -1,4 +1,4 @@
-/*	$NetBSD: mm.h,v 1.14 2021/12/19 01:02:17 riastradh Exp $	*/
+/*	$NetBSD: mm.h,v 1.15 2021/12/19 01:14:14 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -79,6 +79,13 @@ static inline unsigned long
 get_num_physpages(void)
 {
 	return uvmexp.npages;
+}
+
+static inline void *
+kvzalloc(size_t size, gfp_t gfp)
+{
+
+	return kmalloc(size, gfp | __GFP_ZERO);
 }
 
 static inline void *
