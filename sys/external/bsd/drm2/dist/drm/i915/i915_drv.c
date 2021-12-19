@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_drv.c,v 1.45 2021/12/19 12:32:15 riastradh Exp $	*/
+/*	$NetBSD: i915_drv.c,v 1.46 2021/12/19 12:40:43 riastradh Exp $	*/
 
 /* i915_drv.c -- i830,i845,i855,i865,i915 driver -*- linux-c -*-
  */
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_drv.c,v 1.45 2021/12/19 12:32:15 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_drv.c,v 1.46 2021/12/19 12:40:43 riastradh Exp $");
 
 #include <linux/acpi.h>
 #include <linux/device.h>
@@ -1237,7 +1237,7 @@ static int i915_driver_hw_probe(struct drm_i915_private *dev_priv)
 
 	pci_set_master(pdev);
 
-#ifdef __linux__
+#ifndef __NetBSD__
 	/*
 	 * We don't have a max segment size, so set it to the max so sg's
 	 * debugging layer doesn't complain

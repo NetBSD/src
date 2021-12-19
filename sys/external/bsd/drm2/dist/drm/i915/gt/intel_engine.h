@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_engine.h,v 1.3 2021/12/19 11:08:40 riastradh Exp $	*/
+/*	$NetBSD: intel_engine.h,v 1.4 2021/12/19 12:40:43 riastradh Exp $	*/
 
 /* SPDX-License-Identifier: MIT */
 #ifndef _INTEL_RINGBUFFER_H_
@@ -112,21 +112,7 @@ execlists_active(const struct intel_engine_execlists *execlists)
 	return *READ_ONCE(execlists->active);
 }
 
-#ifdef __linux__
-static inline void
-execlists_active_lock_bh(struct intel_engine_execlists *execlists)
-{
-	local_bh_disable(); /* prevent local softirq and lock recursion */
-	tasklet_lock(&execlists->tasklet);
-}
-
-static inline void
-execlists_active_unlock_bh(struct intel_engine_execlists *execlists)
-{
-	tasklet_unlock(&execlists->tasklet);
-	local_bh_enable(); /* restore softirq, and kick ksoftirqd! */
-}
-#else
+#ifdef __NetBSD__
 static inline int
 execlists_active_lock_bh(struct intel_engine_execlists *execlists)
 {
@@ -140,6 +126,20 @@ execlists_active_unlock_bh(struct intel_engine_execlists *execlists, int s)
 {
 	tasklet_unlock(&execlists->tasklet);
 	splraise(s); /* restore softirq, and kick ksoftirqd! */
+}
+#else
+static inline void
+execlists_active_lock_bh(struct intel_engine_execlists *execlists)
+{
+	local_bh_disable(); /* prevent local softirq and lock recursion */
+	tasklet_lock(&execlists->tasklet);
+}
+
+static inline void
+execlists_active_unlock_bh(struct intel_engine_execlists *execlists)
+{
+	tasklet_unlock(&execlists->tasklet);
+	local_bh_enable(); /* restore softirq, and kick ksoftirqd! */
 }
 #endif
 

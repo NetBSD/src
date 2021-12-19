@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_uncore.h,v 1.10 2021/12/19 12:36:50 riastradh Exp $	*/
+/*	$NetBSD: intel_uncore.h,v 1.11 2021/12/19 12:40:43 riastradh Exp $	*/
 
 /*
  * Copyright © 2017 Intel Corporation
@@ -280,33 +280,8 @@ intel_wait_for_register_fw(struct intel_uncore *uncore,
 }
 
 /* register access functions */
-#ifdef __linux__
-#define __raw_read(x__, s__) \
-static inline u##x__ __raw_uncore_read##x__(const struct intel_uncore *uncore, \
-					    i915_reg_t reg) \
-{ \
-	return read##s__(uncore->regs + i915_mmio_reg_offset(reg)); \
-}
+#ifdef __NetBSD__
 
-#define __raw_write(x__, s__) \
-static inline void __raw_uncore_write##x__(const struct intel_uncore *uncore, \
-					   i915_reg_t reg, u##x__ val) \
-{ \
-	write##s__(val, uncore->regs + i915_mmio_reg_offset(reg)); \
-}
-__raw_read(8, b)
-__raw_read(16, w)
-__raw_read(32, l)
-__raw_read(64, q)
-
-__raw_write(8, b)
-__raw_write(16, w)
-__raw_write(32, l)
-__raw_write(64, q)
-
-#undef __raw_read
-#undef __raw_write
-#else
 static inline uint8_t __raw_uncore_read8(const struct intel_uncore *uncore,
 						i915_reg_t reg) {
 	return bus_space_read_1(uncore->regs_bst, uncore->regs_bsh, i915_mmio_reg_offset(reg));
@@ -355,7 +330,36 @@ static inline void __raw_uncore_write64(const struct intel_uncore *uncore,
 	    i915_mmio_reg_offset(reg) + 4, val >> 32);
 #endif
 }
-#endif
+
+#else  /* !__NetBSD__ */
+
+#define __raw_read(x__, s__) \
+static inline u##x__ __raw_uncore_read##x__(const struct intel_uncore *uncore, \
+					    i915_reg_t reg) \
+{ \
+	return read##s__(uncore->regs + i915_mmio_reg_offset(reg)); \
+}
+
+#define __raw_write(x__, s__) \
+static inline void __raw_uncore_write##x__(const struct intel_uncore *uncore, \
+					   i915_reg_t reg, u##x__ val) \
+{ \
+	write##s__(val, uncore->regs + i915_mmio_reg_offset(reg)); \
+}
+__raw_read(8, b)
+__raw_read(16, w)
+__raw_read(32, l)
+__raw_read(64, q)
+
+__raw_write(8, b)
+__raw_write(16, w)
+__raw_write(32, l)
+__raw_write(64, q)
+
+#undef __raw_read
+#undef __raw_write
+
+#endif	/* __NetBSD__ */
 
 #define __uncore_read(name__, x__, s__, trace__) \
 static inline u##x__ intel_uncore_##name__(struct intel_uncore *uncore, \

@@ -1,4 +1,4 @@
-/*	$NetBSD: ttm_bo_api.h,v 1.7 2021/12/19 09:55:14 riastradh Exp $	*/
+/*	$NetBSD: ttm_bo_api.h,v 1.8 2021/12/19 12:40:44 riastradh Exp $	*/
 
 /**************************************************************************
  *
@@ -775,7 +775,7 @@ static inline bool ttm_bo_uses_embedded_gem_object(struct ttm_buffer_object *bo)
 /* Default number of pre-faulted pages in the TTM fault handler */
 #define TTM_BO_VM_NUM_PREFAULT 16
 
-#ifdef __linux__
+#ifndef __NetBSD__
 vm_fault_t ttm_bo_vm_reserve(struct ttm_buffer_object *bo,
 			     struct vm_fault *vmf);
 
@@ -791,6 +791,6 @@ void ttm_bo_vm_close(struct vm_area_struct *vma);
 
 int ttm_bo_vm_access(struct vm_area_struct *vma, unsigned long addr,
 		     void *buf, int len, int write);
-#endif
+#endif	/* __NetBSD__ */
 
 #endif

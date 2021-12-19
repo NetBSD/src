@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_engine_cs.c,v 1.8 2021/12/19 12:33:56 riastradh Exp $	*/
+/*	$NetBSD: intel_engine_cs.c,v 1.9 2021/12/19 12:40:43 riastradh Exp $	*/
 
 /*
  * Copyright © 2016 Intel Corporation
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intel_engine_cs.c,v 1.8 2021/12/19 12:33:56 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intel_engine_cs.c,v 1.9 2021/12/19 12:40:43 riastradh Exp $");
 
 #include <drm/drm_print.h>
 
@@ -1375,10 +1375,10 @@ static void intel_engine_print_registers(struct intel_engine_cs *engine,
 				   idx, hws[idx * 2], hws[idx * 2 + 1]);
 		}
 
-#ifdef __linux__
-		execlists_active_lock_bh(execlists);
-#else
+#ifdef __NetBSD__
 		int s = execlists_active_lock_bh(execlists);
+#else
+		execlists_active_lock_bh(execlists);
 #endif
 		rcu_read_lock();
 		for (port = execlists->active; (rq = *port); port++) {
