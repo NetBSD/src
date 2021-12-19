@@ -1,4 +1,4 @@
-/*	$NetBSD: reservation.h,v 1.15 2021/12/19 01:25:42 riastradh Exp $	*/
+/*	$NetBSD: reservation.h,v 1.16 2021/12/19 01:48:03 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -64,6 +64,8 @@ struct reservation_poll {
 
 #define	reservation_object_add_excl_fence	linux_reservation_object_add_excl_fence
 #define	reservation_object_add_shared_fence	linux_reservation_object_add_shared_fence
+#define	reservation_object_assert_held		linux_reservation_object_assert_held
+#define	reservation_object_copy_fences		linux_reservation_object_copy_fences
 #define	reservation_object_fini			linux_reservation_object_fini
 #define	reservation_object_get_excl		linux_reservation_object_get_excl
 #define	reservation_object_get_excl_rcu		linux_reservation_object_get_excl_rcu
@@ -95,6 +97,7 @@ int	reservation_object_lock_interruptible(struct reservation_object *,
 bool	reservation_object_trylock(struct reservation_object *) __must_check;
 void	reservation_object_unlock(struct reservation_object *);
 bool	reservation_object_held(struct reservation_object *);
+void	reservation_object_assert_held(struct reservation_object *);
 struct dma_fence *
 	reservation_object_get_excl(struct reservation_object *);
 struct reservation_object_list *
@@ -109,6 +112,9 @@ struct dma_fence *
 	reservation_object_get_excl_rcu(struct reservation_object *);
 int	reservation_object_get_fences_rcu(struct reservation_object *,
 	    struct dma_fence **, unsigned *, struct dma_fence ***);
+
+int	reservation_object_copy_fences(struct reservation_object *,
+	    const struct reservation_object *);
 
 bool	reservation_object_test_signaled_rcu(struct reservation_object *,
 	    bool);
