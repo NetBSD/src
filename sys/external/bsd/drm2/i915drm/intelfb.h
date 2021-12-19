@@ -1,4 +1,4 @@
-/*	$NetBSD: intelfb.h,v 1.2 2021/12/19 10:32:59 riastradh Exp $	*/
+/*	$NetBSD: intelfb.h,v 1.3 2021/12/19 11:38:46 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -42,10 +42,7 @@ struct intelfb_attach_args {
 	struct drm_device			*ifa_drm_dev;
 	struct drm_fb_helper			*ifa_fb_helper;
 	struct drm_fb_helper_surface_size	ifa_fb_sizes;
-	bus_space_tag_t				ifa_fb_bst;
-	bus_addr_t				ifa_fb_addr;
-	bus_size_t				ifa_fb_size;
-	bool					ifa_fb_zero;
+	void*					ifa_fb_vaddr;
 };
 
 #endif	/* _I915DRM_INTELFB_H_ */
