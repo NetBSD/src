@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_work.c,v 1.45 2020/02/01 22:38:05 riastradh Exp $	*/
+/*	$NetBSD: linux_work.c,v 1.46 2021/12/19 00:48:53 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_work.c,v 1.45 2020/02/01 22:38:05 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_work.c,v 1.46 2021/12/19 00:48:53 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/atomic.h>
@@ -155,7 +155,7 @@ linux_workqueue_init0(void)
 	}
 
 	system_power_efficient_wq = alloc_ordered_workqueue("lnxpwrwq", 0);
-	if (system_long_wq == NULL) {
+	if (system_power_efficient_wq == NULL) {
 		error = ENOMEM;
 		goto fail3;
 	}
