@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_nvkm_subdev_therm_fan.c,v 1.3 2021/12/18 23:45:41 riastradh Exp $	*/
+/*	$NetBSD: nouveau_nvkm_subdev_therm_fan.c,v 1.4 2021/12/19 11:34:46 riastradh Exp $	*/
 
 /*
  * Copyright 2012 Red Hat Inc.
@@ -25,7 +25,7 @@
  * 	    Martin Peres
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_subdev_therm_fan.c,v 1.3 2021/12/18 23:45:41 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_subdev_therm_fan.c,v 1.4 2021/12/19 11:34:46 riastradh Exp $");
 
 #include "priv.h"
 
@@ -226,6 +226,14 @@ nvkm_therm_fan_fini(struct nvkm_therm *therm, bool suspend)
 	if (suspend)
 		nvkm_timer_alarm(tmr, 0, &therm->fan->alarm);
 	return 0;
+}
+
+void
+nvkm_therm_fan_dtor(struct nvkm_therm *therm)
+{
+	if (therm->fan->dtor)
+		therm->fan->dtor(therm->fan);
+	spin_lock_destroy(&therm->fan->lock);
 }
 
 int

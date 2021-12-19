@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_dispnv50_disp.c,v 1.5 2021/12/19 10:49:47 riastradh Exp $	*/
+/*	$NetBSD: nouveau_dispnv50_disp.c,v 1.6 2021/12/19 11:34:44 riastradh Exp $	*/
 
 /*
  * Copyright 2011 Red Hat Inc.
@@ -24,7 +24,7 @@
  * Authors: Ben Skeggs
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_dispnv50_disp.c,v 1.5 2021/12/19 10:49:47 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_dispnv50_disp.c,v 1.6 2021/12/19 11:34:44 riastradh Exp $");
 
 #include "disp.h"
 #include "atom.h"
@@ -2455,6 +2455,7 @@ nv50_display_destroy(struct drm_device *dev)
 	nouveau_bo_ref(NULL, &disp->sync);
 
 	nouveau_display(dev)->priv = NULL;
+	mutex_destroy(&disp->mutex);
 	kfree(disp);
 }
 

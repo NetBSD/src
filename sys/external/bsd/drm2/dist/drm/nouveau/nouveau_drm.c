@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_drm.c,v 1.22 2021/12/19 10:51:56 riastradh Exp $	*/
+/*	$NetBSD: nouveau_drm.c,v 1.23 2021/12/19 11:34:44 riastradh Exp $	*/
 
 /*
  * Copyright 2012 Red Hat Inc.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_drm.c,v 1.22 2021/12/19 10:51:56 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_drm.c,v 1.23 2021/12/19 11:34:44 riastradh Exp $");
 
 #include <linux/console.h>
 #include <linux/delay.h>
@@ -203,6 +203,8 @@ nouveau_cli_fini(struct nouveau_cli *cli)
 	mutex_lock(&cli->drm->master.lock);
 	nvif_client_fini(&cli->base);
 	mutex_unlock(&cli->drm->master.lock);
+	mutex_destroy(&cli->lock);
+	mutex_destroy(&cli->mutex);
 }
 
 static int
@@ -610,6 +612,7 @@ fail_bios:
 	nouveau_ttm_fini(drm);
 fail_ttm:
 	nouveau_vga_fini(drm);
+	spin_lock_destroy(&drm->tile.lock);
 	nouveau_cli_fini(&drm->client);
 fail_master:
 	nouveau_cli_fini(&drm->master);
@@ -644,6 +647,8 @@ nouveau_drm_device_fini(struct drm_device *dev)
 
 	nouveau_ttm_fini(drm);
 	nouveau_vga_fini(drm);
+
+	spin_lock_destroy(&drm->tile.lock);
 
 	nouveau_cli_fini(&drm->client);
 	nouveau_cli_fini(&drm->master);

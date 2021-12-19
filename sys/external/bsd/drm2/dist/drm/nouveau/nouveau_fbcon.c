@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_fbcon.c,v 1.14 2021/12/19 10:51:56 riastradh Exp $	*/
+/*	$NetBSD: nouveau_fbcon.c,v 1.15 2021/12/19 11:34:44 riastradh Exp $	*/
 
 /*
  * Copyright © 2007 David Airlie
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_fbcon.c,v 1.14 2021/12/19 10:51:56 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_fbcon.c,v 1.15 2021/12/19 11:34:44 riastradh Exp $");
 
 #include <linux/module.h>
 #include <linux/kernel.h>
@@ -679,6 +679,7 @@ nouveau_fbcon_fini(struct drm_device *dev)
 
 	nouveau_fbcon_accel_fini(dev);
 	nouveau_fbcon_destroy(dev, drm->fbcon);
+	mutex_destroy(&drm->fbcon->hotplug_lock);
 	kfree(drm->fbcon);
 	drm->fbcon = NULL;
 }

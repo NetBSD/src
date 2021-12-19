@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_atomic.c,v 1.11 2021/12/19 00:55:34 riastradh Exp $	*/
+/*	$NetBSD: drm_atomic.c,v 1.12 2021/12/19 11:34:44 riastradh Exp $	*/
 
 /*
  * Copyright (C) 2014 Red Hat
@@ -29,7 +29,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_atomic.c,v 1.11 2021/12/19 00:55:34 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_atomic.c,v 1.12 2021/12/19 11:34:44 riastradh Exp $");
 
 #include <linux/sync_file.h>
 
@@ -52,6 +52,11 @@ void __drm_crtc_commit_free(struct kref *kref)
 	struct drm_crtc_commit *commit =
 		container_of(kref, struct drm_crtc_commit, ref);
 
+#ifdef __NetBSD__
+	destroy_completion(&commit->flip_done);
+	destroy_completion(&commit->hw_done);
+	destroy_completion(&commit->cleanup_done);
+#endif
 	kfree(commit);
 }
 EXPORT_SYMBOL(__drm_crtc_commit_free);

@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_nvkm_subdev_timer_base.c,v 1.5 2021/12/19 10:51:59 riastradh Exp $	*/
+/*	$NetBSD: nouveau_nvkm_subdev_timer_base.c,v 1.6 2021/12/19 11:34:46 riastradh Exp $	*/
 
 /*
  * Copyright 2012 Red Hat Inc.
@@ -24,7 +24,7 @@
  * Authors: Ben Skeggs
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_subdev_timer_base.c,v 1.5 2021/12/19 10:51:59 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_subdev_timer_base.c,v 1.6 2021/12/19 11:34:46 riastradh Exp $");
 
 #include "priv.h"
 
@@ -176,6 +176,7 @@ nvkm_timer_init(struct nvkm_subdev *subdev)
 static void *
 nvkm_timer_dtor(struct nvkm_subdev *subdev)
 {
+	spin_lock_destroy(&nvkm_timer(subdev)->lock);
 	return nvkm_timer(subdev);
 }
 

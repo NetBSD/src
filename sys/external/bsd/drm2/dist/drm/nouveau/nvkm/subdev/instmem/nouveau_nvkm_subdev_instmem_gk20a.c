@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_nvkm_subdev_instmem_gk20a.c,v 1.7 2021/12/19 10:51:58 riastradh Exp $	*/
+/*	$NetBSD: nouveau_nvkm_subdev_instmem_gk20a.c,v 1.8 2021/12/19 11:34:45 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2015, NVIDIA CORPORATION. All rights reserved.
@@ -44,7 +44,7 @@
  * goes beyond a certain threshold. At the moment this limit is 1MB.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_subdev_instmem_gk20a.c,v 1.7 2021/12/19 10:51:58 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_subdev_instmem_gk20a.c,v 1.8 2021/12/19 11:34:45 riastradh Exp $");
 
 #include "priv.h"
 
@@ -661,6 +661,8 @@ gk20a_instmem_dtor(struct nvkm_instmem *base)
 	if (imem->vaddr_use != 0)
 		nvkm_warn(&base->subdev, "instobj vmap area not empty! "
 			  "0x%x bytes still mapped\n", imem->vaddr_use);
+
+	mutex_destroy(&imem->lock);
 
 	return imem;
 }
