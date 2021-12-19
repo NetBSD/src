@@ -1,11 +1,8 @@
-/*	$NetBSD: linux_dma_fence_chain.c,v 1.2 2021/12/19 12:39:16 riastradh Exp $	*/
+/*	$NetBSD: linux_dma_fence_chain.c,v 1.3 2021/12/19 12:39:32 riastradh Exp $	*/
 
 /*-
- * Copyright (c) 2020 The NetBSD Foundation, Inc.
+ * Copyright (c) 2021 The NetBSD Foundation, Inc.
  * All rights reserved.
- *
- * This code is derived from software contributed to The NetBSD Foundation
- * by Taylor R. Campbell.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_dma_fence_chain.c,v 1.2 2021/12/19 12:39:16 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_dma_fence_chain.c,v 1.3 2021/12/19 12:39:32 riastradh Exp $");
 
 #include <sys/types.h>
 
@@ -38,42 +35,169 @@ __KERNEL_RCSID(0, "$NetBSD: linux_dma_fence_chain.c,v 1.2 2021/12/19 12:39:16 ri
 #include <linux/dma-fence-chain.h>
 #include <linux/spinlock.h>
 
+static void dma_fence_chain_irq_work(struct irq_work *);
+static bool dma_fence_chain_enable_signaling(struct dma_fence *);
+
 static const struct dma_fence_ops dma_fence_chain_ops;
 
 /*
  * dma_fence_chain_init(chain, prev, fence, seqno)
  *
- *	Initialize a new fence chain, and either start 
+ *	Initialize a fence chain node.  If prev was already a chain,
+ *	extend it; otherwise; create a new chain context.
  */
 void
 dma_fence_chain_init(struct dma_fence_chain *chain, struct dma_fence *prev,
     struct dma_fence *fence, uint64_t seqno)
 {
-	uint64_t context = -1;	/* XXX */
+	struct dma_fence_chain *prev_chain = to_dma_fence_chain(prev);
+	uint64_t context;
 
-	chain->prev_seqno = 0;
 	spin_lock_init(&chain->dfc_lock);
+	chain->dfc_prev = prev;	  /* consume caller's reference */
+	chain->dfc_fence = fence; /* consume caller's reference */
+	init_irq_work(&chain->dfc_irq_work, &dma_fence_chain_irq_work);
 
-	/* XXX we don't use these yet */
-	dma_fence_put(prev);
-	dma_fence_put(fence);
+	if (prev_chain == NULL ||
+	    !__dma_fence_is_later(seqno, prev->seqno, prev->ops)) {
+		context = dma_fence_context_alloc(1);
+		if (prev_chain)
+			seqno = MAX(prev->seqno, seqno);
+		chain->prev_seqno = 0;
+	} else {
+		context = prev->context;
+		chain->prev_seqno = prev->seqno;
+	}
 
 	dma_fence_init(&chain->base, &dma_fence_chain_ops, &chain->dfc_lock,
 	    context, seqno);
+}
+
+static const char *
+dma_fence_chain_driver_name(struct dma_fence *fence)
+{
+
+	return "dma_fence_chain";
+}
+
+static const char *
+dma_fence_chain_timeline_name(struct dma_fence *fence)
+{
+
+	return "unbound";
+}
+
+static void
+dma_fence_chain_irq_work(struct irq_work *work)
+{
+	struct dma_fence_chain *chain = container_of(work,
+	    struct dma_fence_chain, dfc_irq_work);
+
+	if (!dma_fence_chain_enable_signaling(&chain->base))
+		dma_fence_signal(&chain->base);
+	dma_fence_put(&chain->base);
+}
+
+static void
+dma_fence_chain_callback(struct dma_fence *fence, struct dma_fence_cb *cb)
+{
+	struct dma_fence_chain *chain = container_of(cb,
+	    struct dma_fence_chain, dfc_callback);
+
+	irq_work_queue(&chain->dfc_irq_work);
+	dma_fence_put(fence);
+}
+
+static bool
+dma_fence_chain_enable_signaling(struct dma_fence *fence)
+{
+	struct dma_fence_chain *chain = to_dma_fence_chain(fence);
+	struct dma_fence_chain *chain1;
+	struct dma_fence *f, *f1;
+
+	KASSERT(chain);
+
+	dma_fence_get(&chain->base);
+	dma_fence_chain_for_each(f, &chain->base) {
+		f1 = (chain1 = to_dma_fence_chain(f)) ? chain1->dfc_fence : f;
+
+		dma_fence_get(f1);
+		if (dma_fence_add_callback(f, &chain->dfc_callback,
+			dma_fence_chain_callback) != 0) {
+			dma_fence_put(f);
+			return true;
+		}
+		dma_fence_put(f1);
+	}
+	dma_fence_put(&chain->base);
+
+	return false;
+}
+
+static bool
+dma_fence_chain_signaled(struct dma_fence *fence)
+{
+	struct dma_fence_chain *chain1;
+	struct dma_fence *f, *f1;
+
+	dma_fence_chain_for_each(f, fence) {
+		f1 = (chain1 = to_dma_fence_chain(f)) ? chain1->dfc_fence : f;
+
+		if (!dma_fence_is_signaled(f1)) {
+			dma_fence_put(f);
+			return false;
+		}
+	}
+
+	return true;
 }
 
 static void
 dma_fence_chain_release(struct dma_fence *fence)
 {
 	struct dma_fence_chain *chain = to_dma_fence_chain(fence);
+	struct dma_fence_chain *prev_chain;
+	struct dma_fence *prev;
 
 	KASSERT(chain);
 
+	/*
+	 * Release the previous pointer, carefully.  Caller has
+	 * exclusive access to chain, so no need for atomics here.
+	 */
+	while ((prev = chain->dfc_prev) != NULL) {
+		/*
+		 * If anyone else still holds a reference to the
+		 * previous fence, or if it's not a chain, stop here.
+		 */
+		if (kref_read(&prev->refcount) > 1)
+			break;
+		if ((prev_chain = to_dma_fence_chain(prev)) == NULL)
+			break;
+
+		/*
+		 * Cut it out and free it.  We have exclusive access to
+		 * prev so this is safe.  This dma_fence_put triggers
+		 * recursion into dma_fence_chain_release, but the
+		 * recursion is bounded to one level.
+		 */
+		chain->dfc_prev = prev_chain->dfc_prev;
+		prev_chain->dfc_prev = NULL;
+		dma_fence_put(prev);
+	}
+	dma_fence_put(prev);
+
+	dma_fence_put(chain->dfc_fence);
 	spin_lock_destroy(&chain->dfc_lock);
 	dma_fence_free(&chain->base);
 }
 
 static const struct dma_fence_ops dma_fence_chain_ops = {
+	.use_64bit_seqno = true,
+	.get_driver_name = dma_fence_chain_driver_name,
+	.get_timeline_name = dma_fence_chain_timeline_name,
+	.enable_signaling = dma_fence_chain_enable_signaling,
+	.signaled = dma_fence_chain_signaled,
 	.release = dma_fence_chain_release,
 };
 
@@ -93,18 +217,61 @@ to_dma_fence_chain(struct dma_fence *fence)
 }
 
 /*
+ * get_prev(chain)
+ *
+ *	Get the previous fence of the chain and add a reference, if
+ *	possible; return NULL otherwise.
+ */
+static struct dma_fence *
+get_prev(struct dma_fence_chain *chain)
+{
+	struct dma_fence *prev;
+
+	rcu_read_lock();
+	prev = dma_fence_get_rcu_safe(&chain->dfc_prev);
+	rcu_read_unlock();
+
+	return prev;
+}
+
+/*
  * dma_fence_chain_walk(fence)
  *
- *	Return the next fence in the chain, or NULL if end of chain,
- *	after releasing any fences that have already been signalled.
+ *	Find the first unsignalled fence in the chain, or NULL if fence
+ *	is not a chain node or the chain's fences are all signalled.
+ *	While searching, cull signalled fences.
  */
 struct dma_fence *
 dma_fence_chain_walk(struct dma_fence *fence)
 {
+	struct dma_fence_chain *chain, *prev_chain;
+	struct dma_fence *prev, *splice;
 
-	/* XXX */
+	if ((chain = to_dma_fence_chain(fence)) == NULL) {
+		dma_fence_put(fence);
+		return NULL;
+	}
+
+	while ((prev = get_prev(chain)) != NULL) {
+		if ((prev_chain = to_dma_fence_chain(prev)) != NULL) {
+			if (!dma_fence_is_signaled(prev_chain->dfc_fence))
+				break;
+			splice = get_prev(prev_chain);
+		} else {
+			if (!dma_fence_is_signaled(prev))
+				break;
+			splice = NULL;
+		}
+		membar_exit();	/* pairs with dma_fence_get_rcu_safe */
+		if (atomic_cas_ptr(&chain->dfc_prev, prev, splice) == prev)
+			dma_fence_put(prev); /* transferred to splice */
+		else
+			dma_fence_put(splice);
+		dma_fence_put(prev);
+	}
+
 	dma_fence_put(fence);
-	return NULL;
+	return prev;
 }
 
 /*
