@@ -1,4 +1,4 @@
-/*	$NetBSD: mm.h,v 1.21 2021/12/19 11:33:49 riastradh Exp $	*/
+/*	$NetBSD: mm.h,v 1.22 2021/12/19 11:46:58 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -49,7 +49,7 @@ struct file;
 #define	PAGE_MASK	(~(PAGE_SIZE-1))
 
 #define	PAGE_ALIGN(x)		(((x) + (PAGE_SIZE-1)) & ~(PAGE_SIZE-1))
-#define	offset_in_page(x)	((x) & (PAGE_SIZE-1))
+#define	offset_in_page(x)	((uintptr_t)(x) & (PAGE_SIZE-1))
 
 #define	untagged_addr(x)	(x)
 
