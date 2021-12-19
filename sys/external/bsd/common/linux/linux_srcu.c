@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_srcu.c,v 1.2 2021/12/19 01:46:01 riastradh Exp $	*/
+/*	$NetBSD: linux_srcu.c,v 1.3 2021/12/19 11:20:33 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_srcu.c,v 1.2 2021/12/19 01:46:01 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_srcu.c,v 1.3 2021/12/19 11:20:33 riastradh Exp $");
 
 /*
  * SRCU: Sleepable RCU
@@ -84,7 +84,7 @@ struct srcu_cpu {
  *	May sleep.
  */
 void
-srcu_init(struct srcu *srcu, const char *name)
+srcu_init(struct srcu_struct *srcu, const char *name)
 {
 
 	ASSERT_SLEEPABLE();
@@ -107,7 +107,7 @@ srcu_init(struct srcu *srcu, const char *name)
  *	May sleep.
  */
 void
-srcu_fini(struct srcu *srcu)
+srcu_fini(struct srcu_struct *srcu)
 {
 
 	ASSERT_SLEEPABLE();
@@ -129,7 +129,7 @@ srcu_fini(struct srcu *srcu)
  *	Never sleeps.
  */
 static void
-srcu_adjust(struct srcu *srcu, unsigned gen, int delta)
+srcu_adjust(struct srcu_struct *srcu, unsigned gen, int delta)
 {
 	struct srcu_cpu *cpu;
 	unsigned epoch = gen & 1; /* active epoch */
@@ -149,7 +149,7 @@ srcu_adjust(struct srcu *srcu, unsigned gen, int delta)
  *	Never sleeps.
  */
 int
-srcu_read_lock(struct srcu *srcu)
+srcu_read_lock(struct srcu_struct *srcu)
 {
 	unsigned gen;
 
@@ -181,7 +181,7 @@ srcu_read_lock(struct srcu *srcu)
  *	Never sleeps.
  */
 void
-srcu_read_unlock(struct srcu *srcu, int ticket)
+srcu_read_unlock(struct srcu_struct *srcu, int ticket)
 {
 	unsigned gen = ticket;
 
@@ -227,7 +227,7 @@ srcu_read_unlock(struct srcu *srcu, int ticket)
 /*
  * synchronize_srcu_xc(a, b)
  *
- *	Cross-call function for synchronize_srcu: a is the struct srcu
+ *	Cross-call function for synchronize_srcu: a is the struct srcu_struct
  *	pointer; b is ignored.  Transfer the local count of srcu
  *	readers on this CPU in the inactive epoch to the global count
  *	under the srcu sync lock.
@@ -235,7 +235,7 @@ srcu_read_unlock(struct srcu *srcu, int ticket)
 static void
 synchronize_srcu_xc(void *a, void *b)
 {
-	struct srcu *srcu = a;
+	struct srcu_struct *srcu = a;
 	struct srcu_cpu *cpu;
 	unsigned gen, epoch;
 	uint64_t local;
@@ -266,7 +266,7 @@ synchronize_srcu_xc(void *a, void *b)
  *	May sleep.  (Practically guaranteed to sleep!)
  */
 void
-synchronize_srcu(struct srcu *srcu)
+synchronize_srcu(struct srcu_struct *srcu)
 {
 
 	ASSERT_SLEEPABLE();
