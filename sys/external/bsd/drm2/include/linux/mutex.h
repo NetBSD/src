@@ -1,4 +1,4 @@
-/*	$NetBSD: mutex.h,v 1.15 2021/12/19 00:54:46 riastradh Exp $	*/
+/*	$NetBSD: mutex.h,v 1.16 2021/12/19 01:21:22 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -113,6 +113,25 @@ static inline void
 mutex_lock_nested(struct mutex *mutex, unsigned subclass __unused)
 {
 	mutex_lock(mutex);
+}
+
+/*
+ * `recursive locking is bad, do not use this ever.'
+ * -- linux/scripts/checkpath.pl
+ */
+static inline enum {
+	MUTEX_TRYLOCK_FAILED,
+	MUTEX_TRYLOCK_SUCCESS,
+	MUTEX_TRYLOCK_RECURSIVE,
+}
+mutex_trylock_recursive(struct mutex *mutex)
+{
+	if (mutex_owned(&mutex->mtx_lock))
+		return MUTEX_TRYLOCK_RECURSIVE;
+	else if (mutex_tryenter(&mutex->mtx_lock))
+		return MUTEX_TRYLOCK_SUCCESS;
+	else
+		return MUTEX_TRYLOCK_FAILED;
 }
 
 #endif  /* _LINUX_MUTEX_H_ */
