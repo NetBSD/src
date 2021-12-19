@@ -1,4 +1,4 @@
-/*	$NetBSD: ioport.h,v 1.5 2021/12/19 01:40:04 riastradh Exp $	*/
+/*	$NetBSD: ioport.h,v 1.6 2021/12/19 10:57:27 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -37,6 +37,7 @@
 
 #define	IORESOURCE_IO	0
 #define	IORESOURCE_MEM	1
+#define	IORESOURCE_IRQ	2
 
 struct resource {
 	bus_addr_t start;
