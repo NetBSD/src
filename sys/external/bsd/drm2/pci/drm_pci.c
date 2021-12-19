@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_pci.c,v 1.43 2021/12/19 11:01:22 riastradh Exp $	*/
+/*	$NetBSD: drm_pci.c,v 1.44 2021/12/19 11:05:13 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_pci.c,v 1.43 2021/12/19 11:01:22 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_pci.c,v 1.44 2021/12/19 11:05:13 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/errno.h>
@@ -59,11 +59,10 @@ drm_pci_attach_args(struct drm_device *dev)
 }
 
 int
-drm_pci_attach(device_t self, const struct pci_attach_args *pa,
-    struct pci_dev *pdev, struct drm_driver *driver, unsigned long cookie,
-    struct drm_device **devp)
+drm_pci_attach(struct drm_device *dev, const struct pci_attach_args *pa,
+    struct pci_dev *pdev)
 {
-	struct drm_device *dev;
+	device_t self = dev->dev;
 	unsigned int unit;
 	int ret;
 
@@ -71,14 +70,7 @@ drm_pci_attach(device_t self, const struct pci_attach_args *pa,
 	/* XXX errno NetBSD->Linux */
 	ret = -drm_guarantee_initialized();
 	if (ret)
-		goto fail0;
-
-	/* Create a DRM device.  */
-	dev = drm_dev_alloc(driver, self);
-	if (IS_ERR(dev)) {
-		ret = -ENOMEM;
-		goto fail0;
-	}
+		return ret;
 
 	dev->pdev = pdev;
 
@@ -139,33 +131,13 @@ drm_pci_attach(device_t self, const struct pci_attach_args *pa,
 				dev->agp->agp_info.aki_info.ai_aperture_size);
 	}
 
-	/* Register the DRM device and do driver-specific initialization.  */
-	ret = drm_dev_register(dev, cookie);
-	if (ret)
-		goto fail1;
-
 	/* Success!  */
-	*devp = dev;
 	return 0;
-
-fail2: __unused
-	drm_dev_unregister(dev);
-fail1:	drm_pci_agp_destroy(dev);
-	dev->bus_nmaps = 0;
-	kmem_free(dev->bus_maps, PCI_NUM_RESOURCES * sizeof(dev->bus_maps[0]));
-	if (dev->dmat_subregion_p) {
-		bus_dmatag_destroy(dev->dmat);
-	}
-	drm_dev_put(dev);
-fail0:	return ret;
 }
 
-int
-drm_pci_detach(struct drm_device *dev, int flags __unused)
+void
+drm_pci_detach(struct drm_device *dev)
 {
-
-	/* Do driver-specific detachment and unregister the device.  */
-	drm_dev_unregister(dev);
 
 	/* Tear down AGP stuff if necessary.  */
 	drm_pci_agp_destroy(dev);
@@ -178,10 +150,6 @@ drm_pci_detach(struct drm_device *dev, int flags __unused)
 	if (dev->dmat_subregion_p) {
 		bus_dmatag_destroy(dev->dmat);
 	}
-
-	drm_dev_put(dev);
-
-	return 0;
 }
 
 void

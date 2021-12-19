@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_pci_autoconf.c,v 1.3 2021/12/19 10:32:59 riastradh Exp $	*/
+/*	$NetBSD: i915_pci_autoconf.c,v 1.4 2021/12/19 11:05:12 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_pci_autoconf.c,v 1.3 2021/12/19 10:32:59 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_pci_autoconf.c,v 1.4 2021/12/19 11:05:12 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/queue.h>
@@ -58,6 +58,8 @@ struct i915drmkms_softc {
 	}				sc_task_u;
 	struct drm_device		*sc_drm_dev;
 	struct pci_dev			sc_pci_dev;
+	bool				sc_pci_attached;
+	bool				sc_dev_registered;
 };
 
 static const struct intel_device_info *
@@ -177,13 +179,29 @@ i915drmkms_attach_real(device_t self)
 	/* Initialize the Linux PCI device descriptor.  */
 	linux_pci_dev_init(&sc->sc_pci_dev, self, device_parent(self), pa, 0);
 
+	sc->sc_drm_dev = drm_dev_alloc(i915_drm_driver, self);
+	if (IS_ERR(sc->sc_drm_dev)) {
+		aprint_error_dev(self, "unable to create drm device: %ld\n",
+		    PTR_ERR(sc->sc_drm_dev));
+		sc->sc_drm_dev = NULL;
+		return;
+	}
+
 	/* XXX errno Linux->NetBSD */
-	error = -drm_pci_attach(self, pa, &sc->sc_pci_dev, i915_drm_driver,
-	    cookie, &sc->sc_drm_dev);
+	error = -drm_pci_attach(sc->sc_drm_dev, pa, &sc->sc_pci_dev);
 	if (error) {
 		aprint_error_dev(self, "unable to attach drm: %d\n", error);
 		return;
 	}
+	sc->sc_pci_attached = true;
+
+	/* XXX errno Linux->NetBSD */
+	error = -drm_dev_register(sc->sc_drm_dev, cookie);
+	if (error) {
+		aprint_error_dev(self, "unable to register drm: %d\n", error);
+		return;
+	}
+	sc->sc_dev_registered = true;
 
 	while (!SIMPLEQ_EMPTY(&sc->sc_task_u.attach)) {
 		struct i915drmkms_task *const task =
@@ -216,22 +234,24 @@ i915drmkms_detach(device_t self, int flags)
 		return error;
 
 	if (sc->sc_task_state == I915DRMKMS_TASK_ATTACH)
-		goto out;
+		goto out0;
 	if (sc->sc_task_u.workqueue != NULL) {
 		workqueue_destroy(sc->sc_task_u.workqueue);
 		sc->sc_task_u.workqueue = NULL;
 	}
 
 	if (sc->sc_drm_dev == NULL)
-		goto out;
-	/* XXX errno Linux->NetBSD */
-	error = -drm_pci_detach(sc->sc_drm_dev, flags);
-	if (error)
-		/* XXX Kinda too late to fail now...  */
-		return error;
-	sc->sc_drm_dev = NULL;
+		goto out0;
+	if (!sc->sc_pci_attached)
+		goto out1;
+	if (!sc->sc_dev_registered)
+		goto out2;
 
-out:	linux_pci_dev_destroy(&sc->sc_pci_dev);
+	drm_dev_unregister(sc->sc_drm_dev);
+out2:	drm_pci_detach(sc->sc_drm_dev);
+out1:	drm_dev_put(sc->sc_drm_dev);
+	sc->sc_drm_dev = NULL;
+out0:	linux_pci_dev_destroy(&sc->sc_pci_dev);
 	pmf_device_deregister(self);
 	return 0;
 }

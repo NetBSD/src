@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_pci.h,v 1.6 2021/12/19 10:51:39 riastradh Exp $	*/
+/*	$NetBSD: drm_pci.h,v 1.7 2021/12/19 11:05:12 riastradh Exp $	*/
 
 /*
  * Internal Header for the Direct Rendering Manager
@@ -76,10 +76,9 @@ static inline int drm_get_pci_dev(struct pci_dev *pdev,
 #ifdef __NetBSD__
 int drm_pci_request_irq(struct drm_device *, int);
 void drm_pci_free_irq(struct drm_device *);
-extern int drm_pci_attach(device_t, const struct pci_attach_args *,
-    struct pci_dev *, struct drm_driver *, unsigned long,
-    struct drm_device **);
-extern int drm_pci_detach(struct drm_device *, int);
+int drm_pci_attach(struct drm_device *, const struct pci_attach_args *,
+    struct pci_dev *);
+void drm_pci_detach(struct drm_device *);
 int drm_pci_set_busid(struct drm_device *, struct drm_master *);
 #endif
 

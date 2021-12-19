@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_pci.c,v 1.29 2021/12/19 10:51:59 riastradh Exp $	*/
+/*	$NetBSD: nouveau_pci.c,v 1.30 2021/12/19 11:05:13 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_pci.c,v 1.29 2021/12/19 10:51:59 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_pci.c,v 1.30 2021/12/19 11:05:13 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #if defined(__arm__) || defined(__aarch64__)
@@ -76,6 +76,8 @@ struct nouveau_pci_softc {
 	struct drm_device	*sc_drm_dev;
 	struct pci_dev		sc_pci_dev;
 	struct nvkm_device	*sc_nv_dev;
+	bool			sc_pci_attached;
+	bool			sc_dev_registered;
 };
 
 static int	nouveau_pci_match(device_t, cfdata_t, void *);
@@ -200,16 +202,33 @@ nouveau_pci_attach_real(device_t self)
 	if (error) {
 		aprint_error_dev(self, "unable to create nouveau device: %d\n",
 		    error);
+		sc->sc_nv_dev = NULL;
+		return;
+	}
+
+	sc->sc_drm_dev = drm_dev_alloc(nouveau_drm_driver_pci, self);
+	if (IS_ERR(sc->sc_drm_dev)) {
+		aprint_error_dev(self, "unable to create drm device: %ld\n",
+		    PTR_ERR(sc->sc_drm_dev));
+		sc->sc_drm_dev = NULL;
 		return;
 	}
 
 	/* XXX errno Linux->NetBSD */
-	error = -drm_pci_attach(self, pa, &sc->sc_pci_dev,
-	    nouveau_drm_driver_pci, 0, &sc->sc_drm_dev);
+	error = -drm_pci_attach(sc->sc_drm_dev, pa, &sc->sc_pci_dev);
 	if (error) {
 		aprint_error_dev(self, "unable to attach drm: %d\n", error);
 		return;
 	}
+	sc->sc_pci_attached = true;
+
+	/* XXX errno Linux->NetBSD */
+	error = -drm_dev_register(sc->sc_drm_dev, 0);
+	if (error) {
+		aprint_error_dev(self, "unable to register drm: %d\n", error);
+		return;
+	}
+	sc->sc_dev_registered = true;
 
 	while (!SIMPLEQ_EMPTY(&sc->sc_task_u.attach)) {
 		struct nouveau_pci_task *const task =
@@ -254,16 +273,17 @@ nouveau_pci_detach(device_t self, int flags)
 
 	if (sc->sc_nv_dev == NULL)
 		goto out0;
-
 	if (sc->sc_drm_dev == NULL)
 		goto out1;
-	/* XXX errno Linux->NetBSD */
-	error = -drm_pci_detach(sc->sc_drm_dev, flags);
-	if (error)
-		/* XXX Kinda too late to fail now...  */
-		return error;
-	sc->sc_drm_dev = NULL;
+	if (!sc->sc_pci_attached)
+		goto out2;
+	if (!sc->sc_dev_registered)
+		goto out3;
 
+	drm_dev_unregister(sc->sc_drm_dev);
+out3:	drm_pci_detach(sc->sc_drm_dev);
+out2:	drm_dev_put(sc->sc_drm_dev);
+	sc->sc_drm_dev = NULL;
 out1:	nvkm_device_del(&sc->sc_nv_dev);
 out0:	linux_pci_dev_destroy(&sc->sc_pci_dev);
 	pmf_device_deregister(self);
