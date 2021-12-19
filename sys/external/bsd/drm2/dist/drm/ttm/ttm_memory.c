@@ -1,4 +1,4 @@
-/*	$NetBSD: ttm_memory.c,v 1.7 2021/12/18 23:45:44 riastradh Exp $	*/
+/*	$NetBSD: ttm_memory.c,v 1.8 2021/12/19 10:29:08 riastradh Exp $	*/
 
 /* SPDX-License-Identifier: GPL-2.0 OR MIT */
 /**************************************************************************
@@ -29,11 +29,10 @@
  **************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ttm_memory.c,v 1.7 2021/12/18 23:45:44 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ttm_memory.c,v 1.8 2021/12/19 10:29:08 riastradh Exp $");
 
 #define pr_fmt(fmt) "[TTM] " fmt
 
-#include <drm/drmP.h>
 #include <drm/ttm/ttm_memory.h>
 #include <drm/ttm/ttm_module.h>
 #include <drm/ttm/ttm_page_alloc.h>
