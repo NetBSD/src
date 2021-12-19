@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_wakeref.h,v 1.3 2021/12/19 11:49:11 riastradh Exp $	*/
+/*	$NetBSD: intel_wakeref.h,v 1.4 2021/12/19 12:33:57 riastradh Exp $	*/
 
 /*
  * SPDX-License-Identifier: MIT
@@ -63,6 +63,8 @@ void __intel_wakeref_init(struct intel_wakeref *wf,
 									\
 	__intel_wakeref_init((wf), (rpm), (ops), &__key);		\
 } while (0)
+
+void intel_wakeref_fini(struct intel_wakeref *);
 
 int __intel_wakeref_get_first(struct intel_wakeref *wf);
 void __intel_wakeref_put_last(struct intel_wakeref *wf, unsigned long flags);
