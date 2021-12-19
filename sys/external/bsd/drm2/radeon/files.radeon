@@ -1,4 +1,4 @@
-#	$NetBSD: files.radeon,v 1.29 2021/06/02 15:45:29 nia Exp $
+#	$NetBSD: files.radeon,v 1.30 2021/12/19 00:25:34 riastradh Exp $
 
 version	20180827
 
@@ -44,22 +44,22 @@ file	external/bsd/drm2/radeon/radeondrmkmsfb.c		radeondrmkmsfb
 #file	external/bsd/drm2/dist/drm/radeon/radeon_acpi.c	radeon
 file	external/bsd/drm2/dist/drm/radeon/radeon_agp.c	radeon
 file	external/bsd/drm2/dist/drm/radeon/radeon_asic.c	radeon
-file	external/bsd/drm2/dist/drm/radeon/radeon_atom.c	radeon
 file	external/bsd/drm2/dist/drm/radeon/radeon_atombios.c	radeon
 file	external/bsd/drm2/dist/drm/radeon/radeon_atombios_crtc.c	radeon
 file	external/bsd/drm2/dist/drm/radeon/radeon_atombios_dp.c	radeon
 file	external/bsd/drm2/dist/drm/radeon/radeon_atombios_encoders.c	radeon
 file	external/bsd/drm2/dist/drm/radeon/radeon_atombios_i2c.c	radeon
+file	external/bsd/drm2/dist/drm/radeon/radeon_atom.c	radeon
 file	external/bsd/drm2/dist/drm/radeon/radeon_audio.c	radeon
 file	external/bsd/drm2/dist/drm/radeon/radeon_benchmark.c	radeon
 file	external/bsd/drm2/dist/drm/radeon/radeon_bios.c	radeon
 file	external/bsd/drm2/dist/drm/radeon/radeon_btc_dpm.c	radeon
 file	external/bsd/drm2/dist/drm/radeon/radeon_cayman_blit_shaders.c	radeon
 file	external/bsd/drm2/dist/drm/radeon/radeon_ci_dpm.c	radeon
-file	external/bsd/drm2/dist/drm/radeon/radeon_ci_smc.c	radeon
-file	external/bsd/drm2/dist/drm/radeon/radeon_cik.c	radeon
 file	external/bsd/drm2/dist/drm/radeon/radeon_cik_blit_shaders.c	radeon
+file	external/bsd/drm2/dist/drm/radeon/radeon_cik.c	radeon
 file	external/bsd/drm2/dist/drm/radeon/radeon_cik_sdma.c	radeon
+file	external/bsd/drm2/dist/drm/radeon/radeon_ci_smc.c	radeon
 file	external/bsd/drm2/dist/drm/radeon/radeon_clocks.c	radeon
 file	external/bsd/drm2/dist/drm/radeon/radeon_combios.c	radeon
 file	external/bsd/drm2/dist/drm/radeon/radeon_connectors.c	radeon
@@ -74,8 +74,8 @@ file	external/bsd/drm2/dist/drm/radeon/radeon_dp_auxch.c	radeon
 file	external/bsd/drm2/dist/drm/radeon/radeon_dp_mst.c	radeon
 file	external/bsd/drm2/dist/drm/radeon/radeon_drv.c	radeon
 file	external/bsd/drm2/dist/drm/radeon/radeon_encoders.c	radeon
-file	external/bsd/drm2/dist/drm/radeon/radeon_evergreen.c	radeon
 file	external/bsd/drm2/dist/drm/radeon/radeon_evergreen_blit_shaders.c	radeon
+file	external/bsd/drm2/dist/drm/radeon/radeon_evergreen.c	radeon
 file	external/bsd/drm2/dist/drm/radeon/radeon_evergreen_cs.c	radeon
 file	external/bsd/drm2/dist/drm/radeon/radeon_evergreen_dma.c	radeon
 file	external/bsd/drm2/dist/drm/radeon/radeon_evergreen_hdmi.c	radeon
@@ -86,7 +86,6 @@ file	external/bsd/drm2/dist/drm/radeon/radeon_gem.c	radeon
 file	external/bsd/drm2/dist/drm/radeon/radeon_i2c.c	radeon
 file	external/bsd/drm2/dist/drm/radeon/radeon_ib.c	radeon
 file	external/bsd/drm2/dist/drm/radeon/radeon_irq_kms.c	radeon
-file	external/bsd/drm2/dist/drm/radeon/radeon_kfd.c	radeon
 file	external/bsd/drm2/dist/drm/radeon/radeon_kms.c	radeon
 file	external/bsd/drm2/dist/drm/radeon/radeon_kv_dpm.c	radeon
 file	external/bsd/drm2/dist/drm/radeon/radeon_kv_smc.c	radeon
@@ -104,8 +103,8 @@ file	external/bsd/drm2/dist/drm/radeon/radeon_r200.c	radeon
 file	external/bsd/drm2/dist/drm/radeon/radeon_r300.c	radeon
 file	external/bsd/drm2/dist/drm/radeon/radeon_r420.c	radeon
 file	external/bsd/drm2/dist/drm/radeon/radeon_r520.c	radeon
-file	external/bsd/drm2/dist/drm/radeon/radeon_r600.c	radeon
 file	external/bsd/drm2/dist/drm/radeon/radeon_r600_blit_shaders.c	radeon
+file	external/bsd/drm2/dist/drm/radeon/radeon_r600.c	radeon
 file	external/bsd/drm2/dist/drm/radeon/radeon_r600_cs.c	radeon
 file	external/bsd/drm2/dist/drm/radeon/radeon_r600_dma.c	radeon
 file	external/bsd/drm2/dist/drm/radeon/radeon_r600_dpm.c	radeon
@@ -125,8 +124,8 @@ file	external/bsd/drm2/dist/drm/radeon/radeon_rv770_dpm.c	radeon
 file	external/bsd/drm2/dist/drm/radeon/radeon_rv770_smc.c	radeon
 file	external/bsd/drm2/dist/drm/radeon/radeon_sa.c	radeon
 file	external/bsd/drm2/dist/drm/radeon/radeon_semaphore.c	radeon
-file	external/bsd/drm2/dist/drm/radeon/radeon_si.c	radeon
 file	external/bsd/drm2/dist/drm/radeon/radeon_si_blit_shaders.c	radeon
+file	external/bsd/drm2/dist/drm/radeon/radeon_si.c	radeon
 file	external/bsd/drm2/dist/drm/radeon/radeon_si_dma.c	radeon
 file	external/bsd/drm2/dist/drm/radeon/radeon_si_dpm.c	radeon
 file	external/bsd/drm2/dist/drm/radeon/radeon_si_smc.c	radeon
