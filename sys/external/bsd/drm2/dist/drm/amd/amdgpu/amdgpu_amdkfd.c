@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu_amdkfd.c,v 1.4 2021/12/18 23:44:58 riastradh Exp $	*/
+/*	$NetBSD: amdgpu_amdkfd.c,v 1.5 2021/12/19 10:56:50 riastradh Exp $	*/
 
 /*
  * Copyright 2014 Advanced Micro Devices, Inc.
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdgpu_amdkfd.c,v 1.4 2021/12/18 23:44:58 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdgpu_amdkfd.c,v 1.5 2021/12/19 10:56:50 riastradh Exp $");
 
 #include "amdgpu_amdkfd.h"
 #include "amd_shared.h"
@@ -226,7 +226,6 @@ void amdgpu_amdkfd_gpu_reset(struct kgd_dev *kgd)
 	if (amdgpu_device_should_recover_gpu(adev))
 		amdgpu_device_gpu_recover(adev, NULL);
 }
-#endif
 
 int amdgpu_amdkfd_alloc_gtt_mem(struct kgd_dev *kgd, size_t size,
 				void **mem_obj, uint64_t *gpu_addr,
