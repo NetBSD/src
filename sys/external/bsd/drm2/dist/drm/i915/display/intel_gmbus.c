@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_gmbus.c,v 1.3 2021/12/19 11:45:01 riastradh Exp $	*/
+/*	$NetBSD: intel_gmbus.c,v 1.4 2021/12/19 12:40:31 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2006 Dave Airlie <airlied@linux.ie>
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intel_gmbus.c,v 1.3 2021/12/19 11:45:01 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intel_gmbus.c,v 1.4 2021/12/19 12:40:31 riastradh Exp $");
 
 #include <linux/export.h>
 #include <linux/i2c-algo-bit.h>
@@ -371,6 +371,21 @@ static int gmbus_wait(struct drm_i915_private *dev_priv, u32 status, u32 irq_en)
 				GMBUS2))
 			    & GMBUS_ACTIVE)
 			== 0));
+		/*
+		 * After DRM_SPIN_TIMED_WAIT_NOINTR_UNTIL, ret<0 on
+		 * error (-ERESTARTSYS, interrupt), ret=0 on timeout,
+		 * ret>0 on success (time remaining).
+		 *
+		 * We want ret=-ETIMEDOUT on timeout and ret=0 on
+		 * success.
+		 */
+		if (ret < 0) {
+			/* error */
+		} else if (ret == 0) {
+			ret = -ETIMEDOUT;
+		} else {
+			ret = 0;
+		}
 	}
 
 	I915_WRITE_FW(GMBUS4, 0);
@@ -420,6 +435,21 @@ gmbus_wait_idle(struct drm_i915_private *dev_priv)
 		    ((intel_uncore_read_fw(&dev_priv->uncore, GMBUS2)
 			    & GMBUS_ACTIVE)
 			== 0));
+		/*
+		 * After DRM_SPIN_TIMED_WAIT_NOINTR_UNTIL, ret<0 on
+		 * error (-ERESTARTSYS, interrupt), ret=0 on timeout,
+		 * ret>0 on success (time remaining).
+		 *
+		 * We want ret=-ETIMEDOUT on timeout and ret=0 on
+		 * success.
+		 */
+		if (ret < 0) {
+			/* error */
+		} else if (ret == 0) {
+			ret = -ETIMEDOUT;
+		} else {
+			ret = 0;
+		}
 	}
 
 	I915_WRITE_FW(GMBUS4, 0);
