@@ -1,10 +1,14 @@
-#	$NetBSD: files.ttm,v 1.3 2019/09/30 00:06:02 mrg Exp $
+#	$NetBSD: files.ttm,v 1.4 2021/12/19 01:47:31 riastradh Exp $
 
 # TTM, the texture and tiling manager.
+
+version	20180827
 
 define	drmkms_ttm: drmkms
 
 makeoptions	drmkms	"CWARNFLAGS.ttm_bo.c"+="${${ACTIVE_CC} == gcc && ${HAVE_GCC:U0} >= 7:? -Wno-error=implicit-fallthrough :}"
+makeoptions	drmkms_ttm	"CWARNFLAGS.drmkms_ttm"+="-Wno-missing-field-initializers"
+makeoptions	drmkms_ttm	"CWARNFLAGS.drmkms_ttm"+="-Wno-shadow"
 
 file	external/bsd/drm2/ttm/ttm_agp_backend.c			drmkms_ttm
 file	external/bsd/drm2/dist/drm/ttm/ttm_memory.c		drmkms_ttm
