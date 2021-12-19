@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu_dm_helpers.c,v 1.2 2021/12/18 23:45:00 riastradh Exp $	*/
+/*	$NetBSD: amdgpu_dm_helpers.c,v 1.3 2021/12/19 12:01:30 riastradh Exp $	*/
 
 /*
  * Copyright 2015 Advanced Micro Devices, Inc.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdgpu_dm_helpers.c,v 1.2 2021/12/18 23:45:00 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdgpu_dm_helpers.c,v 1.3 2021/12/19 12:01:30 riastradh Exp $");
 
 #include <linux/string.h>
 #include <linux/acpi.h>
@@ -60,7 +60,7 @@ enum dc_edid_status dm_helpers_parse_edid_caps(
 		const struct dc_edid *edid,
 		struct dc_edid_caps *edid_caps)
 {
-	struct edid *edid_buf = (struct edid *) edid->raw_edid;
+	struct edid *edid_buf = (struct edid *) __UNCONST(edid->raw_edid);
 	struct cea_sad *sads;
 	int sad_count = -1;
 	int sadb_count = -1;
@@ -100,9 +100,9 @@ enum dc_edid_status dm_helpers_parse_edid_caps(
 	}
 
 	edid_caps->edid_hdmi = drm_detect_hdmi_monitor(
-			(struct edid *) edid->raw_edid);
+			(struct edid *) __UNCONST(edid->raw_edid));
 
-	sad_count = drm_edid_to_sad((struct edid *) edid->raw_edid, &sads);
+	sad_count = drm_edid_to_sad((struct edid *) __UNCONST(edid->raw_edid), &sads);
 	if (sad_count <= 0)
 		return result;
 
@@ -116,7 +116,7 @@ enum dc_edid_status dm_helpers_parse_edid_caps(
 		edid_caps->audio_modes[i].sample_size = sad->byte2;
 	}
 
-	sadb_count = drm_edid_to_speaker_allocation((struct edid *) edid->raw_edid, &sadb);
+	sadb_count = drm_edid_to_speaker_allocation((struct edid *) __UNCONST(edid->raw_edid), &sadb);
 
 	if (sadb_count < 0) {
 		DRM_ERROR("Couldn't read Speaker Allocation Data Block: %d\n", sadb_count);
@@ -473,7 +473,7 @@ bool dm_helpers_dp_write_dpcd(
 	}
 
 	return drm_dp_dpcd_write(&aconnector->dm_dp_aux.aux,
-			address, (uint8_t *)data, size) > 0;
+			address, __UNCONST(data), size) > 0;
 }
 
 bool dm_helpers_submit_i2c(

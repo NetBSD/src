@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu_dm.c,v 1.2 2021/12/18 23:45:00 riastradh Exp $	*/
+/*	$NetBSD: amdgpu_dm.c,v 1.3 2021/12/19 12:01:30 riastradh Exp $	*/
 
 /*
  * Copyright 2015 Advanced Micro Devices, Inc.
@@ -27,7 +27,7 @@
 
 /* The caprices of the preprocessor require that this be declared right here */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdgpu_dm.c,v 1.2 2021/12/18 23:45:00 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdgpu_dm.c,v 1.3 2021/12/19 12:01:30 riastradh Exp $");
 
 #define CREATE_TRACE_POINTS
 
@@ -96,6 +96,8 @@ __KERNEL_RCSID(0, "$NetBSD: amdgpu_dm.c,v 1.2 2021/12/18 23:45:00 riastradh Exp 
 #include "modules/inc/mod_freesync.h"
 #include "modules/power/power_helpers.h"
 #include "modules/inc/mod_info_packet.h"
+
+#include <linux/nbsd-namespace.h>
 
 #define FIRMWARE_RENOIR_DMUB "amdgpu/renoir_dmcub.bin"
 MODULE_FIRMWARE(FIRMWARE_RENOIR_DMUB);
@@ -617,6 +619,7 @@ static void amdgpu_dm_fbc_init(struct drm_connector *connector)
 
 }
 
+#ifndef __NetBSD__		/* XXX amdgpu audio */
 static int amdgpu_dm_audio_component_get_eld(struct device *kdev, int port,
 					  int pipe, bool *enabled,
 					  unsigned char *buf, int max_bytes)
@@ -687,6 +690,7 @@ static const struct component_ops amdgpu_dm_audio_component_bind_ops = {
 	.bind	= amdgpu_dm_audio_component_bind,
 	.unbind	= amdgpu_dm_audio_component_unbind,
 };
+#endif
 
 static int amdgpu_dm_audio_init(struct amdgpu_device *adev)
 {
@@ -711,9 +715,13 @@ static int amdgpu_dm_audio_init(struct amdgpu_device *adev)
 		adev->mode_info.audio.pin[i].offset = 0;
 	}
 
+#ifdef __NetBSD__		/* XXX amdgpu audio */
+	__USE(ret);
+#else
 	ret = component_add(adev->dev, &amdgpu_dm_audio_component_bind_ops);
 	if (ret < 0)
 		return ret;
+#endif
 
 	adev->dm.audio_registered = true;
 
@@ -729,7 +737,9 @@ static void amdgpu_dm_audio_fini(struct amdgpu_device *adev)
 		return;
 
 	if (adev->dm.audio_registered) {
+#ifndef __NetBSD__		/* XXX amdgpu audio */
 		component_del(adev->dev, &amdgpu_dm_audio_component_bind_ops);
+#endif
 		adev->dm.audio_registered = false;
 	}
 
@@ -2448,7 +2458,7 @@ static int amdgpu_dm_mode_config_init(struct amdgpu_device *adev)
 
 	adev->mode_info.mode_config_initialized = true;
 
-	adev->ddev->mode_config.funcs = (void *)&amdgpu_dm_mode_funcs;
+	adev->ddev->mode_config.funcs = &amdgpu_dm_mode_funcs;
 	adev->ddev->mode_config.helper_private = &amdgpu_dm_mode_config_helperfuncs;
 
 	adev->ddev->mode_config.max_width = 16384;
@@ -2492,12 +2502,12 @@ static int amdgpu_dm_mode_config_init(struct amdgpu_device *adev)
 #define AMDGPU_DM_DEFAULT_MIN_BACKLIGHT 12
 #define AMDGPU_DM_DEFAULT_MAX_BACKLIGHT 255
 
-#if defined(CONFIG_BACKLIGHT_CLASS_DEVICE) ||\
-	defined(CONFIG_BACKLIGHT_CLASS_DEVICE_MODULE)
+#if IS_ENABLED(CONFIG_BACKLIGHT_CLASS_DEVICE) ||\
+	IS_ENABLED(CONFIG_BACKLIGHT_CLASS_DEVICE_MODULE)
 
 static void amdgpu_dm_update_backlight_caps(struct amdgpu_display_manager *dm)
 {
-#if defined(CONFIG_ACPI)
+#if IS_ENABLED(CONFIG_ACPI)
 	struct amdgpu_dm_backlight_caps caps;
 
 	if (dm->backlight_caps.caps_valid)
@@ -2640,8 +2650,8 @@ static int initialize_plane(struct amdgpu_display_manager *dm,
 static void register_backlight_device(struct amdgpu_display_manager *dm,
 				      struct dc_link *link)
 {
-#if defined(CONFIG_BACKLIGHT_CLASS_DEVICE) ||\
-	defined(CONFIG_BACKLIGHT_CLASS_DEVICE_MODULE)
+#if IS_ENABLED(CONFIG_BACKLIGHT_CLASS_DEVICE) ||\
+	IS_ENABLED(CONFIG_BACKLIGHT_CLASS_DEVICE_MODULE)
 
 	if ((link->connector_signal & (SIGNAL_TYPE_EDP | SIGNAL_TYPE_LVDS)) &&
 	    link->type != dc_connection_none) {
@@ -3759,7 +3769,7 @@ static void fill_stream_properties_from_drm_display_mode(
 {
 	struct dc_crtc_timing *timing_out = &stream->timing;
 	const struct drm_display_info *info = &connector->display_info;
-	struct amdgpu_dm_connector *aconnector = to_amdgpu_dm_connector(connector);
+	const struct amdgpu_dm_connector *aconnector = const_container_of(connector, struct amdgpu_dm_connector, base);
 	struct hdmi_vendor_infoframe hv_frame;
 	struct hdmi_avi_infoframe avi_frame;
 
@@ -3803,9 +3813,9 @@ static void fill_stream_properties_from_drm_display_mode(
 	}
 
 	if (stream->signal == SIGNAL_TYPE_HDMI_TYPE_A) {
-		drm_hdmi_avi_infoframe_from_display_mode(&avi_frame, (struct drm_connector *)connector, mode_in);
+		drm_hdmi_avi_infoframe_from_display_mode(&avi_frame, __UNCONST(connector), mode_in);
 		timing_out->vic = avi_frame.video_code;
-		drm_hdmi_vendor_infoframe_from_display_mode(&hv_frame, (struct drm_connector *)connector, mode_in);
+		drm_hdmi_vendor_infoframe_from_display_mode(&hv_frame, __UNCONST(connector), mode_in);
 		timing_out->hdmi_vic = hv_frame.vic;
 	}
 
@@ -4365,8 +4375,8 @@ int amdgpu_dm_connector_atomic_get_property(struct drm_connector *connector,
 {
 	struct drm_device *dev = connector->dev;
 	struct amdgpu_device *adev = dev->dev_private;
-	struct dm_connector_state *dm_state =
-		to_dm_connector_state(state);
+	const struct dm_connector_state *dm_state =
+		const_container_of(state, struct dm_connector_state, base);
 	int ret = -EINVAL;
 
 	if (property == dev->mode_config.scaling_mode_property) {
@@ -4417,8 +4427,8 @@ static void amdgpu_dm_connector_destroy(struct drm_connector *connector)
 	struct amdgpu_device *adev = connector->dev->dev_private;
 	struct amdgpu_display_manager *dm = &adev->dm;
 
-#if defined(CONFIG_BACKLIGHT_CLASS_DEVICE) ||\
-	defined(CONFIG_BACKLIGHT_CLASS_DEVICE_MODULE)
+#if IS_ENABLED(CONFIG_BACKLIGHT_CLASS_DEVICE) ||\
+	IS_ENABLED(CONFIG_BACKLIGHT_CLASS_DEVICE_MODULE)
 
 	if ((link->connector_signal & (SIGNAL_TYPE_EDP | SIGNAL_TYPE_LVDS)) &&
 	    link->type != dc_connection_none &&
@@ -4426,6 +4436,9 @@ static void amdgpu_dm_connector_destroy(struct drm_connector *connector)
 		backlight_device_unregister(dm->backlight_dev);
 		dm->backlight_dev = NULL;
 	}
+#else
+	__USE(dm);
+	__USE(link);
 #endif
 
 	if (aconnector->dc_em_sink)
@@ -4968,7 +4981,7 @@ static int dm_update_mst_vcpi_slots_for_dsc(struct drm_atomic_state *state,
 {
 	struct dc_stream_state *stream = NULL;
 	struct drm_connector *connector;
-	struct drm_connector_state *new_con_state, *old_con_state;
+	struct drm_connector_state *new_con_state, *old_con_state __unused;
 	struct amdgpu_dm_connector *aconnector;
 	struct dm_connector_state *dm_conn_state;
 	int i, j, clock, bpp;
@@ -5773,7 +5786,7 @@ create_i2c(struct ddc_service *ddc_service,
 		return NULL;
 	i2c->base.owner = THIS_MODULE;
 	i2c->base.class = I2C_CLASS_DDC;
-	i2c->base.dev.parent = &adev->pdev->dev;
+	i2c->base.dev.parent = pci_dev_dev(adev->pdev);
 	i2c->base.algo = &amdgpu_dm_i2c_algo;
 	snprintf(i2c->base.name, sizeof(i2c->base.name), "AMDGPU DM i2c hw bus %d", link_index);
 	i2c_set_adapdata(&i2c->base, i2c);
@@ -5960,7 +5973,7 @@ static bool is_content_protection_different(struct drm_connector_state *state,
 					    const struct drm_connector_state *old_state,
 					    const struct drm_connector *connector, struct hdcp_workqueue *hdcp_w)
 {
-	struct amdgpu_dm_connector *aconnector = to_amdgpu_dm_connector(connector);
+	const struct amdgpu_dm_connector *aconnector = const_container_of(connector, struct amdgpu_dm_connector, base);
 
 	if (old_state->hdcp_content_type != state->hdcp_content_type &&
 	    state->content_protection != DRM_MODE_CONTENT_PROTECTION_UNDESIRED) {
@@ -6300,7 +6313,7 @@ static void amdgpu_dm_handle_vrr_transition(struct dm_crtc_state *old_state,
 static void amdgpu_dm_commit_cursors(struct drm_atomic_state *state)
 {
 	struct drm_plane *plane;
-	struct drm_plane_state *old_plane_state, *new_plane_state;
+	struct drm_plane_state *old_plane_state, *new_plane_state __unused;
 	int i;
 
 	/*

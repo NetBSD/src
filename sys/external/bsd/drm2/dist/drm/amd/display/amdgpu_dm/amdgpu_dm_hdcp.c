@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu_dm_hdcp.c,v 1.2 2021/12/18 23:45:00 riastradh Exp $	*/
+/*	$NetBSD: amdgpu_dm_hdcp.c,v 1.3 2021/12/19 12:01:30 riastradh Exp $	*/
 
 /*
  * Copyright 2019 Advanced Micro Devices, Inc.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdgpu_dm_hdcp.c,v 1.2 2021/12/18 23:45:00 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdgpu_dm_hdcp.c,v 1.3 2021/12/19 12:01:30 riastradh Exp $");
 
 #include "amdgpu_dm_hdcp.h"
 #include "amdgpu.h"
@@ -34,12 +34,14 @@ __KERNEL_RCSID(0, "$NetBSD: amdgpu_dm_hdcp.c,v 1.2 2021/12/18 23:45:00 riastradh
 #include "dm_helpers.h"
 #include <drm/drm_hdcp.h>
 
+#include <linux/nbsd-namespace.h>
+
 static bool
 lp_write_i2c(void *handle, uint32_t address, const uint8_t *data, uint32_t size)
 {
 
 	struct dc_link *link = handle;
-	struct i2c_payload i2c_payloads[] = {{true, address, size, (void *)data} };
+	struct i2c_payload i2c_payloads[] = {{true, address, size, __UNCONST(data)} };
 	struct i2c_command cmd = {i2c_payloads, 1, I2C_COMMAND_ENGINE_HW, link->dc->caps.i2c_speed_in_khz};
 
 	return dm_helpers_submit_i2c(link->ctx, link, &cmd);
