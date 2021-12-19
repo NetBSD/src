@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_overlay.c,v 1.2 2021/12/18 23:45:30 riastradh Exp $	*/
+/*	$NetBSD: intel_overlay.c,v 1.3 2021/12/19 11:48:02 riastradh Exp $	*/
 
 /*
  * Copyright © 2009
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intel_overlay.c,v 1.2 2021/12/18 23:45:30 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intel_overlay.c,v 1.3 2021/12/19 11:48:02 riastradh Exp $");
 
 #include <drm/drm_fourcc.h>
 #include <drm/i915_drm.h>
@@ -42,6 +42,8 @@ __KERNEL_RCSID(0, "$NetBSD: intel_overlay.c,v 1.2 2021/12/18 23:45:30 riastradh 
 #include "intel_display_types.h"
 #include "intel_frontbuffer.h"
 #include "intel_overlay.h"
+
+#include <linux/nbsd-namespace.h>
 
 /* Limits for overlay size. According to intel doc, the real limits are:
  * Y width: 4095, UV width (planar): 2047, Y height: 2047,
@@ -1079,7 +1081,6 @@ int intel_overlay_put_image_ioctl(struct drm_device *dev, void *data,
 	struct intel_overlay *overlay;
 	struct drm_crtc *drmmode_crtc;
 	struct intel_crtc *crtc;
-	struct drm_gem_object *new_gbo;
 	struct drm_i915_gem_object *new_bo;
 	int ret;
 
