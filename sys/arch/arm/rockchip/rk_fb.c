@@ -1,4 +1,4 @@
-/* $NetBSD: rk_fb.c,v 1.4 2021/12/19 11:01:10 riastradh Exp $ */
+/* $NetBSD: rk_fb.c,v 1.5 2021/12/19 12:28:27 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2015-2019 Jared McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "opt_wsdisplay_compat.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rk_fb.c,v 1.4 2021/12/19 11:01:10 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rk_fb.c,v 1.5 2021/12/19 12:28:27 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -45,6 +45,8 @@ __KERNEL_RCSID(0, "$NetBSD: rk_fb.c,v 1.4 2021/12/19 11:01:10 riastradh Exp $");
 static int	rk_fb_match(device_t, cfdata_t, void *);
 static void	rk_fb_attach(device_t, device_t, void *);
 
+static void	rk_fb_init(struct rk_drm_task *);
+
 static bool	rk_fb_shutdown(device_t, int);
 
 struct rk_fb_softc {
@@ -52,6 +54,7 @@ struct rk_fb_softc {
 	device_t		sc_dev;
 	struct rk_drm_framebuffer *sc_fb;
 	struct rk_drmfb_attach_args sc_sfa;
+	struct rk_drm_task	sc_attach_task;
 };
 
 static paddr_t	rk_fb_mmapfb(struct drmfb_softc *, off_t, int);
@@ -77,7 +80,6 @@ rk_fb_attach(device_t parent, device_t self, void *aux)
 {
 	struct rk_fb_softc * const sc = device_private(self);
 	struct rk_drmfb_attach_args * const sfa = aux;
-	int error;
 
 	sc->sc_dev = self;
 	sc->sc_sfa = *sfa;
@@ -91,6 +93,19 @@ rk_fb_attach(device_t parent, device_t self, void *aux)
 	const bool is_console = true;
 	prop_dictionary_set_bool(dict, "is_console", is_console);
 #endif
+
+	rk_task_init(&sc->sc_attach_task, &rk_fb_init);
+	rk_task_schedule(parent, &sc->sc_attach_task);
+}
+
+static void
+rk_fb_init(struct rk_drm_task *task)
+{
+	struct rk_fb_softc * const sc =
+	    container_of(task, struct rk_fb_softc, sc_attach_task);
+	device_t self = sc->sc_dev;
+	struct rk_drmfb_attach_args * const sfa = &sc->sc_sfa;
+	int error;
 
 	const struct drmfb_attach_args da = {
 		.da_dev = self,
