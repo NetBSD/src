@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_print.c,v 1.12 2021/12/19 12:04:26 riastradh Exp $	*/
+/*	$NetBSD: drm_print.c,v 1.13 2021/12/19 12:34:42 riastradh Exp $	*/
 
 /*
  * Copyright (C) 2016 Red Hat
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_print.c,v 1.12 2021/12/19 12:04:26 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_print.c,v 1.13 2021/12/19 12:34:42 riastradh Exp $");
 
 #ifndef __NetBSD__		/* XXX ??? */
 #define DEBUG /* for pr_debug() */
@@ -38,6 +38,7 @@ __KERNEL_RCSID(0, "$NetBSD: drm_print.c,v 1.12 2021/12/19 12:04:26 riastradh Exp
 #include <sys/cpu.h>
 #include <sys/device.h>
 #include <sys/ksyms.h>
+#include <sys/pserialize.h>
 #else
 #include <stdarg.h>
 
@@ -78,10 +79,10 @@ drm_symstr(vaddr_t val, char *out, size_t outsize)
 	unsigned long naddr;
 	const char *mod;
 	const char *sym;
+	int s;
 
-	if (0 &&
-	    !cpu_intr_p() &&
-	    ksyms_getname(&mod, &sym, val, KSYMS_PROC|KSYMS_CLOSEST) == 0) {
+	s = pserialize_read_enter();
+	if (ksyms_getname(&mod, &sym, val, KSYMS_PROC|KSYMS_CLOSEST) == 0) {
 		char offset[32];
 
 		if (ksyms_getval(mod, sym, &naddr, KSYMS_ANY) == 0 &&
@@ -90,9 +91,11 @@ drm_symstr(vaddr_t val, char *out, size_t outsize)
 			    (void *)(val - naddr));
 		else
 			offset[0] = '\0';
+		pserialize_read_exit(s);
 		snprintf(out, outsize, "%s:%s%s", mod, sym, offset);
 		return;
 	}
+	pserialize_read_exit(s);
 	snprintf(out, outsize, "%p", (void *)val);
 }
 #endif
