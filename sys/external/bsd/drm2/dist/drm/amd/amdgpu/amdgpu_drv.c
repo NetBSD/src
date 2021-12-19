@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu_drv.c,v 1.6 2021/12/18 23:44:58 riastradh Exp $	*/
+/*	$NetBSD: amdgpu_drv.c,v 1.7 2021/12/19 12:01:48 riastradh Exp $	*/
 
 /*
  * Copyright 2000 VA Linux Systems, Inc., Sunnyvale, California.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdgpu_drv.c,v 1.6 2021/12/18 23:44:58 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdgpu_drv.c,v 1.7 2021/12/19 12:01:48 riastradh Exp $");
 
 #include <drm/amdgpu_drm.h>
 #include <drm/drm_drv.h>
@@ -33,6 +33,7 @@ __KERNEL_RCSID(0, "$NetBSD: amdgpu_drv.c,v 1.6 2021/12/18 23:44:58 riastradh Exp
 #include <drm/drm_vblank.h>
 #include "amdgpu_drv.h"
 
+#include <drm/drm_pci.h>
 #include <drm/drm_pciids.h>
 #include <linux/console.h>
 #include <linux/module.h>
@@ -151,7 +152,9 @@ int amdgpu_noretry;
 int amdgpu_force_asic_type = -1;
 
 struct amdgpu_mgpu_info mgpu_info = {
+#ifndef __NetBSD__
 	.mutex = __MUTEX_INITIALIZER(mgpu_info.mutex),
+#endif
 };
 int amdgpu_ras_enable = -1;
 uint amdgpu_ras_mask = 0xffffffff;
@@ -1373,6 +1376,7 @@ static const struct file_operations amdgpu_driver_kms_fops = {
 static const struct uvm_pagerops amdgpu_gem_uvm_ops;
 #endif
 
+#ifndef __NetBSD__
 int amdgpu_file_to_fpriv(struct file *filp, struct amdgpu_fpriv **fpriv)
 {
         struct drm_file *file;
@@ -1388,6 +1392,7 @@ int amdgpu_file_to_fpriv(struct file *filp, struct amdgpu_fpriv **fpriv)
 	*fpriv = file->driver_priv;
 	return 0;
 }
+#endif
 
 static bool
 amdgpu_get_crtc_scanout_position(struct drm_device *dev, unsigned int pipe,
