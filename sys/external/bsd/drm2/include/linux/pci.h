@@ -1,4 +1,4 @@
-/*	$NetBSD: pci.h,v 1.45 2021/12/19 09:49:39 riastradh Exp $	*/
+/*	$NetBSD: pci.h,v 1.46 2021/12/19 09:55:32 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -178,6 +178,14 @@ struct pci_dev {
 	uint32_t		class;
 	bool			msi_enabled;
 	bool			no_64bit_msi;
+};
+
+enum pci_bus_speed {
+	PCI_SPEED_UNKNOWN,
+	PCIE_SPEED_2_5GT,
+	PCIE_SPEED_5_0GT,
+	PCIE_SPEED_8_0GT,
+	PCIE_SPEED_16_0GT,
 };
 
 #define	PCIBIOS_MIN_MEM	0x100000	/* XXX bogus x86 kludge bollocks */
