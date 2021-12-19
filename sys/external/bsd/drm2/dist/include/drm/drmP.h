@@ -1,4 +1,4 @@
-/*	$NetBSD: drmP.h,v 1.58 2021/12/19 01:59:03 riastradh Exp $	*/
+/*	$NetBSD: drmP.h,v 1.59 2021/12/19 01:59:11 riastradh Exp $	*/
 
 /*
  * Internal Header for the Direct Rendering Manager
@@ -165,49 +165,12 @@ extern void drm_unplug_dev(struct drm_device *dev);
 extern unsigned int drm_debug;
 extern bool drm_atomic;
 
-				/* Debugfs support */
-#if defined(CONFIG_DEBUG_FS)
-extern int drm_debugfs_create_files(const struct drm_info_list *files,
-				    int count, struct dentry *root,
-				    struct drm_minor *minor);
-extern int drm_debugfs_remove_files(const struct drm_info_list *files,
-				    int count, struct drm_minor *minor);
-#else
-static inline int drm_debugfs_create_files(const struct drm_info_list *files,
-					   int count, struct dentry *root,
-					   struct drm_minor *minor)
-{
-	return 0;
-}
-
-static inline int drm_debugfs_remove_files(const struct drm_info_list *files,
-					   int count, struct drm_minor *minor)
-{
-	return 0;
-}
-#endif
-
 int drm_pci_set_unique(struct drm_device *dev,
 		       struct drm_master *master,
 		       struct drm_unique *u);
 extern struct drm_dma_handle *drm_pci_alloc(struct drm_device *dev, size_t size,
 					    size_t align);
 extern void drm_pci_free(struct drm_device *dev, struct drm_dma_handle * dmah);
-
-			       /* sysfs support (drm_sysfs.c) */
-extern void drm_sysfs_hotplug_event(struct drm_device *dev);
-
-
-struct drm_device *drm_dev_alloc(struct drm_driver *driver,
-				 struct device *parent);
-void drm_dev_ref(struct drm_device *dev);
-void drm_dev_unref(struct drm_device *dev);
-int drm_dev_register(struct drm_device *dev, unsigned long flags);
-void drm_dev_unregister(struct drm_device *dev);
-int drm_dev_set_unique(struct drm_device *dev, const char *fmt, ...);
-
-struct drm_minor *drm_minor_acquire(unsigned int minor_id);
-void drm_minor_release(struct drm_minor *minor);
 
 #ifdef __NetBSD__
 int drm_limit_dma_space(struct drm_device *, resource_size_t, resource_size_t);
