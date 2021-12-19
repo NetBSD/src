@@ -1,4 +1,4 @@
-/*	$NetBSD: hdmi.h,v 1.8 2021/12/19 01:55:05 riastradh Exp $	*/
+/*	$NetBSD: hdmi.h,v 1.9 2021/12/19 09:46:24 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -173,6 +173,17 @@ enum hdmi_infoframe_type {
 	HDMI_INFOFRAME_TYPE_AUDIO		= 0x84,
 };
 
+enum hdmi_eotf {
+	HDMI_EOTF_TRADITIONAL_GAMMA_SDR,
+	HDMI_EOTF_TRADITIONAL_GAMMA_HDR,
+	HDMI_EOTF_SMPTE_ST2084,
+	HDMI_EOTF_BT_2100_HLG,
+};
+
+enum hdmi_metadata_type {
+	HDMI_STATIC_METADATA_TYPE1 = 1,
+};
+
 #define	HDMI_INFOFRAME_SIZE(TYPE)					      \
 	(HDMI_INFOFRAME_HEADER_SIZE + HDMI_##TYPE##_INFOFRAME_SIZE)
 
@@ -182,6 +193,33 @@ struct hdmi_infoframe_header {
 	uint8_t				version;
 	uint8_t				length;
 	/* checksum */
+};
+
+struct hdmi_type1 {
+	enum hdmi_eotf eotf;
+	enum hdmi_metadata_type metadata_type;
+	uint16_t min_cll;
+	uint16_t max_cll;
+	uint16_t max_fall;
+};
+
+struct hdr_sink_metadata {
+	struct hdmi_type1 hdmi_type1;
+};
+
+struct hdmi_drm_infoframe {
+	enum hdmi_eotf eotf;
+	enum hdmi_metadata_type metadata_type;
+	struct {
+		uint16_t x, y;
+	} display_primaries[3];
+	struct {
+		uint16_t x, y;
+	} white_point;
+	uint16_t max_display_mastering_luminance;
+	uint16_t min_display_mastering_luminance;
+	uint16_t max_cll;
+	uint16_t max_fall;
 };
 
 static inline void
@@ -554,7 +592,11 @@ hdmi_infoframe_pack(union hdmi_infoframe *frame, void *buf, size_t size)
 	}
 }
 
-struct hdr_sink_metadata {};
-struct hdmi_drm_infoframe {};
+static inline int
+hdmi_drm_infoframe_init(struct hdmi_drm_infoframe *frame)
+{
+	panic("TODO");
+	return 0;
+}
 
 #endif	/* _LINUX_HDMI_H_ */
