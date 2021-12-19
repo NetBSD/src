@@ -1,4 +1,4 @@
-/*	$NetBSD: drmP.h,v 1.64 2021/12/19 09:54:31 riastradh Exp $	*/
+/*	$NetBSD: drmP.h,v 1.65 2021/12/19 09:54:38 riastradh Exp $	*/
 
 /*
  * Internal Header for the Direct Rendering Manager
@@ -148,22 +148,6 @@ int drm_guarantee_initialized(void);
 #endif
 
 /*@}*/
-
-/* PCI section */
-void drm_pci_agp_destroy(struct drm_device *dev);
-
-extern int drm_pci_init(struct drm_driver *driver, struct pci_driver *pdriver);
-extern void drm_pci_exit(struct drm_driver *driver, struct pci_driver *pdriver);
-#ifdef __NetBSD__
-int drm_pci_request_irq(struct drm_device *, int);
-void drm_pci_free_irq(struct drm_device *);
-extern int drm_pci_attach(device_t, const struct pci_attach_args *,
-    struct pci_dev *, struct drm_driver *, unsigned long,
-    struct drm_device **);
-extern int drm_pci_detach(struct drm_device *, int);
-#endif
-
-extern int drm_pcie_get_speed_cap_mask(struct drm_device *dev, u32 *speed_mask);
 
 /* platform section */
 extern int drm_platform_init(struct drm_driver *driver, struct platform_device *platform_device);
