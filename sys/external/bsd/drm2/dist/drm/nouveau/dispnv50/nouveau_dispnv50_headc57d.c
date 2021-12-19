@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_dispnv50_headc57d.c,v 1.3 2021/12/19 10:49:38 riastradh Exp $	*/
+/*	$NetBSD: nouveau_dispnv50_headc57d.c,v 1.4 2021/12/19 10:49:47 riastradh Exp $	*/
 
 /*
  * Copyright 2018 Red Hat Inc.
@@ -22,7 +22,7 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_dispnv50_headc57d.c,v 1.3 2021/12/19 10:49:38 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_dispnv50_headc57d.c,v 1.4 2021/12/19 10:49:47 riastradh Exp $");
 
 #include "head.h"
 #include "atom.h"
@@ -102,6 +102,12 @@ headc57d_olut_set(struct nv50_head *head, struct nv50_head_atom *asyh)
 		evo_kick(push, core);
 	}
 }
+
+#ifdef __NetBSD__
+#define	__iomem		__lut_iomem
+#define	readw(p)	atomic_load_relaxed((const __iomem uint16_t *)(p))
+#define	writew(v,p)	atomic_store_relaxed((__iomem uint16_t *)(p), (v))
+#endif
 
 static void
 headc57d_olut_load_8(struct drm_color_lut *in, int size, void __iomem *mem)

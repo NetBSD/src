@@ -1,4 +1,4 @@
-/*	$NetBSD: disp.h,v 1.2 2021/12/18 23:45:32 riastradh Exp $	*/
+/*	$NetBSD: disp.h,v 1.3 2021/12/19 10:49:47 riastradh Exp $	*/
 
 #ifndef __NV50_KMS_H__
 #define __NV50_KMS_H__
@@ -50,7 +50,16 @@ struct nv50_disp_interlock {
 
 void corec37d_ntfy_init(struct nouveau_bo *, u32);
 
+#ifdef __NetBSD__
+#  define	__lut_iomem	volatile
+#  define	__iomem		__lut_iomem
+#endif
+
 void head907d_olut_load(struct drm_color_lut *, int size, void __iomem *);
+
+#ifdef __NetBSD__
+#  undef	__iomem
+#endif
 
 struct nv50_chan {
 	struct nvif_object user;
