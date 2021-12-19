@@ -1,4 +1,4 @@
-/*	$NetBSD: mm.h,v 1.2 2021/12/19 11:33:50 riastradh Exp $	*/
+/*	$NetBSD: mm.h,v 1.3 2021/12/19 11:55:58 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2021 The NetBSD Foundation, Inc.
@@ -33,6 +33,8 @@
 
 #include <uvm/uvm_extern.h>
 
+#include <linux/gfp.h>
+
 static inline void
 mmgrab(struct vmspace *vm)
 {
@@ -43,6 +45,16 @@ static inline void
 mmdrop(struct vmspace *vm)
 {
 	uvmspace_free(vm);
+}
+
+static inline void
+fs_reclaim_acquire(gfp_t gfp)
+{
+}
+
+static inline void
+fs_reclaim_release(gfp_t gfp)
+{
 }
 
 #endif	/* _LINUX_SCHED_MM_H_ */
