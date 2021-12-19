@@ -1,6 +1,6 @@
 /* $SourceForge: bktr_audio.c,v 1.6 2003/03/11 23:11:20 thomasklausner Exp $ */
 
-/*	$NetBSD: bktr_audio.c,v 1.19 2012/12/07 05:56:30 msaitoh Exp $	*/
+/*	$NetBSD: bktr_audio.c,v 1.20 2021/12/19 22:03:41 andvar Exp $	*/
 /* $FreeBSD: src/sys/dev/bktr/bktr_audio.c,v 1.8 2000/10/31 13:09:56 roger Exp$ */
 /*
  * This is part of the Driver for Video Capture Cards (Frame grabbers)
@@ -71,7 +71,7 @@
 
 #ifdef __NetBSD__
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bktr_audio.c,v 1.19 2012/12/07 05:56:30 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bktr_audio.c,v 1.20 2021/12/19 22:03:41 andvar Exp $");
 
 #include <sys/proc.h>
 #include <dev/ic/bt8xx.h>	/* NetBSD location of .h files */
@@ -560,7 +560,7 @@ void msp_autodetect(bktr_ptr_t bktr) {
         msp_dpl_write(bktr, bktr->msp_addr, 0x12, 0x0008,0x0020);/* Loudspeaker set stereo*/
         /*
           set spatial effect strength to 50% enlargement
-          set spatial effect mode b, stereo basewidth enlargment only
+          set spatial effect mode b, stereo basewidth enlargement only
         */
         msp_dpl_write(bktr, bktr->msp_addr, 0x12, 0x0005,0x3f28);
       } else if (stereo > 0x8000) {    /* bilingual mode */
@@ -572,7 +572,7 @@ void msp_autodetect(bktr_ptr_t bktr) {
         msp_dpl_write(bktr, bktr->msp_addr, 0x12, 0x0008,0x0030);/* Loudspeaker */
         /*
           set spatial effect strength to 50% enlargement
-          set spatial effect mode a, stereo basewidth enlargment
+          set spatial effect mode a, stereo basewidth enlargement
           and pseudo stereo effect with automatic high-pass filter
         */
         msp_dpl_write(bktr, bktr->msp_addr, 0x12, 0x0005,0x3f08);
