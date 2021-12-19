@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_dp_mst_topology.c,v 1.9 2021/12/19 09:44:48 riastradh Exp $	*/
+/*	$NetBSD: drm_dp_mst_topology.c,v 1.10 2021/12/19 09:45:01 riastradh Exp $	*/
 
 /*
  * Copyright © 2014 Red Hat
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_dp_mst_topology.c,v 1.9 2021/12/19 09:44:48 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_dp_mst_topology.c,v 1.10 2021/12/19 09:45:01 riastradh Exp $");
 
 #include <linux/delay.h>
 #include <linux/errno.h>
@@ -2970,7 +2970,7 @@ void drm_dp_send_clear_payload_id_table(struct drm_dp_mst_topology_mgr *mgr,
 					struct drm_dp_mst_branch *mstb)
 {
 	struct drm_dp_sideband_msg_tx *txmsg;
-	int len, ret;
+	int len __unused, ret;
 
 	txmsg = kzalloc(sizeof(*txmsg), GFP_KERNEL);
 	if (!txmsg)
@@ -3378,7 +3378,7 @@ static int drm_dp_send_dpcd_read(struct drm_dp_mst_topology_mgr *mgr,
 				 struct drm_dp_mst_port *port,
 				 int offset, int size, u8 *bytes)
 {
-	int len;
+	int len __unused;
 	int ret = 0;
 	struct drm_dp_sideband_msg_tx *txmsg;
 	struct drm_dp_mst_branch *mstb;
