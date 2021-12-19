@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_prime.h,v 1.2 2021/12/18 23:45:46 riastradh Exp $	*/
+/*	$NetBSD: drm_prime.h,v 1.3 2021/12/19 01:57:06 riastradh Exp $	*/
 
 /*
  * Copyright © 2012 Red Hat
@@ -87,8 +87,15 @@ void drm_gem_unmap_dma_buf(struct dma_buf_attachment *attach,
 void *drm_gem_dmabuf_vmap(struct dma_buf *dma_buf);
 void drm_gem_dmabuf_vunmap(struct dma_buf *dma_buf, void *vaddr);
 
+#ifdef __NetBSD__
+int gem_prime_mmap(struct drm_gem_object *, off_t *, size_t, int, int *,
+    int *, struct uvm_object **, int *);
+int drm_gem_dmabuf_mmap(struct dma_buf *, off_t *, size_t, int, int *,
+    int *, struct uvm_object **, int *);
+#else
 int drm_gem_prime_mmap(struct drm_gem_object *obj, struct vm_area_struct *vma);
 int drm_gem_dmabuf_mmap(struct dma_buf *dma_buf, struct vm_area_struct *vma);
+#endif
 
 struct sg_table *drm_prime_pages_to_sg(struct page **pages, unsigned int nr_pages);
 struct dma_buf *drm_gem_prime_export(struct drm_gem_object *obj,
