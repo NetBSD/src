@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_sw_fence.c,v 1.4 2021/12/19 11:54:57 riastradh Exp $	*/
+/*	$NetBSD: i915_sw_fence.c,v 1.5 2021/12/19 11:56:38 riastradh Exp $	*/
 
 /*
  * SPDX-License-Identifier: MIT
@@ -7,7 +7,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_sw_fence.c,v 1.4 2021/12/19 11:54:57 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_sw_fence.c,v 1.5 2021/12/19 11:56:38 riastradh Exp $");
 
 #include <linux/slab.h>
 #include <linux/dma-fence.h>
@@ -172,8 +172,6 @@ autoremove_wake_function(struct i915_sw_fence_waiter *waiter, unsigned mode,
 	/* Caller presumably already completed the fence.  */
 	DRM_SPIN_WAKEUP_ALL(&sfw->wq, &sfw->fence->wait.lock);
 
-	list_del_init(&waiter->entry);
-
 	return 0;
 }
 
@@ -195,6 +193,7 @@ i915_sw_fence_wait(struct i915_sw_fence *fence)
 	list_add_tail(&waiter.entry, &fence->wait.head);
 	DRM_SPIN_WAIT_NOINTR_UNTIL(ret, &sfw.wq, &fence->wait.lock,
 	    i915_sw_fence_done(fence));
+	list_del(&waiter.entry);
 	spin_unlock(&fence->wait.lock);
 
 	DRM_DESTROY_WAITQUEUE(&sfw.wq);
