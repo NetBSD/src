@@ -1,4 +1,4 @@
-/* $NetBSD: ti_lcdc.c,v 1.8 2021/12/19 11:01:21 riastradh Exp $ */
+/* $NetBSD: ti_lcdc.c,v 1.9 2021/12/19 12:44:25 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2019 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ti_lcdc.c,v 1.8 2021/12/19 11:01:21 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ti_lcdc.c,v 1.9 2021/12/19 12:44:25 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -41,11 +41,12 @@ __KERNEL_RCSID(0, "$NetBSD: ti_lcdc.c,v 1.8 2021/12/19 11:01:21 riastradh Exp $"
 #include <uvm/uvm_object.h>
 #include <uvm/uvm_device.h>
 
-#include <drm/drmP.h>
 #include <drm/drm_crtc.h>
 #include <drm/drm_crtc_helper.h>
-#include <drm/drm_plane_helper.h>
+#include <drm/drm_drv.h>
 #include <drm/drm_fb_helper.h>
+#include <drm/drm_fourcc.h>
+#include <drm/drm_plane_helper.h>
 
 #include <dev/fdt/fdtvar.h>
 #include <dev/fdt/fdt_port.h>
@@ -66,13 +67,11 @@ enum {
 static int	tilcdc_match(device_t, cfdata_t, void *);
 static void	tilcdc_attach(device_t, device_t, void *);
 
-static int	tilcdc_set_busid(struct drm_device *, struct drm_master *);
-
 static int	tilcdc_load(struct drm_device *, unsigned long);
-static int	tilcdc_unload(struct drm_device *);
+static void	tilcdc_unload(struct drm_device *);
 
 static struct drm_driver tilcdc_driver = {
-	.driver_features = DRIVER_MODESET | DRIVER_GEM | DRIVER_PRIME,
+	.driver_features = DRIVER_MODESET | DRIVER_GEM,
 	.dev_priv_size = 0,
 	.load = tilcdc_load,
 	.unload = tilcdc_unload,
@@ -82,8 +81,6 @@ static struct drm_driver tilcdc_driver = {
 	.gem_uvm_ops = &drm_gem_cma_uvm_ops,
 
 	.dumb_create = drm_gem_cma_dumb_create,
-	.dumb_map_offset = drm_gem_cma_dumb_map_offset,
-	.dumb_destroy = drm_gem_dumb_destroy,
 
 	.name = DRIVER_NAME,
 	.desc = DRIVER_DESC,
@@ -91,8 +88,6 @@ static struct drm_driver tilcdc_driver = {
 	.major = DRIVER_MAJOR,
 	.minor = DRIVER_MINOR,
 	.patchlevel = DRIVER_PATCHLEVEL,
-
-	.set_busid = tilcdc_set_busid,
 };
 
 CFATTACH_DECL_NEW(ti_lcdc, sizeof(struct tilcdc_softc),
@@ -353,8 +348,9 @@ tilcdc_ep_activate(device_t dev, struct fdt_endpoint *ep, bool activate)
 	sc->sc_encoder.base.possible_crtcs = 1 << drm_crtc_index(&sc->sc_crtc.base);
 
 	drm_encoder_init(ddev, &sc->sc_encoder.base, &tilcdc_encoder_funcs,
-	    DRM_MODE_ENCODER_TMDS);
-	drm_encoder_helper_add(&sc->sc_encoder.base, &tilcdc_encoder_helper_funcs);
+	    DRM_MODE_ENCODER_TMDS, NULL);
+	drm_encoder_helper_add(&sc->sc_encoder.base,
+	    &tilcdc_encoder_helper_funcs);
 
 	return fdt_endpoint_activate(ep, activate);
 }
@@ -432,7 +428,7 @@ tilcdc_attach(device_t parent, device_t self, void *aux)
 
 	error = -drm_dev_register(sc->sc_ddev, 0);
 	if (error) {
-		drm_dev_unref(sc->sc_ddev);
+		drm_dev_put(sc->sc_ddev);
 		aprint_error_dev(self, "couldn't register DRM device: %d\n",
 		    error);
 		return;
@@ -441,23 +437,6 @@ tilcdc_attach(device_t parent, device_t self, void *aux)
 	aprint_normal_dev(self, "initialized %s %d.%d.%d %s on minor %d\n",
 	    driver->name, driver->major, driver->minor, driver->patchlevel,
 	    driver->date, sc->sc_ddev->primary->index);
-}
-
-static int
-tilcdc_set_busid(struct drm_device *ddev, struct drm_master *master)
-{
-	struct tilcdc_softc * const sc = tilcdc_private(ddev);
-	char id[32];
-
-	snprintf(id, sizeof(id), "platform:tilcdc:%u", device_unit(sc->sc_dev));
-
-	master->unique = kzalloc(strlen(id) + 1, GFP_KERNEL);
-	if (master->unique == NULL)
-		return -ENOMEM;
-	strcpy(master->unique, id);
-	master->unique_len = strlen(master->unique);
-
-	return 0;
 }
 
 static int
@@ -475,7 +454,7 @@ tilcdc_fb_destroy(struct drm_framebuffer *fb)
 	struct tilcdc_framebuffer *sfb = to_tilcdc_framebuffer(fb);
 
 	drm_framebuffer_cleanup(fb);
-	drm_gem_object_unreference_unlocked(&sfb->obj->base);
+	drm_gem_object_put_unlocked(&sfb->obj->base);
 	kmem_free(sfb, sizeof(*sfb));
 }
 
@@ -486,7 +465,7 @@ static const struct drm_framebuffer_funcs tilcdc_framebuffer_funcs = {
 
 static struct drm_framebuffer *
 tilcdc_fb_create(struct drm_device *ddev, struct drm_file *file,
-    struct drm_mode_fb_cmd2 *cmd)
+    const struct drm_mode_fb_cmd2 *cmd)
 {
 	struct tilcdc_framebuffer *fb;
 	struct drm_gem_object *gem_obj;
@@ -495,33 +474,16 @@ tilcdc_fb_create(struct drm_device *ddev, struct drm_file *file,
 	if (cmd->flags)
 		return NULL;
 
-	gem_obj = drm_gem_object_lookup(ddev, file, cmd->handles[0]);
+	gem_obj = drm_gem_object_lookup(file, cmd->handles[0]);
 	if (gem_obj == NULL)
 		return NULL;
 
 	fb = kmem_zalloc(sizeof(*fb), KM_SLEEP);
+	drm_helper_mode_fill_fb_struct(ddev, &fb->base, cmd);
 	fb->obj = to_drm_gem_cma_obj(gem_obj);
-	fb->base.pitches[0] = cmd->pitches[0];
-	fb->base.pitches[1] = cmd->pitches[1];
-	fb->base.pitches[2] = cmd->pitches[2];
-	fb->base.offsets[0] = cmd->offsets[0];
-	fb->base.offsets[1] = cmd->offsets[2];
-	fb->base.offsets[2] = cmd->offsets[1];
-	fb->base.width = cmd->width;
-	fb->base.height = cmd->height;
-	fb->base.pixel_format = cmd->pixel_format;
-	fb->base.bits_per_pixel = drm_format_plane_cpp(fb->base.pixel_format, 0) * 8;
 
-	switch (fb->base.pixel_format) {
-	case DRM_FORMAT_XRGB8888:
-	case DRM_FORMAT_XBGR8888:
-		fb->base.depth = 32;
-		break;
-	default:
-		break;
-	}
-
-	error = drm_framebuffer_init(ddev, &fb->base, &tilcdc_framebuffer_funcs);
+	error = drm_framebuffer_init(ddev, &fb->base,
+	    &tilcdc_framebuffer_funcs);
 	if (error != 0)
 		goto dealloc;
 
@@ -530,7 +492,7 @@ tilcdc_fb_create(struct drm_device *ddev, struct drm_file *file,
 dealloc:
 	drm_framebuffer_cleanup(&fb->base);
 	kmem_free(fb, sizeof(*fb));
-	drm_gem_object_unreference_unlocked(gem_obj);
+	drm_gem_object_put_unlocked(gem_obj);
 
 	return NULL;
 }
@@ -574,8 +536,10 @@ tilcdc_fb_probe(struct drm_fb_helper *helper, struct drm_fb_helper_surface_size 
 	fb->offsets[0] = 0;
 	fb->width = width;
 	fb->height = height;
-	fb->pixel_format = pixel_format;
-	drm_fb_get_bpp_depth(fb->pixel_format, &fb->depth, &fb->bits_per_pixel);
+	fb->modifier = 0;
+	fb->flags = 0;
+	fb->format = drm_format_info(pixel_format);
+	fb->dev = ddev;
 
 	error = drm_framebuffer_init(ddev, fb, &tilcdc_framebuffer_funcs);
 	if (error != 0) {
@@ -637,11 +601,12 @@ tilcdc_load(struct drm_device *ddev, unsigned long flags)
 
 	drm_fb_helper_prepare(ddev, &fbdev->helper, &tilcdc_fb_helper_funcs);
 
-	error = drm_fb_helper_init(ddev, &fbdev->helper, 1, 1);
+	error = drm_fb_helper_init(ddev, &fbdev->helper, 1);
 	if (error)
 		goto allocerr;
 
-	fbdev->helper.fb = kmem_zalloc(sizeof(struct tilcdc_framebuffer), KM_SLEEP);
+	fbdev->helper.fb = kmem_zalloc(sizeof(struct tilcdc_framebuffer),
+	    KM_SLEEP);
 
 	drm_fb_helper_single_add_all_connectors(&fbdev->helper);
 
@@ -659,10 +624,9 @@ drmerr:
 	return error;
 }
 
-static int
+static void
 tilcdc_unload(struct drm_device *ddev)
 {
-	drm_mode_config_cleanup(ddev);
 
-	return 0;
+	drm_mode_config_cleanup(ddev);
 }
