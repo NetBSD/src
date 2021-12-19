@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_display.h,v 1.3 2021/12/19 09:59:05 riastradh Exp $	*/
+/*	$NetBSD: intel_display.h,v 1.4 2021/12/19 11:12:29 riastradh Exp $	*/
 
 /*
  * Copyright © 2006-2019 Intel Corporation
@@ -92,6 +92,7 @@ enum i915_gpio {
  *
  * XXX Yes, this is disgusting.  Sorry.
  */
+#include <sys/file.h>
 #define	pipe	pipe_drmhack
 /*
  * Keep the pipe enum values fixed: the code assumes that PIPE_A=0, the
