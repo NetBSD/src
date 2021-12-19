@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_dp_mst_topology.c,v 1.7 2021/12/19 00:50:01 riastradh Exp $	*/
+/*	$NetBSD: drm_dp_mst_topology.c,v 1.8 2021/12/19 09:44:35 riastradh Exp $	*/
 
 /*
  * Copyright © 2014 Red Hat
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_dp_mst_topology.c,v 1.7 2021/12/19 00:50:01 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_dp_mst_topology.c,v 1.8 2021/12/19 09:44:35 riastradh Exp $");
 
 #include <linux/delay.h>
 #include <linux/errno.h>
@@ -327,7 +327,7 @@ static bool drm_dp_decode_sideband_msg_hdr(struct drm_dp_sideband_msg_hdr *hdr,
 	return true;
 }
 
-void
+static void
 drm_dp_encode_sideband_req(const struct drm_dp_sideband_msg_req_body *req,
 			   struct drm_dp_sideband_msg_tx *raw)
 {
@@ -433,7 +433,7 @@ drm_dp_encode_sideband_req(const struct drm_dp_sideband_msg_req_body *req,
 EXPORT_SYMBOL_FOR_TESTS_ONLY(drm_dp_encode_sideband_req);
 
 /* Decode a sideband request we've encoded, mainly used for debugging */
-int
+static int
 drm_dp_decode_sideband_req(const struct drm_dp_sideband_msg_tx *raw,
 			   struct drm_dp_sideband_msg_req_body *req)
 {
@@ -561,7 +561,7 @@ drm_dp_decode_sideband_req(const struct drm_dp_sideband_msg_tx *raw,
 }
 EXPORT_SYMBOL_FOR_TESTS_ONLY(drm_dp_decode_sideband_req);
 
-void
+static void
 drm_dp_dump_sideband_msg_req_body(const struct drm_dp_sideband_msg_req_body *req,
 				  int indent, struct drm_printer *printer)
 {
