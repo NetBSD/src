@@ -1,11 +1,8 @@
-/*	$NetBSD: drm_writeback.h,v 1.6 2021/12/19 10:46:03 riastradh Exp $	*/
+/*	$NetBSD: drm_writeback.c,v 1.1 2021/12/19 10:46:02 riastradh Exp $	*/
 
 /*-
- * Copyright (c) 2018 The NetBSD Foundation, Inc.
+ * Copyright (c) 2020 The NetBSD Foundation, Inc.
  * All rights reserved.
- *
- * This code is derived from software contributed to The NetBSD Foundation
- * by Taylor R. Campbell.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -29,33 +26,42 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef	_DRM_DRM_WRITEBACK_H_
-#define	_DRM_DRM_WRITEBACK_H_
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: drm_writeback.c,v 1.1 2021/12/19 10:46:02 riastradh Exp $");
 
-#include <drm/drm_connector.h>
-
-struct dma_fence;
-struct drm_connector;
-struct drm_connector_state;
-struct drm_framebuffer;
-struct drm_writeback_connector;
-
-struct drm_writeback_connector {
-	struct drm_connector	base;
-};
-
-struct drm_writeback_job {
-	struct drm_framebuffer	*fb;
-	struct dma_fence	*out_fence;
-};
+#include <drm/drm_writeback.h>
 
 struct drm_writeback_connector *
-	drm_connector_to_writeback(struct drm_connector *);
-struct dma_fence *
-	drm_writeback_get_out_fence(struct drm_writeback_connector *);
-int	drm_writeback_prepare_job(struct drm_writeback_job *);
-void	drm_writeback_cleanup_job(struct drm_writeback_job *);
-int	drm_writeback_set_fb(struct drm_connector_state *,
-	    struct drm_framebuffer *);
+drm_connector_to_writeback(struct drm_connector *connector)
+{
 
-#endif	/* _DRM_DRM_WRITEBACK_H_ */
+	return container_of(connector, struct drm_writeback_connector, base);
+}
+
+struct dma_fence *
+drm_writeback_get_out_fence(struct drm_writeback_connector *wbconn)
+{
+	panic("writeback connectors not implemented");
+	return NULL;
+}
+
+int
+drm_writeback_prepare_job(struct drm_writeback_job *wbj)
+{
+	panic("writeback connectors not implemented");
+	return -ENXIO;
+}
+
+void
+drm_writeback_cleanup_job(struct drm_writeback_job *job)
+{
+	panic("writeback connectors not implemented");
+}
+
+int
+drm_writeback_set_fb(struct drm_connector_state *state,
+    struct drm_framebuffer *fb)
+{
+	panic("writeback connectors not implemented");
+	return -ENXIO;
+}
