@@ -1,4 +1,4 @@
-/*	$NetBSD: ttm_tt.c,v 1.14 2021/12/19 01:49:50 riastradh Exp $	*/
+/*	$NetBSD: ttm_tt.c,v 1.15 2021/12/19 09:58:15 riastradh Exp $	*/
 
 /* SPDX-License-Identifier: GPL-2.0 OR MIT */
 /**************************************************************************
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ttm_tt.c,v 1.14 2021/12/19 01:49:50 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ttm_tt.c,v 1.15 2021/12/19 09:58:15 riastradh Exp $");
 
 #define pr_fmt(fmt) "[TTM] " fmt
 
@@ -41,6 +41,7 @@ __KERNEL_RCSID(0, "$NetBSD: ttm_tt.c,v 1.14 2021/12/19 01:49:50 riastradh Exp $"
 #include <linux/shmem_fs.h>
 #include <linux/file.h>
 #include <drm/drm_cache.h>
+#include <drm/drm_mem_util.h>
 #include <drm/ttm/ttm_bo_driver.h>
 #include <drm/ttm/ttm_page_alloc.h>
 #include <drm/bus_dma_hacks.h>
