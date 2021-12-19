@@ -1,4 +1,4 @@
-29~# $NetBSD: CHANGES-9.3,v 1.1.2.58 2021/12/14 19:06:08 martin Exp $
+29~# $NetBSD: CHANGES-9.3,v 1.1.2.59 2021/12/19 16:39:28 martin Exp $
 
 A complete list of changes from the NetBSD 9.2 release to the NetBSD 9.3
 release:
@@ -1111,4 +1111,17 @@ sys/dev/cgd.c					1.141
 	cgd(4): PR 56546: wait for worker threads to complete before
 	destroying mutex.
 	[riastradh, ticket #1393]
+
+sys/dev/raidframe/rf_diskqueue.c		1.63 (patch)
+
+	raid(4): add missing buf_destroy() call.
+	[mrg, ticket #1394]
+
+sys/dev/usb/usb_quirks.c			1.101
+sys/dev/usb/usbdevs				1.799
+sys/dev/usb/usbdevs.h				(regen)
+sys/dev/usb/usbdevs_data.h			(regen)
+
+	Add two additional cyperpower UPS ids to be ignored as HID devices.
+	[mrg, ticket #1395]
 
