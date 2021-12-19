@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_dma_fence.c,v 1.15 2021/12/19 11:09:17 riastradh Exp $	*/
+/*	$NetBSD: linux_dma_fence.c,v 1.16 2021/12/19 11:20:49 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_dma_fence.c,v 1.15 2021/12/19 11:09:17 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_dma_fence.c,v 1.16 2021/12/19 11:20:49 riastradh Exp $");
 
 #include <sys/atomic.h>
 #include <sys/condvar.h>
@@ -782,10 +782,11 @@ dma_fence_wait(struct dma_fence *fence, bool intr)
  *
  *	Default implementation of fence wait callback using a condition
  *	variable.  If the fence is already signalled, return timeout,
- *	or 1 if no timeout.  If the enable signalling callback hasn't
- *	been called, call it, and if it fails, act as if the fence had
- *	been signalled.  Otherwise, wait on the internal condvar.  If
- *	timeout is MAX_SCHEDULE_TIMEOUT, treat it as no timeout.
+ *	or 1 if timeout is zero meaning poll.  If the enable signalling
+ *	callback hasn't been called, call it, and if it fails, act as
+ *	if the fence had been signalled.  Otherwise, wait on the
+ *	internal condvar.  If timeout is MAX_SCHEDULE_TIMEOUT, wait
+ *	indefinitely.
  */
 long
 dma_fence_default_wait(struct dma_fence *fence, bool intr, long timeout)
@@ -800,15 +801,20 @@ dma_fence_default_wait(struct dma_fence *fence, bool intr, long timeout)
 
 	/* Optimistically try to skip the lock if it's already signalled.  */
 	if (fence->flags & (1u << DMA_FENCE_FLAG_SIGNALED_BIT))
-		return (timeout < MAX_SCHEDULE_TIMEOUT ? timeout : 1);
+		return (timeout ? timeout : 1);
 
 	/* Acquire the lock.  */
 	spin_lock(fence->lock);
 
-	/* Ensure signalling is enabled, or fail if we can't.  */
-	ret = dma_fence_ensure_signal_enabled(fence);
-	if (ret)
-		goto out;
+	/* Ensure signalling is enabled, or stop if already completed.  */
+	if (dma_fence_ensure_signal_enabled(fence) != 0)
+		return (timeout ? timeout : 1);
+
+	/* If merely polling, stop here.  */
+	if (timeout == 0) {
+		spin_unlock(fence->lock);
+		return 0;
+	}
 
 	/* Find out what our deadline is so we can handle spurious wakeup.  */
 	if (timeout < MAX_SCHEDULE_TIMEOUT) {
@@ -854,7 +860,6 @@ dma_fence_default_wait(struct dma_fence *fence, bool intr, long timeout)
 		}
 	}
 
-out:
 	/* All done.  Release the lock.  */
 	spin_unlock(fence->lock);
 
