@@ -1,4 +1,4 @@
-/*	$NetBSD: i2c.h,v 1.8 2015/03/05 17:29:18 riastradh Exp $	*/
+/*	$NetBSD: i2c.h,v 1.9 2021/12/19 00:59:25 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -87,6 +87,7 @@ struct i2c_adapter {
 	char		 		name[I2C_NAME_SIZE];
 	const struct i2c_algorithm	*algo;
 	void				*algo_data;
+	const struct i2c_lock_operations *lock_ops;
 	int				retries;
 	struct module			*owner;
 	unsigned int			class; /* I2C_CLASS_* */
@@ -104,6 +105,15 @@ struct i2c_algorithm {
 	int		(*master_xfer)(struct i2c_adapter *, struct i2c_msg *,
 			    int);
 	uint32_t	(*functionality)(struct i2c_adapter *);
+};
+
+/*
+ * struct i2c_lock_operations: i2c bus lock operations.
+ */
+struct i2c_lock_operations {
+	void	(*lock_bus)(struct i2c_adapter *, unsigned);
+	int	(*trylock_bus)(struct i2c_adapter *, unsigned);
+	void	(*unlock_bus)(struct i2c_adapter *, unsigned);
 };
 
 /*
