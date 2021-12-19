@@ -1,4 +1,4 @@
-/*	$NetBSD: string.h,v 1.7 2021/12/19 01:34:15 riastradh Exp $	*/
+/*	$NetBSD: string.h,v 1.8 2021/12/19 09:51:20 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -130,5 +130,7 @@ memset_p(void **p, void *v, size_t n)
 	while (n --> 0)
 		*p++ = v;
 }
+
+#define str_has_prefix(str, prefix) strncmp(str, prefix, strlen(prefix))
 
 #endif  /* _LINUX_STRING_H_ */
