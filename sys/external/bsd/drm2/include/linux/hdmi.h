@@ -1,4 +1,4 @@
-/*	$NetBSD: hdmi.h,v 1.7 2021/12/19 00:55:09 riastradh Exp $	*/
+/*	$NetBSD: hdmi.h,v 1.8 2021/12/19 01:55:05 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -553,5 +553,8 @@ hdmi_infoframe_pack(union hdmi_infoframe *frame, void *buf, size_t size)
 		return -EINVAL;
 	}
 }
+
+struct hdr_sink_metadata {};
+struct hdmi_drm_infoframe {};
 
 #endif	/* _LINUX_HDMI_H_ */
