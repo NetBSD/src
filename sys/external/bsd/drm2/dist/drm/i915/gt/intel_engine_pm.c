@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_engine_pm.c,v 1.2 2021/12/18 23:45:30 riastradh Exp $	*/
+/*	$NetBSD: intel_engine_pm.c,v 1.3 2021/12/19 11:52:07 riastradh Exp $	*/
 
 /*
  * SPDX-License-Identifier: MIT
@@ -7,7 +7,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intel_engine_pm.c,v 1.2 2021/12/18 23:45:30 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intel_engine_pm.c,v 1.3 2021/12/19 11:52:07 riastradh Exp $");
 
 #include "i915_drv.h"
 
@@ -229,11 +229,10 @@ static void call_idle_barriers(struct intel_engine_cs *engine)
 	struct llist_node *node, *next;
 
 	llist_for_each_safe(node, next, llist_del_all(&engine->barrier_tasks)) {
-		struct dma_fence_cb *cb =
-			container_of((struct list_head *)node,
-				     typeof(*cb), node);
+		struct i915_active_fence *fence =
+		    container_of(node, struct i915_active_fence, llist);
 
-		cb->func(ERR_PTR(-EAGAIN), cb);
+		fence->cb.func(ERR_PTR(-EAGAIN), &fence->cb);
 	}
 }
 
