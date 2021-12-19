@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_llc_types.h,v 1.2 2021/12/18 23:45:30 riastradh Exp $	*/
+/*	$NetBSD: intel_llc_types.h,v 1.3 2021/12/19 11:46:38 riastradh Exp $	*/
 
 /*
  * SPDX-License-Identifier: MIT
@@ -10,6 +10,7 @@
 #define INTEL_LLC_TYPES_H
 
 struct intel_llc {
+	int x;	/* XXX only exists because container_of on empty aggregate is an error */
 };
 
 #endif /* INTEL_LLC_TYPES_H */
