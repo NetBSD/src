@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_prime.c,v 1.17 2021/12/19 11:34:56 riastradh Exp $	*/
+/*	$NetBSD: drm_prime.c,v 1.18 2021/12/19 11:36:25 riastradh Exp $	*/
 
 /*
  * Copyright © 2012 Red Hat
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_prime.c,v 1.17 2021/12/19 11:34:56 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_prime.c,v 1.18 2021/12/19 11:36:25 riastradh Exp $");
 
 #include <linux/export.h>
 #include <linux/dma-buf.h>
@@ -308,6 +308,8 @@ void drm_prime_remove_buf_handle_locked(struct drm_prime_file_private *prime_fpr
 	if (member != NULL) {
 		rb_tree_remove_node(&prime_fpriv->handles.rbr_tree, member);
 		rb_tree_remove_node(&prime_fpriv->dmabufs.rbr_tree, member);
+		dma_buf_put(dma_buf);
+		kfree(member);
 	}
 #else
 	struct rb_node *rb;
@@ -335,11 +337,7 @@ void drm_prime_remove_buf_handle_locked(struct drm_prime_file_private *prime_fpr
 
 void drm_prime_init_file_private(struct drm_prime_file_private *prime_fpriv)
 {
-#ifdef __NetBSD__
-	linux_mutex_init(&prime_fpriv->lock);
-#else
 	mutex_init(&prime_fpriv->lock);
-#endif
 #ifdef __NetBSD__
 	rb_tree_init(&prime_fpriv->dmabufs.rbr_tree, &dmabuf_ops);
 	rb_tree_init(&prime_fpriv->handles.rbr_tree, &handle_ops);
@@ -351,11 +349,10 @@ void drm_prime_init_file_private(struct drm_prime_file_private *prime_fpriv)
 
 void drm_prime_destroy_file_private(struct drm_prime_file_private *prime_fpriv)
 {
-#ifdef __NetBSD__ /* XXX post-merge linux doesn't destroy it's lock now? */
-	linux_mutex_destroy(&prime_fpriv->lock);
-#endif
+	mutex_destroy(&prime_fpriv->lock);
 	/* by now drm_gem_release should've made sure the list is empty */
 	WARN_ON(!RB_EMPTY_ROOT(&prime_fpriv->dmabufs));
+	WARN_ON(!RB_EMPTY_ROOT(&prime_fpriv->handles));
 }
 
 /**
