@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_dp_mst_topology.c,v 1.10 2021/12/19 09:45:01 riastradh Exp $	*/
+/*	$NetBSD: drm_dp_mst_topology.c,v 1.11 2021/12/19 09:45:10 riastradh Exp $	*/
 
 /*
  * Copyright © 2014 Red Hat
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_dp_mst_topology.c,v 1.10 2021/12/19 09:45:01 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_dp_mst_topology.c,v 1.11 2021/12/19 09:45:10 riastradh Exp $");
 
 #include <linux/delay.h>
 #include <linux/errno.h>
@@ -3825,7 +3825,11 @@ static int drm_dp_mst_handle_down_rep(struct drm_dp_mst_topology_mgr *mgr)
 	mgr->is_waiting_for_dwn_reply = false;
 	mutex_unlock(&mgr->qlock);
 
+#ifdef __NetBSD__
+	DRM_WAKEUP_ALL(&mgr->tx_waitq, &mgr->qlock);
+#else
 	wake_up_all(&mgr->tx_waitq);
+#endif
 
 	return 0;
 
@@ -4716,7 +4720,13 @@ drm_dp_delayed_destroy_mstb(struct drm_dp_mst_branch *mstb)
 	mutex_unlock(&mstb->mgr->qlock);
 
 	if (wake_tx)
+	{
+#ifdef __NetBSD__
+		DRM_WAKEUP_ALL(&mstb->mgr->tx_waitq, &mstb->mgr->qlock);
+#else
 		wake_up_all(&mstb->mgr->tx_waitq);
+#endif
+	}
 
 	drm_dp_mst_put_mstb_malloc(mstb);
 }
