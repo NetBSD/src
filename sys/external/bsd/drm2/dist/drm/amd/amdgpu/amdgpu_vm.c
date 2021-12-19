@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu_vm.c,v 1.5 2021/12/18 23:44:58 riastradh Exp $	*/
+/*	$NetBSD: amdgpu_vm.c,v 1.6 2021/12/19 12:22:28 riastradh Exp $	*/
 
 /*
  * Copyright 2008 Advanced Micro Devices, Inc.
@@ -28,7 +28,7 @@
  *          Jerome Glisse
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdgpu_vm.c,v 1.5 2021/12/18 23:44:58 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdgpu_vm.c,v 1.6 2021/12/19 12:22:28 riastradh Exp $");
 
 #include <linux/dma-fence-array.h>
 #include <linux/interval_tree_generic.h>
@@ -2194,7 +2194,7 @@ int amdgpu_vm_bo_map(struct amdgpu_device *adev,
 	if (tmp) {
 		/* bo and tmp overlap, invalid addr */
 		dev_err(adev->dev, "bo %p va 0x%010"PRIx64"-0x%010"PRIx64" conflict with "
-			"0x%010Lx-0x%010Lx\n", bo, saddr, eaddr,
+			"0x%010"PRIx64"-0x%010"PRIx64"\n", bo, saddr, eaddr,
 			tmp->start, tmp->last + 1);
 		return -EINVAL;
 	}
@@ -2396,7 +2396,7 @@ int amdgpu_vm_bo_clear_mappings(struct amdgpu_device *adev,
 		list_del(&tmp->list);
 		list_add(&tmp->list, &removed);
 
-		tmp = amdgpu_vm_it_iter_next(tmp, saddr, eaddr);
+		tmp = amdgpu_vm_it_iter_next(&vm->va, tmp, saddr, eaddr);
 	}
 
 	/* And free them up */
@@ -2469,7 +2469,7 @@ void amdgpu_vm_bo_trace_cs(struct amdgpu_vm *vm, struct ww_acquire_ctx *ticket)
 		return;
 
 	for (mapping = amdgpu_vm_it_iter_first(&vm->va, 0, U64_MAX); mapping;
-	     mapping = amdgpu_vm_it_iter_next(mapping, 0, U64_MAX)) {
+	     mapping = amdgpu_vm_it_iter_next(&vm->va, mapping, 0, U64_MAX)) {
 		if (mapping->bo_va && mapping->bo_va->base.bo) {
 			struct amdgpu_bo *bo;
 
@@ -2775,7 +2775,7 @@ int amdgpu_vm_init(struct amdgpu_device *adev, struct amdgpu_vm *vm,
 	int r, i;
 
 #ifdef __NetBSD__
-	interval_tree_init(&vm->va);
+	amdgpu_vm_it_init(&vm->va);
 #else
 	vm->va = RB_ROOT_CACHED;
 #endif
@@ -3228,6 +3228,7 @@ int amdgpu_vm_ioctl(struct drm_device *dev, void *data, struct drm_file *filp)
 void amdgpu_vm_get_task_info(struct amdgpu_device *adev, unsigned int pasid,
 			 struct amdgpu_task_info *task_info)
 {
+#ifndef __NetBSD__		/* XXX amdgpu task info */
 	struct amdgpu_vm *vm;
 	unsigned long flags;
 
@@ -3238,6 +3239,7 @@ void amdgpu_vm_get_task_info(struct amdgpu_device *adev, unsigned int pasid,
 		*task_info = vm->task_info;
 
 	spin_unlock_irqrestore(&adev->vm_manager.pasid_lock, flags);
+#endif
 }
 
 /**
@@ -3247,6 +3249,7 @@ void amdgpu_vm_get_task_info(struct amdgpu_device *adev, unsigned int pasid,
  */
 void amdgpu_vm_set_task_info(struct amdgpu_vm *vm)
 {
+#ifndef __NetBSD__		/* XXX amdgpu task info */
 	if (vm->task_info.pid)
 		return;
 
@@ -3258,6 +3261,7 @@ void amdgpu_vm_set_task_info(struct amdgpu_vm *vm)
 
 	vm->task_info.tgid = current->group_leader->pid;
 	get_task_comm(vm->task_info.process_name, current->group_leader);
+#endif
 }
 
 /**
