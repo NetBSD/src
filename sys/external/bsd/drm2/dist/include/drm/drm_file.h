@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_file.h,v 1.3 2021/12/19 00:46:23 riastradh Exp $	*/
+/*	$NetBSD: drm_file.h,v 1.4 2021/12/19 00:58:04 riastradh Exp $	*/
 
 /*
  * Copyright 1999 Precision Insight, Inc., Cedar Park, Texas.
@@ -332,7 +332,12 @@ struct drm_file {
 	int event_space;
 
 	/** @event_read_lock: Serializes drm_read(). */
+#ifdef __NetBSD__
+	struct lwp *event_read_lock;
+	drm_waitqueue_t event_read_wq;
+#else
 	struct mutex event_read_lock;
+#endif
 
 	/**
 	 * @prime:
