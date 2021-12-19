@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu_ih.c,v 1.6 2021/12/19 10:20:10 riastradh Exp $	*/
+/*	$NetBSD: amdgpu_ih.c,v 1.7 2021/12/19 11:26:25 riastradh Exp $	*/
 
 /*
  * Copyright 2014 Advanced Micro Devices, Inc.
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdgpu_ih.c,v 1.6 2021/12/19 10:20:10 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdgpu_ih.c,v 1.7 2021/12/19 11:26:25 riastradh Exp $");
 
 #include <linux/dma-mapping.h>
 
@@ -84,7 +84,7 @@ fail1:			bus_dmamem_free(adev->ddev->dmat, &ih->ring_seg, 1);
 			goto fail0;
 		}
 		r = -bus_dmamem_map(adev->ddev->dmat, &ih->ring_seg, 1, size,
-		    &kva, BUS_DMA_WAITOK);
+		    &kva, BUS_DMA_WAITOK|BUS_DMA_COHERENT);
 		if (r) {
 fail2:			bus_dmamap_destroy(adev->ddev->dmat, ih->ring_map);
 			ih->ring_map = NULL;

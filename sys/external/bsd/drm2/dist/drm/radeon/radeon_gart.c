@@ -1,4 +1,4 @@
-/*	$NetBSD: radeon_gart.c,v 1.13 2021/12/18 23:45:43 riastradh Exp $	*/
+/*	$NetBSD: radeon_gart.c,v 1.14 2021/12/19 11:26:26 riastradh Exp $	*/
 
 /*
  * Copyright 2008 Advanced Micro Devices, Inc.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radeon_gart.c,v 1.13 2021/12/18 23:45:43 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radeon_gart.c,v 1.14 2021/12/19 11:26:26 riastradh Exp $");
 
 #include <linux/pci.h>
 #include <linux/vmalloc.h>
@@ -99,7 +99,9 @@ int radeon_gart_table_ram_alloc(struct radeon_device *rdev)
 	if (error)
 		goto fail3;
 
-	memset((void *)rdev->gart.ptr, 0, rdev->gart.table_size);
+	memset(rdev->gart.ptr, 0, rdev->gart.table_size);
+	bus_dmamap_sync(rdev->ddev->dmat, rdev->gart.rg_table_map, 0,
+	    rdev->gart.table_size, BUS_DMASYNC_PREWRITE);
 
 	/* Success!  */
 	rdev->gart.table_addr = rdev->gart.rg_table_map->dm_segs[0].ds_addr;
