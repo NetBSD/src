@@ -1,4 +1,4 @@
-/*	$NetBSD: pci.h,v 1.40 2021/12/19 01:21:00 riastradh Exp $	*/
+/*	$NetBSD: pci.h,v 1.41 2021/12/19 01:21:08 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -201,8 +201,8 @@ struct pci_dev {
 #define	pci_enable_msi			linux_pci_enable_msi
 #define	pci_enable_rom			linux_pci_enable_rom
 #define	pci_find_capability		linux_pci_find_capability
-#define	pci_get_bus_and_slot		linux_pci_get_bus_and_slot
 #define	pci_get_class			linux_pci_get_class
+#define	pci_get_domain_bus_and_slot	linux_pci_get_domain_bus_and_slot
 #define	pci_get_drvdata			linux_pci_get_drvdata
 #define	pci_iomap			linux_pci_iomap
 #define	pci_iounmap			linux_pci_iounmap
@@ -279,7 +279,7 @@ int		pci_bus_alloc_resource(struct pci_bus *, struct resource *,
 			bus_size_t), struct pci_dev *);
 
 /* XXX Kludges only -- do not use without checking the implementation!  */
-struct pci_dev *pci_get_bus_and_slot(int, int);
+struct pci_dev *pci_get_domain_bus_and_slot(int, int, int);
 struct pci_dev *pci_get_class(uint32_t, struct pci_dev *); /* i915 kludge */
 void		pci_dev_put(struct pci_dev *);
 
