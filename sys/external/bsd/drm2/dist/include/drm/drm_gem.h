@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_gem.h,v 1.11 2021/12/19 09:56:03 riastradh Exp $	*/
+/*	$NetBSD: drm_gem.h,v 1.12 2021/12/19 10:38:23 riastradh Exp $	*/
 
 #ifndef __DRM_GEM_H__
 #define __DRM_GEM_H__
@@ -173,8 +173,8 @@ struct drm_gem_object_funcs {
 	 * used, the @mmap callback must set vma->vm_ops instead.
 	 */
 #ifdef __NetBSD__
-	int (*mmap)(struct drm_device *, off_t, size_t, int, struct uvm_object **,
-	    voff_t *, struct file *);
+	int (*mmap)(struct drm_gem_object *, off_t *, size_t, int,
+	    int *, int *, struct uvm_object **, int *);
 #else
 	int (*mmap)(struct drm_gem_object *obj, struct vm_area_struct *vma);
 #endif

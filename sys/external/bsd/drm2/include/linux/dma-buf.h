@@ -1,4 +1,4 @@
-/*	$NetBSD: dma-buf.h,v 1.9 2021/12/19 10:36:47 riastradh Exp $	*/
+/*	$NetBSD: dma-buf.h,v 1.10 2021/12/19 10:38:23 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -58,6 +58,7 @@ enum dma_data_direction {
 };
 
 struct dma_buf_ops {
+	bool	cache_sgt_mapping;
 	int	(*attach)(struct dma_buf *, struct dma_buf_attachment *);
 	void	(*detach)(struct dma_buf *, struct dma_buf_attachment *);
 	struct sg_table *
