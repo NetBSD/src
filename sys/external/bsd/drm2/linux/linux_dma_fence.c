@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_dma_fence.c,v 1.17 2021/12/19 11:20:56 riastradh Exp $	*/
+/*	$NetBSD: linux_dma_fence.c,v 1.18 2021/12/19 12:00:48 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_dma_fence.c,v 1.17 2021/12/19 11:20:56 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_dma_fence.c,v 1.18 2021/12/19 12:00:48 riastradh Exp $");
 
 #include <sys/atomic.h>
 #include <sys/condvar.h>
@@ -83,8 +83,36 @@ dma_fence_init(struct dma_fence *fence, const struct dma_fence_ops *ops,
 	fence->context = context;
 	fence->seqno = seqno;
 	fence->ops = ops;
+	fence->error = 0;
 	TAILQ_INIT(&fence->f_callbacks);
 	cv_init(&fence->f_cv, "dmafence");
+}
+
+/*
+ * dma_fence_reset(fence)
+ *
+ *	Ensure fence is in a quiescent state.  Allowed either for newly
+ *	initialized or freed fences, but not fences with more than one
+ *	reference.
+ *
+ *	XXX extension to Linux API
+ */
+void
+dma_fence_reset(struct dma_fence *fence, const struct dma_fence_ops *ops,
+    spinlock_t *lock, unsigned context, unsigned seqno)
+{
+
+	KASSERT(kref_read(&fence->refcount) == 0 ||
+	    kref_read(&fence->refcount) == 1);
+	KASSERT(TAILQ_EMPTY(&fence->f_callbacks));
+	KASSERT(fence->lock == lock);
+	KASSERT(fence->ops == ops);
+
+	kref_init(&fence->refcount);
+	fence->flags = 0;
+	fence->context = context;
+	fence->seqno = seqno;
+	fence->error = 0;
 }
 
 /*
