@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_request.c,v 1.5 2021/12/19 11:36:17 riastradh Exp $	*/
+/*	$NetBSD: i915_request.c,v 1.6 2021/12/19 11:58:32 riastradh Exp $	*/
 
 /*
  * Copyright © 2008-2015 Intel Corporation
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_request.c,v 1.5 2021/12/19 11:36:17 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_request.c,v 1.6 2021/12/19 11:58:32 riastradh Exp $");
 
 #include <linux/dma-fence-array.h>
 #include <linux/irq_work.h>
@@ -1607,7 +1607,7 @@ long i915_request_wait(struct i915_request *rq,
 		    i915_request_completed(rq));
 	}
 	if (timeout > 0)	/* succeeded before timeout */
-		dma_fence_signal(&rq->fence);
+		dma_fence_signal_locked(&rq->fence);
 	spin_unlock(rq->fence.lock);
 	DRM_DESTROY_WAITQUEUE(&wait.wq);
 #else
