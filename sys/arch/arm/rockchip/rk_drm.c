@@ -1,4 +1,4 @@
-/* $NetBSD: rk_drm.c,v 1.16 2021/12/19 12:43:37 riastradh Exp $ */
+/* $NetBSD: rk_drm.c,v 1.17 2021/12/19 12:45:04 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2019 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rk_drm.c,v 1.16 2021/12/19 12:43:37 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rk_drm.c,v 1.17 2021/12/19 12:45:04 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -167,6 +167,10 @@ rk_drm_attach(device_t parent, device_t self, void *aux)
 
 	fdt_remove_bycompat(fb_compatible);
 
+	/*
+	 * Wait until rk_vop is attached as a sibling to this device --
+	 * we need that to actually display our framebuffer.
+	 */
 	config_defer(self, rk_drm_init);
 }
 
