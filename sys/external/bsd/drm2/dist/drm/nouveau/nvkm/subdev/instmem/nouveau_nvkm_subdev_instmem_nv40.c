@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_nvkm_subdev_instmem_nv40.c,v 1.10 2021/12/19 10:51:58 riastradh Exp $	*/
+/*	$NetBSD: nouveau_nvkm_subdev_instmem_nv40.c,v 1.11 2021/12/19 12:31:19 riastradh Exp $	*/
 
 /*
  * Copyright 2012 Red Hat Inc.
@@ -24,7 +24,7 @@
  * Authors: Ben Skeggs
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_subdev_instmem_nv40.c,v 1.10 2021/12/19 10:51:58 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_subdev_instmem_nv40.c,v 1.11 2021/12/19 12:31:19 riastradh Exp $");
 
 #define nv40_instmem(p) container_of((p), struct nv40_instmem, base)
 #include "priv.h"
@@ -301,9 +301,8 @@ nv40_instmem_new(struct nvkm_device *device, int index,
 	iomembase = device->func->resource_addr(device, bar);
 	iomemsz = device->func->resource_size(device, bar);
 	/* XXX errno NetBSD->Linux */
-	/* XXX post-merge: switch to WC */
 	ret = -bus_space_map(imem->iomemt, iomembase, iomemsz,
-	    BUS_SPACE_MAP_LINEAR, &imem->iomemh);
+	    BUS_SPACE_MAP_LINEAR|BUS_SPACE_MAP_PREFETCHABLE, &imem->iomemh);
 	if (ret) {
 		nvkm_error(&imem->base.subdev, "unable to map PRAMIN BAR %d"
 		    ": %d\n", bar, ret);
