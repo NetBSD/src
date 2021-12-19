@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_file.c,v 1.2 2021/12/18 23:44:57 riastradh Exp $	*/
+/*	$NetBSD: drm_file.c,v 1.3 2021/12/19 10:45:33 riastradh Exp $	*/
 
 /*
  * \author Rickard E. (Rik) Faith <faith@valinux.com>
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_file.c,v 1.2 2021/12/18 23:44:57 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_file.c,v 1.3 2021/12/19 10:45:33 riastradh Exp $");
 
 #include <linux/anon_inodes.h>
 #include <linux/dma-fence.h>
@@ -53,8 +53,17 @@ __KERNEL_RCSID(0, "$NetBSD: drm_file.c,v 1.2 2021/12/18 23:44:57 riastradh Exp $
 #include "drm_internal.h"
 #include "drm_legacy.h"
 
+#ifdef __NetBSD__
+#include <sys/poll.h>
+#include <sys/select.h>
+#endif
+
+#include <linux/nbsd-namespace.h>
+
 /* from BKL pushdown */
+#ifndef __NetBSD__
 DEFINE_MUTEX(drm_global_mutex);
+#endif
 
 /**
  * DOC: file operations
@@ -131,7 +140,9 @@ struct drm_file *drm_file_alloc(struct drm_minor *minor)
 	if (!file)
 		return ERR_PTR(-ENOMEM);
 
+#ifndef __NetBSD__
 	file->pid = get_pid(task_pid(current));
+#endif
 	file->minor = minor;
 
 	/* for compatibility root is always authenticated */
@@ -143,10 +154,19 @@ struct drm_file *drm_file_alloc(struct drm_minor *minor)
 	INIT_LIST_HEAD(&file->blobs);
 	INIT_LIST_HEAD(&file->pending_event_list);
 	INIT_LIST_HEAD(&file->event_list);
+#ifdef __NetBSD__
+	DRM_INIT_WAITQUEUE(&file->event_wait, "drmevent");
+	selinit(&file->event_selq);
+#else
 	init_waitqueue_head(&file->event_wait);
+#endif
 	file->event_space = 4096; /* set aside 4k for event buffer */
 
+#ifdef __NetBSD__
+	file->event_read_lock = NULL;
+#else
 	mutex_init(&file->event_read_lock);
+#endif
 
 	if (drm_core_check_feature(dev, DRIVER_GEM))
 		drm_gem_open(dev, file);
@@ -170,7 +190,18 @@ out_prime_destroy:
 		drm_syncobj_release(file);
 	if (drm_core_check_feature(dev, DRIVER_GEM))
 		drm_gem_release(dev, file);
+#ifdef __NetBSD__
+	KASSERT(file->event_read_lock == NULL);
+#else
+	mutex_destroy(&file->event_read_lock);
+#endif
+	mutex_destroy(&file->fbs_lock);
+#ifdef __NetBSD__
+	DRM_DESTROY_WAITQUEUE(&file->event_wait);
+	seldestroy(&file->event_selq);
+#else
 	put_pid(file->pid);
+#endif
 	kfree(file);
 
 	return ERR_PTR(ret);
@@ -224,7 +255,11 @@ void drm_file_free(struct drm_file *file)
 
 	DRM_DEBUG("pid = %d, device = 0x%lx, open_count = %d\n",
 		  task_pid_nr(current),
+#ifdef __NetBSD__
+		  (unsigned long)device_unit(file->minor->dev->dev),
+#else
 		  (long)old_encode_dev(file->minor->kdev->devt),
+#endif
 		  dev->open_count);
 
 	if (drm_core_check_feature(dev, DRIVER_LEGACY) &&
@@ -262,10 +297,18 @@ void drm_file_free(struct drm_file *file)
 
 	WARN_ON(!list_empty(&file->event_list));
 
+#ifdef __NetBSD__
+	DRM_DESTROY_WAITQUEUE(&file->event_wait);
+	seldestroy(&file->event_selq);
+#else
 	put_pid(file->pid);
+	mutex_destroy(&file->event_read_lock);
+#endif
+	mutex_destroy(&file->fbs_lock);
 	kfree(file);
 }
 
+#ifndef __NetBSD__
 static void drm_close_helper(struct file *filp)
 {
 	struct drm_file *file_priv = filp->private_data;
@@ -277,12 +320,14 @@ static void drm_close_helper(struct file *filp)
 
 	drm_file_free(file_priv);
 }
+#endif
 
 /*
  * Check whether DRI will run on this CPU.
  *
  * \return non-zero if the DRI will run on this CPU, or zero otherwise.
  */
+__unused
 static int drm_cpu_valid(void)
 {
 #if defined(__sparc__) && !defined(__sparc_v9__)
@@ -301,6 +346,7 @@ static int drm_cpu_valid(void)
  * Creates and initializes a drm_file structure for the file private data in \p
  * filp and add it into the double linked list in \p dev.
  */
+#ifndef __NetBSD__
 static int drm_open_helper(struct file *filp, struct drm_minor *minor)
 {
 	struct drm_device *dev = minor->dev;
@@ -358,6 +404,7 @@ static int drm_open_helper(struct file *filp, struct drm_minor *minor)
 
 	return 0;
 }
+#endif
 
 /**
  * drm_open - open method for DRM file
@@ -372,6 +419,7 @@ static int drm_open_helper(struct file *filp, struct drm_minor *minor)
  *
  * 0 on success or negative errno value on falure.
  */
+#ifndef __NetBSD__
 int drm_open(struct inode *inode, struct file *filp)
 {
 	struct drm_device *dev;
@@ -408,6 +456,7 @@ err_undo:
 	return retcode;
 }
 EXPORT_SYMBOL(drm_open);
+#endif
 
 void drm_lastclose(struct drm_device * dev)
 {
@@ -437,6 +486,7 @@ void drm_lastclose(struct drm_device * dev)
  *
  * Always succeeds and returns 0.
  */
+#ifndef __NetBSD__
 int drm_release(struct inode *inode, struct file *filp)
 {
 	struct drm_file *file_priv = filp->private_data;
@@ -459,6 +509,7 @@ int drm_release(struct inode *inode, struct file *filp)
 	return 0;
 }
 EXPORT_SYMBOL(drm_release);
+#endif
 
 /**
  * drm_read - read method for DRM file
@@ -486,6 +537,7 @@ EXPORT_SYMBOL(drm_release);
  * Number of bytes read (always aligned to full events, and can be 0) or a
  * negative error code on failure.
  */
+#ifndef __NetBSD__
 ssize_t drm_read(struct file *filp, char __user *buffer,
 		 size_t count, loff_t *offset)
 {
@@ -556,6 +608,7 @@ put_back_event:
 	return ret;
 }
 EXPORT_SYMBOL(drm_read);
+#endif
 
 /**
  * drm_poll - poll method for DRM file
@@ -573,6 +626,7 @@ EXPORT_SYMBOL(drm_read);
  *
  * Mask of POLL flags indicating the current status of the file.
  */
+#ifndef __NetBSD__
 __poll_t drm_poll(struct file *filp, struct poll_table_struct *wait)
 {
 	struct drm_file *file_priv = filp->private_data;
@@ -586,6 +640,7 @@ __poll_t drm_poll(struct file *filp, struct poll_table_struct *wait)
 	return mask;
 }
 EXPORT_SYMBOL(drm_poll);
+#endif
 
 /**
  * drm_event_reserve_init_locked - init a DRM event and reserve space for it
@@ -733,7 +788,12 @@ void drm_send_event_locked(struct drm_device *dev, struct drm_pending_event *e)
 	list_del(&e->pending_link);
 	list_add_tail(&e->link,
 		      &e->file_priv->event_list);
+#ifdef __NetBSD__
+	DRM_SPIN_WAKEUP_ONE(&e->file_priv->event_wait, &dev->event_lock);
+	selnotify(&e->file_priv->event_selq, POLLIN|POLLRDNORM, NOTE_SUBMIT);
+#else
 	wake_up_interruptible(&e->file_priv->event_wait);
+#endif
 }
 EXPORT_SYMBOL(drm_send_event_locked);
 
@@ -776,6 +836,7 @@ EXPORT_SYMBOL(drm_send_event);
  * RETURNS:
  * Pointer to newly created struct file, ERR_PTR on failure.
  */
+#ifndef __NetBSD__
 struct file *mock_drm_getfile(struct drm_minor *minor, unsigned int flags)
 {
 	struct drm_device *dev = minor->dev;
@@ -801,3 +862,4 @@ struct file *mock_drm_getfile(struct drm_minor *minor, unsigned int flags)
 	return file;
 }
 EXPORT_SYMBOL_FOR_TESTS_ONLY(mock_drm_getfile);
+#endif

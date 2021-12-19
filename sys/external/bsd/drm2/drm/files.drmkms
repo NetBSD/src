@@ -1,4 +1,4 @@
-#	$NetBSD: files.drmkms,v 1.58 2021/12/19 10:39:57 riastradh Exp $
+#	$NetBSD: files.drmkms,v 1.59 2021/12/19 10:45:33 riastradh Exp $
 
 version	20180827
 
@@ -115,7 +115,7 @@ file	external/bsd/drm2/dist/drm/drm_edid.c	drmkms
 file	external/bsd/drm2/dist/drm/drm_encoder.c	drmkms
 file	external/bsd/drm2/i2c/drm_encoder_slave.c	drmkms
 file	external/bsd/drm2/dist/drm/drm_fb_helper.c	drmkms
-file	external/bsd/drm2/drm/drm_file.c	drmkms
+file	external/bsd/drm2/dist/drm/drm_file.c	drmkms
 file	external/bsd/drm2/dist/drm/drm_flip_work.c	drmkms
 #file	external/bsd/drm2/dist/drm/drm_format_helper.c	drmkms
 file	external/bsd/drm2/dist/drm/drm_fourcc.c	drmkms

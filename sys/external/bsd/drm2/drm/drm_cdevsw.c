@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_cdevsw.c,v 1.25 2021/12/19 10:35:59 riastradh Exp $	*/
+/*	$NetBSD: drm_cdevsw.c,v 1.26 2021/12/19 10:45:33 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_cdevsw.c,v 1.25 2021/12/19 10:35:59 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_cdevsw.c,v 1.26 2021/12/19 10:45:33 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -68,8 +68,6 @@ __KERNEL_RCSID(0, "$NetBSD: drm_cdevsw.c,v 1.25 2021/12/19 10:35:59 riastradh Ex
 #include "../dist/drm/drm_legacy.h"
 
 static dev_type_open(drm_open);
-
-static int	drm_firstopen(struct drm_device *);
 
 static int	drm_close(struct file *);
 static int	drm_read(struct file *, off_t *, struct uio *, kauth_cred_t,
@@ -122,14 +120,18 @@ drm_open(dev_t d, int flags, int fmt, struct lwp *l)
 {
 	struct drm_minor *dminor;
 	struct drm_device *dev;
-	bool firstopen, lastclose;
+	bool lastclose;
 	int fd;
 	struct file *fp;
+	struct drm_file *priv;
+	int need_setup = 0;
 	int error;
 
 	error = drm_guarantee_initialized();
 	if (error)
 		goto fail0;
+
+	/* Synchronize with drm_file.c, drm_open and drm_open_helper.  */
 
 	if (flags & O_EXCL) {
 		error = EBUSY;
@@ -154,35 +156,51 @@ drm_open(dev_t d, int flags, int fmt, struct lwp *l)
 		error = EBUSY;
 		goto fail1;
 	}
-	firstopen = (dev->open_count == 0);
-	dev->open_count++;
+	if (dev->open_count++ == 0)
+		need_setup = 1;
 	mutex_unlock(&drm_global_mutex);
-
-	if (firstopen) {
-		/* XXX errno Linux->NetBSD */
-		error = -drm_firstopen(dev);
-		if (error)
-			goto fail2;
-	}
 
 	error = fd_allocfile(&fp, &fd);
 	if (error)
 		goto fail2;
 
-	struct drm_file *const file = kmem_zalloc(sizeof(*file), KM_SLEEP);
-	/* XXX errno Linux->NetBSD */
-	error = -drm_open_file(file, fp, dminor);
-	if (error)
+	priv = drm_file_alloc(dminor);
+	if (IS_ERR(priv)) {
+		/* XXX errno Linux->NetBSD */
+		error = -PTR_ERR(priv);
 		goto fail3;
+	}
 
-	error = fd_clone(fp, fd, flags, &drm_fileops, file);
+	if (drm_is_primary_client(priv)) {
+		/* XXX errno Linux->NetBSD */
+		error = -drm_master_open(priv);
+		if (error)
+			goto fail4;
+	}
+
+	mutex_lock(&dev->filelist_mutex);
+	list_add(&priv->lhead, &dev->filelist);
+	mutex_unlock(&dev->filelist_mutex);
+	/* XXX Alpha hose?  */
+
+	if (need_setup) {
+		/* XXX errno Linux->NetBSD */
+		error = -drm_legacy_setup(dev);
+		if (error)
+			goto fail5;
+	}
+
+	error = fd_clone(fp, fd, flags, &drm_fileops, priv);
 	KASSERT(error == EMOVEFD); /* XXX */
 
 	/* Success!  (But error has to be EMOVEFD, not 0.)  */
 	return error;
 
-fail3:	kmem_free(file, sizeof(*file));
-	fd_abort(curproc, fp, fd);
+fail5:	mutex_lock(&dev->filelist_mutex);
+	list_del(&priv->lhead);
+	mutex_unlock(&dev->filelist_mutex);
+fail4:	drm_file_free(priv);
+fail3:	fd_abort(curproc, fp, fd);
 fail2:	mutex_lock(&drm_global_mutex);
 	KASSERT(0 < dev->open_count);
 	--dev->open_count;
@@ -200,13 +218,18 @@ fail0:	KASSERT(error);
 static int
 drm_close(struct file *fp)
 {
-	struct drm_file *const file = fp->f_data;
-	struct drm_minor *const dminor = file->minor;
+	struct drm_file *const priv = fp->f_data;
+	struct drm_minor *const dminor = priv->minor;
 	struct drm_device *const dev = dminor->dev;
 	bool lastclose;
 
-	drm_close_file(file);
-	kmem_free(file, sizeof(*file));
+	/* Synchronize with drm_file.c, drm_release.  */
+
+	mutex_lock(&dev->filelist_mutex);
+	list_del(&priv->lhead);
+	mutex_unlock(&dev->filelist_mutex);
+
+	drm_file_free(priv);
 
 	mutex_lock(&drm_global_mutex);
 	KASSERT(0 < dev->open_count);
@@ -220,66 +243,6 @@ drm_close(struct file *fp)
 	drm_minor_release(dminor);
 
 	return 0;
-}
-
-static int
-drm_firstopen(struct drm_device *dev)
-{
-	int ret;
-
-	if (drm_core_check_feature(dev, DRIVER_MODESET))
-		return 0;
-
-	if (dev->driver->firstopen) {
-		ret = (*dev->driver->firstopen)(dev);
-		if (ret)
-			goto fail0;
-	}
-
-	ret = drm_legacy_dma_setup(dev);
-	if (ret)
-		goto fail1;
-
-	return 0;
-
-fail2: __unused
-#if IS_ENABLED(CONFIG_DRM_LEGACY)
-	drm_legacy_dma_takedown(dev);
-#endif
-fail1:	if (dev->driver->lastclose)
-		(*dev->driver->lastclose)(dev);
-fail0:	KASSERT(ret);
-	return ret;
-}
-
-void
-drm_lastclose(struct drm_device *dev)
-{
-
-	/* XXX Order is sketchy here...  */
-	if (dev->driver->lastclose)
-		(*dev->driver->lastclose)(dev);
-	if (dev->irq_enabled && !drm_core_check_feature(dev, DRIVER_MODESET))
-		drm_irq_uninstall(dev);
-
-	mutex_lock(&dev->struct_mutex);
-	if (dev->agp)
-		drm_legacy_agp_clear(dev);
-#if IS_ENABLED(CONFIG_DRM_LEGACY)
-	drm_legacy_sg_cleanup(dev);
-	drm_legacy_dma_takedown(dev);
-#endif
-	mutex_unlock(&dev->struct_mutex);
-
-	/* XXX Synchronize with drm_legacy_dev_reinit.  */
-	if (!drm_core_check_feature(dev, DRIVER_MODESET)) {
-#if IS_ENABLED(CONFIG_DRM_LEGACY)
-		dev->sigdata.lock = NULL;
-		dev->context_flag = 0;
-		dev->last_context = 0;
-#endif
-		dev->if_version = 0;
-	}
 }
 
 static int
