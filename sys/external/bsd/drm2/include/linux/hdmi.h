@@ -1,4 +1,4 @@
-/*	$NetBSD: hdmi.h,v 1.10 2021/12/19 11:38:04 riastradh Exp $	*/
+/*	$NetBSD: hdmi.h,v 1.11 2021/12/19 11:38:27 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -199,6 +199,18 @@ enum hdmi_metadata_type {
 	HDMI_STATIC_METADATA_TYPE1 = 1,
 };
 
+struct hdmi_type1 {
+	enum hdmi_eotf			eotf;
+	enum hdmi_metadata_type		metadata_type;
+	uint16_t			min_cll;
+	uint16_t			max_cll;
+	uint16_t			max_fall;
+};
+
+struct hdr_sink_metadata {
+	struct hdmi_type1		hdmi_type1;
+};
+
 #define	HDMI_INFOFRAME_SIZE(TYPE)					      \
 	(HDMI_INFOFRAME_HEADER_SIZE + HDMI_##TYPE##_INFOFRAME_SIZE)
 
@@ -208,33 +220,6 @@ struct hdmi_infoframe_header {
 	uint8_t				version;
 	uint8_t				length;
 	/* checksum */
-};
-
-struct hdmi_type1 {
-	enum hdmi_eotf eotf;
-	enum hdmi_metadata_type metadata_type;
-	uint16_t min_cll;
-	uint16_t max_cll;
-	uint16_t max_fall;
-};
-
-struct hdr_sink_metadata {
-	struct hdmi_type1 hdmi_type1;
-};
-
-struct hdmi_drm_infoframe {
-	enum hdmi_eotf eotf;
-	enum hdmi_metadata_type metadata_type;
-	struct {
-		uint16_t x, y;
-	} display_primaries[3];
-	struct {
-		uint16_t x, y;
-	} white_point;
-	uint16_t max_display_mastering_luminance;
-	uint16_t min_display_mastering_luminance;
-	uint16_t max_cll;
-	uint16_t max_fall;
 };
 
 static inline void
@@ -499,6 +484,7 @@ hdmi_spd_infoframe_pack(struct hdmi_spd_infoframe *frame, void *buf,
 	(void)memcpy(&p[0], frame->vendor, 8);
 	(void)memcpy(&p[8], frame->product, 16);
 	p[24] = frame->sdi;
+	CTASSERT(HDMI_SPD_INFOFRAME_SIZE == 25);
 
 	hdmi_infoframe_checksum(buf, length);
 
@@ -583,9 +569,80 @@ hdmi_vendor_infoframe_pack(const struct hdmi_vendor_infoframe *frame,
 	return length;
 }
 
+#define	HDMI_DRM_INFOFRAME_SIZE		26
+struct hdmi_drm_infoframe {
+	struct hdmi_infoframe_header	header;
+	enum hdmi_eotf			eotf;
+	enum hdmi_metadata_type		metadata_type;
+	struct {
+		uint16_t	x, y;
+	}				display_primaries[3];
+	struct {
+		uint16_t	x, y;
+	}				white_point;
+	uint16_t			max_display_mastering_luminance;
+	uint16_t			min_display_mastering_luminance;
+	uint16_t			max_cll;
+	uint16_t			max_fall;
+};
+
+static inline int
+hdmi_drm_infoframe_init(struct hdmi_drm_infoframe *frame)
+{
+	static const struct hdmi_drm_infoframe zero_frame;
+
+	*frame = zero_frame;
+
+	hdmi_infoframe_header_init(&frame->header, HDMI_INFOFRAME_TYPE_DRM,
+	    1, HDMI_DRM_INFOFRAME_SIZE);
+
+	return 0;
+}
+
+#define	hdmi_drm_infoframe_pack_only	hdmi_drm_infoframe_pack /* XXX */
+
+static inline int
+hdmi_drm_infoframe_pack(const struct hdmi_drm_infoframe *frame,
+    void *buf, size_t size)
+{
+	const size_t length = HDMI_INFOFRAME_HEADER_SIZE +
+	    HDMI_DRM_INFOFRAME_SIZE;
+	uint8_t *p = buf;
+	unsigned i;
+	int ret;
+
+	KASSERT(frame->header.length == HDMI_DRM_INFOFRAME_SIZE);
+
+	ret = hdmi_infoframe_header_pack(&frame->header, length, p, size);
+	if (ret < 0)
+		return ret;
+	KASSERT(ret == HDMI_INFOFRAME_HEADER_SIZE);
+	p += HDMI_INFOFRAME_HEADER_SIZE;
+	size -= HDMI_INFOFRAME_HEADER_SIZE;
+
+	p[0] = frame->eotf;
+	p[1] = frame->metadata_type;
+	for (i = 0; i < __arraycount(frame->display_primaries); i++) {
+		le16enc(&p[2 + 4*i], frame->display_primaries[i].x);
+		le16enc(&p[2 + 4*i + 1], frame->display_primaries[i].y);
+	}
+	le16enc(&p[14], frame->white_point.x);
+	le16enc(&p[16], frame->white_point.y);
+	le16enc(&p[18], frame->min_display_mastering_luminance);
+	le16enc(&p[20], frame->max_display_mastering_luminance);
+	le16enc(&p[22], frame->max_cll);
+	le16enc(&p[24], frame->max_fall);
+	CTASSERT(HDMI_DRM_INFOFRAME_SIZE == 26);
+
+	hdmi_infoframe_checksum(buf, length);
+
+	return length;
+}
+
 union hdmi_infoframe {
 	struct hdmi_infoframe_header	any;
 	struct hdmi_avi_infoframe	avi;
+	struct hdmi_drm_infoframe	drm;
 	struct hdmi_spd_infoframe	spd;
 	union hdmi_vendor_any_infoframe	vendor;
 };
@@ -597,6 +654,8 @@ hdmi_infoframe_pack(union hdmi_infoframe *frame, void *buf, size_t size)
 	switch (frame->any.type) {
 	case HDMI_INFOFRAME_TYPE_AVI:
 		return hdmi_avi_infoframe_pack(&frame->avi, buf, size);
+	case HDMI_INFOFRAME_TYPE_DRM:
+		return hdmi_drm_infoframe_pack(&frame->drm, buf, size);
 	case HDMI_INFOFRAME_TYPE_SPD:
 		return hdmi_spd_infoframe_pack(&frame->spd, buf, size);
 	case HDMI_INFOFRAME_TYPE_VENDOR:
@@ -605,13 +664,6 @@ hdmi_infoframe_pack(union hdmi_infoframe *frame, void *buf, size_t size)
 	default:
 		return -EINVAL;
 	}
-}
-
-static inline int
-hdmi_drm_infoframe_init(struct hdmi_drm_infoframe *frame)
-{
-	panic("TODO");
-	return 0;
 }
 
 static inline void

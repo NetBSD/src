@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_dpll_mgr.c,v 1.2 2021/12/18 23:45:30 riastradh Exp $	*/
+/*	$NetBSD: intel_dpll_mgr.c,v 1.3 2021/12/19 11:38:26 riastradh Exp $	*/
 
 /*
  * Copyright © 2006-2016 Intel Corporation
@@ -24,11 +24,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intel_dpll_mgr.c,v 1.2 2021/12/18 23:45:30 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intel_dpll_mgr.c,v 1.3 2021/12/19 11:38:26 riastradh Exp $");
 
 #include "intel_display_types.h"
 #include "intel_dpio_phy.h"
 #include "intel_dpll_mgr.h"
+
+#include <linux/nbsd-namespace.h>
 
 /**
  * DOC: Display PLLs
