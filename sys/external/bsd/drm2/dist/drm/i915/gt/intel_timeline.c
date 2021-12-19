@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_timeline.c,v 1.3 2021/12/19 11:49:11 riastradh Exp $	*/
+/*	$NetBSD: intel_timeline.c,v 1.4 2021/12/19 11:57:19 riastradh Exp $	*/
 
 /*
  * SPDX-License-Identifier: MIT
@@ -7,7 +7,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intel_timeline.c,v 1.3 2021/12/19 11:49:11 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intel_timeline.c,v 1.4 2021/12/19 11:57:19 riastradh Exp $");
 
 #include "i915_drv.h"
 
@@ -287,6 +287,8 @@ void intel_timeline_fini(struct intel_timeline *timeline)
 		i915_gem_object_unpin_map(timeline->hwsp_ggtt->obj);
 
 	i915_vma_put(timeline->hwsp_ggtt);
+
+	mutex_destroy(&timeline->mutex);
 }
 
 struct intel_timeline *
