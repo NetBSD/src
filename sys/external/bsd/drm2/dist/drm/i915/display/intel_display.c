@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_display.c,v 1.8 2021/12/19 11:56:38 riastradh Exp $	*/
+/*	$NetBSD: intel_display.c,v 1.9 2021/12/19 12:11:46 riastradh Exp $	*/
 
 /*
  * Copyright © 2006-2007 Intel Corporation
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intel_display.c,v 1.8 2021/12/19 11:56:38 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intel_display.c,v 1.9 2021/12/19 12:11:46 riastradh Exp $");
 
 #include "intel_display.h"	/* for pipe_drmhack */
 
@@ -15275,9 +15275,9 @@ static void intel_atomic_helper_free_state_worker(struct work_struct *work)
 
 static int
 intel_atomic_commit_fence_wake(struct i915_sw_fence_waiter *waiter,
-    unsigned mode, int flags, void *cookie)
+    unsigned mode, int flags, void *not_a_cookie)
 {
-	struct intel_atomic_state *intel_state = cookie;
+	struct intel_atomic_state *intel_state = waiter->private;
 	struct drm_i915_private *dev_priv = to_i915(intel_state->base.dev);
 
 	spin_lock(&dev_priv->atomic_commit_lock);

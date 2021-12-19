@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_sw_fence.c,v 1.5 2021/12/19 11:56:38 riastradh Exp $	*/
+/*	$NetBSD: i915_sw_fence.c,v 1.6 2021/12/19 12:11:46 riastradh Exp $	*/
 
 /*
  * SPDX-License-Identifier: MIT
@@ -7,7 +7,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_sw_fence.c,v 1.5 2021/12/19 11:56:38 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_sw_fence.c,v 1.6 2021/12/19 12:11:46 riastradh Exp $");
 
 #include <linux/slab.h>
 #include <linux/dma-fence.h>
@@ -165,9 +165,9 @@ struct i915_sw_fence_wq {
 
 static int
 autoremove_wake_function(struct i915_sw_fence_waiter *waiter, unsigned mode,
-    int flags, void *cookie)
+    int flags, void *donottouch_no_really)
 {
-	struct i915_sw_fence_wq *sfw = cookie;
+	struct i915_sw_fence_wq *sfw = waiter->private;
 
 	/* Caller presumably already completed the fence.  */
 	DRM_SPIN_WAKEUP_ALL(&sfw->wq, &sfw->fence->wait.lock);
