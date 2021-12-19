@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_dp_helper.h,v 1.7 2021/12/19 10:38:05 riastradh Exp $	*/
+/*	$NetBSD: drm_dp_helper.h,v 1.8 2021/12/19 10:48:47 riastradh Exp $	*/
 
 /*
  * Copyright © 2008 Keith Packard
@@ -29,6 +29,8 @@
 #include <linux/i2c.h>
 #include <linux/types.h>
 #include <linux/workqueue.h>
+
+struct seq_file;
 
 /*
  * Unless otherwise noted, all values are from the DP 1.1a spec.  Note that
