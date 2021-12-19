@@ -1,4 +1,4 @@
-/*	$NetBSD: ttm_bo.c,v 1.27 2021/12/19 11:09:02 riastradh Exp $	*/
+/*	$NetBSD: ttm_bo.c,v 1.28 2021/12/19 11:21:12 riastradh Exp $	*/
 
 /* SPDX-License-Identifier: GPL-2.0 OR MIT */
 /**************************************************************************
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ttm_bo.c,v 1.27 2021/12/19 11:09:02 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ttm_bo.c,v 1.28 2021/12/19 11:21:12 riastradh Exp $");
 
 #define pr_fmt(fmt) "[TTM] " fmt
 
@@ -685,7 +685,8 @@ static void ttm_bo_release(struct kref *kref)
 #endif
 	drm_vma_offset_remove(bdev->vma_manager, &bo->base.vma_node);
 #ifdef __NetBSD__
-	drm_vma_node_destroy(&bo->base.vma_node);
+	if (!ttm_bo_uses_embedded_gem_object(bo))
+		drm_vma_node_destroy(&bo->base.vma_node);
 #endif
 	ttm_mem_io_lock(man, false);
 	ttm_mem_io_free_vm(bo);
