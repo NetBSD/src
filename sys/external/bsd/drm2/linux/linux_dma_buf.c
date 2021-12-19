@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_dma_buf.c,v 1.10 2021/12/19 11:33:31 riastradh Exp $	*/
+/*	$NetBSD: linux_dma_buf.c,v 1.11 2021/12/19 11:37:14 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_dma_buf.c,v 1.10 2021/12/19 11:33:31 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_dma_buf.c,v 1.11 2021/12/19 11:37:14 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/atomic.h>
@@ -104,6 +104,7 @@ dma_buf_fd(struct dma_buf *dmabuf, int flags)
 	unsigned refcnt __diagused;
 	int ret;
 
+	/* XXX errno NetBSD->Linux */
 	ret = -fd_allocfile(&file, &fd);
 	if (ret)
 		goto out0;
