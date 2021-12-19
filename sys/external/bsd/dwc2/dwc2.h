@@ -1,4 +1,4 @@
-/*	$NetBSD: dwc2.h,v 1.10 2018/08/27 17:13:07 riastradh Exp $	*/
+/*	$NetBSD: dwc2.h,v 1.11 2021/12/19 11:00:47 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -41,6 +41,7 @@
 
 #include <linux/list.h>
 #include <linux/workqueue.h>
+#include <linux/bug.h>
 
 #include "opt_usb.h"
 // #define VERBOSE_DEBUG
@@ -70,7 +71,6 @@ typedef int irqreturn_t;
 
 #ifdef DWC2_DEBUG
 extern int dwc2debug;
-#define WARN_ON(x)	KASSERT(!(x))
 
 #define	dev_info(d,fmt,...) do {			\
 	printf("%s: " fmt, device_xname(d), 		\
@@ -97,7 +97,6 @@ extern int dwc2debug;
 	}						\
 } while (0)
 #else
-#define WARN_ON(x)
 #define	dev_info(...) do { } while (0)
 #define	dev_warn(...) do { } while (0)
 #define	dev_err(...) do { } while (0)

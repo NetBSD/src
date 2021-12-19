@@ -1,4 +1,4 @@
-/* $NetBSD: rk_anxdp.c,v 1.4 2021/07/25 11:14:15 jmcneill Exp $ */
+/* $NetBSD: rk_anxdp.c,v 1.5 2021/12/19 11:00:46 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2019 Jonathan A. Kollasch <jakllsch@kollasch.net>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rk_anxdp.c,v 1.4 2021/07/25 11:14:15 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rk_anxdp.c,v 1.5 2021/12/19 11:00:46 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -37,7 +37,7 @@ __KERNEL_RCSID(0, "$NetBSD: rk_anxdp.c,v 1.4 2021/07/25 11:14:15 jmcneill Exp $"
 #include <sys/kernel.h>
 #include <sys/conf.h>
 
-#include <drm/drmP.h>
+#include <drm/drm_drv.h>
 #include <drm/drm_crtc_helper.h>
 
 #include <dev/fdt/fdtvar.h>
@@ -174,7 +174,7 @@ rk_anxdp_ep_activate(device_t dev, struct fdt_endpoint *ep, bool activate)
 
 	sc->sc_encoder.possible_crtcs = 0x2; /* VOPB only */
 	drm_encoder_init(crtc->dev, &sc->sc_encoder, &rk_anxdp_encoder_funcs,
-	    DRM_MODE_ENCODER_TMDS);
+	    DRM_MODE_ENCODER_TMDS, NULL);
 	drm_encoder_helper_add(&sc->sc_encoder, &rk_anxdp_encoder_helper_funcs);
 
 	out_ep = fdt_endpoint_get_from_index(&sc->sc_ports, ANXDP_PORT_OUTPUT, 0);

@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_drm.c,v 1.15 2021/08/07 16:18:45 thorpej Exp $ */
+/* $NetBSD: sunxi_drm.c,v 1.16 2021/12/19 11:00:46 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2019 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_drm.c,v 1.15 2021/08/07 16:18:45 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_drm.c,v 1.16 2021/12/19 11:00:46 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -41,9 +41,12 @@ __KERNEL_RCSID(0, "$NetBSD: sunxi_drm.c,v 1.15 2021/08/07 16:18:45 thorpej Exp $
 #include <uvm/uvm_object.h>
 #include <uvm/uvm_device.h>
 
-#include <drm/drmP.h>
+#include <drm/drm_auth.h>
 #include <drm/drm_crtc_helper.h>
+#include <drm/drm_drv.h>
 #include <drm/drm_fb_helper.h>
+#include <drm/drm_fourcc.h>
+#include <drm/drm_vblank.h>
 
 #include <dev/fdt/fdtvar.h>
 #include <dev/fdt/fdt_port.h>
@@ -88,10 +91,10 @@ static int	sunxi_drm_enable_vblank(struct drm_device *, unsigned int);
 static void	sunxi_drm_disable_vblank(struct drm_device *, unsigned int);
 
 static int	sunxi_drm_load(struct drm_device *, unsigned long);
-static int	sunxi_drm_unload(struct drm_device *);
+static void	sunxi_drm_unload(struct drm_device *);
 
 static struct drm_driver sunxi_drm_driver = {
-	.driver_features = DRIVER_MODESET | DRIVER_GEM | DRIVER_PRIME,
+	.driver_features = DRIVER_MODESET | DRIVER_GEM,
 	.dev_priv_size = 0,
 	.load = sunxi_drm_load,
 	.unload = sunxi_drm_unload,
@@ -101,7 +104,6 @@ static struct drm_driver sunxi_drm_driver = {
 	.gem_uvm_ops = &drm_gem_cma_uvm_ops,
 
 	.dumb_create = drm_gem_cma_dumb_create,
-	.dumb_map_offset = drm_gem_cma_dumb_map_offset,
 	.dumb_destroy = drm_gem_dumb_destroy,
 
 	.get_vblank_counter = sunxi_drm_get_vblank_counter,
@@ -177,7 +179,6 @@ sunxi_drm_init(device_t dev)
 
 	error = -drm_dev_register(sc->sc_ddev, 0);
 	if (error) {
-		drm_dev_unref(sc->sc_ddev);
 		aprint_error_dev(dev, "couldn't register DRM device: %d\n",
 		    error);
 		return;
@@ -239,7 +240,7 @@ sunxi_drm_fb_destroy(struct drm_framebuffer *fb)
 	struct sunxi_drm_framebuffer *sfb = to_sunxi_drm_framebuffer(fb);
 
 	drm_framebuffer_cleanup(fb);
-	drm_gem_object_unreference_unlocked(&sfb->obj->base);
+	drm_gem_object_put_unlocked(&sfb->obj->base);
 	kmem_free(sfb, sizeof(*sfb));
 }
 
@@ -250,7 +251,7 @@ static const struct drm_framebuffer_funcs sunxi_drm_framebuffer_funcs = {
 
 static struct drm_framebuffer *
 sunxi_drm_fb_create(struct drm_device *ddev, struct drm_file *file,
-    struct drm_mode_fb_cmd2 *cmd)
+    const struct drm_mode_fb_cmd2 *cmd)
 {
 	struct sunxi_drm_framebuffer *fb;
 	struct drm_gem_object *gem_obj;
@@ -259,7 +260,7 @@ sunxi_drm_fb_create(struct drm_device *ddev, struct drm_file *file,
 	if (cmd->flags)
 		return NULL;
 
-	gem_obj = drm_gem_object_lookup(ddev, file, cmd->handles[0]);
+	gem_obj = drm_gem_object_lookup(file, cmd->handles[0]);
 	if (gem_obj == NULL)
 		return NULL;
 
@@ -273,17 +274,7 @@ sunxi_drm_fb_create(struct drm_device *ddev, struct drm_file *file,
 	fb->base.offsets[2] = cmd->offsets[1];
 	fb->base.width = cmd->width;
 	fb->base.height = cmd->height;
-	fb->base.pixel_format = cmd->pixel_format;
-	fb->base.bits_per_pixel = drm_format_plane_cpp(fb->base.pixel_format, 0) * 8;
-
-	switch (fb->base.pixel_format) {
-	case DRM_FORMAT_XRGB8888:
-	case DRM_FORMAT_ARGB8888:
-		fb->base.depth = 32;
-		break;
-	default:
-		break;
-	}
+	fb->base.format = drm_format_info(cmd->pixel_format);
 
 	error = drm_framebuffer_init(ddev, &fb->base, &sunxi_drm_framebuffer_funcs);
 	if (error != 0)
@@ -294,7 +285,7 @@ sunxi_drm_fb_create(struct drm_device *ddev, struct drm_file *file,
 dealloc:
 	drm_framebuffer_cleanup(&fb->base);
 	kmem_free(fb, sizeof(*fb));
-	drm_gem_object_unreference_unlocked(gem_obj);
+	drm_gem_object_put_unlocked(gem_obj);
 
 	return NULL;
 }
@@ -391,8 +382,7 @@ sunxi_drm_fb_probe(struct drm_fb_helper *helper, struct drm_fb_helper_surface_si
 	fb->offsets[0] = 0;
 	fb->width = width;
 	fb->height = height;
-	fb->pixel_format = DRM_FORMAT_XRGB8888;
-	drm_fb_get_bpp_depth(fb->pixel_format, &fb->depth, &fb->bits_per_pixel);
+	fb->format = drm_format_info(DRM_FORMAT_XRGB8888);
 
 	error = drm_framebuffer_init(ddev, fb, &sunxi_drm_framebuffer_funcs);
 	if (error != 0) {
@@ -469,7 +459,7 @@ sunxi_drm_load(struct drm_device *ddev, unsigned long flags)
 
 	drm_fb_helper_prepare(ddev, &fbdev->helper, &sunxi_drm_fb_helper_funcs);
 
-	error = drm_fb_helper_init(ddev, &fbdev->helper, num_crtc, num_crtc);
+	error = drm_fb_helper_init(ddev, &fbdev->helper, num_crtc);
 	if (error)
 		goto allocerr;
 
@@ -539,12 +529,10 @@ sunxi_drm_disable_vblank(struct drm_device *ddev, unsigned int crtc)
 	sc->sc_vbl[crtc].disable_vblank(sc->sc_vbl[crtc].priv);
 }
 
-static int
+static void
 sunxi_drm_unload(struct drm_device *ddev)
 {
 	drm_mode_config_cleanup(ddev);
-
-	return 0;
 }
 
 int
