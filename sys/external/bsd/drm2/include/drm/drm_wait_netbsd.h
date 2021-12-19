@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_wait_netbsd.h,v 1.18 2021/12/19 12:41:07 riastradh Exp $	*/
+/*	$NetBSD: drm_wait_netbsd.h,v 1.19 2021/12/19 12:41:15 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -116,7 +116,7 @@ DRM_SPIN_WAKEUP_ALL(drm_waitqueue_t *q, spinlock_t *interlock)
  * . -EINTR/-ERESTARTSYS if interrupted by a signal, or
  * . 0 if the condition was true before or just after the timeout.
  *
- * Note that cv_timedwait* return -EWOULDBLOCK, not -EBUSY, on timeout.
+ * Note that cv_timedwait* return EWOULDBLOCK, not EBUSY, on timeout.
  *
  * Note that ERESTARTSYS is actually ELAST+1 and only used in Linux
  * code and must be converted for use in NetBSD code (user or kernel.)
@@ -182,10 +182,10 @@ DRM_SPIN_WAKEUP_ALL(drm_waitqueue_t *q, spinlock_t *interlock)
  * . the number of ticks remaining if the condition was true before the
  * timeout.
  *
- * Contrast DRM_SPIN_WAIT_ON which returns -EINTR/-ERESTARTSYS on signal,
- * -EBUSY on timeout, and zero on success; and cv_*wait*, which return
- * -EINTR/-ERESTARTSYS on signal, -EWOULDBLOCK on timeout, and zero on
- * success.
+ * Contrast DRM_SPIN_WAIT_ON which returns -EINTR/-ERESTARTSYS on
+ * signal, -EBUSY on timeout, and zero on success; and cv_*wait*, which
+ * return EINTR/ERESTARTSYS on signal, EWOULDBLOCK on timeout, and zero
+ * on success.
  *
  * XXX In retrospect, giving the timed and untimed macros a different
  * return convention from one another to match Linux may have been a
