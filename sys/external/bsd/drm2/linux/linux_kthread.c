@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_kthread.c,v 1.5 2021/12/19 12:42:14 riastradh Exp $	*/
+/*	$NetBSD: linux_kthread.c,v 1.6 2021/12/19 12:42:25 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2021 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_kthread.c,v 1.5 2021/12/19 12:42:14 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_kthread.c,v 1.6 2021/12/19 12:42:25 riastradh Exp $");
 
 #include <sys/types.h>
 
@@ -42,6 +42,9 @@ __KERNEL_RCSID(0, "$NetBSD: linux_kthread.c,v 1.5 2021/12/19 12:42:14 riastradh 
 #include <sys/specificdata.h>
 
 #include <linux/kthread.h>
+#include <linux/spinlock.h>
+
+#include <drm/drm_wait_netbsd.h>
 
 struct task_struct {
 	kmutex_t	kt_lock;
@@ -52,6 +55,8 @@ struct task_struct {
 
 	int		(*kt_func)(void *);
 	void		*kt_cookie;
+	spinlock_t	*kt_interlock;
+	drm_waitqueue_t	*kt_wq;
 	struct lwp	*kt_lwp;
 };
 
@@ -109,7 +114,8 @@ linux_kthread_start(void *cookie)
 }
 
 static struct task_struct *
-kthread_alloc(int (*func)(void *), void *cookie)
+kthread_alloc(int (*func)(void *), void *cookie, spinlock_t *interlock,
+    drm_waitqueue_t *wq)
 {
 	struct task_struct *T;
 
@@ -120,6 +126,8 @@ kthread_alloc(int (*func)(void *), void *cookie)
 
 	T->kt_func = func;
 	T->kt_cookie = cookie;
+	T->kt_interlock = interlock;
+	T->kt_wq = wq;
 
 	return T;
 }
@@ -134,12 +142,13 @@ kthread_free(struct task_struct *T)
 }
 
 struct task_struct *
-kthread_run(int (*func)(void *), void *cookie, const char *name)
+kthread_run(int (*func)(void *), void *cookie, const char *name,
+    spinlock_t *interlock, drm_waitqueue_t *wq)
 {
 	struct task_struct *T;
 	int error;
 
-	T = kthread_alloc(func, cookie);
+	T = kthread_alloc(func, cookie, interlock, wq);
 	error = kthread_create(PRI_NONE, KTHREAD_MPSAFE|KTHREAD_MUSTJOIN, NULL,
 	    linux_kthread_start, T, &T->kt_lwp, "%s", name);
 	if (error) {
@@ -150,59 +159,35 @@ kthread_run(int (*func)(void *), void *cookie, const char *name)
 	return T;
 }
 
-/*
- * lwp_kick(l)
- *
- *	Cause l to wake up if it is asleep, no matter what condvar or
- *	other wchan it's asleep on.  This logic is like sleepq_timeout,
- *	but without setting LW_STIMO.  This is not a general-purpose
- *	mechanism -- don't go around using this instead of condvars.
- */
-static void
-lwp_kick(struct lwp *l)
-{
-
-	lwp_lock(l);
-	if (l->l_wchan == NULL) {
-		/* Not sleeping, so no need to wake up.  */
-		lwp_unlock(l);
-	} else {
-		/*
-		 * Sleeping, so wake it up.  lwp_unsleep has the side
-		 * effect of unlocking l when we pass unlock=true.
-		 */
-		lwp_unsleep(l, /*unlock*/true);
-	}
-}
-
 int
 kthread_stop(struct task_struct *T)
 {
-	struct lwp *l;
 	int ret;
+
+	/* Lock order: interlock, then kthread lock.  */
+	spin_lock(T->kt_interlock);
+	mutex_enter(&T->kt_lock);
 
 	/*
 	 * Notify the thread that it's stopping, and wake it if it's
-	 * parked.
+	 * parked or sleeping on its own waitqueue.
 	 */
-	mutex_enter(&T->kt_lock);
 	T->kt_shouldpark = false;
 	T->kt_shouldstop = true;
 	cv_broadcast(&T->kt_cv);
+	DRM_SPIN_WAKEUP_ALL(T->kt_wq, T->kt_interlock);
+
+	/* Release the locks.  */
 	mutex_exit(&T->kt_lock);
+	spin_unlock(T->kt_interlock);
 
-	/*
-	 * Kick the lwp in case it's waiting on anything else, and then
-	 * wait for it to complete.  It is the thread's obligation to
-	 * check kthread_shouldstop before sleeping again.
-	 */
-	l = T->kt_lwp;
-	KASSERT(l != curlwp);
-	lwp_kick(l);
-	ret = kthread_join(l);
+	/* Wait for the (NetBSD) kthread to exit.  */
+	ret = kthread_join(T->kt_lwp);
 
+	/* Free the (Linux) kthread.  */
 	kthread_free(T);
 
+	/* Return what the thread returned.  */
 	return ret;
 }
 
@@ -222,8 +207,9 @@ kthread_should_stop(void)
 void
 kthread_park(struct task_struct *T)
 {
-	struct lwp *l;
 
+	/* Lock order: interlock, then kthread lock.  */
+	spin_lock(T->kt_interlock);
 	mutex_enter(&T->kt_lock);
 
 	/* Caller must not ask to park if they've already asked to stop.  */
@@ -232,22 +218,26 @@ kthread_park(struct task_struct *T)
 	/* Ask the thread to park.  */
 	T->kt_shouldpark = true;
 
-	/* Don't wait for ourselves -- Linux allows this semantics.  */
-	if ((l = T->kt_lwp) == curlwp)
-		goto out;
+	/*
+	 * Ensure the thread is not sleeping on its condvar.  After
+	 * this point, we are done with the interlock, which we must
+	 * not hold while we wait on the kthread condvar.
+	 */
+	DRM_SPIN_WAKEUP_ALL(T->kt_wq, T->kt_interlock);
+	spin_unlock(T->kt_interlock);
 
 	/*
-	 * If the thread is asleep for any reason, give it a spurious
-	 * wakeup.  The thread is responsible for checking
-	 * kthread_shouldpark before sleeping.
+	 * Wait until the thread has issued kthread_parkme, unless we
+	 * are already the thread, which Linux allows and interprets to
+	 * mean don't wait.
 	 */
-	lwp_kick(l);
+	if (T->kt_lwp != curlwp) {
+		while (!T->kt_parked)
+			cv_wait(&T->kt_cv, &T->kt_lock);
+	}
 
-	/* Wait until the thread has issued kthread_parkme.  */
-	while (!T->kt_parked)
-		cv_wait(&T->kt_cv, &T->kt_lock);
-
-out:	mutex_exit(&T->kt_lock);
+	/* Release the kthread lock too.  */
+	mutex_exit(&T->kt_lock);
 }
 
 void
