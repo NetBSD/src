@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_atomic.h,v 1.3 2021/12/18 23:45:45 riastradh Exp $	*/
+/*	$NetBSD: drm_atomic.h,v 1.4 2021/12/19 01:57:35 riastradh Exp $	*/
 
 /*
  * Copyright (C) 2014 Red Hat
@@ -30,6 +30,7 @@
 #ifndef DRM_ATOMIC_H_
 #define DRM_ATOMIC_H_
 
+#include <linux/completion.h>
 #include <drm/drm_crtc.h>
 #include <drm/drm_util.h>
 
