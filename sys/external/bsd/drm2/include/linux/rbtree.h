@@ -1,4 +1,4 @@
-/*	$NetBSD: rbtree.h,v 1.6 2021/12/19 01:44:26 riastradh Exp $	*/
+/*	$NetBSD: rbtree.h,v 1.7 2021/12/19 01:44:33 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -63,5 +63,17 @@ rb_erase_cached(struct rb_node *rbnode, struct rb_root_cached *root)
 {
 	rb_erase(rbnode, &root->rbrc_root);
 }
+
+/*
+ * XXX This is not actually postorder, but I can't fathom why you would
+ * want postorder for an ordered tree; different insertion orders lead
+ * to different traversal orders.
+ */
+#define	rbtree_postorder_for_each_entry_safe(NODE, TMP, ROOT, FIELD)	      \
+	for ((NODE) = RB_TREE_MIN(&(ROOT)->rbr_tree);			      \
+		((NODE) != NULL &&					      \
+		    ((TMP) = rb_tree_iterate(&(ROOT)->rbr_tree, (NODE),	      \
+			RB_DIR_RIGHT)));				      \
+		(NODE) = (TMP))
 
 #endif  /* _LINUX_RBTREE_H_ */
