@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_pci.c,v 1.10 2020/02/12 18:35:01 jdolecek Exp $	*/
+/*	$NetBSD: linux_pci.c,v 1.11 2021/12/19 01:21:08 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_pci.c,v 1.10 2020/02/12 18:35:01 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_pci.c,v 1.11 2021/12/19 01:21:08 riastradh Exp $");
 
 #include <linux/pci.h>
 
@@ -364,6 +364,7 @@ static int
 pci_kludgey_match_bus0_dev0_func0(const struct pci_attach_args *pa)
 {
 
+	/* XXX domain */
 	if (pa->pa_bus != 0)
 		return 0;
 	if (pa->pa_device != 0)
@@ -375,10 +376,11 @@ pci_kludgey_match_bus0_dev0_func0(const struct pci_attach_args *pa)
 }
 
 struct pci_dev *
-pci_get_bus_and_slot(int bus, int slot)
+pci_get_domain_bus_and_slot(int domain, int bus, int slot)
 {
 	struct pci_attach_args pa;
 
+	KASSERT(domain == 0);
 	KASSERT(bus == 0);
 	KASSERT(slot == PCI_DEVFN(0, 0));
 
