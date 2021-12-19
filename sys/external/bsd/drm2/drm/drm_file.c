@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_file.c,v 1.2 2021/12/19 00:58:04 riastradh Exp $	*/
+/*	$NetBSD: drm_file.c,v 1.3 2021/12/19 09:46:40 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,14 +30,15 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_file.c,v 1.2 2021/12/19 00:58:04 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_file.c,v 1.3 2021/12/19 09:46:40 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/select.h>
 
 #include <drm/drmP.h>
-#include <drm/drm_internal.h>
+#include <drm/drm_drv.h>
 #include <drm/drm_legacy.h>
+#include <drm/drm_file.h>
 
 #include "../dist/drm/drm_crtc_internal.h"
 #include "../dist/drm/drm_internal.h"
@@ -85,14 +86,12 @@ drm_open_file(struct drm_file *file, void *fp, struct drm_minor *minor)
 	/* file->prime is initialized by drm_prime_init_file_private.  */
 	file->event_read_lock = NULL;
 	DRM_INIT_WAITQUEUE(&file->event_read_wq, "drmevtrd");
-	file->lock_count = 0;
 
 	if (drm_core_check_feature(dev, DRIVER_GEM))
 		drm_gem_open(dev, file);
 	if (drm_core_check_feature(dev, DRIVER_SYNCOBJ))
 		drm_syncobj_open(file);
-	if (drm_core_check_feature(dev, DRIVER_PRIME))
-		drm_prime_init_file_private(&file->prime);
+	drm_prime_init_file_private(&file->prime);
 
 	if (dev->driver->open) {
 		ret = (*dev->driver->open)(dev, file);
@@ -119,8 +118,7 @@ fail1:
 	    dev->driver->preclose)
 		(*dev->driver->preclose)(dev, file);
 fail0:
-	if (drm_core_check_feature(dev, DRIVER_PRIME))
-		drm_prime_destroy_file_private(&file->prime);
+	drm_prime_destroy_file_private(&file->prime);
 	if (drm_core_check_feature(dev, DRIVER_SYNCOBJ))
 		drm_syncobj_release(file);
 	if (drm_core_check_feature(dev, DRIVER_GEM))
@@ -175,8 +173,7 @@ drm_close_file(struct drm_file *file)
 	if (dev->driver->postclose)
 		dev->driver->postclose(dev, file);
 
-	if (drm_core_check_feature(dev, DRIVER_PRIME))
-		drm_prime_destroy_file_private(&file->prime);
+	drm_prime_destroy_file_private(&file->prime);
 
 	KASSERT(list_empty(&file->event_list));
 
