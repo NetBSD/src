@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_gem_dmabuf.c,v 1.4 2021/12/19 11:27:20 riastradh Exp $	*/
+/*	$NetBSD: i915_gem_dmabuf.c,v 1.5 2021/12/19 11:32:53 riastradh Exp $	*/
 
 /*
  * SPDX-License-Identifier: MIT
@@ -7,7 +7,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_gem_dmabuf.c,v 1.4 2021/12/19 11:27:20 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_gem_dmabuf.c,v 1.5 2021/12/19 11:32:53 riastradh Exp $");
 
 #include <linux/dma-buf.h>
 #include <linux/highmem.h>
@@ -41,7 +41,7 @@ static struct sg_table *i915_gem_map_dma_buf(struct dma_buf_attachment *attachme
 		goto err;
 
 #ifdef __NetBSD__
-	st = drm_prime_pglist_to_sg(&obj->mm.pageq,
+	st = drm_prime_pages_to_sg(obj->mm.pagearray,
 	    obj->base.size >> PAGE_SHIFT);
 	if (IS_ERR(st))
 		goto err_unpin_pages;

@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_cache.c,v 1.16 2021/12/19 09:52:00 riastradh Exp $	*/
+/*	$NetBSD: drm_cache.c,v 1.17 2021/12/19 11:32:54 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_cache.c,v 1.16 2021/12/19 09:52:00 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_cache.c,v 1.17 2021/12/19 11:32:54 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -64,24 +64,6 @@ drm_clflush_pages(struct page **pages, unsigned long npages)
 		drm_md_clflush_begin();
 		while (npages--)
 			drm_md_clflush_page(pages[npages]);
-		drm_md_clflush_commit();
-	} else {
-		drm_md_clflush_all();
-	}
-#endif
-}
-
-void
-drm_clflush_pglist(struct pglist *list)
-{
-#if defined(DRM_CLFLUSH)
-	if (drm_md_clflush_finegrained_p()) {
-		struct vm_page *page;
-
-		drm_md_clflush_begin();
-		TAILQ_FOREACH(page, list, pageq.queue)
-			drm_md_clflush_page(container_of(page, struct page,
-				p_vmp));
 		drm_md_clflush_commit();
 	} else {
 		drm_md_clflush_all();

@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_prime.h,v 1.5 2021/12/19 10:38:23 riastradh Exp $	*/
+/*	$NetBSD: drm_prime.h,v 1.6 2021/12/19 11:32:54 riastradh Exp $	*/
 
 /*
  * Copyright © 2012 Red Hat
@@ -112,7 +112,6 @@ void drm_prime_gem_destroy(struct drm_gem_object *obj, struct sg_table *sg);
 
 #ifdef __NetBSD__
 extern struct sg_table *drm_prime_bus_dmamem_to_sg(bus_dma_tag_t, const bus_dma_segment_t *, int);
-extern struct sg_table *drm_prime_pglist_to_sg(struct pglist *, unsigned);
 extern int drm_prime_sg_to_bus_dmamem(bus_dma_tag_t, bus_dma_segment_t *, int, int *, const struct sg_table *);
 extern int drm_prime_bus_dmamap_load_sgt(bus_dma_tag_t, bus_dmamap_t, struct sg_table *);
 extern bus_size_t drm_prime_sg_size(struct sg_table *);
