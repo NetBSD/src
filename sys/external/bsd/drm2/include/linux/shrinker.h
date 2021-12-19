@@ -1,4 +1,4 @@
-/*	$NetBSD: shrinker.h,v 1.4 2018/08/27 07:18:18 riastradh Exp $	*/
+/*	$NetBSD: shrinker.h,v 1.5 2021/12/19 01:22:37 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -32,8 +32,11 @@
 #ifndef _LINUX_SHRINKER_H_
 #define _LINUX_SHRINKER_H_
 
+#include <uvm/uvm.h>
+
 struct shrink_control {
 	unsigned long	nr_to_scan;
+	unsigned long	nr_scanned;
 };
 
 struct shrinker {
@@ -43,20 +46,34 @@ struct shrinker {
 	unsigned long	(*scan_objects)(struct shrinker *,
 			    struct shrink_control *);
 	int		seeks;
+	size_t		batch;
 };
 
 #define	SHRINK_STOP	(~0UL)
 
 #define	DEFAULT_SEEKS	2	/* XXX cargo-culted from Linux */
 
-static inline void
+static inline int
 register_shrinker(struct shrinker *shrinker __unused)
 {
+	return 0;
 }
 
 static inline void
 unregister_shrinker(struct shrinker *shrinker __unused)
 {
+}
+
+static inline bool
+current_is_kswapd(void)
+{
+	return curlwp == uvm.pagedaemon_lwp;
+}
+
+static inline size_t
+get_nr_swap_pages(void)
+{
+	return uvmexp.swpages;
 }
 
 #endif  /* _LINUX_SHRINKER_H_ */
