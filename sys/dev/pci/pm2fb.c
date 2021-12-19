@@ -1,4 +1,4 @@
-/*	$NetBSD: pm2fb.c,v 1.33 2021/08/07 16:19:14 thorpej Exp $	*/
+/*	$NetBSD: pm2fb.c,v 1.34 2021/12/19 21:15:28 andvar Exp $	*/
 
 /*
  * Copyright (c) 2009, 2012 Michael Lorenz
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pm2fb.c,v 1.33 2021/08/07 16:19:14 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pm2fb.c,v 1.34 2021/12/19 21:15:28 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1218,7 +1218,7 @@ pm2fb_putchar_aa(void *cookie, int row, int col, u_int c, long attr)
 	pm2fb_wait(sc, uimin(200, ri->ri_fontscale));
 
 	/*
-	 * and now we just hammer the forground colour and alpha values into
+	 * and now we just hammer the foreground colour and alpha values into
 	 * the upload port
 	 */
 	for (i = 0; i < ri->ri_fontscale; i++) {

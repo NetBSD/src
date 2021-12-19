@@ -1,4 +1,4 @@
-/*	$NetBSD: jobs.c,v 1.114 2021/10/10 18:46:25 rillig Exp $	*/
+/*	$NetBSD: jobs.c,v 1.115 2021/12/19 21:15:27 andvar Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)jobs.c	8.5 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: jobs.c,v 1.114 2021/10/10 18:46:25 rillig Exp $");
+__RCSID("$NetBSD: jobs.c,v 1.115 2021/12/19 21:15:27 andvar Exp $");
 #endif
 #endif /* not lint */
 
@@ -1308,7 +1308,7 @@ forkchild(struct job *jp, union node *n, int mode, int vforked)
  * the interactive program catches interrupts, the user doesn't want
  * these interrupts to also abort the loop.  The approach we take here
  * is to have the shell ignore interrupt signals while waiting for a
- * forground process to terminate, and then send itself an interrupt
+ * foreground process to terminate, and then send itself an interrupt
  * signal if the child process was terminated by an interrupt signal.
  * Unfortunately, some programs want to do a bit of cleanup and then
  * exit on interrupt; unless these processes terminate themselves by
