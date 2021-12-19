@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_gem.h,v 1.4 2021/12/19 01:43:28 riastradh Exp $	*/
+/*	$NetBSD: i915_gem.h,v 1.5 2021/12/19 11:03:25 riastradh Exp $	*/
 
 /*
  * Copyright © 2016 Intel Corporation
@@ -93,6 +93,8 @@ static inline void tasklet_lock(struct tasklet_struct *t)
 		cpu_relax();
 }
 
+#ifndef __NetBSD__
+
 static inline bool tasklet_is_locked(const struct tasklet_struct *t)
 {
 	return test_bit(TASKLET_STATE_RUN, &t->state);
@@ -106,11 +108,7 @@ static inline void __tasklet_disable_sync_once(struct tasklet_struct *t)
 
 static inline bool __tasklet_is_enabled(const struct tasklet_struct *t)
 {
-#ifdef __NetBSD__
-	return tasklet_is_enabled(t);
-#else
 	return !atomic_read(&t->count);
-#endif
 }
 
 static inline bool __tasklet_enable(struct tasklet_struct *t)
@@ -122,5 +120,7 @@ static inline bool __tasklet_is_scheduled(struct tasklet_struct *t)
 {
 	return test_bit(TASKLET_STATE_SCHED, &t->state);
 }
+
+#endif
 
 #endif /* __I915_GEM_H__ */
