@@ -1,4 +1,4 @@
-/*	$NetBSD: radeon_fb.c,v 1.12 2021/12/19 01:50:00 riastradh Exp $	*/
+/*	$NetBSD: radeon_fb.c,v 1.13 2021/12/19 09:55:48 riastradh Exp $	*/
 
 /*
  * Copyright © 2007 David Airlie
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radeon_fb.c,v 1.12 2021/12/19 01:50:00 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radeon_fb.c,v 1.13 2021/12/19 09:55:48 riastradh Exp $");
 
 #include <linux/module.h>
 #include <linux/pci.h>
@@ -59,6 +59,7 @@ struct radeon_fbdev {
 	struct radeon_device *rdev;
 };
 
+#ifndef __NetBSD__
 static int
 radeonfb_open(struct fb_info *info, int user)
 {
@@ -84,7 +85,6 @@ radeonfb_release(struct fb_info *info, int user)
 	return 0;
 }
 
-#ifndef __NetBSD__
 static const struct fb_ops radeonfb_ops = {
 	.owner = THIS_MODULE,
 	DRM_FB_HELPER_DEFAULT_OPS,
@@ -356,8 +356,9 @@ static int radeon_fbdev_destroy(struct drm_device *dev, struct radeon_fbdev *rfb
 {
 #ifdef __NetBSD__
 	int ret;
-#endif
+#else
 	struct drm_framebuffer *fb = &rfbdev->fb;
+#endif
 
 #ifdef __NetBSD__
 	/* XXX errno NetBSD->Linux */
