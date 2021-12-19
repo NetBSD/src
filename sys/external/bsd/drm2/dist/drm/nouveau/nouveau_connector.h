@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_connector.h,v 1.3 2021/12/18 23:45:32 riastradh Exp $	*/
+/*	$NetBSD: nouveau_connector.h,v 1.4 2021/12/19 10:49:21 riastradh Exp $	*/
 
 /*
  * Copyright (C) 2008 Maarten Maathuis.
@@ -49,6 +49,8 @@ struct nouveau_backlight;
 
 #define nouveau_conn_atom(p)                                                   \
 	container_of((p), struct nouveau_conn_atom, state)
+#define nouveau_conn_atom_const(p)                                             \
+	const_container_of((p), struct nouveau_conn_atom, state)
 
 struct nouveau_conn_atom {
 	struct drm_connector_state state;
