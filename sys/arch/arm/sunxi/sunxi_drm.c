@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_drm.c,v 1.20 2021/12/19 11:25:17 riastradh Exp $ */
+/* $NetBSD: sunxi_drm.c,v 1.21 2021/12/19 11:25:48 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2019 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_drm.c,v 1.20 2021/12/19 11:25:17 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_drm.c,v 1.21 2021/12/19 11:25:48 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -84,8 +84,6 @@ static void	sunxi_drm_attach(device_t, device_t, void *);
 static void	sunxi_drm_init(device_t);
 static vmem_t	*sunxi_drm_alloc_cma_pool(struct drm_device *, size_t);
 
-static int	sunxi_drm_set_busid(struct drm_device *, struct drm_master *);
-
 static uint32_t	sunxi_drm_get_vblank_counter(struct drm_device *, unsigned int);
 static int	sunxi_drm_enable_vblank(struct drm_device *, unsigned int);
 static void	sunxi_drm_disable_vblank(struct drm_device *, unsigned int);
@@ -116,8 +114,6 @@ static struct drm_driver sunxi_drm_driver = {
 	.major = DRIVER_MAJOR,
 	.minor = DRIVER_MINOR,
 	.patchlevel = DRIVER_PATCHLEVEL,
-
-	.set_busid = sunxi_drm_set_busid,
 };
 
 CFATTACH_DECL_NEW(sunxi_drm, sizeof(struct sunxi_drm_softc),
@@ -206,23 +202,6 @@ sunxi_drm_alloc_cma_pool(struct drm_device *ddev, size_t cma_size)
 
 	return vmem_create("sunxidrm", segs[0].ds_addr, segs[0].ds_len,
 	    PAGE_SIZE, NULL, NULL, NULL, 0, VM_SLEEP, IPL_NONE);
-}
-
-static int
-sunxi_drm_set_busid(struct drm_device *ddev, struct drm_master *master)
-{
-	struct sunxi_drm_softc * const sc = sunxi_drm_private(ddev);
-	char id[32];
-
-	snprintf(id, sizeof(id), "platform:sunxi:%u", device_unit(sc->sc_dev));
-
-	master->unique = kzalloc(strlen(id) + 1, GFP_KERNEL);
-	if (master->unique == NULL)
-		return -ENOMEM;
-	strcpy(master->unique, id);
-	master->unique_len = strlen(master->unique);
-
-	return 0;
 }
 
 static int

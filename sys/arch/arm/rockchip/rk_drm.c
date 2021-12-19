@@ -1,4 +1,4 @@
-/* $NetBSD: rk_drm.c,v 1.10 2021/12/19 11:01:21 riastradh Exp $ */
+/* $NetBSD: rk_drm.c,v 1.11 2021/12/19 11:25:48 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2019 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rk_drm.c,v 1.10 2021/12/19 11:01:21 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rk_drm.c,v 1.11 2021/12/19 11:25:48 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -75,8 +75,6 @@ static void	rk_drm_attach(device_t, device_t, void *);
 static void	rk_drm_init(device_t);
 static vmem_t	*rk_drm_alloc_cma_pool(struct drm_device *, size_t);
 
-static int	rk_drm_set_busid(struct drm_device *, struct drm_master *);
-
 static uint32_t	rk_drm_get_vblank_counter(struct drm_device *, unsigned int);
 static int	rk_drm_enable_vblank(struct drm_device *, unsigned int);
 static void	rk_drm_disable_vblank(struct drm_device *, unsigned int);
@@ -107,8 +105,6 @@ static struct drm_driver rk_drm_driver = {
 	.major = DRIVER_MAJOR,
 	.minor = DRIVER_MINOR,
 	.patchlevel = DRIVER_PATCHLEVEL,
-
-	.set_busid = rk_drm_set_busid,
 };
 
 CFATTACH_DECL_NEW(rk_drm, sizeof(struct rk_drm_softc),
@@ -197,23 +193,6 @@ rk_drm_alloc_cma_pool(struct drm_device *ddev, size_t cma_size)
 
 	return vmem_create("rkdrm", segs[0].ds_addr, segs[0].ds_len,
 	    PAGE_SIZE, NULL, NULL, NULL, 0, VM_SLEEP, IPL_NONE);
-}
-
-static int
-rk_drm_set_busid(struct drm_device *ddev, struct drm_master *master)
-{
-	struct rk_drm_softc * const sc = rk_drm_private(ddev);
-	char id[32];
-
-	snprintf(id, sizeof(id), "platform:rk:%u", device_unit(sc->sc_dev));
-
-	master->unique = kzalloc(strlen(id) + 1, GFP_KERNEL);
-	if (master->unique == NULL)
-		return -ENOMEM;
-	strcpy(master->unique, id);
-	master->unique_len = strlen(master->unique);
-
-	return 0;
 }
 
 static int
