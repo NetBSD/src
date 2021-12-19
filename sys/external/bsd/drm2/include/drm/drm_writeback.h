@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_writeback.h,v 1.2 2021/12/19 00:49:29 riastradh Exp $	*/
+/*	$NetBSD: drm_writeback.h,v 1.3 2021/12/19 01:57:49 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -46,5 +46,10 @@ struct drm_writeback_connector *
 	drm_connector_to_writeback(struct drm_connector *);
 struct dma_fence *
 	drm_writeback_get_out_fence(struct drm_writeback_connector *);
+
+static inline void
+drm_writeback_cleanup_job(struct drm_writeback_job *job) {
+	panic("TODO");
+}
 
 #endif	/* _DRM_DRM_WRITEBACK_H_ */
