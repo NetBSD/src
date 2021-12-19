@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_gem_vm.c,v 1.9 2018/08/27 07:51:06 riastradh Exp $	*/
+/*	$NetBSD: drm_gem_vm.c,v 1.10 2021/12/19 01:04:19 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_gem_vm.c,v 1.9 2018/08/27 07:51:06 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_gem_vm.c,v 1.10 2021/12/19 01:04:19 riastradh Exp $");
 
 #include <sys/types.h>
 
@@ -97,8 +97,9 @@ drm_gem_mmap_object(struct drm_device *dev, off_t byte_offset, size_t nbytes,
 static int
 drm_gem_mmap_object_locked(struct drm_device *dev, off_t byte_offset,
     size_t nbytes, int prot __unused, struct uvm_object **uobjp,
-    voff_t *uoffsetp, struct file *file)
+    voff_t *uoffsetp, struct file *fp)
 {
+	struct drm_file *file = fp->f_data;
 	const unsigned long startpage = (byte_offset >> PAGE_SHIFT);
 	const unsigned long npages = (nbytes >> PAGE_SHIFT);
 
