@@ -1,4 +1,4 @@
-/*	$NetBSD: vgaarb.h,v 1.3 2015/02/25 21:55:30 riastradh Exp $	*/
+/*	$NetBSD: vgaarb.h,v 1.4 2021/12/19 09:47:10 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -43,6 +43,12 @@ vga_client_register(struct pci_dev *pdev __unused, void *cookie __unused,
     unsigned int (*set_vga_decode)(void *, bool) __unused)
 {
 	return -ENOSYS;
+}
+
+static inline int
+vga_remove_vgacon(struct pci_dev *pdev)
+{
+	return 0;
 }
 
 #endif  /* _LINUX_VGAARB_H_ */
