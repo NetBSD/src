@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_fb_helper.c,v 1.20 2021/12/19 01:03:32 riastradh Exp $	*/
+/*	$NetBSD: drm_fb_helper.c,v 1.21 2021/12/19 01:53:39 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2006-2009 Red Hat Inc.
@@ -30,7 +30,7 @@
  *      Jesse Barnes <jesse.barnes@intel.com>
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_fb_helper.c,v 1.20 2021/12/19 01:03:32 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_fb_helper.c,v 1.21 2021/12/19 01:53:39 riastradh Exp $");
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
@@ -1825,8 +1825,8 @@ __drm_fb_helper_initial_config_and_unlock(struct drm_fb_helper *fb_helper,
 
 	fb_helper->deferred_setup = false;
 
-	info = fb_helper->fbdev;
 #ifndef __NetBSD__		/* XXX fb info */
+	info = fb_helper->fbdev;
 	info->var.pixclock = 0;
 	/* Shamelessly allow physical address leaking to userspace */
 #if IS_ENABLED(CONFIG_DRM_FBDEV_LEAK_PHYS_SMEM)
@@ -1841,6 +1841,7 @@ __drm_fb_helper_initial_config_and_unlock(struct drm_fb_helper *fb_helper,
 	 * register the fbdev emulation instance in kernel_fb_helper_list. */
 	mutex_unlock(&fb_helper->lock);
 
+#ifndef __NetBSD__		/* XXX fb info */
 	ret = register_framebuffer(info);
 	if (ret < 0)
 		return ret;

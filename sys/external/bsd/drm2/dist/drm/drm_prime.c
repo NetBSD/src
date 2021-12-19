@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_prime.c,v 1.11 2021/12/19 01:16:36 riastradh Exp $	*/
+/*	$NetBSD: drm_prime.c,v 1.12 2021/12/19 01:53:39 riastradh Exp $	*/
 
 /*
  * Copyright © 2012 Red Hat
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_prime.c,v 1.11 2021/12/19 01:16:36 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_prime.c,v 1.12 2021/12/19 01:53:39 riastradh Exp $");
 
 #include <linux/export.h>
 #include <linux/dma-buf.h>
@@ -418,7 +418,6 @@ void drm_prime_remove_buf_handle_locked(struct drm_prime_file_private *prime_fpr
 		} else {
 			rb = rb->rb_left;
 		}
-#endif
 	}
 #endif
 }
@@ -1180,8 +1179,8 @@ struct drm_gem_object *drm_gem_prime_import(struct drm_device *dev,
 }
 EXPORT_SYMBOL(drm_gem_prime_import);
 
-/**
 #ifdef __NetBSD__
+/**
 
 struct sg_table *
 drm_prime_bus_dmamem_to_sg(bus_dma_tag_t dmat, const bus_dma_segment_t *segs,

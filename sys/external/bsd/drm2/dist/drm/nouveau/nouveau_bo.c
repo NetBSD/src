@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_bo.c,v 1.16 2021/12/18 23:45:32 riastradh Exp $	*/
+/*	$NetBSD: nouveau_bo.c,v 1.17 2021/12/19 01:53:39 riastradh Exp $	*/
 
 /*
  * Copyright 2007 Dave Airlied
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_bo.c,v 1.16 2021/12/18 23:45:32 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_bo.c,v 1.17 2021/12/19 01:53:39 riastradh Exp $");
 
 #include <linux/dma-mapping.h>
 #include <linux/swiotlb.h>
@@ -1739,7 +1739,6 @@ nouveau_ttm_tt_populate(struct ttm_tt *ttm, struct ttm_operation_ctx *ctx)
 		ttm_dma->dma_address[i] = addr;
 	}
 	return 0;
-#endif
 }
 
 static void
@@ -1749,7 +1748,6 @@ nouveau_ttm_tt_unpopulate(struct ttm_tt *ttm)
 	struct nouveau_drm *drm;
 	struct device *dev;
 	unsigned i;
-#endif
 	bool slave = !!(ttm->page_flags & TTM_PAGE_FLAG_SG);
 
 	if (slave)
@@ -1784,7 +1782,6 @@ nouveau_ttm_tt_unpopulate(struct ttm_tt *ttm)
 	}
 
 	ttm_pool_unpopulate(ttm);
-#endif
 }
 
 #ifdef __NetBSD__
