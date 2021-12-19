@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_dma_fence_array.c,v 1.2 2021/12/19 12:23:50 riastradh Exp $	*/
+/*	$NetBSD: linux_dma_fence_array.c,v 1.3 2021/12/19 12:33:26 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2021 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_dma_fence_array.c,v 1.2 2021/12/19 12:23:50 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_dma_fence_array.c,v 1.3 2021/12/19 12:33:26 riastradh Exp $");
 
 #include <sys/systm.h>
 
@@ -139,6 +139,7 @@ dma_fence_array_release(struct dma_fence *fence)
 		dma_fence_put(A->fences[i]);
 
 	kfree(A->fences);
+	spin_lock_destroy(&A->dfa_lock);
 	dma_fence_free(fence);
 }
 
