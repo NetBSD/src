@@ -1,4 +1,4 @@
-/*	$NetBSD: time.h,v 1.8 2021/12/19 01:43:04 riastradh Exp $	*/
+/*	$NetBSD: time.h,v 1.9 2021/12/19 09:44:11 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -40,6 +40,7 @@
 
 #define NSEC_PER_MSEC	1000000L
 #define	NSEC_PER_SEC	1000000000L
+#define USEC_PER_MSEC	1000L
 
 /*
  * XXX get_seconds as implemented by Linux is a Y2038 bug waiting to
