@@ -1,4 +1,4 @@
-/*	$NetBSD: hash.h,v 1.3 2021/12/19 01:34:46 riastradh Exp $	*/
+/*	$NetBSD: hash.h,v 1.4 2021/12/19 09:48:06 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -32,6 +32,7 @@
 #ifndef _LINUX_HASH_H_
 #define _LINUX_HASH_H_
 
+#include <sys/param.h>
 #include <machine/limits.h>
 
 static inline unsigned long
