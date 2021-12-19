@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_engine_pm.h,v 1.2 2021/12/18 23:45:30 riastradh Exp $	*/
+/*	$NetBSD: intel_engine_pm.h,v 1.3 2021/12/19 12:33:56 riastradh Exp $	*/
 
 /*
  * SPDX-License-Identifier: MIT
@@ -65,5 +65,6 @@ intel_engine_create_kernel_request(struct intel_engine_cs *engine)
 }
 
 void intel_engine_init__pm(struct intel_engine_cs *engine);
+void intel_engine_fini__pm(struct intel_engine_cs *engine);
 
 #endif /* INTEL_ENGINE_PM_H */

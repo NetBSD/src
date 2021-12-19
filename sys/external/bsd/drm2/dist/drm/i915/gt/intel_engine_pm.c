@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_engine_pm.c,v 1.3 2021/12/19 11:52:07 riastradh Exp $	*/
+/*	$NetBSD: intel_engine_pm.c,v 1.4 2021/12/19 12:33:56 riastradh Exp $	*/
 
 /*
  * SPDX-License-Identifier: MIT
@@ -7,7 +7,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intel_engine_pm.c,v 1.3 2021/12/19 11:52:07 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intel_engine_pm.c,v 1.4 2021/12/19 12:33:56 riastradh Exp $");
 
 #include "i915_drv.h"
 
@@ -290,6 +290,13 @@ void intel_engine_init__pm(struct intel_engine_cs *engine)
 
 	intel_wakeref_init(&engine->wakeref, rpm, &wf_ops);
 	intel_engine_init_heartbeat(engine);
+}
+
+void
+intel_engine_fini__pm(struct intel_engine_cs *engine)
+{
+
+	intel_wakeref_fini(&engine->wakeref);
 }
 
 #if IS_ENABLED(CONFIG_DRM_I915_SELFTEST)

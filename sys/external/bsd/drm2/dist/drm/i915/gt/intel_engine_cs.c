@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_engine_cs.c,v 1.7 2021/12/19 12:32:15 riastradh Exp $	*/
+/*	$NetBSD: intel_engine_cs.c,v 1.8 2021/12/19 12:33:56 riastradh Exp $	*/
 
 /*
  * Copyright © 2016 Intel Corporation
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intel_engine_cs.c,v 1.7 2021/12/19 12:32:15 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intel_engine_cs.c,v 1.8 2021/12/19 12:33:56 riastradh Exp $");
 
 #include <drm/drm_print.h>
 
@@ -812,6 +812,7 @@ void intel_engine_cleanup_common(struct intel_engine_cs *engine)
 	cleanup_status_page(engine);
 
 	intel_engine_fini_retire(engine);
+	intel_engine_fini__pm(engine);
 	intel_engine_pool_fini(&engine->pool);
 	intel_engine_fini_breadcrumbs(engine);
 	intel_engine_cleanup_cmd_parser(engine);
