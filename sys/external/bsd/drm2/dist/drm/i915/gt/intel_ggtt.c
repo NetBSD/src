@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_ggtt.c,v 1.12 2021/12/19 12:26:48 riastradh Exp $	*/
+/*	$NetBSD: intel_ggtt.c,v 1.13 2021/12/19 12:34:50 riastradh Exp $	*/
 
 // SPDX-License-Identifier: MIT
 /*
@@ -6,7 +6,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intel_ggtt.c,v 1.12 2021/12/19 12:26:48 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intel_ggtt.c,v 1.13 2021/12/19 12:34:50 riastradh Exp $");
 
 #include <linux/stop_machine.h>
 
@@ -1658,7 +1658,7 @@ intel_partial_pages(const struct i915_ggtt_view *view,
 
 		st->sgl->sg_dmamap->dm_nsegs = view->partial.size;
 		for (i = j = 0; i < view->partial.size; j++) {
-			KASSERT(j <= obj->mm.pages->sgl->sg_dmamap->dm_nsegs);
+			KASSERT(j < obj->mm.pages->sgl->sg_dmamap->dm_nsegs);
 			const bus_dma_segment_t *iseg =
 			    &obj->mm.pages->sgl->sg_dmamap->dm_segs[j];
 
