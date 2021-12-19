@@ -1,4 +1,4 @@
-/*	$NetBSD: drmfb_pci.c,v 1.4 2021/12/19 10:33:00 riastradh Exp $	*/
+/*	$NetBSD: drmfb_pci.c,v 1.5 2021/12/19 10:37:32 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drmfb_pci.c,v 1.4 2021/12/19 10:33:00 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drmfb_pci.c,v 1.5 2021/12/19 10:37:32 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "vga.h"
@@ -61,6 +61,8 @@ __KERNEL_RCSID(0, "$NetBSD: drmfb_pci.c,v 1.4 2021/12/19 10:33:00 riastradh Exp 
 #include <dev/ic/vgareg.h>
 #include <dev/ic/vgavar.h>
 #endif
+
+#include <linux/pci.h>
 
 #include <drm/drm_device.h>
 #include <drm/drm_fb_helper.h>
