@@ -1,4 +1,4 @@
-/*	$NetBSD: dma-buf.h,v 1.10 2021/12/19 10:38:23 riastradh Exp $	*/
+/*	$NetBSD: dma-buf.h,v 1.11 2021/12/19 11:33:31 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -37,7 +37,9 @@
 #include <sys/mutex.h>
 
 #include <linux/err.h>
+#include <linux/dma-mapping.h>
 #include <linux/dma-resv.h>
+#include <linux/scatterlist.h>
 
 struct device;
 struct dma_buf;
@@ -49,13 +51,6 @@ struct module;
 struct dma_resv;
 struct sg_table;
 struct uvm_object;
-
-enum dma_data_direction {
-	DMA_NONE		= 0,
-	DMA_TO_DEVICE		= 1,
-	DMA_FROM_DEVICE		= 2,
-	DMA_BIDIRECTIONAL	= 3,
-};
 
 struct dma_buf_ops {
 	bool	cache_sgt_mapping;
@@ -90,7 +85,7 @@ struct dma_buf {
 struct dma_buf_attachment {
 	void				*priv;
 	struct dma_buf			*dmabuf;
-	struct device			*dev;
+	bus_dma_tag_t			dev; /* XXX expedient misnomer */
 };
 
 struct dma_buf_export_info {
@@ -128,7 +123,7 @@ void	get_dma_buf(struct dma_buf *);
 void	dma_buf_put(struct dma_buf *);
 
 struct dma_buf_attachment *
-	dma_buf_attach(struct dma_buf *, struct device *);
+	dma_buf_attach(struct dma_buf *, bus_dma_tag_t);
 void	dma_buf_detach(struct dma_buf *, struct dma_buf_attachment *);
 
 struct sg_table *

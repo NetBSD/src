@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_scatterlist.h,v 1.5 2021/12/19 11:11:35 riastradh Exp $	*/
+/*	$NetBSD: i915_scatterlist.h,v 1.6 2021/12/19 11:33:30 riastradh Exp $	*/
 
 /*
  * SPDX-License-Identifier: MIT
@@ -15,7 +15,32 @@
 
 #include "i915_gem.h"
 
-#ifdef __linux__
+#ifdef __NetBSD__
+
+struct sgt_iter {
+	unsigned i;
+};
+
+#define	for_each_sgt_page(pp, iter, sgt)				      \
+	for ((iter)->i = 0;						      \
+	     ((iter)->i < (sgt)->sgt_npgs				      \
+		 ? ((pp) = (sgt)->sgt_pgs[(iter)->i], 1)		      \
+		 : 0);							      \
+	     (iter)->i++)
+
+static inline unsigned
+i915_sg_page_sizes(struct scatterlist *sg)
+{
+	unsigned i, page_sizes = 0;
+
+	for (i = 0; i < sg->sg_dmamap->dm_nsegs; i++)
+		page_sizes |= sg->sg_dmamap->dm_segs[i].ds_len;
+
+	return page_sizes;
+}
+
+#else
+
 /*
  * Optimised SGL iterator for GEM objects
  */
@@ -124,6 +149,7 @@ static inline unsigned int i915_sg_segment_size(void)
 
 	return size;
 }
+
 #endif
 
 bool i915_sg_trim(struct sg_table *orig_st);

@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_gem_dmabuf.c,v 1.5 2021/12/19 11:32:53 riastradh Exp $	*/
+/*	$NetBSD: i915_gem_dmabuf.c,v 1.6 2021/12/19 11:33:30 riastradh Exp $	*/
 
 /*
  * SPDX-License-Identifier: MIT
@@ -7,7 +7,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_gem_dmabuf.c,v 1.5 2021/12/19 11:32:53 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_gem_dmabuf.c,v 1.6 2021/12/19 11:33:30 riastradh Exp $");
 
 #include <linux/dma-buf.h>
 #include <linux/highmem.h>
@@ -29,23 +29,13 @@ static struct sg_table *i915_gem_map_dma_buf(struct dma_buf_attachment *attachme
 {
 	struct drm_i915_gem_object *obj = dma_buf_to_obj(attachment->dmabuf);
 	struct sg_table *st;
-#ifdef __NetBSD__
-	int ret;
-#else
 	struct scatterlist *src, *dst;
 	int ret, i;
-#endif
 
 	ret = i915_gem_object_pin_pages(obj);
 	if (ret)
 		goto err;
 
-#ifdef __NetBSD__
-	st = drm_prime_pages_to_sg(obj->mm.pagearray,
-	    obj->base.size >> PAGE_SHIFT);
-	if (IS_ERR(st))
-		goto err_unpin_pages;
-#else
 	/* Copy sg so that we make an independent mapping */
 	st = kmalloc(sizeof(struct sg_table), GFP_KERNEL);
 	if (st == NULL) {
@@ -57,6 +47,14 @@ static struct sg_table *i915_gem_map_dma_buf(struct dma_buf_attachment *attachme
 	if (ret)
 		goto err_free;
 
+#ifdef __NetBSD__
+	__USE(i);
+	__USE(src);
+	__USE(dst);
+	memcpy(st->sgl->sg_pgs, obj->mm.pages->sgl->sg_pgs,
+	    obj->mm.pages->nents * sizeof(st->sgl->sg_pgs[0]));
+#else
+
 	src = obj->mm.pages->sgl;
 	dst = st->sgl;
 	for (i = 0; i < obj->mm.pages->nents; i++) {
@@ -64,21 +62,19 @@ static struct sg_table *i915_gem_map_dma_buf(struct dma_buf_attachment *attachme
 		dst = sg_next(dst);
 		src = sg_next(src);
 	}
+#endif
 
 	if (!dma_map_sg(attachment->dev, st->sgl, st->nents, dir)) {
 		ret = -ENOMEM;
 		goto err_free_sg;
 	}
-#endif
 
 	return st;
 
-#ifndef __NetBSD__
 err_free_sg:
 	sg_free_table(st);
 err_free:
 	kfree(st);
-#endif
 err_unpin_pages:
 	i915_gem_object_unpin_pages(obj);
 err:
@@ -91,13 +87,9 @@ static void i915_gem_unmap_dma_buf(struct dma_buf_attachment *attachment,
 {
 	struct drm_i915_gem_object *obj = dma_buf_to_obj(attachment->dmabuf);
 
-#ifdef __NetBSD__
-	drm_prime_sg_free(sg);
-#else
 	dma_unmap_sg(attachment->dev, sg->sgl, sg->nents, dir);
 	sg_free_table(sg);
 	kfree(sg);
-#endif
 
 	i915_gem_object_unpin_pages(obj);
 }
@@ -282,7 +274,7 @@ struct drm_gem_object *i915_gem_prime_import(struct drm_device *dev,
 	}
 
 	/* need to attach */
-	attach = dma_buf_attach(dma_buf, dev->dev);
+	attach = dma_buf_attach(dma_buf, dev->dmat);
 	if (IS_ERR(attach))
 		return ERR_CAST(attach);
 
