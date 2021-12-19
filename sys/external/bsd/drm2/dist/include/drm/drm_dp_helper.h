@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_dp_helper.h,v 1.6 2021/12/19 10:37:18 riastradh Exp $	*/
+/*	$NetBSD: drm_dp_helper.h,v 1.7 2021/12/19 10:38:05 riastradh Exp $	*/
 
 /*
  * Copyright © 2008 Keith Packard
@@ -27,7 +27,6 @@
 
 #include <linux/delay.h>
 #include <linux/i2c.h>
-#include <linux/seq_file.h>
 #include <linux/types.h>
 #include <linux/workqueue.h>
 

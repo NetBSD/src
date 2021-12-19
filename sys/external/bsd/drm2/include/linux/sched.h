@@ -1,4 +1,4 @@
-/*	$NetBSD: sched.h,v 1.17 2021/12/19 01:51:27 riastradh Exp $	*/
+/*	$NetBSD: sched.h,v 1.18 2021/12/19 10:38:05 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -40,7 +40,10 @@
 #include <asm/param.h>
 #include <asm/barrier.h>
 #include <asm/processor.h>
+#include <linux/device.h>
 #include <linux/errno.h>
+
+struct seq_file;
 
 #define	TASK_COMM_LEN	MAXCOMLEN
 
