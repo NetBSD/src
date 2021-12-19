@@ -1,7 +1,7 @@
-/*	$NetBSD: linux_tasklet.c,v 1.7 2021/12/19 11:49:11 riastradh Exp $	*/
+/*	$NetBSD: linux_tasklet.c,v 1.8 2021/12/19 11:57:34 riastradh Exp $	*/
 
 /*-
- * Copyright (c) 2018, 2020 The NetBSD Foundation, Inc.
+ * Copyright (c) 2018, 2020, 2021 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -30,13 +30,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_tasklet.c,v 1.7 2021/12/19 11:49:11 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_tasklet.c,v 1.8 2021/12/19 11:57:34 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/atomic.h>
 #include <sys/cpu.h>
 #include <sys/errno.h>
 #include <sys/intr.h>
+#include <sys/kmem.h>
 #include <sys/lock.h>
 #include <sys/percpu.h>
 #include <sys/queue.h>
@@ -51,7 +52,7 @@ __KERNEL_RCSID(0, "$NetBSD: linux_tasklet.c,v 1.7 2021/12/19 11:49:11 riastradh 
 #define	TASKLET_RUNNING		((unsigned)__BIT(1))
 
 struct tasklet_queue {
-	struct percpu	*tq_percpu;	/* struct tasklet_cpu */
+	struct percpu	*tq_percpu;	/* struct tasklet_cpu * */
 	void		*tq_sih;
 };
 
@@ -114,6 +115,25 @@ linux_tasklets_fini(void)
 	tasklet_queue_fini(&tasklet_queue);
 }
 
+static void
+tasklet_cpu_init(void *ptr, void *cookie, struct cpu_info *ci)
+{
+	struct tasklet_cpu **tcp = ptr, *tc;
+
+	*tcp = tc = kmem_zalloc(sizeof(*tc), KM_SLEEP);
+	SIMPLEQ_INIT(&tc->tc_head);
+}
+
+static void
+tasklet_cpu_fini(void *ptr, void *cookie, struct cpu_info *ci)
+{
+	struct tasklet_cpu **tcp = ptr, *tc = *tcp;
+
+	KASSERT(SIMPLEQ_EMPTY(&tc->tc_head));
+	kmem_free(tc, sizeof(*tc));
+	*tcp = NULL;		/* paranoia */
+}
+
 /*
  * tasklet_queue_init(tq, prio)
  *
@@ -126,7 +146,8 @@ tasklet_queue_init(struct tasklet_queue *tq, unsigned prio)
 	int error;
 
 	/* Allocate per-CPU memory.  percpu_alloc cannot fail.  */
-	tq->tq_percpu = percpu_alloc(sizeof(struct tasklet_cpu));
+	tq->tq_percpu = percpu_create(sizeof(struct tasklet_cpu),
+	    tasklet_cpu_init, tasklet_cpu_fini, NULL);
 	KASSERT(tq->tq_percpu != NULL);
 
 	/* Try to establish a softint.  softint_establish may fail.  */
@@ -177,7 +198,7 @@ tasklet_softintr(void *cookie)
 {
 	struct tasklet_queue *const tq = cookie;
 	struct tasklet_head th = SIMPLEQ_HEAD_INITIALIZER(th);
-	struct tasklet_cpu *tc;
+	struct tasklet_cpu **tcp, *tc;
 	int s;
 
 	/*
@@ -186,7 +207,8 @@ tasklet_softintr(void *cookie)
 	 *
 	 * No memory barriers: CPU-local state only.
 	 */
-	tc = percpu_getref(tq->tq_percpu);
+	tcp = percpu_getref(tq->tq_percpu);
+	tc = *tcp;
 	s = splhigh();
 	SIMPLEQ_CONCAT(&th, &tc->tc_head);
 	splx(s);
@@ -282,7 +304,7 @@ tasklet_queue_schedule(struct tasklet_queue *tq,
 static void
 tasklet_queue_enqueue(struct tasklet_queue *tq, struct tasklet_struct *tasklet)
 {
-	struct tasklet_cpu *tc;
+	struct tasklet_cpu **tcp, *tc;
 	int s;
 
 	KASSERT(atomic_load_relaxed(&tasklet->tl_state) & TASKLET_SCHEDULED);
@@ -292,7 +314,8 @@ tasklet_queue_enqueue(struct tasklet_queue *tq, struct tasklet_struct *tasklet)
 	 * blocked, and schedule a soft interrupt to process it.  No
 	 * memory barriers: CPU-local state only.
 	 */
-	tc = percpu_getref(tq->tq_percpu);
+	tcp = percpu_getref(tq->tq_percpu);
+	tc = *tcp;
 	s = splhigh();
 	SIMPLEQ_INSERT_TAIL(&tc->tc_head, tasklet, tl_entry);
 	splx(s);
