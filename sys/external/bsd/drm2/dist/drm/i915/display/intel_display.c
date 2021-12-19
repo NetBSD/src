@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_display.c,v 1.11 2021/12/19 12:32:15 riastradh Exp $	*/
+/*	$NetBSD: intel_display.c,v 1.12 2021/12/19 12:37:17 riastradh Exp $	*/
 
 /*
  * Copyright © 2006-2007 Intel Corporation
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intel_display.c,v 1.11 2021/12/19 12:32:15 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intel_display.c,v 1.12 2021/12/19 12:37:17 riastradh Exp $");
 
 #include "intel_display.h"	/* for pipe_drmhack */
 
@@ -943,7 +943,7 @@ vlv_find_best_dpll(const struct intel_limit *limit,
 				clock.p = clock.p1 * clock.p2;
 				/* based on hardware requirement, prefer bigger m1,m2 values */
 				for (clock.m1 = limit->m1.min; clock.m1 <= limit->m1.max; clock.m1++) {
-					unsigned int ppm;
+					unsigned int ppm = 0; /*XXXGCC*/
 
 					clock.m2 = DIV_ROUND_CLOSEST(target * clock.p * clock.n,
 								     refclk * clock.m1);
@@ -1005,7 +1005,7 @@ chv_find_best_dpll(const struct intel_limit *limit,
 		for (clock.p2 = limit->p2.p2_fast;
 				clock.p2 >= limit->p2.p2_slow;
 				clock.p2 -= clock.p2 > 10 ? 2 : 1) {
-			unsigned int error_ppm;
+			unsigned int error_ppm = 0; /*XXXGCC*/
 
 			clock.p = clock.p1 * clock.p2;
 
