@@ -1,4 +1,4 @@
-/*	$NetBSD: interval_tree.h,v 1.10 2021/12/19 01:44:33 riastradh Exp $	*/
+/*	$NetBSD: interval_tree.h,v 1.11 2021/12/19 01:48:30 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -77,35 +77,37 @@ static const rb_tree_ops_t interval_tree_ops = {
 };
 
 static inline void
-interval_tree_init(struct rb_root *root)
+interval_tree_init(struct rb_root_cached *root)
 {
 
-	rb_tree_init(&root->rbr_tree, &interval_tree_ops);
+	rb_tree_init(&root->rb_root.rbr_tree, &interval_tree_ops);
 }
 
 static inline void
-interval_tree_insert(struct interval_tree_node *node, struct rb_root *root)
+interval_tree_insert(struct interval_tree_node *node,
+    struct rb_root_cached *root)
 {
 	struct interval_tree_node *collision __diagused;
 
-	collision = rb_tree_insert_node(&root->rbr_tree, node);
+	collision = rb_tree_insert_node(&root->rb_root.rbr_tree, node);
 	KASSERT(collision == node);
 }
 
 static inline void
-interval_tree_remove(struct interval_tree_node *node, struct rb_root *root)
+interval_tree_remove(struct interval_tree_node *node,
+    struct rb_root_cached *root)
 {
 
-	rb_tree_remove_node(&root->rbr_tree, node);
+	rb_tree_remove_node(&root->rb_root.rbr_tree, node);
 }
 
 static inline struct interval_tree_node *
-interval_tree_iter_first(struct rb_root *root, unsigned long start,
+interval_tree_iter_first(struct rb_root_cached *root, unsigned long start,
     unsigned long last)
 {
 	struct interval_tree_node *node;
 
-	node = rb_tree_find_node_geq(&root->rbr_tree, &start);
+	node = rb_tree_find_node_geq(&root->rb_root.rbr_tree, &start);
 	if (node == NULL)
 		return NULL;
 	if (last < node->start)
@@ -121,13 +123,13 @@ interval_tree_iter_first(struct rb_root *root, unsigned long start,
  * uses.
  */
 static inline struct interval_tree_node *
-interval_tree_iter_next(struct rb_root *root, struct interval_tree_node *node,
-    unsigned long start, unsigned long last)
+interval_tree_iter_next(struct rb_root_cached *root,
+    struct interval_tree_node *node, unsigned long start, unsigned long last)
 {
 	struct interval_tree_node *next;
 
 	KASSERT(node != NULL);
-	next = rb_tree_iterate(&root->rbr_tree, node, RB_DIR_RIGHT);
+	next = rb_tree_iterate(&root->rb_root.rbr_tree, node, RB_DIR_RIGHT);
 	if (next == NULL)
 		return NULL;
 	if (last < next->start)
