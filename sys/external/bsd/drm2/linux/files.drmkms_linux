@@ -1,4 +1,4 @@
-#       $NetBSD: files.drmkms_linux,v 1.27 2021/12/19 10:47:06 riastradh Exp $
+#       $NetBSD: files.drmkms_linux,v 1.28 2021/12/19 10:50:46 riastradh Exp $
 
 define	drmkms_linux: i2cexec, i2c_bitbang
 
@@ -12,6 +12,7 @@ file	external/bsd/drm2/linux/linux_dma_fence.c	drmkms_linux
 file	external/bsd/drm2/linux/linux_dma_fence_chain.c	drmkms_linux
 file	external/bsd/drm2/linux/linux_dma_resv.c	drmkms_linux
 file	external/bsd/drm2/linux/linux_dmi.c		drmkms_linux
+file	external/bsd/drm2/linux/linux_firmware.c	drmkms_linux
 file	external/bsd/drm2/linux/linux_i2c.c		drmkms_linux
 file	external/bsd/drm2/linux/linux_idr.c		drmkms_linux
 file	external/bsd/drm2/linux/linux_kmap.c		drmkms_linux
