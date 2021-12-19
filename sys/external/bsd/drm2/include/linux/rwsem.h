@@ -1,4 +1,4 @@
-/*	$NetBSD: rwsem.h,v 1.4 2021/12/19 11:21:45 riastradh Exp $	*/
+/*	$NetBSD: rwsem.h,v 1.5 2021/12/19 11:22:00 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -55,12 +55,16 @@
 #define	up_write		linux_up_write
 
 struct rw_semaphore {
-	kmutex_t	rws_lock;
-	kcondvar_t	rws_cv;
+	/*
+	 * Note: rws_lock and rws_cv must not be first; doing so
+	 * confuses lockdebug.
+	 */
 	struct lwp	*rws_writer;
 	unsigned	rws_readers;
 	bool		rws_writewanted;
 	bool		rws_debug;
+	kmutex_t	rws_lock;
+	kcondvar_t	rws_cv;
 };
 
 void init_rwsem(struct rw_semaphore *);
