@@ -1,4 +1,4 @@
-/*	$NetBSD: pm_runtime.h,v 1.5 2020/02/14 14:34:59 maya Exp $	*/
+/*	$NetBSD: pm_runtime.h,v 1.6 2021/12/19 01:48:45 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -74,6 +74,11 @@ pm_runtime_put_autosuspend(struct device *dev __unused)
 }
 
 static inline void
+pm_runtime_put_noidle(struct device *dev __unused)
+{
+}
+
+static inline void
 pm_runtime_set_active(struct device *dev __unused)
 {
 }
@@ -86,6 +91,11 @@ pm_runtime_set_autosuspend_delay(struct device *dev __unused,
 
 static inline void
 pm_runtime_use_autosuspend(struct device *dev __unused)
+{
+}
+
+static inline void
+pm_runtime_forbid(struct device *dev __unused)
 {
 }
 
