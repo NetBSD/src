@@ -1,4 +1,4 @@
-/*	$NetBSD: rbtree.h,v 1.3 2021/12/19 00:46:44 riastradh Exp $	*/
+/*	$NetBSD: rbtree.h,v 1.4 2021/12/19 00:47:54 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -36,6 +36,10 @@
 
 struct rb_root {
 	struct rb_tree	rbr_tree;
+};
+
+struct rb_root_cached {
+	struct rb_root	rbrc_root;
 };
 
 static inline bool
