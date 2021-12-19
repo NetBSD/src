@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu_dce110_hw_sequencer.c,v 1.3 2021/12/19 10:59:02 riastradh Exp $	*/
+/*	$NetBSD: amdgpu_dce110_hw_sequencer.c,v 1.4 2021/12/19 10:59:37 riastradh Exp $	*/
 
 /*
  * Copyright 2015 Advanced Micro Devices, Inc.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdgpu_dce110_hw_sequencer.c,v 1.3 2021/12/19 10:59:02 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdgpu_dce110_hw_sequencer.c,v 1.4 2021/12/19 10:59:37 riastradh Exp $");
 
 #include <linux/delay.h>
 
@@ -2691,7 +2691,6 @@ static void program_output_csc(struct dc *dc,
 	}
 }
 
-static
 void dce110_set_cursor_position(struct pipe_ctx *pipe_ctx)
 {
 	struct dc_cursor_position pos_cpy = pipe_ctx->stream->cursor_position;
@@ -2720,7 +2719,6 @@ void dce110_set_cursor_position(struct pipe_ctx *pipe_ctx)
 		mi->funcs->set_cursor_position(mi, &pos_cpy, &param);
 }
 
-static
 void dce110_set_cursor_attribute(struct pipe_ctx *pipe_ctx)
 {
 	struct dc_cursor_attributes *attributes = &pipe_ctx->stream->cursor_attributes;
