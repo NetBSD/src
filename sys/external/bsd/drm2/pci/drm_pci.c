@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_pci.c,v 1.37 2021/12/19 09:51:04 riastradh Exp $	*/
+/*	$NetBSD: drm_pci.c,v 1.38 2021/12/19 09:51:12 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_pci.c,v 1.37 2021/12/19 09:51:04 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_pci.c,v 1.38 2021/12/19 09:51:12 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/errno.h>
@@ -153,7 +153,7 @@ fail1:	drm_pci_agp_destroy(dev);
 	if (dev->dmat_subregion_p) {
 		bus_dmatag_destroy(dev->dmat);
 	}
-	drm_dev_unref(dev);
+	drm_dev_put(dev);
 fail0:	return ret;
 }
 
@@ -176,7 +176,7 @@ drm_pci_detach(struct drm_device *dev, int flags __unused)
 		bus_dmatag_destroy(dev->dmat);
 	}
 
-	drm_dev_unref(dev);
+	drm_dev_put(dev);
 
 	return 0;
 }
