@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_ioctl.h,v 1.2 2021/12/18 23:45:46 riastradh Exp $	*/
+/*	$NetBSD: drm_ioctl.h,v 1.3 2021/12/19 00:57:21 riastradh Exp $	*/
 
 /*
  * Internal Header for the Direct Rendering Manager
@@ -169,7 +169,11 @@ struct drm_ioctl_desc {
 	}
 
 int drm_ioctl_permit(u32 flags, struct drm_file *file_priv);
+#ifdef __NetBSD__
+int drm_ioctl(struct file *, unsigned long, void *);
+#else
 long drm_ioctl(struct file *filp, unsigned int cmd, unsigned long arg);
+#endif
 long drm_ioctl_kernel(struct file *, drm_ioctl_t, void *, u32);
 #ifdef CONFIG_COMPAT
 long drm_compat_ioctl(struct file *filp, unsigned int cmd, unsigned long arg);
