@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_gem_framebuffer_helper.c,v 1.1 2021/12/19 00:25:53 riastradh Exp $	*/
+/*	$NetBSD: drm_gem_framebuffer_helper.c,v 1.2 2021/12/19 00:59:34 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,13 +30,15 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_gem_framebuffer_helper.c,v 1.1 2021/12/19 00:25:53 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_gem_framebuffer_helper.c,v 1.2 2021/12/19 00:59:34 riastradh Exp $");
 
 #include <linux/err.h>
 #include <linux/slab.h>
 
 #include <drm/drm_framebuffer.h>
 #include <drm/drm_gem.h>
+#include <drm/drm_gem_framebuffer_helper.h>
+#include <drm/drm_modeset_helper.h>
 
 #include <uapi/drm/drm_mode.h>
 
@@ -118,8 +120,8 @@ drm_gem_fb_create_with_funcs(struct drm_device *dev, struct drm_file *file,
 
 	/* Get the object for each plane.  */
 	for (plane = 0; plane < fb->format->num_planes; plane++) {
-		unsigned vsub = (plane > 0 ? info->vsub : 1); /* XXX ? */
-		unsigned hsub = (plane > 0 ? info->hsub : 1); /* XXX ? */
+		unsigned vsub = (plane > 0 ? fb->format->vsub : 1); /* XXX ? */
+		unsigned hsub = (plane > 0 ? fb->format->hsub : 1); /* XXX ? */
 		unsigned handle = mode_cmd->handles[plane];
 		unsigned size;
 
