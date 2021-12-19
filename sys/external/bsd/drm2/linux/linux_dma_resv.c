@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_dma_resv.c,v 1.7 2021/12/19 11:54:39 riastradh Exp $	*/
+/*	$NetBSD: linux_dma_resv.c,v 1.8 2021/12/19 12:09:35 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_dma_resv.c,v 1.7 2021/12/19 11:54:39 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_dma_resv.c,v 1.8 2021/12/19 12:09:35 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/poll.h>
@@ -708,7 +708,7 @@ top:
 	 * one.  If we can't, start over.
 	 */
 	if (fence) {
-		if (dma_fence_get_rcu(fence) == NULL)
+		if ((fence = dma_fence_get_rcu(fence)) == NULL)
 			goto restart;
 	}
 
