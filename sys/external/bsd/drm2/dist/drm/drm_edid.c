@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_edid.c,v 1.14 2021/12/19 09:46:13 riastradh Exp $	*/
+/*	$NetBSD: drm_edid.c,v 1.15 2021/12/19 12:44:04 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2006 Luc Verhaegen (quirks list)
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_edid.c,v 1.14 2021/12/19 09:46:13 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_edid.c,v 1.15 2021/12/19 12:44:04 riastradh Exp $");
 
 #include <linux/hdmi.h>
 #include <linux/i2c.h>
@@ -4267,6 +4267,9 @@ drm_parse_hdmi_vsdb_audio(struct drm_connector *connector, const u8 *db)
 {
 	u8 len = cea_db_payload_len(db);
 
+	if (len >= 5) {
+		connector->physical_address = (db[4] << 8) | db[5];
+	}
 	if (len >= 6 && (db[6] & (1 << 7)))
 		connector->eld[DRM_ELD_SAD_COUNT_CONN_TYPE] |= DRM_ELD_SUPPORTS_AI;
 	if (len >= 8) {
