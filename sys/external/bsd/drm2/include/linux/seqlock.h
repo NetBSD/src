@@ -1,4 +1,4 @@
-/*	$NetBSD: seqlock.h,v 1.2 2021/12/19 00:47:40 riastradh Exp $	*/
+/*	$NetBSD: seqlock.h,v 1.3 2021/12/19 01:21:30 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -38,8 +38,88 @@
 
 #include <lib/libkern/libkern.h>
 
+struct seqcount {
+	unsigned	sqc_gen;
+};
+
+typedef struct seqcount seqcount_t;
+
+static inline void
+seqcount_init(struct seqcount *seqcount)
+{
+
+	seqcount->sqc_gen = 0;
+}
+
+static inline void
+seqcount_destroy(struct seqcount *seqcount)
+{
+
+	KASSERT((seqcount->sqc_gen & 1) == 0);
+	seqcount->sqc_gen = -1;
+}
+
+static inline void
+write_seqcount_begin(struct seqcount *seqcount)
+{
+
+	KASSERT((seqcount->sqc_gen & 1) == 0);
+	seqcount->sqc_gen |= 1;
+	membar_producer();
+}
+
+static inline void
+write_seqcount_end(struct seqcount *seqcount)
+{
+
+	KASSERT((seqcount->sqc_gen & 1) == 1);
+	membar_producer();
+	seqcount->sqc_gen |= 1;	/* paranoia */
+	seqcount->sqc_gen++;
+}
+
+static inline unsigned
+__read_seqcount_begin(struct seqcount *seqcount)
+{
+	unsigned gen;
+
+	while (__predict_false((gen = seqcount->sqc_gen) & 1))
+		SPINLOCK_BACKOFF_HOOK;
+	__insn_barrier();
+
+	return gen;
+}
+
+static inline bool
+__read_seqcount_retry(struct seqcount *seqcount, unsigned gen)
+{
+
+	__insn_barrier();
+	return __predict_false(seqcount->sqc_gen != gen);
+}
+
+static inline unsigned
+read_seqcount_begin(struct seqcount *seqcount)
+{
+	unsigned gen;
+
+	gen = __read_seqcount_begin(seqcount);
+	membar_consumer();
+
+	return gen;
+}
+
+static inline bool
+read_seqcount_retry(struct seqcount *seqcount, unsigned gen)
+{
+
+	membar_consumer();
+	return __read_seqcount_retry(seqcount, gen);
+}
+
 struct seqlock {
-	uint64_t	sql_gen;
+	kmutex_t		sql_lock;
+	struct seqcount		sql_count;
 };
 
 typedef struct seqlock seqlock_t;
@@ -48,26 +128,32 @@ static inline void
 seqlock_init(struct seqlock *seqlock)
 {
 
-	seqlock->sql_gen = 0;
+	mutex_init(&seqlock->sql_lock, MUTEX_DEFAULT, IPL_VM);
+	seqcount_init(&seqlock->sql_count);
+}
+
+static inline void
+seqlock_destroy(struct seqlock *seqlock)
+{
+
+	seqcount_destroy(&seqlock->sql_count);
+	mutex_destroy(&seqlock->sql_lock);
 }
 
 static inline void
 write_seqlock(struct seqlock *seqlock)
 {
 
-	KASSERT((seqlock->sql_gen & 1) == 0);
-	seqlock->sql_gen |= 1;
-	membar_producer();
+	mutex_spin_enter(&seqlock->sql_lock);
+	write_seqcount_begin(&seqlock->sql_count);
 }
 
 static inline void
 write_sequnlock(struct seqlock *seqlock)
 {
 
-	KASSERT((seqlock->sql_gen & 1) == 1);
-	membar_producer();
-	seqlock->sql_gen |= 1;	/* paraonia */
-	seqlock->sql_gen++;
+	write_seqcount_end(&seqlock->sql_count);
+	mutex_spin_exit(&seqlock->sql_lock);
 }
 
 #define	write_seqlock_irqsave(SEQLOCK, FLAGS)	do {			      \
@@ -76,27 +162,22 @@ write_sequnlock(struct seqlock *seqlock)
 } while (0)
 
 #define	write_sequnlock_irqrestore(SEQLOCK, FLAGS)	do {		      \
-	write_seqlock(SEQLOCK);						      \
+	write_sequnlock(SEQLOCK);					      \
 	splx((int)(FLAGS));						      \
 } while (0)
 
-static inline uint64_t
+static inline unsigned
 read_seqbegin(struct seqlock *seqlock)
 {
-	uint64_t gen;
 
-	while ((gen = seqlock->sql_gen) & 1)
-		SPINLOCK_BACKOFF_HOOK;
-	membar_consumer();
-
-	return gen;
+	return read_seqcount_begin(&seqlock->sql_count);
 }
 
 static inline bool
-read_seqretry(struct seqlock *seqlock, uint64_t gen)
+read_seqretry(struct seqlock *seqlock, unsigned gen)
 {
 
-	return gen != seqlock->sql_gen;
+	return read_seqcount_retry(&seqlock->sql_count, gen);
 }
 
 #endif	/* _LINUX_SEQLOCK_H_ */
