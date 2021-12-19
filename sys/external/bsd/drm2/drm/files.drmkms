@@ -1,4 +1,4 @@
-#	$NetBSD: files.drmkms,v 1.53 2021/12/19 09:50:50 riastradh Exp $
+#	$NetBSD: files.drmkms,v 1.54 2021/12/19 09:53:14 riastradh Exp $
 
 version	20180827
 
@@ -131,5 +131,5 @@ file	external/bsd/drm2/dist/drm/drm_self_refresh_helper.c	drmkms
 file	external/bsd/drm2/dist/drm/drm_syncobj.c	drmkms
 #file	external/bsd/drm2/dist/drm/drm_trace_points.c	drmkms
 file	external/bsd/drm2/dist/drm/drm_vblank.c	drmkms
-file	external/bsd/drm2/dist/drm/drm_vma_manager.c	drmkms
-file	external/bsd/drm2/dist/drm/drm_vm.c	drmkms
+#file	external/bsd/drm2/dist/drm/drm_vma_manager.c	drmkms
+#file	external/bsd/drm2/dist/drm/drm_vm.c	drmkms
