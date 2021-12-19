@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_cdevsw.c,v 1.21 2021/12/19 01:59:19 riastradh Exp $	*/
+/*	$NetBSD: drm_cdevsw.c,v 1.22 2021/12/19 01:59:34 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_cdevsw.c,v 1.21 2021/12/19 01:59:19 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_cdevsw.c,v 1.22 2021/12/19 01:59:34 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -80,6 +80,8 @@ static int	drm_kqfilter(struct file *, struct knote *);
 static int	drm_stat(struct file *, struct stat *);
 static int	drm_fop_mmap(struct file *, off_t *, size_t, int, int *, int *,
 			     struct uvm_object **, int *);
+static void	drm_requeue_event(struct drm_file *, struct drm_pending_event *);
+
 static paddr_t	drm_legacy_mmap(dev_t, off_t, int);
 
 const struct cdevsw drm_cdevsw = {
@@ -239,7 +241,9 @@ drm_firstopen(struct drm_device *dev)
 	return 0;
 
 fail2: __unused
+#if IS_ENABLED(CONFIG_DRM_LEGACY)
 	drm_legacy_dma_takedown(dev);
+#endif
 fail1:	if (dev->driver->lastclose)
 		(*dev->driver->lastclose)(dev);
 fail0:	KASSERT(ret);
@@ -259,15 +263,19 @@ drm_lastclose(struct drm_device *dev)
 	mutex_lock(&dev->struct_mutex);
 	if (dev->agp)
 		drm_legacy_agp_clear(dev);
+#if IS_ENABLED(CONFIG_DRM_LEGACY)
 	drm_legacy_sg_cleanup(dev);
 	drm_legacy_dma_takedown(dev);
+#endif
 	mutex_unlock(&dev->struct_mutex);
 
 	/* XXX Synchronize with drm_legacy_dev_reinit.  */
 	if (!drm_core_check_feature(dev, DRIVER_MODESET)) {
+#if IS_ENABLED(CONFIG_DRM_LEGACY)
 		dev->sigdata.lock = NULL;
 		dev->context_flag = 0;
 		dev->last_context = 0;
+#endif
 		dev->if_version = 0;
 	}
 }
