@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_vma.c,v 1.8 2021/12/19 11:57:11 riastradh Exp $	*/
+/*	$NetBSD: i915_vma.c,v 1.9 2021/12/19 12:00:31 riastradh Exp $	*/
 
 /*
  * Copyright © 2016 Intel Corporation
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_vma.c,v 1.8 2021/12/19 11:57:11 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_vma.c,v 1.9 2021/12/19 12:00:31 riastradh Exp $");
 
 #include <linux/sched/mm.h>
 #include <drm/drm_gem.h>
@@ -57,6 +57,7 @@ struct i915_vma *i915_vma_alloc(void)
 
 void i915_vma_free(struct i915_vma *vma)
 {
+	mutex_destroy(&vma->pages_mutex);
 	return kmem_cache_free(global.slab_vmas, vma);
 }
 
