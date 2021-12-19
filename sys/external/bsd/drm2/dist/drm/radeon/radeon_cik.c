@@ -1,4 +1,4 @@
-/*	$NetBSD: radeon_cik.c,v 1.5 2021/12/19 01:47:14 riastradh Exp $	*/
+/*	$NetBSD: radeon_cik.c,v 1.6 2021/12/19 09:54:20 riastradh Exp $	*/
 
 /*
  * Copyright 2012 Advanced Micro Devices, Inc.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radeon_cik.c,v 1.5 2021/12/19 01:47:14 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radeon_cik.c,v 1.6 2021/12/19 09:54:20 riastradh Exp $");
 
 #include <linux/firmware.h>
 #include <linux/module.h>
@@ -1888,7 +1888,7 @@ int ci_mc_load_microcode(struct radeon_device *rdev)
 	const __be32 *fw_data = NULL;
 	const __le32 *new_fw_data = NULL;
 	u32 running, tmp;
-	u32 *io_mc_regs = NULL;
+	const u32 *io_mc_regs = NULL;
 	const __le32 *new_io_mc_regs = NULL;
 	int i, regs_size, ucode_size;
 
