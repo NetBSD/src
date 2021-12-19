@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_module.c,v 1.17 2020/01/03 21:01:16 jmcneill Exp $	*/
+/*	$NetBSD: drm_module.c,v 1.18 2021/12/19 00:28:20 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_module.c,v 1.17 2020/01/03 21:01:16 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_module.c,v 1.18 2021/12/19 00:28:20 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/condvar.h>
@@ -46,9 +46,10 @@ __KERNEL_RCSID(0, "$NetBSD: drm_module.c,v 1.17 2020/01/03 21:01:16 jmcneill Exp
 
 #include <drm/drmP.h>
 #include <drm/drm_encoder_slave.h>
-#include <drm/drm_internal.h>
 #include <drm/drm_sysctl.h>
 #include <drm/drm_panel.h>
+
+#include "../dist/drm/drm_internal.h"
 
 /*
  * XXX This is stupid.
