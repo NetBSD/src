@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_dma_fence.c,v 1.21 2021/12/19 12:09:19 riastradh Exp $	*/
+/*	$NetBSD: linux_dma_fence.c,v 1.22 2021/12/19 12:09:27 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_dma_fence.c,v 1.21 2021/12/19 12:09:19 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_dma_fence.c,v 1.22 2021/12/19 12:09:27 riastradh Exp $");
 
 #include <sys/atomic.h>
 #include <sys/condvar.h>
@@ -465,7 +465,8 @@ dma_fence_enable_sw_signaling(struct dma_fence *fence)
 	KASSERT(dma_fence_referenced_p(fence));
 
 	spin_lock(fence->lock);
-	(void)dma_fence_ensure_signal_enabled(fence);
+	if ((fence->flags & (1u << DMA_FENCE_FLAG_SIGNALED_BIT)) == 0)
+		(void)dma_fence_ensure_signal_enabled(fence);
 	spin_unlock(fence->lock);
 }
 
