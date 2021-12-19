@@ -1,4 +1,4 @@
-/*	$NetBSD: kernel.h,v 1.29 2021/12/19 00:48:09 riastradh Exp $	*/
+/*	$NetBSD: kernel.h,v 1.30 2021/12/19 00:48:16 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -94,6 +94,7 @@
 
 #define	clamp_t(T, X, MIN, MAX)	min_t(T, max_t(T, X, MIN), MAX)
 #define	clamp(X, MN, MX)	MIN(MAX(X, MN), MX)
+#define	clamp_val(X, MIN, MAX)	clamp_t(typeof(X), X, MIN, MAX)
 
 #define	min3(X, Y, Z)	MIN(X, MIN(Y, Z))
 #define	max3(X, Y, Z)	MAX(X, MAX(Y, Z))
