@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_vblank.c,v 1.2 2021/12/18 23:44:57 riastradh Exp $	*/
+/*	$NetBSD: drm_vblank.c,v 1.3 2021/12/19 01:16:51 riastradh Exp $	*/
 
 /*
  * drm_irq.c IRQ and vblank support
@@ -27,10 +27,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_vblank.c,v 1.2 2021/12/18 23:44:57 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_vblank.c,v 1.3 2021/12/19 01:16:51 riastradh Exp $");
 
 #include <linux/export.h>
 #include <linux/moduleparam.h>
+#include <linux/math64.h>
 
 #include <drm/drm_crtc.h>
 #include <drm/drm_drv.h>
@@ -276,7 +277,7 @@ static void drm_update_vblank_count(struct drm_device *dev, unsigned int pipe,
 	}
 
 	DRM_DEBUG_VBL("updating vblank count on crtc %u:"
-		      " current=%llu, diff=%u, hw=%u hw_last=%u\n",
+		      " current=%"PRIu64", diff=%u, hw=%u hw_last=%u\n",
 		      pipe, atomic64_read(&vblank->count), diff,
 		      cur_vblank, vblank->last);
 
@@ -717,7 +718,7 @@ bool drm_calc_vbltimestamp_from_scanoutpos(struct drm_device *dev,
 	ts_etime = ktime_to_timespec64(etime);
 	ts_vblank_time = ktime_to_timespec64(*vblank_time);
 
-	DRM_DEBUG_VBL("crtc %u : v p(%d,%d)@ %lld.%06ld -> %lld.%06ld [e %d us, %d rep]\n",
+	DRM_DEBUG_VBL("crtc %u : v p(%d,%d)@ %"PRId64".%06ld -> %"PRId64".%06ld [e %d us, %d rep]\n",
 		      pipe, hpos, vpos,
 		      (u64)ts_etime.tv_sec, ts_etime.tv_nsec / 1000,
 		      (u64)ts_vblank_time.tv_sec, ts_vblank_time.tv_nsec / 1000,
@@ -1207,7 +1208,7 @@ void drm_crtc_vblank_off(struct drm_crtc *crtc)
 		if (e->pipe != pipe)
 			continue;
 		DRM_DEBUG("Sending premature vblank event on disable: "
-			  "wanted %llu, current %llu\n",
+			  "wanted %"PRIu64", current %"PRIu64"\n",
 			  e->sequence, seq);
 		list_del(&e->base.link);
 		drm_vblank_put(dev, pipe);
@@ -1371,7 +1372,7 @@ void drm_vblank_restore(struct drm_device *dev, unsigned int pipe)
 		diff = DIV_ROUND_CLOSEST_ULL(diff_ns, framedur_ns);
 
 
-	DRM_DEBUG_VBL("missed %d vblanks in %lld ns, frame duration=%d ns, hw_diff=%d\n",
+	DRM_DEBUG_VBL("missed %d vblanks in %"PRId64" ns, frame duration=%d ns, hw_diff=%d\n",
 		      diff, diff_ns, framedur_ns, cur_vblank - vblank->last);
 	store_vblank(dev, pipe, diff, t_vblank, cur_vblank);
 }
@@ -1531,7 +1532,7 @@ static int drm_queue_vblank_event(struct drm_device *dev, unsigned int pipe,
 
 	seq = drm_vblank_count_and_time(dev, pipe, &now);
 
-	DRM_DEBUG("event on vblank count %llu, current %llu, crtc %u\n",
+	DRM_DEBUG("event on vblank count %"PRIu64", current %"PRIu64", crtc %u\n",
 		  req_seq, seq, pipe);
 
 	trace_drm_vblank_event_queued(file_priv, pipe, req_seq);
@@ -1705,7 +1706,7 @@ int drm_wait_vblank_ioctl(struct drm_device *dev, void *data,
 	if (req_seq != seq) {
 		int wait;
 
-		DRM_DEBUG("waiting on vblank count %llu, crtc %u\n",
+		DRM_DEBUG("waiting on vblank count %"PRIu64", crtc %u\n",
 			  req_seq, pipe);
 		wait = wait_event_interruptible_timeout(vblank->queue,
 			vblank_passed(drm_vblank_count(dev, pipe), req_seq) ||
@@ -1757,7 +1758,7 @@ static void drm_handle_vblank_events(struct drm_device *dev, unsigned int pipe)
 		if (!vblank_passed(seq, e->sequence))
 			continue;
 
-		DRM_DEBUG("vblank event on %llu, current %llu\n",
+		DRM_DEBUG("vblank event on %"PRIu64", current %"PRIu64"\n",
 			  e->sequence, seq);
 
 		list_del(&e->base.link);
