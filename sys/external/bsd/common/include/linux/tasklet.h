@@ -1,4 +1,4 @@
-/*	$NetBSD: tasklet.h,v 1.1 2021/12/19 01:17:14 riastradh Exp $	*/
+/*	$NetBSD: tasklet.h,v 1.2 2021/12/19 01:17:23 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -34,7 +34,6 @@
 
 /* namespace */
 #define	tasklet_disable		linux_tasklet_disable
-#define	tasklet_disable_nosync	linux_tasklet_disable_nosync
 #define	tasklet_enable		linux_tasklet_enable
 #define	tasklet_hi_schedule	linux_tasklet_hi_schedule
 #define	tasklet_init		linux_tasklet_init
