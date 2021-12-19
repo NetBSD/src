@@ -1,4 +1,4 @@
-/*	$NetBSD: dma-resv.h,v 1.6 2021/12/19 10:36:55 riastradh Exp $	*/
+/*	$NetBSD: dma-resv.h,v 1.7 2021/12/19 10:37:47 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -108,7 +108,7 @@ struct dma_fence *
 	dma_resv_get_excl(struct dma_resv *);
 struct dma_resv_list *
 	dma_resv_get_list(struct dma_resv *);
-int	dma_resv_reserve_shared(struct dma_resv *);
+int	dma_resv_reserve_shared(struct dma_resv *, unsigned int);
 void	dma_resv_add_excl_fence(struct dma_resv *,
 	    struct dma_fence *);
 void	dma_resv_add_shared_fence(struct dma_resv *,
