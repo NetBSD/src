@@ -1,4 +1,4 @@
-/*	$NetBSD: list.h,v 1.21 2021/12/19 01:44:41 riastradh Exp $	*/
+/*	$NetBSD: list.h,v 1.22 2021/12/19 01:46:23 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -105,6 +105,12 @@ list_is_singular(const struct list_head *head)
 	if (head->next != head->prev)
 		return false;
 	return true;
+}
+
+static inline bool
+list_is_last(const struct list_head *entry, const struct list_head *head)
+{
+	return head == entry->next;
 }
 
 static inline void
