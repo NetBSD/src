@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_gem_shmem.c,v 1.9 2021/12/19 11:57:03 riastradh Exp $	*/
+/*	$NetBSD: i915_gem_shmem.c,v 1.10 2021/12/19 12:25:56 riastradh Exp $	*/
 
 /*
  * SPDX-License-Identifier: MIT
@@ -7,7 +7,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_gem_shmem.c,v 1.9 2021/12/19 11:57:03 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_gem_shmem.c,v 1.10 2021/12/19 12:25:56 riastradh Exp $");
 
 #include <linux/pagevec.h>
 #include <linux/swap.h>
@@ -352,6 +352,16 @@ shmem_put_pages(struct drm_i915_gem_object *obj, struct sg_table *pages)
 
 #ifdef __NetBSD__
 	__USE(sgt_iter);
+	if (obj->mm.dirty) {
+		unsigned i;
+
+		rw_enter(obj->base.filp->vmobjlock, RW_WRITER);
+		for (i = 0; i < pages->sgl->sg_npgs; i++) {
+			uvm_pagemarkdirty(&pages->sgl->sg_pgs[i]->p_vmp,
+			    UVM_PAGE_STATUS_DIRTY);
+		}
+		rw_exit(obj->base.filp->vmobjlock);
+	}
 	uvm_obj_unwirepages(obj->base.filp, 0, obj->base.size);
 #else
 	mapping_clear_unevictable(file_inode(obj->base.filp)->i_mapping);
