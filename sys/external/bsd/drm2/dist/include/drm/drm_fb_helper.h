@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_fb_helper.h,v 1.12 2021/12/19 01:03:32 riastradh Exp $	*/
+/*	$NetBSD: drm_fb_helper.h,v 1.13 2021/12/19 09:52:25 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2006-2009 Red Hat Inc.
@@ -283,10 +283,8 @@ int drm_fb_helper_ioctl(struct fb_info *info, unsigned int cmd,
 
 int drm_fb_helper_hotplug_event(struct drm_fb_helper *fb_helper);
 int drm_fb_helper_initial_config(struct drm_fb_helper *fb_helper, int bpp_sel);
-#ifndef __NetBSD__		/* XXX fb info */
-int drm_fb_helper_debug_enter(struct fb_info *info);
-int drm_fb_helper_debug_leave(struct fb_info *info);
-#endif
+int drm_fb_helper_debug_enter_fb(struct drm_fb_helper *);
+int drm_fb_helper_debug_leave_fb(struct drm_fb_helper *);
 
 void drm_fb_helper_lastclose(struct drm_device *dev);
 void drm_fb_helper_output_poll_changed(struct drm_device *dev);
