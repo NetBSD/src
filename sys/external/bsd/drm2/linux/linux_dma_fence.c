@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_dma_fence.c,v 1.30 2021/12/19 12:31:11 riastradh Exp $	*/
+/*	$NetBSD: linux_dma_fence.c,v 1.31 2021/12/19 12:34:05 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_dma_fence.c,v 1.30 2021/12/19 12:31:11 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_dma_fence.c,v 1.31 2021/12/19 12:34:05 riastradh Exp $");
 
 #include <sys/atomic.h>
 #include <sys/condvar.h>
@@ -685,9 +685,8 @@ struct wait_any {
 	struct wait_any1 {
 		kmutex_t	lock;
 		kcondvar_t	cv;
-		bool		done;
-		uint32_t	*ip;
 		struct wait_any	*cb;
+		bool		done;
 	}		*common;
 };
 
@@ -700,8 +699,6 @@ wait_any_cb(struct dma_fence *fence, struct dma_fence_cb *fcb)
 
 	mutex_enter(&cb->common->lock);
 	cb->common->done = true;
-	if (cb->common->ip)
-		*cb->common->ip = cb - cb->common->cb;
 	cv_broadcast(&cb->common->cv);
 	mutex_exit(&cb->common->lock);
 }
@@ -712,6 +709,9 @@ wait_any_cb(struct dma_fence *fence, struct dma_fence_cb *fcb)
  *	Wait for any of fences[0], fences[1], fences[2], ...,
  *	fences[nfences-1] to be signalled.  If ip is nonnull, set *ip
  *	to the index of the first one.
+ *
+ *	Return -ERESTARTSYS if interrupted, 0 on timeout, or time
+ *	remaining (at least 1) on success.
  */
 long
 dma_fence_wait_any_timeout(struct dma_fence **fences, uint32_t nfences,
@@ -723,6 +723,22 @@ dma_fence_wait_any_timeout(struct dma_fence **fences, uint32_t nfences,
 	int start, end;
 	long ret = 0;
 
+	/* Optimistically check whether any are signalled.  */
+	for (i = 0; i < nfences; i++) {
+		if (dma_fence_is_signaled(fences[i])) {
+			if (ip)
+				*ip = i;
+			return MAX(1, timeout);
+		}
+	}
+
+	/*
+	 * If timeout is zero, we're just polling, so stop here as if
+	 * we timed out instantly.
+	 */
+	if (timeout == 0)
+		return 0;
+
 	/* Allocate an array of callback records.  */
 	cb = kcalloc(nfences, sizeof(cb[0]), GFP_KERNEL);
 	if (cb == NULL) {
@@ -733,30 +749,23 @@ dma_fence_wait_any_timeout(struct dma_fence **fences, uint32_t nfences,
 	/* Initialize a mutex and condvar for the common wait.  */
 	mutex_init(&common.lock, MUTEX_DEFAULT, IPL_VM);
 	cv_init(&common.cv, "fence");
-	common.done = false;
-	common.ip = ip;
 	common.cb = cb;
+	common.done = false;
 
-	/* Add a callback to each of the fences, or stop here if we can't.  */
+	/*
+	 * Add a callback to each of the fences, or stop if already
+	 * signalled.
+	 */
 	for (i = 0; i < nfences; i++) {
 		cb[i].common = &common;
 		KASSERT(dma_fence_referenced_p(fences[i]));
 		ret = dma_fence_add_callback(fences[i], &cb[i].fcb,
 		    &wait_any_cb);
-		if (ret)
-			goto out1;
-	}
-
-	/*
-	 * Test whether any of the fences has been signalled.  If they
-	 * have, stop here.  If the haven't, we are guaranteed to be
-	 * notified by one of the callbacks when they have.
-	 */
-	for (j = 0; j < nfences; j++) {
-		if (test_bit(DMA_FENCE_FLAG_SIGNALED_BIT, &fences[j]->flags)) {
+		if (ret) {
+			KASSERT(ret == -ENOENT);
 			if (ip)
-				*ip = j;
-			ret = 0;
+				*ip = i;
+			ret = MAX(1, timeout);
 			goto out1;
 		}
 	}
@@ -768,7 +777,6 @@ dma_fence_wait_any_timeout(struct dma_fence **fences, uint32_t nfences,
 	mutex_enter(&common.lock);
 	while (timeout > 0 && !common.done) {
 		start = getticks();
-		__insn_barrier();
 		if (intr) {
 			if (timeout != MAX_SCHEDULE_TIMEOUT) {
 				ret = -cv_timedwait_sig(&common.cv,
@@ -788,30 +796,36 @@ dma_fence_wait_any_timeout(struct dma_fence **fences, uint32_t nfences,
 			}
 		}
 		end = getticks();
-		__insn_barrier();
-		if (ret) {
-			if (ret == -ERESTART)
-				ret = -ERESTARTSYS;
+		if (ret)
 			break;
-		}
 		timeout -= MIN(timeout, (unsigned)end - (unsigned)start);
 	}
 	mutex_exit(&common.lock);
+
+	/*
+	 * Test whether any of the fences has been signalled.  If they
+	 * have, return success.
+	 */
+	for (j = 0; j < nfences; j++) {
+		if (dma_fence_is_signaled(fences[i])) {
+			if (ip)
+				*ip = j;
+			ret = MAX(1, timeout);
+			goto out1;
+		}
+	}
 
 	/*
 	 * Massage the return code: if we were interrupted, return
 	 * ERESTARTSYS; if cv_timedwait timed out, return 0; otherwise
 	 * return the remaining time.
 	 */
-	if (ret < 0) {
-		if (ret == -EINTR || ret == -ERESTART)
-			ret = -ERESTARTSYS;
-		if (ret == -EWOULDBLOCK)
-			ret = 0;
-	} else {
-		KASSERT(ret == 0);
-		ret = timeout;
+	if (ret == -EINTR || ret == -ERESTART) {
+		ret = -ERESTARTSYS;
+	} else if (ret == -EWOULDBLOCK) {
+		ret = 0;	/* timed out */
 	}
+	KASSERTMSG(ret == -ERESTARTSYS || ret >= 0, "ret=%ld", ret);
 
 out1:	while (i --> 0)
 		(void)dma_fence_remove_callback(fences[i], &cb[i].fcb);
