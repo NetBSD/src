@@ -1,4 +1,4 @@
-/*	$NetBSD: radeon_fence.c,v 1.18 2021/12/19 01:50:00 riastradh Exp $	*/
+/*	$NetBSD: radeon_fence.c,v 1.19 2021/12/19 09:55:55 riastradh Exp $	*/
 
 /*
  * Copyright 2009 Jerome Glisse.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radeon_fence.c,v 1.18 2021/12/19 01:50:00 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radeon_fence.c,v 1.19 2021/12/19 09:55:55 riastradh Exp $");
 
 #include <linux/atomic.h>
 #include <linux/firmware.h>
@@ -155,7 +155,7 @@ int radeon_fence_emit(struct radeon_device *rdev,
 	(*fence)->ring = ring;
 	(*fence)->is_vm_update = false;
 	dma_fence_init(&(*fence)->base, &radeon_fence_ops,
-		       &rdev->fence_queue.lock,
+		       &rdev->fence_lock,
 		       rdev->fence_context + ring,
 		       seq);
 	radeon_fence_ring_emit(rdev, ring, *fence);
