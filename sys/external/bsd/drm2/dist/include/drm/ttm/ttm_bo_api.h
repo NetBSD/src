@@ -1,4 +1,4 @@
-/*	$NetBSD: ttm_bo_api.h,v 1.5 2021/12/18 23:45:46 riastradh Exp $	*/
+/*	$NetBSD: ttm_bo_api.h,v 1.6 2021/12/19 01:49:36 riastradh Exp $	*/
 
 /**************************************************************************
  *
@@ -719,11 +719,11 @@ int ttm_bo_mmap_obj(struct vm_area_struct *vma, struct ttm_buffer_object *bo);
 int ttm_bo_mmap(struct file *filp, struct vm_area_struct *vma,
 		struct ttm_bo_device *bdev);
 
+#endif	/* __NetBSD__ */
+
 void *ttm_kmap_atomic_prot(struct page *page, pgprot_t prot);
 
 void ttm_kunmap_atomic_prot(void *addr, pgprot_t prot);
-
-#endif	/* __NetBSD__ */
 
 /**
  * ttm_bo_io
