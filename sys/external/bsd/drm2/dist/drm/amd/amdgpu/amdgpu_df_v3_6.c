@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu_df_v3_6.c,v 1.3 2021/12/19 11:35:07 riastradh Exp $	*/
+/*	$NetBSD: amdgpu_df_v3_6.c,v 1.4 2021/12/19 11:59:45 riastradh Exp $	*/
 
 /*
  * Copyright 2018 Advanced Micro Devices, Inc.
@@ -23,7 +23,7 @@
  *
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdgpu_df_v3_6.c,v 1.3 2021/12/19 11:35:07 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdgpu_df_v3_6.c,v 1.4 2021/12/19 11:59:45 riastradh Exp $");
 
 #include "amdgpu.h"
 #include "df_v3_6.h"
@@ -579,7 +579,7 @@ static void df_v3_6_pmc_release_cntr(struct amdgpu_device *adev,
 static void df_v3_6_reset_perfmon_cntr(struct amdgpu_device *adev,
 					 uint64_t config)
 {
-	uint32_t lo_base_addr, hi_base_addr;
+	uint32_t lo_base_addr = 0, hi_base_addr = 0;
 
 	df_v3_6_pmc_get_read_settings(adev, config, &lo_base_addr,
 				      &hi_base_addr);
@@ -665,7 +665,7 @@ static void df_v3_6_pmc_get_count(struct amdgpu_device *adev,
 				  uint64_t config,
 				  uint64_t *count)
 {
-	uint32_t lo_base_addr, hi_base_addr, lo_val = 0, hi_val = 0;
+	uint32_t lo_base_addr = 0, hi_base_addr = 0, lo_val = 0, hi_val = 0;
 	*count = 0;
 
 	switch (adev->asic_type) {
