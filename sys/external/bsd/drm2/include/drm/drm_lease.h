@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_lease.h,v 1.1 2021/12/19 00:26:09 riastradh Exp $	*/
+/*	$NetBSD: drm_lease.h,v 1.2 2021/12/19 00:49:22 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -51,6 +51,7 @@ struct drm_master *drm_lease_owner(struct drm_master *);
 bool	drm_lease_held(struct drm_file *, int);
 bool	_drm_lease_held(struct drm_file *, int);
 void	drm_lease_revoke(struct drm_master *);
+void	drm_lease_destroy(struct drm_master *);
 uint32_t drm_lease_filter_crtcs(struct drm_file *, uint32_t);
 
 #endif	/* _DRM_DRM_LEASE_H_ */
