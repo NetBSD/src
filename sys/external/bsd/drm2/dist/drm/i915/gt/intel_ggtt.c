@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_ggtt.c,v 1.8 2021/12/19 11:50:39 riastradh Exp $	*/
+/*	$NetBSD: intel_ggtt.c,v 1.9 2021/12/19 12:03:38 riastradh Exp $	*/
 
 // SPDX-License-Identifier: MIT
 /*
@@ -6,7 +6,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intel_ggtt.c,v 1.8 2021/12/19 11:50:39 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intel_ggtt.c,v 1.9 2021/12/19 12:03:38 riastradh Exp $");
 
 #include <linux/stop_machine.h>
 
@@ -1324,9 +1324,9 @@ static int ggtt_probe_hw(struct i915_ggtt *ggtt, struct intel_gt *gt)
 	}
 
 	/* GMADR is the PCI mmio aperture into the global GTT. */
-	DRM_DEBUG_DRIVER("GGTT size = %"PRIx64"M\n", ggtt->vm.total >> 20);
-	DRM_DEBUG_DRIVER("GMADR size = %"PRIx64"M\n", (u64)ggtt->mappable_end >> 20);
-	DRM_DEBUG_DRIVER("DSM size = %"PRIx64"M\n",
+	DRM_DEBUG_DRIVER("GGTT size = %"PRIu64"M\n", ggtt->vm.total >> 20);
+	DRM_DEBUG_DRIVER("GMADR size = %"PRIu64"M\n", (u64)ggtt->mappable_end >> 20);
+	DRM_DEBUG_DRIVER("DSM size = %"PRIu64"M\n",
 			 (u64)resource_size(&intel_graphics_stolen_res) >> 20);
 
 	return 0;
