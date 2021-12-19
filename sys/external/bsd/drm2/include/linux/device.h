@@ -1,4 +1,4 @@
-/*	$NetBSD: device.h,v 1.12 2021/12/19 10:38:05 riastradh Exp $	*/
+/*	$NetBSD: device.h,v 1.13 2021/12/19 10:51:01 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -59,6 +59,7 @@
 	else								      \
 		aprint_error("warn: " FMT, ##__VA_ARGS__);		      \
 } while (0)
+#define	dev_WARN	dev_warn
 
 #define	dev_notice(DEV, FMT, ...)	do {				      \
 	if (DEV)							      \
