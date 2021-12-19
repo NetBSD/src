@@ -1,4 +1,4 @@
-/*	$NetBSD: sched_main.c,v 1.3 2021/12/19 12:23:16 riastradh Exp $	*/
+/*	$NetBSD: sched_main.c,v 1.4 2021/12/19 12:29:55 riastradh Exp $	*/
 
 /*
  * Copyright 2015 Advanced Micro Devices, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sched_main.c,v 1.3 2021/12/19 12:23:16 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sched_main.c,v 1.4 2021/12/19 12:29:55 riastradh Exp $");
 
 #include <linux/kthread.h>
 #include <linux/wait.h>
@@ -692,7 +692,8 @@ static struct drm_sched_job *
 drm_sched_get_cleanup_job(struct drm_gpu_scheduler *sched)
 {
 	struct drm_sched_job *job;
-	unsigned long flags;
+
+	assert_spin_locked(&sched->job_list_lock);
 
 	/*
 	 * Don't destroy jobs while the timeout worker is running  OR thread
@@ -702,8 +703,6 @@ drm_sched_get_cleanup_job(struct drm_gpu_scheduler *sched)
 	    !cancel_delayed_work(&sched->work_tdr)) ||
 	    __kthread_should_park(sched->thread))
 		return NULL;
-
-	spin_lock_irqsave(&sched->job_list_lock, flags);
 
 	job = list_first_entry_or_null(&sched->ring_mirror_list,
 				       struct drm_sched_job, node);
@@ -716,8 +715,6 @@ drm_sched_get_cleanup_job(struct drm_gpu_scheduler *sched)
 		/* queue timeout for next job */
 		drm_sched_start_timeout(sched);
 	}
-
-	spin_unlock_irqrestore(&sched->job_list_lock, flags);
 
 	return job;
 }
