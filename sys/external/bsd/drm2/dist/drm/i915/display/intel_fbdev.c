@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_fbdev.c,v 1.3 2021/12/19 10:46:43 riastradh Exp $	*/
+/*	$NetBSD: intel_fbdev.c,v 1.4 2021/12/19 11:38:46 riastradh Exp $	*/
 
 /*
  * Copyright © 2007 David Airlie
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intel_fbdev.c,v 1.3 2021/12/19 10:46:43 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intel_fbdev.c,v 1.4 2021/12/19 11:38:46 riastradh Exp $");
 
 #include <linux/async.h>
 #include <linux/console.h>
@@ -172,6 +172,10 @@ static int intelfb_alloc(struct drm_fb_helper *helper,
 	return 0;
 }
 
+#ifdef __NetBSD__
+#  define	__iomem		__i915_vma_iomem
+#endif
+
 static int intelfb_create(struct drm_fb_helper *helper,
 			  struct drm_fb_helper_surface_size *sizes)
 {
@@ -238,14 +242,23 @@ static int intelfb_create(struct drm_fb_helper *helper,
 	static const struct intelfb_attach_args zero_ifa;
 	struct intelfb_attach_args ifa = zero_ifa;
 
+	__USE(ggtt);
+	__USE(pdev);
+
+	vaddr = i915_vma_pin_iomap(vma);
+	if (IS_ERR(vaddr)) {
+		DRM_ERROR("Failed to remap framebuffer into virtual memory\n");
+		ret = PTR_ERR(vaddr);
+		goto out_unpin;
+	}
+
+        if (vma->obj->stolen && !prealloc)
+		memset_io(vaddr, 0, vma->node.size);
+
 	ifa.ifa_drm_dev = dev;
 	ifa.ifa_fb_helper = helper;
 	ifa.ifa_fb_sizes = *sizes;
-	ifa.ifa_fb_bst = dev->pdev->pd_pa.pa_memt;
-	ifa.ifa_fb_addr = (dev_priv->gtt.mappable_base +
-	    i915_gem_obj_ggtt_offset(obj));
-	ifa.ifa_fb_size = size;
-	ifa.ifa_fb_zero = (ifbdev->fb->obj->stolen && !prealloc);
+	ifa.ifa_fb_vaddr = vaddr;
 
 	/*
 	 * XXX Should do this asynchronously, since we hold
@@ -258,8 +271,7 @@ static int intelfb_create(struct drm_fb_helper *helper,
 		ret = -ENXIO;
 		goto out_unpin;
 	}
-	fb = &ifbdev->fb->base;
-	ifbdev->helper.fb = fb;
+	ifbdev->helper.fb = &ifbdev->fb->base;
     }
 #else
 	info = drm_fb_helper_alloc_fbi(helper);
@@ -321,6 +333,9 @@ out_unlock:
 	intel_runtime_pm_put(&dev_priv->runtime_pm, wakeref);
 	return ret;
 }
+#ifdef __NetBSD__
+#  undef	__iomem
+#endif
 
 static const struct drm_fb_helper_funcs intel_fb_helper_funcs = {
 	.fb_probe = intelfb_create,
