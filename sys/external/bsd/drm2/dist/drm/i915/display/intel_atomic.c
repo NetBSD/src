@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_atomic.c,v 1.3 2021/12/19 11:38:03 riastradh Exp $	*/
+/*	$NetBSD: intel_atomic.c,v 1.4 2021/12/19 11:56:08 riastradh Exp $	*/
 
 /*
  * Copyright © 2015 Intel Corporation
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intel_atomic.c,v 1.3 2021/12/19 11:38:03 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intel_atomic.c,v 1.4 2021/12/19 11:56:08 riastradh Exp $");
 
 #include <drm/drm_atomic.h>
 #include <drm/drm_atomic_helper.h>
@@ -495,6 +495,8 @@ intel_atomic_state_alloc(struct drm_device *dev)
 		kfree(state);
 		return NULL;
 	}
+
+	i915_sw_fence_init(&state->commit_ready, intel_atomic_commit_ready);
 
 	return &state->base;
 }
