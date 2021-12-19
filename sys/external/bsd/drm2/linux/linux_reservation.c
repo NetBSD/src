@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_reservation.c,v 1.18 2021/12/19 01:21:38 riastradh Exp $	*/
+/*	$NetBSD: linux_reservation.c,v 1.19 2021/12/19 01:23:38 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_reservation.c,v 1.18 2021/12/19 01:21:38 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_reservation.c,v 1.19 2021/12/19 01:23:38 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/poll.h>
@@ -91,7 +91,7 @@ reservation_object_init(struct reservation_object *robj)
 {
 
 	ww_mutex_init(&robj->lock, &reservation_ww_class);
-	seqcount_init(&robj->count);
+	seqcount_init(&robj->seq);
 	robj->robj_fence = NULL;
 	robj->robj_list = NULL;
 	robj->robj_prealloc = NULL;
@@ -308,7 +308,7 @@ reservation_object_write_begin(struct reservation_object *robj,
 
 	KASSERT(reservation_object_held(robj));
 
-	write_seqcount_begin(&robj->count);
+	write_seqcount_begin(&robj->seq);
 }
 
 /*
@@ -326,7 +326,7 @@ reservation_object_write_commit(struct reservation_object *robj,
 
 	KASSERT(reservation_object_held(robj));
 
-	write_seqcount_end(&robj->count);
+	write_seqcount_end(&robj->seq);
 }
 
 struct reservation_object_read_ticket {
@@ -345,7 +345,7 @@ reservation_object_read_begin(struct reservation_object *robj,
     struct reservation_object_read_ticket *ticket)
 {
 
-	ticket->version = read_seqcount_begin(&robj->count);
+	ticket->version = read_seqcount_begin(&robj->seq);
 }
 
 /*
@@ -360,7 +360,7 @@ reservation_object_read_valid(struct reservation_object *robj,
     struct reservation_object_read_ticket *ticket)
 {
 
-	return !read_seqcount_retry(&robj->count, ticket->version);
+	return !read_seqcount_retry(&robj->seq, ticket->version);
 }
 
 /*
