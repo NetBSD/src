@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_gem_mman.c,v 1.7 2021/12/19 11:33:30 riastradh Exp $	*/
+/*	$NetBSD: i915_gem_mman.c,v 1.8 2021/12/19 11:56:52 riastradh Exp $	*/
 
 /*
  * SPDX-License-Identifier: MIT
@@ -7,7 +7,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_gem_mman.c,v 1.7 2021/12/19 11:33:30 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_gem_mman.c,v 1.8 2021/12/19 11:56:52 riastradh Exp $");
 
 #include <linux/anon_inodes.h>
 #include <linux/mman.h>
@@ -832,6 +832,12 @@ i915_gem_mmap_offset_ioctl(struct drm_device *dev, void *data,
 }
 
 #ifdef __NetBSD__
+
+const struct uvm_pagerops i915_gem_uvm_ops = {
+	.pgo_reference = drm_gem_pager_reference,
+	.pgo_detach = drm_gem_pager_detach,
+	.pgo_fault = i915_gem_fault,
+};
 
 int
 i915_gem_mmap_object(struct drm_device *dev, off_t byte_offset, size_t nbytes,

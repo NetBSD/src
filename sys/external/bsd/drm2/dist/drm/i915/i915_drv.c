@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_drv.c,v 1.42 2021/12/19 11:54:10 riastradh Exp $	*/
+/*	$NetBSD: i915_drv.c,v 1.43 2021/12/19 11:56:52 riastradh Exp $	*/
 
 /* i915_drv.c -- i830,i845,i855,i865,i915 driver -*- linux-c -*-
  */
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_drv.c,v 1.42 2021/12/19 11:54:10 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_drv.c,v 1.43 2021/12/19 11:56:52 riastradh Exp $");
 
 #include <linux/acpi.h>
 #include <linux/device.h>
@@ -2875,7 +2875,7 @@ static struct drm_driver driver = {
 	.free_irq = drm_pci_free_irq,
 
 	.mmap_object = &i915_gem_mmap_object,
-	.gem_uvm_ops = NULL,
+	.gem_uvm_ops = &i915_gem_uvm_ops,
 #endif
 
 
