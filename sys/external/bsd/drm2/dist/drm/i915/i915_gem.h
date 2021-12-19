@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_gem.h,v 1.2 2021/12/18 23:45:28 riastradh Exp $	*/
+/*	$NetBSD: i915_gem.h,v 1.3 2021/12/19 01:19:14 riastradh Exp $	*/
 
 /*
  * Copyright © 2016 Intel Corporation
@@ -105,7 +105,11 @@ static inline void __tasklet_disable_sync_once(struct tasklet_struct *t)
 
 static inline bool __tasklet_is_enabled(const struct tasklet_struct *t)
 {
+#ifdef __NetBSD__
+	return tasklet_is_enabled(t);
+#else
 	return !atomic_read(&t->count);
+#endif
 }
 
 static inline bool __tasklet_enable(struct tasklet_struct *t)
