@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_file.h,v 1.6 2021/12/19 01:57:21 riastradh Exp $	*/
+/*	$NetBSD: drm_file.h,v 1.7 2021/12/19 01:59:03 riastradh Exp $	*/
 
 /*
  * Copyright 1999 Precision Insight, Inc., Cedar Park, Texas.
@@ -80,10 +80,12 @@ struct drm_minor {
 	struct device *kdev;		/* Linux device */
 	struct drm_device *dev;
 
+#ifndef __NetBSD__		/* XXX debugfs */
 	struct dentry *debugfs_root;
 
 	struct list_head debugfs_list;
 	struct mutex debugfs_lock; /* Protects debugfs_list. */
+#endif
 };
 
 /**

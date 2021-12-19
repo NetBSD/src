@@ -1,4 +1,4 @@
-/*	$NetBSD: drmP.h,v 1.57 2021/12/19 01:57:20 riastradh Exp $	*/
+/*	$NetBSD: drmP.h,v 1.58 2021/12/19 01:59:03 riastradh Exp $	*/
 
 /*
  * Internal Header for the Direct Rendering Manager
@@ -102,7 +102,6 @@ struct drm_agp_head;
 struct drm_local_map;
 struct drm_device_dma;
 struct drm_dma_handle;
-struct drm_gem_object;
 struct drm_bus_irq_cookie;
 
 struct device_node;
@@ -115,49 +114,6 @@ struct dma_buf_attachment;
 /*@{*/
 
 #define DRM_IF_VERSION(maj, min) (maj << 16 | min)
-
-/**
- * Ioctl function type.
- *
- * \param inode device inode.
- * \param file_priv DRM file private pointer.
- * \param cmd command.
- * \param arg argument.
- */
-typedef int drm_ioctl_t(struct drm_device *dev, void *data,
-			struct drm_file *file_priv);
-
-typedef int drm_ioctl_compat_t(struct file *filp, unsigned int cmd,
-			       unsigned long arg);
-
-/**
- * Creates a driver or general drm_ioctl_desc array entry for the given
- * ioctl, for use by drm_ioctl().
- */
-
-#define DRM_IOCTL_DEF_DRV(ioctl, _func, _flags)				\
-	[DRM_IOCTL_NR(DRM_IOCTL_##ioctl) - DRM_COMMAND_BASE] = {	\
-		.cmd = DRM_IOCTL_##ioctl,				\
-		.func = _func,						\
-		.flags = _flags,					\
-		.name = #ioctl						\
-	 }
-
-/* Event queued up for userspace to read */
-struct drm_pending_event {
-	struct drm_event *event;
-	struct list_head link;
-	struct drm_file *file_priv;
-	pid_t pid; /* pid of requester, no guarantee it's valid by the time
-		      we deliver the event, for tracing only */
-	void (*destroy)(struct drm_pending_event *event);
-};
-
-/* initial implementaton using a linked list - todo hashtab */
-struct drm_prime_file_private {
-	struct list_head head;
-	struct mutex lock;
-};
 
 #ifdef __NetBSD__		/* XXX debugfs */
 struct seq_file;
@@ -184,25 +140,6 @@ struct drm_info_node {
 	struct dentry *dent;
 };
 
-/**
- * DRM minor structure. This structure represents a drm minor number.
- */
-struct drm_minor {
-	int index;			/**< Minor device number */
-	int type;                       /**< Control or render */
-	struct device *kdev;		/**< Linux device */
-	struct drm_device *dev;
-
-#ifndef __NetBSD__		/* XXX debugfs */
-	struct dentry *debugfs_root;
-
-	struct list_head debugfs_list;
-	struct mutex debugfs_lock; /* Protects debugfs_list. */
-#endif
-
-	/* currently active master for this node. Protected by master_mutex */
-	struct drm_master *master;
-};
 
 /******************************************************************/
 /** \name Internal function definitions */
@@ -249,34 +186,6 @@ static inline int drm_debugfs_remove_files(const struct drm_info_list *files,
 	return 0;
 }
 #endif
-
-extern struct dma_buf *drm_gem_prime_export(struct drm_device *dev,
-					    struct drm_gem_object *obj,
-					    int flags);
-extern int drm_gem_prime_handle_to_fd(struct drm_device *dev,
-		struct drm_file *file_priv, uint32_t handle, uint32_t flags,
-		int *prime_fd);
-extern struct drm_gem_object *drm_gem_prime_import(struct drm_device *dev,
-		struct dma_buf *dma_buf);
-extern int drm_gem_prime_fd_to_handle(struct drm_device *dev,
-		struct drm_file *file_priv, int prime_fd, uint32_t *handle);
-extern void drm_gem_dmabuf_release(struct dma_buf *dma_buf);
-
-#ifdef __NetBSD__
-extern struct sg_table *drm_prime_bus_dmamem_to_sg(bus_dma_tag_t, const bus_dma_segment_t *, int);
-extern struct sg_table *drm_prime_pglist_to_sg(struct pglist *, unsigned);
-extern int drm_prime_sg_to_bus_dmamem(bus_dma_tag_t, bus_dma_segment_t *, int, int *, const struct sg_table *);
-extern int drm_prime_bus_dmamap_load_sgt(bus_dma_tag_t, bus_dmamap_t, struct sg_table *);
-extern bus_size_t drm_prime_sg_size(struct sg_table *);
-extern void drm_prime_sg_free(struct sg_table *);
-extern bool drm_prime_sg_importable(bus_dma_tag_t, struct sg_table *);
-#else
-extern int drm_prime_sg_to_page_addr_arrays(struct sg_table *sgt, struct page **pages,
-					    dma_addr_t *addrs, int max_pages);
-#endif
-extern struct sg_table *drm_prime_pages_to_sg(struct page **pages, unsigned int nr_pages);
-extern void drm_prime_gem_destroy(struct drm_gem_object *obj, struct sg_table *sg);
-
 
 int drm_pci_set_unique(struct drm_device *dev,
 		       struct drm_master *master,
