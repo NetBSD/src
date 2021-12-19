@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_fbdev.c,v 1.8 2021/12/19 11:45:01 riastradh Exp $	*/
+/*	$NetBSD: intel_fbdev.c,v 1.9 2021/12/19 12:32:15 riastradh Exp $	*/
 
 /*
  * Copyright © 2007 David Airlie
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intel_fbdev.c,v 1.8 2021/12/19 11:45:01 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intel_fbdev.c,v 1.9 2021/12/19 12:32:15 riastradh Exp $");
 
 #include <linux/async.h>
 #include <linux/console.h>
@@ -356,6 +356,8 @@ static void intel_fbdev_destroy(struct intel_fbdev *ifbdev)
 
 	if (ifbdev->fb)
 		drm_framebuffer_remove(&ifbdev->fb->base);
+
+	mutex_destroy(&ifbdev->hpd_lock);
 
 	kfree(ifbdev);
 }

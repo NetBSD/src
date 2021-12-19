@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_guc.c,v 1.3 2021/12/19 11:45:01 riastradh Exp $	*/
+/*	$NetBSD: intel_guc.c,v 1.4 2021/12/19 12:32:15 riastradh Exp $	*/
 
 // SPDX-License-Identifier: MIT
 /*
@@ -6,7 +6,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intel_guc.c,v 1.3 2021/12/19 11:45:01 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intel_guc.c,v 1.4 2021/12/19 12:32:15 riastradh Exp $");
 
 #include "gt/intel_gt.h"
 #include "gt/intel_gt_irq.h"
@@ -407,6 +407,9 @@ void intel_guc_fini(struct intel_guc *guc)
 	intel_uc_fw_cleanup_fetch(&guc->fw);
 
 	intel_uc_fw_change_status(&guc->fw, INTEL_UC_FIRMWARE_DISABLED);
+
+	spin_lock_destroy(&guc->irq_lock);
+	mutex_destroy(&guc->send_mutex);
 }
 
 /*

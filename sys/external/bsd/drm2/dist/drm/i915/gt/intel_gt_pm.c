@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_gt_pm.c,v 1.3 2021/12/19 11:45:01 riastradh Exp $	*/
+/*	$NetBSD: intel_gt_pm.c,v 1.4 2021/12/19 12:32:15 riastradh Exp $	*/
 
 /*
  * SPDX-License-Identifier: MIT
@@ -7,7 +7,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intel_gt_pm.c,v 1.3 2021/12/19 11:45:01 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intel_gt_pm.c,v 1.4 2021/12/19 12:32:15 riastradh Exp $");
 
 #include <linux/suspend.h>
 
@@ -175,6 +175,7 @@ static void gt_sanitize(struct intel_gt *gt, bool force)
 
 void intel_gt_pm_fini(struct intel_gt *gt)
 {
+	intel_rps_fini(&gt->rps);
 	intel_rc6_fini(&gt->rc6);
 }
 

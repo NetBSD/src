@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_rps.c,v 1.4 2021/12/19 11:49:11 riastradh Exp $	*/
+/*	$NetBSD: intel_rps.c,v 1.5 2021/12/19 12:32:15 riastradh Exp $	*/
 
 /*
  * SPDX-License-Identifier: MIT
@@ -7,7 +7,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intel_rps.c,v 1.4 2021/12/19 11:49:11 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intel_rps.c,v 1.5 2021/12/19 12:32:15 riastradh Exp $");
 
 #include "i915_drv.h"
 #include "intel_gt.h"
@@ -1675,6 +1675,13 @@ void intel_rps_init(struct intel_rps *rps)
 
 	if (INTEL_GEN(i915) >= 8 && INTEL_GEN(i915) < 11)
 		rps->pm_intrmsk_mbz |= GEN8_PMINTR_DISABLE_REDIRECT_TO_GUC;
+}
+
+void intel_rps_fini(struct intel_rps *rps)
+{
+
+	mutex_destroy(&rps->power.mutex);
+	mutex_destroy(&rps->lock);
 }
 
 u32 intel_rps_get_cagf(struct intel_rps *rps, u32 rpstat)

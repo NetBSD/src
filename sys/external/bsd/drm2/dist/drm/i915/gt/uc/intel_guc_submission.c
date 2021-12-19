@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_guc_submission.c,v 1.3 2021/12/19 11:45:01 riastradh Exp $	*/
+/*	$NetBSD: intel_guc_submission.c,v 1.4 2021/12/19 12:32:15 riastradh Exp $	*/
 
 // SPDX-License-Identifier: MIT
 /*
@@ -6,7 +6,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intel_guc_submission.c,v 1.3 2021/12/19 11:45:01 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intel_guc_submission.c,v 1.4 2021/12/19 12:32:15 riastradh Exp $");
 
 #include <linux/circ_buf.h>
 
@@ -550,6 +550,7 @@ err_pool:
 
 void intel_guc_submission_fini(struct intel_guc *guc)
 {
+	spin_lock_destroy(&guc->wq_lock);
 	if (guc->stage_desc_pool) {
 		guc_proc_desc_destroy(guc);
 		guc_workqueue_destroy(guc);

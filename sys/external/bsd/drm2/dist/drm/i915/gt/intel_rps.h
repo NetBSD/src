@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_rps.h,v 1.3 2021/12/19 11:33:49 riastradh Exp $	*/
+/*	$NetBSD: intel_rps.h,v 1.4 2021/12/19 12:32:15 riastradh Exp $	*/
 
 /*
  * SPDX-License-Identifier: MIT
@@ -15,6 +15,7 @@ struct i915_request;
 
 void intel_rps_init_early(struct intel_rps *rps);
 void intel_rps_init(struct intel_rps *rps);
+void intel_rps_fini(struct intel_rps *rps);
 
 void intel_rps_driver_register(struct intel_rps *rps);
 void intel_rps_driver_unregister(struct intel_rps *rps);
