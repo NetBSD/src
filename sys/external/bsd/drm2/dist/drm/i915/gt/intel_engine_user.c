@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_engine_user.c,v 1.2 2021/12/18 23:45:30 riastradh Exp $	*/
+/*	$NetBSD: intel_engine_user.c,v 1.3 2021/12/19 11:38:37 riastradh Exp $	*/
 
 /*
  * SPDX-License-Identifier: MIT
@@ -7,7 +7,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intel_engine_user.c,v 1.2 2021/12/18 23:45:30 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intel_engine_user.c,v 1.3 2021/12/19 11:38:37 riastradh Exp $");
 
 #include <linux/list.h>
 #include <linux/list_sort.h>
@@ -17,6 +17,8 @@ __KERNEL_RCSID(0, "$NetBSD: intel_engine_user.c,v 1.2 2021/12/18 23:45:30 riastr
 #include "intel_engine.h"
 #include "intel_engine_user.h"
 #include "intel_gt.h"
+
+#include <linux/nbsd-namespace.h>
 
 struct intel_engine_cs *
 intel_engine_lookup_user(struct drm_i915_private *i915, u8 class, u8 instance)

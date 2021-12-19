@@ -1,4 +1,4 @@
-/*	$NetBSD: hardirq.h,v 1.2 2018/08/27 13:37:37 riastradh Exp $	*/
+/*	$NetBSD: hardirq.h,v 1.3 2021/12/19 11:38:37 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -34,16 +34,10 @@
 
 #include <sys/types.h>
 #include <sys/kernel.h>
-#include <sys/null.h>
 #include <sys/xcall.h>
 
-static inline void
-synchronize_irq_xc(void *a, void *b)
-{
-}
-
 /*
- * synchronize(irq)
+ * synchronize_irq(irq)
  *
  *	Wait for all interrupt handlers servicing irq to complete on
  *	all CPUs.  We just do a low-priority cross-call broadcast to
@@ -55,7 +49,15 @@ synchronize_irq(int irq)
 {
 
 	if (!cold)
-		xc_wait(xc_broadcast(0, synchronize_irq_xc, NULL, NULL));
+		xc_barrier(0);
+}
+
+static inline void
+synchronize_hardirq(int irq)
+{
+
+	if (!cold)
+		xc_barrier(XC_HIGHPRI);
 }
 
 #endif	/* _LINUX_HARDIRQ_H_ */
