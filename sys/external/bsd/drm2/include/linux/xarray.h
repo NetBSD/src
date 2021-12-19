@@ -1,4 +1,4 @@
-/*	$NetBSD: xarray.h,v 1.4 2021/12/19 11:00:03 riastradh Exp $	*/
+/*	$NetBSD: xarray.h,v 1.5 2021/12/19 11:00:10 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -29,10 +29,18 @@
 #ifndef	_LINUX_XARRAY_H_
 #define	_LINUX_XARRAY_H_
 
+#include <sys/radixtree.h>
+
 #include <linux/slab.h>
 
 struct xarray;
 struct xa_limit;
+
+struct xarray {
+	kmutex_t		xa_lock;
+	struct radix_tree	xa_tree;
+	gfp_t			xa_gfp;
+};
 
 struct xa_limit {
 	uint32_t	max;
@@ -56,13 +64,14 @@ struct xa_limit {
 void	xa_init_flags(struct xarray *, gfp_t);
 void	xa_destroy(struct xarray *);
 
-int	xa_alloc(struct xarray *, uint32_t *, void *, struct xa_limit, gfp_t);
 void *	xa_load(struct xarray *, unsigned long);
+void *	xa_store(struct xarray *, unsigned long, void *, gfp_t);
+void *	xa_erase(struct xarray *, unsigned long);
+
+int	xa_alloc(struct xarray *, uint32_t *, void *, struct xa_limit, gfp_t);
 void *	xa_find(struct xarray *, unsigned long *, unsigned long, unsigned);
 void *	xa_find_after(struct xarray *, unsigned long *, unsigned long,
 	    unsigned);
-void	xa_store(struct xarray *, unsigned long, void *, gfp_t);
-void *	xa_erase(struct xarray *, unsigned long);
 
 extern const struct xa_limit xa_limit_32b;
 
