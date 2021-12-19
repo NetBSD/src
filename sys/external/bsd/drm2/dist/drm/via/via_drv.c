@@ -1,4 +1,4 @@
-/*	$NetBSD: via_drv.c,v 1.8 2021/12/18 23:45:44 riastradh Exp $	*/
+/*	$NetBSD: via_drv.c,v 1.9 2021/12/19 12:30:23 riastradh Exp $	*/
 
 /*
  * Copyright 1998-2003 VIA Technologies, Inc. All Rights Reserved.
@@ -25,13 +25,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: via_drv.c,v 1.8 2021/12/18 23:45:44 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: via_drv.c,v 1.9 2021/12/19 12:30:23 riastradh Exp $");
 
 #include <linux/module.h>
 #include <linux/pci.h>
 
 #include <drm/drm_drv.h>
 #include <drm/drm_file.h>
+#include <drm/drm_pci.h>
 #include <drm/drm_pciids.h>
 #include <drm/via_drm.h>
 

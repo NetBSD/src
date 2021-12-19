@@ -1,4 +1,4 @@
-/*	$NetBSD: time.h,v 1.10 2021/12/19 11:12:36 riastradh Exp $	*/
+/*	$NetBSD: time.h,v 1.11 2021/12/19 12:30:23 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -39,6 +39,7 @@
 
 #define	timespec64	timespec	/* take that, 2038 */
 
+#define NSEC_PER_USEC	1000L
 #define NSEC_PER_MSEC	1000000L
 #define	NSEC_PER_SEC	1000000000L
 #define USEC_PER_MSEC	1000L
