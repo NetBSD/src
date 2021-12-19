@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_dp_helper.c,v 1.13 2021/12/18 23:44:57 riastradh Exp $	*/
+/*	$NetBSD: drm_dp_helper.c,v 1.14 2021/12/19 00:56:40 riastradh Exp $	*/
 
 /*
  * Copyright © 2009 Keith Packard
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_dp_helper.c,v 1.13 2021/12/18 23:44:57 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_dp_helper.c,v 1.14 2021/12/19 00:56:40 riastradh Exp $");
 
 #include <linux/delay.h>
 #include <linux/errno.h>
@@ -465,6 +465,7 @@ EXPORT_SYMBOL(drm_dp_downstream_id);
  * @aux: DisplayPort AUX channel
  *
  */
+#ifndef __NetBSD__
 void drm_dp_downstream_debug(struct seq_file *m,
 			     const u8 dpcd[DP_RECEIVER_CAP_SIZE],
 			     const u8 port_cap[4], struct drm_dp_aux *aux)
@@ -542,6 +543,7 @@ void drm_dp_downstream_debug(struct seq_file *m,
 	}
 }
 EXPORT_SYMBOL(drm_dp_downstream_debug);
+#endif
 
 /*
  * I2C-over-AUX implementation
