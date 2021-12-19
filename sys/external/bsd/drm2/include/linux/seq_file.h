@@ -1,4 +1,4 @@
-/*	$NetBSD: seq_file.h,v 1.2 2014/03/18 18:20:43 riastradh Exp $	*/
+/*	$NetBSD: seq_file.h,v 1.3 2021/12/19 00:47:32 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -31,5 +31,7 @@
 
 #ifndef _LINUX_SEQ_FILE_H_
 #define _LINUX_SEQ_FILE_H_
+
+struct seq_file;
 
 #endif  /* _LINUX_SEQ_FILE_H_ */
