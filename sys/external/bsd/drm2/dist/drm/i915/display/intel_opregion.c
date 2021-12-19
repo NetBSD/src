@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_opregion.c,v 1.2 2021/12/18 23:45:30 riastradh Exp $	*/
+/*	$NetBSD: intel_opregion.c,v 1.3 2021/12/19 11:47:25 riastradh Exp $	*/
 
 /*
  * Copyright 2008 Intel Corporation <hong.liu@intel.com>
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intel_opregion.c,v 1.2 2021/12/18 23:45:30 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intel_opregion.c,v 1.3 2021/12/19 11:47:25 riastradh Exp $");
 
 #include <linux/acpi.h>
 #include <linux/dmi.h>
@@ -275,13 +275,13 @@ struct opregion_asle_ext {
 static int swsci(struct drm_i915_private *dev_priv,
 		 u32 function, u32 parm, u32 *parm_out)
 {
-	struct drm_i915_private *dev_priv = dev->dev_private;
 	struct opregion_swsci *swsci = dev_priv->opregion.swsci;
+	struct pci_dev *pdev = dev_priv->drm.pdev;
 	u32 main_function, sub_function, scic;
 	u16 swsci_val;
 	u32 dslp;
 
-	if (!region_swsci)
+	if (!swsci)
 		return -ENODEV;
 
 	main_function = (function & SWSCI_SCIC_MAIN_FUNCTION_MASK) >>
@@ -301,7 +301,7 @@ static int swsci(struct drm_i915_private *dev_priv,
 	}
 
 	/* Driver sleep timeout in ms. */
-	dslp = region_swsci->dslp;
+	dslp = swsci->dslp;
 	if (!dslp) {
 		/* The spec says 2ms should be the default, but it's too small
 		 * for some machines. */
@@ -314,7 +314,7 @@ static int swsci(struct drm_i915_private *dev_priv,
 	}
 
 	/* The spec tells us to do this, but we are the only user... */
-	scic = region_swsci->scic;
+	scic = swsci->scic;
 	if (scic & SWSCI_SCIC_INDICATOR) {
 		DRM_DEBUG_DRIVER("SWSCI request already in progress\n");
 		return -EBUSY;
@@ -322,8 +322,8 @@ static int swsci(struct drm_i915_private *dev_priv,
 
 	scic = function | SWSCI_SCIC_INDICATOR;
 
-	region_swsci->parm = parm;
-	region_swsci->scic = scic;
+	swsci->parm = parm;
+	swsci->scic = scic;
 
 	/* Ensure SCI event is selected and event trigger is cleared. */
 	pci_read_config_word(pdev, SWSCI, &swsci_val);
@@ -338,7 +338,7 @@ static int swsci(struct drm_i915_private *dev_priv,
 	pci_write_config_word(pdev, SWSCI, swsci_val);
 
 	/* Poll for the result. */
-#define C (((scic = region_swsci->scic) & SWSCI_SCIC_INDICATOR) == 0)
+#define C (((scic = swsci->scic) & SWSCI_SCIC_INDICATOR) == 0)
 	if (wait_for(C, dslp)) {
 		DRM_DEBUG_DRIVER("SWSCI request timed out\n");
 		return -ETIMEDOUT;
@@ -354,7 +354,7 @@ static int swsci(struct drm_i915_private *dev_priv,
 	}
 
 	if (parm_out)
-		*parm_out = region_swsci->parm;
+		*parm_out = swsci->parm;
 
 	return 0;
 
@@ -621,6 +621,8 @@ void intel_opregion_asle_intr(struct drm_i915_private *dev_priv)
 #define ACPI_EV_DISPLAY_SWITCH (1<<0)
 #define ACPI_EV_LID            (1<<1)
 #define ACPI_EV_DOCK           (1<<2)
+
+static struct intel_opregion *system_opregion;
 
 #ifdef __NetBSD__
 static void
