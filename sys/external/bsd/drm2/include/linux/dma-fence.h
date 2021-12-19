@@ -1,4 +1,4 @@
-/*	$NetBSD: dma-fence.h,v 1.6 2021/12/19 01:40:55 riastradh Exp $	*/
+/*	$NetBSD: dma-fence.h,v 1.7 2021/12/19 01:48:22 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -116,7 +116,7 @@ struct dma_fence *
 struct dma_fence *
 	dma_fence_get_rcu(struct dma_fence *);
 struct dma_fence *
-	dma_fence_get_rcu_safe(struct dma_fence **);
+	dma_fence_get_rcu_safe(struct dma_fence *volatile const *);
 void	dma_fence_put(struct dma_fence *);
 
 int	dma_fence_add_callback(struct dma_fence *, struct dma_fence_cb *,
