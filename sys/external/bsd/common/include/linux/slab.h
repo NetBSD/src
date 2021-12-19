@@ -1,4 +1,4 @@
-/*	$NetBSD: slab.h,v 1.5 2021/12/19 11:58:02 riastradh Exp $	*/
+/*	$NetBSD: slab.h,v 1.6 2021/12/19 11:58:09 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -182,7 +182,7 @@ kmem_cache_create(const char *name, size_t size, size_t align,
 
 	kc = kmem_alloc(sizeof(*kc), KM_SLEEP);
 	kc->kc_pool_cache = pool_cache_init(size, align, 0, 0, name, palloc,
-	    IPL_NONE, &kmem_cache_ctor, NULL, kc);
+	    IPL_VM, &kmem_cache_ctor, NULL, kc);
 	kc->kc_size = size;
 	kc->kc_ctor = ctor;
 
