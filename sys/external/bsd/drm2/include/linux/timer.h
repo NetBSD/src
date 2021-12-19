@@ -1,4 +1,4 @@
-/*	$NetBSD: timer.h,v 1.8 2021/12/19 01:16:21 riastradh Exp $	*/
+/*	$NetBSD: timer.h,v 1.9 2021/12/19 01:55:29 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -51,14 +51,14 @@ struct timer_list {
 
 static inline void
 timer_setup(struct timer_list *timer, void (*fn)(struct timer_list *),
-    unsigned flags)
+    uintptr_t flags)
 {
 
 	callout_init(&timer->tl_callout, 0);
 
 	/* XXX Super-sketchy casts!  */
 	callout_setfunc(&timer->tl_callout, (void (*)(void *))(void *)fn,
-	    (void *)arg);
+	    (void *)flags);
 }
 
 static inline void
