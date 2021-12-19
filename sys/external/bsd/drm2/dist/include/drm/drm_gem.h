@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_gem.h,v 1.8 2021/12/19 01:54:35 riastradh Exp $	*/
+/*	$NetBSD: drm_gem.h,v 1.9 2021/12/19 09:45:34 riastradh Exp $	*/
 
 #ifndef __DRM_GEM_H__
 #define __DRM_GEM_H__
@@ -47,6 +47,7 @@
 #include <drm/drm_vma_manager.h>
 
 struct drm_gem_object;
+struct xarray;
 
 /**
  * struct drm_gem_object_funcs - GEM object functions
