@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveaufb.c,v 1.4 2016/12/12 19:45:56 maya Exp $	*/
+/*	$NetBSD: nouveaufb.c,v 1.5 2021/12/19 00:32:11 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveaufb.c,v 1.4 2016/12/12 19:45:56 maya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveaufb.c,v 1.5 2021/12/19 00:32:11 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/bus.h>
@@ -42,7 +42,7 @@ __KERNEL_RCSID(0, "$NetBSD: nouveaufb.c,v 1.4 2016/12/12 19:45:56 maya Exp $");
 #include <drm/drmfb_pci.h>
 
 #include "nouveau_bo.h"
-#include "nouveau_drm.h"
+#include "nouveau_drv.h"
 #include "nouveau_fbcon.h"
 #include "nouveau_pci.h"
 #include "nouveaufb.h"
