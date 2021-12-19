@@ -1,4 +1,4 @@
-/*	$NetBSD: pci.h,v 1.39 2020/02/14 14:34:59 maya Exp $	*/
+/*	$NetBSD: pci.h,v 1.40 2021/12/19 01:21:00 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -112,7 +112,11 @@ CTASSERT(PCI_CLASS_BRIDGE_ISA == 0x0601);
 #define	PCI_VENDOR_ID_SONY	PCI_VENDOR_SONY
 #define	PCI_VENDOR_ID_VIA	PCI_VENDOR_VIATECH
 
+#define	PCI_SUBVENDOR_ID_REDHAT_QUMRANET	0x1af4
+
 #define	PCI_DEVICE_ID_ATI_RADEON_QY	PCI_PRODUCT_ATI_RADEON_RV100_QY
+
+#define	PCI_SUBDEVICE_ID_QEMU		0x1100
 
 #define	PCI_DEVFN(DEV, FN)						\
 	(__SHIFTIN((DEV), __BITS(3, 7)) | __SHIFTIN((FN), __BITS(0, 2)))
