@@ -1,11 +1,11 @@
-/*	$NetBSD: i915_getparam.c,v 1.2 2021/12/18 23:45:28 riastradh Exp $	*/
+/*	$NetBSD: i915_getparam.c,v 1.3 2021/12/19 10:24:52 riastradh Exp $	*/
 
 /*
  * SPDX-License-Identifier: MIT
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_getparam.c,v 1.2 2021/12/18 23:45:28 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_getparam.c,v 1.3 2021/12/19 10:24:52 riastradh Exp $");
 
 #include "gem/i915_gem_mman.h"
 #include "gt/intel_engine_user.h"
@@ -116,6 +116,9 @@ int i915_getparam_ioctl(struct drm_device *dev, void *data,
 		break;
 
 	case I915_PARAM_MMAP_VERSION:
+#ifdef __NetBSD__
+		dev_priv->quirks |= QUIRK_NETBSD_VERSION_CALLED;
+#endif
 		/* Remember to bump this if the version changes! */
 	case I915_PARAM_HAS_GEM:
 	case I915_PARAM_HAS_PAGEFLIPPING:

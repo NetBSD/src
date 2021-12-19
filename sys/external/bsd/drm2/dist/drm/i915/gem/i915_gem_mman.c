@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_gem_mman.c,v 1.2 2021/12/18 23:45:30 riastradh Exp $	*/
+/*	$NetBSD: i915_gem_mman.c,v 1.3 2021/12/19 10:24:52 riastradh Exp $	*/
 
 /*
  * SPDX-License-Identifier: MIT
@@ -7,7 +7,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_gem_mman.c,v 1.2 2021/12/18 23:45:30 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_gem_mman.c,v 1.3 2021/12/19 10:24:52 riastradh Exp $");
 
 #include <linux/anon_inodes.h>
 #include <linux/mman.h>
@@ -74,6 +74,12 @@ i915_gem_mmap_ioctl(struct drm_device *dev, void *data,
 	obj = i915_gem_object_lookup(file, args->handle);
 	if (!obj)
 		return -ENOENT;
+
+#ifdef __NetBSD__
+	struct drm_i915_private *i915 = to_i915(obj->base.dev);
+	if (dev->quirks & QUIRK_NETBSD_VERSION_CALLED)
+		args->flags = 0;
+#endif
 
 	/* prime objects have no backing filp to GEM mmap
 	 * pages from.
