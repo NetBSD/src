@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_vblank.h,v 1.6 2021/12/19 01:14:36 riastradh Exp $	*/
+/*	$NetBSD: drm_vblank.h,v 1.7 2021/12/19 01:56:33 riastradh Exp $	*/
 
 /*
  * Copyright 2016 Intel Corp.
@@ -106,7 +106,11 @@ struct drm_vblank_crtc {
 	/**
 	 * @queue: Wait queue for vblank waiters.
 	 */
+#ifdef __NetBSD__
+	drm_waitqueue_t queue;
+#else
 	wait_queue_head_t queue;
+#endif
 	/**
 	 * @disable_timer: Disable timer for the delayed vblank disabling
 	 * hysteresis logic. Vblank disabling is controlled through the
@@ -247,7 +251,11 @@ bool drm_calc_vbltimestamp_from_scanoutpos(struct drm_device *dev,
 					   bool in_vblank_irq);
 void drm_calc_timestamping_constants(struct drm_crtc *crtc,
 				     const struct drm_display_mode *mode);
+#ifdef __NetBSD__
+drm_waitqueue_t *drm_crtc_vblank_waitqueue(struct drm_crtc *crtc)
+#else
 wait_queue_head_t *drm_crtc_vblank_waitqueue(struct drm_crtc *crtc);
+#endif
 void drm_crtc_set_max_vblank_count(struct drm_crtc *crtc,
 				   u32 max_vblank_count);
 #endif
