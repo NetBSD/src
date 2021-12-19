@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_mipi_dsi.h,v 1.1 2018/08/27 06:33:57 riastradh Exp $	*/
+/*	$NetBSD: drm_mipi_dsi.h,v 1.2 2021/12/19 11:38:04 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -31,5 +31,15 @@
 
 #ifndef _DRM_MIPI_DSI_H_
 #define _DRM_MIPI_DSI_H_
+
+struct mipi_dsi_host_ops;
+
+enum mipi_dsi_pixel_format {
+	MIPI_DSI_PIXEL_NFORMATS,
+};
+
+struct mipi_dsi_host {
+	char dummy;
+};
 
 #endif /*_DRM_MIPI_DSI_H_*/

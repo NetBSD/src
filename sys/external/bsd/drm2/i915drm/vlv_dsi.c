@@ -1,4 +1,4 @@
-/*	$NetBSD: vlv_dsi.c,v 1.1 2021/12/19 00:57:42 riastradh Exp $	*/
+/*	$NetBSD: vlv_dsi.c,v 1.2 2021/12/19 11:38:04 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,9 +30,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vlv_dsi.c,v 1.1 2021/12/19 00:57:42 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vlv_dsi.c,v 1.2 2021/12/19 11:38:04 riastradh Exp $");
 
-#include "intel_drv.h"
+#include "display/intel_dsi.h"
 
 void
 vlv_dsi_init(struct drm_i915_private *dev_priv)

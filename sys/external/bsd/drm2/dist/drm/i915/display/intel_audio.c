@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_audio.c,v 1.2 2021/12/18 23:45:29 riastradh Exp $	*/
+/*	$NetBSD: intel_audio.c,v 1.3 2021/12/19 11:38:03 riastradh Exp $	*/
 
 /*
  * Copyright © 2014 Intel Corporation
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intel_audio.c,v 1.2 2021/12/18 23:45:29 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intel_audio.c,v 1.3 2021/12/19 11:38:03 riastradh Exp $");
 
 #include <linux/component.h>
 #include <linux/kernel.h>
@@ -805,6 +805,8 @@ void intel_init_audio_hooks(struct drm_i915_private *dev_priv)
 	}
 }
 
+#ifndef __NetBSD__		/* XXX intel audio */
+
 static void glk_force_audio_cdclk(struct drm_i915_private *dev_priv,
 				  bool enable)
 {
@@ -842,8 +844,6 @@ retry:
 	drm_modeset_drop_locks(&ctx);
 	drm_modeset_acquire_fini(&ctx);
 }
-
-#ifndef __NetBSD__		/* XXX intel audio */
 
 static unsigned long i915_audio_component_get_power(struct device *kdev)
 {

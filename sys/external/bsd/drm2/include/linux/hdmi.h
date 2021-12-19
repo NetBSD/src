@@ -1,4 +1,4 @@
-/*	$NetBSD: hdmi.h,v 1.9 2021/12/19 09:46:24 riastradh Exp $	*/
+/*	$NetBSD: hdmi.h,v 1.10 2021/12/19 11:38:04 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -166,11 +166,26 @@ enum hdmi_ycc_quantization_range {
 	HDMI_YCC_QUANTIZATION_RANGE_FULL	= 1,
 };
 
+enum hdmi_packet_type {
+        HDMI_PACKET_TYPE_NULL = 0x00,
+        HDMI_PACKET_TYPE_AUDIO_CLOCK_REGEN	= 0x01,
+        HDMI_PACKET_TYPE_AUDIO_SAMPLE		= 0x02,
+        HDMI_PACKET_TYPE_GENERAL_CONTROL	= 0x03,
+        HDMI_PACKET_TYPE_ACP			= 0x04,
+        HDMI_PACKET_TYPE_ISRC1			= 0x05,
+        HDMI_PACKET_TYPE_ISRC2			= 0x06,
+        HDMI_PACKET_TYPE_ONE_BIT_AUDIO_SAMPLE	= 0x07,
+        HDMI_PACKET_TYPE_DST_AUDIO		= 0x08,
+        HDMI_PACKET_TYPE_HBR_AUDIO_STREAM	= 0x09,
+        HDMI_PACKET_TYPE_GAMUT_METADATA		= 0x0a,
+};
+
 enum hdmi_infoframe_type {
 	HDMI_INFOFRAME_TYPE_VENDOR		= 0x81,
 	HDMI_INFOFRAME_TYPE_AVI			= 0x82,
 	HDMI_INFOFRAME_TYPE_SPD			= 0x83,
 	HDMI_INFOFRAME_TYPE_AUDIO		= 0x84,
+	HDMI_INFOFRAME_TYPE_DRM			= 0x87,
 };
 
 enum hdmi_eotf {
@@ -597,6 +612,13 @@ hdmi_drm_infoframe_init(struct hdmi_drm_infoframe *frame)
 {
 	panic("TODO");
 	return 0;
+}
+
+static inline void
+hdmi_infoframe_log(const char *level, struct device *device,
+    const union hdmi_infoframe *frame)
+{
+	/* XXX */
 }
 
 #endif	/* _LINUX_HDMI_H_ */

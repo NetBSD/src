@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_display.c,v 1.2 2021/12/18 23:45:29 riastradh Exp $	*/
+/*	$NetBSD: intel_display.c,v 1.3 2021/12/19 11:38:03 riastradh Exp $	*/
 
 /*
  * Copyright © 2006-2007 Intel Corporation
@@ -27,7 +27,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intel_display.c,v 1.2 2021/12/18 23:45:29 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intel_display.c,v 1.3 2021/12/19 11:38:03 riastradh Exp $");
+
+#include "intel_display.h"	/* for pipe_drmhack */
 
 #include <linux/i2c.h>
 #include <linux/input.h>
@@ -2127,7 +2129,7 @@ intel_fill_fb_ggtt_view(struct i915_ggtt_view *view,
 	view->type = I915_GGTT_VIEW_NORMAL;
 	if (drm_rotation_90_or_270(rotation)) {
 		view->type = I915_GGTT_VIEW_ROTATED;
-		view->rotated = to_intel_framebuffer(fb)->rot_info;
+		view->rotated = to_intel_framebuffer((struct drm_framebuffer *)__UNCONST(fb))->rot_info;
 	}
 }
 
@@ -2314,7 +2316,7 @@ static int intel_fb_pitch(const struct drm_framebuffer *fb, int color_plane,
 			  unsigned int rotation)
 {
 	if (drm_rotation_90_or_270(rotation))
-		return to_intel_framebuffer(fb)->rotated[color_plane].pitch;
+		return to_intel_framebuffer((struct drm_framebuffer *)__UNCONST(fb))->rotated[color_plane].pitch;
 	else
 		return fb->pitches[color_plane];
 }
@@ -3118,7 +3120,7 @@ intel_fill_fb_info(struct drm_i915_private *dev_priv,
 	}
 
 	if (mul_u32_u32(max_size, tile_size) > obj->base.size) {
-		DRM_DEBUG_KMS("fb too big for bo (need %llu bytes, have %zu bytes)\n",
+		DRM_DEBUG_KMS("fb too big for bo (need %"PRIu64" bytes, have %zu bytes)\n",
 			      mul_u32_u32(max_size, tile_size), obj->base.size);
 		return -EINVAL;
 	}
@@ -3415,7 +3417,7 @@ intel_alloc_initial_plane_obj(struct intel_crtc *crtc,
 	case I915_FORMAT_MOD_Y_TILED:
 		break;
 	default:
-		DRM_DEBUG_DRIVER("Unsupported modifier for initial FB: 0x%llx\n",
+		DRM_DEBUG_DRIVER("Unsupported modifier for initial FB: 0x%"PRIx64"\n",
 				 fb->modifier);
 		return false;
 	}
@@ -8316,7 +8318,7 @@ static void chv_prepare_pll(struct intel_crtc *crtc,
 	enum pipe pipe = crtc->pipe;
 	enum dpio_channel port = vlv_pipe_to_channel(pipe);
 	u32 loopfilter, tribuf_calcntr;
-	u32 bestn, bestm1, bestm2, bestp1, bestp2, bestm2_frac;
+	u32 bestn __unused, bestm1 __unused, bestm2, bestp1, bestp2, bestm2_frac;
 	u32 dpio_val;
 	int vco;
 
@@ -9085,7 +9087,7 @@ i9xx_get_initial_plane_config(struct intel_crtc *crtc,
 	struct intel_plane *plane = to_intel_plane(crtc->base.primary);
 	enum i9xx_plane_id i9xx_plane = plane->i9xx_plane;
 	enum pipe pipe;
-	u32 val, base, offset;
+	u32 val, base, offset __unused;
 	int fourcc, pixel_format;
 	unsigned int aligned_height;
 	struct drm_framebuffer *fb;
@@ -10282,7 +10284,7 @@ skl_get_initial_plane_config(struct intel_crtc *crtc,
 	struct intel_plane *plane = to_intel_plane(crtc->base.primary);
 	enum plane_id plane_id = plane->id;
 	enum pipe pipe;
-	u32 val, base, offset, stride_mult, tiling, alpha;
+	u32 val, base, offset __unused, stride_mult, tiling, alpha;
 	int fourcc, pixel_format;
 	unsigned int aligned_height;
 	struct drm_framebuffer *fb;
@@ -14410,7 +14412,7 @@ static int intel_atomic_check_planes(struct intel_atomic_state *state,
 {
 	struct drm_i915_private *dev_priv = to_i915(state->base.dev);
 	struct intel_crtc_state *old_crtc_state, *new_crtc_state;
-	struct intel_plane_state *plane_state;
+	struct intel_plane_state *plane_state __unused;
 	struct intel_plane *plane;
 	struct intel_crtc *crtc;
 	int i, ret;
@@ -14468,7 +14470,7 @@ static int intel_atomic_check_planes(struct intel_atomic_state *state,
 
 static int intel_atomic_check_crtcs(struct intel_atomic_state *state)
 {
-	struct intel_crtc_state *crtc_state;
+	struct intel_crtc_state *crtc_state __unused;
 	struct intel_crtc *crtc;
 	int i;
 
@@ -14549,7 +14551,7 @@ intel_atomic_check_tiled_conns(struct intel_atomic_state *state)
 {
 	struct drm_i915_private *dev_priv = to_i915(state->base.dev);
 	struct drm_connector *connector;
-	struct drm_connector_state *old_conn_state, *new_conn_state;
+	struct drm_connector_state *old_conn_state __unused, *new_conn_state __unused;
 	int i, ret;
 
 	if (INTEL_GEN(dev_priv) < 11)
@@ -15271,6 +15273,9 @@ static void intel_atomic_helper_free_state_worker(struct work_struct *work)
 
 static void intel_atomic_commit_fence_wait(struct intel_atomic_state *intel_state)
 {
+#ifdef __NetBSD__
+	panic("NYI");
+#else
 	struct wait_queue_entry wait_fence, wait_reset;
 	struct drm_i915_private *dev_priv = to_i915(intel_state->base.dev);
 
@@ -15294,6 +15299,7 @@ static void intel_atomic_commit_fence_wait(struct intel_atomic_state *intel_stat
 	finish_wait(bit_waitqueue(&dev_priv->gt.reset.flags,
 				  I915_RESET_MODESET),
 		    &wait_reset);
+#endif
 }
 
 static void intel_atomic_cleanup_work(struct work_struct *work)
@@ -15628,6 +15634,12 @@ static int intel_atomic_commit(struct drm_device *dev,
 	return 0;
 }
 
+#ifdef __NetBSD__
+
+/* XXX */
+
+#else
+
 struct wait_rps_boost {
 	struct wait_queue_entry wait;
 
@@ -15657,6 +15669,8 @@ static int do_rps_boost(struct wait_queue_entry *_wait,
 	return 1;
 }
 
+#endif
+
 static void add_rps_boost_after_vblank(struct drm_crtc *crtc,
 				       struct dma_fence *fence)
 {
@@ -15671,6 +15685,9 @@ static void add_rps_boost_after_vblank(struct drm_crtc *crtc,
 	if (drm_crtc_vblank_get(crtc))
 		return;
 
+#ifdef __NetBSD__
+	panic("NYI %p", &wait);
+#else
 	wait = kmalloc(sizeof(*wait), GFP_KERNEL);
 	if (!wait) {
 		drm_crtc_vblank_put(crtc);
@@ -15684,6 +15701,7 @@ static void add_rps_boost_after_vblank(struct drm_crtc *crtc,
 	wait->wait.flags = 0;
 
 	add_wait_queue(drm_crtc_vblank_waitqueue(crtc), &wait->wait);
+#endif
 }
 
 static int intel_plane_pin_fb(struct intel_plane_state *plane_state)
@@ -16944,7 +16962,7 @@ static int intel_framebuffer_init(struct intel_framebuffer *intel_fb,
 				      mode_cmd->modifier[0])) {
 		struct drm_format_name_buf format_name;
 
-		DRM_DEBUG_KMS("unsupported pixel format %s / modifier 0x%llx\n",
+		DRM_DEBUG_KMS("unsupported pixel format %s / modifier 0x%"PRIx64"\n",
 			      drm_get_format_name(mode_cmd->pixel_format,
 						  &format_name),
 			      mode_cmd->modifier[0]);

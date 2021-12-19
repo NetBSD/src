@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_context.c,v 1.2 2021/12/18 23:45:30 riastradh Exp $	*/
+/*	$NetBSD: intel_context.c,v 1.3 2021/12/19 11:38:04 riastradh Exp $	*/
 
 /*
  * SPDX-License-Identifier: MIT
@@ -7,7 +7,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intel_context.c,v 1.2 2021/12/18 23:45:30 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intel_context.c,v 1.3 2021/12/19 11:38:04 riastradh Exp $");
 
 #include "gem/i915_gem_context.h"
 #include "gem/i915_gem_pm.h"
@@ -19,6 +19,8 @@ __KERNEL_RCSID(0, "$NetBSD: intel_context.c,v 1.2 2021/12/18 23:45:30 riastradh 
 #include "intel_engine.h"
 #include "intel_engine_pm.h"
 #include "intel_ring.h"
+
+#include <linux/nbsd-namespace.h>
 
 static struct i915_global_context {
 	struct i915_global base;

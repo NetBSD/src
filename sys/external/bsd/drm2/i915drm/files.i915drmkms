@@ -1,4 +1,4 @@
-#	$NetBSD: files.i915drmkms,v 1.73 2021/12/19 11:37:41 riastradh Exp $
+#	$NetBSD: files.i915drmkms,v 1.74 2021/12/19 11:38:04 riastradh Exp $
 
 version	20180827
 
@@ -54,6 +54,7 @@ file	external/bsd/drm2/i915drm/i915_pci_autoconf.c	i915drmkms
 file	external/bsd/drm2/i915drm/i915_perf.c	i915drmkms
 file	external/bsd/drm2/i915drm/i915_sysfs.c	i915drmkms
 file	external/bsd/drm2/i915drm/i915_switcheroo.c	i915drmkms
+file	external/bsd/drm2/i915drm/icl_dsi.c		i915drmkms
 file	external/bsd/drm2/i915drm/intel_gtt.c		i915drmkms
 file	external/bsd/drm2/i915drm/intelfb.c		intelfb
 file	external/bsd/drm2/i915drm/vlv_dsi.c	i915drmkms
@@ -65,7 +66,7 @@ file	external/bsd/drm2/dist/drm/i915/display/dvo_ivch.c	i915drmkms
 file	external/bsd/drm2/dist/drm/i915/display/dvo_ns2501.c	i915drmkms
 file	external/bsd/drm2/dist/drm/i915/display/dvo_sil164.c	i915drmkms
 file	external/bsd/drm2/dist/drm/i915/display/dvo_tfp410.c	i915drmkms
-file	external/bsd/drm2/dist/drm/i915/display/icl_dsi.c	i915drmkms
+#file	external/bsd/drm2/dist/drm/i915/display/icl_dsi.c	i915drmkms
 file	external/bsd/drm2/dist/drm/i915/display/intel_acpi.c	i915drmkms
 file	external/bsd/drm2/dist/drm/i915/display/intel_atomic.c	i915drmkms
 file	external/bsd/drm2/dist/drm/i915/display/intel_atomic_plane.c	i915drmkms

@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_dp.c,v 1.2 2021/12/18 23:45:30 riastradh Exp $	*/
+/*	$NetBSD: intel_dp.c,v 1.3 2021/12/19 11:38:03 riastradh Exp $	*/
 
 /*
  * Copyright © 2008 Intel Corporation
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intel_dp.c,v 1.2 2021/12/18 23:45:30 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intel_dp.c,v 1.3 2021/12/19 11:38:03 riastradh Exp $");
 
 #include <linux/export.h>
 #include <linux/i2c.h>
@@ -1730,7 +1730,7 @@ static i915_reg_t skl_aux_data_reg(struct intel_dp *intel_dp, int index)
 static void
 intel_dp_aux_fini(struct intel_dp *intel_dp)
 {
-	kfree(intel_dp->aux.name);
+	kfree(__UNCONST(intel_dp->aux.name));
 }
 
 static void
@@ -2345,7 +2345,7 @@ bool intel_dp_limited_color_range(const struct intel_crtc_state *crtc_state,
 				  const struct drm_connector_state *conn_state)
 {
 	const struct intel_digital_connector_state *intel_conn_state =
-		to_intel_digital_connector_state(conn_state);
+		const_container_of(conn_state, struct intel_digital_connector_state, base);
 	const struct drm_display_mode *adjusted_mode =
 		&crtc_state->hw.adjusted_mode;
 
@@ -2847,7 +2847,7 @@ static void edp_panel_vdd_schedule_off(struct intel_dp *intel_dp)
  */
 static void edp_panel_vdd_off(struct intel_dp *intel_dp, bool sync)
 {
-	struct drm_i915_private *dev_priv = dp_to_i915(intel_dp);
+	struct drm_i915_private *dev_priv __lockdep_used = dp_to_i915(intel_dp);
 
 	lockdep_assert_held(&dev_priv->pps_mutex);
 

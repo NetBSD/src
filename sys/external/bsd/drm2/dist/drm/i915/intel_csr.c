@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_csr.c,v 1.7 2021/12/18 23:45:28 riastradh Exp $	*/
+/*	$NetBSD: intel_csr.c,v 1.8 2021/12/19 11:38:04 riastradh Exp $	*/
 
 /*
  * Copyright © 2014 Intel Corporation
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intel_csr.c,v 1.7 2021/12/18 23:45:28 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intel_csr.c,v 1.8 2021/12/19 11:38:04 riastradh Exp $");
 
 #include <linux/firmware.h>
 
@@ -229,7 +229,7 @@ struct stepping_info {
  * Kabylake derivated from Skylake H0, so SKL H0
  * is the right firmware for KBL A0 (revid 0).
  */
-static const struct stepping_info kbl_stepping_info[] = {
+static const struct stepping_info kbl_stepping_info[] __unused = {
 	{'H', '0'}, {'I', '0'}
 };
 
@@ -391,7 +391,7 @@ static u32 parse_csr_fw_dmc(struct intel_csr *csr,
 	unsigned int header_len_bytes, dmc_header_size, payload_size, i;
 	const u32 *mmioaddr, *mmiodata;
 	u32 mmio_count, mmio_count_max;
-	u8 *payload;
+	const u8 *payload;
 
 	BUILD_BUG_ON(ARRAY_SIZE(csr->mmioaddr) < DMC_V3_MAX_MMIO_COUNT ||
 		     ARRAY_SIZE(csr->mmioaddr) < DMC_V1_MAX_MMIO_COUNT);
@@ -480,7 +480,7 @@ static u32 parse_csr_fw_dmc(struct intel_csr *csr,
 		return 0;
 	}
 
-	payload = (u8 *)(dmc_header) + header_len_bytes;
+	payload = (const u8 *)(dmc_header) + header_len_bytes;
 	memcpy(csr->dmc_payload, payload, payload_size);
 
 	return header_len_bytes + payload_size;
@@ -532,7 +532,7 @@ parse_csr_fw_package(struct intel_csr *csr,
 		num_entries = max_entries;
 
 	fw_info = (const struct intel_fw_info *)
-		((u8 *)package_header + sizeof(*package_header));
+		((const u8 *)package_header + sizeof(*package_header));
 	dmc_offset = find_dmc_fw_offset(fw_info, num_entries, si,
 					package_header->header_ver);
 	if (dmc_offset == CSR_DEFAULT_FW_OFFSET) {
@@ -642,7 +642,8 @@ static void csr_load_work_fn(struct work_struct *work)
 	dev_priv = container_of(work, typeof(*dev_priv), csr.work);
 	csr = &dev_priv->csr;
 
-	request_firmware(&fw, dev_priv->csr.fw_path, &dev_priv->drm.pdev->dev);
+	request_firmware(&fw, dev_priv->csr.fw_path,
+	    pci_dev_dev(dev_priv->drm.pdev));
 	parse_csr_fw(dev_priv, fw);
 
 	if (dev_priv->csr.dmc_payload) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: uuid.h,v 1.3 2021/12/19 11:36:57 riastradh Exp $	*/
+/*	$NetBSD: uuid.h,v 1.4 2021/12/19 11:38:04 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -31,6 +31,32 @@
 
 #ifndef _LINUX_UUID_H_
 #define _LINUX_UUID_H_
+
+typedef struct {
+	unsigned char guid_bytes[16];
+} guid_t;
+
+#define	GUID_INIT(x, y, z, v0, v1, v2, v3, v4, v5, v6, v7) ((guid_t)	      \
+{									      \
+	.guid_bytes = {							      \
+		[0] = (x) & 0xff,					      \
+		[1] = ((x) >> 8) & 0xff,				      \
+		[2] = ((x) >> 16) & 0xff,				      \
+		[3] = ((x) >> 24) & 0xff,				      \
+		[4] = (y) & 0xff,					      \
+		[5] = ((y) >> 8) & 0xff,				      \
+		[6] = (z) & 0xff,					      \
+		[7] = ((z) >> 8) & 0xff,				      \
+		[8] = (v0),						      \
+		[9] = (v1),						      \
+		[10] = (v2),						      \
+		[11] = (v3),						      \
+		[12] = (v4),						      \
+		[13] = (v5),						      \
+		[14] = (v6),						      \
+		[15] = (v7),						      \
+	}								      \
+})
 
 #define	UUID_STRING_LEN		36
 

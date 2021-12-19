@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_pci.c,v 1.18 2021/12/19 11:09:48 riastradh Exp $	*/
+/*	$NetBSD: linux_pci.c,v 1.19 2021/12/19 11:38:04 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_pci.c,v 1.18 2021/12/19 11:09:48 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_pci.c,v 1.19 2021/12/19 11:38:04 riastradh Exp $");
 
 #if NACPICA > 0
 #include <dev/acpi/acpivar.h>
@@ -447,6 +447,14 @@ pci_get_class(uint32_t class_subclass_shifted __unused, struct pci_dev *from)
 	linux_pci_dev_init(pdev, NULL, NULL, &pa, NBPCI_KLUDGE_GET_MUMBLE);
 
 	return pdev;
+}
+
+int
+pci_dev_present(const struct pci_device_id *ids)
+{
+
+	/* XXX implement me -- pci_find_device doesn't pass a cookie */
+	return 0;
 }
 
 void

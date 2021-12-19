@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_sideband.h,v 1.2 2021/12/18 23:45:29 riastradh Exp $	*/
+/*	$NetBSD: intel_sideband.h,v 1.3 2021/12/19 11:38:04 riastradh Exp $	*/
 
 /* SPDX-License-Identifier: MIT */
 
@@ -7,6 +7,9 @@
 
 #include <linux/bitops.h>
 #include <linux/types.h>
+
+#include <sys/file.h>
+#define	pipe	pipe_drmhack	/* see intel_display.h */
 
 struct drm_i915_private;
 enum pipe;

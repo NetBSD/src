@@ -1,4 +1,4 @@
-/*	$NetBSD: workqueue.h,v 1.23 2021/12/19 11:10:17 riastradh Exp $	*/
+/*	$NetBSD: workqueue.h,v 1.24 2021/12/19 11:38:03 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013, 2018 The NetBSD Foundation, Inc.
@@ -59,6 +59,7 @@
 #define	queue_work			linux_queue_work
 #define	schedule_delayed_work		linux_schedule_delayed_work
 #define	schedule_work			linux_schedule_work
+#define	system_highpri_wq		linux_system_highpri_wq
 #define	system_long_wq			linux_system_long_wq
 #define	system_power_efficient_wq	linux_system_power_efficient_wq
 #define	system_unbound_wq		linux_system_unbound_wq
@@ -95,16 +96,19 @@ struct rcu_work {
 #define	WQ_MEM_RECLAIM		__BIT(2)
 #define	WQ_UNBOUND		__BIT(3)
 
+#define	WQ_UNBOUND_MAX_ACTIVE	0
+
 static inline struct delayed_work *
 to_delayed_work(struct work_struct *work)
 {
 	return container_of(work, struct delayed_work, work);
 }
 
-extern struct workqueue_struct	*system_wq;
+extern struct workqueue_struct	*system_highpri_wq;
 extern struct workqueue_struct	*system_long_wq;
 extern struct workqueue_struct	*system_power_efficient_wq;
 extern struct workqueue_struct	*system_unbound_wq;
+extern struct workqueue_struct	*system_wq;
 
 int	linux_workqueue_init(void);
 void	linux_workqueue_fini(void);

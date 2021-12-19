@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_breadcrumbs.c,v 1.3 2021/12/19 11:03:57 riastradh Exp $	*/
+/*	$NetBSD: intel_breadcrumbs.c,v 1.4 2021/12/19 11:38:04 riastradh Exp $	*/
 
 /*
  * Copyright © 2015 Intel Corporation
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intel_breadcrumbs.c,v 1.3 2021/12/19 11:03:57 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intel_breadcrumbs.c,v 1.4 2021/12/19 11:38:04 riastradh Exp $");
 
 #include <linux/kthread.h>
 #include <trace/events/dma_fence.h>
@@ -35,6 +35,8 @@ __KERNEL_RCSID(0, "$NetBSD: intel_breadcrumbs.c,v 1.3 2021/12/19 11:03:57 riastr
 #include "i915_trace.h"
 #include "intel_gt_pm.h"
 #include "intel_gt_requests.h"
+
+#include <linux/nbsd-namespace.h>
 
 static void irq_enable(struct intel_engine_cs *engine)
 {
@@ -380,8 +382,9 @@ void intel_engine_print_breadcrumbs(struct intel_engine_cs *engine,
 	spin_lock_irq(&b->irq_lock);
 	list_for_each_entry(ce, &b->signalers, signal_link) {
 		list_for_each_entry(rq, &ce->signals, signal_link) {
-			drm_printf(p, "\t[%llx:%llx%s] @ %dms\n",
-				   rq->fence.context, rq->fence.seqno,
+			drm_printf(p, "\t[%"PRIx64":%"PRIx64"%s] @ %dms\n",
+				   (uint64_t)rq->fence.context,
+				   (uint64_t)rq->fence.seqno,
 				   i915_request_completed(rq) ? "!" :
 				   i915_request_started(rq) ? "*" :
 				   "",

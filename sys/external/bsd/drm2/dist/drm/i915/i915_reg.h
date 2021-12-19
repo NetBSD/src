@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_reg.h,v 1.17 2021/12/19 11:14:16 riastradh Exp $	*/
+/*	$NetBSD: i915_reg.h,v 1.18 2021/12/19 11:38:04 riastradh Exp $	*/
 
 /* Copyright 2003 Tungsten Graphics, Inc., Cedar Park, Texas.
  * All Rights Reserved.
@@ -29,6 +29,7 @@
 
 #include <linux/bitfield.h>
 #include <linux/bits.h>
+#include <linux/types.h>
 
 /**
  * DOC: The i915 register macro definition style guide
