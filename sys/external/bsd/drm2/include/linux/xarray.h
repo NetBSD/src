@@ -1,4 +1,4 @@
-/*	$NetBSD: xarray.h,v 1.5 2021/12/19 11:00:10 riastradh Exp $	*/
+/*	$NetBSD: xarray.h,v 1.6 2021/12/19 11:27:04 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -51,6 +51,8 @@ struct xa_limit {
 	for ((INDEX) = 0, (ENTRY) = xa_find((XA), &(INDEX), ULONG_MAX, 0);    \
 		(ENTRY) != NULL;					      \
 		(ENTRY) = xa_find_after((XA), &(INDEX), ULONG_MAX, 0))
+
+#define	XA_FLAGS_ALLOC	0
 
 #define	xa_alloc	linux_xa_alloc
 #define	xa_erase	linux_xa_erase
