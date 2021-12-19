@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_dma_resv.c,v 1.17 2021/12/19 12:31:34 riastradh Exp $	*/
+/*	$NetBSD: linux_dma_resv.c,v 1.18 2021/12/19 12:32:53 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_dma_resv.c,v 1.17 2021/12/19 12:31:34 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_dma_resv.c,v 1.18 2021/12/19 12:32:53 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/poll.h>
@@ -300,10 +300,10 @@ dma_resv_get_list(struct dma_resv *robj)
 }
 
 /*
- * dma_resv_reserve_shared(robj)
+ * dma_resv_reserve_shared(robj, num_fences)
  *
- *	Reserve space in robj to add a shared fence.  To be used only
- *	once before calling dma_resv_add_shared_fence.
+ *	Reserve space in robj to add num_fences shared fences.  To be
+ *	used only once before calling dma_resv_add_shared_fence.
  *
  *	Caller must have robj locked.
  *
@@ -317,7 +317,6 @@ dma_resv_reserve_shared(struct dma_resv *robj, unsigned int num_fences)
 	uint32_t n, nalloc;
 
 	KASSERT(dma_resv_held(robj));
-	KASSERT(num_fences == 1);
 
 	list = robj->fence;
 	prealloc = robj->robj_prealloc;
@@ -325,18 +324,18 @@ dma_resv_reserve_shared(struct dma_resv *robj, unsigned int num_fences)
 	/* If there's an existing list, check it for space.  */
 	if (list) {
 		/* If there's too many already, give up.  */
-		if (list->shared_count == UINT32_MAX)
+		if (list->shared_count > UINT32_MAX - num_fences)
 			return -ENOMEM;
 
-		/* Add one more. */
-		n = list->shared_count + 1;
+		/* Add some more. */
+		n = list->shared_count + num_fences;
 
 		/* If there's enough for one more, we're done.  */
 		if (n <= list->shared_max)
 			return 0;
 	} else {
-		/* No list already.  We need space for 1.  */
-		n = 1;
+		/* No list already.  We need space for num_fences.  */
+		n = num_fences;
 	}
 
 	/* If not, maybe there's a preallocated list ready.  */
