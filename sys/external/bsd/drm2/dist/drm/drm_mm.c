@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_mm.c,v 1.8 2021/12/19 01:51:27 riastradh Exp $	*/
+/*	$NetBSD: drm_mm.c,v 1.9 2021/12/19 11:00:36 riastradh Exp $	*/
 
 /**************************************************************************
  *
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_mm.c,v 1.8 2021/12/19 01:51:27 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_mm.c,v 1.9 2021/12/19 11:00:36 riastradh Exp $");
 
 #include <linux/export.h>
 #include <linux/interval_tree_generic.h>
@@ -162,8 +162,9 @@ INTERVAL_TREE_DEFINE(struct drm_mm_node, rb,
 		     START, LAST, static inline, drm_mm_interval_tree)
 
 struct drm_mm_node *
-__drm_mm_interval_first(const struct drm_mm *mm, u64 start, u64 last)
+__drm_mm_interval_first(const struct drm_mm *mm_const, u64 start, u64 last)
 {
+	struct drm_mm *mm = __UNCONST(mm_const);
 	return drm_mm_interval_tree_iter_first((struct rb_root_cached *)&mm->interval_tree,
 					       start, last) ?: (struct drm_mm_node *)&mm->head_node;
 }
@@ -217,7 +218,44 @@ static void drm_mm_interval_tree_add_node(struct drm_mm_node *hole_node,
 				   &drm_mm_interval_tree_augment);
 }
 
-#ifndef __NetBSD__
+#ifdef __NetBSD__
+
+static int
+compare_hole_addrs(void *cookie, const void *va, const void *vb)
+{
+	const struct drm_mm_node *a = va, *b = vb;
+	const u64 aa = __drm_mm_hole_node_start(a);
+	const u64 ba = __drm_mm_hole_node_start(b);
+
+	if (aa < ba)
+		return -1;
+	if (aa > ba)
+		return +1;
+	return 0;
+}
+
+static int
+compare_hole_addr_key(void *cookie, const void *vn, const void *vk)
+{
+	const struct drm_mm_node *n = vn;
+	const u64 a = __drm_mm_hole_node_start(n);
+	const u64 *k = vk;
+
+	if (a < *k)
+		return -1;
+	if (a > *k)
+		return +1;
+	return 0;
+}
+
+static const rb_tree_ops_t holes_addr_rb_ops = {
+	.rbto_compare_nodes = compare_hole_addrs,
+	.rbto_compare_key = compare_hole_addr_key,
+	.rbto_node_offset = offsetof(struct drm_mm_node, rb_hole_addr),
+};
+
+#else
+
 #define RB_INSERT(root, member, expr) do { \
 	struct rb_node **link = &root.rb_node, *rb = NULL; \
 	u64 x = expr(node); \
@@ -231,6 +269,7 @@ static void drm_mm_interval_tree_add_node(struct drm_mm_node *hole_node,
 	rb_link_node(&node->member, rb, link); \
 	rb_insert_color(&node->member, &root); \
 } while (0)
+
 #endif
 
 #define HOLE_SIZE(NODE) ((NODE)->hole_size)
@@ -241,9 +280,45 @@ static u64 rb_to_hole_size(struct rb_node *rb)
 	return rb_entry(rb, struct drm_mm_node, rb_hole_size)->hole_size;
 }
 
+static int
+compare_hole_sizes(void *cookie, const void *va, const void *vb)
+{
+	const struct drm_mm_node *a = va, *b = vb;
+
+	if (a->hole_size < b->hole_size)
+		return -1;
+	if (a->hole_size > b->hole_size)
+		return +1;
+	return 0;
+}
+
+static int
+compare_hole_size_key(void *cookie, const void *vn, const void *vk)
+{
+	const struct drm_mm_node *n = vn;
+	const u64 *k = vk;
+
+	if (n->hole_size < *k)
+		return -1;
+	if (n->hole_size > *k)
+		return +1;
+	return 0;
+}
+
+static const rb_tree_ops_t holes_size_rb_ops = {
+	.rbto_compare_nodes = compare_hole_sizes,
+	.rbto_compare_key = compare_hole_size_key,
+	.rbto_node_offset = offsetof(struct drm_mm_node, rb_hole_size),
+};
+
 static void insert_hole_size(struct rb_root_cached *root,
 			     struct drm_mm_node *node)
 {
+#ifdef __NetBSD__
+	struct drm_mm_node *collision __diagused;
+	collision = rb_tree_insert_node(&root->rb_root.rbr_tree, node);
+	KASSERT(collision == node);
+#else
 	struct rb_node **link = &root->rb_root.rb_node, *rb = NULL;
 	u64 x = node->hole_size;
 	bool first = true;
@@ -260,6 +335,7 @@ static void insert_hole_size(struct rb_root_cached *root,
 
 	rb_link_node(&node->rb_hole_size, rb, link);
 	rb_insert_color_cached(&node->rb_hole_size, root, first);
+#endif
 }
 
 static void add_hole(struct drm_mm_node *node)
@@ -272,8 +348,9 @@ static void add_hole(struct drm_mm_node *node)
 
 	insert_hole_size(&mm->holes_size, node);
 #ifdef __NetBSD__
-	struct rb_node *collision __diagused;
-	collision = rb_tree_insert_node(&mm->holes_addr
+	struct drm_mm_node *collision __diagused;
+	collision = rb_tree_insert_node(&mm->holes_addr, node);
+	KASSERT(collision == node);
 #else
 	RB_INSERT(mm->holes_addr, rb_hole_addr, HOLE_ADDR);
 #endif
@@ -381,13 +458,25 @@ next_hole(struct drm_mm *mm,
 	switch (mode) {
 	default:
 	case DRM_MM_INSERT_BEST:
+#ifdef __NetBSD__
+		return RB_TREE_NEXT(&mm->holes_size.rb_root.rbr_tree, node);
+#else
 		return rb_hole_size_to_node(rb_prev(&node->rb_hole_size));
+#endif
 
 	case DRM_MM_INSERT_LOW:
+#ifdef __NetBSD__
+		return RB_TREE_NEXT(&mm->holes_addr.rbr_tree, node);
+#else
 		return rb_hole_addr_to_node(rb_next(&node->rb_hole_addr));
+#endif
 
 	case DRM_MM_INSERT_HIGH:
+#ifdef __NetBSD__
+		return RB_TREE_PREV(&mm->holes_addr.rbr_tree, node);
+#else
 		return rb_hole_addr_to_node(rb_prev(&node->rb_hole_addr));
+#endif
 
 	case DRM_MM_INSERT_EVICT:
 		node = list_next_entry(node, hole_stack);
@@ -929,9 +1018,15 @@ void drm_mm_init(struct drm_mm *mm, u64 start, u64 size)
 	mm->color_adjust = NULL;
 
 	INIT_LIST_HEAD(&mm->hole_stack);
+#ifdef __NetBSD__
+	drm_mm_interval_tree_init(&mm->interval_tree);
+	rb_tree_init(&mm->holes_size.rb_root.rbr_tree, &holes_size_rb_ops);
+	rb_tree_init(&mm->holes_addr.rbr_tree, &holes_addr_rb_ops);
+#else
 	mm->interval_tree = RB_ROOT_CACHED;
 	mm->holes_size = RB_ROOT_CACHED;
 	mm->holes_addr = RB_ROOT;
+#endif
 
 	/* Clever trick to avoid a special case in the free hole tracking. */
 	INIT_LIST_HEAD(&mm->head_node.node_list);
@@ -986,14 +1081,14 @@ void drm_mm_print(const struct drm_mm *mm, struct drm_printer *p)
 	total_free += drm_mm_dump_hole(p, &mm->head_node);
 
 	drm_mm_for_each_node(entry, mm) {
-		drm_printf(p, "%#018llx-%#018llx: %llu: used\n", entry->start,
+		drm_printf(p, "%#018llx-%#018llx: %"PRIu64": used\n", entry->start,
 			   entry->start + entry->size, entry->size);
 		total_used += entry->size;
 		total_free += drm_mm_dump_hole(p, entry);
 	}
 	total = total_free + total_used;
 
-	drm_printf(p, "total: %llu, used %llu free %llu\n", total,
+	drm_printf(p, "total: %"PRIu64", used %"PRIu64" free %"PRIu64"\n", total,
 		   total_used, total_free);
 }
 EXPORT_SYMBOL(drm_mm_print);
