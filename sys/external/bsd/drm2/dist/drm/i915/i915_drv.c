@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_drv.c,v 1.23 2021/12/19 10:25:00 riastradh Exp $	*/
+/*	$NetBSD: i915_drv.c,v 1.24 2021/12/19 10:25:15 riastradh Exp $	*/
 
 /* i915_drv.c -- i830,i845,i855,i865,i915 driver -*- linux-c -*-
  */
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_drv.c,v 1.23 2021/12/19 10:25:00 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_drv.c,v 1.24 2021/12/19 10:25:15 riastradh Exp $");
 
 #include <linux/acpi.h>
 #include <linux/device.h>
@@ -308,7 +308,11 @@ static int i915_driver_modeset_probe(struct drm_i915_private *i915)
 		goto out;
 #endif
 
+#ifdef __NetBSD__
+	intel_register_dsm_handler(i915);
+#else
 	intel_register_dsm_handler();
+#endif
 
 	ret = i915_switcheroo_register(i915);
 	if (ret)
