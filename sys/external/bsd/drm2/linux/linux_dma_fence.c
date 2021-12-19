@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_dma_fence.c,v 1.32 2021/12/19 12:34:16 riastradh Exp $	*/
+/*	$NetBSD: linux_dma_fence.c,v 1.33 2021/12/19 12:34:58 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_dma_fence.c,v 1.32 2021/12/19 12:34:16 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_dma_fence.c,v 1.33 2021/12/19 12:34:58 riastradh Exp $");
 
 #include <sys/atomic.h>
 #include <sys/condvar.h>
@@ -909,6 +909,8 @@ dma_fence_wait(struct dma_fence *fence, bool intr)
 		ret = dma_fence_default_wait(fence, intr,
 		    MAX_SCHEDULE_TIMEOUT);
 	KASSERT(ret != 0);
+	KASSERTMSG(ret == -ERESTARTSYS || ret == MAX_SCHEDULE_TIMEOUT,
+	    "ret=%ld", ret);
 
 	return (ret < 0 ? ret : 0);
 }
