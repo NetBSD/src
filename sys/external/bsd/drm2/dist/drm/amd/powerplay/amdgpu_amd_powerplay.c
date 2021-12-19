@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu_amd_powerplay.c,v 1.2 2021/12/18 23:45:26 riastradh Exp $	*/
+/*	$NetBSD: amdgpu_amd_powerplay.c,v 1.3 2021/12/19 10:59:02 riastradh Exp $	*/
 
 /*
  * Copyright 2015 Advanced Micro Devices, Inc.
@@ -23,7 +23,7 @@
  *
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdgpu_amd_powerplay.c,v 1.2 2021/12/18 23:45:26 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdgpu_amd_powerplay.c,v 1.3 2021/12/19 10:59:02 riastradh Exp $");
 
 #include "pp_debug.h"
 #include <linux/types.h>
@@ -37,6 +37,7 @@ __KERNEL_RCSID(0, "$NetBSD: amdgpu_amd_powerplay.c,v 1.2 2021/12/18 23:45:26 ria
 #include "amdgpu.h"
 #include "hwmgr.h"
 
+#include <linux/nbsd-namespace.h>
 
 static const struct amd_pm_funcs pp_dpm_funcs;
 
@@ -655,7 +656,7 @@ static int pp_dpm_get_pp_table(void *handle, char **table)
 		return -EINVAL;
 
 	mutex_lock(&hwmgr->smu_lock);
-	*table = (char *)hwmgr->soft_pp_table;
+	*table = __UNCONST(hwmgr->soft_pp_table);
 	size = hwmgr->soft_pp_table_size;
 	mutex_unlock(&hwmgr->smu_lock);
 	return size;

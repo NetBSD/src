@@ -1,10 +1,10 @@
-/*	$NetBSD: amdgpu_dc_link_hwss.c,v 1.2 2021/12/18 23:45:02 riastradh Exp $	*/
+/*	$NetBSD: amdgpu_dc_link_hwss.c,v 1.3 2021/12/19 10:59:01 riastradh Exp $	*/
 
 /* Copyright 2015 Advanced Micro Devices, Inc. */
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdgpu_dc_link_hwss.c,v 1.2 2021/12/18 23:45:02 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdgpu_dc_link_hwss.c,v 1.3 2021/12/19 10:59:01 riastradh Exp $");
 
 #include "dm_services.h"
 #include "dc.h"
@@ -294,7 +294,7 @@ void dp_set_hw_lane_settings(
 void dp_set_hw_test_pattern(
 	struct dc_link *link,
 	enum dp_test_pattern test_pattern,
-	uint8_t *custom_pattern,
+	const uint8_t *custom_pattern,
 	uint32_t custom_pattern_size)
 {
 	struct encoder_set_dp_phy_pattern_param pattern_param = {0};
@@ -334,8 +334,10 @@ void dp_retrain_link_dp_test(struct dc_link *link,
 			dp_receiver_power_ctrl(link, false);
 
 			link->dc->hwss.disable_stream(&pipes[i]);
+#ifndef __NetBSD__		/* XXX amdgpu audio */
 			if ((&pipes[i])->stream_res.audio && !link->dc->debug.az_endpoint_mute_only)
 				(&pipes[i])->stream_res.audio->funcs->az_disable((&pipes[i])->stream_res.audio);
+#endif
 
 			link->link_enc->funcs->disable_output(
 					link->link_enc,
@@ -357,6 +359,7 @@ void dp_retrain_link_dp_test(struct dc_link *link,
 			link->dc->hwss.unblank_stream(&pipes[i],
 					link_setting);
 
+#ifndef __NetBSD__		/* XXX amdgpu audio */
 			if (pipes[i].stream_res.audio) {
 				/* notify audio driver for
 				 * audio modes of monitor */
@@ -370,6 +373,7 @@ void dp_retrain_link_dp_test(struct dc_link *link,
 				audio_mute_control(
 					pipes[i].stream_res.stream_enc, false);
 			}
+#endif
 		}
 	}
 }

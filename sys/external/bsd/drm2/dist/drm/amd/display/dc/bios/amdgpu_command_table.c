@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu_command_table.c,v 1.2 2021/12/18 23:45:00 riastradh Exp $	*/
+/*	$NetBSD: amdgpu_command_table.c,v 1.3 2021/12/19 10:59:01 riastradh Exp $	*/
 
 /*
  * Copyright 2012-15 Advanced Micro Devices, Inc.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdgpu_command_table.c,v 1.2 2021/12/18 23:45:00 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdgpu_command_table.c,v 1.3 2021/12/19 10:59:01 riastradh Exp $");
 
 #include "dm_services.h"
 #include "amdgpu.h"
@@ -1461,7 +1461,7 @@ static enum bp_result adjust_display_pll_v2(
 	struct bp_adjust_pixel_clock_parameters *bp_params)
 {
 	enum bp_result result = BP_RESULT_FAILURE;
-	ADJUST_DISPLAY_PLL_PS_ALLOCATION params = { 0 };
+	ADJUST_DISPLAY_PLL_PS_ALLOCATION params __unused = { 0 };
 
 	/* We need to convert from KHz units into 10KHz units and then convert
 	 * output pixel clock back 10KHz-->KHz */

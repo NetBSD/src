@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu_dce110_compressor.c,v 1.2 2021/12/18 23:45:02 riastradh Exp $	*/
+/*	$NetBSD: amdgpu_dce110_compressor.c,v 1.3 2021/12/19 10:59:02 riastradh Exp $	*/
 
 /*
  * Copyright 2012-15 Advanced Micro Devices, Inc.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdgpu_dce110_compressor.c,v 1.2 2021/12/18 23:45:02 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdgpu_dce110_compressor.c,v 1.3 2021/12/19 10:59:02 riastradh Exp $");
 
 #include <linux/delay.h>
 #include <linux/slab.h>
@@ -417,6 +417,7 @@ void dce110_compressor_destroy(struct compressor **compressor)
 	*compressor = NULL;
 }
 
+static __unused
 bool dce110_get_required_compressed_surfacesize(struct fbc_input_info fbc_input_info,
 						struct fbc_requested_compressed_size size)
 {
@@ -461,6 +462,7 @@ void get_max_support_fbc_buffersize(unsigned int *max_x, unsigned int *max_y)
 }
 
 
+static __unused
 unsigned int controller_id_to_index(enum controller_id controller_id)
 {
 	unsigned int index = 0;

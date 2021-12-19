@@ -1,4 +1,4 @@
-/*	$NetBSD: fixed31_32.h,v 1.2 2021/12/18 23:45:07 riastradh Exp $	*/
+/*	$NetBSD: fixed31_32.h,v 1.3 2021/12/19 10:59:02 riastradh Exp $	*/
 
 /*
  * Copyright 2012-15 Advanced Micro Devices, Inc.
@@ -27,6 +27,8 @@
 
 #ifndef __DAL_FIXED31_32_H__
 #define __DAL_FIXED31_32_H__
+
+#include "os_types.h"
 
 #ifndef LLONG_MAX
 #define LLONG_MAX 9223372036854775807ll
@@ -530,7 +532,7 @@ static inline struct fixed31_32 dc_fixpt_truncate(struct fixed31_32 arg, unsigne
 
 	if (negative)
 		arg.value = -arg.value;
-	arg.value &= (~0LL) << (FIXED31_32_BITS_PER_FRACTIONAL_PART - frac_bits);
+	arg.value &= (~0ULL) << (FIXED31_32_BITS_PER_FRACTIONAL_PART - frac_bits);
 	if (negative)
 		arg.value = -arg.value;
 	return arg;

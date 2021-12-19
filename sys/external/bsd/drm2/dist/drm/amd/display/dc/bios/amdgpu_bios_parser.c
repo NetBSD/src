@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu_bios_parser.c,v 1.2 2021/12/18 23:45:00 riastradh Exp $	*/
+/*	$NetBSD: amdgpu_bios_parser.c,v 1.3 2021/12/19 10:59:01 riastradh Exp $	*/
 
 /*
  * Copyright 2012-15 Advanced Micro Devices, Inc.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdgpu_bios_parser.c,v 1.2 2021/12/18 23:45:00 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdgpu_bios_parser.c,v 1.3 2021/12/19 10:59:01 riastradh Exp $");
 
 #include <linux/slab.h>
 
@@ -2589,6 +2589,7 @@ static struct integrated_info *bios_parser_create_integrated_info(
 	return NULL;
 }
 
+static
 enum bp_result update_slot_layout_info(
 	struct dc_bios *dcb,
 	unsigned int i,
@@ -2693,6 +2694,7 @@ enum bp_result update_slot_layout_info(
 }
 
 
+static
 enum bp_result get_bracket_layout_record(
 	struct dc_bios *dcb,
 	unsigned int bracket_layout_id,

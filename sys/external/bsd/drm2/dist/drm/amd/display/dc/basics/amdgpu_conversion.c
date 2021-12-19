@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu_conversion.c,v 1.2 2021/12/18 23:45:00 riastradh Exp $	*/
+/*	$NetBSD: amdgpu_conversion.c,v 1.3 2021/12/19 10:59:01 riastradh Exp $	*/
 
 /*
  * Copyright 2012-15 Advanced Micro Devices, Inc.
@@ -26,7 +26,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdgpu_conversion.c,v 1.2 2021/12/18 23:45:00 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdgpu_conversion.c,v 1.3 2021/12/19 10:59:01 riastradh Exp $");
+
+#include "conversion.h"
 
 #include "dm_services.h"
 

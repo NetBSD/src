@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu_cs.c,v 1.5 2021/12/18 23:44:58 riastradh Exp $	*/
+/*	$NetBSD: amdgpu_cs.c,v 1.6 2021/12/19 10:59:01 riastradh Exp $	*/
 
 /*
  * Copyright 2008 Jerome Glisse.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdgpu_cs.c,v 1.5 2021/12/18 23:44:58 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdgpu_cs.c,v 1.6 2021/12/19 10:59:01 riastradh Exp $");
 
 #include <linux/file.h>
 #include <linux/pagemap.h>
@@ -482,8 +482,13 @@ static int amdgpu_cs_list_validate(struct amdgpu_cs_parser *p,
 		struct mm_struct *usermm;
 
 		usermm = amdgpu_ttm_tt_get_usermm(bo->tbo.ttm);
+#ifdef __NetBSD__		/* XXX amdgpu userptr */
+		if (usermm)
+			return -EPERM;
+#else
 		if (usermm && usermm != current->mm)
 			return -EPERM;
+#endif
 
 		if (amdgpu_ttm_tt_is_userptr(bo->tbo.ttm) &&
 		    lobj->user_invalidated && lobj->user_pages) {
@@ -1007,7 +1012,7 @@ static int amdgpu_syncobj_lookup_and_add_to_sync(struct amdgpu_cs_parser *p,
 
 	r = drm_syncobj_find_fence(p->filp, handle, point, flags, &fence);
 	if (r) {
-		DRM_ERROR("syncobj %u failed to find fence @ %llu (%d)!\n",
+		DRM_ERROR("syncobj %u failed to find fence @ %"PRIu64" (%d)!\n",
 			  handle, point, r);
 		return r;
 	}
@@ -1459,6 +1464,27 @@ int amdgpu_cs_fence_to_handle_ioctl(struct drm_device *dev, void *data,
 		return r;
 
 	case AMDGPU_FENCE_TO_HANDLE_GET_SYNC_FILE_FD:
+#ifdef __NetBSD__
+	   {
+		struct file *fp = NULL;
+
+		/* XXX errno NetBSD->Linux */
+		r = -fd_allocfile(&fp, &fd);
+		if (r)
+			goto out;
+		sync_file = sync_file_create(fence, fp);
+		if (sync_file == NULL)
+			goto out;
+		fd_affix(curproc, fp, fd);
+		fp = NULL;	/* consumed by sync_file */
+
+out:		if (fp) {
+			fd_abort(curproc, fp, fd);
+			fd = -1;
+		}
+		dma_fence_put(fence);
+	   }
+#else
 		fd = get_unused_fd_flags(O_CLOEXEC);
 		if (fd < 0) {
 			dma_fence_put(fence);
@@ -1473,6 +1499,7 @@ int amdgpu_cs_fence_to_handle_ioctl(struct drm_device *dev, void *data,
 		}
 
 		fd_install(fd, sync_file->file);
+#endif
 		info->out.handle = fd;
 		return 0;
 

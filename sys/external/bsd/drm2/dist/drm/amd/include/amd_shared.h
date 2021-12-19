@@ -1,4 +1,4 @@
-/*	$NetBSD: amd_shared.h,v 1.3 2021/12/18 23:45:08 riastradh Exp $	*/
+/*	$NetBSD: amd_shared.h,v 1.4 2021/12/19 10:59:02 riastradh Exp $	*/
 
 /*
  * Copyright 2015 Advanced Micro Devices, Inc.
@@ -158,7 +158,7 @@ enum amd_dpm_forced_level;
  */
 struct amd_ip_funcs {
 	/** @name: Name of IP block */
-	char *name;
+	const char *name;
 	/**
 	 * @early_init:
 	 *

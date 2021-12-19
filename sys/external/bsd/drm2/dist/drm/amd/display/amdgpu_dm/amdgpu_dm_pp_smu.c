@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu_dm_pp_smu.c,v 1.2 2021/12/18 23:45:00 riastradh Exp $	*/
+/*	$NetBSD: amdgpu_dm_pp_smu.c,v 1.3 2021/12/19 10:59:01 riastradh Exp $	*/
 
 /*
  * Copyright 2018 Advanced Micro Devices, Inc.
@@ -24,7 +24,7 @@
  * Authors: AMD
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdgpu_dm_pp_smu.c,v 1.2 2021/12/18 23:45:00 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdgpu_dm_pp_smu.c,v 1.3 2021/12/19 10:59:01 riastradh Exp $");
 
 #include <linux/string.h>
 #include <linux/acpi.h>
@@ -811,7 +811,7 @@ enum pp_smu_status pp_nv_set_hard_min_uclk_by_freq(struct pp_smu *pp, int mhz)
 }
 
 enum pp_smu_status pp_nv_set_pstate_handshake_support(
-	struct pp_smu *pp, BOOLEAN pstate_handshake_supported)
+	struct pp_smu *pp, bool pstate_handshake_supported)
 {
 	const struct dc_context *ctx = pp->dm;
 	struct amdgpu_device *adev = ctx->driver_context;
