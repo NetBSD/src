@@ -1,4 +1,4 @@
-/*	$NetBSD: gfp.h,v 1.2 2021/12/19 01:24:43 riastradh Exp $	*/
+/*	$NetBSD: gfp.h,v 1.3 2021/12/19 11:03:32 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -77,5 +77,11 @@ typedef int gfp_t;
 #define	__GFP_RETRY_MAYFAIL	__GFP_NORETRY
 
 struct page;
+
+static inline bool
+gfpflags_allow_blocking(gfp_t gfp)
+{
+	return (gfp & (__GFP_WAIT|__GFP_NORETRY)) == __GFP_WAIT;
+}
 
 #endif	/* _LINUX_GFP_H_ */
