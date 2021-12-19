@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_gem_context.c,v 1.3 2021/12/19 01:24:25 riastradh Exp $	*/
+/*	$NetBSD: i915_gem_context.c,v 1.4 2021/12/19 11:27:20 riastradh Exp $	*/
 
 /*
  * SPDX-License-Identifier: MIT
@@ -67,10 +67,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_gem_context.c,v 1.3 2021/12/19 01:24:25 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_gem_context.c,v 1.4 2021/12/19 11:27:20 riastradh Exp $");
 
 #include <linux/log2.h>
 #include <linux/nospec.h>
+
+#include <asm/uaccess.h>
 
 #include <drm/i915_drm.h>
 
@@ -86,6 +88,8 @@ __KERNEL_RCSID(0, "$NetBSD: i915_gem_context.c,v 1.3 2021/12/19 01:24:25 riastra
 #include "i915_globals.h"
 #include "i915_trace.h"
 #include "i915_user_extensions.h"
+
+#include <linux/nbsd-namespace.h>
 
 #define ALL_L3_SLICES(dev) (1 << NUM_L3_SLICES(dev)) - 1
 
@@ -317,7 +321,9 @@ static void i915_gem_context_free(struct i915_gem_context *ctx)
 	if (ctx->timeline)
 		intel_timeline_put(ctx->timeline);
 
+#ifndef __NetBSD__
 	put_pid(ctx->pid);
+#endif
 	mutex_destroy(&ctx->mutex);
 
 	kfree_rcu(ctx, rcu);
@@ -808,10 +814,11 @@ static int gem_context_register(struct i915_gem_context *ctx,
 #else
 	ctx->pid = get_task_pid(current, PIDTYPE_PID);
 #endif
-	snprintf(ctx->name, sizeof(ctx->name), "%s[%d]",
 #ifdef __NetBSD__
-		 curproc->p_comm, (int)curproc->p_pid));
+	snprintf(ctx->name, sizeof(ctx->name), "%s[%d]",
+		 curproc->p_comm, (int)curproc->p_pid);
 #else
+	snprintf(ctx->name, sizeof(ctx->name), "%s[%d]",
 		 current->comm, pid_nr(ctx->pid));
 #endif
 
@@ -2233,8 +2240,13 @@ int i915_gem_context_create_ioctl(struct drm_device *dev, void *data,
 
 	ext_data.fpriv = file->driver_priv;
 	if (client_is_banned(ext_data.fpriv)) {
+#ifdef __NetBSD__
+		DRM_DEBUG("client %s[%d] banned from creating ctx\n",
+			  curproc->p_comm, (int)curproc->p_pid);
+#else
 		DRM_DEBUG("client %s[%d] banned from creating ctx\n",
 			  current->comm, task_pid_nr(current));
+#endif
 		return -EIO;
 	}
 
