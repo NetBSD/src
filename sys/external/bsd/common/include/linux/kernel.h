@@ -1,4 +1,4 @@
-/*	$NetBSD: kernel.h,v 1.41 2021/12/19 11:14:42 riastradh Exp $	*/
+/*	$NetBSD: kernel.h,v 1.42 2021/12/19 11:33:09 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -51,6 +51,10 @@
 #define U16_MAX UINT16_MAX
 #define U32_MAX UINT32_MAX
 #define U64_MAX UINT64_MAX
+
+#define	S16_MAX	INT16_MAX
+#define	S32_MAX	INT32_MAX
+#define	S64_MAX	INT64_MAX
 
 #define	oops_in_progress	(panicstr != NULL)
 
