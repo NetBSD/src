@@ -1,4 +1,4 @@
-/*	$NetBSD: ratelimit.h,v 1.3 2021/12/19 00:59:17 riastradh Exp $	*/
+/*	$NetBSD: ratelimit.h,v 1.4 2021/12/19 01:20:08 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -36,7 +36,9 @@
 #include <sys/stdbool.h>
 #include <sys/time.h>
 
-struct linux_ratelimit {
+#define	ratelimit_state	linux_ratelimit_state
+
+struct ratelimit_state {
 	volatile unsigned	rl_lock;
 	struct timeval		rl_lasttime;
 	int			rl_curpps;
@@ -52,7 +54,7 @@ struct linux_ratelimit {
 #define	DEFAULT_RATELIMIT_BURST		10
 
 #define	DEFINE_RATELIMIT_STATE(n, i, b)					      \
-	struct linux_ratelimit n = {					      \
+	struct ratelimit_state n = {					      \
 		.rl_lock = 0,						      \
 		.rl_lasttime = { .tv_sec = 0, .tv_usec = 0 },		      \
 		.rl_curpps = 0,						      \
@@ -60,7 +62,7 @@ struct linux_ratelimit {
 	}
 
 static inline bool
-__ratelimit(struct linux_ratelimit *r)
+__ratelimit(struct ratelimit_state *r)
 {
 	int ok;
 
