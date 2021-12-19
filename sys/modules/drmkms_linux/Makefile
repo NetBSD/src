@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.12 2019/02/17 04:05:47 rin Exp $
+# $NetBSD: Makefile,v 1.13 2021/12/19 00:27:09 riastradh Exp $
 
 #
 # At some point this needs to turn into linux.kmod and a proper home for it
@@ -21,8 +21,8 @@ KMOD=	drmkms_linux
 
 SRCS+=	linux_atomic64.c
 SRCS+=	linux_dma_buf.c
+SRCS+=	linux_dma_fence.c
 SRCS+=	linux_dmi.c
-SRCS+=	linux_fence.c
 SRCS+=	linux_i2c.c
 SRCS+=	linux_idr.c
 SRCS+=	linux_kmap.c
