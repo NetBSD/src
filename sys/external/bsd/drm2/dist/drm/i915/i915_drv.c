@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_drv.c,v 1.21 2021/12/19 01:24:25 riastradh Exp $	*/
+/*	$NetBSD: i915_drv.c,v 1.22 2021/12/19 01:53:39 riastradh Exp $	*/
 
 /* i915_drv.c -- i830,i845,i855,i865,i915 driver -*- linux-c -*-
  */
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_drv.c,v 1.21 2021/12/19 01:24:25 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_drv.c,v 1.22 2021/12/19 01:53:39 riastradh Exp $");
 
 #include <linux/acpi.h>
 #include <linux/device.h>
@@ -1967,7 +1967,6 @@ int i915_drm_resume_early(struct drm_device *dev)
 	struct pci_dev *pdev = dev_priv->drm.pdev;
 	int ret;
 
-#ifndef __NetBSD__		/* pmf handles this for us.  */
 	/*
 	 * We have a resume ordering issue with the snd-hda driver also
 	 * requiring our device to be power up. Due to the lack of a

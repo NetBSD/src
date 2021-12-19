@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_panel.c,v 1.2 2021/12/18 23:45:30 riastradh Exp $	*/
+/*	$NetBSD: intel_panel.c,v 1.3 2021/12/19 01:53:39 riastradh Exp $	*/
 
 /*
  * Copyright © 2006-2010 Intel Corporation
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intel_panel.c,v 1.2 2021/12/18 23:45:30 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intel_panel.c,v 1.3 2021/12/19 01:53:39 riastradh Exp $");
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
@@ -699,7 +699,6 @@ intel_panel_actually_set_backlight(const struct drm_connector_state *conn_state,
 	level = intel_panel_compute_brightness(connector, level);
 	panel->backlight.set(conn_state, level);
 }
-#endif
 
 /* set backlight brightness to level in range [0..max], assuming hw min is
  * respected.

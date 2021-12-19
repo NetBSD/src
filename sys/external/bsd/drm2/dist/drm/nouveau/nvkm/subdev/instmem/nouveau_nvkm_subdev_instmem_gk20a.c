@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_nvkm_subdev_instmem_gk20a.c,v 1.5 2021/12/18 23:45:40 riastradh Exp $	*/
+/*	$NetBSD: nouveau_nvkm_subdev_instmem_gk20a.c,v 1.6 2021/12/19 01:53:40 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2015, NVIDIA CORPORATION. All rights reserved.
@@ -44,7 +44,7 @@
  * goes beyond a certain threshold. At the moment this limit is 1MB.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_subdev_instmem_gk20a.c,v 1.5 2021/12/18 23:45:40 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_subdev_instmem_gk20a.c,v 1.6 2021/12/19 01:53:40 riastradh Exp $");
 
 #include "priv.h"
 
@@ -184,7 +184,6 @@ gk20a_instobj_iommu_recycle_vaddr(struct gk20a_instobj_iommu *obj)
 		   imem->vaddr_max);
 }
 
-#endif	/* __NetBSD__ */
 
 /*
  * Must be called while holding gk20a_instmem::lock
