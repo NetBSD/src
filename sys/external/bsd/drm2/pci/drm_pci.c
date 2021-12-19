@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_pci.c,v 1.44 2021/12/19 11:05:13 riastradh Exp $	*/
+/*	$NetBSD: drm_pci.c,v 1.45 2021/12/19 11:09:48 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_pci.c,v 1.44 2021/12/19 11:05:13 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_pci.c,v 1.45 2021/12/19 11:09:48 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/errno.h>
@@ -225,19 +225,4 @@ drm_pci_free_irq(struct drm_device *dev)
 	pci_intr_release(pa->pa_pc, cookie->intr_handles, 1);
 	kmem_free(cookie, sizeof(*cookie));
 	dev->irq_cookie = NULL;
-}
-
-int
-drm_pci_set_busid(struct drm_device *dev, struct drm_master *master)
-{
-	const struct pci_attach_args *const pa = &dev->pdev->pd_pa;
-
-	master->unique = kasprintf(GFP_KERNEL, "pci:%04x:%02x:%02x.%d",
-	    device_unit(device_parent(dev->dev)),
-	    pa->pa_bus, pa->pa_device, pa->pa_function);
-	if (master->unique == NULL)
-		return -ENOMEM;
-	master->unique_len = strlen(master->unique);
-
-	return 0;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_drv.c,v 1.26 2021/12/19 10:32:47 riastradh Exp $	*/
+/*	$NetBSD: i915_drv.c,v 1.27 2021/12/19 11:09:47 riastradh Exp $	*/
 
 /* i915_drv.c -- i830,i845,i855,i865,i915 driver -*- linux-c -*-
  */
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_drv.c,v 1.26 2021/12/19 10:32:47 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_drv.c,v 1.27 2021/12/19 11:09:47 riastradh Exp $");
 
 #include <linux/acpi.h>
 #include <linux/device.h>
@@ -50,7 +50,6 @@ __KERNEL_RCSID(0, "$NetBSD: i915_drv.c,v 1.26 2021/12/19 10:32:47 riastradh Exp 
 #include <drm/drm_irq.h>
 #include <drm/drm_probe_helper.h>
 #include <drm/i915_drm.h>
-#include "../drm_internal.h"	/* drm_pci_set_busid */
 
 #include "display/intel_acpi.h"
 #include "display/intel_audio.h"
