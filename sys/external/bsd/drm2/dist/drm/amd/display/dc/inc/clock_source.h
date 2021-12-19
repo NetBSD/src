@@ -1,4 +1,4 @@
-/*	$NetBSD: clock_source.h,v 1.2 2021/12/18 23:45:05 riastradh Exp $	*/
+/*	$NetBSD: clock_source.h,v 1.3 2021/12/19 11:23:17 riastradh Exp $	*/
 
 /*
  * Copyright 2012-15 Advanced Micro Devices, Inc.
@@ -169,7 +169,7 @@ struct clock_source_funcs {
 			struct pixel_clk_params *,
 			struct pll_settings *);
 	bool (*get_pixel_clk_frequency_100hz)(
-			const struct clock_source *clock_source,
+			struct clock_source *clock_source,
 			unsigned int inst,
 			unsigned int *pixel_clk_khz);
 };
