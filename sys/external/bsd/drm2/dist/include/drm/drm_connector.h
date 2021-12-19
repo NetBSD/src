@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_connector.h,v 1.3 2021/12/19 01:02:10 riastradh Exp $	*/
+/*	$NetBSD: drm_connector.h,v 1.4 2021/12/19 09:43:13 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2016 Intel Corporation
@@ -412,7 +412,7 @@ struct drm_display_info {
 	 * @color_formats. Array of size @num_bus_formats encoded using
 	 * MEDIA_BUS_FMT\_ defines shared with v4l and media drivers.
 	 */
-	const u32 *bus_formats;
+	u32 *bus_formats;
 	/**
 	 * @num_bus_formats: Size of @bus_formats array.
 	 */
