@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_pci.c,v 1.2 2021/12/18 23:45:28 riastradh Exp $	*/
+/*	$NetBSD: i915_pci.c,v 1.3 2021/12/19 01:43:51 riastradh Exp $	*/
 
 /*
  * Copyright © 2016 Intel Corporation
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_pci.c,v 1.2 2021/12/18 23:45:28 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_pci.c,v 1.3 2021/12/19 01:43:51 riastradh Exp $");
 
 #include <linux/console.h>
 #include <linux/vga_switcheroo.h>
@@ -989,12 +989,14 @@ static int i915_pci_probe(struct pci_dev *pdev, const struct pci_device_id *ent)
 	if (PCI_FUNC(pdev->devfn))
 		return -ENODEV;
 
+#ifndef __NetBSD__		/* XXX vga switcheroo */
 	/*
 	 * apple-gmux is needed on dual GPU MacBook Pro
 	 * to probe the panel if we're the inactive GPU.
 	 */
 	if (vga_switcheroo_client_probe_defer(pdev))
 		return -EPROBE_DEFER;
+#endif
 
 	err = i915_driver_probe(pdev, ent);
 	if (err)

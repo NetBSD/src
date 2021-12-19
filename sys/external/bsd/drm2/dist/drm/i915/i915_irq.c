@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_irq.c,v 1.21 2021/12/19 01:43:37 riastradh Exp $	*/
+/*	$NetBSD: i915_irq.c,v 1.22 2021/12/19 01:43:51 riastradh Exp $	*/
 
 /* i915_irq.c -- IRQ support for the I915 -*- linux-c -*-
  */
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_irq.c,v 1.21 2021/12/19 01:43:37 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_irq.c,v 1.22 2021/12/19 01:43:51 riastradh Exp $");
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
@@ -2408,7 +2408,7 @@ static inline void gen8_master_intr_enable(void __iomem * const regs)
 	raw_reg_write(regs, GEN8_MASTER_IRQ, GEN8_MASTER_IRQ_CONTROL);
 }
 
-static irqreturn_t gen8_irq_handler(int irq, void *arg)
+static irqreturn_t gen8_irq_handler(DRM_IRQ_ARGS)
 {
 	struct drm_i915_private *dev_priv = arg;
 	u32 master_ctl;
