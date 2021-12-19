@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_gtt.c,v 1.5 2021/12/19 11:12:13 riastradh Exp $	*/
+/*	$NetBSD: intel_gtt.c,v 1.6 2021/12/19 11:26:26 riastradh Exp $	*/
 
 // SPDX-License-Identifier: MIT
 /*
@@ -6,7 +6,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intel_gtt.c,v 1.5 2021/12/19 11:12:13 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intel_gtt.c,v 1.6 2021/12/19 11:26:26 riastradh Exp $");
 
 #include <linux/slab.h> /* fault-inject.h is not standalone! */
 
@@ -419,10 +419,12 @@ int setup_scratch_page(struct i915_address_space *vm, gfp_t gfp)
 
 		/* Zero the page.  */
 		ret = -bus_dmamem_map(vm->dmat, &vm->scratch_page.seg, 1,
-		    size, &kva, BUS_DMA_NOWAIT);
+		    size, &kva, BUS_DMA_NOWAIT|BUS_DMA_NOCACHE);
 		if (ret)
 			goto unload_dmamap;
 		memset(kva, 0, size);
+		bus_dmamap_sync(vm->dmat, vm->scratch_page.map, 0, size,
+		    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
 		bus_dmamem_unmap(vm->dmat, kva, size);
 
 		/* XXX Is this page guaranteed to work as a huge page?  */

@@ -1,4 +1,4 @@
-/*	$NetBSD: radeon_device.c,v 1.11 2021/12/18 23:45:43 riastradh Exp $	*/
+/*	$NetBSD: radeon_device.c,v 1.12 2021/12/19 11:26:26 riastradh Exp $	*/
 
 /*
  * Copyright 2008 Advanced Micro Devices, Inc.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radeon_device.c,v 1.11 2021/12/18 23:45:43 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radeon_device.c,v 1.12 2021/12/19 11:26:26 riastradh Exp $");
 
 #include <linux/console.h>
 #include <linux/efi.h>
@@ -839,6 +839,8 @@ int radeon_dummy_page_init(struct radeon_device *rdev)
 		goto fail3;
 
 	memset(rdev->dummy_page.rdp_addr, 0, PAGE_SIZE);
+	bus_dmamap_sync(rdev->ddev->dmat, rdev->dummy_page.rdp_map, 0,
+	    PAGE_SIZE, BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
 
 	/* Success!  */
 	rdev->dummy_page.addr = rdev->dummy_page.rdp_map->dm_segs[0].ds_addr;
