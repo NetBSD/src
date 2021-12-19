@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_dma_resv.c,v 1.5 2021/12/19 11:52:55 riastradh Exp $	*/
+/*	$NetBSD: linux_dma_resv.c,v 1.6 2021/12/19 11:53:33 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_dma_resv.c,v 1.5 2021/12/19 11:52:55 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_dma_resv.c,v 1.6 2021/12/19 11:53:33 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/poll.h>
@@ -464,7 +464,7 @@ dma_resv_add_excl_fence(struct dma_resv *robj,
 	dma_resv_write_begin(robj, &ticket);
 
 	/* Replace the fence and zero the shared count.  */
-	robj->fence_excl = fence;
+	atomic_store_release(&robj->fence_excl, fence);
 	if (old_list)
 		old_list->shared_count = 0;
 
@@ -573,7 +573,7 @@ dma_resv_add_shared_fence(struct dma_resv *robj,
 		dma_resv_write_begin(robj, &ticket);
 
 		/* Replace the list.  */
-		robj->fence = prealloc;
+		atomic_store_release(&robj->fence, prealloc);
 		robj->robj_prealloc = NULL;
 
 		/* Commit the update.  */
@@ -629,11 +629,7 @@ top:
 	dma_resv_read_begin(robj, &ticket);
 
 	/* If there is a shared list, grab it.  */
-	list = robj->fence;
-	__insn_barrier();
-	if (list) {
-		/* Make sure the content of the list has been published.  */
-		membar_datadep_consumer();
+	if ((list = atomic_load_consume(&robj->fence)) != NULL) {
 
 		/* Check whether we have a buffer.  */
 		if (shared == NULL) {
@@ -642,7 +638,6 @@ top:
 			 * one without waiting.
 			 */
 			shared_alloc = list->shared_max;
-			__insn_barrier();
 			shared = kcalloc(shared_alloc, sizeof(shared[0]),
 			    GFP_NOWAIT);
 			if (shared == NULL) {
@@ -665,7 +660,6 @@ top:
 			 * out and wait to allocate a bigger one.
 			 */
 			shared_alloc = list->shared_max;
-			__insn_barrier();
 			rcu_read_unlock();
 			kfree(shared);
 			shared = kcalloc(shared_alloc, sizeof(shared[0]),
@@ -686,12 +680,7 @@ top:
 	}
 
 	/* If there is an exclusive fence, grab it.  */
-	fence = robj->fence_excl;
-	__insn_barrier();
-	if (fence) {
-		/* Make sure the content of the fence has been published.  */
-		membar_datadep_consumer();
-	}
+	fence = atomic_load_consume(&robj->fence_excl);
 
 	/*
 	 * We are done reading from robj and list.  Validate our
@@ -770,11 +759,7 @@ top:
 	dma_resv_read_begin(src_robj, &read_ticket);
 
 	/* Get the shared list.  */
-	src_list = src_robj->fence;
-	__insn_barrier();
-	if (src_list) {
-		/* Make sure the content of the list has been published.  */
-		membar_datadep_consumer();
+	if ((src_list = atomic_load_consume(&src_robj->fence)) != NULL) {
 
 		/* Find out how long it is.  */
 		shared_count = src_list->shared_count;
@@ -808,11 +793,7 @@ top:
 	}
 
 	/* Get the exclusive fence.  */
-	fence = src_robj->fence_excl;
-	__insn_barrier();
-	if (fence != NULL) {
-		/* Make sure the content of the fence has been published.  */
-		membar_datadep_consumer();
+	if ((fence = atomic_load_consume(&src_robj->fence_excl)) != NULL) {
 
 		/*
 		 * Make sure we saw a consistent snapshot of the fence.
@@ -853,8 +834,9 @@ top:
 	dma_resv_write_begin(dst_robj, &write_ticket);
 
 	/* Replace the fences.  */
-	dst_robj->fence = dst_list;
-	dst_robj->fence_excl = fence;
+	membar_exit();
+	atomic_store_relaxed(&dst_robj->fence, dst_list);
+	atomic_store_relaxed(&dst_robj->fence_excl, fence);
 
 	/* Commit the update.  */
 	dma_resv_write_commit(dst_robj, &write_ticket);
@@ -918,11 +900,7 @@ top:
 	/* If shared is requested and there is a shared list, test it.  */
 	if (!shared)
 		goto excl;
-	list = robj->fence;
-	__insn_barrier();
-	if (list) {
-		/* Make sure the content of the list has been published.  */
-		membar_datadep_consumer();
+	if ((list = atomic_load_consume(&robj->fence)) != NULL) {
 
 		/* Find out how long it is.  */
 		shared_count = list->shared_count;
@@ -953,11 +931,7 @@ top:
 
 excl:
 	/* If there is an exclusive fence, test it.  */
-	fence = robj->fence_excl;
-	__insn_barrier();
-	if (fence) {
-		/* Make sure the content of the fence has been published.  */
-		membar_datadep_consumer();
+	if ((fence = atomic_load_consume(&robj->fence_excl)) != NULL) {
 
 		/*
 		 * Make sure we saw a consistent snapshot of the fence.
@@ -1022,11 +996,7 @@ top:
 	/* If shared is requested and there is a shared list, wait on it.  */
 	if (!shared)
 		goto excl;
-	list = robj->fence;
-	__insn_barrier();
-	if (list) {
-		/* Make sure the content of the list has been published.  */
-		membar_datadep_consumer();
+	if ((list = atomic_load_consume(&robj->fence)) != NULL) {
 
 		/* Find out how long it is.  */
 		shared_count = list->shared_count;
@@ -1056,11 +1026,7 @@ top:
 
 excl:
 	/* If there is an exclusive fence, test it.  */
-	fence = robj->fence_excl;
-	__insn_barrier();
-	if (fence) {
-		/* Make sure the content of the fence has been published.  */
-		membar_datadep_consumer();
+	if ((fence = atomic_load_consume(&robj->fence_excl)) != NULL) {
 
 		/*
 		 * Make sure we saw a consistent snapshot of the fence.
@@ -1202,11 +1168,7 @@ top:
 	/* If we want to wait for all fences, get the shared list.  */
 	if (!(events & POLLOUT))
 		goto excl;
-	list = robj->fence;
-	__insn_barrier();
-	if (list) do {
-		/* Make sure the content of the list has been published.  */
-		membar_datadep_consumer();
+	if ((list = atomic_load_consume(&robj->fence)) != NULL) do {
 
 		/* Find out how long it is.  */
 		shared_count = list->shared_count;
@@ -1277,11 +1239,7 @@ top:
 
 excl:
 	/* We always wait for at least the exclusive fence, so get it.  */
-	fence = robj->fence_excl;
-	__insn_barrier();
-	if (fence) do {
-		/* Make sure the content of the fence has been published.  */
-		membar_datadep_consumer();
+	if ((fence = atomic_load_consume(&robj->fence_excl)) != NULL) do {
 
 		/*
 		 * Make sure we saw a consistent snapshot of the fence.
