@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_ww_mutex.c,v 1.8 2021/12/19 10:38:14 riastradh Exp $	*/
+/*	$NetBSD: linux_ww_mutex.c,v 1.9 2021/12/19 11:21:20 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_ww_mutex.c,v 1.8 2021/12/19 10:38:14 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_ww_mutex.c,v 1.9 2021/12/19 11:21:20 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/atomic.h>
@@ -760,12 +760,27 @@ ww_mutex_trylock(struct ww_mutex *mutex)
 		WW_LOCKED(mutex);
 		ret = 1;
 	} else {
+		/*
+		 * It is tempting to assert that we do not hold the
+		 * mutex here, because trylock when we hold the lock
+		 * already generally indicates a bug in the design of
+		 * the code.  However, it seems that Linux relies on
+		 * this deep in ttm buffer reservation logic, so these
+		 * assertions are disabled until we find another way to
+		 * work around that or fix the bug that leads to it.
+		 *
+		 * That said: we should not be in the WW_WANTOWN state,
+		 * which happens only while we're in the ww mutex logic
+		 * waiting to acquire the lock.
+		 */
+#if 0
 		KASSERTMSG(((mutex->wwm_state != WW_OWNED) ||
 		    (mutex->wwm_u.owner != curlwp)),
 		    "locking %p against myself: %p", mutex, curlwp);
 		KASSERTMSG(((mutex->wwm_state != WW_CTX) ||
 		    (mutex->wwm_u.ctx->wwx_owner != curlwp)),
 		    "locking %p against myself: %p", mutex, curlwp);
+#endif
 		KASSERTMSG(((mutex->wwm_state != WW_WANTOWN) ||
 		    (mutex->wwm_u.ctx->wwx_owner != curlwp)),
 		    "locking %p against myself: %p", mutex, curlwp);
