@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_drv.h,v 1.43 2021/12/19 11:32:35 riastradh Exp $	*/
+/*	$NetBSD: i915_drv.h,v 1.44 2021/12/19 11:33:49 riastradh Exp $	*/
 
 /* i915_drv.h -- Private header for the I915 driver -*- linux-c -*-
  */
@@ -1322,6 +1322,11 @@ struct drm_i915_private {
 	struct mutex hdcp_comp_mutex;
 
 	I915_SELFTEST_DECLARE(struct i915_selftest_stash selftest;)
+
+#ifdef __NetBSD__
+	pci_intr_handle_t *pci_ihp;
+	void *pci_intrcookie;
+#endif
 
 	/*
 	 * NOTE: This is the dri1/ums dungeon, don't add stuff here. Your patch

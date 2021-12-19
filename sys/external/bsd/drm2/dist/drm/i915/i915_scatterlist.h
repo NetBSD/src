@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_scatterlist.h,v 1.6 2021/12/19 11:33:30 riastradh Exp $	*/
+/*	$NetBSD: i915_scatterlist.h,v 1.7 2021/12/19 11:33:49 riastradh Exp $	*/
 
 /*
  * SPDX-License-Identifier: MIT
@@ -22,11 +22,11 @@ struct sgt_iter {
 };
 
 #define	for_each_sgt_page(pp, iter, sgt)				      \
-	for ((iter)->i = 0;						      \
-	     ((iter)->i < (sgt)->sgt_npgs				      \
-		 ? ((pp) = (sgt)->sgt_pgs[(iter)->i], 1)		      \
+	for ((iter).i = 0;						      \
+	     ((iter).i < (sgt)->sgl->sg_npgs				      \
+		 ? (((pp) = (sgt)->sgl->sg_pgs[(iter).i]), 1)		      \
 		 : 0);							      \
-	     (iter)->i++)
+	     (iter).i++)
 
 static inline unsigned
 i915_sg_page_sizes(struct scatterlist *sg)
@@ -37,6 +37,18 @@ i915_sg_page_sizes(struct scatterlist *sg)
 		page_sizes |= sg->sg_dmamap->dm_segs[i].ds_len;
 
 	return page_sizes;
+}
+
+static inline unsigned
+i915_sg_segment_size(void)
+{
+	return PAGE_SIZE;
+}
+
+static inline bool
+i915_sg_trim(struct sg_table *sgt)
+{
+	return true;
 }
 
 #else
@@ -150,8 +162,8 @@ static inline unsigned int i915_sg_segment_size(void)
 	return size;
 }
 
-#endif
-
 bool i915_sg_trim(struct sg_table *orig_st);
+
+#endif
 
 #endif

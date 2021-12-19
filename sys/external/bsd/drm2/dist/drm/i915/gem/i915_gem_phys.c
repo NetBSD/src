@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_gem_phys.c,v 1.4 2021/12/19 11:33:30 riastradh Exp $	*/
+/*	$NetBSD: i915_gem_phys.c,v 1.5 2021/12/19 11:33:49 riastradh Exp $	*/
 
 /*
  * SPDX-License-Identifier: MIT
@@ -7,7 +7,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_gem_phys.c,v 1.4 2021/12/19 11:33:30 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_gem_phys.c,v 1.5 2021/12/19 11:33:49 riastradh Exp $");
 
 #include <linux/highmem.h>
 #include <linux/shmem_fs.h>
@@ -29,7 +29,7 @@ __KERNEL_RCSID(0, "$NetBSD: i915_gem_phys.c,v 1.4 2021/12/19 11:33:30 riastradh 
 static int i915_gem_object_get_pages_phys(struct drm_i915_gem_object *obj)
 {
 #ifdef __NetBSD__
-	struct uvm_object *uobj = obj->base.filp;
+	struct uvm_object *mapping = obj->base.filp;
 #else
 	struct address_space *mapping = obj->base.filp->f_mapping;
 #endif
@@ -113,24 +113,9 @@ static int i915_gem_object_get_pages_phys(struct drm_i915_gem_object *obj)
 		struct page *page;
 		void *src;
 
-#ifdef __NetBSD__
-		struct vm_page *vm_page;
-
-		/* XXX errno NetBSD->Linux */
-		ret = -uvm_obj_wirepages(uobj, i*PAGE_SIZE, (i + 1)*PAGE_SIZE,
-		    NULL);
-		if (ret)
-			goto err_st;
-		rw_enter(uobj->vmobjlock, RW_READER);
-		vm_page = uvm_pagelookup(uobj, i*PAGE_SIZE);
-		rw_exit(uobj->vmobjlock);
-		KASSERT(vm_page);
-		page = container_of(vm_page, struct page, p_vmp);
-#else
 		page = shmem_read_mapping_page(mapping, i);
 		if (IS_ERR(page))
 			goto err_st;
-#endif
 
 		src = kmap_atomic(page);
 		memcpy(dst, src, PAGE_SIZE);
@@ -138,7 +123,7 @@ static int i915_gem_object_get_pages_phys(struct drm_i915_gem_object *obj)
 		kunmap_atomic(src);
 
 #ifdef __NetBSD__
-		uvm_obj_unwirepages(uobj, i*PAGE_SIZE, (i + 1)*PAGE_SIZE);
+		uvm_obj_unwirepages(mapping, i*PAGE_SIZE, (i + 1)*PAGE_SIZE);
 #else
 		put_page(page);
 #endif
@@ -195,8 +180,7 @@ i915_gem_object_put_pages_phys(struct drm_i915_gem_object *obj,
 
 	if (obj->mm.dirty) {
 #ifdef __NetBSD__
-		struct uvm_object *uobj = obj->base.filp;
-		struct vm_page *vm_page;
+		struct uvm_object *mapping = obj->base.filp;
 #else
 		struct address_space *mapping = obj->base.filp->f_mapping;
 #endif
@@ -207,20 +191,9 @@ i915_gem_object_put_pages_phys(struct drm_i915_gem_object *obj,
 			struct page *page;
 			char *dst;
 
-#ifdef __NetBSD__
-			if (uvm_obj_wirepages(uobj, i*PAGE_SIZE,
-				(i + 1)*PAGE_SIZE, NULL) != 0)
-				continue;
-			rw_enter(uobj->vmobjlock, RW_READER);
-			vm_page = uvm_pagelookup(uobj, i*PAGE_SIZE);
-			rw_exit(uobj->vmobjlock);
-			KASSERT(vm_page);
-			page = container_of(vm_page, struct page, p_vmp);
-#else
 			page = shmem_read_mapping_page(mapping, i);
 			if (IS_ERR(page))
 				continue;
-#endif
 
 			dst = kmap_atomic(page);
 			drm_clflush_virt_range(src, PAGE_SIZE);
@@ -229,7 +202,8 @@ i915_gem_object_put_pages_phys(struct drm_i915_gem_object *obj,
 
 			set_page_dirty(page);
 #ifdef __NetBSD__
-			uvm_obj_unwirepages(uobj, i*PAGE_SIZE,
+			/* XXX mark_page_accessed */
+			uvm_obj_unwirepages(mapping, i*PAGE_SIZE,
 			    (i + 1)*PAGE_SIZE);
 #else
 			if (obj->mm.madv == I915_MADV_WILLNEED)

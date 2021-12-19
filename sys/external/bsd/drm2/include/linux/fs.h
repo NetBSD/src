@@ -1,4 +1,4 @@
-/*	$NetBSD: fs.h,v 1.6 2021/12/19 10:37:40 riastradh Exp $	*/
+/*	$NetBSD: fs.h,v 1.7 2021/12/19 11:33:49 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -38,5 +38,11 @@
 #include <linux/capability.h>
 #include <linux/err.h>
 #include <linux/wait_bit.h>
+
+static inline struct uvm_object *
+file_inode(struct uvm_object *uobj)
+{
+	return uobj;
+}
 
 #endif  /* _LINUX_FS_H_ */
