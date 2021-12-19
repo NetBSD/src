@@ -1,4 +1,4 @@
-/*	$NetBSD: platform_device.h,v 1.7 2015/10/27 13:21:18 riastradh Exp $	*/
+/*	$NetBSD: platform_device.h,v 1.8 2021/12/19 10:49:55 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -55,6 +55,21 @@ platform_device_dev(const struct platform_device *platformdev)
 {
 
 	return platformdev->pd_dev;
+}
+
+static inline const char *
+platform_device_name(const struct platform_device *platformdev)
+{
+
+	return device_xname(platformdev->pd_dev);
+}
+
+static inline struct platform_device *
+to_platform_device(device_t self)
+{
+
+	/* XXX */
+	return device_private(self);
 }
 
 #endif  /* _LINUX_PLATFORM_DEVICE_H_ */
