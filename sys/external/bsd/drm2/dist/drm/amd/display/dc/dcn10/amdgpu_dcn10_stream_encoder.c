@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu_dcn10_stream_encoder.c,v 1.2 2021/12/18 23:45:03 riastradh Exp $	*/
+/*	$NetBSD: amdgpu_dcn10_stream_encoder.c,v 1.3 2021/12/19 11:25:01 riastradh Exp $	*/
 
 /*
  * Copyright 2012-15 Advanced Micro Devices, Inc.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdgpu_dcn10_stream_encoder.c,v 1.2 2021/12/18 23:45:03 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdgpu_dcn10_stream_encoder.c,v 1.3 2021/12/19 11:25:01 riastradh Exp $");
 
 #include <linux/delay.h>
 
@@ -63,7 +63,7 @@ void enc1_update_generic_info_packet(
 	uint32_t packet_index,
 	const struct dc_info_packet *info_packet)
 {
-	uint32_t regval;
+	uint32_t regval __unused;
 	/* TODOFPGA Figure out a proper number for max_retries polling for lock
 	 * use 50 for now.
 	 */
@@ -263,8 +263,8 @@ void enc1_stream_encoder_dp_set_stream_attribute(
 	uint32_t h_back_porch;
 	uint8_t synchronous_clock = 0; /* asynchronous mode */
 	uint8_t colorimetry_bpc;
-	uint8_t dynamic_range_rgb = 0; /*full range*/
-	uint8_t dynamic_range_ycbcr = 1; /*bt709*/
+	uint8_t dynamic_range_rgb __unused = 0; /*full range*/
+	uint8_t dynamic_range_ycbcr __unused = 1; /*bt709*/
 	uint8_t dp_pixel_encoding = 0;
 	uint8_t dp_component_depth = 0;
 
@@ -1279,7 +1279,7 @@ static void enc1_se_audio_setup(
 {
 	struct dcn10_stream_encoder *enc1 = DCN10STRENC_FROM_STRENC(enc);
 
-	uint32_t speakers = 0;
+	uint32_t speakers __unused = 0;
 	uint32_t channels = 0;
 
 	ASSERT(audio_info);

@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu_dcn10_link_encoder.c,v 1.2 2021/12/18 23:45:03 riastradh Exp $	*/
+/*	$NetBSD: amdgpu_dcn10_link_encoder.c,v 1.3 2021/12/19 11:25:01 riastradh Exp $	*/
 
 /*
  * Copyright 2012-15 Advanced Micro Devices, Inc.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdgpu_dcn10_link_encoder.c,v 1.2 2021/12/18 23:45:03 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdgpu_dcn10_link_encoder.c,v 1.3 2021/12/19 11:25:01 riastradh Exp $");
 
 #include <linux/delay.h>
 #include <linux/slab.h>
@@ -1200,7 +1200,7 @@ void dcn10_link_encoder_update_mst_stream_allocation_table(
 	const struct link_mst_stream_allocation_table *table)
 {
 	struct dcn10_link_encoder *enc10 = TO_DCN10_LINK_ENC(enc);
-	uint32_t value0 = 0;
+	uint32_t value0 __unused = 0;
 	uint32_t value1 = 0;
 	uint32_t value2 = 0;
 	uint32_t slots = 0;
