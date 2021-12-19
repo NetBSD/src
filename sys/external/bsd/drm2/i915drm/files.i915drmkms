@@ -1,4 +1,4 @@
-#	$NetBSD: files.i915drmkms,v 1.45 2021/12/19 00:57:42 riastradh Exp $
+#	$NetBSD: files.i915drmkms,v 1.46 2021/12/19 01:24:26 riastradh Exp $
 
 version	20180827
 
@@ -17,9 +17,12 @@ makeoptions	i915drmkms	CPPFLAGS+="-I$S/external/bsd/drm2/i915drm"
 
 makeoptions	i915drmkms	CPPFLAGS+="-I$S/external/bsd/drm2/dist/drm/i915"
 
-makeoptions	i915drmkms	CPPFLAGS+="-DCONFIG_DRM_I915_FBDEV=1"
-makeoptions	i915drmkms	CPPFLAGS+="-DCONFIG_DRM_I915_PRELIMINARY_HW_SUPPORT=0"
 makeoptions	i915drmkms	CPPFLAGS+="-DCONFIG_DRM_FBDEV_EMULATION=1"
+makeoptions	i915drmkms	CPPFLAGS+="-DCONFIG_DRM_I915_DEBUG=1" # XXX
+makeoptions	i915drmkms	CPPFLAGS+="-DCONFIG_DRM_I915_DEBUG_GEM=1" # XXX
+makeoptions	i915drmkms	CPPFLAGS+="-DCONFIG_DRM_I915_FBDEV=1"
+makeoptions	i915drmkms	CPPFLAGS+="-DCONFIG_DRM_I915_GVT=0"
+makeoptions	i915drmkms	CPPFLAGS+="-DCONFIG_DRM_I915_PRELIMINARY_HW_SUPPORT=0"
 
 makeoptions	i915drmkms	"CWARNFLAGS.i915drmkms"+="-Wno-shadow"
 makeoptions	i915drmkms	"CWARNFLAGS.i915drmkms"+="-Wno-pointer-arith"

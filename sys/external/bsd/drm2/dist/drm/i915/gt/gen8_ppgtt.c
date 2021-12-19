@@ -1,4 +1,4 @@
-/*	$NetBSD: gen8_ppgtt.c,v 1.2 2021/12/18 23:45:30 riastradh Exp $	*/
+/*	$NetBSD: gen8_ppgtt.c,v 1.3 2021/12/19 01:24:25 riastradh Exp $	*/
 
 // SPDX-License-Identifier: MIT
 /*
@@ -6,7 +6,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gen8_ppgtt.c,v 1.2 2021/12/18 23:45:30 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gen8_ppgtt.c,v 1.3 2021/12/19 01:24:25 riastradh Exp $");
 
 #include <linux/log2.h>
 
@@ -384,6 +384,25 @@ gen8_ppgtt_insert_pte(struct i915_ppgtt *ppgtt,
 	pd = i915_pd_entry(pdp, gen8_pd_index(idx, 2));
 	vaddr = kmap_atomic_px(i915_pt_entry(pd, gen8_pd_index(idx, 1)));
 	do {
+#ifdef __NetBSD__
+		KASSERT(iter->seg < iter->map->dm_nsegs);
+		KASSERT((iter->off & (I915_GTT_PAGE_SIZE - 1)) == 0);
+		const bus_dma_segment_t *seg = &iter->map->dm_segs[iter->seg];
+		KASSERT((seg->ds_addr & (I915_GTT_PAGE_SIZE - 1)) == 0);
+		KASSERT((seg->ds_len & (I915_GTT_PAGE_SIZE - 1)) == 0);
+		KASSERT(iter->off <= seg->ds_len - I915_GTT_PAGE_SIZE);
+		vaddr[idx->pte] = pte_encode | (seg->ds_addr + iter->off);
+		iter->off += I915_GTT_PAGE_SIZE;
+		if (iter->off >= seg->ds_len) {
+			GEM_BUG_ON(iter->off > seg->ds_len);
+			iter->off = 0;
+			if (++iter->seg >= iter->map->dm_nsegs) {
+				GEM_BUG_ON(iter->seg > iter->map->dm_nsegs);
+				ret = false;
+				break;
+			}
+		}
+#else
 		GEM_BUG_ON(iter->sg->length < I915_GTT_PAGE_SIZE);
 		vaddr[gen8_pd_index(idx, 0)] = pte_encode | iter->dma;
 
@@ -398,6 +417,7 @@ gen8_ppgtt_insert_pte(struct i915_ppgtt *ppgtt,
 			iter->dma = sg_dma_address(iter->sg);
 			iter->max = iter->dma + iter->sg->length;
 		}
+#endif
 
 		if (gen8_pd_index(++idx, 0) == 0) {
 			if (gen8_pd_index(idx, 1) == 0) {
@@ -424,7 +444,11 @@ static void gen8_ppgtt_insert_huge(struct i915_vma *vma,
 {
 	const gen8_pte_t pte_encode = gen8_pte_encode(0, cache_level, flags);
 	u64 start = vma->node.start;
+#ifdef __NetBSD__
+	bus_size_t rem = iter->map->dm_segs[iter->seg].ds_len - iter->off;
+#else
 	dma_addr_t rem = iter->sg->length;
+#endif
 
 	GEM_BUG_ON(!i915_vm_is_4lvl(vma->vm));
 
@@ -440,7 +464,13 @@ static void gen8_ppgtt_insert_huge(struct i915_vma *vma,
 		u16 index;
 
 		if (vma->page_sizes.sg & I915_GTT_PAGE_SIZE_2M &&
+#ifdef __NetBSD__
+		    IS_ALIGNED((iter->map->dm_segs[iter->seg].ds_addr +
+			    iter->off),
+			I915_GTT_PAGE_SIZE_2M) &&
+#else
 		    IS_ALIGNED(iter->dma, I915_GTT_PAGE_SIZE_2M) &&
+#endif
 		    rem >= I915_GTT_PAGE_SIZE_2M &&
 		    !__gen8_pte_index(start, 0)) {
 			index = __gen8_pte_index(start, 1);
@@ -457,7 +487,13 @@ static void gen8_ppgtt_insert_huge(struct i915_vma *vma,
 
 			if (!index &&
 			    vma->page_sizes.sg & I915_GTT_PAGE_SIZE_64K &&
+#ifdef __NetBSD__
+			    IS_ALIGNED((iter->map->dm_segs[iter->seg].ds_addr
+				    + iter->off),
+				I915_GTT_PAGE_SIZE_64K) &&
+#else
 			    IS_ALIGNED(iter->dma, I915_GTT_PAGE_SIZE_64K) &&
+#endif
 			    (IS_ALIGNED(rem, I915_GTT_PAGE_SIZE_64K) ||
 			     rem >= (I915_PDES - index) * I915_GTT_PAGE_SIZE))
 				maybe_64K = __gen8_pte_index(start, 1);
@@ -466,10 +502,41 @@ static void gen8_ppgtt_insert_huge(struct i915_vma *vma,
 		}
 
 		do {
+#ifdef __NetBSD__
+			GEM_BUG_ON((iter->map->ds_seg[iter->seg].ds_len -
+				iter->off) < page_size);
+#else
 			GEM_BUG_ON(iter->sg->length < page_size);
+#endif
 			vaddr[index++] = encode | iter->dma;
 
 			start += page_size;
+#ifdef __NetBSD__
+			iter->off += page_size;
+			rem -= page_size;
+			if (iter->off >= iter->map->ds_seg[iter->seg].ds_len) {
+				GEM_BUG_ON(iter->off >
+				    iter->map->ds_seg[iter->seg].ds_len);
+				iter->off = 0;
+				if (++iter->seg >= iter->map->dm_nsegs) {
+					GEM_BUG_ON(iter->seg >
+					    iter->map->dm_nsegs);
+					break;
+				}
+				const bus_dma_segment_t *seg =
+				    &iter->map->dm_segs[iter->seg];
+				if (maybe_64K && index < I915_PDES &&
+				    !(IS_ALIGNED((seg->ds_addr + iter->off),
+					    I915_GTT_PAGE_SIZE_64K) &&
+					(IS_ALIGNED(rem,
+					    I915_GEM_PAGE_SIZE_64K) ||
+					    rem >= ((I915_PDES - index) * I915_GTT_PAGE_SIZE))))
+					maybe_64K = false;
+				if (unlikely(!IS_ALIGNED((seg->ds_addr +
+						iter->off), page_size)))
+					break;
+			}
+#else
 			iter->dma += page_size;
 			rem -= page_size;
 			if (iter->dma >= iter->max) {
@@ -490,6 +557,7 @@ static void gen8_ppgtt_insert_huge(struct i915_vma *vma,
 				if (unlikely(!IS_ALIGNED(iter->dma, page_size)))
 					break;
 			}
+#endif
 		} while (rem >= page_size && index < I915_PDES);
 
 		kunmap_atomic(vaddr);
@@ -503,7 +571,12 @@ static void gen8_ppgtt_insert_huge(struct i915_vma *vma,
 		if (maybe_64K != -1 &&
 		    (index == I915_PDES ||
 		     (i915_vm_has_scratch_64K(vma->vm) &&
-		      !iter->sg && IS_ALIGNED(vma->node.start +
+#ifdef __NetBSD__
+		      iter->seg == iter->map->dm_nsegs &&
+#else
+		      !iter->sg &&
+#endif
+		      IS_ALIGNED(vma->node.start +
 					      vma->node.size,
 					      I915_GTT_PAGE_SIZE_2M)))) {
 			vaddr = kmap_atomic_px(pd);
@@ -534,7 +607,12 @@ static void gen8_ppgtt_insert_huge(struct i915_vma *vma,
 		}
 
 		vma->page_sizes.gtt |= page_size;
-	} while (iter->sg);
+	}
+#ifdef __NetBSD__
+	while (iter->seg < iter->map->dm_nsegs);
+#else
+	while (iter->sg);
+#endif
 }
 
 static void gen8_ppgtt_insert(struct i915_address_space *vm,

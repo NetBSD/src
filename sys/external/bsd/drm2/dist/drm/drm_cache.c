@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_cache.c,v 1.3 2021/12/18 23:44:57 riastradh Exp $	*/
+/*	$NetBSD: drm_cache.c,v 1.4 2021/12/19 01:24:25 riastradh Exp $	*/
 
 /**************************************************************************
  *
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_cache.c,v 1.3 2021/12/18 23:44:57 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_cache.c,v 1.4 2021/12/19 01:24:25 riastradh Exp $");
 
 #include <linux/export.h>
 #include <linux/highmem.h>
@@ -161,7 +161,11 @@ drm_clflush_virt_range(void *addr, unsigned long length)
 {
 #if defined(CONFIG_X86)
 	if (static_cpu_has(X86_FEATURE_CLFLUSH)) {
+#ifdef __NetBSD__
+		const int size = cpu_info_primary.ci_cflush_lsize;
+#else
 		const int size = boot_cpu_data.x86_clflush_size;
+#endif
 		void *end = addr + length;
 
 		addr = (void *)(((unsigned long)addr) & -size);
