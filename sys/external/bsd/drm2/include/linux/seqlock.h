@@ -1,4 +1,4 @@
-/*	$NetBSD: seqlock.h,v 1.3 2021/12/19 01:21:30 riastradh Exp $	*/
+/*	$NetBSD: seqlock.h,v 1.4 2021/12/19 01:25:50 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -115,6 +115,17 @@ read_seqcount_retry(struct seqcount *seqcount, unsigned gen)
 
 	membar_consumer();
 	return __read_seqcount_retry(seqcount, gen);
+}
+
+static inline unsigned
+raw_read_seqcount(struct seqcount *seqcount)
+{
+	unsigned gen;
+
+	gen = seqcount->sqc_gen;
+	membar_consumer();
+
+	return gen;
 }
 
 struct seqlock {
