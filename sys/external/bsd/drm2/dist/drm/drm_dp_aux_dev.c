@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_dp_aux_dev.c,v 1.2 2021/12/18 23:44:57 riastradh Exp $	*/
+/*	$NetBSD: drm_dp_aux_dev.c,v 1.3 2021/12/19 11:06:54 riastradh Exp $	*/
 
 /*
  * Copyright © 2015 Intel Corporation
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_dp_aux_dev.c,v 1.2 2021/12/18 23:44:57 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_dp_aux_dev.c,v 1.3 2021/12/19 11:06:54 riastradh Exp $");
 
 #include <linux/device.h>
 #include <linux/fs.h>
@@ -87,9 +87,11 @@ static struct drm_dp_aux_dev *alloc_drm_dp_aux_dev(struct drm_dp_aux *aux)
 	atomic_set(&aux_dev->usecount, 1);
 	kref_init(&aux_dev->refcount);
 
+	idr_preload(GFP_KERNEL);
 	mutex_lock(&aux_idr_mutex);
 	index = idr_alloc(&aux_idr, aux_dev, 0, DRM_AUX_MINORS, GFP_KERNEL);
 	mutex_unlock(&aux_idr_mutex);
+	idr_preload_end();
 	if (index < 0) {
 		kfree(aux_dev);
 		return ERR_PTR(index);
