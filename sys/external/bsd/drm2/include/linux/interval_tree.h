@@ -1,4 +1,4 @@
-/*	$NetBSD: interval_tree.h,v 1.8 2019/01/04 20:22:32 tnn Exp $	*/
+/*	$NetBSD: interval_tree.h,v 1.9 2021/12/19 00:46:44 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -32,18 +32,7 @@
 #ifndef	_LINUX_INTERVAL_TREE_H_
 #define	_LINUX_INTERVAL_TREE_H_
 
-#include <sys/rbtree.h>
-
-struct rb_root {
-	struct rb_tree	rbr_tree;
-};
-
-static inline bool
-RB_EMPTY_ROOT(struct rb_root *root)
-{
-
-	return RB_TREE_MIN(&root->rbr_tree) == NULL;
-}
+#include <linux/rbtree.h>
 
 struct interval_tree_node {
 	struct rb_node	itn_node;
