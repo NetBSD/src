@@ -1,4 +1,4 @@
-/*	$NetBSD: dma-fence.h,v 1.8 2021/12/19 10:38:46 riastradh Exp $	*/
+/*	$NetBSD: dma-fence.h,v 1.9 2021/12/19 10:40:12 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -37,8 +37,10 @@
 #include <sys/kernel.h>
 #include <sys/queue.h>
 
+#include <linux/err.h>
 #include <linux/kref.h>
 #include <linux/rcupdate.h>
+#include <linux/sched.h>
 #include <linux/spinlock.h>
 
 struct dma_fence_cb;

@@ -1,4 +1,4 @@
-/*	$NetBSD: poll.h,v 1.2 2014/03/18 18:20:43 riastradh Exp $	*/
+/*	$NetBSD: poll.h,v 1.3 2021/12/19 10:40:12 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -31,5 +31,7 @@
 
 #ifndef _LINUX_POLL_H_
 #define _LINUX_POLL_H_
+
+#include <linux/fs.h>
 
 #endif  /* _LINUX_POLL_H_ */
