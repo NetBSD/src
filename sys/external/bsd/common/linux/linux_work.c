@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_work.c,v 1.58 2021/12/19 12:11:36 riastradh Exp $	*/
+/*	$NetBSD: linux_work.c,v 1.59 2021/12/19 12:27:39 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_work.c,v 1.58 2021/12/19 12:11:36 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_work.c,v 1.59 2021/12/19 12:27:39 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/atomic.h>
@@ -1458,7 +1458,7 @@ flush_workqueue(struct workqueue_struct *wq)
 	struct flush_work fw;
 
 	if (lwp_getspecific(workqueue_key) == wq) {
-		printf("%s: running from workqueue %s\n", __func__,
+		aprint_debug("%s: running from workqueue %s\n", __func__,
 		    wq->wq_name);
 		return;
 	}
