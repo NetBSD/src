@@ -1,4 +1,4 @@
-/*	$NetBSD: lockdep.h,v 1.6 2021/12/19 11:11:19 riastradh Exp $	*/
+/*	$NetBSD: lockdep.h,v 1.7 2021/12/19 11:35:44 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -43,7 +43,10 @@ struct spinlock;
 #define	__acquires(lock)	/* XXX lockdep annotation */
 #define	__releases(lock)	/* XXX lockdep annotation */
 
-#define	__lockdep_used			__debugused
+#define	mutex_acquire(m, x, y, ip)	__nothing
+#define	mutex_release(m, ip)		__nothing
+
+#define	__lockdep_used			__unused
 #define	lock_acquire_shared_recursive(l, s, t, n, i)	__nothing
 #define	lock_release(l, n)		__nothing
 #ifdef notyet
