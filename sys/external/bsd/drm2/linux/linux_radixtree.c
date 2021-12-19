@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_radixtree.c,v 1.2 2021/12/19 11:51:51 riastradh Exp $	*/
+/*	$NetBSD: linux_radixtree.c,v 1.3 2021/12/19 11:53:26 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2021 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_radixtree.c,v 1.2 2021/12/19 11:51:51 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_radixtree.c,v 1.3 2021/12/19 11:53:26 riastradh Exp $");
 
 #include <sys/atomic.h>
 #include <sys/kmem.h>
@@ -68,8 +68,6 @@ radix_tree_insert(struct radix_tree_root *root, unsigned long key, void *datum)
 
 	kludge->k_key = key;
 	kludge->k_datum = datum;
-
-	membar_exit();
 
 	__cpu_simple_lock(&root->rtr_lock);
 	error = radix_tree_insert_node(&root->rtr_tree, key, kludge);
