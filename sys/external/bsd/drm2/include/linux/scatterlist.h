@@ -1,4 +1,4 @@
-/*	$NetBSD: scatterlist.h,v 1.6 2021/12/19 11:38:04 riastradh Exp $	*/
+/*	$NetBSD: scatterlist.h,v 1.7 2021/12/19 12:10:42 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -58,6 +58,7 @@ struct sg_table {
 	struct scatterlist {
 		struct page	**sg_pgs;
 		unsigned	sg_npgs;
+		bus_dma_tag_t	sg_dmat;
 		bus_dmamap_t	sg_dmamap;
 	} sgl[1];
 	unsigned	nents;
