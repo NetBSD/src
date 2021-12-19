@@ -1,4 +1,4 @@
-/*	$NetBSD: reservation.h,v 1.10 2021/12/19 01:20:22 riastradh Exp $	*/
+/*	$NetBSD: reservation.h,v 1.11 2021/12/19 01:20:30 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -71,9 +71,13 @@ struct reservation_poll {
 #define	reservation_object_held			linux_reservation_object_held
 #define	reservation_object_init			linux_reservation_object_init
 #define	reservation_object_kqfilter		linux_reservation_object_kqfilter
+#define	reservation_object_lock			linux_reservation_object_lock
+#define	reservation_object_lock_interruptible	linux_reservation_object_lock_interruptible
 #define	reservation_object_poll			linux_reservation_object_poll
 #define	reservation_object_reserve_shared	linux_reservation_object_reserve_shared
 #define	reservation_object_test_signaled_rcu	linux_reservation_object_test_signaled_rcu
+#define	reservation_object_trylock		linux_reservation_object_trylock
+#define	reservation_object_unlock		linux_reservation_object_unlock
 #define	reservation_object_wait_timeout_rcu	linux_reservation_object_wait_timeout_rcu
 #define	reservation_poll_fini			linux_reservation_poll_fini
 #define	reservation_poll_init			linux_reservation_poll_init
@@ -83,6 +87,12 @@ extern struct ww_class	reservation_ww_class;
 
 void	reservation_object_init(struct reservation_object *);
 void	reservation_object_fini(struct reservation_object *);
+int	reservation_object_lock(struct reservation_object *,
+	    struct ww_acquire_ctx *);
+int	reservation_object_lock_interruptible(struct reservation_object *,
+	    struct ww_acquire_ctx *);
+bool	reservation_object_trylock(struct reservation_object *) __must_check;
+void	reservation_object_unlock(struct reservation_object *);
 bool	reservation_object_held(struct reservation_object *);
 struct dma_fence *
 	reservation_object_get_excl(struct reservation_object *);
