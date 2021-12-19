@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_gem_vm.c,v 1.11 2021/12/19 01:13:28 riastradh Exp $	*/
+/*	$NetBSD: drm_gem_vm.c,v 1.12 2021/12/19 09:49:08 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_gem_vm.c,v 1.11 2021/12/19 01:13:28 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_gem_vm.c,v 1.12 2021/12/19 09:49:08 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/file.h>
@@ -51,7 +51,7 @@ drm_gem_pager_reference(struct uvm_object *uobj)
 	struct drm_gem_object *const obj = container_of(uobj,
 	    struct drm_gem_object, gemo_uvmobj);
 
-	drm_gem_object_reference(obj);
+	drm_gem_object_get(obj);
 }
 
 void
@@ -60,7 +60,7 @@ drm_gem_pager_detach(struct uvm_object *uobj)
 	struct drm_gem_object *const obj = container_of(uobj,
 	    struct drm_gem_object, gemo_uvmobj);
 
-	drm_gem_object_unreference_unlocked(obj);
+	drm_gem_object_put_unlocked(obj);
 }
 
 int
@@ -130,7 +130,7 @@ drm_gem_mmap_object_locked(struct drm_device *dev, off_t byte_offset,
 	KASSERT(obj->dev == dev);
 
 	/* Success!  */
-	drm_gem_object_reference(obj);
+	drm_gem_object_get(obj);
 	*uobjp = &obj->gemo_uvmobj;
 	*uoffsetp = 0;
 	return 0;
