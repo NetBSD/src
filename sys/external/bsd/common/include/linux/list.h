@@ -1,4 +1,4 @@
-/*	$NetBSD: list.h,v 1.27 2021/12/19 10:51:09 riastradh Exp $	*/
+/*	$NetBSD: list.h,v 1.28 2021/12/19 11:32:08 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -279,18 +279,25 @@ list_del_init(struct list_head *node)
 		(VAR) = list_entry(list_next(&(VAR)->FIELD), typeof(*(VAR)), \
 		    FIELD))
 
-#define	list_for_each_entry_reverse(VAR, HEAD, FIELD)			\
-	for ((VAR) = list_entry(list_last((HEAD)), typeof(*(VAR)), FIELD); \
-		&(VAR)->FIELD != (HEAD);				\
-		(VAR) = list_entry(list_prev(&(VAR)->FIELD), typeof(*(VAR)), \
-		    FIELD))
-
 #define	list_for_each_entry_safe(VAR, NEXT, HEAD, FIELD)		\
 	for ((VAR) = list_entry(list_first((HEAD)), typeof(*(VAR)), FIELD); \
 		(&(VAR)->FIELD != (HEAD)) &&				\
 		    ((NEXT) = list_entry(list_next(&(VAR)->FIELD),	\
 			typeof(*(VAR)), FIELD), 1);			\
 		(VAR) = (NEXT))
+
+#define	list_for_each_entry_safe_reverse(VAR, NEXT, HEAD, FIELD)	\
+	for ((VAR) = list_entry(list_last((HEAD)), typeof(*(VAR)), FIELD); \
+		(&(VAR)->FIELD != (HEAD)) &&				\
+		    ((NEXT) = list_entry(list_prev(&(VAR)->FIELD),	\
+		        typeof(*(VAR)), FIELD), 1);			\
+		(VAR) = (NEXT))
+
+#define	list_for_each_entry_reverse(VAR, HEAD, FIELD)			\
+	for ((VAR) = list_entry(list_last((HEAD)), typeof(*(VAR)), FIELD); \
+		&(VAR)->FIELD != (HEAD);				\
+		(VAR) = list_entry(list_prev(&(VAR)->FIELD), typeof(*(VAR)), \
+		    FIELD))
 
 #define	list_for_each_entry_continue(VAR, HEAD, FIELD)			\
 	for ((VAR) = list_next_entry((VAR), FIELD);			\
