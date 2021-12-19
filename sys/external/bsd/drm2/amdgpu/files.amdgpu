@@ -1,4 +1,4 @@
-#	$NetBSD: files.amdgpu,v 1.12 2021/12/19 10:55:27 riastradh Exp $
+#	$NetBSD: files.amdgpu,v 1.13 2021/12/19 10:56:39 riastradh Exp $
 
 version	20180827
 
@@ -10,12 +10,26 @@ defflag	opt_amdgpu_cik.h AMDGPU_CIK
 
 device	amdgpufb: amdgpufbbus, drmfb, drmfb_pci, wsemuldisplaydev
 attach	amdgpufb at amdgpufbbus
+makeoptions	amdgpufb	"CPPFLAGS.amdgpufb"+="${CPPFLAGS.amdgpu}"
 
 # Match order in dist/drm/amd/amdgpu/Makefile.
 makeoptions	amdgpu	"CPPFLAGS.amdgpu"+="-I$S/external/bsd/drm2/dist/drm/amd/include/asic_reg"
 makeoptions	amdgpu	"CPPFLAGS.amdgpu"+="-I$S/external/bsd/drm2/dist/drm/amd/include"
 makeoptions	amdgpu	"CPPFLAGS.amdgpu"+="-I$S/external/bsd/drm2/dist/drm/amd/amdgpu"
-makeoptions	amdgpu	"CPPFLAGS.amdgpu"+="-I$S/external/bsd/drm2/dist/drm/amd/scheduler"
+makeoptions	amdgpu	"CPPFLAGS.amdgpu"+="-I$S/external/bsd/drm2/dist/drm/amd/powerplay/inc"
+makeoptions	amdgpu	"CPPFLAGS.amdgpu"+="-I$S/external/bsd/drm2/dist/drm/amd/powerplay/smumgr"
+makeoptions	amdgpu	"CPPFLAGS.amdgpu"+="-I$S/external/bsd/drm2/dist/drm/amd/powerplay/hwmgr"
+makeoptions	amdgpu	"CPPFLAGS.amdgpu"+="-I$S/external/bsd/drm2/dist/drm/amd/acp/include"
+makeoptions	amdgpu	"CPPFLAGS.amdgpu"+="-I$S/external/bsd/drm2/dist/drm/amd/display"
+makeoptions	amdgpu	"CPPFLAGS.amdgpu"+="-I$S/external/bsd/drm2/dist/drm/amd/display/include"
+makeoptions	amdgpu	"CPPFLAGS.amdgpu"+="-I$S/external/bsd/drm2/dist/drm/amd/display/dc"
+makeoptions	amdgpu	"CPPFLAGS.amdgpu"+="-I$S/external/bsd/drm2/dist/drm/amd/display/dc/inc"
+makeoptions	amdgpu	"CPPFLAGS.amdgpu"+="-I$S/external/bsd/drm2/dist/drm/amd/display/dc/inc/hw"
+makeoptions	amdgpu	"CPPFLAGS.amdgpu"+="-I$S/external/bsd/drm2/dist/drm/amd/display/dc/clk_mgr"
+makeoptions	amdgpu	"CPPFLAGS.amdgpu"+="-I$S/external/bsd/drm2/dist/drm/amd/display/modules/inc"
+makeoptions	amdgpu	"CPPFLAGS.amdgpu"+="-I$S/external/bsd/drm2/dist/drm/amd/display/modules/hdcp"
+makeoptions	amdgpu	"CPPFLAGS.amdgpu"+="-I$S/external/bsd/drm2/dist/drm/amd/display/amdgpu_dm"
+makeoptions	amdgpu	"CPPFLAGS.amdgpu"+="-I$S/external/bsd/drm2/dist/drm/amd/display/dmub/inc"
 
 makeoptions	amdgpu	"CWARNFLAGS.amdgpu"+="-Wno-missing-field-initializers"
 makeoptions	amdgpu	"CWARNFLAGS.amdgpu"+="-Wno-shadow"
