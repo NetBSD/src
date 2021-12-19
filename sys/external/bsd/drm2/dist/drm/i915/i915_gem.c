@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_gem.c,v 1.72 2021/12/19 12:25:37 riastradh Exp $	*/
+/*	$NetBSD: i915_gem.c,v 1.73 2021/12/19 12:27:09 riastradh Exp $	*/
 
 /*
  * Copyright © 2008-2015 Intel Corporation
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_gem.c,v 1.72 2021/12/19 12:25:37 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_gem.c,v 1.73 2021/12/19 12:27:09 riastradh Exp $");
 
 #ifdef __NetBSD__
 #include <drm/bus_dma_hacks.h>
@@ -193,9 +193,10 @@ i915_gem_phys_pwrite(struct drm_i915_gem_object *obj,
 		     struct drm_file *file)
 {
 #ifdef __NetBSD__
-	panic("TODO");
+	void *vaddr = obj->mm.u.phys.kva + args->offset;
 #else
 	void *vaddr = sg_page(obj->mm.pages->sgl) + args->offset;
+#endif
 	char __user *user_data = u64_to_user_ptr(args->data_ptr);
 
 	/*
@@ -211,7 +212,6 @@ i915_gem_phys_pwrite(struct drm_i915_gem_object *obj,
 	intel_gt_chipset_flush(&to_i915(obj->base.dev)->gt);
 
 	i915_gem_object_flush_frontbuffer(obj, ORIGIN_CPU);
-#endif
 	return 0;
 }
 
