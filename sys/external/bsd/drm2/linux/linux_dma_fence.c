@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_dma_fence.c,v 1.3 2021/12/19 01:15:28 riastradh Exp $	*/
+/*	$NetBSD: linux_dma_fence.c,v 1.4 2021/12/19 01:16:05 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_dma_fence.c,v 1.3 2021/12/19 01:15:28 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_dma_fence.c,v 1.4 2021/12/19 01:16:05 riastradh Exp $");
 
 #include <sys/atomic.h>
 #include <sys/condvar.h>
@@ -352,7 +352,7 @@ dma_fence_add_callback(struct dma_fence *fence, struct dma_fence_cb *fcb,
 		goto out1;
 
 	/* Insert the callback.  */
-	fcb->fcb_func = fn;
+	fcb->func = fn;
 	TAILQ_INSERT_TAIL(&fence->f_callbacks, fcb, fcb_entry);
 	fcb->fcb_onqueue = true;
 
@@ -510,7 +510,7 @@ dma_fence_signal_locked(struct dma_fence *fence)
 	TAILQ_FOREACH_SAFE(fcb, &fence->f_callbacks, fcb_entry, next) {
 		TAILQ_REMOVE(&fence->f_callbacks, fcb, fcb_entry);
 		fcb->fcb_onqueue = false;
-		(*fcb->fcb_func)(fence, fcb);
+		(*fcb->func)(fence, fcb);
 	}
 
 	/* Success! */

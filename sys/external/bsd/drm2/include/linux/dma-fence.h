@@ -1,4 +1,4 @@
-/*	$NetBSD: dma-fence.h,v 1.3 2021/12/19 01:15:28 riastradh Exp $	*/
+/*	$NetBSD: dma-fence.h,v 1.4 2021/12/19 01:16:05 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@ struct dma_fence_ops {
 typedef void (*dma_fence_func_t)(struct dma_fence *, struct dma_fence_cb *);
 
 struct dma_fence_cb {
-	dma_fence_func_t		fcb_func;
+	dma_fence_func_t		func; /* Linux API name */
 	TAILQ_ENTRY(dma_fence_cb)	fcb_entry;
 	bool				fcb_onqueue;
 };
