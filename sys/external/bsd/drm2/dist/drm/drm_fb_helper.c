@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_fb_helper.c,v 1.21 2021/12/19 01:53:39 riastradh Exp $	*/
+/*	$NetBSD: drm_fb_helper.c,v 1.22 2021/12/19 09:46:33 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2006-2009 Red Hat Inc.
@@ -30,7 +30,7 @@
  *      Jesse Barnes <jesse.barnes@intel.com>
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_fb_helper.c,v 1.21 2021/12/19 01:53:39 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_fb_helper.c,v 1.22 2021/12/19 09:46:33 riastradh Exp $");
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
@@ -144,6 +144,7 @@ static DEFINE_MUTEX(kernel_fb_helper_lock);
  * fbdev shadow buffer and call drm_fbdev_generic_setup() instead.
  */
 
+#ifndef __NetBSD__
 static void drm_fb_helper_restore_lut_atomic(struct drm_crtc *crtc)
 {
 	uint16_t *r_base, *g_base, *b_base;
@@ -163,16 +164,9 @@ static void drm_fb_helper_restore_lut_atomic(struct drm_crtc *crtc)
  * drm_fb_helper_debug_enter - implementation for &fb_ops.fb_debug_enter
  * @info: fbdev registered by the helper
  */
-#ifndef __NetBSD__
 int drm_fb_helper_debug_enter(struct fb_info *info)
 {
-	return drm_fb_helper_debug_enter_fb(info->par);
-}
-#endif
-
-int
-drm_fb_helper_debug_enter_fb(struct drm_fb_helper *helper)
-{
+	struct drm_fb_helper *helper = info->par;
 	const struct drm_crtc_helper_funcs *funcs;
 	struct drm_mode_set *mode_set;
 
@@ -206,7 +200,6 @@ EXPORT_SYMBOL(drm_fb_helper_debug_enter);
  * drm_fb_helper_debug_leave - implementation for &fb_ops.fb_debug_leave
  * @info: fbdev registered by the helper
  */
-#ifndef __NetBSD__
 int drm_fb_helper_debug_leave(struct fb_info *info)
 {
 	struct drm_fb_helper *helper = info->par;
@@ -1692,7 +1685,6 @@ static void drm_fb_helper_fill_var(struct fb_info *info,
 	info->var.xres = fb_width;
 	info->var.yres = fb_height;
 }
-#endif
 
 /**
  * drm_fb_helper_fill_info - initializes fbdev information
@@ -1723,6 +1715,7 @@ void drm_fb_helper_fill_info(struct fb_info *info,
 
 }
 EXPORT_SYMBOL(drm_fb_helper_fill_info);
+#endif
 
 /*
  * This is a continuation of drm_setup_crtcs() that sets up anything related
@@ -1734,12 +1727,12 @@ EXPORT_SYMBOL(drm_fb_helper_fill_info);
 static void drm_setup_crtcs_fb(struct drm_fb_helper *fb_helper)
 {
 	struct drm_client_dev *client = &fb_helper->client;
-	struct drm_connector_list_iter conn_iter;
 #ifndef __NetBSD__		/* XXX fb info */
+	struct drm_connector_list_iter conn_iter;
 	struct fb_info *info = fb_helper->fbdev;
+	struct drm_connector *connector;
 #endif
 	unsigned int rotation, sw_rotations = 0;
-	struct drm_connector *connector;
 	struct drm_mode_set *modeset;
 
 	mutex_lock(&client->modeset_mutex);
@@ -2026,18 +2019,24 @@ static int drm_fbdev_fb_release(struct fb_info *info, int user)
 	return 0;
 }
 
+#endif	/* __NetBSD__ */
+
 static void drm_fbdev_cleanup(struct drm_fb_helper *fb_helper)
 {
+#ifndef __NetBSD__		/* XXX fb info */
 	struct fb_info *fbi = fb_helper->fbdev;
+#endif
 	void *shadow = NULL;
 
 	if (!fb_helper->dev)
 		return;
 
+#ifndef __NetBSD__		/* XXX fb info */
 	if (fbi && fbi->fbdefio) {
 		fb_deferred_io_cleanup(fbi);
 		shadow = fbi->screen_buffer;
 	}
+#endif
 
 	drm_fb_helper_fini(fb_helper);
 
@@ -2053,6 +2052,8 @@ static void drm_fbdev_release(struct drm_fb_helper *fb_helper)
 	kfree(fb_helper);
 }
 
+
+#ifndef __NetBSD__		/* XXX fb info */
 /*
  * fb_ops.fb_destroy is called by the last put_fb_info() call at the end of
  * unregister_framebuffer() or fb_release().
@@ -2127,6 +2128,7 @@ static int drm_fb_helper_generic_probe(struct drm_fb_helper *fb_helper,
 
 #ifdef __NetBSD__		/* XXX fb info */
 	__USE(fb);
+	__USE(vaddr);
 #else
 	fbi = drm_fb_helper_alloc_fbi(fb_helper);
 	if (IS_ERR(fbi))
@@ -2173,14 +2175,12 @@ static void drm_fbdev_client_unregister(struct drm_client_dev *client)
 {
 	struct drm_fb_helper *fb_helper = drm_fb_helper_from_client(client);
 
-	if (fb_helper->fbdev)
 #ifndef __NetBSD__		/* XXX fb info */
-	{
+	if (fb_helper->fbdev)
 		/* drm_fbdev_fb_destroy() takes care of cleanup */
 		drm_fb_helper_unregister_fbi(fb_helper);
-	}
-#endif
 	else
+#endif
 		drm_fbdev_release(fb_helper);
 }
 
