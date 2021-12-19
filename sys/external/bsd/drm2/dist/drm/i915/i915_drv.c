@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_drv.c,v 1.32 2021/12/19 11:18:09 riastradh Exp $	*/
+/*	$NetBSD: i915_drv.c,v 1.33 2021/12/19 11:18:26 riastradh Exp $	*/
 
 /* i915_drv.c -- i830,i845,i855,i865,i915 driver -*- linux-c -*-
  */
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_drv.c,v 1.32 2021/12/19 11:18:09 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_drv.c,v 1.33 2021/12/19 11:18:26 riastradh Exp $");
 
 #include <linux/acpi.h>
 #include <linux/device.h>
@@ -48,6 +48,7 @@ __KERNEL_RCSID(0, "$NetBSD: i915_drv.c,v 1.32 2021/12/19 11:18:09 riastradh Exp 
 #include <drm/drm_atomic_helper.h>
 #include <drm/drm_ioctl.h>
 #include <drm/drm_irq.h>
+#include <drm/drm_pci.h>
 #include <drm/drm_probe_helper.h>
 #include <drm/i915_drm.h>
 
@@ -1991,10 +1992,7 @@ int i915_drm_resume_early(struct drm_device *dev)
 	 * the device powered we can also remove the following set power state
 	 * call.
 	 */
-#ifdef __NetBSD__		/* pmf handles this for us.  */
-	if (0)
-		goto out;
-#else
+#ifndef __NetBSD__		/* pmf handles this for us.  */
 	ret = pci_set_power_state(pdev, PCI_D0);
 	if (ret) {
 		DRM_ERROR("failed to set PCI D0 power state (%d)\n", ret);
@@ -2141,7 +2139,6 @@ static int i915_pm_resume(struct device *kdev)
 
 	return i915_drm_resume(&i915->drm);
 }
-#endif
 
 /* freeze: before creating the hibernation_image */
 static int i915_pm_freeze(struct device *kdev)
@@ -2425,6 +2422,7 @@ static int vlv_wait_for_pw_status(struct drm_i915_private *i915,
 
 	return ret;
 }
+#endif
 
 int vlv_force_gfx_clock(struct drm_i915_private *dev_priv, bool force_on)
 {
@@ -2452,6 +2450,7 @@ int vlv_force_gfx_clock(struct drm_i915_private *dev_priv, bool force_on)
 	return err;
 }
 
+#ifndef __NetBSD__		/* XXX vlv suspend/resume */
 static int vlv_allow_gt_wake(struct drm_i915_private *dev_priv, bool allow)
 {
 	u32 mask;
@@ -2576,6 +2575,7 @@ static int vlv_resume_prepare(struct drm_i915_private *dev_priv,
 
 	return ret;
 }
+#endif
 
 #ifndef __NetBSD__		/* XXX runtime pm */
 static int intel_runtime_suspend(struct device *kdev)
