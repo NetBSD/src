@@ -1,4 +1,4 @@
-/*	$NetBSD: ttm_agp_backend.c,v 1.8 2018/08/28 03:41:40 riastradh Exp $	*/
+/*	$NetBSD: ttm_agp_backend.c,v 1.9 2021/12/19 01:50:54 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ttm_agp_backend.c,v 1.8 2018/08/28 03:41:40 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ttm_agp_backend.c,v 1.9 2021/12/19 01:50:54 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/kmem.h>
@@ -39,10 +39,11 @@ __KERNEL_RCSID(0, "$NetBSD: ttm_agp_backend.c,v 1.8 2018/08/28 03:41:40 riastrad
 #include <dev/pci/pcivar.h>
 #include <dev/pci/agpvar.h>
 
+#include <drm/drm_agpsupport.h>
+
 #include <ttm/ttm_bo_driver.h>
 #include <ttm/ttm_page_alloc.h>
-
-#if CONFIG_AGP
+#include <ttm/ttm_tt.h>
 
 struct ttm_agp {
 	struct ttm_dma_tt ttm_dma;
@@ -54,8 +55,8 @@ struct ttm_agp {
 static const struct ttm_backend_func ttm_agp_backend_func;
 
 struct ttm_tt *
-ttm_agp_tt_create(struct ttm_bo_device *bdev, struct agp_bridge_data *bridge,
-    unsigned long size, uint32_t page_flags, struct page *dummy_read_page)
+ttm_agp_tt_create(struct ttm_buffer_object *bo, struct agp_bridge_data *bridge,
+    uint32_t page_flags)
 {
 	struct ttm_agp *ttm_agp;
 
@@ -63,8 +64,7 @@ ttm_agp_tt_create(struct ttm_bo_device *bdev, struct agp_bridge_data *bridge,
 	ttm_agp->agp = &bridge->abd_sc;
 	ttm_agp->ttm_dma.ttm.func = &ttm_agp_backend_func;
 
-	if (ttm_dma_tt_init(&ttm_agp->ttm_dma, bdev, size, page_flags,
-		dummy_read_page) != 0)
+	if (ttm_dma_tt_init(&ttm_agp->ttm_dma, bo, page_flags) != 0)
 		goto fail;
 
 	/* Success!  */
@@ -75,7 +75,7 @@ fail:	kmem_free(ttm_agp, sizeof(*ttm_agp));
 }
 
 int
-ttm_agp_tt_populate(struct ttm_tt *ttm)
+ttm_agp_tt_populate(struct ttm_tt *ttm, struct ttm_operation_ctx *ctx)
 {
 
 	KASSERTMSG((ttm->state == tt_unpopulated),
@@ -169,5 +169,3 @@ static const struct ttm_backend_func ttm_agp_backend_func = {
 	.unbind = &ttm_agp_unbind,
 	.destroy = &ttm_agp_destroy,
 };
-
-#endif
