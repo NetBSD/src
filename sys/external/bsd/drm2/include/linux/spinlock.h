@@ -1,4 +1,4 @@
-/*	$NetBSD: spinlock.h,v 1.10 2021/12/19 01:45:05 riastradh Exp $	*/
+/*	$NetBSD: spinlock.h,v 1.11 2021/12/19 11:35:51 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -93,6 +93,9 @@ spin_lock_nested(spinlock_t *spinlock, int subclass)
 {
 	spin_lock(spinlock);
 }
+
+#define	spin_lock_irqsave_nested(SPINLOCK, FLAGS, SUBCLASS)		      \
+	spin_lock_irqsave(SPINLOCK, FLAGS)
 
 static inline void
 spin_lock_init(spinlock_t *spinlock)
