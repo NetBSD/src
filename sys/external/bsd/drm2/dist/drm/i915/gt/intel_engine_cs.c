@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_engine_cs.c,v 1.3 2021/12/19 01:21:53 riastradh Exp $	*/
+/*	$NetBSD: intel_engine_cs.c,v 1.4 2021/12/19 11:08:40 riastradh Exp $	*/
 
 /*
  * Copyright © 2016 Intel Corporation
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intel_engine_cs.c,v 1.3 2021/12/19 01:21:53 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intel_engine_cs.c,v 1.4 2021/12/19 11:08:40 riastradh Exp $");
 
 #include <drm/drm_print.h>
 
@@ -1345,7 +1345,11 @@ static void intel_engine_print_registers(struct intel_engine_cs *engine,
 				   idx, hws[idx * 2], hws[idx * 2 + 1]);
 		}
 
+#ifdef __linux__
 		execlists_active_lock_bh(execlists);
+#else
+		int s = execlists_active_lock_bh(execlists);
+#endif
 		rcu_read_lock();
 		for (port = execlists->active; (rq = *port); port++) {
 			char hdr[80];
@@ -1385,7 +1389,11 @@ static void intel_engine_print_registers(struct intel_engine_cs *engine,
 				intel_timeline_put(tl);
 		}
 		rcu_read_unlock();
+#ifdef __linux__
 		execlists_active_unlock_bh(execlists);
+#else
+		execlists_active_unlock_bh(execlists, s);
+#endif
 	} else if (INTEL_GEN(dev_priv) > 6) {
 		drm_printf(m, "\tPP_DIR_BASE: 0x%08x\n",
 			   ENGINE_READ(engine, RING_PP_DIR_BASE));
@@ -1548,7 +1556,11 @@ int intel_enable_engine_stats(struct intel_engine_cs *engine)
 	if (!intel_engine_supports_stats(engine))
 		return -ENODEV;
 
+#ifdef __linux__
 	execlists_active_lock_bh(execlists);
+#else
+	int s = execlists_active_lock_bh(execlists);
+#endif
 	write_seqlock_irqsave(&engine->stats.lock, flags);
 
 	if (unlikely(engine->stats.enabled == ~0)) {
@@ -1578,7 +1590,11 @@ int intel_enable_engine_stats(struct intel_engine_cs *engine)
 
 unlock:
 	write_sequnlock_irqrestore(&engine->stats.lock, flags);
+#ifdef __linux__
 	execlists_active_unlock_bh(execlists);
+#else
+	execlists_active_unlock_bh(execlists, s);
+#endif
 
 	return err;
 }
