@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_agp_hook.c,v 1.3 2018/08/30 22:39:54 mrg Exp $	*/
+/*	$NetBSD: drm_agp_hook.c,v 1.4 2021/12/19 00:28:20 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_agp_hook.c,v 1.3 2018/08/30 22:39:54 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_agp_hook.c,v 1.4 2021/12/19 00:28:20 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/condvar.h>
@@ -39,7 +39,8 @@ __KERNEL_RCSID(0, "$NetBSD: drm_agp_hook.c,v 1.3 2018/08/30 22:39:54 mrg Exp $")
 #include <sys/once.h>
 
 #include <drm/drmP.h>
-#include <drm/drm_internal.h>
+
+#include "../dist/drm/drm_internal.h"
 
 static struct {
 	kmutex_t			lock;

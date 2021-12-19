@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_lock.c,v 1.8 2020/05/23 23:42:43 ad Exp $	*/
+/*	$NetBSD: drm_lock.c,v 1.9 2021/12/19 00:28:20 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -46,14 +46,15 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_lock.c,v 1.8 2020/05/23 23:42:43 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_lock.c,v 1.9 2021/12/19 00:28:20 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/errno.h>
 #include <sys/systm.h>
 
 #include <drm/drmP.h>
-#include <drm/drm_internal.h>
+
+#include "../dist/drm/drm_internal.h"
 #include "../dist/drm/drm_legacy.h"
 
 static bool	drm_lock_acquire(struct drm_lock_data *, int);
