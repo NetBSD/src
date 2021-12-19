@@ -1,4 +1,4 @@
-/*	$NetBSD: radeon_module.c,v 1.6 2021/12/19 09:56:17 riastradh Exp $	*/
+/*	$NetBSD: radeon_module.c,v 1.7 2021/12/19 10:33:00 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radeon_module.c,v 1.6 2021/12/19 09:56:17 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radeon_module.c,v 1.7 2021/12/19 10:33:00 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/module.h>
@@ -39,7 +39,7 @@ __KERNEL_RCSID(0, "$NetBSD: radeon_module.c,v 1.6 2021/12/19 09:56:17 riastradh 
 #endif
 #include <sys/systm.h>
 
-#include <drm/drmP.h>
+#include <drm/drm_device.h>
 #include <drm/drm_drv.h>
 #include <drm/drm_sysctl.h>
 

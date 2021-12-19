@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveaufb.h,v 1.1 2015/03/06 01:43:07 riastradh Exp $	*/
+/*	$NetBSD: nouveaufb.h,v 1.2 2021/12/19 10:32:59 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -34,8 +34,9 @@
 
 #include <sys/bus.h>
 
-#include <drm/drmP.h>
 #include <drm/drm_fb_helper.h>
+
+struct drm_device;
 
 struct nouveaufb_attach_args {
 	struct drm_device			*nfa_drm_dev;

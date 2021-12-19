@@ -1,4 +1,4 @@
-/*	$NetBSD: via_pci.c,v 1.5 2021/02/13 15:42:15 jakllsch Exp $	*/
+/*	$NetBSD: via_pci.c,v 1.6 2021/12/19 10:33:00 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: via_pci.c,v 1.5 2021/02/13 15:42:15 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: via_pci.c,v 1.6 2021/12/19 10:33:00 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/device.h>
@@ -39,11 +39,12 @@ __KERNEL_RCSID(0, "$NetBSD: via_pci.c,v 1.5 2021/02/13 15:42:15 jakllsch Exp $")
 
 #include <linux/pci.h>
 
-#include <drm/drmP.h>
 #include <drm/drm_pciids.h>
 #include <drm/via_drm.h>
 
 #include "via_drv.h"
+
+struct drm_device;
 
 struct viadrm_softc {
 	device_t		sc_dev;
