@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_irq_work.c,v 1.1 2021/12/19 11:49:57 riastradh Exp $	*/
+/*	$NetBSD: linux_irq_work.c,v 1.2 2021/12/19 11:50:54 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2021 The NetBSD Foundation, Inc.
@@ -30,12 +30,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_irq_work.c,v 1.1 2021/12/19 11:49:57 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_irq_work.c,v 1.2 2021/12/19 11:50:54 riastradh Exp $");
 
 #include <sys/param.h>
 
 #include <sys/atomic.h>
 #include <sys/intr.h>
+#include <sys/kmem.h>
 #include <sys/mutex.h>
 #include <sys/percpu.h>
 #include <sys/queue.h>
@@ -57,11 +58,12 @@ static void *irq_work_sih __read_mostly;
 static void
 irq_work_intr(void *cookie)
 {
-	struct irq_work_cpu *iwc;
+	struct irq_work_cpu *const *iwcp, *iwc;
 	SIMPLEQ_HEAD(, irq_work) todo = SIMPLEQ_HEAD_INITIALIZER(todo);
 	struct irq_work *iw, *next;
 
-	iwc = percpu_getref(irq_work_percpu);
+	iwcp = percpu_getref(irq_work_percpu);
+	iwc = *iwcp;
 	mutex_spin_enter(&iwc->iwc_lock);
 	SIMPLEQ_CONCAT(&todo, &iwc->iwc_todo);
 	mutex_spin_exit(&iwc->iwc_lock);
@@ -76,8 +78,9 @@ irq_work_intr(void *cookie)
 static void
 irq_work_cpu_init(void *ptr, void *cookie, struct cpu_info *ci)
 {
-	struct irq_work_cpu *iwc = ptr;
+	struct irq_work_cpu **iwcp = ptr, *iwc;
 
+	iwc = *iwcp = kmem_zalloc(sizeof(*iwc), KM_SLEEP);
 	mutex_init(&iwc->iwc_lock, MUTEX_DEFAULT, IPL_HIGH);
 	SIMPLEQ_INIT(&iwc->iwc_todo);
 }
@@ -85,10 +88,11 @@ irq_work_cpu_init(void *ptr, void *cookie, struct cpu_info *ci)
 static void
 irq_work_cpu_fini(void *ptr, void *cookie, struct cpu_info *ci)
 {
-	struct irq_work_cpu *iwc __diagused = ptr;
+	struct irq_work_cpu **iwcp = ptr, *iwc = *iwcp;
 
 	KASSERT(SIMPLEQ_EMPTY(&iwc->iwc_todo));
 	mutex_destroy(&iwc->iwc_lock);
+	kmem_free(iwc, sizeof(*iwc));
 }
 
 void
@@ -120,13 +124,14 @@ init_irq_work(struct irq_work *iw, void (*func)(struct irq_work *))
 bool
 irq_work_queue(struct irq_work *iw)
 {
-	struct irq_work_cpu *iwc;
+	struct irq_work_cpu *const *iwcp, *iwc;
 
 	if (atomic_swap_uint(&iw->iw_flags, IRQ_WORK_PENDING)
 	    & IRQ_WORK_PENDING)
 		return false;
 
-	iwc = percpu_getref(irq_work_percpu);
+	iwcp = percpu_getref(irq_work_percpu);
+	iwc = *iwcp;
 	mutex_spin_enter(&iwc->iwc_lock);
 	SIMPLEQ_INSERT_TAIL(&iwc->iwc_todo, iw, iw_entry);
 	mutex_spin_exit(&iwc->iwc_lock);
