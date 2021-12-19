@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_atomic.h,v 1.2 2021/12/18 23:45:29 riastradh Exp $	*/
+/*	$NetBSD: intel_atomic.h,v 1.3 2021/12/19 11:56:08 riastradh Exp $	*/
 
 /* SPDX-License-Identifier: MIT */
 /*
@@ -60,5 +60,10 @@ int intel_atomic_setup_scalers(struct drm_i915_private *dev_priv,
 int intel_atomic_lock_global_state(struct intel_atomic_state *state);
 
 int intel_atomic_serialize_global_state(struct intel_atomic_state *state);
+
+#include "i915_sw_fence.h"
+int __i915_sw_fence_call
+intel_atomic_commit_ready(struct i915_sw_fence *fence,
+			  enum i915_sw_fence_notify notify);
 
 #endif /* __INTEL_ATOMIC_H__ */
