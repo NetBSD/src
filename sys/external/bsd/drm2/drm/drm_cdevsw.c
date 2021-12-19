@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_cdevsw.c,v 1.26 2021/12/19 10:45:33 riastradh Exp $	*/
+/*	$NetBSD: drm_cdevsw.c,v 1.27 2021/12/19 11:08:55 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_cdevsw.c,v 1.26 2021/12/19 10:45:33 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_cdevsw.c,v 1.27 2021/12/19 11:08:55 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -177,6 +177,7 @@ drm_open(dev_t d, int flags, int fmt, struct lwp *l)
 		if (error)
 			goto fail4;
 	}
+	priv->filp = fp;
 
 	mutex_lock(&dev->filelist_mutex);
 	list_add(&priv->lhead, &dev->filelist);
