@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_dma_fence.c,v 1.28 2021/12/19 12:23:34 riastradh Exp $	*/
+/*	$NetBSD: linux_dma_fence.c,v 1.29 2021/12/19 12:30:56 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_dma_fence.c,v 1.28 2021/12/19 12:23:34 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_dma_fence.c,v 1.29 2021/12/19 12:30:56 riastradh Exp $");
 
 #include <sys/atomic.h>
 #include <sys/condvar.h>
@@ -238,6 +238,9 @@ dma_fence_get_stub(void)
 	static struct dma_fence fence = {
 		.refcount = {1}, /* always referenced */
 		.flags = 1u << DMA_FENCE_FLAG_SIGNALED_BIT,
+#ifdef DIAGNOSTIC
+		.f_magic = FENCE_MAGIC_GOOD,
+#endif
 	};
 
 	return dma_fence_get(&fence);
