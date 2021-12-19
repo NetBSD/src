@@ -1,4 +1,4 @@
-/*	$NetBSD: capability.h,v 1.2 2020/02/14 16:02:41 tnn Exp $	*/
+/*	$NetBSD: capability.h,v 1.3 2021/12/19 01:22:01 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -33,16 +33,22 @@
 
 enum linux_capability {
 	LINUX_CAP_SYS_ADMIN,
+	LINUX_CAP_SYS_NICE,
 #define	CAP_SYS_ADMIN	LINUX_CAP_SYS_ADMIN
+#define	CAP_SYS_NICE	LINUX_CAP_SYS_NICE
 };
 
 static inline bool
 capable(enum linux_capability cap)
 {
-
-	KASSERT(cap == CAP_SYS_ADMIN);
-	return kauth_authorize_generic(kauth_cred_get(), KAUTH_GENERIC_ISSUSER,
-	    NULL) == 0;
+	switch (cap) {
+	case CAP_SYS_ADMIN:
+	case CAP_SYS_NICE:
+		return (kauth_authorize_generic(kauth_cred_get(),
+			KAUTH_GENERIC_ISSUSER, NULL) == 0);
+	default:
+		panic("unknown cap %d", cap);
+	}
 }
 
 #endif  /* _LINUX_CAPABILITY_H_ */
