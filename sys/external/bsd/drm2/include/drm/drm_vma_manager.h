@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_vma_manager.h,v 1.2 2021/12/19 01:02:02 riastradh Exp $	*/
+/*	$NetBSD: drm_vma_manager.h,v 1.3 2021/12/19 01:08:15 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -55,25 +55,25 @@ struct drm_vma_offset_node {
 };
 
 static inline unsigned long
-drm_vma_node_start(struct drm_vma_offset_node *node)
+drm_vma_node_start(const struct drm_vma_offset_node *node)
 {
 	return node->von_startpage;
 }
 
 static inline unsigned long
-drm_vma_node_size(struct drm_vma_offset_node *node)
+drm_vma_node_size(const struct drm_vma_offset_node *node)
 {
 	return node->von_npages;
 }
 
 static inline bool
-drm_vma_node_has_offset(struct drm_vma_offset_node *node)
+drm_vma_node_has_offset(const struct drm_vma_offset_node *node)
 {
 	return (node->von_npages != 0);
 }
 
 static inline uint64_t
-drm_vma_node_offset_addr(struct drm_vma_offset_node *node)
+drm_vma_node_offset_addr(const struct drm_vma_offset_node *node)
 {
 	return (uint64_t)node->von_startpage << PAGE_SHIFT;
 }
