@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_ggtt.c,v 1.10 2021/12/19 12:10:07 riastradh Exp $	*/
+/*	$NetBSD: intel_ggtt.c,v 1.11 2021/12/19 12:10:42 riastradh Exp $	*/
 
 // SPDX-License-Identifier: MIT
 /*
@@ -6,7 +6,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intel_ggtt.c,v 1.10 2021/12/19 12:10:07 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intel_ggtt.c,v 1.11 2021/12/19 12:10:42 riastradh Exp $");
 
 #include <linux/stop_machine.h>
 
@@ -1631,8 +1631,11 @@ intel_partial_pages(const struct i915_ggtt_view *view,
 		    (bus_size_t)view->partial.size << PAGE_SHIFT,
 		    view->partial.size, PAGE_SIZE, 0, BUS_DMA_NOWAIT,
 		    &st->sgl->sg_dmamap);
-		if (ret)
+		if (ret) {
+			st->sgl->sg_dmamap = NULL;
 			goto fail;
+		}
+		st->sgl->sg_dmat = obj->base.dev->dmat;
 	}
 
 	/*
@@ -1669,10 +1672,10 @@ intel_partial_pages(const struct i915_ggtt_view *view,
 	/* Success!  */
 	return st;
 
-fail:	if (st->sgl->sg_dmamap)
-		bus_dmamap_destroy(obj->base.dev->dmat, st->sgl->sg_dmamap);
-	if (st)
+fail:	if (st) {
+		sg_free_table(st);
 		kfree(st);
+	}
 	return ERR_PTR(ret);
 #else
 	struct sg_table *st;

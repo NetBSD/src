@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_gtt.c,v 1.8 2021/12/19 12:10:07 riastradh Exp $	*/
+/*	$NetBSD: intel_gtt.c,v 1.9 2021/12/19 12:10:42 riastradh Exp $	*/
 
 // SPDX-License-Identifier: MIT
 /*
@@ -6,7 +6,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intel_gtt.c,v 1.8 2021/12/19 12:10:07 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intel_gtt.c,v 1.9 2021/12/19 12:10:42 riastradh Exp $");
 
 #include <linux/slab.h> /* fault-inject.h is not standalone! */
 
@@ -268,12 +268,6 @@ void clear_pages(struct i915_vma *vma)
 	GEM_BUG_ON(!vma->pages);
 
 	if (vma->pages != vma->obj->mm.pages) {
-#ifdef __NetBSD__
-		if (vma->pages->sgl->sg_dmamap) {
-			bus_dma_tag_t dmat = vma->obj->base.dev->dmat;
-			bus_dmamap_destroy(dmat, vma->pages->sgl->sg_dmamap);
-		}
-#endif
 		sg_free_table(vma->pages);
 		kfree(vma->pages);
 	}

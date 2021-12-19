@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_gem_stolen.c,v 1.4 2021/12/19 11:33:30 riastradh Exp $	*/
+/*	$NetBSD: i915_gem_stolen.c,v 1.5 2021/12/19 12:10:42 riastradh Exp $	*/
 
 /*
  * SPDX-License-Identifier: MIT
@@ -7,7 +7,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_gem_stolen.c,v 1.4 2021/12/19 11:33:30 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_gem_stolen.c,v 1.5 2021/12/19 12:10:42 riastradh Exp $");
 
 #include <linux/errno.h>
 #include <linux/mutex.h>
@@ -557,6 +557,7 @@ i915_pages_create_for_stolen(struct drm_device *dev,
 		st->sgl->sg_dmamap = NULL;
 		goto out;
 	}
+	st->sgl->sg_dmat = dmat;
 
 	/* XXX errno NetBSD->Liux */
 	ret = -bus_dmamap_load_raw(dmat, st->sgl->sg_dmamap, seg, nseg, size,
@@ -571,10 +572,6 @@ i915_pages_create_for_stolen(struct drm_device *dev,
 out:	if (ret) {
 		if (loaded)
 			bus_dmamap_unload(dmat, st->sgl->sg_dmamap);
-		if (st->sgl->sg_dmamap) {
-			bus_dmamap_destroy(dmat, st->sgl->sg_dmamap);
-			st->sgl->sg_dmamap = NULL;
-		}
 		sg_free_table(st);
 		kfree(st);
 		return ERR_PTR(ret);
@@ -611,8 +608,6 @@ static void i915_gem_object_put_pages_stolen(struct drm_i915_gem_object *obj,
 	/* Should only be called from i915_gem_object_release_stolen() */
 #ifdef __NetBSD__
 	bus_dmamap_unload(obj->base.dev->dmat, pages->sgl->sg_dmamap);
-	bus_dmamap_destroy(obj->base.dev->dmat, pages->sgl->sg_dmamap);
-	pages->sgl->sg_dmamap = NULL;
 #endif
 	sg_free_table(pages);
 	kfree(pages);
