@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_scheduler.c,v 1.2 2021/12/18 23:45:28 riastradh Exp $	*/
+/*	$NetBSD: i915_scheduler.c,v 1.3 2021/12/19 11:37:05 riastradh Exp $	*/
 
 /*
  * SPDX-License-Identifier: MIT
@@ -7,7 +7,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_scheduler.c,v 1.2 2021/12/18 23:45:28 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_scheduler.c,v 1.3 2021/12/19 11:37:05 riastradh Exp $");
 
 #include <linux/mutex.h>
 
@@ -22,12 +22,17 @@ static struct i915_global_scheduler {
 	struct kmem_cache *slab_priorities;
 } global;
 
+#ifdef __NetBSD__
+static spinlock_t schedule_lock;
+spinlock_t *const i915_schedule_lock = &schedule_lock;
+#else
 static DEFINE_SPINLOCK(schedule_lock);
+#endif
 
 static const struct i915_request *
 node_to_request(const struct i915_sched_node *node)
 {
-	return container_of(node, const struct i915_request, sched);
+	return const_container_of(node, const struct i915_request, sched);
 }
 
 static inline bool node_started(const struct i915_sched_node *node)
