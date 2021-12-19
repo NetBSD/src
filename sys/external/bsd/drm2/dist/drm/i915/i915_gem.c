@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_gem.c,v 1.66 2021/12/19 10:28:31 riastradh Exp $	*/
+/*	$NetBSD: i915_gem.c,v 1.67 2021/12/19 11:16:24 riastradh Exp $	*/
 
 /*
  * Copyright © 2008-2015 Intel Corporation
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_gem.c,v 1.66 2021/12/19 10:28:31 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_gem.c,v 1.67 2021/12/19 11:16:24 riastradh Exp $");
 
 #ifdef __NetBSD__
 #if 0				/* XXX uvmhist option?  */
@@ -60,7 +60,6 @@ __KERNEL_RCSID(0, "$NetBSD: i915_gem.c,v 1.66 2021/12/19 10:28:31 riastradh Exp 
 #include <linux/pci.h>
 #include <linux/dma-buf.h>
 #include <linux/mman.h>
-#include <linux/nbsd-namespace.h>
 
 #include "display/intel_display.h"
 #include "display/intel_frontbuffer.h"
@@ -80,6 +79,8 @@ __KERNEL_RCSID(0, "$NetBSD: i915_gem.c,v 1.66 2021/12/19 10:28:31 riastradh Exp 
 #include "i915_vgpu.h"
 
 #include "intel_pm.h"
+
+#include <linux/nbsd-namespace.h>
 
 static int
 insert_mappable_node(struct i915_ggtt *ggtt, struct drm_mm_node *node, u32 size)
