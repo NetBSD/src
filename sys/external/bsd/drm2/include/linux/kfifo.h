@@ -1,4 +1,4 @@
-/*	$NetBSD: kfifo.h,v 1.3 2018/08/27 14:41:53 riastradh Exp $	*/
+/*	$NetBSD: kfifo.h,v 1.4 2021/12/19 10:57:34 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -52,7 +52,14 @@ struct kfifo_meta {
 		TYPE			*kf_buf;			      \
 	}
 
+#define	_KFIFO_TYPE(TAG, TYPE, N)					      \
+	struct TAG {							      \
+		struct kfifo_meta	kf_meta;			      \
+		TYPE			kf_buf[N];			      \
+	}
+
 #define	DECLARE_KFIFO_PTR(FIFO, TYPE)	_KFIFO_PTR_TYPE(, TYPE) FIFO
+#define	DECLARE_KFIFO(FIFO, TYPE, N)	_KFIFO_TYPE(, TYPE, N) FIFO
 
 _KFIFO_PTR_TYPE(kfifo, void);
 
