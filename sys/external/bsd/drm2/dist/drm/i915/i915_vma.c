@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_vma.c,v 1.6 2021/12/19 11:37:41 riastradh Exp $	*/
+/*	$NetBSD: i915_vma.c,v 1.7 2021/12/19 11:55:58 riastradh Exp $	*/
 
 /*
  * Copyright © 2016 Intel Corporation
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_vma.c,v 1.6 2021/12/19 11:37:41 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_vma.c,v 1.7 2021/12/19 11:55:58 riastradh Exp $");
 
 #include <linux/sched/mm.h>
 #include <drm/drm_gem.h>
@@ -175,14 +175,12 @@ vma_create(struct drm_i915_gem_object *obj,
 
 	i915_active_init(&vma->active, __i915_vma_active, __i915_vma_retire);
 
-#ifndef __NetBSD__		/* XXX fs reclaim */
 	/* Declare ourselves safe for use inside shrinkers */
 	if (IS_ENABLED(CONFIG_LOCKDEP)) {
 		fs_reclaim_acquire(GFP_KERNEL);
 		might_lock(&vma->active.mutex);
 		fs_reclaim_release(GFP_KERNEL);
 	}
-#endif
 
 	INIT_LIST_HEAD(&vma->closed_link);
 
