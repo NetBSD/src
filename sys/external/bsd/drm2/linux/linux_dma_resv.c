@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_dma_resv.c,v 1.14 2021/12/19 12:26:22 riastradh Exp $	*/
+/*	$NetBSD: linux_dma_resv.c,v 1.15 2021/12/19 12:26:30 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_dma_resv.c,v 1.14 2021/12/19 12:26:22 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_dma_resv.c,v 1.15 2021/12/19 12:26:30 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/poll.h>
@@ -1044,6 +1044,8 @@ top:	KASSERT(fence == NULL);
 		if (!dma_resv_read_valid(robj, &ticket))
 			goto restart;
 	}
+	if (shared_count)
+		goto out;
 
 	/* If there is an exclusive fence, test it.  */
 	KASSERT(fence == NULL);
@@ -1131,6 +1133,8 @@ top:	KASSERT(fence == NULL);
 		if (!dma_resv_read_valid(robj, &ticket))
 			goto restart;
 	}
+	if (shared_count)
+		goto out;
 
 	/* If there is an exclusive fence, test it.  */
 	KASSERT(fence == NULL);
@@ -1144,7 +1148,7 @@ top:	KASSERT(fence == NULL);
 		fence = NULL;
 	}
 
-	/* Success!  Return the number of ticks left.  */
+out:	/* Success!  Return the number of ticks left.  */
 	rcu_read_unlock();
 	KASSERT(fence == NULL);
 	return timeout;
