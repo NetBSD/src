@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_internal.h,v 1.8 2021/12/19 00:58:30 riastradh Exp $	*/
+/*	$NetBSD: drm_internal.h,v 1.9 2021/12/19 01:03:22 riastradh Exp $	*/
 
 /*
  * Copyright © 2014 Intel Corporation
@@ -247,3 +247,6 @@ int drm_framebuffer_debugfs_init(struct drm_minor *minor);
 /* drm_hdcp.c */
 int drm_setup_hdcp_srm(struct class *drm_class);
 void drm_teardown_hdcp_srm(struct class *drm_class);
+
+/* drm_fb_helper.c */
+extern struct mutex drm_kernel_fb_helper_lock;
