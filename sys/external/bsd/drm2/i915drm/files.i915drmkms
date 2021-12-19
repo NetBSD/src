@@ -1,4 +1,4 @@
-#	$NetBSD: files.i915drmkms,v 1.48 2021/12/19 01:40:34 riastradh Exp $
+#	$NetBSD: files.i915drmkms,v 1.49 2021/12/19 01:42:23 riastradh Exp $
 
 version	20180827
 
@@ -39,7 +39,7 @@ makeoptions 	i915drmkms 	"CWARNFLAGS.intel_sdvo.c"+="${${ACTIVE_CC} == gcc && ${
 file	external/bsd/drm2/i915drm/i915_gem_userptr.c	i915drmkms
 file	external/bsd/drm2/i915drm/i915_gemfs.c	i915drmkms
 file	external/bsd/drm2/i915drm/i915_module.c		i915drmkms
-file	external/bsd/drm2/i915drm/i915_pci.c		i915drmkms
+file	external/bsd/drm2/i915drm/i915_pci_autoconf.c	i915drmkms
 file	external/bsd/drm2/i915drm/i915_perf.c	i915drmkms
 file	external/bsd/drm2/i915drm/i915_sw_fence.c	i915drmkms
 file	external/bsd/drm2/i915drm/i915_sysfs.c	i915drmkms
