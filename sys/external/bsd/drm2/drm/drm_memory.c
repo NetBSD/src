@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_memory.c,v 1.15 2021/12/19 10:32:59 riastradh Exp $	*/
+/*	$NetBSD: drm_memory.c,v 1.16 2021/12/19 10:36:13 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_memory.c,v 1.15 2021/12/19 10:32:59 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_memory.c,v 1.16 2021/12/19 10:36:13 riastradh Exp $");
 
 #if defined(__i386__) || defined(__x86_64__)
 
@@ -75,6 +75,7 @@ __KERNEL_RCSID(0, "$NetBSD: drm_memory.c,v 1.15 2021/12/19 10:32:59 riastradh Ex
 #include <drm/drm_drv.h>
 #include <drm/drm_legacy.h>
 #include <drm/drm_pci.h>
+#include <drm/drm_print.h>
 
 /*
  * XXX drm_bus_borrow is a horrible kludge!
