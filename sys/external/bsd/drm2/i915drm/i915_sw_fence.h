@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_sw_fence.h,v 1.3 2021/12/19 01:46:32 riastradh Exp $	*/
+/*	$NetBSD: i915_sw_fence.h,v 1.4 2021/12/19 11:19:55 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -38,14 +38,19 @@
 #include <linux/gfp.h>
 
 struct dma_fence_ops;
+struct dma_resv;
 struct i915_sw_fence;
-struct reservation_object;
+struct i915_sw_fence_cb;
 
 struct i915_sw_fence {
 	char dummy;
 };
 
 struct i915_sw_fence_wait {
+	char dummy;
+};
+
+struct i915_sw_dma_fence_cb {
 	char dummy;
 };
 
@@ -63,7 +68,7 @@ void	i915_sw_fence_fini(struct i915_sw_fence *);
 bool	i915_sw_fence_signaled(struct i915_sw_fence *);
 
 void	i915_sw_fence_await_reservation(struct i915_sw_fence *,
-	    struct reservation_object *, const struct dma_fence_ops *, bool,
+	    struct dma_resv *, const struct dma_fence_ops *, bool,
 	    unsigned long, gfp_t);
 void	i915_sw_fence_await_sw_fence(struct i915_sw_fence *,
 	    struct i915_sw_fence *, struct i915_sw_fence_wait *);
