@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_work.c,v 1.56 2021/12/19 12:11:21 riastradh Exp $	*/
+/*	$NetBSD: linux_work.c,v 1.57 2021/12/19 12:11:28 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_work.c,v 1.56 2021/12/19 12:11:21 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_work.c,v 1.57 2021/12/19 12:11:28 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/atomic.h>
@@ -461,7 +461,7 @@ linux_workqueue_thread(void *cookie)
 			TAILQ_REMOVE(q[i], &marker, work_entry);
 		}
 
-		/* Notify flush that we've completed a batch of work.  */
+		/* Notify cancel that we've completed a batch of work.  */
 		wq->wq_gen++;
 		cv_broadcast(&wq->wq_cv);
 		SDT_PROBE1(sdt, linux, work, batch__done,  wq);
@@ -1428,46 +1428,22 @@ flush_scheduled_work(void)
 	flush_workqueue(system_wq);
 }
 
-/*
- * flush_workqueue_locked(wq)
- *
- *	Wait for all work queued on wq to complete.  This does not
- *	include delayed work.  True if there was work to be flushed,
- *	false it the queue was empty.
- *
- *	Caller must hold wq's lock.
- */
-static bool
-flush_workqueue_locked(struct workqueue_struct *wq)
+struct flush_work {
+	kmutex_t		fw_lock;
+	kcondvar_t		fw_cv;
+	struct work_struct	fw_work;
+	bool			fw_done;
+};
+
+static void
+flush_work_cb(struct work_struct *work)
 {
-	uint64_t gen;
-	bool work_queued = false;
+	struct flush_work *fw = container_of(work, struct flush_work, fw_work);
 
-	KASSERT(mutex_owned(&wq->wq_lock));
-
-	/* Get the current generation number.  */
-	gen = wq->wq_gen;
-
-	/*
-	 * If there's any work in progress -- whether currently running
-	 * or queued to run -- we must wait for the worker thread to
-	 * finish that batch.
-	 */
-	if (wq->wq_current_work != NULL ||
-	    !TAILQ_EMPTY(&wq->wq_queue) ||
-	    !TAILQ_EMPTY(&wq->wq_dqueue)) {
-		gen++;
-		work_queued = true;
-	}
-
-	/* Wait until the generation number has caught up.  */
-	SDT_PROBE1(sdt, linux, work, flush__start,  wq);
-	while (wq->wq_gen < gen)
-		cv_wait(&wq->wq_cv, &wq->wq_lock);
-	SDT_PROBE1(sdt, linux, work, flush__done,  wq);
-
-	/* Return whether we had to wait for anything.  */
-	return work_queued;
+	mutex_enter(&fw->fw_lock);
+	fw->fw_done = true;
+	cv_broadcast(&fw->fw_cv);
+	mutex_exit(&fw->fw_lock);
 }
 
 /*
@@ -1479,10 +1455,26 @@ flush_workqueue_locked(struct workqueue_struct *wq)
 void
 flush_workqueue(struct workqueue_struct *wq)
 {
+	struct flush_work fw;
 
-	mutex_enter(&wq->wq_lock);
-	(void)flush_workqueue_locked(wq);
-	mutex_exit(&wq->wq_lock);
+	mutex_init(&fw.fw_lock, MUTEX_DEFAULT, IPL_VM);
+	cv_init(&fw.fw_cv, "lxwqflsh");
+	INIT_WORK(&fw.fw_work, &flush_work_cb);
+	fw.fw_done = false;
+
+	SDT_PROBE1(sdt, linux, work, flush__start,  wq);
+	queue_work(wq, &fw.fw_work);
+
+	mutex_enter(&fw.fw_lock);
+	while (!fw.fw_done)
+		cv_wait(&fw.fw_cv, &fw.fw_lock);
+	mutex_exit(&fw.fw_lock);
+	SDT_PROBE1(sdt, linux, work, flush__done,  wq);
+
+	KASSERT(fw.fw_done);
+	/* no DESTROY_WORK */
+	cv_destroy(&fw.fw_cv);
+	mutex_destroy(&fw.fw_lock);
 }
 
 /*
@@ -1494,15 +1486,20 @@ void
 drain_workqueue(struct workqueue_struct *wq)
 {
 	unsigned ntries = 0;
+	bool done;
 
-	mutex_enter(&wq->wq_lock);
-	while (flush_workqueue_locked(wq)) {
+	do {
 		if (ntries++ == 10 || (ntries % 100) == 0)
 			printf("linux workqueue %s"
 			    ": still clogged after %u flushes",
 			    wq->wq_name, ntries);
-	}
-	mutex_exit(&wq->wq_lock);
+		flush_workqueue(wq);
+		mutex_enter(&wq->wq_lock);
+		done = wq->wq_current_work == NULL;
+		done &= TAILQ_EMPTY(&wq->wq_queue);
+		done &= TAILQ_EMPTY(&wq->wq_dqueue);
+		mutex_exit(&wq->wq_lock);
+	} while (!done);
 }
 
 /*
@@ -1599,7 +1596,9 @@ flush_delayed_work(struct delayed_work *dw)
 		 * Waiting for the whole queue to flush is overkill,
 		 * but doesn't hurt.
 		 */
-		(void)flush_workqueue_locked(wq);
+		mutex_exit(&wq->wq_lock);
+		flush_workqueue(wq);
+		mutex_enter(&wq->wq_lock);
 		waited = true;
 	}
 	mutex_exit(&wq->wq_lock);
