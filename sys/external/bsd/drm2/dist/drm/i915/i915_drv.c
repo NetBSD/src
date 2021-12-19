@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_drv.c,v 1.40 2021/12/19 11:26:35 riastradh Exp $	*/
+/*	$NetBSD: i915_drv.c,v 1.41 2021/12/19 11:54:03 riastradh Exp $	*/
 
 /* i915_drv.c -- i830,i845,i855,i865,i915 driver -*- linux-c -*-
  */
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_drv.c,v 1.40 2021/12/19 11:26:35 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_drv.c,v 1.41 2021/12/19 11:54:03 riastradh Exp $");
 
 #include <linux/acpi.h>
 #include <linux/device.h>
@@ -1537,6 +1537,12 @@ int i915_driver_probe(struct pci_dev *pdev, const struct pci_device_id *ent)
 	if (IS_ERR(dev_priv))
 		return PTR_ERR(dev_priv);
 
+#ifdef __NetBSD__
+	ret = drm_pci_attach(&dev_priv->drm, pdev);
+	if (ret)
+		goto out_destroy;
+#endif
+
 	/* Disable nuclear pageflip by default on pre-ILK */
 	if (!i915_modparams.nuclear_pageflip && match_info->gen < 5)
 		dev_priv->drm.driver_features &= ~DRIVER_ATOMIC;
@@ -1605,9 +1611,13 @@ out_pci_disable:
 #ifndef __NetBSD__
 	pci_disable_device(pdev);
 out_fini:
-	i915_probe_error(dev_priv, "Device initialization failed (%d)\n", ret);
-	i915_driver_destroy(dev_priv);
 #endif
+	i915_probe_error(dev_priv, "Device initialization failed (%d)\n", ret);
+#ifdef __NetBSD__
+	drm_pci_detach(&dev_priv->drm);
+out_destroy:
+#endif
+	i915_driver_destroy(dev_priv);
 	return ret;
 }
 
@@ -1663,6 +1673,9 @@ static void i915_driver_release(struct drm_device *dev)
 	intel_runtime_pm_driver_release(rpm);
 
 	i915_driver_late_release(dev_priv);
+#ifdef __NetBSD__
+	drm_pci_detach(dev);
+#endif
 	i915_driver_destroy(dev_priv);
 }
 
