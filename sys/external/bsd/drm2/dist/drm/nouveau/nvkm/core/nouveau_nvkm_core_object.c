@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_nvkm_core_object.c,v 1.8 2021/12/19 10:51:57 riastradh Exp $	*/
+/*	$NetBSD: nouveau_nvkm_core_object.c,v 1.9 2021/12/19 11:05:55 riastradh Exp $	*/
 
 /*
  * Copyright 2012 Red Hat Inc.
@@ -24,7 +24,7 @@
  * Authors: Ben Skeggs
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_core_object.c,v 1.8 2021/12/19 10:51:57 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_core_object.c,v 1.9 2021/12/19 11:05:55 riastradh Exp $");
 
 #include <core/object.h>
 #include <core/client.h>
@@ -53,8 +53,8 @@ nvkm_object_search(struct nvkm_client *client, u64 handle,
 			else
 				goto done;
 		}
-		return ERR_PTR(-ENOENT);
 #endif
+		return ERR_PTR(-ENOENT);
 	} else {
 		object = &client->object;
 	}
