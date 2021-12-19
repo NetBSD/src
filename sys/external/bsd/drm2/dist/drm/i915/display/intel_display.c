@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_display.c,v 1.7 2021/12/19 11:56:23 riastradh Exp $	*/
+/*	$NetBSD: intel_display.c,v 1.8 2021/12/19 11:56:38 riastradh Exp $	*/
 
 /*
  * Copyright © 2006-2007 Intel Corporation
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intel_display.c,v 1.7 2021/12/19 11:56:23 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intel_display.c,v 1.8 2021/12/19 11:56:38 riastradh Exp $");
 
 #include "intel_display.h"	/* for pipe_drmhack */
 
@@ -15285,8 +15285,6 @@ intel_atomic_commit_fence_wake(struct i915_sw_fence_waiter *waiter,
 	    &dev_priv->atomic_commit_lock);
 	spin_unlock(&dev_priv->atomic_commit_lock);
 
-	list_del_init(&waiter->entry);
-
 	return 0;
 }
 
@@ -15310,6 +15308,10 @@ static void intel_atomic_commit_fence_wait(struct intel_atomic_state *intel_stat
 	    (i915_sw_fence_done(&intel_state->commit_ready) ||
 		test_bit(I915_RESET_MODESET, &dev_priv->gt.reset.flags)));
 	spin_unlock(&dev_priv->atomic_commit_lock);
+
+	spin_lock(&intel_state->commit_ready.wait.lock);
+	list_del(&waiter.entry);
+	spin_unlock(&intel_state->commit_ready.wait.lock);
 }
 
 static void intel_atomic_cleanup_work(struct work_struct *work)
