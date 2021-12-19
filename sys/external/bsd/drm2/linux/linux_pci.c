@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_pci.c,v 1.13 2021/12/19 01:46:52 riastradh Exp $	*/
+/*	$NetBSD: linux_pci.c,v 1.14 2021/12/19 01:48:13 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_pci.c,v 1.13 2021/12/19 01:46:52 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_pci.c,v 1.14 2021/12/19 01:48:13 riastradh Exp $");
 
 #include <linux/pci.h>
 
@@ -685,6 +685,14 @@ pci_dma_supported(struct pci_dev *pdev, uintmax_t mask)
 		return pci_dma64_available(&pdev->pd_pa);
 	else
 		return true;
+}
+
+bool
+pci_is_thunderbolt_attached(struct pci_dev *pdev)
+{
+
+	/* XXX Cop-out.  */
+	return false;
 }
 
 bool
