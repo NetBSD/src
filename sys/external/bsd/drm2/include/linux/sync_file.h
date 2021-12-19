@@ -1,4 +1,4 @@
-/*	$NetBSD: sync_file.h,v 1.1 2021/12/19 00:28:55 riastradh Exp $	*/
+/*	$NetBSD: sync_file.h,v 1.2 2021/12/19 00:54:36 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -31,5 +31,13 @@
 
 #ifndef	_LINUX_SYNC_FILE_H_
 #define	_LINUX_SYNC_FILE_H_
+
+struct dma_fence;
+struct sync_file;
+
+struct sync_file *
+	sync_file_create(struct dma_fence *);
+struct dma_fence *
+	sync_file_get_fence(int);
 
 #endif	/* _LINUX_SYNC_FILE_H_ */
