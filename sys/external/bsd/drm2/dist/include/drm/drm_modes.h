@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_modes.h,v 1.5 2021/12/18 23:45:46 riastradh Exp $	*/
+/*	$NetBSD: drm_modes.h,v 1.6 2021/12/19 01:55:52 riastradh Exp $	*/
 
 /*
  * Copyright © 2006 Keith Packard
@@ -35,6 +35,7 @@
 #include <drm/drm_connector.h>
 
 struct videomode;
+struct device_node;
 
 /*
  * Note on terminology:  here, for brevity and convenience, we refer to connector
