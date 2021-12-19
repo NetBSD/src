@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_nvkm_subdev_pci_base.c,v 1.9 2021/12/19 10:51:58 riastradh Exp $	*/
+/*	$NetBSD: nouveau_nvkm_subdev_pci_base.c,v 1.10 2021/12/19 12:31:26 riastradh Exp $	*/
 
 /*
  * Copyright 2015 Red Hat Inc.
@@ -24,7 +24,7 @@
  * Authors: Ben Skeggs <bskeggs@redhat.com>
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_subdev_pci_base.c,v 1.9 2021/12/19 10:51:58 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_subdev_pci_base.c,v 1.10 2021/12/19 12:31:26 riastradh Exp $");
 
 #include "priv.h"
 #include "agp.h"
@@ -123,14 +123,13 @@ nvkm_pci_oneinit(struct nvkm_subdev *subdev)
 			return ret;
 	}
 
-#ifdef __NetBSD__ /* XXX post-merge audit */
+#ifdef __NetBSD__
     {
 	const char *const name = device_xname(pci_dev_dev(pdev));
 	const struct pci_attach_args *pa = &pdev->pd_pa;
 	const char *intrstr;
 	char intrbuf[PCI_INTRSTR_LEN];
 
-	/* XXX convert to use drm_pci_request_irq() */
 	if (pdev->msi_enabled) {
 		if (pdev->pd_intr_handles == NULL) {
 			if ((ret = pci_msi_alloc_exact(pa, &pci->pci_ihp,
