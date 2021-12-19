@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_tasklet.c,v 1.5 2021/12/19 11:03:18 riastradh Exp $	*/
+/*	$NetBSD: linux_tasklet.c,v 1.6 2021/12/19 11:04:58 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018, 2020 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_tasklet.c,v 1.5 2021/12/19 11:03:18 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_tasklet.c,v 1.6 2021/12/19 11:04:58 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/atomic.h>
@@ -373,6 +373,11 @@ tasklet_disable(struct tasklet_struct *tasklet)
 	KASSERT(disablecount < UINT_MAX);
 	KASSERT(disablecount != 0);
 
+	/* Pairs with membar_exit in __tasklet_enable.  */
+#ifndef __HAVE_ATOMIC_AS_MEMBAR
+	membar_enter();
+#endif
+
 	/* Wait for it to finish running, if it was running.  */
 	tasklet_unlock_wait(tasklet);
 }
@@ -457,12 +462,16 @@ tasklet_trylock(struct tasklet_struct *tasklet)
 	unsigned state;
 
 	do {
-		/* Pairs with membar_exit in tasklet_unlock.  */
-		state = atomic_load_acquire(&tasklet->tl_state);
+		state = atomic_load_relaxed(&tasklet->tl_state);
 		if (state & TASKLET_RUNNING)
 			return false;
 	} while (atomic_cas_uint(&tasklet->tl_state, state,
 		state | TASKLET_RUNNING) != state);
+
+	/* Pairs with membar_exit in tasklet_unlock.  */
+#ifndef __HAVE_ATOMIC_AS_MEMBAR
+	membar_enter();
+#endif
 
 	return true;
 }
@@ -481,8 +490,8 @@ tasklet_unlock(struct tasklet_struct *tasklet)
 	KASSERT(atomic_load_relaxed(&tasklet->tl_state) & TASKLET_RUNNING);
 
 	/*
-	 * Pairs with atomic_load_acquire in tasklet_trylock and
-	 * tasklet_unlock.
+	 * Pairs with membar_enter in tasklet_trylock and with
+	 * atomic_load_acquire in tasklet_unlock_wait.
 	 */
 #ifndef __HAVE_ATOMIC_AS_MEMBAR
 	membar_exit();
@@ -534,6 +543,11 @@ __tasklet_disable_sync_once(struct tasklet_struct *tasklet)
 	KASSERT(disablecount < UINT_MAX);
 	KASSERT(disablecount != 0);
 
+	/* Pairs with membar_exit in __tasklet_enable_sync_once.  */
+#ifndef __HAVE_ATOMIC_AS_MEMBAR
+	membar_enter();
+#endif
+
 	/*
 	 * If it was zero, wait for it to finish running.  If it was
 	 * not zero, caller must not care whether it was running.
@@ -552,6 +566,11 @@ void
 __tasklet_enable_sync_once(struct tasklet_struct *tasklet)
 {
 	unsigned int disablecount;
+
+	/* Pairs with membar_enter in __tasklet_disable_sync_once.  */
+#ifndef __HAVE_ATOMIC_AS_MEMBAR
+	membar_exit();
+#endif
 
 	/* Decrement the disable count.  */
 	disablecount = atomic_dec_uint_nv(&tasklet->tl_disablecount);
@@ -615,8 +634,8 @@ __tasklet_enable(struct tasklet_struct *tasklet)
 	 * before potentially allowing tasklet to run again by
 	 * decrementing the disable count.
 	 *
-	 * Pairs with atomic_load_acquire(&tasklet->tl_disablecount) in
-	 * tasklet_softintr.
+	 * Pairs with atomic_load_acquire in tasklet_softintr and with
+	 * membar_enter in tasklet_disable.
 	 */
 #ifndef __HAVE_ATOMIC_AS_MEMBAR
 	membar_exit();
