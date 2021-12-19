@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu_psp_v3_1.c,v 1.2 2021/12/18 23:44:58 riastradh Exp $	*/
+/*	$NetBSD: amdgpu_psp_v3_1.c,v 1.3 2021/12/19 12:21:29 riastradh Exp $	*/
 
 /*
  * Copyright 2016 Advanced Micro Devices, Inc.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdgpu_psp_v3_1.c,v 1.2 2021/12/18 23:44:58 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdgpu_psp_v3_1.c,v 1.3 2021/12/19 12:21:29 riastradh Exp $");
 
 #include <linux/firmware.h>
 #include <linux/module.h>
@@ -96,9 +96,9 @@ static int psp_v3_1_init_microcode(struct psp_context *psp)
 	adev->psp.sos_bin_size = le32_to_cpu(hdr->sos_size_bytes);
 	adev->psp.sys_bin_size = le32_to_cpu(hdr->header.ucode_size_bytes) -
 					le32_to_cpu(hdr->sos_size_bytes);
-	adev->psp.sys_start_addr = (uint8_t *)hdr +
+	adev->psp.sys_start_addr = (const uint8_t *)hdr +
 				le32_to_cpu(hdr->header.ucode_array_offset_bytes);
-	adev->psp.sos_start_addr = (uint8_t *)adev->psp.sys_start_addr +
+	adev->psp.sos_start_addr = (const uint8_t *)adev->psp.sys_start_addr +
 				le32_to_cpu(hdr->sos_offset_bytes);
 
 	snprintf(fw_name, sizeof(fw_name), "amdgpu/%s_asd.bin", chip_name);
@@ -114,7 +114,7 @@ static int psp_v3_1_init_microcode(struct psp_context *psp)
 	adev->psp.asd_fw_version = le32_to_cpu(hdr->header.ucode_version);
 	adev->psp.asd_feature_version = le32_to_cpu(hdr->ucode_feature_version);
 	adev->psp.asd_ucode_size = le32_to_cpu(hdr->header.ucode_size_bytes);
-	adev->psp.asd_start_addr = (uint8_t *)hdr +
+	adev->psp.asd_start_addr = (const uint8_t *)hdr +
 				le32_to_cpu(hdr->header.ucode_array_offset_bytes);
 
 	return 0;

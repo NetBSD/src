@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpufb.c,v 1.2 2021/12/19 10:32:59 riastradh Exp $	*/
+/*	$NetBSD: amdgpufb.c,v 1.3 2021/12/19 12:21:29 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdgpufb.c,v 1.2 2021/12/19 10:32:59 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdgpufb.c,v 1.3 2021/12/19 12:21:29 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/bus.h>
@@ -178,9 +178,7 @@ amdgpufb_drmfb_mmapfb(struct drmfb_softc *drmfb, off_t offset, int prot)
 	    struct amdgpufb_softc, sc_drmfb);
 	struct drm_fb_helper *const helper = sc->sc_afa.afa_fb_helper;
 	struct drm_framebuffer *const fb = helper->fb;
-	struct amdgpu_framebuffer *const rfb = container_of(fb,
-	    struct amdgpu_framebuffer, base);
-	struct drm_gem_object *const gobj = rfb->obj;
+	struct drm_gem_object *const gobj = fb->obj[0];
 	struct amdgpu_bo *const rbo = gem_to_amdgpu_bo(gobj);
 	const unsigned num_pages __diagused = rbo->tbo.num_pages;
 	int flags = 0;

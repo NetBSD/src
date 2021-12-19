@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu_arcturus_ppt.c,v 1.3 2021/12/19 10:59:02 riastradh Exp $	*/
+/*	$NetBSD: amdgpu_arcturus_ppt.c,v 1.4 2021/12/19 12:21:29 riastradh Exp $	*/
 
 /*
  * Copyright 2019 Advanced Micro Devices, Inc.
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdgpu_arcturus_ppt.c,v 1.3 2021/12/19 10:59:02 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdgpu_arcturus_ppt.c,v 1.4 2021/12/19 12:21:29 riastradh Exp $");
 
 #include "pp_debug.h"
 #include <linux/firmware.h>
@@ -501,7 +501,7 @@ static int arcturus_check_powerplay_table(struct smu_context *smu)
 
 static int arcturus_store_powerplay_table(struct smu_context *smu)
 {
-	struct smu_11_0_powerplay_table *powerplay_table = NULL;
+	const struct smu_11_0_powerplay_table *powerplay_table = NULL;
 	struct smu_table_context *table_context = &smu->smu_table;
 	struct smu_baco_context *smu_baco = &smu->smu_baco;
 	int ret = 0;

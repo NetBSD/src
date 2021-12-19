@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu_pci.c,v 1.8 2021/12/19 11:53:50 riastradh Exp $	*/
+/*	$NetBSD: amdgpu_pci.c,v 1.9 2021/12/19 12:21:29 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,12 +30,21 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdgpu_pci.c,v 1.8 2021/12/19 11:53:50 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdgpu_pci.c,v 1.9 2021/12/19 12:21:29 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/queue.h>
 #include <sys/systm.h>
 #include <sys/workqueue.h>
+
+#include <dev/pci/pcivar.h>
+
+#include <linux/pci.h>
+
+#include <drm/drm_device.h>
+#include <drm/drm_drv.h>
+#include <drm/drm_fb_helper.h>
+#include <drm/drm_pci.h>
 
 #include <amdgpu.h>
 #include "amdgpu_drv.h"
@@ -222,25 +231,25 @@ amdgpu_detach(device_t self, int flags)
 		return error;
 
 	if (sc->sc_task_state == AMDGPU_TASK_ATTACH)
-		goto out;
+		goto out0;
 	if (sc->sc_task_u.workqueue != NULL) {
 		workqueue_destroy(sc->sc_task_u.workqueue);
 		sc->sc_task_u.workqueue = NULL;
 	}
 
 	if (sc->sc_drm_dev == NULL)
-		goto out0;
-	if (!sc->sc_pci_attached)
 		goto out1;
-	if (!sc->sc_dev_registered)
+	if (!sc->sc_pci_attached)
 		goto out2;
+	if (!sc->sc_dev_registered)
+		goto out3;
 
 	drm_dev_unregister(sc->sc_drm_dev);
-out2:	drm_pci_detach(sc->sc_drm_dev);
-out1:	drm_dev_put(sc->sc_drm_dev);
+out3:	drm_pci_detach(sc->sc_drm_dev);
+out2:	drm_dev_put(sc->sc_drm_dev);
 	sc->sc_drm_dev = NULL;
-out0:	linux_pci_dev_destroy(&sc->sc_pci_dev);
-	pmf_device_deregister(self);
+out1:	linux_pci_dev_destroy(&sc->sc_pci_dev);
+out0:	pmf_device_deregister(self);
 	return 0;
 }
 
@@ -250,12 +259,11 @@ amdgpu_do_suspend(device_t self, const pmf_qual_t *qual)
 	struct amdgpu_softc *const sc = device_private(self);
 	struct drm_device *const dev = sc->sc_drm_dev;
 	int ret;
-	bool is_console = true; /* XXX */
 
 	if (dev == NULL)
 		return true;
 
-	ret = amdgpu_suspend_kms(dev, true, is_console);
+	ret = amdgpu_device_suspend(dev, /*fbcon*/true);
 	if (ret)
 		return false;
 
@@ -268,12 +276,11 @@ amdgpu_do_resume(device_t self, const pmf_qual_t *qual)
 	struct amdgpu_softc *const sc = device_private(self);
 	struct drm_device *const dev = sc->sc_drm_dev;
 	int ret;
-	bool is_console = true; /* XXX */
 
 	if (dev == NULL)
 		return true;
 
-	ret = amdgpu_resume_kms(dev, true, is_console);
+	ret = amdgpu_device_resume(dev, /*fbcon*/true);
 	if (ret)
 		return false;
 

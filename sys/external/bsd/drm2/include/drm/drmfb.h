@@ -1,4 +1,4 @@
-/*	$NetBSD: drmfb.h,v 1.2 2016/12/12 19:45:56 maya Exp $	*/
+/*	$NetBSD: drmfb.h,v 1.3 2021/12/19 12:21:30 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -36,6 +36,7 @@
 
 #include <dev/wsfb/genfbvar.h>
 
+struct drm_device;
 struct drm_fb_helper;
 struct drm_fb_helper_surface_sizes;
 

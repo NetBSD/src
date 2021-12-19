@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu_ppatomfwctrl.c,v 1.2 2021/12/18 23:45:26 riastradh Exp $	*/
+/*	$NetBSD: amdgpu_ppatomfwctrl.c,v 1.3 2021/12/19 12:21:29 riastradh Exp $	*/
 
 /*
  * Copyright 2016 Advanced Micro Devices, Inc.
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdgpu_ppatomfwctrl.c,v 1.2 2021/12/18 23:45:26 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdgpu_ppatomfwctrl.c,v 1.3 2021/12/19 12:21:29 riastradh Exp $");
 
 #include "ppatomfwctrl.h"
 #include "atomfirmware.h"
@@ -56,7 +56,7 @@ static const union atom_voltage_object_v4 *pp_atomfwctrl_lookup_voltage_type_v4(
 	return NULL;
 }
 
-static struct atom_voltage_objects_info_v4_1 *pp_atomfwctrl_get_voltage_info_table(
+static const struct atom_voltage_objects_info_v4_1 *pp_atomfwctrl_get_voltage_info_table(
 		struct pp_hwmgr *hwmgr)
 {
 	const void *table_address;
@@ -70,7 +70,7 @@ static struct atom_voltage_objects_info_v4_1 *pp_atomfwctrl_get_voltage_info_tab
 			"Error retrieving BIOS Table Address!",
 			return NULL);
 
-	return (struct atom_voltage_objects_info_v4_1 *)table_address;
+	return (const struct atom_voltage_objects_info_v4_1 *)table_address;
 }
 
 /**
@@ -81,8 +81,8 @@ static struct atom_voltage_objects_info_v4_1 *pp_atomfwctrl_get_voltage_info_tab
 bool pp_atomfwctrl_is_voltage_controlled_by_gpio_v4(struct pp_hwmgr *hwmgr,
 		uint8_t voltage_type, uint8_t voltage_mode)
 {
-	struct atom_voltage_objects_info_v4_1 *voltage_info =
-			(struct atom_voltage_objects_info_v4_1 *)
+	const struct atom_voltage_objects_info_v4_1 *voltage_info =
+			(const struct atom_voltage_objects_info_v4_1 *)
 			pp_atomfwctrl_get_voltage_info_table(hwmgr);
 	bool ret;
 
@@ -101,8 +101,8 @@ int pp_atomfwctrl_get_voltage_table_v4(struct pp_hwmgr *hwmgr,
 		uint8_t voltage_type, uint8_t voltage_mode,
 		struct pp_atomfwctrl_voltage_table *voltage_table)
 {
-	struct atom_voltage_objects_info_v4_1 *voltage_info =
-			(struct atom_voltage_objects_info_v4_1 *)
+	const struct atom_voltage_objects_info_v4_1 *voltage_info =
+			(const struct atom_voltage_objects_info_v4_1 *)
 			pp_atomfwctrl_get_voltage_info_table(hwmgr);
 	const union atom_voltage_object_v4 *voltage_object;
 	unsigned int i;
@@ -164,7 +164,7 @@ int pp_atomfwctrl_get_voltage_table_v4(struct pp_hwmgr *hwmgr,
 }
 
  
-static struct atom_gpio_pin_lut_v2_1 *pp_atomfwctrl_get_gpio_lookup_table(
+static const struct atom_gpio_pin_lut_v2_1 *pp_atomfwctrl_get_gpio_lookup_table(
 		struct pp_hwmgr *hwmgr)
 {
 	const void *table_address;
@@ -177,11 +177,11 @@ static struct atom_gpio_pin_lut_v2_1 *pp_atomfwctrl_get_gpio_lookup_table(
 			"Error retrieving BIOS Table Address!",
 			return NULL);
 
-	return (struct atom_gpio_pin_lut_v2_1 *)table_address;
+	return (const struct atom_gpio_pin_lut_v2_1 *)table_address;
 }
 
 static bool pp_atomfwctrl_lookup_gpio_pin(
-		struct atom_gpio_pin_lut_v2_1 *gpio_lookup_table,
+		const struct atom_gpio_pin_lut_v2_1 *gpio_lookup_table,
 		const uint32_t pin_id,
 		struct pp_atomfwctrl_gpio_pin_assignment *gpio_pin_assignment)
 {
@@ -215,7 +215,7 @@ bool pp_atomfwctrl_get_pp_assign_pin(struct pp_hwmgr *hwmgr,
 		struct pp_atomfwctrl_gpio_pin_assignment *gpio_pin_assignment)
 {
 	bool ret = false;
-	struct atom_gpio_pin_lut_v2_1 *gpio_lookup_table =
+	const struct atom_gpio_pin_lut_v2_1 *gpio_lookup_table =
 			pp_atomfwctrl_get_gpio_lookup_table(hwmgr);
 
 	/* If we cannot find the table do NOT try to control this voltage. */

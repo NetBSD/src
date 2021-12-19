@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu_navi10_ppt.c,v 1.3 2021/12/19 12:02:39 riastradh Exp $	*/
+/*	$NetBSD: amdgpu_navi10_ppt.c,v 1.4 2021/12/19 12:21:29 riastradh Exp $	*/
 
 /*
  * Copyright 2019 Advanced Micro Devices, Inc.
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdgpu_navi10_ppt.c,v 1.3 2021/12/19 12:02:39 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdgpu_navi10_ppt.c,v 1.4 2021/12/19 12:21:29 riastradh Exp $");
 
 #include "pp_debug.h"
 #include <linux/firmware.h>
@@ -522,7 +522,7 @@ static int navi10_append_powerplay_table(struct smu_context *smu)
 
 static int navi10_store_powerplay_table(struct smu_context *smu)
 {
-	struct smu_11_0_powerplay_table *powerplay_table = NULL;
+	const struct smu_11_0_powerplay_table *powerplay_table = NULL;
 	struct smu_table_context *table_context = &smu->smu_table;
 	struct smu_baco_context *smu_baco = &smu->smu_baco;
 
@@ -1807,7 +1807,7 @@ static int navi10_get_thermal_temperature_range(struct smu_context *smu,
 						struct smu_temperature_range *range)
 {
 	struct smu_table_context *table_context = &smu->smu_table;
-	struct smu_11_0_powerplay_table *powerplay_table = table_context->power_play_table;
+	const struct smu_11_0_powerplay_table *powerplay_table = table_context->power_play_table;
 
 	if (!range || !powerplay_table)
 		return -EINVAL;
@@ -1968,14 +1968,14 @@ static int navi10_overdrive_get_gfx_clk_base_voltage(struct smu_context *smu,
 }
 
 static int navi10_setup_od_limits(struct smu_context *smu) {
-	struct smu_11_0_overdrive_table *overdrive_table = NULL;
-	struct smu_11_0_powerplay_table *powerplay_table = NULL;
+	const struct smu_11_0_overdrive_table *overdrive_table = NULL;
+	const struct smu_11_0_powerplay_table *powerplay_table = NULL;
 
 	if (!smu->smu_table.power_play_table) {
 		pr_err("powerplay table uninitialized!\n");
 		return -ENOENT;
 	}
-	powerplay_table = (struct smu_11_0_powerplay_table *)smu->smu_table.power_play_table;
+	powerplay_table = (const struct smu_11_0_powerplay_table *)smu->smu_table.power_play_table;
 	overdrive_table = &powerplay_table->overdrive_table;
 	if (!smu->od_settings) {
 		smu->od_settings = kmemdup(overdrive_table, sizeof(struct smu_11_0_overdrive_table), GFP_KERNEL);

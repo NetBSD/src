@@ -1,4 +1,4 @@
-/*	$NetBSD: ppevvmath.h,v 1.2 2021/12/18 23:45:26 riastradh Exp $	*/
+/*	$NetBSD: ppevvmath.h,v 1.3 2021/12/19 12:21:30 riastradh Exp $	*/
 
 /*
  * Copyright 2015 Advanced Micro Devices, Inc.
@@ -29,7 +29,7 @@
 #define PRECISION 5 /* Change this value to change the number of decimal places in the final output - 5 is a good default */
 
 #define SHIFTED_2 (2 << SHIFT_AMOUNT)
-#define MAX (1 << (SHIFT_AMOUNT - 1)) - 1 /* 32767 - Might change in the future */
+#define MAX_VALUE (1 << (SHIFT_AMOUNT - 1)) - 1 /* 32767 - Might change in the future */
 
 /* -------------------------------------------------------------------------------
  * NEW TYPE - fINT
@@ -95,8 +95,8 @@ static int GetReal (fInt A);                              /* Internal function *
 /* -------------------------------------------------------------------------------------
  * TROUBLESHOOTING INFORMATION
  * -------------------------------------------------------------------------------------
- * 1) ConvertToFraction - InputOutOfRangeException: Only accepts numbers smaller than MAX (default: 32767)
- * 2) fAdd - OutputOutOfRangeException: Output bigger than MAX (default: 32767)
+ * 1) ConvertToFraction - InputOutOfRangeException: Only accepts numbers smaller than MAX_VALUE (default: 32767)
+ * 2) fAdd - OutputOutOfRangeException: Output bigger than MAX_VALUE (default: 32767)
  * 3) fMultiply - OutputOutOfRangeException:
  * 4) fGetSquare - OutputOutOfRangeException:
  * 5) fDivide - DivideByZeroException
@@ -221,7 +221,7 @@ static fInt ConvertToFraction(int X) /*Add all range checking here. Is it possib
 {
 	fInt temp;
 
-	if (X <= MAX)
+	if (X <= MAX_VALUE)
 		temp.full = (X << SHIFT_AMOUNT);
 	else
 		temp.full = 0;
@@ -239,7 +239,7 @@ static fInt Convert_ULONG_ToFraction(uint32_t X)
 {
 	fInt temp;
 
-	if (X <= MAX)
+	if (X <= MAX_VALUE)
 		temp.full = (X << SHIFT_AMOUNT);
 	else
 		temp.full = 0;
@@ -267,14 +267,14 @@ static fInt GetScaledFraction(int X, int factor)
 		bNEGATED = !bNEGATED; /*If bNEGATED = true due to X < 0, this will cover the case of negative cancelling negative */
 	}
 
-	if ((X > MAX) || factor > MAX) {
-		if ((X/factor) <= MAX) {
-			while (X > MAX) {
+	if ((X > MAX_VALUE) || factor > MAX_VALUE) {
+		if ((X/factor) <= MAX_VALUE) {
+			while (X > MAX_VALUE) {
 				X = X >> 1;
 				times_shifted++;
 			}
 
-			while (factor > MAX) {
+			while (factor > MAX_VALUE) {
 				factor = factor >> 1;
 				factor_shifted++;
 			}
@@ -335,7 +335,7 @@ static fInt fMultiply (fInt X, fInt Y) /* Uses 64-bit integers (int64_t) */
 {
 	fInt Product;
 	int64_t tempProduct;
-	bool X_LessThanOne, Y_LessThanOne;
+	bool X_LessThanOne __unused, Y_LessThanOne __unused;
 
 	X_LessThanOne = (X.partial.real == 0 && X.partial.decimal != 0 && X.full >= 0);
 	Y_LessThanOne = (Y.partial.real == 0 && Y.partial.decimal != 0 && Y.full >= 0);

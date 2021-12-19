@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu_pm.c,v 1.4 2021/12/18 23:44:58 riastradh Exp $	*/
+/*	$NetBSD: amdgpu_pm.c,v 1.5 2021/12/19 12:21:29 riastradh Exp $	*/
 
 /*
  * Copyright 2017 Advanced Micro Devices, Inc.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdgpu_pm.c,v 1.4 2021/12/18 23:44:58 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdgpu_pm.c,v 1.5 2021/12/19 12:21:29 riastradh Exp $");
 
 #include <drm/drm_debugfs.h>
 
@@ -48,7 +48,6 @@ __KERNEL_RCSID(0, "$NetBSD: amdgpu_pm.c,v 1.4 2021/12/18 23:44:58 riastradh Exp 
 
 #ifndef __NetBSD__		/* XXX sysfs */
 static int amdgpu_debugfs_pm_init(struct amdgpu_device *adev);
-#endif
 
 static const struct cg_flag_name clocks[] = {
 	{AMD_CG_SUPPORT_GFX_MGCG, "Graphics Medium Grain Clock Gating"},
@@ -89,6 +88,7 @@ static const struct hwmon_temp_label {
 	{PP_TEMP_JUNCTION, "junction"},
 	{PP_TEMP_MEM, "mem"},
 };
+#endif	/* __NetBSD__ */
 
 void amdgpu_pm_acpi_event_handler(struct amdgpu_device *adev)
 {

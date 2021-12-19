@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu_vcn_v1_0.c,v 1.2 2021/12/18 23:44:58 riastradh Exp $	*/
+/*	$NetBSD: amdgpu_vcn_v1_0.c,v 1.3 2021/12/19 12:21:29 riastradh Exp $	*/
 
 /*
  * Copyright 2016 Advanced Micro Devices, Inc.
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdgpu_vcn_v1_0.c,v 1.2 2021/12/18 23:44:58 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdgpu_vcn_v1_0.c,v 1.3 2021/12/19 12:21:29 riastradh Exp $");
 
 #include <linux/firmware.h>
 
@@ -43,6 +43,8 @@ __KERNEL_RCSID(0, "$NetBSD: amdgpu_vcn_v1_0.c,v 1.2 2021/12/18 23:44:58 riastrad
 
 #include "ivsrcid/vcn/irqsrcs_vcn_1_0.h"
 #include "jpeg_v1_0.h"
+
+#include <linux/nbsd-namespace.h>
 
 #define mmUVD_RBC_XX_IB_REG_CHECK_1_0		0x05ab
 #define mmUVD_RBC_XX_IB_REG_CHECK_1_0_BASE_IDX	1
@@ -131,7 +133,7 @@ static int vcn_v1_0_sw_init(void *handle)
 		return r;
 
 	ring = &adev->vcn.inst->ring_dec;
-	sprintf(ring->name, "vcn_dec");
+	snprintf(ring->name, sizeof(ring->name), "vcn_dec");
 	r = amdgpu_ring_init(adev, ring, 512, &adev->vcn.inst->irq, 0);
 	if (r)
 		return r;
@@ -149,7 +151,7 @@ static int vcn_v1_0_sw_init(void *handle)
 
 	for (i = 0; i < adev->vcn.num_enc_rings; ++i) {
 		ring = &adev->vcn.inst->ring_enc[i];
-		sprintf(ring->name, "vcn_enc%d", i);
+		snprintf(ring->name, sizeof(ring->name), "vcn_enc%d", i);
 		r = amdgpu_ring_init(adev, ring, 512, &adev->vcn.inst->irq, 0);
 		if (r)
 			return r;
@@ -688,7 +690,7 @@ static void vcn_v1_0_clock_gating_dpg_mode(struct amdgpu_device *adev, uint8_t s
 static void vcn_1_0_disable_static_power_gating(struct amdgpu_device *adev)
 {
 	uint32_t data = 0;
-	int ret;
+	int ret __unused;
 
 	if (adev->pg_flags & AMD_PG_SUPPORT_VCN) {
 		data = (1 << UVD_PGFSM_CONFIG__UVDM_PWR_CONFIG__SHIFT
@@ -734,7 +736,7 @@ static void vcn_1_0_disable_static_power_gating(struct amdgpu_device *adev)
 static void vcn_1_0_enable_static_power_gating(struct amdgpu_device *adev)
 {
 	uint32_t data = 0;
-	int ret;
+	int ret __unused;
 
 	if (adev->pg_flags & AMD_PG_SUPPORT_VCN) {
 		/* Before power off, this indicator has to be turned on */
@@ -1118,7 +1120,7 @@ static int vcn_v1_0_start(struct amdgpu_device *adev)
  */
 static int vcn_v1_0_stop_spg_mode(struct amdgpu_device *adev)
 {
-	int ret_code, tmp;
+	int ret_code __unused, tmp;
 
 	SOC15_WAIT_ON_RREG(UVD, 0, mmUVD_STATUS, UVD_STATUS__IDLE, 0x7, ret_code);
 
@@ -1159,7 +1161,7 @@ static int vcn_v1_0_stop_spg_mode(struct amdgpu_device *adev)
 
 static int vcn_v1_0_stop_dpg_mode(struct amdgpu_device *adev)
 {
-	int ret_code = 0;
+	int ret_code __unused = 0;
 	uint32_t tmp;
 
 	/* Wait for power status to be UVD_POWER_STATUS__UVD_POWER_STATUS_TILES_OFF */

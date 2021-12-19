@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu_process_pptables_v1_0.c,v 1.2 2021/12/18 23:45:26 riastradh Exp $	*/
+/*	$NetBSD: amdgpu_process_pptables_v1_0.c,v 1.3 2021/12/19 12:21:29 riastradh Exp $	*/
 
 /*
  * Copyright 2015 Advanced Micro Devices, Inc.
@@ -23,7 +23,7 @@
  *
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdgpu_process_pptables_v1_0.c,v 1.2 2021/12/18 23:45:26 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdgpu_process_pptables_v1_0.c,v 1.3 2021/12/19 12:21:29 riastradh Exp $");
 
 #include "pp_debug.h"
 #include <linux/module.h>
@@ -142,7 +142,7 @@ static const void *get_powerplay_table(struct pp_hwmgr *hwmgr)
 
 	u16 size;
 	u8 frev, crev;
-	void *table_address = (void *)hwmgr->soft_pp_table;
+	const void *table_address = (const void *)hwmgr->soft_pp_table;
 
 	if (!table_address) {
 		table_address = (ATOM_Tonga_POWERPLAYTABLE *)
@@ -424,7 +424,7 @@ static int get_sclk_voltage_dependency_table(
 
 	if (sclk_dep_table->ucRevId < 1) {
 		const ATOM_Tonga_SCLK_Dependency_Table *tonga_table =
-			    (ATOM_Tonga_SCLK_Dependency_Table *)sclk_dep_table;
+			    (const ATOM_Tonga_SCLK_Dependency_Table *)sclk_dep_table;
 		ATOM_Tonga_SCLK_Dependency_Record *sclk_dep_record;
 
 		PP_ASSERT_WITH_CODE((0 != tonga_table->ucNumEntries),
@@ -456,7 +456,7 @@ static int get_sclk_voltage_dependency_table(
 		}
 	} else {
 		const ATOM_Polaris_SCLK_Dependency_Table *polaris_table =
-			    (ATOM_Polaris_SCLK_Dependency_Table *)sclk_dep_table;
+			    (const ATOM_Polaris_SCLK_Dependency_Table *)sclk_dep_table;
 		ATOM_Polaris_SCLK_Dependency_Record *sclk_dep_record;
 
 		PP_ASSERT_WITH_CODE((0 != polaris_table->ucNumEntries),
@@ -506,7 +506,7 @@ static int get_pcie_table(
 	phm_ppt_v1_pcie_record *pcie_record;
 
 	if (ptable->ucRevId < 1) {
-		const ATOM_Tonga_PCIE_Table *atom_pcie_table = (ATOM_Tonga_PCIE_Table *)ptable;
+		const ATOM_Tonga_PCIE_Table *atom_pcie_table = (const ATOM_Tonga_PCIE_Table *)ptable;
 		ATOM_Tonga_PCIE_Record *atom_pcie_record;
 
 		PP_ASSERT_WITH_CODE((atom_pcie_table->ucNumEntries != 0),
@@ -545,7 +545,7 @@ static int get_pcie_table(
 		*pp_tonga_pcie_table = pcie_table;
 	} else {
 		/* Polaris10/Polaris11 and newer. */
-		const ATOM_Polaris10_PCIE_Table *atom_pcie_table = (ATOM_Polaris10_PCIE_Table *)ptable;
+		const ATOM_Polaris10_PCIE_Table *atom_pcie_table = (const ATOM_Polaris10_PCIE_Table *)ptable;
 		ATOM_Polaris10_PCIE_Record *atom_pcie_record;
 
 		PP_ASSERT_WITH_CODE((atom_pcie_table->ucNumEntries != 0),
@@ -613,7 +613,7 @@ static int get_cac_tdp_table(
 
 	if (table->ucRevId < 3) {
 		const ATOM_Tonga_PowerTune_Table *tonga_table =
-			(ATOM_Tonga_PowerTune_Table *)table;
+			(const ATOM_Tonga_PowerTune_Table *)table;
 		tdp_table->usTDP = le16_to_cpu(tonga_table->usTDP);
 		tdp_table->usConfigurableTDP =
 			le16_to_cpu(tonga_table->usConfigurableTDP);
@@ -640,7 +640,7 @@ static int get_cac_tdp_table(
 			le16_to_cpu(tonga_table->usClockStretchAmount);
 	} else {   /* Fiji and newer */
 		const ATOM_Fiji_PowerTune_Table *fijitable =
-			(ATOM_Fiji_PowerTune_Table *)table;
+			(const ATOM_Fiji_PowerTune_Table *)table;
 		tdp_table->usTDP = le16_to_cpu(fijitable->usTDP);
 		tdp_table->usConfigurableTDP = le16_to_cpu(fijitable->usConfigurableTDP);
 		tdp_table->usTDC = le16_to_cpu(fijitable->usTDC);
@@ -942,7 +942,7 @@ static int init_thermal_controller(
 
 	if (fan_table->ucRevId < 8) {
 		const ATOM_Tonga_Fan_Table *tonga_fan_table =
-			(ATOM_Tonga_Fan_Table *)fan_table;
+			(const ATOM_Tonga_Fan_Table *)fan_table;
 		hwmgr->thermal_controller.advanceFanControlParameters.ucTHyst
 			= tonga_fan_table->ucTHyst;
 		hwmgr->thermal_controller.advanceFanControlParameters.usTMin
@@ -979,7 +979,7 @@ static int init_thermal_controller(
 			= tonga_fan_table->ucMinimumPWMLimit;
 	} else {
 		const ATOM_Fiji_Fan_Table *fiji_fan_table =
-			(ATOM_Fiji_Fan_Table *)fan_table;
+			(const ATOM_Fiji_Fan_Table *)fan_table;
 		hwmgr->thermal_controller.advanceFanControlParameters.ucTHyst
 			= fiji_fan_table->ucTHyst;
 		hwmgr->thermal_controller.advanceFanControlParameters.usTMin
@@ -1221,7 +1221,7 @@ static int ppt_get_num_of_vce_state_table_entries_v1_0(struct pp_hwmgr *hwmgr)
 	if (pp_table == NULL)
 		return 0;
 
-	vce_state_table = (void *)pp_table +
+	vce_state_table = (const void *)pp_table +
 			le16_to_cpu(pp_table->usVCEStateTableOffset);
 
 	return vce_state_table->ucNumEntries;
@@ -1319,8 +1319,8 @@ int get_powerplay_table_entry_v1_0(struct pp_hwmgr *hwmgr,
 						ATOM_Tonga_State, entries,
 						state_arrays, entry_index);
 
-		result = call_back_func(hwmgr, (void *)state_entry, power_state,
-				(void *)pp_table,
+		result = call_back_func(hwmgr, __UNCONST(state_entry), power_state,
+				__UNCONST(pp_table),
 				make_classification_flags(hwmgr,
 					le16_to_cpu(state_entry->usClassification),
 					le16_to_cpu(state_entry->usClassification2)));

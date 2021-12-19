@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu_gart.c,v 1.6 2021/12/19 12:02:39 riastradh Exp $	*/
+/*	$NetBSD: amdgpu_gart.c,v 1.7 2021/12/19 12:21:29 riastradh Exp $	*/
 
 /*
  * Copyright 2008 Advanced Micro Devices, Inc.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdgpu_gart.c,v 1.6 2021/12/19 12:02:39 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdgpu_gart.c,v 1.7 2021/12/19 12:21:29 riastradh Exp $");
 
 #include <linux/pci.h>
 #include <linux/vmalloc.h>
@@ -294,7 +294,7 @@ amdgpu_gart_post_update(struct amdgpu_device *adev, unsigned gpu_pgstart,
  * Common gart functions.
  */
 #ifdef __NetBSD__
-void
+int
 amdgpu_gart_unbind(struct amdgpu_device *adev, uint64_t gpu_start,
     unsigned npages)
 {
@@ -311,7 +311,7 @@ amdgpu_gart_unbind(struct amdgpu_device *adev, uint64_t gpu_start,
 
 	if (!adev->gart.ready) {
 		WARN(1, "trying to bind memory to uninitialized GART !\n");
-		return;
+		return -EINVAL;
 	}
 
 	amdgpu_gart_pre_update(adev, gpu_pgstart, gpu_npages);
@@ -329,6 +329,8 @@ amdgpu_gart_unbind(struct amdgpu_device *adev, uint64_t gpu_start,
 		}
 	}
 	amdgpu_gart_post_update(adev, gpu_pgstart, gpu_npages);
+
+	return 0;
 }
 #else  /* __NetBSD__ */
 /**
@@ -380,6 +382,7 @@ int amdgpu_gart_unbind(struct amdgpu_device *adev, uint64_t offset,
 
 	return 0;
 }
+#endif	/* __NetBSD__ */
 
 /**
  * amdgpu_gart_map - map dma_addresses into GART entries
@@ -394,6 +397,55 @@ int amdgpu_gart_unbind(struct amdgpu_device *adev, uint64_t offset,
  * Map the dma_addresses into GART entries (all asics).
  * Returns 0 for success, -EINVAL for failure.
  */
+#ifdef __NetBSD__
+int amdgpu_gart_map(struct amdgpu_device *adev, uint64_t gpu_start,
+    unsigned npages, bus_size_t map_start, bus_dmamap_t dmamap, uint32_t flags,
+    void *dst)
+{
+	bus_size_t seg_off = 0;
+	unsigned i, j, t;
+
+	CTASSERT(AMDGPU_GPU_PAGE_SIZE <= PAGE_SIZE);
+	CTASSERT((PAGE_SIZE % AMDGPU_GPU_PAGE_SIZE) == 0);
+
+	KASSERT((gpu_start & (PAGE_SIZE - 1)) == 0);
+
+	if (!adev->gart.ready) {
+		WARN(1, "trying to bind memory to uninitialized GART !\n");
+		return -EINVAL;
+	}
+
+	for (i = 0; i < dmamap->dm_nsegs; i++) {
+		KASSERT((dmamap->dm_segs[i].ds_len & (PAGE_SIZE - 1)) == 0);
+		if (map_start == 0)
+			break;
+		if (map_start < dmamap->dm_segs[i].ds_len) {
+			seg_off = map_start;
+			break;
+		}
+		map_start -= dmamap->dm_segs[i].ds_len;
+	}
+	KASSERT(i < dmamap->dm_nsegs);
+
+	t = gpu_start / AMDGPU_GPU_PAGE_SIZE;
+
+	for (i = 0; npages --> 0;) {
+		KASSERT(i < dmamap->dm_nsegs);
+		for (j = 0; j < AMDGPU_GPU_PAGES_IN_CPU_PAGE; j++) {
+			amdgpu_gmc_set_pte_pde(adev, dst, t,
+			    dmamap->dm_segs[i].ds_addr + seg_off, flags);
+			seg_off += AMDGPU_GPU_PAGE_SIZE;
+			if (seg_off == dmamap->dm_segs[i].ds_len) {
+				i++;
+				seg_off = 0;
+			}
+			KASSERT(seg_off < dmamap->dm_segs[i].ds_len);
+		}
+	}
+
+	return 0;
+}
+#else
 int amdgpu_gart_map(struct amdgpu_device *adev, uint64_t offset,
 		    int pages, dma_addr_t *dma_addr, uint64_t flags,
 		    void *dst)

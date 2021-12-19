@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu_ttm.h,v 1.4 2021/12/19 12:02:39 riastradh Exp $	*/
+/*	$NetBSD: amdgpu_ttm.h,v 1.5 2021/12/19 12:21:29 riastradh Exp $	*/
 
 /*
  * Copyright 2016 Advanced Micro Devices, Inc.
@@ -51,7 +51,12 @@ struct amdgpu_mman {
 	struct ttm_bo_device		bdev;
 	bool				mem_global_referenced;
 	bool				initialized;
+#ifdef __NetBSD__
+	bus_space_handle_t		aper_base_handle;
+	void				*aper_base_kaddr;
+#else
 	void __iomem			*aper_base_kaddr;
+#endif
 
 #if defined(CONFIG_DEBUG_FS)
 	struct dentry			*debugfs_entries[8];

@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu_vega20_hwmgr.c,v 1.2 2021/12/18 23:45:26 riastradh Exp $	*/
+/*	$NetBSD: amdgpu_vega20_hwmgr.c,v 1.3 2021/12/19 12:21:30 riastradh Exp $	*/
 
 /*
  * Copyright 2018 Advanced Micro Devices, Inc.
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdgpu_vega20_hwmgr.c,v 1.2 2021/12/18 23:45:26 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdgpu_vega20_hwmgr.c,v 1.3 2021/12/19 12:21:30 riastradh Exp $");
 
 #include <linux/delay.h>
 #include <linux/fb.h>
@@ -56,6 +56,8 @@ __KERNEL_RCSID(0, "$NetBSD: amdgpu_vega20_hwmgr.c,v 1.2 2021/12/18 23:45:26 rias
 #include "smuio/smuio_9_0_offset.h"
 #include "smuio/smuio_9_0_sh_mask.h"
 #include "nbio/nbio_7_4_sh_mask.h"
+
+#include <linux/nbsd-namespace.h>
 
 #define smnPCIE_LC_SPEED_CNTL			0x11140290
 #define smnPCIE_LC_LINK_WIDTH_CNTL		0x11140288
@@ -3202,7 +3204,7 @@ static int vega20_get_ppfeature_status(struct pp_hwmgr *hwmgr, char *buf)
 			"[EnableAllSmuFeatures] Failed to get enabled smc features!",
 			return ret);
 
-	size += sprintf(buf + size, "Current ppfeatures: 0x%016llx\n", features_enabled);
+	size += sprintf(buf + size, "Current ppfeatures: 0x%016"PRIx64"\n", features_enabled);
 	size += sprintf(buf + size, "%-19s %-22s %s\n",
 				output_title[0],
 				output_title[1],
@@ -3236,8 +3238,8 @@ static int vega20_set_ppfeature_status(struct pp_hwmgr *hwmgr, uint64_t new_ppfe
 	features_to_enable =
 		~features_enabled & new_ppfeature_masks;
 
-	pr_debug("features_to_disable 0x%llx\n", features_to_disable);
-	pr_debug("features_to_enable 0x%llx\n", features_to_enable);
+	pr_debug("features_to_disable 0x%"PRIx64"\n", features_to_disable);
+	pr_debug("features_to_enable 0x%"PRIx64"\n", features_to_enable);
 
 	if (features_to_disable) {
 		ret = vega20_enable_smc_features(hwmgr, false, features_to_disable);

@@ -1,4 +1,4 @@
-/*	$NetBSD: atom.h,v 1.3 2021/12/18 23:44:58 riastradh Exp $	*/
+/*	$NetBSD: atom.h,v 1.4 2021/12/19 12:21:29 riastradh Exp $	*/
 
 /*
  * Copyright 2008 Advanced Micro Devices, Inc.
@@ -28,6 +28,7 @@
 #define ATOM_H
 
 #include <linux/types.h>
+#include <linux/mutex.h>
 
 struct drm_device;
 

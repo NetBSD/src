@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu_soc15.c,v 1.2 2021/12/18 23:44:58 riastradh Exp $	*/
+/*	$NetBSD: amdgpu_soc15.c,v 1.3 2021/12/19 12:21:29 riastradh Exp $	*/
 
 /*
  * Copyright 2016 Advanced Micro Devices, Inc.
@@ -23,7 +23,7 @@
  *
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdgpu_soc15.c,v 1.2 2021/12/18 23:44:58 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdgpu_soc15.c,v 1.3 2021/12/19 12:21:29 riastradh Exp $");
 
 #include <linux/firmware.h>
 #include <linux/slab.h>
@@ -81,6 +81,8 @@ __KERNEL_RCSID(0, "$NetBSD: amdgpu_soc15.c,v 1.2 2021/12/18 23:44:58 riastradh E
 #include "amdgpu_ras.h"
 #include "amdgpu_xgmi.h"
 #include <uapi/linux/kfd_ioctl.h>
+
+#include <linux/nbsd-namespace.h>
 
 #define mmMP0_MISC_CGTT_CTRL0                                                                   0x01b9
 #define mmMP0_MISC_CGTT_CTRL0_BASE_IDX                                                          0

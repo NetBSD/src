@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu_psp.h,v 1.2 2021/12/18 23:44:58 riastradh Exp $	*/
+/*	$NetBSD: amdgpu_psp.h,v 1.3 2021/12/19 12:21:29 riastradh Exp $	*/
 
 /*
  * Copyright 2016 Advanced Micro Devices, Inc.
@@ -236,10 +236,10 @@ struct psp_context
 	uint32_t			sos_bin_size;
 	uint32_t			toc_bin_size;
 	uint32_t			kdb_bin_size;
-	uint8_t				*sys_start_addr;
-	uint8_t				*sos_start_addr;
-	uint8_t				*toc_start_addr;
-	uint8_t				*kdb_start_addr;
+	const uint8_t			*sys_start_addr;
+	const uint8_t			*sos_start_addr;
+	const uint8_t			*toc_start_addr;
+	const uint8_t			*kdb_start_addr;
 
 	/* tmr buffer */
 	struct amdgpu_bo		*tmr_bo;
@@ -250,7 +250,7 @@ struct psp_context
 	uint32_t			asd_fw_version;
 	uint32_t			asd_feature_version;
 	uint32_t			asd_ucode_size;
-	uint8_t				*asd_start_addr;
+	const uint8_t			*asd_start_addr;
 
 	/* fence buffer */
 	struct amdgpu_bo		*fence_buf_bo;
@@ -272,18 +272,18 @@ struct psp_context
 	uint32_t			ta_fw_version;
 	uint32_t			ta_xgmi_ucode_version;
 	uint32_t			ta_xgmi_ucode_size;
-	uint8_t				*ta_xgmi_start_addr;
+	const uint8_t			*ta_xgmi_start_addr;
 	uint32_t			ta_ras_ucode_version;
 	uint32_t			ta_ras_ucode_size;
-	uint8_t				*ta_ras_start_addr;
+	const uint8_t			*ta_ras_start_addr;
 
 	uint32_t			ta_hdcp_ucode_version;
 	uint32_t			ta_hdcp_ucode_size;
-	uint8_t				*ta_hdcp_start_addr;
+	const uint8_t			*ta_hdcp_start_addr;
 
 	uint32_t			ta_dtm_ucode_version;
 	uint32_t			ta_dtm_ucode_size;
-	uint8_t				*ta_dtm_start_addr;
+	const uint8_t			*ta_dtm_start_addr;
 
 	struct psp_asd_context		asd_context;
 	struct psp_xgmi_context		xgmi_context;

@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu_smu8_smumgr.c,v 1.2 2021/12/18 23:45:27 riastradh Exp $	*/
+/*	$NetBSD: amdgpu_smu8_smumgr.c,v 1.3 2021/12/19 12:21:30 riastradh Exp $	*/
 
 /*
  * Copyright 2015 Advanced Micro Devices, Inc.
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdgpu_smu8_smumgr.c,v 1.2 2021/12/18 23:45:27 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdgpu_smu8_smumgr.c,v 1.3 2021/12/19 12:21:30 riastradh Exp $");
 
 #include <linux/delay.h>
 #include <linux/gfp.h>
@@ -44,6 +44,8 @@ __KERNEL_RCSID(0, "$NetBSD: amdgpu_smu8_smumgr.c,v 1.2 2021/12/18 23:45:27 riast
 #include "gca/gfx_8_0_d.h"
 #include "gca/gfx_8_0_sh_mask.h"
 #include "smumgr.h"
+
+#include <linux/nbsd-namespace.h>
 
 #define SIZE_ALIGN_32(x)    (((x) + 31) / 32 * 32)
 
@@ -100,7 +102,7 @@ static int smu8_send_msg_to_smc_with_parameter(struct pp_hwmgr *hwmgr,
 
 	elapsed_us = ktime_us_delta(ktime_get(), t_start);
 
-	WARN(result, "%s(0x%04x, %#x) timed out after %lld us\n",
+	WARN(result, "%s(0x%04x, %#x) timed out after %"PRId64" us\n",
 			__func__, msg, parameter, elapsed_us);
 
 	return result;

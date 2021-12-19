@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu_uvd_v7_0.c,v 1.2 2021/12/18 23:44:58 riastradh Exp $	*/
+/*	$NetBSD: amdgpu_uvd_v7_0.c,v 1.3 2021/12/19 12:21:29 riastradh Exp $	*/
 
 /*
  * Copyright 2016 Advanced Micro Devices, Inc.
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdgpu_uvd_v7_0.c,v 1.2 2021/12/18 23:44:58 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdgpu_uvd_v7_0.c,v 1.3 2021/12/19 12:21:29 riastradh Exp $");
 
 #include <linux/firmware.h>
 
@@ -45,6 +45,8 @@ __KERNEL_RCSID(0, "$NetBSD: amdgpu_uvd_v7_0.c,v 1.2 2021/12/18 23:44:58 riastrad
 #include "mmhub/mmhub_1_0_offset.h"
 #include "mmhub/mmhub_1_0_sh_mask.h"
 #include "ivsrcid/uvd/irqsrcs_uvd_7_0.h"
+
+#include <linux/nbsd-namespace.h>
 
 #define mmUVD_PG0_CC_UVD_HARVESTING                                                                    0x00c7
 #define mmUVD_PG0_CC_UVD_HARVESTING_BASE_IDX                                                           1
@@ -454,7 +456,7 @@ static int uvd_v7_0_sw_init(void *handle)
 			continue;
 		if (!amdgpu_sriov_vf(adev)) {
 			ring = &adev->uvd.inst[j].ring;
-			sprintf(ring->name, "uvd_%d", ring->me);
+			snprintf(ring->name, sizeof(ring->name), "uvd_%d", ring->me);
 			r = amdgpu_ring_init(adev, ring, 512, &adev->uvd.inst[j].irq, 0);
 			if (r)
 				return r;
@@ -462,7 +464,7 @@ static int uvd_v7_0_sw_init(void *handle)
 
 		for (i = 0; i < adev->uvd.num_enc_rings; ++i) {
 			ring = &adev->uvd.inst[j].ring_enc[i];
-			sprintf(ring->name, "uvd_enc_%d.%d", ring->me, i);
+			snprintf(ring->name, sizeof(ring->name), "uvd_enc_%d.%d", ring->me, i);
 			if (amdgpu_sriov_vf(adev)) {
 				ring->use_doorbell = true;
 

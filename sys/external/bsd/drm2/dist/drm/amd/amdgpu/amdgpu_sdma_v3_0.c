@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu_sdma_v3_0.c,v 1.4 2021/12/18 23:44:58 riastradh Exp $	*/
+/*	$NetBSD: amdgpu_sdma_v3_0.c,v 1.5 2021/12/19 12:21:29 riastradh Exp $	*/
 
 /*
  * Copyright 2014 Advanced Micro Devices, Inc.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdgpu_sdma_v3_0.c,v 1.4 2021/12/18 23:44:58 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdgpu_sdma_v3_0.c,v 1.5 2021/12/19 12:21:29 riastradh Exp $");
 
 #include <linux/delay.h>
 #include <linux/firmware.h>
@@ -393,12 +393,12 @@ static void sdma_v3_0_ring_set_wptr(struct amdgpu_ring *ring)
 	struct amdgpu_device *adev = ring->adev;
 
 	if (ring->use_doorbell) {
-		u32 *wb = (u32 *)&adev->wb.wb[ring->wptr_offs];
+		volatile u32 *wb = (volatile u32 *)&adev->wb.wb[ring->wptr_offs];
 		/* XXX check if swapping is necessary on BE */
 		WRITE_ONCE(*wb, (lower_32_bits(ring->wptr) << 2));
 		WDOORBELL32(ring->doorbell_index, lower_32_bits(ring->wptr) << 2);
 	} else if (ring->use_pollmem) {
-		u32 *wb = (u32 *)&adev->wb.wb[ring->wptr_offs];
+		volatile u32 *wb = (volatile u32 *)&adev->wb.wb[ring->wptr_offs];
 
 		WRITE_ONCE(*wb, (lower_32_bits(ring->wptr) << 2));
 	} else {

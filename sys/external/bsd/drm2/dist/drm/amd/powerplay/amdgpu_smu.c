@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu_smu.c,v 1.2 2021/12/18 23:45:26 riastradh Exp $	*/
+/*	$NetBSD: amdgpu_smu.c,v 1.3 2021/12/19 12:21:29 riastradh Exp $	*/
 
 /*
  * Copyright 2019 Advanced Micro Devices, Inc.
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdgpu_smu.c,v 1.2 2021/12/18 23:45:26 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdgpu_smu.c,v 1.3 2021/12/19 12:21:29 riastradh Exp $");
 
 #include <linux/firmware.h>
 #include <linux/pci.h>
@@ -41,6 +41,8 @@ __KERNEL_RCSID(0, "$NetBSD: amdgpu_smu.c,v 1.2 2021/12/18 23:45:26 riastradh Exp
 #include "arcturus_ppt.h"
 #include "navi10_ppt.h"
 #include "renoir_ppt.h"
+
+#include <linux/nbsd-namespace.h>
 
 #undef __SMU_DUMMY_MAP
 #define __SMU_DUMMY_MAP(type)	#type
@@ -84,7 +86,7 @@ size_t smu_sys_get_pp_feature_mask(struct smu_context *smu, char *buf)
 	if (ret)
 		goto failed;
 
-	size =  sprintf(buf + size, "features high: 0x%08x low: 0x%08x\n",
+	size =  snprintf(buf + size, SIZE_MAX/*XXX*/, "features high: 0x%08x low: 0x%08x\n",
 			feature_mask[1], feature_mask[0]);
 
 	for (i = 0; i < SMU_FEATURE_COUNT; i++) {
@@ -96,7 +98,7 @@ size_t smu_sys_get_pp_feature_mask(struct smu_context *smu, char *buf)
 	}
 
 	for (i = 0; i < hw_feature_count; i++) {
-		size += sprintf(buf + size, "%02d. %-20s (%2d) : %s\n",
+		size += snprintf(buf + size, SIZE_MAX/*XXX*/, "%02d. %-20s (%2d) : %s\n",
 			       count++,
 			       smu_get_feature_name(smu, sort_feature[i]),
 			       i,
@@ -583,7 +585,7 @@ bool is_support_sw_smu_xgmi(struct amdgpu_device *adev)
 	return false;
 }
 
-int smu_sys_get_pp_table(struct smu_context *smu, void **table)
+int smu_sys_get_pp_table(struct smu_context *smu, const void **table)
 {
 	struct smu_table_context *smu_table = &smu->smu_table;
 	uint32_t powerplay_table_size;
