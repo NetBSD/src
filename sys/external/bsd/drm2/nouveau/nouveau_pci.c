@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_pci.c,v 1.30 2021/12/19 11:05:13 riastradh Exp $	*/
+/*	$NetBSD: nouveau_pci.c,v 1.31 2021/12/19 11:05:20 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_pci.c,v 1.30 2021/12/19 11:05:13 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_pci.c,v 1.31 2021/12/19 11:05:20 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #if defined(__arm__) || defined(__aarch64__)
@@ -221,6 +221,13 @@ nouveau_pci_attach_real(device_t self)
 		return;
 	}
 	sc->sc_pci_attached = true;
+
+	/* XXX errno Linux->NetBSD */
+	error = -nouveau_drm_device_init(sc->sc_drm_dev);
+	if (error) {
+		aprint_error_dev(self, "unable to init nouveau: %d\n", error);
+		return;
+	}
 
 	/* XXX errno Linux->NetBSD */
 	error = -drm_dev_register(sc->sc_drm_dev, 0);
