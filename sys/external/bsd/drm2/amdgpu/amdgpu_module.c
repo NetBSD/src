@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu_module.c,v 1.4 2018/08/28 03:35:08 riastradh Exp $	*/
+/*	$NetBSD: amdgpu_module.c,v 1.5 2021/12/19 10:32:59 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdgpu_module.c,v 1.4 2018/08/28 03:35:08 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdgpu_module.c,v 1.5 2021/12/19 10:32:59 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/module.h>
@@ -39,7 +39,7 @@ __KERNEL_RCSID(0, "$NetBSD: amdgpu_module.c,v 1.4 2018/08/28 03:35:08 riastradh 
 #endif
 #include <sys/systm.h>
 
-#include <drm/drmP.h>
+#include <drm/drm_device.h>
 #include <drm/drm_sysctl.h>
 
 #include "amdgpu_amdkfd.h"

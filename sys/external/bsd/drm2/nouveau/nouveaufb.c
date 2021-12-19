@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveaufb.c,v 1.5 2021/12/19 00:32:11 riastradh Exp $	*/
+/*	$NetBSD: nouveaufb.c,v 1.6 2021/12/19 10:32:59 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -30,14 +30,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveaufb.c,v 1.5 2021/12/19 00:32:11 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveaufb.c,v 1.6 2021/12/19 10:32:59 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/bus.h>
 #include <sys/device.h>
 #include <sys/errno.h>
 
-#include <drm/drmP.h>
 #include <drm/drmfb.h>
 #include <drm/drmfb_pci.h>
 

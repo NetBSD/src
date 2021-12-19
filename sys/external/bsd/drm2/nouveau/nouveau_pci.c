@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_pci.c,v 1.27 2021/12/19 00:32:11 riastradh Exp $	*/
+/*	$NetBSD: nouveau_pci.c,v 1.28 2021/12/19 10:32:59 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_pci.c,v 1.27 2021/12/19 00:32:11 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_pci.c,v 1.28 2021/12/19 10:32:59 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #if defined(__arm__) || defined(__aarch64__)
@@ -44,8 +44,6 @@ __KERNEL_RCSID(0, "$NetBSD: nouveau_pci.c,v 1.27 2021/12/19 00:32:11 riastradh E
 #include <sys/workqueue.h>
 #include <sys/module.h>
 
-#include <drm/drmP.h>
-
 #include <core/device.h>
 #include <core/pci.h>
 
@@ -55,6 +53,8 @@ __KERNEL_RCSID(0, "$NetBSD: nouveau_pci.c,v 1.27 2021/12/19 00:32:11 riastradh E
 
 #include "nouveau_drv.h"
 #include "nouveau_pci.h"
+
+struct drm_device;
 
 MODULE(MODULE_CLASS_DRIVER, nouveau_pci, "nouveau,drmkms_pci");
 

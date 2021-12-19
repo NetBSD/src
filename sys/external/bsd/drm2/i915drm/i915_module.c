@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_module.c,v 1.9 2021/12/19 01:41:35 riastradh Exp $	*/
+/*	$NetBSD: i915_module.c,v 1.10 2021/12/19 10:32:59 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_module.c,v 1.9 2021/12/19 01:41:35 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_module.c,v 1.10 2021/12/19 10:32:59 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/module.h>
@@ -39,7 +39,7 @@ __KERNEL_RCSID(0, "$NetBSD: i915_module.c,v 1.9 2021/12/19 01:41:35 riastradh Ex
 #endif
 #include <sys/systm.h>
 
-#include <drm/drmP.h>
+#include <drm/drm_device.h>
 #include <drm/drm_sysctl.h>
 
 #include "i915_drv.h"

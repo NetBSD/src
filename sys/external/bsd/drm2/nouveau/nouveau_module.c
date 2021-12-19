@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_module.c,v 1.9 2018/08/28 03:34:07 riastradh Exp $	*/
+/*	$NetBSD: nouveau_module.c,v 1.10 2021/12/19 10:32:59 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -30,13 +30,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_module.c,v 1.9 2018/08/28 03:34:07 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_module.c,v 1.10 2021/12/19 10:32:59 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/module.h>
 #include <sys/systm.h>
 
-#include <drm/drmP.h>
 #include <drm/drm_sysctl.h>
 
 #include <core/device.h>

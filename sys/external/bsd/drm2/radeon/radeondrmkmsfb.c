@@ -1,4 +1,4 @@
-/*	$NetBSD: radeondrmkmsfb.c,v 1.14 2021/12/19 01:47:41 riastradh Exp $	*/
+/*	$NetBSD: radeondrmkmsfb.c,v 1.15 2021/12/19 10:33:00 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -31,12 +31,11 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radeondrmkmsfb.c,v 1.14 2021/12/19 01:47:41 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radeondrmkmsfb.c,v 1.15 2021/12/19 10:33:00 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/device.h>
 
-#include <drm/drmP.h>
 #include <drm/drm_fb_helper.h>
 #include <drm/drmfb.h>
 #include <drm/drmfb_pci.h>

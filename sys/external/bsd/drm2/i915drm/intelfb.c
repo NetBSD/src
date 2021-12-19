@@ -1,4 +1,4 @@
-/*	$NetBSD: intelfb.c,v 1.18 2021/06/12 12:15:43 riastradh Exp $	*/
+/*	$NetBSD: intelfb.c,v 1.19 2021/12/19 10:32:59 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -30,13 +30,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intelfb.c,v 1.18 2021/06/12 12:15:43 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intelfb.c,v 1.19 2021/12/19 10:32:59 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/bus.h>
 #include <sys/device.h>
 
-#include <drm/drmP.h>
+#include <drm/drm_device.h>
 #include <drm/drmfb.h>
 #include <drm/drmfb_pci.h>
 

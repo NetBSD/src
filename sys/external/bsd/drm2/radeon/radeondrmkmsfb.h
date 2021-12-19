@@ -1,4 +1,4 @@
-/*	$NetBSD: radeondrmkmsfb.h,v 1.2 2014/11/18 09:28:36 nonaka Exp $	*/
+/*	$NetBSD: radeondrmkmsfb.h,v 1.3 2021/12/19 10:33:00 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -32,8 +32,9 @@
 #ifndef	_RADEON_RADEONDRMKMSFB_H_
 #define	_RADEON_RADEONDRMKMSFB_H_
 
-#include <drm/drmP.h>
 #include <drm/drm_fb_helper.h>
+
+struct drm_device;
 
 struct radeonfb_attach_args {
 	struct drm_fb_helper			*rfa_fb_helper;

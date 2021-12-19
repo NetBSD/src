@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu_pci.c,v 1.5 2018/08/27 14:41:26 riastradh Exp $	*/
+/*	$NetBSD: amdgpu_pci.c,v 1.6 2021/12/19 10:32:59 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,18 +30,18 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdgpu_pci.c,v 1.5 2018/08/27 14:41:26 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdgpu_pci.c,v 1.6 2021/12/19 10:32:59 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/queue.h>
 #include <sys/systm.h>
 #include <sys/workqueue.h>
 
-#include <drm/drmP.h>
-
 #include <amdgpu.h>
 #include "amdgpu_drv.h"
 #include "amdgpu_task.h"
+
+struct drm_device;
 
 SIMPLEQ_HEAD(amdgpu_task_head, amdgpu_task);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: radeon_pci.c,v 1.16 2021/12/19 09:56:17 riastradh Exp $	*/
+/*	$NetBSD: radeon_pci.c,v 1.17 2021/12/19 10:33:00 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radeon_pci.c,v 1.16 2021/12/19 09:56:17 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radeon_pci.c,v 1.17 2021/12/19 10:33:00 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "vga.h"
@@ -67,8 +67,9 @@ __KERNEL_RCSID(0, "$NetBSD: radeon_pci.c,v 1.16 2021/12/19 09:56:17 riastradh Ex
 #include <dev/fdt/fdtvar.h>
 #endif
 
-#include <drm/drm_pci.h>
+#include <drm/drm_device.h>
 #include <drm/drm_fb_helper.h>
+#include <drm/drm_pci.h>
 
 #include <radeon.h>
 #include "radeon_drv.h"
