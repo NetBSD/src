@@ -1,4 +1,4 @@
-/* $NetBSD: rk_drm.h,v 1.1 2019/11/09 23:30:14 jmcneill Exp $ */
+/* $NetBSD: rk_drm.h,v 1.2 2021/12/19 12:28:27 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2019 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,6 +29,7 @@
 #ifndef _ARM_RK_DRM_H
 #define _ARM_RK_DRM_H
 
+#include <sys/workqueue.h>
 #include <drm/drm_fb_helper.h>
 #include <drm/drm_gem_cma_helper.h>
 
@@ -62,6 +63,12 @@ struct rk_drm_softc {
 
 	int			sc_phandle;
 
+	struct lwp			*sc_task_thread;
+	SIMPLEQ_HEAD(, rk_drm_task)	sc_tasks;
+	struct workqueue		*sc_task_wq;
+
+	bool			sc_dev_registered;
+
 	struct rk_drm_vblank	sc_vbl[RK_DRM_MAX_CRTC];
 };
 
@@ -90,10 +97,22 @@ struct rk_drmfb_attach_args {
 	uint32_t		sfa_fb_linebytes;
 };
 
+struct rk_drm_task {
+	union {
+		SIMPLEQ_ENTRY(rk_drm_task)	queue;
+		struct work			work;
+	}		rdt_u;
+	void		(*rdt_fn)(struct rk_drm_task *);
+};
+
 #define rk_drm_private(ddev)		(ddev)->dev_private
 #define	to_rk_drm_framebuffer(x)	container_of(x, struct rk_drm_framebuffer, base)
 
 int	rk_drm_register_port(int, struct fdt_device_ports *);
 struct drm_device *rk_drm_port_device(struct fdt_device_ports *);
+
+void	rk_task_init(struct rk_drm_task *,
+	    void (*)(struct rk_drm_task *));
+void	rk_task_schedule(device_t, struct rk_drm_task *);
 
 #endif /* _ARM_RK_DRM_H */
