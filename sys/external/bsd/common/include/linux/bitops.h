@@ -1,4 +1,4 @@
-/*	$NetBSD: bitops.h,v 1.13 2021/12/19 01:59:55 riastradh Exp $	*/
+/*	$NetBSD: bitops.h,v 1.14 2021/12/19 09:44:27 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -41,6 +41,7 @@
 #include <machine/limits.h>
 
 #include <lib/libkern/libkern.h>
+#include <linux/bits.h>
 
 /*
  * Linux __ffs/__ffs64 is zero-based; zero input is undefined.  Our
