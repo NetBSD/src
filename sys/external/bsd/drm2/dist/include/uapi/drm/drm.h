@@ -1,4 +1,4 @@
-/*	$NetBSD: drm.h,v 1.3 2021/12/19 00:47:00 riastradh Exp $	*/
+/*	$NetBSD: drm.h,v 1.4 2021/12/19 00:47:09 riastradh Exp $	*/
 
 /**
  * \file drm.h
@@ -59,7 +59,11 @@ typedef unsigned int drm_handle_t;
 #include <sys/ioccom.h>
 #include <sys/types.h>
 #include <sys/fcntl.h>
-#ifndef _KERNEL
+
+#ifdef _KERNEL
+#include <linux/types.h>
+#include <asm/ioctl.h>
+#else
 typedef int8_t   __s8;
 typedef uint8_t  __u8;
 typedef int16_t  __s16;
@@ -68,10 +72,12 @@ typedef int32_t  __s32;
 typedef uint32_t __u32;
 typedef int64_t  __s64;
 typedef uint64_t __u64;
+
 #endif
 #  ifndef __user
 #    define	__user
 #  endif
+
 typedef size_t   __kernel_size_t;
 typedef unsigned long drm_handle_t;
 
