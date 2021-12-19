@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_kthread.c,v 1.7 2021/12/19 12:42:32 riastradh Exp $	*/
+/*	$NetBSD: linux_kthread.c,v 1.8 2021/12/19 12:42:48 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2021 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_kthread.c,v 1.7 2021/12/19 12:42:32 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_kthread.c,v 1.8 2021/12/19 12:42:48 riastradh Exp $");
 
 #include <sys/types.h>
 
@@ -41,6 +41,7 @@ __KERNEL_RCSID(0, "$NetBSD: linux_kthread.c,v 1.7 2021/12/19 12:42:32 riastradh 
 #include <sys/mutex.h>
 #include <sys/specificdata.h>
 
+#include <linux/err.h>
 #include <linux/kthread.h>
 #include <linux/spinlock.h>
 
@@ -153,7 +154,7 @@ kthread_run(int (*func)(void *), void *cookie, const char *name,
 	    linux_kthread_start, T, &T->kt_lwp, "%s", name);
 	if (error) {
 		kthread_free(T);
-		T = NULL;
+		return ERR_PTR(-error); /* XXX errno NetBSD->Linux */
 	}
 
 	return T;
