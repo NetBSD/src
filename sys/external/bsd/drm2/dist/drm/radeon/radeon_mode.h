@@ -1,4 +1,4 @@
-/*	$NetBSD: radeon_mode.h,v 1.7 2021/12/19 10:37:18 riastradh Exp $	*/
+/*	$NetBSD: radeon_mode.h,v 1.8 2021/12/19 10:38:05 riastradh Exp $	*/
 
 /*
  * Copyright 2000 ATI Technologies Inc., Markham, Ontario, and
@@ -41,7 +41,6 @@
 #include <drm/drm_crtc_helper.h>
 #include <linux/i2c.h>
 #include <linux/i2c-algo-bit.h>
-#include <linux/ktime.h>
 
 struct radeon_bo;
 struct radeon_device;

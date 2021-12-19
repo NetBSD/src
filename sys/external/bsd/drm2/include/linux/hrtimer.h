@@ -1,4 +1,4 @@
-/*	$NetBSD: hrtimer.h,v 1.2 2021/12/19 01:19:07 riastradh Exp $	*/
+/*	$NetBSD: hrtimer.h,v 1.3 2021/12/19 10:38:05 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -31,6 +31,8 @@
 
 #ifndef _LINUX_HRTIMER_H_
 #define _LINUX_HRTIMER_H_
+
+#include <linux/timer.h>
 
 struct hrtimer {
 };
