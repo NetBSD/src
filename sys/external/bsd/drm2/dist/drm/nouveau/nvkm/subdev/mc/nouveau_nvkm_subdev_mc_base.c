@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_nvkm_subdev_mc_base.c,v 1.3 2021/12/18 23:45:40 riastradh Exp $	*/
+/*	$NetBSD: nouveau_nvkm_subdev_mc_base.c,v 1.4 2021/12/19 11:34:45 riastradh Exp $	*/
 
 /*
  * Copyright 2012 Red Hat Inc.
@@ -24,7 +24,7 @@
  * Authors: Ben Skeggs
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_subdev_mc_base.c,v 1.3 2021/12/18 23:45:40 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_subdev_mc_base.c,v 1.4 2021/12/19 11:34:45 riastradh Exp $");
 
 #include "priv.h"
 
@@ -199,6 +199,9 @@ nvkm_mc_init(struct nvkm_subdev *subdev)
 static void *
 nvkm_mc_dtor(struct nvkm_subdev *subdev)
 {
+	struct nvkm_mc *mc = nvkm_mc(subdev);
+	if (mc->func->dtor)
+		return mc->func->dtor(mc);
 	return nvkm_mc(subdev);
 }
 

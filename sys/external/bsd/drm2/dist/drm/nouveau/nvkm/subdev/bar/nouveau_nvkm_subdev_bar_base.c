@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_nvkm_subdev_bar_base.c,v 1.3 2021/12/18 23:45:38 riastradh Exp $	*/
+/*	$NetBSD: nouveau_nvkm_subdev_bar_base.c,v 1.4 2021/12/19 11:34:45 riastradh Exp $	*/
 
 /*
  * Copyright 2012 Red Hat Inc.
@@ -24,7 +24,7 @@
  * Authors: Ben Skeggs
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_subdev_bar_base.c,v 1.3 2021/12/18 23:45:38 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_subdev_bar_base.c,v 1.4 2021/12/19 11:34:45 riastradh Exp $");
 
 #include "priv.h"
 
@@ -126,6 +126,7 @@ nvkm_bar_dtor(struct nvkm_subdev *subdev)
 {
 	struct nvkm_bar *bar = nvkm_bar(subdev);
 	nvkm_bar_bar2_fini(subdev->device);
+	spin_lock_destroy(&bar->lock);
 	return bar->func->dtor(bar);
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_nvkm_engine_gr_gf100.c,v 1.6 2021/12/19 10:51:57 riastradh Exp $	*/
+/*	$NetBSD: nouveau_nvkm_engine_gr_gf100.c,v 1.7 2021/12/19 11:34:45 riastradh Exp $	*/
 
 /*
  * Copyright 2012 Red Hat Inc.
@@ -24,7 +24,7 @@
  * Authors: Ben Skeggs
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_engine_gr_gf100.c,v 1.6 2021/12/19 10:51:57 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_engine_gr_gf100.c,v 1.7 2021/12/19 11:34:45 riastradh Exp $");
 
 #include "gf100.h"
 #include "ctxgf100.h"
@@ -2032,6 +2032,8 @@ gf100_gr_dtor(struct nvkm_gr *base)
 	vfree(gr->method);
 	vfree(gr->sw_ctx);
 	vfree(gr->sw_nonctx);
+
+	mutex_destroy(&gr->fecs.mutex);
 
 	return gr;
 }

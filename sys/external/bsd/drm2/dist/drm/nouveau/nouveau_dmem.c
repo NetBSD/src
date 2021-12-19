@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_dmem.c,v 1.2 2021/12/18 23:45:32 riastradh Exp $	*/
+/*	$NetBSD: nouveau_dmem.c,v 1.3 2021/12/19 11:34:44 riastradh Exp $	*/
 
 /*
  * Copyright 2018 Red Hat Inc.
@@ -22,7 +22,7 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_dmem.c,v 1.2 2021/12/18 23:45:32 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_dmem.c,v 1.3 2021/12/19 11:34:44 riastradh Exp $");
 
 #include "nouveau_dmem.h"
 #include "nouveau_drv.h"
@@ -409,6 +409,7 @@ nouveau_dmem_fini(struct nouveau_drm *drm)
 			nouveau_bo_ref(NULL, &chunk->bo);
 		}
 		list_del(&chunk->list);
+		spin_lock_destroy(&chunk->lock);
 		kfree(chunk);
 	}
 
@@ -558,6 +559,7 @@ nouveau_dmem_init(struct nouveau_drm *drm)
 	NV_INFO(drm, "DMEM: registered %ldMB of device memory\n", size >> 20);
 	return;
 out_free:
+	mutex_destroy(&drm->dmem->mutex);
 	kfree(drm->dmem);
 	drm->dmem = NULL;
 }

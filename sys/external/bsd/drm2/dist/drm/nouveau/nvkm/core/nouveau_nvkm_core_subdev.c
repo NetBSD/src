@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_nvkm_core_subdev.c,v 1.4 2021/12/18 23:45:34 riastradh Exp $	*/
+/*	$NetBSD: nouveau_nvkm_core_subdev.c,v 1.5 2021/12/19 11:34:44 riastradh Exp $	*/
 
 /*
  * Copyright 2012 Red Hat Inc.
@@ -24,12 +24,14 @@
  * Authors: Ben Skeggs
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_core_subdev.c,v 1.4 2021/12/18 23:45:34 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_core_subdev.c,v 1.5 2021/12/19 11:34:44 riastradh Exp $");
 
 #include <core/subdev.h>
 #include <core/device.h>
 #include <core/option.h>
 #include <subdev/mc.h>
+
+#include <linux/nbsd-namespace.h>
 
 static struct lock_class_key nvkm_subdev_lock_class[NVKM_SUBDEV_NR];
 
@@ -208,6 +210,7 @@ nvkm_subdev_del(struct nvkm_subdev **psubdev)
 			*psubdev = subdev->func->dtor(subdev);
 		time = ktime_to_us(ktime_get()) - time;
 		nvkm_trace(subdev, "destroy completed in %"PRId64"us\n", time);
+		mutex_destroy(&subdev->mutex);
 		kfree(*psubdev);
 		*psubdev = NULL;
 	}

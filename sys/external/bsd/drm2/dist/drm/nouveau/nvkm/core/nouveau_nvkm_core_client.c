@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_nvkm_core_client.c,v 1.5 2021/12/19 10:51:57 riastradh Exp $	*/
+/*	$NetBSD: nouveau_nvkm_core_client.c,v 1.6 2021/12/19 11:34:44 riastradh Exp $	*/
 
 /*
  * Copyright 2012 Red Hat Inc.
@@ -24,7 +24,7 @@
  * Authors: Ben Skeggs
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_core_client.c,v 1.5 2021/12/19 10:51:57 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_core_client.c,v 1.6 2021/12/19 11:34:44 riastradh Exp $");
 
 #include <core/client.h>
 #include <core/device.h>
@@ -276,6 +276,7 @@ nvkm_client_dtor(struct nvkm_object *object)
 	int i;
 	for (i = 0; i < ARRAY_SIZE(client->notify); i++)
 		nvkm_client_notify_del(client, i);
+	spin_lock_destroy(&client->lock);
 	return client;
 }
 

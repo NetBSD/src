@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_nvkm_subdev_instmem_base.c,v 1.7 2021/12/19 10:51:58 riastradh Exp $	*/
+/*	$NetBSD: nouveau_nvkm_subdev_instmem_base.c,v 1.8 2021/12/19 11:34:45 riastradh Exp $	*/
 
 /*
  * Copyright 2012 Red Hat Inc.
@@ -24,7 +24,7 @@
  * Authors: Ben Skeggs
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_subdev_instmem_base.c,v 1.7 2021/12/19 10:51:58 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_subdev_instmem_base.c,v 1.8 2021/12/19 11:34:45 riastradh Exp $");
 
 #include "priv.h"
 
@@ -264,6 +264,7 @@ static void *
 nvkm_instmem_dtor(struct nvkm_subdev *subdev)
 {
 	struct nvkm_instmem *imem = nvkm_instmem(subdev);
+	spin_lock_destroy(&imem->lock);
 	if (imem->func->dtor)
 		return imem->func->dtor(imem);
 	return imem;

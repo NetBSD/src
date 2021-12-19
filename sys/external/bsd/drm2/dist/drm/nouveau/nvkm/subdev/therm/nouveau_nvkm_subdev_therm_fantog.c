@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_nvkm_subdev_therm_fantog.c,v 1.3 2021/12/18 23:45:41 riastradh Exp $	*/
+/*	$NetBSD: nouveau_nvkm_subdev_therm_fantog.c,v 1.4 2021/12/19 11:34:46 riastradh Exp $	*/
 
 /*
  * Copyright 2012 The Nouveau community
@@ -24,7 +24,7 @@
  * Authors: Martin Peres
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_subdev_therm_fantog.c,v 1.3 2021/12/18 23:45:41 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_subdev_therm_fantog.c,v 1.4 2021/12/19 11:34:46 riastradh Exp $");
 
 #include "priv.h"
 
@@ -92,6 +92,13 @@ nvkm_fantog_set(struct nvkm_therm *therm, int percent)
 	return 0;
 }
 
+static void
+nvkm_fantog_dtor(struct nvkm_fan *base)
+{
+	struct nvkm_fantog *fan = container_of(base, struct nvkm_fantog, base);
+	spin_lock_destroy(&fan->lock);
+}
+
 int
 nvkm_fantog_create(struct nvkm_therm *therm, struct dcb_gpio_func *func)
 {
@@ -112,6 +119,7 @@ nvkm_fantog_create(struct nvkm_therm *therm, struct dcb_gpio_func *func)
 	fan->base.type = "toggle";
 	fan->base.get = nvkm_fantog_get;
 	fan->base.set = nvkm_fantog_set;
+	fan->base.dtor = nvkm_fantog_dtor;
 	nvkm_alarm_init(&fan->alarm, nvkm_fantog_alarm);
 	fan->period_us = 100000; /* 10Hz */
 	fan->percent = 100;

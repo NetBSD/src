@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_nvkm_engine_gr_nv50.c,v 1.3 2021/12/18 23:45:36 riastradh Exp $	*/
+/*	$NetBSD: nouveau_nvkm_engine_gr_nv50.c,v 1.4 2021/12/19 11:34:45 riastradh Exp $	*/
 
 /*
  * Copyright 2012 Red Hat Inc.
@@ -24,7 +24,7 @@
  * Authors: Ben Skeggs
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_engine_gr_nv50.c,v 1.3 2021/12/18 23:45:36 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_engine_gr_nv50.c,v 1.4 2021/12/19 11:34:45 riastradh Exp $");
 
 #include "nv50.h"
 
@@ -778,9 +778,17 @@ nv50_gr_new_(const struct nvkm_gr_func *func, struct nvkm_device *device,
 	return nvkm_gr_ctor(func, device, index, true, &gr->base);
 }
 
+static void *
+nv50_gr_dtor(struct nvkm_gr *gr)
+{
+	spin_lock_destroy(&nv50_gr(gr)->lock);
+	return gr;
+}
+
 static const struct nvkm_gr_func
 nv50_gr = {
 	.init = nv50_gr_init,
+	.dtor = nv50_gr_dtor,
 	.intr = nv50_gr_intr,
 	.chan_new = nv50_gr_chan_new,
 	.units = nv50_gr_units,

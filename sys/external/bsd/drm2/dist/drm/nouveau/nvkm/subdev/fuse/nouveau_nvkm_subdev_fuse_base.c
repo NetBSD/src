@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_nvkm_subdev_fuse_base.c,v 1.3 2021/12/18 23:45:39 riastradh Exp $	*/
+/*	$NetBSD: nouveau_nvkm_subdev_fuse_base.c,v 1.4 2021/12/19 11:34:45 riastradh Exp $	*/
 
 /*
  * Copyright 2014 Martin Peres
@@ -24,7 +24,7 @@
  * Authors: Martin Peres
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_subdev_fuse_base.c,v 1.3 2021/12/18 23:45:39 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_subdev_fuse_base.c,v 1.4 2021/12/19 11:34:45 riastradh Exp $");
 
 #include "priv.h"
 
@@ -37,6 +37,7 @@ nvkm_fuse_read(struct nvkm_fuse *fuse, u32 addr)
 static void *
 nvkm_fuse_dtor(struct nvkm_subdev *subdev)
 {
+	spin_lock_destroy(&nvkm_fuse(subdev)->lock);
 	return nvkm_fuse(subdev);
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_nvkm_engine_gr_nv10.c,v 1.3 2021/12/18 23:45:36 riastradh Exp $	*/
+/*	$NetBSD: nouveau_nvkm_engine_gr_nv10.c,v 1.4 2021/12/19 11:34:45 riastradh Exp $	*/
 
 /*
  * Copyright 2007 Matthieu CASTET <castet.matthieu@free.fr>
@@ -24,7 +24,7 @@
  * DEALINGS IN THE SOFTWARE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_engine_gr_nv10.c,v 1.3 2021/12/18 23:45:36 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_engine_gr_nv10.c,v 1.4 2021/12/19 11:34:45 riastradh Exp $");
 
 #include "nv10.h"
 #include "regs.h"
@@ -1190,9 +1190,17 @@ nv10_gr_new_(const struct nvkm_gr_func *func, struct nvkm_device *device,
 	return nvkm_gr_ctor(func, device, index, true, &gr->base);
 }
 
+static void *
+nv10_gr_dtor(struct nvkm_gr *gr)
+{
+	spin_lock_destroy(&nv10_gr(gr)->lock);
+	return gr;
+}
+
 static const struct nvkm_gr_func
 nv10_gr = {
 	.init = nv10_gr_init,
+	.dtor = nv10_gr_dtor,
 	.intr = nv10_gr_intr,
 	.tile = nv10_gr_tile,
 	.chan_new = nv10_gr_chan_new,

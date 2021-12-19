@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_nvkm_core_engine.c,v 1.4 2021/12/18 23:45:34 riastradh Exp $	*/
+/*	$NetBSD: nouveau_nvkm_core_engine.c,v 1.5 2021/12/19 11:34:44 riastradh Exp $	*/
 
 /*
  * Copyright 2012 Red Hat Inc.
@@ -24,7 +24,7 @@
  * Authors: Ben Skeggs
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_core_engine.c,v 1.4 2021/12/18 23:45:34 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_core_engine.c,v 1.5 2021/12/19 11:34:44 riastradh Exp $");
 
 #include <core/engine.h>
 #include <core/device.h>
@@ -159,6 +159,7 @@ static void *
 nvkm_engine_dtor(struct nvkm_subdev *subdev)
 {
 	struct nvkm_engine *engine = nvkm_engine(subdev);
+	spin_lock_destroy(&engine->lock);
 	if (engine->func->dtor)
 		return engine->func->dtor(engine);
 	return engine;

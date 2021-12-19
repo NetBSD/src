@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_svm.c,v 1.2 2021/12/18 23:45:32 riastradh Exp $	*/
+/*	$NetBSD: nouveau_svm.c,v 1.3 2021/12/19 11:34:44 riastradh Exp $	*/
 
 /*
  * Copyright 2018 Red Hat Inc.
@@ -22,7 +22,7 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_svm.c,v 1.2 2021/12/18 23:45:32 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_svm.c,v 1.3 2021/12/19 11:34:44 riastradh Exp $");
 
 #include "nouveau_svm.h"
 #include "nouveau_drv.h"
@@ -305,6 +305,7 @@ nouveau_svmm_fini(struct nouveau_svmm **psvmm)
 		svmm->vmm = NULL;
 		mutex_unlock(&svmm->mutex);
 		mmu_notifier_put(&svmm->notifier);
+		mutex_destroy(&svmm->mutex);
 		*psvmm = NULL;
 	}
 }
@@ -364,6 +365,7 @@ out_mm_unlock:
 	up_write(&current->mm->mmap_sem);
 out_free:
 	mutex_unlock(&cli->mutex);
+	mutex_destroy(&svmm->mutex);
 	kfree(svmm);
 	return ret;
 }

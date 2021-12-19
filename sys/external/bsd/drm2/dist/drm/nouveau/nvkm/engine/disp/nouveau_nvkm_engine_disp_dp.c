@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_nvkm_engine_disp_dp.c,v 1.3 2021/12/19 10:51:57 riastradh Exp $	*/
+/*	$NetBSD: nouveau_nvkm_engine_disp_dp.c,v 1.4 2021/12/19 11:34:45 riastradh Exp $	*/
 
 /*
  * Copyright 2014 Red Hat Inc.
@@ -24,7 +24,7 @@
  * Authors: Ben Skeggs
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_engine_disp_dp.c,v 1.3 2021/12/19 10:51:57 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_engine_disp_dp.c,v 1.4 2021/12/19 11:34:45 riastradh Exp $");
 
 #include "dp.h"
 #include "conn.h"
@@ -617,6 +617,7 @@ nvkm_dp_dtor(struct nvkm_outp *outp)
 {
 	struct nvkm_dp *dp = nvkm_dp(outp);
 	nvkm_notify_fini(&dp->hpd);
+	mutex_destroy(&dp->mutex);
 	return dp;
 }
 
