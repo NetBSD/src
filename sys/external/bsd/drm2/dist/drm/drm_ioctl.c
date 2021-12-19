@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_ioctl.c,v 1.15 2021/12/19 01:08:35 riastradh Exp $	*/
+/*	$NetBSD: drm_ioctl.c,v 1.16 2021/12/19 09:48:37 riastradh Exp $	*/
 
 /*
  * Created: Fri Jan  8 09:01:26 1999 by faith@valinux.com
@@ -31,12 +31,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_ioctl.c,v 1.15 2021/12/19 01:08:35 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_ioctl.c,v 1.16 2021/12/19 09:48:37 riastradh Exp $");
 
 #include <linux/export.h>
 #include <linux/nospec.h>
 #include <linux/pci.h>
 #include <linux/uaccess.h>
+#include <linux/capability.h>
 
 #ifdef __NetBSD__
 #include <sys/types.h>
