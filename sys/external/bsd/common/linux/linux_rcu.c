@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_rcu.c,v 1.2 2021/12/19 11:31:04 riastradh Exp $	*/
+/*	$NetBSD: linux_rcu.c,v 1.3 2021/12/19 11:35:17 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_rcu.c,v 1.2 2021/12/19 11:31:04 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_rcu.c,v 1.3 2021/12/19 11:35:17 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -93,6 +93,29 @@ synchronize_rcu(void)
 	SDT_PROBE0(sdt, linux, rcu, synchronize__start);
 	xc_wait(xc_broadcast(0, &synchronize_rcu_xc, NULL, NULL));
 	SDT_PROBE0(sdt, linux, rcu, synchronize__done);
+}
+
+/*
+ * cookie = get_state_synchronize_rcu(), cond_synchronize_rcu(cookie)
+ *
+ *	Optimization for synchronize_rcu -- skip if it has already
+ *	happened between get_state_synchronize_rcu and
+ *	cond_synchronize_rcu.  get_state_synchronize_rcu implies a full
+ *	SMP memory barrier (membar_sync).
+ */
+unsigned long
+get_state_synchronize_rcu(void)
+{
+
+	membar_sync();
+	return 0;
+}
+
+void
+cond_synchronize_rcu(unsigned long cookie)
+{
+
+	synchronize_rcu();
 }
 
 /*
