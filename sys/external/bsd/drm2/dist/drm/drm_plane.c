@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_plane.c,v 1.2 2021/12/18 23:44:57 riastradh Exp $	*/
+/*	$NetBSD: drm_plane.c,v 1.3 2021/12/19 01:13:44 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2016 Intel Corporation
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_plane.c,v 1.2 2021/12/18 23:44:57 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_plane.c,v 1.3 2021/12/19 01:13:44 riastradh Exp $");
 
 #include <linux/slab.h>
 #include <linux/uaccess.h>
@@ -111,7 +111,7 @@ static int create_in_format_blob(struct drm_device *dev, struct drm_plane *plane
 	 * should be naturally aligned to 8B.
 	 */
 	BUILD_BUG_ON(sizeof(struct drm_format_modifier_blob) % 8);
-	blob_size += ALIGN(formats_size, 8);
+	blob_size += round_up(formats_size, 8);
 	blob_size += modifiers_size;
 
 	blob = drm_property_create_blob(dev, blob_size, NULL);
@@ -125,7 +125,7 @@ static int create_in_format_blob(struct drm_device *dev, struct drm_plane *plane
 	blob_data->count_modifiers = plane->modifier_count;
 
 	blob_data->modifiers_offset =
-		ALIGN(blob_data->formats_offset + formats_size, 8);
+		round_up(blob_data->formats_offset + formats_size, 8);
 
 	memcpy(formats_ptr(blob_data), plane->format_types, formats_size);
 
