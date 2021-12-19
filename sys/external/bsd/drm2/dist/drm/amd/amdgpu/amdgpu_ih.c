@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu_ih.c,v 1.8 2021/12/19 12:02:39 riastradh Exp $	*/
+/*	$NetBSD: amdgpu_ih.c,v 1.9 2021/12/19 12:29:25 riastradh Exp $	*/
 
 /*
  * Copyright 2014 Advanced Micro Devices, Inc.
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdgpu_ih.c,v 1.8 2021/12/19 12:02:39 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdgpu_ih.c,v 1.9 2021/12/19 12:29:25 riastradh Exp $");
 
 #include <linux/dma-mapping.h>
 
@@ -76,7 +76,7 @@ int amdgpu_ih_ring_init(struct amdgpu_device *adev, struct amdgpu_ih_ring *ih,
 fail0:			KASSERT(r);
 			return r;
 		}
-		KASSERT(rseg == 0);
+		KASSERT(rseg == 1);
 		r = -bus_dmamap_create(adev->ddev->dmat, size, 1, PAGE_SIZE, 0,
 		    BUS_DMA_WAITOK, &ih->ring_map);
 		if (r) {
