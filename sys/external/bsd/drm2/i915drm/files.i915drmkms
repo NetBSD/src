@@ -1,4 +1,4 @@
-#	$NetBSD: files.i915drmkms,v 1.51 2021/12/19 01:42:39 riastradh Exp $
+#	$NetBSD: files.i915drmkms,v 1.52 2021/12/19 01:42:48 riastradh Exp $
 
 version	20180827
 
@@ -215,18 +215,18 @@ file	external/bsd/drm2/dist/drm/i915/intel_sideband.c	i915drmkms
 file	external/bsd/drm2/dist/drm/i915/intel_uncore.c	i915drmkms
 file	external/bsd/drm2/dist/drm/i915/intel_wakeref.c	i915drmkms
 file	external/bsd/drm2/dist/drm/i915/intel_wopcm.c	i915drmkms
-file	external/bsd/drm2/dist/drm/i915/oa/i915_oa_bdw.c	i915drmkms
-file	external/bsd/drm2/dist/drm/i915/oa/i915_oa_bxt.c	i915drmkms
-file	external/bsd/drm2/dist/drm/i915/oa/i915_oa_cflgt2.c	i915drmkms
-file	external/bsd/drm2/dist/drm/i915/oa/i915_oa_cflgt3.c	i915drmkms
-file	external/bsd/drm2/dist/drm/i915/oa/i915_oa_chv.c	i915drmkms
-file	external/bsd/drm2/dist/drm/i915/oa/i915_oa_cnl.c	i915drmkms
-file	external/bsd/drm2/dist/drm/i915/oa/i915_oa_glk.c	i915drmkms
-file	external/bsd/drm2/dist/drm/i915/oa/i915_oa_hsw.c	i915drmkms
-file	external/bsd/drm2/dist/drm/i915/oa/i915_oa_icl.c	i915drmkms
-file	external/bsd/drm2/dist/drm/i915/oa/i915_oa_kblgt2.c	i915drmkms
-file	external/bsd/drm2/dist/drm/i915/oa/i915_oa_kblgt3.c	i915drmkms
-file	external/bsd/drm2/dist/drm/i915/oa/i915_oa_sklgt2.c	i915drmkms
-file	external/bsd/drm2/dist/drm/i915/oa/i915_oa_sklgt3.c	i915drmkms
-file	external/bsd/drm2/dist/drm/i915/oa/i915_oa_sklgt4.c	i915drmkms
-file	external/bsd/drm2/dist/drm/i915/oa/i915_oa_tgl.c	i915drmkms
+#file	external/bsd/drm2/dist/drm/i915/oa/i915_oa_bdw.c	i915drmkms
+#file	external/bsd/drm2/dist/drm/i915/oa/i915_oa_bxt.c	i915drmkms
+#file	external/bsd/drm2/dist/drm/i915/oa/i915_oa_cflgt2.c	i915drmkms
+#file	external/bsd/drm2/dist/drm/i915/oa/i915_oa_cflgt3.c	i915drmkms
+#file	external/bsd/drm2/dist/drm/i915/oa/i915_oa_chv.c	i915drmkms
+#file	external/bsd/drm2/dist/drm/i915/oa/i915_oa_cnl.c	i915drmkms
+#file	external/bsd/drm2/dist/drm/i915/oa/i915_oa_glk.c	i915drmkms
+#file	external/bsd/drm2/dist/drm/i915/oa/i915_oa_hsw.c	i915drmkms
+#file	external/bsd/drm2/dist/drm/i915/oa/i915_oa_icl.c	i915drmkms
+#file	external/bsd/drm2/dist/drm/i915/oa/i915_oa_kblgt2.c	i915drmkms
+#file	external/bsd/drm2/dist/drm/i915/oa/i915_oa_kblgt3.c	i915drmkms
+#file	external/bsd/drm2/dist/drm/i915/oa/i915_oa_sklgt2.c	i915drmkms
+#file	external/bsd/drm2/dist/drm/i915/oa/i915_oa_sklgt3.c	i915drmkms
+#file	external/bsd/drm2/dist/drm/i915/oa/i915_oa_sklgt4.c	i915drmkms
+#file	external/bsd/drm2/dist/drm/i915/oa/i915_oa_tgl.c	i915drmkms
