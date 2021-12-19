@@ -1,4 +1,4 @@
-/*	$NetBSD: via_module.c,v 1.4 2018/08/28 03:35:08 riastradh Exp $	*/
+/*	$NetBSD: via_module.c,v 1.5 2021/12/19 10:33:00 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -30,13 +30,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: via_module.c,v 1.4 2018/08/28 03:35:08 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: via_module.c,v 1.5 2021/12/19 10:33:00 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/module.h>
 #include <sys/once.h>
 
-#include <drm/drmP.h>
+#include <drm/drm_device.h>
 #include <drm/via_drm.h>
 
 #include "via_drv.h"

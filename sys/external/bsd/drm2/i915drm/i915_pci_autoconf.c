@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_pci_autoconf.c,v 1.2 2021/12/19 01:46:16 riastradh Exp $	*/
+/*	$NetBSD: i915_pci_autoconf.c,v 1.3 2021/12/19 10:32:59 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_pci_autoconf.c,v 1.2 2021/12/19 01:46:16 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_pci_autoconf.c,v 1.3 2021/12/19 10:32:59 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/queue.h>
@@ -38,10 +38,10 @@ __KERNEL_RCSID(0, "$NetBSD: i915_pci_autoconf.c,v 1.2 2021/12/19 01:46:16 riastr
 #include <sys/queue.h>
 #include <sys/workqueue.h>
 
-#include <drm/drmP.h>
-
 #include "i915_drv.h"
 #include "i915_pci.h"
+
+struct drm_device;
 
 SIMPLEQ_HEAD(i915drmkms_task_head, i915drmkms_task);
 

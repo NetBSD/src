@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpufb.h,v 1.1 2018/08/27 14:02:32 riastradh Exp $	*/
+/*	$NetBSD: amdgpufb.h,v 1.2 2021/12/19 10:32:59 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -34,8 +34,9 @@
 
 #include <sys/bus.h>
 
-#include <drm/drmP.h>
 #include <drm/drm_fb_helper.h>
+
+struct drm_device;
 
 struct amdgpufb_attach_args {
 	struct drm_device			*afa_drm_dev;

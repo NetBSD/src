@@ -1,4 +1,4 @@
-/*	$NetBSD: intelfb.h,v 1.1 2014/07/24 21:18:40 riastradh Exp $	*/
+/*	$NetBSD: intelfb.h,v 1.2 2021/12/19 10:32:59 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -34,8 +34,9 @@
 
 #include <sys/bus.h>
 
-#include <drm/drmP.h>
 #include <drm/drm_fb_helper.h>
+
+struct drm_device;
 
 struct intelfb_attach_args {
 	struct drm_device			*ifa_drm_dev;

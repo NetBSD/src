@@ -1,4 +1,4 @@
-/*	$NetBSD: drmfb.c,v 1.9 2021/12/19 09:53:06 riastradh Exp $	*/
+/*	$NetBSD: drmfb.c,v 1.10 2021/12/19 10:32:59 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drmfb.c,v 1.9 2021/12/19 09:53:06 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drmfb.c,v 1.10 2021/12/19 10:32:59 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "vga.h"
@@ -65,7 +65,7 @@ __KERNEL_RCSID(0, "$NetBSD: drmfb.c,v 1.9 2021/12/19 09:53:06 riastradh Exp $");
 
 #include <dev/wsfb/genfbvar.h>
 
-#include <drm/drmP.h>
+#include <drm/drm_device.h>
 #include <drm/drm_fb_helper.h>
 #include <drm/drmfb.h>
 
