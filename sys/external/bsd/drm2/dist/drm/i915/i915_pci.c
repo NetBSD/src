@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_pci.c,v 1.3 2021/12/19 01:43:51 riastradh Exp $	*/
+/*	$NetBSD: i915_pci.c,v 1.4 2021/12/19 01:44:49 riastradh Exp $	*/
 
 /*
  * Copyright © 2016 Intel Corporation
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_pci.c,v 1.3 2021/12/19 01:43:51 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_pci.c,v 1.4 2021/12/19 01:44:49 riastradh Exp $");
 
 #include <linux/console.h>
 #include <linux/vga_switcheroo.h>
@@ -913,6 +913,13 @@ static const struct pci_device_id pciidlist[] = {
 };
 MODULE_DEVICE_TABLE(pci, pciidlist);
 
+#ifdef __NetBSD__
+
+/* XXX Kludge to expose this to NetBSD driver attachment goop.  */
+const struct pci_device_id *const i915_device_ids = pciidlist;
+const size_t i915_n_device_ids = __arraycount(pciidlist);
+
+#else
 static void i915_pci_remove(struct pci_dev *pdev)
 {
 	struct drm_i915_private *i915;
@@ -1083,6 +1090,8 @@ static void __exit i915_exit(void)
 
 module_init(i915_init);
 module_exit(i915_exit);
+
+#endif
 
 MODULE_AUTHOR("Tungsten Graphics, Inc.");
 MODULE_AUTHOR("Intel Corporation");
