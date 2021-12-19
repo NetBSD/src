@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_util.h,v 1.2 2021/12/18 23:45:46 riastradh Exp $	*/
+/*	$NetBSD: drm_util.h,v 1.3 2021/12/19 01:56:00 riastradh Exp $	*/
 
 /*
  * Internal Header for the Direct Rendering Manager
@@ -77,9 +77,13 @@
  */
 static inline bool drm_can_sleep(void)
 {
+#ifdef __NetBSD__
+	return false;		/* XXX */
+#else
 	if (in_atomic() || in_dbg_master() || irqs_disabled())
 		return false;
 	return true;
+#endif
 }
 
 #endif
