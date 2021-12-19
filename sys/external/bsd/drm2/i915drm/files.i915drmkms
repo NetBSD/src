@@ -1,4 +1,4 @@
-#	$NetBSD: files.i915drmkms,v 1.43 2021/12/19 00:26:16 riastradh Exp $
+#	$NetBSD: files.i915drmkms,v 1.44 2021/12/19 00:26:41 riastradh Exp $
 
 version	20180827
 
@@ -36,6 +36,7 @@ makeoptions 	i915drmkms 	"CWARNFLAGS.intel_sdvo.c"+="${${ACTIVE_CC} == gcc && ${
 file	external/bsd/drm2/i915drm/i915_gem_userptr.c	i915drmkms
 file	external/bsd/drm2/i915drm/i915_module.c		i915drmkms
 file	external/bsd/drm2/i915drm/i915_pci.c		i915drmkms
+file	external/bsd/drm2/i915drm/i915_sw_fence.c	i915drmkms
 file	external/bsd/drm2/i915drm/i915_sysfs.c	i915drmkms
 file	external/bsd/drm2/i915drm/intel_dsi.c	i915drmkms
 file	external/bsd/drm2/i915drm/intel_gtt.c		i915drmkms
@@ -189,7 +190,7 @@ file	external/bsd/drm2/dist/drm/i915/i915_request.c	i915drmkms
 file	external/bsd/drm2/dist/drm/i915/i915_scatterlist.c	i915drmkms
 file	external/bsd/drm2/dist/drm/i915/i915_scheduler.c	i915drmkms
 file	external/bsd/drm2/dist/drm/i915/i915_suspend.c	i915drmkms
-file	external/bsd/drm2/dist/drm/i915/i915_sw_fence.c	i915drmkms
+#file	external/bsd/drm2/dist/drm/i915/i915_sw_fence.c	i915drmkms
 file	external/bsd/drm2/dist/drm/i915/i915_sw_fence_work.c	i915drmkms
 file	external/bsd/drm2/dist/drm/i915/i915_switcheroo.c	i915drmkms
 file	external/bsd/drm2/dist/drm/i915/i915_syncmap.c	i915drmkms
