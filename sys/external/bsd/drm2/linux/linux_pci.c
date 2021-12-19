@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_pci.c,v 1.16 2021/12/19 10:57:42 riastradh Exp $	*/
+/*	$NetBSD: linux_pci.c,v 1.17 2021/12/19 10:59:48 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,11 +30,12 @@
  */
 
 #ifdef _KERNEL_OPT
+#include "acpica.h"
 #include "opt_pci.h"
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_pci.c,v 1.16 2021/12/19 10:57:42 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_pci.c,v 1.17 2021/12/19 10:59:48 riastradh Exp $");
 
 #if NACPICA > 0
 #include <dev/acpi/acpivar.h>
