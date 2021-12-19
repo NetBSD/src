@@ -1,4 +1,4 @@
-/*	$NetBSD: barrier.h,v 1.9 2021/12/19 12:25:05 riastradh Exp $	*/
+/*	$NetBSD: barrier.h,v 1.10 2021/12/19 12:25:11 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -57,22 +57,14 @@
 #define	rmb	membar_consumer
 #endif
 
-#ifdef __alpha__		/* XXX As if...  */
-#  define	read_barrier_depends	membar_sync
-#else
-#  define	read_barrier_depends()	do {} while (0)
-#endif
-
 #ifdef MULTIPROCESSOR
 #  define	smp_mb				membar_sync
 #  define	smp_wmb				membar_producer
 #  define	smp_rmb				membar_consumer
-#  define	smp_read_barrier_depends	read_barrier_depends
 #else
 #  define	smp_mb()			do {} while (0)
 #  define	smp_wmb()			do {} while (0)
 #  define	smp_rmb()			do {} while (0)
-#  define	smp_read_barrier_depends()	do {} while (0)
 #endif
 
 #if defined(MULTIPROCESSOR) && !defined(__HAVE_ATOMIC_AS_MEMBAR)
