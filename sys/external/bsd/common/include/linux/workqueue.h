@@ -1,4 +1,4 @@
-/*	$NetBSD: workqueue.h,v 1.16 2021/12/19 01:03:57 riastradh Exp $	*/
+/*	$NetBSD: workqueue.h,v 1.17 2021/12/19 01:04:05 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013, 2018 The NetBSD Foundation, Inc.
@@ -45,6 +45,7 @@
 #define	cancel_work			linux_cancel_work
 #define	cancel_work_sync		linux_cancel_work_sync
 #define	current_work			linux_current_work
+#define	delayed_work_pending		linux_delayed_work_pending
 #define	destroy_workqueue		linux_destroy_workqueue
 #define	flush_delayed_work		linux_flush_delayed_work
 #define	flush_scheduled_work		linux_flush_scheduled_work
@@ -60,6 +61,7 @@
 #define	system_unbound_wq		linux_system_unbound_wq
 #define	system_wq			linux_system_wq
 #define	to_delayed_work			linux_to_delayed_work
+#define	work_pending			linux_work_pending
 
 struct workqueue_struct;
 
@@ -111,6 +113,7 @@ bool	queue_work(struct workqueue_struct *, struct work_struct *);
 bool	cancel_work(struct work_struct *);
 bool	cancel_work_sync(struct work_struct *);
 bool	flush_work(struct work_struct *);
+bool	work_pending(struct work_struct *);
 
 void	INIT_DELAYED_WORK(struct delayed_work *,
 	    void (*)(struct work_struct *));
@@ -122,6 +125,7 @@ bool	mod_delayed_work(struct workqueue_struct *, struct delayed_work *,
 bool	cancel_delayed_work(struct delayed_work *);
 bool	cancel_delayed_work_sync(struct delayed_work *);
 bool	flush_delayed_work(struct delayed_work *);
+bool	delayed_work_pending(struct delayed_work *);
 
 struct work_struct *
 	current_work(void);

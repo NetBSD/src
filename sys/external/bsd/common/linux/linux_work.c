@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_work.c,v 1.48 2021/12/19 01:03:57 riastradh Exp $	*/
+/*	$NetBSD: linux_work.c,v 1.49 2021/12/19 01:04:05 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_work.c,v 1.48 2021/12/19 01:03:57 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_work.c,v 1.49 2021/12/19 01:04:05 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/atomic.h>
@@ -533,6 +533,19 @@ work_claimed(struct work_struct *work, struct workqueue_struct *wq)
 
 	KASSERT(work_queue(work) == wq);
 	KASSERT(mutex_owned(&wq->wq_lock));
+
+	return work->work_owner & 1;
+}
+
+/*
+ * work_pending(work)
+ *
+ *	True if work is currently claimed by any workqueue, scheduled
+ *	to run on that workqueue.
+ */
+bool
+work_pending(struct work_struct *work)
+{
 
 	return work->work_owner & 1;
 }
@@ -1525,4 +1538,16 @@ flush_delayed_work(struct delayed_work *dw)
 	mutex_exit(&wq->wq_lock);
 
 	return waited;
+}
+
+/*
+ * delayed_work_pending(dw)
+ *
+ *	True if dw is currently scheduled to execute, false if not.
+ */
+bool
+delayed_work_pending(struct delayed_work *dw)
+{
+
+	return work_pending(&dw->work);
 }
