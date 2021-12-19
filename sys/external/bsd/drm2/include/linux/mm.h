@@ -1,4 +1,4 @@
-/*	$NetBSD: mm.h,v 1.19 2021/12/19 10:49:55 riastradh Exp $	*/
+/*	$NetBSD: mm.h,v 1.20 2021/12/19 10:51:31 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -104,6 +104,16 @@ kvzalloc(size_t size, gfp_t gfp)
 {
 
 	return kmalloc(size, gfp | __GFP_ZERO);
+}
+
+static inline void *
+kvcalloc(size_t nelem, size_t elemsize, gfp_t gfp)
+{
+
+	KASSERT(elemsize > 0);
+	if (SIZE_MAX/elemsize < nelem)
+		return NULL;
+	return kvzalloc(nelem * elemsize, gfp);
 }
 
 static inline void *
