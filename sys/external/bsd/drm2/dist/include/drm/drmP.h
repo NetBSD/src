@@ -1,4 +1,4 @@
-/*	$NetBSD: drmP.h,v 1.55 2021/12/19 01:56:50 riastradh Exp $	*/
+/*	$NetBSD: drmP.h,v 1.56 2021/12/19 01:57:13 riastradh Exp $	*/
 
 /*
  * Internal Header for the Direct Rendering Manager
@@ -157,34 +157,6 @@ struct drm_pending_event {
 struct drm_prime_file_private {
 	struct list_head head;
 	struct mutex lock;
-};
-
-/**
- * struct drm_master - drm master structure
- *
- * @refcount: Refcount for this master object.
- * @minor: Link back to minor char device we are master for. Immutable.
- * @unique: Unique identifier: e.g. busid. Protected by drm_global_mutex.
- * @unique_len: Length of unique field. Protected by drm_global_mutex.
- * @magic_map: Map of used authentication tokens. Protected by struct_mutex.
- * @lock: DRI lock information.
- * @driver_priv: Pointer to driver-private information.
- */
-struct drm_master {
-	struct kref refcount;
-	struct drm_minor *minor;
-	char *unique;
-	int unique_len;
-	struct idr magic_map;
-	struct drm_lock_data lock;
-	void *driver_priv;
-};
-
-enum drm_minor_type {
-	DRM_MINOR_LEGACY,
-	DRM_MINOR_CONTROL,
-	DRM_MINOR_RENDER,
-	DRM_MINOR_CNT,
 };
 
 #ifdef __NetBSD__		/* XXX debugfs */
