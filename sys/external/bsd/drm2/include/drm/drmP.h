@@ -1,4 +1,4 @@
-/*	$NetBSD: drmP.h,v 1.3 2021/12/19 10:29:01 riastradh Exp $	*/
+/*	$NetBSD: drmP.h,v 1.4 2021/12/19 10:32:47 riastradh Exp $	*/
 
 /*
  * Internal Header for the Direct Rendering Manager
@@ -67,7 +67,6 @@
 #include <uapi/drm/drm_mode.h>
 
 #ifdef __NetBSD__
-#include <drm/drm_os_netbsd.h>
 #include <asm/barrier.h>
 #include <asm/bug.h>
 #include <linux/atomic.h>
