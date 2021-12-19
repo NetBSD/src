@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic.h,v 1.26 2021/12/19 01:39:27 riastradh Exp $	*/
+/*	$NetBSD: atomic.h,v 1.27 2021/12/19 01:44:19 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@ struct atomic {
 typedef struct atomic atomic_t;
 
 static inline int
-atomic_read(atomic_t *atomic)
+atomic_read(const atomic_t *atomic)
 {
 	/* no membar */
 	return atomic->a_u.au_int;
