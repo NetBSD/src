@@ -1,4 +1,4 @@
-/*	$NetBSD: rcupdate.h,v 1.5 2021/12/19 11:31:04 riastradh Exp $	*/
+/*	$NetBSD: rcupdate.h,v 1.6 2021/12/19 11:33:17 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -51,6 +51,14 @@
 #define	rcu_dereference_protected(P, C) ({				      \
 	WARN_ON(!(C));							      \
 	(P);								      \
+})
+
+#define	rcu_replace_pointer(PTRP, NEWPTR, C) ({				      \
+	__typeof__(PTRP) __rrp_ptrp = (PTRP);				      \
+	__typeof__(PTRP) __rrp_oldptr =					      \
+		rcu_dereference_protected(__rrp_ptrp, C);		      \
+	rcu_assign_pointer(__rrp_ptrp, NEWPTR);				      \
+	__rrp_oldptr;							      \
 })
 
 
