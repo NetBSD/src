@@ -1,4 +1,4 @@
-/*	$NetBSD: ttm_bo.c,v 1.22 2021/12/19 09:57:17 riastradh Exp $	*/
+/*	$NetBSD: ttm_bo.c,v 1.23 2021/12/19 09:57:25 riastradh Exp $	*/
 
 /* SPDX-License-Identifier: GPL-2.0 OR MIT */
 /**************************************************************************
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ttm_bo.c,v 1.22 2021/12/19 09:57:17 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ttm_bo.c,v 1.23 2021/12/19 09:57:25 riastradh Exp $");
 
 #define pr_fmt(fmt) "[TTM] " fmt
 
@@ -42,7 +42,7 @@ __KERNEL_RCSID(0, "$NetBSD: ttm_bo.c,v 1.22 2021/12/19 09:57:17 riastradh Exp $"
 #include <uvm/uvm_object.h>
 #endif
 
-#include <drm/drmP.h>
+#include <drm/drm_prime.h>
 #include <drm/ttm/ttm_module.h>
 #include <drm/ttm/ttm_bo_driver.h>
 #include <drm/ttm/ttm_placement.h>
@@ -61,7 +61,7 @@ __KERNEL_RCSID(0, "$NetBSD: ttm_bo.c,v 1.22 2021/12/19 09:57:17 riastradh Exp $"
 static void ttm_bo_global_kobj_release(struct kobject *kobj);
 #endif
 
-#ifndef __NetBSD__		/* XXX sysfs */
+#ifdef __linux__		/* XXX sysfs */
 /**
  * ttm_global_mutex - protecting the global BO state
  */
@@ -74,6 +74,10 @@ static struct attribute ttm_bo_count = {
 	.name = "bo_count",
 	.mode = S_IRUGO
 };
+#else
+static struct mutex ttm_global_mutex;
+unsigned ttm_bo_glob_use_count;
+struct ttm_bo_global ttm_bo_glob;
 #endif
 
 /* default destructor */
