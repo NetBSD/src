@@ -1,4 +1,4 @@
-/*	$NetBSD: rcupdate.h,v 1.11 2021/12/19 01:19:45 riastradh Exp $	*/
+/*	$NetBSD: rcupdate.h,v 1.12 2021/12/19 01:20:45 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -67,10 +67,14 @@
 #define	rcu_pointer_handoff(P)	(P)
 
 struct rcu_head {
-	void		(*rcuh_callback)(struct rcu_head *);
+	union {
+		void		(*callback)(struct rcu_head *);
+		void		*obj;
+	}		rcuh_u;
 	struct rcu_head	*rcuh_next;
 };
 
+#define	_kfree_rcu		linux__kfree_rcu
 #define	call_rcu		linux_call_rcu
 #define	rcu_barrier		linux_rcu_barrier
 #define	synchronize_rcu		linux_synchronize_rcu
@@ -81,6 +85,8 @@ void	linux_rcu_gc_fini(void);
 void	call_rcu(struct rcu_head *, void (*)(struct rcu_head *));
 void	rcu_barrier(void);
 void	synchronize_rcu(void);
+
+void	_kfree_rcu(struct rcu_head *, void *);
 
 static inline void
 rcu_read_lock(void)
@@ -97,5 +103,8 @@ rcu_read_unlock(void)
 	__insn_barrier();
 	kpreempt_enable();
 }
+
+#define	kfree_rcu(P, F)							      \
+	_kfree_rcu(&(P)->F, (P))
 
 #endif  /* _LINUX_RCUPDATE_H_ */
