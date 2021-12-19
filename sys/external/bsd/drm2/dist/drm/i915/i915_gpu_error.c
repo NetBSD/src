@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_gpu_error.c,v 1.12 2021/12/18 23:45:28 riastradh Exp $	*/
+/*	$NetBSD: i915_gpu_error.c,v 1.13 2021/12/19 12:25:46 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2008 Intel Corporation
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_gpu_error.c,v 1.12 2021/12/18 23:45:28 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_gpu_error.c,v 1.13 2021/12/19 12:25:46 riastradh Exp $");
 
 #include <sys/param.h>
 #include <linux/ascii85.h>
@@ -1878,6 +1878,11 @@ void i915_error_state_store(struct i915_gpu_coredump *error)
 
 	if (!xchg(&warned, true) &&
 	    ktime_get_real_seconds() - DRIVER_TIMESTAMP < DAY_AS_SECONDS(180)) {
+#ifdef __NetBSD__
+		pr_info("Please file a bug at https://gnats.NetBSD.org/"
+		    " providing the dmesg log by booting with debug/verbose"
+		    " as in `boot -vx'.\n");
+#else
 		pr_info("GPU hangs can indicate a bug anywhere in the entire gfx stack, including userspace.\n");
 		pr_info("Please file a _new_ bug report at https://gitlab.freedesktop.org/drm/intel/issues/new.\n");
 		pr_info("Please see https://gitlab.freedesktop.org/drm/intel/-/wikis/How-to-file-i915-bugs for details.\n");
@@ -1885,6 +1890,7 @@ void i915_error_state_store(struct i915_gpu_coredump *error)
 		pr_info("The GPU crash dump is required to analyze GPU hangs, so please always attach it.\n");
 		pr_info("GPU crash dump saved to /sys/class/drm/card%d/error\n",
 			i915->drm.primary->index);
+#endif
 	}
 }
 
