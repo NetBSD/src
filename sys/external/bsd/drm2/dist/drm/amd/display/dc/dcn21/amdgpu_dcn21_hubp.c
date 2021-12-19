@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu_dcn21_hubp.c,v 1.2 2021/12/18 23:45:03 riastradh Exp $	*/
+/*	$NetBSD: amdgpu_dcn21_hubp.c,v 1.3 2021/12/19 11:35:07 riastradh Exp $	*/
 
 /*
 * Copyright 2018 Advanced Micro Devices, Inc.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdgpu_dcn21_hubp.c,v 1.2 2021/12/18 23:45:03 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdgpu_dcn21_hubp.c,v 1.3 2021/12/19 11:35:07 riastradh Exp $");
 
 #include "dcn10/dcn10_hubp.h"
 #include "dcn21_hubp.h"
@@ -330,7 +330,7 @@ void hubp21_set_vm_system_aperture_settings(struct hubp *hubp,
 {
 	struct dcn21_hubp *hubp21 = TO_DCN21_HUBP(hubp);
 
-	PHYSICAL_ADDRESS_LOC mc_vm_apt_default;
+	PHYSICAL_ADDRESS_LOC mc_vm_apt_default __unused;
 	PHYSICAL_ADDRESS_LOC mc_vm_apt_low;
 	PHYSICAL_ADDRESS_LOC mc_vm_apt_high;
 

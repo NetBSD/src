@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu.h,v 1.5 2021/12/18 23:44:58 riastradh Exp $	*/
+/*	$NetBSD: amdgpu.h,v 1.6 2021/12/19 11:35:06 riastradh Exp $	*/
 
 /*
  * Copyright 2008 Advanced Micro Devices, Inc.
@@ -1264,6 +1264,9 @@ void amdgpu_unregister_gpu_instance(struct amdgpu_device *adev);
 
 #include "amdgpu_object.h"
 
+#ifdef __NetBSD__	       /* XXX amdgpu sysfs */
+#define	AMDGPU_PMU_ATTR(_name, _object) CTASSERT(1)
+#else
 /* used by df_v3_6.c and amdgpu_pmu.c */
 #define AMDGPU_PMU_ATTR(_name, _object)					\
 static ssize_t								\
@@ -1276,6 +1279,7 @@ _name##_show(struct device *dev,					\
 }									\
 									\
 static struct device_attribute pmu_attr_##_name = __ATTR_RO(_name)
+#endif
 
 #endif
 

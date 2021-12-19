@@ -1,4 +1,4 @@
-/*	$NetBSD: os_types.h,v 1.2 2021/12/18 23:45:00 riastradh Exp $	*/
+/*	$NetBSD: os_types.h,v 1.3 2021/12/19 11:35:07 riastradh Exp $	*/
 
 /*
  * Copyright 2012-16 Advanced Micro Devices, Inc.
@@ -54,9 +54,15 @@
 
 #if defined(CONFIG_DRM_AMD_DC_DCN)
 #if defined(CONFIG_X86)
+#ifdef __NetBSD__
+#include <x86/fpu.h>
+#define	DC_FP_START()	fpu_kern_enter()
+#define	DC_FP_END()	fpu_kern_leave()
+#else
 #include <asm/fpu/api.h>
 #define DC_FP_START() kernel_fpu_begin()
 #define DC_FP_END() kernel_fpu_end()
+#endif
 #elif defined(CONFIG_PPC64)
 #include <asm/switch_to.h>
 #include <asm/cputable.h>

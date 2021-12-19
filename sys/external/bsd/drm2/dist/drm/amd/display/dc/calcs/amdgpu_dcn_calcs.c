@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu_dcn_calcs.c,v 1.2 2021/12/18 23:45:01 riastradh Exp $	*/
+/*	$NetBSD: amdgpu_dcn_calcs.c,v 1.3 2021/12/19 11:35:07 riastradh Exp $	*/
 
 /*
  * Copyright 2017 Advanced Micro Devices, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdgpu_dcn_calcs.c,v 1.2 2021/12/18 23:45:01 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdgpu_dcn_calcs.c,v 1.3 2021/12/19 11:35:07 riastradh Exp $");
 
 #include "dm_services.h"
 #include "dc.h"
@@ -446,7 +446,7 @@ static void dcn_bw_calc_rq_dlg_ttu(
 		struct pipe_ctx *pipe,
 		int in_idx)
 {
-	struct display_mode_lib *dml = (struct display_mode_lib *)(&dc->dml);
+	struct display_mode_lib *dml = (struct display_mode_lib *)__UNCONST(&dc->dml);
 	struct _vcs_dpi_display_dlg_regs_st *dlg_regs = &pipe->dlg_regs;
 	struct _vcs_dpi_display_ttu_regs_st *ttu_regs = &pipe->ttu_regs;
 	struct _vcs_dpi_display_rq_regs_st *rq_regs = &pipe->rq_regs;
