@@ -1,4 +1,4 @@
-/*	$NetBSD: spinlock.h,v 1.8 2018/08/27 06:17:30 riastradh Exp $	*/
+/*	$NetBSD: spinlock.h,v 1.9 2021/12/19 00:54:46 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -36,11 +36,10 @@
 #include <sys/mutex.h>
 
 #include <machine/limits.h>
-#include <linux/irqflags.h>
-#include <linux/preempt.h>
 
-#define	__acquires(lock)	/* XXX lockdep stuff */
-#define	__releases(lock)	/* XXX lockdep stuff */
+#include <linux/irqflags.h>
+#include <linux/lockdep.h>
+#include <linux/preempt.h>
 
 typedef struct spinlock {
 	kmutex_t sl_lock;
