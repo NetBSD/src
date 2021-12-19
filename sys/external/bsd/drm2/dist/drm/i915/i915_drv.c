@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_drv.c,v 1.22 2021/12/19 01:53:39 riastradh Exp $	*/
+/*	$NetBSD: i915_drv.c,v 1.23 2021/12/19 10:25:00 riastradh Exp $	*/
 
 /* i915_drv.c -- i830,i845,i855,i865,i915 driver -*- linux-c -*-
  */
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_drv.c,v 1.22 2021/12/19 01:53:39 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_drv.c,v 1.23 2021/12/19 10:25:00 riastradh Exp $");
 
 #include <linux/acpi.h>
 #include <linux/device.h>
@@ -173,17 +173,19 @@ static int
 intel_alloc_mchbar_resource(struct drm_i915_private *dev_priv)
 {
 	int reg = INTEL_GEN(dev_priv) >= 4 ? MCHBAR_I965 : MCHBAR_I915;
+#ifdef CONFIG_PNP
 	u32 temp_lo, temp_hi = 0;
 	u64 mchbar_addr;
+#endif
 	int ret;
 
+#ifdef CONFIG_PNP
 	if (INTEL_GEN(dev_priv) >= 4)
 		pci_read_config_dword(dev_priv->bridge_dev, reg + 4, &temp_hi);
 	pci_read_config_dword(dev_priv->bridge_dev, reg, &temp_lo);
 	mchbar_addr = ((u64)temp_hi << 32) | temp_lo;
 
 	/* If ACPI doesn't have it, assume we need to allocate it ourselves */
-#ifdef CONFIG_PNP
 	if (mchbar_addr &&
 	    pnp_range_reserved(mchbar_addr, mchbar_addr + MCHBAR_SIZE))
 		return 0;
