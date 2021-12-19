@@ -1,4 +1,4 @@
-#	$NetBSD: files.amdgpu,v 1.18 2021/12/19 11:35:06 riastradh Exp $
+#	$NetBSD: files.amdgpu,v 1.19 2021/12/19 12:00:00 riastradh Exp $
 
 version	20180827
 
@@ -54,6 +54,13 @@ makeoptions	amdgpu	"COPTS.amdgpu_dcn21_resource.c"+="-mhard-float -msse -msse2"
 makeoptions	amdgpu	"COPTS.amdgpu_dcn_calc_auto.c"+="-mhard-float -msse -msse2"
 makeoptions	amdgpu	"COPTS.amdgpu_dcn_calc_math.c"+="-mhard-float -msse -msse2"
 makeoptions	amdgpu	"COPTS.amdgpu_dcn_calcs.c"+="-mhard-float -msse -msse2"
+makeoptions	amdgpu	"COPTS.amdgpu_display_mode_vba.c"+="-mhard-float -msse -msse2"
+makeoptions	amdgpu	"COPTS.amdgpu_display_mode_vba_20.c"+="-mhard-float -msse -msse2"
+makeoptions	amdgpu	"COPTS.amdgpu_display_mode_vba_20v2.c"+="-mhard-float -msse -msse2"
+makeoptions	amdgpu	"COPTS.amdgpu_display_mode_vba_21.c"+="-mhard-float -msse -msse2"
+makeoptions	amdgpu	"COPTS.amdgpu_display_rq_dlg_calc_20.c"+="-mhard-float -msse -msse2"
+makeoptions	amdgpu	"COPTS.amdgpu_display_rq_dlg_calc_20v2.c"+="-mhard-float -msse -msse2"
+makeoptions	amdgpu	"COPTS.amdgpu_display_rq_dlg_calc_21.c"+="-mhard-float -msse -msse2"
 endif
 
 # Local additions.
