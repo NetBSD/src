@@ -1,4 +1,4 @@
-#	$NetBSD: files.drmkms,v 1.38 2021/12/19 00:26:09 riastradh Exp $
+#	$NetBSD: files.drmkms,v 1.39 2021/12/19 00:26:16 riastradh Exp $
 
 include "external/bsd/drm2/linux/files.drmkms_linux"
 
@@ -122,7 +122,7 @@ file	external/bsd/drm2/dist/drm/drm_scdc_helper.c	drmkms
 file	external/bsd/drm2/dist/drm/drm_self_refresh_helper.c	drmkms
 file	external/bsd/drm2/dist/drm/drm_syncobj.c	drmkms
 file	external/bsd/drm2/dist/drm/drm_sysfs.c	drmkms
-file	external/bsd/drm2/dist/drm/drm_trace_points.c	drmkms
+#file	external/bsd/drm2/dist/drm/drm_trace_points.c	drmkms
 file	external/bsd/drm2/dist/drm/drm_vblank.c	drmkms
 file	external/bsd/drm2/dist/drm/drm_vma_manager.c	drmkms
 file	external/bsd/drm2/dist/drm/drm_vm.c	drmkms
