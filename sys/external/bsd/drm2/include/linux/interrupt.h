@@ -1,4 +1,4 @@
-/*	$NetBSD: interrupt.h,v 1.8 2021/12/19 10:37:25 riastradh Exp $	*/
+/*	$NetBSD: interrupt.h,v 1.9 2021/12/19 11:33:49 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -43,6 +43,8 @@
 
 #define	disable_irq		linux_disable_irq
 #define	enable_irq		linux_enable_irq
+
+typedef irqreturn_t (*irq_handler_t)(void *);
 
 void	disable_irq(int);
 void	enable_irq(int);

@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_gem_userptr.c,v 1.3 2021/12/19 10:28:41 riastradh Exp $	*/
+/*	$NetBSD: i915_gem_userptr.c,v 1.4 2021/12/19 11:33:49 riastradh Exp $	*/
 
 /*
  * SPDX-License-Identifier: MIT
@@ -7,7 +7,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_gem_userptr.c,v 1.3 2021/12/19 10:28:41 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_gem_userptr.c,v 1.4 2021/12/19 11:33:49 riastradh Exp $");
 
 #include <linux/mmu_context.h>
 #include <linux/mmu_notifier.h>
@@ -22,8 +22,14 @@ __KERNEL_RCSID(0, "$NetBSD: i915_gem_userptr.c,v 1.3 2021/12/19 10:28:41 riastra
 #include "i915_gem_object.h"
 #include "i915_scatterlist.h"
 
+#include <linux/nbsd-namespace.h>
+
 struct i915_mm_struct {
+#ifdef __NetBSD__
+	struct vmspace *mm;
+#else
 	struct mm_struct *mm;
+#endif
 	struct drm_i915_private *i915;
 	struct i915_mmu_notifier *mn;
 	struct hlist_node node;
@@ -264,8 +270,13 @@ i915_gem_userptr_init__mmu_notifier(struct drm_i915_gem_object *obj,
 }
 
 static void
+#ifdef __NetBSD__
+i915_mmu_notifier_free(struct i915_mmu_notifier *mn,
+		       struct vmspace *mm)
+#else
 i915_mmu_notifier_free(struct i915_mmu_notifier *mn,
 		       struct mm_struct *mm)
+#endif
 {
 	if (mn == NULL)
 		return;
@@ -300,15 +311,24 @@ i915_gem_userptr_init__mmu_notifier(struct drm_i915_gem_object *obj,
 }
 
 static void
+#ifdef __NetBSD__
+i915_mmu_notifier_free(struct i915_mmu_notifier *mn,
+		       struct vmspace *mm)
+#else
 i915_mmu_notifier_free(struct i915_mmu_notifier *mn,
 		       struct mm_struct *mm)
+#endif
 {
 }
 
 #endif
 
 static struct i915_mm_struct *
+#ifdef __NetBSD__
+__i915_mm_struct_find(struct drm_i915_private *dev_priv, struct vmspace *real)
+#else
 __i915_mm_struct_find(struct drm_i915_private *dev_priv, struct mm_struct *real)
+#endif
 {
 	struct i915_mm_struct *mm;
 
@@ -338,7 +358,11 @@ i915_gem_userptr_init__mm_struct(struct drm_i915_gem_object *obj)
 	 * up.
 	 */
 	mutex_lock(&dev_priv->mm_lock);
+#ifdef __NetBSD__
+	mm = __i915_mm_struct_find(dev_priv, curproc->p_vmspace);
+#else
 	mm = __i915_mm_struct_find(dev_priv, current->mm);
+#endif
 	if (mm == NULL) {
 		mm = kmalloc(sizeof(*mm), GFP_KERNEL);
 		if (mm == NULL) {
@@ -349,8 +373,12 @@ i915_gem_userptr_init__mm_struct(struct drm_i915_gem_object *obj)
 		kref_init(&mm->kref);
 		mm->i915 = to_i915(obj->base.dev);
 
+#ifdef __NetBSD__
+		mm->mm = curproc->p_vmspace;
+#else
 		mm->mm = current->mm;
-		mmgrab(current->mm);
+#endif
+		mmgrab(mm->mm);
 
 		mm->mn = NULL;
 
@@ -464,7 +492,11 @@ __i915_gem_userptr_get_pages_worker(struct work_struct *_work)
 
 	pvec = kvmalloc_array(npages, sizeof(struct page *), GFP_KERNEL);
 	if (pvec != NULL) {
+#ifdef __NetBSD__
+		struct vmspace *mm = obj->userptr.mm->mm;
+#else
 		struct mm_struct *mm = obj->userptr.mm->mm;
+#endif
 		unsigned int flags = 0;
 		int locked = 0;
 
@@ -566,7 +598,11 @@ __i915_gem_userptr_get_pages_schedule(struct drm_i915_gem_object *obj)
 static int i915_gem_userptr_get_pages(struct drm_i915_gem_object *obj)
 {
 	const unsigned long num_pages = obj->base.size >> PAGE_SHIFT;
+#ifdef __NetBSD__
+	struct vmspace *mm = obj->userptr.mm->mm;
+#else
 	struct mm_struct *mm = obj->userptr.mm->mm;
+#endif
 	struct page **pvec;
 	struct sg_table *pages;
 	bool active;
@@ -600,7 +636,12 @@ static int i915_gem_userptr_get_pages(struct drm_i915_gem_object *obj)
 	pvec = NULL;
 	pinned = 0;
 
-	if (mm == current->mm) {
+#ifdef __NetBSD__
+	if (mm == curproc->p_vmspace)
+#else
+	if (mm == current->mm)
+#endif
+	{
 		pvec = kvmalloc_array(num_pages, sizeof(struct page *),
 				      GFP_KERNEL |
 				      __GFP_NORETRY |

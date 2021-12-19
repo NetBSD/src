@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_irq.c,v 1.23 2021/12/19 11:32:44 riastradh Exp $	*/
+/*	$NetBSD: i915_irq.c,v 1.24 2021/12/19 11:33:49 riastradh Exp $	*/
 
 /* i915_irq.c -- IRQ support for the I915 -*- linux-c -*-
  */
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_irq.c,v 1.23 2021/12/19 11:32:44 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_irq.c,v 1.24 2021/12/19 11:33:49 riastradh Exp $");
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
@@ -2388,7 +2388,7 @@ gen8_de_irq_handler(struct drm_i915_private *dev_priv, u32 master_ctl)
 	return ret;
 }
 
-static inline u32 gen8_master_intr_disable(void __iomem * const regs)
+static inline u32 gen8_master_intr_disable(struct intel_uncore *regs)
 {
 	raw_reg_write(regs, GEN8_MASTER_IRQ, 0);
 
@@ -2401,7 +2401,7 @@ static inline u32 gen8_master_intr_disable(void __iomem * const regs)
 	return raw_reg_read(regs, GEN8_MASTER_IRQ);
 }
 
-static inline void gen8_master_intr_enable(void __iomem * const regs)
+static inline void gen8_master_intr_enable(struct intel_uncore *regs)
 {
 	raw_reg_write(regs, GEN8_MASTER_IRQ, GEN8_MASTER_IRQ_CONTROL);
 }
@@ -2460,7 +2460,7 @@ gen11_gu_misc_irq_handler(struct intel_gt *gt, const u32 iir)
 		intel_opregion_asle_intr(gt->i915);
 }
 
-static inline u32 gen11_master_intr_disable(void __iomem * const regs)
+static inline u32 gen11_master_intr_disable(struct intel_uncore *regs)
 {
 	raw_reg_write(regs, GEN11_GFX_MSTR_IRQ, 0);
 
@@ -2473,7 +2473,7 @@ static inline u32 gen11_master_intr_disable(void __iomem * const regs)
 	return raw_reg_read(regs, GEN11_GFX_MSTR_IRQ);
 }
 
-static inline void gen11_master_intr_enable(void __iomem * const regs)
+static inline void gen11_master_intr_enable(struct intel_uncore *regs)
 {
 	raw_reg_write(regs, GEN11_GFX_MSTR_IRQ, GEN11_MASTER_IRQ);
 }
@@ -2498,8 +2498,8 @@ gen11_display_irq_handler(struct drm_i915_private *i915)
 
 static __always_inline irqreturn_t
 __gen11_irq_handler(struct drm_i915_private * const i915,
-		    u32 (*intr_disable)(void __iomem * const regs),
-		    void (*intr_enable)(void __iomem * const regs))
+		    u32 (*intr_disable)(struct intel_uncore *regs),
+		    void (*intr_enable)(struct intel_uncore *regs))
 {
 	struct intel_gt *gt = &i915->gt;
 	u32 master_ctl;
@@ -2530,7 +2530,7 @@ __gen11_irq_handler(struct drm_i915_private * const i915,
 	return IRQ_HANDLED;
 }
 
-static irqreturn_t gen11_irq_handler(int irq, void *arg)
+static irqreturn_t gen11_irq_handler(DRM_IRQ_ARGS)
 {
 	return __gen11_irq_handler(arg,
 				   gen11_master_intr_disable,
@@ -2801,7 +2801,7 @@ static void gen8_irq_reset(struct drm_i915_private *dev_priv)
 	struct intel_uncore *uncore = &dev_priv->uncore;
 	enum pipe pipe;
 
-	gen8_master_intr_disable(dev_priv->uncore.regs);
+	gen8_master_intr_disable(&dev_priv->uncore);
 
 	gen8_gt_irq_reset(&dev_priv->gt);
 
@@ -2863,7 +2863,7 @@ static void gen11_irq_reset(struct drm_i915_private *dev_priv)
 {
 	struct intel_uncore *uncore = &dev_priv->uncore;
 
-	gen11_master_intr_disable(dev_priv->uncore.regs);
+	gen11_master_intr_disable(&dev_priv->uncore);
 
 	gen11_gt_irq_reset(&dev_priv->gt);
 	gen11_display_irq_reset(dev_priv);
@@ -3069,7 +3069,7 @@ static void gen11_hpd_detection_setup(struct drm_i915_private *dev_priv)
 
 static void gen11_hpd_irq_setup(struct drm_i915_private *dev_priv)
 {
-	u32 hotplug_irqs, enabled_irqs;
+	u32 hotplug_irqs, enabled_irqs __unused;
 	const u32 *hpd;
 	u32 val;
 
@@ -3434,7 +3434,7 @@ static void gen8_irq_postinstall(struct drm_i915_private *dev_priv)
 	if (HAS_PCH_SPLIT(dev_priv))
 		ibx_irq_postinstall(dev_priv);
 
-	gen8_master_intr_enable(dev_priv->uncore.regs);
+	gen8_master_intr_enable(&dev_priv->uncore);
 }
 
 static void icp_irq_postinstall(struct drm_i915_private *dev_priv)
@@ -3476,7 +3476,7 @@ static void gen11_irq_postinstall(struct drm_i915_private *dev_priv)
 
 	I915_WRITE(GEN11_DISPLAY_INT_CTL, GEN11_DISPLAY_IRQ_ENABLE);
 
-	gen11_master_intr_enable(uncore->regs);
+	gen11_master_intr_enable(uncore);
 	POSTING_READ(GEN11_GFX_MSTR_IRQ);
 }
 
@@ -4066,7 +4066,9 @@ static void intel_irq_postinstall(struct drm_i915_private *dev_priv)
  */
 int intel_irq_install(struct drm_i915_private *dev_priv)
 {
+#ifndef __NetBSD__
 	int irq = dev_priv->drm.pdev->irq;
+#endif
 	int ret;
 
 	/*
@@ -4080,8 +4082,61 @@ int intel_irq_install(struct drm_i915_private *dev_priv)
 
 	intel_irq_reset(dev_priv);
 
+#ifdef __NetBSD__
+    {
+	struct pci_dev *const pdev = dev_priv->drm.pdev;
+	const char *const name = device_xname(pci_dev_dev(pdev));
+	const struct pci_attach_args *pa = &pdev->pd_pa;
+	const char *intrstr;
+	char intrbuf[PCI_INTRSTR_LEN];
+
+	if (pdev->msi_enabled) {
+		if (pdev->pd_intr_handles == NULL) {
+			/* XXX errno NetBSD->Linux */
+			if ((ret = -pci_msi_alloc_exact(pa, &dev_priv->pci_ihp,
+			    1))) {
+				aprint_error_dev(pci_dev_dev(pdev),
+				    "couldn't allocate MSI (%s)\n", name);
+				goto out;
+			}
+		} else {
+			dev_priv->pci_ihp = pdev->pd_intr_handles;
+			pdev->pd_intr_handles = NULL;
+		}
+	} else {
+		/* XXX errno NetBSD->Linux */
+		if ((ret = -pci_intx_alloc(pa, &dev_priv->pci_ihp))) {
+			aprint_error_dev(pci_dev_dev(pdev),
+			    "couldn't allocate INTx interrupt (%s)\n",
+			    name);
+			goto out;
+		}
+	}
+
+	intrstr = pci_intr_string(pa->pa_pc, dev_priv->pci_ihp[0],
+	    intrbuf, sizeof(intrbuf));
+	dev_priv->pci_intrcookie = pci_intr_establish_xname(pa->pa_pc,
+	    dev_priv->pci_ihp[0], IPL_DRM, intel_irq_handler(dev_priv),
+	    dev_priv, name);
+	if (dev_priv->pci_intrcookie == NULL) {
+		aprint_error_dev(pci_dev_dev(pdev),
+		    "couldn't establish interrupt at %s (%s)\n", intrstr, name);
+		pci_intr_release(pa->pa_pc, dev_priv->pci_ihp, 1);
+		dev_priv->pci_ihp = NULL;
+		ret = -EIO;	/* XXX er? */
+		goto out;
+	}
+
+	/* Success!  */
+	aprint_normal_dev(pci_dev_dev(pdev), "interrupting at %s (%s)\n",
+	    intrstr, name);
+	ret = 0;
+out:;
+    }
+#else
 	ret = request_irq(irq, intel_irq_handler(dev_priv),
 			  IRQF_SHARED, DRIVER_NAME, dev_priv);
+#endif
 	if (ret < 0) {
 		dev_priv->drm.irq_enabled = false;
 		return ret;
@@ -4101,7 +4156,9 @@ int intel_irq_install(struct drm_i915_private *dev_priv)
  */
 void intel_irq_uninstall(struct drm_i915_private *dev_priv)
 {
+#ifndef __NetBSD__
 	int irq = dev_priv->drm.pdev->irq;
+#endif
 
 	/*
 	 * FIXME we can get called twice during driver probe
@@ -4116,7 +4173,19 @@ void intel_irq_uninstall(struct drm_i915_private *dev_priv)
 
 	intel_irq_reset(dev_priv);
 
+#ifdef __NetBSD__
+	const struct pci_attach_args *pa = &dev_priv->drm.pdev->pd_pa;
+	if (dev_priv->pci_intrcookie != NULL) {
+		pci_intr_disestablish(pa->pa_pc, dev_priv->pci_intrcookie);
+		dev_priv->pci_intrcookie = NULL;
+	}
+	if (dev_priv->pci_ihp != NULL) {
+		pci_intr_release(pa->pa_pc, dev_priv->pci_ihp, 1);
+		dev_priv->pci_ihp = NULL;
+	}
+#else
 	free_irq(irq, dev_priv);
+#endif
 
 	intel_hpd_cancel_work(dev_priv);
 	dev_priv->runtime_pm.irqs_enabled = false;
@@ -4161,5 +4230,9 @@ bool intel_irqs_enabled(struct drm_i915_private *dev_priv)
 
 void intel_synchronize_irq(struct drm_i915_private *i915)
 {
+#ifdef __NetBSD__
+	xc_barrier(0);
+#else
 	synchronize_irq(i915->drm.pdev->irq);
+#endif
 }

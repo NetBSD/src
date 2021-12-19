@@ -1,4 +1,4 @@
-/*	$NetBSD: mm.h,v 1.20 2021/12/19 10:51:31 riastradh Exp $	*/
+/*	$NetBSD: mm.h,v 1.21 2021/12/19 11:33:49 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -87,8 +87,16 @@ vm_mmap(struct file *file __unused, unsigned long base __unused,
 }
 
 static inline unsigned long
+totalram_pages(void)
+{
+
+	return uvmexp.npages;
+}
+
+static inline unsigned long
 get_num_physpages(void)
 {
+
 	return uvmexp.npages;
 }
 

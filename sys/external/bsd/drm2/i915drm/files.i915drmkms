@@ -1,4 +1,4 @@
-#	$NetBSD: files.i915drmkms,v 1.69 2021/12/19 11:32:17 riastradh Exp $
+#	$NetBSD: files.i915drmkms,v 1.70 2021/12/19 11:33:49 riastradh Exp $
 
 version	20180827
 
@@ -29,6 +29,8 @@ makeoptions	i915drmkms	"CPPFLAGS.i915drmkms"+="-DCONFIG_DRM_I915_ALPHA_SUPPORT=0
 makeoptions	i915drmkms	"CPPFLAGS.i915drmkms"+="-DCONFIG_DRM_I915_FBDEV=1"
 makeoptions	i915drmkms	"CPPFLAGS.i915drmkms"+="-DCONFIG_DRM_I915_GVT=0"
 makeoptions	i915drmkms	"CPPFLAGS.i915drmkms"+="-DCONFIG_DRM_I915_PRELIMINARY_HW_SUPPORT=0"
+makeoptions	i915drmkms	"CPPFLAGS.i915drmkms"+="-DCONFIG_DRM_I915_DEBUG_MMIO=1" # XXX
+makeoptions	i915drmkms	"CPPFLAGS.i915drmkms"+="-DCONFIG_DRM_I915_FORCE_PROBE=0"
 
 makeoptions	i915drmkms	"CWARNFLAGS.i915drmkms"+="-Wno-missing-field-initializers"
 makeoptions	i915drmkms	"CWARNFLAGS.i915drmkms"+="-Wno-pointer-arith"
@@ -132,7 +134,7 @@ file	external/bsd/drm2/dist/drm/i915/gem/i915_gem_shrinker.c	i915drmkms
 file	external/bsd/drm2/dist/drm/i915/gem/i915_gem_stolen.c	i915drmkms
 file	external/bsd/drm2/dist/drm/i915/gem/i915_gem_throttle.c	i915drmkms
 file	external/bsd/drm2/dist/drm/i915/gem/i915_gem_tiling.c	i915drmkms
-file	external/bsd/drm2/dist/drm/i915/gem/i915_gem_userptr.c	i915drmkms
+#file	external/bsd/drm2/dist/drm/i915/gem/i915_gem_userptr.c	i915drmkms
 file	external/bsd/drm2/dist/drm/i915/gem/i915_gem_wait.c	i915drmkms
 #file	external/bsd/drm2/dist/drm/i915/gem/i915_gemfs.c	i915drmkms
 #file	external/bsd/drm2/dist/drm/i915/gt/debugfs_engines.c	i915drmkms

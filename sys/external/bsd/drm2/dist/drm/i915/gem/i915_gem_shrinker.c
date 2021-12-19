@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_gem_shrinker.c,v 1.2 2021/12/18 23:45:30 riastradh Exp $	*/
+/*	$NetBSD: i915_gem_shrinker.c,v 1.3 2021/12/19 11:33:49 riastradh Exp $	*/
 
 /*
  * SPDX-License-Identifier: MIT
@@ -7,7 +7,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_gem_shrinker.c,v 1.2 2021/12/18 23:45:30 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_gem_shrinker.c,v 1.3 2021/12/19 11:33:49 riastradh Exp $");
 
 #include <linux/oom.h>
 #include <linux/sched/mm.h>
@@ -427,6 +427,7 @@ void i915_gem_driver_unregister__shrinker(struct drm_i915_private *i915)
 void i915_gem_shrinker_taints_mutex(struct drm_i915_private *i915,
 				    struct mutex *mutex)
 {
+#if IS_ENABLED(CONFIG_LOCKDEP)
 	bool unlock = false;
 
 	if (!IS_ENABLED(CONFIG_LOCKDEP))
@@ -447,6 +448,7 @@ void i915_gem_shrinker_taints_mutex(struct drm_i915_private *i915,
 
 	if (unlock)
 		mutex_release(&i915->drm.struct_mutex.dep_map, _RET_IP_);
+#endif
 }
 
 #define obj_to_i915(obj__) to_i915((obj__)->base.dev)
