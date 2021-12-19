@@ -1,4 +1,4 @@
-/*	$NetBSD: bitops.h,v 1.10 2021/12/19 01:04:12 riastradh Exp $	*/
+/*	$NetBSD: bitops.h,v 1.11 2021/12/19 01:33:59 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -96,6 +96,12 @@ hweight64(uint64_t n)
 	return popcount64(n);
 }
 
+static inline int64_t
+sign_extend64(uint64_t x, unsigned n)
+{
+	return (int64_t)(x << (63 - n)) >> (63 - n);
+}
+
 /*
  * XXX Don't define BITS_PER_LONG as sizeof(unsigned long)*CHAR_BIT
  * because that won't work in preprocessor conditionals, where it often
@@ -110,7 +116,8 @@ hweight64(uint64_t n)
 
 #define	BIT(n)		((unsigned long)__BIT(n))
 #define	BIT_ULL(n)	((unsigned long long)__BIT(n))
-#define	GENMASK(h,l)	__BITS(h,l)
+#define	GENMASK(h,l)	((unsigned long)__BITS(h,l))
+#define	GENMASK_ULL(h,l)((unsigned long long)__BITS(h,l))
 
 static inline int
 test_bit(unsigned int n, const volatile unsigned long *p)
@@ -274,5 +281,10 @@ find_first_zero_bit(const unsigned long *ptr, unsigned long nbits)
 	for ((BIT) = find_first_bit((PTR), (NBITS));			      \
 	     (BIT) < (NBITS);						      \
 	     (BIT) = find_next_bit((PTR), (NBITS), (BIT) + 1))
+
+#define	for_each_clear_bit(BIT, PTR, NBITS)				      \
+	for ((BIT) = find_first_zero_bit((PTR), (NBITS));		      \
+	     (BIT) < (NBITS);						      \
+	     (BIT) = find_next_zero_bit((PTR), (NBITS), (BIT) + 1))
 
 #endif  /* _LINUX_BITOPS_H_ */
