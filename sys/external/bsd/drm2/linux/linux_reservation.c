@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_reservation.c,v 1.14 2021/08/02 23:14:15 riastradh Exp $	*/
+/*	$NetBSD: linux_reservation.c,v 1.15 2021/12/19 00:31:43 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,13 +30,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_reservation.c,v 1.14 2021/08/02 23:14:15 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_reservation.c,v 1.15 2021/12/19 00:31:43 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/poll.h>
 #include <sys/select.h>
 
-#include <linux/fence.h>
+#include <linux/dma-fence.h>
 #include <linux/reservation.h>
 #include <linux/ww_mutex.h>
 
@@ -111,11 +111,11 @@ reservation_object_fini(struct reservation_object *robj)
 		objlist_free(robj->robj_prealloc);
 	if (robj->robj_list) {
 		for (i = 0; i < robj->robj_list->shared_count; i++)
-			fence_put(robj->robj_list->shared[i]);
+			dma_fence_put(robj->robj_list->shared[i]);
 		objlist_free(robj->robj_list);
 	}
 	if (robj->robj_fence)
-		fence_put(robj->robj_fence);
+		dma_fence_put(robj->robj_fence);
 	ww_mutex_destroy(&robj->lock);
 }
 
@@ -139,7 +139,7 @@ reservation_object_held(struct reservation_object *robj)
  *
  *	Caller must have robj locked.
  */
-struct fence *
+struct dma_fence *
 reservation_object_get_excl(struct reservation_object *robj)
 {
 
@@ -324,9 +324,9 @@ reservation_object_read_valid(struct reservation_object *robj,
  */
 void
 reservation_object_add_excl_fence(struct reservation_object *robj,
-    struct fence *fence)
+    struct dma_fence *fence)
 {
-	struct fence *old_fence = robj->robj_fence;
+	struct dma_fence *old_fence = robj->robj_fence;
 	struct reservation_object_list *old_list = robj->robj_list;
 	uint32_t old_shared_count;
 	struct reservation_object_write_ticket ticket;
@@ -338,7 +338,7 @@ reservation_object_add_excl_fence(struct reservation_object *robj,
 	 * a reference for ourselves.
 	 */
 	if (fence)
-		(void)fence_get(fence);
+		(void)dma_fence_get(fence);
 
 	/* If there are any shared fences, remember how many.  */
 	if (old_list)
@@ -357,12 +357,12 @@ reservation_object_add_excl_fence(struct reservation_object *robj,
 
 	/* Release the old exclusive fence, if any.  */
 	if (old_fence)
-		fence_put(old_fence);
+		dma_fence_put(old_fence);
 
 	/* Release any old shared fences.  */
 	if (old_list) {
 		while (old_shared_count--)
-			fence_put(old_list->shared[old_shared_count]);
+			dma_fence_put(old_list->shared[old_shared_count]);
 	}
 }
 
@@ -379,19 +379,19 @@ reservation_object_add_excl_fence(struct reservation_object *robj,
  */
 void
 reservation_object_add_shared_fence(struct reservation_object *robj,
-    struct fence *fence)
+    struct dma_fence *fence)
 {
 	struct reservation_object_list *list = robj->robj_list;
 	struct reservation_object_list *prealloc = robj->robj_prealloc;
 	struct reservation_object_write_ticket ticket;
-	struct fence *replace = NULL;
+	struct dma_fence *replace = NULL;
 	uint32_t i;
 
 	KASSERT(reservation_object_held(robj));
 
 	/* Acquire a reference to the fence.  */
 	KASSERT(fence != NULL);
-	(void)fence_get(fence);
+	(void)dma_fence_get(fence);
 
 	/* Check for a preallocated replacement list.  */
 	if (prealloc == NULL) {
@@ -471,16 +471,16 @@ reservation_object_add_shared_fence(struct reservation_object *robj,
 
 	/* Release a fence if we replaced it.  */
 	if (replace)
-		fence_put(replace);
+		dma_fence_put(replace);
 }
 
 int
 reservation_object_get_fences_rcu(struct reservation_object *robj,
-    struct fence **fencep, unsigned *nsharedp, struct fence ***sharedp)
+    struct dma_fence **fencep, unsigned *nsharedp, struct dma_fence ***sharedp)
 {
 	struct reservation_object_list *list;
-	struct fence *fence;
-	struct fence **shared = NULL;
+	struct dma_fence *fence;
+	struct dma_fence **shared = NULL;
 	unsigned shared_alloc, shared_count, i;
 	struct reservation_object_read_ticket ticket;
 
@@ -563,7 +563,7 @@ top:
 	 * one.  If we can't, start over.
 	 */
 	if (fence) {
-		if (fence_get_rcu(fence) == NULL)
+		if (dma_fence_get_rcu(fence) == NULL)
 			goto restart;
 	}
 
@@ -571,7 +571,7 @@ top:
 	 * Try to get a reference to all of the shared fences.
 	 */
 	for (i = 0; i < shared_count; i++) {
-		if (fence_get_rcu(shared[i]) == NULL)
+		if (dma_fence_get_rcu(shared[i]) == NULL)
 			goto put_restart;
 	}
 
@@ -585,11 +585,11 @@ top:
 put_restart:
 	/* Back out.  */
 	while (i --> 0) {
-		fence_put(shared[i]);
+		dma_fence_put(shared[i]);
 		shared[i] = NULL; /* paranoia */
 	}
 	if (fence) {
-		fence_put(fence);
+		dma_fence_put(fence);
 		fence = NULL;	/* paranoia */
 	}
 
@@ -615,7 +615,7 @@ reservation_object_test_signaled_rcu(struct reservation_object *robj,
 {
 	struct reservation_object_read_ticket ticket;
 	struct reservation_object_list *list;
-	struct fence *fence;
+	struct dma_fence *fence;
 	uint32_t i, shared_count;
 	bool signaled = true;
 
@@ -646,11 +646,11 @@ top:
 		 * signalled.
 		 */
 		for (i = 0; i < shared_count; i++) {
-			fence = fence_get_rcu(list->shared[i]);
+			fence = dma_fence_get_rcu(list->shared[i]);
 			if (fence == NULL)
 				goto restart;
-			signaled &= fence_is_signaled(fence);
-			fence_put(fence);
+			signaled &= dma_fence_is_signaled(fence);
+			dma_fence_put(fence);
 			if (!signaled)
 				goto out;
 		}
@@ -674,10 +674,10 @@ top:
 		 * If it is going away, restart.  Otherwise, acquire a
 		 * reference to it to test whether it is signalled.
 		 */
-		if ((fence = fence_get_rcu(fence)) == NULL)
+		if ((fence = dma_fence_get_rcu(fence)) == NULL)
 			goto restart;
-		signaled &= fence_is_signaled(fence);
-		fence_put(fence);
+		signaled &= dma_fence_is_signaled(fence);
+		dma_fence_put(fence);
 		if (!signaled)
 			goto out;
 	}
@@ -709,7 +709,7 @@ reservation_object_wait_timeout_rcu(struct reservation_object *robj,
 {
 	struct reservation_object_read_ticket ticket;
 	struct reservation_object_list *list;
-	struct fence *fence;
+	struct dma_fence *fence;
 	uint32_t i, shared_count;
 	long ret;
 
@@ -743,12 +743,12 @@ top:
 		 * is not signalled.
 		 */
 		for (i = 0; i < shared_count; i++) {
-			fence = fence_get_rcu(list->shared[i]);
+			fence = dma_fence_get_rcu(list->shared[i]);
 			if (fence == NULL)
 				goto restart;
-			if (!fence_is_signaled(fence))
+			if (!dma_fence_is_signaled(fence))
 				goto wait;
-			fence_put(fence);
+			dma_fence_put(fence);
 		}
 	}
 
@@ -771,11 +771,11 @@ top:
 		 * reference to it to test whether it is signalled.  If
 		 * not, wait for it.
 		 */
-		if ((fence = fence_get_rcu(fence)) == NULL)
+		if ((fence = dma_fence_get_rcu(fence)) == NULL)
 			goto restart;
-		if (!fence_is_signaled(fence))
+		if (!dma_fence_is_signaled(fence))
 			goto wait;
-		fence_put(fence);
+		dma_fence_put(fence);
 	}
 
 	/* Success!  Return the number of ticks left.  */
@@ -793,8 +793,8 @@ wait:
 	 */
 	KASSERT(fence != NULL);
 	rcu_read_unlock();
-	ret = fence_wait_timeout(fence, intr, timeout);
-	fence_put(fence);
+	ret = dma_fence_wait_timeout(fence, intr, timeout);
+	dma_fence_put(fence);
 	if (ret <= 0)
 		return ret;
 	KASSERT(ret <= timeout);
@@ -841,7 +841,7 @@ reservation_poll_fini(struct reservation_poll *rpoll)
  *	spuriously notify them about a shared fence, tough.
  */
 static void
-reservation_poll_cb(struct fence *fence, struct fence_cb *fcb)
+reservation_poll_cb(struct dma_fence *fence, struct dma_fence_cb *fcb)
 {
 	struct reservation_poll *rpoll = container_of(fcb,
 	    struct reservation_poll, rp_fcb);
@@ -871,7 +871,7 @@ reservation_object_poll(struct reservation_object *robj, int events,
 {
 	struct reservation_object_read_ticket ticket;
 	struct reservation_object_list *list;
-	struct fence *fence;
+	struct dma_fence *fence;
 	uint32_t i, shared_count;
 	int revents;
 	bool recorded = false;	/* curlwp is on the selq */
@@ -915,14 +915,14 @@ top:
 		 * find any that is not signalled.
 		 */
 		for (i = 0; i < shared_count; i++) {
-			fence = fence_get_rcu(list->shared[i]);
+			fence = dma_fence_get_rcu(list->shared[i]);
 			if (fence == NULL)
 				goto restart;
-			if (!fence_is_signaled(fence)) {
-				fence_put(fence);
+			if (!dma_fence_is_signaled(fence)) {
+				dma_fence_put(fence);
 				break;
 			}
-			fence_put(fence);
+			dma_fence_put(fence);
 		}
 
 		/* If all shared fences have been signalled, move on.  */
@@ -951,17 +951,17 @@ top:
 		 * callback later.
 		 */
 		for (i = 0; i < shared_count; i++) {
-			fence = fence_get_rcu(list->shared[i]);
+			fence = dma_fence_get_rcu(list->shared[i]);
 			if (fence == NULL)
 				goto restart;
-			if (!fence_add_callback(fence, &rpoll->rp_fcb,
+			if (!dma_fence_add_callback(fence, &rpoll->rp_fcb,
 				reservation_poll_cb)) {
-				fence_put(fence);
+				dma_fence_put(fence);
 				revents &= ~POLLOUT;
 				callback = true;
 				break;
 			}
-			fence_put(fence);
+			dma_fence_put(fence);
 		}
 	} while (0);
 
@@ -984,16 +984,16 @@ top:
 		 * reference to it to test whether it is signalled.  If
 		 * not, stop and request a callback.
 		 */
-		if ((fence = fence_get_rcu(fence)) == NULL)
+		if ((fence = dma_fence_get_rcu(fence)) == NULL)
 			goto restart;
-		if (fence_is_signaled(fence)) {
-			fence_put(fence);
+		if (dma_fence_is_signaled(fence)) {
+			dma_fence_put(fence);
 			break;
 		}
 
 		/* Put ourselves on the selq if we haven't already.  */
 		if (!recorded) {
-			fence_put(fence);
+			dma_fence_put(fence);
 			goto record;
 		}
 
@@ -1003,7 +1003,7 @@ top:
 		 * assume the event is not ready.
 		 */
 		if (!claimed || callback) {
-			fence_put(fence);
+			dma_fence_put(fence);
 			revents = 0;
 			break;
 		}
@@ -1014,14 +1014,14 @@ top:
 		 * signalled in the interim, leave the events set; we
 		 * will simulate the callback later.
 		 */
-		if (!fence_add_callback(fence, &rpoll->rp_fcb,
+		if (!dma_fence_add_callback(fence, &rpoll->rp_fcb,
 			reservation_poll_cb)) {
-			fence_put(fence);
+			dma_fence_put(fence);
 			revents = 0;
 			callback = true;
 			break;
 		}
-		fence_put(fence);
+		dma_fence_put(fence);
 	} while (0);
 
 	/* All done reading the fences.  */
