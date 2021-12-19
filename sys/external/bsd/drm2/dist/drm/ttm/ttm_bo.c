@@ -1,4 +1,4 @@
-/*	$NetBSD: ttm_bo.c,v 1.26 2021/12/19 11:07:20 riastradh Exp $	*/
+/*	$NetBSD: ttm_bo.c,v 1.27 2021/12/19 11:09:02 riastradh Exp $	*/
 
 /* SPDX-License-Identifier: GPL-2.0 OR MIT */
 /**************************************************************************
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ttm_bo.c,v 1.26 2021/12/19 11:07:20 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ttm_bo.c,v 1.27 2021/12/19 11:09:02 riastradh Exp $");
 
 #define pr_fmt(fmt) "[TTM] " fmt
 
@@ -1362,11 +1362,13 @@ int ttm_bo_init_reserved(struct ttm_bo_device *bdev,
 		dma_resv_init(&bo->base._resv);
 #ifdef __NetBSD__
 		drm_vma_node_init(&bo->base.vma_node);
-		uvm_obj_init(&bo->uvmobj, bdev->driver->ttm_uvm_ops, true, 1);
 #else
 		drm_vma_node_reset(&bo->base.vma_node);
 #endif
 	}
+#ifdef __NetBSD__
+	uvm_obj_init(&bo->uvmobj, bdev->driver->ttm_uvm_ops, true, 1);
+#endif
 	atomic_inc(&ttm_bo_glob.bo_count);
 
 	/*
