@@ -1,4 +1,4 @@
-/*	$NetBSD: pagemap.h,v 1.4 2021/12/19 10:58:11 riastradh Exp $	*/
+/*	$NetBSD: pagemap.h,v 1.5 2021/12/19 11:15:26 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -34,6 +34,7 @@
 
 #include <sys/types.h>
 
+#include <linux/highmem.h>
 #include <linux/uaccess.h>
 
 static inline int
