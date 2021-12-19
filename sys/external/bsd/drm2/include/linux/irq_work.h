@@ -1,4 +1,4 @@
-/*	$NetBSD: irq_work.h,v 1.2 2021/12/19 11:04:36 riastradh Exp $	*/
+/*	$NetBSD: irq_work.h,v 1.3 2021/12/19 11:05:27 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -30,6 +30,8 @@
 #define _LINUX_IRQ_WORK_H
 
 #include <sys/stdbool.h>
+
+#include <asm/cpufeature.h>
 
 /* namespace */
 #define	init_irq_work	linux_init_irq_work
