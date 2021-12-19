@@ -1,4 +1,4 @@
-/*	$NetBSD: string.h,v 1.9 2021/12/19 10:48:00 riastradh Exp $	*/
+/*	$NetBSD: string.h,v 1.10 2021/12/19 11:14:56 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -113,6 +113,14 @@ strscpy(char *dst, const char *src, size_t dstsize)
 
 	/* Return the number of bytes copied, excluding NUL.  */
 	return dstsize - n;
+}
+
+static inline void
+memset32(uint32_t *p, uint32_t v, size_t n)
+{
+
+	while (n --> 0)
+		*p++ = v;
 }
 
 static inline void
