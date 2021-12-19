@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_framebuffer.c,v 1.2 2021/12/18 23:44:57 riastradh Exp $	*/
+/*	$NetBSD: drm_framebuffer.c,v 1.3 2021/12/19 01:00:02 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2016 Intel Corporation
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_framebuffer.c,v 1.2 2021/12/18 23:44:57 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_framebuffer.c,v 1.3 2021/12/19 01:00:02 riastradh Exp $");
 
 #include <linux/export.h>
 #include <linux/uaccess.h>
@@ -736,7 +736,11 @@ int drm_framebuffer_init(struct drm_device *dev, struct drm_framebuffer *fb,
 	INIT_LIST_HEAD(&fb->filp_head);
 
 	fb->funcs = funcs;
+#ifdef __NetBSD__
+	strlcpy(fb->comm, curproc->p_comm, sizeof fb->comm);
+#else
 	strcpy(fb->comm, current->comm);
+#endif
 
 	ret = __drm_mode_object_add(dev, &fb->base, DRM_MODE_OBJECT_FB,
 				    false, drm_framebuffer_free);
