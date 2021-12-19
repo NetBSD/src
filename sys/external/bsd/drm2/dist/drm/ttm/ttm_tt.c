@@ -1,4 +1,4 @@
-/*	$NetBSD: ttm_tt.c,v 1.15 2021/12/19 09:58:15 riastradh Exp $	*/
+/*	$NetBSD: ttm_tt.c,v 1.16 2021/12/19 11:05:48 riastradh Exp $	*/
 
 /* SPDX-License-Identifier: GPL-2.0 OR MIT */
 /**************************************************************************
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ttm_tt.c,v 1.15 2021/12/19 09:58:15 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ttm_tt.c,v 1.16 2021/12/19 11:05:48 riastradh Exp $");
 
 #define pr_fmt(fmt) "[TTM] " fmt
 
@@ -249,7 +249,7 @@ static void ttm_tt_init_fields(struct ttm_tt *ttm,
 	WARN(bo->num_pages == 0,
 	    "zero-size allocation in %s, please file a NetBSD PR",
 	    __func__);	/* paranoia -- can't prove in five minutes */
-	ttm->swap_storage = uao_create(MAX(1, bo->num_pages), 0);
+	ttm->swap_storage = uao_create(PAGE_SIZE * MAX(1, bo->num_pages), 0);
 	uao_set_pgfl(ttm->swap_storage, bus_dmamem_pgfl(ttm->bdev->dmat));
 	TAILQ_INIT(&ttm->pglist);
 #else
