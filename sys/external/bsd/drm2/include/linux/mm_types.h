@@ -1,4 +1,4 @@
-/*	$NetBSD: mm_types.h,v 1.7 2021/12/19 11:31:47 riastradh Exp $	*/
+/*	$NetBSD: mm_types.h,v 1.8 2021/12/19 11:32:25 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -33,6 +33,7 @@
 #define _LINUX_MM_TYPES_H_
 
 #include <sys/types.h>		/* for uvm_page.h */
+
 #include <uvm/uvm_page.h>	/* XXX don't expose this */
 
 #include <linux/completion.h>
