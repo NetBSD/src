@@ -1,4 +1,4 @@
-/*	$NetBSD: kernel.h,v 1.26 2020/10/19 11:49:56 jmcneill Exp $	*/
+/*	$NetBSD: kernel.h,v 1.27 2021/12/19 00:31:35 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -60,8 +60,9 @@
 #define	__LITTLE_ENDIAN		_LITTLE_ENDIAN
 #endif
 
-#define	IS_ENABLED(option)	(option)
 #define	IS_BUILTIN(option)	(1) /* Probably... */
+#define	IS_ENABLED(option)	(option)
+#define	IS_REACHABLE(option)	(option)
 
 #define	__printf	__printflike
 #define	__user
