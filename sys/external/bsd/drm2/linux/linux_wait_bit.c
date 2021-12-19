@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_wait_bit.c,v 1.2 2021/12/19 01:41:54 riastradh Exp $	*/
+/*	$NetBSD: linux_wait_bit.c,v 1.3 2021/12/19 01:42:02 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_wait_bit.c,v 1.2 2021/12/19 01:41:54 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_wait_bit.c,v 1.3 2021/12/19 01:42:02 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -112,6 +112,38 @@ wake_up_bit(const volatile unsigned long *bitmap, unsigned bit)
 	wbe = wait_bit_enter(bitmap, bit);
 	cv_broadcast(&wbe->cv);
 	wait_bit_exit(wbe);
+}
+
+int
+wait_on_bit(const volatile unsigned long *bitmap, unsigned bit, int flags)
+{
+	struct waitbitentry *wbe;
+	int error, ret;
+
+	if (test_bit(bit, bitmap))
+		return 0;
+
+	wbe = wait_bit_enter(bitmap, bit);
+
+	while (!test_bit(bit, bitmap)) {
+		if (flags & TASK_UNINTERRUPTIBLE) {
+			cv_wait(&wbe->cv, &wbe->lock);
+		} else {
+			error = cv_wait_sig(&wbe->cv, &wbe->lock);
+			if (error == EINTR || error == ERESTART)
+				ret = -ERESTARTSYS;
+			else if (error != 0)
+				ret = -error;
+			if (ret)
+				goto out;
+		}
+	}
+
+	/* Bit is set.  Return zero on success.   */
+	ret = 0;
+
+out:	wait_bit_exit(wbe);
+	return ret;
 }
 
 int
