@@ -1,4 +1,4 @@
-/*	$NetBSD: intel-gtt.h,v 1.9 2021/12/19 11:39:56 riastradh Exp $	*/
+/*	$NetBSD: intel-gtt.h,v 1.10 2021/12/19 12:37:36 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@ struct sg_table;
 
 void	intel_gtt_get(uint64_t * /* GPU VA size in bytes */,
 	    bus_addr_t * /* aperture base */,
-	    uint64_t * /* aperture size in bytes */);
+	    resource_size_t * /* aperture size in bytes */);
 int	intel_gmch_probe(struct pci_dev *, struct pci_dev *,
 	    struct agp_bridge_data *);
 void	intel_gmch_remove(void);
