@@ -1,4 +1,4 @@
-/*	$NetBSD: scatterlist.h,v 1.7 2021/12/19 12:10:42 riastradh Exp $	*/
+/*	$NetBSD: scatterlist.h,v 1.8 2021/12/19 12:13:23 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -33,6 +33,8 @@
 #define	_LINUX_SCATTERLIST_H_
 
 #include <sys/bus.h>
+
+#include <asm/io.h>
 
 #include <linux/mm.h>
 #include <linux/mm_types.h>
