@@ -1,4 +1,4 @@
-/*	$NetBSD: gen6_ppgtt.h,v 1.3 2021/12/19 01:35:35 riastradh Exp $	*/
+/*	$NetBSD: gen6_ppgtt.h,v 1.4 2021/12/19 01:50:47 riastradh Exp $	*/
 
 /* SPDX-License-Identifier: MIT */
 /*
@@ -59,23 +59,13 @@ static inline struct gen6_ppgtt *to_gen6_ppgtt(struct i915_ppgtt *base)
  * so each of the other parameters should preferably be a simple variable, or
  * at most an lvalue with no side-effects!
  */
-#ifdef __NetBSD__		/* XXX ALIGN means something else.  */
-#define gen6_for_each_pde(pt, pd, start, length, iter)			\
-	for (iter = gen6_pde_index(start);				\
-	     length > 0 && iter < I915_PDES &&				\
-		(pt = (pd)->page_table[iter], true);			\
-	     ({ u32 temp = round_up(start+1, 1 << GEN6_PDE_SHIFT);	\
-		    temp = min(temp - start, length);			\
-		    start += temp, length -= temp; }), ++iter)
-#else
 #define gen6_for_each_pde(pt, pd, start, length, iter)			\
 	for (iter = gen6_pde_index(start);				\
 	     length > 0 && iter < I915_PDES &&				\
 		     (pt = i915_pt_entry(pd, iter), true);		\
-	     ({ u32 temp = ALIGN(start+1, 1 << GEN6_PDE_SHIFT);		\
+	     ({ u32 temp = round_up(start+1, 1 << GEN6_PDE_SHIFT);	\
 		    temp = min(temp - start, length);			\
 		    start += temp, length -= temp; }), ++iter)
-#endif
 
 #define gen6_for_all_pdes(pt, pd, iter)					\
 	for (iter = 0;							\
