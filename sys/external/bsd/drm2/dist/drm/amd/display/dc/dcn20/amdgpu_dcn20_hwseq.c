@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu_dcn20_hwseq.c,v 1.3 2021/12/19 11:26:14 riastradh Exp $	*/
+/*	$NetBSD: amdgpu_dcn20_hwseq.c,v 1.4 2021/12/19 11:59:31 riastradh Exp $	*/
 
 /*
  * Copyright 2016 Advanced Micro Devices, Inc.
@@ -25,7 +25,7 @@
  *
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdgpu_dcn20_hwseq.c,v 1.3 2021/12/19 11:26:14 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdgpu_dcn20_hwseq.c,v 1.4 2021/12/19 11:59:31 riastradh Exp $");
 
 #include <linux/delay.h>
 
@@ -2035,7 +2035,6 @@ static void dcn20_reset_back_end_for_pipe(
 
 		/* free acquired resources */
 		if (pipe_ctx->stream_res.audio) {
-#ifndef __NetBSD__		/* XXX amdgpu audio */
 			/*disable az_endpoint*/
 			pipe_ctx->stream_res.audio->funcs->az_disable(pipe_ctx->stream_res.audio);
 
@@ -2047,7 +2046,6 @@ static void dcn20_reset_back_end_for_pipe(
 						pipe_ctx->stream_res.audio, false);
 				pipe_ctx->stream_res.audio = NULL;
 			}
-#endif
 		}
 	}
 	else if (pipe_ctx->stream_res.dsc) {
