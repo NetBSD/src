@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_drv.c,v 1.20 2021/12/19 11:01:29 riastradh Exp $	*/
+/*	$NetBSD: drm_drv.c,v 1.21 2021/12/19 11:10:09 riastradh Exp $	*/
 
 /*
  * Created: Fri Jan 19 10:48:35 2001 by faith@acm.org
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_drv.c,v 1.20 2021/12/19 11:01:29 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_drv.c,v 1.21 2021/12/19 11:10:09 riastradh Exp $");
 
 #include <linux/debugfs.h>
 #include <linux/fs.h>
@@ -79,7 +79,7 @@ static struct dentry *drm_debugfs_root;
 #endif
 
 #ifdef __NetBSD__
-struct srcu drm_unplug_srcu;
+struct srcu_struct drm_unplug_srcu;
 #else
 DEFINE_STATIC_SRCU(drm_unplug_srcu);
 #endif
