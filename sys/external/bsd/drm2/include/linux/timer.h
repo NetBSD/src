@@ -1,4 +1,4 @@
-/*	$NetBSD: timer.h,v 1.14 2021/12/19 11:55:47 riastradh Exp $	*/
+/*	$NetBSD: timer.h,v 1.15 2021/12/19 12:01:57 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -83,12 +83,18 @@ del_timer(struct timer_list *timer)
 	callout_stop(&timer->tl_callout);
 }
 
-static inline bool
+static inline int
 del_timer_sync(struct timer_list *timer)
 {
 
-	/* XXX return values? */
-	return callout_halt(&timer->tl_callout, NULL);
+	/*
+	 * Linux: `The function returns whether it has deactivated a
+	 * pending timer or not.'
+	 *
+	 * NetBSD: `[callout_halt] will return a non-zero value if the
+	 * callout was EXPIRED.', meaning it is no longer pending.
+	 */
+	return !callout_halt(&timer->tl_callout, NULL);
 }
 
 static inline bool
