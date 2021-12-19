@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.770.4.9 2021/10/23 11:17:43 martin Exp $
+$NetBSD: usbdevs,v 1.770.4.10 2021/12/19 16:34:39 martin Exp $
 
 /*-
  * Copyright (c) 1998-2004 The NetBSD Foundation, Inc.
@@ -1287,7 +1287,9 @@ product CMEDIA USBAUDIO		0x013c	USB Pnp Sound
 product CTX EX1300		0x9999	Ex1300 hub
 
 /* CyberPower Systems, Inc. products */
+product CYBERPOWER UPS0		0x0005	Uninterruptible Power Supply
 product CYBERPOWER UPS		0x0501	Uninterruptible Power Supply
+product CYBERPOWER UPS2		0x0601	Uninterruptible Power Supply
 
 /* CyberTAN Technology products */
 product CYBERTAN TG54USB	0x1666	TG54USB
