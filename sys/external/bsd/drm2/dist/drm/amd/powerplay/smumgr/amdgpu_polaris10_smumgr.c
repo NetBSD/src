@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu_polaris10_smumgr.c,v 1.2 2021/12/18 23:45:27 riastradh Exp $	*/
+/*	$NetBSD: amdgpu_polaris10_smumgr.c,v 1.3 2021/12/19 12:21:30 riastradh Exp $	*/
 
 /*
  * Copyright 2015 Advanced Micro Devices, Inc.
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdgpu_polaris10_smumgr.c,v 1.2 2021/12/18 23:45:27 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdgpu_polaris10_smumgr.c,v 1.3 2021/12/19 12:21:30 riastradh Exp $");
 
 #include <linux/pci.h>
 
@@ -159,7 +159,7 @@ static int polaris10_setup_graphics_level_structure(struct pp_hwmgr *hwmgr)
 	graphics_level_address = dpm_table_start + offsetof(SMU74_Discrete_DpmTable, MemoryLevel);
 
 	PP_ASSERT_WITH_CODE(0 == smu7_copy_bytes_to_smc(hwmgr, graphics_level_address,
-				(uint8_t *)(&avfs_memory_level_polaris10), sizeof(avfs_memory_level_polaris10), 0x40000),
+				(const uint8_t *)(&avfs_memory_level_polaris10), sizeof(avfs_memory_level_polaris10), 0x40000),
 				"[AVFS][Polaris10_SetupGfxLvlStruct] Copying of MCLK DPM table failed!",
 			return -1);
 
@@ -168,7 +168,7 @@ static int polaris10_setup_graphics_level_structure(struct pp_hwmgr *hwmgr)
 	graphics_level_address = dpm_table_start + offsetof(SMU74_Discrete_DpmTable, BootMVdd);
 
 	PP_ASSERT_WITH_CODE(0 == smu7_copy_bytes_to_smc(hwmgr, graphics_level_address,
-			(uint8_t *)(&u16_boot_mvdd), sizeof(u16_boot_mvdd), 0x40000),
+			(const uint8_t *)(&u16_boot_mvdd), sizeof(u16_boot_mvdd), 0x40000),
 			"[AVFS][Polaris10_SetupGfxLvlStruct] Copying of DPM table failed!",
 			return -1);
 
@@ -639,7 +639,7 @@ static int polaris10_populate_pm_fuses(struct pp_hwmgr *hwmgr)
 					"Sidd Failed!", return -EINVAL);
 
 		if (smu7_copy_bytes_to_smc(hwmgr, pm_fuse_table_offset,
-				(uint8_t *)&smu_data->power_tune_table,
+				(const uint8_t *)&smu_data->power_tune_table,
 				(sizeof(struct SMU74_Discrete_PmFuses) - 92), SMC_RAM_END))
 			PP_ASSERT_WITH_CODE(false,
 					"Attempt to download PmFuseTable Failed!",
@@ -1066,7 +1066,7 @@ static int polaris10_populate_all_graphic_levels(struct pp_hwmgr *hwmgr)
 		levels[1].pcieDpmLevel = mid_pcie_level_enabled;
 	}
 	/* level count will send to smc once at init smc table and never change */
-	result = smu7_copy_bytes_to_smc(hwmgr, array, (uint8_t *)levels,
+	result = smu7_copy_bytes_to_smc(hwmgr, array, (const uint8_t *)levels,
 			(uint32_t)array_size, SMC_RAM_END);
 
 	return result;
@@ -1170,7 +1170,7 @@ static int polaris10_populate_all_memory_levels(struct pp_hwmgr *hwmgr)
 			phm_get_dpm_level_enable_mask_value(&dpm_table->mclk_table);
 
 	/* level count will send to smc once at init smc table and never change */
-	result = smu7_copy_bytes_to_smc(hwmgr, array, (uint8_t *)levels,
+	result = smu7_copy_bytes_to_smc(hwmgr, array, (const uint8_t *)levels,
 			(uint32_t)array_size, SMC_RAM_END);
 
 	return result;
@@ -1388,7 +1388,7 @@ static int polaris10_program_memory_timing_parameters(struct pp_hwmgr *hwmgr)
 	result = smu7_copy_bytes_to_smc(
 			hwmgr,
 			smu_data->smu7_data.arb_table_start,
-			(uint8_t *)&arb_regs,
+			(const uint8_t *)&arb_regs,
 			sizeof(SMU74_Discrete_MCArbDramTimingTable),
 			SMC_RAM_END);
 	return result;
@@ -1454,7 +1454,7 @@ static int polaris10_populate_smc_uvd_level(struct pp_hwmgr *hwmgr,
 static int polaris10_populate_smc_boot_level(struct pp_hwmgr *hwmgr,
 		struct SMU74_Discrete_DpmTable *table)
 {
-	int result = 0;
+	int result __unused = 0;
 	struct smu7_hwmgr *data = (struct smu7_hwmgr *)(hwmgr->backend);
 
 	table->GraphicsBootLevel = 0;
@@ -1756,7 +1756,7 @@ static int polaris10_populate_avfs_parameters(struct pp_hwmgr *hwmgr)
 
 		smu7_copy_bytes_to_smc(hwmgr,
 					tmp,
-					(uint8_t *)&AVFS_meanNsigma,
+					(const uint8_t *)&AVFS_meanNsigma,
 					sizeof(AVFS_meanNsigma_t),
 					SMC_RAM_END);
 
@@ -1765,7 +1765,7 @@ static int polaris10_populate_avfs_parameters(struct pp_hwmgr *hwmgr)
 				&tmp, SMC_RAM_END);
 		smu7_copy_bytes_to_smc(hwmgr,
 					tmp,
-					(uint8_t *)&AVFS_SclkOffset,
+					(const uint8_t *)&AVFS_SclkOffset,
 					sizeof(AVFS_Sclk_Offset_t),
 					SMC_RAM_END);
 
@@ -2018,7 +2018,7 @@ static int polaris10_init_smc_table(struct pp_hwmgr *hwmgr)
 	result = smu7_copy_bytes_to_smc(hwmgr,
 			smu_data->smu7_data.dpm_table_start +
 			offsetof(SMU74_Discrete_DpmTable, SystemFlags),
-			(uint8_t *)&(table->SystemFlags),
+			(const uint8_t *)&(table->SystemFlags),
 			sizeof(SMU74_Discrete_DpmTable) - 3 * sizeof(SMU74_PIDController),
 			SMC_RAM_END);
 	PP_ASSERT_WITH_CODE(0 == result,
@@ -2155,7 +2155,7 @@ static int polaris10_thermal_setup_fan_table(struct pp_hwmgr *hwmgr)
 			CG_MULT_THERMAL_CTRL, TEMP_SEL);
 
 	res = smu7_copy_bytes_to_smc(hwmgr, smu_data->smu7_data.fan_table_start,
-			(uint8_t *)&fan_table, (uint32_t)sizeof(fan_table),
+			(const uint8_t *)&fan_table, (uint32_t)sizeof(fan_table),
 			SMC_RAM_END);
 
 	if (!res && hwmgr->thermal_controller.
@@ -2298,7 +2298,7 @@ static int polaris10_update_sclk_threshold(struct pp_hwmgr *hwmgr)
 				smu_data->smu7_data.dpm_table_start +
 				offsetof(SMU74_Discrete_DpmTable,
 					LowSclkInterruptThreshold),
-				(uint8_t *)&low_sclk_interrupt_threshold,
+				(const uint8_t *)&low_sclk_interrupt_threshold,
 				sizeof(uint32_t),
 				SMC_RAM_END);
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu_smu_v11_0.c,v 1.2 2021/12/18 23:45:26 riastradh Exp $	*/
+/*	$NetBSD: amdgpu_smu_v11_0.c,v 1.3 2021/12/19 12:21:29 riastradh Exp $	*/
 
 /*
  * Copyright 2019 Advanced Micro Devices, Inc.
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdgpu_smu_v11_0.c,v 1.2 2021/12/18 23:45:26 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdgpu_smu_v11_0.c,v 1.3 2021/12/19 12:21:29 riastradh Exp $");
 
 #include <linux/firmware.h>
 #include <linux/module.h>
@@ -52,6 +52,8 @@ __KERNEL_RCSID(0, "$NetBSD: amdgpu_smu_v11_0.c,v 1.2 2021/12/18 23:45:26 riastra
 #include "asic_reg/nbio/nbio_7_4_sh_mask.h"
 #include "asic_reg/smuio/smuio_11_0_0_offset.h"
 #include "asic_reg/smuio/smuio_11_0_0_sh_mask.h"
+
+#include <linux/nbsd-namespace.h>
 
 MODULE_FIRMWARE("amdgpu/vega20_smc.bin");
 MODULE_FIRMWARE("amdgpu/arcturus_smc.bin");
@@ -295,7 +297,7 @@ int smu_v11_0_check_fw_version(struct smu_context *smu)
 	return ret;
 }
 
-static int smu_v11_0_set_pptable_v2_0(struct smu_context *smu, void **table, uint32_t *size)
+static int smu_v11_0_set_pptable_v2_0(struct smu_context *smu, const void **table, uint32_t *size)
 {
 	struct amdgpu_device *adev = smu->adev;
 	uint32_t ppt_offset_bytes;
@@ -305,27 +307,27 @@ static int smu_v11_0_set_pptable_v2_0(struct smu_context *smu, void **table, uin
 
 	ppt_offset_bytes = le32_to_cpu(v2->ppt_offset_bytes);
 	*size = le32_to_cpu(v2->ppt_size_bytes);
-	*table = (uint8_t *)v2 + ppt_offset_bytes;
+	*table = (const uint8_t *)v2 + ppt_offset_bytes;
 
 	return 0;
 }
 
-static int smu_v11_0_set_pptable_v2_1(struct smu_context *smu, void **table,
+static int smu_v11_0_set_pptable_v2_1(struct smu_context *smu, const void **table,
 				      uint32_t *size, uint32_t pptable_id)
 {
 	struct amdgpu_device *adev = smu->adev;
 	const struct smc_firmware_header_v2_1 *v2_1;
-	struct smc_soft_pptable_entry *entries;
+	const struct smc_soft_pptable_entry *entries;
 	uint32_t pptable_count = 0;
 	int i = 0;
 
 	v2_1 = (const struct smc_firmware_header_v2_1 *) adev->pm.fw->data;
-	entries = (struct smc_soft_pptable_entry *)
-		((uint8_t *)v2_1 + le32_to_cpu(v2_1->pptable_entry_offset));
+	entries = (const struct smc_soft_pptable_entry *)
+		((const uint8_t *)v2_1 + le32_to_cpu(v2_1->pptable_entry_offset));
 	pptable_count = le32_to_cpu(v2_1->pptable_count);
 	for (i = 0; i < pptable_count; i++) {
 		if (le32_to_cpu(entries[i].id) == pptable_id) {
-			*table = ((uint8_t *)v2_1 + le32_to_cpu(entries[i].ppt_offset_bytes));
+			*table = ((const uint8_t *)v2_1 + le32_to_cpu(entries[i].ppt_offset_bytes));
 			*size = le32_to_cpu(entries[i].ppt_size_bytes);
 			break;
 		}
@@ -345,7 +347,7 @@ int smu_v11_0_setup_pptable(struct smu_context *smu)
 	uint32_t size = 0;
 	uint16_t atom_table_size;
 	uint8_t frev, crev;
-	void *table;
+	const void *table;
 	uint16_t version_major, version_minor;
 
 	hdr = (const struct smc_firmware_header_v1_0 *) adev->pm.fw->data;
@@ -374,7 +376,7 @@ int smu_v11_0_setup_pptable(struct smu_context *smu)
 						    powerplayinfo);
 
 		ret = smu_get_atom_data_table(smu, index, &atom_table_size, &frev, &crev,
-					      (uint8_t **)&table);
+					      (void *)&table);
 		if (ret)
 			return ret;
 		size = atom_table_size;
@@ -1060,7 +1062,7 @@ int smu_v11_0_init_max_sustainable_clocks(struct smu_context *smu)
 
 uint32_t smu_v11_0_get_max_power_limit(struct smu_context *smu) {
 	uint32_t od_limit, max_power_limit;
-	struct smu_11_0_powerplay_table *powerplay_table = NULL;
+	const struct smu_11_0_powerplay_table *powerplay_table = NULL;
 	struct smu_table_context *table_context = &smu->smu_table;
 	powerplay_table = table_context->power_play_table;
 
@@ -1160,7 +1162,7 @@ static int smu_v11_0_set_thermal_range(struct smu_context *smu,
 	int high = SMU_THERMAL_MAXIMUM_ALERT_TEMP;
 	uint32_t val;
 	struct smu_table_context *table_context = &smu->smu_table;
-	struct smu_11_0_powerplay_table *powerplay_table = table_context->power_play_table;
+	const struct smu_11_0_powerplay_table *powerplay_table = table_context->power_play_table;
 
 	low = max(SMU_THERMAL_MINIMUM_ALERT_TEMP,
 			range.min / SMU_TEMPERATURE_UNITS_PER_CENTIGRADES);

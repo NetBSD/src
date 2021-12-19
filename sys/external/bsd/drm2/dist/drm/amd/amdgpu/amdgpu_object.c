@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu_object.c,v 1.5 2021/12/18 23:44:58 riastradh Exp $	*/
+/*	$NetBSD: amdgpu_object.c,v 1.6 2021/12/19 12:21:29 riastradh Exp $	*/
 
 /*
  * Copyright 2009 Jerome Glisse.
@@ -32,8 +32,9 @@
  *    Dave Airlie
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdgpu_object.c,v 1.5 2021/12/18 23:44:58 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdgpu_object.c,v 1.6 2021/12/19 12:21:29 riastradh Exp $");
 
+#include <linux/io.h>
 #include <linux/list.h>
 #include <linux/slab.h>
 
@@ -476,7 +477,7 @@ static bool amdgpu_bo_validate_size(struct amdgpu_device *adev,
 	return true;
 
 fail:
-	DRM_DEBUG("BO size %lu > total memory in domain: %llu\n", size,
+	DRM_DEBUG("BO size %lu > total memory in domain: %"PRIu64"\n", size,
 		  man->size << PAGE_SHIFT);
 	return false;
 }

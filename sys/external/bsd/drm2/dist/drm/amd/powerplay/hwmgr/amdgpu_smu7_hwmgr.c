@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu_smu7_hwmgr.c,v 1.2 2021/12/18 23:45:26 riastradh Exp $	*/
+/*	$NetBSD: amdgpu_smu7_hwmgr.c,v 1.3 2021/12/19 12:21:30 riastradh Exp $	*/
 
 /*
  * Copyright 2015 Advanced Micro Devices, Inc.
@@ -23,7 +23,7 @@
  *
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdgpu_smu7_hwmgr.c,v 1.2 2021/12/18 23:45:26 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdgpu_smu7_hwmgr.c,v 1.3 2021/12/19 12:21:30 riastradh Exp $");
 
 #include "pp_debug.h"
 #include <linux/delay.h>
@@ -4470,7 +4470,7 @@ static int smu7_print_clock_levels(struct pp_hwmgr *hwmgr,
 		now = i;
 
 		for (i = 0; i < sclk_table->count; i++)
-			size += sprintf(buf + size, "%d: %uMhz %s\n",
+			size += snprintf(buf + size, SIZE_MAX/*XXX*/, "%d: %uMhz %s\n",
 					i, sclk_table->dpm_levels[i].value / 100,
 					(i == now) ? "*" : "");
 		break;
@@ -4486,7 +4486,7 @@ static int smu7_print_clock_levels(struct pp_hwmgr *hwmgr,
 		now = i;
 
 		for (i = 0; i < mclk_table->count; i++)
-			size += sprintf(buf + size, "%d: %uMhz %s\n",
+			size += snprintf(buf + size, SIZE_MAX/*XXX*/, "%d: %uMhz %s\n",
 					i, mclk_table->dpm_levels[i].value / 100,
 					(i == now) ? "*" : "");
 		break;
@@ -4500,7 +4500,7 @@ static int smu7_print_clock_levels(struct pp_hwmgr *hwmgr,
 		now = i;
 
 		for (i = 0; i < pcie_table->count; i++)
-			size += sprintf(buf + size, "%d: %s %s\n", i,
+			size += snprintf(buf + size, SIZE_MAX/*XXX*/, "%d: %s %s\n", i,
 					(pcie_table->dpm_levels[i].value == 0) ? "2.5GT/s, x8" :
 					(pcie_table->dpm_levels[i].value == 1) ? "5.0GT/s, x16" :
 					(pcie_table->dpm_levels[i].value == 2) ? "8.0GT/s, x16" : "",
@@ -4508,32 +4508,32 @@ static int smu7_print_clock_levels(struct pp_hwmgr *hwmgr,
 		break;
 	case OD_SCLK:
 		if (hwmgr->od_enabled) {
-			size = sprintf(buf, "%s:\n", "OD_SCLK");
+			size = snprintf(buf, SIZE_MAX/*XXX*/, "%s:\n", "OD_SCLK");
 			for (i = 0; i < odn_sclk_table->num_of_pl; i++)
-				size += sprintf(buf + size, "%d: %10uMHz %10umV\n",
+				size += snprintf(buf + size, SIZE_MAX/*XXX*/, "%d: %10uMHz %10umV\n",
 					i, odn_sclk_table->entries[i].clock/100,
 					odn_sclk_table->entries[i].vddc);
 		}
 		break;
 	case OD_MCLK:
 		if (hwmgr->od_enabled) {
-			size = sprintf(buf, "%s:\n", "OD_MCLK");
+			size = snprintf(buf, SIZE_MAX/*XXX*/, "%s:\n", "OD_MCLK");
 			for (i = 0; i < odn_mclk_table->num_of_pl; i++)
-				size += sprintf(buf + size, "%d: %10uMHz %10umV\n",
+				size += snprintf(buf + size, SIZE_MAX/*XXX*/, "%d: %10uMHz %10umV\n",
 					i, odn_mclk_table->entries[i].clock/100,
 					odn_mclk_table->entries[i].vddc);
 		}
 		break;
 	case OD_RANGE:
 		if (hwmgr->od_enabled) {
-			size = sprintf(buf, "%s:\n", "OD_RANGE");
-			size += sprintf(buf + size, "SCLK: %7uMHz %10uMHz\n",
+			size = snprintf(buf, SIZE_MAX/*XXX*/, "%s:\n", "OD_RANGE");
+			size += snprintf(buf + size, SIZE_MAX/*XXX*/, "SCLK: %7uMHz %10uMHz\n",
 				data->golden_dpm_table.sclk_table.dpm_levels[0].value/100,
 				hwmgr->platform_descriptor.overdriveLimit.engineClock/100);
-			size += sprintf(buf + size, "MCLK: %7uMHz %10uMHz\n",
+			size += snprintf(buf + size, SIZE_MAX/*XXX*/, "MCLK: %7uMHz %10uMHz\n",
 				data->golden_dpm_table.mclk_table.dpm_levels[0].value/100,
 				hwmgr->platform_descriptor.overdriveLimit.memoryClock/100);
-			size += sprintf(buf + size, "VDDC: %7umV %11umV\n",
+			size += snprintf(buf + size, SIZE_MAX/*XXX*/, "VDDC: %7umV %11umV\n",
 				data->odn_dpm_table.min_vddc,
 				data->odn_dpm_table.max_vddc);
 		}
@@ -4944,7 +4944,7 @@ static int smu7_get_power_profile_mode(struct pp_hwmgr *hwmgr, char *buf)
 	if (!buf)
 		return -EINVAL;
 
-	size += sprintf(buf + size, "%s %16s %16s %16s %16s %16s %16s %16s\n",
+	size += snprintf(buf + size, SIZE_MAX/*XXX*/, "%s %16s %16s %16s %16s %16s %16s %16s\n",
 			title[0], title[1], title[2], title[3],
 			title[4], title[5], title[6], title[7]);
 
@@ -4952,7 +4952,7 @@ static int smu7_get_power_profile_mode(struct pp_hwmgr *hwmgr, char *buf)
 
 	for (i = 0; i < len; i++) {
 		if (i == hwmgr->power_profile_mode) {
-			size += sprintf(buf + size, "%3d %14s %s: %8d %16d %16d %16d %16d %16d\n",
+			size += snprintf(buf + size, SIZE_MAX/*XXX*/, "%3d %14s %s: %8d %16d %16d %16d %16d %16d\n",
 			i, profile_name[i], "*",
 			data->current_profile_setting.sclk_up_hyst,
 			data->current_profile_setting.sclk_down_hyst,
@@ -4963,21 +4963,21 @@ static int smu7_get_power_profile_mode(struct pp_hwmgr *hwmgr, char *buf)
 			continue;
 		}
 		if (smu7_profiling[i].bupdate_sclk)
-			size += sprintf(buf + size, "%3d %16s: %8d %16d %16d ",
+			size += snprintf(buf + size, SIZE_MAX/*XXX*/, "%3d %16s: %8d %16d %16d ",
 			i, profile_name[i], smu7_profiling[i].sclk_up_hyst,
 			smu7_profiling[i].sclk_down_hyst,
 			smu7_profiling[i].sclk_activity);
 		else
-			size += sprintf(buf + size, "%3d %16s: %8s %16s %16s ",
+			size += snprintf(buf + size, SIZE_MAX/*XXX*/, "%3d %16s: %8s %16s %16s ",
 			i, profile_name[i], "-", "-", "-");
 
 		if (smu7_profiling[i].bupdate_mclk)
-			size += sprintf(buf + size, "%16d %16d %16d\n",
+			size += snprintf(buf + size, SIZE_MAX/*XXX*/, "%16d %16d %16d\n",
 			smu7_profiling[i].mclk_up_hyst,
 			smu7_profiling[i].mclk_down_hyst,
 			smu7_profiling[i].mclk_activity);
 		else
-			size += sprintf(buf + size, "%16s %16s %16s\n",
+			size += snprintf(buf + size, SIZE_MAX/*XXX*/, "%16s %16s %16s\n",
 			"-", "-", "-");
 	}
 

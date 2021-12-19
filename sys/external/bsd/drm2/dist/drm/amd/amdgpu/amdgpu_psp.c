@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu_psp.c,v 1.2 2021/12/18 23:44:58 riastradh Exp $	*/
+/*	$NetBSD: amdgpu_psp.c,v 1.3 2021/12/19 12:21:29 riastradh Exp $	*/
 
 /*
  * Copyright 2016 Advanced Micro Devices, Inc.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdgpu_psp.c,v 1.2 2021/12/18 23:44:58 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdgpu_psp.c,v 1.3 2021/12/19 12:21:29 riastradh Exp $");
 
 #include <linux/firmware.h>
 
@@ -312,7 +312,7 @@ static int psp_tmr_load(struct psp_context *psp)
 
 	psp_prep_tmr_cmd_buf(psp, cmd, psp->tmr_mc_addr,
 			     amdgpu_bo_size(psp->tmr_bo));
-	DRM_INFO("reserve 0x%lx from 0x%llx for PSP TMR\n",
+	DRM_INFO("reserve 0x%lx from 0x%"PRIx64" for PSP TMR\n",
 		 amdgpu_bo_size(psp->tmr_bo), psp->tmr_mc_addr);
 
 	ret = psp_cmd_submit_buf(psp, NULL, cmd,

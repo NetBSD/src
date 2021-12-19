@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu_smu8_hwmgr.c,v 1.2 2021/12/18 23:45:26 riastradh Exp $	*/
+/*	$NetBSD: amdgpu_smu8_hwmgr.c,v 1.3 2021/12/19 12:21:30 riastradh Exp $	*/
 
 /*
  * Copyright 2015 Advanced Micro Devices, Inc.
@@ -23,7 +23,7 @@
  *
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdgpu_smu8_hwmgr.c,v 1.2 2021/12/18 23:45:26 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdgpu_smu8_hwmgr.c,v 1.3 2021/12/19 12:21:30 riastradh Exp $");
 
 #include "pp_debug.h"
 #include <linux/types.h>
@@ -67,7 +67,7 @@ static const struct smu8_power_state *cast_const_smu8_power_state(
 	if (smu8_magic != hw_ps->magic)
 		return NULL;
 
-	return (struct smu8_power_state *)hw_ps;
+	return (const struct smu8_power_state *)hw_ps;
 }
 
 static uint32_t smu8_get_eclk_level(struct pp_hwmgr *hwmgr,
@@ -853,7 +853,7 @@ static int smu8_update_low_mem_pstate(struct pp_hwmgr *hwmgr, const void *input)
 	bool disable_switch;
 	bool enable_low_mem_state;
 	struct smu8_hwmgr *hw_data = hwmgr->backend;
-	const struct phm_set_power_state_input *states = (struct phm_set_power_state_input *)input;
+	const struct phm_set_power_state_input *states = (const struct phm_set_power_state_input *)input;
 	const struct smu8_power_state *pnew_state = cast_const_smu8_power_state(states->pnew_state);
 
 	if (hw_data->sys_info.nb_dpm_enable) {
@@ -1531,7 +1531,7 @@ static int smu8_print_clock_levels(struct pp_hwmgr *hwmgr,
 				CURR_SCLK_INDEX);
 
 		for (i = 0; i < sclk_table->count; i++)
-			size += sprintf(buf + size, "%d: %uMhz %s\n",
+			size += snprintf(buf + size, SIZE_MAX/*XXX*/, "%d: %uMhz %s\n",
 					i, sclk_table->entries[i].clk / 100,
 					(i == now) ? "*" : "");
 		break;
@@ -1543,7 +1543,7 @@ static int smu8_print_clock_levels(struct pp_hwmgr *hwmgr,
 				CURR_MCLK_INDEX);
 
 		for (i = SMU8_NUM_NBPMEMORYCLOCK; i > 0; i--)
-			size += sprintf(buf + size, "%d: %uMhz %s\n",
+			size += snprintf(buf + size, SIZE_MAX/*XXX*/, "%d: %uMhz %s\n",
 					SMU8_NUM_NBPMEMORYCLOCK-i, data->sys_info.nbp_memory_clock[i-1] / 100,
 					(SMU8_NUM_NBPMEMORYCLOCK-i == now) ? "*" : "");
 		break;

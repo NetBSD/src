@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu_si_dpm.c,v 1.2 2021/12/18 23:44:58 riastradh Exp $	*/
+/*	$NetBSD: amdgpu_si_dpm.c,v 1.3 2021/12/19 12:21:29 riastradh Exp $	*/
 
 /*
  * Copyright 2013 Advanced Micro Devices, Inc.
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdgpu_si_dpm.c,v 1.2 2021/12/18 23:44:58 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdgpu_si_dpm.c,v 1.3 2021/12/19 12:21:29 riastradh Exp $");
 
 #include <linux/module.h>
 #include <linux/pci.h>
@@ -7487,6 +7487,7 @@ static void si_dpm_fini(struct amdgpu_device *adev)
 static void si_dpm_debugfs_print_current_performance_level(void *handle,
 						    struct seq_file *m)
 {
+#ifndef __NetBSD__		/* XXX amdgpu debugfs */
 	struct amdgpu_device *adev = (struct amdgpu_device *)handle;
 	struct evergreen_power_info *eg_pi = evergreen_get_pi(adev);
 	struct amdgpu_ps *rps = &eg_pi->current_rps;
@@ -7504,6 +7505,7 @@ static void si_dpm_debugfs_print_current_performance_level(void *handle,
 		seq_printf(m, "power level %d    sclk: %u mclk: %u vddc: %u vddci: %u pcie gen: %u\n",
 			   current_index, pl->sclk, pl->mclk, pl->vddc, pl->vddci, pl->pcie_gen + 1);
 	}
+#endif
 }
 
 static int si_dpm_set_interrupt_state(struct amdgpu_device *adev,

@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu_ucode.c,v 1.7 2021/12/18 23:44:58 riastradh Exp $	*/
+/*	$NetBSD: amdgpu_ucode.c,v 1.8 2021/12/19 12:21:29 riastradh Exp $	*/
 
 /*
  * Copyright 2014 Advanced Micro Devices, Inc.
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdgpu_ucode.c,v 1.7 2021/12/18 23:44:58 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdgpu_ucode.c,v 1.8 2021/12/19 12:21:29 riastradh Exp $");
 
 #include <linux/firmware.h>
 #include <linux/slab.h>
@@ -86,9 +86,9 @@ void amdgpu_ucode_print_smc_hdr(const struct common_firmware_header *hdr)
 		DRM_DEBUG("ucode_start_addr: %u\n", le32_to_cpu(smc_hdr->ucode_start_addr));
 	} else if (version_major == 2) {
 		const struct smc_firmware_header_v1_0 *v1_hdr =
-			container_of(hdr, struct smc_firmware_header_v1_0, header);
+			const_container_of(hdr, struct smc_firmware_header_v1_0, header);
 		const struct smc_firmware_header_v2_0 *v2_hdr =
-			container_of(v1_hdr, struct smc_firmware_header_v2_0, v1_0);
+			const_container_of(v1_hdr, struct smc_firmware_header_v2_0, v1_0);
 
 		DRM_DEBUG("ppt_offset_bytes: %u\n", le32_to_cpu(v2_hdr->ppt_offset_bytes));
 		DRM_DEBUG("ppt_size_bytes: %u\n", le32_to_cpu(v2_hdr->ppt_size_bytes));
@@ -180,7 +180,7 @@ void amdgpu_ucode_print_rlc_hdr(const struct common_firmware_header *hdr)
 			  le32_to_cpu(rlc_hdr->reg_list_separate_array_offset_bytes));
 		if (version_minor == 1) {
 			const struct rlc_firmware_header_v2_1 *v2_1 =
-				container_of(rlc_hdr, struct rlc_firmware_header_v2_1, v2_0);
+				const_container_of(rlc_hdr, struct rlc_firmware_header_v2_1, v2_0);
 			DRM_DEBUG("reg_list_format_direct_reg_list_length: %u\n",
 				  le32_to_cpu(v2_1->reg_list_format_direct_reg_list_length));
 			DRM_DEBUG("save_restore_list_cntl_ucode_ver: %u\n",
@@ -252,7 +252,7 @@ void amdgpu_ucode_print_psp_hdr(const struct common_firmware_header *hdr)
 
 	if (version_major == 1) {
 		const struct psp_firmware_header_v1_0 *psp_hdr =
-			container_of(hdr, struct psp_firmware_header_v1_0, header);
+			const_container_of(hdr, struct psp_firmware_header_v1_0, header);
 
 		DRM_DEBUG("ucode_feature_version: %u\n",
 			  le32_to_cpu(psp_hdr->ucode_feature_version));
@@ -262,7 +262,7 @@ void amdgpu_ucode_print_psp_hdr(const struct common_firmware_header *hdr)
 			  le32_to_cpu(psp_hdr->sos_size_bytes));
 		if (version_minor == 1) {
 			const struct psp_firmware_header_v1_1 *psp_hdr_v1_1 =
-				container_of(psp_hdr, struct psp_firmware_header_v1_1, v1_0);
+				const_container_of(psp_hdr, struct psp_firmware_header_v1_1, v1_0);
 			DRM_DEBUG("toc_header_version: %u\n",
 				  le32_to_cpu(psp_hdr_v1_1->toc_header_version));
 			DRM_DEBUG("toc_offset_bytes: %u\n",
@@ -278,7 +278,7 @@ void amdgpu_ucode_print_psp_hdr(const struct common_firmware_header *hdr)
 		}
 		if (version_minor == 2) {
 			const struct psp_firmware_header_v1_2 *psp_hdr_v1_2 =
-				container_of(psp_hdr, struct psp_firmware_header_v1_2, v1_0);
+				const_container_of(psp_hdr, struct psp_firmware_header_v1_2, v1_0);
 			DRM_DEBUG("kdb_header_version: %u\n",
 				  le32_to_cpu(psp_hdr_v1_2->kdb_header_version));
 			DRM_DEBUG("kdb_offset_bytes: %u\n",
@@ -302,7 +302,7 @@ void amdgpu_ucode_print_gpu_info_hdr(const struct common_firmware_header *hdr)
 
 	if (version_major == 1) {
 		const struct gpu_info_firmware_header_v1_0 *gpu_info_hdr =
-			container_of(hdr, struct gpu_info_firmware_header_v1_0, header);
+			const_container_of(hdr, struct gpu_info_firmware_header_v1_0, header);
 
 		DRM_DEBUG("version_major: %u\n",
 			  le16_to_cpu(gpu_info_hdr->version_major));
@@ -384,6 +384,8 @@ amdgpu_ucode_get_load_type(struct amdgpu_device *adev, int load_type)
 	return AMDGPU_FW_LOAD_DIRECT;
 }
 
+#ifndef __NetBSD__		/* XXX amdgpu sysfs */
+
 #define FW_VERSION_ATTR(name, mode, field)				\
 static ssize_t show_##name(struct device *dev,				\
 			  struct device_attribute *attr,		\
@@ -437,14 +439,22 @@ static const struct attribute_group fw_attr_group = {
 	.attrs = fw_attrs
 };
 
+#endif	/* __NetBSD__ */
+
 int amdgpu_ucode_sysfs_init(struct amdgpu_device *adev)
 {
+#ifdef __NetBSD__
+	return 0;
+#else
 	return sysfs_create_group(&adev->dev->kobj, &fw_attr_group);
+#endif
 }
 
 void amdgpu_ucode_sysfs_fini(struct amdgpu_device *adev)
 {
+#ifndef __NetBSD__
 	sysfs_remove_group(&adev->dev->kobj, &fw_attr_group);
+#endif
 }
 
 static int amdgpu_ucode_init_single_fw(struct amdgpu_device *adev,

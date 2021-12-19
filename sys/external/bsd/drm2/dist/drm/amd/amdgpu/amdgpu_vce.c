@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu_vce.c,v 1.6 2021/12/18 23:44:58 riastradh Exp $	*/
+/*	$NetBSD: amdgpu_vce.c,v 1.7 2021/12/19 12:21:29 riastradh Exp $	*/
 
 /*
  * Copyright 2013 Advanced Micro Devices, Inc.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdgpu_vce.c,v 1.6 2021/12/18 23:44:58 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdgpu_vce.c,v 1.7 2021/12/19 12:21:29 riastradh Exp $");
 
 #include <linux/firmware.h>
 #include <linux/module.h>
@@ -39,6 +39,8 @@ __KERNEL_RCSID(0, "$NetBSD: amdgpu_vce.c,v 1.6 2021/12/18 23:44:58 riastradh Exp
 #include "amdgpu_pm.h"
 #include "amdgpu_vce.h"
 #include "cikd.h"
+
+#include <linux/nbsd-namespace.h>
 
 /* 1 second timeout */
 #define VCE_IDLE_TIMEOUT	msecs_to_jiffies(1000)
@@ -609,7 +611,7 @@ static int amdgpu_vce_validate_bo(struct amdgpu_cs_parser *p, uint32_t ib_idx,
 
 	r = amdgpu_cs_find_mapping(p, addr, &bo, &mapping);
 	if (r) {
-		DRM_ERROR("Can't find BO for addr 0x%010Lx %d %d %d %d\n",
+		DRM_ERROR("Can't find BO for addr 0x%010"PRIx64" %d %d %d %d\n",
 			  addr, lo, hi, size, index);
 		return r;
 	}

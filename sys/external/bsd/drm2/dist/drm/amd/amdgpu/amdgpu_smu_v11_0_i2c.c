@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu_smu_v11_0_i2c.c,v 1.2 2021/12/18 23:44:58 riastradh Exp $	*/
+/*	$NetBSD: amdgpu_smu_v11_0_i2c.c,v 1.3 2021/12/19 12:21:29 riastradh Exp $	*/
 
 /*
  * Copyright 2019 Advanced Micro Devices, Inc.
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdgpu_smu_v11_0_i2c.c,v 1.2 2021/12/18 23:44:58 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdgpu_smu_v11_0_i2c.c,v 1.3 2021/12/19 12:21:29 riastradh Exp $");
 
 #include "smuio/smuio_11_0_0_offset.h"
 #include "smuio/smuio_11_0_0_sh_mask.h"
@@ -682,7 +682,7 @@ int smu_v11_0_i2c_eeprom_control_init(struct i2c_adapter *control)
 
 	control->owner = THIS_MODULE;
 	control->class = I2C_CLASS_SPD;
-	control->dev.parent = &adev->pdev->dev;
+	control->dev.parent = pci_dev_dev(adev->pdev);
 	control->algo = &smu_v11_0_i2c_eeprom_i2c_algo;
 	snprintf(control->name, sizeof(control->name), "RAS EEPROM");
 	control->lock_ops = &smu_v11_0_i2c_i2c_lock_ops;

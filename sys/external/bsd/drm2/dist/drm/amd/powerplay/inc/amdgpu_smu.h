@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu_smu.h,v 1.2 2021/12/18 23:45:26 riastradh Exp $	*/
+/*	$NetBSD: amdgpu_smu.h,v 1.3 2021/12/19 12:21:30 riastradh Exp $	*/
 
 /*
  * Copyright 2019 Advanced Micro Devices, Inc.
@@ -250,7 +250,7 @@ enum smu_table_id
 
 struct smu_table_context
 {
-	void				*power_play_table;
+	const void			*power_play_table;
 	uint32_t			power_play_table_size;
 	void				*hardcode_pptable;
 	unsigned long			metrics_time;
@@ -678,7 +678,7 @@ bool is_support_sw_smu_xgmi(struct amdgpu_device *adev);
 int smu_reset(struct smu_context *smu);
 int smu_common_read_sensor(struct smu_context *smu, enum amd_pp_sensors sensor,
 			   void *data, uint32_t *size);
-int smu_sys_get_pp_table(struct smu_context *smu, void **table);
+int smu_sys_get_pp_table(struct smu_context *smu, const void **table);
 int smu_sys_set_pp_table(struct smu_context *smu,  void *buf, size_t size);
 int smu_get_power_num_states(struct smu_context *smu, struct pp_states_info *state_info);
 enum amd_pm_state_type smu_get_current_power_state(struct smu_context *smu);

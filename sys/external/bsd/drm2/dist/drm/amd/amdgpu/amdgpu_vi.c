@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu_vi.c,v 1.2 2021/12/18 23:44:58 riastradh Exp $	*/
+/*	$NetBSD: amdgpu_vi.c,v 1.3 2021/12/19 12:21:29 riastradh Exp $	*/
 
 /*
  * Copyright 2014 Advanced Micro Devices, Inc.
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdgpu_vi.c,v 1.2 2021/12/18 23:44:58 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdgpu_vi.c,v 1.3 2021/12/19 12:21:29 riastradh Exp $");
 
 #include <linux/pci.h>
 #include <linux/slab.h>
@@ -83,6 +83,8 @@ __KERNEL_RCSID(0, "$NetBSD: amdgpu_vi.c,v 1.2 2021/12/18 23:44:58 riastradh Exp 
 #include "dce_virtual.h"
 #include "mxgpu_vi.h"
 #include "amdgpu_dm.h"
+
+#include <linux/nbsd-namespace.h>
 
 /*
  * Indirect registers accessor

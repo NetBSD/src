@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu_vega10_processpptables.c,v 1.2 2021/12/18 23:45:26 riastradh Exp $	*/
+/*	$NetBSD: amdgpu_vega10_processpptables.c,v 1.3 2021/12/19 12:21:30 riastradh Exp $	*/
 
 /*
  * Copyright 2016 Advanced Micro Devices, Inc.
@@ -23,7 +23,7 @@
  *
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdgpu_vega10_processpptables.c,v 1.2 2021/12/18 23:45:26 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdgpu_vega10_processpptables.c,v 1.3 2021/12/19 12:21:30 riastradh Exp $");
 
 #include <linux/module.h>
 #include <linux/pci.h>
@@ -171,7 +171,7 @@ static int init_thermal_controller(
 			le16_to_cpu(powerplay_table->usFanTableOffset));
 
 	if (header->ucRevId == 10) {
-		fan_table_v1 = (ATOM_Vega10_Fan_Table *)header;
+		fan_table_v1 = (const ATOM_Vega10_Fan_Table *)header;
 
 		PP_ASSERT_WITH_CODE((fan_table_v1->ucRevId >= 8),
 				"Invalid Input Fan Table!", return -EINVAL);
@@ -215,7 +215,7 @@ static int init_thermal_controller(
 		hwmgr->thermal_controller.advanceFanControlParameters.usZeroRPMStartTemperature =
 				le16_to_cpu(fan_table_v1->usFanStartTemperature);
 	} else if (header->ucRevId == 0xb) {
-		fan_table_v2 = (ATOM_Vega10_Fan_Table_V2 *)header;
+		fan_table_v2 = (const ATOM_Vega10_Fan_Table_V2 *)header;
 
 		hwmgr->thermal_controller.fanInfo.ucTachometerPulsesPerRevolution =
 				fan_table_v2->ucFanParameters & ATOM_VEGA10_PP_FANPARAMETERS_TACHOMETER_PULSES_PER_REVOLUTION_MASK;
@@ -259,7 +259,7 @@ static int init_thermal_controller(
 		hwmgr->thermal_controller.advanceFanControlParameters.usZeroRPMStartTemperature =
 				le16_to_cpu(fan_table_v2->usFanStartTemperature);
 	} else if (header->ucRevId > 0xb) {
-		fan_table_v3 = (ATOM_Vega10_Fan_Table_V3 *)header;
+		fan_table_v3 = (const ATOM_Vega10_Fan_Table_V3 *)header;
 
 		hwmgr->thermal_controller.fanInfo.ucTachometerPulsesPerRevolution =
 				fan_table_v3->ucFanParameters & ATOM_VEGA10_PP_FANPARAMETERS_TACHOMETER_PULSES_PER_REVOLUTION_MASK;
@@ -318,11 +318,11 @@ static int init_over_drive_limits(
 			(((unsigned long) powerplay_table) +
 			le16_to_cpu(powerplay_table->usGfxclkDependencyTableOffset));
 	bool is_acg_enabled = false;
-	ATOM_Vega10_GFXCLK_Dependency_Record_V2 *patom_record_v2;
+	const ATOM_Vega10_GFXCLK_Dependency_Record_V2 *patom_record_v2;
 
 	if (gfxclk_dep_table->ucRevId == 1) {
 		patom_record_v2 =
-			(ATOM_Vega10_GFXCLK_Dependency_Record_V2 *)gfxclk_dep_table->entries;
+			(const ATOM_Vega10_GFXCLK_Dependency_Record_V2 *)gfxclk_dep_table->entries;
 		is_acg_enabled =
 			(bool)patom_record_v2[gfxclk_dep_table->ucNumEntries-1].ucACGEnable;
 	}
@@ -444,7 +444,7 @@ static int get_tdp_table(
 		return -ENOMEM;
 
 	if (table->ucRevId == 5) {
-		power_tune_table = (ATOM_Vega10_PowerTune_Table *)table;
+		power_tune_table = (const ATOM_Vega10_PowerTune_Table *)table;
 		tdp_table->usMaximumPowerDeliveryLimit = le16_to_cpu(power_tune_table->usSocketPowerLimit);
 		tdp_table->usTDC = le16_to_cpu(power_tune_table->usTdcLimit);
 		tdp_table->usEDCLimit = le16_to_cpu(power_tune_table->usEdcLimit);
@@ -478,7 +478,7 @@ static int get_tdp_table(
 		tdp_table->ucPlx_I2C_LineSDA = power_tune_table->ucPlx_I2C_LineSDA;
 		hwmgr->platform_descriptor.LoadLineSlope = le16_to_cpu(power_tune_table->usLoadLineResistance);
 	} else if (table->ucRevId == 6) {
-		power_tune_table_v2 = (ATOM_Vega10_PowerTune_Table_V2 *)table;
+		power_tune_table_v2 = (const ATOM_Vega10_PowerTune_Table_V2 *)table;
 		tdp_table->usMaximumPowerDeliveryLimit = le16_to_cpu(power_tune_table_v2->usSocketPowerLimit);
 		tdp_table->usTDC = le16_to_cpu(power_tune_table_v2->usTdcLimit);
 		tdp_table->usEDCLimit = le16_to_cpu(power_tune_table_v2->usEdcLimit);
@@ -524,7 +524,7 @@ static int get_tdp_table(
 		hwmgr->platform_descriptor.LoadLineSlope =
 					le16_to_cpu(power_tune_table_v2->usLoadLineResistance);
 	} else {
-		power_tune_table_v3 = (ATOM_Vega10_PowerTune_Table_V3 *)table;
+		power_tune_table_v3 = (const ATOM_Vega10_PowerTune_Table_V3 *)table;
 		tdp_table->usMaximumPowerDeliveryLimit   = le16_to_cpu(power_tune_table_v3->usSocketPowerLimit);
 		tdp_table->usTDC                         = le16_to_cpu(power_tune_table_v3->usTdcLimit);
 		tdp_table->usEDCLimit                    = le16_to_cpu(power_tune_table_v3->usEdcLimit);
@@ -652,7 +652,7 @@ static int get_gfxclk_voltage_dependency_table(
 	uint32_t table_size, i;
 	struct phm_ppt_v1_clock_voltage_dependency_table
 				*clk_table;
-	ATOM_Vega10_GFXCLK_Dependency_Record_V2 *patom_record_v2;
+	const ATOM_Vega10_GFXCLK_Dependency_Record_V2 *patom_record_v2;
 
 	PP_ASSERT_WITH_CODE((clk_dep_table->ucNumEntries != 0),
 			"Invalid PowerPlay Table!", return -1);
@@ -683,7 +683,7 @@ static int get_gfxclk_voltage_dependency_table(
 				le16_to_cpu(clk_dep_table->entries[i].usAVFSOffset);
 		}
 	} else if (clk_dep_table->ucRevId == 1) {
-		patom_record_v2 = (ATOM_Vega10_GFXCLK_Dependency_Record_V2 *)clk_dep_table->entries;
+		patom_record_v2 = (const ATOM_Vega10_GFXCLK_Dependency_Record_V2 *)clk_dep_table->entries;
 		for (i = 0; i < clk_table->count; i++) {
 			clk_table->entries[i].vddInd =
 					patom_record_v2->ucVddInd;
@@ -817,7 +817,7 @@ static int get_pcie_table(struct pp_hwmgr *hwmgr,
 	struct phm_ppt_v2_information *table_info =
 			(struct phm_ppt_v2_information *)(hwmgr->pptable);
 	const ATOM_Vega10_PCIE_Table *atom_pcie_table =
-			(ATOM_Vega10_PCIE_Table *)table;
+			(const ATOM_Vega10_PCIE_Table *)table;
 
 	PP_ASSERT_WITH_CODE(atom_pcie_table->ucNumEntries,
 			"Invalid PowerPlay Table!",
@@ -1364,8 +1364,8 @@ int vega10_get_powerplay_table_entry(struct pp_hwmgr *hwmgr,
 
 		state_entry = &(state_arrays->states[entry_index]);
 
-		result = call_back_func(hwmgr, (void *)state_entry, power_state,
-				(void *)pp_table,
+		result = call_back_func(hwmgr, __UNCONST(state_entry), power_state,
+				__UNCONST(pp_table),
 				make_classification_flags(hwmgr,
 					le16_to_cpu(state_entry->usClassification),
 					le16_to_cpu(state_entry->usClassification2)));

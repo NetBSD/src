@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu_ring.c,v 1.5 2021/12/18 23:44:58 riastradh Exp $	*/
+/*	$NetBSD: amdgpu_ring.c,v 1.6 2021/12/19 12:21:29 riastradh Exp $	*/
 
 /*
  * Copyright 2008 Advanced Micro Devices, Inc.
@@ -29,7 +29,7 @@
  *          Christian König
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdgpu_ring.c,v 1.5 2021/12/18 23:44:58 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdgpu_ring.c,v 1.6 2021/12/19 12:21:29 riastradh Exp $");
 
 #include <linux/seq_file.h>
 #include <linux/slab.h>
@@ -39,6 +39,8 @@ __KERNEL_RCSID(0, "$NetBSD: amdgpu_ring.c,v 1.5 2021/12/18 23:44:58 riastradh Ex
 #include <drm/amdgpu_drm.h>
 #include "amdgpu.h"
 #include "atom.h"
+
+#include <linux/nbsd-namespace.h>
 
 /*
  * Rings
@@ -324,7 +326,7 @@ int amdgpu_ring_init(struct amdgpu_device *adev, struct amdgpu_ring *ring,
 					    AMDGPU_GEM_DOMAIN_GTT,
 					    &ring->ring_obj,
 					    &ring->gpu_addr,
-					    (void **)&ring->ring);
+					    (void **)__UNVOLATILE(&ring->ring));
 		if (r) {
 			dev_err(adev->dev, "(%d) ring create failed\n", r);
 			return r;
@@ -370,7 +372,7 @@ void amdgpu_ring_fini(struct amdgpu_ring *ring)
 
 	amdgpu_bo_free_kernel(&ring->ring_obj,
 			      &ring->gpu_addr,
-			      (void **)&ring->ring);
+			      (void **)__UNVOLATILE(&ring->ring));
 
 	amdgpu_debugfs_ring_fini(ring);
 

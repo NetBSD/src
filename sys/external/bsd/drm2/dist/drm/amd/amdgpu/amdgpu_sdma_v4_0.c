@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu_sdma_v4_0.c,v 1.2 2021/12/18 23:44:58 riastradh Exp $	*/
+/*	$NetBSD: amdgpu_sdma_v4_0.c,v 1.3 2021/12/19 12:21:29 riastradh Exp $	*/
 
 /*
  * Copyright 2016 Advanced Micro Devices, Inc.
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdgpu_sdma_v4_0.c,v 1.2 2021/12/18 23:44:58 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdgpu_sdma_v4_0.c,v 1.3 2021/12/19 12:21:29 riastradh Exp $");
 
 #include <linux/delay.h>
 #include <linux/firmware.h>
@@ -62,6 +62,8 @@ __KERNEL_RCSID(0, "$NetBSD: amdgpu_sdma_v4_0.c,v 1.2 2021/12/18 23:44:58 riastra
 #include "ivsrcid/sdma1/irqsrcs_sdma1_4_0.h"
 
 #include "amdgpu_ras.h"
+
+#include <linux/nbsd-namespace.h>
 
 MODULE_FIRMWARE("amdgpu/vega10_sdma.bin");
 MODULE_FIRMWARE("amdgpu/vega10_sdma1.bin");
@@ -645,12 +647,12 @@ out:
  */
 static uint64_t sdma_v4_0_ring_get_rptr(struct amdgpu_ring *ring)
 {
-	u64 *rptr;
+	volatile u64 *rptr;
 
 	/* XXX check if swapping is necessary on BE */
-	rptr = ((u64 *)&ring->adev->wb.wb[ring->rptr_offs]);
+	rptr = ((volatile u64 *)&ring->adev->wb.wb[ring->rptr_offs]);
 
-	DRM_DEBUG("rptr before shift == 0x%016llx\n", *rptr);
+	DRM_DEBUG("rptr before shift == 0x%016"PRIx64"\n", *rptr);
 	return ((*rptr) >> 2);
 }
 
@@ -668,13 +670,13 @@ static uint64_t sdma_v4_0_ring_get_wptr(struct amdgpu_ring *ring)
 
 	if (ring->use_doorbell) {
 		/* XXX check if swapping is necessary on BE */
-		wptr = READ_ONCE(*((u64 *)&adev->wb.wb[ring->wptr_offs]));
-		DRM_DEBUG("wptr/doorbell before shift == 0x%016llx\n", wptr);
+		wptr = READ_ONCE(*((volatile u64 *)&adev->wb.wb[ring->wptr_offs]));
+		DRM_DEBUG("wptr/doorbell before shift == 0x%016"PRIx64"\n", wptr);
 	} else {
 		wptr = RREG32_SDMA(ring->me, mmSDMA0_GFX_RB_WPTR_HI);
 		wptr = wptr << 32;
 		wptr |= RREG32_SDMA(ring->me, mmSDMA0_GFX_RB_WPTR);
-		DRM_DEBUG("wptr before shift [%i] wptr == 0x%016llx\n",
+		DRM_DEBUG("wptr before shift [%i] wptr == 0x%016"PRIx64"\n",
 				ring->me, wptr);
 	}
 
@@ -694,7 +696,7 @@ static void sdma_v4_0_ring_set_wptr(struct amdgpu_ring *ring)
 
 	DRM_DEBUG("Setting write pointer\n");
 	if (ring->use_doorbell) {
-		u64 *wb = (u64 *)&adev->wb.wb[ring->wptr_offs];
+		volatile u64 *wb = (volatile u64 *)&adev->wb.wb[ring->wptr_offs];
 
 		DRM_DEBUG("Using doorbell -- "
 				"wptr_offs == 0x%08x "
@@ -705,7 +707,7 @@ static void sdma_v4_0_ring_set_wptr(struct amdgpu_ring *ring)
 				upper_32_bits(ring->wptr << 2));
 		/* XXX check if swapping is necessary on BE */
 		WRITE_ONCE(*wb, (ring->wptr << 2));
-		DRM_DEBUG("calling WDOORBELL64(0x%08x, 0x%016llx)\n",
+		DRM_DEBUG("calling WDOORBELL64(0x%08x, 0x%016"PRIx64")\n",
 				ring->doorbell_index, ring->wptr << 2);
 		WDOORBELL64(ring->doorbell_index, ring->wptr << 2);
 	} else {
@@ -737,7 +739,7 @@ static uint64_t sdma_v4_0_page_ring_get_wptr(struct amdgpu_ring *ring)
 
 	if (ring->use_doorbell) {
 		/* XXX check if swapping is necessary on BE */
-		wptr = READ_ONCE(*((u64 *)&adev->wb.wb[ring->wptr_offs]));
+		wptr = READ_ONCE(*((volatile u64 *)&adev->wb.wb[ring->wptr_offs]));
 	} else {
 		wptr = RREG32_SDMA(ring->me, mmSDMA0_PAGE_RB_WPTR_HI);
 		wptr = wptr << 32;
@@ -759,7 +761,7 @@ static void sdma_v4_0_page_ring_set_wptr(struct amdgpu_ring *ring)
 	struct amdgpu_device *adev = ring->adev;
 
 	if (ring->use_doorbell) {
-		u64 *wb = (u64 *)&adev->wb.wb[ring->wptr_offs];
+		volatile u64 *wb = (volatile u64 *)&adev->wb.wb[ring->wptr_offs];
 
 		/* XXX check if swapping is necessary on BE */
 		WRITE_ONCE(*wb, (ring->wptr << 2));
@@ -1855,7 +1857,7 @@ static int sdma_v4_0_sw_init(void *handle)
 		/* doorbell size is 2 dwords, get DWORD offset */
 		ring->doorbell_index = adev->doorbell_index.sdma_engine[i] << 1;
 
-		sprintf(ring->name, "sdma%d", i);
+		snprintf(ring->name, sizeof(ring->name), "sdma%d", i);
 		r = amdgpu_ring_init(adev, ring, 1024, &adev->sdma.trap_irq,
 				     AMDGPU_SDMA_IRQ_INSTANCE0 + i);
 		if (r)
@@ -1872,7 +1874,7 @@ static int sdma_v4_0_sw_init(void *handle)
 			ring->doorbell_index = adev->doorbell_index.sdma_engine[i] << 1;
 			ring->doorbell_index += 0x400;
 
-			sprintf(ring->name, "page%d", i);
+			snprintf(ring->name, sizeof(ring->name), "page%d", i);
 			r = amdgpu_ring_init(adev, ring, 1024,
 					     &adev->sdma.trap_irq,
 					     AMDGPU_SDMA_IRQ_INSTANCE0 + i);
