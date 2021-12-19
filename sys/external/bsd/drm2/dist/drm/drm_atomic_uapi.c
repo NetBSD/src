@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_atomic_uapi.c,v 1.2 2021/12/18 23:44:57 riastradh Exp $	*/
+/*	$NetBSD: drm_atomic_uapi.c,v 1.3 2021/12/19 00:58:42 riastradh Exp $	*/
 
 /*
  * Copyright (C) 2014 Red Hat
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_atomic_uapi.c,v 1.2 2021/12/18 23:44:57 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_atomic_uapi.c,v 1.3 2021/12/19 00:58:42 riastradh Exp $");
 
 #include <drm/drm_atomic_uapi.h>
 #include <drm/drm_atomic.h>
@@ -1091,6 +1091,38 @@ struct drm_out_fence_state {
 static int setup_out_fence(struct drm_out_fence_state *fence_state,
 			   struct dma_fence *fence)
 {
+#ifdef __NetBSD__
+	int fd = -1;
+	struct file *fp = NULL;
+	int ret;
+
+	/* Allocate a file descriptor.	*/
+	/* XXX errno NetBSD->Linux */
+	ret = -fd_allocfile(&fp, &fd);
+	if (ret)
+		goto out;
+
+	/* Prepare to transmit it to user.  */
+	/* XXX errno NetBSD->Linux */
+	ret = -copyout(&fence_state->fd, &fd, sizeof fd);
+	if (ret)
+		goto out;
+
+	/* Create sync file.  */
+	fence_state->sync_file = sync_file_create(fence, fp);
+	if (fence_state->sync_file == NULL) {
+		ret = -ENOMEM;
+		goto out;
+	}
+	fp = NULL;		/* sync_file consumes */
+
+out:	if (fp != NULL) {
+		fd_abort(curproc, fp, fd);
+		fd = -1;
+	}
+	fence_state->fd = fd;
+	return ret;
+#else
 	fence_state->fd = get_unused_fd_flags(O_CLOEXEC);
 	if (fence_state->fd < 0)
 		return fence_state->fd;
@@ -1103,6 +1135,7 @@ static int setup_out_fence(struct drm_out_fence_state *fence_state,
 		return -ENOMEM;
 
 	return 0;
+#endif
 }
 
 static int prepare_signaling(struct drm_device *dev,
@@ -1264,10 +1297,15 @@ static void complete_signaling(struct drm_device *dev,
 		return;
 
 	for (i = 0; i < num_fences; i++) {
+#ifdef __NetBSD__
+		if (fd_getfile(fence_state[i].fd))
+			(void)fd_close(fence_state[i].fd);
+#else
 		if (fence_state[i].sync_file)
 			fput(fence_state[i].sync_file->file);
 		if (fence_state[i].fd >= 0)
 			put_unused_fd(fence_state[i].fd);
+#endif
 
 		/* If this fails log error to the user */
 		if (fence_state[i].out_fence_ptr &&
