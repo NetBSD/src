@@ -1,4 +1,4 @@
-/*	$NetBSD: radeon_pci.c,v 1.17 2021/12/19 10:33:00 riastradh Exp $	*/
+/*	$NetBSD: radeon_pci.c,v 1.18 2021/12/19 11:05:13 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radeon_pci.c,v 1.17 2021/12/19 10:33:00 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radeon_pci.c,v 1.18 2021/12/19 11:05:13 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "vga.h"
@@ -68,6 +68,7 @@ __KERNEL_RCSID(0, "$NetBSD: radeon_pci.c,v 1.17 2021/12/19 10:33:00 riastradh Ex
 #endif
 
 #include <drm/drm_device.h>
+#include <drm/drm_drv.h>
 #include <drm/drm_fb_helper.h>
 #include <drm/drm_pci.h>
 
@@ -90,6 +91,8 @@ struct radeon_softc {
 	}				sc_task_u;
 	struct drm_device		*sc_drm_dev;
 	struct pci_dev			sc_pci_dev;
+	bool				sc_pci_attached;
+	bool				sc_dev_registered;
 #if defined(__i386__)
 #define RADEON_PCI_UGLY_MAP_HACK
 	/* XXX Used to claim the VGA device before attach_real */
@@ -248,13 +251,29 @@ radeon_attach_real(device_t self)
 	/* Initialize the Linux PCI device descriptor.  */
 	linux_pci_dev_init(&sc->sc_pci_dev, self, device_parent(self), pa, 0);
 
+	sc->sc_drm_dev = drm_dev_alloc(radeon_drm_driver, self);
+	if (IS_ERR(sc->sc_drm_dev)) {
+		aprint_error_dev(self, "unable to create drm device: %ld\n",
+		    PTR_ERR(sc->sc_drm_dev));
+		sc->sc_drm_dev = NULL;
+		goto out;
+	}
+
 	/* XXX errno Linux->NetBSD */
-	error = -drm_pci_attach(self, pa, &sc->sc_pci_dev, radeon_drm_driver,
-	    flags, &sc->sc_drm_dev);
+	error = -drm_pci_attach(sc->sc_drm_dev, pa, &sc->sc_pci_dev);
 	if (error) {
 		aprint_error_dev(self, "unable to attach drm: %d\n", error);
 		goto out;
 	}
+	sc->sc_pci_attached = true;
+
+	/* XXX errno Linux->NetBSD */
+	error = -drm_dev_register(sc->sc_drm_dev, flags);
+	if (error) {
+		aprint_error_dev(self, "unable to register drm: %d\n", error);
+		return;
+	}
+	sc->sc_dev_registered = true;
 
 	while (!SIMPLEQ_EMPTY(&sc->sc_task_u.attach)) {
 		struct radeon_task *const task =
@@ -293,24 +312,25 @@ radeon_detach(device_t self, int flags)
 		return error;
 
 	if (sc->sc_task_state == RADEON_TASK_ATTACH)
-		goto out;
+		goto out0;
 	if (sc->sc_task_u.workqueue != NULL) {
 		workqueue_destroy(sc->sc_task_u.workqueue);
 		sc->sc_task_u.workqueue = NULL;
 	}
 
 	if (sc->sc_drm_dev == NULL)
-		goto out;
-	/* XXX errno Linux->NetBSD */
-	error = -drm_pci_detach(sc->sc_drm_dev, flags);
-	if (error)
-		/* XXX Kinda too late to fail now...  */
-		return error;
+		goto out0;
+	if (!sc->sc_pci_attached)
+		goto out1;
+	if (!sc->sc_dev_registered)
+		goto out2;
+
+	drm_dev_unregister(sc->sc_drm_dev);
+out2:	drm_pci_detach(sc->sc_drm_dev);
+out1:	drm_dev_put(sc->sc_drm_dev);
 	sc->sc_drm_dev = NULL;
-
-out:	linux_pci_dev_destroy(&sc->sc_pci_dev);
+out0:	linux_pci_dev_destroy(&sc->sc_pci_dev);
 	pmf_device_deregister(self);
-
 	return 0;
 }
 
