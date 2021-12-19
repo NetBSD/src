@@ -1,4 +1,4 @@
-/*	$NetBSD: overflow.h,v 1.1 2021/12/19 12:20:21 riastradh Exp $	*/
+/*	$NetBSD: overflow.h,v 1.2 2021/12/19 12:20:53 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -79,7 +79,7 @@ __struct_size(size_t basesize, size_t elemsize, size_t nelem)
 
 #define	struct_size(p, member, n)					      \
 ({									      \
-	CTASSERT(sizeof(*(p)) == offsetof(__typeof__(*(p)), member));	      \
+	CTASSERT(sizeof(*(p)) >= offsetof(__typeof__(*(p)), member));	      \
 	__struct_size(sizeof(*(p)), sizeof((p)->member[0]), (n));	      \
 })
 
