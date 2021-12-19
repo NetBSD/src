@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_active.c,v 1.8 2021/12/19 12:11:14 riastradh Exp $	*/
+/*	$NetBSD: i915_active.c,v 1.9 2021/12/19 12:12:39 riastradh Exp $	*/
 
 /*
  * SPDX-License-Identifier: MIT
@@ -7,7 +7,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_active.c,v 1.8 2021/12/19 12:11:14 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_active.c,v 1.9 2021/12/19 12:12:39 riastradh Exp $");
 
 #include <linux/debugobjects.h>
 
@@ -142,6 +142,10 @@ compare_nodes(void *cookie, const void *va, const void *vb)
 	if (a->timeline < b->timeline)
 		return -1;
 	if (a->timeline > b->timeline)
+		return +1;
+	if ((uintptr_t)a < (uintptr_t)b)
+		return -1;
+	if ((uintptr_t)a > (uintptr_t)b)
 		return +1;
 	return 0;
 }
