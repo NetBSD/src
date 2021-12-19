@@ -1,4 +1,4 @@
-/*	$NetBSD: agpio.h,v 1.12 2017/02/27 14:13:56 msaitoh Exp $	*/
+/*	$NetBSD: agpio.h,v 1.13 2021/12/19 01:51:17 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -31,6 +31,7 @@
 #ifndef _SYS_AGPIO_H_
 #define _SYS_AGPIO_H_
 
+#include <sys/types.h>
 #include <sys/ioccom.h>
 
 /*
