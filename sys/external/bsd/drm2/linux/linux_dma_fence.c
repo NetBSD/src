@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_dma_fence.c,v 1.6 2021/12/19 01:40:48 riastradh Exp $	*/
+/*	$NetBSD: linux_dma_fence.c,v 1.7 2021/12/19 01:48:22 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_dma_fence.c,v 1.6 2021/12/19 01:40:48 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_dma_fence.c,v 1.7 2021/12/19 01:48:22 riastradh Exp $");
 
 #include <sys/atomic.h>
 #include <sys/condvar.h>
@@ -211,7 +211,7 @@ dma_fence_get_rcu(struct dma_fence *fence)
  *	success, or NULL on failure.
  */
 struct dma_fence *
-dma_fence_get_rcu_safe(struct dma_fence **fencep)
+dma_fence_get_rcu_safe(struct dma_fence *volatile const *fencep)
 {
 	struct dma_fence *fence, *fence0;
 
