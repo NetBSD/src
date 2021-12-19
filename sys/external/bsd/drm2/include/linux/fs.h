@@ -1,4 +1,4 @@
-/*	$NetBSD: fs.h,v 1.4 2020/02/14 14:34:59 maya Exp $	*/
+/*	$NetBSD: fs.h,v 1.5 2021/12/19 01:22:22 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -34,5 +34,6 @@
 
 #include <linux/capability.h>
 #include <linux/err.h>
+#include <linux/wait_bit.h>
 
 #endif  /* _LINUX_FS_H_ */
