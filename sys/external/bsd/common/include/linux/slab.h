@@ -1,4 +1,4 @@
-/*	$NetBSD: slab.h,v 1.9 2021/12/19 12:12:23 riastradh Exp $	*/
+/*	$NetBSD: slab.h,v 1.10 2021/12/19 12:20:46 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -39,6 +39,7 @@
 #include <uvm/uvm_extern.h>	/* For PAGE_SIZE.  */
 
 #include <linux/gfp.h>
+#include <linux/overflow.h>
 #include <linux/rcupdate.h>
 
 #define	ARCH_KMALLOC_MINALIGN	4 /* XXX ??? */
