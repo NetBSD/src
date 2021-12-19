@@ -1,4 +1,4 @@
-/*	$NetBSD: drmP.h,v 1.56 2021/12/19 01:57:13 riastradh Exp $	*/
+/*	$NetBSD: drmP.h,v 1.57 2021/12/19 01:57:20 riastradh Exp $	*/
 
 /*
  * Internal Header for the Direct Rendering Manager
@@ -209,32 +209,7 @@ struct drm_minor {
 /*@{*/
 
 				/* Device support (drm_fops.h) */
-#ifdef __NetBSD__
-extern int drm_open_file(struct drm_file *, void *, struct drm_minor *);
-extern void drm_close_file(struct drm_file *);
-#else
-extern int drm_open(struct inode *inode, struct file *filp);
-extern ssize_t drm_read(struct file *filp, char __user *buffer,
-			size_t count, loff_t *offset);
-extern int drm_release(struct inode *inode, struct file *filp);
-#endif
 extern int drm_new_set_master(struct drm_device *dev, struct drm_file *fpriv);
-
-				/* Mapping support (drm_vm.h) */
-#ifndef __NetBSD__
-extern unsigned int drm_poll(struct file *filp, struct poll_table_struct *wait);
-#endif
-
-/* Misc. IOCTL support (drm_ioctl.c) */
-int drm_noop(struct drm_device *dev, void *data,
-	     struct drm_file *file_priv);
-int drm_invalid_op(struct drm_device *dev, void *data,
-		   struct drm_file *file_priv);
-
-/*
- * These are exported to drivers so that they can implement fencing using
- * DMA quiscent + idle. DMA quiescent usually requires the hardware lock.
- */
 
 				/* IRQ support (drm_irq.h) */
 #ifdef __NetBSD__

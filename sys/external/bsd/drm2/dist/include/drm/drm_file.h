@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_file.h,v 1.5 2021/12/19 01:56:50 riastradh Exp $	*/
+/*	$NetBSD: drm_file.h,v 1.6 2021/12/19 01:57:21 riastradh Exp $	*/
 
 /*
  * Copyright 1999 Precision Insight, Inc., Cedar Park, Texas.
@@ -388,11 +388,16 @@ static inline bool drm_is_render_client(const struct drm_file *file_priv)
 	return file_priv->minor->type == DRM_MINOR_RENDER;
 }
 
+#ifdef __NetBSD__
+extern int drm_open_file(struct drm_file *, void *, struct drm_minor *);
+extern void drm_close_file(struct drm_file *);
+#else
 int drm_open(struct inode *inode, struct file *filp);
 ssize_t drm_read(struct file *filp, char __user *buffer,
 		 size_t count, loff_t *offset);
 int drm_release(struct inode *inode, struct file *filp);
 __poll_t drm_poll(struct file *filp, struct poll_table_struct *wait);
+#endif
 int drm_event_reserve_init_locked(struct drm_device *dev,
 				  struct drm_file *file_priv,
 				  struct drm_pending_event *p,
