@@ -1,0 +1,471 @@
+/*	$NetBSD: linux_tasklet.c,v 1.1 2021/12/19 01:17:14 riastradh Exp $	*/
+
+/*-
+ * Copyright (c) 2018 The NetBSD Foundation, Inc.
+ * All rights reserved.
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Taylor R. Campbell.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: linux_tasklet.c,v 1.1 2021/12/19 01:17:14 riastradh Exp $");
+
+#include <sys/types.h>
+#include <sys/atomic.h>
+#include <sys/cpu.h>
+#include <sys/errno.h>
+#include <sys/intr.h>
+#include <sys/lock.h>
+#include <sys/percpu.h>
+#include <sys/queue.h>
+
+#include <lib/libkern/libkern.h>
+
+#include <machine/limits.h>
+
+#include <linux/tasklet.h>
+
+#define	TASKLET_SCHEDULED	((unsigned)__BIT(0))
+#define	TASKLET_RUNNING		((unsigned)__BIT(1))
+
+struct tasklet_queue {
+	struct percpu	*tq_percpu;	/* struct tasklet_cpu */
+	void		*tq_sih;
+};
+
+SIMPLEQ_HEAD(tasklet_head, tasklet_struct);
+
+struct tasklet_cpu {
+	struct tasklet_head	tc_head;
+};
+
+static struct tasklet_queue	tasklet_queue __read_mostly;
+static struct tasklet_queue	tasklet_hi_queue __read_mostly;
+
+static void	tasklet_softintr(void *);
+static int	tasklet_queue_init(struct tasklet_queue *, unsigned);
+static void	tasklet_queue_fini(struct tasklet_queue *);
+static void	tasklet_queue_schedule(struct tasklet_queue *,
+		    struct tasklet_struct *);
+static void	tasklet_queue_enqueue(struct tasklet_queue *,
+		    struct tasklet_struct *);
+
+/*
+ * linux_tasklets_init()
+ *
+ *	Initialize the Linux tasklets subsystem.  Return 0 on success,
+ *	error code on failure.
+ */
+int
+linux_tasklets_init(void)
+{
+	int error;
+
+	error = tasklet_queue_init(&tasklet_queue, SOFTINT_CLOCK);
+	if (error)
+		goto fail0;
+	error = tasklet_queue_init(&tasklet_hi_queue, SOFTINT_SERIAL);
+	if (error)
+		goto fail1;
+
+	/* Success!  */
+	return 0;
+
+fail2: __unused
+	tasklet_queue_fini(&tasklet_hi_queue);
+fail1:	tasklet_queue_fini(&tasklet_queue);
+fail0:	KASSERT(error);
+	return error;
+}
+
+/*
+ * linux_tasklets_fini()
+ *
+ *	Finalize the Linux tasklets subsystem.  All use of tasklets
+ *	must be done.
+ */
+void
+linux_tasklets_fini(void)
+{
+
+	tasklet_queue_fini(&tasklet_hi_queue);
+	tasklet_queue_fini(&tasklet_queue);
+}
+
+/*
+ * tasklet_queue_init(tq, prio)
+ *
+ *	Initialize the tasklet queue tq for running tasklets at softint
+ *	priority prio (SOFTINT_*).
+ */
+static int
+tasklet_queue_init(struct tasklet_queue *tq, unsigned prio)
+{
+	int error;
+
+	/* Allocate per-CPU memory.  percpu_alloc cannot fail.  */
+	tq->tq_percpu = percpu_alloc(sizeof(struct tasklet_cpu));
+	KASSERT(tq->tq_percpu != NULL);
+
+	/* Try to establish a softint.  softint_establish may fail.  */
+	tq->tq_sih = softint_establish(prio|SOFTINT_MPSAFE, &tasklet_softintr,
+	    tq);
+	if (tq->tq_sih == NULL) {
+		error = ENOMEM;
+		goto fail1;
+	}
+
+	/* Success!  */
+	return 0;
+
+fail2: __unused
+	softint_disestablish(tq->tq_sih);
+	tq->tq_sih = NULL;
+fail1:	percpu_free(tq->tq_percpu, sizeof(struct tasklet_cpu));
+	tq->tq_percpu = NULL;
+fail0: __unused
+	KASSERT(error);
+	return error;
+}
+
+/*
+ * tasklet_queue_fini(tq)
+ *
+ *	Finalize the tasklet queue tq: free all resources associated
+ *	with it.
+ */
+static void
+tasklet_queue_fini(struct tasklet_queue *tq)
+{
+
+	softint_disestablish(tq->tq_sih);
+	tq->tq_sih = NULL;
+	percpu_free(tq->tq_percpu, sizeof(struct tasklet_cpu));
+	tq->tq_percpu = NULL;
+}
+
+/*
+ * tasklet_softintr(cookie)
+ *
+ *	Soft interrupt handler: Process queued tasklets on the tasklet
+ *	queue passed in as cookie.
+ */
+static void
+tasklet_softintr(void *cookie)
+{
+	struct tasklet_queue *const tq = cookie;
+	struct tasklet_head th = SIMPLEQ_HEAD_INITIALIZER(th);
+	struct tasklet_cpu *tc;
+	int s;
+
+	/*
+	 * With all interrupts deferred, transfer the current CPU's
+	 * queue of tasklets to a local variable in one swell foop.
+	 *
+	 * No memory barriers: CPU-local state only.
+	 */
+	tc = percpu_getref(tq->tq_percpu);
+	s = splhigh();
+	SIMPLEQ_CONCAT(&th, &tc->tc_head);
+	splx(s);
+	percpu_putref(tq->tq_percpu);
+
+	/* Go through the queue of tasklets we grabbed.  */
+	while (!SIMPLEQ_EMPTY(&th)) {
+		struct tasklet_struct *tasklet;
+		unsigned state;
+
+		/* Remove the first tasklet from the queue.  */
+		tasklet = SIMPLEQ_FIRST(&th);
+		SIMPLEQ_REMOVE_HEAD(&th, tl_entry);
+
+		/*
+		 * Test and set RUNNING, in case it is already running
+		 * on another CPU and got scheduled again on this one
+		 * before it completed.
+		 */
+		do {
+			state = tasklet->tl_state;
+			__insn_barrier();
+			/* It had better be scheduled.  */
+			KASSERT(state & TASKLET_SCHEDULED);
+			if (state & TASKLET_RUNNING)
+				break;
+		} while (atomic_cas_uint(&tasklet->tl_state, state,
+			state | TASKLET_RUNNING) != state);
+
+		if (state & TASKLET_RUNNING) {
+			/*
+			 * Put it back on the queue to run it again in
+			 * a sort of busy-wait, and move on to the next
+			 * one.
+			 */
+			tasklet_queue_enqueue(tq, tasklet);
+			continue;
+		}
+
+		/* Wait for last runner's side effects.  */
+		membar_enter();
+
+		/* Check whether it's currently disabled.  */
+		if (tasklet->tl_disablecount) {
+			/*
+			 * Disabled: clear the RUNNING bit and, requeue
+			 * it, but keep it SCHEDULED.
+			 */
+			KASSERT(tasklet->tl_state & TASKLET_RUNNING);
+			atomic_and_uint(&tasklet->tl_state, ~TASKLET_RUNNING);
+			tasklet_queue_enqueue(tq, tasklet);
+			continue;
+		}
+
+		/* Not disabled.  Clear SCHEDULED and call func.  */
+		KASSERT(tasklet->tl_state & TASKLET_SCHEDULED);
+		atomic_and_uint(&tasklet->tl_state, ~TASKLET_SCHEDULED);
+
+		(*tasklet->func)(tasklet->data);
+
+		/*
+		 * Guarantee all caller-relevant reads or writes in
+		 * func have completed before clearing RUNNING bit.
+		 */
+		membar_exit();
+
+		/* Clear RUNNING to notify tasklet_disable.  */
+		atomic_and_uint(&tasklet->tl_state, ~TASKLET_RUNNING);
+	}
+}
+
+/*
+ * tasklet_queue_schedule(tq, tasklet)
+ *
+ *	Schedule tasklet to run on tq.  If it was already scheduled and
+ *	has not yet run, no effect.
+ */
+static void
+tasklet_queue_schedule(struct tasklet_queue *tq,
+    struct tasklet_struct *tasklet)
+{
+	unsigned ostate, nstate;
+
+	/* Test and set the SCHEDULED bit.  If already set, we're done.  */
+	do {
+		ostate = tasklet->tl_state;
+		if (ostate & TASKLET_SCHEDULED)
+			return;
+		nstate = ostate | TASKLET_SCHEDULED;
+	} while (atomic_cas_uint(&tasklet->tl_state, ostate, nstate)
+	    != ostate);
+
+	/*
+	 * Not already set and we have set it now.  Put it on the queue
+	 * and kick off a softint.
+	 */
+	tasklet_queue_enqueue(tq, tasklet);
+}
+
+/*
+ * tasklet_queue_enqueue(tq, tasklet)
+ *
+ *	Put tasklet on the queue tq and ensure it will run.  tasklet
+ *	must be marked SCHEDULED.
+ */
+static void
+tasklet_queue_enqueue(struct tasklet_queue *tq, struct tasklet_struct *tasklet)
+{
+	struct tasklet_cpu *tc;
+	int s;
+
+	KASSERT(tasklet->tl_state & TASKLET_SCHEDULED);
+
+	/*
+	 * Insert on the current CPU's queue while all interrupts are
+	 * blocked, and schedule a soft interrupt to process it.  No
+	 * memory barriers: CPU-local state only.
+	 */
+	tc = percpu_getref(tq->tq_percpu);
+	s = splhigh();
+	SIMPLEQ_INSERT_TAIL(&tc->tc_head, tasklet, tl_entry);
+	splx(s);
+	softint_schedule(tq->tq_sih);
+	percpu_putref(tq->tq_percpu);
+}
+
+/*
+ * tasklet_init(tasklet, func, data)
+ *
+ *	Initialize tasklet to call func(data) when scheduled.
+ *
+ *	Caller is responsible for issuing the appropriate memory
+ *	barriers or store releases to publish the tasklet to other CPUs
+ *	before use.
+ */
+void
+tasklet_init(struct tasklet_struct *tasklet, void (*func)(unsigned long),
+    unsigned long data)
+{
+
+	tasklet->tl_state = 0;
+	tasklet->tl_disablecount = 0;
+	tasklet->func = func;
+	tasklet->data = data;
+}
+
+/*
+ * tasklet_schedule(tasklet)
+ *
+ *	Schedule tasklet to run at regular priority.  If it was already
+ *	scheduled and has not yet run, no effect.
+ */
+void
+tasklet_schedule(struct tasklet_struct *tasklet)
+{
+
+	tasklet_queue_schedule(&tasklet_queue, tasklet);
+}
+
+/*
+ * tasklet_hi_schedule(tasklet)
+ *
+ *	Schedule tasklet to run at high priority.  If it was already
+ *	scheduled and has not yet run, no effect.
+ */
+void
+tasklet_hi_schedule(struct tasklet_struct *tasklet)
+{
+
+	tasklet_queue_schedule(&tasklet_hi_queue, tasklet);
+}
+
+/*
+ * tasklet_disable(tasklet)
+ *
+ *	Increment the disable count of tasklet, and if it was already
+ *	running, busy-wait for it to complete.
+ *
+ *	As long as the disable count is nonzero, the tasklet's function
+ *	will not run, but if already scheduled, the tasklet will remain
+ *	so and the softint will repeatedly trigger itself in a sort of
+ *	busy-wait, so this should be used only for short durations.
+ *
+ *	If tasklet is guaranteed not to be scheduled, e.g. if you have
+ *	just invoked tasklet_kill, then tasklet_disable serves to wait
+ *	for it to complete in case it might already be running.
+ */
+void
+tasklet_disable(struct tasklet_struct *tasklet)
+{
+	unsigned int disablecount __diagused;
+
+	/* Increment the disable count.  */
+	disablecount = atomic_inc_uint_nv(&tasklet->tl_disablecount);
+	KASSERT(disablecount < UINT_MAX);
+
+	/* Wait for it to finish running, if it was running.  */
+	while (tasklet->tl_state & TASKLET_RUNNING)
+		SPINLOCK_BACKOFF_HOOK;
+
+	/*
+	 * Guarantee any side effects of running are visible to us
+	 * before we return.
+	 *
+	 * XXX membar_sync is overkill here.  It is tempting to issue
+	 * membar_enter, but it only orders stores | loads, stores;
+	 * what we really want here is load_acquire(&tasklet->tl_state)
+	 * above, i.e. to witness all side effects preceding the store
+	 * whose value we loaded.  Absent that, membar_sync is the best
+	 * we can do.
+	 */
+	membar_sync();
+}
+
+/*
+ * tasklet_enable(tasklet)
+ *
+ *	Decrement tasklet's disable count.  If it was previously
+ *	scheduled to run, it may now run.
+ */
+void
+tasklet_enable(struct tasklet_struct *tasklet)
+{
+	unsigned int disablecount __diagused;
+
+	/*
+	 * Guarantee all caller-relevant reads or writes have completed
+	 * before potentially allowing tasklet to run again by
+	 * decrementing the disable count.
+	 */
+	membar_exit();
+
+	/* Decrement the disable count.  */
+	disablecount = atomic_dec_uint_nv(&tasklet->tl_disablecount);
+	KASSERT(disablecount != UINT_MAX);
+}
+
+/*
+ * tasklet_kill(tasklet)
+ *
+ *	Busy-wait for tasklet to run, if it is currently scheduled.
+ *	Caller must guarantee it does not get scheduled again for this
+ *	to be useful.
+ */
+void
+tasklet_kill(struct tasklet_struct *tasklet)
+{
+
+	KASSERTMSG(!cpu_intr_p(),
+	    "deadlock: soft interrupts are blocked in interrupt context");
+
+	/* Wait for it to be removed from the queue.  */
+	while (tasklet->tl_state & TASKLET_SCHEDULED)
+		SPINLOCK_BACKOFF_HOOK;
+
+	/*
+	 * No need for a memory barrier here because writes to the
+	 * single state word are globally ordered, and RUNNING is set
+	 * before SCHEDULED is cleared, so as long as the caller
+	 * guarantees no scheduling, the only possible transitions we
+	 * can witness are:
+	 *
+	 *	0                 -> 0
+	 *	SCHEDULED         -> 0
+	 *	SCHEDULED         -> RUNNING
+	 *	RUNNING           -> 0
+	 *	RUNNING           -> RUNNING
+	 *	SCHEDULED|RUNNING -> 0
+	 *	SCHEDULED|RUNNING -> RUNNING
+	 */
+
+	/* Wait for it to finish running.  */
+	while (tasklet->tl_state & TASKLET_RUNNING)
+		SPINLOCK_BACKOFF_HOOK;
+
+	/*
+	 * Wait for any side effects running.  Again, membar_sync is
+	 * overkill; we really want load_acquire(&tasklet->tl_state)
+	 * here.
+	 */
+	membar_sync();
+}
