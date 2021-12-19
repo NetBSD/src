@@ -1,4 +1,4 @@
-/*	$NetBSD: rbtree.h,v 1.9 2021/12/19 11:00:18 riastradh Exp $	*/
+/*	$NetBSD: rbtree.h,v 1.10 2021/12/19 11:16:32 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -59,13 +59,29 @@ RB_EMPTY_ROOT(struct rb_root *root)
 }
 
 static inline struct rb_node *
-rb_first_cached(struct rb_root_cached *root)
+rb_first(struct rb_root *root)
 {
-	char *vnode = RB_TREE_MIN(&root->rb_root.rbr_tree);
+	char *vnode = RB_TREE_MIN(&root->rbr_tree);
 
 	if (vnode)
-		vnode += root->rb_root.rbr_tree.rbt_ops->rbto_node_offset;
+		vnode += root->rbr_tree.rbt_ops->rbto_node_offset;
 	return (struct rb_node *)vnode;
+}
+
+static inline struct rb_node *
+rb_last(struct rb_root *root)
+{
+	char *vnode = RB_TREE_MAX(&root->rbr_tree);
+
+	if (vnode)
+		vnode += root->rbr_tree.rbt_ops->rbto_node_offset;
+	return (struct rb_node *)vnode;
+}
+
+static inline struct rb_node *
+rb_first_cached(struct rb_root_cached *root)
+{
+	return rb_first(&root->rb_root);
 }
 
 static inline void
