@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_display.c,v 1.4 2021/12/19 11:55:07 riastradh Exp $	*/
+/*	$NetBSD: intel_display.c,v 1.5 2021/12/19 11:55:24 riastradh Exp $	*/
 
 /*
  * Copyright © 2006-2007 Intel Corporation
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intel_display.c,v 1.4 2021/12/19 11:55:07 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intel_display.c,v 1.5 2021/12/19 11:55:24 riastradh Exp $");
 
 #include "intel_display.h"	/* for pipe_drmhack */
 
@@ -4823,9 +4823,11 @@ void intel_prepare_reset(struct drm_i915_private *dev_priv)
 		return;
 
 	/* We have a modeset vs reset deadlock, defensively unbreak it. */
+	spin_lock(&dev_priv->atomic_commit_lock);
 	set_bit(I915_RESET_MODESET, &dev_priv->gt.reset.flags);
-	smp_mb__after_atomic();
-	wake_up_bit(&dev_priv->gt.reset.flags, I915_RESET_MODESET);
+	DRM_SPIN_WAKEUP_ALL(&dev_priv->atomic_commit_wq,
+	    &dev_priv->atomic_commit_lock);
+	spin_unlock(&dev_priv->atomic_commit_lock);
 
 	if (atomic_read(&dev_priv->gpu_error.pending_fb_pin)) {
 		DRM_DEBUG_KMS("Modeset potentially stuck, unbreaking through wedging\n");
@@ -15271,35 +15273,43 @@ static void intel_atomic_helper_free_state_worker(struct work_struct *work)
 	intel_atomic_helper_free_state(dev_priv);
 }
 
-static void intel_atomic_commit_fence_wait(struct intel_atomic_state *intel_state)
+static int
+intel_atomic_commit_fence_wake(struct i915_sw_fence_waiter *waiter,
+    unsigned mode, int flags, void *cookie)
 {
-#ifdef __NetBSD__
-	panic("NYI");
-#else
-	struct wait_queue_entry wait_fence, wait_reset;
+	struct intel_atomic_state *intel_state = cookie;
 	struct drm_i915_private *dev_priv = to_i915(intel_state->base.dev);
 
-	init_wait_entry(&wait_fence, 0);
-	init_wait_entry(&wait_reset, 0);
-	for (;;) {
-		prepare_to_wait(&intel_state->commit_ready.wait,
-				&wait_fence, TASK_UNINTERRUPTIBLE);
-		prepare_to_wait(bit_waitqueue(&dev_priv->gt.reset.flags,
-					      I915_RESET_MODESET),
-				&wait_reset, TASK_UNINTERRUPTIBLE);
+	spin_lock(&dev_priv->atomic_commit_lock);
+	DRM_SPIN_WAKEUP_ALL(&dev_priv->atomic_commit_wq,
+	    &dev_priv->atomic_commit_lock);
+	spin_unlock(&dev_priv->atomic_commit_lock);
 
+	list_del_init(&waiter->entry);
 
-		if (i915_sw_fence_done(&intel_state->commit_ready) ||
-		    test_bit(I915_RESET_MODESET, &dev_priv->gt.reset.flags))
-			break;
+	return 0;
+}
 
-		schedule();
-	}
-	finish_wait(&intel_state->commit_ready.wait, &wait_fence);
-	finish_wait(bit_waitqueue(&dev_priv->gt.reset.flags,
-				  I915_RESET_MODESET),
-		    &wait_reset);
-#endif
+static void intel_atomic_commit_fence_wait(struct intel_atomic_state *intel_state)
+{
+	struct drm_i915_private *dev_priv = to_i915(intel_state->base.dev);
+	struct i915_sw_fence_waiter waiter;
+	int ret;
+
+	waiter.flags = 0;
+	waiter.func = intel_atomic_commit_fence_wake;
+	waiter.private = intel_state;
+
+	spin_lock(&intel_state->commit_ready.wait.lock);
+	list_add_tail(&waiter.entry, &intel_state->commit_ready.wait.head);
+	spin_unlock(&intel_state->commit_ready.wait.lock);
+
+	spin_lock(&dev_priv->atomic_commit_lock);
+	DRM_SPIN_WAIT_NOINTR_UNTIL(ret, &dev_priv->atomic_commit_wq,
+	    &dev_priv->atomic_commit_lock,
+	    (i915_sw_fence_done(&intel_state->commit_ready) ||
+		test_bit(I915_RESET_MODESET, &dev_priv->gt.reset.flags)));
+	spin_unlock(&dev_priv->atomic_commit_lock);
 }
 
 static void intel_atomic_cleanup_work(struct work_struct *work)
