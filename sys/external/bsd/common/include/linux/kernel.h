@@ -1,4 +1,4 @@
-/*	$NetBSD: kernel.h,v 1.27 2021/12/19 00:31:35 riastradh Exp $	*/
+/*	$NetBSD: kernel.h,v 1.28 2021/12/19 00:47:47 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -44,6 +44,7 @@
 #include <asm/div64.h>
 
 #include <linux/bitops.h>
+#include <linux/compiler.h>
 #include <linux/log2.h>
 #include <linux/printk.h>
 #include <linux/slab.h>
