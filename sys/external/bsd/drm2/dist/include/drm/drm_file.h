@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_file.h,v 1.2 2021/12/18 23:45:46 riastradh Exp $	*/
+/*	$NetBSD: drm_file.h,v 1.3 2021/12/19 00:46:23 riastradh Exp $	*/
 
 /*
  * Copyright 1999 Precision Insight, Inc., Cedar Park, Texas.
@@ -39,6 +39,10 @@
 #include <uapi/drm/drm.h>
 
 #include <drm/drm_prime.h>
+
+#ifdef __NetBSD__		/* XXX */
+#include <drm/drm_wait_netbsd.h>
+#endif
 
 struct dma_fence;
 struct drm_file;
