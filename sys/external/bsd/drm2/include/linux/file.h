@@ -1,4 +1,4 @@
-/*	$NetBSD: file.h,v 1.2 2014/03/18 18:20:43 riastradh Exp $	*/
+/*	$NetBSD: file.h,v 1.3 2021/12/19 00:58:42 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -31,5 +31,16 @@
 
 #ifndef _LINUX_FILE_H_
 #define _LINUX_FILE_H_
+
+#include <sys/filedesc.h>
+#include <sys/proc.h>
+
+struct file;
+
+static inline void
+fd_install(int fd, struct file *fp)
+{
+	fd_affix(curproc, fp, fd);
+}
 
 #endif  /* _LINUX_FILE_H_ */
