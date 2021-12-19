@@ -1,4 +1,4 @@
-/*	$NetBSD: llist.h,v 1.3 2021/12/19 01:26:05 riastradh Exp $	*/
+/*	$NetBSD: llist.h,v 1.4 2021/12/19 11:36:48 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
 #include <sys/null.h>
 
 struct llist_head {
-	struct llist_node	*llh_first;
+	struct llist_node	*first;
 };
 
 struct llist_node {
@@ -47,7 +47,7 @@ static inline void
 init_llist_head(struct llist_head *head)
 {
 
-	head->llh_first = NULL;
+	head->first = NULL;
 }
 
 #define	llist_entry(NODE, TYPE, FIELD)	container_of(NODE, TYPE, FIELD)
@@ -57,8 +57,7 @@ llist_empty(struct llist_head *head)
 {
 	bool empty;
 
-	empty = (head->llh_first == NULL);
-	membar_enter();
+	empty = (atomic_load_acquire(&head->first) == NULL);
 
 	return empty;
 }
@@ -69,10 +68,10 @@ llist_add(struct llist_node *node, struct llist_head *head)
 	struct llist_node *first;
 
 	do {
-		first = head->llh_first;
+		first = head->first;
 		node->next = first;
 		membar_exit();
-	} while (atomic_cas_ptr(&head->llh_first, first, node) != first);
+	} while (atomic_cas_ptr(&head->first, first, node) != first);
 
 	return first == NULL;
 }
@@ -82,7 +81,7 @@ llist_del_all(struct llist_head *head)
 {
 	struct llist_node *first;
 
-	first = atomic_swap_ptr(&head->llh_first, NULL);
+	first = atomic_swap_ptr(&head->first, NULL);
 	membar_enter();
 
 	return first;
@@ -94,23 +93,36 @@ llist_del_first(struct llist_head *head)
 	struct llist_node *first;
 
 	do {
-		first = head->llh_first;
-		membar_datadep_consumer();
-	} while (atomic_cas_ptr(&head->llh_first, first, first->next)
+		first = atomic_load_consume(&head->first);
+		if (first == NULL)
+			return NULL;
+	} while (atomic_cas_ptr(&head->first, first, first->next)
 	    != first);
-	membar_enter();
 
 	return first;
 }
 
+#define	_llist_next(ENTRY, FIELD)					      \
+({									      \
+	__typeof__((ENTRY)->FIELD.next) _NODE =				      \
+	    atomic_load_consume(&(ENTRY)->FIELD.next);			      \
+	(_NODE == NULL ? NULL :						      \
+	    llist_entry(_NODE, __typeof__(*(ENTRY)), FIELD));		      \
+})
+
+#define	llist_for_each_entry(ENTRY, NODE, FIELD)			      \
+	for ((ENTRY) = ((NODE) == NULL ? NULL :				      \
+		    (membar_datadep_consumer(),				      \
+			llist_entry(NODE, typeof(*(ENTRY)), FIELD)));	      \
+		(ENTRY) != NULL;					      \
+		(ENTRY) = _llist_next(ENTRY, FIELD))
+
 #define	llist_for_each_entry_safe(ENTRY, TMP, NODE, FIELD)		      \
 	for ((ENTRY) = ((NODE) == NULL ? NULL :				      \
-			llist_entry(NODE, typeof(*(ENTRY)), FIELD));	      \
-		(ENTRY) == NULL ? 0 :					      \
 		    (membar_datadep_consumer(),				      \
-			(TMP) = list_entry((ENTRY)->FIELD.next,	      \
-			    typeof(*(ENTRY)), FIELD),			      \
-			1);						      \
-		 (ENTRY) = (TMP))
+			llist_entry(NODE, typeof(*(ENTRY)), FIELD)));	      \
+		((ENTRY) == NULL ? 0 :					      \
+		    ((TMP) = _llist_next(ENTRY, FIELD), 1));		      \
+		(ENTRY) = (TMP))
 
 #endif	/* _LINUX_LLIST_H_ */
