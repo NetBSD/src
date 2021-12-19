@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_fops.c,v 1.15 2020/02/14 04:36:56 riastradh Exp $	*/
+/*	$NetBSD: drm_file.c,v 1.1 2021/12/19 00:57:55 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_fops.c,v 1.15 2020/02/14 04:36:56 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_file.c,v 1.1 2021/12/19 00:57:55 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/select.h>
