@@ -1,4 +1,4 @@
-/*	$NetBSD: timer.h,v 1.10 2021/12/19 10:38:05 riastradh Exp $	*/
+/*	$NetBSD: timer.h,v 1.11 2021/12/19 11:35:51 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -49,6 +49,8 @@ struct timer_list {
 };
 
 #define	from_timer(V, T, F)	container_of(T, __typeof__(*(V)), F)
+
+#define	TIMER_IRQSAFE		__BIT(0)
 
 static inline void
 timer_setup(struct timer_list *timer, void (*fn)(struct timer_list *),
