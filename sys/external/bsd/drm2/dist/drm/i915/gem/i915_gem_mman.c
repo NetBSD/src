@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_gem_mman.c,v 1.14 2021/12/19 12:08:10 riastradh Exp $	*/
+/*	$NetBSD: i915_gem_mman.c,v 1.15 2021/12/19 12:08:27 riastradh Exp $	*/
 
 /*
  * SPDX-License-Identifier: MIT
@@ -7,7 +7,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_gem_mman.c,v 1.14 2021/12/19 12:08:10 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_gem_mman.c,v 1.15 2021/12/19 12:08:27 riastradh Exp $");
 
 #include <linux/anon_inodes.h>
 #include <linux/mman.h>
@@ -1077,7 +1077,6 @@ i915_gem_mmap_object(struct drm_device *dev, off_t byte_offset, size_t nbytes,
 	}
 
 	/* Success!  */
-	drm_gem_object_get(&obj->base);
 	*uobjp = &obj->base.gemo_uvmobj;
 	*uoffsetp = 0;
 	return 0;
