@@ -1,4 +1,4 @@
-/*	$NetBSD: tasklet.h,v 1.3 2021/12/19 01:17:31 riastradh Exp $	*/
+/*	$NetBSD: tasklet.h,v 1.4 2021/12/19 01:17:46 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -34,9 +34,12 @@
 
 /* namespace */
 #define	tasklet_disable			linux_tasklet_disable
+#define	tasklet_disable_sync_once	linux_tasklet_disable_sync_once
 #define	tasklet_enable			linux_tasklet_enable
+#define	tasklet_enable_sync_once	linux_tasklet_enable_sync_once
 #define	tasklet_hi_schedule		linux_tasklet_hi_schedule
 #define	tasklet_init			linux_tasklet_init
+#define	tasklet_is_enabled		linux_tasklet_is_enabled
 #define	tasklet_kill			linux_tasklet_kill
 #define	tasklet_schedule		linux_tasklet_schedule
 #define	tasklet_struct			linux_tasklet_struct
@@ -77,5 +80,10 @@ void	tasklet_enable(struct tasklet_struct *);
 void	tasklet_schedule(struct tasklet_struct *);
 void	tasklet_hi_schedule(struct tasklet_struct *);
 void	tasklet_kill(struct tasklet_struct *);
+
+/* i915drmkms hack */
+void	tasklet_disable_sync_once(struct tasklet_struct *);
+void	tasklet_enable_sync_once(struct tasklet_struct *);
+bool	tasklet_is_enabled(const struct tasklet_struct *);
 
 #endif	/* _LINUX_TASKLET_H_ */
