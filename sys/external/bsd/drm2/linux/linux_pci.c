@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_pci.c,v 1.12 2021/12/19 01:21:15 riastradh Exp $	*/
+/*	$NetBSD: linux_pci.c,v 1.13 2021/12/19 01:46:52 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_pci.c,v 1.12 2021/12/19 01:21:15 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_pci.c,v 1.13 2021/12/19 01:46:52 riastradh Exp $");
 
 #include <linux/pci.h>
 
@@ -353,7 +353,7 @@ pci_bus_alloc_resource(struct pci_bus *bus, struct resource *resource,
 	if (error)
 		return error;
 
-	resource->size = size;
+	resource->end = start + (size - 1);
 	return 0;
 }
 
