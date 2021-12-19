@@ -1,4 +1,4 @@
-/*	$NetBSD: overflow.h,v 1.3 2021/12/19 10:50:30 riastradh Exp $	*/
+/*	$NetBSD: overflow.h,v 1.4 2021/12/19 11:05:40 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@ array_size(size_t x, size_t y)
 {
 	size_t xy;
 
-	if (check_add_overflow(x, y, &xy))
+	if (check_mul_overflow(x, y, &xy))
 		return SIZE_MAX;
 	return xy;
 }
