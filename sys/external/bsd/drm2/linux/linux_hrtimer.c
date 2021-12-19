@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_hrtimer.c,v 1.1 2021/12/19 11:23:52 riastradh Exp $	*/
+/*	$NetBSD: linux_hrtimer.c,v 1.2 2021/12/19 11:53:09 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2021 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_hrtimer.c,v 1.1 2021/12/19 11:23:52 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_hrtimer.c,v 1.2 2021/12/19 11:53:09 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/callout.h>
@@ -151,13 +151,18 @@ hrtimer_cancel(struct hrtimer *hrt)
 		 */
 		active = callout_pending(&H->ch);
 	}
+	return active;
+}
+
+void
+hrtimer_destroy(struct hrtimer *hrt)
+{
+	struct hrtimer_private *H = hrt->hrt_private;
 
 	callout_destroy(&H->ch);
 	kmem_free(H, sizeof(*H));
 
 	explicit_memset(hrt, 0, sizeof(*hrt)); /* paranoia */
-
-	return active;
 }
 
 bool
