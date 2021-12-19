@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_kthread.c,v 1.2 2021/12/19 12:24:19 riastradh Exp $	*/
+/*	$NetBSD: linux_kthread.c,v 1.3 2021/12/19 12:29:39 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2021 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_kthread.c,v 1.2 2021/12/19 12:24:19 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_kthread.c,v 1.3 2021/12/19 12:29:39 riastradh Exp $");
 
 #include <sys/types.h>
 
@@ -115,7 +115,7 @@ kthread_alloc(int (*func)(void *), void *cookie)
 
 	T = kmem_zalloc(sizeof(*T), KM_SLEEP);
 
-	mutex_init(&T->kt_lock, MUTEX_DEFAULT, IPL_NONE);
+	mutex_init(&T->kt_lock, MUTEX_DEFAULT, IPL_VM);
 	cv_init(&T->kt_cv, "lnxkthrd");
 
 	T->kt_func = func;
