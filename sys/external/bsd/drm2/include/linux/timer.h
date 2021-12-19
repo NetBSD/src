@@ -1,4 +1,4 @@
-/*	$NetBSD: timer.h,v 1.16 2021/12/19 12:02:05 riastradh Exp $	*/
+/*	$NetBSD: timer.h,v 1.17 2021/12/19 12:33:48 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -87,7 +87,11 @@ del_timer(struct timer_list *timer)
 	 * NetBSD: `callout_stop will return a non-zero value if the
 	 * callout was EXPIRED.', meaning it is no longer pending.
 	 */
-	return !callout_stop(&timer->tl_callout);
+	if (!callout_pending(&timer->tl_callout))
+		return 0;	/* not active */
+	if (callout_stop(&timer->tl_callout))
+		return 0;	/* too late, already expired */
+	return 1;		/* we stopped it while active */
 }
 
 static inline int
@@ -101,7 +105,11 @@ del_timer_sync(struct timer_list *timer)
 	 * NetBSD: `[callout_halt] will return a non-zero value if the
 	 * callout was EXPIRED.', meaning it is no longer pending.
 	 */
-	return !callout_halt(&timer->tl_callout, NULL);
+	if (!callout_pending(&timer->tl_callout))
+		return 0;	/* not active */
+	if (callout_halt(&timer->tl_callout, NULL))
+		return 0;	/* too late, already expired */
+	return 1;		/* we stopped it while active */
 }
 
 static inline bool
