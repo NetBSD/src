@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu_fb.c,v 1.8 2021/12/18 23:44:58 riastradh Exp $	*/
+/*	$NetBSD: amdgpu_fb.c,v 1.9 2021/12/19 10:46:43 riastradh Exp $	*/
 
 /*
  * Copyright © 2007 David Airlie
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdgpu_fb.c,v 1.8 2021/12/18 23:44:58 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdgpu_fb.c,v 1.9 2021/12/19 10:46:43 riastradh Exp $");
 
 #include <linux/module.h>
 #include <linux/pm_runtime.h>
@@ -336,21 +336,8 @@ out:
 static int amdgpu_fbdev_destroy(struct drm_device *dev, struct amdgpu_fbdev *rfbdev)
 {
 	struct amdgpu_framebuffer *rfb = &rfbdev->rfb;
-#ifdef __NetBSD__
-	int ret;
-#endif
 
-#ifdef __NetBSD__
-	/* XXX errno NetBSD->Linux */
-	ret = -config_detach(rfbdev->helper.fbdev, DETACH_FORCE);
-	if (ret) {
-		DRM_ERROR("failed to detach amdgpufb: %d\n", ret);
-		return ret;
-	}
-	rfbdev->helper.fbdev = NULL;
-#else
 	drm_fb_helper_unregister_fbi(&rfbdev->helper);
-#endif
 
 	if (rfb->base.obj[0]) {
 		amdgpufb_destroy_pinned_object(rfb->base.obj[0]);
