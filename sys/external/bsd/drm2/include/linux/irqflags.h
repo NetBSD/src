@@ -1,4 +1,4 @@
-/*	$NetBSD: irqflags.h,v 1.1 2014/07/16 20:56:25 riastradh Exp $	*/
+/*	$NetBSD: irqflags.h,v 1.2 2021/12/19 01:45:44 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -36,5 +36,8 @@
 
 #define	local_irq_save(flags)		((flags) = splvm())
 #define	local_irq_restore(flags)	(splx((flags)))
+
+/* Only for positive assertions.  */
+#define	irqs_disabled()			true
 
 #endif	/* _LINUX_IRQFLAGS_H_ */
