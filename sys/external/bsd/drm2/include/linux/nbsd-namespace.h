@@ -1,4 +1,4 @@
-/*	$NetBSD: nbsd-namespace.h,v 1.2 2020/02/14 04:38:48 riastradh Exp $	*/
+/*	$NetBSD: nbsd-namespace.h,v 1.3 2021/12/19 09:59:22 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -42,5 +42,8 @@
 #define	LIST_HEAD	LINUX_LIST_HEAD
 #define	mutex_destroy	linux_mutex_destroy
 #define	mutex_init	linux_mutex_init
+
+/* Disable our historic malloc(9) compatibility macro.  */
+#undef	free
 
 #endif  /* _LINUX_NBSD_NAMESPACE_H_ */
