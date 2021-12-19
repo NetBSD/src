@@ -1,4 +1,4 @@
-#	$NetBSD: files.amdgpu,v 1.22 2021/12/19 12:21:29 riastradh Exp $
+#	$NetBSD: files.amdgpu,v 1.23 2021/12/19 12:22:48 riastradh Exp $
 
 version	20180827
 
@@ -147,7 +147,7 @@ file	external/bsd/drm2/dist/drm/amd/amdgpu/../display/dc/core/amdgpu_dc_stream.c
 file	external/bsd/drm2/dist/drm/amd/amdgpu/../display/dc/core/amdgpu_dc_surface.c	amdgpu
 file	external/bsd/drm2/dist/drm/amd/amdgpu/../display/dc/core/amdgpu_dc_vm_helper.c	amdgpu
 file	external/bsd/drm2/dist/drm/amd/amdgpu/../display/dc/dce/amdgpu_dce_abm.c	amdgpu
-#file	external/bsd/drm2/dist/drm/amd/amdgpu/../display/dc/dce/amdgpu_dce_audio.c	amdgpu
+file	external/bsd/drm2/dist/drm/amd/amdgpu/../display/dc/dce/amdgpu_dce_audio.c	amdgpu
 file	external/bsd/drm2/dist/drm/amd/amdgpu/../display/dc/dce/amdgpu_dce_aux.c	amdgpu
 file	external/bsd/drm2/dist/drm/amd/amdgpu/../display/dc/dce/amdgpu_dce_clock_source.c	amdgpu
 file	external/bsd/drm2/dist/drm/amd/amdgpu/../display/dc/dce/amdgpu_dce_dmcu.c	amdgpu
@@ -497,4 +497,4 @@ file	external/bsd/drm2/dist/drm/amd/amdgpu/amdgpu_vm.c	amdgpu
 file	external/bsd/drm2/dist/drm/amd/amdgpu/amdgpu_vm_cpu.c	amdgpu
 file	external/bsd/drm2/dist/drm/amd/amdgpu/amdgpu_vm_sdma.c	amdgpu
 file	external/bsd/drm2/dist/drm/amd/amdgpu/amdgpu_vram_mgr.c	amdgpu
-#file	external/bsd/drm2/dist/drm/amd/amdgpu/amdgpu_xgmi.c	amdgpu
+file	external/bsd/drm2/amdgpu/amdgpu_xgmi.c	amdgpu
