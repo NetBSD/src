@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_drm.c,v 1.21 2021/12/19 11:25:48 riastradh Exp $ */
+/* $NetBSD: sunxi_drm.c,v 1.22 2021/12/19 12:28:20 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2019 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_drm.c,v 1.21 2021/12/19 11:25:48 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_drm.c,v 1.22 2021/12/19 12:28:20 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -91,6 +91,8 @@ static void	sunxi_drm_disable_vblank(struct drm_device *, unsigned int);
 static int	sunxi_drm_load(struct drm_device *, unsigned long);
 static void	sunxi_drm_unload(struct drm_device *);
 
+static void	sunxi_drm_task_work(struct work *, void *);
+
 static struct drm_driver sunxi_drm_driver = {
 	.driver_features = DRIVER_MODESET | DRIVER_GEM,
 	.dev_priv_size = 0,
@@ -140,6 +142,14 @@ sunxi_drm_attach(device_t parent, device_t self, void *aux)
 	sc->sc_dmat = faa->faa_dmat;
 	sc->sc_bst = faa->faa_bst;
 	sc->sc_phandle = faa->faa_phandle;
+	sc->sc_task_thread = NULL;
+	SIMPLEQ_INIT(&sc->sc_tasks);
+	if (workqueue_create(&sc->sc_task_wq, "sunxidrm",
+		&sunxi_drm_task_work, NULL, PRI_NONE, IPL_NONE, WQ_MPSAFE)) {
+		aprint_error_dev(self, "unable to create workqueue\n");
+		sc->sc_task_wq = NULL;
+		return;
+	}
 
 	aprint_naive("\n");
 
@@ -173,16 +183,41 @@ sunxi_drm_init(device_t dev)
 	struct drm_driver * const driver = &sunxi_drm_driver;
 	int error;
 
+	/*
+	 * Cause any tasks issued synchronously during attach to be
+	 * processed at the end of this function.
+	 */
+	sc->sc_task_thread = curlwp;
+
 	error = -drm_dev_register(sc->sc_ddev, 0);
 	if (error) {
 		aprint_error_dev(dev, "couldn't register DRM device: %d\n",
 		    error);
-		return;
+		goto out;
 	}
+	sc->sc_dev_registered = true;
 
 	aprint_normal_dev(dev, "initialized %s %d.%d.%d %s on minor %d\n",
 	    driver->name, driver->major, driver->minor, driver->patchlevel,
 	    driver->date, sc->sc_ddev->primary->index);
+
+	/*
+	 * Process asynchronous tasks queued synchronously during
+	 * attach.  This will be for display detection to attach a
+	 * framebuffer, so we have the opportunity for a console device
+	 * to attach before autoconf has completed, in time for init(8)
+	 * to find that console without panicking.
+	 */
+	while (!SIMPLEQ_EMPTY(&sc->sc_tasks)) {
+		struct sunxi_drm_task *const task =
+		    SIMPLEQ_FIRST(&sc->sc_tasks);
+
+		SIMPLEQ_REMOVE_HEAD(&sc->sc_tasks, sdt_u.queue);
+		(*task->sdt_fn)(task);
+	}
+
+out:	/* Cause any subesquent tasks to be processed by the workqueue.  */
+	atomic_store_relaxed(&sc->sc_task_thread, NULL);
 }
 
 static vmem_t *
@@ -531,4 +566,32 @@ sunxi_drm_endpoint_device(struct fdt_endpoint *ep)
 			return sep->ddev;
 
 	return NULL;
+}
+
+static void
+sunxi_drm_task_work(struct work *work, void *cookie)
+{
+	struct sunxi_drm_task *task = container_of(work, struct sunxi_drm_task,
+	    sdt_u.work);
+
+	(*task->sdt_fn)(task);
+}
+
+void
+sunxi_task_init(struct sunxi_drm_task *task,
+    void (*fn)(struct sunxi_drm_task *))
+{
+
+	task->sdt_fn = fn;
+}
+
+void
+sunxi_task_schedule(device_t self, struct sunxi_drm_task *task)
+{
+	struct sunxi_drm_softc *sc = device_private(self);
+
+	if (atomic_load_relaxed(&sc->sc_task_thread) == curlwp)
+		SIMPLEQ_INSERT_TAIL(&sc->sc_tasks, task, sdt_u.queue);
+	else
+		workqueue_enqueue(sc->sc_task_wq, &task->sdt_u.work, NULL);
 }
