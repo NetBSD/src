@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_gem.c,v 1.70 2021/12/19 11:26:35 riastradh Exp $	*/
+/*	$NetBSD: i915_gem.c,v 1.71 2021/12/19 12:25:27 riastradh Exp $	*/
 
 /*
  * Copyright © 2008-2015 Intel Corporation
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_gem.c,v 1.70 2021/12/19 11:26:35 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_gem.c,v 1.71 2021/12/19 12:25:27 riastradh Exp $");
 
 #ifdef __NetBSD__
 #if 0				/* XXX uvmhist option?  */
@@ -752,9 +752,6 @@ shmem_pwrite(struct page *page, int offset, int len, char __user *user_data,
 	     bool needs_clflush_before,
 	     bool needs_clflush_after)
 {
-#ifdef __NetBSD__
-	return -EFAULT;
-#else
 	char *vaddr;
 	int ret;
 
@@ -770,7 +767,6 @@ shmem_pwrite(struct page *page, int offset, int len, char __user *user_data,
 	kunmap(page);
 
 	return ret ? -EFAULT : 0;
-#endif
 }
 
 static int
