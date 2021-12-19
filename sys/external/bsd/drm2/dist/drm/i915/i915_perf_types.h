@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_perf_types.h,v 1.4 2021/12/19 11:11:11 riastradh Exp $	*/
+/*	$NetBSD: i915_perf_types.h,v 1.5 2021/12/19 11:11:51 riastradh Exp $	*/
 
 /* SPDX-License-Identifier: MIT */
 /*
@@ -82,6 +82,7 @@ struct i915_perf_stream_ops {
 	 */
 	void (*disable)(struct i915_perf_stream *stream);
 
+#ifdef notyet
 	/**
 	 * @poll_wait: Call poll_wait, passing a wait queue that will be woken
 	 * once there is something ready to read() for the stream
@@ -89,6 +90,7 @@ struct i915_perf_stream_ops {
 	void (*poll_wait)(struct i915_perf_stream *stream,
 			  struct file *file,
 			  poll_table *wait);
+#endif
 
 	/**
 	 * @wait_unlocked: For handling a blocking read, wait until there is
