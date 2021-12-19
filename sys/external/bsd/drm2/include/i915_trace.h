@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_trace.h,v 1.20 2021/12/19 11:38:04 riastradh Exp $	*/
+/*	$NetBSD: i915_trace.h,v 1.21 2021/12/19 11:48:19 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013, 2018 The NetBSD Foundation, Inc.
@@ -512,4 +512,42 @@ trace_intel_pipe_disable(struct intel_crtc *crtc)
 	TRACE1(i915,, pipe__disable,  crtc);
 }
 
+DEFINE_TRACE3(i915,, memory_cxsr,
+    "struct drm_i915_private *"/*dev_priv*/,
+    "bool"/*was_enabled*/,
+    "bool"/*enable*/);
+static inline void
+trace_intel_memory_cxsr(struct drm_i915_private *dev_priv, bool was_enabled, bool enable)
+{
+	TRACE3(i915,, memory_cxsr,  dev_priv, was_enabled, enable);
+}
+
+DEFINE_TRACE2(i915,, g4x_wm,
+    "struct intel_crtc *"/*crtc*/,
+    "struct g4x_wm_values *"/*wm*/);
+static inline void
+trace_g4x_wm(struct intel_crtc *crtc, const struct g4x_wm_values *wm)
+{
+	TRACE2(i915,, g4x_wm,  crtc, wm);
+}
+
+DEFINE_TRACE2(i915,, vlv_wm,
+    "struct intel_crtc *"/*crtc*/,
+    "struct vlv_wm_values *"/*wm*/);
+static inline void
+trace_vlv_wm(struct intel_crtc *crtc, const struct vlv_wm_values *wm)
+{
+	TRACE2(i915,, vlv_wm,  crtc, wm);
+}
+
+DEFINE_TRACE4(i915,, vlv_fifo_size,
+    "struct intel_crtc *"/*crtc*/,
+    "int"/*sprite0_start*/,
+    "int"/*sprite1_start*/,
+    "int"/*fifo_size*/);
+static inline void
+trace_vlv_fifo_size(struct intel_crtc *crtc, int sprite0_start, int sprite1_start, int fifo_size)
+{
+	TRACE4(i915,, vlv_fifo_size,  crtc, sprite0_start, sprite1_start, fifo_size);
+}
 #endif  /* _I915_TRACE_H_ */
