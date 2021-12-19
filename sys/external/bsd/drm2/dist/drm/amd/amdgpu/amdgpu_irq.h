@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu_irq.h,v 1.4 2021/12/18 23:44:58 riastradh Exp $	*/
+/*	$NetBSD: amdgpu_irq.h,v 1.5 2021/12/19 10:20:17 riastradh Exp $	*/
 
 /*
  * Copyright 2014 Advanced Micro Devices, Inc.
@@ -102,7 +102,7 @@ struct amdgpu_irq {
 };
 
 void amdgpu_irq_disable_all(struct amdgpu_device *adev);
-irqreturn_t amdgpu_irq_handler(int irq, void *arg);
+irqreturn_t amdgpu_irq_handler(DRM_IRQ_ARGS);
 
 int amdgpu_irq_init(struct amdgpu_device *adev);
 void amdgpu_irq_fini(struct amdgpu_device *adev);
