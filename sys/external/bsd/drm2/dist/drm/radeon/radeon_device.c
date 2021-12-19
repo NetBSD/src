@@ -1,4 +1,4 @@
-/*	$NetBSD: radeon_device.c,v 1.12 2021/12/19 11:26:26 riastradh Exp $	*/
+/*	$NetBSD: radeon_device.c,v 1.13 2021/12/19 11:52:38 riastradh Exp $	*/
 
 /*
  * Copyright 2008 Advanced Micro Devices, Inc.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radeon_device.c,v 1.12 2021/12/19 11:26:26 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radeon_device.c,v 1.13 2021/12/19 11:52:38 riastradh Exp $");
 
 #include <linux/console.h>
 #include <linux/efi.h>
@@ -1430,12 +1430,8 @@ int radeon_device_init(struct radeon_device *rdev,
 	mutex_init(&rdev->srbm_mutex);
 	init_rwsem(&rdev->pm.mclk_lock);
 	init_rwsem(&rdev->exclusive_lock);
-#ifdef __NetBSD__
 	spin_lock_init(&rdev->irq.vblank_lock);
 	DRM_INIT_WAITQUEUE(&rdev->irq.vblank_queue, "radvblnk");
-#else
-	init_waitqueue_head(&rdev->irq.vblank_queue);
-#endif
 	r = radeon_gem_init(rdev);
 	if (r)
 		return r;
@@ -1710,12 +1706,10 @@ void radeon_device_fini(struct radeon_device *rdev)
 	if (rdev->family >= CHIP_BONAIRE)
 		radeon_doorbell_fini(rdev);
 
-#ifdef __NetBSD__
 	DRM_DESTROY_WAITQUEUE(&rdev->irq.vblank_queue);
 	spin_lock_destroy(&rdev->irq.vblank_lock);
 	destroy_rwsem(&rdev->exclusive_lock);
 	destroy_rwsem(&rdev->pm.mclk_lock);
-#endif
 	mutex_destroy(&rdev->srbm_mutex);
 	mutex_destroy(&rdev->gpu_clock_mutex);
 	mutex_destroy(&rdev->pm.mutex);
