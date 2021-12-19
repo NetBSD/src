@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_gtt_subr.c,v 1.1 2021/12/19 11:45:01 riastradh Exp $	*/
+/*	$NetBSD: intel_gtt_subr.c,v 1.2 2021/12/19 12:27:02 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 /* Intel GTT stubs */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intel_gtt_subr.c,v 1.1 2021/12/19 11:45:01 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intel_gtt_subr.c,v 1.2 2021/12/19 12:27:02 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/bus.h>
@@ -45,9 +45,49 @@ __KERNEL_RCSID(0, "$NetBSD: intel_gtt_subr.c,v 1.1 2021/12/19 11:45:01 riastradh
 #include <dev/pci/agpvar.h>
 #include <dev/pci/agp_i810var.h>
 
+#include <linux/pci.h>
 #include <linux/scatterlist.h>
 
+#include "drm/i915_drm.h"
 #include "drm/intel-gtt.h"
+
+static uint8_t
+pci_conf_read8(pci_chipset_tag_t pc, pcitag_t tag, bus_size_t reg)
+{
+	uint32_t v;
+
+	v = pci_conf_read(pc, tag, reg & ~3);
+
+	return 0xff & (v >> (8 * (reg & 3)));
+}
+
+static uint8_t
+pci_read8(pci_chipset_tag_t pc, int bus, int dev, int func, bus_size_t reg)
+{
+	pcitag_t tag = pci_make_tag(pc, bus, dev, func);
+
+	return pci_conf_read8(pc, tag, reg);
+}
+
+static uint16_t
+pci_conf_read16(pci_chipset_tag_t pc, pcitag_t tag, bus_size_t reg)
+{
+	uint32_t v;
+
+	KASSERT((reg & 1) == 0);
+
+	v = pci_conf_read(pc, tag, reg & ~2);
+
+	return 0xffff & (v >> (8 * (reg & 2)));
+}
+
+static uint16_t
+pci_read16(pci_chipset_tag_t pc, int bus, int dev, int func, bus_size_t reg)
+{
+	pcitag_t tag = pci_make_tag(pc, bus, dev, func);
+
+	return pci_conf_read16(pc, tag, reg);
+}
 
 /* Access to this should be single-threaded.  */
 static struct {
@@ -55,29 +95,347 @@ static struct {
 	bus_dmamap_t		scratch_map;
 } intel_gtt;
 
+/* XXX This logic should be merged with agp_i810.c.  */
 struct resource intel_graphics_stolen_res;
+
+static bus_size_t
+i830_tseg_size(pci_chipset_tag_t pc)
+{
+	uint8_t esmramc = pci_read8(pc, 0, 0, 0, I830_ESMRAMC);
+
+	if ((esmramc & TSEG_ENABLE) == 0)
+		return 0;
+
+	return (esmramc & I830_TSEG_SIZE_1M) ? 1024*1024 : 512*1024;
+}
+
+static bus_size_t
+i845_tseg_size(pci_chipset_tag_t pc)
+{
+	uint8_t esmramc = pci_read8(pc, 0, 0, 0, I845_ESMRAMC);
+
+	if ((esmramc & TSEG_ENABLE) == 0)
+		return 0;
+
+	switch (esmramc & I845_TSEG_SIZE_MASK) {
+	case I845_TSEG_SIZE_512K:
+		return 512*1024;
+	case I845_TSEG_SIZE_1M:
+		return 1024*1024;
+	default:
+		return 0;
+	}
+}
+
+static bus_size_t
+i85x_tseg_size(pci_chipset_tag_t pc)
+{
+	uint8_t esmramc = pci_read8(pc, 0, 0, 0, I85X_ESMRAMC);
+
+	if ((esmramc & TSEG_ENABLE) == 0)
+		return 0;
+
+	return 1024*1024;
+}
+
+static bus_size_t
+i830_tom(pci_chipset_tag_t pc)
+{
+	uint8_t drb3 = pci_read8(pc, 0, 0, 0, I830_DRB3);
+
+	return (bus_size_t)32*1024*1024 * drb3;
+}
+
+static bus_size_t
+i85x_tom(pci_chipset_tag_t pc)
+{
+	uint8_t drb3 = pci_read8(pc, 0, 0, 1, I85X_DRB3);
+
+	return (bus_size_t)32*1024*1024 * drb3;
+}
+
+static bus_size_t
+i830_stolen_size(pci_chipset_tag_t pc, pcitag_t tag)
+{
+	uint16_t gmch_ctrl = pci_read16(pc, 0, 0, 0, I830_GMCH_CTRL);
+
+	switch (gmch_ctrl & I830_GMCH_GMS_MASK) {
+	case I830_GMCH_GMS_STOLEN_512:
+		return 512*1024;
+	case I830_GMCH_GMS_STOLEN_1024:
+		return 1024*1024;
+	case I830_GMCH_GMS_STOLEN_8192:
+		return 8*1024*1024;
+	case I830_GMCH_GMS_LOCAL:
+	default:
+		aprint_error("%s: invalid gmch_ctrl 0x%04x\n", __func__,
+		    gmch_ctrl);
+		return 0;
+	}
+}
+
+static bus_size_t
+gen3_stolen_size(pci_chipset_tag_t pc, pcitag_t tag)
+{
+	uint16_t gmch_ctrl = pci_read16(pc, 0, 0, 0, I830_GMCH_CTRL);
+
+	switch (gmch_ctrl & I855_GMCH_GMS_MASK) {
+	case I855_GMCH_GMS_STOLEN_1M:
+		return 1024*1024;
+	case I855_GMCH_GMS_STOLEN_4M:
+		return 4*1024*1024;
+	case I855_GMCH_GMS_STOLEN_8M:
+		return 8*1024*1024;
+	case I855_GMCH_GMS_STOLEN_16M:
+		return 16*1024*1024;
+	case I855_GMCH_GMS_STOLEN_32M:
+		return 32*1024*1024;
+	case I915_GMCH_GMS_STOLEN_48M:
+		return 48*1024*1024;
+	case I915_GMCH_GMS_STOLEN_64M:
+		return 64*1024*1024;
+	case G33_GMCH_GMS_STOLEN_128M:
+		return 128*1024*1024;
+	case G33_GMCH_GMS_STOLEN_256M:
+		return 256*1024*1024;
+	case INTEL_GMCH_GMS_STOLEN_96M:
+		return 96*1024*1024;
+	case INTEL_GMCH_GMS_STOLEN_160M:
+		return 160*1024*1024;
+	case INTEL_GMCH_GMS_STOLEN_224M:
+		return 224*1024*1024;
+	case INTEL_GMCH_GMS_STOLEN_352M:
+		return 352*1024*1024;
+	default:
+		aprint_error("%s: invalid gmch_ctrl 0x%04x\n", __func__,
+		    gmch_ctrl);
+		return 0;
+	}
+}
+
+static bus_size_t
+gen6_stolen_size(pci_chipset_tag_t pc, pcitag_t tag)
+{
+	uint16_t gmch_ctrl = pci_conf_read16(pc, tag, SNB_GMCH_CTRL);
+	uint16_t gms = (gmch_ctrl >> SNB_GMCH_GMS_SHIFT) & SNB_GMCH_GMS_MASK;
+
+	return (bus_size_t)32*1024*1024 * gms;
+}
+
+static bus_size_t
+gen8_stolen_size(pci_chipset_tag_t pc, pcitag_t tag)
+{
+	uint16_t gmch_ctrl = pci_conf_read16(pc, tag, SNB_GMCH_CTRL);
+	uint16_t gms = (gmch_ctrl >> BDW_GMCH_GMS_SHIFT) & BDW_GMCH_GMS_MASK;
+
+	return (bus_size_t)32*1024*1024 * gms;
+}
+
+static bus_size_t
+chv_stolen_size(pci_chipset_tag_t pc, pcitag_t tag)
+{
+	uint16_t gmch_ctrl = pci_conf_read16(pc, tag, SNB_GMCH_CTRL);
+	uint16_t gms = (gmch_ctrl >> SNB_GMCH_GMS_SHIFT) & SNB_GMCH_GMS_MASK;
+
+	if (gms <= 0x10)
+		return (bus_size_t)32*1024*1024 * gms;
+	else if (gms <= 0x16)
+		return (bus_size_t)(8 + 4*(gms - 0x11))*1024*1024;
+	else
+		return (bus_size_t)(36 + 4*(gms - 0x17))*1024*1024;
+}
+
+static bus_size_t
+gen9_stolen_size(pci_chipset_tag_t pc, pcitag_t tag)
+{
+	uint16_t gmch_ctrl = pci_conf_read16(pc, tag, SNB_GMCH_CTRL);
+	uint16_t gms = (gmch_ctrl >> BDW_GMCH_GMS_SHIFT) & BDW_GMCH_GMS_MASK;
+
+	if (gms <= 0xef)
+		return (bus_size_t)32*1024*1024 * gms;
+	else
+		return (bus_size_t)(4 + 4*(gms - 0xf0))*1024*1024;
+}
+
+static bus_addr_t
+i830_stolen_base(pci_chipset_tag_t pc, pcitag_t tag, bus_size_t stolen_size)
+{
+
+	return i830_tom(pc) - i830_tseg_size(pc) - stolen_size;
+}
+
+static bus_addr_t
+i845_stolen_base(pci_chipset_tag_t pc, pcitag_t tag, bus_size_t stolen_size)
+{
+
+	return i830_tom(pc) - i845_tseg_size(pc) - stolen_size;
+}
+
+static bus_addr_t
+i85x_stolen_base(pci_chipset_tag_t pc, pcitag_t tag, bus_size_t stolen_size)
+{
+
+	return i85x_tom(pc) - i85x_tseg_size(pc) - stolen_size;
+}
+
+static bus_addr_t
+i865_stolen_base(pci_chipset_tag_t pc, pcitag_t tag, bus_size_t stolen_size)
+{
+	uint16_t toud = pci_read16(pc, 0, 0, 0, I865_TOUD);
+
+	return i845_tseg_size(pc) + (64*1024 * toud);
+}
+
+static bus_addr_t
+gen3_stolen_base(pci_chipset_tag_t pc, pcitag_t tag, bus_size_t stolen_size)
+{
+	uint32_t bsm = pci_conf_read(pc, tag, INTEL_BSM);
+
+	return bsm & INTEL_BSM_MASK;
+}
+
+static bus_addr_t
+gen11_stolen_base(pci_chipset_tag_t pc, pcitag_t tag, bus_size_t stolen_size)
+{
+	uint32_t bsm;
+
+	bsm = pci_conf_read(pc, tag, INTEL_GEN11_BSM_DW0) & INTEL_BSM_MASK;
+	bsm |= (uint64_t)pci_conf_read(pc, tag, INTEL_GEN11_BSM_DW1) << 32;
+
+	return bsm;
+}
+
+struct intel_stolen_ops {
+	bus_size_t	(*size)(pci_chipset_tag_t, pcitag_t);
+	bus_addr_t	(*base)(pci_chipset_tag_t, pcitag_t, bus_size_t);
+};
+
+static const struct intel_stolen_ops i830_stolen_ops = {
+	.size = i830_stolen_size,
+	.base = i830_stolen_base,
+};
+
+static const struct intel_stolen_ops i845_stolen_ops = {
+	.size = i830_stolen_size,
+	.base = i845_stolen_base,
+};
+
+static const struct intel_stolen_ops i85x_stolen_ops = {
+	.size = gen3_stolen_size,
+	.base = i85x_stolen_base,
+};
+
+static const struct intel_stolen_ops i865_stolen_ops = {
+	.size = gen3_stolen_size,
+	.base = i865_stolen_base,
+};
+
+static const struct intel_stolen_ops gen3_stolen_ops = {
+	.size = gen3_stolen_size,
+	.base = gen3_stolen_base,
+};
+
+static const struct intel_stolen_ops gen6_stolen_ops = {
+	.size = gen6_stolen_size,
+	.base = gen3_stolen_base,
+};
+
+static const struct intel_stolen_ops gen8_stolen_ops = {
+	.size = gen8_stolen_size,
+	.base = gen3_stolen_base,
+};
+
+static const struct intel_stolen_ops gen9_stolen_ops = {
+	.size = gen9_stolen_size,
+	.base = gen3_stolen_base,
+};
+
+static const struct intel_stolen_ops chv_stolen_ops = {
+	.size = chv_stolen_size,
+	.base = gen3_stolen_base,
+};
+
+static const struct intel_stolen_ops gen11_stolen_ops = {
+	.size = gen9_stolen_size,
+	.base = gen11_stolen_base,
+};
+
+static const struct pci_device_id intel_stolen_ids[] = {
+	INTEL_I830_IDS(&i830_stolen_ops),
+	INTEL_I845G_IDS(&i845_stolen_ops),
+	INTEL_I85X_IDS(&i85x_stolen_ops),
+	INTEL_I865G_IDS(&i865_stolen_ops),
+	INTEL_I915G_IDS(&gen3_stolen_ops),
+	INTEL_I915GM_IDS(&gen3_stolen_ops),
+	INTEL_I945G_IDS(&gen3_stolen_ops),
+	INTEL_I945GM_IDS(&gen3_stolen_ops),
+	INTEL_VLV_IDS(&gen6_stolen_ops),
+	INTEL_PINEVIEW_G_IDS(&gen3_stolen_ops),
+	INTEL_PINEVIEW_M_IDS(&gen3_stolen_ops),
+	INTEL_I965G_IDS(&gen3_stolen_ops),
+	INTEL_G33_IDS(&gen3_stolen_ops),
+	INTEL_I965GM_IDS(&gen3_stolen_ops),
+	INTEL_GM45_IDS(&gen3_stolen_ops),
+	INTEL_G45_IDS(&gen3_stolen_ops),
+	INTEL_IRONLAKE_D_IDS(&gen3_stolen_ops),
+	INTEL_IRONLAKE_M_IDS(&gen3_stolen_ops),
+	INTEL_SNB_D_IDS(&gen6_stolen_ops),
+	INTEL_SNB_M_IDS(&gen6_stolen_ops),
+	INTEL_IVB_M_IDS(&gen6_stolen_ops),
+	INTEL_IVB_D_IDS(&gen6_stolen_ops),
+	INTEL_HSW_IDS(&gen6_stolen_ops),
+	INTEL_BDW_IDS(&gen8_stolen_ops),
+	INTEL_CHV_IDS(&chv_stolen_ops),
+	INTEL_SKL_IDS(&gen9_stolen_ops),
+	INTEL_BXT_IDS(&gen9_stolen_ops),
+	INTEL_KBL_IDS(&gen9_stolen_ops),
+	INTEL_CFL_IDS(&gen9_stolen_ops),
+	INTEL_GLK_IDS(&gen9_stolen_ops),
+	INTEL_CNL_IDS(&gen9_stolen_ops),
+	INTEL_ICL_11_IDS(&gen11_stolen_ops),
+	INTEL_EHL_IDS(&gen11_stolen_ops),
+	INTEL_TGL_12_IDS(&gen11_stolen_ops),
+};
 
 void
 intel_gtt_get(uint64_t *va_size, bus_addr_t *aper_base, uint64_t *aper_size)
 {
-	struct agp_softc *const sc = agp_i810_sc;
+	struct agp_softc *sc;
+	pci_chipset_tag_t pc;
+	pcitag_t tag;
+	struct agp_i810_softc *isc;
+	const struct intel_stolen_ops *ops;
+	bus_addr_t stolen_base;
+	bus_size_t stolen_size;
+	unsigned i;
 
-	if (sc == NULL) {
+	if ((sc = agp_i810_sc) == NULL) {
 		*va_size = 0;
 		*aper_base = 0;
 		*aper_size = 0;
 		return;
 	}
 
-	struct agp_i810_softc *const isc = sc->as_chipc;
+	pc = sc->as_pc;
+	tag = sc->as_tag;
+
+	isc = sc->as_chipc;
 	*va_size = ((size_t)(isc->gtt_size/sizeof(uint32_t)) << PAGE_SHIFT);
 	*aper_base = sc->as_apaddr;
 	*aper_size = sc->as_apsize;
 
-#ifdef notyet
-	intel_graphics_stolen_res.base = ...;
-	intel_graphics_stolen_res.size = isc->stolen;
-#endif
+	for (i = 0; i < __arraycount(intel_stolen_ids); i++) {
+		if (intel_stolen_ids[i].device == PCI_PRODUCT(sc->as_id)) {
+			ops = (const struct intel_stolen_ops *)
+			    intel_stolen_ids[i].driver_data;
+			stolen_size = (*ops->size)(pc, tag);
+			stolen_base = (*ops->base)(pc, tag, stolen_size);
+			intel_graphics_stolen_res.start = stolen_base;
+			intel_graphics_stolen_res.end =
+			    stolen_base + stolen_size - 1;
+			break;
+		}
+	}
 }
 
 int
