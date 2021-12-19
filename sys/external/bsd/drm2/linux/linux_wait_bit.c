@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_wait_bit.c,v 1.4 2021/12/19 11:26:50 riastradh Exp $	*/
+/*	$NetBSD: linux_wait_bit.c,v 1.5 2021/12/19 12:36:09 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_wait_bit.c,v 1.4 2021/12/19 11:26:50 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_wait_bit.c,v 1.5 2021/12/19 12:36:09 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -104,16 +104,13 @@ wait_bit_exit(struct waitbitentry *wbe)
 	mutex_exit(&wbe->lock);
 }
 
-void
-wake_up_bit(const volatile unsigned long *bitmap, unsigned bit)
-{
-	struct waitbitentry *wbe;
-
-	wbe = wait_bit_enter(bitmap, bit);
-	cv_broadcast(&wbe->cv);
-	wait_bit_exit(wbe);
-}
-
+/*
+ * clear_and_wake_up_bit(bit, bitmap)
+ *
+ *	Clear the specified bit in the bitmap and wake any waiters in
+ *	wait_on_bit or wait_on_bit_timeout that were waiting for it to
+ *	clear.
+ */
 void
 clear_and_wake_up_bit(int bit, volatile unsigned long *bitmap)
 {
@@ -125,38 +122,55 @@ clear_and_wake_up_bit(int bit, volatile unsigned long *bitmap)
 	wait_bit_exit(wbe);
 }
 
+/*
+ * wait_on_bit(bitmap, bit, flags)
+ *
+ *	Wait for the specified bit in bitmap to be cleared.  Returns 0
+ *	on success, -EINTR on signal, unless flags has
+ *	TASK_UNINTERRUPTIBLE set.
+ */
 int
 wait_on_bit(const volatile unsigned long *bitmap, unsigned bit, int flags)
 {
 	struct waitbitentry *wbe;
 	int error, ret;
 
-	if (test_bit(bit, bitmap))
+	if (test_bit(bit, bitmap) == 0)
 		return 0;
 
 	wbe = wait_bit_enter(bitmap, bit);
 
-	while (!test_bit(bit, bitmap)) {
+	while (test_bit(bit, bitmap)) {
 		if (flags & TASK_UNINTERRUPTIBLE) {
 			cv_wait(&wbe->cv, &wbe->lock);
 		} else {
 			error = cv_wait_sig(&wbe->cv, &wbe->lock);
-			if (error == EINTR || error == ERESTART)
-				ret = -ERESTARTSYS;
-			else if (error != 0)
-				ret = -error;
-			if (ret)
+			if (error) {
+				/* cv_wait_sig can only fail on signal.  */
+				KASSERTMSG(error == EINTR || error == ERESTART,
+				    "error=%d", error);
+				ret = -EINTR;
 				goto out;
+			}
 		}
 	}
 
-	/* Bit is set.  Return zero on success.   */
+	/* Bit is clear.  Return zero on success.   */
+	KASSERT(test_bit(bit, bitmap) == 0);
 	ret = 0;
 
-out:	wait_bit_exit(wbe);
+out:	KASSERT(test_bit(bit, bitmap) == 0 || ret != 0);
+	wait_bit_exit(wbe);
 	return ret;
 }
 
+/*
+ * wait_on_bit_timeout(bitmap, bit, flags, timeout)
+ *
+ *	Wait for the specified bit in bitmap to be cleared.  Returns 0
+ *	on success, -EINTR on signal unless flags has
+ *	TASK_UNINTERRUPTIBLE set, or -EAGAIN on timeout.
+ */
 int
 wait_on_bit_timeout(const volatile unsigned long *bitmap, unsigned bit,
     int flags, unsigned long timeout)
@@ -164,42 +178,55 @@ wait_on_bit_timeout(const volatile unsigned long *bitmap, unsigned bit,
 	struct waitbitentry *wbe;
 	int error, ret;
 
-	if (test_bit(bit, bitmap))
-		return timeout;
+	if (test_bit(bit, bitmap) == 0)
+		return 0;
 
 	wbe = wait_bit_enter(bitmap, bit);
 
-	while (!test_bit(bit, bitmap)) {
+	while (test_bit(bit, bitmap)) {
 		unsigned starttime, endtime;
 
-		starttime = hardclock_ticks;
-		if (flags & TASK_UNINTERRUPTIBLE) {
-			error = cv_timedwait(&wbe->cv, &wbe->lock,
-			    MIN(INT_MAX, timeout));
-		} else {
-			error = cv_timedwait_sig(&wbe->cv, &wbe->lock,
-			    MIN(INT_MAX, timeout));
-		}
-		endtime = hardclock_ticks;
-
-		/* If we timed out, return zero time left.  */
-		if (error == EWOULDBLOCK || endtime - starttime < timeout) {
-			ret = 0;
+		if (timeout == 0) {
+			ret = -EAGAIN;
 			goto out;
 		}
 
-		/* If we were interrupted, return -ERESTARTSYS.  */
-		if (error == EINTR || error == ERESTART) {
-			ret = -ERESTARTSYS;
+		starttime = getticks();
+		if (flags & TASK_UNINTERRUPTIBLE) {
+			error = cv_timedwait(&wbe->cv, &wbe->lock,
+			    MIN(timeout, INT_MAX/2));
+		} else {
+			error = cv_timedwait_sig(&wbe->cv, &wbe->lock,
+			    MIN(timeout, INT_MAX/2));
+		}
+		endtime = getticks();
+
+		/*
+		 * If we were interrupted or timed out, massage the
+		 * error return and stop here.
+		 */
+		if (error) {
+			KASSERTMSG((error == EINTR || error == ERESTART ||
+				error == EWOULDBLOCK), "error=%d", error);
+			if (error == EINTR || error == ERESTART) {
+				ret = -EINTR;
+			} else if (error == EWOULDBLOCK) {
+				ret = -EAGAIN;
+			} else {
+				panic("invalid error=%d", error);
+			}
 			goto out;
 		}
 
 		/* Otherwise, debit the time spent.  */
-		timeout -= (endtime - starttime);
+		timeout -= MIN(timeout, (endtime - starttime));
 	}
-	/* Bit is set.  Return the time left.  */
+
+	/* Bit is clear.  Return zero on success.  */
+	KASSERT(test_bit(bit, bitmap) == 0);
 	ret = timeout;
 
-out:	wait_bit_exit(wbe);
+out:	KASSERT(test_bit(bit, bitmap) == 0 || ret != 0);
+	wait_bit_exit(wbe);
 	return ret;
 }
