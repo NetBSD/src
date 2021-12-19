@@ -1,4 +1,4 @@
-/*	$NetBSD: bitops.h,v 1.9 2019/12/05 20:03:09 maya Exp $	*/
+/*	$NetBSD: bitops.h,v 1.10 2021/12/19 01:04:12 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -106,7 +106,10 @@ hweight64(uint64_t n)
 #define	BITS_TO_LONGS(n)						\
 	roundup2((n), (sizeof(unsigned long) * CHAR_BIT))
 
-#define	BIT(n)	((uintmax_t)1 << (n))
+#define	BITS_PER_BYTE	NBBY
+
+#define	BIT(n)		((unsigned long)__BIT(n))
+#define	BIT_ULL(n)	((unsigned long long)__BIT(n))
 #define	GENMASK(h,l)	__BITS(h,l)
 
 static inline int
