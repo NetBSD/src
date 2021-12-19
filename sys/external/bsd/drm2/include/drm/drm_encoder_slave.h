@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_encoder_slave.h,v 1.2 2021/12/19 00:50:26 riastradh Exp $	*/
+/*	$NetBSD: drm_encoder_slave.h,v 1.3 2021/12/19 10:48:15 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@ struct drm_encoder_slave_funcs {
 
 struct drm_encoder_slave {
 	struct drm_encoder		base;
-	struct drm_encoder_slave_funcs	*slave_funcs;
+	const struct drm_encoder_slave_funcs *slave_funcs;
 	void				*slave_priv;
 	void				*bus_priv;
 };
