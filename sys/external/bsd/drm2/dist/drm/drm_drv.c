@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_drv.c,v 1.18 2021/12/19 09:45:18 riastradh Exp $	*/
+/*	$NetBSD: drm_drv.c,v 1.19 2021/12/19 09:45:25 riastradh Exp $	*/
 
 /*
  * Created: Fri Jan 19 10:48:35 2001 by faith@acm.org
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_drv.c,v 1.18 2021/12/19 09:45:18 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_drv.c,v 1.19 2021/12/19 09:45:25 riastradh Exp $");
 
 #include <linux/debugfs.h>
 #include <linux/fs.h>
@@ -50,6 +50,8 @@ __KERNEL_RCSID(0, "$NetBSD: drm_drv.c,v 1.18 2021/12/19 09:45:18 riastradh Exp $
 #include "drm_crtc_internal.h"
 #include "drm_internal.h"
 #include "drm_legacy.h"
+
+#include <linux/nbsd-namespace.h>
 
 MODULE_AUTHOR("Gareth Hughes, Leif Delgass, José Fonseca, Jon Smirl");
 MODULE_DESCRIPTION("DRM shared core routines");
@@ -752,7 +754,9 @@ err_free:
 	sysmon_pswitch_unregister(&dev->sc_monitor_hotplug);
 err_pswitch:
 #endif
+#ifndef __NetBSD__		/* XXX drm sysfs */
 	put_device(dev->dev);
+#endif
 	mutex_destroy(&dev->master_mutex);
 	mutex_destroy(&dev->clientlist_mutex);
 	mutex_destroy(&dev->filelist_mutex);
@@ -831,7 +835,9 @@ void drm_dev_fini(struct drm_device *dev)
 	sysmon_pswitch_unregister(&dev->sc_monitor_hotplug);
 #endif
 
+#ifndef __NetBSD__		/* XXX drm sysfs */
 	put_device(dev->dev);
+#endif
 
 	mutex_destroy(&dev->master_mutex);
 	mutex_destroy(&dev->clientlist_mutex);
