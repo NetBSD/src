@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_display.c,v 1.6 2021/12/19 11:56:08 riastradh Exp $	*/
+/*	$NetBSD: intel_display.c,v 1.7 2021/12/19 11:56:23 riastradh Exp $	*/
 
 /*
  * Copyright © 2006-2007 Intel Corporation
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intel_display.c,v 1.6 2021/12/19 11:56:08 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intel_display.c,v 1.7 2021/12/19 11:56:23 riastradh Exp $");
 
 #include "intel_display.h"	/* for pipe_drmhack */
 
@@ -17562,6 +17562,9 @@ int intel_modeset_init(struct drm_i915_private *i915)
 	i915->flip_wq = alloc_workqueue("i915_flip", WQ_HIGHPRI |
 					WQ_UNBOUND, WQ_UNBOUND_MAX_ACTIVE);
 
+	spin_lock_init(&i915->atomic_commit_lock);
+	DRM_INIT_WAITQUEUE(&i915->atomic_commit_wq, "i915cmit");
+
 	intel_mode_config_init(i915);
 
 	ret = intel_bw_init(i915);
@@ -18550,6 +18553,9 @@ void intel_modeset_driver_remove(struct drm_i915_private *i915)
 	intel_gmbus_teardown(i915);
 
 	intel_bw_cleanup(i915);
+
+	DRM_DESTROY_WAITQUEUE(&i915->atomic_commit_wq);
+	spin_lock_destroy(&i915->atomic_commit_lock);
 
 	destroy_workqueue(i915->flip_wq);
 	destroy_workqueue(i915->modeset_wq);
