@@ -1,4 +1,4 @@
-/*	$NetBSD: dma-buf.h,v 1.4 2018/08/27 15:25:13 riastradh Exp $	*/
+/*	$NetBSD: dma-buf.h,v 1.5 2021/12/19 01:14:29 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -57,8 +57,7 @@ enum dma_data_direction {
 };
 
 struct dma_buf_ops {
-	int	(*attach)(struct dma_buf *, struct device *,
-		    struct dma_buf_attachment *);
+	int	(*attach)(struct dma_buf *, struct dma_buf_attachment *);
 	void	(*detach)(struct dma_buf *, struct dma_buf_attachment *);
 	struct sg_table *
 		(*map_dma_buf)(struct dma_buf_attachment *,
@@ -70,10 +69,8 @@ struct dma_buf_ops {
 		    enum dma_data_direction);
 	int	(*end_cpu_access)(struct dma_buf *, size_t, size_t,
 		    enum dma_data_direction);
-	void *	(*kmap_atomic)(struct dma_buf *, unsigned long);
-	void	(*kunmap_atomic)(struct dma_buf *, unsigned long, void *);
-	void *	(*kmap)(struct dma_buf *, unsigned long);
-	void	(*kunmap)(struct dma_buf *, unsigned long, void *);
+	void *	(*map)(struct dma_buf *, unsigned long);
+	void	(*unmap)(struct dma_buf *, unsigned long, void *);
 	int	(*mmap)(struct dma_buf *, off_t *, size_t, int, int *,
 		    int *, struct uvm_object **, int *);
 	void *	(*vmap)(struct dma_buf *);
@@ -95,6 +92,7 @@ struct dma_buf {
 struct dma_buf_attachment {
 	void				*priv;
 	struct dma_buf			*dmabuf;
+	struct device			*dev;
 };
 
 struct dma_buf_export_info {
