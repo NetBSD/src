@@ -1,6 +1,6 @@
 #!/bin/sh
 
-#	$NetBSD: amdgpu2netbsd,v 1.3 2018/08/27 14:22:47 riastradh Exp $
+#	$NetBSD: amdgpu2netbsd,v 1.4 2021/12/19 10:20:31 riastradh Exp $
 #
 # $ /path/to/amdgpu2netbsd > /path/to/files.amdgpu.new
 #
@@ -9,6 +9,7 @@
 
 set -Ceu
 
+: ${GMAKE:=gmake}
 : ${MV:=mv}
 
 # Location of amdgpu sources relative to $NETBSDSOURCEDIR.
@@ -17,10 +18,22 @@ amdgpu_top=external/bsd/drm2/dist/drm/amd/amdgpu
 # config(5) flag for the amdgpu driver.
 amdgpu_flag=amdgpu
 
-env CONFIG_ACPI=y \
-env CONFIG_DRM_AMDGPU_CIK=y \
-env src=. \
-make -f Makefile -V '$(amdgpu-y)' \
+{
+	printf 'show-amdgpu-y:\n'
+	printf '\t@echo $(amdgpu-y)\n'
+	printf 'include Makefile\n'
+} | env \
+	env CONFIG_ACPI=y \
+	env CONFIG_DRM_AMDGPU=y \
+	env CONFIG_DRM_AMDGPU_CIK=y \
+	env CONFIG_DRM_AMDGPU_SI=y \
+	env CONFIG_DRM_AMD_ACP=y \
+	env CONFIG_DRM_AMD_DC=y \
+	env CONFIG_DRM_AMD_DC_DCN=y \
+	env CONFIG_DRM_AMD_DC_HDCP=y \
+	env srctree="`pwd`" \
+	env src=. \
+	${GMAKE} -f - -s show-amdgpu-y \
 | tr ' ' '\n' \
 | grep -v '^$' \
 | sed -e 's,\.o$,.c,' \
