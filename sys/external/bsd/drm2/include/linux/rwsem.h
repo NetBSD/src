@@ -1,4 +1,4 @@
-/*	$NetBSD: rwsem.h,v 1.3 2021/12/19 11:21:30 riastradh Exp $	*/
+/*	$NetBSD: rwsem.h,v 1.4 2021/12/19 11:21:45 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -60,6 +60,7 @@ struct rw_semaphore {
 	struct lwp	*rws_writer;
 	unsigned	rws_readers;
 	bool		rws_writewanted;
+	bool		rws_debug;
 };
 
 void init_rwsem(struct rw_semaphore *);
