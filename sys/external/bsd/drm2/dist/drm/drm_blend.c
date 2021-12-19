@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_blend.c,v 1.3 2021/12/19 00:49:51 riastradh Exp $	*/
+/*	$NetBSD: drm_blend.c,v 1.4 2021/12/19 00:50:01 riastradh Exp $	*/
 
 /*
  * Copyright (C) 2016 Samsung Electronics Co.Ltd
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_blend.c,v 1.3 2021/12/19 00:49:51 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_blend.c,v 1.4 2021/12/19 00:50:01 riastradh Exp $");
 
 #include <linux/export.h>
 #include <linux/slab.h>
@@ -503,7 +503,7 @@ int drm_atomic_normalize_zpos(struct drm_device *dev,
 {
 	struct drm_crtc *crtc;
 	struct drm_crtc_state *old_crtc_state, *new_crtc_state;
-	struct drm_plane *plane;
+	struct drm_plane *plane __unused;
 	struct drm_plane_state *old_plane_state, *new_plane_state;
 	int i, ret = 0;
 

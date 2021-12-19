@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_dp_mst_topology.c,v 1.6 2021/12/18 23:44:57 riastradh Exp $	*/
+/*	$NetBSD: drm_dp_mst_topology.c,v 1.7 2021/12/19 00:50:01 riastradh Exp $	*/
 
 /*
  * Copyright © 2014 Red Hat
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_dp_mst_topology.c,v 1.6 2021/12/18 23:44:57 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_dp_mst_topology.c,v 1.7 2021/12/19 00:50:01 riastradh Exp $");
 
 #include <linux/delay.h>
 #include <linux/errno.h>
@@ -3143,7 +3143,7 @@ int drm_dp_send_power_updown_phy(struct drm_dp_mst_topology_mgr *mgr,
 				 struct drm_dp_mst_port *port, bool power_up)
 {
 	struct drm_dp_sideband_msg_tx *txmsg;
-	int len, ret;
+	int len __unused, ret;
 
 	port = drm_dp_mst_topology_get_port_validated(mgr, port);
 	if (!port)
