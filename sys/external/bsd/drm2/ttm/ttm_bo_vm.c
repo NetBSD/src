@@ -1,4 +1,4 @@
-/*	$NetBSD: ttm_bo_vm.c,v 1.14 2020/02/23 15:46:40 ad Exp $	*/
+/*	$NetBSD: ttm_bo_vm.c,v 1.15 2021/12/19 01:47:24 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ttm_bo_vm.c,v 1.14 2020/02/23 15:46:40 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ttm_bo_vm.c,v 1.15 2021/12/19 01:47:24 riastradh Exp $");
 
 #include <sys/types.h>
 
@@ -101,7 +101,7 @@ ttm_bo_uvm_fault(struct uvm_faultinfo *ufi, vaddr_t vaddr,
 	}
 
 	/* Try to lock the buffer.  */
-	ret = ttm_bo_reserve(bo, true, true, false, NULL);
+	ret = ttm_bo_reserve(bo, true, true, NULL);
 	if (ret) {
 		if (ret != -EBUSY)
 			goto out0;
@@ -132,7 +132,7 @@ ttm_bo_uvm_fault(struct uvm_faultinfo *ufi, vaddr_t vaddr,
 
 	ret = ttm_bo_uvm_fault_idle(bo, ufi);
 	if (ret) {
-		KASSERT(ret == -ERESTART);
+		KASSERT(ret == -ERESTART || ret == -EFAULT);
 		/* ttm_bo_uvm_fault_idle calls uvmfault_unlockall for us.  */
 		ttm_bo_unreserve(bo);
 		/* XXX errno Linux->NetBSD */
@@ -156,13 +156,18 @@ ttm_bo_uvm_fault(struct uvm_faultinfo *ufi, vaddr_t vaddr,
 		size = bo->mem.bus.size;
 		pgprot = ttm_io_prot(bo->mem.placement, vm_prot);
 	} else {
+		struct ttm_operation_ctx ctx = {
+			.interruptible = false,
+			.no_wait_gpu = false,
+			.flags = TTM_OPT_FLAG_FORCE_ALLOC,
+		};
 		u.ttm = bo->ttm;
 		size = (bo->ttm->num_pages << PAGE_SHIFT);
 		if (ISSET(bo->mem.placement, TTM_PL_FLAG_CACHED))
 			pgprot = vm_prot;
 		else
 			pgprot = ttm_io_prot(bo->mem.placement, vm_prot);
-		if ((*u.ttm->bdev->driver->ttm_tt_populate)(u.ttm)) {
+		if (ttm_tt_populate(u.ttm, &ctx)) {
 			ret = -ENOMEM;
 			goto out2;
 		}
@@ -208,16 +213,24 @@ out0:	uvmfault_unlockall(ufi, ufi->entry->aref.ar_amap, NULL);
 static int
 ttm_bo_uvm_fault_idle(struct ttm_buffer_object *bo, struct uvm_faultinfo *ufi)
 {
+	int ret = 0;
 
-	if (__predict_true(!test_bit(TTM_BO_PRIV_FLAG_MOVING,
-		    &bo->priv_flags)))
-		return 0;
-	if (ttm_bo_wait(bo, false, false, true) == 0)
-		return 0;
+	if (__predict_true(!bo->moving))
+		goto out0;
 
-	uvmfault_unlockall(ufi, ufi->entry->aref.ar_amap, NULL);
-	(void)ttm_bo_wait(bo, false, true, false);
-	return -ERESTART;
+	if (dma_fence_is_signaled(bo->moving))
+		goto out1;
+
+	if (dma_fence_wait(bo->moving, true) != 0) {
+		ret = -EFAULT;
+		goto out2;
+	}
+
+	ret = -ERESTART;
+out2:	uvmfault_unlockall(ufi, ufi->entry->aref.ar_amap, NULL);
+out1:	dma_fence_put(bo->moving);
+	bo->moving = NULL;
+out0:	return ret;
 }
 
 int
