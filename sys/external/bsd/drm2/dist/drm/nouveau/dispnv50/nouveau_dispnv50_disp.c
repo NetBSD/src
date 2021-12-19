@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_dispnv50_disp.c,v 1.3 2021/12/19 10:49:29 riastradh Exp $	*/
+/*	$NetBSD: nouveau_dispnv50_disp.c,v 1.4 2021/12/19 10:49:38 riastradh Exp $	*/
 
 /*
  * Copyright 2011 Red Hat Inc.
@@ -24,7 +24,7 @@
  * Authors: Ben Skeggs
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_dispnv50_disp.c,v 1.3 2021/12/19 10:49:29 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_dispnv50_disp.c,v 1.4 2021/12/19 10:49:38 riastradh Exp $");
 
 #include "disp.h"
 #include "atom.h"
@@ -58,8 +58,11 @@ __KERNEL_RCSID(0, "$NetBSD: nouveau_dispnv50_disp.c,v 1.3 2021/12/19 10:49:29 ri
 #include "nouveau_encoder.h"
 #include "nouveau_fence.h"
 #include "nouveau_fbcon.h"
+#include "nv50_display.h"
 
 #include <subdev/bios/dp.h>
+
+#include <linux/nbsd-namespace.h>
 
 /******************************************************************************
  * Atomic state
@@ -1234,7 +1237,7 @@ nv50_mstm_cleanup(struct nv50_mstm *mstm)
 {
 	struct nouveau_drm *drm = nouveau_drm(mstm->outp->base.base.dev);
 	struct drm_encoder *encoder;
-	int ret;
+	int ret __unused;
 
 	NV_ATOMIC(drm, "%s: mstm cleanup\n", mstm->outp->base.base.name);
 	ret = drm_dp_check_act_status(&mstm->mgr);
@@ -1258,7 +1261,7 @@ nv50_mstm_prepare(struct nv50_mstm *mstm)
 {
 	struct nouveau_drm *drm = nouveau_drm(mstm->outp->base.base.dev);
 	struct drm_encoder *encoder;
-	int ret;
+	int ret __unused;
 
 	NV_ATOMIC(drm, "%s: mstm prepare\n", mstm->outp->base.base.name);
 	ret = drm_dp_update_payload_part1(&mstm->mgr);
