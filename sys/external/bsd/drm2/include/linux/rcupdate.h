@@ -1,4 +1,4 @@
-/*	$NetBSD: rcupdate.h,v 1.9 2021/12/19 01:18:02 riastradh Exp $	*/
+/*	$NetBSD: rcupdate.h,v 1.10 2021/12/19 01:18:09 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -56,6 +56,15 @@
 	WARN_ON(!(C));							      \
 	(P);								      \
 })
+
+#define	rcu_access_pointer(P) ({					      \
+	__typeof__(*(P)) *__rcu_access_pointer_tmp = (P);		      \
+	__insn_barrier();						      \
+	__rcu_access_pointer_tmp;					      \
+})
+
+/* kill_dependency */
+#define	rcu_pointer_handoff(P)	(P)
 
 struct rcu_head {
 	void		(*rcuh_callback)(struct rcu_head *);
