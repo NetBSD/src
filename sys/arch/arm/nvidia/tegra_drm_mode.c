@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_drm_mode.c,v 1.20 2021/01/15 23:11:59 jmcneill Exp $ */
+/* $NetBSD: tegra_drm_mode.c,v 1.21 2021/12/19 12:44:14 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,13 +27,15 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_drm_mode.c,v 1.20 2021/01/15 23:11:59 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_drm_mode.c,v 1.21 2021/12/19 12:44:14 riastradh Exp $");
 
-#include <drm/drmP.h>
 #include <drm/drm_crtc.h>
 #include <drm/drm_crtc_helper.h>
+#include <drm/drm_drv.h>
 #include <drm/drm_edid.h>
 #include <drm/drm_plane_helper.h>
+#include <drm/drm_probe_helper.h>
+#include <drm/drm_vblank.h>
 
 #include <dev/i2c/ddcvar.h>
 
@@ -50,7 +52,7 @@ __KERNEL_RCSID(0, "$NetBSD: tegra_drm_mode.c,v 1.20 2021/01/15 23:11:59 jmcneill
 #include <external/bsd/drm2/dist/drm/drm_internal.h>
 
 static struct drm_framebuffer *tegra_fb_create(struct drm_device *,
-		    struct drm_file *, struct drm_mode_fb_cmd2 *);
+    struct drm_file *, const struct drm_mode_fb_cmd2 *);
 
 static const struct drm_mode_config_funcs tegra_mode_config_funcs = {
 	.fb_create = tegra_fb_create
@@ -146,12 +148,10 @@ static const struct drm_connector_funcs tegra_connector_funcs = {
 static int	tegra_connector_mode_valid(struct drm_connector *,
 		    struct drm_display_mode *);
 static int	tegra_connector_get_modes(struct drm_connector *);
-static struct drm_encoder *tegra_connector_best_encoder(struct drm_connector *);
 
 static const struct drm_connector_helper_funcs tegra_connector_helper_funcs = {
 	.mode_valid = tegra_connector_mode_valid,
 	.get_modes = tegra_connector_get_modes,
-	.best_encoder = tegra_connector_best_encoder
 };
 
 static const struct tegra_hdmi_tmds_config {
@@ -218,7 +218,7 @@ tegra_drm_framebuffer_init(struct drm_device *ddev,
 
 static struct drm_framebuffer *
 tegra_fb_create(struct drm_device *ddev, struct drm_file *file,
-    struct drm_mode_fb_cmd2 *cmd)
+    const struct drm_mode_fb_cmd2 *cmd)
 {
 	struct tegra_framebuffer *fb;
 	struct drm_gem_object *gem_obj;
@@ -231,19 +231,13 @@ tegra_fb_create(struct drm_device *ddev, struct drm_file *file,
 		return NULL;
 	}
 
-	gem_obj = drm_gem_object_lookup(ddev, file, cmd->handles[0]);
+	gem_obj = drm_gem_object_lookup(file, cmd->handles[0]);
 	if (gem_obj == NULL)
 		return NULL;
 
 	fb = kmem_zalloc(sizeof(*fb), KM_SLEEP);
+	drm_helper_mode_fill_fb_struct(ddev, &fb->base, cmd);
 	fb->obj = to_drm_gem_cma_obj(gem_obj);
-	fb->base.pitches[0] = cmd->pitches[0];
-	fb->base.offsets[0] = cmd->offsets[0];
-	fb->base.width = cmd->width;
-	fb->base.height = cmd->height;
-	fb->base.pixel_format = cmd->pixel_format;
-	drm_fb_get_bpp_depth(cmd->pixel_format, &fb->base.depth,
-	    &fb->base.bits_per_pixel);
 
 	error = tegra_drm_framebuffer_init(ddev, fb);
 	if (error)
@@ -254,7 +248,7 @@ tegra_fb_create(struct drm_device *ddev, struct drm_file *file,
 	drm_framebuffer_cleanup(&fb->base);
 dealloc:
 	kmem_free(fb, sizeof(*fb));
-	drm_gem_object_unreference_unlocked(gem_obj);
+	drm_gem_object_put_unlocked(gem_obj);
 
 	return NULL;
 }
@@ -274,7 +268,7 @@ tegra_framebuffer_destroy(struct drm_framebuffer *fb)
 	struct tegra_framebuffer *tegra_fb = to_tegra_framebuffer(fb);
 
 	drm_framebuffer_cleanup(fb);
-	drm_gem_object_unreference_unlocked(&tegra_fb->obj->base);
+	drm_gem_object_put_unlocked(&tegra_fb->obj->base);
 	kmem_free(tegra_fb, sizeof(*tegra_fb));
 }
 
@@ -321,7 +315,7 @@ tegra_crtc_init(struct drm_device *ddev, int index)
 	crtc->size = size;
 	crtc->intr = intr;
 	crtc->ih = intr_establish_xname(intr, IPL_VM, IST_LEVEL | IST_MPSAFE,
-	    tegra_crtc_intr, crtc, device_xname(self)); /* XXX */
+	    tegra_crtc_intr, crtc, device_xname(sc->sc_dev)); /* XXX */
 	if (crtc->ih == NULL) {
 		DRM_ERROR("failed to establish interrupt for crtc %d\n", index);
 	}
@@ -406,7 +400,7 @@ tegra_crtc_cursor_set(struct drm_crtc *crtc, struct drm_file *file_priv,
 		goto done;
 	}
 
-	gem_obj = drm_gem_object_lookup(crtc->dev, file_priv, handle);
+	gem_obj = drm_gem_object_lookup(file_priv, handle);
 	if (gem_obj == NULL) {
 		DRM_ERROR("Cannot find cursor object %#x for crtc %d\n",
 		    handle, tegra_crtc->index);
@@ -506,7 +500,7 @@ done:
 	}
 
 	if (gem_obj) {
-		drm_gem_object_unreference_unlocked(gem_obj);
+		drm_gem_object_put_unlocked(gem_obj);
 	}
 
 	return error;
@@ -821,7 +815,7 @@ tegra_encoder_init(struct drm_device *ddev)
 	}
 
 	drm_encoder_init(ddev, &encoder->base, &tegra_encoder_funcs,
-	    DRM_MODE_ENCODER_TMDS);
+	    DRM_MODE_ENCODER_TMDS, NULL);
 	drm_encoder_helper_add(&encoder->base, &tegra_encoder_helper_funcs);
 
 	encoder->base.possible_crtcs = (1 << 0) | (1 << 1);
@@ -1098,7 +1092,8 @@ tegra_encoder_mode_set(struct drm_encoder *encoder,
 		    aibuf[7] | (aibuf[8] << 8) | (aibuf[9] << 16));
 
 		hdmi_avi_infoframe_init(&avii);
-		drm_hdmi_avi_infoframe_from_display_mode(&avii, mode);
+		drm_hdmi_avi_infoframe_from_display_mode(&avii, connector,
+		    mode);
 		hdmi_avi_infoframe_pack(&avii, aviibuf, sizeof(aviibuf));
 		HDMI_WRITE(tegra_encoder,
 		    HDMI_NV_PDISP_HDMI_AVI_INFOFRAME_HEADER_REG,
@@ -1117,7 +1112,7 @@ tegra_encoder_mode_set(struct drm_encoder *encoder,
 		HDMI_WRITE(tegra_encoder,
 		    HDMI_NV_PDISP_HDMI_AVI_INFOFRAME_SUBPACK1_HIGH_REG,
 		    aviibuf[14] | (aviibuf[15] << 8) | (aviibuf[16] << 16));
-		
+
 		HDMI_WRITE(tegra_encoder, HDMI_NV_PDISP_HDMI_GENERIC_CTRL_REG,
 		    HDMI_NV_PDISP_HDMI_GENERIC_CTRL_AUDIO);
 		HDMI_WRITE(tegra_encoder,
@@ -1181,7 +1176,7 @@ tegra_connector_init(struct drm_device *ddev, struct drm_encoder *encoder)
 	connector->base.polled =
 	    DRM_CONNECTOR_POLL_CONNECT | DRM_CONNECTOR_POLL_DISCONNECT;
 
-	drm_mode_connector_attach_encoder(&connector->base, encoder);
+	drm_connector_attach_encoder(&connector->base, encoder);
 
 	connector->hpd = sc->sc_pin_hpd;
 	if (!connector->hpd)
@@ -1271,36 +1266,17 @@ tegra_connector_get_modes(struct drm_connector *connector)
 			tegra_connector->has_audio =
 			    drm_detect_monitor_audio(pedid);
 		}
-		drm_mode_connector_update_edid_property(connector, pedid);
+		drm_connector_update_edid_property(connector, pedid);
 		error = drm_add_edid_modes(connector, pedid);
-		drm_edid_to_eld(connector, pedid);
 		if (drm_detect_hdmi_monitor(pedid)) {
 			prop_dictionary_set_uint16(prop, "physical-address",
 			    connector->physical_address);
 		}
 		return error;
 	} else {
-		drm_mode_connector_update_edid_property(connector, NULL);
+		drm_connector_update_edid_property(connector, NULL);
 		return 0;
 	}
-}
-
-static struct drm_encoder *
-tegra_connector_best_encoder(struct drm_connector *connector)
-{
-	int enc_id = connector->encoder_ids[0];
-	struct drm_mode_object *obj;
-	struct drm_encoder *encoder = NULL;
-
-	if (enc_id) {
-		obj = drm_mode_object_find(connector->dev, enc_id,
-		    DRM_MODE_OBJECT_ENCODER);
-		if (obj == NULL)
-			return NULL;
-		encoder = obj_to_encoder(obj);
-	}
-
-	return encoder;
 }
 
 static int
