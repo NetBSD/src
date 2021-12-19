@@ -1,4 +1,4 @@
-/*	$NetBSD: drmP.h,v 1.54 2021/12/19 01:56:42 riastradh Exp $	*/
+/*	$NetBSD: drmP.h,v 1.55 2021/12/19 01:56:50 riastradh Exp $	*/
 
 /*
  * Internal Header for the Direct Rendering Manager
@@ -157,89 +157,6 @@ struct drm_pending_event {
 struct drm_prime_file_private {
 	struct list_head head;
 	struct mutex lock;
-};
-
-/** File private data */
-struct drm_file {
-	unsigned authenticated :1;
-	/* Whether we're master for a minor. Protected by master_mutex */
-	unsigned is_master :1;
-	/* true when the client has asked us to expose stereo 3D mode flags */
-	unsigned stereo_allowed :1;
-	/*
-	 * true if client understands CRTC primary planes and cursor planes
-	 * in the plane list
-	 */
-	unsigned universal_planes:1;
-	/* true if client understands atomic properties */
-	unsigned atomic:1;
-	/*
-	 * This client is allowed to gain master privileges for @master.
-	 * Protected by struct drm_device::master_mutex.
-	 */
-	unsigned allowed_master:1;
-
-#ifndef __NetBSD__
-	struct pid *pid;
-	kuid_t uid;
-#endif
-	drm_magic_t magic;
-	struct list_head lhead;
-	struct drm_minor *minor;
-	unsigned long lock_count;
-
-	/** Mapping of mm object handles to object pointers. */
-	struct idr object_idr;
-	/** Lock for synchronization of access to object_idr. */
-	spinlock_t table_lock;
-
-	struct file *filp;
-	void *driver_priv;
-
-	struct drm_master *master; /* master this node is currently associated with
-				      N.B. not always minor->master */
-	/**
-	 * fbs - List of framebuffers associated with this file.
-	 *
-	 * Protected by fbs_lock. Note that the fbs list holds a reference on
-	 * the fb object to prevent it from untimely disappearing.
-	 */
-	struct list_head fbs;
-	struct mutex fbs_lock;
-
-	/** User-created blob properties; this retains a reference on the
-	 *  property. */
-	struct list_head blobs;
-
-#ifdef __NetBSD__
-	drm_waitqueue_t event_wait;
-	struct selinfo event_selq;
-#else
-	wait_queue_head_t event_wait;
-#endif
-	struct list_head event_list;
-	int event_space;
-
-	struct drm_prime_file_private prime;
-};
-
-/**
- * Lock data.
- */
-struct drm_lock_data {
-	struct drm_hw_lock *hw_lock;	/**< Hardware lock */
-	/** Private of lock holder's file (NULL=kernel) */
-	struct drm_file *file_priv;
-#ifdef __NetBSD__
-	drm_waitqueue_t lock_queue;	/**< Queue of blocked processes */
-#else
-	wait_queue_head_t lock_queue;	/**< Queue of blocked processes */
-#endif
-	unsigned long lock_time;	/**< Time of last lock in jiffies */
-	spinlock_t spinlock;
-	uint32_t kernel_waiters;
-	uint32_t user_waiters;
-	int idle_has_lock;
 };
 
 /**
