@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_perf.c,v 1.1 2021/12/19 01:40:34 riastradh Exp $	*/
+/*	$NetBSD: i915_perf.c,v 1.2 2021/12/19 01:44:10 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_perf.c,v 1.1 2021/12/19 01:40:34 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_perf.c,v 1.2 2021/12/19 01:44:10 riastradh Exp $");
 
 #include "i915_drv.h"
 
@@ -40,6 +40,6 @@ i915_perf_init(struct drm_i915_private *i915)
 }
 
 void
-i915_gemfs_fini(struct drm_i915_private *i915)
+i915_perf_fini(struct drm_i915_private *i915)
 {
 }
