@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_panel.c,v 1.3 2021/12/19 01:53:39 riastradh Exp $	*/
+/*	$NetBSD: intel_panel.c,v 1.4 2021/12/19 11:48:11 riastradh Exp $	*/
 
 /*
  * Copyright © 2006-2010 Intel Corporation
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intel_panel.c,v 1.3 2021/12/19 01:53:39 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intel_panel.c,v 1.4 2021/12/19 11:48:11 riastradh Exp $");
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
@@ -2008,8 +2008,10 @@ intel_panel_init_backlight_funcs(struct intel_panel *panel)
 		panel->backlight.hz_to_pwm = bxt_hz_to_pwm;
 	} else if (INTEL_PCH_TYPE(dev_priv) >= PCH_CNP) {
 		panel->backlight.setup = cnp_setup_backlight;
+#ifndef __NetBSD__ /* XXX mipi */
 		panel->backlight.enable = cnp_enable_backlight;
 		panel->backlight.disable = cnp_disable_backlight;
+#endif
 		panel->backlight.set = bxt_set_backlight;
 		panel->backlight.get = bxt_get_backlight;
 		panel->backlight.hz_to_pwm = cnp_hz_to_pwm;
