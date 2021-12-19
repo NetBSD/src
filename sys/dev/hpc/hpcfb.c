@@ -1,4 +1,4 @@
-/*	$NetBSD: hpcfb.c,v 1.64 2021/09/18 15:14:41 tsutsui Exp $	*/
+/*	$NetBSD: hpcfb.c,v 1.65 2021/12/19 21:15:28 andvar Exp $	*/
 
 /*-
  * Copyright (c) 1999
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpcfb.c,v 1.64 2021/09/18 15:14:41 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpcfb.c,v 1.65 2021/12/19 21:15:28 andvar Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_hpcfb.h"
@@ -516,7 +516,7 @@ hpcfb_cmap_reorder(struct hpcfb_fbconf *fbconf, struct hpcfb_devconfig *dc)
 	int i, j, bg, fg, tmp;
 
 	/*
-	 * Set forground and background so that the screen
+	 * Set foreground and background so that the screen
 	 * looks black on white.
 	 * Normally, black = 00 and white = ff.
 	 * HPCFB_ACCESS_REVERSE means black = ff and white = 00.
