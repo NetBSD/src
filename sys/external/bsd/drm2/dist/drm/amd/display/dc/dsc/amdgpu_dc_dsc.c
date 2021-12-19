@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu_dc_dsc.c,v 1.2 2021/12/18 23:45:04 riastradh Exp $	*/
+/*	$NetBSD: amdgpu_dc_dsc.c,v 1.3 2021/12/19 10:59:02 riastradh Exp $	*/
 
 /*
  * Copyright 2019 Advanced Micro Devices, Inc.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdgpu_dc_dsc.c,v 1.2 2021/12/18 23:45:04 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdgpu_dc_dsc.c,v 1.3 2021/12/19 10:59:02 riastradh Exp $");
 
 #include "dc_hw_types.h"
 #include "dsc.h"
@@ -311,6 +311,9 @@ static inline uint32_t dsc_div_by_10_round_up(uint32_t value)
 
 static inline uint32_t calc_dsc_bpp_x16(uint32_t stream_bandwidth_kbps, uint32_t pix_clk_100hz, uint32_t bpp_increment_div)
 {
+#ifdef __NetBSD__
+	panic("what is your float doing in my kernel");
+#else
 	uint32_t dsc_target_bpp_x16;
 	float f_dsc_target_bpp;
 	float f_stream_bandwidth_100bps = stream_bandwidth_kbps * 10.0f;
@@ -323,6 +326,7 @@ static inline uint32_t calc_dsc_bpp_x16(uint32_t stream_bandwidth_kbps, uint32_t
 	dsc_target_bpp_x16 = (dsc_target_bpp_x16 * 16) / precision;
 
 	return dsc_target_bpp_x16;
+#endif
 }
 
 /* Get DSC bandwidth range based on [min_bpp, max_bpp] target bitrate range, and timing's pixel clock

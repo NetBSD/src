@@ -1,8 +1,8 @@
-/*	$NetBSD: amdgpu_dc_link_dp.c,v 1.2 2021/12/18 23:45:02 riastradh Exp $	*/
+/*	$NetBSD: amdgpu_dc_link_dp.c,v 1.3 2021/12/19 10:59:01 riastradh Exp $	*/
 
 /* Copyright 2015 Advanced Micro Devices, Inc. */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdgpu_dc_link_dp.c,v 1.2 2021/12/18 23:45:02 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdgpu_dc_link_dp.c,v 1.3 2021/12/19 10:59:01 riastradh Exp $");
 
 #include "dm_services.h"
 #include "dc.h"
@@ -1291,9 +1291,9 @@ static void print_status_message(
 	const struct link_training_settings *lt_settings,
 	enum link_training_result status)
 {
-	char *link_rate = "Unknown";
-	char *lt_result = "Unknown";
-	char *lt_spread = "Disabled";
+	const char *link_rate = "Unknown";
+	const char *lt_result = "Unknown";
+	const char *lt_spread = "Disabled";
 
 	switch (lt_settings->link_settings.link_rate) {
 	case LINK_RATE_LOW:
@@ -3523,6 +3523,7 @@ bool detect_dp_sink_caps(struct dc_link *link)
 	/* TODO save sink caps in link->sink */
 }
 
+static
 enum dc_link_rate linkRateInKHzToLinkRateMultiplier(uint32_t link_rate_in_khz)
 {
 	enum dc_link_rate link_rate;
@@ -3818,7 +3819,7 @@ bool dc_link_dp_set_test_pattern(
 		/* Set CRTC Test Pattern */
 		set_crtc_test_pattern(link, pipe_ctx, test_pattern, test_pattern_color_space);
 		dp_set_hw_test_pattern(link, test_pattern,
-				(uint8_t *)p_custom_pattern,
+				(const uint8_t *)p_custom_pattern,
 				(uint32_t)cust_pattern_size);
 
 		/* Unblank Stream */
@@ -3854,7 +3855,7 @@ bool dc_link_dp_set_test_pattern(
 		}
 
 		dp_set_hw_test_pattern(link, test_pattern,
-				(uint8_t *)p_custom_pattern,
+				(const uint8_t *)p_custom_pattern,
 				(uint32_t)cust_pattern_size);
 
 		if (test_pattern != DP_TEST_PATTERN_VIDEO_MODE) {

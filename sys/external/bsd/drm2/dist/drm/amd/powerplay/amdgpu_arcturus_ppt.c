@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu_arcturus_ppt.c,v 1.2 2021/12/18 23:45:26 riastradh Exp $	*/
+/*	$NetBSD: amdgpu_arcturus_ppt.c,v 1.3 2021/12/19 10:59:02 riastradh Exp $	*/
 
 /*
  * Copyright 2019 Advanced Micro Devices, Inc.
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdgpu_arcturus_ppt.c,v 1.2 2021/12/18 23:45:26 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdgpu_arcturus_ppt.c,v 1.3 2021/12/19 10:59:02 riastradh Exp $");
 
 #include "pp_debug.h"
 #include <linux/firmware.h>
@@ -592,6 +592,7 @@ static int arcturus_populate_umd_state_clk(struct smu_context *smu)
 	return 0;
 }
 
+#ifdef CONFIG_SYSFS
 static int arcturus_get_clk_table(struct smu_context *smu,
 			struct pp_clock_levels_with_latency *clocks,
 			struct arcturus_single_dpm_table *dpm_table)
@@ -615,10 +616,14 @@ static int arcturus_freqs_in_same_level(int32_t frequency1,
 {
 	return (abs(frequency1 - frequency2) <= EPSILON);
 }
+#endif
 
 static int arcturus_print_clk_levels(struct smu_context *smu,
 			enum smu_clk_type type, char *buf)
 {
+#ifndef CONFIG_SYSFS
+	return 0;
+#else
 	int i, now, size = 0;
 	int ret = 0;
 	struct pp_clock_levels_with_latency clocks;
@@ -730,6 +735,7 @@ static int arcturus_print_clk_levels(struct smu_context *smu,
 	}
 
 	return size;
+#endif
 }
 
 static int arcturus_upload_dpm_level(struct smu_context *smu, bool max,
@@ -1323,6 +1329,9 @@ static int arcturus_get_power_limit(struct smu_context *smu,
 static int arcturus_get_power_profile_mode(struct smu_context *smu,
 					   char *buf)
 {
+#ifndef CONFIG_SYSFS
+	return 0;
+#else
 	struct amdgpu_device *adev = smu->adev;
 	DpmActivityMonitorCoeffInt_t activity_monitor;
 	static const char *profile_name[] = {
@@ -1421,6 +1430,7 @@ static int arcturus_get_power_profile_mode(struct smu_context *smu,
 	}
 
 	return size;
+#endif
 }
 
 static int arcturus_set_power_profile_mode(struct smu_context *smu,
@@ -1950,6 +1960,8 @@ static bool arcturus_is_dpm_running(struct smu_context *smu)
 	uint32_t feature_mask[2];
 	unsigned long feature_enabled;
 	ret = smu_feature_get_enabled_mask(smu, feature_mask, 2);
+	if (ret)
+		return false;
 	feature_enabled = (unsigned long)((uint64_t)feature_mask[0] |
 			   ((uint64_t)feature_mask[1] << 32));
 	return !!(feature_enabled & SMC_DPM_FEATURE);
@@ -2190,7 +2202,9 @@ static int arcturus_i2c_eeprom_control_init(struct i2c_adapter *control)
 
 	control->owner = THIS_MODULE;
 	control->class = I2C_CLASS_SPD;
+#ifndef __NetBSD__
 	control->dev.parent = &adev->pdev->dev;
+#endif
 	control->algo = &arcturus_i2c_eeprom_i2c_algo;
 	snprintf(control->name, sizeof(control->name), "RAS EEPROM");
 

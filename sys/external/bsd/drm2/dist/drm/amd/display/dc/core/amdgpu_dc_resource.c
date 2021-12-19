@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu_dc_resource.c,v 1.2 2021/12/18 23:45:02 riastradh Exp $	*/
+/*	$NetBSD: amdgpu_dc_resource.c,v 1.3 2021/12/19 10:59:01 riastradh Exp $	*/
 
 /*
  * Copyright 2012-15 Advanced Micro Devices, Inc.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdgpu_dc_resource.c,v 1.2 2021/12/18 23:45:02 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdgpu_dc_resource.c,v 1.3 2021/12/19 10:59:01 riastradh Exp $");
 
 #include <linux/slab.h>
 
@@ -209,6 +209,7 @@ void dc_destroy_resource_pool(struct dc  *dc)
 	}
 }
 
+#ifndef __NetBSD__		/* XXX amdgpu audio */
 static void update_num_audio(
 	const struct resource_straps *straps,
 	unsigned int *num_audio,
@@ -235,6 +236,7 @@ static void update_num_audio(
 		DC_ERR("DC: unexpected audio fuse!\n");
 	}
 }
+#endif
 
 bool resource_construct(
 	unsigned int num_virtual_links,
@@ -252,6 +254,9 @@ bool resource_construct(
 		create_funcs->read_dce_straps(dc->ctx, &straps);
 
 	pool->audio_count = 0;
+#ifdef __NetBSD__		/* XXX amdgpu audio */
+	__USE(num_audio);
+#else
 	if (create_funcs->create_audio) {
 		/* find the total number of streams available via the
 		 * AZALIA_F0_CODEC_PIN_CONTROL_RESPONSE_CONFIGURATION_DEFAULT
@@ -276,6 +281,7 @@ bool resource_construct(
 			pool->audio_count++;
 		}
 	}
+#endif
 
 	pool->stream_enc_count = 0;
 	if (create_funcs->create_stream_encoder) {
@@ -966,6 +972,7 @@ static void calculate_inits_and_adj_vp(struct pipe_ctx *pipe_ctx)
  * We also need to make sure pipe_ctx->plane_res.scl_data.h_active uses the
  * original h_border_left value in its calculation.
  */
+static
 int shift_border_left_to_dst(struct pipe_ctx *pipe_ctx)
 {
 	int store_h_border_left = pipe_ctx->stream->timing.h_border_left;
@@ -977,6 +984,7 @@ int shift_border_left_to_dst(struct pipe_ctx *pipe_ctx)
 	return store_h_border_left;
 }
 
+static
 void restore_border_left_from_dst(struct pipe_ctx *pipe_ctx,
                                   int store_h_border_left)
 {
@@ -1662,6 +1670,7 @@ static int acquire_first_free_pipe(
 	return -1;
 }
 
+#ifndef __NetBSD__		/* XXX amdgpu audio */
 static struct audio *find_first_free_audio(
 		struct resource_context *res_ctx,
 		const struct resource_pool *pool,
@@ -1693,6 +1702,7 @@ static struct audio *find_first_free_audio(
 	}
 	return 0;
 }
+#endif
 
 bool resource_is_stream_unchanged(
 	struct dc_state *old_context, struct dc_stream_state *stream)
@@ -2015,6 +2025,7 @@ enum dc_status resource_map_pool_resources(
 		pipe_ctx->stream_res.stream_enc,
 		true);
 
+#ifndef __NetBSD__		/* XXX amdgpu audio */
 	/* TODO: Add check if ASIC support and EDID audio */
 	if (!stream->converter_disable_audio &&
 	    dc_is_audio_capable_signal(pipe_ctx->stream->signal) &&
@@ -2031,6 +2042,7 @@ enum dc_status resource_map_pool_resources(
 			update_audio_usage(&context->res_ctx, pool,
 					   pipe_ctx->stream_res.audio, true);
 	}
+#endif
 
 	/* Add ABM to the resource if on EDP */
 	if (pipe_ctx->stream && dc_is_embedded_signal(pipe_ctx->stream->signal))
@@ -2040,8 +2052,12 @@ enum dc_status resource_map_pool_resources(
 		if (context->streams[i] == stream) {
 			context->stream_status[i].primary_otg_inst = pipe_ctx->stream_res.tg->inst;
 			context->stream_status[i].stream_enc_inst = pipe_ctx->stream_res.stream_enc->id;
+#ifdef __NetBSD__		/* XXX amdgpu audio */
+			context->stream_status[i].audio_inst = -1;
+#else
 			context->stream_status[i].audio_inst =
 				pipe_ctx->stream_res.audio ? pipe_ctx->stream_res.audio->inst : -1;
+#endif
 
 			return DC_OK;
 		}

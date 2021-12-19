@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu_xgmi.c,v 1.2 2021/12/18 23:44:58 riastradh Exp $	*/
+/*	$NetBSD: amdgpu_xgmi.c,v 1.3 2021/12/19 10:59:01 riastradh Exp $	*/
 
 /*
  * Copyright 2018 Advanced Micro Devices, Inc.
@@ -24,7 +24,7 @@
  *
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdgpu_xgmi.c,v 1.2 2021/12/18 23:44:58 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdgpu_xgmi.c,v 1.3 2021/12/19 10:59:01 riastradh Exp $");
 
 #include <linux/list.h>
 #include "amdgpu.h"
@@ -86,6 +86,7 @@ static ssize_t amdgpu_xgmi_show_hive_id(struct device *dev,
 static int amdgpu_xgmi_sysfs_create(struct amdgpu_device *adev,
 				    struct amdgpu_hive_info *hive)
 {
+#ifdef CONFIG_SYSFS
 	int ret = 0;
 
 	if (WARN_ON(hive->kobj))
@@ -115,15 +116,18 @@ static int amdgpu_xgmi_sysfs_create(struct amdgpu_device *adev,
 	}
 
 	return ret;
+#endif
 }
 
 static void amdgpu_xgmi_sysfs_destroy(struct amdgpu_device *adev,
 				    struct amdgpu_hive_info *hive)
 {
+#ifdef CONFIG_SYSFS
 	sysfs_remove_file(hive->kobj, &hive->dev_attr.attr);
 	kobject_del(hive->kobj);
 	kobject_put(hive->kobj);
 	hive->kobj = NULL;
+#endif
 }
 
 static ssize_t amdgpu_xgmi_show_device_id(struct device *dev,
@@ -172,6 +176,7 @@ static DEVICE_ATTR(xgmi_error, S_IRUGO, amdgpu_xgmi_show_error, NULL);
 static int amdgpu_xgmi_sysfs_add_dev_info(struct amdgpu_device *adev,
 					 struct amdgpu_hive_info *hive)
 {
+#ifdef CONFIG_SYSFS
 	int ret = 0;
 	char node[10] = { 0 };
 
@@ -217,14 +222,17 @@ remove_file:
 
 success:
 	return ret;
+#endif
 }
 
 static void amdgpu_xgmi_sysfs_rem_dev_info(struct amdgpu_device *adev,
 					  struct amdgpu_hive_info *hive)
 {
+#ifdef CONFIG_SYSFS
 	device_remove_file(adev->dev, &dev_attr_xgmi_device_id);
 	sysfs_remove_link(&adev->dev->kobj, adev->ddev->unique);
 	sysfs_remove_link(hive->kobj, adev->ddev->unique);
+#endif
 }
 
 
@@ -469,6 +477,7 @@ void amdgpu_xgmi_remove_device(struct amdgpu_device *adev)
 
 	if (!(hive->number_devices--)) {
 		amdgpu_xgmi_sysfs_destroy(adev, hive);
+		task_barrier_destroy(&tmp->tb);
 		mutex_destroy(&hive->hive_lock);
 		mutex_destroy(&hive->reset_lock);
 	} else {

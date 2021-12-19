@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu_xgmi.h,v 1.2 2021/12/18 23:44:58 riastradh Exp $	*/
+/*	$NetBSD: amdgpu_xgmi.h,v 1.3 2021/12/19 10:59:01 riastradh Exp $	*/
 
 /*
  * Copyright 2016 Advanced Micro Devices, Inc.
@@ -33,7 +33,9 @@ struct amdgpu_hive_info {
 	int number_devices;
 	struct mutex hive_lock, reset_lock;
 	struct kobject *kobj;
+#ifdef CONFIG_SYSFS
 	struct device_attribute dev_attr;
+#endif
 	struct amdgpu_device *adev;
 	int pstate; /*0 -- low , 1 -- high , -1 unknown*/
 	struct task_barrier tb;

@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu_csa.c,v 1.2 2021/12/18 23:44:58 riastradh Exp $	*/
+/*	$NetBSD: amdgpu_csa.c,v 1.3 2021/12/19 10:59:01 riastradh Exp $	*/
 
 /*
  * Copyright 2016 Advanced Micro Devices, Inc.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdgpu_csa.c,v 1.2 2021/12/18 23:44:58 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdgpu_csa.c,v 1.3 2021/12/19 10:59:01 riastradh Exp $");
 
 #include "amdgpu.h"
 
@@ -42,7 +42,7 @@ uint64_t amdgpu_csa_vaddr(struct amdgpu_device *adev)
 int amdgpu_allocate_static_csa(struct amdgpu_device *adev, struct amdgpu_bo **bo,
 				u32 domain, uint32_t size)
 {
-	int r;
+	int r __unused;
 	void *ptr;
 
 	r = amdgpu_bo_create_kernel(adev, size, PAGE_SIZE,

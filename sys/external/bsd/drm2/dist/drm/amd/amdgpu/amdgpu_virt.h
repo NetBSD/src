@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu_virt.h,v 1.2 2021/12/18 23:44:58 riastradh Exp $	*/
+/*	$NetBSD: amdgpu_virt.h,v 1.3 2021/12/19 10:59:01 riastradh Exp $	*/
 
 /*
  * Copyright 2016 Advanced Micro Devices, Inc.
@@ -278,7 +278,11 @@ struct amdgpu_virt {
 static inline bool is_virtual_machine(void)
 {
 #ifdef CONFIG_X86
+#ifdef __NetBSD__
+	return false;		/* XXX */
+#else
 	return boot_cpu_has(X86_FEATURE_HYPERVISOR);
+#endif
 #else
 	return false;
 #endif

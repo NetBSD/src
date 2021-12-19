@@ -1,4 +1,4 @@
-/*	$NetBSD: hwmgr.h,v 1.2 2021/12/18 23:45:26 riastradh Exp $	*/
+/*	$NetBSD: hwmgr.h,v 1.3 2021/12/19 10:59:02 riastradh Exp $	*/
 
 /*
  * Copyright 2015 Advanced Micro Devices, Inc.
@@ -200,7 +200,7 @@ enum SMU_ASIC_RESET_MODE
 };
 
 struct pp_smumgr_func {
-	char *name;
+	const char *name;
 	int (*smu_init)(struct pp_hwmgr  *hwmgr);
 	int (*smu_fini)(struct pp_hwmgr  *hwmgr);
 	int (*start_smu)(struct pp_hwmgr  *hwmgr);

@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu_acp.c,v 1.2 2021/12/18 23:44:58 riastradh Exp $	*/
+/*	$NetBSD: amdgpu_acp.c,v 1.3 2021/12/19 10:59:01 riastradh Exp $	*/
 
 /*
  * Copyright 2015 Advanced Micro Devices, Inc.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdgpu_acp.c,v 1.2 2021/12/18 23:44:58 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdgpu_acp.c,v 1.3 2021/12/19 10:59:01 riastradh Exp $");
 
 #include <linux/irqdomain.h>
 #include <linux/pci.h>
@@ -122,6 +122,8 @@ static int acp_sw_fini(void *handle)
 	return 0;
 }
 
+#ifndef __NetBSD__		/* XXX amdgpu pm */
+
 struct acp_pm_domain {
 	void *adev;
 	struct generic_pm_domain gpd;
@@ -181,6 +183,8 @@ static struct device *get_mfd_cell_dev(const char *device_name, int r)
 	return dev;
 }
 
+#endif
+
 /**
  * acp_hw_init - start and test ACP block
  *
@@ -220,6 +224,7 @@ static int acp_hw_init(void *handle)
 	acp_base = adev->rmmio_base;
 
 
+#ifndef __NetBSD__		/* XXX amdgpu pm */
 	adev->acp.acp_genpd = kzalloc(sizeof(struct acp_pm_domain), GFP_KERNEL);
 	if (adev->acp.acp_genpd == NULL)
 		return -ENOMEM;
@@ -232,7 +237,9 @@ static int acp_hw_init(void *handle)
 	adev->acp.acp_genpd->adev = adev;
 
 	pm_genpd_init(&adev->acp.acp_genpd->gpd, NULL, false);
+#endif
 
+#ifndef __NetBSD__		/* XXX amdgpu cell */
 	adev->acp.acp_cell = kcalloc(ACP_DEVS, sizeof(struct mfd_cell),
 							GFP_KERNEL);
 
@@ -240,6 +247,7 @@ static int acp_hw_init(void *handle)
 		r = -ENOMEM;
 		goto failure;
 	}
+#endif
 
 	adev->acp.acp_res = kcalloc(5, sizeof(struct resource), GFP_KERNEL);
 	if (adev->acp.acp_res == NULL) {
@@ -247,6 +255,9 @@ static int acp_hw_init(void *handle)
 		goto failure;
 	}
 
+#ifdef __NetBSD__		/* XXX amdgpu sound */
+	__USE(i2s_pdata);
+#else
 	i2s_pdata = kcalloc(3, sizeof(struct i2s_platform_data), GFP_KERNEL);
 	if (i2s_pdata == NULL) {
 		r = -ENOMEM;
@@ -294,6 +305,7 @@ static int acp_hw_init(void *handle)
 	i2s_pdata[2].snd_rates = SNDRV_PCM_RATE_8000_96000;
 	i2s_pdata[2].i2s_reg_comp1 = ACP_BT_COMP1_REG_OFFSET;
 	i2s_pdata[2].i2s_reg_comp2 = ACP_BT_COMP2_REG_OFFSET;
+#endif
 
 	adev->acp.acp_res[0].name = "acp2x_dma";
 	adev->acp.acp_res[0].flags = IORESOURCE_MEM;
@@ -320,6 +332,10 @@ static int acp_hw_init(void *handle)
 	adev->acp.acp_res[4].start = amdgpu_irq_create_mapping(adev, 162);
 	adev->acp.acp_res[4].end = adev->acp.acp_res[4].start;
 
+#ifdef __NetBSD__		/* XXX amdgpu cell */
+	__USE(dev);
+	__USE(i);
+#else
 	adev->acp.acp_cell[0].name = "acp_audio_dma";
 	adev->acp.acp_cell[0].num_resources = 5;
 	adev->acp.acp_cell[0].resources = &adev->acp.acp_res[0];
@@ -357,7 +373,7 @@ static int acp_hw_init(void *handle)
 			goto failure;
 		}
 	}
-
+#endif
 
 	/* Assert Soft reset of ACP */
 	val = cgs_read_register(adev->acp.cgs_device, mmACP_SOFT_RESET);
@@ -372,7 +388,7 @@ static int acp_hw_init(void *handle)
 		    (val & ACP_SOFT_RESET__SoftResetAudDone_MASK))
 			break;
 		if (--count == 0) {
-			dev_err(&adev->pdev->dev, "Failed to reset ACP\n");
+			dev_err(pci_dev_dev(adev->pdev), "Failed to reset ACP\n");
 			r = -ETIMEDOUT;
 			goto failure;
 		}
@@ -390,7 +406,7 @@ static int acp_hw_init(void *handle)
 		if (val & (u32) 0x1)
 			break;
 		if (--count == 0) {
-			dev_err(&adev->pdev->dev, "Failed to reset ACP\n");
+			dev_err(pci_dev_dev(adev->pdev), "Failed to reset ACP\n");
 			r = -ETIMEDOUT;
 			goto failure;
 		}
@@ -443,7 +459,7 @@ static int acp_hw_fini(void *handle)
 		    (val & ACP_SOFT_RESET__SoftResetAudDone_MASK))
 			break;
 		if (--count == 0) {
-			dev_err(&adev->pdev->dev, "Failed to reset ACP\n");
+			dev_err(pci_dev_dev(adev->pdev), "Failed to reset ACP\n");
 			return -ETIMEDOUT;
 		}
 		udelay(100);
@@ -460,12 +476,17 @@ static int acp_hw_fini(void *handle)
 		if (val & (u32) 0x1)
 			break;
 		if (--count == 0) {
-			dev_err(&adev->pdev->dev, "Failed to reset ACP\n");
+			dev_err(pci_dev_dev(adev->pdev), "Failed to reset ACP\n");
 			return -ETIMEDOUT;
 		}
 		udelay(100);
 	}
 
+#ifdef __NetBSD__		/* XXX amdgpu pm */
+	__USE(dev);
+	__USE(i);
+	__USE(ret);
+#else
 	for (i = 0; i < ACP_DEVS ; i++) {
 		dev = get_mfd_cell_dev(adev->acp.acp_cell[i].name, i);
 		ret = pm_genpd_remove_device(dev);
@@ -475,6 +496,7 @@ static int acp_hw_fini(void *handle)
 	}
 
 	mfd_remove_devices(adev->acp.parent);
+#endif
 	kfree(adev->acp.acp_res);
 	kfree(adev->acp.acp_genpd);
 	kfree(adev->acp.acp_cell);

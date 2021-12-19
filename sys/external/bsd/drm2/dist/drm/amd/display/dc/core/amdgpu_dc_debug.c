@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu_dc_debug.c,v 1.2 2021/12/18 23:45:02 riastradh Exp $	*/
+/*	$NetBSD: amdgpu_dc_debug.c,v 1.3 2021/12/19 10:59:01 riastradh Exp $	*/
 
 /*
  * Copyright 2017 Advanced Micro Devices, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdgpu_dc_debug.c,v 1.2 2021/12/18 23:45:02 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdgpu_dc_debug.c,v 1.3 2021/12/19 10:59:01 riastradh Exp $");
 
 #include "dm_services.h"
 
@@ -76,8 +76,8 @@ void pre_surface_trace(
 				"plane_state->visible = %d;\n"
 				"plane_state->flip_immediate = %d;\n"
 				"plane_state->address.type = %d;\n"
-				"plane_state->address.grph.addr.quad_part = 0x%llX;\n"
-				"plane_state->address.grph.meta_addr.quad_part = 0x%llX;\n"
+				"plane_state->address.grph.addr.quad_part = 0x%"PRIX64";\n"
+				"plane_state->address.grph.meta_addr.quad_part = 0x%"PRIX64";\n"
 				"plane_state->scaling_quality.h_taps = %d;\n"
 				"plane_state->scaling_quality.v_taps = %d;\n"
 				"plane_state->scaling_quality.h_taps_c = %d;\n"
@@ -193,8 +193,8 @@ void update_surface_trace(
 		SURFACE_TRACE("Update %d\n", i);
 		if (update->flip_addr) {
 			SURFACE_TRACE("flip_addr->address.type = %d;\n"
-					"flip_addr->address.grph.addr.quad_part = 0x%llX;\n"
-					"flip_addr->address.grph.meta_addr.quad_part = 0x%llX;\n"
+					"flip_addr->address.grph.addr.quad_part = 0x%"PRIX64";\n"
+					"flip_addr->address.grph.meta_addr.quad_part = 0x%"PRIX64";\n"
 					"flip_addr->flip_immediate = %d;\n",
 					update->flip_addr->address.type,
 					update->flip_addr->address.grph.addr.quad_part,

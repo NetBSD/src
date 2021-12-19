@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu_bo_list.c,v 1.7 2021/12/18 23:44:58 riastradh Exp $	*/
+/*	$NetBSD: amdgpu_bo_list.c,v 1.8 2021/12/19 10:59:01 riastradh Exp $	*/
 
 /*
  * Copyright 2015 Advanced Micro Devices, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdgpu_bo_list.c,v 1.7 2021/12/18 23:44:58 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdgpu_bo_list.c,v 1.8 2021/12/19 10:59:01 riastradh Exp $");
 
 #include <linux/uaccess.h>
 
@@ -113,12 +113,18 @@ int amdgpu_bo_list_create(struct amdgpu_device *adev, struct drm_file *filp,
 
 		usermm = amdgpu_ttm_tt_get_usermm(bo->tbo.ttm);
 		if (usermm) {
+#ifdef __NetBSD__		/* XXX amdgpu userptr */
+			amdgpu_bo_unref(&bo);
+			r = -EPERM;
+			goto error_free;
+#else
 			if (usermm != current->mm) {
 				amdgpu_bo_unref(&bo);
 				r = -EPERM;
 				goto error_free;
 			}
 			entry = &array[--first_userptr];
+#endif
 		} else {
 			entry = &array[last_entry++];
 		}

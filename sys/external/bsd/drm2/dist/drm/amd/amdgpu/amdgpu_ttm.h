@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu_ttm.h,v 1.2 2021/12/18 23:44:58 riastradh Exp $	*/
+/*	$NetBSD: amdgpu_ttm.h,v 1.3 2021/12/19 10:59:01 riastradh Exp $	*/
 
 /*
  * Copyright 2016 Advanced Micro Devices, Inc.
@@ -42,6 +42,11 @@
 
 #define AMDGPU_POISON	0xd0bed0be
 
+#ifdef __NetBSD__
+#  define	__amdgpu_aperture_iomem
+#  define	__iomem	__amdgpu_aperture_iomem
+#endif
+
 struct amdgpu_mman {
 	struct ttm_bo_device		bdev;
 	bool				mem_global_referenced;
@@ -61,6 +66,10 @@ struct amdgpu_mman {
 	/* Scheduler entity for buffer moves */
 	struct drm_sched_entity			entity;
 };
+
+#ifdef __NetBSD__
+#  undef	__iomem
+#endif
 
 struct amdgpu_copy_mem {
 	struct ttm_buffer_object	*bo;
@@ -101,7 +110,12 @@ int amdgpu_fill_buffer(struct amdgpu_bo *bo,
 			struct dma_resv *resv,
 			struct dma_fence **fence);
 
+#ifdef __NetBSD__
+int amdgpu_mmap_object(struct drm_device *, off_t, size_t, vm_prot_t,
+    struct uvm_object **, voff_t *, struct file *);
+#else
 int amdgpu_mmap(struct file *filp, struct vm_area_struct *vma);
+#endif
 int amdgpu_ttm_alloc_gart(struct ttm_buffer_object *bo);
 int amdgpu_ttm_recover_gart(struct ttm_buffer_object *tbo);
 

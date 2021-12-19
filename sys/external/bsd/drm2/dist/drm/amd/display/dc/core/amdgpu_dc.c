@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu_dc.c,v 1.2 2021/12/18 23:45:02 riastradh Exp $	*/
+/*	$NetBSD: amdgpu_dc.c,v 1.3 2021/12/19 10:59:01 riastradh Exp $	*/
 
 /*
  * Copyright 2015 Advanced Micro Devices, Inc.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdgpu_dc.c,v 1.2 2021/12/18 23:45:02 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdgpu_dc.c,v 1.3 2021/12/19 10:59:01 riastradh Exp $");
 
 #include <linux/slab.h>
 #include <linux/mm.h>
@@ -2113,8 +2113,10 @@ static void commit_planes_do_stream_update(struct dc *dc,
 				if (*stream_update->dpms_off) {
 					core_link_disable_stream(pipe_ctx);
 					/* for dpms, keep acquired resources*/
+#ifndef __NetBSD__			/* XXX amdgpu audio */
 					if (pipe_ctx->stream_res.audio && !dc->debug.az_endpoint_mute_only)
 						pipe_ctx->stream_res.audio->funcs->az_disable(pipe_ctx->stream_res.audio);
+#endif
 
 					dc->hwss.optimize_bandwidth(dc, dc->current_state);
 				} else {

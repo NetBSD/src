@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu_dma_buf.h,v 1.2 2021/12/18 23:44:58 riastradh Exp $	*/
+/*	$NetBSD: amdgpu_dma_buf.h,v 1.3 2021/12/19 10:59:01 riastradh Exp $	*/
 
 /*
  * Copyright 2019 Advanced Micro Devices, Inc.
@@ -33,8 +33,13 @@ struct drm_gem_object *amdgpu_gem_prime_import(struct drm_device *dev,
 					    struct dma_buf *dma_buf);
 void *amdgpu_gem_prime_vmap(struct drm_gem_object *obj);
 void amdgpu_gem_prime_vunmap(struct drm_gem_object *obj, void *vaddr);
+#ifdef __NetBSD__
+int amdgpu_gem_prime_mmap_object(struct drm_gem_object *, off_t *, size_t, int,
+    int *, struct uvm_object **, int *);
+#else
 int amdgpu_gem_prime_mmap(struct drm_gem_object *obj,
 			  struct vm_area_struct *vma);
+#endif
 
 extern const struct dma_buf_ops amdgpu_dmabuf_ops;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu_cik.c,v 1.4 2021/12/18 23:44:58 riastradh Exp $	*/
+/*	$NetBSD: amdgpu_cik.c,v 1.5 2021/12/19 10:59:01 riastradh Exp $	*/
 
 /*
  * Copyright 2012 Advanced Micro Devices, Inc.
@@ -24,7 +24,7 @@
  * Authors: Alex Deucher
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdgpu_cik.c,v 1.4 2021/12/18 23:44:58 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdgpu_cik.c,v 1.5 2021/12/19 10:59:01 riastradh Exp $");
 
 #include <linux/firmware.h>
 #include <linux/slab.h>
@@ -74,6 +74,8 @@ __KERNEL_RCSID(0, "$NetBSD: amdgpu_cik.c,v 1.4 2021/12/18 23:44:58 riastradh Exp
 #include "amdgpu_dm.h"
 #include "amdgpu_amdkfd.h"
 #include "dce_virtual.h"
+
+#include <linux/nbsd-namespace.h>
 
 /*
  * Indirect registers accessor

@@ -1,4 +1,4 @@
-#	$NetBSD: files.amdgpu,v 1.13 2021/12/19 10:56:39 riastradh Exp $
+#	$NetBSD: files.amdgpu,v 1.14 2021/12/19 10:59:00 riastradh Exp $
 
 version	20180827
 
@@ -31,9 +31,20 @@ makeoptions	amdgpu	"CPPFLAGS.amdgpu"+="-I$S/external/bsd/drm2/dist/drm/amd/displ
 makeoptions	amdgpu	"CPPFLAGS.amdgpu"+="-I$S/external/bsd/drm2/dist/drm/amd/display/amdgpu_dm"
 makeoptions	amdgpu	"CPPFLAGS.amdgpu"+="-I$S/external/bsd/drm2/dist/drm/amd/display/dmub/inc"
 
+makeoptions	amdgpu	"CPPFLAGS.amdgpu"+="-DCONFIG_DRM_AMD_ACP"
+
 makeoptions	amdgpu	"CWARNFLAGS.amdgpu"+="-Wno-missing-field-initializers"
 makeoptions	amdgpu	"CWARNFLAGS.amdgpu"+="-Wno-shadow"
 makeoptions	amdgpu	"CWARNFLAGS.amdgpu"+="-Wno-pointer-arith"
+makeoptions	amdgpu	"CWARNFLAGS.amdgpu"+="-Wno-override-init"
+
+# Half the file strips const qualifier; file is small enough this is
+# not an issue.
+makeoptions	amdgpu	"CWARNFLAGS.amdgpu_arct_reg_init.c"+="-Wno-cast-qual"
+
+# -Wtype-limits raises warnings about code that is careful to avoid
+# overflow in arithmetic, which is the opposite of helpful.  &@!#*
+makeoptions	amdgpu	"CWARNFLAGS.amdgpu_bo_list.c"+="-Wno-type-limits"
 
 # Local additions.
 file	external/bsd/drm2/amdgpu/amdgpu_module.c	amdgpu
@@ -298,7 +309,7 @@ file	external/bsd/drm2/dist/drm/amd/amdgpu/../powerplay/smumgr/amdgpu_vega12_smu
 file	external/bsd/drm2/dist/drm/amd/amdgpu/../powerplay/smumgr/amdgpu_vega20_smumgr.c	amdgpu
 file	external/bsd/drm2/dist/drm/amd/amdgpu/../powerplay/smumgr/amdgpu_vegam_smumgr.c	amdgpu
 file	external/bsd/drm2/dist/drm/amd/amdgpu/amdgpu_acp.c	amdgpu
-file	external/bsd/drm2/dist/drm/amd/amdgpu/amdgpu_acpi.c	amdgpu
+#file	external/bsd/drm2/dist/drm/amd/amdgpu/amdgpu_acpi.c	amdgpu
 file	external/bsd/drm2/dist/drm/amd/amdgpu/amdgpu_afmt.c	amdgpu
 file	external/bsd/drm2/dist/drm/amd/amdgpu/amdgpu_amdkfd.c	amdgpu
 file	external/bsd/drm2/dist/drm/amd/amdgpu/amdgpu_arct_reg_init.c	amdgpu
