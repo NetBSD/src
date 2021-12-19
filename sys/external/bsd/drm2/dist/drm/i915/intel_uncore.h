@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_uncore.h,v 1.5 2021/12/19 11:10:25 riastradh Exp $	*/
+/*	$NetBSD: intel_uncore.h,v 1.6 2021/12/19 11:12:59 riastradh Exp $	*/
 
 /*
  * Copyright © 2017 Intel Corporation
@@ -147,8 +147,13 @@ struct intel_uncore {
 		unsigned int wake_count;
 		bool active;
 		struct hrtimer timer;
+#ifdef __NetBSD__
+		bus_size_t reg_set;
+		bus_size_t reg_ack;
+#else
 		u32 __iomem *reg_set;
 		u32 __iomem *reg_ack;
+#endif
 	} *fw_domain[FW_DOMAIN_ID_COUNT];
 
 	unsigned int user_forcewake_count;

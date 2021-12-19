@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_uncore.c,v 1.15 2021/12/19 10:28:31 riastradh Exp $	*/
+/*	$NetBSD: intel_uncore.c,v 1.16 2021/12/19 11:12:59 riastradh Exp $	*/
 
 /*
  * Copyright © 2013 Intel Corporation
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intel_uncore.c,v 1.15 2021/12/19 10:28:31 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intel_uncore.c,v 1.16 2021/12/19 11:12:59 riastradh Exp $");
 
 #include <linux/pm_runtime.h>
 #include <asm/iosf_mbi.h>
@@ -90,9 +90,30 @@ intel_uncore_forcewake_domain_to_str(const enum forcewake_domain_id id)
 	return "unknown";
 }
 
+#ifdef __NetBSD__
+static inline u32
+fw_ack(struct intel_uncore_forcewake_domain *d)
+{
+	return bus_space_read_4(d->uncore->regs_bst, d->uncore->regs_bsh,
+	    d->reg_ack);
+}
+static inline void
+fw_set(struct intel_uncore_forcewake_domain *d, u32 val)
+{
+	bus_space_write_4(d->uncore->regs_bst, d->uncore->regs_bsh, d->reg_set,
+	    _MASKED_BIT_ENABLE(val));
+}
+static inline void
+fw_clear(struct intel_uncore_forcewake_domain *d, u32 val)
+{
+	bus_space_write_4(d->uncore->regs_bst, d->uncore->regs_bsh, d->reg_set,
+	    _MASKED_BIT_DISABLE(val));
+}
+#else
 #define fw_ack(d) readl((d)->reg_ack)
 #define fw_set(d, val) writel(_MASKED_BIT_ENABLE((val)), (d)->reg_set)
 #define fw_clear(d, val) writel(_MASKED_BIT_DISABLE((val)), (d)->reg_set)
+#endif
 
 static inline void
 fw_domain_reset(const struct intel_uncore_forcewake_domain *d)
@@ -1446,8 +1467,13 @@ static int __fw_domain_init(struct intel_uncore *uncore,
 
 	d->uncore = uncore;
 	d->wake_count = 0;
+#ifdef __NetBSD__
+	d->reg_set = i915_mmio_reg_offset(reg_set);
+	d->reg_ack = i915_mmio_reg_offset(reg_ack);
+#else
 	d->reg_set = uncore->regs + i915_mmio_reg_offset(reg_set);
 	d->reg_ack = uncore->regs + i915_mmio_reg_offset(reg_ack);
+#endif
 
 	d->id = domain_id;
 
