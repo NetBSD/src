@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_drv.h,v 1.34 2021/12/18 23:45:28 riastradh Exp $	*/
+/*	$NetBSD: i915_drv.h,v 1.35 2021/12/19 01:24:25 riastradh Exp $	*/
 
 /* i915_drv.h -- Private header for the I915 driver -*- linux-c -*-
  */
@@ -60,6 +60,7 @@
 #include <linux/shmem_fs.h>
 #include <linux/stackdepot.h>
 #include <linux/xarray.h>
+#include <linux/uuid.h>
 
 #include <drm/intel-gtt.h>
 #include <drm/drm_legacy.h> /* for struct drm_dma_handle */
@@ -1345,7 +1346,7 @@ struct dram_channel_info {
 
 static inline struct drm_i915_private *to_i915(const struct drm_device *dev)
 {
-	return container_of(dev, struct drm_i915_private, drm);
+	return __UNCONST(const_container_of(dev, struct drm_i915_private, drm));
 }
 
 #ifndef __NetBSD__
@@ -2071,12 +2072,14 @@ int i915_reg_read_ioctl(struct drm_device *dev, void *data,
 	intel_de_wait_for_register((dev_priv_), (reg_), (mask_), 0, (timeout_))
 
 /* i915_mm.c */
+#ifndef __NetBSD__
 int remap_io_mapping(struct vm_area_struct *vma,
 		     unsigned long addr, unsigned long pfn, unsigned long size,
 		     struct io_mapping *iomap);
 int remap_io_sg(struct vm_area_struct *vma,
 		unsigned long addr, unsigned long size,
 		struct scatterlist *sgl, resource_size_t iobase);
+#endif
 
 static inline int intel_hws_csb_write_index(struct drm_i915_private *i915)
 {

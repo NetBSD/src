@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_dma.c,v 1.33 2021/12/18 23:54:51 riastradh Exp $	*/
+/*	$NetBSD: i915_dma.c,v 1.34 2021/12/19 01:24:25 riastradh Exp $	*/
 
 /* i915_dma.c -- DMA support for the I915 -*- linux-c -*-
  */
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_dma.c,v 1.33 2021/12/18 23:54:51 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_dma.c,v 1.34 2021/12/19 01:24:25 riastradh Exp $");
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
@@ -956,7 +956,8 @@ int i915_driver_load(struct drm_device *dev, unsigned long flags)
 	dev_priv->regs = pci_iomap(dev->pdev, mmio_bar, mmio_size);
 #ifdef __NetBSD__
 	if (!dev_priv->regs)
-		dev_priv->regs = drm_agp_borrow(dev, mmio_bar, mmio_size);
+		dev_priv->regs = drm_agp_borrow(&dev_priv->drm, mmio_bar,
+		    mmio_size);
 #endif
 	if (!dev_priv->regs) {
 		DRM_ERROR("failed to map registers\n");

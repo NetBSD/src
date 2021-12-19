@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_gtt.h,v 1.2 2021/12/18 23:45:30 riastradh Exp $	*/
+/*	$NetBSD: intel_gtt.h,v 1.3 2021/12/19 01:24:25 riastradh Exp $	*/
 
 /* SPDX-License-Identifier: MIT */
 /*
@@ -576,6 +576,18 @@ void gtt_write_workarounds(struct intel_gt *gt);
 
 void setup_private_pat(struct intel_uncore *uncore);
 
+#ifdef __NetBSD__
+struct sgt_dma {
+	bus_dmamap_t map;
+	unsigned seg;
+	bus_size_t off;
+};
+static inline struct sgt_dma
+sgt_dma(struct i915_vma *vma)
+{
+	return (struct sgt_dma) { vma->pages, 0, 0 };
+}
+#else
 static inline struct sgt_dma {
 	struct scatterlist *sg;
 	dma_addr_t dma, max;
@@ -585,5 +597,6 @@ static inline struct sgt_dma {
 
 	return (struct sgt_dma){ sg, addr, addr + sg->length };
 }
+#endif
 
 #endif
