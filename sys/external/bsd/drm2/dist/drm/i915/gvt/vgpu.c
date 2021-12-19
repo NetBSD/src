@@ -1,4 +1,4 @@
-/*	$NetBSD: vgpu.c,v 1.2 2021/12/18 23:45:31 riastradh Exp $	*/
+/*	$NetBSD: vgpu.c,v 1.3 2021/12/19 11:06:55 riastradh Exp $	*/
 
 /*
  * Copyright(c) 2011-2016 Intel Corporation. All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vgpu.c,v 1.2 2021/12/18 23:45:31 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vgpu.c,v 1.3 2021/12/19 11:06:55 riastradh Exp $");
 
 #include "i915_drv.h"
 #include "gvt.h"
@@ -375,8 +375,10 @@ static struct intel_vgpu *__intel_gvt_create_vgpu(struct intel_gvt *gvt,
 	if (!vgpu)
 		return ERR_PTR(-ENOMEM);
 
+	idr_preload(GFP_KERNEL);
 	ret = idr_alloc(&gvt->vgpu_idr, vgpu, IDLE_VGPU_IDR + 1, GVT_MAX_VGPU,
 		GFP_KERNEL);
+	idr_preload_end();
 	if (ret < 0)
 		goto out_free_vgpu;
 

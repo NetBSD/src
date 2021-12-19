@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_connector.c,v 1.5 2021/12/19 09:51:50 riastradh Exp $	*/
+/*	$NetBSD: drm_connector.c,v 1.6 2021/12/19 11:06:54 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2016 Intel Corporation
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_connector.c,v 1.5 2021/12/19 09:51:50 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_connector.c,v 1.6 2021/12/19 11:06:54 riastradh Exp $");
 
 #include <drm/drm_connector.h>
 #include <drm/drm_edid.h>
@@ -2400,6 +2400,7 @@ struct drm_tile_group *drm_mode_create_tile_group(struct drm_device *dev,
 	memcpy(tg->group_data, topology, 8);
 	tg->dev = dev;
 
+	idr_preload(GFP_KERNEL);
 	mutex_lock(&dev->mode_config.idr_mutex);
 	ret = idr_alloc(&dev->mode_config.tile_idr, tg, 1, 0, GFP_KERNEL);
 	if (ret >= 0) {
@@ -2410,6 +2411,7 @@ struct drm_tile_group *drm_mode_create_tile_group(struct drm_device *dev,
 	}
 
 	mutex_unlock(&dev->mode_config.idr_mutex);
+	idr_preload_end();
 	return tg;
 }
 EXPORT_SYMBOL(drm_mode_create_tile_group);
