@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_lease.c,v 1.1 2021/12/19 00:26:09 riastradh Exp $	*/
+/*	$NetBSD: drm_lease.c,v 1.2 2021/12/19 01:01:43 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,8 +30,17 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_lease.c,v 1.1 2021/12/19 00:26:09 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_lease.c,v 1.2 2021/12/19 01:01:43 riastradh Exp $");
 
+#include <sys/types.h>
+#include <sys/errno.h>
+#include <sys/systm.h>
+
+#include <linux/mutex.h>
+
+#include <drm/drm_auth.h>
+#include <drm/drm_device.h>
+#include <drm/drm_file.h>
 #include <drm/drm_lease.h>
 
 /*
