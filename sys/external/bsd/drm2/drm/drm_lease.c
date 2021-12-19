@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_lease.c,v 1.4 2021/12/19 10:46:09 riastradh Exp $	*/
+/*	$NetBSD: drm_lease.c,v 1.5 2021/12/19 11:08:47 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_lease.c,v 1.4 2021/12/19 10:46:09 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_lease.c,v 1.5 2021/12/19 11:08:47 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/errno.h>
@@ -90,7 +90,7 @@ drm_lease_held(struct drm_file *file, int id)
 bool
 _drm_lease_held(struct drm_file *file, int id)
 {
-	panic("%s: not yet implemented", __func__);
+	return true;
 }
 
 /*
@@ -101,7 +101,6 @@ _drm_lease_held(struct drm_file *file, int id)
 void
 drm_lease_revoke(struct drm_master *master)
 {
-	panic("%s: not yet implemented", __func__);
 }
 
 /*
@@ -112,7 +111,7 @@ drm_lease_revoke(struct drm_master *master)
 uint32_t
 drm_lease_filter_crtcs(struct drm_file *file, uint32_t crtcs)
 {
-	panic("%s: not yet implemented", __func__);
+	return crtcs;
 }
 
 /*
