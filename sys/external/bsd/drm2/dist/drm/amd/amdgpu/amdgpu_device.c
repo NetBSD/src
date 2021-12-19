@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu_device.c,v 1.15 2021/12/19 12:41:23 riastradh Exp $	*/
+/*	$NetBSD: amdgpu_device.c,v 1.16 2021/12/19 12:41:33 riastradh Exp $	*/
 
 /*
  * Copyright 2008 Advanced Micro Devices, Inc.
@@ -28,7 +28,7 @@
  *          Jerome Glisse
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdgpu_device.c,v 1.15 2021/12/19 12:41:23 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdgpu_device.c,v 1.16 2021/12/19 12:41:33 riastradh Exp $");
 
 #include <linux/power_supply.h>
 #include <linux/kthread.h>
@@ -816,8 +816,11 @@ static int amdgpu_device_doorbell_init(struct amdgpu_device *adev)
 static void amdgpu_device_doorbell_fini(struct amdgpu_device *adev)
 {
 #ifdef __NetBSD__
-	bus_space_unmap(adev->doorbell.bst, adev->doorbell.bsh,
-	    adev->doorbell.num_doorbells * sizeof(u32));
+	if (adev->doorbell.num_doorbells) {
+		bus_space_unmap(adev->doorbell.bst, adev->doorbell.bsh,
+		    adev->doorbell.num_doorbells * sizeof(u32));
+		adev->doorbell.num_doorbells = 0;
+	}
 #else
 	iounmap(adev->doorbell.ptr);
 	adev->doorbell.ptr = NULL;
