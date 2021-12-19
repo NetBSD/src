@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_engine_cs.c,v 1.5 2021/12/19 11:38:37 riastradh Exp $	*/
+/*	$NetBSD: intel_engine_cs.c,v 1.6 2021/12/19 11:39:24 riastradh Exp $	*/
 
 /*
  * Copyright © 2016 Intel Corporation
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intel_engine_cs.c,v 1.5 2021/12/19 11:38:37 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intel_engine_cs.c,v 1.6 2021/12/19 11:39:24 riastradh Exp $");
 
 #include <drm/drm_print.h>
 
@@ -490,7 +490,7 @@ void intel_engine_init_execlists(struct intel_engine_cs *engine)
 		memset(execlists->inflight, 0, sizeof(execlists->inflight));
 
 	execlists->queue_priority_hint = INT_MIN;
-	execlists->queue = RB_ROOT_CACHED;
+	i915_sched_init(execlists);
 }
 
 static void cleanup_status_page(struct intel_engine_cs *engine)

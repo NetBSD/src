@@ -1,7 +1,7 @@
-/*	$NetBSD: notifier.h,v 1.4 2021/12/19 11:39:24 riastradh Exp $	*/
+/*	$NetBSD: linux_notifier.c,v 1.1 2021/12/19 11:39:24 riastradh Exp $	*/
 
 /*-
- * Copyright (c) 2013 The NetBSD Foundation, Inc.
+ * Copyright (c) 2021 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -29,43 +29,67 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _LINUX_NOTIFIER_H_
-#define _LINUX_NOTIFIER_H_
-
 #include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: linux_notifier.c,v 1.1 2021/12/19 11:39:24 riastradh Exp $");
 
-#include <sys/pslist.h>
+#include <sys/types.h>
 
+#include <sys/pserialize.h>
+#include <sys/xcall.h>
+
+#include <linux/notifier.h>
 #include <linux/spinlock.h>
 
-/* namespace */
-#define	ATOMIC_INIT_NOTIFIER_HEAD	linux_ATOMIC_INIT_NOTIFIER_HEAD
-#define	ATOMIC_CLEANUP_NOTIFIER_HEAD	linux_ATOMIC_CLEANUP_NOTIFIER_HEAD
-#define	atomic_notifier_call_chain	linux_atomic_notifier_call_chain
-#define	atomic_notifier_chain_register	linux_atomic_notifier_chain_register
-#define	atomic_notifier_chain_unregister linux_atomic_notifier_chain_unregister
+void
+ATOMIC_INIT_NOTIFIER_HEAD(struct atomic_notifier_head *H)
+{
 
-#define	NOTIFY_DONE	0
-#define	NOTIFY_OK	1
+	spin_lock_init(&H->anh_lock);
+	PSLIST_INIT(&H->anh_list);
+}
 
-struct notifier_block {
-	int (*notifier_call)(struct notifier_block *, unsigned long, void *);
-	struct pslist_entry	nb_entry;
-};
+void
+ATOMIC_CLEANUP_NOTIFIER_HEAD(struct atomic_notifier_head *H)
+{
 
-struct atomic_notifier_head {
-	spinlock_t		anh_lock;
-	struct pslist_head	anh_list;
-};
+	PSLIST_DESTROY(&H->anh_list);
+	spin_lock_destroy(&H->anh_lock);
+}
 
-void ATOMIC_INIT_NOTIFIER_HEAD(struct atomic_notifier_head *);
-void ATOMIC_CLEANUP_NOTIFIER_HEAD(struct atomic_notifier_head *);
+void
+atomic_notifier_chain_register(struct atomic_notifier_head *H,
+    struct notifier_block *B)
+{
 
-void atomic_notifier_chain_register(struct atomic_notifier_head *,
-    struct notifier_block *);
-void atomic_notifier_chain_unregister(struct atomic_notifier_head *,
-    struct notifier_block *);
-void atomic_notifier_chain_call(struct atomic_notifier_head *, unsigned long,
-    void *);
+	spin_lock(&H->anh_lock);
+	PSLIST_WRITER_INSERT_HEAD(&H->anh_list, B, nb_entry);
+	spin_unlock(&H->anh_lock);
+}
 
-#endif  /* _LINUX_NOTIFIER_H_ */
+void
+atomic_notifier_chain_unregister(struct atomic_notifier_head *H,
+    struct notifier_block *B)
+{
+
+	spin_lock(&H->anh_lock);
+	PSLIST_WRITER_REMOVE(B, nb_entry);
+	spin_unlock(&H->anh_lock);
+
+	xc_barrier(0);
+}
+
+void
+atomic_notifier_chain_call(struct atomic_notifier_head *H,
+    unsigned long arg0, void *arg1)
+{
+	struct notifier_block *B;
+	int s;
+
+	s = pserialize_read_enter();
+	PSLIST_READER_FOREACH(B, &H->anh_list, struct notifier_block, nb_entry)
+	{
+		if ((*B->notifier_call)(B, arg0, arg1) == NOTIFY_DONE)
+			break;
+	}
+	pserialize_read_exit(s);
+}
