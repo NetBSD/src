@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_atomic.c,v 1.9 2021/12/18 23:44:57 riastradh Exp $	*/
+/*	$NetBSD: drm_atomic.c,v 1.10 2021/12/19 00:50:01 riastradh Exp $	*/
 
 /*
  * Copyright (C) 2014 Red Hat
@@ -29,7 +29,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_atomic.c,v 1.9 2021/12/18 23:44:57 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_atomic.c,v 1.10 2021/12/19 00:50:01 riastradh Exp $");
 
 #include <linux/sync_file.h>
 
@@ -1433,11 +1433,11 @@ EXPORT_SYMBOL(__drm_atomic_helper_set_config);
 void drm_atomic_print_state(const struct drm_atomic_state *state)
 {
 	struct drm_printer p = drm_info_printer(state->dev->dev);
-	struct drm_plane *plane;
+	struct drm_plane *plane __unused;
 	struct drm_plane_state *plane_state;
-	struct drm_crtc *crtc;
+	struct drm_crtc *crtc __unused;
 	struct drm_crtc_state *crtc_state;
-	struct drm_connector *connector;
+	struct drm_connector *connector __unused;
 	struct drm_connector_state *connector_state;
 	int i;
 
