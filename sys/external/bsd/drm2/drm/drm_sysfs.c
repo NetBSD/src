@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_sysfs.c,v 1.7 2021/12/19 10:35:52 riastradh Exp $	*/
+/*	$NetBSD: drm_sysfs.c,v 1.8 2021/12/19 10:39:42 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,9 +30,22 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_sysfs.c,v 1.7 2021/12/19 10:35:52 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_sysfs.c,v 1.8 2021/12/19 10:39:42 riastradh Exp $");
 
 #include <drm/drm_sysfs.h>
+
+#include "../dist/drm/drm_internal.h"
+
+int
+drm_sysfs_connector_add(struct drm_connector *connector)
+{
+	return 0;
+}
+
+void
+drm_sysfs_connector_remove(struct drm_connector *connector)
+{
+}
 
 void
 drm_sysfs_hotplug_event(struct drm_device *dev)
