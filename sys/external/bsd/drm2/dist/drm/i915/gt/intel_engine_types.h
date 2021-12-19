@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_engine_types.h,v 1.4 2021/12/19 11:12:43 riastradh Exp $	*/
+/*	$NetBSD: intel_engine_types.h,v 1.5 2021/12/19 11:13:22 riastradh Exp $	*/
 
 /*
  * SPDX-License-Identifier: MIT
@@ -10,6 +10,7 @@
 #define __INTEL_ENGINE_TYPES__
 
 #include <linux/average.h>
+#include <linux/completion.h>
 #include <linux/hashtable.h>
 #include <linux/irq_work.h>
 #include <linux/kref.h>
