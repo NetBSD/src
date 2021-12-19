@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_kthread.c,v 1.8 2021/12/19 12:42:48 riastradh Exp $	*/
+/*	$NetBSD: linux_kthread.c,v 1.9 2021/12/19 12:43:05 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2021 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_kthread.c,v 1.8 2021/12/19 12:42:48 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_kthread.c,v 1.9 2021/12/19 12:43:05 riastradh Exp $");
 
 #include <sys/types.h>
 
@@ -53,6 +53,8 @@ struct task_struct {
 	bool		kt_shouldstop:1;
 	bool		kt_shouldpark:1;
 	bool		kt_parked:1;
+	bool		kt_exited:1;
+	int		kt_ret;
 
 	int		(*kt_func)(void *);
 	void		*kt_cookie;
@@ -111,7 +113,19 @@ linux_kthread_start(void *cookie)
 	lwp_setspecific(linux_kthread_key, T);
 
 	ret = (*T->kt_func)(T->kt_cookie);
-	kthread_exit(ret);
+
+	/*
+	 * Mark the thread exited, set the return value, and wake any
+	 * waiting kthread_stop.
+	 */
+	mutex_enter(&T->kt_lock);
+	T->kt_exited = true;
+	T->kt_ret = ret;
+	cv_broadcast(&T->kt_cv);
+	mutex_exit(&T->kt_lock);
+
+	/* Exit the (NetBSD) kthread.  */
+	kthread_exit(0);
 }
 
 static struct task_struct *
@@ -125,6 +139,12 @@ kthread_alloc(int (*func)(void *), void *cookie, spinlock_t *interlock,
 	mutex_init(&T->kt_lock, MUTEX_DEFAULT, IPL_VM);
 	cv_init(&T->kt_cv, "lnxkthrd");
 
+	T->kt_shouldstop = false;
+	T->kt_shouldpark = false;
+	T->kt_parked = false;
+	T->kt_exited = false;
+	T->kt_ret = 0;
+
 	T->kt_func = func;
 	T->kt_cookie = cookie;
 	T->kt_interlock = interlock;
@@ -136,6 +156,8 @@ kthread_alloc(int (*func)(void *), void *cookie, spinlock_t *interlock,
 static void
 kthread_free(struct task_struct *T)
 {
+
+	KASSERT(T->kt_exited);
 
 	cv_destroy(&T->kt_cv);
 	mutex_destroy(&T->kt_lock);
@@ -150,7 +172,7 @@ kthread_run(int (*func)(void *), void *cookie, const char *name,
 	int error;
 
 	T = kthread_alloc(func, cookie, interlock, wq);
-	error = kthread_create(PRI_NONE, KTHREAD_MPSAFE|KTHREAD_MUSTJOIN, NULL,
+	error = kthread_create(PRI_NONE, KTHREAD_MPSAFE, NULL,
 	    linux_kthread_start, T, &T->kt_lwp, "%s", name);
 	if (error) {
 		kthread_free(T);
@@ -178,12 +200,16 @@ kthread_stop(struct task_struct *T)
 	cv_broadcast(&T->kt_cv);
 	DRM_SPIN_WAKEUP_ALL(T->kt_wq, T->kt_interlock);
 
-	/* Release the locks.  */
-	mutex_exit(&T->kt_lock);
+	/* Release the interlock while we wait for thread to finish.  */
 	spin_unlock(T->kt_interlock);
 
-	/* Wait for the (NetBSD) kthread to exit.  */
-	ret = kthread_join(T->kt_lwp);
+	/* Wait for the thread to finish.  */
+	while (!T->kt_exited)
+		cv_wait(&T->kt_cv, &T->kt_lock);
+
+	/* Grab the return code and release the lock -- we're done.  */
+	ret = T->kt_ret;
+	mutex_exit(&T->kt_lock);
 
 	/* Free the (Linux) kthread.  */
 	kthread_free(T);
