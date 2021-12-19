@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_scatter.c,v 1.5 2018/08/27 07:02:06 riastradh Exp $	*/
+/*	$NetBSD: drm_scatter.c,v 1.6 2021/12/19 00:28:20 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_scatter.c,v 1.5 2018/08/27 07:02:06 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_scatter.c,v 1.6 2021/12/19 00:28:20 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/bus.h>
@@ -40,7 +40,8 @@ __KERNEL_RCSID(0, "$NetBSD: drm_scatter.c,v 1.5 2018/08/27 07:02:06 riastradh Ex
 #include <linux/slab.h>
 
 #include <drm/drmP.h>
-#include <drm/drm_internal.h>
+
+#include "../dist/drm/drm_internal.h"
 #include "../dist/drm/drm_legacy.h"
 
 static int	drm_sg_alloc_mem(struct drm_device *, size_t,
