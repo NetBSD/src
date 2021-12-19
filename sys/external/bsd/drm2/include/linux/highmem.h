@@ -1,4 +1,4 @@
-/*	$NetBSD: highmem.h,v 1.5 2018/08/27 15:13:17 riastradh Exp $	*/
+/*	$NetBSD: highmem.h,v 1.6 2021/12/19 10:51:24 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -38,6 +38,7 @@
 #include <uvm/uvm_extern.h>
 
 #include <linux/kernel.h>
+#include <linux/mm.h>
 #include <linux/mm_types.h>
 
 /* XXX Make the nm output a little more greppable...  */
