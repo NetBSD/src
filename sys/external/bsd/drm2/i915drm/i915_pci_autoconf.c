@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_pci_autoconf.c,v 1.1 2021/12/19 01:42:23 riastradh Exp $	*/
+/*	$NetBSD: i915_pci_autoconf.c,v 1.2 2021/12/19 01:46:16 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_pci_autoconf.c,v 1.1 2021/12/19 01:42:23 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_pci_autoconf.c,v 1.2 2021/12/19 01:46:16 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/queue.h>
@@ -109,7 +109,7 @@ i915drmkms_pci_lookup(const struct pci_attach_args *pa)
 	const struct intel_device_info *const info =
 	    (const void *)(uintptr_t)i915_device_ids[i].driver_data;
 
-	if (IS_PRELIMINARY_HW(info)) {
+	if (IS_ALPHA_SUPPORT(info)) {
 		printf("i915drmkms: preliminary hardware support disabled\n");
 		return NULL;
 	}
