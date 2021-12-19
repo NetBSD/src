@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_fence.c,v 1.16 2021/12/18 23:45:32 riastradh Exp $	*/
+/*	$NetBSD: nouveau_fence.c,v 1.17 2021/12/19 10:49:13 riastradh Exp $	*/
 
 /*
  * Copyright (C) 2007 Ben Skeggs.
@@ -27,11 +27,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_fence.c,v 1.16 2021/12/18 23:45:32 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_fence.c,v 1.17 2021/12/19 10:49:13 riastradh Exp $");
 
+#include <linux/atomic.h>
 #include <linux/ktime.h>
 #include <linux/hrtimer.h>
 #include <linux/sched/signal.h>
+#include <linux/workqueue.h>
 #include <trace/events/dma_fence.h>
 
 #include <nvif/cl826e.h>
