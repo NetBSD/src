@@ -1,4 +1,4 @@
-/*	$NetBSD: overflow.h,v 1.2 2021/12/19 09:58:57 riastradh Exp $	*/
+/*	$NetBSD: overflow.h,v 1.3 2021/12/19 10:50:30 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -34,18 +34,53 @@
 
 #include <sys/types.h>
 
-static inline size_t
-array_size(size_t nelem, size_t elemsize)
-{
-
-	KASSERT(elemsize != 0);
-	if (nelem >= SIZE_MAX/elemsize)
-		return SIZE_MAX;
-
-	return nelem*elemsize;
-}
+#include <lib/libkern/libkern.h>	/* offsetof */
 
 #define	check_mul_overflow(a, b, res)	__builtin_mul_overflow(a, b, res)
 #define	check_add_overflow(a, b, res)	__builtin_add_overflow(a, b, res)
+
+/* return x*y saturated at SIZE_MAX */
+static inline size_t
+array_size(size_t x, size_t y)
+{
+	size_t xy;
+
+	if (check_add_overflow(x, y, &xy))
+		return SIZE_MAX;
+	return xy;
+}
+
+/* return x*y*z saturated at SIZE_MAX */
+static inline size_t
+array3_size(size_t x, size_t y, size_t z)
+{
+	size_t xy, xyz;
+
+	if (check_mul_overflow(x, y, &xy))
+		return SIZE_MAX;
+	if (check_mul_overflow(xy, z, &xyz))
+		return SIZE_MAX;
+	return xyz;
+}
+
+/* return basesize + elemsize*nelem saturated at SIZE_MAX */
+static inline size_t
+__struct_size(size_t basesize, size_t elemsize, size_t nelem)
+{
+	size_t arraysize, totalsize;
+
+	KASSERT(elemsize);
+	if ((arraysize = array_size(elemsize, nelem)) == SIZE_MAX)
+		return SIZE_MAX;
+	if (check_add_overflow(basesize, arraysize, &totalsize))
+		return SIZE_MAX;
+	return totalsize;
+}
+
+#define	struct_size(p, member, n)					      \
+({									      \
+	CTASSERT(sizeof(*(p)) == offsetof(__typeof__(*(p)), member));	      \
+	__struct_size(sizeof(*(p)), sizeof((p)->member[0]), (n));	      \
+})
 
 #endif  /* _LINUX_OVERFLOW_H_ */
