@@ -1,4 +1,4 @@
-/*	$NetBSD: radeon_ttm.c,v 1.21 2021/12/19 09:56:53 riastradh Exp $	*/
+/*	$NetBSD: radeon_ttm.c,v 1.22 2021/12/19 09:57:01 riastradh Exp $	*/
 
 /*
  * Copyright 2009 Jerome Glisse.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radeon_ttm.c,v 1.21 2021/12/19 09:56:53 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radeon_ttm.c,v 1.22 2021/12/19 09:57:01 riastradh Exp $");
 
 #include <linux/dma-mapping.h>
 #include <linux/pagemap.h>
@@ -988,7 +988,7 @@ int radeon_ttm_init(struct radeon_device *rdev)
 			       rdev->ddev->anon_inode->i_mapping,
 #endif
 			       rdev->ddev->vma_offset_manager,
-			       dma_addressing_limited(&rdev->pdev->dev));
+			       dma_addressing_limited(&rdev->pdev->pd_dev));
 	if (r) {
 		DRM_ERROR("failed initializing buffer object driver(%d).\n", r);
 		return r;
