@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_gem.c,v 1.12 2021/12/18 23:45:32 riastradh Exp $	*/
+/*	$NetBSD: nouveau_gem.c,v 1.13 2021/12/19 10:50:13 riastradh Exp $	*/
 
 /*
  * Copyright (C) 2008 Ben Skeggs.
@@ -27,7 +27,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_gem.c,v 1.12 2021/12/18 23:45:32 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_gem.c,v 1.13 2021/12/19 10:50:13 riastradh Exp $");
+
+#include <asm/uaccess.h>
 
 #include "nouveau_drv.h"
 #include "nouveau_dma.h"

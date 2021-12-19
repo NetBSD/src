@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_drm.c,v 1.20 2021/12/18 23:45:32 riastradh Exp $	*/
+/*	$NetBSD: nouveau_drm.c,v 1.21 2021/12/19 10:50:13 riastradh Exp $	*/
 
 /*
  * Copyright 2012 Red Hat Inc.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_drm.c,v 1.20 2021/12/18 23:45:32 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_drm.c,v 1.21 2021/12/19 10:50:13 riastradh Exp $");
 
 #include <linux/console.h>
 #include <linux/delay.h>
@@ -515,7 +515,7 @@ nouveau_accel_init(struct nouveau_drm *drm)
 	nouveau_bo_move_init(drm);
 }
 
-static int
+int
 nouveau_drm_device_init(struct drm_device *dev)
 {
 	struct nouveau_drm *drm;
@@ -555,7 +555,7 @@ nouveau_drm_device_init(struct drm_device *dev)
     {
 	/* XXX Kludge to make register subregion mapping work.  */
 	struct nvkm_client *client = nvxx_client(&drm->client.base);
-	struct nvkm_device *device = nvxx_device(&drm->device);
+	struct nvkm_device *device = nvxx_device(&drm->client.device);
 	client->mmiot = device->mmiot;
 	client->mmioh = device->mmioh;
 	client->mmioaddr = device->mmioaddr;
@@ -618,7 +618,7 @@ fail_alloc:
 	return ret;
 }
 
-static void
+void
 nouveau_drm_device_fini(struct drm_device *dev)
 {
 	struct nouveau_drm *drm = nouveau_drm(dev);
@@ -909,8 +909,8 @@ nouveau_pmops_resume(struct device *dev)
 #ifndef __NetBSD__
 	struct pci_dev *pdev = to_pci_dev(dev);
 	struct drm_device *drm_dev = pci_get_drvdata(pdev);
-	int ret;
 #endif
+	int ret;
 
 	if (drm_dev->switch_power_state == DRM_SWITCH_POWER_OFF ||
 	    drm_dev->switch_power_state == DRM_SWITCH_POWER_DYNAMIC_OFF)
