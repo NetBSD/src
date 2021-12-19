@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_acpi.h,v 1.3 2021/12/19 10:25:15 riastradh Exp $	*/
+/*	$NetBSD: intel_acpi.h,v 1.4 2021/12/19 11:16:17 riastradh Exp $	*/
 
 /* SPDX-License-Identifier: MIT */
 /*
@@ -19,7 +19,7 @@ void intel_register_dsm_handler(void);
 void intel_unregister_dsm_handler(void);
 #else
 #ifdef __NetBSD__
-static inline void intel_register_dsm_handler(struct drm_i915_private *) { return; }
+static inline void intel_register_dsm_handler(struct drm_i915_private *i915) { return; }
 #else
 static inline void intel_register_dsm_handler(void) { return; }
 #endif
