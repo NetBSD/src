@@ -1,4 +1,4 @@
-/*	$NetBSD: idr.h,v 1.7 2018/08/27 14:14:42 riastradh Exp $	*/
+/*	$NetBSD: idr.h,v 1.8 2021/12/19 01:00:17 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -42,6 +42,7 @@
 struct idr {
 	kmutex_t	idr_lock;
 	rb_tree_t	idr_tree;
+	int		idr_base;
 };
 
 /* XXX Make the nm output a little more greppable...  */
@@ -51,6 +52,7 @@ struct idr {
 #define	idr_for_each		linux_idr_for_each
 #define	idr_get_next		linux_idr_get_next
 #define	idr_init		linux_idr_init
+#define	idr_init_base		linux_idr_init_base
 #define	idr_is_empty		linux_idr_is_empty
 #define	idr_preload		linux_idr_preload
 #define	idr_preload_end		linux_idr_preload_end
@@ -61,6 +63,7 @@ int	linux_idr_module_init(void);
 void	linux_idr_module_fini(void);
 
 void	idr_init(struct idr *);
+void	idr_init_base(struct idr *, int);
 void	idr_destroy(struct idr *);
 bool	idr_is_empty(struct idr *);
 void	*idr_find(struct idr *, int);
