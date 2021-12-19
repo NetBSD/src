@@ -1,4 +1,4 @@
-/*	$NetBSD: kernel.h,v 1.44 2021/12/19 11:35:36 riastradh Exp $	*/
+/*	$NetBSD: kernel.h,v 1.45 2021/12/19 12:02:13 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -273,6 +273,12 @@ static inline bool
 static_branch_likely(const bool *flagp)
 {
 	return __predict_true(*flagp);
+}
+
+static inline int
+sscanf(const char *fmt, ...)
+{
+	return 0;		/* XXX */
 }
 
 #endif  /* _LINUX_KERNEL_H_ */
