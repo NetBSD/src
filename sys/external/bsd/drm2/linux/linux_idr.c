@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_idr.c,v 1.14 2021/12/19 01:15:21 riastradh Exp $	*/
+/*	$NetBSD: linux_idr.c,v 1.15 2021/12/19 12:21:02 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_idr.c,v 1.14 2021/12/19 01:15:21 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_idr.c,v 1.15 2021/12/19 12:21:02 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -423,7 +423,6 @@ idr_for_each(struct idr *idr, int (*proc)(int, void *, void *), void *arg)
 	int error = 0;
 
 	/* XXX Caller must exclude modifications.  */
-	membar_consumer();
 	RB_TREE_FOREACH(node, &idr->idr_tree) {
 		error = (*proc)(node->in_index, node->in_data, arg);
 		if (error)
