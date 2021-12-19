@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_dma_fence.c,v 1.5 2021/12/19 01:25:13 riastradh Exp $	*/
+/*	$NetBSD: linux_dma_fence.c,v 1.6 2021/12/19 01:40:48 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_dma_fence.c,v 1.5 2021/12/19 01:25:13 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_dma_fence.c,v 1.6 2021/12/19 01:40:48 riastradh Exp $");
 
 #include <sys/atomic.h>
 #include <sys/condvar.h>
@@ -473,7 +473,7 @@ dma_fence_set_error(struct dma_fence *fence, int error)
 {
 
 	KASSERT(!(fence->flags & (1u << DMA_FENCE_FLAG_SIGNALED_BIT)));
-	KASSERTMSG(error >= -MAX_ERRNO, "%d", error);
+	KASSERTMSG(error >= -ELAST, "%d", error);
 	KASSERTMSG(error < 0, "%d", error);
 
 	fence->error = error;
