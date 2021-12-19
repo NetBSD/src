@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_uncore.h,v 1.4 2021/12/19 11:04:05 riastradh Exp $	*/
+/*	$NetBSD: intel_uncore.h,v 1.5 2021/12/19 11:10:25 riastradh Exp $	*/
 
 /*
  * Copyright © 2017 Intel Corporation
@@ -109,14 +109,11 @@ struct intel_forcewake_range {
 };
 
 struct intel_uncore {
-#ifdef __NetBSD__
-#  define	__iomem
-#endif
-
+#ifdef __linux__
 	void __iomem *regs;
-
-#ifdef __NetBSD__
-#  undef	__iomem
+#else
+	bus_space_tag_t regs_bst;
+	bus_space_handle_t regs_bsh;
 #endif
 
 	struct drm_i915_private *i915;
@@ -267,6 +264,7 @@ intel_wait_for_register_fw(struct intel_uncore *uncore,
 }
 
 /* register access functions */
+#ifdef __linux__
 #define __raw_read(x__, s__) \
 static inline u##x__ __raw_uncore_read##x__(const struct intel_uncore *uncore, \
 					    i915_reg_t reg) \
@@ -292,6 +290,40 @@ __raw_write(64, q)
 
 #undef __raw_read
 #undef __raw_write
+#else
+static inline uint8_t __raw_uncore_read8(const struct intel_uncore *uncore,
+						i915_reg_t reg) {
+	return bus_space_read_1(uncore->regs_bst, uncore->regs_bsh, i915_mmio_reg_offset(reg));
+}
+static inline uint16_t __raw_uncore_read16(const struct intel_uncore *uncore,
+						i915_reg_t reg) {
+	return bus_space_read_2(uncore->regs_bst, uncore->regs_bsh, i915_mmio_reg_offset(reg));
+}
+static inline uint32_t __raw_uncore_read32(const struct intel_uncore *uncore,
+						i915_reg_t reg) {
+	return bus_space_read_4(uncore->regs_bst, uncore->regs_bsh, i915_mmio_reg_offset(reg));
+}
+static inline uint64_t __raw_uncore_read64(const struct intel_uncore *uncore,
+						i915_reg_t reg) {
+	return bus_space_read_8(uncore->regs_bst, uncore->regs_bsh, i915_mmio_reg_offset(reg));
+}
+static inline void __raw_uncore_write8(const struct intel_uncore *uncore,
+						i915_reg_t reg, uint8_t val) {
+	bus_space_write_1(uncore->regs_bst, uncore->regs_bsh, i915_mmio_reg_offset(reg), val);
+}
+static inline void __raw_uncore_write16(const struct intel_uncore *uncore,
+						i915_reg_t reg, uint16_t val) {
+	bus_space_write_2(uncore->regs_bst, uncore->regs_bsh, i915_mmio_reg_offset(reg), val);
+}
+static inline void __raw_uncore_write32(const struct intel_uncore *uncore,
+						i915_reg_t reg, uint32_t val) {
+	bus_space_write_4(uncore->regs_bst, uncore->regs_bsh, i915_mmio_reg_offset(reg), val);
+}
+static inline void __raw_uncore_write64(const struct intel_uncore *uncore,
+						i915_reg_t reg, uint64_t val) {
+	bus_space_write_8(uncore->regs_bst, uncore->regs_bsh, i915_mmio_reg_offset(reg), val);
+}
+#endif
 
 #define __uncore_read(name__, x__, s__, trace__) \
 static inline u##x__ intel_uncore_##name__(struct intel_uncore *uncore, \
