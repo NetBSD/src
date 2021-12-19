@@ -1,4 +1,4 @@
-/*	$NetBSD: fb.h,v 1.6 2021/12/19 09:47:02 riastradh Exp $	*/
+/*	$NetBSD: fb.h,v 1.7 2021/12/19 11:07:42 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
 static inline int
 fb_get_options(const char *name, char **options)
 {
-	panic("TODO");
 	return 0;
 }
+
 #endif  /* _LINUX_FB_H_ */
