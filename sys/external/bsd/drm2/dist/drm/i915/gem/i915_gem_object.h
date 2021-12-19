@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_gem_object.h,v 1.3 2021/12/19 01:24:25 riastradh Exp $	*/
+/*	$NetBSD: i915_gem_object.h,v 1.4 2021/12/19 11:10:56 riastradh Exp $	*/
 
 /*
  * SPDX-License-Identifier: MIT
@@ -69,7 +69,7 @@ void i915_gem_object_truncate(struct drm_i915_gem_object *obj);
 static inline struct drm_i915_gem_object *
 i915_gem_object_lookup_rcu(struct drm_file *file, u32 handle)
 {
-#ifdef CONFIG_LOCKDEP
+#if IS_ENABLED(CONFIG_LOCKDEP)
 	WARN_ON(debug_locks && !lock_is_held(&rcu_lock_map));
 #endif
 	return idr_find(&file->object_idr, handle);

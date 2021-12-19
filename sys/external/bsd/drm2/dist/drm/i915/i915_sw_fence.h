@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_sw_fence.h,v 1.2 2021/12/18 23:45:28 riastradh Exp $	*/
+/*	$NetBSD: i915_sw_fence.h,v 1.3 2021/12/19 11:10:56 riastradh Exp $	*/
 
 /*
  * SPDX-License-Identifier: MIT
@@ -44,7 +44,7 @@ void __i915_sw_fence_init(struct i915_sw_fence *fence,
 			  i915_sw_fence_notify_t fn,
 			  const char *name,
 			  struct lock_class_key *key);
-#ifdef CONFIG_LOCKDEP
+#if IS_ENABLED(CONFIG_LOCKDEP)
 #define i915_sw_fence_init(fence, fn)				\
 do {								\
 	static struct lock_class_key __key;			\
