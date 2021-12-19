@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_nvkm_subdev_mmu_mem.c,v 1.3 2021/12/19 10:51:58 riastradh Exp $	*/
+/*	$NetBSD: nouveau_nvkm_subdev_mmu_mem.c,v 1.4 2021/12/19 11:06:12 riastradh Exp $	*/
 
 /*
  * Copyright 2017 Red Hat Inc.
@@ -22,7 +22,7 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_subdev_mmu_mem.c,v 1.3 2021/12/19 10:51:58 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_subdev_mmu_mem.c,v 1.4 2021/12/19 11:06:12 riastradh Exp $");
 
 #define nvkm_mem(p) container_of((p), struct nvkm_mem, memory)
 #include "mem.h"
@@ -280,6 +280,7 @@ fail2: __unused
 		KASSERT(mem->dmamap->dm_segs[i].ds_len <= PAGE_SIZE);
 		mem->dma[i] = mem->dmamap->dm_segs[i].ds_addr;
 	}
+	mem->pages = size;
 #else
 	if (!(mem->mem = kvmalloc_array(size, sizeof(*mem->mem), GFP_KERNEL)))
 		return -ENOMEM;
