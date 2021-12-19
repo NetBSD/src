@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_edid.c,v 1.10 2021/12/19 00:56:49 riastradh Exp $	*/
+/*	$NetBSD: drm_edid.c,v 1.11 2021/12/19 00:59:42 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2006 Luc Verhaegen (quirks list)
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_edid.c,v 1.10 2021/12/19 00:56:49 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_edid.c,v 1.11 2021/12/19 00:59:42 riastradh Exp $");
 
 #include <linux/hdmi.h>
 #include <linux/i2c.h>
@@ -2039,12 +2039,18 @@ EXPORT_SYMBOL(drm_get_edid);
 struct edid *drm_get_edid_switcheroo(struct drm_connector *connector,
 				     struct i2c_adapter *adapter)
 {
+#ifndef __NetBSD__		/* XXX vga switcheroo */
 	struct pci_dev *pdev = connector->dev->pdev;
+#endif
 	struct edid *edid;
 
+#ifndef __NetBSD__		/* XXX vga switcheroo */
 	vga_switcheroo_lock_ddc(pdev);
+#endif
 	edid = drm_get_edid(connector, adapter);
+#ifndef __NetBSD__		/* XXX vga switcheroo */
 	vga_switcheroo_unlock_ddc(pdev);
+#endif
 
 	return edid;
 }
