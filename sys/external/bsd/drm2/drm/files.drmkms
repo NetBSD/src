@@ -1,4 +1,4 @@
-#	$NetBSD: files.drmkms,v 1.49 2021/12/19 01:59:27 riastradh Exp $
+#	$NetBSD: files.drmkms,v 1.50 2021/12/19 01:59:48 riastradh Exp $
 
 version	20180827
 
@@ -68,6 +68,7 @@ makeoptions 	drmkms 	"CWARNFLAGS.drm_bufs.c"+="-Wno-pointer-arith"
 makeoptions 	drmkms 	"CWARNFLAGS.drm_crtc.c"+="-Wno-missing-field-initializers"
 makeoptions 	drmkms 	"CWARNFLAGS.drm_crtc.c"+="-Wno-pointer-arith"
 makeoptions 	drmkms 	"CWARNFLAGS.drm_crtc.c"+="-Wno-shadow"
+makeoptions 	drmkms 	"CWARNFLAGS.drm_client_modeset.c"+="-Wno-shadow"
 makeoptions 	drmkms 	"CWARNFLAGS.drm_dp_helper.c"+="-Wno-pointer-arith"
 makeoptions 	drmkms 	"CWARNFLAGS.drm_edid.c"+="-Wno-shadow"
 makeoptions 	drmkms 	"CWARNFLAGS.drm_ioctl.c"+="-Wno-shadow"
