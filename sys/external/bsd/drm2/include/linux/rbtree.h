@@ -1,4 +1,4 @@
-/*	$NetBSD: rbtree.h,v 1.5 2021/12/19 01:08:43 riastradh Exp $	*/
+/*	$NetBSD: rbtree.h,v 1.6 2021/12/19 01:44:26 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -50,7 +50,7 @@ RB_EMPTY_ROOT(struct rb_root *root)
 }
 
 static inline void
-rb_erase(struct rb_root *root, struct rb_node *rbnode)
+rb_erase(struct rb_node *rbnode, struct rb_root *root)
 {
 	struct rb_tree *tree = &root->rbr_tree;
 	void *node = (char *)rbnode - tree->rbt_ops->rbto_node_offset;
@@ -59,9 +59,9 @@ rb_erase(struct rb_root *root, struct rb_node *rbnode)
 }
 
 static inline void
-rb_erase_cached(struct rb_root_cached *root, struct rb_node *rbnode)
+rb_erase_cached(struct rb_node *rbnode, struct rb_root_cached *root)
 {
-	rb_erase(&root->rbrc_root, rbnode);
+	rb_erase(rbnode, &root->rbrc_root);
 }
 
 #endif  /* _LINUX_RBTREE_H_ */
