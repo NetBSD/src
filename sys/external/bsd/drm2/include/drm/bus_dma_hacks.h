@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma_hacks.h,v 1.22 2021/12/19 11:33:31 riastradh Exp $	*/
+/*	$NetBSD: bus_dma_hacks.h,v 1.23 2021/12/19 11:33:59 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -171,7 +171,6 @@ bus_dmamap_load_pages(bus_dma_tag_t tag, bus_dmamap_t map,
 
 		segs[seg].ds_addr = baddr;
 		segs[seg].ds_len = PAGE_SIZE;
-		seg++;
 	}
 
 	error = bus_dmamap_load_raw(tag, map, segs, nsegs, size, flags);
