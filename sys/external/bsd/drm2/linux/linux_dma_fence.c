@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_dma_fence.c,v 1.23 2021/12/19 12:09:51 riastradh Exp $	*/
+/*	$NetBSD: linux_dma_fence.c,v 1.24 2021/12/19 12:10:51 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_dma_fence.c,v 1.23 2021/12/19 12:09:51 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_dma_fence.c,v 1.24 2021/12/19 12:10:51 riastradh Exp $");
 
 #include <sys/atomic.h>
 #include <sys/condvar.h>
@@ -42,6 +42,9 @@ __KERNEL_RCSID(0, "$NetBSD: linux_dma_fence.c,v 1.23 2021/12/19 12:09:51 riastra
 #include <linux/kref.h>
 #include <linux/sched.h>
 #include <linux/spinlock.h>
+
+#define	FENCE_MAGIC_GOOD	0x607ba424048c37e5ULL
+#define	FENCE_MAGIC_BAD		0x7641ca721344505fULL
 
 /*
  * linux_dma_fence_trace
@@ -57,11 +60,15 @@ int	linux_dma_fence_trace = 0;
  *
  *	True if fence has a positive reference count.  True after
  *	dma_fence_init; after the last dma_fence_put, this becomes
- *	false.
+ *	false.  The fence must have been initialized and must not have
+ *	been destroyed.
  */
 static inline bool __diagused
 dma_fence_referenced_p(struct dma_fence *fence)
 {
+
+	KASSERTMSG(fence->f_magic != FENCE_MAGIC_BAD, "fence %p", fence);
+	KASSERTMSG(fence->f_magic == FENCE_MAGIC_GOOD, "fence %p", fence);
 
 	return kref_referenced_p(&fence->refcount);
 }
@@ -86,6 +93,10 @@ dma_fence_init(struct dma_fence *fence, const struct dma_fence_ops *ops,
 	fence->error = 0;
 	TAILQ_INIT(&fence->f_callbacks);
 	cv_init(&fence->f_cv, "dmafence");
+
+#ifdef DIAGNOSTIC
+	fence->f_magic = FENCE_MAGIC_GOOD;
+#endif
 }
 
 /*
@@ -102,6 +113,8 @@ dma_fence_reset(struct dma_fence *fence, const struct dma_fence_ops *ops,
     spinlock_t *lock, unsigned context, unsigned seqno)
 {
 
+	KASSERTMSG(fence->f_magic != FENCE_MAGIC_BAD, "fence %p", fence);
+	KASSERTMSG(fence->f_magic == FENCE_MAGIC_GOOD, "fence %p", fence);
 	KASSERT(kref_read(&fence->refcount) == 0 ||
 	    kref_read(&fence->refcount) == 1);
 	KASSERT(TAILQ_EMPTY(&fence->f_callbacks));
@@ -128,6 +141,10 @@ dma_fence_destroy(struct dma_fence *fence)
 {
 
 	KASSERT(!dma_fence_referenced_p(fence));
+
+#ifdef DIAGNOSTIC
+	fence->f_magic = FENCE_MAGIC_BAD;
+#endif
 
 	KASSERT(TAILQ_EMPTY(&fence->f_callbacks));
 	cv_destroy(&fence->f_cv);
@@ -194,6 +211,10 @@ bool
 dma_fence_is_later(struct dma_fence *a, struct dma_fence *b)
 {
 
+	KASSERTMSG(a->f_magic != FENCE_MAGIC_BAD, "fence %p", a);
+	KASSERTMSG(a->f_magic == FENCE_MAGIC_GOOD, "fence %p", a);
+	KASSERTMSG(b->f_magic != FENCE_MAGIC_BAD, "fence %p", b);
+	KASSERTMSG(b->f_magic == FENCE_MAGIC_GOOD, "fence %p", b);
 	KASSERTMSG(a->context == b->context, "incommensurate fences"
 	    ": %u @ %p =/= %u @ %p", a->context, a, b->context, b);
 
@@ -232,6 +253,9 @@ struct dma_fence *
 dma_fence_get(struct dma_fence *fence)
 {
 
+	KASSERTMSG(fence->f_magic != FENCE_MAGIC_BAD, "fence %p", fence);
+	KASSERTMSG(fence->f_magic == FENCE_MAGIC_GOOD, "fence %p", fence);
+
 	if (fence)
 		kref_get(&fence->refcount);
 	return fence;
@@ -249,6 +273,8 @@ dma_fence_get_rcu(struct dma_fence *fence)
 {
 
 	__insn_barrier();
+	KASSERTMSG(fence->f_magic != FENCE_MAGIC_BAD, "fence %p", fence);
+	KASSERTMSG(fence->f_magic == FENCE_MAGIC_GOOD, "fence %p", fence);
 	if (!kref_get_unless_zero(&fence->refcount))
 		return NULL;
 	return fence;
@@ -297,6 +323,7 @@ retry:
 	}
 
 	/* Success!  */
+	KASSERT(dma_fence_referenced_p(fence));
 	return fence;
 }
 
@@ -538,6 +565,8 @@ void
 dma_fence_set_error(struct dma_fence *fence, int error)
 {
 
+	KASSERTMSG(fence->f_magic != FENCE_MAGIC_BAD, "fence %p", fence);
+	KASSERTMSG(fence->f_magic == FENCE_MAGIC_GOOD, "fence %p", fence);
 	KASSERT(!(fence->flags & (1u << DMA_FENCE_FLAG_SIGNALED_BIT)));
 	KASSERTMSG(error >= -ELAST, "%d", error);
 	KASSERTMSG(error < 0, "%d", error);
@@ -556,6 +585,9 @@ int
 dma_fence_get_status(struct dma_fence *fence)
 {
 	int ret;
+
+	KASSERTMSG(fence->f_magic != FENCE_MAGIC_BAD, "fence %p", fence);
+	KASSERTMSG(fence->f_magic == FENCE_MAGIC_GOOD, "fence %p", fence);
 
 	spin_lock(fence->lock);
 	if (!dma_fence_is_signaled_locked(fence)) {
@@ -945,6 +977,9 @@ bool
 __dma_fence_signal(struct dma_fence *fence)
 {
 
+	KASSERTMSG(fence->f_magic != FENCE_MAGIC_BAD, "fence %p", fence);
+	KASSERTMSG(fence->f_magic == FENCE_MAGIC_GOOD, "fence %p", fence);
+
 	if (test_and_set_bit(DMA_FENCE_FLAG_SIGNALED_BIT, &fence->flags))
 		return false;
 
@@ -961,6 +996,9 @@ void
 __dma_fence_signal_wake(struct dma_fence *fence, ktime_t timestamp)
 {
 	struct dma_fence_cb *fcb, *next;
+
+	KASSERTMSG(fence->f_magic != FENCE_MAGIC_BAD, "fence %p", fence);
+	KASSERTMSG(fence->f_magic == FENCE_MAGIC_GOOD, "fence %p", fence);
 
 	spin_lock(fence->lock);
 
