@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_gem_cma_helper.h,v 1.8 2021/12/18 23:54:51 riastradh Exp $	*/
+/*	$NetBSD: drm_gem_cma_helper.h,v 1.1 2021/12/19 10:24:33 riastradh Exp $	*/
 
 /* SPDX-License-Identifier: GPL-2.0 */
 #ifndef __DRM_GEM_CMA_HELPER_H__
