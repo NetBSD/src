@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_dma_fence.c,v 1.33 2021/12/19 12:34:58 riastradh Exp $	*/
+/*	$NetBSD: linux_dma_fence.c,v 1.34 2021/12/19 12:35:21 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_dma_fence.c,v 1.33 2021/12/19 12:34:58 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_dma_fence.c,v 1.34 2021/12/19 12:35:21 riastradh Exp $");
 
 #include <sys/atomic.h>
 #include <sys/condvar.h>
@@ -443,7 +443,8 @@ dma_fence_add_callback(struct dma_fence *fence, struct dma_fence_cb *fcb,
 	KASSERT(dma_fence_referenced_p(fence));
 
 	/* Optimistically try to skip the lock if it's already signalled.  */
-	if (fence->flags & (1u << DMA_FENCE_FLAG_SIGNALED_BIT)) {
+	if (atomic_load_relaxed(&fence->flags) &
+	    (1u << DMA_FENCE_FLAG_SIGNALED_BIT)) {
 		ret = -ENOENT;
 		goto out0;
 	}
@@ -585,7 +586,8 @@ dma_fence_set_error(struct dma_fence *fence, int error)
 
 	KASSERTMSG(fence->f_magic != FENCE_MAGIC_BAD, "fence %p", fence);
 	KASSERTMSG(fence->f_magic == FENCE_MAGIC_GOOD, "fence %p", fence);
-	KASSERT(!(fence->flags & (1u << DMA_FENCE_FLAG_SIGNALED_BIT)));
+	KASSERT((atomic_load_relaxed(&fence->flags) &
+		(1u << DMA_FENCE_FLAG_SIGNALED_BIT)) == 0);
 	KASSERTMSG(error >= -ELAST, "%d", error);
 	KASSERTMSG(error < 0, "%d", error);
 
@@ -938,7 +940,8 @@ dma_fence_default_wait(struct dma_fence *fence, bool intr, long timeout)
 	KASSERTMSG(timeout <= MAX_SCHEDULE_TIMEOUT, "timeout %ld", timeout);
 
 	/* Optimistically try to skip the lock if it's already signalled.  */
-	if (fence->flags & (1u << DMA_FENCE_FLAG_SIGNALED_BIT))
+	if (atomic_load_relaxed(&fence->flags) &
+	    (1u << DMA_FENCE_FLAG_SIGNALED_BIT))
 		return MAX(1, timeout);
 
 	/* Acquire the lock.  */
