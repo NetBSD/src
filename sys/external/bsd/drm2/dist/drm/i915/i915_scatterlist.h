@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_scatterlist.h,v 1.3 2021/12/19 01:24:26 riastradh Exp $	*/
+/*	$NetBSD: i915_scatterlist.h,v 1.4 2021/12/19 11:11:27 riastradh Exp $	*/
 
 /*
  * SPDX-License-Identifier: MIT
@@ -15,6 +15,7 @@
 
 #include "i915_gem.h"
 
+#ifdef __linux__
 /*
  * Optimised SGL iterator for GEM objects
  */
@@ -41,7 +42,6 @@ static __always_inline struct sgt_iter {
 	return s;
 }
 
-#ifndef __NetBSD__
 static inline int __sg_page_count(const struct scatterlist *sg)
 {
 	return sg->length >> PAGE_SHIFT;
