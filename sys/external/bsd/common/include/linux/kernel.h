@@ -1,4 +1,4 @@
-/*	$NetBSD: kernel.h,v 1.33 2021/12/19 01:14:43 riastradh Exp $	*/
+/*	$NetBSD: kernel.h,v 1.34 2021/12/19 01:18:17 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -74,6 +74,7 @@
 #endif
 #define	__always_unused	__unused
 #define	noinline	__noinline
+#define	__deprecated	/* nothing */
 
 #define	barrier()	__insn_barrier()
 #define	likely(X)	__predict_true(X)
