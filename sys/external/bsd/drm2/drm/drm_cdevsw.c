@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_cdevsw.c,v 1.18 2021/12/19 00:48:38 riastradh Exp $	*/
+/*	$NetBSD: drm_cdevsw.c,v 1.19 2021/12/19 00:48:45 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_cdevsw.c,v 1.18 2021/12/19 00:48:38 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_cdevsw.c,v 1.19 2021/12/19 00:48:45 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -255,7 +255,7 @@ drm_lastclose(struct drm_device *dev)
 
 	mutex_lock(&dev->struct_mutex);
 	if (dev->agp)
-		drm_agp_clear(dev);
+		drm_legacy_agp_clear(dev);
 	drm_legacy_sg_cleanup(dev);
 	drm_legacy_dma_takedown(dev);
 	mutex_unlock(&dev->struct_mutex);
