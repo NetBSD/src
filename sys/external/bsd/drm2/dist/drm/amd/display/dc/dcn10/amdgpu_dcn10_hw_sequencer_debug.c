@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu_dcn10_hw_sequencer_debug.c,v 1.2 2021/12/18 23:45:03 riastradh Exp $	*/
+/*	$NetBSD: amdgpu_dcn10_hw_sequencer_debug.c,v 1.3 2021/12/19 11:24:52 riastradh Exp $	*/
 
 /*
  * Copyright 2016 Advanced Micro Devices, Inc.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdgpu_dcn10_hw_sequencer_debug.c,v 1.2 2021/12/18 23:45:03 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdgpu_dcn10_hw_sequencer_debug.c,v 1.3 2021/12/19 11:24:52 riastradh Exp $");
 
 #include "dm_services.h"
 #include "core_types.h"
@@ -50,7 +50,7 @@ __KERNEL_RCSID(0, "$NetBSD: amdgpu_dcn10_hw_sequencer_debug.c,v 1.2 2021/12/18 2
 #include "dcn10_cm_common.h"
 #include "clk_mgr.h"
 
-unsigned int snprintf_count(char *pBuf, unsigned int bufSize, char *fmt, ...)
+unsigned int __printflike(3,4) snprintf_count(char *pBuf, unsigned int bufSize, const char *fmt, ...)
 {
 	unsigned int ret_vsnprintf;
 	unsigned int chars_printed;

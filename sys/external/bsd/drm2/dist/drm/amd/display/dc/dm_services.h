@@ -1,4 +1,4 @@
-/*	$NetBSD: dm_services.h,v 1.2 2021/12/18 23:45:00 riastradh Exp $	*/
+/*	$NetBSD: dm_services.h,v 1.3 2021/12/19 11:24:52 riastradh Exp $	*/
 
 /*
  * Copyright 2015 Advanced Micro Devices, Inc.
@@ -163,7 +163,7 @@ void generic_reg_wait(const struct dc_context *ctx,
 	unsigned int delay_between_poll_us, unsigned int time_out_num_tries,
 	const char *func_name, int line);
 
-unsigned int snprintf_count(char *pBuf, unsigned int bufSize, char *fmt, ...);
+unsigned int __printflike(3,4) snprintf_count(char *pBuf, unsigned int bufSize, const char *fmt, ...);
 
 /* These macros need to be used with soc15 registers in order to retrieve
  * the actual offset.
