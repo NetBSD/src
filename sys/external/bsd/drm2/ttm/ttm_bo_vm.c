@@ -1,4 +1,4 @@
-/*	$NetBSD: ttm_bo_vm.c,v 1.18 2021/12/19 11:09:25 riastradh Exp $	*/
+/*	$NetBSD: ttm_bo_vm.c,v 1.19 2021/12/19 11:34:06 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ttm_bo_vm.c,v 1.18 2021/12/19 11:09:25 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ttm_bo_vm.c,v 1.19 2021/12/19 11:34:06 riastradh Exp $");
 
 #include <sys/types.h>
 
@@ -178,8 +178,12 @@ ttm_bo_uvm_fault(struct uvm_faultinfo *ufi, vaddr_t vaddr,
 	KASSERT((ufi->entry->offset & (PAGE_SIZE - 1)) == 0);
 	KASSERT(ufi->entry->offset <= size);
 	KASSERT((vaddr - ufi->entry->start) <= (size - ufi->entry->offset));
-	KASSERT(npages <= ((size - ufi->entry->offset) -
-		(vaddr - ufi->entry->start)));
+	KASSERTMSG(((size_t)npages << PAGE_SHIFT <=
+		((size - ufi->entry->offset) - (vaddr - ufi->entry->start))),
+	    "vaddr=%jx npages=%d bo=%p is_iomem=%d size=%zu"
+	    " start=%jx offset=%jx",
+	    (uintmax_t)vaddr, npages, bo, (int)bo->mem.bus.is_iomem, size,
+	    (uintmax_t)ufi->entry->start, (uintmax_t)ufi->entry->offset);
 	uoffset = (ufi->entry->offset + (vaddr - ufi->entry->start));
 	startpage = (uoffset >> PAGE_SHIFT);
 	for (i = 0; i < npages; i++) {
