@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_scatterlist.h,v 1.7 2021/12/19 11:33:49 riastradh Exp $	*/
+/*	$NetBSD: i915_scatterlist.h,v 1.8 2021/12/19 11:37:05 riastradh Exp $	*/
 
 /*
  * SPDX-License-Identifier: MIT
@@ -43,12 +43,6 @@ static inline unsigned
 i915_sg_segment_size(void)
 {
 	return PAGE_SIZE;
-}
-
-static inline bool
-i915_sg_trim(struct sg_table *sgt)
-{
-	return true;
 }
 
 #else
@@ -162,8 +156,8 @@ static inline unsigned int i915_sg_segment_size(void)
 	return size;
 }
 
-bool i915_sg_trim(struct sg_table *orig_st);
-
 #endif
+
+bool i915_sg_trim(struct sg_table *orig_st);
 
 #endif

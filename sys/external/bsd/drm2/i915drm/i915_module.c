@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_module.c,v 1.15 2021/12/19 11:36:08 riastradh Exp $	*/
+/*	$NetBSD: i915_module.c,v 1.16 2021/12/19 11:37:06 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_module.c,v 1.15 2021/12/19 11:36:08 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_module.c,v 1.16 2021/12/19 11:37:06 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/module.h>
@@ -53,7 +53,9 @@ MODULE(MODULE_CLASS_DRIVER, i915drmkms, "drmkms,drmkms_pci"); /* XXX drmkms_i2c 
 
 struct drm_sysctl_def i915_def = DRM_SYSCTL_INIT();
 
+/* XXX use link sets for DEFINE_SPINLOCK */
 extern spinlock_t i915_sw_fence_lock;
+extern spinlock_t *const i915_schedule_lock;
 
 int i915_global_buddy_init(void); /* XXX */
 
@@ -73,6 +75,7 @@ i915drmkms_init(void)
 	drm_sysctl_init(&i915_def);
 	spin_lock_init(&mchdev_lock);
 	spin_lock_init(&i915_sw_fence_lock);
+	spin_lock_init(i915_schedule_lock);
 
 	return 0;
 }
@@ -94,6 +97,7 @@ static void
 i915drmkms_fini(void)
 {
 
+	spin_lock_destroy(i915_schedule_lock);
 	spin_lock_destroy(&i915_sw_fence_lock);
 	spin_lock_destroy(&mchdev_lock);
 	drm_sysctl_fini(&i915_def);
