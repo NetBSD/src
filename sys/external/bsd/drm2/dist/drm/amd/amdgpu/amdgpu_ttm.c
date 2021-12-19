@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu_ttm.c,v 1.6 2021/12/18 23:44:58 riastradh Exp $	*/
+/*	$NetBSD: amdgpu_ttm.c,v 1.7 2021/12/19 10:56:50 riastradh Exp $	*/
 
 /*
  * Copyright 2009 Jerome Glisse.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdgpu_ttm.c,v 1.6 2021/12/18 23:44:58 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdgpu_ttm.c,v 1.7 2021/12/19 10:56:50 riastradh Exp $");
 
 #include <linux/dma-mapping.h>
 #include <linux/iommu.h>
@@ -966,10 +966,8 @@ static int amdgpu_ttm_tt_pin_userptr(struct ttm_tt *ttm)
 	int r;
 
 	int write = !(gtt->userflags & AMDGPU_GEM_USERPTR_READONLY);
-#ifndef __NetBSD__
 	enum dma_data_direction direction = write ?
 		DMA_BIDIRECTIONAL : DMA_TO_DEVICE;
-#endif
 
 	/* Allocate an SG array and squash pages into it */
 	r = sg_alloc_table_from_pages(ttm->sg, ttm->pages, ttm->num_pages, 0,
@@ -993,7 +991,6 @@ static int amdgpu_ttm_tt_pin_userptr(struct ttm_tt *ttm)
 release_sg:
 	kfree(ttm->sg);
 	return r;
-#endif
 }
 
 /**

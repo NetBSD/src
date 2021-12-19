@@ -1,4 +1,4 @@
-/*	$NetBSD: dmub_types.h,v 1.2 2021/12/18 23:45:06 riastradh Exp $	*/
+/*	$NetBSD: dmub_types.h,v 1.3 2021/12/19 10:56:50 riastradh Exp $	*/
 
 /*
  * Copyright 2019 Advanced Micro Devices, Inc.
@@ -33,7 +33,7 @@
 #include <linux/types.h>
 #include <linux/string.h>
 #include <linux/delay.h>
-#include <stdarg.h>
+#include <sys/stdarg.h>
 
 #if defined(__cplusplus)
 extern "C" {
