@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_display.h,v 1.5 2021/12/19 11:38:03 riastradh Exp $	*/
+/*	$NetBSD: intel_display.h,v 1.6 2021/12/19 11:48:27 riastradh Exp $	*/
 
 /*
  * Copyright © 2006-2019 Intel Corporation
@@ -481,7 +481,7 @@ enum phy_fia {
 	for_each_intel_plane_mask(((crtc_state)->uapi.state->dev), (plane), \
 				((crtc_state)->uapi.plane_mask)) \
 		for_each_if ((plane_state = \
-			      to_intel_plane_state(__drm_atomic_get_current_plane_state((crtc_state)->uapi.state, &plane->base))))
+			      const_container_of(__drm_atomic_get_current_plane_state((crtc_state)->uapi.state, &plane->base), struct intel_plane_state, uapi)))
 
 #define for_each_new_intel_connector_in_state(__state, connector, new_connector_state, __i) \
 	for ((__i) = 0; \
