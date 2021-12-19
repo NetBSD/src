@@ -1,4 +1,4 @@
-/*	$NetBSD: device.h,v 1.10 2021/12/19 09:55:23 riastradh Exp $	*/
+/*	$NetBSD: device.h,v 1.11 2021/12/19 10:36:07 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -33,7 +33,10 @@
 #define _LINUX_DEVICE_H_
 
 #include <sys/types.h>
+#include <sys/device.h>
 #include <sys/systm.h>
+
+#include <linux/ratelimit.h>
 
 #define	dev_crit(DEV, FMT, ...)	do {					      \
 	if (DEV)							      \
