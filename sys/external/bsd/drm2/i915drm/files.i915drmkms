@@ -1,4 +1,4 @@
-#	$NetBSD: files.i915drmkms,v 1.58 2021/12/19 10:55:37 riastradh Exp $
+#	$NetBSD: files.i915drmkms,v 1.59 2021/12/19 11:01:53 riastradh Exp $
 
 version	20180827
 
@@ -15,6 +15,7 @@ makeoptions 	i915drmkms	"COPTS.i915drmkms"+="-fwrapv"
 
 makeoptions	i915drmkms	"CPPFLAGS.i915drmkms"+="-I$S/external/bsd/drm2/i915drm"
 
+makeoptions	intelfb		"CPPFLAGS.intelfb"+="-I$S/external/bsd/drm2/dist/drm/i915"
 makeoptions	i915drmkms	"CPPFLAGS.i915drmkms"+="-I$S/external/bsd/drm2/dist/drm/i915"
 
 makeoptions	i915drmkms	"CPPFLAGS.i915drmkms"+="-DCONFIG_DRM_FBDEV_EMULATION=1"
