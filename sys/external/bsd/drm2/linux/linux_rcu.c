@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_rcu.c,v 1.6 2021/12/19 01:19:45 riastradh Exp $	*/
+/*	$NetBSD: linux_rcu.c,v 1.7 2021/12/19 01:19:52 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_rcu.c,v 1.6 2021/12/19 01:19:45 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_rcu.c,v 1.7 2021/12/19 01:19:52 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -169,12 +169,20 @@ gc_thread(void *cookie)
 			mutex_enter(&gc.lock);
 			gc.gen++;		/* done running */
 			cv_broadcast(&gc.cv);	/* notify rcu_barrier */
+
+			/*
+			 * Go back to the top and get more work before
+			 * deciding whether to stop so that we
+			 * guarantee to run all callbacks.
+			 */
+			continue;
 		}
 
 		/* If we're asked to close shop, do so.  */
 		if (gc.dying)
 			break;
 	}
+	KASSERT(gc.first == NULL);
 	mutex_exit(&gc.lock);
 
 	kthread_exit(0);
