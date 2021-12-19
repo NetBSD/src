@@ -1,4 +1,4 @@
-/*	$NetBSD: io-mapping.h,v 1.7 2021/12/19 01:34:30 riastradh Exp $	*/
+/*	$NetBSD: io-mapping.h,v 1.8 2021/12/19 11:39:56 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
 struct io_mapping {
 	bus_space_tag_t		diom_bst;
 	bus_addr_t		diom_addr;
-	bus_size_t		diom_size;
+	bus_size_t		size; /* Linux API */
 	vaddr_t			diom_va;
 	bool			diom_mapped;
 };
@@ -76,7 +76,7 @@ bus_space_io_mapping_init_wc(bus_space_tag_t bst, struct io_mapping *mapping,
 	/* Initialize the mapping record.  */
 	mapping->diom_bst = bst;
 	mapping->diom_addr = addr;
-	mapping->diom_size = size;
+	mapping->size = size;
 	mapping->diom_mapped = false;
 
 	/* Allocate kva for one page.  */
@@ -128,8 +128,8 @@ io_mapping_map_wc(struct io_mapping *mapping, bus_addr_t offset,
 
 	KASSERT(size == PAGE_SIZE);
 	KASSERT(0 == (offset & (PAGE_SIZE - 1)));
-	KASSERT(PAGE_SIZE <= mapping->diom_size);
-	KASSERT(offset <= (mapping->diom_size - PAGE_SIZE));
+	KASSERT(PAGE_SIZE <= mapping->size);
+	KASSERT(offset <= (mapping->size - PAGE_SIZE));
 	KASSERT(__type_fit(off_t, offset));
 	KASSERT(!mapping->diom_mapped);
 
