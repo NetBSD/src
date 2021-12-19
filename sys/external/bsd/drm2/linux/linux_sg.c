@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_sg.c,v 1.3 2021/12/19 11:38:04 riastradh Exp $	*/
+/*	$NetBSD: linux_sg.c,v 1.4 2021/12/19 12:03:13 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2021 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_sg.c,v 1.3 2021/12/19 11:38:04 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_sg.c,v 1.4 2021/12/19 12:03:13 riastradh Exp $");
 
 #include <sys/bus.h>
 #include <sys/errno.h>
@@ -87,11 +87,26 @@ int
 sg_alloc_table_from_bus_dmamem(struct sg_table *sgt, bus_dma_tag_t dmat,
     const bus_dma_segment_t *seg, int nseg, gfp_t gfp)
 {
+	int i, npgs = 0;
 	int ret;
 
 	KASSERT(nseg >= 1);
 
-	ret = sg_alloc_table(sgt, nseg, gfp);
+	/*
+	 * Count the number of pages.  Some segments may span multiple
+	 * contiguous pages.
+	 */
+	for (i = 0; i < nseg; i++) {
+		bus_size_t len = seg[i].ds_len;
+		for (; len >= PAGE_SIZE; len -= PAGE_SIZE, npgs++) {
+			if (npgs == INT_MAX)
+				return -ENOMEM;
+		}
+		KASSERTMSG(len == 0, "misaligned segment length: %ju\n",
+		    (uintmax_t)seg[i].ds_len);
+	}
+
+	ret = sg_alloc_table(sgt, npgs, gfp);
 	if (ret)
 		return ret;
 
