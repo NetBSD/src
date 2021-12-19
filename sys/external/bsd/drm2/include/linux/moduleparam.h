@@ -1,4 +1,4 @@
-/*	$NetBSD: moduleparam.h,v 1.8 2018/08/27 13:57:24 riastradh Exp $	*/
+/*	$NetBSD: moduleparam.h,v 1.9 2021/12/19 01:43:12 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -46,6 +46,12 @@ struct linux_module_param_info {
 #define MTYPE_bool	1
 #define MTYPE_charp	2
 #define MTYPE_uint	3
+
+/*
+ * In case of accidental cpp expansion, break glass to raise alarm and
+ * reach antizombie chainsaw.
+ */
+#define	MTYPE__Bool	MTYPE_bool
 
 #define	module_param_named(NAME, VAR, TYPE, MODE) \
 static __attribute__((__used__)) struct linux_module_param_info info_ ## NAME = { \
