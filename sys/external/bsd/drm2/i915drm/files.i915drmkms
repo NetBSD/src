@@ -1,4 +1,4 @@
-#	$NetBSD: files.i915drmkms,v 1.54 2021/12/19 01:51:37 riastradh Exp $
+#	$NetBSD: files.i915drmkms,v 1.55 2021/12/19 01:55:21 riastradh Exp $
 
 version	20180827
 
@@ -127,9 +127,9 @@ file	external/bsd/drm2/dist/drm/i915/gem/i915_gem_throttle.c	i915drmkms
 file	external/bsd/drm2/dist/drm/i915/gem/i915_gem_tiling.c	i915drmkms
 file	external/bsd/drm2/dist/drm/i915/gem/i915_gem_userptr.c	i915drmkms
 file	external/bsd/drm2/dist/drm/i915/gem/i915_gem_wait.c	i915drmkms
-file	external/bsd/drm2/dist/drm/i915/gt/debugfs_engines.c	i915drmkms
-file	external/bsd/drm2/dist/drm/i915/gt/debugfs_gt.c	i915drmkms
-file	external/bsd/drm2/dist/drm/i915/gt/debugfs_gt_pm.c	i915drmkms
+#file	external/bsd/drm2/dist/drm/i915/gt/debugfs_engines.c	i915drmkms
+#file	external/bsd/drm2/dist/drm/i915/gt/debugfs_gt.c	i915drmkms
+#file	external/bsd/drm2/dist/drm/i915/gt/debugfs_gt_pm.c	i915drmkms
 file	external/bsd/drm2/dist/drm/i915/gt/gen6_ppgtt.c	i915drmkms
 file	external/bsd/drm2/dist/drm/i915/gt/gen6_renderstate.c	i915drmkms
 file	external/bsd/drm2/dist/drm/i915/gt/gen7_renderstate.c	i915drmkms
