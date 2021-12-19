@@ -1,4 +1,4 @@
-/*	$NetBSD: radeon_pci.c,v 1.18 2021/12/19 11:05:13 riastradh Exp $	*/
+/*	$NetBSD: radeon_pci.c,v 1.19 2021/12/19 11:53:51 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radeon_pci.c,v 1.18 2021/12/19 11:05:13 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radeon_pci.c,v 1.19 2021/12/19 11:53:51 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "vga.h"
@@ -260,7 +260,7 @@ radeon_attach_real(device_t self)
 	}
 
 	/* XXX errno Linux->NetBSD */
-	error = -drm_pci_attach(sc->sc_drm_dev, pa, &sc->sc_pci_dev);
+	error = -drm_pci_attach(sc->sc_drm_dev, &sc->sc_pci_dev);
 	if (error) {
 		aprint_error_dev(self, "unable to attach drm: %d\n", error);
 		goto out;
