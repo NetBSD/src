@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu_module.c,v 1.7 2021/12/19 12:02:38 riastradh Exp $	*/
+/*	$NetBSD: amdgpu_module.c,v 1.8 2021/12/19 12:30:14 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdgpu_module.c,v 1.7 2021/12/19 12:02:38 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdgpu_module.c,v 1.8 2021/12/19 12:30:14 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/module.h>
@@ -75,7 +75,7 @@ amdgpu_init(void)
 		return error;
 
 	amdgpu_drm_driver->num_ioctls = amdgpu_max_kms_ioctl;
-	amdgpu_drm_driver->driver_features |= DRIVER_MODESET;
+	amdgpu_drm_driver->driver_features &= ~DRIVER_ATOMIC;
 
 	linux_mutex_init(&mgpu_info.mutex);
 	ida_init(&amdgpu_pasid_ida);
