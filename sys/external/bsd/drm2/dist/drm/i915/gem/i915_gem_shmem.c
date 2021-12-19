@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_gem_shmem.c,v 1.8 2021/12/19 11:33:49 riastradh Exp $	*/
+/*	$NetBSD: i915_gem_shmem.c,v 1.9 2021/12/19 11:57:03 riastradh Exp $	*/
 
 /*
  * SPDX-License-Identifier: MIT
@@ -7,7 +7,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_gem_shmem.c,v 1.8 2021/12/19 11:33:49 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_gem_shmem.c,v 1.9 2021/12/19 11:57:03 riastradh Exp $");
 
 #include <linux/pagevec.h>
 #include <linux/swap.h>
@@ -156,6 +156,7 @@ rebuild_st:
 		__USE(last_pfn);
 		KASSERT(st->nents == i);
 		sg->sg_pgs[st->nents++] = page;
+		sg_page_sizes |= PAGE_SIZE; /* XXX compress contiguous pages */
 #else
 		if (!i ||
 		    sg->length >= max_segment ||
