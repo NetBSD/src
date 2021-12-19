@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_dma_resv.c,v 1.8 2021/12/19 12:09:35 riastradh Exp $	*/
+/*	$NetBSD: linux_dma_resv.c,v 1.9 2021/12/19 12:13:53 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_dma_resv.c,v 1.8 2021/12/19 12:09:35 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_dma_resv.c,v 1.9 2021/12/19 12:13:53 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/poll.h>
@@ -793,7 +793,7 @@ top:
 		dst_list->shared_count = 0;
 		for (i = 0; i < shared_count; i++) {
 			fence = atomic_load_relaxed(&src_list->shared[i]);
-			if ((fence = dma_fence_get_rcu(fence)) != NULL)
+			if ((fence = dma_fence_get_rcu(fence)) == NULL)
 				goto restart;
 			if (dma_fence_is_signaled(fence)) {
 				dma_fence_put(fence);
