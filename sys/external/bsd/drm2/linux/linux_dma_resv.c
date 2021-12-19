@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_dma_resv.c,v 1.1 2021/12/19 10:19:53 riastradh Exp $	*/
+/*	$NetBSD: linux_dma_resv.c,v 1.2 2021/12/19 10:36:55 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_dma_resv.c,v 1.1 2021/12/19 10:19:53 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_dma_resv.c,v 1.2 2021/12/19 10:36:55 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/poll.h>
@@ -137,6 +137,22 @@ dma_resv_lock(struct dma_resv *robj,
 }
 
 /*
+ * dma_resv_lock_slow(robj, ctx)
+ *
+ *	Acquire a reservation object's lock.  Caller must not hold
+ *	this lock or any others -- this is to be used in slow paths
+ *	after dma_resv_lock or dma_resv_lock_interruptible has failed
+ *	and the caller has backed out all other locks.
+ */
+void
+dma_resv_lock_slow(struct dma_resv *robj,
+    struct ww_acquire_ctx *ctx)
+{
+
+	ww_mutex_lock_slow(&robj->lock, ctx);
+}
+
+/*
  * dma_resv_lock_interruptible(robj, ctx)
  *
  *	Acquire a reservation object's lock.  Return 0 on success,
@@ -150,6 +166,23 @@ dma_resv_lock_interruptible(struct dma_resv *robj,
 {
 
 	return ww_mutex_lock_interruptible(&robj->lock, ctx);
+}
+
+/*
+ * dma_resv_lock_slow_interruptible(robj, ctx)
+ *
+ *	Acquire a reservation object's lock.  Caller must not hold
+ *	this lock or any others -- this is to be used in slow paths
+ *	after dma_resv_lock or dma_resv_lock_interruptible has failed
+ *	and the caller has backed out all other locks.  Return 0 on
+ *	success, -ERESTART/-EINTR if interrupted.
+ */
+int
+dma_resv_lock_slow_interruptible(struct dma_resv *robj,
+    struct ww_acquire_ctx *ctx)
+{
+
+	return ww_mutex_lock_slow_interruptible(&robj->lock, ctx);
 }
 
 /*
