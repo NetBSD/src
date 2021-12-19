@@ -1,4 +1,4 @@
-/*	$NetBSD: llist.h,v 1.1 2021/12/19 00:27:36 riastradh Exp $	*/
+/*	$NetBSD: llist.h,v 1.2 2021/12/19 00:54:54 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -110,7 +110,7 @@ llist_del_first(struct llist_head *head)
 		    (membar_datadep_consumer(),				      \
 			(TMP) = list_entry((ENTRY)->FIELD.llh_next,	      \
 			    typeof(*(ENTRY)), FIELD),			      \
-			1),						      \
+			1);						      \
 		 (ENTRY) = (TMP))
 
 #endif	/* _LINUX_LLIST_H_ */
