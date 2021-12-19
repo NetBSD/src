@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_bufs.c,v 1.14 2021/12/19 00:49:43 riastradh Exp $	*/
+/*	$NetBSD: drm_bufs.c,v 1.15 2021/12/19 00:55:51 riastradh Exp $	*/
 
 /*
  * Legacy: Generic DRM Buffer Management
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_bufs.c,v 1.14 2021/12/19 00:49:43 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_bufs.c,v 1.15 2021/12/19 00:55:51 riastradh Exp $");
 
 #include <linux/export.h>
 #include <linux/log2.h>
@@ -264,9 +264,9 @@ static int drm_addmap_core(struct drm_device *dev, resource_size_t offset,
 			/* Prevent a 2nd X Server from creating a 2nd lock */
 			spin_lock(&dev->primary->master->lock.spinlock);
 			if (dev->master->lock.hw_lock != NULL) {
+				spin_unlock(&dev->master->lock.spinlock);
 				vfree(map->handle);
 				kfree(map);
-				spin_unlock(&dev->master->lock.spinlock);
 				return -EBUSY;
 			}
 			spin_unlock(&dev->primary->master->lock.spinlock);
