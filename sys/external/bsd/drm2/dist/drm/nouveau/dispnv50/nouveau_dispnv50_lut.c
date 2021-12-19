@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_dispnv50_lut.c,v 1.2 2021/12/18 23:45:32 riastradh Exp $	*/
+/*	$NetBSD: nouveau_dispnv50_lut.c,v 1.3 2021/12/19 10:49:47 riastradh Exp $	*/
 
 /*
  * Copyright 2018 Red Hat Inc.
@@ -22,7 +22,7 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_dispnv50_lut.c,v 1.2 2021/12/18 23:45:32 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_dispnv50_lut.c,v 1.3 2021/12/19 10:49:47 riastradh Exp $");
 
 #include "lut.h"
 #include "disp.h"
@@ -32,6 +32,12 @@ __KERNEL_RCSID(0, "$NetBSD: nouveau_dispnv50_lut.c,v 1.2 2021/12/18 23:45:32 ria
 #include <drm/drm_property.h>
 
 #include <nvif/class.h>
+
+#ifdef __NetBSD__
+#define	__iomem		__lut_iomem
+#define	readw(p)	atomic_load_relaxed((const __iomem uint16_t *)(p))
+#define	writew(v,p)	atomic_store_relaxed((__iomem uint16_t *)(p), (v))
+#endif
 
 u32
 nv50_lut_load(struct nv50_lut *lut, int buffer, struct drm_property_blob *blob,

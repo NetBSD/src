@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_dispnv50_wndwc57e.c,v 1.2 2021/12/18 23:45:32 riastradh Exp $	*/
+/*	$NetBSD: nouveau_dispnv50_wndwc57e.c,v 1.3 2021/12/19 10:49:47 riastradh Exp $	*/
 
 /*
  * Copyright 2018 Red Hat Inc.
@@ -22,7 +22,7 @@
  * OTHER DEALINGS IN THE SOFTWARE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_dispnv50_wndwc57e.c,v 1.2 2021/12/18 23:45:32 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_dispnv50_wndwc57e.c,v 1.3 2021/12/19 10:49:47 riastradh Exp $");
 
 #include "wndw.h"
 #include "atom.h"
@@ -137,6 +137,12 @@ fixedU0_16_FP16(u16 fixed)
         }
         return (sign << 15) | (exp << 10) | man;
 }
+
+#ifdef __NetBSD__
+#define	__iomem		__lut_iomem
+#define	readw(p)	atomic_load_relaxed((const __iomem uint16_t *)(p))
+#define	writew(v,p)	atomic_store_relaxed((__iomem uint16_t *)(p), (v))
+#endif
 
 static void
 wndwc57e_ilut_load(struct drm_color_lut *in, int size, void __iomem *mem)
