@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_pci_autoconf.c,v 1.5 2021/12/19 11:33:49 riastradh Exp $	*/
+/*	$NetBSD: i915_pci_autoconf.c,v 1.6 2021/12/19 11:53:02 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_pci_autoconf.c,v 1.5 2021/12/19 11:33:49 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_pci_autoconf.c,v 1.6 2021/12/19 11:53:02 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/queue.h>
@@ -64,7 +64,7 @@ struct i915drmkms_softc {
 	bool				sc_dev_registered;
 };
 
-static const struct intel_device_info *
+static const struct pci_device_id *
 		i915drmkms_pci_lookup(const struct pci_attach_args *);
 
 static int	i915drmkms_match(device_t, cfdata_t, void *);
@@ -85,7 +85,7 @@ extern struct drm_driver *const i915_drm_driver;
 extern const struct pci_device_id *const i915_device_ids;
 extern const size_t i915_n_device_ids;
 
-static const struct intel_device_info *
+static const struct pci_device_id *
 i915drmkms_pci_lookup(const struct pci_attach_args *pa)
 {
 	size_t i;
@@ -110,15 +110,15 @@ i915drmkms_pci_lookup(const struct pci_attach_args *pa)
 	if (i == i915_n_device_ids)
 		return NULL;
 
-	const struct intel_device_info *const info =
-	    (const void *)(uintptr_t)i915_device_ids[i].driver_data;
+	const struct pci_device_id *ent = &i915_device_ids[i];
+	const struct intel_device_info *const info = (struct intel_device_info *) ent->driver_data;
 
 	if (info->require_force_probe) {
 		printf("i915drmkms: preliminary hardware support disabled\n");
 		return NULL;
 	}
 
-	return info;
+	return ent;
 }
 
 static int
@@ -168,9 +168,8 @@ i915drmkms_attach_real(device_t self)
 {
 	struct i915drmkms_softc *const sc = device_private(self);
 	struct pci_attach_args *const pa = &sc->sc_pa;
-	const struct intel_device_info *const info = i915drmkms_pci_lookup(pa);
-	const unsigned long cookie =
-	    (unsigned long)(uintptr_t)(const void *)info;
+	const struct pci_device_id *ent = i915drmkms_pci_lookup(pa);
+	const struct intel_device_info *const info = (struct intel_device_info *) ent->driver_data;
 	int error;
 
 	KASSERT(info != NULL);
@@ -198,7 +197,7 @@ i915drmkms_attach_real(device_t self)
 	sc->sc_pci_attached = true;
 
 	/* XXX errno Linux->NetBSD */
-	error = -drm_dev_register(sc->sc_drm_dev, cookie);
+	error = -i915_driver_probe(&sc->sc_pci_dev, ent);
 	if (error) {
 		aprint_error_dev(self, "unable to register drm: %d\n", error);
 		return;
