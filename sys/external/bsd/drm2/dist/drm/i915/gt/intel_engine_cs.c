@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_engine_cs.c,v 1.2 2021/12/18 23:45:30 riastradh Exp $	*/
+/*	$NetBSD: intel_engine_cs.c,v 1.3 2021/12/19 01:21:53 riastradh Exp $	*/
 
 /*
  * Copyright © 2016 Intel Corporation
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intel_engine_cs.c,v 1.2 2021/12/18 23:45:30 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intel_engine_cs.c,v 1.3 2021/12/19 01:21:53 riastradh Exp $");
 
 #include <drm/drm_print.h>
 
@@ -417,6 +417,7 @@ void intel_engines_free(struct intel_gt *gt)
 	enum intel_engine_id id;
 
 	for_each_engine(engine, gt, id) {
+		seqlock_destroy(&engine->stats.lock);
 		kfree(engine);
 		gt->engine[id] = NULL;
 	}
