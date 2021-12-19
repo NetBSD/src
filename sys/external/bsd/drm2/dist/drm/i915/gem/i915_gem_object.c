@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_gem_object.c,v 1.4 2021/12/19 11:33:30 riastradh Exp $	*/
+/*	$NetBSD: i915_gem_object.c,v 1.5 2021/12/19 11:37:41 riastradh Exp $	*/
 
 /*
  * Copyright © 2017 Intel Corporation
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_gem_object.c,v 1.4 2021/12/19 11:33:30 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_gem_object.c,v 1.5 2021/12/19 11:37:41 riastradh Exp $");
 
 #include <linux/bitmap.h>
 #include <linux/sched/mm.h>
@@ -65,6 +65,7 @@ void i915_gem_object_init(struct drm_i915_gem_object *obj,
 
 	spin_lock_init(&obj->vma.lock);
 	INIT_LIST_HEAD(&obj->vma.list);
+	i915_vma_tree_init(obj);
 
 	INIT_LIST_HEAD(&obj->mm.link);
 

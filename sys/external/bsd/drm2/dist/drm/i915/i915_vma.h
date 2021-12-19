@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_vma.h,v 1.6 2021/12/19 11:33:30 riastradh Exp $	*/
+/*	$NetBSD: i915_vma.h,v 1.7 2021/12/19 11:37:41 riastradh Exp $	*/
 
 /*
  * Copyright © 2016 Intel Corporation
@@ -40,6 +40,8 @@
 #include "i915_active.h"
 #include "i915_request.h"
 #include "i915_vma_types.h"
+
+void i915_vma_tree_init(struct drm_i915_gem_object *);
 
 struct i915_vma *
 i915_vma_instance(struct drm_i915_gem_object *obj,
@@ -208,7 +210,7 @@ int i915_vma_bind(struct i915_vma *vma,
 		  struct i915_vma_work *work);
 
 bool i915_gem_valid_gtt_space(struct i915_vma *vma, unsigned long color);
-bool i915_vma_misplaced(struct i915_vma *vma,
+bool i915_vma_misplaced(const struct i915_vma *vma,
 			u64 size, u64 alignment, u64 flags);
 void __i915_vma_set_map_and_fenceable(struct i915_vma *vma);
 void i915_vma_revoke_mmap(struct i915_vma *vma);

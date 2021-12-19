@@ -1,4 +1,4 @@
-#	$NetBSD: files.i915drmkms,v 1.72 2021/12/19 11:37:06 riastradh Exp $
+#	$NetBSD: files.i915drmkms,v 1.73 2021/12/19 11:37:41 riastradh Exp $
 
 version	20180827
 
@@ -53,6 +53,7 @@ file	external/bsd/drm2/i915drm/i915_module.c		i915drmkms
 file	external/bsd/drm2/i915drm/i915_pci_autoconf.c	i915drmkms
 file	external/bsd/drm2/i915drm/i915_perf.c	i915drmkms
 file	external/bsd/drm2/i915drm/i915_sysfs.c	i915drmkms
+file	external/bsd/drm2/i915drm/i915_switcheroo.c	i915drmkms
 file	external/bsd/drm2/i915drm/intel_gtt.c		i915drmkms
 file	external/bsd/drm2/i915drm/intelfb.c		intelfb
 file	external/bsd/drm2/i915drm/vlv_dsi.c	i915drmkms
@@ -208,7 +209,7 @@ file	external/bsd/drm2/dist/drm/i915/i915_scheduler.c	i915drmkms
 file	external/bsd/drm2/dist/drm/i915/i915_suspend.c	i915drmkms
 file	external/bsd/drm2/dist/drm/i915/i915_sw_fence.c	i915drmkms
 file	external/bsd/drm2/dist/drm/i915/i915_sw_fence_work.c	i915drmkms
-file	external/bsd/drm2/dist/drm/i915/i915_switcheroo.c	i915drmkms
+#file	external/bsd/drm2/dist/drm/i915/i915_switcheroo.c	i915drmkms
 file	external/bsd/drm2/dist/drm/i915/i915_syncmap.c	i915drmkms
 #file	external/bsd/drm2/dist/drm/i915/i915_sysfs.c	i915drmkms
 #file	external/bsd/drm2/dist/drm/i915/i915_trace_points.c	i915drmkms
