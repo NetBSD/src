@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_gem_shmem.c,v 1.4 2021/12/19 01:34:08 riastradh Exp $	*/
+/*	$NetBSD: i915_gem_shmem.c,v 1.5 2021/12/19 01:44:57 riastradh Exp $	*/
 
 /*
  * SPDX-License-Identifier: MIT
@@ -7,7 +7,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_gem_shmem.c,v 1.4 2021/12/19 01:34:08 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_gem_shmem.c,v 1.5 2021/12/19 01:44:57 riastradh Exp $");
 
 #include <linux/pagevec.h>
 #include <linux/swap.h>
@@ -461,6 +461,9 @@ static int __create_shmem(struct drm_i915_private *i915,
 			  struct drm_gem_object *obj,
 			  resource_size_t size)
 {
+#ifdef __NetBSD__
+	return drm_gem_object_init(dev, obj, size);
+#else
 	unsigned long flags = VM_NORESERVE;
 	struct file *filp;
 
@@ -476,6 +479,7 @@ static int __create_shmem(struct drm_i915_private *i915,
 
 	obj->filp = filp;
 	return 0;
+#endif
 }
 
 static struct drm_i915_gem_object *
