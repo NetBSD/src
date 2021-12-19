@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_sprite.c,v 1.5 2021/12/19 12:04:42 riastradh Exp $	*/
+/*	$NetBSD: intel_sprite.c,v 1.6 2021/12/19 12:05:09 riastradh Exp $	*/
 
 /*
  * Copyright © 2011 Intel Corporation
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intel_sprite.c,v 1.5 2021/12/19 12:04:42 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intel_sprite.c,v 1.6 2021/12/19 12:05:09 riastradh Exp $");
 
 #include <drm/drm_atomic.h>
 #include <drm/drm_atomic_helper.h>
@@ -121,14 +121,13 @@ void intel_pipe_update_start(const struct intel_crtc_state *new_crtc_state)
 		DRM_ERROR("PSR idle timed out 0x%x, atomic update may fail\n",
 			  psr_status);
 
-	spin_lock(&crtc->base.dev->event_lock);
+	spin_lock(&dev_priv->drm.event_lock);
 
 	crtc->debug.min_vbl = min;
 	crtc->debug.max_vbl = max;
 	trace_intel_pipe_update_start(crtc);
 
-	spin_lock(&dev_priv->drm.vbl_lock);
-	DRM_SPIN_TIMED_WAIT_NOINTR_UNTIL(ret, wq, &dev_priv->drm.vbl_lock,
+	DRM_SPIN_TIMED_WAIT_NOINTR_UNTIL(ret, wq, &dev_priv->drm.event_lock,
 	    timeout,
 	    (scanline = intel_get_crtc_scanline(crtc),
 		scanline < min || scanline > max));
@@ -154,7 +153,6 @@ void intel_pipe_update_start(const struct intel_crtc_state *new_crtc_state)
 	 */
 	while (need_vlv_dsi_wa && scanline == vblank_start)
 		scanline = intel_get_crtc_scanline(crtc);
-	spin_unlock(&dev_priv->drm.vbl_lock);
 
 	crtc->debug.scanline_start = scanline;
 	crtc->debug.start_vbl_time = ktime_get();
@@ -164,7 +162,7 @@ void intel_pipe_update_start(const struct intel_crtc_state *new_crtc_state)
 	return;
 
 irq_disable:
-	spin_lock(&crtc->base.dev->event_lock);
+	spin_lock(&dev_priv->drm.event_lock);
 }
 
 /**
@@ -184,6 +182,8 @@ void intel_pipe_update_end(struct intel_crtc_state *new_crtc_state)
 	ktime_t end_vbl_time = ktime_get();
 	struct drm_i915_private *dev_priv = to_i915(crtc->base.dev);
 
+	BUG_ON(!spin_is_locked(&dev_priv->drm.event_lock));
+
 	trace_intel_pipe_update_end(crtc, end_vbl_count, scanline_end);
 
 	/* We're still in the vblank-evade critical section, this can't race.
@@ -191,15 +191,14 @@ void intel_pipe_update_end(struct intel_crtc_state *new_crtc_state)
 	 * event outside of the critical section - the spinlock might spin for a
 	 * while ... */
 	if (new_crtc_state->uapi.event) {
-		WARN_ON(drm_crtc_vblank_get(&crtc->base) != 0);
+		WARN_ON(drm_crtc_vblank_get_locked(&crtc->base) != 0);
 
 		drm_crtc_arm_vblank_event(&crtc->base,
 				          new_crtc_state->uapi.event);
 
 		new_crtc_state->uapi.event = NULL;
 	}
-
-	spin_unlock(&crtc->base.dev->event_lock);
+	spin_unlock(&dev_priv->drm.event_lock);
 
 	if (intel_vgpu_active(dev_priv))
 		return;

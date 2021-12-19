@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_irq.c,v 1.17 2021/12/18 23:44:57 riastradh Exp $	*/
+/*	$NetBSD: drm_irq.c,v 1.18 2021/12/19 12:05:08 riastradh Exp $	*/
 
 /*
  * drm_irq.c IRQ and vblank support
@@ -55,7 +55,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_irq.c,v 1.17 2021/12/18 23:44:57 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_irq.c,v 1.18 2021/12/19 12:05:08 riastradh Exp $");
 
 #include <linux/export.h>
 #include <linux/interrupt.h>	/* For task queue support */
@@ -215,7 +215,7 @@ int drm_irq_uninstall(struct drm_device *dev)
 	 * disabled when uninstalling the irq handler.
 	 */
 	if (dev->num_crtcs) {
-		spin_lock_irqsave(&dev->vbl_lock, irqflags);
+		spin_lock_irqsave(&dev->event_lock, irqflags);
 		for (i = 0; i < dev->num_crtcs; i++) {
 			struct drm_vblank_crtc *vblank = &dev->vblank[i];
 
@@ -226,12 +226,13 @@ int drm_irq_uninstall(struct drm_device *dev)
 
 			drm_vblank_disable_and_save(dev, i);
 #ifdef __NetBSD__
-			DRM_SPIN_WAKEUP_ONE(&vblank->queue, &dev->vbl_lock);
+			DRM_SPIN_WAKEUP_ONE(&vblank->queue,
+			    &dev->event_lock);
 #else
 			wake_up(&vblank->queue);
 #endif
 		}
-		spin_unlock_irqrestore(&dev->vbl_lock, irqflags);
+		spin_unlock_irqrestore(&dev->event_lock, irqflags);
 	}
 
 	if (!irq_enabled)

@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_vblank.h,v 1.10 2021/12/19 11:52:25 riastradh Exp $	*/
+/*	$NetBSD: drm_vblank.h,v 1.11 2021/12/19 12:05:09 riastradh Exp $	*/
 
 /*
  * Copyright 2016 Intel Corp.
@@ -227,6 +227,7 @@ void drm_vblank_set_event(struct drm_pending_vblank_event *e,
 bool drm_handle_vblank(struct drm_device *dev, unsigned int pipe);
 bool drm_crtc_handle_vblank(struct drm_crtc *crtc);
 int drm_crtc_vblank_get(struct drm_crtc *crtc);
+int drm_crtc_vblank_get_locked(struct drm_crtc *crtc);
 void drm_crtc_vblank_put(struct drm_crtc *crtc);
 void drm_crtc_vblank_put_locked(struct drm_crtc *crtc);
 void drm_wait_one_vblank(struct drm_device *dev, unsigned int pipe);

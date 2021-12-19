@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_device.h,v 1.7 2021/12/19 10:29:16 riastradh Exp $	*/
+/*	$NetBSD: drm_device.h,v 1.8 2021/12/19 12:05:09 riastradh Exp $	*/
 
 #ifndef _DRM_DEVICE_H_
 #define _DRM_DEVICE_H_
@@ -230,11 +230,13 @@ struct drm_device {
 	 *  Protects vblank count and time updates during vblank enable/disable
 	 */
 	spinlock_t vblank_time_lock;
+#ifndef __NetBSD__		/* merged into event_lock */
 	/**
 	 * @vbl_lock: Top-level vblank references lock, wraps the low-level
 	 * @vblank_time_lock.
 	 */
 	spinlock_t vbl_lock;
+#endif
 
 	/**
 	 * @max_vblank_count:
