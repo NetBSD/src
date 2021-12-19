@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_drv.c,v 1.27 2021/12/19 11:09:47 riastradh Exp $	*/
+/*	$NetBSD: i915_drv.c,v 1.28 2021/12/19 11:17:27 riastradh Exp $	*/
 
 /* i915_drv.c -- i830,i845,i855,i865,i915 driver -*- linux-c -*-
  */
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_drv.c,v 1.27 2021/12/19 11:09:47 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_drv.c,v 1.28 2021/12/19 11:17:27 riastradh Exp $");
 
 #include <linux/acpi.h>
 #include <linux/device.h>
@@ -449,34 +449,6 @@ static void i915_workqueues_cleanup(struct drm_i915_private *dev_priv)
 	destroy_workqueue(dev_priv->hotplug.dp_wq);
 	destroy_workqueue(dev_priv->wq);
 }
-
-static const struct intel_device_info intel_kabylake_info = {
-	.is_kabylake = 1,
-	.gen = 9,
-	.num_pipes = 3,
-	.need_gfx_hws = 1, .has_hotplug = 1,
-	.ring_mask = RENDER_RING | BSD_RING | BLT_RING | VEBOX_RING,
-	.has_llc = 1,
-	.has_ddi = 1,
-	.has_fpga_dbg = 1,
-	.has_fbc = 1,
-	GEN_DEFAULT_PIPEOFFSETS,
-	IVB_CURSOR_OFFSETS,
-};
-
-static const struct intel_device_info intel_kabylake_gt3_info = {
-	.is_kabylake = 1,
-	.gen = 9,
-	.num_pipes = 3,
-	.need_gfx_hws = 1, .has_hotplug = 1,
-	.ring_mask = RENDER_RING | BSD_RING | BLT_RING | VEBOX_RING | BSD2_RING,
-	.has_llc = 1,
-	.has_ddi = 1,
-	.has_fpga_dbg = 1,
-	.has_fbc = 1,
-	GEN_DEFAULT_PIPEOFFSETS,
-	IVB_CURSOR_OFFSETS,
-};
 
 /*
  * We don't keep the workarounds for pre-production hardware, so we expect our
