@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_trace.h,v 1.15 2021/12/19 01:23:52 riastradh Exp $	*/
+/*	$NetBSD: i915_trace.h,v 1.16 2021/12/19 11:02:12 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013, 2018 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
 #include <sys/sdt.h>
 
 #include "i915_request.h"
-#include "intel_drv.h"
+#include "i915_drv.h"
 
 /* Must come last.  */
 #include <drm/drm_trace_netbsd.h>
