@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_engine_types.h,v 1.6 2021/12/19 11:46:47 riastradh Exp $	*/
+/*	$NetBSD: intel_engine_types.h,v 1.7 2021/12/19 11:51:59 riastradh Exp $	*/
 
 /*
  * SPDX-License-Identifier: MIT
@@ -299,7 +299,11 @@ struct intel_engine_cs {
 	unsigned int context_tag;
 #define NUM_CONTEXT_TAG roundup_pow_of_two(2 * EXECLIST_MAX_PORTS)
 
-	struct rb_node uabi_node;
+	union {
+		struct rb_node rbtree;
+		struct llist_node llist;
+		struct list_head list;
+	} uabi_node;
 
 	struct intel_sseu sseu;
 

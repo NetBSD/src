@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_drv.h,v 1.44 2021/12/19 11:33:49 riastradh Exp $	*/
+/*	$NetBSD: i915_drv.h,v 1.45 2021/12/19 11:51:59 riastradh Exp $	*/
 
 /* i915_drv.h -- Private header for the I915 driver -*- linux-c -*-
  */
@@ -987,6 +987,7 @@ struct drm_i915_private {
 
 	struct intel_engine_cs *engine[I915_NUM_ENGINES];
 	struct rb_root uabi_engines;
+	struct llist_head uabi_engines_llist;
 
 	struct resource mch_res;
 
@@ -1381,12 +1382,12 @@ static inline struct drm_i915_private *pdev_to_i915(struct pci_dev *pdev)
 	     0;)
 
 #define rb_to_uabi_engine(rb) \
-	rb_entry_safe(rb, struct intel_engine_cs, uabi_node)
+	rb_entry_safe(rb, struct intel_engine_cs, uabi_node.rbtree)
 
 #define for_each_uabi_engine(engine__, i915__) \
 	for ((engine__) = rb_to_uabi_engine(rb_first(&(i915__)->uabi_engines));\
 	     (engine__); \
-	     (engine__) = rb_to_uabi_engine(rb_next2(&(i915__)->uabi_engines, &(engine__)->uabi_node)))
+	     (engine__) = rb_to_uabi_engine(rb_next2(&(i915__)->uabi_engines, &(engine__)->uabi_node.rbtree)))
 
 #define I915_GTT_OFFSET_NONE ((u32)-1)
 
