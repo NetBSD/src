@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_active.c,v 1.2 2021/12/18 23:45:28 riastradh Exp $	*/
+/*	$NetBSD: i915_active.c,v 1.3 2021/12/19 01:44:57 riastradh Exp $	*/
 
 /*
  * SPDX-License-Identifier: MIT
@@ -7,7 +7,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_active.c,v 1.2 2021/12/18 23:45:28 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_active.c,v 1.3 2021/12/19 01:44:57 riastradh Exp $");
 
 #include <linux/debugobjects.h>
 
@@ -246,6 +246,15 @@ active_instance(struct i915_active *ref, struct intel_timeline *tl)
 	spin_lock_irq(&ref->tree_lock);
 	GEM_BUG_ON(i915_active_is_idle(ref));
 
+#ifdef __NetBSD__
+	__USE(parent);
+	__USE(p);
+	node = rb_tree_find_node(&vma->active.rbr_tree, &idx);
+	if (node) {
+		KASSERT(node->timeline == idx);
+		goto out;
+	}
+#else
 	parent = NULL;
 	p = &ref->tree.rb_node;
 	while (*p) {
@@ -262,14 +271,21 @@ active_instance(struct i915_active *ref, struct intel_timeline *tl)
 		else
 			p = &parent->rb_left;
 	}
+#endif
 
 	node = prealloc;
 	__i915_active_fence_init(&node->base, NULL, node_retire);
 	node->ref = ref;
 	node->timeline = idx;
 
+#ifdef __NetBSD__
+	struct i915_vma_active *collision __diagused;
+	collision = rb_tree_insert_node(&vma->active.rbr_tree, node);
+	KASSERT(collision == node);
+#else
 	rb_link_node(&node->node, parent, p);
 	rb_insert_color(&node->node, &ref->tree);
+#endif
 
 out:
 	ref->cache = node;
@@ -278,6 +294,40 @@ out:
 	BUILD_BUG_ON(offsetof(typeof(*node), base));
 	return &node->base;
 }
+
+#ifdef __NetBSD__
+static int
+compare_active(void *cookie, const void *va, const void *vb)
+{
+	const struct i915_active *a = va;
+	const struct i915_active *b = vb;
+
+	if (a->timeline < b->timeline)
+		return -1;
+	if (a->timeline > b->timeline)
+		return +1;
+	return 0;
+}
+
+static int
+compare_active_key(void *cookie, const void *vn, const void *vk)
+{
+	const struct i915_active *a = vn;
+	const uint64_t *k = vk;
+
+	if (a->timeline < *k)
+		return -1;
+	if (a->timeline > *k)
+		return +1;
+	return 0;
+}
+
+static const rb_tree_ops_t active_rb_ops = {
+	.rbto_compare_nodes = compare_active,
+	.rbto_compare_key = compare_active_key,
+	.rbto_node_offset = offsetof(struct i915_active, node),
+};
+#endif
 
 void __i915_active_init(struct i915_active *ref,
 			int (*active)(struct i915_active *ref),
@@ -296,7 +346,11 @@ void __i915_active_init(struct i915_active *ref,
 		ref->flags |= I915_ACTIVE_RETIRE_SLEEPS;
 
 	spin_lock_init(&ref->tree_lock);
+#ifdef __NetBSD__
+	rb_tree_init(&vma->active.rbr_tree, &active_rb_ops);
+#else
 	ref->tree = RB_ROOT;
+#endif
 	ref->cache = NULL;
 
 	init_llist_head(&ref->preallocated_barriers);
