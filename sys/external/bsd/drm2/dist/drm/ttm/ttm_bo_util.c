@@ -1,4 +1,4 @@
-/*	$NetBSD: ttm_bo_util.c,v 1.25 2021/12/19 10:47:30 riastradh Exp $	*/
+/*	$NetBSD: ttm_bo_util.c,v 1.26 2021/12/19 11:22:08 riastradh Exp $	*/
 
 /* SPDX-License-Identifier: GPL-2.0 OR MIT */
 /**************************************************************************
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ttm_bo_util.c,v 1.25 2021/12/19 10:47:30 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ttm_bo_util.c,v 1.26 2021/12/19 11:22:08 riastradh Exp $");
 
 #include <drm/ttm/ttm_bo_driver.h>
 #include <drm/ttm/ttm_placement.h>
@@ -567,7 +567,8 @@ static int ttm_buffer_object_transfer(struct ttm_buffer_object *bo,
 	INIT_LIST_HEAD(&fbo->base.io_reserve_lru);
 	fbo->base.moving = NULL;
 #ifdef __NetBSD__
-	drm_vma_node_init(&fbo->base.base.vma_node);
+	if (!ttm_bo_uses_embedded_gem_object(bo))
+		drm_vma_node_init(&fbo->base.base.vma_node);
 	uvm_obj_init(&fbo->base.uvmobj, bo->bdev->driver->ttm_uvm_ops, true, 1);
 	rw_obj_hold(bo->uvmobj.vmobjlock);
 	uvm_obj_setlock(&fbo->base.uvmobj, bo->uvmobj.vmobjlock);
