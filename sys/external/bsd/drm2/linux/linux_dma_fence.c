@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_dma_fence.c,v 1.7 2021/12/19 01:48:22 riastradh Exp $	*/
+/*	$NetBSD: linux_dma_fence.c,v 1.8 2021/12/19 01:50:40 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_dma_fence.c,v 1.7 2021/12/19 01:48:22 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_dma_fence.c,v 1.8 2021/12/19 01:50:40 riastradh Exp $");
 
 #include <sys/atomic.h>
 #include <sys/condvar.h>
@@ -196,6 +196,7 @@ struct dma_fence *
 dma_fence_get_rcu(struct dma_fence *fence)
 {
 
+	__insn_barrier();
 	if (!kref_get_unless_zero(&fence->refcount))
 		return NULL;
 	return fence;
