@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_dp_helper.c,v 1.14 2021/12/19 00:56:40 riastradh Exp $	*/
+/*	$NetBSD: drm_dp_helper.c,v 1.15 2021/12/19 12:32:01 riastradh Exp $	*/
 
 /*
  * Copyright © 2009 Keith Packard
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_dp_helper.c,v 1.14 2021/12/19 00:56:40 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_dp_helper.c,v 1.15 2021/12/19 12:32:01 riastradh Exp $");
 
 #include <linux/delay.h>
 #include <linux/errno.h>
@@ -1075,6 +1075,7 @@ void drm_dp_aux_unregister(struct drm_dp_aux *aux)
 {
 	drm_dp_aux_unregister_devnode(aux);
 	i2c_del_adapter(&aux->ddc);
+	mutex_destroy(&aux->cec.lock);
 	mutex_destroy(&aux->hw_mutex);
 }
 EXPORT_SYMBOL(drm_dp_aux_unregister);

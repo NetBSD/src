@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_vblank.c,v 1.13 2021/12/19 12:24:57 riastradh Exp $	*/
+/*	$NetBSD: drm_vblank.c,v 1.14 2021/12/19 12:32:01 riastradh Exp $	*/
 
 /*
  * drm_irq.c IRQ and vblank support
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_vblank.c,v 1.13 2021/12/19 12:24:57 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_vblank.c,v 1.14 2021/12/19 12:32:01 riastradh Exp $");
 
 #include <linux/export.h>
 #include <linux/moduleparam.h>
@@ -480,6 +480,8 @@ void drm_vblank_cleanup(struct drm_device *dev)
 	kfree(dev->vblank);
 
 	dev->num_crtcs = 0;
+
+	spin_lock_destroy(&dev->vblank_time_lock);
 }
 
 /**

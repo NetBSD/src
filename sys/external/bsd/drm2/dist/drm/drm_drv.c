@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_drv.c,v 1.21 2021/12/19 11:10:09 riastradh Exp $	*/
+/*	$NetBSD: drm_drv.c,v 1.22 2021/12/19 12:32:01 riastradh Exp $	*/
 
 /*
  * Created: Fri Jan 19 10:48:35 2001 by faith@acm.org
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_drv.c,v 1.21 2021/12/19 11:10:09 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_drv.c,v 1.22 2021/12/19 12:32:01 riastradh Exp $");
 
 #include <linux/debugfs.h>
 #include <linux/fs.h>
@@ -761,6 +761,7 @@ err_pswitch:
 	mutex_destroy(&dev->clientlist_mutex);
 	mutex_destroy(&dev->filelist_mutex);
 	mutex_destroy(&dev->struct_mutex);
+	spin_lock_destroy(&dev->event_lock);
 	drm_legacy_destroy_members(dev);
 	return ret;
 }
@@ -843,6 +844,7 @@ void drm_dev_fini(struct drm_device *dev)
 	mutex_destroy(&dev->clientlist_mutex);
 	mutex_destroy(&dev->filelist_mutex);
 	mutex_destroy(&dev->struct_mutex);
+	spin_lock_destroy(&dev->event_lock);
 	drm_legacy_destroy_members(dev);
 	kfree(dev->unique);
 }
