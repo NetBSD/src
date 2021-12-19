@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_print.c,v 1.6 2021/12/19 09:50:04 riastradh Exp $	*/
+/*	$NetBSD: drm_print.c,v 1.7 2021/12/19 09:50:12 riastradh Exp $	*/
 
 /*
  * Copyright (C) 2016 Red Hat
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_print.c,v 1.6 2021/12/19 09:50:04 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_print.c,v 1.7 2021/12/19 09:50:12 riastradh Exp $");
 
 #ifndef __NetBSD__		/* XXX ??? */
 #define DEBUG /* for pr_debug() */
@@ -56,6 +56,7 @@ __KERNEL_RCSID(0, "$NetBSD: drm_print.c,v 1.6 2021/12/19 09:50:04 riastradh Exp 
 unsigned int __drm_debug;
 EXPORT_SYMBOL(__drm_debug);
 
+#ifdef __linux__
 MODULE_PARM_DESC(debug, "Enable debug output, where each bit enables a debug category.\n"
 "\t\tBit 0 (0x01)  will enable CORE messages (drm core code)\n"
 "\t\tBit 1 (0x02)  will enable DRIVER messages (drm controller code)\n"
@@ -66,6 +67,7 @@ MODULE_PARM_DESC(debug, "Enable debug output, where each bit enables a debug cat
 "\t\tBit 7 (0x80)  will enable LEASE messages (leasing code)\n"
 "\t\tBit 8 (0x100) will enable DP messages (displayport code)");
 module_param_named(debug, __drm_debug, int, 0600);
+#endif
 
 void __drm_puts_coredump(struct drm_printer *p, const char *str)
 {
