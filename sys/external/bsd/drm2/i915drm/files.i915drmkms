@@ -1,4 +1,4 @@
-#	$NetBSD: files.i915drmkms,v 1.74 2021/12/19 11:38:04 riastradh Exp $
+#	$NetBSD: files.i915drmkms,v 1.75 2021/12/19 11:38:26 riastradh Exp $
 
 version	20180827
 
@@ -88,7 +88,7 @@ file	external/bsd/drm2/dist/drm/i915/display/intel_dp_mst.c	i915drmkms
 file	external/bsd/drm2/dist/drm/i915/display/intel_dpio_phy.c	i915drmkms
 file	external/bsd/drm2/dist/drm/i915/display/intel_dpll_mgr.c	i915drmkms
 file	external/bsd/drm2/dist/drm/i915/display/intel_dsb.c	i915drmkms
-file	external/bsd/drm2/dist/drm/i915/display/intel_dsi.c	i915drmkms
+#file	external/bsd/drm2/dist/drm/i915/display/intel_dsi.c	i915drmkms
 file	external/bsd/drm2/dist/drm/i915/display/intel_dsi_dcs_backlight.c	i915drmkms
 file	external/bsd/drm2/dist/drm/i915/display/intel_dsi_vbt.c	i915drmkms
 file	external/bsd/drm2/dist/drm/i915/display/intel_dvo.c	i915drmkms

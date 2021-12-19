@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_dsb.c,v 1.2 2021/12/18 23:45:30 riastradh Exp $	*/
+/*	$NetBSD: intel_dsb.c,v 1.3 2021/12/19 11:38:26 riastradh Exp $	*/
 
 // SPDX-License-Identifier: MIT
 /*
@@ -7,10 +7,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intel_dsb.c,v 1.2 2021/12/18 23:45:30 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intel_dsb.c,v 1.3 2021/12/19 11:38:26 riastradh Exp $");
 
 #include "i915_drv.h"
 #include "intel_display_types.h"
+
+#include <linux/nbsd-namespace.h>
 
 #define DSB_BUF_SIZE    (2 * PAGE_SIZE)
 

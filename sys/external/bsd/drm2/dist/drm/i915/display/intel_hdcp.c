@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_hdcp.c,v 1.2 2021/12/18 23:45:30 riastradh Exp $	*/
+/*	$NetBSD: intel_hdcp.c,v 1.3 2021/12/19 11:38:26 riastradh Exp $	*/
 
 /* SPDX-License-Identifier: MIT */
 /*
@@ -11,7 +11,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intel_hdcp.c,v 1.2 2021/12/18 23:45:30 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intel_hdcp.c,v 1.3 2021/12/19 11:38:26 riastradh Exp $");
 
 #include <linux/component.h>
 #include <linux/i2c.h>
@@ -1939,10 +1939,11 @@ int intel_hdcp_init(struct intel_connector *connector,
 	}
 
 	hdcp->shim = shim;
+	/* XXX destroy */
 	mutex_init(&hdcp->mutex);
 	INIT_DELAYED_WORK(&hdcp->check_work, intel_hdcp_check_work);
 	INIT_WORK(&hdcp->prop_work, intel_hdcp_prop_work);
-	init_waitqueue_head(&hdcp->cp_irq_queue);
+	DRM_INIT_WAITQUEUE(&hdcp->cp_irq_queue, "hdcpirq");
 
 	return 0;
 }
@@ -2087,8 +2088,12 @@ void intel_hdcp_handle_cp_irq(struct intel_connector *connector)
 	if (!hdcp->shim)
 		return;
 
+	unsigned long irqflags;
+	spin_lock_irqsave(&connector->hdcp.cp_irq_lock, irqflags);
 	atomic_inc(&connector->hdcp.cp_irq_count);
-	wake_up_all(&connector->hdcp.cp_irq_queue);
+	DRM_SPIN_WAKEUP_ALL(&connector->hdcp.cp_irq_queue,
+	    &connector->hdcp.cp_irq_lock);
+	spin_unlock_irqrestore(&connector->hdcp.cp_irq_lock, irqflags);
 
 	schedule_delayed_work(&hdcp->check_work, 0);
 }
