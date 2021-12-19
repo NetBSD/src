@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_drv.h,v 1.6 2021/12/19 09:55:05 riastradh Exp $	*/
+/*	$NetBSD: drm_drv.h,v 1.7 2021/12/19 10:51:39 riastradh Exp $	*/
 
 /*
  * Copyright 1999 Precision Insight, Inc., Cedar Park, Texas.
@@ -800,6 +800,7 @@ struct drm_driver {
 	int (*dma_ioctl) (struct drm_device *dev, void *data, struct drm_file *file_priv);
 	int (*dma_quiescent) (struct drm_device *);
 	int (*context_dtor) (struct drm_device *dev, int context);
+	int (*set_busid)(struct drm_device *dev, struct drm_master *master);
 	int dev_priv_size;
 };
 
