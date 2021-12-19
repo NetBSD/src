@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_drv.h,v 1.40 2021/12/19 11:17:19 riastradh Exp $	*/
+/*	$NetBSD: i915_drv.h,v 1.41 2021/12/19 11:18:18 riastradh Exp $	*/
 
 /* i915_drv.h -- Private header for the I915 driver -*- linux-c -*-
  */
@@ -918,7 +918,7 @@ struct i915_selftest_stash {
 struct drm_i915_private {
 	struct drm_device drm;
 
-	const struct intel_device_info __info; /* Use INTEL_INFO() to access. */
+	struct intel_device_info __info; /* Use INTEL_INFO() to access. */
 	struct intel_runtime_info __runtime; /* Use RUNTIME_INFO() to access. */
 	struct intel_driver_caps caps;
 
@@ -2004,10 +2004,10 @@ int intel_engine_cmd_parser(struct intel_engine_cs *engine,
 #define I915_CMD_PARSER_TRAMPOLINE_SIZE 8
 
 /* intel_device_info.c */
-static inline const struct intel_device_info *
+static inline struct intel_device_info *
 mkwrite_device_info(struct drm_i915_private *dev_priv)
 {
-	return (const struct intel_device_info *)INTEL_INFO(dev_priv);
+	return (struct intel_device_info *)INTEL_INFO(dev_priv);
 }
 
 int i915_reg_read_ioctl(struct drm_device *dev, void *data,
