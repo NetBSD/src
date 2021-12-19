@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_memory_region.c,v 1.2 2021/12/18 23:45:28 riastradh Exp $	*/
+/*	$NetBSD: intel_memory_region.c,v 1.3 2021/12/19 10:28:41 riastradh Exp $	*/
 
 // SPDX-License-Identifier: MIT
 /*
@@ -6,7 +6,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intel_memory_region.c,v 1.2 2021/12/18 23:45:28 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intel_memory_region.c,v 1.3 2021/12/19 10:28:41 riastradh Exp $");
 
 #include "intel_memory_region.h"
 #include "i915_drv.h"
@@ -203,6 +203,8 @@ intel_memory_region_create(struct drm_i915_private *i915,
 	return mem;
 
 err_free:
+	mutex_destroy(&mem->mm_lock);
+	mutex_destroy(&mem->objects.lock);
 	kfree(mem);
 	return ERR_PTR(err);
 }
