@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_reservation.c,v 1.22 2021/12/19 01:50:18 riastradh Exp $	*/
+/*	$NetBSD: linux_reservation.c,v 1.23 2021/12/19 01:50:25 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_reservation.c,v 1.22 2021/12/19 01:50:18 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_reservation.c,v 1.23 2021/12/19 01:50:25 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/poll.h>
@@ -256,7 +256,7 @@ reservation_object_reserve_shared(struct reservation_object *robj)
 	prealloc = robj->robj_prealloc;
 
 	/* If there's an existing list, check it for space.  */
-	if (list != NULL) {
+	if (list) {
 		/* If there's too many already, give up.  */
 		if (list->shared_count == UINT32_MAX)
 			return -ENOMEM;
@@ -312,6 +312,9 @@ struct reservation_object_write_ticket {
  *	reservation_object_write_commit to commit the writes.
  *
  *	Caller must have robj locked.
+ *
+ *	Implies membar_producer, i.e. store-before-store barrier.  Does
+ *	NOT serve as an acquire operation, however.
  */
 static void
 reservation_object_write_begin(struct reservation_object *robj,
@@ -330,6 +333,9 @@ reservation_object_write_begin(struct reservation_object *robj,
  *	reservation_object_write_begin that returned ticket.
  *
  *	Caller must have robj locked.
+ *
+ *	Implies membar_producer, i.e. store-before-store barrier.  Does
+ *	NOT serve as a release operation, however.
  */
 static void
 reservation_object_write_commit(struct reservation_object *robj,
@@ -464,7 +470,7 @@ reservation_object_add_shared_fence(struct reservation_object *robj,
 		KASSERT(list != NULL);
 		KASSERT(list->shared_count < list->shared_max);
 
-		/* Begin an update.  */
+		/* Begin an update.  Implies membar_producer for fence.  */
 		reservation_object_write_begin(robj, &ticket);
 
 		/* Find a fence with the same context number.  */
@@ -512,7 +518,10 @@ reservation_object_add_shared_fence(struct reservation_object *robj,
 		if (replace == NULL)
 			prealloc->shared[prealloc->shared_count++] = fence;
 
-		/* Now ready to replace the list.  Begin an update.  */
+		/*
+		 * Now ready to replace the list.  Begin an update.
+		 * Implies membar_producer for fence and prealloc.
+		 */
 		reservation_object_write_begin(robj, &ticket);
 
 		/* Replace the list.  */
@@ -527,7 +536,7 @@ reservation_object_add_shared_fence(struct reservation_object *robj,
 		 * (We are not in a position at this point to sleep
 		 * waiting for activity on all CPUs.)
 		 */
-		if (list != NULL)
+		if (list)
 			objlist_defer_free(list);
 	}
 
@@ -572,7 +581,9 @@ top:
 	reservation_object_read_begin(robj, &ticket);
 
 	/* If there is a shared list, grab it.  */
-	if ((list = robj->fence) != NULL) {
+	list = robj->fence;
+	__insn_barrier();
+	if (list) {
 		/* Make sure the content of the list has been published.  */
 		membar_datadep_consumer();
 
@@ -627,7 +638,9 @@ top:
 	}
 
 	/* If there is an exclusive fence, grab it.  */
-	if ((fence = robj->fence_excl) != NULL) {
+	fence = robj->fence_excl;
+	__insn_barrier();
+	if (fence) {
 		/* Make sure the content of the fence has been published.  */
 		membar_datadep_consumer();
 	}
@@ -707,7 +720,11 @@ top:
 	reservation_object_read_begin(robj, &ticket);
 
 	/* If shared is requested and there is a shared list, test it.  */
-	if (shared && (list = robj->fence) != NULL) {
+	if (!shared)
+		goto excl;
+	list = robj->fence;
+	__insn_barrier();
+	if (list) {
 		/* Make sure the content of the list has been published.  */
 		membar_datadep_consumer();
 
@@ -738,8 +755,11 @@ top:
 		}
 	}
 
+excl:
 	/* If there is an exclusive fence, test it.  */
-	if ((fence = robj->fence_excl) != NULL) {
+	fence = robj->fence_excl;
+	__insn_barrier();
+	if (fence) {
 		/* Make sure the content of the fence has been published.  */
 		membar_datadep_consumer();
 
@@ -804,7 +824,11 @@ top:
 	reservation_object_read_begin(robj, &ticket);
 
 	/* If shared is requested and there is a shared list, wait on it.  */
-	if (shared && (list = robj->fence) != NULL) {
+	if (!shared)
+		goto excl;
+	list = robj->fence;
+	__insn_barrier();
+	if (list) {
 		/* Make sure the content of the list has been published.  */
 		membar_datadep_consumer();
 
@@ -834,8 +858,11 @@ top:
 		}
 	}
 
+excl:
 	/* If there is an exclusive fence, test it.  */
-	if ((fence = robj->fence_excl) != NULL) {
+	fence = robj->fence_excl;
+	__insn_barrier();
+	if (fence) {
 		/* Make sure the content of the fence has been published.  */
 		membar_datadep_consumer();
 
@@ -976,7 +1003,11 @@ top:
 	reservation_object_read_begin(robj, &ticket);
 
 	/* If we want to wait for all fences, get the shared list.  */
-	if ((events & POLLOUT) && (list = robj->fence) != NULL) do {
+	if (!(events & POLLOUT))
+		goto excl;
+	list = robj->fence;
+	__insn_barrier();
+	if (list) do {
 		/* Make sure the content of the list has been published.  */
 		membar_datadep_consumer();
 
@@ -1047,8 +1078,11 @@ top:
 		}
 	} while (0);
 
+excl:
 	/* We always wait for at least the exclusive fence, so get it.  */
-	if ((fence = robj->fence_excl) != NULL) do {
+	fence = robj->fence_excl;
+	__insn_barrier();
+	if (fence) do {
 		/* Make sure the content of the fence has been published.  */
 		membar_datadep_consumer();
 
