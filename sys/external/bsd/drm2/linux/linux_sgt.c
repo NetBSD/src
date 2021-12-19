@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_sg.c,v 1.4 2021/12/19 12:03:13 riastradh Exp $	*/
+/*	$NetBSD: linux_sgt.c,v 1.1 2021/12/19 12:06:57 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2021 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_sg.c,v 1.4 2021/12/19 12:03:13 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_sgt.c,v 1.1 2021/12/19 12:06:57 riastradh Exp $");
 
 #include <sys/bus.h>
 #include <sys/errno.h>
