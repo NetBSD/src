@@ -1,4 +1,4 @@
-/*	$NetBSD: rwsem.h,v 1.2 2018/08/27 07:47:01 riastradh Exp $	*/
+/*	$NetBSD: rwsem.h,v 1.3 2021/12/19 11:21:30 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -45,64 +45,30 @@
 
 #include <sys/mutex.h>
 
+#define	destroy_rwsem		linux_destroy_rwsem
+#define	down_read		linux_down_read
+#define	down_read_trylock	linux_down_read_trylock
+#define	down_write		linux_down_write
+#define	downgrade_write		linux_downgrade_write
+#define	init_rwsem		linux_init_rwsem
+#define	up_read			linux_up_read
+#define	up_write		linux_up_write
+
 struct rw_semaphore {
-	krwlock_t	rws_lock;
+	kmutex_t	rws_lock;
+	kcondvar_t	rws_cv;
+	struct lwp	*rws_writer;
+	unsigned	rws_readers;
+	bool		rws_writewanted;
 };
 
-static inline void
-init_rwsem(struct rw_semaphore *rwsem)
-{
-
-	rw_init(&rwsem->rws_lock);
-}
-
-static inline void
-destroy_rwsem(struct rw_semaphore *rwsem)
-{
-
-	rw_destroy(&rwsem->rws_lock);
-}
-
-static inline void
-down_read(struct rw_semaphore *rwsem)
-{
-
-	rw_enter(&rwsem->rws_lock, RW_READER);
-}
-
-static inline bool
-down_read_trylock(struct rw_semaphore *rwsem)
-{
-
-	return rw_tryenter(&rwsem->rws_lock, RW_READER);
-}
-
-static inline void
-down_write(struct rw_semaphore *rwsem)
-{
-
-	rw_enter(&rwsem->rws_lock, RW_WRITER);
-}
-
-static inline void
-up_read(struct rw_semaphore *rwsem)
-{
-
-	rw_exit(&rwsem->rws_lock);
-}
-
-static inline void
-up_write(struct rw_semaphore *rwsem)
-{
-
-	rw_exit(&rwsem->rws_lock);
-}
-
-static inline void
-downgrade_write(struct rw_semaphore *rwsem)
-{
-
-	rw_downgrade(&rwsem->rws_lock);
-}
+void init_rwsem(struct rw_semaphore *);
+void destroy_rwsem(struct rw_semaphore *);
+void down_read(struct rw_semaphore *);
+bool down_read_trylock(struct rw_semaphore *);
+void down_write(struct rw_semaphore *);
+void up_read(struct rw_semaphore *);
+void up_write(struct rw_semaphore *);
+void downgrade_write(struct rw_semaphore *);
 
 #endif  /* _LINUX_RWSEM_H_ */
