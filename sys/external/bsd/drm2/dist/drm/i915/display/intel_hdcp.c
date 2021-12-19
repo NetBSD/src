@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_hdcp.c,v 1.3 2021/12/19 11:38:26 riastradh Exp $	*/
+/*	$NetBSD: intel_hdcp.c,v 1.4 2021/12/19 11:45:50 riastradh Exp $	*/
 
 /* SPDX-License-Identifier: MIT */
 /*
@@ -11,7 +11,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intel_hdcp.c,v 1.3 2021/12/19 11:38:26 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intel_hdcp.c,v 1.4 2021/12/19 11:45:50 riastradh Exp $");
 
 #include <linux/component.h>
 #include <linux/i2c.h>
@@ -1772,6 +1772,8 @@ static void intel_hdcp_check_work(struct work_struct *work)
 				      DRM_HDCP_CHECK_PERIOD_MS);
 }
 
+#ifndef __NetBSD__		/* XXX i915 hdmi audio */
+
 static int i915_hdcp_component_bind(struct device *i915_kdev,
 				    struct device *mei_kdev, void *data)
 {
@@ -1801,6 +1803,8 @@ static const struct component_ops i915_hdcp_component_ops = {
 	.bind   = i915_hdcp_component_bind,
 	.unbind = i915_hdcp_component_unbind,
 };
+
+#endif
 
 static inline
 enum mei_fw_ddi intel_get_mei_fw_ddi_index(enum port port)
@@ -1890,8 +1894,12 @@ void intel_hdcp_component_init(struct drm_i915_private *dev_priv)
 
 	dev_priv->hdcp_comp_added = true;
 	mutex_unlock(&dev_priv->hdcp_comp_mutex);
+#ifdef __NetBSD__		/* XXX i915 hdmi audio */
+	ret = 0;
+#else
 	ret = component_add_typed(dev_priv->drm.dev, &i915_hdcp_component_ops,
 				  I915_COMPONENT_HDCP);
+#endif
 	if (ret < 0) {
 		DRM_DEBUG_KMS("Failed at component add(%d)\n", ret);
 		mutex_lock(&dev_priv->hdcp_comp_mutex);
