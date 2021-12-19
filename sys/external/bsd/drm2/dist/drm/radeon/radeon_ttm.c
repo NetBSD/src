@@ -1,4 +1,4 @@
-/*	$NetBSD: radeon_ttm.c,v 1.18 2021/12/18 23:45:43 riastradh Exp $	*/
+/*	$NetBSD: radeon_ttm.c,v 1.19 2021/12/19 01:50:00 riastradh Exp $	*/
 
 /*
  * Copyright 2009 Jerome Glisse.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radeon_ttm.c,v 1.18 2021/12/18 23:45:43 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radeon_ttm.c,v 1.19 2021/12/19 01:50:00 riastradh Exp $");
 
 #include <linux/dma-mapping.h>
 #include <linux/pagemap.h>
@@ -202,8 +202,13 @@ static int radeon_verify_access(struct ttm_buffer_object *bo, struct file *filp)
 
 	if (radeon_ttm_tt_has_userptr(bo->ttm))
 		return -EPERM;
+#ifdef __NetBSD__
+	struct drm_file *drm_file = filp->f_data;
+	return drm_vma_node_verify_access(&rbo->gem_base.vma_node, drm_file);
+#else
 	return drm_vma_node_verify_access(&rbo->tbo.base.vma_node,
 					  filp->private_data);
+#endif
 }
 
 static void radeon_move_null(struct ttm_buffer_object *bo,
