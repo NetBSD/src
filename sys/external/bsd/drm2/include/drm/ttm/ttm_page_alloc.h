@@ -1,4 +1,4 @@
-/*	$NetBSD: ttm_page_alloc.h,v 1.2 2016/04/24 04:26:12 riastradh Exp $	*/
+/*	$NetBSD: ttm_page_alloc.h,v 1.3 2021/12/19 09:58:07 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -31,6 +31,8 @@
 
 #ifndef _DRM_TTM_TTM_PAGE_ALLOC_H_
 #define _DRM_TTM_TTM_PAGE_ALLOC_H_
+
+#include <drm/ttm/ttm_bo_driver.h>
 
 struct ttm_dma_tt;
 struct ttm_mem_global;
