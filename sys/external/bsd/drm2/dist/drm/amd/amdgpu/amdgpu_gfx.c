@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu_gfx.c,v 1.4 2021/12/18 23:44:58 riastradh Exp $	*/
+/*	$NetBSD: amdgpu_gfx.c,v 1.5 2021/12/19 12:02:13 riastradh Exp $	*/
 
 /*
  * Copyright 2014 Advanced Micro Devices, Inc.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdgpu_gfx.c,v 1.4 2021/12/18 23:44:58 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdgpu_gfx.c,v 1.5 2021/12/19 12:02:13 riastradh Exp $");
 
 #include "amdgpu.h"
 #include "amdgpu_gfx.h"
@@ -315,7 +315,7 @@ int amdgpu_gfx_kiq_init_ring(struct amdgpu_device *adev,
 		return r;
 
 	ring->eop_gpu_addr = kiq->eop_gpu_addr;
-	sprintf(ring->name, "kiq_%d.%d.%d", ring->me, ring->pipe, ring->queue);
+	snprintf(ring->name, sizeof(ring->name), "kiq_%d.%d.%d", ring->me, ring->pipe, ring->queue);
 	r = amdgpu_ring_init(adev, ring, 1024,
 			     irq, AMDGPU_CP_KIQ_IRQ_DRIVER0);
 	if (r)
