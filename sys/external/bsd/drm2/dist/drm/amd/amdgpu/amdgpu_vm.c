@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu_vm.c,v 1.6 2021/12/19 12:22:28 riastradh Exp $	*/
+/*	$NetBSD: amdgpu_vm.c,v 1.7 2021/12/19 12:22:37 riastradh Exp $	*/
 
 /*
  * Copyright 2008 Advanced Micro Devices, Inc.
@@ -28,7 +28,7 @@
  *          Jerome Glisse
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdgpu_vm.c,v 1.6 2021/12/19 12:22:28 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdgpu_vm.c,v 1.7 2021/12/19 12:22:37 riastradh Exp $");
 
 #include <linux/dma-fence-array.h>
 #include <linux/interval_tree_generic.h>
@@ -1218,12 +1218,21 @@ struct amdgpu_bo_va *amdgpu_vm_bo_find(struct amdgpu_vm *vm,
  * Returns:
  * The pointer for the page table entry.
  */
+#ifdef __NetBSD__
+uint64_t amdgpu_vm_map_gart(const bus_dma_segment_t *pages_addr, uint64_t addr)
+#else
 uint64_t amdgpu_vm_map_gart(const dma_addr_t *pages_addr, uint64_t addr)
+#endif
 {
 	uint64_t result;
 
 	/* page table offset */
+#ifdef __NetBSD__
+	KASSERT(pages_addr[addr >> PAGE_SHIFT].ds_len == PAGE_SIZE);
+	result = pages_addr[addr >> PAGE_SHIFT].ds_addr;
+#else
 	result = pages_addr[addr >> PAGE_SHIFT];
+#endif
 
 	/* in case cpu page size != gpu page size*/
 	result |= addr & (~PAGE_MASK);
@@ -1574,7 +1583,11 @@ static int amdgpu_vm_bo_update_mapping(struct amdgpu_device *adev,
 				       struct dma_fence *exclusive,
 				       uint64_t start, uint64_t last,
 				       uint64_t flags, uint64_t addr,
+#ifdef __NetBSD__
+				       bus_dma_segment_t *pages_addr,
+#else
 				       dma_addr_t *pages_addr,
+#endif
 				       struct dma_fence **fence)
 {
 	struct amdgpu_vm_update_params params;
@@ -1633,7 +1646,11 @@ error_unlock:
  */
 static int amdgpu_vm_bo_split_mapping(struct amdgpu_device *adev,
 				      struct dma_fence *exclusive,
+#ifdef __NetBSD__
+				      bus_dma_segment_t *pages_addr,
+#else
 				      dma_addr_t *pages_addr,
+#endif
 				      struct amdgpu_vm *vm,
 				      struct amdgpu_bo_va_mapping *mapping,
 				      uint64_t flags,
@@ -1667,7 +1684,11 @@ static int amdgpu_vm_bo_split_mapping(struct amdgpu_device *adev,
 	}
 
 	do {
+#ifdef __NetBSD__
+		bus_dma_segment_t *dma_addr = NULL;
+#else
 		dma_addr_t *dma_addr = NULL;
+#endif
 		uint64_t max_entries;
 		uint64_t addr, last;
 
@@ -1688,16 +1709,28 @@ static int amdgpu_vm_bo_split_mapping(struct amdgpu_device *adev,
 			     ++count) {
 				uint64_t idx = pfn + count;
 
+#ifdef __NetBSD__
+				KASSERT(pages_addr[idx].ds_len == PAGE_SIZE);
+				if (pages_addr[idx].ds_addr !=
+				    pages_addr[idx - 1].ds_addr + PAGE_SIZE)
+					break;
+#else
 				if (pages_addr[idx] !=
 				    (pages_addr[idx - 1] + PAGE_SIZE))
 					break;
+#endif
 			}
 
 			if (count < min_linear_pages) {
 				addr = pfn << PAGE_SHIFT;
 				dma_addr = pages_addr;
 			} else {
+#ifdef __NetBSD__
+				KASSERT(pages_addr[pfn].ds_len == PAGE_SIZE);
+				addr = pages_addr[pfn].ds_addr;
+#else
 				addr = pages_addr[pfn];
+#endif
 				max_entries = count *
 					AMDGPU_GPU_PAGES_IN_CPU_PAGE;
 			}
@@ -1744,7 +1777,11 @@ int amdgpu_vm_bo_update(struct amdgpu_device *adev, struct amdgpu_bo_va *bo_va,
 	struct amdgpu_bo *bo = bo_va->base.bo;
 	struct amdgpu_vm *vm = bo_va->base.vm;
 	struct amdgpu_bo_va_mapping *mapping;
+#ifdef __NetBSD__
+	bus_dma_segment_t *pages_addr = NULL;
+#else
 	dma_addr_t *pages_addr = NULL;
+#endif
 	struct ttm_mem_reg *mem;
 	struct drm_mm_node *nodes;
 	struct dma_fence *exclusive, **last_update;
@@ -1763,7 +1800,11 @@ int amdgpu_vm_bo_update(struct amdgpu_device *adev, struct amdgpu_bo_va *bo_va,
 		nodes = mem->mm_node;
 		if (mem->mem_type == TTM_PL_TT) {
 			ttm = container_of(bo->tbo.ttm, struct ttm_dma_tt, ttm);
+#ifdef __NetBSD__
+			pages_addr = ttm->dma_address->dm_segs;
+#else
 			pages_addr = ttm->dma_address;
+#endif
 		}
 		exclusive = bo->tbo.moving;
 	}
