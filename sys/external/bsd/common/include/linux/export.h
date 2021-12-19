@@ -1,4 +1,4 @@
-/*	$NetBSD: export.h,v 1.4 2021/12/19 00:31:35 riastradh Exp $	*/
+/*	$NetBSD: export.h,v 1.1 2021/12/19 09:42:27 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
