@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_work.c,v 1.53 2021/12/19 11:38:03 riastradh Exp $	*/
+/*	$NetBSD: linux_work.c,v 1.54 2021/12/19 11:40:05 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_work.c,v 1.53 2021/12/19 11:38:03 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_work.c,v 1.54 2021/12/19 11:40:05 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/atomic.h>
@@ -565,7 +565,7 @@ work_claimed(struct work_struct *work, struct workqueue_struct *wq)
 	KASSERT(work_queue(work) == wq);
 	KASSERT(mutex_owned(&wq->wq_lock));
 
-	return work->work_owner & 1;
+	return atomic_load_relaxed(&work->work_owner) & 1;
 }
 
 /*
@@ -578,7 +578,7 @@ bool
 work_pending(const struct work_struct *work)
 {
 
-	return work->work_owner & 1;
+	return atomic_load_relaxed(&work->work_owner) & 1;
 }
 
 /*
@@ -591,7 +591,8 @@ static struct workqueue_struct *
 work_queue(struct work_struct *work)
 {
 
-	return (struct workqueue_struct *)(work->work_owner & ~(uintptr_t)1);
+	return (struct workqueue_struct *)
+	    (atomic_load_relaxed(&work->work_owner) & ~(uintptr_t)1);
 }
 
 /*
@@ -614,7 +615,7 @@ acquire_work(struct work_struct *work, struct workqueue_struct *wq)
 
 	owner = (uintptr_t)wq | 1;
 	do {
-		owner0 = work->work_owner;
+		owner0 = atomic_load_relaxed(&work->work_owner);
 		if (owner0 & 1) {
 			KASSERT((owner0 & ~(uintptr_t)1) == (uintptr_t)wq);
 			return false;
@@ -649,10 +650,11 @@ release_work(struct work_struct *work, struct workqueue_struct *wq)
 
 	/*
 	 * Non-interlocked r/m/w is safe here because nobody else can
-	 * write to this while the claimed bit is setand the workqueue
+	 * write to this while the claimed bit is set and the workqueue
 	 * lock is held.
 	 */
-	work->work_owner &= ~(uintptr_t)1;
+	atomic_store_relaxed(&work->work_owner,
+	    atomic_load_relaxed(&work->work_owner) & ~(uintptr_t)1);
 }
 
 /*
