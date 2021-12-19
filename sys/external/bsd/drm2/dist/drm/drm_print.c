@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_print.c,v 1.3 2021/12/19 00:29:09 riastradh Exp $	*/
+/*	$NetBSD: drm_print.c,v 1.4 2021/12/19 01:07:52 riastradh Exp $	*/
 
 /*
  * Copyright (C) 2016 Red Hat
@@ -26,9 +26,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_print.c,v 1.3 2021/12/19 00:29:09 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_print.c,v 1.4 2021/12/19 01:07:52 riastradh Exp $");
 
+#ifndef __NetBSD__		/* XXX ??? */
 #define DEBUG /* for pr_debug() */
+#endif
 
 #ifdef __NetBSD__
 #include <sys/stdarg.h>
@@ -97,7 +99,7 @@ void __drm_puts_coredump(struct drm_printer *p, const char *str)
 
 		len = min_t(ssize_t, strlen(str), iterator->remain);
 
-		memcpy(iterator->data + pos, str, len);
+		memcpy((char *)iterator->data + pos, str, len);
 
 		iterator->offset += len;
 		iterator->remain -= len;
@@ -151,17 +153,21 @@ void __drm_printfn_coredump(struct drm_printer *p, struct va_format *vaf)
 }
 EXPORT_SYMBOL(__drm_printfn_coredump);
 
+#ifndef __NetBSD__		/* XXX seq file */
 void __drm_puts_seq_file(struct drm_printer *p, const char *str)
 {
 	seq_puts(p->arg, str);
 }
 EXPORT_SYMBOL(__drm_puts_seq_file);
+#endif
 
+#ifndef __NetBSD__		/* XXX seq file */
 void __drm_printfn_seq_file(struct drm_printer *p, struct va_format *vaf)
 {
 	seq_printf(p->arg, "%pV", vaf);
 }
 EXPORT_SYMBOL(__drm_printfn_seq_file);
+#endif
 
 void __drm_printfn_info(struct drm_printer *p, struct va_format *vaf)
 {
@@ -247,6 +253,15 @@ EXPORT_SYMBOL(drm_print_bits);
 void drm_dev_printk(const struct device *dev, const char *level,
 		    const char *format, ...)
 {
+#ifdef __NetBSD__
+	va_list va;
+
+	va_start(va, format);
+	if (dev)
+		printf("%s: ", device_xname(__UNCONST(dev)));
+	vprintf(format, va);
+	va_end(va);
+#else
 	struct va_format vaf;
 	va_list args;
 
@@ -262,12 +277,25 @@ void drm_dev_printk(const struct device *dev, const char *level,
 		       level, __builtin_return_address(0), &vaf);
 
 	va_end(args);
+#endif
 }
 EXPORT_SYMBOL(drm_dev_printk);
 
 void drm_dev_dbg(const struct device *dev, enum drm_debug_category category,
 		 const char *format, ...)
 {
+#ifdef __NetBSD__
+	va_list va;
+
+	if (!(drm_debug & category))
+		return;
+
+	va_start(va, format);
+	if (dev)
+		printf("%s: ", device_xname(__UNCONST(dev)));
+	vprintf(format, va);
+	va_end(va);
+#else
 	struct va_format vaf;
 	va_list args;
 
@@ -286,11 +314,22 @@ void drm_dev_dbg(const struct device *dev, enum drm_debug_category category,
 		       __builtin_return_address(0), &vaf);
 
 	va_end(args);
+#endif
 }
 EXPORT_SYMBOL(drm_dev_dbg);
 
 void __drm_dbg(enum drm_debug_category category, const char *format, ...)
 {
+#ifdef __NetBSD__
+	va_list va;
+
+	if (!(drm_debug & category))
+		return;
+
+	va_start(va, format);
+	vprintf(format, va);
+	va_end(va);
+#else
 	struct va_format vaf;
 	va_list args;
 
@@ -305,6 +344,7 @@ void __drm_dbg(enum drm_debug_category category, const char *format, ...)
 	       __builtin_return_address(0), &vaf);
 
 	va_end(args);
+#endif
 }
 EXPORT_SYMBOL(__drm_dbg);
 
