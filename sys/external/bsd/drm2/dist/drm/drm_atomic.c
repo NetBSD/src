@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_atomic.c,v 1.10 2021/12/19 00:50:01 riastradh Exp $	*/
+/*	$NetBSD: drm_atomic.c,v 1.11 2021/12/19 00:55:34 riastradh Exp $	*/
 
 /*
  * Copyright (C) 2014 Red Hat
@@ -29,7 +29,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_atomic.c,v 1.10 2021/12/19 00:50:01 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_atomic.c,v 1.11 2021/12/19 00:55:34 riastradh Exp $");
 
 #include <linux/sync_file.h>
 
@@ -579,7 +579,7 @@ static int drm_atomic_plane_check(const struct drm_plane_state *old_plane_state,
 					   fb->modifier);
 	if (ret) {
 		struct drm_format_name_buf format_name;
-		DRM_DEBUG_ATOMIC("[PLANE:%d:%s] invalid pixel format %s, modifier 0x%llx\n",
+		DRM_DEBUG_ATOMIC("[PLANE:%d:%s] invalid pixel format %s, modifier 0x%"PRIx64"\n",
 				 plane->base.id, plane->name,
 				 drm_get_format_name(fb->format->format,
 						     &format_name),
