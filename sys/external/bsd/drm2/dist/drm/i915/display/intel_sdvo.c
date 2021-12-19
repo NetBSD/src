@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_sdvo.c,v 1.2 2021/12/18 23:45:30 riastradh Exp $	*/
+/*	$NetBSD: intel_sdvo.c,v 1.3 2021/12/19 11:49:11 riastradh Exp $	*/
 
 /*
  * Copyright 2006 Dave Airlie <airlied@linux.ie>
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intel_sdvo.c,v 1.2 2021/12/18 23:45:30 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intel_sdvo.c,v 1.3 2021/12/19 11:49:11 riastradh Exp $");
 
 #include <linux/delay.h>
 #include <linux/export.h>
@@ -1437,9 +1437,9 @@ static void intel_sdvo_pre_enable(struct intel_encoder *intel_encoder,
 	struct intel_crtc *crtc = to_intel_crtc(crtc_state->uapi.crtc);
 	const struct drm_display_mode *adjusted_mode = &crtc_state->hw.adjusted_mode;
 	const struct intel_sdvo_connector_state *sdvo_state =
-		to_intel_sdvo_connector_state(conn_state);
+		const_container_of(conn_state, struct intel_sdvo_connector_state, base.base);
 	const struct intel_sdvo_connector *intel_sdvo_connector =
-		to_intel_sdvo_connector(conn_state->connector);
+		const_container_of(conn_state->connector, struct intel_sdvo_connector, base.base);
 	const struct drm_display_mode *mode = &crtc_state->hw.mode;
 	struct intel_sdvo *intel_sdvo = to_sdvo(intel_encoder);
 	u32 sdvox;
@@ -2271,7 +2271,8 @@ intel_sdvo_connector_atomic_get_property(struct drm_connector *connector,
 					 u64 *val)
 {
 	struct intel_sdvo_connector *intel_sdvo_connector = to_intel_sdvo_connector(connector);
-	const struct intel_sdvo_connector_state *sdvo_state = to_intel_sdvo_connector_state((void *)state);
+	const struct intel_sdvo_connector_state *sdvo_state =
+	    const_container_of(state, struct intel_sdvo_connector_state, base.base);
 
 	if (property == intel_sdvo_connector->tv_format) {
 		int i;
@@ -2391,7 +2392,8 @@ intel_sdvo_connector_register(struct drm_connector *connector)
 	if (ret)
 		return ret;
 
-#ifdef __NetBSD__ /* XXX post-merge audit */
+#ifdef __NetBSD__
+	__USE(sdvo);
 	return 0;
 #else
 	return sysfs_create_link(&connector->kdev->kobj,
@@ -2405,8 +2407,12 @@ intel_sdvo_connector_unregister(struct drm_connector *connector)
 {
 	struct intel_sdvo *sdvo = intel_attached_sdvo(to_intel_connector(connector));
 
+#ifdef __NetBSD__
+	__USE(sdvo);
+#else
 	sysfs_remove_link(&connector->kdev->kobj,
 			  sdvo->ddc.dev.kobj.name);
+#endif
 	intel_connector_unregister(connector);
 }
 
@@ -3226,7 +3232,7 @@ intel_sdvo_init_ddc_proxy(struct intel_sdvo *sdvo,
 	sdvo->ddc.owner = THIS_MODULE;
 	sdvo->ddc.class = I2C_CLASS_DDC;
 	snprintf(sdvo->ddc.name, I2C_NAME_SIZE, "SDVO DDC proxy");
-	sdvo->ddc.dev.parent = dev->dev;
+	sdvo->ddc.dev.parent = pci_dev_dev(pdev);
 	sdvo->ddc.algo_data = sdvo;
 	sdvo->ddc.algo = &intel_sdvo_ddc_proxy;
 	sdvo->ddc.lock_ops = &proxy_lock_ops;

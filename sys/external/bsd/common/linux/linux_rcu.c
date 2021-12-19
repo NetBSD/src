@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_rcu.c,v 1.3 2021/12/19 11:35:17 riastradh Exp $	*/
+/*	$NetBSD: linux_rcu.c,v 1.4 2021/12/19 11:49:11 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_rcu.c,v 1.3 2021/12/19 11:35:17 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_rcu.c,v 1.4 2021/12/19 11:49:11 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -85,6 +85,8 @@ synchronize_rcu_xc(void *a, void *b)
  *	Wait for any pending RCU read section on every CPU to complete
  *	by triggering on every CPU activity that is blocked by an RCU
  *	read section.
+ *
+ *	May sleep.  (Practically guaranteed to sleep!)
  */
 void
 synchronize_rcu(void)
@@ -93,6 +95,24 @@ synchronize_rcu(void)
 	SDT_PROBE0(sdt, linux, rcu, synchronize__start);
 	xc_wait(xc_broadcast(0, &synchronize_rcu_xc, NULL, NULL));
 	SDT_PROBE0(sdt, linux, rcu, synchronize__done);
+}
+
+/*
+ * synchronize_rcu_expedited()
+ *
+ *	Wait for any pending RCU read section on every CPU to complete
+ *	by triggering on every CPU activity that is blocked by an RCU
+ *	read section.  Try to get an answer faster than
+ *	synchronize_rcu, at the cost of more activity triggered on
+ *	other CPUs.
+ *
+ *	May sleep.  (Practically guaranteed to sleep!)
+ */
+void
+synchronize_rcu_expedited(void)
+{
+
+	synchronize_rcu();
 }
 
 /*

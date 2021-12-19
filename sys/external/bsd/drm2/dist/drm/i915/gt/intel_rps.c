@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_rps.c,v 1.3 2021/12/19 01:53:50 riastradh Exp $	*/
+/*	$NetBSD: intel_rps.c,v 1.4 2021/12/19 11:49:11 riastradh Exp $	*/
 
 /*
  * SPDX-License-Identifier: MIT
@@ -7,7 +7,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intel_rps.c,v 1.3 2021/12/19 01:53:50 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intel_rps.c,v 1.4 2021/12/19 11:49:11 riastradh Exp $");
 
 #include "i915_drv.h"
 #include "intel_gt.h"
@@ -16,6 +16,8 @@ __KERNEL_RCSID(0, "$NetBSD: intel_rps.c,v 1.3 2021/12/19 01:53:50 riastradh Exp 
 #include "intel_rps.h"
 #include "intel_sideband.h"
 /* #include "../../../platform/x86/intel_ips.h" */
+
+#include <linux/nbsd-namespace.h>
 
 /*
  * Lock protecting IPS related data structures

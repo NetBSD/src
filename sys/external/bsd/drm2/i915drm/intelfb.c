@@ -1,4 +1,4 @@
-/*	$NetBSD: intelfb.c,v 1.21 2021/12/19 11:38:46 riastradh Exp $	*/
+/*	$NetBSD: intelfb.c,v 1.22 2021/12/19 11:49:12 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intelfb.c,v 1.21 2021/12/19 11:38:46 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intelfb.c,v 1.22 2021/12/19 11:49:12 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/bus.h>
@@ -40,6 +40,8 @@ __KERNEL_RCSID(0, "$NetBSD: intelfb.c,v 1.21 2021/12/19 11:38:46 riastradh Exp $
 #include <drm/drmfb.h>
 #include <drm/drmfb_pci.h>
 
+#include "display/intel_display_types.h"
+#include "display/intel_vga.h"
 #include "i915_drv.h"
 #include "i915_pci.h"
 #include "intelfb.h"
@@ -53,6 +55,8 @@ static void	intelfb_attach_task(struct i915drmkms_task *);
 static bool	intelfb_shutdown(device_t, int);
 
 static paddr_t	intelfb_drmfb_mmapfb(struct drmfb_softc *, off_t, int);
+
+static void	intelfb_disable_vga(struct drm_device *);
 
 struct intelfb_softc {
 	struct drmfb_softc		sc_drmfb; /* XXX Must be first.  */
@@ -69,7 +73,7 @@ static const struct drmfb_params intelfb_drmfb_params = {
 	.dp_mmap = drmfb_pci_mmap,
 	.dp_ioctl = drmfb_pci_ioctl,
 	.dp_is_vga_console = drmfb_pci_is_vga_console,
-	.dp_disable_vga = i915_disable_vga,
+	.dp_disable_vga = intelfb_disable_vga,
 };
 
 CFATTACH_DECL_NEW(intelfb, sizeof(struct intelfb_softc),
@@ -102,15 +106,13 @@ intelfb_attach(device_t parent, device_t self, void *aux)
 	if (error) {
 		aprint_error_dev(self, "failed to schedule mode set: %d\n",
 		    error);
-		goto fail1;
+		return;
 	}
 	config_pending_incr(self);
 	sc->sc_scheduled = true;
 
 	/* Success!  */
 	return;
-
-fail0:	return;
 }
 
 static int
@@ -186,12 +188,23 @@ intelfb_drmfb_mmapfb(struct drmfb_softc *drmfb, off_t offset, int prot)
 	struct intel_fbdev *const fbdev = container_of(helper,
 	    struct intel_fbdev, helper);
 	struct drm_device *const dev = helper->dev;
-	struct drm_i915_private *const dev_priv = dev->dev_private;
+	struct drm_i915_private *const i915 =
+	    container_of(dev, struct drm_i915_private, drm);
+	struct i915_ggtt *const ggtt = &i915->ggtt;
+	struct i915_vma *const vma = fbdev->vma;
 
 	KASSERT(0 <= offset);
-	KASSERT(offset < fbdev->fb->obj->base.size);
+	KASSERT(offset < vma->node.size);
 
-	return bus_space_mmap(dev->bst, dev_priv->gtt.mappable_base,
-	    i915_gem_obj_ggtt_offset(fbdev->fb->obj) + offset,
+	return bus_space_mmap(dev->bst, ggtt->gmadr.start, vma->node.start,
 	    prot, BUS_SPACE_MAP_PREFETCHABLE);
+}
+
+static void
+intelfb_disable_vga(struct drm_device *dev)
+{
+	struct drm_i915_private *i915 =
+	    container_of(dev, struct drm_i915_private, drm);
+
+	intel_vga_disable(i915);
 }

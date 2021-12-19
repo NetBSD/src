@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_wakeref.c,v 1.2 2021/12/18 23:45:29 riastradh Exp $	*/
+/*	$NetBSD: intel_wakeref.c,v 1.3 2021/12/19 11:49:11 riastradh Exp $	*/
 
 /*
  * SPDX-License-Identifier: MIT
@@ -7,7 +7,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intel_wakeref.c,v 1.2 2021/12/18 23:45:29 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intel_wakeref.c,v 1.3 2021/12/19 11:49:11 riastradh Exp $");
 
 #include <linux/wait_bit.h>
 
@@ -25,6 +25,8 @@ static void rpm_put(struct intel_wakeref *wf)
 
 	intel_runtime_pm_put(wf->rpm, wakeref);
 	INTEL_WAKEREF_BUG_ON(!wakeref);
+
+	DRM_WAKEUP_ALL(&wf->wq, &wf->mutex);
 }
 
 int __intel_wakeref_get_first(struct intel_wakeref *wf)
@@ -66,7 +68,6 @@ static void ____intel_wakeref_put_last(struct intel_wakeref *wf)
 	/* ops->put() must reschedule its own release on error/deferral */
 	if (likely(!wf->ops->put(wf))) {
 		rpm_put(wf);
-		wake_up_var(&wf->wakeref);
 	}
 
 unlock:
@@ -108,6 +109,7 @@ void __intel_wakeref_init(struct intel_wakeref *wf,
 	__mutex_init(&wf->mutex, "wakeref.mutex", &key->mutex);
 	atomic_set(&wf->count, 0);
 	wf->wakeref = 0;
+	DRM_INIT_WAITQUEUE(&wf->wq, "i915wake");
 
 	INIT_WORK(&wf->work, __intel_wakeref_put_work);
 	lockdep_init_map(&wf->work.lockdep_map, "wakeref.work", &key->work, 0);
@@ -119,8 +121,9 @@ int intel_wakeref_wait_for_idle(struct intel_wakeref *wf)
 
 	might_sleep();
 
-	err = wait_var_event_killable(&wf->wakeref,
-				      !intel_wakeref_is_active(wf));
+	mutex_lock(&wf->mutex);
+	DRM_WAIT_UNTIL(err, &wf->wq, &wf->mutex, !intel_wakeref_is_active(wf));
+	mutex_unlock(&wf->mutex);
 	if (err)
 		return err;
 

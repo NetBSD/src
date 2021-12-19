@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_wopcm.c,v 1.2 2021/12/18 23:45:29 riastradh Exp $	*/
+/*	$NetBSD: intel_wopcm.c,v 1.3 2021/12/19 11:49:11 riastradh Exp $	*/
 
 // SPDX-License-Identifier: MIT
 /*
@@ -6,10 +6,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intel_wopcm.c,v 1.2 2021/12/18 23:45:29 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intel_wopcm.c,v 1.3 2021/12/19 11:49:11 riastradh Exp $");
 
 #include "intel_wopcm.h"
 #include "i915_drv.h"
+
+#include <linux/nbsd-namespace.h>
 
 /**
  * DOC: WOPCM Layout

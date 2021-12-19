@@ -1,11 +1,8 @@
-/*	$NetBSD: smp.h,v 1.4 2021/12/19 11:49:12 riastradh Exp $	*/
+/*	$NetBSD: intel_dsi_dcs_backlight.c,v 1.1 2021/12/19 11:49:12 riastradh Exp $	*/
 
 /*-
- * Copyright (c) 2018 The NetBSD Foundation, Inc.
+ * Copyright (c) 2021 The NetBSD Foundation, Inc.
  * All rights reserved.
- *
- * This code is derived from software contributed to The NetBSD Foundation
- * by Taylor R. Campbell.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -29,47 +26,16 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef	_LINUX_SMP_H_
-#define	_LINUX_SMP_H_
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: intel_dsi_dcs_backlight.c,v 1.1 2021/12/19 11:49:12 riastradh Exp $");
 
-#include <sys/cpu.h>
-#include <sys/systm.h>
-#include <sys/xcall.h>
+#include <sys/errno.h>
 
-#define	smp_processor_id()	cpu_number()
+#include "display/intel_dsi_dcs_backlight.h"
 
-static inline int
-get_cpu(void)
+int
+intel_dsi_dcs_init_backlight_funcs(struct intel_connector *intel_connector)
 {
 
-	kpreempt_disable();
-	return cpu_index(curcpu());
+	return -ENOSYS;
 }
-
-static inline void
-put_cpu(void)
-{
-
-	kpreempt_disable();
-}
-
-static inline void
-on_each_cpu_xc(void *a, void *b)
-{
-	void (**fp)(void *) = a;
-	void *cookie = b;
-
-	(**fp)(cookie);
-}
-
-static inline void
-on_each_cpu(void (*f)(void *), void *cookie, int wait)
-{
-	uint64_t ticket;
-
-	ticket = xc_broadcast(0, &on_each_cpu_xc, &f, cookie);
-	if (wait)
-		xc_wait(ticket);
-}
-
-#endif	/* _LINUX_SMP_H_ */

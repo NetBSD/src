@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_lrc.c,v 1.6 2021/12/19 11:47:40 riastradh Exp $	*/
+/*	$NetBSD: intel_lrc.c,v 1.7 2021/12/19 11:49:11 riastradh Exp $	*/
 
 /*
  * Copyright © 2014 Intel Corporation
@@ -134,7 +134,7 @@
  *
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intel_lrc.c,v 1.6 2021/12/19 11:47:40 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intel_lrc.c,v 1.7 2021/12/19 11:49:11 riastradh Exp $");
 
 #include <linux/interrupt.h>
 
@@ -209,7 +209,10 @@ struct virtual_engine {
 	struct ve_node {
 		struct rb_node rb;
 		int prio;
+		uint64_t order;
+		bool inserted;
 	} nodes[I915_NUM_ENGINES];
+	uint64_t order;
 
 	/*
 	 * Keep track of bonded pairs -- restrictions upon on our selection
@@ -227,6 +230,44 @@ struct virtual_engine {
 	unsigned int num_siblings;
 	struct intel_engine_cs *siblings[0];
 };
+
+#ifdef __NetBSD__
+static int
+compare_ve_nodes(void *cookie, const void *va, const void *vb)
+{
+	const struct ve_node *na = va;
+	const struct ve_node *nb = vb;
+
+	if (na->prio < nb->prio)
+		return -1;
+	if (na->prio > nb->prio)
+		return +1;
+	if (na->order < nb->order)
+		return -1;
+	if (na->order > nb->order)
+		return +1;
+	return 0;
+}
+
+static int
+compare_ve_node_key(void *cookie, const void *vn, const void *vk)
+{
+	const struct ve_node *n = vn;
+	const int *k = vk;
+
+	if (n->prio < *k)
+		return -1;
+	if (n->prio > *k)
+		return +1;
+	return 0;
+}
+
+static const rb_tree_ops_t ve_tree_ops = {
+	.rbto_compare_nodes = compare_ve_nodes,
+	.rbto_compare_key = compare_ve_node_key,
+	.rbto_node_offset = offsetof(struct ve_node, rb),
+};
+#endif
 
 static struct virtual_engine *to_virtual_engine(struct intel_engine_cs *engine)
 {
@@ -1818,13 +1859,14 @@ static void execlists_dequeue(struct intel_engine_cs *engine)
 
 		if (!rq) { /* lazily cleanup after another engine handled rq */
 			rb_erase_cached(rb, &execlists->virtual);
-			RB_CLEAR_NODE(rb);
+			container_of(rb, struct ve_node, rb)->inserted =
+			    false;
 			rb = rb_first_cached(&execlists->virtual);
 			continue;
 		}
 
 		if (!virtual_matches(ve, rq, engine)) {
-			rb = rb_next(rb);
+			rb = rb_next2(&execlists->virtual.rb_root, rb);
 			continue;
 		}
 
@@ -1909,7 +1951,7 @@ static void execlists_dequeue(struct intel_engine_cs *engine)
 				 * Even if ELSP[1] is occupied and not worthy
 				 * of timeslices, our queue might be.
 				 */
-				if (!execlists->timer.expires &&
+				if (!timer_pending(&execlists->timer) &&
 				    need_timeslice(engine, last))
 					set_timer_ms(&execlists->timer,
 						     timeslice(engine));
@@ -1930,7 +1972,8 @@ static void execlists_dequeue(struct intel_engine_cs *engine)
 		if (unlikely(!rq)) { /* lost the race to a sibling */
 			spin_unlock(&ve->base.active.lock);
 			rb_erase_cached(rb, &execlists->virtual);
-			RB_CLEAR_NODE(rb);
+			container_of(rb, struct ve_node, rb)->inserted =
+			    false;
 			rb = rb_first_cached(&execlists->virtual);
 			continue;
 		}
@@ -1942,7 +1985,8 @@ static void execlists_dequeue(struct intel_engine_cs *engine)
 		if (rq_prio(rq) >= queue_prio(execlists)) {
 			if (!virtual_matches(ve, rq, engine)) {
 				spin_unlock(&ve->base.active.lock);
-				rb = rb_next(rb);
+				rb = rb_next2(&execlists->virtual.rb_root,
+				    rb);
 				continue;
 			}
 
@@ -1963,7 +2007,8 @@ static void execlists_dequeue(struct intel_engine_cs *engine)
 			ve->request = NULL;
 			ve->base.execlists.queue_priority_hint = INT_MIN;
 			rb_erase_cached(rb, &execlists->virtual);
-			RB_CLEAR_NODE(rb);
+			container_of(rb, struct ve_node, rb)->inserted =
+			    false;
 
 			GEM_BUG_ON(!(rq->execution_mask & engine->mask));
 			rq->engine = engine;
@@ -2162,8 +2207,8 @@ cancel_port_requests(struct intel_engine_execlists * const execlists)
 static inline void
 invalidate_csb_entries(const u32 *first, const u32 *last)
 {
-	clflush((void *)first);
-	clflush((void *)last);
+	clflush(__UNCONST(first));
+	clflush(__UNCONST(last));
 }
 
 static inline bool
@@ -3684,7 +3729,7 @@ static void execlists_reset_cancel(struct intel_engine_cs *engine)
 			rb_entry(rb, typeof(*ve), nodes[engine->id].rb);
 
 		rb_erase_cached(rb, &execlists->virtual);
-		RB_CLEAR_NODE(rb);
+		container_of(rb, struct ve_node, rb)->inserted = false;
 
 		spin_lock(&ve->base.active.lock);
 		rq = fetch_and_zero(&ve->request);
@@ -3703,7 +3748,12 @@ static void execlists_reset_cancel(struct intel_engine_cs *engine)
 	/* Remaining _unready_ requests will be nop'ed when submitted */
 
 	execlists->queue_priority_hint = INT_MIN;
+#ifdef __NetBSD__
+	i915_sched_init(execlists);
+	rb_tree_init(&execlists->virtual.rb_root.rbr_tree, &ve_tree_ops);
+#else
 	execlists->queue = RB_ROOT_CACHED;
+#endif
 
 	GEM_BUG_ON(__tasklet_is_enabled(&execlists->tasklet));
 	execlists->tasklet.func = nop_submission_tasklet;
@@ -4664,14 +4714,16 @@ static void virtual_context_destroy(struct kref *kref)
 		struct rb_node *node = &ve->nodes[sibling->id].rb;
 		unsigned long flags;
 
-		if (RB_EMPTY_NODE(node))
+		if (!ve->nodes[sibling->id].inserted)
 			continue;
 
 		spin_lock_irqsave(&sibling->active.lock, flags);
 
 		/* Detachment is lazily performed in the execlists tasklet */
-		if (!RB_EMPTY_NODE(node))
+		if (ve->nodes[sibling->id].inserted) {
 			rb_erase_cached(node, &sibling->execlists.virtual);
+			ve->nodes[sibling->id].inserted = false;
+		}
 
 		spin_unlock_irqrestore(&sibling->active.lock, flags);
 	}
@@ -4804,7 +4856,11 @@ static void virtual_submission_tasklet(unsigned long data)
 	if (unlikely(!mask))
 		return;
 
+#ifdef __NetBSD__
+	int s = splsoftserial(); /* block tasklets=softints */
+#else
 	local_irq_disable();
+#endif
 	for (n = 0; READ_ONCE(ve->request) && n < ve->num_siblings; n++) {
 		struct intel_engine_cs *sibling = ve->siblings[n];
 		struct ve_node * const node = &ve->nodes[sibling->id];
@@ -4812,11 +4868,11 @@ static void virtual_submission_tasklet(unsigned long data)
 		bool first;
 
 		if (unlikely(!(mask & sibling->mask))) {
-			if (!RB_EMPTY_NODE(&node->rb)) {
+			if (node->inserted) {
 				spin_lock(&sibling->active.lock);
 				rb_erase_cached(&node->rb,
 						&sibling->execlists.virtual);
-				RB_CLEAR_NODE(&node->rb);
+				node->inserted = false;
 				spin_unlock(&sibling->active.lock);
 			}
 			continue;
@@ -4824,7 +4880,7 @@ static void virtual_submission_tasklet(unsigned long data)
 
 		spin_lock(&sibling->active.lock);
 
-		if (!RB_EMPTY_NODE(&node->rb)) {
+		if (node->inserted) {
 			/*
 			 * Cheat and avoid rebalancing the tree if we can
 			 * reuse this node in situ.
@@ -4835,8 +4891,24 @@ static void virtual_submission_tasklet(unsigned long data)
 				goto submit_engine;
 
 			rb_erase_cached(&node->rb, &sibling->execlists.virtual);
+			node->inserted = false;
 		}
 
+#ifdef __NetBSD__
+		__USE(parent);
+		__USE(rb);
+		struct ve_node *collision __diagused;
+		/* XXX kludge to get insertion order */
+		node->order = ve->order++;
+		collision = rb_tree_insert_node(
+			&sibling->execlists.virtual.rb_root.rbr_tree,
+			node);
+		KASSERT(collision == node);
+		node->inserted = true;
+		first = rb_tree_find_node_geq(
+			&sibling->execlists.virtual.rb_root.rbr_tree,
+			&node->prio) == node;
+#else
 		rb = NULL;
 		first = true;
 		parent = &sibling->execlists.virtual.rb_root.rb_node;
@@ -4857,9 +4929,10 @@ static void virtual_submission_tasklet(unsigned long data)
 		rb_insert_color_cached(&node->rb,
 				       &sibling->execlists.virtual,
 				       first);
+#endif
 
 submit_engine:
-		GEM_BUG_ON(RB_EMPTY_NODE(&node->rb));
+		GEM_BUG_ON(!node->inserted);
 		node->prio = prio;
 		if (first && prio > sibling->execlists.queue_priority_hint) {
 			sibling->execlists.queue_priority_hint = prio;
@@ -4868,7 +4941,11 @@ submit_engine:
 
 		spin_unlock(&sibling->active.lock);
 	}
+#ifdef __NetBSD__
+	splx(s);
+#else
 	local_irq_enable();
+#endif
 }
 
 static void virtual_submit_request(struct i915_request *rq)
@@ -5034,8 +5111,8 @@ intel_execlists_create_virtual(struct intel_engine_cs **siblings,
 			goto err_put;
 		}
 
-		GEM_BUG_ON(RB_EMPTY_NODE(&ve->nodes[sibling->id].rb));
-		RB_CLEAR_NODE(&ve->nodes[sibling->id].rb);
+		GEM_BUG_ON(!ve->nodes[sibling->id].inserted);
+		ve->nodes[sibling->id].inserted = false;
 
 		ve->siblings[ve->num_siblings++] = sibling;
 		ve->base.mask |= sibling->mask;
@@ -5195,7 +5272,9 @@ void intel_execlists_show_requests(struct intel_engine_cs *engine,
 	if (execlists->queue_priority_hint != INT_MIN)
 		drm_printf(m, "\t\tQueue priority hint: %d\n",
 			   execlists->queue_priority_hint);
-	for (rb = rb_first_cached(&execlists->queue); rb; rb = rb_next(rb)) {
+	for (rb = rb_first_cached(&execlists->queue);
+	     rb;
+	     rb = rb_next2(&execlists->queue.rb_root, rb)) {
 		struct i915_priolist *p = rb_entry(rb, typeof(*p), node);
 		int i;
 
@@ -5217,7 +5296,9 @@ void intel_execlists_show_requests(struct intel_engine_cs *engine,
 
 	last = NULL;
 	count = 0;
-	for (rb = rb_first_cached(&execlists->virtual); rb; rb = rb_next(rb)) {
+	for (rb = rb_first_cached(&execlists->virtual);
+	     rb;
+	     rb = rb_next2(&execlists->virtual.rb_root, rb)) {
 		struct virtual_engine *ve =
 			rb_entry(rb, typeof(*ve), nodes[engine->id].rb);
 		struct i915_request *rq = READ_ONCE(ve->request);

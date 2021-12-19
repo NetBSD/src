@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_module.c,v 1.16 2021/12/19 11:37:06 riastradh Exp $	*/
+/*	$NetBSD: i915_module.c,v 1.17 2021/12/19 11:49:12 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_module.c,v 1.16 2021/12/19 11:37:06 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_module.c,v 1.17 2021/12/19 11:49:12 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/module.h>
@@ -43,6 +43,7 @@ __KERNEL_RCSID(0, "$NetBSD: i915_module.c,v 1.16 2021/12/19 11:37:06 riastradh E
 #include <drm/drm_sysctl.h>
 
 #include "i915_drv.h"
+#include "i915_globals.h"
 #include "gt/intel_rps.h"
 
 MODULE(MODULE_CLASS_DRIVER, i915drmkms, "drmkms,drmkms_pci"); /* XXX drmkms_i2c */
@@ -68,7 +69,8 @@ i915drmkms_init(void)
 	if (error)
 		return error;
 
-	error = -i915_global_buddy_init();
+	/* XXX errno Linux->NetBSD */
+	error = -i915_globals_init();
 	if (error)
 		return error;
 
@@ -101,6 +103,8 @@ i915drmkms_fini(void)
 	spin_lock_destroy(&i915_sw_fence_lock);
 	spin_lock_destroy(&mchdev_lock);
 	drm_sysctl_fini(&i915_def);
+
+	i915_globals_exit();
 }
 
 static int

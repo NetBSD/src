@@ -11,9 +11,34 @@ enum hdcp_wired_protocol {
 	HDCP_PROTOCOL_DP
 };
 
+enum hdcp_port_type {
+	HDCP_PORT_TYPE_INVALID		= 0,
+	HDCP_PORT_TYPE_INTEGRATED	= 1,
+	HDCP_PORT_TYPE_LSPCON		= 2,
+	HDCP_PORT_TYPE_CPDP		= 3,
+};
+
+enum mei_fw_ddi {
+        MEI_DDI_INVALID_PORT		= 0,
+	MEI_DDI_B			= 1,
+	MEI_DDI_C			= 2,
+	MEI_DDI_E			= 3,
+	MEI_DDI_F			= 4,
+	MEI_DDI_A			= 7,
+};
+
+enum mei_fw_tc {
+	MEI_INVALID_TRANSCODER = 0,
+};
+
 struct hdcp_port_data {
 	struct hdcp2_streamid_type *streams;
 	uint32_t seq_num_m;
+	enum mei_fw_ddi fw_ddi;
+	enum mei_fw_tc fw_tc;
+	uint8_t port_type;
+	uint8_t protocol;
+	uint16_t k;
 };
 
 struct i915_hdcp_component_ops {

@@ -1,4 +1,4 @@
-/*	$NetBSD: sched.h,v 1.18 2021/12/19 10:38:05 riastradh Exp $	*/
+/*	$NetBSD: sched.h,v 1.19 2021/12/19 11:49:12 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -33,13 +33,15 @@
 #define _LINUX_SCHED_H_
 
 #include <sys/param.h>
+
 #include <sys/cdefs.h>
 #include <sys/kernel.h>
 #include <sys/proc.h>
 
-#include <asm/param.h>
 #include <asm/barrier.h>
+#include <asm/param.h>
 #include <asm/processor.h>
+
 #include <linux/device.h>
 #include <linux/errno.h>
 

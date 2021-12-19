@@ -1,4 +1,4 @@
-/*	$NetBSD: signal.h,v 1.3 2021/12/19 11:45:01 riastradh Exp $	*/
+/*	$NetBSD: signal.h,v 1.4 2021/12/19 11:49:12 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -29,6 +29,7 @@
 #ifndef	_LINUX_SCHED_SIGNAL_H_
 #define	_LINUX_SCHED_SIGNAL_H_
 
+#include <linux/rculist.h>
 #include <linux/sched.h>
 
 static inline bool

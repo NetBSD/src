@@ -1,4 +1,4 @@
-/*	$NetBSD: random.h,v 1.3 2021/12/19 11:45:01 riastradh Exp $	*/
+/*	$NetBSD: random.h,v 1.4 2021/12/19 11:49:12 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -62,6 +62,19 @@ get_random_u32(void)
 	cprng_strong(kern_cprng, &v, sizeof v, 0);
 
 	return v;
+}
+
+static inline uint32_t
+prandom_u32_max(uint32_t bound)
+{
+	uint32_t v, min;
+
+	min = (-bound) % bound;
+	do {
+		v = get_random_u32();
+	} while (v < min);
+
+	return v % bound;
 }
 
 #endif	/* _LINUX_RANDOM_H_ */
