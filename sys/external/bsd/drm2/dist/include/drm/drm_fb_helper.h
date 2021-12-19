@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_fb_helper.h,v 1.11 2021/12/19 01:02:34 riastradh Exp $	*/
+/*	$NetBSD: drm_fb_helper.h,v 1.12 2021/12/19 01:03:32 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2006-2009 Red Hat Inc.
@@ -142,9 +142,11 @@ struct drm_fb_helper {
 	struct fb_info *fbdev;
 #endif
 	u32 pseudo_palette[17];
+#ifndef __NetBSD__		/* XXX fb dirty */
 	struct drm_clip_rect dirty_clip;
 	spinlock_t dirty_lock;
 	struct work_struct dirty_work;
+#endif
 	struct work_struct resume_work;
 
 	/**
