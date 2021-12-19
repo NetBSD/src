@@ -1,4 +1,4 @@
-/*	$NetBSD: compiler.h,v 1.4 2021/12/19 01:41:21 riastradh Exp $	*/
+/*	$NetBSD: compiler.h,v 1.5 2021/12/19 11:10:01 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -34,6 +34,8 @@
 
 #include <sys/atomic.h>
 #include <sys/cdefs.h>
+
+#include <linux/stddef.h>
 
 #include <asm/barrier.h>
 
