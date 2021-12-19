@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_gem_phys.c,v 1.7 2021/12/19 12:10:42 riastradh Exp $	*/
+/*	$NetBSD: i915_gem_phys.c,v 1.8 2021/12/19 12:45:43 riastradh Exp $	*/
 
 /*
  * SPDX-License-Identifier: MIT
@@ -7,7 +7,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_gem_phys.c,v 1.7 2021/12/19 12:10:42 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_gem_phys.c,v 1.8 2021/12/19 12:45:43 riastradh Exp $");
 
 #include <linux/highmem.h>
 #include <linux/shmem_fs.h>
@@ -66,7 +66,8 @@ static int i915_gem_object_get_pages_phys(struct drm_i915_gem_object *obj)
 		return -ENOMEM;
 	KASSERT(rsegs == 1);
 	ret = -bus_dmamem_map(dmat, &obj->mm.u.phys.seg, 1,
-	    roundup_pow_of_two(obj->base.size), &vaddr, BUS_DMA_WAITOK);
+	    roundup_pow_of_two(obj->base.size), &vaddr,
+	    BUS_DMA_WAITOK|BUS_DMA_COHERENT);
 	if (ret)
 		goto err_pci;
 	obj->mm.u.phys.kva = vaddr;
