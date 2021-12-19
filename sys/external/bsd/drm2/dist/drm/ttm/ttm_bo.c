@@ -1,4 +1,4 @@
-/*	$NetBSD: ttm_bo.c,v 1.25 2021/12/19 11:07:04 riastradh Exp $	*/
+/*	$NetBSD: ttm_bo.c,v 1.26 2021/12/19 11:07:20 riastradh Exp $	*/
 
 /* SPDX-License-Identifier: GPL-2.0 OR MIT */
 /**************************************************************************
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ttm_bo.c,v 1.25 2021/12/19 11:07:04 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ttm_bo.c,v 1.26 2021/12/19 11:07:20 riastradh Exp $");
 
 #define pr_fmt(fmt) "[TTM] " fmt
 
@@ -1656,7 +1656,6 @@ static void ttm_bo_global_release(void)
 	spin_lock_destroy(&glob->lru_lock);
 	mutex_unlock(&ttm_global_mutex);
 	mutex_destroy(&ttm_global_mutex);
-	kfree(glob);
 	return;
 #endif
 out:
