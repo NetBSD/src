@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_gtt.h,v 1.10 2021/12/19 11:24:08 riastradh Exp $	*/
+/*	$NetBSD: intel_gtt.h,v 1.11 2021/12/19 11:33:30 riastradh Exp $	*/
 
 /* SPDX-License-Identifier: MIT */
 /*
@@ -643,7 +643,7 @@ struct sgt_dma {
 static inline struct sgt_dma
 sgt_dma(struct i915_vma *vma)
 {
-	return (struct sgt_dma) { vma->pages, 0, 0 };
+	return (struct sgt_dma) { vma->pages->sgl->sg_dmamap, 0, 0 };
 }
 #else
 static inline struct sgt_dma {

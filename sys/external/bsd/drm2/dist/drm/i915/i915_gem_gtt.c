@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_gem_gtt.c,v 1.22 2021/12/19 11:32:54 riastradh Exp $	*/
+/*	$NetBSD: i915_gem_gtt.c,v 1.23 2021/12/19 11:33:30 riastradh Exp $	*/
 
 // SPDX-License-Identifier: MIT
 /*
@@ -6,7 +6,7 @@
  * Copyright © 2020 Intel Corporation
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_gem_gtt.c,v 1.22 2021/12/19 11:32:54 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_gem_gtt.c,v 1.23 2021/12/19 11:33:30 riastradh Exp $");
 
 #include <linux/slab.h> /* fault-inject.h is not standalone! */
 
@@ -41,23 +41,15 @@ __KERNEL_RCSID(0, "$NetBSD: i915_gem_gtt.c,v 1.22 2021/12/19 11:32:54 riastradh 
 #define	_PAGE_PAT	PTE_PAT	/* 0x80 page attribute table on PTE */
 #endif
 
-#ifdef __NetBSD__
-int i915_gem_gtt_prepare_pages(struct drm_i915_gem_object *obj,
-			       bus_dmamap_t pages)
-#else
 int i915_gem_gtt_prepare_pages(struct drm_i915_gem_object *obj,
 			       struct sg_table *pages)
-#endif
 {
 	do {
 #ifdef __NetBSD__
-		/*
-		 * XXX Not sure whether caller should be passing DMA
-		 * map or page list.
-		 */
-		if (bus_dmamap_load_pages(obj->base.dev->dmat, pages,
-			obj->mm.pagearray, obj->base.size, BUS_DMA_NOWAIT)
-		    == 0)
+		if (dma_map_sg_attrs(obj->base.dev->dmat,
+				     pages->sgl, pages->nents,
+				     PCI_DMA_BIDIRECTIONAL,
+				     DMA_ATTR_NO_WARN))
 			return 0;
 #else
 		if (dma_map_sg_attrs(&obj->base.dev->pdev->dev,
@@ -83,17 +75,12 @@ int i915_gem_gtt_prepare_pages(struct drm_i915_gem_object *obj,
 	return -ENOSPC;
 }
 
-#ifdef __NetBSD__
-void i915_gem_gtt_finish_pages(struct drm_i915_gem_object *obj,
-			       bus_dmamap_t pages)
-#else
 void i915_gem_gtt_finish_pages(struct drm_i915_gem_object *obj,
 			       struct sg_table *pages)
-#endif
 {
 	struct drm_i915_private *dev_priv = to_i915(obj->base.dev);
 #ifdef __NetBSD__
-	bus_dma_tag_t dmat = dev_priv->drm.dmat;
+	bus_dma_tag_t kdev = dev_priv->drm.dmat;
 #else
 	struct device *kdev = &dev_priv->drm.pdev->dev;
 #endif
@@ -109,11 +96,7 @@ void i915_gem_gtt_finish_pages(struct drm_i915_gem_object *obj,
 		}
 	}
 
-#ifdef __NetBSD__
-	bus_dmamap_unload(dmat, pages);
-#else
 	dma_unmap_sg(kdev, pages->sgl, pages->nents, PCI_DMA_BIDIRECTIONAL);
-#endif
 }
 
 /**

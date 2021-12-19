@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_gem_pm.c,v 1.2 2021/12/18 23:45:30 riastradh Exp $	*/
+/*	$NetBSD: i915_gem_pm.c,v 1.3 2021/12/19 11:33:30 riastradh Exp $	*/
 
 /*
  * SPDX-License-Identifier: MIT
@@ -7,7 +7,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_gem_pm.c,v 1.2 2021/12/18 23:45:30 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_gem_pm.c,v 1.3 2021/12/19 11:33:30 riastradh Exp $");
 
 #include "gem/i915_gem_pm.h"
 #include "gt/intel_gt.h"
@@ -15,6 +15,8 @@ __KERNEL_RCSID(0, "$NetBSD: i915_gem_pm.c,v 1.2 2021/12/18 23:45:30 riastradh Ex
 #include "gt/intel_gt_requests.h"
 
 #include "i915_drv.h"
+
+#include <linux/nbsd-namespace.h>
 
 void i915_gem_suspend(struct drm_i915_private *i915)
 {
