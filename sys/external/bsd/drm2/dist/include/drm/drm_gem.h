@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_gem.h,v 1.10 2021/12/19 09:48:14 riastradh Exp $	*/
+/*	$NetBSD: drm_gem.h,v 1.11 2021/12/19 09:56:03 riastradh Exp $	*/
 
 #ifndef __DRM_GEM_H__
 #define __DRM_GEM_H__
@@ -44,6 +44,8 @@
 #include <linux/kref.h>
 #include <linux/dma-resv.h>
 
+#include <drm/drm_device.h>
+#include <drm/drm_print.h>
 #include <drm/drm_vma_manager.h>
 #undef free
 
@@ -450,5 +452,7 @@ int drm_gem_dumb_map_offset(struct drm_file *file, struct drm_device *dev,
 int drm_gem_dumb_destroy(struct drm_file *file,
 			 struct drm_device *dev,
 			 uint32_t handle);
+
+#define	free(addr, type)		kern_free(addr)
 
 #endif /* __DRM_GEM_H__ */
