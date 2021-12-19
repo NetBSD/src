@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_drv.c,v 1.20 2021/12/18 23:45:28 riastradh Exp $	*/
+/*	$NetBSD: i915_drv.c,v 1.21 2021/12/19 01:24:25 riastradh Exp $	*/
 
 /* i915_drv.c -- i830,i845,i855,i865,i915 driver -*- linux-c -*-
  */
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_drv.c,v 1.20 2021/12/18 23:45:28 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_drv.c,v 1.21 2021/12/19 01:24:25 riastradh Exp $");
 
 #include <linux/acpi.h>
 #include <linux/device.h>
@@ -50,6 +50,7 @@ __KERNEL_RCSID(0, "$NetBSD: i915_drv.c,v 1.20 2021/12/18 23:45:28 riastradh Exp 
 #include <drm/drm_irq.h>
 #include <drm/drm_probe_helper.h>
 #include <drm/i915_drm.h>
+#include "../drm_internal.h"	/* drm_pci_set_busid */
 
 #include "display/intel_acpi.h"
 #include "display/intel_audio.h"
@@ -295,11 +296,15 @@ static int i915_driver_modeset_probe(struct drm_i915_private *i915)
 			goto out;
 	}
 
+#ifdef __NetBSD__		/* XXX vga */
+	__USE(i915);
+#else
 	intel_bios_init(i915);
 
 	ret = intel_vga_register(i915);
 	if (ret)
 		goto out;
+#endif
 
 	intel_register_dsm_handler();
 
@@ -1548,9 +1553,11 @@ int i915_driver_probe(struct pci_dev *pdev, const struct pci_device_id *ent)
 	}
 #endif
 
+#ifndef __NetBSD__		/* XXX done for us */
 	ret = pci_enable_device(pdev);
 	if (ret)
 		goto out_fini;
+#endif
 
 	ret = i915_driver_early_probe(dev_priv);
 	if (ret < 0)
@@ -1590,10 +1597,12 @@ out_runtime_pm_put:
 	enable_rpm_wakeref_asserts(&dev_priv->runtime_pm);
 	i915_driver_late_release(dev_priv);
 out_pci_disable:
+#ifndef __NetBSD__
 	pci_disable_device(pdev);
 out_fini:
 	i915_probe_error(dev_priv, "Device initialization failed (%d)\n", ret);
 	i915_driver_destroy(dev_priv);
+#endif
 	return ret;
 }
 
@@ -1707,9 +1716,11 @@ static void intel_suspend_encoders(struct drm_i915_private *dev_priv)
 	drm_modeset_unlock_all(dev);
 }
 
+#ifndef __NetBSD__		/* XXX vlv suspend/resume */
 static int vlv_resume_prepare(struct drm_i915_private *dev_priv,
 			      bool rpm_resume);
 static int vlv_suspend_complete(struct drm_i915_private *dev_priv);
+#endif
 
 static bool suspend_to_idle(struct drm_i915_private *dev_priv)
 {
@@ -1720,6 +1731,7 @@ static bool suspend_to_idle(struct drm_i915_private *dev_priv)
 	return false;
 }
 
+#ifndef __NetBSD__		/* XXX runtime pm */
 static int i915_drm_prepare(struct drm_device *dev)
 {
 	struct drm_i915_private *i915 = to_i915(dev);
@@ -1734,6 +1746,7 @@ static int i915_drm_prepare(struct drm_device *dev)
 
 	return 0;
 }
+#endif
 
 int i915_drm_suspend(struct drm_device *dev)
 {
@@ -1749,7 +1762,9 @@ int i915_drm_suspend(struct drm_device *dev)
 
 	drm_kms_helper_poll_disable(dev);
 
-#ifndef __NetBSD__		/* pmf handles this for us.  */
+#ifdef __NetBSD__		/* pmf handles this for us.  */
+	__USE(pdev);
+#else
 	pci_save_state(pdev);
 #endif
 
@@ -1813,7 +1828,11 @@ static int i915_drm_suspend_late(struct drm_device *dev, bool hibernation)
 	intel_display_power_suspend_late(dev_priv);
 
 	if (IS_VALLEYVIEW(dev_priv) || IS_CHERRYVIEW(dev_priv))
+#ifdef __NetBSD__
+		ret = 0;
+#else
 		ret = vlv_suspend_complete(dev_priv);
+#endif
 
 	if (ret) {
 		DRM_ERROR("Suspend complete failed: %d\n", ret);
@@ -1822,7 +1841,9 @@ static int i915_drm_suspend_late(struct drm_device *dev, bool hibernation)
 		goto out;
 	}
 
-#ifndef __NetBSD__		/* pmf handles this for us.  */
+#ifdef __NetBSD__		/* pmf handles this for us.  */
+	__USE(pdev);
+#else
 	pci_disable_device(pdev);
 	/*
 	 * During hibernation on some platforms the BIOS may try to access
@@ -1848,6 +1869,7 @@ out:
 	return ret;
 }
 
+#ifndef __NetBSD__		/* XXX vga switcheroo */
 int i915_suspend_switcheroo(struct drm_i915_private *i915, pm_message_t state)
 {
 	int error;
@@ -1865,6 +1887,7 @@ int i915_suspend_switcheroo(struct drm_i915_private *i915, pm_message_t state)
 
 	return i915_drm_suspend_late(&i915->drm, false);
 }
+#endif
 
 int i915_drm_resume(struct drm_device *dev)
 {
@@ -1965,6 +1988,10 @@ int i915_drm_resume_early(struct drm_device *dev)
 	 * the device powered we can also remove the following set power state
 	 * call.
 	 */
+#ifdef __NetBSD__		/* pmf handles this for us.  */
+	if (0)
+		goto out;
+#else
 	ret = pci_set_power_state(pdev, PCI_D0);
 	if (ret) {
 		DRM_ERROR("failed to set PCI D0 power state (%d)\n", ret);
@@ -1994,7 +2021,11 @@ int i915_drm_resume_early(struct drm_device *dev)
 	disable_rpm_wakeref_asserts(&dev_priv->runtime_pm);
 
 	if (IS_VALLEYVIEW(dev_priv) || IS_CHERRYVIEW(dev_priv))
+#ifdef __NetBSD__		/* XXX vlv suspend/resume */
+		ret = 0;
+#else
 		ret = vlv_resume_prepare(dev_priv, false);
+#endif
 	if (ret)
 		DRM_ERROR("Resume prepare failed: %d, continuing anyway\n",
 			  ret);
@@ -2014,6 +2045,7 @@ int i915_drm_resume_early(struct drm_device *dev)
 	return ret;
 }
 
+#ifndef __NetBSD__		/* XXX vga switcheroo */
 int i915_resume_switcheroo(struct drm_i915_private *i915)
 {
 	int ret;
@@ -2573,7 +2605,9 @@ static int intel_runtime_suspend(struct device *kdev)
 	intel_display_power_suspend(dev_priv);
 
 	if (IS_VALLEYVIEW(dev_priv) || IS_CHERRYVIEW(dev_priv))
+#ifndef __NetBSD__		/* XXX vlv suspend/resume */
 		ret = vlv_suspend_complete(dev_priv);
+#endif
 
 	if (ret) {
 		DRM_ERROR("Runtime suspend failed, disabling it (%d)\n", ret);

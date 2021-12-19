@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_gem_gtt.c,v 1.19 2021/12/18 23:45:28 riastradh Exp $	*/
+/*	$NetBSD: i915_gem_gtt.c,v 1.20 2021/12/19 01:24:25 riastradh Exp $	*/
 
 // SPDX-License-Identifier: MIT
 /*
@@ -7,7 +7,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_gem_gtt.c,v 1.19 2021/12/18 23:45:28 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_gem_gtt.c,v 1.20 2021/12/19 01:24:25 riastradh Exp $");
 
 #include <linux/slab.h> /* fault-inject.h is not standalone! */
 
@@ -42,15 +42,23 @@ __KERNEL_RCSID(0, "$NetBSD: i915_gem_gtt.c,v 1.19 2021/12/18 23:45:28 riastradh 
 #define	_PAGE_PAT	PTE_PAT	/* 0x80 page attribute table on PTE */
 #endif
 
+#ifdef __NetBSD__
+int i915_gem_gtt_prepare_pages(struct drm_i915_gem_object *obj,
+			       bus_dmamap_t pages)
+#else
 int i915_gem_gtt_prepare_pages(struct drm_i915_gem_object *obj,
 			       struct sg_table *pages)
+#endif
 {
 	do {
 #ifdef __NetBSD__
-		KASSERT(0 < obj->base.size);
-		/* XXX errno NetBSD->Linux */
-		return -bus_dmamap_load_pglist(obj->base.dev->dmat, obj->pages,
-		    &obj->pageq, obj->base.size, BUS_DMA_NOWAIT);
+		/*
+		 * XXX Not sure whether caller should be passing DMA
+		 * map or page list.
+		 */
+		if (bus_dmamap_load_pglist(obj->base.dev->dmat, pages,
+			&obj->pageq, pages->dm_mapsize, BUS_DMA_NOWAIT) == 0)
+			return 0;
 #else
 		if (dma_map_sg_attrs(&obj->base.dev->pdev->dev,
 				     pages->sgl, pages->nents,
@@ -75,11 +83,20 @@ int i915_gem_gtt_prepare_pages(struct drm_i915_gem_object *obj,
 	return -ENOSPC;
 }
 
+#ifdef __NetBSD__
+void i915_gem_gtt_finish_pages(struct drm_i915_gem_object *obj,
+			       bus_dmamap_t pages)
+#else
 void i915_gem_gtt_finish_pages(struct drm_i915_gem_object *obj,
 			       struct sg_table *pages)
+#endif
 {
 	struct drm_i915_private *dev_priv = to_i915(obj->base.dev);
+#ifdef __NetBSD__
+	bus_dma_tag_t dmat = dev_priv->drm.dev->dmat;
+#else
 	struct device *kdev = &dev_priv->drm.pdev->dev;
+#endif
 	struct i915_ggtt *ggtt = &dev_priv->ggtt;
 
 	if (unlikely(ggtt->do_idle_maps)) {
@@ -92,7 +109,11 @@ void i915_gem_gtt_finish_pages(struct drm_i915_gem_object *obj,
 		}
 	}
 
+#ifdef __NetBSD__
+	bus_dmamap_unload(dmat, pages);
+#else
 	dma_unmap_sg(kdev, pages->sgl, pages->nents, PCI_DMA_BIDIRECTIONAL);
+#endif
 }
 
 /**

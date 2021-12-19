@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_gem_pages.c,v 1.2 2021/12/18 23:45:30 riastradh Exp $	*/
+/*	$NetBSD: i915_gem_pages.c,v 1.3 2021/12/19 01:24:25 riastradh Exp $	*/
 
 /*
  * SPDX-License-Identifier: MIT
@@ -7,7 +7,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_gem_pages.c,v 1.2 2021/12/18 23:45:30 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_gem_pages.c,v 1.3 2021/12/19 01:24:25 riastradh Exp $");
 
 #include "i915_drv.h"
 #include "i915_gem_object.h"
@@ -16,8 +16,13 @@ __KERNEL_RCSID(0, "$NetBSD: i915_gem_pages.c,v 1.2 2021/12/18 23:45:30 riastradh
 #include "i915_gem_mman.h"
 
 void __i915_gem_object_set_pages(struct drm_i915_gem_object *obj,
+#ifdef __NetBSD__
+				 bus_dmamap_t pages,
+#else
 				 struct sg_table *pages,
-				 unsigned int sg_page_sizes)
+				 unsigned int sg_page_sizes
+#endif
+				)
 {
 	struct drm_i915_private *i915 = to_i915(obj->base.dev);
 	unsigned long supported = INTEL_INFO(i915)->page_sizes;
@@ -36,8 +41,10 @@ void __i915_gem_object_set_pages(struct drm_i915_gem_object *obj,
 		obj->cache_dirty = false;
 	}
 
+#ifndef __NetBSD__
 	obj->mm.get_page.sg_pos = pages->sgl;
 	obj->mm.get_page.sg_idx = 0;
+#endif
 
 	obj->mm.pages = pages;
 
@@ -48,8 +55,10 @@ void __i915_gem_object_set_pages(struct drm_i915_gem_object *obj,
 		obj->mm.quirked = true;
 	}
 
+#ifndef __NetBSD__
 	GEM_BUG_ON(!sg_page_sizes);
 	obj->mm.page_sizes.phys = sg_page_sizes;
+#endif
 
 	/*
 	 * Calculate the supported page-sizes which fit into the given

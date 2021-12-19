@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_perf_types.h,v 1.2 2021/12/18 23:45:28 riastradh Exp $	*/
+/*	$NetBSD: i915_perf_types.h,v 1.3 2021/12/19 01:24:25 riastradh Exp $	*/
 
 /* SPDX-License-Identifier: MIT */
 /*
@@ -52,9 +52,11 @@ struct i915_oa_config {
 	const struct i915_oa_reg *flex_regs;
 	u32 flex_regs_len;
 
+#ifndef __NetBSD__		/* XXX sysfs */
 	struct attribute_group sysfs_metric;
 	struct attribute *attrs[2];
 	struct device_attribute sysfs_metric_id;
+#endif
 
 	struct kref ref;
 	struct rcu_head rcu;

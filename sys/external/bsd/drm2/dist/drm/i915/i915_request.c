@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_request.c,v 1.2 2021/12/18 23:45:28 riastradh Exp $	*/
+/*	$NetBSD: i915_request.c,v 1.3 2021/12/19 01:24:26 riastradh Exp $	*/
 
 /*
  * Copyright © 2008-2015 Intel Corporation
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_request.c,v 1.2 2021/12/18 23:45:28 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_request.c,v 1.3 2021/12/19 01:24:26 riastradh Exp $");
 
 #include <linux/dma-fence-array.h>
 #include <linux/irq_work.h>
@@ -1465,7 +1465,13 @@ static bool __i915_spin_request(const struct i915_request * const rq,
 
 struct request_wait {
 	struct dma_fence_cb cb;
+#ifdef __NetBSD__
+	bool complete;
+	kcondvar_t cv;
+	/* XXX lock, condvar, ...?  */
+#else
 	struct task_struct *tsk;
+#endif
 };
 
 static void request_wait_wake(struct dma_fence *fence, struct dma_fence_cb *cb)

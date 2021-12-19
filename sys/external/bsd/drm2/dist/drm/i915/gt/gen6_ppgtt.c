@@ -1,4 +1,4 @@
-/*	$NetBSD: gen6_ppgtt.c,v 1.2 2021/12/18 23:45:30 riastradh Exp $	*/
+/*	$NetBSD: gen6_ppgtt.c,v 1.3 2021/12/19 01:24:25 riastradh Exp $	*/
 
 // SPDX-License-Identifier: MIT
 /*
@@ -6,7 +6,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gen6_ppgtt.c,v 1.2 2021/12/18 23:45:30 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gen6_ppgtt.c,v 1.3 2021/12/19 01:24:25 riastradh Exp $");
 
 #include <linux/log2.h>
 
@@ -22,8 +22,14 @@ static inline void gen6_write_pde(const struct gen6_ppgtt *ppgtt,
 				  const struct i915_page_table *pt)
 {
 	/* Caller needs to make sure the write completes if necessary */
+#ifdef __NetBSD__
+	CTASSERT(sizeof(gen6_pte_t) == 4);
+	bus_space_write_4(ppgtt->pd_bst, ppgtt->pd_bsh, pde*sizeof(gen6_pte_t),
+	    GEN6_PDE_ADDR_ENCODE(px_dma(pt)) | GEN6_PDE_VALID);
+#else
 	iowrite32(GEN6_PDE_ADDR_ENCODE(px_dma(pt)) | GEN6_PDE_VALID,
 		  ppgtt->pd_addr + pde);
+#endif
 }
 
 void gen7_ppgtt_enable(struct intel_gt *gt)
@@ -136,6 +142,25 @@ static void gen6_ppgtt_insert_entries(struct i915_address_space *vm,
 
 	vaddr = kmap_atomic_px(i915_pt_entry(pd, act_pt));
 	do {
+#ifdef __NetBSD__
+		KASSERT(iter.seg < iter.map->dm_nsegs);
+		KASSERT((iter.off & (PAGE_SIZE - 1)) == 0);
+		const bus_dma_segment_t *seg = &iter.map->dm_segs[iter.seg];
+		KASSERT((seg->ds_addr & (PAGE_SIZE - 1)) == 0);
+		KASSERT((seg->ds_len & (PAGE_SIZE - 1)) == 0);
+		KASSERT(iter.off <= seg->ds_len - PAGE_SIZE);
+		vaddr[act_pte] = pte_encode |
+		    GEN6_PTE_ADDR_ENCODE(seg->ds_addr + iter.off);
+		iter.off += PAGE_SIZE;
+		if (iter.off >= seg->ds_len) {
+			GEM_BUG_ON(iter.off > seg->ds_len);
+			iter.off = 0;
+			if (++iter.seg >= iter.map->dm_nsegs) {
+				GEM_BUG_ON(iter.seg > iter.map->dm_nsegs);
+				break;
+			}
+		}
+#else
 		GEM_BUG_ON(iter.sg->length < I915_GTT_PAGE_SIZE);
 		vaddr[act_pte] = pte_encode | GEN6_PTE_ADDR_ENCODE(iter.dma);
 
@@ -148,6 +173,7 @@ static void gen6_ppgtt_insert_entries(struct i915_address_space *vm,
 			iter.dma = sg_dma_address(iter.sg);
 			iter.max = iter.dma + iter.sg->length;
 		}
+#endif
 
 		if (++act_pte == GEN6_PTES) {
 			kunmap_atomic(vaddr);
@@ -313,7 +339,31 @@ static int pd_vma_bind(struct i915_vma *vma,
 	u32 ggtt_offset = i915_ggtt_offset(vma) / I915_GTT_PAGE_SIZE;
 
 	px_base(ppgtt->base.pd)->ggtt_offset = ggtt_offset * sizeof(gen6_pte_t);
+#ifdef __NetBSD__
+    {
+	int ret;
+	ppgtt->pd_bst = ggtt->gsmt;
+	KASSERTMSG((sizeof(gen6_pte_t) * (ggtt->vm.total >> PAGE_SHIFT) <=
+		ggtt->gsmsz - (sizeof(gen6_pte_t) * ggtt_offset)),
+	    "oversize ggtt vm total %"PRIx64
+	    " requiring %"PRIx64" bytes of ptes,"
+	    " gsm has %"PRIx64" bytes for ptes",
+	    ggtt->vm.total,
+	    sizeof(gen6_pte_t) * (ggtt->vm.total >> PAGE_SHIFT),
+	    ggtt->gsmsz - (sizeof(gen6_pte_t) * ggtt_offset));
+	ret = -bus_space_subregion(ggtt->gsmt, ggtt->gsmh,
+	    sizeof(gen6_pte_t) * ggtt_offset,
+	    MIN(sizeof(gen6_pte_t) * (ggtt->vm.total >> PAGE_SHIFT),
+		ggtt->gsmsz - (sizeof(gen6_pte_t) * ggtt_offset)),
+	    &ppgtt->pd_bsh);
+	if (ret) {
+		DRM_ERROR("Unable to subregion the GGTT: %d\n", ret);
+		return ret;
+	}
+    }
+#else
 	ppgtt->pd_addr = (gen6_pte_t __iomem *)ggtt->gsm + ggtt_offset;
+#endif
 
 	gen6_flush_pd(ppgtt, 0, ppgtt->base.vm.total);
 	return 0;

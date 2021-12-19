@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_gem.c,v 1.62 2021/12/18 23:45:28 riastradh Exp $	*/
+/*	$NetBSD: i915_gem.c,v 1.63 2021/12/19 01:24:25 riastradh Exp $	*/
 
 /*
  * Copyright © 2008-2015 Intel Corporation
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_gem.c,v 1.62 2021/12/18 23:45:28 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_gem.c,v 1.63 2021/12/19 01:24:25 riastradh Exp $");
 
 #ifdef __NetBSD__
 #if 0				/* XXX uvmhist option?  */
@@ -263,6 +263,7 @@ i915_gem_dumb_create(struct drm_file *file,
 		     struct drm_device *dev,
 		     struct drm_mode_create_dumb *args)
 {
+
 	enum intel_memory_type mem_type;
 	int cpp = DIV_ROUND_UP(args->bpp, 8);
 	u32 format;
@@ -287,7 +288,11 @@ i915_gem_dumb_create(struct drm_file *file,
 	/* align stride to page size so that we can remap */
 	if (args->pitch > intel_plane_fb_max_stride(to_i915(dev), format,
 						    DRM_FORMAT_MOD_LINEAR))
+#ifdef __NetBSD__               /* ALIGN means something else.  */
+		args->pitch = round_up(args->pitch, 4096);
+#else
 		args->pitch = ALIGN(args->pitch, 4096);
+#endif
 
 	if (args->pitch < args->width)
 		return -EINVAL;
@@ -356,6 +361,7 @@ i915_gem_shmem_pread(struct drm_i915_gem_object *obj,
 	int ret;
 
 	ret = i915_gem_object_prepare_read(obj, &needs_clflush);
+
 	if (ret)
 		return ret;
 
