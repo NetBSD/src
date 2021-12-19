@@ -1,4 +1,4 @@
-/*	$NetBSD: dma-mapping.h,v 1.7 2021/12/19 01:42:10 riastradh Exp $	*/
+/*	$NetBSD: dma-mapping.h,v 1.8 2021/12/19 09:57:01 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -32,6 +32,7 @@
 #ifndef _LINUX_DMA_MAPPING_H_
 #define _LINUX_DMA_MAPPING_H_
 
+#include <sys/param.h>
 #include <sys/bus.h>
 
 #include <machine/limits.h>
@@ -45,6 +46,13 @@ DMA_BIT_MASK(unsigned nbits)
 	if (nbits == CHAR_BIT*sizeof(uintmax_t))
 		return ~(uintmax_t)0;
 	return ~(~(uintmax_t)0 << nbits);
+}
+
+static inline bool
+dma_addressing_limited(device_t *dev)
+{
+
+	return false;
 }
 
 #endif  /* _LINUX_DMA_MAPPING_H_ */
