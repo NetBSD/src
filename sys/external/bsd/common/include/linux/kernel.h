@@ -1,4 +1,4 @@
-/*	$NetBSD: kernel.h,v 1.34 2021/12/19 01:18:17 riastradh Exp $	*/
+/*	$NetBSD: kernel.h,v 1.35 2021/12/19 01:24:57 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -79,6 +79,8 @@
 #define	barrier()	__insn_barrier()
 #define	likely(X)	__predict_true(X)
 #define	unlikely(X)	__predict_false(X)
+
+#define	might_sleep	ASSERT_SLEEPABLE
 
 /*
  * XXX Linux kludge to work around GCC uninitialized variable warning.
@@ -257,6 +259,16 @@ u64_to_user_ptr(uint64_t addr)
 {
 
 	return (void __user *)(uintptr_t)addr;
+}
+
+#define	TAINT_MACHINE_CHECK	0
+#define	TAINT_WARN		1
+
+#define	LOCKDEP_STILL_OK	0
+
+static inline void
+add_taint(unsigned taint, int lockdep)
+{
 }
 
 #endif  /* _LINUX_KERNEL_H_ */
