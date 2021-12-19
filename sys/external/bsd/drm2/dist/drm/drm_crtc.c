@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_crtc.c,v 1.18 2021/12/18 23:44:57 riastradh Exp $	*/
+/*	$NetBSD: drm_crtc.c,v 1.19 2021/12/19 00:56:18 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2006-2008 Intel Corporation
@@ -32,7 +32,7 @@
  *      Jesse Barnes <jesse.barnes@intel.com>
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_crtc.c,v 1.18 2021/12/18 23:44:57 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_crtc.c,v 1.19 2021/12/19 00:56:18 riastradh Exp $");
 
 #include <linux/ctype.h>
 #include <linux/list.h>
@@ -635,7 +635,7 @@ int drm_mode_setcrtc(struct drm_device *dev, void *data,
 							   fb->modifier);
 			if (ret) {
 				struct drm_format_name_buf format_name;
-				DRM_DEBUG_KMS("Invalid pixel format %s, modifier 0x%llx\n",
+				DRM_DEBUG_KMS("Invalid pixel format %s, modifier 0x%"PRIx64"\n",
 					      drm_get_format_name(fb->format->format,
 								  &format_name),
 					      fb->modifier);
