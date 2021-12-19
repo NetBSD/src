@@ -1,4 +1,4 @@
-/*	$NetBSD: dma-fence.h,v 1.5 2021/12/19 01:25:13 riastradh Exp $	*/
+/*	$NetBSD: dma-fence.h,v 1.6 2021/12/19 01:40:55 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -86,6 +86,7 @@ struct dma_fence_cb {
 #define	dma_fence_free			linux_dma_fence_free
 #define	dma_fence_get			linux_dma_fence_get
 #define	dma_fence_get_rcu		linux_dma_fence_get_rcu
+#define	dma_fence_get_rcu_safe		linux_dma_fence_get_rcu_safe
 #define	dma_fence_init			linux_dma_fence_init
 #define	dma_fence_is_later		linux_dma_fence_is_later
 #define	dma_fence_is_signaled		linux_dma_fence_is_signaled
