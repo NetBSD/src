@@ -1,4 +1,4 @@
-/*	$NetBSD: io.h,v 1.6 2018/08/27 07:33:45 riastradh Exp $	*/
+/*	$NetBSD: io.h,v 1.7 2021/12/19 01:49:21 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -32,11 +32,15 @@
 #ifndef _LINUX_IO_H_
 #define _LINUX_IO_H_
 
+#include <linux/types.h>
+
 #include <asm/io.h>
 
-#define	arch_phys_wc_add	linux_arch_phys_wc_add
-#define	arch_phys_wc_del	linux_arch_phys_wc_del
-#define	arch_phys_wc_index	linux_arch_phys_wc_index
+#define	arch_phys_wc_add		linux_arch_phys_wc_add
+#define	arch_phys_wc_del		linux_arch_phys_wc_del
+#define	arch_phys_wc_index		linux_arch_phys_wc_index
+#define	arch_io_reserve_memtype_wc	linux_arch_io_reserve_memtype_wc
+#define	arch_io_free_memtype_wc		linux_arch_io_free_memtype_wc
 
 int	linux_writecomb_init(void);
 void	linux_writecomb_fini(void);
@@ -44,5 +48,8 @@ void	linux_writecomb_fini(void);
 int	arch_phys_wc_add(unsigned long, unsigned long);
 void	arch_phys_wc_del(int);
 int	arch_phys_wc_index(int);
+
+int	arch_io_reserve_memtype_wc(resource_size_t, resource_size_t);
+void	arch_io_free_memtype_wc(resource_size_t, resource_size_t);
 
 #endif  /* _LINUX_IO_H_ */
