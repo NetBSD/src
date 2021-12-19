@@ -1,4 +1,4 @@
-/*	$NetBSD: srcu.h,v 1.2 2021/12/19 00:58:22 riastradh Exp $	*/
+/*	$NetBSD: srcu.h,v 1.1 2021/12/19 01:37:27 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.

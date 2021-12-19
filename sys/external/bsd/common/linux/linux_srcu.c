@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_srcu.c,v 1.1 2021/12/19 00:58:22 riastradh Exp $	*/
+/*	$NetBSD: linux_srcu.c,v 1.1 2021/12/19 01:37:27 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_srcu.c,v 1.1 2021/12/19 00:58:22 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_srcu.c,v 1.1 2021/12/19 01:37:27 riastradh Exp $");
 
 /*
  * SRCU: Sleepable RCU
