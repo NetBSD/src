@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_atomic_uapi.c,v 1.4 2021/12/19 01:15:56 riastradh Exp $	*/
+/*	$NetBSD: drm_atomic_uapi.c,v 1.5 2021/12/19 01:58:32 riastradh Exp $	*/
 
 /*
  * Copyright (C) 2014 Red Hat
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_atomic_uapi.c,v 1.4 2021/12/19 01:15:56 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_atomic_uapi.c,v 1.5 2021/12/19 01:58:32 riastradh Exp $");
 
 #include <drm/drm_atomic_uapi.h>
 #include <drm/drm_atomic.h>
@@ -569,7 +569,7 @@ static int drm_atomic_plane_set_property(struct drm_plane *plane,
 		state->pixel_blend_mode = val;
 	} else if (property == plane->rotation_property) {
 		if (!is_power_of_2(val & DRM_MODE_ROTATE_MASK)) {
-			DRM_DEBUG_ATOMIC("[PLANE:%d:%s] bad rotation bitmask: 0x%llx\n",
+			DRM_DEBUG_ATOMIC("[PLANE:%d:%s] bad rotation bitmask: 0x%"PRIx64"\n",
 					 plane->base.id, plane->name, val);
 			return -EINVAL;
 		}
