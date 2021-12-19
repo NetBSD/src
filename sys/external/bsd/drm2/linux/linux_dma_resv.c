@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_dma_resv.c,v 1.12 2021/12/19 12:26:04 riastradh Exp $	*/
+/*	$NetBSD: linux_dma_resv.c,v 1.13 2021/12/19 12:26:13 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_dma_resv.c,v 1.12 2021/12/19 12:26:04 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_dma_resv.c,v 1.13 2021/12/19 12:26:13 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/poll.h>
@@ -741,6 +741,14 @@ dma_resv_get_excl_rcu(const struct dma_resv *robj)
 
 /*
  * dma_resv_get_fences_rcu(robj, fencep, nsharedp, sharedp)
+ *
+ *	Get a snapshot of the exclusive and shared fences of robj.  The
+ *	shared fences are returned as a pointer *sharedp to an array,
+ *	to be freed by the caller with kfree, of *nsharedp elements.
+ *
+ *	Returns zero on success, negative (Linux-style) error code on
+ *	failure.  On failure, *fencep, *nsharedp, and *sharedp are
+ *	untouched.
  */
 int
 dma_resv_get_fences_rcu(const struct dma_resv *robj,
