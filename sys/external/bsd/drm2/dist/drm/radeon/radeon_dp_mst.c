@@ -1,9 +1,9 @@
-/*	$NetBSD: radeon_dp_mst.c,v 1.4 2021/12/18 23:45:43 riastradh Exp $	*/
+/*	$NetBSD: radeon_dp_mst.c,v 1.5 2021/12/19 09:54:57 riastradh Exp $	*/
 
 // SPDX-License-Identifier: MIT
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radeon_dp_mst.c,v 1.4 2021/12/18 23:45:43 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radeon_dp_mst.c,v 1.5 2021/12/19 09:54:57 riastradh Exp $");
 
 #include <drm/drm_debugfs.h>
 #include <drm/drm_dp_mst_helper.h>
@@ -395,7 +395,7 @@ radeon_mst_encoder_dpms(struct drm_encoder *encoder, int mode)
 	struct radeon_connector *radeon_connector;
 	struct drm_crtc *crtc;
 	struct radeon_crtc *radeon_crtc;
-	int ret, slots;
+	int ret __unused, slots;
 	s64 fixed_pbn, fixed_pbn_per_slot, avg_time_slots_per_mtp;
 	if (!ASIC_IS_DCE5(rdev)) {
 		DRM_ERROR("got mst dpms on non-DCE5\n");
