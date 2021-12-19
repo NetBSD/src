@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_gem_mman.c,v 1.5 2021/12/19 11:32:53 riastradh Exp $	*/
+/*	$NetBSD: i915_gem_mman.c,v 1.6 2021/12/19 11:33:02 riastradh Exp $	*/
 
 /*
  * SPDX-License-Identifier: MIT
@@ -7,7 +7,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_gem_mman.c,v 1.5 2021/12/19 11:32:53 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_gem_mman.c,v 1.6 2021/12/19 11:33:02 riastradh Exp $");
 
 #include <linux/anon_inodes.h>
 #include <linux/mman.h>
@@ -100,17 +100,17 @@ i915_gem_mmap_ioctl(struct drm_device *dev, void *data,
 	int error;
 
         /* Acquire a reference for uvm_map to consume.  */
-        uao_reference(obj->filp);
+        uao_reference(obj->base.filp);
         addr = (*curproc->p_emul->e_vm_default_addr)(curproc,
             (vaddr_t)curproc->p_vmspace->vm_daddr, args->size,
             curproc->p_vmspace->vm_map.flags & VM_MAP_TOPDOWN);
         error = uvm_map(&curproc->p_vmspace->vm_map, &addr, args->size,
-            obj->filp, args->offset, 0,
+            obj->base.filp, args->offset, 0,
             UVM_MAPFLAG(VM_PROT_READ|VM_PROT_WRITE,
                 VM_PROT_READ|VM_PROT_WRITE, UVM_INH_COPY, UVM_ADV_NORMAL,
                 0));
         if (error) {
-                uao_detach(obj->filp);
+                uao_detach(obj->base.filp);
 		/* XXX errno NetBSD->Linux */
 		addr = -error;
 		goto err;
