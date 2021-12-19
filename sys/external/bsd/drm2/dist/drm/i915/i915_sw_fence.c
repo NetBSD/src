@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_sw_fence.c,v 1.3 2021/12/19 11:36:08 riastradh Exp $	*/
+/*	$NetBSD: i915_sw_fence.c,v 1.4 2021/12/19 11:54:57 riastradh Exp $	*/
 
 /*
  * SPDX-License-Identifier: MIT
@@ -7,7 +7,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_sw_fence.c,v 1.3 2021/12/19 11:36:08 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_sw_fence.c,v 1.4 2021/12/19 11:54:57 riastradh Exp $");
 
 #include <linux/slab.h>
 #include <linux/dma-fence.h>
@@ -184,7 +184,6 @@ i915_sw_fence_wait(struct i915_sw_fence *fence)
 	struct i915_sw_fence_wq sfw;
 	int ret;
 
-	INIT_LIST_HEAD(&waiter.entry);
 	waiter.flags = 0;
 	waiter.func = autoremove_wake_function;
 	waiter.private = &sfw;
@@ -193,6 +192,7 @@ i915_sw_fence_wait(struct i915_sw_fence *fence)
 	DRM_INIT_WAITQUEUE(&sfw.wq, "i915swf");
 
 	spin_lock(&fence->wait.lock);
+	list_add_tail(&waiter.entry, &fence->wait.head);
 	DRM_SPIN_WAIT_NOINTR_UNTIL(ret, &sfw.wq, &fence->wait.lock,
 	    i915_sw_fence_done(fence));
 	spin_unlock(&fence->wait.lock);
