@@ -1,4 +1,4 @@
-/*	$NetBSD: ttm_tt.h,v 1.6 2021/12/19 11:32:54 riastradh Exp $	*/
+/*	$NetBSD: ttm_tt.h,v 1.7 2021/12/19 12:29:16 riastradh Exp $	*/
 
 /**************************************************************************
  *
@@ -138,7 +138,6 @@ struct ttm_tt {
 struct ttm_dma_tt {
 	struct ttm_tt ttm;
 #ifdef __NetBSD__
-	bus_dma_segment_t *dma_segs;
 	bus_dmamap_t dma_address;
 #else
 	dma_addr_t *dma_address;
