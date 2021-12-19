@@ -1,4 +1,4 @@
-/*	$NetBSD: fb.h,v 1.5 2021/12/19 09:43:20 riastradh Exp $	*/
+/*	$NetBSD: fb.h,v 1.6 2021/12/19 09:47:02 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -34,6 +34,7 @@
 
 #include <linux/kgdb.h>
 #include <linux/notifier.h>
+#include <linux/init.h>
 
 #define	PICOS2KHZ(PICOS)	(1000000000ul / (PICOS))
 #define	KHZ2PICOS(KHZ)		(1000000000ul / (KHZ))
