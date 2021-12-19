@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_gem_object.c,v 1.6 2021/12/19 11:58:41 riastradh Exp $	*/
+/*	$NetBSD: i915_gem_object.c,v 1.7 2021/12/19 11:58:50 riastradh Exp $	*/
 
 /*
  * Copyright © 2017 Intel Corporation
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_gem_object.c,v 1.6 2021/12/19 11:58:41 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_gem_object.c,v 1.7 2021/12/19 11:58:50 riastradh Exp $");
 
 #include <linux/bitmap.h>
 #include <linux/sched/mm.h>
@@ -178,6 +178,7 @@ static void __i915_gem_free_object_rcu(struct rcu_head *head)
 	struct drm_i915_private *i915 = to_i915(obj->base.dev);
 
 	dma_resv_fini(&obj->base._resv);
+	drm_vma_node_destroy(&obj->base.vma_node);
 	i915_gem_object_free(obj);
 
 	GEM_BUG_ON(!atomic_read(&i915->mm.free_count));
