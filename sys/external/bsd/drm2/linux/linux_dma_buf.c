@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_dma_buf.c,v 1.11 2021/12/19 11:37:14 riastradh Exp $	*/
+/*	$NetBSD: linux_dma_buf.c,v 1.12 2021/12/19 11:37:29 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_dma_buf.c,v 1.11 2021/12/19 11:37:14 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_dma_buf.c,v 1.12 2021/12/19 11:37:29 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/atomic.h>
@@ -42,10 +42,6 @@ __KERNEL_RCSID(0, "$NetBSD: linux_dma_buf.c,v 1.11 2021/12/19 11:37:14 riastradh
 #include <linux/dma-buf.h>
 #include <linux/err.h>
 #include <linux/dma-resv.h>
-
-struct dma_buf_file {
-	struct dma_buf	*dbf_dmabuf;
-};
 
 static int	dmabuf_fop_poll(struct file *, int);
 static int	dmabuf_fop_close(struct file *);
@@ -231,8 +227,7 @@ dma_buf_unmap_attachment(struct dma_buf_attachment *attach,
 static int
 dmabuf_fop_close(struct file *file)
 {
-	struct dma_buf_file *dbf = file->f_data;
-	struct dma_buf *dmabuf = dbf->dbf_dmabuf;
+	struct dma_buf *dmabuf = file->f_data;
 
 	dma_buf_put(dmabuf);
 	return 0;
@@ -241,8 +236,7 @@ dmabuf_fop_close(struct file *file)
 static int
 dmabuf_fop_poll(struct file *file, int events)
 {
-	struct dma_buf_file *dbf = file->f_data;
-	struct dma_buf *dmabuf = dbf->dbf_dmabuf;
+	struct dma_buf *dmabuf = file->f_data;
 	struct dma_resv_poll *rpoll = &dmabuf->db_resv_poll;
 
 	return dma_resv_do_poll(dmabuf->resv, events, rpoll);
@@ -251,8 +245,7 @@ dmabuf_fop_poll(struct file *file, int events)
 static int
 dmabuf_fop_kqfilter(struct file *file, struct knote *kn)
 {
-	struct dma_buf_file *dbf = file->f_data;
-	struct dma_buf *dmabuf = dbf->dbf_dmabuf;
+	struct dma_buf *dmabuf = file->f_data;
 	struct dma_resv_poll *rpoll = &dmabuf->db_resv_poll;
 
 	return dma_resv_kqfilter(dmabuf->resv, kn, rpoll);
@@ -262,8 +255,7 @@ static int
 dmabuf_fop_mmap(struct file *file, off_t *offp, size_t size, int prot,
     int *flagsp, int *advicep, struct uvm_object **uobjp, int *maxprotp)
 {
-	struct dma_buf_file *dbf = file->f_data;
-	struct dma_buf *dmabuf = dbf->dbf_dmabuf;
+	struct dma_buf *dmabuf = file->f_data;
 
 	if (size > dmabuf->size)
 		return EINVAL;
