@@ -206,7 +206,7 @@ static inline bool dma_resv_is_locked(struct dma_resv *obj)
  */
 static inline struct ww_acquire_ctx *dma_resv_locking_ctx(struct dma_resv *obj)
 {
-	return READ_ONCE(obj->lock.ctx);
+	return READ_ONCE(obj->lock.wwm_u.ctx);
 }
 
 /**
