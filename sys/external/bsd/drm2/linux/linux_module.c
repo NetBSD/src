@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_module.c,v 1.12 2021/12/19 11:49:57 riastradh Exp $	*/
+/*	$NetBSD: linux_module.c,v 1.13 2021/12/19 12:23:07 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_module.c,v 1.12 2021/12/19 11:49:57 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_module.c,v 1.13 2021/12/19 12:23:07 riastradh Exp $");
 
 #include <sys/module.h>
 #ifndef _MODULE
@@ -42,6 +42,7 @@ __KERNEL_RCSID(0, "$NetBSD: linux_module.c,v 1.12 2021/12/19 11:49:57 riastradh 
 #include <linux/idr.h>
 #include <linux/io.h>
 #include <linux/irq_work.h>
+#include <linux/kthread.h>
 #include <linux/mutex.h>
 #include <linux/rcupdate.h>
 #include <linux/tasklet.h>
@@ -104,12 +105,19 @@ linux_init(void)
 		goto fail7;
 	}
 
+	error = linux_kthread_init();
+	if (error) {
+		printf("linux: unable to initialize kthread: %d\n", error);
+		goto fail8;
+	}
+
 	linux_irq_work_init();
 
 	return 0;
 
-fail8: __unused
-	linux_wait_bit_fini();
+fail9: __unused
+	linux_kthread_fini();
+fail8:	linux_wait_bit_fini();
 fail7:	linux_tasklets_fini();
 fail6:	linux_atomic64_fini();
 fail5:	linux_writecomb_fini();
@@ -138,6 +146,7 @@ linux_fini(void)
 {
 
 	linux_irq_work_fini();
+	linux_kthread_fini();
 	linux_wait_bit_fini();
 	linux_tasklets_fini();
 	linux_atomic64_fini();
