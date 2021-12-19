@@ -1,4 +1,4 @@
-/*	$NetBSD: time.h,v 1.5 2018/08/27 07:02:16 riastradh Exp $	*/
+/*	$NetBSD: time.h,v 1.6 2021/12/19 01:16:28 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -33,6 +33,8 @@
 #define _LINUX_TIME_H_
 
 #include <sys/time.h>
+
+#define	timespec64	timespec	/* take that, 2038 */
 
 #define NSEC_PER_MSEC	1000000L
 
