@@ -1,4 +1,4 @@
-/*	$NetBSD: workqueue.h,v 1.21 2021/12/19 01:51:02 riastradh Exp $	*/
+/*	$NetBSD: workqueue.h,v 1.22 2021/12/19 11:03:49 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013, 2018 The NetBSD Foundation, Inc.
@@ -36,6 +36,7 @@
 #include <sys/stdbool.h>
 
 #include <linux/kernel.h>	/* container_of */
+#include <linux/stringify.h>
 
 #define	INIT_DELAYED_WORK		linux_INIT_DELAYED_WORK
 #define	INIT_WORK			linux_INIT_WORK
