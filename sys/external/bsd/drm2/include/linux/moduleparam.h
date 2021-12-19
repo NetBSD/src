@@ -1,4 +1,4 @@
-/*	$NetBSD: moduleparam.h,v 1.10 2021/12/19 09:52:17 riastradh Exp $	*/
+/*	$NetBSD: moduleparam.h,v 1.11 2021/12/19 12:01:48 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -66,6 +66,8 @@ __link_set_add_data(linux_module_param_info, info_ ## NAME)
 #define	module_param(VAR, TYPE, MODE)	module_param_named(VAR, VAR, TYPE, MODE)
 #define	module_param_unsafe		module_param
 #define	module_param_named_unsafe	module_param_named
+#define	module_param_string(VAR, TYPE, SIZE, MODE)			      \
+	CTASSERT(1)		/* XXX */
 
 struct linux_module_param_desc {
 	const char *name;
