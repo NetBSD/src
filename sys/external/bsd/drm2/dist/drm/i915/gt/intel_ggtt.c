@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_ggtt.c,v 1.11 2021/12/19 12:10:42 riastradh Exp $	*/
+/*	$NetBSD: intel_ggtt.c,v 1.12 2021/12/19 12:26:48 riastradh Exp $	*/
 
 // SPDX-License-Identifier: MIT
 /*
@@ -6,7 +6,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intel_ggtt.c,v 1.11 2021/12/19 12:10:42 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intel_ggtt.c,v 1.12 2021/12/19 12:26:48 riastradh Exp $");
 
 #include <linux/stop_machine.h>
 
@@ -1652,6 +1652,8 @@ intel_partial_pages(const struct i915_ggtt_view *view,
 	 * anything to compress contiguous pages into larger segments.
 	 */
 	if (obj->mm.pages->sgl->sg_dmamap) {
+		bus_size_t offset = (bus_size_t)view->partial.offset
+		    << PAGE_SHIFT;
 		unsigned i, j, k;
 
 		st->sgl->sg_dmamap->dm_nsegs = view->partial.size;
@@ -1659,13 +1661,28 @@ intel_partial_pages(const struct i915_ggtt_view *view,
 			KASSERT(j <= obj->mm.pages->sgl->sg_dmamap->dm_nsegs);
 			const bus_dma_segment_t *iseg =
 			    &obj->mm.pages->sgl->sg_dmamap->dm_segs[j];
+
 			KASSERT(iseg->ds_len % PAGE_SIZE == 0);
+
+			/* Skip segments prior to the start offset.  */
+			if (offset >= iseg->ds_len) {
+				offset -= iseg->ds_len;
+				continue;
+			}
 			for (k = 0; k < iseg->ds_len >> PAGE_SHIFT; k++) {
 				bus_dma_segment_t *oseg =
 				    &st->sgl->sg_dmamap->dm_segs[i++];
-				oseg->ds_addr = iseg->ds_addr + k*PAGE_SIZE;
+				oseg->ds_addr = iseg->ds_addr + offset +
+				    k*PAGE_SIZE;
 				oseg->ds_len = PAGE_SIZE;
 			}
+
+			/*
+			 * After the first segment which we possibly
+			 * use only a suffix of, the remainder we will
+			 * take from the beginning.
+			 */
+			offset = 0;
 		}
 	}
 
