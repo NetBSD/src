@@ -1,4 +1,4 @@
-/*	$NetBSD: completion.h,v 1.10 2021/12/19 01:57:42 riastradh Exp $	*/
+/*	$NetBSD: completion.h,v 1.11 2021/12/19 12:22:56 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -304,6 +304,17 @@ wait_for_completion_killable(struct completion *completion)
 {
 
 	return wait_for_completion_interruptible(completion);
+}
+
+static inline void
+wait_for_completion(struct completion *completion)
+{
+
+	mutex_enter(&completion->c_lock);
+	while (completion->c_done == 0)
+		cv_wait(&completion->c_cv, &completion->c_lock);
+	_completion_claim(completion);
+	mutex_exit(&completion->c_lock);
 }
 
 /*
