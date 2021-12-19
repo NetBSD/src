@@ -1,4 +1,4 @@
-/*	$NetBSD: device.h,v 1.9 2021/12/19 09:46:05 riastradh Exp $	*/
+/*	$NetBSD: device.h,v 1.10 2021/12/19 09:55:23 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -81,6 +81,8 @@
 #define	get_device(x)	(x)
 
 #define	DPM_FLAG_NEVER_SKIP	0
+
+#define	dev_warn_ratelimited	dev_warn
 
 static inline void
 dev_pm_set_driver_flags(struct device *dev, uint32_t flags)
