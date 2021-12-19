@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_edid.h,v 1.3 2021/12/18 23:45:45 riastradh Exp $	*/
+/*	$NetBSD: drm_edid.h,v 1.4 2021/12/19 00:46:15 riastradh Exp $	*/
 
 /*
  * Copyright © 2007-2008 Intel Corporation
@@ -349,6 +349,7 @@ struct edid *drm_load_edid_firmware(struct drm_connector *connector);
 int __drm_set_edid_firmware_path(const char *path);
 int __drm_get_edid_firmware_path(char *buf, size_t bufsize);
 #else
+#include <linux/err.h>
 static inline struct edid *
 drm_load_edid_firmware(struct drm_connector *connector)
 {
