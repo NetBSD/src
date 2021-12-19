@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_fb_helper.h,v 1.9 2021/12/18 23:45:45 riastradh Exp $	*/
+/*	$NetBSD: drm_fb_helper.h,v 1.10 2021/12/19 01:02:25 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2006-2009 Red Hat Inc.
@@ -32,6 +32,7 @@
 #ifndef DRM_FB_HELPER_H
 #define DRM_FB_HELPER_H
 
+struct apertures_struct;
 struct drm_fb_helper;
 
 #include <drm/drm_client.h>
