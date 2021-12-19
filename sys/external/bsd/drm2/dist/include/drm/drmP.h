@@ -1,4 +1,4 @@
-/*	$NetBSD: drmP.h,v 1.63 2021/12/19 09:52:43 riastradh Exp $	*/
+/*	$NetBSD: drmP.h,v 1.64 2021/12/19 09:54:31 riastradh Exp $	*/
 
 /*
  * Internal Header for the Direct Rendering Manager
@@ -118,28 +118,6 @@ struct dma_buf_attachment;
 #ifdef __NetBSD__		/* XXX debugfs */
 struct seq_file;
 #endif
-
-/**
- * Info file list entry. This structure represents a debugfs or proc file to
- * be created by the drm core
- */
-struct drm_info_list {
-	const char *name; /** file name */
-	int (*show)(struct seq_file*, void*); /** show callback */
-	u32 driver_features; /**< Required driver features for this entry */
-	void *data;
-};
-
-/**
- * debugfs node structure. This structure represents a debugfs file.
- */
-struct drm_info_node {
-	struct list_head list;
-	struct drm_minor *minor;
-	const struct drm_info_list *info_ent;
-	struct dentry *dent;
-};
-
 
 /******************************************************************/
 /** \name Internal function definitions */
