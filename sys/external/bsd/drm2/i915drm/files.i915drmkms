@@ -1,4 +1,4 @@
-#	$NetBSD: files.i915drmkms,v 1.47 2021/12/19 01:39:48 riastradh Exp $
+#	$NetBSD: files.i915drmkms,v 1.48 2021/12/19 01:40:34 riastradh Exp $
 
 version	20180827
 
@@ -37,13 +37,15 @@ makeoptions 	i915drmkms 	"CWARNFLAGS.intel_display.c"+="${${ACTIVE_CC} == gcc &&
 makeoptions 	i915drmkms 	"CWARNFLAGS.intel_sdvo.c"+="${${ACTIVE_CC} == gcc && ${HAVE_GCC:U0} >= 7:? -Wno-implicit-fallthrough :}"
 
 file	external/bsd/drm2/i915drm/i915_gem_userptr.c	i915drmkms
+file	external/bsd/drm2/i915drm/i915_gemfs.c	i915drmkms
 file	external/bsd/drm2/i915drm/i915_module.c		i915drmkms
 file	external/bsd/drm2/i915drm/i915_pci.c		i915drmkms
+file	external/bsd/drm2/i915drm/i915_perf.c	i915drmkms
 file	external/bsd/drm2/i915drm/i915_sw_fence.c	i915drmkms
 file	external/bsd/drm2/i915drm/i915_sysfs.c	i915drmkms
-file	external/bsd/drm2/i915drm/vlv_dsi.c	i915drmkms
 file	external/bsd/drm2/i915drm/intel_gtt.c		i915drmkms
 file	external/bsd/drm2/i915drm/intelfb.c		intelfb
+file	external/bsd/drm2/i915drm/vlv_dsi.c	i915drmkms
 # Generated from i915drmkms2netbsd.
 file	external/bsd/drm2/dist/drm/i915/display/dvo_ch7017.c	i915drmkms
 file	external/bsd/drm2/dist/drm/i915/display/dvo_ch7xxx.c	i915drmkms
@@ -109,7 +111,6 @@ file	external/bsd/drm2/dist/drm/i915/gem/i915_gem_dmabuf.c	i915drmkms
 file	external/bsd/drm2/dist/drm/i915/gem/i915_gem_domain.c	i915drmkms
 file	external/bsd/drm2/dist/drm/i915/gem/i915_gem_execbuffer.c	i915drmkms
 file	external/bsd/drm2/dist/drm/i915/gem/i915_gem_fence.c	i915drmkms
-file	external/bsd/drm2/dist/drm/i915/gem/i915_gemfs.c	i915drmkms
 file	external/bsd/drm2/dist/drm/i915/gem/i915_gem_internal.c	i915drmkms
 file	external/bsd/drm2/dist/drm/i915/gem/i915_gem_lmem.c	i915drmkms
 file	external/bsd/drm2/dist/drm/i915/gem/i915_gem_mman.c	i915drmkms
@@ -187,7 +188,6 @@ file	external/bsd/drm2/dist/drm/i915/i915_memcpy.c	i915drmkms
 #file	external/bsd/drm2/dist/drm/i915/i915_mm.c	i915drmkms
 file	external/bsd/drm2/dist/drm/i915/i915_params.c	i915drmkms
 file	external/bsd/drm2/dist/drm/i915/i915_pci.c	i915drmkms
-file	external/bsd/drm2/dist/drm/i915/i915_perf.c	i915drmkms
 file	external/bsd/drm2/dist/drm/i915/i915_query.c	i915drmkms
 file	external/bsd/drm2/dist/drm/i915/i915_request.c	i915drmkms
 file	external/bsd/drm2/dist/drm/i915/i915_scatterlist.c	i915drmkms
