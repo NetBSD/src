@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_property.c,v 1.3 2021/12/19 01:14:22 riastradh Exp $	*/
+/*	$NetBSD: drm_property.c,v 1.4 2021/12/19 09:50:27 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2016 Intel Corporation
@@ -23,8 +23,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_property.c,v 1.3 2021/12/19 01:14:22 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_property.c,v 1.4 2021/12/19 09:50:27 riastradh Exp $");
 
+#include <linux/mm.h>
 #include <linux/export.h>
 #include <linux/uaccess.h>
 
